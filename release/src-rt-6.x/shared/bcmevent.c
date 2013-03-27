@@ -1,7 +1,7 @@
 /*
  * bcmevent read-only data shared by kernel or app layers
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: bcmevent.c 300516 2011-12-04 17:39:44Z $
+ * $Id: bcmevent.c 339265 2012-06-15 23:44:23Z $
  */
 
 #include <typedefs.h>
@@ -23,7 +23,7 @@
 #include <proto/bcmeth.h>
 #include <proto/bcmevent.h>
 
-#if WLC_E_LAST != 89
+#if WLC_E_LAST != 95
 #error "You need to add an entry to bcmevent_names[] for the new event"
 #endif
 
@@ -89,7 +89,7 @@ const bcmevent_name_t bcmevent_names[] = {
 	{ WLC_E_ACTION_FRAME_RX, "ACTION_FRAME_RX" },
 	{ WLC_E_ACTION_FRAME_COMPLETE, "ACTION_FRAME_COMPLETE" },
 #endif
-#ifdef WIN7
+#if defined(NDIS) && (NDISVER >= 0x0620)
 	{ WLC_E_PRE_ASSOC_IND, "ASSOC_RECV" },
 	{ WLC_E_PRE_REASSOC_IND, "REASSOC_RECV" },
 	{ WLC_E_CHANNEL_ADOPTED, "CHANNEL_ADOPTED" },
@@ -98,7 +98,7 @@ const bcmevent_name_t bcmevent_names[] = {
 	{ WLC_E_DFS_AP_RESUME, "DFS_AP_RESUME" },
 	{ WLC_E_ASSOC_IND_NDIS, "ASSOC_IND_NDIS"},
 	{ WLC_E_REASSOC_IND_NDIS, "REASSOC_IND_NDIS"},
-#endif /* WIN7 */
+#endif /* NDIS && NDISVER >= 0x0620 */
 	{ WLC_E_ESCAN_RESULT, "WLC_E_ESCAN_RESULT" },
 	{ WLC_E_ACTION_FRAME_OFF_CHAN_COMPLETE, "WLC_E_AF_OFF_CHAN_COMPLETE" },
 #ifdef WLP2P
@@ -123,7 +123,11 @@ const bcmevent_name_t bcmevent_names[] = {
 	{ WLC_E_GTK_PLUMBED, "GTK_PLUMBED" },
 #endif
 	{ WLC_E_ASSOC_REQ_IE, "ASSOC_REQ_IE" },
-	{ WLC_E_ASSOC_RESP_IE, "ASSOC_RESP_IE" }
+	{ WLC_E_ASSOC_RESP_IE, "ASSOC_RESP_IE" },
+#ifdef WLTDLS
+	{ WLC_E_TDLS_PEER_EVENT, "TDLS_PEER_EVENT" },
+#endif /* WLTDLS */
+	{ WLC_E_NATIVE, "NATIVE" }
 };
 
 const int bcmevent_names_size = ARRAYSIZE(bcmevent_names);

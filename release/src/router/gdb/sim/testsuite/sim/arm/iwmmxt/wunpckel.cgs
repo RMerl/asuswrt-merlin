@@ -1,0 +1,137 @@
+# Intel(r) Wireless MMX(tm) technology testcase for WUNPCKEL
+# mach: xscale
+# as: -mcpu=xscale+iwmmxt
+
+	.include "testutils.inc"
+
+	start
+
+	.global wunpckel
+wunpckel:
+	# Enable access to CoProcessors 0 & 1 before
+        # we attempt these instructions.
+
+	mvi_h_gr   r1, 3
+	mcr        p15, 0, r1, cr15, cr1, 0
+
+	# Test Unsigned Byte Unpacking
+		
+	mvi_h_gr   r0, 0x12345687
+	mvi_h_gr   r1, 0x9abcdef0
+	mvi_h_gr   r2, 0
+	mvi_h_gr   r3, 0
+
+	tmcrr	   wr0, r0, r1
+	tmcrr	   wr1, r2, r3
+
+	wunpckelub  wr1, wr0
+	
+	tmrrc	   r0, r1, wr0
+	tmrrc	   r2, r3, wr1
+	
+	test_h_gr  r0, 0x12345687
+	test_h_gr  r1, 0x9abcdef0
+	test_h_gr  r2, 0x00560087
+	test_h_gr  r3, 0x00120034
+		
+	# Test Signed Byte Unpacking
+		
+	mvi_h_gr   r0, 0x12345687
+	mvi_h_gr   r1, 0x9abcdef0
+	mvi_h_gr   r2, 0
+	mvi_h_gr   r3, 0
+
+	tmcrr	   wr0, r0, r1
+	tmcrr	   wr1, r2, r3
+
+	wunpckelsb  wr1, wr0
+	
+	tmrrc	   r0, r1, wr0
+	tmrrc	   r2, r3, wr1
+	
+	test_h_gr  r0, 0x12345687
+	test_h_gr  r1, 0x9abcdef0
+	test_h_gr  r2, 0x0056ff87
+	test_h_gr  r3, 0x00120034
+		
+	# Test Unsigned Halfword Unpacking
+		
+	mvi_h_gr   r0, 0x12345678
+	mvi_h_gr   r1, 0x9abcdef0
+	mvi_h_gr   r2, 0
+	mvi_h_gr   r3, 0
+
+	tmcrr	   wr0, r0, r1
+	tmcrr	   wr1, r2, r3
+
+	wunpckeluh  wr1, wr0
+	
+	tmrrc	   r0, r1, wr0
+	tmrrc	   r2, r3, wr1
+	
+	test_h_gr  r0, 0x12345678
+	test_h_gr  r1, 0x9abcdef0
+	test_h_gr  r2, 0x00005678
+	test_h_gr  r3, 0x00001234
+		
+	# Test Signed Halfword Unpacking
+		
+	mvi_h_gr   r0, 0x12348678
+	mvi_h_gr   r1, 0x9abcdef0
+	mvi_h_gr   r2, 0
+	mvi_h_gr   r3, 0
+
+	tmcrr	   wr0, r0, r1
+	tmcrr	   wr1, r2, r3
+
+	wunpckelsh  wr1, wr0
+	
+	tmrrc	   r0, r1, wr0
+	tmrrc	   r2, r3, wr1
+	
+	test_h_gr  r0, 0x12348678
+	test_h_gr  r1, 0x9abcdef0
+	test_h_gr  r2, 0xffff8678
+	test_h_gr  r3, 0x00001234
+		
+	# Test Unsigned Word Unpacking
+		
+	mvi_h_gr   r0, 0x12345678
+	mvi_h_gr   r1, 0x9abcdef0
+	mvi_h_gr   r2, 0
+	mvi_h_gr   r3, 0
+
+	tmcrr	   wr0, r0, r1
+	tmcrr	   wr1, r2, r3
+
+	wunpckeluw  wr1, wr0
+	
+	tmrrc	   r0, r1, wr0
+	tmrrc	   r2, r3, wr1
+	
+	test_h_gr  r0, 0x12345678
+	test_h_gr  r1, 0x9abcdef0
+	test_h_gr  r2, 0x12345678
+	test_h_gr  r3, 0x00000000
+		
+	# Test Signed Word Unpacking
+		
+	mvi_h_gr   r0, 0x82345678
+	mvi_h_gr   r1, 0x9abcdef0
+	mvi_h_gr   r2, 0
+	mvi_h_gr   r3, 0
+
+	tmcrr	   wr0, r0, r1
+	tmcrr	   wr1, r2, r3
+
+	wunpckelsw  wr1, wr0
+	
+	tmrrc	   r0, r1, wr0
+	tmrrc	   r2, r3, wr1
+	
+	test_h_gr  r0, 0x82345678
+	test_h_gr  r1, 0x9abcdef0
+	test_h_gr  r2, 0x82345678
+	test_h_gr  r3, 0xffffffff
+		
+	pass

@@ -1,0 +1,14 @@
+# m32r testcase for slli $dr,#$uimm5
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global slli
+slli:
+	mvi_h_gr  r4, 6
+	slli      r4, #1
+	test_h_gr r4, 12
+
+	pass

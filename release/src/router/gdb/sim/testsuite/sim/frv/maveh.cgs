@@ -1,0 +1,72 @@
+# frv testcase for maveh $FRi,$FRj,$FRj
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global maveh
+maveh:
+	set_fr_iimmed	0x0000,0x0000,fr10
+	set_fr_iimmed	0x0000,0x0000,fr11
+	maveh		fr10,fr11,fr12
+	test_fr_limmed	0x0000,0x0000,fr12
+
+	set_fr_iimmed	0x0001,0x0000,fr10
+	set_fr_iimmed	0x0002,0x0001,fr11
+	maveh		fr10,fr11,fr12
+	test_fr_limmed	0x0001,0x0000,fr12
+
+	set_fr_iimmed	0x0000,0xffff,fr10
+	set_fr_iimmed	0xffff,0xfffe,fr11
+	maveh		fr10,fr11,fr12
+	test_fr_limmed	0xffff,0xfffe,fr12
+
+	set_fr_iimmed	0xdead,0x0000,fr10
+	set_fr_iimmed	0x0000,0xbeef,fr11
+	maveh		fr10,fr11,fr12
+	test_fr_limmed	0xef56,0xdf77,fr12
+
+	set_fr_iimmed	0x0000,0xdead,fr10
+	set_fr_iimmed	0xbeef,0x0000,fr11
+	maveh		fr10,fr11,fr12
+	test_fr_limmed	0xdf77,0xef56,fr12
+
+	set_fr_iimmed	0x1234,0x5678,fr10
+	set_fr_iimmed	0x1111,0x1111,fr11
+	maveh		fr10,fr11,fr12
+	test_fr_limmed	0x11a2,0x33c4,fr12
+
+	set_fr_iimmed	0x1234,0x5678,fr10
+	set_fr_iimmed	0xffff,0xffff,fr11
+	maveh		fr10,fr11,fr12
+	test_fr_limmed	0x0919,0x2b3b,fr12
+
+	set_spr_immed	0,msr0
+	set_fr_iimmed	0x7ffe,0x7ffe,fr10
+	set_fr_iimmed	0x0002,0x0001,fr11
+	maveh		fr10,fr11,fr12
+	test_fr_limmed	0x4000,0x3fff,fr12
+
+	set_spr_immed	0,msr0
+	set_fr_iimmed	0x8001,0x8001,fr10
+	set_fr_iimmed	0xffff,0xfffe,fr11
+	maveh		fr10,fr11,fr12
+	test_fr_limmed	0xc000,0xbfff,fr12
+
+	set_spr_immed	0,msr0
+	set_fr_iimmed	0x8001,0x8001,fr10
+	set_fr_iimmed	0xfffe,0xfffe,fr11
+	maveh		fr10,fr11,fr12
+	test_fr_limmed	0xbfff,0xbfff,fr12
+
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_fr_iimmed	0x8000,0x8000,fr10
+	set_fr_iimmed	0x7fff,0x7fff,fr11
+	maveh.p		fr10,fr10,fr12
+	maveh		fr11,fr11,fr13
+	test_fr_limmed	0x8000,0x8000,fr12
+	test_fr_limmed	0x7fff,0x7fff,fr13
+
+	pass

@@ -1,0 +1,120 @@
+# fr30 testcase for div2 $Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global div2
+div2:
+	; Test div2 $Ri
+	; example from the manual -- all status bits 0
+	mvi_h_gr   	0x00ffffff,r2
+	mvi_h_dr   	0x00ffffff,mdh
+	mvi_h_dr   	0x0000000f,mdl
+	set_dbits	0x0
+	set_cc          0x00
+	div2      	r2
+	test_cc		0 1 0 0
+	test_dbits	0x0
+	test_h_gr  	0x00ffffff,r2
+	test_h_dr  	0x00000000,mdh
+	test_h_dr  	0x0000000f,mdl
+
+	; D0 == 1
+	mvi_h_dr   	0x00ffffff,mdh
+	set_dbits	0x1
+	set_cc          0x00
+	div2      	r2
+	test_cc		0 1 0 0
+	test_dbits	0x1
+	test_h_gr  	0x00ffffff,r2
+	test_h_dr  	0x00000000,mdh
+	test_h_dr  	0x0000000f,mdl
+
+	; D1 == 1
+	mvi_h_dr   	0x00ffffff,mdh
+	set_dbits	0x2
+	set_cc          0x00
+	div2      	r2
+	test_cc		0 0 0 0
+	test_dbits	0x2
+	test_h_gr  	0x00ffffff,r2
+	test_h_dr  	0x00ffffff,mdh
+	test_h_dr  	0x0000000f,mdl
+
+	; D0 == 1, D1 == 1
+	set_dbits	0x3
+	set_cc          0x00
+	div2      	r2
+	test_cc		0 0 0 0
+	test_dbits	0x3
+	test_h_gr  	0x00ffffff,r2
+	test_h_dr  	0x00ffffff,mdh
+	test_h_dr  	0x0000000f,mdl
+
+	; C == 1
+	mvi_h_dr   	0x11ffffee,mdh
+	mvi_h_gr  	0x11ffffef,r2
+	set_dbits	0x0
+	set_cc          0x00
+	div2      	r2
+	test_cc		0 0 0 1
+	test_dbits	0x0
+	test_h_gr  	0x11ffffef,r2
+	test_h_dr  	0x11ffffee,mdh
+	test_h_dr  	0x0000000f,mdl
+
+	; D0 == 1, C == 1
+	mvi_h_dr   	0x23ffffdc,mdh
+	mvi_h_gr  	0x23ffffdd,r2
+	set_dbits	0x1
+	set_cc          0x00
+	div2      	r2
+	test_cc		0 0 0 1
+	test_dbits	0x1
+	test_h_gr  	0x23ffffdd,r2
+	test_h_dr  	0x23ffffdc,mdh
+	test_h_dr  	0x0000000f,mdl
+
+	; D1 == 1, C == 1
+	mvi_h_dr   	0xfffffffd,mdh
+	mvi_h_gr  	0x00000004,r2
+	set_dbits	0x2
+	set_cc          0x00
+	div2      	r2
+	test_cc		0 0 0 1
+	test_dbits	0x2
+	test_h_gr  	0x00000004,r2
+	test_h_dr  	0xfffffffd,mdh
+	test_h_dr  	0x0000000f,mdl
+
+	; D0 == 1, D1 == 1, C == 1
+	mvi_h_dr   	0x00000002,mdh
+	mvi_h_gr  	0xffffffff,r2
+	set_dbits	0x3
+	set_cc          0x00
+	div2      	r2
+	test_cc		0 0 0 1
+	test_dbits	0x3
+	test_h_gr  	0xffffffff,r2
+	test_h_dr  	0x00000002,mdh
+	test_h_dr  	0x0000000f,mdl
+
+	; remainder is zero
+	mvi_h_dr   	0x00000004,mdh
+	mvi_h_gr  	0x00000004,r2
+	set_dbits	0x0
+	set_cc          0x00
+	div2      	r2
+	test_cc		0 1 0 0
+	test_dbits	0x0
+	test_h_gr  	0x00000004,r2
+	test_h_dr  	0x00000000,mdh
+	test_h_dr  	0x0000000f,mdl
+
+	pass
+
+
+

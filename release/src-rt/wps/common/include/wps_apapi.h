@@ -1,7 +1,7 @@
 /*
  * WPS Registratar API
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wps_apapi.h 296559 2011-11-16 02:01:13Z $
+ * $Id: wps_apapi.h 372004 2012-11-30 03:46:58Z $
  */
 
 #ifndef _WPS_AP_API_H_
@@ -61,5 +61,6 @@ uint32 wpsap_start_registration(void *mc_dev, char *sta_pin);
 unsigned char * wps_get_mac_income(void *mc_dev);
 unsigned char *wps_get_mac(void *mc_dev);
 uint8 wps_get_version2(void *mc_dev);
+bool ap_api_is_recvd_m2d(void *mc_dev);
 
 #endif /* _WPS_AP_API_H_ */

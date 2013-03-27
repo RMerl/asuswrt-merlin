@@ -1,0 +1,64 @@
+# sh testcase for mul.l $rm, $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global mull
+mull:
+	mov #3, r0
+	mov #5, r1
+	mul.l r0, r1
+
+	# Check the result.
+	sts macl, r3
+	mov #15, r4
+	cmp/eq r3, r4
+	bf wrong
+
+lxs:
+	# Large * small.
+	mov #255, r0
+	mov #0, r1
+	mul.l r0, r1
+
+	# Check the result.
+	sts macl, r3
+	mov #0, r4
+	cmp/eq r3, r4
+	bf wrong
+
+sxl:
+	# Small * large.
+	mov #0, r0
+	mov #255, r1
+	mul.l r0, r1
+
+	# Check the result.
+	sts macl, r3
+	mov #0, r4
+	cmp/eq r3, r4
+	bf wrong
+
+lxl:
+	# Large * large.
+	mov #1, r0
+	neg r0, r0
+	mov #2, r1
+	mul.l r0, r1
+
+	# Check the result.
+	sts macl, r3
+	mov #2, r4
+	neg r4, r4
+	cmp/eq r3, r4
+	bf wrong
+
+okay:
+	pass
+
+wrong:
+	fail

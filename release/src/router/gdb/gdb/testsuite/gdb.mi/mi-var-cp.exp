@@ -1,0 +1,50 @@
+# Copyright 2006, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if { [skip_cplus_tests] } { continue }
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+gdb_exit
+if [mi_gdb_start] {
+    continue
+}
+
+set testfile mi-var-cp
+set srcfile "$testfile.cc"
+set binfile $objdir/$subdir/$testfile
+
+if [get_compiler_info ${binfile} "c++"] {
+    return -1;
+}
+
+if {[gdb_compile $srcdir/$subdir/$srcfile $binfile executable {debug c++}] != ""} {
+  untested $testfile.exp
+  return -1
+}
+
+mi_gdb_load ${binfile}
+
+mi_prepare_inline_tests $srcfile
+
+mi_run_inline_test reference_update
+mi_run_inline_test base_in_reference
+mi_run_inline_test reference_to_pointer
+mi_run_inline_test reference_to_struct
+mi_run_inline_test path_expression
+
+mi_gdb_exit
+return 0

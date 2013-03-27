@@ -1,0 +1,79 @@
+
+gact <ACTION> [RAND] [INDEX]
+
+Where: 
+	ACTION := reclassify | drop | continue | pass | ok 
+	RAND := random <RANDTYPE> <ACTION> <VAL>
+	RANDTYPE := netrand | determ
+        VAL : = value not exceeding 10000
+        INDEX := index value used
+      
+ACTION semantics
+- pass and ok are equivalent to accept
+- continue allows to restart classification lookup
+- drop drops packets
+- reclassify implies continue classification where we left off
+
+randomization
+--------------
+
+At the moment there are only two algorithms. One is deterministic
+and the other uses internal kernel netrand.
+
+Examples:
+
+Rules can be installed on both ingress and egress - this shows ingress
+only
+
+tc qdisc add dev eth0 ingress
+
+# example 1
+tc filter add dev eth0 parent ffff: protocol ip prio 6 u32 match ip src \
+10.0.0.9/32 flowid 1:16 action drop
+
+ping -c 20 10.0.0.9
+
+--
+filter u32
+filter u32 fh 800: ht divisor 1
+filter u32 fh 800::800 order 2048 key ht 800 bkt 0 flowid 1:16  (rule hit 32 success 20)
+  match 0a000009/ffffffff at 12 (success 20 )
+        action order 1: gact action drop
+         random type none pass val 0
+         index 1 ref 1 bind 1 installed 59 sec used 35 sec
+         Sent 1680 bytes 20 pkts (dropped 20, overlimits 0 )
+ 
+----
+
+# example 2
+#allow 1 out 10 randomly using the netrand generator
+tc filter add dev eth0 parent ffff: protocol ip prio 6 u32 match ip src \
+10.0.0.9/32 flowid 1:16 action drop random netrand ok 10
+ 
+ping -c 20 10.0.0.9
+
+----
+filter protocol ip pref 6 u32 filter protocol ip pref 6 u32 fh 800: ht divisor 1filter protocol ip pref 6 u32 fh 800::800 order 2048 key ht 800 bkt 0 flowid 1:16  (rule hit 20 success 20)
+  match 0a000009/ffffffff at 12 (success 20 )
+        action order 1: gact action drop
+         random type netrand pass val 10
+         index 5 ref 1 bind 1 installed 49 sec used 25 sec
+         Sent 1680 bytes 20 pkts (dropped 16, overlimits 0 )
+                                                                                
+--------
+#alternative: deterministically accept every second packet
+tc filter add dev eth0 parent ffff: protocol ip prio 6 u32 match ip src \
+10.0.0.9/32 flowid 1:16 action drop random determ ok 2
+                                                                                
+ping -c 20 10.0.0.9
+                                                                                
+tc -s filter show parent ffff: dev eth0
+-----
+filter protocol ip pref 6 u32 filter protocol ip pref 6 u32 fh 800: ht divisor 1filter protocol ip pref 6 u32 fh 800::800 order 2048 key ht 800 bkt 0 flowid 1:16  (rule hit 20 success 20)
+  match 0a000009/ffffffff at 12 (success 20 )
+        action order 1: gact action drop
+         random type determ pass val 2
+         index 4 ref 1 bind 1 installed 118 sec used 82 sec
+         Sent 1680 bytes 20 pkts (dropped 10, overlimits 0 )
+-----
+

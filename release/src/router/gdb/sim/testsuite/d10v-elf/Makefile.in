@@ -1,0 +1,180 @@
+# Makefile for regression testing the GNU debugger.
+# Copyright (C) 1992, 1993, 1994, 1995, 2007 Free Software Foundation, Inc.
+
+# This file is part of GDB.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+VPATH = @srcdir@
+srcdir = @srcdir@
+srcroot = $(srcdir)/..
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+host_alias = @host_alias@
+target_alias = @target_alias@
+program_transform_name = @program_transform_name@
+build_canonical = @build@
+host_canonical = @host@
+target_canonical = @target@
+target_cpu = @target_cpu@
+
+
+SHELL = /bin/sh
+SUBDIRS = @subdirs@
+RPATH_ENVVAR = @RPATH_ENVVAR@
+
+TESTS = \
+	exit47.ko \
+	hello.hi \
+	t-dbt.ok \
+	t-ld-st.ok \
+	t-mac.ok \
+	t-mvtac.ok \
+	t-mvtc.ok \
+	t-msbu.ok \
+	t-mulxu.ok \
+	t-rac.ok \
+	t-rachi.ok \
+	t-rdt.ok \
+	t-rep.ok \
+	t-rte.ok \
+	t-sac.ok \
+	t-sachi.ok \
+	t-sadd.ok \
+	t-slae.ok \
+	t-sp.ok \
+	t-sub2w.ok \
+	t-sub.ok \
+	t-subi.ok \
+	t-ae-ld-d.ok \
+	t-ae-ld-i.ok \
+	t-ae-ld-id.ok \
+	t-ae-ld-im.ok \
+	t-ae-ld-ip.ok \
+	t-ae-ld2w-d.ok \
+	t-ae-ld2w-i.ok \
+	t-ae-ld2w-id.ok \
+	t-ae-ld2w-im.ok \
+	t-ae-ld2w-ip.ok \
+	t-ae-st-d.ok \
+	t-ae-st-i.ok \
+	t-ae-st-id.ok \
+	t-ae-st-im.ok \
+	t-ae-st-ip.ok \
+	t-ae-st-is.ok \
+	t-ae-st2w-d.ok \
+	t-ae-st2w-i.ok \
+	t-ae-st2w-id.ok \
+	t-ae-st2w-im.ok \
+	t-ae-st2w-ip.ok \
+	t-ae-st2w-is.ok \
+	t-mod-ld-pre.ok \
+	t-rie-xx.ok \
+#
+
+AS_FOR_TARGET = `\
+  if [ -x ../../../gas/as-new ]; then \
+    echo ../../../gas/as-new ; \
+  else \
+    echo $(target_alias)-as ; \
+  fi`
+
+LD_FOR_TARGET = `\
+  if [ -x ../../../ld/ld-new ]; then \
+    echo ../../../ld/ld-new ; \
+  else \
+    echo $(target_alias)-ld ; \
+  fi`
+
+RUN_FOR_TARGET = `\
+  if [ -x ../../../sim/d10v/run ]; then \
+    echo ../../../sim/d10v/run ; \
+  else \
+    echo $(target_alias)-run ; \
+  fi`
+
+# Force d10v into operating mode.
+RUNFLAGS_FOR_TARGET=-o
+
+
+check: sanity $(TESTS)
+sanity:
+	@eval echo AS_FOR_TARGET=$(AS_FOR_TARGET)
+	@eval echo LD_FOR_TARGET=$(LD_FOR_TARGET)
+	@eval echo RUN_FOR_TARGET=$(RUN_FOR_TARGET)
+
+clean:
+	rm -f $(TESTS)
+	rm -f *.run *.o
+	rm -f core *.core
+
+# Rules for running the tests
+
+.SUFFIXES: .ok .run .hi .ko .ti
+.run.ok:
+	rm -f tmp-$* $*.hi
+	ulimit -t 5 ; \
+	$(RUN_FOR_TARGET) $(RUNFLAGS_FOR_TARGET) $*.run > tmp-$*
+	mv tmp-$* $*.ok
+.run.hi:
+	rm -f tmp-$* $*.hi diff-$*
+	ulimit -t 5 ; \
+	$(RUN_FOR_TARGET) $(RUNFLAGS_FOR_TARGET) $*.run > tmp-$*
+	echo 'Hello World!' | diff - tmp-$* > diff-$*
+	cat tmp-$* diff-$* > $*.hi
+.run.ko:
+	rm -f tmp-$* $*.ko
+	set +e ; \
+	ulimit -t 5 ; \
+	$(RUN_FOR_TARGET) $(RUNFLAGS_FOR_TARGET) $*.run > tmp-$* ; \
+	if [ $$? -eq 47 ] ; then \
+	  exit 0 ; \
+	else \
+	  exit 1 ; \
+	fi
+	mv tmp-$* $*.ko
+.run.ti:
+	rm -f tmp-$* $*.ti
+	set +e ; \
+	ulimit -t 5 ; \
+	$(RUN_FOR_TARGET) $(RUNFLAGS_FOR_TARGET) $(INTFLAGS_FOR_TARGET) $*.run > tmp-$*
+	test `cat tmp-$* | wc -l` -eq 10 < /dev/null
+	test `grep Tick tmp-$* | wc -l` -eq 10 < /dev/null
+	mv tmp-$* $*.ti
+
+
+# Rules for building the test
+# Preference is for obtaining the executable (.run) from a prebuilt image
+
+.SUFFIXES: .uue .s .S .run
+.uue.run:
+	head $* | grep $*.run > /dev/null
+	uudecode $*.uue
+.run.u:
+	uuencode < $*.run $*.run > $*.u
+.o.run:
+	$(LD_FOR_TARGET) $(LDFLAGS_FOR_TARGET) -o $*.run $*.o
+.s.o:
+	$(AS_FOR_TARGET) $(ASFLAGS_FOR_TARGET) -I$(srcdir) $(srcdir)/$*.s -o $*.o
+.S.o:
+	$(AS_FOR_TARGET) $(ASFLAGS_FOR_TARGET) -I$(srcdir) $(srcdir)/$*.S -o $*.o
+
+
+Makefile: Makefile.in config.status
+	$(SHELL) ./config.status
+
+config.status: configure
+	$(SHELL) ./config.status --recheck

@@ -50,7 +50,7 @@ function applyRule(){
 			tmp_value = "";	
 		
 		document.form.filter_lwlist.value = tmp_value;
-		updateDateTime(document.form.current_page.value);		
+		updateDateTime();		
 
 		showLoading();
 		document.form.submit();
@@ -351,6 +351,26 @@ function check_Timefield_checkbox(){	// To check Date checkbox checked or not an
 		document.form.filter_lw_time2_x.disabled = true;
 		$("enable_time_weekend_tr").style.display = ""; 
 	}
+}
+function updateDateTime(){
+	document.form.filter_lw_date_x.value = setDateCheck(
+		document.form.filter_lw_date_x_Sun,
+		document.form.filter_lw_date_x_Mon,
+		document.form.filter_lw_date_x_Tue,
+		document.form.filter_lw_date_x_Wed,
+		document.form.filter_lw_date_x_Thu,
+		document.form.filter_lw_date_x_Fri,
+		document.form.filter_lw_date_x_Sat);
+	document.form.filter_lw_time_x.value = setTimeRange(
+		document.form.filter_lw_time_x_starthour,
+		document.form.filter_lw_time_x_startmin,
+		document.form.filter_lw_time_x_endhour,
+		document.form.filter_lw_time_x_endmin);
+	document.form.filter_lw_time2_x.value = setTimeRange(
+		document.form.filter_lw_time2_x_starthour,
+		document.form.filter_lw_time2_x_startmin,
+		document.form.filter_lw_time2_x_endhour,
+		document.form.filter_lw_time2_x_endmin);	
 }
 </script>
 </head>

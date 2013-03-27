@@ -37,6 +37,7 @@
 #include <features.h>
 #include <bcmnvram.h>
 #include <discover.h>
+#include <shared.h>
 #include <rtstate.h>
 
 //#define DHCP_DETECT
@@ -873,16 +874,19 @@ void closeall(int fd1, int fd2) {
 	close(fd2);
 }
 
-int discover_all() {
-	unsigned char *message;
-	unsigned long xid = 0;
+int discover_all(void)
+{
 	fd_set rfds;
 	int retval;
 	
 	struct timeval tv;
-	int len;
-	struct dhcpMessage packet;
 	int max_fd;
+#ifdef DHCP_DETECT
+	int len;
+	unsigned char *message;
+	unsigned long xid = 0;
+	struct dhcpMessage packet;
+#endif
 	
 	PPPoEConnection conn;	// ppp
 	
@@ -969,9 +973,11 @@ int discover_all() {
 #endif // DHCP_DETECT
 	}
 	
-	int count = 0, got_DHCP, got_PPP;
 	for (;;) {
+		int got_DHCP = 0, got_PPP = 0;
 #ifdef DHCP_DETECT
+		int count = 0;
+
 		got_DHCP = 0;
 #endif // DHCP_DETECT
 		got_PPP = 0;

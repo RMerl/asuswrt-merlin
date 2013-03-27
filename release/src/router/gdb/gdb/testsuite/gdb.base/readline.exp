@@ -1,0 +1,244 @@
+# Copyright 2002, 2003, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Tom Tromey <tromey@redhat.com>
+
+# This file is part of the gdb testsuite.
+
+#
+# Tests for readline operations.
+#
+
+# This function is used to test operate-and-get-next.
+# NAME is the name of the test.
+# ARGS is a list of alternating commands and expected results.
+proc operate_and_get_next {name args} {
+  global gdb_prompt
+
+  set my_gdb_prompt "($gdb_prompt| >)"
+
+  set reverse {}
+  foreach {item result} $args {
+    verbose "sending $item"
+    sleep 1
+
+    # We can't use gdb_test here because we might see a " >" prompt.
+    set status 0
+    send_gdb "$item\n"
+    gdb_expect {
+      -re "$item" {
+	# Ok
+      }
+      timeout {
+	set status 1
+      }
+    }
+
+    if {! $status} {
+      gdb_expect {
+	-re "$result" {
+	  # Ok.
+	}
+	timeout {
+	  set status 1
+	}
+      }
+    }
+
+    if {$status} {
+      fail "$name - send $item"
+      return 0
+    }
+    pass "$name - send $item"
+
+    set reverse [linsert $reverse 0 $item $result]
+  }
+
+  # Now use C-p to go back to the start.
+  foreach {item result} $reverse {
+    # Actually send C-p followed by C-l.  This lets us recognize the
+    # command when gdb prints it again.
+    send_gdb "\x10\x0c"
+    set status 0
+    gdb_expect {
+      -re "$item" {
+	# Ok
+      }
+      timeout {
+	set status 1
+      }
+    }
+    if {$status} {
+      fail "$name - C-p to $item"
+      return 0
+    }
+    pass "$name - C-p to $item"
+  }
+
+  # Now C-o through the list.  Don't send the command, since it is
+  # already there.  Strip off the first command from the list so we
+  # can see the next command inside the loop.
+  set count 0
+  foreach {item result} $args {
+    set status 0
+
+    # If this isn't the first item, make sure we see the command at
+    # the prompt.
+    if {$count > 0} {
+      gdb_expect {
+	-re ".*$item" {
+	  # Ok
+	}
+	timeout {
+	  set status 1
+	}
+      }
+    }
+
+    if {! $status} {
+      # For the last item, send a simple \n instead of C-o.
+      if {$count == [llength $args] - 2} {
+	send_gdb "\n"
+      } else {
+	# 15 is C-o.
+	send_gdb [format %c 15]
+      }
+      set status 0
+      gdb_expect {
+	-re "$result" {
+	  # Ok
+	}
+	timeout {
+	  set status 1
+	}
+      }
+    }
+
+    if {$status} {
+      fail "$name - C-o for $item"
+      return 0
+    }
+    pass "$name - C-o for $item"
+
+    set count [expr {$count + 2}]
+  }
+
+  # Match the prompt so the next test starts at the right place.
+  gdb_test "" "" "$name - final prompt"
+
+  return 1
+}
+
+
+if $tracelevel {
+  strace $tracelevel
+}
+
+# Don't let a .inputrc file or an existing setting of INPUTRC mess up
+# the test results.  Even if /dev/null doesn't exist on the particular
+# platform, the readline library will use the default setting just by
+# failing to open the file.  OTOH, opening /dev/null successfully will
+# also result in the default settings being used since nothing will be
+# read from this file.
+global env
+if [info exists env(INPUTRC)] {
+    set old_inputrc $env(INPUTRC)
+}
+set env(INPUTRC) "/dev/null"
+
+# The arrow key test relies on the standard VT100 bindings, so make
+# sure that an appropriate terminal is selected.  The same bug
+# doesn't show up if we use ^P / ^N instead.
+if [info exists env(TERM)] {
+    set old_term $env(TERM)
+}
+set env(TERM) "vt100"
+
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+set oldtimeout1 $timeout
+set timeout 30
+
+
+# A simple test of operate-and-get-next.
+operate_and_get_next "Simple operate-and-get-next" \
+  "p 1" ".* = 1" \
+  "p 2" ".* = 2" \
+  "p 3" ".* = 3"
+
+# Test operate-and-get-next with a secondary prompt.
+operate_and_get_next "operate-and-get-next with secondary prompt" \
+  "if 1 > 0" "" \
+  "p 5" "" \
+  "end" ".* = 5"
+
+# Verify that arrow keys work in secondary prompts.  The control
+# sequence is a hard-coded VT100 up arrow.
+gdb_test "print 42" "\\\$\[0-9\]* = 42"
+set msg "arrow keys with secondary prompt"
+gdb_test_multiple "if 1 > 0\n\033\[A\033\[A\nend" $msg {
+    -re ".*\\\$\[0-9\]* = 42\r\n$gdb_prompt $" {
+	pass $msg
+    }
+    -re ".*Undefined command:.*$gdb_prompt $" {
+	fail $msg
+    }
+}
+
+# Now repeat the first test with a history file that fills the entire
+# history list.
+
+if [info exists env(GDBHISTFILE)] {
+    set old_gdbhistfile $env(GDBHISTFILE)
+}
+if [info exists env(HISTSIZE)] {
+    set old_histsize $env(HISTSIZE)
+}
+set env(GDBHISTFILE) "${srcdir}/${subdir}/gdb_history"
+set env(HISTSIZE) "10"
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+operate_and_get_next "Simple operate-and-get-next" \
+  "p 7" ".* = 7" \
+  "p 8" ".* = 8" \
+  "p 9" ".* = 9"
+
+
+# Restore globals modified in this test...
+if [info exists old_inputrc] {
+    set env(INPUTRC) $old_inputrc
+} else {
+    unset env(INPUTRC)
+}
+if [info exists old_gdbhistfile] {
+    set env(GDBHISTFILE) $old_gdbhistfile
+} else {
+    unset env(GDBHISTFILE)
+}
+if [info exists old_histsize] {
+    set env(HISTSIZE) $old_histsize
+} else {
+    unset env(HISTSIZE)
+}
+set timeout $oldtimeout1
+
+return 0

@@ -1,0 +1,52 @@
+# sh testcase for beq$likely $rm, $rn, $tra -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global beq
+init:
+	# Load up the branch target registers.
+	pta beq2, tr0
+	pta beq3, tr1
+	pta wrong, tr2
+
+beq1:
+	# Compare r0 with itself.
+	# Always true, so branch likely.
+	movi 1, r0
+	beq/l r0, r0, tr0
+	# We should branch over this.
+	fail
+
+beq2:	
+	# Ensure high order bits are compared, too.
+	movi 1, r0
+	shlli r0, 35, r0
+	addi r0, 10, r0
+	movi 1, r1
+	shlli r1, 35, r1
+	addi r1, 10, r1
+	beq r0, r1, tr1
+	# We should branch over this, too.
+	fail
+
+beq3:
+	movi 1, r0
+	shlli r0, 35, r0
+	addi r0, 10, r0
+	movi 2, r1
+	shlli r1, 35, r1
+	addi r1, 9, r1
+	# Unlikely we'll branch!
+	beq/u r0, r1, tr2
+	# We should proceed to pass here.
+
+okay:
+	pass
+
+wrong:
+	fail

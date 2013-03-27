@@ -65,6 +65,8 @@
 #include <pthread.h>
 #include <pwd.h>
 
+#include <sys/stat.h>
+
 #include "config.h"
 
 #ifdef ENABLE_NLS
@@ -860,6 +862,109 @@ init(int argc, char * * argv)
 	return 0;
 }
 
+#if (!defined(RTN66U) && !defined(RTN56U))
+#define PATH_ICON_PNG_SM	"/rom/dlna/icon_sm.png"
+#define PATH_ICON_PNG_LRG	"/rom/dlna/icon_lrg.png"
+#define PATH_ICON_JPEG_SM	"/rom/dlna/icon_sm.jpg"
+#define PATH_ICON_JPEG_LRG	"/rom/dlna/icon_lrg.jpg"
+unsigned char buf_png_sm[65536];
+unsigned char buf_png_lrg[65536];
+unsigned char buf_jpeg_sm[65536];
+unsigned char buf_jpeg_lrg[65536];
+int size_png_sm = 0;
+int size_png_lrg = 0;
+int size_jpeg_sm = 0;
+int size_jpeg_lrg = 0;
+
+int
+init_icon(const char *iconfile)
+{
+	int fd = 0;
+	int *size = NULL;
+	unsigned char *buf = NULL;
+	FILE *in = NULL;
+	size_t i, offset;
+	int ret = 0;
+
+	if( strcmp(iconfile, PATH_ICON_PNG_SM) == 0 )
+	{
+		buf = buf_png_sm;
+		size = &size_png_sm;
+	}
+	else if( strcmp(iconfile, PATH_ICON_PNG_LRG) == 0 )
+	{
+		buf = buf_png_lrg;
+		size = &size_png_lrg;
+	}
+	else if( strcmp(iconfile, PATH_ICON_JPEG_SM) == 0 )
+	{
+		buf = buf_jpeg_sm;
+		size = &size_jpeg_sm;
+	}
+	else if( strcmp(iconfile, PATH_ICON_JPEG_LRG) == 0 )
+	{
+		buf = buf_jpeg_lrg;
+		size = &size_jpeg_lrg;
+	}
+	else
+	{
+		ret = -1;
+		goto RETURN;
+	}
+
+	fd = open(iconfile, O_RDONLY);
+	if (fd < 0)
+	{
+		fprintf(stderr, "reading icon file %s FAILED : %s\n",
+			iconfile, strerror(errno));
+		ret = -1;
+		goto RETURN;
+	} else {
+		struct stat filestats;
+		int statstat;
+
+		statstat = fstat(fd, &filestats);
+		if (statstat < 0)
+		{
+			fprintf(stderr, "stat-ing iconfile %s FAILED : %s\n",
+				iconfile, strerror(errno));
+			ret = -1;
+			goto RETURN;
+		} else {
+			if (filestats.st_size > 65536)
+			{
+				ret = -1;
+				goto RETURN;
+			}
+			else
+				*size = filestats.st_size;
+		}
+
+		close(fd);
+
+		if ((in = fopen(iconfile, "rb")) == NULL)
+		{
+			fprintf(stderr, "fopen icon file %s FAILED : %s\n",
+				iconfile, strerror(errno));
+			*size = 0;
+			ret =  -1;
+			goto RETURN;
+		}
+
+		/* loop through the file */
+		offset = 0;
+		memset(buf, 0, *size);
+		while ( (i = fread(buf + offset, 1, BUFSIZ, in)) != 0 ) {
+			offset += i;
+		}
+	}
+RETURN:
+	if (fd > 0) close(fd);
+	if (in) fclose(in);
+	return ret;
+}
+#endif
+
 /* === main === */
 /* process HTTP or SSDP requests */
 int
@@ -899,7 +1004,12 @@ main(int argc, char * * argv)
 
 	if (init(argc, argv) != 0)
 		return 1;
-
+#if (!defined(RTN66U) && !defined(RTN56U))
+	init_icon(PATH_ICON_PNG_SM);
+	init_icon(PATH_ICON_PNG_LRG);
+	init_icon(PATH_ICON_JPEG_SM);
+	init_icon(PATH_ICON_JPEG_LRG);
+#endif
 #ifdef READYNAS
 	DPRINTF(E_WARN, L_GENERAL, "Starting " SERVER_NAME " version " MINIDLNA_VERSION ".\n");
 	unlink("/ramfs/.upnp-av_scan");

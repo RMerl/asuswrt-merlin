@@ -1,0 +1,812 @@
+
+		PSIM - model the PowerPC environment
+
+    Copyright (C) 1994-1996, Andrew Cagney <cagney@highland.com.au>.
+
+    ----------------------------------------------------------------------
+
+
+			Building PSIM
+
+	This file describes how to build the program PSIM
+
+	o	Walk through a basic build
+
+	o	Discussion of PSIM's components and
+		how they relate to the build process
+
+	o	Detailed description of each of PSIM's
+		compile time configuration options
+
+
+    ----------------------------------------------------------------------
+
+
+BUILDING PSIM:
+
+PSIM 1.0.2 is included in GDB-4.16.  To build PSIM you will need the
+following:
+
+	gdb-4.16.tar.gz		Available from your favorite GNU
+				ftp site
+
+	gcc			GCC version two includes suport
+				for long long (64bit integer)
+				arrithemetic which PSIM uses.  Hence
+				it is recommended that you build PSIM
+				using GCC.
+				
+Method:
+
+	1.	Unpack gdb
+
+		$ cd .../scratch
+		$ gunzip < gdb-4.16.tar.gz | tar xf -
+
+
+	2.	Configure gdb
+
+		First consult the gdb documentation
+
+		$ cd .../scratch
+		$ cd gdb-4.16
+		$ more README
+		$ more gdb/README
+
+		then something like (I assume SH):
+
+		$ CC=gcc ./configure \
+                        --enable-sim-powerpc \
+                        --target=powerpc-unknown-eabi \
+                        --prefix=/applications/psim
+
+
+	4.	Build (again specifying GCC)
+
+		$ make CC=gcc
+
+		alternatively, if you are short on disk space or only
+		want to build the simulator:
+
+		$ ( cd libiberty && make CC=gcc )
+		$ ( cd bfd && make CC=gcc )
+		$ ( cd sim/ppc && make CC=gcc )
+
+
+	5.	Install
+
+		$ make CC=gcc install
+
+		or just
+
+		$ cp gdb/gdb ~/bin/powerpc-unknown-eabisim-gdb
+		$ cp sim/ppc/run ~/bin/powerpc-unknown-eabisim-run
+
+
+    ----------------------------------------------------------------------
+
+
+UPDATING PSIM:
+
+
+A PSIM is an ongoing development.  Occasional snapshots which both contain new
+features and fix old bugs are made available.  See the ftp directory:
+
+	ftp://ftp.ci.com.au/pub/psim/beta
+or	ftp://cambridge.cygnus.com/pub/psim/beta
+
+for the latest version.  To build/install one of these snapshots, you
+replace the sim/ppc found in the gdb archive with with one from the
+snapshot.  Then just re-configure and rebuild/install.
+
+	Procedure:
+
+	0.	A starting point
+
+		$ cd gdb-4.16
+
+
+	1.	Remove the old psim directory
+
+		$ mv sim/ppc sim/old.ppc
+
+
+	2.	Unpack the new one
+
+		$ gunzip < ../psim-NNNNNN.tar.gz | tar tf -
+		$ gunzip < ../psim-NNNNNN.tar.gz | tar tf -
+
+
+	3.	Reconfigure/rebuild (as seen above):
+
+		$ CC=gcc ./configure \
+			--enable-sim-powerpc \
+                        --target=powerpc-unknown-eabi \
+                        --prefix=/applications/psim
+		$ make CC=gcc
+
+
+    ----------------------------------------------------------------------
+
+
+UPDATES TO GDB:
+
+From time to time, problems involving the integration of PSIM into gdb
+are found.  While eventually each of these problems is resolved there
+can be periouds during which a local hack may be needed.
+
+At the time of writing the following were outstanding:
+
+	ATTACH command:
+
+		ftp://ftp.ci.com.au/pub/psim/gdb-4.15+attach.diff.gz
+	or	ftp://cambridge.cygnus.com/pub/psim/gdb-4.15+attach.diff.gz
+	
+	PSIM, unlike the other simulators found in GDB, is able to load
+	the description of a target machine (including the initial
+	state of all processor registers) from a file.
+
+	Unfortunatly GDB does not yet have a standard command that
+	facilitates the use of this feature.  Until such a command is
+	added, the patch (hack?) gdb-4.15+attach.diff.gz can be used to
+	extend GDB's attach command so that it can be used to initialize
+	the simulators configuration from a file.
+
+
+
+    ----------------------------------------------------------------------
+
+
+RUNNING PROGRAMS:
+
+
+See the file:
+
+	ftp://ftp.ci.com.au/pub/psim/RUN
+or	ftp://cambridge.cygnus.com/pub/psim/RUN
+
+
+    ----------------------------------------------------------------------
+
+
+COMPILE TIME CONFIGURATION OPTIONS:
+
+
+PSIM's compile time configuration is controlled by autoconf.  PSIM's
+configure script recognises options of the form:
+
+		--enable-sim-<option>[=<val>]
+
+And can be specified on the configure command line (at the top level
+of the gdb directory tree) vis:
+
+		$ cd gdb-4.15
+		$ CC=gcc ./configure \
+                        --target=powerpc-unknown-eabisim \
+                        --prefix=/applications/psim \
+			--enable-sim-inline
+		$ make CC=gcc
+
+For a brief list of PSIM's configuration options, configure --help
+will list them vis:
+
+	$ cd sim/ppc
+	$ ./configure --help
+
+Each PSIM specific option is discussed in detail below.
+
+
+
+--enable-sim-cflags=<opts>
+
+
+Specify additional C compiler flags that are to be used when compiling
+just PSIM.
+
+PSIM places heavy demands on both the host machine and its C compiler.  So that
+the builder has better control over the compiler the above option can be used
+to pass additional options to the compiler while PSIM is being built.
+
+Ex: No debug information
+
+PSIM can be built with everything inline.  Unfortunately, because of
+all the debugging information generated the C compiler can grow very
+very large as a result.  For GCC, the debug information can be
+restricted with the `-g0' option.  To specify that this option should
+be include in the CFLAGS when compiling the psim source code use:
+
+	--enable-sim-cflags=-g0
+
+Ex: Additional optimization flags
+
+A significant gain in performance can be achieved by tuning the
+optimization flags passed to the C compiler.  For instance on an x86
+you may consider:
+
+	--enable-sim-cflags='-g0 -O2 -fno-strength-reduce -f...'
+
+
+
+--enable-sim-warnings=<flags>
+
+
+Turn on additional GCC specific checks.
+
+Some hosts (NetBSD, Linux, Solaris-2.5) have complete header files
+that include correct prototypes for all library functions.  On such
+hosts, PSIM can be built with many more than the standard C checks
+enabled.  The option --enable-sim-warnings controls this.
+
+Ex: Default warnings
+
+With just --enable-sim-warnings, the following -W options are enabled:
+-Werror -Wall -Wpointer-arith -Wmissing-prototypes.
+
+
+
+--enable-sim-opcode=which
+
+
+Specify the file containing the rules for generating the instruction
+decode and execute functions from the file ppc-instructions.
+
+The form of the instruction decode and execute functions is controlled
+by an opcode table.  It specifies: the combination of switch
+statements and jump tables to use when decoding an instruction and how
+much of each instruction should be decoded before calling the
+instruction execute function.
+
+PSIM includes a number of opcode tables:
+
+	psim-opcode-simple
+		Generates a small compact two level switch statement
+		that will compile quickly and run reasonably fast.
+
+		This may be useful on a small machine.
+
+	psim-opcode-complex
+		(the default) A fairly aggressive instruction decode
+		table that includes the breaking out of a number
+		of special instruction cases (eg RA==0 vs RA!=0).
+
+	psim-opcode-flat
+		Identical to complex except a switch statement
+		is used.  Ideal for when the icache is being
+		disabled.
+
+	psim-opcode-stupid
+		In addition to the instruction decodes performed
+		by psim-opcode-complex, this also full decodes mtspr,
+		mfspr, and branch instructions.  The table generated
+		is very large and, as a consequence, only performs
+		well on machines with large caches.
+
+	ppc-opcode-test-1
+	ppc-opcode-test-2
+		Generate test (but workable) tables.  These exercise
+		PSIM's ability to generate instruction decode functions
+		that are a combination of jump-tables and switch statements.
+
+The program igen generates the instruction tables from the opcode
+table and the ppc-instruction table.
+
+
+
+--enable-sim-switch
+
+
+Enable/disable the use of a switch statement when looking up the
+attributes of a SPR register.
+
+The PowerPC architecture defines a number of Special Purpose Registers
+(SPR's).  Associated with each of these registers are a number of
+attributes (such as validity or size) which the instructions
+mtspr/mfspr query as part of their execution.
+
+For PSIM, this information is kept in a table (ppc-spr-table).  The
+program dgen converts this table into lookup routines (contained in
+the generated files spreg.h spreg.c) that can be used to query an
+SPR's attributes.  Those lookup routines are either implemented as
+a table or alternatively as a number of switch statements:
+
+	spr_table spr_info[] = { .... };
+	int spr_length(sprs spr) { return spr_info[spr].length; }
+
+vs
+
+	int spr_length(sprs spr) { switch (spr) { case ..: return ..; } }
+
+In general the first implementation (a table) is the most efficient.
+It may, however, prove that when performing an aggressive optimization
+where both the SPR is known and the above function is being inlined
+(with the consequence that GCC can eliminate the switch statement)
+that the second choice is improves performance.
+
+In practice, only a marginal (if any benefit) has ever been seen.
+
+
+
+--enable-sim-duplicate
+
+
+Create a duplicate copy of each instruction function hardwiring
+instruction fields that would have otherwise have been variable.
+
+As discussed above, igen outputs a C function generated from the file
+ppc-instructions (using the opcode rules) for each of the
+instructions.  Thus multiple entries in the instruction decode tables
+may be pointing back at the same function.  Enabling duplicate, will
+result in psim creating a duplicate of the instruction's function for
+each different entry in the instruction decode tables.
+
+For instance, given the branch instruction:
+
+	0.19,6.BO,11.BI,16./,21.528,31.LK
+	...
+	if (LK) LR = (spreg)IEA(CIA + 4);
+	...
+
+igen as part of its instruction lookup table may have generated two
+different entries - one for LK=0 and one for LK=1.  With duplicate
+enabled, igen outputs (almost) duplicate copies of branch function,
+one with LK hardwired to 0 and one with LK hardwired to 1.
+
+By doing this the compiler is provided with additional information that
+will allow it possibly eliminate dead code.  (such as the assignment
+to LK if LR==0).
+
+Ex: default
+
+Because this feature is such a big win, --enable-sim-duplicate is
+turned on by default.
+
+Ex: A small machine
+
+Only rarely (eg on a very small host) would this feature need to be
+disabled (using: --disable-sim-duplicate).
+
+
+
+--enable-sim-filter=rule
+
+
+Include/exclude PowerPC instructions that are specific to a particular
+implementation.
+
+Some of the PowerPC instructions included in the file ppc-instructions
+are limited to certain specific PPC implementations.  For instance,
+the instruction:
+
+	0.58,6.RT,11.RA,16.DS,30.2:DS:64::Load Word Algebraic
+
+Is only valid for the 64bit architecture.  The enable-sim-filter flag
+is passed to igen so that it can `filter out' any invalid
+instructions.  The filter rule has the form:
+
+	-f <name>
+
+thus:
+
+	--enable-sim-filter='-f 64'
+
+(the default) would filter out all 64bit instructions.
+
+Ex: Remove floating point instructions
+
+A given 32bit PowerPC implementation may not include floating point
+hardware.  Consequently there is little point in including floating
+point instructions in the instruction table.  The option:
+
+	--enable-sim-filter='-f 64 -f f'
+
+will eliminate all floating point instructions from the instruction
+table.
+
+
+
+--enable-sim-icache=size
+
+
+Set the size of the cache used to hold decoded instructions.
+
+Psim executes instructions in two separate steps:
+
+	o	instruction fetch/decode
+
+	o	instruction execution
+
+For a given instruction, the first stage need only be executed once
+(the first time the instruction is encountered) while the second stage
+must be executed every time the program `executes' that instruction.
+
+Exploiting this, PSIM can maintain a cache of decoded instructions.
+It will then use the decoded instruction from the cache in preference
+to fetching/decoding the real instruction from memory.
+
+Ex: default
+
+Because this feature is normally such a big win, it is enabled by
+default (with the cache size set to 1024 entries).
+
+The 1024 entries equals 4096 bytes (or one page) of instructions.
+Larger caches can be used but with caution - PSIM does not check for
+address aliasing within its instruction cache.
+
+Ex: disable the cache
+
+There may be cases (for instance where the cache has a low hit rate)
+where the psim performs better with no instruction cache.  For such
+situations, the cache can be disabled vis: --disable-sim-icache.
+
+
+
+--enable-sim-inline[=module]
+
+
+Specify the inlining of one or more modules.
+
+Many architectures (in particular the x86) suffer from a large
+function call overhead.  By eliminating function calls (through
+inlining of functions) a large performance gain can be achieved.
+
+In PSIM, modules are inlined in one of two possible ways.  Some
+modules (such as the byte swapping code) can be inlined into any
+module that calls them.  Other modules, due to complex
+interdependencies, are only inlined as a group when compiling the
+external interface module psim.c.
+
+Ex: default
+
+By default the modules endian (handle be/le), bits (manipulate
+bit-fields within words), cpu (the processor object) and events
+(timers) are inlined in any module that calls them.  This gives a
+reasonable performance gain with little additional compilation
+overhead.
+
+Ex: recommended  --enable-sim-inline
+
+Assuming you machine is reasonably well configured, this option is
+highly recommended.  On the x86 several orders of magnitude
+improvement in performance is possible.
+
+Ex: fine tuning
+
+The file std-config.h contains a detailed description of how the
+inlining works.  Individual modules can be inlined by specifying them.
+For if you have a very large cache the model module could be inlined
+with:
+
+	--enable-sim-inline=MODEL
+
+
+
+--enable-sim-bswap
+
+
+(x86 specific) Use the i486/P5/P6 byte swap instruction.
+
+PSIM contains generic byte swapping code.  For the x86 (P[4-6]) PSIM
+can be built so that it uses the bswap instruction instead of relying
+on the compiler to generate byte swap code.
+
+Ex: default
+
+By default, when compiling with GCC-2 on an i486/P5/P6 the bswap
+instruction is used.
+
+
+
+--enable-sim-endian=endian
+
+
+Specify the byte order of the target.
+
+By default, PSIM is able to execute both big and little endian
+executables.  As a consequence, every byte swap routine includes a
+test to see if the byte swap is really needed.  By specifying the byte
+order of the target (and the host below) the need for this test can be
+eliminated.
+
+Clearly setting the byte order of the target is only useful when known
+before hand.
+
+
+
+--enable-sim-hostendain=end
+
+
+As above but for the host.
+
+Normally this option should not be needed. configure (autoconf) should
+determine the byte order of the host automatically.  However if for
+some reason there is a problem, this option can be used to override
+autoconf.
+
+
+
+--enable-sim-smp=n
+
+
+Set the maximum number of processors that PSIM can model.
+
+Psim can model (with small limitation discussed else where) a
+multi-processor PowerPC environment.  While the overhead of
+co-ordinating the execution of a number of processors is relatively
+small it is still significant when compared to handling only one
+processor.
+
+This option only sets the maximum number of processors that can be
+simulated.  The number active during a given simulation run us
+determined at run time.
+
+Ex: default
+
+By default 5 processors are configured but only one is enabled.
+Additional processors can be enabled with the runtime option:
+
+	-o '/openprom/options/smp 5'
+
+Ex: recommended
+
+Unless you intend studying multi-processor systems there is little reason for
+having PSIM configured with SMP support.  Specifying:
+
+	--disable-sim-smp
+or	--enable-sim-smp=0
+
+will eliminate any SMP such as:
+
+	for (cpu = 0; cpu < nr_cpus; cpu++)
+		...
+
+
+
+--enable-sim-xor-endian=n
+
+
+Set the byte-size of the bus involved in the PowerPC's xor endian byte
+swapping.
+
+The PowerPC's implementation of BE/LE mode is different to what a
+programmer may first expect.  The details of this implementation are
+discussed at length in PowerPC documentation.
+
+Ex: default
+
+By default this is configured with a value of 8 (the bus size of most
+60x processors).
+
+Ex: recommended
+
+Unless you are expecting to test/debug PowerPC be/le switching code
+this option is of little use and should be disabled:
+
+	--disable-sim-xor-endian
+
+
+
+--enable-sim-bitsize=n
+
+
+Specify the bit size (32/64) of the PowerPC to be modelled.
+
+Note: By default 32 is specified.  The implementation of the 64bit
+architecture is still under development.
+
+
+--enable-sim-hostbitsize=32|64
+
+As above but for the host.
+
+NOTE: Psim has yet to be built on a 64bit host.
+
+
+
+--enable-sim-env=env
+
+
+Hardwire the PowerPC environment being modelled (user, virtual or
+operating).
+
+The PowerPC architecture defines three different levels of compliance to its
+architectural specification.  These environments are discussed in detail in
+PowerPC publications.
+
+	user - normal user programs 
+	virtual - an extension of the user environment (includes timers)
+	operating - kernel code
+
+Ex: default
+
+By default all three environments are supported.
+
+Ex: recommended
+
+If you only intend running psim with user (or operating) code then
+PSIM should be configured accordingly.  For user code, it eliminates:
+support for timers and events and redundant VM calls.
+
+
+
+--enable-sim-timebase
+
+
+Enable/disable the time base register.
+
+The PowerPC architecture (virtual environment) includes a time base
+register.  Maintaining that register incurs an overhead in
+performance that can be eliminated by eliminating time-base register
+support.
+
+Ex: default
+
+Normally this option is not used.  Instead --enable-sim-env (above) us
+used to disable/enable features such as the timebase register.
+
+
+
+--enable-sim-alignment=align
+
+
+Control the PowerPC's memory access alignment restrictions.
+
+The PowerPC in LE mode only allows memory transfers of a correctly
+aligned size/address.  The above option controls how misaligned
+accesses are handled.
+
+	strict		All accesses must be correctly aligned
+
+	nonstrict	Unaligned access allowed (the are split
+			into a number of aligned accesses).
+
+Ex: default
+
+Unless otherwise specified PSIM will auto configure a BE program to
+allow miss-aligned accesses while a LE program will not.
+
+Ex: 604e
+
+The recently announced 604e processor allows miss-aligned accesses in both
+BE and LE modes.  If modeling the 604e then you should specify:
+
+	--enable-sim-alignment=nonstrict
+
+
+
+--enable-sim-trace
+
+
+Include code to trace PSIM's internal progress (also controlled by the
+-t option).
+
+Checking to see if a trace message should be output slows down a
+simulation.  Disabling this option (--disable-sim-trace) eliminates
+completely that code.
+
+
+
+--enable-sim-assert
+
+
+Include the code that checks the correctness of parts of PSIM.
+
+Eliminating such code (--disable-sim-assert) eliminates internal
+consistency tests and their overhead.
+
+
+
+--enable-sim-reserved-bits
+
+
+Include code to check that the reserved fields of the instruction are
+zero.
+
+The PowerPC architecture defines certain fields of some instructions
+as reserved (`/').  By default, for each instruction, PSIM will check
+the reserved fields causing an invalid instruction exception if a
+field is invalid.  Disabling this option eliminates this test.  This
+is at the slight risk of PSIM treating an invalid instruction as
+valid.
+
+
+
+--enable-sim-float
+
+
+Include support for hardware floating point.
+
+
+
+--enable-sim-monitor=mon
+
+
+Include support for basic instruction counting.
+
+If you are not interested in the performance of either you program or
+the simulator then you can disable this option.
+
+
+
+--enable-sim-model=which
+
+Hardwire the processor that will be used as a reference when modeling
+execution units.
+
+
+
+--enable-sim-default-model=which
+
+
+Specify the processor of choice for the execution unit model.
+
+
+
+--enable-sim-model-issue
+
+
+Include support for the modeling of processor execution units.
+
+    ----------------------------------------------------------------------
+
+TYPICAL CONFIGURATION OPTIONS:
+
+
+	VEA CODE ONLY:
+
+	Here of note are:
+
+		o	ramp up the compiler options (some
+			of the below are P5 specific).
+
+		o	disable anything not used
+
+        CC=gcc ./configure \
+                --prefix=/applications/psim \
+                --target=powerpc-unknown-eabi \
+                --enable-sim-powerpc \
+                --enable-sim-warnings \
+                --enable-sim-inline \
+                --disable-sim-smp \
+                --enable-sim-duplicate \
+                --enable-sim-endian=big \
+                --disable-sim-xor-endian \
+                --enable-sim-env=user \
+                --disable-sim-reserved-bits \
+                --disable-sim-assert \
+                --disable-sim-trace \
+                --enable-sim-cflags='-g0,-O2,-fno-strength-reduce,-fomit-frame-pointer'
+
+
+	OEA CODE ONLY:
+
+	The key configuration changes are:
+
+		o	turn off the instruction cache.  The overhead
+			of flushing and reloading it is greater than
+			not having a cache.
+
+		o	use a switch statement (ppc-opcode-flat) for
+			the instruction decode and then (-O3) fully
+			inline all functions.
+
+		o	--enable-sim-warnings is not present.  GCC (2.7.2)
+			gets confused by the instruction decode table
+			generated by igen (contains a perfect switch)
+			and, as a consequence, generates a bogus warning.
+
+	CC=gcc ./configure \
+                --prefix=/applications/psim \
+                --target=powerpc-unknown-eabi \
+                --enable-sim-powerpc \
+                --enable-sim-inline \
+                --disable-sim-smp \
+                --enable-sim-duplicate \
+                --enable-sim-endian=big \
+                --disable-sim-xor-endian \
+                --enable-sim-env=operating \
+                --disable-sim-reserved-bits \
+                --disable-sim-assert \
+                --disable-sim-trace \
+                --enable-sim-opcode=ppc-opcode-flat \
+                --disable-sim-icache \
+                --enable-sim-cflags='-g0,-O3,-fno-strength-reduce,-fomit-frame-pointer'

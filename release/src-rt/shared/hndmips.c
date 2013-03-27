@@ -797,7 +797,7 @@ si_router_coma(si_t *sih, int reset, int delay_val)
 	W_REG(osh, &cc->chipcontrol_data, 0x04000600);
 
 	/* Set the watchdog */
-	if (sih->chiprev == 0) {
+	if (((CHIPID(sih->chip)) == BCM5357_CHIP_ID) && (sih->chiprev == 0)) {
 		W_REG(osh, &cc->watchdog, reset*ILP_CLOCK);
 	} else {
 		si_watchdog_ms(sih, reset*1000);
@@ -808,165 +808,6 @@ si_router_coma(si_t *sih, int reset, int delay_val)
 		dmem = (void *)si_setcore(sih, DMEMC_CORE_ID, 0);
 
 	do_router_coma(sih, dmem, delay_val);
-}
-
-static void
-BCMINITFN(dmc_phyctl)(osl_t *osh, dmemcregs_t *dmc0, uint32 phyctl_val)
-{
-	int i;
-	int val, val1;
-	_dmemcregs_t *dmc = (_dmemcregs_t *)dmc0;
-
-	SET_REG(osh, &dmc->control[9], DMC09_SREFRESH, DMC09_SREFRESH);
-	SET_REG(osh, &dmc->control[9], DMC09_START, 0);
-
-	SET_REG(osh, &dmc->control[147], (1 << 16), (phyctl_val & (1 << 16)));
-	SET_REG(osh, &dmc->control[148], (1 << 16), (phyctl_val & (1 << 16)));
-	SET_REG(osh, &dmc->control[149], 0x7, (phyctl_val & 0x7));
-	SET_REG(osh, &dmc->control[150], 0x7, (phyctl_val & 0x7));
-
-	__asm__(
-		".set\tmips3\n\t"
-		"sync\n\t"
-		"wait\n\t"
-		".set\tmips0");
-
-	SET_REG(osh, &dmc->control[9], DMC09_START, DMC09_START);
-
-	/* Check DLL lock */
-	while ((R_REG(osh, &dmc->control[4]) & DMC04_DLLLOCK) == 0);
-
-	/* Add some delay */
-	for (i = 0; i < 3000000; i++);
-
-	val = R_REG(osh, &dmc->control[5]) & 0x1;
-	if (val) {
-		/* bypass mode */
-		val1 = R_REG(osh, &dmc->control[144]) >> 3;
-		val = (R_REG(osh, &dmc->control[140]) & ~0x03ff0000) | (val1 << 16);
-		W_REG(osh, &dmc->control[140], val);
-		val = (R_REG(osh, &dmc->control[142]) & ~0x1ff8000) | (((val1 * 3) & 0x3ff) << 15);
-		W_REG(osh, &dmc->control[142], val);
-		val1 = R_REG(osh, &dmc->control[145]) >> 3;
-		val = (R_REG(osh, &dmc->control[141]) & ~0x03ff0000) | (val1 << 16);
-		W_REG(osh, &dmc->control[141], val);
-		val = (R_REG(osh, &dmc->control[143]) & ~0x1ff8000) | (((val1 * 3) & 0x3ff) << 15);
-		W_REG(osh, &dmc->control[143], val);
-	}
-
-	for (i = 0; i < 1000000; i++);
-
-	SET_REG(osh, &dmc->control[9], DMC09_SREFRESH, 0);
-}
-
-static void
-BCMINITFN(afterphyctl)(void)
-{
-}
-
-void
-si_dmc_phyctl(si_t *sih, uint32 phyctl_val)
-{
-	osl_t *osh;
-	chipcregs_t *cc = NULL;
-	dmemcregs_t *dmc = NULL;
-	uint idx, i;
-
-	osh = si_osh(sih);
-
-	/* get index of the current core */
-	idx = si_coreidx(sih);
-
-	/* switch to chipc core */
-	cc = (chipcregs_t *)si_setcoreidx(sih, SI_CC_IDX);
-	ASSERT(cc);
-	if ((dmc = (dmemcregs_t *)si_setcore(sih, DMEMC_CORE_ID, 0)) != NULL) {
-		uint ic_size, ic_lsize;
-		ulong start, end;
-		uint32 c0reg;
-		uint32 tmp;
-
-		/* Enable mips interrupt */
-		c0reg = MFC0(C0_STATUS, 0);
-		tmp = (c0reg & ~ALLINTS) | IE_IRQ0;
-		MTC0(C0_STATUS, 0, tmp);
-
-		/* Enable PMU interrupt */
-		OR_REG(osh, &cc->intmask, CI_PMU);
-
-		icache_probe(MFC0(C0_CONFIG, 1), &ic_size, &ic_lsize);
-
-		/* Put dmc_phyctl routine into the icache */
-		start = (ulong)&dmc_phyctl;
-		end = (ulong)&afterphyctl;
-		for (i = 0; i < (end - start); i += ic_lsize)
-			cache_op(start + i, Fill_I);
-
-		/* Program PMU timer */
-		tmp = R_REG(osh, &cc->res_req_timer);
-		tmp &= 0xfc000000;
-		tmp |= 0x0100011b;
-		W_REG(osh, &cc->res_req_timer, tmp);
-
-		dmc_phyctl(osh, dmc, phyctl_val);
-
-		/* Clear PMU interrupt */
-		W_REG(osh, &cc->pmustatus, 0x40);
-
-		/* Restore mips interrupt mask */
-		MTC0(C0_STATUS, 0, c0reg);
-	}
-	/* switch back to previous core */
-	si_setcoreidx(sih, idx);
-}
-
-static void
-BCMINITFN(sdsleep)(osl_t *osh, dmemcregs_t *dmc0)
-{
-	int i;
-	int val, val1;
-	_dmemcregs_t *dmc = (_dmemcregs_t *)dmc0;
-
-	SET_REG(osh, &dmc->control[9], DMC09_SREFRESH, DMC09_SREFRESH);
-	SET_REG(osh, &dmc->control[9], DMC09_START, 0);
-
-	__asm__(
-		".set\tmips3\n\t"
-		"sync\n\t"
-		"wait\n\t"
-		".set\tmips0");
-
-	SET_REG(osh, &dmc->control[9], DMC09_START, DMC09_START);
-
-	/* Check DLL lock */
-	while ((R_REG(osh, &dmc->control[4]) & DMC04_DLLLOCK) == 0);
-
-	/* Add some delay */
-	for (i = 0; i < 3000000; i++);
-
-	val = R_REG(osh, &dmc->control[5]) & 0x1;
-	if (val) {
-		/* bypass mode */
-		val1 = R_REG(osh, &dmc->control[144]) >> 3;
-		val = (R_REG(osh, &dmc->control[140]) & ~0x03ff0000) | (val1 << 16);
-		W_REG(osh, &dmc->control[140], val);
-		val = (R_REG(osh, &dmc->control[142]) & ~0x1ff8000) | (((val1 * 3) & 0x3ff) << 15);
-		W_REG(osh, &dmc->control[142], val);
-		val1 = R_REG(osh, &dmc->control[145]) >> 3;
-		val = (R_REG(osh, &dmc->control[141]) & ~0x03ff0000) | (val1 << 16);
-		W_REG(osh, &dmc->control[141], val);
-		val = (R_REG(osh, &dmc->control[143]) & ~0x1ff8000) | (((val1 * 3) & 0x3ff) << 15);
-		W_REG(osh, &dmc->control[143], val);
-	}
-
-	for (i = 0; i < 1000000; i++);
-
-	SET_REG(osh, &dmc->control[9], DMC09_SREFRESH, 0);
-}
-
-static void
-BCMINITFN(aftersdsleep)(void)
-{
 }
 
 #define PLL_ENTRIES_4706	1
@@ -1059,9 +900,6 @@ BCMINITFN(mips_pmu_setclock)(si_t *sih, uint32 mipsclock, uint32 ddrclock, uint3
 {
 	osl_t *osh;
 	chipcregs_t *cc = NULL;
-	dmemcregs_t *dmc = NULL;
-	void *regs = NULL;
-	int chclk_otf = 0;
 	uint idx, i;
 	uint mainpll_pll0 = PMU4716_MAINPLL_PLL0;
 	bool ret = TRUE;
@@ -1270,57 +1108,6 @@ BCMINITFN(mips_pmu_setclock)(si_t *sih, uint32 mipsclock, uint32 ddrclock, uint3
 	}
 	/* Wait for the last write */
 	(void)R_REG(osh, &cc->pllcontrol_data);
-
-	/* For chips that support changing clocks on the fly, use the new clocks changing scheme */
-	if ((regs = si_setcore(sih, MIPS74K_CORE_ID, 0)) != NULL)
-		chclk_otf = ((si_core_sflags(sih, 0, 0) & SISF_CHG_CLK_OTF_PRESENT) != 0);
-	if (chclk_otf &&
-	    ((dmc = (dmemcregs_t *)si_setcore(sih, DMEMC_CORE_ID, 0)) != NULL)) {
-		uint ic_size, ic_lsize;
-		ulong start, end;
-		uint32 c0reg;
-		uint32 tmp;
-
-		/* Enable mips interrupt */
-		c0reg = MFC0(C0_STATUS, 0);
-		tmp = (c0reg & ~ALLINTS) | IE_IRQ0;
-		MTC0(C0_STATUS, 0, tmp);
-
-		/* Enable PMU interrupt */
-		OR_REG(osh, &cc->intmask, CI_PMU);
-
-		icache_probe(MFC0(C0_CONFIG, 1), &ic_size, &ic_lsize);
-
-		/* Put sdsleep routine into the icache */
-		start = (ulong)&sdsleep;
-		end = (ulong)&aftersdsleep;
-		for (i = 0; i < (end - start); i += ic_lsize)
-			cache_op(start + i, Fill_I);
-
-		/* Program PMU timer */
-		tmp = R_REG(osh, &cc->res_req_timer);
-		tmp &= 0xfc000000;
-		tmp |= 0x0100011b;
-		W_REG(osh, &cc->res_req_timer, tmp);
-
-		/* Set change clock */
-		W_REG(osh, &cc->chipcontrol_addr, 0x1);
-		SET_REG(osh, &cc->chipcontrol_data, (1 << 3), (1 << 3));
-
-		sdsleep(osh, dmc);
-
-		/* Clear change clock */
-		W_REG(osh, &cc->chipcontrol_addr, 0x1);
-		SET_REG(osh, &cc->chipcontrol_data, (1 << 3), 0);
-
-		/* Clear PMU interrupt */
-		W_REG(osh, &cc->pmustatus, 0x40);
-
-		/* Restore mips interrupt mask */
-		MTC0(C0_STATUS, 0, c0reg);
-
-		goto done;
-	}
 
 	if (CHIPID(sih->chip) == BCM47162_CHIP_ID) {
 		/* In 47162, clear min_res_mask */

@@ -1,0 +1,131 @@
+@c -*-texinfo-*-
+
+@c This file is part of the GDB manual.
+@c
+@c Copyright (C) 2003, 2004, 2005, 2006
+@c               Free Software Foundation, Inc.
+@c
+@c See the file gdbint.texinfo for copying conditions.
+@c
+@c Also, the @deftypefun lines from this file are processed into a
+@c header file during the GDB build process.  Permission is granted
+@c to redistribute and/or modify those lines under the terms of the
+@c GNU General Public License as published by the Free Software
+@c Foundation; either version 2 of the License, or (at your option)
+@c any later version.
+
+@node GDB Observers
+@appendix @value{GDBN} Currently available observers
+
+@section Implementation rationale
+@cindex observers implementation rationale
+
+An @dfn{observer} is an entity which is interested in being notified
+when GDB reaches certain states, or certain events occur in GDB.
+The entity being observed is called the @dfn{subject}.  To receive
+notifications, the observer attaches a callback to the subject.
+One subject can have several observers.
+
+@file{observer.c} implements an internal generic low-level event
+notification mechanism.  This generic event notification mechanism is
+then re-used to implement the exported high-level notification
+management routines for all possible notifications.
+
+The current implementation of the generic observer provides support
+for contextual data.  This contextual data is given to the subject
+when attaching the callback.  In return, the subject will provide
+this contextual data back to the observer as a parameter of the
+callback.
+
+Note that the current support for the contextual data is only partial,
+as it lacks a mechanism that would deallocate this data when the
+callback is detached.  This is not a problem so far, as this contextual
+data is only used internally to hold a function pointer.  Later on, if
+a certain observer needs to provide support for user-level contextual
+data, then the generic notification mechanism will need to be
+enhanced to allow the observer to provide a routine to deallocate the
+data when attaching the callback.
+
+The observer implementation is also currently not reentrant.
+In particular, it is therefore not possible to call the attach
+or detach routines during a notification.
+
+@section Debugging
+Observer notifications can be traced using the command @samp{set debug
+observer 1} (@pxref{Debugging Output, , Optional messages about
+internal happenings, gdb, Debugging with @var{GDBN}}).
+
+@section @code{normal_stop} Notifications
+@cindex @code{normal_stop} observer
+@cindex notification about inferior execution stop
+
+@value{GDBN} notifies all @code{normal_stop} observers when the
+inferior execution has just stopped, the associated messages and
+annotations have been printed, and the control is about to be returned
+to the user.
+
+Note that the @code{normal_stop} notification is not emitted when
+the execution stops due to a breakpoint, and this breakpoint has
+a condition that is not met.  If the breakpoint has any associated
+commands list, the commands are executed after the notification
+is emitted.
+
+The following interfaces are available to manage observers:
+
+@deftypefun extern struct observer *observer_attach_@var{event} (observer_@var{event}_ftype *@var{f})
+Using the function @var{f}, create an observer that is notified when
+ever @var{event} occurs, return the observer.
+@end deftypefun
+
+@deftypefun extern void observer_detach_@var{event} (struct observer *@var{observer});
+Remove @var{observer} from the list of observers to be notified when
+@var{event} occurs.
+@end deftypefun
+
+@deftypefun extern void observer_notify_@var{event} (void);
+Send a notification to all @var{event} observers.
+@end deftypefun
+
+The following observable events are defined:
+
+@c note: all events must take at least one parameter.
+
+@deftypefun void normal_stop (struct bpstats *@var{bs})
+The inferior has stopped for real.
+@end deftypefun
+
+@deftypefun void target_changed (struct target_ops *@var{target})
+The target's register contents have changed.
+@end deftypefun
+
+@deftypefun void executable_changed (void *@var{unused_args})
+The executable being debugged by GDB has changed: The user decided
+to debug a different program, or the program he was debugging has
+been modified since being loaded by the debugger (by being recompiled,
+for instance).
+@end deftypefun
+
+@deftypefun void inferior_created (struct target_ops *@var{objfile}, int @var{from_tty})
+@value{GDBN} has just connected to an inferior.  For @samp{run},
+@value{GDBN} calls this observer while the inferior is still stopped
+at the entry-point instruction.  For @samp{attach} and @samp{core},
+@value{GDBN} calls this observer immediately after connecting to the
+inferior, and before any information on the inferior has been printed.
+@end deftypefun
+
+@deftypefun void solib_loaded (struct so_list *@var{solib})
+The shared library specified by @var{solib} has been loaded.  Note that
+when @value{GDBN} calls this observer, the library's symbols probably
+haven't been loaded yet.
+@end deftypefun
+
+@deftypefun void solib_unloaded (struct so_list *@var{solib})
+The shared library specified by @var{solib} has been unloaded.
+@end deftypefun
+
+@deftypefun void new_objfile (struct objfile *@var{objfile})
+The symbol file specified by @var{objfile} has been loaded.
+Called with @var{objfile} equal to @code{NULL} to indicate
+previously loaded symbol table data has now been invalidated.
+@end deftypefun
+

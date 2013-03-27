@@ -1017,6 +1017,11 @@ ifeq ($(BCMWAPI_WPI),1)
 		WLFLAGS += -DBCMSMS4_TEST
 	endif
 endif
+#ifdef BCMWAPI_WAI
+ifeq ($(BCMWAPI_WAI),1)
+	WLFLAGS += -DBCMWAPI_WAI
+endif
+#endif
 #endif
 
 #ifdef WIFI_ACT_FRAME

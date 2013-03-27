@@ -1,0 +1,14 @@
+# arm testcase for asr $rd,$rs
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global alu_asr
+alu_asr:
+	asr r0,r0
+
+# FIXME: Also asr $rd,$rs,#$offset5
+
+	pass

@@ -1,0 +1,49 @@
+# sh testcase for addi.l $rm, $disp10, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	pta wrong, tr0
+
+addil0:
+	movi 1, r63
+	addi.l r63, 0, r1
+	bnei r1, 0, tr0
+
+addil1:
+	movi 10, r0
+	addi.l r0, 0, r3
+	bnei r3, 10, tr0
+
+addil2:
+	movi 0, r0
+	addi.l r0, 10, r2
+	bnei r2, 10, tr0
+
+addil3:
+	addi.l r63, 10, r1
+	bnei r1, 10, tr0
+
+addil4:
+	movi 10, r0
+	addi.l r0, 0, r1
+	bnei r1, 10, tr0
+
+addil5:
+	# Ensure top 32-bits are discarded when adding.
+	movi 10, r0
+	shlli r0, 32, r0
+	addi r0, 10, r0
+	addi.l r0, 10, r2
+	bnei r2, 20, tr0
+	
+okay:	
+	pass
+
+wrong:
+	fail

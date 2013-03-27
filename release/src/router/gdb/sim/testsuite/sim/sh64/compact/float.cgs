@@ -1,0 +1,80 @@
+# sh testcase for float -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+pos:	
+	mov #3, r0
+	lds r0, fpul
+	float fpul, fr7
+
+	# Check the result.
+	fldi1 fr0
+	fldi1 fr1
+	fadd fr0, fr1
+	fadd fr0, fr1
+	fcmp/eq fr1, fr7
+	bf wrong
+
+neg:	
+	mov #3, r0
+	neg r0, r0
+	lds r0, fpul
+	float fpul, fr7
+
+	# Check the result.
+	fldi1 fr0
+	fldi1 fr1
+	fadd fr0, fr1
+	fadd fr0, fr1
+	fneg fr1
+	fcmp/eq fr1, fr7
+	bf wrong
+
+	bra double
+	nop
+
+wrong:
+	fail
+	
+double:
+	mov #3, r0
+	lds r0, fpul
+	_setpr
+	float fpul, dr8
+	_clrpr
+	# check the result.
+	fldi1 fr0
+	fldi1 fr1
+	fadd fr0, fr1
+	fadd fr0, fr1
+	_s2d fr1, dr2
+	fcmp/eq dr2, dr8
+	bf wrong
+
+dneg:
+	mov #3, r0
+	neg r0, r0
+	lds r0, fpul
+	_setpr
+	float fpul, dr8
+	_clrpr
+	# check the result.
+	fldi1 fr0
+	fldi1 fr1
+	fadd fr0, fr1
+	fadd fr0, fr1
+	fneg fr1
+	_s2d fr1, dr2
+	fcmp/eq dr2, dr8
+	bf wrong	
+
+okay:
+	pass
+
+wrong2:
+	fail

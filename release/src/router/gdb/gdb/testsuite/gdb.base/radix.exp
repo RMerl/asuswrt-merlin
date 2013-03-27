@@ -1,0 +1,156 @@
+# This testcase is part of GDB, the GNU debugger.
+# Copyright 1993, 1997, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was written by Fred Fish. (fnf@cygnus.com)
+# And rewritten by Michael Chastain (mec.gnu@mindspring.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+
+# Test input radices.
+
+proc test_one_input { iradix input output } {
+    gdb_test "print $input" "$output" \
+	"print $input; expect $output; input radix $iradix"
+}
+
+proc test_input_radix { iradix iradixhex iradixoctal } {
+    # set input-radix = $iradix, output-radix = ten
+    gdb_test "set radix" \
+	"Input and output radices now set to decimal 10, hex a, octal 12." \
+	"initialize radix, input radix $iradix"
+    gdb_test "set input-radix $iradix" \
+	"Input radix now set to decimal $iradix, hex $iradixhex, octal $iradixoctal."
+    if { $iradix == 10 } then {
+	gdb_test "show radix" \
+	    "Input and output radices set to decimal 10, hex a, octal 12." \
+	    "show radix, input radix $iradix"
+    } else {
+	gdb_test "show radix" \
+	    "Input radix set to decimal $iradix, hex $iradixhex, octal $iradixoctal.\r\nOutput radix set to decimal 10, hex a, octal 12." \
+	    "show radix, input radix $iradix"
+    }
+
+    # test constants with specific bases that do not use $iradix
+    test_one_input $iradix  "010"        "8"
+    test_one_input $iradix  "20."        "20"
+    test_one_input $iradix  "(int) 20."  "20"
+    test_one_input $iradix  "0xf"        "15"
+
+    # test simple one-digit constants
+    test_one_input $iradix  "0"          "0"
+    test_one_input $iradix  "1"          "1"
+    test_one_input $iradix  "-1"          "-1"
+
+    # test simple two-digit constants
+    test_one_input $iradix "10"          [expr $iradix]
+    test_one_input $iradix "11"          [expr $iradix + 1]
+    test_one_input $iradix "-10"         [expr 0 - $iradix]
+    test_one_input $iradix "-11"         [expr 0 - $iradix - 1]
+
+    # test simple three-digit constants
+    test_one_input $iradix "100"         [expr $iradix * $iradix]
+    test_one_input $iradix "101"         [expr $iradix * $iradix + 1]
+    test_one_input $iradix "-100"        [expr 0 - $iradix * $iradix]
+    test_one_input $iradix "-101"        [expr 0 - $iradix * $iradix - 1]
+
+    # test a five-digit constant
+    test_one_input $iradix  "10101"      \
+	[expr $iradix * $iradix * $iradix * $iradix + $iradix * $iradix + 1]
+}
+
+test_input_radix 2 "2" "2"
+    test_one_input 2  "4"   "Invalid number \"4\"\\."
+    test_one_input 2  "-2"  "Invalid number \"2\"\\."
+
+test_input_radix 3 "3" "3"
+    test_one_input 3  "2"   "2"
+    test_one_input 3  "20"  "6"
+    test_one_input 3  "3"   "Invalid number \"3\"\\."
+    test_one_input 2  "30"  "Invalid number \"30\"\\."
+
+test_input_radix 8 "8" "10"
+    test_one_input 8  "20"  "16"
+    test_one_input 8  "-20" "-16"
+    test_one_input 8  "8"   "Invalid number \"8\"."
+    test_one_input 8  "-9"  "Invalid number \"9\"."
+
+test_input_radix 10 "a" "12"
+    test_one_input 10 "-12"  "-12"
+
+test_input_radix 16 "10" "20"
+
+# Test output radices.
+
+proc test_one_output { oradix input output } {
+    gdb_test "print $input" "$output" \
+	"print $input; expect $output; output radix $oradix"
+}
+
+proc test_output_radix { oradix oradixhex oradixoctal } {
+    # set input-radix = ten, output-radix = $oradix
+    gdb_test "set radix" \
+	"Input and output radices now set to decimal 10, hex a, octal 12." \
+	"initialize radix, output radix $oradix"
+    gdb_test "set output-radix $oradix" \
+	"Output radix now set to decimal $oradix, hex $oradixhex, octal $oradixoctal."
+    if { $oradix == 10 } then {
+	gdb_test "show radix" \
+	    "Input and output radices set to decimal 10, hex a, octal 12." \
+	    "show radix, output radix $oradix"
+    } else {
+	gdb_test "show radix" \
+	    "Input radix set to decimal 10, hex a, octal 12.\r\nOutput radix set to decimal $oradix, hex $oradixhex, octal $oradixoctal." \
+	    "show radix, output radix $oradix"
+    }
+
+    # no standard tests for output radix
+}
+
+test_output_radix 8 "8" "10"
+    test_one_output 8  "010"        "010"
+    test_one_output 8  "0xf"        "17"
+    test_one_output 8  "10"         "12"
+    test_one_output 8  "100"        "144"
+    setup_kfail *-*-* "gdb/1715"
+    test_one_output 8  "20."        "24"
+    test_one_output 8  "(int) 20."  "24"
+
+test_output_radix 10 "a" "12"
+    test_one_output 10 "010"        "8"
+    test_one_output 10 "0xf"        "15"
+    test_one_output 10 "10"         "10"
+    test_one_output 10 "100"        "100"
+    test_one_output 10 "20."        "20"
+    test_one_output 10 "(int) 20."  "20"
+
+test_output_radix 16 "10" "20"
+    test_one_output 16 "010"        "8"
+    test_one_output 16 "0xf"        "f"
+    test_one_output 16 "10"         "a"
+    test_one_output 16 "100"        "64"
+    setup_kfail *-*-* "gdb/1715"
+    test_one_output 16 "20."        "14"
+    test_one_output 16 "(int) 20."  "14"

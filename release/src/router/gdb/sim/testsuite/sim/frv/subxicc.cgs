@@ -1,0 +1,61 @@
+# frv testcase for subxicc $GRi,$GRj,$GRk,$ICCi_1
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global subxicc
+subxicc:
+	set_gr_immed   	2,gr8
+	set_icc         0x0e,0		; Make sure carry is off
+	subxicc      	gr8,1,gr8,icc0
+	test_icc	0 0 0 0 icc0
+	test_gr_immed  	1,gr8
+
+	set_gr_limmed   0x8000,0x0000,gr8
+	set_icc         0x0c,0		; Make sure carry is off
+	subxicc		gr8,1,gr8,icc0
+	test_icc	0 0 1 0 icc0
+	test_gr_limmed  0x7fff,0xffff,gr8
+
+	set_gr_immed   	0x1ff,gr8
+	set_icc         0x0a,0		; Make sure carry is off
+	subxicc		gr8,0x1ff,gr8,icc0
+	test_icc	0 1 0 0 icc0
+	test_gr_immed  	0,gr8
+
+	set_icc         0x06,0		; Make sure carry is off
+	subxicc		gr8,1,gr8,icc0
+	test_icc	1 0 0 1 icc0
+	test_gr_limmed  0xffff,0xffff,gr8
+
+	set_gr_immed   	3,gr8
+	set_icc         0x0f,0		; Make sure carry is on
+	subxicc      	gr8,1,gr8,icc0
+	test_icc	0 0 0 0 icc0
+	test_gr_immed  	1,gr8
+
+	set_gr_limmed   0x8000,0x0000,gr8
+	set_icc         0x0d,0		; Make sure carry is on
+	subxicc		gr8,0,gr8,icc0
+	test_icc	0 0 1 0 icc0
+	test_gr_limmed  0x7fff,0xffff,gr8
+
+	set_gr_immed   	0x200,gr8
+	set_icc         0x0b,0		; Make sure carry is on
+	subxicc		gr8,0x1ff,gr8,icc0
+	test_icc	0 1 0 0 icc0
+	test_gr_immed  	0,gr8
+
+	set_icc         0x07,0		; Make sure carry is on
+	subxicc		gr8,0,gr8,icc0
+	test_icc	1 0 0 1 icc0
+	test_gr_limmed  0xffff,0xffff,gr8
+
+	set_icc         0x07,0		; Make sure carry is on
+	subxicc		gr8,-512,gr8,icc0
+	test_icc	0 0 0 0 icc0
+	test_gr_immed  510,gr8
+
+	pass

@@ -1,0 +1,19 @@
+# FRV simulator testsuite.
+
+if [istarget frv*-*] {
+    # load support procs (none yet)
+    # load_lib cgen.exp
+    # all machines
+    set all_machs "frv fr500 fr550 fr400 fr405 fr450"
+    set cpu_option -mcpu
+
+    # The .cgs suffix is for "cgen .s".
+    foreach src [lsort [glob -nocomplain $srcdir/$subdir/*.cgs]] {
+	# If we're only testing specific files and this isn't one of them,
+	# skip it.
+	if ![runtest_file_p $runtests $src] {
+	    continue
+	}
+	run_sim_test $src $all_machs
+    }
+}

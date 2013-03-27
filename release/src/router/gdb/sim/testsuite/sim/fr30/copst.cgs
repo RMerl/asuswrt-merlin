@@ -1,0 +1,21 @@
+# fr30 testcase for copst $u4,$cc,$CRj,Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global copst
+copst:
+	; Test copst copst $u4,$cc,$CRj,Ri
+	; The current implementation is a noop
+	set_cc          0x0f		; Condition codes are irrelevent
+	copst      	0,0,cr0,r15
+	test_cc		1 1 1 1
+
+	set_cc          0x0e		; Condition codes are irrelevent
+	copst      	15,255,cr15,r0
+	test_cc		1 1 1 0
+
+	pass

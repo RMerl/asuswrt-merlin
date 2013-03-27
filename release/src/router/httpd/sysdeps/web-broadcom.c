@@ -801,7 +801,8 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 	if (val) 
 	{
-		ret += websWrite(wp, "Radio is disabled\n");
+		ret += websWrite(wp, "%s radio is disabled\n",
+			nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
 		return ret;
 	}
 
@@ -1149,8 +1150,8 @@ wl_control_channel(int unit)
 				bi->ie_offset = sizeof(wl_bss_info_107_t);
 			}
 
-        		if (dtoh32(bi->version) != LEGACY_WL_BSS_INFO_VERSION && bi->n_cap)
-                		return bi->ctl_ch;
+			if (dtoh32(bi->version) != LEGACY_WL_BSS_INFO_VERSION && bi->n_cap)
+				return bi->ctl_ch;
 
 		}
 	}
@@ -1279,15 +1280,14 @@ getWscStatusStr()
 		}
 		return "Fail due to WPS time out!";
 		break;
-        case 8: /* WPS_PBCOVERLAP */
+	case 8: /* WPS_PBCOVERLAP */
 		if (++wps_error_count > 60)
 		{
 			wps_error_count = 0;
 			nvram_set("wps_proc_status", "0");
 		}
-		return "Fail due to WPS time out!";
-                return "Fail due to WPS session overlap!";
-                break;
+		return "Fail due to WPS session overlap!";
+		break;
 	default:
 		wps_error_count = 0;
 		if (nvram_match("wps_enable", "1"))
@@ -1921,6 +1921,7 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 	char ssid_str[256];
 	wl_scan_results_t *result;
 	wl_bss_info_t *info;
+	wl_bss_info_107_t *old_info;
 	struct bss_ie_hdr *ie;
 	NDIS_802_11_NETWORK_TYPE NetWorkType;
 	struct maclist *authorized;
@@ -1991,6 +1992,15 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 		if (ret == 0)
 		{
 			info = &(result->bss_info[0]);
+
+			/* Convert version 107 to 109 */
+			if (dtoh32(info->version) == LEGACY_WL_BSS_INFO_VERSION) {
+				old_info = (wl_bss_info_107_t *)info;
+				info->chanspec = CH20MHZ_CHSPEC(old_info->channel);
+				info->ie_length = old_info->ie_length;
+				info->ie_offset = sizeof(wl_bss_info_107_t);
+			}
+
 			info_b = (unsigned char *)info;
 			
 			for(i = 0; i < result->count; i++)
@@ -2045,8 +2055,8 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 //					strcpy(apinfos[ap_count].SSID, info->SSID);
 					memset(apinfos[ap_count].SSID, 0x0, 33);
 					memcpy(apinfos[ap_count].SSID, info->SSID, info->SSID_len);
-//					apinfos[ap_count].channel = ((wl_bss_info_107_t *) info)->channel;
-					apinfos[ap_count].channel = info->chanspec;
+//					apinfos[ap_count].channel = info->chanspec;
+					apinfos[ap_count].channel = (uint8)(info->chanspec & WL_CHANSPEC_CHAN_MASK);
 					apinfos[ap_count].ctl_ch = info->ctl_ch;
 
 					if (info->RSSI >= -50)
@@ -2072,8 +2082,7 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 */
 
 					NetWorkType = Ndis802_11DS;
-//					if (((wl_bss_info_107_t *) info)->channel <= 14)
-					if ((uint8)info->chanspec <= 14)
+					if ((uint8)(info->chanspec & WL_CHANSPEC_CHAN_MASK) <= 14)
 					{
 						for (k = 0; k < info->rateset.count; k++)
 						{
@@ -2148,7 +2157,7 @@ next_info:
 		for (k = 0; k < ap_count; k++)
 		{
 			fprintf(stderr, "%2d. ", k + 1);
-			fprintf(stderr, "%2d ", apinfos[k].channel);
+			fprintf(stderr, "%2d ", apinfos[k].ctl_ch);
 			fprintf(stderr, "%-33s", apinfos[k].SSID);
 			fprintf(stderr, "%-18s", apinfos[k].BSSID);
 
@@ -2176,7 +2185,7 @@ next_info:
 			fprintf(stderr, "%3d", apinfos[k].ctl_ch);
 
 			if (	((apinfos[k].NetworkType == Ndis802_11OFDM5_N) || (apinfos[k].NetworkType == Ndis802_11OFDM24_N)) &&
-				(apinfos[k].channel != apinfos[k].ctl_ch)	)
+				(apinfos[k].channel != apinfos[k].ctl_ch))
 			{
 				if (apinfos[k].ctl_ch < apinfos[k].channel)
 					ht_extcha = 1;
@@ -2235,7 +2244,7 @@ next_info:
 			retval += websWrite(wp, "\"%s\", ", ssid_str);
 		}
 
-		retval += websWrite(wp, "\"%d\", ", apinfos[i].channel);
+		retval += websWrite(wp, "\"%d\", ", apinfos[i].ctl_ch);
 
 		if (apinfos[i].wpa == 1)
 		{
@@ -2271,7 +2280,7 @@ next_info:
 				retval += websWrite(wp, "\"%s\", ", "TKIP");
 			else if (apinfos[i].wid.pairwise_cipher == WPA_CIPHER_CCMP_)
 				retval += websWrite(wp, "\"%s\", ", "AES");
-			else if (apinfos[i].wid.pairwise_cipher == WPA_CIPHER_TKIP_|WPA_CIPHER_CCMP_)
+			else if (apinfos[i].wid.pairwise_cipher == (WPA_CIPHER_TKIP_|WPA_CIPHER_CCMP_))
 				retval += websWrite(wp, "\"%s\", ", "TKIP+AES");
 			else
 				retval += websWrite(wp, "\"%s\", ", "Unknown");
@@ -2582,7 +2591,7 @@ wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 
 	if (wl_get_scan_results(name) == NULL)
-		return NULL;
+		return 0;
 
 	memset(ap_list, 0, sizeof(ap_list));
 	if (list->count == 0)
@@ -2592,12 +2601,12 @@ wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		/* fprintf(stderr, "Sorry, your driver has bss_info_version %d "
 		    "but this program supports only version %d.\n",
 		    list->version, WL_BSS_INFO_VERSION); */
-		return NULL;
+		return 0;
 	}
 
 	bi = list->bss_info;
 	for (i = 0; i < list->count; i++) {
-        /* Convert version 107 to 108 */
+	/* Convert version 107 to 108 */
 		if (bi->version == LEGACY_WL_BSS_INFO_VERSION) {
 			old_bi = (wl_bss_info_107_t *)bi;
 			bi->chanspec = CH20MHZ_CHSPEC(old_bi->channel);

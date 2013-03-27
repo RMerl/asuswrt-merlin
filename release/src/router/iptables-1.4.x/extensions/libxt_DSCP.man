@@ -1,0 +1,9 @@
+This target allows to alter the value of the DSCP bits within the TOS
+header of the IPv4 packet.  As this manipulates a packet, it can only
+be used in the mangle table.
+.TP
+\fB\-\-set\-dscp\fP \fIvalue\fP
+Set the DSCP field to a numerical value (can be decimal or hex)
+.TP
+\fB\-\-set\-dscp\-class\fP \fIclass\fP
+Set the DSCP field to a DiffServ class.

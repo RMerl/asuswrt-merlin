@@ -1,7 +1,8 @@
-﻿/* combined all protocol into this dattabase */
+﻿/* combined all protocol into this database */
 function gen_country_list(){
 	countrylist = new Array();
 	countrylist.push(["Australia", "AU"]);
+	countrylist.push(["Bosnia and Herzegovina", "BH"]);
 	countrylist.push(["Brazil", "BZ"]);
 	countrylist.push(["Bulgaria", "BUL"]);
 	countrylist.push(["Canada", "CA"]);
@@ -56,6 +57,7 @@ function gen_country_list(){
 		$("isp_countrys").options[0].selected = "1";
 }
 
+// 1:WCDMA  2:CMDA2000  3.TD-SCDMA  4.WiMAX
 function gen_list(){
 	var country = $("isp_countrys").value;
 
@@ -357,11 +359,19 @@ function gen_list(){
   }
 	else if(country == "VN"){
 		protolist = new Array("1", "1", "1");
-                isplist = new Array("Mobifone(Fast Connect)", "Vinaphone(ezCom)", "Viettel(D-Com 3G)");
-                apnlist = new Array("m-wap", "m3-card", "e-connect");
-                daillist = new Array("*99#", "*99#", "*99#");
-                userlist = new Array("mms", "mms", "");
-                passlist = new Array("mms", "mms", "");
+    isplist = new Array("Mobifone(Fast Connect)", "Vinaphone(ezCom)", "Viettel(D-Com 3G)");
+    apnlist = new Array("m-wap", "m3-card", "e-connect");
+    daillist = new Array("*99#", "*99#", "*99#");
+    userlist = new Array("mms", "mms", "");
+    passlist = new Array("mms", "mms", "");
+	}
+	else if(country == "BH"){
+		protolist = new Array("1");
+    isplist = new Array("T3");
+    apnlist = new Array("");
+    daillist = new Array("#777");
+    userlist = new Array("t3net");
+    passlist = new Array("t3net");
 	}
 	else{
 		isplist = new Array("");

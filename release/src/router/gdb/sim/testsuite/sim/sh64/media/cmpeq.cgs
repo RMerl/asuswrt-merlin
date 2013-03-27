@@ -1,0 +1,42 @@
+# sh testcase for cmpeq $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	pta wrong, tr0
+	movi 0, r0
+	movi 1, r1
+	movi 2, r2
+	movi 2, r3
+	movi 3, r4
+
+cmpeq1:
+	cmpeq r2, r2, r7
+	bne r7, r1, tr0
+
+cmpeq2:
+	cmpeq r2, r3, r7
+	bne r7, r1, tr0
+
+cmpeq3:
+	cmpeq r2, r4, r7
+	bne r7, r0, tr0
+
+cmpeq4:
+	movi 1, r2
+	shlli r2, 63, r2
+	movi 1, r3
+	shlli r3, 63, r3
+	cmpeq r2, r3, r7
+	bne r7, r1, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

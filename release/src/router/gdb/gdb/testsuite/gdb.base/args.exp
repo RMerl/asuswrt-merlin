@@ -1,0 +1,102 @@
+# Copyright 2003, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This is a test for the gdb invocation option --args.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+
+global GDBFLAGS
+
+# Skip test if target does not support argument passing.
+if [target_info exists noargs] {
+    return;
+}
+
+set testfile "args"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
+    untested args.exp
+    return -1
+}
+
+proc args_test { name arglist } {
+    global srcdir
+    global subdir
+    global binfile
+    global hex
+    global decimal
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+
+    # No loading needs to be done when the target is `exec'.  Some targets
+    # require that the program be loaded, however, and it doesn't hurt
+    # for `exec'.
+    gdb_load $binfile
+
+    runto_main
+    gdb_breakpoint [gdb_get_line_number "set breakpoint here"]
+    gdb_continue_to_breakpoint "breakpoint for $name"
+
+    set expected_len [expr 1 + [llength $arglist]]
+    gdb_test "print argc" "\\\$$decimal = $expected_len" "argc for $name"
+
+    set i 1
+    foreach arg $arglist {
+	gdb_test "print argv\[$i\]" "\\\$$decimal = $hex \"$arg\"" \
+	    "argv\[$i\] for $name"
+	set i [expr $i + 1]
+    }
+}
+
+#
+# Test that the --args are processed correctly.
+#
+set old_gdbflags $GDBFLAGS
+set GDBFLAGS "--args $binfile 1 3"
+args_test basic {{1} {3}}
+
+#
+# Test that the --args are processed correctly even if one of them is empty.
+# The syntax needed is a little peculiar; DejaGNU treats the arguments as a
+# list and expands them itself, since no shell redirection is involved.
+#
+set GDBFLAGS "--args $binfile 1 {} 3"
+args_test "one empty" {{1} {} {3}}
+
+#
+# try with 2 empty args
+#
+set GDBFLAGS "--args $binfile 1 {} {} 3"
+args_test "two empty" {{1} {} {} 3}
+
+# Try with arguments containing literal single quotes.
+
+set GDBFLAGS "--args $binfile 1 '' 3"
+args_test "one empty" {{1} {''} {3}}
+
+set GDBFLAGS "--args $binfile 1 '' '' 3"
+args_test "two empty" {{1} {''} {''} {3}}
+
+set GDBFLAGS $old_gdbflags

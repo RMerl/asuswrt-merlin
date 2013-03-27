@@ -1,0 +1,87 @@
+                                                                                                                                                                                                                                                               
+Delivered-To: oyvindharboe@gmail.com
+Received: by 10.100.7.20 with SMTP id 20cs114742ang;
+        Wed, 16 Jul 2008 08:58:18 -0700 (PDT)
+Received: by 10.114.137.2 with SMTP id k2mr325372wad.95.1216223896673;
+        Wed, 16 Jul 2008 08:58:16 -0700 (PDT)
+Return-Path: <ml-jim@qiao.in-berlin.de>
+Received: from cpanel5.proisp.no (cpanel5.proisp.no [209.85.100.29])
+        by mx.google.com with ESMTP id m28si10145125waf.16.2008.07.16.08.58.15;
+        Wed, 16 Jul 2008 08:58:16 -0700 (PDT)
+Received-SPF: neutral (google.com: 209.85.100.29 is neither permitted nor denied by best guess record for domain of ml-jim@qiao.in-berlin.de) client-ip=209.85.100.29;
+Authentication-Results: mx.google.com; spf=neutral (google.com: 209.85.100.29 is neither permitted nor denied by best guess record for domain of ml-jim@qiao.in-berlin.de) smtp.mail=ml-jim@qiao.in-berlin.de
+Received: from gnu.in-berlin.de ([192.109.42.4]:58401)
+	by cpanel5.proisp.no with esmtps (TLSv1:AES256-SHA:256)
+	(Exim 4.69)
+	(envelope-from <ml-jim@qiao.in-berlin.de>)
+	id 1KJ9OG-0006Hf-8y
+	for oyvind.harboe@zylin.com; Wed, 16 Jul 2008 17:58:07 +0200
+X-Envelope-From: ml-jim@qiao.in-berlin.de
+X-Envelope-To: <oyvind.harboe@zylin.com>
+Received: from qiao.in-berlin.de (qiao.in-berlin.de [217.197.85.72])
+	by gnu.in-berlin.de (8.13.8/8.13.8/Debian-2) with ESMTP id m6GFvxio009504
+	for <oyvind.harboe@zylin.com>; Wed, 16 Jul 2008 17:58:02 +0200
+Received: from [192.168.0.10] ([::ffff:192.168.0.10])
+  by qiao.in-berlin.de with esmtp; Wed, 16 Jul 2008 18:00:04 +0200
+  id 0001D68D.487E1B04.000042E7
+In-Reply-To: <c09652430807160034pd4a5b0q18f69a219827e111@mail.gmail.com>
+References: <c09652430807160034pd4a5b0q18f69a219827e111@mail.gmail.com>
+Mime-Version: 1.0 (Apple Message framework v753.1)
+Content-Type: text/plain; charset=ISO-8859-1; delsp=yes; format=flowed
+Message-Id: <E112D7A6-89D1-40C8-913C-7DAF7303E7EC@qiao.in-berlin.de>
+Cc: jim-devel@lists.berlios.de, antirez@gmail.com, patthoyts@users.sf.net,
+        andrew@lunn.ch, openocd@duaneellis.com, uklein@klein-messgeraete.de
+Content-Transfer-Encoding: quoted-printable
+From: Clemens Hintze <ml-jim@qiao.in-berlin.de>
+Subject: Re: Change Jim Tcl license
+Date: Wed, 16 Jul 2008 17:58:14 +0200
+To: "=?ISO-8859-1?Q?\"=D8yvind_Harboe\"?=" <oyvind.harboe@zylin.com>
+X-Mailer: Apple Mail (2.753.1)
+X-Spam-Score:  (0.101) BAYES_50,RDNS_NONE
+X-Scanned-By: MIMEDefang_at_IN-Berlin_e.V. on 192.109.42.4
+X-Spam-Status: No, score=-2.6
+X-Spam-Score: -25
+X-Spam-Bar: --
+X-Spam-Flag: NO
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - cpanel5.proisp.no
+X-AntiAbuse: Original Domain - zylin.com
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - qiao.in-berlin.de
+X-Source: 
+X-Source-Args: 
+X-Source-Dir: 
+
+
+Am 16.07.2008 um 09:34 schrieb =D8yvind Harboe:
+
+> Hi all,
+
+Hi =D8yvind,
+
+(...)
+
+> If you have contributed to Jim Tcl, please reply to this email
+> that you agree that we can switch Jim Tcl to a FreeBSD license.
+>
+> Once I have a record of all contributors agreeing to switch
+> to a FreeBSD license, I'll update CVS.
+
+No problem with me: I agree to permit my contributions to the Jim =20
+project to be
+re-licensed under a BSD compatible license.
+
+(...)
+
+> Please let me know if any of the emails below are wrong(chi is
+> missing) or the list is not complete.
+
+After consultation with the voices in my head, I can ensure you, =20
+'chi' is also agreeing with the re-licensing, because its me too ;-)
+
+Thank you very much to revive Jim! :-)
+
+Best regards,
+Clemens Hintze.
+
+(...)=

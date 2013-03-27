@@ -409,31 +409,6 @@ int detect_internet(int wan_unit){
 	return link_internet;
 }
 
-int trigger_ppp_connection(int wan_unit){
-#ifdef RTCONFIG_DSL
-	const char *test_url = "203.69.138.19";
-#else
-	const char *test_url = "www.asus.com";
-#endif
-	char cmd[256];
-	char prefix_wan[8], nvram_name[16];
-
-	memset(prefix_wan, 0, 8);
-	sprintf(prefix_wan, "wan%d_", wan_unit);
-
-	if(nvram_match(strcat_r(prefix_wan, "proto", nvram_name), "pppoe")
-			&& nvram_get_int(strcat_r(prefix_wan, "pppoe_demand", nvram_name))
-			&& (nvram_match(strcat_r(prefix_wan, "ipaddr", nvram_name), "") || nvram_match(strcat_r(prefix_wan, "ipaddr", nvram_name), "10.64.64.64"))
-			){
-csprintf("# wanduck trigger the PPP connection!\n");
-		sprintf(cmd, "ping -c 1 -W %d %s", TCPCHECK_TIMEOUT, test_url);
-logmessage("wanduck", cmd);
-		system(cmd);
-	}
-
-	return 0;
-}
-
 int passivesock(char *service, int protocol_num, int qlen){
 	//struct servent *pse;
 	struct sockaddr_in sin;
@@ -668,7 +643,13 @@ int if_wan_phyconnected(int wan_unit, int wan_state){
 	{
 		if(link_wan[wan_unit] != nvram_get_int(wired_link_nvram)){
 			nvram_set_int(wired_link_nvram, link_wan[wan_unit]);
+
+			if(link_wan[wan_unit] == 2)
+				logmessage("wanduck", "The local subnet is the same with the USB ethernet.");
 		}
+
+		if(link_wan[wan_unit] == 2)
+			return SET_ETH_MODEM;
 	}
 	else
 #endif
@@ -828,7 +809,7 @@ void handle_wan_line(int wan_unit, int action){
 
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 		if(check_if_dir_exist("/opt/lib/ipkg")){
-_dprintf("wanduck: update the APP's lists...\n");
+			_dprintf("wanduck: update the APP's lists...\n");
 			notify_rc("start_apps_update");
 		}
 #endif
@@ -874,7 +855,7 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 
 #ifdef NO_IOS_DETECT_INTERNET
 	// disable iOS popup window. Jerry5 2012.11.27
-	if (!strcmp(url,"www.apple.com/library/test/success.html")){
+	if (!strcmp(url,"www.apple.com/library/test/success.html") && nvram_get_int("disiosdet") == 1){
 		sprintf(buf, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", buf, "HTTP/1.0 200 OK\r\n", "Server: Apache/2.2.3 (Oracle)\r\n", "Content-Type: text/html; charset=UTF-8\r\n", "Cache-Control: max-age=557\r\n","Expires: ", timebuf, "\r\n", "Date: ", timebuf, "\r\n", "Content-Length: 127\r\n", "Connection: close\r\n\r\n","<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\">\n","<HTML>\n","<HEAD>\n\t","<TITLE>Success</TITLE>\n","</HEAD>\n","<BODY>\n","Success\n","</BODY>\n","</HTML>\n");
 	}
 	else{
@@ -894,6 +875,23 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 	else
 		strcpy(dut_addr, nvram_safe_get("lan_ipaddr"));
 
+	// TODO: Only send pages for the wan(0)'s state.
+#ifdef RTCONFIG_USB_MODEM
+#ifdef RTCONFIG_DUALWAN
+	if(get_dualwan_by_unit(wan_unit) == WANS_DUALWAN_IF_USB)
+#else
+	if(wan_unit == WAN_UNIT_SECOND)
+#endif
+	{
+		if(conn_changed_state[wan_unit] == SET_ETH_MODEM)
+			sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "Location:http://", dut_addr, "/error_page.htm?flag=", CASE_THESAMESUBNET, "\r\nContent-Type: text/plain\r\n", "\r\n<html></html>\r\n");
+		else{
+			close_socket(sfd, T_HTTP);
+			return;
+		}
+	}
+	else
+#endif
 	if((conn_changed_state[wan_unit] == C2D || conn_changed_state[wan_unit] == DISCONN) && disconn_case[wan_unit] == CASE_THESAMESUBNET)
 		sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "Location:http://", dut_addr, "/error_page.htm?flag=", disconn_case[wan_unit], "\r\nContent-Type: text/plain\r\n", "\r\n<html></html>\r\n");
 	else if(isFirstUse){
@@ -1008,8 +1006,7 @@ void handle_http_req(int sfd, char *line){
 			return;
 		}
 
-		// TODO: Only send pages for the wan(0)'s state.
-		send_page(0, sfd, NULL, dst_url);
+		send_page(current_wan_unit, sfd, NULL, dst_url);
 	}
 	else
 		close_socket(sfd, T_HTTP);
@@ -1334,6 +1331,7 @@ int wanduck_main(int argc, char *argv[]){
 
 	signal(SIGHUP, SIG_IGN);
 	signal(SIGTERM, safe_leave);
+	signal(SIGCHLD, chld_reap);
 	signal(SIGUSR1, get_network_nvram);
 #ifdef RTCONFIG_USB_MODEM
 	signal(SIGUSR2, notify_nvram_changed);
@@ -1517,6 +1515,11 @@ csprintf("\n#CONNED : Enable direct rule\n");
 					if(conn_state[wan_unit] == PHY_RECONN){
 						conn_changed_state[wan_unit] = PHY_RECONN;
 					}
+#ifdef RTCONFIG_USB_MODEM
+					else if(conn_state[wan_unit] == SET_ETH_MODEM){
+						conn_changed_state[wan_unit] = SET_ETH_MODEM;
+					}
+#endif
 					else if(conn_state[wan_unit] == DISCONN){
 						conn_changed_state[wan_unit] = C2D;
 
@@ -1596,6 +1599,16 @@ csprintf("# wanduck: set S_COUNT: PHY_RECONN.\n");
 					set_disconn_count(current_wan_unit, S_COUNT);
 				}
 			}
+#ifdef RTCONFIG_USB_MODEM
+			else if(conn_state[current_wan_unit] == SET_ETH_MODEM){
+				conn_changed_state[current_wan_unit] = SET_ETH_MODEM;
+
+				conn_state_old[current_wan_unit] = DISCONN;
+
+				// The USB modem is a router type dongle, and must let the local subnet not be the "192.168.1.x".
+				set_disconn_count(current_wan_unit, S_IDLE);
+			}
+#endif
 			else if(conn_state[current_wan_unit] == CONNED){
 				if(conn_state_old[current_wan_unit] == DISCONN)
 					conn_changed_state[current_wan_unit] = D2C;
@@ -1763,7 +1776,7 @@ csprintf("\n# wanduck(C2D): Modem was plugged off and try to Switch the other li
 					else
 #endif
 					// C2D: Try to prepare the backup line.
-					if(link_wan[other_wan_unit]){
+					if(link_wan[other_wan_unit] == 1){
 						if(get_wan_state(other_wan_unit) != WAN_STATE_CONNECTED){
 csprintf("\n# wanduck(C2D): Try to prepare the backup line.\n");
 							memset(cmd, 0, 32);
@@ -1812,7 +1825,7 @@ csprintf("\n# Disable direct rule(D2C)\n");
 			handle_wan_line(current_wan_unit, 0);
 		}
 
-		trigger_ppp_connection(current_wan_unit);
+		start_demand_ppp(current_wan_unit, 1);
 
 		if((nready = select(maxfd+1, &rset, NULL, NULL, &tval)) <= 0)
 			continue;

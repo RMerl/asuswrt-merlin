@@ -1,0 +1,58 @@
+# frv testcase for ldqfu @($GRi,$GRj),$GRk
+# mach: frv
+# as(frv): -mcpu=frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldqfu
+ldqfu:
+	set_mem_limmed	0xdead,0xbeef,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xbeef,0xdead,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0x1234,0x5678,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0x9abc,0xdef0,sp
+	set_gr_gr	sp,gr20
+	set_fr_iimmed	0xdead,0xbeef,fr8
+	set_fr_iimmed	0xbeef,0xdead,fr9
+	set_fr_iimmed	0x1234,0x5678,fr10
+	set_fr_iimmed	0x9abc,0xdef0,fr11
+
+	set_gr_immed	0,gr7
+	ldqfu 		@(sp,gr7),fr8
+	test_fr_limmed	0x9abc,0xdef0,fr8
+	test_fr_limmed	0x1234,0x5678,fr9
+	test_fr_limmed	0xbeef,0xdead,fr10
+	test_fr_limmed	0xdead,0xbeef,fr11
+	test_gr_gr	sp,gr20
+
+	set_fr_iimmed	0xdead,0xbeef,fr8
+	set_fr_iimmed	0xbeef,0xdead,fr9
+	set_fr_iimmed	0x1234,0x5678,fr10
+	set_fr_iimmed	0x9abc,0xdef0,fr11
+	inc_gr_immed	-16,sp
+	set_gr_immed	16,gr7
+	ldqfu 		@(sp,gr7),fr8
+	test_fr_limmed	0x9abc,0xdef0,fr8
+	test_fr_limmed	0x1234,0x5678,fr9
+	test_fr_limmed	0xbeef,0xdead,fr10
+	test_fr_limmed	0xdead,0xbeef,fr11
+	test_gr_gr	sp,gr20
+
+	set_fr_iimmed	0xdead,0xbeef,fr8
+	set_fr_iimmed	0xbeef,0xdead,fr9
+	set_fr_iimmed	0x1234,0x5678,fr10
+	set_fr_iimmed	0x9abc,0xdef0,fr11
+	inc_gr_immed	16,sp
+	set_gr_immed	-16,gr7
+	ldqfu 		@(sp,gr7),fr8
+	test_fr_limmed	0x9abc,0xdef0,fr8
+	test_fr_limmed	0x1234,0x5678,fr9
+	test_fr_limmed	0xbeef,0xdead,fr10
+	test_fr_limmed	0xdead,0xbeef,fr11
+	test_gr_gr	sp,gr20
+
+	pass

@@ -1,0 +1,59 @@
+# frv parallel testcase for stq $GRk,@($GRi,$GRj)
+# mach: frv
+# as(frv): -mcpu=frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global stq
+stq:
+	set_mem_limmed	0xbeef,0xdead,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xdead,0xbeef,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xdead,0xdead,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xbeef,0xbeef,sp
+	set_gr_immed	0,gr7
+	set_gr_limmed	0xbeef,0xdead,gr8
+	set_gr_limmed	0xdead,0xbeef,gr9
+	set_gr_limmed	0xdead,0xdead,gr10
+	set_gr_limmed	0xbeef,0xbeef,gr11
+	stq		gr8,@(sp,gr7)		; non parallel
+	test_mem_limmed	0xbeef,0xdead,sp
+	inc_gr_immed	4,sp
+	test_mem_limmed	0xdead,0xbeef,sp
+	inc_gr_immed	4,sp
+	test_mem_limmed	0xdead,0xdead,sp
+	inc_gr_immed	4,sp
+	test_mem_limmed	0xbeef,0xbeef,sp
+
+	set_mem_limmed	0xbeef,0xdead,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xdead,0xbeef,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xdead,0xdead,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xbeef,0xbeef,sp
+	set_gr_immed	0,gr7
+	set_gr_limmed	0xbeef,0xdead,gr8
+	set_gr_limmed	0xdead,0xbeef,gr9
+	set_gr_limmed	0xdead,0xdead,gr10
+	set_gr_limmed	0xbeef,0xbeef,gr11
+	stq.p		gr8,@(sp,gr7)		; parallel
+	setlos		0,gr8
+	ldq		@(sp,gr7),gr12
+	test_mem_limmed	0xbeef,0xdead,sp	; memory is set
+	inc_gr_immed	4,sp
+	test_mem_limmed	0xdead,0xbeef,sp
+	inc_gr_immed	4,sp
+	test_mem_limmed	0xdead,0xdead,sp
+	inc_gr_immed	4,sp
+	test_mem_limmed	0xbeef,0xbeef,sp
+	test_gr_immed	0xbeefdead,gr12
+	test_gr_immed	0xdeadbeef,gr13
+	test_gr_immed	0xdeaddead,gr14
+	test_gr_immed	0xbeefbeef,gr15
+
+	pass

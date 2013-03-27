@@ -312,7 +312,7 @@ buffer *chunkqueue_get_append_buffer(chunkqueue *cq) {
 
 int chunkqueue_set_tempdirs(chunkqueue *cq, array *tempdirs) {
 	if (!cq) return -1;
-
+	
 	cq->tempdirs = tempdirs;
 
 	return 0;
@@ -330,19 +330,33 @@ chunk *chunkqueue_get_append_tempfile(chunkqueue *cq) {
 	if (cq->tempdirs && cq->tempdirs->used) {
 		size_t i;
 
-		/* we have several tempdirs, only if all of them fail we jump out */
-
-		for (i = 0; i < cq->tempdirs->used; i++) {
-			data_string *ds = (data_string *)cq->tempdirs->data[i];
-
-			buffer_copy_string_buffer(template, ds->value);
+		//- 20130220 JerryLin add
+		//- first check usbdisk temp folder
+		int bUseUsbdisk = 0;
+		data_string *my_ds = (data_string *)array_get_element(cq->tempdirs, "server.usbdisk.upload-dirs");
+		if(my_ds && my_ds->value->used){
+			buffer_copy_string_buffer(template, my_ds->value);
 			BUFFER_APPEND_SLASH(template);
-			buffer_append_string_len(template, CONST_STR_LEN("lighttpd-upload-XXXXXX"));
-
+			buffer_append_string_len(template, CONST_STR_LEN("lighttpd-upload-XXXXXX"));			
 			if (-1 != (c->file.fd = mkstemp(template->ptr))) {
 				/* only trigger the unlink if we created the temp-file successfully */
 				c->file.is_temp = 1;
-				break;
+				bUseUsbdisk = 1;
+			}
+		}
+
+		if(bUseUsbdisk==0){
+			/* we have several tempdirs, only if all of them fail we jump out */		
+			for (i = 0; i < cq->tempdirs->used; i++) {
+				data_string *ds = (data_string *)cq->tempdirs->data[i];			
+				buffer_copy_string_buffer(template, ds->value);
+				BUFFER_APPEND_SLASH(template);
+				buffer_append_string_len(template, CONST_STR_LEN("lighttpd-upload-XXXXXX"));			
+				if (-1 != (c->file.fd = mkstemp(template->ptr))) {
+					/* only trigger the unlink if we created the temp-file successfully */
+					c->file.is_temp = 1;
+					break;
+				}
 			}
 		}
 	} else {
@@ -354,11 +368,11 @@ chunk *chunkqueue_get_append_tempfile(chunkqueue *cq) {
 
 	buffer_copy_string_buffer(c->file.name, template);
 	c->file.length = 0;
-
+	Cdbg(1,"c->file.name=%s", c->file.name->ptr);
 	chunkqueue_append_chunk(cq, c);
 
 	buffer_free(template);
-
+	
 	return c;
 }
 

@@ -1,0 +1,193 @@
+# Copyright 2002, 2003, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was written by Joel Brobecker. (brobecker@gnat.com), derived
+# from selftest.exp, written by Rob Savoye.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+# are we on a target board
+if { [is_remote target] || ![isnative] } then {
+    return
+}
+
+proc setup_test { executable } {
+    global gdb_prompt
+    global timeout
+
+    # load yourself into the debugger
+    # This can take a relatively long time, particularly for testing where
+    # the executable is being accessed over a network, or where gdb does not
+    # support partial symbols for a particular target and has to load the
+    # entire symbol table.  Set the timeout to 10 minutes, which should be
+    # adequate for most environments (it *has* timed out with 5 min on a
+    # SPARCstation SLC under moderate load, so this isn't unreasonable).
+    # After gdb is started, set the timeout to 30 seconds for the duration
+    # of this test, and then back to the original value.
+
+    set oldtimeout $timeout
+    set timeout 600
+    verbose "Timeout is now $timeout seconds" 2
+
+    global gdb_file_cmd_debug_info
+    set gdb_file_cmd_debug_info "unset"
+
+    set result [gdb_load $executable]
+    set timeout $oldtimeout
+    verbose "Timeout is now $timeout seconds" 2
+
+    if { $result != 0 } then {
+	return -1
+    }
+
+    if { $gdb_file_cmd_debug_info != "debug" } then {
+	untested "No debug information, skipping testcase."
+	return -1
+    }
+
+    # Set a breakpoint at main
+    gdb_test "break captured_main" \
+            "Breakpoint.*at.* file.*, line.*" \
+            "breakpoint in captured_main"
+
+    # run yourself
+    # It may take a very long time for the inferior gdb to start (lynx),
+    # so we bump it back up for the duration of this command.
+    set timeout 600
+
+    set description "run until breakpoint at captured_main"
+    send_gdb "run -nw\n"
+    gdb_expect {
+        -re "Starting program.*Breakpoint \[0-9\]+,.*captured_main .data.* at .*main.c:.*$gdb_prompt $" {
+            pass "$description"
+        }
+        -re "Starting program.*Breakpoint \[0-9\]+,.*captured_main .data.*$gdb_prompt $" {
+            xfail "$description (line numbers scrambled?)"
+        }
+        -re "vfork: No more processes.*$gdb_prompt $" {
+            fail "$description (out of virtual memory)"
+            set timeout $oldtimeout
+            verbose "Timeout is now $timeout seconds" 2
+            return -1
+        }
+        -re ".*$gdb_prompt $" {
+            fail "$description"
+            set timeout $oldtimeout
+            verbose "Timeout is now $timeout seconds" 2
+            return -1
+        }
+        timeout {
+            fail "$description (timeout)"
+        }
+    }
+
+    set timeout $oldtimeout
+    verbose "Timeout is now $timeout seconds" 2
+
+    return 0
+}
+
+proc test_with_self { executable } {
+
+    set setup_result [setup_test $executable]
+    if {$setup_result <0} then {
+        return -1
+    }
+
+    # A file which contains a directory prefix
+    gdb_test "print xfullpath (\"./xfullpath.exp\")" \
+             ".\[0-9\]+ =.*\".*/xfullpath.exp\"" \
+             "A filename with ./ as the directory prefix"
+
+    # A file which contains a directory prefix
+    gdb_test "print xfullpath (\"../../defs.h\")" \
+             ".\[0-9\]+ =.*\".*/defs.h\"" \
+             "A filename with ../ in the directory prefix"
+
+    # A one-character filename
+    gdb_test "print xfullpath (\"./a\")" \
+             ".\[0-9\]+ =.*\".*/a\"" \
+             "A one-char filename in the current directory"
+          
+    # A file in the root directory
+    gdb_test "print xfullpath (\"/root_file_which_should_exist\")" \
+             ".\[0-9\]+ =.*\"/root_file_which_should_exist\"" \
+             "A filename in the root directory"
+          
+    # A file which does not have a directory prefix
+    gdb_test "print xfullpath (\"xfullpath.exp\")" \
+             ".\[0-9\]+ =.*\"xfullpath.exp\"" \
+             "A filename without any directory prefix"
+
+    # A one-char filename without any directory prefix
+    gdb_test "print xfullpath (\"a\")" \
+             ".\[0-9\]+ =.*\"a\"" \
+             "A one-char filename without any directory prefix"
+
+    # An empty filename
+    gdb_test "print xfullpath (\"\")" \
+             ".\[0-9\]+ =.*\"\"" \
+             "An empty filename"
+
+    return 0
+}
+
+# Find a pathname to a file that we would execute if the shell was asked
+# to run $arg using the current PATH.
+
+proc find_gdb { arg } {
+
+    # If the arg directly specifies an existing executable file, then
+    # simply use it.
+
+    if [file executable $arg] then {
+	return $arg
+    }
+
+    set result [which $arg]
+    if [string match "/" [ string range $result 0 0 ]] then {
+	return $result
+    }
+
+    # If everything fails, just return the unqualified pathname as default
+    # and hope for best.
+
+    return $arg
+}
+
+# Run the test with self.
+# Copy the file executable file in case this OS doesn't like to edit its own
+# text space.
+
+set GDB_FULLPATH [find_gdb $GDB]
+
+# Remove any old copy lying around.
+remote_file host delete x$tool
+
+gdb_start
+set file [remote_download host $GDB_FULLPATH x$tool]
+set result [test_with_self $file];
+gdb_exit;
+catch "remote_file host delete $file";
+
+if {$result <0} then {
+    warning "Couldn't test self"
+    return -1
+}

@@ -33,15 +33,6 @@ function initial(){
 	if(WebDav_support != -1){
 		hideAll(1);
 	}
-
-	/* Viz 2012.08.14 move to System page
-	if(HTTPS_support == -1 || '<% nvram_get("http_enable"); %>' == 0)
-		$("https_port").style.display = "none";
-	else if('<% nvram_get("http_enable"); %>' == 1)
-		$("http_port").style.display = "none";
-
-	hideport(document.form.misc_http_x[0].checked);
-	*/
 }
 
 function hideAll(_value){
@@ -81,30 +72,9 @@ function showPortItem(_value){
 }
 
 function applyRule(){
-	if(validForm()){
-		//Viz 2012.08.14 move to System page inputRCtrl1(document.form.misc_http_x, 1);
-		inputRCtrl1(document.form.misc_ping_x, 1);
-
-		showLoading();
-		document.form.submit();
-	}
-}
-
-function validForm(){
-	/*Viz 2012.08.14 move to System page
-	if (document.form.misc_http_x[0].checked) {
-		if (!validate_range(document.form.misc_httpport_x, 1024, 65535))
-			return false;
-
-		if (HTTPS_support != -1 &&
-		    !validate_range(document.form.misc_httpsport_x, 1024, 65535))
-			return false;
-	} else {
-		document.form.misc_httpport_x.value = '<% nvram_get("misc_httpport_x"); %>';
-		document.form.misc_httpsport_x.value = '<% nvram_get("misc_httpsport_x"); %>';
-	}*/
-
-	return true;
+	inputRCtrl1(document.form.misc_ping_x, 1);
+	showLoading();
+	document.form.submit();
 }
 
 function hideport(flag){

@@ -1,0 +1,15 @@
+# m32r testcase for srli $dr,#$uimm5
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global srli
+srli:
+	mvi_h_gr  r5, 6
+	srli      r5, #1
+	test_h_gr r5, 3
+
+
+	pass

@@ -1,0 +1,39 @@
+
+Stupidly Simple Test Suite for neon
+-----------------------------------
+
+The aim of the test suite is two-fold:
+
+ 1. ensure compliance to the relevant RFCs in network behaviour.
+
+ 2. ensure that the promises made by the public API are met 
+ by the current implementation.
+
+The file `STATUS' makes an attempt at listing RFC requirements and how
+the test suite tests whether neon meets them or not (it's not finished
+yet).
+
+The test suite is licensed under the GPL.
+
+Important Note About Test Failures
+----------------------------------
+
+Note that a test failure either means a bug in the test or a bug in
+the code itself.  On platforms without pipe(), there is a race
+condition in the code which forks a server process: if you get random
+failures on a slow or loaded box, increase the sleep time in
+common/child.c:minisleep().
+
+Extra Stuff
+-----------
+
+server-tests requires that you have a running HTTP server on localhost
+port 80, and you have copied htdocs/* to server-htdocs-root/test/*
+
+Credits
+-------
+
+This test suite is inspired by the Subversion project, discussion on
+the subversion mailing list, and seeing chromatic's talks on XP.  The
+presentation is inspired by the standard Perl test suite.  Imitation
+is the greatest form of flattery, right?

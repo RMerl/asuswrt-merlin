@@ -1,0 +1,15 @@
+# m32r testcase for bra $disp24
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global bra24
+bra24:
+	bra.l ok
+
+	fail
+
+ok:
+	pass

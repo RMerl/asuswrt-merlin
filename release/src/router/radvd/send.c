@@ -9,7 +9,7 @@
  *
  *   The license which is distributed with this software in the file COPYRIGHT
  *   applies to this software. If your distribution is missing this file, you
- *   may request it from <pekkas@netcore.fi>.
+ *   may request it from <reubenhwk@gmail.com>.
  *
  */
 
@@ -114,12 +114,6 @@ int
 send_ra(struct Interface *iface, struct in6_addr *dest)
 {
 	uint8_t all_hosts_addr[] = {0xff,0x02,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
-	struct sockaddr_in6 addr;
-	struct in6_pktinfo *pkt_info;
-	struct msghdr mhdr;
-	struct cmsghdr *cmsg;
-	struct iovec iov;
-	char __attribute__((aligned(8))) chdr[CMSG_SPACE(sizeof(struct in6_pktinfo))];
 	struct nd_router_advert *radvert;
 	struct AdvPrefix *prefix;
 	struct AdvRoute *route;
@@ -178,11 +172,6 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 		flog(LOG_WARNING, "gettimeofday() went backwards!");
 	}
 	iface->last_ra_time = time_now;
-
-	memset((void *)&addr, 0, sizeof(addr));
-	addr.sin6_family = AF_INET6;
-	addr.sin6_port = htons(IPPROTO_ICMPV6);
-	memcpy(&addr.sin6_addr, dest, sizeof(struct in6_addr));
 
 	memset(buff, 0, sizeof(buff));
 	radvert = (struct nd_router_advert *) buff;
@@ -501,6 +490,39 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 		memcpy(buff + buff_dest, &ha_info, sizeof(ha_info));
 	}
 
+	err = really_send(dest, iface->if_index, iface->if_addr, buff, len);
+
+	if (err < 0) {
+		if (!iface->IgnoreIfMissing || !(errno == EINVAL || errno == ENODEV))
+			flog(LOG_WARNING, "sendmsg: %s", strerror(errno));
+		else
+			dlog(LOG_DEBUG, 3, "sendmsg: %s", strerror(errno));
+	}
+
+	return 0;
+}
+
+int really_send(
+		struct in6_addr const *dest,
+		unsigned int if_index,
+		struct in6_addr if_addr,
+		unsigned char * buff,
+		size_t len)
+{
+	char __attribute__((aligned(8))) chdr[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+	struct in6_pktinfo *pkt_info;
+	struct msghdr mhdr;
+	struct cmsghdr *cmsg;
+	struct iovec iov;
+	int err;
+	struct sockaddr_in6 addr;
+
+	memset((void *)&addr, 0, sizeof(addr));
+	addr.sin6_family = AF_INET6;
+	addr.sin6_port = htons(IPPROTO_ICMPV6);
+	memcpy(&addr.sin6_addr, dest, sizeof(struct in6_addr));
+
+
 	iov.iov_len  = len;
 	iov.iov_base = (caddr_t) buff;
 
@@ -512,14 +534,13 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 	cmsg->cmsg_type  = IPV6_PKTINFO;
 
 	pkt_info = (struct in6_pktinfo *)CMSG_DATA(cmsg);
-	pkt_info->ipi6_ifindex = iface->if_index;
-	dlog(LOG_DEBUG, 4, "using if_index %d for interface %s", iface->if_index, iface->Name);
-	memcpy(&pkt_info->ipi6_addr, &iface->if_addr, sizeof(struct in6_addr));
+	pkt_info->ipi6_ifindex = if_index;
+	memcpy(&pkt_info->ipi6_addr, &if_addr, sizeof(struct in6_addr));
 
 #ifdef HAVE_SIN6_SCOPE_ID
 	if (IN6_IS_ADDR_LINKLOCAL(&addr.sin6_addr) ||
 		IN6_IS_ADDR_MC_LINKLOCAL(&addr.sin6_addr))
-			addr.sin6_scope_id = iface->if_index;
+			addr.sin6_scope_id = if_index;
 #endif
 
 	memset(&mhdr, 0, sizeof(mhdr));
@@ -532,12 +553,5 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 
 	err = sendmsg(sock, &mhdr, 0);
 
-	if (err < 0) {
-		if (!iface->IgnoreIfMissing || !(errno == EINVAL || errno == ENODEV))
-			flog(LOG_WARNING, "sendmsg: %s", strerror(errno));
-		else
-			dlog(LOG_DEBUG, 3, "sendmsg: %s", strerror(errno));
-	}
-
-	return 0;
+	return err;
 }

@@ -423,7 +423,7 @@ PDEBUG("URB_FUNCTION_SELECT_INTERFACE:: config, int, alt, ep: %x %x %x %x\n", tm
 							purb->UrbControlVendorClassRequest.Index, (char*)pbuf,
 							purb->UrbControlVendorClassRequest.TransferBufferLength,
 							timeout_control_msg);
-//					PDEBUG("usb_control_msg(), direction: out, return: %d\n", ret);
+					PDEBUG_RET("usb_control_msg(), direction: out, return: %d\n", ret);
 				} else {
 					tmpReqType = (USB_TYPE_CLASS | USB_DIR_IN | USB_RECIP_OTHER);
 					pbuf = pirp_saverw->Buffer + purb->UrbHeader.Length;
@@ -434,7 +434,7 @@ PDEBUG("URB_FUNCTION_SELECT_INTERFACE:: config, int, alt, ep: %x %x %x %x\n", tm
 							purb->UrbControlVendorClassRequest.Index, (char*)pbuf,
 							purb->UrbControlVendorClassRequest.TransferBufferLength,
 							timeout_control_msg);
-//					PDEBUG("usb_control_msg(), direction: in, return: %d\n", ret);
+					PDEBUG_RET("usb_control_msg(), direction: in, return: %d\n", ret);
 				}
 				usb_close(udev);
 				if (ret < 0)
@@ -509,7 +509,7 @@ PDEBUG("URB_FUNCTION_SELECT_INTERFACE:: config, int, alt, ep: %x %x %x %x\n", tm
 							purb->UrbControlVendorClassRequest.Index, (char*)pbuf,
 							purb->UrbControlVendorClassRequest.TransferBufferLength,
 							timeout_control_msg);
-//					PDEBUG("usb_control_msg() out return: %d\n", ret);
+					PDEBUG_RET("usb_control_msg() out return: %d\n", ret);
 					((PCONNECTION_INFO)curt_pos)->count_class_int_in = 0;
 				} else {
 
@@ -576,7 +576,7 @@ PDEBUG("URB_FUNCTION_SELECT_INTERFACE:: config, int, alt, ep: %x %x %x %x\n", tm
 					}
 */
 
-//					PDEBUG("usb_control_msg() in return: %d\n", ret);
+					PDEBUG_RET("usb_control_msg() in return: %d\n", ret);
 				}
 				usb_close(udev);
 				if (ret < 0)
@@ -722,7 +722,7 @@ PDEBUG("URB_FUNCTION_SELECT_INTERFACE:: config, int, alt, ep: %x %x %x %x\n", tm
 							}
 						}
 
-						PDEBUG("usb_bulk_write() return: %d\n", ret);
+						PDEBUG_RET("usb_bulk_write() return: %d\n", ret);
 
 						count_bulk_write ++;
 						count_bulk_read_ret0_1 = 0;
@@ -830,7 +830,7 @@ PDEBUG("URB_FUNCTION_SELECT_INTERFACE:: config, int, alt, ep: %x %x %x %x\n", tm
 							((PCONNECTION_INFO)curt_pos)->count_class_int_in = 0;
 						}
 
-						PDEBUG("usb_bulk_read() return: %d\n", ret);
+						PDEBUG_RET("usb_bulk_read() return: %d\n", ret);
 
 						if (Is_HP) {	// HP, if this connection only includes HP ToolBox
 							if (ret == 0) {
@@ -906,9 +906,9 @@ PDEBUG("URB_FUNCTION_SELECT_INTERFACE:: config, int, alt, ep: %x %x %x %x\n", tm
 							ret = usb_interrupt_write(udev, dev->config[tmp_config].interface[tmp_int].altsetting[tmp_alt].endpoint[tmp_ep].bEndpointAddress, (char*)pbuf, purb->UrbBulkOrInterruptTransfer.TransferBufferLength, timeout_bulk_write_msg_tmp);
 							alarm(1);
 							gettimeofday(&tv_now, NULL);
-
-							PDEBUG("usb_interrupt_write() return: %d\n", ret);
-
+	
+							PDEBUG_RET("usb_interrupt_write() return: %d\n", ret);
+	
 							if (ret < 0) {
 								if ((tv_now.tv_usec - tv_ref.tv_usec) >= 0)
 									PDEBUG("sec: %ld, msec: %ld\n", tv_now.tv_sec-tv_ref.tv_sec, (tv_now.tv_usec-tv_ref.tv_usec)/1000);
@@ -932,7 +932,7 @@ PDEBUG("URB_FUNCTION_SELECT_INTERFACE:: config, int, alt, ep: %x %x %x %x\n", tm
 							alarm(1);
 							gettimeofday(&tv_now, NULL);
 
-							PDEBUG("usb_interrupt_read() return: %d\n", ret);
+							PDEBUG_RET("usb_interrupt_read() return: %d\n", ret);
 
 							if (ret < 0) {
 								if ((tv_now.tv_usec - tv_ref.tv_usec) >= 0)
@@ -1371,7 +1371,7 @@ int handleURB_64(PIRP_SAVE pirp_saverw, struct u2ec_list_head *curt_pos)
 							purb->UrbControlVendorClassRequest.Index, (char*)pbuf,
 							purb->UrbControlVendorClassRequest.TransferBufferLength,
 							timeout_control_msg);
-//					PDEBUG("usb_control_msg(), direction: out, return: %d\n", ret);
+					PDEBUG_RET("usb_control_msg(), direction: out, return: %d\n", ret);
 				} else {
 					tmpReqType = (USB_TYPE_CLASS | USB_DIR_IN | USB_RECIP_OTHER);
 					pbuf = pirp_saverw->Buffer + purb->UrbHeader.Length;
@@ -1382,7 +1382,7 @@ int handleURB_64(PIRP_SAVE pirp_saverw, struct u2ec_list_head *curt_pos)
 							purb->UrbControlVendorClassRequest.Index, (char*)pbuf,
 							purb->UrbControlVendorClassRequest.TransferBufferLength,
 							timeout_control_msg);
-//					PDEBUG("usb_control_msg(), direction: in, return: %d\n", ret);
+					PDEBUG_RET("usb_control_msg(), direction: in, return: %d\n", ret);
 				}
 				usb_close(udev);
 				if (ret < 0)
@@ -1457,7 +1457,7 @@ int handleURB_64(PIRP_SAVE pirp_saverw, struct u2ec_list_head *curt_pos)
 							purb->UrbControlVendorClassRequest.Index, (char*)pbuf,
 							purb->UrbControlVendorClassRequest.TransferBufferLength,
 							timeout_control_msg);
-//					PDEBUG("usb_control_msg() out return: %d\n", ret);
+					PDEBUG_RET("usb_control_msg() out return: %d\n", ret);
 					((PCONNECTION_INFO)curt_pos)->count_class_int_in = 0;
 				} else {
 
@@ -1490,7 +1490,7 @@ int handleURB_64(PIRP_SAVE pirp_saverw, struct u2ec_list_head *curt_pos)
 					else if (Is_HP && ((PCONNECTION_INFO)curt_pos)->count_class_int_in < 3)	// HP Deskjet 3920 
 						((PCONNECTION_INFO)curt_pos)->count_class_int_in++;
 
-//					PDEBUG("usb_control_msg() in return: %d\n", ret);
+					PDEBUG_RET("usb_control_msg() in return: %d\n", ret);
 				}
 				usb_close(udev);
 				if (ret < 0)
@@ -1646,7 +1646,7 @@ int handleURB_64(PIRP_SAVE pirp_saverw, struct u2ec_list_head *curt_pos)
 							}
 						}
 
-						PDEBUG("usb_bulk_write() return: %d\n", ret);
+						PDEBUG_RET("usb_bulk_write() return: %d\n", ret);
 
 						count_bulk_write ++;
 						count_bulk_read_ret0_1 = 0;
@@ -1754,7 +1754,7 @@ int handleURB_64(PIRP_SAVE pirp_saverw, struct u2ec_list_head *curt_pos)
 							((PCONNECTION_INFO)curt_pos)->count_class_int_in = 0;
 						}
 
-						PDEBUG("usb_bulk_read() return: %d\n", ret);
+						PDEBUG_RET("usb_bulk_read() return: %d\n", ret);
 
 						if (Is_HP) {	// HP, if this connection only includes HP ToolBox
 							if (ret == 0) {
@@ -1830,9 +1830,9 @@ int handleURB_64(PIRP_SAVE pirp_saverw, struct u2ec_list_head *curt_pos)
 							ret = usb_interrupt_write(udev, dev->config[tmp_config].interface[tmp_int].altsetting[tmp_alt].endpoint[tmp_ep].bEndpointAddress, (char*)pbuf, purb->UrbBulkOrInterruptTransfer.TransferBufferLength, timeout_bulk_write_msg_tmp);
 							alarm(1);
 							gettimeofday(&tv_now, NULL);
-
-							PDEBUG("usb_interrupt_write() return: %d\n", ret);
-
+	
+							PDEBUG_RET("usb_interrupt_write() return: %d\n", ret);
+	
 							if (ret < 0) {
 								if ((tv_now.tv_usec - tv_ref.tv_usec) >= 0)
 									PDEBUG("sec: %ld, msec: %ld\n", tv_now.tv_sec-tv_ref.tv_sec, (tv_now.tv_usec-tv_ref.tv_usec)/1000);
@@ -1856,7 +1856,7 @@ int handleURB_64(PIRP_SAVE pirp_saverw, struct u2ec_list_head *curt_pos)
 							alarm(1);
 							gettimeofday(&tv_now, NULL);
 
-							PDEBUG("usb_interrupt_read() return: %d\n", ret);
+							PDEBUG_RET("usb_interrupt_read() return: %d\n", ret);
 
 							if (ret < 0) {
 								if ((tv_now.tv_usec - tv_ref.tv_usec) >= 0)

@@ -2,13 +2,15 @@
 # $1: package name.
 
 
+apps_ipkg_old=`nvram get apps_ipkg_old`
+is_arm_machine=`uname -m |grep arm`
+
 APPS_PATH=/opt
 CONF_FILE=$APPS_PATH/etc/ipkg.conf
 ASUS_SERVER=`nvram get apps_ipkg_server`
 wget_timeout=`nvram get apps_wget_timeout`
 #wget_options="-nv -t 2 -T $wget_timeout --dns-timeout=120"
 wget_options="-q -t 2 -T $wget_timeout"
-download_dir=/tmp
 download_file=
 
 # $1: package name.
@@ -24,7 +26,7 @@ _check_package(){
 }
 
 # $1: package name, $2: ipkg server name, $3: force(1/0).
-_get_pkg_file_name(){
+_get_pkg_file_name_old(){
 	pkg_file_full=`app_get_field.sh $1 Filename 2`
 	old_pkg_file=`echo "$pkg_file_full" |awk '{FS=".ipk";print $1}'`
 	pkg_file=`echo "$old_pkg_file" |sed 's/\./-/g'`
@@ -36,6 +38,91 @@ _get_pkg_file_name(){
 	fi
 }
 
+# $1: package name.
+_get_pkg_file_name(){
+	pkg_file_full=`app_get_field.sh $1 Filename 2`
+
+	echo "$pkg_file_full"
+}
+
+# $1: ipkg log file, $2: the depends of package.
+_check_log_message(){
+	got_log=`cat $1 |sed -n '$p'`
+	action=`echo $got_log |awk '{print $1}'`
+
+	if [ "$action" == "Installing" ] || [ "$action" == "Configuring" ]; then
+		target=`echo $got_log |awk '{print $2}'`
+	elif [ "$action" == "Downloading" ]; then
+		target=`echo $got_log |awk '{print $2}' |awk '{FS="/"; print $NF}' |awk '{FS="_"; print $1}'`
+	elif [ "$action" == "Successfully" ]; then
+		target="terminated"
+	elif [ "$action" == "update-alternatives:" ]; then
+		target=""
+	else
+		target="error"
+	fi
+
+	got_target=0
+	if [ "$action" == "Installing" ] || [ "$action" == "Configuring" ] || [ "$action" == "Downloading" ]; then
+		check_array=`echo $2 |sed 's/,/ /g'`
+		for check in $check_array; do
+			if [ "$target" == "$check" ]; then
+				got_target=1
+				break
+			fi
+		done
+	fi
+
+	if [ "$got_target" -eq "1" ]; then
+		nvram set apps_depend_action="$action"
+		nvram set apps_depend_action_target="$target"
+	fi
+
+	echo "$target"
+
+	return 0
+}
+
+# $1: delay number.
+_loop_delay(){
+	i=0
+	while [ $i -lt $1 ]; do
+		i=$(($i+1))
+		echo "."
+	done
+}
+
+# $1: package name, $2: ipkg log file.
+_log_ipkg_install(){
+	package_deps=`app_get_field.sh $1 Depends 2`
+	package_deps=`echo $package_deps |sed 's/,/ /g'`
+	package_deps_do=
+
+	for dep in $package_deps; do
+		_check_package $dep
+		if [ "$?" == "1" ]; then
+			continue
+		fi
+
+		if [ -z "$package_deps_do" ]; then
+			package_deps_do=$dep
+		else
+			package_deps_do=$package_deps_do,$dep
+		fi
+	done
+	nvram set apps_depend_do="$package_deps_do"
+
+	ret=`_check_log_message "$2" "$package_deps_do"`
+	while [ "$ret" != "terminated" ] && [ "$ret" != "error" ]; do
+		_loop_delay 10
+		ret=`_check_log_message "$2" "$package_deps_do"`
+	done
+
+	echo "$ret"
+
+	return 0
+}
+
 # $1: package name, $2: installed path.
 _download_package(){
 	pkg_server=
@@ -44,8 +131,11 @@ _download_package(){
 	# Geting the app's file name...
 	server_names=`grep -n '^src.*' $CONF_FILE |sort -r |awk '{print $3}'`
 	for s in $server_names; do
-		pkg_file=`_get_pkg_file_name $1 $s 0`
-		echo "wget --spider $wget_options $s/$pkg_file"
+		if [ -z "$is_arm_machine" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
+			pkg_file=`_get_pkg_file_name_old $1 $s 0`
+		else
+			pkg_file=`_get_pkg_file_name $1`
+		fi
 		wget --spider $wget_options $s/$pkg_file
 		if [ "$?" == "0" ]; then
 			pkg_server=$s
@@ -58,16 +148,48 @@ _download_package(){
 	fi
 
 	# Downloading the app's file name...
-	if [ "$pkg_server" == "$ASUS_SERVER" ]; then
-		download_file=`_get_pkg_file_name $1 $pkg_server 1`
+	if [ -z "$is_arm_machine" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ] && [ "$pkg_server" == "$ASUS_SERVER" ]; then
+		download_file=`_get_pkg_file_name_old $1 $pkg_server 1`
 	else
 		download_file=$pkg_file
 	fi
 
-	echo "wget -c $wget_options $pkg_server/$pkg_file -O $2$download_dir/$download_file"
-	wget -c $wget_options $pkg_server/$pkg_file -O $2$download_dir/$download_file
-	if [ "$?" != "0" ]; then
-		rm -f $2$download_dir/$download_file
+	target=$2/$download_file
+	nvram set apps_download_file=$target
+	wget -c $wget_options $pkg_server/$pkg_file -O $target &
+	wget_pid=`pidof wget`
+	if [ -z "$wget_pid" ] || [ $wget_pid -lt 1 ]; then
+		rm -rf $target
+		sync
+
+		nvram set apps_state_error=6
+		return 1
+	fi
+	i=0
+	while [ $i -lt $wget_timeout ] && [ ! -f "$target" ]; do
+		i=$(($i+1))
+		sleep 1
+	done
+
+	wget_pid=`pidof wget`
+	size=`app_get_field.sh $1 Size 2`
+	target_size=`ls -l $target |awk '{printf $5}'`
+	percent=$(($target_size*100/$size))
+	nvram set apps_download_percent=$percent
+	while [ -n "$wget_pid" ] && [ -n "$target_size" ] && [ $target_size -lt $size ]; do
+		sleep 1
+
+		wget_pid=`pidof wget`
+		target_size=`ls -l $target |awk '{printf $5}'`
+		percent=$(($target_size*100/$size))
+		nvram set apps_download_percent=$percent
+	done
+
+	target_size=`ls -l $target |awk '{printf $5}'`
+	percent=$(($target_size*100/$size))
+	nvram set apps_download_percent=$percent
+	if [ -z "$percent" ] || [ $percent -ne 100 ]; then
+		rm -rf $target
 		sync
 
 		nvram set apps_state_error=6
@@ -105,12 +227,6 @@ if [ -z "$APPS_DEV" ] || [ -z "$APPS_MOUNTED_PATH" ]; then
 fi
 APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
 
-_download_package $1 $APPS_INSTALL_PATH
-if [ "$?" != "0" ]; then
-	# apps_state_error was already set by _download_package().
-	exit 1
-fi
-
 
 nvram set apps_state_upgrade=1 # REMOVING
 _check_package $1
@@ -122,26 +238,69 @@ if [ "$?" != "0" ]; then
 	fi
 fi
 
+need_asuslighttpd=0
+
+if [ "$1" == "downloadmaster" ] || [ "$1" == "mediaserver" ]; then
+	DM_version1=`app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $1}'`
+	DM_version2=`app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $4}'`
+	MS_version=`app_get_field.sh mediaserver Version 2 |awk '{FS=".";print $4}'`
+
+	if [ "$1" == "downloadmaster" ] && [ "$DM_version1" -gt "2" ] && [ "$DM_version2" -gt "59" ]; then
+		need_asuslighttpd=1
+	elif [ "$1" == "mediaserver" ] && [ "$MS_version" -gt "15" ]; then
+		need_asuslighttpd=1
+	fi
+fi
+
+if [ "$need_asuslighttpd" == "1" ]; then
+	_check_package asuslighttpd
+	if [ "$?" != "0" ]; then
+		app_remove.sh asuslighttpd
+		if [ "$?" != "0" ]; then
+			# apps_state_error was already set by app_remove.sh.
+			exit 1
+		fi
+	fi
+fi
+
 
 nvram set apps_state_upgrade=2 # INSTALLING
-#if [ "$1" != "asuslighttpd" ]; then
-#	_check_package "asuslighttpd"
-#	if [ "$?" == "0" ]; then
-#		app_install.sh "asuslighttpd"
-#		if [ "$?" != "0" ]; then
-#			# apps_state_error was already set by app_install.sh.
-#			exit 1
-#		fi
-#	fi
-#fi
+if [ "$need_asuslighttpd" == "1" ]; then
+	_download_package asuslighttpd $APPS_INSTALL_PATH
+	if [ "$?" != "0" ]; then
+		# apps_state_error was already set by _download_package().
+		exit 1
+	fi
 
-ipkg install $APPS_INSTALL_PATH$download_dir/$download_file
+	install_log=$APPS_INSTALL_PATH/ipkg_log.txt
+	ipkg install $APPS_INSTALL_PATH/$download_file 1>$install_log &
+	result=`_log_ipkg_install $1 $install_log`
+	if [ "$result" == "error" ]; then
+		echo "Fail to install the package: $1!"
+		nvram set apps_state_error=7
+		exit 1
+	else
+		rm -rf $APPS_INSTALL_PATH/$download_file
+		rm -f $install_log
+	fi
+fi
+
+_download_package $1 $APPS_INSTALL_PATH
 if [ "$?" != "0" ]; then
+	# apps_state_error was already set by _download_package().
+	exit 1
+fi
+
+install_log=$APPS_INSTALL_PATH/ipkg_log.txt
+ipkg install $APPS_INSTALL_PATH/$download_file 1>$install_log &
+result=`_log_ipkg_install $1 $install_log`
+if [ "$result" == "error" ]; then
 	echo "Fail to install the package: $1!"
 	nvram set apps_state_error=7
 	exit 1
 else
-	rm -f $APPS_INSTALL_PATH$download_dir/$download_file
+	rm -rf $APPS_INSTALL_PATH/$download_file
+	rm -f $install_log
 fi
 
 APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
@@ -160,6 +319,13 @@ if [ "$?" != "0" ]; then
 fi
 
 app_set_enabled.sh $1 "yes"
+
+nvram set apps_download_file=
+nvram set apps_download_percent=
+
+nvram set apps_depend_do=
+nvram set apps_depend_action=
+nvram set apps_depend_action_target=
 
 
 nvram set apps_state_upgrade=3 # FINISHED

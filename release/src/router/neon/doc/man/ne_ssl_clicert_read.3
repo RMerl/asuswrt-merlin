@@ -1,0 +1,147 @@
+'\" t
+.\"     Title: ne_ssl_client_cert
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_SSL_CLIENT_CERT" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_ssl_clicert_read, ne_ssl_clicert_name, ne_ssl_clicert_encrypted, ne_ssl_clicert_decrypt, ne_ssl_clicert_owner, ne_ssl_clicert_free \- SSL client certificate handling
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_ssl\&.h>
+.fi
+.ft
+.HP \w'ne_ssl_client_cert\ *ne_ssl_clicert_read('u
+.BI "ne_ssl_client_cert *ne_ssl_clicert_read(const\ char\ *" "filename" ");"
+.HP \w'const\ char\ *ne_ssl_clicert_name('u
+.BI "const char *ne_ssl_clicert_name(const\ ne_ssl_client_cert\ *" "ccert" ");"
+.HP \w'int\ ne_ssl_clicert_encrypted('u
+.BI "int ne_ssl_clicert_encrypted(const\ ne_ssl_client_cert\ *" "ccert" ");"
+.HP \w'int\ ne_ssl_clicert_decrypt('u
+.BI "int ne_ssl_clicert_decrypt(ne_ssl_client_cert\ *" "ccert" ", const\ char\ *" "password" ");"
+.HP \w'const\ ne_ssl_certificate\ *ne_ssl_clicert_owner('u
+.BI "const ne_ssl_certificate *ne_ssl_clicert_owner(const\ ne_ssl_client_cert\ *" "ccert" ");"
+.HP \w'void\ ne_ssl_clicert_free('u
+.BI "void ne_ssl_clicert_free(ne_ssl_client_cert\ *" "ccert" ");"
+.SH "DESCRIPTION"
+.PP
+The
+\fBne_ssl_clicert_read\fR
+function reads a
+client certificate
+from a PKCS#12\-formatted file, and returns an
+\fBne_ssl_client_cert\fR
+object\&. If the client certificate is encrypted, it must be decrypted before it is used\&. An
+\fBne_ssl_client_cert\fR
+object holds a client certificate and the associated private key, not just a certificate; the term "client certificate" will used to refer to this pair\&.
+.PP
+A client certificate can be in one of two states:
+\fIencrypted\fR
+or
+\fIdecrypted\fR\&. The
+\fBne_ssl_clicert_encrypted\fR
+function will return non\-zero if the client certificate is in the
+\fIencrypted\fR
+state\&. A client certificate object returned by
+\fBne_ssl_clicert_read\fR
+may be initially in either state, depending on whether the file was encrypted or not\&.
+.PP
+\fBne_ssl_clicert_decrypt\fR
+can be used to decrypt a client certificate using the appropriate password\&. This function must only be called if the object is in the
+\fIencrypted\fR
+state; if decryption fails, the certificate state does not change, so decryption can be attempted more than once using different passwords\&.
+.PP
+A client certificate can be given a "friendly name" when it is created;
+\fBne_ssl_clicert_name\fR
+will return this name (or
+NULL
+if no friendly name was specified)\&.
+\fBne_ssl_clicert_name\fR
+can be used when the client certificate is in either the encrypted or decrypted state, and will return the same string for the lifetime of the object\&.
+.PP
+The function
+\fBne_ssl_clicert_owner\fR
+returns the certificate part of the client certificate; it must only be called if the client certificate is in the
+\fIdecrypted\fR
+state\&.
+.PP
+When the client certificate is no longer needed, the
+\fBne_ssl_clicert_free\fR
+function should be used to destroy the object\&.
+.SH "RETURN VALUE"
+.PP
+\fBne_ssl_clicert_read\fR
+returns a client certificate object, or
+NULL
+if the file could not be read\&.
+\fBne_ssl_clicert_encrypted\fR
+returns zero if the object is in the decrypted state, or non\-zero if it is in the encrypted state\&.
+\fBne_ssl_clicert_name\fR
+returns a
+NUL\-terminated friendly name string, or
+NULL\&.
+\fBne_ssl_clicert_owner\fR
+returns a certificate object\&.
+.SH "EXAMPLES"
+.PP
+The following code reads a client certificate and decrypts it if necessary, then loads it into an HTTP session\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ne_ssl_client_cert *ccert;
+
+ccert = ne_ssl_clicert_read("/path/to/client\&.p12");
+
+if (ccert == NULL) {
+   /* handle error\&.\&.\&. */
+} else if (ne_ssl_clicert_encrypted(ccert)) {
+   char *password = prompt_for_password();
+
+   if (ne_ssl_clicert_decrypt(ccert, password)) {
+      /* could not decrypt! handle error\&.\&.\&. */
+   }
+}
+
+ne_ssl_set_clicert(sess, ccert);
+.fi
+.if n \{\
+.RE
+.\}
+.SH "SEE ALSO"
+.PP
+ne_ssl_cert_read
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

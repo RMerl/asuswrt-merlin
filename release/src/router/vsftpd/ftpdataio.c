@@ -125,6 +125,7 @@ vsf_ftpdataio_get_pasv_fd(struct vsf_session* p_sess)
   }
   vsf_sysutil_sockaddr_clear(&p_accept_addr);
   init_data_sock_params(p_sess, remote_fd);
+  vsf_sysutil_set_lfp(remote_fd);
   return remote_fd;
 }
 

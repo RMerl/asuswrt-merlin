@@ -1,0 +1,32 @@
+.TH "ROUTEL" "8" "3 Jan, 2008" "iproute2" "Linux"
+.SH "NAME"
+.LP 
+routel \- list routes with pretty output format
+.br
+routef \- flush routes
+.SH "SYNTAX"
+.LP 
+routel [\fItablenr\fP [\fIraw ip args...\fP]]
+.br 
+routef
+.SH "DESCRIPTION"
+.LP 
+These programs are a set of helper scripts you can use instead of raw iproute2 commands.
+.br
+The routel script will list routes in a format that some might consider easier to interpret then the ip route list equivalent.
+.br
+The routef script does not take any arguments and will simply flush the routing table down the drain. Beware! This means deleting all routes which will make your network unusable!
+
+.SH "FILES"
+.LP 
+\fI/usr/bin/routef\fP 
+.br 
+\fI/usr/bin/routel\fP 
+.SH "AUTHORS"
+.LP 
+The routel script was written by Stephen R. van den Berg <srb@cuci.nl>, 1999/04/18 and donated to the public domain.
+.br
+This manual page was written by Andreas Henriksson  <andreas@fatal.se>, for the Debian GNU/Linux system.
+.SH "SEE ALSO"
+.LP 
+ip(8)

@@ -1,0 +1,55 @@
+# sh testcase for sthi.l $rm, $disp6, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	pta wrong, tr0
+
+	movi 40, r0
+	shlli r0, 8, r0
+	
+	movi 0x1020, r1
+	shlli r1, 8, r1
+	addi r1, 0x30, r1
+	shlli r1, 8, r1
+	addi r1, 0x40, r1
+	shlli r1, 8, r1
+	addi r1, 0x50, r1
+	shlli r1, 8, r1
+	addi r1, 0x60, r1
+	shlli r1, 8, r1
+	addi r1, 0x70, r1
+	shlli r1, 8, r1
+	addi r1, 0x80, r1
+
+sthil1:
+	sthi.l r0, 0, r1
+
+sthil2:
+	sthi.l r0, 1, r1
+
+sthil3:	
+	sthi.l r0, 2, r1
+
+sthil4:	
+	sthi.l r0, 3, r1
+
+sthil5:	
+	sthi.l r0, -1, r1
+
+sthil6:	
+	sthi.l r0, -2, r1
+
+sthil7:	
+	sthi.l r0, -3, r1
+
+okay:	
+	pass
+
+wrong:
+	fail

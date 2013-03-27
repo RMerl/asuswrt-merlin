@@ -132,7 +132,7 @@ int ntp_main(int argc, char *argv[])
 		{
 			pid_t pid;
 			char *args[] = {"ntpclient", "-h", servers, "-i", "3", "-l", "-s", NULL};
-			dbg("run ntpclient\n");
+//			dbg("run ntpclient\n");
 
 			nvram_set("ntp_server_tried", servers);
 			ret = _eval(args, NULL, 0, &pid);

@@ -1,0 +1,12 @@
+# arm testcase for ldsh $rd,[$rb,$ro]
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldsh
+ldsh:
+	ldsh r0,[r0,r0]
+
+	pass

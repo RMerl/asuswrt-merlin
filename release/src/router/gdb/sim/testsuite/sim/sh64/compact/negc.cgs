@@ -1,0 +1,66 @@
+# sh testcase for negc $rm, $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	.macro signbit sign
+	mov r1, r2
+	shlr16 r2
+	shlr8 r2
+	shlr r2
+	shlr r2
+	shlr r2
+	shlr r2
+	shlr r2
+	shlr r2
+	shlr r2
+	assert r2, \sign
+	.endm
+	start
+
+	.global negc
+negc:
+	clrt
+	mov #1, r0
+	negc r0, r1
+	signbit #1
+
+negc2:
+	sett
+	mov #1, r0
+	negc r0, r1
+	signbit #1
+
+negc3:
+	clrt
+	mov #0, r0
+	negc r0, r1
+	signbit #0
+
+negc4:
+	sett
+	mov #0, r0
+	negc r0, r1
+	signbit #1
+
+negc5:
+	clrt
+	mov #0, r0
+	or #255, r0
+	negc r0, r1
+	signbit #1
+
+negc6:
+	sett
+	mov #0, r0
+	or #255, r0
+	negc r0, r1
+	signbit #1
+
+okay:
+	pass
+
+wrong:
+	fail

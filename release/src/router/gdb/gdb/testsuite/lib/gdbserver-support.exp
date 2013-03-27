@@ -1,0 +1,270 @@
+# Copyright 2000, 2002, 2003, 2004, 2005, 2006, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is based on config/gdbserver.exp, which was written by
+# Michael Snyder (msnyder@redhat.com).
+
+#
+# To be addressed or set in your baseboard config file:
+#
+#   set_board_info gdb_protocol "remote"
+#	Unles you have a gdbserver that uses a different protocol...
+#
+#   set_board_info gdb_server_prog
+#	This will be the path to the gdbserver program you want to test.
+#	Defaults to "gdbserver".
+#
+#   set_board_info sockethost
+#	The name of the host computer whose socket is being used.
+#	Defaults to "localhost".  Note: old gdbserver requires 
+#	that you define this, but libremote/gdbserver does not.
+#
+#   set_board_info gdb,socketport
+#	Port id to use for socket connection.  If not set explicitly,
+#	it will start at "2345" and increment for each use.
+#
+
+#
+# gdb_target_cmd
+# Send gdb the "target" command
+#
+proc gdb_target_cmd { targetname serialport } {
+    global gdb_prompt
+
+    set serialport_re [string_to_regexp $serialport]
+    for {set i 1} {$i <= 3} {incr i} {
+	send_gdb "target $targetname $serialport\n"
+	gdb_expect 60 {
+	    -re "A program is being debugged already.*ill it.*y or n. $" {
+		send_gdb "y\n"
+		exp_continue
+	    }
+	    -re "Couldn't establish connection to remote.*$gdb_prompt $" {
+		verbose "Connection failed"
+	    }
+	    -re "Remote MIPS debugging.*$gdb_prompt" {
+		verbose "Set target to $targetname"
+		return 0
+	    }
+	    -re "Remote debugging using .*$serialport_re.*$gdb_prompt $" {
+		verbose "Set target to $targetname"
+		return 0
+	    }
+	    -re "Remote target $targetname connected to.*$gdb_prompt $" {
+		verbose "Set target to $targetname"
+		return 0
+	    }
+	    -re "Connected to.*$gdb_prompt $" { 
+		verbose "Set target to $targetname"
+		return 0
+	    }
+	    -re "Ending remote.*$gdb_prompt $" { }
+	    -re "Connection refused.*$gdb_prompt $" {
+		verbose "Connection refused by remote target.  Pausing, and trying again."
+		sleep 30
+		continue
+	    }
+	    -re "Timeout reading from remote system.*$gdb_prompt $" {
+		verbose "Got timeout error from gdb."
+	    }
+	    -notransfer -re "Remote debugging using .*\r\n> $" {
+		# We got an unexpected prompt while creating the target.
+		# Leave it there for the test to diagnose.
+		return 1
+	    }
+	    timeout {
+		send_gdb ""
+		break
+	    }
+	}
+    }
+    return 1
+}
+
+
+global portnum
+set portnum "2345"
+
+# Locate the gdbserver binary.  Returns "" if gdbserver could not be found.
+
+proc find_gdbserver { } {
+  global GDB
+
+  if [target_info exists gdb_server_prog] {
+    return [target_info gdb_server_prog]
+  }
+
+  set gdbserver "${GDB}server"
+  if { [file isdirectory $gdbserver] } {
+    append gdbserver "/gdbserver"
+  }
+
+  if { [file executable $gdbserver] } {
+    return $gdbserver
+  }
+
+  return ""
+}
+
+# Return non-zero if we should skip gdbserver-specific tests.
+
+proc skip_gdbserver_tests { } {
+  if { [find_gdbserver] == "" } {
+    return 1
+  }
+
+  return 0
+}
+
+# Start a gdbserver process running SERVER_EXEC, and connect GDB
+# to it.  CHILD_ARGS are passed to the inferior.
+#
+# Returns the target protocol and socket to connect to.
+
+proc gdbserver_spawn { child_args } {
+    global portnum
+    global gdbserver_host_exec
+    global gdbserver_host_mtime
+    global gdbserver_server_exec
+    global last_loaded_file
+
+    set host_exec $last_loaded_file
+
+    # If we already downloaded a file to the target, see if we can reuse it.
+    set reuse 0
+    if { [info exists gdbserver_server_exec] } {
+	set reuse 1
+
+	# If the file has changed, we can not.
+	if { $host_exec != $gdbserver_host_exec } {
+	    set reuse 0
+	}
+
+	# If the mtime has changed, we can not.
+	if { [file mtime $host_exec] != $gdbserver_host_mtime } {
+	    set reuse 0
+	}
+    }
+
+    if { $reuse == 0 } {
+	set gdbserver_host_exec $host_exec
+	set gdbserver_host_mtime [file mtime $host_exec]
+	if [is_remote target] {
+	    set gdbserver_server_exec [gdb_download $host_exec]
+	} else {
+	    set gdbserver_server_exec $host_exec
+	}
+    }
+
+    # Port id -- either specified in baseboard file, or managed here.
+    if [target_info exists gdb,socketport] {
+	set portnum [target_info gdb,socketport]
+    } else {
+	# Bump the port number to avoid conflicts with hung ports.
+	incr portnum
+    }
+
+    # Extract the local and remote host ids from the target board struct.
+    if [target_info exists sockethost] {
+	set debughost  [target_info sockethost]
+    } else {
+	set debughost "localhost:"
+    }
+
+    # Extract the protocol
+    if [target_info exists gdb_protocol] {
+	set protocol [target_info gdb_protocol]
+    } else {
+	set protocol "remote"
+    }
+
+    set gdbserver [find_gdbserver]
+
+    # Export the host:port pair.
+    set gdbport $debughost$portnum
+
+    # Fire off the debug agent.  This flavour of gdbserver takes as
+    # arguments the port information, the name of the executable file to
+    # be debugged, and any arguments.
+    set gdbserver_command "$gdbserver :$portnum $gdbserver_server_exec"
+    if { $child_args != "" } {
+	append gdbserver_command " $child_args"
+    }
+
+    set server_spawn_id [remote_spawn target $gdbserver_command]
+
+    # Wait for the server to produce at least one line and an additional
+    # character of output.  This will wait until any TCP socket has been
+    # created, so that GDB can connect.
+    expect {
+	-i $server_spawn_id
+	-notransfer
+	-re ".*\n." { }
+    }
+
+    # We can't just call close, because if gdbserver is local then that means
+    # that it will get a SIGHUP.  Doing it this way could also allow us to
+    # get at the inferior's input or output if necessary, and means that we
+    # don't need to redirect output.
+    expect_background {
+	-i $server_spawn_id
+	full_buffer { }
+	eof {
+	    # The spawn ID is already closed now (but not yet waited for).
+	    wait -i $expect_out(spawn_id)
+	}
+    }
+
+    return [list $protocol $gdbport]
+}
+
+# Start a gdbserver process running HOST_EXEC and pass CHILD_ARGS
+# to it.  Return 0 on success, or non-zero on failure.
+
+proc gdbserver_run { child_args } {
+    global gdbserver_protocol
+    global gdbserver_gdbport
+
+    # Kill anything running before we try to start gdbserver, in case
+    # we are sharing a serial connection.
+    global gdb_prompt
+    send_gdb "kill\n"
+    gdb_expect 120 {
+	-re "Kill the program being debugged. .y or n. $" {
+	    send_gdb "y\n"
+	    verbose "\t\tKilling previous program being debugged"
+	    exp_continue
+	}
+	-re "$gdb_prompt $" {
+	    # OK.
+	}
+    }
+
+    set res [gdbserver_spawn $child_args]
+    set gdbserver_protocol [lindex $res 0]
+    set gdbserver_gdbport [lindex $res 1]
+
+    return [gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport]
+}
+
+# Reconnect to the previous gdbserver session.
+
+proc gdbserver_reconnect { } {
+    global gdbserver_protocol
+    global gdbserver_gdbport
+
+    return [gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport]
+}

@@ -1,0 +1,95 @@
+# frv testcase for stqfi $FRk,@($GRi,$GRj)
+# mach: frv
+# as(frv): -mcpu=frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global stqfi
+stqfi:
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_gr	sp,gr10
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xbeef,0xdead,sp
+	set_gr_gr	sp,gr11
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0x1234,0x5678,sp
+	set_gr_gr	sp,gr12
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0x8765,0x4321,sp
+	set_gr_gr	sp,gr13
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xfedc,0xba98,sp
+	set_gr_gr	sp,gr14
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0x89ab,0xcdef,sp
+	set_gr_gr	sp,gr15
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0x2345,0x6789,sp
+	set_gr_gr	sp,gr16
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0x9876,0x5432,sp
+	set_gr_gr	sp,gr17
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0x3456,0x789a,sp
+	set_gr_gr	sp,gr18
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xa987,0x6543,sp
+	set_gr_gr	sp,gr19
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0x4567,0x89ab,sp
+	set_gr_gr	sp,gr20
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xba98,0x7654,sp
+	set_gr_gr	sp,gr21
+	set_fr_iimmed	0xffff,0xffff,fr8
+	set_fr_iimmed	0xeeee,0xeeee,fr9
+	set_fr_iimmed	0xdddd,0xdddd,fr10
+	set_fr_iimmed	0xcccc,0xcccc,fr11
+
+	stqfi		fr8,@(sp,0)
+	test_mem_limmed	0xffff,0xffff,gr21
+	test_mem_limmed	0xeeee,0xeeee,gr20
+	test_mem_limmed	0xdddd,0xdddd,gr19
+	test_mem_limmed	0xcccc,0xcccc,gr18
+	test_mem_limmed	0x9876,0x5432,gr17
+	test_mem_limmed	0x2345,0x6789,gr16
+	test_mem_limmed	0x89ab,0xcdef,gr15
+	test_mem_limmed	0xfedc,0xba98,gr14
+	test_mem_limmed	0x8765,0x4321,gr13
+	test_mem_limmed	0x1234,0x5678,gr12
+	test_mem_limmed	0xbeef,0xdead,gr11
+	test_mem_limmed	0xdead,0xbeef,gr10
+
+	inc_gr_immed	0x810,sp	; 2064
+	stqfi		fr8,@(sp,-2048)
+	test_mem_limmed	0xffff,0xffff,gr21
+	test_mem_limmed	0xeeee,0xeeee,gr20
+	test_mem_limmed	0xdddd,0xdddd,gr19
+	test_mem_limmed	0xcccc,0xcccc,gr18
+	test_mem_limmed	0xffff,0xffff,gr17
+	test_mem_limmed	0xeeee,0xeeee,gr16
+	test_mem_limmed	0xdddd,0xdddd,gr15
+	test_mem_limmed	0xcccc,0xcccc,gr14
+	test_mem_limmed	0x8765,0x4321,gr13
+	test_mem_limmed	0x1234,0x5678,gr12
+	test_mem_limmed	0xbeef,0xdead,gr11
+	test_mem_limmed	0xdead,0xbeef,gr10
+
+	inc_gr_immed	-4064,sp
+	stqfi		fr8,@(sp,0x7f0)
+	test_mem_limmed	0xffff,0xffff,gr21
+	test_mem_limmed	0xeeee,0xeeee,gr20
+	test_mem_limmed	0xdddd,0xdddd,gr19
+	test_mem_limmed	0xcccc,0xcccc,gr18
+	test_mem_limmed	0xffff,0xffff,gr17
+	test_mem_limmed	0xeeee,0xeeee,gr16
+	test_mem_limmed	0xdddd,0xdddd,gr15
+	test_mem_limmed	0xcccc,0xcccc,gr14
+	test_mem_limmed	0xffff,0xffff,gr13
+	test_mem_limmed	0xeeee,0xeeee,gr12
+	test_mem_limmed	0xdddd,0xdddd,gr11
+	test_mem_limmed	0xcccc,0xcccc,gr10
+
+	pass

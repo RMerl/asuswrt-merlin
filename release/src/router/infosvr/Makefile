@@ -14,7 +14,7 @@
 #vpath %.c $(TOP)/shared
 
 CFLAGS  += -I. -I$(TOP)/shared  -I$(SRCBASE)/include -Wall
-CFLAGS  += -Dlinux -DASUS_NVRAM -DNO_PARALLEL -DPRNINFO
+CFLAGS  += -Dlinux -DNO_PARALLEL -DPRNINFO
 LDFLAGS = -L$(TOP)/shared -lshared -L$(TOP)/nvram -lnvram 
 
 all: infosvr

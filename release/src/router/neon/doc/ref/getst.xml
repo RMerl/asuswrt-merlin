@@ -1,0 +1,63 @@
+    <refentry id="refgetst">
+
+      <refmeta>
+	<refentrytitle>ne_get_status</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_get_status">ne_get_status</refname>
+	<refpurpose>retrieve HTTP response status for request</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_request.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>const ne_status *<function>ne_get_status</function></funcdef>
+	    <paramdef>const ne_request *<parameter>request</parameter></paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>The <function>ne_get_status</function> function returns
+a pointer to the HTTP status object giving the result of a request.
+The object returned only becomes valid once the request has been
+<emphasis>successfully</emphasis> dispatched (the return value of
+<function>ne_request_dispatch</function> or
+<function>ne_begin_request</function> was zero).  The object remains
+valid until the associated request object is destroyed.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>See also</title>
+
+	<para><xref linkend="ne_status"/>, <xref
+	linkend="ne_request_create"/></para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Example</title>
+	
+	<para>Display the response status code of applying the
+<literal>HEAD</literal> method to some resource.</para>
+
+	<programlisting>ne_request *req = ne_request_create(sess, "HEAD", "/foo/bar");
+if (ne_request_dispatch(req))
+   /* handle errors... */
+else
+   printf("Response status code was %d\n", ne_get_status(req)->code);
+ne_request_destroy(req);</programlisting>
+      </refsect1>
+
+    </refentry>

@@ -1,0 +1,65 @@
+# Copyright 2000, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+# Set the current language to Java.  This counts as a test.  If it
+# fails, then we skip the other tests.
+
+proc set_lang_java {} {
+    global gdb_prompt
+
+    if [gdb_test "set language java" "" "set language java"] {
+	return 0
+    }
+
+    if [gdb_test "show language" ".* source language is \"java\".*"] {
+	return 0
+    }
+    return 1;
+}
+
+proc test_comparisons {} {
+    global gdb_prompt
+
+    # Test various comparisons.
+
+    gdb_test "p 1 > 2" " = false"
+    gdb_test "p 1 < 2" " = true"
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+gdb_test "set print sevenbit-strings" ""
+gdb_test "set print address off" "" ""
+gdb_test "set width 0" ""
+
+if [set_lang_java] then {
+    test_comparisons
+} else {
+    fail "Java expression tests suppressed"
+}

@@ -1,0 +1,40 @@
+# fr30 testcase for eorb $Rj,$Ri, eorb $Rj,@$Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global eorb
+eorb:
+	; Test eorb $Rj,@$Ri
+	mvi_h_gr   	0xaaaaaaaa,r7
+	mvi_h_mem  	0x55555555,sp
+	set_cc          0x07		; Set mask opposite of expected
+	eorb      	r7,@sp
+	test_cc		1 0 1 1
+	test_h_mem 	0xff555555,sp
+
+	mvi_h_gr   	0xaaaaaa00,r7
+	mvi_h_mem  	0x00555555,sp
+	set_cc          0x08		; Set mask opposite of expected
+	eorb		r7,@sp
+	test_cc		0 1 0 0
+	test_h_mem 	0x00555555,sp
+
+	mvi_h_gr   	0xaaaaaa55,r7
+	mvi_h_mem  	0x55aaaaaa,sp
+	set_cc          0x0b		; Set mask opposite of expected
+	eorb      	r7,@sp
+	test_cc		0 1 1 1
+	test_h_mem 	0x00aaaaaa,sp
+
+	mvi_h_gr   	0x000000d0,r7
+	mvi_h_mem  	0x0eadbeef,sp
+	set_cc          0x05		; Set mask opposite of expected
+	eorb		r7,@sp
+	test_cc		1 0 0 1
+	test_h_mem 	0xdeadbeef,sp
+
+	pass

@@ -11,6 +11,7 @@
 <title><#Web_Title#> - <#menu3#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
+<link rel="stylesheet" type="text/css" href="app_installation.css">
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
@@ -32,10 +33,50 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
+<% apps_action(); %> //trigger apps_action.
+
 var cloud_sync = '<% nvram_get("cloud_sync"); %>';
 var cloud_status;
 window.onresize = cal_agreement_block;
 var curState = '<% nvram_get("webdav_aidisk"); %>';
+
+var _apps_action = '<% get_parameter("apps_action"); %>';
+if(_apps_action == 'cancel')
+	_apps_action = '';
+	
+var apps_array = <% apps_info("asus"); %>;
+if(apps_array == ""){
+		apps_array =["aicloud", "", "", "no", "no", "", "", "","", "", "", "", ""];
+}
+
+var apps_state_upgrade = "<% nvram_get("apps_state_upgrade"); %>";
+var apps_state_update = "<% nvram_get("apps_state_update"); %>";
+var apps_state_remove = "<% nvram_get("apps_state_remove"); %>";
+var apps_state_enable = "<% nvram_get("apps_state_enable"); %>";
+var apps_state_switch = "<% nvram_get("apps_state_switch"); %>";
+var apps_state_autorun = "<% nvram_get("apps_state_autorun"); %>";
+var apps_state_install = "<% nvram_get("apps_state_install"); %>";
+var apps_state_error = "<% nvram_get("apps_state_error"); %>";
+var apps_download_file = "<% nvram_get("apps_download_file"); %>";
+var apps_download_percent = "<% nvram_get("apps_download_percent"); %>";
+var apps_dev = "<% nvram_get("apps_dev"); %>";
+var apps_download_percent_done = 0;
+
+var curr_pool_name = "";
+var stoppullstate = 0;
+var isinstall = 0;
+var installPercent = 1;
+var default_apps_array = new Array();
+var appnum = 0;
+	
+var is_cloud_installed = false;
+for(var x=0; x < apps_array.length; x++){	//check if AiCloud has installed
+	if(apps_array[x][0]=='aicloud' && apps_array[x][3]=='yes' && apps_array[x][4]=='yes'){
+		is_cloud_installed = true;
+	}
+}
+var ddns_hostname = '<% nvram_get("ddns_hostname_x"); %>';
+var https_port = '<% nvram_get("webdav_https_port"); %>';
 
 function initial(){
 	show_menu();
@@ -44,16 +85,55 @@ function initial(){
 	addOnlineHelp($("faq2"), ["ASUSWRT", "DMZ"]);
 	addOnlineHelp($("faq3"), ["WOL", "BIOS"]);
 
+	$("app_state").style.display = "";
+	
+	if(cloudsync_support){		//aicloud builded in
+			divdisplayctrl("none", "none", "none", "");
+			$('btn_cloud_uninstall').style.display = "none";
+			
+	}else{		// aicloud ipk
+		
+		if(_apps_action == '' && !is_cloud_installed){	//setup not yet	
+				divdisplayctrl("", "none", "none", "none");
+		}		
+		
+  	if(_apps_action == '' && 
+			(apps_state_upgrade == 3 || apps_state_upgrade == "") && 
+			(apps_state_enable == 2 || apps_state_enable == "") &&
+			(apps_state_update == 2 || apps_state_update == "") && 
+			(apps_state_remove == 2 || apps_state_remove == "") &&
+			(apps_state_switch == 5 || apps_state_switch == "") && 
+			(apps_state_autorun == 4 || apps_state_autorun == "") && 
+			(apps_state_install == 4 || apps_state_install == "") &&
+			is_cloud_installed){	//setup install is done
+					$('cloudsetup_movie').style.display = "none";
+					divdisplayctrl("none", "none", "none", "");
+		}
+		else{	//setup status else 
+					update_appstate();
+		}
+	}
+
 	switch(valid_is_wan_ip(wanlink_ipaddr())){
 		/* private */
-		case 0: 
-			$("accessMethod").innerHTML = '<#aicloud_disk_case0#>';
+		case 0:
+			if(https_port == 443)
+				$("accessMethod").innerHTML = '<#aicloud_disk_case0#>';
+			else{
+				$("accessMethod").innerHTML = '<#aicloud_disk_case0#>';
+				$('cloud_url').href = "https://router.asus.com:" + https_port;
+				$('cloud_url').innerHTML = "https://router.asus.com:" + https_port;
+			}
 			break;
 		/* public */
 		case 1:
 			$("privateIpOnly").style.display = "none";
-			if('<% nvram_get("ddns_enable_x"); %>' == '1' && '<% nvram_get("ddns_hostname_x"); %>' != ''){
-				$("accessMethod").innerHTML = '<#aicloud_disk_case11#> <a style="font-weight: bolder;text-decoration: underline;word-break:break-all;" href="https://<% nvram_get("ddns_hostname_x"); %>" target="_blank">https://<% nvram_get("ddns_hostname_x"); %></a><br />';
+			if('<% nvram_get("ddns_enable_x"); %>' == '1' && ddns_hostname != ''){
+				if(https_port == 443) // if the port number of https is 443, hide it
+					$("accessMethod").innerHTML = '<#aicloud_disk_case11#> <a style="font-weight: bolder;text-decoration: underline;word-break:break-all;" href="https://'+ ddns_hostname + ':'+ https_port +' "target="_blank">https://'+ ddns_hostname +'</a><br />';
+				else
+					$("accessMethod").innerHTML = '<#aicloud_disk_case11#> <a style="font-weight: bolder;text-decoration: underline;word-break:break-all;" href="https://'+ ddns_hostname + ':'+ https_port +' "target="_blank">https://'+ ddns_hostname +':'+ https_port +'</a><br />';
+				
 				$("accessMethod").innerHTML += '<#aicloud_disk_case12#>';
 			}
 			else{
@@ -62,7 +142,11 @@ function initial(){
 			}
 			break;
 	}
+
 	cal_agreement_block();
+
+	if('<% nvram_get("rrsut"); %>' != '1')
+		$("rrsLink").style.display = "none";
 }
 
 function valid_is_wan_ip(ip_obj){
@@ -143,6 +227,387 @@ function cal_agreement_block(){
 
 	$("agreement_panel").style.marginLeft = blockmarginLeft+"px";
 }
+
+function apps_form(_act, _name, _flag){
+	cookie_help.set("apps_last", _name, 1000);
+	document.app_form.apps_action.value = _act;
+	document.app_form.apps_name.value = _name;
+	document.app_form.apps_flag.value = _flag;
+	document.app_form.submit();
+}
+
+var partitions_array = "";
+function show_partition(){
+	var htmlcode = "";
+	var mounted_partition = 0;
+
+	if(pool_names() != "") //  avoid no_disk error
+		partitions_array = pool_devices(); 
+		
+	htmlcode += '<div class="formfontdesc" id="usbHint3">Please select an disk partition to install ASUS AiCloud, the one you choose will be the system disk.</div>';
+	htmlcode += '<div class="formfontdesc" id="usbHint4" style="font-size:12px;">Note: Download Master and AiCloud should be installed in the same system disk.</div>';	
+	
+	htmlcode += '<table align="center" style="margin:auto;border-collapse:collapse;">';
+
+			
+	for(var i = 0; i < partitions_array.length; i++){			
+		var all_accessable_size = simpleNum(pool_kilobytes()[i]-pool_kilobytes_in_use()[i]);
+		var all_total_size = simpleNum(pool_kilobytes()[i]);
+
+		if(pool_status()[i] == "unmounted")
+			continue;
+
+		if(apps_dev == partitions_array[i]){
+			curr_pool_name = pool_names()[i];
+			if(all_accessable_size > 1)
+				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="divdisplayctrl(\'none\', \'none\', \'\', \'none\');apps_form(\'install\',\'aicloud\',\''+pool_names()[i]+'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+			else
+				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+			htmlcode += '<div class="app_desc"><b>'+ pool_names()[i] + ' (active)</b></div>';
+		}
+		else{
+			if(all_accessable_size > 1)
+				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="divdisplayctrl(\'none\', \'none\', \'\', \'none\');apps_form(\'switch\',\'aicloud\',\''+pool_names()[i]+'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+			else
+				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+			htmlcode += '<div class="app_desc"><b>'+ pool_names()[i] + '</b></div>'; 
+		}
+
+		if(all_accessable_size > 1)
+			htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ all_accessable_size+" GB" + '</b></div>'; 
+		else
+			htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ all_accessable_size+" GB <span style=\'color:#FFCC00\'>(Disk quota can not less than 1GB)" + '</span></b></div>'; 
+
+		htmlcode += '<div class="app_desc"><#Totalspace#>: <b>'+ all_total_size+" GB" + '</b></div>'; 
+		htmlcode += '</div><br/><br/></td></tr>\n';
+		mounted_partition++;
+	}
+
+	if(mounted_partition == 0)
+		htmlcode += '<tr height="360px"><td colspan="2"><span class="app_name" style="line-height:100%"><#no_usb_found#></span></td></tr>\n';
+
+	$("partition_div").innerHTML = htmlcode;
+	//$("usbHint").innerHTML = "<#DM_Install_partition#>";
+	//calHeight(1);
+}
+
+
+function divdisplayctrl(flag1, flag2, flag3, flag4){
+	$("cloud_uninstall").style.display = flag1;
+	$("partition_div").style.display = flag2;
+	$("app_state").style.display = flag3;
+	$("cloud_installed").style.display = flag4;
+
+	if(flag1 != "none"){ // AiCloud uninstall
+		$("return_btn").style.display = "none";
+		$("tab_smartsync").style.display="none";
+		$("tab_routersync").style.display="none";
+		$("tab_setting").style.display="none";
+		$("tab_syslog").style.display="none";
+	}
+	else if(flag2 != "none"){ // partition list
+		//detectUSBStatusApp();
+		show_partition();
+		$("return_btn").style.display = "";
+		//calHeight(1);
+		$("tab_smartsync").style.display="none";
+		$("tab_routersync").style.display="none";
+		$("tab_setting").style.display="none";
+		$("tab_syslog").style.display="none";
+	}
+	else if(flag3 != "none"){ // AiCloud installing
+		$("return_btn").style.display = "none";
+		//calHeight(1);
+		$("tab_smartsync").style.display="none";
+		$("tab_routersync").style.display="none";
+		$("tab_setting").style.display="none";
+		$("tab_syslog").style.display="none";
+	}	
+	else if(flag4 != "none"){ // Have AiCloud installed
+		$("return_btn").style.display = "none";
+		//calHeight(1);
+		$("tab_smartsync").style.display="";
+		$("tab_routersync").style.display="";
+		$("tab_setting").style.display="";
+		$("tab_syslog").style.display="";
+	}
+	else{
+		$("return_btn").style.display = "none";		
+		//calHeight(0);		
+ 	}
+
+ 	//stoppullstate = 1;
+}
+
+
+function check_wan(){		//check wan status before Setup aicloud
+	if(wanlink_status()!= 1){
+		alert("Please make sure you have connected to internet and reinstall.");
+		return;
+	}else{
+		divdisplayctrl("none", "", "none", "none");
+	}	
+}
+
+function update_appstate(e){
+  $j.ajax({
+    url: '/update_appstate.asp',
+    dataType: 'script',
+	
+    error: function(xhr){
+      update_appstate();
+    },
+    success: function(response){
+			if(stoppullstate == 1)
+				return false;
+			else if(!check_appstate()){
+      	setTimeout("update_appstate();", 1000);
+				//calHeight(0);
+			}
+			else
+				update_applist();
+		}    
+  });
+}
+
+
+function check_appstate(){
+	if(_apps_action != "" 
+		 && apps_state_upgrade == "" 
+		 && apps_state_enable == "" 
+		 && apps_state_update == "" 
+		 && apps_state_remove == "" 
+		 && apps_state_switch == "" 
+		 && apps_state_autorun == "" 
+		 && apps_state_install == ""){
+		return false;
+	}
+
+	if((apps_state_upgrade == 3 || apps_state_upgrade == "") 
+			&& (apps_state_enable == 2 || apps_state_enable == "") 
+			&& (apps_state_update == 2 || apps_state_update == "") 
+			&& (apps_state_remove == 2 || apps_state_remove == "") 
+			&& (apps_state_switch == 5 || apps_state_switch == "") 
+			&& (apps_state_autorun == 4 || apps_state_autorun == "") 
+			&& (apps_state_install == 4 || apps_state_install == "")){
+		$('cloudsetup_movie').style.display = "none";	
+		//divdisplayctrl("none", "none", "none", "");
+		return true;
+	}
+
+	var errorcode;
+	divdisplayctrl("none", "none", "", "none");
+	$('cloudsetup_movie').style.display = "";
+
+	if(apps_state_upgrade != 3 && apps_state_upgrade != ""){ // upgrade error handler
+		errorcode = "apps_state_upgrade = " + apps_state_upgrade;
+		if(apps_state_error == 1)
+			$("apps_state_desc").innerHTML = "<#usb_inputerror#>";
+		else if(apps_state_error == 2)
+			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
+		else if(apps_state_error == 4)
+			$("apps_state_desc").innerHTML = "<#usb_failed_install#>";
+		else if(apps_state_error == 6)
+			$("apps_state_desc").innerHTML = "<#usb_failed_remote_responding#>";
+		else if(apps_state_error == 7)
+			$("apps_state_desc").innerHTML = "<#usb_failed_upgrade#>";
+		else if(apps_state_error == 9)
+			$("apps_state_desc").innerHTML = "<#usb_failed_unmount#>";
+		else if(apps_state_error == 10)
+			$("apps_state_desc").innerHTML = "<#usb_failed_dev_responding#>";
+		else if(apps_state_upgrade == 0)
+			$("apps_state_desc").innerHTML = "<#usb_initializing#>";
+		else if(apps_state_upgrade == 1)
+			$("apps_state_desc").innerHTML = "<#usb_uninstalling#>";
+		else if(apps_state_upgrade == 2){
+			if(apps_download_percent > 0 && apps_download_percent < 100){
+				$("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>" + apps_download_percent + "</b> <span style='font-size: 16px;'>%</span>";
+				apps_download_percent_done = 0;
+			}
+			else if(apps_download_percent_done > 5){
+				if(installPercent > 99)
+					installPercent = 99;
+				$("loadingicon").style.display = "none";
+				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				installPercent = installPercent + 1.5;
+			}
+			else if(apps_download_percent == ""){
+				$("apps_state_desc").innerHTML = "<#usb_initializing#>...";
+				apps_download_percent_done++;
+			}
+			else if(apps_download_percent == 100){
+				$("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>99</b> <span style='font-size: 16px;'>%</span>";
+				apps_download_percent_done++;
+			}
+			else{
+				if(installPercent > 99)
+					installPercent = 99;
+				$("loadingicon").style.display = "none";
+				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				installPercent = installPercent + 1.5;
+			}
+		}
+		else
+			$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>";
+	}
+	else if(apps_state_enable != 2 && apps_state_enable != ""){
+		errorcode = "apps_state_enable = " + apps_state_enable;
+		if(apps_state_error == 1)
+			$("apps_state_desc").innerHTML = "<#usb_failed_unknown#>";
+		else if(apps_state_error == 2)
+			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
+		else if(apps_state_error == 3)
+			$("apps_state_desc").innerHTML = "<#usb_failed_create_swap#>";
+        else if(apps_state_error == 8)
+            $("apps_state_desc").innerHTML = "Enable error!";
+		else{
+			$("loadingicon").style.display = "";
+			$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>";
+		}
+	}
+	else if(apps_state_update != 2 && apps_state_update != ""){
+		errorcode = "apps_state_update = " + apps_state_update;
+		if(apps_state_error == 1)
+			$("apps_state_desc").innerHTML = "<#USB_Application_Preparing#>";
+		else if(apps_state_error == 2)
+			$("apps_state_desc").innerHTML = "<#USB_Application_No_Internet#>";
+		else
+			$("apps_state_desc").innerHTML = "Updating...";
+	}
+	else if(apps_state_remove != 2 && apps_state_remove != ""){
+		errorcode = "apps_state_remove = " + apps_state_remove;
+		$("apps_state_desc").innerHTML = "<#uninstall_processing#>";
+	}
+	else if(apps_state_switch != 4 && apps_state_switch != 5 && apps_state_switch != ""){
+		errorcode = "apps_state_switch = " + apps_state_switch;
+		if(apps_state_error == 1)
+			$("apps_state_desc").innerHTML = "<#usb_failed_unknown#>";
+		else if(apps_state_error == 2)
+			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
+		else if(apps_state_switch == 1)
+			$("apps_state_desc").innerHTML = "<#USB_Application_Stopping#>";
+		else if(apps_state_switch == 2)
+			$("apps_state_desc").innerHTML = "<#USB_Application_Stopwapping#>";
+		else if(apps_state_switch == 3)
+			$("apps_state_desc").innerHTML = "<#USB_Application_Partition_Check#>";
+		else
+			$("apps_state_desc").innerHTML = "<#Excute_processing#>";
+	}
+	else if(apps_state_autorun != 4 && apps_state_autorun != ""){
+		errorcode = "apps_state_autorun = " + apps_state_autorun;
+		if(apps_state_error == 1)
+			$("apps_state_desc").innerHTML = "<#usb_failed_unknown#>";
+		else if(apps_state_error == 2)
+			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
+		else if(apps_state_autorun == 1)
+			$("apps_state_desc").innerHTML = "<#USB_Application_disk_checking#>";
+		else if(apps_state_install == 2)
+			$("apps_state_desc").innerHTML = "<#USB_Application_Swap_creating#>";
+		else
+			$("apps_state_desc").innerHTML = "<#Auto_Install_processing#>";
+	}
+	else if(apps_state_install != 4 && apps_state_error > 0){ // install error handler
+		if(apps_state_error == 1)
+			$("apps_state_desc").innerHTML = "<#usb_inputerror#>";
+		else if(apps_state_error == 2)
+			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
+		else if(apps_state_error == 3)
+			$("apps_state_desc").innerHTML = "<#usb_failed_create_swap#>";
+		else if(apps_state_error == 4)
+			$("apps_state_desc").innerHTML = "<#usb_failed_install#>";
+		else if(apps_state_error == 5)
+			$("apps_state_desc").innerHTML = "<#usb_failed_connect_internet#>";
+		else if(apps_state_error == 6)
+			$("apps_state_desc").innerHTML = "<#usb_failed_remote_responding#>";
+		else if(apps_state_error == 7)
+			$("apps_state_desc").innerHTML = "<#usb_failed_upgrade#>";
+		else if(apps_state_error == 9)
+			$("apps_state_desc").innerHTML = "<#usb_failed_unmount#>";
+		else if(apps_state_error == 10)
+			$("apps_state_desc").innerHTML = "<#usb_failed_dev_responding#>";
+
+		isinstall = 0;
+	}
+	else if(apps_state_install != 4 && apps_state_install != ""){
+		isinstall = 1;
+		errorcode = "_apps_state_install = " + apps_state_install;
+
+		if(apps_state_install == 0)
+			$("apps_state_desc").innerHTML = "<#usb_partitioning#>";
+		else if(apps_state_install == 1)
+			$("apps_state_desc").innerHTML = "<#USB_Application_disk_checking#>";
+		else if(apps_state_install == 2)
+			$("apps_state_desc").innerHTML = "<#USB_Application_Swap_creating#>";
+		else{
+			if(apps_download_percent > 0 && apps_download_percent < 100){
+				$("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>" + apps_download_percent + "</b> <span style='font-size: 16px;'>%</span>";
+				apps_download_percent_done = 0;
+			}
+			else if(apps_download_percent_done > 5){
+				if(installPercent > 99)
+					installPercent = 99;
+				$("loadingicon").style.display = "none";
+				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				installPercent = installPercent + 1.5;
+			}
+			else if(apps_download_percent == ""){
+				$("apps_state_desc").innerHTML = "<#usb_initializing#>...";
+				apps_download_percent_done++;
+			}
+			else if(apps_download_percent == 100){
+				$("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>99</b> <span style='font-size: 16px;'>%</span>";
+				apps_download_percent_done++;
+			}
+			else{
+				if(installPercent > 99)
+					installPercent = 99;
+				$("loadingicon").style.display = "none";
+				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				installPercent = installPercent + 1.5;
+			}
+		}
+	}
+	else{
+		$("loadingicon").style.display = "";
+		$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>";
+	}
+	
+	if(apps_state_error != 0){
+		$("return_btn").style.display = "";
+		$("loadingicon").style.display = "none";
+		stoppullstate = 1;
+	}
+	else
+		$("return_btn").style.display = "none";
+
+	$("apps_state_desc").innerHTML += '<span class="app_action" onclick="apps_form(\'cancel\',\'\',\'\');">(<#CTL_Cancel#>)</span>';
+	return false;
+}
+
+
+function update_applist(e){
+  $j.ajax({
+    url: '/update_applist.asp',
+    dataType: 'script',
+	
+    error: function(xhr){
+      update_applist();
+    },
+    success: function(response){
+			if(isinstall > 0 && getCookie_help("apps_last") == "aicloud"){
+				$('cloudsetup_movie').style.display = "none";
+				setTimeout('divdisplayctrl("none", "none", "none", "");', 100);
+			}
+			else{
+				$('cloudsetup_movie').style.display = "none";
+				setTimeout('show_partition();', 100);
+				setTimeout('divdisplayctrl("", "none", "none", "none");', 100);
+				//setTimeout('show_apps();', 100);
+			}
+		}    
+  });
+}
+
 </script>
 </head>
 <body onload="initial();" onunload="return unload_body();">
@@ -214,6 +679,14 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 	<!--[if lte IE 6.5]><iframe class="hackiframe"></iframe><![endif]-->
 	</div>
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0" scrolling="no"></iframe>
+<form method="post" name="app_form" action="/cloud_main.asp">
+<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>" disabled>
+<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>" disabled>
+<input type="hidden" name="apps_action" value="">
+<input type="hidden" name="apps_path" value="">
+<input type="hidden" name="apps_name" value="">
+<input type="hidden" name="apps_flag" value="">
+</form>
 <form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
@@ -244,13 +717,16 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 							<div class="tabclick"><span>AiCloud</span></div>
 						</td>
 						<td>
-							<a href="cloud_sync.asp"><div class="tab"><span>Smart Sync</span></div></a>
+							<a href="cloud_sync.asp"><div class="tab" id="tab_smartsync"><span>Smart Sync</span></div></a>
 						</td>
 						<td>
-							<a href="cloud_settings.asp"><div class="tab"><span>Settings</span></div></a>
+							<a id="rrsLink" href="cloud_router_sync.asp"><div class="tab" id="tab_routersync"><span>Sync Server</span></div></a>
 						</td>
 						<td>
-							<a href="cloud_syslog.asp"><div class="tab"><span>Log</span></div></a>
+							<a href="cloud_settings.asp"><div class="tab" id="tab_setting"><span>Settings</span></div></a>
+						</td>
+						<td>
+							<a href="cloud_syslog.asp"><div class="tab" id="tab_syslog"><span>Log</span></div></a>
 						</td>
 					</tr>
 					</tbody>
@@ -265,8 +741,33 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 							<tr>
 							  <td bgcolor="#4D595D" valign="top">
 									<div>&nbsp;</div>
-									<div class="formfonttitle">AiCloud</div>
+									<div class="formfonttitle">AiCloud</div>									
+									<div><img id="return_btn" onclick="location.href='/cloud_main.asp'" align="right" style="cursor:pointer;position:absolute;margin-left:690px;margin-top:-45px;" title="Back to AiCloud" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'"></div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div id="cloud_uninstall" style="display:none;">
+   										<table>	
+  										<tr>
+   												<td><div class="formfontdesc" id="usbHint">ASUS AiCloud keeps you connected to your data whatever and whenever you have an Internet connection. It links your home network and online Web storage service* and lets your access it through the AiCloud mobile app on your iOS or Android smartphone or through a personalized URL in a Web browser. Now all your data can go where you do.</div></td> 
+  										</tr>
+											<tr>
+   												<td><div class="formfontdesc" id="usbHint2">Learn more: <a href="http://event.asus.com/2012/nw/aicloud/index.htm" target="_blank" style="color:#FC0;text-decoration: underline; font-family:Lucida Console;">http://event.asus.com/2012/nw/aicloud/index.htm</a></div></td> 
+  										</tr>  
+  										<tr>
+   												<td valign="top"><div id="cloud_movie" style="box-shadow: 2px 2px 15px #222;margin-top: 50px;width:400px;height:241px;margin-left:165px;background:url(images/movie.jpg) no-repeat center;cursor:pointer" onClick="window.open('http://www.youtube.com/watch?v=MgIAfG5ZhPs')"></div></td>
+  										</tr>  	   
+  										<tr>
+   												<td align="center" width="740px" height="60px">
+													<div id="gotonext">
+  														<div class="titlebtn" style="margin-top: 50px;margin-left:300px;_margin-left:150px;cursor:pointer;" align="center"><span id="settingBtn" style="*width:140px;" onClick="check_wan();">Install</span></div>
+													</div>
+  												</td>
+  										</tr>  
+   										</table>										
+									</div>
+									<div id="partition_div" style="display:none;"></div>
+									<div id="cloudsetup_movie" style="box-shadow: 2px 2px 15px #222;display:none;width:349px;height:193px;margin-left:165px;margin-top:40px;background:url(images/setup.jpg) no-repeat center;cursor:pointer" onClick="window.open('http://www.youtube.com/watch?v=1zIVzl1h8P4')"></div>
+									<div id="app_state" class="app_state" style="display:none;"><span id="apps_state_desc">Loading APP list...</span><img id="loadingicon" style="margin-left:5px;" src="/images/InternetScan.gif"></div>
+									<div id="cloud_installed" style="display:none;">
 									<table width="100%" height="550px" style="border-collapse:collapse;">
 
 									  <tr bgcolor="#444f53">
@@ -500,8 +1001,15 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 						  					<input name="button" type="button" class="button_gen_short" onclick="location.href='/cloud_sync.asp'" value="<#btn_go#>"/>
 											</td>
 									  </tr>
-
+									  <tr>
+									  	<td colspan="5" id="btn_cloud_uninstall">
+												<div class="apply_gen" style="margin-top:20px;">
+													<input class="button_gen" onclick="apps_form('remove','aicloud','');" type="button" value="Uninstall"/>
+			            			</div>			            
+			            		</td>
+			            	</tr>		
 									</table>
+									</div>
 
 							  </td>
 							</tr>				

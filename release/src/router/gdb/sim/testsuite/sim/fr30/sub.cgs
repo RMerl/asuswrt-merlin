@@ -1,0 +1,36 @@
+# fr30 testcase for sub $Rj,$Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global sub
+sub:
+	; Test sub $Rj,$Ri
+	mvi_h_gr   	1,r7
+	mvi_h_gr   	2,r8
+	set_cc          0x0f		; Set mask opposite of expected
+	sub      	r7,r8
+	test_cc		0 0 0 0
+	test_h_gr  	1,r8
+
+	mvi_h_gr   	1,r7
+	mvi_h_gr   	0x80000000,r8
+	set_cc          0x0d		; Set mask opposite of expected
+	sub		r7,r8
+	test_cc		0 0 1 0
+	test_h_gr  	0x7fffffff,r8
+
+	set_cc          0x0b		; Set mask opposite of expected
+	sub		r8,r8
+	test_cc		0 1 0 0
+	test_h_gr  	0,r8
+
+	set_cc          0x06		; Set mask opposite of expected
+	sub		r7,r8
+	test_cc		1 0 0 1
+	test_h_gr  	0xffffffff,r8
+
+	pass

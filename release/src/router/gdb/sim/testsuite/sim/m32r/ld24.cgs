@@ -1,0 +1,14 @@
+# m32r testcase for ld24 $dr,#$uimm24
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global ld24
+ld24:
+	ld24 r4, #0x123456
+
+	test_h_gr r4, 0x123456
+
+	pass

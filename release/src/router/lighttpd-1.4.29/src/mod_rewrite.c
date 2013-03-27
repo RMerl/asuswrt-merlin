@@ -487,6 +487,7 @@ URIHANDLER_FUNC(mod_rewrite_uri_handler) {
 }
 #endif
 
+#ifndef APP_IPKG
 int mod_rewrite_plugin_init(plugin *p);
 int mod_rewrite_plugin_init(plugin *p) {
 	p->version     = LIGHTTPD_VERSION_ID;
@@ -508,3 +509,26 @@ int mod_rewrite_plugin_init(plugin *p) {
 
 	return 0;
 }
+#else
+int aicloud_mod_rewrite_plugin_init(plugin *p);
+int aicloud_mod_rewrite_plugin_init(plugin *p) {
+	p->version     = LIGHTTPD_VERSION_ID;
+	p->name        = buffer_init_string("rewrite");
+
+#ifdef HAVE_PCRE_H
+	p->init        = mod_rewrite_init;
+	/* it has to stay _raw as we are matching on uri + querystring
+	 */
+
+	p->handle_uri_raw = mod_rewrite_uri_handler;
+	p->handle_physical = mod_rewrite_physical;
+	p->cleanup     = mod_rewrite_free;
+	p->connection_reset = mod_rewrite_con_reset;
+#endif
+	p->set_defaults = mod_rewrite_set_defaults;
+
+	p->data        = NULL;
+
+	return 0;
+}
+#endif

@@ -1,0 +1,550 @@
+# Copyright 1988, 1990, 1991, 1992, 1994, 1997, 1999, 2000, 2002, 2003, 2004,
+# 2005, 2006, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was written by Rob Savoye. (rob@cygnus.com)
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+# are we on a target board
+if { [is_remote target] || ![isnative] } then {
+    return
+}
+
+# Not all of the lines of code near the start of main are executed for
+# every machine.  Also, optimization may reorder some of the lines.
+# So all we do is try to step or next over everything until we get
+# to a line that we know is always executed.
+
+proc do_steps_and_nexts {} {
+    global gdb_prompt
+    global srcdir
+ 
+    gdb_reinitialize_dir $srcdir/..
+
+    set unlikely_line 0
+    for {set count 0} {$count < 32} {incr count} {
+	send_gdb "list\n"
+	# NOTE: carlton/2002-12-11: The "initial brace" and
+	# "current_directory initialization" possibilities happen to
+	# me with GCC 3.1 on i686-pc-linux-gnu when I compile with
+	# optimization.
+	gdb_expect {
+	    -re ".*context = data.*$gdb_prompt $" {
+		set description "step over context initialization"
+		set command "step"
+	    }
+	    -re ".*argc = context->argc.*$gdb_prompt $" {
+		set description "step over argc initialization"
+		set command "step"
+	    }
+	    -re ".*argv = context->argv.*$gdb_prompt $" {
+		set description "step over argv initialization"
+		set command "step"
+	    }
+	    -re ".*quiet = 0.*$gdb_prompt $" {
+		set description "step over quiet initialization"
+		set command "step"
+	    }
+	    -re ".*batch = 0.*$gdb_prompt $" {
+		set description "step over batch initialization"
+		set command "step"
+	    }
+	    -re ".*symarg = NULL.*$gdb_prompt $" {
+		set description "step over symarg initialization"
+		set command "step"
+	    }
+	    -re ".*execarg = NULL.*$gdb_prompt $" {
+		set description "step over execarg initialization"
+		set command "step"
+	    }
+	    -re ".*corearg = NULL.*$gdb_prompt $" {
+		set description "step over corearg initialization"
+		set command "step"
+	    }
+	    -re ".*cdarg = NULL.*$gdb_prompt $" {
+		set description "step over cdarg initialization"
+		set command "step"
+	    }
+	    -re ".*ttyarg = NULL.*$gdb_prompt $" {
+		set description "step over ttyarg initialization"
+		set command "step"
+	    }
+	    -re ".*time_at_startup = get_run_time.*$gdb_prompt $" {
+		set description "next over get_run_time and everything it calls"
+		set command "next"
+	    }
+	    -re ".*START_PROGRESS.*$gdb_prompt $" {
+		# Note: ezannoni/2004/02/17: This check should be
+		# removed, since as of today that source line is not
+		# in gdb anymore.
+		set description "next over START_PROGRESS and everything it calls"
+		set command "next"
+	    }
+	    -re ".*mac_init.*$gdb_prompt $" {
+		set description "next over mac_init and everything it calls"
+		set command "next"
+	    }
+	    -re ".*init_malloc.*$gdb_prompt $" {
+		# gdb 6.2.X is the last gdb which called init_malloc
+		set description "next over init_malloc and everything it calls"
+		set command "next"
+	    }
+	    -re ".*lim_at_start.*$gdb_prompt $" {
+		set description "next over lim_at_start initialization"
+		set command "next"
+	    }
+	    -re ".*count . 0x3.*$gdb_prompt $" {
+		set description "next over conditional stack alignment code 1"
+		set command "next"
+	    }
+	    -re ".*if .i != 0.*$gdb_prompt $" {
+		set description "next over conditional stack alignment code 2"
+		set command "next"
+	    }
+	    -re ".*alloca .i - 4.*$gdb_prompt $" {
+		set description "next over conditional stack alignment alloca"
+		set command "next"
+	    }
+	    -re ".*cmdsize = 1.*$gdb_prompt $" {
+		set description "step over cmdsize initialization"
+		set command "next"
+	    }
+	    -re ".*cmdarg = .* xmalloc.*$gdb_prompt $" {
+		set description "next over cmdarg initialization via xmalloc"
+		set command "next"
+	    }
+	    -re ".*ncmd = 0.*$gdb_prompt $" {
+		set description "next over ncmd initialization"
+		set command "next"
+	    }
+	    -re ".*dirsize = 1.*$gdb_prompt $" {
+		set description "next over dirsize initialization"
+		set command "next"
+	    }
+	    -re ".*dirarg = .* xmalloc.*$gdb_prompt $" {
+		return
+	    }
+	    -re ".*setlocale .LC_MESSAGES,.*$gdb_prompt $" {
+		set description "next over setlocale LC_MESSAGES"
+		set command "next"
+	    }
+	    -re ".*setlocale .LC_CTYPE,.*$gdb_prompt $" {
+		set description "next over setlocale LC_CTYPE"
+		set command "next"
+	    }
+	    -re ".*bindtextdomain .PACKAGE, LOCALEDIR.;.*$gdb_prompt $" {
+		set description "next over bindtextdomain"
+		set command "next"
+	    }
+	    -re ".*textdomain .PACKAGE.;.*$gdb_prompt $" {
+		set description "next over textdomain PACKAGE"
+		set command "next"
+	    }
+	    -re "\[0-9\]+\[\t \]+\{\r\n$gdb_prompt $" {
+		set description "step over initial brace"
+		set command "step"
+	    }
+	    -re ".*current_directory = gdb_dirbuf.*$gdb_prompt $" {
+		set description "step over current_directory initialization"
+		set command "step"
+	    }
+	    -re ".*gdb_sysroot = .*$gdb_prompt $" {
+		# NOTE: carlton/2003-01-15: More optimization reordering,
+		# observed on GCC 3.1.
+		set description "step over gdb_sysroot initialization"
+		set command "step"
+	    }
+	    -re ".*ndir = 0.*$gdb_prompt $" {
+		set description "step over ndir initialization"
+		set command "step"
+	    }
+	    -re ".*instream = stdin.*$gdb_prompt $" {
+		set description "step over instream initialization"
+		set command "step"
+	    }
+	    -re ".*getcwd .gdb_dirbuf, sizeof .gdb_dirbuf..;.*$gdb_prompt $" {
+		set description "next over getcwd"
+		set command "next"
+	    }
+	    -re ".*quit_flag = 0.*$gdb_prompt $" {
+		set description "step over quit_flag initialization"
+		set command "step"
+	    }
+	    -re ".*gdb_stdout = stdio_fileopen .stdout.;.*$gdb_prompt $" {
+		set description "step over gdb_stdout initialization"
+		set command "step"
+	    }
+	    -re ".*gdb_stderr = stdio_fileopen .stderr.;.*$gdb_prompt $" {
+		set description "step over gdb_stderr initialization"
+		set command "step"
+	    }
+	    -re ".*main.c.*No such file or directory.*$gdb_prompt $" {
+		setup_xfail "rs6000-*-aix3*"
+		fail "must be able to list source lines"
+		return
+	    }
+	    -re ".*interpreter_p = xstrdup.*$gdb_prompt $" {
+		if { $unlikely_line == 0 } {
+		    # This is a GCC optimization bug; a constant has been
+		    # associated with the wrong line number.
+		    setup_xfail "*-*-*" gcc/26475
+		    fail "$description (unlikely line from gcc)"
+		    set unlikely_line 1
+		}
+		set description "next over xstrdup"
+		set command "next"
+	    }
+	    -re ".*$gdb_prompt $" {
+		fail "unknown source line after $description"
+		return
+	    }
+	    default {
+		fail "unknown source line near main"
+		return
+	    }
+	}
+	send_gdb "$command\n"
+	gdb_expect {
+	    -re ".*No such file or directory.\r\n$gdb_prompt $" {
+		fail "$description (no source available)"
+	    }
+	    -re ".*A file or directory .* does not exist..\r\n$gdb_prompt $" {
+		fail "$description (no source available)"
+	    }
+	    -re ".*$gdb_prompt $" {
+		pass "$description"
+	    }
+	    timeout {
+		fail "$description (timeout)"
+	    }
+	}
+    }
+}
+
+proc test_with_self { executable } {
+    global gdb_prompt
+    global tool
+    global det_file
+    global decimal
+    global timeout
+
+    # load yourself into the debugger
+    # This can take a relatively long time, particularly for testing where
+    # the executable is being accessed over a network, or where gdb does not
+    # support partial symbols for a particular target and has to load the
+    # entire symbol table.  Set the timeout to 10 minutes, which should be
+    # adequate for most environments (it *has* timed out with 5 min on a
+    # SPARCstation SLC under moderate load, so this isn't unreasonable).
+    # After gdb is started, set the timeout to 30 seconds for the duration
+    # of this test, and then back to the original value.
+
+    set oldtimeout $timeout
+    set timeout 600
+    verbose "Timeout is now $timeout seconds" 2
+
+    global gdb_file_cmd_debug_info
+    set gdb_file_cmd_debug_info "unset"
+
+    set result [gdb_load $executable]
+    set timeout $oldtimeout
+    verbose "Timeout is now $timeout seconds" 2
+
+    if { $result != 0 } then {
+	return -1
+    }
+
+    if { $gdb_file_cmd_debug_info != "debug" } then {
+	untested "No debug information, skipping testcase."
+	return -1
+    }
+
+    # disassemble yourself
+    gdb_test "x/10i main" \
+	    "x/10i.*main.*main.$decimal.*main.$decimal.*" \
+	    "Disassemble main"
+
+    # Set a breakpoint at main
+    gdb_test "break captured_main" \
+	    "Breakpoint.*at.* file.*, line.*" \
+	    "breakpoint in captured_main"
+
+    # We'll need this when we send a ^C to GDB.  Need to do it before we
+    # run the program and gdb starts saving and restoring tty states.
+    # On Ultrix, we don't need it and it is really slow (because shell_escape
+    # doesn't use vfork).
+    if ![istarget "*-*-ultrix*"] then {
+	gdb_test "shell stty intr '^C'" "" \
+	    "set interrupt character in test_with_self"
+    }
+
+    # FIXME: If we put this after the run to main, the first list
+    # command doesn't print the same line as the current line where
+    # gdb is stopped.
+    gdb_test "set listsize 1" "" "set listsize to 1"
+
+    # run yourself
+    # It may take a very long time for the inferior gdb to start (lynx),
+    # so we bump it back up for the duration of this command.
+    set timeout 600
+
+    set description "run until breakpoint at captured_main"
+    send_gdb "run -nw\n"
+    gdb_expect {
+	-re "Starting program.*Breakpoint \[0-9\]+,.*captured_main .data.* at .*main.c:.*$gdb_prompt $" {
+	    pass "$description"
+	}
+	-re "Starting program.*Breakpoint \[0-9\]+,.*captured_main .data.*$gdb_prompt $" {
+	    xfail "$description (line numbers scrambled?)"
+	}
+	-re "vfork: No more processes.*$gdb_prompt $" {
+	    fail "$description (out of virtual memory)"
+	    set timeout $oldtimeout
+	    verbose "Timeout is now $timeout seconds" 2
+	    return -1
+	}
+	-re ".*$gdb_prompt $" {
+	    fail "$description"
+	    set timeout $oldtimeout
+	    verbose "Timeout is now $timeout seconds" 2
+	    return -1
+	}
+	timeout {
+	    fail "$description (timeout)"
+	}
+    }
+
+    set timeout $oldtimeout
+    verbose "Timeout is now $timeout seconds" 2
+
+    # do we have a version number ?
+    send_gdb "print version\n"
+    gdb_expect {
+	-re ".\[0-9\]+ = .\[0-9.\]+.*$gdb_prompt $" {
+	    pass "printed version as string"
+	}
+	-re ".\[0-9\]+ = +0x.*\[0-9.\]+.*$gdb_prompt $" {
+	    pass "printed version as pointer"
+	}
+	-re ".\[0-9\]+ = +.+ +0x.*\[0-9.\]+.*$gdb_prompt $" {
+	    pass "printed version with cast"
+	}
+	-re ".*$gdb_prompt $"	{ fail "printed version" }
+	timeout		{ fail "(timeout) printed version" }
+    }
+
+    do_steps_and_nexts
+
+    gdb_test "print \"foo\"" ".\[0-9\]+ = \"foo\"" "print a string"
+
+    # do_steps_and_nexts left us ready to execute an xmalloc call,
+    # so give that a try.
+    # If we don't actually enter the xmalloc call when we give a
+    # step command that seems like a genuine bug.  It seems to happen
+    # on most RISC processors.
+    # NOTE drow/2003-06-22: However, if we step back to the preceding two
+    # lines, just keep stepping until we enter.
+    set stepped_back 0
+    setup_xfail "alpha-*-*" "mips-*-*"
+    set description "step into xmalloc call"
+    send_gdb "step\n"
+    gdb_expect {
+	-re "ncmd = 0;.*$gdb_prompt $" {
+	    set stepped_back 1
+	    send_gdb "step\n"
+	    exp_continue
+	}
+        -re ".*cmdarg = .* xmalloc.*$gdb_prompt $" {
+	    set stepped_back 1
+	    send_gdb "step\n"
+	    exp_continue
+        }
+	-re "dirsize = 1;.*$gdb_prompt $" {
+	    set stepped_back 1
+	    send_gdb "step\n"
+	    exp_continue
+	}
+	-re ".*dirarg = .* xmalloc.*$gdb_prompt $" {
+	    if { $stepped_back == 1 } {
+		send_gdb "step\n"
+		exp_continue
+	    } else {
+		fail "$description"
+	    }
+	}
+	-re "xmalloc.*size=.*at.*utils.c.*$gdb_prompt $" {
+	    pass "$description"
+	}
+	-re ".*No such file or directory.\r\n$gdb_prompt $" {
+	    pass "$description (no source available)"
+	}
+	-re "A file or directory .* does not exist..\r\n$gdb_prompt $" {
+	    pass "$description (no source available)"
+	}
+	-re ".*$gdb_prompt $" {
+	    fail "$description"
+	}
+	timeout {
+	    fail "$description (timeout)"
+	}
+    }
+
+    # start the "xgdb" process
+    send_gdb "continue\n"
+    gdb_expect {
+	-re "GNU gdb \[0-9\.\]*.*
+Copyright \\(C\\) \[0-9\]* Free Software Foundation, Inc.*
+License GPLv3\\+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.*
+This is free software: you are free to change and redistribute it.*
+There is NO WARRANTY, to the extent permitted by law.  Type \"show copying\".*
+and \"show warranty\" for details.*
+This GDB was configured as .*$gdb_prompt $"\
+	    { pass "xgdb is at prompt" }
+	-re "GNU gdb \[0-9\.\]*.*
+Copyright \\(C\\) \[0-9\]* Free Software Foundation, Inc.*
+GDB is free software, covered by the GNU General Public License, and you are.*
+welcome to change it and/or distribute copies of it under certain conditions.*
+Type \"show copying\" to see the conditions.*
+There is absolutely no warranty for GDB.  Type \"show warranty\" for details.*
+This GDB was configured as .*$gdb_prompt $"\
+	    { pass "xgdb is at prompt (obsolescent gdb 2)" }
+	-re "GDB is free software and you are welcome to distribute copies of it.*
+ under certain conditions; type \"show copying\" to see the conditions..*
+There is absolutely no warranty for GDB; type \"show warranty\" for details..*
+GDB.*Copyright \[0-9\]+ Free Software Foundation, Inc..*$gdb_prompt $"\
+	    { pass "xgdb is at prompt (obsolescent gdb 1)" }
+	-re ".*$gdb_prompt $"       { fail "xgdb is at prompt" }
+	timeout	            { fail "(timeout) xgdb is at prompt" }
+    }
+    
+    # set xgdb prompt so we can tell which is which
+    send_gdb "set prompt (xgdb) \n"
+    gdb_expect {
+	-re "\[(\]xgdb\[)\].*\[(\]xgdb\[)\] $"	{ pass "Set xgdb prompt" }
+	-re ".*$gdb_prompt $"		{ fail "Set xgdb prompt" }
+	default				{ fail "(timeout) Set xgdb prompt" }
+    }
+    
+    # kill the xgdb process
+    set description "send ^C to child process"
+    send_gdb "\003"
+    gdb_expect {
+	-re "Program received signal SIGINT.*$gdb_prompt $" {
+	    pass "$description"
+	}
+	-re ".*$gdb_prompt $" {
+	    fail "$description"
+	}
+	timeout {
+	    fail "$description (timeout)"
+	}
+    }
+    
+    set description "send SIGINT signal to child process"
+    send_gdb "signal SIGINT\n"
+    gdb_expect {
+	-re "Continuing with signal SIGINT.*$gdb_prompt $" {
+	    pass "$description"
+	}
+	-re ".*$gdb_prompt $" {
+	    fail "$description"
+	}
+	timeout {
+	    fail "$description (timeout)"
+	}
+    }
+    
+    # get a stack trace
+    #
+    # This fails on some linux systems for unknown reasons.  On the
+    # systems where it fails, sometimes it works fine when run manually.
+    # The testsuite failures may not be limited to just aout systems.
+    setup_xfail "i*86-pc-linuxaout-gnu"
+    set description "backtrace through signal handler"
+    send_gdb "backtrace\n"
+    gdb_expect {
+	-re "#0.*(read|poll).*in main \\(.*\\) at .*gdb\\.c.*$gdb_prompt $" {
+	    pass "$description"
+	}
+	-re ".*$gdb_prompt $" {
+	    # On the alpha, we hit the infamous problem about gdb
+	    # being unable to get the frame pointer (mentioned in
+	    # gdb/README).  As it is intermittent, there is no way to
+	    # XFAIL it which will give us an XPASS if the problem goes
+	    # away.
+	    setup_xfail "alpha*-*-osf*"
+	    fail "$description"
+	}
+	timeout {
+	    fail "$description (timeout)"
+	}
+    }
+
+
+    # Set the timeout back to the value it had when we were called.
+    set timeout $oldtimeout
+    verbose "Timeout is now $timeout seconds" 2
+
+    # Restart gdb in case next test expects it to be started already.
+    return 0
+}
+
+# Find a pathname to a file that we would execute if the shell was asked
+# to run $arg using the current PATH.
+
+proc find_gdb { arg } {
+
+    # If the arg directly specifies an existing executable file, then
+    # simply use it.
+
+    if [file executable $arg] then {
+	return $arg
+    }
+
+    set result [which $arg]
+    if [string match "/" [ string range $result 0 0 ]] then {
+	return $result
+    }
+
+    # If everything fails, just return the unqualified pathname as default
+    # and hope for best.
+
+    return $arg
+}
+
+# Run the test with self.
+# Copy the file executable file in case this OS doesn't like to edit its own
+# text space.
+
+set GDB_FULLPATH [find_gdb $GDB]
+
+# Remove any old copy lying around.
+remote_file host delete x$tool
+
+gdb_start
+set file [remote_download host $GDB_FULLPATH x$tool]
+set result [test_with_self $file];
+gdb_exit;
+catch "remote_file host delete $file";
+
+if {$result <0} then {
+    warning "Couldn't test self"
+    return -1
+}

@@ -1,0 +1,664 @@
+# frv testcase for scutss $FRj,$FRk
+# mach: fr405 fr450
+
+	.include "../testutils.inc"
+
+	start
+
+	.global scutss
+scutss:
+	set_spr_immed   0xffffffe7,iacc0h
+	set_spr_immed   0x89abcdef,iacc0l
+
+	set_gr_immed	0,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xffe8,gr11
+
+	set_gr_immed	1,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xffcf,gr11
+
+	set_gr_immed	2,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xff9e,gr11
+
+	set_gr_immed	3,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xff3c,gr11
+
+	set_gr_immed	4,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xfe79,gr11
+
+	set_gr_immed	5,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xfcf1,gr11
+
+	set_gr_immed	6,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xf9e2,gr11
+
+	set_gr_immed	7,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xf3c5,gr11
+
+	set_gr_immed	8,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xe78a,gr11
+
+	set_gr_immed	9,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xcf13,gr11
+
+	set_gr_immed	10,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0x9e27,gr11
+
+	set_gr_immed	11,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0x3c4d,gr11
+
+	set_gr_immed	12,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xfffe,0x789b,gr11
+
+	set_gr_immed	13,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xfffc,0xf135,gr11
+
+	set_gr_immed	14,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xfff9,0xe26b,gr11
+
+	set_gr_immed	15,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xfff3,0xc4d6,gr11
+
+	set_gr_immed	16,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffe7,0x89ac,gr11
+
+	set_gr_immed	17,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffcf,0x1358,gr11
+
+	set_gr_immed	18,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xff9e,0x26af,gr11
+
+	set_gr_immed	19,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xff3c,0x4d5e,gr11
+
+	set_gr_immed	20,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xfe78,0x9abd,gr11
+
+	set_gr_immed	21,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xfcf1,0x357a,gr11
+
+	set_gr_immed	22,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xf9e2,0x6af3,gr11
+
+	set_gr_immed	23,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xf3c4,0xd5e7,gr11
+
+	set_gr_immed	24,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xe789,0xabce,gr11
+
+	set_gr_immed	25,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xcf13,0x579c,gr11
+
+	set_gr_immed	26,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x9e26,0xaf38,gr11
+
+	set_gr_immed	27,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x8000,0x0000,gr11
+
+	set_gr_immed	28,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x8000,0x0000,gr11
+
+	set_gr_immed	29,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x8000,0x0000,gr11
+
+	set_gr_immed	30,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x8000,0x0000,gr11
+
+	set_gr_immed	31,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x8000,0x0000,gr11
+
+	set_gr_immed	32,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x8000,0x0000,gr11
+
+	set_gr_immed	33,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x8000,0x0000,gr11
+
+	set_gr_immed	34,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	35,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	36,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	37,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	38,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	39,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	40,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	41,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	42,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	43,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	44,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	45,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	46,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	47,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	48,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	49,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	50,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	51,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	52,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	53,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	54,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	55,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	56,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	57,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	58,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	59,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	60,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	61,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	62,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	63,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	set_gr_immed	64,gr10		; same as -64
+	scutss      	gr10,gr11
+	test_gr_immed	0,gr11
+
+	set_gr_immed	128,gr10	; same as 0 
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xffe8,gr11
+
+	.global scutss2
+scutss2:
+	set_spr_immed   0xe789abcd,iacc0h
+	set_spr_immed   0xefa5a5a5,iacc0l
+
+	set_gr_limmed	0xffff,0xffff,gr10	; -1
+	scutss      	gr10,gr11
+	test_gr_limmed  0xf3c4,0xd5e7,gr11
+
+	set_gr_limmed	0x0000,0x007e,gr10	; -2 (only lower 7 bits matter)
+	scutss      	gr10,gr11
+	test_gr_limmed  0xf9e2,0x6af3,gr11
+
+	set_gr_immed	-3,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xfcf1,0x357a,gr11
+
+	set_gr_immed	-4,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xfe78,0x9abd,gr11
+
+	set_gr_immed	-5,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xff3c,0x4d5e,gr11
+
+	set_gr_immed	-6,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xff9e,0x26af,gr11
+
+	set_gr_immed	-7,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffcf,0x1358,gr11
+
+	set_gr_immed	-8,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffe7,0x89ac,gr11
+
+	set_gr_immed	-9,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xfff3,0xc4d6,gr11
+
+	set_gr_immed	-10,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xfff9,0xe26b,gr11
+
+	set_gr_immed	-11,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xfffc,0xf135,gr11
+
+	set_gr_immed	-12,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xfffe,0x789b,gr11
+
+	set_gr_immed	-13,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0x3c4d,gr11
+
+	set_gr_immed	-14,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0x9e27,gr11
+
+	set_gr_immed	-15,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xcf13,gr11
+
+	set_gr_immed	-16,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xe78a,gr11
+
+	set_gr_immed	-17,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xf3c5,gr11
+
+	set_gr_immed	-18,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xf9e2,gr11
+
+	set_gr_immed	-19,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xfcf1,gr11
+
+	set_gr_immed	-20,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xfe79,gr11
+
+	set_gr_immed	-21,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xff3c,gr11
+
+	set_gr_immed	-22,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xff9e,gr11
+
+	set_gr_immed	-23,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xffcf,gr11
+
+	set_gr_immed	-24,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xffe8,gr11
+
+	set_gr_immed	-25,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xfff4,gr11
+
+	set_gr_immed	-26,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xfffa,gr11
+
+	set_gr_immed	-27,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xfffd,gr11
+
+	set_gr_immed	-28,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xfffe,gr11
+
+	set_gr_immed	-29,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0xffff,0xffff,gr11
+
+	set_gr_immed	-30,gr10
+	scutss      	gr10,gr11
+	test_gr_immed   0,gr11
+
+	set_gr_immed	-31,gr10
+	scutss      	gr10,gr11
+	test_gr_immed   0,gr11
+
+	set_gr_immed	-32,gr10
+	scutss      	gr10,gr11
+	test_gr_immed   0,gr11
+
+	set_gr_limmed	0,64,gr10	; same as -32 
+	scutss      	gr10,gr11
+	test_gr_immed   0,gr11
+
+	set_spr_immed   0x6789abcd,iacc0h
+	set_spr_immed   0xefa5a5a5,iacc0l
+
+	set_gr_limmed	0xffff,0xffff,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x33c4,0xd5e7,gr11
+
+	set_gr_limmed	0x0000,0x007e,gr10	; -2 (only lower 7 bits matter)
+	scutss      	gr10,gr11
+	test_gr_limmed  0x19e2,0x6af3,gr11
+
+	set_gr_immed	-3,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0cf1,0x357a,gr11
+
+	set_gr_immed	-4,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0678,0x9abd,gr11
+
+	set_gr_immed	-5,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x033c,0x4d5e,gr11
+
+	set_gr_immed	-6,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x019e,0x26af,gr11
+
+	set_gr_immed	-7,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x00cf,0x1358,gr11
+
+	set_gr_immed	-8,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0067,0x89ac,gr11
+
+	set_gr_immed	-9,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0033,0xc4d6,gr11
+
+	set_gr_immed	-10,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0019,0xe26b,gr11
+
+	set_gr_immed	-11,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x000c,0xf135,gr11
+
+	set_gr_immed	-12,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0006,0x789b,gr11
+
+	set_gr_immed	-13,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0003,0x3c4d,gr11
+
+	set_gr_immed	-14,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0001,0x9e27,gr11
+
+	set_gr_immed	-15,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0xcf13,gr11
+
+	set_gr_immed	-16,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x678a,gr11
+
+	set_gr_immed	-17,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x33c5,gr11
+
+	set_gr_immed	-18,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x19e2,gr11
+
+	set_gr_immed	-19,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x0cf1,gr11
+
+	set_gr_immed	-20,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x0679,gr11
+
+	set_gr_immed	-21,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x033c,gr11
+
+	set_gr_immed	-22,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x019e,gr11
+
+	set_gr_immed	-23,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x00cf,gr11
+
+	set_gr_immed	-24,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x0068,gr11
+
+	set_gr_immed	-25,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x0034,gr11
+
+	set_gr_immed	-26,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x001a,gr11
+
+	set_gr_immed	-27,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x000d,gr11
+
+	set_gr_immed	-28,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x0006,gr11
+
+	set_gr_immed	-29,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x0003,gr11
+
+	set_gr_immed	-30,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x0002,gr11
+
+	set_gr_immed	-31,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x0001,gr11
+
+	set_gr_immed	-32,gr10
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x0000,gr11
+
+	set_gr_immed	64,gr10		; same as -32
+	scutss      	gr10,gr11
+	test_gr_limmed  0x0000,0x0000,gr11
+
+	; Examples from the customer (modified for iacc0)
+	set_spr_immed   0xffffffff,iacc0h
+	set_spr_immed   0xffe00000,iacc0l
+
+	set_gr_limmed	0,16,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed  0xffff,0xffe0,gr11
+
+	set_gr_limmed	0,17,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed  0xffff,0xffc0,gr11
+
+	set_gr_limmed	0,18,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed	0xffff,0xff80,gr11
+
+	set_spr_immed   0,iacc0h
+	set_spr_immed   0x003fffff,iacc0l
+
+	set_gr_limmed	0,40,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed  0x3fff,0xff00,gr11
+
+	set_gr_limmed	0,41,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed  0x7fff,0xfe00,gr11
+
+	set_spr_immed   0x7f,iacc0h
+	set_spr_immed   0xffe00000,iacc0l
+
+	set_gr_limmed	0,40,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed  0x7fff,0xffff,gr11		; saturated
+
+	set_gr_limmed	0,41,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed	0x7fff,0xffff,gr11		; saturated
+
+	set_gr_limmed	0,42,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed	0x7fff,0xffff,gr11		; saturated
+
+	set_spr_immed   0x08,iacc0h
+	set_spr_immed   0x003fffff,iacc0l
+
+	set_gr_limmed	0,40,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed	0x7fff,0xffff,gr11		; saturated
+
+	set_gr_limmed	0,41,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed	0x7fff,0xffff,gr11		; saturated
+
+	set_spr_immed   0xffffffff,iacc0h
+	set_spr_immed   0xefe00000,iacc0l
+
+	set_gr_limmed	0,40,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11		; saturated
+
+	set_gr_limmed	0,41,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11		; saturated
+
+	set_gr_limmed	0,42,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11		; saturated
+
+	set_spr_immed   0x80000000,iacc0h
+	set_spr_immed   0x003fffff,iacc0l
+
+	set_gr_limmed	0,16,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11		; saturated
+
+	set_gr_limmed	0,17,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11		; saturated
+
+	set_spr_immed   0xaf5a5a5a,iacc0h
+	set_spr_immed   0x5a5a5a5a,iacc0l
+
+	set_gr_limmed	0xffff,0xfffc,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed  0xfaf5,0xa5a6,gr11
+
+	set_spr_immed   0x2f5a5a5a,iacc0h
+	set_spr_immed   0x5a5a5a5a,iacc0l
+
+	set_gr_limmed	0xffff,0xfff9,gr10
+	scutss    	gr10,gr11
+	test_gr_limmed  0x005e,0xb4b5,gr11
+
+# From the manual
+	.global scutss3
+scutss3:
+	set_spr_immed   0xfffffedc,iacc0h
+	set_spr_immed   0xba987654,iacc0l
+
+	set_gr_immed	16,gr10
+	scutss		gr10,gr11
+	test_gr_limmed	0xfedc,0xba98,gr11
+
+	set_gr_immed	12,gr10
+	scutss		gr10,gr11
+	test_gr_limmed	0xffed,0xcbaa,gr11
+
+	set_gr_immed	-4,gr10
+	scutss		gr10,gr11
+	test_gr_limmed	0xffff,0xffee,gr11
+
+	set_gr_immed	24,gr10
+	scutss		gr10,gr11
+	test_gr_limmed	0x8000,0x0000,gr11
+
+	pass

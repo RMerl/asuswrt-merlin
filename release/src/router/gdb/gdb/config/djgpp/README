@@ -1,0 +1,189 @@
+
+       How to build and install the DJGPP native version of GDB
+       ********************************************************
+
+General
+=======
+
+GDB built with DJGPP supports native DJGPP debugging, whereby you run
+gdb.exe and the program being debugged on the same machine.  In
+addition, this version supports remote debugging via a serial port,
+provided that the target machine has a GDB-compatible debugging stub
+which can be linked with the target program (see the section "Remote
+Serial" in the GDB manual for more details).
+
+
+Installation of the binary distribution
+=======================================
+
+Simply unzip the gdbNNNb.zip file (where NNN is the version number)
+from the top DJGPP installation directory.  Be sure to preserve the
+directory structure while you unzip (use -d switch if you do this with
+PKUNZIP).  On Windows 9X and Windows 2000, use an unzip program which
+supports long file names; one such program is unzip32.exe, available
+from the DJGPP sites.
+
+If you need the libraries which are built as part of GDB, install the
+companion file gdbNNNa.zip.  This allows to develop applications which
+use the same functions as GDB.  For example, you can build your own
+front end to the debugger.
+
+
+Rebuilding GDB from sources
+===========================
+
+1. Prerequisites
+   -------------
+To build the package, you will need the DJGPP development environment
+(GCC, header files, and the libraries), and also DJGPP ports of the
+following tools:
+
+	- GNU Make 3.79.1 or later
+	- Bash 2.03 or later
+	- GNU Sed
+	- GNU Fileutils
+	- GNU Textutils 2.0 or later
+	- GNU Sh-utils
+	- GNU Grep 2.4 or later
+	- GNU Findutils
+	- GNU Awk 3.04 or later
+	- GNU Bison (only if you change one of the gdb/*.y files)
+	- Groff (only if you need to format the man pages)
+	- GNU Diffutils (only if you run the test suite)
+
+These programs should be available from the DJGPP sites, in the v2gnu
+directory.  In addition, the configuration script invokes the `update'
+and `utod' utilities which are part of the basic DJGPP development kit
+(djdevNNN.zip).
+
+
+2. Unpacking the sources
+   ---------------------
+If you download the source distribution from one of the DJGPP sites,
+just unzip it while preserving the directory structure (I suggest to
+use unzip32.exe available with the rest of DJGPP), and proceed to the
+section "How to build", below.
+
+Source distributions downloaded from one of the GNU FTP sites need
+some more work to unpack.  First, you MUST use the `djunpack' batch
+file to unzip the package.  That's because some file names in the
+official distributions need to be changed to avoid problems on the
+various platforms supported by DJGPP.  `djunpack' invokes the `djtar'
+program (that is part of the basic DJGPP development kit) to rename
+these files on the fly given a file with name mappings; the
+distribution includes a file `gdb/config/djgpp/fnchange.lst' with the
+necessary mappings.  So you need first to retrieve that batch file,
+and then invoke it to unpack the distribution.  Here's how:
+
+ djtar -x -p -o gdb-5.2/djunpack.bat gdb-5.2.tar.gz > djunpack.bat
+ djunpack gdb-5.2.tar.gz
+
+(The name of the distribution archive and the leading directory of the
+path to `djunpack.bat' in the distribution will be different for
+versions of GDB other than 5.2.)
+
+If the argument to `djunpack.bat' include leading directories, it MUST
+be given with the DOS-style backslashes; Unix-style forward slashes
+will NOT work.
+
+If the distribution comes as a .tar.bz2 archive, and your version of
+`djtar' doesn't support bzip2 decompression, you need to unpack it as
+follows:
+
+ bunzip2 gdb-6.4.tar.bz2
+ djtar -x -p -o gdb-6.4/djunpack.bat gdb-6.4.tar > djunpack.bat
+ djunpack gdb-6.4.tar
+
+
+3. How to build
+   ------------
+
+If the source distribution available from DJGPP archives is already
+configured for DJGPP v2.x (if it is, you will find files named
+`Makefile' in each subdirectory), then just invoke Make:
+
+		make
+
+To build a package that is not yet configured, or if you downloaded
+GDB from a GNU FTP site, you will need to configure it first.  You
+will also need to configure it if you want to change the configuration
+options (e.g., compile without support for the GDBMI interface).  To
+configure GDB, type this command:
+
+		sh ./gdb/config/djgpp/djconfig.sh
+
+This script checks the unpacked distribution, then edits the configure
+scripts in the various subdirectories, to make them suitable for
+DJGPP, and finally invokes the top-level configure script, which
+recursively configures all the subdirectories.
+
+You may pass optional switches to djconfig.sh.  It accepts all the
+switches accepted by the original GDB configure script.  These
+switches are described in the file gdb/README, and their full list can
+be displayed by running the following command:
+
+		sh ./gdb/configure --help
+
+NOTE: if you *do* use optional command-line switches, you MUST pass
+to the script the name of the directory where GDB sources are
+unpacked--even if you are building GDB in-place!  For example:
+
+	sh ./gdb/config/djgpp/djconfig.sh . --disable-gdbmi
+
+It is also possible to build GDB in a directory that is different from
+the one where the sources were unpacked.  In that case, you have to
+pass the source directory as the first argument to the script:
+
+	sh ./gdb/config/djgpp/djconfig.sh d:/gnu/gdb-6.4
+
+You MUST use forward slashes in the first argument.
+
+After the configure script finishes, run Make:
+
+	make
+
+If you want to produce the documentation (for example, if you changed
+some of the Texinfo sources), type this:
+
+	make info
+
+When Make finishes, you can install the package:
+
+	make install prefix='${DJDIR}' INSTALL='ginstall -c'
+
+The above doesn't install the docs; for that you will need to say
+this:
+
+	make install-info prefix='${DJDIR}' INSTALL='ginstall -c'
+
+The test suite has been made to work with DJGPP.  If you make a change
+in some of the programs, or want to be sure you have a fully
+functional GDB executable, it is a good idea to run the test suite.
+You cannot use "make check" for that, since it will want to run the
+`dejagnu' utility which DJGPP doesn't support.  Instead, use the special
+script gdb/config/djgpp/djcheck.sh, like this:
+
+		cd gdb/testsuite
+		sh ../config/djgpp/djcheck.sh
+
+This will run for a while and should not print anything, except the
+messages "Running tests in DIR", where DIR is one of the
+subdirectories of the testsuite.  Any test that fails to produce the
+expected output will cause the diffs between the expected and the
+actual output be printed, and in addition will leave behind a file
+SOMETHING.tst (where SOMETHING is the name of the failed test).  You
+should compare each of the *.tst files with the corresponding *.out
+file and convince yourself that the differences do not indicate a real
+problem.  Examples of differences you can disregard are changes in the
+copyright blurb printed by GDB, values of unitialized variables,
+addresses of global variables like argv[] and envp[] (which depend on
+the size of your environment), etc.
+
+Note that djcheck.sh only recurses into those of the subdirectories of
+the test suite which test features supported by the DJGPP port of GDB.
+For example, the tests in the gdb.gdbtk, gdb.threads, and gdb.hp
+directories are not run.
+
+
+Enjoy,
+                                    Eli Zaretskii <eliz@gnu.org>

@@ -1,0 +1,192 @@
+# arm testcase for ldr${cond}b $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_post_dec_imm_offset
+ldrb_post_dec_imm_offset:
+	ldr0b pc,???
+
+	pass
+# arm testcase for ldr${cond}bt $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_post_dec_nonpriv_imm_offset
+ldrb_post_dec_nonpriv_imm_offset:
+	ldr0bt pc,???
+
+	pass
+# arm testcase for ldr${cond}bt $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_post_dec_nonpriv_reg_offset
+ldrb_post_dec_nonpriv_reg_offset:
+	ldr0bt pc,???
+
+	pass
+# arm testcase for ldr${cond}b $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_post_dec_reg_offset
+ldrb_post_dec_reg_offset:
+	ldr0b pc,???
+
+	pass
+# arm testcase for ldr${cond}b $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_post_inc_imm_offset
+ldrb_post_inc_imm_offset:
+	ldr0b pc,???
+
+	pass
+# arm testcase for ldr${cond}bt $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_post_inc_nonpriv_imm_offset
+ldrb_post_inc_nonpriv_imm_offset:
+	ldr0bt pc,???
+
+	pass
+# arm testcase for ldr${cond}bt $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_post_inc_nonpriv_reg_offset
+ldrb_post_inc_nonpriv_reg_offset:
+	ldr0bt pc,???
+
+	pass
+# arm testcase for ldr${cond}b $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_post_inc_reg_offset
+ldrb_post_inc_reg_offset:
+	ldr0b pc,???
+
+	pass
+# arm testcase for ldr${cond}b $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_pre_dec_imm_offset
+ldrb_pre_dec_imm_offset:
+	ldr0b pc,???
+
+	pass
+# arm testcase for ldr${cond}b $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_pre_dec_reg_offset
+ldrb_pre_dec_reg_offset:
+	ldr0b pc,???
+
+	pass
+# arm testcase for ldr${cond}b $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_pre_dec_wb_imm_offset
+ldrb_pre_dec_wb_imm_offset:
+	ldr0b pc,???
+
+	pass
+# arm testcase for ldr${cond}b $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_pre_dec_wb_reg_offset
+ldrb_pre_dec_wb_reg_offset:
+	ldr0b pc,???
+
+	pass
+# arm testcase for ldr${cond}b $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_pre_inc_imm_offset
+ldrb_pre_inc_imm_offset:
+	ldr0b pc,???
+
+	pass
+# arm testcase for ldr${cond}b $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_pre_inc_reg_offset
+ldrb_pre_inc_reg_offset:
+	ldr0b pc,???
+
+	pass
+# arm testcase for ldr${cond}b $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_pre_inc_wb_imm_offset
+ldrb_pre_inc_wb_imm_offset:
+	ldr0b pc,???
+
+	pass
+# arm testcase for ldr${cond}b $rd,???
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb_pre_inc_wb_reg_offset
+ldrb_pre_inc_wb_reg_offset:
+	ldr0b pc,???
+
+	pass

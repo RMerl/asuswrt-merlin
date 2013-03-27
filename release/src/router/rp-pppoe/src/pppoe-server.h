@@ -4,7 +4,7 @@
 *
 * Definitions for PPPoE server
 *
-* Copyright (C) 2001-2006 Roaring Penguin Software Inc.
+* Copyright (C) 2001-2012 Roaring Penguin Software Inc.
 *
 * This program may be distributed according to the terms of the GNU
 * General Public License, version 2 or (at your option) any later version.
@@ -29,6 +29,7 @@ typedef struct {
     int sock;			/* Socket for discovery frames */
     unsigned char mac[ETH_ALEN]; /* MAC address */
     EventHandler *eh;		/* Event handler for this interface */
+    UINT16_t mtu;               /* MTU of interface */
 
     /* Next fields are used only if we're an L2TP LAC */
 #ifdef HAVE_L2TP
@@ -78,6 +79,7 @@ typedef struct ClientSessionStruct {
     unsigned int flags;		/* Various flags */
     time_t startTime;		/* When session started */
     char const *serviceName;	/* Service name */
+    UINT16_t requested_mtu;     /* Requested PPP_MAX_PAYLOAD  per RFC 4638 */
 #ifdef HAVE_LICENSE
     char user[MAX_USERNAME_LEN+1]; /* Authenticated user-name */
     char realm[MAX_USERNAME_LEN+1]; /* Realm */

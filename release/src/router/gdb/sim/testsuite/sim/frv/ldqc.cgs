@@ -1,0 +1,60 @@
+# frv testcase for ldqc @($GRi,$GRj),$GRk
+# mach: frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldqc
+ldqc:
+	set_mem_limmed	0xdead,0xbeef,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xbeef,0xdead,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0x1234,0x5678,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0x9abc,0xdef0,sp
+	set_cpr_limmed	0xdead,0xbeef,cpr8
+	set_cpr_limmed	0xbeef,0xdead,cpr9
+	set_cpr_limmed	0x1234,0x5678,cpr10
+	set_cpr_limmed	0x9abc,0xdef0,cpr11
+
+	set_gr_immed	0,gr7
+	;loading into cpr0 is business as usual
+	ldqc 		@(sp,gr7),cpr0
+	test_cpr_limmed	0x9abc,0xdef0,cpr0
+	test_cpr_limmed	0x1234,0x5678,cpr1
+	test_cpr_limmed	0xbeef,0xdead,cpr2
+	test_cpr_limmed	0xdead,0xbeef,cpr3
+
+	ldqc 		@(sp,gr7),cpr8
+	test_cpr_limmed	0x9abc,0xdef0,cpr8
+	test_cpr_limmed	0x1234,0x5678,cpr9
+	test_cpr_limmed	0xbeef,0xdead,cpr10
+	test_cpr_limmed	0xdead,0xbeef,cpr11
+
+	set_cpr_limmed	0xdead,0xbeef,cpr8
+	set_cpr_limmed	0xbeef,0xdead,cpr9
+	set_cpr_limmed	0x1234,0x5678,cpr10
+	set_cpr_limmed	0x9abc,0xdef0,cpr11
+	inc_gr_immed	-16,sp
+	set_gr_immed	16,gr7
+	ldqc 		@(sp,gr7),cpr8
+	test_cpr_limmed	0x9abc,0xdef0,cpr8
+	test_cpr_limmed	0x1234,0x5678,cpr9
+	test_cpr_limmed	0xbeef,0xdead,cpr10
+	test_cpr_limmed	0xdead,0xbeef,cpr11
+
+	set_cpr_limmed	0xdead,0xbeef,cpr8
+	set_cpr_limmed	0xbeef,0xdead,cpr9
+	set_cpr_limmed	0x1234,0x5678,cpr10
+	set_cpr_limmed	0x9abc,0xdef0,cpr11
+	inc_gr_immed	32,sp
+	set_gr_immed	-16,gr7
+	ldqc 		@(sp,gr7),cpr8
+	test_cpr_limmed	0x9abc,0xdef0,cpr8
+	test_cpr_limmed	0x1234,0x5678,cpr9
+	test_cpr_limmed	0xbeef,0xdead,cpr10
+	test_cpr_limmed	0xdead,0xbeef,cpr11
+
+	pass

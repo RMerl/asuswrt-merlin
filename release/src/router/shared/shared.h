@@ -193,12 +193,15 @@ enum {
 	MODEL_RTN12C1,
 	MODEL_RTN12D1,
 	MODEL_RTN12HP,
+	MODEL_APN12HP,
 	MODEL_RTN16,
 	MODEL_RTN15U,
 	MODEL_RTN53,
 	MODEL_RTN66U,
 	MODEL_RTAC66U,
+	MODEL_RTAC56U,
 	MODEL_RTN10U,
+	MODEL_RTN10P,
 	MODEL_RTN10D1,
 	MODEL_GENERIC
 };
@@ -243,6 +246,7 @@ extern int check_hw_type(void);
 //	extern int get_hardware(void) __attribute__ ((weak, alias ("check_hw_type")));
 extern int get_model(void);
 extern char *get_modelid(int model);
+extern char *get_productid(void);
 extern int supports(unsigned long attr);
 
 // pids.c
@@ -256,6 +260,8 @@ extern int ppid(int pid);
 
 
 // files.c
+extern int check_if_dir_empty(const char *dirpath);
+
 #define FW_CREATE	0
 #define FW_APPEND	1
 #define FW_NEWLINE	2
@@ -281,6 +287,8 @@ extern int f_wait_notexists(const char *name, int max);
 #define BTN_SWMODE_SW_ROUTER		5
 #define BTN_SWMODE_SW_REPEATER		6
 #define BTN_SWMODE_SW_AP		7
+#define BTN_WIFI_TOG			8
+#define BTN_TURBO			9
 
 #define LED_POWER			0
 #define LED_USB				1
@@ -289,8 +297,12 @@ extern int f_wait_notexists(const char *name, int max);
 #define HAVE_FAN			4
 #define LED_LAN				5
 #define LED_WAN				6
+#ifdef RTCONFIG_LED_ALL
+#define LED_ALL				0xFE
+#endif
 #define LED_2G				7
 #define LED_5G				8
+#define LED_USB3			9
 #define LED_SWITCH			20
 
 #define	LED_OFF				0
@@ -304,12 +316,45 @@ extern int init_gpio(void);
 extern int button_pressed(int which);
 extern int led_control(int which, int mode);
 
+/* api-*.c */
+extern uint32_t gpio_dir(uint32_t gpio, int dir);
+extern uint32_t set_gpio(uint32_t gpio, uint32_t value);
+extern uint32_t get_gpio(uint32_t gpio);
+extern uint32_t get_phy_speed(uint32_t portmask);
+
+/* sysdeps/ralink/ *.c */
+#ifdef RTCONFIG_RALINK
+extern int FRead(char *dst, int src, int count);
+extern int FWrite(const char *src, int offset, int count);
+extern int rtkswitch_ioctl(int val, int val2);
+extern unsigned int rtkswitch_wanPort_phyStatus(void);
+extern unsigned int rtkswitch_lanPorts_phyStatus(void);
+extern unsigned int rtkswitch_WanPort_phySpeed(void);
+extern int rtkswitch_WanPort_linkUp(void);
+extern int rtkswitch_WanPort_linkDown(void);
+extern int rtkswitch_LanPort_linkUp(void);
+extern int rtkswitch_LanPort_linkDown(void);
+extern int rtkswitch_AllPort_linkUp(void);
+extern int rtkswitch_AllPort_linkDown(void);
+extern int rtkswitch_Reset_Storm_Control(void);
+extern int ralink_gpio_read_bit(int idx);
+extern int ralink_gpio_write_bit(int idx, int value);
+extern char *wif_to_vif(char *wif);
+extern int ralink_gpio_init(unsigned int idx, int dir);
+extern int config_rtkswitch(int argc, char *argv[]);
+#endif
+
 // base64.c
 extern int base64_encode(unsigned char *in, char *out, int inlen);		// returns amount of out buffer used
 extern int base64_decode(const char *in, unsigned char *out, int inlen);	// returns amount of out buffer used
 extern int base64_encoded_len(int len);
 extern int base64_decoded_len(int len);										// maximum possible, not actual
 
+/* boardapi.c */
+extern int lanport_status(void);
+
+/* discover.c */
+extern int discover_all(void);
 
 // strings.c
 extern int char_to_ascii_safe(const char *output, const char *input, int outsize);
@@ -318,15 +363,6 @@ extern int ascii_to_char_safe(const char *output, const char *input, int outsize
 extern void ascii_to_char(const char *output, const char *input);
 extern const char *find_word(const char *buffer, const char *word);
 extern int remove_word(char *buffer, const char *word);
-
-#ifdef RTCONFIG_RALINK
-extern int ralink_gpio_init(unsigned int idx, int dir);
-#ifdef RTCONFIG_DSL
-extern int config8367r(int argc, char *argv[]);
-#else
-extern void config8367m(int argc, char *argv[]);
-#endif
-#endif
 
 // file.c
 extern int check_if_file_exist(const char *file);
@@ -342,12 +378,32 @@ extern int nvram_set_file(const char *key, const char *fname, int max);
 #endif
 extern int free_caches(const char *clean_mode, const int clean_time, const unsigned int threshold);
 extern unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2);
-extern char *get_productid();
+extern int update_6rd_info(void);
+extern const char *get_wanip(void);
+extern int is_private_subnet(const char *ip);
+extern const char *get_wanface(void);
+extern const char *get_wanip(void);
+extern int is_intf_up(const char* ifname);
+extern uint32_t crc_calc(uint32_t crc, const char *buf, int len);
+#ifdef RTCONFIG_IPV6
+extern const char *get_wan6face(void);
+#endif
 
 /* notify_rc.c */
 extern void notify_rc(const char *event_name);
 extern void notify_rc_after_wait(const char *event_name);
 extern void notify_rc_after_period_wait(const char *event_name, int wait);
 extern void notify_rc_and_wait(const char *event_name);
+
+/* rtstate.c */
+extern char *get_wanx_ifname(int unit);
+extern int get_lanports_status(void);
+extern int set_wan_primary_ifunit(const int unit);
+#ifdef RTCONFIG_IPV6
+extern char *get_wan6_ifname(int unit);
+#endif
+
+/* semaphore.c */
+extern void init_spinlock(void);
 
 #endif

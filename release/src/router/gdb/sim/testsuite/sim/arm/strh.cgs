@@ -1,0 +1,132 @@
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global strh_post_dec_imm_offset
+strh_post_dec_imm_offset:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global strh_post_dec_reg_offset
+strh_post_dec_reg_offset:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global strh_post_inc_imm_offset
+strh_post_inc_imm_offset:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global strh_post_inc_reg_offset
+strh_post_inc_reg_offset:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global strh_pre_dec_imm_offset
+strh_pre_dec_imm_offset:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global strh_pre_dec_reg_offset
+strh_pre_dec_reg_offset:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global strh_pre_dec_wb_imm_offset
+strh_pre_dec_wb_imm_offset:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global strh_pre_dec_wb_reg_offset
+strh_pre_dec_wb_reg_offset:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global strh_pre_inc_imm_offset
+strh_pre_inc_imm_offset:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global strh_pre_inc_reg_offset
+strh_pre_inc_reg_offset:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global strh_pre_inc_wb_imm_offset
+strh_pre_inc_wb_imm_offset:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global strh_pre_inc_wb_reg_offset
+strh_pre_inc_wb_reg_offset:
+
+	pass

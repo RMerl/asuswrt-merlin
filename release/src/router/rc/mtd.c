@@ -64,34 +64,6 @@ static void crc_done(void)
 	crc_table = NULL;
 }
 
-static int crc_init(void)
-{
-	uint32 c;
-	int i, j;
-
-	if (crc_table == NULL) {
-		if ((crc_table = malloc(sizeof(uint32) * 256)) == NULL) return 0;
-		for (i = 255; i >= 0; --i) {
-			c = i;
-			for (j = 8; j > 0; --j) {
-				if (c & 1) c = (c >> 1) ^ 0xEDB88320L;
-					else c >>= 1;
-			}
-			crc_table[i] = c;
-		}
-	}
-	return 1;
-}
-
-static uint32 crc_calc(uint32 crc, char *buf, int len)
-{
-	while (len-- > 0) {
-		crc = crc_table[(crc ^ *((char *)buf)) & 0xFF] ^ (crc >> 8);
-		buf++;
-	}
-	return crc;
-}
-
 // -----------------------------------------------------------------------------
 
 static int mtd_open(const char *mtdname, mtd_info_t *mi)
@@ -232,9 +204,6 @@ int mtd_write_main(int argc, char *argv[])
 	int mf = -1;
 	mtd_info_t mi;
 	erase_info_t ei;
-	uint32 sig;
-	struct code_header cth;
-	uint32 crc;
 	FILE *f;
 	char *buf = NULL;
 	const char *error;

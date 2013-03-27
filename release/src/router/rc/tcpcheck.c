@@ -308,7 +308,8 @@ static void waitforconnects()
   }
 }
 
-int tcpcheck_main(int argc, const char *argv[]){
+int tcpcheck_main(int argc, char *argv[])
+{
   struct connectinfo *pending;
   int i;
   int res;

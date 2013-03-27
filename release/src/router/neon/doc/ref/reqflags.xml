@@ -1,0 +1,86 @@
+<refentry id="refreqflags">
+
+  <refmeta>
+    <refentrytitle>ne_set_request_flag</refentrytitle>
+    <manvolnum>3</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname id="ne_set_request_flag">ne_set_request_flag</refname>
+    <refname id="ne_get_request_flag">ne_get_request_flag</refname>
+    <refpurpose>set and retrieve per-request flags</refpurpose>
+  </refnamediv>
+  
+  <refsynopsisdiv>
+
+    <funcsynopsis>
+
+      <funcsynopsisinfo>#include &lt;ne_request.h&gt;</funcsynopsisinfo>
+
+      <funcprototype>
+        <funcdef>void <function>ne_set_request_flag</function></funcdef>
+        <paramdef>ne_request *<parameter>req</parameter></paramdef>
+        <paramdef>ne_request_flag <parameter>flag</parameter></paramdef>
+        <paramdef>int <parameter>value</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>int <function>ne_get_request_flag</function></funcdef>
+        <paramdef>ne_request *<parameter>req</parameter></paramdef>
+        <paramdef>ne_request_flag <parameter>flag</parameter></paramdef>
+      </funcprototype>
+
+    </funcsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para>The <function>ne_set_request_flag</function> function
+    enables or disables a per-request flag.  Passing a non-zero
+    <parameter>value</parameter> argument enables the flag, and zero
+    disables it.</para>
+
+    <para>The following flags are defined:</para>
+
+	<variablelist>
+	  <varlistentry>
+            <term><constant>NE_REQFLAG_EXPECT100</constant></term>
+	    <listitem>
+	      <simpara>enable this flag to use the "Expect:
+	      100-continue" feature of HTTP/1.1, which allows the
+	      server to process request headers without reading the
+	      entire request body.  This saves time and bandwidth if
+	      the server gives an authentication challenge (requiring
+	      the request to be resent), but has interoperability
+	      problems with some older servers.</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+            <term><constant>NE_REQFLAG_IDEMPOTENT</constant></term>
+	    <listitem>
+	      <simpara>disable this flag if the request uses a
+	      non-idempotent method such as
+	      <literal>POST</literal></simpara>
+	    </listitem>
+	  </varlistentry>
+        </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Return value</title>
+
+    <para>The <function>ne_get_request_flag</function> function returns
+    zero if a flag is disabled, less than zero if the flag is not
+    supported, or greater than zero if the flag is enabled.</para>
+  </refsect1>
+
+  <refsect1>
+    <title>See also</title>
+
+    <para><xref linkend="ne_request_create"/>.</para>
+
+  </refsect1>
+
+</refentry>

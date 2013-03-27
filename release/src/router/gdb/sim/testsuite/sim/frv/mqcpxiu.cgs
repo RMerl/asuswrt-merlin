@@ -1,0 +1,60 @@
+# frv testcase for mqcpxiu $GRi,$GRj,$GRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mqcpxiu
+mqcpxiu:
+	set_fr_iimmed  	4,2,fr8		; multiply small numbers
+	set_fr_iimmed  	3,5,fr10
+	set_fr_iimmed  	1,2,fr9		; multiply by 1
+	set_fr_iimmed  	1,3,fr11
+	mqcpxiu      	fr8,fr10,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	26,acc0
+	test_accg_immed 	0,accg1
+	test_acc_immed 	5,acc1
+
+	set_fr_iimmed  	0,2,fr8		; multiply by 0
+	set_fr_iimmed  	0,2,fr10
+	set_fr_iimmed 	0x3fff,1,fr9	; 15 bit result
+	set_fr_iimmed  	0x0001,2,fr11
+	mqcpxiu      	fr8,fr10,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0,acc0
+	test_accg_immed 	0,accg1
+	test_acc_limmed	0x0000,0x7fff,acc1
+
+	set_fr_iimmed  	0x4000,1,fr8	; 16 bit result
+	set_fr_iimmed  	0x0001,2,fr10
+	set_fr_iimmed  	0x4000,1,fr9	; 17 bit result
+	set_fr_iimmed  	0x0001,4,fr11
+	mqcpxiu      	fr8,fr10,acc0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x0000,0x8001,acc0
+	test_accg_immed 	0,accg1
+	test_acc_immed 	0x0010001,acc1
+
+	set_fr_iimmed  	0x7fff,0x0000,fr8	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr10
+	set_fr_iimmed  	0x8000,0x8000,fr9	; max positive result
+	set_fr_iimmed  	0x0000,0x8000,fr11
+	mqcpxiu      	fr8,fr10,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0x3fff0001,acc0
+	test_accg_immed 	0,accg1
+	test_acc_limmed	0x4000,0x0000,acc1
+
+	set_fr_iimmed  	0xffff,0x0000,fr8	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr10
+	set_fr_iimmed  	0xffff,0xffff,fr9	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr11
+	mqcpxiu      	fr8,fr10,acc0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0xfffe,0x0001,acc0
+	test_accg_immed 1,accg1
+	test_acc_immed	0xfffc0002,acc1
+
+	pass

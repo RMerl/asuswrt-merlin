@@ -1,0 +1,14 @@
+# sh testcase for mshflo.l $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global mshflol
+mshflol:
+	mshflo.l r0, r0, r0
+
+	pass

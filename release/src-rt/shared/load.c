@@ -242,50 +242,18 @@ extern int input_len;
 static void
 load(si_t *sih)
 {
-	int inoff, ret = 0;
-#ifdef NFLASH_SUPPORT
-	chipcregs_t *cc;
-	struct nflash *nfl_info;
-	uchar *copy_buf, *nand_ptr;
-	int copy_len, offset, len;
-#endif
-
-	/* Offset from beginning of flash */
+	int ret = 0;
 #ifdef	CONFIG_XIP
+	int inoff;
+
 	inoff = ((ulong)text_end - (ulong)text_start) + ((ulong)input_data - (ulong)data_start);
-#else
-	inoff = (ulong)input_data - (ulong)text_start;
-#endif /* CONFIG_XIP */
-#ifdef NFLASH_SUPPORT
-	if ((sih->ccrev == 38) && ((sih->chipst & (1 << 4)) != 0)) {
-		cc = (chipcregs_t *)si_setcoreidx(sih, SI_CC_IDX);
-		nfl_info = nflash_init(sih, cc);
-		if (nfl_info) {
-			nand_ptr = OSL_CACHED(SI_FLASH1);
-			/* 512KB of buffer ahead of LOADADDR */
-			copy_buf = (unsigned char *)(LOADADDR - 0x80000);
-			inbase = (uint32 *)(copy_buf + inoff);
-			copy_len = inoff + input_len;
-			offset = 0;
-			while (copy_len > 0) {
-				if (nflash_checkbadb(sih, cc, offset) != 0) {
-					offset += nfl_info->blocksize;
-					continue;
-				}
-				len = (copy_len < nfl_info->blocksize)?
-					copy_len: nfl_info->blocksize;
-				memcpy(copy_buf, nand_ptr + offset, len);
-				copy_len -= len;
-				offset += len;
-				copy_buf += len;
-			}
-		}
-	} else
-#endif /* NFLASH_SUPPORT */
 	if (sih->ccrev == 12)
 		inbase = OSL_UNCACHED(SI_FLASH2 + inoff);
 	else
 		inbase = OSL_CACHED(SI_FLASH2 + inoff);
+#else
+	inbase = (uint32 *)input_data;
+#endif
 
 	outbuf = (uchar *)LOADADDR;
 	bytes_out = 0;

@@ -1,0 +1,10 @@
+# sh testcase for synci -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+	synci
+	pass

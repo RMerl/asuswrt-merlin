@@ -1,0 +1,35 @@
+# sh testcase for shori $imm16, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	pta wrong, tr0
+
+shori1:
+	movi 1, r0
+	shori 7, r0
+	# check it.
+	andi r0, 15, r7
+	bnei r7, 7, tr0
+	shlri r0, 16, r0
+	bnei r0, 1, tr0
+
+shori2:
+	# Test for zero extension bug reported by
+	# Alexandre Oliva <aoliva@redhat.com>.
+	movi 0, r0
+	shori 65535, r0
+	# check it.
+	movi 0xffff, r1
+	bne r0, r1, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

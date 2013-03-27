@@ -1,0 +1,6 @@
+# Host: NetBSD/vax a.out
+NATDEPFILES= fork-child.o inf-ptrace.o \
+	vaxbsd-nat.o bsd-kvm.o \
+	solib.o solib-sunos.o
+
+LOADLIBES= -lkvm

@@ -1,0 +1,14 @@
+# sh testcase for shlr2 $rn
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global shrl2
+shrl2:
+	shlr2 r0
+
+	pass

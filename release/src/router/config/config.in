@@ -97,6 +97,10 @@ config RTCONFIG_WIRELESSWAN
 	bool "Wireless WAN Function"
 	default n
 
+config RTCONFIG_W3N
+	bool "W3Networks support"
+	default n
+
 config RTCONFIG_WIRELESSREPEATER
 	bool "Repeater Mode"
 	default n
@@ -104,6 +108,15 @@ config RTCONFIG_WIRELESSREPEATER
 config RTCONFIG_PROXYSTA
 	bool "Proxy STA"
 	default n
+
+config RTCONFIG_IXIAEP
+	bool "IXIA Performance Endpoint"
+	default n
+
+config RTCONFIG_IPERF
+	bool "Iperf"
+	default n
+
 
 config RTCONFIG_OLD_PARENTALCTRL
 	bool "Parental Control Function Old UI"
@@ -179,13 +192,13 @@ config RTCONFIG_NTFS
 	depends on RTCONFIG_USB
 	default n
 
-config RTCONFIG_DISK_MONITOR
-	bool "Disk monitor Support"
+config RTCONFIG_NTFS3G
+	bool "NTFS-3G Support"
 	depends on RTCONFIG_USB
 	default n
 
-config RTCONFIG_NTFS3G
-	bool "NTFS-3G Support"
+config RTCONFIG_DISK_MONITOR
+	bool "Disk monitor Support"
 	depends on RTCONFIG_USB
 	default n
 
@@ -242,6 +255,11 @@ config RTCONFIG_RALINK_RT3052
 	depends on RTCONFIG_RALINK
 	default n
 
+config RTCONFIG_N56U_SR2
+	bool "RT-N56U SR2 hardware support"
+	depends on RTCONFIG_RALINK
+	default n
+
 config RTCONFIG_LOCALE2012
 	bool "Wireless Locale 2012"
 	depends on RTCONFIG_RALINK_RT3883
@@ -249,6 +267,10 @@ config RTCONFIG_LOCALE2012
 
 config RTCONFIG_ODMPID
 	bool "ODM Product ID"
+	default n
+
+config RTCONFIG_LED_ALL
+	bool "LED All GPIO"
 	default n
 
 config CONFIG_LIBBCM
@@ -269,6 +291,10 @@ config RTCONFIG_SHP
 
 config RTCONFIG_SFP
 	bool "Small Footprint"
+	default n
+
+config RTCONFIG_STRACE
+	bool "strace"
 	default n
 
 config RTCONFIG_4M_SFP
@@ -295,6 +321,10 @@ config RTCONFIG_WIRELESS_SWITCH
 	bool "HW Switch for WiFi"
 	default n
 
+config RTCONFIG_WIFI_TOG_BTN
+	bool "HW Button for WiFi toggle"
+	default n
+
 config RTCONFIG_AUTODICT
 	bool "AUTO DICTIONARY TOOLS"
 	default n
@@ -307,7 +337,31 @@ config RTCONFIG_NVRAM_64K
 	bool "NVRAM_64K"
 	default n
 
+config RTCONFIG_GDB
+	bool "GDB"
+	default n
+
+config RTCONFIG_USB_XHCI
+	bool "XHCI"
+	default n
+
+config RTCONFIG_WLMODULE_RT3090_AP
+	bool "Wireless module RT3090 ap"
+	default n
+
+config RTCONFIG_WLMODULE_RT3352_INIC_MII
+	bool "Wireless module RT3352 iNIC MII"
+	default n
+
+config RTCONFIG_PSISTLOG
+	bool "Persistent syslog"
+	default n
+
 config RTCONFIG_DUAL_TRX
-        bool "DUAL_TRX"
-        default n
+	bool "DUAL_TRX"
+	default n
+
+config RTCONFIG_OPTIMIZE_XBOX
+	bool "OPTIMIZE_XBOX"
+	default n
 

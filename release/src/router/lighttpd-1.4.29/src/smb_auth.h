@@ -32,6 +32,8 @@ size_t smbc_wrapper_read(connection* con, int fd, void *buf, size_t bufsize);
 
 size_t smbc_wrapper_write(connection* con, int fd, const void *buf, size_t bufsize, uint16_t write_mode );
 
+void process_share_link_for_router_sync_use();
+
 
 
 

@@ -1,0 +1,60 @@
+# fr30 testcase for ldm0 ($reglist_low)
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global ldm0
+ldm0:
+	; Test ldm0 ($reglist_low)
+	mvr_h_gr	sp,r9		; save stack pointer permanently
+	inci_h_gr	-4,sp
+	mvi_h_mem  	3,sp
+	inci_h_gr	-4,sp
+	mvi_h_mem  	2,sp
+	inci_h_gr	-4,sp
+	mvi_h_mem  	1,sp
+	inci_h_gr	-4,sp
+	mvi_h_mem  	0,sp
+
+	set_cc          0x0f		; Condition codes should not change
+	ldm0      	(r0,r2,r4,r6)
+	test_cc		1 1 1 1
+	testr_h_gr	sp,r9
+	test_h_gr 	0,r0
+	test_h_gr 	1,r2
+	test_h_gr 	2,r4
+	test_h_gr   	3,r6
+
+	inci_h_gr	-16,sp
+	set_cc          0x0f		; Condition codes should not change
+	ldm0      	(r1,r3,r5,r7)
+	test_cc		1 1 1 1
+	testr_h_gr	sp,r9
+	test_h_gr 	0,r1
+	test_h_gr 	1,r3
+	test_h_gr 	2,r5
+	test_h_gr   	3,r7
+
+	inci_h_gr	-16,sp
+	set_cc          0x0f		; Condition codes should not change
+	ldm0      	(r1,r5,r7,r3)	; Order speficied should not matter
+	test_cc		1 1 1 1
+	testr_h_gr	sp,r9
+	test_h_gr 	0,r1
+	test_h_gr 	1,r3
+	test_h_gr 	2,r5
+	test_h_gr   	3,r7
+
+	set_cc          0x0f		; Condition codes should not change
+	ldm0      	()		; Nothing should happen
+	test_cc		1 1 1 1
+	testr_h_gr	sp,r9
+	test_h_gr 	0,r1
+	test_h_gr 	1,r3
+	test_h_gr 	2,r5
+	test_h_gr   	3,r7
+
+	pass

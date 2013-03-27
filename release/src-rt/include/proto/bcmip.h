@@ -36,13 +36,24 @@
 #define IP_VER_4		4	/* version number for IPV4 */
 #define IP_VER_6		6	/* version number for IPV6 */
 
+
+
+/* IP flags. */
+#define IP_CE			0x8000	/* Flag: "Congestion"		*/
+#define IP_DF			0x4000	/* Flag: "Don't Fragment"	*/
+#define IP_MF			0x2000	/* Flag: "More Fragments"	*/
+#define IP_OFFSET		0x1FFF	/* "Fragment Offset" part	*/
+
+
 #define IP_VER(ip_body) \
 	((((uint8 *)(ip_body))[IP_VER_OFFSET] & IP_VER_MASK) >> IP_VER_SHIFT)
 
 #define IP_PROT_ICMP		0x1	/* ICMP protocol */
+#define IP_PROT_IGMP		0x2	/* IGMP protocol */
 #define IP_PROT_TCP		0x6	/* TCP protocol */
 #define IP_PROT_UDP		0x11	/* UDP protocol type */
-#define IP_PROT_IGMP		0x02	/* IGMP protocol */
+#define IP_PROT_ICMP6		0x3a	/* ICMPv6 protocol type */
+#define IP_PROT_GRE		0x2f	/* GRE protocol type */
 
 /* IPV4 field offsets */
 #define IPV4_VER_HL_OFFSET	0	/* version and ihl byte offset */
@@ -54,6 +65,7 @@
 #define IPV4_SRC_IP_OFFSET	12	/* src IP addr offset */
 #define IPV4_DEST_IP_OFFSET	16	/* dest IP addr offset */
 #define IPV4_OPTIONS_OFFSET	20	/* IP options offset */
+#define IPV4_MIN_HEADER_LEN	20	/* Minimum size for an IP header (no options) */
 
 /* IPV4 field decodes */
 #define IPV4_VER_MASK		0xf0	/* IPV4 version mask */
@@ -141,6 +153,63 @@ BWL_PRE_PACKED_STRUCT struct ipv4_hdr {
 #define IP_TOS46(ip_body) \
 	(IP_VER(ip_body) == IP_VER_4 ? IPV4_TOS(ip_body) : \
 	 IP_VER(ip_body) == IP_VER_6 ? IPV6_TRAFFIC_CLASS(ip_body) : 0)
+
+/* IPV6 extension headers (options) */
+#define IPV6_EXTHDR_HOP		0
+#define IPV6_EXTHDR_ROUTING	43
+#define IPV6_EXTHDR_FRAGMENT	44
+#define IPV6_EXTHDR_AUTH	51
+#define IPV6_EXTHDR_NONE	59
+#define IPV6_EXTHDR_DEST	60
+
+#define IPV6_EXTHDR(prot)	(((prot) == IPV6_EXTHDR_HOP) || \
+	                         ((prot) == IPV6_EXTHDR_ROUTING) || \
+	                         ((prot) == IPV6_EXTHDR_FRAGMENT) || \
+	                         ((prot) == IPV6_EXTHDR_AUTH) || \
+	                         ((prot) == IPV6_EXTHDR_NONE) || \
+	                         ((prot) == IPV6_EXTHDR_DEST))
+
+#define IPV6_MIN_HLEN 		40
+
+#define IPV6_EXTHDR_LEN(eh)	((((struct ipv6_exthdr *)(eh))->hdrlen + 1) << 3)
+
+BWL_PRE_PACKED_STRUCT struct ipv6_exthdr {
+	uint8	nexthdr;
+	uint8	hdrlen;
+} BWL_POST_PACKED_STRUCT;
+
+BWL_PRE_PACKED_STRUCT struct ipv6_exthdr_frag {
+	uint8	nexthdr;
+	uint8	rsvd;
+	uint16	frag_off;
+	uint32	ident;
+} BWL_POST_PACKED_STRUCT;
+
+static INLINE int32
+ipv6_exthdr_len(uint8 *h, uint8 *proto)
+{
+	uint16 len = 0, hlen;
+	struct ipv6_exthdr *eh = (struct ipv6_exthdr *)h;
+
+	while (IPV6_EXTHDR(eh->nexthdr)) {
+		if (eh->nexthdr == IPV6_EXTHDR_NONE)
+			return -1;
+		else if (eh->nexthdr == IPV6_EXTHDR_FRAGMENT)
+			hlen = 8;
+		else if (eh->nexthdr == IPV6_EXTHDR_AUTH)
+			hlen = (eh->hdrlen + 2) << 2;
+		else
+			hlen = IPV6_EXTHDR_LEN(eh);
+
+		len += hlen;
+		eh = (struct ipv6_exthdr *)(h + len);
+	}
+
+	*proto = eh->nexthdr;
+	return len;
+}
+
+#define IPV4_ISMULTI(a) (((a) & 0xf0000000) == 0xe0000000)
 
 /* This marks the end of a packed structure section. */
 #include <packed_section_end.h>

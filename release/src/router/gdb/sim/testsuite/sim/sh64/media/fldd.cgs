@@ -1,0 +1,13 @@
+# sh testcase for fld.d $rm, $disp10x8, $drf -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+	movi 0x2800, r0
+	fld.d r0, 0, dr0
+	fld.d r0, 8, dr0
+	fld.d r0, -8, dr0
+	pass

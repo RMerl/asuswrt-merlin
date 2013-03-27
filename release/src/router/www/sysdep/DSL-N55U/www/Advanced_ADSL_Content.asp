@@ -197,7 +197,7 @@ function valid_form(){
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 		<thead>
 		<tr>
-		<td colspan="7">Stability Adjustment</td>
+		<td colspan="7"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,1);">Stability Adjustment</a></td>
 		</tr>
 		</thead>
 		<tr>
@@ -222,7 +222,7 @@ function valid_form(){
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 		<thead>
 		<tr>
-		<td colspan="7">SRA(Seamless Rate Adaptation)</td>
+		<td colspan="7"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,2);">SRA(Seamless Rate Adaptation)</a></td>
 		</tr>
 		</thead>
 		<tr>

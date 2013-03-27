@@ -5,6 +5,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
+<meta HTTP-EQUIV="refresh" CONTENT="10">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
 <title><#Web_Title#> - <#menu_dsl_log#></title>
@@ -19,6 +20,9 @@
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
+var sync_status = "<% nvram_get("dsltmp_adslsyncsts"); %>";
+var adsl_timestamp = "<% nvram_get("adsl_timestamp"); %>";
+var adsl_boottime = boottime - parseInt(adsl_timestamp);
 
 function initial(){
 	replace_Content("Modulation : 0", "Modulation : T1.413");
@@ -34,6 +38,30 @@ function initial(){
 	replace_Content("Line State : 3", "Line State : up");
 
 	replace_ContentAnnex("Annex Mode : Annex A ", "Annex Mode : Annex A/L");
+}
+
+function showadslbootTime(){
+	if((adsl_timestamp != "") && (sync_status == "up"))
+	{
+		Days = Math.floor(adsl_boottime / (60*60*24));
+		Hours = Math.floor((adsl_boottime / 3600) % 24);
+		Minutes = Math.floor(adsl_boottime % 3600 / 60);
+		Seconds = Math.floor(adsl_boottime % 60);
+
+		$("boot_days").innerHTML = Days;
+		$("boot_hours").innerHTML = Hours;
+		$("boot_minutes").innerHTML = Minutes;
+		$("boot_seconds").innerHTML = Seconds;
+		adsl_boottime += 1;
+		setTimeout("showadslbootTime()", 1000);
+	}
+	else
+	{
+		$("boot_days").innerHTML = "0";
+		$("boot_hours").innerHTML = "0";
+		$("boot_minutes").innerHTML = "0";
+		$("boot_seconds").innerHTML = "0";
+	}
 }
 
 function replace_Content(oldMod, newMod){
@@ -58,7 +86,7 @@ function replace_ContentAnnex(oldMod, newMod){
 </script>
 </head>
 
-<body onload="show_menu();load_body(); initial();" onunLoad="return unload_body();">
+<body onload="show_menu();load_body();showadslbootTime();initial();" onunLoad="return unload_body();">
 <div id="TopBanner"></div>
 
 <div id="Loading" class="popup_bg"></div>
@@ -117,6 +145,12 @@ function replace_ContentAnnex(oldMod, newMod){
 								<th width="20%"><#adsl_link_sts_itemname#></th>
 								<td>
 									<% nvram_get("dsltmp_adslsyncsts"); %>
+								</td>
+							</tr>
+							<tr>
+								<th width="20%">ADSL <#General_x_SystemUpTime_itemname#></th>
+								<td>
+									<span id="boot_days"></span> <#Day#> <span id="boot_hours"></span> <#Hour#> <span id="boot_minutes"></span> <#Minute#> <span id="boot_seconds"></span> <#Second#>
 								</td>
 							</tr>
 						</table>

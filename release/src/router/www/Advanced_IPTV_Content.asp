@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
@@ -23,6 +23,12 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 
 var original_switch_stb_x = '<% nvram_get("switch_stb_x"); %>';
 var original_switch_wantag = '<% nvram_get("switch_wantag"); %>';
+var original_switch_wan0tagid = '<%nvram_get("switch_wan0tagid"); %>';
+var original_switch_wan0tagid = '<%nvram_get("switch_wan0prio"); %>';
+var original_switch_wan1tagid = '<%nvram_get("switch_wan1tagid"); %>';
+var original_switch_wan1tagid = '<%nvram_get("switch_wan1prio"); %>';
+var original_switch_wan2tagid = '<%nvram_get("switch_wan2tagid"); %>';
+var original_switch_wan2tagid = '<%nvram_get("switch_wan2prio"); %>';
 
 var wans_lanport = '<% nvram_get("wans_lanport"); %>';
 var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
@@ -44,8 +50,10 @@ function initial(){
 	if(Rawifi_support == -1)	//rawifi platform without this item, by Viz 2012.01
 		$('enable_eff_multicast_forward').style.display="";		
 
-	if(parent.rc_support.search("manual_stb") == -1)
-		document.form.switch_wantag.remove(6);
+	if(dsl_support == -1){
+		if(parent.rc_support.search("manual_stb") == -1) 
+			document.form.switch_wantag.remove(8);
+	}
 }
 
 function load_ISP_profile() {
@@ -55,16 +63,16 @@ function load_ISP_profile() {
                 document.form.switch_wan0prio.value = "0";
                 document.form.switch_wan1tagid.value = "600";
                 document.form.switch_wan1prio.value = "0";
-                document.form.switch_wan2tagid.value = "0";
+                document.form.switch_wan2tagid.value = "";
                 document.form.switch_wan2prio.value = "0";
         }
         else if(document.form.switch_wantag.value == "unifi_biz") {
 		document.form.switch_stb_x.value = "0";
                 document.form.switch_wan0tagid.value = "500";
                 document.form.switch_wan0prio.value = "0";
-                document.form.switch_wan1tagid.value = "0";
+                document.form.switch_wan1tagid.value = "";
                 document.form.switch_wan1prio.value = "0";
-                document.form.switch_wan2tagid.value = "0";
+                document.form.switch_wan2tagid.value = "";
                 document.form.switch_wan2prio.value = "0";
         }
         else if(document.form.switch_wantag.value == "singtel_mio") {
@@ -82,19 +90,36 @@ function load_ISP_profile() {
                 document.form.switch_wan0prio.value = "0";
                 document.form.switch_wan1tagid.value = "20";
                 document.form.switch_wan1prio.value = "4";
-                document.form.switch_wan2tagid.value = "0";
+                document.form.switch_wan2tagid.value = "";
                 document.form.switch_wan2prio.value = "0";
         }
         else if(document.form.switch_wantag.value == "m1_fiber") {
                 document.form.switch_stb_x.value = "3";
                 document.form.switch_wan0tagid.value = "1103";
                 document.form.switch_wan0prio.value = "1";
-                document.form.switch_wan1tagid.value = "0";
+                document.form.switch_wan1tagid.value = "";
                 document.form.switch_wan1prio.value = "0";
                 document.form.switch_wan2tagid.value = "1107";
                 document.form.switch_wan2prio.value = "1";
-        }else{}
-
+        }
+        else if(document.form.switch_wantag.value == "maxis_fiber_sp") {
+                document.form.switch_stb_x.value = "3";
+                document.form.switch_wan0tagid.value = "11";
+                document.form.switch_wan0prio.value = "0";
+                document.form.switch_wan1tagid.value = "";
+                document.form.switch_wan1prio.value = "0";
+                document.form.switch_wan2tagid.value = "14";
+                document.form.switch_wan2prio.value = "0";
+        }
+        else if(document.form.switch_wantag.value == "maxis_fiber") {
+                document.form.switch_stb_x.value = "3";
+                document.form.switch_wan0tagid.value = "621";
+                document.form.switch_wan0prio.value = "0";
+                document.form.switch_wan1tagid.value = "";
+                document.form.switch_wan1prio.value = "0";
+                document.form.switch_wan2tagid.value = "821,822";
+                document.form.switch_wan2prio.value = "0";
+        }
 }
 
 function ISP_Profile_Selection(isp){
@@ -158,10 +183,30 @@ function ISP_Profile_Selection(isp){
 		document.form.switch_wantag.value = "m1_fiber";
                 document.form.switch_stb_x.value = "3";
 	}
+        else if(isp == "maxis_fiber_sp"){
+		$("wan_stb_x").style.display = "none";
+		$("wan_iptv_x").style.display = "none";
+		$("wan_voip_x").style.display = "";
+		$("wan_internet_x").style.display = "none";
+		$("wan_iptv_port4_x").style.display = "none";
+		$("wan_voip_port3_x").style.display = "none";
+                document.form.switch_wantag.value = "maxis_fiber_sp";
+                document.form.switch_stb_x.value = "3";
+        }
+        else if(isp == "maxis_fiber"){
+		$("wan_stb_x").style.display = "none";
+		$("wan_iptv_x").style.display = "none";
+		$("wan_voip_x").style.display = "";
+		$("wan_internet_x").style.display = "none";
+		$("wan_iptv_port4_x").style.display = "none";
+		$("wan_voip_port3_x").style.display = "none";
+                document.form.switch_wantag.value = "maxis_fiber";
+                document.form.switch_stb_x.value = "3";
+        }
 	else if(isp == "manual"){
 		$("wan_stb_x").style.display = "none";
-		$("wan_iptv_x").style.display = "";
-		$("wan_voip_x").style.display = "";
+		$("wan_iptv_x").style.display = "none";
+		$("wan_voip_x").style.display = "none";
 		$("wan_internet_x").style.display = "";
 		$("wan_iptv_port4_x").style.display = "";
 		$("wan_voip_port3_x").style.display = "";
@@ -176,17 +221,17 @@ function validForm(){
         {
                 if(document.form.switch_wan0tagid.value.length > 0)
                 {
-                        if(!validate_range(document.form.switch_wan0tagid, 2, 4094))
+                        if(!validate_range_null(document.form.switch_wan0tagid, 2, 4094, ""))
                                 return false;
                 }
                 if(document.form.switch_wan1tagid.value.length > 0)
                 {
-                        if(!validate_range(document.form.switch_wan1tagid, 2, 4094))
+                        if(!validate_range_null(document.form.switch_wan1tagid, 2, 4094, ""))
                                 return false;
                 }
                 if(document.form.switch_wan2tagid.value.length > 0)
                 {
-                        if(!validate_range(document.form.switch_wan2tagid, 2, 4094))
+                        if(!validate_range_null(document.form.switch_wan2tagid, 2, 4094, ""))
                                 return false;
                 }
 
@@ -239,18 +284,21 @@ function applyRule(){
 	}
 
 	if(dsl_support == -1) {	
-		  if( (original_switch_stb_x != document.form.switch_stb_x.value) 
-			||  (original_switch_wantag != document.form.switch_wantag.value)){
-						FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
-				}
-			load_ISP_profile();			
+		if( (original_switch_stb_x != document.form.switch_stb_x.value) 
+		||  (original_switch_wantag != document.form.switch_wantag.value)
+		||  (original_switch_wan0tagid != document.form.switch_wan0tagid.value)
+		||  (original_switch_wan0prio != document.form.switch_wan0prio.value)
+                ||  (original_switch_wan1tagid != document.form.switch_wan1tagid.value)
+                ||  (original_switch_wan1prio != document.form.switch_wan1prio.value)
+                ||  (original_switch_wan2tagid != document.form.switch_wan2tagid.value)
+                ||  (original_switch_wan2prio != document.form.switch_wan2prio.value)
+		){
+			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+		}
+		load_ISP_profile();			
 	} 
 
 	if(validForm()){
-
-		if(wl6_support != -1)
-			document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
-
 		if(document.form.udpxy_enable_x.value != 0 && document.form.udpxy_enable_x.value != ""){
 			if(!validate_range(document.form.udpxy_enable_x, 1024, 65535)){
 					document.form.udpxy_enable_x.focus();
@@ -286,6 +334,22 @@ function disable_udpxy(){
 		return change_common_radio(document.form.mr_enable_x, 'RouterConfig', 'mr_enable_x', '0');
 	}	
 }// The input fieldof UDP proxy does not relate to Mutlicast Routing. 
+
+
+
+function validate_range_null(o, min, max, def) {		//Viz add 2013.03 allow to set null
+	if (o.value=="") return true;
+	
+	if(o.value<min || o.value>max) {
+		alert('<#JS_validrange#> ' + min + ' <#JS_validrange_to#> ' + max + '.');
+		o.value = def;
+		o.focus();
+		o.select();
+		return false;
+	}
+	
+	return true;
+}
 
 </script>
 </head>
@@ -372,6 +436,8 @@ function disable_udpxy(){
 						<option value="singtel_mio" <% nvram_match( "switch_wantag", "singtel_mio", "selected"); %>>Singtel-MIO</option>
 						<option value="singtel_others" <% nvram_match( "switch_wantag", "singtel_others", "selected"); %>>Singtel-Others</option>
 						<option value="m1_fiber" <% nvram_match("switch_wantag", "m1_fiber", "selected"); %>>M1-Fiber</option>
+						<option value="maxis_fiber" <% nvram_match("switch_wantag", "maxis_fiber", "selected"); %>>Maxis-Fiber</option>
+						<option value="maxis_fiber_sp" <% nvram_match("switch_wantag", "maxis_fiber_sp", "selected"); %>>Maxis-Fiber-Special</option>
 						<option value="manual" <% nvram_match( "switch_wantag", "manual", "selected"); %>>Manual</option>
 		    </select>
   		</td>
@@ -401,22 +467,22 @@ function disable_udpxy(){
 		<tr id="wan_internet_x">
 	  	<th width="30%">Internet</th>
 	  	<td>
-			VID&nbsp;<input type="text" name="switch_wan0tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan0tagid"); %>">&nbsp;&nbsp;&nbsp;&nbsp;
-			PRIO&nbsp;<input type="text" name="switch_wan0prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan0prio"); %>">
+			VID&nbsp;<input type="text" name="switch_wan0tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan0tagid"); %>" onKeyPress="return is_number(this, event);">&nbsp;&nbsp;&nbsp;&nbsp;
+			PRIO&nbsp;<input type="text" name="switch_wan0prio" class="input_3_table" maxlength="1" value="<% nvram_get( "switch_wan0prio"); %>" onKeyPress="return is_number(this, event);">
 	  	</td>
 		</tr>
 	    	<tr id="wan_iptv_port4_x">
-	    	<th width="30%">IPTV (LAN port 4)</th>
+	    	<th width="30%">LAN port 4</th>
 	  	<td>
-			VID&nbsp;<input type="text" name="switch_wan1tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan1tagid"); %>">&nbsp;&nbsp;&nbsp;&nbsp;
-			PRIO&nbsp;<input type="text" name="switch_wan1prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan1prio"); %>">
+			VID&nbsp;<input type="text" name="switch_wan1tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan1tagid"); %>" onKeyPress="return is_number(this, event);">&nbsp;&nbsp;&nbsp;&nbsp;
+			PRIO&nbsp;<input type="text" name="switch_wan1prio" class="input_3_table" maxlength="1" value="<% nvram_get( "switch_wan1prio"); %>" onKeyPress="return is_number(this, event);">
 	  	</td>
 		</tr>
 		<tr id="wan_voip_port3_x">
-	  	<th width="30%">VoIP (LAN port 3)</th>
+	  	<th width="30%">LAN port 3</th>
 	  	<td>
-			VID&nbsp;<input type="text" name="switch_wan2tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan2tagid"); %>">&nbsp;&nbsp;&nbsp;&nbsp;
-			PRIO&nbsp;<input type="text" name="switch_wan2prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan2prio"); %>">
+			VID&nbsp;<input type="text" name="switch_wan2tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan2tagid"); %>" onKeyPress="return is_number(this, event);">&nbsp;&nbsp;&nbsp;&nbsp;
+			PRIO&nbsp;<input type="text" name="switch_wan2prio" class="input_3_table" maxlength="1" value="<% nvram_get( "switch_wan2prio"); %>" onKeyPress="return is_number(this, event);">
 	  	</td>
 		</tr>
 		</table>
@@ -478,7 +544,7 @@ function disable_udpxy(){
 				</td>
 			</tr-->	
 			<tr>
-				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,11);"><#RouterConfig_GWMulticastEnable_itemname#></a></th>
+				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,11);"><#RouterConfig_GWMulticastEnable_itemname#> (IGMP Proxy)</a></th>
 				<td>
           <select name="mr_enable_x" class="input_option">
             <option value="0" <% nvram_match("mr_enable_x", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -488,7 +554,7 @@ function disable_udpxy(){
 			</tr>
 
 					<tr id="enable_eff_multicast_forward" style="display:none;">
-						<th>Enable efficient multicast forwarding</th>
+						<th>Enable efficient multicast forwarding (IGMP Snooping)</th>
 						<td>
                   				<select name="emf_enable" class="input_option">
                     					<option value="0" <% nvram_match("emf_enable", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>

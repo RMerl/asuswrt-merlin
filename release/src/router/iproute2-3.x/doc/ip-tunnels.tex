@@ -1,0 +1,469 @@
+\documentstyle[12pt,twoside]{article}
+\def\TITLE{Tunnels over IP}
+\input preamble
+\begin{center}
+\Large\bf Tunnels over IP in Linux-2.2
+\end{center}
+
+
+\begin{center}
+{ \large Alexey~N.~Kuznetsov } \\
+\em Institute for Nuclear Research, Moscow \\
+\verb|kuznet@ms2.inr.ac.ru| \\
+\rm March 17, 1999
+\end{center}
+
+\vspace{5mm}
+
+\tableofcontents
+
+
+\section{Instead of introduction: micro-FAQ.}
+
+\begin{itemize}
+
+\item
+Q: In linux-2.0.36 I used:
+\begin{verbatim} 
+    ifconfig tunl1 10.0.0.1 pointopoint 193.233.7.65
+\end{verbatim} 
+to create tunnel. It does not work in 2.2.0!
+
+A: You are right, it does not work. The command written above is split to two commands.
+\begin{verbatim}
+    ip tunnel add MY-TUNNEL mode ipip remote 193.233.7.65
+\end{verbatim} 
+will create tunnel device with name \verb|MY-TUNNEL|. Now you may configure
+it with:
+\begin{verbatim} 
+    ifconfig MY-TUNNEL 10.0.0.1
+\end{verbatim} 
+Certainly, if you prefer name \verb|tunl1| to \verb|MY-TUNNEL|,
+you still may use it.
+
+\item
+Q: In linux-2.0.36 I used:
+\begin{verbatim} 
+    ifconfig tunl0 10.0.0.1
+    route add -net 10.0.0.0 gw 193.233.7.65 dev tunl0
+\end{verbatim} 
+to tunnel net 10.0.0.0 via router 193.233.7.65. It does not
+work in 2.2.0! Moreover, \verb|route| prints a funny error sort of
+``network unreachable'' and after this I found a strange direct route
+to 10.0.0.0 via \verb|tunl0| in routing table.
+
+A: Yes, in 2.2 the rule that {\em normal} gateway must reside on directly
+connected network has not any exceptions. You may tell kernel, that
+this particular route is {\em abnormal}:
+\begin{verbatim} 
+  ifconfig tunl0 10.0.0.1 netmask 255.255.255.255
+  ip route add 10.0.0.0/8 via 193.233.7.65 dev tunl0 onlink
+\end{verbatim}
+Note keyword \verb|onlink|, it is the magic key that orders kernel
+not to check for consistency of gateway address.
+Probably, after this explanation you have already guessed another method
+to cheat kernel:
+\begin{verbatim} 
+  ifconfig tunl0 10.0.0.1 netmask 255.255.255.255
+  route add -host 193.233.7.65 dev tunl0
+  route add -net 10.0.0.0 netmask 255.0.0.0 gw 193.233.7.65
+  route del -host 193.233.7.65 dev tunl0
+\end{verbatim}
+Well, if you like such tricks, nobody may prohibit you to use them.
+Only do not forget
+that between \verb|route add| and \verb|route del| host 193.233.7.65 is
+unreachable.
+
+\item
+Q: In 2.0.36 I used to load \verb|tunnel| device module and \verb|ipip| module.
+I cannot find any \verb|tunnel| in 2.2!
+
+A: Linux-2.2 has single module \verb|ipip| for both directions of tunneling
+and for all IPIP tunnel devices.
+
+\item
+Q: \verb|traceroute| does not work over tunnel! Well, stop... It works,
+     only skips some number of hops.
+
+A: Yes. By default tunnel driver copies \verb|ttl| value from
+inner packet to outer one. It means that path traversed by tunneled
+packets to another endpoint is not hidden. If you dislike this, or if you
+are going to use some routing protocol expecting that packets
+with ttl 1 will reach peering host (f.e.\ RIP, OSPF or EBGP)
+and you are not afraid of
+tunnel loops, you may append option \verb|ttl 64|, when creating tunnel
+with \verb|ip tunnel add|.
+
+\item
+Q: ... Well, list of things, which 2.0 was able to do finishes.
+
+\end{itemize}
+
+\paragraph{Summary of differences between 2.2 and 2.0.}
+
+\begin{itemize}
+
+\item {\bf In 2.0} you could compile tunnel device into kernel
+	and got set of 4 devices \verb|tunl0| ... \verb|tunl3| or,
+	alternatively, compile it as module and load new module
+	for each new tunnel. Also, module \verb|ipip| was necessary
+	to receive tunneled packets.
+
+      {\bf 2.2} has {\em one\/} module \verb|ipip|. Loading it you get base
+	tunnel device \verb|tunl0| and another tunnels may be created with command
+	\verb|ip tunnel add|. These new devices may have arbitrary names.
+
+
+\item {\bf In 2.0} you set remote tunnel endpoint address with
+	the command \verb|ifconfig| ... \verb|pointopoint A|.
+
+	{\bf In 2.2} this command has the same semantics on all
+	the interfaces, namely it sets not tunnel endpoint,
+	but address of peering host, which is directly reachable
+	via this tunnel,
+	rather than via Internet. Actual tunnel endpoint address \verb|A|
+	should be set with \verb|ip tunnel add ... remote A|.
+
+\item {\bf In 2.0} you create tunnel routes with the command:
+\begin{verbatim}
+    route add -net 10.0.0.0 gw A dev tunl0
+\end{verbatim}
+
+	{\bf 2.2} interprets this command equally for all device
+	kinds and gateway is required to be directly reachable via this tunnel,
+	rather than via Internet. You still may use \verb|ip route add ... onlink|
+	to override this behaviour.
+
+\end{itemize}
+
+
+\section{Tunnel setup: basics}
+
+Standard Linux-2.2 kernel supports three flavor of tunnels,
+listed in the following table:
+\vspace{2mm}
+
+\begin{tabular}{lll}
+\vrule depth 0.8ex width 0pt\relax
+Mode & Description  & Base device \\
+ipip & IP over IP & tunl0 \\
+sit & IPv6 over IP & sit0 \\
+gre & ANY over GRE over IP & gre0
+\end{tabular}
+
+\vspace{2mm}
+
+\noindent All the kinds of tunnels are created with one command:
+\begin{verbatim}
+  ip tunnel add <NAME> mode <MODE> [ local <S> ] [ remote <D> ]
+\end{verbatim}
+
+This command creates new tunnel device with name \verb|<NAME>|.
+The \verb|<NAME>| is an arbitrary string. Particularly,
+it may be even \verb|eth0|. The rest of parameters set
+different tunnel characteristics.
+
+\begin{itemize}
+
+\item
+\verb|mode <MODE>| sets tunnel mode. Three modes are available now
+	\verb|ipip|, \verb|sit| and \verb|gre|.
+
+\item
+\verb|remote <D>| sets remote endpoint of the tunnel to IP
+	address \verb|<D>|.
+\item
+\verb|local <S>| sets fixed local address for tunneled
+	packets. It must be an address on another interface of this host.
+
+\end{itemize}
+
+\let\thefootnote\oldthefootnote
+
+Both \verb|remote| and \verb|local| may be omitted. In this case we
+say that they are zero or wildcard. Two tunnels of one mode cannot
+have the same \verb|remote| and \verb|local|. Particularly it means
+that base device or fallback tunnel cannot be replicated.\footnote{
+This restriction is relaxed for keyed GRE tunnels.}
+
+Tunnels are divided to two classes: {\bf pointopoint} tunnels, which
+have some not wildcard \verb|remote| address and deliver all the packets
+to this destination, and {\bf NBMA} (i.e. Non-Broadcast Multi-Access) tunnels,
+which have no \verb|remote|. Particularly, base devices (f.e.\ \verb|tunl0|)
+are NBMA, because they have neither \verb|remote| nor
+\verb|local| addresses.
+
+
+After tunnel device is created you should configure it as you did
+it with another devices. Certainly, the configuration of tunnels has
+some features related to the fact that they work over existing Internet
+routing infrastructure and simultaneously create new virtual links,
+which changes this infrastructure. The danger that not enough careful
+tunnel setup will result in formation of tunnel loops,
+collapse of routing or flooding network with exponentially
+growing number of tunneled fragments is very real.
+
+
+Protocol setup on pointopoint tunnels does not differ of configuration
+of another devices. You should set a protocol address with \verb|ifconfig|
+and add routes with \verb|route| utility.
+
+NBMA tunnels are different. To route something via NBMA tunnel
+you have to explain to driver, where it should deliver packets to.
+The only way to make it is to create special routes with gateway
+address pointing to desired endpoint. F.e.\ 
+\begin{verbatim}
+    ip route add 10.0.0.0/24 via <A> dev tunl0 onlink
+\end{verbatim}
+It is important to use option \verb|onlink|, otherwise
+kernel will refuse request to create route via gateway not directly
+reachable over device \verb|tunl0|. With IPv6 the situation is much simpler:
+when you start device \verb|sit0|, it automatically configures itself
+with all IPv4 addresses mapped to IPv6 space, so that all IPv4
+Internet is {\em really reachable} via \verb|sit0|! Excellent, the command
+\begin{verbatim}
+    ip route add 3FFE::/16 via ::193.233.7.65 dev sit0
+\end{verbatim}
+will route \verb|3FFE::/16| via \verb|sit0|, sending all the packets
+destined to this prefix to 193.233.7.65.
+
+\section{Tunnel setup: options}
+
+Command \verb|ip tunnel add| has several additional options.
+\begin{itemize}
+
+\item \verb|ttl N| --- set fixed TTL \verb|N| on tunneled packets.
+	\verb|N| is number in the range 1--255. 0 is special value,
+	meaning that packets inherit TTL value. 
+		Default value is: \verb|inherit|.
+
+\item \verb|tos T| --- set fixed tos \verb|T| on tunneled packets.
+		Default value is: \verb|inherit|.
+
+\item \verb|dev DEV| --- bind tunnel to device \verb|DEV|, so that
+	tunneled packets will be routed only via this device and will
+	not be able to escape to another device, when route to endpoint changes.
+
+\item \verb|nopmtudisc| --- disable Path MTU Discovery on this tunnel.
+	It is enabled by default. Note that fixed ttl is incompatible
+	with this option: tunnels with fixed ttl always make pmtu discovery.
+
+\end{itemize}
+
+\verb|ipip| and \verb|sit| tunnels have no more options. \verb|gre|
+tunnels are more complicated:
+
+\begin{itemize}
+
+\item \verb|key K| --- use keyed GRE with key \verb|K|. \verb|K| is
+	either number or IP address-like dotted quad.
+
+\item \verb|csum| --- checksum tunneled packets.
+
+\item \verb|seq| --- serialize packets.
+\begin{NB}
+	I think this option does not
+	work. At least, I did not test it, did not debug it and
+	even do not understand,	how it is supposed to work and for what
+	purpose Cisco planned to use it.
+\end{NB}
+
+\end{itemize}
+
+
+Actually, these GRE options can be set separately for input and
+output directions by prefixing corresponding keywords with letter
+\verb|i| or \verb|o|. F.e.\ \verb|icsum| orders to accept only
+packets with correct checksum and \verb|ocsum| means, that
+our host will calculate and send checksum.
+
+Command \verb|ip tunnel add| is not the only operation,
+which can be made with tunnels. Certainly, you may get short help page
+with:
+\begin{verbatim}
+    ip tunnel help
+\end{verbatim}
+
+Besides that, you may view list of installed tunnels with the help of command:
+\begin{verbatim}
+    ip tunnel ls
+\end{verbatim}
+Also you may look at statistics:
+\begin{verbatim}
+    ip -s tunnel ls Cisco
+\end{verbatim}
+where \verb|Cisco| is name of tunnel device. Command
+\begin{verbatim}
+    ip tunnel del Cisco
+\end{verbatim}
+destroys tunnel \verb|Cisco|. And, finally,
+\begin{verbatim}
+    ip tunnel change Cisco mode sit local ME remote HE ttl 32
+\end{verbatim}
+changes its parameters.
+
+\section{Differences 2.2 and 2.0 tunnels revisited.}
+
+Now we can discuss more subtle differences between tunneling in 2.0
+and 2.2.
+
+\begin{itemize}
+
+\item In 2.0 all tunneled packets were received promiscuously
+as soon as you loaded module \verb|ipip|. 2.2 tries to select the best
+tunnel device and packet looks as received on this. F.e.\ if host
+received \verb|ipip| packet from host \verb|D| destined to our
+local address \verb|S|, kernel searches for matching tunnels
+in order:
+
+\begin{tabular}{ll}
+1 & \verb|remote| is \verb|D| and \verb|local| is \verb|S| \\
+2 & \verb|remote| is \verb|D| and \verb|local| is wildcard \\
+3 & \verb|remote| is wildcard and \verb|local| is \verb|S| \\
+4 & \verb|tunl0|
+\end{tabular}
+
+If tunnel exists, but it is not in \verb|UP| state, the tunnel is ignored.
+Note, that if \verb|tunl0| is \verb|UP| it receives all the IPIP packets,
+not acknowledged by more specific tunnels.
+Be careful, it means that without carefully installed firewall rules
+anyone on the Internet may inject to your network any packets with
+source addresses indistinguishable from local ones. It is not so bad idea
+to design tunnels in the way enforcing maximal route symmetry
+and to enable reversed path filter (\verb|rp_filter| sysctl option) on
+tunnel devices.
+
+\item In 2.2 you can monitor and debug tunnels with \verb|tcpdump|.
+F.e.\ \verb|tcpdump| \verb|-i Cisco| \verb|-nvv| will dump packets,
+which kernel output, via tunnel \verb|Cisco| and the packets received on it
+from kernel viewpoint.
+
+\end{itemize}
+
+
+\section{Linux and Cisco IOS tunnels.}
+
+Among another tunnels Cisco IOS supports IPIP and GRE.
+Essentially, Cisco setup is subset of options, available for Linux.
+Let us consider the simplest example:
+
+\begin{verbatim}
+interface Tunnel0
+ tunnel mode gre ip
+ tunnel source 10.10.14.1
+ tunnel destination 10.10.13.2
+\end{verbatim}
+
+
+This command set translates to:
+
+\begin{verbatim}
+    ip tunnel add Tunnel0 \
+        mode gre \
+        local 10.10.14.1 \
+        remote 10.10.13.2
+\end{verbatim}
+
+Any questions? No questions.
+
+\section{Interaction IPIP tunnels and DVMRP.}
+
+DVMRP exploits IPIP tunnels to route multicasts via Internet.
+\verb|mrouted| creates
+IPIP tunnels listed in its configuration file automatically.
+From kernel and user viewpoints there are no differences between
+tunnels, created in this way, and tunnels created by \verb|ip tunnel|.
+I.e.\ if \verb|mrouted| created some tunnel, it may be used to
+route unicast packets, provided appropriate routes are added.
+And vice versa, if administrator has already created a tunnel,
+it will be reused by \verb|mrouted|, if it requests DVMRP
+tunnel with the same local and remote addresses.
+
+Do not wonder, if your manually configured tunnel is
+destroyed, when mrouted exits.
+
+
+\section{Broadcast GRE ``tunnels''.}
+
+It is possible to set \verb|remote| for GRE tunnel to a multicast
+address. Such tunnel becomes {\bf broadcast} tunnel (though word
+tunnel is not quite appropriate in this case, it is rather virtual network).
+\begin{verbatim}
+  ip tunnel add Universe local 193.233.7.65 \
+                         remote 224.66.66.66 ttl 16
+  ip addr add 10.0.0.1/16 dev Universe
+  ip link set Universe up
+\end{verbatim}
+This tunnel is true broadcast network and broadcast packets are
+sent to multicast group 224.66.66.66. By default such tunnel starts
+to resolve both IP and IPv6 addresses via ARP/NDISC, so that
+if multicast routing is supported in surrounding network, all GRE nodes
+will find one another automatically and will form virtual Ethernet-like
+broadcast network. If multicast routing does not work, it is unpleasant
+but not fatal flaw. The tunnel becomes NBMA rather than broadcast network.
+You may disable dynamic ARPing by:
+\begin{verbatim}
+  echo 0 > /proc/sys/net/ipv4/neigh/Universe/mcast_solicit
+\end{verbatim}
+and to add required information to ARP tables manually:
+\begin{verbatim}
+  ip neigh add 10.0.0.2 lladdr 128.6.190.2 dev Universe nud permanent
+\end{verbatim}
+In this case packets sent to 10.0.0.2 will be encapsulated in GRE
+and sent to 128.6.190.2. It is possible to facilitate address resolution
+using methods typical for another NBMA networks f.e.\ to start user
+level \verb|arpd| daemon, which will maintain database of hosts attached
+to GRE virtual network or ask for information
+dedicated ARP or NHRP server.
+
+
+Actually, such setup is the most natural for tunneling,
+it is really flexible, scalable and easily managable, so that
+it is strongly recommended to be used with GRE tunnels instead of ugly
+hack with NBMA mode and \verb|onlink| modifier. Unfortunately,
+by historical reasons broadcast mode is not supported by IPIP tunnels,
+but this probably will change in future.
+
+
+
+\section{Traffic control issues.}
+
+Tunnels are devices, hence all the power of Linux traffic control
+applies to them. The simplest (and the most useful in practice)
+example is limiting tunnel bandwidth. The following command:
+\begin{verbatim}
+    tc qdisc add dev tunl0 root tbf \
+        rate 128Kbit burst 4K limit 10K
+\end{verbatim}
+will limit tunneled traffic to 128Kbit with maximal burst size of 4K
+and queuing not more than 10K.
+
+However, you should remember, that tunnels are {\em virtual} devices
+implemented in software and true queue management is impossible for them
+just because they have no queues. Instead, it is better to create classes
+on real physical interfaces and to map tunneled packets to them.
+In general case of dynamic routing you should create such classes
+on all outgoing interfaces, or, alternatively,
+to use option \verb|dev DEV| to bind tunnel to a fixed physical device.
+In the last case packets will be routed only via specified device
+and you need to setup corresponding classes only on it.
+Though you have to pay for this convenience,
+if routing will change, your tunnel will fail.
+
+Suppose that CBQ class \verb|1:ABC| has been created on device \verb|eth0| 
+specially for tunnel \verb|Cisco| with endpoints \verb|S| and \verb|D|.
+Now you can select IPIP packets with addresses \verb|S| and \verb|D|
+with some classifier and map them to class \verb|1:ABC|. F.e.\ 
+it is easy to make with \verb|rsvp| classifier:
+\begin{verbatim}
+    tc filter add dev eth0 pref 100 proto ip rsvp \
+        session D ipproto ipip filter S \
+        classid 1:ABC
+\end{verbatim}
+
+If you want to make more detailed classification of sub-flows
+transmitted via tunnel, you can build CBQ subtree,
+rooted at \verb|1:ABC| and attach to subroot set of rules parsing
+IPIP packets more deeply.
+
+\end{document}

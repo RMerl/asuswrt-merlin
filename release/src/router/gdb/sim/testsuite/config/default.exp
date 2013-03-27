@@ -1,0 +1,42 @@
+# Simulator default dejagnu configuration file.
+
+load_lib sim-defs.exp
+
+global AS
+if ![info exists AS] {
+    set AS [findfile $base_dir/../../gas/as-new $base_dir/../../gas/as-new \
+		     [transform as]]
+}
+
+global ASFLAGS
+if ![info exists ASFLAGS] {
+    set ASFLAGS ""
+}
+
+# Compilation is achieved with sim_compile ... so we don't check $CC here.
+
+global CFLAGS
+if ![info exists CFLAGS] {
+    set CFLAGS ""
+}
+
+global LD
+if ![info exists LD] {
+    set LD [findfile $base_dir/../../ld/ld-new $base_dir/../../ld/ld-new \
+		     [transform ld]]
+}
+
+global LDFLAGS
+if ![info exists LDFLAGS] {
+    set LDFLAGS ""
+}
+
+# The path to the simulator is obtained with [board_info host sim],
+# so we don't check $SIM here.
+
+global SIMFLAGS
+if ![info exists SIMFLAGS] {
+    set SIMFLAGS ""
+}
+
+sim_init

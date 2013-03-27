@@ -1,0 +1,241 @@
+# Copyright 2007 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# This file is part of the gdb testsuite.
+#
+# Contributed by Markus Deuling <deuling@de.ibm.com>.
+# Tests for 'info spu' commands.
+
+set prms_id 0
+set bug_id 0
+
+if { ![istarget "spu-*-elf"] } then {
+  verbose "Skipping SPU-only testcase"
+  return
+}
+
+set testfile "spu-info"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+set sources ${srcdir}/${subdir}/${srcfile}
+
+if { [gdb_compile $sources ${binfile} executable { debug }] != "" } {
+  return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# Continue to MARKER
+proc c_to { marker } {
+  global srcfile
+  set line [gdb_get_line_number $marker]
+  gdb_test "break $line" \
+	   "Breakpoint.*at.*file.*$srcfile.*line $line.*" \
+	   "break $line"
+  gdb_test "continue" \
+	   "Continuing.*Breakpoint.*at.*$srcfile.*$line.*" \
+	   "continue to $line"
+}
+
+
+
+if ![runto_main] then {
+  fail "Can't run to main"
+  return 0
+}
+
+# Check the help.
+gdb_test "info spu" \
+	 ".*info spu.* must be followed by the name of an SPU facility.*" \
+	 "info spu"
+gdb_test "help info spu" \
+	 "Various SPU specific commands.*List of info spu subcommands.*" \
+	 "help info spu"
+
+gdb_test "help info spu dma" \
+	 "Display MFC DMA status." \
+	 "help info spu dma"
+gdb_test "help info spu event" \
+	 "Display SPU event facility status." \
+	 "help info spu event"
+gdb_test "help info spu mailbox" \
+	 "Display SPU mailbox facility status." \
+	 "help info spu mailbox"
+gdb_test "help info spu proxydma" \
+	 "Display MFC Proxy-DMA status." \
+	 "help info spu proxydma"
+gdb_test "help info spu signal" \
+	 "Display SPU signal notification facility status." \
+	 "help info spu signal"
+
+
+# architecture should be spu:256K.
+gdb_test "show architecture" \
+	 "The target architecture is set automatically.*currently spu:256K.*" \
+	 "architecture = spu256K"
+
+# 'info spu event'.
+gdb_test "info spu event" \
+	 "Event Status.*Event Mask.*" \
+	 "info spu event"
+
+# 'info spu signal'.
+gdb_test "info spu signal" \
+	 "Signal 1 not pending.*\(Type.*\).*Signal 2 not pending.*\(Type.*\).*" \
+	 "info spu signal"
+
+# 'info spu mailbox'.
+gdb_test "info spu mailbox" \
+	 "SPU Outbound Mailbox.*SPU Outbound Interrupt Mailbox.*" \
+	 "info spu mailbox"
+
+# 'info spu dma'.
+gdb_test "info spu dma" \
+	 "Tag-Group Status.*Tag-Group Mask.*Stall-and-Notify .*Atomic Cmd Status.*Opcode.*Tag.*TId.*RId.*EA.*LSA.*Size.*LstAddr.*LstSize.*E.*" \
+	 "info spu dma"
+
+# 'info spu proxydma'.
+gdb_test "info spu proxydma" \
+	 "Tag-Group Status.*Tag-Group Mask.*Opcode.*Tag.*TId.*RId.*EA.*LSA.*Size.*LstAddr.*LstSize.*E.*" \
+	  "info spu proxydma"
+
+# Event tests.
+c_to "Marker Event"
+gdb_test "info spu event" \
+	"Event Status 0x00000000.*Event Mask   0x00000000.*" \
+	"empty event status"
+
+# MFC_MULTI_SRC_SYNC_EVENT.
+gdb_test "next" "" "next"
+gdb_test "info spu event" \
+	"Event Status 0x00000000.*Event Mask   0x00001000.*" \
+	"event mask 0x1000"
+# MFC_PRIV_ATTN_EVENT.
+gdb_test "next" "" "next"
+gdb_test "info spu event" \
+	"Event Status 0x00000000.*Event Mask   0x00000800.*" \
+	"event mask 0x0800"
+# MFC_LLR_LOST_EVENT.
+gdb_test "next" "" "next"
+gdb_test "info spu event" \
+	"Event Status 0x00000000.*Event Mask   0x00000400.*" \
+	"event mask 0x0400"
+# MFC_SIGNAL_NOTIFY_1_EVENT.
+gdb_test "next" "" "next"
+gdb_test "info spu event" \
+	"Event Status 0x00000000.*Event Mask   0x00000200.*" \
+	"event mask 0x0200"
+# MFC_SIGNAL_NOTIFY_2_EVENT.
+gdb_test "next" "" "next"
+gdb_test "info spu event" \
+	"Event Status 0x00000000.*Event Mask   0x00000100.*" \
+	"event mask 0x0100"
+# MFC_OUT_MBOX_AVAILABLE_EVENT.
+gdb_test "next" "" "next"
+gdb_test "info spu event" \
+	"Event Status 0x00000000.*Event Mask   0x00000080.*" \
+	"event mask 0x0080"
+# MFC_OUT_INTR_MBOX_AVAILABLE_EVENT.
+gdb_test "next" "" "next"
+gdb_test "info spu event" \
+	"Event Status 0x00000000.*Event Mask   0x00000040.*" \
+	"event mask 0x0040"
+# MFC_DECREMENTER_EVENT.
+gdb_test "next" "" "next"
+gdb_test "info spu event" \
+	"Event Status 0x00000000.*Event Mask   0x00000020.*" \
+	"event mask 0x0020"
+# MFC_IN_MBOX_AVAILABLE_EVENT.
+gdb_test "next" "" "next"
+gdb_test "info spu event" \
+	"Event Status 0x00000000.*Event Mask   0x00000010.*" \
+	"event mask 0x0010"
+# MFC_COMMAND_QUEUE_AVAILABLE_EVENT.
+gdb_test "next" "" "next"
+gdb_test "info spu event" \
+	"Event Status 0x00000000.*Event Mask   0x00000008.*" \
+	"event mask 0x0008"
+# MFC_LIST_STALL_NOTIFY_EVENT.
+gdb_test "next" "" "next"
+gdb_test "info spu event" \
+	"Event Status 0x00000000.*Event Mask   0x00000002.*" \
+	"event mask 0x0002"
+# MFC_TAG_STATUS_UPDATE_EVENT.
+gdb_test "next" "" "next"
+gdb_test "info spu event" \
+	"Event Status 0x00000000.*Event Mask   0x00000001.*" \
+	"event mask 0x0001"
+
+
+# DMA tests.
+# 'info spu dma' should be empty.
+c_to "Marker DMA"
+gdb_test "info spu dma" \
+	 "Tag-Group Status.*0x00000000.*Tag-Group Mask.*0x00000000.*Stall-and-Notify.*0x00000000.*Atomic Cmd Status.*0x00000000.*Opcode.*Tag.*TId.*RId.*EA.*LSA.*Size.*LstAddr.*LstSize.*E.*0.*0.*0.*0.*0x00000 0x00000.*" \
+	 "info spu dma (empty)"
+
+# 'info spu dma' should be filled with some data.
+c_to "Marker DMAWait"
+gdb_test "next" "" "next"
+gdb_test "info spu dma" \
+	 "Tag-Group Status.*0x00000000.*Tag-Group Mask.*0x00000020.*Stall-and-Notify.*0x00000000.*Atomic Cmd Status.*0x00000000.*Opcode.*Tag.*TId.*RId.*EA.*LSA.*Size.*LstAddr.*LstSize.*E.*getl.*putllc.*get.*mfcsync.*get.*0.*0.*0.*0.*0x00000 0x00000.*" \
+	 "info spu dma (non-empty)"
+gdb_test "finish" "" "finish"
+
+# Mailbox Test
+# 'info spu mailbox' should be empty.
+c_to "Marker Mbox"
+gdb_test "info spu mailbox" \
+	 "SPU Outbound Mailbox.*0xc0000000.*SPU Outbound Interrupt Mailbox.*0xc0000000.*" \
+	 "info spu mailbox"
+
+# 'info spu mailbox' should now contain data.
+c_to "Marker MboxEnd"
+gdb_test "info spu mailbox" \
+	 "SPU Outbound Mailbox.*0x12345678.*SPU Outbound Interrupt Mailbox.*0x12345678.*" \
+	 "info spu mailbox"
+
+# Signal Test
+# 'info spu signal'.
+c_to "Marker Signal"
+gdb_test "info spu signal" \
+	 "Signal 1 not pending.*\(Type.*\).*Signal 2 not pending.*\(Type.*\).*" \
+	 "info spu signal"
+
+# 'info spu signal' with signal1 pending.
+c_to "Marker Signal1"
+gdb_test "info spu signal" \
+	 "Signal 1 control word 0x801c0800.*Signal 2 not pending.*\(Type.*\).*" \
+	 "info spu signal"
+
+# 'info spu signal' with signal1 and signal2 pending.
+c_to "Marker Signal2"
+gdb_test "info spu signal" \
+	 "Signal 1 control word 0x801c0800.*Signal 2 control word 0x801c0800.*" \
+	 "info spu signal"
+
+# Read signal1. Only signal2 is pending.
+c_to "Marker SignalRead"
+gdb_test "info spu signal" \
+	 "Signal 1 not pending.*Signal 2 control word 0x801c0800.*" \
+	 "info spu signal"
+
+
+gdb_exit
+
+return 0

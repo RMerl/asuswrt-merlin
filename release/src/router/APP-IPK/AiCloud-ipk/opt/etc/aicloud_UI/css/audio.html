@@ -1,0 +1,396 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title></title>
+<style>
+html{
+	margin:0 0;
+	padding:0px;
+}
+body{
+	display: block;
+	overflow: hidden;
+	background: #e8e8e8;
+}
+#jp_playlist_1{
+	height:200px;
+	overflow:auto;
+}
+</style>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript" src="/smb/js/jplayer/jquery.jplayer.min.js"></script>
+<script type="text/javascript" src="/smb/js/davclient_tools.js"></script>
+<link rel="stylesheet" href="/smb/css/jplayer.blue.monday.css" type="text/css">
+<script type="text/javascript">
+	
+var m = new lang();
+var g_storage = new myStorage();
+var g_showAudioList = false;
+var g_jplayer_solution = "html,flash";
+var g_jplayer_supplied = "mp3";
+var g_audio_playlist = [];
+var g_current_index = 0;
+
+function getUrlVars(){
+	var vars = [], hash;
+  var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+  for(var i = 0; i < hashes.length; i++)
+  {
+  	hash = hashes[i].split('=');
+    vars.push(hash[0]);
+    vars[hash[0]] = hash[1];
+  }
+  return vars;
+}
+ 
+function parseXml(xml) {
+  if (jQuery.browser.msie) {
+  	var xmlDoc = new ActiveXObject("Microsoft.XMLDOM"); 
+    xmlDoc.loadXML(xml);
+    xml = xmlDoc;
+  }   
+  return xml;
+}
+  
+$(document).ready(function(){
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	
+	var generate_sharelink = getUrlVars()["s"];
+	var this_audio = getUrlVars()["a"];
+	var audio_list = getUrlVars()["alist"];
+	g_current_index = getUrlVars()["index"];
+	
+	var this_audio_list = audio_list.split(",");
+	
+	var client = new davlib.DavClient();
+	client.initialize();
+
+	$('button#cancel').text(m.getString('btn_close'));
+	$('button#playlist').text(m.getString('btn_playlist'));
+	
+	var browserVer = navigator.userAgent;
+	
+	if( browserVer.indexOf("Chrome") != -1 ){
+		g_jplayer_solution = "html";
+		g_jplayer_supplied = "mp3";
+	}
+	else if( browserVer.indexOf("MSIE") != -1 || 
+	    browserVer.indexOf("Firefox") != -1 || 
+	    browserVer.indexOf("Opera") != -1 ||
+	    ( browserVer.indexOf("Safari") != -1 && ( isMacOS() || isWinOS() ) ) ){
+		g_jplayer_solution = "flash,html";
+		g_jplayer_supplied = "mp3";
+	}
+	
+	var current_query_index = 0;
+	var on_query = false;
+	
+	$("#jp_title_1 li").text("Loading...");
+	$("#playlist").css("visibility","hidden");
+	
+	showHideAudioInterface(false);
+	showHideAudioList(false);
+
+	if(generate_sharelink==1){
+		var media_hostName = window.location.host;
+		if(media_hostName.indexOf(":")!=-1)
+			media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
+		media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
+		
+		var timer = setInterval(function(){
+			
+			if(on_query==false){
+				
+				if(current_query_index<0||current_query_index>this_audio_list.length-1){
+					clearInterval(timer);
+					initJPlayer();
+					return;
+				}
+			
+				var this_audio = this_audio_list[current_query_index];
+				var this_file_name = this_audio.substring( this_audio.lastIndexOf("/")+1, this_audio.length );
+				var this_url = this_audio.substring(0, this_audio.lastIndexOf('/'));
+				
+				on_query = true;			
+				client.GSL(this_url, this_url, this_file_name, 0, 0, function(error, content, statusstring){				
+					if(error==200){
+						var data = parseXml(statusstring);
+						var share_link = $(data).find('sharelink').text();
+						share_link = media_hostName + share_link;
+						
+						on_query = false;
+						
+						var obj = [];
+						obj['name'] = mydecodeURI(this_file_name);
+						obj['mp3'] = share_link;
+						g_audio_playlist.push(obj);
+						
+						current_query_index++;
+					}
+				});
+			}
+		}, 100);
+	}
+	else{
+		for(var i=0; i < this_audio_list.length;i++){
+			var this_audio = this_audio_list[i];
+			var this_file_name = this_audio.substring( this_audio.lastIndexOf("/")+1, this_audio.length );
+			var this_url = this_audio.substring(0, this_audio.lastIndexOf('/'));
+				
+			var obj = [];
+			obj['name'] = mydecodeURI(this_file_name);
+			obj['mp3'] = this_audio;
+			g_audio_playlist.push(obj);
+		}
+		
+		initJPlayer();	
+	}
+});
+
+function initJPlayer(){
+	
+	var Playlist = function(instance, playlist, options) {
+  	var self = this;
+
+    this.instance = instance; // String: To associate specific HTML with this playlist
+    this.playlist = playlist; // Array of Objects: The playlist
+    this.options = options; // Object: The jPlayer constructor options for this playlist
+
+    this.current = 0;
+
+    this.cssId = {
+    	jPlayer: "jquery_jplayer_",
+      interface: "jp_interface_",
+      playlist: "jp_playlist_",
+      playtitle: "jp_title_"
+    };
+    this.cssSelector = {};
+
+    $.each(this.cssId, function(entity, id) {
+    	self.cssSelector[entity] = "#" + id + self.instance;
+    });
+
+    if(!this.options.cssSelectorAncestor) {
+    	this.options.cssSelectorAncestor = this.cssSelector.interface;
+    }
+    
+    $(this.cssSelector.jPlayer).jPlayer(this.options);
+
+    $(this.cssSelector.interface + " .jp-previous").click(function() {
+    	self.playlistPrev();
+      $(this).blur();
+      return false;
+    });
+
+    $(this.cssSelector.interface + " .jp-next").click(function() {
+    	self.playlistNext();
+      $(this).blur();
+      return false;
+    });
+  };
+
+  Playlist.prototype = {
+  	displayPlaylist: function() {
+    	var self = this;
+      $(this.cssSelector.playlist + " ul").empty();
+      
+      for (i=0; i < this.playlist.length; i++) {
+      	var filename = this.playlist[i].name;
+      	var listItem = (i === this.playlist.length-1) ? "<li class='jp-playlist-last'>" : "<li>";
+        listItem += "<a href='#' id='" + this.cssId.playlist + this.instance + "_item_" + i +"' tabindex='1'>"+ filename +"</a>";
+
+        // Associate playlist items with their media
+        $(this.cssSelector.playlist + " ul").append(listItem);
+       
+        $(this.cssSelector.playlist + "_item_" + i).data("index", i).click(function() {
+        	var index = $(this).data("index");        	
+          if(self.current !== index) {
+          	self.playlistChange(index);
+          } 
+          else {
+          	$(self.cssSelector.jPlayer).jPlayer("play");
+          }
+          $(this).blur();
+          return false;
+        });
+      }
+    },
+    playlistInit: function(autoplay) {
+    	if(autoplay) {
+      	this.playlistChange(this.current);
+      } else {
+        this.playlistConfig(this.current);
+      }
+    },
+    playlistConfig: function(index) {
+    	$(this.cssSelector.playlist + "_item_" + this.current).removeClass("jp-playlist-current").parent().removeClass("jp-playlist-current");
+      $(this.cssSelector.playlist + "_item_" + index).addClass("jp-playlist-current").parent().addClass("jp-playlist-current");
+      this.current = parseInt(index);
+      
+      var filename = this.playlist[this.current]['name'];
+      var full_filename = filename;
+      var ui_width = $(this.cssSelector.playtitle + " li").width();
+      var cur_width = String(filename).width($(this.cssSelector.playtitle + " li").css('font'));      
+           
+      if(cur_width>ui_width){
+      	var fileext = getFileExt(filename);
+      	var len = filename.length;
+      	var new_name = "";
+      	var i=0;
+      	for(i=0; i<len; i++){
+      		new_name+=filename[i];
+      		var test_name = new_name + "." + fileext
+      		var test_width = String(test_name).width($(this.cssSelector.playtitle + " li").css('font'));
+      		if(test_width>ui_width){
+      			break;
+      		}
+      	}
+      	
+      	filename = filename.substring(0,i-4) + "...." + fileext;
+    	}
+    	//alert("play "+this.playlist[this.current].mp3);
+    	$(this.cssSelector.playtitle + " li").attr("title",full_filename);
+      $(this.cssSelector.playtitle + " li").text(filename);
+      $(this.cssSelector.jPlayer).jPlayer("setMedia", this.playlist[this.current]);
+    },
+    playlistChange: function(index) {
+      this.playlistConfig(index);
+      $(this.cssSelector.jPlayer).jPlayer("play");
+    },
+    playlistNext: function() {
+    	var index = (this.current + 1 < this.playlist.length) ? this.current + 1 : 0;
+      this.playlistChange(index);
+    },
+    playlistPrev: function() {
+    	var index = (this.current - 1 >= 0) ? this.current - 1 : this.playlist.length - 1;
+      this.playlistChange(index);
+    }
+  };
+  
+	var audioPlaylist = new Playlist("1", g_audio_playlist, {
+  	ready: function() {
+  		audioPlaylist.displayPlaylist();
+    	audioPlaylist.current = g_current_index; 
+      audioPlaylist.playlistInit(true); // Parameter is a boolean for autoplay.
+      
+      $("#playlist").css("visibility","visible");
+      showHideAudioInterface(true);
+      showHideAudioList(false);
+    },
+    ended: function() {
+    	audioPlaylist.playlistNext();
+    },
+    play: function() {
+    	$(this).jPlayer("pauseOthers");
+    },
+    swfPath: "/smb/js/jplayer/",
+		supplied: g_jplayer_supplied,
+		solution: g_jplayer_solution,
+		wmode: "window",
+		errorAlerts: true,
+		warningAlerts: false
+	});
+}
+
+function doClose(e) {	
+	$("#jquery_jplayer_1").jPlayer("stop");
+	$("#jquery_jplayer_1").jPlayer("clearMedia");
+	parent.closeJqmWindow(0);
+};
+
+function showHideAudioInterface(bshow){
+	if(bshow){
+		$("#jp_interface_1").css("display","block");
+	}
+	else{
+		$("#jp_interface_1").css("display","none");
+	}
+}
+
+function showHideAudioList(bshow){
+	if(bshow){
+		$(".jp-playlist").css("display", "block");
+		parent.resizeJqmWindow(parent.g_modal_window_width, parent.g_modal_window_height+$(".jp-playlist").height());
+	}
+	else{		
+		$(".jp-playlist").css("display", "none");
+		parent.resizeJqmWindow(parent.g_modal_window_width, parent.g_modal_window_height);
+	}
+	
+	g_showAudioList = bshow;
+}
+
+function doOpenPlayList(){
+	showHideAudioList(!g_showAudioList);
+}
+
+</script>
+</head>
+<body>
+	
+<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+	<tr style='height:80px'>
+  	<td>  		
+			<div id="container">
+				<div id="jquery_jplayer_1" class="jp-jplayer"></div>
+				<div id="jp_container_1" class="jp-audio">					
+					<div class="jp-type-playlist">
+						<div id="jp_title_1" class="jp-title">
+							<ul>
+								<li>Cro Magnon Man</li>
+							</ul>
+						</div>
+						<div id="jp_interface_1" class="jp-gui jp-interface">
+							<ul class="jp-controls">
+								<li><a href="javascript:;" class="jp-previous" tabindex="1">previous</a></li>
+								<li><a href="javascript:;" class="jp-play" tabindex="1" style="display: block; ">play</a></li>
+								<li><a href="javascript:;" class="jp-pause" tabindex="1" style="display: block; ">pause</a></li>
+								<li><a href="javascript:;" class="jp-next" tabindex="1">next</a></li>
+								<li><a href="javascript:;" class="jp-stop" tabindex="1">stop</a></li>
+								<li><a href="javascript:;" class="jp-mute" tabindex="1" title="mute">mute</a></li>
+								<li><a href="javascript:;" class="jp-volume-max" tabindex="1" title="max volume">max volume</a></li>
+							</ul>
+							<div class="jp-progress">
+								<div class="jp-seek-bar" style="width: 100%; ">
+									<div class="jp-play-bar" style="width: 46.700506341691536%; "></div>	
+								</div>
+							</div>
+							<div class="jp-volume-bar">
+								<div class="jp-volume-bar-value" style="width: 31.979694962501526%; "></div>
+							</div>
+							<div class="jp-duration">00:00</div>
+							<div class="jp-split">/</div>
+							<div class="jp-current-time">00:00</div>
+						</div>						
+												
+						<div id="jp_playlist_1" class="jp-playlist">
+							<!--<a href="javascript:;" class="jp-show-audio-list"></a>-->
+							<ul></ul>
+            </div>
+            
+						<div class="jp-no-solution" style="display: none; ">
+							<span>Update Required</span>
+						To play the media you will need to either update your browser to a recent version or update your <a href="http://get.adobe.com/flashplayer/" target="_blank">Flash plugin</a>.
+						</div>
+						
+					</div>
+				</div>
+			</div>
+    </td>    
+  </tr>
+  <tr style='height:10px'></tr>
+  <tr>
+  	<td>
+  	<div class="table_block_footer" style="text-align:right">
+  		<button id="playlist" class="btnStyle" onClick="doOpenPlayList();">PlayList</button> 
+    	<button id="cancel" class="btnStyle" onClick="doClose();">Close</button> 
+    </div>
+    </td>
+  </tr>
+</table>
+	
+</body>
+</html>

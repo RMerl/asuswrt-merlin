@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title></title>
+<style>
+html{
+	margin:0px;
+	padding:0px;
+}
+#errorpage {
+    width: 100%; 
+    height: 100%; 
+    position: absolute; 
+    left: 0px; 
+    top: 0px; 
+    z-index: 0;
+}
+</style>
+<script type='text/javascript' src='/smb/js/tools.js'></script>
+<script type="text/javascript">
+var m = new lang();
+var g_storage = new myStorage();
+
+$("document").ready(function() {	
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();			
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');	
+	m.setLanguage(lan);
+	
+	var this_showbutton = getUrlVars()["showbutton"];		
+	var bg_img_file = "help_en.png";
+	if(lan=="zh-tw")
+		bg_img_file = "help_zh-tw.png";
+		
+	var help_html = "";
+	
+	if(this_showbutton==1)
+		help_html += "<div id='errorpage' style='width:100%;height:94%;position: absolute;left: 0px;top: 0px;z-index: 0;'>";
+	else
+		help_html += "<div id='errorpage' style='width:100%;height: 100%;position: absolute;left: 0px;top: 0px;z-index: 0;'>";
+		
+	help_html += "<img src='" + bg_img_file + "' class='stretch' alt='' style='width:100%;height:100%' />";
+	help_html += "</div>";
+	
+	if(this_showbutton==1){
+		help_html += "<div width='100%' style='position:absolute;bottom:0px;right:0px;'><button id='btnClose' style='position: relative;float:right;right:5px;' onclick='parent.closeJqmWindow(0);'>close</button><div>";
+	}
+	
+	$(help_html).appendTo($("body"));
+	
+	$('button#btnClose').text(m.getString("btn_close"));
+});
+
+function closeWindow(){
+	parent.closeJqmWindow(0);
+}
+
+$(document).keydown(function(e) {
+	alert(e.keyCode);
+    if (e.keyCode == 27) return false;
+});
+
+</script>
+</head>
+<body id='main' width='100%' height='100%' style='margin:0px;padding:0px'>
+</body>
+</html>

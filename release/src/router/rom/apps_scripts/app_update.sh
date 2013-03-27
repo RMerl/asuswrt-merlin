@@ -1,6 +1,10 @@
 #!/bin/sh
 
 
+apps_ipkg_old=`nvram get apps_ipkg_old`
+is_arm_machine=`uname -m |grep arm`
+
+ASUS_SERVER=`nvram get apps_ipkg_server`
 wget_timeout=`nvram get apps_wget_timeout`
 #wget_options="-nv -t 2 -T $wget_timeout --dns-timeout=120"
 wget_options="-q -t 2 -T $wget_timeout"
@@ -43,12 +47,18 @@ while [ $i -lt $row_num ]; do
 	server_name=`sed -n $i'p' $TEMP_FILE |awk '{print $2}'`
 
 	if [ "$list_name" == "optware.asus" ]; then
-		if [ "$SQ_TEST" == "1" ]; then
-			#cp -f $apps_local_space/$list_name $LIST_DIR/$list_name
-			#continue
-			server_name=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ
+		if [ -z "$is_arm_machine" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
+			if [ "$SQ_TEST" == "1" ]; then
+				server_name=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ
+			else
+				server_name=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless
+			fi
 		else
-			server_name=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless
+			if [ "$SQ_TEST" == "1" ]; then
+				server_name=`echo "$ASUS_SERVER" |sed 's/stable/unstable/g'`
+			else
+				server_name=$ASUS_SERVER
+			fi
 		fi
 	fi
 

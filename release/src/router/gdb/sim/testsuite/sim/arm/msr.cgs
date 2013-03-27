@@ -1,0 +1,24 @@
+# arm testcase for msr$cond cpsr,$rm
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global msr_c
+msr_c:
+	msr0 cpsr,pc
+
+	pass
+# arm testcase for msr$cond spsr,$rm
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global msr_s
+msr_s:
+	msr0 spsr,pc
+
+	pass

@@ -1,0 +1,208 @@
+<?xml version='1.0'?> <!-- -*- nxml -*- -->
+
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+  "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+
+<!ENTITY % isoent SYSTEM
+    "http://www.oasis-open.org/docbook/xml/4.2/ent/iso-num.ent">
+<!ENTITY % isopub SYSTEM
+    "http://www.oasis-open.org/docbook/xml/4.2/ent/iso-pub.ent">
+
+%isoent;
+%isopub;
+
+<!-- date/version stamp files created as release tarball is rolled -->
+<!ENTITY date SYSTEM "date.xml">
+<!ENTITY version SYSTEM "version.xml">
+
+<!ENTITY neon "neon">
+
+<!-- a useful entity for writing reference examples -->
+<!ENTITY egsess "ne_session *sess = ne_session_create(...);">
+
+<!ENTITY null "<literal>NULL</literal>">
+
+<!ENTITY nul "<literal>NUL</literal>">
+
+<!-- xml.xml entities: -->
+<!ENTITY startelm "<emphasis>start-element</emphasis>">
+<!ENTITY cdata "<emphasis>character-data</emphasis>">
+<!ENTITY endelm "<emphasis>end-element</emphasis>">
+
+<!ENTITY section.features SYSTEM "feat.xml">
+<!ENTITY section.using SYSTEM "using.xml">
+<!ENTITY section.xml SYSTEM "xml.xml">
+<!ENTITY section.security SYSTEM "security.xml">
+<!ENTITY section.ssl SYSTEM "ssl.xml">
+
+<!ENTITY biblio SYSTEM "biblio.xml">
+
+<!ENTITY refneon SYSTEM "ref/neon.xml">
+<!ENTITY refconfig SYSTEM "ref/config.xml">
+
+<!ENTITY refsess SYSTEM "ref/sess.xml">
+<!ENTITY refsessflags SYSTEM "ref/sessflags.xml">
+<!ENTITY referr SYSTEM "ref/err.xml">
+<!ENTITY refopts SYSTEM "ref/opts.xml">
+<!ENTITY refsslvfy SYSTEM "ref/sslvfy.xml">
+<!ENTITY refsslcert SYSTEM "ref/sslcert.xml">
+<!ENTITY refsslcert2 SYSTEM "ref/sslcert2.xml">
+<!ENTITY refsslcertio SYSTEM "ref/sslcertio.xml">
+<!ENTITY refssldname SYSTEM "ref/ssldname.xml">
+<!ENTITY refssltrust SYSTEM "ref/ssltrust.xml">
+<!ENTITY refreq SYSTEM "ref/req.xml">
+<!ENTITY refreqhdr SYSTEM "ref/reqhdr.xml">
+<!ENTITY refresphdr SYSTEM "ref/resphdr.xml">
+<!ENTITY refreqflags SYSTEM "ref/reqflags.xml">
+<!ENTITY refstatus SYSTEM "ref/status.xml">
+<!ENTITY refgetst SYSTEM "ref/getst.xml">
+<!ENTITY refreqbody SYSTEM "ref/reqbody.xml">
+<!ENTITY refauth SYSTEM "ref/auth.xml">
+<!ENTITY refalloc SYSTEM "ref/alloc.xml">
+<!ENTITY refbuf SYSTEM "ref/buf.xml">
+<!ENTITY refbufcr SYSTEM "ref/bufcr.xml">
+<!ENTITY refbufapp SYSTEM "ref/bufapp.xml">
+<!ENTITY refbufdest SYSTEM "ref/bufdest.xml">
+<!ENTITY refbufutil SYSTEM "ref/bufutil.xml">
+<!ENTITY reftok SYSTEM "ref/tok.xml">
+<!ENTITY refshave SYSTEM "ref/shave.xml">
+<!ENTITY refvers SYSTEM "ref/vers.xml">
+<!ENTITY refinit SYSTEM "ref/init.xml">
+<!ENTITY refi18n SYSTEM "ref/i18n.xml">
+<!ENTITY reffeat SYSTEM "ref/feat.xml">
+<!ENTITY refresolve SYSTEM "ref/resolve.xml">
+<!ENTITY refiaddr SYSTEM "ref/iaddr.xml">
+<!ENTITY refclicert SYSTEM "ref/clicert.xml">
+<!ENTITY refxml SYSTEM "ref/xml.xml">
+
+]>
+
+<book>
+  <bookinfo>
+    <title>neon HTTP/WebDAV client library</title>
+    <author>
+      <personname>
+        <firstname>Joe</firstname><surname>Orton</surname>
+      </personname>
+      <email>neon@lists.manyfish.co.uk</email>
+    </author>
+    <copyright><year>2001-2008</year><holder>Joe Orton</holder></copyright>
+
+    <legalnotice>
+
+      <para>This document is free documentation; you can redistribute
+      it and/or modify it under the terms of the <ulink
+      url="http://www.gnu.org/copyleft/gpl.html">GNU General Public
+      License</ulink> as published by the Free Software Foundation;
+      either version 2 of the License, or (at your option) any later
+      version.</para>
+    
+      <para>This document is distributed in the hope that it will be
+      useful, but <emphasis>without any warranty</emphasis>; without
+      even the implied warranty of
+      <emphasis>merchantability</emphasis> or <emphasis>fitness for a
+      particular purpose</emphasis>.  See the GNU General Public
+      License for more details.</para>
+
+      <para>You should have received a copy of the GNU General Public
+      License along with this program; if not, write to the Free
+      Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139,
+      USA.</para>
+
+    </legalnotice>
+
+  </bookinfo>
+  
+  <chapter id="intro">
+    <title>Introduction</title>
+
+    <para>This chapter provides an introduction to neon, giving an
+overview of the range of features offered, and some general guidelines
+for using the neon API.</para>
+    
+    <para>neon aims to provide a modern, flexible, and simple API
+in the C programming language for implementing HTTP and WebDAV
+support.  The WebDAV functionality is entirely separate from the basic
+HTTP functionality; neon can be used simply as an HTTP client library,
+ignoring the WebDAV support if desired.</para>
+
+    &section.features;
+
+    &section.using;
+    
+    &section.security;
+
+  </chapter>
+ 
+  <chapter id="api">
+    <title>The &neon; C language interface</title>
+
+    <para>The documentation for the &neon; interface is split between
+    this chapter, which gives a broad introduction to the abstractions
+    exposed by the library, and <xref linkend="ref"/>, which gives a
+    function-by-function breakdown of the interface.</para>
+
+    &section.xml;
+
+<!-- &section.ssl; -->
+
+  </chapter>
+ 
+  <reference id="ref">
+
+    <!-- these are used in the man page header/footers -->
+    <referenceinfo>
+      <title>neon API reference</title>
+      <date>&date;</date>
+      <productname>neon</productname>
+      <productnumber>&version;</productnumber>
+    </referenceinfo>
+    
+    <title>neon API reference</title>
+
+    &refneon; <!-- neon -->
+    &refconfig; <!-- neon-config -->
+
+    &refresolve; <!-- ne_addr_resolve -->
+    &refbuf; <!-- ne_buffer -->
+    &refbufapp; <!-- ne_buffer_append -->
+    &refbufutil; <!-- ne_buffer_clear -->
+    &refbufcr; <!-- ne_buffer_create -->
+    &refbufdest; <!-- ne_buffer_destroy -->
+    &referr; <!-- ne_get_error -->
+    &refgetst; <!-- ne_get_status -->
+    &reffeat; <!-- ne_has_support -->
+    &refi18n; <!-- ne_i18n_init -->
+    &refiaddr; <!-- ne_iaddr_make -->
+    &refalloc; <!-- ne_malloc -->
+    &refsess; <!-- ne_session_create -->
+    &refsessflags; <!-- ne_set_session_flag -->
+    &refreq; <!-- ne_request_create -->
+    &refreqhdr; <!-- ne_add_request_header -->
+    &refresphdr; <!-- ne_add_request_header -->
+    &refopts; <!-- ne_set_useragent -->
+    &refreqflags; <!-- ne_set_request_flag -->
+    &refreqbody; <!-- ne_set_request_body_buffer -->
+    &refauth; <!-- ne_set_server_auth -->
+    &refshave; <!-- ne_shave -->
+    &refinit; <!-- ne_sock_init -->
+    &refsslcert; <!-- ne_ssl_cert_identity -->
+    &refsslcert2; <!-- ne_ssl_cert_cmp -->
+    &refsslcertio; <!-- ne_ssl_cert_read -->
+    &refssldname; <!-- ne_ssl_dname -->
+    &refssltrust; <!-- ne_ssl_load_ca -->
+    &refsslvfy; <!-- ne_ssl_set_verify -->
+    &refclicert; <!-- ne_ssl_client_cert -->
+    &refstatus; <!-- ne_status -->
+    &reftok; <!-- ne_token -->
+    &refvers; <!-- ne_version_match -->
+    &refxml; <!-- ne_xml_parser -->
+
+    <!-- REFEND -->
+    <!-- ******************************************************************* -->
+
+  </reference>
+
+&biblio;
+
+</book>

@@ -1357,6 +1357,18 @@ send_file(struct upnphttp * h, int sendfd, off_t offset, off_t end_offset)
 	free(buf);
 }
 
+#include <shutils.h>
+#if (!defined(RTN66U) && !defined(RTN56U))
+extern unsigned char buf_png_sm[];
+extern unsigned char buf_png_lrg[];
+extern unsigned char buf_jpeg_sm[];
+extern unsigned char buf_jpeg_lrg[];
+extern int size_png_sm;
+extern int size_png_lrg;
+extern int size_jpeg_sm;
+extern int size_jpeg_lrg;
+#endif
+
 void
 SendResp_icon(struct upnphttp * h, char * icon)
 {
@@ -1367,6 +1379,7 @@ SendResp_icon(struct upnphttp * h, char * icon)
 	int size, ret;
 	time_t curtime = time(NULL);
 
+#if defined(RTN66U) || defined(RTN56U)
 	if( strcmp(icon, "sm.png") == 0 )
 	{
 		DPRINTF(E_DEBUG, L_HTTP, "Sending small PNG icon\n");
@@ -1395,6 +1408,36 @@ SendResp_icon(struct upnphttp * h, char * icon)
 		size = sizeof(jpeg_lrg)-1;
 		strcpy(mime+6, "jpeg");
 	}
+#else
+	if( strcmp(icon, "sm.png") == 0 )
+	{
+		DPRINTF(E_DEBUG, L_HTTP, "Sending small PNG icon\n");
+		data = (char *)buf_png_sm;
+		size = size_png_sm;
+		strcpy(mime+6, "png");
+	}
+	else if( strcmp(icon, "lrg.png") == 0 )
+	{
+		DPRINTF(E_DEBUG, L_HTTP, "Sending large PNG icon\n");
+		data = (char *)buf_png_lrg;
+		size = size_png_lrg;
+		strcpy(mime+6, "png");
+	}
+	else if( strcmp(icon, "sm.jpg") == 0 )
+	{
+		DPRINTF(E_DEBUG, L_HTTP, "Sending small JPEG icon\n");
+		data = (char *)buf_jpeg_sm;
+		size = size_jpeg_sm;
+		strcpy(mime+6, "jpeg");
+	}
+	else if( strcmp(icon, "lrg.jpg") == 0 )
+	{
+		DPRINTF(E_DEBUG, L_HTTP, "Sending large JPEG icon\n");
+		data = (char *)buf_jpeg_lrg;
+		size = size_jpeg_lrg;
+		strcpy(mime+6, "jpeg");
+	}
+#endif
 	else
 	{
 		DPRINTF(E_WARN, L_HTTP, "Invalid icon request: %s\n", icon);
@@ -1622,7 +1665,7 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	char *resolution = NULL;
 	char *key, *val;
 	char *saveptr, *item=NULL;
-	int rotate;
+	int rotate = 0;
 	/* Not implemented yet *
 	char *pixelshape=NULL; */
 	sqlite_int64 id;

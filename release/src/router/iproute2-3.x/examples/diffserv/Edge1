@@ -1,0 +1,68 @@
+#! /bin/sh -x
+#
+# sample script on using the ingress capabilities
+# This script just tags on the ingress interfac using Ipchains
+# the result is used for fast classification and re-marking
+# on the egress interface
+#
+#path to various utilities;
+#change to reflect yours.
+#
+IPROUTE=/root/DS-6-beta/iproute2-990530-dsing
+TC=$IPROUTE/tc/tc
+IP=$IPROUTE/ip/ip
+IPCHAINS=/root/DS-6-beta/ipchains-1.3.9/ipchains
+INDEV=eth2
+EGDEV="dev eth1"
+#
+# tag all incoming packets from host 10.2.0.24 to value 1
+# tag all incoming packets from host 10.2.0.3 to value 2
+# tag the rest of incoming packets from subnet 10.2.0.0/24 to value 3
+#These values are used in the egress
+#
+############################################################ 
+$IPCHAINS -A input -s 10.2.0.4/24 -m 3
+$IPCHAINS -A input -i $INDEV -s 10.2.0.24 -m 1
+$IPCHAINS -A input -i $INDEV -s 10.2.0.3 -m 2
+
+######################## Egress side ########################
+
+
+# attach a dsmarker
+#
+$TC qdisc add $EGDEV handle 1:0 root dsmark indices 64 set_tc_index
+#
+# values of the DSCP to change depending on the class
+#
+#becomes EF
+$TC class change $EGDEV classid 1:1 dsmark mask 0x3 \
+       value 0xb8
+#becomes AF11
+$TC class change $EGDEV classid 1:2 dsmark mask 0x3 \
+       value 0x28
+#becomes AF21
+$TC class change $EGDEV classid 1:3 dsmark mask 0x3 \
+       value 0x48
+#
+#
+# The class mapping
+#
+$TC filter add $EGDEV parent 1:0 protocol ip prio 4 handle 1 fw classid 1:1
+$TC filter add $EGDEV parent 1:0 protocol ip prio 4 handle 2 fw classid 1:2
+$TC filter add $EGDEV parent 1:0 protocol ip prio 4 handle 3 fw classid 1:3
+#
+
+#
+echo "---- qdisc parameters Ingress  ----------"
+$TC qdisc ls dev $INDEV
+echo "---- Class parameters Ingress  ----------"
+$TC class ls dev $INDEV
+echo "---- filter parameters Ingress ----------"
+$TC filter ls dev $INDEV parent 1:0
+
+echo "---- qdisc parameters Egress  ----------"
+$TC qdisc ls $EGDEV
+echo "---- Class parameters Egress  ----------"
+$TC class ls $EGDEV
+echo "---- filter parameters Egress ----------"
+$TC filter ls $EGDEV parent 1:0

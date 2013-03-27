@@ -1,0 +1,101 @@
+# frv testcase for tge $ICCi_2,$GRi,$GRj
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global tge
+tge:
+	and_spr_immed	-4081,tbr		; clear tbr.tt
+	set_gr_spr	tbr,gr7
+	inc_gr_immed	2112,gr7		; address of exception handler
+	set_bctrlr_0_0	gr7	; bctrlr 0,0
+
+	set_spr_immed	128,lcr
+	set_gr_immed	0,gr7
+	set_gr_immed	4,gr8
+
+	set_psr_et	1
+	set_spr_addr	ok0,lr
+	set_icc		0x0 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+ok0:
+	set_psr_et	1
+	set_spr_addr	ok1,lr
+	set_icc		0x1 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+ok1:
+	set_spr_addr	bad,lr
+	set_icc		0x2 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0x3 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+
+	set_psr_et	1
+	set_spr_addr	ok4,lr
+	set_icc		0x4 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+ok4:
+	set_psr_et	1
+	set_spr_addr	ok5,lr
+	set_icc		0x5 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+ok5:
+	set_spr_addr	bad,lr
+	set_icc		0x6 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0x7 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0x8 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0x9 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+
+	set_psr_et	1
+	set_spr_addr	oka,lr
+	set_icc		0xa 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+oka:
+	set_psr_et	1
+	set_spr_addr	okb,lr
+	set_icc		0xb 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+okb:
+	set_spr_addr	bad,lr
+	set_icc		0xc 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0xd 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+
+	set_psr_et	1
+	set_spr_addr	oke,lr
+	set_icc		0xe 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+oke:
+	set_psr_et	1
+	set_spr_addr	okf,lr
+	set_icc		0xf 0
+	tge 		icc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+okf:
+	pass
+bad:
+	fail

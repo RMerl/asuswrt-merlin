@@ -2,7 +2,7 @@
  * Generic Broadcom Home Networking Division (HND) DMA module.
  * This supports the following chips: BCM42xx, 44xx, 47xx .
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hnddma.c 321146 2012-03-14 08:27:23Z $
+ * $Id: hnddma.c 348299 2012-08-01 07:49:48Z $
  */
 
 #include <bcm_cfg.h>
@@ -153,6 +153,10 @@ typedef struct dma_info {
 	uint8 		rxprefetchthresh;	/* prefetch threshold for rx */
 	pktpool_t	*pktpool;	/* pktpool */
 	uint		dma_avoidance_cnt;
+
+	uint32 		d64_xs0_cd_mask; /* tx current descriptor pointer mask */
+	uint32 		d64_xs1_ad_mask; /* tx active descriptor mask */
+	uint32 		d64_rs0_cd_mask; /* rx current descriptor pointer mask */
 } dma_info_t;
 
 /*
@@ -485,11 +489,51 @@ dma_attach(osl_t *osh, const char *name, si_t *sih,
 
 	/* init dma reg pointer */
 	if (DMA64_ENAB(di) && DMA64_MODE(di)) {
-		ASSERT(ntxd <= D64MAXDD);
-		ASSERT(nrxd <= D64MAXDD);
+		uint32 mask;
+
 		di->d64txregs = (dma64regs_t *)dmaregstx;
 		di->d64rxregs = (dma64regs_t *)dmaregsrx;
 		di->hnddma.di_fn = (const di_fcn_t *)&dma64proc;
+
+		/* detect the dma descriptor address mask,
+		 * should be 0x1fff before 4360B0, 0xffff start from 4360B0
+		 */
+		if (dmaregstx) {
+			W_REG(di->osh, &di->d64txregs->addrlow, 0xffffffff);
+			mask = R_REG(di->osh, &di->d64txregs->addrlow);
+
+			if (mask & 0xfff)
+				mask = R_REG(di->osh, &di->d64txregs->ptr) | 0xf;
+			else
+				mask = 0x1fff;
+
+			DMA_TRACE(("%s: dma_tx_mask: %08x\n", di->name, mask));
+			di->d64_xs0_cd_mask = mask;
+			di->d64_xs1_ad_mask = mask;
+
+			if (mask == 0x1fff)
+				ASSERT(ntxd <= D64MAXDD);
+			else
+				ASSERT(ntxd <= D64MAXDD_LARGE);
+		}
+
+		if (dmaregsrx) {
+			W_REG(di->osh, &di->d64rxregs->addrlow, 0xffffffff);
+			mask = R_REG(di->osh, &di->d64rxregs->addrlow);
+
+			if (mask & 0xfff)
+				mask = R_REG(di->osh, &di->d64rxregs->ptr) | 0xf;
+			else
+				mask = 0x1fff;
+
+			DMA_TRACE(("%s: dma_rx_mask: %08x\n", di->name, mask));
+			di->d64_rs0_cd_mask = mask;
+
+			if (mask == 0x1fff)
+				ASSERT(nrxd <= D64MAXDD);
+			else
+				ASSERT(nrxd <= D64MAXDD_LARGE);
+		}
 	} else if (DMA32_ENAB(di)) {
 		ASSERT(ntxd <= D32MAXDD);
 		ASSERT(nrxd <= D32MAXDD);
@@ -804,6 +848,12 @@ dma64_dd_upd(dma_info_t *di, dma64dd_t *ddring, dmaaddr_t pa, uint outidx, uint3
 			W_SM(&ddring[outidx].ctrl2, BUS_SWAP32(ctrl2 | D64_CTRL2_PARITY));
 		}
 	}
+
+#if defined(_CFE_) && defined(__ARM_ARCH_7A__)
+	if (CHIPID(di->sih->chip) == BCM4707_CHIP_ID)
+		OSL_CACHE_FLUSH((uint)OSL_CACHED(&ddring[outidx]), sizeof(dma64dd_t));
+#endif
+
 }
 
 static bool
@@ -1151,7 +1201,7 @@ next_frame:
 	if (head == NULL)
 		return (NULL);
 
-#if !defined(__mips__)
+#if !defined(__mips__) && !defined(__ARM_ARCH_7A__)
 #ifdef BCM4335
 	if ((R_REG(osh, &dregs->control) & D64_RC_GE)) {
 		/* In case of glommed pkt get length from hwheader */
@@ -1167,8 +1217,9 @@ next_frame:
 #else
 	{
 	int read_count = 0;
-	for (read_count = 200; (!(len = ltoh16(*(uint16 *)OSL_UNCACHED(PKTDATA(di->osh, head)))) &&
-	                        read_count); read_count--) {
+	for (read_count = 200;
+	     (!(len = ltoh16(*(uint16 *)OSL_UNCACHED(PKTDATA(di->osh, head)))) &&
+	       read_count); read_count--) {
 		if (CHIPID(di->sih->chip) == BCM5356_CHIP_ID)
 			break;
 		OSL_DELAY(1);
@@ -1191,6 +1242,10 @@ next_frame:
 
 	/* check for single or multi-buffer rx */
 	if (resid > 0) {
+#ifdef BCMDBG
+		/* get rid of compiler warning */
+		p = NULL;
+#endif /* BCMDBG */
 		tail = head;
 		while ((resid > 0) && (p = _dma_getnextrxp(di, FALSE))) {
 			PKTSETNEXT(di->osh, tail, p);
@@ -2582,11 +2637,11 @@ dma64_rxstopped(dma_info_t *di)
 static bool
 dma64_alloc(dma_info_t *di, uint direction)
 {
-	uint16 size;
+	uint32 size;
 	uint ddlen;
 	void *va;
 	uint alloced = 0;
-	uint16 align;
+	uint32 align;
 	uint16 align_bits;
 
 	ddlen = sizeof(dma64dd_t);
@@ -2596,7 +2651,9 @@ dma64_alloc(dma_info_t *di, uint direction)
 	align = (1 << align_bits);
 
 	if (direction == DMA_TX) {
-		if ((va = dma_ringalloc(di->osh, D64RINGALIGN, size, &align_bits, &alloced,
+		if ((va = dma_ringalloc(di->osh,
+			(di->d64_xs0_cd_mask == 0x1fff) ? D64RINGBOUNDARY : D64RINGBOUNDARY_LARGE,
+			size, &align_bits, &alloced,
 			&di->txdpaorig, &di->tx_dmah)) == NULL) {
 			DMA_ERROR(("%s: dma64_alloc: DMA_ALLOC_CONSISTENT(ntxd) failed\n",
 			           di->name));
@@ -2620,7 +2677,9 @@ dma64_alloc(dma_info_t *di, uint direction)
 		di->txdalloc = alloced;
 		ASSERT(ISALIGNED(PHYSADDRLO(di->txdpa), align));
 	} else {
-		if ((va = dma_ringalloc(di->osh, D64RINGALIGN, size, &align_bits, &alloced,
+		if ((va = dma_ringalloc(di->osh,
+			(di->d64_rs0_cd_mask == 0x1fff) ? D64RINGBOUNDARY : D64RINGBOUNDARY_LARGE,
+			size, &align_bits, &alloced,
 			&di->rxdpaorig, &di->rx_dmah)) == NULL) {
 			DMA_ERROR(("%s: dma64_alloc: DMA_ALLOC_CONSISTENT(nrxd) failed\n",
 			           di->name));
@@ -3020,7 +3079,7 @@ dma64_getnexttxp(dma_info_t *di, txd_range_t range)
 		dma64regs_t *dregs = di->d64txregs;
 
 		end = (uint16)(B2I(((R_REG(di->osh, &dregs->status0) & D64_XS0_CD_MASK) -
-		           di->xmtptrbase) & D64_XS0_CD_MASK, dma64dd_t));
+		      di->xmtptrbase) & D64_XS0_CD_MASK, dma64dd_t));
 
 		if (range == HNDDMA_RANGE_TRANSFERED) {
 			active_desc = (uint16)(R_REG(di->osh, &dregs->status1) & D64_XS1_AD_MASK);
@@ -3035,25 +3094,31 @@ dma64_getnexttxp(dma_info_t *di, txd_range_t range)
 		goto bogus;
 
 	for (i = start; i != end && !txp; i = NEXTTXD(i)) {
-		dmaaddr_t pa;
 		hnddma_seg_map_t *map = NULL;
 		uint size, j, nsegs;
 
+#if !defined(__mips__) && !defined(__ARM_ARCH_7A__)
+		dmaaddr_t pa;
 		PHYSADDRLOSET(pa, (BUS_SWAP32(R_SM(&di->txd64[i].addrlow)) - di->dataoffsetlow));
 		PHYSADDRHISET(pa, (BUS_SWAP32(R_SM(&di->txd64[i].addrhigh)) - di->dataoffsethigh));
+#endif
 
 		if (DMASGLIST_ENAB) {
 			map = &di->txp_dmah[i];
 			size = map->origsize;
 			nsegs = map->nsegs;
 		} else {
+#if !defined(__mips__) && !defined(__ARM_ARCH_7A__)
 			size = (BUS_SWAP32(R_SM(&di->txd64[i].ctrl2)) & D64_CTRL2_BC_MASK);
+#endif
 			nsegs = 1;
 		}
 
 		for (j = nsegs; j > 0; j--) {
+#if !defined(__mips__) && !defined(__ARM_ARCH_7A__)
 			W_SM(&di->txd64[i].addrlow, 0xdeadbeef);
 			W_SM(&di->txd64[i].addrhigh, 0xdeadbeef);
+#endif
 
 			txp = di->txp[i];
 			di->txp[i] = NULL;
@@ -3061,7 +3126,9 @@ dma64_getnexttxp(dma_info_t *di, txd_range_t range)
 				i = NEXTTXD(i);
 		}
 
+#if !defined(__mips__) && !defined(__ARM_ARCH_7A__)
 		DMA_UNMAP(di->osh, pa, size, DMA_TX, txp, map);
+#endif
 	}
 
 	di->txin = i;
@@ -3082,7 +3149,9 @@ dma64_getnextrxp(dma_info_t *di, bool forceall)
 {
 	uint i, curr;
 	void *rxp;
+#if !defined(__mips__) && !defined(__ARM_ARCH_7A__)
 	dmaaddr_t pa;
+#endif
 
 	/* if forcing, dma engine must be disabled */
 	ASSERT(!forceall || !dma64_rxenabled(di));
@@ -3105,6 +3174,7 @@ dma64_getnextrxp(dma_info_t *di, bool forceall)
 	ASSERT(rxp);
 	di->rxp[i] = NULL;
 
+#if !defined(__mips__) && !defined(__ARM_ARCH_7A__)
 	PHYSADDRLOSET(pa, (BUS_SWAP32(R_SM(&di->rxd64[i].addrlow)) - di->dataoffsetlow));
 	PHYSADDRHISET(pa, (BUS_SWAP32(R_SM(&di->rxd64[i].addrhigh)) - di->dataoffsethigh));
 
@@ -3114,6 +3184,7 @@ dma64_getnextrxp(dma_info_t *di, bool forceall)
 
 	W_SM(&di->rxd64[i].addrlow, 0xdeadbeef);
 	W_SM(&di->rxd64[i].addrhigh, 0xdeadbeef);
+#endif
 
 	di->rxin = NEXTRXD(i);
 

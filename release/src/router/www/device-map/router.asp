@@ -25,24 +25,22 @@ function initial(){
 	$("t1").className = <% nvram_get("wl_unit"); %> ? "tabclick_NW" : "tab_NW";
 
 	if(sw_mode == 2){
-		if(parent.psta_support == -1){
-			if('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
-				tabclickhandler('<% nvram_get("wl_unit"); %>');
-			}
-			else if('<% nvram_get("wl_unit"); %>' != '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' == '1'){
-				tabclickhandler('<% nvram_get("wl_unit"); %>');
-			}
+		if('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
+			tabclickhandler('<% nvram_get("wl_unit"); %>');
+		}
+		else if('<% nvram_get("wl_unit"); %>' != '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' == '1'){
+			tabclickhandler('<% nvram_get("wl_unit"); %>');
+		}
+	}
+	else if(sw_mode == 4){
+		if('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
+			$("WLnetworkmap").style.display = "none";
+			$("applySecurity").style.display = "none";
+			$("WLnetworkmap_re").style.display = "";
 		}
 		else{
-			if('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
-				$("WLnetworkmap").style.display = "none";
-				$("applySecurity").style.display = "none";
-				$("WLnetworkmap_re").style.display = "";
-			}
-			else{
-				if('<% nvram_get("wl_subunit"); %>' != '-1'){
-					tabclickhandler('<% nvram_get("wl_unit"); %>');
-				}
+			if('<% nvram_get("wl_subunit"); %>' != '-1'){
+				tabclickhandler('<% nvram_get("wl_unit"); %>');
 			}
 		}
 	}
@@ -57,7 +55,7 @@ function initial(){
 	}
 
 	// modify wlX.1_ssid(SSID to end clients) under repeater mode
-	if(parent.sw_mode == 2 && '<% nvram_get("wlc_band"); %>' == '<% nvram_get("wl_unit"); %>')
+	if((parent.sw_mode == 2 || parent.sw_mode == 4) && '<% nvram_get("wlc_band"); %>' == '<% nvram_get("wl_unit"); %>')
 		document.form.wl_subunit.value = 1;
 	else
 		document.form.wl_subunit.value = -1;
@@ -66,7 +64,7 @@ function initial(){
 		$("t0").style.display = "";
 		$("t1").style.display = "";
 		/* allow to use the other band as a wireless AP
-		if(sw_mode == 2 && parent.psta_support != -1)
+		if(parent.sw_mode == 4)
 			$('t'+((parseInt(<% nvram_get("wlc_band"); %>+1))%2)).style.display = 'none';
 		*/
 	}
@@ -86,7 +84,7 @@ function initial(){
 		document.form.wl_wpa_psk.value = "<#wireless_psk_fillin#>";
 	*/
 	
-	if(sw_mode == 2){				
+	if(sw_mode == 2 || sw_mode == 4){				
 			//remove Crypto: WPA & RADIUS
 			for(i=document.form.wl_auth_mode_x.length-1;i>=0;i--){
 					var authmode_opt = document.form.wl_auth_mode_x.options[i].value.toString();
@@ -97,7 +95,7 @@ function initial(){
 	
 	wl_auth_mode_change(1);
 	show_LAN_info();
-	if(parent.psta_support != -1 && parent.sw_mode == 2)
+	if(parent.sw_mode == 4)
 		parent.show_middle_status('<% nvram_get("wlc_auth_mode"); %>', '', 0);		
 	else
 		parent.show_middle_status(document.form.wl_auth_mode_x.value, document.form.wl_wpa_mode.value, parseInt(document.form.wl_wep_x.value));
@@ -107,7 +105,7 @@ function initial(){
 }
 
 function tabclickhandler(wl_unit){
-	if(parent.sw_mode == 2 && '<% nvram_get("wlc_band"); %>' == wl_unit)
+	if((parent.sw_mode == 2 || parent.sw_mode == 4) && '<% nvram_get("wlc_band"); %>' == wl_unit)
 		document.form.wl_subunit.value = 1;
 	else
 		document.form.wl_subunit.value = -1;
@@ -451,9 +449,6 @@ function submitForm(){
 	}
 	document.form.wsc_config_state.value = "1";
 
-	if(wl6_support != -1)
-		document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
-
 	parent.showLoading();
 	document.form.submit();	
 	return true;
@@ -571,7 +566,10 @@ function change_authmode(o, s, v){
 
 
 function gotoSiteSurvey(){
-	parent.location.href = '/QIS_wizard.htm?flag=sitesurvey&band='+'<% nvram_get("wl_unit"); %>';
+	if(sw_mode == 2)
+		parent.location.href = '/QIS_wizard.htm?flag=sitesurvey&band='+'<% nvram_get("wl_unit"); %>';
+	else
+		parent.location.href = '/QIS_wizard.htm?flag=sitesurvey_mb';
 }
 </script>
 </head>

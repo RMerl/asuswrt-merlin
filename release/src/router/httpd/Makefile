@@ -2,7 +2,7 @@ include ../common.mak
 
 CFLAGS = -Os -Wall $(EXTRACFLAGS)
 CFLAGS += -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared -I$(TOP)/zlib
-CFLAGS += -DASUS_NVRAM -DASUS_DDNS -DTRANSLATE_ON_FLY -DFLASH_EMULATOR -DLinux -DWSC 
+CFLAGS += -DASUS_DDNS -DTRANSLATE_ON_FLY -DFLASH_EMULATOR -DLinux -DWSC 
 
 ifeq ($(RTCONFIG_RALINK),y)
 CFLAGS += -DRalink_WPS
@@ -71,7 +71,7 @@ httpd: $(OBJS)
 	$(CPTMP)
 
 
-install:
+install: all
 	@echo " [httpd] Installing to $(INSTALLDIR)"
 	@install -D httpd $(INSTALLDIR)/usr/sbin/httpd
 	@$(STRIP) $(INSTALLDIR)/usr/sbin/httpd

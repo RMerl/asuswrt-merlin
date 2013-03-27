@@ -32,10 +32,24 @@ function applyRule(){
 }
 
 function validForm(){
-	if(!validate_ipaddr_final(document.form.dmz_ip, 'dmz_ip')){
-		return false;
+	if(document.form.dmz_ip.value != ""){
+		if(!validate_ipaddr_final(document.form.dmz_ip, 'dmz_ip')){
+			return false;
+		}
+		
+		if(document.form.dmz_enable[1].checked){
+			document.form.dmz_ip.value = " ";
+		}
 	}
+	else{
+		if(document.form.dmz_enable[0].checked){
+			alert("<#JS_fieldblank#>");
+			document.form.dmz_ip.focus();
+			return false;
+		}
 	
+	}
+
 	return true;
 }
 
@@ -47,6 +61,25 @@ function initial(){
 	show_menu(); 
 	load_body();
 	addOnlineHelp($("faq"), ["ASUSWRT", "DMZ"]);
+	dmz_enable_check();
+}
+
+function dmz_enable_check(){
+	if(document.form.dmz_ip.value == ""){
+		document.form.dmz_enable[1].checked = "true";
+		document.form.dmz_ip.parentNode.parentNode.style.display = "none";
+	}	
+	else{
+		document.form.dmz_enable[0].checked = "true";
+		document.form.dmz_ip.parentNode.parentNode.style.display = "";
+	}	
+}
+
+function dmz_on_off(flag){
+	if(flag == 1)
+		document.form.dmz_ip.parentNode.parentNode.style.display = "";
+	else	
+		document.form.dmz_ip.parentNode.parentNode.style.display = "none";
 }
 </script>
 </head>
@@ -101,12 +134,19 @@ function initial(){
 
 
 	<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-          <tr>
+         <tr>
+            <th>Enable DMZ</th>
+            <td>
+				<input type="radio" name="dmz_enable" class="input" value="1" onclick="dmz_on_off(1)" ><#checkbox_Yes#>
+				<input type="radio" name="dmz_enable" class="input" value="0" onclick="dmz_on_off(0)" ><#checkbox_No#>
+            </td>
+         </tr>
+		 <tr>
             <th><#IPConnection_ExposedIP_itemname#></th>
             <td>
               <input type="text" maxlength="15" class="input_15_table" name="dmz_ip" value="<% nvram_get("dmz_ip"); %>" onkeypress="return is_ipaddr(this, event)"/>
             </td>
-          </tr>
+         </tr>
 
         <!-- Viz 2011.04tr>
         <th width="30%"  align="right"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,20);"><#IPConnection_BattleNet_itemname#></a></th>

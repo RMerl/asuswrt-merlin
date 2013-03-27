@@ -1,0 +1,136 @@
+# Copyright 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Test loading symbols from unrelocated C++ object files.
+
+set testfile cp-relocate
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}.o
+
+if { [skip_cplus_tests] } { continue }
+
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" object {c++ debug}] != "" } {
+     untested cp-relocate.exp
+     return -1
+}
+
+proc get_func_address { func } {
+    global gdb_prompt hex
+
+    set rfunc [string_to_regexp $func]
+    gdb_test_multiple "print '${func}'" "get address of ${func}" {
+	-re "\\\$\[0-9\]+ = \\{.*\\} (0|($hex) <${rfunc}>)\[\r\n\]+${gdb_prompt} $" {
+	    # $1 = {int ()} 0x24 <function_bar>
+	    # But if the function is at zero, the name may be omitted.
+	    pass "get address of ${func}"
+	    if { $expect_out(1,string) == "0" } {
+		return "0x0"
+	    } else {
+		return $expect_out(2,string)
+	    }
+	}
+    }
+  return ""
+}
+
+# Load the file as an executable; GDB should assign non-overlapping
+# section offsets.
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_file_cmd ${binfile}
+
+# Find the interesting functions.  We go to a little effort to find
+# the right function names here, to work around PR c++/40.
+set func1_name ""
+set func2_name ""
+gdb_test_multiple "info functions func<.>" "info functions" {
+    -re "\r\nint (\[^\r\]*func<1>\[^\r]*);" {
+	set func1_name $expect_out(1,string)
+	exp_continue
+    }
+    -re "\r\nint (\[^\r\]*func<2>\[^\r]*);" {
+	set func2_name $expect_out(1,string)
+	exp_continue
+    }
+    -re "$gdb_prompt $" {
+	if { ${func1_name} != "" && ${func2_name} != "" } {
+	    pass "info functions"
+	} else {
+	    fail "info functions"
+	    return -1
+	}
+    }
+}
+
+# Check that all the functions have different addresses.
+set func1_addr [get_func_address "$func1_name"]
+set func2_addr [get_func_address "$func2_name"]
+set caller_addr [get_func_address "caller"]
+
+if { "${func1_addr}" == "${func2_addr}"
+     || "${func1_addr}" == "${func2_addr}"
+     || "${func2_addr}" == "${caller_addr}" } {
+  fail "C++ functions have different addresses"
+} else {
+  pass "C++ functions have different addresses"
+}
+
+# Figure out the names of the sections containing the template
+# functions.
+set func1_sec ""
+set func2_sec ""
+gdb_test_multiple "info file" "info file" {
+    -re "($hex) - ($hex) is (\[^\r\]*)\r" {
+	if { $expect_out(1,string) <= $func1_addr
+	     && $expect_out(2,string) > $func1_addr } {
+	    set func1_sec $expect_out(3,string)
+	} elseif { $expect_out(1,string) <= $func2_addr
+	    && $expect_out(2,string) > $func2_addr } {
+	    set func2_sec $expect_out(3,string)
+	}
+	exp_continue
+    }
+    -re "$gdb_prompt $" {
+	if { ${func1_sec} != "" && ${func2_sec} != "" } {
+	    pass "info file"
+	} else {
+	    fail "info file"
+	    return -1
+	}
+    }
+}
+
+if { $func1_sec == $func2_sec } {
+    untested "cp-relocate.exp - template functions in same sections"
+    return -1
+}
+
+# Now start a clean GDB, for add-symbol-file tests.
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+gdb_test "add-symbol-file ${binfile} 0 -s ${func1_sec} 0x10000 -s ${func2_sec} 0x20000" \
+	"Reading symbols from .*${testfile}\\.o\\.\\.\\.done\\.(|\r\nUsing host libthread_db library .*libthread_db.so.*\\.)" \
+	"add-symbol-file ${testfile}.o" \
+	"add symbol table from file \".*${testfile}\\.o\" at.*\\(y or n\\) " \
+	"y"
+
+# Make sure the function addresses were updated.
+gdb_test "break *'$func1_name'" \
+    "Breakpoint $decimal at 0x1....: file .*"
+gdb_test "break *'$func2_name'" \
+    "Breakpoint $decimal at 0x2....: file .*"

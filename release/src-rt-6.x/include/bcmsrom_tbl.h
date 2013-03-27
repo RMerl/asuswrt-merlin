@@ -1,7 +1,7 @@
 /*
  * Table that encodes the srom formats for PCI/PCIe NICs.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmsrom_tbl.h 324896 2012-03-30 19:35:36Z $
+ * $Id: bcmsrom_tbl.h 350740 2012-08-15 06:35:40Z $
  */
 
 #ifndef	_bcmsrom_tbl_h_
@@ -81,7 +81,7 @@ static const sromvar_t pci_sromvars[] = {
 	{"boardflags2", 0xffffff00,	SRFL_PRHEX|SRFL_MORE,	SROM8_BFL2,	0xffff},
 	{"",		0,		0,		SROM8_BFL3,		0xffff},
 	{"boardtype",	0xfffffffc,	SRFL_PRHEX,	SROM_SSID,		0xffff},
-
+	{"subvid",	0xfffffffc,	SRFL_PRHEX,	SROM_SVID,		0xffff},
 	{"boardnum",	0x00000006,	0,		SROM_MACLO_IL0,		0xffff},
 	{"boardnum",	0x00000008,	0,		SROM3_MACLO,		0xffff},
 	{"boardnum",	0x00000010,	0,		SROM4_MACLO,		0xffff},
@@ -440,8 +440,8 @@ static const sromvar_t pci_sromvars[] = {
 	{"",	0x00000400, SRFL_PRHEX,	SROM10_SWCTRLMAP_2G + 8,			0xffff},
 
 	/* sromrev 11 */
-	{"boardflags3",	0xfffff800,	SRFL_PRHEX|SRFL_MORE,	SROM11_BFL3,	0xffff},
-	{"",		0,		0,			SROM11_BFL3,	0xffff},
+	{"boardflags3",	0xfffff800,	SRFL_PRHEX|SRFL_MORE,	SROM11_BFL4,	0xffff},
+	{"",		0,		0,			SROM11_BFL5,	0xffff},
 	{"boardnum",	0xfffff800,	0,			SROM11_MACLO,	0xffff},
 	{"macaddr",	0xfffff800,	SRFL_ETHADDR,		SROM11_MACHI,	0xffff},
 	{"ccode",	0xfffff800,	SRFL_CCODE,		SROM11_CCODE,	0xffff},
@@ -484,11 +484,16 @@ static const sromvar_t pci_sromvars[] = {
 	{"tempsense_slope",	0xfffff800,	SRFL_PRHEX, 	SROM11_TS_SLP_OPT_CORRX, 0x00ff},
 	{"tempcorrx",		0xfffff800,	SRFL_PRHEX, 	SROM11_TS_SLP_OPT_CORRX, 0xfc00},
 	{"tempsense_option",	0xfffff800,	SRFL_PRHEX,	SROM11_TS_SLP_OPT_CORRX, 0x0300},
+	{"xtalfreq",		0xfffff800,	0,		SROM11_XTAL_FREQ, 	0xffff},
 	{"phycal_tempdelta",	0xfffff800,	0,		SROM11_PHYCAL_TEMPDELTA, 0x00ff},
 	{"temps_period",	0xfffff800,	0,		SROM11_PHYCAL_TEMPDELTA, 0x0f00},
 	{"temps_hysteresis",	0xfffff800,	0,		SROM11_PHYCAL_TEMPDELTA, 0xf000},
 	{"measpower1", 		0xfffff800,	SRFL_PRHEX,	SROM11_MPWR_1_AND_2, 	0x007f},
 	{"measpower2",		0xfffff800, 	SRFL_PRHEX,	SROM11_MPWR_1_AND_2, 	0x3f80},
+	{"pdoffset2g40ma0",     0xfffff800, 0,      SROM11_PDOFF_2G_40M,    0x000f},
+	{"pdoffset2g40ma1",     0xfffff800, 0,      SROM11_PDOFF_2G_40M,    0x00f0},
+	{"pdoffset2g40ma2",     0xfffff800, 0,      SROM11_PDOFF_2G_40M,    0x0f00},
+	{"pdoffset2g40mvalid",  0xfffff800, 0,      SROM11_PDOFF_2G_40M,    0x8000},
 	{"pdoffset40ma0",      	0xfffff800,	0,		SROM11_PDOFF_40M_A0,   	0xffff},
 	{"pdoffset40ma1",      	0xfffff800,	0,		SROM11_PDOFF_40M_A1,   	0xffff},
 	{"pdoffset40ma2",      	0xfffff800,	0,		SROM11_PDOFF_40M_A2,   	0xffff},
@@ -534,7 +539,7 @@ static const sromvar_t pci_sromvars[] = {
 	{"mcslr5glpo",		0xfffff800,	0,		SROM11_MCSLR5GLPO, 	0xffff},
 	{"mcslr5gmpo",		0xfffff800,	0,		SROM11_MCSLR5GMPO, 	0xffff},
 	{"mcslr5ghpo",		0xfffff800,	0,		SROM11_MCSLR5GHPO, 	0xffff},
-	{"sb20in40hrrpo", 	0xfffff800,	0,	SROM11_SB20IN40HRPO,		0xffff},
+	{"sb20in40hrpo", 	0xfffff800,	0,	SROM11_SB20IN40HRPO,		0xffff},
 	{"sb20in80and160hr5glpo", 0xfffff800, 	0, 	SROM11_SB20IN80AND160HR5GLPO, 	0xffff},
 	{"sb40and80hr5glpo",	  0xfffff800, 	0,	SROM11_SB40AND80HR5GLPO,	0xffff},
 	{"sb20in80and160hr5gmpo", 0xfffff800, 	0,	SROM11_SB20IN80AND160HR5GMPO, 	0xffff},
@@ -555,26 +560,39 @@ static const sromvar_t pci_sromvars[] = {
 	{"pcieingress_war",	0xfffff800,	0,	SROM11_PCIEINGRESS_WAR,	0xf},
 	{"sar2g",       	0xfffff800,	0,	SROM11_SAR,          	0x00ff},
 	{"sar5g",           	0xfffff800,	0,	SROM11_SAR,		0xff00},
-	{"noiselvl2ga0",	0xfffff800,	0,	SROM11_NOISELVL_2G,	0x001f},
-	{"noiselvl2ga1",	0xfffff800,	0,	SROM11_NOISELVL_2G,	0x03e0},
-	{"noiselvl2ga2",	0xfffff800,	0,	SROM11_NOISELVL_2G,	0x7c00},
-	{"noiselvl5gla0",	0xfffff800,	0,	SROM11_NOISELVL_5GL,	0x001f},
-	{"noiselvl5gla1",	0xfffff800,	0,	SROM11_NOISELVL_5GL,	0x03e0},
-	{"noiselvl5gla2",	0xfffff800,	0,	SROM11_NOISELVL_5GL,	0x7c00},
-	{"noiselvl5gma0",	0xfffff800,	0,	SROM11_NOISELVL_5GM,	0x001f},
-	{"noiselvl5gma1",	0xfffff800,	0,	SROM11_NOISELVL_5GM,	0x03e0},
-	{"noiselvl5gma2",	0xfffff800,	0,	SROM11_NOISELVL_5GM,	0x7c00},
-	{"noiselvl5gha0",	0xfffff800,	0,	SROM11_NOISELVL_5GH,	0x001f},
-	{"noiselvl5gha1",	0xfffff800,	0,	SROM11_NOISELVL_5GH,	0x03e0},
-	{"noiselvl5gha2",	0xfffff800,	0,	SROM11_NOISELVL_5GH,	0x7c00},
-	{"noiselvl5gua0",	0xfffff800,	0,	SROM11_NOISELVL_5GU,	0x001f},
-	{"noiselvl5gua1",	0xfffff800,	0,	SROM11_NOISELVL_5GU,	0x03e0},
-	{"noiselvl5gua2",	0xfffff800,	0,	SROM11_NOISELVL_5GU,	0x7c00},
-	{"rxgainerr2g",	0xfffff800, SRFL_PRHEX,		SROM11_RXGAINERR_2G,	0xffff},
-	{"rxgainerr5g",	0xfffff800, SRFL_PRHEX|SRFL_ARRAY, SROM11_RXGAINERR_5GL, 0xffff},
-	{"",		0xfffff800, SRFL_PRHEX|SRFL_ARRAY, SROM11_RXGAINERR_5GM, 0xffff},
-	{"",		0xfffff800, SRFL_PRHEX|SRFL_ARRAY, SROM11_RXGAINERR_5GH, 0xffff},
-	{"",		0xfffff800, SRFL_PRHEX,		   SROM11_RXGAINERR_5GU, 0xffff},
+
+	{"noiselvl2ga0",	0xfffff800,	0,		SROM11_NOISELVL_2G,	0x001f},
+	{"noiselvl2ga1",	0xfffff800,	0,		SROM11_NOISELVL_2G,	0x03e0},
+	{"noiselvl2ga2",	0xfffff800,	0,		SROM11_NOISELVL_2G,	0x7c00},
+	{"noiselvl5ga0",	0xfffff800,	SRFL_ARRAY,	SROM11_NOISELVL_5GL,	0x001f},
+	{"",			0xfffff800,	SRFL_ARRAY,	SROM11_NOISELVL_5GM,	0x001f},
+	{"",			0xfffff800,	SRFL_ARRAY,	SROM11_NOISELVL_5GH,	0x001f},
+	{"",			0xfffff800,	0,		SROM11_NOISELVL_5GU,	0x001f},
+	{"noiselvl5ga1",	0xfffff800,	SRFL_ARRAY,	SROM11_NOISELVL_5GL,	0x03e0},
+	{"",			0xfffff800,	SRFL_ARRAY,	SROM11_NOISELVL_5GM,	0x03e0},
+	{"",			0xfffff800,	SRFL_ARRAY,	SROM11_NOISELVL_5GH,	0x03e0},
+	{"",			0xfffff800,	0,		SROM11_NOISELVL_5GU,	0x03e0},
+	{"noiselvl5ga2",	0xfffff800,	SRFL_ARRAY,	SROM11_NOISELVL_5GL,	0x7c00},
+	{"",			0xfffff800,	SRFL_ARRAY,	SROM11_NOISELVL_5GM,	0x7c00},
+	{"",			0xfffff800,	SRFL_ARRAY,	SROM11_NOISELVL_5GH,	0x7c00},
+	{"",			0xfffff800,	0,		SROM11_NOISELVL_5GU,	0x7c00},
+
+	{"rxgainerr2ga0", 	0xfffff800, 	0,    		SROM11_RXGAINERR_2G,    0x003f},
+	{"rxgainerr2ga1", 	0xfffff800, 	0,    		SROM11_RXGAINERR_2G,    0x07c0},
+	{"rxgainerr2ga2", 	0xfffff800, 	0,    		SROM11_RXGAINERR_2G,    0xf800},
+	{"rxgainerr5ga0",      	0xfffff800, 	SRFL_ARRAY,    	SROM11_RXGAINERR_5GL,   0x003f},
+	{"",      		0xfffff800, 	SRFL_ARRAY,    	SROM11_RXGAINERR_5GM,   0x003f},
+	{"",      		0xfffff800, 	SRFL_ARRAY,    	SROM11_RXGAINERR_5GH,   0x003f},
+	{"",      		0xfffff800, 	0,    		SROM11_RXGAINERR_5GU,   0x003f},
+	{"rxgainerr5ga1",      	0xfffff800, 	SRFL_ARRAY,    	SROM11_RXGAINERR_5GL,   0x07c0},
+	{"",      		0xfffff800, 	SRFL_ARRAY,    	SROM11_RXGAINERR_5GM,   0x07c0},
+	{"",      		0xfffff800, 	SRFL_ARRAY,    	SROM11_RXGAINERR_5GH,   0x07c0},
+	{"",      		0xfffff800, 	0,    		SROM11_RXGAINERR_5GU,   0x07c0},
+	{"rxgainerr5ga2",      	0xfffff800, 	SRFL_ARRAY,    	SROM11_RXGAINERR_5GL,   0xf800},
+	{"",      		0xfffff800, 	SRFL_ARRAY,    	SROM11_RXGAINERR_5GM,   0xf800},
+	{"",      		0xfffff800, 	SRFL_ARRAY,    	SROM11_RXGAINERR_5GH,   0xf800},
+	{"",      		0xfffff800, 	0,    		SROM11_RXGAINERR_5GU,   0xf800},
+
 	{NULL,		0,		0,		0,			0}
 };
 
@@ -780,7 +798,8 @@ static const cis_tuple_t cis_hnbuvars[] = {
 	{HNBU_AA,		0xffffffff, 3, "1aa0 1aa1"}, /* backward compatibility */
 	{HNBU_AG,		0xffffffff, 5, "1ag0 1ag1 1ag2 1ag3"},
 	{HNBU_BOARDFLAGS,	0xffffffff, 13, "4boardflags 4boardflags2 4boardflags3"},
-	{HNBU_LEDS,		0xffffffff, 5, "1ledbh0 1ledbh1 1ledbh2 1ledbh3"},
+	{HNBU_LEDS,		0xffffffff, 13, "1ledbh0 1ledbh1 1ledbh2 1ledbh3 1ledbh4 1ledbh5 "
+	"1ledbh6 1ledbh7 1ledbh8 1ledbh9 1ledbh10 1ledbh11"},
 	{HNBU_CCODE,		0xffffffff, 4, "2ccode 1cctl"},
 	{HNBU_CCKPO,		0xffffffff, 3, "2cckpo"},
 	{HNBU_OFDMPO,		0xffffffff, 5, "4ofdmpo"},
@@ -847,31 +866,50 @@ static const cis_tuple_t cis_hnbuvars[] = {
 	{HNBU_MCS5GHPO,	0xffffffff, 13,	"4mcsbw205ghpo 4mcsbw20ul5ghpo 4mcsbw405ghpo"},
 	{HNBU_MCS32PO,	0xffffffff, 3,	"2mcs32po"},
 	{HNBU_LEG40DUPPO, 	0xffffffff, 3,	"2legofdm40duppo"},
-	{HNBU_TEMPTHRESH, 	0xffffffff, 6,	"1tempthresh 1periodhyst 1tempoffset 1tempcoropt "
-	"1phycal_tempdelta"},
-	{HNBU_FEM_CFG,		0xfffff800, 5,	"2fem_cfg1 2fem_cfg2"},
-	{HNBU_ACPA_C0,		0xfffff800, 41,	"2subband5gver 2maxp2ga0 2*3pa2ga0 2rxgainsa0 "
+	{HNBU_TEMPTHRESH, 	0xffffffff, 7,	"1tempthresh 0temps_period 0temps_hysteresis "
+	"1tempoffset 1tempsense_slope 0tempcorrx 0tempsense_option "
+	"1phycal_tempdelta"}, /* special case */
+	{HNBU_MUXENAB,		0xffffffff, 2,	"1muxenab"},
+	{HNBU_FEM_CFG,		0xfffff800, 5,	"0femctrl 0papdcap2g 0tworangetssi2g 0pdgain2g "
+	"0epagain2g 0tssiposslope2g 0gainctrlsph 0papdcap5g 0tworangetssi5g 0pdgain5g 0epagain5g "
+	"0tssiposslope5g"}, /* special case */
+	{HNBU_ACPA_C0,		0xfffff800, 39,	"2subband5gver 2maxp2ga0 2*3pa2ga0 "
 	"1*4maxp5ga0 2*12pa5ga0"},
-	{HNBU_ACPA_C1,		0xfffff800, 39,	"2maxp2ga1 2*3pa2ga1 2rxgainsa1 1*4maxp5ga1 "
-	"2*12pa5ga1"},
-	{HNBU_ACPA_C2,		0xfffff800, 39,	"2maxp2ga2 2*3pa2ga2 2rxgainsa2 1*4maxp5ga2 "
-	"2*12pa5ga2"},
+	{HNBU_ACPA_C1,		0xfffff800, 37,	"2maxp2ga1 2*3pa2ga1 1*4maxp5ga1 2*12pa5ga1"},
+	{HNBU_ACPA_C2,		0xfffff800, 37,	"2maxp2ga2 2*3pa2ga2 1*4maxp5ga2 2*12pa5ga2"},
 	{HNBU_MEAS_PWR,		0xfffff800, 5,	"1measpower 1measpower1 1measpower2 2rawtempsense"},
 	{HNBU_PDOFF,		0xfffff800, 13,	"2pdoffset40ma0 2pdoffset40ma1 2pdoffset40ma2 "
 	"2pdoffset80ma0 2pdoffset80ma1 2pdoffset80ma2"},
 	{HNBU_ACPPR_2GPO,	0xfffff800, 5,	"2dot11agofdmhrbw202gpo 2ofdmlrbw202gpo"},
 	{HNBU_ACPPR_5GPO,	0xfffff800, 31,	"4mcsbw805glpo 4mcsbw1605glpo 4mcsbw805gmpo "
-	"4mcsbw1605gmpo 4mcsbw805ghpo 4mcsbw1605ghpo 2mcslr5rlpo 2mcslr5gmpo 2mcslr5ghpo"},
-	{HNBU_ACPPR_SBPO,	0xfffff800, 33,	"2sb20in40hrrpo 2sb20in80and160hr5glpo "
+	"4mcsbw1605gmpo 4mcsbw805ghpo 4mcsbw1605ghpo 2mcslr5glpo 2mcslr5gmpo 2mcslr5ghpo"},
+	{HNBU_ACPPR_SBPO,	0xfffff800, 33,	"2sb20in40hrpo 2sb20in80and160hr5glpo "
 	"2sb40and80hr5glpo 2sb20in80and160hr5gmpo 2sb40and80hr5gmpo 2sb20in80and160hr5ghpo "
 	"2sb40and80hr5ghpo 2sb20in40lrpo 2sb20in80and160lr5glpo 2sb40and80lr5glpo "
 	"2sb20in80and160lr5gmpo 2sb40and80lr5gmpo 2sb20in80and160lr5ghpo 2sb40and80lr5ghpo "
 	"2dot11agduphrpo 2dot11agduplrpo"},
-	{HNBU_NOISELVL,		0xfffff800, 11, "2noiselvl2g 2noiselvl5gl 2noiselvl5gm "
-	"2noiselvl5gh 2noiselvl5gu"},
-	{HNBU_RXGAIN_ERR,	0xfffff800, 11, "2rxgainerr2g 2*4rxgainerr5g"},
+	{HNBU_NOISELVL,		0xfffff800, 16, "1noiselvl2ga0 1noiselvl2ga1 1noiselvl2ga2 "
+	"1*4noiselvl5ga0 1*4noiselvl5ga1 1*4noiselvl5ga2"},
+	{HNBU_RXGAIN_ERR,	0xfffff800, 16, "1rxgainerr2ga0 1rxgainerr2ga1 1rxgainerr2ga2 "
+	"1*4rxgainerr5ga0 1*4rxgainerr5ga1 1*4rxgainerr5ga2"},
 	{HNBU_AGBGA,		0xfffff800, 7, "1agbg0 1agbg1 1agbg2 1aga0 1aga1 1aga2"},
 	{HNBU_UUID, 		0xffffffff, 17,	"16uuid"},
+	{HNBU_ACRXGAINS_C0,	0xfffff800, 5, "0rxgains5gtrelnabypa0 0rxgains5gtrisoa0 "
+	"0rxgains5gelnagaina0 0rxgains2gtrelnabypa0 0rxgains2gtrisoa0 0rxgains2gelnagaina0 "
+	"0rxgains5ghtrelnabypa0 0rxgains5ghtrisoa0 0rxgains5ghelnagaina0 0rxgains5gmtrelnabypa0 "
+	"0rxgains5gmtrisoa0 0rxgains5gmelnagaina0"},	/* special case */
+	{HNBU_ACRXGAINS_C1,	0xfffff800, 5, "0rxgains5gtrelnabypa1 0rxgains5gtrisoa1 "
+	"0rxgains5gelnagaina1 0rxgains2gtrelnabypa1 0rxgains2gtrisoa1 0rxgains2gelnagaina1 "
+	"0rxgains5ghtrelnabypa1 0rxgains5ghtrisoa1 0rxgains5ghelnagaina1 0rxgains5gmtrelnabypa1 "
+	"0rxgains5gmtrisoa1 0rxgains5gmelnagaina1"},	/* special case */
+	{HNBU_ACRXGAINS_C2,	0xfffff800, 5, "0rxgains5gtrelnabypa2 0rxgains5gtrisoa2 "
+	"0rxgains5gelnagaina2 0rxgains2gtrelnabypa2 0rxgains2gtrisoa2 0rxgains2gelnagaina2 "
+	"0rxgains5ghtrelnabypa2 0rxgains5ghtrisoa2 0rxgains5ghelnagaina2 0rxgains5gmtrelnabypa2 "
+	"0rxgains5gmtrisoa2 0rxgains5gmelnagaina2"},	/* special case */
+	{HNBU_TXDUTY, 		0xfffff800, 9,	"2tx_duty_cycle_ofdm_40_5g "
+	"2tx_duty_cycle_thresh_40_5g 2tx_duty_cycle_ofdm_80_5g 2tx_duty_cycle_thresh_80_5g"},
+	{HNBU_PDOFF_2G,		0xfffff800, 3,	"0pdoffset2g40ma0 0pdoffset2g40ma1 "
+	"0pdoffset2g40ma2 0pdoffset2g40mvalid"},
 	{0xFF,			0xffffffff, 0, ""}
 };
 

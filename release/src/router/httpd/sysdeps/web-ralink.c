@@ -61,7 +61,6 @@
 #ifndef O_BINARY
 #define O_BINARY 	0
 #endif
-#include <image.h>
 #ifndef MAP_FAILED
 #define MAP_FAILED (-1)
 #endif
@@ -70,6 +69,7 @@
 //static char * rfctime(const time_t *timep);
 //static char * reltime(unsigned int seconds);
 void reltime(unsigned int seconds, char *buf);
+static int wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit);
 
 #include <fcntl.h>
 #include <signal.h>
@@ -86,7 +86,7 @@ void reltime(unsigned int seconds, char *buf);
 int is_hwnat_loaded()
 {
 	DIR *dir_to_open = NULL;
-        
+
 	dir_to_open = opendir("/sys/module/hw_nat");
 	if (dir_to_open)
 	{
@@ -101,6 +101,7 @@ int
 ej_nat_table(int eid, webs_t wp, int argc, char_t **argv)
 {
 #ifdef REMOVE
+	int needlen = 0, listlen, i;
     	netconf_nat_t *nat_list = 0;
 //	netconf_nat_t **plist, *cur;
 #endif
@@ -433,16 +434,16 @@ getRate(MACHTTRANSMIT_SETTING HTSetting)
     	rate_index = 12 + ((unsigned char)HTSetting.field.BW *24) + ((unsigned char)HTSetting.field.ShortGI *48) + ((unsigned char)HTSetting.field.MCS);
     }
     else 
-    if (HTSetting.field.MODE == MODE_OFDM)                
+    if (HTSetting.field.MODE == MODE_OFDM)
     	rate_index = (unsigned char)(HTSetting.field.MCS) + 4;
     else if (HTSetting.field.MODE == MODE_CCK)   
     	rate_index = (unsigned char)(HTSetting.field.MCS);
 
     if (rate_index < 0)
-        rate_index = 0;
+	rate_index = 0;
     
     if (rate_index > rate_count)
-        rate_index = rate_count;
+	rate_index = rate_count;
 
 	return (MCSMappingRateTable[rate_index] * 5)/10;
 }
@@ -451,23 +452,23 @@ int
 getRate_2g(MACHTTRANSMIT_SETTING_2G HTSetting)
 {
 	int rate_count = sizeof(MCSMappingRateTable)/sizeof(int);
-	int rate_index = 0;  
+	int rate_index = 0;
 
     if (HTSetting.field.MODE >= MODE_HTMIX)
     {
     	rate_index = 12 + ((unsigned char)HTSetting.field.BW *24) + ((unsigned char)HTSetting.field.ShortGI *48) + ((unsigned char)HTSetting.field.MCS);
     }
     else 
-    if (HTSetting.field.MODE == MODE_OFDM)                
+    if (HTSetting.field.MODE == MODE_OFDM)
     	rate_index = (unsigned char)(HTSetting.field.MCS) + 4;
     else if (HTSetting.field.MODE == MODE_CCK)   
     	rate_index = (unsigned char)(HTSetting.field.MCS);
 
     if (rate_index < 0)
-        rate_index = 0;
+	rate_index = 0;
     
-    if (rate_index > rate_count)
-        rate_index = rate_count;
+    if (rate_index >= rate_count)
+	rate_index = rate_count-1;
 
 	return (MCSMappingRateTable[rate_index] * 5)/10;
 }
@@ -480,7 +481,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	char word[256], *next;
 
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
-		retval += wl_status(eid, wp, argc, argv, ii, word);
+		retval += wl_status(eid, wp, argc, argv, ii);
 		retval += websWrite(wp, "\n");
 
 		ii++;
@@ -495,8 +496,8 @@ ej_wl_status_2g(int eid, webs_t wp, int argc, char_t **argv)
 	return ej_wl_status(eid, wp, argc, argv, 0);
 }
 
-int
-wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit, const char *ifname)
+static int
+wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 {
 	int ret = 0;
 	int channel;
@@ -507,28 +508,32 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit, const char *ifn
 	struct iwreq wrq2;
 	struct iwreq wrq3;
 	unsigned long phy_mode;
-	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
+	char tmp[128], prefix[] = "wlXXXXXXXXXX_", *ifname;
 	int wl_mode_x;
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+	ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 
 #if 0
 	if (nvram_match(strcat_r(prefix, "radio", tmp), "0"))
 	{
-		ret+=websWrite(wp, "Radio is disabled\n");
+		ret+=websWrite(wp, "%s radio is disabled\n",
+			nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
 		return ret;
 	}
 #else
-	if (!get_radio_status(nvram_safe_get(strcat_r(prefix, "ifname", tmp))))
+	if (!get_radio_status(ifname))
 	{
-		ret+=websWrite(wp, "Radio is disabled\n");
+		ret+=websWrite(wp, "%s radio is disabled\n",
+			nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
 		return ret;
 	}
 #endif
 
 	if (wl_ioctl(ifname, SIOCGIWAP, &wrq0) < 0)
 	{
-		ret+=websWrite(wp, "Radio is disabled\n");
+		ret+=websWrite(wp, "%s radio is disabled\n",
+			nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
 		return ret;
 	}
 
@@ -556,6 +561,27 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit, const char *ifn
 	if (ralink_get_range_info(&range, buffer, wrq2.u.data.length) < 0)
 		return ret;
 
+#if 1
+	if (unit == 0 && get_model() == MODEL_RTN65U)
+	{
+		FILE *fp;
+		phy_mode = 0;
+		if((fp = fopen("/etc/Wireless/iNIC/iNIC_ap.dat", "r")) != NULL)
+		{
+			while(fgets(tmp, sizeof(tmp), fp) != NULL)
+			{
+				if(strncmp(tmp, "WirelessMode=", 13) == 0)
+				{
+					phy_mode = atoi(tmp + 13);
+					break;
+				}
+			}
+			fclose(fp);
+		}
+	}
+	else
+	{
+#endif
 	bzero(buffer, sizeof(unsigned long));
 	wrq2.u.data.length = sizeof(unsigned long);
 	wrq2.u.data.pointer = (caddr_t) buffer;
@@ -563,8 +589,17 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit, const char *ifn
 
 	if (wl_ioctl(ifname, RT_PRIV_IOCTL, &wrq2) < 0)
 		return ret;
+
+	if(wrq2.u.mode == (__u32) buffer) //.u.mode is at the same location as u.data.pointer
+	{ //new wifi driver
+		phy_mode = 0;
+		memcpy(&phy_mode, wrq2.u.data.pointer, wrq2.u.data.length);
+	}
 	else
 		phy_mode=wrq2.u.mode;
+#if 1
+	}
+#endif
 
 	freq = iw_freq2float(&(wrq1.u.freq));
 	if (freq < KILO)
@@ -619,55 +654,71 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit, const char *ifn
 		return ret;
 
 	RT_802_11_MAC_TABLE* mp=(RT_802_11_MAC_TABLE*)wrq3.u.data.pointer;
+	RT_802_11_MAC_TABLE_2G* mp2=(RT_802_11_MAC_TABLE_2G*)wrq3.u.data.pointer;
 	int i;
 
 	ret+=websWrite(wp, "\nStations List			   \n");
 	ret+=websWrite(wp, "----------------------------------------\n");
 	ret+=websWrite(wp, "%-18s%-4s%-8s%-4s%-4s%-4s%-5s%-5s%-12s\n",
 			   "MAC", "PSM", "PhyMode", "BW", "MCS", "SGI", "STBC", "Rate", "Connect Time");
-
-	int hr, min, sec;
-	if (!strcmp(ifname, WIF_5G))
-	for (i=0;i<mp->Num;i++)
+#if 0
+	int entrySize;
+	entrySize = sizeof(RT_802_11_MAC_ENTRY);			//52 Bytes default size
+	if (get_model() == MODEL_RTN65U)
 	{
-                hr = mp->Entry[i].ConnectedTime/3600;
-                min = (mp->Entry[i].ConnectedTime % 3600)/60;
-                sec = mp->Entry[i].ConnectedTime - hr*3600 - min*60;
+		if(strcmp(ifname, WIF_2G) == 0)
+			entrySize = sizeof(RT_802_11_MAC_ENTRY_2G);	//24 Bytes used by iNIC fw binary
+		else
+			entrySize = sizeof(RT_802_11_MAC_ENTRY_RT3883);	//40 Bytes used by RT3883
+	}
+#endif
 
-		ret+=websWrite(wp, "%02X:%02X:%02X:%02X:%02X:%02X %s %-7s %s %-03d %s %s  %-03dM %02d:%02d:%02d\n",
-				mp->Entry[i].Addr[0], mp->Entry[i].Addr[1],
-				mp->Entry[i].Addr[2], mp->Entry[i].Addr[3],
-				mp->Entry[i].Addr[4], mp->Entry[i].Addr[5],
-				mp->Entry[i].Psm ? "Yes" : "NO ",
-				GetPhyMode(mp->Entry[i].TxRate.field.MODE),
-				GetBW(mp->Entry[i].TxRate.field.BW),
-				mp->Entry[i].TxRate.field.MCS,
-				mp->Entry[i].TxRate.field.ShortGI ? "Yes" : "NO ",
-				mp->Entry[i].TxRate.field.STBC ? "Yes" : "NO ",
-				getRate(mp->Entry[i].TxRate),
-				hr, min, sec
-		);
+#define SHOW_STA_INFO(_p,_i,_st, _gr) {											\
+		int hr, min, sec;											\
+		_st *Entry = ((_st *)(_p)) + _i;									\
+		hr = Entry->ConnectedTime/3600;										\
+		min = (Entry->ConnectedTime % 3600)/60;									\
+		sec = Entry->ConnectedTime - hr*3600 - min*60;								\
+		ret+=websWrite(wp, "%02X:%02X:%02X:%02X:%02X:%02X %s %-7s %s %3d %s %s  %3dM %02d:%02d:%02d\n",		\
+				Entry->Addr[0], Entry->Addr[1],								\
+				Entry->Addr[2], Entry->Addr[3],								\
+				Entry->Addr[4], Entry->Addr[5],								\
+				Entry->Psm ? "Yes" : "NO ",								\
+				GetPhyMode(Entry->TxRate.field.MODE),							\
+				GetBW(Entry->TxRate.field.BW),								\
+				Entry->TxRate.field.MCS,								\
+				Entry->TxRate.field.ShortGI ? "Yes" : "NO ",						\
+				Entry->TxRate.field.STBC ? "Yes" : "NO ",						\
+				_gr(Entry->TxRate),									\
+				hr, min, sec										\
+		);													\
+	}
+
+	if (get_model() == MODEL_RTN65U)
+	{
+		for (i=0;i<mp->Num;i++)
+		{
+			if(strcmp(ifname, WIF_2G) == 0)
+			{
+				SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3352_iNIC, getRate_2g);
+			}
+			else
+			{
+				SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3883, getRate_2g);
+			}
+		}
 	}
 	else
-	for (i=0;i<mp_2g->Num;i++)
 	{
-                hr = mp_2g->Entry[i].ConnectedTime/3600;
-                min = (mp_2g->Entry[i].ConnectedTime % 3600)/60;
-                sec = mp_2g->Entry[i].ConnectedTime - hr*3600 - min*60;
-
-		ret+=websWrite(wp, "%02X:%02X:%02X:%02X:%02X:%02X %s %-7s %s %-03d %s %s  %-03dM %02d:%02d:%02d\n",
-				mp_2g->Entry[i].Addr[0], mp_2g->Entry[i].Addr[1],
-				mp_2g->Entry[i].Addr[2], mp_2g->Entry[i].Addr[3],
-				mp_2g->Entry[i].Addr[4], mp_2g->Entry[i].Addr[5],
-				mp_2g->Entry[i].Psm ? "Yes" : "NO ",
-				GetPhyMode(mp_2g->Entry[i].TxRate.field.MODE),
-				GetBW(mp_2g->Entry[i].TxRate.field.BW),
-				mp_2g->Entry[i].TxRate.field.MCS,
-				mp_2g->Entry[i].TxRate.field.ShortGI ? "Yes" : "NO ",
-				mp_2g->Entry[i].TxRate.field.STBC ? "Yes" : "NO ",
-				getRate_2g(mp_2g->Entry[i].TxRate),
-				hr, min, sec
-		);
+		if(strcmp(ifname, WIF_2G) == 0)
+		{
+			for (i=0;i<mp2->Num;i++)
+				SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_2G, getRate_2g);
+		}
+		else
+		{	for (i=0;i<mp->Num;i++)
+				SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY, getRate);
+		}
 	}
 
 	return ret;
@@ -1066,6 +1117,20 @@ exit:
 	return 0;
 }
 
+static void convertToUpper(char *str)
+{
+	if(str == NULL)
+		return;
+	while(*str)
+	{
+		if(*str >= 'a' && *str <= 'z')
+		{
+			*str &= (unsigned char)~0x20;
+		}
+		str++;
+	}
+}
+
 static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 {
 	int retval = 0, i = 0, apCount = 0;
@@ -1116,6 +1181,69 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	dbg("\n%s", header);
 	if (wrq.u.data.length > 0)
 	{
+#if 1
+		if (unit == 0 && get_model() == MODEL_RTN65U)
+		{
+			char *encryption;
+			SITE_SURVEY_RT3352_iNIC *pSsap, *ssAP;
+
+			pSsap = ssAP = (SITE_SURVEY_RT3352_iNIC *) (1 /* '\n' */ + wrq.u.data.pointer +  sizeof(SITE_SURVEY_RT3352_iNIC) /* header */);
+			while(((unsigned int)wrq.u.data.pointer + wrq.u.data.length) > (unsigned int) ssAP)
+			{
+				ssAP->channel   [sizeof(ssAP->channel)    -1] = '\0';
+				ssAP->ssid      [32                         ] = '\0';
+				ssAP->bssid     [17                         ] = '\0';
+				ssAP->encryption[sizeof(ssAP->encryption) -1] = '\0';
+				if((encryption = strchr(ssAP->authmode, '/')) != NULL)
+				{
+					memmove(ssAP->encryption, encryption +1, sizeof(ssAP->encryption) -1);
+					memset(encryption, ' ', sizeof(ssAP->authmode) - (encryption - ssAP->authmode));
+					*encryption = '\0';
+				}
+				ssAP->authmode  [sizeof(ssAP->authmode)   -1] = '\0';
+				ssAP->signal    [sizeof(ssAP->signal)     -1] = '\0';
+				ssAP->wmode     [sizeof(ssAP->wmode)      -1] = '\0';
+				ssAP->extch     [sizeof(ssAP->extch)      -1] = '\0';
+				ssAP->nt        [sizeof(ssAP->nt)         -1] = '\0';
+				ssAP->wps       [sizeof(ssAP->wps)        -1] = '\0';
+				ssAP->dpid      [sizeof(ssAP->dpid)       -1] = '\0';
+
+				convertToUpper(ssAP->bssid);
+				ssAP++;
+				apCount++;
+			}
+
+			if (apCount)
+			{
+				retval += websWrite(wp, "[");
+				for (i = 0; i < apCount; i++)
+				{
+					dbg("%-4s%-33s%-18s%-9s%-16s%-9s%-8s\n",
+						pSsap[i].channel,
+						pSsap[i].ssid,
+						pSsap[i].bssid,
+						pSsap[i].encryption,
+						pSsap[i].authmode,
+						pSsap[i].signal,
+						pSsap[i].wmode
+					);
+
+					memset(ssid_str, 0, sizeof(ssid_str));
+					char_to_ascii(ssid_str, trim_r(pSsap[i].ssid));
+
+					if (!i)
+						retval += websWrite(wp, "[\"%s\", \"%s\"]", ssid_str, pSsap[i].bssid);
+					else
+						retval += websWrite(wp, ", [\"%s\", \"%s\"]", ssid_str, pSsap[i].bssid);
+				}
+				retval += websWrite(wp, "]");
+				dbg("\n");
+			}
+			else
+				retval += websWrite(wp, "[]");
+			return retval;
+		}
+#endif
 		ssap=(SSA *)(wrq.u.data.pointer+strlen(header)+1);
 		int len = strlen(wrq.u.data.pointer+strlen(header))-1;
 		char *sp, *op;

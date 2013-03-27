@@ -150,7 +150,7 @@ int _ifconfig(const char *name, int flags, const char *addr, const char *netmask
 	struct ifreq ifr;
 	struct in_addr in_addr, in_netmask, in_broadaddr;
 
-	_dprintf("%s: name=%s flags=%s addr=%s netmask=%s\n", __FUNCTION__, name, flags == IFUP ? "IFUP" : "0", addr, netmask);
+	_dprintf("%s: name=%s flags=%04x %s addr=%s netmask=%s\n", __FUNCTION__, name, flags, (flags & IFUP)? "IFUP" : "", addr, netmask);
 
 	/* Open a raw socket to the kernel */
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
@@ -273,7 +273,12 @@ void config_loopback(void)
 
 		close(sfd);
 	}
-
+#ifdef RTCONFIG_IPV6
+#ifdef RTCONFIG_BCMARM
+	if (!(ipv6_enabled() && is_routing_enabled()))
+	eval("ip", "-6", "addr", "flush", "dev", "lo", "scope", "host");
+#endif
+#endif
 	/* Bring up loopback interface */
 	ifconfig("lo", IFUP, "127.0.0.1", "255.0.0.0");
 

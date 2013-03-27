@@ -1,0 +1,124 @@
+    <refentry id="refconfig">
+
+      <refentryinfo><title>neon</title></refentryinfo>
+
+      <refmeta>
+	<refentrytitle>neon-config</refentrytitle>
+	<manvolnum>1</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="neon-config">neon-config</refname>
+
+	<refpurpose>script providing information about installed copy
+	of neon library</refpurpose>
+      </refnamediv>
+
+      <refsynopsisdiv>
+
+	<cmdsynopsis>
+	  <command>neon-config</command>
+	  <arg choice="opt"><option>--prefix</option></arg>
+	  <group>
+	    <arg><option>--cflags</option></arg>
+	    <arg><option>--libs</option></arg>
+	    <arg><option>--la-file</option></arg>
+	    <arg><option>--support</option> <replaceable>feature</replaceable></arg>
+	    <arg><option>--help</option></arg>
+	    <arg><option>--version</option></arg>
+	  </group>
+	</cmdsynopsis>
+
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>The <command>neon-config</command> script provides
+information about an installed copy of the neon library.  The
+<option>--cflags</option> and <option>--libs</option> options instruct
+how to compile and link an application against the library; the
+<option>--version</option> and <option>--support</option> options can
+help determine whether the library meets the applications
+requirements.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Options</title>
+
+	<variablelist>
+
+	  <varlistentry>
+	    <term><option>--cflags</option></term>
+	    <listitem><simpara>Print the flags which should be passed to
+the C compiler when compiling object files, when the object files use
+neon header files.</simpara></listitem>
+	  </varlistentry>
+
+	  <varlistentry>
+	    <term><option>--libs</option></term>
+	    <listitem><simpara>Print the flags which should be passed to
+the linker when linking an application which uses the neon
+library</simpara></listitem>
+	  </varlistentry>
+
+	  <varlistentry>
+	    <term><option>--la-file</option></term>
+	    <listitem><simpara>Print the location of the libtool library
+script, <filename>libneon.la</filename>, which can be used to link against
+&neon; by applications using libtool.</simpara></listitem>
+	  </varlistentry>
+
+	  <varlistentry>
+	    <term><option>--version</option></term>
+	    <listitem><simpara>Print the version of the library</simpara></listitem>
+	  </varlistentry>
+
+	  <varlistentry>
+	    <term><option>--prefix</option> <replaceable>dir</replaceable></term>
+	    <listitem><simpara>If <replaceable>dir</replaceable> is given; relocate output of
+<option>--cflags</option> and <option>--libs</option> as if neon was
+installed in given prefix directory.  Otherwise, print the
+installation prefix of the library.</simpara></listitem>
+	  </varlistentry>
+
+	  <varlistentry>
+	    <term><option>--support</option> <replaceable>feature</replaceable></term>
+	    <listitem><simpara>The script exits with success if
+<replaceable>feature</replaceable> is supported by the
+library.</simpara></listitem>
+          </varlistentry>
+
+	  <varlistentry>
+	    <term><option>--help</option></term>
+	    <listitem><simpara>Print help message; includes list of known
+	    features and whether they are supported or not.</simpara></listitem>
+	  </varlistentry>
+
+	</variablelist>
+
+      </refsect1>
+
+      <refsect1 id="example">
+	<title>Example</title>
+
+	<para>Below is a Makefile fragment which could be used to
+build an application against an installed neon library, when the
+<command>neon-config</command> script can be found in
+<envar>$PATH</envar>.</para>
+
+	<programlisting>CFLAGS = `neon-config --cflags`
+LIBS = `neon-config --libs`
+OBJECTS = myapp.o
+TARGET = myapp
+
+$(TARGET): $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
+
+myapp.o: myapp.c
+	$(CC) $(CFLAGS) -c myapp.c -o myapp.o</programlisting>
+
+       </refsect1>
+
+    </refentry>

@@ -8,7 +8,7 @@
 .\"
 .\"   The license which is distributed with this software in the file COPYRIGHT
 .\"   applies to this software. If your distribution is missing this file, you
-.\"   may request it from <pekkas@netcore.fi>.
+.\"   may request it from <reubenhwk@gmail.com>.
 .\"
 .\"
 .\"
@@ -166,7 +166,7 @@ to point to a file in a
 .SH BUGS
 
 There certainly are some bugs. If you find them or have other
-suggestions please contact Pekka Savola <pekkas@netcore.fi>.
+suggestions please contact Reuben Hawkins <reubenhwk@gmail.com>.
 
 .SH "SEE ALSO"
 
@@ -178,7 +178,7 @@ suggestions please contact Pekka Savola <pekkas@netcore.fi>.
 Pedro Roque	<roque@di.fc.ul.pt>	- wrote first version for Linux
 Lars Fenneberg	<lf@elemental.net>	- previous maintainer
 Nathan Lutchansky	<lutchann@litech.org>	- previous maintainer
-Pekka Savola	<pekkas@netcore.fi>	- current maintainer
+Reuben Hawkins	<reubenhwk@gmail.com>	- current maintainer
 Craig Metz	<cmetz@inner.net>	- port to NRL's IPv6 code for BSD4.4
 Marko Myllynen	<myllynen@lut.fi>	- RFC 2461 update, Mobile IPv6 support
 Jim Paris	<jim@jtan.com>		- Privilege separation support

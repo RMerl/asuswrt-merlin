@@ -1,0 +1,119 @@
+iproute2+tc*
+
+It's the first release of Linux traffic control engine.
+
+
+NOTES.
+* csz scheduler is inoperational at the moment, and probably
+  never will be repaired but replaced with h-pfq scheduler.
+* To use "fw" classifier you will need ipfwchains patch.
+* No manual available. Ask me, if you have problems (only try to guess
+  answer yourself at first 8)).
+
+
+Micro-manual how to start it the first time
+-------------------------------------------
+
+A. Attach CBQ to eth1:
+
+tc qdisc add dev eth1 root handle 1: cbq bandwidth 10Mbit allot 1514 cell 8 \
+avpkt 1000 mpu 64
+
+B. Add root class:
+
+tc class add dev eth1 parent 1:0 classid 1:1 cbq bandwidth 10Mbit rate 10Mbit \
+allot 1514 cell 8 weight 1Mbit prio 8 maxburst 20 avpkt 1000
+
+C. Add default interactive class:
+
+tc class add dev eth1 parent 1:1 classid 1:2 cbq bandwidth 10Mbit rate 1Mbit \
+allot 1514 cell 8 weight 100Kbit prio 3 maxburst 20 avpkt 1000 split 1:0 \
+defmap c0
+
+D. Add default class:
+
+tc class add dev eth1 parent 1:1 classid 1:3 cbq bandwidth 10Mbit rate 8Mbit \
+allot 1514 cell 8 weight 800Kbit prio 7 maxburst 20 avpkt 1000 split 1:0 \
+defmap 3f
+
+etc. etc. etc. Well, it is enough to start 8) The rest can be guessed 8)
+Look also at more elaborated example, ready to start rsvpd,
+in rsvp/cbqinit.eth1.
+
+
+Terminology and advices about setting CBQ parameters may be found in Sally Floyd
+papers. 
+
+
+Pairs X:Y are class handles, X:0 are qdisc heandles.
+weight should be proportional to rate for leaf classes
+(I choosed it ten times less, but it is not necessary)
+
+defmap is bitmap of logical priorities served by this class.
+
+E. Another qdiscs are simpler. F.e. let's join TBF on class 1:2
+
+tc qdisc add dev eth1 parent 1:2 tbf rate 64Kbit buffer 5Kb/8 limit 10Kb
+
+F. Look at all that we created:
+
+tc qdisc ls dev eth1
+tc class ls dev eth1
+
+G. Install "route" classifier on root of cbq and map destination from realm
+1 to class 1:2
+
+tc filter add dev eth1 parent 1:0 protocol ip prio 100 route to 1 classid 1:2
+
+H. Assign routes to 10.11.12.0/24 to realm 1
+
+ip route add 10.11.12.0/24 dev eth1 via whatever realm 1
+
+etc. The same thing can be made with rules.
+I still did not test ipchains, but they should work too.
+
+Setup of rsvp and u32 classifiers is more hairy.
+If you read RSVP specs, you will understand how rsvp classifier
+works easily. What's about u32... That's example:
+
+
+
+#! /bin/sh
+
+TC=/home/root/tc
+
+# Setup classifier root on eth1 root (it is cbq)
+$TC filter add dev eth1 parent 1:0 prio 5 protocol ip u32
+
+# Create hash table of 256 slots with ID 1:
+$TC filter add dev eth1 parent 1:0 prio 5 handle 1: u32 divisor 256
+
+# Add to 6th slot of hash table rule to select tcp/telnet to 193.233.7.75
+# direct it to class 1:4 and prescribe to fall to best effort,
+# if traffic violate TBF (32kbit,5K)
+$TC filter add dev eth1 parent 1:0 prio 5 u32 ht 1:6: \
+	match ip dst 193.233.7.75 \
+	match tcp dst 0x17 0xffff \
+	flowid 1:4 \
+	police rate 32kbit buffer 5kb/8 mpu 64 mtu 1514 index 1
+
+# Add to 1th slot of hash table rule to select icmp to 193.233.7.75
+# direct it to class 1:4 and prescribe to fall to best effort,
+# if traffic violate TBF (10kbit,5K)
+$TC filter add dev eth1 parent 1:0 prio 5 u32 ht 1:: \
+	sample ip protocol 1 0xff \
+	match ip dst 193.233.7.75 \
+	flowid 1:4 \
+	police rate 10kbit buffer 5kb/8 mpu 64 mtu 1514 index 2
+
+# Lookup hash table, if it is not fragmented frame
+# Use protocol as hash key
+$TC filter add dev eth1 parent 1:0 prio 5 handle ::1 u32 ht 800:: \
+	match ip nofrag \
+	offset mask 0x0F00 shift 6 \
+	hashkey mask 0x00ff0000 at 8 \
+	link 1:
+
+
+Alexey Kuznetsov
+kuznet@ms2.inr.ac.ru

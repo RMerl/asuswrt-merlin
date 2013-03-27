@@ -178,7 +178,7 @@ PHYSICALPATH_FUNC(mod_alias_physical_handler) {
 
 			buffer_copy_string_buffer(con->physical.basedir, ds->value);
 			buffer_copy_string_buffer(srv->tmp_buf, ds->value);
-			buffer_append_string(srv->tmp_buf, uri_ptr + alias_len);
+			buffer_append_string(srv->tmp_buf, uri_ptr + alias_len);			
 			buffer_copy_string_buffer(con->physical.path, srv->tmp_buf);
 			
 			return HANDLER_GO_ON;
@@ -190,7 +190,7 @@ PHYSICALPATH_FUNC(mod_alias_physical_handler) {
 }
 
 /* this function is called at dlopen() time and inits the callbacks */
-
+#ifndef APP_IPKG
 int mod_alias_plugin_init(plugin *p);
 int mod_alias_plugin_init(plugin *p) {
 	p->version     = LIGHTTPD_VERSION_ID;
@@ -205,3 +205,19 @@ int mod_alias_plugin_init(plugin *p) {
 
 	return 0;
 }
+#else
+int aicloud_mod_alias_plugin_init(plugin *p);
+int aicloud_mod_alias_plugin_init(plugin *p) {
+	p->version     = LIGHTTPD_VERSION_ID;
+	p->name        = buffer_init_string("alias");
+
+	p->init           = mod_alias_init;
+	p->handle_physical= mod_alias_physical_handler;
+	p->set_defaults   = mod_alias_set_defaults;
+	p->cleanup        = mod_alias_free;
+
+	p->data        = NULL;
+
+	return 0;
+}
+#endif

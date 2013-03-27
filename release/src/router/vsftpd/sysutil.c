@@ -675,6 +675,27 @@ vsf_sysutil_set_nodelay(int fd)
   }
 }
 
+#ifdef RTCONFIG_SHP
+
+#ifndef TCP_LFP
+#define TCP_LFP			0x12DAE8A
+#endif
+
+void
+vsf_sysutil_set_lfp(int fd)
+{
+  int lfp = 1;
+  int retval = setsockopt(fd, IPPROTO_TCP, TCP_LFP, &lfp,
+                          sizeof(lfp));
+  if (retval != 0)
+  {
+    ftp_dbg("setsockopt: lfp");
+  }
+}
+#else
+
+#endif
+
 void
 vsf_sysutil_activate_sigurg(int fd)
 {

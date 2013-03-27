@@ -1,7 +1,7 @@
 /*
  * RoboSwitch setup functions
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmrobo.h 299850 2011-12-01 03:46:38Z $
+ * $Id: bcmrobo.h 341899 2012-06-29 04:06:38Z $
  */
 
 #ifndef _bcm_robo_h_
@@ -27,6 +27,18 @@
 #define	DEVID5398	0x98	/* 5398 */
 #define	DEVID53115	0x3115	/* 53115 */
 #define	DEVID53125	0x3125	/* 53125 */
+
+/*
+ * MODELID:
+ * 0x53010: BCM4707, Select Low SKU device if SKU ID[1:0] = 01.
+ * 0x53011: BCM4708, Select Middle SKU device if SKU ID[1:0] = 10.
+ * 0x53012: BCM4709, Select High SKU device if SKU ID[1:0] = 00.
+ * Note: The SKU ID[1:0] is loaded from OTP configuration data.
+ */
+#define DEVID53010	0x53010	/* 53010 */
+#define DEVID53011	0x53011	/* 53011 */
+#define DEVID53012	0x53012	/* 53012 */
+#define ROBO_IS_BCM5301X(id) ((id) == DEVID53010 || (id) == DEVID53011 || (id) == DEVID53012)
 
 /* Power save duty cycle times */
 #define MAX_NO_PHYS		5
@@ -41,6 +53,46 @@
 
 #define ROBO_IS_PWRSAVE_MANUAL(r) ((r)->pwrsave_mode_manual)
 #define ROBO_IS_PWRSAVE_AUTO(r) ((r)->pwrsave_mode_auto)
+
+/* SRAB interface */
+/* Access switch registers through SRAB (Switch Register Access Bridge) */
+#define REG_VERSION_ID		0x40
+#define REG_CTRL_PORT0_GMIIPO	0x58	/* 53012: GMII Port0 Override register */
+#define REG_CTRL_PORT1_GMIIPO	0x59	/* 53012: GMII Port1 Override register */
+#define REG_CTRL_PORT2_GMIIPO	0x5a	/* 53012: GMII Port2 Override register */
+#define REG_CTRL_PORT3_GMIIPO	0x5b	/* 53012: GMII Port3 Override register */
+#define REG_CTRL_PORT4_GMIIPO	0x5c	/* 53012: GMII Port4 Override register */
+#define REG_CTRL_PORT5_GMIIPO	0x5d	/* 53012: GMII Port5 Override register */
+#define REG_CTRL_PORT7_GMIIPO	0x5f	/* 53012: GMII Port7 Override register */
+
+/* Command and status register of the SRAB */
+#define CFG_F_sra_rst_MASK		(1 << 2)
+#define CFG_F_sra_write_MASK		(1 << 1)
+#define CFG_F_sra_gordyn_MASK		(1 << 0)
+#define CFG_F_sra_page_R		24
+#define CFG_F_sra_offset_R		16
+
+/* Switch interface controls */
+#define CFG_F_sw_init_done_MASK		(1 << 6)
+#define CFG_F_rcareq_MASK		(1 << 3)
+#define CFG_F_rcagnt_MASK		(1 << 4)
+
+#ifndef PAD
+#define	_PADLINE(line)	pad ## line
+#define	_XSTR(line)	_PADLINE(line)
+#define	PAD		_XSTR(__LINE__)
+#endif	/* PAD */
+
+typedef volatile struct {
+	uint32	PAD[11];
+	uint32	cmdstat;	/* 0x2c, command and status register of the SRAB */
+	uint32	wd_h;		/* 0x30, high order word of write data to switch registe */
+	uint32	wd_l;		/* 0x34, low order word of write data to switch registe */
+	uint32	rd_h;		/* 0x38, high order word of read data from switch register */
+	uint32	rd_l;		/* 0x3c, low order word of read data from switch register */
+	uint32	ctrls;		/* 0x40, switch interface controls */
+	uint32	intr;		/* 0x44, the register captures interrupt pulses from the switch */
+} srabregs_t;
 
 /* Forward declaration */
 typedef struct robo_info_s robo_info_t;
@@ -65,7 +117,7 @@ struct robo_info_s {
 	si_t	*sih;			/* SiliconBackplane handle */
 	char	*vars;			/* nvram variables handle */
 	void	*h;			/* dev handle */
-	uint16	devid;			/* Device id for the switch */
+	uint32	devid;			/* Device id for the switch */
 	uint32	corerev;		/* Core rev of internal switch */
 
 	dev_ops_t *ops;			/* device ops */
@@ -77,6 +129,9 @@ struct robo_info_s {
 	/* MII */
 	miird_f	miird;
 	miiwr_f	miiwr;
+
+	/* SRAB */
+	srabregs_t *srabregs;
 
 	uint16	prev_status;		/* link status of switch ports */
 	uint32	pwrsave_mode_manual; 	/* bitmap of ports in manual power save */

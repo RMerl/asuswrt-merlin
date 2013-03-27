@@ -1,7 +1,7 @@
 /*
  * Broadcom chipcommon NAND flash interface
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,16 +15,11 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: nflash.h 256080 2011-04-28 08:40:56Z $
+ * $Id: nflash.h 342924 2012-07-04 15:53:44Z $
  */
 
 #ifndef _nflash_h_
 #define _nflash_h_
-
-#ifndef _LANGUAGE_ASSEMBLY
-#include <typedefs.h>
-#include <sbchipc.h>
-#endif /* _LANGUAGE_ASSEMBLY */
 
 /* Nand flash AC timing (in unit of ns) for BCM4706 (rev 31) */
 #define NFLASH_T_WP					15
@@ -149,50 +144,10 @@
 #define	NIST_ERASED			0x08000000
 #define	NIST_STATUS			0x000000ff
 
-#define	NFL_VENDOR_AMD			0x01
-#define	NFL_VENDOR_NUMONYX		0x20
-#define	NFL_VENDOR_MICRON		0x2C
-#define	NFL_VENDOR_TOSHIBA		0x98
-#define NFL_VENDOR_HYNIX		0xAD
-#define NFL_VENDOR_SAMSUNG		0xEC
-#define NFL_VENDOR_ZENTEL		0x92
-
-#define NFL_SECTOR_SIZE			512
-
-#define NFL_TABLE_END			0xffffffff
-#define NFL_BOOT_SIZE			0x200000
-#define NFL_BOOT_OS_SIZE		0x2000000
-#define NFL_BBT_SIZE			0x100000
-
 #ifndef _LANGUAGE_ASSEMBLY
-
-struct nflash {
-	uint blocksize;		/* Block size */
-	uint pagesize;		/* Page size */
-	uint oobsize;		/* OOB size per page */
-	uint numblocks;		/* Number of blocks */
-	uint32 type;		/* Type */
-	uint size;		/* Total size in bytes */
-	uint8 id[5];
-	uint ecclevel;		/* ECC algorithm for blocks other than block 0 */
-	uint ecclevel0;		/* ECC algorithm for blocks 0 */
-};
-
-/* Utility functions */
-extern void nflash_enable(si_t *sih, int enable);
-extern int nflash_poll(si_t *sih, chipcregs_t *cc);
-extern int nflash_read(si_t *sih, chipcregs_t *cc,
-                       uint offset, uint len, uchar *buf);
-extern int nflash_write(si_t *sih, chipcregs_t *cc,
-                        uint offset, uint len, const uchar *buf);
-extern int nflash_erase(si_t *sih, chipcregs_t *cc, uint offset);
-extern struct nflash *nflash_init(si_t *sih, chipcregs_t *cc);
-extern int nflash_checkbadb(si_t *sih, chipcregs_t *cc, uint offset);
-extern int nflash_readst(si_t *sih, chipcregs_t *cc, uint8 *status);
-extern int nflash_readoob(si_t *sih, chipcregs_t *cc, uint offset, uint len, uchar *buf);
-extern int nflash_writeoob(si_t *sih, chipcregs_t *cc, uint offset, uint len, uchar *buf);
-extern int nflash_mark_badb(si_t *sih, chipcregs_t *cc, uint offset);
-
+#include <typedefs.h>
+#include <sbchipc.h>
+#include <hndnand.h>
 #endif /* _LANGUAGE_ASSEMBLY */
 
 #endif /* _nflash_h_ */

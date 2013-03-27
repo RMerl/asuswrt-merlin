@@ -1,0 +1,59 @@
+.TH PFIFO_FAST 8 "10 January 2002" "iproute2" "Linux"
+.SH NAME
+pfifo_fast \- three-band first in, first out queue
+
+.SH DESCRIPTION
+pfifo_fast is the default qdisc of each interface.
+
+Whenever an interface is created, the pfifo_fast qdisc is automatically used
+as a queue. If another qdisc is attached, it preempts the default
+pfifo_fast, which automatically returns to function when an existing qdisc
+is detached.
+
+In this sense this qdisc is magic, and unlike other qdiscs.
+
+.SH ALGORITHM
+The algorithm is very similar to that of the classful 
+.BR tc-prio (8)
+qdisc. 
+.B pfifo_fast
+is like three
+.BR tc-pfifo (8)
+queues side by side, where packets can be enqueued in any of the three bands
+based on their Type of Service bits or assigned priority. 
+
+Not all three bands are dequeued simultaneously - as long as lower bands
+have traffic, higher bands are never dequeued. This can be used to
+prioritize interactive traffic or penalize 'lowest cost' traffic.
+
+Each band can be txqueuelen packets long, as configured with
+.BR ifconfig (8)
+or 
+.BR ip (8).
+Additional packets coming in are not enqueued but are instead dropped.
+
+See
+.BR tc-prio (8)
+for complete details on how TOS bits are translated into bands.
+.SH PARAMETERS
+.TP 
+txqueuelen
+The length of the three bands depends on the interface txqueuelen, as
+specified with
+.BR ifconfig (8)
+or
+.BR ip (8).
+
+.SH BUGS
+Does not maintain statistics and does not show up in tc qdisc ls. This is because
+it is the automatic default in the absence of a configured qdisc. 
+
+.SH SEE ALSO
+.BR tc (8)
+
+.SH AUTHORS
+Alexey N. Kuznetsov, <kuznet@ms2.inr.ac.ru>
+
+This manpage maintained by bert hubert <ahu@ds9a.nl>
+
+

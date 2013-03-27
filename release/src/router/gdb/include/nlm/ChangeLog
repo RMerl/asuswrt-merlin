@@ -1,0 +1,100 @@
+2005-05-10  Nick Clifton  <nickc@redhat.com>
+
+	* Update the address and phone number of the FSF organization in
+	the GPL notices in the following files:
+	alpha-ext.h, common.h, external.h, i386-ext.h, internal.h,
+	ppc-ext.h, sparc32-ext.h
+	
+2003-08-07  Alan Modra  <amodra@bigpond.net.au>
+
+	* internal.h (Nlm_Internal_Custom_Header): Replace PTR with void *.
+
+2001-10-02  Alan Modra  <amodra@bigpond.net.au>
+
+	* common.h (NLM_CAT, NLM_CAT3): Don't define.
+	(NLM_CAT4): Update conditions under which this is defined.  Document
+	why CONCAT4 can't be used.
+
+1994-05-06  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
+
+	* external.h (nlmNAME(External_Custom_Header)): Add length,
+	dataOffset, and dataStamp field.
+	(nlmNAME(External_Cygnus_Ext_Header)): Remove.
+	* internal.h (Nlm_Internal_Custom_Header): Add hdrLength,
+	dataOffset, dataStamp and hdr fields.
+
+1994-04-22  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
+
+	* external.h (struct nlmNAME(external_cygnus_ext_header)): Rename
+	from nlmNAME(external_cygnus_section_header).  Change stamp field
+	to 8 bytes.  Add bytes field.
+	* internal.h (nlm_internal_cygnus_ext_header): Rename from
+	nlm_internal_cygnus_section_header.  Change stamp field to 8
+	bytes.
+
+1994-04-21  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
+
+	* internal.h (struct nlm_internal_cygnus_section_header): Define.
+	* external.h (struct nlmNAME(external_cygnus_section_header):
+	Define.
+
+1994-04-20  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
+
+	* internal.h (struct nlm_internal_custom_header): Remove
+	debugRecOffset and debugRecLength fields.  Add data field.
+	* external.h (struct nlmNAME(external_custom_header)): Remove
+	debugRecOffset and debugRecLength fields.
+
+1994-02-07  Jim Kingdon  (kingdon@lioth.cygnus.com)
+
+	* internal.h: Change HOST_64_BIT to BFD_HOST_64_BIT.
+
+1993-12-02  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
+
+	* alpha-ext.h: New file describing formats of information in Alpha
+	NetWare files.
+	* common.h: Define some non-external Alpha information.
+
+1993-11-17  Sean Eric Fagan  (sef@cygnus.com)
+
+	* external.h: Don't define external_fixed_header here.
+	* i386-ext.h, sparc32-ext.h: New header files to define
+	external_fixed_header for particular CPU's.
+
+1993-10-27  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
+
+	* internal.h (Nlm_Internal_Extended_Header): Added fields
+	sharedDebugRecordOffset and sharedDebugRecordCount.
+	* external.h (NlmNAME(External_Extended_Header)): Likewise.
+
+	* common.h (NLM_SIGNATURE): Do not define (it's different for each
+	backend).
+
+1993-08-31  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
+
+	* internal.h: Change length fields of type char to type unsigned
+	char.
+
+1993-07-31  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
+
+	* common.h (NLM_HIBIT, NLM_HEADER_VERSION): Define.
+
+1993-07-22  Fred Fish  (fnf@deneb.cygnus.com)
+
+	* common.h (NLM_CAT*, NLM_ARCH_SIZE, NLM_TARGET_LONG_SIZE,
+	NLM_TARGET_ADDRESS_SIZE, NLM_NAME, NlmNAME, nlmNAME):  New
+	macros.
+	* external.h (TARGET_LONG_SIZE, TARGET_ADDRESS_SIZE): Remove
+	macros, convert usages to NLM_ equivalents.
+	* external.h:  Use nlmNAME and NlmNAME macros to derive both
+	32 and 64 bit versions.
+
+1993-07-20  Fred Fish  (fnf@deneb.cygnus.com)
+
+	* (common.h, external.h, internal.h):  New files for NLM/NetWare
+	support.
+
+
+Local Variables:
+version-control: never
+End:

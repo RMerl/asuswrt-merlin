@@ -28,8 +28,10 @@
 
 #if EMBEDDED_EANBLE
 #include "nvram_control.h"
+#ifndef APP_IPKG
 #include <utils.h>
 #include <shared.h>
+#endif
 #endif
 
 //#include <sys/shm.h>
@@ -41,9 +43,9 @@
 #define _USEARP
 #define MAC_BCAST_ADDR  "\xff\xff\xff\xff\xff\xff"
 #define TT_SIGUSR2 (SIGUSR2)
-//#define ARP_TIME_INTERVAL 5
+#define ARP_TIME_INTERVAL 5
 //#define ARP_TIME_INTERVAL 3600
-#define ARP_TIME_INTERVAL 120
+//#define ARP_TIME_INTERVAL 120
 
 #define RE_SCAN_TIME_INTERVAL 120
 
@@ -161,7 +163,9 @@ void read_arpping_list(){
 	char* str_smbdav_list = (char*)malloc(strlen(aa)+1);
 	strcpy(str_smbdav_list, aa);
 	Cdbg(DBE, "read_arpping_list................str_smbdav_list=%s", str_smbdav_list);
-	
+#ifdef APP_IPKG
+	free(aa);
+#endif
 	if(str_smbdav_list!=NULL){
 		char * pch;
 		pch = strtok(str_smbdav_list, "<>");
@@ -207,6 +211,8 @@ void read_arpping_list(){
 			//- Next
 			pch = strtok(NULL,"<>");
 		}
+
+		free(str_smbdav_list);
 	}
 
 #else
@@ -495,8 +501,8 @@ static int thread_arpping(char* iface)
 	}
 		
 	for( lots_of_threads=g_threadIndex; 
-	      lots_of_threads<g_threadIndex+NUM_THREADS; 
-	      lots_of_threads++){
+	     lots_of_threads<g_threadIndex+NUM_THREADS; 
+	     lots_of_threads++){
 
 		if(is_shutdown)
 			return 0;
@@ -507,6 +513,8 @@ static int thread_arpping(char* iface)
 		}
 
 		SrvInfo *pSrvInfo = &a_srvInfo[lots_of_threads];
+
+		Cdbg(DBE, "Create arpping thread: %d", lots_of_threads);
 		
 		pSrvInfo->id = lots_of_threads;
 					
@@ -547,11 +555,12 @@ static int thread_arpping(char* iface)
 void query_one_hostname(){
 	smb_srv_info_t *p;
 	int bchange = 0;
-	
+	Cdbg(DBE, "query_one_hostname......");
 	for (p = smb_srv_info_list; p; p = p->next) {
 		if(is_shutdown)
 			break;
-		
+
+		Cdbg(DBE, "Query samba server name, ip=[%s]", p->ip->ptr);
 		char* hostname = smbc_nmblookup(p->ip->ptr);
 		
 		if( strcmp(p->name->ptr, "")!=0&&
@@ -651,15 +660,15 @@ void dumparptable()
 	}
 	
 	//mac_num = 0;
-
+		
 	//while (fgets(buf, 256, fp) && (mac_num < MAX_MAC_NUM - 2)) {
 	while (fgets(buf, 256, fp) ) {
 		sscanf(buf, "%s %s %s %s %s %s", ip_entry, hw_type, flags, hw_address, mask, device);
 		
-	        if (!strcmp(device, g_scan_interface) && strlen(hw_address)!=0)
-	        {
-	        	//Cdbg(DBE, "%s, %s", ip_entry, hw_address);
-	        	//strcpy(mac_clone[mac_num++], hw_address);
+	    if (!strcmp(device, g_scan_interface) && strlen(hw_address)!=0)
+	    {
+	    	Cdbg(DBE, "%s, %s", ip_entry, hw_address);
+	        //strcpy(mac_clone[mac_num++], hw_address);
 
 			int bFound = 0;
 			smb_srv_info_t *p;
@@ -712,13 +721,13 @@ void dumparptable()
 
 				//save_arpping_list();
 			}
-	        }
+		}
 	}
 	fclose(fp);
 }
 
 void on_arpping_timer_handler2(time_t cur_time) {
-	
+
 	if(g_bInitialize==0)
 		return;
 	
@@ -727,7 +736,7 @@ void on_arpping_timer_handler2(time_t cur_time) {
 	query_one_hostname();
 	
 	//- Rescan samba server
-	if( g_current_time > RE_SCAN_TIME_INTERVAL &&g_threadIndex == MAX_THREADS){
+	if( g_current_time > RE_SCAN_TIME_INTERVAL && g_threadIndex == MAX_THREADS ){
 
 		g_rescancount++;
 		g_threadIndex = THREAD_BEGIN_INDEX;;
@@ -849,6 +858,8 @@ int init_a_srvInfo()
 		sprintf(ipAddr,"%u.%u.%u.%u", UC(p[0]), UC(p[1]), UC(p[2]), i+1);
 		pSrvInfo->arp_ip = inet_addr(ipAddr);
 		buffer_copy_string(pSrvInfo->arp_cip, ipAddr);
+
+		//Cdbg(DBE, "pSrvInfo->arp_cip = %s", pSrvInfo->arp_cip->ptr);
 		
 		strcpy( pSrvInfo->iface, g_scan_interface );		
 	}
@@ -939,7 +950,7 @@ static void sigaction_handler(int sig, siginfo_t *si, void *context) {
 		
 		nvram_do_commit();
 		#endif
-		
+		Cdbg(DBE, "Shut down arpping....SIGTERM");
 		is_shutdown = 1;
 		break;
 	}
@@ -1004,12 +1015,12 @@ int main(int argc, char *argv[])
 			break;
 		}
 	}
-	
+
 	//- Check if same process is running.
 	FILE *fp = fopen(LIGHTTPD_ARPPING_PID_FILE_PATH, "r");
 	if (fp) {
 		fclose(fp);
-		Cdbg(DBE, "lighttpd-arpping is already exist!");
+		exit(EXIT_FAILURE);
 		return 0;
 	}
 	
@@ -1021,17 +1032,17 @@ int main(int argc, char *argv[])
 	}
 	fprintf(fp, "%d\n", pid);
 	fclose(fp);
-	
+
 #if EMBEDDED_EANBLE
 	sigset_t sigs_to_catch;
 
 	//- set the signal handler
-    	sigemptyset(&sigs_to_catch);
-    	sigaddset(&sigs_to_catch, SIGTERM);
+    sigemptyset(&sigs_to_catch);
+    sigaddset(&sigs_to_catch, SIGTERM);
 	sigaddset(&sigs_to_catch, SIGUSR1);
-    	sigprocmask(SIG_UNBLOCK, &sigs_to_catch, NULL);
+    sigprocmask(SIG_UNBLOCK, &sigs_to_catch, NULL);
 
-    	signal(SIGTERM, sigaction_handler);  
+    signal(SIGTERM, sigaction_handler);  
 	signal(SIGUSR1, sigaction_handler);
 #else
 	struct sigaction act;
@@ -1051,11 +1062,9 @@ int main(int argc, char *argv[])
 	sigaction(SIGCHLD, &act, NULL);	
 	sigaction(SIGUSR1, &act, NULL);	
 #endif
-	
-	int          dbglv = 9;
-	smbc_init(get_auth_data_fn, dbglv);
 
-	Cdbg(DBE, "start arpping_thread...");
+	int          dbglv = 0;//9;
+	smbc_init(get_auth_data_fn, dbglv);
 
 	start_scan_sambaserver(0);
 	
@@ -1063,7 +1072,7 @@ int main(int argc, char *argv[])
 	while (!is_shutdown) {
 
 		sleep(10);
-
+		
 		time_t cur_ts = time(NULL);
 		
 #if EMBEDDED_EANBLE
@@ -1073,16 +1082,18 @@ int main(int argc, char *argv[])
 			prv_ts = cur_ts;
 		}
 #else		
-		if(cur_ts - prv_ts >= ARP_TIME_INTERVAL){	
+		if( prv_ts == 0 || cur_ts - prv_ts >= ARP_TIME_INTERVAL ){	
 			on_arpping_timer_handler2(0);	
-			prv_ts = cur_ts;
+			prv_ts = cur_ts;			
 		}		
 #endif
 		
   	}
 
-	fprintf(stderr, "Success to terminate lighttpd-arpping.....\n");
+	Cdbg(DBE, "Success to terminate lighttpd-arpping.....");
 	
 	exit(EXIT_SUCCESS);
+
+	return 0;
 }
 #endif

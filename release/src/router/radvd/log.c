@@ -8,7 +8,7 @@
  *
  *	The license which is distributed with this software in the file
  *	COPYRIGHT applies to this software. If your distribution is missing
- *	this file, you may request it from <pekkas@netcore.fi>.
+ *	this file, you may request it from <reubenhwk@gmail.com>.
  *
  */
 

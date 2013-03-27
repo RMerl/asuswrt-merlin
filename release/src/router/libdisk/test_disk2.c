@@ -316,7 +316,7 @@ extern disk_info_t *create_disk(const char *device_name, disk_info_t **new_disk_
 	u32 major, minor;
 	u64 size_in_kilobytes = 0;
 	int len;
-	char buf[64], *port, *vendor, *model, *ptr;
+	char buf[64], *port, *vendor = NULL, *model = NULL, *ptr;
 	partition_info_t *new_partition_info, **follow_partition_list;
 
 	if(new_disk_info == NULL){

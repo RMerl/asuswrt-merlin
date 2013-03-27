@@ -1,0 +1,104 @@
+# Copyright 2006, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This test checks that the if .. else .. end construct works and may
+# contain empty bodies without crashing.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+gdb_exit
+gdb_start
+
+# First test that the if command works with an empty body
+# Test with different conditions because the body is ignored
+# if it is not executed.
+
+#    with true condition
+set message "if 1 with empty body"
+gdb_test_multiple "if 1\nend" $message {
+    -re "$gdb_prompt $" {pass $message}
+    eof {
+	fail "$message (crashed)"
+	gdb_exit
+	gdb_start
+    }
+}
+
+#    with false condition
+set message "if 0 with empty body"
+gdb_test_multiple "if 0\nend" $message {
+    -re "$gdb_prompt $" {pass $message}
+    eof {
+	fail "$message (crashed)"
+	gdb_exit
+	gdb_start
+    }
+}
+
+# Second, do the same tests with an empty else body.
+# This fails in GDB <=6.5
+
+# Unfortunately it was an uninitialised memory problem so
+# sometimes it just works. Preceed it with an if else end with
+# bodies and hopefully the memory with be dirty and the problem
+# will show itself (this works at time of writing).
+
+gdb_test "if 1\necho true\\n\nelse\necho false\\n\nend" "true" ""
+
+#    with true condition
+set message "if 1 .. else with empty body"
+gdb_test_multiple "if 1\nelse\nend" $message {
+    -re "$gdb_prompt $" {pass $message}
+    eof {
+	fail "$message (crashed)"
+	gdb_exit
+	gdb_start
+    }
+}
+
+# dirty memory
+gdb_test "if 1\necho true\\n\nelse\necho false\\n\nend" "true" ""
+
+#    with false condition
+set message "if 0 .. else with empty body"
+gdb_test_multiple "if 0\nelse\nend" $message {
+    -re "$gdb_prompt $" {pass $message}
+    eof {
+	fail "$message (crashed)"
+	gdb_exit
+	gdb_start
+    }
+}
+
+gdb_test "set confirm off" "" ""
+
+# Test that a define with an empty else can be replaced.
+# If there is memory corruption then free will fail.
+# dirty memory
+gdb_test "if 1\necho true\\n\nelse\necho false\\n\nend" "true" ""
+# create
+gdb_test "define abc\nif 1\nelse\nend\nend" "" "create define with empty else"
+# call (note that condition is 1 so should pass)
+gdb_test "abc" "" "call original define"
+# replace
+set message "replace define with if .. else with empty body"
+gdb_test_multiple "define abc\necho got here\\n\nend" $message {
+    -re "$gdb_prompt $" {pass $message}
+    eof {fail "$message (crashed)"}
+}
+# call
+gdb_test "abc" "got here" "call replacement define"

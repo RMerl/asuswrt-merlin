@@ -1,0 +1,126 @@
+.TH SS 8
+.SH NAME
+ss \- another utility to investigate sockets
+.SH SYNOPSIS
+.B ss
+.RI [ options ] " [ FILTER ]"
+.SH DESCRIPTION
+.B ss
+is used to dump socket statistics. It allows showing information similar
+to
+.IR netstat .
+It can display more TCP and state informations than other tools.
+
+.SH OPTIONS
+When no option is used ss displays a list of 
+open non-listening TCP sockets that have established connection.
+.TP
+These programs follow the usual GNU command line syntax, with long
+options starting with two dashes (`-').
+A summary of options is included below.
+.TP
+.B \-h, \-\-help
+Show summary of options.
+.TP
+.B \-V, \-\-version
+Output version information.
+.TP
+.B \-n, \-\-numeric
+Do not try to resolve service names.
+.TP
+.B \-r, \-\-resolve
+Try to resolve numeric address/ports.
+.TP
+.B \-a, \-\-all
+Display both listening and non-listening (for TCP this means established connections) sockets.
+.TP
+.B \-l, \-\-listening
+Display only listening sockets (these are omitted by default).
+.TP
+.B \-o, \-\-options
+Show timer information.
+.TP
+.B \-e, \-\-extended
+Show detailed socket information
+.TP
+.B \-m, \-\-memory
+Show socket memory usage.
+.TP
+.B \-p, \-\-processes
+Show process using socket.
+.TP
+.B \-i, \-\-info
+Show internal TCP information.
+.TP
+.B \-s, \-\-summary
+Print summary statistics. This option does not parse socket lists obtaining
+summary from various sources. It is useful when amount of sockets is so huge
+that parsing /proc/net/tcp is painful.
+.TP
+.B \-4, \-\-ipv4
+Display only IP version 4 sockets (alias for -f inet).
+.TP
+.B \-6, \-\-ipv6
+Display only IP version 6 sockets (alias for -f inet6).
+.TP
+.B \-0, \-\-packet
+Display PACKET sockets (alias for -f link).
+.TP
+.B \-t, \-\-tcp
+Display TCP sockets.
+.TP
+.B \-u, \-\-udp
+Display UDP sockets.
+.TP
+.B \-d, \-\-dccp
+Display DCCP sockets.
+.TP
+.B \-w, \-\-raw
+Display RAW sockets.
+.TP
+.B \-x, \-\-unix
+Display Unix domain sockets (alias for -f unix).
+.TP
+.B \-f FAMILY, \-\-family=FAMILY
+Display sockets of type FAMILY.
+Currently the following families are supported: unix, inet, inet6, link, netlink.
+.TP
+.B \-A QUERY, \-\-query=QUERY, \-\-socket=QUERY
+List of socket tables to dump, separated by commas. The following identifiers
+are understood: all, inet, tcp, udp, raw, unix, packet, netlink, unix_dgram,
+unix_stream, packet_raw, packet_dgram.
+.TP
+.B \-D FILE, \-\-diag=FILE
+Do not display anything, just dump raw information about TCP sockets to FILE after applying filters. If FILE is - stdout is used.
+.TP
+.B \-F FILE, \-\-filter=FILE
+Read filter information from FILE.
+Each line of FILE is interpreted like single command line option. If FILE is - stdin is used.
+.TP
+.B FILTER := [ state TCP-STATE ] [ EXPRESSION ]
+Please take a look at the official documentation (Debian package iproute-doc) for details regarding filters.
+.SH USAGE EXAMPLES
+.TP
+.B ss -t -a
+Display all TCP sockets.
+.TP
+.B ss -u -a
+Display all UDP sockets.
+.TP
+.B ss -o state established '( dport = :ssh or sport = :ssh )'
+Display all established ssh connections.
+.TP
+.B ss -x src /tmp/.X11-unix/*
+Find all local processes connected to X server.
+.TP
+.B ss -o state fin-wait-1 '( sport = :http or sport = :https )' dst 193.233.7/24
+List all the tcp sockets in state FIN-WAIT-1 for our apache to network 193.233.7/24 and look at their timers.
+.SH SEE ALSO
+.BR ip (8),
+.BR /usr/share/doc/iproute-doc/ss.html " (package iproute­doc)"
+.SH AUTHOR
+.I ss 
+was written by Alexey Kuznetosv, <kuznet@ms2.inr.ac.ru>.
+.PP
+This manual page was written by Michael Prokop <mika@grml.org>
+for the Debian project (but may be used by others).

@@ -1,0 +1,27 @@
+# frv testcase for ldhf @($GRi,$GRj),$GRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldhf
+ldhf:
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_fr_iimmed	0xbeef,0xdead,fr8
+
+	set_gr_immed	0,gr7
+	ldhf 		@(sp,gr7),fr8
+	test_fr_limmed	0x0000,0xdead,fr8
+
+	set_gr_immed	2,gr7
+	ldhf 		@(sp,gr7),fr8
+	test_fr_limmed	0x0000,0xbeef,fr8
+
+	set_mem_limmed	0xffff,0x0000,sp
+	inc_gr_immed	4,sp
+	set_gr_immed	-2,gr7
+	ldhf 		@(sp,gr7),fr8
+	test_fr_limmed	0x0000,0x0000,fr8
+
+	pass

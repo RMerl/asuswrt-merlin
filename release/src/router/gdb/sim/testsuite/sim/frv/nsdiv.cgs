@@ -1,0 +1,64 @@
+# frv testcase for nsdiv $GRi,$GRj,$GRk
+# mach: fr500 fr550 frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global nsdiv
+nsdiv:
+	set_spr_immed	0,gner0
+	set_spr_immed	0,gner1
+
+	; simple division 12 / 3
+	set_gr_immed   	3,gr3
+	set_gr_immed   	12,gr1
+	nsdiv      	gr1,gr3,gr2
+	test_gr_immed  	4,gr2
+	test_spr_immed	0,gner0
+	test_spr_immed	0,gner1
+
+	; Random example
+	set_gr_limmed  	0x0123,0x4567,gr3
+	set_gr_limmed  	0xfedc,0xba98,gr1
+	nsdiv      	gr1,gr3,gr2
+	test_gr_immed  	-1,gr2
+	test_spr_immed	0,gner0
+	test_spr_immed	0,gner1
+
+	; Special case from the Arch Spec Vol 2
+	or_spr_immed	0x20,isr	; turn on isr.edem
+	set_gr_immed  	-1,gr3
+	set_gr_limmed  	0x8000,0x0000,gr1
+	set_spr_immed	4,gner1		; turn on NE bit for gr2
+	nsdiv      	gr1,gr3,gr2	; overflow is masked
+	test_gr_limmed 	0x7fff,0xffff,gr2
+	test_spr_bits	0x4,2,1,isr	; isr.aexc is set
+	test_spr_immed	0,gner0
+	test_spr_immed	0,gner1
+
+	nsdiv      	gr1,gr0,gr32	; divide by zero
+	test_spr_immed	1,gner0
+	test_spr_immed	0,gner1
+
+	and_spr_immed	-33,isr		; turn off isr.edem
+	set_gr_immed  	-1,gr3
+	set_gr_limmed  	0x8000,0x0000,gr1
+	nsdiv      	gr1,gr3,gr2
+	test_gr_limmed 	0x8000,0x0000,gr2
+	test_spr_immed	1,gner0
+	test_spr_immed	4,gner1
+
+	nsdiv      	gr1,gr0,gr10	; divide by zero
+	test_spr_immed	1,gner0
+	test_spr_immed	0x00000404,gner1
+
+	; simple division 12 / 3 -- should turn off ne flag
+	set_gr_immed   	3,gr3
+	set_gr_immed   	12,gr1
+	nsdiv      	gr1,gr3,gr2
+	test_gr_immed  	4,gr2
+	test_spr_immed	1,gner0
+	test_spr_immed	0x00000400,gner1
+
+	pass

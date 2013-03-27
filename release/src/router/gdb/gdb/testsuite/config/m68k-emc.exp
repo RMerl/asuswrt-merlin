@@ -1,0 +1,17 @@
+load_lib gdb.exp
+load_lib "../config/monitor.exp"
+
+proc gdb_emclaptop_command { command } {
+    global board_info;
+    set tname [board_info target name];
+
+    if ![info exists board_info($tname,m68k_connected)] {
+	m68k_emc_board_connect target;
+    }
+    # This is about all we can do for now. *sigh*
+    set dos_host [board_info target dos_host];
+
+    remote_send $dos_host "${command}\n";
+    #remote_expect $dos_host {
+    #}
+}

@@ -1,0 +1,35 @@
+
+To Do List for neon                                      -*- text -*-
+===================
+
+Please submit feature requests to <neon@lists.manyfish.co.uk>
+
+For one-point-oh
+----------------
+
+Longer term
+-----------
+
+6. PUT with ranges... ne_put_range
+
+9. DeltaV support (http://www.webdav.org/deltav/). See also the
+   subversion project (http://subversion.tigris.org/) who might build
+   a versioning system over DAV.
+
+14. Improved request-header manipulation... some kind of indexed table
+    (a la Apache, libghttp, so we're sure we don't add the same header
+    to the request twice.  Better control over adding Cache-Control
+    headers would be good too.
+
+21. Storing multiple authentication "sessions" within an actual
+    auth_session, so I can log into e.g. /foo/ and /bar/ (which are
+    not in the same authentication domain) and switch between them
+    without having to re-enter passwords all the time.
+
+46. Asynchronous request-dispatching? Makes integration into GUI loop
+    easy... any other reasons?  Must leave existing request_dispatch
+    interface intact.
+
+50. opendir/readdir/closedir-esque interface for PROPFIND depth 1, 
+    a la EZDAV. (cadaver has it already)
+

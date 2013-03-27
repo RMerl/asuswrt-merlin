@@ -2,7 +2,7 @@
  * Initialization and support routines for self-booting
  * compressed image.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: load.c 305376 2011-12-28 05:59:10Z $
+ * $Id: load.c 342293 2012-07-02 10:25:35Z $
  */
 
 #include <typedefs.h>
@@ -374,10 +374,12 @@ c_main(unsigned long ra)
 
 	BCMDBG_TRACE(0x4c4402);
 
-	/* Only do this for newer chips, since the SB ones did not have
-	 * space in the nvram header for the sflash divider.
+	/* Only do this for 4716, we need to reuse the
+	 * space in the nvram header for TREF on 5357.
 	 */
-	if (sih->socitype == SOCI_AI)
+	if ((CHIPID(sih->chip) == BCM4716_CHIP_ID) ||
+	    (CHIPID(sih->chip) == BCM4748_CHIP_ID) ||
+	    (CHIPID(sih->chip) == BCM47162_CHIP_ID))
 		set_sflash_div(sih);
 
 	BCMDBG_TRACE(0x4c4403);

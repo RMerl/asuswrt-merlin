@@ -1,0 +1,215 @@
+# Copyright 1998, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+if [istarget "m68k-*-elf"] then {
+    pass "Test not supported on this target"
+    return;
+}
+
+load_lib "trace-support.exp"
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "circ"
+set srcfile ${testfile}.c
+set binfile $objdir/$subdir/$testfile
+
+if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
+	executable {debug nowarnings}] != "" } {
+    untested circ.exp
+    return -1
+}
+
+# Tests:
+# 1) Set up a trace experiment that will collect approximately 10 frames,
+#    requiring more than 512 but less than 1024 bytes of cache buffer.
+#    (most targets should have at least 1024 bytes of cache buffer!)
+#    Run and confirm that it collects all 10 frames.
+# 2) Artificially limit the trace buffer to 512 bytes, and rerun the
+#    experiment.  Confirm that the first several frames are collected,
+#    but that the last several are not.
+# 3) Set trace buffer to circular mode, still with the artificial limit
+#    of 512 bytes, and rerun the experiment.  Confirm that the last 
+#    several frames are collected, but the first several are not.
+#
+
+# return 0 for success, 1 for failure
+proc run_trace_experiment { pass } {
+    gdb_run_cmd 
+
+    if [gdb_test "tstart" \
+	    "\[\r\n\]*" \
+	    "start trace experiment, pass $pass"] then { return 1; }
+    if [gdb_test "continue" \
+	    "Continuing.*Breakpoint \[0-9\]+, end.*" \
+	    "run to end, pass $pass"] then { return 1; }
+    if [gdb_test "tstop" \
+	    "\[\r\n\]*" \
+	    "stop trace experiment, pass $pass"] then { return 1; }
+    return 0;
+}
+
+# return 0 for success, 1 for failure
+proc set_a_tracepoint { func } {
+    if [gdb_test "trace $func" \
+	    "Tracepoint \[0-9\]+ at .*" \
+	    "set tracepoint at $func"] then {
+	return 1;
+    }
+    if [gdb_trace_setactions "set actions for $func" \
+	    "" \
+	    "collect testload" "^$"] then {
+	return 1;
+    }
+    return 0;
+}
+
+# return 0 for success, 1 for failure
+proc setup_tracepoints { } {
+    gdb_delete_tracepoints
+    if [set_a_tracepoint func0] then { return 1; }
+    if [set_a_tracepoint func1] then { return 1; }
+    if [set_a_tracepoint func2] then { return 1; }
+    if [set_a_tracepoint func3] then { return 1; }
+    if [set_a_tracepoint func4] then { return 1; }
+    if [set_a_tracepoint func5] then { return 1; }
+    if [set_a_tracepoint func6] then { return 1; }
+    if [set_a_tracepoint func7] then { return 1; }
+    if [set_a_tracepoint func8] then { return 1; }
+    if [set_a_tracepoint func9] then { return 1; }
+    return 0;
+}
+
+# return 0 for success, 1 for failure
+proc trace_buffer_normal { } {
+    if [gdb_test "maint packet QTBuffer:size:ffffffff" \
+	    "received: .OK." ""] then { 
+	pass "This test cannot be run on this target"
+	return 1;
+    }
+    if [gdb_test "maint packet QTBuffer:circular:0" \
+	    "received: .OK." ""] then { 
+	pass "This test cannot be run on this target"
+	return 1;
+    }
+    return 0;
+}
+
+# return 0 for success, 1 for failure
+proc gdb_trace_circular_tests { } {
+
+    # We generously give ourselves one "pass" if we successfully 
+    # detect that this test cannot be run on this target!
+    if { ![gdb_target_supports_trace] } then { 
+	pass "Current target does not supporst trace"
+	return 1;
+    }
+
+    if [trace_buffer_normal] then { return 1; }
+
+    gdb_test "break begin" "" ""
+    gdb_test "break end"   "" ""
+    gdb_test "tstop"       "" ""
+    gdb_test "tfind none"  "" ""
+
+    if [setup_tracepoints] then { return 1; }
+
+    # First, run the trace experiment with default attributes:
+    # Make sure it behaves as expected.
+    if [run_trace_experiment 1] then { return 1; }
+    if [gdb_test "tfind start" \
+	    "#0  func0 .*" \
+	    "find frame zero, pass 1"] then { return 1; }
+
+    if [gdb_test "tfind 9" \
+	    "#0  func9 .*" \
+	    "find frame nine, pass 1"] then { return 1; }
+
+    if [gdb_test "tfind none" \
+	    "#0  end .*" \
+	    "quit trace debugging, pass 1"] then { return 1; }
+
+    # Then, shrink the trace buffer so that it will not hold
+    # all ten trace frames.  Verify that frame zero is still
+    # collected, but frame nine is not.
+    if [gdb_test "maint packet QTBuffer:size:200" \
+	    "received: .OK." "shrink the target trace buffer"] then { 
+	return 1;
+    }
+    if [run_trace_experiment 2] then { return 1; }
+    if [gdb_test "tfind start" \
+	    "#0  func0 .*" \
+	    "find frame zero, pass 2"] then { return 1; }
+
+    if [gdb_test "tfind 9" \
+	    ".* failed to find .*" \
+	    "fail to find frame nine, pass 2"] then { return 1; }
+
+    if [gdb_test "tfind none" \
+	    "#0  end .*" \
+	    "quit trace debugging, pass 2"] then { return 1; }
+
+    # Finally, make the buffer circular.  Now when it runs out of
+    # space, it should wrap around and overwrite the earliest frames.
+    # This means that:
+    #   1) frame zero will be overwritten and therefore unavailable
+    #   2) the earliest frame in the buffer will be other-than-zero
+    #   3) frame nine will be available (unlike on pass 2).
+    if [gdb_test "maint packet QTBuffer:circular:1" \
+	    "received: .OK." "make the target trace buffer circular"] then { 
+	return 1;
+    }
+    if [run_trace_experiment 3] then { return 1; }
+    if [gdb_test "tfind start" \
+	    "#0  func\[1-9\] .*" \
+	    "first frame is NOT frame zero, pass 3"] then { return 1; }
+
+    if [gdb_test "tfind 9" \
+	    "#0  func9 .*" \
+	    "find frame nine, pass 3"] then { return 1; }
+
+    if [gdb_test "tfind none" \
+	    "#0  end .*" \
+	    "quit trace debugging, pass 3"] then { return 1; }
+
+    return 0;
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+ 
+if [target_info exists gdb_stub] {
+    gdb_step_for_stub;
+}
+# Body of test encased in a proc so we can return prematurely.
+if { ![gdb_trace_circular_tests] } then {
+    # Set trace buffer attributes back to normal
+    trace_buffer_normal;
+}
+
+# Finished!
+gdb_test "tfind none" "" ""

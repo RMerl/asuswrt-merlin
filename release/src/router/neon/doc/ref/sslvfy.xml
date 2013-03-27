@@ -1,0 +1,163 @@
+    <refentry id="refsslvfy"> <!-- -*- xml-mode -*- -->
+
+      <refmeta>
+	<refentrytitle>ne_ssl_set_verify</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_ssl_set_verify">ne_ssl_set_verify</refname>
+	<refpurpose>register an SSL certificate verification callback</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_session.h&gt;</funcsynopsisinfo>
+
+	  <!-- hard to put data type declarations here -->
+
+	  <funcprototype>
+	    <funcdef>typedef int <function>ne_ssl_verify_fn</function></funcdef>
+	    <paramdef>void *<parameter>userdata</parameter></paramdef>
+	    <paramdef>int <parameter>failures</parameter></paramdef>
+	    <paramdef>const ne_ssl_certificate *<parameter>cert</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_ssl_set_verify</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	    <paramdef>ne_ssl_verify_fn <parameter>verify_fn</parameter></paramdef>
+	    <paramdef>void *<parameter>userdata</parameter></paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>To enable manual SSL certificate verification, a
+callback can be registered using
+<function>ne_ssl_set_verify</function>.  If such a callback is not
+registered, when a connection is established to an SSL server which
+does not present a certificate signed by a trusted CA (see <xref
+linkend="ne_ssl_trust_cert"/>), or if the certificate presented is invalid in
+some way, the connection will fail.</para>
+
+	<para>When the callback is invoked, the
+<parameter>failures</parameter> parameter gives a bitmask indicating
+in what way the automatic certificate verification failed.  The value
+is equal to the bit-wise OR of one or more of the following
+constants (and is guaranteed to be non-zero):</para>
+
+	<variablelist>
+	  <varlistentry><term><constant>NE_SSL_NOTYETVALID</constant></term>
+	    <listitem>
+	      <simpara>The certificate is not yet valid.</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry><term><constant>NE_SSL_EXPIRED</constant></term>
+	    <listitem>
+	      <simpara>The certificate has expired.</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry><term><constant>NE_SSL_IDMISMATCH</constant></term>
+	    <listitem>
+	      <simpara>The hostname used for the session does not match
+the hostname to which the certificate was issued.</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry><term><constant>NE_SSL_UNTRUSTED</constant></term>
+	    <listitem>
+	      <simpara>The Certificate Authority which signed the certificate
+is not trusted.</simpara>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+
+	<para>Note that if either of the
+	<constant>NE_SSL_IDMISMATCH</constant> or
+	<constant>NE_SSL_UNTRUSTED</constant> failures is given, the
+	connection may have been intercepted by a third party, and
+	must not be presumed to be <quote>secure</quote>.</para>
+
+	<para>The <parameter>cert</parameter> parameter passed to the
+callback represents the certificate which was presented by the server.
+If the server presented a chain of certificates, the chain can be
+accessed using <xref linkend="ne_ssl_cert_signedby"/>.  The
+<parameter>cert</parameter> object given is not valid after the
+callback returns.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Return value</title>
+
+	<para>The verification callback must return zero to indicate
+that the certificate should be trusted; and non-zero otherwise (in
+which case, the connection will fail).</para>
+      </refsect1>
+
+      <refsect1>
+	<title>Examples</title>
+
+	<para>The following code implements an example verification
+	callback, using the <function>dump_cert</function> function
+	from <xref linkend="ne_ssl_cert_subject"/> to display
+	certification information.  Notice that the hostname of the
+	server used for the session is passed as the
+	<parameter>userdata</parameter> parameter to the
+	callback.</para>
+
+	<programlisting>
+static int
+my_verify(void *userdata, int failures, const ne_ssl_certificate *cert)
+{
+  const char *hostname = userdata;
+
+  dump_cert(cert);
+
+  puts("Certificate verification failed - the connection may have been "
+       "intercepted by a third party!");
+
+  if (failures &amp; NE_SSL_IDMISMATCH) { 
+    const char *id = ne_ssl_cert_identity(cert);
+    if (id) 
+      printf("Server certificate was issued to '%s' not '%s'.\n",
+             id, hostname);
+    else
+      printf("The certificate was not issued for '%s'\n", hostname);
+  }
+
+  if (failures &amp; NE_SSL_UNTRUSTED)
+    puts("The certificate is not signed by a trusted Certificate Authority.");
+
+  /* ... check for validity failures ... */
+
+  if (prompt_user())
+    return 1; /* fail verification */
+  else
+    return 0; /* trust the certificate anyway */
+}
+
+int
+main(...)
+{
+  ne_session *sess = ne_session_create("https", "some.host.name", 443);
+  ne_ssl_set_verify(sess, my_verify, "some.host.name");
+  ...
+}</programlisting>
+
+      </refsect1>
+
+      <refsect1>
+	<title>See also</title>
+
+	<para><xref linkend="ne_ssl_trust_cert"/>, <xref
+	linkend="ne_ssl_readable_dname"/>, <xref linkend="ne_ssl_cert_subject"/></para>
+      </refsect1>
+
+   </refentry>

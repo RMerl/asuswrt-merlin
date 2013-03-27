@@ -1,0 +1,36 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>ne_session_create</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="ref.html" title="neon API reference"><link rel="prev" href="refalloc.html" title="ne_malloc"><link rel="next" href="refsessflags.html" title="ne_set_session_flag"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">ne_session_create</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="refalloc.html">Prev</a> </td><th width="60%" align="center">neon API reference</th><td width="20%" align="right"> <a accesskey="n" href="refsessflags.html">Next</a></td></tr></table><hr></div><div class="refentry" title="ne_session_create"><a name="refsess"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ne_session_create, ne_close_connection, ne_session_proxy, ne_session_destroy — set up HTTP sessions</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="funcsynopsis"><pre class="funcsynopsisinfo">#include &lt;ne_session.h&gt;</pre><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">ne_session *<b class="fsfunc">ne_session_create</b>(</code></td><td>const char *<var class="pdparam">scheme</var>, </td></tr><tr><td> </td><td>const char *<var class="pdparam">hostname</var>, </td></tr><tr><td> </td><td>unsigned int <var class="pdparam">port</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">void <b class="fsfunc">ne_session_proxy</b>(</code></td><td>ne_session *<var class="pdparam">session</var>, </td></tr><tr><td> </td><td>const char *<var class="pdparam">hostname</var>, </td></tr><tr><td> </td><td>unsigned int <var class="pdparam">port</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">void <b class="fsfunc">ne_close_connection</b>(</code></td><td>ne_session *<var class="pdparam">session</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">void <b class="fsfunc">ne_session_destroy</b>(</code></td><td>ne_session *<var class="pdparam">session</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div></div></div><div class="refsect1" title="Description"><a name="id454329"></a><h2>Description</h2><p>An <em class="type">ne_session</em> object represents an HTTP
+session - a logical grouping of a sequence of HTTP requests made to a
+certain server. Any requests made using the session can use a
+persistent connection, share cached authentication credentials and any
+other common attributes.</p><p>A new HTTP session is created using
+<code class="function">ne_session_create</code>, giving the
+<code class="parameter">hostname</code> and <code class="parameter">port</code> of the
+server to use, along with the <code class="parameter">scheme</code> used to
+contact the server (usually <code class="literal">"http"</code>).  Before the
+first use of <code class="function">ne_session_create</code> in a process,
+<a class="xref" href="refsockinit.html#ne_sock_init">ne_sock_init</a> must have been called to perform any
+global initialization needed by any libraries used by neon.</p><p>To enable SSL/TLS for the session, pass the string
+<code class="literal">"https"</code> as the <code class="parameter">scheme</code>
+parameter, and either register a certificate verification function
+(see <a class="xref" href="refsslvfy.html#ne_ssl_set_verify">ne_ssl_set_verify</a>) or trust the appropriate 
+certificate (see <a class="xref" href="refsslca.html#ne_ssl_trust_cert">ne_ssl_trust_cert</a>, <a class="xref" href="refsslca.html#ne_ssl_trust_default_ca">ne_ssl_trust_default_ca</a>).</p><p>If an HTTP proxy server should be used for the session,
+	<code class="function">ne_session_proxy</code> must be called giving
+	the hostname and port on which to contact the proxy.</p><p>Further per-session options may be changed using the
+        <a class="xref" href="refreqflags.html#ne_set_request_flag">ne_set_request_flag</a> interface.</p><p>If it is known that the session will not be used for a
+significant period of time, <code class="function">ne_close_connection</code>
+can be called to close the connection, if one remains open.  Use of
+this function is entirely optional, but it must not be called if there
+is a request active using the session.</p><p>Once a session has been completed,
+<code class="function">ne_session_destroy</code> must be called to destroy the
+resources associated with the session.  Any subsequent use of the
+session pointer produces undefined behaviour.</p></div><div class="refsect1" title="Notes"><a name="id454449"></a><h2>Notes</h2><p>The hostname passed to
+<code class="function">ne_session_create</code> is resolved when the first
+request using the session is dispatched; a DNS resolution failure can
+only be detected at that time (using the <code class="literal">NE_LOOKUP</code>
+error code); see <a class="xref" href="refreq.html#ne_request_dispatch">ne_request_dispatch</a> for
+details.</p></div><div class="refsect1" title="Return Values"><a name="id454474"></a><h2>Return Values</h2><p><code class="function">ne_session_create</code> will return
+	a pointer to a new session object (and never <code class="literal">NULL</code>).</p></div><div class="refsect1" title="Examples"><a name="id454494"></a><h2>Examples</h2><p>Create and destroy a session:</p><pre class="programlisting">ne_session *sess;
+sess = ne_session_create("http", "host.example.com", 80);
+/* ... use sess ... */
+ne_session_destroy(sess);
+</pre></div><div class="refsect1" title="See Also"><a name="id454510"></a><h2>See Also</h2><p><a class="xref" href="refsslvfy.html#ne_ssl_set_verify">ne_ssl_set_verify</a>, <a class="xref" href="refsslca.html#ne_ssl_trust_cert">ne_ssl_trust_cert</a>, <a class="xref" href="refsockinit.html#ne_sock_init">ne_sock_init</a>, <a class="xref" href="refsessflags.html#ne_set_session_flag">ne_set_session_flag</a></p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="refalloc.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ref.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="refsessflags.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">ne_malloc </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> ne_set_session_flag</td></tr></table></div></body></html>

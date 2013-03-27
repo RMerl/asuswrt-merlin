@@ -1,7 +1,7 @@
 #ifndef __FLASH_MTD_H
 #define __FLASH_MTD_H
 
-#define NUM_INFO 5
+#define NUM_INFO 6
 #define MAX_READ_CNT 0x10000
 
 struct mtd_info {
@@ -17,7 +17,7 @@ extern int flash_mtd_open(int num, int flags);
 extern int flash_mtd_read(int offset, int count);
 extern int FRead(char *dst, int src, int count);
 extern int flash_mtd_write(int offset, int value);
-extern int FWrite(char *src, int dst, int count);
+extern int FWrite(const char *src, int dst, int count);
 extern int flash_mtd_erase(int start, int end);
 //extern int flash_mtd_main(int argc, char *argv[]);
 

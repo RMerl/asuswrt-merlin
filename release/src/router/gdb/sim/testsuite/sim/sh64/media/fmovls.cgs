@@ -1,0 +1,26 @@
+# sh testcase for fmov.ls $rm, $frf -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+fmovls0:
+	movi 0, r0
+	fmov.ls r0, fr0
+
+fmovls1:
+	movi 1, r1
+	fmov.ls r1, fr1
+
+upper:
+	movi 1, r2
+	shlli r2, 63, r2
+	ori r2, 3, r2
+	# Bit 63 should be ignored.
+	fmov.ls r2, fr2
+
+okay:
+	pass

@@ -1,0 +1,30 @@
+# fr30 testcase for btstl $Rj,@$Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global btstl
+btstl:
+	; Test btstl $Rj,@$Ri
+	mvi_h_mem  	0x55555555,sp
+	set_cc          0x0b		; Set mask opposite of expected
+	btstl      	0x0a,@sp
+	test_cc		0 1 1 1
+	test_h_mem 	0x55555555,sp
+
+	mvi_h_mem  	0xffffffff,sp
+	set_cc          0x0c		; Set mask opposite of expected
+	btstl		0x0a,@sp
+	test_cc		0 0 0 0
+	test_h_mem 	0xffffffff,sp
+
+	mvi_h_mem  	0x5effffff,sp
+	set_cc          0x0e		; Set mask opposite of expected
+	btstl		0x07,@sp
+	test_cc		0 0 1 0
+	test_h_mem 	0x5effffff,sp
+
+	pass

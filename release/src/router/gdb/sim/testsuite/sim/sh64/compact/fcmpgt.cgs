@@ -1,0 +1,95 @@
+# sh testcase for fcmpgt -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	# 1.0 !> 1.0.
+	fldi1 fr0
+	fldi1 fr1
+	fcmp/gt fr0, fr1
+	bt wrong
+
+	# 0.0 !> 1.0.
+	fldi0 fr0
+	fldi1 fr1
+	fcmp/gt fr0, fr1
+	bf wrong
+
+	# 1.0 > 0.0.
+	fldi1 fr0
+	fldi0 fr1
+	fcmp/gt fr0, fr1
+	bt wrong
+
+	# 2.0 > 1.0
+	fldi1 fr0
+	fadd fr0, fr0
+	fldi1 fr1
+	fcmp/gt fr0, fr1
+	bt wrong
+
+	bra double
+	nop
+
+wrong:
+	fail
+
+double:
+	# double precision tests.
+	# 1.0 !> 1.0.
+	fldi1 fr0
+	fldi1 fr2
+	_s2d fr0, dr0
+	_s2d fr2, dr2
+	_setpr
+	fcmp/gt dr0, dr2
+	bt wrong2
+	_clrpr
+
+	# 0.0 !> 1.0.
+	fldi0 fr0
+	fldi1 fr2
+	_s2d fr0, dr0
+	_s2d fr2, dr2
+	_setpr
+	fcmp/gt dr0, dr2
+	bf wrong2
+	_clrpr
+
+	bra next
+	nop
+
+wrong2:
+	fail
+
+next:
+	# 1.0 > 0.0.
+	fldi1 fr0
+	fldi0 fr2
+	_s2d fr0, dr0
+	_s2d fr2, dr2
+	_setpr
+	fcmp/gt dr0, dr2
+	bt wrong2
+	_clrpr
+
+	# 2.0 > 1.0.
+	fldi1 fr0
+	fadd fr0, fr0
+	fldi1 fr2
+	_s2d fr0, dr0
+	_s2d fr2, dr2
+	_setpr
+	fcmp/gt dr0, dr2
+	bt wrong2
+	_clrpr
+
+okay:
+	pass
+
+wrong3:
+	fail

@@ -1,0 +1,24 @@
+# frv testcase for stdfu $FRk,@($GRi,$GRj)
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global stdfu
+stdfu:
+	set_mem_limmed	0xbeef,0xdead,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_gr	sp,gr20
+	inc_gr_immed	-4,sp
+	set_gr_immed	4,gr7
+	set_fr_iimmed	0xbeef,0xdead,fr8
+	set_fr_iimmed	0xdead,0xbeef,fr9
+	stdfu		fr8,@(sp,gr7)
+	test_gr_gr	sp,gr20
+	test_mem_limmed	0xbeef,0xdead,sp
+	inc_gr_immed	4,sp
+	test_mem_limmed	0xdead,0xbeef,sp
+
+	pass

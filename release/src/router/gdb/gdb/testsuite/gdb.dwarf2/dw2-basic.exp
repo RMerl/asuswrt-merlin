@@ -1,0 +1,52 @@
+# Copyright 2004, 2005, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Minimal DWARF-2 unit test
+
+# This test can only be run on targets which support DWARF-2 and use gas.
+# For now pick a sampling of likely targets.
+if {![istarget *-*-linux*]
+    && ![istarget *-*-gnu*]
+    && ![istarget *-*-elf*]
+    && ![istarget *-*-openbsd*]
+    && ![istarget arm-*-eabi*]
+    && ![istarget powerpc-*-eabi*]} {
+    return 0  
+}
+
+set testfile "dw2-basic"
+set srcfile ${testfile}.S
+set binfile ${objdir}/${subdir}/${testfile}.x
+
+if  { [gdb_compile "${srcdir}/${subdir}/main.c" "main.o" object {debug}] != "" } {
+    return -1
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${testfile}.o" object {nodebug}] != "" } {
+    return -1
+}
+
+if  { [gdb_compile "${testfile}.o main.o" "${binfile}" executable {debug}] != "" } {
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+gdb_test "set listsize 1" ""
+gdb_test "list func_cu1" "4\[ \t\]+File 1 Line 4"
+gdb_test "ptype func_cu1" "type = int \\(\\)"

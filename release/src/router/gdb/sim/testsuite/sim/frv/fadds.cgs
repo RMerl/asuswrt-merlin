@@ -1,0 +1,92 @@
+# frv testcase for fadds $GRi,$GRj,$GRk
+# mach: fr500 fr550 frv
+
+	.include "testutils.inc"
+
+	float_constants
+	start
+	load_float_constants
+
+	.global fadds
+fadds:
+	fadds      	fr16,fr0,fr1
+	test_fr_fr	fr1,fr0
+	fadds      	fr16,fr4,fr1
+	test_fr_fr	fr1,fr4
+	fadds      	fr16,fr8,fr1
+	test_fr_fr	fr1,fr8
+	fadds      	fr16,fr12,fr1
+	test_fr_fr	fr1,fr12
+	fadds      	fr16,fr16,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	fadds      	fr16,fr20,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	fadds      	fr16,fr24,fr1
+	test_fr_fr	fr1,fr24
+	fadds      	fr16,fr28,fr1
+	test_fr_fr	fr1,fr28
+	fadds      	fr16,fr32,fr1
+	test_fr_fr	fr1,fr32
+	fadds      	fr16,fr36,fr1
+	test_fr_fr	fr1,fr36
+	fadds      	fr16,fr40,fr1
+	test_fr_fr	fr1,fr40
+	fadds      	fr16,fr44,fr1
+	test_fr_fr	fr1,fr44
+	fadds      	fr16,fr48,fr1
+	test_fr_fr	fr1,fr48
+	fadds      	fr16,fr52,fr1
+	test_fr_fr	fr1,fr52
+
+	fadds      	fr20,fr0,fr1
+	test_fr_fr	fr1,fr0
+	fadds      	fr20,fr4,fr1
+	test_fr_fr	fr1,fr4
+	fadds      	fr20,fr8,fr1
+	test_fr_fr	fr1,fr8
+	fadds      	fr20,fr12,fr1
+	test_fr_fr	fr1,fr12
+	fadds      	fr20,fr16,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	fadds      	fr20,fr20,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	fadds      	fr20,fr24,fr1
+	test_fr_fr	fr1,fr24
+	fadds      	fr20,fr28,fr1
+	test_fr_fr	fr1,fr28
+	fadds      	fr20,fr32,fr1
+	test_fr_fr	fr1,fr32
+	fadds      	fr20,fr36,fr1
+	test_fr_fr	fr1,fr36
+	fadds      	fr20,fr40,fr1
+	test_fr_fr	fr1,fr40
+	fadds      	fr20,fr44,fr1
+	test_fr_fr	fr1,fr44
+	fadds      	fr20,fr48,fr1
+	test_fr_fr	fr1,fr48
+	fadds      	fr20,fr52,fr1
+	test_fr_fr	fr1,fr52
+
+	fadds      	fr8,fr28,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	fadds      	fr12,fr24,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	fadds      	fr24,fr12,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	fadds      	fr28,fr8,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+
+	fadds      	fr36,fr40,fr1
+	test_fr_fr	fr1,fr44
+
+	pass
+
+

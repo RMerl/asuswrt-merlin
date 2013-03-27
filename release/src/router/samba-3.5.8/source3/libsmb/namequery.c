@@ -1224,9 +1224,16 @@ static NTSTATUS resolve_hosts(const char *name, int name_type,
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_ADDRCONFIG;
 
+#ifndef APP_IPKG
 #if !defined(HAVE_IPV6)
 	/* Unless we have IPv6, we really only want IPv4 addresses back. */
 	hints.ai_family = AF_INET;
+#endif
+#else
+#if defined(HAVE_IPV6) //modify by zero
+        /* Unless we have IPv6, we really only want IPv4 addresses back. */
+        hints.ai_family = AF_INET;
+#endif
 #endif
 
 	ret = getaddrinfo(name,

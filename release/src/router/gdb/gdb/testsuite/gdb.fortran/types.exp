@@ -1,0 +1,114 @@
+# Copyright 1994, 1995, 1997, 1998, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was adapted from old Chill tests by Stan Shebs
+# (shebs@cygnus.com).
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+# Set the current language to fortran.  This counts as a test.  If it
+# fails, then we skip the other tests.
+
+proc set_lang_fortran {} {
+    global gdb_prompt
+    
+    if [gdb_test "set language fortran" ""] {
+	return 0;
+    }
+
+    if ![gdb_test "show language" ".* source language is \"fortran\".*"] {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+proc test_integer_literal_types_accepted {} {
+    global gdb_prompt
+
+    # Test various decimal values.
+    # Should be integer*4 probably.
+    gdb_test "pt 123" "type = int" 
+}
+
+proc test_character_literal_types_accepted {} {
+    global gdb_prompt
+
+    # Test various character values.
+
+    gdb_test "pt 'a'" "type = character\\*1"
+}
+
+proc test_integer_literal_types_rejected {} {
+    global gdb_prompt
+
+    test_print_reject "pt _"
+}
+
+proc test_logical_literal_types_accepted {} {
+    global gdb_prompt
+
+    # Test the only possible values for a logical, TRUE and FALSE.
+
+    gdb_test "pt .TRUE." "type = logical\\*2"
+    gdb_test "pt .FALSE." "type = logical\\*2"
+}
+
+proc test_float_literal_types_accepted {} {
+    global gdb_prompt
+
+    # Test various floating point formats
+
+    # this used to guess whether to look for "real*4" or
+    # "real*8" based on a target config variable, but noone
+    # maintained it properly.
+
+    gdb_test "pt .44" "type = real\\*\[0-9\]+"
+    gdb_test "pt 44.0" "type = real\\*\[0-9\]+"
+    gdb_test "pt 10D20" "type = real\\*\[0-9\]+"
+    gdb_test "pt 10D20" "type = real\\*\[0-9\]+"
+    gdb_test "pt 10d20" "type = real\\*\[0-9\]+"
+    gdb_test "pt 10d20" "type = real\\*\[0-9\]+"
+    gdb_test "pt 10E20" "type = real\\*\[0-9\]+"
+    gdb_test "pt 10E20" "type = real\\*\[0-9\]+"
+    gdb_test "pt 10e20" "type = real\\*\[0-9\]+"
+    gdb_test "pt 10e20" "type = real\\*\[0-9\]+"
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+gdb_test "set print sevenbit-strings" ""
+
+if [set_lang_fortran] then {
+    test_integer_literal_types_accepted
+    test_integer_literal_types_rejected
+    test_logical_literal_types_accepted
+    test_character_literal_types_accepted
+    test_float_literal_types_accepted
+} else {
+    warning "$test_name tests suppressed." 0
+}

@@ -1,0 +1,114 @@
+# Copyright 2003, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# tls-shared.exp -- Expect script to test thread local storage in gdb, with
+# shared libraries.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set testfile tls-main
+set libfile tls-shared
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+remote_exec build "rm -f ${binfile}"
+
+# get the value of gcc_compiled
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+if  { [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}.o" object {debug}] != "" } {
+    return -1
+}
+
+# Build the shared libraries this test case needs.
+#
+
+if {$gcc_compiled == 0} {
+    if [istarget "hppa*-hp-hpux*"] then {
+        set additional_flags "additional_flags=+z"
+    } elseif { [istarget "mips-sgi-irix*"] } {
+        # Disable SGI compiler's implicit -Dsgi
+        set additional_flags "additional_flags=-Usgi"
+    } else {
+        # don't know what the compiler is...
+        set additional_flags ""
+    }
+} else {
+    if { ([istarget "powerpc*-*-aix*"]
+    || [istarget "rs6000*-*-aix*"]) } {
+        set additional_flags ""
+    } else {
+        set additional_flags "additional_flags=-fpic"
+    }
+}
+
+set additional_flags "$additional_flags -shared"
+if {[gdb_compile_pthreads "${srcdir}/${subdir}/${libfile}.c" "${objdir}/${subdir}/${libfile}.so" executable [list debug $additional_flags "incdir=${objdir}"]] != ""} {
+    return -1
+}
+
+if { ($gcc_compiled 
+&&  ([istarget "powerpc*-*-aix*"]
+|| [istarget "rs6000*-*-aix*"] )) } {
+    set additional_flags "additional_flags=-L${objdir}/${subdir}"
+} elseif { [istarget "mips-sgi-irix*"] } {
+    set additional_flags "additional_flags=-rpath ${objdir}/${subdir}"
+} else {
+    set additional_flags ""
+}
+
+if {[gdb_compile_pthreads "${objdir}/${subdir}/${testfile}.o ${objdir}/${subdir}/${libfile}.so" "${binfile}" executable [list debug $additional_flags]] != ""} {
+    return -1
+}
+
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if ![runto_main] then {
+    fail "Can't run to main"
+    return 0
+}
+
+gdb_test "print i_tls" "2" "print thread local storage variable"
+
+gdb_test "ptype i_tls" "int" "ptype of thread local storage variable"
+
+gdb_test "info address i_tls" \
+	"Symbol \\\"i_tls\\\" is a thread-local variable at offset 0 in the thread-local storage for .*tls-main.." \
+	"print storage info for thread local storage variable"
+
+set line_number [gdb_get_line_number "break here to check result"]
+
+gdb_test "break $line_number" \
+	"Breakpoint.*at.*file.*tls-main.c.*line ${line_number}." \
+	"break at and of main"
+gdb_test "continue" \
+	"main .* at .*:.*return 0.*break here to check result.*" \
+        "continue to break"
+# This is more of a gcc/glibc test, really. 
+#
+gdb_test "print result" "3" "print result"
+
+

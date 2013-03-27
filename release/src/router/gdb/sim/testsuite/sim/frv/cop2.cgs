@@ -1,0 +1,14 @@
+# frv testcase for cop2 $s6_1,$CPRi,$CPRj,$CPRk
+# mach: frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global cop2
+cop2:
+	cop2		0,cpr0,cpr15,cpr31
+	cop2		31,cpr32,cpr45,cpr63
+	cop2		-32,cpr32,cpr45,cpr63
+
+	pass

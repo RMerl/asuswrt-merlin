@@ -1,0 +1,37 @@
+#    Makefile template for Configure for the h8300 sim library.
+#    Copyright (C) 1990, 91, 92, 95, 96, 1997, 2007
+#    Free Software Foundation, Inc.
+#    Written by Cygnus Support.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## COMMON_PRE_CONFIG_FRAG
+
+# List of main object files for `run'.
+SIM_RUN_OBJS = nrun.o
+
+SIM_OBJS = compile.o \
+	   $(SIM_NEW_COMMON_OBJS) \
+	   sim-cpu.o \
+	   sim-engine.o \
+	   sim-load.o \
+	   $(SIM_EXTRA_OBJS)
+
+## COMMON_POST_CONFIG_FRAG
+
+compile.o: compile.c inst.h config.h \
+	   $(srcdir)/../../include/gdb/sim-h8300.h \
+	   $(srcdir)/../../include/opcode/h8300.h \
+	   $(srcdir)/../../include/gdb/remote-sim.h \
+	   $(srcdir)/../../include/gdb/callback.h

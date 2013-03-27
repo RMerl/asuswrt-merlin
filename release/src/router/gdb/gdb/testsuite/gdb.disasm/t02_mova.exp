@@ -1,0 +1,487 @@
+# Copyright (C) 2003, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Michael Snyder (msnyder@redhat.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+if ![istarget "h8300*-*-*"] {
+    verbose "Tests ignored for all but h8300s based targets."
+    return
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "t02_mova"
+set srcfile ${srcdir}/${subdir}/${testfile}.s
+set objfile ${objdir}/${subdir}/${testfile}.o
+set binfile ${objdir}/${subdir}/${testfile}.x
+
+set asm-flags "";
+set link-flags "-m h8300sxelf";
+
+
+if {[target_assemble $srcfile $objfile "${asm-flags}"] != ""} then {
+     untested t02_mova.exp
+     return -1
+}
+
+if {[target_link $objfile $binfile "${link-flags}"] != ""} then {
+     untested t02_mova.exp
+     return -1
+}
+
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+
+gdb_test "x /i _start" "mova/b.l\t@\\(0x1234(:16|),r3l.b\\),er1" \
+	"mova/b.c @(0x1234:16,r3l.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),r3.w\\),er1" \
+	"mova/b.c @(0x1234:16,r3.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),r3l.b\\),er1" \
+	"mova/w.c @(0x1234:16,r3l.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),r3.w\\),er1" \
+	"mova/w.c @(0x1234:16,r3.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),r3l.b\\),er1" \
+	"mova/l.c @(0x1234:16,r3l.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),r3.w\\),er1" \
+	"mova/l.c @(0x1234:16,r3.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),r3l.b\\),er1" \
+	"mova/b.c @(0x12345678:32,r3l.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),r3.w\\),er1" \
+	"mova/b.c @(0x12345678:32,r3.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),r3l.b\\),er1" \
+	"mova/w.c @(0x12345678:32,r3l.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),r3.w\\),er1" \
+	"mova/w.c @(0x12345678:32,r3.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),r3l.b\\),er1" \
+	"mova/l.c @(0x12345678:32,r3l.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),r3.w\\),er1" \
+	"mova/l.c @(0x12345678:32,r3.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),r3l.b\\),er1" \
+	"mova/b.l @(0x1234:16,r3l.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),r3.w\\),er1" \
+	"mova/b.l @(0x1234:16,r3.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),r3l.b\\),er1" \
+	"mova/w.l @(0x1234:16,r3l.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),r3.w\\),er1" \
+	"mova/w.l @(0x1234:16,r3.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),r3l.b\\),er1" \
+	"mova/l.l @(0x1234:16,r3l.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),r3.w\\),er1" \
+	"mova/l.l @(0x1234:16,r3.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),r3l.b\\),er1" \
+	"mova/b.l @(0x12345678:32,r3l.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),r3.w\\),er1" \
+	"mova/b.l @(0x12345678:32,r3.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),r3l.b\\),er1" \
+	"mova/w.l @(0x12345678:32,r3l.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),r3.w\\),er1" \
+	"mova/w.l @(0x12345678:32,r3.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),r3l.b\\),er1" \
+	"mova/l.l @(0x12345678:32,r3l.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),r3.w\\),er1" \
+	"mova/l.l @(0x12345678:32,r3.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@er2.b\\),er1" \
+	"mova/b.l @(0x1234:16,@er2.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x1(:2|),er2\\).b\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x1:2,er2).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@er2\\+.b\\),er1" \
+	"mova/b.l @(0x1234:16,@er2+.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@-er2.b\\),er1" \
+	"mova/b.l @(0x1234:16,@-er2.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\+er2.b\\),er1" \
+	"mova/b.l @(0x1234:16,@+er2.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@er2-.b\\),er1" \
+	"mova/b.l @(0x1234:16,@er2-.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),er2\\).b\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abc:16,er2).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),er2\\).b\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abcdef0:32,er2).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),r2l.b\\).b\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abc:16,r2l.b).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),r2.w\\).b\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abc:16,r2.w).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),er2.l\\).b\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abc:16,er2.l).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),r2l.b\\).b\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abcdef0:32,r2l.b).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),r2.w\\).b\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abcdef0:32,r2.w).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),er2.l\\).b\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abcdef0:32,er2.l).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@0x9abc(:16|).b\\),er1" \
+	"mova/b.l @(0x1234:16,@0x9abc:16.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@0x9abcdef0(:32|).b\\),er1" \
+	"mova/b.l @(0x1234:16,@0x9abcdef0:32.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@er2.w\\),er1" \
+	"mova/b.l @(0x1234:16,@er2.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x2(:2|),er2\\).w\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x2:2,er2).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@er2\\+.w\\),er1" \
+	"mova/b.l @(0x1234:16,@er2+.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@-er2.w\\),er1" \
+	"mova/b.l @(0x1234:16,@-er2.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\+er2.w\\),er1" \
+	"mova/b.l @(0x1234:16,@+er2.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@er2-.w\\),er1" \
+	"mova/b.l @(0x1234:16,@er2-.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),er2\\).w\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abc:16,er2).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),er2\\).w\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abcdef0:32,er2).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),r2l.b\\).w\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abc:16,r2l.b).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),r2.w\\).w\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abc:16,r2.w).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),er2.l\\).w\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abc:16,er2.l).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),r2l.b\\).w\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abcdef0:32,r2l.b).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),r2.w\\).w\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abcdef0:32,r2.w).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),er2.l\\).w\\),er1" \
+	"mova/b.l @(0x1234:16,@(0x9abcdef0:32,er2.l).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@0x9abc(:16|).w\\),er1" \
+	"mova/b.l @(0x1234:16,@0x9abc:16.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x1234(:16|),@0x9abcdef0(:32|).w\\),er1" \
+	"mova/b.l @(0x1234:16,@0x9abcdef0:32.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@er2.b\\),er1" \
+	"mova/w.l @(0x1234:16,@er2.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x1(:2|),er2\\).b\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x1:2,er2).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@er2\\+.b\\),er1" \
+	"mova/w.l @(0x1234:16,@er2+.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@-er2.b\\),er1" \
+	"mova/w.l @(0x1234:16,@-er2.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\+er2.b\\),er1" \
+	"mova/w.l @(0x1234:16,@+er2.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@er2-.b\\),er1" \
+	"mova/w.l @(0x1234:16,@er2-.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),er2\\).b\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abc:16,er2).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),er2\\).b\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abcdef0:32,er2).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),r2l.b\\).b\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abc:16,r2l.b).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),r2.w\\).b\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abc:16,r2.w).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),er2.l\\).b\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abc:16,er2.l).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),r2l.b\\).b\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abcdef0:32,r2l.b).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),r2.w\\).b\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abcdef0:32,r2.w).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),er2.l\\).b\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abcdef0:32,er2.l).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@0x9abc(:16|).b\\),er1" \
+	"mova/w.l @(0x1234:16,@0x9abc:16.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@0x9abcdef0(:32|).b\\),er1" \
+	"mova/w.l @(0x1234:16,@0x9abcdef0:32.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@er2.w\\),er1" \
+	"mova/w.l @(0x1234:16,@er2.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x2(:2|),er2\\).w\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x2:2,er2).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@er2\\+.w\\),er1" \
+	"mova/w.l @(0x1234:16,@er2+.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@-er2.w\\),er1" \
+	"mova/w.l @(0x1234:16,@-er2.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\+er2.w\\),er1" \
+	"mova/w.l @(0x1234:16,@+er2.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@er2-.w\\),er1" \
+	"mova/w.l @(0x1234:16,@er2-.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),er2\\).w\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abc:16,er2).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),er2\\).w\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abcdef0:32,er2).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),r2l.b\\).w\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abc:16,r2l.b).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),r2.w\\).w\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abc:16,r2.w).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),er2.l\\).w\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abc:16,er2.l).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),r2l.b\\).w\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abcdef0:32,r2l.b).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),r2.w\\).w\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abcdef0:32,r2.w).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),er2.l\\).w\\),er1" \
+	"mova/w.l @(0x1234:16,@(0x9abcdef0:32,er2.l).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@0x9abc(:16|).w\\),er1" \
+	"mova/w.l @(0x1234:16,@0x9abc:16.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x1234(:16|),@0x9abcdef0(:32|).w\\),er1" \
+	"mova/w.l @(0x1234:16,@0x9abcdef0:32.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@er2.b\\),er1" \
+	"mova/l.l @(0x1234:16,@er2.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x1(:2|),er2\\).b\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x1:2,er2).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@er2\\+.b\\),er1" \
+	"mova/l.l @(0x1234:16,@er2+.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@-er2.b\\),er1" \
+	"mova/l.l @(0x1234:16,@-er2.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\+er2.b\\),er1" \
+	"mova/l.l @(0x1234:16,@+er2.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@er2-.b\\),er1" \
+	"mova/l.l @(0x1234:16,@er2-.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),er2\\).b\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abc:16,er2).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),er2\\).b\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abcdef0:32,er2).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),r2l.b\\).b\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abc:16,r2l.b).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),r2.w\\).b\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abc:16,r2.w).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),er2.l\\).b\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abc:16,er2.l).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),r2l.b\\).b\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abcdef0:32,r2l.b).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),r2.w\\).b\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abcdef0:32,r2.w).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),er2.l\\).b\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abcdef0:32,er2.l).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@0x9abc(:16|).b\\),er1" \
+	"mova/l.l @(0x1234:16,@0x9abc:16.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@0x9abcdef0(:32|).b\\),er1" \
+	"mova/l.l @(0x1234:16,@0x9abcdef0:32.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@er2.w\\),er1" \
+	"mova/l.l @(0x1234:16,@er2.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x2(:2|),er2\\).w\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x2:2,er2).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@er2\\+.w\\),er1" \
+	"mova/l.l @(0x1234:16,@er2+.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@-er2.w\\),er1" \
+	"mova/l.l @(0x1234:16,@-er2.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\+er2.w\\),er1" \
+	"mova/l.l @(0x1234:16,@+er2.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@er2-.w\\),er1" \
+	"mova/l.l @(0x1234:16,@er2-.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),er2\\).w\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abc:16,er2).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),er2\\).w\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abcdef0:32,er2).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),r2l.b\\).w\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abc:16,r2l.b).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),r2.w\\).w\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abc:16,r2.w).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abc(:16|),er2.l\\).w\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abc:16,er2.l).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),r2l.b\\).w\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abcdef0:32,r2l.b).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),r2.w\\).w\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abcdef0:32,r2.w).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@\\(0x9abcdef0(:32|),er2.l\\).w\\),er1" \
+	"mova/l.l @(0x1234:16,@(0x9abcdef0:32,er2.l).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@0x9abc(:16|).w\\),er1" \
+	"mova/l.l @(0x1234:16,@0x9abc:16.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x1234(:16|),@0x9abcdef0(:32|).w\\),er1" \
+	"mova/l.l @(0x1234:16,@0x9abcdef0:32.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@er2.b\\),er1" \
+	"mova/b.l @(0x12345678:32,@er2.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x1(:2|),er2\\).b\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x1:2,er2).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@er2\\+.b\\),er1" \
+	"mova/b.l @(0x12345678:32,@er2+.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@-er2.b\\),er1" \
+	"mova/b.l @(0x12345678:32,@-er2.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\+er2.b\\),er1" \
+	"mova/b.l @(0x12345678:32,@+er2.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@er2-.b\\),er1" \
+	"mova/b.l @(0x12345678:32,@er2-.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),er2\\).b\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abc:16,er2).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),er2\\).b\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abcdef0:32,er2).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),r2l.b\\).b\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abc:16,r2l.b).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),r2.w\\).b\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abc:16,r2.w).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),er2.l\\).b\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abc:16,er2.l).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),r2l.b\\).b\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abcdef0:32,r2l.b).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),r2.w\\).b\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abcdef0:32,r2.w).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),er2.l\\).b\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abcdef0:32,er2.l).b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@0x9abc(:16|).b\\),er1" \
+	"mova/b.l @(0x12345678:32,@0x9abc:16.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@0x9abcdef0(:32|).b\\),er1" \
+	"mova/b.l @(0x12345678:32,@0x9abcdef0:32.b),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@er2.w\\),er1" \
+	"mova/b.l @(0x12345678:32,@er2.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x2(:2|),er2\\).w\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x2:2,er2).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@er2\\+.w\\),er1" \
+	"mova/b.l @(0x12345678:32,@er2+.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@-er2.w\\),er1" \
+	"mova/b.l @(0x12345678:32,@-er2.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\+er2.w\\),er1" \
+	"mova/b.l @(0x12345678:32,@+er2.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@er2-.w\\),er1" \
+	"mova/b.l @(0x12345678:32,@er2-.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),er2\\).w\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abc:16,er2).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),er2\\).w\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abcdef0:32,er2).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),r2l.b\\).w\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abc:16,r2l.b).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),r2.w\\).w\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abc:16,r2.w).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),er2.l\\).w\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abc:16,er2.l).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),r2l.b\\).w\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abcdef0:32,r2l.b).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),r2.w\\).w\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abcdef0:32,r2.w).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),er2.l\\).w\\),er1" \
+	"mova/b.l @(0x12345678:32,@(0x9abcdef0:32,er2.l).w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@0x9abc(:16|).w\\),er1" \
+	"mova/b.l @(0x12345678:32,@0x9abc:16.w),er1"
+gdb_test "x" "mova/b.l\t@\\(0x12345678(:32|),@0x9abcdef0(:32|).w\\),er1" \
+	"mova/b.l @(0x12345678:32,@0x9abcdef0:32.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@er2.b\\),er1" \
+	"mova/w.l @(0x12345678:32,@er2.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x1(:2|),er2\\).b\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x1:2,er2).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@er2\\+.b\\),er1" \
+	"mova/w.l @(0x12345678:32,@er2+.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@-er2.b\\),er1" \
+	"mova/w.l @(0x12345678:32,@-er2.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\+er2.b\\),er1" \
+	"mova/w.l @(0x12345678:32,@+er2.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@er2-.b\\),er1" \
+	"mova/w.l @(0x12345678:32,@er2-.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),er2\\).b\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abc:16,er2).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),er2\\).b\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abcdef0:32,er2).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),r2l.b\\).b\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abc:16,r2l.b).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),r2.w\\).b\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abc:16,r2.w).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),er2.l\\).b\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abc:16,er2.l).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),r2l.b\\).b\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abcdef0:32,r2l.b).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),r2.w\\).b\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abcdef0:32,r2.w).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),er2.l\\).b\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abcdef0:32,er2.l).b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@0x9abc(:16|).b\\),er1" \
+	"mova/w.l @(0x12345678:32,@0x9abc:16.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@0x9abcdef0(:32|).b\\),er1" \
+	"mova/w.l @(0x12345678:32,@0x9abcdef0:32.b),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@er2.w\\),er1" \
+	"mova/w.l @(0x12345678:32,@er2.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x2(:2|),er2\\).w\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x2:2,er2).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@er2\\+.w\\),er1" \
+	"mova/w.l @(0x12345678:32,@er2+.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@-er2.w\\),er1" \
+	"mova/w.l @(0x12345678:32,@-er2.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\+er2.w\\),er1" \
+	"mova/w.l @(0x12345678:32,@+er2.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@er2-.w\\),er1" \
+	"mova/w.l @(0x12345678:32,@er2-.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),er2\\).w\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abc:16,er2).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),er2\\).w\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abcdef0:32,er2).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),r2l.b\\).w\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abc:16,r2l.b).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),r2.w\\).w\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abc:16,r2.w).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),er2.l\\).w\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abc:16,er2.l).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),r2l.b\\).w\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abcdef0:32,r2l.b).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),r2.w\\).w\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abcdef0:32,r2.w).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),er2.l\\).w\\),er1" \
+	"mova/w.l @(0x12345678:32,@(0x9abcdef0:32,er2.l).w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@0x9abc(:16|).w\\),er1" \
+	"mova/w.l @(0x12345678:32,@0x9abc:16.w),er1"
+gdb_test "x" "mova/w.l\t@\\(0x12345678(:32|),@0x9abcdef0(:32|).w\\),er1" \
+	"mova/w.l @(0x12345678:32,@0x9abcdef0:32.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@er2.b\\),er1" \
+	"mova/l.l @(0x12345678:32,@er2.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x1(:2|),er2\\).b\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x1:2,er2).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@er2\\+.b\\),er1" \
+	"mova/l.l @(0x12345678:32,@er2+.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@-er2.b\\),er1" \
+	"mova/l.l @(0x12345678:32,@-er2.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\+er2.b\\),er1" \
+	"mova/l.l @(0x12345678:32,@+er2.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@er2-.b\\),er1" \
+	"mova/l.l @(0x12345678:32,@er2-.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),er2\\).b\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abc:16,er2).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),er2\\).b\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abcdef0:32,er2).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),r2l.b\\).b\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abc:16,r2l.b).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),r2.w\\).b\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abc:16,r2.w).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),er2.l\\).b\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abc:16,er2.l).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),r2l.b\\).b\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abcdef0:32,r2l.b).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),r2.w\\).b\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abcdef0:32,r2.w).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),er2.l\\).b\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abcdef0:32,er2.l).b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@0x9abc(:16|).b\\),er1" \
+	"mova/l.l @(0x12345678:32,@0x9abc:16.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@0x9abcdef0(:32|).b\\),er1" \
+	"mova/l.l @(0x12345678:32,@0x9abcdef0:32.b),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@er2.w\\),er1" \
+	"mova/l.l @(0x12345678:32,@er2.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x2(:2|),er2\\).w\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x2:2,er2).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@er2\\+.w\\),er1" \
+	"mova/l.l @(0x12345678:32,@er2+.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@-er2.w\\),er1" \
+	"mova/l.l @(0x12345678:32,@-er2.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\+er2.w\\),er1" \
+	"mova/l.l @(0x12345678:32,@+er2.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@er2-.w\\),er1" \
+	"mova/l.l @(0x12345678:32,@er2-.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),er2\\).w\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abc:16,er2).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),er2\\).w\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abcdef0:32,er2).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),r2l.b\\).w\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abc:16,r2l.b).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),r2.w\\).w\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abc:16,r2.w).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abc(:16|),er2.l\\).w\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abc:16,er2.l).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),r2l.b\\).w\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abcdef0:32,r2l.b).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),r2.w\\).w\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abcdef0:32,r2.w).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@\\(0x9abcdef0(:32|),er2.l\\).w\\),er1" \
+	"mova/l.l @(0x12345678:32,@(0x9abcdef0:32,er2.l).w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@0x9abc(:16|).w\\),er1" \
+	"mova/l.l @(0x12345678:32,@0x9abc:16.w),er1"
+gdb_test "x" "mova/l.l\t@\\(0x12345678(:32|),@0x9abcdef0(:32|).w\\),er1" \
+	"mova/l.l @(0x12345678:32,@0x9abcdef0:32.w),er1"

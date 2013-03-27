@@ -1,0 +1,20 @@
+# fr30 testcase for xchb @$Rj,Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global xchb
+xchb:
+	; Test xchb @$Rj,Ri
+	mvi_h_mem	0xdeadbeef,sp
+	mvi_h_gr	0xbeefdead,r0
+	set_cc	0x0f			; Condition codes are irrelevent
+	xchb		@sp,r0
+	test_cc	1 1 1 1
+	test_h_gr	0xde,r0
+	test_h_mem	0xadadbeef,sp
+
+	pass

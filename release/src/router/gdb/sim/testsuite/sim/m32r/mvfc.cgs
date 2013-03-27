@@ -1,0 +1,23 @@
+# m32r testcase for mvfc $dr,$scr
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global mvfc
+mvfc:
+	mvi_h_condbit 0
+	mvi_h_gr r4, 1
+
+	mvfc r4, cr1
+
+	test_h_gr r4, 0
+
+	mvi_h_condbit 1
+
+	mvfc r4, cr1
+
+	test_h_gr r4, 1
+
+	pass

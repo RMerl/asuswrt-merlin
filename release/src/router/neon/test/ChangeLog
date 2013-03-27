@@ -1,0 +1,1548 @@
+Wed Aug 25 21:05:28 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* cookies.c: Removed.
+
+	* Makefile.in: Updated.
+
+Wed Aug 25 19:47:28 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (do_connect, begin): Simplify do_connect use.
+
+Wed Aug 25 18:28:19 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* xml.c (matches, fail_parse): Test for UTF-8 BOM handling.
+
+Mon Jul  5 18:41:07 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* basic.c (content_type): Test for correct default charset for
+	text/xml content-type by RFC3280.
+
+Mon Jul  5 10:59:17 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	Add XFAIL regression tests for trio of ne_compress.c bugs:
+	
+	* compress.c (reader): Validate that a size=0 call comes only
+	after the expected response data, and use struct string.
+	(do_fetch): Pass a struct string to reader and adapt for failure
+	logic.
+	(auth_cb, retry_compress_helper, retry_compress,
+	retry_notcompress): New tests.
+
+Sun Jul  4 21:55:00 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* utils.c (serve_sstring_slowly, serve_sstring): Moved from
+	sockets.c, renamed from serve_string_slowly, serve_sstring.
+
+	* sockets.c: All callers updated.
+
+Sun May  2 21:16:45 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c (regress_dates): Add regression tests.
+
+Wed Apr 14 10:45:43 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* props.c (regress, patch_regress): Add regression tests for
+	CAN-2004-0179 issues.
+
+Thu Apr  8 13:57:04 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* largefile.c (read_large_response): Go faster: turn off debugging
+	during request dispatch.
+
+Wed Apr  7 13:39:37 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* auth.c (basic): Add some multi-scheme challenges.
+
+Wed Apr  7 13:14:16 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (s_progress): Use NE_FMT_OFF_T for printing off_t's
+	throughout.
+
+Sun Feb 22 23:38:05 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (expect_100_once, serve_100_once): Adjust for new
+	100-continue interface.
+	(expect_100_nobody): New test.
+
+Sun Feb 22 20:39:15 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* cookies.c (parsing): Use ne_cookie_empty_cache.
+
+Sun Feb 22 17:28:41 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* props.c (pfind_simple): Test for whitespace handling.
+
+Sun Feb 22 16:31:52 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* auth.c (basic): Test handling of Basic challenge in presence of
+	multiple challenges.
+
+Sun Feb 15 12:34:13 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* makekeys.sh, openssl.conf: Create new utf8subj.cert,
+	bmpsubj.cert, t61subj.cert certificates.
+
+	* ssl.c (dname_readable): Test that ne_ssl_readable_dname always
+	gives back UTF-8.
+
+Sat Feb 14 21:59:17 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* xml.c (fail_parse): Add tests for invalid NCNames in namespace
+	prefix declaration and as element names.
+
+Sun Jan 25 15:21:56 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* largefile.c (serve_large_response, read_large_response): New
+	test.
+
+Sat Jan 24 18:10:14 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in: Fix test suite for 'make' implementatinos which
+	don't handle single-suffix inference rules.
+
+Sat Jan  3 14:10:14 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* largefile.c (send_high_offset): Renamed from send_large_file.
+
+Sat Jan  3 13:57:16 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (BASIC_TESTS): Add cookies.
+
+Thu Jan  1 17:42:30 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c (support): Check for NE_FEATURE_LFS.
+
+	* largefile.c: New file.
+
+	* Makefile.in: Add lfs-check, largefile, largefile.lo targets.
+
+Sat Nov 15 08:04:22 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (idna_hostname, dup_header, serve_check_host): New
+	test.
+
+Fri Nov 14 14:06:57 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c (support): Test for NE_FEATURE_IDNA.
+
+Fri Nov 14 11:26:29 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* acl.c: Remove NEON_NODAV condition.
+
+	* stubs.c: Use new NE_HAVE_* conditions.
+
+	* util-tests.c (supports): Test new ne_has_support interface.
+
+Thu Nov 13 20:33:44 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (no_body_205): New test.
+
+Tue Nov 11 20:36:43 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Adjust for ne_xml_valid->ne_xml_failure API change.
+	
+	* xml.c (chardata, startelm_abort, endelm_abort, parse_match):
+	Check for propagation of negative failure codes.
+	(fail_parse): Check for positive failure code.
+	(attributes): Use ne_xml_failure.
+
+Sat Oct 25 00:11:29 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (fail_truncated_eof): Remove test.
+
+Tue Oct 21 20:29:46 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (fail_tunnel, proxy_tunnel): Fix non-C89 code,
+	Radu Greab.
+
+Thu Oct  9 19:42:13 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (ssl_closure): Fix occassional spurious errors.
+	
+Tue Oct  7 20:23:35 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (ssl_server): Handle several requests if required.
+	(tunnel_header): New function.
+	(serve_tunnel): Fail with a 500 if the request included
+	an Authenticate header; take an ssl_server_args pointer
+	as userdata.
+	(fail_tunnel, proxy_tunnel): Adjust accordingly.
+	(apt_post_send): Adjust for 401 check.
+	(auth_tunnel_creds): New test.	
+
+Wed Oct  1 00:30:25 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (simple_sslv2): Regression test.
+	(ssl_server): Create SSL_CTX locally; optionally create an
+	SSLv2-only server.
+	(init_ssl): Do not create the SSL_CTX.
+
+Wed Sep 17 19:57:22 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c: Refactor around single SSL server function.
+	(ssl_server): Combination of do_ssl_response and old serve_*
+	functions.  All callers updated.
+
+Sun Sep 14 12:27:22 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (write_reset, read_reset): Skip if no RESET was
+	returned.
+
+Sun Sep 14 11:01:08 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in: Fix building the 'resolve' tool.
+
+Sat Sep  6 12:29:53 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* makekeys.sh, openssl.conf: Generate altname5.cert with an IPv4
+	address in the subjectAltName attribute.
+
+	* ssl.c (ipaddr_altname): Test for IPv4 address in subjectAltName.
+
+Sat Sep  6 12:28:55 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in: Clear the SUFFIXES list; use standard make syntax;
+	fix build of 'basic' on some platforms.
+
+Sat Aug 30 18:59:24 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in: Rewrite to use libtool to build object files and
+	libtest.
+
+	* run.sh: Don't set LD_LIBRARY_PATH.
+
+Wed Jul 23 23:25:39 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* compress.c (do_fetch): Check for response truncation
+	for success case.
+	(fail_corrupt1, fail_corrupt2): New tests.
+
+Sat Jun 21 12:59:49 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (versions): Fix and enable test.
+
+Wed Jun 18 20:09:59 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (is_alive): Adapt for new socket API.
+
+	* socket.c (do_connect, addr_connect): Likewise.
+
+Tue May 20 20:14:03 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (cert_fingerprint): Fix for VPATH builds.
+
+Sat May 10 17:13:05 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* xml.c (matches): Add regression test for prefix matching bug
+	fixed in 0.18.0.
+
+Sat Apr 26 19:22:29 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (any_te_header): New function.
+
+Wed Apr 23 18:24:19 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* stubs.c (stub_ssl): Test ne_ssl_cert_import, ne_ssl_cert_export,
+	ne_ssl_cert_write stubs.
+
+Wed Apr 23 14:05:38 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (read_write): New function.
+
+Wed Apr 23 00:34:44 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (cache_cert, verify_cache): New functions.
+
+Wed Apr 23 00:14:14 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (any_ssl_request): Free the cert after passing it to
+	ne_ssl_trust_cert.
+
+Tue Apr 22 23:24:33 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* string-tests.c (unbase64): Improve coverage.
+
+Tue Apr 22 20:25:15 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (import_export, flatten_pem, cert_compare): New functions.
+
+Tue Apr 22 18:32:43 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* string-tests.c (b64_check, unbase64): New functions.
+	(base64): Use b64_check.
+
+Tue Apr 22 15:54:04 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* string-tests.c (base64): Test decoding binary data which
+	contains bytes with the high bit set.
+
+Tue Apr 22 14:18:03 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* string-tests.c (base64): Moved here...
+
+	* util-tests.c (base64): ...from here.
+
+Tue Apr 22 13:17:48 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (just_serve_string, fail_not_ssl): New functions.
+
+Tue Apr 22 13:09:13 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* stubs.c (stub_ssl): Test ne_ssl_cert_validity stub.
+
+Tue Apr 22 11:35:10 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (versions): Run test as XFAIL.
+
+Tue Apr 22 11:33:43 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c (version_string): New function.
+
+Tue Apr 22 09:23:27 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (check_validity, cert_validity): New functions.
+
+Mon Apr 21 19:45:39 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c (digest_md5): Replace ne_md5_buffer.
+	(md5): Use digest_md5; test 500-byte string.
+
+Mon Apr 21 18:38:02 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* xml.c (fail_parse): Call ne_xml_parse with length=0 finish
+	parse.
+
+Mon Apr 21 17:18:45 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* props.c: Add tests for ne_207.h interface and ne_simple_propfind
+	from ne_props.h.
+
+	* xml.c: Add tests for new XML interface.
+
+	* Makefile.in: Run props tests before lock since the latter is
+	implemented using the former.
+
+Mon Apr  7 22:27:18 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* stubs.c (stub_ssl): Test for ne_ssl_cert_identity stub.
+
+Mon Apr  7 22:17:56 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (cert_fingerprint): Renamed from fingerprint.
+	(check_identity, cert_identities): New functions.	
+
+Sun Apr  6 20:18:30 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* stubs.c (stub_ssl): Adjust for new clicert API.
+
+Sun Apr  6 20:12:48 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (dname_compare): Renamed from comparisons.
+	(dname_readable): New function.
+
+	* makekeys.sh: Create justmail.cert.
+
+Sun Apr  6 20:00:18 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (keypw_prompt): Removed function.
+	(init, load_client_cert, client_cert_provided): Adapt for new
+	clicert API.
+	(ccert_unencrypted): New function.
+
+Fri Apr  4 22:34:12 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (fail_request_with_error): Refactored from
+	fail_request; check for a particular error string.
+	(fail_request): Use fail_request_with_error.
+	(invalid_response_gives_error): New function.
+	(fail_long_header): Use it.
+	(fail_corrupt_chunks): New function.
+
+Sat Mar 29 14:39:20 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (comparisons): New function.
+
+	* stubs.c (stub_ssl): Test ne_ssl_dname_cmp.
+
+Sat Mar 29 13:58:37 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* makekeys.sh: Generate noclient.p12.
+
+	* ssl.c (load_client_cert): Test ne_ssl_clicert_name.
+
+	* stubs.c (stub_ssl): Check for ne_ssl_clicert_name stub.
+
+Sat Mar 29 13:31:35 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (load_client_cert): Test ne_ssl_clicert_owner.
+
+Fri Mar 28 22:13:55 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (fingerprint): New function.
+
+	* stubs.c (stub_ssl): Check for ne_ssl_cert_digest stub.
+
+Wed Mar 26 22:52:15 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (fail_missing_CN): New function.
+
+	* makekeys.sh: Generate missingcn.cert.
+
+	* openssl.conf: Allow commonName to be omitted from CSR.
+
+Wed Mar 26 22:41:48 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (load_server_certs): Renamed from load_ca; test loading
+	non-existent file.
+
+Wed Mar 26 20:38:08 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* stubs.c (stub_ssl): Updated for new SSL interface.
+
+Tue Mar 25 20:32:07 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Update tests for changes to SSL interface:
+	
+	* socket.c (init_ssl): Use ne_ssl_context_create,
+	ne_ssl_cert_read, ne_ssl_ctx_trustcert.
+	(begin): Use ne_sock_connect_ssl.
+
+	* ssl.c (serve_ssl_chained, trust_default_ca, load_client_cert,
+	check_dname, check_cert_dnames, check_cert, check_chain,
+	parse_chain, cc_check_dnames, cc_provided_dnames): New functions.
+	(serve_ccert): Always trust SERVER_CERT; optionally call
+	SSL_CTX_set_client_CA_list.
+	(any_ssl_request, load_ca, fail_truncated_eof): Use
+	ne_ssl_cert_read and ne_ssl_trust_cert.
+	(keypw_prompt): Fail if userdata is NULL.
+	(fail_load_ccerts, load_pkcs12_ccert, load_pem_ccert, check_DNs):
+	Removed functions.
+	(parse_cert): Use check_cert.
+	(client_cert_provided, client_cert_pkcs12): Rewritten for new API.
+
+	* makekeys.sh: Generate calist.pem, unclient.p12.
+
+Wed Mar 12 22:36:27 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* redirect.c (simple): Fold in tests for 30[237] redirects for
+	better coverage.
+	(no_redirect): Another test for _location returning NULL.
+
+Wed Mar 12 22:29:45 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* redirect.c (process_redir): Factored out from check_redir.
+	(no_redirect): New function.
+
+Sun Mar  9 17:46:37 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* lock.c (fail_discover): New function.
+
+Sat Mar  1 10:53:58 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri-tests.c (authinfo): Removed.
+	(escapes): Test nothing-to-escape and invalid URI cases.
+	(compares): Gain 100% branch coverage in ne_path_compare.
+	(default_port): Test unknown scheme case.
+	(parse): Test authinfo here, and some edge cases.
+	(unparse): Fill in port if default.	
+
+Sat Mar  1 09:20:42 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (multi_init): New function.
+
+Sat Mar  1 08:04:09 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* string-tests.c (cleaner): New function.
+
+Wed Feb 26 22:13:14 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (fail_eof_chunk, fail_eof_badclen): New tests.
+
+Wed Feb 26 21:54:39 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c (support): New function.
+	(bad_sl, accept_sl): More status-lines.
+
+Tue Feb 25 21:06:18 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (do_ssl_response): Fail if response contains
+	"Proxy-Authorization" header.
+	(apt_post_send, apt_creds, auth_proxy_tunnel): New functions.
+
+Thu Nov 28 21:25:01 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (te_over_clength2): New test.
+
+Sun Nov 17 18:59:04 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (addr_make_v4, addr_make_v6, addr_compare): New
+	functions.
+
+Fri Oct 11 00:49:01 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* props.c (regress): Moved from regress.c:propfind_segv; add
+	regression test for ne_props.c segfault fixed in rev 1.83.
+
+	* regress.c: Removed.
+	
+Tue Oct  8 20:06:55 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* xml.c (matches): Add tests that entities in attribute values are
+	dereferenced by the XML parser.
+
+Fri Oct  4 17:10:19 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (no_body_bad_clength, no_body_empty_clength): New
+	tests.
+	(expect_no_body): Use better paths in the requests.
+
+Tue Sep 24 21:27:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (fail_long_header, versions, hook_create_req): New
+	functions.	
+
+Tue Sep 17 21:08:17 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* openssl.conf (neonca): Make 'countryName' optional in CA policy.
+	(reqDN.CNfirst): New section.
+
+	* makekeys.sh: Generate 'cnfirst.cert', which has commonName as
+	first attribute in subject DN.
+
+	* ssl.c (commonName_first): New function.
+
+Tue Sep 10 21:11:18 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (fail_double_lookup): New function.
+
+Sun Aug 25 23:16:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (do_ssl_response): Add 'unclean' argument.
+	(all callers changed).
+	(serve_response_unclean, empty_truncated_eof, fail_truncated_eof):
+	New functions.
+
+Sun Aug 25 19:16:00 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (resolve_numeric): Test ne_addr_print too.
+
+Sun Aug 25 13:39:37 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* resolve.c: New file.
+
+Sun Aug 25 11:25:12 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (is_alive): Update for new ne_addr_* interface.
+
+Sun Aug 25 08:31:16 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (serve_truncate, ssl_truncate): New functions.
+
+Sun Aug 25 08:28:17 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (do_connect): New function; use new
+	ne_sock_connect/ne_addr interface.
+	(begin) [SOCKET_SSL, !SOCKET_SSL]: Use do_connect.
+	(resolve_numeric): Adjust for new ne_addr interface.
+	(resolve_ipv6): Disable test.
+
+Sat Aug 24 08:50:06 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (fail_statusline): New function.
+
+Fri Aug 23 22:52:38 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (init): FAILHARD if initialization fails.
+
+Wed Aug 21 13:29:58 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri-tests.c (null_uri): Removed test.
+	(parse): More tests including IPv6 address tests; use ONCMP macro.
+	(failparse): New function.
+	(unparse): Add URI with IPv6 address.	
+
+Wed Aug 21 13:28:37 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (resolve_ipv6): New function.
+
+Mon Aug 19 16:59:46 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (resolve): Adapt for new ne_addr_resolve interface.
+	(resolve_numeric): New test.
+
+	* request.c (is_alive): Use new ne_addr_resolve interface.
+
+Mon Aug 19 16:57:53 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (begin): Fix handling of connect failure.
+	(TO_BEGIN): Handle errors from to_begin properly.
+
+Sun Aug 18 23:37:34 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* string-tests.c (str_errors): Check return value and behaviour
+	when error string is truncated, an
+
+Sun Aug 18 23:31:51 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c (str_errors): Moved to...
+
+	* string-tests.c (str_errors): here.
+
+Sun Aug 18 23:11:28 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* string-tests.c (strnzcpy): New function.
+
+Sun Aug 18 08:18:24 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (caseless_match): New function.
+
+	* makekeys.sh: Create caseless.cert.
+
+Sun Aug 18 08:12:32 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (notdns_altname): New function.
+
+	* makekeys.sh: Create altname4.cert.
+
+	* openssl.conf (altExt4): New section.
+
+Sun Aug 18 07:42:30 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (multi_commonName): New function.
+	
+	* openssl.conf (req): Use distinguished_name section as
+	specificied by $REQDN.
+	(reqDN.doubleCN): New section.
+
+	* makekeys.sh: Set $REQDN; create twocn.cert.
+
+Sun Aug 18 00:47:19 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (accept_signed_cert): New function, factored out from
+	simple.
+	(simple): Use accept_signed_cert.
+	(subject_altname, two_subject_altname, two_subject_altname2):
+	New function.
+
+	* openssl.conf: Add extension sections altExt, altExt2, altExt3.
+
+	* makekeys.sh: Generate altname.cert, altname2.cert,
+	altname3.cert.
+
+Sat Aug 17 18:41:42 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* makekeys.sh (csr_fields): New function; generate output for
+	`openssl req'.
+
+Sat Aug 17 18:27:36 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* makekeys.sh: Add CA and REQ variables to simplify OpenSSL
+	invocation.  Pass -config to req rather than relying on installed
+	default configuration.
+
+	* openssl.conf: Add `req' and `reqDN' sections to allow use with
+	`openssl req' command.  Add CA basic constraint extention to
+	certificates used.
+
+Sat Aug 10 10:42:57 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* makekeys.sh: Use openssl binary as ${OPENSSL}.
+
+	* Makefile.in: Pick up OPENSSL from configure, and pass it through
+	to makekeys.sh.
+
+Sat Aug 10 10:18:15 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (begin): Don't use run-time initialization.
+
+	* request.c (s_progress): Fix warnings on FreeBSD.
+
+Mon Aug  5 21:08:24 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (ccert_provider, client_cert_provided): New functions.
+	(fail_load_ccerts): Enable function.
+
+Sun Aug  4 22:32:43 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (serve_abort, retry_after_abort): New functions.
+
+Sun Aug  4 13:28:47 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (continued_header): New function.
+
+Sun Aug  4 12:54:52 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c [SOCKET_SSL] (ssl_closure): New function; use instead
+	of read_reset, write_reset for SOCKET_SSL build.
+
+Sun Aug  4 12:27:34 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Build socket.c twice, once for testing over SSL connections:
+
+	* Makefile.in (socket-ssl.o, socket-ssl): New targets.
+	(SSL_TESTS): Include socket-ssl target.
+
+	* socket.c [SOCKET_SSL] (init_ssl, wrap_serve): New functions.
+	[SOCKET_SSL] (begin): Alternate implementation.
+
+Sat Aug  3 22:20:59 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* session.c (privates): New function.
+
+Sat Aug  3 22:20:14 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* auth.c (fail_auth_cb, tunnel_regress): New function.
+
+Sat Aug  3 22:12:48 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* auth.c (forget_regress): New function.
+
+Sun Jul 28 12:24:02 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* lock.c (lock_timeout, submit_test, lock_shared): Use ne_concat,
+	not CONCAT? macros.
+
+	* ssl.c (init, fail_expired, fail_notvalid): Likewise.
+
+Thu Jul 25 00:04:47 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* string-tests.c (buf_concat, buf_concat2, buf_concat3): Renamed
+	from concat, concat1, concat3).
+	(concat): New function.
+
+Sun Jul 14 11:42:03 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c (versioning): New function.
+
+Thu Jul 11 17:24:29 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (no_headers): New function.
+
+Wed Jul 10 22:58:01 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* utils.c (any_2xx_request_body): New function.
+
+Wed Jul 10 22:44:12 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (ptimeout_eof, ptimeout_eof2, close_not_retried,
+	serve_close2): New functions.
+	(abort_respbody): Rejoin child earlier for reliable results.
+
+Sun Jul  7 12:17:11 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (expect_eof): Better error reporting.
+	(good_close): Split from finish().
+	(finish): Use good_close.
+	(expect_write_closed, write_reset, read_reset): Add tests that
+	an ECONNRESET is treated as a SOCK_CLOSED failure.
+
+Sun Jul  7 08:38:12 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* utils.c (serve_response): Use discard_body().
+
+Sun Jul  7 08:28:56 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (serve_expect, full_write, small_writes, large_writes,
+	echo_server, echo_expect, echo_lines): New functions.
+
+Sat Jul  6 13:11:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (serve_eof, fail_early_eof, fail_eof_continued,
+	fail_eof_headers): New functions.
+
+Sat Jul  6 08:58:17 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (serve_100_once, expect_100_once): New functions.
+
+Fri Jul  5 21:43:58 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* auth.c (username): Use the correct spelling of Aladdin.
+	(auth_hdr): Simplify debug messages.
+	(auth_serve): Fail if no Authorization header is given.
+	(basic): Check for response status.
+
+Fri Jul  5 21:41:02 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* utils.c (any_2xx_request): New function.
+
+Sun Jun 30 17:10:59 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (fail_noserver): Factor out from host_not_found.
+	(fail_lookup): Equivalent to old host_not_found.
+	(fail_connect, abort_respbody): New function.
+
+Sun Jun 30 14:32:32 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (fail_chunksize): New function.
+
+Sun Jun 30 10:39:17 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (test_persist): Factor out from persist; take
+	response and response body as arguments.
+	(persist_http11): New function, equivalent to old persist.
+	(persist_chunked, persist_http10): New functions.
+
+Sun Jun 30 10:25:07 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* utils.c (serve_response): Factor out from single_serve_string,
+	many_serve_string.
+	(single_serve_string, many_serve_string): Use serve_response.
+
+Sun Jun 30 09:13:55 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (expect_response, persist, persist_timeout,
+	multi_header): Rely on the fact that the test framework
+	will reap the server.
+	(expect_no_body, no_body_304, no_body_204, no_body_HEAD,
+	no_body_chunks): New functions.
+
+Tue Jun 25 23:05:42 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (trailing_header): New function.
+
+Sun Jun 23 23:00:03 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (no_verify): Fix sixth argument to any_ssl_request.
+
+Sun Jun 23 15:21:06 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (grind): New target.
+
+	* run.sh: Respect $HARNESS.
+
+Sun Jun 23 15:20:38 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* props.c: New file.
+
+Sun Jun 23 09:37:10 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* makekeys.sh: Ignore failure from `hostname -[sdf]' commands, as
+	appropriate tests are skipped on failure.
+
+Sun Jun 23 08:33:50 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (host_not_found): Use any_request(); simplify.
+	(proxy_no_resolve): New function.
+
+Sun Jun 16 11:40:19 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (do_ssl_response): Succeed if connection is closed
+	by client after negotiation.
+	(serve_tunnel, fail_tunnel, proxy_tunnel): New functions.
+
+Mon Jun 10 21:18:03 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* redirect.c (check_redir): Await server child before returning.
+
+Sun Jun  9 13:05:25 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (DECL): Don't use run-time initialization.
+	(single_read, single_peek, small_reads, read_and_peek, line_closure,
+	larger_read, line_toolong): Use DECL, as last declaration.
+
+Sun Jun  9 13:03:36 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* compress.c (reader, do_fetch): Check that inflated data is of
+	expected length.
+
+Sun Jun  9 11:40:54 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* redirect.c (struct redir_args): Add 'path' field.
+	(any_request): Use path in Request-URI.
+	(simple, redir_303, non_absolute): Fill in path.
+	(relative_1, relative_2): New functions.
+
+Tue Jun  4 16:56:08 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri-tests.c (parents): Improve ne_path_parent tests.
+
+Mon Jun  3 18:22:31 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* cookies.c: New file.
+
+Sun Jun  2 10:06:42 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* basic.c (dav_capabilities): New function.
+
+Sat Jun  1 10:39:04 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (to_begin, to_end, peek_timeout, read_timeout,
+	readline_timeout, fullread_timeout): New functions.
+
+Sat Jun  1 10:38:13 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (read_timeout): Use sleepy_server.
+	(hung_server): Removed.
+
+Sat Jun  1 10:32:45 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* utils.c (sleepy_server): New function.
+
+Thu May 30 20:00:40 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (finish): New function, factored out from common code.
+	(small_reads, read_and_peek, larger_read): Use it.
+	(line_simple, line_closure, line_empty, line_toolong, line_mingle,
+	line_chunked): New functions.
+
+Sun May 26 14:54:52 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (fill_uri, match_hostport, hostports): Moved functions
+	to session.c.
+
+	* session.c: New file.
+
+Fri May 24 08:14:21 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (match_hostport, hostports): New functions.
+
+Tue May 21 21:29:25 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* redirect.c: New file.
+
+Sun May 19 18:25:48 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* auth.c, lock.c, regress.c, socket.c, ssl.c, utils.c, utils.h:
+	Update for socket API change; s/sock_/ne_sock_/,
+	s/SOCK_/NE_SOCK_/.
+
+Wed May  8 19:41:24 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (do_ssl_response): Take response body as parameter; all
+	callers changed.
+	(serve_eof, simple_eof): New functions.	
+
+Wed May  8 17:17:27 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c: New file.
+
+	* sock-tests.c: Removed file.
+
+	* Makefile.in: Updated accordingly.
+
+Wed May  8 11:53:35 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (host_not_found): New function.
+
+Wed May  1 21:41:02 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri-tests.c (parse): New function.
+	(simple, simple_ssl): Adjust for ne_uri_parse port default.
+
+Tue Apr 23 21:39:09 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (read_timeout): Better diagnostic for test failure
+	cases.
+
+Sun Apr 14 12:00:19 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* basic.c (content_type): Updated to reflect default charset
+	ISO-8859-1 for text/ media types.
+
+Sun Apr  7 17:35:21 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* run.sh: Set MALLOC_CHECK_ so glibc's heap corruption detection
+	is enabled.
+
+Sun Apr  7 17:30:37 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* compress.c (do_fetch): Reset 'failed' flag to zero each time.
+
+Wed Apr  3 20:16:43 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (NO_BODY): Renamed from NOBODY (all callers changed).
+	(empty_header, ignore_header_ws, ignore_header_ws2): New tests.
+	(ignore_header_ws3): Renamed from ignore_header_spaces.	
+
+Tue Apr  2 21:09:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (expect_header_value): New function.
+	 (ignore_header_case, ignore_header_spaces,
+	ignore_header_tabs): New tests.
+
+Mon Mar 25 21:51:24 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* lock.c (multi_lock_response, lock_shared): New function.
+	(lock_compare): Factored out from discover_results.
+	(discover, lock_timeout, submit_test): Adjust for lock API
+	changes.
+
+Mon Mar 25 21:36:55 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (fail_ssl_request): Check failure bits against
+	NE_SSL_FAILMASK.
+
+Sun Mar 10 22:07:48 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* stubs.c (stub_decompress, sd_reader): New function.
+
+Sun Mar 10 21:39:29 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* lock.c (activelock): New function, factored out from
+	lock_response.
+	(lock_response): Use activelock; adjust argument types.
+	(make_lock): Adjusted for lock_response arg changes.
+	(discard_response, serve_discovery, discover_result, discover):
+	New functions.
+
+Wed Mar  6 22:22:04 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* lock.c (submit_test): Handle failures gracefully.
+
+Wed Mar  6 21:23:27 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* lock.c (submit_test): Update to expect an absoluteURI in If:
+	headers.
+
+Wed Mar  6 21:17:37 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri-tests.c (unparse): New function.
+
+Tue Mar  5 22:59:37 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri-tests.c (cmp): Checks for case-insensitive comparison, and
+	empty path, "/" equivalence.
+
+Mon Mar  4 01:07:03 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (blank_response): Add test for potential segfault
+	in strip_eol (would fail if run under Electric Fence).
+
+Sun Mar  3 20:50:01 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* lock.c (make_lock, store_single, store_several, got_if_header,
+	serve_verify_if, do_request, submit_test, if_simple,
+	if_under_infinite, if_infinite_over, if_child, if_covered_child):
+	New tests.
+
+	(lock_timeout): Adjusted for API changes.
+
+Sun Mar  3 15:29:05 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri-tests.c (cmp_differ, cmp): New functions.
+
+Sun Mar  3 11:08:36 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (fill_uri): New function.
+
+Sun Feb 17 21:31:21 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (fqdn_match): Removed test.
+
+Sun Feb 17 20:32:16 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* makekeys.sh: Create keypair for client cert.
+
+	* ssl.c (do_ssl_response, any_ssl_request, all callers thereof):
+	Better error handling.
+	(serve_ccert, load_pem_ccert, keypw_prompt, load_pkcs12_ccert,
+	fail_load_ccerts, client_cert_pem, client_cert_pkcs12): New
+	functions.
+
+Sun Feb 17 11:54:19 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* basic.c (do_range): Factored out from
+	get_range/fail_range_length.
+	(get_range, fail_range_length): Use do_range.
+	(fail_range_units, fail_range_notrange, fail_range_unsatify): New
+	tests.
+
+Sun Feb 17 11:36:00 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* basic.c (get_range, fail_range_length): New functions.
+
+Sat Feb 16 23:29:40 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* xml.c: New file.
+
+	* Makefile.in (DAV_TESTS): Add xml tests.
+
+Sat Feb 16 15:26:27 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* compress.c (do_fetch): Rename from fetch(); add 'expect_fail'
+	paramater.  (fetch): Re-implement using do_fetch.
+	(fail_trailing, fail_bad_csum, fail_truncate): New functions.
+
+	* Makefile.in (trailing.gz, truncated.gz, badcsum.gz): New helper
+	files.
+
+Thu Feb 14 19:09:42 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (everywhere): Simplify use of expect_response.
+
+Thu Feb 14 19:05:48 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (ignore_bad_headers): New function.
+
+Mon Feb 11 22:06:40 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* makekeys.sh: If the hostname command is clever enough to give
+	FQDN, hostname, domainname, then create wildcard.cert; cert with a
+	wildcard commonName.
+
+	* ssl.c (wildcard_match): New function
+
+Mon Feb 11 21:55:52 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (any_ssl_request): Take session pointer, don't
+	initialize here.  (DEFSESS): New macro.
+	(everywhere): Use DEFSESS rather than passing pointer-to-
+	session pointer.	
+
+Mon Feb 11 20:44:44 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (fqdn_match): Test for FQDN matching against non-qualified
+	FQDN.
+	(makekeys.sh): Create server cert with FQDN.
+
+Sun Feb 10 12:36:55 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (chunk_oversize): New function.
+
+Sat Feb  9 21:12:47 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (reason_phrase): New function.
+
+Sat Feb  9 16:50:58 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (read_timeout, hung_server): New functions.
+
+Thu Feb  7 22:58:31 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (cache_verify, no_verify, count_vfy): New functions.
+
+Thu Feb  7 19:39:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (any_ssl_request): Take server function as argument: all
+	callers changed.
+	(fail_ssl_request): Renamed from failreq; uses any_ssl_request.
+
+Wed Feb  6 20:43:32 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (load_ca): New function.
+
+Wed Feb  6 20:36:15 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (any_ssl_request): Make ca_cert and verify_fn arguments
+	optional.
+	(trustall): Removed function.
+	(simple): Use the CA cert; no need for a verify function.
+	(parse_cert): Don't give a CA cert, force use of verify function.
+	(failreq): Bug fix, don't trust server cert as CA.
+	(fail_wrongCN, fail_notvalid, fail_expired): Pass server cert
+	as CA cert server cert is self-signed.
+
+Tue Feb  5 20:33:42 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (fail_untrusted_ca, fail_self_signed): New tests.
+	(fail_serve): New function.
+	(failreq, any_ssl_request): Take ca cert argument.
+	(check_DNs, trustall, get_failures): Adjust for new verify
+	callback interface.
+
+Sat Feb  2 14:18:11 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c (do_ssl_response): Factored out from serve_ssl.
+	(serve_ssl): Use do_ssl_response.
+	(serve_scache, session_cache): New functions.
+
+Thu Jan 31 21:09:58 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (ca-stamp): New target.
+
+	* makekeys.sh: New helper script.
+
+	* ssl.c (parse_cert, fail_wrongCN, fail_expired, fail_notvalid):
+	New tests.
+	(any_ssl_request, trustall, check_DNs, failreq): New auxiliaries.
+
+Thu Jan 31 20:42:38 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* wrongcn.pem, notvalid.pem, expired.pem, server.key: New files.
+
+	* Makefile.in: Remove targets to generate certs.
+
+Wed Jan 30 21:15:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (wrongcn.pem): New target.
+
+Wed Jan 30 19:58:18 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* string-tests.c: Updated for ne_buffer API change.
+
+Sat Jan 26 11:23:34 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in: Pick up appropriate TESTS, HELPERS from configure.
+	(ssltests*, davtests*): Remove crud.
+
+	* compress.c: Presume zlib support present if built.
+
+Sun Jan 20 23:29:37 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ssl.c: New file.
+
+	* Makefile.in (ssltests-no, ssltests-yes, server.pem, server.key):
+	New targets.
+	(check): Conditionally run SSL tests.
+
+Sun Jan 20 13:20:56 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (davtests-no, davtests-yes): Separate test programs
+	which require DAV support; only run if DAV is enabled.
+
+	* Makefile.in (test): Pass SRCDIR env var through to run.sh.
+
+	* run.sh: Pass SRCDIR as argv[1] to test programs.
+
+	* compress.c (init): New function.  Use 'newsfn' global for
+	filename of NEWS file.
+
+Sun Jan 20 13:06:40 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in: Fixes for VPATH build
+
+Mon Jan 14 01:58:39 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* basic.c (content_type): Add harsher charset handling tests.
+
+Sun Jan 13 14:01:57 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* lock.c (lock_timeout): Use make_session. 
+
+	* acl.c (test_acl): Use make_session.
+
+	* auth.c (basic, retries): Use make_session.
+
+Sun Jan 13 14:01:13 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* utils.c (make_session): New function.
+
+Sun Jan 13 14:00:34 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* basic.c (content_type): Rename ctype to ct; check if charset is
+	unexpectedly set.
+
+Sun Jan 13 13:58:07 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* basic.c: New file.
+
+	* Makefile.in: Add `basic' test suite.
+
+Mon Jan  7 22:05:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in: Don't pass CFLAGS to CC when linking.
+
+Mon Jan  7 21:46:03 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* lock.c: New file.
+
+	* Makefile.in: Add 'lock' to TESTS, build lock.
+
+Mon Jan  7 21:17:21 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* skeleton.c: Add skeleton test suite.
+
+Tue Jan  1 21:47:09 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in: Use CPPFLAGS correctly.
+
+Sun Dec  9 14:02:50 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* string-tests.c (ONCMP): New macro.  (everywhere): Use it.
+	(grow): Add ne_buffer_grow test.
+
+Sun Dec  9 13:12:27 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* string-tests.c (concat2, concat3): New ne_buffer_concat tests.
+
+Sat Dec  1 18:35:29 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* utils.c (any_request): Don't set the error context.
+
+Sat Dec  1 12:21:48 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* auth.c (retry_failure, retry_fail_cb, retry_fail_serve): New
+	functions.
+
+Tue Nov 27 21:24:22 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (s_progress, provide_progress, send_progress): New
+	functions.
+
+Sun Nov 18 19:11:23 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* auth.c (send_response): New function.  (auth_serve): Simplify
+	using send_response.  (retry_serve, retry_cb, retries): New
+	functions.
+
+Sat Nov 17 22:32:29 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* auth.c (auth_serve, basic): Simplify, use a persistent
+	connection and any_request() to work with --disable-dav builds.
+
+Sat Nov 17 22:30:43 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* utils.c (any_request): New function.
+
+Sun Oct 28 19:38:05 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in: Use explicit link rules.
+
+Fri Oct 26 20:08:33 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (persist_timeout): Test behaviour when connection
+	closes after between 1 and 10 requests.
+
+Fri Oct 26 20:04:27 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* utils.c (many_serve_string): New function.
+
+Sun Oct  7 17:48:53 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* utils.c: New file.
+
+	* request.c (single_serve_string): Moved to utils.c.
+
+	* Makefile.in: Link utils.o into all libtest.a. Move libtest.a
+	into this directory.
+
+Sun Oct  7 15:01:47 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (persist, persist_timeout, serve_twice, is_alive): New
+	functions.  (closed_connection): Avoid race condition.
+
+Sat Oct  6 14:33:42 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (prepare_request, finish_request): Renamed from
+	make_request, destroy_request.  (skip_interim_1xx, skip_many_1xx,
+	skip_1xx_hdrs): New functions.
+
+Wed Oct  3 00:03:33 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (fail_request): Optionally include a request body, and
+	optionally presume the server runs "forever".  (all callers
+	changed).  (serve_close, closed_connection): New function.
+
+Sat Sep 29 14:08:16 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* compress.c (fetch): Update for new decompression API.
+
+Sat Sep 29 11:21:56 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* compress.c: New file.
+
+	* Makefile.in: Build compress test, and some its helpers.  Add
+	-lneon to LIBS, and pick up NEON_CFLAGS.
+
+Thu Sep 27 20:31:51 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* utils.h: New file.
+
+	* request.c: Moved ONREQ() into utils.h
+
+Mon Aug 27 00:34:56 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* regress.c: New file.
+
+Mon Aug 27 00:33:13 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (discard_request): Moved into common/child.c.
+	(make_request, destroy_request): Convenience functions.
+	(serve_non_http, not_http): New test.
+
+Sun Jun 24 22:15:46 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* test.[ch], child.[ch]: Moved into 'common' subdir.
+
+	* Makefile.in: Updated likewise.
+
+Tue Jun 19 22:00:06 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c (parse_dates): Test date parsers.
+
+Sun Jun 10 17:36:11 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (infinite_headers, unbounded_headers): New test.
+
+Sun Jun 10 16:38:53 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c [HAVE_PIPE]: Use a pipe between child and parent to know
+	when the child is ready to accept connections.  Avoids boring
+	sleep()ing.
+
+Fri Jun  8 21:19:35 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (segv, main): Remove SEGV handler in favour of useful
+	core dumps.
+
+Mon Jun  4 01:15:52 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (server_socket): Set socket family correctly.
+
+Thu May 31 08:58:41 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c (md5_alignment): New test for MD5 alignment issue
+	on Sparc.
+
+Thu May 31 00:40:43 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (minisleep): Just sleep for a second anyway.
+
+Thu May 31 00:19:16 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (server_socket): Casts for bind and setsockopt arguments.
+
+Thu May 31 00:02:21 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (send_bodies): Test callback-provided request bodies.
+
+Wed May 30 22:37:08 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (child_segv): New function.  (in_child): Install
+	different SEGV handler.  (segv): Sleep so the re-raised SEGV
+	signal gets handled and we dump core.
+
+Wed May 30 19:24:32 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (send_bodies): New test for sending request bodies.
+
+Wed May 16 21:19:49 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (expect_response): Renamed, fold together
+	single_request and do_get_request.  (all callers changed)
+
+Wed May 16 20:59:19 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (construct_get, run_request): New functions.
+	(fold_headers, fold_many_headers, multi_header): New tests.
+
+Sat May 12 17:37:36 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* server.c: Renamed from http-tests.c.
+
+Sat May 12 17:35:05 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (minisleep): New function.  (spawn_server, reap_server):
+	New functions.  (server_child): Call in_child.
+
+Sat May 12 17:33:57 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (main): Open two log files for debugging messages.
+	(in_child): Switch to debug using child log.
+
+Sat May 12 11:18:18 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (main): Call sock_init.  (segv): Re-raise SEGV signal
+	after printing message.
+
+Mon May  7 10:38:50 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (chunk_syntax_1, chunk_syntax_2, chunk_syntax_3,
+	chunk_syntax_4, chunk_syntax_5): Split down from chunk_syntax.
+
+Mon May  7 10:37:38 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c (base64): Update for ne_base64() changes.  Add
+	tests for binary data.
+
+Sun May  6 23:55:36 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.h (ON): Use global buffer 'on_err_buf'.  Make 'name'
+	variable public.
+
+Sun May  6 23:53:06 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (single_serve_string): General version of
+	single_serve_*.  (single_request): Pass in expected response body.
+	(single_get_*): Use new single_request/single_serve_string.
+	(chunk_syntax): Add some tests for chunk syntax.
+
+Sun May  6 22:29:36 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c, child.h: New files, split down from request.c.
+
+Sun May  6 21:53:28 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (spawn_server): Sleep for a while to let the server
+	get going.  (do_request): Use passed parameters when creating
+	request.
+
+Sun May  6 21:34:27 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c (spawn_server): Use callback to handle the server side
+	of connection.  (single_request): New function.  (single_get_eof,
+	single_get_clength, single_get_chunked): New functions.
+	(reap_server): New function.
+
+Sun May  6 20:02:32 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* request.c: New file.
+
+Wed May  2 12:08:53 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* string-tests.c (token1, token2, nulls, empty, quoted, badquotes,
+	shave, combo): New tests for ne_token and ne_shave.
+
+Wed May  2 12:04:52 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* string-tests.c: Updated for sbuffer -> ne_buffer changes.
+
+Wed May  2 01:08:45 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (check): Alias for test goal.
+
+Wed May  2 01:08:36 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (segv): Disable SEGV handler once handling it.
+
+Sun Apr 29 14:57:59 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri-tests.c (slash): Check behaviour of passing zero-length URI.
+
+Sun Apr 29 13:43:59 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (clean): New target.  (libtest.a): Depend on libneon
+	to force rebuilds when necessary.  (all): Build but don't test.
+
+Sun Apr 29 13:41:13 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c: Add status line with leading garbage.
+
+Sun Apr 29 13:39:53 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c (status_lines): Add some tests for invalid status
+	lines too.
+
+Sun Apr 29 13:38:31 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (main): Use basename(argv[0]) as suite name.  Fail if no
+	tests are in the functions vector.
+
+Sun Apr 29 11:06:45 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (segv): New function.  (main): Add SIGSEGV handler.
+
+Fri Apr 27 00:00:12 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c (base64): New test.
+
+Thu Apr 26 22:39:44 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri-tests.c (just_hostname, just_path, null_uri): New tests.
+
+Thu Apr 26 22:03:58 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* util-tests.c (md5): Test of MD5 functions.
+
+Mon Apr 23 23:08:02 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http-tests.c (simple_head): Add HEAD test.
+
+Mon Apr 23 22:49:52 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http-tests.c (simple_get): Check for EOF after reading response
+	body of HTTP/1.0 GET request.
+
+	(null_resource): New function, test for 404 on null resource.
+
+

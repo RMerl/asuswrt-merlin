@@ -1,0 +1,40 @@
+# sh testcase for shar $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global shar
+shar:
+	mov #0, r0
+	or #192, r0
+	shar r0
+	bt wrong
+	shar r0
+	bt wrong
+	shar r0
+	bt wrong
+	shar r0
+	bt wrong
+	shar r0
+	bt wrong
+	shar r0
+	bt wrong
+	shar r0
+	bf wrong
+	shar r0
+	bf wrong
+	shar r0
+	bt wrong
+	shar r0
+	bt wrong
+	assert r0, #0
+
+okay:
+	pass
+wrong:
+	fail
+	

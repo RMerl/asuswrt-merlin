@@ -1,0 +1,22 @@
+# frv testcase for movgs $GRj,$FRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global movgs
+movgs:
+	set_gr_limmed	0xdead,0xbeef,gr8
+	and_spr_immed	0,lcr
+	movgs gr8,lcr
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_spr_limmed	0xdead,0xbeef,lcr
+
+	; try alternate names for lcr
+	and_spr_immed	0,273
+	movgs gr8,spr[273]			; lcr is spr number 273
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_spr_limmed	0xdead,0xbeef,spr[273]
+
+	pass

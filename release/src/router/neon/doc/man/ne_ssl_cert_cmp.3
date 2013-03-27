@@ -1,0 +1,59 @@
+'\" t
+.\"     Title: ne_ssl_cert_cmp
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_SSL_CERT_CMP" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_ssl_cert_cmp, ne_ssl_cert_free \- functions to operate on certificate objects
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_header\&.h>
+.fi
+.ft
+.HP \w'int\ ne_ssl_cert_cmp('u
+.BI "int ne_ssl_cert_cmp(const\ ne_ssl_certificate\ *" "c1" ", const\ ne_ssl_certificate\ *" "c2" ");"
+.HP \w'void\ ne_ssl_cert_free('u
+.BI "void ne_ssl_cert_free(ne_ssl_certificate\ *" "cert" ");"
+.SH "DESCRIPTION"
+.PP
+The
+\fBne_ssl_cert_cmp\fR
+function can be used to compare two certificate objects; it returns zero if they refer to the same certificate, and non\-zero otherwise\&.
+.PP
+The
+\fBne_ssl_cert_free\fR
+function can be used to destroy a certificate object when it is no longer needed\&.
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

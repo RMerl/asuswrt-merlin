@@ -1,0 +1,627 @@
+# Copyright 1992, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
+# 2004, 2006, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was written by Fred Fish. (fnf@cygnus.com)
+# And rewritten by Michael Chastain <mec.gnu@mindspring.com>.
+
+set nl "\[\r\n\]+"
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+if { [skip_cplus_tests] } { continue }
+
+load_lib "cp-support.exp"
+
+set testfile "classes"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     untested classes.exp
+     return -1
+}
+
+# Test ptype of class objects.
+
+proc test_ptype_class_objects {} {
+
+    # Simple type.
+
+    cp_test_ptype_class \
+	"ptype struct default_public_struct" "" "struct" "default_public_struct" \
+	{
+	    { field public "int a;" }
+	    { field public "int b;" }
+	}
+
+    # Another simple type.
+
+    cp_test_ptype_class \
+	"ptype struct explicit_public_struct" "" "struct" "explicit_public_struct" \
+	{
+	    { field public "int a;" }
+	    { field public "int b;" }
+	}
+
+    # Another simple type.
+
+    cp_test_ptype_class \
+	"ptype struct protected_struct" "" "struct" "protected_struct" \
+	{
+	    { field protected "int a;" }
+	    { field protected "int b;" }
+	}
+
+    # Another simple type.
+
+    cp_test_ptype_class \
+	"ptype struct private_struct" "" "struct" "private_struct" \
+	{
+	    { field private "int a;" }
+	    { field private "int b;" }
+	}
+
+    # A bigger type.
+
+    cp_test_ptype_class \
+	"ptype struct mixed_protection_struct" "" "struct" "mixed_protection_struct" \
+	{
+	    { field public    "int a;" }
+	    { field public    "int b;" }
+	    { field private   "int c;" }
+	    { field private   "int d;" }
+	    { field protected "int e;" }
+	    { field protected "int f;" }
+	    { field public    "int g;" }
+	    { field private   "int h;" }
+	    { field protected "int i;" }
+	}
+
+    # All that again with "class" instead of "struct".
+    # gdb does not care about the difference anyways.
+
+    cp_test_ptype_class \
+	"ptype class public_class" "" "class" "public_class" \
+	{
+	    { field public "int a;" }
+	    { field public "int b;" }
+	}
+
+    # Another simple type.
+
+    cp_test_ptype_class \
+	"ptype class protected_class" "" "class" "protected_class" \
+	{
+	    { field protected "int a;" }
+	    { field protected "int b;" }
+	}
+
+    # Another simple type.
+
+    cp_test_ptype_class \
+	"ptype class default_private_class" "" "class" "default_private_class" \
+	{
+	    { field private "int a;" }
+	    { field private "int b;" }
+	}
+
+    # Another simple type.
+
+    cp_test_ptype_class \
+	"ptype class explicit_private_class" "" "class" "explicit_private_class" \
+	{
+	    { field private "int a;" }
+	    { field private "int b;" }
+	}
+
+    # A bigger type.
+
+    cp_test_ptype_class \
+	"ptype class mixed_protection_class" "" "class" "mixed_protection_class" \
+	{
+
+	    { field public    "int a;" }
+	    { field public    "int b;" }
+	    { field private   "int c;" }
+	    { field private   "int d;" }
+	    { field protected "int e;" }
+	    { field protected "int f;" }
+	    { field public    "int g;" }
+	    { field private   "int h;" }
+	    { field protected "int i;" }
+	}
+
+    # Here are some classes with inheritance.
+
+    # Base class.
+
+    cp_test_ptype_class \
+	"ptype class A" "" "class" "A" \
+	{
+	    { field public "int a;" }
+	    { field public "int x;" }
+	}
+
+    # Derived class.
+
+    cp_test_ptype_class \
+	"ptype class B" "" "class" "B" \
+	{
+	    { base         "public A" }
+	    { field public "int b;" }
+	    { field public "int x;" }
+	}
+
+    # Derived class.
+
+    cp_test_ptype_class \
+	"ptype class C" "" "class" "C" \
+	{
+	    { base         "public A" }
+	    { field public "int c;" }
+	    { field public "int x;" }
+	}
+
+    # Derived class, multiple inheritance.
+
+    cp_test_ptype_class \
+	"ptype class D" "" "class" "D" \
+	{
+	    { base         "public B" }
+	    { base         "public C" }
+	    { field public "int d;" }
+	    { field public "int x;" }
+	}
+
+    # Derived class.
+
+    cp_test_ptype_class \
+	"ptype class E" "" "class" "E" \
+	{
+	    { base         "public D" }
+	    { field public "int e;" }
+	    { field public "int x;" }
+	}
+
+    # This is a break from inheritance tests.
+    #
+    # gcc 2.X with stabs (stabs or stabs+?) used to have a problem with
+    # static methods whose name is the same as their argument mangling.
+ 
+    cp_test_ptype_class \
+	"ptype class Static" "" "class" "Static" \
+	{
+	    { method public "static void ii(int, int);" }
+	}
+
+    # Here are some virtual inheritance tests.
+
+    # A virtual base class.
+
+    cp_test_ptype_class \
+	"ptype class vA" "" "class" "vA" \
+	{
+	    { field public "int va;" }
+	    { field public "int vx;" }
+	}
+
+    # A derived class with a virtual base.
+
+    cp_test_ptype_class \
+	"ptype class vB" "" "class" "vB" \
+	{
+	    { base         "public virtual vA" }
+	    { vbase        "vA" }
+	    { field public "int vb;" }
+	    { field public "int vx;" }
+	}
+
+    # Another derived class with a virtual base.
+
+    cp_test_ptype_class \
+	"ptype class vC" "" "class" "vC" \
+	{
+	    { base         "public virtual vA" }
+	    { vbase        "vA" }
+	    { field public "int vc;" }
+	    { field public "int vx;" }
+	}
+
+    # A classic diamond class.
+
+    cp_test_ptype_class \
+	"ptype class vD" "" "class" "vD" \
+	{
+	    { base         "public virtual vB" }
+	    { base         "public virtual vC" }
+	    { vbase        "vC" }
+	    { vbase        "vB" }
+	    { field public "int vd;" }
+	    { field public "int vx;" }
+	}
+
+    # A class derived from a diamond class.
+
+    cp_test_ptype_class \
+	"ptype class vE" "" "class" "vE" \
+	{
+	    { base         "public virtual vD" }
+	    { vbase        "vD" }
+	    { field public "int ve;" }
+	    { field public "int vx;" }
+	}
+
+    # Another inheritance series.
+
+    # A base class.
+
+    cp_test_ptype_class \
+	"ptype class Base1" "" "class" "Base1" \
+	{
+	    { field  public "int x;" }
+	    { method public "Base1(int);" }
+	}
+
+    # Another base class.
+
+    cp_test_ptype_class \
+	"ptype class Foo" "" "class" "Foo" \
+	{
+	    { field public "int x;" }
+	    { field public "int y;" }
+	    { field public "static int st;" }
+	    { method public "Foo(int, int);" }
+	    { method public "int operator!();" }
+	    { method public "operator int();" }
+	    { method public "int times(int);" }
+	} \
+	"" \
+	{
+	    {
+		"operator int();"
+		"int operator int();"
+		{ setup_kfail "gdb/1497" "*-*-*" }
+	    }
+	    {
+		"operator int();"
+		"int operator int(void);"
+		{ setup_kfail "gdb/1497" "*-*-*" }
+	    }
+	}
+
+    # A multiple inheritance derived class.
+
+    cp_test_ptype_class \
+	"ptype class Bar" "" "class" "Bar" \
+	{
+	    { base          "public Base1" }
+	    { base          "public Foo" }
+	    { field  public "int z;" }
+	    { method public "Bar(int, int, int);" }
+	}
+
+}
+
+# Test simple access to class members.
+
+proc test_non_inherited_member_access {} {
+    
+    # Print non-inherited members of g_A.
+    gdb_test "print g_A.a" ".* = 1"
+    gdb_test "print g_A.x" ".* = 2"
+
+    # Print non-inherited members of g_B.
+    gdb_test "print g_B.b" ".* = 5"
+    gdb_test "print g_B.x" ".* = 6"
+
+    # Print non-inherited members of g_C.
+    gdb_test "print g_C.c" ".* = 9"
+    gdb_test "print g_C.x" ".* = 10"
+
+    # Print non-inherited members of g_D.
+    gdb_test "print g_D.d" ".* = 19"
+    gdb_test "print g_D.x" ".* = 20"
+
+    # Print non-inherited members of g_E.
+    gdb_test "print g_E.e" ".* = 31"
+    gdb_test "print g_E.x" ".* = 32"
+}
+
+# Test access to members of other classes.
+# gdb should refuse to print them.
+# (I feel old -- I remember when this was legal in C -- chastain).
+
+proc test_wrong_class_members {} {
+    gdb_test "print g_A.b" "There is no member( or method|) named b."
+    gdb_test "print g_B.c" "There is no member( or method|) named c."
+    gdb_test "print g_B.d" "There is no member( or method|) named d."
+    gdb_test "print g_C.b" "There is no member( or method|) named b."
+    gdb_test "print g_C.d" "There is no member( or method|) named d."
+    gdb_test "print g_D.e" "There is no member( or method|) named e."
+}
+
+# Test access to names that are not members of any class.
+
+proc test_nonexistent_members {} {
+    gdb_test "print g_A.y" "There is no member( or method|) named y."
+    gdb_test "print g_B.z" "There is no member( or method|) named z."
+    gdb_test "print g_C.q" "There is no member( or method|) named q."
+    gdb_test "print g_D.p" "There is no member( or method|) named p."
+}
+
+# Call a method that expects a base class parameter with base, inherited,
+# and unrelated class arguments.
+
+proc test_method_param_class {} {
+    gdb_test "call class_param.Aptr_a (&g_A)" ".* = 1"
+    gdb_test "call class_param.Aptr_x (&g_A)" ".* = 2"
+    gdb_test "call class_param.Aptr_a (&g_B)" ".* = 3"
+    gdb_test "call class_param.Aptr_x (&g_B)" ".* = 4"
+    gdb_test "call class_param.Aref_a (g_A)" ".* = 1"
+    gdb_test "call class_param.Aref_x (g_A)" ".* = 2"
+    gdb_test "call class_param.Aref_a (g_B)" ".* = 3"
+    gdb_test "call class_param.Aref_x (g_B)" ".* = 4"
+    gdb_test "call class_param.Aval_a (g_A)" ".* = 1"
+    gdb_test "call class_param.Aval_x (g_A)" ".* = 2"
+    gdb_test "call class_param.Aval_a (g_B)" ".* = 3"
+    gdb_test "call class_param.Aval_x (g_B)" ".* = 4"
+
+    gdb_test "call class_param.Aptr_a (&foo)" "Cannot resolve .*" "unrelated class *param"
+    gdb_test "call class_param.Aref_a (foo)" "Cannot resolve .*" "unrelated class &param"
+    gdb_test "call class_param.Aval_a (foo)" "Cannot resolve .*" "unrelated class param"
+}
+
+# Examine a class with an enum field.
+
+proc test_enums {} {
+    global gdb_prompt
+    global nl
+
+    # print the object
+
+    gdb_test "print obj_with_enum" \
+	"\\$\[0-9\]+ = \{priv_enum = red, x = 0\}" \
+	"print obj_with_enum (1)"
+
+    # advance one line
+
+    gdb_test "next" ""
+
+    # print the object again
+
+    gdb_test "print obj_with_enum" \
+	"\\$\[0-9\]+ = \{priv_enum = green, x = 0\}" \
+	"print obj_with_enum (2)"
+
+    # print the enum member
+
+    gdb_test "print obj_with_enum.priv_enum" "\\$\[0-9\]+ = green"
+
+    # ptype on the enum member
+
+    gdb_test_multiple "ptype obj_with_enum.priv_enum" "ptype obj_with_enum.priv_enum" {
+        -re "type = enum ClassWithEnum::PrivEnum \{ ?red, green, blue, yellow = 42 ?\}$nl$gdb_prompt $" {
+	    pass "ptype obj_with_enum.priv_enum"
+        }
+	-re "type = enum PrivEnum \{ ?red, green, blue, yellow = 42 ?\}$nl$gdb_prompt $" {
+	    # gcc 2.95.3 -gdwarf-2
+	    # gcc 3.3.2 -gdwarf-2
+	    pass "ptype obj_with_enum.priv_enum"
+	}
+	-re "type = enum \{ ?red, green, blue, yellow = 42 ?\}$nl$gdb_prompt $" {
+	    # This case case is a little dubious, but it's not clear what
+	    # ought to be required of a ptype on a private enum...
+	    # -sts 19990324
+	    #
+	    # It bugs me that this happens with gcc 3.
+	    # -- chastain 2003-12-30
+	    #
+	    # gcc 2.95.3 -gstabs+
+	    # gcc 3.3.2 -gstabs+
+	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
+	    pass "ptype obj_with_enum.priv_enum"
+	}
+    }
+
+    # ptype on the object
+
+    # NOTE: carlton/2003-02-28: One could certainly argue that plain
+    # "PrivEnum"
+    # is acceptable: PrivEnum is a member of ClassWithEnum, so
+    # there's no need to explicitly qualify its name with
+    # "ClassWithEnum::".  The truth, though, is that GDB is simply
+    # forgetting that PrivEnum is a member of ClassWithEnum, so we do
+    # that output for a bad reason instead of a good reason.  Under
+    # stabs, we probably can't get this right; under DWARF-2, we can.
+
+    cp_test_ptype_class \
+	"ptype obj_with_enum" "" "class" "ClassWithEnum" \
+	{
+	    { field public "ClassWithEnum::PrivEnum priv_enum;" }
+	    { field public "int x;" }
+	} \
+	"" \
+	{
+	    {
+		"ClassWithEnum::PrivEnum priv_enum;"
+		"PrivEnum priv_enum;"
+		{ setup_kfail "gdb/57" "*-*-*" }
+	    }
+	}
+
+    # I'll do this test two different ways, because of a parser bug.
+    # See PR gdb/1588.
+
+    gdb_test_multiple "print (ClassWithEnum::PrivEnum) 42" "print (ClassWithEnum::PrivEnum) 42" {
+	-re "\\$\[0-9\]+ = yellow$nl$gdb_prompt $" {
+	    pass "print (ClassWithEnum::PrivEnum) 42"
+	}
+	-re "A (parse|syntax) error in expression, near `42'.$nl$gdb_prompt $" {
+	    # "parse error" is bison 1.35.
+	    # "syntax error" is bison 1.875.
+	    kfail "gdb/1588" "print (ClassWithEnum::PrivEnum) 42"
+	}
+    }
+
+    gdb_test_multiple "print ('ClassWithEnum::PrivEnum') 42" "print ('ClassWithEnum::PrivEnum') 42" {
+	-re "\\$\[0-9\]+ = yellow$nl$gdb_prompt $" {
+	    # gcc 3.3.2 -gstabs+
+	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
+	    pass "print ('ClassWithEnum::PrivEnum') 42"
+	}
+	-re "No symbol \"ClassWithEnum::PrivEnum\" in current context.$nl$gdb_prompt $" {
+	    # gcc 2.95.3 -gdwarf-2
+	    # gcc 3.3.2 -gdwarf-2
+	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
+	    # gcc 2.95.3 -gstabs+
+	    kfail "gdb/57" "print ('ClassWithEnum::PrivEnum') 42"
+	}
+    }
+}
+
+# Pointers to class members
+
+proc test_pointers_to_class_members {} {
+    gdb_test "print Bar::z" "Cannot reference non-static field \"z\""
+    gdb_test "print &Foo::x" "\\$\[0-9\]+ = &Foo::x"
+    gdb_test "print (int)&Foo::x" "\\$\[0-9\]+ = 0"
+    gdb_test "print (int)&Bar::y == 2*sizeof(int)" "\\$\[0-9\]+ = true"
+
+    gdb_test "ptype Bar::z" "type = int"
+    gdb_test "ptype &Bar::z" "type = int Bar::\\*"
+
+    # TODO: this is a bogus test.  It's looking at a variable that
+    # has not even been declared yet, so it's accessing random junk
+    # on the stack and comparing that it's NOT equal to a specific
+    # value.  It's been like this since gdb 4.10 in 1993!
+    # -- chastain 2004-01-01
+    gdb_test "print (int)pmi == sizeof(int)" ".* = false"
+}
+
+# Test static members.
+
+proc test_static_members {} {
+    global hex
+
+    gdb_test "print Foo::st" "\\$\[0-9\]+ = 100"
+    gdb_test "set foo.st = 200" "" ""
+    gdb_test "print bar.st" "\\$\[0-9\]+ = 200"
+    gdb_test "print &foo.st" "\\$\[0-9\]+ = \\(int ?\\*\\) $hex"
+    gdb_test "print &Bar::st" "\\$\[0-9\]+ = \\(int ?\\*\\) $hex"
+    gdb_test "print *\$" "\\$\[0-9\]+ = 200"
+
+    gdb_test "set print static-members off" ""
+    gdb_test "print csi" \
+	"{x = 10, y = 20}" \
+	"print csi without static members"
+    gdb_test "print cnsi" \
+	"{x = 30, y = 40}" \
+	"print cnsi without static members"
+
+    gdb_test "set print static-members on" ""
+    gdb_test "print csi" \
+	"{x = 10, y = 20, static null = {x = 0, y = 0, static null = <same as static member of an already seen type>}}" \
+	"print csi with static members"
+    gdb_test "print cnsi" \
+	"{x = 30, y = 40, static null = {x = 0, y = 0, static null = <same as static member of an already seen type>, static yy = {z = 5, static xx = {x = 1, y = 2, static null = <same as static member of an already seen type>, static yy = <same as static member of an already seen type>}}}, static yy = <same as static member of an already seen type>}" \
+	"print cnsi with static members"
+}
+
+proc do_tests {} {
+    global prms_id
+    global bug_id
+    global subdir
+    global objdir
+    global srcdir
+    global binfile
+    global gdb_prompt
+    global nl
+
+    set prms_id 0
+    set bug_id 0
+
+    # Start with a fresh gdb.
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_load $binfile
+
+    gdb_test "set language c++" "" ""
+    gdb_test "set width 0" "" ""
+
+    if ![runto_main ] then {
+	perror "couldn't run to breakpoint"
+	return
+    }
+
+    gdb_breakpoint inheritance2
+    gdb_test "continue" ".*Breakpoint .* inheritance2.*" ""
+
+    test_ptype_class_objects
+    test_non_inherited_member_access
+    test_wrong_class_members
+    test_nonexistent_members
+    test_method_param_class
+
+    gdb_breakpoint enums2
+    gdb_test "continue" ".*Breakpoint .* enums2.*" "continue to enums2(\\(\\)|)"
+    gdb_test "finish" "" ""
+    test_enums
+
+    gdb_test "finish" "" ""
+    test_pointers_to_class_members
+    test_static_members
+
+    # Now some random tests that were just thrown in here.
+
+    gdb_breakpoint marker_reg1
+    gdb_test "continue" ".*Breakpoint .* marker_reg1.*" ""
+    gdb_test "finish" "Run till exit from.*" "finish from marker_reg1"
+
+    # This class is so small that an instance of it can fit in a register.
+    # When gdb tries to call a method, it gets embarrassed about taking
+    # the address of a register.
+    #
+    # TODO: I think that message should be a PASS, not an XFAIL.
+    # gdb prints an informative message and declines to do something
+    # impossible.
+    #
+    # The method call actually succeeds if the compiler allocates very
+    # small classes in memory instead of registers.  So this test does
+    # not tell us anything interesting if the call succeeds.
+    #
+    # -- chastain 2003-12-31
+    gdb_test_multiple "print v.method ()" "calling method for small class" {
+	-re "\\$\[0-9\]+ = 82$nl$gdb_prompt $" {
+	    # gcc 3.3.2 -gdwarf-2
+	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
+	    # gcc 3.3.2 -gstabs+
+	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
+	    pass "calling method for small class"
+	}
+	-re "Address requested for identifier \"v\" which is in register .*$nl$gdb_prompt $" {
+	    # gcc 2.95.3 -gdwarf-2
+	    # gcc 2.95.3 -gstabs+
+	    setup_xfail "*-*-*" 2972
+	    fail "calling method for small class"
+	}
+    }
+}
+
+do_tests

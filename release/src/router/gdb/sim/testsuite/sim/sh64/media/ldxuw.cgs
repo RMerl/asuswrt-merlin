@@ -1,0 +1,29 @@
+# sh testcase for ldx.uw $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+ldxuw1:
+	movi 20, r3
+	shlli r3, 8, r3
+	movi 0, r4
+	ldx.uw r3, r4, r0
+
+ldxuw2:
+	movi 20, r3
+	shlli r3, 8, r3
+	movi 2, r4
+	ldx.uw r3, r4, r0
+
+ldxuw3:
+	movi 20, r3
+	shlli r3, 8, r3
+	movi -2, r4
+	ldx.uw r3, r4, r0
+
+okay:
+	pass

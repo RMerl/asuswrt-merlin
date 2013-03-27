@@ -1,0 +1,33 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>ne_ssl_cert_identity</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="ref.html" title="neon API reference"><link rel="prev" href="refsockinit.html" title="ne_sock_init"><link rel="next" href="refsslcert2.html" title="ne_ssl_cert_cmp"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">ne_ssl_cert_identity</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="refsockinit.html">Prev</a> </td><th width="60%" align="center">neon API reference</th><td width="20%" align="right"> <a accesskey="n" href="refsslcert2.html">Next</a></td></tr></table><hr></div><div class="refentry" title="ne_ssl_cert_identity"><a name="refcert"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ne_ssl_cert_identity, ne_ssl_cert_signedby, ne_ssl_cert_issuer, ne_ssl_cert_subject — functions to access certificate properties</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="funcsynopsis"><pre class="funcsynopsisinfo">#include &lt;ne_ssl.h&gt;</pre><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">const char *<b class="fsfunc">ne_ssl_cert_identity</b>(</code></td><td>const ne_ssl_certificate *<var class="pdparam">cert</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">const ne_ssl_certificate *<b class="fsfunc">ne_ssl_cert_signedby</b>(</code></td><td>const ne_ssl_certificate *<var class="pdparam">cert</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">const ne_ssl_dname *<b class="fsfunc">ne_ssl_cert_subject</b>(</code></td><td>const ne_ssl_certificate *<var class="pdparam">cert</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">const ne_ssl_dname *<b class="fsfunc">ne_ssl_cert_issuer</b>(</code></td><td>const ne_ssl_certificate *<var class="pdparam">cert</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div></div></div><div class="refsect1" title="Description"><a name="id460591"></a><h2>Description</h2><p>The function <code class="function">ne_ssl_cert_identity</code>
+    retrieves the <span class="quote">“<span class="quote">identity</span>”</span> of a certificate; for an
+    SSL server certificate, this will be the hostname for which the
+    certificate was issued.  In PKI parlance, the identity is the
+    <span class="emphasis"><em>common name</em></span> attribute of the distinguished name of
+    the certificate subject.</p><p>The functions <code class="function">ne_ssl_cert_subject</code> and
+    <code class="function">ne_ssl_cert_issuer</code> can be used to access the
+    objects representing the distinguished name of the subject and of
+    the issuer of a certificate, respectively.</p><p>If a certificate object is part of a certificate chain, then
+    <code class="function">ne_ssl_cert_signedby</code> can be used to find the
+    certificate which signed a particular certificate. For a
+    self-signed certificate or a certificate for which the full chain
+    is not available, this function will return <code class="literal">NULL</code>.</p></div><div class="refsect1" title="Return value"><a name="id460645"></a><h2>Return value</h2><p><code class="function">ne_ssl_cert_issuer</code> and
+    <code class="function">ne_ssl_cert_subject</code> are guaranteed to never
+    return <code class="literal">NULL</code>. <code class="function">ne_ssl_cert_identity</code> may
+    return <code class="literal">NULL</code> if the certificate has no specific
+    <span class="quote">“<span class="quote">identity</span>”</span>. <code class="function">ne_ssl_cert_signedby</code>
+    may return <code class="literal">NULL</code> as covered above.</p></div><div class="refsect1" title="Examples"><a name="id460694"></a><h2>Examples</h2><p>The following function could be used to display information
+    about a given certificate:</p><pre class="programlisting">void dump_cert(const ne_ssl_certificate *cert) {
+  const char *id = ne_ssl_cert_identity(cert);
+  char *dn;
+
+  if (id) 
+    printf("Certificate was issued for '%s'.\n", id);
+
+  dn = ne_ssl_readable_dname(ne_ssl_cert_subject(cert));
+  printf("Subject: %s\n", dn);
+  free(dn);
+
+  dn = ne_ssl_readable_dname(ne_ssl_cert_issuer(cert));
+  printf("Issuer: %s\n", dn);
+  free(dn);
+}</pre></div><div class="refsect1" title="See also"><a name="id460712"></a><h2>See also</h2><p><a class="xref" href="refsslcert2.html#ne_ssl_cert_cmp">ne_ssl_cert_cmp</a>, <a class="xref" href="refssldname.html#ne_ssl_readable_dname">ne_ssl_readable_dname</a></p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="refsockinit.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ref.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="refsslcert2.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">ne_sock_init </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> ne_ssl_cert_cmp</td></tr></table></div></body></html>

@@ -1,0 +1,10 @@
+# sh testcase for putcfg $rm, $disp6, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+	putcfg r0, 0, r0
+	pass

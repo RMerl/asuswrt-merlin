@@ -1,0 +1,12 @@
+# arm testcase for cmn $rd,$rs
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global alu_cmn
+alu_cmn:
+	cmn r0,r0
+
+	pass

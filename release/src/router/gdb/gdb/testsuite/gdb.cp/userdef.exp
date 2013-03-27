@@ -1,0 +1,159 @@
+# Tests of overloaded operators resolution.
+# Copyright 1998, 1999, 2002, 2004, 2005, 2006, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# written by Elena Zannoni (ezannoni@cygnus.com)
+#
+# source file "userdef.cc"
+#
+
+if $tracelevel then {
+        strace $tracelevel
+}
+
+if { [skip_cplus_tests] } { continue }
+
+# On SPU this test fails because the executable exceeds local storage size.
+if { [istarget "spu*-*-*"] } {
+        return 0
+}
+
+set testfile "userdef"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     untested userdef.exp
+     return -1
+}
+
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+send_gdb "break marker1\n" ; gdb_expect -re ".*$gdb_prompt $"
+    send_gdb "cont\n"
+    gdb_expect {
+        -re "Break.* marker1(\\(\\)|) \\(\\) at .*:$decimal.*$gdb_prompt $" {
+            send_gdb "up\n"
+            gdb_expect {
+                -re ".*$gdb_prompt $" { pass "up from marker1" }
+                timeout { fail "up from marker1" }
+            }
+        }
+        -re "$gdb_prompt $" { fail "continue to marker1"  }
+        timeout { fail "(timeout) continue to marker1"  }
+    }
+
+
+gdb_test "print one + two" "\\\$\[0-9\]* = {x = 6, y = 8}"
+
+# If GDB fails to restore the selected frame properly after the
+# inferior function call above (see GDB PR 1155 for an explanation of
+# why this might happen), all the subsequent tests will fail.  We
+# should detect report that failure, but let the marker call finish so
+# that the rest of the tests can run undisturbed.
+gdb_test_multiple "frame" "re-selected 'main' frame after inferior call" {
+    -re "#0  marker1.*$gdb_prompt $" {
+        setup_kfail "gdb/1155" s390-*-linux-gnu
+        fail "re-selected 'main' frame after inferior call"
+        gdb_test "finish" ".*main.*at .*userdef.cc:.*// marker1-returns-here.*" \
+                "finish call to marker1"
+    }
+    -re "#1  ($hex in )?main.*$gdb_prompt $" {
+        pass "re-selected 'main' frame after inferior call"
+    }
+}
+        
+gdb_test "print one - two" "\\\$\[0-9\]* = {x = -2, y = -2}"
+
+gdb_test "print one * two" "\\\$\[0-9\]* = {x = 8, y = 15}"
+
+gdb_test "print one / two" "\\\$\[0-9\]* = {x = 0, y = 0}"
+
+gdb_test "print one % two" "\\\$\[0-9\]* = {x = 2, y = 3}"
+
+gdb_test "print one && two" "\\\$\[0-9\]* = 1\[\r\n\]"
+
+gdb_test "print one || two" "\\\$\[0-9\]* = 1\[\r\n\]"
+
+gdb_test "print one & two" "\\\$\[0-9\]* = {x = 0, y = 1}"
+
+gdb_test "print one | two" "\\\$\[0-9\]* = {x = 6, y = 7}"
+
+gdb_test "print one ^ two" "\\\$\[0-9\]* = {x = 6, y = 6}"
+
+gdb_test "print one < two" "\\\$\[0-9\]* = 1\[\r\n\]"
+
+gdb_test "print one <= two" "\\\$\[0-9\]* = 1\[\r\n\]"
+
+gdb_test "print one > two" "\\\$\[0-9\]* = 0\[\r\n\]"
+
+gdb_test "print one >= two" "\\\$\[0-9\]* = 0\[\r\n\]"
+
+gdb_test "print one == two" "\\\$\[0-9\]* = 0\[\r\n\]"
+
+gdb_test "print one != two" "\\\$\[0-9\]* = 1\[\r\n\]"
+
+# Can't really check the output of this one without knowing
+# target integer width.  Make sure we don't try to call
+# the iostreams operator instead, though.
+gdb_test "print one << 31" "\\\$\[0-9\]* = {x = -?\[0-9\]*, y = -?\[0-9\]*}"
+
+# Should be fine even on < 32-bit targets.
+gdb_test "print one >> 31" "\\\$\[0-9\]* = {x = 0, y = 0}"
+
+gdb_test "print !one" "\\\$\[0-9\]* = 0\[\r\n\]"
+
+# Assumes 2's complement.  So does everything...
+gdb_test "print +one" "\\\$\[0-9\]* = {x = 2, y = 3}"
+
+gdb_test "print ~one" "\\\$\[0-9\]* = {x = -3, y = -4}"
+
+gdb_test "print -one" "\\\$\[0-9\]* = {x = -2, y = -3}"
+
+gdb_test "print one++" "\\\$\[0-9\]* = {x = 2, y = 4}"
+
+gdb_test "print ++one" "\\\$\[0-9\]* = {x = 3, y = 4}"
+
+gdb_test "print one--" "\\\$\[0-9\]* = {x = 3, y = 3}"
+
+gdb_test "print --one" "\\\$\[0-9\]* = {x = 2, y = 3}"
+
+gdb_test "print one += 7" "\\\$\[0-9\]* = {x = 9, y = 10}"
+
+gdb_test "print two = one" "\\\$\[0-9\]* = {x = 9, y = 10}"
+
+# Check that GDB tolerates whitespace in operator names.
+gdb_test "break A2::'operator+'" ".*Breakpoint $decimal at.*"
+gdb_test "break A2::'operator +'" ".*Breakpoint $decimal at.*"
+
+# Check that GDB handles operator* correctly.
+gdb_test "print c" "\\\$\[0-9\]* = {m = {z = .*}}"
+gdb_test "print *c" "\\\$\[0-9\]* = \\(Member &\\) @$hex: {z = .*}"
+gdb_test "print &*c" "\\\$\[0-9\]* = \\(Member \\*\\) $hex"
+gdb_test "ptype &*c" "type = struct Member {\[\r\n \]+int z;\[\r\n\]+} &\\*"
+
+gdb_exit
+return 0

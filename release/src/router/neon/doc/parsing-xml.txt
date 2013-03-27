@@ -1,0 +1,170 @@
+
+Requirements for XML parsing in neon
+------------------------------------
+
+Before describing the interface given in neon for parsing XML, here
+are the requirements which it must satisfy:
+
+ 1. to support using either libxml or expat as the underlying parser
+ 2. to allow "independent" sections to handle parsing one XML
+    document
+ 3. to map element namespaces/names to an integer for easier
+    comparison.
+
+A description of requirement (2) is useful since it is the "hard"
+requirement, and adds most of the complexity of interface: WebDAV
+PROPFIND responses are made up of a large boilerplate XML
+
+ <multistatus><response><propstat><prop>...</prop></propstat> etc.
+
+neon should handle the parsing of these standard elements, and expose
+the meaning of the response using a convenient interface.  But, within
+the <prop> elements, there may also be fragments of XML: neon can
+never know how to parse these, since they are property- and hence
+application-specific. The simplest example of this is the
+DAV:resourcetype property.
+
+So there is requirement (2) that two "independent" sections of code
+can handle the parsing of one XML document.
+
+Callback-based XML parsing
+--------------------------
+
+There are two ways of parsing XML documents commonly used:
+
+ 1. Build an in-memory tree of the document
+ 2. Use callbacks
+
+Where practical, using callbacks is more efficient than building a
+tree, so this is what neon uses.  The standard interface for
+callback-based XML parsing is called SAX, so understanding the SAX
+interface is useful to understanding the XML parsing interface
+provided by neon.
+
+The SAX interface works by registering callbacks which are called *as
+the XML is parsed*. The most important callbacks are for 'start
+element' and 'end element'. For instance, if the XML document below is
+parsed by a SAX-like interface:
+
+  <hello>
+    <foobar></foobar>
+  </hello>
+
+Say we have registered callbacks "startelm" for 'start element' and
+"endelm" for 'end element'.  Simplified somewhat, the callbacks will
+be called in this order, with these arguments:
+
+ 1. startelm("hello")
+ 2. startelm("foobar")
+ 3. endelm("foobar")
+ 4. endelm("hello")
+
+See the expat 'xmlparse.h' header for a more complete definition of a
+SAX-like interface.
+
+The hip_xml interface
+---------------------
+
+The hip_xml interface satisfies requirement (2) by introducing the
+"handler" concept. A handler is made up of these things:
+
+ - a set of XML elements
+ - a callback to validate an element
+ - a callback which is called when an element is opened
+ - a callback which is called when an element is closed
+ - (optionally, a callback which is called for CDATA)
+
+Registering a handler essentially says:
+
+ "If you encounter any of this set of elements, I want these
+  callbacks to be called."
+
+Handlers are kept in a STACK inside hip_xml.  The first handler
+registered becomes the BASE of the stack, subsequent handlers are
+PUSHed on top.
+
+During XML parsing, the handler which is used for an XML element is
+recorded.  When a new element is started, the search for a handler for
+this element begins at the handler used for the parent element, and
+carries on up the stack.  For the root element, the search always
+starts at the BASE of the stack.
+
+A user's guide to hip_xml
+-------------------------
+
+The first thing to do when using hip_xml is to know what set of XML
+elements you are going to be parsing.  This can usually be done by
+looking at the DTD provided for the documents you are going to be
+parsing.  The DTD is also very useful in writing the 'validate'
+callback function, since it can tell you what parent/child pairs are
+valid, and which aren't.
+
+In this example, we'll parse XML documents which look like:
+
+<T:list-of-things xmlns:T="http://things.org/">
+  <T:a-thing>foo</T:a-thing>
+  <T:a-thing>bar</T:a-thing>
+</T:list-of-things>
+
+So, given the set of elements, declare the element id's and the
+element array:
+
+#define ELM_listofthings (HIP_ELM_UNUSED)
+#define ELM_a_thing (HIP_ELM_UNUSED + 1)
+
+const static struct my_elms[] = {
+   { "http://things.org/", "list-of-things", ELM_listofthings, 0 },
+   { "http://things.org/", "a-thing", ELM_a_thing, HIP_XML_CDATA },
+   { NULL }
+};
+
+This declares we know about two elements: list-of-things, and a-thing,
+and that the 'a-thing' element contains character data.
+
+The definition of the validation callback is very simple:
+
+static int validate(hip_xml_elmid parent, hip_xml_elmid child)
+{
+    /* Only allow 'list-of-things' as the root element. */
+    if (parent == HIP_ELM_root && child == ELM_listofthings ||
+        parent = ELM_listofthings && child == ELM_a_thing) {
+	return HIP_XML_VALID;
+    } else {
+        return HIP_XML_INVALID;
+    }
+}
+
+For this example, we can ignore the start-element callback, and just
+use the end-element callback:
+
+static int endelm(void *userdata, const struct hip_xml_elm *s,
+		  const char *cdata)
+{
+    printf("Got a thing: %s\n", cdata);
+    return 0;
+}
+
+This endelm callback just prints the cdata which was contained in the
+"a-thing" element.
+
+Now, on to parsing. A new parser object is created for parsing each
+XML document.  Creating a new parser object is as simple as:
+
+  hip_xml_parser *parser;
+
+  parser = hip_xml_create();
+
+Next register the handler, passing NULL as the start-element callback,
+and also as userdata, which we don't use here.
+
+  hip_xml_push_handler(parser, my_elms, 
+		       validate, NULL, endelm,
+		       NULL);
+
+Finally, call hip_xml_parse, passing the chunks of XML document to the
+hip_xml as you get them. The output should be:
+
+  Got a thing: foo
+  Got a thing: bar
+
+for the XML document.

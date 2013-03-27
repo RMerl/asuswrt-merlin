@@ -1,0 +1,569 @@
+
+# Copyright 1997, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Jeff Law. (law@cygnus.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+if ![istarget "mn10300*-*-*"] {
+    verbose "Tests ignored for all but mn10300 based targets."
+    return
+}
+
+global exec_output
+set prms_id 0
+set bug_id 0
+
+set testfile "mn10300"
+set srcfile ${srcdir}/${subdir}/${testfile}.s
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcfile}" "${binfile}" executable ""] != "" } {
+     untested mn10300.exp
+     return -1
+}
+
+proc add_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/14i add_tests\n"
+    gdb_expect {
+	-re "
+.*add	d1,d2.*
+.*add	d2,a3.*
+.*add	a3,a2.*
+.*add	a2,d1.*
+.*add	16,d1.*
+.*add	256,d2.*
+.*add	131071,d3.*
+.*add	16,a1.*
+.*add	256,a2.*
+.*add	131071,a3.*
+.*add	16,sp.*
+.*add	256,sp.*
+.*add	131071,sp.*
+.*addc	d1,d2.*
+.*$gdb_prompt $" { pass "add tests" }
+	-re "$gdb_prompt $" { fail "add tests" }
+	timeout { fail "(timeout) add tests" }
+    }
+}
+
+proc bcc_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/15i bCC_tests\n"
+    gdb_expect {
+	-re "
+.*beq	0x\[0-9a-f]+ <bCC_tests>.*
+.*bne	0x\[0-9a-f]+ <bCC_tests>.*
+.*bgt	0x\[0-9a-f]+ <bCC_tests>.*
+.*bge	0x\[0-9a-f]+ <bCC_tests>.*
+.*ble	0x\[0-9a-f]+ <bCC_tests>.*
+.*blt	0x\[0-9a-f]+ <bCC_tests>.*
+.*bhi	0x\[0-9a-f]+ <bCC_tests>.*
+.*bcc	0x\[0-9a-f]+ <bCC_tests>.*
+.*bls	0x\[0-9a-f]+ <bCC_tests>.*
+.*bcs	0x\[0-9a-f]+ <bCC_tests>.*
+.*bvc	0x\[0-9a-f]+ <bCC_tests>.*
+.*bvs	0x\[0-9a-f]+ <bCC_tests>.*
+.*bnc	0x\[0-9a-f]+ <bCC_tests>.*
+.*bns	0x\[0-9a-f]+ <bCC_tests>.*
+.*bra	0x\[0-9a-f]+ <bCC_tests>.*
+.*$gdb_prompt $" { pass "bCC tests" }
+	-re "$gdb_prompt $" { fail "bCC tests" }
+	timeout { fail "(timeout) bCC tests" }
+    }
+}
+
+proc bit_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/11i bit_tests\n"
+    gdb_expect {
+	-re "
+.*btst	64,d1.*
+.*btst	8192,d2.*
+.*btst	131071,d3.*
+.*btst	64,\\(8,a1\\).*
+.*btst	64,\\(0x1ffff\\).*
+.*bset	d1,\\(a2\\).*
+.*bset	64,\\(8,a1\\).*
+.*bset	64,\\(0x1ffff\\).*
+.*bclr	d1,\\(a2\\).*
+.*bclr	64,\\(8,a1\\).*
+.*bclr	64,\\(0x1ffff\\).*
+.*$gdb_prompt $" { pass "bit tests" }
+	-re "$gdb_prompt $" { fail "bit tests" }
+	timeout { fail "(timeout) bit tests" }
+    }
+}
+
+proc cmp_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/10i cmp_tests\n"
+    gdb_expect {
+	-re "
+.*cmp	d1,d2.*
+.*cmp	d2,a3.*
+.*cmp	a3,d3.*
+.*cmp	a3,a2.*
+.*cmp	16,d3.*
+.*cmp	256,d2.*
+.*cmp	131071,d1.*
+.*cmp	16,a3.*
+.*cmp	256,a2.*
+.*cmp	131071,a1.*
+.*$gdb_prompt $" { pass "cmp tests" }
+	-re "$gdb_prompt $" { fail "cmp tests" }
+	timeout { fail "(timeout) cmp tests" }
+    }
+}
+
+proc extend_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/5i extend_tests\n"
+    gdb_expect {
+	-re "
+.*ext	d1.*
+.*extb	d2.*
+.*extbu	d3.*
+.*exth	d2.*
+.*exthu	d1.*
+.*$gdb_prompt $" { pass "extend tests" }
+	-re "$gdb_prompt $" { fail "extend tests" }
+	timeout { fail "(timeout) extend tests" }
+    }
+}
+
+proc extended_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/13i extended_tests\n"
+    gdb_expect {
+	-re "
+.*putx	d1.*
+.*getx	d2.*
+.*mulq	d1,d2.*
+.*mulq	16,d2.*
+.*mulq	256,d3.*
+.*mulq	131071,d3.*
+.*mulqu	d1,d2.*
+.*mulqu	16,d2.*
+.*mulqu	256,d3.*
+.*mulqu	131071,d3.*
+.*sat16	d2,d3.*
+.*sat24	d3,d2.*
+.*bsch	d1,d2.*
+.*$gdb_prompt $" { pass "extended tests" }
+	-re "$gdb_prompt $" { fail "extended tests" }
+	timeout { fail "(timeout) extended tests" }
+    }
+}
+
+proc logical_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/14i logical_tests\n"
+    gdb_expect {
+	-re "
+.*and	d1,d2.*
+.*and	127,d2.*
+.*and	32767,d3.*
+.*and	131071,d3.*
+.*and	32767,psw.*
+.*or	d1,d2.*
+.*or	127,d2.*
+.*or	32767,d3.*
+.*or	131071,d3.*
+.*or	32767,psw.*
+.*xor	d1,d2.*
+.*xor	32767,d3.*
+.*xor	131071,d3.*
+.*not	d3.*
+.*$gdb_prompt $" { pass "logical tests" }
+	-re "$gdb_prompt $" { fail "logical tests" }
+	timeout { fail "(timeout) logical tests" }
+    }
+}
+
+proc loop_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/12i loop_tests\n"
+    gdb_expect {
+	-re "
+.*leq.*
+.*lne.*
+.*lgt.*
+.*lge.*
+.*lle.*
+.*llt.*
+.*lhi.*
+.*lcc.*
+.*lls.*
+.*lcs.*
+.*lra.*
+.*setlb.*
+.*$gdb_prompt $" { pass "loop tests" }
+	-re "$gdb_prompt $" { fail "loop tests" }
+	timeout { fail "(timeout) loop tests" }
+    }
+}
+
+proc mov_tests_1 { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/16i mov_tests_1\n"
+    gdb_expect {
+	-re "
+.*mov	d1,d2.*
+.*mov	d1,a2.*
+.*mov	a2,d1.*
+.*mov	a2,a1.*
+.*mov	sp,a2.*
+.*mov	a1,sp.*
+.*mov	d2,psw.*
+.*mov	mdr,d1.*
+.*mov	d2,mdr.*
+.*mov	\\(a2\\),d1.*
+.*mov	\\(8,a2\\),d1.*
+.*mov	\\(256,a2\\),d1.*
+.*mov	\\(131071,a2\\),d1.*
+.*mov	\\(8,sp\\),d1.*
+.*mov	\\(256,sp\\),d1.*
+.*mov	psw,d3.*
+.*$gdb_prompt $" { pass "mov1 tests" }
+	-re "$gdb_prompt $" { fail "mov1 tests" }
+	timeout { fail "(timeout) mov1 tests" }
+    }
+}
+
+proc mov_tests_2 { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/15i mov_tests_2\n"
+    gdb_expect {
+	-re "
+.*mov	\\(131071,sp\\),d1.*
+.*mov	\\(d1,a1\\),d2.*
+.*mov	\\(0x8000.*\\),d1.*
+.*mov	\\(0x1ffff.*\\),d1.*
+.*mov	\\(a2\\),a1.*
+.*mov	\\(8,a2\\),a1.*
+.*mov	\\(256,a2\\),a1.*
+.*mov	\\(131071,a2\\),a1.*
+.*mov	\\(8,sp\\),a1.*
+.*mov	\\(256,sp\\),a1.*
+.*mov	\\(131071,sp\\),a1.*
+.*mov	\\(d1,a1\\),a2.*
+.*mov	\\(0x8000.*\\),a1.*
+.*mov	\\(0x1ffff.*\\),a1.*
+.*mov	\\(32,a1\\),sp.*
+.*$gdb_prompt $" { pass "mov2 tests" }
+	-re "$gdb_prompt $" { fail "mov2 tests" }
+	timeout { fail "(timeout) mov2 tests" }
+    }
+}
+
+proc mov_tests_3 { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/15i mov_tests_3\n"
+    gdb_expect {
+	-re "
+.*mov	d1,\\(a2\\).*
+.*mov	d1,\\(32,a2\\).*
+.*mov	d1,\\(256,a2\\).*
+.*mov	d1,\\(131071,a2\\).*
+.*mov	d1,\\(32,sp\\).*
+.*mov	d1,\\(32768,sp\\).*
+.*mov	d1,\\(131071,sp\\).*
+.*mov	d1,\\(d2,a2\\).*
+.*mov	d1,\\(0x80.*\\).*
+.*mov	d1,\\(0x1ffff.*\\).*
+.*mov	a1,\\(a2\\).*
+.*mov	a1,\\(32,a2\\).*
+.*mov	a1,\\(256,a2\\).*
+.*mov	a1,\\(131071,a2\\).*
+.*mov	a1,\\(32,sp\\).*
+.*$gdb_prompt $" { pass "mov3 tests" }
+	-re "$gdb_prompt $" { fail "mov3 tests" }
+	timeout { fail "(timeout) mov3 tests" }
+    }
+}
+
+proc mov_tests_4 { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/12i mov_tests_4\n"
+    gdb_expect {
+	-re "
+.*mov	a1,\\(32768,sp\\).*
+.*mov	a1,\\(131071,sp\\).*
+.*mov	a1,\\(d2,a2\\).*
+.*mov	a1,\\(0x80.*\\).*
+.*mov	a1,\\(0x1ffff.*\\).*
+.*mov	sp,\\(32,a1\\).*
+.*mov	8,d1.*
+.*mov	256,d1.*
+.*mov	131071,d1.*
+.*mov	8,a1.*
+.*mov	256,a1.*
+.*mov	131071,a1.*
+.*$gdb_prompt $" { pass "mov4 tests" }
+	-re "$gdb_prompt $" { fail "mov4 tests" }
+	timeout { fail "(timeout) mov4 tests" }
+    }
+}
+
+proc movbu_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/20i movbu_tests\n"
+    gdb_expect {
+	-re "
+.*movbu	\\(a2\\),d1.*
+.*movbu	\\(8,a2\\),d1.*
+.*movbu	\\(256,a2\\),d1.*
+.*movbu	\\(131071,a2\\),d1.*
+.*movbu	\\(8,sp\\),d1.*
+.*movbu	\\(256,sp\\),d1.*
+.*movbu	\\(131071,sp\\),d1.*
+.*movbu	\\(d1,a1\\),d2.*
+.*movbu	\\(0x8000.*\\),d1.*
+.*movbu	\\(0x1ffff.*\\),d1.*
+.*movbu	d1,\\(a2\\).*
+.*movbu	d1,\\(32,a2\\).*
+.*movbu	d1,\\(256,a2\\).*
+.*movbu	d1,\\(131071,a2\\).*
+.*movbu	d1,\\(32,sp\\).*
+.*movbu	d1,\\(32768,sp\\).*
+.*movbu	d1,\\(131071,sp\\).*
+.*movbu	d1,\\(d2,a2\\).*
+.*movbu	d1,\\(0x80.*\\).*
+.*movbu	d1,\\(0x1ffff.*\\).*
+.*$gdb_prompt $" { pass "movbu tests" }
+	-re "$gdb_prompt $" { fail "movbu tests" }
+	timeout { fail "(timeout) movbu tests" }
+    }
+}
+
+proc movhu_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/20i movhu_tests\n"
+    gdb_expect {
+	-re "
+.*movhu	\\(a2\\),d1.*
+.*movhu	\\(8,a2\\),d1.*
+.*movhu	\\(256,a2\\),d1.*
+.*movhu	\\(131071,a2\\),d1.*
+.*movhu	\\(8,sp\\),d1.*
+.*movhu	\\(256,sp\\),d1.*
+.*movhu	\\(131071,sp\\),d1.*
+.*movhu	\\(d1,a1\\),d2.*
+.*movhu	\\(0x8000.*\\),d1.*
+.*movhu	\\(0x1ffff.*\\),d1.*
+.*movhu	d1,\\(a2\\).*
+.*movhu	d1,\\(32,a2\\).*
+.*movhu	d1,\\(256,a2\\).*
+.*movhu	d1,\\(131071,a2\\).*
+.*movhu	d1,\\(32,sp\\).*
+.*movhu	d1,\\(32768,sp\\).*
+.*movhu	d1,\\(131071,sp\\).*
+.*movhu	d1,\\(d2,a2\\).*
+.*movhu	d1,\\(0x80.*\\).*
+.*movhu	d1,\\(0x1ffff.*\\).*
+.*$gdb_prompt $" { pass "movhu tests" }
+	-re "$gdb_prompt $" { fail "movhu tests" }
+	timeout { fail "(timeout) movhu tests" }
+    }
+}
+
+proc movm_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/4i movm_tests\n"
+    gdb_expect {
+	-re "
+.*movm	\\(sp\\),.a2,a3..*
+.*movm	\\(sp\\),.d2,d3,a2,a3,other..*
+.*movm	.a2,a3.,\\(sp\\).*
+.*movm	.d2,d3,a2,a3,other.,\\(sp\\).*
+.*$gdb_prompt $" { pass "movm tests" }
+	-re "$gdb_prompt $" { fail "movm tests" }
+	timeout { fail "(timeout) movm tests" }
+    }
+}
+
+proc muldiv_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/4i muldiv_tests\n"
+    gdb_expect {
+	-re "
+.*mul	d1,d2.*
+.*mulu	d2,d3.*
+.*div	d3,d3.*
+.*divu	d3,d2.*
+.*$gdb_prompt $" { pass "muldiv tests" }
+	-re "$gdb_prompt $" { fail "muldiv tests" }
+	timeout { fail "(timeout) muldiv tests" }
+    }
+}
+
+proc other_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/19i other_tests\n"
+    gdb_expect {
+	-re "
+.*clr	d2.*
+.*inc	d1.*
+.*inc	a2.*
+.*inc4	a3.*
+.*jmp	\\(a2\\).*
+.*jmp	0x\[0-9a-f]+ <main>.*
+.*jmp	0x\[0-9a-f]+ <start>.*
+.*call	0x\[0-9a-f]+ <main>,.a2,a3.,9.*
+.*call	0x\[0-9a-f]+ <start>,.a2,a3.,32.*
+.*calls	\\(a2\\).*
+.*calls	0x\[0-9a-f]+ <main>.*
+.*calls	0x\[0-9a-f]+ <start>.*
+.*ret	.a2,a3.,7.*
+.*retf	.a2,a3.,5.*
+.*rets.*
+.*rti.*
+.*trap.*
+.*nop.*
+.*rtm.*
+.*$gdb_prompt $" { pass "other tests" }
+	-re "$gdb_prompt $" { fail "other tests" }
+	timeout { fail "(timeout) other tests" }
+    }
+}
+
+proc shift_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/9i shift_tests\n"
+    gdb_expect {
+	-re "
+.*asr	d1,d2.*
+.*asr	4,d2.*
+.*lsr	d2,d3.*
+.*lsr	4,d3.*
+.*asl	d3,d2.*
+.*asl	4,d2.*
+.*asl2	d2.*
+.*ror	d1.*
+.*rol	d2.*
+.*$gdb_prompt $" { pass "shift tests" }
+	-re "$gdb_prompt $" { fail "shift tests" }
+	timeout { fail "(timeout) shift tests" }
+    }
+}
+
+proc sub_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/7i sub_tests\n"
+    gdb_expect {
+	-re "
+.*sub	d1,d2.*
+.*sub	d2,a3.*
+.*sub	a3,d3.*
+.*sub	a3,a2.*
+.*sub	131071,d2.*
+.*sub	131071,a1.*
+.*subc	d1,d2.*
+.*$gdb_prompt $" { pass "sub tests" }
+	-re "$gdb_prompt $" { fail "sub tests" }
+	timeout { fail "(timeout) sub tests" }
+    }
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+
+add_tests
+bcc_tests
+bit_tests
+cmp_tests
+extend_tests
+extended_tests
+logical_tests
+loop_tests
+mov_tests_1
+mov_tests_2
+mov_tests_3
+mov_tests_4
+movbu_tests
+movhu_tests
+movm_tests
+muldiv_tests
+other_tests
+shift_tests
+sub_tests

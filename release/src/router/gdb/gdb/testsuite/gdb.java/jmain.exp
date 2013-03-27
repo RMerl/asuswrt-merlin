@@ -1,0 +1,94 @@
+# Copyright 2000, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was based on jmisc.exp which in turn was written by
+# Anthony Green. (green@redhat.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+load_lib "java.exp"
+
+set testfile "jmain"
+set srcfile ${srcdir}/$subdir/${testfile}.java
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [compile_java_from_source ${srcfile} ${binfile} "-g"] != "" } {
+    untested "Couldn't compile ${srcfile}"
+    return -1
+}
+
+set prms_id 0
+set bug_id 0
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+gdb_test "set print sevenbit-strings" ".*"
+
+# Check that plain old "main" works.  The load should both set the
+# language to java and (since --main=jmain), some how set the scope to
+# jmain's main.
+
+# Where the breakpoint should always land
+
+set bpmain "Breakpoint .* file .*jmain.java, line 5\."
+
+# Where GCC PR 16439 puts the breakpoint.
+set earlybpmain "Breakpoint .* file .*jmain.java, line 4\."
+
+gdb_load "${binfile}"
+setup_kfail *-*-* java/1567
+gdb_test "break main" "${bpmain}"
+
+# Check that an unqualified "main" works.
+
+gdb_load "${binfile}"
+setup_kfail *-*-* java/1565
+gdb_test "break jmain.main" "${bpmain}"
+
+# Check that a fully qualified "main" works.
+gdb_load "${binfile}"
+set cmd "break \'${testfile}.main(java.lang.String\[\])\'"
+set msg $cmd
+gdb_test_multiple $cmd $msg {
+    -re "${bpmain}\r\n$gdb_prompt $" {
+	pass $msg
+    }
+    -re "${earlybpmain}\r\n$gdb_prompt $" {
+	setup_xfail *-*-* gcc/16439
+	fail $msg
+    }
+    -re "Make breakpoint pending.* \\(y or \\\[n\\\]\\) $" {
+	gdb_test "n" "" ""
+
+	# Check again with a method signature at the end.
+	set cmd "break \'${testfile}.main(java.lang.String\[\])void\'"
+	set msg $cmd
+	gdb_test_multiple $cmd $msg {
+	    -re "${bpmain}\r\n$gdb_prompt $" {
+		pass $msg
+	    }
+	    -re "${earlybpmain}\r\n$gdb_prompt $" {
+		setup_xfail *-*-* gcc/16439
+		fail $msg
+	    }
+	}
+    }
+}
+

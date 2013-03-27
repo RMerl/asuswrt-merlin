@@ -1,0 +1,40 @@
+# sh testcase for mov $rm64, $rn64
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global mov
+mov:
+	mov #1, r0
+	rotr r0
+	mov #0, r15
+	mov #10, r0
+
+	mov r0, r1
+	mov r1, r2
+	mov r2, r3
+	mov r3, r4
+	mov r4, r5
+	mov r5, r6
+	mov r6, r7
+	mov r7, r8
+	mov r8, r9
+	mov r9, r10
+	mov r10, r11
+	mov r11, r12
+	mov r12, r13
+	mov r13, r14
+	mov r14, r15
+
+	cmp/eq r0, r15
+	bf wrong
+	
+okay:
+	pass
+
+wrong:
+	fail

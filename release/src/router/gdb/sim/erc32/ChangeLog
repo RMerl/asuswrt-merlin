@@ -1,0 +1,704 @@
+2006-12-21  Hans-Peter Nilsson  <hp@axis.com>
+
+	* acconfig.h: Remove.
+	* config.in: Regenerate.
+
+2006-12-20  Hans-Peter Nilsson  <hp@axis.com>
+
+	* configure.ac: Add test for readline, substitute READLINE.
+	* Makefile.in (READLINE_LIB): New substituted-contents variable.
+	(SIM_EXTRA_LIBDEPS): Don't set.
+	(SIM_EXTRA_LIBS): Use $(READLINE_LIB) instead of
+	../../readline/libreadline.a.
+	* configure: Regenerate.
+
+2006-08-08  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* Makefile.in (func.o, help.o): Correct dependencies.
+
+2006-08-08  Joel Sherrill <joel.sherrill@oarcorp.com>
+
+	* Makefile.in (install-sis): Honor DESTDIR.
+
+2006-06-13  Richard Earnshaw  <rearnsha@arm.com>
+
+	* configure: Regenerated.
+
+2006-06-05  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure: Regenerated.
+
+2006-05-31  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure: Regenerated.
+
+2005-11-28  Mark Mitchell  <mark@codesourcery.com>
+
+	* interf.c: (gdb/signals.h): Include it.
+	(sim_stop_reason): Use TARGET_SIGNAL_*.
+
+2005-07-08  Ben Elliston  <bje@au.ibm.com>
+
+	* func.c: Remove ANSI_PROTOTYPES conditional code.
+
+2005-03-23  Mark Kettenis  <kettenis@gnu.org>
+
+	* configure: Regenerate.
+
+2005-03-07  Jerome Guitton  <guitton@gnat.com>
+
+	* sim/erc32/float.c (set_fsr): Do not use deprecated multi-line
+	strings.
+	(clear_accex): Ditto.
+	* sim/erc32/interf.c: Remove the redeclaration of fprintf.
+	* sim/erc32/sis.c: Ditto.
+	* sim/erc32/exec.c: Add missing semicolon.
+	* sim/erc32/func.c: Remove definitions of generic_print_address,
+	generic_symbol_at_address, buffer_read_memory and perror_memory, as
+	they are already defined in opcodes/dis-buf.c.
+
+2005-01-14  Andrew Cagney  <cagney@gnu.org>
+
+	* configure.ac: Sinclude aclocal.m4 before common.m4.  Add
+	explicit call to AC_CONFIG_HEADER.
+	* configure: Regenerate.
+
+2005-01-12  Andrew Cagney  <cagney@gnu.org>
+
+	* configure.ac: Update to use ../common/common.m4.
+	* configure: Re-generate.
+
+2005-01-11  Andrew Cagney  <cagney@localhost.localdomain>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+2005-01-07  Andrew Cagney  <cagney@gnu.org>
+
+	* configure.ac: Rename configure.in, require autoconf 2.59.
+	* configure: Re-generate.
+
+2004-12-08  Hans-Peter Nilsson  <hp@axis.com>
+
+	* configure: Regenerate for ../common/aclocal.m4 update.
+
+2004-11-11  Andreas Schwab  <schwab@suse.de>
+
+	* interf.c: Include "libiberty.h" instead of declaring buildargv
+	ourselves.
+
+2003-02-27  Andrew Cagney  <cagney@redhat.com>
+
+	* interf.c (sim_open, sim_create_inferior): Rename _bfd to bfd.
+
+2002-06-16  Andrew Cagney  <ac131313@redhat.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+2002-06-08  Andrew Cagney  <cagney@redhat.com>
+
+	* sis.h: Include "gdb/remote-sim.h" and "gdb/callback.h".
+	* interf.c: Include "gdb/remote-sim.h".
+
+Tue May 23 21:39:23 2000  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+2000-03-07  Frank Ch. Eigler  <fche@redhat.com>
+
+	From John Dallaway  <jld@redhat.co.uk>:
+	* Makefile.in (install-sis): Add $(EXEEXT) for Windows host.
+
+2000-03-03  Jonathan Larmour  <jlarmour@redhat.co.uk>
+
+	* func.c (buffer_read_memory): Change type of size to unsigned to
+	match prototype
+
+Thu Sep  2 18:15:53 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+1999-05-08  Felix Lee  <flee@cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+	
+1999-03-03  DJ Delorie  <dj@cygnus.com>
+
+	* configure.in: add termcap and -luser32 for host=cygwin
+	* configure: regenerate
+	
+1999-02-11  Hugo Tyson  <hmt@cygnus.co.uk>
+
+	* exec.c (dispatch_instruction): 
+	Correct the sense of the
+	          if (!sparclite) {
+		     sregs->trap = TRAP_UNIMP;
+                     break;
+		  }
+	clause that has been pasted around: it's correct in the SCAN and
+	DIVScc (divide step) cases (where it was probably originally
+	written?), but reversed in the SDIV, SDIVcc, UDIV, UDIVcc cases
+	ie. instructions only in the SPARC V8 or SPARClite 86x
+	architectures.  It was also present when not required for SMUL,
+	SMULcc, UMUL, UMULcc instructions that are present in all
+	architectures.
+
+1999-01-25  Hugo Tyson  <hmt@cygnus.co.uk>
+
+	* interf.c (run_sim): Fix a bug in the main loop's handling of
+	annulled delay slot instructions.  There is precedent for this
+	change; the _other_ main loop in sis.c gets it right according to
+	my reading of the code.
+
+	The bug is: if an interrupt happens when the next instruction
+	(at sregs->pc) is annulled, the trap is taken (by execute_trap())
+	with the current values of PC and NPC, so when the trap returns,
+	the annulled instruction is indeed executed.  Another giveaway is
+	that the annul flag is cleared in execute_trap(): the information
+	is demonstrably discarded.
+
+	The solution is: perform annulling before looking for traps, in
+	fact it's neater to do annulling, see if there's an interrupt and
+	if not, do the instruction, then handle traps be they generated by
+	interrupts pending or by the instruction we might just have done.
+	That's what the sis.c one does.
+
+1999-01-20  Hugo Tyson  <hmt@cygnus.co.uk>
+
+	* sis.h: Add asr17 register for support of SparcLITE (at least the
+	Hitachi ones I find before me)
+
+	* exec.c (dispatch_instruction): Case WRY: Allow write of asr17 if
+	sparclite.  Other ASR numbers than 17 or 0 (Y) trap out.
+	Case RDY: Allow read of asr17 if sparclite.  Other ASRs ditto.
+	(execute_trap): Do single-vector-trapping if asr17 bit 0 is set.
+	(init_regs): Initialize y and asr17.
+	NB: In instruction-set space, the Y register is asr0; the
+	instructions have different names for human reasons only.
+
+	* sis.c:
+	* interf.c: Set boolean mode variable dumbio if invoked with
+	argument "-dumbio" and mention it of verbose.
+	* erc32.c: if "dumbio" is set, do not assume that there is a
+	terminal type device attached to stdin/stdout.  Do not set
+	buffering or mess with tcsetattr or do any read operations in
+	order to make UART interrupts; not input data is supported.
+	This is necessary to allow the sim to be used within the eCos
+	testing infrastructure where stdin/stdout are pipes to a TCL
+	program; the sim hangs otherwise.
+
+Thu Jul 23 07:17:03 1998  Mark Alexander  <marka@cygnus.com>
+
+	* exec.c (dispatch_instruction): Add SPARClite 'scan' instruction.
+
+Tue Jul  7 21:12:41 1998  Mark Alexander  <marka@cygnus.com>
+
+	* func.c (bfd_load): Add special handling of a.out executables.
+
+Sat Jun 13 08:33:25 1998  Mark Alexander  <marka@cygnus.com>
+
+	* func.c (bfd_load): Print correct endianness.
+	* interf.c (run_sim): Print debugging information if verbosity level
+	is greater than 2.
+	(sim_open): Repeated -v options now increment verbosity level.
+	(sim_store_register): Handle little-endian case.
+	(flush_window): Print debugging information if verbosity level
+	is greater then 2.
+
+Tue Jun  2 15:20:35 1998  Mark Alexander  <marka@cygnus.com>
+
+	* interf.c (sim_open): Use revamped memory_read, which makes
+	byte-swapping unnecessary.  Add -sparclite-board option for
+	emulating RAM found on typical SPARClite boards.  Print
+	error message for unrecognized option.
+	* erc32.c: Change RAM address and size from constants to variables,
+	to allow emulation of SPARClite board RAM.
+	(fetch_bytes, store_bytes): New helper functions for revamped
+	mememory_read and memory_write.
+	(memory_read, memory_write): Rewrite to store bytes in target
+	byte order instead of storing words in host byte order; this
+	greatly simplifies support of little-endian programs.
+	(get_mem_ptr): Remove unnecessary byte parameter.
+	(sis_memory_write, sis_memory_read): Store words in target
+	byte order instead of host byte order.
+	(byte_swap_words): Remove, no longer needed.
+	* sis.h ((byte_swap_words): Remove declaration, no longer needed.
+	(memory_read): Add new sz parameter.
+	* sis.c (run_sim): Use revamped memory_read, which makes
+	byte-swapping unnecessary.
+	* exec.c (dispatch_instruction): Use revamped memory_read, which
+	makes byte-swapping and double-word fetching unnecessary.
+	* func.c (sparclite_board): Declare new variable.
+	(get_regi): Handle little-endian data.
+	(bfd_load): Recognize little-endian SPARClite as having
+	little-endian data.
+	
+Fri May 22 14:23:16 1998  Mark Alexander  <marka@cygnus.com>
+
+	* erc32.c (port_init): Print messages only if sis_verbose is true.
+	* func.c (bfd_load): Ditto.
+	* interf.c (sim_open): Ditto.
+
+Thu May 14 23:10:48 1998  Mark Alexander  <marka@cygnus.com>
+
+	* sis.h (uint64, int64): Define.
+	* exec.c (SDIV, SDIVCC, UDIV, UDIVCC): Define new opcodes.
+	* (mul64): Simplify calculation of negative result.
+	* (div64): New helper function for 64-bit division.
+	* (dispatch_instruction): Add emulation of SDIV, SDIVCC, UDIV,
+	and UDIVCC.
+	
+Wed May 13 14:59:54 1998  Mark Alexander  <marka@cygnus.com>
+
+	* erc32.c (close_port): Don't close stdin; it kills GDB.
+	(byte_swap_words): New function.
+	* sis.h: (byte_swap_words): Declare.
+	* interf.c (run_sim): Always fetch instructions as big-endian.
+	* sis.c (run_sim): Ditto.
+
+Tue Apr 28 18:33:31 1998  Geoffrey Noer  <noer@cygnus.com>
+
+        * configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Sun Apr 26 15:31:55 1998  Tom Tromey  <tromey@creche>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+	* config.in: Ditto.
+
+Sun Apr 26 15:20:17 1998  Tom Tromey  <tromey@cygnus.com>
+
+	* acconfig.h: New file.
+	* configure.in: Reverted change of Apr 24; use sinclude again.
+
+Fri Apr 24 14:16:40 1998  Tom Tromey  <tromey@creche>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+	* config.in: Ditto.
+
+Fri Apr 24 11:19:52 1998  Tom Tromey  <tromey@cygnus.com>
+
+	* configure.in: Don't call sinclude.
+
+Sat Apr 18 12:00:16 1998  Mark Alexander  <marka@cygnus.com>
+
+	* func.c (disp_fpu): Fix build problem on big-endian hosts.
+
+Wed Apr  8 19:33:34 1998  Mark Alexander  <marka@cygnus.com>
+
+	* erc32.c (sim_stop): Handle SIGINT gracefully.
+	* interf.c (sim_open): Don't catch SIGINT; GDB will do that for us.
+
+Wed Apr  8 18:29:40 1998  Mark Alexander  <marka@cygnus.com>
+
+	* exec.c (dispatch_instruction): Change how carry out is calculated
+	in DIVSCC.  Add emulation of SMULCC, UMUL, and UMULCC.
+
+Sat Apr  4 20:36:25 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Wed Apr  1 21:19:18 1998  Mark Alexander  <marka@cygnus.com>
+
+	* end.c: Update to version 2.7.5, fix compiler warnings and bugs.
+	* erc32.c: Ditto.
+	* exec.c: Ditto.
+	* float.c: Ditto.
+	* func.c: Ditto.
+	* help.c: Ditto.
+	* interf.c: Ditto.
+	* sis.c: Ditto.
+	* sis.h: Ditto.
+
+Fri Mar 27 16:15:52 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Wed Mar 25 12:35:29 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Wed Mar 18 12:38:12 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Tue Feb 17 12:41:11 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* interf.c (sim_store_register, sim_fetch_register): Pass in
+ 	length parameter.  Return -1.
+
+Sun Feb  1 16:47:51 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Sat Jan 31 18:15:41 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Mon Jan 19 22:26:29 1998  Doug Evans  <devans@seba>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Mon Dec 15 23:17:11 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+	* config.in: Ditto.
+
+Thu Dec  4 09:21:05 1997  Doug Evans  <devans@canuck.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Fri Oct  3 09:28:00 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Wed Sep 24 17:38:57 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Tue Sep 23 11:04:38 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Mon Sep 22 11:46:20 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Fri Sep 19 17:45:25 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Mon Sep 15 17:36:15 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Wed Aug 27 18:13:22 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+	* config.in: Ditto.
+
+Tue Aug 26 10:38:20 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* float.c (__setfpucw): Compile on any i386 target.  Not just NT.
+
+	* interf.c (sim_kill): Delete.
+	(sim_create_inferior): Add ABFD argument.  Initialize PC from ABFD
+ 	argument.
+	(sim_load): Don't save start address.
+	(start_address): Delete variable.
+
+Mon Aug 25 17:50:22 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+	* config.in: Ditto.
+
+Mon Aug 25 16:19:49 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* interf.c (sim_open): Add ABFD argument. Change ARGV to PARGV.
+
+Mon Jun 30 11:45:25 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* Makefile.in (install-sis): Change $(srcdir)/sis to sis.
+
+Wed May 28 09:46:13 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* interf.c (sim_set_callbacks): Drop SD argument - not applicable.
+	(sim_open): Add callback arg, save it.
+
+Thu Apr 24 00:39:51 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Tue Apr 22 11:05:01 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* interf.c (sim_open): Undo patch to add -E support.
+
+Thu Apr 17 03:03:56 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* interf.c (sim_open): Ignore -E arg.
+	(start_address): New static local.
+	(sim_load): Return SIM_RC.  New arg abfd.  Set start_address from bfd.
+	(sim_create_inferior): Return SIM_RC.  Delete arg start_address.
+
+Tue Apr 15 15:16:11 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (install-sis): Depend upon installdirs.  Use
+	$(program_transform_name) directly, rather than using
+	$(INSTALL_XFORM).
+
+Mon Apr  7 15:45:02 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+	* config.in: Ditto.
+
+Wed Apr  2 15:06:28 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* interf.c (sim_open): New arg `kind'.
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Wed Apr  2 14:34:19 1997 Andrew Cagney <cagney@kremvax.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Mon Mar 17 15:10:07 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
+
+	* configure: Re-generate.
+
+Thu Mar 13 12:46:04 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* interf.c (sim_open): New SIM_DESC result.  Argument is now in
+	argv form.
+	(other sim_*): New SIM_DESC argument.
+
+Tue Feb  4 13:35:20 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* Makefile.in (@COMMON_MAKEFILE_FRAG): Use
+	COMMON_{PRE,POST}_CONFIG_FRAG instead.
+	* configure.in: sinclude ../common/aclocal.m4.
+	* configure: Regenerated.
+
+Thu Jan 23 11:46:23 1997  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* configure configure.in Makefile.in:  Update to new configure
+	scheme which is more compatible with WinGDB builds.
+	* configure.in:  Improve comment on how to run autoconf.
+	* configure:  Re-run autoconf to get new ../common/aclocal.m4.
+	* Makefile.in:  Use autoconf substitution to install common
+	makefile fragment.
+
+Wed Dec  4 18:25:04 1996  Rob Savoye  <rob@chinadoll.cygnus.com>
+
+	* interf.c (run_sim): Stop the simulator and reset the stdio after
+	breakpoints.
+
+Tue Dec  3 11:54:37 1996  Rob Savoye  <rob@chinadoll.cygnus.com>
+
+	* configure.in: Look for libtermcap.a.
+	* Makefile.in: Only link in -ltermcap if it exists.
+	* erc32.c: Update to version 2.6a. Fix uart handling.
+	* exec.c: Update to version 2.6a. Add sparclite support.
+	* float.c: Update to version 2.6a. Convert comments to
+	preprocessor warnings. Add __setfpucw() for i385 hosts so floating
+	point exceptions work on win32.
+	* func.c: Update to version 2.6a. Fix uart handling, add support
+	for user error traps.
+	* help.c: Update to version 2.6a. Add help note on user error
+	traps.
+	* interf.c: Update to version 2.6a. Fix uart handling, and add
+	sparclite support.
+	* examples/gccx: Use sparclite cross compiler, not native gcc.
+	* examples/srt0.S: Use "mov" rather than "wr" for manipulating
+	the psr register.
+
+Mon Nov 25 08:28:10 1996  Fred Fish  <fnf@cygnus.com>
+
+	* Makefile.in (run.o): Remove this rule, it hides the one in
+	../common/Make-common.in that correctly references the source
+	in the sibling ../common directory.
+
+Wed Nov 20 01:30:12 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* Makefile.in: Delete stuff moved to ../common/Make-common.in.
+	(SIM_{OBJS,EXTRA_LIBS,EXTRA_LIBDEPS,EXTRA_ALL,EXTRA_INSTALL}): Define.
+	(SIM_{EXTRA_CLEAN,EXTRA_CFLAGS}): Define.
+	* configure.in: Simplify using macros in ../common/aclocal.m4.
+	Call AC_CHECK_HEADERS(stdlib.h).
+	* configure: Regenerated.
+	* config.in: New file.
+	* func.c (sim_set_callbacks): Delete, moved to
+	* interf.c (sim_set_callbacks): here.
+	(sim_callback): New global.
+	Rewrite all calls to printf_filtered to go through callback.
+	(sim_size,sim_trace): New functions.
+	(sim_{insert,remove}_breakpoint): #if 0 out.
+	* sis.c: #include "config.h".  #include <stdlib.h> if present.
+	(main): Coerce fprintf arg to INIT_DISASSEMBLE_INFO to fprintf_ftype.
+	* sis.h: #include "callback.h".
+	* run.c: Deleted, using one in ../common now.
+
+Thu Oct  3 16:12:03 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (clean): Move config.log to distclean.
+
+Wed Oct  2 16:57:57 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (clean): Also remove config.log.
+
+Sat Sep 14 00:00:46 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (CC_FOR_BUILD): New variable.
+	(AR, AR_FLAGS, BISON, MAKEINFO): Remove duplicate variables.
+	(RANLIB, CC): Likewise.
+	(end): Use $(CC_FOR_BUILD), not $(CC).
+	* configure.in: Set CC_FOR_BUILD.
+	* configure: Rebuild.
+
+Sun Sep  8 14:04:37 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* erc32.c (port_init):  Disable this for __GO32__ (got no pty's
+	there either...).
+
+Mon Aug 12 17:04:58 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* erc32.c:  Don't include sys/ioctl.h or sys/file.h.  They aren't
+	necessary.
+	* (port_init):  Don't even *try* to open pty's under _WIN32.
+	* Use SIM_ADDR, not caddr_t for declaring vars that hold addresses.
+	* float.c:  Get rid of #warning.  Makes Microsoft C barf.
+	* interf.c (sim_open):  Cast fprintf to (fprintf_ftype) to fix
+	compiler warning.
+	* (sim_load sim_create_inferior sim_read):  Use prototypes only in
+	decls, not defs.
+	* Get rid of enum sim_stop.  It's defined in remote-sim.h.
+	* (sim_stop_reason):  Define SIGTRAP if _WIN32.
+	* sis.h:  Include ansidecl.h and remote-sim.h.
+
+Wed Jul  3 16:05:23 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* erc32.c (mec_reset mec_read mec_write memory_read memory_write),
+	sis.h:  Get rid of all uses of long long's.
+	* (close_port read_uart write_uart uarta_tx):  Don't seg fault
+	when can't open pty's.
+	* exec.c:  Add two new instructions: smul, and divscc.
+	* interf.c (flush_windows):  New routine to flush the register
+	windows out to the stack just before returning to GDB.  Makes
+	backtraces work much better.
+
+Wed Jun 26 12:19:11 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+        * Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
+        INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
+        (docdir, oldincludedir): Removed.
+        * configure.in (AC_PREREQ): autoconf 2.5 or higher.
+        (AC_PROG_INSTALL): Added.
+        * configure: Rebuilt.
+
+Mon Jun 24 14:19:07 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Call AC_PROG_CC before running configure.host.
+	* configure: Rebuild with autoconf 2.10.
+
+Tue Jun  4 10:37:12 1996  Tom Tromey  <tromey@csk3.cygnus.com>
+
+	* Makefile.in (install): Don't check to see if tooldir exists.
+	Make $(tooldir) and $(tooldir)/bin.
+
+Mon Jun  3 12:33:38 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (end.h): Use explicit ./ when running end.
+
+Sun May 19 21:05:31 1996  Rob Savoye  <rob@chinadoll.cygnus.com>
+
+	* func.c(bfd_load): Don't try to print the filename if the pfbd is
+	NULL.
+	* interf.c(sim_load): Pass the whole string, not just the first
+	byte.
+
+Version 2.1 26-02-96
+--------------------
+ 
+* Fixed bug in "go" command.
+ 
+version 2.0 05-02-96
+--------------------
+
+* Fixed bug in interrupt force register (erc32.c).
+
+* Change file load function to use bfd_openr.
+
+* SIS should now be endian independent.
+
+version 1.8 24-11-95
+--------------------
+
+* Fixed FPU timing - some sequences of FPU instructions did not calculate
+  the resource dependencies right.
+
+* Corrected STDFQ when qne = 0 (again!). The ftt is set to sequence_error
+  but no FPU trap is generated.
+
+version 1.7.1 31-10-95
+--------------------
+
+* Corrected STDFQ when qne = 0. Now, a trap is immidiately generated but
+  the FPU stays in execute mode.
+
+* Corrected JMPL and RETT timing (these instructions takes two cycles).
+
+
+version 1.7 25-10-95
+--------------------
+
+* Interrupt during annuled instruction corrupted return address - fixed.
+
+
+version 1.6.2 25-10-95
+--------------------
+
+* Added -DFAST_UART to Makefile
+ 
+
+version 1.6.1 24-10-95
+--------------------
+ 
+* Fixed bug in STDFQ which caused bus error
+
+
+version 1.6 02-10-95
+--------------------
+ 
+* Modified srt0.s to include code that initiates registers in IU and FPU
+  and initializes the data segment. The simulator 'load' command does not
+  longer initialize the data segment!
+
+* Corrected MEC timer operation; scalers now divide the frequency by 
+  (scaler_value + 1).
+
+* MEC breakpoints are not checked during store operation
+
+
+version 1.5 14-09-95
+--------------------
+
+* Fixed some bugs in the cycle counting for IU & FPU instructions.
+
+* Fixed bug that allowed an annuled instruction to cause memory exception.
+
+* The *ws parameter in mem.c should now contain the number of waitstates
+  required by the memory access (was total number of cycles).
+
+* The supplied srt0.s now clears the BSS (thanks Joel).
+
+version 1.4 22-08-95
+--------------------
+
+* Added a '-g' switch to enable/disable the GNU readline(), which cause
+some problems on solaris 2.x machines.
+
+* Enabled MEC watchpoint and breakpoint function to mem.c. Performance 
+may suffer a bit ...
+
+NOTE: The UARTs are now connected to /dev/ttypc and /dev/ttypd.
+
+version 1.3 26-07-95
+--------------------
+
+* Fixed bug in mulscc instruction (how could that ever have worked?)
+
+* Fixed bug in UART B (flushed characters on UART A), thanks Paul.
+
+version 1.2 13-07-95
+--------------------
+
+* Fixed bug in interrupt handling (wrong interrupt selected when more that
+one interrupt pending)
+
+* Fixed updating of condition codes during logical instructions (carry and
+overflow were not reset)
+
+* Fixed bug in WRTBR (tt field was wrongly over-written)
+
+version 1.1 07-07-95
+--------------------
+
+* Fixed several bugs in the interrupt handler and callback routines.
+(reported by Paul Warren, Alsys)

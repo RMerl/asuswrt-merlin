@@ -1,0 +1,25 @@
+Major changes in release 1.3.1:
+
+Termcap data file updated.
+Bug fixes and portability changes.
+
+Major changes in release 1.3:
+
+Termcap data file is now included in distribution and may optionally
+  be installed, or used in a non-default location.
+Support for a fake internal terminal (no external files).
+Higher tty speeds supported.
+Portability tweaks.
+
+Major changes in release 1.2:
+
+For `%.', only set the high bit on NUL.
+Fix a file descriptor and memory leak.
+Add const in termcap.h prototypes.
+Configuration improvements.
+
+Major changes in release 1.1:
+
+Fix portability problems.
+Improve configuration and installation.
+Fix compiler warnings.

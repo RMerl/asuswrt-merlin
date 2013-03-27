@@ -1,0 +1,12 @@
+# arm testcase for swi $value8
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global swi
+swi:
+	swi 0
+
+	pass

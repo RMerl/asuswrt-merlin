@@ -23,14 +23,14 @@ PPPDVERSION = $(shell awk -F '"' '/VERSION/ { print $$2; }' ../../patchlevel.h)
 INSTALL	= install
 
 # Version is set ONLY IN THE MAKEFILE!  Don't delete this!
-RP_VERSION=3.10p
+RP_VERSION=3.11p
 
-COPTS=-O2 -g
-CFLAGS=$(COPTS) -I../../../include '-DRP_VERSION="$(RP_VERSION)"'
+COPTS=-O2 -g -fno-strict-aliasing -Wall -Wstrict-prototypes
+CFLAGS=$(COPTS) -I../../../include '-DRP_VERSION="$(RP_VERSION)"' -DPLUGIN=1
 all: rp-pppoe.so
 
-rp-pppoe.so: libplugin.a plugin.o
-	$(LD) -o rp-pppoe.so -shared plugin.o libplugin.a
+rp-pppoe.so: plugin.o libplugin.a
+	$(LD) -o $@ -shared $^ $(LDFLAGS)
 
 install: all
 	$(INSTALL) -d -m 755 $(LIBDIR)
@@ -40,10 +40,13 @@ clean:
 	rm -f *.o *.so *.a
 
 plugin.o: plugin.c
-	$(CC) $(CFLAGS) -I../../.. -c -o $@ -fPIC plugin.c
+	$(CC) $(CFLAGS) -I../../.. -c -o $@ -fPIC $<
 
 libplugin.a: discovery.o if.o common.o debug.o
 	$(AR) -rc $@ $^
+
+discovery.o: discovery.c
+	$(CC) $(CFLAGS) -I../../.. -c -o $@ -fPIC $<
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ -fPIC $^

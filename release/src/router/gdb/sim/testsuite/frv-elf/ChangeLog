@@ -1,0 +1,39 @@
+2005-01-07  Andrew Cagney  <cagney@gnu.org>
+
+	* configure.ac: Rename configure.in, require autoconf 2.59.
+	* configure: Re-generate.
+
+2000-07-26  Dave Brolley  <brolley@redhat.com>
+
+	* Makefile.in (TESTS): Don't run cache.ok
+	* cache.s: Use softune syntax for jmpl.
+
+2000-07-19  Dave Brolley  <brolley@redhat.com>
+
+	* cache.s (pass): Use softune syntax for tira.
+	* exit47.s (pass): Use softune syntax for tira.
+	* grloop.s (pass): Use softune syntax for tira.
+	* hello.s (pass): Use softune syntax for tira.
+
+Thu Aug 19 18:00:16 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* hello.s: Fix sethi, setlo insn usage.
+
+Mon Jun 21 17:33:37 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* Makefile.in (TESTS): Add grloop.ok.
+	* grloop.s: New testcase.
+
+Fri Jun 18 17:55:02 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* exit47.s: Use proper syscalls interface.
+	* hello.s: Use proper syscalls interface.
+
+Mon May 31 12:03:38 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* hello.s,loop.s,exit47.s: Convert to frv insn set.
+
+Thu May  6 16:36:30 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* Directory created.
+

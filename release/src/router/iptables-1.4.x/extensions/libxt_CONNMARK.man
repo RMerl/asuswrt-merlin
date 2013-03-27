@@ -1,0 +1,53 @@
+This module sets the netfilter mark value associated with a connection. The
+mark is 32 bits wide.
+.TP
+\fB\-\-set\-xmark\fP \fIvalue\fP[\fB/\fP\fImask\fP]
+Zero out the bits given by \fImask\fP and XOR \fIvalue\fP into the ctmark.
+.TP
+\fB\-\-save\-mark\fP [\fB\-\-nfmask\fP \fInfmask\fP] [\fB\-\-ctmask\fP \fIctmask\fP]
+Copy the packet mark (nfmark) to the connection mark (ctmark) using the given
+masks. The new nfmark value is determined as follows:
+.IP
+ctmark = (ctmark & ~ctmask) ^ (nfmark & nfmask)
+.IP
+i.e. \fIctmask\fP defines what bits to clear and \fInfmask\fP what bits of the
+nfmark to XOR into the ctmark. \fIctmask\fP and \fInfmask\fP default to
+0xFFFFFFFF.
+.TP
+\fB\-\-restore\-mark\fP [\fB\-\-nfmask\fP \fInfmask\fP] [\fB\-\-ctmask\fP \fIctmask\fP]
+Copy the connection mark (ctmark) to the packet mark (nfmark) using the given
+masks. The new ctmark value is determined as follows:
+.IP
+nfmark = (nfmark & ~\fInfmask\fP) ^ (ctmark & \fIctmask\fP);
+.IP
+i.e. \fInfmask\fP defines what bits to clear and \fIctmask\fP what bits of the
+ctmark to XOR into the nfmark. \fIctmask\fP and \fInfmask\fP default to
+0xFFFFFFFF.
+.IP
+\fB\-\-restore\-mark\fP is only valid in the \fBmangle\fP table.
+.PP
+The following mnemonics are available for \fB\-\-set\-xmark\fP:
+.TP
+\fB\-\-and\-mark\fP \fIbits\fP
+Binary AND the ctmark with \fIbits\fP. (Mnemonic for \fB\-\-set\-xmark
+0/\fP\fIinvbits\fP, where \fIinvbits\fP is the binary negation of \fIbits\fP.)
+.TP
+\fB\-\-or\-mark\fP \fIbits\fP
+Binary OR the ctmark with \fIbits\fP. (Mnemonic for \fB\-\-set\-xmark\fP
+\fIbits\fP\fB/\fP\fIbits\fP.)
+.TP
+\fB\-\-xor\-mark\fP \fIbits\fP
+Binary XOR the ctmark with \fIbits\fP. (Mnemonic for \fB\-\-set\-xmark\fP
+\fIbits\fP\fB/0\fP.)
+.TP
+\fB\-\-set\-mark\fP \fIvalue\fP[\fB/\fP\fImask\fP]
+Set the connection mark. If a mask is specified then only those bits set in the
+mask are modified.
+.TP
+\fB\-\-save\-mark\fP [\fB\-\-mask\fP \fImask\fP]
+Copy the nfmark to the ctmark. If a mask is specified, only those bits are
+copied.
+.TP
+\fB\-\-restore\-mark\fP [\fB\-\-mask\fP \fImask\fP]
+Copy the ctmark to the nfmark. If a mask is specified, only those bits are
+copied. This is only valid in the \fBmangle\fP table.

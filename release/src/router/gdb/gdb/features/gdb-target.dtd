@@ -1,0 +1,45 @@
+<!-- Copyright (C) 2007 Free Software Foundation, Inc.
+
+     Copying and distribution of this file, with or without modification,
+     are permitted in any medium without royalty provided the copyright
+     notice and this notice are preserved.  -->
+
+<!-- The root element of a GDB target description is <target>.  -->
+
+<!ELEMENT target	(architecture?, feature*)>
+<!ATTLIST target
+	version		CDATA	#FIXED "1.0">
+
+<!ELEMENT architecture	(#PCDATA)>
+
+<!ELEMENT feature	((vector | union)*, reg*)>
+<!ATTLIST feature
+	name		ID	#REQUIRED>
+
+<!ELEMENT reg		(description*)>
+<!ATTLIST reg
+	name		CDATA	#REQUIRED
+	bitsize		CDATA	#REQUIRED
+	regnum		CDATA	#IMPLIED
+	save-restore	(yes | no) 'yes'
+	type		CDATA	'int'
+	group		CDATA	#IMPLIED
+	>
+
+<!ELEMENT vector	EMPTY>
+<!ATTLIST vector
+	id		CDATA	#REQUIRED
+	type		CDATA	#REQUIRED
+	count		CDATA	#REQUIRED>
+
+<!ELEMENT union		(field+)>
+<!ATTLIST union
+	id		CDATA	#REQUIRED>
+
+<!ELEMENT field		EMPTY>
+<!ATTLIST field
+	name		CDATA	#REQUIRED
+	type		CDATA	#REQUIRED>
+
+<!ENTITY % xinclude SYSTEM "xinclude.dtd">
+%xinclude;

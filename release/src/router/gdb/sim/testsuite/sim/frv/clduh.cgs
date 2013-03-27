@@ -1,0 +1,114 @@
+# frv testcase for clduh @($GRi,$GRj),$GRk,$CCi,$cond
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global clduh
+clduh:
+	set_spr_immed	0x1b1b,cccr
+
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_limmed	0xbeef,0xdead,gr8
+
+	set_gr_immed	0,gr7
+	clduh 		@(sp,gr7),gr8,cc0,1
+	test_gr_limmed	0x0000,0xdead,gr8
+
+	set_gr_immed	2,gr7
+	clduh 		@(sp,gr7),gr8,cc0,1
+	test_gr_limmed	0x0000,0xbeef,gr8
+
+	set_mem_limmed	0xffff,0x0000,sp
+	inc_gr_immed	4,sp
+	set_gr_immed	-2,gr7
+	clduh 		@(sp,gr7),gr8,cc4,1
+	test_gr_limmed	0x0000,0x0000,gr8
+
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_limmed	0xbeef,0xdead,gr8
+
+	set_gr_immed	0,gr7
+	clduh 		@(sp,gr7),gr8,cc0,0
+	test_gr_limmed	0xbeef,0xdead,gr8
+
+	set_gr_immed	2,gr7
+	clduh 		@(sp,gr7),gr8,cc0,0
+	test_gr_limmed	0xbeef,0xdead,gr8
+
+	set_mem_limmed	0xffff,0x0000,sp
+	inc_gr_immed	4,sp
+	set_gr_immed	-2,gr7
+	clduh 		@(sp,gr7),gr8,cc4,0
+	test_gr_limmed	0xbeef,0xdead,gr8
+
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_limmed	0xbeef,0xdead,gr8
+
+	set_gr_immed	0,gr7
+	clduh 		@(sp,gr7),gr8,cc1,0
+	test_gr_limmed	0x0000,0xdead,gr8
+
+	set_gr_immed	2,gr7
+	clduh 		@(sp,gr7),gr8,cc1,0
+	test_gr_limmed	0x0000,0xbeef,gr8
+
+	set_mem_limmed	0xffff,0x0000,sp
+	inc_gr_immed	4,sp
+	set_gr_immed	-2,gr7
+	clduh 		@(sp,gr7),gr8,cc5,0
+	test_gr_limmed	0x0000,0x0000,gr8
+
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_limmed	0xbeef,0xdead,gr8
+
+	set_gr_immed	0,gr7
+	clduh 		@(sp,gr7),gr8,cc1,1
+	test_gr_limmed	0xbeef,0xdead,gr8
+
+	set_gr_immed	2,gr7
+	clduh 		@(sp,gr7),gr8,cc1,1
+	test_gr_limmed	0xbeef,0xdead,gr8
+
+	set_mem_limmed	0xffff,0x0000,sp
+	inc_gr_immed	4,sp
+	set_gr_immed	-2,gr7
+	clduh 		@(sp,gr7),gr8,cc5,1
+	test_gr_limmed	0xbeef,0xdead,gr8
+
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_limmed	0xbeef,0xdead,gr8
+
+	set_gr_immed	0,gr7
+	clduh 		@(sp,gr7),gr8,cc2,0
+	test_gr_limmed	0xbeef,0xdead,gr8
+
+	set_gr_immed	2,gr7
+	clduh 		@(sp,gr7),gr8,cc2,0
+	test_gr_limmed	0xbeef,0xdead,gr8
+
+	set_mem_limmed	0xffff,0x0000,sp
+	inc_gr_immed	4,sp
+	set_gr_immed	-2,gr7
+	clduh 		@(sp,gr7),gr8,cc6,1
+	test_gr_limmed	0xbeef,0xdead,gr8
+
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_limmed	0xbeef,0xdead,gr8
+
+	set_gr_immed	0,gr7
+	clduh 		@(sp,gr7),gr8,cc3,0
+	test_gr_limmed	0xbeef,0xdead,gr8
+
+	set_gr_immed	2,gr7
+	clduh 		@(sp,gr7),gr8,cc3,0
+	test_gr_limmed	0xbeef,0xdead,gr8
+
+	set_mem_limmed	0xffff,0x0000,sp
+	inc_gr_immed	4,sp
+	set_gr_immed	-2,gr7
+	clduh 		@(sp,gr7),gr8,cc7,1
+	test_gr_limmed	0xbeef,0xdead,gr8
+
+	pass

@@ -1,0 +1,73 @@
+    <refentry id="refreqbody">
+
+      <refmeta>
+	<refentrytitle>ne_set_request_body_buffer</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_set_request_body_buffer">ne_set_request_body_buffer</refname>
+	<refname id="ne_set_request_body_fd">ne_set_request_body_fd</refname>
+	<refname id="ne_set_request_body_fd64">ne_set_request_body_fd64</refname>
+	<refpurpose>include a message body with a request</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_request.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_set_request_body_buffer</function></funcdef>
+	    <paramdef>ne_request *<parameter>req</parameter></paramdef>
+	    <paramdef>const char *<parameter>buf</parameter></paramdef>
+	    <paramdef>size_t <parameter>count</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>int <function>ne_set_request_body_fd</function></funcdef>
+	    <paramdef>ne_request *<parameter>req</parameter></paramdef>
+	    <paramdef>int <parameter>fd</parameter></paramdef>
+	    <paramdef>off_t <parameter>begin</parameter></paramdef>
+	    <paramdef>off_t <parameter>length</parameter></paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>The <function>ne_set_request_body_buffer</function>
+function specifies that a message body should be included with the
+body, which is stored in the <parameter>count</parameter> bytes buffer
+<parameter>buf</parameter>.</para>
+
+	<para>The <function>ne_set_request_body_fd</function> function
+can be used to include a message body with a request which is read
+from a file descriptor.  The body is read from the file descriptor
+<parameter>fd</parameter>, which must be a associated with a seekable
+file (not a pipe, socket, or FIFO).  <parameter>count</parameter>
+bytes are read, beginning at offset <parameter>begin</parameter>
+(hence, passing <parameter>begin</parameter> as zero means the body is read
+from the beginning of the file).</para>
+
+        <para>For all the above functions, the source of the request
+        body must survive until the request has been dispatched;
+        neither the memory buffer passed to
+        <function>ne_set_request_body_buffer</function> nor the file
+        descriptor passed to
+        <function>ne_set_request_body_fd</function> are copied
+        internally.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>See also</title>
+
+	<para><xref linkend="ne_request_create"/></para>
+      </refsect1>
+
+    </refentry>

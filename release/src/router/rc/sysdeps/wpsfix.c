@@ -92,5 +92,6 @@ wpsfix_main(int argc, char *argv[])
 	{
 		pause();
 	}
+	return 0;
 }
 #endif

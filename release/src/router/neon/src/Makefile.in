@@ -1,0 +1,173 @@
+#
+# neon source directory Makefile
+# 
+# Use the NEON_NORMAL_BUILD or NEON_LIBTOOL_BUILD autoconf 
+# macros to set up this Makefile correctly.
+#
+
+SHELL = @SHELL@
+
+# Installation paths
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+
+# Build paths
+VPATH = @srcdir@
+top_builddir = @top_builddir@
+top_srcdir = @top_srcdir@
+
+# Toolchain settings.
+CC = @CC@
+AR = @AR@
+RANLIB = @RANLIB@
+LIBTOOL = @LIBTOOL@
+
+# Flags
+CPPFLAGS = @DEFS@ @CPPFLAGS@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+NEON_LINK_FLAGS = @NEON_LINK_FLAGS@
+# Note: don't substitute @LIBS@ in here; during a bundled
+# build of this directory, @LIBS@ may include -lneon.
+#LIBS = @NEON_LIBS@ @NEON_LTLIBS@
+#LIBS = @NEON_LIBS@
+#LIBS = @NEON_LTLIBS@
+#LIBS = -L../../libxml2/.libs -lxml2 -L../../zlib -lz -lm -L../../openssl -lssl
+
+COMPILE = $(CC) $(CPPFLAGS) $(CFLAGS)
+LT_COMPILE = $(LIBTOOL) --quiet --mode=compile $(COMPILE)
+LINK = $(LIBTOOL) --quiet --mode=link $(CC) -no-undefined $(LDFLAGS)
+
+NEON_BASEOBJS = ne_request.@NEON_OBJEXT@ ne_session.@NEON_OBJEXT@	\
+	ne_basic.@NEON_OBJEXT@ ne_string.@NEON_OBJEXT@			\
+	ne_uri.@NEON_OBJEXT@ ne_dates.@NEON_OBJEXT@			\
+	ne_alloc.@NEON_OBJEXT@ ne_md5.@NEON_OBJEXT@			\
+	ne_utils.@NEON_OBJEXT@ ne_socket.@NEON_OBJEXT@			\
+	ne_auth.@NEON_OBJEXT@ ne_redirect.@NEON_OBJEXT@			\
+	ne_compress.@NEON_OBJEXT@ ne_i18n.@NEON_OBJEXT@			\
+	ne_pkcs11.@NEON_OBJEXT@ ne_socks.@NEON_OBJEXT@			\
+	ne_ntlm.@NEON_OBJEXT@
+
+NEON_DAVOBJS = $(NEON_BASEOBJS) \
+	ne_207.@NEON_OBJEXT@ ne_xml.@NEON_OBJEXT@ \
+	ne_props.@NEON_OBJEXT@ ne_locks.@NEON_OBJEXT@ \
+	ne_xmlreq.@NEON_OBJEXT@
+
+OBJECTS = @NEONOBJS@ @NEON_EXTRAOBJS@
+
+.SUFFIXES:
+.SUFFIXES: .c .lo .o
+
+NEON_TARGET = @NEON_TARGET@
+
+# Thanks to gettext for this neat trick.
+all: all-@NEON_BUILD_BUNDLED@
+
+all-yes: $(NEON_TARGET)
+all-no:
+	@echo "Bundled neon build not being used."
+
+.c.lo:
+	$(LT_COMPILE) -c $< -o $@
+.c.o:
+	$(COMPILE) -c $< -o $@
+
+libneon.la: $(OBJECTS)
+	$(LINK) -rpath $(libdir) $(NEON_LINK_FLAGS) -o $@ $(OBJECTS) $(LIBS)
+
+libneon.a: $(OBJECTS)
+	@rm -f $@
+	$(AR) cru $@ $(OBJECTS)
+	$(RANLIB) $@
+
+clean:
+	rm -f $(NEON_TARGET) *.o *.lo *.bbg *.bb *.gc*
+	rm -rf .libs
+
+c++.c:
+	find . -name ne_\*.h -print | sed 's/.*/#include "&"/;/ne_priv/d' > $@
+	echo "int main(void) {}" >> $@
+
+check-c++: c++.c
+	c++ -I. c++.c
+
+check-incl:
+	@for f in ne_*.h; do \
+	 echo Checking $$f...; \
+	 echo "#include \"$$f\"" > checkincl.c; \
+	 $(COMPILE) -c checkincl.c -o checkincl.o || exit 1; done
+
+# Update generated dependencies below; requires cc -MM as in gcc.
+update-deps:
+	for f in `echo $(OBJECTS) | sed 's/\\.@NEON_OBJEXT@/.c/g;s/ne_openssl.c//;s/ne_gnutls.c//;s/ne_pkcs11.c//;s/ne_stubssl.c//'`; do \
+	  $(CC) $(CPPFLAGS) -MM -c $$f; \
+	done | sed 's, \.\./, $$(top_builddir)/,g;s, /[^ ]*.h,,g;/^  .$$/d;s/\.o: /.@NEON''_OBJEXT@: /' > new-deps
+	sed '/[-]--CUT---/q' Makefile.in > Makefile.new
+	cat Makefile.new new-deps > Makefile.in
+	rm new-deps Makefile.new
+
+ne_openssl.@NEON_OBJEXT@: ne_openssl.c $(top_builddir)/config.h ne_ssl.h ne_defs.h ne_string.h \
+  ne_alloc.h ne_session.h ne_uri.h ne_socket.h ne_internal.h ne_private.h \
+  ne_request.h ne_utils.h ne_pkcs11.h ne_privssl.h
+ne_stubssl.@NEON_OBJEXT@: ne_stubssl.c $(top_builddir)/config.h ne_ssl.h ne_defs.h ne_session.h \
+  ne_uri.h ne_socket.h
+ne_pkcs11.@NEON_OBJEXT@: ne_pkcs11.c $(top_builddir)/config.h ne_pkcs11.h ne_defs.h ne_session.h \
+  ne_ssl.h ne_uri.h ne_socket.h ne_internal.h ne_privssl.h \
+  ne_alloc.h ne_private.h ne_request.h ne_utils.h ne_string.h
+ne_gnutls.@NEON_OBJEXT@: ne_gnutls.c $(top_builddir)/config.h ne_ssl.h ne_defs.h \
+  ne_string.h ne_alloc.h ne_session.h ne_uri.h ne_socket.h ne_internal.h \
+  ne_private.h ne_request.h ne_utils.h ne_privssl.h
+#### ---CUT--- DO NOT REMOVE THIS LINE.  Generated dependencies follow.  ####
+ne_request.@NEON_OBJEXT@: ne_request.c $(top_builddir)/config.h ne_internal.h ne_defs.h ne_alloc.h \
+  ne_request.h ne_utils.h ne_string.h ne_session.h ne_ssl.h ne_uri.h \
+  ne_socket.h ne_private.h
+ne_session.@NEON_OBJEXT@: ne_session.c $(top_builddir)/config.h ne_session.h ne_ssl.h ne_defs.h \
+  ne_uri.h ne_socket.h ne_alloc.h ne_utils.h ne_internal.h ne_string.h \
+  ne_dates.h ne_private.h ne_request.h
+ne_basic.@NEON_OBJEXT@: ne_basic.c $(top_builddir)/config.h ne_request.h ne_utils.h ne_defs.h \
+  ne_string.h ne_alloc.h ne_session.h ne_ssl.h ne_uri.h ne_socket.h \
+  ne_basic.h ne_207.h ne_xml.h ne_locks.h ne_dates.h ne_internal.h
+ne_string.@NEON_OBJEXT@: ne_string.c $(top_builddir)/config.h ne_alloc.h ne_defs.h ne_string.h
+ne_uri.@NEON_OBJEXT@: ne_uri.c $(top_builddir)/config.h ne_string.h ne_defs.h ne_alloc.h ne_uri.h
+ne_dates.@NEON_OBJEXT@: ne_dates.c $(top_builddir)/config.h ne_alloc.h ne_defs.h ne_dates.h \
+  ne_string.h
+ne_alloc.@NEON_OBJEXT@: ne_alloc.c $(top_builddir)/config.h ne_alloc.h ne_defs.h
+ne_md5.@NEON_OBJEXT@: ne_md5.c $(top_builddir)/config.h ne_md5.h ne_defs.h ne_string.h ne_alloc.h
+ne_utils.@NEON_OBJEXT@: ne_utils.c $(top_builddir)/config.h ne_utils.h ne_defs.h ne_string.h \
+  ne_alloc.h ne_dates.h
+ne_socket.@NEON_OBJEXT@: ne_socket.c $(top_builddir)/config.h ne_privssl.h ne_ssl.h ne_defs.h \
+  ne_socket.h ne_internal.h ne_utils.h ne_string.h ne_alloc.h ne_sspi.h
+ne_auth.@NEON_OBJEXT@: ne_auth.c $(top_builddir)/config.h ne_md5.h ne_defs.h ne_dates.h \
+  ne_request.h ne_utils.h ne_string.h ne_alloc.h ne_session.h ne_ssl.h \
+  ne_uri.h ne_socket.h ne_auth.h ne_internal.h
+ne_redirect.@NEON_OBJEXT@: ne_redirect.c $(top_builddir)/config.h ne_session.h ne_ssl.h ne_defs.h \
+  ne_uri.h ne_socket.h ne_request.h ne_utils.h ne_string.h ne_alloc.h \
+  ne_redirect.h ne_internal.h
+ne_compress.@NEON_OBJEXT@: ne_compress.c $(top_builddir)/config.h ne_request.h ne_utils.h \
+  ne_defs.h ne_string.h ne_alloc.h ne_session.h ne_ssl.h ne_uri.h \
+  ne_socket.h ne_compress.h ne_internal.h
+ne_i18n.@NEON_OBJEXT@: ne_i18n.c $(top_builddir)/config.h ne_i18n.h ne_defs.h
+ne_socks.@NEON_OBJEXT@: ne_socks.c $(top_builddir)/config.h ne_internal.h ne_defs.h ne_string.h \
+  ne_alloc.h ne_socket.h ne_ssl.h ne_utils.h
+ne_207.@NEON_OBJEXT@: ne_207.c $(top_builddir)/config.h ne_alloc.h ne_defs.h ne_utils.h ne_xml.h \
+  ne_207.h ne_request.h ne_string.h ne_session.h ne_ssl.h ne_uri.h \
+  ne_socket.h ne_basic.h ne_internal.h
+ne_xml.@NEON_OBJEXT@: ne_xml.c $(top_builddir)/config.h ne_internal.h ne_defs.h ne_alloc.h \
+  ne_xml.h ne_utils.h ne_string.h
+ne_props.@NEON_OBJEXT@: ne_props.c $(top_builddir)/config.h ne_alloc.h ne_defs.h ne_xml.h \
+  ne_props.h ne_request.h ne_utils.h ne_string.h ne_session.h ne_ssl.h \
+  ne_uri.h ne_socket.h ne_207.h ne_basic.h ne_locks.h ne_internal.h
+ne_locks.@NEON_OBJEXT@: ne_locks.c $(top_builddir)/config.h ne_alloc.h ne_defs.h ne_request.h \
+  ne_utils.h ne_string.h ne_session.h ne_ssl.h ne_uri.h ne_socket.h \
+  ne_xml.h ne_locks.h ne_basic.h ne_props.h ne_207.h ne_internal.h \
+  ne_xmlreq.h
+ne_xmlreq.@NEON_OBJEXT@: ne_xmlreq.c $(top_builddir)/config.h ne_internal.h ne_defs.h ne_xmlreq.h \
+  ne_request.h ne_utils.h ne_string.h ne_alloc.h ne_session.h ne_ssl.h \
+  ne_uri.h ne_socket.h ne_xml.h ne_basic.h
+ne_oldacl.@NEON_OBJEXT@: ne_oldacl.c $(top_builddir)/config.h ne_request.h ne_utils.h ne_defs.h \
+  ne_string.h ne_alloc.h ne_session.h ne_ssl.h ne_uri.h ne_socket.h \
+  ne_locks.h ne_acl.h ne_xml.h
+ne_acl3744.@NEON_OBJEXT@: ne_acl3744.c $(top_builddir)/config.h ne_request.h ne_utils.h ne_defs.h \
+  ne_string.h ne_alloc.h ne_session.h ne_ssl.h ne_uri.h ne_socket.h \
+  ne_locks.h ne_acl.h ne_xml.h

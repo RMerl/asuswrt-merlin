@@ -1,0 +1,13 @@
+# sh testcase for fschg
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+	fschg
+	fschg
+	fschg
+	fschg
+	pass

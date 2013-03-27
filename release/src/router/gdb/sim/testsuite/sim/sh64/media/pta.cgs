@@ -1,0 +1,26 @@
+# sh testcase for pta$likely $disp16, $tra -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+pta0:
+	pta foo, tr0
+pta1:
+	pta/l bar, tr1
+pta2:
+	pta/u baz, tr2
+	movi 0, r0
+	bnei r0, 1, tr2
+	fail
+
+foo:
+bar:
+baz:
+	pass
+	fail
+	fail
+	fail
+	fail

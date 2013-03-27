@@ -1,0 +1,22 @@
+# frv testcase for fsqrtd $FRj,$FRk
+# mach: frv
+# as(frv): -mcpu=frv
+
+	.include "testutils.inc"
+
+	double_constants
+	start
+	load_double_constants
+
+	.global fsqrtd
+fsqrtd:
+	fsqrtd		fr44,fr2		; 9.0
+	test_dfr_dfr	fr2,fr36		; 3.0
+
+	set_fr_iimmed	0x4009,0x21fb,fr10	; 3.141592654
+	set_fr_iimmed	0x6000,0x0000,fr11
+	fsqrtd		fr10,fr10
+	test_fr_iimmed	0x3ffc5bf8,fr10		; 1.7724539
+	test_fr_iimmed	0x9853a94d,fr11
+
+	pass

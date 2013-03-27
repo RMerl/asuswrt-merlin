@@ -126,6 +126,11 @@ body {
 #option9 a:hover, #option1 a:active {background: url(images/New_ui/lefttabdown_o.png)}
 #option9 div#option_str1 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
 
+#option10 {height:52px;}
+#option10 a:link,  #option1 a:visited {height:52px; background: url(images/New_ui/lefttabdown_n.png);}
+#option10 a:hover, #option1 a:active {background: url(images/New_ui/lefttabdown_o.png)}
+#option10 div#option_str1 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
+
 .m_qis_r {width:189px;height: 55px;font-family:Verdana ;font-size : 12px;color: #94ccf2;background:url(images/New_ui/item1.png) no-repeat; color:#ffffff;padding-left:0px; position:relative; font-weight: bolder; text-shadow: 1px 1px 0px black;}
 .m_qis_r:hover {width:189px;height: 55px;font-family:Verdana ;font-size : 12px;color: #94ccf2;background:url(images/New_ui/item1_hover.png) no-repeat; color:#ffffff;padding-left:0px; position:relative; font-weight: bolder; text-shadow: 1px 1px 0px black;}
 .m0_r {margin-top:12px;width:190px;text-align:center;font-family:Verdana ;color: #94ccf2;background:url(images/New_ui/lefttabhead.png) no-repeat; color:#ffffff;font-weight:bold; padding-top:0px;	position:relative;text-shadow: 1px 1px 0px black;}
@@ -148,6 +153,8 @@ body {
 .m8_r div#menu_string6 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
 .m9_r {margin-top: -2px; width:203px;height: 52px;font-family:Verdana ;font-size : 12px;color: #94ccf2;background:url(images/New_ui/lefttabdown_f.png) no-repeat; color:#ffffff;font-weight:bold;	padding-left:0px; position:relative;text-shadow: 1px 1px 0px black;}
 .m9_r div#menu_string6 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
+.m10_r {margin-top: -2px; width:203px;height: 52px;font-family:Verdana ;font-size : 12px;color: #94ccf2;background:url(images/New_ui/lefttabdown_f.png) no-repeat; color:#ffffff;font-weight:bold;	padding-left:0px; position:relative;text-shadow: 1px 1px 0px black;}
+.m10_r div#menu_string6 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
 
 .submenu {width:187px; font-family:Verdana; font-size:11px; line-height:20px;}
 .submenu a {height:26px; text-decoration:none; }
@@ -362,10 +369,10 @@ body {
 	z-index:99;
 	background-color: #444F53;
 	filter:alpha(opacity=90);  /*IE5、IE5.5、IE6、IE7*/
-	opacity: .9;  /*Opera9.0+、Firefox1.5+、Safari、Chrome*/
 	background-repeat: repeat;
 	visibility:hidden;
 	overflow:hidden;
+	background:rgba(68, 79, 83, 0.9) none repeat scroll 0 0 !important;
 }
 
 .loadingBlock{
@@ -410,8 +417,6 @@ body {
 }
 
 .loadingBarBlock{
-	filter:alpha(opacity=90);
-	opacity:.90;
 	-webkit-border-radius: 10px;
 	-moz-border-radius: 10px;
 	border-radius: 10px;
@@ -419,13 +424,13 @@ body {
 	border-radius: 10px 10px 10px 10px;
 	border: 0px;
 	/*margin-top:200px;*/
-	width:300px;
+	width: 33%;
 	font-size:12px;
 	font-family:Verdana, Arial, Helvetica, sans-serif;
 	color:#FFFFFF;
 	background-color:#000000;
 	position:absolute;
-	margin:5px 35% 5px;
+	margin:5px 33% 5px;
 }
 
 .hackiframe   /* iframe for Hack IE 6.0 to avoid select menu over DIV layer. */
@@ -723,6 +728,10 @@ width:122px;
 #menu_img9{
   background: url(images/New_ui/icon_menues.png);
   background-position: -0px -257px; width: 43px; height: 40px;
+}
+#menu_img10{
+  background: url(images/New_ui/icon_menues.png);
+  background-position: -0px -293px; width: 43px; height: 40px;
 }
 #bottom_help_icon{
   background: url(images/New_ui/bottom_help.png);

@@ -665,6 +665,25 @@ BCMROMFN(bcmwpa_akm2WPAauth)(uint8 *akm, uint32 *auth, bool sta_iswpa)
 		return TRUE;
 	}
 	else
+#ifdef BCMWAPI_WAI
+	if (!bcmp(akm, WAPI_OUI, DOT11_OUI_LEN)) {
+		switch (akm[DOT11_OUI_LEN]) {
+		case RSN_AKM_NONE:
+			*auth = WAPI_AUTH_NONE;
+			break;
+		case RSN_AKM_UNSPECIFIED:
+			*auth = WAPI_AUTH_UNSPECIFIED;
+			break;
+		case RSN_AKM_PSK:
+			*auth = WAPI_AUTH_PSK;
+			break;
+		default:
+			return FALSE;
+		}
+		return TRUE;
+	}
+	else
+#endif /* BCMWAPI_WAI */
 	if (!bcmp(akm, WPA_OUI, DOT11_OUI_LEN)) {
 		switch (akm[DOT11_OUI_LEN]) {
 		case RSN_AKM_NONE:
@@ -689,6 +708,21 @@ BCMROMFN(bcmwpa_akm2WPAauth)(uint8 *akm, uint32 *auth, bool sta_iswpa)
 bool
 BCMROMFN(bcmwpa_cipher2wsec)(uint8 *cipher, uint32 *wsec)
 {
+#ifdef BCMWAPI_WAI
+	if (!bcmp(cipher, WAPI_OUI, DOT11_OUI_LEN)) {
+		switch (WAPI_CSE_WPI_2_CIPHER(cipher[DOT11_OUI_LEN])) {
+		case WAPI_CIPHER_NONE:
+			*wsec = 0;
+			break;
+		case WAPI_CIPHER_SMS4:
+			*wsec = SMS4_ENABLED;
+			break;
+		default:
+			return FALSE;
+		}
+		return TRUE;
+	}
+#endif /* BCMWAPI_WAI */
 	switch (cipher[DOT11_OUI_LEN]) {
 	case WPA_CIPHER_NONE:
 		*wsec = 0;
@@ -703,6 +737,11 @@ BCMROMFN(bcmwpa_cipher2wsec)(uint8 *cipher, uint32 *wsec)
 	case WPA_CIPHER_AES_CCM:
 		*wsec = AES_ENABLED;
 		break;
+#ifdef BCMWAPI_WAI
+	case WAPI_CIPHER_SMS4:
+		*wsec = SMS4_ENABLED;
+		break;
+#endif /* BCMWAPI_WAI */
 	default:
 		return FALSE;
 	}

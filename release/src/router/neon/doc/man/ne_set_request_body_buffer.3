@@ -1,0 +1,78 @@
+'\" t
+.\"     Title: ne_set_request_body_buffer
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_SET_REQUEST_BODY_" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_set_request_body_buffer, ne_set_request_body_fd, ne_set_request_body_fd64 \- include a message body with a request
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_request\&.h>
+.fi
+.ft
+.HP \w'void\ ne_set_request_body_buffer('u
+.BI "void ne_set_request_body_buffer(ne_request\ *" "req" ", const\ char\ *" "buf" ", size_t\ " "count" ");"
+.HP \w'int\ ne_set_request_body_fd('u
+.BI "int ne_set_request_body_fd(ne_request\ *" "req" ", int\ " "fd" ", off_t\ " "begin" ", off_t\ " "length" ");"
+.SH "DESCRIPTION"
+.PP
+The
+\fBne_set_request_body_buffer\fR
+function specifies that a message body should be included with the body, which is stored in the
+\fIcount\fR
+bytes buffer
+\fIbuf\fR\&.
+.PP
+The
+\fBne_set_request_body_fd\fR
+function can be used to include a message body with a request which is read from a file descriptor\&. The body is read from the file descriptor
+\fIfd\fR, which must be a associated with a seekable file (not a pipe, socket, or FIFO)\&.
+\fIcount\fR
+bytes are read, beginning at offset
+\fIbegin\fR
+(hence, passing
+\fIbegin\fR
+as zero means the body is read from the beginning of the file)\&.
+.PP
+For all the above functions, the source of the request body must survive until the request has been dispatched; neither the memory buffer passed to
+\fBne_set_request_body_buffer\fR
+nor the file descriptor passed to
+\fBne_set_request_body_fd\fR
+are copied internally\&.
+.SH "SEE ALSO"
+.PP
+ne_request_create
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

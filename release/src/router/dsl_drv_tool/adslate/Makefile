@@ -9,7 +9,7 @@ CFLAGS += -DRTCONFIG_DSL_ANNEX_B
 endif
 
 CFLAGS += -Wall -O
-CFLAGS += -DASUS -DASUS_NVRAM
+CFLAGS += -DASUS
 CFLAGS += -I$(TOP)/shared -I$(SRCBASE)/include
 CFLAGS += -I$(SRCBASE)/linux/linux-2.6.21.x/drivers/net/raeth.dsl
 CFLAGS += -I$(SRCBASE)/linux/linux-2.6.21.x/include

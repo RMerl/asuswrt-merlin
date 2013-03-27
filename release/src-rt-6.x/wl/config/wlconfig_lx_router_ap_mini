@@ -1,6 +1,6 @@
 # Broadcom 802.11abg Networking Device Driver Configuration file
 #
-# Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -28,3 +28,18 @@ WLTUNEFILE=wltunable_lx_router_mini.h
 include $(WLCFGDIR)/wlconfig_apdef
 include $(WLCFGDIR)/wlconfig_lx_wl_clm
 APCS=1
+WL11AC=0
+WLPIO=0
+SMF_STATS=0
+PHYMON=0
+BCMECICOEX=0
+BCM_DCS=0
+BTC2WIRE=0
+DBAND=0
+LPCONF=0
+ACONF=0
+GCONF=0
+HTCONF=0
+LCNCONF=0
+LCN40CONF=0
+MINIAP=1

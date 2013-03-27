@@ -1,0 +1,192 @@
+#
+# Copyright (c) 2000, Gaël Roualland <gael.roualland@iname.com>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#      $Id$
+#
+# Printable syscalls
+# syntax: syscall [printfunc]
+#
+# mostly built from sys_* functions in source code
+
+__getcwd
+__sysctl
+accept
+access
+adjtime
+alarm
+bind
+brk
+capget
+capset
+chdir
+chflags
+chmod
+chown
+chroot
+close
+connect
+creat
+dup
+dup2
+errlist
+execv
+execve
+exit
+fchdir
+fchflags
+fchmod
+fchown
+fchroot
+fcntl
+flock
+fork
+fpathconf
+fstat
+fstatfs
+fsync
+ftruncate
+getdents
+getdirentries
+getdomainname
+getdtablesize
+getgid
+getgroups
+gethostid
+gethostname
+getitimer
+getpagesize
+getpeername
+getpgid
+getpgrp
+getpid
+getpriority
+getrlimit
+getrusage
+getsid
+getsockname
+getsockopt
+gettimeofday
+getuid
+indir
+ioctl
+kill
+killpg
+link
+listen
+lseek
+lstat
+mincore
+mkdir
+mkfifo
+mknod
+mmap
+mprotect
+msgctl
+msgget
+msgrcv
+msgsnd
+msync
+munmap
+nerr
+nice
+open
+pathconf
+pipe
+poll
+pread
+ptrace
+pwrite
+quotactl
+read
+readlink
+readv
+recv
+recvfrom
+recvmsg
+rename
+rmdir
+sbrk
+select
+semctl
+semget
+semop
+send
+sendfile
+sendmsg
+sendto
+setdomainname
+setgroups
+sethostname
+setitimer
+setpgid
+setpgrp
+setpriority
+setregid
+setresgid
+setresuid
+setreuid
+setrlimit
+setsid
+setsockopt
+settimeofday
+shmat
+shmctl
+shmdt
+shmget
+shutdown
+sigaction
+sigaltstack
+sigblock
+sigcleanup
+signal
+sigpause
+sigpending
+sigprocmask
+sigsetmask
+sigstack
+sigsuspend
+sigvec
+socket
+socketpair
+stat
+statfs
+stime
+symlink
+sysctl
+time
+times
+truncate
+umask
+uname
+unlink
+utime
+utimes
+vfork
+wait
+wait4
+waitpid
+write
+writev

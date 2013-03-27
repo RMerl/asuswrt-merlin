@@ -1,0 +1,29 @@
+# sh testcase for mova @($imm8x4, pc), r0 -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global mova
+mova:
+	mova @(40, pc), r0
+	mov #16, r1
+	shll8 r1
+	add #40, r1
+	cmp/eq r0, r1
+	bf wrong
+	mova @(12, pc), r0
+	mov #16, r1
+	shll8 r1
+	add #24, r1
+	cmp/eq r0, r1
+	bf wrong
+
+okay:
+	pass
+
+wrong:
+	fail

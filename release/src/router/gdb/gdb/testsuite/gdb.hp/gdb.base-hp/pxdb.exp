@@ -1,0 +1,128 @@
+# Copyright (C) 1998, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+
+# This file is part of the gdb testsuite
+
+
+# pxdb.exp   Test that gdb calls pxdb on an application
+#            built without it.
+#
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+if { [skip_hp_tests] } then { continue }
+
+set testfile pxdb
+set srcfile ${testfile}.c
+set objfile ${objdir}/${subdir}/${testfile}.o
+set binfile ${objdir}/${subdir}/${testfile}
+
+if [get_compiler_info ${binfile} "c++"] {
+    return -1;
+}
+
+if { $gcc_compiled } then { continue }
+
+# To build a non-pxdb-ed file, use
+#
+#     <compile to .o file>
+#     export LD_PXDB /dev/null
+#     ld -o hello_no_pxdb hello.o /opt/langtools/lib/end.o /usr/ccs/lib/crt0.o -lc
+#
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${objfile}" object {debug}] != "" } {
+    untested pxdb.exp
+    return -1
+}
+
+#
+# use this to debug:
+#log_user 1
+
+
+# Following should get the error message:
+#
+#      ld: (Warning) Can't exec pxdb using path: /dev/null
+#
+#execute_anywhere "ksh -c \"export LD_PXDB=/dev/null\""
+
+if [istarget "hppa64-*-*"] {
+set cmdline  "ksh -c \"LD_PXDB=/dev/null ld -o ${binfile} ${objfile} /opt/langtools/lib/pa20_64/crt0.o /opt/langtools/lib/pa20_64/end.o -lc\""
+} else {
+set cmdline  "ksh -c \"LD_PXDB=/dev/null ld -o ${binfile} ${objfile} /usr/ccs/lib/crt0.o /opt/langtools/lib/end.o -lc\""
+}
+
+remote_exec build "rm ${binfile}"
+remote_exec build $cmdline
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+# We expect to see this:
+#
+#  "warning: File not processed by pxdb--about to process now.
+#  "
+#  ".
+#  "Procedures: 7
+#  "Files: 2
+#  "Reading symbols from ~/c_code.dir/hello_no_pxdb...done.
+#  "(gdb)
+#
+send_gdb "file ${binfile}\n"
+gdb_expect {
+
+    -re ".*warning: File not processed by pxdb.*Procedures: \[0-9\]+.*$gdb_prompt $"\
+                            { pass "PXDB call"        }
+
+    -re "$gdb_prompt $" {
+      if [istarget hppa*-*-hpux*] {
+        pass "Didn't call pxdb"
+      } else { 
+        fail "Didn't call pxdb"
+      }
+    }
+
+    -re ".*$gdb_prompt $"       { fail "Some other message" }
+
+    timeout                 { fail "call pxdb (timeout)" }
+}
+
+# Make sure the new data makes sense
+#
+if { ![runto callee] } then { return }
+
+send_gdb "print x\n"
+gdb_expect {
+   -re ".*= 1.*$gdb_prompt $"    { pass "Good data after pxdb call" }
+   -re ".*$gdb_prompt $"         { fail "No data after pxdb call" }
+   timeout { fail "(timeout)" }
+}
+
+gdb_exit
+return 0
+
+
+
+
+

@@ -1,0 +1,23 @@
+# frv testcase for add $GRi,$GRj,$GRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global add
+add:
+	set_gr_immed   	1,gr7
+	set_gr_immed   	2,gr8
+	add      	gr7,gr8,gr8
+	test_gr_immed  	3,gr8
+
+	set_gr_limmed	0x7fff,0xffff,gr7
+	set_gr_immed   	1,gr8
+	add		gr7,gr8,gr8
+	test_gr_limmed	0x8000,0x0000,gr8
+
+	add		gr8,gr8,gr8
+	test_gr_immed  	0,gr8
+
+	pass

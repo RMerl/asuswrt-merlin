@@ -6,19 +6,27 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<link href="other.css"  rel="stylesheet" type="text/css">
 <style type="text/css">
 body {
 	margin:50px auto;
 }
+.desc{
+  text-shadow: 0px 1px 0px white;
+  font-weight: bolder;
+  font-size: 32px;
+	font-family:Segoe UI, Georgia, sans-serif;
+  color: #000;				
+	line-height: 40px;
+	text-align: left;
+}
 </style>
 </head>
 
-<body>
+<body style="background:#DDD">
 <table border="0" align="center" cellpadding="10" cellspacing="0">
   <tr>
 		<td>
-			<p><#logoutmessage#></p>
+			<div class="desc"><#logoutmessage#></div>
 		</td>
   </tr>
 </table>

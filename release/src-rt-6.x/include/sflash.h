@@ -1,7 +1,7 @@
 /*
  * Broadcom SiliconBackplane chipcommon serial flash interface
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: sflash.h 241182 2011-02-17 21:50:03Z $
+ * $Id: sflash.h 345824 2012-07-19 06:29:12Z $
  */
 
 #ifndef _sflash_h_
@@ -29,6 +29,7 @@ struct sflash {
 	uint numblocks;		/* Number of blocks */
 	uint32 type;		/* Type */
 	uint size;		/* Total size in bytes */
+	uint32 phybase;
 };
 
 /* Utility functions */

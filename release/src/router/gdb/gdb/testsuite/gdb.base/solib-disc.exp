@@ -1,0 +1,103 @@
+# Copyright 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Test connecting and disconnecting at shared library events.
+
+if {[skip_shlib_tests]} {
+    return 0
+}
+
+if { [info proc gdb_reconnect] == "" } {
+    return 0
+}
+
+set testfile solib-disc
+set libfile so-disc-shr
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+set libsrc "${srcdir}/${subdir}/${libfile}.c"
+set libname "${libfile}.so"
+set libobj "${objdir}/${subdir}/${libname}"
+set execsrc "${srcdir}/${subdir}/${srcfile}"
+
+remote_exec build "rm -f ${binfile}"
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+set exec_opts [list debug shlib_load additional_flags=-DSHLIB_NAME\=\"${libname}\"]
+
+if { [gdb_compile_shlib $libsrc $libobj {debug}] != ""
+     || [gdb_compile $execsrc ${binfile} executable $exec_opts] != "" } {
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+gdb_load_shlibs $libobj
+
+if ![runto_main] then {
+    fail "Can't run to main"
+    return 0
+}
+
+gdb_test "set stop-on-solib-events 1" ""
+
+gdb_test "continue" "Stopped due to shared library event" "continue to load"
+
+set msg "save \$pc after load"
+set saved_pc ""
+gdb_test_multiple "print/x \$pc" $msg {
+    -re "\\\$$decimal = (\[^\r\n\]*)\r\n$gdb_prompt $" {
+	set saved_pc $expect_out(1,string)
+	pass $msg
+    }
+}
+
+gdb_test "disconnect" "Ending remote debugging\\." "disconnect after load"
+if { [gdb_reconnect] == 0 } {
+    pass "reconnect after load"
+} else {
+    fail "reconnect after load"
+    return 0
+}
+
+gdb_test "print/x \$pc" "\\\$$decimal = $saved_pc" "check \$pc after load"
+
+
+gdb_test "continue" "Stopped due to shared library event" "continue to unload"
+
+set msg "save \$pc after unload"
+set saved_pc ""
+gdb_test_multiple "print/x \$pc" $msg {
+    -re "\\\$$decimal = (\[^\r\n\]*)\r\n$gdb_prompt $" {
+	set saved_pc $expect_out(1,string)
+	pass $msg
+    }
+}
+
+gdb_test "disconnect" "Ending remote debugging\\." "disconnect after unload"
+if { [gdb_reconnect] == 0 } {
+    pass "reconnect after unload"
+} else {
+    fail "reconnect after unload"
+    return 0
+}
+
+gdb_test "print/x \$pc" "\\\$$decimal = $saved_pc" "check \$pc after unload"

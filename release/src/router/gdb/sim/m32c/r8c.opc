@@ -1,0 +1,1593 @@
+/* r8c.opc --- semantics for r8c opcodes.		        -*- mode: c -*-
+
+Copyright (C) 2005, 2007 Free Software Foundation, Inc.
+Contributed by Red Hat, Inc.
+
+This file is part of the GNU simulators.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "cpu.h"
+#include "mem.h"
+#include "misc.h"
+#include "int.h"
+
+#define AU  __attribute__((unused))
+
+#define tprintf if (trace) printf
+
+static unsigned char
+getbyte ()
+{
+  int tsave = trace;
+  unsigned char b;
+
+  if (trace == 1)
+    trace = 0;
+  b = mem_get_pc ();
+  regs.r_pc ++;
+  trace = tsave;
+  return b;
+}
+
+#define M16C_ONLY() /* FIXME: add something here */
+
+#define GETBYTE() (op[opi++] = getbyte())
+
+#define UNSUPPORTED() unsupported("unsupported", orig_pc)
+#define NOTYET() unsupported("unimplemented", orig_pc)
+
+static void
+unsupported (char *tag, int orig_pc)
+{
+  int i;
+  printf("%s opcode at %08x\n", tag, orig_pc);
+  regs.r_pc = orig_pc;
+  for (i=0; i<2; i++)
+    {
+      int b = mem_get_pc();
+      printf(" %s", bits(b>>4, 4));
+      printf(" %s", bits(b, 4));
+      regs.r_pc ++;
+    }
+  printf("\n");
+  regs.r_pc = orig_pc;
+  for (i=0; i<6; i++)
+    {
+      printf(" %02x", mem_get_pc ());
+      regs.r_pc ++;
+    }
+  printf("\n");
+  exit(1);
+}
+
+static int
+IMM(bw)
+{
+  int rv = getbyte ();
+  if (bw)
+    rv = rv + 256 * getbyte();
+  if (bw == 2)
+    rv = rv + 65536 * getbyte();
+  return rv;
+}
+
+#define IMM4() (immm >= 8 ? 7 - immm : immm + 1)
+
+#define UNARY_SOP \
+  dc = decode_srcdest4 (dest, w); \
+  v = sign_ext (get_src (dc), w?16:8);
+
+#define UNARY_UOP \
+  dc = decode_srcdest4 (dest, w); \
+  v = get_src (dc);
+
+#define BINARY_SOP \
+  sc = decode_srcdest4 (srcx, w); \
+  dc = decode_srcdest4 (dest, w); \
+  a = sign_ext (get_src (sc), w?16:8); \
+  b = sign_ext (get_src (dc), w?16:8);
+
+#define BINARY_UOP \
+  sc = decode_srcdest4 (srcx, w); \
+  dc = decode_srcdest4 (dest, w); \
+  a = get_src (sc); \
+  b = get_src (dc);
+
+#define carry (FLAG_C ? 1 : 0)
+
+static void
+cmp (int d, int s, int w)
+{
+  int a, b, f=0;
+  int mask = w ? 0xffff : 0xff;
+  a = d - s;
+  b = sign_ext (d, w?16:8) - sign_ext (s, w?16:8);
+  tprintf ("cmp: %x - %x = %08x, %x - %x = %d\n",
+	   d, s, a,
+	   sign_ext(d,w?16:8), sign_ext(s,w?16:8), b);
+
+  if (b == 0)
+    f |= FLAGBIT_Z;
+  if (b & (w ? 0x8000 : 0x80))
+    f |= FLAGBIT_S;
+  if ((d & mask) >= (s & mask))
+    f |= FLAGBIT_C;
+  if (b < (w ? -32768 : -128) || b > (w ? 32767 : 127))
+    f |= FLAGBIT_O;
+
+  set_flags (FLAGBIT_Z | FLAGBIT_S | FLAGBIT_O | FLAGBIT_C, f);
+}
+
+static void
+div_op (int s, int u, int x, int w)
+{
+  srcdest sc;
+  int v, a, b;
+
+  if (s == -1)
+    s = IMM(w);
+  else
+    {
+      sc = decode_srcdest4 (s, w);
+      s = get_src (sc);
+    }
+
+  v = get_reg (w ? r2r0 : r0);
+
+  if (!u)
+    {
+      s = sign_ext (s, w ? 16 : 8);
+      v = sign_ext (v, w ? 16 : 8);
+    }
+
+  if (s == 0)
+    {
+      set_flags (FLAGBIT_O, FLAGBIT_O);
+      return;
+    }
+
+  if (u)
+    {
+      a = (unsigned int)v / (unsigned int)s;
+      b = (unsigned int)v % (unsigned int)s;
+    }
+  else
+    {
+      a = v / s;
+      b = v % s;
+    }
+  if (x)
+    {
+      if ((s > 0 && b < 0)
+	  || (s < 0 && b > 0))
+	{
+	  a --;
+	  b += s;
+	}
+    }
+  tprintf ("%d / %d = %d rem %d\n", v, s, a, b);
+  if ((!u && (a > (w ? 32767 : 127)
+	     || a < (w ? -32768 : -129)))
+      || (u && (a > (w ? 65536 : 255))))
+    set_flags (FLAGBIT_O, FLAGBIT_O);
+  else
+    set_flags (FLAGBIT_O, 0);
+
+  put_reg (w ? r0 : r0l, a);
+  put_reg (w ? r2 : r0h, b);
+}
+
+static void
+rot_op (srcdest sd, int rotc, int count)
+{
+  int mask = (sd.bytes == 2) ? 0xffff : 0xff;
+  int msb = (sd.bytes == 2) ? 0x8000 : 0x80;
+  int v = get_src (sd);
+  int c = carry, ct;
+
+  tprintf("%s %x by %d\n", rotc ? "rotc" : "rot", v, count);
+  tprintf (": %s %d\n", bits(v, 8*sd.bytes), c);
+  while (count > 0)
+    {
+      ct = (v & msb) ? 1 : 0;
+      v <<= 1;
+      v |= rotc ? c : ct;
+      v &= mask;
+      c = ct;
+      tprintf (": %s %d\n", bits(v, 8*sd.bytes), c);
+      count --;
+    }
+  while (count < 0)
+    {
+      ct = v & 1;
+      v >>= 1;
+      v |= (rotc ? c : ct) * msb;
+      c = ct;
+      tprintf (": %s %d\n", bits(v, 8*sd.bytes), c);
+      count ++;
+    }
+  put_dest (sd, v);
+  set_szc (v, sd.bytes, c);
+}
+
+static void
+shift_op (srcdest sd, int arith, int count)
+{
+  int mask = (sd.bytes == 2) ? 0xffff : 0xff;
+  int msb = (sd.bytes == 2) ? 0x8000 : 0x80;
+  int v = get_src (sd);
+  int c = 0;
+
+  if (sd.bytes == 4)
+    {
+      mask = 0xffffffffU;
+      msb = 0x80000000U;
+      if (count > 16 || count < -16)
+	{
+	  fprintf(stderr, "Error: SI shift of %d undefined\n", count);
+	  exit(1);
+	}
+      if (count > 16)
+	count = (count - 1) % 16 + 1;
+      if (count < -16)
+	count = -((-count - 1) % 16 + 1);
+    }
+
+  tprintf("%s %x by %d\n", arith ? "sha" : "shl", v, count);
+  tprintf (": %s %d\n", bits(v, 8*sd.bytes), c);
+  while (count > 0)
+    {
+      c = (v & msb) ? 1 : 0;
+      v <<= 1;
+      v &= mask;
+      tprintf (": %s %d\n", bits(v, 8*sd.bytes), c);
+      count --;
+    }
+  while (count < 0)
+    {
+      c = v & 1;
+      if (arith)
+	v = (v & msb) | (v >> 1);
+      else
+	v = (v >> 1) & (msb - 1);
+      tprintf (": %s %d\n", bits(v, 8*sd.bytes), c);
+      count ++;
+    }
+  put_dest (sd, v);
+  set_szc (v, sd.bytes, c);
+}
+
+#define MATH_OP(dc,s,c,op,carryrel) \
+  a = get_src(dc); \
+  b = s & b2mask[dc.bytes]; \
+  v2 = a op b op c; \
+  tprintf("0x%x " #op " 0x%x " #op " 0x%x = 0x%x\n", a, b, c, v2); \
+  a = sign_ext (a, dc.bytes * 8); \
+  b = sign_ext (s, dc.bytes * 8); \
+  v = a op b op c; \
+  tprintf("%d " #op " %d " #op " %d = %d\n", a, b, c, v); \
+  set_oszc (v, dc.bytes, v2 carryrel); \
+  put_dest (dc, v2);
+
+#define BIT_OP(field,expr) \
+  dc = decode_bit (field); \
+  b = get_bit (dc); \
+  v = expr; \
+  tprintf ("b=%d, carry=%d, %s = %d\n", b, carry, #expr, v); \
+  put_bit (dc, v);
+
+#define BIT_OPC(field,expr) \
+  dc = decode_bit (field); \
+  b = get_bit (dc); \
+  v = expr; \
+  tprintf ("b=%d, carry=%d, %s = %d\n", b, carry, #expr, v); \
+  set_c (v);
+
+/* The "BMcnd dest" opcode uses a different encoding for the */
+/* condition than other opcodes.  */
+static int bmcnd_cond_map[] = {
+  0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15
+};
+
+int
+decode_r8c()
+{
+  unsigned char op[40];
+  int opi = 0;
+  int v, v2, a, b;
+  int orig_pc = get_reg (pc);
+  srcdest sc, dc;
+  int imm;
+
+  step_result = M32C_MAKE_STEPPED ();
+
+  tprintf("trace: decode pc = %05x\n", orig_pc);
+
+  /** VARY dst 011 100 101 110 111 */
+
+  /** 0111 011w 1111 dest  ABS.size dest */
+
+  UNARY_SOP;
+  a = v<0 ? -v : v;
+  tprintf("abs(%d) = %d\n", v, a);
+  set_osz(a, w+1);
+  put_dest (dc, a);
+
+  /** 0111 011w 0110 dest  ADC.size #IMM,dest */
+
+  dc = decode_srcdest4(dest, w);
+  imm = IMM(w);
+  MATH_OP (dc, imm, carry, +, > (w?0xffff:0xff));
+
+  /** 1011 000w srcx dest  ADC.size src,dest */
+
+  sc = decode_srcdest4(srcx, w);
+  dc = decode_srcdest4(dest, w);
+  b = get_src (sc);
+  MATH_OP (dc, b, carry, +, > (w?0xffff:0xff));
+
+  /** 0111 011w 1110 dest  ADCF.size dest */
+
+  dc = decode_srcdest4(dest, w);
+  MATH_OP (dc, 0, carry, +, > (w?0xffff:0xff));
+
+  /** 0111 011w 0100 dest  ADD.size:G #imm,dest */
+
+  dc = decode_srcdest4(dest, w);
+  imm = IMM(w);
+  MATH_OP (dc, imm, 0, +, > (w?0xffff:0xff));
+
+  /** 1100 100w immm dest  ADD.size:Q #IMM,dest */
+
+  dc = decode_srcdest4(dest, w);
+  imm = sign_ext (immm, 4);
+  MATH_OP (dc, imm, 0, +, > (w?0xffff:0xff));
+
+  /** 1000 0dst            ADD.B:S #IMM8,dst */
+
+  imm = IMM(0);
+  dc = decode_dest3 (dst, 0);
+  MATH_OP (dc, imm, 0, +, > 0xff);
+
+  /** 1010 000w srcx dest  ADD.size:G src,dest */
+
+  sc = decode_srcdest4(srcx, w);
+  dc = decode_srcdest4(dest, w);
+  b = get_src (sc);
+  MATH_OP (dc, b, 0, +, > (w?0xffff:0xff));
+
+  /** 0010 0d sr           ADD.B:S src,R0L/R0H */
+
+  sc = decode_src2 (sr, 0, d);
+  dc = decode_dest1 (d, 0);
+  b = get_src (sc);
+  MATH_OP (dc, b, 0, +, > 0xff);
+
+  /** 0111 110w 1110 1011  ADD.size:G #IMM,sp */
+
+  dc = reg_sd (sp);
+  imm = sign_ext (IMM(w), w?16:8);
+  MATH_OP (dc, imm, 0, +, > 0xffff);
+
+  /** 0111 1101 1011 immm  ADD.size:Q #IMM,sp */
+
+  dc = reg_sd (sp);
+  imm = sign_ext (immm, 4);
+  MATH_OP (dc, imm, 0, +, > 0xffff);
+
+  /** 1111 100w immm dest  ADJNZ.size #IMM,dest,label */
+
+  UNARY_UOP;
+  imm = sign_ext(immm, 4);
+  tprintf("%x + %d = %x\n", v, imm, v+imm);
+  v += imm;
+  put_dest (dc, v);
+  a = sign_ext (IMM(0), 8);
+  if ((v & (w ? 0xffff : 0xff)) != 0)
+    {
+      tprintf("jmp: %x + 2 + %d = ", get_reg (pc), a);
+      put_reg (pc, orig_pc + 2 + a);
+      tprintf("%x\n", get_reg (pc));
+    }
+
+  /** 0111 011w 0010 dest  AND.size:G #IMM,dest */
+
+  UNARY_UOP;
+  imm = IMM(w);
+  tprintf ("%x & %x = %x\n", v, imm, v & imm);
+  v &= imm;
+  set_sz (v, w+1);
+  put_dest (dc, v);
+
+  /** 1001 0dst            AND.B:S #IMM8,dest */
+
+  imm = IMM(0);
+  dc = decode_dest3 (dst, 0);
+  v = get_src (dc);
+  tprintf("%x & %x = %x\n", v, imm, v & imm);
+  v &= imm;
+  set_sz (v, 1);
+  put_dest (dc, v);
+
+  /** 1001 000w srcx dest  AND.size:G src.dest */
+
+  BINARY_UOP;
+  tprintf ("%x & %x = %x\n", a, b, a & b);
+  v = a & b;
+  set_sz (v, w+1);
+  put_dest (dc, v);
+
+  /** 0001 0d sr           AND.B:S src,R0L/R0H */
+
+  sc = decode_src2 (sr, 0, d);
+  dc = decode_dest1 (d, 0);
+  a = get_src (sc);
+  b = get_src (dc);
+  v = a & b;
+  tprintf("%x & %x = %x\n", a, b, v);
+  set_sz (v, 1);
+  put_dest (dc, v);
+
+  /** 0111 1110 0100 srcx  BAND src */
+
+  BIT_OPC (srcx, b & carry);
+
+  /** 0111 1110 1000 dest  BCLR:G dest */
+
+  dc = decode_bit (dest);
+  put_bit (dc, 0);
+
+  /** 0100 0bit            BCLR:S bit,base:11[SB] */
+
+  dc = decode_bit11 (bit);
+  put_bit (dc, 0);
+
+  /** 0111 1110 0010 dest  BMcnd dest  */
+
+  dc = decode_bit (dest);
+  if (condition_true (bmcnd_cond_map [IMM (0) & 15]))
+    put_bit (dc, 1);
+  else
+    put_bit (dc, 0);
+
+  /** 0111 1101 1101 cond  BMcnd C  */
+
+  if (condition_true (cond))
+    set_c (1);
+  else
+    set_c (0);
+
+  /** 0111 1110 0101 srcx  BNAND src */
+
+  BIT_OPC (srcx, !b & carry);
+
+  /** 0111 1110 0111 srcx  BNOR src */
+
+  BIT_OPC (srcx, !b | carry);
+
+  /** 0111 1110 1010 dest  BNOT:G dest */
+
+  BIT_OP (dest, !b);
+
+  /** 0101 0bit            BNOT:S bit,base:11[SB] */
+
+  dc = decode_bit11 (bit);
+  put_bit (dc, !get_bit (dc));
+
+  /** 0111 1110 0011 srcx  BNTST src */
+
+  dc = decode_bit (srcx);
+  b = get_bit (dc);
+  set_zc (!b, !b);
+
+  /** 0111 1110 1101 srcx  BNXOR src */
+
+  BIT_OPC (srcx, !b ^ carry);
+
+  /** 0111 1110 0110 srcx  BOR src */
+
+  BIT_OPC (srcx, b | carry);
+
+  /** 0000 0000            BRK */
+
+  /* We report the break to our caller with the PC still pointing at the 
+     breakpoint instruction.  */
+  put_reg (pc, orig_pc);
+  if (verbose)
+    printf("[break]\n");
+  return M32C_MAKE_HIT_BREAK ();
+
+  /** 0111 1110 1001 dest  BSET:G dest */
+
+  dc = decode_bit (dest);
+  put_bit (dc, 1);
+
+  /** 0100 1bit            BSET:S bit,base:11[SB] */
+
+  dc = decode_bit11 (bit);
+  put_bit (dc, 1);
+
+  /** 0111 1110 1011 srcx  BTST:G src */
+
+  dc = decode_bit (srcx);
+  b = get_bit (dc);
+  set_zc (!b, b);
+
+  /** 0101 1bit            BTST:S bit,base:11[SB] */
+
+  dc = decode_bit11 (bit);
+  b = get_bit (dc);
+  set_zc (!b, b);
+
+  /** 0111 1110 0000 dest  BTSTC dest */
+
+  dc = decode_bit (dest);
+  b = get_bit (dc);
+  set_zc (!b, b);
+  put_bit (dc, 0);
+
+  /** 0111 1110 0001 dest  BTSTS dest */
+
+  dc = decode_bit (dest);
+  b = get_bit (dc);
+  set_zc (!b, b);
+  put_bit (dc, 1);
+
+  /** 0111 1110 1100 srcx  BXOR src */
+
+  BIT_OPC (srcx, b ^ carry);
+
+  /** 0111 011w 1000 dest  CMP.size:G #IMM,dest */
+
+  UNARY_UOP;
+  imm = IMM(w);
+  cmp (v, imm, w);
+
+  /** 1101 000w immm dest  CMP.size:Q #IMM,dest */
+
+  UNARY_UOP;
+  immm = sign_ext (immm, 4);
+  cmp (v, immm, w);
+
+  /** 1110 0dst            CMP.B:S #IMM8,dest */
+
+  imm = IMM(0);
+  dc = decode_dest3 (dst, 0);
+  v = get_src (dc);
+  cmp (v, imm, 0);
+
+  /** 1100 000w srcx dest  CMP.size:G src,dest */
+
+  BINARY_UOP;
+  cmp(b, a, w);
+
+  /** 0011 1d sr           CMP.B:S src,R0L/R0H */
+
+  sc = decode_src2 (sr, 0, d);
+  dc = decode_dest1 (d, 0);
+  a = get_src (sc);
+  b = get_src (dc);
+  cmp (b, a, 0);
+
+  /** 0111 110w 1110 i1c s  DADC,DADD,DSBB,DSUB */
+
+  /* w = width, i = immediate, c = carry, s = subtract */
+
+  int src = i ? IMM(w) : get_reg (w ? r1 : r0h);
+  int dest = get_reg (w ? r0 : r0l);
+  int res;
+
+  src = bcd2int(src, w);
+  dest = bcd2int(dest, w);
+
+  tprintf("decimal: %d %s %d", dest, s?"-":"+", src);
+  if (c)
+    tprintf(" c=%d", carry);
+
+  if (!s)
+    {
+      res = dest + src;
+      if (c)
+	res += carry;
+      c = res > (w ? 9999 : 99);
+    }
+  else
+    {
+      res = dest - src;
+      if (c)
+	res -= (1-carry);
+      c = res >= 0;
+      if (res < 0)
+	res += w ? 10000 : 100;
+    }
+
+  res = int2bcd (res, w);
+  tprintf(" = %x\n", res);
+
+  set_szc (res, w+1, c);
+
+  put_reg (w ? r0 : r0l, res);
+
+  /** 1010 1dst            DEC.B dest */
+
+  dc = decode_dest3 (dst, 0);
+  v = get_src (dc);
+  tprintf("%x -- = %x\n", v, v-1);
+  v --;
+  set_sz (v, 1);
+  put_dest (dc, v);
+
+  /** 1111 d010            DEC.W dest */
+
+  v = get_reg (d ? a1 : a0);
+  tprintf("%x -- = %x\n", v, v-1);
+  v --;
+  set_sz (v, 2);
+  put_reg (d ? a1 : a0, v);
+
+  /** 0111 110w 1110 0001  DIV.size #IMM */
+
+  div_op (-1, 0, 0, w);
+
+  /** 0111 011w 1101 srcx  DIV.size src */
+
+  div_op (srcx, 0, 0, w);
+
+  /** 0111 110w 1110 0000  DIVU.size #IMM */
+
+  div_op (-1, 1, 0, w);
+
+  /** 0111 011w 1100 srcx  DIVU.size src */
+
+  div_op (srcx, 1, 0, w);
+
+  /** 0111 110w 1110 0011  DIVX.size #IMM */
+
+  div_op (-1, 0, 1, w);
+
+  /** 0111 011w 1001 srcx  DIVX.size src */
+
+  div_op (srcx, 0, 1, w);
+
+  /** 0111 1100 1111 0010  ENTER #IMM8 */
+
+  imm = IMM(0);
+  put_reg (sp, get_reg (sp) - 2);
+  mem_put_hi (get_reg (sp), get_reg (fb));
+  put_reg (fb, get_reg (sp));
+  put_reg (sp, get_reg (sp) - imm);
+
+  /** 0111 1101 1111 0010  EXITD */
+
+  put_reg (sp, get_reg (fb));
+  put_reg (fb, mem_get_hi (get_reg (sp)));
+  put_reg (sp, get_reg (sp) + 2);
+  put_reg (pc, mem_get_psi (get_reg (sp)));
+  put_reg (sp, get_reg (sp) + 3);
+
+  /** 0111 1100 0110 dest  EXTS.B dest */
+
+  dc = decode_srcdest4 (dest, 0);
+  v = sign_ext (get_src (dc), 8);
+  dc = widen_sd (dc);
+  put_dest (dc, v);
+  set_sz (v, 1);
+
+  /** 0111 1100 1111 0011  EXTS.W R0 */
+
+  v = sign_ext (get_reg (r0), 16);
+  put_reg (r2r0, v);
+  set_sz (v, 2);
+
+  /** 1110 1011 0flg 0101  FCLR dest */
+
+  set_flags (1 << flg, 0);
+
+  /** 1110 1011 0flg 0100  FSET dest */
+
+  set_flags (1 << flg, 1 << flg);
+
+  /** 1010 0dst            INC.B dest */
+
+  dc = decode_dest3 (dst, 0);
+  v = get_src (dc);
+  tprintf("%x ++ = %x\n", v, v+1);
+  v ++;
+  set_sz (v, 1);
+  put_dest (dc, v);
+
+  /** 1011 d010            INC.W dest */
+
+  v = get_reg (d ? a1 : a0);
+  tprintf("%x ++ = %x\n", v, v+1);
+  v ++;
+  set_sz (v, 2);
+  put_reg (d ? a1 : a0, v);
+
+  /** 1110 1011 11vector   INT #imm */
+
+  trigger_based_interrupt (vector);
+
+  /** 1111 0110            INTO */
+
+  if (FLAG_O)
+    trigger_fixed_interrupt (0xffe0);
+
+  /** 0110 1cnd            Jcnd label */
+
+  v = sign_ext (IMM(0), 8);
+  if (condition_true (cnd))
+    put_reg (pc, orig_pc + 1 + v);
+
+  /** 0111 1101 1100 cond  Jcnd label */
+
+  v = sign_ext (IMM(0), 8);
+  if (condition_true (cond))
+    put_reg (pc, orig_pc + 2 + v);
+
+  /** 0110 0dsp            JMP.S label */
+
+  put_reg (pc, orig_pc + 2 + dsp);
+
+  /** 1111 1110            JMP.B label */
+
+  imm = sign_ext (IMM(0), 8);
+  if (imm == -1)
+    {
+      if (verbose)
+	printf("[jmp-to-self detected as exit]\n");
+      return M32C_MAKE_HIT_BREAK ();
+    }
+  put_reg (pc, orig_pc + 1 + imm);
+
+  /** 1111 0100            JMP.W label */
+
+  imm = sign_ext (IMM(1), 16);
+  put_reg (pc, orig_pc + 1 + imm);
+
+  /** 1111 1100            JMP.A label */
+  
+  imm = IMM(2);
+  put_reg (pc, imm);
+
+  /** 0111 1101 0010 srcx  JMPI.W src */
+
+  sc = decode_jumpdest (srcx, 1);
+  a = get_src (sc);
+  a = sign_ext (a, 16);
+  put_reg (pc, orig_pc + a);
+
+  /** 0111 1101 0000 srcx  JMPI.A src */
+
+  sc = decode_jumpdest (srcx, 0);
+  a = get_src (sc);
+  put_reg (pc, a);
+
+  /** 1110 1110            JMPS #IMM8 */
+
+  M16C_ONLY();
+
+  imm = IMM(0);
+  a = 0xf0000 + mem_get_hi (0xffffe - imm * 2);
+  put_reg (pc, a);
+
+  /** 1111 0101            JSR.W label */
+
+  imm = sign_ext (IMM(1), 16);
+  put_reg (sp, get_reg (sp) - 3);
+  mem_put_psi (get_reg (sp), get_reg (pc));
+  put_reg (pc, orig_pc + imm + 1);
+
+  /** 1111 1101            JSR.A label */
+
+  imm = IMM(2);
+  put_reg (sp, get_reg (sp) - 3);
+  mem_put_psi (get_reg (sp), get_reg (pc));
+  put_reg (pc, imm);
+
+  /** 0111 1101 0011 srcx  JSRI.W src */
+
+  sc = decode_jumpdest (srcx, 1);
+  a = get_src (sc);
+  a = sign_ext (a, 16);
+
+  put_reg (sp, get_reg (sp) - 3);
+  mem_put_psi (get_reg (sp), get_reg (pc));
+  put_reg (pc, orig_pc + a);
+
+  /** 0111 1101 0001 srcx  JSRI.A src */
+
+  sc = decode_jumpdest (srcx, 0);
+  a = get_src (sc);
+
+  put_reg (sp, get_reg (sp) - 3);
+  mem_put_psi (get_reg (sp), get_reg (pc));
+  put_reg (pc, a);
+
+  /** 1110 1111            JSRS #IMM8 */
+
+  M16C_ONLY();
+
+  imm = IMM(0);
+  a = 0xf0000 + mem_get_hi (0xffffe - imm * 2);
+
+  put_reg (sp, get_reg (sp) - 3);
+  mem_put_psi (get_reg (sp), get_reg (pc));
+  put_reg (pc, a);
+
+  /** 1110 1011 0reg 0000  LDC #IMM16,dest */
+
+  dc = decode_cr (reg);
+  imm = IMM(1);
+  put_dest (dc, imm);
+
+  /** 0111 1010 1reg srcx  LDC src,dest */
+
+  dc = decode_cr (reg);
+  sc = decode_srcdest4 (srcx,1);
+  put_dest (dc, get_src (sc));
+
+  /** 0111 1100 1111 0000  LDCTX abs16,abs20 */
+
+  NOTYET();
+
+  /** 0111 010w 1000 dest  LDE.size abs20,dest */
+
+  dc = decode_srcdest4 (dest, w);
+  imm = IMM(2);
+  if (w)
+    v = mem_get_hi (imm);
+  else
+    v = mem_get_qi (imm);
+  put_dest (dc, v);
+
+  /** 0111 010w 1001 dest  LDE.size dsp:20[a0], dest */
+
+  dc = decode_srcdest4 (dest, w);
+  imm = IMM(2) + get_reg (a0);
+  if (w)
+    v = mem_get_hi (imm);
+  else
+    v = mem_get_qi (imm);
+  put_dest (dc, v);
+
+  /** 0111 010w 1010 dest  LDE.size [a1a0],dest */
+  
+  dc = decode_srcdest4 (dest, w);
+  imm = get_reg (a1a0);
+  if (w)
+    v = mem_get_hi (imm);
+  else
+    v = mem_get_qi (imm);
+  put_dest (dc, v);
+
+  /** 0111 1101 1010 0imm  LDIPL #IMM */
+
+  set_flags (0x700, imm*0x100);
+
+  /** 0111 010w 1100 dest  MOV.size:G #IMM,dest */
+
+  dc = decode_srcdest4 (dest, w);
+  imm = IMM(w);
+  v = imm;
+  tprintf("%x = %x\n", v, v);
+  set_sz(v, w+1);
+  put_dest (dc, v);
+
+  /** 1101 100w immm dest  MOV.size:Q #IMM,dest */
+
+  dc = decode_srcdest4 (dest, w);
+  v = sign_ext (immm, 4);
+  tprintf ("%x = %x\n", v, v);
+  set_sz (v, w+1);
+  put_dest (dc, v);
+
+  /** 1100 0dst            MOV.B:S #IMM8,dest */
+
+  imm = IMM(0);
+  dc = decode_dest3 (dst, 0);
+  v = imm;
+  tprintf("%x = %x\n", v, v);
+  set_sz (v, 1);
+  put_dest (dc, v);
+
+  /** 1w10 d010            MOV.size:S #IMM,dest */
+
+  /* Note that for w, 0=W and 1=B unlike the usual meaning.  */
+  v = IMM(1-w);
+  tprintf("%x = %x\n", v, v);
+  set_sz (v, 2-w);
+  put_reg (d ? a1 : a0, v);
+
+  /** 1011 0dst            MOV.B:Z #0,dest */
+
+  dc = decode_dest3 (dst, 0);
+  v = 0;
+  set_sz (v, 1);
+  put_dest (dc, v);
+
+  /** 0111 001w srcx dest  MOV.size:G src,dest */
+
+  sc = decode_srcdest4 (srcx, w);
+  dc = decode_srcdest4 (dest, w);
+  v = get_src (sc);
+  set_sz (v, w+1);
+  put_dest (dc, v);
+
+  /** 0011 0d sr           MOV.B:S src,dest */
+
+  sc = decode_src2 (sr, 0, d);
+  v = get_src (sc);
+  set_sz (v, 1);
+  put_reg (d ? a1 : a0, v);
+
+  /** 0000 0s ds           MOV.B:S R0L/R0H,dest */
+
+  if (ds == 0)
+    UNSUPPORTED();
+  dc = decode_src2 (ds, 0, s);
+  v = get_reg (s ? r0h : r0l);
+  set_sz (v, 1);
+  put_dest (dc, v);
+
+  /** 0000 1d sr           MOV.B:S src,R0L/R0H */
+
+  sc = decode_src2 (sr, 0, d);
+  v = get_src (sc);
+  set_sz (v, 1);
+  put_reg (d ? r0h : r0l, v);
+
+  /** 0111 010w 1011 dest  MOV.size:G dsp:8[SP], dest */
+
+  dc = decode_srcdest4 (dest, w);
+  imm = IMM(0);
+  a = get_reg (sp) + sign_ext (imm, 8);
+  a &= addr_mask;
+  if (w)
+    v = mem_get_hi (a);
+  else
+    v = mem_get_qi (a);
+  set_sz (v, w+1);
+  put_dest (dc, v);
+
+  /** 0111 010w 0011 srcx  MOV.size:G src, disp8[SP] */
+
+  sc = decode_srcdest4 (srcx, w);
+  imm = IMM(0);
+  a = get_reg (sp) + sign_ext (imm, 8);
+  a &= addr_mask;
+  v = get_src (sc);
+  if (w)
+    mem_put_hi (a, v);
+  else
+    mem_put_qi (a, v);
+  set_sz (v, w+1);
+
+  /** 1110 1011 0reg 1src  MOVA src,dest */
+
+  static reg_id map[] = { r0, r1, r2, r3, a0, a1, 0, 0 };
+  sc = decode_srcdest4 (8 + src, 0);
+  put_reg (map[reg], sc.u.addr);
+
+  /** 0111 1100 10hl dest  MOVdir R0L,dest */
+
+  if (dest == 0 || dest == 4 || dest == 5)
+    UNSUPPORTED();
+  dc = decode_srcdest4 (dest, 0);
+  a = get_src (dc);
+  b = get_reg (r0l);
+  switch (hl)
+    {
+    case 0: a = (a & 0xf0) | (b & 0x0f); break;
+    case 1: a = (a & 0xf0) | ((b>>4) & 0x0f); break;
+    case 2: a = (a & 0x0f) | ((b & 0x0f)<<4); break;
+    case 3: a = (a & 0x0f) | (b & 0xf0); break;
+    }
+  put_dest (dc, a);
+
+  /** 0111 1100 00hl srcx  MOVdir src,R0L */
+
+  if (srcx == 0 || srcx == 4 || srcx == 5)
+    UNSUPPORTED();
+  sc = decode_srcdest4 (srcx, 0);
+  a = get_reg (r0l);
+  b = get_src (sc);
+  switch (hl)
+    {
+    case 0: a = (a & 0xf0) | (b & 0x0f); break;
+    case 1: a = (a & 0xf0) | ((b>>4) & 0x0f); break;
+    case 2: a = (a & 0x0f) | ((b & 0x0f)<<4); break;
+    case 3: a = (a & 0x0f) | (b & 0xf0); break;
+    }
+  put_reg (r0l, a);
+
+  /** 0111 110w 0101 dest  MUL.size #IMM,dest */
+
+  UNARY_SOP;
+  imm = sign_ext (IMM(w), w?16:8);
+  tprintf("%d * %d = %d\n", v, imm, v*imm);
+  v *= imm;
+  dc = widen_sd (dc);
+  put_dest (dc, v);
+
+  /** 0111 100w srcx dest  MUL.size src,dest */
+
+  BINARY_SOP;
+  v = a * b;
+  tprintf("%d * %d = %d\n", a, b, v);
+  dc = widen_sd (dc);
+  put_dest (dc, v);
+
+  /** 0111 110w 0100 dest  MULU.size #IMM,dest */
+
+  UNARY_UOP;
+  imm = IMM(w);
+  tprintf("%u * %u = %u\n", v, imm, v*imm);
+  v *= imm;
+  dc = widen_sd (dc);
+  put_dest (dc, v);
+
+  /** 0111 000w srcx dest  MULU.size src,dest */
+
+  BINARY_UOP;
+  v = a * b;
+  tprintf("%u * %u = %u\n", a, b, v);
+  dc = widen_sd (dc);
+  put_dest (dc, v);
+
+  /** 0111 010w 0101 dest  NEG.size dest */
+
+  UNARY_SOP;
+  tprintf("%d * -1 = %d\n", v, -v);
+  v = -v;
+  set_oszc (v, w+1, v == 0);
+  put_dest (dc, v);
+
+  /** 0000 0100            NOP */
+
+  tprintf("nop\n");
+
+  /** 0111 010w 0111 dest  NOT.size:G */
+
+  UNARY_UOP;
+  tprintf("~ %x = %x\n", v, ~v);
+  v = ~v;
+  set_sz (v, w+1);
+  put_dest (dc, v);
+
+  /** 1011 1dst            NOT.B:S dest */
+
+  dc = decode_dest3 (dst, 0);
+  v = get_src (dc);
+  tprintf("~ %x = %x\n", v, ~v);
+  v = ~v;
+  set_sz (v, 1);
+  put_dest (dc, v);
+
+  /** 0111 011w 0011 dest  OR.size:G #IMM,dest */
+
+  UNARY_UOP;
+  imm = IMM(w);
+  tprintf ("%x | %x = %x\n", v, imm, v | imm);
+  v |= imm;
+  set_sz (v, w+1);
+  put_dest (dc, v);
+
+  /** 1001 1dst            OR.B:S #IMM8,dest */
+
+  imm = IMM(0);
+  dc = decode_dest3 (dst, 0);
+  v = get_src (dc);
+  tprintf("%x | %x = %x\n", v, imm, v|imm);
+  v |= imm;
+  set_sz (v, 1);
+  put_dest (dc, v);
+
+  /** 1001 100w srcx dest  OR.size:G src,dest */
+
+  BINARY_UOP;
+  tprintf ("%x | %x = %x\n", a, b, a | b);
+  v = a | b;
+  set_sz (v, w+1);
+  put_dest (dc, v);
+
+  /** 0001 1d sr           OR.B:S src,R0L/R0H */
+
+  sc = decode_src2 (sr, 0, d);
+  dc = decode_dest1 (d, 0);
+  a = get_src (sc);
+  b = get_src (dc);
+  v = a | b;
+  tprintf("%x | %x = %x\n", a, b, v);
+  set_sz (v, 1);
+  put_dest (dc, v);
+
+  /** 0111 010w 1101 dest  POP.size:G dest */
+
+  dc = decode_srcdest4 (dest, w);
+  if (w)
+    {
+      v = mem_get_hi (get_reg (sp));
+      put_reg (sp, get_reg (sp) + 2);
+      tprintf("pophi: %x\n", v);
+    }
+  else
+    {
+      v = mem_get_qi (get_reg (sp));
+      put_reg (sp, get_reg (sp) + 1);
+      tprintf("popqi: %x\n", v);
+    }
+  put_dest (dc, v);
+
+  /** 1001 d010            POP.B:S dest */
+
+  v = mem_get_qi (get_reg (sp));
+  put_reg (d ? r0h : r0l, v);
+  put_reg (sp, get_reg (sp) + 1);
+  tprintf("popqi: %x\n", v);
+
+  /** 1101 d010            POP.W:S dest */
+
+  v = mem_get_hi (get_reg (sp));
+  put_reg (d ? a1 : a0, v);
+  put_reg (sp, get_reg (sp) + 2);
+  tprintf("pophi: %x\n", v);
+
+  /** 1110 1011 0reg 0011  POPC dest */
+
+  dc = decode_cr (reg);
+  v = mem_get_hi (get_reg (sp));
+  put_dest (dc, v);
+  put_reg (sp, get_reg (sp) + 2);
+  tprintf("popc: %x\n", v);
+
+  /** 1110 1101            POPM dest */
+
+  static int map[] = { r0, r1, r2, r3, a0, a1, sb, fb };
+  imm = IMM(0);
+  tprintf("popm: %x\n", imm);
+  for (a=0; a<8; a++)
+    if (imm & (1<<a))
+      {
+	v = mem_get_hi (get_reg (sp));
+	put_reg (map[a], v);
+	put_reg (sp, get_reg (sp) + 2);
+      }
+
+  /** 0111 110w 1110 0010  PUSH.size:G #IMM */
+
+  imm = IMM(w);
+  if (w)
+    {
+      put_reg (sp, get_reg (sp) - 2);
+      mem_put_hi (get_reg (sp), imm);
+      tprintf("pushhi %04x\n", imm);
+    }
+  else
+    {
+      put_reg (sp, get_reg (sp) - 1);
+      mem_put_qi (get_reg (sp), imm);
+      tprintf("pushqi %02x\n", imm);
+    }
+
+  /** 0111 010w 0100 srcx  PUSH.size:G src */
+
+  sc = decode_srcdest4 (srcx, w);
+  v = get_src (sc);
+  if (w)
+    {
+      put_reg (sp, get_reg (sp) - 2);
+      mem_put_hi (get_reg (sp), v);
+      tprintf("pushhi: %x\n", v);
+    }
+  else
+    {
+      put_reg (sp, get_reg (sp) - 1);
+      mem_put_qi (get_reg (sp), v);
+      tprintf("pushqi: %x\n", v);
+    }
+
+  /** 1000 s010            PUSH.B:S src */
+
+  v = get_reg (s ? r0h : r0l);
+  put_reg (sp, get_reg (sp) - 1);
+  mem_put_qi (get_reg (sp), v);
+  tprintf("pushqi: %x\n", v);
+
+  /** 1100 s010            PUSH.W:S src */
+
+  v = get_reg (s ? a1 : a0);
+  put_reg (sp, get_reg (sp) - 2);
+  mem_put_hi (get_reg (sp), v);
+  tprintf("pushhi: %x\n", v);
+
+  /** 0111 1101 1001 srcx  PUSHA src */
+
+  sc = decode_srcdest4 (srcx, 0);
+  put_reg (sp, get_reg (sp) - 2);
+  mem_put_hi (get_reg (sp), sc.u.addr);
+  tprintf("pushhi: %x\n", sc.u.addr);
+
+  /** 1110 1011 0src 0010  PUSHC src */
+
+  sc = decode_cr (src);
+  put_reg (sp, get_reg (sp) - 2);
+  v = get_src (sc);
+  mem_put_hi (get_reg (sp), v);
+  tprintf("pushc: %x\n", v);
+
+  /** 1110 1100            PUSHM src */
+
+  static int map[] = { fb, sb, a1, a0, r3, r2, r1, r0 };
+  imm = IMM(0);
+  tprintf("pushm: %x\n", imm);
+  for (a=0; a<8; a++)
+    if (imm & (1<<a))
+      {
+	put_reg (sp, get_reg (sp) - 2);
+	v = get_reg (map[a]);
+	mem_put_hi (get_reg (sp), v);
+      }
+
+  /** 1111 1011            REIT */
+
+  a = get_reg (sp);
+  v = (mem_get_hi (a)
+       + 65536 * (mem_get_qi (a+3) & 0x0f));
+  b = (mem_get_qi (a+2)
+       + 16 * (mem_get_qi (a+3) & 0xf0));
+  put_reg (pc, v);
+  put_reg (flags, b);
+  put_reg (sp, get_reg (sp) + 4);
+
+  /** 0111 110w 1111 0001  RMPA.size */
+
+  int count = get_reg (r3);
+  int list1 = get_reg (a0);
+  int list2 = get_reg (a1);
+  int sum = get_reg (w ? r2r0 : r0);
+
+  while (count)
+    {
+      if (w)
+	{
+	  a = sign_ext (mem_get_hi (list1), 16);
+	  b = sign_ext (mem_get_hi (list2), 16);
+	}
+      else
+	{
+	  a = sign_ext (mem_get_qi (list1), 8);
+	  b = sign_ext (mem_get_qi (list2), 8);
+	}
+      tprintf("%d + %d * %d = ", sum, a, b);
+      sum += a * b;
+      tprintf("%d\n", sum);
+      list1 += w ? 2 : 1;
+      list2 += w ? 2 : 1;
+      count --;
+    }
+  put_reg (r3, count);
+  put_reg (a0, list1);
+  put_reg (a1, list2);
+  put_reg (w ? r2r0 : r0, sum);
+
+  /** 0111 011w 1010 dest  ROLC.size dest */
+
+  dc = decode_srcdest4 (dest, w);
+  rot_op (dc, 1, 1);
+
+  /** 0111 011w 1011 dest  RORC.size dest */
+
+  dc = decode_srcdest4 (dest, w);
+  rot_op (dc, 1, -1);
+
+  /** 1110 000w immm dest  ROT.size #IMM,dest */
+
+  dc = decode_srcdest4 (dest, w);
+  rot_op (dc, 0, IMM4());
+
+  /** 0111 010w 0110 dest  ROT.size R1H,dest */
+
+  dc = decode_srcdest4 (dest, w);
+  rot_op (dc, 0, sign_ext (get_reg (r1h), 8));
+
+  /** 1111 0011            RTS */
+
+  put_reg (pc, mem_get_psi (get_reg (sp)));
+  put_reg (sp, get_reg (sp) + 3);
+
+  /** 0111 011w 0111 dest  SBB.size #IMM,dest */
+
+  dc = decode_srcdest4 (dest, w);
+  imm = IMM(w);
+  MATH_OP (dc, imm, !carry, -, >= 0);
+
+  /** 1011 100w srcx dest  SBB.size src,dest */
+
+  sc = decode_srcdest4(srcx, w);
+  dc = decode_srcdest4(dest, w);
+  b = get_src (sc);
+  MATH_OP (dc, b, !carry, -, >= 0);
+
+  /** 1111 000w immm dest  SHA.size #IMM, dest */
+
+  dc = decode_srcdest4(dest, w);
+  shift_op (dc, 1, IMM4());
+
+  /** 0111 010w 1111 dest  SHA.size R1H,dest */
+
+  dc = decode_srcdest4(dest, w);
+  a = sign_ext (get_reg (r1h), 8);
+  shift_op (dc, 1, a);
+
+  /** 1110 1011 101d immm  SHA.L #IMM, dest */
+
+  dc = reg_sd (d ? r3r1 : r2r0);
+  shift_op (dc, 1, IMM4());
+
+  /** 1110 1011 001d 0001  SHA.L R1H,dest */
+
+  dc = reg_sd (d ? r3r1 : r2r0);
+  a = sign_ext (get_reg (r1h), 8);
+  shift_op (dc, 1, a);
+
+  /** 1110 100w immm dest  SHL.size #IMM, dest */
+
+  dc = decode_srcdest4(dest, w);
+  shift_op (dc, 0, IMM4());
+
+  /** 0111 010w 1110 dest  SHL.size R1H,dest */
+
+  dc = decode_srcdest4(dest, w);
+  a = sign_ext (get_reg (r1h), 8);
+  shift_op (dc, 0, a);
+
+  /** 1110 1011 100d immm  SHL.L #IMM,dest */
+
+  dc = reg_sd (d ? r3r1 : r2r0);
+  shift_op (dc, 0, IMM4());
+
+  /** 1110 1011 000d 0001  SHL.L R1H,dest */
+
+  dc = reg_sd (d ? r3r1 : r2r0);
+  a = sign_ext (get_reg (r1h), 8);
+  shift_op (dc, 0, a);
+
+  /** 0111 110w 1110 100b  SMOVB.size */
+
+  int count = get_reg (r3);
+  int s1 = get_reg (a0) + (get_reg (r1h) << 16);
+  int s2 = get_reg (a1);
+  int inc = (w ? 2 : 1) * (b ? -1 : 1);
+
+  while (count)
+    {
+      if (w)
+	{
+	  v = mem_get_hi (s1);
+	  mem_put_hi (s2, v);
+	}
+      else
+	{
+	  v = mem_get_qi (s1);
+	  mem_put_qi (s2, v);
+	}
+      s1 += inc;
+      s2 += inc;
+      count --;
+    }
+  put_reg (r3, count);
+  put_reg (a0, s1 & 0xffff);
+  put_reg (a1, s2);
+  put_reg (r1h, s1 >> 16);
+
+  /** 0111 110w 1110 1010  SSTR.size */
+
+  int count = get_reg (r3);
+  int s1 = get_reg (a1);
+  v = get_reg (w ? r0 : r0h);
+
+  while (count)
+    {
+      if (w)
+	{
+	  mem_put_hi (s1, v);
+	  s1 += 2;
+	}
+      else
+	{
+	  mem_put_qi (s1, v);
+	  s1 += 1;
+	}
+      count --;
+    }
+  put_reg (r3, count);
+  put_reg (a1, s1);
+
+  /** 0111 1011 1src dest  STC src,dest */
+
+  dc = decode_srcdest4 (dest, 1);
+  sc = decode_cr (src);
+  put_dest (dc, get_src(sc));
+
+  /** 0111 1100 1100 dest  STC PC,dest */
+
+  dc = decode_srcdest4 (dest, 1);
+  dc.bytes = 3;
+  put_dest (dc, orig_pc);
+
+  /** 0111 1101 1111 0000  STCTX abs16,abs20 */
+
+  NOTYET();
+
+  /** 0111 010w 0000 srcx  STE.size src,abs20 */
+
+  sc = decode_srcdest4 (srcx, w);
+  a = IMM(2);
+  v = get_src (sc);
+  if (w)
+    mem_put_hi (a, v);
+  else
+    mem_put_qi (a, v);
+  if (srcx == 4 || srcx == 5)
+    {
+      v = get_reg (sc.u.reg);
+      set_sz (v, 2);
+    }
+  else
+    set_sz (v, w+1);
+    
+  /** 0111 010w 0001 srcx  STE.size src,disp20[a0] */
+
+  sc = decode_srcdest4 (srcx, w);
+  a = get_reg(a0) + IMM(2);
+  v = get_src (sc);
+  if (w)
+    mem_put_hi (a, v);
+  else
+    mem_put_qi (a, v);
+  if (srcx == 4 || srcx == 5)
+    {
+      v = get_reg (sc.u.reg);
+      set_sz (v, 2);
+    }
+  else
+    set_sz (v, w+1);
+
+  /** 0111 010w 0010 srcx  STE.size src,[a1a0] */
+
+  sc = decode_srcdest4 (srcx, w);
+  a = get_reg(a1a0);
+  v = get_src (sc);
+  if (w)
+    mem_put_hi (a, v);
+  else
+    mem_put_qi (a, v);
+  if (srcx == 4 || srcx == 5)
+    {
+      v = get_reg (sc.u.reg);
+      set_sz (v, 2);
+    }
+  else
+    set_sz (v, w+1);
+
+  /** 1101 0dst            STNZ #IMM8,dest */
+
+  imm = IMM(0);
+  dc = decode_dest3(dst, 0);
+  if (!FLAG_Z)
+    put_dest (dc, imm);
+
+  /** 1100 1dst            STZ #IMM8,dest */
+
+  imm = IMM(0);
+  dc = decode_dest3(dst, 0);
+  if (FLAG_Z)
+    put_dest (dc, imm);
+
+  /** 1101 1dst            STZX #IMM81,#IMM82,dest */
+
+  a = IMM(0);
+  dc = decode_dest3(dst, 0);
+  b = IMM(0);
+  if (FLAG_Z)
+    put_dest (dc, a);
+  else
+    put_dest (dc, b);
+
+  /** 0111 011w 0101 dest  SUB.size:G #IMM,dest */
+
+  dc = decode_srcdest4 (dest, w);
+  imm = IMM(w);
+  MATH_OP (dc, imm, 0, -, >= 0);
+
+  /** 1000 1dst            SUB.B:S #IMM8,dest */
+
+  imm = IMM(0);
+  dc = decode_dest3 (dst, 0);
+  MATH_OP (dc, imm, 0, -, >= 0);
+
+  /** 1010 100w srcx dest  SUB.size:G src,dest */
+
+  sc = decode_srcdest4(srcx, w);
+  dc = decode_srcdest4(dest, w);
+  b = get_src (sc);
+  MATH_OP (dc, b, 0, -, >= 0);
+
+  /** 0010 1d sr           SUB.B:S src,R0L/R0H */
+
+  sc = decode_src2 (sr, 0, d);
+  dc = decode_dest1 (d, 0);
+  b = get_src (sc);
+  MATH_OP (dc, b, 0, -, >= 0);
+
+  /** 0111 011w 0000 dest  TST.size #IMM, dest */
+
+  UNARY_UOP;
+  imm = IMM(w);
+  tprintf ("%x & %x = %x\n", v, imm, v & imm);
+  v &= imm;
+  set_sz (v, w+1);
+
+  /** 1000 000w srcx dest  TST.size src,dest */
+
+  BINARY_UOP;
+  tprintf ("%x & %x = %x\n", a, b, a & b);
+  v = a & b;
+  set_sz (v, w+1);
+
+  /** 1111 1111            UND */
+
+  trigger_fixed_interrupt (0xffdc);
+
+  /** 0111 1101 1111 0011  WAIT */
+
+  tprintf("waiting...\n");
+
+  /** 0111 101w 00sr dest  XCHG.size src,dest */
+
+  sc = decode_srcdest4 (sr, w);
+  dc = decode_srcdest4 (dest, w);
+  a = get_src (sc);
+  b = get_src (dc);
+  put_dest (dc, a);
+  put_dest (sc, b);
+
+  /** 0111 011w 0001 dest  XOR.size #IMM,dest */
+
+  UNARY_UOP;
+  imm = IMM(w);
+  tprintf ("%x ^ %x = %x\n", v, imm, v ^ imm);
+  v ^= imm;
+  set_sz (v, w+1);
+  put_dest (dc, v);
+
+  /** 1000 100w srcx dest  XOR.size src,dest */
+
+  BINARY_UOP;
+  tprintf ("%x ^ %x = %x\n", a, b, a ^ b);
+  v = a ^ b;
+  set_sz (v, w+1);
+  put_dest (dc, v);
+  
+  /**                      OP */
+/** */
+
+  return step_result;
+}

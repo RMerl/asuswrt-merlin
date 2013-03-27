@@ -1,0 +1,167 @@
+#   Copyright 2005, 2006, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if $tracelevel then {
+	strace $tracelevel
+	}
+
+if { [is_remote target] || ![isnative] } then {
+    continue
+}
+
+# Until "set follow-fork-mode" and "catch fork" are implemented on
+# other targets...
+#
+if {![istarget "hppa*-hp-hpux*"] && ![istarget "*-*-linux*"]} then {
+    continue
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "multi-forks"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested multi-forks.exp
+     return -1
+}
+
+# Start with a fresh gdb
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+global gdb_prompt
+
+# This is a test of gdb's ability to follow the parent, child or both
+# parent and child of multiple Unix fork() system calls.
+#
+
+# Inferior program calls fork 4 times.  Since each fork
+# calls fork 4 times, there will be 16 forks.  Each fork
+# saves the return values of its own 4 fork calls.
+
+# First set gdb to follow the child.
+# The result should be that each of the 4 forks returns zero.
+
+runto_main
+set exit_bp_loc [gdb_get_line_number "Set exit breakpoint here."]
+gdb_test "break $exit_bp_loc" "Breakpoint.* at .*" "Break at exit"
+gdb_test "set follow child" "" ""
+
+send_gdb "continue\n"
+gdb_expect {
+    -re ".*Break.* main .*$gdb_prompt.*$" {}
+    -re ".*$gdb_prompt $" {fail "run to exit 1"}
+    default {fail "run to exit 1 (timeout)"}
+}
+
+gdb_test "print pids" "\\$.* = \\{0, 0, 0, 0\\}.*" "follow child, print pids"
+
+# Now set gdb to follow the parent.
+# Result should be that none of the 4 forks returns zero.
+
+delete_breakpoints
+runto_main
+gdb_test "break $exit_bp_loc" "Breakpoint.* at .*" "Break at exit"
+gdb_test "set follow parent" "" ""
+
+send_gdb "continue\n"
+gdb_expect {
+    -re ".*Break.* main .*$gdb_prompt.*$" {}
+    -re ".*$gdb_prompt $" {fail "run to exit 2"}
+    default {fail "run to exit 2 (timeout)"}
+}
+
+gdb_test "print pids\[0\]==0 || pids\[1\]==0 || pids\[2\]==0 || pids\[3\]==0" \
+    " = 0" "follow parent, print pids"
+
+#
+# Now test with detach-on-fork off.
+#
+
+runto_main
+gdb_test "break $exit_bp_loc" "Breakpoint.* at .*" ""
+
+gdb_test "help set detach-on-fork" "whether gdb will detach the child.*" \
+    "help set detach"
+
+gdb_test "show detach-on-fork" "on." "show detach default on"
+
+gdb_test "set detach off" "" "set detach off"
+
+#
+# We will now run every fork up to the exit bp, 
+# eventually winding up with 16 forks.
+#
+
+for {set i 1} {$i <= 15} {incr i} {
+  gdb_test "continue" "Breakpoint .* main .*exit.*" "Run to exit $i"
+  gdb_test "info fork" " 4 .* 3 .* 2 .* 1 .*" "info fork $i"
+  gdb_test "restart $i" "(_dl_sysinfo_int80|fork|__kernel_(v|)syscall).*" \
+      "restart $i"
+}
+
+gdb_test "continue" "Breakpoint .* main .*exit.*" "Run to exit 16"
+gdb_test "info fork" " 4 .* 3 .* 2 .* 1 .*" "info fork 16"
+gdb_test "restart 0" " main .*" "restart final"
+
+#
+# Now we should examine all the pids.
+#
+
+# 
+# Test detach fork
+# 
+
+# [assumes we're at #0]
+gdb_test "detach fork 1" "Detached .*" "Detach 1"
+gdb_test "detach fork 2" "Detached .*" "Detach 2"
+gdb_test "detach fork 3" "Detached .*" "Detach 3"
+gdb_test "detach fork 4" "Detached .*" "Detach 4"
+
+# 
+# Test delete fork
+# 
+
+gdb_test "delete fork 5" "" "Delete 5"
+gdb_test "info fork 5"   "No fork number 5." "Did delete 5"
+gdb_test "delete fork 6" "" "Delete 6"
+gdb_test "info fork 6"   "No fork number 6." "Did delete 6"
+gdb_test "delete fork 7" "" "Delete 7"
+gdb_test "info fork 7"   "No fork number 7." "Did delete 7"
+gdb_test "delete fork 8" "" "Delete 8"
+gdb_test "info fork 8"   "No fork number 8." "Did delete 8"
+gdb_test "delete fork 9" "" "Delete 9"
+gdb_test "info fork 9"   "No fork number 9." "Did delete 9"
+gdb_test "delete fork 10" "" "Delete 10"
+gdb_test "info fork 10"   "No fork number 10." "Did delete 10"
+gdb_test "delete fork 11" "" "Delete 11"
+gdb_test "info fork 11"   "No fork number 11." "Did delete 11"
+gdb_test "delete fork 12" "" "Delete 12"
+gdb_test "info fork 12"   "No fork number 12." "Did delete 12"
+gdb_test "delete fork 13" "" "Delete 13"
+gdb_test "info fork 13"   "No fork number 13." "Did delete 13"
+gdb_test "delete fork 14" "" "Delete 14"
+gdb_test "info fork 14"   "No fork number 14." "Did delete 14"
+gdb_test "delete fork 15" "" "Delete 15"
+gdb_test "info fork 15"   "No fork number 15." "Did delete 15"
+
+return 0
+

@@ -1,0 +1,98 @@
+
+Note all these are mere examples which can be customized to your needs
+
+AFCBQ
+-----
+AF PHB built using CBQ, DSMARK,GRED (default in GRIO mode) ,RED for BE 
+and the tcindex classifier with some algorithmic mapping
+
+EFCBQ
+-----
+EF PHB built using CBQ (for rate control and prioritization), 
+DSMARK( to remark DSCPs), tcindex  classifier and  RED for the BE
+traffic.
+
+EFPRIO
+------
+EF PHB using the PRIO scheduler, Token Bucket to rate control EF,
+tcindex classifier, DSMARK to remark, and RED for the BE traffic
+
+EDGE scripts
+==============
+
+CB-3(1|2)-(u32/chains)
+======================
+
+
+The major differences are that the classifier is u32 on -u32 extension
+and IPchains on the chains extension. CB stands for color Blind
+and 31 is for the mode where only a CIR and CBS are defined whereas
+32 stands for a mode where a CIR/CBS + PIR/EBS are defined.
+
+Color Blind (CB)
+==========-----=
+We look at one special subnet that we are interested in for simplicty
+reasons to demonstrate the capability. We send the packets from that
+subnet to AF4*, BE or end up dropping depending on the metering results. 
+
+
+The algorithm overview is as follows:
+
+*classify:
+
+**case: subnet X
+----------------
+  if !exceed meter1 tag as AF41
+	else
+	    if !exceed meter2  tag as AF42
+	        else
+		  if !exceed meter 3 tag as AF43
+		      else 
+			 drop 
+
+default case: Any other subnet
+-------------------------------
+  if !exceed meter 5 tag as AF43
+      else
+	 drop 
+
+
+One Egress side change the DSCPs of the packets to reflect AF4* and BE
+based on the tags from the ingress.
+
+-------------------------------------------------------------
+
+Color Aware
+===========
+
+Define some meters with + policing and give them IDs eg
+
+meter1=police index 1 rate $CIR1 burst $CBS1  
+meter2=police index 2 rate $CIR2 burst $CBS2   etc 
+
+General overview:
+classify based on the DSCPs and use the policer ids to decide tagging
+
+
+*classify on ingress:
+
+switch (dscp) {
+    case AF41: /* tos&0xfc == 0x88 */
+	if (!exceed meter1) break;
+    case AF42: /* tos&0xfc == 0x90 */
+	if (!exceed meter2) {
+	    tag as AF42;
+	    break;
+	}
+    case AF43: /* tos&0xfc == 0x98 */
+	if (!exceed meter3) {
+	    tag as AF43;
+	    break;
+	} else
+	  drop;
+    default:
+	if (!exceed meter4) tag as BE;
+	else drop;
+}
+
+On the Egress side mark the proper AF tags

@@ -2,7 +2,7 @@
  * Generic Broadcom Home Networking Division (HND) DMA engine HW interface
  * This supports the following chips: BCM42xx, 44xx, 47xx .
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: sbhnddma.h 321146 2012-03-14 08:27:23Z $
+ * $Id: sbhnddma.h 345316 2012-07-17 17:46:04Z $
  */
 
 #ifndef	_sbhnddma_h_
@@ -241,9 +241,17 @@ typedef volatile struct {
  */
 #define D64RINGALIGN_BITS	13
 #define	D64MAXRINGSZ		(1 << D64RINGALIGN_BITS)
-#define	D64RINGALIGN		(1 << D64RINGALIGN_BITS)
+#define	D64RINGBOUNDARY		(1 << D64RINGALIGN_BITS)
 
 #define	D64MAXDD	(D64MAXRINGSZ / sizeof (dma64dd_t))
+
+/* for cores with large descriptor ring support, descriptor ring size can be up to 4096 */
+#define	D64MAXDD_LARGE		((1 << 16) / sizeof (dma64dd_t))
+
+/* for cores with large descriptor ring support (4k descriptors), descriptor ring cannot cross
+ * 64K boundary
+ */
+#define	D64RINGBOUNDARY_LARGE	(1 << 16)
 
 /*
  * Default DMA Burstlen values for USBRev >= 12 and SDIORev >= 11.
@@ -281,7 +289,7 @@ typedef volatile struct {
 #define	D64_XP_LD_MASK		0x00001fff	/* last valid descriptor */
 
 /* transmit channel status */
-#define	D64_XS0_CD_MASK		0x00001fff	/* current descriptor pointer */
+#define	D64_XS0_CD_MASK		(di->d64_xs0_cd_mask)	/* current descriptor pointer */
 #define	D64_XS0_XS_MASK		0xf0000000     	/* transmit state */
 #define	D64_XS0_XS_SHIFT		28
 #define	D64_XS0_XS_DISABLED	0x00000000	/* disabled */
@@ -290,7 +298,7 @@ typedef volatile struct {
 #define	D64_XS0_XS_STOPPED	0x30000000	/* stopped */
 #define	D64_XS0_XS_SUSP		0x40000000	/* suspend pending */
 
-#define	D64_XS1_AD_MASK		0x00001fff	/* active descriptor */
+#define	D64_XS1_AD_MASK		(di->d64_xs1_ad_mask)	/* active descriptor */
 #define	D64_XS1_XE_MASK		0xf0000000     	/* transmit errors */
 #define	D64_XS1_XE_SHIFT		28
 #define	D64_XS1_XE_NOERR	0x00000000	/* no error */
@@ -330,7 +338,7 @@ typedef volatile struct {
 #define	D64_RP_LD_MASK		0x00001fff	/* last valid descriptor */
 
 /* receive channel status */
-#define	D64_RS0_CD_MASK		0x00001fff	/* current descriptor pointer */
+#define	D64_RS0_CD_MASK		(di->d64_rs0_cd_mask)	/* current descriptor pointer */
 #define	D64_RS0_RS_MASK		0xf0000000     	/* receive state */
 #define	D64_RS0_RS_SHIFT		28
 #define	D64_RS0_RS_DISABLED	0x00000000	/* disabled */

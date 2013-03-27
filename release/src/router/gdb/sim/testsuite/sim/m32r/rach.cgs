@@ -1,0 +1,22 @@
+# m32r testcase for rach
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global rach
+rach:
+	mvi_h_accum0 1, 0x40004001
+	rach
+	test_h_accum0 3, 0
+
+	mvi_h_accum0 0x3fff, 0xc0000000
+	rach
+	test_h_accum0 0x7fff, 0
+
+	mvi_h_accum0 0xffff8000, 0
+	rach
+	test_h_accum0 0xffff8000, 0
+
+	pass

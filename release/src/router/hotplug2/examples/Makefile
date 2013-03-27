@@ -10,6 +10,9 @@ all:
 install:
 	$(INSTALL_DIR) $(PREFIX)/etc
 	case "$(KERNELVER)" in \
+		3.*) \
+		$(INSTALL) hotplug2.rules-2.6kernel $(PREFIX)/etc/hotplug2.rules \
+		;; \
 		2.6.*) \
 		$(INSTALL) hotplug2.rules-2.6kernel $(PREFIX)/etc/hotplug2.rules \
 		;; \

@@ -1,0 +1,700 @@
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 1996, 1997, 1999, 2003, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+# Some targets can't call functions, so don't even bother with this
+# test.
+
+if [target_info exists gdb,cannot_call_functions] {
+    setup_xfail "*-*-*"
+    fail "This target can not call functions"
+    continue
+}
+
+set testfile "structs"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+# Create and source the file that provides information about the
+# compiler used to compile the test case.
+
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+# Compile a variant of structs.c using TYPES to specify the type of
+# the first N struct elements (the remaining elements take the type of
+# the last TYPES field).  Run the compmiled program up to "main".
+# Also updates the global "testfile" to reflect the most recent build.
+
+proc start_structs_test { types } {
+    global testfile
+    global srcfile
+    global binfile
+    global objdir
+    global subdir
+    global srcdir
+    global gdb_prompt
+
+    # Create the additional flags
+    set flags "debug"
+    set testfile "structs"
+    set n 0
+    for {set n 0} {$n<[llength ${types}]} {incr n} {
+	set m [I2A ${n}]
+	set t [lindex ${types} $n]
+	lappend flags "additional_flags=-Dt${m}=${t}"
+	append testfile "-" "$t"
+    }
+
+    set binfile ${objdir}/${subdir}/${testfile}
+    if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "${flags}"] != "" } {
+	# built the second test case since we can't use prototypes
+	warning "Prototypes not supported, rebuilding with -DNO_PROTOTYPES"
+	if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "${flags} additional_flags=-DNO_PROTOTYPES"] != "" } {
+	    untested structs.exp
+	    return -1
+	}
+    }
+
+    # Start with a fresh gdb.
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_load ${binfile}
+
+    # Make certain that the output is consistent
+    gdb_test "set print sevenbit-strings" "" \
+	    "set print sevenbit-strings; ${testfile}"
+    gdb_test "set print address off" "" \
+	    "set print address off; ${testfile}"
+    gdb_test "set width 0" "" \
+	    "set width 0; ${testfile}"
+
+    # Advance to main
+    if { ![runto_main] } then {
+	gdb_suppress_tests;
+    }
+
+    # Get the debug format
+    get_debug_format
+
+    # check that at the struct containing all the relevant types is correct
+    set foo_t "type = struct struct[llength ${types}] \{"
+    for {set n 0} {$n<[llength ${types}]} {incr n} {
+	append foo_t "\[\r\n \]+[lindex ${types} $n] [i2a $n];"
+    }
+    append foo_t "\[\r\n \]+\}"
+    gdb_test "ptype foo[llength ${types}]" "${foo_t}" \
+	    "ptype foo[llength ${types}]; ${testfile}"
+}
+
+# The expected value for fun${n}, L${n} and foo${n}.  First element is
+# empty to make indexing easier.  "foo" returns the modified value,
+# "zed" returns the invalid value.
+
+proc foo { n } {
+    return [lindex {
+	"{}"
+	"{a = 49 '1'}"
+	"{a = 97 'a', b = 50 '2'}"
+	"{a = 49 '1', b = 98 'b', c = 51 '3'}"
+	"{a = 97 'a', b = 50 '2', c = 99 'c', d = 52 '4'}"
+	"{a = 49 '1', b = 98 'b', c = 51 '3', d = 100 'd', e = 53 '5'}"
+	"{a = 97 'a', b = 50 '2', c = 99 'c', d = 52 '4', e = 101 'e', f = 54 '6'}"
+	"{a = 49 '1', b = 98 'b', c = 51 '3', d = 100 'd', e = 53 '5', f = 102 'f', g = 55 '7'}"
+	"{a = 97 'a', b = 50 '2', c = 99 'c', d = 52 '4', e = 101 'e', f = 54 '6', g = 103 'g', h = 56 '8'}"
+	"{a = 49 '1', b = 98 'b', c = 51 '3', d = 100 'd', e = 53 '5', f = 102 'f', g = 55 '7', h = 104 'h', i = 57 '9'}"
+	"{a = 97 'a', b = 50 '2', c = 99 'c', d = 52 '4', e = 101 'e', f = 54 '6', g = 103 'g', h = 56 '8', i = 105 'i', j = 65 'A'}"
+	"{a = 49 '1', b = 98 'b', c = 51 '3', d = 100 'd', e = 53 '5', f = 102 'f', g = 55 '7', h = 104 'h', i = 57 '9', j = 106 'j', k = 66 'B'}"
+	"{a = 97 'a', b = 50 '2', c = 99 'c', d = 52 '4', e = 101 'e', f = 54 '6', g = 103 'g', h = 56 '8', i = 105 'i', j = 65 'A', k = 107 'k', l = 67 'C'}"
+	"{a = 49 '1', b = 98 'b', c = 51 '3', d = 100 'd', e = 53 '5', f = 102 'f', g = 55 '7', h = 104 'h', i = 57 '9', j = 106 'j', k = 66 'B', l = 108 'l', m = 68 'D'}"
+	"{a = 97 'a', b = 50 '2', c = 99 'c', d = 52 '4', e = 101 'e', f = 54 '6', g = 103 'g', h = 56 '8', i = 105 'i', j = 65 'A', k = 107 'k', l = 67 'C', m = 109 'm', n = 69 'E'}"
+	"{a = 49 '1', b = 98 'b', c = 51 '3', d = 100 'd', e = 53 '5', f = 102 'f', g = 55 '7', h = 104 'h', i = 57 '9', j = 106 'j', k = 66 'B', l = 108 'l', m = 68 'D', n = 110 'n', o = 70 'F'}"
+	"{a = 97 'a', b = 50 '2', c = 99 'c', d = 52 '4', e = 101 'e', f = 54 '6', g = 103 'g', h = 56 '8', i = 105 'i', j = 65 'A', k = 107 'k', l = 67 'C', m = 109 'm', n = 69 'E', o = 111 'o', p = 71 'G'}"
+	"{a = 49 '1', b = 98 'b', c = 51 '3', d = 100 'd', e = 53 '5', f = 102 'f', g = 55 '7', h = 104 'h', i = 57 '9', j = 106 'j', k = 66 'B', l = 108 'l', m = 68 'D', n = 110 'n', o = 70 'F', p = 112 'p', q = 72 'H'}"
+    } $n]
+}
+
+proc zed { n } {
+    return [lindex {
+	"{}"
+	"{a = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z', d = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z', d = 90 'Z', e = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z', d = 90 'Z', e = 90 'Z', f = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z', d = 90 'Z', e = 90 'Z', f = 90 'Z', g = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z', d = 90 'Z', e = 90 'Z', f = 90 'Z', g = 90 'Z', h = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z', d = 90 'Z', e = 90 'Z', f = 90 'Z', g = 90 'Z', h = 90 'Z', i = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z', d = 90 'Z', e = 90 'Z', f = 90 'Z', g = 90 'Z', h = 90 'Z', i = 90 'Z', j = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z', d = 90 'Z', e = 90 'Z', f = 90 'Z', g = 90 'Z', h = 90 'Z', i = 90 'Z', j = 90 'Z', k = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z', d = 90 'Z', e = 90 'Z', f = 90 'Z', g = 90 'Z', h = 90 'Z', i = 90 'Z', j = 90 'Z', k = 90 'Z', l = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z', d = 90 'Z', e = 90 'Z', f = 90 'Z', g = 90 'Z', h = 90 'Z', i = 90 'Z', j = 90 'Z', k = 90 'Z', l = 90 'Z', m = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z', d = 90 'Z', e = 90 'Z', f = 90 'Z', g = 90 'Z', h = 90 'Z', i = 90 'Z', j = 90 'Z', k = 90 'Z', l = 90 'Z', m = 90 'Z', n = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z', d = 90 'Z', e = 90 'Z', f = 90 'Z', g = 90 'Z', h = 90 'Z', i = 90 'Z', j = 90 'Z', k = 90 'Z', l = 90 'Z', m = 90 'Z', n = 90 'Z', o = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z', d = 90 'Z', e = 90 'Z', f = 90 'Z', g = 90 'Z', h = 90 'Z', i = 90 'Z', j = 90 'Z', k = 90 'Z', l = 90 'Z', m = 90 'Z', n = 90 'Z', o = 90 'Z', p = 90 'Z'}"
+	"{a = 90 'Z', b = 90 'Z', c = 90 'Z', d = 90 'Z', e = 90 'Z', f = 90 'Z', g = 90 'Z', h = 90 'Z', i = 90 'Z', j = 90 'Z', k = 90 'Z', l = 90 'Z', m = 90 'Z', n = 90 'Z', o = 90 'Z', p = 90 'Z', q = 90 'Z'}"
+    } $n]
+}
+
+proc any { n } {
+    return [lindex {
+	"{}"
+	"{a = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*, d = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*, d = \[^,\}\]*, e = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*, d = \[^,\}\]*, e = \[^,\}\]*, f = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*, d = \[^,\}\]*, e = \[^,\}\]*, f = \[^,\}\]*, g = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*, d = \[^,\}\]*, e = \[^,\}\]*, f = \[^,\}\]*, g = \[^,\}\]*, h = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*, d = \[^,\}\]*, e = \[^,\}\]*, f = \[^,\}\]*, g = \[^,\}\]*, h = \[^,\}\]*, i = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*, d = \[^,\}\]*, e = \[^,\}\]*, f = \[^,\}\]*, g = \[^,\}\]*, h = \[^,\}\]*, i = \[^,\}\]*, j = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*, d = \[^,\}\]*, e = \[^,\}\]*, f = \[^,\}\]*, g = \[^,\}\]*, h = \[^,\}\]*, i = \[^,\}\]*, j = \[^,\}\]*, k = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*, d = \[^,\}\]*, e = \[^,\}\]*, f = \[^,\}\]*, g = \[^,\}\]*, h = \[^,\}\]*, i = \[^,\}\]*, j = \[^,\}\]*, k = \[^,\}\]*, l = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*, d = \[^,\}\]*, e = \[^,\}\]*, f = \[^,\}\]*, g = \[^,\}\]*, h = \[^,\}\]*, i = \[^,\}\]*, j = \[^,\}\]*, k = \[^,\}\]*, l = \[^,\}\]*, m = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*, d = \[^,\}\]*, e = \[^,\}\]*, f = \[^,\}\]*, g = \[^,\}\]*, h = \[^,\}\]*, i = \[^,\}\]*, j = \[^,\}\]*, k = \[^,\}\]*, l = \[^,\}\]*, m = \[^,\}\]*, n = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*, d = \[^,\}\]*, e = \[^,\}\]*, f = \[^,\}\]*, g = \[^,\}\]*, h = \[^,\}\]*, i = \[^,\}\]*, j = \[^,\}\]*, k = \[^,\}\]*, l = \[^,\}\]*, m = \[^,\}\]*, n = \[^,\}\]*, o = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*, d = \[^,\}\]*, e = \[^,\}\]*, f = \[^,\}\]*, g = \[^,\}\]*, h = \[^,\}\]*, i = \[^,\}\]*, j = \[^,\}\]*, k = \[^,\}\]*, l = \[^,\}\]*, m = \[^,\}\]*, n = \[^,\}\]*, o = \[^,\}\]*, p = \[^,\}\]*}"
+	"{a = \[^,\}\]*, b = \[^,\}\]*, c = \[^,\}\]*, d = \[^,\}\]*, e = \[^,\}\]*, f = \[^,\}\]*, g = \[^,\}\]*, h = \[^,\}\]*, i = \[^,\}\]*, j = \[^,\}\]*, k = \[^,\}\]*, l = \[^,\}\]*, m = \[^,\}\]*, n = \[^,\}\]*, o = \[^,\}\]*, p = \[^,\}\]*, q = \[^,\}\]*}"
+    } $n]
+}
+
+# Given N (0..25), return the corresponding alphabetic letter in lower
+# or upper case.  This is ment to be i18n proof.
+
+proc i2a { n } {
+    return [string range "abcdefghijklmnopqrstuvwxyz" $n $n]
+}
+
+proc I2A { n } {
+    return [string toupper [i2a $n]]
+}
+
+
+# Use the file name, compiler and tuples to set up any needed KFAILs.
+
+proc setup_kfails { file tuples bug } {
+    global testfile
+    if [string match $file $testfile] {
+	foreach f $tuples { setup_kfail $f $bug }
+    }
+}
+
+proc setup_compiler_kfails { file compiler format tuples bug } {
+    global testfile
+    if {[string match $file $testfile] && [test_compiler_info $compiler]  && [test_debug_format $format]} {
+	foreach f $tuples { setup_kfail $f $bug }
+    }
+}
+
+# Test GDB's ability to make inferior function calls to functions
+# returning (or passing in a single structs.
+
+# N identifies the number of elements in the struct that will be used
+# for the test case.  FAILS is a list of target tuples that will fail
+# this test.
+
+#  start_structs_test() will have previously built a program with a
+# specified combination of types for those elements.  To ensure
+# robustness of the output, "p/c" is used.
+
+# This tests the code paths "which return-value convention?" and
+# "extract return-value from registers" called by "infcall.c".
+
+proc test_struct_calls { n } {
+    global testfile
+    global gdb_prompt
+
+    # Check that GDB can always extract a struct-return value from an
+    # inferior function call.  Since GDB always knows the location of an
+    # inferior function call's return value these should never fail
+    
+    # Implemented by calling the parameterless function "fun$N" and then
+    # examining the return value printed by GDB.
+
+    set tests "call $n ${testfile}"
+
+    # Call fun${n}, checking the printed return-value.
+    setup_compiler_kfails structs-tc-tll gcc-3-3-* "DWARF 2" i*86-*-* gdb/1455
+    setup_compiler_kfails structs-tc-td gcc-3-3-* "DWARF 2" i*86-*-* gdb/1455
+    gdb_test "p/c fun${n}()"  "[foo ${n}]" "p/c fun<n>(); ${tests}"
+
+    # Check that GDB can always pass a structure to an inferior function.
+    # This test can never fail.
+
+    # Implemented by calling the one parameter function "Fun$N" which
+    # stores its parameter in the global variable "L$N".  GDB then
+    # examining that global to confirm that the value is as expected.
+
+    gdb_test "call Fun${n}(foo${n})" "" "call Fun<n>(foo<n>); ${tests}"
+    setup_compiler_kfails structs-tc-tll gcc-3-3-* "DWARF 2" i*86-*-* gdb/1455
+    setup_compiler_kfails structs-tc-td gcc-3-3-* "DWARF 2" i*86-*-* gdb/1455
+    gdb_test "p/c L${n}" [foo ${n}] "p/c L<n>; ${tests}"
+}
+
+# Test GDB's ability to both return a function (with "return" or
+# "finish") and correctly extract/store any corresponding
+# return-value.
+
+# Check that GDB can consistently extract/store structure return
+# values.  There are two cases - returned in registers and returned in
+# memory.  For the latter case, the return value can't be found and a
+# failure is "expected".  However GDB must still both return the
+# function and display the final source and line information.
+
+# N identifies the number of elements in the struct that will be used
+# for the test case.  FAILS is a list of target tuples that will fail
+# this test.
+
+# This tests the code paths "which return-value convention?", "extract
+# return-value from registers", and "store return-value in registers".
+# Unlike "test struct calls", this test is expected to "fail" when the
+# return-value is in memory (GDB can't find the location).  The test
+# is in three parts: test "return"; test "finish"; check that the two
+# are consistent.  GDB can sometimes work for one command and not the
+# other.
+
+proc test_struct_returns { n } {
+    global gdb_prompt
+    global testfile
+
+    set tests "return $n ${testfile}"
+
+
+    # Check that "return" works.
+
+    # GDB must always force the return of a function that has
+    # a struct result.  Dependant on the ABI, it may, or may not be
+    # possible to store the return value in a register.
+
+    # The relevant code looks like "L{n} = fun{n}()".  The test forces
+    # "fun{n}" to "return" with an explicit value.  Since that code
+    # snippet will store the the returned value in "L{n}" the return
+    # is tested by examining "L{n}".  This assumes that the
+    # compiler implemented this as fun{n}(&L{n}) and hence that when
+    # the value isn't stored "L{n}" remains unchanged.  Also check for
+    # consistency between this and the "finish" case.
+
+    # Get into a call of fun${n}
+    gdb_test "advance fun${n}" \
+	    "fun${n} .*\[\r\n\]+\[0-9\].*return foo${n}.*" \
+	    "advance to fun<n> for return; ${tests}"
+
+    # Check that the program invalidated the relevant global.
+    gdb_test "p/c L${n}" " = [zed $n]" "zed L<n> for return; ${tests}"
+
+    # Force the "return".  This checks that the return is always
+    # performed, and that GDB correctly reported this to the user.
+    # GDB 6.0 and earlier, when the return-value's location wasn't
+    # known, both failed to print a final "source and line" and misplaced
+    # the frame ("No frame").
+
+    # The test is writen so that it only reports one FAIL/PASS for the
+    # entire operation.  The value returned is checked further down.
+    # "return_value_known", if non-zero, indicates that GDB knew where
+    # the return value was located.
+
+    set test "return foo<n>; ${tests}"
+    set return_value_known 1
+    set return_value_unimplemented 0
+    gdb_test_multiple "return foo${n}" "${test}" {
+	-re "The location" {
+	    # Ulgh, a struct return, remember this (still need prompt).
+	    set return_value_known 0
+	    exp_continue
+	}
+	-re "A structure or union" {
+	    # Ulgh, a struct return, remember this (still need prompt).
+	    set return_value_known 0
+	    # Double ulgh.  Architecture doesn't use return_value and
+	    # hence hasn't implemented small structure return.
+	    set return_value_unimplemented 1
+	    exp_continue
+	}
+	-re "Make fun${n} return now.*y or n. $" {
+	    gdb_test_multiple "y" "${test}" {
+		-re "L${n} *= fun${n}.*${gdb_prompt} $" {
+		    # Need to step off the function call
+		    gdb_test "next" "L.* *= fun.*" "${test}"
+		}
+		-re "L[expr ${n} + 1] *= fun[expr ${n} + 1].*${gdb_prompt} $" {
+		    pass "${test}"
+		}
+	    }
+	}
+    }
+
+    # Check that the return-value is as expected.  At this stage we're
+    # just checking that GDB has returned a value consistent with
+    # "return_value_known" set above.
+    #
+    # Note that, when return_value_known is false, we can't make any
+    # assumptions at all about the value L<n>:
+    #
+    # - If the caller passed the address of L<n> directly as fun<n>'s
+    #   return value buffer, then L<n> will be unchanged, because we
+    #   forced fun<n> to return before it could store anything in it.
+    #
+    # - If the caller passed the address of some temporary buffer to
+    #   fun<n>, and then copied the buffer into L<n>, then L<n> will
+    #   have been overwritten with whatever garbage was in the
+    #   uninitialized buffer.
+    #
+    # - However, if the temporary buffer just happened to have the
+    #   "right" value of foo<n> in it, then L<n> will, in fact, have
+    #   the value you'd expect to see if the 'return' had worked!
+    #   This has actually been observed to happen on the Renesas M32C.
+    #
+    # So, really, anything is acceptable unless return_value_known is
+    # true.
+
+    set test "value foo<n> returned; ${tests}"
+    gdb_test_multiple "p/c L${n}" "${test}" {
+	-re " = [foo ${n}].*${gdb_prompt} $" {
+            # This answer is okay regardless of whether GDB claims to
+            # have set the return value: if it did, then this is what
+            # we expected; and if it didn't, then any answer is okay.
+            pass "${test}"
+	}
+	-re " = [any $n].*${gdb_prompt} $" {
+	    if $return_value_known {
+		# This contradicts the above claim that GDB knew
+		# the location of the return value.
+		fail "${test}"
+	    } else {
+                # We expected L${n} to be set to garbage, so any
+                # answer is acceptable.
+		pass "${test}"
+	    }
+	}
+	-re ".*${gdb_prompt} $" {
+	    if $return_value_unimplemented {
+		# What a suprize.  The architecture hasn't implemented
+		# return_value, and hence has to fail.
+		kfail "$test" gdb/1444
+	    } else {
+		fail "$test"
+	    }
+	}
+    }	
+    
+    # Check that a "finish" works.
+
+    # This is almost but not quite the same as "call struct funcs".
+    # Architectures can have subtle differences in the two code paths.
+
+    # The relevant code snippet is "L{n} = fun{n}()".  The program is
+    # advanced into a call to  "fun{n}" and then that function is
+    # finished.  The returned value that GDB prints, reformatted using
+    # "p/c", is checked.
+
+    # Get into "fun${n}()".
+    gdb_test "advance fun${n}" \
+	    "fun${n} .*\[\r\n\]+\[0-9\].*return foo${n}.*" \
+	    "advance to fun<n> for finish; ${tests}"
+
+    # Check that the program invalidated the relevant global.
+    gdb_test "p/c L${n}" " = [zed $n]" "zed L<n> for finish; ${tests}"
+
+    # Finish the function, set 'finish_value_known" to non-empty if
+    # the return-value was found.
+
+    set test "finish foo<n>; ${tests}"
+    set finish_value_known 1
+    gdb_test_multiple "finish" "${test}" {
+	-re "Value returned is .*${gdb_prompt} $" {
+	    pass "${test}"
+	}
+	-re "Cannot determine contents.*${gdb_prompt} $" {
+	    # Expected bad value.  For the moment this is ok.
+	    set finish_value_known 0
+	    pass "${test}"
+	}
+    }
+
+    # Re-print the last (return-value) using the more robust
+    # "p/c".  If no return value was found, the 'Z' from the previous
+    # check that the variable was cleared, is printed.
+    set test "value foo<n> finished; ${tests}"
+    gdb_test_multiple "p/c" "${test}" {
+	-re "[foo ${n}]\[\r\n\]+${gdb_prompt} $" {
+	    if $finish_value_known {
+		pass "${test}"
+	    } else {
+		# This contradicts the above claim that GDB didn't
+		# know the location of the return-value.
+		fail "${test}"
+	    }
+	}
+	-re "[zed ${n}]\[\r\n\]+${gdb_prompt} $" {
+	    # The value didn't get found.  This is "expected".
+	    if $finish_value_known {
+		# This contradicts the above claim that GDB did
+		# know the location of the return-value.
+		fail "${test}"
+	    } else {
+		pass "${test}"
+	    }
+	}
+    }
+
+    # Finally, check that "return" and finish" have consistent
+    # behavior.
+
+    # Since "finish" works in more cases than "return" (see
+    # RETURN_VALUE_ABI_RETURNS_ADDRESS and
+    # RETURN_VALUE_ABI_PRESERVES_ADDRESS), the "return" value being
+    # known implies that the "finish" value is known (but not the
+    # reverse).
+
+    set test "return value known implies finish value known; ${tests}"
+    if {$return_value_known && ! $finish_value_known} {
+	kfail gdb/1444 "${test}"
+    } else {
+	pass "${test}"
+    }
+}
+
+# ABIs pass anything >8 or >16 bytes in memory but below that things
+# randomly use register and/and structure conventions.  Check all
+# possible sized char structs in that range.  But only a restricted
+# range of the other types.
+
+# NetBSD/PPC returns "unnatural" (3, 5, 6, 7) sized structs in memory.
+
+# d10v is weird. 5/6 byte structs go in memory.  2 or more char
+# structs go in memory.  Everything else is in a register!
+
+# Test every single char struct from 1..17 in size.  This is what the
+# original "structs" test was doing.
+
+start_structs_test { tc }
+test_struct_calls 1
+test_struct_calls 2
+test_struct_calls 3
+test_struct_calls 4
+test_struct_calls 5
+test_struct_calls 6
+test_struct_calls 7
+test_struct_calls 8
+test_struct_calls 9
+test_struct_calls 10
+test_struct_calls 11
+test_struct_calls 12
+test_struct_calls 13
+test_struct_calls 14
+test_struct_calls 15
+test_struct_calls 16
+test_struct_calls 17
+test_struct_returns 1
+test_struct_returns 2
+test_struct_returns 3
+test_struct_returns 4
+test_struct_returns 5
+test_struct_returns 6
+test_struct_returns 7
+test_struct_returns 8
+
+
+# Let the fun begin.
+
+# Assuming that any integer struct larger than 8 bytes goes in memory,
+# come up with many and varied combinations of a return struct.  For
+# "struct calls" test just beyond that 8 byte boundary, for "struct
+# returns" test up to that boundary.
+
+# For floats, assumed that up to two struct elements can be stored in
+# floating point registers, regardless of their size.
+
+# The approx size of each structure it is computed assumed that tc=1,
+# ts=2, ti=4, tl=4, tll=8, tf=4, td=8, tld=16, and that all fields are
+# naturally aligned.  Padding being added where needed.  Note that
+# these numbers are just approx, the d10v has ti=2, a 64-bit has has
+# tl=8.
+
+# Approx size: 2, 4, ...
+start_structs_test { ts }
+test_struct_calls 1
+test_struct_calls 2
+test_struct_calls 3
+test_struct_calls 4
+test_struct_calls 5
+test_struct_returns 1
+test_struct_returns 2
+test_struct_returns 3
+test_struct_returns 4
+
+# Approx size: 4, 8, ...
+start_structs_test { ti }
+test_struct_calls 1
+test_struct_calls 2
+test_struct_calls 3
+test_struct_returns 1
+test_struct_returns 2
+
+# Approx size: 4, 8, ...
+start_structs_test { tl }
+test_struct_calls 1
+test_struct_calls 2
+test_struct_calls 3
+test_struct_returns 1
+test_struct_returns 2
+
+# Approx size: 8, 16, ...
+start_structs_test { tll }
+test_struct_calls 1
+test_struct_calls 2
+test_struct_returns 1
+
+# Approx size: 4, 8, ...
+start_structs_test { tf }
+test_struct_calls 1
+test_struct_calls 2
+test_struct_calls 3
+test_struct_returns 1
+test_struct_returns 2
+
+# Approx size: 8, 16, ...
+start_structs_test { td }
+test_struct_calls 1
+test_struct_calls 2
+test_struct_returns 1
+
+# Approx size: 16, 32, ...
+start_structs_test { tld }
+test_struct_calls 1
+test_struct_calls 2
+test_struct_returns 1
+
+# Approx size: 2+1=3, 4, ...
+start_structs_test { ts tc }
+test_struct_calls 2
+test_struct_calls 3
+test_struct_calls 4
+test_struct_calls 5
+test_struct_calls 6
+test_struct_calls 7
+test_struct_calls 8
+test_struct_returns 2
+
+# Approx size: 4+1=5, 6, ...
+start_structs_test { ti tc }
+test_struct_calls 2
+test_struct_calls 3
+test_struct_calls 4
+test_struct_calls 5
+test_struct_calls 6
+test_struct_returns 2
+
+# Approx size: 4+1=5, 6, ...
+start_structs_test { tl tc }
+test_struct_calls 2
+test_struct_calls 3
+test_struct_calls 4
+test_struct_calls 5
+test_struct_calls 6
+test_struct_returns 2
+
+# Approx size: 8+1=9, 10, ...
+start_structs_test { tll tc }
+test_struct_calls 2
+
+# Approx size: 4+1=5, 6, ...
+start_structs_test { tf tc }
+test_struct_calls 2
+test_struct_calls 3
+test_struct_calls 4
+test_struct_calls 5
+test_struct_calls 6
+test_struct_returns 2
+
+# Approx size: 8+1=9, 10, ...
+start_structs_test { td tc }
+test_struct_calls 2
+
+# Approx size: 16+1=17, 18, ...
+start_structs_test { tld tc }
+test_struct_calls 2
+
+# Approx size: (1+1)+2=4, 6, ...
+start_structs_test { tc ts }
+test_struct_calls 2
+test_struct_calls 3
+test_struct_calls 4
+test_struct_calls 5
+test_struct_calls 6
+test_struct_returns 2
+
+# Approx size: (1+3)+4=8, 12, ...
+start_structs_test { tc ti }
+test_struct_calls 2
+test_struct_calls 3
+test_struct_calls 4
+test_struct_returns 2
+
+# Approx size: (1+3)+4=8, 12, ...
+start_structs_test { tc tl }
+test_struct_calls 2
+test_struct_calls 3
+test_struct_calls 4
+test_struct_returns 2
+
+# Approx size: (1+7)+8=16, 24, ...
+start_structs_test { tc tll }
+test_struct_calls 2
+
+# Approx size: (1+3)+4=8, 12, ...
+start_structs_test { tc tf }
+test_struct_calls 2
+test_struct_calls 3
+test_struct_calls 4
+
+# Approx size: (1+7)+8=16, 24, ...
+start_structs_test { tc td }
+test_struct_calls 2
+
+# Approx size: (1+15)+16=32, 48, ...
+start_structs_test { tc tld }
+test_struct_calls 2
+
+# Some float combinations
+
+# Approx size: 8+4=12, 16, ...
+# d10v: 4+4=8, 12, ...
+start_structs_test { td tf }
+test_struct_calls 2
+test_struct_returns 2
+
+# Approx size: (4+4)+8=16, 32, ...
+# d10v: 4+4=8, 12, ...
+start_structs_test { tf td }
+test_struct_calls 2
+test_struct_returns 2
+
+return 0

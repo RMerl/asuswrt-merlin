@@ -1,0 +1,48 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>ne_addr_resolve</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="ref.html" title="neon API reference"><link rel="prev" href="refconfig.html" title="neon-config"><link rel="next" href="refbuf.html" title="ne_buffer"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">ne_addr_resolve</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="refconfig.html">Prev</a> </td><th width="60%" align="center">neon API reference</th><td width="20%" align="right"> <a accesskey="n" href="refbuf.html">Next</a></td></tr></table><hr></div><div class="refentry" title="ne_addr_resolve"><a name="refresolve"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ne_addr_resolve, ne_addr_result, ne_addr_first, ne_addr_next, ne_addr_error, ne_addr_destroy — functions to resolve hostnames to addresses</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="funcsynopsis"><pre class="funcsynopsisinfo">#include &lt;ne_socket.h&gt;</pre><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">ne_sock_addr *<b class="fsfunc">ne_addr_resolve</b>(</code></td><td>const char *<var class="pdparam">hostname</var>, </td></tr><tr><td> </td><td>int <var class="pdparam">flags</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">int <b class="fsfunc">ne_addr_result</b>(</code></td><td>const ne_sock_addr *<var class="pdparam">addr</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">const ne_inet_addr *<b class="fsfunc">ne_addr_first</b>(</code></td><td>ne_sock_addr *<var class="pdparam">addr</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">const ne_inet_addr *<b class="fsfunc">ne_addr_next</b>(</code></td><td>ne_sock_addr *<var class="pdparam">addr</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">char *<b class="fsfunc">ne_addr_error</b>(</code></td><td>const ne_sock_addr *<var class="pdparam">addr</var>, </td></tr><tr><td> </td><td>char *<var class="pdparam">buffer</var>, </td></tr><tr><td> </td><td>size_t <var class="pdparam">bufsiz</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">void <b class="fsfunc">ne_addr_destroy</b>(</code></td><td>ne_sock_addr *<var class="pdparam">addr</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div></div></div><div class="refsect1" title="Description"><a name="id448486"></a><h2>Description</h2><p>The <code class="function">ne_addr_resolve</code> function resolves
+    the given <code class="parameter">hostname</code>, returning an
+    <em class="type">ne_sock_addr</em> object representing the address (or
+    addresses) associated with the hostname.  The
+    <code class="parameter">flags</code> parameter is currently unused, and
+    must be passed as 0.</p><p>The <code class="parameter">hostname</code> passed to
+    <code class="function">ne_addr_resolve</code> can be a DNS hostname
+    (e.g. <code class="literal">"www.example.com"</code>) or an IPv4 dotted quad
+    (e.g. <code class="literal">"192.0.34.72"</code>); or, on systems which
+    support IPv6, an IPv6 hex address, which may be enclosed in
+    brackets, e.g. <code class="literal">"[::1]"</code>.</p><p>To determine whether the hostname was successfully resolved,
+    the <code class="function">ne_addr_result</code> function is used, which
+    returns non-zero if an error occurred.  If an error did occur, the
+    <code class="function">ne_addr_error</code> function can be used, which
+    will copy the error string into a given
+    <code class="parameter">buffer</code> (of size
+    <code class="parameter">bufsiz</code>).</p><p>The functions <code class="function">ne_addr_first</code> and
+    <code class="function">ne_addr_next</code> are used to retrieve the
+    Internet addresses associated with an address object which has
+    been successfully resolved.  <code class="function">ne_addr_first</code>
+    returns the first address; <code class="function">ne_addr_next</code>
+    returns the next address after the most recent call to
+    <code class="function">ne_addr_next</code> or
+    <code class="function">ne_addr_first</code>, or <code class="literal">NULL</code> if there are no more
+    addresses.  The <em class="type">ne_inet_addr</em> pointer returned by
+    these functions can be passed to
+    <code class="function">ne_sock_connect</code> to connect a socket.</p><p>After the address object has been used, it should be
+    destroyed using <code class="function">ne_addr_destroy</code>.</p></div><div class="refsect1" title="Return value"><a name="id448631"></a><h2>Return value</h2><p><code class="function">ne_addr_resolve</code> returns a pointer to an
+    address object, and never <code class="literal">NULL</code>.
+    <code class="function">ne_addr_error</code> returns the
+    <code class="parameter">buffer</code> parameter .</p></div><div class="refsect1" title="Examples"><a name="id448661"></a><h2>Examples</h2><p>The code below prints out the set of addresses associated
+    with the hostname <code class="literal">www.google.com</code>.</p><pre class="programlisting">ne_sock_addr *addr;
+char buf[256];
+
+addr = ne_addr_resolve("www.google.com", 0);
+if (ne_addr_result(addr)) {
+    printf("Could not resolve www.google.com: %s\n",
+           ne_addr_error(addr, buf, sizeof buf));
+} else {
+    const ne_inet_addr *ia;
+    printf("www.google.com:");
+    for (ia = ne_addr_first(addr); ia != NULL; ia = ne_addr_next(addr)) {
+        printf(" %s", ne_iaddr_print(ia, buf, sizeof buf));
+    }
+    putchar('\n');
+}
+ne_addr_destroy(addr);
+</pre></div><div class="refsect1" title="See also"><a name="id448685"></a><h2>See also</h2><p><a class="xref" href="refiaddr.html#ne_iaddr_print">ne_iaddr_print</a></p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="refconfig.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ref.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="refbuf.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">neon-config </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> ne_buffer</td></tr></table></div></body></html>

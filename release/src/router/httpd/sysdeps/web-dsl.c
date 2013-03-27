@@ -61,7 +61,6 @@
 #ifndef O_BINARY
 #define O_BINARY 	0
 #endif
-#include <image.h>
 #ifndef MAP_FAILED
 #define MAP_FAILED (-1)
 #endif

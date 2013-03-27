@@ -6,7 +6,7 @@
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="stylesheet" type="text/css" href="/form_style.css">
-<link rel="stylesheet" type="text/css" href="qis_style.css">
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/javascript" src="/alttxt.js"></script>
@@ -16,19 +16,23 @@ var now_flag = '<% get_parameter("flag"); %>';
 
 function QKaccount_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_account_webtitle#>";
-	parent.set_step("t2");
+	if(parent.ISMOBILE){
+		parent.set_step("internet_type");
+		hideObjs();
+		document.getElementById("QISmain").style.display = "none";
+		document.getElementById("QISmain_m").style.display = "";		
+	}
+	else{
+		parent.set_step("t2");
+		hideLinkTag();
+		flash_button();
+		$("descritpion_tail1").innerHTML = "<#qis_pppoe_desc2#>";
+		if(now_flag != "auto_way_pppoe")
+			show_prev_button();					
+		document.getElementById("nextButton").focus();
+	}
 
-	hideLinkTag();
-	flash_button();
-	
-	$("descritpion_tail1").innerHTML = "<#qis_pppoe_desc2#>";
-	
 	get_value_from_parent();
-	
-	if(now_flag != "auto_way_pppoe")
-		show_prev_button();
-				
-	document.getElementById("nextButton").focus();
 } 
 
 function get_value_from_parent(){
@@ -74,21 +78,29 @@ function show_prev_button(){
 }
 
 function submitForm(o, s){
+	if(parent.ISMOBILE){
+		document.form.wan_pppoe_username.value = document.form.wan_pppoe_username_m.value;
+		document.form.wan_pppoe_passwd.value = document.form.wan_pppoe_passwd_m.value;
+	}
+
 	if(document.form.wan_pppoe_username.value.length == 0){
 		alert("<#QKSet_account_nameblank#>");
 		document.form.wan_pppoe_username.select();
 		document.form.wan_pppoe_username.focus();
+		changeiuiBackground(0);
 		return false;
 	}
 	if(!validate_string(document.form.wan_pppoe_username)){
 		document.form.wan_pppoe_username.select();
 		document.form.wan_pppoe_username.focus();
+		changeiuiBackground(0);
 		return false;
 	}
 	
 	if(!validate_string(document.form.wan_pppoe_passwd)){
 		document.form.wan_pppoe_passwd.select();
 		document.form.wan_pppoe_passwd.focus();
+		changeiuiBackground(0);
 		return false;
 	}
 	
@@ -128,7 +140,7 @@ function submitForm(o, s){
 		document.form.switch_stb_x.value = parent.document.QKform.switch_stb_x.value;
 		if(original_switch_wantag != document.form.switch_wantag.value){
 				document.form.action_script.value	= "reboot";
-				document.form.action_wait.value	= "50";
+				document.form.action_wait.value	= eval("<% get_default_reboot_time(); %> + 10");
 				$("loadHint").style.display = "";
 				$("nextButton").style.display = "none";
 				$("prevButton").style.display = "none";
@@ -150,8 +162,10 @@ function submitForm(o, s){
 		location.href = document.form.next_page.value;
 		return true;
 	}
-	else
+	else{
+		changeiuiBackground(0);
 		alert("System error!");	// no translate.
+	}
 }
 
 function simple_showLoading(){
@@ -235,9 +249,9 @@ function replace_pass_type(obj, _Type){
 <input type="hidden" name="switch_wan2prio" value="<% nvram_get("switch_wan2prio"); %>">
 <input type="hidden" name="switch_stb_x" value="<% nvram_get("switch_stb_x"); %>">
 
-<div class="QISmain">
+<div class="QISmain" id="QISmain">
 		<div>
-			<table width="730px">
+			<table width="100%">
 				<tr>
 					<td align="left">
 						<span class="description_down"><#PPPConnection_UserName_sectionname#></span>
@@ -248,7 +262,7 @@ function replace_pass_type(obj, _Type){
 				</tr>
 			</table>
 		</div>
-		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 <br/><br/>
 <p class="QISGeneralFont" style="margin-left:70px;margin-right:70px;"><#qis_pppoe_desc1#></p>
 <br/>
@@ -286,8 +300,32 @@ function replace_pass_type(obj, _Type){
 	<span id="loadHint" style="display:none"><#SAVE_note#></span>
 	<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 </div>
-
 </div>
+
+<div id="QISmain_m" style="display:none;">
+	<div class="itemTitle"><#qis_pppoe_desc1#></div>
+	<fieldset>
+		<div id="DNSDiv">
+			<div class="row">
+				<label><#PPPConnection_UserName_itemname#></label>
+				<input type="text" name="wan_pppoe_username_m" placeholder="" maxlength="64" value=""/>
+			</div>
+			<div class="row_end">
+				<label><#PPPConnection_Password_itemname#></label>
+				<input name="wan_pppoe_passwd_m" type="text" placeholder="" autocapitalization="off" maxlength="64">
+			</div>
+		</div>
+	</fieldset>
+	<br />
+	<div><#qis_pppoe_desc2#></div>
+	<br />
+	<fieldset class="theFieldset" id="theFieldset">
+		<div class="row_end">
+			<a id="loadingIcon_iui" class="iuiA" onclick="changeiuiBackground(1);submitForm();"><#CTL_next#></a>
+		</div>
+	</fieldset>
+</div>
+
 </form> 
 </body>
 </html>

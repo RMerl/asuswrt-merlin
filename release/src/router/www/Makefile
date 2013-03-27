@@ -14,7 +14,7 @@ install:
 	mkdir -p $(INSTALLDIR)
 	cp ../www $(INSTALLDIR)/. -rf
 	# INSTALL MODEL DEPENDENT files
-	cp ../www/sysdep/$(BUILD_NAME)/www $(INSTALLDIR)/. -rf || true
+	cp ../www/sysdep/$(BUILD_NAME)/www $(INSTALLDIR)/. -rfL || true
 
 	rm -rf $(INSTALLDIR)/www/Makefile
 	rm -rf $(INSTALLDIR)/www/sysdep
@@ -100,12 +100,18 @@ ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
 endif
+ifneq ($(BUILD_NAME),DSL-N55U)
+ifneq ($(BUILD_NAME),DSL-N55U-B)
+ifneq ($(BUILD_NAME),RT-N56U)
 ifneq ($(RTCONFIG_CLOUDSYNC),y)
 	rm -rf $(INSTALLDIR)/www/images/cloudsync
 	rm -rf $(INSTALLDIR)/www/images/New_ui/USBExt/*cloud*.png
 	rm -rf $(INSTALLDIR)/www/update_cloudstatus.asp
 	rm -rf $(INSTALLDIR)/www/get_webdavInfo.asp
 	rm -rf $(INSTALLDIR)/www/*cloud*.asp
+endif
+endif
+endif
 endif
 ifeq ($(RTCONFIG_NO_USBSTORAGE),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/USBExt
@@ -118,6 +124,14 @@ ifeq ($(RTCONFIG_NO_USBSTORAGE),y)
 	rm -rf $(INSTALLDIR)/www/getfoldertree.asp
 	rm -rf $(INSTALLDIR)/www/gettree.asp
 	rm -rf $(INSTALLDIR)/www/images/Tree
+	# disk utility
+	rm -rf $(INSTALLDIR)/www/device-map/disk_utility.asp        
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/backgroud_move_8P_2.0.gif
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/white_04.gif
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/normal.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/blue.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/red.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/USB_2.png
 else
 ifneq ($(RTCONFIG_USB),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/USBExt
@@ -152,6 +166,17 @@ ifneq ($(RTCONFIG_USB),y)
 	rm -rf $(INSTALLDIR)/www/switch_AiDisk_app.asp
 	rm -rf $(INSTALLDIR)/www/update_diskinfo.asp
 	rm -rf $(INSTALLDIR)/www/device-map/safely_remove_disk.asp
+	rm -rf $(INSTALLDIR)/www/device-map/disk.asp
+	# disk utility
+	rm -rf $(INSTALLDIR)/www/device-map/disk_utility.asp
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/backgroud_move_3_02.gif
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/white_04.gif
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/yellow_04.gif
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/red_04.gif
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/normal.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/orange.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/red.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/USB_2.png
 endif
 endif
 	cd $(INSTALLDIR)/www && ln -sf ../tmp/settings Settings_$(BUILD_NAME).CFG && cd $(TOP)/www 

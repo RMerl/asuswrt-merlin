@@ -1,0 +1,12 @@
+# arm testcase for pop {$rlist}
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global pop
+pop:
+	pop {0}
+
+	pass

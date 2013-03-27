@@ -1,0 +1,12 @@
+# arm testcase for bx $rs
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global bx_rs
+bx_rs:
+	bx r0
+
+	pass

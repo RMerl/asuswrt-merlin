@@ -1,0 +1,92 @@
+# frv testcase for tigt $ICCi_2,$GRi,$s12
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global tigt
+tigt:
+	and_spr_immed	-4081,tbr		; clear tbr.tt
+	set_gr_spr	tbr,gr7
+	inc_gr_immed	2112,gr7		; address of exception handler
+	set_bctrlr_0_0	gr7	; bctrlr 0,0
+
+	set_spr_immed	128,lcr
+	set_gr_immed	0,gr7
+
+	set_psr_et	1
+	set_spr_addr	ok0,lr
+	set_icc		0x0 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+	fail
+ok0:
+	set_psr_et	1
+	set_spr_addr	ok1,lr
+	set_icc		0x1 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+	fail
+ok1:
+	set_spr_addr	bad,lr
+	set_icc		0x2 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0x3 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0x4 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0x5 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0x6 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0x7 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0x8 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0x9 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+
+	set_psr_et	1
+	set_spr_addr	oka,lr
+	set_icc		0xa 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+	fail
+oka:
+	set_psr_et	1
+	set_spr_addr	okb,lr
+	set_icc		0xb 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+	fail
+okb:
+	set_spr_addr	bad,lr
+	set_icc		0xc 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0xd 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0xe 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+
+	set_spr_addr	bad,lr
+	set_icc		0xf 0
+	tigt 		icc0,gr7,4	; should branch to tbr + (128 + 4)*16
+
+	pass
+bad:
+	fail

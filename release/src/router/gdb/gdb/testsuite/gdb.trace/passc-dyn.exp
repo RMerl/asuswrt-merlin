@@ -1,0 +1,188 @@
+#   Copyright 1998, 2005, 2007 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Michael Snyder (msnyder@cygnus.com)
+
+load_lib "trace-support.exp";
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+gdb_exit
+gdb_start
+if [istarget "m68k-*-elf"] then {
+    load_lib "emc-support.exp";
+    set srcfile gdb_c_test.c
+    set binfile [board_info target d490_binfile];
+    gdb_test "set remotetimeout 6" "" ""
+    set timeout 500
+    gdb_target_monitor $binfile
+    # Give a TSTOP and ignore errors, to make sure any previous trace is off
+    gdb_test "tstop" "" ""
+    gdb_test "tfind none" "" ""
+    send_gdb "compare-sections CS\n"
+    gdb_expect {
+	-re "MIS-MATCHED.*$gdb_prompt $" {
+	    untested passc-dyn.exp
+	    return -1
+	    all tests in this module will fail.";
+	}
+	-re ".*$gdb_prompt $" { }
+    }
+} else {
+    set testfile "actions"
+    set srcfile ${testfile}.c
+    set binfile $objdir/$subdir/$testfile
+    if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
+	    executable {debug nowarnings}] != "" } {
+	untested passc-dyn.exp
+	return -1
+    }
+    gdb_load $binfile
+    gdb_test "tstop"       "" ""
+    gdb_test "tfind none"  "" ""
+    runto_main
+}
+gdb_reinitialize_dir $srcdir/$subdir
+
+# We generously give ourselves one "pass" if we successfully 
+# detect that this test cannot be run on this target!
+if { ![gdb_target_supports_trace] } then {
+    pass "Current target does not support trace"
+    return 1;
+
+}
+
+# If testing on a remote host, download the source file.
+# remote_download host $srcdir/$subdir/$srcfile
+
+
+#
+# test passcount dynamically (live target)
+#
+
+set baseline [gdb_find_recursion_test_baseline $srcfile];
+
+if { $baseline == -1 } then {
+    fail "Could not find gdb_recursion_test function"
+    return;
+}
+
+# define relative source line numbers:
+# all subsequent line numbers are relative to this first one (baseline)
+
+set testline2  [expr $baseline +  4]
+set testline3  [expr $baseline +  5]
+set testline4  [expr $baseline +  6]
+
+#
+# test passcount command semantics (live test)
+#
+
+## Set three tracepoints with three different passcounts.
+## Verify that the experiment stops after the one with the 
+## lowest passcount is hit.
+
+gdb_delete_tracepoints
+set tdp2 [gdb_gettpnum "$testline2"]
+set tdp3 [gdb_gettpnum "$testline3"]
+set tdp4 [gdb_gettpnum "$testline4"]
+if { $tdp2 <= 0 || $tdp3 <= 0 || $tdp4 <= 0 } then {
+    fail "setting tracepoints"
+    return;
+}
+
+gdb_test "passcount 4 $tdp2" "Setting tracepoint $tdp2's passcount to 4" \
+	"4.5: set passcount for tracepoint $tdp2"
+gdb_test "passcount 2 $tdp3" "Setting tracepoint $tdp3's passcount to 2" \
+	"4.5: set passcount for tracepoint $tdp3"
+gdb_test "passcount 3 $tdp4" "Setting tracepoint $tdp4's passcount to 3" \
+	"4.5: set passcount for tracepoint $tdp4"
+
+gdb_test "tstart" "" ""
+
+if [istarget "m68k-*-elf"] then {
+    gdb_emclaptop_command "85,1,2,3,4,5,6"
+    sleep 5
+    gdb_emclaptop_command "85,7,8,9,A,B,C"
+    sleep 5
+    gdb_emclaptop_command "85,D,E,F,10,11,12"
+    sleep 5
+    # gdb_test "tstop"
+    ##
+    ## Note! Must NOT give the tstop command, because the passcount
+    ##       has already stopped the experiment.  You would not
+    ##       think this would be an error, but in EMC's mind it is...
+    ##
+} else {
+    gdb_test "break end" "" ""
+    gdb_test "continue" \
+	    "Continuing.*Breakpoint $decimal, end.*" \
+	    "run trace experiment"
+    gdb_test "tstop" "" ""
+}
+
+gdb_test "tfind none" "" ""
+if [gdb_test "printf \"x \%d x\\n\", \$trace_frame" "x -1 x" ""] {
+    untested passc-dyn.exp
+    return -1
+}
+
+gdb_test "tfind tracepoint $tdp2" "" ""
+if [gdb_test "printf \"x \%d x\\n\", \$trace_frame" "x 0 x" ""] {
+    untested passc-dyn.exp
+    return -1
+}
+
+gdb_test "tfind tracepoint $tdp3" "" ""
+if [gdb_test "printf \"x \%d x\\n\", \$trace_frame" "x 1 x" ""] {
+    untested passc-dyn.exp
+    return -1
+}
+
+gdb_test "tfind tracepoint $tdp4" "" ""
+if [gdb_test "printf \"x \%d x\\n\", \$trace_frame" "x 2 x" ""] {
+    untested passc-dyn.exp
+    return -1
+}
+
+gdb_test "tfind tracepoint $tdp2" "" ""
+if [gdb_test "printf \"x \%d x\\n\", \$trace_frame" "x 3 x" ""] {
+    untested passc-dyn.exp
+    return -1
+}
+
+gdb_test "tfind tracepoint $tdp3" "" ""
+if [gdb_test "printf \"x \%d x\\n\", \$trace_frame" "x 4 x" ""] {
+    untested passc-dyn.exp
+    return -1
+}
+
+## We should now be at the last frame, because this frame's passcount
+## should have caused collection to stop.  If we do a tfind now, 
+## it should fail.
+
+gdb_test "tfind" "failed to find.*" "4.5: dynamic passcount test"
+
+# Finished!
+gdb_test "tfind none" "" ""
+

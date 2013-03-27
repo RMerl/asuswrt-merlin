@@ -22,6 +22,7 @@
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
+<% wanlink(); %>
 
 
 <% login_state_hook(); %>
@@ -59,10 +60,6 @@ function initial(){
 
 function applyRule(){
 	if(validForm()){
-
-		if(wl6_support != -1)
-			document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
-
 		showLoading();
 		document.form.submit();
 	}
@@ -118,7 +115,7 @@ function validForm(){
 		return false;
 	}
 
-	if(sw_mode == 2 || sw_mode == 3){
+	if(sw_mode == 2 || sw_mode == 3  || sw_mode == 4){
 		if(document.form.lan_dnsenable_x_radio[0].checked == 1)
 			document.form.lan_dnsenable_x.value = 1;
 		else
@@ -145,14 +142,18 @@ function validForm(){
 	}else
 		document.form.lan_proto.value = "static";		
 	
-	//router mode : WAN IP conflict with LAN ip subnet
-	if(sw_mode == 1 && document.form.wan_ipaddr_x.value != "0.0.0.0" && document.form.wan_ipaddr_x.value != "" 
-		&& document.form.wan_netmask_x.value != "0.0.0.0" && document.form.wan_netmask_x.value != ""){
-		if(matchSubnet2(document.form.wan_ipaddr_x.value, document.form.wan_netmask_x, document.form.lan_ipaddr.value, document.form.lan_netmask)){
-					document.form.lan_ipaddr.focus();
-					document.form.lan_ipaddr.select();
-					alert("<#IPConnection_x_WAN_LAN_conflict#>");
-					return false;
+	//router mode : WAN IP conflict with LAN ip subnet when wan is connected
+	var wanip_obj = wanlink_ipaddr();
+	//alert(wanip_obj +" , "+document.form.wan_netmask_x.value+" , "+document.form.wan_ipaddr_x.value);
+	if(wanip_obj != "0.0.0.0"){				
+		if(sw_mode == 1 && document.form.wan_ipaddr_x.value != "0.0.0.0" && document.form.wan_ipaddr_x.value != "" 
+				&& document.form.wan_netmask_x.value != "0.0.0.0" && document.form.wan_netmask_x.value != ""){
+			if(matchSubnet2(document.form.wan_ipaddr_x.value, document.form.wan_netmask_x, document.form.lan_ipaddr.value, document.form.lan_netmask)){
+						document.form.lan_ipaddr.focus();
+						document.form.lan_ipaddr.select();
+						alert("<#IPConnection_x_WAN_LAN_conflict#>");
+						return false;
+			}						
 		}	
 	}	
 	
@@ -370,12 +371,11 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_net_and_phy">
-<input type="hidden" name="action_wait" value="15">
+<input type="hidden" name="action_wait" value="35">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="wan_ipaddr_x" value="<% nvram_get("wan0_ipaddr"); %>">
 <input type="hidden" name="wan_netmask_x" value="<% nvram_get("wan0_netmask"); %>" >
-<input type="hidden" name="wan_gateway_x" value="<% nvram_get("wan0_gateway"); %>">
 <input type="hidden" name="wan_proto" value="<% nvram_get("wan_proto"); %>">
 <input type="hidden" name="lan_proto" value="<% nvram_get("lan_proto"); %>">
 <input type="hidden" name="lan_dnsenable_x" value="<% nvram_get("lan_dnsenable_x"); %>">

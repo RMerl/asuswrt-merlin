@@ -1,0 +1,17 @@
+# m32r testcase for and3 $dr,$sr,#$uimm16
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global and3
+and3:
+	mvi_h_gr r4, 0
+	mvi_h_gr r5, 6
+
+	and3 r4, r5, #3
+
+	test_h_gr r4, 2
+
+	pass

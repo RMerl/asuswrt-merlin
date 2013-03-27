@@ -1,0 +1,36 @@
+# fr30 testcase for extsb $Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global extsb
+extsb:
+	; Test extsb $Ri
+	mvi_h_gr   	0,r7
+	set_cc          0x0f		; Condition codes are irrelevent
+	extsb      	r7
+	test_cc		1 1 1 1
+	test_h_gr  	0,r7
+
+	mvi_h_gr   	0x7f,r7
+	set_cc          0x0e		; Condition codes are irrelevent
+	extsb      	r7
+	test_cc		1 1 1 0
+	test_h_gr  	0x7f,r7
+
+ 	mvi_h_gr   	0x80,r7
+	set_cc          0x0d		; Condition codes are irrelevent
+	extsb      	r7
+	test_cc		1 1 0 1
+	test_h_gr  	0xffffff80,r7
+
+	mvi_h_gr   	0xffffff7f,r7
+	set_cc          0x0c		; Condition codes are irrelevent
+	extsb      	r7
+	test_cc		1 1 0 0
+	test_h_gr  	0x7f,r7
+
+	pass

@@ -1,0 +1,117 @@
+# This file was written by Sue Kimura. (sue_kimura@hp.com)
+#
+# Test for CLLbs14602 -- problem with recognizing long double on 10.20.
+#
+# Source file: bs14602.c
+
+if $tracelevel {
+    strace $tracelevel
+}
+
+if { [skip_hp_tests] } { continue }
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+
+set testfile bs14602
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+# set up appropriate compile option to recognize long double
+if {$hp_aCC_compiler || $hp_cc_compiler} {
+    set ansi_option "-Ae"
+} else {
+    set ansi_option ""
+}
+
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "$binfile" executable "debug {additional_flags=${ansi_option}}"] != "" } {
+    perror "Couldn't compile ${srcfile}"
+    return -1
+}
+
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+
+
+# get to end of main so we can check out some stuff
+if ![runto main] {
+  perror "couldn't run to breakpoint main"
+  continue
+}
+
+gdb_test "txbreak" \
+    "Breakpoint $decimal at $hex: file .*bs14602.c, line 9." \
+    "set breakpoint at end of main"
+
+gdb_test "continue" \
+    "Continuing.\r\n$hex in main* \\(\\) at .*bs14602.c:9\r\n.*" \
+    "continue to end of main"
+
+# test some simple things about long double
+gdb_test "whatis v_long_double" \
+    "type = long double" \
+    "whatis v_long_double"
+
+gdb_test "ptype v_long_double" \
+    "type = long double" \
+    "ptype v_long_double"
+
+gdb_test "print sizeof \(long double\)" \
+    " = 16" \
+    "print sizeof long double"
+
+gdb_test "print sizeof \(v_long_double\)" \
+    " = 16" \
+    "print sizeof v_long_double"
+
+gdb_test "print v_long_double"  \
+    " = 12345.67890000000079453457146883011" \
+    "print v_long_double - 1" 
+
+gdb_test "set variable v_long_double = 98765.43210" \
+    "" \
+    "set variable v_long_double to constant value"
+
+gdb_test "print v_long_double" \
+    " = 98765.43210000000544823706150054932" \
+    "print v_long_double - 2" 
+
+gdb_test "set variable v_double = v_long_double" \
+    "" \
+    " set variable v_double with v_long_double"
+
+gdb_test "print v_double" \
+    " = 98765.432100000005" \
+    " print v_double"
+
+#reset v_long_double
+gdb_test "set variable v_long_double = 0" \
+    "" \
+    "reset v_long_double to 0"
+
+gdb_test "print v_long_double" \
+    " = 0" \
+    "print v_long_double - 3"
+
+gdb_test "set variable v_long_double = v_double" \
+    "" \
+    " set variable v_long_double with v_long_double"
+
+gdb_test "print v_long_double" \
+    " = 98765.43210000000544823706150054932" \
+    "print v_long_double - 4 "

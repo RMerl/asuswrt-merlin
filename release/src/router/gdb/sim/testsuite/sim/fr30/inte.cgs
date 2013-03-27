@@ -1,0 +1,36 @@
+# fr30 testcase for inte
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global inte
+inte:
+	; Test inte which is essentially int #9
+	mvr_h_gr   	tbr,r7
+	inci_h_gr	0x3d8,r7
+	mvi_h_mem	pass,r7
+	mvi_h_gr	doint,r9
+	inci_h_gr	2,r9
+	mvr_h_gr	ssp,r10
+	set_cc          0x0f		; Condition codes should not change
+	set_s_user			; Set opposite of expected
+	set_i		1		; Should not change
+	mvr_h_gr	ps,r8
+doint:	inte
+	fail
+
+pass:
+	test_cc		1 1 1 1
+	test_ilm	4
+	test_s_system
+	test_i		1
+	inci_h_gr	-4,r10
+	testr_h_mem	r8,r10
+	inci_h_gr	-4,r10
+	testr_h_mem	r9,r10
+	testr_h_dr	r10,ssp
+
+	pass

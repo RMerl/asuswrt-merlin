@@ -1,0 +1,240 @@
+# fr30 testcase for mul $Rj,$Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global mul
+mul:
+	; Test mul $Rj,$Ri
+	; Positive operands
+	mvi_h_gr   	3,r7		; multiply small numbers
+	mvi_h_gr   	2,r8
+	set_cc          0x0f		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 0 1
+	test_h_dr  	0,mdh
+	test_h_dr  	6,mdl
+
+	mvi_h_gr   	1,r7		; multiply by 1
+	mvi_h_gr   	2,r8
+	set_cc          0x0e		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 0 0
+	test_h_dr  	0,mdh
+	test_h_dr  	2,mdl
+
+	mvi_h_gr   	2,r7		; multiply by 1
+	mvi_h_gr   	1,r8
+	set_cc          0x0f		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 0 1
+	test_h_dr  	0,mdh
+	test_h_dr  	2,mdl
+
+	mvi_h_gr   	0,r7		; multiply by 0
+	mvi_h_gr   	2,r8
+	set_cc          0x0b		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 1 0 1
+	test_h_dr  	0,mdh
+	test_h_dr  	0,mdl
+
+	mvi_h_gr   	2,r7		; multiply by 0
+	mvi_h_gr   	0,r8
+	set_cc          0x0a		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 1 0 0
+	test_h_dr  	0,mdh
+	test_h_dr  	0,mdl
+
+	mvi_h_gr   	0x3fffffff,r7	; 31 bit result
+	mvi_h_gr   	2,r8
+	set_cc          0x0f		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 0 1
+	test_h_dr  	0,mdh
+	test_h_dr  	0x7ffffffe,mdl
+
+	mvi_h_gr   	0x40000000,r7	; 32 bit result
+	mvi_h_gr   	2,r8
+	set_cc          0x04		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		1 0 1 0
+	test_h_dr  	0,mdh
+	test_h_dr  	0x80000000,mdl
+
+	mvi_h_gr   	0x40000000,r7	; 33 bit result
+	mvi_h_gr   	4,r8
+	set_cc          0x0d		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 1 1
+	test_h_dr  	1,mdh
+	test_h_dr  	0x00000000,mdl
+
+	mvi_h_gr   	0x7fffffff,r7	; max positive result
+	mvi_h_gr   	0x7fffffff,r8
+	set_cc          0x0d		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 1 1
+	test_h_dr  	0x3fffffff,mdh
+	test_h_dr  	0x00000001,mdl
+
+	; Mixed operands
+	mvi_h_gr   	-3,r7		; multiply small numbers
+	mvi_h_gr   	2,r8
+	set_cc          0x07		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		1 0 0 1
+	test_h_dr  	-1,mdh
+	test_h_dr  	-6,mdl
+
+	mvi_h_gr   	3,r7		; multiply small numbers
+	mvi_h_gr   	-2,r8
+	set_cc          0x07		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		1 0 0 1
+	test_h_dr  	-1,mdh
+	test_h_dr  	-6,mdl
+
+	mvi_h_gr   	1,r7		; multiply by 1
+	mvi_h_gr   	-2,r8
+	set_cc          0x06		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		1 0 0 0
+	test_h_dr  	-1,mdh
+	test_h_dr  	-2,mdl
+
+	mvi_h_gr   	-2,r7		; multiply by 1
+	mvi_h_gr   	1,r8
+	set_cc          0x07		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		1 0 0 1
+	test_h_dr  	-1,mdh
+	test_h_dr  	-2,mdl
+
+	mvi_h_gr   	0,r7		; multiply by 0
+	mvi_h_gr   	-2,r8
+	set_cc          0x0b		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 1 0 1
+	test_h_dr  	0,mdh
+	test_h_dr  	0,mdl
+
+	mvi_h_gr   	-2,r7		; multiply by 0
+	mvi_h_gr   	0,r8
+	set_cc          0x0a		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 1 0 0
+	test_h_dr  	0,mdh
+	test_h_dr  	0,mdl
+
+	mvi_h_gr   	0x20000001,r7	; 31 bit result
+	mvi_h_gr   	-2,r8
+	set_cc          0x07		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		1 0 0 1
+	test_h_dr  	0xffffffff,mdh
+	test_h_dr  	0xbffffffe,mdl
+
+	mvi_h_gr   	0x40000000,r7	; 32 bit result
+	mvi_h_gr   	-2,r8
+	set_cc          0x06		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		1 0 0 0
+	test_h_dr  	0xffffffff,mdh
+	test_h_dr  	0x80000000,mdl
+
+	mvi_h_gr   	0x40000001,r7	; 32 bit result
+	mvi_h_gr   	-2,r8
+	set_cc          0x0c		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 1 0
+	test_h_dr  	0xffffffff,mdh
+	test_h_dr  	0x7ffffffe,mdl
+
+	mvi_h_gr   	0x40000000,r7	; 33 bit result
+	mvi_h_gr   	-4,r8
+	set_cc          0x0d		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 1 1
+	test_h_dr  	0xffffffff,mdh
+	test_h_dr  	0x00000000,mdl
+
+	mvi_h_gr   	0x7fffffff,r7	; max negative result
+	mvi_h_gr   	0x80000000,r8
+	set_cc          0x05		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		1 0 1 1
+	test_h_dr  	0xc0000000,mdh
+	test_h_dr  	0x80000000,mdl
+
+	; Negative operands
+	mvi_h_gr   	-3,r7		; multiply small numbers
+	mvi_h_gr   	-2,r8
+	set_cc          0x0f		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 0 1
+	test_h_dr  	0,mdh
+	test_h_dr  	6,mdl
+
+	mvi_h_gr   	-1,r7		; multiply by 1
+	mvi_h_gr   	-2,r8
+	set_cc          0x0e		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 0 0
+	test_h_dr  	0,mdh
+	test_h_dr  	2,mdl
+
+	mvi_h_gr   	-2,r7		; multiply by 1
+	mvi_h_gr   	-1,r8
+	set_cc          0x0f		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 0 1
+	test_h_dr  	0,mdh
+	test_h_dr  	2,mdl
+
+	mvi_h_gr   	0xc0000001,r7	; 31 bit result
+	mvi_h_gr   	-2,r8
+	set_cc          0x0f		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 0 1
+	test_h_dr  	0,mdh
+	test_h_dr  	0x7ffffffe,mdl
+
+	mvi_h_gr   	0xc0000000,r7	; 32 bit result
+	mvi_h_gr   	-2,r8
+	set_cc          0x04		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		1 0 1 0
+	test_h_dr  	0,mdh
+	test_h_dr  	0x80000000,mdl
+
+	mvi_h_gr   	0xc0000000,r7	; 33 bit result
+	mvi_h_gr   	-4,r8
+	set_cc          0x0d		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 1 1
+	test_h_dr  	1,mdh
+	test_h_dr  	0x00000000,mdl
+
+	mvi_h_gr   	0x80000001,r7	; almost max positive result
+	mvi_h_gr   	0x80000001,r8
+	set_cc          0x0d		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 1 1
+	test_h_dr  	0x3fffffff,mdh
+	test_h_dr  	0x00000001,mdl
+
+
+	mvi_h_gr   	0x80000000,r7	; max positive result
+	mvi_h_gr   	0x80000000,r8
+	set_cc          0x0d		; Set mask opposite of expected
+	mul      	r7,r8
+	test_cc		0 0 1 1
+	test_h_dr  	0x40000000,mdh
+	test_h_dr  	0x00000000,mdl
+
+	pass

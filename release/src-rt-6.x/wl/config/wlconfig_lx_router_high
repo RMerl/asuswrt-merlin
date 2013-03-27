@@ -1,6 +1,6 @@
 # Broadcom 802.11abg Networking Device Driver Configuration file
 #
-# Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -61,6 +61,7 @@ PHYMON=1
 BCM_DCS=1
 WET=1
 PSTA=1
+DWDS=1
 
 # Overrides
 WLEXTLOG=0

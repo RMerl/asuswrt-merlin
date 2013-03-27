@@ -9,7 +9,7 @@
 .\"
 .\"   The license which is distributed with this software in the file COPYRIGHT
 .\"   applies to this software. If your distribution is missing this file, you
-.\"   may request it from <pekkas@netcore.fi>.
+.\"   may request it from <reubenhwk@gmail.com>.
 .\"
 .\"
 .\"
@@ -70,7 +70,7 @@ The default debugging level is 0.
 .SH BUGS
 
 There certainly are some bugs. If you find them or have other
-suggestions please contact Pekka Savola <pekkas@netcore.fi>.
+suggestions please contact Reuben Hawkins <reubenhwk@gmail.com>.
 
 .SH "SEE ALSO"
 
@@ -81,6 +81,6 @@ suggestions please contact Pekka Savola <pekkas@netcore.fi>.
 .nf
 Lars Fenneberg	<lf@elemental.net>	- previous maintainer
 Nathan Lutchansky <lutchann@litech.org> - previous maintainer
-Pekka Savola	<pekkas@netcore.fi>	- current maintainer
+Reuben Hawkins	<reubenhwk@gmail.com>	- current maintainer
 Marko Myllynen	<myllynen@lut.fi>	- Mobile IPv6 support
 .fi

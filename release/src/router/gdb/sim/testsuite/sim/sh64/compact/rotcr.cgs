@@ -1,0 +1,103 @@
+# sh testcase for rotcr $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global rotcr
+rotcr:
+	clrt
+	mov #1, r1
+	rotcr r1
+	bf wrong
+	assert r1, #0
+	sett
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	assert r1, #1
+	rotcr r1
+	bf wrong
+
+trotcr:
+	sett
+	mov #1, r1
+	rotcr r1
+	bf wrong
+	sett
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	rotcr r1
+	bf wrong
+	assert r1, #1
+	rotcr r1
+	bf wrong
+	rotcr r1
+
+okay:	
+	pass
+wrong:
+	fail
+	
+

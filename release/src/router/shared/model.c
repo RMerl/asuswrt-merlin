@@ -24,7 +24,10 @@ static const struct model_s model_list[] = {
 	{ "RT-N12C1",	MODEL_RTN12C1	},
 	{ "RT-N12D1",	MODEL_RTN12D1	},
 	{ "RT-N12HP",	MODEL_RTN12HP	},
+	{ "AP-N12HP",	MODEL_APN12HP	},
 	{ "RT-N10U",	MODEL_RTN10U	},
+	{ "RT-N10+",	MODEL_RTN10P	},
+	{ "RT-N10P",	MODEL_RTN10P	},
 	{ "RT-N10D1",	MODEL_RTN10D1	},
 #else	/* RTCONFIG_RALINK */
 #ifdef RTCONFIG_DSL
@@ -42,22 +45,24 @@ static const struct model_s model_list[] = {
 };
 
 #if !defined(RTCONFIG_RALINK)
-int get_model_by_hw_rtn12(void)
+static int get_model_by_hw(void)
 {
 	char *hw_version = nvram_safe_get("hardware_version");
 
-	if (strncmp(hw_version, "RTN12", 5) != 0)
-		return MODEL_UNKNOWN;
-	else if (strncmp(hw_version, "RTN12B1", 7) == 0)
-		return MODEL_RTN12B1;
-	else if (strncmp(hw_version, "RTN12C1", 7) == 0)
-		return MODEL_RTN12C1;
-	else if (strncmp(hw_version, "RTN12D1", 7) == 0)
-		return MODEL_RTN12D1;
-	else if (strncmp(hw_version, "RTN12HP", 7) == 0)
-		return MODEL_RTN12HP;
-
-	return MODEL_RTN12;
+	if (strncmp(hw_version, "RTN12", 5) == 0) {
+		if (strncmp(hw_version, "RTN12B1", 7) == 0)
+			return MODEL_RTN12B1;
+		if (strncmp(hw_version, "RTN12C1", 7) == 0)
+			return MODEL_RTN12C1;
+		if (strncmp(hw_version, "RTN12D1", 7) == 0)
+			return MODEL_RTN12D1;
+		if (strncmp(hw_version, "RTN12HP", 7) == 0)
+			return MODEL_RTN12HP;
+		return MODEL_RTN12;
+	}else if (strncmp(hw_version, "APN12HP", 7) == 0) {
+		return MODEL_APN12HP;
+	}
+	return MODEL_UNKNOWN;
 }
 #endif
 
@@ -75,7 +80,7 @@ int get_model(void)
 	}
 #if !defined(RTCONFIG_RALINK)
 	if (model == MODEL_RTN12)
-		model = get_model_by_hw_rtn12();
+		model = get_model_by_hw();
 #endif
 	return model;
 }

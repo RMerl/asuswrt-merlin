@@ -1,0 +1,36 @@
+# arm testcase for cmp${cond}${set-cc?} $rn,$imm12
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global cmp_imm
+cmp_imm:
+	cmp00 pc,0
+
+	pass
+# arm testcase for cmp$cond${set-cc?} $rd,$rn,$rm,${operand2-shifttype} ${operand2-shiftimm}
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global cmp_reg_imm_shift
+cmp_reg_imm_shift:
+	cmp00 pc,pc,pc,lsl 0
+
+	pass
+# arm testcase for cmp$cond${set-cc?} $rd,$rn,$rm,${operand2-shifttype} ${operand2-shiftreg}
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global cmp_reg_reg_shift
+cmp_reg_reg_shift:
+	cmp00 pc,pc,pc,lsl pc
+
+	pass

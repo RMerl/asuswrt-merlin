@@ -1,0 +1,138 @@
+# frv testcase for mcmpsh $FRi,$FRj,$FCCk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mcmpsh
+mcmpsh:
+	set_fr_iimmed	0x7fff,0x7fff,fr10
+	set_fr_iimmed	0x7fff,0x7fff,fr11
+	set_fcc         0x7,0		; Set mask opposite of expected
+	set_fcc         0x7,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x8,0
+	test_fcc	0x8,1
+
+	set_fr_iimmed	0x7fff,0x7fff,fr10
+	set_fr_iimmed	0x7fff,0x8000,fr11
+	set_fcc         0x7,0		; Set mask opposite of expected
+	set_fcc         0xd,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x8,0
+	test_fcc	0x2,1
+
+	set_fr_iimmed	0x7fff,0x7fff,fr10
+	set_fr_iimmed	0x8000,0x7fff,fr11
+	set_fcc         0xd,0		; Set mask opposite of expected
+	set_fcc         0x7,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x2,0
+	test_fcc	0x8,1
+
+	set_fr_iimmed	0x7fff,0x7fff,fr10
+	set_fr_iimmed	0x8000,0x8000,fr11
+	set_fcc         0xd,0		; Set mask opposite of expected
+	set_fcc         0xd,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x2,0
+	test_fcc	0x2,1
+
+	set_fr_iimmed	0x7fff,0x8000,fr10
+	set_fr_iimmed	0x7fff,0x7fff,fr11
+	set_fcc         0x7,0		; Set mask opposite of expected
+	set_fcc         0xb,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x8,0
+	test_fcc	0x4,1
+
+	set_fr_iimmed	0x7fff,0x8000,fr10
+	set_fr_iimmed	0x7fff,0x8000,fr11
+	set_fcc         0x7,0		; Set mask opposite of expected
+	set_fcc         0x7,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x8,0
+	test_fcc	0x8,1
+
+	set_fr_iimmed	0x7fff,0x8000,fr10
+	set_fr_iimmed	0x8000,0x7fff,fr11
+	set_fcc         0xd,0		; Set mask opposite of expected
+	set_fcc         0xb,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x2,0
+	test_fcc	0x4,1
+
+	set_fr_iimmed	0x7fff,0x8000,fr10
+	set_fr_iimmed	0x8000,0x8000,fr11
+	set_fcc         0xd,0		; Set mask opposite of expected
+	set_fcc         0x7,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x2,0
+	test_fcc	0x8,1
+
+	set_fr_iimmed	0x8000,0x7fff,fr10
+	set_fr_iimmed	0x7fff,0x7fff,fr11
+	set_fcc         0xb,0		; Set mask opposite of expected
+	set_fcc         0x7,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x4,0
+	test_fcc	0x8,1
+
+	set_fr_iimmed	0x8000,0x7fff,fr10
+	set_fr_iimmed	0x7fff,0x8000,fr11
+	set_fcc         0xb,0		; Set mask opposite of expected
+	set_fcc         0xd,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x4,0
+	test_fcc	0x2,1
+
+	set_fr_iimmed	0x8000,0x7fff,fr10
+	set_fr_iimmed	0x8000,0x7fff,fr11
+	set_fcc         0x7,0		; Set mask opposite of expected
+	set_fcc         0x7,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x8,0
+	test_fcc	0x8,1
+
+	set_fr_iimmed	0x8000,0x7fff,fr10
+	set_fr_iimmed	0x8000,0x8000,fr11
+	set_fcc         0x7,0		; Set mask opposite of expected
+	set_fcc         0xd,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x8,0
+	test_fcc	0x2,1
+
+	set_fr_iimmed	0x8000,0x8000,fr10
+	set_fr_iimmed	0x7fff,0x7fff,fr11
+	set_fcc         0xb,0		; Set mask opposite of expected
+	set_fcc         0xb,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x4,0
+	test_fcc	0x4,1
+
+	set_fr_iimmed	0x8000,0x8000,fr10
+	set_fr_iimmed	0x7fff,0x8000,fr11
+	set_fcc         0xb,0		; Set mask opposite of expected
+	set_fcc         0x7,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x4,0
+	test_fcc	0x8,1
+
+	set_fr_iimmed	0x8000,0x8000,fr10
+	set_fr_iimmed	0x8000,0x7fff,fr11
+	set_fcc         0x7,0		; Set mask opposite of expected
+	set_fcc         0xb,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x8,0
+	test_fcc	0x4,1
+
+	set_fr_iimmed	0x8000,0x8000,fr10
+	set_fr_iimmed	0x8000,0x8000,fr11
+	set_fcc         0x7,0		; Set mask opposite of expected
+	set_fcc         0x7,1		; Set mask opposite of expected
+	mcmpsh		fr10,fr11,fcc0
+	test_fcc	0x8,0
+	test_fcc	0x8,1
+
+	pass

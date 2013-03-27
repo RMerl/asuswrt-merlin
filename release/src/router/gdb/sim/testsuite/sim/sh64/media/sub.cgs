@@ -1,0 +1,42 @@
+# sh testcase for sub $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	pta wrong, tr0
+	movi 0, r0
+	movi 1, r1
+
+sub1:
+	# 0 - 0 = 0.
+	sub r0, r0, r2
+	bnei r2, 0, tr0
+
+sub2:
+	# 1 - 0 = 1.
+	sub r1, r0, r2
+	bnei r2, 1, tr0
+
+sub3:
+	# 0 - 1 = -1.
+	sub r0, r1, r2
+	addi r2, 1, r2
+	bnei r2, 0, tr0
+
+sub4:
+	# 5 - 2 = 3.
+	movi 5, r0
+	movi 2, r1
+	sub r0, r1, r2
+	bnei r2, 3, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

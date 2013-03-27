@@ -1,0 +1,12 @@
+# arm testcase for bl-lo ${lbwl-lo}
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global bl_lo
+bl_lo:
+	bl-lo 0
+
+	pass

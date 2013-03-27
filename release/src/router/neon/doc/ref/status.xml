@@ -1,0 +1,78 @@
+    <refentry id="refstatus">
+
+      <refmeta>
+	<refentrytitle>ne_status</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_status">ne_status</refname>
+	<refpurpose>HTTP status structure</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis><funcsynopsisinfo>#include &lt;ne_utils.h&gt;
+
+typedef struct {
+    int major_version, minor_version;
+    int code, klass;
+    const char *reason_phrase;
+} <type>ne_status</type>;</funcsynopsisinfo></funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>An <type>ne_status</type> type represents an HTTP
+response status; used in response messages giving a result of request.
+The <structfield>major_version</structfield> and
+<structfield>minor_version</structfield> fields give the HTTP version
+supported by the server issuing the response.  The
+<structfield>code</structfield> field gives the status code of the
+result (lying between 100 and 999 inclusive), and the
+<structfield>klass</structfield> field gives the
+class<footnote><para>the field is named <quote>klass</quote> not
+<quote>class</quote> so that the header can be used from a C++
+program, in which <quote>class</quote> is a reserved
+word)</para></footnote>, which is equal to the most significant digit
+of the status.</para>
+
+	<para>There are five classes of HTTP status code defined by
+	RFC2616:</para>
+	
+	<variablelist>
+	  <varlistentry>
+	    <term><literal>1xx</literal></term>
+	    <listitem><simpara>Informational response.</simpara></listitem>
+	  </varlistentry>
+
+	  <varlistentry>
+	    <term><literal>2xx</literal></term>
+	    <listitem><simpara>Success: the operation was successful</simpara></listitem>
+	  </varlistentry>
+
+	  <varlistentry>
+	    <term><literal>3xx</literal></term>
+	    <listitem><simpara>Redirection</simpara></listitem>
+	  </varlistentry>
+
+	  <varlistentry>
+	    <term><literal>4xx</literal></term> <listitem><simpara>Client
+	    error: the request made was incorrect in some
+	    manner.</simpara></listitem>
+	  </varlistentry>
+
+	  <varlistentry>
+	    <term><literal>5xx</literal></term>
+	    <listitem><simpara>Server error</simpara></listitem>
+	  </varlistentry>
+	</variablelist>
+
+      </refsect1>
+
+      <refsect1> <title>See also</title> <para><xref
+linkend="ne_get_status"/>.</para> </refsect1>
+
+    </refentry>

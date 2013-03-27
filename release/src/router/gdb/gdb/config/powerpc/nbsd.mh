@@ -1,0 +1,4 @@
+# Host: NetBSD/powerpc
+NATDEPFILES= fork-child.o inf-ptrace.o ppcnbsd-nat.o bsd-kvm.o
+
+LOADLIBES= -lkvm

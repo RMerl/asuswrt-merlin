@@ -1,0 +1,61 @@
+# frv testcase for mcpli $FRi,$s6,$FRk
+# mach: fr400 fr550
+
+	.include "testutils.inc"
+
+	start
+
+	.global mcpli
+mcpli:
+	set_fr_iimmed   0xdead,0xbeef,fr8
+	set_fr_iimmed   0xbeef,0xdead,fr9
+	set_fr_iimmed   0x1234,0x5678,fr10
+	mcpli      	fr8,0x0,fr10	; Shift by 0
+	test_fr_iimmed  0xdeadbeef,fr10
+
+	set_fr_iimmed   0x1234,0x5678,fr10
+	mcpli      	fr8,0x1,fr10	; Shift by 1
+	test_fr_iimmed  0xbd5b7ddf,fr10
+
+	set_fr_iimmed   0x1234,0x5678,fr10
+	mcpli      	fr8,0x4,fr10	; Shift by 4
+	test_fr_iimmed  0xeadbeefd,fr10
+
+	set_fr_iimmed   0x1234,0x5678,fr10
+	mcpli      	fr8,0xc,fr10	; Shift by 12
+	test_fr_iimmed  0xdbeefead,fr10
+
+	set_fr_iimmed   0x1234,0x5678,fr10
+	mcpli      	fr8,0x1c,fr10	; Shift by 28
+	test_fr_iimmed  0xfeefdead,fr10
+
+	set_fr_iimmed   0x1234,0x5678,fr10
+	mcpli      	fr8,0x1f,fr10	; Shift by 31
+	test_fr_iimmed  0xbeefdead,fr10
+
+	; test again with truncated shift values
+	set_fr_iimmed   0x1234,0x5678,fr10
+	mcpli      	fr8,0x20,fr10	; Shift by 0
+	test_fr_iimmed  0xdeadbeef,fr10
+
+	set_fr_iimmed   0x1234,0x5678,fr10
+	mcpli      	fr8,0x21,fr10	; Shift by 1
+	test_fr_iimmed  0xbd5b7ddf,fr10
+
+	set_fr_iimmed   0x1234,0x5678,fr10
+	mcpli      	fr8,0x24,fr10	; Shift by 4
+	test_fr_iimmed  0xeadbeefd,fr10
+
+	set_fr_iimmed   0x1234,0x5678,fr10
+	mcpli      	fr8,0x2c,fr10	; Shift by 12
+	test_fr_iimmed  0xdbeefead,fr10
+
+	set_fr_iimmed   0x1234,0x5678,fr10
+	mcpli      	fr8,0x3c,fr10	; Shift by 28
+	test_fr_iimmed  0xfeefdead,fr10
+
+	set_fr_iimmed   0x1234,0x5678,fr10
+	mcpli      	fr8,0x3f,fr10	; Shift by 31
+	test_fr_iimmed  0xbeefdead,fr10
+
+	pass

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  *
  * Fundamental types and constants relating to 802.11
  *
- * $Id: 802.11.h 308961 2012-01-18 03:01:00Z $
+ * $Id: 802.11.h 349051 2012-08-06 22:19:21Z $
  */
 
 #ifndef _802_11_H_
@@ -1214,6 +1214,8 @@ typedef struct ti_ie ti_ie_t;
 #define DOT11_EXT_CAP_OBSS_COEX_MGMT		0
 /* scheduled PSMP support bit position */
 #define DOT11_EXT_CAP_SPSMP					6
+/* proxy ARP service support bit position */
+#define DOT11_EXT_CAP_PROXY_ARP				12
 /* BSS Transition Management support bit position */
 #define DOT11_EXT_CAP_BSS_TRANSITION_MGMT	19
 /* Interworking support bit position */
@@ -1726,30 +1728,35 @@ typedef int vht_group_id_t;
 
 /* for VHT-A1 */
 /* SIG-A1 reserved bits */
-#define VHT_SIGA1_CONST_MASK 		0x800004
+#define VHT_SIGA1_CONST_MASK		0x800004
 
-#define VHT_SIGA1_20MHZ_VAL 		0x000000
-#define VHT_SIGA1_40MHZ_VAL 		0x000001
-#define VHT_SIGA1_80MHZ_VAL 		0x000002
-#define VHT_SIGA1_160MHZ_VAL 		0x000003
+#define VHT_SIGA1_20MHZ_VAL		0x000000
+#define VHT_SIGA1_40MHZ_VAL		0x000001
+#define VHT_SIGA1_80MHZ_VAL		0x000002
+#define VHT_SIGA1_160MHZ_VAL		0x000003
 
-#define VHT_SIGA1_STBC 			0x000008
+#define VHT_SIGA1_STBC			0x000008
 
-#define VHT_SIGA1_GID_MAX_GID 		0x3f
-#define VHT_SIGA1_GID_SHIFT 		4
-#define VHT_SIGA1_GID_TO_AP 		0x00
-#define VHT_SIGA1_GID_NOT_TO_AP 	0x3f
+#define VHT_SIGA1_GID_MAX_GID		0x3f
+#define VHT_SIGA1_GID_MASK		0x0003f0
+#define VHT_SIGA1_GID_SHIFT		4
+#define VHT_SIGA1_GID_TO_AP		0x00
+#define VHT_SIGA1_GID_NOT_TO_AP		0x3f
 
-#define VHT_SIGA1_NSTS_SHIFT 		10
+#define VHT_SIGA1_NSTS_SHIFT		10
 #define VHT_SIGA1_NSTS_SHIFT_MASK_USER0 0x001C00
 
-#define VHT_SIGA1_PARTIAL_AID_SHIFT 13
+#define VHT_SIGA1_PARTIAL_AID_MASK	0x3fe000
+#define VHT_SIGA1_PARTIAL_AID_SHIFT	13
+
+#define VHT_SIGA1_TXOP_PS_NOT_ALLOWED	0x400000
 
 /* for VHT-A2 */
 #define VHT_SIGA2_GI_NONE               0x000000
 #define VHT_SIGA2_GI_SHORT              0x000001
 #define VHT_SIGA2_GI_W_MOD10            0x000002
 #define VHT_SIGA2_CODING_LDPC           0x000004
+#define VHT_SIGA2_LDPC_EXTRA_OFDM_SYM	0x000008
 #define VHT_SIGA2_BEAMFORM_ENABLE       0x000100
 #define VHT_SIGA2_MCS_SHIFT             4
 
@@ -1807,8 +1814,11 @@ typedef struct brcm_prop_ie_s brcm_prop_ie_t;
 #define BRCM_PROP_IE_LEN	6	/* len of fixed part of brcm_prop ie */
 
 #define DPT_IE_TYPE		2
-#define WET_TUNNEL_IE_TYPE	3
+#define BRCM_SYSCAP_IE_TYPE	3
 #endif /* LINUX_POSTMOGRIFY_REMOVAL */
+
+/* brcm syscap_ie cap */
+#define BRCM_SYSCAP_WET_TUNNEL	0x0100	/* Device with WET_TUNNEL support */
 
 /* BRCM OUI: Used in the proprietary(221) IE in all broadcom devices */
 #define BRCM_OUI		"\x00\x10\x18"	/* Broadcom OUI */
@@ -1840,6 +1850,7 @@ typedef	struct brcm_ie brcm_ie_t;
 #define	BRF1_RX_LARGE_AGG	0x10	/* device can rx large aggregates */
 #define BRF1_RFAWARE_DCS	0x20    /* RFAWARE dynamic channel selection (DCS) */
 #define BRF1_SOFTAP		0x40    /* Configure as Broadcom SOFTAP */
+#define BRF1_DWDS		0x80    /* DWDS capable */
 
 /* Vendor IE structure */
 BWL_PRE_PACKED_STRUCT struct vndr_ie {
@@ -1909,6 +1920,11 @@ typedef struct ht_prop_cap_ie ht_prop_cap_ie_t;
 #define HT_CAP_RX_STBC_TWO_STREAM	0x2	/* rx STBC support of 1-2 spatial streams */
 #define HT_CAP_RX_STBC_THREE_STREAM	0x3	/* rx STBC support of 1-3 spatial streams */
 
+#define HT_CAP_TX_BF_CAP_EXPLICIT_CSI_FB_MASK	0x400
+#define HT_CAP_TX_BF_CAP_EXPLICIT_CSI_FB_SHIFT	10
+#define HT_CAP_TX_BF_CAP_EXPLICIT_COMPRESSED_FB_MASK 0x18000
+#define HT_CAP_TX_BF_CAP_EXPLICIT_COMPRESSED_FB_SHIFT 15
+
 #define VHT_MAX_MPDU		11454	/* max mpdu size for now (bytes) */
 #define VHT_MPDU_MSDU_DELTA	56		/* Difference in spec - vht mpdu, amsdu len */
 /* Max AMSDU len - per spec */
@@ -1922,12 +1938,20 @@ typedef struct ht_prop_cap_ie ht_prop_cap_ie_t;
 #define HT_PARAMS_DENSITY_SHIFT	2	/* ampdu density shift */
 
 /* HT/AMPDU specific define */
-#define AMPDU_MAX_MPDU_DENSITY	7	/* max mpdu density; in 1/8 usec units */
-#define AMPDU_RX_FACTOR_8K	0	/* max rcv ampdu len (8kb) */
-#define AMPDU_RX_FACTOR_16K	1	/* max rcv ampdu len (16kb) */
-#define AMPDU_RX_FACTOR_32K	2	/* max rcv ampdu len (32kb) */
-#define AMPDU_RX_FACTOR_64K	3	/* max rcv ampdu len (64kb) */
-#define AMPDU_RX_FACTOR_BASE	8*1024	/* ampdu factor base for rx len */
+#define AMPDU_MAX_MPDU_DENSITY  7       /* max mpdu density; in 1/4 usec units */
+#define AMPDU_DENSITY_NONE      0       /* No density requirement */
+#define AMPDU_DENSITY_1over4_US 1       /* 1/4 us density */
+#define AMPDU_DENSITY_1over2_US 2       /* 1/2 us density */
+#define AMPDU_DENSITY_1_US      3       /*   1 us density */
+#define AMPDU_DENSITY_2_US      4       /*   2 us density */
+#define AMPDU_DENSITY_4_US      5       /*   4 us density */
+#define AMPDU_DENSITY_8_US      6       /*   8 us density */
+#define AMPDU_DENSITY_16_US     7       /*  16 us density */
+#define AMPDU_RX_FACTOR_8K      0       /* max rcv ampdu len (8kb) */
+#define AMPDU_RX_FACTOR_16K     1       /* max rcv ampdu len (16kb) */
+#define AMPDU_RX_FACTOR_32K     2       /* max rcv ampdu len (32kb) */
+#define AMPDU_RX_FACTOR_64K     3       /* max rcv ampdu len (64kb) */
+#define AMPDU_RX_FACTOR_BASE    8*1024  /* ampdu factor base for rx len */
 
 #define AMPDU_DELIMITER_LEN	4	/* length of ampdu delimiter */
 #define AMPDU_DELIMITER_LEN_MAX	63	/* max length of ampdu delimiter(enforced in HW) */
@@ -2061,6 +2085,10 @@ typedef struct dot11_obss_ie dot11_obss_ie_t;
 
 /* ************* VHT definitions. ************* */
 
+/*
+ * VHT Capabilites IE (sec 8.4.2.160)
+ */
+
 BWL_PRE_PACKED_STRUCT struct vht_cap_ie {
 	uint32  vht_cap_info;
 	/* supported MCS set - 64 bit field */
@@ -2070,24 +2098,23 @@ BWL_PRE_PACKED_STRUCT struct vht_cap_ie {
 	uint16	tx_max_rate;
 } BWL_POST_PACKED_STRUCT;
 typedef struct vht_cap_ie vht_cap_ie_t;
+
 /* 4B cap_info + 8B supp_mcs */
 #define VHT_CAP_IE_LEN 12
-/* 32bit - cap info */
-#define VHT_CAP_INFO_MAX_MPDU_LEN_MASK			0x00000003
+
+/* VHT Capabilities Info field - 32bit - in VHT Cap IE */
+#define VHT_CAP_INFO_MAX_MPDU_LEN_MASK          0x00000003
 #define VHT_CAP_INFO_SUPP_CHAN_WIDTH_MASK       0x0000000c
 #define VHT_CAP_INFO_LDPC                       0x00000010
 #define VHT_CAP_INFO_SGI_80MHZ                  0x00000020
 #define VHT_CAP_INFO_SGI_160MHZ                 0x00000040
 #define VHT_CAP_INFO_TX_STBC                    0x00000080
-#define VHT_CAP_INFO_RX_STBC                    0x00000700
-
 #define VHT_CAP_INFO_RX_STBC_MASK               0x00000700
 #define VHT_CAP_INFO_RX_STBC_SHIFT              8
 #define VHT_CAP_INFO_SU_BEAMFMR                 0x00000800
 #define VHT_CAP_INFO_SU_BEAMFMEE                0x00001000
 #define VHT_CAP_INFO_NUM_BMFMR_ANT_MASK         0x0000e000
 #define VHT_CAP_INFO_NUM_BMFMR_ANT_SHIFT        13
-
 #define VHT_CAP_INFO_NUM_SOUNDING_DIM_MASK      0x00070000
 #define VHT_CAP_INFO_NUM_SOUNDING_DIM_SHIFT     16
 #define VHT_CAP_INFO_MU_BEAMFMR                 0x00080000
@@ -2096,39 +2123,77 @@ typedef struct vht_cap_ie vht_cap_ie_t;
 #define VHT_CAP_INFO_HTCVHT                     0x00400000
 #define VHT_CAP_INFO_AMPDU_MAXLEN_EXP_MASK      0x03800000
 #define VHT_CAP_INFO_AMPDU_MAXLEN_EXP_SHIFT     23
-
 #define VHT_CAP_INFO_LINK_ADAPT_CAP_MASK        0x0c000000
 #define VHT_CAP_INFO_LINK_ADAPT_CAP_SHIFT       26
 
-/* 64-bit Supp MCS. */
-#define VHT_CAP_SUPP_MCS_RX_HIGHEST_RATE_MASK	0x1fff
-#define VHT_CAP_SUPP_MCS_RX_HIGHEST_RATE_SHIFT	0
+/* VHT Supported MCS Set - 64-bit - in VHT Cap IE */
+#define VHT_CAP_SUPP_MCS_RX_HIGHEST_RATE_MASK   0x1fff
+#define VHT_CAP_SUPP_MCS_RX_HIGHEST_RATE_SHIFT  0
 
-#define VHT_CAP_SUPP_MCS_TX_HIGHEST_RATE_MASK	0x1fff
-#define VHT_CAP_SUPP_MCS_TX_HIGHEST_RATE_SHIFT	0
+#define VHT_CAP_SUPP_MCS_TX_HIGHEST_RATE_MASK   0x1fff
+#define VHT_CAP_SUPP_MCS_TX_HIGHEST_RATE_SHIFT  0
 
-#define VHT_CAP_MCS_MAP_0_7						0
-#define VHT_CAP_MCS_MAP_0_8						1
-#define VHT_CAP_MCS_MAP_0_9						2
-#define VHT_CAP_MCS_MAP_NONE					3
+#define VHT_CAP_MCS_MAP_0_7                     0
+#define VHT_CAP_MCS_MAP_0_8                     1
+#define VHT_CAP_MCS_MAP_0_9                     2
+#define VHT_CAP_MCS_MAP_NONE                    3
+#define VHT_CAP_MCS_MAP_S                       2 /* num bits for 1-stream */
+#define VHT_CAP_MCS_MAP_M                       0x3 /* mask for 1-stream */
+/* assumes VHT_CAP_MCS_MAP_NONE is 3 and 2 bits are used for encoding */
+#define VHT_CAP_MCS_MAP_NONE_ALL                0xffff
+/* mcsmap with MCS0-9 for Nss = 3 */
+#define VHT_CAP_MCS_MAP_0_9_NSS3 \
+	        ((VHT_CAP_MCS_MAP_0_9 << VHT_MCS_MAP_GET_SS_IDX(1)) | \
+	         (VHT_CAP_MCS_MAP_0_9 << VHT_MCS_MAP_GET_SS_IDX(2)) | \
+	         (VHT_CAP_MCS_MAP_0_9 << VHT_MCS_MAP_GET_SS_IDX(3)))
 
-#define VHT_CAP_MCS_MAP_NSS_MAX					8
+#define VHT_CAP_MCS_MAP_NSS_MAX                 8
+
+/* get mcsmap with given mcs for given nss streams */
+#define VHT_CAP_MCS_MAP_CREATE(mcsmap, nss, mcs) \
+	do { \
+		int i; \
+		for (i = 1; i <= nss; i++) { \
+			VHT_MCS_MAP_SET_MCS_PER_SS(i, mcs, mcsmap); \
+		} \
+	} while (0)
+
+/* Map the mcs code to mcs bit map */
+#define VHT_MCS_CODE_TO_MCS_MAP(mcs_code) \
+	((mcs_code == VHT_CAP_MCS_MAP_0_7) ? 0xff : \
+	 (mcs_code == VHT_CAP_MCS_MAP_0_8) ? 0x1ff : \
+	 (mcs_code == VHT_CAP_MCS_MAP_0_9) ? 0x3ff : 0)
+
+/* Map the mcs bit map to mcs code */
+#define VHT_MCS_MAP_TO_MCS_CODE(mcs_map) \
+	((mcs_map == 0xff)  ? VHT_CAP_MCS_MAP_0_7 : \
+	 (mcs_map == 0x1ff) ? VHT_CAP_MCS_MAP_0_8 : \
+	 (mcs_map == 0x3ff) ? VHT_CAP_MCS_MAP_0_9 : VHT_CAP_MCS_MAP_NONE)
 
 /* VHT Capabilities Supported Channel Width */
 typedef enum vht_cap_chan_width {
-	VHT_CAP_CHAN_WIDTH_20_40  = 0x00,
-	VHT_CAP_CHAN_WIDTH_80	  = 0x04,
-	VHT_CAP_CHAN_WIDTH_160	  = 0x08
+	VHT_CAP_CHAN_WIDTH_SUPPORT_MANDATORY = 0x00,
+	VHT_CAP_CHAN_WIDTH_SUPPORT_160       = 0x04,
+	VHT_CAP_CHAN_WIDTH_SUPPORT_160_8080  = 0x08
 } vht_cap_chan_width_t;
 
-/* VHT Capabilities Supported max MPDU LEN */
+/* VHT Capabilities Supported max MPDU LEN (sec 8.4.2.160.2) */
 typedef enum vht_cap_max_mpdu_len {
-	VHT_CAP_MPDU_MAX_4K		= 0x00,
-	VHT_CAP_MPDU_MAX_8K		= 0x01,
-	VHT_CAP_MPDU_MAX_11K	= 0x02
+	VHT_CAP_MPDU_MAX_4K     = 0x00,
+	VHT_CAP_MPDU_MAX_8K     = 0x01,
+	VHT_CAP_MPDU_MAX_11K    = 0x02
 } vht_cap_max_mpdu_len_t;
 
-/* VHT Operation Element */
+/* Maximum MPDU Length byte counts for the VHT Capabilities advertised limits */
+#define VHT_MPDU_LIMIT_4K        3895
+#define VHT_MPDU_LIMIT_8K        7991
+#define VHT_MPDU_LIMIT_11K      11454
+
+
+/*
+ * VHT Operation IE (sec 8.4.2.161)
+ */
+
 BWL_PRE_PACKED_STRUCT struct vht_op_ie {
 	uint8	chan_width;
 	uint8	chan1;
@@ -2136,6 +2201,7 @@ BWL_PRE_PACKED_STRUCT struct vht_op_ie {
 	uint16	supp_mcs;  /*  same def as above in vht cap */
 } BWL_POST_PACKED_STRUCT;
 typedef struct vht_op_ie vht_op_ie_t;
+
 /* 3B VHT Op info + 2B Basic MCS */
 #define VHT_OP_IE_LEN 5
 
@@ -2147,11 +2213,17 @@ typedef enum vht_op_chan_width {
 } vht_op_chan_width_t;
 
 /* Def for rx & tx basic mcs maps - ea ss num has 2 bits of info */
-#define VHT_MCS_MAP_GET_SS_IDX(nss) (((nss)-1)*2)
+#define VHT_MCS_MAP_GET_SS_IDX(nss) (((nss)-1) * VHT_CAP_MCS_MAP_S)
 #define VHT_MCS_MAP_GET_MCS_PER_SS(nss, mcsMap) \
-	(((mcsMap) >> VHT_MCS_MAP_GET_SS_IDX(nss)) & 0x3)
+	(((mcsMap) >> VHT_MCS_MAP_GET_SS_IDX(nss)) & VHT_CAP_MCS_MAP_M)
 #define VHT_MCS_MAP_SET_MCS_PER_SS(nss, numMcs, mcsMap) \
-	((mcsMap) |= (((numMcs) & 0x3) << VHT_MCS_MAP_GET_SS_IDX(nss)))
+	do { \
+	 (mcsMap) &= (~(VHT_CAP_MCS_MAP_M << VHT_MCS_MAP_GET_SS_IDX(nss))); \
+	 (mcsMap) |= (((numMcs) & VHT_CAP_MCS_MAP_M) << VHT_MCS_MAP_GET_SS_IDX(nss)); \
+	} while (0)
+#define VHT_MCS_SS_SUPPORTED(nss, mcsMap) \
+		 (VHT_MCS_MAP_GET_MCS_PER_SS((nss), (mcsMap)) != VHT_CAP_MCS_MAP_NONE)
+
 
 /* ************* WPA definitions. ************* */
 #define WPA_OUI			"\x00\x50\xF2"	/* WPA OUI */
@@ -2191,6 +2263,9 @@ typedef enum vht_op_chan_width {
 #endif
 
 #define WFA_OUI_TYPE_TPC	8
+#ifdef WLTDLS
+#define WFA_OUI_TYPE_WFD	10
+#endif /* WTDLS */
 
 /* RSN authenticated key managment suite */
 #define RSN_AKM_NONE		0	/* None (IBSS) */

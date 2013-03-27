@@ -1,0 +1,126 @@
+# Copyright 2003, 2004, 2006 Free Software Foundation Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# This file tests C++-specific maintenance commands and help on those.
+
+# Currently, no source file is used.
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+# Test the help messages.
+
+proc test_help {} {
+    set first_component_help "Print the first class/namespace component of NAME"
+    set namespace_help "Print the list of possible C\\+\\+ namespaces"
+
+    test_prefix_command_help {"maintenance cplus"} {
+        "C\\+\\+ maintenance commands\.\[\r\n\]+"
+    }
+
+    test_prefix_command_help {"maint cp" "maintenance cplus"} {
+        "C\\+\\+ maintenance commands.\r\n\r\n"
+    }
+
+    set multiple_help_body "List of maintenance cplus subcommands:\r\n\r\nmaintenance cplus first_component -- ${first_component_help}\r\nmaintenance cplus namespace -- ${namespace_help}\r\n\r\nType \"help maintenance cplus\" followed by maintenance cplus subcommand name for full documentation.\r\nCommand name abbreviations are allowed if unambiguous."
+
+    gdb_test "maint cp" "\"maintenance cplus\" must be followed by the name of a command.\r\n.*"
+
+    gdb_test "help maint cp first_component" "${first_component_help}."
+    gdb_test "help maint cp namespace" "${namespace_help}."
+}
+
+# This is used when NAME should contain only a single component.  Be
+# careful to make sure that parentheses get escaped properly.
+proc test_single_component {name} {
+    set matchname [string_to_regexp "$name"]
+    gdb_test "maint cp first_component $name" "$matchname"
+}
+
+# This is used when NAME is invalid.
+proc test_invalid_name {name} {
+    set matchname [string_to_regexp "$name"]
+    gdb_test "maint cp first_component $name" \
+	"During symbol reading, unexpected demangled name '$matchname'.\r\n$matchname"
+}
+
+proc test_first_component {} {
+    # The function in question might complain; make sure that we see
+    # all complaints.
+
+    gdb_test "set complaints 1000" ""
+
+    test_single_component "foo"
+    test_single_component "operator<<"
+    test_single_component "operator>>"
+    test_single_component "operator ->"
+    test_single_component "operator()"
+    test_single_component "operator>"
+    test_single_component "operator<"
+    test_single_component "operator ->"
+    test_single_component "operator  ->"
+
+    test_single_component "foo()"
+    test_single_component "foo(int)"
+    test_single_component "foo(X::Y)"
+    test_single_component "foo(X::Y, A::B)"
+    test_single_component "foo(std::basic_streambuf<wchar_t,std::char_traits<wchar_t> >)"
+    test_single_component "operator>(X::Y)"
+
+    # Operator names can show up in weird places.
+
+    test_single_component "int operator<< <char>()"
+    test_single_component "T<Cooperator>"
+
+    # NOTE: carlton/2003-04-23: I've only seen the first of these
+    # produced by the demangler, but I'm including two more just to be
+    # on the safe side.
+    test_single_component "int foo<&(operator<<(C, C))>()"
+    test_single_component "int foo<&operator<<(C, C)>()"
+    test_single_component "int foo<operator<<(C, C)>()"
+
+    gdb_test "maint cp first_component foo::bar" "foo"
+    gdb_test "maint cp first_component foo::bar::baz" "foo"
+    gdb_test "maint cp first_component C<A>::bar" "C<A>"
+    gdb_test "maint cp first_component C<std::basic_streambuf<wchar_t,std::char_traits<wchar_t> > >::bar" "C<std::basic_streambuf<wchar_t,std::char_traits<wchar_t> > >"
+
+    # Make sure we behave appropriately on invalid input.
+
+    # NOTE: carlton/2003-06-25: As of today, the demangler can in fact
+    # produce examples like the third case below: there really should
+    # be a space between the two <'s.  See PR gdb/1245.
+
+    test_invalid_name "foo<"
+    test_invalid_name "foo("
+    test_invalid_name "bool operator<<char>"
+}
+
+proc test_namespace {} {
+    # There's not a lot we can do to test this.
+
+    gdb_test "maint cp namespace" "Possible namespaces:"
+}
+
+gdb_exit
+gdb_start
+
+test_help
+test_first_component
+test_namespace
+
+gdb_exit
+return 0

@@ -1,0 +1,237 @@
+# frv testcase for smu $GRi,$GRj
+# mach: fr405 fr450
+
+	.include "../testutils.inc"
+
+	start
+
+	.global smu
+smu1:
+	; Positive operands
+	set_gr_immed	3,gr7		; multiply small numbers
+	set_gr_immed	2,gr8
+	smu		gr7,gr8
+	test_gr_immed	3,gr7
+	test_gr_immed	2,gr8
+	test_spr_immed	6,iacc0l
+	test_spr_immed	0,iacc0h
+smu2:
+	set_gr_immed	1,gr7		; multiply by 1
+	set_gr_immed	2,gr8
+	smu		gr7,gr8
+	test_gr_immed	1,gr7
+	test_gr_immed	2,gr8
+	test_spr_immed	2,iacc0l
+	test_spr_immed	0,iacc0h
+smu3:
+	set_gr_immed	2,gr7		; multiply by 1
+	set_gr_immed	1,gr8
+	smu		gr7,gr8
+	test_gr_immed	1,gr8
+	test_gr_immed	2,gr7
+	test_spr_immed	2,iacc0l
+	test_spr_immed	0,iacc0h
+smu4:
+	set_gr_immed	0,gr7		; multiply by 0
+	set_gr_immed	2,gr8
+	smu		gr7,gr8
+	test_gr_immed	2,gr8
+	test_gr_immed	0,gr7
+	test_spr_immed	0,iacc0l
+	test_spr_immed	0,iacc0h
+smu5:
+	set_gr_immed	2,gr7		; multiply by 0
+	set_gr_immed	0,gr8
+	smu		gr7,gr8
+	test_gr_immed	0,gr8
+	test_gr_immed	2,gr7
+	test_spr_immed	0,iacc0l
+	test_spr_immed	0,iacc0h
+smu6:
+	set_gr_limmed	0x3fff,0xffff,gr7	; 31 bit result
+	set_gr_immed	2,gr8
+	smu		gr7,gr8
+	test_gr_immed	2,gr8
+	test_gr_limmed	0x3fff,0xffff,gr7
+	test_spr_limmed	0x7fff,0xfffe,iacc0l
+	test_spr_immed	0,iacc0h
+smu7:
+	set_gr_limmed	0x4000,0x0000,gr7	; 32 bit result
+	set_gr_immed	2,gr8
+	smu		gr7,gr8
+	test_gr_immed	2,gr8
+	test_gr_limmed	0x4000,0x0000,gr7
+	test_spr_limmed	0x8000,0x0000,iacc0l
+	test_spr_immed	0,iacc0h
+smu8:
+	set_gr_limmed	0x4000,0x0000,gr7	; 33 bit result
+	set_gr_immed	4,gr8
+	smu		gr7,gr8
+	test_gr_immed	4,gr8
+	test_gr_limmed	0x4000,0x0000,gr7
+	test_spr_immed	0,iacc0l
+	test_spr_immed	1,iacc0h
+smu9:
+	set_gr_limmed	0x7fff,0xffff,gr7	; max positive result
+	set_gr_limmed	0x7fff,0xffff,gr8
+	smu		gr7,gr8
+	test_gr_limmed	0x7fff,0xffff,gr8
+	test_gr_limmed	0x7fff,0xffff,gr7
+	test_spr_immed	0x00000001,iacc0l
+	test_spr_limmed	0x3fff,0xffff,iacc0h
+smu10:
+	; Mixed operands
+	set_gr_immed	-3,gr7		; multiply small numbers
+	set_gr_immed	2,gr8
+	smu		gr7,gr8
+	test_gr_immed	2,gr8
+	test_gr_immed	-3,gr7
+	test_spr_immed	-6,iacc0l
+	test_spr_immed	-1,iacc0h
+smu11:
+	set_gr_immed	3,gr7		; multiply small numbers
+	set_gr_immed	-2,gr8
+	smu		gr7,gr8
+	test_gr_immed	-2,gr8
+	test_gr_immed	3,gr7
+	test_spr_immed	-6,iacc0l
+	test_spr_immed	-1,iacc0h
+smu12:
+	set_gr_immed	1,gr7		; multiply by 1
+	set_gr_immed	-2,gr8
+	smu		gr7,gr8
+	test_gr_immed	-2,gr8
+	test_gr_immed	1,gr7
+	test_spr_immed	-2,iacc0l
+	test_spr_immed	-1,iacc0h
+smu13:
+	set_gr_immed	-2,gr7		; multiply by 1
+	set_gr_immed	1,gr8
+	smu		gr7,gr8
+	test_gr_immed	1,gr8
+	test_gr_immed	-2,gr7
+	test_spr_immed	-2,iacc0l
+	test_spr_immed	-1,iacc0h
+smu14:
+	set_gr_immed	0,gr7		; multiply by 0
+	set_gr_immed	-2,gr8
+	smu		gr7,gr8
+	test_gr_immed	-2,gr8
+	test_gr_immed	0,gr7
+	test_spr_immed	0,iacc0l
+	test_spr_immed	0,iacc0h
+smu15:
+	set_gr_immed	-2,gr7		; multiply by 0
+	set_gr_immed	0,gr8
+	smu		gr7,gr8
+	test_gr_immed	0,gr8
+	test_gr_immed	-2,gr7
+	test_spr_immed	0,iacc0l
+	test_spr_immed	0,iacc0h
+smu16:
+	set_gr_limmed	0x2000,0x0001,gr7	; 31 bit result
+	set_gr_immed	-2,gr8
+	smu		gr7,gr8
+	test_gr_immed	-2,gr8
+	test_gr_limmed	0x2000,0x0001,gr7
+	test_spr_limmed	0xbfff,0xfffe,iacc0l
+	test_spr_limmed	0xffff,0xffff,iacc0h
+smu17:
+	set_gr_limmed	0x4000,0x0000,gr7	; 32 bit result
+	set_gr_immed	-2,gr8
+	smu		gr7,gr8
+	test_gr_immed	-2,gr8
+	test_gr_limmed	0x4000,0x0000,gr7
+	test_spr_limmed	0x8000,0x0000,iacc0l
+	test_spr_limmed	0xffff,0xffff,iacc0h
+smu18:
+	set_gr_limmed	0x4000,0x0001,gr7	; 32 bit result
+	set_gr_immed	-2,gr8
+	smu		gr7,gr8
+	test_gr_immed	-2,gr8
+	test_gr_limmed	0x4000,0x0001,gr7
+	test_spr_limmed	0x7fff,0xfffe,iacc0l
+	test_spr_limmed	0xffff,0xffff,iacc0h
+smu19:
+	set_gr_limmed	0x4000,0x0000,gr7	; 33 bit result
+	set_gr_immed	-4,gr8
+	smu		gr7,gr8
+	test_gr_immed	-4,gr8
+	test_gr_limmed	0x4000,0x0000,gr7
+	test_spr_limmed	0x0000,0x0000,iacc0l
+	test_spr_limmed	0xffff,0xffff,iacc0h
+smu20:
+	set_gr_limmed	0x7fff,0xffff,gr7	; max negative result
+	set_gr_limmed	0x8000,0x0000,gr8
+	smu		gr7,gr8
+	test_gr_limmed	0x8000,0x0000,gr8
+	test_gr_limmed	0x7fff,0xffff,gr7
+	test_spr_limmed	0x8000,0x0000,iacc0l
+	test_spr_limmed	0xc000,0x0000,iacc0h
+smu21:
+	; Negative operands
+	set_gr_immed	-3,gr7		; multiply small numbers
+	set_gr_immed	-2,gr8
+	smu		gr7,gr8
+	test_gr_immed	-2,gr8
+	test_gr_immed	-3,gr7
+	test_spr_immed	6,iacc0l
+	test_spr_immed	0,iacc0h
+smu22:
+	set_gr_immed	-1,gr7		; multiply by 1
+	set_gr_immed	-2,gr8
+	smu		gr7,gr8
+	test_gr_immed	-2,gr8
+	test_gr_immed	-1,gr7
+	test_spr_immed	2,iacc0l
+	test_spr_immed	0,iacc0h
+smu23:
+	set_gr_immed	-2,gr7		; multiply by 1
+	set_gr_immed	-1,gr8
+	smu		gr7,gr8
+	test_gr_immed	-1,gr8
+	test_gr_immed	-2,gr7
+	test_spr_immed	2,iacc0l
+	test_spr_immed	0,iacc0h
+smu24:
+	set_gr_limmed	0xc000,0x0001,gr7	; 31 bit result
+	set_gr_immed	-2,gr8
+	smu		gr7,gr8
+	test_gr_immed	-2,gr8
+	test_gr_limmed	0xc000,0x0001,gr7
+	test_spr_limmed	0x7fff,0xfffe,iacc0l
+	test_spr_immed	0,iacc0h
+smu25:
+	set_gr_limmed	0xc000,0x0000,gr7	; 32 bit result
+	set_gr_immed	-2,gr8
+	smu		gr7,gr8
+	test_gr_immed	-2,gr8
+	test_gr_limmed	0xc000,0x0000,gr7
+	test_spr_limmed	0x8000,0x0000,iacc0l
+	test_spr_immed	0,iacc0h
+smu26:
+	set_gr_limmed	0xc000,0x0000,gr7	; 33 bit result
+	set_gr_immed	-4,gr8
+	smu		gr7,gr8
+	test_gr_immed	-4,gr8
+	test_gr_limmed	0xc000,0x0000,gr7
+	test_spr_immed	0x00000000,iacc0l
+	test_spr_immed	1,iacc0h
+smu27:
+	set_gr_limmed	0x8000,0x0001,gr7	; almost max positive result
+	set_gr_limmed	0x8000,0x0001,gr8
+	smu		gr7,gr8
+	test_gr_limmed	0x8000,0x0001,gr8
+	test_gr_limmed	0x8000,0x0001,gr7
+	test_spr_immed	0x00000001,iacc0l
+	test_spr_limmed	0x3fff,0xffff,iacc0h
+smu28:
+	set_gr_limmed	0x8000,0x0000,gr7	; max positive result
+	set_gr_limmed	0x8000,0x0000,gr8
+	smu		gr7,gr8
+	test_gr_limmed	0x8000,0x0000,gr8
+	test_gr_limmed	0x8000,0x0000,gr7
+	test_spr_immed	0x00000000,iacc0l
+	test_spr_limmed	0x4000,0x0000,iacc0h
+
+	pass

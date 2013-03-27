@@ -1,0 +1,2259 @@
+# Copyright (C) 2003, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Michael Snyder (msnyder@redhat.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+if ![istarget "h8300*-*-*"] {
+    verbose "Tests ignored for all but h8300s based targets."
+    return
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "t11_logs"
+set srcfile ${srcdir}/${subdir}/${testfile}.s
+set objfile ${objdir}/${subdir}/${testfile}.o
+set binfile ${objdir}/${subdir}/${testfile}.x
+
+set asm-flags "";
+set link-flags "-m h8300sxelf";
+
+
+if {[target_assemble $srcfile $objfile "${asm-flags}"] != ""} then {
+     untested t11_logs.exp
+     return -1
+}
+
+if {[target_link $objfile $binfile "${link-flags}"] != ""} then {
+     untested t11_logs.exp
+     return -1
+}
+
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+
+gdb_test "x /i _start" "not.b\tr1h" \
+	"not.b r1h"
+gdb_test "x" "not.b\t@er1" \
+	"not.b @er1"
+gdb_test "x" "not.b\t@\\(0x3(:2|),er1\\)" \
+	"not.b @(0x3:2,er1)"
+gdb_test "x" "not.b\t@er1\\+" \
+	"not.b @er1+"
+gdb_test "x" "not.b\t@-er1" \
+	"not.b @-er1"
+gdb_test "x" "not.b\t@\\+er1" \
+	"not.b @+er1"
+gdb_test "x" "not.b\t@er1-" \
+	"not.b @er1-"
+gdb_test "x" "not.b\t@\\(0x1234(:16|),er1\\)" \
+	"not.b @(0x1234:16,er1)"
+gdb_test "x" "not.b\t@\\(0x12345678(:32|),er1\\)" \
+	"not.b @(0x12345678:32,er1)"
+gdb_test "x" "not.b\t@\\(0x1234(:16|),r2l.b\\)" \
+	"not.b @(0x1234:16,r2l.b)"
+gdb_test "x" "not.b\t@\\(0x1234(:16|),r2.w\\)" \
+	"not.b @(0x1234:16,r2.w)"
+gdb_test "x" "not.b\t@\\(0x1234(:16|),er2.l\\)" \
+	"not.b @(0x1234:16,er2.l)"
+gdb_test "x" "not.b\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"not.b @(0x12345678:32,r2l.b)"
+gdb_test "x" "not.b\t@\\(0x12345678(:32|),r2.w\\)" \
+	"not.b @(0x12345678:32,r2.w)"
+gdb_test "x" "not.b\t@\\(0x12345678(:32|),er2.l\\)" \
+	"not.b @(0x12345678:32,er2.l)"
+gdb_test "x" "not.b\t@0x12(:8|)" \
+	"not.b @0x12:8"
+gdb_test "x" "not.b\t@0x1234(:16|)" \
+	"not.b @0x1234:16"
+gdb_test "x" "not.b\t@0x12345678(:32|)" \
+	"not.b @0x12345678:32"
+gdb_test "x" "not.w\tr1" \
+	"not.w r1"
+gdb_test "x" "not.w\t@er1" \
+	"not.w @er1"
+gdb_test "x" "not.w\t@\\(0x6(:2|),er1\\)" \
+	"not.w @(0x6:2,er1)"
+gdb_test "x" "not.w\t@er1\\+" \
+	"not.w @er1+"
+gdb_test "x" "not.w\t@-er1" \
+	"not.w @-er1"
+gdb_test "x" "not.w\t@\\+er1" \
+	"not.w @+er1"
+gdb_test "x" "not.w\t@er1-" \
+	"not.w @er1-"
+gdb_test "x" "not.w\t@\\(0x1234(:16|),er1\\)" \
+	"not.w @(0x1234:16,er1)"
+gdb_test "x" "not.w\t@\\(0x12345678(:32|),er1\\)" \
+	"not.w @(0x12345678:32,er1)"
+gdb_test "x" "not.w\t@\\(0x1234(:16|),r2l.b\\)" \
+	"not.w @(0x1234:16,r2l.b)"
+gdb_test "x" "not.w\t@\\(0x1234(:16|),r2.w\\)" \
+	"not.w @(0x1234:16,r2.w)"
+gdb_test "x" "not.w\t@\\(0x1234(:16|),er2.l\\)" \
+	"not.w @(0x1234:16,er2.l)"
+gdb_test "x" "not.w\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"not.w @(0x12345678:32,r2l.b)"
+gdb_test "x" "not.w\t@\\(0x12345678(:32|),r2.w\\)" \
+	"not.w @(0x12345678:32,r2.w)"
+gdb_test "x" "not.w\t@\\(0x12345678(:32|),er2.l\\)" \
+	"not.w @(0x12345678:32,er2.l)"
+gdb_test "x" "not.w\t@0x1234(:16|)" \
+	"not.w @0x1234:16"
+gdb_test "x" "not.w\t@0x12345678(:32|)" \
+	"not.w @0x12345678:32"
+gdb_test "x" "not.l\ter1" \
+	"not.l er1"
+gdb_test "x" "not.l\t@er1" \
+	"not.l @er1"
+gdb_test "x" "not.l\t@\\(0xc(:2|),er1\\)" \
+	"not.l @(0xc:2,er1)"
+gdb_test "x" "not.l\t@er1\\+" \
+	"not.l @er1+"
+gdb_test "x" "not.l\t@-er1" \
+	"not.l @-er1"
+gdb_test "x" "not.l\t@\\+er1" \
+	"not.l @+er1"
+gdb_test "x" "not.l\t@er1-" \
+	"not.l @er1-"
+gdb_test "x" "not.l\t@\\(0x1234(:16|),er1\\)" \
+	"not.l @(0x1234:16,er1)"
+gdb_test "x" "not.l\t@\\(0x12345678(:32|),er1\\)" \
+	"not.l @(0x12345678:32,er1)"
+gdb_test "x" "not.l\t@\\(0x1234(:16|),r2l.b\\)" \
+	"not.l @(0x1234:16,r2l.b)"
+gdb_test "x" "not.l\t@\\(0x1234(:16|),r2.w\\)" \
+	"not.l @(0x1234:16,r2.w)"
+gdb_test "x" "not.l\t@\\(0x1234(:16|),er2.l\\)" \
+	"not.l @(0x1234:16,er2.l)"
+gdb_test "x" "not.l\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"not.l @(0x12345678:32,r2l.b)"
+gdb_test "x" "not.l\t@\\(0x12345678(:32|),r2.w\\)" \
+	"not.l @(0x12345678:32,r2.w)"
+gdb_test "x" "not.l\t@\\(0x12345678(:32|),er2.l\\)" \
+	"not.l @(0x12345678:32,er2.l)"
+gdb_test "x" "not.l\t@0x1234(:16|)" \
+	"not.l @0x1234:16"
+gdb_test "x" "not.l\t@0x12345678(:32|)" \
+	"not.l @0x12345678:32"
+gdb_test "x" "shll.b\tr1h" \
+	"shll.b r1h"
+gdb_test "x" "shll.b\t@er1" \
+	"shll.b @er1"
+gdb_test "x" "shll.b\t@\\(0x3(:2|),er1\\)" \
+	"shll.b @(0x3:2,er1)"
+gdb_test "x" "shll.b\t@er1\\+" \
+	"shll.b @er1+"
+gdb_test "x" "shll.b\t@-er1" \
+	"shll.b @-er1"
+gdb_test "x" "shll.b\t@\\+er1" \
+	"shll.b @+er1"
+gdb_test "x" "shll.b\t@er1-" \
+	"shll.b @er1-"
+gdb_test "x" "shll.b\t@\\(0x1234(:16|),er1\\)" \
+	"shll.b @(0x1234:16,er1)"
+gdb_test "x" "shll.b\t@\\(0x12345678(:32|),er1\\)" \
+	"shll.b @(0x12345678:32,er1)"
+gdb_test "x" "shll.b\t@\\(0x1234(:16|),r2l.b\\)" \
+	"shll.b @(0x1234:16,r2l.b)"
+gdb_test "x" "shll.b\t@\\(0x1234(:16|),r2.w\\)" \
+	"shll.b @(0x1234:16,r2.w)"
+gdb_test "x" "shll.b\t@\\(0x1234(:16|),er2.l\\)" \
+	"shll.b @(0x1234:16,er2.l)"
+gdb_test "x" "shll.b\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"shll.b @(0x12345678:32,r2l.b)"
+gdb_test "x" "shll.b\t@\\(0x12345678(:32|),r2.w\\)" \
+	"shll.b @(0x12345678:32,r2.w)"
+gdb_test "x" "shll.b\t@\\(0x12345678(:32|),er2.l\\)" \
+	"shll.b @(0x12345678:32,er2.l)"
+gdb_test "x" "shll.b\t@0x12(:8|)" \
+	"shll.b @0x12:8"
+gdb_test "x" "shll.b\t@0x1234(:16|)" \
+	"shll.b @0x1234:16"
+gdb_test "x" "shll.b\t@0x12345678(:32|)" \
+	"shll.b @0x12345678:32"
+gdb_test "x" "shll.w\tr1" \
+	"shll.w r1"
+gdb_test "x" "shll.w\t@er1" \
+	"shll.w @er1"
+gdb_test "x" "shll.w\t@\\(0x6(:2|),er1\\)" \
+	"shll.w @(0x6:2,er1)"
+gdb_test "x" "shll.w\t@er1\\+" \
+	"shll.w @er1+"
+gdb_test "x" "shll.w\t@-er1" \
+	"shll.w @-er1"
+gdb_test "x" "shll.w\t@\\+er1" \
+	"shll.w @+er1"
+gdb_test "x" "shll.w\t@er1-" \
+	"shll.w @er1-"
+gdb_test "x" "shll.w\t@\\(0x1234(:16|),er1\\)" \
+	"shll.w @(0x1234:16,er1)"
+gdb_test "x" "shll.w\t@\\(0x12345678(:32|),er1\\)" \
+	"shll.w @(0x12345678:32,er1)"
+gdb_test "x" "shll.w\t@\\(0x1234(:16|),r2l.b\\)" \
+	"shll.w @(0x1234:16,r2l.b)"
+gdb_test "x" "shll.w\t@\\(0x1234(:16|),r2.w\\)" \
+	"shll.w @(0x1234:16,r2.w)"
+gdb_test "x" "shll.w\t@\\(0x1234(:16|),er2.l\\)" \
+	"shll.w @(0x1234:16,er2.l)"
+gdb_test "x" "shll.w\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"shll.w @(0x12345678:32,r2l.b)"
+gdb_test "x" "shll.w\t@\\(0x12345678(:32|),r2.w\\)" \
+	"shll.w @(0x12345678:32,r2.w)"
+gdb_test "x" "shll.w\t@\\(0x12345678(:32|),er2.l\\)" \
+	"shll.w @(0x12345678:32,er2.l)"
+gdb_test "x" "shll.w\t@0x1234(:16|)" \
+	"shll.w @0x1234:16"
+gdb_test "x" "shll.w\t@0x12345678(:32|)" \
+	"shll.w @0x12345678:32"
+gdb_test "x" "shll.l\ter1" \
+	"shll.l er1"
+gdb_test "x" "shll.l\t@er1" \
+	"shll.l @er1"
+gdb_test "x" "shll.l\t@\\(0xc(:2|),er1\\)" \
+	"shll.l @(0xc:2,er1)"
+gdb_test "x" "shll.l\t@er1\\+" \
+	"shll.l @er1+"
+gdb_test "x" "shll.l\t@-er1" \
+	"shll.l @-er1"
+gdb_test "x" "shll.l\t@\\+er1" \
+	"shll.l @+er1"
+gdb_test "x" "shll.l\t@er1-" \
+	"shll.l @er1-"
+gdb_test "x" "shll.l\t@\\(0x1234(:16|),er1\\)" \
+	"shll.l @(0x1234:16,er1)"
+gdb_test "x" "shll.l\t@\\(0x12345678(:32|),er1\\)" \
+	"shll.l @(0x12345678:32,er1)"
+gdb_test "x" "shll.l\t@\\(0x1234(:16|),r2l.b\\)" \
+	"shll.l @(0x1234:16,r2l.b)"
+gdb_test "x" "shll.l\t@\\(0x1234(:16|),r2.w\\)" \
+	"shll.l @(0x1234:16,r2.w)"
+gdb_test "x" "shll.l\t@\\(0x1234(:16|),er2.l\\)" \
+	"shll.l @(0x1234:16,er2.l)"
+gdb_test "x" "shll.l\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"shll.l @(0x12345678:32,r2l.b)"
+gdb_test "x" "shll.l\t@\\(0x12345678(:32|),r2.w\\)" \
+	"shll.l @(0x12345678:32,r2.w)"
+gdb_test "x" "shll.l\t@\\(0x12345678(:32|),er2.l\\)" \
+	"shll.l @(0x12345678:32,er2.l)"
+gdb_test "x" "shll.l\t@0x1234(:16|)" \
+	"shll.l @0x1234:16"
+gdb_test "x" "shll.l\t@0x12345678(:32|)" \
+	"shll.l @0x12345678:32"
+gdb_test "x" "shll.b\t#2,r1h" \
+	"shll.b #2,r1h"
+gdb_test "x" "shll.b\t#2,@er1" \
+	"shll.b #2,@er1"
+gdb_test "x" "shll.b\t#2,@\\(0x3(:2|),er1\\)" \
+	"shll.b #2,@(0x3:2,er1)"
+gdb_test "x" "shll.b\t#2,@er1\\+" \
+	"shll.b #2,@er1+"
+gdb_test "x" "shll.b\t#2,@-er1" \
+	"shll.b #2,@-er1"
+gdb_test "x" "shll.b\t#2,@\\+er1" \
+	"shll.b #2,@+er1"
+gdb_test "x" "shll.b\t#2,@er1-" \
+	"shll.b #2,@er1-"
+gdb_test "x" "shll.b\t#2,@\\(0x1234(:16|),er1\\)" \
+	"shll.b #2,@(0x1234:16,er1)"
+gdb_test "x" "shll.b\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"shll.b #2,@(0x12345678:32,er1)"
+gdb_test "x" "shll.b\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"shll.b #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "shll.b\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"shll.b #2,@(0x1234:16,r2.w)"
+gdb_test "x" "shll.b\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"shll.b #2,@(0x1234:16,er2.l)"
+gdb_test "x" "shll.b\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shll.b #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shll.b\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"shll.b #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "shll.b\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"shll.b #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "shll.b\t#2,@0x12(:8|)" \
+	"shll.b #2,@0x12:8"
+gdb_test "x" "shll.b\t#2,@0x1234(:16|)" \
+	"shll.b #2,@0x1234:16"
+gdb_test "x" "shll.b\t#2,@0x12345678(:32|)" \
+	"shll.b #2,@0x12345678:32"
+gdb_test "x" "shll.w\t#2,r1" \
+	"shll.w #2,r1"
+gdb_test "x" "shll.w\t#2,@er1" \
+	"shll.w #2,@er1"
+gdb_test "x" "shll.w\t#2,@\\(0x6(:2|),er1\\)" \
+	"shll.w #2,@(0x6:2,er1)"
+gdb_test "x" "shll.w\t#2,@er1\\+" \
+	"shll.w #2,@er1+"
+gdb_test "x" "shll.w\t#2,@-er1" \
+	"shll.w #2,@-er1"
+gdb_test "x" "shll.w\t#2,@\\+er1" \
+	"shll.w #2,@+er1"
+gdb_test "x" "shll.w\t#2,@er1-" \
+	"shll.w #2,@er1-"
+gdb_test "x" "shll.w\t#2,@\\(0x1234(:16|),er1\\)" \
+	"shll.w #2,@(0x1234:16,er1)"
+gdb_test "x" "shll.w\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"shll.w #2,@(0x12345678:32,er1)"
+gdb_test "x" "shll.w\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"shll.w #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "shll.w\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"shll.w #2,@(0x1234:16,r2.w)"
+gdb_test "x" "shll.w\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"shll.w #2,@(0x1234:16,er2.l)"
+gdb_test "x" "shll.w\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shll.w #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shll.w\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"shll.w #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "shll.w\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"shll.w #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "shll.w\t#2,@0x1234(:16|)" \
+	"shll.w #2,@0x1234:16"
+gdb_test "x" "shll.w\t#2,@0x12345678(:32|)" \
+	"shll.w #2,@0x12345678:32"
+gdb_test "x" "shll.l\t#2,er1" \
+	"shll.l #2,er1"
+gdb_test "x" "shll.l\t#2,@er1" \
+	"shll.l #2,@er1"
+gdb_test "x" "shll.l\t#2,@\\(0xc(:2|),er1\\)" \
+	"shll.l #2,@(0xc:2,er1)"
+gdb_test "x" "shll.l\t#2,@er1\\+" \
+	"shll.l #2,@er1+"
+gdb_test "x" "shll.l\t#2,@-er1" \
+	"shll.l #2,@-er1"
+gdb_test "x" "shll.l\t#2,@\\+er1" \
+	"shll.l #2,@+er1"
+gdb_test "x" "shll.l\t#2,@er1-" \
+	"shll.l #2,@er1-"
+gdb_test "x" "shll.l\t#2,@\\(0x1234(:16|),er1\\)" \
+	"shll.l #2,@(0x1234:16,er1)"
+gdb_test "x" "shll.l\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"shll.l #2,@(0x12345678:32,er1)"
+gdb_test "x" "shll.l\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"shll.l #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "shll.l\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"shll.l #2,@(0x1234:16,r2.w)"
+gdb_test "x" "shll.l\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"shll.l #2,@(0x1234:16,er2.l)"
+gdb_test "x" "shll.l\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shll.l #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shll.l\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"shll.l #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "shll.l\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"shll.l #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "shll.l\t#2,@0x1234(:16|)" \
+	"shll.l #2,@0x1234:16"
+gdb_test "x" "shll.l\t#2,@0x12345678(:32|)" \
+	"shll.l #2,@0x12345678:32"
+gdb_test "x" "shll.b\t#4,r1h" \
+	"shll.b #4,r1h"
+gdb_test "x" "shll.b\t#4,@er1" \
+	"shll.b #4,@er1"
+gdb_test "x" "shll.b\t#4,@\\(0x3(:2|),er1\\)" \
+	"shll.b #4,@(0x3:2,er1)"
+gdb_test "x" "shll.b\t#4,@er1\\+" \
+	"shll.b #4,@er1+"
+gdb_test "x" "shll.b\t#4,@-er1" \
+	"shll.b #4,@-er1"
+gdb_test "x" "shll.b\t#4,@\\+er1" \
+	"shll.b #4,@+er1"
+gdb_test "x" "shll.b\t#4,@er1-" \
+	"shll.b #4,@er1-"
+gdb_test "x" "shll.b\t#4,@\\(0x1234(:16|),er1\\)" \
+	"shll.b #4,@(0x1234:16,er1)"
+gdb_test "x" "shll.b\t#4,@\\(0x12345678(:32|),er1\\)" \
+	"shll.b #4,@(0x12345678:32,er1)"
+gdb_test "x" "shll.b\t#4,@\\(0x1234(:16|),r2l.b\\)" \
+	"shll.b #4,@(0x1234:16,r2l.b)"
+gdb_test "x" "shll.b\t#4,@\\(0x1234(:16|),r2.w\\)" \
+	"shll.b #4,@(0x1234:16,r2.w)"
+gdb_test "x" "shll.b\t#4,@\\(0x1234(:16|),er2.l\\)" \
+	"shll.b #4,@(0x1234:16,er2.l)"
+gdb_test "x" "shll.b\t#4,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shll.b #4,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shll.b\t#4,@\\(0x12345678(:32|),r2.w\\)" \
+	"shll.b #4,@(0x12345678:32,r2.w)"
+gdb_test "x" "shll.b\t#4,@\\(0x12345678(:32|),er2.l\\)" \
+	"shll.b #4,@(0x12345678:32,er2.l)"
+gdb_test "x" "shll.b\t#4,@0x12(:8|)" \
+	"shll.b #4,@0x12:8"
+gdb_test "x" "shll.b\t#4,@0x1234(:16|)" \
+	"shll.b #4,@0x1234:16"
+gdb_test "x" "shll.b\t#4,@0x12345678(:32|)" \
+	"shll.b #4,@0x12345678:32"
+gdb_test "x" "shll.w\t#4,r1" \
+	"shll.w #4,r1"
+gdb_test "x" "shll.w\t#4,@er1" \
+	"shll.w #4,@er1"
+gdb_test "x" "shll.w\t#4,@\\(0x6(:2|),er1\\)" \
+	"shll.w #4,@(0x6:2,er1)"
+gdb_test "x" "shll.w\t#4,@er1\\+" \
+	"shll.w #4,@er1+"
+gdb_test "x" "shll.w\t#4,@-er1" \
+	"shll.w #4,@-er1"
+gdb_test "x" "shll.w\t#4,@\\+er1" \
+	"shll.w #4,@+er1"
+gdb_test "x" "shll.w\t#4,@er1-" \
+	"shll.w #4,@er1-"
+gdb_test "x" "shll.w\t#4,@\\(0x1234(:16|),er1\\)" \
+	"shll.w #4,@(0x1234:16,er1)"
+gdb_test "x" "shll.w\t#4,@\\(0x12345678(:32|),er1\\)" \
+	"shll.w #4,@(0x12345678:32,er1)"
+gdb_test "x" "shll.w\t#4,@\\(0x1234(:16|),r2l.b\\)" \
+	"shll.w #4,@(0x1234:16,r2l.b)"
+gdb_test "x" "shll.w\t#4,@\\(0x1234(:16|),r2.w\\)" \
+	"shll.w #4,@(0x1234:16,r2.w)"
+gdb_test "x" "shll.w\t#4,@\\(0x1234(:16|),er2.l\\)" \
+	"shll.w #4,@(0x1234:16,er2.l)"
+gdb_test "x" "shll.w\t#4,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shll.w #4,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shll.w\t#4,@\\(0x12345678(:32|),r2.w\\)" \
+	"shll.w #4,@(0x12345678:32,r2.w)"
+gdb_test "x" "shll.w\t#4,@\\(0x12345678(:32|),er2.l\\)" \
+	"shll.w #4,@(0x12345678:32,er2.l)"
+gdb_test "x" "shll.w\t#4,@0x1234(:16|)" \
+	"shll.w #4,@0x1234:16"
+gdb_test "x" "shll.w\t#4,@0x12345678(:32|)" \
+	"shll.w #4,@0x12345678:32"
+gdb_test "x" "shll.l\t#4,er1" \
+	"shll.l #4,er1"
+gdb_test "x" "shll.l\t#4,@er1" \
+	"shll.l #4,@er1"
+gdb_test "x" "shll.l\t#4,@\\(0xc(:2|),er1\\)" \
+	"shll.l #4,@(0xc:2,er1)"
+gdb_test "x" "shll.l\t#4,@er1\\+" \
+	"shll.l #4,@er1+"
+gdb_test "x" "shll.l\t#4,@-er1" \
+	"shll.l #4,@-er1"
+gdb_test "x" "shll.l\t#4,@\\+er1" \
+	"shll.l #4,@+er1"
+gdb_test "x" "shll.l\t#4,@er1-" \
+	"shll.l #4,@er1-"
+gdb_test "x" "shll.l\t#4,@\\(0x1234(:16|),er1\\)" \
+	"shll.l #4,@(0x1234:16,er1)"
+gdb_test "x" "shll.l\t#4,@\\(0x12345678(:32|),er1\\)" \
+	"shll.l #4,@(0x12345678:32,er1)"
+gdb_test "x" "shll.l\t#4,@\\(0x1234(:16|),r2l.b\\)" \
+	"shll.l #4,@(0x1234:16,r2l.b)"
+gdb_test "x" "shll.l\t#4,@\\(0x1234(:16|),r2.w\\)" \
+	"shll.l #4,@(0x1234:16,r2.w)"
+gdb_test "x" "shll.l\t#4,@\\(0x1234(:16|),er2.l\\)" \
+	"shll.l #4,@(0x1234:16,er2.l)"
+gdb_test "x" "shll.l\t#4,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shll.l #4,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shll.l\t#4,@\\(0x12345678(:32|),r2.w\\)" \
+	"shll.l #4,@(0x12345678:32,r2.w)"
+gdb_test "x" "shll.l\t#4,@\\(0x12345678(:32|),er2.l\\)" \
+	"shll.l #4,@(0x12345678:32,er2.l)"
+gdb_test "x" "shll.l\t#4,@0x1234(:16|)" \
+	"shll.l #4,@0x1234:16"
+gdb_test "x" "shll.l\t#4,@0x12345678(:32|)" \
+	"shll.l #4,@0x12345678:32"
+gdb_test "x" "shll.w\t#8,r1" \
+	"shll.w #8,r1"
+gdb_test "x" "shll.w\t#8,@er1" \
+	"shll.w #8,@er1"
+gdb_test "x" "shll.w\t#8,@\\(0x6(:2|),er1\\)" \
+	"shll.w #8,@(0x6:2,er1)"
+gdb_test "x" "shll.w\t#8,@er1\\+" \
+	"shll.w #8,@er1+"
+gdb_test "x" "shll.w\t#8,@-er1" \
+	"shll.w #8,@-er1"
+gdb_test "x" "shll.w\t#8,@\\+er1" \
+	"shll.w #8,@+er1"
+gdb_test "x" "shll.w\t#8,@er1-" \
+	"shll.w #8,@er1-"
+gdb_test "x" "shll.w\t#8,@\\(0x1234(:16|),er1\\)" \
+	"shll.w #8,@(0x1234:16,er1)"
+gdb_test "x" "shll.w\t#8,@\\(0x12345678(:32|),er1\\)" \
+	"shll.w #8,@(0x12345678:32,er1)"
+gdb_test "x" "shll.w\t#8,@\\(0x1234(:16|),r2l.b\\)" \
+	"shll.w #8,@(0x1234:16,r2l.b)"
+gdb_test "x" "shll.w\t#8,@\\(0x1234(:16|),r2.w\\)" \
+	"shll.w #8,@(0x1234:16,r2.w)"
+gdb_test "x" "shll.w\t#8,@\\(0x1234(:16|),er2.l\\)" \
+	"shll.w #8,@(0x1234:16,er2.l)"
+gdb_test "x" "shll.w\t#8,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shll.w #8,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shll.w\t#8,@\\(0x12345678(:32|),r2.w\\)" \
+	"shll.w #8,@(0x12345678:32,r2.w)"
+gdb_test "x" "shll.w\t#8,@\\(0x12345678(:32|),er2.l\\)" \
+	"shll.w #8,@(0x12345678:32,er2.l)"
+gdb_test "x" "shll.w\t#8,@0x1234(:16|)" \
+	"shll.w #8,@0x1234:16"
+gdb_test "x" "shll.w\t#8,@0x12345678(:32|)" \
+	"shll.w #8,@0x12345678:32"
+gdb_test "x" "shll.l\t#8,er1" \
+	"shll.l #8,er1"
+gdb_test "x" "shll.l\t#8,@er1" \
+	"shll.l #8,@er1"
+gdb_test "x" "shll.l\t#8,@\\(0xc(:2|),er1\\)" \
+	"shll.l #8,@(0xc:2,er1)"
+gdb_test "x" "shll.l\t#8,@er1\\+" \
+	"shll.l #8,@er1+"
+gdb_test "x" "shll.l\t#8,@-er1" \
+	"shll.l #8,@-er1"
+gdb_test "x" "shll.l\t#8,@\\+er1" \
+	"shll.l #8,@+er1"
+gdb_test "x" "shll.l\t#8,@er1-" \
+	"shll.l #8,@er1-"
+gdb_test "x" "shll.l\t#8,@\\(0x1234(:16|),er1\\)" \
+	"shll.l #8,@(0x1234:16,er1)"
+gdb_test "x" "shll.l\t#8,@\\(0x12345678(:32|),er1\\)" \
+	"shll.l #8,@(0x12345678:32,er1)"
+gdb_test "x" "shll.l\t#8,@\\(0x1234(:16|),r2l.b\\)" \
+	"shll.l #8,@(0x1234:16,r2l.b)"
+gdb_test "x" "shll.l\t#8,@\\(0x1234(:16|),r2.w\\)" \
+	"shll.l #8,@(0x1234:16,r2.w)"
+gdb_test "x" "shll.l\t#8,@\\(0x1234(:16|),er2.l\\)" \
+	"shll.l #8,@(0x1234:16,er2.l)"
+gdb_test "x" "shll.l\t#8,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shll.l #8,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shll.l\t#8,@\\(0x12345678(:32|),r2.w\\)" \
+	"shll.l #8,@(0x12345678:32,r2.w)"
+gdb_test "x" "shll.l\t#8,@\\(0x12345678(:32|),er2.l\\)" \
+	"shll.l #8,@(0x12345678:32,er2.l)"
+gdb_test "x" "shll.l\t#8,@0x1234(:16|)" \
+	"shll.l #8,@0x1234:16"
+gdb_test "x" "shll.l\t#8,@0x12345678(:32|)" \
+	"shll.l #8,@0x12345678:32"
+gdb_test "x" "shll.l\t#16,er1" \
+	"shll.l #16,er1"
+gdb_test "x" "shll.l\t#16,@er1" \
+	"shll.l #16,@er1"
+gdb_test "x" "shll.l\t#16,@\\(0xc(:2|),er1\\)" \
+	"shll.l #16,@(0xc:2,er1)"
+gdb_test "x" "shll.l\t#16,@er1\\+" \
+	"shll.l #16,@er1+"
+gdb_test "x" "shll.l\t#16,@-er1" \
+	"shll.l #16,@-er1"
+gdb_test "x" "shll.l\t#16,@\\+er1" \
+	"shll.l #16,@+er1"
+gdb_test "x" "shll.l\t#16,@er1-" \
+	"shll.l #16,@er1-"
+gdb_test "x" "shll.l\t#16,@\\(0x1234(:16|),er1\\)" \
+	"shll.l #16,@(0x1234:16,er1)"
+gdb_test "x" "shll.l\t#16,@\\(0x12345678(:32|),er1\\)" \
+	"shll.l #16,@(0x12345678:32,er1)"
+gdb_test "x" "shll.l\t#16,@\\(0x1234(:16|),r2l.b\\)" \
+	"shll.l #16,@(0x1234:16,r2l.b)"
+gdb_test "x" "shll.l\t#16,@\\(0x1234(:16|),r2.w\\)" \
+	"shll.l #16,@(0x1234:16,r2.w)"
+gdb_test "x" "shll.l\t#16,@\\(0x1234(:16|),er2.l\\)" \
+	"shll.l #16,@(0x1234:16,er2.l)"
+gdb_test "x" "shll.l\t#16,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shll.l #16,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shll.l\t#16,@\\(0x12345678(:32|),r2.w\\)" \
+	"shll.l #16,@(0x12345678:32,r2.w)"
+gdb_test "x" "shll.l\t#16,@\\(0x12345678(:32|),er2.l\\)" \
+	"shll.l #16,@(0x12345678:32,er2.l)"
+gdb_test "x" "shll.l\t#16,@0x1234(:16|)" \
+	"shll.l #16,@0x1234:16"
+gdb_test "x" "shll.l\t#16,@0x12345678(:32|)" \
+	"shll.l #16,@0x12345678:32"
+gdb_test "x" "shll.b\t#0x7(:5|),r1h" \
+	"shll.b #0x7:5,r1h"
+gdb_test "x" "shll.w\t#0xf(:5|),r1" \
+	"shll.w #0xf:5,r1"
+gdb_test "x" "shll.l\t#0x1f(:5|),er1" \
+	"shll.l #0x1f:5,er1"
+gdb_test "x" "shll.b\tr3h,r1h" \
+	"shll.b r3h,r1h"
+gdb_test "x" "shll.w\tr3h,r1" \
+	"shll.w r3h,r1"
+gdb_test "x" "shll.l\tr3h,er1" \
+	"shll.l r3h,er1"
+gdb_test "x" "shlr.b\tr1h" \
+	"shlr.b r1h"
+gdb_test "x" "shlr.b\t@er1" \
+	"shlr.b @er1"
+gdb_test "x" "shlr.b\t@\\(0x3(:2|),er1\\)" \
+	"shlr.b @(0x3:2,er1)"
+gdb_test "x" "shlr.b\t@er1\\+" \
+	"shlr.b @er1+"
+gdb_test "x" "shlr.b\t@-er1" \
+	"shlr.b @-er1"
+gdb_test "x" "shlr.b\t@\\+er1" \
+	"shlr.b @+er1"
+gdb_test "x" "shlr.b\t@er1-" \
+	"shlr.b @er1-"
+gdb_test "x" "shlr.b\t@\\(0x1234(:16|),er1\\)" \
+	"shlr.b @(0x1234:16,er1)"
+gdb_test "x" "shlr.b\t@\\(0x12345678(:32|),er1\\)" \
+	"shlr.b @(0x12345678:32,er1)"
+gdb_test "x" "shlr.b\t@\\(0x1234(:16|),r2l.b\\)" \
+	"shlr.b @(0x1234:16,r2l.b)"
+gdb_test "x" "shlr.b\t@\\(0x1234(:16|),r2.w\\)" \
+	"shlr.b @(0x1234:16,r2.w)"
+gdb_test "x" "shlr.b\t@\\(0x1234(:16|),er2.l\\)" \
+	"shlr.b @(0x1234:16,er2.l)"
+gdb_test "x" "shlr.b\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"shlr.b @(0x12345678:32,r2l.b)"
+gdb_test "x" "shlr.b\t@\\(0x12345678(:32|),r2.w\\)" \
+	"shlr.b @(0x12345678:32,r2.w)"
+gdb_test "x" "shlr.b\t@\\(0x12345678(:32|),er2.l\\)" \
+	"shlr.b @(0x12345678:32,er2.l)"
+gdb_test "x" "shlr.b\t@0x12(:8|)" \
+	"shlr.b @0x12:8"
+gdb_test "x" "shlr.b\t@0x1234(:16|)" \
+	"shlr.b @0x1234:16"
+gdb_test "x" "shlr.b\t@0x12345678(:32|)" \
+	"shlr.b @0x12345678:32"
+gdb_test "x" "shlr.w\tr1" \
+	"shlr.w r1"
+gdb_test "x" "shlr.w\t@er1" \
+	"shlr.w @er1"
+gdb_test "x" "shlr.w\t@\\(0x6(:2|),er1\\)" \
+	"shlr.w @(0x6:2,er1)"
+gdb_test "x" "shlr.w\t@er1\\+" \
+	"shlr.w @er1+"
+gdb_test "x" "shlr.w\t@-er1" \
+	"shlr.w @-er1"
+gdb_test "x" "shlr.w\t@\\+er1" \
+	"shlr.w @+er1"
+gdb_test "x" "shlr.w\t@er1-" \
+	"shlr.w @er1-"
+gdb_test "x" "shlr.w\t@\\(0x1234(:16|),er1\\)" \
+	"shlr.w @(0x1234:16,er1)"
+gdb_test "x" "shlr.w\t@\\(0x12345678(:32|),er1\\)" \
+	"shlr.w @(0x12345678:32,er1)"
+gdb_test "x" "shlr.w\t@\\(0x1234(:16|),r2l.b\\)" \
+	"shlr.w @(0x1234:16,r2l.b)"
+gdb_test "x" "shlr.w\t@\\(0x1234(:16|),r2.w\\)" \
+	"shlr.w @(0x1234:16,r2.w)"
+gdb_test "x" "shlr.w\t@\\(0x1234(:16|),er2.l\\)" \
+	"shlr.w @(0x1234:16,er2.l)"
+gdb_test "x" "shlr.w\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"shlr.w @(0x12345678:32,r2l.b)"
+gdb_test "x" "shlr.w\t@\\(0x12345678(:32|),r2.w\\)" \
+	"shlr.w @(0x12345678:32,r2.w)"
+gdb_test "x" "shlr.w\t@\\(0x12345678(:32|),er2.l\\)" \
+	"shlr.w @(0x12345678:32,er2.l)"
+gdb_test "x" "shlr.w\t@0x1234(:16|)" \
+	"shlr.w @0x1234:16"
+gdb_test "x" "shlr.w\t@0x12345678(:32|)" \
+	"shlr.w @0x12345678:32"
+gdb_test "x" "shlr.l\ter1" \
+	"shlr.l er1"
+gdb_test "x" "shlr.l\t@er1" \
+	"shlr.l @er1"
+gdb_test "x" "shlr.l\t@\\(0xc(:2|),er1\\)" \
+	"shlr.l @(0xc:2,er1)"
+gdb_test "x" "shlr.l\t@er1\\+" \
+	"shlr.l @er1+"
+gdb_test "x" "shlr.l\t@-er1" \
+	"shlr.l @-er1"
+gdb_test "x" "shlr.l\t@\\+er1" \
+	"shlr.l @+er1"
+gdb_test "x" "shlr.l\t@er1-" \
+	"shlr.l @er1-"
+gdb_test "x" "shlr.l\t@\\(0x1234(:16|),er1\\)" \
+	"shlr.l @(0x1234:16,er1)"
+gdb_test "x" "shlr.l\t@\\(0x12345678(:32|),er1\\)" \
+	"shlr.l @(0x12345678:32,er1)"
+gdb_test "x" "shlr.l\t@\\(0x1234(:16|),r2l.b\\)" \
+	"shlr.l @(0x1234:16,r2l.b)"
+gdb_test "x" "shlr.l\t@\\(0x1234(:16|),r2.w\\)" \
+	"shlr.l @(0x1234:16,r2.w)"
+gdb_test "x" "shlr.l\t@\\(0x1234(:16|),er2.l\\)" \
+	"shlr.l @(0x1234:16,er2.l)"
+gdb_test "x" "shlr.l\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"shlr.l @(0x12345678:32,r2l.b)"
+gdb_test "x" "shlr.l\t@\\(0x12345678(:32|),r2.w\\)" \
+	"shlr.l @(0x12345678:32,r2.w)"
+gdb_test "x" "shlr.l\t@\\(0x12345678(:32|),er2.l\\)" \
+	"shlr.l @(0x12345678:32,er2.l)"
+gdb_test "x" "shlr.l\t@0x1234(:16|)" \
+	"shlr.l @0x1234:16"
+gdb_test "x" "shlr.l\t@0x12345678(:32|)" \
+	"shlr.l @0x12345678:32"
+gdb_test "x" "shlr.b\t#2,r1h" \
+	"shlr.b #2,r1h"
+gdb_test "x" "shlr.b\t#2,@er1" \
+	"shlr.b #2,@er1"
+gdb_test "x" "shlr.b\t#2,@\\(0x3(:2|),er1\\)" \
+	"shlr.b #2,@(0x3:2,er1)"
+gdb_test "x" "shlr.b\t#2,@er1\\+" \
+	"shlr.b #2,@er1+"
+gdb_test "x" "shlr.b\t#2,@-er1" \
+	"shlr.b #2,@-er1"
+gdb_test "x" "shlr.b\t#2,@\\+er1" \
+	"shlr.b #2,@+er1"
+gdb_test "x" "shlr.b\t#2,@er1-" \
+	"shlr.b #2,@er1-"
+gdb_test "x" "shlr.b\t#2,@\\(0x1234(:16|),er1\\)" \
+	"shlr.b #2,@(0x1234:16,er1)"
+gdb_test "x" "shlr.b\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"shlr.b #2,@(0x12345678:32,er1)"
+gdb_test "x" "shlr.b\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"shlr.b #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "shlr.b\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"shlr.b #2,@(0x1234:16,r2.w)"
+gdb_test "x" "shlr.b\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"shlr.b #2,@(0x1234:16,er2.l)"
+gdb_test "x" "shlr.b\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shlr.b #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shlr.b\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"shlr.b #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "shlr.b\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"shlr.b #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "shlr.b\t#2,@0x12(:8|)" \
+	"shlr.b #2,@0x12:8"
+gdb_test "x" "shlr.b\t#2,@0x1234(:16|)" \
+	"shlr.b #2,@0x1234:16"
+gdb_test "x" "shlr.b\t#2,@0x12345678(:32|)" \
+	"shlr.b #2,@0x12345678:32"
+gdb_test "x" "shlr.w\t#2,r1" \
+	"shlr.w #2,r1"
+gdb_test "x" "shlr.w\t#2,@er1" \
+	"shlr.w #2,@er1"
+gdb_test "x" "shlr.w\t#2,@\\(0x6(:2|),er1\\)" \
+	"shlr.w #2,@(0x6:2,er1)"
+gdb_test "x" "shlr.w\t#2,@er1\\+" \
+	"shlr.w #2,@er1+"
+gdb_test "x" "shlr.w\t#2,@-er1" \
+	"shlr.w #2,@-er1"
+gdb_test "x" "shlr.w\t#2,@\\+er1" \
+	"shlr.w #2,@+er1"
+gdb_test "x" "shlr.w\t#2,@er1-" \
+	"shlr.w #2,@er1-"
+gdb_test "x" "shlr.w\t#2,@\\(0x1234(:16|),er1\\)" \
+	"shlr.w #2,@(0x1234:16,er1)"
+gdb_test "x" "shlr.w\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"shlr.w #2,@(0x12345678:32,er1)"
+gdb_test "x" "shlr.w\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"shlr.w #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "shlr.w\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"shlr.w #2,@(0x1234:16,r2.w)"
+gdb_test "x" "shlr.w\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"shlr.w #2,@(0x1234:16,er2.l)"
+gdb_test "x" "shlr.w\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shlr.w #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shlr.w\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"shlr.w #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "shlr.w\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"shlr.w #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "shlr.w\t#2,@0x1234(:16|)" \
+	"shlr.w #2,@0x1234:16"
+gdb_test "x" "shlr.w\t#2,@0x12345678(:32|)" \
+	"shlr.w #2,@0x12345678:32"
+gdb_test "x" "shlr.l\t#2,er1" \
+	"shlr.l #2,er1"
+gdb_test "x" "shlr.l\t#2,@er1" \
+	"shlr.l #2,@er1"
+gdb_test "x" "shlr.l\t#2,@\\(0xc(:2|),er1\\)" \
+	"shlr.l #2,@(0xc:2,er1)"
+gdb_test "x" "shlr.l\t#2,@er1\\+" \
+	"shlr.l #2,@er1+"
+gdb_test "x" "shlr.l\t#2,@-er1" \
+	"shlr.l #2,@-er1"
+gdb_test "x" "shlr.l\t#2,@\\+er1" \
+	"shlr.l #2,@+er1"
+gdb_test "x" "shlr.l\t#2,@er1-" \
+	"shlr.l #2,@er1-"
+gdb_test "x" "shlr.l\t#2,@\\(0x1234(:16|),er1\\)" \
+	"shlr.l #2,@(0x1234:16,er1)"
+gdb_test "x" "shlr.l\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"shlr.l #2,@(0x12345678:32,er1)"
+gdb_test "x" "shlr.l\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"shlr.l #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "shlr.l\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"shlr.l #2,@(0x1234:16,r2.w)"
+gdb_test "x" "shlr.l\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"shlr.l #2,@(0x1234:16,er2.l)"
+gdb_test "x" "shlr.l\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shlr.l #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shlr.l\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"shlr.l #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "shlr.l\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"shlr.l #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "shlr.l\t#2,@0x1234(:16|)" \
+	"shlr.l #2,@0x1234:16"
+gdb_test "x" "shlr.l\t#2,@0x12345678(:32|)" \
+	"shlr.l #2,@0x12345678:32"
+gdb_test "x" "shlr.b\t#4,r1h" \
+	"shlr.b #4,r1h"
+gdb_test "x" "shlr.b\t#4,@er1" \
+	"shlr.b #4,@er1"
+gdb_test "x" "shlr.b\t#4,@\\(0x3(:2|),er1\\)" \
+	"shlr.b #4,@(0x3:2,er1)"
+gdb_test "x" "shlr.b\t#4,@er1\\+" \
+	"shlr.b #4,@er1+"
+gdb_test "x" "shlr.b\t#4,@-er1" \
+	"shlr.b #4,@-er1"
+gdb_test "x" "shlr.b\t#4,@\\+er1" \
+	"shlr.b #4,@+er1"
+gdb_test "x" "shlr.b\t#4,@er1-" \
+	"shlr.b #4,@er1-"
+gdb_test "x" "shlr.b\t#4,@\\(0x1234(:16|),er1\\)" \
+	"shlr.b #4,@(0x1234:16,er1)"
+gdb_test "x" "shlr.b\t#4,@\\(0x12345678(:32|),er1\\)" \
+	"shlr.b #4,@(0x12345678:32,er1)"
+gdb_test "x" "shlr.b\t#4,@\\(0x1234(:16|),r2l.b\\)" \
+	"shlr.b #4,@(0x1234:16,r2l.b)"
+gdb_test "x" "shlr.b\t#4,@\\(0x1234(:16|),r2.w\\)" \
+	"shlr.b #4,@(0x1234:16,r2.w)"
+gdb_test "x" "shlr.b\t#4,@\\(0x1234(:16|),er2.l\\)" \
+	"shlr.b #4,@(0x1234:16,er2.l)"
+gdb_test "x" "shlr.b\t#4,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shlr.b #4,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shlr.b\t#4,@\\(0x12345678(:32|),r2.w\\)" \
+	"shlr.b #4,@(0x12345678:32,r2.w)"
+gdb_test "x" "shlr.b\t#4,@\\(0x12345678(:32|),er2.l\\)" \
+	"shlr.b #4,@(0x12345678:32,er2.l)"
+gdb_test "x" "shlr.b\t#4,@0x12(:8|)" \
+	"shlr.b #4,@0x12:8"
+gdb_test "x" "shlr.b\t#4,@0x1234(:16|)" \
+	"shlr.b #4,@0x1234:16"
+gdb_test "x" "shlr.b\t#4,@0x12345678(:32|)" \
+	"shlr.b #4,@0x12345678:32"
+gdb_test "x" "shlr.w\t#4,r1" \
+	"shlr.w #4,r1"
+gdb_test "x" "shlr.w\t#4,@er1" \
+	"shlr.w #4,@er1"
+gdb_test "x" "shlr.w\t#4,@\\(0x6(:2|),er1\\)" \
+	"shlr.w #4,@(0x6:2,er1)"
+gdb_test "x" "shlr.w\t#4,@er1\\+" \
+	"shlr.w #4,@er1+"
+gdb_test "x" "shlr.w\t#4,@-er1" \
+	"shlr.w #4,@-er1"
+gdb_test "x" "shlr.w\t#4,@\\+er1" \
+	"shlr.w #4,@+er1"
+gdb_test "x" "shlr.w\t#4,@er1-" \
+	"shlr.w #4,@er1-"
+gdb_test "x" "shlr.w\t#4,@\\(0x1234(:16|),er1\\)" \
+	"shlr.w #4,@(0x1234:16,er1)"
+gdb_test "x" "shlr.w\t#4,@\\(0x12345678(:32|),er1\\)" \
+	"shlr.w #4,@(0x12345678:32,er1)"
+gdb_test "x" "shlr.w\t#4,@\\(0x1234(:16|),r2l.b\\)" \
+	"shlr.w #4,@(0x1234:16,r2l.b)"
+gdb_test "x" "shlr.w\t#4,@\\(0x1234(:16|),r2.w\\)" \
+	"shlr.w #4,@(0x1234:16,r2.w)"
+gdb_test "x" "shlr.w\t#4,@\\(0x1234(:16|),er2.l\\)" \
+	"shlr.w #4,@(0x1234:16,er2.l)"
+gdb_test "x" "shlr.w\t#4,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shlr.w #4,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shlr.w\t#4,@\\(0x12345678(:32|),r2.w\\)" \
+	"shlr.w #4,@(0x12345678:32,r2.w)"
+gdb_test "x" "shlr.w\t#4,@\\(0x12345678(:32|),er2.l\\)" \
+	"shlr.w #4,@(0x12345678:32,er2.l)"
+gdb_test "x" "shlr.w\t#4,@0x1234(:16|)" \
+	"shlr.w #4,@0x1234:16"
+gdb_test "x" "shlr.w\t#4,@0x12345678(:32|)" \
+	"shlr.w #4,@0x12345678:32"
+gdb_test "x" "shlr.l\t#4,er1" \
+	"shlr.l #4,er1"
+gdb_test "x" "shlr.l\t#4,@er1" \
+	"shlr.l #4,@er1"
+gdb_test "x" "shlr.l\t#4,@\\(0xc(:2|),er1\\)" \
+	"shlr.l #4,@(0xc:2,er1)"
+gdb_test "x" "shlr.l\t#4,@er1\\+" \
+	"shlr.l #4,@er1+"
+gdb_test "x" "shlr.l\t#4,@-er1" \
+	"shlr.l #4,@-er1"
+gdb_test "x" "shlr.l\t#4,@\\+er1" \
+	"shlr.l #4,@+er1"
+gdb_test "x" "shlr.l\t#4,@er1-" \
+	"shlr.l #4,@er1-"
+gdb_test "x" "shlr.l\t#4,@\\(0x1234(:16|),er1\\)" \
+	"shlr.l #4,@(0x1234:16,er1)"
+gdb_test "x" "shlr.l\t#4,@\\(0x12345678(:32|),er1\\)" \
+	"shlr.l #4,@(0x12345678:32,er1)"
+gdb_test "x" "shlr.l\t#4,@\\(0x1234(:16|),r2l.b\\)" \
+	"shlr.l #4,@(0x1234:16,r2l.b)"
+gdb_test "x" "shlr.l\t#4,@\\(0x1234(:16|),r2.w\\)" \
+	"shlr.l #4,@(0x1234:16,r2.w)"
+gdb_test "x" "shlr.l\t#4,@\\(0x1234(:16|),er2.l\\)" \
+	"shlr.l #4,@(0x1234:16,er2.l)"
+gdb_test "x" "shlr.l\t#4,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shlr.l #4,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shlr.l\t#4,@\\(0x12345678(:32|),r2.w\\)" \
+	"shlr.l #4,@(0x12345678:32,r2.w)"
+gdb_test "x" "shlr.l\t#4,@\\(0x12345678(:32|),er2.l\\)" \
+	"shlr.l #4,@(0x12345678:32,er2.l)"
+gdb_test "x" "shlr.l\t#4,@0x1234(:16|)" \
+	"shlr.l #4,@0x1234:16"
+gdb_test "x" "shlr.l\t#4,@0x12345678(:32|)" \
+	"shlr.l #4,@0x12345678:32"
+gdb_test "x" "shlr.w\t#8,r1" \
+	"shlr.w #8,r1"
+gdb_test "x" "shlr.w\t#8,@er1" \
+	"shlr.w #8,@er1"
+gdb_test "x" "shlr.w\t#8,@\\(0x6(:2|),er1\\)" \
+	"shlr.w #8,@(0x6:2,er1)"
+gdb_test "x" "shlr.w\t#8,@er1\\+" \
+	"shlr.w #8,@er1+"
+gdb_test "x" "shlr.w\t#8,@-er1" \
+	"shlr.w #8,@-er1"
+gdb_test "x" "shlr.w\t#8,@\\+er1" \
+	"shlr.w #8,@+er1"
+gdb_test "x" "shlr.w\t#8,@er1-" \
+	"shlr.w #8,@er1-"
+gdb_test "x" "shlr.w\t#8,@\\(0x1234(:16|),er1\\)" \
+	"shlr.w #8,@(0x1234:16,er1)"
+gdb_test "x" "shlr.w\t#8,@\\(0x12345678(:32|),er1\\)" \
+	"shlr.w #8,@(0x12345678:32,er1)"
+gdb_test "x" "shlr.w\t#8,@\\(0x1234(:16|),r2l.b\\)" \
+	"shlr.w #8,@(0x1234:16,r2l.b)"
+gdb_test "x" "shlr.w\t#8,@\\(0x1234(:16|),r2.w\\)" \
+	"shlr.w #8,@(0x1234:16,r2.w)"
+gdb_test "x" "shlr.w\t#8,@\\(0x1234(:16|),er2.l\\)" \
+	"shlr.w #8,@(0x1234:16,er2.l)"
+gdb_test "x" "shlr.w\t#8,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shlr.w #8,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shlr.w\t#8,@\\(0x12345678(:32|),r2.w\\)" \
+	"shlr.w #8,@(0x12345678:32,r2.w)"
+gdb_test "x" "shlr.w\t#8,@\\(0x12345678(:32|),er2.l\\)" \
+	"shlr.w #8,@(0x12345678:32,er2.l)"
+gdb_test "x" "shlr.w\t#8,@0x1234(:16|)" \
+	"shlr.w #8,@0x1234:16"
+gdb_test "x" "shlr.w\t#8,@0x12345678(:32|)" \
+	"shlr.w #8,@0x12345678:32"
+gdb_test "x" "shlr.l\t#8,er1" \
+	"shlr.l #8,er1"
+gdb_test "x" "shlr.l\t#8,@er1" \
+	"shlr.l #8,@er1"
+gdb_test "x" "shlr.l\t#8,@\\(0xc(:2|),er1\\)" \
+	"shlr.l #8,@(0xc:2,er1)"
+gdb_test "x" "shlr.l\t#8,@er1\\+" \
+	"shlr.l #8,@er1+"
+gdb_test "x" "shlr.l\t#8,@-er1" \
+	"shlr.l #8,@-er1"
+gdb_test "x" "shlr.l\t#8,@\\+er1" \
+	"shlr.l #8,@+er1"
+gdb_test "x" "shlr.l\t#8,@er1-" \
+	"shlr.l #8,@er1-"
+gdb_test "x" "shlr.l\t#8,@\\(0x1234(:16|),er1\\)" \
+	"shlr.l #8,@(0x1234:16,er1)"
+gdb_test "x" "shlr.l\t#8,@\\(0x12345678(:32|),er1\\)" \
+	"shlr.l #8,@(0x12345678:32,er1)"
+gdb_test "x" "shlr.l\t#8,@\\(0x1234(:16|),r2l.b\\)" \
+	"shlr.l #8,@(0x1234:16,r2l.b)"
+gdb_test "x" "shlr.l\t#8,@\\(0x1234(:16|),r2.w\\)" \
+	"shlr.l #8,@(0x1234:16,r2.w)"
+gdb_test "x" "shlr.l\t#8,@\\(0x1234(:16|),er2.l\\)" \
+	"shlr.l #8,@(0x1234:16,er2.l)"
+gdb_test "x" "shlr.l\t#8,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shlr.l #8,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shlr.l\t#8,@\\(0x12345678(:32|),r2.w\\)" \
+	"shlr.l #8,@(0x12345678:32,r2.w)"
+gdb_test "x" "shlr.l\t#8,@\\(0x12345678(:32|),er2.l\\)" \
+	"shlr.l #8,@(0x12345678:32,er2.l)"
+gdb_test "x" "shlr.l\t#8,@0x1234(:16|)" \
+	"shlr.l #8,@0x1234:16"
+gdb_test "x" "shlr.l\t#8,@0x12345678(:32|)" \
+	"shlr.l #8,@0x12345678:32"
+gdb_test "x" "shlr.l\t#16,er1" \
+	"shlr.l #16,er1"
+gdb_test "x" "shlr.l\t#16,@er1" \
+	"shlr.l #16,@er1"
+gdb_test "x" "shlr.l\t#16,@\\(0xc(:2|),er1\\)" \
+	"shlr.l #16,@(0xc:2,er1)"
+gdb_test "x" "shlr.l\t#16,@er1\\+" \
+	"shlr.l #16,@er1+"
+gdb_test "x" "shlr.l\t#16,@-er1" \
+	"shlr.l #16,@-er1"
+gdb_test "x" "shlr.l\t#16,@\\+er1" \
+	"shlr.l #16,@+er1"
+gdb_test "x" "shlr.l\t#16,@er1-" \
+	"shlr.l #16,@er1-"
+gdb_test "x" "shlr.l\t#16,@\\(0x1234(:16|),er1\\)" \
+	"shlr.l #16,@(0x1234:16,er1)"
+gdb_test "x" "shlr.l\t#16,@\\(0x12345678(:32|),er1\\)" \
+	"shlr.l #16,@(0x12345678:32,er1)"
+gdb_test "x" "shlr.l\t#16,@\\(0x1234(:16|),r2l.b\\)" \
+	"shlr.l #16,@(0x1234:16,r2l.b)"
+gdb_test "x" "shlr.l\t#16,@\\(0x1234(:16|),r2.w\\)" \
+	"shlr.l #16,@(0x1234:16,r2.w)"
+gdb_test "x" "shlr.l\t#16,@\\(0x1234(:16|),er2.l\\)" \
+	"shlr.l #16,@(0x1234:16,er2.l)"
+gdb_test "x" "shlr.l\t#16,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shlr.l #16,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shlr.l\t#16,@\\(0x12345678(:32|),r2.w\\)" \
+	"shlr.l #16,@(0x12345678:32,r2.w)"
+gdb_test "x" "shlr.l\t#16,@\\(0x12345678(:32|),er2.l\\)" \
+	"shlr.l #16,@(0x12345678:32,er2.l)"
+gdb_test "x" "shlr.l\t#16,@0x1234(:16|)" \
+	"shlr.l #16,@0x1234:16"
+gdb_test "x" "shlr.l\t#16,@0x12345678(:32|)" \
+	"shlr.l #16,@0x12345678:32"
+gdb_test "x" "shlr.b\t#0x7(:5|),r1h" \
+	"shlr.b #0x7:5,r1h"
+gdb_test "x" "shlr.w\t#0xf(:5|),r1" \
+	"shlr.w #0xf:5,r1"
+gdb_test "x" "shlr.l\t#0x1f(:5|),er1" \
+	"shlr.l #0x1f:5,er1"
+gdb_test "x" "shlr.b\tr3h,r1h" \
+	"shlr.b r3h,r1h"
+gdb_test "x" "shlr.w\tr3h,r1" \
+	"shlr.w r3h,r1"
+gdb_test "x" "shlr.l\tr3h,er1" \
+	"shlr.l r3h,er1"
+gdb_test "x" "shal.b\tr1h" \
+	"shal.b r1h"
+gdb_test "x" "shal.b\t@er1" \
+	"shal.b @er1"
+gdb_test "x" "shal.b\t@\\(0x3(:2|),er1\\)" \
+	"shal.b @(0x3:2,er1)"
+gdb_test "x" "shal.b\t@er1\\+" \
+	"shal.b @er1+"
+gdb_test "x" "shal.b\t@-er1" \
+	"shal.b @-er1"
+gdb_test "x" "shal.b\t@\\+er1" \
+	"shal.b @+er1"
+gdb_test "x" "shal.b\t@er1-" \
+	"shal.b @er1-"
+gdb_test "x" "shal.b\t@\\(0x1234(:16|),er1\\)" \
+	"shal.b @(0x1234:16,er1)"
+gdb_test "x" "shal.b\t@\\(0x12345678(:32|),er1\\)" \
+	"shal.b @(0x12345678:32,er1)"
+gdb_test "x" "shal.b\t@\\(0x1234(:16|),r2l.b\\)" \
+	"shal.b @(0x1234:16,r2l.b)"
+gdb_test "x" "shal.b\t@\\(0x1234(:16|),r2.w\\)" \
+	"shal.b @(0x1234:16,r2.w)"
+gdb_test "x" "shal.b\t@\\(0x1234(:16|),er2.l\\)" \
+	"shal.b @(0x1234:16,er2.l)"
+gdb_test "x" "shal.b\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"shal.b @(0x12345678:32,r2l.b)"
+gdb_test "x" "shal.b\t@\\(0x12345678(:32|),r2.w\\)" \
+	"shal.b @(0x12345678:32,r2.w)"
+gdb_test "x" "shal.b\t@\\(0x12345678(:32|),er2.l\\)" \
+	"shal.b @(0x12345678:32,er2.l)"
+gdb_test "x" "shal.b\t@0x12(:8|)" \
+	"shal.b @0x12:8"
+gdb_test "x" "shal.b\t@0x1234(:16|)" \
+	"shal.b @0x1234:16"
+gdb_test "x" "shal.b\t@0x12345678(:32|)" \
+	"shal.b @0x12345678:32"
+gdb_test "x" "shal.w\tr1" \
+	"shal.w r1"
+gdb_test "x" "shal.w\t@er1" \
+	"shal.w @er1"
+gdb_test "x" "shal.w\t@\\(0x6(:2|),er1\\)" \
+	"shal.w @(0x6:2,er1)"
+gdb_test "x" "shal.w\t@er1\\+" \
+	"shal.w @er1+"
+gdb_test "x" "shal.w\t@-er1" \
+	"shal.w @-er1"
+gdb_test "x" "shal.w\t@\\+er1" \
+	"shal.w @+er1"
+gdb_test "x" "shal.w\t@er1-" \
+	"shal.w @er1-"
+gdb_test "x" "shal.w\t@\\(0x1234(:16|),er1\\)" \
+	"shal.w @(0x1234:16,er1)"
+gdb_test "x" "shal.w\t@\\(0x12345678(:32|),er1\\)" \
+	"shal.w @(0x12345678:32,er1)"
+gdb_test "x" "shal.w\t@\\(0x1234(:16|),r2l.b\\)" \
+	"shal.w @(0x1234:16,r2l.b)"
+gdb_test "x" "shal.w\t@\\(0x1234(:16|),r2.w\\)" \
+	"shal.w @(0x1234:16,r2.w)"
+gdb_test "x" "shal.w\t@\\(0x1234(:16|),er2.l\\)" \
+	"shal.w @(0x1234:16,er2.l)"
+gdb_test "x" "shal.w\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"shal.w @(0x12345678:32,r2l.b)"
+gdb_test "x" "shal.w\t@\\(0x12345678(:32|),r2.w\\)" \
+	"shal.w @(0x12345678:32,r2.w)"
+gdb_test "x" "shal.w\t@\\(0x12345678(:32|),er2.l\\)" \
+	"shal.w @(0x12345678:32,er2.l)"
+gdb_test "x" "shal.w\t@0x1234(:16|)" \
+	"shal.w @0x1234:16"
+gdb_test "x" "shal.w\t@0x12345678(:32|)" \
+	"shal.w @0x12345678:32"
+gdb_test "x" "shal.l\ter1" \
+	"shal.l er1"
+gdb_test "x" "shal.l\t@er1" \
+	"shal.l @er1"
+gdb_test "x" "shal.l\t@\\(0xc(:2|),er1\\)" \
+	"shal.l @(0xc:2,er1)"
+gdb_test "x" "shal.l\t@er1\\+" \
+	"shal.l @er1+"
+gdb_test "x" "shal.l\t@-er1" \
+	"shal.l @-er1"
+gdb_test "x" "shal.l\t@\\+er1" \
+	"shal.l @+er1"
+gdb_test "x" "shal.l\t@er1-" \
+	"shal.l @er1-"
+gdb_test "x" "shal.l\t@\\(0x1234(:16|),er1\\)" \
+	"shal.l @(0x1234:16,er1)"
+gdb_test "x" "shal.l\t@\\(0x12345678(:32|),er1\\)" \
+	"shal.l @(0x12345678:32,er1)"
+gdb_test "x" "shal.l\t@\\(0x1234(:16|),r2l.b\\)" \
+	"shal.l @(0x1234:16,r2l.b)"
+gdb_test "x" "shal.l\t@\\(0x1234(:16|),r2.w\\)" \
+	"shal.l @(0x1234:16,r2.w)"
+gdb_test "x" "shal.l\t@\\(0x1234(:16|),er2.l\\)" \
+	"shal.l @(0x1234:16,er2.l)"
+gdb_test "x" "shal.l\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"shal.l @(0x12345678:32,r2l.b)"
+gdb_test "x" "shal.l\t@\\(0x12345678(:32|),r2.w\\)" \
+	"shal.l @(0x12345678:32,r2.w)"
+gdb_test "x" "shal.l\t@\\(0x12345678(:32|),er2.l\\)" \
+	"shal.l @(0x12345678:32,er2.l)"
+gdb_test "x" "shal.l\t@0x1234(:16|)" \
+	"shal.l @0x1234:16"
+gdb_test "x" "shal.l\t@0x12345678(:32|)" \
+	"shal.l @0x12345678:32"
+gdb_test "x" "shal.b\t#2,r1h" \
+	"shal.b #2,r1h"
+gdb_test "x" "shal.b\t#2,@er1" \
+	"shal.b #2,@er1"
+gdb_test "x" "shal.b\t#2,@\\(0x3(:2|),er1\\)" \
+	"shal.b #2,@(0x3:2,er1)"
+gdb_test "x" "shal.b\t#2,@er1\\+" \
+	"shal.b #2,@er1+"
+gdb_test "x" "shal.b\t#2,@-er1" \
+	"shal.b #2,@-er1"
+gdb_test "x" "shal.b\t#2,@\\+er1" \
+	"shal.b #2,@+er1"
+gdb_test "x" "shal.b\t#2,@er1-" \
+	"shal.b #2,@er1-"
+gdb_test "x" "shal.b\t#2,@\\(0x1234(:16|),er1\\)" \
+	"shal.b #2,@(0x1234:16,er1)"
+gdb_test "x" "shal.b\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"shal.b #2,@(0x12345678:32,er1)"
+gdb_test "x" "shal.b\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"shal.b #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "shal.b\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"shal.b #2,@(0x1234:16,r2.w)"
+gdb_test "x" "shal.b\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"shal.b #2,@(0x1234:16,er2.l)"
+gdb_test "x" "shal.b\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shal.b #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shal.b\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"shal.b #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "shal.b\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"shal.b #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "shal.b\t#2,@0x12(:8|)" \
+	"shal.b #2,@0x12:8"
+gdb_test "x" "shal.b\t#2,@0x1234(:16|)" \
+	"shal.b #2,@0x1234:16"
+gdb_test "x" "shal.b\t#2,@0x12345678(:32|)" \
+	"shal.b #2,@0x12345678:32"
+gdb_test "x" "shal.w\t#2,r1" \
+	"shal.w #2,r1"
+gdb_test "x" "shal.w\t#2,@er1" \
+	"shal.w #2,@er1"
+gdb_test "x" "shal.w\t#2,@\\(0x6(:2|),er1\\)" \
+	"shal.w #2,@(0x6:2,er1)"
+gdb_test "x" "shal.w\t#2,@er1\\+" \
+	"shal.w #2,@er1+"
+gdb_test "x" "shal.w\t#2,@-er1" \
+	"shal.w #2,@-er1"
+gdb_test "x" "shal.w\t#2,@\\+er1" \
+	"shal.w #2,@+er1"
+gdb_test "x" "shal.w\t#2,@er1-" \
+	"shal.w #2,@er1-"
+gdb_test "x" "shal.w\t#2,@\\(0x1234(:16|),er1\\)" \
+	"shal.w #2,@(0x1234:16,er1)"
+gdb_test "x" "shal.w\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"shal.w #2,@(0x12345678:32,er1)"
+gdb_test "x" "shal.w\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"shal.w #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "shal.w\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"shal.w #2,@(0x1234:16,r2.w)"
+gdb_test "x" "shal.w\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"shal.w #2,@(0x1234:16,er2.l)"
+gdb_test "x" "shal.w\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shal.w #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shal.w\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"shal.w #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "shal.w\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"shal.w #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "shal.w\t#2,@0x1234(:16|)" \
+	"shal.w #2,@0x1234:16"
+gdb_test "x" "shal.w\t#2,@0x12345678(:32|)" \
+	"shal.w #2,@0x12345678:32"
+gdb_test "x" "shal.l\t#2,er1" \
+	"shal.l #2,er1"
+gdb_test "x" "shal.l\t#2,@er1" \
+	"shal.l #2,@er1"
+gdb_test "x" "shal.l\t#2,@\\(0xc(:2|),er1\\)" \
+	"shal.l #2,@(0xc:2,er1)"
+gdb_test "x" "shal.l\t#2,@er1\\+" \
+	"shal.l #2,@er1+"
+gdb_test "x" "shal.l\t#2,@-er1" \
+	"shal.l #2,@-er1"
+gdb_test "x" "shal.l\t#2,@\\+er1" \
+	"shal.l #2,@+er1"
+gdb_test "x" "shal.l\t#2,@er1-" \
+	"shal.l #2,@er1-"
+gdb_test "x" "shal.l\t#2,@\\(0x1234(:16|),er1\\)" \
+	"shal.l #2,@(0x1234:16,er1)"
+gdb_test "x" "shal.l\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"shal.l #2,@(0x12345678:32,er1)"
+gdb_test "x" "shal.l\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"shal.l #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "shal.l\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"shal.l #2,@(0x1234:16,r2.w)"
+gdb_test "x" "shal.l\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"shal.l #2,@(0x1234:16,er2.l)"
+gdb_test "x" "shal.l\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shal.l #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shal.l\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"shal.l #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "shal.l\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"shal.l #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "shal.l\t#2,@0x1234(:16|)" \
+	"shal.l #2,@0x1234:16"
+gdb_test "x" "shal.l\t#2,@0x12345678(:32|)" \
+	"shal.l #2,@0x12345678:32"
+gdb_test "x" "shar.b\tr1h" \
+	"shar.b r1h"
+gdb_test "x" "shar.b\t@er1" \
+	"shar.b @er1"
+gdb_test "x" "shar.b\t@\\(0x3(:2|),er1\\)" \
+	"shar.b @(0x3:2,er1)"
+gdb_test "x" "shar.b\t@er1\\+" \
+	"shar.b @er1+"
+gdb_test "x" "shar.b\t@-er1" \
+	"shar.b @-er1"
+gdb_test "x" "shar.b\t@\\+er1" \
+	"shar.b @+er1"
+gdb_test "x" "shar.b\t@er1-" \
+	"shar.b @er1-"
+gdb_test "x" "shar.b\t@\\(0x1234(:16|),er1\\)" \
+	"shar.b @(0x1234:16,er1)"
+gdb_test "x" "shar.b\t@\\(0x12345678(:32|),er1\\)" \
+	"shar.b @(0x12345678:32,er1)"
+gdb_test "x" "shar.b\t@\\(0x1234(:16|),r2l.b\\)" \
+	"shar.b @(0x1234:16,r2l.b)"
+gdb_test "x" "shar.b\t@\\(0x1234(:16|),r2.w\\)" \
+	"shar.b @(0x1234:16,r2.w)"
+gdb_test "x" "shar.b\t@\\(0x1234(:16|),er2.l\\)" \
+	"shar.b @(0x1234:16,er2.l)"
+gdb_test "x" "shar.b\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"shar.b @(0x12345678:32,r2l.b)"
+gdb_test "x" "shar.b\t@\\(0x12345678(:32|),r2.w\\)" \
+	"shar.b @(0x12345678:32,r2.w)"
+gdb_test "x" "shar.b\t@\\(0x12345678(:32|),er2.l\\)" \
+	"shar.b @(0x12345678:32,er2.l)"
+gdb_test "x" "shar.b\t@0x12(:8|)" \
+	"shar.b @0x12:8"
+gdb_test "x" "shar.b\t@0x1234(:16|)" \
+	"shar.b @0x1234:16"
+gdb_test "x" "shar.b\t@0x12345678(:32|)" \
+	"shar.b @0x12345678:32"
+gdb_test "x" "shar.w\tr1" \
+	"shar.w r1"
+gdb_test "x" "shar.w\t@er1" \
+	"shar.w @er1"
+gdb_test "x" "shar.w\t@\\(0x6(:2|),er1\\)" \
+	"shar.w @(0x6:2,er1)"
+gdb_test "x" "shar.w\t@er1\\+" \
+	"shar.w @er1+"
+gdb_test "x" "shar.w\t@-er1" \
+	"shar.w @-er1"
+gdb_test "x" "shar.w\t@\\+er1" \
+	"shar.w @+er1"
+gdb_test "x" "shar.w\t@er1-" \
+	"shar.w @er1-"
+gdb_test "x" "shar.w\t@\\(0x1234(:16|),er1\\)" \
+	"shar.w @(0x1234:16,er1)"
+gdb_test "x" "shar.w\t@\\(0x12345678(:32|),er1\\)" \
+	"shar.w @(0x12345678:32,er1)"
+gdb_test "x" "shar.w\t@\\(0x1234(:16|),r2l.b\\)" \
+	"shar.w @(0x1234:16,r2l.b)"
+gdb_test "x" "shar.w\t@\\(0x1234(:16|),r2.w\\)" \
+	"shar.w @(0x1234:16,r2.w)"
+gdb_test "x" "shar.w\t@\\(0x1234(:16|),er2.l\\)" \
+	"shar.w @(0x1234:16,er2.l)"
+gdb_test "x" "shar.w\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"shar.w @(0x12345678:32,r2l.b)"
+gdb_test "x" "shar.w\t@\\(0x12345678(:32|),r2.w\\)" \
+	"shar.w @(0x12345678:32,r2.w)"
+gdb_test "x" "shar.w\t@\\(0x12345678(:32|),er2.l\\)" \
+	"shar.w @(0x12345678:32,er2.l)"
+gdb_test "x" "shar.w\t@0x1234(:16|)" \
+	"shar.w @0x1234:16"
+gdb_test "x" "shar.w\t@0x12345678(:32|)" \
+	"shar.w @0x12345678:32"
+gdb_test "x" "shar.l\ter1" \
+	"shar.l er1"
+gdb_test "x" "shar.l\t@er1" \
+	"shar.l @er1"
+gdb_test "x" "shar.l\t@\\(0xc(:2|),er1\\)" \
+	"shar.l @(0xc:2,er1)"
+gdb_test "x" "shar.l\t@er1\\+" \
+	"shar.l @er1+"
+gdb_test "x" "shar.l\t@-er1" \
+	"shar.l @-er1"
+gdb_test "x" "shar.l\t@\\+er1" \
+	"shar.l @+er1"
+gdb_test "x" "shar.l\t@er1-" \
+	"shar.l @er1-"
+gdb_test "x" "shar.l\t@\\(0x1234(:16|),er1\\)" \
+	"shar.l @(0x1234:16,er1)"
+gdb_test "x" "shar.l\t@\\(0x12345678(:32|),er1\\)" \
+	"shar.l @(0x12345678:32,er1)"
+gdb_test "x" "shar.l\t@\\(0x1234(:16|),r2l.b\\)" \
+	"shar.l @(0x1234:16,r2l.b)"
+gdb_test "x" "shar.l\t@\\(0x1234(:16|),r2.w\\)" \
+	"shar.l @(0x1234:16,r2.w)"
+gdb_test "x" "shar.l\t@\\(0x1234(:16|),er2.l\\)" \
+	"shar.l @(0x1234:16,er2.l)"
+gdb_test "x" "shar.l\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"shar.l @(0x12345678:32,r2l.b)"
+gdb_test "x" "shar.l\t@\\(0x12345678(:32|),r2.w\\)" \
+	"shar.l @(0x12345678:32,r2.w)"
+gdb_test "x" "shar.l\t@\\(0x12345678(:32|),er2.l\\)" \
+	"shar.l @(0x12345678:32,er2.l)"
+gdb_test "x" "shar.l\t@0x1234(:16|)" \
+	"shar.l @0x1234:16"
+gdb_test "x" "shar.l\t@0x12345678(:32|)" \
+	"shar.l @0x12345678:32"
+gdb_test "x" "shar.b\t#2,r1h" \
+	"shar.b #2,r1h"
+gdb_test "x" "shar.b\t#2,@er1" \
+	"shar.b #2,@er1"
+gdb_test "x" "shar.b\t#2,@\\(0x3(:2|),er1\\)" \
+	"shar.b #2,@(0x3:2,er1)"
+gdb_test "x" "shar.b\t#2,@er1\\+" \
+	"shar.b #2,@er1+"
+gdb_test "x" "shar.b\t#2,@-er1" \
+	"shar.b #2,@-er1"
+gdb_test "x" "shar.b\t#2,@\\+er1" \
+	"shar.b #2,@+er1"
+gdb_test "x" "shar.b\t#2,@er1-" \
+	"shar.b #2,@er1-"
+gdb_test "x" "shar.b\t#2,@\\(0x1234(:16|),er1\\)" \
+	"shar.b #2,@(0x1234:16,er1)"
+gdb_test "x" "shar.b\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"shar.b #2,@(0x12345678:32,er1)"
+gdb_test "x" "shar.b\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"shar.b #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "shar.b\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"shar.b #2,@(0x1234:16,r2.w)"
+gdb_test "x" "shar.b\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"shar.b #2,@(0x1234:16,er2.l)"
+gdb_test "x" "shar.b\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shar.b #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shar.b\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"shar.b #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "shar.b\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"shar.b #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "shar.b\t#2,@0x12(:8|)" \
+	"shar.b #2,@0x12:8"
+gdb_test "x" "shar.b\t#2,@0x1234(:16|)" \
+	"shar.b #2,@0x1234:16"
+gdb_test "x" "shar.b\t#2,@0x12345678(:32|)" \
+	"shar.b #2,@0x12345678:32"
+gdb_test "x" "shar.w\t#2,r1" \
+	"shar.w #2,r1"
+gdb_test "x" "shar.w\t#2,@er1" \
+	"shar.w #2,@er1"
+gdb_test "x" "shar.w\t#2,@\\(0x6(:2|),er1\\)" \
+	"shar.w #2,@(0x6:2,er1)"
+gdb_test "x" "shar.w\t#2,@er1\\+" \
+	"shar.w #2,@er1+"
+gdb_test "x" "shar.w\t#2,@-er1" \
+	"shar.w #2,@-er1"
+gdb_test "x" "shar.w\t#2,@\\+er1" \
+	"shar.w #2,@+er1"
+gdb_test "x" "shar.w\t#2,@er1-" \
+	"shar.w #2,@er1-"
+gdb_test "x" "shar.w\t#2,@\\(0x1234(:16|),er1\\)" \
+	"shar.w #2,@(0x1234:16,er1)"
+gdb_test "x" "shar.w\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"shar.w #2,@(0x12345678:32,er1)"
+gdb_test "x" "shar.w\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"shar.w #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "shar.w\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"shar.w #2,@(0x1234:16,r2.w)"
+gdb_test "x" "shar.w\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"shar.w #2,@(0x1234:16,er2.l)"
+gdb_test "x" "shar.w\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shar.w #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shar.w\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"shar.w #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "shar.w\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"shar.w #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "shar.w\t#2,@0x1234(:16|)" \
+	"shar.w #2,@0x1234:16"
+gdb_test "x" "shar.w\t#2,@0x12345678(:32|)" \
+	"shar.w #2,@0x12345678:32"
+gdb_test "x" "shar.l\t#2,er1" \
+	"shar.l #2,er1"
+gdb_test "x" "shar.l\t#2,@er1" \
+	"shar.l #2,@er1"
+gdb_test "x" "shar.l\t#2,@\\(0xc(:2|),er1\\)" \
+	"shar.l #2,@(0xc:2,er1)"
+gdb_test "x" "shar.l\t#2,@er1\\+" \
+	"shar.l #2,@er1+"
+gdb_test "x" "shar.l\t#2,@-er1" \
+	"shar.l #2,@-er1"
+gdb_test "x" "shar.l\t#2,@\\+er1" \
+	"shar.l #2,@+er1"
+gdb_test "x" "shar.l\t#2,@er1-" \
+	"shar.l #2,@er1-"
+gdb_test "x" "shar.l\t#2,@\\(0x1234(:16|),er1\\)" \
+	"shar.l #2,@(0x1234:16,er1)"
+gdb_test "x" "shar.l\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"shar.l #2,@(0x12345678:32,er1)"
+gdb_test "x" "shar.l\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"shar.l #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "shar.l\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"shar.l #2,@(0x1234:16,r2.w)"
+gdb_test "x" "shar.l\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"shar.l #2,@(0x1234:16,er2.l)"
+gdb_test "x" "shar.l\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"shar.l #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "shar.l\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"shar.l #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "shar.l\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"shar.l #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "shar.l\t#2,@0x1234(:16|)" \
+	"shar.l #2,@0x1234:16"
+gdb_test "x" "shar.l\t#2,@0x12345678(:32|)" \
+	"shar.l #2,@0x12345678:32"
+gdb_test "x" "rotxl.b\tr1h" \
+	"rotxl.b r1h"
+gdb_test "x" "rotxl.b\t@er1" \
+	"rotxl.b @er1"
+gdb_test "x" "rotxl.b\t@\\(0x3(:2|),er1\\)" \
+	"rotxl.b @(0x3:2,er1)"
+gdb_test "x" "rotxl.b\t@er1\\+" \
+	"rotxl.b @er1+"
+gdb_test "x" "rotxl.b\t@-er1" \
+	"rotxl.b @-er1"
+gdb_test "x" "rotxl.b\t@\\+er1" \
+	"rotxl.b @+er1"
+gdb_test "x" "rotxl.b\t@er1-" \
+	"rotxl.b @er1-"
+gdb_test "x" "rotxl.b\t@\\(0x1234(:16|),er1\\)" \
+	"rotxl.b @(0x1234:16,er1)"
+gdb_test "x" "rotxl.b\t@\\(0x12345678(:32|),er1\\)" \
+	"rotxl.b @(0x12345678:32,er1)"
+gdb_test "x" "rotxl.b\t@\\(0x1234(:16|),r2l.b\\)" \
+	"rotxl.b @(0x1234:16,r2l.b)"
+gdb_test "x" "rotxl.b\t@\\(0x1234(:16|),r2.w\\)" \
+	"rotxl.b @(0x1234:16,r2.w)"
+gdb_test "x" "rotxl.b\t@\\(0x1234(:16|),er2.l\\)" \
+	"rotxl.b @(0x1234:16,er2.l)"
+gdb_test "x" "rotxl.b\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotxl.b @(0x12345678:32,r2l.b)"
+gdb_test "x" "rotxl.b\t@\\(0x12345678(:32|),r2.w\\)" \
+	"rotxl.b @(0x12345678:32,r2.w)"
+gdb_test "x" "rotxl.b\t@\\(0x12345678(:32|),er2.l\\)" \
+	"rotxl.b @(0x12345678:32,er2.l)"
+gdb_test "x" "rotxl.b\t@0x12(:8|)" \
+	"rotxl.b @0x12:8"
+gdb_test "x" "rotxl.b\t@0x1234(:16|)" \
+	"rotxl.b @0x1234:16"
+gdb_test "x" "rotxl.b\t@0x12345678(:32|)" \
+	"rotxl.b @0x12345678:32"
+gdb_test "x" "rotxl.w\tr1" \
+	"rotxl.w r1"
+gdb_test "x" "rotxl.w\t@er1" \
+	"rotxl.w @er1"
+gdb_test "x" "rotxl.w\t@\\(0x6(:2|),er1\\)" \
+	"rotxl.w @(0x6:2,er1)"
+gdb_test "x" "rotxl.w\t@er1\\+" \
+	"rotxl.w @er1+"
+gdb_test "x" "rotxl.w\t@-er1" \
+	"rotxl.w @-er1"
+gdb_test "x" "rotxl.w\t@\\+er1" \
+	"rotxl.w @+er1"
+gdb_test "x" "rotxl.w\t@er1-" \
+	"rotxl.w @er1-"
+gdb_test "x" "rotxl.w\t@\\(0x1234(:16|),er1\\)" \
+	"rotxl.w @(0x1234:16,er1)"
+gdb_test "x" "rotxl.w\t@\\(0x12345678(:32|),er1\\)" \
+	"rotxl.w @(0x12345678:32,er1)"
+gdb_test "x" "rotxl.w\t@\\(0x1234(:16|),r2l.b\\)" \
+	"rotxl.w @(0x1234:16,r2l.b)"
+gdb_test "x" "rotxl.w\t@\\(0x1234(:16|),r2.w\\)" \
+	"rotxl.w @(0x1234:16,r2.w)"
+gdb_test "x" "rotxl.w\t@\\(0x1234(:16|),er2.l\\)" \
+	"rotxl.w @(0x1234:16,er2.l)"
+gdb_test "x" "rotxl.w\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotxl.w @(0x12345678:32,r2l.b)"
+gdb_test "x" "rotxl.w\t@\\(0x12345678(:32|),r2.w\\)" \
+	"rotxl.w @(0x12345678:32,r2.w)"
+gdb_test "x" "rotxl.w\t@\\(0x12345678(:32|),er2.l\\)" \
+	"rotxl.w @(0x12345678:32,er2.l)"
+gdb_test "x" "rotxl.w\t@0x1234(:16|)" \
+	"rotxl.w @0x1234:16"
+gdb_test "x" "rotxl.w\t@0x12345678(:32|)" \
+	"rotxl.w @0x12345678:32"
+gdb_test "x" "rotxl.l\ter1" \
+	"rotxl.l er1"
+gdb_test "x" "rotxl.l\t@er1" \
+	"rotxl.l @er1"
+gdb_test "x" "rotxl.l\t@\\(0xc(:2|),er1\\)" \
+	"rotxl.l @(0xc:2,er1)"
+gdb_test "x" "rotxl.l\t@er1\\+" \
+	"rotxl.l @er1+"
+gdb_test "x" "rotxl.l\t@-er1" \
+	"rotxl.l @-er1"
+gdb_test "x" "rotxl.l\t@\\+er1" \
+	"rotxl.l @+er1"
+gdb_test "x" "rotxl.l\t@er1-" \
+	"rotxl.l @er1-"
+gdb_test "x" "rotxl.l\t@\\(0x1234(:16|),er1\\)" \
+	"rotxl.l @(0x1234:16,er1)"
+gdb_test "x" "rotxl.l\t@\\(0x12345678(:32|),er1\\)" \
+	"rotxl.l @(0x12345678:32,er1)"
+gdb_test "x" "rotxl.l\t@\\(0x1234(:16|),r2l.b\\)" \
+	"rotxl.l @(0x1234:16,r2l.b)"
+gdb_test "x" "rotxl.l\t@\\(0x1234(:16|),r2.w\\)" \
+	"rotxl.l @(0x1234:16,r2.w)"
+gdb_test "x" "rotxl.l\t@\\(0x1234(:16|),er2.l\\)" \
+	"rotxl.l @(0x1234:16,er2.l)"
+gdb_test "x" "rotxl.l\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotxl.l @(0x12345678:32,r2l.b)"
+gdb_test "x" "rotxl.l\t@\\(0x12345678(:32|),r2.w\\)" \
+	"rotxl.l @(0x12345678:32,r2.w)"
+gdb_test "x" "rotxl.l\t@\\(0x12345678(:32|),er2.l\\)" \
+	"rotxl.l @(0x12345678:32,er2.l)"
+gdb_test "x" "rotxl.l\t@0x1234(:16|)" \
+	"rotxl.l @0x1234:16"
+gdb_test "x" "rotxl.l\t@0x12345678(:32|)" \
+	"rotxl.l @0x12345678:32"
+gdb_test "x" "rotxl.b\t#2,r1h" \
+	"rotxl.b #2,r1h"
+gdb_test "x" "rotxl.b\t#2,@er1" \
+	"rotxl.b #2,@er1"
+gdb_test "x" "rotxl.b\t#2,@\\(0x3(:2|),er1\\)" \
+	"rotxl.b #2,@(0x3:2,er1)"
+gdb_test "x" "rotxl.b\t#2,@er1\\+" \
+	"rotxl.b #2,@er1+"
+gdb_test "x" "rotxl.b\t#2,@-er1" \
+	"rotxl.b #2,@-er1"
+gdb_test "x" "rotxl.b\t#2,@\\+er1" \
+	"rotxl.b #2,@+er1"
+gdb_test "x" "rotxl.b\t#2,@er1-" \
+	"rotxl.b #2,@er1-"
+gdb_test "x" "rotxl.b\t#2,@\\(0x1234(:16|),er1\\)" \
+	"rotxl.b #2,@(0x1234:16,er1)"
+gdb_test "x" "rotxl.b\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"rotxl.b #2,@(0x12345678:32,er1)"
+gdb_test "x" "rotxl.b\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"rotxl.b #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "rotxl.b\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"rotxl.b #2,@(0x1234:16,r2.w)"
+gdb_test "x" "rotxl.b\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"rotxl.b #2,@(0x1234:16,er2.l)"
+gdb_test "x" "rotxl.b\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotxl.b #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "rotxl.b\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"rotxl.b #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "rotxl.b\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"rotxl.b #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "rotxl.b\t#2,@0x12(:8|)" \
+	"rotxl.b #2,@0x12:8"
+gdb_test "x" "rotxl.b\t#2,@0x1234(:16|)" \
+	"rotxl.b #2,@0x1234:16"
+gdb_test "x" "rotxl.b\t#2,@0x12345678(:32|)" \
+	"rotxl.b #2,@0x12345678:32"
+gdb_test "x" "rotxl.w\t#2,r1" \
+	"rotxl.w #2,r1"
+gdb_test "x" "rotxl.w\t#2,@er1" \
+	"rotxl.w #2,@er1"
+gdb_test "x" "rotxl.w\t#2,@\\(0x6(:2|),er1\\)" \
+	"rotxl.w #2,@(0x6:2,er1)"
+gdb_test "x" "rotxl.w\t#2,@er1\\+" \
+	"rotxl.w #2,@er1+"
+gdb_test "x" "rotxl.w\t#2,@-er1" \
+	"rotxl.w #2,@-er1"
+gdb_test "x" "rotxl.w\t#2,@\\+er1" \
+	"rotxl.w #2,@+er1"
+gdb_test "x" "rotxl.w\t#2,@er1-" \
+	"rotxl.w #2,@er1-"
+gdb_test "x" "rotxl.w\t#2,@\\(0x1234(:16|),er1\\)" \
+	"rotxl.w #2,@(0x1234:16,er1)"
+gdb_test "x" "rotxl.w\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"rotxl.w #2,@(0x12345678:32,er1)"
+gdb_test "x" "rotxl.w\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"rotxl.w #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "rotxl.w\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"rotxl.w #2,@(0x1234:16,r2.w)"
+gdb_test "x" "rotxl.w\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"rotxl.w #2,@(0x1234:16,er2.l)"
+gdb_test "x" "rotxl.w\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotxl.w #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "rotxl.w\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"rotxl.w #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "rotxl.w\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"rotxl.w #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "rotxl.w\t#2,@0x1234(:16|)" \
+	"rotxl.w #2,@0x1234:16"
+gdb_test "x" "rotxl.w\t#2,@0x12345678(:32|)" \
+	"rotxl.w #2,@0x12345678:32"
+gdb_test "x" "rotxl.l\t#2,er1" \
+	"rotxl.l #2,er1"
+gdb_test "x" "rotxl.l\t#2,@er1" \
+	"rotxl.l #2,@er1"
+gdb_test "x" "rotxl.l\t#2,@\\(0xc(:2|),er1\\)" \
+	"rotxl.l #2,@(0xc:2,er1)"
+gdb_test "x" "rotxl.l\t#2,@er1\\+" \
+	"rotxl.l #2,@er1+"
+gdb_test "x" "rotxl.l\t#2,@-er1" \
+	"rotxl.l #2,@-er1"
+gdb_test "x" "rotxl.l\t#2,@\\+er1" \
+	"rotxl.l #2,@+er1"
+gdb_test "x" "rotxl.l\t#2,@er1-" \
+	"rotxl.l #2,@er1-"
+gdb_test "x" "rotxl.l\t#2,@\\(0x1234(:16|),er1\\)" \
+	"rotxl.l #2,@(0x1234:16,er1)"
+gdb_test "x" "rotxl.l\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"rotxl.l #2,@(0x12345678:32,er1)"
+gdb_test "x" "rotxl.l\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"rotxl.l #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "rotxl.l\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"rotxl.l #2,@(0x1234:16,r2.w)"
+gdb_test "x" "rotxl.l\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"rotxl.l #2,@(0x1234:16,er2.l)"
+gdb_test "x" "rotxl.l\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotxl.l #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "rotxl.l\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"rotxl.l #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "rotxl.l\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"rotxl.l #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "rotxl.l\t#2,@0x1234(:16|)" \
+	"rotxl.l #2,@0x1234:16"
+gdb_test "x" "rotxl.l\t#2,@0x12345678(:32|)" \
+	"rotxl.l #2,@0x12345678:32"
+gdb_test "x" "rotxr.b\tr1h" \
+	"rotxr.b r1h"
+gdb_test "x" "rotxr.b\t@er1" \
+	"rotxr.b @er1"
+gdb_test "x" "rotxr.b\t@\\(0x3(:2|),er1\\)" \
+	"rotxr.b @(0x3:2,er1)"
+gdb_test "x" "rotxr.b\t@er1\\+" \
+	"rotxr.b @er1+"
+gdb_test "x" "rotxr.b\t@-er1" \
+	"rotxr.b @-er1"
+gdb_test "x" "rotxr.b\t@\\+er1" \
+	"rotxr.b @+er1"
+gdb_test "x" "rotxr.b\t@er1-" \
+	"rotxr.b @er1-"
+gdb_test "x" "rotxr.b\t@\\(0x1234(:16|),er1\\)" \
+	"rotxr.b @(0x1234:16,er1)"
+gdb_test "x" "rotxr.b\t@\\(0x12345678(:32|),er1\\)" \
+	"rotxr.b @(0x12345678:32,er1)"
+gdb_test "x" "rotxr.b\t@\\(0x1234(:16|),r2l.b\\)" \
+	"rotxr.b @(0x1234:16,r2l.b)"
+gdb_test "x" "rotxr.b\t@\\(0x1234(:16|),r2.w\\)" \
+	"rotxr.b @(0x1234:16,r2.w)"
+gdb_test "x" "rotxr.b\t@\\(0x1234(:16|),er2.l\\)" \
+	"rotxr.b @(0x1234:16,er2.l)"
+gdb_test "x" "rotxr.b\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotxr.b @(0x12345678:32,r2l.b)"
+gdb_test "x" "rotxr.b\t@\\(0x12345678(:32|),r2.w\\)" \
+	"rotxr.b @(0x12345678:32,r2.w)"
+gdb_test "x" "rotxr.b\t@\\(0x12345678(:32|),er2.l\\)" \
+	"rotxr.b @(0x12345678:32,er2.l)"
+gdb_test "x" "rotxr.b\t@0x12(:8|)" \
+	"rotxr.b @0x12:8"
+gdb_test "x" "rotxr.b\t@0x1234(:16|)" \
+	"rotxr.b @0x1234:16"
+gdb_test "x" "rotxr.b\t@0x12345678(:32|)" \
+	"rotxr.b @0x12345678:32"
+gdb_test "x" "rotxr.w\tr1" \
+	"rotxr.w r1"
+gdb_test "x" "rotxr.w\t@er1" \
+	"rotxr.w @er1"
+gdb_test "x" "rotxr.w\t@\\(0x6(:2|),er1\\)" \
+	"rotxr.w @(0x6:2,er1)"
+gdb_test "x" "rotxr.w\t@er1\\+" \
+	"rotxr.w @er1+"
+gdb_test "x" "rotxr.w\t@-er1" \
+	"rotxr.w @-er1"
+gdb_test "x" "rotxr.w\t@\\+er1" \
+	"rotxr.w @+er1"
+gdb_test "x" "rotxr.w\t@er1-" \
+	"rotxr.w @er1-"
+gdb_test "x" "rotxr.w\t@\\(0x1234(:16|),er1\\)" \
+	"rotxr.w @(0x1234:16,er1)"
+gdb_test "x" "rotxr.w\t@\\(0x12345678(:32|),er1\\)" \
+	"rotxr.w @(0x12345678:32,er1)"
+gdb_test "x" "rotxr.w\t@\\(0x1234(:16|),r2l.b\\)" \
+	"rotxr.w @(0x1234:16,r2l.b)"
+gdb_test "x" "rotxr.w\t@\\(0x1234(:16|),r2.w\\)" \
+	"rotxr.w @(0x1234:16,r2.w)"
+gdb_test "x" "rotxr.w\t@\\(0x1234(:16|),er2.l\\)" \
+	"rotxr.w @(0x1234:16,er2.l)"
+gdb_test "x" "rotxr.w\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotxr.w @(0x12345678:32,r2l.b)"
+gdb_test "x" "rotxr.w\t@\\(0x12345678(:32|),r2.w\\)" \
+	"rotxr.w @(0x12345678:32,r2.w)"
+gdb_test "x" "rotxr.w\t@\\(0x12345678(:32|),er2.l\\)" \
+	"rotxr.w @(0x12345678:32,er2.l)"
+gdb_test "x" "rotxr.w\t@0x1234(:16|)" \
+	"rotxr.w @0x1234:16"
+gdb_test "x" "rotxr.w\t@0x12345678(:32|)" \
+	"rotxr.w @0x12345678:32"
+gdb_test "x" "rotxr.l\ter1" \
+	"rotxr.l er1"
+gdb_test "x" "rotxr.l\t@er1" \
+	"rotxr.l @er1"
+gdb_test "x" "rotxr.l\t@\\(0xc(:2|),er1\\)" \
+	"rotxr.l @(0xc:2,er1)"
+gdb_test "x" "rotxr.l\t@er1\\+" \
+	"rotxr.l @er1+"
+gdb_test "x" "rotxr.l\t@-er1" \
+	"rotxr.l @-er1"
+gdb_test "x" "rotxr.l\t@\\+er1" \
+	"rotxr.l @+er1"
+gdb_test "x" "rotxr.l\t@er1-" \
+	"rotxr.l @er1-"
+gdb_test "x" "rotxr.l\t@\\(0x1234(:16|),er1\\)" \
+	"rotxr.l @(0x1234:16,er1)"
+gdb_test "x" "rotxr.l\t@\\(0x12345678(:32|),er1\\)" \
+	"rotxr.l @(0x12345678:32,er1)"
+gdb_test "x" "rotxr.l\t@\\(0x1234(:16|),r2l.b\\)" \
+	"rotxr.l @(0x1234:16,r2l.b)"
+gdb_test "x" "rotxr.l\t@\\(0x1234(:16|),r2.w\\)" \
+	"rotxr.l @(0x1234:16,r2.w)"
+gdb_test "x" "rotxr.l\t@\\(0x1234(:16|),er2.l\\)" \
+	"rotxr.l @(0x1234:16,er2.l)"
+gdb_test "x" "rotxr.l\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotxr.l @(0x12345678:32,r2l.b)"
+gdb_test "x" "rotxr.l\t@\\(0x12345678(:32|),r2.w\\)" \
+	"rotxr.l @(0x12345678:32,r2.w)"
+gdb_test "x" "rotxr.l\t@\\(0x12345678(:32|),er2.l\\)" \
+	"rotxr.l @(0x12345678:32,er2.l)"
+gdb_test "x" "rotxr.l\t@0x1234(:16|)" \
+	"rotxr.l @0x1234:16"
+gdb_test "x" "rotxr.l\t@0x12345678(:32|)" \
+	"rotxr.l @0x12345678:32"
+gdb_test "x" "rotxr.b\t#2,r1h" \
+	"rotxr.b #2,r1h"
+gdb_test "x" "rotxr.b\t#2,@er1" \
+	"rotxr.b #2,@er1"
+gdb_test "x" "rotxr.b\t#2,@\\(0x3(:2|),er1\\)" \
+	"rotxr.b #2,@(0x3:2,er1)"
+gdb_test "x" "rotxr.b\t#2,@er1\\+" \
+	"rotxr.b #2,@er1+"
+gdb_test "x" "rotxr.b\t#2,@-er1" \
+	"rotxr.b #2,@-er1"
+gdb_test "x" "rotxr.b\t#2,@\\+er1" \
+	"rotxr.b #2,@+er1"
+gdb_test "x" "rotxr.b\t#2,@er1-" \
+	"rotxr.b #2,@er1-"
+gdb_test "x" "rotxr.b\t#2,@\\(0x1234(:16|),er1\\)" \
+	"rotxr.b #2,@(0x1234:16,er1)"
+gdb_test "x" "rotxr.b\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"rotxr.b #2,@(0x12345678:32,er1)"
+gdb_test "x" "rotxr.b\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"rotxr.b #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "rotxr.b\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"rotxr.b #2,@(0x1234:16,r2.w)"
+gdb_test "x" "rotxr.b\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"rotxr.b #2,@(0x1234:16,er2.l)"
+gdb_test "x" "rotxr.b\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotxr.b #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "rotxr.b\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"rotxr.b #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "rotxr.b\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"rotxr.b #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "rotxr.b\t#2,@0x12(:8|)" \
+	"rotxr.b #2,@0x12:8"
+gdb_test "x" "rotxr.b\t#2,@0x1234(:16|)" \
+	"rotxr.b #2,@0x1234:16"
+gdb_test "x" "rotxr.b\t#2,@0x12345678(:32|)" \
+	"rotxr.b #2,@0x12345678:32"
+gdb_test "x" "rotxr.w\t#2,r1" \
+	"rotxr.w #2,r1"
+gdb_test "x" "rotxr.w\t#2,@er1" \
+	"rotxr.w #2,@er1"
+gdb_test "x" "rotxr.w\t#2,@\\(0x6(:2|),er1\\)" \
+	"rotxr.w #2,@(0x6:2,er1)"
+gdb_test "x" "rotxr.w\t#2,@er1\\+" \
+	"rotxr.w #2,@er1+"
+gdb_test "x" "rotxr.w\t#2,@-er1" \
+	"rotxr.w #2,@-er1"
+gdb_test "x" "rotxr.w\t#2,@\\+er1" \
+	"rotxr.w #2,@+er1"
+gdb_test "x" "rotxr.w\t#2,@er1-" \
+	"rotxr.w #2,@er1-"
+gdb_test "x" "rotxr.w\t#2,@\\(0x1234(:16|),er1\\)" \
+	"rotxr.w #2,@(0x1234:16,er1)"
+gdb_test "x" "rotxr.w\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"rotxr.w #2,@(0x12345678:32,er1)"
+gdb_test "x" "rotxr.w\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"rotxr.w #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "rotxr.w\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"rotxr.w #2,@(0x1234:16,r2.w)"
+gdb_test "x" "rotxr.w\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"rotxr.w #2,@(0x1234:16,er2.l)"
+gdb_test "x" "rotxr.w\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotxr.w #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "rotxr.w\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"rotxr.w #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "rotxr.w\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"rotxr.w #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "rotxr.w\t#2,@0x1234(:16|)" \
+	"rotxr.w #2,@0x1234:16"
+gdb_test "x" "rotxr.w\t#2,@0x12345678(:32|)" \
+	"rotxr.w #2,@0x12345678:32"
+gdb_test "x" "rotxr.l\t#2,er1" \
+	"rotxr.l #2,er1"
+gdb_test "x" "rotxr.l\t#2,@er1" \
+	"rotxr.l #2,@er1"
+gdb_test "x" "rotxr.l\t#2,@\\(0xc(:2|),er1\\)" \
+	"rotxr.l #2,@(0xc:2,er1)"
+gdb_test "x" "rotxr.l\t#2,@er1\\+" \
+	"rotxr.l #2,@er1+"
+gdb_test "x" "rotxr.l\t#2,@-er1" \
+	"rotxr.l #2,@-er1"
+gdb_test "x" "rotxr.l\t#2,@\\+er1" \
+	"rotxr.l #2,@+er1"
+gdb_test "x" "rotxr.l\t#2,@er1-" \
+	"rotxr.l #2,@er1-"
+gdb_test "x" "rotxr.l\t#2,@\\(0x1234(:16|),er1\\)" \
+	"rotxr.l #2,@(0x1234:16,er1)"
+gdb_test "x" "rotxr.l\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"rotxr.l #2,@(0x12345678:32,er1)"
+gdb_test "x" "rotxr.l\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"rotxr.l #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "rotxr.l\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"rotxr.l #2,@(0x1234:16,r2.w)"
+gdb_test "x" "rotxr.l\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"rotxr.l #2,@(0x1234:16,er2.l)"
+gdb_test "x" "rotxr.l\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotxr.l #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "rotxr.l\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"rotxr.l #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "rotxr.l\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"rotxr.l #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "rotxr.l\t#2,@0x1234(:16|)" \
+	"rotxr.l #2,@0x1234:16"
+gdb_test "x" "rotxr.l\t#2,@0x12345678(:32|)" \
+	"rotxr.l #2,@0x12345678:32"
+gdb_test "x" "rotl.b\tr1h" \
+	"rotl.b r1h"
+gdb_test "x" "rotl.b\t@er1" \
+	"rotl.b @er1"
+gdb_test "x" "rotl.b\t@\\(0x3(:2|),er1\\)" \
+	"rotl.b @(0x3:2,er1)"
+gdb_test "x" "rotl.b\t@er1\\+" \
+	"rotl.b @er1+"
+gdb_test "x" "rotl.b\t@-er1" \
+	"rotl.b @-er1"
+gdb_test "x" "rotl.b\t@\\+er1" \
+	"rotl.b @+er1"
+gdb_test "x" "rotl.b\t@er1-" \
+	"rotl.b @er1-"
+gdb_test "x" "rotl.b\t@\\(0x1234(:16|),er1\\)" \
+	"rotl.b @(0x1234:16,er1)"
+gdb_test "x" "rotl.b\t@\\(0x12345678(:32|),er1\\)" \
+	"rotl.b @(0x12345678:32,er1)"
+gdb_test "x" "rotl.b\t@\\(0x1234(:16|),r2l.b\\)" \
+	"rotl.b @(0x1234:16,r2l.b)"
+gdb_test "x" "rotl.b\t@\\(0x1234(:16|),r2.w\\)" \
+	"rotl.b @(0x1234:16,r2.w)"
+gdb_test "x" "rotl.b\t@\\(0x1234(:16|),er2.l\\)" \
+	"rotl.b @(0x1234:16,er2.l)"
+gdb_test "x" "rotl.b\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotl.b @(0x12345678:32,r2l.b)"
+gdb_test "x" "rotl.b\t@\\(0x12345678(:32|),r2.w\\)" \
+	"rotl.b @(0x12345678:32,r2.w)"
+gdb_test "x" "rotl.b\t@\\(0x12345678(:32|),er2.l\\)" \
+	"rotl.b @(0x12345678:32,er2.l)"
+gdb_test "x" "rotl.b\t@0x12(:8|)" \
+	"rotl.b @0x12:8"
+gdb_test "x" "rotl.b\t@0x1234(:16|)" \
+	"rotl.b @0x1234:16"
+gdb_test "x" "rotl.b\t@0x12345678(:32|)" \
+	"rotl.b @0x12345678:32"
+gdb_test "x" "rotl.w\tr1" \
+	"rotl.w r1"
+gdb_test "x" "rotl.w\t@er1" \
+	"rotl.w @er1"
+gdb_test "x" "rotl.w\t@\\(0x6(:2|),er1\\)" \
+	"rotl.w @(0x6:2,er1)"
+gdb_test "x" "rotl.w\t@-er1" \
+	"rotl.w @-er1"
+gdb_test "x" "rotl.w\t@er1\\+" \
+	"rotl.w @er1+"
+gdb_test "x" "rotl.w\t@er1-" \
+	"rotl.w @er1-"
+gdb_test "x" "rotl.w\t@\\+er1" \
+	"rotl.w @+er1"
+gdb_test "x" "rotl.w\t@\\(0x1234(:16|),er1\\)" \
+	"rotl.w @(0x1234:16,er1)"
+gdb_test "x" "rotl.w\t@\\(0x12345678(:32|),er1\\)" \
+	"rotl.w @(0x12345678:32,er1)"
+gdb_test "x" "rotl.w\t@\\(0x1234(:16|),r2l.b\\)" \
+	"rotl.w @(0x1234:16,r2l.b)"
+gdb_test "x" "rotl.w\t@\\(0x1234(:16|),r2.w\\)" \
+	"rotl.w @(0x1234:16,r2.w)"
+gdb_test "x" "rotl.w\t@\\(0x1234(:16|),er2.l\\)" \
+	"rotl.w @(0x1234:16,er2.l)"
+gdb_test "x" "rotl.w\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotl.w @(0x12345678:32,r2l.b)"
+gdb_test "x" "rotl.w\t@\\(0x12345678(:32|),r2.w\\)" \
+	"rotl.w @(0x12345678:32,r2.w)"
+gdb_test "x" "rotl.w\t@\\(0x12345678(:32|),er2.l\\)" \
+	"rotl.w @(0x12345678:32,er2.l)"
+gdb_test "x" "rotl.w\t@0x1234(:16|)" \
+	"rotl.w @0x1234:16"
+gdb_test "x" "rotl.w\t@0x12345678(:32|)" \
+	"rotl.w @0x12345678:32"
+gdb_test "x" "rotl.l\ter1" \
+	"rotl.l er1"
+gdb_test "x" "rotl.l\t@er1" \
+	"rotl.l @er1"
+gdb_test "x" "rotl.l\t@\\(0xc(:2|),er1\\)" \
+	"rotl.l @(0xc:2,er1)"
+gdb_test "x" "rotl.l\t@er1\\+" \
+	"rotl.l @er1+"
+gdb_test "x" "rotl.l\t@-er1" \
+	"rotl.l @-er1"
+gdb_test "x" "rotl.l\t@\\+er1" \
+	"rotl.l @+er1"
+gdb_test "x" "rotl.l\t@er1-" \
+	"rotl.l @er1-"
+gdb_test "x" "rotl.l\t@\\(0x1234(:16|),er1\\)" \
+	"rotl.l @(0x1234:16,er1)"
+gdb_test "x" "rotl.l\t@\\(0x12345678(:32|),er1\\)" \
+	"rotl.l @(0x12345678:32,er1)"
+gdb_test "x" "rotl.l\t@\\(0x1234(:16|),r2l.b\\)" \
+	"rotl.l @(0x1234:16,r2l.b)"
+gdb_test "x" "rotl.l\t@\\(0x1234(:16|),r2.w\\)" \
+	"rotl.l @(0x1234:16,r2.w)"
+gdb_test "x" "rotl.l\t@\\(0x1234(:16|),er2.l\\)" \
+	"rotl.l @(0x1234:16,er2.l)"
+gdb_test "x" "rotl.l\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotl.l @(0x12345678:32,r2l.b)"
+gdb_test "x" "rotl.l\t@\\(0x12345678(:32|),r2.w\\)" \
+	"rotl.l @(0x12345678:32,r2.w)"
+gdb_test "x" "rotl.l\t@\\(0x12345678(:32|),er2.l\\)" \
+	"rotl.l @(0x12345678:32,er2.l)"
+gdb_test "x" "rotl.l\t@0x1234(:16|)" \
+	"rotl.l @0x1234:16"
+gdb_test "x" "rotl.l\t@0x12345678(:32|)" \
+	"rotl.l @0x12345678:32"
+gdb_test "x" "rotl.b\t#2,r1h" \
+	"rotl.b #2,r1h"
+gdb_test "x" "rotl.b\t#2,@er1" \
+	"rotl.b #2,@er1"
+gdb_test "x" "rotl.b\t#2,@\\(0x3(:2|),er1\\)" \
+	"rotl.b #2,@(0x3:2,er1)"
+gdb_test "x" "rotl.b\t#2,@er1\\+" \
+	"rotl.b #2,@er1+"
+gdb_test "x" "rotl.b\t#2,@-er1" \
+	"rotl.b #2,@-er1"
+gdb_test "x" "rotl.b\t#2,@\\+er1" \
+	"rotl.b #2,@+er1"
+gdb_test "x" "rotl.b\t#2,@er1-" \
+	"rotl.b #2,@er1-"
+gdb_test "x" "rotl.b\t#2,@\\(0x1234(:16|),er1\\)" \
+	"rotl.b #2,@(0x1234:16,er1)"
+gdb_test "x" "rotl.b\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"rotl.b #2,@(0x12345678:32,er1)"
+gdb_test "x" "rotl.b\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"rotl.b #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "rotl.b\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"rotl.b #2,@(0x1234:16,r2.w)"
+gdb_test "x" "rotl.b\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"rotl.b #2,@(0x1234:16,er2.l)"
+gdb_test "x" "rotl.b\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotl.b #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "rotl.b\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"rotl.b #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "rotl.b\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"rotl.b #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "rotl.b\t#2,@0x12(:8|)" \
+	"rotl.b #2,@0x12:8"
+gdb_test "x" "rotl.b\t#2,@0x1234(:16|)" \
+	"rotl.b #2,@0x1234:16"
+gdb_test "x" "rotl.b\t#2,@0x12345678(:32|)" \
+	"rotl.b #2,@0x12345678:32"
+gdb_test "x" "rotl.w\t#2,r1" \
+	"rotl.w #2,r1"
+gdb_test "x" "rotl.w\t#2,@er1" \
+	"rotl.w #2,@er1"
+gdb_test "x" "rotl.w\t#2,@\\(0x6(:2|),er1\\)" \
+	"rotl.w #2,@(0x6:2,er1)"
+gdb_test "x" "rotl.w\t#2,@er1\\+" \
+	"rotl.w #2,@er1+"
+gdb_test "x" "rotl.w\t#2,@-er1" \
+	"rotl.w #2,@-er1"
+gdb_test "x" "rotl.w\t#2,@\\+er1" \
+	"rotl.w #2,@+er1"
+gdb_test "x" "rotl.w\t#2,@er1-" \
+	"rotl.w #2,@er1-"
+gdb_test "x" "rotl.w\t#2,@\\(0x1234(:16|),er1\\)" \
+	"rotl.w #2,@(0x1234:16,er1)"
+gdb_test "x" "rotl.w\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"rotl.w #2,@(0x12345678:32,er1)"
+gdb_test "x" "rotl.w\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"rotl.w #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "rotl.w\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"rotl.w #2,@(0x1234:16,r2.w)"
+gdb_test "x" "rotl.w\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"rotl.w #2,@(0x1234:16,er2.l)"
+gdb_test "x" "rotl.w\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotl.w #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "rotl.w\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"rotl.w #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "rotl.w\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"rotl.w #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "rotl.w\t#2,@0x1234(:16|)" \
+	"rotl.w #2,@0x1234:16"
+gdb_test "x" "rotl.w\t#2,@0x12345678(:32|)" \
+	"rotl.w #2,@0x12345678:32"
+gdb_test "x" "rotl.l\t#2,er1" \
+	"rotl.l #2,er1"
+gdb_test "x" "rotl.l\t#2,@er1" \
+	"rotl.l #2,@er1"
+gdb_test "x" "rotl.l\t#2,@\\(0xc(:2|),er1\\)" \
+	"rotl.l #2,@(0xc:2,er1)"
+gdb_test "x" "rotl.l\t#2,@er1\\+" \
+	"rotl.l #2,@er1+"
+gdb_test "x" "rotl.l\t#2,@-er1" \
+	"rotl.l #2,@-er1"
+gdb_test "x" "rotl.l\t#2,@\\+er1" \
+	"rotl.l #2,@+er1"
+gdb_test "x" "rotl.l\t#2,@er1-" \
+	"rotl.l #2,@er1-"
+gdb_test "x" "rotl.l\t#2,@\\(0x1234(:16|),er1\\)" \
+	"rotl.l #2,@(0x1234:16,er1)"
+gdb_test "x" "rotl.l\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"rotl.l #2,@(0x12345678:32,er1)"
+gdb_test "x" "rotl.l\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"rotl.l #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "rotl.l\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"rotl.l #2,@(0x1234:16,r2.w)"
+gdb_test "x" "rotl.l\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"rotl.l #2,@(0x1234:16,er2.l)"
+gdb_test "x" "rotl.l\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotl.l #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "rotl.l\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"rotl.l #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "rotl.l\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"rotl.l #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "rotl.l\t#2,@0x1234(:16|)" \
+	"rotl.l #2,@0x1234:16"
+gdb_test "x" "rotl.l\t#2,@0x12345678(:32|)" \
+	"rotl.l #2,@0x12345678:32"
+gdb_test "x" "rotr.b\tr1h" \
+	"rotr.b r1h"
+gdb_test "x" "rotr.b\t@er1" \
+	"rotr.b @er1"
+gdb_test "x" "rotr.b\t@\\(0x3(:2|),er1\\)" \
+	"rotr.b @(0x3:2,er1)"
+gdb_test "x" "rotr.b\t@er1\\+" \
+	"rotr.b @er1+"
+gdb_test "x" "rotr.b\t@-er1" \
+	"rotr.b @-er1"
+gdb_test "x" "rotr.b\t@\\+er1" \
+	"rotr.b @+er1"
+gdb_test "x" "rotr.b\t@er1-" \
+	"rotr.b @er1-"
+gdb_test "x" "rotr.b\t@\\(0x1234(:16|),er1\\)" \
+	"rotr.b @(0x1234:16,er1)"
+gdb_test "x" "rotr.b\t@\\(0x12345678(:32|),er1\\)" \
+	"rotr.b @(0x12345678:32,er1)"
+gdb_test "x" "rotr.b\t@\\(0x1234(:16|),r2l.b\\)" \
+	"rotr.b @(0x1234:16,r2l.b)"
+gdb_test "x" "rotr.b\t@\\(0x1234(:16|),r2.w\\)" \
+	"rotr.b @(0x1234:16,r2.w)"
+gdb_test "x" "rotr.b\t@\\(0x1234(:16|),er2.l\\)" \
+	"rotr.b @(0x1234:16,er2.l)"
+gdb_test "x" "rotr.b\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotr.b @(0x12345678:32,r2l.b)"
+gdb_test "x" "rotr.b\t@\\(0x12345678(:32|),r2.w\\)" \
+	"rotr.b @(0x12345678:32,r2.w)"
+gdb_test "x" "rotr.b\t@\\(0x12345678(:32|),er2.l\\)" \
+	"rotr.b @(0x12345678:32,er2.l)"
+gdb_test "x" "rotr.b\t@0x12(:8|)" \
+	"rotr.b @0x12:8"
+gdb_test "x" "rotr.b\t@0x1234(:16|)" \
+	"rotr.b @0x1234:16"
+gdb_test "x" "rotr.b\t@0x12345678(:32|)" \
+	"rotr.b @0x12345678:32"
+gdb_test "x" "rotr.w\tr1" \
+	"rotr.w r1"
+gdb_test "x" "rotr.w\t@er1" \
+	"rotr.w @er1"
+gdb_test "x" "rotr.w\t@\\(0x6(:2|),er1\\)" \
+	"rotr.w @(0x6:2,er1)"
+gdb_test "x" "rotr.w\t@-er1" \
+	"rotr.w @-er1"
+gdb_test "x" "rotr.w\t@er1\\+" \
+	"rotr.w @er1+"
+gdb_test "x" "rotr.w\t@er1-" \
+	"rotr.w @er1-"
+gdb_test "x" "rotr.w\t@\\+er1" \
+	"rotr.w @+er1"
+gdb_test "x" "rotr.w\t@\\(0x1234(:16|),er1\\)" \
+	"rotr.w @(0x1234:16,er1)"
+gdb_test "x" "rotr.w\t@\\(0x12345678(:32|),er1\\)" \
+	"rotr.w @(0x12345678:32,er1)"
+gdb_test "x" "rotr.w\t@\\(0x1234(:16|),r2l.b\\)" \
+	"rotr.w @(0x1234:16,r2l.b)"
+gdb_test "x" "rotr.w\t@\\(0x1234(:16|),r2.w\\)" \
+	"rotr.w @(0x1234:16,r2.w)"
+gdb_test "x" "rotr.w\t@\\(0x1234(:16|),er2.l\\)" \
+	"rotr.w @(0x1234:16,er2.l)"
+gdb_test "x" "rotr.w\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotr.w @(0x12345678:32,r2l.b)"
+gdb_test "x" "rotr.w\t@\\(0x12345678(:32|),r2.w\\)" \
+	"rotr.w @(0x12345678:32,r2.w)"
+gdb_test "x" "rotr.w\t@\\(0x12345678(:32|),er2.l\\)" \
+	"rotr.w @(0x12345678:32,er2.l)"
+gdb_test "x" "rotr.w\t@0x1234(:16|)" \
+	"rotr.w @0x1234:16"
+gdb_test "x" "rotr.w\t@0x12345678(:32|)" \
+	"rotr.w @0x12345678:32"
+gdb_test "x" "rotr.l\ter1" \
+	"rotr.l er1"
+gdb_test "x" "rotr.l\t@er1" \
+	"rotr.l @er1"
+gdb_test "x" "rotr.l\t@\\(0xc(:2|),er1\\)" \
+	"rotr.l @(0xc:2,er1)"
+gdb_test "x" "rotr.l\t@er1\\+" \
+	"rotr.l @er1+"
+gdb_test "x" "rotr.l\t@-er1" \
+	"rotr.l @-er1"
+gdb_test "x" "rotr.l\t@\\+er1" \
+	"rotr.l @+er1"
+gdb_test "x" "rotr.l\t@er1-" \
+	"rotr.l @er1-"
+gdb_test "x" "rotr.l\t@\\(0x1234(:16|),er1\\)" \
+	"rotr.l @(0x1234:16,er1)"
+gdb_test "x" "rotr.l\t@\\(0x12345678(:32|),er1\\)" \
+	"rotr.l @(0x12345678:32,er1)"
+gdb_test "x" "rotr.l\t@\\(0x1234(:16|),r2l.b\\)" \
+	"rotr.l @(0x1234:16,r2l.b)"
+gdb_test "x" "rotr.l\t@\\(0x1234(:16|),r2.w\\)" \
+	"rotr.l @(0x1234:16,r2.w)"
+gdb_test "x" "rotr.l\t@\\(0x1234(:16|),er2.l\\)" \
+	"rotr.l @(0x1234:16,er2.l)"
+gdb_test "x" "rotr.l\t@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotr.l @(0x12345678:32,r2l.b)"
+gdb_test "x" "rotr.l\t@\\(0x12345678(:32|),r2.w\\)" \
+	"rotr.l @(0x12345678:32,r2.w)"
+gdb_test "x" "rotr.l\t@\\(0x12345678(:32|),er2.l\\)" \
+	"rotr.l @(0x12345678:32,er2.l)"
+gdb_test "x" "rotr.l\t@0x1234(:16|)" \
+	"rotr.l @0x1234:16"
+gdb_test "x" "rotr.l\t@0x12345678(:32|)" \
+	"rotr.l @0x12345678:32"
+gdb_test "x" "rotr.b\t#2,r1h" \
+	"rotr.b #2,r1h"
+gdb_test "x" "rotr.b\t#2,@er1" \
+	"rotr.b #2,@er1"
+gdb_test "x" "rotr.b\t#2,@\\(0x3(:2|),er1\\)" \
+	"rotr.b #2,@(0x3:2,er1)"
+gdb_test "x" "rotr.b\t#2,@er1\\+" \
+	"rotr.b #2,@er1+"
+gdb_test "x" "rotr.b\t#2,@-er1" \
+	"rotr.b #2,@-er1"
+gdb_test "x" "rotr.b\t#2,@\\+er1" \
+	"rotr.b #2,@+er1"
+gdb_test "x" "rotr.b\t#2,@er1-" \
+	"rotr.b #2,@er1-"
+gdb_test "x" "rotr.b\t#2,@\\(0x1234(:16|),er1\\)" \
+	"rotr.b #2,@(0x1234:16,er1)"
+gdb_test "x" "rotr.b\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"rotr.b #2,@(0x12345678:32,er1)"
+gdb_test "x" "rotr.b\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"rotr.b #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "rotr.b\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"rotr.b #2,@(0x1234:16,r2.w)"
+gdb_test "x" "rotr.b\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"rotr.b #2,@(0x1234:16,er2.l)"
+gdb_test "x" "rotr.b\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotr.b #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "rotr.b\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"rotr.b #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "rotr.b\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"rotr.b #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "rotr.b\t#2,@0x12(:8|)" \
+	"rotr.b #2,@0x12:8"
+gdb_test "x" "rotr.b\t#2,@0x1234(:16|)" \
+	"rotr.b #2,@0x1234:16"
+gdb_test "x" "rotr.b\t#2,@0x12345678(:32|)" \
+	"rotr.b #2,@0x12345678:32"
+gdb_test "x" "rotr.w\t#2,r1" \
+	"rotr.w #2,r1"
+gdb_test "x" "rotr.w\t#2,@er1" \
+	"rotr.w #2,@er1"
+gdb_test "x" "rotr.w\t#2,@\\(0x6(:2|),er1\\)" \
+	"rotr.w #2,@(0x6:2,er1)"
+gdb_test "x" "rotr.w\t#2,@er1\\+" \
+	"rotr.w #2,@er1+"
+gdb_test "x" "rotr.w\t#2,@-er1" \
+	"rotr.w #2,@-er1"
+gdb_test "x" "rotr.w\t#2,@\\+er1" \
+	"rotr.w #2,@+er1"
+gdb_test "x" "rotr.w\t#2,@er1-" \
+	"rotr.w #2,@er1-"
+gdb_test "x" "rotr.w\t#2,@\\(0x1234(:16|),er1\\)" \
+	"rotr.w #2,@(0x1234:16,er1)"
+gdb_test "x" "rotr.w\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"rotr.w #2,@(0x12345678:32,er1)"
+gdb_test "x" "rotr.w\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"rotr.w #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "rotr.w\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"rotr.w #2,@(0x1234:16,r2.w)"
+gdb_test "x" "rotr.w\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"rotr.w #2,@(0x1234:16,er2.l)"
+gdb_test "x" "rotr.w\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotr.w #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "rotr.w\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"rotr.w #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "rotr.w\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"rotr.w #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "rotr.w\t#2,@0x1234(:16|)" \
+	"rotr.w #2,@0x1234:16"
+gdb_test "x" "rotr.w\t#2,@0x12345678(:32|)" \
+	"rotr.w #2,@0x12345678:32"
+gdb_test "x" "rotr.l\t#2,er1" \
+	"rotr.l #2,er1"
+gdb_test "x" "rotr.l\t#2,@er1" \
+	"rotr.l #2,@er1"
+gdb_test "x" "rotr.l\t#2,@\\(0xc(:2|),er1\\)" \
+	"rotr.l #2,@(0xc:2,er1)"
+gdb_test "x" "rotr.l\t#2,@er1\\+" \
+	"rotr.l #2,@er1+"
+gdb_test "x" "rotr.l\t#2,@-er1" \
+	"rotr.l #2,@-er1"
+gdb_test "x" "rotr.l\t#2,@\\+er1" \
+	"rotr.l #2,@+er1"
+gdb_test "x" "rotr.l\t#2,@er1-" \
+	"rotr.l #2,@er1-"
+gdb_test "x" "rotr.l\t#2,@\\(0x1234(:16|),er1\\)" \
+	"rotr.l #2,@(0x1234:16,er1)"
+gdb_test "x" "rotr.l\t#2,@\\(0x12345678(:32|),er1\\)" \
+	"rotr.l #2,@(0x12345678:32,er1)"
+gdb_test "x" "rotr.l\t#2,@\\(0x1234(:16|),r2l.b\\)" \
+	"rotr.l #2,@(0x1234:16,r2l.b)"
+gdb_test "x" "rotr.l\t#2,@\\(0x1234(:16|),r2.w\\)" \
+	"rotr.l #2,@(0x1234:16,r2.w)"
+gdb_test "x" "rotr.l\t#2,@\\(0x1234(:16|),er2.l\\)" \
+	"rotr.l #2,@(0x1234:16,er2.l)"
+gdb_test "x" "rotr.l\t#2,@\\(0x12345678(:32|),r2l.b\\)" \
+	"rotr.l #2,@(0x12345678:32,r2l.b)"
+gdb_test "x" "rotr.l\t#2,@\\(0x12345678(:32|),r2.w\\)" \
+	"rotr.l #2,@(0x12345678:32,r2.w)"
+gdb_test "x" "rotr.l\t#2,@\\(0x12345678(:32|),er2.l\\)" \
+	"rotr.l #2,@(0x12345678:32,er2.l)"
+gdb_test "x" "rotr.l\t#2,@0x1234(:16|)" \
+	"rotr.l #2,@0x1234:16"
+gdb_test "x" "rotr.l\t#2,@0x12345678(:32|)" \
+	"rotr.l #2,@0x12345678:32"

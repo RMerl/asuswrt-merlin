@@ -1,0 +1,48 @@
+# sh testcase for shld $rm, $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global null
+null:
+	mov #1, r0
+	mov #0, r1
+	shld r1, r0
+	# no shift is performed.
+	assert r0, #1
+
+	.global gt0
+gt0:
+	mov #4, r0
+	mov #3, r1
+	shld r1, r0
+	# shift left 3 bits.
+	assert r0, #32
+
+	.global lt0
+lt0:
+	mov #32, r0
+	mov #3, r1
+	neg r1, r1
+	shld r1, r0
+	# shift right 3 bits.
+	assert r0, #4
+
+	.global fill
+fill:
+	mov #1, r0
+	rotr r0
+	mov #1, r1
+	rotr r1
+	shld r1, r0
+	assert r0, #0
+	
+okay:
+	pass
+wrong:
+	fail
+	

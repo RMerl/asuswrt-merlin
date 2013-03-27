@@ -1,0 +1,356 @@
+
+SIS - Sparc Instruction Simulator README file  (v2.0, 05-02-1996)
+-------------------------------------------------------------------
+
+1. Introduction
+
+The SIS is a SPARC V7 architecture simulator. It consist of two parts,
+the simulator core and a user defined memory module. The simulator
+core executes the instructions while the memory module emulates memory
+and peripherals. 
+
+2. Usage
+
+The simulator is started as follows: 
+
+sis [-uart1 uart_device1] [-uart2 uart_device2] 
+    [-nfp] [-freq frequency] [-c batch_file] [files] 
+
+The default uart devices for SIS are /dev/ptypc and /dev/ptypd. The
+-uart[1,2] switch can be used to connect the uarts to other devices.
+Use 'tip /dev/ttypc'  to connect a terminal emulator to the uarts.
+The '-nfp' will disable the simulated FPU, so each FPU instruction will
+generate a FPU disabled trap. The '-freq' switch can be used to define
+which "frequency" the simulator runs at. This is used by the 'perf'
+command to calculated the MIPS figure for a particular configuration.
+The give frequency must be an integer indicating the frequency in MHz.
+
+The -c option indicates that sis commands should be read from 'batch_file' 
+at startup.
+
+Files to be loaded must be in one of the supported formats (see INSTALLATION),
+and will be loaded into the simulated memory. The file formats are
+automatically recognised.
+
+The script 'startsim' will start the simulator in one xterm window and
+open a terminal emulator (tip) connected to the UART A in a second
+xterm window. Below is description of commands  that are recognized by 
+the simulator. The command-line is parsed using GNU readline. A command
+history of 64 commands is maintained. Use the up/down arrows to recall
+previous commands. For more details, see the readline documentation.
+
+batch <file>
+
+Execute a batch file of SIS commands.
+
++bp <address>
+
+Adds an breakpoint at address <address>.
+
+bp
+
+Prints all breakpoints
+
+-bp <num>
+
+Deletes breakpoint <num>. Use 'bp' to see which number is assigned to the 
+breakpoints.
+
+cont [inst_count]
+
+Continue execution at present position, optionally for [inst_count] 
+instructions.
+
+dis [addr] [count]
+
+Disassemble [count] instructions at address [addr]. Default values for
+count is 16 and addr is the present address.
+
+echo <string>
+
+Print <string> to the simulator window.
+
+float
+
+Prints the FPU registers
+
+go <address> [inst_count]
+
+The go command will set pc to <address> and npc to <address> + 4, and start
+execution. No other initialisation will be done. If inst_count is given, 
+execution will stop after the specified number of instructions.
+
+help
+
+Print a small help menu for the SIS commands.
+
+hist [trace_length]
+
+Enable the instruction trace buffer. The 'trace_length' last executed 
+instructions will be placed in the trace buffer. A 'hist' command without 
+a trace_length will display the trace buffer. Specifying a zero trace 
+length will disable the trace buffer.
+
+load  <file_name>
+
+Loads a file into simulator memory. 
+
+mem [addr] [count]
+
+Display memory at [addr] for [count] bytes. Same default values as above.
+
+quit
+
+Exits the simulator.
+
+perf [reset]
+
+The 'perf' command will display various execution statistics. A 'perf reset' 
+command will reset the statistics. This can be used if statistics shall 
+be calculated only over a part of the program. The 'run' and 'reset' 
+command also resets the statistic information.
+
+reg [reg_name] [value]
+
+Prints and sets the IU regiters. 'reg' without parameters prints the IU
+registers. 'reg [reg_name] [value]' sets the corresponding register to
+[value]. Valid register names are psr, tbr, wim, y, g1-g7, o0-o7 and
+l0-l7.
+
+reset
+
+Performs a power-on reset. This command is equal to 'run 0'.
+
+run [inst_count]
+
+Resets the simulator and starts execution from address 0. If an instruction
+count is given (inst_count), the simulator will stop after the specified 
+number of instructions. The event queue is emptied but any set breakpoints
+remain.
+
+step
+
+Equal to 'trace 1'
+
+tra [inst_count]
+
+Starts the simulator at the present position and prints each instruction
+it executes. If an instruction count is given (inst_count), the simulator 
+will stop after the specified number of instructions.
+
+Typing a 'Ctrl-C' will interrupt a running simulator. 
+
+Short forms of the commands are allowed, e.g 'c' 'co' or 'con' are all
+interpreted as 'cont'. 
+
+
+3. Simulator core
+
+The SIS emulates the behavior of the 90C601E and 90C602E sparc IU and
+FPU from Matra MHS. These are roughly equivalent to the Cypress C601
+and C602.  The simulator is cycle true, i.e a simulator time is
+maintained and inremented according the IU and FPU instruction timing.
+The parallel execution between the IU and FPU is modelled, as well as
+stalls due to operand dependencies (FPU). The core interacts with the
+user-defined memory modules through a number of functions. The memory
+module must provide the following functions:
+
+int memory_read(asi,addr,data,ws)
+int asi;
+unsigned int addr;
+unsigned int *data;
+int *ws;
+
+int memory_write(asi,addr,data,sz,ws)
+int asi;
+unsigned int addr;
+unsigned int *data;
+int sz;
+int *ws;
+
+int sis_memory_read(addr, data, length)
+unsigned int addr;
+char   *data;
+unsigned int length;
+
+int sis_memory_write(addr, data, length)
+unsigned int addr;
+char    *data;
+unsigned int length;
+
+int init_sim()
+
+int reset()
+
+int error_mode(pc)
+unsigned int pc;
+
+memory_read() is used by the simulator to fetch instructions and
+operands.  The address space identifier (asi) and address is passed as
+parameters. The read data should be assigned to the data pointer
+(*data) and the number of waitstate to *ws. 'memory_read' should return
+0 on success and 1 on failure. A failure will cause a data or
+instruction fetch trap. memory_read() always reads one 32-bit word.
+
+sis_memory_read() is used by the simulator to display and disassemble
+memory contants. The function should copy 'length' bytes of the simulated
+memory starting at 'addr' to '*data'.
+The sis_memory_read() should return 1 on success and 0 on failure.
+Failure should only be indicated if access to unimplemented memory is attempted.
+
+memory_write() is used to write to memory. In addition to the asi
+and address parameters, the size of the written data is given by 'sz'.
+The pointer *data points to the data to be written. The 'sz' is coded
+as follows:
+
+  sz	access type
+  0	  byte
+  1	  halfword
+  2	  word
+  3	  double-word
+
+If a double word is written, the most significant word is in data[0] and
+the least significant in data[1].
+
+sis_memory_write() is used by the simulator during loading of programs.
+The function should copy 'length' bytes from *data to the simulated
+memory starting at 'addr'. sis_memory_write() should return 1 on 
+success and 0 on failure. Failure should only be indicated if access 
+to unimplemented memory is attempted. See erc32.c for more details 
+on how to define the memory emulation functions.
+
+The 'init_sim' is called once when the simulator is started. This function
+should be used to perform initialisations of user defined memory or 
+peripherals that only have to be done once, such as opening files etc.
+
+The 'reset' is called every time the simulator is reset, i.e. when a
+'run' command is given. This function should be used to simulate a power
+on reset of memory and peripherals.
+
+error_mode() is called by the simulator when the IU goes into error mode,
+typically if a trap is caused when traps are disabled. The memory module
+can then take actions, such as issue a reset.
+
+sys_reset() can be called by the memory module to reset the simulator. A
+reset will empty the event queue and perform a power-on reset.
+
+4. Events and interrupts
+
+The simulator supports an event queue and the generation of processor
+interrupts. The following functions are available to the user-defined
+memory module:
+
+event(cfunc,arg,delta)
+void (*cfunc)();
+int arg;
+unsigned int delta;
+
+set_int(level,callback,arg)
+int level;
+void (*callback)();
+int arg;
+
+clear_int(level)
+int level;
+
+sim_stop()
+
+The 'event' functions will schedule the execution of the function 'cfunc'
+at time 'now + delta' clock cycles. The parameter 'arg' is passed as a 
+parameter to 'cfunc'.
+
+The 'set_int' function set the processor interrupt 'level'. When the interrupt
+is taken, the function 'callback' is called with the argument 'arg'. This
+will also clear the interrupt. An interrupt can be cleared before it is
+taken by calling 'clear_int' with the appropriate interrupt level.
+
+The sim_stop function is called each time the simulator stops execution.
+It can be used to flush buffered devices to get a clean state during
+single stepping etc.
+
+See 'erc32.c' for examples on how to use events and interrupts.
+
+5. Memory module
+
+The supplied memory module (erc32.c) emulates the functions of memory and
+the MEC asic developed for the 90C601/2. It includes the following functions:
+
+* UART A & B
+* Real-time clock
+* General purpose timer
+* Interrupt controller
+* Breakpoint register
+* Watchpoint register
+* 512 Kbyte ROM
+* 4 Mbyte RAM
+
+See README.erc32 on how the MEC functions are emulated.  For a detailed MEC
+specification, look at the ERC32 home page at URL:
+
+http://www.estec.esa.nl/wsmwww/erc32
+
+6. Compile and linking programs
+
+The directory 'examples' contain some code fragments for SIS.
+The script gccx indicates how the native sunos gcc and linker can be used
+to produce executables for the simulator. To compile and link the provided
+'hello.c', type 'gccx hello.c'. This will build the executable 'hello'.
+Start the simulator by running 'startsim hello', and issue the command 'run.
+After the program is terminated, the IU will be force to error mode through
+a software trap and halt. 
+
+The programs are linked with a start-up file, srt0.S. This file includes
+the traptable and window underflow/overflow trap routines.
+
+7. IU and FPU instruction timing.
+
+The simulator provides cycle true simulation. The following table shows
+the emulated instruction timing for 90C601E & 90C602E:
+
+Instructions	      Cycles
+
+jmpl, rett		2
+load			2
+store			3
+load double		3
+store double		4
+other integer ops	1
+fabs			2
+fadds			4
+faddd			4
+fcmps			4
+fcmpd			4
+fdivs			20
+fdivd			35
+fmovs			2
+fmuls			5
+fmuld			9
+fnegs			2
+fsqrts			37
+fsqrtd			65
+fsubs			4
+fsubd			4
+fdtoi			7
+fdots			3
+fitos			6
+fitod			6
+fstoi			6
+fstod			2
+
+The parallel operation between the IU and FPU is modelled. This means
+that a FPU instruction will execute in parallel with other instructions as
+long as no data or resource dependency is detected. See the 90C602E data
+sheet for the various types of dependencies. Tracing using the 'trace'
+command will display the current simulator time in the left column. This
+time indicates when the instruction is fetched. If a dependency is detetected,
+the following fetch will be delayed until the conflict is resolved.
+
+The load dependency in the 90C601E is also modelled - if the destination 
+register of a load instruction is used by the following instruction, an 
+idle cycle is inserted.
+
+8. FPU implementation
+
+The simulator maps floating-point operations on the hosts floating point
+capabilities. This means that accuracy and generation of IEEE exceptions is 
+host dependent.

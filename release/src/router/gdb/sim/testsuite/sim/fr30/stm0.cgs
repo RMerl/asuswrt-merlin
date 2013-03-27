@@ -1,0 +1,101 @@
+# fr30 testcase for stm0 ($reglist_low)
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global stm0
+stm0:
+	; Test stm0 ($reglist_low)
+	mvr_h_gr	sp,r8		; save stack pointer temporarily
+	mvr_h_gr	sp,r9		; save stack pointer permanently
+	mvi_h_gr   	0,r0
+	mvi_h_gr   	1,r1
+	mvi_h_gr   	2,r2
+	mvi_h_gr   	3,r3
+	mvi_h_gr   	4,r4
+	mvi_h_gr   	5,r5
+	mvi_h_gr   	6,r6
+	mvi_h_gr   	7,r7
+	set_cc          0x0f		; Condition codes should not change
+	stm0      	(r0,r2,r4,r6)
+	test_cc		1 1 1 1
+	inci_h_gr	-4,r8
+	test_h_mem	6,r8
+	inci_h_gr	-4,r8
+	test_h_mem	4,r8
+	inci_h_gr	-4,r8
+	test_h_mem	2,r8
+	inci_h_gr	-4,r8
+	test_h_mem	0,r8
+
+	mvr_h_gr	r9,sp		; restore stack pointer
+	mvr_h_gr	r9,r8		; save stack pointer temporarily
+	mvi_h_gr   	0,r0
+	mvi_h_gr   	1,r1
+	mvi_h_gr   	2,r2
+	mvi_h_gr   	3,r3
+	mvi_h_gr   	4,r4
+	mvi_h_gr   	5,r5
+	mvi_h_gr   	6,r6
+	mvi_h_gr   	7,r7
+	set_cc          0x0f		; Condition codes should not change
+	stm0      	(r1,r3,r5,r7)
+	test_cc		1 1 1 1
+	inci_h_gr	-4,r8
+	test_h_mem	7,r8
+	inci_h_gr	-4,r8
+	test_h_mem	5,r8
+	inci_h_gr	-4,r8
+	test_h_mem	3,r8
+	inci_h_gr	-4,r8
+	test_h_mem	1,r8
+
+	mvr_h_gr	r9,sp		; restore stack pointer
+	mvr_h_gr	r9,r8		; save stack pointer temporarily
+	mvi_h_gr   	0,r0
+	mvi_h_gr   	1,r1
+	mvi_h_gr   	2,r2
+	mvi_h_gr   	3,r3
+	mvi_h_gr   	4,r4
+	mvi_h_gr   	5,r5
+	mvi_h_gr   	6,r6
+	mvi_h_gr   	7,r7
+	set_cc          0x0f		; Condition codes should not change
+	stm0      	(r1,r5,r7,r3)	; Order specified should not matter
+	test_cc		1 1 1 1
+	inci_h_gr	-4,r8
+	test_h_mem	7,r8
+	inci_h_gr	-4,r8
+	test_h_mem	5,r8
+	inci_h_gr	-4,r8
+	test_h_mem	3,r8
+	inci_h_gr	-4,r8
+	test_h_mem	1,r8
+
+	mvr_h_gr	r9,sp		; restore stack pointer
+	mvr_h_gr	r9,r8		; save stack pointer temporarily
+	mvi_h_gr   	9,r0
+	mvi_h_gr   	9,r1
+	mvi_h_gr   	9,r2
+	mvi_h_gr   	9,r3
+	mvi_h_gr   	9,r4
+	mvi_h_gr   	9,r5
+	mvi_h_gr   	9,r6
+	mvi_h_gr   	9,r7
+	set_cc          0x0f		; Condition codes should not change
+	stm0      	()		; should do nothing
+	test_cc		1 1 1 1
+	testr_h_gr	r9,sp
+	inci_h_gr	-4,r8
+	test_h_mem	7,r8
+	inci_h_gr	-4,r8
+	test_h_mem	5,r8
+	inci_h_gr	-4,r8
+	test_h_mem	3,r8
+	inci_h_gr	-4,r8
+	test_h_mem	1,r8
+
+	pass

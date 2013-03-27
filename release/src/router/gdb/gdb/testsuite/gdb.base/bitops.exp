@@ -1,0 +1,364 @@
+# Copyright 1998, 1999, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Elena Zannoni (ezannoni@cygnus.com)
+
+# This file is part of the gdb testsuite
+#
+# tests expressions with bitwise operators, and some
+# logical operators
+# Does not use a target program
+# 
+
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+
+send_gdb "print !1\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of !1"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of !1" }
+    timeout           { fail "(timeout) print value of !1" }
+  }
+
+
+send_gdb "print !0\n"
+gdb_expect {
+    -re ".\[0-9\]* = 1.*$gdb_prompt $" {
+        pass "print value of !0"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of !0" }
+    timeout           { fail "(timeout) print value of !0" }
+  }
+
+
+send_gdb "print !100\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of !100"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of !100" }
+    timeout           { fail "(timeout) print value of !100" }
+  }
+
+
+send_gdb "print !1000\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of !1000"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of !1000" }
+    timeout           { fail "(timeout) print value of !1000" }
+  }
+
+
+send_gdb "print !10\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of !10"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of !10" }
+    timeout           { fail "(timeout) print value of !10" }
+  }
+
+
+send_gdb "print !2\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of !2 "
+      }
+    -re ".*$gdb_prompt $" { fail "print value of !2" }
+    timeout           { fail "(timeout) print value of !2" }
+  }
+
+
+send_gdb "print 10 | 5\n"
+gdb_expect {
+    -re ".\[0-9\]* = 15.*$gdb_prompt $" {
+        pass "print value of 10 | 5"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 10 | 5" }
+    timeout           { fail "(timeout) print value of 10 | 5" }
+  }
+
+
+send_gdb "print 10 & 5\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of 10 & 5"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 10 & 5" }
+    timeout           { fail "(timeout) print value of 10 & 5" }
+  }
+
+
+send_gdb "print 10 ^ 5\n"
+gdb_expect {
+    -re ".\[0-9\]* = 15.*$gdb_prompt $" {
+        pass "print value of 10 ^ 5"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 10 ^ 5" }
+    timeout           { fail "(timeout) print value of 10 ^ 5" }
+  }
+
+
+send_gdb "print -!0\n"
+gdb_expect {
+    -re ".\[0-9\]* = -1.*$gdb_prompt $" {
+        pass "print value of -!0"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of -!0" }
+    timeout           { fail "(timeout) print value of -!0" }
+  }
+
+
+send_gdb "print ~-!0\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of ~-!0"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of ~-!0" }
+    timeout           { fail "(timeout) print value of ~-!0" }
+  }
+
+
+
+send_gdb "print 3 * 2 / 4.0 * 2.0\n"
+gdb_expect {
+    -re ".\[0-9\]* = 3.*$gdb_prompt $" {
+        pass "print value of 3 * 2 / 4.0 * 2.0"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 3 * 2 / 4.0 * 2.0" }
+    timeout           { fail "(timeout) print value of 3 * 2 / 4.0 * 2.0" }
+  }
+
+
+send_gdb "print 8 << 2 >> 4\n"
+gdb_expect {
+    -re ".\[0-9\]* = 2.*$gdb_prompt $" {
+        pass "print value of 8 << 2 >> 4"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 8 << 2 >> 4" }
+    timeout           { fail "(timeout) print value of 8 << 2 >> 4" }
+  }
+
+
+send_gdb "print -1 < 0 > 1\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of -1 < 0 > 1"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of -1 < 0 > 1" }
+    timeout           { fail "(timeout) print value of -1 < 0 > 1" }
+  }
+
+
+send_gdb "print 15 ^ 10 ^ 5 ^ 7\n"
+gdb_expect {
+    -re ".\[0-9\]* = 7.*$gdb_prompt $" {
+        pass "print value of 15 ^ 10 ^ 5 ^ 7"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 15 ^ 10 ^ 5 ^ 7" }
+    timeout           { fail "(timeout) print value of 15 ^ 10 ^ 5 ^ 7" }
+  }
+
+
+send_gdb "print 3.5 < 4.0\n"
+gdb_expect {
+    -re ".\[0-9\]* = 1.*$gdb_prompt $" {
+        pass "print value of 3.5 < 4.0"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 3.5 < 4.0" }
+    timeout           { fail "(timeout) print value of 3.5 < 4.0" }
+  }
+
+
+send_gdb "print 3.5 < -4.0\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of 3.5 < -4.0"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 3.5 < -4.0" }
+    timeout           { fail "(timeout) print value of 3.5 < -4.0" }
+  }
+
+
+send_gdb "print 2 > -3\n"
+gdb_expect {
+    -re ".\[0-9\]* = 1.*$gdb_prompt $" {
+        pass "print value of 2 > -3"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 2 > -3" }
+    timeout           { fail "(timeout) print value of 2 > -3" }
+  }
+
+
+send_gdb "print -3>4\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of -3>4"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of -3>4" }
+    timeout           { fail "(timeout) print value of -3>4" }
+  }
+
+
+send_gdb "print (-3 > 4)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of (-3 > 4)"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (-3 > 4)" }
+    timeout           { fail "(timeout) print value of (-3 > 4)" }
+  }
+
+
+send_gdb "print 3>=2.5\n"
+gdb_expect {
+    -re ".\[0-9\]* = 1.*$gdb_prompt $" {
+        pass "print value of 3>=2.5"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 3>=2.5" }
+    timeout           { fail "(timeout) print value of 3>=2.5" }
+  }
+
+
+send_gdb "print 3>=4.5\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of 3>=4.5"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 3>=4.5" }
+    timeout           { fail "(timeout) print value of 3>=4.5" }
+  }
+
+
+send_gdb "print 3==3.0\n"
+gdb_expect {
+    -re ".\[0-9\]* = 1.*$gdb_prompt $" {
+        pass "print value of 3==3.0"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 3==3.0" }
+    timeout           { fail "(timeout) print value of 3==3.0" }
+  }
+
+
+send_gdb "print 3==4.0\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of 3==4.0"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 3==4.0" }
+    timeout           { fail "(timeout) print value of 3==4.0" }
+  }
+
+
+send_gdb "print 3!=3.0\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of 3!=3.0"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 3!=3.0" }
+    timeout           { fail "(timeout) print value of 3!=3.0" }
+  }
+
+
+send_gdb "print 3!=5.0\n"
+gdb_expect {
+    -re ".\[0-9\]* = 1.*$gdb_prompt $" {
+        pass "print value of 3!=5.0"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 3!=5.0" }
+    timeout           { fail "(timeout) print value of 3!=5.0" }
+  }
+
+
+send_gdb "print 0 || 1 && 0 | 0 ^ 0 == 8 > 128 >>1 +2 *2\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of 0 || 1 && 0 | 0 ^ 0 == 8 > 128 >>1 +2 *2"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 0 || 1 && 0 | 0 ^ 0 == 8 > 128 >>1 +2 *2" }
+    timeout           { fail "(timeout) print value of 0 || 1 && 0 | 0 ^ 0 == 8 > 128 >>1 +2 *2" }
+  }
+
+
+send_gdb "print 1.0 || 0\n"
+gdb_expect {
+    -re ".\[0-9\]* = 1.*$gdb_prompt $" {
+        pass "print value of 1.0 || 0"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 1.0 || 0" }
+    timeout           { fail "(timeout) print value of 1.0 || 0" }
+  }
+
+
+send_gdb "print 0.0 || 1.0\n"
+gdb_expect {
+    -re ".\[0-9\]* = 1.*$gdb_prompt $" {
+        pass "print value of 0.0 || 1.0"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 0.0 || 1.0" }
+    timeout           { fail "(timeout) print value of 0.0 || 1.0" }
+  }
+
+
+send_gdb "print 0.0 || 0\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of 0.0 || 0"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 0.0 || 0" }
+    timeout           { fail "(timeout) print value of 0.0 || 0" }
+  }
+
+
+send_gdb "print 0 || 1 && 0 | 0 ^ 0 == 8\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of 0 || 1 && 0 | 0 ^ 0 == 8"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 0 || 1 && 0 | 0 ^ 0 == 8" }
+    timeout           { fail "(timeout) print value of 0 || 1 && 0 | 0 ^ 0 == 8" }
+  }
+
+
+send_gdb "print 0 == 8 > 128 >> 1 + 2 * 2\n"
+gdb_expect {
+    -re ".\[0-9\]* = 0.*$gdb_prompt $" {
+        pass "print value of 0 == 8 > 128 >> 1 + 2 * 2"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of 0 == 8 > 128 >> 1 + 2 * 2" }
+    timeout           { fail "(timeout) print value of 0 == 8 > 128 >> 1 + 2 * 2" }
+  }
+

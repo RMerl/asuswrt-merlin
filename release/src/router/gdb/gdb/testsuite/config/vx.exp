@@ -1,0 +1,127 @@
+#   Copyright 1988, 1990, 1991, 1992, 1995, 1997, 2007
+#   Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was written by Rob Savoye. (rob@cygnus.com)
+
+#
+# load support libraries
+#
+load_lib remote.exp
+load_lib gdb.exp
+
+set shell_prompt "->"
+set gdb_prompt "\\(vxgdb\\)"
+
+#
+# gdb_version -- extract and print the version number of gcc
+#
+proc gdb_version {} {
+    default_gdb_version
+}
+
+#
+# gdb_load -- load a file into the debugger.
+# We have to stop and start gdb each time we do this, because when
+# vxgdb loads two files in a row, the symbols in the first file loaded
+# take precedence. Returns -1 on error, else 0.
+#
+proc gdb_load { arg } {
+    set result 0
+
+    if { [remote_ld target $arg] != 0 } {
+	perror "Couldn't load $arg"
+	return -1
+    }
+
+    return [gdb_file_cmd $arg]
+}
+
+#
+# gdb_start -- start gdb running
+#
+proc gdb_start { } {
+    global gdb_prompt
+    global verbose
+    global connectmode
+    global reboot
+
+    # get a connection to the board
+    for { set x 0; } { $x < 3 } { incr x } {
+	set shell_id [remote_open target]
+	if { $shell_id > 0 } {
+	    verbose "Spawn id for remote shell is $shell_id"
+
+	    set timeout 10
+	    verbose "Timeout is now $timeout seconds" 2
+
+	    set state [spawn_vxgdb];
+	    if { $state == "pass" } {
+		return 0;
+	    }
+	    if { $state == "fail" } {
+		return -1;
+	    }
+	}
+	remote_reboot target;
+    }
+}
+
+proc spawn_vxgdb { } {
+    global gdb_prompt
+
+    default_gdb_start
+
+    # set the default arguments to "main", so that "run" with no
+    # arguments will work correctly.
+    send_gdb "set args main\n"
+    gdb_expect -re ".*$gdb_prompt $" {}
+
+    verbose "Setting up target, Please wait..."
+    # set targets hostname
+    send_gdb "target vxworks [target_info hostname]\n"
+    set timeout 60
+    verbose "Timeout is now $timeout seconds" 2
+    gdb_expect {
+	-re "Done\..*$gdb_prompt $"	{
+	    verbose "Set target to [target_info hostname]" 1
+	    set timeout 10;
+	    return "pass";
+	}
+	-re "net_connect: RPC: (Program not registered|.*Timed out).*$" {
+	    warning "Couldn't set GDB to target [target_info netport]."
+	}
+	timeout {
+	    warning "Couldn't set target for vxworks."
+	}
+    }
+    return "retry";
+}
+
+proc gdb_exit { } {
+    remote_close target;
+    catch default_gdb_exit
+}
+
+#expect_after {
+#    "<return>"		   { send "\n"; perror "Window too small." }
+#    -re "\(y or n\) " 	   { send "n\n"; perror "Got interactive prompt." }
+#    buffer_full		   { perror "internal buffer is full." }
+#    eof			   { perror "eof -- pty is hosed." }
+#    timeout			   { perror "timeout." }
+#    "virtual memory exhausted" { perror "virtual memory exhausted." }
+#    "Undefined command"	   { perror "send string probably wrong." }
+#}
+

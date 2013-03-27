@@ -1,0 +1,46 @@
+# sh testcase for andi $rm, $disp10, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	pta wrong, tr0
+	
+andi0:
+	# 0 and 0 is 0.
+	movi 0, r0
+	andi r0, 0, r2
+	bnei r2, 0, tr0
+
+and1:
+	# 0 and 1 is 0.
+	movi 0, r0
+	andi r0, 1, r2
+	bnei r2, 0, tr0
+
+and2:
+	# 1 and 0 is 0.
+	movi 1, r0
+	andi r0, 0, r2
+	bnei r2, 0, tr0
+
+and3:
+	# 1 and 1 is 1.
+	movi 1, r0
+	andi r0, 1, r2
+	bnei r2, 1, tr0
+
+and4:
+	movi 15, r0
+	andi r0, 3, r2
+	bnei r2, 3, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

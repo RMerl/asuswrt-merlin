@@ -1,0 +1,1775 @@
+// -*- C -*-
+
+// Simulator definition for the MIPS DSP ASE.
+// Copyright (C) 2005, 2007 Free Software Foundation, Inc.
+// Contributed by MIPS Technologies, Inc.  Written by Chao-ying Fu.
+//
+// This file is part of GDB, the GNU debugger.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+// op: 0 = ADD, 1 = SUB, 2 = MUL
+// sat: 0 = no saturation, 1 = saturation
+:function:::void:do_ph_op:int rd, int rs, int rt, int op, int sat
+{
+  int i;
+  signed32 h0 = 0;
+  signed16 h1, h2;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  unsigned32 result = 0;
+  for (i = 0; i < 32; i += 16, v1 >>= 16, v2 >>= 16)
+    {
+      h1 = (signed16)(v1 & 0xffff);
+      h2 = (signed16)(v2 & 0xffff);
+      if (op == 0) // ADD
+	h0 = (signed32)h1 + (signed32)h2;
+      else if (op == 1) // SUB
+        h0 = (signed32)h1 - (signed32)h2;
+      else // MUL
+        h0 = (signed32)h1 * (signed32)h2;
+      if (h0 > (signed32)0x7fff || h0 < (signed32)0xffff8000)
+	{
+	  if (op == 0 || op == 1) // ADD, SUB
+	    DSPCR |= DSPCR_OUFLAG4;
+	  else if (op == 2) // MUL
+	    DSPCR |= DSPCR_OUFLAG5;
+	  if (sat == 1)
+	    {
+	      if (h0 > (signed32)0x7fff)
+		h0 = 0x7fff;
+	      else
+		h0 = 0x8000;
+	    }
+	}
+      result |= ((unsigned32)((unsigned16)h0) << i);
+    }
+  GPR[rd] = EXTEND32 (result);
+}
+
+// op: 0 = ADD, 1 = SUB
+:function:::void:do_w_op:int rd, int rs, int rt, int op
+{
+  signed64 h0;
+  signed32 h1, h2;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  unsigned32 result = 0;
+  h1 = (signed32)v1;
+  h2 = (signed32)v2;
+  if (op == 0) // ADD
+    h0 = (signed64)h1 + (signed64)h2;
+  else // SUB
+    h0 = (signed64)h1 - (signed64)h2;
+  if (((h0 & 0x100000000LL) >> 1) != (h0 & 0x80000000))
+    {
+      DSPCR |= DSPCR_OUFLAG4;
+      if (h0 & 0x100000000LL)
+	h0 = 0x80000000;
+      else
+	h0 = 0x7fffffff;
+    }
+  GPR[rd] = EXTEND32 (h0);
+}
+
+// op: 0 = ADD, 1 = SUB
+// sat: 0 = no saturation, 1 = saturation
+:function:::void:do_qb_op:int rd, int rs, int rt, int op, int sat
+{
+  int i;
+  unsigned32 h0;
+  unsigned8 h1, h2;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  unsigned32 result = 0;
+  for (i = 0; i < 32; i += 8, v1 >>= 8, v2 >>= 8)
+    {
+      h1 = (unsigned8)(v1 & 0xff);
+      h2 = (unsigned8)(v2 & 0xff);
+      if (op == 0) // ADD
+	h0 = (unsigned32)h1 + (unsigned32)h2;
+      else // SUB
+	h0 = (unsigned32)h1 - (unsigned32)h2;
+      if (h0 & 0x100)
+	{
+	  DSPCR |= DSPCR_OUFLAG4;
+	  if (sat == 1)
+	    {
+	      if (op == 0) // ADD
+		h0 = 0xff;
+	      else // SUB
+		h0 = 0;
+	    }
+	}
+      result |= ((unsigned32)((unsigned8)h0) << i);
+    }
+  GPR[rd] = EXTEND32 (result);
+}
+
+// op: 0 = left, 1 = right
+:function:::void:do_qb_shift:int rd, int rt, int shift, int op
+{
+  int i, j;
+  unsigned8 h0;
+  unsigned32 v1 = GPR[rt];
+  unsigned32 result = 0;
+  for (i = 0; i < 32; i += 8, v1 >>= 8)
+    {
+      h0 = (unsigned8)(v1 & 0xff);
+      if (op == 0) // left
+	{
+	  for (j = 7; j >= 8 - shift; j--)
+	    {
+	      if (h0 & (1<<j))
+		{
+		  DSPCR |= DSPCR_OUFLAG6;
+		  break;
+		}
+	    }
+          h0 = h0 << shift;
+	}
+      else // right
+        h0 = h0 >> shift;
+      result |= ((unsigned32)h0 << i);
+    }
+  GPR[rd] = EXTEND32 (result);
+}
+
+// op: 0 = left, 1 = right
+// sat: 0 = no saturation/rounding, 1 = saturation/rounding
+:function:::void:do_ph_shift:int rd, int rt, int shift, int op, int sat
+{
+  int i, j;
+  signed16 h0;
+  unsigned32 v1 = GPR[rt];
+  unsigned32 result = 0;
+  int setcond;
+  for (i = 0; i < 32; i += 16, v1 >>= 16)
+    {
+      h0 = (signed16)(v1 & 0xffff);
+      if (op == 0) // left
+	{
+	  setcond = 0;
+	  if (h0 & (1<<15))
+	    {
+	      for (j = 14; j >= 15 - shift; j--)
+		{
+		  if (!(h0 & (1 << j)))
+		    {
+		      DSPCR |= DSPCR_OUFLAG6;
+		      setcond = 1;
+		      break;
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (j = 14; j >= 15 - shift; j--)
+		{
+		  if (h0 & (1 << j))
+		    {
+		      DSPCR |= DSPCR_OUFLAG6;
+		      setcond = 2;
+		      break;
+		    }
+		}
+	    }
+	  h0 = h0 << shift;
+	  if (sat == 1)
+	    {
+	      if (setcond == 2)
+		h0 = 0x7fff; 
+	      else if (setcond == 1)
+		h0 = 0x8000;
+	    }
+	}
+      else // right
+	{
+	  if (sat == 1 && shift != 0 && (h0 & (1 << (shift-1))))
+	    h0 = (h0 >> shift) + 1;
+	  else
+	    h0 = h0 >> shift;
+	}
+
+      result |= ((unsigned32)((unsigned16)h0) << i);
+    }
+  GPR[rd] = EXTEND32 (result);
+}
+
+:function:::void:do_w_shll:int rd, int rt, int shift
+{
+  int i;
+  unsigned32 v1 = GPR[rt];
+  unsigned32 result = 0;
+  int setcond = 0;
+  if (v1 & (1 << 31))
+    {
+      for (i = 30; i >= 31 - shift; i--)
+	{
+	  if (!(v1 & (1 << i)))
+	    {
+	      DSPCR |= DSPCR_OUFLAG6;
+	      setcond = 1;
+	      break;
+	    }
+	}
+    }
+  else
+    {
+      for (i = 30; i >= 31 - shift; i--)
+	{
+	  if (v1 & (1 << i))
+	    {
+	      DSPCR |= DSPCR_OUFLAG6;
+	      setcond = 2;
+	      break;
+	    }
+	}
+    }
+  if (setcond == 2)
+    result = 0x7fffffff; 
+  else if (setcond == 1)
+    result = 0x80000000;
+  else
+    result = v1 << shift; 
+  GPR[rd] = EXTEND32 (result);
+}
+
+:function:::void:do_w_shra:int rd, int rt, int shift
+{
+  unsigned32 result = GPR[rt];
+  signed32 h0 = (signed32)result;
+  if (shift != 0 && (h0 & (1 << (shift-1))))
+    h0 = (h0 >> shift) + 1;
+  else
+    h0 = h0 >> shift;
+  GPR[rd] = EXTEND32 (h0);
+}
+
+011111,5.RS,5.RT,5.RD,01010,010000:SPECIAL3:32::ADDQ.PH
+"addq.ph r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_op (SD_, RD, RS, RT, 0, 0);
+}
+
+011111,5.RS,5.RT,5.RD,01110,010000:SPECIAL3:32::ADDQ_S.PH
+"addq_s.ph r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_op (SD_, RD, RS, RT, 0, 1);
+}
+
+011111,5.RS,5.RT,5.RD,10110,010000:SPECIAL3:32::ADDQ_S.W
+"addq_s.w r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_w_op (SD_, RD, RS, RT, 0);
+}
+
+011111,5.RS,5.RT,5.RD,00000,010000:SPECIAL3:32::ADDU.QB
+"addu.qb r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_op (SD_, RD, RS, RT, 0, 0);
+}
+
+011111,5.RS,5.RT,5.RD,00100,010000:SPECIAL3:32::ADDU_S.QB
+"addu_s.qb r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_op (SD_, RD, RS, RT, 0, 1);
+}
+
+011111,5.RS,5.RT,5.RD,01011,010000:SPECIAL3:32::SUBQ.PH
+"subq.ph r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_op (SD_, RD, RS, RT, 1, 0);
+}
+
+011111,5.RS,5.RT,5.RD,01111,010000:SPECIAL3:32::SUBQ_S.PH
+"subq_s.ph r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_op (SD_, RD, RS, RT, 1, 1);
+}
+
+011111,5.RS,5.RT,5.RD,10111,010000:SPECIAL3:32::SUBQ_S.W
+"subq_s.w r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_w_op (SD_, RD, RS, RT, 1);
+}
+
+011111,5.RS,5.RT,5.RD,00001,010000:SPECIAL3:32::SUBU.QB
+"subu.qb r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_op (SD_, RD, RS, RT, 1, 0);
+}
+
+011111,5.RS,5.RT,5.RD,00101,010000:SPECIAL3:32::SUBU_S.QB
+"subu_s.qb r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_op (SD_, RD, RS, RT, 1, 1);
+}
+
+011111,5.RS,5.RT,5.RD,10000,010000:SPECIAL3:32::ADDSC
+"addsc r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RS];
+  unsigned32 v2 = GPR[RT];
+  unsigned64 h0;
+  h0 = (unsigned64)v1 + (unsigned64)v2;
+  if (h0 & 0x100000000LL)
+    DSPCR |= DSPCR_CARRY;
+  GPR[RD] = EXTEND32 (h0);
+}
+
+011111,5.RS,5.RT,5.RD,10001,010000:SPECIAL3:32::ADDWC
+"addwc r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RS];
+  unsigned32 v2 = GPR[RT];
+  unsigned64 h0;
+  signed32 h1 = (signed32) v1;
+  signed32 h2 = (signed32) v2;
+  h0 = (signed64)h1 + (signed64)h2
+       + (signed64)((DSPCR >> DSPCR_CARRY_SHIFT) & DSPCR_CARRY_MASK);
+  if (((h0 & 0x100000000LL) >> 1) != (h0 & 0x80000000))
+    DSPCR |= DSPCR_OUFLAG4;
+  GPR[RD] = EXTEND32 (h0);
+}
+
+011111,5.RS,5.RT,5.RD,10010,010000:SPECIAL3:32::MODSUB
+"modsub r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  unsigned32 result = 0;
+  unsigned32 v1 = GPR[RS];
+  unsigned32 v2 = GPR[RT];
+  unsigned32 decr = v2 & 0xff;
+  unsigned32 lastindex = (v2 & 0xffff00) >> 8;
+  if (v1 == 0)
+    result = lastindex;
+  else
+    result =  v1 - decr;
+  GPR[RD] = EXTEND32 (result);
+}
+
+011111,5.RS,00000,5.RD,10100,010000:SPECIAL3:32::RADDU.W.QB
+"raddu.w.qb r<RD>, r<RS>"
+*dsp:
+{
+  int i;
+  unsigned8 h0;
+  unsigned32 v1 = GPR[RS];
+  unsigned32 result = 0;
+  for (i = 0; i < 32; i += 8, v1 >>= 8)
+    {
+      h0 = (unsigned8)(v1 & 0xff);
+      result += (unsigned32)h0;
+    }
+  GPR[RD] = EXTEND32 (result);
+}
+
+011111,00000,5.RT,5.RD,01001,010010:SPECIAL3:32::ABSQ_S.PH
+"absq_s.ph r<RD>, r<RT>"
+*dsp:
+{
+  int i;
+  signed16 h0;
+  unsigned32 v1 = GPR[RT];
+  unsigned32 result = 0;
+  for (i = 0; i < 32; i += 16, v1 >>= 16)
+    {
+      h0 = (signed16)(v1 & 0xffff);
+      if (h0 == (signed16)0x8000)
+	{
+	  DSPCR |= DSPCR_OUFLAG4;
+	  h0 = 0x7fff;
+	}
+      else if (h0 & 0x8000)
+	h0 = -h0; 
+      result |= ((unsigned32)((unsigned16)h0) << i);
+    }
+  GPR[RD] = EXTEND32 (result);
+}
+
+011111,00000,5.RT,5.RD,10001,010010:SPECIAL3:32::ABSQ_S.W
+"absq_s.w r<RD>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RT];
+  signed32 h0 = (signed32)v1;
+  if (h0 == (signed32)0x80000000)
+    {
+      DSPCR |= DSPCR_OUFLAG4;
+      h0 = 0x7fffffff;
+    }
+  else if (h0 & 0x80000000)
+    h0 = -h0; 
+  GPR[RD] = EXTEND32 (h0);
+}
+
+011111,5.RS,5.RT,5.RD,01100,010001:SPECIAL3:32::PRECRQ.QB.PH
+"precrq.qb.ph r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RS];
+  unsigned32 v2 = GPR[RT];
+  unsigned32 tempu = (v1 & 0xff000000) >> 24;
+  unsigned32 tempv = (v1 & 0xff00) >> 8;
+  unsigned32 tempw = (v2 & 0xff000000) >> 24;
+  unsigned32 tempx = (v2 & 0xff00) >> 8;
+  GPR[RD] = EXTEND32 ((tempu << 24) | (tempv << 16) | (tempw << 8) | tempx);
+}
+
+011111,5.RS,5.RT,5.RD,10100,010001:SPECIAL3:32::PRECRQ.PH.W
+"precrq.ph.w r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RS];
+  unsigned32 v2 = GPR[RT];
+  unsigned32 tempu = (v1 & 0xffff0000) >> 16;
+  unsigned32 tempv = (v2 & 0xffff0000) >> 16;
+  GPR[RD] = EXTEND32 ((tempu << 16) | tempv);
+}
+
+011111,5.RS,5.RT,5.RD,10101,010001:SPECIAL3:32::PRECRQ_RS.PH.W
+"precrq_rs.ph.w r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RS];
+  unsigned32 v2 = GPR[RT];
+  signed32 h1 = (signed32)v1;
+  signed32 h2 = (signed32)v2;
+  signed64 temp1 = (signed64)h1 + (signed64)0x8000;
+  signed32 temp2;
+  signed64 temp3 = (signed64)h2 + (signed64)0x8000;
+  signed32 temp4;
+  if (((temp1 & 0x100000000LL) >> 1) != (temp1 & 0x80000000))
+    {
+      DSPCR |= DSPCR_OUFLAG6;
+      temp2 = 0x7fff;
+    }
+  else
+    temp2 = (signed32)((temp1 & 0xffff0000) >> 16);
+  if (((temp3 & 0x100000000LL) >> 1) != (temp3 & 0x80000000))
+    {
+      DSPCR |= DSPCR_OUFLAG6;
+      temp4 = 0x7fff;
+    }
+  else
+    temp4 = (signed32)((temp3 & 0xffff0000) >> 16);
+  GPR[RD] = EXTEND32 ((temp2 << 16) | temp4);
+}
+
+011111,5.RS,5.RT,5.RD,01111,010001:SPECIAL3:32::PRECRQU_S.QB.PH
+"precrqu_s.qb.ph r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RS];
+  unsigned32 v2 = GPR[RT];
+  unsigned32 tempu, tempv, tempw, tempx;
+  if (v1 & 0x80000000)
+    {
+      DSPCR |= DSPCR_OUFLAG6;
+      tempu = 0;
+    }
+  else if (!(v1 & 0x80000000) && ((v1 >> 16) > (unsigned32)0x7f80))
+    {
+      DSPCR |= DSPCR_OUFLAG6;
+      tempu = 0xff;
+    }
+  else
+    tempu = (v1 & 0x7f800000) >> 23;
+  if (v1 & 0x8000)
+    {
+      DSPCR |= DSPCR_OUFLAG6;
+      tempv = 0;
+    }
+  else if (!(v1 & 0x8000) && ((v1 & 0xffff) > (unsigned32)0x7f80))
+    {
+      DSPCR |= DSPCR_OUFLAG6;
+      tempv = 0xff;
+    }
+  else
+    tempv = (v1 & 0x7f80) >> 7;
+  if (v2 & 0x80000000)
+    {
+      DSPCR |= DSPCR_OUFLAG6;
+      tempw = 0;
+    }
+  else if (!(v2 & 0x80000000) && ((v2 >> 16) > (unsigned32)0x7f80))
+    {
+      DSPCR |= DSPCR_OUFLAG6;
+      tempw = 0xff;
+    }
+  else
+    tempw = (v2 & 0x7f800000) >> 23;
+  if (v2 & 0x8000)
+    {
+      DSPCR |= DSPCR_OUFLAG6;
+      tempx = 0;
+    }
+  else if (!(v2 & 0x8000) && ((v2 & 0xffff) > (unsigned32)0x7f80))
+    {
+      DSPCR |= DSPCR_OUFLAG6;
+      tempx = 0xff;
+    }
+  else
+    tempx = (v2 & 0x7f80) >> 7;
+  GPR[RD] = EXTEND32 ((tempu << 24) | (tempv << 16) | (tempw << 8) | tempx);
+}
+
+011111,00000,5.RT,5.RD,01100,010010:SPECIAL3:32::PRECEQ.W.PHL
+"preceq.w.phl r<RD>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RT];
+  GPR[RD] = EXTEND32 (v1 & 0xffff0000);
+}
+
+011111,00000,5.RT,5.RD,01101,010010:SPECIAL3:32::PRECEQ.W.PHR
+"preceq.w.phr r<RD>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RT];
+  GPR[RD] = EXTEND32 ((v1 & 0xffff) << 16);
+}
+
+011111,00000,5.RT,5.RD,00100,010010:SPECIAL3:32::PRECEQU.PH.QBL
+"precequ.ph.qbl r<RD>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RT];
+  GPR[RD] = EXTEND32 ((v1 & 0xff000000) >> 1) | ((v1 & 0xff0000) >> 9);
+}
+
+011111,00000,5.RT,5.RD,00101,010010:SPECIAL3:32::PRECEQU.PH.QBR
+"precequ.ph.qbr r<RD>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RT];
+  GPR[RD] = EXTEND32 ((v1 & 0xff00) << 15) | ((v1 & 0xff) << 7);
+}
+
+011111,00000,5.RT,5.RD,00110,010010:SPECIAL3:32::PRECEQU.PH.QBLA
+"precequ.ph.qbla r<RD>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RT];
+  GPR[RD] = EXTEND32 ((v1 & 0xff000000) >> 1) | ((v1 & 0xff00) >> 1);
+}
+
+011111,00000,5.RT,5.RD,00111,010010:SPECIAL3:32::PRECEQU.PH.QBRA
+"precequ.ph.qbra r<RD>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RT];
+  GPR[RD] = EXTEND32 ((v1 & 0xff0000) << 7) | ((v1 & 0xff) << 7);
+}
+
+011111,00000,5.RT,5.RD,11100,010010:SPECIAL3:32::PRECEU.PH.QBL
+"preceu.ph.qbl r<RD>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RT];
+  GPR[RD] = EXTEND32 ((v1 & 0xff000000) >> 8) | ((v1 & 0xff0000) >> 16);
+}
+
+011111,00000,5.RT,5.RD,11101,010010:SPECIAL3:32::PRECEU.PH.QBR
+"preceu.ph.qbr r<RD>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RT];
+  GPR[RD] = EXTEND32 ((v1 & 0xff00) << 8) | (v1 & 0xff);
+}
+
+011111,00000,5.RT,5.RD,11110,010010:SPECIAL3:32::PRECEU.PH.QBLA
+"preceu.ph.qbla r<RD>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RT];
+  GPR[RD] = EXTEND32 ((v1 & 0xff000000) >> 8) | ((v1 & 0xff00) >> 8);
+}
+
+011111,00000,5.RT,5.RD,11111,010010:SPECIAL3:32::PRECEU.PH.QBRA
+"preceu.ph.qbra r<RD>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RT];
+  GPR[RD] = EXTEND32 ((v1 & 0xff0000) | (v1 & 0xff));
+}
+
+011111,00,3.SHIFT3,5.RT,5.RD,00000,010011:SPECIAL3:32::SHLL.QB
+"shll.qb r<RD>, r<RT>, <SHIFT3>"
+*dsp:
+{
+  do_qb_shift (SD_, RD, RT, SHIFT3, 0);
+}
+
+011111,5.RS,5.RT,5.RD,00010,010011:SPECIAL3:32::SHLLV.QB
+"shllv.qb r<RD>, r<RT>, r<RS>"
+*dsp:
+{
+  unsigned32 shift = GPR[RS] & 0x7;
+  do_qb_shift (SD_, RD, RT, shift, 0);
+}
+
+011111,0,4.SHIFT4,5.RT,5.RD,01000,010011:SPECIAL3:32::SHLL.PH
+"shll.ph r<RD>, r<RT>, <SHIFT4>"
+*dsp:
+{
+  do_ph_shift (SD_, RD, RT, SHIFT4, 0, 0);
+}
+
+011111,5.RS,5.RT,5.RD,01010,010011:SPECIAL3:32::SHLLV.PH
+"shllv.ph r<RD>, r<RT>, r<RS>"
+*dsp:
+{
+  unsigned32 shift = GPR[RS] & 0xf;
+  do_ph_shift (SD_, RD, RT, shift, 0, 0);
+}
+
+011111,0,4.SHIFT4,5.RT,5.RD,01100,010011:SPECIAL3:32::SHLL_S.PH
+"shll_s.ph r<RD>, r<RT>, <SHIFT4>"
+*dsp:
+{
+  do_ph_shift (SD_, RD, RT, SHIFT4, 0, 1);
+}
+
+011111,5.RS,5.RT,5.RD,01110,010011:SPECIAL3:32::SHLLV_S.PH
+"shllv_s.ph r<RD>, r<RT>, r<RS>"
+*dsp:
+{
+  unsigned32 shift = GPR[RS] & 0xf;
+  do_ph_shift (SD_, RD, RT, shift, 0, 1);
+}
+
+011111,5.SHIFT5,5.RT,5.RD,10100,010011:SPECIAL3:32::SHLL_S.W
+"shll_s.w r<RD>, r<RT>, <SHIFT5>"
+*dsp:
+{
+  do_w_shll (SD_, RD, RT, SHIFT5);
+}
+
+011111,5.RS,5.RT,5.RD,10110,010011:SPECIAL3:32::SHLLV_S.W
+"shllv_s.w r<RD>, r<RT>, r<RS>"
+*dsp:
+{
+  unsigned32 shift = GPR[RS] & 0x1f;
+  do_w_shll (SD_, RD, RT, shift);
+}
+
+011111,00,3.SHIFT3,5.RT,5.RD,00001,010011:SPECIAL3:32::SHRL.QB
+"shrl.qb r<RD>, r<RT>, <SHIFT3>"
+*dsp:
+{
+  do_qb_shift (SD_, RD, RT, SHIFT3, 1);
+}
+
+011111,5.RS,5.RT,5.RD,00011,010011:SPECIAL3:32::SHRLV.QB
+"shrlv.qb r<RD>, r<RT>, r<RS>"
+*dsp:
+{
+  unsigned32 shift = GPR[RS] & 0x7;
+  do_qb_shift (SD_, RD, RT, shift, 1);
+}
+
+011111,0,4.SHIFT4,5.RT,5.RD,01001,010011:SPECIAL3:32::SHRA.PH
+"shra.ph r<RD>, r<RT>, <SHIFT4>"
+*dsp:
+{
+  do_ph_shift (SD_, RD, RT, SHIFT4, 1, 0);
+}
+
+011111,5.RS,5.RT,5.RD,01011,010011:SPECIAL3:32::SHRAV.PH
+"shrav.ph r<RD>, r<RT>, r<RS>"
+*dsp:
+{
+  unsigned32 shift = GPR[RS] & 0xf;
+  do_ph_shift (SD_, RD, RT, shift, 1, 0);
+}
+
+011111,0,4.SHIFT4,5.RT,5.RD,01101,010011:SPECIAL3:32::SHRA_R.PH
+"shra_r.ph r<RD>, r<RT>, <SHIFT4>"
+*dsp:
+{
+  do_ph_shift (SD_, RD, RT, SHIFT4, 1, 1);
+}
+
+011111,5.RS,5.RT,5.RD,01111,010011:SPECIAL3:32::SHRAV_R.PH
+"shrav_r.ph r<RD>, r<RT>, r<RS>"
+*dsp:
+{
+  unsigned32 shift = GPR[RS] & 0xf;
+  do_ph_shift (SD_, RD, RT, shift, 1, 1);
+}
+
+011111,5.SHIFT5,5.RT,5.RD,10101,010011:SPECIAL3:32::SHRA_R.W
+"shra_r.w r<RD>, r<RT>, <SHIFT5>"
+*dsp:
+{
+  do_w_shra (SD_, RD, RT, SHIFT5);
+}
+
+011111,5.RS,5.RT,5.RD,10111,010011:SPECIAL3:32::SHRAV_R.W
+"shrav_r.w r<RD>, r<RT>, r<RS>"
+*dsp:
+{
+  unsigned32 shift = GPR[RS] & 0x1f;
+  do_w_shra (SD_, RD, RT, shift);
+}
+
+// loc: 0 = qhl, 1 = qhr
+:function:::void:do_qb_muleu:int rd, int rs, int rt, int loc
+{
+  int i;
+  unsigned32 result = 0;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  unsigned16 h1, h2;
+  unsigned32 prod;
+  if (loc == 0)
+    v1 >>= 16;
+  for (i = 0; i < 32; i += 16, v1 >>= 8, v2 >>= 16)
+    {
+      h1 = (unsigned16)(v1 & 0xff);
+      h2 = (unsigned16)(v2 & 0xffff);
+      prod = (unsigned32)h1 * (unsigned32)h2;
+      if (prod > 0xffff)
+	{
+	  DSPCR |= DSPCR_OUFLAG5;
+	  prod = 0xffff;
+	}
+      result |= ((unsigned32)prod << i);
+    }
+  GPR[rd] = EXTEND32 (result);
+}
+
+011111,5.RS,5.RT,5.RD,00110,010000:SPECIAL3:32::MULEU_S.PH.QBL
+"muleu_s.ph.qbl r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_muleu (SD_, RD, RS, RT, 0);
+}
+
+011111,5.RS,5.RT,5.RD,00111,010000:SPECIAL3:32::MULEU_S.PH.QBR
+"muleu_s.ph.qbr r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_muleu (SD_, RD, RS, RT, 1);
+}
+
+// round: 0 = no rounding, 1 = rounding
+:function:::void:do_ph_mulq:int rd, int rs, int rt, int round
+{
+  int i;
+  unsigned32 result = 0;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  signed16 h1, h2;
+  signed32 prod;
+  for (i = 0; i < 32; i += 16, v1 >>= 16, v2 >>= 16)
+    {
+      h1 = (signed16)(v1 & 0xffff);
+      h2 = (signed16)(v2 & 0xffff);
+      if (h1 == (signed16)0x8000 && h2 == (signed16)0x8000)
+	{
+	  DSPCR |= DSPCR_OUFLAG5;
+	  prod = 0x7fffffff;
+	}
+      else
+	{
+	  prod = ((signed32)h1 * (signed32)h2) << 1;
+	  if (round == 1)
+	    prod += (signed32)0x8000;
+	}
+      result |= (((unsigned32)prod >> 16) << i);
+    }
+  GPR[rd] = EXTEND32 (result);
+}
+
+011111,5.RS,5.RT,5.RD,11111,010000:SPECIAL3:32::MULQ_RS.PH
+"mulq_rs.ph r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_mulq (SD_, RD, RS, RT, 1);
+}
+
+// loc: 0 = phl, 1 = phr
+:function:::void:do_ph_muleq:int rd, int rs, int rt, int loc
+{
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  signed16 h1, h2;
+  signed32 prod;
+  if (loc == 0)
+    {
+      h1 = (signed16)(v1 >> 16);
+      h2 = (signed16)(v2 >> 16);
+    }
+  else
+    {
+      h1 = (signed16)(v1 & 0xffff);
+      h2 = (signed16)(v2 & 0xffff);
+    }
+  if (h1 == (signed16)0x8000 && h2 == (signed16)0x8000)
+    {
+      DSPCR |= DSPCR_OUFLAG5;
+      prod = 0x7fffffff;
+    }
+  else
+    prod = ((signed32)h1 * (signed32)h2) << 1;
+  GPR[rd] = EXTEND32 (prod);
+}
+
+011111,5.RS,5.RT,5.RD,11100,010000:SPECIAL3:32::MULEQ_S.W.PHL
+"muleq_s.w.phl r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_muleq (SD_, RD, RS, RT, 0);
+}
+
+011111,5.RS,5.RT,5.RD,11101,010000:SPECIAL3:32::MULEQ_S.W.PHR
+"muleq_s.w.phr r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_muleq (SD_, RD, RS, RT, 1);
+}
+
+// op: 0 = DPAU 1 = DPSU
+// loc: 0 = qbl, 1 = qbr
+:function:::void:do_qb_dot_product:int ac, int rs, int rt, int op, int loc
+{
+  int i;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  unsigned8 h1, h2;
+  unsigned32 lo = DSPLO(ac);
+  unsigned32 hi = DSPHI(ac);
+  unsigned64 prod = (((unsigned64)hi) << 32) + (unsigned64)lo;
+  if (loc == 0)
+    {
+      v1 >>= 16;
+      v2 >>= 16;
+    }
+  for (i = 0; i < 16; i += 8, v1 >>= 8, v2 >>= 8)
+    {
+      h1 = (unsigned8)(v1 & 0xff);
+      h2 = (unsigned8)(v2 & 0xff);
+      if (op == 0) // DPAU
+	prod += (unsigned64)h1 * (unsigned64)h2;
+      else // DPSU
+	prod -= (unsigned64)h1 * (unsigned64)h2;
+    }
+  DSPLO(ac) = EXTEND32 (prod);
+  DSPHI(ac) = EXTEND32 (prod >> 32);
+}
+
+011111,5.RS,5.RT,000,2.AC,00011,110000:SPECIAL3:32::DPAU.H.QBL
+"dpau.h.qbl ac<AC>, r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_dot_product (SD_, AC, RS, RT, 0, 0);
+}
+
+011111,5.RS,5.RT,000,2.AC,00111,110000:SPECIAL3:32::DPAU.H.QBR
+"dpau.h.qbr ac<AC>, r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_dot_product (SD_, AC, RS, RT, 0, 1);
+}
+
+011111,5.RS,5.RT,000,2.AC,01011,110000:SPECIAL3:32::DPSU.H.QBL
+"dpsu.h.qbl ac<AC>, r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_dot_product (SD_, AC, RS, RT, 1, 0);
+}
+
+011111,5.RS,5.RT,000,2.AC,01111,110000:SPECIAL3:32::DPSU.H.QBR
+"dpsu.h.qbr ac<AC>, r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_dot_product (SD_, AC, RS, RT, 1, 1);
+}
+
+// op: 0 = DPAQ 1 = DPSQ
+:function:::void:do_ph_dot_product:int ac, int rs, int rt, int op
+{
+  int i;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  signed16 h1, h2;
+  signed32 result;
+  unsigned32 lo = DSPLO(ac);
+  unsigned32 hi = DSPHI(ac);
+  signed64 prod = (signed64)((((unsigned64)hi) << 32) + (unsigned64)lo);
+  for (i = 0; i < 32; i += 16, v1 >>= 16, v2 >>= 16)
+    {
+      h1 = (signed16)(v1 & 0xffff);
+      h2 = (signed16)(v2 & 0xffff);
+      if (h1 == (signed16)0x8000 && h2 == (signed16)0x8000)
+	{
+	  DSPCR |= (1 << (DSPCR_OUFLAG_SHIFT + ac));
+	  result = (signed32)0x7fffffff;
+	}
+      else
+	result = ((signed32)h1 * (signed32)h2) << 1;
+
+      if (op == 0) // DPAQ
+	prod += (signed64)result;
+      else // DPSQ
+	prod -= (signed64)result;
+    }
+  DSPLO(ac) = EXTEND32 (prod);
+  DSPHI(ac) = EXTEND32 (prod >> 32);
+}
+
+011111,5.RS,5.RT,000,2.AC,00100,110000:SPECIAL3:32::DPAQ_S.W.PH
+"dpaq_s.w.ph ac<AC>, r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_dot_product (SD_, AC, RS, RT, 0);
+}
+
+011111,5.RS,5.RT,000,2.AC,00101,110000:SPECIAL3:32::DPSQ_S.W.PH
+"dpsq_s.w.ph ac<AC>, r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_dot_product (SD_, AC, RS, RT, 1);
+}
+
+011111,5.RS,5.RT,000,2.AC,00110,110000:SPECIAL3:32::MULSAQ_S.W.PH
+"mulsaq_s.w.ph ac<AC>, r<RS>, r<RT>"
+*dsp:
+{
+  int i;
+  unsigned32 v1 = GPR[RS];
+  unsigned32 v2 = GPR[RT];
+  signed16 h1, h2;
+  signed32 result;
+  unsigned32 lo = DSPLO(AC);
+  unsigned32 hi = DSPHI(AC);
+  signed64 prod = (signed64)((((unsigned64)hi) << 32) + (unsigned64)lo);
+  for (i = 0; i < 32; i += 16, v1 >>= 16, v2 >>= 16)
+    {
+      h1 = (signed16)(v1 & 0xffff);
+      h2 = (signed16)(v2 & 0xffff);
+      if (h1 == (signed16)0x8000 && h2 == (signed16)0x8000)
+	{
+	  DSPCR |= (1 << (DSPCR_OUFLAG_SHIFT + AC));
+	  result = (signed32) 0x7fffffff;
+	}
+      else
+	result = ((signed32)h1 * (signed32)h2) << 1;
+
+      if (i == 0)
+	prod -= (signed64) result;
+      else
+	prod += (signed64) result;
+    }
+  DSPLO(AC) = EXTEND32 (prod);
+  DSPHI(AC) = EXTEND32 (prod >> 32);
+}
+
+// op: 0 = DPAQ 1 = DPSQ
+:function:::void:do_w_dot_product:int ac, int rs, int rt, int op
+{
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  signed32 h1, h2;
+  signed64 result;
+  unsigned32 lo = DSPLO(ac);
+  unsigned32 hi = DSPHI(ac);
+  unsigned32 resultlo;
+  unsigned32 resulthi;
+  unsigned32 carry;
+  unsigned64 temp1;
+  signed64 temp2;
+  h1 = (signed32) v1;
+  h2 = (signed32) v2;
+  if (h1 == 0x80000000 && h2 == 0x80000000)
+    {
+      DSPCR |= (1 << (DSPCR_OUFLAG_SHIFT + ac));
+      result = (signed64) 0x7fffffffffffffffLL;
+    }
+  else
+    result = ((signed64)h1 * (signed64)h2) << 1;
+  resultlo = (unsigned32)(result);
+  resulthi = (unsigned32)(result >> 32);
+  if (op ==0) // DPAQ
+    {
+      temp1 = (unsigned64)lo + (unsigned64)resultlo;
+      carry = (unsigned32)((temp1 >> 32) & 1);
+      temp2 = (signed64)((signed32)hi) + (signed64)((signed32)resulthi) +
+	      (signed64)((signed32)carry);
+    }
+  else // DPSQ
+    {
+      temp1 = (unsigned64)lo - (unsigned64)resultlo;
+      carry = (unsigned32)((temp1 >> 32) & 1);
+      temp2 = (signed64)((signed32)hi) - (signed64)((signed32)resulthi) -
+	      (signed64)((signed32)carry);
+    }
+  if (((temp2 & 0x100000000LL) >> 1) != (temp2 & 0x80000000LL))
+    {
+      DSPCR |= (1 << (DSPCR_OUFLAG_SHIFT + ac));
+      if (temp2 & 0x100000000LL)
+	{
+	  DSPLO(ac) = EXTEND32 (0x00000000);
+	  DSPHI(ac) = EXTEND32 (0x80000000);
+	}
+      else
+	{
+	  DSPLO(ac) = EXTEND32 (0xffffffff);
+	  DSPHI(ac) = EXTEND32 (0x7fffffff);
+	}
+    }
+  else
+    {
+      DSPLO(ac) = EXTEND32 (temp1);
+      DSPHI(ac) = EXTEND32 (temp2);
+    }
+}
+
+011111,5.RS,5.RT,000,2.AC,01100,110000:SPECIAL3:32::DPAQ_SA.L.W
+"dpaq_sa.l.w ac<AC>, r<RS>, r<RT>"
+*dsp:
+{
+  do_w_dot_product (SD_, AC, RS, RT, 0);
+}
+
+011111,5.RS,5.RT,000,2.AC,01101,110000:SPECIAL3:32::DPSQ_SA.L.W
+"dpsq_sa.l.w ac<AC>, r<RS>, r<RT>"
+*dsp:
+{
+  do_w_dot_product (SD_, AC, RS, RT, 1);
+}
+
+// op: 0 = MAQ_S 1 = MAQ_SA
+// loc: 0 = phl, 1 = phr
+:function:::void:do_ph_maq:int ac, int rs, int rt, int op, int loc
+{
+  int i;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  signed16 h1, h2;
+  signed32 result;
+  unsigned32 lo = DSPLO(ac);
+  unsigned32 hi = DSPHI(ac);
+  signed64 prod = (signed64)((((unsigned64)hi) << 32) + (unsigned64)lo);
+  if (loc == 0)
+    {
+      h1 = (signed16)(v1 >> 16);
+      h2 = (signed16)(v2 >> 16);
+    }
+  else
+    {
+      h1 = (signed16)(v1 & 0xffff);
+      h2 = (signed16)(v2 & 0xffff);
+    }
+  if (h1 == (signed16)0x8000 && h2 == (signed16)0x8000)
+    {
+      DSPCR |= (1 << (DSPCR_OUFLAG_SHIFT + ac));
+      result = (signed32)0x7fffffff;
+    }
+  else
+    result = ((signed32)h1 * (signed32)h2) << 1;
+  prod += (signed64)result;
+  if (op == 1) // MAQ_SA
+    {
+      if (prod & 0x8000000000000000LL)
+	{
+	  for (i = 62; i >= 31; i--)
+	    {
+	      if (!(prod & ((signed64)1 << i)))
+		{
+		  DSPCR |= (1 << (DSPCR_OUFLAG_SHIFT + ac));
+		  prod = 0xffffffff80000000LL;
+		  break;
+		}
+	    }
+	}
+      else
+	{
+	  for (i = 62; i >= 31; i--)
+	    {
+	      if (prod & ((signed64)1 << i))
+		{
+		  DSPCR |= (1 << (DSPCR_OUFLAG_SHIFT + ac));
+		  prod = 0x7fffffff;
+		  break;
+		}
+	    }
+	}
+    }
+  DSPLO(ac) = EXTEND32 (prod);
+  DSPHI(ac) = EXTEND32 (prod >> 32);
+}
+
+011111,5.RS,5.RT,000,2.AC,10100,110000:SPECIAL3:32::MAQ_S.W.PHL
+"maq_s.w.phl ac<AC>, r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_maq (SD_, AC, RS, RT, 0, 0);
+}
+
+011111,5.RS,5.RT,000,2.AC,10110,110000:SPECIAL3:32::MAQ_S.W.PHR
+"maq_s.w.phr ac<AC>, r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_maq (SD_, AC, RS, RT, 0, 1);
+}
+
+011111,5.RS,5.RT,000,2.AC,10000,110000:SPECIAL3:32::MAQ_SA.W.PHL
+"maq_sa.w.phl ac<AC>, r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_maq (SD_, AC, RS, RT, 1, 0);
+}
+
+011111,5.RS,5.RT,000,2.AC,10010,110000:SPECIAL3:32::MAQ_SA.W.PHR
+"maq_sa.w.phr ac<AC>, r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_maq (SD_, AC, RS, RT, 1, 1);
+}
+
+011111,00000,5.RT,5.RD,11011,010010:SPECIAL3:32::BITREV
+"bitrev r<RD>, r<RT>"
+*dsp:
+{
+  int i;
+  unsigned32 v1 = GPR[RT];
+  unsigned32 h1 = 0;
+  for (i = 0; i < 16; i++)
+    {
+      if (v1 & (1 << i))
+	h1 |= (1 << (15 - i));
+    }
+  GPR[RD] = EXTEND32 (h1);
+}
+
+011111,5.RS,5.RT,00000,00000,001100:SPECIAL3:32::INSV
+"insv r<RT>, r<RS>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RS];
+  unsigned32 v2 = GPR[RT];
+  unsigned32 pos = (DSPCR >> DSPCR_POS_SHIFT) & DSPCR_POS_MASK;
+  unsigned32 size = (DSPCR >> DSPCR_SCOUNT_SHIFT) & DSPCR_SCOUNT_MASK;
+  unsigned32 mask1, mask2, mask3, result;
+  if (size < 32)
+    mask1 = (1 << size) - 1;
+  else
+    mask1 = 0xffffffff;
+  mask2 = (1 << pos) - 1;
+  if (pos + size < 32)
+    mask3 = ~((1 << (pos + size)) - 1);
+  else
+    mask3 = 0;
+  result = (v2 & mask3) | ((v1 & mask1) << pos) | (v2 & mask2);
+  GPR[RT] = EXTEND32 (result);
+}
+
+011111,00,8.IMM8,5.RD,00010,010010:SPECIAL3:32::REPL.QB
+"repl.qb r<RD>, <IMM8>"
+*dsp:
+{
+  GPR[RD] = EXTEND32 ((IMM8 << 24) | (IMM8 << 16) | (IMM8 << 8) | IMM8);
+}
+
+011111,00000,5.RT,5.RD,00011,010010:SPECIAL3:32::REPLV.QB
+"replv.qb r<RD>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RT];
+  v1 = v1 & 0xff;
+  GPR[RD] = EXTEND32 ((v1 << 24) | (v1 << 16) | (v1 << 8) | v1);
+}
+
+011111,10.IMM10,5.RD,01010,010010:SPECIAL3:32::REPL.PH
+"repl.ph r<RD>, <IMM10>"
+*dsp:
+{
+  signed32 v1 = IMM10;
+  if (v1 & 0x200)
+    v1 |= 0xfffffc00;
+  GPR[RD] = EXTEND32 ((v1 << 16) | (v1 & 0xffff));
+}
+
+011111,00000,5.RT,5.RD,01011,010010:SPECIAL3:32::REPLV.PH
+"replv.ph r<RD>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RT];
+  v1 = v1 & 0xffff;
+  GPR[RD] = EXTEND32 ((v1 << 16) | v1);
+}
+
+// op: 0 = EQ, 1 = LT, 2 = LE
+:function:::void:do_qb_cmpu:int rs, int rt, int op
+{
+  int i, j;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  unsigned8 h1, h2;
+  unsigned32 mask;
+  for (i = 0, j = 0; i < 32; i += 8, j++, v1 >>= 8, v2 >>= 8)
+    {
+      h1 = (unsigned8)(v1 & 0xff);
+      h2 = (unsigned8)(v2 & 0xff);
+      mask = ~(1 << (DSPCR_CCOND_SHIFT + j));
+      DSPCR &= mask;
+      if (op == 0) // EQ
+	DSPCR |= ((h1 == h2) << (DSPCR_CCOND_SHIFT + j));
+      else if (op == 1) // LT
+	DSPCR |= ((h1 < h2) << (DSPCR_CCOND_SHIFT + j));
+      else // LE
+	DSPCR |= ((h1 <= h2) << (DSPCR_CCOND_SHIFT + j));
+    }
+}
+
+011111,5.RS,5.RT,00000,00000,010001:SPECIAL3:32::CMPU.EQ.QB
+"cmpu.eq.qb r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_cmpu (SD_, RS, RT, 0);
+}
+
+011111,5.RS,5.RT,00000,00001,010001:SPECIAL3:32::CMPU.LT.QB
+"cmpu.lt.qb r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_cmpu (SD_, RS, RT, 1);
+}
+
+011111,5.RS,5.RT,00000,00010,010001:SPECIAL3:32::CMPU.LE.QB
+"cmpu.le.qb r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_cmpu (SD_, RS, RT, 2);
+}
+
+// op: 0 = EQ, 1 = LT, 2 = LE
+:function:::void:do_qb_cmpgu:int rd, int rs, int rt, int op
+{
+  int i, j;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  unsigned8 h1, h2;
+  unsigned32 result = 0;
+  for (i = 0, j = 0; i < 32; i += 8, j++, v1 >>= 8, v2 >>= 8)
+    {
+      h1 = (unsigned8)(v1 & 0xff);
+      h2 = (unsigned8)(v2 & 0xff);
+      if (op == 0) // EQ
+	result |= ((h1 == h2) << j);
+      else if (op == 1) // LT
+	result |= ((h1 < h2) << j);
+      else // LE
+	result |= ((h1 <= h2) << j);
+    }
+  GPR[rd] = EXTEND32 (result);
+}
+
+011111,5.RS,5.RT,5.RD,00100,010001:SPECIAL3:32::CMPGU.EQ.QB
+"cmpgu.eq.qb r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_cmpgu (SD_, RD, RS, RT, 0);
+}
+
+011111,5.RS,5.RT,5.RD,00101,010001:SPECIAL3:32::CMPGU.LT.QB
+"cmpgu.lt.qb r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_cmpgu (SD_, RD, RS, RT, 1);
+}
+
+011111,5.RS,5.RT,5.RD,00110,010001:SPECIAL3:32::CMPGU.LE.QB
+"cmpgu.le.qb r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  do_qb_cmpgu (SD_, RD, RS, RT, 2);
+}
+
+// op: 0 = EQ, 1 = LT, 2 = LE
+:function:::void:do_ph_cmpu:int rs, int rt, int op
+{
+  int i, j;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  signed16 h1, h2;
+  unsigned32 mask;
+  for (i = 0, j = 0; i < 32; i += 16, j++, v1 >>= 16, v2 >>= 16)
+    {
+      h1 = (signed16)(v1 & 0xffff);
+      h2 = (signed16)(v2 & 0xffff);
+      mask = ~(1 << (DSPCR_CCOND_SHIFT + j));
+      DSPCR &= mask;
+      if (op == 0) // EQ
+	DSPCR |= ((h1 == h2) << (DSPCR_CCOND_SHIFT + j));
+      else if (op == 1) // LT
+	DSPCR |= ((h1 < h2) << (DSPCR_CCOND_SHIFT + j));
+      else // LE
+	DSPCR |= ((h1 <= h2) << (DSPCR_CCOND_SHIFT + j));
+    }
+}
+
+011111,5.RS,5.RT,00000,01000,010001:SPECIAL3:32::CMP.EQ.PH
+"cmp.eq.ph r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_cmpu (SD_, RS, RT, 0);
+}
+
+011111,5.RS,5.RT,00000,01001,010001:SPECIAL3:32::CMP.LT.PH
+"cmp.lt.ph r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_cmpu (SD_, RS, RT, 1);
+}
+
+011111,5.RS,5.RT,00000,01010,010001:SPECIAL3:32::CMP.LE.PH
+"cmp.le.ph r<RS>, r<RT>"
+*dsp:
+{
+  do_ph_cmpu (SD_, RS, RT, 2);
+}
+
+011111,5.RS,5.RT,5.RD,00011,010001:SPECIAL3:32::PICK.QB
+"pick.qb r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  int i, j;
+  unsigned32 v1 = GPR[RS];
+  unsigned32 v2 = GPR[RT];
+  unsigned8 h1, h2;
+  unsigned32 result = 0;
+  for (i = 0, j = 0; i < 32; i += 8, j++, v1 >>= 8, v2 >>= 8)
+    {
+      h1 = (unsigned8)(v1 & 0xff);
+      h2 = (unsigned8)(v2 & 0xff);
+      if (DSPCR & (1 << (DSPCR_CCOND_SHIFT + j)))
+	result |= (unsigned32)(h1 << i);
+      else
+	result |= (unsigned32)(h2 << i);
+    }
+  GPR[RD] = EXTEND32 (result);
+}
+
+011111,5.RS,5.RT,5.RD,01011,010001:SPECIAL3:32::PICK.PH
+"pick.ph r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  int i, j;
+  unsigned32 v1 = GPR[RS];
+  unsigned32 v2 = GPR[RT];
+  unsigned16 h1, h2;
+  unsigned32 result = 0;
+  for (i = 0, j = 0; i < 32; i += 16, j++, v1 >>= 16, v2 >>= 16)
+    {
+      h1 = (unsigned16)(v1 & 0xffff);
+      h2 = (unsigned16)(v2 & 0xffff);
+      if (DSPCR & (1 << (DSPCR_CCOND_SHIFT + j)))
+	result |= (unsigned32)(h1 << i);
+      else
+	result |= (unsigned32)(h2 << i);
+    }
+  GPR[RD] = EXTEND32 (result);
+}
+
+011111,5.RS,5.RT,5.RD,01110,010001:SPECIAL3:32::PACKRL.PH
+"packrl.ph r<RD>, r<RS>, r<RT>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RS];
+  unsigned32 v2 = GPR[RT];
+  GPR[RD] = EXTEND32 ((v1 << 16) + (v2 >> 16));
+}
+
+// op: 0 = EXTR, 1 = EXTR_R, 2 = EXTR_RS
+:function:::void:do_w_extr:int rt, int ac, int shift, int op
+{
+  int i;
+  unsigned32 lo = DSPLO(ac);
+  unsigned32 hi = DSPHI(ac);
+  unsigned64 prod = (((unsigned64)hi) << 32) + (unsigned64)lo;
+  signed64 result = (signed64)prod;
+  int setcond = 0;
+  if (!(prod & 0x8000000000000000LL))
+    {
+      for (i = 62; i >= (shift + 31); i--)
+	{
+	  if (prod & ((unsigned64)1 << i))
+	    {
+	      DSPCR |= DSPCR_OUFLAG7;
+	      setcond = 1;
+	      break;
+	    }
+	}
+      if (((prod >> (shift - 1)) & 0xffffffffLL) == 0xffffffffLL)
+	{
+	  DSPCR |= DSPCR_OUFLAG7;
+	  setcond = 1;
+	}
+    }
+  else
+    {
+      for (i = 62; i >= (shift + 31); i--)
+	{
+	  if (!(prod & ((unsigned64)1 << i)))
+	    {
+	      DSPCR |= DSPCR_OUFLAG7;
+	      setcond = 2;
+	      break;
+	    }
+	}
+    }
+  if (op == 0) // EXTR
+    result = result >> shift;
+  else if (op == 1) // EXTR_R
+    {
+      if (shift != 0)
+        result = ((result >> (shift - 1)) + 1) >> 1;
+      else
+	result = result >> shift;
+    }
+  else // EXTR_RS
+    {
+      if (setcond == 1)
+	result = 0x7fffffff;
+      else if (setcond == 2)
+	result = 0x80000000;
+      else 
+	{
+	  if (shift != 0)
+	    result = ((result >> (shift - 1)) + 1) >> 1;
+	  else
+	    result = result >> shift;
+	}
+    }
+  GPR[rt] = EXTEND32 (result);
+}
+
+011111,5.SHIFT,5.RT,000,2.AC,00000,111000:SPECIAL3:32::EXTR.W
+"extr.w r<RT>, ac<AC>, <SHIFT>"
+*dsp:
+{
+  do_w_extr (SD_, RT, AC, SHIFT, 0);
+}
+
+011111,5.RS,5.RT,000,2.AC,00001,111000:SPECIAL3:32::EXTRV.W
+"extrv.w r<RT>, ac<AC>, r<RS>"
+*dsp:
+{
+  unsigned32 shift = GPR[RS] & 0x1f;
+  do_w_extr (SD_, RT, AC, shift, 0);
+}
+
+011111,5.SHIFT,5.RT,000,2.AC,00100,111000:SPECIAL3:32::EXTR_R.W
+"extr_r.w r<RT>, ac<AC>, <SHIFT>"
+*dsp:
+{
+  do_w_extr (SD_, RT, AC, SHIFT, 1);
+}
+
+011111,5.RS,5.RT,000,2.AC,00101,111000:SPECIAL3:32::EXTRV_R.W
+"extrv_r.w r<RT>, ac<AC>, r<RS>"
+*dsp:
+{
+  unsigned32 shift = GPR[RS] & 0x1f;
+  do_w_extr (SD_, RT, AC, shift, 1);
+}
+
+011111,5.SHIFT,5.RT,000,2.AC,00110,111000:SPECIAL3:32::EXTR_RS.W
+"extr_rs.w r<RT>, ac<AC>, <SHIFT>"
+*dsp:
+{
+  do_w_extr (SD_, RT, AC, SHIFT, 2);
+}
+
+011111,5.RS,5.RT,000,2.AC,00111,111000:SPECIAL3:32::EXTRV_RS.W
+"extrv_rs.w r<RT>, ac<AC>, r<RS>"
+*dsp:
+{
+  unsigned32 shift = GPR[RS] & 0x1f;
+  do_w_extr (SD_, RT, AC, shift, 2);
+}
+
+:function:::void:do_h_extr:int rt, int ac, int shift
+{
+  int i;
+  unsigned32 lo = DSPLO(ac);
+  unsigned32 hi = DSPHI(ac);
+  unsigned64 prod = (((unsigned64)hi) << 32) + (unsigned64)lo;
+  signed64 result = (signed64)prod;
+  signed64 value = 0xffffffffffff8000LL;
+  result >>= shift;
+  if (result > 0x7fff)
+    {
+      result = 0x7fff;
+      DSPCR |= DSPCR_OUFLAG7;
+    }
+  else if (result < value)
+    {
+      result = value;
+      DSPCR |= DSPCR_OUFLAG7;
+    }
+  GPR[rt] = EXTEND32 (result);
+}
+
+011111,5.SHIFT,5.RT,000,2.AC,01110,111000:SPECIAL3:32::EXTR_S.H
+"extr_s.h r<RT>, ac<AC>, <SHIFT>"
+*dsp:
+{
+  do_h_extr (SD_, RT, AC, SHIFT);
+}
+
+011111,5.RS,5.RT,000,2.AC,01111,111000:SPECIAL3:32::EXTRV_S.H
+"extrv_s.h r<RT>, ac<AC>, r<RS>"
+*dsp:
+{
+  unsigned32 shift = GPR[RS] & 0x1f;
+  do_h_extr (SD_, RT, AC, shift);
+}
+
+// op: 0 = EXTP, 1 = EXTPDP
+:function:::void:do_extp:int rt, int ac, int size, int op
+{
+  signed32 pos = (DSPCR >> DSPCR_POS_SHIFT) & DSPCR_POS_MASK;
+  unsigned32 lo = DSPLO(ac);
+  unsigned32 hi = DSPHI(ac);
+  unsigned64 prod = (((unsigned64)hi) << 32) + (unsigned64)lo;
+  unsigned64 result = 0;
+  if (pos - (size + 1) >= -1)
+    {
+      prod >>= (pos - size);
+      result = prod & (((unsigned64)1 << (size + 1)) - 1);
+      DSPCR &= (~DSPCR_EFI_SMASK);
+      if (op == 1) // EXTPDP
+	{
+	  if (pos - (size + 1) >= 0)
+	    {
+	      DSPCR &= (~DSPCR_POS_SMASK);
+	      DSPCR |= ((pos - (size + 1)) & DSPCR_POS_MASK) << DSPCR_POS_SHIFT;
+	    }
+	  else if (pos - (size + 1) == -1)
+	    {
+	      DSPCR |= DSPCR_POS_SMASK;
+	    }
+	}
+    }
+  else
+    {
+      DSPCR |= DSPCR_EFI;
+      Unpredictable ();
+    }
+  GPR[rt] = EXTEND32 (result);
+}
+
+011111,5.SIZE,5.RT,000,2.AC,00010,111000:SPECIAL3:32::EXTP
+"extp r<RT>, ac<AC>, <SIZE>"
+*dsp:
+{
+  do_extp (SD_, RT, AC, SIZE, 0);
+}
+
+011111,5.RS,5.RT,000,2.AC,00011,111000:SPECIAL3:32::EXTPV
+"extpv r<RT>, ac<AC>, r<RS>"
+*dsp:
+{
+  unsigned32 size = GPR[RS] & 0x1f;
+  do_extp (SD_, RT, AC, size, 0);
+}
+
+011111,5.SIZE,5.RT,000,2.AC,01010,111000:SPECIAL3:32::EXTPDP
+"extpdp r<RT>, ac<AC>, <SIZE>"
+*dsp:
+{
+  do_extp (SD_, RT, AC, SIZE, 1);
+}
+
+011111,5.RS,5.RT,000,2.AC,01011,111000:SPECIAL3:32::EXTPDPV
+"extpdpv r<RT>, ac<AC>, r<RS>"
+*dsp:
+{
+  unsigned32 size = GPR[RS] & 0x1f;
+  do_extp (SD_, RT, AC, size, 1);
+}
+
+:function:::void:do_shilo:int ac, int shift
+{
+  unsigned32 lo = DSPLO(ac);
+  unsigned32 hi = DSPHI(ac);
+  unsigned64 prod = (((unsigned64)hi) << 32) + (unsigned64)lo;
+  if (shift > 31)
+    shift = shift - 64;
+  if (shift >= 0)
+    prod >>= shift;
+  else
+    prod <<= (-shift);
+  DSPLO(ac) = EXTEND32 (prod);
+  DSPHI(ac) = EXTEND32 (prod >> 32);
+}
+
+011111,6.SHIFT6,0000,000,2.AC,11010,111000:SPECIAL3:32::SHILO
+"shilo ac<AC>, <SHIFT6>"
+*dsp:
+{
+  do_shilo (SD_, AC, SHIFT6);
+}
+
+011111,5.RS,00000,000,2.AC,11011,111000:SPECIAL3:32::SHILOV
+"shilov ac<AC>, r<RS>"
+*dsp:
+{
+  signed32 shift = GPR[RS] & 0x3f;
+  do_shilo (SD_, AC, shift);
+}
+
+011111,5.RS,00000,000,2.AC,11111,111000:SPECIAL3:32::MTHLIP
+"mthlip r<RS>, ac<AC>"
+*dsp:
+{
+  unsigned32 pos = (DSPCR >> DSPCR_POS_SHIFT) & DSPCR_POS_MASK;
+  DSPHI(AC) = DSPLO(AC);
+  DSPLO(AC) = GPR[RS];
+  if (pos >= 32)
+    Unpredictable ();
+  else
+    pos += 32;
+  DSPCR &= (~DSPCR_POS_SMASK);
+  DSPCR |= (pos & DSPCR_POS_MASK) << DSPCR_POS_SHIFT;
+}
+
+011111,5.RS,10.MASK10,10011,111000:SPECIAL3:32::WRDSP
+"wrdsp r<RS>":MASK10 == 1111111111
+"wrdsp r<RS>, <MASK10>"
+*dsp:
+{
+  unsigned32 v1 = GPR[RS];
+  if (MASK10 & 0x1)
+    {
+      DSPCR &= (~DSPCR_POS_SMASK);
+      DSPCR |= (v1 & DSPCR_POS_SMASK);
+    }
+  if (MASK10 & 0x2)
+    {
+      DSPCR &= (~DSPCR_SCOUNT_SMASK);
+      DSPCR |= (v1 & DSPCR_SCOUNT_SMASK);
+    }
+  if (MASK10 & 0x4)
+    {
+      DSPCR &= (~DSPCR_CARRY_SMASK);
+      DSPCR |= (v1 & DSPCR_CARRY_SMASK);
+    }
+  if (MASK10 & 0x8)
+    {
+      DSPCR &= (~DSPCR_OUFLAG_SMASK);
+      DSPCR |= (v1 & DSPCR_OUFLAG_SMASK);
+    }
+  if (MASK10 & 0x10)
+    {
+      DSPCR &= (~DSPCR_CCOND_SMASK);
+      DSPCR |= (v1 & DSPCR_CCOND_SMASK);
+    }
+  if (MASK10 & 0x20)
+    {
+      DSPCR &= (~DSPCR_EFI_SMASK);
+      DSPCR |= (v1 & DSPCR_EFI_SMASK);
+    }
+}
+
+011111,10.MASK10,5.RD,10010,111000:SPECIAL3:32::RDDSP
+"rddsp r<RD>":MASK10 == 1111111111
+"rddsp r<RD>, <MASK10>"
+*dsp:
+{
+  unsigned32 result = 0;
+  if (MASK10 & 0x1)
+    {
+      result &= (~DSPCR_POS_SMASK);
+      result |= (DSPCR & DSPCR_POS_SMASK);
+    }
+  if (MASK10 & 0x2)
+    {
+      result &= (~DSPCR_SCOUNT_SMASK);
+      result |= (DSPCR & DSPCR_SCOUNT_SMASK);
+    }
+  if (MASK10 & 0x4)
+    {
+      result &= (~DSPCR_CARRY_SMASK);
+      result |= (DSPCR & DSPCR_CARRY_SMASK);
+    }
+  if (MASK10 & 0x8)
+    {
+      result &= (~DSPCR_OUFLAG_SMASK);
+      result |= (DSPCR & DSPCR_OUFLAG_SMASK);
+    }
+  if (MASK10 & 0x10)
+    {
+      result &= (~DSPCR_CCOND_SMASK);
+      result |= (DSPCR & DSPCR_CCOND_SMASK);
+    }
+  if (MASK10 & 0x20)
+    {
+      result &= (~DSPCR_EFI_SMASK);
+      result |= (DSPCR & DSPCR_EFI_SMASK);
+    }
+  GPR[RD] = EXTEND32 (result);
+}
+
+011111,5.BASE,5.INDEX,5.RD,00110,001010:SPECIAL3:32::LBUX
+"lbux r<RD>, r<INDEX>(r<BASE>)"
+*dsp:
+{
+  GPR[RD] = do_load (SD_, AccessLength_BYTE, GPR[BASE], GPR[INDEX]);
+}
+
+011111,5.BASE,5.INDEX,5.RD,00100,001010:SPECIAL3:32::LHX
+"lhx r<RD>, r<INDEX>(r<BASE>)"
+*dsp:
+{
+  GPR[RD] = EXTEND16 (do_load (SD_, AccessLength_HALFWORD, GPR[BASE], GPR[INDEX]));
+}
+
+011111,5.BASE,5.INDEX,5.RD,00000,001010:SPECIAL3:32::LWX
+"lwx r<RD>, r<INDEX>(r<BASE>)"
+*dsp:
+{
+  GPR[RD] = EXTEND32 (do_load (SD_, AccessLength_WORD, GPR[BASE], GPR[INDEX]));
+}
+
+000001,00000,11100,16.OFFSET:REGIMM:32::BPOSGE32
+"bposge32 <OFFSET>"
+*dsp:
+{
+  unsigned32 pos = (DSPCR >> DSPCR_POS_SHIFT) & DSPCR_POS_MASK;
+  address_word offset = EXTEND16 (OFFSET) << 2;
+  if (pos >= 32)
+    {
+      DELAY_SLOT (NIA + offset);
+    }
+}

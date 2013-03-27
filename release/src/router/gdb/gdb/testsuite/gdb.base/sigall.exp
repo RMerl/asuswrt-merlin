@@ -1,0 +1,210 @@
+#   Copyright 1995, 1996, 1997, 1999, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if [target_info exists gdb,nosignals] {
+    verbose "Skipping sigall.exp because of nosignals."
+    continue
+}
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+set testfile sigall
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested sigall.exp
+     return -1
+}
+
+# Make the first signal SIGABRT because it is always supported.
+set sig_supported 1
+set thissig "ABRT"
+
+proc test_one_sig {nextsig} {
+    global sig_supported
+    global gdb_prompt
+    global thissig
+
+    set this_sig_supported $sig_supported
+    gdb_test "handle SIG$thissig stop print" \
+	"SIG$thissig\[ \t\]*Yes\[ \t\]*Yes\[ \t\]*Yes.*"
+    gdb_test "b handle_$thissig" "Breakpoint \[0-9\]+ .*"
+    gdb_test "b gen_$nextsig" "Breakpoint \[0-9\]+ .*"
+
+    set need_another_continue 1
+    set missed_handler 0
+    if $this_sig_supported then {
+	send_gdb "continue\n"
+	if { $thissig == "IO" } {
+	    setup_xfail "i*86-pc-linuxoldld-gnu" "i*86-pc-linuxaout-gnu"
+	}
+	gdb_expect {
+	    -re "Continuing.*Program received signal SIG$thissig.*$gdb_prompt $" {
+		pass "get signal $thissig"
+	    }
+	    -re ".*$gdb_prompt $" {
+		fail "get signal $thissig"
+		set need_another_continue 0
+	    }
+	    default {
+		fail "get signal $thissig (eof or timeout)"
+	    }
+	}
+    }
+    if [ istarget "alpha-dec-osf3*" ] then {
+	# OSF/1-3.x is unable to continue with a job control stop signal.
+	# The inferior remains stopped without an event of interest
+	# and GDB waits forever for the inferior to stop on an event
+	# of interest. Work around the kernel bug.
+	if { $thissig == "TSTP" || $thissig == "TTIN" || $thissig == "TTOU" } {
+	    setup_xfail "alpha-dec-osf3*"
+	    fail "cannot continue from signal $thissig"
+	    set need_another_continue 0
+	}
+    }
+
+    if $need_another_continue then {
+	send_gdb "continue\n"
+	if { $thissig == "URG" } {
+	    setup_xfail "i*86-pc-linuxoldld-gnu" "i*86-pc-linuxaout-gnu"
+	}
+        # Either Lynx or GDB screws up on SIGPRIO
+	if { $thissig == "PRIO" } {
+	    setup_xfail "*-*-*lynx*"
+	}
+	gdb_expect {
+	    -re "Breakpoint.*handle_$thissig.*$gdb_prompt $" {
+		pass "send signal $thissig"
+	    }
+	    -re "Breakpoint.*gen_$nextsig.*kill.*$gdb_prompt $" {
+		fail "missed breakpoint at handle_$thissig"
+		set missed_handler 1
+	    }
+	}
+    }
+
+    if { $missed_handler == "0" } then {
+        send_gdb "signal 0\n"
+        gdb_expect {
+	    -re "Breakpoint.*gen_$nextsig.*kill.*$gdb_prompt $" {
+	        pass "advance to $nextsig"
+	        set sig_supported 1
+	    }
+	    -re "Breakpoint.*gen_$nextsig.*handle.*$gdb_prompt $" {
+	        pass "advance to $nextsig"
+	        set sig_supported 0
+	    }
+	    -re ".*$gdb_prompt $" { fail "advance to $nextsig" }
+	    default { fail "advance to $nextsig (eof or timeout)" }
+        }
+    }
+    set thissig $nextsig
+}
+
+gdb_load $binfile
+
+runto gen_ABRT
+test_one_sig HUP
+test_one_sig QUIT
+test_one_sig ILL
+test_one_sig EMT
+test_one_sig FPE
+test_one_sig BUS
+test_one_sig SEGV
+test_one_sig SYS
+test_one_sig PIPE
+test_one_sig ALRM
+test_one_sig URG
+test_one_sig TSTP
+test_one_sig CONT
+test_one_sig CHLD
+test_one_sig TTIN
+test_one_sig TTOU
+test_one_sig IO
+test_one_sig XCPU
+test_one_sig XFSZ
+test_one_sig VTALRM
+test_one_sig PROF
+test_one_sig WINCH
+test_one_sig LOST
+test_one_sig USR1
+test_one_sig USR2
+test_one_sig PWR
+test_one_sig POLL
+test_one_sig WIND
+test_one_sig PHONE
+test_one_sig WAITING
+test_one_sig LWP
+test_one_sig DANGER
+test_one_sig GRANT
+test_one_sig RETRACT
+test_one_sig MSG
+test_one_sig SOUND
+test_one_sig SAK
+test_one_sig PRIO
+test_one_sig 33
+test_one_sig 34
+test_one_sig 35
+test_one_sig 36
+test_one_sig 37
+test_one_sig 38
+test_one_sig 39
+test_one_sig 40
+test_one_sig 41
+test_one_sig 42
+test_one_sig 43
+test_one_sig 44
+test_one_sig 45
+test_one_sig 46
+test_one_sig 47
+test_one_sig 48
+test_one_sig 49
+test_one_sig 50
+test_one_sig 51
+test_one_sig 52
+test_one_sig 53
+test_one_sig 54
+test_one_sig 55
+test_one_sig 56
+test_one_sig 57
+test_one_sig 58
+test_one_sig 59
+test_one_sig 60
+test_one_sig 61
+test_one_sig 62
+test_one_sig 63
+test_one_sig TERM
+
+# The last signal (SIGTERM) gets handled slightly differently because
+# we are not setting up for another test.
+gdb_test "handle SIGTERM stop print" \
+    "SIGTERM\[ \t\]*Yes\[ \t\]*Yes\[ \t\]*Yes.*"
+gdb_test "b handle_TERM" "Breakpoint \[0-9\]+ .*"
+gdb_test "continue" \
+    "Continuing.*Program received signal SIGTERM.*" \
+    "get signal TERM"
+gdb_test "continue" "Breakpoint.*handle_TERM.*" "send signal TERM"
+gdb_continue_to_end "continue to sigall exit"
+
+return 0

@@ -1,0 +1,133 @@
+# Copyright 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# Test resolving of an opaque type from the loaded shared library.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set testfile type-opaque-main
+set libfile type-opaque-lib
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+set libsrc "${srcdir}/${subdir}/${libfile}.c"
+set libobj "${objdir}/${subdir}/${libfile}.so"
+set execsrc "${srcdir}/${subdir}/${srcfile}"
+
+remote_exec build "rm -f ${binfile}"
+
+# Are we on a target board?  No support for downloading shared libraries
+# to a target yet.
+if ![isnative] then {
+    return 0
+}
+
+# get the value of gcc_compiled
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+if { [gdb_compile_shlib $libsrc $libobj {debug}] != ""
+     || [gdb_compile $execsrc ${binfile} executable \
+	     [list debug shlib=${libobj}]] != "" } {
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if ![runto_main] then {
+    fail "Can't run to main"
+    return 0
+}
+
+
+# DWARF3: An incomplete structure, union or class type is represented by
+# a structure, union or class entry that does not have a byte size attribute
+# and that has a DW_AT_declaration attribute.
+
+
+proc body { struct } {
+    global gdb_prompt
+
+
+    # <1><15f>: Abbrev Number: 8 (DW_TAG_structure_type)
+    #     DW_AT_name        : libtype_opaque
+    #     DW_AT_declaration : 1
+
+    set name "opaque $struct type resolving"
+    gdb_test_multiple "ptype pointer_${struct}_opaque" $name \
+    {
+	-re "libfield_opaque.*$gdb_prompt $"  {
+	    pass $name
+	}
+    }
+
+
+    # <1><9e>: Abbrev Number: 2 (DW_TAG_structure_type)
+    #     DW_AT_name        : libtype_empty
+    #     DW_AT_byte_size   : 0
+    #     DW_AT_decl_file   : 1
+    #     DW_AT_decl_line   : 25
+
+    set name "empty $struct type resolving"
+    gdb_test_multiple "ptype pointer_${struct}_empty" $name \
+    {
+	-re "\\{\[ \t\r\n\]*<no data fields>\[ \t\r\n\]*\\}.*$gdb_prompt $"  {
+	    pass $name
+	}
+	-re "libfield_empty.*$gdb_prompt $"  {
+	    fail $name
+	}
+    }
+
+
+    # <1><b0>: Abbrev Number: 3 (DW_TAG_structure_type)
+    #     DW_AT_sibling     : <e3>
+    #     DW_AT_name        : libtype_filled
+    #     DW_AT_byte_size   : 4
+    #     DW_AT_decl_file   : 1
+    #     DW_AT_decl_line   : 29
+    # <2><c7>: Abbrev Number: 4 (DW_TAG_member)
+    #     DW_AT_name        : mainfield_filled
+    #     DW_AT_decl_file   : 1
+    #     DW_AT_decl_line   : 30
+    #     DW_AT_type        : <e3>
+    #     DW_AT_data_member_location: 2 byte block: 23 0     (DW_OP_plus_uconst: 0)
+
+    set name "filled $struct type resolving"
+    gdb_test_multiple "ptype pointer_${struct}_filled" $name \
+    {
+	-re "mainfield_filled.*$gdb_prompt $"  {
+	    pass $name
+	}
+	-re "libfield_filled.*$gdb_prompt $"  {
+	    fail $name
+	}
+    }
+
+
+}
+
+
+body struct
+body union

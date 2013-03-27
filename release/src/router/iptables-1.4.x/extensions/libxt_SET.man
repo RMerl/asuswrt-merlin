@@ -1,0 +1,25 @@
+This modules adds and/or deletes entries from IP sets which can be defined 
+by ipset(8).
+.TP
+\fB\-\-add\-set\fP \fIsetname\fP \fIflag\fP[\fB,\fP\fIflag\fP...]
+add the address(es)/port(s) of the packet to the sets
+.TP
+\fB\-\-del\-set\fP \fIsetname\fP \fIflag\fP[\fB,\fP\fIflag\fP...]
+delete the address(es)/port(s) of the packet from the sets
+.IP
+where flags are
+.BR "src"
+and/or
+.BR "dst"
+specifications and there can be no more than six of them.
+.TP
+\fB\-\-timeout\fP \fIvalue\fP
+when adding entry, the timeout value to use instead of the default
+one from the set definition
+.TP
+\fB\-\-exist\fP
+when adding entry if it already exists, reset the timeout value
+to the specified one or to the default from the set definition
+.PP
+Use of -j SET requires that ipset kernel support is provided, which, for
+standard kernels, is the case since Linux 2.6.39.

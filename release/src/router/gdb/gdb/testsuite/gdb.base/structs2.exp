@@ -1,0 +1,91 @@
+# Copyright 1998, 1999, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set prototypes 1
+set testfile "structs2"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+# build the first test case
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    # built the second test case since we can't use prototypes
+    warning "Prototypes not supported, rebuilding with -DNO_PROTOTYPES"
+    if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DNO_PROTOTYPES}] != "" } {
+	untested structs2.exp
+	return -1
+    }
+    set prototypes 0
+}
+
+# Start with a fresh gdb.
+
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+gdb_test "set width 0" ""
+
+if { ![runto_main] } then {
+    gdb_suppress_tests
+}
+
+# Ok, we're finally ready to actually do our tests.
+
+set prms_id 13536
+set bug_id 0
+
+gdb_test "f" \
+    ".*bkpt = 0.*" \
+    "structs2 sanity check"
+
+gdb_test "break param_reg" \
+    "Breakpoint .* at .*" \
+    "structs2 breakpoint set"
+
+if [test_compiler_info gcc-3-*] {
+  setup_xfail hppa*-* gcc/15860
+}
+gdb_test "continue" \
+    ".*pr_char=120.*pr_uchar=130.*pr_short=32000.*pr_ushort=33000.*bkpt = 1.*" \
+    "structs2 continue1"
+
+if [test_compiler_info gcc-3-*] {
+  setup_xfail hppa*-* gcc/15860
+}
+gdb_test "continue" \
+    ".*pr_char=-126.*pr_uchar=120.*pr_short=-32536.*pr_ushort=32000.*bkpt = 1.*" \
+    "structs2 continue2"
+
+# End of tests.
+
+gdb_stop_suppressing_tests
+
+return 0

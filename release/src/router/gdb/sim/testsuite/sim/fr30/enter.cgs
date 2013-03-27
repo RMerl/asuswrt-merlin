@@ -1,0 +1,34 @@
+# fr30 testcase for enter $u10
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global enter
+enter:
+	; Test enter $u10
+	mvr_h_gr   	sp,r7			; save stack pointer
+	mvr_h_gr	sp,r8			; shadow stack pointer
+	mvr_h_gr	sp,r14		; Initialize
+	set_cc	0x0f			; Condition codes are irrelevent
+	enter      	0
+	test_cc	1 1 1 1
+	testr_h_gr 	r8,sp
+	inci_h_gr	-4,r8
+	testr_h_gr	r14,r8
+	testr_h_mem	r7,r14
+
+	mvr_h_gr	sp,r8			; shadow stack pointer
+	mvr_h_gr	r14,r9		; save
+	set_cc	0x0e			; Condition codes are irrelevent
+	enter      	0x3fc
+	test_cc	1 1 1 0
+	inci_h_gr	-4,r8
+	testr_h_gr	r14,r8
+	testr_h_mem	r9,r14
+	inci_h_gr	-0x3f8,r8
+	testr_h_gr 	r8,sp
+
+	pass

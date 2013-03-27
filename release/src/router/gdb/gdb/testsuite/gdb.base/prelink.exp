@@ -1,0 +1,115 @@
+# Copyright 2006, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@gnu.org
+
+# This file was written by Alexandre Oliva <aoliva@redhat.com>
+
+if $tracelevel then {
+	strace $tracelevel
+	}
+
+set prms_id 0
+set bug_id 0
+
+# are we on a target board
+if ![isnative] then {
+    return
+}
+
+if [get_compiler_info "ignored"] {
+    return -1
+}
+
+if {$gcc_compiled == 0} {
+    return -1
+}
+
+set testfile "prelink"
+
+set libsrcfile ${testfile}-lib.c
+set libfile ${objdir}/${subdir}/${testfile}.so
+if { [gdb_compile "${srcdir}/${subdir}/${libsrcfile}" "${libfile}" executable [list debug "additional_flags=-fpic -shared -nodefaultlibs"]] != ""} {
+    # If creating the shared library fails, maybe we don't have the right tools
+    return -1
+}
+
+if {[catch "system \"prelink -qNR ${libfile}\""] != 0} {
+    # Maybe we don't have prelink.
+    return -1
+}
+
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}t
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile} ${libfile}" "${binfile}" executable [list debug "additional_flags=-Wl,-rpath,${objdir}/${subdir}"]] != ""} {
+    return -1;
+}
+
+set found 0
+set coredir "${objdir}/${subdir}/coredir.[getpid]"
+file mkdir $coredir
+catch "system \"(cd ${coredir}; ulimit -c unlimited; ${binfile}; true) >/dev/null 2>&1\""
+
+foreach i "${coredir}/core ${coredir}/core.coremaker.c ${binfile}.core" {
+    if [remote_file build exists $i] {
+	remote_exec build "mv $i ${objdir}/${subdir}/prelink.core"
+	set found 1
+    }
+}
+# Check for "core.PID".
+if { $found == 0 } {
+    set names [glob -nocomplain -directory $coredir core.*]
+    if {[llength $names] == 1} {
+        set corefile [file join $coredir [lindex $names 0]]
+        remote_exec build "mv $corefile ${objdir}/${subdir}/prelink.core"
+        set found 1
+    }
+}
+
+# Try to clean up after ourselves.
+remote_file build delete [file join $coredir coremmap.data]
+remote_exec build "rmdir $coredir"
+
+if { $found == 0  } {
+    warning "can't generate a core file - prelink tests suppressed - check ulimit -c"
+    return 0
+}
+
+if {[catch "system \"prelink -uN ${libfile}\""] != 0} {
+    untested "${testfile}.so was not prelinked, maybe system libraries are not prelinked?"
+    return 0
+}
+catch "system \"prelink -qNR ${libfile}\""
+
+# Start with a fresh gdb
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+set test "prelink"
+global gdb_prompt
+gdb_test_multiple "core-file $objdir/$subdir/prelink.core" "$test" {
+    -re "warning: \.dynamic section.*not at the expected address.*warning: difference.*caused by prelink, adjusting expectations.*$gdb_prompt $" {
+	pass "$test"
+    }
+}
+
+gdb_exit
+
+return 0
+

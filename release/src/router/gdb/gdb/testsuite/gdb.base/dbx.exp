@@ -1,0 +1,345 @@
+# Copyright 1998, 1999, 2001, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+
+if $tracelevel then {
+        strace $tracelevel
+}
+
+set testfile1 "average"
+set testfile2 "sum"
+set testfile "dbx-test"
+set binfile1 ${objdir}/${subdir}/${testfile1}
+set binfile2 ${objdir}/${subdir}/${testfile2}
+set binfile ${objdir}/${subdir}/${testfile}
+
+
+
+if  { [gdb_compile "${srcdir}/${subdir}/average.c" "${binfile1}.o" object {debug}] != "" } {
+     untested dbx.exp
+     return -1
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/sum.c" "${binfile2}.o" object {debug}] != "" } {
+     untested dbx.exp
+     return -1
+}
+
+if  { [gdb_compile "${binfile1}.o ${binfile2}.o" ${binfile} executable {debug}] != "" } {
+     untested dbx.exp
+     return -1
+}
+
+#
+# start gdb -- start gdb running, default procedure
+#
+proc dbx_gdb_start { } {
+    global verbose
+    global GDB
+    global GDBFLAGS
+    global prompt
+    global spawn_id
+    global timeout
+    verbose "Spawning $GDB -nw $GDBFLAGS"
+
+    if { [which $GDB] == 0 } then {
+        perror "$GDB does not exist."
+        exit 1
+    }
+
+    set oldtimeout $timeout
+    set timeout [expr "$timeout + 60"]
+    eval "spawn $GDB -nw -dbx $GDBFLAGS"
+    gdb_expect {
+        -re ".*\r\n$gdb_prompt $" {
+            verbose "GDB initialized."
+        }
+        -re "$prompt $" {
+            perror "GDB never initialized."
+            return -1
+        }
+        timeout         {
+            perror "(timeout) GDB never initialized."
+            return -1
+        }
+    }
+    set timeout $oldtimeout
+    # force the height to "unlimited", so no pagers get used
+    send_gdb "set height 0\n"
+    gdb_expect {
+        -re ".*$prompt $" {
+            verbose "Setting height to 0." 2
+        }
+        timeout {
+            warning "Couldn't set the height to 0."
+        }
+    }
+    # force the width to "unlimited", so no wraparound occurs
+    send_gdb "set width 0\n"
+    gdb_expect {
+        -re ".*$prompt $" {
+            verbose "Setting width to 0." 2
+        }
+        timeout {
+            warning "Couldn't set the width to 0."
+        }
+    }
+}
+
+
+proc dbx_reinitialize_dir { subdir } {
+    global gdb_prompt
+
+   send_gdb "use\n"
+    gdb_expect {
+        -re "Reinitialize source path to empty.*y or n. " {
+            send_gdb "y\n"
+            gdb_expect {
+                -re "Source directories searched.*$gdb_prompt $" {
+                    send_gdb "use $subdir\n"
+                    gdb_expect {
+                        -re "Source directories searched.*$gdb_prompt $" {
+                            verbose "Dir set to $subdir"
+                        }
+                        -re ".*$gdb_prompt $" {
+                            perror "Dir \"$subdir\" failed."
+                        }
+                    }
+                }
+                -re ".*$gdb_prompt $" {
+                    perror "Dir \"$subdir\" failed."
+                }
+            }
+        }
+        -re ".*$gdb_prompt $" {
+            perror "Dir \"$subdir\" failed."
+        }
+    }
+}
+
+# In "testsuite/config/unix-gdb.exp", the routine "gdb_load"
+# is defined as "gdb_file_cmd".  The binding of "gdb_file_cmd"
+# is done at invocation time.  Before this file is processed,
+# it binds to the definition in "testsuite/lib/gdb.exp"; after
+# this file is processed, it binds to this definition.
+# TCL lets us overrides a previous routine definition without a
+# warning (isn't that special?).
+#
+# This means that tests before use "file" to load a target, and
+# tests afterwards use the pair "symbol-file" "exec-file".
+#
+# I'm leaving it as it is for now because at the moment it
+# is the only test we have of the use of the combination of
+# "symbol-file" and "exec-file" to load a debugging target (the
+# other definition uses "file". 
+#
+# Symbol-file and exec-file should be tested explicitly, not
+# as a side effect of running a particular test (in this case,
+# "testsuite/gdb.compat/dbx.exp").
+#
+# CM: Renamed the procedure so it does not override the orginal file name.
+#     Having the test suite change behavior depending on the tests run makes
+#     it extremely difficult to reproduce errors. I've also added a
+#     "dbx_gdb_load" procedure.  This and only this test will call these
+#     procedures now. I also added an "expect" to the "send exec-file" line.
+#     The "expect" waits for a prompt to appear. Otherwise, if the tests run
+#     too quickly, the caller could send another command before the prompt
+#     of this command returns, causing the test to get out of sync and fail
+#     seemingly randomly or only on a loaded system.
+#
+# Problem is, though, that the testsuite config files can override the definition of
+# gdb_load (without notice, as was mentioned above). Unfortunately, the gdb_load proc
+# that was copied into this test was a copy of the unix native version.
+#
+# The real problem that we're attempting to solve is how to load an exec and symbol
+# file into gdb for a dbx session. So why not just override gdb_file_cmd with the
+# right sequence of events, allowing gdb_load to do its normal thing? This way
+# remotes and simulators will work, too.
+#
+# [drow 2002-03-30]: We can restore the old gdb_file_cmd afterwards, though.
+set old_gdb_file_cmd_args [info args gdb_file_cmd]
+set old_gdb_file_cmd_body [info body gdb_file_cmd]
+
+proc gdb_file_cmd {arg} {
+    global verbose
+    global loadpath
+    global loadfile
+    global GDB
+    global gdb_prompt
+    global spawn_id
+    upvar timeout timeout
+    global last_loaded_file
+
+    set last_loaded_file $arg
+
+    if [is_remote host] {
+        set arg [remote_download host $arg];
+        if { $arg == "" } {
+            error "download failed"
+            return -1;
+        }
+    }
+
+    send_gdb "symbol-file $arg\n"
+    gdb_expect {
+	-re "Detected 64-bit symbol file.\r\nInvoking.*gdb64.*$gdb_prompt $" {
+            verbose "\t\tLoaded $arg into the $GDB"
+            send_gdb "exec-file $arg\n" 
+            gdb_expect {
+                -re ".*$gdb_prompt $" {
+                    verbose "\t\tLoaded $arg with new symbol table into $GDB"
+                    return 0
+                }
+                timeout {
+                    perror "(timeout) Couldn't load $arg"
+                    return -1
+                }
+            }
+            return 0
+        }
+        -re "Reading symbols from.*done.*$gdb_prompt $" {
+            verbose "\t\tLoaded $arg into the $GDB"
+            send_gdb "exec-file $arg\n" 
+            gdb_expect {
+	        -re "A program is being debugged already.*Kill it.*y or n. $" {
+	            send_gdb "y\n"
+	                verbose "\t\tKilling previous program being debugged"
+	            exp_continue
+	        }
+                -re ".*$gdb_prompt $" {
+                    verbose "\t\tLoaded $arg with new symbol table into $GDB"
+                    return 0
+                }
+                timeout {
+                    perror "(timeout) Couldn't load $arg"
+                    return -1
+                }
+            }
+            return 0
+        }
+        -re "has no symbol-table.*$gdb_prompt $" {
+            perror "$arg wasn't compiled with \"-g\""
+            return -1
+        }
+        -re "Load new symbol table from \".*\".*y or n. $" {
+            send_gdb "y\n"
+	    exp_continue
+        }
+        -re ".*No such file or directory.*$gdb_prompt $" {
+            perror "($arg) No such file or directory\n"
+            return -1
+        }
+        -re "$gdb_prompt $" {
+            perror "couldn't load $arg into $GDB."
+            return -1
+            }
+        timeout {
+            perror "couldn't load $arg into $GDB (timed out)."
+            return -1
+        }
+        eof {
+            # This is an attempt to detect a core dump, but seems not to
+            # work.  Perhaps we need to match .* followed by eof, in which
+            # expect does not seem to have a way to do that.
+            perror "couldn't load $arg into $GDB (end of file)."
+            return -1
+        }
+    }
+}
+
+#
+#test_breakpoints
+#
+proc test_breakpoints { } {
+    gdb_test "stop in main" "Breakpoint.*at.*: file.*average\.c, line 38\."
+    gdb_test "status" "Num.*Type.*Disp.*Enb.*Address.*What\r\n1\[ \r\]+breakpoint\[ \r\]+keep y.*in main at.*average\.c:38.*"
+    gdb_test "stop at average.c:43" "Breakpoint.*at.*: file.*average\.c, line 43.*"
+    gdb_test "stop in average.c:43" "Usage: stop in <function . address>"
+    gdb_test "stop at main" "Usage: stop at <line>"
+}
+
+#
+#test_assign
+#
+proc test_assign { } {
+    global decimal
+    global gdb_prompt
+
+    gdb_run_cmd
+    gdb_expect 30 {
+        -re "Break.* at .*:$decimal.*$gdb_prompt $" { pass "running to main" }
+        -re "Breakpoint \[0-9\]*, \[0-9xa-f\]* in .*$gdb_prompt $" { pass "running to main"  }
+        -re "$gdb_prompt $" { fail "running to main" }
+        timeout { fail "running to main (timeout)" }
+    }
+    send_gdb "assign first=1\n"
+    gdb_expect {
+      -re "No symbol \"first\" in current context.*$" { fail "assign first" }
+      "$gdb_prompt $" { pass "assign first" }
+      timeout { fail "assign first (timeout)" }
+    }
+    gdb_test "print first" ".1 = 1"
+}
+
+#
+#test_whereis
+#
+proc test_whereis { } {
+    gdb_test "whereis my_list" "All variables matching regular expression \"my_list\":\r\n\r\nFile.*average\.c:\r\nstatic int my_list\\\[10\\\];"
+}
+
+#
+#test_func
+#
+proc test_func { } {
+    gdb_test "cont" "" "cont 1"
+    gdb_test "step" ""
+    # This always fails, but it's not clear why. -sts 1999-08-17
+    setup_xfail "*-*-*"
+    gdb_test "func sum" "'sum' not within current stack frame\."
+    gdb_test "stop in sum" "Breakpoint.*at.*: file.*sum\.c, line 11\."
+    gdb_test "cont" "" "cont 2"
+    # This always fails, but it's not clear why. -sts 1999-08-17
+    setup_xfail "*-*-*"
+    gdb_test "func print_average" ".*in print_average.*\\(list=.*, low=0, high=6\\).*at.*average\.c:24\r\n24\[ \t\]+total = sum\\(list, low, high\\);"
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+global GDBFLAGS
+set saved_gdbflags $GDBFLAGS
+
+set GDBFLAGS "$GDBFLAGS --dbx"
+gdb_start
+dbx_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+test_breakpoints
+test_assign
+test_whereis
+gdb_test "file average.c:1" "1\[ \t\]+/. This is a sample program.*"
+test_func
+
+#exit and cleanup
+gdb_exit
+
+set GDBFLAGS $saved_gdbflags
+eval proc gdb_file_cmd {$old_gdb_file_cmd_args} {$old_gdb_file_cmd_body}
+
+return 0

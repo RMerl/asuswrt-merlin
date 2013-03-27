@@ -1,0 +1,71 @@
+<refentry id="refi18n">
+
+  <refmeta>
+    <refentrytitle>ne_i18n_init</refentrytitle>
+    <manvolnum>3</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname id="ne_i18n_init">ne_i18n_init</refname>
+    <refpurpose>functions to initialize internationalization support</refpurpose>
+  </refnamediv>
+  
+  <refsynopsisdiv>
+
+    <funcsynopsis>
+
+      <funcsynopsisinfo>#include &lt;ne_i18n.h&gt;</funcsynopsisinfo>
+
+      <funcprototype>
+        <funcdef>void <function>ne_i18n_init</function></funcdef>
+        <paramdef>const char *<parameter>encoding</parameter></paramdef>
+      </funcprototype>
+
+    </funcsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para>The <function>ne_i18n_init</function> function can be used
+    to enable support for translated messages in the &neon; library.
+    The <parameter>encoding</parameter> parameter, if non-&null;,
+    specifies the character encoding required for generated translated
+    string.  If it is &null;, the appropriate character encoding for
+    the process locale will be used.</para>
+
+    <para>This call is only strictly necessary if either:
+
+    <orderedlist numeration="loweralpha">
+        
+      <listitem><simpara>&neon; has been installed into a different
+      prefix than the <literal>gettext</literal> implementation on
+      which it depends for i18n purposes, or</simpara></listitem>
+
+      <listitem><simpara>the caller requires that translated messages
+      are in a particular character encoding.</simpara></listitem>
+
+    </orderedlist></para>
+
+    <para>If <function>ne_i18n_init</function> is never called, the
+    message catalogs will not be found if case (a) applies (and so
+    English error messages will be used), and will use the default
+    character encoding specified by the process locale.  The library
+    will otherwise operate correctly.</para>
+
+    <para>Note that the encoding used is a process-global setting and
+    so results may be unexpected if other users of &neon; within the
+    process call <function>ne_i18n_init</function> with a different
+    encoding parameter.</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>See also</title>
+
+    <para><xref linkend="ne_sock_init"/></para>
+  </refsect1>
+
+</refentry>
+

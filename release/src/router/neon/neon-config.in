@@ -1,0 +1,110 @@
+#! /bin/sh
+# Originally from libxml, Copyright (C) Daniel Veillard
+# Modifications for neon Copyright (C) 2000-2006 Joe Orton.
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+includedir=@includedir@
+libdir=@libdir@
+
+usage()
+{
+    cat <<EOF
+Usage: neon-config [OPTION]
+
+Known values for OPTION are:
+
+  --prefix=DIR		change neon prefix [default $prefix]
+  --libs		print library linking information
+  --la-file		print location of libtool .la file
+  --cflags		print pre-processor and compiler flags
+  --help		display this help and exit
+  --version		output version information
+  --support FEATURE     exit with success if feature is supported
+
+ Known features: 
+    dav [@NE_FLAG_DAV@], ssl [@NE_FLAG_SSL@], zlib [@NE_FLAG_ZLIB@], ipv6 [@NE_FLAG_IPV6@], lfs [@NE_FLAG_LFS@],
+    i18n [@NE_FLAG_I18N@], ts_ssl [@NE_FLAG_TS_SSL@]
+
+EOF
+
+    exit $1
+}
+
+support()
+{
+    if test "$1" = "yes"; then
+	exit 0
+    else
+	exit 1
+    fi
+}
+
+if test $# -eq 0; then
+    usage 1
+fi
+
+while test $# -gt 0; do
+    case "$1" in
+    -*=*) optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+    *) optarg= ;;
+    esac
+
+    case "$1" in
+    --prefix=*)
+	prefix=$optarg
+	;;
+
+    --prefix)
+	echo $prefix
+	;;
+
+    --version)
+	echo neon @NEON_VERSION@
+	exit 0
+	;;
+
+    --help)
+	usage 0
+	;;
+
+    --cflags)
+       	echo -I${includedir}/neon @NEON_CFLAGS@
+       	;;
+
+    --libs)
+        LIBS="-lneon @NEON_LIBS@"
+	# Don't add standard library paths
+        if test "$prefix" != "/usr"; then
+           LIBS="-L${libdir} ${LIBS}"
+        fi
+	echo @user_LDFLAGS@ ${LIBS}
+	;;
+
+    --la-file)
+	echo ${libdir}/libneon.la
+	;;
+
+    --support)
+	shift
+
+	case "$1" in
+	ssl|SSL) support @NE_FLAG_SSL@ ;;
+	zlib|ZLIB) support @NE_FLAG_ZLIB@ ;;
+	ipv6|IPV6) support @NE_FLAG_IPV6@ ;;
+	dav|DAV) support @NE_FLAG_DAV@ ;;
+	lfs|LFS) support @NE_FLAG_LFS@ ;;
+	i18n|I18N) support @NE_FLAG_I18N@ ;;
+	ts_ssl|TS_SSL) support @NE_FLAG_TS_SSL@ ;;
+	*) support no ;;
+	esac
+	;;
+
+    *)
+	usage 1 1>&2
+	;;
+    esac
+    shift
+done
+
+exit 0

@@ -1,0 +1,127 @@
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check that GDB can support multiple watchpoints across threads.
+
+if $tracelevel {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+# This test verifies that a watchpoint is detected in the proper thread
+# so the test is only meaningful on a system with hardware watchpoints.
+if [target_info exists gdb,no_hardware_watchpoints] {
+    return 0;
+}
+
+set testfile "watchthreads"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug "incdir=${objdir}"]] != "" } {
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+gdb_test "set can-use-hw-watchpoints 1" "" ""
+
+#
+# Run to `main' where we begin our tests.
+#
+
+if ![runto_main] then {
+    gdb_suppress_tests
+}
+
+set args_0 0
+set args_1 0
+
+# Watch values that will be modified by distinct threads.
+gdb_test "watch args\[0\]" "Hardware watchpoint 2: args\\\[0\\\]"
+gdb_test "watch args\[1\]" "Hardware watchpoint 3: args\\\[1\\\]"
+
+set init_line [expr [gdb_get_line_number "Init value"]+1]
+set inc_line [gdb_get_line_number "Loop increment"]
+
+# Loop and continue to allow both watchpoints to be triggered.
+for {set i 0} {$i < 30} {incr i} {
+  set test_flag 0
+  gdb_test_multiple "continue" "threaded watch loop" {
+    -re "Hardware watchpoint 2: args\\\[0\\\].*Old value = 0.*New value = 1.*main \\\(\\\) at .*watchthreads.c:$init_line.*$gdb_prompt $"
+       { set args_0 1; set test_flag 1 }
+    -re "Hardware watchpoint 3: args\\\[1\\\].*Old value = 0.*New value = 1.*main \\\(\\\) at .*watchthreads.c:$init_line.*$gdb_prompt $"
+       { set args_1 1; set test_flag 1 }
+    -re "Hardware watchpoint 2: args\\\[0\\\].*Old value = $args_0.*New value = [expr $args_0+1].*in thread_function \\\(arg=0x0\\\) at .*watchthreads.c:$inc_line.*$gdb_prompt $"
+       { set args_0 [expr $args_0+1]; set test_flag 1 }
+    -re "Hardware watchpoint 3: args\\\[1\\\].*Old value = $args_1.*New value = [expr $args_1+1].*in thread_function \\\(arg=0x1\\\) at .*watchthreads.c:$inc_line.*$gdb_prompt $"
+       { set args_1 [expr $args_1+1]; set test_flag 1 }
+  }
+  # If we fail above, don't bother continuing loop
+  if { $test_flag == 0 } {
+    set i 30;
+  }
+}
+
+# Print success message if loop succeeded.
+if { $test_flag == 1 } {
+  pass "threaded watch loop"
+}
+
+# Verify that we hit first watchpoint in main thread.
+set message "first watchpoint on args\[0\] hit"
+if { $args_0 > 0 } {
+  pass $message 
+} else {
+  fail $message 
+}
+
+# Verify that we hit second watchpoint in main thread.
+set message "first watchpoint on args\[1\] hit"
+if { $args_1 > 0 } {
+  pass $message 
+} else {
+  fail $message 
+}
+
+# Verify that we hit first watchpoint in child thread.
+set message "watchpoint on args\[0\] hit in thread"
+if { $args_0 > 1 } {
+  pass $message 
+} else {
+  fail $message
+}
+
+# Verify that we hit second watchpoint in child thread.
+set message "watchpoint on args\[1\] hit in thread"
+if { $args_1 > 1 } {
+  pass $message 
+} else {
+  fail $message 
+}
+
+# Verify that all watchpoint hits are accounted for.
+set message "combination of threaded watchpoints = 30"
+if { [expr $args_0+$args_1] == 30 } {
+  pass $message 
+} else {
+  fail $message 
+}

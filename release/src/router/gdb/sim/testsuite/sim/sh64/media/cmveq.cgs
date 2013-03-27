@@ -1,0 +1,32 @@
+# sh testcase for cmveq $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+init:
+	pta wrong, tr0
+
+	movi 0, r0
+	movi 1, r1
+	movi 2, r2
+	movi 21, r3
+
+cmveq:
+	# Zap r7.
+	movi 0, r7
+
+	cmveq r0, r2, r7
+	bne r2, r7, tr0
+
+	cmveq r1, r3, r7
+	# Make sure r7 is still equal to r2.
+	bne r2, r7, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

@@ -34,14 +34,21 @@ $(error $(MAKE): Error: version $(MAKE_VERSION) too old, 3.81+ required)
 endif
 
 ################################################################
+# Derive including makefile since it's a little tricky.
+################################################################
+
+WLAN_Makefile := $(abspath $(lastword $(filter-out $(lastword $(MAKEFILE_LIST)),$(MAKEFILE_LIST))))
+
+################################################################
 # Shiny new ideas, can be enabled via environment for testing.
 ################################################################
 
 ifdef WLAN_MakeBeta
 $(info Info: BUILDING WITH "WLAN_MakeBeta" ENABLED!)
 SHELL := /bin/bash
+#export SHELLOPTS ?= pipefail
 #.SUFFIXES:
-#MAKEFLAGS += -R
+#MAKEFLAGS += -r
 endif
 
 ################################################################
@@ -109,12 +116,17 @@ endef
 # like "aaa-bbb-ccc-ddd".
 wlan_opt = $(if $(findstring -$1-,-$2-),1,0)
 
+# Compares two dotted numeric strings (e.g 2.3.16.1) for $1 >= $2
+define wlan_version_ge
+$(findstring TRUE,$(shell bash -c 'sort -cu -t. -k1,1nr -k2,2nr -k3,3nr -k4,4nr <(echo -e "$2\n$1") 2>&1 || echo TRUE'))
+endef
+
 # This is a useful macro to wrap around a compiler command line,
 # e.g. "$(call wlan_cc,<command-line>). It organizes flags in a
 # readable way while taking care not to change any ordering
 # which matters. It also provides a hook for externally
 # imposed C flags which can be passed in from the top level.
-# TODO this would be the best place to add a check for
+# This would be the best place to add a check for
 # command line length. Requires a $(strlen) function;
 # GMSL has one.
 define wlan_cc
@@ -155,7 +167,7 @@ include $(WLAN_TreeBaseA)/src-rt-6.x/makefiles/RelPath.mk
 export WLAN_TreeBaseR = $(call relpath,$(WLAN_TreeBaseA))
 
 # For compatibility, due to the prevalence of $(SRCBASE)
-WLAN_SrcBaseA := $(WLAN_TreeBaseA)/src
+WLAN_SrcBaseA := $(WLAN_TreeBaseA)/src-rt-6.x
 WLAN_SrcBaseR  = $(patsubst %/,%,$(dir $(WLAN_TreeBaseR)))
 
 # Show makefile list before we start including things.
@@ -173,7 +185,7 @@ include $(WLAN_TreeBaseA)/src-rt-6.x/tools/release/WLAN.usf
 ################################################################
 
 # This uses pattern matching to pull component paths from
-# their basenames (e.g. src/wl/clm => clm).
+# their basenames (e.g. src/wl/xyz => xyz).
 # It also strips out component paths which don't currently exist.
 # This may be required due to our "partial-source" build styles
 # and the fact that linux mkdep throws an error when a directory
@@ -192,27 +204,39 @@ ifeq (,$(WLAN_ComponentsInUse))
 else ifeq (*,$(WLAN_ComponentsInUse))
   WLAN_ComponentsInUse		:= $(sort $(notdir $(WLAN_AllComponentPaths)))
   $(call wlan_info,all SW components requested ("$(WLAN_ComponentsInUse)"))
+else
+  WLAN_ComponentsInUse		:= $(sort $(WLAN_ComponentsInUse))
 endif
 WLAN_ComponentPathsInUse	:= $(call _common-component-names-to-rel-paths,$(WLAN_ComponentsInUse))
 
 # Test that all requested components exist.
 ifneq ($(sort $(WLAN_ComponentsInUse)),$(notdir $(WLAN_ComponentPathsInUse)))
-  $(call wlan_warning,bogus component request: "$(sort $(WLAN_ComponentsInUse))" != "$(notdir $(WLAN_ComponentPathsInUse))")
+# TODO - turned off until old branches support this infrastructure.
+#  $(call wlan_warning,bogus component request: "$(sort $(WLAN_ComponentsInUse))" != "$(notdir $(WLAN_ComponentPathsInUse))")
 endif
 
-# Generate a WLAN_ComponentBaseDir_<name> variable for each component.
+# Loop through all components in use. If an xyz.mk file exists at the base of
+# component xyz's subtree, include it and use its contents to modify the list
+# of include and src dirs. Otherwise, use the defaults for that component.
+# Also generate a WLAN_ComponentBaseDir_xyz variable for each component "xyz".
+WLAN_ComponentIncPathsInUse :=
+WLAN_ComponentSrcPathsInUse :=
 $(foreach _path,$(WLAN_ComponentPathsInUse), \
+  $(if $(wildcard $(WLAN_TreeBaseA)/$(_path)/$(notdir $(_path)).mk),$(eval include $(WLAN_TreeBaseA)/$(_path)/$(notdir $(_path)).mk)) \
+  $(eval $(notdir $(_path))_IncDirs ?= include) \
+  $(eval $(notdir $(_path))_SrcDirs ?= src-rt-6.x) \
+  $(eval WLAN_ComponentIncPathsInUse += $(addprefix $(_path)/,$($(notdir $(_path))_IncDirs))) \
+  $(eval WLAN_ComponentSrcPathsInUse += $(addprefix $(_path)/,$($(notdir $(_path))_SrcDirs))) \
   $(eval WLAN_ComponentBaseDir_$$(notdir $(_path)) := $$(WLAN_TreeBaseA)/$(_path)) \
 )
 
-# TODO - It's not clear whether the following should be exported.
 # Public convenience macros based on WLAN_ComponentPathsInUse list.
-export WLAN_ComponentSrcDirsR	 = $(addprefix $(WLAN_TreeBaseR)/,$(addsuffix /src,$(WLAN_ComponentPathsInUse)))
-export WLAN_ComponentIncDirsR	 = $(addprefix $(WLAN_TreeBaseR)/,$(addsuffix /include,$(WLAN_ComponentPathsInUse)))
+export WLAN_ComponentSrcDirsR	 = $(addprefix $(WLAN_TreeBaseR)/,$(WLAN_ComponentSrcPathsInUse))
+export WLAN_ComponentIncDirsR	 = $(addprefix $(WLAN_TreeBaseR)/,$(WLAN_ComponentIncPathsInUse))
 export WLAN_ComponentIncPathR	 = $(addprefix -I,$(WLAN_ComponentIncDirsR))
 
-export WLAN_ComponentSrcDirsA	 = $(addprefix $(WLAN_TreeBaseA)/,$(addsuffix /src,$(WLAN_ComponentPathsInUse)))
-export WLAN_ComponentIncDirsA	 = $(addprefix $(WLAN_TreeBaseA)/,$(addsuffix /include,$(WLAN_ComponentPathsInUse)))
+export WLAN_ComponentSrcDirsA	 = $(addprefix $(WLAN_TreeBaseA)/,$(WLAN_ComponentSrcPathsInUse))
+export WLAN_ComponentIncDirsA	 = $(addprefix $(WLAN_TreeBaseA)/,$(WLAN_ComponentIncPathsInUse))
 export WLAN_ComponentIncPathA	 = $(addprefix -I,$(WLAN_ComponentIncDirsA))
 
 export WLAN_ComponentSrcDirs	 = $(WLAN_ComponentSrcDirsA)
@@ -231,8 +255,30 @@ $(info Info: CL=$(CL))
 endif
 endif
 
+# A big hammer for debugging each shell invocation.
+# Warning: this can get lost if a sub-makefile sets SHELL explicitly, and
+# if so the parent should add $WLAN_ShellDebugSHELL to the call.
+ifeq ($D,2)
+WLAN_ShellDebug := 1
+endif
+ifdef WLAN_ShellDebug
+ORIG_SHELL := $(SHELL)
+SHELL = $(strip $(warning Shell: ORIG_SHELL=$(ORIG_SHELL) PATH=$(PATH))$(ORIG_SHELL)) -x
+WLAN_ShellDebugSHELL := SHELL='$$(warning Shell: ORIG_SHELL=$$(ORIG_SHELL) PATH=$$(PATH))$(ORIG_SHELL) -x'
+endif
+
 # Variables of general utility.
 WLAN_Perl := perl
+WLAN_Python := python
+
+# These macros are used to stash an extra copy of generated source files,
+# such that when a source release is made those files can be reconstituted
+# from the stash during builds. Required if the generating tools or inputs
+# are not shipped.
+define wlan_copy_to_gen
+  $(if $(WLAN_COPY_GEN),&& mkdir -pv $(subst $(abspath $2),$(abspath $2/$(WLAN_GenDir)),$(dir $1)) && \
+    cp -pv $1 $(subst $(abspath $2),$(abspath $2/$(WLAN_GenDir)),$1.GEN))
+endef
 
 ################################################################
 # CLM function; generates a rule to run ClmCompiler iff the XML exists.
@@ -245,7 +291,8 @@ WLAN_Perl := perl
 # are those which must be present for all release builds.
 # The "clm_compiled" phony target is provided for makefiles which need
 # to defer some other processing until CLM data is ready, and "clm_clean"
-# and "CLM_DATA_FILES" make it easier for client makefiles to clean up CLM data.
+# and "CLM_DATA_FILES" make it easier for internal client makefiles to
+# clean up CLM data (externally, this is treated as source and not removed).
 #   The outermost conditional allows this rule to become a no-op
 # in external settings where there is no XML input file while allowing
 # it to turn back on automatically if an XML file is provided.
@@ -264,22 +311,21 @@ CLMCOMPDEFFLAGS ?= --region '\#a/0' --region '\#r/0' --full_set
 CLMCOMPEXTFLAGS := --obfuscate
 define WLAN_GenClmCompilerRule
 $(eval\
-#$$(call wlan_assert,$$(findstring clm,$$(WLAN_ComponentsInUse)),CLM component not requested)\ ## TODO - enable
 .PHONY: clm_compiled clm_clean
 vpath wlc_clm_data$4.c $1 $$(abspath $1)
-ifneq (,$(wildcard $(addsuffix /wl/clm/private/wlc_clm_data.xml,$2 $2/../../src $2/../../../src)))
-  vpath wlc_clm_data.xml $(addsuffix /wl/clm/private,$5 $2 $2/../../src $2/../../../src)
+ifneq (,$(wildcard $(addsuffix /wl/clm/private/wlc_clm_data.xml,$2 $2/../../src-rt-6.x $2/../../../src-rt-6.x)))
+  vpath wlc_clm_data.xml $(addsuffix /wl/clm/private,$5 $2 $2/../../src-rt-6.x $2/../../../src-rt-6.x)
   $1/wlc_clm_data$4.c: wlc_clm_data.xml $$(if $$(CLM_TYPE),$2/wl/clm/types/$$(CLM_TYPE).clm) ; \
     $$(strip $$(abspath $$(<D)/../../../tools/build/ClmCompiler) \
       $$(if $$(CLM_TYPE),--config_file $$(abspath $$(<D)/../types/$$(CLM_TYPE).clm) $3,$$(if $3,$3,$$(CLMCOMPDEFFLAGS))) \
-      $(CLMCOMPEXTFLAGS) $$< $$@)
+      $(CLMCOMPEXTFLAGS) $$< $$@ $$(call wlan_copy_to_gen,$$@,$2))
+else
+  vpath %.GEN $(subst $(abspath $2),$(abspath $2/$(WLAN_GenDir)),$1) $(sort $(patsubst %/,%,$(dir $(wildcard $(subst $(abspath $2),$(abspath $2/$(WLAN_GenDir)),$(dir $1))*/*.GEN))))
+  $1/%: %.GEN ; cp -pv $$< $$@
+endif
   clm_compiled: $1/wlc_clm_data$4.c
   clm_clean:: ; $$(RM) $1/wlc_clm_data$4.c
   CLM_DATA_FILES += $1/wlc_clm_data$4.c
-else
-  clm_compiled:
-  clm_clean::
-endif
 )
 endef
 

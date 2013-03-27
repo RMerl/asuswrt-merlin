@@ -139,7 +139,6 @@ void ots_rand(unsigned char *rnd, int rndlen)
 {
 	time_t tim;
 	int i, vrand;
-	unsigned long *bptr;
 
 	/* make a random number and set the top and bottom bits */
 	time(&tim);

@@ -1,0 +1,12 @@
+# arm testcase for ldrb $rd,[$rb,$ro]
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrb
+ldrb:
+	ldrb r0,[r0,r0]
+
+	pass

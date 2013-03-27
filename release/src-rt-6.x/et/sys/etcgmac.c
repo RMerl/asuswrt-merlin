@@ -3,7 +3,7 @@
  *
  * This file implements the chip-specific routines for the GMAC core.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: etcgmac.c 337637 2012-06-07 23:59:18Z $
+ * $Id: etcgmac.c 346601 2012-07-23 10:38:19Z $
  */
 
 #include <et_cfg.h>
@@ -179,6 +179,7 @@ chipattach(etc_info_t *etc, void *osh, void *regsva)
 	char name[16];
 	char *var;
 	uint boardflags, boardtype, reset;
+	uint32 flagbits = 0;
 
 	ET_TRACE(("et%d: chipattach: regsva 0x%lx\n", etc->unit, (ulong)regsva));
 
@@ -203,17 +204,22 @@ chipattach(etc_info_t *etc, void *osh, void *regsva)
 		goto fail;
 	}
 
-	if ((etc->corerev = si_corerev(ch->sih)) == GMAC_4706B0_CORE_REV &&
-	    (ch->regscomm = (gmac_commonregs_t *)si_setcore(ch->sih,
-		GMAC_COMMON_4706_CORE_ID, 0)) == NULL) {
-		ET_ERROR(("et%d: chipattach: Could not setcore to GMAC common\n", etc->unit));
-		goto fail;
+	if (si_corerev(ch->sih) == GMAC_4706B0_CORE_REV) {
+		etc->corerev = GMAC_4706B0_CORE_REV;
+		if ((ch->regscomm = (gmac_commonregs_t *)si_setcore(ch->sih,
+		    GMAC_COMMON_4706_CORE_ID, 0)) == NULL) {
+			ET_ERROR(("et%d: chipattach: Could not setcore to GMAC common\n",
+				etc->unit));
+			goto fail;
+		}
 	}
 
 	if ((regs = (gmacregs_t *)si_setcore(ch->sih, GMAC_CORE_ID, etc->unit)) == NULL) {
 		ET_ERROR(("et%d: chipattach: Could not setcore to GMAC\n", etc->unit));
 		goto fail;
 	}
+	if (etc->corerev != GMAC_4706B0_CORE_REV)
+		etc->corerev = si_corerev(ch->sih);
 
 	ch->regs = regs;
 	etc->chip = ch->sih->chip;
@@ -268,6 +274,23 @@ chipattach(etc_info_t *etc, void *osh, void *regsva)
 	/* configure pci core */
 	si_pci_setup(ch->sih, (1 << si_coreidx(ch->sih)));
 
+	/* Northstar, take all GMAC cores out of reset */
+	if (CHIPID(ch->sih->chip) == BCM4707_CHIP_ID) {
+		int ns_gmac;
+		for (ns_gmac = 0; ns_gmac < MAX_GMAC_CORES_4707; ns_gmac++) {
+			/* As northstar requirement, we have to reset all GAMCs before
+			 * accessing them. et_probe() call pci_enable_device() for etx
+			 * and do si_core_reset for GAMCx only.	 Then the other three
+			 * GAMCs didn't reset.  We do it here.
+			 */
+			si_setcore(ch->sih, GMAC_CORE_ID, ns_gmac);
+			if (!si_iscoreup(ch->sih)) {
+				ET_TRACE(("et%d: reset GMAC[%d] core\n", etc->unit, ns_gmac));
+				si_core_reset(ch->sih, flagbits, 0);
+			}
+		}
+		si_setcore(ch->sih, GMAC_CORE_ID, etc->unit);
+	}
 	/* reset the gmac core */
 	chipreset(ch);
 
@@ -309,6 +332,68 @@ chipattach(etc_info_t *etc, void *osh, void *regsva)
 	for (i = 0; i < NUMTXQ; i++)
 		if (ch->di[i] != NULL)
 			etc->txavail[i] = (uint *)&ch->di[i]->txavail;
+
+#ifndef _CFE_
+	/* override dma parameters, corerev 4 dma channel 1,2 and 3 default burstlen is 0. */
+	if (etc->corerev == 4) {
+#define DMA_CTL_TX 0
+#define DMA_CTL_RX 1
+
+#define DMA_CTL_MR 0
+#define DMA_CTL_PC 1
+#define DMA_CTL_PT 2
+#define DMA_CTL_BL 3
+		static uint16 dmactl[2][4] = {
+			/* TX */
+			{ DMA_MR_2, DMA_PC_16, DMA_PT_8, DMA_BL_1024 },
+			{ 0, DMA_PC_16, DMA_PT_8, DMA_BL_128 },
+		};
+
+		dmactl[DMA_CTL_TX][DMA_CTL_MR] = (TXMR == 2 ? DMA_MR_2 : DMA_MR_1);
+		dmactl[DMA_CTL_TX][DMA_CTL_PT] = (TXPREFTHRESH == 8 ? DMA_PT_8 :
+		                                  TXPREFTHRESH == 4 ? DMA_PT_4 :
+		                                  TXPREFTHRESH == 2 ? DMA_PT_2 : DMA_PT_1);
+		dmactl[DMA_CTL_TX][DMA_CTL_PC] = (TXPREFCTL == 16 ? DMA_PC_16 :
+		                                  TXPREFCTL == 8 ? DMA_PC_8 :
+		                                  TXPREFCTL == 4 ? DMA_PC_4 : DMA_PC_0);
+		dmactl[DMA_CTL_TX][DMA_CTL_BL] = (TXBURSTLEN == 1024 ? DMA_BL_1024 :
+		                                  TXBURSTLEN == 512 ? DMA_BL_512 :
+		                                  TXBURSTLEN == 256 ? DMA_BL_256 :
+		                                  TXBURSTLEN == 128 ? DMA_BL_128 :
+		                                  TXBURSTLEN == 64 ? DMA_BL_64 :
+		                                  TXBURSTLEN == 32 ? DMA_BL_32 : DMA_BL_16);
+
+		dmactl[DMA_CTL_RX][DMA_CTL_PT] =  (RXPREFTHRESH == 8 ? DMA_PT_8 :
+		                                   RXPREFTHRESH == 4 ? DMA_PT_4 :
+		                                   RXPREFTHRESH == 2 ? DMA_PT_2 : DMA_PT_1);
+		dmactl[DMA_CTL_RX][DMA_CTL_PC] = (RXPREFCTL == 16 ? DMA_PC_16 :
+		                                  RXPREFCTL == 8 ? DMA_PC_8 :
+		                                  RXPREFCTL == 4 ? DMA_PC_4 : DMA_PC_0);
+		dmactl[DMA_CTL_RX][DMA_CTL_BL] = (RXBURSTLEN == 1024 ? DMA_BL_1024 :
+		                                  RXBURSTLEN == 512 ? DMA_BL_512 :
+		                                  RXBURSTLEN == 256 ? DMA_BL_256 :
+		                                  RXBURSTLEN == 128 ? DMA_BL_128 :
+		                                  RXBURSTLEN == 64 ? DMA_BL_64 :
+		                                  RXBURSTLEN == 32 ? DMA_BL_32 : DMA_BL_16);
+
+		for (i = 0; i < NUMTXQ; i++) {
+				dma_param_set(ch->di[i], HNDDMA_PID_TX_MULTI_OUTSTD_RD,
+				              dmactl[DMA_CTL_TX][DMA_CTL_MR]);
+				dma_param_set(ch->di[i], HNDDMA_PID_TX_PREFETCH_CTL,
+				              dmactl[DMA_CTL_TX][DMA_CTL_PC]);
+				dma_param_set(ch->di[i], HNDDMA_PID_TX_PREFETCH_THRESH,
+				              dmactl[DMA_CTL_TX][DMA_CTL_PT]);
+				dma_param_set(ch->di[i], HNDDMA_PID_TX_BURSTLEN,
+				              dmactl[DMA_CTL_TX][DMA_CTL_BL]);
+				dma_param_set(ch->di[i], HNDDMA_PID_RX_PREFETCH_CTL,
+				              dmactl[DMA_CTL_RX][DMA_CTL_PC]);
+				dma_param_set(ch->di[i], HNDDMA_PID_RX_PREFETCH_THRESH,
+				              dmactl[DMA_CTL_RX][DMA_CTL_PT]);
+				dma_param_set(ch->di[i], HNDDMA_PID_RX_BURSTLEN,
+				              dmactl[DMA_CTL_RX][DMA_CTL_BL]);
+		}
+	}
+#endif /* ! _CFE_ */
 
 	/* set default sofware intmask */
 	sprintf(name, "et%d_no_txint", etc->coreunit);
@@ -442,7 +527,8 @@ chipdetach(ch_t *ch)
 		}
 
 	/* put the core back into reset */
-	if (ch->sih)
+	/* For Northstar, should not disable any GMAC core */
+	if (ch->sih && CHIPID(ch->sih->chip) != BCM4707_CHIP_ID)
 		si_core_disable(ch->sih, 0);
 
 	ch->etc->mib = NULL;
@@ -543,7 +629,11 @@ chipdumpregs(ch_t *ch, gmacregs_t *regs, struct bcmstrbuf *b)
 	bcm_bprintf(b, "\n");
 
 	/* unimac registers */
-	PRREG(unimacversion); PRREG(hdbkpctl);
+	if (CHIPID(ch->sih->chip) != BCM4707_CHIP_ID) {
+		/* BCM4707 doesn't has unimacversion register */
+		PRREG(unimacversion);
+	}
+	PRREG(hdbkpctl);
 	bcm_bprintf(b, "\n");
 	PRREG(cmdcfg);
 	bcm_bprintf(b, "\n");
@@ -629,14 +719,14 @@ gmac_clearmib(ch_t *ch)
 static void
 gmac_init_reset(ch_t *ch)
 {
-	OR_REG(ch->osh, &ch->regs->cmdcfg, CC_SR);
+	OR_REG(ch->osh, &ch->regs->cmdcfg, CC_SR(ch->etc->corerev));
 	OSL_DELAY(GMAC_RESET_DELAY);
 }
 
 static void
 gmac_clear_reset(ch_t *ch)
 {
-	AND_REG(ch->osh, &ch->regs->cmdcfg, ~CC_SR);
+	AND_REG(ch->osh, &ch->regs->cmdcfg, ~CC_SR(ch->etc->corerev));
 	OSL_DELAY(GMAC_RESET_DELAY);
 }
 
@@ -715,6 +805,10 @@ gmac_speed(ch_t *ch, uint32 speed)
 			ET_ERROR(("et%d: gmac_speed: supports 1000 mbps full duplex only\n",
 			          ch->etc->unit));
 			return (FAILURE);
+
+		case ET_2500FULL:
+			speed = 3;
+			break;
 
 		default:
 			ET_ERROR(("et%d: gmac_speed: speed %d not supported\n",
@@ -802,7 +896,7 @@ gmac_enable(ch_t *ch)
 	/* put mac in reset */
 	gmac_init_reset(ch);
 
-	cmdcfg |= CC_SR;
+	cmdcfg |= CC_SR(ch->etc->corerev);
 
 	/* first deassert rx_ena and tx_ena while in reset */
 	cmdcfg &= ~(CC_RE | CC_TE);
@@ -813,7 +907,7 @@ gmac_enable(ch_t *ch)
 
 	/* enable the mac transmit and receive paths now */
 	OSL_DELAY(2);
-	cmdcfg &= ~CC_SR;
+	cmdcfg &= ~CC_SR(ch->etc->corerev);
 	cmdcfg |= (CC_RE | CC_TE);
 
 	/* assert rx_ena and tx_ena when out of reset to enable the mac */
@@ -825,7 +919,7 @@ gmac_enable(ch_t *ch)
 		/* request ht clock */
 		OR_REG(ch->osh, &regs->clk_ctl_st, CS_FH);
 
-	if ((CHIPID(ch->sih->chip) == BCM47162_CHIP_ID) && (mode == 2))
+	if (PMUCTL_ENAB(ch->sih) && (CHIPID(ch->sih->chip) == BCM47162_CHIP_ID) && (mode == 2))
 		si_pmu_chipcontrol(ch->sih, PMU_CHIPCTL1, PMU_CC1_RXC_DLL_BYPASS,
 		                   PMU_CC1_RXC_DLL_BYPASS);
 
@@ -848,14 +942,20 @@ gmac_enable(ch_t *ch)
 		W_REG(ch->osh, &regs->pausectl, 0x27fff);
 	}
 
-	/* init the mac data period. the value is set according to expr
-	 * ((128ns / bp_clk) - 3).
+	/* To prevent any risk of the BCM4707 ROM mdp issue we saw in the QT,
+	 * we use the mdp register default value
 	 */
-	rxqctl = R_REG(ch->osh, &regs->rxqctl);
-	rxqctl &= ~RC_MDP_MASK;
-	bp_clk = si_clock(ch->sih) / 1000000;
-	mdp = ((bp_clk * 128) / 1000) - 3;
-	W_REG(ch->osh, &regs->rxqctl, rxqctl | (mdp << RC_MDP_SHIFT));
+	if (CHIPID(ch->sih->chip) != BCM4707_CHIP_ID) {
+		/* init the mac data period. the value is set according to expr
+		 * ((128ns / bp_clk) - 3).
+		 */
+		rxqctl = R_REG(ch->osh, &regs->rxqctl);
+		rxqctl &= ~RC_MDP_MASK;
+
+		bp_clk = si_clock(ch->sih) / 1000000;
+		mdp = ((bp_clk * 128) / 1000) - 3;
+		W_REG(ch->osh, &regs->rxqctl, rxqctl | (mdp << RC_MDP_SHIFT));
+	}
 
 	return;
 }
@@ -885,25 +985,52 @@ gmac_txflowcontrol(ch_t *ch, bool on)
 static void
 gmac_miiconfig(ch_t *ch)
 {
-	uint32 devstatus, mode;
-	gmacregs_t *regs;
-
-	regs = ch->regs;
-
-	/* Read the devstatus to figure out the configuration
-	 * mode of the interface.
+	/* BCM4707 GMAC DevStatus register has different definition of "Interface Mode"
+	 * Bit 12:8  "interface_mode"  This field is programmed through IDM control bits [6:2]
+	 *
+	 * Bit 0 : SOURCE_SYNC_MODE_EN - If set, Rx line clock input will be used by Unimac for
+	 *          sampling data.If this is reset, PLL reference clock (Clock 250 or Clk 125 based
+	 *          on CLK_250_SEL) will be used as receive side line clock.
+	 * Bit 1 : DEST_SYNC_MODE_EN - If this is reset, PLL reference clock input (Clock 250 or
+	 *          Clk 125 based on CLK_250_SEL) will be used as transmit line clock.
+	 *          If this is set, TX line clock input (from external switch/PHY) is used as
+	 *          transmit line clock.
+	 * Bit 2 : TX_CLK_OUT_INVERT_EN - If set, this will invert the TX clock out of AMAC.
+	 * Bit 3 : DIRECT_GMII_MODE - If direct gmii is set to 0, then only 25 MHz clock needs to
+	 *          be fed at 25MHz reference clock input, for both 10/100 Mbps speeds.
+	 *          Unimac will internally divide the clock to 2.5 MHz for 10 Mbps speed
+	 * Bit 4 : CLK_250_SEL - When set, this selects 250Mhz reference clock input and hence
+	 *          Unimac line rate will be 2G.
+	 *          If reset, this selects 125MHz reference clock input.
 	 */
-	devstatus = R_REG(ch->osh, &regs->devstatus);
-	mode = ((devstatus & DS_MM_MASK) >> DS_MM_SHIFT);
-
-	/* Set the speed to 100 if the switch interface is
-	 * using mii/rev mii.
-	 */
-	if ((mode == 0) || (mode == 1)) {
-		if (ch->etc->forcespeed == ET_AUTO)
-			gmac_speed(ch, ET_100FULL);
+	if (CHIPID(ch->sih->chip) == BCM4707_CHIP_ID) {
+		if (ch->etc->forcespeed == ET_AUTO) {
+			si_core_cflags(ch->sih, 0x44, 0x44);
+			gmac_speed(ch, ET_2500FULL);
+		}
 		else
 			gmac_speed(ch, ch->etc->forcespeed);
+	} else {
+		uint32 devstatus, mode;
+		gmacregs_t *regs;
+
+		regs = ch->regs;
+
+		/* Read the devstatus to figure out the configuration
+		 * mode of the interface.
+		 */
+		devstatus = R_REG(ch->osh, &regs->devstatus);
+		mode = ((devstatus & DS_MM_MASK) >> DS_MM_SHIFT);
+
+		/* Set the speed to 100 if the switch interface is
+		 * using mii/rev mii.
+		 */
+		if ((mode == 0) || (mode == 1)) {
+			if (ch->etc->forcespeed == ET_AUTO)
+				gmac_speed(ch, ET_100FULL);
+			else
+				gmac_speed(ch, ch->etc->forcespeed);
+		}
 	}
 }
 
@@ -971,7 +1098,7 @@ chipinreset:
 	si_core_reset(ch->sih, flagbits, 0);
 
 	/* Request Misc PLL for corerev > 2 */
-	if (ch->etc->corerev > 2) {
+	if (ch->etc->corerev > 2 && CHIPID(ch->sih->chip) != BCM4707_CHIP_ID) {
 		OR_REG(ch->osh, &regs->clk_ctl_st, CS_ER);
 		SPINWAIT((R_REG(ch->osh, &regs->clk_ctl_st) & CS_ES) != CS_ES, 1000);
 	}
@@ -995,9 +1122,11 @@ chipinreset:
 			sw_type = PMU_CC1_IF_TYPE_RGMII|PMU_CC1_SW_TYPE_RGMII;
 
 		ET_TRACE(("%s: sw_type %04x\n", __FUNCTION__, sw_type));
-		si_pmu_chipcontrol(ch->sih, PMU_CHIPCTL1,
-			(PMU_CC1_IF_TYPE_MASK|PMU_CC1_SW_TYPE_MASK),
-			sw_type);
+		if (PMUCTL_ENAB(ch->sih)) {
+			si_pmu_chipcontrol(ch->sih, PMU_CHIPCTL1,
+				(PMU_CC1_IF_TYPE_MASK|PMU_CC1_SW_TYPE_MASK),
+				sw_type);
+		}
 	}
 
 	if ((sflags & SISF_SW_ATTACHED) && (!ch->etc->robo)) {
@@ -1738,8 +1867,10 @@ chipphyinit(ch_t *ch, uint phyaddr)
 		int i;
 
 		/* Clear ephy power down bits in case it was set for coma mode */
-		si_pmu_chipcontrol(ch->sih, 2, 0xc0000000, 0);
-		si_pmu_chipcontrol(ch->sih, 4, 0x80000000, 0);
+		if (PMUCTL_ENAB(ch->sih)) {
+			si_pmu_chipcontrol(ch->sih, 2, 0xc0000000, 0);
+			si_pmu_chipcontrol(ch->sih, 4, 0x80000000, 0);
+		}
 
 		for (i = 0; i < 5; i++) {
 			chipphywr(ch, i, 0x1f, 0x000f);

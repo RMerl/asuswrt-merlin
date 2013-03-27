@@ -1,0 +1,126 @@
+     <refentry id="refsess">
+      
+      <refmeta>
+	<refentrytitle>ne_session_create</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_session_create">ne_session_create</refname>
+	<refname id="ne_close_connection">ne_close_connection</refname>
+	<refname id="ne_session_proxy">ne_session_proxy</refname>
+	<refname id="ne_session_destroy">ne_session_destroy</refname>
+	<refpurpose>set up HTTP sessions</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+	  <funcsynopsisinfo>#include &lt;ne_session.h&gt;</funcsynopsisinfo>
+	  <funcprototype>
+	    <funcdef>ne_session *<function>ne_session_create</function></funcdef>
+	    <paramdef>const char *<parameter>scheme</parameter></paramdef>
+	    <paramdef>const char *<parameter>hostname</parameter></paramdef>
+	    <paramdef>unsigned int <parameter>port</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_session_proxy</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	    <paramdef>const char *<parameter>hostname</parameter></paramdef>
+	    <paramdef>unsigned int <parameter>port</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_close_connection</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_session_destroy</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>An <type>ne_session</type> object represents an HTTP
+session - a logical grouping of a sequence of HTTP requests made to a
+certain server. Any requests made using the session can use a
+persistent connection, share cached authentication credentials and any
+other common attributes.</para>
+
+	<para>A new HTTP session is created using
+<function>ne_session_create</function>, giving the
+<parameter>hostname</parameter> and <parameter>port</parameter> of the
+server to use, along with the <parameter>scheme</parameter> used to
+contact the server (usually <literal>"http"</literal>).  Before the
+first use of <function>ne_session_create</function> in a process,
+<xref linkend="ne_sock_init"/> must have been called to perform any
+global initialization needed by any libraries used by &neon;.</para>
+
+	<para>To enable SSL/TLS for the session, pass the string
+<literal>"https"</literal> as the <parameter>scheme</parameter>
+parameter, and either register a certificate verification function
+(see <xref linkend="ne_ssl_set_verify"/>) or trust the appropriate 
+certificate (see <xref linkend="ne_ssl_trust_cert"/>, <xref
+linkend="ne_ssl_trust_default_ca"/>).</para>
+
+	<para>If an HTTP proxy server should be used for the session,
+	<function>ne_session_proxy</function> must be called giving
+	the hostname and port on which to contact the proxy.</para>
+
+        <para>Further per-session options may be changed using the
+        <xref linkend="ne_set_request_flag"/> interface.</para>
+
+	<para>If it is known that the session will not be used for a
+significant period of time, <function>ne_close_connection</function>
+can be called to close the connection, if one remains open.  Use of
+this function is entirely optional, but it must not be called if there
+is a request active using the session.</para>
+
+	<para>Once a session has been completed,
+<function>ne_session_destroy</function> must be called to destroy the
+resources associated with the session.  Any subsequent use of the
+session pointer produces undefined behaviour.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Notes</title>
+
+        <para>The hostname passed to
+<function>ne_session_create</function> is resolved when the first
+request using the session is dispatched; a DNS resolution failure can
+only be detected at that time (using the <literal>NE_LOOKUP</literal>
+error code); see <xref linkend="ne_request_dispatch"/> for
+details.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Return Values</title>
+	<para><function>ne_session_create</function> will return
+	a pointer to a new session object (and never &null;).</para>
+      </refsect1>
+
+      <refsect1>
+	<title>Examples</title>
+	<para>Create and destroy a session:</para>
+	<programlisting>ne_session *sess;
+sess = ne_session_create("http", "host.example.com", 80);
+/* ... use sess ... */
+ne_session_destroy(sess);
+</programlisting>
+      </refsect1>
+
+      <refsect1>
+	<title>See Also</title>
+
+	<para><xref linkend="ne_ssl_set_verify"/>, <xref linkend="ne_ssl_trust_cert"/>, <xref linkend="ne_sock_init"/>, <xref linkend="ne_set_session_flag"/></para>
+      </refsect1>
+
+    </refentry>

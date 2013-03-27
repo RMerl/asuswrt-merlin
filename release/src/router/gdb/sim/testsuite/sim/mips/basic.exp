@@ -1,0 +1,90 @@
+# MIPS simulator instruction tests
+
+# As gross as it is, we unset the linker script specified by the target
+# board.  The MIPS libgloss linker scripts include libgcc (and possibly
+# other libraries), which the linker (used to link these tests rather
+# than the compiler) can't necessarily find.
+unset_currtarget_info ldscript
+
+# Do "run_sim_test TESTFILE MODELS" for each combination of the
+# mf{lo,hi} -> mult/div/mt{lo,hi} hazard described in mips.igen.
+# Insert NOPS nops after the mflo or mfhi.
+proc run_hilo_test {testfile models nops} {
+    foreach reg {lo hi} {
+	foreach insn "{mult\t\$4,\$4} {div\t\$0,\$4,\$4} {mt$reg\t\$4}" {
+	    set contents ""
+	    append contents "\t.macro hilo\n"
+	    append contents "\tmf$reg\t\$4\n"
+	    append contents "\t.rept\t$nops\n"
+	    append contents "\tnop\n"
+	    append contents "\t.endr\n"
+	    append contents "\t$insn\n"
+	    append contents "\t.endm"
+
+	    verbose -log "HILO test:\n$contents"
+	    set file [open hilo-hazard.inc w]
+	    puts $file $contents
+	    close $file
+
+	    run_sim_test $testfile $models
+	}
+    }
+}
+
+
+# Only test mips*-*-elf (e.g., no mips*-*-linux), and only test if the target
+# board really is a simulator (sim tests don't work on real HW).
+if {[istarget mips*-*-elf] && [board_info target exists is_simulator]} {
+
+    set dspmodels ""
+    set mdmxmodels ""
+
+    if {[istarget mipsisa64sb1*-*-elf]} {
+	set models "sb1"
+	set submodels "mips1 mips2 mips3 mips4 mips32 mips64"
+	append mdmxmodels " mips64"
+    } elseif {[istarget mipsisa64*-*-elf]} {
+	set models "mips32 mips64 mips32r2 mips64r2"
+	set submodels "mips1 mips2 mips3 mips4"
+	append dspmodels " mips32r2 mips64r2"
+	append mdmxmodels " mips64 mips32r2 mips64r2"
+    } elseif {[istarget mips*-sde-elf*]} {
+	set models "mips32 mips64 mips32r2 mips64r2"
+	set submodels ""
+	append dspmodels " mips32r2 mips64r2"
+	append mdmxmodels " mips64 mips32r2 mips64r2"
+    } elseif {[istarget mipsisa32*-*-elf]} {
+	set models "mips32 mips32r2"
+	set submodels "mips1 mips2"
+	append dspmodels " mips32r2"
+	append mdmxmodels " mips32r2"
+    } elseif {[istarget mips64vr*-*-elf]} {
+	set models "vr4100 vr4111 vr4120 vr5000 vr5400 vr5500"
+	set submodels "mips1 mips2 mips3 mips4"
+    } elseif {[istarget mips64*-*-elf]} {
+	set models "mips3"
+	set submodels "mips1 mips2"
+    } else {
+	# fall back to just testing mips1 code.
+	set models "mips1"
+	set submodels ""
+    }
+    append submodels " " $models
+    set cpu_option -march
+
+    run_sim_test sanity.s $submodels
+    foreach nops {0 1} {
+	run_hilo_test hilo-hazard-1.s $models $nops
+	run_hilo_test hilo-hazard-2.s $models $nops
+    }
+    run_hilo_test hilo-hazard-3.s $models 2
+
+    run_sim_test fpu64-ps.s $submodels
+    run_sim_test fpu64-ps-sb1.s $submodels
+
+    run_sim_test mdmx-ob.s $mdmxmodels
+    run_sim_test mdmx-ob-sb1.s $mdmxmodels
+
+    run_sim_test mips32-dsp.s $dspmodels
+    run_sim_test mips32-dsp2.s $dspmodels
+}

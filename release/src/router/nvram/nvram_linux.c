@@ -24,12 +24,12 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
+#include <shared.h>
 #include <typedefs.h>
 #include <bcmnvram.h>
 #include <nvram_convert.h>
 #include <shutils.h>
 #include <utils.h>
-#include <shared.h>
 
 #define PATH_DEV_NVRAM "/dev/nvram"
 
@@ -37,18 +37,29 @@
 static int nvram_fd = -1;
 static char *nvram_buf = NULL;
 
-int nvram_init(void *unused)
+int
+nvram_init(void *unused)
 {
-	if ((nvram_fd = open(PATH_DEV_NVRAM, O_RDWR)) >= 0) {
-		/* Map kernel string buffer into user space */
-		if ((nvram_buf = mmap(NULL, NVRAM_SPACE, PROT_READ, MAP_SHARED, nvram_fd, 0)) != MAP_FAILED) {
-			fcntl(nvram_fd, F_SETFD, FD_CLOEXEC);	// zzz
-			return 0;
-		}
+	if (nvram_fd >= 0)
+		return 0;
+
+	if ((nvram_fd = open(PATH_DEV_NVRAM, O_RDWR)) < 0)
+		goto err;
+
+	/* Map kernel string buffer into user space */
+	nvram_buf = mmap(NULL, NVRAM_SPACE, PROT_READ, MAP_SHARED, nvram_fd, 0);
+	if (nvram_buf == MAP_FAILED) {
 		close(nvram_fd);
 		nvram_fd = -1;
+		goto err;
 	}
- 	perror(PATH_DEV_NVRAM);
+
+	fcntl(nvram_fd, F_SETFD, FD_CLOEXEC);
+
+	return 0;
+
+err:
+	perror(PATH_DEV_NVRAM);
 	return errno;
 }
 

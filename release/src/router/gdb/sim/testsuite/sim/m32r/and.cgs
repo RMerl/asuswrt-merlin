@@ -1,0 +1,17 @@
+# m32r testcase for and $dr,$sr
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global and
+and:
+	mvi_h_gr r4, 3
+	mvi_h_gr r5, 6
+
+	and r4, r5
+
+	test_h_gr r4, 2
+
+	pass

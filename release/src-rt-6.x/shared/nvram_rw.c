@@ -1,7 +1,7 @@
 /*
  * NVRAM variable manipulation (direct mapped flash)
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,7 +24,6 @@
 #include <osl.h>
 #include <bcmutils.h>
 #include <siutils.h>
-#include <mipsinc.h>
 #include <bcmnvram.h>
 #include <bcmendian.h>
 #include <flashutl.h>
@@ -32,8 +31,13 @@
 #include <sbchipc.h>
 
 #ifdef NFLASH_SUPPORT
-#include <nflash.h>
+#include <hndnand.h>
 #endif	/* NFLASH_SUPPORT */
+#ifdef _CFE_
+#include <hndsflash.h>
+#else
+
+#endif
 
 struct nvram_tuple *_nvram_realloc(struct nvram_tuple *t, const char *name, const char *value);
 void  _nvram_free(struct nvram_tuple *t);
@@ -47,10 +51,6 @@ extern int _nvram_commit(struct nvram_header *header);
 extern int _nvram_init(void *si);
 extern void _nvram_exit(void);
 
-#ifdef __ECOS
-extern int kernel_initial;
-#endif
-
 static struct nvram_header *nvram_header = NULL;
 static int nvram_do_reset = FALSE;
 
@@ -59,8 +59,14 @@ static int nvram_do_reset = FALSE;
 char *flashdrv_nvram = "flash0.nvram";
 #endif
 
+#if defined(__ECOS)
+extern int kernel_initial;
+#define NVRAM_LOCK()	cyg_scheduler_lock()
+#define NVRAM_UNLOCK()	cyg_scheduler_unlock()
+#else
 #define NVRAM_LOCK()	do {} while (0)
 #define NVRAM_UNLOCK()	do {} while (0)
+#endif
 
 /* Convenience */
 #define KB * 1024
@@ -163,6 +169,38 @@ BCMINITFN(nvram_reset)(void  *si)
 	return TRUE;
 }
 
+#ifdef NFLASH_SUPPORT
+static unsigned char nand_nvh[NVRAM_SPACE];
+
+static struct nvram_header *
+BCMINITFN(nand_find_nvram)(hndnand_t *nfl, uint32 off)
+{
+	int blocksize = nfl->blocksize;
+	unsigned char *buf = nand_nvh;
+	int rlen = sizeof(nand_nvh);
+	int len;
+
+	for (; off < NFL_BOOT_SIZE; off += blocksize) {
+		if (hndnand_checkbadb(nfl, off) != 0)
+			continue;
+
+		len = blocksize;
+		if (len >= rlen)
+			len = rlen;
+
+		if (hndnand_read(nfl, off, len, buf) == 0)
+			break;
+
+		buf += len;
+		rlen -= len;
+		if (rlen == 0)
+			return (struct nvram_header *)nand_nvh;
+	}
+
+	return NULL;
+}
+#endif /* NFLASH_SUPPORT */
+
 extern unsigned char embedded_nvram[];
 
 static struct nvram_header *
@@ -171,46 +209,72 @@ BCMINITFN(find_nvram)(si_t *sih, bool embonly, bool *isemb)
 	struct nvram_header *nvh;
 	uint32 off, lim;
 	uint32 flbase = SI_FLASH2;
+	int bootdev;
 #ifdef NFLASH_SUPPORT
-	int nandboot = 0;
-	chipcregs_t *cc = NULL;
-	struct nflash *nfl_info;
+	hndnand_t *nfl_info = NULL;
+#endif
+#ifdef _CFE_
+	hndsflash_t *sfl_info = NULL;
+#endif
 
-	if ((sih->ccrev == 38) && ((sih->chipst & (1 << 4)) != 0)) {
-		flbase = SI_FLASH1;
-		nandboot = 1;
+	bootdev = soc_boot_dev((void *)sih);
+#ifdef NFLASH_SUPPORT
+	if (bootdev == SOC_BOOTDEV_NANDFLASH) {
+		/* Init nand anyway */
+		nfl_info = hndnand_init(sih);
+		if (nfl_info)
+			flbase = nfl_info->phybase;
 	}
+	else
 #endif /* NFLASH_SUPPORT */
+	if (bootdev == SOC_BOOTDEV_SFLASH) {
+#ifdef _CFE_
+		/* Init nand anyway */
+		sfl_info = hndsflash_init(sih);
+		if (sfl_info)
+			flbase = sfl_info->phybase;
+#else
+	if (sih->ccrev == 42)
+		flbase = SI_NS_NORFLASH;
+#endif
+	}
 
 	if (!embonly) {
 		*isemb = FALSE;
 #ifdef NFLASH_SUPPORT
-		if (nandboot) {
-			if ((cc = (chipcregs_t *)si_setcoreidx(sih, SI_CC_IDX))) {
-				nfl_info = nflash_init(sih, cc);
-				if (nfl_info) {
-					off = nfl_info->blocksize;
-					for (; off < SI_FLASH1_SZ; off += nfl_info->blocksize) {
-						if (nflash_checkbadb(sih, cc, off) != 0)
-							continue;
-						nvh = (struct nvram_header *)KSEG1ADDR(flbase+off);
-						if (nvh->magic == NVRAM_MAGIC)
-							return (nvh);
-					}
-				}
+		if (nfl_info) {
+			uint32 blocksize;
+
+			blocksize = nfl_info->blocksize;
+			off = blocksize;
+			for (; off < NFL_BOOT_SIZE; off += blocksize) {
+				if (hndnand_checkbadb(nfl_info, off) != 0)
+					continue;
+				nvh = (struct nvram_header *)OSL_UNCACHED(flbase + off);
+				if (nvh->magic != NVRAM_MAGIC)
+					continue;
+
+				/* Read into the nand_nvram */
+				if ((nvh = nand_find_nvram(nfl_info, off)) == NULL)
+					continue;
+//				if (nvram_calc_crc(nvh) == (uint8)nvh->crc_ver_init)
+					return nvh;
 			}
-		} else
+		}
+		else
 #endif /* NFLASH_SUPPORT */
 		{
 			lim = SI_FLASH2_SZ;
 			off = FLASH_MIN;
 			while (off <= lim) {
-				nvh = (struct nvram_header *)KSEG1ADDR(flbase + off - NVRAM_SPACE);
-				if (nvh->magic == NVRAM_MAGIC)
-					/* if (nvram_calc_crc(nvh) == (uint8) nvh->crc_ver_init) */{
+				nvh = (struct nvram_header *)
+					OSL_UNCACHED(flbase + off - NVRAM_SPACE);
+				if (nvh->magic == NVRAM_MAGIC) {
+//					if (nvram_calc_crc(nvh) == (uint8) nvh->crc_ver_init) {
 						return (nvh);
-					}
-					off <<= 1;
+//					}
+				}
+				off <<= 1;
 			}
 		}
 #ifdef BCMDBG
@@ -220,10 +284,10 @@ BCMINITFN(find_nvram)(si_t *sih, bool embonly, bool *isemb)
 
 	/* Now check embedded nvram */
 	*isemb = TRUE;
-	nvh = (struct nvram_header *)KSEG1ADDR(flbase + (4 * 1024));
+	nvh = (struct nvram_header *)OSL_UNCACHED(flbase + (4 * 1024));
 	if (nvh->magic == NVRAM_MAGIC)
 		return (nvh);
-	nvh = (struct nvram_header *)KSEG1ADDR(flbase + 1024);
+	nvh = (struct nvram_header *)OSL_UNCACHED(flbase + 1024);
 	if (nvh->magic == NVRAM_MAGIC)
 		return (nvh);
 #ifdef _CFE_

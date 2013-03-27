@@ -1,0 +1,153 @@
+<refentry id="refclicert">
+
+  <refmeta>
+    <refentrytitle>ne_ssl_client_cert</refentrytitle>
+    <manvolnum>3</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname id="ne_ssl_clicert_read">ne_ssl_clicert_read</refname>
+    <refname id="ne_ssl_clicert_name">ne_ssl_clicert_name</refname>
+    <refname id="ne_ssl_clicert_encrypted">ne_ssl_clicert_encrypted</refname>
+    <refname id="ne_ssl_clicert_decrypt">ne_ssl_clicert_decrypt</refname>
+    <refname id="ne_ssl_clicert_owner">ne_ssl_clicert_owner</refname>
+    <refname id="ne_ssl_clicert_free">ne_ssl_clicert_free</refname>
+    <refpurpose>SSL client certificate handling</refpurpose>
+  </refnamediv>
+  
+  <refsynopsisdiv>
+
+    <funcsynopsis>
+
+      <funcsynopsisinfo>#include &lt;ne_ssl.h&gt;</funcsynopsisinfo>
+
+      <funcprototype>
+        <funcdef>ne_ssl_client_cert *<function>ne_ssl_clicert_read</function></funcdef>
+        <paramdef>const char *<parameter>filename</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>const char *<function>ne_ssl_clicert_name</function></funcdef>
+        <paramdef>const ne_ssl_client_cert *<parameter>ccert</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>int <function>ne_ssl_clicert_encrypted</function></funcdef>
+        <paramdef>const ne_ssl_client_cert *<parameter>ccert</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>int <function>ne_ssl_clicert_decrypt</function></funcdef>
+        <paramdef>ne_ssl_client_cert *<parameter>ccert</parameter></paramdef>
+        <paramdef>const char *<parameter>password</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>const ne_ssl_certificate *<function>ne_ssl_clicert_owner</function></funcdef>
+        <paramdef>const ne_ssl_client_cert *<parameter>ccert</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>void <function>ne_ssl_clicert_free</function></funcdef>
+        <paramdef>ne_ssl_client_cert *<parameter>ccert</parameter></paramdef>
+      </funcprototype>
+
+    </funcsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para>The <function>ne_ssl_clicert_read</function> function reads
+    a <firstterm>client certificate</firstterm> from a
+    PKCS#12-formatted file, and returns an
+    <type>ne_ssl_client_cert</type> object.  If the client
+    certificate is encrypted, it must be decrypted before it is used.
+    An <type>ne_ssl_client_cert</type> object holds a client
+    certificate and the associated private key, not just a
+    certificate; the term "<glossterm>client certificate</glossterm>"
+    will used to refer to this pair.</para>
+
+    <para>A client certificate can be in one of two states:
+    <emphasis>encrypted</emphasis> or <emphasis>decrypted</emphasis>.
+    The <function>ne_ssl_clicert_encrypted</function> function will
+    return non-zero if the client certificate is in the
+    <emphasis>encrypted</emphasis> state.  A client certificate object
+    returned by <function>ne_ssl_clicert_read</function> may be
+    initially in either state, depending on whether the file was
+    encrypted or not.</para>
+
+    <para><function>ne_ssl_clicert_decrypt</function> can be used to
+    decrypt a client certificate using the appropriate password.  This
+    function must only be called if the object is in the
+    <emphasis>encrypted</emphasis> state; if decryption fails, the
+    certificate state does not change, so decryption can be attempted
+    more than once using different passwords.</para>
+
+    <para>A client certificate can be given a "friendly name" when it
+    is created; <function>ne_ssl_clicert_name</function> will return
+    this name (or &null; if no friendly name was specified).
+    <function>ne_ssl_clicert_name</function> can be used when the
+    client certificate is in either the encrypted or decrypted state,
+    and will return the same string for the lifetime of the
+    object.</para>
+
+    <para>The function <function>ne_ssl_clicert_owner</function>
+    returns the certificate part of the client certificate; it must
+    only be called if the client certificate is in the
+    <emphasis>decrypted</emphasis> state.</para>
+
+    <para>When the client certificate is no longer needed, the
+    <function>ne_ssl_clicert_free</function> function should be used
+    to destroy the object.</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Return value</title>
+
+    <para><function>ne_ssl_clicert_read</function> returns a client
+    certificate object, or &null; if the file could not be read.
+    <function>ne_ssl_clicert_encrypted</function> returns zero if the
+    object is in the decrypted state, or non-zero if it is in the
+    encrypted state. <function>ne_ssl_clicert_name</function> returns
+    a &nul;-terminated friendly name string, or &null;.
+    <function>ne_ssl_clicert_owner</function> returns a certificate
+    object.</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Examples</title>
+
+    <para>The following code reads a client certificate and decrypts
+    it if necessary, then loads it into an HTTP session.</para>
+
+    <programlisting>ne_ssl_client_cert *ccert;
+
+ccert = ne_ssl_clicert_read("/path/to/client.p12");
+
+if (ccert == NULL) {
+   /* handle error... */
+} else if (ne_ssl_clicert_encrypted(ccert)) {
+   char *password = prompt_for_password();
+
+   if (ne_ssl_clicert_decrypt(ccert, password)) {
+      /* could not decrypt! handle error... */
+   }
+}
+
+ne_ssl_set_clicert(sess, ccert);
+</programlisting>
+
+  </refsect1>
+
+  <refsect1>
+    <title>See also</title>
+
+    <para><xref linkend="ne_ssl_cert_read"/></para>
+  </refsect1>
+
+</refentry>
+

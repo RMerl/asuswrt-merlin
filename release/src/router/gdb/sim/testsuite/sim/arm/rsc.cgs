@@ -1,0 +1,36 @@
+# arm testcase for rsc$cond${set-cc?} $rd,$rn,$imm12
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global rsc_imm
+rsc_imm:
+	rsc00 pc,pc,0
+
+	pass
+# arm testcase for rsc$cond${set-cc?} $rd,$rn,$rm,${operand2-shifttype} ${operand2-shiftimm}
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global rsc_reg_imm_shift
+rsc_reg_imm_shift:
+	rsc00 pc,pc,pc,lsl 0
+
+	pass
+# arm testcase for rsc$cond${set-cc?} $rd,$rn,$rm,${operand2-shifttype} ${operand2-shiftreg}
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global rsc_reg_reg_shift
+rsc_reg_reg_shift:
+	rsc00 pc,pc,pc,lsl pc
+
+	pass

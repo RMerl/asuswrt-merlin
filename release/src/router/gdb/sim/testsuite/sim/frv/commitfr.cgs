@@ -1,0 +1,61 @@
+# frv testcase for commitfr $FRk
+# mach: frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global commitfr
+commitfr:
+	and_spr_immed	-4081,tbr		; clear tbr.tt
+	set_gr_spr	tbr,gr17
+	inc_gr_immed	0x190,gr17		; address of exception handler
+	set_bctrlr_0_0  gr17
+	set_spr_immed	128,lcr
+	set_psr_et	1
+	set_gr_immed	0,gr15
+
+	nldfi		@(sp,0),fr20	; Activate fr20 with nesr.fr==1
+	nldi		@(sp,0),gr20	; Activate gr20 with nesr.fr==0
+	nldfi		@(sp,0),fr52	; Activate fr52 with nesr.fr==1
+	set_spr_immed	0x00000000,fner1
+	set_spr_immed	0x00000000,fner0
+	set_spr_addr	bad,lr
+	commitfr	fr20		; should be nop
+	test_spr_immed	0x00000000,fner1
+	test_spr_immed	0x00000000,fner0
+	test_spr_immed	0xd4800001,nesr0
+	test_spr_gr	neear0,sp
+	test_spr_immed	0x94800401,nesr1
+	test_spr_gr	neear1,sp
+	test_spr_immed	0xf4800801,nesr2
+	test_spr_gr	neear2,sp
+
+	or_spr_immed	0x00100000,fner1
+	or_spr_immed	0x00200000,fner1
+	or_spr_immed	0x00100000,fner0
+	set_spr_addr	ok,lr
+	set_gr_addr	com1,gr16
+com1:	commitfr	fr20
+	test_gr_immed	1,gr15
+
+	pass
+
+ok:	test_spr_immed	0x1,esfr1		; esr0 is active
+	test_spr_gr	epcr0,gr16
+	test_spr_bits	0x0001,0,0x1,esr0	; esr0 is valid
+	test_spr_bits	0x003e,1,0x14,esr0	; esr0.ec is set
+	test_spr_bits	0x0800,11,0x0,esr0	; esr0.eav is clear
+	test_spr_bits	0x01000,12,0x0,esr0	; esr0.edv is clear
+	test_spr_immed	0x00200000,fner1
+	test_spr_immed	0x00100000,fner0
+	test_spr_immed	0,nesr0
+	test_spr_immed	0,neear0
+	test_spr_immed	0x94800401,nesr1
+	test_spr_gr	neear1,sp
+	test_spr_immed	0xf4800801,nesr2
+	test_spr_gr	neear2,sp
+	inc_gr_immed	1,gr15
+	rett		0
+
+bad:	fail

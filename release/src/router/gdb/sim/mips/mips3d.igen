@@ -1,0 +1,176 @@
+// -*- C -*-
+
+// Simulator definition for the MIPS MIPS-3D ASE.
+// Copyright (C) 2002 Free Software Foundation, Inc.
+// Contributed by Ed Satterthwaite and Chris Demetriou, of Broadcom
+// Corporation (SiByte).
+//
+// This file is part of GDB, the GNU debugger.
+// 
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+//  Reference: MIPS64 Architecture for Programmers Volume IV-c:
+//             The MIPS-3D Application-Specific Extension to the
+//             MIPS64 Architecture.  (MIPS Document MD00099)
+
+
+010001,10,110,5.FT,5.FS,5.FD,011000:COP1:64,f::ADDR.PS
+"addr.ps f<FD>, f<FS>, f<FT>"
+*mips3d:
+{
+  /* fd.PL = ft.PU + ft.PL;  fd.PU = fs.PU + fs.PL;  */
+  check_fpu (SD_);
+  check_u64 (SD_, instruction_0);
+  StoreFPR (FD, fmt_ps, AddR (ValueFPR (FS, fmt_ps),
+			      ValueFPR (FT, fmt_ps), fmt_ps));
+}
+
+
+010001,01001,3.CC,0,1.TF,16.OFFSET:COP1:64,f::BC1ANY2tf
+"bc1any2%s<TF> <CC>, %#lx<OFFSET>"
+*mips3d:
+{
+  address_word offset;
+  int cc = CC;
+  check_fpu (SD_);
+  check_u64 (SD_, instruction_0);
+  if ((cc & 0x1) != 0)
+    Unpredictable ();
+  if ((GETFCC (cc) == TF) || (GETFCC (cc + 1) == TF))
+    {
+      offset = (EXTEND16 (OFFSET) << 2);
+      DELAY_SLOT (NIA + offset);
+    }
+}
+
+
+010001,01010,3.CC,0,1.TF,16.OFFSET:COP1:64,f::BC1ANY4tf
+"bc1any4%s<TF> <CC>, %#lx<OFFSET>"
+*mips3d:
+{
+  address_word offset;
+  int cc = CC;
+  check_fpu (SD_);
+  check_u64 (SD_, instruction_0);
+  if ((cc & 0x3) != 0)
+    Unpredictable ();
+  if ((GETFCC (cc) == TF)
+      || (GETFCC (cc + 1) == TF)
+      || (GETFCC (cc + 2) == TF)
+      || (GETFCC (cc + 3) == TF))
+    {
+      offset = (EXTEND16 (OFFSET) << 2);
+      DELAY_SLOT (NIA + offset);
+    }
+}
+
+
+010001,10,3.FMT,5.FT,5.FS,3.CC,01,11,4.COND:COP1:64,f::CABS.cond.fmt
+"cabs.%s<COND>.%s<FMT> <CC>, f<FS>, f<FT>"
+*mips3d:
+{
+  int fmt = FMT;
+  check_fpu (SD_);
+  check_u64 (SD_, instruction_0);
+  check_fmt_p (SD_, fmt, instruction_0);
+  CompareAbs (ValueFPR (FS, fmt), ValueFPR (FT, fmt), fmt, COND, CC);
+  TRACE_ALU_RESULT (ValueFCR (31));
+}
+
+
+010001,10,110,00000,5.FS,5.FD,100100:COP1:64,f::CVT.PW.PS
+"cvt.pw.ps f<FD>, f<FS>"
+*mips3d:
+{
+  /* fd.pu = cvt_rnd (fs.pu); fd.pl = cvt_rnd (fs.pl);  */
+  /* fmt_pw is fmt_long for 64 bit transfers, but cvt encoding is fmt_word.  */
+  check_fpu (SD_);
+  check_u64 (SD_, instruction_0);
+  StoreFPR (FD, fmt_pw, ConvertPS (GETRM (), ValueFPR (FS, fmt_ps),
+				   fmt_ps, fmt_word));
+}
+
+
+010001,10,100,00000,5.FS,5.FD,100110:COP1:64,f::CVT.PS.PW
+"cvt.ps.pw f<FD>, f<FS>"
+*mips3d:
+{
+  /* fd.pl = cvt_rnd (fs.pl); fd.pu = cvt_rnd (fs.pu);  */
+  /* fmt_pw is fmt_long for 64 bit transfers, but cvt encoding is fmt_word.  */
+  check_fpu (SD_);
+  check_u64 (SD_, instruction_0);
+  StoreFPR (FD, fmt_ps, ConvertPS (GETRM (), ValueFPR (FS, fmt_pw),
+				   fmt_word, fmt_ps));
+}
+
+
+010001,10,110,5.FT,5.FS,5.FD,011010:COP1:64,f::MULR.PS
+"mulr.ps f<FD>, f<FS>, f<FT>"
+*mips3d:
+{
+  /* fd.PL = ft.PU * ft.PL;  fd.PU = fs.PU * fs.PL;  */
+  check_fpu (SD_);
+  check_u64 (SD_, instruction_0);
+  StoreFPR (FD, fmt_ps, MultiplyR (ValueFPR (FS, fmt_ps),
+				   ValueFPR (FT, fmt_ps), fmt_ps));
+}
+
+
+010001,10,3.FMT,00000,5.FS,5.FD,011101:COP1:64,f::RECIP1.fmt
+"recip1.%s<FMT> f<FD>, f<FS>"
+*mips3d:
+{
+  int fmt = FMT;
+  check_fpu (SD_);
+  check_u64 (SD_, instruction_0);
+  check_fmt_p (SD_, fmt, instruction_0);
+  StoreFPR (FD, fmt, Recip1 (ValueFPR (FS, fmt), fmt));
+}
+
+
+010001,10,3.FMT,5.FT,5.FS,5.FD,011100:COP1:64,f::RECIP2.fmt
+"recip2.%s<FMT> f<FD>, f<FS>, f<FT>"
+*mips3d:
+{
+  int fmt = FMT;
+  check_fpu (SD_);
+  check_u64 (SD_, instruction_0);
+  check_fmt_p (SD_, fmt, instruction_0);
+  StoreFPR (FD, fmt, Recip2 (ValueFPR (FS, fmt), ValueFPR (FT, fmt), fmt));
+}
+
+
+010001,10,3.FMT,00000,5.FS,5.FD,011110:COP1:64,f::RSQRT1.fmt
+"rsqrt1.%s<FMT> f<FD>, f<FS>"
+*mips3d:
+{
+  int fmt = FMT;
+  check_fpu (SD_);
+  check_u64 (SD_, instruction_0);
+  check_fmt_p (SD_, fmt, instruction_0);
+  StoreFPR (FD, fmt, RSquareRoot1 (ValueFPR (FS, fmt), fmt));
+}
+
+
+010001,10,3.FMT,5.FT,5.FS,5.FD,011111:COP1:64,f::RSQRT2.fmt
+"rsqrt2.%s<FMT> f<FD>, f<FS>, f<FT>"
+*mips3d:
+{
+  int fmt = FMT;
+  check_fpu (SD_);
+  check_u64 (SD_, instruction_0);
+  check_fmt_p (SD_, fmt, instruction_0);
+  StoreFPR (FD, fmt, RSquareRoot2 (ValueFPR (FS, fmt),
+				   ValueFPR (FT, fmt), fmt));
+}

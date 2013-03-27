@@ -2,12 +2,20 @@
 # $1: device name.
 
 
+is_arm_machine=`uname -m |grep arm`
+
 autorun_file=.asusrouter
 nonautorun_file=$autorun_file.disabled
 APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
 APPS_DEV=`nvram get apps_dev`
 apps_from_internet=`nvram get rc_support |grep appnet`
 apps_local_space=`nvram get apps_local_space`
+
+if [ -n "$is_arm_machine" ]; then
+        pkg_type="arm"
+else
+        pkg_type="mipsel"
+fi
 
 if [ -n "$apps_from_internet" ]; then
 	exit 0
@@ -51,7 +59,7 @@ fi
 list_installed=`ipkg list_installed`
 
 if [ -z "`echo "$list_installed" |grep "openssl - "`" ]; then
-	ipkg install $apps_local_space/openssl_*_mipsel.ipk
+	ipkg install $apps_local_space/openssl_*_$pkg_type.ipk
 	if [ "$?" != "0" ]; then
 		echo "Failed to install openssl!"
 		nvram set apps_state_error=4
@@ -60,7 +68,7 @@ if [ -z "`echo "$list_installed" |grep "openssl - "`" ]; then
 fi
 
 if [ -z "`echo "$list_installed" |grep "zlib - "`" ]; then
-	ipkg install $apps_local_space/zlib_*_mipsel.ipk
+	ipkg install $apps_local_space/zlib_*_$pkg_type.ipk
 	if [ "$?" != "0" ]; then
 		echo "Failed to install zlib!"
 		nvram set apps_state_error=4
@@ -69,7 +77,7 @@ if [ -z "`echo "$list_installed" |grep "zlib - "`" ]; then
 fi
 
 if [ -z "`echo "$list_installed" |grep "libcurl - "`" ]; then
-	ipkg install $apps_local_space/libcurl_*_mipsel.ipk
+	ipkg install $apps_local_space/libcurl_*_$pkg_type.ipk
 	if [ "$?" != "0" ]; then
 		echo "Failed to install libcurl!"
 		nvram set apps_state_error=4
@@ -78,7 +86,7 @@ if [ -z "`echo "$list_installed" |grep "libcurl - "`" ]; then
 fi
 
 if [ -z "`echo "$list_installed" |grep "libevent - "`" ]; then
-	ipkg install $apps_local_space/libevent_*_mipsel.ipk
+	ipkg install $apps_local_space/libevent_*_$pkg_type.ipk
 	if [ "$?" != "0" ]; then
 		echo "Failed to install libevent!"
 		nvram set apps_state_error=4
@@ -87,7 +95,7 @@ if [ -z "`echo "$list_installed" |grep "libevent - "`" ]; then
 fi
 
 if [ -z "`echo "$list_installed" |grep "ncurses - "`" ]; then
-	ipkg install $apps_local_space/ncurses_*_mipsel.ipk
+	ipkg install $apps_local_space/ncurses_*_$pkg_type.ipk
 	if [ "$?" != "0" ]; then
 		echo "Failed to install ncurses!"
 		nvram set apps_state_error=4
@@ -96,7 +104,7 @@ if [ -z "`echo "$list_installed" |grep "ncurses - "`" ]; then
 fi
 
 if [ -z "`echo "$list_installed" |grep "libxml2 - "`" ]; then
-	ipkg install $apps_local_space/libxml2_*_mipsel.ipk
+	ipkg install $apps_local_space/libxml2_*_$pkg_type.ipk
 	if [ "$?" != "0" ]; then
 		echo "Failed to install libxml2!"
 		nvram set apps_state_error=4
@@ -104,17 +112,19 @@ if [ -z "`echo "$list_installed" |grep "libxml2 - "`" ]; then
 	fi
 fi
 
-if [ -z "`echo "$list_installed" |grep "libuclibc++ - "`" ]; then
-	ipkg install $apps_local_space/libuclibc++_*_mipsel.ipk
-	if [ "$?" != "0" ]; then
-		echo "Failed to install libuclibc++!"
-		nvram set apps_state_error=4
-		exit 1
+if [ -z "$is_arm_machine" ]; then
+	if [ -z "`echo "$list_installed" |grep "libuclibc++ - "`" ]; then
+		ipkg install $apps_local_space/libuclibc++_*_$pkg_type.ipk
+		if [ "$?" != "0" ]; then
+			echo "Failed to install libuclibc++!"
+			nvram set apps_state_error=4
+			exit 1
+		fi
 	fi
 fi
 
 if [ -z "`echo "$list_installed" |grep "libsigc++ - "`" ]; then
-	ipkg install $apps_local_space/libsigc++_*_mipsel.ipk
+	ipkg install $apps_local_space/libsigc++_*_$pkg_type.ipk
 	if [ "$?" != "0" ]; then
 		echo "Failed to install libsigc++!"
 		nvram set apps_state_error=4
@@ -123,7 +133,7 @@ if [ -z "`echo "$list_installed" |grep "libsigc++ - "`" ]; then
 fi
 
 if [ -z "`echo "$list_installed" |grep "libpar2 - "`" ]; then
-	ipkg install $apps_local_space/libpar2_*_mipsel.ipk
+	ipkg install $apps_local_space/libpar2_*_$pkg_type.ipk
 	if [ "$?" != "0" ]; then
 		echo "Failed to install libpar2!"
 		nvram set apps_state_error=4
@@ -132,7 +142,7 @@ if [ -z "`echo "$list_installed" |grep "libpar2 - "`" ]; then
 fi
 
 if [ -z "`echo "$list_installed" |grep "pcre - "`" ]; then
-	ipkg install $apps_local_space/pcre_*_mipsel.ipk
+	ipkg install $apps_local_space/pcre_*_$pkg_type.ipk
 	if [ "$?" != "0" ]; then
 		echo "Failed to install pcre!"
 		nvram set apps_state_error=4
@@ -141,7 +151,7 @@ if [ -z "`echo "$list_installed" |grep "pcre - "`" ]; then
 fi
 
 if [ -z "`echo "$list_installed" |grep "spawn-fcgi - "`" ]; then
-	ipkg install $apps_local_space/spawn-fcgi_*_mipsel.ipk
+	ipkg install $apps_local_space/spawn-fcgi_*_$pkg_type.ipk
 	if [ "$?" != "0" ]; then
 		echo "Failed to install spawn-fcgi!"
 		nvram set apps_state_error=4

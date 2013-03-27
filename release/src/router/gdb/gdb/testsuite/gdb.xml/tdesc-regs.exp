@@ -1,0 +1,114 @@
+# Copyright 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if {[gdb_skip_xml_test]} {
+    unsupported "tdesc-regs.exp"
+    return -1
+}
+
+gdb_start
+
+# To test adding registers, we need a core set of registers for this
+# architecture, or the description will be rejected.
+
+set core-regs ""
+switch -glob -- [istarget] {
+    "*arm-*-*" {
+        set core-regs {arm-core.xml}
+    }
+    "xscale-*-*" {
+        set core-regs {arm-core.xml}
+    }
+    "mips*-*-*" {
+	set core-regs {mips-cpu.xml mips-cp0.xml mips-fpu.xml}
+    }
+}
+
+# If no core registers were specified, assume this target does not
+# support target-defined registers.  Verify that we get a warning if
+# we try to use them.  This not only tests the warning, but also
+# reminds maintainers to add test support when they add the feature.
+if {[string equal ${core-regs} ""]} {
+    gdb_test "set tdesc file $srcdir/$subdir/single-reg.xml" \
+	"warning: Target-supplied registers are not supported.*" \
+	"set tdesc file single-reg.xml"
+    unsupported "register tests"
+    return 0
+}
+
+# Otherwise, we support both XML and target defined registers.
+
+# Make sure we reject a description missing standard registers,
+# like the PC.
+gdb_test "set tdesc file $srcdir/$subdir/single-reg.xml" \
+    "warning: Architecture rejected target-supplied description" \
+    "set tdesc file single-reg.xml"
+
+# Copy the core registers into the objdir if necessary, so that they
+# will be found by <xi:include>.
+foreach src ${core-regs} {
+    file delete "$src"
+    file copy "$srcdir/../features/$src" "$src"
+}
+
+# Similarly, we need to copy files under test into the objdir.
+proc load_description { file errmsg } {
+    global srcdir
+    global subdir
+    global gdb_prompt
+    global core-regs
+
+    file delete "regs.xml"
+    set ifd [open "$srcdir/$subdir/$file" r]
+    set ofd [open "regs.xml" w]
+    while {[gets $ifd line] >= 0} {
+	if {[regexp {<xi:include href="core-regs.xml"/>} $line]} {
+	    foreach src ${core-regs} {
+		puts $ofd "  <xi:include href=\"$src\"/>"
+	    }
+	} else {
+	    puts $ofd $line
+	}
+    }
+    close $ifd
+    close $ofd
+
+    # Anchor the test output, so that error messages are detected.
+    set cmd "set tdesc filename regs.xml"
+    set msg "set tdesc filename $file"
+    set cmd_regex [string_to_regexp $cmd]
+    gdb_test_multiple $cmd $msg {
+	-re "^$cmd_regex\r\n$errmsg$gdb_prompt $" {
+	    pass $msg
+	}
+    }
+}
+
+load_description "extra-regs.xml" ""
+gdb_test "ptype \$extrareg" "type = (int|long|long long)"
+gdb_test "ptype \$uintreg" "type = uint32_t"
+gdb_test "ptype \$vecreg" "type = int8_t \\\[4\\\]"
+gdb_test "ptype \$unionreg" \
+    "type = union {\r\n *v4int8 v4;\r\n *v2int16 v2;\r\n}"
+gdb_test "ptype \$unionreg.v4" "type = int8_t \\\[4\\\]"
+
+load_description "core-only.xml" ""
+# The extra register from the previous description should be gone.
+gdb_test "ptype \$extrareg" "type = void"
+
+foreach src ${core-regs} {
+    file delete "$src"
+}
+file delete "regs.xml"

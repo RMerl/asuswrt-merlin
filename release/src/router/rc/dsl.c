@@ -38,21 +38,14 @@ void convert_dsl_config_num()
 	nvram_set_int("dslx_config_num", config_num); 
 }
 
+/* Paul modify 2013/1/23 */
 void convert_dsl_wan()
 {
 	int conv_dsl_to_wan0 = 0;
-	int conv_dsl_to_wan1 = 0;
 
 #ifdef RTCONFIG_DUALWAN
 	if (get_dualwan_primary()==WANS_DUALWAN_IF_DSL)
-	{
 		conv_dsl_to_wan0 = 1;
-	}
-
-	if (get_dualwan_secondary()==WANS_DUALWAN_IF_DSL)
-	{
-		conv_dsl_to_wan1 = 1;
-	}	
 #else
 	conv_dsl_to_wan0 = 1;
 #endif
@@ -60,83 +53,47 @@ void convert_dsl_wan()
 	if (conv_dsl_to_wan0)
 	{
 		nvram_set("wan_nat_x",nvram_safe_get("dslx_nat"));
-		nvram_set("wan_upnp_enable",nvram_safe_get("dslx_upnp_enable"));	
-		nvram_set("wan_enable",nvram_safe_get("dslx_link_enable")); 
-		nvram_set("wan_dhcpenable_x",nvram_safe_get("dslx_DHCPClient"));	
-		nvram_set("wan_ipaddr_x",nvram_safe_get("dslx_ipaddr"));	
-		nvram_set("wan_upnp_enable",nvram_safe_get("dslx_upnp_enable"));		
-		nvram_set("wan_netmask_x",nvram_safe_get("dslx_netmask"));		
-		nvram_set("wan_gateway_x",nvram_safe_get("dslx_gateway"));		
-		nvram_set("wan_dnsenable_x",nvram_safe_get("dslx_dnsenable"));		
-		nvram_set("wan_dns1_x",nvram_safe_get("dslx_dns1"));			
-		nvram_set("wan_dns2_x",nvram_safe_get("dslx_dns2"));			
-		nvram_set("wan_pppoe_username",nvram_safe_get("dslx_pppoe_username"));			
-		nvram_set("wan_pppoe_passwd",nvram_safe_get("dslx_pppoe_passwd"));				
-		nvram_set("wan_pppoe_idletime",nvram_safe_get("dslx_pppoe_idletime"));			
-		nvram_set("wan_pppoe_mtu",nvram_safe_get("dslx_pppoe_mtu"));				
-		nvram_set("wan_pppoe_mru",nvram_safe_get("dslx_pppoe_mtu"));			
-		nvram_set("wan_pppoe_service",nvram_safe_get("dslx_pppoe_service"));				
-		nvram_set("wan_pppoe_ac",nvram_safe_get("dslx_pppoe_ac"));				
-		nvram_set("wan_pppoe_options_x",nvram_safe_get("dslx_pppoe_options"));			
-//		nvram_set("wan_pppoe_relay",nvram_safe_get("dslx_pppoe_relay"));				
-		nvram_set("wan_dns1_x",nvram_safe_get("dslx_dns1"));			
-		nvram_set("wan_dns1_x",nvram_safe_get("dslx_dns1"));				
-	}
+		nvram_set("wan_upnp_enable",nvram_safe_get("dslx_upnp_enable"));
+		nvram_set("wan_enable",nvram_safe_get("dslx_link_enable"));
+		nvram_set("wan_dhcpenable_x",nvram_safe_get("dslx_DHCPClient"));
+		nvram_set("wan_ipaddr_x",nvram_safe_get("dslx_ipaddr"));
+		nvram_set("wan_upnp_enable",nvram_safe_get("dslx_upnp_enable"));
+		nvram_set("wan_netmask_x",nvram_safe_get("dslx_netmask"));
+		nvram_set("wan_gateway_x",nvram_safe_get("dslx_gateway"));
+		nvram_set("wan_dnsenable_x",nvram_safe_get("dslx_dnsenable"));
+		nvram_set("wan_dns1_x",nvram_safe_get("dslx_dns1"));
+		nvram_set("wan_dns2_x",nvram_safe_get("dslx_dns2"));
+		nvram_set("wan_pppoe_username",nvram_safe_get("dslx_pppoe_username"));
+		nvram_set("wan_pppoe_passwd",nvram_safe_get("dslx_pppoe_passwd"));
+		nvram_set("wan_pppoe_idletime",nvram_safe_get("dslx_pppoe_idletime"));
+		nvram_set("wan_pppoe_mtu",nvram_safe_get("dslx_pppoe_mtu"));
+		nvram_set("wan_pppoe_mru",nvram_safe_get("dslx_pppoe_mtu"));
+		nvram_set("wan_pppoe_service",nvram_safe_get("dslx_pppoe_service"));
+		nvram_set("wan_pppoe_ac",nvram_safe_get("dslx_pppoe_ac"));
+		nvram_set("wan_pppoe_options_x",nvram_safe_get("dslx_pppoe_options"));
+		nvram_set("wan_hwaddr_x",nvram_safe_get("dslx_hwaddr"));
 
-	if (conv_dsl_to_wan0)
-	{
 		nvram_set("wan0_nat_x",nvram_safe_get("dslx_nat"));
-		nvram_set("wan0_upnp_enable",nvram_safe_get("dslx_upnp_enable"));	
-		nvram_set("wan0_enable",nvram_safe_get("dslx_link_enable"));	
-		nvram_set("wan0_dhcpenable_x",nvram_safe_get("dslx_DHCPClient"));	
-		nvram_set("wan0_ipaddr_x",nvram_safe_get("dslx_ipaddr"));	
-		nvram_set("wan0_upnp_enable",nvram_safe_get("dslx_upnp_enable"));		
-		nvram_set("wan0_netmask_x",nvram_safe_get("dslx_netmask")); 	
-		nvram_set("wan0_gateway_x",nvram_safe_get("dslx_gateway")); 	
-		nvram_set("wan0_dnsenable_x",nvram_safe_get("dslx_dnsenable")); 	
-		nvram_set("wan0_dns1_x",nvram_safe_get("dslx_dns1"));			
-		nvram_set("wan0_dns2_x",nvram_safe_get("dslx_dns2"));			
-		nvram_set("wan0_pppoe_username",nvram_safe_get("dslx_pppoe_username")); 		
-		nvram_set("wan0_pppoe_passwd",nvram_safe_get("dslx_pppoe_passwd")); 			
-		nvram_set("wan0_pppoe_idletime",nvram_safe_get("dslx_pppoe_idletime")); 		
-		nvram_set("wan0_pppoe_mtu",nvram_safe_get("dslx_pppoe_mtu"));				
-		nvram_set("wan0_pppoe_mru",nvram_safe_get("dslx_pppoe_mtu"));			
-		nvram_set("wan0_pppoe_service",nvram_safe_get("dslx_pppoe_service"));				
-		nvram_set("wan0_pppoe_ac",nvram_safe_get("dslx_pppoe_ac")); 			
-		nvram_set("wan0_pppoe_options_x",nvram_safe_get("dslx_pppoe_options")); 		
-//		nvram_set("wan0_pppoe_relay",nvram_safe_get("dslx_pppoe_relay"));				
-		nvram_set("wan0_dns1_x",nvram_safe_get("dslx_dns1"));			
-		nvram_set("wan0_dns1_x",nvram_safe_get("dslx_dns1"));				
+		nvram_set("wan0_upnp_enable",nvram_safe_get("dslx_upnp_enable"));
+		nvram_set("wan0_enable",nvram_safe_get("dslx_link_enable"));
+		nvram_set("wan0_dhcpenable_x",nvram_safe_get("dslx_DHCPClient"));
+		nvram_set("wan0_ipaddr_x",nvram_safe_get("dslx_ipaddr"));
+		nvram_set("wan0_upnp_enable",nvram_safe_get("dslx_upnp_enable"));
+		nvram_set("wan0_netmask_x",nvram_safe_get("dslx_netmask"));
+		nvram_set("wan0_gateway_x",nvram_safe_get("dslx_gateway"));
+		nvram_set("wan0_dnsenable_x",nvram_safe_get("dslx_dnsenable"));
+		nvram_set("wan0_dns1_x",nvram_safe_get("dslx_dns1"));
+		nvram_set("wan0_dns2_x",nvram_safe_get("dslx_dns2"));
+		nvram_set("wan0_pppoe_username",nvram_safe_get("dslx_pppoe_username"));
+		nvram_set("wan0_pppoe_passwd",nvram_safe_get("dslx_pppoe_passwd"));
+		nvram_set("wan0_pppoe_idletime",nvram_safe_get("dslx_pppoe_idletime"));
+		nvram_set("wan0_pppoe_mtu",nvram_safe_get("dslx_pppoe_mtu"));
+		nvram_set("wan0_pppoe_mru",nvram_safe_get("dslx_pppoe_mtu"));
+		nvram_set("wan0_pppoe_service",nvram_safe_get("dslx_pppoe_service"));
+		nvram_set("wan0_pppoe_ac",nvram_safe_get("dslx_pppoe_ac"));
+		nvram_set("wan0_pppoe_options_x",nvram_safe_get("dslx_pppoe_options"));
 		nvram_set("wan0_hwaddr_x",nvram_safe_get("dslx_hwaddr"));					
 	}
-
-	if (conv_dsl_to_wan1)
-	{
-		nvram_set("wan1_nat_x",nvram_safe_get("dslx_nat"));
-		nvram_set("wan1_upnp_enable",nvram_safe_get("dslx_upnp_enable"));	
-		nvram_set("wan1_enable",nvram_safe_get("dslx_link_enable"));	
-		nvram_set("wan1_dhcpenable_x",nvram_safe_get("dslx_DHCPClient"));	
-		nvram_set("wan1_ipaddr_x",nvram_safe_get("dslx_ipaddr"));	
-		nvram_set("wan1_upnp_enable",nvram_safe_get("dslx_upnp_enable"));		
-		nvram_set("wan1_netmask_x",nvram_safe_get("dslx_netmask")); 	
-		nvram_set("wan1_gateway_x",nvram_safe_get("dslx_gateway")); 	
-		nvram_set("wan1_dnsenable_x",nvram_safe_get("dslx_dnsenable")); 	
-		nvram_set("wan1_dns1_x",nvram_safe_get("dslx_dns1"));			
-		nvram_set("wan1_dns2_x",nvram_safe_get("dslx_dns2"));			
-		nvram_set("wan1_pppoe_username",nvram_safe_get("dslx_pppoe_username")); 		
-		nvram_set("wan1_pppoe_passwd",nvram_safe_get("dslx_pppoe_passwd")); 			
-		nvram_set("wan1_pppoe_idletime",nvram_safe_get("dslx_pppoe_idletime")); 		
-		nvram_set("wan1_pppoe_mtu",nvram_safe_get("dslx_pppoe_mtu"));				
-		nvram_set("wan1_pppoe_mru",nvram_safe_get("dslx_pppoe_mtu"));			
-		nvram_set("wan1_pppoe_service",nvram_safe_get("dslx_pppoe_service"));				
-		nvram_set("wan1_pppoe_ac",nvram_safe_get("dslx_pppoe_ac")); 			
-		nvram_set("wan1_pppoe_options_x",nvram_safe_get("dslx_pppoe_options")); 		
-//		nvram_set("wan1_pppoe_relay",nvram_safe_get("dslx_pppoe_relay"));				
-		nvram_set("wan1_dns1_x",nvram_safe_get("dslx_dns1"));			
-		nvram_set("wan1_dns1_x",nvram_safe_get("dslx_dns1"));				
-		nvram_set("wan1_hwaddr_x",nvram_safe_get("dslx_hwaddr"));					
-	}
-	
 
 	if (conv_dsl_to_wan0)
 	{
@@ -164,42 +121,8 @@ void convert_dsl_wan()
 				nvram_set("wan0_proto","static");		
 			}
 		}
-	}
-
-	if (conv_dsl_to_wan1)
-	{
-		if (nvram_match("dsl0_proto","pppoe") || nvram_match("dsl0_proto","pppoa")) {
-			nvram_set("wan1_proto","pppoe");
-			/* Turn off DHCP on MAN interface */
-			nvram_set_int("wan1_dhcpenable_x", 2);
-		}
-		else if (nvram_match("dsl0_proto","ipoa")) {
-			nvram_set("wan1_proto","static");
-		}
-		else if (nvram_match("dsl0_proto","bridge")) {
-			// disable nat
-			nvram_set("wan1_nat_x","0");		
-
-			/* Paul add 2012/7/13, for Bridge connection type wan0_proto set to dhcp, and dsl_proto set as bridge */
-			nvram_set("wan1_proto","dhcp");
-			nvram_set("dsl_proto","bridge");
-		}
-		else if (nvram_match("dsl0_proto","mer")) {
-			if (nvram_match("dslx_DHCPClient","1")) {
-				nvram_set("wan1_proto","dhcp");
-			}
-			else {
-				nvram_set("wan1_proto","static");		
-			}
-		}
-	}
-	
-
-	if (conv_dsl_to_wan0)
-	{
 		nvram_set("wan_proto",nvram_safe_get("wan0_proto"));
-	}	
-
+	}
 }
 
 
@@ -398,8 +321,8 @@ void init_dsl_before_start_wan(void)
 	// eth2 could not start up in original initialize routine
 	// it must put eth2 start-up code here
 	dbG("enable eth2 and power up all LAN ports\n");
-	eval("ifconfig", "eth", "up");
-	eval("8367r", "14");
+	eval("ifconfig", "eth2", "up");
+	eval("rtkswitch", "14");
 	eval("brctl", "addif", "br0", "eth2.2");
 }
 

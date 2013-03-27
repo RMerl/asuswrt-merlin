@@ -1,0 +1,1 @@
+#include "../sparc/syscallent.h"

@@ -1,0 +1,28 @@
+# sh testcase for bf/s $disp8 -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global taken
+taken:
+	clrt
+	bf/s ntaken
+slot1:
+	nop
+	fail
+	.global ntaken
+ntaken:
+	sett
+	bf/s bad
+slot2:
+	nop
+	pass
+bad:
+	fail
+	fail
+	fail
+	fail

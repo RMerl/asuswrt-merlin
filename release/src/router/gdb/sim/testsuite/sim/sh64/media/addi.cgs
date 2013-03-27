@@ -1,0 +1,37 @@
+# sh testcase for addi $rm, $disp10, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	pta wrong, tr0
+
+addi1:
+	movi 1, r0
+	addi r0, 10, r0
+	bnei r0, 11, tr0
+
+addi2:
+	movi 10, r0
+	addi r0, 1, r0
+	bnei r0, 11, tr0
+
+addi3:
+	movi 10, r0
+	addi r0, -1, r0
+	bnei r0, 9, tr0
+
+addi4:
+	movi 20, r0
+	addi r0, -2, r0
+	bnei r0, 18, tr0
+
+okay:	
+	pass
+
+wrong:
+	fail

@@ -221,7 +221,7 @@ function validForm(){
 				document.form.pptpd_clientlist_username.focus();
 				return false;
 		
-		}else if(!Block_chars(document.form.pptpd_clientlist_username, ["*", " ", "\\", "/", "<", ">"])){
+		}else if(!Block_chars(document.form.pptpd_clientlist_username, [" ", "@", "*", "+", "|", ":", "?", "<", ">", ",", ".", "/", ";", "[", "]", "\\", "=", "\"" ])){
 				return false;		
 		}
 
@@ -229,8 +229,7 @@ function validForm(){
 				alert("<#JS_fieldblank#>");
 				document.form.pptpd_clientlist_password.focus();
 				return false;
-		
-		}else if(!Block_chars(document.form.pptpd_clientlist_password, ["*", " ", "\\", "/", "<", ">"])){
+		}else if(!Block_chars(document.form.pptpd_clientlist_password, ["<", ">"])){
 				return false;		
 		}
 		

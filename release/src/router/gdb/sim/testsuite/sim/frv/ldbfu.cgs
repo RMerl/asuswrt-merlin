@@ -1,0 +1,34 @@
+# frv testcase for ldbfu @($GRi,$GRj),$GRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldbfu
+ldbfu:
+	set_gr_gr	sp,gr20
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_fr_iimmed	0xbeef,0xdead,fr8
+
+	set_gr_immed	0,gr7
+	ldbfu 		@(sp,gr7),fr8
+	test_fr_limmed	0x0000,0x00de,fr8
+	test_gr_gr	sp,gr20
+
+	inc_gr_immed	1,gr20
+	set_gr_immed	1,gr7
+	ldbfu 		@(sp,gr7),fr8
+	test_fr_limmed	0x0000,0x00ad,fr8
+	test_gr_gr	sp,gr20
+
+	inc_gr_immed	2,gr20
+	inc_gr_immed	-1,sp
+	set_mem_limmed	0xffff,0xff00,sp
+	inc_gr_immed	4,sp
+	set_gr_immed	-1,gr7
+	ldbfu 		@(sp,gr7),fr8
+	test_fr_limmed	0x0000,0x0000,fr8
+	test_gr_gr	sp,gr20
+
+	pass

@@ -1,0 +1,294 @@
+# tls.exp -- Expect script to test thread-local storage
+# Copyright (C) 1992, 2003, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+set testfile tls
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if [istarget "*-*-linux"] then {
+    set target_cflags "-D_MIT_POSIX_THREADS"
+} else {
+    set target_cflags ""
+}
+
+if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug "incdir=${objdir}"]] != "" } {
+    return -1
+}
+
+### Compute the value of the a_thread_local variable.
+proc compute_expected_value {value} {
+    set expected_value 0
+    set i 0
+    while { $i <= $value} {
+        incr expected_value $i
+        incr i
+    }
+    return $expected_value
+}
+
+### Get the value of the variable 'me' for the current thread.
+proc get_me_variable {tnum} {
+    global expect_out
+    global gdb_prompt
+    global decimal
+
+    set value_of_me -1
+    send_gdb "print me\n"
+    gdb_expect {
+	-re ".*= ($decimal).*\r\n$gdb_prompt $" {
+	    set value_of_me $expect_out(1,string)
+	    pass "$tnum thread print me"
+        }
+	-re "$gdb_prompt $" {
+	    fail "$tnum thread print me"
+	}
+	timeout {
+	    fail "$tnum thread print me (timeout)" 
+	}
+    }
+    return ${value_of_me}
+}
+
+### Check the values of the thread local variables in the thread.
+### Also check that info address print the right things.
+proc check_thread_local {number} {
+    set me_variable [get_me_variable $number]
+    set expected_value [compute_expected_value ${me_variable}]
+
+    gdb_test "p a_thread_local" \
+	    "= $expected_value" \
+	    "${number} thread local storage"
+
+    gdb_test "p another_thread_local" \
+	    "= $me_variable" \
+	    "${number} another thread local storage"
+
+    gdb_test "info address a_thread_local" \
+	    ".*a_thread_local.*a thread-local variable at offset.*" \
+	    "${number} info address a_thread_local"
+
+    gdb_test "info address another_thread_local" \
+    	    ".*another_thread_local.*a thread-local variable at offset.*" \
+	    "${number} info address another_thread_local"
+}
+
+### Select a particular thread.
+proc select_thread {thread} {
+    global gdb_prompt
+
+    send_gdb "thread $thread\n"
+    gdb_expect {
+	-re "\\\[Switching to thread .*\\\].*\r\n$gdb_prompt $" {
+	    pass "selected thread: $thread"
+	}
+	-re "$gdb_prompt $" {
+	    fail "selected thread: $thread"
+	}
+	timeout {
+	    fail "selected thread: $thread (timeout)"
+	}
+    }
+}
+
+### Do a backtrace for the current thread, and check that the 'spin' routine
+### is in it. This means we have one of the threads we created, rather
+### than the main thread. Record the thread in the spin_threads 
+### array. Also remember the level of the 'spin' routine in the backtrace, for 
+### later use.
+proc check_thread_stack {number spin_threads spin_threads_level} {
+    global gdb_prompt
+    global expect_out
+    global decimal
+    global hex
+    upvar $spin_threads tarr
+    upvar $spin_threads_level tarrl
+
+    select_thread $number
+    send_gdb "where\n"
+    gdb_expect {
+	-re ".*(\[0-9\]+)\[ \t\]+$hex in spin \\(vp=(0x\[0-9a-f\]+).*\r\n$gdb_prompt $" {
+	    if {[info exists tarr($number)]} {
+		fail "backtrace of thread number $number in spin"
+	    } else {
+		pass "backtrace of thread number $number in spin"
+                set level $expect_out(1,string)
+		set tarrl($number) $level
+		set tarr($number) 1
+	    }
+	}
+	-re ".*$gdb_prompt $" {
+	 set tarr($number) 0
+	 set tarrl($number) 0
+	 pass "backtrace of thread number $number not relevant"
+	}
+	timeout {
+	    fail "backtrace of thread number $number (timeout)" 
+	}
+    }
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+gdb_load ${binfile}
+if ![runto_main] then {
+   fail "Can't run to main"
+   return 0
+}
+
+# Set a breakpoint at the "spin" routine to
+# test the thread local's value.  
+#
+gdb_test "b [gdb_get_line_number "here we know tls value"]" \
+         ".*Breakpoint 2.*tls.*"   "set breakpoint at all threads"
+
+# Set a bp at a point where we know all threads are alive.
+#
+gdb_test "b [gdb_get_line_number "still alive"]" \
+         ".*Breakpoint 3.*tls.*" "set breakpoint at synch point"
+
+# Set a bp at the end to see if all threads are finished.
+#
+gdb_test "b [gdb_get_line_number "before exit"]" \
+         ".*Breakpoint 4.*tls.*" "set breakpoint at exit"
+
+send_gdb "continue\n"
+gdb_expect {
+    -re ".*Program received signal SIGSEGV.*a_thread_local = 0;.*$gdb_prompt $" {
+        # This is the first symptom if the gcc and binutils versions
+        # in use support TLS, but the system glibc does not.
+        unsupported "continue to first thread: system does not support TLS"
+        return -1
+    }
+    -re ".*Program exited normally.*$gdb_prompt $" {
+        fail "continue to first thread: program runaway"
+    }
+    -re ".*Pass 0 done.*Pass 1 done.*$gdb_prompt $" {
+        fail "continue to first thread: program runaway 2"
+    }
+    -re ".*Breakpoint 2.*tls value.*$gdb_prompt $" {
+        pass "continue to first thread: get to thread"
+    }
+    -re ".*$gdb_prompt $" {
+        fail "continue to first thread: no progress?"
+    }
+    timeout { fail "continue to first thread (timeout)" }
+}
+
+gdb_test "info thread" ".*Thread.*spin.*" \
+	"at least one th in spin while stopped at first th"
+
+check_thread_local "first"
+
+gdb_test "continue" ".*Breakpoint 2.*tls value.*" "continue to second thread"
+gdb_test "info thread" "Thread.*spin.*" \
+	"at least one th in spin while stopped at second th"
+
+check_thread_local "second"
+
+gdb_test "continue" ".*Breakpoint 2.*tls value.*" "continue to third thread"
+gdb_test "info thread" ".*Thread.*spin.*" \
+	"at least one th in spin while stopped at third th"
+
+check_thread_local "third"
+
+gdb_test "continue" ".*Breakpoint 3.*still alive.*" "continue to synch point"
+
+set no_of_threads 0
+send_gdb "info thread\n"
+gdb_expect {
+	-re "^info thread\[ \t\r\n\]+(\[0-9\]+) Thread.*$gdb_prompt $" {
+	   set no_of_threads $expect_out(1,string)
+	   pass "get number of threads"
+        }
+	-re "$gdb_prompt $" {
+	    fail "get number of threads"
+	}
+	timeout {
+	    fail "get number of threads (timeout)"
+	}
+}
+
+array set spin_threads {}
+unset spin_threads
+array set spin_threads_level {}
+unset spin_threads_level
+
+# For each thread check its backtrace to see if it is stopped at the
+# spin routine. 
+for {set i 1} {$i <= $no_of_threads} {incr i} {
+    check_thread_stack $i spin_threads spin_threads_level
+}
+
+### Loop through the threads and check the values of the tls variables.
+### keep track of how many threads we find in the spin routine.
+set thrs_in_spin 0
+foreach i [array names spin_threads] {
+    if {$spin_threads($i) == 1} {
+      incr thrs_in_spin
+      select_thread $i
+      set level $spin_threads_level($i)
+      # We expect to be in sem_wait, but if the thread has not yet
+      # been scheduled, we might be in sem_post still.  We could be at
+      # any intermediate point in spin, too, but that is much less
+      # likely.
+      gdb_test "up $level" ".*spin.*sem_(wait|post).*" "thread $i up"
+      check_thread_local $i 
+    }
+}
+
+if {$thrs_in_spin == 0} {
+  fail "No thread backtrace reported spin (vsyscall kernel problem?)"
+}
+
+gdb_test "continue" ".*Breakpoint 4.*before exit.*" "threads exited"
+
+send_gdb "info thread\n" 
+gdb_expect {
+    -re ".* 1 Thread.*2 Thread.*$gdb_prompt $" {
+        fail "Too many threads left at end"
+    }
+    -re ".*\\\* 1 Thread.*main.*$gdb_prompt $" {
+        pass "Expect only base thread at end"
+    }
+    -re ".*No stack.*$gdb_prompt $" {
+        fail "runaway at end"
+    }
+    -re ".*$gdb_prompt $" {
+        fail "mess at end"
+    }
+    timeout { fail "at end (timeout)" }
+}
+
+# Start over and do some "info address" stuff
+#
+runto spin
+
+gdb_test "info address a_global" \
+	".*a_global.*static storage at address.*" "info address a_global"
+
+setup_kfail "gdb/1294" "*-*-*"
+gdb_test "info address me" ".*me.*is a variable at offset.*" "info address me"
+
+# Done!
+#
+gdb_exit
+
+return 0

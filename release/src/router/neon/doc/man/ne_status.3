@@ -1,0 +1,105 @@
+'\" t
+.\"     Title: ne_status
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_STATUS" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_status \- HTTP status structure
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_utils\&.h>
+
+typedef struct {
+    int major_version, minor_version;
+    int code, klass;
+    const char *reason_phrase;
+} ne_status;
+.fi
+.ft
+.SH "DESCRIPTION"
+.PP
+An
+\fBne_status\fR
+type represents an HTTP response status; used in response messages giving a result of request\&. The
+\fImajor_version\fR
+and
+\fIminor_version\fR
+fields give the HTTP version supported by the server issuing the response\&. The
+\fIcode\fR
+field gives the status code of the result (lying between 100 and 999 inclusive), and the
+\fIklass\fR
+field gives the class\&\s-2\u[1]\d\s+2, which is equal to the most significant digit of the status\&.
+.PP
+There are five classes of HTTP status code defined by RFC2616:
+.PP
+1xx
+.RS 4
+Informational response\&.
+.RE
+.PP
+2xx
+.RS 4
+Success: the operation was successful
+.RE
+.PP
+3xx
+.RS 4
+Redirection
+.RE
+.PP
+4xx
+.RS 4
+Client error: the request made was incorrect in some manner\&.
+.RE
+.PP
+5xx
+.RS 4
+Server error
+.RE
+.SH "SEE ALSO"
+.PP
+ne_get_status\&.
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br
+.SH "NOTES"
+.IP " 1." 4
+the field is named
+\(lqklass\(rq
+not
+\(lqclass\(rq
+so that the header can be used from a C++ program, in which
+\(lqclass\(rq
+is a reserved word)
+

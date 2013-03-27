@@ -79,6 +79,18 @@ char *g_buf_alloc(char *g_buf_now)
 	return (g_buf_now);
 }
 
+/* overwrite all '/' with '_' */
+static void remove_slash(char *str)
+{
+	char *p = str;
+
+	if (!str || *str == '\0')
+		return;
+
+	while ((p = strchr(str, '/')) != NULL)
+		*p++ = '_';
+}
+
 int host_addr_info(const char *name, int af, struct sockaddr_storage *buf)
 {
 	struct addrinfo hints;
@@ -575,7 +587,7 @@ int timematch_conv(char *mstr, char *nv_date, char *nv_time)
 	}
 
 	//sprintf(mstr, "-m time --timestart %s:00 --timestop %s:00 --days ",
-	sprintf(mstr, "-m time --timestart %s --timestop %s --days ",
+	sprintf(mstr, "-m time --timestart %s --timestop %s " DAYS_PARAM,
 			timestart, timestop);
 
 	head=1;
@@ -744,7 +756,7 @@ int timematch_conv2(char *mstr, char *nv_date, char *nv_time, char *nv_time2)
 		
 		// cross-night period
 		if(strcmp(datetime[i].tmpstop, "")!=0){
-			sprintf(buf, "%s-m time --timestop %s --days %s", buf, str2time(datetime[i].tmpstop, tmp2), datestr[i]);
+			sprintf(buf, "%s-m time --timestop %s" DAYS_PARAM "%s", buf, str2time(datetime[i].tmpstop, tmp2), datestr[i]);
 		}
 
 		// normal period
@@ -753,16 +765,16 @@ int timematch_conv2(char *mstr, char *nv_date, char *nv_time, char *nv_time2)
 			if(strcmp(buf, "")!=0) sprintf(buf, "%s>", buf); // add ">"
 
 			if((strcmp(datetime[i].start, "0000")==0) && (strcmp(datetime[i].stop, "2359")==0)){// whole day
-				sprintf(buf, "%s-m time --days %s", buf, datestr[i]);
+				sprintf(buf, "%s-m time" DAYS_PARAM "%s", buf, datestr[i]);
 			}
 			else if((strcmp(datetime[i].start, "0000")!=0) && (strcmp(datetime[i].stop, "2359")==0)){// start ~ 2359
-				sprintf(buf, "%s-m time --timestart %s --days %s", buf, str2time(datetime[i].start, tmp1), datestr[i]);
+				sprintf(buf, "%s-m time --timestart %s" DAYS_PARAM "%s", buf, str2time(datetime[i].start, tmp1), datestr[i]);
 			}
 			else if((strcmp(datetime[i].start, "0000")==0) && (strcmp(datetime[i].stop, "2359")!=0)){// 0 ~ stop
-				sprintf(buf, "%s-m time --timestop %s --days %s", buf, str2time(datetime[i].stop, tmp2), datestr[i]);
+				sprintf(buf, "%s-m time --timestop %s" DAYS_PARAM "%s", buf, str2time(datetime[i].stop, tmp2), datestr[i]);
 			}
 			else if((strcmp(datetime[i].start, "0000")!=0) && (strcmp(datetime[i].stop, "2359")!=0)){// start ~ stop
-				sprintf(buf, "%s-m time --timestart %s --timestop %s --days %s", buf,  str2time(datetime[i].start, tmp1), str2time(datetime[i].stop, tmp2), datestr[i]);
+				sprintf(buf, "%s-m time --timestart %s --timestop %s" DAYS_PARAM "%s", buf,  str2time(datetime[i].start, tmp1), str2time(datetime[i].stop, tmp2), datestr[i]);
 			}
 		}
 
@@ -1013,8 +1025,10 @@ char *ipoffset(char *ip, int offset, char *tmp)
 void repeater_nat_setting(){
 	FILE *fp;
 	char *lan_ip = nvram_safe_get("lan_ipaddr");
+	char name[PATH_MAX];
 
-	if((fp = fopen("/tmp/nat_rules", "w")) == NULL)
+	sprintf(name, "%s_repeater", NAT_RULES);
+	if((fp = fopen(name, "w")) == NULL)
 		return;
 
 	fprintf(fp, "*nat\n"
@@ -1028,6 +1042,10 @@ void repeater_nat_setting(){
 	fprintf(fp, "COMMIT\n");
 
 	fclose(fp);
+
+	unlink(NAT_RULES);
+	symlink(name, NAT_RULES);
+
 	return;
 }
 #endif
@@ -1040,8 +1058,12 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	char dstips[64];
 	char *proto, *protono, *port, *lport, *dstip, *desc;
 	char *nv, *nvp, *b;
+	char name[PATH_MAX];
+	int wan_unit;
 
-	if ((fp=fopen("/tmp/nat_rules", "w"))==NULL) return;
+	sprintf(name, "%s_%s_%s", NAT_RULES, wan_if, wanx_if);
+	remove_slash(name + strlen(NAT_RULES));
+	if ((fp=fopen(name, "w"))==NULL) return;
 
 	fprintf(fp, "*nat\n"
 		":PREROUTING ACCEPT [0:0]\n"
@@ -1183,18 +1205,24 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	}
 
 	fprintf(fp, "COMMIT\n");
-
 	fclose(fp);
 
-	/* force nat update */
-	nvram_set_int("nat_state", NAT_STATE_UPDATE);
-	start_nat_rules();
+	unlink(NAT_RULES);
+	symlink(name, NAT_RULES);
+
+	wan_unit = wan_ifunit(wan_if);
+	_dprintf("wanport_status(%d) %d\n", wan_unit, wanport_status(wan_unit));
+	if (wan_unit || get_wanports_status(wan_unit)) {
+		/* force nat update */
+		nvram_set_int("nat_state", NAT_STATE_UPDATE);
+		start_nat_rules();
+	}
 }
 
 #ifdef RTCONFIG_DUALWAN // RTCONFIG_DUALWAN
 void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	// oleg patch
 {
-	FILE *fp;		// oleg patch
+	FILE *fp = NULL;	// oleg patch
 	char lan_class[32];	// oleg patch
 	int wan_port;
 	char dstips[32];
@@ -1204,15 +1232,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	char *wanx_if, *wanx_ip;
 	int unit;
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
-
-	if ((fp=fopen("/tmp/nat_rules", "w"))==NULL) return;
-
-	fprintf(fp, "*nat\n"
-		":PREROUTING ACCEPT [0:0]\n"
-		":POSTROUTING ACCEPT [0:0]\n"
-		":OUTPUT ACCEPT [0:0]\n"
-		":VSERVER - [0:0]\n"
-		":VUPNP - [0:0]\n");
+	char name[PATH_MAX];
 
 	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
@@ -1223,6 +1243,19 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 		wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
 		wanx_if = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 		wanx_ip = nvram_safe_get(strcat_r(prefix, "xipaddr", tmp));
+
+		if (!fp) {
+			sprintf(name, "%s_%d_%s_%s", NAT_RULES, unit, wan_if, wanx_if);
+			remove_slash(name + strlen(NAT_RULES));
+			if ((fp=fopen(name, "w"))==NULL) return;
+
+			fprintf(fp, "*nat\n"
+				":PREROUTING ACCEPT [0:0]\n"
+				":POSTROUTING ACCEPT [0:0]\n"
+				":OUTPUT ACCEPT [0:0]\n"
+				":VSERVER - [0:0]\n"
+				":VUPNP - [0:0]\n");
+		}
 
 		_dprintf("writting prerouting 2 %s %s %s %s %s %s\n", wan_if, wan_ip, wanx_if, wanx_ip, lan_if, lan_ip);
 
@@ -1393,17 +1426,26 @@ TRACE_PT("writing dmz\n");
 	}
 
 	fprintf(fp, "COMMIT\n");
-	
 	fclose(fp);
 
-	// force nat update
-	nvram_set_int("nat_state", NAT_STATE_UPDATE);
-	start_nat_rules();
+	unlink(NAT_RULES);
+	symlink(name, NAT_RULES);
+
+	int need_apply = 0;
+	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
+		if(unit || get_wanports_status(unit))
+			++need_apply;
+
+	if(need_apply){
+		// force nat update
+		nvram_set_int("nat_state", NAT_STATE_UPDATE);
+		start_nat_rules();
+	}
 }
 #endif // RTCONFIG_DUALWAN
 
 #ifdef WEB_REDIRECT
-void redirect_setting()
+void redirect_setting(void)
 {
 	FILE *nat_fp, *redirect_fp;
 	char tmp_buf[1024];
@@ -1427,7 +1469,7 @@ void redirect_setting()
 		return;
 	}
 
-	if(nvram_get_int("sw_mode") == SW_MODE_ROUTER && (nat_fp = fopen("/tmp/nat_rules", "r")) != NULL) {
+	if(nvram_get_int("sw_mode") == SW_MODE_ROUTER && (nat_fp = fopen(NAT_RULES, "r")) != NULL) {
 		memset(tmp_buf, 0, sizeof(tmp_buf));
 		while ((fgets(tmp_buf, sizeof(tmp_buf), nat_fp)) != NULL
 				&& strncmp(tmp_buf, "COMMIT", 6) != 0) {
@@ -1448,7 +1490,7 @@ void redirect_setting()
 
 	memset(http_rule, 0, sizeof(http_rule));
 	memset(dns_rule, 0, sizeof(dns_rule));
-	sprintf(http_rule, "-A PREROUTING -d ! %s/%s -p tcp --dport 80 -j DNAT --to-destination %s:18017\n", lan_ipaddr_t, lan_netmask_t, lan_ipaddr_t);
+	sprintf(http_rule, "-A PREROUTING ! -d %s/%s -p tcp --dport 80 -j DNAT --to-destination %s:18017\n", lan_ipaddr_t, lan_netmask_t, lan_ipaddr_t);
 	sprintf(dns_rule, "-A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s:18018\n", lan_ipaddr_t);
 
 	fprintf(redirect_fp, "%s%s", http_rule, dns_rule);
@@ -1519,8 +1561,6 @@ int makeTimestr(char *tf)
 	static const char *days[7] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 	int i, comma = 0;
 
-	memset(tf, 0, 256);
-
 	if (!nvram_match("url_enable_x", "1"))
 		return -1;
 
@@ -1530,8 +1570,8 @@ int makeTimestr(char *tf)
 		return -1;
 	}
 
-	sprintf(tf, "-m time --timestart %c%c:%c%c --timestop %c%c:%c%c --days ", url_time[0], url_time[1], url_time[2], url_time[3], url_time[4], url_time[5], url_time[6], url_time[7]);
-//	sprintf(tf, " -m time --timestart %c%c:%c%c --timestop %c%c:%c%c --days ", url_time[0], url_time[1], url_time[2], url_time[3], url_time[4], url_time[5], url_time[6], url_time[7]);
+	sprintf(tf, "-m time --timestart %c%c:%c%c --timestop %c%c:%c%c " DAYS_PARAM, url_time[0], url_time[1], url_time[2], url_time[3], url_time[4], url_time[5], url_time[6], url_time[7]);
+//	sprintf(tf, " -m time --timestart %c%c:%c%c --timestop %c%c:%c%c " DAYS_PARAM, url_time[0], url_time[1], url_time[2], url_time[3], url_time[4], url_time[5], url_time[6], url_time[7]);
 
 	for (i=0; i<7; ++i)
 	{
@@ -1556,8 +1596,6 @@ int makeTimestr2(char *tf)
 	static const char *days[7] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 	int i, comma = 0;
 
-	memset(tf, 0, 256);
-
 	if (!nvram_match("url_enable_x_1", "1"))
 		return -1;
 
@@ -1567,7 +1605,7 @@ int makeTimestr2(char *tf)
 		return -1;
 	}
 
-	sprintf(tf, "-m time --timestart %c%c:%c%c --timestop %c%c:%c%c --days ", url_time[0], url_time[1], url_time[2], url_time[3], url_time[4], url_time[5], url_time[6], url_time[7]);
+	sprintf(tf, "-m time --timestart %c%c:%c%c --timestop %c%c:%c%c " DAYS_PARAM, url_time[0], url_time[1], url_time[2], url_time[3], url_time[4], url_time[5], url_time[6], url_time[7]);
 
 	for (i=0; i<7; ++i)
 	{
@@ -1657,8 +1695,6 @@ int makeTimestr_content(char *tf)
 	static const char *days[7] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 	int i, comma = 0;
 
-	memset(tf, 0, 256);
-
 	if (!nvram_match("keyword_enable_x", "1"))
 		return -1;
 
@@ -1668,7 +1704,7 @@ int makeTimestr_content(char *tf)
 		return -1;
 	}
 
-	sprintf(tf, "-m time --timestart %c%c:%c%c --timestop %c%c:%c%c --days ", keyword_time[0], keyword_time[1], keyword_time[2], keyword_time[3], keyword_time[4], keyword_time[5], keyword_time[6], keyword_time[7]);
+	sprintf(tf, "-m time --timestart %c%c:%c%c --timestop %c%c:%c%c " DAYS_PARAM, keyword_time[0], keyword_time[1], keyword_time[2], keyword_time[3], keyword_time[4], keyword_time[5], keyword_time[6], keyword_time[7]);
 
 	for (i=0; i<7; ++i)
 	{
@@ -1693,8 +1729,6 @@ int makeTimestr2_content(char *tf)
 	static const char *days[7] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 	int i, comma = 0;
 
-	memset(tf, 0, 256);
-
 	if (!nvram_match("keyword_enable_x_1", "1"))
 		return -1;
 
@@ -1704,7 +1738,7 @@ int makeTimestr2_content(char *tf)
 		return -1;
 	}
 
-	sprintf(tf, "-m time --timestart %c%c:%c%c --timestop %c%c:%c%c --days ", keyword_time[0], keyword_time[1], keyword_time[2], keyword_time[3], keyword_time[4], keyword_time[5], keyword_time[6], keyword_time[7]);
+	sprintf(tf, "-m time --timestart %c%c:%c%c --timestop %c%c:%c%c " DAYS_PARAM, keyword_time[0], keyword_time[1], keyword_time[2], keyword_time[3], keyword_time[4], keyword_time[5], keyword_time[6], keyword_time[7]);
 
 	for (i=0; i<7; ++i)
 	{
@@ -1791,7 +1825,7 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	FILE *fp;	// oleg patch
 	char *proto, *flag, *srcip, *srcport, *dstip, *dstport;
 	char *nv, *nvp, *b;
-	char *setting;
+	char *setting = NULL;
 	char macaccept[32], chain[32];
 	char *ftype, *dtype;
 	int i;
@@ -1809,15 +1843,15 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 #endif	/* RTCONFIG_OLD_PARENTALCTRL */
 #endif
 #ifdef RTCONFIG_IPV6
-	FILE *fp_ipv6;
+	FILE *fp_ipv6 = NULL;
 	int n;
 	char *ip;
 #endif
-	int v4v6_ok;
+	int v4v6_ok = IPT_V4;
 
 //2008.09 magic{
 #ifdef WEBSTRFILTER
-	char timef[32], timef2[32], *filterstr;
+	char timef[256], timef2[256], *filterstr;
 #endif
 //2008.09 magic}
 	char *wanx_if, *wanx_ip;
@@ -2069,6 +2103,8 @@ TRACE_PT("writing Parental Control\n");
 		if (nvram_match("pptpd_enable", "1")) {
 			fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n", wan_if, 1723, logaccept);
 			fprintf(fp, "-A INPUT -p 47 -j %s\n",logaccept);
+			stop_pptpd();
+			start_pptpd();
 		}
 
 #ifdef RTCONFIG_IPV6
@@ -2699,7 +2735,7 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 #endif
 //2008.09 magic{
 #ifdef WEBSTRFILTER
-	char timef[32], timef2[32], *filterstr;
+	char timef[256], timef2[256], *filterstr;
 #endif
 //2008.09 magic}
 	char *wan_if, *wan_ip;
@@ -4079,7 +4115,11 @@ int start_firewall(int wanunit, int lanunit)
 
 	if ((fp=fopen("/proc/sys/net/ipv4/tcp_tw_recycle", "w+")))
 	{
+#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_DUALWAN)
+		fputs("0", fp);
+#else
 		fputs("1", fp);
+#endif
 		fclose(fp);
 	}
 

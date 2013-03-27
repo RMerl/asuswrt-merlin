@@ -1,0 +1,175 @@
+    <refentry id="refreq">
+
+      <refmeta>
+	<refentrytitle>ne_request_create</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_request_create">ne_request_create</refname>
+	<refname id="ne_request_dispatch">ne_request_dispatch</refname>
+	<refname id="ne_request_destroy">ne_request_destroy</refname>
+	<refpurpose>low-level HTTP request handling</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_request.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>ne_request *<function>ne_request_create</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	    <paramdef>const char *<parameter>method</parameter></paramdef>
+	    <paramdef>const char *<parameter>path</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>int <function>ne_request_dispatch</function></funcdef>
+	    <paramdef>ne_request *<parameter>req</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_request_destroy</function></funcdef>
+	    <paramdef>ne_request *<parameter>req</parameter></paramdef>
+	  </funcprototype>
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>An HTTP request, represented by the
+<type>ne_request</type> type, specifies that some operation is to be
+performed on some resource.  The
+<function>ne_request_create</function> function creates a request
+object, specifying the operation in the <parameter>method</parameter>
+parameter. The location of the resource is determined by the server in
+use for the session given by the <parameter>sess</parameter>
+parameter, combined with the <parameter>path</parameter> parameter.</para>
+
+<para>The <parameter>path</parameter> string used must conform to the
+<literal>abs_path</literal> definition given in RFC2396, with an
+optional "?query" part, and must be URI-escaped by the caller (for
+instance, using <function>ne_path_escape</function>).  If the string
+comes from an untrusted source, failure to perform URI-escaping
+results in a security vulnerability.</para>
+
+	<para>To dispatch a request, and process the response, the
+<function>ne_request_dispatch</function> function can be used.  An
+alternative is to use the (more complex, but more flexible)
+combination of the <function>ne_begin_request</function>,
+<function>ne_end_request</function>, and
+<function>ne_read_response_block</function> functions; see
+<function>ne_begin_request</function>.</para>
+
+	<para>To add extra headers in the request, the functions <xref
+linkend="ne_add_request_header"/> and <xref
+linkend="ne_print_request_header"/> can be used.  To include a message
+body with the request, one of the functions
+<function>ne_set_request_body_buffer</function>, <xref
+linkend="ne_set_request_body_fd"/>, or
+<function>ne_set_request_body_provider</function> can be used.</para>
+
+	<para>The return value of
+<function>ne_request_dispatch</function> indicates merely whether the
+request was sent and the response read successfully.  To discover the
+result of the operation, <xref linkend="ne_get_status"/>, along with
+any processing of the response headers and message body.</para>
+
+	<para>A request can only be dispatched once: calling
+	<function>ne_request_dispatch</function> more than once on a
+	single <type>ne_request</type> object produces undefined
+	behaviour.  Once all processing associated with the request
+	object is complete, use the
+	<function>ne_request_destroy</function> function to destroy
+        the resources associated with it.  Any subsequent use of the
+	request object produces undefined behaviour.</para>
+
+        <para>If a request is being using a non-idempotent method such
+        as <literal>POST</literal>, the
+        <literal>NE_REQFLAG_IDEMPOTENT</literal> flag should be
+        disabled; see <xref linkend="ne_set_request_flag"/>.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Return value</title>
+
+	<para>The <function>ne_request_create</function> function
+returns a pointer to a request object (and never &null;).</para>
+
+	<para>The <function>ne_request_dispatch</function> function
+returns zero if the request was dispatched successfully, and a
+non-zero error code otherwise.</para>
+
+      </refsect1>
+
+<!-- TODO: abs_path description in a NOTES section -->
+
+      <refsect1>
+	<title>Errors</title>
+
+	<variablelist>
+	  <varlistentry><term><errorcode>NE_ERROR</errorcode></term>
+	    <listitem>
+	      <simpara>Request failed (see session error string)</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry><term><errorcode>NE_LOOKUP</errorcode></term>
+	    <listitem>
+	      <simpara>The DNS lookup for the server (or proxy server) failed.</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry><term><errorcode>NE_AUTH</errorcode></term>
+	    <listitem>
+	      <simpara>Authentication failed on the server.</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry><term><errorcode>NE_PROXYAUTH</errorcode></term>
+	    <listitem>
+	      <simpara>Authentication failed on the proxy server.</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry><term><errorcode>NE_CONNECT</errorcode></term>
+	    <listitem>
+	      <simpara>A connection to the server could not be established.</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry><term><errorcode>NE_TIMEOUT</errorcode></term>
+	    <listitem>
+	      <simpara>A timeout occurred while waiting for the server to respond.</simpara>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Example</title>
+	
+	<para>An example of applying a <literal>MKCOL</literal>
+	operation to the resource at the location 
+	<literal>http://www.example.com/foo/bar/</literal>:</para>
+
+	<programlisting>ne_session *sess = ne_session_create("http", "www.example.com", 80);
+ne_request *req = ne_request_create(sess, "MKCOL", "/foo/bar/");
+if (ne_request_dispatch(req)) {
+   printf("Request failed: %s\n", ne_get_error(sess));
+}
+ne_request_destroy(req);</programlisting>
+      </refsect1>
+
+      <refsect1>
+	<title>See also</title>
+	
+	<para><xref linkend="ne_get_error"/>, <xref
+linkend="ne_set_error"/>, <xref linkend="ne_get_status"/>, <xref
+linkend="ne_add_request_header"/>, <xref
+linkend="ne_set_request_body_buffer"/>, <xref linkend="ne_set_request_flag"/>.</para>
+
+      </refsect1>
+
+    </refentry>

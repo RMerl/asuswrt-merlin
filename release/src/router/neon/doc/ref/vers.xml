@@ -1,0 +1,63 @@
+<refentry id="refvers">
+
+  <refmeta>
+    <refentrytitle>ne_version_match</refentrytitle>
+    <manvolnum>3</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname>ne_version_match</refname>
+    <refname>ne_version_string</refname>
+    <refpurpose>library versioning</refpurpose>
+  </refnamediv>
+  
+  <refsynopsisdiv>
+
+    <funcsynopsis>
+
+      <funcsynopsisinfo>#include &lt;ne_utils.h&gt;</funcsynopsisinfo>
+
+      <funcprototype>
+        <funcdef>int <function>ne_version_match</function></funcdef>
+        <paramdef>int <parameter>major</parameter></paramdef>
+        <paramdef>int <parameter>minor</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>const char *<function>ne_version_string</function></funcdef>
+	<void/>
+      </funcprototype>
+
+    </funcsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para>The <function>ne_version_match</function> function returns
+    non-zero if the library version is not of major version
+    <parameter>major</parameter>, or the minor version is less than
+    <parameter>minor</parameter>.  For &neon; versions 0.x, every
+    minor version is assumed to be incompatible with every other minor
+    version.</para>  <!-- TODO: remove that for 1.0 -->
+
+    <para>The <function>ne_version_string</function> function returns
+    a string giving the library version.</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Examples</title>
+
+    <para>To require &neon; 1.x, version 1.2 or later:</para>
+
+    <programlisting>if (ne_version_match(1, 2)) {
+    printf("Library version out of date: 1.2 required, found %s.",
+           ne_version_string());
+    exit(1);
+}</programlisting>
+
+  </refsect1>
+
+</refentry>

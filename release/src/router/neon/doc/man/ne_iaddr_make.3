@@ -1,0 +1,157 @@
+'\" t
+.\"     Title: ne_iaddr_make
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_IADDR_MAKE" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_iaddr_make, ne_iaddr_cmp, ne_iaddr_print, ne_iaddr_typeof, ne_iaddr_parse, ne_iaddr_raw, ne_iaddr_reverse, ne_iaddr_free \- functions to manipulate network addresses
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_socket\&.h>
+
+typedef enum {
+    ne_iaddr_ipv4 = 0,
+    ne_iaddr_ipv6
+} ne_iaddr_type;
+.fi
+.ft
+.HP \w'ne_inet_addr\ *ne_iaddr_make('u
+.BI "ne_inet_addr *ne_iaddr_make(ne_iaddr_type\ " "type" ", const\ unsigned\ char\ *" "raw" ");"
+.HP \w'int\ ne_iaddr_cmp('u
+.BI "int ne_iaddr_cmp(const\ ne_inet_addr\ *" "ia1" ", const\ ne_inet_addr\ *" "ia2" ");"
+.HP \w'char\ *ne_iaddr_print('u
+.BI "char *ne_iaddr_print(const\ ne_inet_addr\ *" "ia" ", char\ *" "buffer" ", size_t\ " "bufsiz" ");"
+.HP \w'ne_iaddr_type\ ne_iaddr_typeof('u
+.BI "ne_iaddr_type ne_iaddr_typeof(const\ ne_inet_addr\ *" "ia" ");"
+.HP \w'ne_inet_addr\ *ne_iaddr_parse('u
+.BI "ne_inet_addr *ne_iaddr_parse(const\ char\ *" "address" ", ne_iaddr_type\ " "type" ");"
+.HP \w'unsigned\ char\ *ne_iaddr_raw('u
+.BI "unsigned char *ne_iaddr_raw(const\ ne_inet_addr\ *" "ia" ", unsigned\ char\ *" "buffer" ");"
+.HP \w'int\ ne_iaddr_reverse('u
+.BI "int ne_iaddr_reverse(const\ ne_inet_addr\ *" "ia" ", char\ *" "buffer" ", size_t\ " "buflen" ");"
+.HP \w'void\ ne_iaddr_free('u
+.BI "void ne_iaddr_free(const\ ne_inet_addr\ *" "ia" ");"
+.SH "DESCRIPTION"
+.PP
+\fBne_iaddr_make\fR
+creates an
+\fBne_inet_addr\fR
+object from a raw binary network address; for instance the four bytes
+0x7f 0x00 0x00 0x01
+represent the IPv4 address
+127\&.0\&.0\&.1\&. The object returned is suitable for passing to
+\fBne_sock_connect\fR\&. A binary IPv4 address contains four bytes; a binary IPv6 address contains sixteen bytes; addresses passed must be in network byte order\&.
+.PP
+\fBne_iaddr_cmp\fR
+compares two network address objects; returning zero only if they are identical\&. The objects need not have the same address type; if the addresses are not of the same type, the return value is guaranteed to be non\-zero\&.
+.PP
+\fBne_iaddr_print\fR
+prints a human\-readable string representation of a network address into a buffer, for instance the string
+"127\&.0\&.0\&.1"\&.
+.PP
+\fBne_iaddr_typeof\fR
+returns the type of the given network address object\&.
+.PP
+\fBne_iaddr_parse\fR
+parses a string representation of a network address (such as
+"127\&.0\&.0\&.1"
+and creates a network address object to represent the parsed address\&.
+.PP
+\fBne_iaddr_raw\fR
+writes the raw byte representation of a network address to the provided buffer\&. The bytes are written in network byte order; the buffer must be of suitable length for the type of address (4 bytes for an IPv4 address, 16 bytes for an IPv6 address)\&.
+.PP
+\fBne_iaddr_reverse\fR
+performs a reverse name lookup on the address object, writing the (first) hostname associated with the IP address to the provided buffer\&. If the hostname is longer than the buffer it will be silently truncated; on success the string written to the buffer is always
+NUL\-terminated\&.
+.PP
+\fBne_iaddr_free\fR
+releases the memory associated with a network address object\&.
+.SH "RETURN VALUE"
+.PP
+\fBne_iaddr_make\fR
+returns
+NULL
+if the address type passed is not supported (for instance on a platform which does not support IPv6)\&.
+.PP
+\fBne_iaddr_print\fR
+returns the
+\fIbuffer\fR
+pointer, and never
+NULL\&.
+.PP
+\fBne_iaddr_parse\fR
+returns a network address object on success, or
+NULL
+on failure to parse the
+\fIaddress\fR
+parameter\&.
+.PP
+\fBne_iaddr_reverse\fR
+returns zero on success or non\-zero if no hostname is associated with the address\&.
+.PP
+\fBne_iaddr_raw\fR
+returns the
+\fIbuffer\fR
+parameter, and never
+NULL\&.
+.SH "EXAMPLES"
+.PP
+The following example connects a socket to port 80 at the address
+127\&.0\&.0\&.1\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+unsigned char addr[] = "\e0x7f\e0x00\e0x00\e0x01";
+ne_inet_addr *ia;
+
+ia = ne_iaddr_make(ne_iaddr_ipv4, addr);
+if (ia != NULL) {
+    ne_socket *sock = ne_sock_connect(ia, 80);
+    ne_iaddr_free(ia);
+    /* \&.\&.\&. */
+} else {
+    /* \&.\&.\&. */
+}
+.fi
+.if n \{\
+.RE
+.\}
+.SH "SEE ALSO"
+.PP
+ne_addr_resolve
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

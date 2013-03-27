@@ -1,0 +1,82 @@
+# Copyright 2002, 2003, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the gdb testsuite
+
+# Test casting, especially between class types or pointer-to-class
+# types.
+
+# This file is part of the gdb testsuite
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+#
+# test running programs
+#
+
+set prms_id 0
+set bug_id 0
+
+if { [skip_cplus_tests] } { continue }
+
+set testfile "casts"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if [get_compiler_info ${binfile} "c++"] {
+    return -1;
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     untested casts.exp
+     return -1
+}
+
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+gdb_test "break [gdb_get_line_number "casts.exp: 1"]" \
+    "Breakpoint.*at.* file .*" \
+    ""
+
+gdb_test "continue" "Breakpoint .* at .*casts.cc.*" ""
+
+# Casting a pointer to a base class to a pointer to a derived class
+# should yield the entire derived class.  Until August 2002, GDB got
+# the enclosing type on `(B *) a' wrong: while the value's static type
+# was `B *', as it should be, the enclosing type (which is supposed to
+# be the dynamic type) was `A *'.  It's senseless to have a static
+# type derived from the dynamic type; it should be the other way
+# 'round.  Dereferencing this oddly typed pointer yielded a value in
+# which only the base class's members were initialized, since GDB uses
+# the enclosing type to decide how many bytes to read.  Members from
+# the derived class were garbage, from GDB's address space.
+gdb_test "print * (B *) a" ".* = {<A> = {a = 42}, b = 1729}" \
+    "cast base class pointer to derived class pointer"
+
+# Check also that we get the same results from letting the compiler do
+# the dereference.
+gdb_test "print * b" ".* = {<A> = {a = 42}, b = 1729}" \
+    "let compiler cast base class pointer to derived class pointer"

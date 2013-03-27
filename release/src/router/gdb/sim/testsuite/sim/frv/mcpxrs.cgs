@@ -1,0 +1,115 @@
+# frv testcase for mcpxrs $GRi,$GRj,$ACCk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mcpxrs
+mcpxrs:
+	; Positive operands
+	set_fr_iimmed  	2,4,fr7		; multiply small numbers
+	set_fr_iimmed  	3,5,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0xff,accg0
+	test_acc_immed 	-14,acc0
+
+	set_fr_iimmed  	3,1,fr7		; multiply by 0
+	set_fr_iimmed  	2,0,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	6,acc0
+
+	set_fr_iimmed  	2,1,fr7		; multiply by 1
+	set_fr_iimmed  	1,1,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	1,acc0
+
+	set_fr_iimmed	0x3fff,2,fr7	; 15 bit result
+	set_fr_iimmed  	2,0x0007,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0,0x7ff0,acc0
+
+	set_fr_iimmed	0x4000,2,fr7	; 16 bit result
+	set_fr_iimmed  	2,0x2000,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x0000,0x4000,acc0
+
+	set_fr_iimmed	0x7fff,0x0000,fr7	; max positive result
+	set_fr_iimmed	0x7fff,0x7fff,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_limmed 0x3fff,0x0001,acc0
+
+	; Mixed operands
+	set_fr_iimmed  	2,0xfffd,fr7		; multiply small numbers
+	set_fr_iimmed  	0xfffd,1,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0xff,accg0
+	test_acc_immed 	-3,acc0
+
+	set_fr_iimmed  	0xfffe,2,fr7		; multiply by 1
+	set_fr_iimmed  	1,0xfffe,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	2,acc0
+
+	set_fr_iimmed  	0xfffe,0,fr7		; multiply by 0
+	set_fr_iimmed  	1,0xfffe,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0xff,accg0
+	test_acc_immed 	-2,acc0
+
+	set_fr_iimmed  	0x2001,0xfffe,fr7	; 15 bit result
+	set_fr_iimmed  	0xfffe,0xfff9,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0xff,accg0
+	test_acc_limmed	0xffff,0xbff0,acc0
+
+	set_fr_iimmed	0x4000,0xfffe,fr7	; 16 bit result
+	set_fr_iimmed  	0xfffe,0x0003,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0xff,accg0
+	test_acc_limmed	0xffff,0x8006,acc0
+
+	set_fr_iimmed	0x7fff,0x8000,fr7	; max negative result
+	set_fr_iimmed	0x8000,0x8000,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0xff,accg0
+	test_acc_limmed	0x8000,0x8000,acc0
+
+	set_fr_iimmed	0x8000,0x7fff,fr7	; max positive result
+	set_fr_iimmed	0x8000,0x8000,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x7fff,0x8000,acc0
+
+	; Negative operands
+	set_fr_iimmed  	0xfffe,0xfffc,fr7		; multiply small numbers
+	set_fr_iimmed  	0xfffd,0xfffb,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0xff,accg0
+	test_acc_immed 	-14,acc0
+
+	set_fr_iimmed  	0xffff,0xffff,fr7		; multiply by -1
+	set_fr_iimmed  	0xfffe,0xffff,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	1,acc0
+
+	set_fr_iimmed	0x7fff,0x0000,fr7	; almost max positive result
+	set_fr_iimmed	0x7fff,0x8001,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0x3fff0001,acc0
+
+	set_fr_iimmed	0x8000,0x0000,fr7	; max positive result
+	set_fr_iimmed	0x8000,0x8000,fr8
+	mcpxrs      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0x40000000,acc0
+
+	pass

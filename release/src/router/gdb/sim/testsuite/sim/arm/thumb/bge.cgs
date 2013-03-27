@@ -1,0 +1,12 @@
+# arm testcase for bge $soffset8
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global bge
+bge:
+	bge footext
+
+	pass

@@ -1,0 +1,42 @@
+# m32r testcase for addx $dr,$sr
+# mach(): m32r m32rx
+# timeout(): 42
+
+# timeout is set to test it
+
+	.include "testutils.inc"
+
+	start
+
+	.global addx
+addx:
+	mvi_h_condbit 1
+	mvi_h_gr r4, 1
+	mvi_h_gr r5, 2
+	addx r4, r5
+	bc not_ok
+	test_h_gr r4, 4
+
+	mvi_h_gr r4, 0xfffffffe
+	addx r4, r5
+	bnc not_ok
+	test_h_gr r4, 0
+
+	mvi_h_gr r4, -1
+	mvi_h_gr r5, -1
+	mvi_h_condbit 1
+	addx r4,r5
+	bnc not_ok
+	test_h_gr r4, -1
+
+	mvi_h_gr r4,-1
+	mvi_h_gr r5,0x7fffffff
+	mvi_h_condbit 1
+	addx r5,r4
+	bnc not_ok
+	test_h_gr r5,0x7fffffff
+
+	pass
+
+not_ok:
+	fail

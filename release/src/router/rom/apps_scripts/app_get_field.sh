@@ -60,17 +60,11 @@ for f in $LIST_FILES; do
 
 	field_gone=`grep "$2: " $TEMP_CONF_FILE`
 	if [ -z "$field_gone" ]; then
-		rm -f $TEMP_CONF_FILE
 		continue
 	fi
 
-	field_value=`grep "$2: " $TEMP_CONF_FILE |awk '{print $2}'`
-	if [ -n "$field_value" ]; then
-		for v in $field_value; do
-			field_value=$v
-			break
-		done
-	fi
+	field_value=`grep "$2: " $TEMP_CONF_FILE |sed '2,$d' |awk '{FS="'$2': "; print $2}' |sed 's/, /,/g'`
+	rm -f $TEMP_CONF_FILE
 	echo "$field_value"
 	exit 0
 done

@@ -1,0 +1,87 @@
+# Test Framework Driver for GDB driving a builtin simulator
+#   Copyright 1994, 1997, 1998, 2004, 2007 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib gdb.exp
+
+#
+# gdb_target_sim
+# Set gdb to target the simulator
+#
+proc gdb_target_sim { } {
+    global gdb_prompt
+    
+    set target_sim_options "[board_info target gdb,target_sim_options]";
+
+    send_gdb "target sim $target_sim_options\n"
+    set timeout 60
+    verbose "Timeout is now $timeout seconds" 2
+    gdb_expect {
+	-re "Connected to the simulator.*$gdb_prompt $"	{
+	    verbose "Set target to sim"
+	}
+	timeout { 
+	    perror "Couldn't set target for simulator."
+	    cleanup
+	    return -1
+	}
+    }
+    set timeout 10
+    verbose "Timeout is now $timeout seconds" 2
+    return 0
+}
+
+#
+# gdb_load -- load a file into the debugger.
+#             return a -1 if anything goes wrong.
+#
+proc gdb_load { arg } {
+    global verbose
+    global loadpath
+    global loadfile
+    global GDB
+    global gdb_prompt
+
+    if { $arg != "" } {
+	if [gdb_file_cmd $arg] then { return -1 }
+    }
+
+    if [gdb_target_sim] then { return -1 }
+
+    send_gdb "load\n"
+    set timeout 2400
+    verbose "Timeout is now $timeout seconds" 2
+    gdb_expect {
+	-re ".*$gdb_prompt $" {
+	    if $verbose>1 then {
+		send_user "Loaded $arg into $GDB\n"
+	    }
+	    set timeout 30
+	    verbose "Timeout is now $timeout seconds" 2
+	    return 0
+	}
+	-re "$gdb_prompt $"     {
+	    if $verbose>1 then {
+		perror "GDB couldn't load."
+	    }
+	}
+	timeout {
+	    if $verbose>1 then {
+		perror "Timed out trying to load $arg."
+	    }
+	}
+    }
+    return -1
+}

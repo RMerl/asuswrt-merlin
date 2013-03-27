@@ -1,0 +1,27 @@
+This target is used to set the Netfilter mark value associated with the packet.
+It can, for example, be used in conjunction with routing based on fwmark (needs
+iproute2). If you plan on doing so, note that the mark needs to be set in the
+PREROUTING chain of the mangle table to affect routing.
+The mark field is 32 bits wide.
+.TP
+\fB\-\-set\-xmark\fP \fIvalue\fP[\fB/\fP\fImask\fP]
+Zeroes out the bits given by \fImask\fP and XORs \fIvalue\fP into the packet
+mark ("nfmark"). If \fImask\fP is omitted, 0xFFFFFFFF is assumed.
+.TP
+\fB\-\-set\-mark\fP \fIvalue\fP[\fB/\fP\fImask\fP]
+Zeroes out the bits given by \fImask\fP and ORs \fIvalue\fP into the packet
+mark. If \fImask\fP is omitted, 0xFFFFFFFF is assumed.
+.PP
+The following mnemonics are available:
+.TP
+\fB\-\-and\-mark\fP \fIbits\fP
+Binary AND the nfmark with \fIbits\fP. (Mnemonic for \fB\-\-set\-xmark
+0/\fP\fIinvbits\fP, where \fIinvbits\fP is the binary negation of \fIbits\fP.)
+.TP
+\fB\-\-or\-mark\fP \fIbits\fP
+Binary OR the nfmark with \fIbits\fP. (Mnemonic for \fB\-\-set\-xmark\fP
+\fIbits\fP\fB/\fP\fIbits\fP.)
+.TP
+\fB\-\-xor\-mark\fP \fIbits\fP
+Binary XOR the nfmark with \fIbits\fP. (Mnemonic for \fB\-\-set\-xmark\fP
+\fIbits\fP\fB/0\fP.)

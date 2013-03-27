@@ -1,0 +1,62 @@
+# sh testcase for rotl $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global rotl
+rotl:
+	mov #1, r1
+	rotl r1
+	assert r1, #2
+	rotl r1
+	assert r1, #4
+	rotl r1
+	assert r1, #8
+	rotl r1
+	assert r1, #16
+	rotl r1
+	assert r1, #32
+	rotl r1
+	assert r1, #64
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	rotl r1
+	bf wrong
+	assert r1, #1
+	rotl r1
+	rotl r1
+	rotl r1
+	assert r1, #8
+
+okay:	
+	pass
+
+wrong:
+	fail

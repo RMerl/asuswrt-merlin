@@ -1,0 +1,66 @@
+# frv testcase to generate compound exception
+# mach: fr500 frv
+	.include "testutils.inc"
+
+	start
+
+	.global align
+align:
+	and_spr_immed	-4081,tbr		; clear tbr.tt
+	set_gr_spr	tbr,gr17
+	inc_gr_immed	0x200,gr17		; address of exception handler
+	set_bctrlr_0_0  gr17
+	set_spr_immed	128,lcr
+	set_spr_addr	ok1,lr
+	or_spr_immed	0x04000000,fsr0		; enabled div/0 fp_exception
+	set_psr_et	1
+
+	set_gr_immed	0,gr15
+	set_fr_iimmed	0x7f7f,0xffff,fr0
+	set_fr_iimmed	0x0000,0x0000,fr1
+
+	and_spr_immed	0xfffffffe,isr		; enable mem_address_not_aligned
+	set_gr_addr	store,gr16
+	set_gr_addr	dividei,gr17
+	set_gr_immed	0xdeadbeef,gr8
+	inc_gr_immed	2,sp			; misalign
+store:	sti.p		gr8,@(sp,0)		; misaligned write
+dividef:fdivs.p		fr0,fr1,fr2		; fp_exception
+dividei:sdiv		gr1,gr0,gr1		; division exception
+	test_gr_immed	1,gr15
+
+	pass
+
+; exception handler
+ok1:
+	; check interrupt on store
+	test_spr_immed	0x102,esfr1		; esr8 and esr1 are active
+	test_spr_gr	epcr8,gr16
+	test_spr_bits	0x0001,0,0x1,esr8	; esr8 is valid
+	test_spr_bits	0x003e,1,0xb,esr8	; esr8.ec is set
+	test_spr_bits	0x0800,11,0x1,esr8	; esr8.eav is set
+	test_spr_gr	ear8,sp
+	test_spr_bits	0x01000,12,0x1,esr8	; esr8.edv is set
+	test_spr_bits	0x1e000,13,0x3,esr8	; esr8.edn is 3
+	test_spr_gr	edr3,gr8		; edr3 is set
+
+	; check on fp_exception
+	test_spr_bits	0x100000,20,0x1,fsr0	; fsr0.qne is set
+	test_spr_bits	0xe0000,17,0x1,fsr0	; fsr0.ftt is set
+	test_spr_bits	0xfc00,10,0x0,fsr0	; fsr0.aexc is clear
+
+	test_spr_bits	0x80000000,31,0x0,fqst2	; fq2.miv is set
+	test_spr_bits	0x18000,15,0x0,fqst2	; fq2.sie is set
+	test_spr_bits	0x380,7,0x1,fqst2	; fq2.ftt is set
+	test_spr_bits	0x7e,1,0x4,fqst2	; fq2.cexc is set
+	test_spr_bits	0x1,0,0x1,fqst2		; fq2.valid is set
+	test_spr_immed	0x05e40241,fqop2	; fq2.opc
+
+	; check interrupt on dividei
+	test_spr_gr	epcr1,gr17
+	test_spr_bits	0x0001,0,0x1,esr1	; esr1 is valid
+	test_spr_bits	0x003e,1,0x13,esr1	; esr1.ec is set
+
+	inc_gr_immed	1,gr15
+	rett		0
+	fail

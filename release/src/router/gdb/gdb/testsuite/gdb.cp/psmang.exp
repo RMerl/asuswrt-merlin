@@ -1,0 +1,225 @@
+# Copyright 2002, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the gdb testsuite
+
+# Looking up methods by name, in programs with multiple compilation units.
+
+# ====== PLEASE BE VERY CAREFUL WHEN CHANGING THIS TEST. =====
+#
+# The bug we're testing for (circa October 2002) is very sensitive to
+# various conditions that are hard to control directly in the test
+# suite.  If you change the test, please revert this change, and make
+# sure the test still fails:
+#
+# 2002-08-29  Jim Blandy  <jimb@redhat.com>
+# 
+# 	* symtab.c (lookup_symbol_aux): In the cases where we find a
+# 	minimal symbol of an appropriate name and use its address to
+# 	select a symtab to read and search, use `name' (as passed to us)
+# 	as the demangled name when searching the symtab's global and
+# 	static blocks, not the minsym's name.
+#
+# The original bug was that you'd try to set a breakpoint on a method
+# (e.g., `break s::method1'), and you'd get an error, but if you
+# repeated the command, it would work the second time:
+#   
+#   (gdb) break s::method1
+#   the class s does not have any method named method1
+#   Hint: try 's::method1<TAB> or 's::method1<ESC-?>
+#   (Note leading single quote.)
+#   (gdb) break s::method1
+#   Breakpoint 1 at 0x804841b: file psmang1.cc, line 13.
+#   (gdb) 
+#
+# We observed this bug first using Stabs, and then using Dwarf 2.
+#
+# The problem was in lookup_symbol_aux: when looking up s::method1, it
+# would fail to find it in any symtabs, find the minsym with the
+# corresponding mangled name (say, `_ZN1S7method1Ev'), pass the
+# minsym's address to find_pc_sect_symtab to look up the symtab
+# (causing the compilation unit's full symbols to be read in), and
+# then look up the symbol in that symtab's global block.  All that is
+# correct.  However, it would pass the minsym's name as the NAME
+# argument to lookup_block_symbol; a minsym's name is mangled, whereas
+# lookup_block_symbol's NAME argument should be demangled.
+#
+# This is a pretty simple bug, but it turns out to be a bear to
+# construct a test for.  That's why this test case is so delicate.  If
+# you can see how to make it less so, please contribute a patch.
+#
+# Here are the twists:
+#
+# The bug only manifests itself when we call lookup_symbol to look up
+# a method name (like "s::method1" or "s::method2"), and that method's
+# definition is in a compilation unit for which we have read partial
+# symbols, but not full symbols.  The partial->full conversion must be
+# caused by that specific lookup.  (If we already have full symbols
+# for the method's compilation unit, we won't need to look up the
+# minsym, find the symtab for the minsym's address, and then call
+# lookup_block_symbol; it's that last call where things go awry.)
+#
+# Now, when asked to set a breakpoint at `s::method1', GDB will first
+# look up `s' to see if that is, in fact, the name of a class, and
+# then look up 's::method1'.  So we have to make sure that looking up
+# `s' doesn't cause full symbols to be read for the compilation unit
+# containing the definition of `s::method1'.
+#
+# The partial symbol tables for `psmang1.cc' and `psmang2.cc' will
+# both have entries for `s'; GDB will read full symbols for whichever
+# compilation unit's partial symbol table appears first in the
+# objfile's list.  The order in which compilation units appear in the
+# partial symbol table list depends on how the program is linked, and
+# how the debug info reader does the partial symbol scan.  Ideally,
+# the test shouldn't rely on them appearing in any particular order.
+#
+# So, since we don't know which compilation unit's full symbols are
+# going to get read, we simply try looking up one method from each of
+# the two compilation units.  One of them has to come after the other
+# in the partial symbol table list, so whichever comes later will
+# still need its partial symbols read by the time we go to look up
+# 's::methodX'.
+#
+# Second twist: don't move the common definition of `struct s' into a
+# header file.  If the compiler emits identical stabs for the
+# #inclusion of that header file into psmang1.cc and into psmang2.cc,
+# then the linker will do stabs compression, and replace one of the
+# BINCL/EINCL regions with an EXCL stab, pointing to the other
+# BINCL/EINCL region.  GDB will read this, and record that the
+# compilation unit that got the EXCL depends on the compilation unit
+# that kept the BINCL/EINCL.  Then, when it decides it needs to read
+# full symbols for the former, it'll also read full symbols for the
+# latter.  Now, if it just so happens that the compilation unit that
+# got the EXCL is also the first one with a definition of `s' in the
+# partial symbol table list, then that first probe for `s' will cause
+# both compilation units' full symbols to be read --- again defeating
+# the test.
+#
+# We could work around this by having three compilation units, or by
+# ensuring that the header file produces different stabs each time
+# it's #included, but it seems simplest just to avoid compilation unit
+# dependencies altogether, drop the header file, and duplicate the
+# (pretty trivial) struct definition.
+#
+# Note that #including any header file at all into both compilation
+# units --- say, <stdio.h> --- could create this sort of dependency.
+#
+# This is the aspect of the test which the debug format is most likely
+# to affect, I think.  The different formats create different kinds of
+# inter-CU dependencies, which could mask the bug.  It might be
+# possible for the test to check that at least one of the partial
+# symtabs remains unread, and fail otherwise --- the failure
+# indicating that the test itself isn't going to catch the bug it was
+# meant to, not that GDB is misbehaving.
+#
+# Third twist: given the way lookup_block_symbol is written, it's
+# possible to find the symbol even when it gets passed a mangled name
+# for its NAME parameter.  There are three ways lookup_block_symbol
+# might search a block, depending on how it was constructed:
+#
+# linear search.  In this case, this bug will never manifest itself,
+# since we check every symbol against NAME using SYMBOL_MATCHES_NAME.
+# Since that macro checks its second argument (NAME) against both the
+# mangled and demangled names of the symbol, this will always find the
+# symbol successfully, so, no bug.
+#
+# hash table.  If both the mangled and demangled names hash to the
+# same bucket, then you'll again find the symbol "by accident", since
+# we search the entire bucket using SYMBOL_SOURCE_NAME.  Since GDB
+# chooses the number of buckets based on the number of symbols, small
+# compilation units may have only one hash bucket; in this case, the
+# search always succeeds, even though we hashed on the wrong name.
+# This test works around that by having a lot of dummy variables,
+# making it less likely that the mangled and demangled names fall in
+# the same bucket.
+#
+# binary search.  (GDB 5.2 produced these sorts of blocks, and this
+# test tries to detect the bug there, but subsequent versions of GDB
+# almost never build them, and they may soon be removed entirely.)  In
+# this case, the symbols in the block are sorted by their
+# SYMBOL_SOURCE_NAME (whose behavior depends on the current demangling
+# setting, so that's wrong, but let's try to stay focussed).
+# lookup_block_symbol does a binary search comparing NAME with
+# SYMBOL_SOURCE_NAME until the range has been narrowed down to only a
+# few symbols; then it starts a linear search forward from the lower
+# end of that range, until it reaches a symbol whose
+# SYMBOL_SOURCE_NAME follows NAME in lexicographic order.  This means
+# that, if you're doing a binary search for a mangled name in a block
+# sorted by SYMBOL_SOURCE_NAME, you might find the symbol `by
+# accident' if the mangled and demangled names happen to fall near
+# each other in the ordering.  The initial version of this patch used
+# a class called `S'; all the other symbols in the compilation unit
+# started with lower-case letters, so the demangled name `S::method1'
+# sorted at the same place as the mangled name `_ZN1S7method1Ev': at
+# the very beginning.  Using a lower-case 's' as the name ensures that
+# the demangled name falls after all the dummy symbols introduced for
+# the hash table, as described above.
+#
+# This is all so tortured, someone will probably come up with still
+# other ways this test could fail to do its job.  If you need to make
+# revisions, please be very careful.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+#
+# test running programs
+#
+
+set prms_id 0
+set bug_id 0
+
+if { [skip_cplus_tests] } { continue }
+
+set testfile "psmang"
+set binfile ${objdir}/${subdir}/${testfile}
+
+if [get_compiler_info ${binfile} "c++"] {
+    return -1;
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${testfile}1.cc" "${testfile}1.o" object {debug c++}] != "" } {
+     untested psmang.exp
+     return -1
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${testfile}2.cc" "${testfile}2.o" object {debug c++}] != "" } {
+     untested psmang.exp
+     return -1
+}
+
+if  { [gdb_compile "${testfile}1.o ${testfile}2.o" ${binfile} executable {debug c++}] != "" } {
+     untested psmang.exp
+     return -1
+}
+
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+gdb_test "break s::method1" "Breakpoint .* at .*: file .*psmang1.cc.*"
+
+# We have to exit and restart GDB here, to make sure that all the
+# compilation units are psymtabs again.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+gdb_test "break s::method2" "Breakpoint .* at .*: file .*psmang2.cc.*"

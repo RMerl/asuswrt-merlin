@@ -15,94 +15,94 @@
  * MA 02111-1307 USA
  */
 #ifdef BTN_SETUP
-// * Man in Middle Attack
-//
-//             -Attacker<-
-//            /           \
-//           /             \
-//          V               \	     
-//         AP  <----x---- Client
-//  ==> the same as
-//         AP  <--------- Anonymous Client
-//  ==> solved by using in very short range
-//
-// * Key generation(Diffie-Hellman)
-//
-// AP 				
-//	p: random in 100 predefined primes		
-//	q: 5
-//	public_ap/private_ap: DH_generate_key(p, q, private)
-//
-// Client
-//	p: random in 100 predfined primses, rand in SSID
-//	q: 5
-//	public_client/private_client: DH_generate_key(p, q, private)
-//
-// * Process
-// 
-// (a1) Press Button for 3 seconds
-//
-// (a2) Generate Public Key by using:
-//      CreatePubPrivKey()
-//
-// (a3) Change SSID to
-//      ASUS_OTSx_zzz_iiii
-//      x : setting in default or not
-//      zzz : rand seed for primes number
-//      iiii : default ip, if no dhcp server is provided
-//
-// (c1) Survey AP with OTS....
-// (c2) Generate Public Key by using:
-//			CreatePubPrivKey()
-// (c3) Start Session one with PackSetPubKey
-//	<-----OTSInit(SetPubKey)---------
-// (a4) UnpackSetPubKey
-// (a5) For other connection, set into log
-//
-// (a6) PackSetPubKeyRes
-//	------OTSInitAck(SetPubKeyRes)-->
-// (c4) UnpackSetPubKeyAck
-// (c5) Close Session one socket
-//
-// (a7) CreateSharedKey()		(c6) CreateSharedKey
-// (a8) Set to WPA-PSK w/
-//			CreateSharedKey
-//
-// (c7) Start Session Two w/ PackSetInfoGWQuick
-//	<---- OTSExchange(SetInfoGWQuick)- 
-// (a9) UnpackSetInfoGWQuick
-// (a10) For other connection, set into log
-//
-// (a11-1) PackSetInfoGWQuickRes: 
-//				 Apply Setting with QuickFlag = None
-//
-//	----- OTSExchangeRes(SetInfoGWQuickRes) -> Client
-// (c8) UnpackSetInfoGWQuickRes
-//
-// (a11-2) PackSetInfoGWQuickRes
-//				 Response Setting with QuickFlag = Wireless
-//
-//	----- OTSExchangeRes(SetInfoGWQuickRes) -> Client
-// (c8) UnpackSetInfoGWQuickRes
-// (c9) close sesson two socket
-//
-// (a12) save setting and reboot
-//
-// * Timer
-// - 120 seconds, button is pressed and no action is performed.
-// - 20 seconds, button is pressed and OTSInit is sent
-//
-// * Functions
-// DH *DH_new();
-// int CreatePubPrivKey(DH *dh, int rand, char *pub, char *priv);
-// int CreateSharedKey(DH *dh, char *pub, char *shared);
-// int DH_free(DH *dh);
-//
-// Fully Support: ASUS cards, WZC
-// Alert to WZC(WPA) : Centrino or other cards in XP SP2
-// Alert to WZC(WEP) : Centrino or other cards in XP SP1
-// Alert to Ethernet : Other cards in 98/ME/.....
-//
+/* * Man in Middle Attack
+ *
+ *             -Attacker<-
+ *            /           \
+ *           /             \
+ *          V               \
+ *         AP  <----x---- Client
+ *  ==> the same as
+ *         AP  <--------- Anonymous Client
+ *  ==> solved by using in very short range
+ *
+ * * Key generation(Diffie-Hellman)
+ *
+ * AP 				
+ *	p: random in 100 predefined primes		
+ *	q: 5
+ *	public_ap/private_ap: DH_generate_key(p, q, private)
+ *
+ * Client
+ *	p: random in 100 predfined primses, rand in SSID
+ *	q: 5
+ *	public_client/private_client: DH_generate_key(p, q, private)
+ *
+ * * Process
+ * 
+ * (a1) Press Button for 3 seconds
+ *
+ * (a2) Generate Public Key by using:
+ *      CreatePubPrivKey()
+ *
+ * (a3) Change SSID to
+ *      ASUS_OTSx_zzz_iiii
+ *      x : setting in default or not
+ *      zzz : rand seed for primes number
+ *      iiii : default ip, if no dhcp server is provided
+ *
+ * (c1) Survey AP with OTS....
+ * (c2) Generate Public Key by using:
+ *			CreatePubPrivKey()
+ * (c3) Start Session one with PackSetPubKey
+ *	<-----OTSInit(SetPubKey)---------
+ * (a4) UnpackSetPubKey
+ * (a5) For other connection, set into log
+ *
+ * (a6) PackSetPubKeyRes
+ *	------OTSInitAck(SetPubKeyRes)-->
+ * (c4) UnpackSetPubKeyAck
+ * (c5) Close Session one socket
+ *
+ * (a7) CreateSharedKey()		(c6) CreateSharedKey
+ * (a8) Set to WPA-PSK w/
+ *			CreateSharedKey
+ *
+ * (c7) Start Session Two w/ PackSetInfoGWQuick
+ *	<---- OTSExchange(SetInfoGWQuick)- 
+ * (a9) UnpackSetInfoGWQuick
+ * (a10) For other connection, set into log
+ *
+ * (a11-1) PackSetInfoGWQuickRes: 
+ *				 Apply Setting with QuickFlag = None
+ *
+ *	----- OTSExchangeRes(SetInfoGWQuickRes) -> Client
+ * (c8) UnpackSetInfoGWQuickRes
+ *
+ * (a11-2) PackSetInfoGWQuickRes
+ *				 Response Setting with QuickFlag = Wireless
+ *
+ *	----- OTSExchangeRes(SetInfoGWQuickRes) -> Client
+ * (c8) UnpackSetInfoGWQuickRes
+ * (c9) close sesson two socket
+ *
+ * (a12) save setting and reboot
+ *
+ * * Timer
+ * - 120 seconds, button is pressed and no action is performed.
+ * - 20 seconds, button is pressed and OTSInit is sent
+ *
+ * * Functions
+ * DH *DH_new();
+ * int CreatePubPrivKey(DH *dh, int rand, char *pub, char *priv);
+ * int CreateSharedKey(DH *dh, char *pub, char *shared);
+ * int DH_free(DH *dh);
+ *
+ * Fully Support: ASUS cards, WZC
+ * Alert to WZC(WPA) : Centrino or other cards in XP SP2
+ * Alert to WZC(WEP) : Centrino or other cards in XP SP1
+ * Alert to Ethernet : Other cards in 98/ME/.....
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -118,6 +118,10 @@
 #include <rc.h>
 #include <syslog.h>
 #include <iboxcom.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 
 #ifdef RTCONFIG_RALINK
 #include <ralink.h>
@@ -259,7 +263,7 @@ void Decrypt(int klen, unsigned char *key, unsigned char *ptext, int tlen, unsig
 #endif
 
 // some utility
-void nvram_set_ip(char *nvram_name, DWORD ip)
+void nvram_set_ip(const char *nvram_name, DWORD ip)
 {
 	struct in_addr in;
 
@@ -271,7 +275,7 @@ void nvram_set_ip(char *nvram_name, DWORD ip)
 	else nvram_set(nvram_name, "");
 }
 
-void nvram_set_str(char *nvram_name, char *value, int size)
+void nvram_set_str(const char *nvram_name, char *value, int size)
 {
 	char tmpbuf[256];
 
@@ -285,7 +289,6 @@ start_sdhcpd(void)
 {
 	FILE *fp;
 	char *dhcpd_argv[] = {"udhcpd", "/tmp/udhcpd.conf", NULL, NULL};
-	char *slease = "/tmp/udhcpd-br0.sleases";
 	pid_t pid;
 
 	if (nvram_match("lan_proto", "dhcp")) return 0;
@@ -765,9 +768,9 @@ void btn_setup_save_setting(PKT_SET_INFO_GW_QUICK *pkt)
                                         sprintf(sr_name,"%s%d", "sr_if_x", (idx+idx1));
                                         nvram_set_str(sr_name, "WAN", 3);
                                         sprintf(sr_name,"%s%d", "sr_ipaddr_x", (idx+idx1));
-                                        nvram_set_ip(sr_name, pkt->ISPSetting.SR_IPAddr[idx]);
+                                        nvram_set_ip(sr_name, pkt->ISPSetting.SR_IPAddr[(int)idx]);
                                         sprintf(sr_name,"%s%d", "sr_netmask_x", (idx+idx1));
-                                        nvram_set_ip(sr_name, pkt->ISPSetting.SR_Mask[idx]);
+                                        nvram_set_ip(sr_name, pkt->ISPSetting.SR_Mask[(int)idx]);
                                         sprintf(sr_name,"%s%d", "sr_gateway_x", (idx+idx1));
                                         nvram_set(sr_name, "0.0.0.0");
                                 }
@@ -956,7 +959,9 @@ int OTSStart(int flag)
 	}
 	return 1;
 
+#ifdef FULL_EZSETUP
 err:
+#endif
 	if (dh) 
 	{
 		DH_free(dh);
@@ -998,7 +1003,7 @@ OTSExchange(int auth, int encrypt)
 		 sprintf(sharedkeystr, "%s%02X", sharedkeystr, (unsigned char )sharedkey[i]);
 	}
 
-	tw = sharedkeystr;
+	tw = (TEMP_WIRELESS *) sharedkeystr;
 	strncpy(SSID, tw->u.WirelessStruct.TempSSID, sizeof(SSID));
 	SSID[32]=0;
 	strncpy(Key, tw->u.WirelessStruct.TempKey, sizeof(Key));
@@ -1167,7 +1172,9 @@ int OTSPacketHandler(int sockfd)
 {
     IBOX_COMM_PKT_HDR_EX *phdr;
     IBOX_COMM_PKT_RES_EX *phdr_res;
+#ifdef ENCRYPTION
     char tmpbuf[INFO_PDU_LENGTH];
+#endif
 	
     int i, len;
     char *buf;
@@ -1176,7 +1183,7 @@ int OTSPacketHandler(int sockfd)
     {
 	syslog(LOG_NOTICE, "Connect Timeout %x\n", bs_mode);
 	close(sockfd); 
-	return NULL;
+	return 0;
     }
 
     buf = pdubuf; 
@@ -1194,7 +1201,7 @@ int OTSPacketHandler(int sockfd)
     for(i=0;i<sizeof(pdubuf);i++)
     {
 	if(i%16==0) _dprintf("\n");
-	_dprintf("%02x ", (unsigned char *)pdubuf[i]);
+	_dprintf("%02x ", (unsigned char)pdubuf[i]);
     }
 #endif
 
@@ -1296,7 +1303,7 @@ int OTSPacketHandler(int sockfd)
 #ifdef OTS_SIMU
 		     if(!ots_simu(1)) return INFO_PDU_LENGTH;	
 #endif
-		     send(sockfd, pdubuf_res, sizeof(pdubuf_res), NULL);
+		     send(sockfd, pdubuf_res, sizeof(pdubuf_res), 0);
 		     return INFO_PDU_LENGTH;		  
 		}	
 		case NET_CMD_ID_SETKEY_EX:
@@ -1310,13 +1317,13 @@ int OTSPacketHandler(int sockfd)
 		     {	
 		     	  bs_auth=-1;
 		     	  bs_encrypt=-1;
-		  	  return NULL;
+		  	  return 0;
                      }
 
 		     pkey=(PKT_SET_INFO_GW_QUICK_KEY *)(pdubuf+sizeof(IBOX_COMM_PKT_HDR_EX));
 		     pkey_res = (PKT_SET_INFO_GW_QUICK_KEY *)(pdubuf_res+sizeof(IBOX_COMM_PKT_RES_EX));
 
-		     if(pkey->KeyLen==0) return NULL;
+		     if(pkey->KeyLen==0) return 0;
 		     else memcpy(cpubkey, pkey->Key, MAX_DHKEY_LEN);
 
 		     bs_mode = BTNSETUP_DATAEXCHANGE;
@@ -1331,7 +1338,7 @@ int OTSPacketHandler(int sockfd)
 #ifdef OTS_SIMU
 		     if(!ots_simu(2)) return INFO_PDU_LENGTH;
 #endif
-		     send(sockfd, pdubuf_res, sizeof(pdubuf_res), NULL);
+		     send(sockfd, pdubuf_res, sizeof(pdubuf_res), 0);
 		     return INFO_PDU_LENGTH;
 		}
 		case NET_CMD_ID_QUICKGW_EX:
@@ -1341,7 +1348,7 @@ int OTSPacketHandler(int sockfd)
 
 		     if (bs_mode!=BTNSETUP_DATAEXCHANGE && bs_mode!=BTNSETUP_DATAEXCHANGE_EXTEND) 
 		     {
-			 return NULL;
+			 return 0;
 		     }
 #ifdef ENCRYPTION
 		     gwquick=(PKT_SET_INFO_GW_QUICK *)(tmpbuf+sizeof(IBOX_COMM_PKT_HDR_EX));
@@ -1425,10 +1432,10 @@ int OTSPacketHandler(int sockfd)
 		     return INFO_PDU_LENGTH;
 		}
 		default:
-			return NULL;	
+			return 0;
 	}
     }
-    return NULL;
+    return 0;
 }
 
 int 
@@ -1457,12 +1464,6 @@ ots_main(int argc, char *argv[])
     	int listen_fd;
     	int conn_fd;
     	socklen_t sz = sizeof(usa);
-    	IBOX_COMM_PKT_HDR*  phdr;
-    	int                 iLen , iRes , iCount , iRcv;
-    	int                 fromlen;
-    	char                *hdr;
-    	char                pdubuf[INFO_PDU_LENGTH];
-    	struct sockaddr_in  from_addr;
 	time_t now;
 	int flag=0;
 	int ret;

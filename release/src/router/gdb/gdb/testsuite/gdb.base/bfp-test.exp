@@ -1,0 +1,130 @@
+# Copyright 2005, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the gdb testsuite.  It is intended to test that
+# gdb could correctly handle floating point constant with a suffix.
+
+if $tracelevel {
+    strace $tracelevel
+}
+
+set testfile "bfp-test"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    untested "Couldn't compile ${srcfile}"
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+# Run to the breakpoint at return.
+gdb_breakpoint [gdb_get_line_number "return"]
+gdb_continue_to_breakpoint "return"
+
+# Print the original value of b32, b64 and b128.
+gdb_test "print b32" ".*1 = 1\.5.*" "The original value of b32 is 1.5"
+gdb_test "print b64" ".*2 = 2\.25.*" "The original value of b64 is 2.25"
+gdb_test "print b128" ".*3 = 3\.375.*" "The original value of b128 is 3.375"
+
+# Test that gdb could correctly recognize float constant expression with a suffix. 
+gdb_test "print b32=-1.5f" ".*4 = -1\.5.*" "Try to change b32 to -1.5 with 'print b32=-1.5f'"
+gdb_test "print b64=-2.25f" ".*5 = -2\.25.*" "Try to change b64 to -2.25 with 'print b64=-2.25f'"
+gdb_test "print b128=-3.375l" ".*6 = -3\.375.*" "Try to change b128 to -3.375 with 'print b128=-3.375l'"
+
+# Test that gdb could handle the above correctly with "set var" command.
+set test "set variable b32 = 10.5f"
+gdb_test_multiple "set var b32=10.5f" "$test" {
+    -re "$gdb_prompt $" {
+	pass "$test"
+    }
+    -re "Invalid number.*$gdb_prompt $" {
+	fail "$test (do not recognize 10.5f)"
+    }
+}
+
+set test "set variable b64 = 20.25f"
+gdb_test_multiple "set var b64=20.25f" "$test" {
+    -re "$gdb_prompt $" {
+	pass "$test"
+    }
+    -re "Invalid number.*$gdb_prompt $" {
+	fail "$test (do not recognize 20.25f)"
+    }
+}
+
+set test "set variable b128 = 30.375l"
+gdb_test_multiple "set var b128=30.375l" "$test" {
+    -re "$gdb_prompt $" {
+	pass "$test"
+    }
+    -re "Invalid number.*$gdb_prompt $" {
+	fail "$test (do not recognize 30.375l)"
+    }
+}
+
+gdb_test "print b32" ".*7 = 10\.5.*" "The value of b32 is changed to 10.5"
+gdb_test "print b64" ".*8 = 20\.25.*" "The value of b64 is changed to 20.25"
+gdb_test "print b128" ".*9 = 30\.375.*" "The value of b128 is changed to 30.375"
+
+# Test that gdb could handle invalid suffix correctly.
+
+set test "set variable b32 = 100.5a"
+gdb_test_multiple "set var b32=100.5a" "$test" {
+    -re "Invalid number.*$gdb_prompt $" {
+	pass "$test"
+    }
+    -re "$gdb_prompt $" {
+	fail "$test (do not report error on invalid suffix)"
+    }
+}
+
+set test "set variable b64 = 200.25x"
+gdb_test_multiple "set var b64=200.25x" "$test" {
+    -re "Invalid number.*$gdb_prompt $" {
+	pass "$test"
+    }
+    -re "$gdb_prompt $" {
+	fail "$test (do not report error on invalid suffix)"
+    }
+}
+
+set test "set variable b128 = 300.375fl"
+gdb_test_multiple "set var b128=300.375fl" "$test" {
+    -re "Invalid number.*$gdb_prompt $" {
+	pass "$test"
+    }
+    -re "$gdb_prompt $" {
+	fail "$test (do not report error on invalid suffix)"
+    }
+}
+
+set test "set variable b128 = 300.375fff"
+gdb_test_multiple "set var b128=300.375fff" "$test" {
+    -re "Invalid number.*$gdb_prompt $" {
+	pass "$test"
+    }
+    -re "$gdb_prompt $" {
+	fail "$test (do not report error on invalid suffix)"
+    }
+}

@@ -1,0 +1,29 @@
+# frv testcase for ld @($GRi,$GRj),$GRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global ld
+ld:
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_limmed	0xbeef,0xdead,gr8
+
+	set_gr_immed	0,gr7
+	ld 		@(sp,gr7),gr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+
+	set_gr_limmed	0xbeef,0xdead,gr8
+	inc_gr_immed	-4,sp
+	set_gr_immed	4,gr7
+	ld 		@(sp,gr7),gr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+
+	set_gr_limmed	0xbeef,0xdead,gr8
+	inc_gr_immed	8,sp
+	set_gr_immed	-4,gr7
+	ld 		@(sp,gr7),gr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+
+	pass

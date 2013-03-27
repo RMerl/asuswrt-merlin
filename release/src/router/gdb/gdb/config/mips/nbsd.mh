@@ -1,0 +1,2 @@
+# Host: NetBSD/mips
+NATDEPFILES= fork-child.o inf-ptrace.o mipsnbsd-nat.o

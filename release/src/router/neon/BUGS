@@ -1,0 +1,47 @@
+
+Known problems/bugs in neon                                      -*- text -*-
+---------------------------
+
+* several reports of issues with long-lived sessions causing problems
+ with GSSAPI auth using mod_auth_kerb.  May be a server problem, but
+ needs further investigation to be sure. 
+
+* 2818 requires that a on rejection of the SSL server cert, a "bad certificate"
+ message should be sent - this is not being done currently (and can probably
+ only be done with OpenSSL by actually doing cert verification in the verify
+ callback)
+
+* ne_lock_discover does not handle multiple (shared) locks on
+  a single resource.
+
+* SSL session caching issues; only cache for clean shutdowns, and
+ only cache on shutdown, since the SSL_SESSION may change during
+ an ne_session?
+
+* perhaps allow a per-Server-header hack for "Darwin Streaming Server
+4.0" which doesn't terminate the response headers:
+http://bugzilla.gnome.org/show_bug.cgi?id=366331
+
+HTTP/1.1 200 OK
+Server: Darwin Streaming Server 4.0
+Content-Type: audio/mpeg
+Cache-Control: no-cache
+Pragma: no-cache
+Connection: close
+W8޳����s0��
+
+* for a server with multiple A addresses, a successful connect() will
+  "pin" that address for future attempts to connect.  If subsequently
+  a connect() fails, neon should at least iterate through the entire
+  address list and at best should do the DNS lookup again.
+
+* should 207 code strclean the error string from the response body?
+
+* load_client_cert fails with:
+
+  load_client_cert: (did not fail to load clicert without pkey)
+
+  on RHEL4 openssl.
+
+* --with-ca-bundle only allows trusting a PEM bundle; support
+  by directory as well

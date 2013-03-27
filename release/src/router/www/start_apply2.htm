@@ -89,7 +89,13 @@ function afterLiveUpdate(){
 }
 
 function initial(){
-	if(getflag == "sitesurvey"){
+	if(current_page == "/qis/QIS_wireless.htm" && parent.parent.ISMOBILE){
+		setTimeout("parent.parent.detect_LANStatus('finish');", restart_time*1000);
+	}
+	else if(getflag == "sitesurvey"){
+		parent.setTimeout("update_site_info();", 1000);
+	}
+	else if(getflag == "sitesurvey_mb"){
 		parent.setTimeout("update_site_info();", 1000);
 	}
 	else if(getflag == "upgrading"){
@@ -100,22 +106,29 @@ function initial(){
 		parent.errCount = 0;
 		parent.parent.$("LoadingBar").style.visibility = "visible";
 		parent.parent.showLoadingBar(parent.waitingTime);
-		
-		if(parent.psta_support == -1){
-			parent.setTimeout("update_site_info();", parseInt(parent.waitingTime)*1000);
-		}
-		else{
-			parent.parent.$('drword').innerHTML = "<#LANConfig_ChangedLANIP#>";
-			setTimeout("parent.parent.hideLoading();	",50000);
-			setTimeout("parent.parent.dr_advise();",50000);
-		}
+		parent.setTimeout("update_site_info();", parseInt(parent.waitingTime)*1000);		
+	}
+	else if(getflag == "wlcconnect_mb"){
+		parent.errCount = 0;
+		parent.parent.$("LoadingBar").style.visibility = "visible";
+		parent.parent.showLoadingBar(parent.waitingTime);
+		parent.parent.$('drword').innerHTML = "<#LANConfig_ChangedLANIP#>";
+		setTimeout("parent.parent.hideLoading();	",50000);
+		setTimeout("parent.parent.dr_advise();",50000);		
 	}
 	else if(page_modified == 1){
 		if(parent.parent.isWLclient()){
-			parent.parent.dr_advise();
-			setTimeout("showdr_advise();", 10000);
+			if(parent.parent.ISMOBILE){
+				alert("<#DrSurf_sweet_advise1#>");
+			}
+			else{
+				parent.parent.dr_advise();
+				setTimeout("showdr_advise();", 10000);
+				return false;
+			}
 		}
-		else if(getflag == "finish"){
+
+		if(getflag == "finish"){
 			if(parent.$("hidden_frame")){
 				if(parent.parent.live_update_support == -1){
 					//setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000); // Post
@@ -154,7 +167,7 @@ function initial(){
 		parent.showLoading(restart_time);
 		setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
 	}
-	else{		
+	else{
 		if(next_page == "/qis/QIS_finish.htm"){
 			if(parent.parent.live_update_support == -1){
 				if(navigator.userAgent.indexOf("Opera")  >= 0)

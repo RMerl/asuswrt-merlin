@@ -1,0 +1,257 @@
+// -*- C -*-
+//
+// NEC specific instructions
+//
+
+:%s::::MFHI:int hi
+{
+  return hi ? "hi" : "";
+}
+
+:%s::::SAT:int s
+{
+  return s ? "s" : "";
+}
+
+:%s::::UNS:int u
+{
+  return u ? "u" : "";
+}
+
+// Simulate the various kinds of multiply and multiply-accumulate instructions.
+// Perform an operation of the form:
+//
+//	LHS (+/-) GPR[RS] * GPR[RT]
+//
+// and store it in the 64-bit accumulator.  Optionally copy either LO or
+// HI into a general purpose register.
+//
+// - RD is the destination register of the LO or HI move
+// - RS are RT are the multiplication source registers
+// - ACCUMULATE_P is true if LHS should be the value of the 64-bit accumulator,
+//     false if it should be 0.
+// - STORE_HI_P is true if HI should be stored in RD, false if LO should be.
+// - UNSIGNED_P is true if the operation should be unsigned.
+// - SATURATE_P is true if the result should be saturated to a 32-bit value.
+// - SUBTRACT_P is true if the right hand side should be subtraced from LHS,
+//     false if it should be added.
+// - SHORT_P is true if RS and RT must be 16-bit numbers.
+// - DOUBLE_P is true if the 64-bit accumulator is in LO, false it is a
+//     concatenation of the low 32 bits of HI and LO.
+:function:::void:do_vr_mul_op:int rd, int rs, int rt, int accumulate_p, int store_hi_p, int unsigned_p, int saturate_p, int subtract_p, int short_p, int double_p
+{
+  unsigned64 lhs, x, y, xcut, ycut, product, result;
+
+  check_mult_hilo (SD_, HIHISTORY, LOHISTORY);
+
+  lhs = (!accumulate_p ? 0 : double_p ? LO : U8_4 (HI, LO));
+  x = GPR[rs];
+  y = GPR[rt];
+
+  /* Work out the canonical form of X and Y from their significant bits.  */
+  if (!short_p)
+    {
+      /* Normal sign-extension rule for 32-bit operands.  */
+      xcut = EXTEND32 (x);
+      ycut = EXTEND32 (y);
+    }
+  else if (unsigned_p)
+    {
+      /* Operands must be zero-extended 16-bit numbers.  */
+      xcut = x & 0xffff;
+      ycut = y & 0xffff;
+    }
+  else
+    {
+      /* Likewise but sign-extended.  */
+      xcut = EXTEND16 (x);
+      ycut = EXTEND16 (y);
+    }
+  if (x != xcut || y != ycut)
+    sim_engine_abort (SD, CPU, CIA,
+		      "invalid multiplication operand at 0x%08lx\n",
+		      (long) CIA);
+
+  TRACE_ALU_INPUT2 (x, y);
+  product = (unsigned_p
+	     ? V8_4 (x, 1) * V8_4 (y, 1)
+	     : EXTEND32 (x) * EXTEND32 (y));
+  result = (subtract_p ? lhs - product : lhs + product);
+  if (saturate_p)
+    {
+      /* Saturate the result to 32 bits.  An unsigned, unsaturated
+	 result is zero-extended to 64 bits, but unsigned overflow
+	 causes all 64 bits to be set.  */
+      if (!unsigned_p && (unsigned64) EXTEND32 (result) != result)
+	result = ((signed64) result < 0 ? -0x7fffffff - 1 : 0x7fffffff);
+      else if (unsigned_p && (result >> 32) != 0)
+	result = (unsigned64) 0 - 1;
+    }
+  TRACE_ALU_RESULT (result);
+
+  if (double_p)
+    LO = result;
+  else
+    {
+      LO = EXTEND32 (result);
+      HI = EXTEND32 (VH4_8 (result));
+    }
+  if (rd != 0)
+    GPR[rd] = store_hi_p ? HI : LO;
+}
+
+// VR4100 instructions.
+
+000000,5.RS,5.RT,00000,00000,101000::32::MADD16
+"madd16 r<RS>, r<RT>"
+*vr4100:
+{
+  do_vr_mul_op (SD_, 0, RS, RT,
+		1 /* accumulate */,
+		0 /* store in LO */,
+		0 /* signed arithmetic */,
+		0 /* don't saturate */,
+		0 /* don't subtract */,
+		1 /* short */,
+		0 /* single */);
+}
+
+000000,5.RS,5.RT,00000,00000,101001::64::DMADD16
+"dmadd16 r<RS>, r<RT>"
+*vr4100:
+{
+  do_vr_mul_op (SD_, 0, RS, RT,
+		1 /* accumulate */,
+		0 /* store in LO */,
+		0 /* signed arithmetic */,
+		0 /* don't saturate */,
+		0 /* don't subtract */,
+		1 /* short */,
+		1 /* double */);
+}
+
+
+
+// VR4120 and VR4130 instructions.
+
+000000,5.RS,5.RT,5.RD,1.SAT,1.MFHI,00,1.UNS,101001::64::DMACC
+"dmacc%s<MFHI>%s<UNS>%s<SAT> r<RD>, r<RS>, r<RT>"
+*vr4120:
+{
+  do_vr_mul_op (SD_, RD, RS, RT,
+		1 /* accumulate */,
+		MFHI, UNS, SAT,
+		0 /* don't subtract */,
+		SAT /* short */,
+		1 /* double */);
+}
+
+000000,5.RS,5.RT,5.RD,1.SAT,1.MFHI,00,1.UNS,101000::32::MACC_4120
+"macc%s<MFHI>%s<UNS>%s<SAT> r<RD>, r<RS>, r<RT>"
+*vr4120:
+{
+  do_vr_mul_op (SD_, RD, RS, RT,
+		1 /* accumulate */,
+		MFHI, UNS, SAT,
+		0 /* don't subtract */,
+		SAT /* short */,
+		0 /* single */);
+}
+
+
+// VR5400 and VR5500 instructions.
+
+000000,5.RS,5.RT,5.RD,0,1.MFHI,001,01100,1.UNS::32::MUL
+"mul%s<MFHI>%s<UNS> r<RD>, r<RS>, r<RT>"
+*vr5400:
+*vr5500:
+{
+  do_vr_mul_op (SD_, RD, RS, RT,
+		0 /* don't accumulate */,
+		MFHI, UNS,
+		0 /* don't saturate */,
+		0 /* don't subtract */,
+		0 /* not short */,
+		0 /* single */);
+}
+
+000000,5.RS,5.RT,5.RD,0,1.MFHI,011,01100,1.UNS::32::MULS
+"muls%s<MFHI>%s<UNS> r<RD>, r<RS>, r<RT>"
+*vr5400:
+*vr5500:
+{
+  do_vr_mul_op (SD_, RD, RS, RT,
+		0 /* don't accumulate */,
+		MFHI, UNS,
+		0 /* don't saturate */,
+		1 /* subtract */,
+		0 /* not short */,
+		0 /* single */);
+}
+
+000000,5.RS,5.RT,5.RD,0,1.MFHI,101,01100,1.UNS::32::MACC_5xxx
+"macc%s<MFHI>%s<UNS> r<RD>, r<RS>, r<RT>"
+*vr5400:
+*vr5500:
+{
+  do_vr_mul_op (SD_, RD, RS, RT,
+		1 /* accumulate */,
+		MFHI, UNS,
+		0 /* don't saturate */,
+		0 /* don't subtract */,
+		0 /* not short */,
+		0 /* single */);
+}
+
+000000,5.RS,5.RT,5.RD,0,1.MFHI,111,01100,1.UNS::32::MSAC
+"msac%s<MFHI>%s<UNS> r<RD>, r<RS>, r<RT>"
+*vr5400:
+*vr5500:
+{
+  do_vr_mul_op (SD_, RD, RS, RT,
+		1 /* accumulate */,
+		MFHI, UNS,
+		0 /* don't saturate */,
+		1 /* subtract */,
+		0 /* not short */,
+		0 /* single */);
+}
+
+
+010011,5.BASE,5.INDEX,5.0,5.FD,000101:COP1X:64::LUXC1
+"luxc1 f<FD>, r<INDEX>(r<BASE>)"
+*vr5500:
+{
+  check_fpu (SD_);
+  COP_LD (1, FD, do_load (SD_, AccessLength_DOUBLEWORD,
+			  (GPR[BASE] + GPR[INDEX]) & ~MASK64 (2, 0), 0));
+}
+
+010011,5.BASE,5.INDEX,5.FS,00000,001101:COP1X:64::SUXC1
+"suxc1 f<FS>, r<INDEX>(r<BASE>)"
+*vr5500:
+{
+  check_fpu (SD_);
+  do_store (SD_, AccessLength_DOUBLEWORD,
+	    (GPR[BASE] + GPR[INDEX]) & ~MASK64 (2, 0), 0,
+	    COP_SD (1, FS));
+}
+
+010000,1,19.*,100000:COP0:32::WAIT
+"wait"
+*vr5500:
+
+011100,00000,5.RT,5.DR,00000,111101:SPECIAL:64::MFDR
+"mfdr r<RT>, r<DR>"
+*vr5400:
+*vr5500:
+
+011100,00100,5.RT,5.DR,00000,111101:SPECIAL:64::MTDR
+"mtdr r<RT>, r<DR>"
+*vr5400:
+*vr5500:
+
+011100,00000,00000,00000,00000,111110:SPECIAL:64::DRET
+"dret"
+*vr5400:
+*vr5500:

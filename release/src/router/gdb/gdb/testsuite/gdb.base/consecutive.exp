@@ -1,0 +1,110 @@
+#   Copyright 2001, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Michael Snyder. (msnyder@redhat.com)
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+#
+# Test breakpoints at consecutive instruction addresses.
+#
+
+set prms_id 0
+set bug_id 0
+
+set testfile "consecutive"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
+    untested consecutive.exp
+    return -1
+}
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if [target_info exists gdb_stub] {
+    gdb_step_for_stub;
+}
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+set nl "\[\r\n\]+"
+
+gdb_breakpoint foo
+gdb_test "continue" "Breakpoint $decimal, foo .*" \
+	"continue to breakpoint in foo"
+
+set bp_addr 0
+set stop_addr 0
+
+send_gdb "x /2i \$pc\n"
+gdb_expect {
+    global hex
+    global nl
+    global bp_addr
+    global gdb_prompt
+
+    -re "$hex.*${nl}($hex).*$gdb_prompt $" {
+	set bp_addr $expect_out(1,string)
+	pass "get breakpoint address for foo"
+    }
+    -re ".*$gdb_prompt $" {
+	fail "get breakpoint address for foo"
+	return 0;
+    }
+    timeout {
+	fail "get breakpoint address for foo (timeout)"
+	return 0;
+    }
+}
+
+gdb_test "break \*$bp_addr" "Breakpoint $decimal at $bp_addr: file .*" \
+	"set bp, 2nd instr"
+
+send_gdb "step\n"
+gdb_expect {
+    -re "Breakpoint $decimal, ($hex) in foo.*$gdb_prompt $" {
+	set stop_addr $expect_out(1,string)
+	if [eval expr "$bp_addr == $stop_addr"] then {
+	    pass "stopped at bp, 2nd instr"
+	} else {
+	    fail "stopped at bp, 2nd instr (wrong address)"
+	}
+    }
+    -re ".*$gdb_prompt $" {
+	fail "stopped at bp, 2nd instr"
+    }
+    timeout {
+	fail "stopped at bp, 2nd instr (timeout)"
+
+    }
+}
+

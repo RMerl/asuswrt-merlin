@@ -1,0 +1,121 @@
+# sh testcase for fmul -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	.macro init
+	fldi0 fr0
+	fldi1 fr1
+	fldi1 fr2
+	fadd fr2, fr2
+	fldi0 fr7
+	fldi1 fr8
+	.endm
+
+	start
+
+	# 0.0 * 0.0 = 0.0.
+	init
+	fmul fr0, fr0
+	fcmp/eq fr7, fr0
+	bf wrong
+
+	# 0.0 * 1.0 = 0.0.
+	init
+	fmul fr1, fr0
+	fcmp/eq fr7, fr0
+	bf wrong
+
+	# 1.0 * 0.0 = 0.0.
+	init
+	fmul fr0, fr1
+	fcmp/eq fr7, fr1
+	bf wrong
+
+	# 1.0 * 1.0 = 1.0.
+	init
+	fmul fr1, fr1
+	fcmp/eq fr8, fr1
+	bf wrong
+
+	# 2.0 * 1.0 = 2.0.
+	init
+	fmul fr2, fr1
+	fcmp/eq fr2, fr1
+	bf wrong
+
+	bra double
+	nop
+
+wrong:
+	fail
+	
+	.macro dinit
+	fldi0 fr0
+	fldi1 fr2
+	fldi1 fr4
+	fadd fr4, fr4
+	fldi0 fr8
+	fldi1 fr10
+	_s2d fr0, dr0
+	_s2d fr2, dr2
+	_s2d fr4, dr4
+	_s2d fr8, dr8
+	_s2d fr10, dr10
+	.endm
+	
+double:
+	# 0.0 * 0.0 = 0.0.
+	dinit
+	_setpr
+	fmul dr0, dr0
+	fcmp/eq dr8, dr0
+	bf wrong
+	_clrpr
+
+	# 0.0 * 1.0 = 0.0.
+	dinit
+	_setpr
+	fmul dr2, dr0
+	fcmp/eq dr8, dr0
+	bf wrong2
+	_clrpr
+
+	# 1.0 * 0.0 = 0.0.
+	dinit
+	_setpr
+	fmul dr0, dr2
+	fcmp/eq dr8, dr2
+	bf wrong2
+	_clrpr
+
+	bra next
+	nop
+
+wrong2:
+	fail
+
+next:
+	# 1.0 * 1.0 = 1.0.
+	dinit
+	_setpr
+	fmul dr2, dr2
+	fcmp/eq dr10, dr2
+	bf wrong3
+	_clrpr
+
+	# 2.0 * 1.0 = 2.0.
+	dinit
+	_setpr
+	fmul dr4, dr2
+	fcmp/eq dr4, dr2
+	bf wrong3
+	_clrpr
+
+okay:
+	pass
+
+wrong3:	
+	fail

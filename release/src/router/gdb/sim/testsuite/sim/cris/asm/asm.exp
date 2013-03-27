@@ -1,0 +1,45 @@
+# Copyright (C) 2005, 2007 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Miscellaneous CRIS simulator testcases in assembly code.
+
+if [istarget cris*-*-*] {
+    global ASFLAGS_FOR_TARGET
+    # All machines we test and the corresponding assembler option.  Needs
+    # update if we build the simulator for crisv0 crisv3 and crisv8 too.
+
+    set combos {{"crisv10" "--march=v10 --no-mul-bug-abort"}
+                {"crisv32" "--march=v32"}}
+
+    # We need to pass different assembler flags for each machine.
+    # Specifying it here rather than adding a specifier to each and every
+    # test-file is preferrable.
+
+    foreach combo $combos {
+	set mach [lindex $combo 0]
+	set ASFLAGS_FOR_TARGET "[lindex $combo 1]"
+
+	# The .ms suffix is for "miscellaneous .s".
+	foreach src [lsort [glob -nocomplain $srcdir/$subdir/*.ms]] {
+	    # If we're only testing specific files and this isn't one of them,
+	    # skip it.
+	    if ![runtest_file_p $runtests $src] {
+		continue
+	    }
+
+	    run_sim_test $src $mach
+	}
+    }
+}

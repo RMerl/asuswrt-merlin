@@ -15,7 +15,7 @@
 # OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
-# $Id: Makefile 315309 2012-02-16 06:57:20Z $
+# $Id: Makefile 315309 2012-02-16 06:57:20Z dboyce $
 #
 
 # Max sizes for vanilla external
@@ -34,6 +34,9 @@ CFE_MAXSIZE = 262144
 endif
 
 # Max sizes for internal
+CFE_INTERNAL = 1
+CFEZ_MAXSIZE = 262144
+CFE_MAXSIZE = 524288
 
 BSPOBJS += bcm947xx_init.o bcm947xx_devs.o ui_bcm947xx.o
 
@@ -75,6 +78,7 @@ endif
 ifeq ($(strip ${CFG_MINIMAL_SIZE}),1)
 CFLAGS += -DCFG_MINIMAL_SIZE=1
 else
+CFLAGS += -DBCMINTERNAL -DBCMDBG -DUNRELEASEDCHIP
 endif
 
 ifeq ($(strip $(CFG_FLASH)),1)
@@ -90,7 +94,7 @@ endif
 
 ifeq ($(strip ${CFG_NFLASH}),1)
 CFLAGS += -DCFG_NFLASH=1 -DNFLASH_SUPPORT -DCFG_HEAP_SIZE=2048
-ALLOBJS += dev_nflash.o nflash.o
+ALLOBJS += dev_nflash.o nflash.o nand_ecc.o
 endif
 
 ifeq ($(strip $(CFG_ET)),1)

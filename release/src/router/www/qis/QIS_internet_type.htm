@@ -5,7 +5,6 @@
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link href="../form_style.css"  rel="stylesheet" type="text/css">
-<link href="qis_style.css"  rel="stylesheet" type="text/css">
 <style type="text/css">
 .wan_type_title{
 	color:#FFFFFF;
@@ -25,6 +24,7 @@
 	text-align:left;
 }
 </style>
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript">
 var now_flag = '<% get_parameter("flag"); %>';
@@ -35,34 +35,48 @@ var contentM_height_orig = parent.document.getElementById("contentM").height;
 
 function QKinternettype_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_type_head#>";
-	parent.set_step("t2");
-	document.applyForm.wan_proto.value = '<% nvram_get("wan_proto"); %>';
-	detect_if_wan_plug();
 
-	if(document.applyForm.wan_proto.value == 'pppoe')
-		inputCCtrl4(document.applyForm.x_WANType, 1);
-	else if(document.applyForm.wan_proto.value == 'static')
-		inputCCtrl4(document.applyForm.x_WANType, 2);
-	else if(document.applyForm.wan_proto.value == 'pptp')
-		inputCCtrl4(document.applyForm.x_WANType, 3);
-	else if(document.applyForm.wan_proto.value == 'l2tp')
-		inputCCtrl4(document.applyForm.x_WANType, 4);
-	else
-		inputCCtrl4(document.applyForm.x_WANType, 0);
+	if(parent.ISMOBILE){
+		parent.set_step("detect");
+		document.getElementById("field_general").style.display = "none";
+		document.getElementById("field_mobile").style.display = "";		
+		hideObjs();
+
+		//if(parent.rc_support.search("manual_stb") == -1)
+			// disable Unifi settings here
+			document.getElementById("unifyBtn").style.display = "none";
+	}
+	else{
+		parent.set_step("t2");
+		document.applyForm.wan_proto.value = '<% nvram_get("wan_proto"); %>';
 	
-	if(parent.get_internet_type_reducedmode() == "enable")
-		blocking("dhcppppoe_sec", false);
-
-	ISP_Profile_Selection(original_switch_wantag);
-	hide_specialISP();
-
-	if(parent.ruisp_support >= 0)
-		document.getElementById("ruisp_btn").style.display = "";
+		if(document.applyForm.wan_proto.value == 'pppoe')
+			inputCCtrl4(document.applyForm.x_WANType, 1);
+		else if(document.applyForm.wan_proto.value == 'static')
+			inputCCtrl4(document.applyForm.x_WANType, 2);
+		else if(document.applyForm.wan_proto.value == 'pptp')
+			inputCCtrl4(document.applyForm.x_WANType, 3);
+		else if(document.applyForm.wan_proto.value == 'l2tp')
+			inputCCtrl4(document.applyForm.x_WANType, 4);
+		else
+			inputCCtrl4(document.applyForm.x_WANType, 0);
 		
-	document.getElementById("ff123").focus();
+		if(parent.get_internet_type_reducedmode() == "enable")
+			blocking("dhcppppoe_sec", false);
+	
+		ISP_Profile_Selection(original_switch_wantag);
+		hide_specialISP();
+	
+		if(parent.ruisp_support >= 0)
+			document.getElementById("ruisp_btn").style.display = "";
+			
+		document.getElementById("ff123").focus();
+	
+		if(parent.rc_support.search("manual_stb") == -1) 
+			document.applyForm.switch_wantag.remove(8);
 
-	if(parent.rc_support.search("manual_stb") == -1)
-		document.applyForm.switch_wantag.remove(6);
+		detect_if_wan_plug();
+	}
 }
 
 function inputCCtrl4(o, flag){
@@ -76,6 +90,25 @@ function inputCCtrl4(o, flag){
 }
 
 function submitForm(){
+	if(parent.ISMOBILE){
+		if(document.applyForm.specialisp.checked != true){
+			document.applyForm.switch_wantag.value = 'none';
+		}
+		else{
+			if(document.applyForm.switch_wantag.value == ''){
+				document.applyForm.switch_wantag.value = 'none';
+			}
+			else if(document.applyForm.switch_wantag.value == 'manual'){
+				document.applyForm.switch_wan0tagid.value = document.applyForm._switch_wan0tagid.value;
+				document.applyForm.switch_wan0prio.value = document.applyForm._switch_wan0prio.value;
+				document.applyForm.switch_wan1tagid.value = document.applyForm._switch_wan1tagid.value;
+				document.applyForm.switch_wan1prio.value = document.applyForm._switch_wan1prio.value;
+				document.applyForm.switch_wan2tagid.value = document.applyForm._switch_wan2tagid.value;
+				document.applyForm.switch_wan2prio.value = document.applyForm._switch_wan2prio.value;		
+			}
+		}
+	}
+
 	if(parent.get_internet_type_reducedmode() == "enable" &&
 			(document.applyForm.x_WANType[3].checked == false &&
 			document.applyForm.x_WANType[4].checked == false
@@ -182,6 +215,22 @@ function ISP_Profile_Selection(isp){
 		document.getElementById("wan_voip_port3_x").style.display = "none";
 		document.applyForm.switch_wantag.value = "m1_fiber";
 	}
+	else if(isp == "maxis_fiber"){		
+		document.getElementById("wan_iptv_x").style.display = "none";
+		document.getElementById("wan_voip_x").style.display = "";
+		document.getElementById("wan_internet_x").style.display = "none";
+		document.getElementById("wan_iptv_port4_x").style.display = "none";
+		document.getElementById("wan_voip_port3_x").style.display = "none";
+		document.applyForm.switch_wantag.value = "maxis_fiber";
+	}
+	else if(isp == "maxis_fiber_sp"){		
+		document.getElementById("wan_iptv_x").style.display = "none";
+		document.getElementById("wan_voip_x").style.display = "";
+		document.getElementById("wan_internet_x").style.display = "none";
+		document.getElementById("wan_iptv_port4_x").style.display = "none";
+		document.getElementById("wan_voip_port3_x").style.display = "none";
+		document.applyForm.switch_wantag.value = "maxis_fiber_sp";
+	}
 	else if(isp == "manual"){
 		document.getElementById("wan_iptv_x").style.display = "";
 		document.getElementById("wan_voip_x").style.display = "";
@@ -237,6 +286,24 @@ function set_ISP_profile(){
                 document.applyForm.switch_wan1prio.value = "0";
                 document.applyForm.switch_wan2tagid.value = "1107";
                 document.applyForm.switch_wan2prio.value = "1";
+        }
+        else if(document.applyForm.switch_wantag.value == "maxis_fiber") {
+                document.applyForm.switch_stb_x.value = "3";
+                document.applyForm.switch_wan0tagid.value = "621";
+                document.applyForm.switch_wan0prio.value = "0";
+                document.applyForm.switch_wan1tagid.value = "0";
+                document.applyForm.switch_wan1prio.value = "0";
+                document.applyForm.switch_wan2tagid.value = "821";
+                document.applyForm.switch_wan2prio.value = "0";
+        }
+        else if(document.applyForm.switch_wantag.value == "maxis_fiber_sp") {
+                document.applyForm.switch_stb_x.value = "3";
+                document.applyForm.switch_wan0tagid.value = "11";
+                document.applyForm.switch_wan0prio.value = "0";
+                document.applyForm.switch_wan1tagid.value = "0";
+                document.applyForm.switch_wan1prio.value = "0";
+                document.applyForm.switch_wan2tagid.value = "14";
+                document.applyForm.switch_wan2prio.value = "0";
         }
 
 }
@@ -315,8 +382,12 @@ function detect_if_wan_plug(flag){
 			detect_if_wan_plug();		
 		},
 		success: function(response){
-			if(autodet_state == 4) // ethernet did not plug
-				document.getElementById("wan_unplug").style.display = "";
+			if(autodet_state == 4){ // ethernet did not plug
+				if(parent.ISMOBILE)
+					document.getElementById("wan_unplug_mobile").style.display = "";
+				else
+					document.getElementById("wan_unplug").style.display = "";
+			}
 			else if(autodet_state == 0)
 				detect_if_wan_plug();
 			else
@@ -337,8 +408,8 @@ function detect_if_wan_plug(flag){
 <input type="hidden" name="switch_stb_x" value="">
 <div class="QISmain">
 
-<div>
-	<table width="730px">
+<div id="descTltle">
+	<table width="100%">
 		<tr>
 			<td align="left">
 				<span class="description_down"><#QKSet_type_desc#></span>
@@ -349,8 +420,9 @@ function detect_if_wan_plug(flag){
 		</tr>
 	</table>
 </div>
-<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 
+<div id="field_general">
 <p class="QISGeneralFont"><#QIS_type_desc1#></p>
 <p id="wan_unplug" class="QISGeneralFont" style="color:#FC0;display:none;"><#web_redirect_suggestion1#></p>
 
@@ -432,7 +504,9 @@ function detect_if_wan_plug(flag){
 				<option value="unifi_biz" <% nvram_match( "switch_wantag", "unifi_biz", "selected"); %>>Unifi-Business</option>
 				<option value="singtel_mio" <% nvram_match( "switch_wantag", "singtel_mio", "selected"); %>>Singtel-MIO</option>
 				<option value="singtel_others" <% nvram_match( "switch_wantag", "singtel_others", "selected"); %>>Singtel-Others</option>
-				<option value="m1_fiber" <% nvram_match_x("switch_wantag", "m1_fiber", "selected"); %>>M1-Fiber</option>
+				<option value="m1_fiber" <% nvram_match("switch_wantag", "m1_fiber", "selected"); %>>M1-Fiber</option>
+				<option value="maxis_fiber" <% nvram_match("switch_wantag", "maxis_fiber", "selected"); %>>Maxis-Fiber</option>
+				<option value="maxis_fiber_sp" <% nvram_match("switch_wantag", "maxis_fiber_sp", "selected"); %>>Maxis-Fiber-Special</option>
 				<option value="manual" <% nvram_match( "switch_wantag", "manual", "selected"); %>>Manual</option>
 			</select>
 		</span>
@@ -471,8 +545,100 @@ function detect_if_wan_plug(flag){
 
 	</div>
 </div>
+</div>
 
-</div>    
+<div style="display:none;" id="field_mobile">
+	<span class="QISGeneralFont" id="theDesc" style="margin-left:0px;"><#QIS_type_desc1#><br><br></span>
+	<fieldset class="theFieldset" id="internetType_m">
+		<div class="row">
+			<a class="iuiA" onclick="document.applyForm.x_WANType[0].checked=true;submitForm();"><#BOP_ctype_title1#> (DHCP)</a>
+		</div>
+		<div class="row">
+			<a class="iuiA" onclick="document.applyForm.x_WANType[1].checked=true;submitForm();">PPPoE</a>
+		</div>
+		<div class="row">
+			<a class="iuiA" onclick="document.applyForm.x_WANType[2].checked=true;submitForm();"><#BOP_ctype_title5#></a>
+		</div>
+		<div class="row">
+			<a class="iuiA" onclick="document.applyForm.x_WANType[3].checked=true;submitForm();">PPTP</a>
+		</div>
+		<div class="row_end">
+			<a class="iuiA" onclick="document.applyForm.x_WANType[4].checked=true;submitForm();">L2TP</a>
+		</div>
+	</fieldset>
+	<fieldset class="theFieldset" id="unifyBtn">
+		<div class="row_end">
+			<a class="iuiA_unsel_check" id="unify_switcher" onclick="document.applyForm.specialisp.checked=this.getAttribute('myselected');mySel(this, false);" myselected="false">Unify</a>
+			<span class="sel_check" onclick='showHidden_slide("field_mobile_unify", ["internetType_m", "unifyBtn", "theDesc"]);'><img width="50px" src="/iui/listArrow_setting.png" style="position:relative;left:20"></span>
+		</div>
+	</fieldset>
 
+	<div id="field_mobile_unify" style="display:none;left:100%;position:absolute;width:100%">
+		<fieldset class="theFieldset">
+			<div class="row">
+				<a class="iuiA_unsel" onclick="document.applyForm.switch_wantag.value='unifi_home';mySel(this, false);" myselected="false">Unifi-Home</a>
+			</div>
+			<div class="row">
+				<a class="iuiA_unsel" onclick="document.applyForm.switch_wantag.value='unifi_biz';mySel(this, false);" myselected="false">Unifi-Business</a>
+			</div>
+			<div class="row">
+				<a class="iuiA_unsel" onclick="document.applyForm.switch_wantag.value='singtel_mio';mySel(this, false);" myselected="false">Singtel-MIO</a>
+			</div>
+			<div class="row">
+				<a class="iuiA_unsel" onclick="document.applyForm.switch_wantag.value='singtel_others';mySel(this, false);" myselected="false">Singtel-Others</a>
+			</div>
+			<div class="row">
+				<a class="iuiA_unsel" onclick="document.applyForm.switch_wantag.value='m1_fiber';mySel(this, false);" myselected="false">M1-Fiber</a>
+			</div>
+			<div class="row_end">
+				<a class="iuiA_unsel_check" onclick="document.applyForm.switch_wantag.value='manual';mySel(this, false);" myselected="false"><#Manual_Setting_btn#></a>
+				<span class="sel_check" onclick='showHidden_slide("unify_input", ["field_mobile_unify"]);'>
+					<img width="50px" src="/iui/listArrow_setting.png">
+				</span>
+			</div>
+		</fieldset>
+		<div class="QISGeneralFont" id="voipport" style="margin-left:0px;">VoIP Port: <b style="color:#FC0">LAN3</b></div>
+		<div class="QISGeneralFont" id="iptvport" style="margin-left:0px;">IPTV STB Port: <b style="color:#FC0">LAN4</b></div>
+	</div>
+
+	<div id="unify_input" style="display:none;left:100%;position:absolute;width:100%">
+		<div class="itemTitle">Iinternet:</div>
+		<fieldset class="theFieldset" id="unify_input_1">
+			<div class="row">
+				<label>VID</label>
+				<input type="number" id="" name="_switch_wan0tagid" value="">
+			</div>
+			<div class="row_end">
+				<label>PRIO</label>
+				<input type="number" id="" name="_switch_wan0prio" value="">
+			</div>
+		</fieldset>
+		
+		<div class="itemTitle">VoIP(LAN port 3):</div>		
+		<fieldset class="theFieldset" id="unify_input_2">
+			<div class="row">
+				<label>VID</label>
+				<input type="number" id="" name="_switch_wan1tagid" value="">
+			</div>
+			<div class="row_end">
+				<label>PRIO</label>
+				<input type="number" id="" name="_switch_wan1prio" value="">
+			</div>
+		</fieldset>
+		
+		<div class="itemTitle">IPTV(LAN port 4):</div>		
+		<fieldset class="theFieldset" id="unify_input_3">
+			<div class="row">
+				<label>VID</label>
+				<input type="number" id="" name="_switch_wan2tagid" value="">
+			</div>
+			<div class="row_end">
+				<label>PRIO</label>
+				<input type="number" id="" name="_switch_wan2prio" value="">
+			</div>
+		</fieldset>
+	</div>
+
+</div>
 </form>
 </body> 

@@ -1,0 +1,13 @@
+# sh testcase for clrmac -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global clrmac
+clrmac:
+	clrmac
+	pass

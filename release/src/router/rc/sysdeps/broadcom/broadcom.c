@@ -37,29 +37,27 @@ typedef u_int8_t __u8;
 #include <ctype.h>
 #include <wlutils.h>
 #include <shared.h>
-#ifdef RTCONFIG_WIRELESSREPEATER
 #include <wlscan.h>
-#endif
 
 //This define only used for switch 53125
 #define SWITCH_PORT_0_UP	0x0001
 #define SWITCH_PORT_1_UP	0x0002
-#define SWITCH_PORT_2_UP        0x0004
-#define SWITCH_PORT_3_UP        0x0008
-#define SWITCH_PORT_4_UP        0x0010
+#define SWITCH_PORT_2_UP	0x0004
+#define SWITCH_PORT_3_UP	0x0008
+#define SWITCH_PORT_4_UP	0x0010
 
 #define SWITCH_PORT_0_GIGA	0x0002
-#define SWITCH_PORT_1_GIGA      0x0008
-#define SWITCH_PORT_2_GIGA      0x0020
-#define SWITCH_PORT_3_GIGA      0x0080
-#define SWITCH_PORT_4_GIGA      0x0200
+#define SWITCH_PORT_1_GIGA	0x0008
+#define SWITCH_PORT_2_GIGA	0x0020
+#define SWITCH_PORT_3_GIGA	0x0080
+#define SWITCH_PORT_4_GIGA	0x0200
 //End
 
 //Defined for switch 5325
-#define SWITCH_ACCESS_CMD SIOCGETCROBORD
-#define SWITCH_ACCESS_PAGE "0x1"
-#define SWITCH_ACCESS_REG_LINKSTATUS "0x0"
-#define SWITCH_ACCESS_REG_LINKSPEED "0x4"
+//#define SWITCH_ACCESS_CMD		SIOCGETCROBORD
+#define SWITCH_ACCESS_PAGE		"0x1"
+#define SWITCH_ACCESS_REG_LINKSTATUS	"0x0"
+#define SWITCH_ACCESS_REG_LINKSPEED	"0x4"
 
 /* hardware-dependent */
 #define ETH_WAN_PORT "4"
@@ -96,8 +94,8 @@ setCommit(void)
 	FILE *fp;
 	char line[32];
 	eval("rm", "-f", "/var/log/commit_ret");
-        eval("nvram", "set", "asuscfecommit=");
-        eval("nvram", "commit");
+	eval("nvram", "set", "asuscfecommit=");
+	eval("nvram", "commit");
 	sleep(1);
 	if((fp = fopen("/var/log/commit_ret", "r"))!=NULL) {
 		while(fgets(line, sizeof(line), fp)){
@@ -130,16 +128,18 @@ setMAC_2G(const char *mac)
 	eval("killall", "wsc");
 
 	switch(model) {
+		case MODEL_RTN53:
+		case MODEL_RTN16:
+		case MODEL_RTN15U:
 		case MODEL_RTN12:
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
 		case MODEL_RTN12D1:
 		case MODEL_RTN12HP:
-		case MODEL_RTN53:
-		case MODEL_RTN15U:
+		case MODEL_APN12HP:
 		case MODEL_RTN10U:
+		case MODEL_RTN10P:
 		case MODEL_RTN10D1:
-		case MODEL_RTN16:
 		{
 			memset(cmd_l, 0, 64);
 			sprintf(cmd_l, "asuscfeet0macaddr=%s", mac);
@@ -208,26 +208,26 @@ setCountryCode_2G(const char *cc)
 	if( cc==NULL || !isValidCountryCode(cc) )
 		return 0;
 
-        eval("killall", "wsc");
-        memset(cmd, 0, 32);
-        sprintf(cmd, "asuscferegulation_domain=%s", cc);
-        eval("nvram", "set", cmd );
-        puts(nvram_safe_get("regulation_domain"));
-        return 1;
+	eval("killall", "wsc");
+	memset(cmd, 0, 32);
+	sprintf(cmd, "asuscferegulation_domain=%s", cc);
+	eval("nvram", "set", cmd );
+	puts(nvram_safe_get("regulation_domain"));
+	return 1;
 }
 
 int
 setCountryCode_5G(const char *cc)
 {
 	if( cc==NULL || !isValidCountryCode(cc) )
-                return 0;
+		return 0;
 
-        eval("killall", "wsc");
-        memset(cmd, 0, 32);
-        sprintf(cmd, "asuscferegulation_domain_5G=%s", cc);
-        eval("nvram", "set", cmd );
-        puts(nvram_safe_get("regulation_domain_5G"));
-        return 1;
+	eval("killall", "wsc");
+	memset(cmd, 0, 32);
+	sprintf(cmd, "asuscferegulation_domain_5G=%s", cc);
+	eval("nvram", "set", cmd );
+	puts(nvram_safe_get("regulation_domain_5G"));
+	return 1;
 }
 
 int
@@ -244,16 +244,18 @@ setRegrev_2G(const char *regrev)
 	eval("killall", "wsc");
 
 	switch(model) {
+		case MODEL_RTN53:
+		case MODEL_RTN16:
+		case MODEL_RTN15U:
 		case MODEL_RTN12:
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
 		case MODEL_RTN12D1:
 		case MODEL_RTN12HP:
-		case MODEL_RTN53:
-		case MODEL_RTN15U:
+		case MODEL_APN12HP:
 		case MODEL_RTN10U:
+		case MODEL_RTN10P:
 		case MODEL_RTN10D1:
-		case MODEL_RTN16:
 		{
 			memset(cmd, 0, 32);
 			sprintf(cmd, "asuscfesb/1/regrev=%s", regrev);
@@ -314,17 +316,17 @@ setRegrev_5G(const char *regrev)
 int
 setPIN(const char *pin)
 {
-        if( pin==NULL ) 
+	if( pin==NULL ) 
 		return 0;
 
 	if( pincheck(pin) )
-        {
-                eval("killall", "wsc");
-                memset(cmd, 0, 32);
-                sprintf(cmd, "asuscfesecret_code=%s", pin);
-                eval("nvram", "set", cmd );
-                puts(nvram_safe_get("secret_code"));
-                return 1;
+	{
+		eval("killall", "wsc");
+		memset(cmd, 0, 32);
+		sprintf(cmd, "asuscfesecret_code=%s", pin);
+		eval("nvram", "set", cmd );
+		puts(nvram_safe_get("secret_code"));
+		return 1;
 	}
 	else
 		return 0;
@@ -335,8 +337,8 @@ set40M_Channel_2G(char *channel)
 {
 	char str[8];
 
-        if( channel==NULL || !isValidChannel(1, channel) )
-                return 0;
+	if( channel==NULL || !isValidChannel(1, channel) )
+		return 0;
 
 #ifdef RTCONFIG_BCMWL6
 	if (atoi(channel) >= 5) sprintf(str, "%su", channel);
@@ -362,8 +364,8 @@ set40M_Channel_5G(char *channel)
 	char str[8];
 	int ch = 0;
 
-        if( channel==NULL || !isValidChannel(0, channel) )
-                return 0;
+	if( channel==NULL || !isValidChannel(0, channel) )
+		return 0;
 
 #ifdef RTCONFIG_BCMWL6
 	ch = atoi(channel);
@@ -371,20 +373,20 @@ set40M_Channel_5G(char *channel)
 	if (ch==40||ch==48||ch==56||ch==64||ch==104||ch==112||ch==120||ch==128||ch==136||ch==153||ch==161)
 		sprintf(str, "%su", channel);
 	else if (ch==36||ch==44||ch==52||ch==60||ch==100||ch==108||ch==116||ch==124||ch==132||ch==149||ch==157)
-        	sprintf(str, "%sl", channel);
-        nvram_set("wl1_chanspec", str);
+		sprintf(str, "%sl", channel);
+	nvram_set("wl1_chanspec", str);
 	nvram_set("wl1_bw_cap", "3");
 #else
-        nvram_set("wl1_channel", channel);
-        nvram_set("wl1_nbw_cap", "1");
-        nvram_set("wl1_nctrlsb", "lower");
+	nvram_set("wl1_channel", channel);
+	nvram_set("wl1_nbw_cap", "1");
+	nvram_set("wl1_nctrlsb", "lower");
 #endif
-        nvram_set("wl1_obss_coex", "0");
-        eval("wlconf", "eth2", "down" );
-        eval("wlconf", "eth2", "up" );
-        eval("wlconf", "eth2", "start" );
+	nvram_set("wl1_obss_coex", "0");
+	eval("wlconf", "eth2", "down" );
+	eval("wlconf", "eth2", "up" );
+	eval("wlconf", "eth2", "start" );
 	puts("1");
-        return 1;
+	return 1;
 }
 
 int
@@ -393,165 +395,166 @@ set80M_Channel_5G(char *channel)
 	char str[8];
 	int ch = 0;
 
-        if( channel==NULL || !isValidChannel(0, channel) )
-                return 0;
+	if( channel==NULL || !isValidChannel(0, channel) )
+		return 0;
 
 #ifdef RTCONFIG_BCMWL6
 	ch = atoi(channel);
 	sprintf(str, "0");
 	if (ch==36||ch==40||ch==44||ch==48||ch==52||ch==56||ch==60||ch==64||
 		ch==100||ch==104||ch==108||ch==112||ch==149||ch==153||ch==157||ch==161)
-        	sprintf(str, "%s/80", channel);
-        nvram_set("wl1_chanspec", str);
+		sprintf(str, "%s/80", channel);
+	nvram_set("wl1_chanspec", str);
 	nvram_set("wl1_bw_cap", "7");
 #else
-        nvram_set("wl1_channel", channel);
-        nvram_set("wl1_nbw_cap", "1");
-        nvram_set("wl1_nctrlsb", "lower");
+	nvram_set("wl1_channel", channel);
+	nvram_set("wl1_nbw_cap", "1");
+	nvram_set("wl1_nctrlsb", "lower");
 #endif
-        nvram_set("wl1_obss_coex", "0");
-        eval("wlconf", "eth2", "down" );
-        eval("wlconf", "eth2", "up" );
-        eval("wlconf", "eth2", "start" );
+	nvram_set("wl1_obss_coex", "0");
+	eval("wlconf", "eth2", "down" );
+	eval("wlconf", "eth2", "up" );
+	eval("wlconf", "eth2", "start" );
 	puts("1");
-        return 1;
+	return 1;
 }
 
 int
-ResetDefault(void) {
+ResetDefault(void)
+{
 	eval("mtd-erase","-d","nvram");
-        puts("1");
+	puts("1");
 	return 0;
 }
 
 static void
 syserr(char *s)
 {
-        perror(s);
-        exit(1);
+	perror(s);
+	exit(1);
 }
 
 static int
 et_check(int s, struct ifreq *ifr)
 {
-        struct ethtool_drvinfo info;
+	struct ethtool_drvinfo info;
 
-        memset(&info, 0, sizeof(info));
-        info.cmd = ETHTOOL_GDRVINFO;
-        ifr->ifr_data = (caddr_t)&info;
-        if (ioctl(s, SIOCETHTOOL, (caddr_t)ifr) < 0) {
-                /* print a good diagnostic if not superuser */
-                if (errno == EPERM)
-                        syserr("siocethtool");
-                return (-1);
-        }
+	memset(&info, 0, sizeof(info));
+	info.cmd = ETHTOOL_GDRVINFO;
+	ifr->ifr_data = (caddr_t)&info;
+	if (ioctl(s, SIOCETHTOOL, (caddr_t)ifr) < 0) {
+		/* print a good diagnostic if not superuser */
+		if (errno == EPERM)
+			syserr("siocethtool");
+		return (-1);
+	}
 
-        if (!strncmp(info.driver, "et", 2))
-                return (0);
-        else if (!strncmp(info.driver, "bcm57", 5))
-                return (0);
+	if (!strncmp(info.driver, "et", 2))
+		return (0);
+	else if (!strncmp(info.driver, "bcm57", 5))
+		return (0);
 
-        return (-1);
+	return (-1);
 }
 
 static void
 et_find(int s, struct ifreq *ifr)
 {
-        char proc_net_dev[] = "/proc/net/dev";
-        FILE *fp;
-        char buf[512], *c, *name;
+	char proc_net_dev[] = "/proc/net/dev";
+	FILE *fp;
+	char buf[512], *c, *name;
 
-        ifr->ifr_name[0] = '\0';
+	ifr->ifr_name[0] = '\0';
 
-        /* eat first two lines */
-        if (!(fp = fopen(proc_net_dev, "r")) ||
-            !fgets(buf, sizeof(buf), fp) ||
-            !fgets(buf, sizeof(buf), fp))
-                return;
+	/* eat first two lines */
+	if (!(fp = fopen(proc_net_dev, "r")) ||
+	    !fgets(buf, sizeof(buf), fp) ||
+	    !fgets(buf, sizeof(buf), fp))
+		return;
 
-        while (fgets(buf, sizeof(buf), fp)) {
-                c = buf;
-                while (isspace(*c))
-                        c++;
-                if (!(name = strsep(&c, ":")))
-                        continue;
-                strncpy(ifr->ifr_name, name, IFNAMSIZ);
-                if (et_check(s, ifr) == 0)
-                        break;
-                ifr->ifr_name[0] = '\0';
-        }
+	while (fgets(buf, sizeof(buf), fp)) {
+		c = buf;
+		while (isspace(*c))
+			c++;
+		if (!(name = strsep(&c, ":")))
+			continue;
+		strncpy(ifr->ifr_name, name, IFNAMSIZ);
+		if (et_check(s, ifr) == 0)
+			break;
+		ifr->ifr_name[0] = '\0';
+	}
 
-        fclose(fp);
+	fclose(fp);
 }
 
 /*
 int
 Get53125Status(void)
 {
-        char switch_link_status[]="GGGGG";
-        struct ifreq ifr;
-        int vecarg[5];
-        int s;
+	char switch_link_status[]="GGGGG";
+	struct ifreq ifr;
+	int vecarg[5];
+	int s;
 	char output[25];
-        int model;
+	int model;
 
-        // generate nvram nvram according to system setting
-        model = get_model();
+	// generate nvram nvram according to system setting
+	model = get_model();
 
-        if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-                syserr("socket");
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+		syserr("socket");
 
-        et_find(s, &ifr);
+	et_find(s, &ifr);
 
-        if (!*ifr.ifr_name) {
-                 printf("et interface not found\n");
-                 return 0;
-        }
+	if (!*ifr.ifr_name) {
+		 printf("et interface not found\n");
+		 return 0;
+	}
 
 	//Get Link Speed
-        vecarg[0] = strtoul("0x1", NULL, 0) << 16;;
-        vecarg[0] |= strtoul("0x4", NULL, 0) & 0xffff;
+	vecarg[0] = strtoul("0x1", NULL, 0) << 16;;
+	vecarg[0] |= strtoul("0x4", NULL, 0) & 0xffff;
 
-        ifr.ifr_data = (caddr_t) vecarg;
-        if (ioctl(s, SIOCGETCROBORD, (caddr_t)&ifr) < 0)
-                syserr("etcrobord");
-        else {
-                if( !(vecarg[1] & SWITCH_PORT_0_GIGA) )
-                        memcpy(&switch_link_status[0], "M", 1);
-                if( !(vecarg[1] & SWITCH_PORT_1_GIGA) )
-                        memcpy(&switch_link_status[1], "M", 1);
-                if( !(vecarg[1] & SWITCH_PORT_2_GIGA) )
-                        memcpy(&switch_link_status[2], "M", 1);
-                if( !(vecarg[1] & SWITCH_PORT_3_GIGA) )
-                        memcpy(&switch_link_status[3], "M", 1);
-                if( !(vecarg[1] & SWITCH_PORT_4_GIGA) )
-                        memcpy(&switch_link_status[4], "M", 1);
-        }
+	ifr.ifr_data = (caddr_t) vecarg;
+	if (ioctl(s, SIOCGETCROBORD, (caddr_t)&ifr) < 0)
+		syserr("etcrobord");
+	else {
+		if( !(vecarg[1] & SWITCH_PORT_0_GIGA) )
+			memcpy(&switch_link_status[0], "M", 1);
+		if( !(vecarg[1] & SWITCH_PORT_1_GIGA) )
+			memcpy(&switch_link_status[1], "M", 1);
+		if( !(vecarg[1] & SWITCH_PORT_2_GIGA) )
+			memcpy(&switch_link_status[2], "M", 1);
+		if( !(vecarg[1] & SWITCH_PORT_3_GIGA) )
+			memcpy(&switch_link_status[3], "M", 1);
+		if( !(vecarg[1] & SWITCH_PORT_4_GIGA) )
+			memcpy(&switch_link_status[4], "M", 1);
+	}
 
-        //Get Link Status
-        vecarg[0] = strtoul("0x1", NULL, 0) << 16;;
-        vecarg[0] |= strtoul("0x0", NULL, 0) & 0xffff;
+	//Get Link Status
+	vecarg[0] = strtoul("0x1", NULL, 0) << 16;;
+	vecarg[0] |= strtoul("0x0", NULL, 0) & 0xffff;
 
-        ifr.ifr_data = (caddr_t) vecarg;
-        if (ioctl(s, SIOCGETCROBORD, (caddr_t)&ifr) < 0)
-                syserr("etcrobord");
-        else {
-                if( !(vecarg[1] & SWITCH_PORT_0_UP) )
-                        memcpy(&switch_link_status[0], "X", 1);
-                if( !(vecarg[1] & SWITCH_PORT_1_UP) )
-                        memcpy(&switch_link_status[1], "X", 1);
-                if( !(vecarg[1] & SWITCH_PORT_2_UP) )
-                        memcpy(&switch_link_status[2], "X", 1);
-                if( !(vecarg[1] & SWITCH_PORT_3_UP) )
-                        memcpy(&switch_link_status[3], "X", 1);
-                if( !(vecarg[1] & SWITCH_PORT_4_UP) )
-                        memcpy(&switch_link_status[4], "X", 1);
-        }
+	ifr.ifr_data = (caddr_t) vecarg;
+	if (ioctl(s, SIOCGETCROBORD, (caddr_t)&ifr) < 0)
+		syserr("etcrobord");
+	else {
+		if( !(vecarg[1] & SWITCH_PORT_0_UP) )
+			memcpy(&switch_link_status[0], "X", 1);
+		if( !(vecarg[1] & SWITCH_PORT_1_UP) )
+			memcpy(&switch_link_status[1], "X", 1);
+		if( !(vecarg[1] & SWITCH_PORT_2_UP) )
+			memcpy(&switch_link_status[2], "X", 1);
+		if( !(vecarg[1] & SWITCH_PORT_3_UP) )
+			memcpy(&switch_link_status[3], "X", 1);
+		if( !(vecarg[1] & SWITCH_PORT_4_UP) )
+			memcpy(&switch_link_status[4], "X", 1);
+	}
 
-        switch(model) {
-                case MODEL_RTN66U:
+	switch(model) {
+		case MODEL_RTN66U:
 		case MODEL_RTAC66U:
-                {
+		{
 			sprintf(output, "W0=%c;L1=%c;L2=%c;L3=%c;L4=%c", switch_link_status[0],
 				switch_link_status[1], switch_link_status[2],
 				switch_link_status[3], switch_link_status[4]);
@@ -560,7 +563,7 @@ Get53125Status(void)
 	}
 	puts(output);
 
-        return 1;
+	return 1;
 }
 
 int
@@ -632,15 +635,15 @@ Get5325Status(void)
 int 
 GetPhyStatus(void)
 {
-        int model;
+	int model;
 
-        // generate nvram nvram according to system setting
-        model = get_model();
+	// generate nvram nvram according to system setting
+	model = get_model();
 
 	switch(model) {
-                case MODEL_RTN12:
-                case MODEL_RTN12B1:
-                case MODEL_RTN12C1:
+		case MODEL_RTN12:
+		case MODEL_RTN12B1:
+		case MODEL_RTN12C1:
 		case MODEL_RTN53:
 		{
 			return Get5325Status();
@@ -661,59 +664,56 @@ int
 GetPhyStatus(void)
 {
 	int ports[5];
-        int i, ret, model, mask;
-        char out_buf[30];
+	int i, ret, model, mask;
+	char out_buf[30];
 
-        model = get_model();
-        switch(model) {
-                case MODEL_RTN12:
-                case MODEL_RTN12B1:
-                case MODEL_RTN12C1:
-                case MODEL_RTN12D1:
-                case MODEL_RTN12HP:
-                case MODEL_RTN15U:
-                case MODEL_RTN53:
-                {       /* WAN L1 L2 L3 L4 */
-                        ports[0]=4; ports[1]=3; ports[2]=2, ports[3]=1; ports[4]=0;
-                        break;
-                }
-                case MODEL_RTN16:
-                case MODEL_RTN10U:
-                {       /* WAN L1 L2 L3 L4 */
-			ports[0]=0; ports[1]=4; ports[2]=3, ports[3]=2; ports[4]=1;
-                        break;
-                }
-                case MODEL_RTN10D1:
-                case MODEL_RTN66U:
-                case MODEL_RTAC66U:
-                {
-			/* WAN L1 L2 L3 L4 */
-			ports[0]=0; ports[1]=1;	ports[2]=2; ports[3]=3; ports[4]=4;
-                        break;
-                }
-        }
+	model = get_model();
+	switch(model) {
+	case MODEL_RTN53:
+	case MODEL_RTN15U:
+	case MODEL_RTN12:
+	case MODEL_RTN12B1:
+	case MODEL_RTN12C1:
+	case MODEL_RTN12D1:
+	case MODEL_RTN12HP:
+	case MODEL_APN12HP:
+	case MODEL_RTN10P:
+	case MODEL_RTN10D1:
+		/* WAN L1 L2 L3 L4 */
+		ports[0]=4; ports[1]=3; ports[2]=2, ports[3]=1; ports[4]=0;
+		break;
+	case MODEL_RTN16:
+	case MODEL_RTN10U:
+		/* WAN L1 L2 L3 L4 */
+		ports[0]=0; ports[1]=4; ports[2]=3, ports[3]=2; ports[4]=1;
+		break;
+	case MODEL_RTN66U:
+	case MODEL_RTAC66U:
+		/* WAN L1 L2 L3 L4 */
+		ports[0]=0; ports[1]=1; ports[2]=2; ports[3]=3; ports[4]=4;
+		break;
+	}
 
-        memset(out_buf, 0, 30);
-        for(i=0; i<5; i++) {
+	memset(out_buf, 0, 30);
+	for(i=0; i<5; i++) {
 		mask = 0;
 		mask |= 0x0001<<ports[i];
-                if(get_phy_status(mask)==0) {/*Disconnect*/
-                        if(i==0)
-                                sprintf(out_buf, "W0=X;");
-                        else
-                                sprintf(out_buf, "%sL%d=X;", out_buf, i);
-                }
-                else { /*Connect, keep check speed*/
+		if(get_phy_status(mask)==0) {/*Disconnect*/
+			if(i==0)
+				sprintf(out_buf, "W0=X;");
+			else
+				sprintf(out_buf, "%sL%d=X;", out_buf, i);
+		}
+		else { /*Connect, keep check speed*/
 			mask = 0;
 			mask |= (0x0003<<(ports[i]*2));
-                        ret=get_phy_speed(mask);
+			ret=get_phy_speed(mask);
 			ret>>=(ports[i]*2);
-                        if(i==0) 
-                                sprintf(out_buf, "W0=%s;", (ret & 2)? "G":"M");
-                        else 
-                                sprintf(out_buf, "%sL%d=%s;", out_buf, i, (ret & 2)? "G":"M");
-
-                }
+			if(i==0)
+				sprintf(out_buf, "W0=%s;", (ret & 2)? "G":"M");
+			else
+				sprintf(out_buf, "%sL%d=%s;", out_buf, i, (ret & 2)? "G":"M");
+		}
 	}
 
 	puts(out_buf);
@@ -723,38 +723,43 @@ GetPhyStatus(void)
 int 
 setAllLedOn(void)
 {
-        int model;
+	int model;
 
 	led_control(LED_POWER, LED_ON);
 
-        // generate nvram nvram according to system setting
-        model = get_model();
-        switch(model) {
+	// generate nvram nvram according to system setting
+	model = get_model();
+	switch(model) {
 		case MODEL_RTN16:
 		case MODEL_RTN66U:
-                {
-                        /* LAN, WAN Led On */
-                        eval("et", "robowr", "0", "0x18", "0x01ff");
-                        eval("et", "robowr", "0", "0x1a", "0x01e0");
-                        eval("radio", "on"); /* wireless */
-                        led_control(LED_USB, LED_ON);
-                        break;
-                }
-		case MODEL_RTAC66U:
 		{
-	        	/* LAN, WAN Led On */
-        		eval("et", "robowr", "0", "0x18", "0x01ff");
-        		eval("et", "robowr", "0", "0x1a", "0x01e0");
-        		eval("radio", "on"); /* 2G led */
-                        gpio_write(LED_5G, 1);
-                        led_control(LED_5G, LED_ON);
+			/* LAN, WAN Led On */
+			eval("et", "robowr", "0", "0x18", "0x01ff");
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			eval("radio", "on"); /* wireless */
 			led_control(LED_USB, LED_ON);
 			break;
+		}
+		case MODEL_RTAC66U:
+		{
+			/* LAN, WAN Led On */
+			eval("et", "robowr", "0", "0x18", "0x01ff");
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			eval("radio", "on"); /* 2G led */
+			gpio_write(LED_5G, 1);
+			led_control(LED_5G, LED_ON);
+			led_control(LED_USB, LED_ON);
+			break;
+		}
+		case MODEL_RTN10P:
+		{
+			led_control(LED_WPS, LED_ON);
 		}
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
 		case MODEL_RTN12D1:
 		case MODEL_RTN12HP:
+		case MODEL_APN12HP:
 		{
 			eval("et", "robowr", "00", "0x12", "0xfd55");
 			eval("radio", "on"); /* wireless */
@@ -768,8 +773,8 @@ setAllLedOn(void)
 			eval("radio", "on"); /* wireless */
 			break;
 		}
-                case MODEL_RTN53:
-                {
+		case MODEL_RTN53:
+		{
 			//LAN, WAN Led On
 			led_control(LED_LAN, LED_ON);
 			led_control(LED_WAN, LED_ON);
@@ -777,8 +782,8 @@ setAllLedOn(void)
 			led_control(LED_2G, LED_ON);
 			gpio_write(LED_5G, 1);
 			led_control(LED_5G, LED_ON);
-                        break;
-                }
+			break;
+		}
 	}
 
 	puts("1");
@@ -788,38 +793,43 @@ setAllLedOn(void)
 int 
 setAllLedOff(void)
 {
-        int model;
+	int model;
 
 	led_control(LED_POWER, LED_OFF);
 
-        // generate nvram nvram according to system setting
-        model = get_model();
-        switch(model) {
-                case MODEL_RTN16:
-                case MODEL_RTN66U:
-                {
-                        /* LAN, WAN Led Off */
-                        eval("et", "robowr", "0", "0x18", "0x01e0");
-                        eval("et", "robowr", "0", "0x1a", "0x01e0");
-                        eval("radio", "off"); /* wireless */
-                        led_control(LED_USB, LED_OFF);
-                        break;
-                }
-		case MODEL_RTAC66U:
-                {
+	// generate nvram nvram according to system setting
+	model = get_model();
+	switch(model) {
+		case MODEL_RTN16:
+		case MODEL_RTN66U:
+		{
 			/* LAN, WAN Led Off */
-		        eval("et", "robowr", "0", "0x18", "0x01e0");
-		        eval("et", "robowr", "0", "0x1a", "0x01e0");
-                        eval("radio", "off"); /* 2G led*/
-                        gpio_write(LED_5G, 1);
-                        led_control(LED_5G, LED_OFF);
+			eval("et", "robowr", "0", "0x18", "0x01e0");
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			eval("radio", "off"); /* wireless */
 			led_control(LED_USB, LED_OFF);
-                        break;
-                }
+			break;
+		}
+		case MODEL_RTAC66U:
+		{
+			/* LAN, WAN Led Off */
+			eval("et", "robowr", "0", "0x18", "0x01e0");
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			eval("radio", "off"); /* 2G led*/
+			gpio_write(LED_5G, 1);
+			led_control(LED_5G, LED_OFF);
+			led_control(LED_USB, LED_OFF);
+			break;
+		}
+		case MODEL_RTN10P:
+		{
+			led_control(LED_WPS, LED_OFF);
+		}
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
 		case MODEL_RTN12D1:
 		case MODEL_RTN12HP:
+		case MODEL_APN12HP:
 		{
 			eval("et", "robowr", "00", "0x12", "0xf800");
 			eval("radio", "off"); /* wireless */
@@ -833,18 +843,18 @@ setAllLedOff(void)
 			eval("radio", "off"); /* wireless */
 			break;
 		}
-                case MODEL_RTN53:
-                {
-                        //LAN, WAN Led Off
-                        led_control(LED_LAN, LED_OFF);
-                        led_control(LED_WAN, LED_OFF);
-                        gpio_write(LED_2G, 1);
-                        led_control(LED_2G, LED_OFF);
-                        gpio_write(LED_5G, 1);
-                        led_control(LED_5G, LED_OFF);
-                        break;
-                }
-        }
+		case MODEL_RTN53:
+		{
+			//LAN, WAN Led Off
+			led_control(LED_LAN, LED_OFF);
+			led_control(LED_WAN, LED_OFF);
+			gpio_write(LED_2G, 1);
+			led_control(LED_2G, LED_OFF);
+			gpio_write(LED_5G, 1);
+			led_control(LED_5G, LED_OFF);
+			break;
+		}
+	}
 
 	puts("1");
 	return 0;
@@ -864,22 +874,50 @@ setFanOn(void)
 int
 setFanOff(void)
 {
-        led_control(FAN, FAN_OFF);
-        if( !button_pressed(BTN_FAN) )
-                puts("1");
-        else
-                puts("ATE_ERROR");
+	led_control(FAN, FAN_OFF);
+	if( !button_pressed(BTN_FAN) )
+		puts("1");
+	else
+		puts("ATE_ERROR");
 }
 #endif
 
 int
-getMAC_2G() {
+setTelnetEnable(const char *enable)
+{
+	if(enable==NULL || (strcmp(enable, "0") && strcmp(enable, "1")) )
+		return 0;
+
+	memset(cmd, 0, 32);
+	sprintf(cmd, "asuscfeAte_telnet=%s", enable);
+	eval("nvram", "set", cmd );
+	puts(nvram_safe_get("Ate_telnet"));
+	return 1;
+}
+
+int
+setWaitTime(const char *wtime)
+{
+	if(wtime == NULL || !isNumber(wtime))
+		return 0;
+
+	memset(cmd, 0, 32);
+	sprintf(cmd, "asuscfewait_time=%s", wtime);
+	eval("nvram", "set", cmd );
+	puts(nvram_safe_get("wait_time"));
+	return 1;
+}
+
+int
+getMAC_2G(void)
+{
 	puts(nvram_safe_get("et0macaddr"));
 	return 0;
 }
 
 int
-getMAC_5G() {
+getMAC_5G(void)
+{
 	int model;
 
 	// generate nvram nvram according to system setting
@@ -903,14 +941,17 @@ getMAC_5G() {
 }
 
 int 
-getBootVer(void) {
+getBootVer(void)
+{
 	char buf[32];
 	memset(buf, 0, 32);
 
 	if(get_model()==MODEL_RTN53 ||
 		get_model()==MODEL_RTN10U ||
+		get_model()==MODEL_RTN10P ||
 		get_model()==MODEL_RTN12B1 || get_model()==MODEL_RTN12C1 ||
 		get_model()==MODEL_RTN12D1 || get_model()==MODEL_RTN12HP ||
+		get_model()==MODEL_APN12HP ||
 		get_model()==MODEL_RTN15U)
 		strcpy(buf, nvram_safe_get("hardware_version"));
 	else
@@ -920,41 +961,47 @@ getBootVer(void) {
 }
 
 int 
-getPIN(void) {
+getPIN(void)
+{
 	puts(nvram_safe_get("secret_code"));
 	return 0;
 }
 
 int
-getCountryCode_2G(void) {
+getCountryCode_2G(void)
+{
 	puts(nvram_safe_get("regulation_domain"));
 	return 0;
 }
 
 int
-getCountryCode_5G(void) {
-        puts(nvram_safe_get("regulation_domain_5G"));
+getCountryCode_5G(void)
+{
+	puts(nvram_safe_get("regulation_domain_5G"));
 	return 0;
 }
 
 int 
-getRegrev_2G(void) {
+getRegrev_2G(void)
+{
 	int model;
 
 	// generate nvram nvram according to system setting
 	model = get_model();
 
 	switch(model) {
+		case MODEL_RTN53:
+		case MODEL_RTN16:
+		case MODEL_RTN15U:
 		case MODEL_RTN12:
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
 		case MODEL_RTN12D1:
 		case MODEL_RTN12HP:
-		case MODEL_RTN53:
-		case MODEL_RTN15U:
+		case MODEL_APN12HP:
 		case MODEL_RTN10U:
+		case MODEL_RTN10P:
 		case MODEL_RTN10D1:
-		case MODEL_RTN16:
 		{
 			puts(nvram_safe_get("sb/1/regrev"));
 			break;
@@ -971,7 +1018,8 @@ getRegrev_2G(void) {
 }
 
 int
-getRegrev_5G(void) {
+getRegrev_5G(void)
+{
 	int model;
 
 	// generate nvram nvram according to system setting
@@ -1001,11 +1049,11 @@ int setSN(const char *SN)
 	if(SN==NULL || !isValidSN(SN))
 		return 0;
 
-        memset(cmd_l, 0, 64);
-        sprintf(cmd_l, "asuscfeserial_no=%s", SN);
-        eval("nvram", "set", cmd_l );
-        puts(nvram_safe_get("serial_no"));
-        return 1;
+	memset(cmd_l, 0, 64);
+	sprintf(cmd_l, "asuscfeserial_no=%s", SN);
+	eval("nvram", "set", cmd_l );
+	puts(nvram_safe_get("serial_no"));
+	return 1;
 }
 
 int getSN(void)
@@ -1053,7 +1101,8 @@ Get_fail_dev_log(void)
 }
 
 
-void ate_commit_bootlog(char *err_code) {
+void ate_commit_bootlog(char *err_code)
+{
 	nvram_set("Ate_power_on_off_enable", err_code);
 	nvram_commit();
 	nvram_set("asuscfeAte_power_on_off_ret", err_code);
@@ -1064,55 +1113,64 @@ void ate_commit_bootlog(char *err_code) {
 
 int Get_channel_list(int unit)
 {
-        int i, retval = 0;
-        char buf[4096];
-        wl_channels_in_country_t *cic = (wl_channels_in_country_t *)buf;
-        char tmp[256], prefix[] = "wlXXXXXXXXXX_";
-        char *country_code;
-        char *name;
+	int i, retval = 0;
+	char buf[4096];
+	wl_channels_in_country_t *cic = (wl_channels_in_country_t *)buf;
+	char tmp[256], prefix[] = "wlXXXXXXXXXX_";
+	char *country_code;
+	char *name;
 
-        snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-        country_code = nvram_safe_get(strcat_r(prefix, "country_code", tmp));
-        name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+	country_code = nvram_safe_get(strcat_r(prefix, "country_code", tmp));
+	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 
-        cic->buflen = sizeof(buf);
-        strcpy(cic->country_abbrev, country_code);
-        if (!unit)
-                cic->band = WLC_BAND_2G;
-        else
-                cic->band = WLC_BAND_5G;
-        cic->count = 0;
+	cic->buflen = sizeof(buf);
+	strcpy(cic->country_abbrev, country_code);
+	if (!unit)
+		cic->band = WLC_BAND_2G;
+	else
+		cic->band = WLC_BAND_5G;
+	cic->count = 0;
 
-        if (wl_ioctl(name, WLC_GET_CHANNELS_IN_COUNTRY, cic, cic->buflen) != 0)
-                return retval;
+	if (wl_ioctl(name, WLC_GET_CHANNELS_IN_COUNTRY, cic, cic->buflen) != 0)
+		return retval;
 
-        if (cic->count == 0)
-                return retval;
-        else
-        {
-                memset(tmp, 0x0, sizeof(tmp));
+	if (cic->count == 0)
+		return retval;
+	else
+	{
+		memset(tmp, 0x0, sizeof(tmp));
 
-                for (i = 0; i < cic->count; i++)
-                {
-                        if (i == 0)
-                                sprintf(tmp, "%d", cic->channel[i]);
-                        else
-                                sprintf(tmp,  "%s, %d", tmp, cic->channel[i]);
-                }
+		for (i = 0; i < cic->count; i++)
+		{
+			if (i == 0)
+				sprintf(tmp, "%d", cic->channel[i]);
+			else
+				sprintf(tmp,  "%s, %d", tmp, cic->channel[i]);
+		}
 
-                puts(tmp);
-        }
+		puts(tmp);
+	}
 
-        return 1;
+	return 1;
 }
 
-#ifdef RTCONFIG_WIRELESSREPEATER
-char *wlc_nvname(char *keyword) 
+int Get_ChannelList_2G(void)
 {
-	return(wl_nvname(keyword, nvram_get_int("wlc_band"), -1));
+	return Get_channel_list(0);
+}
+
+int Get_ChannelList_5G(void)
+{
+	return Get_channel_list(1);
 }
 
 static const unsigned char WPA_OUT_TYPE[] = { 0x00, 0x50, 0xf2, 1 };
+
+char *wlc_nvname(char *keyword)
+{
+	return(wl_nvname(keyword, nvram_get_int("wlc_band"), -1));
+}
 
 int wpa_key_mgmt_to_bitfield(const unsigned char *s)
 {
@@ -1440,6 +1498,10 @@ static const char * wpa_cipher_txt(int cipher)
 	}
 }
 
+/* The below macro handle endian mis-matches between wl utility and wl driver. */
+static bool g_swap = FALSE;
+#define dtoh32(i) (g_swap?bcmswap32(i):(uint32)(i))
+
 int wlcscan_core(char *ofile, char *wif)
 {
 	int ret, i, k, left, ht_extcha;
@@ -1453,6 +1515,7 @@ int wlcscan_core(char *ofile, char *wif)
 	char ssid_str[256];
 	wl_scan_results_t *result;
 	wl_bss_info_t *info;
+	wl_bss_info_107_t *old_info;
 	struct bss_ie_hdr *ie;
 	NDIS_802_11_NETWORK_TYPE NetWorkType;
 	struct maclist *authorized;
@@ -1483,15 +1546,22 @@ int wlcscan_core(char *ofile, char *wif)
 
 	while ((ret = wl_ioctl(wif, WLC_SCAN, params, params_size)) < 0 &&
 				count++ < 2){
-		fprintf(stderr, "[rc] set scan command failed, retry %d\n", count);
+		dbg("[rc] set scan command failed, retry %d\n", count);
 		sleep(1);
 	}
 
 	free(params);
 
 	nvram_set("ap_selecting", "1");
-	fprintf(stderr, "[rc] Please wait 4 seconds\n\n");
-	sleep(4);
+	dbg("[rc] Please wait 4 seconds ");
+	sleep(1);
+	dbg(".");
+	sleep(1);
+	dbg(".");
+	sleep(1);
+	dbg(".");
+	sleep(1);
+	dbg(".\n\n");
 	nvram_set("ap_selecting", "0");
 
 	if (ret == 0){
@@ -1502,13 +1572,22 @@ int wlcscan_core(char *ofile, char *wif)
 
 		while ((ret = wl_ioctl(wif, WLC_SCAN_RESULTS, result, WLC_IOCTL_MAXLEN)) < 0 && count++ < 2)
 		{
-			fprintf(stderr, "[rc] set scan results command failed, retry %d\n", count);
+			dbg("[rc] set scan results command failed, retry %d\n", count);
 			sleep(1);
 		}
 
 		if (ret == 0)
 		{
 			info = &(result->bss_info[0]);
+
+			/* Convert version 107 to 109 */
+			if (dtoh32(info->version) == LEGACY_WL_BSS_INFO_VERSION) {
+				old_info = (wl_bss_info_107_t *)info;
+				info->chanspec = CH20MHZ_CHSPEC(old_info->channel);
+				info->ie_length = old_info->ie_length;
+				info->ie_offset = sizeof(wl_bss_info_107_t);
+			}
+
 			info_b = (unsigned char *)info;
 
 			for(i = 0; i < result->count; i++)
@@ -1552,9 +1631,14 @@ int wlcscan_core(char *ofile, char *wif)
 //					strcpy(apinfos[ap_count].SSID, info->SSID);
 					memset(apinfos[ap_count].SSID, 0x0, 33);
 					memcpy(apinfos[ap_count].SSID, info->SSID, info->SSID_len);
-//					apinfos[ap_count].channel = ((wl_bss_info_107_t *) info)->channel;
-					apinfos[ap_count].channel = info->chanspec;
-					apinfos[ap_count].ctl_ch = info->ctl_ch;
+					apinfos[ap_count].channel = (uint8)(info->chanspec & WL_CHANSPEC_CHAN_MASK);
+					if ( info->ctl_ch == 0 )
+					{
+						apinfos[ap_count].ctl_ch = apinfos[ap_count].channel;
+					}else
+					{
+						apinfos[ap_count].ctl_ch = info->ctl_ch;
+					}
 
 					if (info->RSSI >= -50)
 						apinfos[ap_count].RSSI_Quality = 100;
@@ -1574,13 +1658,12 @@ int wlcscan_core(char *ofile, char *wif)
 /*
 					unsigned char *RATESET = &info->rateset;
 					for (k = 0; k < 18; k++)
-						fprintf(stderr, "%02x ", (unsigned char)RATESET[k]);
-					fprintf(stderr, "\n");
+						dbg("%02x ", (unsigned char)RATESET[k]);
+					dbg("\n");
 */
 
 					NetWorkType = Ndis802_11DS;
-//					if (((wl_bss_info_107_t *) info)->channel <= 14)
-					if ((uint8)info->chanspec <= 14)
+					if ((uint8)(info->chanspec & WL_CHANSPEC_CHAN_MASK) <= 14)
 					{
 						for (k = 0; k < info->rateset.count; k++)
 						{
@@ -1646,52 +1729,52 @@ next_info:
 
 	/* Print scanning result to console */
 	if (ap_count == 0){
-		fprintf(stderr, "[wlc] No AP found!\n");
+		dbg("[wlc] No AP found!\n");
 	}else{
-		fprintf(stderr, "%-4s%-3s%-33s%-18s%-9s%-16s%-9s%8s%3s%3s\n",
-				"idx", "CH", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode", "CC", "EC");
+		dbg("%-4s%4s%-33s%-18s%-9s%-16s%-9s%8s%3s%3s\n",
+				"idx", "CH ", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode", "CC", "EC");
 		for (k = 0; k < ap_count; k++)
 		{
-			fprintf(stderr, "%2d. ", k + 1);
-			fprintf(stderr, "%2d ", apinfos[k].channel);
-			fprintf(stderr, "%-33s", apinfos[k].SSID);
-			fprintf(stderr, "%-18s", apinfos[k].BSSID);
+			dbg("%2d. ", k + 1);
+			dbg("%3d ", apinfos[k].ctl_ch);
+			dbg("%-33s", apinfos[k].SSID);
+			dbg("%-18s", apinfos[k].BSSID);
 
 			if (apinfos[k].wpa == 1)
-				fprintf(stderr, "%-9s%-16s", wpa_cipher_txt(apinfos[k].wid.pairwise_cipher), wpa_key_mgmt_txt(apinfos[k].wid.key_mgmt, apinfos[k].wid.proto));
+				dbg("%-9s%-16s", wpa_cipher_txt(apinfos[k].wid.pairwise_cipher), wpa_key_mgmt_txt(apinfos[k].wid.key_mgmt, apinfos[k].wid.proto));
 			else if (apinfos[k].wep == 1)
-				fprintf(stderr, "WEP      Unknown         ");
+				dbg("WEP      Unknown         ");
 			else
-				fprintf(stderr, "NONE     Open System     ");
-			fprintf(stderr, "%9d ", apinfos[k].RSSI_Quality);
+				dbg("NONE     Open System     ");
+			dbg("%9d ", apinfos[k].RSSI_Quality);
 
 			if (apinfos[k].NetworkType == Ndis802_11FH || apinfos[k].NetworkType == Ndis802_11DS)
-				fprintf(stderr, "%-7s", "11b");
+				dbg("%-7s", "11b");
 			else if (apinfos[k].NetworkType == Ndis802_11OFDM5)
-				fprintf(stderr, "%-7s", "11a");
+				dbg("%-7s", "11a");
 			else if (apinfos[k].NetworkType == Ndis802_11OFDM5_N)
-				fprintf(stderr, "%-7s", "11a/n");
+				dbg("%-7s", "11a/n");
 			else if (apinfos[k].NetworkType == Ndis802_11OFDM24)
-				fprintf(stderr, "%-7s", "11b/g");
+				dbg("%-7s", "11b/g");
 			else if (apinfos[k].NetworkType == Ndis802_11OFDM24_N)
-				fprintf(stderr, "%-7s", "11b/g/n");
+				dbg("%-7s", "11b/g/n");
 			else
-				fprintf(stderr, "%-7s", "unknown");
+				dbg("%-7s", "unknown");
 
-			fprintf(stderr, "%3d", apinfos[k].ctl_ch);
+			dbg("%3d", apinfos[k].ctl_ch);
 
 			if (	((apinfos[k].NetworkType == Ndis802_11OFDM5_N) ||
-					 (apinfos[k].NetworkType == Ndis802_11OFDM24_N)) &&
-					(apinfos[k].channel != apinfos[k].ctl_ch)	){
+				 (apinfos[k].NetworkType == Ndis802_11OFDM24_N)) &&
+					(apinfos[k].channel != apinfos[k].ctl_ch)){
 				if (apinfos[k].ctl_ch < apinfos[k].channel)
 					ht_extcha = 1;
 				else
 					ht_extcha = 0;
 
-				fprintf(stderr, "%3d", ht_extcha);
+				dbg("%3d", ht_extcha);
 			}
 
-			fprintf(stderr, "\n");
+			dbg("\n");
 		}
 	}
 
@@ -1730,27 +1813,27 @@ next_info:
 			printf("[wlcscan] Output %s error\n", ofile);
 		}else{
 			for (i = 0; i < ap_count; i++){
-				if(apinfos[i].channel < 0 ){
+				if(apinfos[i].ctl_ch < 0 ){
 					fprintf(fp, "\"ERR_BNAD\",");
-				}else if( apinfos[i].channel > 0 &&
-							 apinfos[i].channel < 14){
+				}else if( apinfos[i].ctl_ch > 0 &&
+							 apinfos[i].ctl_ch < 14){
 					fprintf(fp, "\"2G\",");
-				}else if( apinfos[i].channel > 14 &&
-							 apinfos[i].channel < 166 ){
+				}else if( apinfos[i].ctl_ch > 14 &&
+							 apinfos[i].ctl_ch < 166){
 					fprintf(fp, "\"5G\",");
 				}else{
 					fprintf(fp, "\"ERR_BNAD\",");
 				}
 
 				if (strlen(apinfos[i].SSID) == 0){
-					fprintf(fp, ",");
+					fprintf(fp, "\"\",");
 				}else{
 					memset(ssid_str, 0, sizeof(ssid_str));
 					char_to_ascii(ssid_str, apinfos[i].SSID);
 					fprintf(fp, "\"%s\",", ssid_str);
 				}
 
-				fprintf(fp, "\"%d\",", apinfos[i].channel);
+				fprintf(fp, "\"%d\",", apinfos[i].ctl_ch);
 
 				if (apinfos[i].wpa == 1){
 					if (apinfos[i].wid.key_mgmt == WPA_KEY_MGMT_IEEE8021X_)
@@ -1787,7 +1870,7 @@ next_info:
 					else if (apinfos[i].wid.pairwise_cipher == WPA_CIPHER_TKIP_|WPA_CIPHER_CCMP_)
 						fprintf(fp, "\"%s\",", "TKIP+AES");
 					else
-						fprintf(fp, "\"%\"s,", "Unknown");
+						fprintf(fp, "\"%s\",", "Unknown");
 				}else if (apinfos[i].wep == 1){
 					fprintf(fp, "\"%s\",", "WEP");
 				}else{
@@ -1870,6 +1953,7 @@ next_info:
 	return retval;
 }
 
+#ifdef RTCONFIG_WIRELESSREPEATER
 /* 
  *  Return value:
  *  	2 = successfully connected to parent AP 
@@ -1889,7 +1973,7 @@ int get_wlc_status(char *wif)
 	wl_psk = strstr(nvram_safe_get(wlc_nvname("akm")), "psk") ? 1 : 0;
 
 	if (wl_ioctl(wif, WLC_GET_SSID, &wst, sizeof(wst))){
-		fprintf(stderr, "[wlc] WLC_GET_SSID error\n");
+		dbg("[wlc] WLC_GET_SSID error\n");
 		goto wl_ioctl_error;
 	}
 
@@ -1907,7 +1991,7 @@ int get_wlc_status(char *wif)
 					(unsigned char)bssid[5]);
 		}
 	}else{
-		fprintf(stderr, "[wlc] WLC_GET_BSSID error\n");
+		dbg("[wlc] WLC_GET_BSSID error\n");
 		goto wl_ioctl_error;
 	}
 
@@ -1925,36 +2009,36 @@ int get_wlc_status(char *wif)
 				free(authorized);
 			}else{
 				free(authorized);
-				fprintf(stderr, "[wlc] Authorized failed\n");
+				dbg("[wlc] Authorized failed\n");
 				goto wl_ioctl_error;
 			}
 		}
 	}
 
 	if(!wl_associated){
-		fprintf(stderr, "[wlc] not wl_associated\n");
+		dbg("[wlc] not wl_associated\n");
 	}
 
-	fprintf(stderr, "[wlc] wl-associated [%d]\n", wl_associated);
-	fprintf(stderr, "[wlc] %s\n", wst.SSID);
-	fprintf(stderr, "[wlc] %s\n", nvram_safe_get(wlc_nvname("ssid")));
+	dbg("[wlc] wl-associated [%d]\n", wl_associated);
+	dbg("[wlc] %s\n", wst.SSID);
+	dbg("[wlc] %s\n", nvram_safe_get(wlc_nvname("ssid")));
 
 	if (wl_associated &&
 		!strncmp(wst.SSID, nvram_safe_get(wlc_nvname("ssid")), wst.SSID_len)){
 		if (wl_psk){
 			if (wl_authorized){
-				fprintf(stderr, "[wlc] wl_authorized\n");
+				dbg("[wlc] wl_authorized\n");
 				return 2;
 			}else{
-				fprintf(stderr, "[wlc] not wl_authorized\n");
+				dbg("[wlc] not wl_authorized\n");
 				return 1;
 			}
 		}else{
-			fprintf(stderr, "[wlc] wl_psk:[%d]\n", wl_psk);
+			dbg("[wlc] wl_psk:[%d]\n", wl_psk);
 			return 2;
 		}
 	}else{
-		fprintf(stderr, "[wlc] Not associated\n");
+		dbg("[wlc] Not associated\n");
 		return 0;
 	}
 
@@ -1967,7 +2051,7 @@ wl_ioctl_error:
 //	when wlc_list, then connect to it according to priority
 int wlcconnect_core(void)
 {
-	int ret;
+	int ret = 0;
 	unsigned int count;
 	char word[256], *next;
 	unsigned char SEND_NULLDATA[]={ 0x73, 0x65, 0x6e, 0x64,
@@ -1979,12 +2063,12 @@ int wlcconnect_core(void)
 	int unit;
 
 	count = 0;
-	unit=0;
+	unit = 0;
 	/* return WLC connection status */
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
 		// only one client in a system
 		if(is_ure(unit)) {
-			fprintf(stderr, "[rc] [%s] is URE mode\n", word);
+			dbg("[rc] [%s] is URE mode\n", word);
 			while(count<4){
 				count++;
 
@@ -1998,9 +2082,9 @@ int wlcconnect_core(void)
 				sleep(1);
 			}
 			ret = get_wlc_status(word);
-			fprintf(stderr, "[wlc] get_wlc_status:[%d]\n", ret);
+			dbg("[wlc] get_wlc_status:[%d]\n", ret);
 		}else{
-			fprintf(stderr, "[rc] [%s] is not URE mode\n", word);
+			dbg("[rc] [%s] is not URE mode\n", word);
 		}
 		unit++;
 	}

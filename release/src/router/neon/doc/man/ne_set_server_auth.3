@@ -1,0 +1,133 @@
+'\" t
+.\"     Title: ne_set_server_auth
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_SET_SERVER_AUTH" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_set_server_auth, ne_set_proxy_auth, ne_forget_auth \- register authentication callbacks
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_auth\&.h>
+.fi
+.ft
+.HP \w'typedef\ int\ (*ne_auth_creds)('u
+.BI "typedef int (*ne_auth_creds)(void\ *" "userdata" ", const\ char\ *" "realm" ", int\ " "attempt" ", char\ *" "username" ", char\ *" "password" ");"
+.HP \w'void\ ne_set_server_auth('u
+.BI "void ne_set_server_auth(ne_session\ *" "session" ", ne_auth_creds\ " "callback" ", void\ *" "userdata" ");"
+.HP \w'void\ ne_set_proxy_auth('u
+.BI "void ne_set_proxy_auth(ne_session\ *" "session" ", ne_auth_creds\ " "callback" ", void\ *" "userdata" ");"
+.HP \w'void\ ne_forget_auth('u
+.BI "void ne_forget_auth(ne_session\ *" "session" ");"
+.SH "DESCRIPTION"
+.PP
+The
+\fBne_auth_creds\fR
+function type defines a callback which is invoked when a server or proxy server requires user authentication for a particular request\&. The
+\fIrealm\fR
+string is supplied by the server\&.
+The
+\fIattempt\fR
+is a counter giving the number of times the request has been retried with different authentication credentials\&. The first time the callback is invoked for a particular request,
+\fIattempt\fR
+will be zero\&.
+.PP
+To retry the request using new authentication credentials, the callback should return zero, and the
+\fIusername\fR
+and
+\fIpassword\fR
+buffers must contain
+NUL\-terminated strings\&. The
+NE_ABUFSIZ
+constant gives the size of these buffers\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBTip\fR
+.ps -1
+.br
+.PP
+If you only wish to allow the user one attempt to enter credentials, use the value of the
+\fIattempt\fR
+parameter as the return value of the callback\&.
+.sp .5v
+.RE
+.PP
+To abort the request, the callback should return a non\-zero value; in which case the contents of the
+\fIusername\fR
+and
+\fIpassword\fR
+buffers are ignored\&.
+.PP
+The
+\fBne_forget_auth\fR
+function can be used to discard the cached authentication credentials\&.
+.SH "EXAMPLES"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+/* Function which prompts for a line of user input: */
+extern char *prompt_for(const char *prompt);
+
+static int
+my_auth(void *userdata, const char *realm, int attempts,
+        char *username, char *password)
+{
+   strncpy(username, prompt_for("Username: "), NE_ABUFSIZ);
+   strncpy(password, prompt_for("Password: "), NE_ABUFSIZ);
+   return attempts;
+}
+
+int main(\&.\&.\&.)
+{
+   ne_session *sess = ne_session_create(\&.\&.\&.);
+
+   ne_set_server_auth(sess, my_auth, NULL);
+
+   /* \&.\&.\&. */
+}
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

@@ -1,0 +1,259 @@
+// -*- C -*-
+
+// Simulator definition for the MIPS 32/64 revision 2 instructions.
+// Copyright (C) 2004 Free Software Foundation, Inc.
+// Contributed by David Ung, of MIPS Technologies.
+//
+// This file is part of GDB, the GNU debugger.
+// 
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+011111,5.RS,5.RT,5.SIZE,5.LSB,000011::64::DEXT
+"dext r<RT>, r<RS>, <LSB>, <SIZE+1>"
+*mips64r2:
+{
+  check_u64 (SD_, instruction_0);
+  TRACE_ALU_INPUT3 (GPR[RS], LSB, SIZE);
+  GPR[RT] = EXTRACTED64 (GPR[RS], LSB + SIZE, LSB);
+  TRACE_ALU_RESULT1 (GPR[RT]);
+}
+
+011111,5.RS,5.RT,5.SIZE,5.LSB,000001::64::DEXTM
+"dextm r<RT>, r<RS>, <LSB>, <SIZE+33>"
+*mips64r2:
+{
+  check_u64 (SD_, instruction_0);
+  TRACE_ALU_INPUT3 (GPR[RS], LSB, SIZE);
+  GPR[RT] = EXTRACTED64 (GPR[RS], LSB + SIZE + 32, LSB);
+  TRACE_ALU_RESULT1 (GPR[RT]);
+}
+
+011111,5.RS,5.RT,5.SIZE,5.LSB,000010::64::DEXTU
+"dextu r<RT>, r<RS>, <LSB+32>, <SIZE+1>"
+*mips64r2:
+{
+  check_u64 (SD_, instruction_0);
+  TRACE_ALU_INPUT3 (GPR[RS], LSB, SIZE);
+  GPR[RT] = EXTRACTED64 (GPR[RS], LSB + 32 + SIZE, LSB + 32);
+  TRACE_ALU_RESULT1 (GPR[RT]);
+}
+
+
+010000,01011,5.RT,01100,00000,0,00,000::32::DI
+"di":RT == 0
+"di r<RT>"
+*mips32r2:
+*mips64r2:
+{
+  TRACE_ALU_INPUT0 ();
+  GPR[RT] = EXTEND32 (SR);
+  SR &= ~status_IE;
+  TRACE_ALU_RESULT1 (GPR[RT]);
+}
+
+
+011111,5.RS,5.RT,5.MSB,5.LSB,000111::64::DINS
+"dins r<RT>, r<RS>, <LSB>, <MSB-LSB+1>"
+*mips64r2:
+{
+  check_u64 (SD_, instruction_0);
+  TRACE_ALU_INPUT4 (GPR[RT], GPR[RS], LSB, MSB);
+  if (LSB <= MSB)
+    GPR[RT] ^= (GPR[RT] ^ (GPR[RS] << LSB)) & MASK64 (MSB, LSB);
+  TRACE_ALU_RESULT1 (GPR[RT]);
+}
+
+011111,5.RS,5.RT,5.MSB,5.LSB,000101::64::DINSM
+"dinsm r<RT>, r<RS>, <LSB>, <MSB+32-LSB+1>"
+*mips64r2:
+{
+  check_u64 (SD_, instruction_0);
+  TRACE_ALU_INPUT4 (GPR[RT], GPR[RS], LSB, MSB);
+  if (LSB <= MSB + 32)
+    GPR[RT] ^= (GPR[RT] ^ (GPR[RS] << LSB)) & MASK64 (MSB + 32, LSB);
+  TRACE_ALU_RESULT1 (GPR[RT]);
+}
+
+011111,5.RS,5.RT,5.MSB,5.LSB,000110::64::DINSU
+"dinsu r<RT>, r<RS>, <LSB+32>, <MSB-LSB+1>"
+*mips64r2:
+{
+  check_u64 (SD_, instruction_0);
+  TRACE_ALU_INPUT4 (GPR[RT], GPR[RS], LSB, MSB);
+  if (LSB <= MSB)
+    GPR[RT] ^= (GPR[RT] ^ (GPR[RS] << (LSB + 32)))
+      & MASK64 (MSB + 32, LSB + 32);
+  TRACE_ALU_RESULT1 (GPR[RT]);
+}
+
+
+011111,00000,5.RT,5.RD,00010,100100::64::DSBH
+"dsbh r<RD>, r<RT>"
+*mips64r2:
+{
+  union { unsigned64 d; unsigned16 h[4]; } u;
+  check_u64 (SD_, instruction_0);
+  TRACE_ALU_INPUT1 (GPR[RT]);
+  u.d = GPR[RT];
+  u.h[0] = SWAP_2 (u.h[0]);
+  u.h[1] = SWAP_2 (u.h[1]);
+  u.h[2] = SWAP_2 (u.h[2]);
+  u.h[3] = SWAP_2 (u.h[3]);
+  GPR[RD] = u.d;
+  TRACE_ALU_RESULT1 (GPR[RD]);
+}
+
+011111,00000,5.RT,5.RD,00101,100100::64::DSHD
+"dshd r<RD>, r<RT>"
+*mips64r2:
+{
+  unsigned64 d;
+  check_u64 (SD_, instruction_0);
+  TRACE_ALU_INPUT1 (GPR[RT]);
+  d = GPR[RT];
+  GPR[RD] = ((d >> 48)
+	     | (d << 48)
+	     | ((d & 0x0000ffff00000000ULL) >> 16)
+	     | ((d & 0x00000000ffff0000ULL) << 16));
+  TRACE_ALU_RESULT1 (GPR[RD]);
+}
+
+
+010000,01011,5.RT,01100,00000,1,00,000::32::EI
+"ei":RT == 0
+"ei r<RT>"
+*mips32r2:
+*mips64r2:
+{
+  TRACE_ALU_INPUT0 ();
+  GPR[RT] = EXTEND32 (SR);
+  SR |= status_IE;
+  TRACE_ALU_RESULT1 (GPR[RT]);
+}
+
+
+011111,5.RS,5.RT,5.SIZE,5.LSB,000000::32::EXT
+"ext r<RT>, r<RS>, <LSB>, <SIZE+1>"
+*mips32r2:
+*mips64r2:
+{
+  TRACE_ALU_INPUT3 (GPR[RS], LSB, SIZE);
+  GPR[RT] = EXTEND32 (EXTRACTED32 (GPR[RS], LSB + SIZE, LSB));
+  TRACE_ALU_RESULT1 (GPR[RT]);
+}
+
+
+010001,00011,5.RT,5.FS,00000000000:COP1Sa:32,f::MFHC1
+"mfhc1 r<RT>, f<FS>"
+*mips32r2:
+*mips64r2:
+{
+  check_fpu (SD_);
+  if (SizeFGR() == 64)
+    GPR[RT] = EXTEND32 (WORD64HI (FGR[FS]));
+  else if ((FS & 0x1) == 0)
+    GPR[RT] = EXTEND32 (FGR[FS + 1]);
+  else
+    {
+      if (STATE_VERBOSE_P(SD))
+	sim_io_eprintf (SD, 
+	         "Warning: PC 0x%lx: MFHC1 32-bit use of odd FPR number\n",
+			(long) CIA);
+      GPR[RT] = EXTEND32 (0xBADF00D);
+    }
+  TRACE_ALU_RESULT (GPR[RT]);
+}
+
+010001,00111,5.RT,5.FS,00000000000:COP1Sa:32,f::MTHC1
+"mthc1 r<RT>, f<FS>"
+*mips32r2:
+*mips64r2:
+{
+  check_fpu (SD_); 
+  if (SizeFGR() == 64)
+    StoreFPR (FS, fmt_uninterpreted_64, SET64HI (GPR[RT]) | VL4_8 (FGR[FS]));
+  else if ((FS & 0x1) == 0)
+    StoreFPR (FS + 1, fmt_uninterpreted_32, VL4_8 (GPR[RT]));
+  else
+    {
+      if (STATE_VERBOSE_P(SD))
+	sim_io_eprintf (SD, 
+	         "Warning: PC 0x%lx: MTHC1 32-bit use of odd FPR number\n",
+			(long) CIA);
+      StoreFPR (FS, fmt_uninterpreted_32, 0xDEADC0DE);
+    }
+  TRACE_FP_RESULT (GPR[RT]);
+}
+
+
+011111,5.RS,5.RT,5.MSB,5.LSB,000100::32::INS
+"ins r<RT>, r<RS>, <LSB>, <MSB-LSB+1>"
+*mips32r2:
+*mips64r2:
+{
+  TRACE_ALU_INPUT4 (GPR[RT], GPR[RS], LSB, MSB);
+  if (LSB <= MSB)
+    GPR[RT] = EXTEND32 (GPR[RT] ^
+			((GPR[RT] ^ (GPR[RS] << LSB)) & MASK32 (MSB, LSB)));
+  TRACE_ALU_RESULT1 (GPR[RT]);
+}
+
+
+011111,00000,5.RT,5.RD,10000,100000::32::SEB
+"seb r<RD>, r<RT>"
+*mips32r2:
+*mips64r2:
+{
+  TRACE_ALU_INPUT1 (GPR[RT]);
+  GPR[RD] = EXTEND8 (GPR[RT]);
+  TRACE_ALU_RESULT1 (GPR[RD]);
+}
+
+011111,00000,5.RT,5.RD,11000,100000::32::SEH
+"seh r<RD>, r<RT>"
+*mips32r2:
+*mips64r2:
+{
+  TRACE_ALU_INPUT1 (GPR[RT]);
+  GPR[RD] = EXTEND16 (GPR[RT]);
+  TRACE_ALU_RESULT1 (GPR[RD]);
+}
+
+
+000001,5.BASE,11111,16.OFFSET::32::SYNCI
+"synci <OFFSET>(r<BASE>)"
+*mips32r2:
+*mips64r2:
+{
+  // sync i-cache - nothing to do currently
+}
+
+
+011111,00000,5.RT,5.RD,00010,100000::32::WSBH
+"wsbh r<RD>, r<RT>"
+*mips32r2:
+*mips64r2:
+{
+  union { unsigned32 w; unsigned16 h[2]; } u;
+  TRACE_ALU_INPUT1 (GPR[RT]);
+  u.w = GPR[RT];
+  u.h[0] = SWAP_2 (u.h[0]);
+  u.h[1] = SWAP_2 (u.h[1]);
+  GPR[RD] = EXTEND32 (u.w);
+  TRACE_ALU_RESULT1 (GPR[RD]);
+}
+
+
+

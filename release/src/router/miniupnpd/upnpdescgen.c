@@ -149,8 +149,8 @@ static const struct XMLElt rootDesc[] =
 	{"/manufacturer", ROOTDEV_MANUFACTURER},		/* required */
 /* 8 */
 	{"/manufacturerURL", ROOTDEV_MANUFACTURERURL},	/* optional */
-	{"/modelDescription", ROOTDEV_MODELDESCRIPTION}, /* recommended */
-	{"/modelName", ROOTDEV_MODELNAME},	/* required */
+	{"/modelDescription", friendly_name}, /* recommended */
+	{"/modelName", friendly_name},			/* required */
 	{"/modelNumber", modelnumber},
 	{"/modelURL", ROOTDEV_MODELURL},
 	{"/serialNumber", serialnumber},

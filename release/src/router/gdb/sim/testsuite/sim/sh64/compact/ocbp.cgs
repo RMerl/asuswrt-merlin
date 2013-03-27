@@ -1,0 +1,15 @@
+# sh testcase for ocbp @$rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global ocbp
+ocbp:
+	ocbp @r0
+	ocbp @r1
+	ocbp @r15
+	pass

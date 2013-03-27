@@ -1,0 +1,118 @@
+# FRV testcase for dcul GRi
+# mach: frv fr500
+
+	.include "../testutils.inc"
+
+	start
+
+	.global dcul
+dcul:
+	or_spr_immed	0xc8000000,hsr0	; caches enabled -- copy-back mode
+
+	; preload and lock all the lines in set 0 of the data cache
+	set_gr_immed	0x70000,gr10
+	lock_data_cache	gr10
+	set_mem_immed	0x11111111,gr10
+	test_mem_immed	0x11111111,gr10
+
+	inc_gr_immed	0x1000,gr10
+	set_gr_immed	1,gr11
+	lock_data_cache	gr10
+	set_mem_immed	0x22222222,gr10
+	test_mem_immed	0x22222222,gr10
+
+	inc_gr_immed	0x1000,gr10
+	set_gr_immed	63,gr11
+	lock_data_cache	gr10
+	set_mem_immed	0x33333333,gr10
+	test_mem_immed	0x33333333,gr10
+
+	inc_gr_immed	0x1000,gr10
+	set_gr_immed	64,gr11
+	lock_data_cache	gr10
+	set_mem_immed	0x44444444,gr10
+	test_mem_immed	0x44444444,gr10
+
+	; Now write to another address which should be in the same set
+	; the write should go through to memory, since all the lines in the
+	; set are locked
+	inc_gr_immed	0x1000,gr10
+	set_mem_immed	0xdeadbeef,gr10
+	test_mem_immed	0xdeadbeef,gr10
+
+	; Invalidate the data cache. Only the last value stored should have made
+	; it through to memory
+	set_gr_immed	0x70000,gr10
+	invalidate_data_cache	gr10
+	test_mem_immed	0,gr10
+
+	inc_gr_immed	0x1000,gr10
+	invalidate_data_cache	gr10
+	test_mem_immed	0,gr10
+
+	inc_gr_immed	0x1000,gr10
+	invalidate_data_cache	gr10
+	test_mem_immed	0,gr10
+
+	inc_gr_immed	0x1000,gr10
+	invalidate_data_cache	gr10
+	test_mem_immed	0,gr10
+
+	inc_gr_immed	0x1000,gr10
+	invalidate_data_cache	gr10
+	test_mem_immed	0xdeadbeef,gr10
+
+	; Now preload load and lock all the lines in set 0 of the data cache
+	; again
+	set_gr_immed	0x70000,gr10
+	lock_data_cache	gr10
+	set_mem_immed	0x11111111,gr10
+	test_mem_immed	0x11111111,gr10
+
+	inc_gr_immed	0x1000,gr10
+	set_gr_immed	1,gr11
+	lock_data_cache	gr10
+	set_mem_immed	0x22222222,gr10
+	test_mem_immed	0x22222222,gr10
+
+	inc_gr_immed	0x1000,gr10
+	set_gr_immed	63,gr11
+	lock_data_cache	gr10
+	set_mem_immed	0x33333333,gr10
+	test_mem_immed	0x33333333,gr10
+
+	inc_gr_immed	0x1000,gr10
+	set_gr_immed	64,gr11
+	lock_data_cache	gr10
+	set_mem_immed	0x44444444,gr10
+	test_mem_immed	0x44444444,gr10
+
+	; unlock one line
+	set_gr_immed	0x72000,gr10
+	dcul		gr10
+
+	; Now write to another address which should be in the same set.
+	set_gr_immed	0x75000,gr10
+	set_mem_immed	0xbeefdead,gr10
+
+	; All of the stored values should be retrievable
+
+	set_gr_immed	0x70000,gr10
+	test_mem_immed	0x11111111,gr10
+
+	inc_gr_immed	0x1000,gr10
+	test_mem_immed	0x22222222,gr10
+
+	inc_gr_immed	0x1000,gr10
+	test_mem_immed	0x33333333,gr10
+
+	inc_gr_immed	0x1000,gr10
+	test_mem_immed	0x44444444,gr10
+
+	inc_gr_immed	0x1000,gr10
+	test_mem_immed	0xdeadbeef,gr10
+
+	inc_gr_immed	0x1000,gr10
+	test_mem_immed	0xbeefdead,gr10
+
+	pass

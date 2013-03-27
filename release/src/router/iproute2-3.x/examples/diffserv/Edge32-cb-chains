@@ -1,0 +1,144 @@
+#! /bin/sh -x
+#
+# sample script on using the ingress capabilities
+# This script fwmark tags(IPchains) based on metering on the ingress 
+# interface the result is used for fast classification and re-marking
+# on the egress interface
+# This is an example of a color blind mode marker with no PIR configured
+# based on draft-wahjak-mcm-00.txt (section 3.1)
+#
+#path to various utilities;
+#change to reflect yours.
+#
+IPROUTE=/root/DS-6-beta/iproute2-990530-dsing
+TC=$IPROUTE/tc/tc
+IP=$IPROUTE/ip/ip
+IPCHAINS=/root/DS-6-beta/ipchains-1.3.9/ipchains
+INDEV=eth2
+EGDEV="dev eth1"
+CIR1=1500kbit
+CIR2=500kbit
+
+#The CBS is about 60 MTU sized packets
+CBS1=90k
+CBS2=90k
+
+meter1="police rate $CIR1 burst $CBS1 "
+meter1a="police rate $CIR2 burst $CBS1 "
+meter2="police rate $CIR1 burst $CBS2 "
+meter2a="police rate $CIR2 burst $CBS2 "
+meter3="police rate $CIR2 burst $CBS1 "
+meter3a="police rate $CIR2 burst $CBS1 "
+meter4="police rate $CIR2 burst $CBS2 "
+meter5="police rate $CIR1 burst $CBS2 "
+#
+# tag the rest of incoming packets from subnet 10.2.0.0/24 to fw value 1
+# tag all incoming packets from any other subnet to fw tag 2
+############################################################ 
+$IPCHAINS -A input -i $INDEV -s 0/0 -m 2
+$IPCHAINS -A input -i $INDEV -s 10.2.0.0/24 -m 1
+#
+############################################################ 
+# install the ingress qdisc on the ingress interface
+$TC qdisc add dev $INDEV handle ffff: ingress
+#
+############################################################ 
+
+# All packets are marked with a tcindex value which is used on the egress
+# tcindex 1 maps to AF41, 2->AF42, 3->AF43, 4->BE
+#
+############################################################ 
+# 
+# anything with fw tag of 1 is passed on with a tcindex value 1
+#if it doesnt exceed its allocated rate (CIR/CBS)
+# 
+$TC filter add dev $INDEV parent ffff: protocol ip prio 1 handle 1 fw \
+$meter1 \
+continue flowid 4:1
+$TC filter add dev $INDEV parent ffff: protocol ip prio 2 handle 1 fw \
+$meter1a \
+continue flowid 4:1
+#
+# if it exceeds the above but not the extra rate/burst below, it gets a 
+#tcindex value  of 2
+#
+$TC filter add dev $INDEV parent ffff: protocol ip prio 3 handle 1 fw \
+$meter2 \
+continue flowid 4:2
+$TC filter add dev $INDEV parent ffff: protocol ip prio 4 handle 1 fw \
+$meter2a \
+continue flowid 4:2
+#
+# if it exceeds the above but not the rule below, it gets a tcindex value
+# of 3
+#
+$TC filter add dev $INDEV parent ffff: protocol ip prio 5 handle 1 fw \
+$meter3 \
+continue flowid 4:3
+$TC filter add dev $INDEV parent ffff: protocol ip prio 6 handle 1 fw \
+$meter3a \
+drop flowid 4:3
+#
+# Anything else (not from the subnet 10.2.0.24/24) gets discarded if it 
+# exceeds 1Mbps and by default goes to BE if it doesnt
+#
+$TC filter add dev $INDEV parent ffff: protocol ip prio 7 handle 2 fw \
+$meter5 \
+drop flowid 4:4
+
+
+######################## Egress side ########################
+
+
+# attach a dsmarker
+#
+$TC qdisc add $EGDEV handle 1:0 root dsmark indices 64
+#
+# values of the DSCP to change depending on the class
+#note that the ECN bits are masked out
+#
+#AF41 (0x88 is 0x22 shifted to the right by two bits)
+#
+$TC class change $EGDEV classid 1:1 dsmark mask 0x3 \
+       value 0x88
+#AF42
+$TC class change $EGDEV classid 1:2 dsmark mask 0x3 \
+       value 0x90
+#AF43
+$TC class change $EGDEV classid 1:3 dsmark mask 0x3 \
+       value 0x98
+#BE
+$TC class change $EGDEV classid 1:4 dsmark mask 0x3 \
+       value 0x0
+#
+#
+# The class mapping (using tcindex; could easily have
+# replaced it with the fw classifier instead)
+#
+$TC filter add $EGDEV parent 1:0 protocol ip prio 1 \
+          handle 1 tcindex classid 1:1
+$TC filter add $EGDEV parent 1:0 protocol ip prio 1 \
+          handle 2 tcindex  classid 1:2
+$TC filter add $EGDEV parent 1:0 protocol ip prio 1 \
+          handle 3 tcindex  classid 1:3
+$TC filter add $EGDEV parent 1:0 protocol ip prio 1 \
+          handle 4 tcindex  classid 1:4
+#
+
+#
+echo "---- qdisc parameters Ingress  ----------"
+$TC qdisc ls dev $INDEV
+echo "---- Class parameters Ingress  ----------"
+$TC class ls dev $INDEV
+echo "---- filter parameters Ingress ----------"
+$TC filter ls dev $INDEV parent ffff:
+
+echo "---- qdisc parameters Egress  ----------"
+$TC qdisc ls $EGDEV
+echo "---- Class parameters Egress  ----------"
+$TC class ls $EGDEV
+echo "---- filter parameters Egress ----------"
+$TC filter ls $EGDEV parent 1:0
+#
+#deleting the ingress qdisc
+#$TC qdisc del $INDEV ingress

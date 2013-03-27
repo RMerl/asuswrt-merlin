@@ -1,0 +1,78 @@
+# Copyright (C) 1992, 1994, 1995, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Fred Fish. (fnf@cygnus.com)
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+if { [skip_hp_tests] } then { continue }
+
+global usestubs
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+set testfile "xdb"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested xdb1.exp
+     return -1
+}
+
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+if { $gcc_compiled } then { continue }
+
+global GDBFLAGS
+set saved_gdbflags $GDBFLAGS
+
+set GDBFLAGS "$GDBFLAGS --xdb"
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+gdb_test "set pagination off" ""
+gdb_test "show pagination" "State of pagination is off."
+gdb_test "set pagination on" ""
+gdb_test "show pagination" "State of pagination is on."
+
+gdb_test "txbreak callee" "Breakpoint.*at.*"
+gdb_test "info break" "Num.*Type.*Disp.*Enb.*Address.*What\r\n.*breakpoint.*del.*y.*"
+
+gdb_test "xbreak callee" "Breakpoint.*at.*.*"
+gdb_test "info break" "Num.*Type.*Disp.*Enb.*Address.*What\r\n.*breakpoint.*keep.*y.*"
+
+gdb_exit
+set GDBFLAGS $saved_gdbflags
+return 0
+
+
+
+
+
+
+

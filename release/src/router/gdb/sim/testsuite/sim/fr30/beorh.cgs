@@ -1,0 +1,36 @@
+# fr30 testcase for beorh $Rj,@$Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global beorh
+beorh:
+	; Test beorh $Rj,@$Ri
+	mvi_h_mem  	0x55555555,sp
+	set_cc          0x0f		; Condition codes should not change
+	beorh      	0x0a,@sp
+	test_cc		1 1 1 1
+	test_h_mem 	0xf5555555,sp
+
+	mvi_h_mem  	0x0fffffff,sp
+	set_cc          0x04		; Condition codes should not change
+	beorh		0x00,@sp
+	test_cc		0 1 0 0
+	test_h_mem 	0x0fffffff,sp
+
+	mvi_h_mem  	0xffffffff,sp
+	set_cc          0x0a		; Condition codes should not change
+	beorh		0x0f,@sp
+	test_cc		1 0 1 0
+	test_h_mem 	0x0fffffff,sp
+
+	mvi_h_mem  	0x9eadbeef,sp
+	set_cc          0x09		; Condition codes should not change
+	beorh		0x04,@sp
+	test_cc		1 0 0 1
+	test_h_mem 	0xdeadbeef,sp
+
+	pass

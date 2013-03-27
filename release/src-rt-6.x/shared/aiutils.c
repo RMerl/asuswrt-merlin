@@ -2,7 +2,7 @@
  * Misc utility routines for accessing chip-specific features
  * of the SiliconBackplane-based Broadcom chips.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: aiutils.c 321248 2012-03-14 21:17:30Z $
+ * $Id: aiutils.c 347044 2012-07-25 10:26:49Z $
  */
 #include <bcm_cfg.h>
 #include <typedefs.h>
@@ -40,6 +40,8 @@
 			(CHIPID(sih->chip) == BCM4749_CHIP_ID)) && \
 	    (sih->chippkg == BCM5357_PKG_ID) && \
 	    (sii->coreid[sii->curidx] == USB20H_CORE_ID))
+#define BCM4707_DMP() ((CHIPID(sih->chip) == BCM4707_CHIP_ID) && \
+	    (sii->coreid[sii->curidx] == NS_CCB_CORE_ID))
 
 /* EROM parsing */
 
@@ -310,7 +312,7 @@ BCMATTACHFN(ai_scan)(si_t *sih, void *regs, uint devid)
 					sii->oob_router = addrl;
 				}
 			}
-			if (cid != GMAC_COMMON_4706_CORE_ID)
+			if (cid != GMAC_COMMON_4706_CORE_ID && cid != NS_CCB_CORE_ID)
 				continue;
 		}
 
@@ -485,7 +487,7 @@ ai_setcoreidx(si_t *sih, uint coreidx)
 			ASSERT(GOODREGS(sii->regs[coreidx]));
 		}
 		sii->curmap = regs = sii->regs[coreidx];
-		if (!sii->wrappers[coreidx]) {
+		if (!sii->wrappers[coreidx] && (wrap != 0)) {
 			sii->wrappers[coreidx] = REG_MAP(wrap, SI_CORE_SIZE);
 			ASSERT(GOODREGS(sii->wrappers[coreidx]));
 		}
@@ -670,6 +672,11 @@ ai_flag(si_t *sih)
 	}
 	if (BCM5357_DMP()) {
 		SI_ERROR(("%s: Attempting to read USB20H DMP registers on 5357b0\n", __FUNCTION__));
+		return sii->curidx;
+	}
+	if (BCM4707_DMP()) {
+		SI_ERROR(("%s: Attempting to read CHIPCOMMONB DMP registers on 4707\n",
+			__FUNCTION__));
 		return sii->curidx;
 	}
 	ai = sii->curwrap;
@@ -860,15 +867,15 @@ ai_core_disable(si_t *sih, uint32 bits)
 #endif
 	}
 
-	W_REG(sii->osh, &ai->ioctrl, bits);
-	dummy = R_REG(sii->osh, &ai->ioctrl);
-	BCM_REFERENCE(dummy);
-	OSL_DELAY(10);
-
 	W_REG(sii->osh, &ai->resetctrl, AIRC_RESET);
 	dummy = R_REG(sii->osh, &ai->resetctrl);
 	BCM_REFERENCE(dummy);
 	OSL_DELAY(1);
+
+	W_REG(sii->osh, &ai->ioctrl, bits);
+	dummy = R_REG(sii->osh, &ai->ioctrl);
+	BCM_REFERENCE(dummy);
+	OSL_DELAY(10);
 }
 
 /* reset and re-enable a core
@@ -891,6 +898,9 @@ ai_core_reset(si_t *sih, uint32 bits, uint32 resetbits)
 	 * Must do the disable sequence first to work for arbitrary current core state.
 	 */
 	ai_core_disable(sih, (bits | resetbits));
+	if (sii->coreid[sii->curidx] == ARMCR4_CORE_ID) {
+		OSL_DELAY(10);
+	}
 
 	/*
 	 * Now do the initialization sequence.
@@ -929,6 +939,11 @@ ai_core_cflags_wo(si_t *sih, uint32 mask, uint32 val)
 		          __FUNCTION__));
 		return;
 	}
+	if (BCM4707_DMP()) {
+		SI_ERROR(("%s: Accessing CHIPCOMMONB DMP register (ioctrl) on 4707\n",
+			__FUNCTION__));
+		return;
+	}
 
 	ASSERT(GOODREGS(sii->curwrap));
 	ai = sii->curwrap;
@@ -957,6 +972,11 @@ ai_core_cflags(si_t *sih, uint32 mask, uint32 val)
 	if (BCM5357_DMP()) {
 		SI_ERROR(("%s: Accessing USB20H DMP register (ioctrl) on 5357\n",
 		          __FUNCTION__));
+		return 0;
+	}
+	if (BCM4707_DMP()) {
+		SI_ERROR(("%s: Accessing CHIPCOMMONB DMP register (ioctrl) on 4707\n",
+			__FUNCTION__));
 		return 0;
 	}
 
@@ -989,6 +1009,11 @@ ai_core_sflags(si_t *sih, uint32 mask, uint32 val)
 	if (BCM5357_DMP()) {
 		SI_ERROR(("%s: Accessing USB20H DMP register (iostatus) on 5357\n",
 		          __FUNCTION__));
+		return 0;
+	}
+	if (BCM4707_DMP()) {
+		SI_ERROR(("%s: Accessing CHIPCOMMONB DMP register (ioctrl) on 4707\n",
+			__FUNCTION__));
 		return 0;
 	}
 
@@ -1030,6 +1055,10 @@ ai_dumpregs(si_t *sih, struct bcmstrbuf *b)
 		}
 		if (BCM5357_DMP()) {
 			bcm_bprintf(b, "Skipping usb20h in 5357\n");
+			continue;
+		}
+		if (BCM4707_DMP()) {
+			bcm_bprintf(b, "Skipping chipcommonb in 4707\n");
 			continue;
 		}
 
@@ -1191,6 +1220,10 @@ ai_view(si_t *sih, bool verbose)
 		SI_ERROR(("Cannot access usb20h DMP in 5357\n"));
 		return;
 	}
+	if (BCM4707_DMP()) {
+		SI_ERROR(("Cannot access chipcommonb DMP in 4707\n"));
+		return;
+	}
 	cid = sii->coreid[sii->curidx];
 	addr = sii->wrapba[sii->curidx];
 	_ai_view(osh, ai, cid, addr, verbose);
@@ -1215,6 +1248,10 @@ ai_viewall(si_t *sih, bool verbose)
 		}
 		if (BCM5357_DMP()) {
 			SI_ERROR(("Skipping usb20h DMP in 5357\n"));
+			continue;
+		}
+		if (BCM4707_DMP()) {
+			SI_ERROR(("Skipping chipcommonb DMP in 4707\n"));
 			continue;
 		}
 		ai = sii->curwrap;

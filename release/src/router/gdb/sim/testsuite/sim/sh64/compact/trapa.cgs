@@ -1,0 +1,13 @@
+# sh testcase for trapa #$imm8 -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global trapa
+trapa:
+	# pass is a macro for "trapa #253".
+	trapa #253

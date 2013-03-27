@@ -1,7 +1,7 @@
 /*
  * WPS Enrollee OS layer
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wps_enr_osl.h 247314 2011-03-18 12:25:52Z $
+ * $Id: wps_enr_osl.h 345515 2012-07-18 07:56:02Z $
  */
 
 #ifndef __OSL_H__
@@ -18,6 +18,7 @@
 /* Opaque types */
 struct _wps_credentials;
 
+int wps_osl_get_ifname(char *ifname);
 int wps_osl_set_ifname(char *ifname);
 int wps_osl_get_mac(uint8 *mac);
 int wps_osl_init(char *);

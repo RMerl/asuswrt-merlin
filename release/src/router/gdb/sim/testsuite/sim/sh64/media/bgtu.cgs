@@ -1,0 +1,36 @@
+# sh testcase for bgtu$likely $rm, $rn, $tra -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+
+init:
+	pta wrong, tr0
+
+bgtu1:
+	movi 1, r0
+	movi -1, r1
+	pta bgt2, tr1
+	bgtu r1, r0, tr1
+	fail
+
+bgt2:
+	bgtu r0, r0, tr0
+ 
+bgt3:
+	pta okay, tr1
+	movi -1, r0
+	movi 1, r1
+	pta okay, tr1
+	bgtu r0, r1, tr1
+	fail
+
+okay:
+	pass
+
+wrong:
+	fail

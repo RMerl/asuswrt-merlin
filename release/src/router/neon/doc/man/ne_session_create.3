@@ -1,0 +1,134 @@
+'\" t
+.\"     Title: ne_session_create
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_SESSION_CREATE" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_session_create, ne_close_connection, ne_session_proxy, ne_session_destroy \- set up HTTP sessions
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_session\&.h>
+.fi
+.ft
+.HP \w'ne_session\ *ne_session_create('u
+.BI "ne_session *ne_session_create(const\ char\ *" "scheme" ", const\ char\ *" "hostname" ", unsigned\ int\ " "port" ");"
+.HP \w'void\ ne_session_proxy('u
+.BI "void ne_session_proxy(ne_session\ *" "session" ", const\ char\ *" "hostname" ", unsigned\ int\ " "port" ");"
+.HP \w'void\ ne_close_connection('u
+.BI "void ne_close_connection(ne_session\ *" "session" ");"
+.HP \w'void\ ne_session_destroy('u
+.BI "void ne_session_destroy(ne_session\ *" "session" ");"
+.SH "DESCRIPTION"
+.PP
+An
+\fBne_session\fR
+object represents an HTTP session \- a logical grouping of a sequence of HTTP requests made to a certain server\&. Any requests made using the session can use a persistent connection, share cached authentication credentials and any other common attributes\&.
+.PP
+A new HTTP session is created using
+\fBne_session_create\fR, giving the
+\fIhostname\fR
+and
+\fIport\fR
+of the server to use, along with the
+\fIscheme\fR
+used to contact the server (usually
+"http")\&. Before the first use of
+\fBne_session_create\fR
+in a process,
+ne_sock_init
+must have been called to perform any global initialization needed by any libraries used by neon\&.
+.PP
+To enable SSL/TLS for the session, pass the string
+"https"
+as the
+\fIscheme\fR
+parameter, and either register a certificate verification function (see
+ne_ssl_set_verify) or trust the appropriate certificate (see
+ne_ssl_trust_cert,
+ne_ssl_trust_default_ca)\&.
+.PP
+If an HTTP proxy server should be used for the session,
+\fBne_session_proxy\fR
+must be called giving the hostname and port on which to contact the proxy\&.
+.PP
+Further per\-session options may be changed using the
+ne_set_request_flag
+interface\&.
+.PP
+If it is known that the session will not be used for a significant period of time,
+\fBne_close_connection\fR
+can be called to close the connection, if one remains open\&. Use of this function is entirely optional, but it must not be called if there is a request active using the session\&.
+.PP
+Once a session has been completed,
+\fBne_session_destroy\fR
+must be called to destroy the resources associated with the session\&. Any subsequent use of the session pointer produces undefined behaviour\&.
+.SH "NOTES"
+.PP
+The hostname passed to
+\fBne_session_create\fR
+is resolved when the first request using the session is dispatched; a DNS resolution failure can only be detected at that time (using the
+NE_LOOKUP
+error code); see
+ne_request_dispatch
+for details\&.
+.SH "RETURN VALUES"
+.PP
+\fBne_session_create\fR
+will return a pointer to a new session object (and never
+NULL)\&.
+.SH "EXAMPLES"
+.PP
+Create and destroy a session:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ne_session *sess;
+sess = ne_session_create("http", "host\&.example\&.com", 80);
+/* \&.\&.\&. use sess \&.\&.\&. */
+ne_session_destroy(sess);
+.fi
+.if n \{\
+.RE
+.\}
+.SH "SEE ALSO"
+.PP
+ne_ssl_set_verify,
+ne_ssl_trust_cert,
+ne_sock_init,
+ne_set_session_flag
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

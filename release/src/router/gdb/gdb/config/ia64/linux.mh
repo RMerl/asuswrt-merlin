@@ -1,0 +1,8 @@
+# Host: Intel IA-64 running GNU/Linux
+
+NAT_FILE= config/nm-linux.h
+NATDEPFILES= inf-ptrace.o fork-child.o corelow.o gcore.o \
+	core-regset.o ia64-linux-nat.o \
+	proc-service.o linux-thread-db.o linux-nat.o linux-fork.o
+
+LOADLIBES = -ldl -rdynamic

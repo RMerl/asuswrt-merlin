@@ -1,450 +1,83 @@
 ﻿var Untranslated = {
-	wireless_psk_fillin : 'Please type password',
-	Adj_dst : 'Manual daylight saving time'
+	defaultHint : 'For more detail, you can also refer to http://support.asus.com/',
+	diskUtility_scanning : 'Disk scanning now. Please wait for it to complete.',
+	diskUtility_scan_hint : 'During scanning process, all disk activities will be stopped, do you want to scan it now',
+	diskUtility_initial : 'Initializing disk scanning...',
+	diskUtility_umount : 'Unmounting disk...',
+	diskUtility_scan : 'Disk scanning ...',
+	diskUtility_reMount : 'Disk Re-Mounting...',
+	diskUtility_finish : 'Finishing disk scanning...',
+	diskUtility_stop : 'Disk scan will be stopped soon ...',
+	diskUtility_information : 'Information',
+	diskUtility : 'Disk Utility',
+	diskUtility_init_status : 'Click "Scan" to check if your hard drive is heathly.',
+	diskUtility_problem_found : 'Disk scan process finished, please check the detail information as below.',
+	diskUtility_crash_found : 'We have found files cracked in your hard drive, please safely remove it and use a computer to fix it.',
+	diskUtility_detailInfo : 'Detail information',
+	diskUtility_schedule : 'Schedule scan setting',
+	diskUtility_frenqucy : 'Frenqucy',
+	diskUtility_monthly : 'Monthly',
+	diskUtility_weekly : 'Weekly',
+	diskUtility_daily : 'Daily',
+	diskUtility_week : 'Week',
+	diskUtility_time : 'Time',
+	diskUtility_scanDuring : 'During scanning process, all disk activies be stopped.',
+	diskUtility_dchedule_hint : 'You just scheduled to do disk scan at <1:00>  on <1st>  <Monthly>',
+	routerSync_rule_both : 'Two way sync: Two way sync refers to the inviter and invitee will sync up all files in the sync folder they had chosen. All files sync folders will be free to be accessed by both.',
+	routerSync_rule_StoC : 'Server to client: Server to client refers to the invitee could download files in the sync folder from the inviter only, the invitee have no permission to upload files to the inviter.',
+	routerSync_rule_CtoS : 'Client to server: Client to server refers to the invitee could upload files in the sync folder to the inviter only, the invitee have no permission to access files in sync folder of the inviter.',
+	file_downloading : 'Firmware downloading',
+	https_access_url : "Access setting page via ",
+	apps_downloading : 'Apps downloading',
+	fw_size_higher_mem : 'Memory space is NOT enough to upgrade on internet. Please wait for rebooting.',
+	portConflictHint : 'This port had been used for',
+	https_access_url : "Access setting page via ",
+	enable_dmz : "Enable DMZ "
 };
-
-var helptitle = new Array(19);
-// Wireless
-helptitle[0] = [["", ""],
-				["<#WLANConfig11b_SSID_itemname#>", "wl_ssid"],
-				["<#WLANConfig11b_x_BlockBCSSID_itemname#>", "wl_closed"],				
-				["<#WLANConfig11b_Channel_itemname#>", "wl_channel"],
-				["<#WLANConfig11b_x_Mode11g_itemname#>", "wl_nmode_x"],
-				["<#WLANConfig11b_AuthenticationMethod_itemname#>", "wl_auth_mode"],
-				["<#WLANConfig11b_WPAType_itemname#>", "wl_crypto"],
-				["<#WLANConfig11b_x_PSKKey_itemname#>", "wl_wpa_psk"],
-				["<#WLANConfig11b_x_Phrase_itemname#>", "wl_phrase_x"],
-				["<#WLANConfig11b_WEPType_itemname#>", "wl_wep_x"],
-				["<#WLANConfig11b_WEPDefaultKey_itemname#>", "wl_key"],
-				["<#WLANConfig11b_x_Rekey_itemname#>", "wl_wpa_gtk_rekey"],
-				["<#WLANConfig11b_WEPKey_itemname#>", "wl_asuskey1"],
-				["<#WLANConfig11b_WEPKey_itemname#>", "wl_asuskey1"],
-				["<#WLANConfig11b_ChannelBW_itemname#>", "wl_bw"],
-				["<#WLANConfig11b_EChannel_itemname#>", "wl_nctrlsb"],
-				["<#WLANConfig11b_WLBand_itemname#>", "wl_bw"],
-				["<#WLANConfig11b_TxPower_itemname#>", "TxPower"],
-				["<#WLANConfig11b_WEPKey_itemname#>", "wl_key1"],
-				["<#WLANConfig11b_WEPKey_itemname#>", "wl_key2"],
-				["<#WLANConfig11b_WEPKey_itemname#>", "wl_key3"],
-				["<#WLANConfig11b_WEPKey_itemname#>", "wl_key4"],
-				["", ""]];
-helptitle[1] = [["", ""],
-				["<#WLANConfig11b_x_APMode_itemname#>", "wl_mode_x"],
-				["<#WLANConfig11b_Channel_itemname#>", "wl_channel"],
-				["<#WLANConfig11b_x_BRApply_itemname#>", "wl_wdsapply_x"]];
-helptitle[2] = [["", ""],
-				["<#WLANAuthentication11a_ExAuthDBIPAddr_itemname#>", "wl_radius_ipaddr"],
-				["<#WLANAuthentication11a_ExAuthDBPortNumber_itemname#>", "wl_radius_port"],
-				["<#WLANAuthentication11a_ExAuthDBPassword_itemname#>", "wl_radius_key"]];
-helptitle[3] = [["", ""],
-				["<#WLANConfig11b_x_RadioEnable_itemname#>", "wl_radio_x"],
-				["<#WLANConfig11b_x_RadioEnableDate_itemname#>", "wl_radio_date_x_"],
-				["<#WLANConfig11b_x_RadioEnableTime_itemname#>", "wl_radio_time_x_"],
-				["", ""],//["<#WLANConfig11b_x_AfterBurner_itemname#>", "wl_afterburner"],
-				["<#WLANConfig11b_x_IsolateAP_itemname#>", "wl_ap_isolate"],
-				["<#WLANConfig11b_DataRateAll_itemname#>", "wl_rate"],
-				["<#WLANConfig11b_MultiRateAll_itemname#>", "wl_mrate_x"],
-				["<#WLANConfig11b_DataRate_itemname#>", "wl_rateset"],
-				["<#WLANConfig11b_x_Frag_itemname#>", "wl_frag"],
-				["<#WLANConfig11b_x_RTS_itemname#>", "wl_rts"],
-				["<#WLANConfig11b_x_DTIM_itemname#>", "wl_dtim"],
-				["<#WLANConfig11b_x_Beacon_itemname#>", "wl_bcn"],
-				["<#WLANConfig11b_x_TxBurst_itemname#>", "TxBurst"],
-				["<#WLANConfig11b_x_WMM_itemname#>", "wl_wme"],
-				["<#WLANConfig11b_x_NOACK_itemname#>", "wl_wme_no_ack"],
-				["<#WLANConfig11b_x_PktAggregate_itemname#>", "PktAggregate"],
-				["<#WLANConfig11b_x_APSD_itemname#>", "APSDCapable"],
-				["<#WLANConfig11b_x_DLS_itemname#>", "DLSCapable"],
-				["<#WLANConfig11b_x_HT_OpMode_itemname#>", "HT_OpMode"],
-				["<#WLANConfig11n_PremblesType_itemname#>", "wl_plcphdr"] // 20
-				];
-// LAN
-helptitle[4] = [["", ""],
-				["<#IPConnection_ExternalIPAddress_itemname#>", "lan_ipaddr"],
-				["<#IPConnection_x_ExternalSubnetMask_itemname#>", "lan_netmask"],
-				["<#IPConnection_x_ExternalGateway_itemname#>", "lan_gateway"]];
-helptitle[5] = [["", ""],
-			 	["<#LANHostConfig_DHCPServerConfigurable_itemname#>", "dhcp_enable_x"],
-				["<#LANHostConfig_DomainName_itemname#>", "lan_domain"],
-				["<#LANHostConfig_MinAddress_itemname#>", "dhcp_start"],
-				["<#LANHostConfig_MaxAddress_itemname#>", "dhcp_end"],
-				["<#LANHostConfig_LeaseTime_itemname#>", "dhcp_lease"],
-				["<#IPConnection_x_ExternalGateway_itemname#>", "dhcp_gateway_x"],
-				["<#LANHostConfig_x_LDNSServer1_itemname#>", "dhcp_dns1_x"],
-				["<#LANHostConfig_x_WINSServer_itemname#>", "dhcp_wins_x"],
-				["<#LANHostConfig_ManualDHCPEnable_itemname#>", "dhcp_static_x"],
-				["", ""],
-				["", ""],
-				["", ""]];
-helptitle[6] = [["", ""],
-				["<#RouterConfig_GWStaticIP_itemname#>", "sr_ipaddr_x_0"],
-				["<#RouterConfig_GWStaticMask_itemname#>", "sr_netmask_x_0"],
-				["<#RouterConfig_GWStaticGW_itemname#>", "sr_gateway_x_0"],
-				["<#RouterConfig_GWStaticMT_itemname#>", "sr_matric_x_0"],
-				["<#wan_interface#>", "sr_if_x_0"],
-				["<#RouterConfig_IPTV_itemname#>"]];
-// WAN
-helptitle[7] = [["", ""],
-				["<#IPConnection_ExternalIPAddress_itemname#>", "wan_ipaddr_x"],
-				["<#IPConnection_x_ExternalSubnetMask_itemname#>", "wan_netmask_x"],
-				["<#IPConnection_x_ExternalGateway_itemname#>", "wan_gateway_x"],
-				["<#PPPConnection_UserName_itemname#>", "wan_pppoe_username"],
-				["<#PPPConnection_Password_itemname#>", "wan_pppoe_passwd"],
-				["<#PPPConnection_IdleDisconnectTime_itemname#>", "wan_pppoe_idletime"],
-				["<#PPPConnection_x_PPPoEMTU_itemname#>", "wan_pppoe_mtu"],
-				["<#PPPConnection_x_PPPoEMRU_itemname#>", "wan_pppoe_mru"],
-				["<#PPPConnection_x_ServiceName_itemname#>", "wan_pppoe_service"],
-				["<#PPPConnection_x_AccessConcentrator_itemname#>", "wan_pppoe_ac"],
-				["<#PPPConnection_x_PPPoERelay_itemname#>", "wan_pppoe_relay"],
-				["<#IPConnection_x_DNSServerEnable_itemname#>", "wan_dnsenable_x"],
-				["<#IPConnection_x_DNSServer1_itemname#>", "wan_dns1_x"],
-				["<#IPConnection_x_DNSServer2_itemname#>", "wan_dns2_x"],
-				["<#PPPConnection_x_HostNameForISP_itemname#>", "wan_hostname"],
-				["<#PPPConnection_x_MacAddressForISP_itemname#>", "wan_hwaddr_x"],
-				["<#PPPConnection_x_PPTPOptions_itemname#>", "wan_pptp_options_x"],
-				["<#PPPConnection_x_AdditionalOptions_itemname#>", "wan_pppoe_options_x"],
-				["<#BOP_isp_heart_item#>", "wan_heartbeat_x"],
-				["<#IPConnection_BattleNet_itemname#>", "sp_battle_ips"],
-				["<#Layer3Forwarding_x_STB_itemname#>", "wan_stb_x"],
-				["Hardware NAT", "hwnat"],
-				["<#isp_profile#>", "switch_wantag"],
-				["<#PPPConnection_Authentication_itemname#>", "wan_auth_t"]];
-//Firewall
-helptitle[8] = [["", ""],
-				["<#FirewallConfig_WanLanLog_itemname#>", "fw_log_x"],
-				["<#FirewallConfig_x_WanWebEnable_itemname#>", "misc_http_x"],
-				["<#FirewallConfig_x_WanWebPort_itemname#>", "misc_httpport_x"],
-				["<#FirewallConfig_x_WanLPREnable_itemname#>", "misc_lpr_x"],
-				["<#FirewallConfig_x_WanPingEnable_itemname#>", "misc_ping_x"],
-				["<#FirewallConfig_FirewallEnable_itemname#>", "fw_enable_x"],
-				["<#FirewallConfig_DoSEnable_itemname#>", "fw_dos_x"]];
-helptitle[9] = [["", ""],
-				["<#FirewallConfig_URLActiveDate_itemname#>", "url_date_x_"],
-				["<#FirewallConfig_URLActiveTime_itemname#>", "url_time_x_"]];
-helptitle[10] = [["", ""],
-				["<#FirewallConfig_LanWanActiveDate_itemname#>", "filter_lw_date_x_"],
-				["<#FirewallConfig_LanWanActiveTime_itemname#>", "filter_lw_time_x_"],
-				["<#FirewallConfig_LanWanDefaultAct_itemname#>", "filter_lw_default_x"],
-				["<#FirewallConfig_LanWanICMP_itemname#>", "filter_lw_icmp_x"],
-				["<#FirewallConfig_LanWanFirewallEnable_itemname#>", "fw_lw_enable_x"]];
-//Administration
-helptitle[11] = [["", ""],
-				["<#LANHostConfig_x_ServerLogEnable_itemname#>", "log_ipaddr"],
-				["<#LANHostConfig_x_TimeZone_itemname#>", "time_zone"],
-				["<#LANHostConfig_x_NTPServer_itemname#>", "ntp_server0"],
-				["<#PASS_new#>"]];
-//Log
-helptitle[12] = [["", ""],
-				["<#General_x_SystemUpTime_itemname#>", "system_now_time"],
-				["<#PrinterStatus_x_PrinterModel_itemname#>", ""],
-				["<#PrinterStatus_x_PrinterStatus_itemname#>", ""],
-				["<#PrinterStatus_x_PrinterUser_itemname#>", ""]];
-//WPS
-helptitle[13] = [["", ""],
-				["<#WLANConfig11b_x_WPS_itemname#>", ""],
-				["<#WLANConfig11b_x_WPSMode_itemname#>", ""],
-				["<#WLANConfig11b_x_WPSPIN_itemname#>", ""],
-				["<#WLANConfig11b_x_DevicePIN_itemname#>", ""],
-				["<#WLANConfig11b_x_WPSband_itemname#>", ""]];
-//UPnP
-helptitle[14] = [["", ""],
-				["<#UPnPMediaServer#>", ""]];
-//AiDisk Wizard
-helptitle[15] = [["", ""],
-				["<a href='../Advanced_AiDisk_ftp.asp' target='_parent' hidefocus='true'><#menu5_4#></a>", ""],
-				["<#AiDisk_Step1_helptitle#>", ""],
-				["<#AiDisk_Step2_helptitle#>", ""],
-				["<#AiDisk_Step3_helptitle#>", ""]];
-
-helptitle[16] = [["", ""],
-				["<#EzQoS_helptitle#>", ""]];
-//Others in the USB application
-helptitle[17] = [["", ""],
-				["<#ShareNode_MaximumLoginUser_itemname#>", "st_max_user"],
-				["<#ShareNode_DeviceName_itemname#>", "computer_name"],
-				["<#ShareNode_WorkGroup_itemname#>", "st_samba_workgroup"],
-				["<#BasicConfig_EnableDownloadMachine_itemname#>", "apps_dl"],
-				["<#BasicConfig_EnableDownloadShare_itemname#>", "apps_dl_share"],
-				["<#BasicConfig_EnableMediaServer_itemname#>", "upnp_enable"],
-                                ["<#ShareNode_Seeding_itemname#>", "apps_seed"],
-                                ["<#ShareNode_MaxUpload_itemname#>", "apps_upload_max"]];
-				
-// MAC filter
-helptitle[18] = [["", ""],
-				["<#FirewallConfig_MFMethod_itemname#>", "macfilter_enable_x"],
-				["<#FirewallConfig_LanWanSrcPort_itemname#>", ""],
-				["<#FirewallConfig_LanWanSrcIP_itemname#>/<#FirewallConfig_LanWanDstIP_itemname#>", ""],
-				["<#BM_UserList3#>", ""],
-				["Transfered", ""],
-				["<#FirewallConfig_LanWanSrcIP_itemname#>"]];
-// Setting
-helptitle[19] = [["", ""],
-				["<#Setting_factorydefault_itemname#>", ""],
-				["<#Setting_save_itemname#>", ""],
-				["<#Setting_upload_itemname#>", ""]];
-// QoS
-helptitle[20] = [["", ""],
-				["<#BM_measured_uplink_speed#>", ""],
-				["<#BM_manual_uplink_speed#>", "qos_manual_ubw"],
-				["<#max_bound#>", "max_bound"],
-				["<#min_bound#>", "min_bound"],
-				["<#max_bound#>", "max_bound"]];
-// HSDPA
-helptitle[21] = [["", ""],
-				["<#HSDPAConfig_hsdpa_mode_itemname#>", "hsdpa_mode"],
-				["<#PIN_code#>", "pin_code"],
-				["<#HSDPAConfig_private_apn_itemname#>", "private_apn"],
-				["HSDPA<#PPPConnection_x_PPPoEMTU_itemname#>", "wan_hsdpa_mtu"],
-				["HSDPA<#PPPConnection_x_PPPoEMRU_itemname#>", "wan_hsdpa_mru"],
-				["<#IPConnection_x_DNSServer1_itemname#>", "wan2_dns1_x"],
-				["<#IPConnection_x_DNSServer2_itemname#>", "wan2_dns2_x"],
-				["<#HSDPAConfig_ISP_itemname#>", "private_isp"],
-				["<#HSDPAConfig_Country_itemname#>", "private_country"],
-				["<#HSDPAConfig_DialNum_itemname#>", "private_dialnum"],
-				["<#HSDPAConfig_Username_itemname#>", "private_username"],
-				["<#HSDPAConfig_Password_itemname#>", "private_passowrd"],
-				["<#HSDPAConfig_USBAdapter_itemname#>", "private_usbadaptor"]];
-
-helptitle[22] = [["", ""],
-				["Router(<#OP_GW_item#>)", ""],
-				["Repeater(<#OP_RE_item#>)", ""],
-				["AP(<#OP_AP_item#>)", ""]];
-
-/*
-if(psta_support != -1){
-	helptitle[22] = [["", ""],["Router(<#OP_GW_item#>)", ""],["Media bridge", ""],["AP(<#OP_AP_item#>)", ""]];
-}
-*/
-
-helptitle[23] = [["", ""],
-				["5GHz SSID:", "ssid_5g"],
-				["2.4GHz SSID:", "ssid_2g"]];
-
-var helpcontent = new Array(19);
-helpcontent[0] = new Array("",
-							 "<#WLANConfig11b_SSID_itemdesc#>",
-						   "<#WLANConfig11b_x_BlockBCSSID_itemdesc#>",						   
-						   "<#WLANConfig11b_Channel_itemdesc#>",
-						   "<#WLANConfig11b_x_Mode11g_itemdesc#>",
-						   "<#WLANConfig11b_AuthenticationMethod_itemdesc#>",
-						   "<#WLANConfig11b_WPAType_itemdesc#>",
-						   "<#WLANConfig11b_x_PSKKey_itemdesc#>",
-						   "<#WLANConfig11b_x_Phrase_itemdesc#>",
-						   "<#WLANConfig11b_WEPType_itemdesc#>",
-						   "<#WLANConfig11b_WEPDefaultKey_itemdesc#>",
-						   "<#WLANConfig11b_x_Rekey_itemdesc#><#JS_field_wanip_rule3#>",
-						   "<#WLANConfig11b_WEPKey_itemtype1#>",
-						   "<#WLANConfig11b_WEPKey_itemtype2#>",
-						   "<#WLANConfig11b_ChannelBW_itemdesc#><br/><#WLANConfig11b_Wireless_Speed_itemname_3#>",
-						   "<#WLANConfig11b_EChannel_itemdesc#>",
-							 "",
-							 "Increase Tx Power to enhance the quality of transmission or decrease Tx Power to reduce power consumption.",
-							 "WEP-64bits: <#WLANConfig11b_WEPKey_itemtype1#><br/>WEP-128bits: <#WLANConfig11b_WEPKey_itemtype2#>",
-							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
-							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
-							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
-							 '<div><#qis_wireless_help1#></div><br/><img src="/images/qis/select_wireless.jpg">',
-							 '<div><#qis_wireless_help2#></div><br/><img width="350px" src="/images/qis/security_key.png">',
-							 "<#WLANConfig11n_automode_limition_hint#>"
-							 );
-helpcontent[1] = new Array("",
-						   "<#WLANConfig11b_x_APMode_itemdesc#>",
-						   "<#WLANConfig11b_Channel_itemdesc#>",
-						   "<#WLANConfig11b_x_BRApply_itemdesc#>");
-helpcontent[2] = new Array("",
-						   "<#WLANAuthentication11a_ExAuthDBIPAddr_itemdesc#>",
-						   "<#WLANAuthentication11a_ExAuthDBPortNumber_itemdesc#>",
-						   "<#WLANAuthentication11a_ExAuthDBPassword_itemdesc#>");
-helpcontent[3] = new Array("",
-						   "<#WLANConfig11b_x_RadioEnable_itemdesc#>",
-						   "<#WLANConfig11b_x_RadioEnableDate_itemdesc#><p><a href='/Main_LogStatus_Content.asp' target='_blank'><#General_x_SystemTime_itemname#><#btn_go#></a></p>",
-						   "<#WLANConfig11b_x_RadioEnableTime_itemdesc#><p><a href='/Main_LogStatus_Content.asp' target='_blank'><#General_x_SystemTime_itemname#><#btn_go#></a></p>",						   
-						   "<#WLANConfig11b_x_AfterBurner_itemdesc#>",
-						   "<#WLANConfig11b_x_IsolateAP_itemdesc#>",
-						   "<#WLANConfig11b_DataRateAll_itemdesc#>",
-							 "<#WLANConfig11b_MultiRateAll_itemdesc#>",
-							 "<#WLANConfig11b_DataRate_itemdesc#>",
-						   "<#WLANConfig11b_x_Frag_itemdesc#>",
-						   "<#WLANConfig11b_x_RTS_itemdesc#>",
-						   "<#WLANConfig11b_x_DTIM_itemdesc#>",
-						   "<#WLANConfig11b_x_Beacon_itemdesc#>",
-						   "<#WLANConfig11b_x_TxBurst_itemdesc#>",
-						   "<#WLANConfig11b_x_WMM_itemdesc#>",
-						   "<#WLANConfig11b_x_NOACK_itemdesc#>",
-						   "<#WLANConfig11b_x_PktAggregate_itemdesc#>",
-						   "<#WLANConfig11b_x_APSD_itemdesc#>",
-						   "<#WLANConfig11b_x_DLS_itemdesc#>",
-						   "[n Only]: <#WLANConfig11b_x_HT_OpMode_itemdesc#>",
-						   "<#WLANConfig11n_PremblesType_itemdesc#>",	
-						   "Enabling this option will improve router performance in an environment where there is more interference, but it might reduce connection stability under some circumstances." //21
-						   //"<#WLANConfig11b_x_Xpress_itemdesc#>");
-						   );
-helpcontent[4] = new Array("",
-						   "<#LANHostConfig_IPRouters_itemdesc#>",
-						   "<#LANHostConfig_SubnetMask_itemdesc#>",
-						   "<#LANHostConfig_x_Gateway_itemdesc#>");
-helpcontent[5] = new Array("",
-							 "<#LANHostConfig_DHCPServerConfigurable_itemdesc#>",
-							 "<#LANHostConfig_DomainName_itemdesc#><#LANHostConfig_DomainName_itemdesc2#>",
-							 "<#LANHostConfig_MinAddress_itemdesc#>",
-							 "<#LANHostConfig_MaxAddress_itemdesc#>",
-							 "<#LANHostConfig_LeaseTime_itemdesc#>",
-							 "<#LANHostConfig_x_LGateway_itemdesc#>",
-							 "<#LANHostConfig_x_LDNSServer1_itemdesc#>",
-							 "<#LANHostConfig_x_WINSServer_itemdesc#>",
-							 "<#LANHostConfig_ManualDHCPEnable_itemdesc#>",
-							 "<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>",
-							 "<#LANHostConfig_ManualDHCPMulticast_itemdesc#>",
-							 "<#LANHostConfig_ManualDHCPSTB_itemdesc#>",
-							 "<#LANHostConfig_x_DDNSHostNames_itemdesc#>");
-helpcontent[6] = new Array("",
-						   "<#RHELP_desc4#>",
-						   "<#RHELP_desc5#>",
-						   "<#RHELP_desc6#>",
-						   "<#RHELP_desc7#>",
-						   "<#RHELP_desc8#>",
-						   "<#RHELP_desc9#>",
-						   "<#RouterConfig_GWMulticast_Multicast_all_itemdesc#>");
-//WAN
-helpcontent[7] = new Array("",
-							 "<#IPConnection_ExternalIPAddress_itemdesc#>",
-							 "<#IPConnection_x_ExternalSubnetMask_itemdesc#>",
-							 "<#IPConnection_x_ExternalGateway_itemdesc#>",
-							 "<#PPPConnection_UserName_itemdesc#>",
-							 "<#PPPConnection_Password_itemdesc#>",
-							 "<#PPPConnection_IdleDisconnectTime_itemdesc#>",
-							 "<#PPPConnection_x_PPPoEMTU_itemdesc#>",
-							 "<#PPPConnection_x_PPPoEMRU_itemdesc#>",
-							 "<#PPPConnection_x_ServiceName_itemdesc#>",
-							 "<#PPPConnection_x_AccessConcentrator_itemdesc#>",
-							 "<#PPPConnection_x_PPPoERelay_itemdesc#>",
-							 "<#IPConnection_x_DNSServerEnable_itemdesc#>",
-							 "<#IPConnection_x_DNSServer1_itemdesc#>",
-							 "<#IPConnection_x_DNSServer2_itemdesc#>",
-							 "<#BOP_isp_host_desc#>",
-							 "<#PPPConnection_x_MacAddressForISP_itemdesc#>",
-							 "<#PPPConnection_x_PPTPOptions_itemdesc#>",
-							 "<#PPPConnection_x_AdditionalOptions_itemdesc#>",
-							 "<#BOP_isp_heart_desc#>",
-							 "<#IPConnection_BattleNet_itemdesc#>",
-							 "<#Layer3Forwarding_x_STB_itemdesc#>",
-							 "<#hwnat_desc#>",
-							 "<#IPConnection_UPnP_itemdesc#>",
-							 "<#IPConnection_PortRange_itemdesc#>",
-							 "<#IPConnection_LocalIP_itemdesc#>",
-							 "<#IPConnection_LocalPort_itemdesc#>",
-							 "<#qis_pppoe_help1#>",
-							 "<#isp_profile#>",
-							 "<#PPPConnection_Authentication_itemdesc#>");
-//Firewall
-helpcontent[8] = new Array("",
-						   "<#FirewallConfig_WanLanLog_itemdesc#>",
-						   "<#FirewallConfig_x_WanWebEnable_itemdesc#>",
-						   "<#FirewallConfig_x_WanWebPort_itemdesc#>",
-						   "<#FirewallConfig_x_WanLPREnable_itemdesc#>",
-						   "<#FirewallConfig_x_WanPingEnable_itemdesc#>",
-						   "<#FirewallConfig_FirewallEnable_itemdesc#>",
-						   "<#FirewallConfig_DoSEnable_itemdesc#>");
-helpcontent[9] = new Array("",
-						   "<#FirewallConfig_URLActiveDate_itemdesc#>",
-						   "<#FirewallConfig_URLActiveTime_itemdesc#>");
-helpcontent[10] = new Array("",
-							"<#FirewallConfig_LanWanActiveDate_itemdesc#>",
-							"<#FirewallConfig_LanWanActiveTime_itemdesc#>",
-							"<#FirewallConfig_LanWanDefaultAct_itemdesc#>",
-							"<#FirewallConfig_LanWanICMP_itemdesc#>",
-							"<#FirewallConfig_LanWanFirewallEnable_itemdesc#>");
-//Administration
-helpcontent[11] = new Array("",
-							"<#LANHostConfig_x_ServerLogEnable_itemdesc#>",
-							"<#LANHostConfig_x_TimeZone_itemdesc#>",
-							"<#LANHostConfig_x_NTPServer_itemdesc#>",
-							"<#LANHostConfig_x_Password_itemdesc#>");
-//Log
-helpcontent[12] = new Array("",
-							"<#General_x_SystemUpTime_itemdesc#>",
-							"<#PrinterStatus_x_PrinterModel_itemdesc#>",
-							"<#PrinterStatus_x_PrinterStatus_itemdesc#>",
-							"<#PrinterStatus_x_PrinterUser_itemdesc#>");
-//WPS
-helpcontent[13] = new Array("",
-							"<#WLANConfig11b_x_WPS_itemdesc#>",
-							"<#WLANConfig11b_x_WPSMode_itemdesc#>",
-							"<#WLANConfig11b_x_WPSPIN_itemdesc#>",
-							"<#WLANConfig11b_x_DevicePIN_itemdesc#>",
-							"<#WLANConfig11b_x_WPSband_itemdesc#>");
-//UPnP
-helpcontent[14] = new Array("",
-							"<#UPnPMediaServer_Help#>");
-//AiDisk Wizard
-helpcontent[15] = new Array("",
-							"", /*<#AiDisk_moreconfig#>*/
-							"<#AiDisk_Step1_help#><p><a href='../Advanced_AiDisk_ftp.asp' target='_parent' hidefocus='true'><#MoreConfig#></a></p><!--span style='color:red'><#AiDisk_Step1_help2#></span-->",
-							"<#AiDisk_Step2_help#>",
-							"<#AiDisk_Step3_help#>");
-//EzQoS
-helpcontent[16] = new Array("",
-							"<#EZQoSDesc1#><p><#EZQoSDesc2#> <a href='/QoS_EZQoS.asp'><#BM_title_User#></a></p>");
-//Others in the USB application
-helpcontent[17] = new Array("",
-							"<#JS_storageMLU#>",
-							"<#JS_storageright#>",
-							"<#Help_of_Workgroup#>",
-							"<#JS_basiconfig1#>",
-							"<#JS_basiconfig3#>",
-							"<#JS_basiconfig8#>",
-							"<#ShareNode_Seeding_itemdesc#>",
-							"<#ShareNode_MaxUpload_itemdesc#>",
-							"<#ShareNode_FTPLANG_itemdesc#>");
-// MAC filter
-helpcontent[18] = new Array("",
-							"<#FirewallConfig_MFMethod_itemdesc#>",
-							"<#Port_format#>",
-							"<#IP_format#>",
-							"<#Port_format#>",
-							"<#UserQoS_transferred_hint#>",
-							"<#source_ipmac#>");
-// Setting
-helpcontent[19] = new Array("",
-							"<#Setting_factorydefault_itemdesc#>",
-							"<#Setting_save_itemdesc#>",
-							"<#Setting_upload_itemdesc#>");
-// QoS
-helpcontent[20] = new Array("",
-							"<#BM_measured_uplink_speed_desc#>",
-							"<#BM_manual_uplink_speed_desc#>",
-							"<#min_bound_desc#>",
-							"<#max_bound_desc#>",
-							"<#bound_zero_desc#>");
-// HSDPA
-helpcontent[21] = new Array("",
-							"<#HSDPAConfig_hsdpa_mode_itemdesc#>",
-							"<#HSDPAConfig_pin_code_itemdesc#>",
-							"<#HSDPAConfig_private_apn_itemdesc#>",
-							"HSDPA<#PPPConnection_x_PPPoEMTU_itemdesc#>",
-							"HSDPA<#PPPConnection_x_PPPoEMRU_itemdesc#>",
-							"<#IPConnection_x_DNSServer1_itemdesc#>",
-							"<#IPConnection_x_DNSServer2_itemdesc#>",
-							"<#HSDPAConfig_isp_itemdesc#>",
-							"<#HSDPAConfig_country_itemdesc#>",
-							"<#HSDPAConfig_dialnum_itemdesc#>",
-							"<#HSDPAConfig_username_itemdesc#>",
-							"<#HSDPAConfig_password_itemdesc#>",
-							"<#HSDPAConfig_usbadaptor_itemdesc#>");
-							
-helpcontent[22] = new Array("",
-							"<#OP_GW_desc#>",
-							"<#OP_GW_desc#>",
-							"<#OP_AP_desc#>");
-// title
-helpcontent[23] = new Array("",
-							"",
-							"",
-							"<#statusTitle_Internet#>",
-							"<#statusTitle_USB_Disk#>",
-							"<#statusTitle_Printer#>");
-
 var clicked_help_string = "<#Help_init_word1#> <a class=\"hintstyle\" style=\"background-color:#7aa3bd\"><#Help_init_word2#></a> <#Help_init_word3#>";
+
+// init Helper
+function addNewScript_help(scriptName){
+	var script = document.createElement("script");
+	script.type = "text/javascript";
+	script.src = scriptName;
+	document.getElementsByTagName("head")[0].appendChild(script);
+}
+function isMobile_help(){
+	if(screen.width < 640 || screen.height < 640){
+		return true;
+	}
+	else{
+		var mobiles = new Array(
+									"midp", "j2me", "avant", "docomo", "novarra", "palmos", "palmsource",
+									"240x320", "opwv", "chtml", "pda", "windows ce", "mmp/",
+									"blackberry", "mib/", "symbian", "wireless", "nokia", "hand", "mobi",
+									"phone", "cdm", "up.b", "audio", "sie-", "sec-", "samsung", "htc",
+									"mot-", "mitsu", "sagem", "sony", "alcatel", "lg", "eric", "vx",
+									"NEC", "philips", "mmm", "xx", "panasonic", "sharp", "wap", "sch",
+									"rover", "pocket", "benq", "java", "pt", "pg", "vox", "amoi",
+									"bird", "compal", "kg", "voda", "sany", "kdd", "dbt", "sendo",
+									"sgh", "gradi", "jb", "dddi", "moto", "iphone", "android",
+									"iPod", "incognito", "webmate", "dream", "cupcake", "webos",
+									"s8000", "bada", "googlebot-mobile");
+	
+	 	var ua = navigator.userAgent.toLowerCase();
+		var _isMobile = false;
+		
+		for(var i = 0; i < mobiles.length; i++){
+			if(ua.indexOf(mobiles[i]) > 0){
+				_isMobile = true;
+				break;
+			}
+		}	
+		return _isMobile;
+	}
+}
+
+var helptitle = new Array();
+var helpcontent = new Array();
+if(!isMobile_help())
+	setTimeout("addNewScript_help('/help_content.js');", 2000);
 
 function suspendconn(wanenable){
 	document.internetForm_title.wan_enable.value = wanenable;
@@ -618,7 +251,7 @@ function overHint(itemNum){
 				else
 					statusmenu = "<span class='StatusHint'><#web_redirect_reason2_2#></span>";
 			}
-			else if(sw_mode == 2){
+			else if(sw_mode == 2 || sw_mode == 4){
 				if(_wlc_state == "wlc_state=2")
 					statusmenu = "<span class='StatusHint'><#APSurvey_msg_connected#></span>";
 				else{
@@ -633,7 +266,7 @@ function overHint(itemNum){
 
 	// usb storage
 	if(itemNum == 2){
-		var dmStatus = "Not installed";
+		var dmStatus = "<#download_nonInstall#>";
 		if(nodm_support != -1){
 			var dmStatus = "Not support.";
 		}
@@ -648,8 +281,8 @@ function overHint(itemNum){
 		}
 		else{
 			statusmenu = "<div class='StatusHint'>Download Master:</div>";				
-			if(getCookie_help("dm_install") == null || getCookie_help("dm_enable") == null)
-				dmStatus = "Please check USB Application";
+			if(getCookie_help("dm_install") == null || getCookie_help("dm_enable") == null || getCookie_help("hwaddr") != '<% nvram_get("et0macaddr"); %>')
+				dmStatus = "<#USB_Application_check#>";
 			else if(getCookie_help("dm_install") == "yes" && getCookie_help("dm_enable") == "yes"){
 				//dmStatus = "Enabled";
 				if(pool_devices() != ""){ //  avoid no disk error
@@ -669,7 +302,7 @@ function overHint(itemNum){
 				}
 			}
 			else if(getCookie_help("dm_install") == "no"){
-				dmStatus = "Not installed";		
+				dmStatus = "<#download_nonInstall#>";		
 				if(nodm_support != -1){
 					dmStatus = "Not support.";
 				}
@@ -727,11 +360,12 @@ function openHint(hint_array_id, hint_show_id, flag){
 				}
 			}
 			else if(sw_mode == 2){
-				if(psta_support == -1)
-					statusmenu = "<span class='StatusClickHint' onclick='top.location.href=\"http://www.asusnetwork.net/QIS_wizard.htm?flag=sitesurvey\";' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#APSurvey_action_search_again_hint2#></span>";
-				else
-					statusmenu = "<span class='StatusClickHint' onclick='top.location.href=\"/QIS_wizard.htm?flag=sitesurvey\";' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#APSurvey_action_search_again_hint2#></span>";
+				statusmenu = "<span class='StatusClickHint' onclick='top.location.href=\"http://router.asus.com/QIS_wizard.htm?flag=sitesurvey\";' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#APSurvey_action_search_again_hint2#></span>";
 			}
+			else if(sw_mode == 4){
+				statusmenu = "<span class='StatusClickHint' onclick='top.location.href=\"/QIS_wizard.htm?flag=sitesurvey\";' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#APSurvey_action_search_again_hint2#></span>";
+			}
+
 			_caption = "Internet Status";
 		}
 		else if(hint_show_id == 2){
@@ -778,10 +412,16 @@ function openHint(hint_array_id, hint_show_id, flag){
 	for (var i=0;i<tag_name.length;i++)
 		tag_name[i].onmouseout=nd;
 	
-	if(hint_array_id == 0 && hint_show_id > 21)
+	if(hint_array_id == 0 && hint_show_id > 21) // for status icon
 		return overlib(helpcontent[hint_array_id][hint_show_id], FIXX, 270, FIXY, 30);
-	else
-		return overlib(helpcontent[hint_array_id][hint_show_id], HAUTO, VAUTO);
+	else if(helpcontent == [] || helpcontent == "" || hint_array_id > helpcontent.length)
+		return overlib(Untranslated.defaultHint, HAUTO, VAUTO);
+	else{
+		if(hint_show_id > helpcontent[hint_array_id].length)
+			return overlib(Untranslated.defaultHint, HAUTO, VAUTO);
+		else
+			return overlib(helpcontent[hint_array_id][hint_show_id], HAUTO, VAUTO);
+	}
 }
 
 //\/////

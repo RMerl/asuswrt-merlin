@@ -1,0 +1,125 @@
+
+IFB is intended to replace IMQ.
+Advantage over current IMQ; cleaner in particular in in SMP;
+with a _lot_ less code.
+
+Known IMQ/IFB USES
+------------------
+
+As far as i know the reasons listed below is why people use IMQ. 
+It would be nice to know of anything else that i missed.
+
+1) qdiscs/policies that are per device as opposed to system wide.
+IFB allows for sharing.
+
+2) Allows for queueing incoming traffic for shaping instead of
+dropping. I am not aware of any study that shows policing is 
+worse than shaping in achieving the end goal of rate control.
+I would be interested if anyone is experimenting.
+
+3) Very interesting use: if you are serving p2p you may wanna give 
+preference to your own localy originated traffic (when responses come back)
+vs someone using your system to do bittorent. So QoSing based on state
+comes in as the solution. What people did to achive this was stick
+the IMQ somewhere prelocal hook.
+I think this is a pretty neat feature to have in Linux in general.
+(i.e not just for IMQ).
+But i wont go back to putting netfilter hooks in the device to satisfy
+this.  I also dont think its worth it hacking ifb some more to be 
+aware of say L3 info and play ip rule tricks to achieve this.
+--> Instead the plan is to have a contrack related action. This action will
+selectively either query/create contrack state on incoming packets. 
+Packets could then be redirected to ifb based on what happens -> eg 
+on incoming packets; if we find they are of known state we could send to 
+a different queue than one which didnt have existing state. This
+all however is dependent on whatever rules the admin enters.
+
+At the moment this 3rd function does not exist yet. I have decided that
+instead of sitting on the patch for another year, to release it and then 
+if theres pressure i will add this feature.
+
+An example, to provide functionality that most people use IMQ for below:
+
+--------
+export TC="/sbin/tc"
+
+$TC qdisc add dev ifb0 root handle 1: prio 
+$TC qdisc add dev ifb0 parent 1:1 handle 10: sfq
+$TC qdisc add dev ifb0 parent 1:2 handle 20: tbf rate 20kbit buffer 1600 limit 3000
+$TC qdisc add dev ifb0 parent 1:3 handle 30: sfq                                
+$TC filter add dev ifb0 protocol ip pref 1 parent 1: handle 1 fw classid 1:1
+$TC filter add dev ifb0 protocol ip pref 2 parent 1: handle 2 fw classid 1:2
+
+ifconfig ifb0 up
+
+$TC qdisc add dev eth0 ingress
+
+# redirect all IP packets arriving in eth0 to ifb0 
+# use mark 1 --> puts them onto class 1:1
+$TC filter add dev eth0 parent ffff: protocol ip prio 10 u32 \
+match u32 0 0 flowid 1:1 \
+action ipt -j MARK --set-mark 1 \
+action mirred egress redirect dev ifb0
+
+--------
+
+
+Run A Little test:
+
+from another machine ping so that you have packets going into the box:
+-----
+[root@jzny action-tests]# ping 10.22
+PING 10.22 (10.0.0.22): 56 data bytes
+64 bytes from 10.0.0.22: icmp_seq=0 ttl=64 time=2.8 ms
+64 bytes from 10.0.0.22: icmp_seq=1 ttl=64 time=0.6 ms
+64 bytes from 10.0.0.22: icmp_seq=2 ttl=64 time=0.6 ms
+
+--- 10.22 ping statistics ---
+3 packets transmitted, 3 packets received, 0% packet loss
+round-trip min/avg/max = 0.6/1.3/2.8 ms
+[root@jzny action-tests]# 
+-----
+Now look at some stats:
+
+---
+[root@jmandrake]:~# $TC -s filter show parent ffff: dev eth0
+filter protocol ip pref 10 u32 
+filter protocol ip pref 10 u32 fh 800: ht divisor 1 
+filter protocol ip pref 10 u32 fh 800::800 order 2048 key ht 800 bkt 0 flowid 1:1 
+  match 00000000/00000000 at 0
+        action order 1: tablename: mangle  hook: NF_IP_PRE_ROUTING 
+        target MARK set 0x1  
+        index 1 ref 1 bind 1 installed 4195sec  used 27sec 
+         Sent 252 bytes 3 pkts (dropped 0, overlimits 0) 
+
+        action order 2: mirred (Egress Redirect to device ifb0) stolen
+        index 1 ref 1 bind 1 installed 165 sec used 27 sec
+         Sent 252 bytes 3 pkts (dropped 0, overlimits 0) 
+
+[root@jmandrake]:~# $TC -s qdisc
+qdisc sfq 30: dev ifb0 limit 128p quantum 1514b 
+ Sent 0 bytes 0 pkts (dropped 0, overlimits 0) 
+qdisc tbf 20: dev ifb0 rate 20Kbit burst 1575b lat 2147.5s 
+ Sent 210 bytes 3 pkts (dropped 0, overlimits 0) 
+qdisc sfq 10: dev ifb0 limit 128p quantum 1514b 
+ Sent 294 bytes 3 pkts (dropped 0, overlimits 0) 
+qdisc prio 1: dev ifb0 bands 3 priomap  1 2 2 2 1 2 0 0 1 1 1 1 1 1 1 1
+ Sent 504 bytes 6 pkts (dropped 0, overlimits 0) 
+qdisc ingress ffff: dev eth0 ---------------- 
+ Sent 308 bytes 5 pkts (dropped 0, overlimits 0) 
+
+[root@jmandrake]:~# ifconfig ifb0
+ifb0    Link encap:Ethernet  HWaddr 00:00:00:00:00:00  
+          inet6 addr: fe80::200:ff:fe00:0/64 Scope:Link
+          UP BROADCAST RUNNING NOARP  MTU:1500  Metric:1
+          RX packets:6 errors:0 dropped:3 overruns:0 frame:0
+          TX packets:3 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:32 
+          RX bytes:504 (504.0 b)  TX bytes:252 (252.0 b)
+-----
+
+You send it any packet not originating from the actions it will drop them.
+[In this case the three dropped packets were ipv6 ndisc].
+
+cheers,
+jamal

@@ -644,7 +644,7 @@ efi_partition(struct parsed_partitions *state, struct block_device *bdev)
 		if (!is_pte_valid(&ptes[i], last_lba(bdev)))
 			continue;
 
-		put_partition(state, i+1, start * ssz, size * ssz);
+		put_partition(state, i+1, start * n, size * n);
 
 		/* If this is a RAID volume, tell md */
 		if (!efi_guidcmp(ptes[i].partition_type_guid,

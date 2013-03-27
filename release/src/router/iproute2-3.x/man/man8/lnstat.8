@@ -1,0 +1,75 @@
+.TH LNSTAT 8
+.SH NAME
+lnstat \- unified linux network statistics
+.SH SYNOPSIS
+.B lnstat
+.RI [ options ]
+.SH DESCRIPTION
+This manual page documents briefly the
+.B lnstat
+command.
+.PP
+\fBlnstat\fP is a generalized and more feature-complete replacement for the old rtstat program.
+In addition to routing cache statistics, it supports any kind of statistics the linux kernel
+exports via a file in /proc/net/stat/.
+.SH OPTIONS
+These programs follow the usual GNU command line syntax, with long
+options starting with two dashes (`-').
+lnstat supports the following options.
+.TP
+.B \-h, \-\-help
+Show summary of options.
+.TP
+.B \-V, \-\-version
+Show version of program.
+.TP
+.B \-c, \-\-count <count>
+Print <count> number of intervals.
+.TP
+.B \-d, \-\-dump
+Dump list of available files/keys.
+.TP
+.B \-f, \-\-file <file>
+Statistics file to use.
+.TP
+.B \-i, \-\-interval <intv>
+Set interval to 'intv' seconds.
+.TP
+.B \-k, \-\-keys k,k,k,...
+Display only keys specified.
+.TP
+.B \-s, \-\-subject [0-2]
+Specify display of subject/header. '0' means no header at all, '1' prints a header only at start of the program and '2' prints a header every 20 lines.
+.TP
+.B \-w, \-\-width n,n,n,...
+Width for each field.
+.SH USAGE EXAMPLES
+.TP
+.B # lnstat -d
+Get a list of supported statistics files.
+.TP
+.B # lnstat -k arp_cache:entries,rt_cache:in_hit,arp_cache:destroys
+Select the specified files and keys.
+.TP
+.B # lnstat -i 10
+Use an interval of 10 seconds.
+.TP
+.B # lnstat -f ip_conntrack
+Use only the specified file for statistics.
+.TP
+.B # lnstat -s 0
+Do not print a header at all.
+.TP
+.B # lnstat -s 20
+Print a header at start and every 20 lines.
+.TP
+.B # lnstat -c -1 -i 1 -f rt_cache -k entries,in_hit,in_slow_tot
+Display statistics for keys entries, in_hit and in_slow_tot of field rt_cache every second.
+.SH SEE ALSO
+.BR ip (8),
+and /usr/share/doc/iproute-doc/README.lnstat (package iproute-doc on Debian)
+.br
+.SH AUTHOR
+lnstat was written by Harald Welte <laforge@gnumonks.org>.
+.PP
+This manual page was written by Michael Prokop <mika@grml.org> for the Debian project (but may be used by others).

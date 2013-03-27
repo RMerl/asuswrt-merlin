@@ -1,0 +1,23 @@
+# m32r testcase for cmp $src1,$src2
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global cmp
+cmp:
+	mvi_h_condbit 0
+	mvi_h_gr r4, 1
+	mvi_h_gr r5, 2
+	cmp r4, r5
+	bc ok
+not_ok:
+	fail
+ok:
+	mvi_h_condbit 1
+	mvi_h_gr r4, 2
+	cmp r4, r5
+	bc not_ok
+
+	pass

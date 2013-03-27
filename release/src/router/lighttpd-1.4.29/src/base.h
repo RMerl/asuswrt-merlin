@@ -588,8 +588,9 @@ typedef struct {
 #ifdef HAVE_LIBSMBCLIENT
 	buffer* share_link_basic_auth;
 	buffer* share_link_shortpath;
+	buffer* share_link_realpath;
 	buffer* share_link_filename;
-	int 	is_share_link;
+	int     share_link_type;
 	buffer* physical_auth_url;
 	physical url; //- start with smb://	 or http://
 	buffer* url_options;
@@ -820,7 +821,7 @@ typedef struct server {
 
 	//- Jerry add
 	smb_info_t *smb_srv_info_list;
-	smb_info_t *aidisk_info_list;
+	//smb_info_t *aidisk_info_list;
 	int syslog_fd;
 	buffer *syslog_buf;
 	buffer *cur_login_info;

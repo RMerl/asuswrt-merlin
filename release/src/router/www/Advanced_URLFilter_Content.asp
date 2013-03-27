@@ -84,7 +84,7 @@ function addRow(obj, upper){
 				//Viz check same rule
 				for(i=0; i<rule_num; i++){
 						for(j=0; j<item_num-1; j++){		//only 1 value column
-								if(obj.value == $('url_rulelist_table').rows[i].cells[j].innerHTML){
+								if(obj.value.toLowerCase() == $('url_rulelist_table').rows[i].cells[j].innerHTML.toLowerCase()){
 										alert("<#JS_duplicate#>");
 										return false;
 								}	
@@ -120,7 +120,7 @@ function applyRule(){
 			tmp_value = "";	
 		document.form.url_rulelist.value = tmp_value;
 
-		updateDateTime(document.form.current_page.value);
+		updateDateTime();
 
 		if(document.form.url_enable_x[0].checked == true && document.form.url_enable_x_orig.value != 1 ||
 				document.form.url_enable_x[1].checked == true && document.form.url_enable_x_orig.value != 0)
@@ -163,6 +163,27 @@ function enable_url_1(){
 
 function done_validating(action){
 	refreshpage();
+}
+
+function updateDateTime(){
+	document.form.url_date_x.value = setDateCheck(
+		document.form.url_date_x_Sun,
+		document.form.url_date_x_Mon,
+		document.form.url_date_x_Tue,
+		document.form.url_date_x_Wed,
+		document.form.url_date_x_Thu,
+		document.form.url_date_x_Fri,
+		document.form.url_date_x_Sat);
+	document.form.url_time_x.value = setTimeRange(
+		document.form.url_time_x_starthour,
+		document.form.url_time_x_startmin,
+		document.form.url_time_x_endhour,
+		document.form.url_time_x_endmin);
+	document.form.url_time_x_1.value = setTimeRange(
+		document.form.url_time_x_starthour_1,
+		document.form.url_time_x_startmin_1,
+		document.form.url_time_x_endhour_1,
+		document.form.url_time_x_endmin_1);
 }
 </script>
 </head>

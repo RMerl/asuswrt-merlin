@@ -1,0 +1,22 @@
+# sh testcase for lds $rn, fpscr -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global lds_fpscr
+lds_fpscr:
+	mov #0, r0
+	lds r0, fpscr
+readback:
+	sts fpscr, r1
+	cmp/eq r0, r1
+	bf wrong
+
+okay:
+	pass
+wrong:
+	fail

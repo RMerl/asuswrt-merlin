@@ -830,12 +830,11 @@ char *processPacket(int sockfd, char *pdubuf)
 			if (nvram_get_int("sw_mode") == SW_MODE_REPEATER)
 			{
 				snprintf(prefix, sizeof(prefix), "wl%d.1_", nvram_get_int("wlc_band"));
-				strcpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
+				strncpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)), 32);
 			}
 			else
 #endif
-			strcpy(ssid_g, nvram_safe_get("wl0_ssid"));
-		     strcpy(productid_g, get_productid());
+		     strncpy(ssid_g, nvram_safe_get("wl0_ssid"), 32);
 		     strcpy(ginfo->SSID, ssid_g);
 		     strcpy(ginfo->NetMask, get_lan_netmask());
 		     strcpy(ginfo->ProductID, productid_g);	// disable for tmp
@@ -890,12 +889,11 @@ char *processPacket(int sockfd, char *pdubuf)
 			if (nvram_get_int("sw_mode") == SW_MODE_REPEATER)
 			{
 				snprintf(prefix, sizeof(prefix), "wl%d.1_", nvram_get_int("wlc_band"));
-				strcpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
+				strncpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)), 32);
 			}
 			else
 #endif
-			strcpy(ssid_g, nvram_safe_get("wl0_ssid"));
-		     strcpy(productid_g, get_productid());
+		     strncpy(ssid_g, nvram_safe_get("wl0_ssid"), 32);
    		     strcpy(ginfo->SSID, ssid_g);
 		     strcpy(ginfo->NetMask, get_lan_netmask());
 		     strcpy(ginfo->ProductID, productid_g);	// disable for tmp

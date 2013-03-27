@@ -1,0 +1,20 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>ne_token</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="ref.html" title="neon API reference"><link rel="prev" href="refstatus.html" title="ne_status"><link rel="next" href="refvers.html" title="ne_version_match"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">ne_token</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="refstatus.html">Prev</a> </td><th width="60%" align="center">neon API reference</th><td width="20%" align="right"> <a accesskey="n" href="refvers.html">Next</a></td></tr></table><hr></div><div class="refentry" title="ne_token"><a name="reftok"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ne_token, ne_qtoken — string tokenizers</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="funcsynopsis"><pre class="funcsynopsisinfo">#include &lt;ne_string.h&gt;</pre><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">char *<b class="fsfunc">ne_token</b>(</code></td><td>char **<var class="pdparam">str</var>, </td></tr><tr><td> </td><td>char <var class="pdparam">sep</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">char *<b class="fsfunc">ne_qtoken</b>(</code></td><td>char **<var class="pdparam">str</var>, </td></tr><tr><td> </td><td>char <var class="pdparam">sep</var>, </td></tr><tr><td> </td><td>const char *<var class="pdparam">quotes</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div></div></div><div class="refsect1" title="Description"><a name="id464512"></a><h2>Description</h2><p><code class="function">ne_token</code> and
+<code class="function">ne_qtoken</code> tokenize the string at the location
+stored in the pointer <code class="parameter">str</code>.  Each time the
+function is called, it returns the next token, and modifies the
+<code class="parameter">str</code> pointer to point to the remainer of the
+string, or <code class="literal">NULL</code> if there are no more tokens in the string.  A token
+is delimited by the separator character <code class="parameter">sep</code>; if
+<code class="function">ne_qtoken</code> is used any quoted segments of the
+string are skipped when searching for a separator.  A quoted segment
+is enclosed in a pair of one of the characters given in the
+<code class="parameter">quotes</code> string.</p><p>The string being tokenized is modified each time
+the tokenizing function is called; replacing the next separator
+character with a <code class="literal">NUL</code> terminator.</p></div><div class="refsect1" title="Examples"><a name="id464578"></a><h2>Examples</h2><p>The following function prints out each token in a
+comma-separated string <code class="parameter">list</code>, which is
+modified in-place:</p><pre class="programlisting">static void splitter(char *list)
+{
+  do {
+    printf("Token: %s\n", ne_token(&amp;list, ','));
+  while (list);
+}</pre></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="refstatus.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ref.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="refvers.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">ne_status </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> ne_version_match</td></tr></table></div></body></html>

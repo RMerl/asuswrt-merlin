@@ -1,7 +1,7 @@
 /*
  * WPS environment variables
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: wps_ui.h 276844 2011-08-11 14:04:11Z $
+ * $Id: wps_ui.h 381832 2013-01-30 02:35:37Z $
  */
 
 #ifndef __WPS_UI_H__
@@ -63,6 +63,7 @@ int wps_ui_process_msg(char *buf, int buflen);
 #ifdef WPS_ADDCLIENT_WWTP
 int wps_ui_is_SET_cmd(char *buf, int buflen);
 void wps_ui_close_addclient_window();
+void wps_ui_wer_override_active(bool active);
 #endif
 
 #endif	/* __WPS_UI_H__ */

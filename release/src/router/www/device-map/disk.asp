@@ -51,15 +51,22 @@ var apps_dev = "<% nvram_get("apps_dev"); %>";
 var dummyShareway = '<% nvram_get("dummyShareway"); %>';
 
 function initial(){
+	$("t0").className = "tabclick_NW";
+	$("t1").className = "tab_NW";
 	flash_button();
 	showtext($("disk_model_name"), parent.getDiskModelName(diskOrder));
 	showtext($("disk_total_size"), parent.getDiskTotalSize(diskOrder));
 
-	if(parent.media_support == -1)
+	if(!parent.media_support)
 		$("mediaserver_hyperlink").style.display = "none";
 	
 	if(WebDav_support == -1)
 		$("clouddiskstr").style.display = "none";
+
+	// Hide disk utility temporarily.
+	if(parent.diskUtility_support){
+		$("diskTab").style.display = "";
+	}
 
 	if(mountedNum > 0){
 		showtext($("disk_total_size"), all_total_size+" GB");		
@@ -177,7 +184,14 @@ function gotoAidisk(){
 }
 
 function gotoDM(){
-	parent.location.href = "http://" + location.host + ":8081";
+	var dm_http_port = '<% nvram_get("dm_http_port"); %>';
+	if(dm_http_port == "")
+		dm_http_port = "8081";
+
+	if(parent.location.host.split(":").length > 1)
+		parent.location.href = "http://" + parent.location.host.split(":")[0] + ":" + dm_http_port;
+	else
+		parent.location.href = "http://" + parent.location.host + ":" + dm_http_port;
 }
 
 function remove_disk(){
@@ -221,7 +235,25 @@ function DMhint(){
 </head>
 
 <body class="statusbody" onload="initial();">
-<table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="table1px">
+<table>
+	<tr>
+	<td>		
+		<table id="diskTab" width="100px" border="0" align="left" style="margin-left:5px;display:none;" cellpadding="0" cellspacing="0">
+  		<td>
+				<div id="t0" class="tabclick_NW" align="center" style="font-weight: bolder;margin-right:2px; width:100px;" onclick="">
+					<span id="span1" style="cursor:pointer;font-weight: bolder;">Information</span>
+				</div>
+			</td>
+  		<td>
+				<div id="t1" class="tab_NW" align="center" style="font-weight: bolder;margin-right:2px; width:100px;" onclick="location.href='disk_utility.asp'">
+					<span id="span1" style="cursor:pointer;font-weight: bolder;">Disk Utility</span>
+				</div>
+			</td>
+		</table>
+	</td>
+</tr>
+</table>
+<table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="table1px" style="margin-top:-3px;">
 	<tr>
     <td style="padding:5px 10px 0px 15px;">
     	<p class="formfonttitle_nwm"><#Modelname#>:</p>

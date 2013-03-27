@@ -1,0 +1,102 @@
+
+		.../lsof_<version>/tests
+
+This sub-directory contains support for lsof's test suite.  Find
+more information about the test suite in the 00TESTS file of the
+lsof distribution, which should be in in the parent of this
+subdirectory.
+
+These tests can be activated from .. with:
+
+    $ make test
+
+They can be activated from this directory with:
+
+    $ make
+    $ make test
+    $ make all
+
+These tests are all written in C, so individual tests may be
+activated by executing them directly -- e.g.,
+
+    $ ./LTlock
+
+It may sometimes be necessary to use execution-time options
+alter test behavior.  (Some tests will suggest that when they
+encounter certain kinds of errors.)  See the 00FAQ and 00TEST files
+in .. for more information.
+
+These tests check lsof field output, not lsof text output.  There
+are no tests for lsof text output.
+
+Here is a brief description of the files in this subdirectory:
+
+    00README		this file
+
+    Add2TestDB          a script to add the identity of the current
+			test to TestDB
+
+    CkTestDB		a script to check the identity of this
+			dialect against the TestDB file
+
+    config.cc           a file prepared by ../Configure that contains
+			the name (and possibly the path) to the C
+			compiler for the programs of this sub-directory
+
+    config.cflags       a file prepared by ../Configure that contains
+			C compiler flags for the programs of this
+			sub-directory
+
+    config.libs		a file prepared by ../Configure that contains
+			library load specifications -- i.e, make(1)
+			LDFLAGS
+
+    config.xobj         a file prepared by ../Configure that contains
+			paths to any extra object files (*.o) needed
+			by the C programs in this directory
+
+    LsofTest.h		lsof test definitions for C programs
+
+    LTbasic.c		C source to basic lsof tests
+
+    LTbigf.c		C source to a program that tests large file
+			sizes and offsets on dialects that support
+			file sizes > 32 bits
+
+    LTdnlc.c            C source to a program that tests the
+			effectiveness of assembling path names from
+			the kernel's Dynamic Name Lookup Cache
+			(DNLC)
+
+    LTlib.c		a support library in C
+
+    LTlock.c		C source to a program that tests lock reporting
+
+    LTnfs		C source to a program that tests for open NFS
+			files
+
+    LTnlink.c           C source to a program that tests lsof's
+			reporting of open file link counts
+
+    LTsock.c            C source to program that tests the finding
+			of IPv4 sockets
+
+    LTszoff.c           C source to a program that tests file sizes
+			and offsets  -- see LTbigf.c for a large
+			file (size > 32 bits) test
+
+    LTunix.c		C source to a program that tests the finding
+			of UNIX domain sockets
+
+    Makefile		the make(1) control file
+
+			The Makefile clean rule will not remove
+			config.* files, but the spotless rule will.
+			One the spotless rule has been used,
+			../Configure must be re-run.
+
+    TestDB              a data base of dialects where the test
+			suite has been validated
+
+Vic Abell
+April 11, 2002

@@ -1,0 +1,225 @@
+# frv testcase for nfdadds $FRi,$FRj,$FRk
+# mach: fr500 fr550 frv
+
+	.include "testutils.inc"
+
+	float_constants
+	start
+	load_float_constants
+	load_float_constants1
+
+	.global nfdadds
+nfdadds:
+	nfdadds      	fr16,fr0,fr2
+	test_fr_fr	fr2,fr0
+	test_fr_fr	fr3,fr0
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr16,fr4,fr2
+	test_fr_fr	fr2,fr4
+	test_fr_fr	fr3,fr4
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr16,fr8,fr2
+	test_fr_fr	fr2,fr8
+	test_fr_fr	fr3,fr8
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr16,fr12,fr2
+	test_fr_fr	fr2,fr12
+	test_fr_fr	fr3,fr12
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr16,fr16,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr16
+	test_fr_fr	fr3,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr16,fr20,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr16
+	test_fr_fr	fr3,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr16,fr24,fr2
+	test_fr_fr	fr2,fr24
+	test_fr_fr	fr3,fr24
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr16,fr28,fr2
+	test_fr_fr	fr2,fr28
+	test_fr_fr	fr3,fr28
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr16,fr32,fr2
+	test_fr_fr	fr2,fr32
+	test_fr_fr	fr3,fr32
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr16,fr36,fr2
+	test_fr_fr	fr2,fr36
+	test_fr_fr	fr3,fr36
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr16,fr40,fr2
+	test_fr_fr	fr2,fr40
+	test_fr_fr	fr3,fr40
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr16,fr44,fr2
+	test_fr_fr	fr2,fr44
+	test_fr_fr	fr3,fr44
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr16,fr48,fr2
+	test_fr_fr	fr2,fr48
+	test_fr_fr	fr3,fr48
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr16,fr52,fr2
+	test_fr_fr	fr2,fr52
+	test_fr_fr	fr3,fr52
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfdadds      	fr20,fr0,fr2
+	test_fr_fr	fr2,fr0
+	test_fr_fr	fr3,fr0
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr20,fr4,fr2
+	test_fr_fr	fr2,fr4
+	test_fr_fr	fr3,fr4
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr20,fr8,fr2
+	test_fr_fr	fr2,fr8
+	test_fr_fr	fr3,fr8
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr20,fr12,fr2
+	test_fr_fr	fr2,fr12
+	test_fr_fr	fr3,fr12
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr20,fr16,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr16
+	test_fr_fr	fr3,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr20,fr20,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr16
+	test_fr_fr	fr3,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr20,fr24,fr2
+	test_fr_fr	fr2,fr24
+	test_fr_fr	fr3,fr24
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr20,fr28,fr2
+	test_fr_fr	fr2,fr28
+	test_fr_fr	fr3,fr28
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr20,fr32,fr2
+	test_fr_fr	fr2,fr32
+	test_fr_fr	fr3,fr32
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr20,fr36,fr2
+	test_fr_fr	fr2,fr36
+	test_fr_fr	fr3,fr36
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr20,fr40,fr2
+	test_fr_fr	fr2,fr40
+	test_fr_fr	fr3,fr40
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr20,fr44,fr2
+	test_fr_fr	fr2,fr44
+	test_fr_fr	fr3,fr44
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr20,fr48,fr2
+	test_fr_fr	fr2,fr48
+	test_fr_fr	fr3,fr48
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr20,fr52,fr2
+	test_fr_fr	fr2,fr52
+	test_fr_fr	fr3,fr52
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfdadds      	fr8,fr28,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr16
+	test_fr_fr	fr3,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr12,fr24,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr16
+	test_fr_fr	fr3,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr24,fr12,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr16
+	test_fr_fr	fr3,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfdadds      	fr28,fr8,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr16
+	test_fr_fr	fr3,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfdadds      	fr36,fr40,fr2
+	test_fr_fr	fr2,fr44
+	test_fr_fr	fr3,fr44
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	; try to cause exceptions
+	nfdadds      	fr48,fr28,fr2
+;	test_fr_fr	fr2,fr44
+;	test_fr_fr	fr3,fr44
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfdadds      	fr52,fr28,fr2
+;	test_fr_fr	fr2,fr44
+;	test_fr_fr	fr3,fr44
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfdadds      	fr56,fr28,fr2
+;	test_fr_fr	fr2,fr44
+;	test_fr_fr	fr3,fr44
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfdadds      	fr60,fr28,fr2
+;	test_fr_fr	fr2,fr44
+;	test_fr_fr	fr3,fr44
+	test_spr_immed	0xc,fner1
+	test_spr_immed	0,fner0
+
+	pass
+
+

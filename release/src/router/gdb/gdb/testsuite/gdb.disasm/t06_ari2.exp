@@ -1,0 +1,283 @@
+# Copyright (C) 2003, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Michael Snyder (msnyder@redhat.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+if ![istarget "h8300*-*-*"] {
+    verbose "Tests ignored for all but h8300s based targets."
+    return
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "t06_ari2"
+set srcfile ${srcdir}/${subdir}/${testfile}.s
+set objfile ${objdir}/${subdir}/${testfile}.o
+set binfile ${objdir}/${subdir}/${testfile}.x
+
+set asm-flags "";
+set link-flags "-m h8300sxelf";
+
+
+if {[target_assemble $srcfile $objfile "${asm-flags}"] != ""} then {
+     untested t06_ari2.exp
+     return -1
+}
+
+if {[target_link $objfile $binfile "${link-flags}"] != ""} then {
+     untested t06_ari2.exp
+     return -1
+}
+
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+
+gdb_test "x /i _start" "addx(.b|)\t#0x12(:8|),r1h" \
+	"addx.b #0x12:8,r1h"
+gdb_test "x" "addx(.b|)\t#0x12(:8|),@er1" \
+	"addx.b #0x12:8,@er1"
+gdb_test "x" "addx(.b|)\t#0x12(:8|),@er1-" \
+	"addx.b #0x12:8,@er1-"
+gdb_test "x" "addx(.b|)\tr3h,r1h" \
+	"addx.b r3h,r1h"
+gdb_test "x" "addx(.b|)\tr3h,@er1" \
+	"addx.b r3h,@er1"
+gdb_test "x" "addx(.b|)\tr3h,@er1-" \
+	"addx.b r3h,@er1-"
+gdb_test "x" "addx(.b|)\t@er3,r1h" \
+	"addx.b @er3,r1h"
+gdb_test "x" "addx(.b|)\t@er3,@er1" \
+	"addx.b @er3,@er1"
+gdb_test "x" "addx(.b|)\t@er3-,r1h" \
+	"addx.b @er3-,r1h"
+gdb_test "x" "addx(.b|)\t@er3-,@er1-" \
+	"addx.b @er3-,@er1-"
+gdb_test "x" "addx.w\t#0x1234(:16|),r1" \
+	"addx.w #0x1234:16,r1"
+gdb_test "x" "addx.w\t#0x1234(:16|),@er1" \
+	"addx.w #0x1234:16,@er1"
+gdb_test "x" "addx.w\t#0x1234(:16|),@er1-" \
+	"addx.w #0x1234:16,@er1-"
+gdb_test "x" "addx.w\tr3,r1" \
+	"addx.w r3,r1"
+gdb_test "x" "addx.w\tr3,@er1" \
+	"addx.w r3,@er1"
+gdb_test "x" "addx.w\tr3,@er1-" \
+	"addx.w r3,@er1-"
+gdb_test "x" "addx.w\t@er3,r1" \
+	"addx.w @er3,r1"
+gdb_test "x" "addx.w\t@er3,@er1" \
+	"addx.w @er3,@er1"
+gdb_test "x" "addx.w\t@er3-,r1" \
+	"addx.w @er3-,r1"
+gdb_test "x" "addx.w\t@er3-,@er1-" \
+	"addx.w @er3-,@er1-"
+gdb_test "x" "addx.l\t#0x12345678(:32|),er1" \
+	"addx.l #0x12345678:32,er1"
+gdb_test "x" "addx.l\t#0x12345678(:32|),@er1" \
+	"addx.l #0x12345678:32,@er1"
+gdb_test "x" "addx.l\t#0x12345678(:32|),@er1-" \
+	"addx.l #0x12345678:32,@er1-"
+gdb_test "x" "addx.l\ter3,er1" \
+	"addx.l er3,er1"
+gdb_test "x" "addx.l\ter3,@er1" \
+	"addx.l er3,@er1"
+gdb_test "x" "addx.l\ter3,@er1-" \
+	"addx.l er3,@er1-"
+gdb_test "x" "addx.l\t@er3,er1" \
+	"addx.l @er3,er1"
+gdb_test "x" "addx.l\t@er3,@er1" \
+	"addx.l @er3,@er1"
+gdb_test "x" "addx.l\t@er3-,er1" \
+	"addx.l @er3-,er1"
+gdb_test "x" "addx.l\t@er3-,@er1-" \
+	"addx.l @er3-,@er1-"
+gdb_test "x" "subx(.b|)\t#0x12(:8|),r1h" \
+	"subx.b #0x12:8,r1h"
+gdb_test "x" "subx(.b|)\t#0x12(:8|),@er1" \
+	"subx.b #0x12:8,@er1"
+gdb_test "x" "subx(.b|)\t#0x12(:8|),@er1-" \
+	"subx.b #0x12:8,@er1-"
+gdb_test "x" "subx(.b|)\tr3h,r1h" \
+	"subx.b r3h,r1h"
+gdb_test "x" "subx(.b|)\tr3h,@er1" \
+	"subx.b r3h,@er1"
+gdb_test "x" "subx(.b|)\tr3h,@er1-" \
+	"subx.b r3h,@er1-"
+gdb_test "x" "subx(.b|)\t@er3,r1h" \
+	"subx.b @er3,r1h"
+gdb_test "x" "subx(.b|)\t@er3,@er1" \
+	"subx.b @er3,@er1"
+gdb_test "x" "subx(.b|)\t@er3-,r1h" \
+	"subx.b @er3-,r1h"
+gdb_test "x" "subx(.b|)\t@er3-,@er1-" \
+	"subx.b @er3-,@er1-"
+gdb_test "x" "subx.w\t#0x1234(:16|),r1" \
+	"subx.w #0x1234:16,r1"
+gdb_test "x" "subx.w\t#0x1234(:16|),@er1" \
+	"subx.w #0x1234:16,@er1"
+gdb_test "x" "subx.w\t#0x1234(:16|),@er1-" \
+	"subx.w #0x1234:16,@er1-"
+gdb_test "x" "subx.w\tr3,r1" \
+	"subx.w r3,r1"
+gdb_test "x" "subx.w\tr3,@er1" \
+	"subx.w r3,@er1"
+gdb_test "x" "subx.w\tr3,@er1-" \
+	"subx.w r3,@er1-"
+gdb_test "x" "subx.w\t@er3,r1" \
+	"subx.w @er3,r1"
+gdb_test "x" "subx.w\t@er3,@er1" \
+	"subx.w @er3,@er1"
+gdb_test "x" "subx.w\t@er3-,r1" \
+	"subx.w @er3-,r1"
+gdb_test "x" "subx.w\t@er3-,@er1-" \
+	"subx.w @er3-,@er1-"
+gdb_test "x" "subx.l\t#0x12345678(:32|),er1" \
+	"subx.l #0x12345678:32,er1"
+gdb_test "x" "subx.l\t#0x12345678(:32|),@er1" \
+	"subx.l #0x12345678:32,@er1"
+gdb_test "x" "subx.l\t#0x12345678(:32|),@er1-" \
+	"subx.l #0x12345678:32,@er1-"
+gdb_test "x" "subx.l\ter3,er1" \
+	"subx.l er3,er1"
+gdb_test "x" "subx.l\ter3,@er1" \
+	"subx.l er3,@er1"
+gdb_test "x" "subx.l\ter3,@er1-" \
+	"subx.l er3,@er1-"
+gdb_test "x" "subx.l\t@er3,er1" \
+	"subx.l @er3,er1"
+gdb_test "x" "subx.l\t@er3,@er1" \
+	"subx.l @er3,@er1"
+gdb_test "x" "subx.l\t@er3-,er1" \
+	"subx.l @er3-,er1"
+gdb_test "x" "subx.l\t@er3-,@er1-" \
+	"subx.l @er3-,@er1-"
+gdb_test "x" "inc(.b|)\tr1h" \
+	"inc.b r1h"
+gdb_test "x" "inc(.w|)\t#1,r1" \
+	"inc.w #1,r1"
+gdb_test "x" "inc(.w|)\t#2,r1" \
+	"inc.w #2,r1"
+gdb_test "x" "inc(.l|)\t#1,er1" \
+	"inc.l #1,er1"
+gdb_test "x" "inc(.l|)\t#2,er1" \
+	"inc.l #2,er1"
+gdb_test "x" "dec(.b|)\tr1h" \
+	"dec.b r1h"
+gdb_test "x" "dec(.w|)\t#1,r1" \
+	"dec.w #1,r1"
+gdb_test "x" "dec(.w|)\t#2,r1" \
+	"dec.w #2,r1"
+gdb_test "x" "dec(.l|)\t#1,er1" \
+	"dec.l #1,er1"
+gdb_test "x" "dec(.l|)\t#2,er1" \
+	"dec.l #2,er1"
+gdb_test "x" "adds(.l|)\t#1,er1" \
+	"adds.l #1,er1"
+gdb_test "x" "adds(.l|)\t#2,er1" \
+	"adds.l #2,er1"
+gdb_test "x" "adds(.l|)\t#4,er1" \
+	"adds.l #4,er1"
+gdb_test "x" "subs(.l|)\t#1,er1" \
+	"subs.l #1,er1"
+gdb_test "x" "subs(.l|)\t#2,er1" \
+	"subs.l #2,er1"
+gdb_test "x" "subs(.l|)\t#4,er1" \
+	"subs.l #4,er1"
+gdb_test "x" "daa(.b|)\tr1h" \
+	"daa.b r1h"
+gdb_test "x" "das(.b|)\tr1h" \
+	"das.b r1h"
+gdb_test "x" "mulxu.b\t#0xf(:4|),r1" \
+	"mulxu.b #0xf:4,r1"
+gdb_test "x" "mulxu.b\tr3h,r1" \
+	"mulxu.b r3h,r1"
+gdb_test "x" "mulxu.w\t#0xf(:4|),er1" \
+	"mulxu.w #0xf:4,er1"
+gdb_test "x" "mulxu.w\tr3,er1" \
+	"mulxu.w r3,er1"
+gdb_test "x" "divxu.b\t#0xf(:4|),r1" \
+	"divxu.b #0xf:4,r1"
+gdb_test "x" "divxu.b\tr3h,r1" \
+	"divxu.b r3h,r1"
+gdb_test "x" "divxu.w\t#0xf(:4|),er1" \
+	"divxu.w #0xf:4,er1"
+gdb_test "x" "divxu.w\tr3,er1" \
+	"divxu.w r3,er1"
+gdb_test "x" "mulxs.b\t#0xf(:4|),r1" \
+	"mulxs.b #0xf:4,r1"
+gdb_test "x" "mulxs.b\tr3h,r1" \
+	"mulxs.b r3h,r1"
+gdb_test "x" "mulxs.w\t#0xf(:4|),er1" \
+	"mulxs.w #0xf:4,er1"
+gdb_test "x" "mulxs.w\tr3,er1" \
+	"mulxs.w r3,er1"
+gdb_test "x" "divxs.b\t#0xf(:4|),r1" \
+	"divxs.b #0xf:4,r1"
+gdb_test "x" "divxs.b\tr3h,r1" \
+	"divxs.b r3h,r1"
+gdb_test "x" "divxs.w\t#0xf(:4|),er1" \
+	"divxs.w #0xf:4,er1"
+gdb_test "x" "divxs.w\tr3,er1" \
+	"divxs.w r3,er1"
+gdb_test "x" "mulu.w\t#0xf(:4|),r1" \
+	"mulu.w #0xf:4,r1"
+gdb_test "x" "mulu.w\tr3,r1" \
+	"mulu.w r3,r1"
+gdb_test "x" "mulu.l\t#0xf(:4|),er1" \
+	"mulu.l #0xf:4,er1"
+gdb_test "x" "mulu.l\ter3,er1" \
+	"mulu.l er3,er1"
+gdb_test "x" "mulu/u.l\t#0xf(:4|),er1" \
+	"mulu/u.l #0xf:4,er1"
+gdb_test "x" "mulu/u.l\ter3,er1" \
+	"mulu/u.l er3,er1"
+gdb_test "x" "muls.w\t#0xf(:4|),r1" \
+	"muls.w #0xf:4,r1"
+gdb_test "x" "muls.w\tr3,r1" \
+	"muls.w r3,r1"
+gdb_test "x" "muls.l\t#0xf(:4|),er1" \
+	"muls.l #0xf:4,er1"
+gdb_test "x" "muls.l\ter3,er1" \
+	"muls.l er3,er1"
+gdb_test "x" "muls/u.l\t#0xf(:4|),er1" \
+	"muls/u.l #0xf:4,er1"
+gdb_test "x" "muls/u.l\ter3,er1" \
+	"muls/u.l er3,er1"
+gdb_test "x" "divu.w\t#0xf(:4|),r1" \
+	"divu.w #0xf:4,r1"
+gdb_test "x" "divu.w\tr3,r1" \
+	"divu.w r3,r1"
+gdb_test "x" "divu.l\t#0xf(:4|),er1" \
+	"divu.l #0xf:4,er1"
+gdb_test "x" "divu.l\ter3,er1" \
+	"divu.l er3,er1"
+gdb_test "x" "divs.w\t#0xf(:4|),r1" \
+	"divs.w #0xf:4,r1"
+gdb_test "x" "divs.w\tr3,r1" \
+	"divs.w r3,r1"
+gdb_test "x" "divs.l\t#0xf(:4|),er1" \
+	"divs.l #0xf:4,er1"
+gdb_test "x" "divs.l\ter3,er1" \
+	"divs.l er3,er1"

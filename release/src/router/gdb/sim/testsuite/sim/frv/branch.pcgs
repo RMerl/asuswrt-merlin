@@ -1,0 +1,63 @@
+# frv parallel testcase for branching
+# mach: fr500 fr550 frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global branch
+branch:	; All insns in VLIW execute
+	setlos.p	1,gr1
+	setlos		0,gr2
+	setlos.p	0,gr3
+	bra		ok1
+	setlos.p	2,gr2
+	setlos		3,gr3
+	fail
+ok1:
+	test_gr_immed  	1,gr1
+	test_gr_immed  	0,gr2
+	test_gr_immed  	0,gr3
+
+	; 1st branch is taken
+	bra.p		ok5
+	bra		ok4
+	bra.p		ok3
+	bra		ok2
+	fail
+ok2:
+	fail
+ok3:
+	fail
+ok4:
+	fail
+ok5:
+	; 1st true branch is taken
+	set_icc		0x4 1
+	bne.p		icc1,1,ok6
+	blt		icc1,1,ok7
+	beq.p		icc1,1,ok9
+	ble		icc1,1,ok8
+	fail
+ok6:
+	fail
+ok7:
+	fail
+ok8:
+	fail
+ok9:
+	; combination of the above
+	set_icc		0x4 1
+	setlos.p	4,gr4
+	setlos.p	0,gr5
+	bne.p		icc1,1,oka
+	beq		icc1,1,okb
+	setlos		5,gr5
+	fail
+oka:
+	fail
+okb:
+	test_gr_immed  	4,gr4
+	test_gr_immed  	0,gr5
+
+	pass

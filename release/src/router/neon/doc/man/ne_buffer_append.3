@@ -1,0 +1,105 @@
+'\" t
+.\"     Title: ne_buffer_append
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_BUFFER_APPEND" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_buffer_append, ne_buffer_zappend, ne_buffer_concat \- append data to a string buffer
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_string\&.h>
+.fi
+.ft
+.HP \w'void\ ne_buffer_append('u
+.BI "void ne_buffer_append(ne_buffer\ *" "buf" ", const\ char\ *" "string" ", size_t\ " "len" ");"
+.HP \w'void\ ne_buffer_zappend('u
+.BI "void ne_buffer_zappend(ne_buffer\ *" "buf" ", const\ char\ *" "string" ");"
+.HP \w'void\ ne_buffer_concat('u
+.BI "void ne_buffer_concat(ne_buffer\ *" "buf" ", const\ char\ *" "str" ", \&.\&.\&.);"
+.SH "DESCRIPTION"
+.PP
+The
+\fBne_buffer_append\fR
+and
+\fBne_buffer_zappend\fR
+functions append a string to the end of a buffer; extending the buffer as necessary\&. The
+\fIlen\fR
+passed to
+\fBne_buffer_append\fR
+specifies the length of the string to append; there must be no
+NUL
+terminator in the first
+\fIlen\fR
+bytes of the string\&.
+\fBne_buffer_zappend\fR
+must be passed a
+NUL\-terminated string\&.
+.PP
+The
+\fBne_buffer_concat\fR
+function takes a variable\-length argument list following
+\fIstr\fR; each argument must be a
+\fBchar *\fR
+pointer to a
+NUL\-terminated string\&. A
+NULL
+pointer must be given as the last argument to mark the end of the list\&. The strings (including
+\fIstr\fR) are appended to the buffer in the order given\&. None of the strings passed to
+\fBne_buffer_concat\fR
+are modified\&.
+.SH "EXAMPLES"
+.PP
+The following code will output "Hello, world\&. And goodbye\&."\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ne_buffer *buf = ne_buffer_create();
+ne_buffer_zappend(buf, "Hello");
+ne_buffer_concat(buf, ", world\&. ", "And ", "goodbye\&.", NULL);
+puts(buf\->data);
+ne_buffer_destroy(buf);
+.fi
+.if n \{\
+.RE
+.\}
+.SH "SEE ALSO"
+.PP
+ne_buffer,
+ne_buffer_create,
+ne_buffer_destroy
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

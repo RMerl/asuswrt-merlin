@@ -1,0 +1,109 @@
+# frv testcase for ftue $FCCi_2,$GRi,$GRj
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global ftue
+ftue:
+	and_spr_immed	-4081,tbr		; clear tbr.tt
+	set_gr_spr	tbr,gr7
+	inc_gr_immed	2112,gr7		; address of exception handler
+	set_bctrlr_0_0	gr7	; bctrlr 0,0
+
+	set_spr_immed	128,lcr
+	set_gr_immed	0,gr7
+	set_gr_immed	4,gr8
+
+	set_spr_addr	bad,lr
+	set_fcc		0x0 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+
+	set_psr_et	1
+	set_spr_addr	ok1,lr
+	set_fcc		0x1 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+ok1:
+	set_spr_addr	bad,lr
+	set_fcc		0x2 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+
+	set_psr_et	1
+	set_spr_addr	ok3,lr
+	set_fcc		0x3 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+ok3:
+	set_spr_addr	bad,lr
+	set_fcc		0x4 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+
+	set_psr_et	1
+	set_spr_addr	ok5,lr
+	set_fcc		0x5 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+ok5:
+	set_spr_addr	bad,lr
+	set_fcc		0x6 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+
+	set_psr_et	1
+	set_spr_addr	ok7,lr
+	set_fcc		0x7 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+ok7:
+	set_psr_et	1
+	set_spr_addr	ok8,lr
+	set_fcc		0x8 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+ok8:
+	set_psr_et	1
+	set_spr_addr	ok9,lr
+	set_fcc		0x9 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+ok9:
+	set_psr_et	1
+	set_spr_addr	oka,lr
+	set_fcc		0xa 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+oka:
+	set_psr_et	1
+	set_spr_addr	okb,lr
+	set_fcc		0xb 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+okb:
+	set_psr_et	1
+	set_spr_addr	okc,lr
+	set_fcc		0xc 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+okc:
+	set_psr_et	1
+	set_spr_addr	okd,lr
+	set_fcc		0xd 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+okd:
+	set_psr_et	1
+	set_spr_addr	oke,lr
+	set_fcc		0xe 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+oke:
+	set_psr_et	1
+	set_spr_addr	okf,lr
+	set_fcc		0xf 0
+	ftue 		fcc0,gr7,gr8	; should branch to tbr + (128 + 4)*16
+	fail
+okf:
+	pass
+bad:
+	fail

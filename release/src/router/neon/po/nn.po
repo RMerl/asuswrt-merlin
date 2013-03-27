@@ -1,0 +1,658 @@
+# Norwegian Nynorsk sitecopy translation.
+# Copyright (C) 2001 Karl Ove Hufthammer.
+# Karl Ove Hufthammer <karl@huftis.org>, 2002.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: sitecopy 0.11.4\n"
+"Report-Msgid-Bugs-To: neon@lists.manyfish.co.uk\n"
+"POT-Creation-Date: 2010-10-01 13:30+0100\n"
+"PO-Revision-Date: 2002-11-07 18:11+0100\n"
+"Last-Translator: Karl Ove Hufthammer <karl@huftis.org>\n"
+"Language-Team: Norwegian Nynorsk <i18n-nn@lister.ping.uio.no>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/ne_207.c:198
+#, c-format
+msgid ""
+"Invalid HTTP status line in status element at line %d of response:\n"
+"Status line was: %s"
+msgstr ""
+"Ugyldig HTTP-statuslinje i statuselement på linje %d av svaret:\n"
+"Statuslinja var: %s"
+
+#: src/ne_auth.c:134
+#, fuzzy, c-format
+msgid "Could not authenticate to server: %s"
+msgstr "Klarte ikkje kopla til tenaren."
+
+#: src/ne_auth.c:139
+#, fuzzy, c-format
+msgid "Could not authenticate to proxy server: %s"
+msgstr "Klarte ikkje kopla til mellomtenar"
+
+#: src/ne_auth.c:374
+#, c-format
+msgid "rejected %s challenge"
+msgstr ""
+
+#: src/ne_auth.c:390
+msgid "missing realm in Basic challenge"
+msgstr ""
+
+#: src/ne_auth.c:485
+msgid "invalid Negotiate token"
+msgstr ""
+
+#: src/ne_auth.c:508
+#, fuzzy
+msgid "GSSAPI authentication error: "
+msgstr "Krev autentisering på %s «%s»:\n"
+
+#: src/ne_auth.c:521
+#, c-format
+msgid "GSSAPI failure (code %u)"
+msgstr ""
+
+#: src/ne_auth.c:556
+msgid "ignoring empty Negotiate continuation"
+msgstr ""
+
+#: src/ne_auth.c:571
+#, c-format
+msgid "Negotiate response verification failed: invalid response header token"
+msgstr ""
+
+#: src/ne_auth.c:593
+#, fuzzy, c-format
+msgid "Negotiate response verification failure: %s"
+msgstr "Tenarsertifikatet er utgått på dato."
+
+#: src/ne_auth.c:765
+msgid "unknown algorithm in Digest challenge"
+msgstr ""
+
+#: src/ne_auth.c:769
+msgid "incompatible algorithm in Digest challenge"
+msgstr ""
+
+#: src/ne_auth.c:773
+msgid "missing parameter in Digest challenge"
+msgstr ""
+
+#: src/ne_auth.c:777
+msgid "initial Digest challenge was stale"
+msgstr ""
+
+#: src/ne_auth.c:784
+msgid "stale Digest challenge with new algorithm or realm"
+msgstr ""
+
+#: src/ne_auth.c:796
+#, fuzzy
+msgid "could not parse domain in Digest challenge"
+msgstr "Klarte ikkje tolka storleik på oppdelt svar"
+
+#: src/ne_auth.c:1105
+#, c-format
+msgid "Digest mutual authentication failure: missing parameters"
+msgstr ""
+
+#: src/ne_auth.c:1110
+#, c-format
+msgid "Digest mutual authentication failure: client nonce mismatch"
+msgstr ""
+
+#: src/ne_auth.c:1120
+#, c-format
+msgid "Digest mutual authentication failure: could not parse nonce count"
+msgstr ""
+
+#: src/ne_auth.c:1125
+#, c-format
+msgid "Digest mutual authentication failure: nonce count mismatch (%u not %u)"
+msgstr ""
+
+#: src/ne_auth.c:1168
+#, c-format
+msgid "Digest mutual authentication failure: request-digest mismatch"
+msgstr ""
+
+#: src/ne_auth.c:1299
+#, c-format
+msgid "ignored %s challenge"
+msgstr ""
+
+#: src/ne_auth.c:1378
+#, fuzzy
+msgid "could not parse challenge"
+msgstr "Klarte ikkje tolka storleik på oppdelt svar"
+
+#: src/ne_basic.c:98
+#, fuzzy, c-format
+msgid "Could not determine file size: %s"
+msgstr "Fann ikkje fillengda: %s"
+
+#: src/ne_basic.c:149
+#, c-format
+msgid "Response did not include requested range"
+msgstr ""
+
+#: src/ne_basic.c:183
+#, fuzzy, c-format
+msgid "Range is not satisfiable"
+msgstr "Området finst ikkje."
+
+#: src/ne_basic.c:188
+#, fuzzy, c-format
+msgid "Resource does not support ranged GET requests"
+msgstr "Tenaren kan ikkje handtera kommandoar for delvis GET."
+
+#: src/ne_compress.c:184
+#, c-format
+msgid "%s: %s (code %d)"
+msgstr ""
+
+#: src/ne_compress.c:232
+#, fuzzy
+msgid "Could not inflate data"
+msgstr "Klarte ikkje opna fil: "
+
+#: src/ne_compress.c:293
+#, fuzzy
+msgid "Could not initialize zlib"
+msgstr "Klarte ikkje opna fil: "
+
+#: src/ne_gnutls.c:172
+#, c-format
+msgid "[unprintable:#%lu]"
+msgstr ""
+
+#: src/ne_gnutls.c:201
+msgid "[unprintable]"
+msgstr ""
+
+#: src/ne_gnutls.c:817
+msgid "signed using insecure algorithm"
+msgstr ""
+
+#: src/ne_gnutls.c:820
+#, c-format
+msgid "unrecognized errors (%u)"
+msgstr ""
+
+#: src/ne_gnutls.c:865 src/ne_openssl.c:468
+#, c-format
+msgid "Server certificate was missing commonName attribute in subject name"
+msgstr ""
+
+#: src/ne_gnutls.c:879
+#, fuzzy, c-format
+msgid "Could not verify server certificate: %s"
+msgstr "Klarte ikkje skriva til fil: %s"
+
+#: src/ne_gnutls.c:891 src/ne_openssl.c:455
+#, c-format
+msgid "Certificate verification error: %s"
+msgstr ""
+
+#: src/ne_gnutls.c:924 src/ne_openssl.c:674
+#, c-format
+msgid "SSL handshake failed, client certificate was requested: %s"
+msgstr ""
+
+#: src/ne_gnutls.c:929 src/ne_openssl.c:679
+#, fuzzy, c-format
+msgid "SSL handshake failed: %s"
+msgstr "Klarte ikkje skriva til fil: %s"
+
+#: src/ne_gnutls.c:939
+#, c-format
+msgid "Server did not send certificate chain"
+msgstr ""
+
+#: src/ne_locks.c:584
+msgid "LOCK response missing Lock-Token header"
+msgstr ""
+
+#: src/ne_locks.c:759
+#, c-format
+msgid "Response missing activelock for %s"
+msgstr ""
+
+#: src/ne_locks.c:801
+#, c-format
+msgid "No activelock for <%s> returned in LOCK refresh response"
+msgstr ""
+
+#: src/ne_openssl.c:699
+#, c-format
+msgid "SSL server did not present certificate"
+msgstr ""
+
+#: src/ne_openssl.c:708
+#, fuzzy, c-format
+msgid "Server certificate changed: connection intercepted?"
+msgstr "Tenarsertifikatet er utgått på dato."
+
+#: src/ne_props.c:371 src/ne_props.c:435
+#, fuzzy
+msgid "Response exceeds maximum property count"
+msgstr "Svaret inneheld for mange header-felt."
+
+#: src/ne_redirect.c:92
+#, fuzzy, c-format
+msgid "Could not parse redirect destination URL"
+msgstr "Klarte ikkje tolka vidaresendingsadresse."
+
+#: src/ne_request.c:194
+#, fuzzy, c-format
+msgid "%s: connection was closed by proxy server"
+msgstr "%s: tilkoplinga vart lukka av mellomtenaren."
+
+#: src/ne_request.c:197
+#, fuzzy, c-format
+msgid "%s: connection was closed by server"
+msgstr "%s: tilkoplinga vart lukka av tenaren."
+
+#: src/ne_request.c:202
+#, fuzzy, c-format
+msgid "%s: connection timed out"
+msgstr "%s: sambandet vart tidsavbrote."
+
+#: src/ne_request.c:305
+#, fuzzy, c-format
+msgid "Premature EOF in request body file"
+msgstr "Klarte ikkje skriva til fil: %s"
+
+#: src/ne_request.c:312
+#, fuzzy, c-format
+msgid "Failed reading request body file: %s"
+msgstr "Klarte ikkje skriva til fil: %s"
+
+#: src/ne_request.c:332
+msgid "offset invalid"
+msgstr ""
+
+#: src/ne_request.c:337
+#, fuzzy, c-format
+msgid "Could not seek to offset %s of request body file: %s"
+msgstr "Klarte ikkje skriva til fil: %s"
+
+#: src/ne_request.c:385
+msgid "Could not send request body"
+msgstr "Klarte ikkje senda førespurnad"
+
+#: src/ne_request.c:728
+msgid "Could not read chunk size"
+msgstr "Klarte ikkje lesa storleik på oppdelt svar"
+
+#: src/ne_request.c:735
+msgid "Could not parse chunk size"
+msgstr "Klarte ikkje tolka storleik på oppdelt svar"
+
+#: src/ne_request.c:772
+msgid "Could not read response body"
+msgstr "Klarte ikkje lesa svar"
+
+#: src/ne_request.c:788
+#, fuzzy
+msgid "Could not read chunk delimiter"
+msgstr "Klarte ikkje lesa storleik på oppdelt svar"
+
+#: src/ne_request.c:791
+msgid "Chunk delimiter was invalid"
+msgstr ""
+
+#: src/ne_request.c:896
+msgid "Could not read status line"
+msgstr "Klarte ikkje lesa statuslinja"
+
+#: src/ne_request.c:918
+#, fuzzy
+msgid "Could not parse response status line"
+msgstr "Klarte ikkje tolka statuslinja i svaret."
+
+#: src/ne_request.c:930
+#, fuzzy
+msgid "Could not read interim response headers"
+msgstr "Klarte ikkje lesa svarlinje"
+
+#: src/ne_request.c:964
+msgid "Could not send request"
+msgstr "Klarte ikkje senda førespurnad"
+
+#: src/ne_request.c:1012 src/ne_request.c:1030 src/ne_request.c:1040
+msgid "Error reading response headers"
+msgstr "Feil ved lesing av svarhovud"
+
+#: src/ne_request.c:1058
+#, c-format
+msgid "Response header too long"
+msgstr "For langt svarhovud"
+
+#: src/ne_request.c:1140
+#, fuzzy
+msgid "Response exceeded maximum number of header fields"
+msgstr "Svaret inneheld for mange header-felt."
+
+#: src/ne_request.c:1155
+#, fuzzy, c-format
+msgid "Could not resolve hostname `%s': %s"
+msgstr "%s: Feil: Fann ikkje adressa til nettverksvert (%s).\n"
+
+#: src/ne_request.c:1286
+msgid "Unknown transfer-coding in response"
+msgstr ""
+
+#: src/ne_request.c:1299
+msgid "Invalid Content-Length in response"
+msgstr ""
+
+#: src/ne_request.c:1372
+#, c-format
+msgid "Could not write to file: %s"
+msgstr "Klarte ikkje skriva til fil: %s"
+
+#: src/ne_request.c:1445
+#, fuzzy, c-format
+msgid "Could not create SSL connection through proxy server: %s"
+msgstr "Klarte ikkje oppretta SSL-tilkopling til mellomtenar"
+
+#: src/ne_request.c:1484
+#, fuzzy, c-format
+msgid "Could not create socket"
+msgstr "Klarte ikkje forhandla SSL-økt"
+
+#: src/ne_request.c:1518
+msgid "Could not connect to server"
+msgstr "Klarte ikkje kopla til tenaren."
+
+#: src/ne_request.c:1520
+msgid "Could not connect to proxy server"
+msgstr "Klarte ikkje kopla til mellomtenar"
+
+#: src/ne_request.c:1563
+#, c-format
+msgid "Could not find IPv4 address of hostname %s for SOCKS v4 proxy"
+msgstr ""
+
+#: src/ne_request.c:1621
+#, fuzzy, c-format
+msgid "Could not establish connection from SOCKS proxy (%s:%u): %s"
+msgstr "Klarte ikkje oppretta SSL-tilkopling til mellomtenar"
+
+#: src/ne_session.c:530 src/ne_session.c:541
+#, fuzzy
+msgid "[invalid date]"
+msgstr "[ugyldig dato]"
+
+#: src/ne_session.c:554
+#, fuzzy
+msgid "certificate is not yet valid"
+msgstr "Sertifikatet er gyldig"
+
+#: src/ne_session.c:555
+#, fuzzy
+msgid "certificate has expired"
+msgstr "Tenarsertifikatet er utgått på dato."
+
+#: src/ne_session.c:556
+#, fuzzy
+msgid "certificate issued for a different hostname"
+msgstr "Sertifikatet er utferda av:"
+
+#: src/ne_session.c:557
+msgid "issuer is not trusted"
+msgstr ""
+
+#: src/ne_session.c:558
+#, fuzzy
+msgid "bad certificate chain"
+msgstr "Tenarsertifikatet er utgått på dato."
+
+#: src/ne_session.c:559
+#, fuzzy
+msgid "certificate has been revoked"
+msgstr "Tenarsertifikatet er utgått på dato."
+
+#: src/ne_session.c:564
+#, fuzzy
+msgid "Server certificate verification failed: "
+msgstr "Tenarsertifikatet er utgått på dato."
+
+#: src/ne_socket.c:516 src/ne_socket.c:612 src/ne_socket.c:716
+#, fuzzy
+msgid "Connection closed"
+msgstr "Tilkoplinga vart lukka av tenaren"
+
+#: src/ne_socket.c:622 src/ne_socket.c:728
+#, fuzzy
+msgid "Secure connection truncated"
+msgstr "Sambandet vart tidsavbrote."
+
+#: src/ne_socket.c:634 src/ne_socket.c:740
+#, fuzzy, c-format
+msgid "SSL error: %s"
+msgstr "%s: Feil: %s\n"
+
+#: src/ne_socket.c:637
+#, c-format
+msgid "SSL error code %d/%d/%lu"
+msgstr ""
+
+#: src/ne_socket.c:721
+#, fuzzy, c-format
+msgid "SSL alert received: %s"
+msgstr "%s: Feil: %s\n"
+
+#: src/ne_socket.c:736
+msgid "SSL socket read failed"
+msgstr ""
+
+#: src/ne_socket.c:867
+msgid "Line too long"
+msgstr "For lang linje"
+
+#: src/ne_socket.c:1012 src/ne_socket.c:1018
+msgid "Host not found"
+msgstr "Fann ikkje vert"
+
+#: src/ne_socket.c:1221
+#, fuzzy
+msgid "Connection timed out"
+msgstr "%s: sambandet vart tidsavbrote."
+
+#: src/ne_socket.c:1412
+msgid "Socket descriptor number exceeds FD_SETSIZE"
+msgstr ""
+
+#: src/ne_socket.c:1474
+msgid "Socket family not supported"
+msgstr ""
+
+#: src/ne_socket.c:1701
+#, fuzzy
+msgid "Client certificate verification failed"
+msgstr "Tenarsertifikatet er utgått på dato."
+
+#: src/ne_socket.c:1717
+#, fuzzy
+msgid "SSL disabled due to lack of entropy"
+msgstr "SSL avslått grunna mangel på entropi"
+
+#: src/ne_socket.c:1724
+#, fuzzy
+msgid "SSL disabled due to library version mismatch"
+msgstr "SSL avslått grunna mangel på entropi"
+
+#: src/ne_socket.c:1730
+#, fuzzy
+msgid "Could not create SSL structure"
+msgstr "Klarte ikkje forhandla SSL-økt"
+
+#: src/ne_socks.c:65
+msgid "failure"
+msgstr ""
+
+#: src/ne_socks.c:68
+#, fuzzy
+msgid "connection not permitted"
+msgstr "%s: sambandet vart tidsavbrote."
+
+#: src/ne_socks.c:71
+msgid "network unreachable"
+msgstr ""
+
+#: src/ne_socks.c:74
+msgid "host unreachable"
+msgstr ""
+
+#: src/ne_socks.c:77
+msgid "TTL expired"
+msgstr ""
+
+#: src/ne_socks.c:80
+msgid "command not supported"
+msgstr ""
+
+#: src/ne_socks.c:83
+msgid "address type not supported"
+msgstr ""
+
+#: src/ne_socks.c:86
+#, c-format
+msgid "%s: unrecognized error (%u)"
+msgstr ""
+
+#: src/ne_socks.c:128 src/ne_socks.c:328
+#, fuzzy
+msgid "Could not send message to proxy"
+msgstr "Klarte ikkje senda førespurnad"
+
+#: src/ne_socks.c:133
+#, fuzzy
+msgid "Could not read initial response from proxy"
+msgstr "Klarte ikkje lesa svar"
+
+#: src/ne_socks.c:136
+msgid "Invalid version in proxy response"
+msgstr ""
+
+#: src/ne_socks.c:157
+#, fuzzy
+msgid "Could not send login message"
+msgstr "Klarte ikkje senda førespurnad"
+
+#: src/ne_socks.c:162
+#, fuzzy
+msgid "Could not read login reply"
+msgstr "Klarte ikkje lesa statuslinja"
+
+#: src/ne_socks.c:165
+msgid "Invalid version in login reply"
+msgstr ""
+
+#: src/ne_socks.c:168
+#, fuzzy
+msgid "Authentication failed"
+msgstr "Krev autentisering på %s «%s»:\n"
+
+#: src/ne_socks.c:172
+msgid "No acceptable authentication method"
+msgstr ""
+
+#: src/ne_socks.c:174
+msgid "Unexpected authentication method chosen"
+msgstr ""
+
+#: src/ne_socks.c:210
+#, fuzzy
+msgid "Could not send connect request"
+msgstr "Klarte ikkje senda førespurnad"
+
+#: src/ne_socks.c:215
+#, fuzzy
+msgid "Could not read connect reply"
+msgstr "Klarte ikkje kopla til tenaren."
+
+#: src/ne_socks.c:218
+msgid "Invalid version in connect reply"
+msgstr ""
+
+#: src/ne_socks.c:221 src/ne_socks.c:337
+#, fuzzy
+msgid "Could not connect"
+msgstr "Klarte ikkje kopla til tenaren."
+
+#: src/ne_socks.c:235
+msgid "Could not read FQDN length in connect reply"
+msgstr ""
+
+#: src/ne_socks.c:240
+msgid "Unknown address type in connect reply"
+msgstr ""
+
+#: src/ne_socks.c:245
+#, fuzzy
+msgid "Could not read address in connect reply"
+msgstr "Klarte ikkje lesa svar"
+
+#: src/ne_socks.c:266
+msgid "request rejected or failed"
+msgstr ""
+
+#: src/ne_socks.c:269
+#, fuzzy
+msgid "could not establish connection to identd"
+msgstr "Klarte ikkje kopla til tenaren."
+
+#: src/ne_socks.c:272
+msgid "rejected due to identd user mismatch"
+msgstr ""
+
+#: src/ne_socks.c:275
+#, c-format
+msgid "%s: unrecognized failure (%u)"
+msgstr ""
+
+#: src/ne_socks.c:333
+#, fuzzy
+msgid "Could not read response from proxy"
+msgstr "Klarte ikkje lesa svar"
+
+#: src/ne_xml.c:280
+#, fuzzy, c-format
+msgid "XML parse error at line %d: invalid element name"
+msgstr "XML-tolkingsfeil på linje %d: %s."
+
+#: src/ne_xml.c:474
+#, fuzzy
+msgid "Unknown error"
+msgstr "Ukjend systemfeil"
+
+#: src/ne_xml.c:579
+msgid "Invalid Byte Order Mark"
+msgstr ""
+
+#: src/ne_xml.c:667
+#, fuzzy, c-format
+msgid "XML parse error at line %d: %s"
+msgstr "XML-tolkingsfeil på linje %d: %s."
+
+#: src/ne_xmlreq.c:36
+#, fuzzy, c-format
+msgid "Could not parse response: %s"
+msgstr "Klarte ikkje lesa «LIST»-svar."
+
+#, fuzzy
+#~ msgid "%s: %s"
+#~ msgstr "%s: %s\n"
+
+#~ msgid "Server was not authenticated correctly."
+#~ msgstr "Tenaren vart ikkje rett autentisert."
+
+#~ msgid "Proxy server was not authenticated correctly."
+#~ msgstr "Mellomtenaren vart ikkje rett autentisert."

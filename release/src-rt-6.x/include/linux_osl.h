@@ -1,7 +1,7 @@
 /*
  * Linux OS Independent Layer
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: linux_osl.h 341165 2012-06-26 19:16:22Z $
+ * $Id: linux_osl.h 349159 2012-08-07 06:34:33Z $
  */
 
 #ifndef _linux_osl_h_
@@ -324,6 +324,10 @@ extern void osl_writel(osl_t *osh, volatile uint32 *r, uint32 v);
 #else
 #define OSL_UNCACHED(va)	((void *)va)
 #define OSL_CACHED(va)		((void *)va)
+
+/* ARM NorthStar */
+#define OSL_CACHE_FLUSH(va, len)
+
 #endif /* mips */
 
 #ifdef __mips__
@@ -433,8 +437,13 @@ typedef struct ctfpool {
 #define	PKTFAST(osh, skb)	(((struct sk_buff*)(skb))->__unused)
 #endif /* 2.6.22 */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
+#define	CTFPOOLPTR(osh, skb)	(((struct sk_buff*)(skb))->ctfpool)
+#define	CTFPOOLHEAD(osh, skb)	(((ctfpool_t *)((struct sk_buff*)(skb))->ctfpool)->head)
+#else
 #define	CTFPOOLPTR(osh, skb)	(((struct sk_buff*)(skb))->sk)
 #define	CTFPOOLHEAD(osh, skb)	(((ctfpool_t *)((struct sk_buff*)(skb))->sk)->head)
+#endif
 
 extern void *osl_ctfpool_add(osl_t *osh);
 extern void osl_ctfpool_replenish(osl_t *osh, uint thresh);
@@ -475,9 +484,9 @@ do { \
 #define	PKTSETSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->ctf_mac_len |= SKIPCT)
 #define	PKTCLRSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->ctf_mac_len &= (~SKIPCT))
 #define	PKTSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->ctf_mac_len & SKIPCT)
-#define	PKTSETCHAINED(osh, skb)	(((struct sk_buff*)(skb))->mac_len |= CHAINED)
-#define	PKTCLRCHAINED(osh, skb)	(((struct sk_buff*)(skb))->mac_len &= (~CHAINED))
-#define	PKTISCHAINED(skb)	(((struct sk_buff*)(skb))->mac_len & CHAINED)
+#define	PKTSETCHAINED(osh, skb)	(((struct sk_buff*)(skb))->ctf_mac_len |= CHAINED)
+#define	PKTCLRCHAINED(osh, skb)	(((struct sk_buff*)(skb))->ctf_mac_len &= (~CHAINED))
+#define	PKTISCHAINED(skb)	(((struct sk_buff*)(skb))->ctf_mac_len & CHAINED)
 #else /* 2.6.22 */
 #define	SKIPCT	(1 << 2)
 #define	CHAINED	(1 << 3)
@@ -514,6 +523,9 @@ extern struct sk_buff *osl_pkt_tonative(osl_t *osh, void *pkt);
 						((x) ? CHECKSUM_UNNECESSARY : CHECKSUM_NONE))
 /* PKTSETSUMNEEDED and PKTSUMGOOD are not possible because skb->ip_summed is overloaded */
 #define PKTSHARED(skb)                  (((struct sk_buff*)(skb))->cloned)
+
+#define DEVMTU(dev)			(((struct net_device*)(dev))->mtu)
+#define DEVIFINDEX(dev)			(((struct net_device*)(dev))->ifindex)
 
 #else	/* BINOSL */
 
@@ -771,8 +783,17 @@ extern uint osl_pktalloced(osl_t *osh);
 	} \
 	osl_dma_map((osh), (va), sz, (direction)); \
 })
+#if defined(__mips__)
 #define	_DMA_MAP(osh, va, size, direction, p, dmah) \
 	dma_cache_inv((uint)(va), (size))
+#elif defined(__ARM_ARCH_7A__)
+#include <asm/cacheflush.h>
+#define	_DMA_MAP(osh, va, size, direction, p, dmah) \
+	osl_dma_map((osh), (va), (size), (direction))
+#else
+#define	_DMA_MAP(osh, va, size, direction, p, dmah)
+#endif
+
 #else /* CTFMAP */
 #define	DMA_MAP(osh, va, size, direction, p, dmah) \
 	osl_dma_map((osh), (va), (size), (direction))
@@ -786,7 +807,7 @@ struct chain_node {
 };
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 14)
-#define CHAIN_NODE(skb)		((struct chain_node*)&(((struct sk_buff*)skb)->tstamp))
+#define CHAIN_NODE(skb)		((struct chain_node*)&(((struct sk_buff*)skb)->ctf_tstamp))
 #else
 #define CHAIN_NODE(skb)		((struct chain_node*)&(((struct sk_buff*)skb)->stamp))
 #endif
@@ -819,6 +840,7 @@ do { \
 	ASSERT((skb) != NULL); \
 	FOREACH_CHAINED_PKT((skb), nskb) { \
 		PKTCLRCHAINED((osh), (skb)); \
+		PKTCCLRATTR((skb)); \
 		PKTFREE((osh), (skb), (send)); \
 	} \
 } while (0)

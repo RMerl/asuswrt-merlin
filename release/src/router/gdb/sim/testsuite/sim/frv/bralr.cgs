@@ -1,0 +1,91 @@
+# frv testcase for bralr
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global bralr
+bralr:
+	set_spr_addr	ok1,lr
+	set_icc		0x0 0
+	bralr
+	fail
+ok1:
+	set_spr_addr	ok2,lr
+	set_icc		0x1 1
+	bralr
+	fail
+ok2:
+	set_spr_addr	ok3,lr
+	set_icc		0x2 2
+	bralr
+	fail
+ok3:
+	set_spr_addr	ok4,lr
+	set_icc		0x3 3
+	bralr
+	fail
+ok4:
+	set_spr_addr	ok5,lr
+	set_icc		0x4 0
+	bralr
+	fail
+ok5:
+	set_spr_addr	ok6,lr
+	set_icc		0x5 1
+	bralr
+	fail
+ok6:
+	set_spr_addr	ok7,lr
+	set_icc		0x6 2
+	bralr
+	fail
+ok7:
+	set_spr_addr	ok8,lr
+	set_icc		0x7 3
+	bralr
+	fail
+ok8:
+	set_spr_addr	ok9,lr
+	set_icc		0x8 0
+	bralr
+	fail
+ok9:
+	set_spr_addr	oka,lr
+	set_icc		0x9 1
+	bralr
+	fail
+oka:
+	set_spr_addr	okb,lr
+	set_icc		0xa 2
+	bralr
+	fail
+okb:
+	set_spr_addr	okc,lr
+	set_icc		0xb 3
+	bralr
+	fail
+okc:
+	set_spr_addr	okd,lr
+	set_icc		0xc 0
+	bralr
+	fail
+okd:
+	set_spr_addr	oke,lr
+	set_icc		0xd 1
+	bralr
+	fail
+oke:
+	set_spr_addr	okf,lr
+	set_icc		0xe 2
+	bralr
+	fail
+okf:
+	set_spr_addr	okg,lr
+	set_icc		0xf 3
+	bralr
+	fail
+okg:
+
+	pass

@@ -1,7 +1,7 @@
 /*
  * 802.1Q VLAN protocol definitions
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: vlan.h 241182 2011-02-17 21:50:03Z $
+ * $Id: vlan.h 345182 2012-07-16 23:31:56Z $
  */
 
 #ifndef _vlan_h_
@@ -28,16 +28,27 @@
 /* This marks the start of a packed structure section. */
 #include <packed_section_start.h>
 
+#ifndef	 VLAN_VID_MASK
 #define VLAN_VID_MASK		0xfff	/* low 12 bits are vlan id */
+#endif
+
 #define	VLAN_CFI_SHIFT		12	/* canonical format indicator bit */
 #define VLAN_PRI_SHIFT		13	/* user priority */
 
 #define VLAN_PRI_MASK		7	/* 3 bits of priority */
 
+#define	VLAN_TPID_OFFSET	12	/* offset of tag protocol id field */
+#define	VLAN_TCI_OFFSET		14	/* offset of tag ctrl info field */
+
 #define	VLAN_TAG_LEN		4
 #define	VLAN_TAG_OFFSET		(2 * ETHER_ADDR_LEN)	/* offset in Ethernet II packet only */
 
 #define VLAN_TPID		0x8100	/* VLAN ethertype/Tag Protocol ID */
+
+struct vlan_header {
+	uint16	vlan_type;		/* 0x8100 */
+	uint16	vlan_tag;		/* priority, cfi and vid */
+};
 
 struct ethervlan_header {
 	uint8	ether_dhost[ETHER_ADDR_LEN];

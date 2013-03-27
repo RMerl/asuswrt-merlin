@@ -1,0 +1,84 @@
+# fr30 testcase for
+# mach(): fr30
+#  stb $Ri,@$Rj
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global stb
+stb:
+	mvr_h_gr	sp,r9		; Save stack pointer
+	; Test stb $Ri,@Rj
+	mvi_h_mem	0xdeadbeef,sp
+	mvi_h_gr	0xaaaaaafe,r8
+	set_cc          0x0f		; Condition codes should not change
+	stb      	r8,@sp
+	test_cc		1 1 1 1
+	test_h_mem	0xfeadbeef,sp
+	test_h_gr	0xaaaaaafe,r8
+
+	; Test stb $Ri,@(R13,Rj)
+	mvi_h_mem	0xbeefdead,sp
+	mvi_h_gr	0xaaaaaade,r8
+	mvr_h_gr	sp,r1
+	inci_h_gr	-8,sp
+	mvr_h_gr	sp,r2
+	mvi_h_mem	0xbeefdead,sp
+	inci_h_gr	4,sp
+	mvi_h_mem	0xbeefdead,sp
+
+	mvi_h_gr	4,r13
+	set_cc          0x0e		; Condition codes should not change
+	stb      	r8,@(r13,sp)
+	test_cc		1 1 1 0
+	test_h_mem	0xdeefdead,r1
+	test_h_gr	0xaaaaaade,r8
+
+	mvi_h_gr	0,r13
+	set_cc          0x0d		; Condition codes should not change
+	stb      	r8,@(r13,sp)
+	test_cc		1 1 0 1
+	test_h_mem	0xdeefdead,sp
+	test_h_gr	0xaaaaaade,r8
+
+	mvi_h_gr	-4,r13
+	set_cc          0x0c		; Condition codes should not change
+	stb      	r8,@(r13,sp)
+	test_cc		1 1 0 0
+	test_h_mem	0xdeefdead,r2
+	test_h_gr	0xaaaaaade,r8
+
+	; Test stb $Ri,@(R14,$disp8
+	mvr_h_gr	r9,sp		; Restore stack pointer
+	mvi_h_gr	0xaaaaaafe,r8
+	mvi_h_mem	0xdeadbeef,sp
+	mvr_h_gr	sp,r14
+	inci_h_gr	-128,r14	; must be aligned
+	mvi_h_mem	0xdeadbeef,r14
+	mvr_h_gr	r14,r2
+	inci_h_gr	-128,r14	; must be aligned
+	mvi_h_mem	0xdeadbeef,r14
+	mvr_h_gr	r14,r3
+	inci_h_gr	129,r14
+
+	set_cc          0x0b		; Condition codes should not change
+	stb      	r8,@(r14,127)
+	test_cc		1 0 1 1
+	test_h_mem	0xfeadbeef,r1
+	test_h_gr	0xaaaaaafe,r8
+
+	set_cc          0x0a		; Condition codes should not change
+	stb      	r8,@(r14,0)
+	test_cc		1 0 1 0
+	test_h_mem	0xdefebeef,r2
+	test_h_gr	0xaaaaaafe,r8
+
+	set_cc          0x09		; Condition codes should not change
+	stb      	r8,@(r14,-128)
+	test_cc		1 0 0 1
+	test_h_mem	0xdefebeef,r3
+	test_h_gr	0xaaaaaafe,r8
+
+	pass

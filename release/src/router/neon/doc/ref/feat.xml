@@ -1,0 +1,95 @@
+<refentry id="reffeat">
+
+  <refmeta>
+    <refentrytitle>ne_has_support</refentrytitle>
+    <manvolnum>3</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname id="ne_has_support">ne_has_support</refname>
+    <refpurpose>determine feature support status</refpurpose>
+  </refnamediv>
+  
+  <refsynopsisdiv>
+
+    <funcsynopsis>
+
+      <funcsynopsisinfo>#include &lt;ne_utils.h&gt;</funcsynopsisinfo>
+
+      <funcprototype>
+        <funcdef>int <function>ne_has_support</function></funcdef>
+        <paramdef>int <parameter>feature</parameter></paramdef>
+      </funcprototype>
+
+    </funcsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para>The <function>ne_has_support</function> function can be used
+    to determine whether a particular optional feature, given by the
+    feature code <parameter>feature</parameter>, is supported.  The
+    following feature codes are available:
+
+    <variablelist>
+      <varlistentry>
+        <term><constant>NE_FEATURE_SSL</constant></term>
+        <listitem>
+          <simpara>Indicates support for SSL/TLS</simpara>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><constant>NE_FEATURE_ZLIB</constant></term>
+        <listitem>
+          <simpara>Indicates support for compressed responses</simpara>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><constant>NE_FEATURE_IPV6</constant></term>
+        <listitem>
+          <simpara>Indicates support for IPv6</simpara>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><constant>NE_FEATURE_LFS</constant></term>
+        <listitem>
+          <simpara>Indicates support for large files</simpara>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><constant>NE_FEATURE_SOCKS</constant></term>
+        <listitem>
+          <simpara>Indicates support for SOCKSv5</simpara>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><constant>NE_FEATURE_TS_SSL</constant></term>
+        <listitem>
+          <simpara>Indicates support for thread-safe SSL
+          initialization &mdash; see <xref linkend="ne_sock_init"/></simpara>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    </para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Return value</title>
+
+    <para><function>ne_has_support</function> returns non-zero if 
+    the given feature is supported, or zero otherwise.</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>See also</title>
+
+    <para><xref linkend="refvers"/>, <xref linkend="refsockinit"/></para>
+  </refsect1>
+
+</refentry>
+

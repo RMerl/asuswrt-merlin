@@ -1,0 +1,737 @@
+Mon May 17 21:25:44 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.mak: Fix for handling of paths with spaces, and
+	simplify (Jon Foster <jon@jon-foster.co.uk>).
+
+Thu May 13 11:42:07 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Don't rely on echo -n in ne_version.
+
+Sun Feb 22 20:29:04 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Move memleak.h include to end of config.h.
+
+Sun Feb 22 18:44:55 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Fix to run DAV tests when an XML parser is
+	configured.
+
+Sat Jan 24 17:50:52 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: AC_DEFINE _GNU_SOURCE again so that it's used
+	during compiler checks.
+
+Sat Jan 24 17:33:54 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Cleanup; move all AC_SUBSTs together; use a single
+	AH_TOP for config.h.in header; require autoconf 2.58.
+
+Thu Jan  1 17:40:34 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-config.in: Handle 'lfs' feature.
+
+Sat Nov 15 09:42:40 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-config.in: Print help output on stderr for unknown arguments.
+	(usage): Update help output for new NE_FLAG_ substitutions.
+
+Sat Nov 15 09:24:49 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Update for use latest autoconf best-practice:
+	s/AC_HELP_STRING/AS_HELP_STRING.
+
+Fri Nov 14 11:28:24 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in, neon-config.in: Use new NE_FLAG substitutions
+	for feature detection.
+
+Fri Nov 14 09:08:10 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Add -export-symbols-regex to NEON_LINK_FLAGS to
+	prevent export of ne__ symbols where possible.
+
+Sun Oct 26 12:42:15 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-config.in: Fix to exit with failure for an unrecognized
+	option.
+
+Sat Oct 25 10:37:59 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Use AC_LIBTOOL_TAGS if available.
+
+Mon Sep 22 20:56:21 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in: Respect @datadir@ from configure (Max Bowsher).
+
+Sun Sep 14 11:13:36 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Run NEON_TEST before LIBNEON_SOURCE_CHECKS, to
+	help prevent time_t format string detection failing due to changed
+	CFLAGS.
+
+Fri Jun 20 17:51:05 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in, neon-config.in: Don't pass user-supplied CPPFLAGS
+	through to neon-config, it is no longer necessary.
+
+Sun Apr  6 19:51:31 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* doc/manual.xml: Include clicert reference docs.
+
+	* doc/ref/clicert.xml: New file.
+
+Sun Apr  6 19:24:47 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (XMLTO): New variable.
+	(docs-man, docs-pdf, docs-ps, docs-html): Use $(XMLTO) variable.
+
+Wed Mar 26 20:09:12 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (DIST_HEADERS): Add ne_tls.h
+
+	* neon.mak: Build ne_openssl.obj for SSL build, ne_stubssl.obj for
+	non-SSL build.
+
+Sun Mar  9 10:38:36 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Set ALLOW_INSTALL=yes early to allow later
+	overrides.
+
+	* Makefile.in (install-yes): Remove dependence on subdirs.
+	(install-lib): Depend on subdirs; don't install neon.pc.
+	(install-config): Install neon.pc here.	
+
+Sat Mar  1 21:50:17 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (cover): New target.
+
+Sat Mar  1 20:39:32 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Add --enable-memleak argument; if enabled, have
+	config.h include memleak.h, add top_srcdir/src to include path,
+	and substitute ALLOW_INSTALL as 'memleak'.  Otherwise, substitute
+	ALLOW_INSTALL as 'yes'.
+
+	* Makefile.in (install): Use install-@ALLOW_INSTALL@.
+	(install-yes): Renamed from install.
+	(install-memleak): Prevent installation with non-standard ABI.
+
+Fri Dec 27 15:15:54 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.pc.in: New file.
+
+	* configure.in: Generate neon.pc.
+	
+	* Makefile.in (install-lib): Install neon.pc
+
+Tue Nov 19 11:24:40 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Use NEON_TEST before NEON_XML_PARSER to prevent
+	problems if NEON_XML_PARSER adds anything to CPPFLAGS which breaks
+	gcc -Werror (e.g. -I/usr/local/include).
+
+Sat Sep 21 12:29:56 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-config.in: Add support for `--la-file' argument, to print
+	location of libtool .la file.
+
+Sat Sep 14 12:46:21 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Add AC_COPYRIGHT, use AC_MSG_NOTICE for
+	post-configure message, update for modern use of AC_CONFIG_FILES
+	and AC_OUTPUT.
+
+Thu Aug 29 23:49:40 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Further Win32 updates from Blair Zajac:
+	
+	* config.hw.in: Define HAVE_ERRNO_H; fix non-SSL build.
+
+	* neon.mak: Fix to build DAV sources if EXPAT_FLAGS is set but not
+	EXPAT_SRC.
+
+Sun Aug 25 23:37:59 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Win32 updates from Blair Zajac <blair@orcaware.com>:
+	
+	* neon.mak: Fix expansion of $(LIB32_OBJS) variable that was
+	causing nmake failures.  Allow non-DAV build if EXPAT_SRC is not
+	specified.
+
+	* config.hw.in: Remove hard-coded defines.
+
+	* INSTALL.win32: Overhaul.
+
+Sat Aug 10 10:42:09 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Substitue OPENSSL into Makefiles as an absolute
+	path.
+
+Fri Aug  9 20:45:01 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Update to use modern three-argument AC_INIT and
+	AC_CONFIG_SRCDIR.  Pick up version string from .version; thanks to
+	Greg Stein for they `esyscmd' trick.  Move NEON_WITH_LIBS earlier.
+	Use AC_HELP_STRING for --disable-webdav.
+
+Fri Aug  9 20:41:24 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* config.hw.in, neon.mak, INSTALL.win32: Win32 build update from
+	Gerald Richter: add optional NEON_NODAV and OPENSSL_STATIC flags,
+	update locations of includes and libraries.
+
+Sun Jun 30 11:08:56 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.mak: Enable WIN32_LEAN_AND_MEAN etc, to prevent X509_NAME
+	definition conflicting with OpenSSL headers in recent versions of
+	Platform SDK (Branko Èibej).
+
+Thu Jun 13 20:35:43 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Call NEON_WITH_LIBS for --with-libs option.
+
+Tue Jun  4 13:27:48 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.mak: Always build ne_compress.obj; patch from Branko Èibej.
+
+Tue Jun  4 09:38:24 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (man1dir, man3dir): Use $(mandir).  (Rodney Dawes)
+
+Mon Jun  3 20:47:14 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (install-html, install-man): Fix for VPATH builds.
+
+Sat May 25 15:01:18 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Only enable SSL tests if an `openssl' binary is
+	found in $PATH.
+
+Thu May 23 20:31:01 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Require a release version of autoconf.
+
+Sat May 18 14:43:15 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (docs-man): Use customisation layer.
+
+Sat Apr 13 22:34:00 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in, neon-config.in: Pass LDFLAGS and CPPFLAGS setting
+	given to configure through to neon-config --libs/--cflags output.
+
+Mon Feb 25 20:53:28 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.mak (OPENSSL_FLAGS): Define NEON_SSL not ENABLE_SSL
+	(Branko).
+
+Mon Feb 25 20:46:04 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* config.hw.in: Add NE_FMT_OFF_T (Dan Berlin, Branko Èibej).
+
+Sun Feb 10 20:35:55 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (docs-html): Use XSL customisation layer for the
+	HTML output.
+
+Wed Feb  6 00:42:32 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Require autoconf 2.52d for AC_C_BIGENDIAN which
+	supports cross-compiling.
+
+Sat Jan 26 11:19:39 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Define TESTS and HELPERS appropriately for whether
+	DAV, SSL, zlib are supported.
+
+Sat Jan 26 11:03:38 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.mak: Add OpenSSL, zlib support (Branko Èibej).
+
+Sat Jan 26 00:15:29 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.dsp, neon.dsw: Removed per advice from Branko.
+
+Thu Jan 24 21:02:02 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (check): Run check target in test subdir.
+	(subdirs): Remove redundant subshell.
+	(distclean): Clean harder.
+
+Thu Jan 24 20:46:28 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.mak: Remove sslcerts.c from build.
+
+Sun Jan 20 12:51:27 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Create test/common for vpath build.
+
+Tue Jan  8 21:35:12 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.mak: Rewritten by Branko Èibej <brane@xbc.nu>.
+
+	* config.hw.in: Update from Branko Èibej.
+
+Thu Jan  3 08:48:00 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (neon-config): Add target.
+
+Thu Jan  3 08:47:06 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-config.in (libs): Don't print -L/usr/lib or -L/lib.
+
+Thu Jan  3 08:43:08 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Make neon-config executable in the build tree.
+
+Mon Dec 17 22:54:00 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (install-lib, install-headers, install-config):
+	Support DESTDIR; patch from Pawel Golaszewski <ues@ds.pg.gda.pl>.
+
+Sat Oct 27 12:23:57 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-config.in: Add "--support FEATURE" option; the script exits
+	with success if given FEATURE is supported.
+
+Sat Oct  6 13:11:57 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Require autoconf 2.50. Use AC_HELP_STRING.
+
+Sun Sep 30 23:44:56 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in, neon-config.in: Clean up handling of cflags/libs
+	exporting.
+
+Sat Sep 29 12:45:25 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in: Add Makefile re-generation target, have clean
+	recurse into test too, have check depend on subdirs, distribute
+	ne_compress.h.
+
+Tue Sep 25 07:34:32 2001  Mo DeJong  <supermo@bayarea.net>
+
+	* configure.in: Move check for signal.h into
+	LIBNEON_SOURCE_CHECKS.
+
+Mon Sep 24 20:28:26 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* autogen.sh: Bomb out on errors (set -e).
+
+Mon Sep 24 20:20:08 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* autogen.sh: Clean up, use libtoolize.
+
+	* ltmain.sh: Removed from CVS.
+
+Mon Sep 24 20:17:18 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Use three-argument AC_DEFINE for _GNU_SOURCE (Mo
+	DeJong).
+
+Tue Sep 11 23:20:23 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* config.hw.in: Define USE_DAV_LOCKS.
+
+Mon Aug 13 21:07:28 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.mak: Add support for SSL (Peter Boos).
+
+Sat Jun 30 12:22:17 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Add NEONLIBS to LIBS, so that the depedencies are
+	added to the link line.  This means they are picked up as
+	references in the .so, and also listed in the libtool .la file.
+
+Tue Jun 12 13:02:58 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* config.hw.in: Renamed from config.hw, and have version
+	substituted in when tarball is rolled. Adjust for XML parser
+	changes. (Gerald Richter)
+
+Sun Jun 10 16:41:46 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Check for pipe() for tests, use NEON_DEBUG.
+
+Fri Jun  8 22:57:24 2001  Joe Orton  <joe@manyfish.co.uk>
+	
+	* config.hw: Fixes from Gerald Richter <richter@ecos.de>.
+
+	* neon.mak, INSTALL.win32: New files from Gerald Richter.
+
+Thu May 31 00:00:32 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Disable shared library build by default.  Use
+	NE_DEBUGGING rather than DEBUGGING.  Check for 'usleep' for tests.
+
+Sun Apr 29 16:41:17 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Produce test/Makefile.
+
+Wed Mar 14 22:51:28 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (DIST_HEADERS): Add http_auth.h
+
+Wed Mar 14 22:45:51 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Build bundled directory regardless of
+	--disable-webdav.
+
+Sun Feb 25 17:00:40 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Rename NEON_IS_BUNDLED to NEON_BUILD_BUNDLED.
+
+Sun Feb 25 16:53:28 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Set NEON_IS_BUNDLED to "yes".
+
+Sat Feb 24 00:09:57 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Add --disable-webdav flag to disable WebDAV
+	support.  Set NEON_NEED_XML_PARSER=yes if DAV is not disabled.
+
+Sun Jan 28 23:10:39 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in: Remove neon_config.h from DIST_HEADERS.
+
+Sun Jan 28 10:41:40 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* configure.in: Don't produce neon_config.h.
+
+Tue Jan 23 23:16:25 2001  Joe Orton  <joe@light.plus.com>
+
+	* configure.in: Moved version defns into NEON_VERSIONS macros.
+	Produce src/neon_config.h.
+
+Tue Jan 16 20:16:47 2001  Joe Orton  <joe@light.plus.com>
+
+	* configure.in: Bumped version to 0.10.1.
+
+Mon Jan 15 22:59:47 2001  Joe Orton  <joe@light.plus.com>
+
+	* configure.in: Bumped version to 0.10.0.
+
+Sun Jan 14 23:55:47 2001  Joe Orton  <joe@light.plus.com>
+
+	* Makefile.in (distclean): Don't remove neon_config.h.  (install):
+	Depend on subdirs.
+
+Wed Jan 10 22:46:53 2001  Joe Orton  <joe@light.plus.com>
+
+	* configure.in: Use NEON_LINK_FLAGS to pass through -version-info
+	and interface version flags.  Add -I${top_builddir} to CFLAGS.
+	Remove NEONOBJS declaration, let NEON_LIBTOOL_BUILD do it.
+
+Wed Dec 20 00:11:56 2000  Joe Orton  <joe@light.plus.com>
+
+	* configure.in: Bumped version to 0.9.1, interface version to
+	9:1:0.
+
+Tue Dec 19 22:15:45 2000  Joe Orton  <joe@light.plus.com>
+
+	* Makefile.in: Build using recursive make into src directory.  Add
+	VPATH support. (Mo DeJong <mdejong@cygnus.com>)
+
+Tue Dec 19 22:13:40 2000  Joe Orton  <joe@light.plus.com>
+
+	* configure.in: Build using new src/Makefile.in.
+
+Sun Dec 17 19:53:36 2000  Joe Orton  <joe@light.plus.com>
+
+	* config.sub, config.guess, ltconfig, ltmain.sh: Update to libtool
+	1.3.5 versions.
+
+Sun Dec 17 18:43:00 2000  Joe Orton  <joe@light.plus.com>
+
+	* Makefile.in: Remove all traces of example programs.  Fix
+	uritest.
+
+Thu Dec 14 21:47:48 2000  Joe Orton  <joe@light.plus.com>
+
+	* configure.in: Bumped version to 0.8.0, interface version to
+	8:0:0.
+
+Thu Dec 14 20:57:49 2000  Joe Orton  <joe@light.plus.com>
+
+	* configure.in: Removed configuration of examples.
+
+Wed Dec 13 20:14:53 2000  Joe Orton  <joe@light.plus.com>
+
+	* config.hw: Added for Windows.
+
+Sun Nov 26 09:52:29 2000  Joe Orton  <joe@light.plus.com>
+
+	* example/: Removed directory (now in separate neon-examples
+	package).
+
+Tue Sep 12 10:33:50 2000  Joe Orton  <joe@light.plus.com>
+
+	* Makefile.in: Remove sitecopy bits which somehow got left in
+	there.
+
+Tue Sep 12 00:41:49 2000  Joe Orton  <joe@light.plus.com>
+
+	* configure.in: Bumped version to 0.7.3, interface version to
+	7:1:1.
+
+Tue Sep 12 00:39:49 2000  Joe Orton  <joe@light.plus.com>
+
+	* Makefile.in (distclean): New target.
+
+Thu Sep  7 00:14:15 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Bumped version to 0.7.2, interface version to
+	7:0:1.
+
+Thu Sep  7 00:10:54 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.in: Added 'all' target (patch by Greg Stein
+	<gstein@lyra.org>).
+
+Sun Sep  3 10:32:09 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.in (SHELL): Added definition.  Changed xalloc.h to
+	ne_alloc.h in DIST_HEADERS. Thanks to Eric Mumpower
+	<nocturne@arepa.com>.
+
+Tue Aug 15 21:53:37 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Bumped version to 0.7.1, interface version to
+	6:1:1.
+
+Mon Aug 14 09:28:47 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Bumped version to 0.7.0, interface version to
+	6:0:0.
+
+Sun Aug 13 15:59:58 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Bumped version to 0.6.1, interface version to
+	5:1:1.
+
+Sat Aug 12 17:10:09 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Bumped version to 0.6.0, interface version to
+	5:0:1.
+
+Sat Aug 12 17:08:54 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Add --with-extra-includes and --with-extra-libs
+	configure parameters
+
+Sat Aug 12 17:07:22 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nget.c (redirect_notify): New function.  (main): Support
+	automatic redirects.
+
+Sat Aug 12 16:53:50 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.in: Build http_redirect.lo.
+
+Sat Aug 12 14:43:28 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nget.c (pretty_progress_bar): Use 'off_t' not size_t
+	arguments.
+
+Sat Aug 12 02:11:05 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Bumped interface version to 4:1:0, version to
+	0.5.1.
+
+Fri Aug 11 17:18:19 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Bumped interface version to 4:0:0, version to
+	0.5.0.
+
+Fri Jul 28 13:35:06 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Bumped interface version to 3:2:1, version to
+	0.4.2.
+
+Fri Jul 28 11:26:18 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Bumped interface version to 3:1:1, version to
+	0.4.1.
+
+Fri Jul 28 11:25:05 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nget.c: Include nsocket.h not socket.h.
+
+Fri Jul 28 10:31:50 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Bumped interface version to 3:0:1.  Bumped version
+	to 0.4.0.
+
+Thu Jul 27 22:01:11 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.in: Install nsocket.h not socket.h.
+
+Thu Jul 27 21:59:45 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Tell neon-config that header files are in
+	$(includedir)/neon.  Use NEON_WARNINGS macro for compiler
+	warnings.
+
+Thu Jul 20 19:20:23 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.in: Install headers into $(includedir)/neon rather
+	libneon.  Add dav_locks.h, xalloc.h, neon_md5.h, neon_i18n.h to
+	list of headers installed.
+
+Mon Jul 17 09:11:46 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Bumped version to 0.3.1, interface version to
+	2:0:1.
+
+Sun Jul 16 18:47:47 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Bumped version to 0.3.0.
+
+Sun Jul 16 17:17:51 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.in (nbrowse, nserver, debug-nserver, debug-nbrowse):
+	Added targets.
+
+Sun Jul 16 17:15:08 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nget.c (main): Updated for new SSL interface.
+
+Sun Jul 16 16:51:16 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Added --enable-gnome-examples switch.
+
+Sun Jun 18 12:56:00 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nserver.c: New file.
+
+Sun Jun 18 12:54:43 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nbrowse.glade: Added Glade project file.
+
+Sun Jun 18 12:51:56 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nbrowse/main.c, example/nbrowse/interface.c,
+	example/nbrowse/callbacks.c, example/nbrowse/support.c: Added
+	files from Glade.
+
+Thu May 25 01:04:11 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Bumped NEON_INTERFACE_VERSION to 1:0:0.  With
+	--enable-warnings, only include -Wstrict-prototypes if we're not
+	building with SSL support.
+
+Thu May 25 01:01:01 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.in: Pass --quiet to libtool to make it a bit less
+	chatty.  (again, debug-nget): New target.
+
+Tue May 23 17:14:43 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nget.c (main): Use http_session_create/destroy. Quit if
+	http_set_secure fails.
+
+Tue May 23 15:35:16 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nget.c (parse_args, conn_notify): New functions.
+	(main): Call neon_debug_init, call sock_init.  Register
+	conn_notify. If scheme is "https", use a secure connection.
+
+Tue May 23 14:14:05 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nget.c (parse_args): New function.  (main): 
+
+Sun May 21 23:54:48 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon-config.in: Use @NEON_LIBDIR@ not -L@libdir@ in --libs
+	output.
+
+Sun May 21 23:53:41 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Call NEON_SSL macro, add LDFLAGS to NEON_LIBDIR to
+	pick up OpenSSL library location.
+
+Sat May 20 21:47:54 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nget.c: Include neon_config.h for NEON_VERSION
+	declaration.
+
+Sat May 20 21:47:29 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Added --enable-warnings parameter.
+
+Sat May 20 21:46:54 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.in (libneon.la): Fixed passing interface version.
+
+Sun May 14 00:40:38 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in (NEON_VERSION): Bumped to 0.2.0.
+
+Sun May 14 00:28:33 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.in (install-config): New goal.
+
+Sun May 14 00:26:00 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Added --enable-debugging argument.  Added
+	NEON_LIBDIR, NEON_INCLUDEDIR, NEON_LIBS, NEON_CFLAGS for
+	neon-config.  Produce neon-config from neon-config.in.
+
+	* neon-config.in: New file, modified from libxml.
+
+Sat May 13 23:16:46 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Builed static and shared libraries by default.
+
+Sat May 13 16:32:15 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* config.sub, config.guess, ltmain.sh, ltconfig: Updated from
+	libtool-1.3.4.
+
+Sat May 13 13:45:56 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nget.c: Don't include neon.h.
+
+Sat May 13 13:44:22 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.in: Use libtool.  (install-examples): New goal.
+
+	* configure.in: Define NEON_VERSION.
+
+Thu May 11 14:14:00 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nget.c (main): Set user-agent.
+
+Thu May 11 14:10:24 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* ltconfig, ltmain.sh, config.sub, config.guess: Added libtool
+	support files.
+
+	* configure.in: Call AC_PROG_LIBTOOL and AC_DISABLE_STATIC.
+
+	* .cvsignore: Added libtool.
+
+Wed May 10 19:17:24 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in: Print configuration message, check for ranlib.
+
+Wed May 10 19:16:43 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nget.c (main): Allow output to stdout.
+
+Wed May 10 19:15:56 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.in: Added shared, install* targets
+
+Wed May 10 17:47:30 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nget.c (pretty_progress_bar): New function, from
+	cadaver.
+
+Wed May 10 14:42:45 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* example/nget.c: New file.
+
+Wed May 10 14:41:39 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* configure.in, Makefile.in, .cvsignore, install-sh: New files.

@@ -1,0 +1,28 @@
+# m32r testcase for addv3 $dr,$sr,#$simm16
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global addv3
+addv3:
+	mvi_h_condbit 0
+	mvi_h_gr r4, 1
+	mvi_h_gr r5, 1
+
+	addv3 r4, r5, #2
+
+	bc not_ok
+
+	test_h_gr r4, 3
+
+	mvi_h_gr r5, 0x7fff8001
+
+	addv3 r4, r5, #0x7fff
+
+	bnc not_ok
+
+	pass
+not_ok:
+	fail

@@ -1,0 +1,140 @@
+    <sect1 id="using">
+      <title>How to use neon from your application</title>
+
+      <para>This section describes how to add &neon; support to an
+      application.  If you just want to quickly try out &neon;, use
+      the <xref linkend="refconfig"/> script.</para>
+
+      <para>The &neon; source code is designed to be easily embedded
+      into an application source tree.  &neon; has no dependencies on
+      libraries other than an SSL toolkit and XML parser, though the
+      source tree can be configured to have no support for SSL or XML
+      if desired.  To configure the &neon; source code some <ulink
+      url="http://www.gnu.org/software/autoconf/">GNU autoconf</ulink>
+      macros are supplied, which can be used in a number of ways, as
+      follows:</para>
+      
+      <itemizedlist>
+	<listitem>
+	  
+	  <para>autoconf macros are distributed in the 'macros'
+	  subdirectory of the neon distribution.  Use the NEON_LIBRARY
+	  macro from your configure.in to check for the presence of
+	  the neon library installed on the system.  The macro adds an
+	  '--with-neon=...'  argument to configure, which allows the
+	  user to specify a location for the library (the standard
+	  /usr and /usr/local directories are checked automatically
+	  without having to be specified).</para></listitem>
+	  
+	  <listitem><para>The 'src' directory of the neon package can be
+	  imported directly into your application, if you do not wish
+	  to add an external dependency.  If you wish to bundle, use
+	  the NEON_BUNDLED macro to configure neon in your application:
+	  here, the neon sources are bundled in a directory called
+	  'libneon':</para>
+	  
+	  <programlisting>NEON_BUNDLED(libneon, ...)</programlisting>
+	  
+	  <para>If your application supports builds where srcdir != builddir,
+	  you should use the NEON_VPATH_BUNDLED macro like this:</para>
+	  
+	  <programlisting>NEON_VPATH_BUNDLED(${srcdir}/libneon, libneon, ...)</programlisting>
+	  
+	  <para>If you use this macro, a '--with-included-neon' option
+	  will be added to the generated configure script.  This
+	  allows the user to force the bundled neon to be used in the
+	  application, rather than any neon library found on the
+	  system. If you allow neon to be configured this way, you
+	  must also configure an XML parser. Use the NEON_XML_PARSER
+	  macro to do this.</para></listitem>
+	  
+	  <listitem><para>The final argument to the _BUNDLED macros is a
+	  set of actions which are executed if the bundled build *is*
+	  chosen (rather than an external neon which might have been
+	  found on the user's system).  In here, use either the
+	  NEON_LIBTOOL_BUILD or NEON_NORMAL_BUILD macro to set up the
+	  neon Makefile appropriately: including adding the neon source
+	  directory to the recursive make.</para></listitem>
+	  
+	</itemizedlist>
+	
+	<para>A full fragment might be:</para>
+	
+<programlisting>NEON_BUNDLED(libneon, [
+  NEON_NORMAL_BUILD
+  NEON_XML_PARSER
+  SUBDIRS="libneon $SUBDIRS"
+])</programlisting>
+	
+	<para>This means the bundled neon source directory (called 'libneon')
+	is used if no neon is found on the system, and the standard XML
+	parser search is used.</para>
+	
+      </sect1>
+      
+      <sect1 id="compliance">
+	<title>Standards compliance</title>
+	
+	<para>&neon; is intended to be compliant with the IETF and W3C
+	standards which it implements, with a few exceptions due to
+	practical necessity or interoperability issues.  These
+	exceptions are documented in this section.</para>
+
+	<sect2><title>RFC 2518, HTTP Extensions for Distributed Authoring&mdash;WebDAV</title>
+	
+	<para>&neon; is deliberately not compliant with section
+	23.4.2, and treats property names as a (namespace-URI, name)
+	pair.  This is <ulink
+	url="http://lists.w3.org/Archives/Public/w3c-dist-auth/1999OctDec/0343.html">generally
+	considered</ulink> to be correct behaviour by the WebDAV
+	working group, and is likely to formally adopted in a future
+	revision of the specification.</para></sect2>
+	
+        <sect2><title>RFC 2616, Hypertext Transfer Protocol&mdash;HTTP/1.1</title>
+        
+        <para>There is some confusion in this specification about the
+        use of the <quote>identity</quote>
+        <firstterm>transfer-coding</firstterm>.  &neon; ignores the
+        <literal>Transfer-Encoding</literal> response header if it
+        contains only the (now deprecated) <quote>identity</quote>
+        token, and will determine the response message length as if
+        the header was not present.  &neon; will give an error if a
+        response includes a <literal>Transfer-Encoding</literal>
+        header with a value other than <quote>identity</quote> or
+        <quote>chunked</quote>.</para></sect2>
+
+        <sect2>
+        <title>RFC 2617, HTTP Authentication: Basic and Digest Access Authentication</title>
+
+        <para>&neon; is not strictly compliant with the quoting rules
+        given in the grammar for the <literal>Authorization</literal>
+        header.  The grammar requires that the <literal>qop</literal>
+        and <literal>algorithm</literal> parameters are not quoted,
+        however one widely deployed server implementation
+        (Microsoft&reg; IIS 5) rejects the request if these parameters
+        are not quoted.  &neon; sends these parameters with
+        quotes&mdash;this is not known to cause any problems with
+        other server implementations.</para></sect2>
+
+	<sect2>
+        <title>Namespaces in XML</title>
+
+        <para>The &neon; XML parser interface will accept and parse
+        without error some XML documents which are well-formed
+        according to the XML specification but do not conform to the
+        "Namespaces in XML" specification <xref
+        linkend="bib.xmlnames"/>.  Specifically: the restrictions on
+        the first character of the <literal>NCName</literal> rule are
+        not all implemented; &neon; will allow any
+        <literal>CombiningChar</literal>, <literal>Extender</literal>
+        and some characters from the <literal>Digit</literal> class in
+        this position.</para> </sect2>
+ 
+        <!-- a few RFC2818/3280 issues: rules about when to cache
+        sessions in the face of unclean shutdown are strict, neon is
+        probably not compliant: document or fix.  Likewise SSL
+        shutdown issues in general.  Cert hostname checks allow
+        wildcard "*." syntax which is less than 2818 but more than
+        3280 requires. -->
+
+    </sect1>

@@ -1,0 +1,32 @@
+# frv testcase for fdtoi $FRj,$FRk
+# mach: frv
+# as(frv): -mcpu=frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global fdtoi
+fdtoi:
+	set_fr_iimmed	0,0,fr2
+	set_fr_iimmed	0,0,fr3
+	fdtoi		fr2,fr2
+	test_fr_iimmed	0,fr2
+
+	set_fr_iimmed	0x4000,0x0000,fr2
+	set_fr_iimmed	0x0000,0x0000,fr3
+	fdtoi		fr2,fr2
+	test_fr_iimmed	0x00000002,fr2
+
+	set_fr_iimmed	0xc1c0,0xa920,fr2
+	set_fr_iimmed	0x8880,0x0000,fr3
+	fdtoi		fr2,fr2
+	test_fr_iimmed	0xdeadbeef,fr2
+
+	set_gr_limmed	0x4031,0x0000,gr8
+	set_gr_limmed	0x0000,0x0000,gr9
+	movgfd		gr8,fr0
+	fdtoi		fr0,fr0
+	test_fr_iimmed	17,fr0
+
+	pass

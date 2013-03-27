@@ -1,0 +1,81 @@
+# Copyright 2004, 2007 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# This file is part of the gdb testsuite.
+
+if $tracelevel {
+    strace $tracelevel
+}
+
+# Test PowerPC E500 prologue analyzer.
+
+set prms_id 0
+set bug_id 0
+
+if ![istarget "powerpc-*"] then {
+    verbose "Skipping powerpc E500 prologue tests."
+    return
+}
+
+set testfile "e500-prologue"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {}] != "" } {
+    unsupported "Testcase compile failed."
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# Insert a breakpoint in FUNCTION and verifies that the breakpoint was
+# inserted at the expected location.  EXPECTED_LOCATION should be an
+# offset relative to the function start address.
+proc insert_breakpoint {function expected_location} {
+    global gdb_prompt
+    global expect_out
+    global hex
+    
+    set address ""
+
+    # Insert a breakpoint using the given function name, and extract
+    # the breakpoint address for the output.
+    gdb_test_multiple "break $function" "set breakpoint in $function" {
+        -re "Breakpoint 1 at ($hex).*$gdb_prompt $" {
+            set address $expect_out(1,string)
+        }
+        default {
+            fail "set breakpoint in $function"
+        }
+    }
+
+    # If we managed to get the breakpoing address, then check that
+    # we inserted it at the expected location by examining the
+    # instruction at that address (we're not interested in the insn
+    # itself, but rather at the address printed at the begining of
+    # the instruction).
+    if { $address != "" } then {
+       gdb_test "x /i $address" \
+                ".*<$function\\+$expected_location>.*" \
+                "check $function breakpoint address"
+    } else {
+       fail "unable to compute breakpoint address"
+    }
+
+}
+
+insert_breakpoint "arg_passing_test2" 40

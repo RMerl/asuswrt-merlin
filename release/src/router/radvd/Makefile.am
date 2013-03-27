@@ -8,7 +8,7 @@
 #
 #   The license which is distributed with this software in the file COPYRIGHT
 #   applies to this software. If your distribution is missing this file, you
-#   may request it from <pekkas@netcore.fi>.
+#   may request it from <reubenhwk@gmail.com>.
 #
 
 AUTOMAKE_OPTIONS = 1.2 foreign
@@ -131,5 +131,5 @@ dist-hook:
 	rm -f $(distdir)/gram.h
 	rm -f $(distdir)/scanner.c
 
-scanner.o: gram.h
+scanner.c: gram.h
 

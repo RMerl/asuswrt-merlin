@@ -1,0 +1,194 @@
+# fr30 testcase for
+# mach(): fr30
+#  st $Ri,@$Rj
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global st
+st:
+	mvr_h_gr	sp,r9		; Save stack pointer
+	; Test st $Ri,@Rj
+	mvi_h_gr	0xdeadbeef,r8
+	set_cc          0x0f		; Condition codes should not change
+	st      	r8,@sp
+	test_cc		1 1 1 1
+	test_h_mem	0xdeadbeef,sp
+	test_h_gr	0xdeadbeef,r8
+
+	; Test st $Ri,@(R13,Rj)
+	mvi_h_gr	0xbeefdead,r8
+	mvr_h_gr	sp,r1
+	inci_h_gr	-8,sp
+	mvr_h_gr	sp,r2
+	inci_h_gr	4,sp
+
+	mvi_h_gr	4,r13
+	set_cc          0x0e		; Condition codes should not change
+	st      	r8,@(r13,sp)
+	test_cc		1 1 1 0
+	test_h_mem	0xbeefdead,r1
+	test_h_gr	0xbeefdead,r8
+
+	mvi_h_gr	0,r13
+	set_cc          0x0d		; Condition codes should not change
+	st      	r8,@(r13,sp)
+	test_cc		1 1 0 1
+	test_h_mem	0xbeefdead,sp
+	test_h_gr	0xbeefdead,r8
+
+	mvi_h_gr	-4,r13
+	set_cc          0x0c		; Condition codes should not change
+	st      	r8,@(r13,sp)
+	test_cc		1 1 0 0
+	test_h_mem	0xbeefdead,r2
+	test_h_gr	0xbeefdead,r8
+
+	; Test st $Ri,@(R14,$disp10)
+	mvi_h_gr	0xdeadbeef,r8
+	mvr_h_gr	r9,sp		; Restore stack pointer
+	mvr_h_gr	sp,r14
+	inci_h_gr	-508,r14
+	mvr_h_gr	r14,r2
+	inci_h_gr	-512,r14
+	mvr_h_gr	r14,r3
+	inci_h_gr	512,r14
+
+	set_cc          0x0b		; Condition codes should not change
+	st      	r8,@(r14,508)
+	test_cc		1 0 1 1
+	test_h_mem	0xdeadbeef,r1
+	test_h_gr	0xdeadbeef,r8
+
+	set_cc          0x0a		; Condition codes should not change
+	st      	r8,@(r14,0)
+	test_cc		1 0 1 0
+	test_h_mem	0xdeadbeef,r2
+	test_h_gr	0xdeadbeef,r8
+
+	set_cc          0x09		; Condition codes should not change
+	st      	r8,@(r14,-512)
+	test_cc		1 0 0 1
+	test_h_mem	0xdeadbeef,r3
+	test_h_gr	0xdeadbeef,r8
+
+	; Test st $Ri,@(R15,$udisp6)
+	mvi_h_gr	0xbeefdead,r8
+	mvr_h_gr	r9,sp		; Restore stack pointer
+	inci_h_gr	-60,sp
+
+	set_cc          0x08		; Condition codes should not change
+	st      	r8,@(r15,60)
+	test_cc		1 0 0 0
+	test_h_mem	0xbeefdead,r9
+	test_h_gr	0xbeefdead,r8
+
+	set_cc          0x07		; Condition codes should not change
+	st      	r8,@(r15,0)
+	test_cc		0 1 1 1
+	test_h_mem	0xbeefdead,r9
+	test_h_gr	0xbeefdead,r8
+
+	; Test st $Ri,@-R15
+	mvr_h_gr	r9,sp		; Restore stack pointer
+	mvr_h_gr	r9,r10
+
+	set_cc          0x06		; Condition codes should not change
+	st      	r15,@-r15
+	test_cc		0 1 1 0
+	testr_h_mem	r9,sp		; original value stored
+	inci_h_gr	-4,r10
+	testr_h_gr	r10,sp		; was decremented
+
+	mvi_h_gr	0xdeadbeef,r8
+	set_cc          0x05		; Condition codes should not change
+	st      	r8,@-r15
+	test_cc		0 1 0 1
+	test_h_mem	0xdeadbeef,sp
+	test_h_gr	0xdeadbeef,r8
+	inci_h_gr	-4,r10
+	testr_h_gr	r10,sp		; was decremented
+
+	; Test st $Rs,@-R15
+	mvr_h_gr	r9,sp		; Restore stack pointer
+	mvr_h_gr	r9,r10
+	mvi_h_dr	0xbeefdead,tbr
+	mvi_h_dr	0xdeadbeef,rp
+	mvi_h_dr	0x0000dead,mdh
+	mvi_h_dr	0xbeef0000,mdl
+
+	set_cc          0x04		; Condition codes should not change
+	st      	tbr,@-r15
+	test_cc		0 1 0 0
+	test_h_mem	0xbeefdead,sp
+	inci_h_gr	-4,r10
+	testr_h_gr	r10,sp		; was decremented
+
+	set_cc          0x03		; Condition codes should not change
+	st      	rp,@-r15
+	test_cc		0 0 1 1
+	test_h_mem	0xdeadbeef,sp
+	inci_h_gr	-4,r10
+	testr_h_gr	r10,sp		; was decremented
+
+	set_cc          0x02		; Condition codes should not change
+	st      	mdh,@-r15
+	test_cc		0 0 1 0
+	test_h_mem	0x0000dead,sp
+	inci_h_gr	-4,r10
+	testr_h_gr	r10,sp		; was decremented
+
+	set_cc          0x01		; Condition codes should not change
+	st      	mdl,@-r15
+	test_cc		0 0 0 1
+	test_h_mem	0xbeef0000,sp
+	inci_h_gr	-4,r10
+	testr_h_gr	r10,sp		; was decremented
+
+	mvr_h_gr	sp,usp
+	set_s_user
+	set_cc          0x00		; Condition codes should not change
+	st      	ssp,@-r15
+	test_cc		0 0 0 0
+	testr_h_mem	r10,sp
+	inci_h_gr	-4,r10
+	testr_h_gr	r10,sp		; was decremented
+
+	set_cc          0x00		; Condition codes should not change
+	st      	usp,@-r15
+	test_cc		0 0 0 0
+	testr_h_mem	r10,sp		; original value stored
+	inci_h_gr	-4,r10
+	testr_h_gr	r10,sp		; was decremented
+
+	mvr_h_gr	sp,ssp
+	set_s_system
+	set_cc          0x00		; Condition codes should not change
+	st      	usp,@-r15
+	test_cc		0 0 0 0
+	testr_h_mem	r10,sp
+	inci_h_gr	-4,r10
+	testr_h_gr	r10,sp		; was decremented
+
+	set_cc          0x00		; Condition codes should not change
+	st      	ssp,@-r15
+	test_cc		0 0 0 0
+	testr_h_mem	r10,sp		; original value stored
+	inci_h_gr	-4,r10
+	testr_h_gr	r10,sp		; was decremented
+
+	; Test st $PS,@-R15
+	mvr_h_gr	r9,sp		; Restore stack pointer
+	mvr_h_gr	r9,r10
+
+	set_cc          0x0f		; Condition codes affect result
+	set_dbits	3		; Division bits affect result
+	st      	ps,@-r15
+	test_cc		1 1 1 1
+	test_h_mem	0x0000060f,sp
+	inci_h_gr	-4,r10
+	testr_h_gr	r10,sp		; was decremented
+
+	pass

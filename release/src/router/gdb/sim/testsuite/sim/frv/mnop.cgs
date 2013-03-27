@@ -1,0 +1,12 @@
+# frv testcase for mnop
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mnop
+mnop:
+	mnop
+
+	pass

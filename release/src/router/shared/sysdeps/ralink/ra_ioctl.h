@@ -9,6 +9,12 @@
 #define RAETH_ESW_INGRESS_RATE		0x89F5
 #define RAETH_ESW_EGRESS_RATE		0x89F6
 
+/* ASUS Ext */
+#define RAETH_ASUS			0x89FF
+
+/* ASUS Ext sub-command */
+#define RAETH_ASUS_RESET		0x0
+#define RAETH_ASUS_STATS		0x1
 
 /* rt3052 embedded ethernet switch registers */
 #define REG_ESW_VLAN_ID_BASE		0x50
@@ -45,6 +51,13 @@ typedef struct rt335x_esw_reg {
 	unsigned int port;
 	unsigned int bw;/*Mbps*/
 } esw_rate;
+
+typedef struct raeth_asus_data_s {
+	__u32	subcmd;
+	union	{
+		__u32 subdata;
+	};
+} raeth_asus_data_t;
 
 
 #endif

@@ -1,0 +1,47 @@
+# frv testcase for nlddfi @($GRi,$d12),$GRk
+# mach: frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global nlddfi
+nlddfi:
+	set_mem_limmed	0xdead,0xbeef,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xbeef,0xdead,sp
+	set_fr_iimmed	0xdead,0xbeef,fr8
+	set_fr_iimmed	0xbeef,0xdead,fr9
+
+	set_gr_gr	sp,gr20
+	nlddfi 		@(sp,0),fr8
+	test_fr_limmed	0xbeef,0xdead,fr8
+	test_fr_limmed	0xdead,0xbeef,fr9
+	test_spr_limmed	0xc8a0,0x0001,nesr0
+	test_spr_gr	neear0,gr20
+	test_spr_limmed	0x0000,0x0000,fner1
+	test_spr_limmed	0x0000,0x0000,fner0
+
+	set_fr_iimmed	0xdead,0xbeef,fr8
+	set_fr_iimmed	0xbeef,0xdead,fr9
+	inc_gr_immed	-8,sp
+	nlddfi 		@(sp,8),fr8
+	test_fr_limmed	0xbeef,0xdead,fr8
+	test_fr_limmed	0xdead,0xbeef,fr9
+	test_spr_limmed	0xc8a0,0x0401,nesr1
+	test_spr_gr	neear1,gr20
+	test_spr_limmed	0x0000,0x0000,fner1
+	test_spr_limmed	0x0000,0x0000,fner0
+
+	set_fr_iimmed	0xdead,0xbeef,fr8
+	set_fr_iimmed	0xbeef,0xdead,fr9
+	inc_gr_immed	16,sp
+	nlddfi 		@(sp,-8),fr8
+	test_fr_limmed	0xbeef,0xdead,fr8
+	test_fr_limmed	0xdead,0xbeef,fr9
+	test_spr_limmed	0xc8a0,0x0801,nesr2
+	test_spr_gr	neear2,gr20
+	test_spr_limmed	0x0000,0x0000,fner1
+	test_spr_limmed	0x0000,0x0000,fner0
+
+	pass

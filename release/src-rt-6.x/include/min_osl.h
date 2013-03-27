@@ -1,7 +1,7 @@
 /*
  * HND Minimal OS Abstraction Layer.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: min_osl.h 260531 2011-05-19 07:18:56Z $
+ * $Id: min_osl.h 341899 2012-06-29 04:06:38Z $
  */
 
 #ifndef _min_osl_h_
@@ -31,6 +31,10 @@
 extern void caches_on(void);
 extern void blast_dcache(void);
 extern void blast_icache(void);
+#elif defined(__ARM_ARCH_7A__)
+extern void caches_on(void);
+extern void blast_dcache(void);
+extern void blast_icache(void);
 #else /* !mips */
 /* Cache support (or lack thereof) */
 static inline void caches_on(void) { return; };
@@ -43,12 +47,18 @@ static inline void blast_icache(void) { return; };
 extern void assfail(char *exp, char *file, int line);
 #define ASSERT(exp) \
 	do { if (!(exp)) assfail(#exp, __FILE__, __LINE__); } while (0)
+
+#ifdef __ARM_ARCH_7A__
+#define	TRACE_LOC		OSL_UNCACHED(0x18000064)	/* BP access address reg in chipc */
+#else
 #define	TRACE_LOC		OSL_UNCACHED(0x180000d0)	/* BP access address reg in chipc */
+#endif
+
 #define	BCMDBG_TRACE(val)	do {*((uint32 *)TRACE_LOC) = val;} while (0)
 #else
 #define	ASSERT(exp)		do {} while (0)
 #define	BCMDBG_TRACE(val)	do {} while (0)
-#endif
+#endif /* BCMDBG */
 
 /* PCMCIA attribute space access macros */
 #define	OSL_PCMCIA_READ_ATTR(osh, offset, buf, size) \
@@ -133,6 +143,11 @@ extern void *malloc_align(uint size, uint align_bits);
 #ifdef	__mips__
 #define	OSL_UNCACHED(va)	((void *)KSEG1ADDR((ulong)(va)))
 #define	OSL_CACHED(va)		((void *)KSEG0ADDR((ulong)(va)))
+#elif  defined(__ARM_ARCH_7A__)
+#define	OSL_UNCACHED(va)	((void *)(va))
+#define	OSL_CACHED(va)		((void *)(va))
+/* ARM NorthStar */
+#define OSL_CACHE_FLUSH(va, len)	_cfe_flushcache_rang(va, len)
 #else
 #define	OSL_UNCACHED(va)	((void *)(va))
 #define	OSL_CACHED(va)		((void *)(va))

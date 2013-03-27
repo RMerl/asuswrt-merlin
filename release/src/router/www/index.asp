@@ -51,7 +51,7 @@ var usb_path2_index = '<% nvram_get("usb_path2"); %>';
 <% wanlink(); %>
 <% get_printer_info(); %>
 
-var all_disks;
+var all_disks = "";
 var all_disk_interface;
 if(usb_support != -1){
 	all_disks = foreign_disks().concat(blank_disks());
@@ -67,14 +67,28 @@ var networkmap_fullscan = '<% nvram_match("networkmap_fullscan", "0", "done"); %
 var client_list_array = '<% get_client_detail_info(); %>';
 var $j = jQuery.noConflict();	
 
+var _apps_pool_error = '<% apps_fsck_ret(); %>';
+if('<% apps_fsck_ret(); %>' != '')
+	var apps_pool_error = eval(_apps_pool_error);
+else
+	var apps_pool_error = [[""]];
+
+var usb_path1_pool_error = '<% nvram_get("usb_path1_pool_error"); %>';
+var usb_path2_pool_error = '<% nvram_get("usb_path2_pool_error"); %>';
+
+if(all_disks != "")
+        var pool_name = pool_devices();
+
+var wan0_primary = '<% nvram_get("wan0_primary"); %>';
+var wan1_primary = '<% nvram_get("wan1_primary"); %>';	
+
 function initial(){
 	show_menu();
-
 	var isIE6 = navigator.userAgent.search("MSIE 6") > -1;
 	if(isIE6)
-		alert("We've detected that you're using IE6. Please Try Google Chrome, IE7 or higher for best browsing experience.");
+		alert("<#ALERT_TO_CHANGE_BROWSER#>");
 
-	if(psta_support != -1 && sw_mode == 2)
+	if(sw_mode == 4)
 		show_middle_status('<% nvram_get("wlc_auth_mode"); %>', "", 0);		
 	else
 		show_middle_status(document.form.wl_auth_mode_x.value, document.form.wl_wpa_mode.value, parseInt(document.form.wl_wep_x.value));
@@ -109,18 +123,10 @@ function initial(){
 		$("NM_connect_status").style.fontSize = "20px";
 	}
 	else{
-		var ddnsName = decodeURIComponent('<% nvram_char_to_ascii("", "ddns_hostname_x"); %>');
 		$("index_status").innerHTML = '<span style="word-break:break-all;">' + wanlink_ipaddr() + '</span>'
-		if('<% nvram_get("ddns_enable_x"); %>' == '0')
-			$("ddnsHostName").innerHTML = '<a style="color:#FFF;text-decoration:underline;" href="/Advanced_ASUSDDNS_Content.asp?af=ddns_enable_x"><#btn_go#></a>';
-		else if(ddnsName == '')
-			$("ddnsHostName").innerHTML = '<a style="color:#FFF;text-decoration:underline;" href="/Advanced_ASUSDDNS_Content.asp?af=DDNSName">Sign up</a>';
-		else if(ddnsName == isMD5DDNSName())
-			$("ddnsHostName").innerHTML = '<a style="color:#FFF;text-decoration:underline;" href="/Advanced_ASUSDDNS_Content.asp?af=DDNSName">Sign up</a>';
-		else{
-			$("ddnsHostName").innerHTML = '<span style="word-break:break-all;">'+ ddnsName +'</span>';
-		}
 
+		setTimeout("show_ddns_status();", 2000);
+		
 		if(wanlink_ipaddr() == '0.0.0.0' || wanlink_ipaddr() == '')
 			$("wanIP_div").style.display = "none";
 	}
@@ -130,7 +136,39 @@ function initial(){
 		customize_NM_table(NM_table_img);
 		$("bgimg").options[NM_table_img[4]].selected = 1;
 	}
+
 }
+
+function show_ddns_status(){
+	var ddns_enable = '<% nvram_get("ddns_enable_x"); %>';
+	var ddns_server_x = '<% nvram_get("ddns_server_x");%>';
+	var ddnsName = decodeURIComponent('<% nvram_char_to_ascii("", "ddns_hostname_x"); %>');
+
+	$("ddns_fail_hint").className = "notificationoff";
+        if( ddns_enable == '0')
+                $("ddnsHostName").innerHTML = '<a style="color:#FFF;text-decoration:underline;" href="/Advanced_ASUSDDNS_Content.asp?af=ddns_enable_x"><#btn_go#></a>';
+        else if(ddnsName == '')
+                $("ddnsHostName").innerHTML = '<a style="color:#FFF;text-decoration:underline;" href="/Advanced_ASUSDDNS_Content.asp?af=DDNSName">Sign up</a>';
+        else if(ddnsName == isMD5DDNSName())
+                $("ddnsHostName").innerHTML = '<a style="color:#FFF;text-decoration:underline;" href="/Advanced_ASUSDDNS_Content.asp?af=DDNSName">Sign up</a>';
+        else{
+                $("ddnsHostName").innerHTML = '<span>'+ ddnsName +'</span>';
+                if( ddns_enable == '1' ) {
+			if(!((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")) ) //link down
+				$("ddns_fail_hint").className = "notificationon";
+			if( ddns_server_x == 'WWW.ASUS.COM' ) { //ASUS DDNS
+			    if( (ddns_return_code.indexOf('200')==-1) && (ddns_return_code.indexOf('220')==-1) && (ddns_return_code.indexOf('230')==-1))
+				$("ddns_fail_hint").className = "notificationon";
+			}
+			else { //Other ddns service
+			    if(ddns_updated != '1' || ddns_return_code=='unknown_error' || ddns_return_code=="auth_fail")
+                        	$("ddns_fail_hint").className = "notificationon";
+			}
+                }
+	}
+	setTimeout("show_ddns_status();", 2000);
+}
+
 
 var isMD5DDNSName = function(){
 	var macAddr = '<% nvram_get("et0macaddr"); %>'.toUpperCase().replace(/:/g, "");
@@ -139,16 +177,16 @@ var isMD5DDNSName = function(){
 
 function detectUSBStatusIndex(){
 	$j.ajax({
-    		url: '/update_diskinfo.asp',
-    		dataType: 'script',
-    		error: function(xhr){
-    			detectUSBStatusIndex();
-    		},
-    		success: function(){
-			return 0;
-			clickEvent($("iconRouter"));
-			$("statusframe").src = "/device-map/router.asp";
-			show_device();
+    	url: '/update_diskinfo.asp',
+    	dataType: 'script',
+    	error: function(xhr){
+    		detectUSBStatusIndex();
+    	},
+    	success: function(){
+				return 0;
+				clickEvent($("iconRouter"));
+				$("statusframe").src = "/device-map/router.asp";
+				show_device();
   		}
 	});
 }
@@ -162,8 +200,7 @@ function setCookie(color){
 	document.cookie = "NM_table_img=" + color;
 }
 
-function getCookie(c_name)
-{
+function getCookie(c_name){
 	if (document.cookie.length>0){ 
 		c_start=document.cookie.indexOf(c_name + "=");
 		if (c_start!=-1){ 
@@ -285,7 +322,9 @@ function show_device(){
 		case "storage":
 			for(var i = 0; i < all_disks.length; ++i){
 				if(foreign_disk_interface_names()[i] == "1"){
-					disk_html(0, i);	
+					disk_html(0, i);
+					check_status(apps_pool_error, i);
+					check_status2(usb_path1_pool_error, i);
 					break;
 				}
 			}
@@ -310,6 +349,8 @@ function show_device(){
 			for(var i = 0; i < all_disks.length; ++i){
 				if(foreign_disk_interface_names()[i] == "2"){
 					disk_html(1, i);
+					check_status(apps_pool_error, i);
+					check_status2(usb_path2_pool_error, i);
 					break;
 				}
 			}
@@ -346,13 +387,17 @@ function disk_html(device_order, all_disk_order){
 	else
 		disk_model_name = blank_disks()[all_disk_order-foreign_disks().length];
 	
-	icon_html_code += '<a href="device-map/disk.asp" target="statusframe">\n';
+	icon_html_code += '<a target="statusframe">\n';
 
-	if(device_order == 0)
-		icon_html_code += '<div id="iconUSBdisk_'+all_disk_order+'" style="margin-top:20px;" class="iconUSBdisk" onclick="setSelectedDiskOrder(this.id);clickEvent(this);"></div>\n';		
-	else
+	if(device_order == 0){
+		icon_html_code += '<div id="iconUSBdisk_'+all_disk_order+'" style="margin-top:20px;" class="iconUSBdisk" onclick="setSelectedDiskOrder(this.id);clickEvent(this);"></div>\n';
+		icon_html_code += '<div id="ring_USBdisk_'+all_disk_order+'" class="iconUSBdisk" style="display:none;z-index:1;"></div>\n';
+	}
+	else{
 		icon_html_code += '<div id="iconUSBdisk_'+all_disk_order+'" class="iconUSBdisk" onclick="setSelectedDiskOrder(this.id);clickEvent(this);"></div>\n';
-
+		icon_html_code += '<div id="ring_USBdisk_'+all_disk_order+'" class="iconUSBdisk" style="display:none;z-index:1;"></div>\n';
+	}
+	
 	icon_html_code += '</a>\n';
 	
 	dec_html_code += '<div class="formfonttitle_nwm" style="text-shadow: 1px 1px 0px black;text-align:center;margin-top:10px;">'+disk_model_name+'</div>\n';
@@ -454,10 +499,13 @@ function clickEvent(obj){
 	var icon;
 	var stitle;
 	var seat;
-
 	clicked_device_order = -1;
 
 	if(obj.id.indexOf("Internet") > 0){
+		if(dualWAN_support == -1){
+			check_wan_unit();
+		}
+		
 		icon = "iconInternet";
 		stitle = "<#statusTitle_Internet#>";
 		$("statusframe").src = "/device-map/internet.asp";
@@ -472,8 +520,7 @@ function clickEvent(obj){
 	}
 	else if(obj.id.indexOf("USBdisk") > 0){
 		icon = "iconUSBdisk";
-		stitle = "<#statusTitle_USB_Disk#>";
-		$("statusframe").src = "/device-map/disk.asp";
+		stitle = "<#statusTitle_USB_Disk#>";		
 	}
 	else if(obj.id.indexOf("Modem") > 0){
 		seat = obj.id.indexOf("Modem")+5;
@@ -495,11 +542,35 @@ function clickEvent(obj){
 		alert("mouse over on wrong place!");
 
 	if(lastClicked){
-		lastClicked.style.backgroundPosition = '0% 0%';
+		if(lastClicked.id.indexOf("USBdisk") > 0)
+			lastClicked.style.backgroundPosition = '0% -4px';
+		else
+			lastClicked.style.backgroundPosition = '0% 0%';
 	}
 
-	obj.style.backgroundPosition = '0% 101%';
-
+	if(obj.id.indexOf("USBdisk") > 0){	// To control USB icon outter ring's color
+		if(diskUtility_support){
+			for(i=0;i < apps_pool_error.length ; i++){
+				if(pool_name[getSelectedDiskOrder()] == apps_pool_error[i][0]){
+					if(apps_pool_error[i][1] == 1){
+						$("statusframe").src = "/device-map/disk_utility.asp";
+						obj.style.backgroundPosition = '0% -201px';					
+					}	
+					else{
+						$("statusframe").src = "/device-map/disk.asp";	
+						obj.style.backgroundPosition = '0% -103px';
+					}	
+				}		
+			}
+		}
+		else{
+			$("statusframe").src = "/device-map/disk.asp";	
+			obj.style.backgroundPosition = '0% -103px';
+		}		
+	}
+	else
+		obj.style.backgroundPosition = '0% 101%';
+	
 	$('helpname').innerHTML = stitle;	
 	avoidkey = icon;
 	lastClicked = obj;
@@ -516,7 +587,7 @@ function mouseEvent(obj, key){
 	else if(obj.id.indexOf("Client") > 0){
 		if(wan_route_x == "IP_Bridged")
 			return;
-		
+
 		icon = "iconClient";
 	}
 	else if(obj.id.indexOf("USBdisk") > 0)
@@ -568,6 +639,107 @@ function showstausframe(page){
 		page
 	window.open("/device-map/"+page.toLowerCase()+".asp","statusframe");
 }
+
+function check_status(flag, diskOrder){
+	document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/USB_2.png)";	
+	document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -4px';
+	document.getElementById('iconUSBdisk_'+diskOrder).style.position = "absolute";
+	document.getElementById('iconUSBdisk_'+diskOrder).style.marginTop = "0px";
+	if(navigator.appName.indexOf("Microsoft") >= 0)
+		document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "0px";
+	else
+		document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "33px";
+	
+	document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";	
+	document.getElementById('ring_USBdisk_'+diskOrder).style.display = "";
+	
+	if(!diskUtility_support)
+		return true;
+	
+	var i, j, ret;
+	for(i = 0, ret = 0; i < pool_name.length; ++i){
+		for(j = 0; j < flag.length; ++j){
+			if(pool_name[i] == flag[j][0]){
+				ret += parseInt(flag[j][1]);
+			}
+		}
+	}
+
+	if(ret == 0){
+		document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -4px';
+		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 50%';	
+	}
+	else if(ret == 1){
+		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 101%';
+		document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -4px';
+	}
+}
+
+function check_status2(flag, diskOrder){
+	if(!diskUtility_support)
+		return true;
+
+	if(flag == 1){
+		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 101%';
+		document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -4px';		
+	}
+}
+
+function check_wan_unit(){   //To check wan_unit, if USB Modem plug in change wan_unit to 1
+	if(wan0_primary == 1 && document.form.wan_unit.value == 1)
+		change_wan_unit(0);
+	else if(wan1_primary == 1 && document.form.wan_unit.value == 0)
+		change_wan_unit(1);
+}
+function change_wan_unit(wan_unit_flag){
+	document.form.wan_unit.value = wan_unit_flag;	
+	document.form.wl_auth_mode_x.disabled = true;	
+	document.form.wl_wpa_mode.disabled = true;	
+	document.form.wl_wep_x.disabled = true;		
+	FormActions("/apply.cgi", "change_wan_unit", "", "");
+	document.form.submit();
+}
+
+function show_ddns_fail_hint() {
+	var str="";
+
+	if( !((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")) )
+		str = "<#Disconnected#>";
+	else if(ddns_server = 'WWW.ASUS.COM') {
+		if(ddns_return_code == 'register,203')
+                alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '<%nvram_get("ddns_hostname_x");%>' <#LANHostConfig_x_DDNS_alarm_registered#>");
+        	else if(ddns_return_code.indexOf('233')!=-1)
+                	str = "<#LANHostConfig_x_DDNS_alarm_hostname#> '<%nvram_get("ddns_hostname_x");%>' <#LANHostConfig_x_DDNS_alarm_registered_2#> '<%nvram_get("ddns_old_name");%>'.";
+	  	else if(ddns_return_code.indexOf('297')!=-1)
+        		str = "<#LANHostConfig_x_DDNS_alarm_7#>";
+	  	else if(ddns_return_code.indexOf('298')!=-1)
+    			str = "<#LANHostConfig_x_DDNS_alarm_8#>";
+	  	else if(ddns_return_code.indexOf('299')!=-1)
+    			str = "<#LANHostConfig_x_DDNS_alarm_9#>";
+  		else if(ddns_return_code.indexOf('401')!=-1)
+	    		str = "<#LANHostConfig_x_DDNS_alarm_10#>";
+	  	else if(ddns_return_code.indexOf('407')!=-1)
+    			str = "<#LANHostConfig_x_DDNS_alarm_11#>";
+		else if(ddns_return_code.indexOf('-1')!=-1)
+			str = "<#LANHostConfig_x_DDNS_alarm_2#>";
+	  	else if(ddns_return_code =='no_change')
+    			str = "<#LANHostConfig_x_DDNS_alarm_nochange#>";
+	        else if(ddns_return_code == 'Time-out')
+        	        str = "<#LANHostConfig_x_DDNS_alarm_1#>";
+	        else if(ddns_return_code =='unknown_error')
+        	        str = "<#LANHostConfig_x_DDNS_alarm_2#>";
+	  	else if(ddns_return_code =='')
+    			str = "<#LANHostConfig_x_DDNS_alarm_2#>";
+		else if(ddns_return_code =='connect_fail')
+                	str = "<#qis_fail_desc7#>";
+                else if(ddns_return_code =='auth_fail')
+                        str = "<#qis_fail_desc1#>";
+	}
+	else 
+		str = "<#LANHostConfig_x_DDNS_alarm_2#>";
+
+	overlib(str, FIXX, 630, FIXY, 260);
+}
 </script>
 </head>
 
@@ -613,8 +785,8 @@ function showstausframe(page){
 <input type="hidden" name="apps_path" value="">
 <input type="hidden" name="apps_name" value="">
 <input type="hidden" name="apps_flag" value="">
+<input type="hidden" name="wan_unit" value="<% nvram_get("wan_unit"); %>">
 </form>
-
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
 	<td valign="top" width="17">&nbsp;</td>
@@ -647,9 +819,10 @@ function showstausframe(page){
 							<span style="font-size:12px;font-family: Verdana, Arial, Helvetica, sans-serif;">WAN IP:</span>
 							<strong id="index_status" class="index_status" style="font-size:14px;"></strong>
 						</div>
-						<div id="ddnsHostName_div" style="margin-top:5px;">
+						<div id="ddnsHostName_div" style="margin-top:5px;word-break:break-all;word-wrap:break-word;">
 							<span style="font-size:12px;font-family: Verdana, Arial, Helvetica, sans-serif;">DDNS:</span>
-							<strong id="ddnsHostName" class="index_status" style="font-size:14px;"></strong>
+							<strong id="ddnsHostName" class="index_status" style="font-size:14px;"><#QIS_detectWAN_desc2#></strong>
+							<span id="ddns_fail_hint" class="notificationoff" style="position: absolute;margin-top:-5px;" onClick="show_ddns_fail_hint();" onMouseOut="nd();"></span>
 						</div>
 					</td>
 					<td width="40" rowspan="11" valign="top">

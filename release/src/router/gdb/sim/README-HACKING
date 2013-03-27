@@ -1,0 +1,259 @@
+This is a loose collection of notes for people hacking on simulators.
+If this document gets big enough it can be prettied up then.
+
+Contents
+
+- The "common" directory
+- Common Makefile Support
+- TAGS support
+- Generating "configure" files
+- tconfig.in
+- C Language Assumptions
+- "dump" commands under gdb
+
+The "common" directory
+======================
+
+The common directory contains:
+
+- common documentation files (e.g. run.1, and maybe in time .texi files)
+- common source files (e.g. run.c)
+- common Makefile fragment and configury (e.g. Make-common.in, aclocal.m4).
+
+In addition "common" contains portions of the system call support
+(e.g. callback.c, nltvals.def).
+
+Even though no files are built in this directory, it is still configured
+so support for regenerating nltvals.def is present.
+
+Common Makefile Support
+=======================
+
+A common configuration framework is available for simulators that want
+to use it.  The common framework exists to remove a lot of duplication
+in configure.in and Makefile.in, and it also provides a foundation for
+enhancing the simulators uniformly (e.g. the more they share in common
+the easier a feature added to one is added to all).
+
+The configure.in of a simulator using the common framework should look like:
+
+--- snip ---
+dnl Process this file with autoconf to produce a configure script.
+sinclude(../common/aclocal.m4)
+AC_PREREQ(2.5)dnl
+AC_INIT(Makefile.in)
+
+SIM_AC_COMMON
+
+... target specific additions ...
+
+SIM_AC_OUTPUT
+--- snip ---
+
+SIM_AC_COMMON:
+
+- invokes the autoconf macros most often used by the simulators
+- defines --enable/--with options usable by all simulators
+- initializes sim_link_files/sim_link_links as the set of symbolic links
+  to set up
+
+SIM_AC_OUTPUT:
+
+- creates the symbolic links defined in sim_link_{files,links}
+- creates config.h
+- creates the Makefile
+
+The Makefile.in of a simulator using the common framework should look like:
+
+--- snip ---
+# Makefile for blah ...
+# Copyright blah ...
+
+## COMMON_PRE_CONFIG_FRAG
+
+# These variables are given default values in COMMON_PRE_CONFIG_FRAG.
+# We override the ones we need to here.
+# Not all of these need to be mentioned, only the necessary ones.
+# In fact it is better to *not* mention ones if the value is the default.
+
+# List of object files, less common parts.
+SIM_OBJS =
+# List of extra dependencies.
+# Generally this consists of simulator specific files included by sim-main.h.
+SIM_EXTRA_DEPS =
+# List of flags to always pass to $(CC).
+SIM_EXTRA_CFLAGS =
+# List of extra libraries to link with.
+SIM_EXTRA_LIBS =
+# List of extra program dependencies.
+SIM_EXTRA_LIBDEPS =
+# List of main object files for `run'.
+SIM_RUN_OBJS = run.o
+# Dependency of `all' to build any extra files.
+SIM_EXTRA_ALL =
+# Dependency of `install' to install any extra files.
+SIM_EXTRA_INSTALL =
+# Dependency of `clean' to clean any extra files.
+SIM_EXTRA_CLEAN =
+
+## COMMON_POST_CONFIG_FRAG
+
+# Rules need to build $(SIM_OBJS), plus whatever else the target wants.
+
+... target specific rules ...
+--- snip ---
+
+COMMON_{PRE,POST}_CONFIG_FRAG are markers for SIM_AC_OUTPUT to tell it
+where to insert the two pieces of common/Make-common.in.
+The resulting Makefile is created by doing autoconf substitions on
+both the target's Makefile.in and Make-common.in, and inserting
+the two pieces of Make-common.in into the target's Makefile.in at
+COMMON_{PRE,POST}_CONFIG_FRAG.
+
+Note that SIM_EXTRA_{INSTALL,CLEAN} could be removed and "::" targets
+could be used instead.  However, it's not clear yet whether "::" targets
+are portable enough.
+
+TAGS support
+============
+
+Many files generate program symbols at compile time.
+Such symbols can't be found with grep nor do they normally appear in
+the TAGS file.  To get around this, source files can add the comment
+
+/* TAGS: foo1 foo2 */
+
+where foo1, foo2 are program symbols.  Symbols found in such comments
+are greppable and appear in the TAGS file.
+
+Generating "configure" files
+============================
+
+For targets using the common framework, "configure" can be generated
+by running `autoconf'.
+
+To regenerate the configure files for all targets using the common framework:
+
+	$  cd devo/sim
+	$  make -f Makefile.in SHELL=/bin/sh autoconf-common
+
+To add a change-log entry to the ChangeLog file for each updated
+directory (WARNING - check the modified new-ChangeLog files before
+renaming):
+
+	$  make -f Makefile.in SHELL=/bin/sh autoconf-changelog
+	$  more */new-ChangeLog
+	$  make -f Makefile.in SHELL=/bin/sh autoconf-install
+
+In a similar vein, both the configure and config.in files can be
+updated using the sequence:
+
+	$  cd devo/sim
+	$  make -f Makefile.in SHELL=/bin/sh autoheader-common
+	$  make -f Makefile.in SHELL=/bin/sh autoheader-changelog
+	$  more */new-ChangeLog
+	$  make -f Makefile.in SHELL=/bin/sh autoheader-install
+
+To add the entries to an alternative ChangeLog file, use:
+
+	$  make ChangeLog=MyChangeLog ....
+
+
+tconfig.in
+==========
+
+File tconfig.in defines one or more target configuration macros
+(e.g. a tm.h file).  There are very few that need defining.
+For a list of all of them, see common/tconfig.in.
+It contains them all, commented out.
+The intent is that a new port can just copy this file and
+define the ones it needs.
+
+C Language Assumptions
+======================
+
+The programmer may assume that the simulator is being built using an
+ANSI C compiler that supports a 64 bit data type.  Consequently:
+
+	o	prototypes can be used (although using
+		PARAMS() and K&R declarations wouldn't
+		go astray).
+
+	o	If sim-types.h is included, the two
+		types signed64 and unsigned64 are
+		available.
+
+	o	The type `unsigned' is valid.
+
+However, the user should be aware of the following:
+
+	o	GCC's `<number>LL' is NOT acceptable.
+		Microsoft-C doesn't reconize it.
+
+	o	MSC's `<number>i64' is NOT acceptable.
+		GCC doesn't reconize it.
+
+	o	GCC's `long long' MSC's `_int64' can
+		NOT be used to define 64 bit integer data
+		types.
+
+	o	An empty array (eg int a[0]) is not valid.
+
+When building with GCC it is effectivly a requirement that
+--enable-build-warnings=,-Werror be specified during configuration.
+
+"dump" commands under gdb
+=========================
+
+gdbinit.in contains the following
+
+define dump
+set sim_debug_dump ()
+end
+
+Simulators that define the sim_debug_dump function can then have their
+internal state pretty printed from gdb.
+
+FIXME: This can obviously be made more elaborate.  As needed it will be.
+
+Rebuilding nltvals.def
+======================
+
+Checkout a copy of the SIM and LIBGLOSS modules (Unless you've already
+got one to hand):
+
+	$  mkdir /tmp/$$
+	$  cd /tmp/$$
+	$  cvs checkout sim-no-testsuite libgloss-no-testsuite newlib-no-testsuite
+
+Configure things for an arbitrary simulator target (I've d10v for
+convenience):
+
+	$  mkdir /tmp/$$/build
+	$  cd /tmp/$$/build
+	$  /tmp/$$/devo/configure --target=d10v-elf
+
+In the sim/common directory rebuild the headers:
+
+	$  cd sim/common
+	$  make headers
+
+To add a new target:
+
+	devo/sim/common/gennltvals.sh
+
+		Add your new processor target (you'll need to grub
+		around to find where your syscall.h lives).
+
+	devo/sim/<processor>/Makefile.in
+
+		Add the definition:
+
+			``NL_TARGET = -DNL_TARGET_d10v''
+
+		just before the line COMMON_POST_CONFIG_FRAG.
+
+	devo/sim/<processor>/*.[ch]
+
+		Include targ-vals.h instead of syscall.h.
+

@@ -1,0 +1,223 @@
+# Test reading debug information from in object files.
+
+if { [skip_hp_tests] } { continue }
+
+if { ![istarget "hppa*-*-hpux*"] } {
+    verbose "HPUX test ignored for non-hppa targets."
+    return 0
+}
+
+set testfile "test"
+set srcsubdir ${srcdir}/${subdir}/objdbg01
+set toolssubdir ${srcdir}/${subdir}/tools
+set objdbgdir ${objdir}/${subdir}/objdbg01
+set binfile ${objdbgdir}/${testfile}
+set symaddrfile ${toolssubdir}/symaddr
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+if {!$hp_aCC_compiler && !$hp_cc_compiler} {
+  return 0
+}
+
+if { [gdb_compile "${toolssubdir}/test-objdbg.cc" "${objdbgdir}/test-objdbg.o" object "debug c++ {additional_flags=-I${toolssubdir} +objdebug}"] != "" } {
+    untested objdbg01.exp
+    return -1
+}
+
+if { [gdb_compile "${srcsubdir}/x1.cc" "${objdbgdir}/x1.o" object "debug c++ {additional_flags=-I${srcsubdir} +objdebug}"] != "" } {
+    perror "Couldn't compile x1.cc"
+    return -1
+}
+
+if { [gdb_compile "${srcsubdir}/x2.cc" "${objdbgdir}/x2.o" object "debug c++ {additional_flags=-I${srcsubdir} +objdebug}"] != "" } {
+    perror "Couldn't compile x2.cc"
+    return -1
+}
+
+if { [gdb_compile "${srcsubdir}/x3.cc" "${objdbgdir}/x3.o" object "debug c++ {additional_flags=-I${srcsubdir} +objdebug}"] != "" } {
+    perror "Couldn't compile x3.cc"
+    return -1
+}
+
+if { [gdb_compile "${objdbgdir}/x1.o ${objdbgdir}/x2.o ${objdbgdir}/x3.o" "${binfile}0" executable "debug c++ {additional_flags=-I${srcsubdir} +objdebug}"] != "" } {
+    perror "Couldn't compile ${binfile}0"
+    return -1
+}
+
+if {[gdb_compile "${objdbgdir}/x3.o ${objdbgdir}/x2.o ${objdbgdir}/x1.o" "${binfile}1" executable "debug c++ {additional_flags=-I${srcsubdir} +objdebug}"] != "" } {
+    perror "Couldn't compile ${binfile}1"
+    return -1
+}
+
+# Test two executables. The first has x1.cc linked first, the second
+# has x3.cc linked first.  The difference is that in the first one,
+# the Info<PP> instantiation from x1.cc is taken, in the second, its
+# from x3.cc.
+
+for {set filenum 0} {$filenum < 2} {incr filenum 1} {
+
+    # Lets test some commons
+    # Need to restart each to to make sure objects are not loaded
+    # Also cross check the address with what is actually in the
+    #   object file (call the executable ${symaddrfile} to retrieve the
+    #   information).
+
+    set exec_output [lindex [remote_exec build "${symaddrfile} ${binfile}${filenum} acomm"] 1]
+    regsub -all "\[\r\n\]" ${exec_output} "" exec_output
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir ${srcsubdir}
+    gdb_load ${binfile}${filenum}
+    gdb_test "p &acomm" "..* = \\(int \[*\]\\) 0x${exec_output}.*"
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir ${srcsubdir}
+    gdb_load ${binfile}${filenum}
+    gdb_test "b main" "Breakpoint \[0-9\]+ at 0x\[0-9a-f\]+: file ..*/x1.cc, line 20."
+    gdb_test "run" "Starting program:.*Breakpoint \[0-9\]+, main .*/x1.cc:20.*20.*acomm.*=.*1.*"
+    gdb_test "s 1" "21.*"
+    gdb_test "p acomm" ".* = 1.*"
+    gdb_test "p &acomm" "..* = \\(int \[*\]\\) 0x${exec_output}.*"
+
+    # Step through each line.
+    # Do this three times.
+    #   First round:  Test that things are okay after printing commons
+    #                 above.
+    #   Second round: Restart gdb and make sure we can walk through
+    #   Third round:  Do NOT restrart gdb to verify that the debug information
+    #                 was not messed up by loading additional object files from
+    #                 the first run through.
+    for {set i 0} {$i < 3} {incr i 1} {
+        if $i==1 then {
+            gdb_exit
+            gdb_start
+            gdb_reinitialize_dir ${srcsubdir}
+            gdb_load ${binfile}${filenum}
+        }
+        if $i!=2 then {
+            gdb_test "b main" \
+		"Breakpoint \[0-9\]+ at 0x\[0-9a-f\]+: file ..*/x1.cc, line 20."
+        }
+        if $i!=0 then {
+            gdb_test "run" \
+		"Starting program:.*Breakpoint \[0-9\]+, main .*/x1.cc:20.*"
+            gdb_test "s 1" "21.*"
+        }
+        gdb_test "s 1" "Info<PP>::p .*/x3.h:11.*"
+        gdb_test "s 1" "PP::print .*/x2.cc:8.*"
+        gdb_test "s 1" ".*9.*"
+        gdb_test "s 1" "Info<PP>::p .*/x3.h:12.*"
+        gdb_test "s 1" "main .*/x1.cc:22.*"
+        gdb_test "s 1" "foo .*/x3.cc:5.*"
+        gdb_test "s 1" "Info<PP>::p .*/x3.h:11.*"
+        gdb_test "s 1" "PP::print .*/x2.cc:8.*"
+        gdb_test "s 1" ".*9.*"
+        gdb_test "s 1" "Info<PP>::p .*/x3.h:12.*"
+        gdb_test "s 1" "foo .*/x3.cc:6.*"
+        gdb_test "s 1" "Info<QQ>::p .*/x3.h:11.*"
+        gdb_test "s 1" "QQ::print .*/x2.cc:13.*"
+        gdb_test "s 1" ".*14.*"
+        gdb_test "s 1" "Info<QQ>::p .*/x3.h:12.*"
+        gdb_test "s 1" "foo .*/x3.cc:7.*"
+        gdb_test "s 1" "main .*/x1.cc:24.*"
+        gdb_test "s 1" ".*25.*"
+        if [istarget "hppa64-*-*"] {
+            gdb_test "s 1" "0x\[0-9a-f\]+ in .*"
+            gdb_test "c" ".*Program exited normally.*"
+        } else {
+            gdb_test "s 1" "0x\[0-9a-f\]+ in _start .*"
+            gdb_test "s 1" ".*Program exited normally.*"
+        }
+    }
+
+    # Test various ptypes, and combinations of them
+    # Test things multiple times in each set to make sure that the debug
+    #   information did not get messed up.
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir ${srcsubdir}
+    gdb_load ${binfile}${filenum}
+    gdb_test "ptype QQ" "type = (class |)QQ {..*void print( |)..*}.*"
+    gdb_test "ptype PP" "type = (class |)PP {..*void print( |)..*}.*"
+    gdb_test "ptype QQ" "type = (class |)QQ {..*void print( |)..*}.*"
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir ${srcsubdir}
+    gdb_load ${binfile}${filenum}
+    gdb_test "ptype PP" "type = (class |)PP {..*void print( |)..*}.*"
+    gdb_test "ptype QQ" "type = (class |)QQ {..*void print( |)..*}.*"
+    gdb_test "ptype PP" "type = (class |)PP {..*void print( |)..*}.*"
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir ${srcsubdir}
+    gdb_load ${binfile}${filenum}
+    gdb_test "ptype Info<QQ>" "type = (class |)Info<QQ> {..*void p( |)..*}.*"
+    gdb_test "ptype Info<PP>" "type = (class |)Info<PP> {..*void p( |)..*}.*"
+    gdb_test "ptype Info<QQ>" "type = (class |)Info<QQ> {..*void p( |)..*}.*"
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir ${srcsubdir}
+    gdb_load ${binfile}${filenum}
+    gdb_test "ptype Info<PP>" "type = (class |)Info<PP> {..*void p( |)..*}.*"
+    gdb_test "ptype Info<QQ>" "type = (class |)Info<QQ> {..*void p( |)..*}.*"
+    gdb_test "ptype Info<PP>" "type = (class |)Info<PP> {..*void p( |)..*}.*"
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir ${srcsubdir}
+    gdb_load ${binfile}${filenum}
+    gdb_test "ptype Info" "type = template <..*> (class |)Info {..*}.*"
+    gdb_test "ptype Info<PP>" "type = (class |)Info<PP> {..*void p( |)..*}.*"
+    gdb_test "ptype Info<QQ>" "type = (class |)Info<QQ> {..*void p( |)..*}.*"
+    gdb_test "ptype Info" "type = template <..*> (class |)Info {..*}.*"
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir ${srcsubdir}
+    gdb_load ${binfile}${filenum}
+    gdb_test "ptype class QQ" "type = (class |)QQ {..*void print( |)..*}.*"
+    gdb_test "ptype class PP" "type = (class |)PP {..*void print( |)..*}.*"
+    gdb_test "ptype class QQ" "type = (class |)QQ {..*void print( |)..*}.*"
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir ${srcsubdir}
+    gdb_load ${binfile}${filenum}
+    gdb_test "ptype class PP" "type = (class |)PP {..*void print( |)..*}.*"
+    gdb_test "ptype class QQ" "type = (class |)QQ {..*void print( |)..*}.*"
+    gdb_test "ptype class PP" "type = (class |)PP {..*void print( |)..*}.*"
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir ${srcsubdir}
+    gdb_load ${binfile}${filenum}
+    gdb_test "ptype class Info<QQ>" \
+	"type = (class |)Info<QQ> {..*void p( |)..*}.*"
+    gdb_test "ptype class Info<PP>" \
+	"type = (class |)Info<PP> {..*void p( |)..*}.*"
+    gdb_test "ptype class Info<QQ>" \
+	"type = (class |)Info<QQ> {..*void p( |)..*}.*"
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir ${srcsubdir}
+    gdb_load ${binfile}${filenum}
+    gdb_test "ptype class Info<PP>" \
+	"type = (class |)Info<PP> {..*void p( |)..*}.*"
+    gdb_test "ptype class Info<QQ>" \
+	"type = (class |)Info<QQ> {..*void p( |)..*}.*"
+    gdb_test "ptype class Info<PP>" \
+	"type = (class |)Info<PP> {..*void p( |)..*}.*"
+}
+

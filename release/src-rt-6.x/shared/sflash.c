@@ -1,7 +1,7 @@
 /*
  * Broadcom SiliconBackplane chipcommon serial flash interface
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: sflash.c 300516 2011-12-04 17:39:44Z $
+ * $Id: sflash.c 345824 2012-07-19 06:29:12Z $
  */
 
 #include <bcm_cfg.h>
@@ -229,6 +229,7 @@ sflash_init(si_t *sih, chipcregs_t *cc)
 	}
 
 	sflash.size = sflash.blocksize * sflash.numblocks;
+	sflash.phybase = SI_FLASH2;
 
 	if (firsttime)
 		printf("Found an %s serial flash with %d %dKB blocks; total size %dMB\n",

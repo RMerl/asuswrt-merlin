@@ -1,0 +1,64 @@
+# Copyright 2005, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was written by Wu Zhou. (woodzltc@cn.ibm.com)
+
+# This file is part of the gdb testsuite.  It contains tests for type-printing
+# and value-printing Fortran derived types.
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set testfile "derived-type"
+set srcfile ${testfile}.f90
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug f77 quiet}] != "" } {
+    untested "Couldn't compile ${srcfile}"
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if ![runto MAIN__] then {
+    perror "couldn't run to breakpoint MAIN__"
+    continue
+}
+
+gdb_test "ptype p" \
+    "type = Type bar.*int4.*\:\: c.*real.*\:\: d.*End Type bar" \
+    "ptype p"
+gdb_test "ptype q" \
+    "type = Type foo.*real.*\:\: a.*Type bar.*int4.*\:\: c.*real.*\:\: d.*End Type bar \:\: x.*character.*\\(7\\) \:\: b.*End Type foo" \
+    "type-printing for derived type"
+
+gdb_breakpoint [gdb_get_line_number "print"]
+gdb_continue_to_breakpoint "print"
+
+gdb_test "print p" "\\$\[0-9\]+ = \\{ 1, 2.375\\}"
+gdb_test "print p%c" "\\$\[0-9\]+ = 1"
+gdb_test "print p%d" "\\$\[0-9\]+ = 2.375"
+gdb_test "print q%a" "\\$\[0-9\]+ = 3.125"
+gdb_test "print q%b" "\\$\[0-9\]+ = \\(.*a.*b.*c.*d.*e.*f.*g.*\\)"
+gdb_test "print q%x%c" "\\$\[0-9\]+ = 1"
+gdb_test "print q%x%d" "\\$\[0-9\]+ = 2.375"
+gdb_test "print q" \
+    "\\$\[0-9\]+ = \\{ 3.125, \\{ 1, 2.375\\}, \\(.*a.*b.*c.*d.*e.*f.*g.*\\)\\}" \
+    "print q"
+

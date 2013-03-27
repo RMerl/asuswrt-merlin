@@ -1,0 +1,121 @@
+<refentry id="refsessflags">
+
+  <refmeta>
+    <refentrytitle>ne_set_session_flag</refentrytitle>
+    <manvolnum>3</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname id="ne_set_session_flag">ne_set_session_flag</refname>
+    <refname id="ne_get_session_flag">ne_get_session_flag</refname>
+    <refpurpose>set and retrieve session flags</refpurpose>
+  </refnamediv>
+  
+  <refsynopsisdiv>
+
+    <funcsynopsis>
+
+      <funcsynopsisinfo>#include &lt;ne_request.h&gt;</funcsynopsisinfo>
+
+      <funcprototype>
+        <funcdef>void <function>ne_set_session_flag</function></funcdef>
+        <paramdef>ne_session *<parameter>sess</parameter></paramdef>
+        <paramdef>ne_session_flag <parameter>flag</parameter></paramdef>
+        <paramdef>int <parameter>value</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>int <function>ne_get_session_flag</function></funcdef>
+        <paramdef>ne_session *<parameter>sess</parameter></paramdef>
+        <paramdef>ne_session_flag <parameter>flag</parameter></paramdef>
+      </funcprototype>
+
+    </funcsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para>The <function>ne_set_session_flag</function> function
+    enables or disables a session flag.  Passing a non-zero
+    <parameter>value</parameter> argument enables the flag, and zero
+    disables it.</para>
+
+    <para>The following flags are defined:</para>
+
+	<variablelist>
+	  <varlistentry>
+            <term><constant>NE_SESSFLAG_PERSIST</constant></term>
+	    <listitem>
+	      <simpara>disable this flag to prevent use of persistent
+	      connections</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+            <term><constant>NE_SESSFLAG_ICYPROTO</constant></term>
+	    <listitem>
+	      <simpara>enable this flag to enable support for non-HTTP
+	      ShoutCast-style "ICY" responses</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+            <term><constant>NE_SESSFLAG_SSLv2</constant></term>
+	    <listitem>
+	      <simpara>disable this flag to disable support for the SSLv2
+	      protocol</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+            <term><constant>NE_SESSFLAG_RFC4918</constant></term>
+	    <listitem>
+	      <simpara>enable this flag to enable support for
+	      RFC4918-only WebDAV features; losing
+	      backwards-compatibility with RFC2518 servers</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+            <term><constant>NE_SESSFLAG_CONNAUTH</constant></term>
+	    <listitem>
+	      <simpara>enable this flag if an RFC-violating
+	      connection-based HTTP authentication scheme is in
+	      use</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+            <term><constant>NE_SESSFLAG_TLS_SNI</constant></term>
+	    <listitem>
+	      <simpara>disable this flag if a server is used
+              which does not correctly support the TLS SNI 
+              extension</simpara>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+            <term><constant>NE_SESSFLAG_EXPECT100</constant></term>
+	    <listitem>
+	      <simpara>enable this flag to enable the request flag
+	      <constant>NE_REQFLAG_EXPECT100</constant> for new
+	      requests</simpara>
+	    </listitem>
+	  </varlistentry>
+
+        </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Return value</title>
+
+    <para>The <function>ne_get_session_flag</function> function
+    returns zero if a flag is disabled, less than zero if the flag is
+    not supported, or greater than zero if the flag is enabled.</para>
+  </refsect1>
+
+  <refsect1>
+    <title>See also</title>
+
+    <para><xref linkend="ne_session_create"/>, <xref
+    linkend="ne_set_request_flag"/>.</para>
+
+  </refsect1>
+
+</refentry>

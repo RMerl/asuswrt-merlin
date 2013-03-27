@@ -1,0 +1,81 @@
+#   Copyright 1988, 1990, 1991, 1992, 1994, 1995, 1996, 1997, 1999, 2007
+#   Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Rob Savoye. (rob@cygnus.com)
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+# Don't try this for remote targets.
+if [is_remote target] then {
+    continue
+}
+
+if [target_info exists noargs] then {
+    verbose "Skipping term.exp because of noargs."
+    return
+}
+
+gdb_start
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+set testfile "run"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested term.exp
+     return -1
+}
+
+gdb_exit
+gdb_start
+delete_breakpoints
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+gdb_test "set print sevenbit-strings" "" "test set print sevenbit-strings"
+gdb_test "set print address off" "" "test set print address off"
+gdb_test "set width 0" "" "test set width 0"
+gdb_test "info terminal" "No saved terminal information.*" "test info terminal"
+gdb_run_cmd 5
+gdb_expect {
+    -re ".*120.*Program exited normally.*$gdb_prompt $" {
+	gdb_test "info terminal" "No saved terminal information.*" "test info terminal #2"
+    }
+    default {
+	fail "term.exp, factorial didn't run to completion for info terminal"
+    }
+}
+
+# In mid-execution
+gdb_breakpoint main
+gdb_run_cmd 5
+gdb_expect {
+    -re ".*Breakpoint \[0-9\]+,.*main.*if .argc != 2.*$gdb_prompt $" {
+	gdb_test "info terminal" "Inferior's terminal status .currently saved by GDB.:.*" "info terminal at breakpoint"
+    }
+    -re ".*$gdb_prompt $"	{ fail "info terminal at breakpoint" }
+    timeout		{ fail "(timeout) info terminal at breakpoint" }
+}

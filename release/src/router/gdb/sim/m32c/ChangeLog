@@ -1,0 +1,69 @@
+2006-06-26  DJ Delorie  <dj@redhat.com>
+
+	* r8c.opc (decode_r8c): Don't bother reading the destination
+	before moving a constant into it.  Fix borrow comparison for SUB.
+
+2006-06-13  Richard Earnshaw  <rearnsha@arm.com>
+
+	* configure: Regenerated.
+
+2006-06-05  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure: Regenerated.
+
+2006-05-31  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure: Regenerated.
+
+2006-03-13  DJ Delorie  <dj@redhat.com>
+
+	* mem.c (mem_put_byte): Hook simulated UART to stdout.
+	(mem_put_hi): Hook in simulated trace port.
+	(mem_get_byte): Hook in simulated uart control port.
+	* opc2c: Be more picky about matching special comments.
+	* r8c.opc (shift_op): Limit shift counts to -16..16.
+	(BMcnd): Map conditional codes.
+	* reg.c (condition_true): Mask condition code to 4 bits.
+	* syscalls.c: Include local syscall.h.
+	* syscall.h: New, copied from libgloss.
+
+2005-10-06  Jim Blandy  <jimb@redhat.com>
+
+	Simulator for Renesas M32C and M16C, by DJ Delorie <dj@redhat.com>,
+	with further work from Jim Blandy <jimb@redhat.com> and
+	Kevin Buettner <kevinb@redhat.com>.
+	
+	* ChangeLog: New.
+	* Makefile.in: New.
+	* blinky.S: New.
+	* config.in: New.
+	* configure: New.
+	* configure.in: New.
+	* cpu.h: New.
+	* gdb-if.c: New.
+	* gloss.S: New.
+	* int.c: New.
+	* int.h: New.
+	* load.c: New.
+	* load.h: New.
+	* m32c.opc: New.
+	* main.c: New.
+	* mem.c: New.
+	* mem.h: New.
+	* misc.c: New.
+	* misc.h: New.
+	* opc2c.c: New.
+	* r8c.opc: New.
+	* reg.c: New.
+	* safe-fgets.c: New.
+	* safe-fgets.h: New.
+	* sample.S: New.
+	* sample.ld: New.
+	* sample2.c: New.
+	* srcdest.c: New.
+	* syscalls.c: New.
+	* syscalls.h: New.
+	* trace.c: New.
+	* trace.h: New.
+
+

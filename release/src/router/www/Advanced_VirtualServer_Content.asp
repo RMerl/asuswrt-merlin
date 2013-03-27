@@ -173,8 +173,6 @@ function change_wizard(o, id){
 		if(document.form.KnownApps.options[1].selected == 1){
 				if(parent.usb_support == -1){
 						document.form.vts_port_x_0.value = "21";
-				}else{
-						//document.form.vts_port_x_0.value = document.form.vts_ftpport.value;
 				}
 				
 				document.form.vts_lport_x_0.value = "21";

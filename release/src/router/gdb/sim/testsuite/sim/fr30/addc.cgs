@@ -1,0 +1,50 @@
+# fr30 testcase for addc $Rj,$Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global add
+add:
+	mvi_h_gr   	1,r7
+	mvi_h_gr   	2,r8
+	set_cc          0x0e		; Make sure carry bit is off
+	addc      	r7,r8
+	test_cc		0 0 0 0
+	test_h_gr  	3,r8
+
+	mvi_h_gr   	0x7fffffff,r7
+	mvi_h_gr   	1,r8
+	set_cc          0x04		; Make sure carry bit is off
+	addc		r7,r8
+	test_cc		1 0 1 0
+	test_h_gr  	0x80000000,r8
+
+	set_cc          0x08		; Make sure carry bit is off
+	addc		r8,r8
+	test_cc		0 1 1 1
+	test_h_gr  	0,r8
+
+	mvi_h_gr   	1,r7
+	mvi_h_gr   	2,r8
+	set_cc          0x0f		; Make sure carry bit is on
+	addc      	r7,r8
+	test_cc		0 0 0 0
+	test_h_gr  	4,r8
+
+	mvi_h_gr   	0x7fffffff,r7
+	mvi_h_gr   	0,r8
+	set_cc          0x05		; Make sure carry bit is on
+	addc		r7,r8
+	test_cc		1 0 1 0
+	test_h_gr  	0x80000000,r8
+
+	mvi_h_gr   	0x7fffffff,r7
+	set_cc          0x0b		; Make sure carry bit is on
+	addc		r7,r8
+	test_cc		0 1 0 1;
+	test_h_gr  	0,r8
+
+	pass

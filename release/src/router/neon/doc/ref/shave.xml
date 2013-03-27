@@ -1,0 +1,52 @@
+    <refentry id="refshave">
+
+      <refmeta>
+	<refentrytitle>ne_shave</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname>ne_shave</refname>
+	<refpurpose>trim whitespace from a string</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_string.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>char *<function>ne_shave</function></funcdef>
+	    <paramdef>char *<parameter>str</parameter></paramdef>
+	    <paramdef>const char *<parameter>whitespace</parameter></paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para><function>ne_shave</function> returns a portion of
+<parameter>str</parameter> with any leading or trailing characters in
+the <parameter>whitespace</parameter> array removed.
+<parameter>str</parameter> may be modified.  Note that the return
+value may not be equal to <parameter>str</parameter>.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Examples</title>
+
+	<para>The following code segment will output
+	<literal>"fish"</literal>:</para>
+	
+	<programlisting>char s[] = ".!.fish!.!";
+puts(ne_shave(s, ".!"));</programlisting>
+
+      </refsect1>
+
+    </refentry>
+

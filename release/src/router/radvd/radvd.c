@@ -9,7 +9,7 @@
  *
  *   The license which is distributed with this software in the file COPYRIGHT
  *   applies to this software. If your distribution is missing this file, you
- *   may request it from <pekkas@netcore.fi>.
+ *   may request it from <reubenhwk@gmail.com>.
  *
  */
 
@@ -664,6 +664,13 @@ sigint_handler(int sig)
 	}
 }
 
+void sigusr1_handler(int sig)
+{
+	/* Linux has "one-shot" signals, reinstall the signal handler */
+	signal(SIGUSR1, sigusr1_handler);
+
+	sigusr1_received = 1;
+}
 
 void reset_prefix_lifetimes(void)
 {
@@ -693,15 +700,6 @@ void reset_prefix_lifetimes(void)
 		
 	}
 
-}
-
-void sigusr1_handler(int sig)
-{
-
-	/* Linux has "one-shot" signals, reinstall the signal handler */
-	signal(SIGUSR1, sigusr1_handler);
-
-	sigusr1_received = 1;
 }
 
 int

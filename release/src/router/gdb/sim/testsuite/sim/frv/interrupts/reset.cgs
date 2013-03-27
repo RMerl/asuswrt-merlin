@@ -1,0 +1,81 @@
+# frv testcase to generate reset interrupts
+# mach: fr500 fr550 fr400
+# sim: --memory-region 0xff000000,64
+
+	.include "testutils.inc"
+
+	start
+
+	.global reset
+reset:
+	and_spr_immed	0xfffffffb,psr	; turn off PSR.S
+	set_gr_immed	0xfeff0500,gr10	; address of reset register
+	set_spr_immed	0x7fffffff,lcr
+	set_bctrlr_0_0  gr0
+
+; Can't recover from hardware interrupt with enough state intact to verify it
+;	set_spr_addr	ok1,lr
+;	set_mem_immed	0x3,gr10	; cause hardware reset
+;	dcf		@(gr10,gr0)	; Wait for store to happen
+;	fail
+;
+;ok1:	; reset should branch to reset address which should then branch here
+;	test_mem_immed	0x00000200,gr10
+;	set_spr_addr	ok2,lr
+;	set_mem_immed	0x2,gr10	; cause hardware reset
+;	dcf		@(gr10,gr0)	; Wait for store to happen
+;	fail
+;	
+ok2:	; reset should branch to reset address which should then branch here
+;	test_mem_immed	0x00000200,gr10
+	set_spr_addr	ok3,lr
+	set_mem_immed	0x1,gr10	; cause software reset
+	dcf		@(gr10,gr0)	; Wait for store to happen
+	fail
+	
+ok3:	; reset should branch to reset address which should then branch here
+	test_mem_immed	0x00000100,gr10
+	test_spr_bits	0x4,2,1,psr	; psr.s is set
+	test_spr_bits	0x2,1,0,psr	; psr.ps not set
+	set_spr_addr	bad,lr
+	set_mem_immed	0x0,gr10	; no reset
+	test_mem_immed	0x0,gr10
+
+	; now retest with HSR0.SA set
+	set_mem_immed	0,gr0
+	set_gr_addr	0xff000000,gr11
+	set_bctrlr_0_0  gr11
+	or_spr_immed	0x00001000,hsr0	; set HSR0.SA
+
+; Can't recover from hardware interrupt with enough state intact to verify it
+;	set_spr_addr	ok4,lr
+;	dcf		@(gr10,gr0)	; Wait for store to happen
+;	set_mem_immed	0x3,gr10	; cause hardware reset
+;	fail
+;
+;ok4:	; reset should branch to reset address which should then branch here
+;	test_mem_immed	0x00000200,gr10
+;	set_spr_addr	ok5,lr
+;	set_mem_immed	0x2,gr10	; cause hardware reset
+;	dcf		@(gr10,gr0)	; Wait for store to happen
+;	fail
+;	
+ok5:	; reset should branch to reset address which should then branch here
+;	test_mem_immed	0x00000200,gr10
+	set_spr_addr	ok6,lr
+	set_mem_immed	0x1,gr10	; cause software reset
+	dcf		@(gr10,gr0)	; Wait for store to happen
+	fail
+	
+ok6:	; reset should branch to reset address which should then branch here
+	test_mem_immed	0x00000100,gr10
+	test_spr_bits	0x4,2,1,psr	; psr.s is set
+	test_spr_bits	0x2,1,1,psr	; psr.ps is set
+	set_spr_addr	bad,lr
+	set_mem_immed	0x0,gr10	; no reset
+	test_mem_immed	0x0,gr10
+
+	pass
+
+bad:	; Should never get here
+	fail

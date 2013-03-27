@@ -1,0 +1,9 @@
+# Host: GNU/Linux x86-64
+NATDEPFILES= inf-ptrace.o fork-child.o \
+	i386-nat.o amd64-nat.o amd64-linux-nat.o linux-nat.o \
+	proc-service.o linux-thread-db.o gcore.o  linux-fork.o
+NAT_FILE= nm-linux64.h
+
+# The dynamically loaded libthread_db needs access to symbols in the
+# gdb executable.
+LOADLIBES = -ldl -rdynamic

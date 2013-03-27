@@ -24,7 +24,7 @@ install: all
 ifeq ($(RTN66U), y)
 	install -D icon.RT-N66U.ico $(INSTALLDIR)/rom/etc/icon.ico
 	install -D icon.large.RT-N66U.ico $(INSTALLDIR)/rom/etc/icon.large.ico
-else ifeq ($(RTN56U), y)
+else ifeq ($(RTN56U)$(RTN65U), y)
 	install -D icon.RT-N56U.ico $(INSTALLDIR)/rom/etc/icon.ico
 	install -D icon.large.RT-N56U.ico $(INSTALLDIR)/rom/etc/icon.large.ico
 else ifeq ($(DSLN55U), y)

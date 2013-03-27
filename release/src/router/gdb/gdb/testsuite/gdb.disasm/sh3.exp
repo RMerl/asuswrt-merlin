@@ -1,0 +1,123 @@
+# Copyright (C) 1992, 1997, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Jeff Law. (law@cs.utah.edu)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+if ![istarget "sh3*-*-*"] {
+    verbose "Tests ignored for all but sh3 based targets."
+    return
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "sh3"
+set srcfile ${srcdir}/${subdir}/${testfile}.s
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcfile}" "${binfile}" executable ""] != "" } {
+     untested sh3.exp
+     return -1
+}
+
+proc all_fp_move_and_load_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/9i fp_move_and_load_tests\n"
+    gdb_expect {
+	-re "
+.*fmov.s\t@r0,fr0.*
+.*fmov.s\tfr0,@r0.*
+.*fmov.s\t@r0\\+,fr0.*
+.*fmov.s\tfr0,@-r0.*
+.*fmov.s\t@\\(r0,r0\\),fr0.*
+.*fmov.s\tfr0,@\\(r0,r0\\).*
+.*fmov\tfr0,fr1.*
+.*fldi0\tfr0.*
+.*fldi1\tfr0.*
+.*$gdb_prompt $" { pass "fp_move_and_load_tests" }
+	-re "$gdb_prompt $" { fail "fp_move_and_load_tests" }
+	timeout { fail "(timeout) fp_move_and_load_tests" }
+    }
+}
+
+proc all_fp_arithmetic_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/13i fp_arithmetic_tests\n"
+    gdb_expect {
+	-re "
+.*fadd\tfr0,fr1.*
+.*fsub\tfr0,fr1.*
+.*fmul\tfr0,fr1.*
+.*fdiv\tfr0,fr1.*
+.*fmac\tfr0,fr0,fr1.*
+.*fcmp/eq\tfr0,fr1.*
+.*fcmp/gt\tfr0,fr1.*
+.*ftst/nan\tfr0.*
+.*fneg\tfr0.*
+.*fabs\tfr0.*
+.*fsqrt\tfr0.*
+.*float\tfpul,fr0.*
+.*ftrc\tfr0,fpul.*
+.*$gdb_prompt $" { pass "fp_arithmetic_tests" }
+	-re "$gdb_prompt $" { fail "fp_arithmetic_tests" }
+	timeout { fail "(timeout) fp_arithmetic_tests" }
+    }
+}
+
+proc all_fp_misc_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/10i fp_misc_tests\n"
+    gdb_expect {
+	-re "
+.*fsts\tfpul,fr0.*
+.*flds\tfr0,fpul.*
+.*lds\tr3,fpul.*
+.*lds\\.l\t@r3\\+,fpul.*
+.*lds\tr3,fpscr.*
+.*lds\\.l\t@r3\\+,fpscr.*
+.*sts\tfpul,r3.*
+.*sts\\.l\tfpul,@-r3.*
+.*sts\tfpscr,r3.*
+.*sts\\.l\tfpscr,@-r3.*
+.*$gdb_prompt $" { pass "fp_misc_tests" }
+	-re "$gdb_prompt $" { fail "fp_misc_tests" }
+	timeout { fail "(timeout) fp_misc_tests" }
+    }
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+
+all_fp_move_and_load_tests
+all_fp_arithmetic_tests
+all_fp_misc_tests
+

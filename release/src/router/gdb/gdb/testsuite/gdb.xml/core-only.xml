@@ -1,0 +1,3 @@
+<target>
+  <xi:include href="core-regs.xml"/>
+</target>

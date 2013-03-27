@@ -1,7 +1,7 @@
 /*
  * Fundamental constants relating to ICMP Protocol
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmicmp.h 300516 2011-12-04 17:39:44Z $
+ * $Id: bcmicmp.h 329768 2012-04-26 21:33:00Z $
  */
 
 #ifndef _bcmicmp_h_
@@ -28,6 +28,8 @@
 /* This marks the start of a packed structure section. */
 #include <packed_section_start.h>
 
+#define ICMP_TYPE_ECHO_REQUEST	8	/* ICMP type echo request */
+#define ICMP_TYPE_ECHO_REPLY		0	/* ICMP type echo reply */
 
 #define ICMP_CHKSUM_OFFSET	2	/* ICMP body checksum offset */
 

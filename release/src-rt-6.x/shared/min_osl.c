@@ -2,7 +2,7 @@
  * Initialization and support routines for self-booting compressed
  * image.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: min_osl.c 300516 2011-12-04 17:39:44Z $
+ * $Id: min_osl.c 341899 2012-06-29 04:06:38Z $
  */
 
 #include <typedefs.h>
@@ -146,6 +146,319 @@ blast_icache(void)
 		start += __ic_lsize;
 	}
 }
+
+#elif defined(__ARM_ARCH_7A__)
+
+static uint8 loader_pagetable_array[128*1024+16384];
+
+typedef volatile struct scu_reg_struct_t {
+	uint32 control;
+	uint32 config;
+	uint32 cpupwrstatus;
+	uint32 invalidate;
+	uint32 rsvd1[4];
+	uint32 rsvd2[4];
+	uint32 rsvd3[4];
+	uint32 filtstart;
+	uint32 filtend;
+	uint32 rsvd4[2];
+	uint32 sac;
+	uint32 snsac;
+} scu_reg_struct;
+
+typedef volatile struct l2cc_reg_struct_t {
+	uint32 cache_id;
+	uint32 cache_type;
+	uint32 rsvd1[62];
+	uint32 control;	/* 0x100 */
+	uint32 aux_control;
+	uint32 tag_ram_control;
+	uint32 data_ram_control;
+	uint32 rsvd2[60];
+	uint32 ev_counter_ctrl;	/* 0x200 */
+	uint32 ev_counter1_cfg;
+	uint32 ev_counter0_cfg;
+	uint32 ev_counter1;
+	uint32 ev_counter0;
+	uint32 int_mask;
+	uint32 int_mask_status;
+	uint32 int_raw_status;
+	uint32 int_clear;
+	uint32 rsvd3[55];
+	uint32 rsvd4[64]; /* 0x300 */
+	uint32 rsvd5[64]; /* 0x400 */
+	uint32 rsvd6[64]; /* 0x500 */
+	uint32 rsvd7[64]; /* 0x600 */
+	uint32 rsvd8[12]; /* 0x700 - 0x72F */
+	uint32 cache_sync; /* 0x730 */
+	uint32 rsvd9[15];
+	uint32 inv_pa; /* 0x770 */
+	uint32 rsvd10[2];
+	uint32 inv_way; /* 0x77C */
+	uint32 rsvd11[12];
+	uint32 clean_pa; /* 0x7B0 */
+	uint32 rsvd12[1];
+	uint32 clean_index; /* 0x7B8 */
+	uint32 clean_way;
+	uint32 rsvd13[12];
+	uint32 clean_inv_pa; /* 0x7F0 */
+	uint32 rsvd14[1];
+	uint32 clean_inv_index;
+	uint32 clean_inv_way;
+	uint32 rsvd15[64]; /* 0x800 - 0x8FF */
+	uint32 d_lockdown0; /* 0x900 */
+	uint32 i_lockdown0;
+	uint32 d_lockdown1;
+	uint32 i_lockdown1;
+	uint32 d_lockdown2;
+	uint32 i_lockdown2;
+	uint32 d_lockdown3;
+	uint32 i_lockdown3;
+	uint32 d_lockdown4;
+	uint32 i_lockdown4;
+	uint32 d_lockdown5;
+	uint32 i_lockdown5;
+	uint32 d_lockdown6;
+	uint32 i_lockdown6;
+	uint32 d_lockdown7;
+	uint32 i_lockdown7;
+	uint32 rsvd16[4]; /* 0x940 */
+	uint32 lock_line_en; /* 0x950 */
+	uint32 unlock_way;
+	uint32 rsvd17[42];
+	uint32 rsvd18[64]; /* 0xA00 */
+	uint32 rsvd19[64]; /* 0xB00 */
+	uint32 addr_filtering_start; /* 0xC00 */
+	uint32 addr_filtering_end;
+	uint32 rsvd20[62];
+	uint32 rsvd21[64]; /* 0xD00 */
+	uint32 rsvd22[64]; /* 0xE00 */
+	uint32 rsvd23[16]; /* 0xF00 - 0xF3F */
+	uint32 debug_ctrl; /* 0xF40 */
+	uint32 rsvd24[7];
+	uint32 prefetch_ctrl; /* 0xF60 */
+	uint32 rsvd25[7];
+	uint32 power_ctrl; /* 0xF80 */
+} l2cc_reg_struct;
+
+/* ARM9 Private memory region */
+#define IPROC_PERIPH_BASE		(0x19020000)	/* (IHOST_A9MP_scu_CONTROL) */
+#define IPROC_PERIPH_SCU_REG_BASE	(IPROC_PERIPH_BASE)
+#define IPROC_L2CC_REG_BASE		(IPROC_PERIPH_BASE + 0x2000) /* L2 Cache controller */
+
+/* Structures and bit definitions */
+/* SCU Control register */
+#define IPROC_SCU_CTRL_SCU_EN		(0x00000001)
+#define IPROC_SCU_CTRL_ADRFLT_EN	(0x00000002)
+#define IPROC_SCU_CTRL_PARITY_EN	(0x00000004)
+#define IPROC_SCU_CTRL_SPEC_LNFL_EN	(0x00000008)
+#define IPROC_SCU_CTRL_FRC2P0_EN	(0x00000010)
+#define IPROC_SCU_CTRL_SCU_STNDBY_EN	(0x00000020)
+#define IPROC_SCU_CTRL_IC_STNDBY_EN	(0x00000040)
+
+/*
+ * CR1 bits (CP#15 CR1)
+ */
+#define CR_M	(1 << 0)	/* MMU enable				*/
+#define CR_A	(1 << 1)	/* Alignment abort enable		*/
+#define CR_C	(1 << 2)	/* Dcache enable			*/
+#define CR_W	(1 << 3)	/* Write buffer enable			*/
+#define CR_P	(1 << 4)	/* 32-bit exception handler		*/
+#define CR_D	(1 << 5)	/* 32-bit data address range		*/
+#define CR_L	(1 << 6)	/* Implementation defined		*/
+#define CR_B	(1 << 7)	/* Big endian				*/
+#define CR_S	(1 << 8)	/* System MMU protection		*/
+#define CR_R	(1 << 9)	/* ROM MMU protection			*/
+#define CR_F	(1 << 10)	/* Implementation defined		*/
+#define CR_Z	(1 << 11)	/* Implementation defined		*/
+#define CR_I	(1 << 12)	/* Icache enable			*/
+#define CR_V	(1 << 13)	/* Vectors relocated to 0xffff0000	*/
+#define CR_RR	(1 << 14)	/* Round Robin cache replacement	*/
+#define CR_L4	(1 << 15)	/* LDR pc can set T bit			*/
+#define CR_DT	(1 << 16)
+#define CR_IT	(1 << 18)
+#define CR_ST	(1 << 19)
+#define CR_FI	(1 << 21)	/* Fast interrupt (lower latency mode)	*/
+#define CR_U	(1 << 22)	/* Unaligned access operation		*/
+#define CR_XP	(1 << 23)	/* Extended page tables			*/
+#define CR_VE	(1 << 24)	/* Vectored interrupts			*/
+#define CR_EE	(1 << 25)	/* Exception (Big) Endian		*/
+#define CR_TRE	(1 << 28)	/* TEX remap enable			*/
+#define CR_AFE	(1 << 29)	/* Access flag enable			*/
+#define CR_TE	(1 << 30)	/* Thumb exception enable		*/
+
+#define isb() __asm__ __volatile__ ("" : : : "memory")
+#define nop() __asm__ __volatile__("mov\tr0,r0\t@ nop\n\t")
+
+extern void cpu_flush_cache_all(void);
+extern void cpu_inv_cache_all(void);
+
+void flush_cache(unsigned long dummy1, unsigned long dummy2)
+{
+	cpu_flush_cache_all();
+	return;
+}
+
+static void l2cc_init(void)
+{
+	uint32 regval;
+	l2cc_reg_struct *l2cc = (l2cc_reg_struct *)IPROC_L2CC_REG_BASE;
+
+	regval = l2cc->aux_control;
+	regval &= ~(0x000F0000); /* Clear the Way-size and associativity (8 way) */
+	regval |= 0x0A130000;    /* Non-secure interrupt access, Way-size 16KB,
+				    16 way and event monitoring
+				  */
+	l2cc->aux_control = regval;
+	l2cc->tag_ram_control = 0; /* Tag ram latency */
+	l2cc->data_ram_control = 0; /* Data ram latency */
+}
+
+static void l2cc_invalidate(void)
+{
+	l2cc_reg_struct *l2cc = (l2cc_reg_struct *)IPROC_L2CC_REG_BASE;
+
+	/* Invalidate the entire L2 cache */
+	l2cc->inv_way = 0x0000FFFF;
+}
+
+int l2cc_enable(void)
+{
+	int i;
+	l2cc_reg_struct *l2cc = (l2cc_reg_struct *)IPROC_L2CC_REG_BASE;
+
+	l2cc_init();
+	l2cc_invalidate();
+
+	i = 1000;
+	while (l2cc->inv_way && i)
+	{
+		--i;
+	};
+
+	if (i == 0)
+		return (-1);
+
+	/* Clear any pending interrupts from this controller */
+	l2cc->int_clear = 0x1FF;
+
+	/* Enable the L2 */
+	l2cc->control = 0x01;
+
+	/* mem barrier to sync up things */
+	i = 0;
+	asm("mcr p15, 0, %0, c7, c10, 4": :"r"(i));
+
+	return 0;
+}
+
+static void cp_delay(void)
+{
+	volatile int i;
+
+	/* copro seems to need some delay between reading and writing */
+	for (i = 0; i < 1000; i++)
+		nop();
+	asm volatile("" : : : "memory");
+}
+
+void
+caches_on(void)
+{
+	int i;
+	uint32 val, *ptb, ptbaddr;
+
+	cpu_inv_cache_all();
+
+	/* Enable I$ */
+	asm("mrc p15, 0, %0, c1, c0, 0	@ get CR" : "=r" (val) : : "cc");
+	cp_delay();
+	val |= CR_I;
+	asm volatile("mcr p15, 0, %0, c1, c0, 0	@ set CR" : : "r" (val) : "cc");
+	isb();
+
+	/* prepare page table for MMU */
+	ptbaddr = (uint32)loader_pagetable_array;
+	/* Round down to next 64 kB limit */
+	ptbaddr += 0x10000;
+	ptbaddr &= ~(0x10000 - 1);
+	ptb = (uint32 *)ptbaddr;
+
+	/* Set up an identity-mapping for all 4GB, rw for everyone */
+	for (i = 0; i < 128; i++) {
+		/* DRAM area: TEX = 0x4, Ap = 3, Domain = 0, C =1, B = 0 */
+		ptb[i] = i << 20 | 0x4c0e;
+	}
+
+	for (i = 128; i < 480; i++) {
+		/* TEX = 0x2(device memory), Ap = 3, Domain = 0, C =0, B = 0 */
+		ptb[i] = i << 20 | 0x0c02;
+	}
+
+	for (i = 480; i < 512; i++) {
+		/* SPI region: TEX = 0x4, Ap = 3, Domain = 0, C =1, B = 0 */
+		ptb[i] = i << 20 | 0x4c0a;
+	}
+
+	for (i = 512; i < 4096; i++) {
+		/* TEX = 0x2(device memory), Ap = 3, Domain = 0, C =0, B = 0 */
+		ptb[i] = i << 20 | 0x2c02;
+	}
+
+	/* Apply page table address to CP15 */
+	asm volatile("mcr p15, 0, %0, c2, c0, 0" : : "r" (ptb) : "memory");
+	/* Set the access control to all-supervisor */
+	asm volatile("mcr p15, 0, %0, c3, c0, 0" : : "r" (~0));
+
+	/* Enable I$ and MMU */
+	asm("mrc p15, 0, %0, c1, c0, 0	@ get CR" : "=r" (val) : : "cc");
+	cp_delay();
+	val |= (CR_C | CR_M);
+	asm volatile("mcr p15, 0, %0, c1, c0, 0	@ set CR" : : "r" (val) : "cc");
+	isb();
+}
+
+void
+blast_dcache(void)
+{
+#ifndef CFG_UNCACHED
+	uint32 val;
+
+	asm("mrc p15, 0, %0, c1, c0, 0	@ get CR" : "=r" (val) : : "cc");
+	cp_delay();
+
+	if ((val & CR_C) != CR_C)
+		return; /* D$ not enabled */
+
+	flush_cache(0, ~0);
+
+	val &= ~(CR_C | CR_M);
+	asm volatile("mcr p15, 0, %0, c1, c0, 0	@ set CR" : : "r" (val) : "cc");
+	isb();
+#endif
+}
+
+void
+blast_icache(void)
+{
+#ifndef CFG_UNCACHED
+	uint32 val;
+
+	asm("mrc p15, 0, %0, c1, c0, 0	@ get CR" : "=r" (val) : : "cc");
+	cp_delay();
+
+	if ((val & CR_I) != CR_I)
+		return; /* I$ not enabled */
+
+	val &= ~CR_I;
+	asm volatile("mcr p15, 0, %0, c1, c0, 0	@ set CR" : : "r" (val) : "cc");
+	isb();
+
+	/* invalidate I-cache */
+	asm("mcr p15, 0, %0, c7, c5, 0": :"r" (0));
+#endif
+}
+
 #endif	/* mips */
 
 /* uart output */
@@ -266,7 +579,11 @@ free(void *where)
 #define	get_cycle_count	get_c0_count
 #elif defined(__arm__) || defined(__thumb__) || defined(__thumb2__)
 #define	get_cycle_count	get_arm_cyclecount
+#ifdef __ARM_ARCH_7A__
+extern long _getticks(void);
+#define get_arm_cyclecount	(uint32)_getticks
 #endif
+#endif /* mips */
 
 uint32
 osl_getcycles(void)
@@ -323,7 +640,11 @@ serial_add(void *regs, uint irq, uint baud_base, uint reg_shift)
 	min_uart.reg_shift = reg_shift;
 
 	/* Set baud and 8N1 */
+#if defined(CFG_SIM) && defined(__ARM_ARCH_7A__)
+	quot = (min_uart.baud_base + 300) / 600;
+#else
 	quot = (min_uart.baud_base + 57600) / 115200;
+#endif
 	serial_out(&min_uart, UART_LCR, UART_LCR_DLAB);
 	serial_out(&min_uart, UART_DLL, quot & 0xff);
 	serial_out(&min_uart, UART_DLM, quot >> 8);

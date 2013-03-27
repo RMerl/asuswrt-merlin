@@ -1,0 +1,16 @@
+# Host: Linux/MIPS
+NAT_FILE= config/nm-linux.h
+NATDEPFILES= inf-ptrace.o fork-child.o mips-linux-nat.o \
+	linux-thread-db.o proc-service.o gcore.o \
+	linux-nat.o linux-fork.o
+
+LOADLIBES = -ldl -rdynamic
+
+TDEP_XML = $(srcdir)/features/mips-cpu.xml \
+	$(srcdir)/features/mips-cp0.xml \
+	$(srcdir)/features/mips-fpu.xml \
+	$(srcdir)/features/mips-linux.xml \
+	$(srcdir)/features/mips64-cpu.xml \
+	$(srcdir)/features/mips64-cp0.xml \
+	$(srcdir)/features/mips64-fpu.xml \
+	$(srcdir)/features/mips64-linux.xml

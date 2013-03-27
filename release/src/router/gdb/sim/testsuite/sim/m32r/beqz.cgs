@@ -1,0 +1,18 @@
+# m32r testcase for beqz $src2,$disp16
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global beqz
+beqz:
+	mvi_h_gr r4, 0
+	beqz r4, ok
+not_ok:
+	fail
+ok:
+	mvi_h_gr r4, 1
+	beqz r4, not_ok
+
+	pass

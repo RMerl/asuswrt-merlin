@@ -1,0 +1,12 @@
+# arm testcase for swp$cond $rd,$rm,[$rn]
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global swp
+swp:
+	swp0 pc,pc,[pc]
+
+	pass

@@ -1799,12 +1799,6 @@ BWL_PRE_PACKED_STRUCT struct wlc_d11rxhdr {
 
 #define HTPHY_MMPLCPLen(rxs)	((((rxs)->PhyRxStatus_1 & PRXS1_HTPHY_MMPLCPLenL_MASK) >> 8) | \
 	(((rxs)->PhyRxStatus_2 & PRXS2_HTPHY_MMPLCPLenH_MASK) << 8))
-/* Get Rx power on core 0 */
-#define HTPHY_RXPWR_ANT0(rxs)	((((rxs)->PhyRxStatus_2) & PRXS2_HTPHY_RXPWR_ANT0) >> 8)
-/* Get Rx power on core 1 */
-#define HTPHY_RXPWR_ANT1(rxs)	(((rxs)->PhyRxStatus_3) & PRXS3_HTPHY_RXPWR_ANT1)
-/* Get Rx power on core 2 */
-#define HTPHY_RXPWR_ANT2(rxs)	((((rxs)->PhyRxStatus_3) & PRXS3_HTPHY_RXPWR_ANT2) >> 8)
 
 /* ucode RxStatus1: */
 #define	RXS_BCNSENT		0x8000

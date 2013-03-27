@@ -20,7 +20,9 @@ all:
 install:
 	@echo " [$(DIR_NAME)] Installing to $(INSTALLDIR)"
 	mkdir -p $(INSTALLDIR)
-	cp -rf prebuilt/* $(INSTALLDIR)/
+	cp -rf prebuild/lib $(INSTALLDIR)/
+	cp -rf prebuild/rom $(INSTALLDIR)/
+	cp -rf prebuild/sbin $(INSTALLDIR)/
 
 clean:
 	echo "$(INSTALLDIR)"

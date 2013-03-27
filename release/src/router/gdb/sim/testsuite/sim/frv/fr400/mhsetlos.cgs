@@ -1,0 +1,25 @@
+# frv testcase for mhsetlos $s12,$FRk
+# mach: all
+
+	.include "../testutils.inc"
+
+	start
+
+	.global mhsetlos
+mhsetlos:
+	set_fr_immed	0,fr1
+	mhsetlos	0,fr1
+	test_fr_iimmed	0,fr1
+	mhsetlos	1,fr1
+	test_fr_iimmed	0x00000001,fr1
+	mhsetlos	0x7ff,fr1
+	test_fr_iimmed	0x000007ff,fr1
+	mhsetlos	-2048,fr1
+	test_fr_iimmed	0x0000f800,fr1
+
+	; Try parallel set of hi and lo at the same time
+	mhsethis.p	1,fr1
+	mhsetlos	2,fr1
+	test_fr_iimmed	0x00010002,fr1
+
+	pass

@@ -1,0 +1,39 @@
+# sh testcase for mabs.l $rm, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global mabsl
+init:
+	pta wrong, tr0
+
+mabsl1:
+	# Pack { 1 3 } into R0.
+	_packl 1, 3, r0
+
+	mabs.l r0, r1
+
+	# Test for { 1 3 } in R0.
+	_packl 1, 3, r2
+	bne r0, r2, tr0
+	
+mabsl2:
+	# Pack { -1, -1 } into R0.
+	_packl 1, 1, r0
+	
+	# Set the left sign bit.
+	movi 1, r1
+	shlli r1, 63, r1
+	or r0, r1, r0
+
+	mabs.l r0, r2
+
+okay:
+	pass
+
+wrong:
+	fail

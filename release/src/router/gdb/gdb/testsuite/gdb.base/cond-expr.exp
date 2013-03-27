@@ -1,0 +1,122 @@
+# Copyright 1998, 1999, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Elena Zannoni (ezannoni@cygnus.com)
+
+# This file is part of the gdb testsuite
+
+#
+# test of evaluation of conditional expressions, with constants and 
+# variables. Using the print and the whatis command
+# written with the only purpose in mind to cover the holes in the
+# eval.c file
+#
+# source file "int-type.c"
+#
+
+
+if $tracelevel then {
+        strace $tracelevel
+}
+
+# Check to see if we have an executable to test.  If not, then either we
+# haven't tried to compile one, or the compilation failed for some reason.
+# In either case, just notify the user and skip the tests in this file.
+
+set testfile "int-type"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
+     untested cond-expr.exp
+     return -1
+    }
+
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+send_gdb "print (2 ? 3 : 4)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 3.*$gdb_prompt $" {
+        pass "print value of cond expr (const true)"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of cond expr (const true)" }
+    timeout           { fail "(timeout) print value of cond expr (const true)" }
+  }
+
+send_gdb "print (0 ? 3 : 4)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 4.*$gdb_prompt $" {
+        pass "print value of cond expr (const false)"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of cond expr (const false)" }
+    timeout           { fail "(timeout) print value of cond expr (const false)" }
+  }
+
+gdb_test "set variable x=14" "" "set variable x=14"
+gdb_test "set variable y=2" "" "set variable y=2"
+gdb_test "set variable z=3" "" "set variable z=3"
+
+send_gdb "print (x ? y : z)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 2.*$gdb_prompt $" {
+        pass "print value of cond expr (var true)"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of cond expr (var true)" }
+    timeout           { fail "(timeout) print value of cond expr (var true)" }
+  }
+
+gdb_test "set variable x=0" "" "set variable x=0"
+
+send_gdb "print (x ? y : z)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 3.*$gdb_prompt $" {
+        pass "print value of cond expr (var false)"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of cond expr (var false)" }
+    timeout           { fail "(timeout) print value of cond expr (var false)" }
+  }
+
+
+send_gdb "whatis (0 ? 3 : 4)\n"
+gdb_expect {
+    -re "type = int.*$gdb_prompt $" {
+        pass "print whatis of cond expr"
+      }
+    -re ".*$gdb_prompt $" { fail "print whatis of cond expr" }
+    timeout           { fail "(timeout) print whatis of cond expr" }
+  }
+
+
+
+
+
+
+
+
+
+
+

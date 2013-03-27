@@ -1,0 +1,89 @@
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldmda_wb
+ldmda_wb:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldmda
+ldmda:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldmdb_wb
+ldmdb_wb:
+
+	pass
+# arm testcase for ldm$cond ..
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldmdb
+ldmdb:
+	ldm0 ..
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldmia_wb
+ldmia_wb:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldmia
+ldmia:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldmib_wb
+ldmib_wb:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldmib
+ldmib:
+
+	pass

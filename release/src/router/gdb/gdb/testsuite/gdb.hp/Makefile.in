@@ -1,0 +1,44 @@
+VPATH = @srcdir@
+srcdir = @srcdir@
+
+SUBDIRS = @subdirs@
+
+all:
+	@echo "Nothing to be done for all..."
+
+info:
+install-info:
+dvi:
+install:
+uninstall: force
+installcheck:
+check:
+
+clean mostlyclean:
+	-rm -f *~ core *.o
+	if [ x"${SUBDIRS}" != x ] ; then \
+	    for dir in ${SUBDIRS}; \
+	    do \
+		    echo "$$dir:"; \
+		    if [ -d $$dir ]; then \
+			    (cd $$dir; $(MAKE) clean); \
+		    fi; \
+	    done ; \
+	else true; fi
+
+distclean maintainer-clean realclean: clean
+	-rm -f Makefile config.status config.log
+	-rm -f *-init.exp
+	-rm -fr *.log summary detail *.plog *.sum *.psum site.*
+	if [ x"${SUBDIRS}" != x ] ; then \
+	    for dir in ${SUBDIRS}; \
+	    do \
+		    echo "$$dir:"; \
+		    if [ -d $$dir ]; then \
+			    (cd $$dir; $(MAKE) distclean); \
+		    fi; \
+	    done ; \
+	else true; fi
+
+Makefile: $(srcdir)/Makefile.in $(srcdir)/configure.in
+	$(SHELL) ./config.status --recheck

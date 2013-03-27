@@ -1,0 +1,34 @@
+# sh testcase for fadd.s $frg, $frh, $frf -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global fadds
+init:
+	pta wrong, tr0
+	movi 2, r0
+	movi 3, r1
+
+fadd0:
+	# Add 2 and 3.
+	fmov.ls r0, fr7
+	float.ls fr7, fr0
+	fmov.ls r1, fr7
+	float.ls fr7, fr1
+	fadd.s fr0, fr1, fr2
+	# Check to make sure we got 5.
+	movi 5, r2
+	fmov.ls r2, fr7
+	float.ls fr7, fr3
+	fcmpeq.s fr2, fr3, r7
+	bnei r7, 1, tr0
+
+okay:	
+	pass
+
+wrong:
+	fail

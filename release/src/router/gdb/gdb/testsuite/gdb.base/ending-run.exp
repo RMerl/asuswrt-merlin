@@ -1,0 +1,321 @@
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# use this to debug:
+#
+#log_user 1
+
+# ending-run.exp -- Expect script to test ending a test run in gdb
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set testfile ending-run
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+remote_exec build "rm -f ${binfile}"
+remote_exec build "rm -f core"
+
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested ending-run.exp
+     return -1
+}
+
+
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# CHFts23469: Test that you can "clear" a bp set at
+# a line _before_ the routine (which will default to the
+# first line in the routine, which turns out to correspond
+# to the prolog--that's another bug...)
+#
+
+gdb_test "b ending-run.c:1" ".*Breakpoint.*ending-run.c, line 1.*" \
+	"bpt at line before routine"
+
+gdb_test "b ending-run.c:13" \
+	".*Note.*also.*Breakpoint 2.*ending-run.c, line 13.*" \
+	"b ending-run.c:13, one"
+
+# Set up to go to the next-to-last line of the program
+#
+gdb_test "b ending-run.c:31" ".*Breakpoint 3.*ending-run.c, line 31.*"
+
+# Expect to hit the bp at line "1", but symbolize this
+# as line "13".  Then try to clear it--this should work.
+#
+gdb_run_cmd
+gdb_test "" ".*Breakpoint.*1.*callee.*13.*" "run"
+
+gdb_test "cle" ".*Deleted breakpoints 2 1.*" "clear worked"
+send_gdb "i b\n"
+gdb_expect {
+    -re ".* breakpoint .* breakpoint .*$gdb_prompt $" { 
+	fail "cleared bp at line before routine" 
+    }
+    -re ".*3.*main.*31.*$gdb_prompt $" { 
+	pass "cleared bp at line before routine" 
+    }
+    -re ".*$gdb_prompt $" { 
+	fail "cleared bp at line before routine (info b)" 
+    }
+}
+
+# Test some other "clear" combinations
+#
+gdb_test "b ending-run.c:1" ".*Breakpoint.*4.*"
+gdb_test "b ending-run.c:13" ".*Note.*also.*Breakpoint.*5.*" "b ending-run.c:13, two"
+gdb_test "cle ending-run.c:13" \
+	".*Deleted breakpoint 5.*" "Only cleared 1 by line"
+
+send_gdb "inf line ending-run.c:13\n"
+gdb_expect {
+    -re ".*address (0x\[0-9a-fA-F]*).*$gdb_prompt $" {
+        set line_eight $expect_out(1,string)
+        gdb_test "b 13" ".*Breakpoint.*6.*"
+        gdb_test "cle *$line_eight" ".*Deleted breakpoints 6 4.*" "Clear 2 by address"
+    }
+    -re ".*$gdb_prompt $" {
+        fail "need to fix test for new compile outcome"
+    }
+}
+
+send_gdb "inf line ending-run.c:14\n"
+gdb_expect {
+    -re ".*address (0x\[0-9a-fA-F]*).*$gdb_prompt $" {
+        set line_nine $expect_out(1,string)
+        gdb_test "b ending-run.c:14" ".*Breakpoint 7.*ending-run.c, line 14.*"
+        gdb_test "b *$line_nine" ".*Note.*also.*Breakpoint 8.*" "Breakpoint 7 at *ending-run.c:14"
+        gdb_test "c" ".*Breakpoint.*7.*callee.*14.*"
+        gdb_test "cle" ".*Deleted breakpoints 8 7.*" "Clear 2 by default"
+    }
+    -re ".*$gdb_prompt $" {
+        fail "need to fix test for new compile outcome"
+    }
+}
+
+send_gdb "i b\n"
+gdb_expect {
+    -re ".* breakpoint .* breakpoint .*$gdb_prompt $" {
+        fail "all set to continue (didn't clear bps)" 
+    }
+    -re ".*3.*main.*31.*$gdb_prompt $" {
+        pass "all set to continue"
+    }
+    -re ".*$gdb_prompt $" {
+        fail "all set to continue (missing bp at end)"
+    }
+}
+
+
+# See if we can step out with control.  The "1 2 3" stuff
+# is output from the program.
+#
+if ![gdb_skip_stdio_test "cont"] {
+    gdb_test "cont" ".*1 2 7 14 23 34 47 62 79.*Breakpoint.*31.*"
+} else {
+    gdb_test "cont" ".*Breakpoint.*31.*"
+}
+
+if ![gdb_skip_stdio_test "Step to return"] {
+    gdb_test "next" ".*Goodbye!.*32.*" \
+	    "Step to return"
+} else {
+    gdb_test "next" "" ""
+}
+
+set old_timeout $timeout
+set timeout 50
+set program_exited 0
+send_gdb "next\n"
+set nexted 0
+gdb_expect {
+    -re "33.*$gdb_prompt $" {
+	# sometimes we stop at the closing brace, if so, do another next
+	if { $nexted } {
+	    fail "step out of main"
+	} else {
+	    set nexted 1
+	    send_gdb "next\n"
+	    exp_continue
+	}
+    }
+    -re ".*Unable to find return pc for this frame.*$gdb_prompt $" {
+	fail "step out of main"
+	gdb_test "n" ".*" ""
+    }
+    -re ".*in.*start.*$gdb_prompt $" { 
+	pass "step out of main"
+    }
+    -re ".*in.*bsp_trap.*$gdb_prompt $" { 
+	pass "step out of main"
+    }
+    -re ".*in.*init.*$gdb_prompt $" { 
+	# This is what happens on sparc64-elf ultra.
+	pass "step out of main"
+    }
+    -re ".*in.*dll_crt0_1.*$gdb_prompt $" {
+	# This is what happens on Cygwin.
+	pass "step out of main"
+    }
+    -re ".*Program exited normally.*$gdb_prompt $" {
+	# This is what happens on Linux i86 (and I would expect others)
+	set program_exited 1
+	pass "step out of main"
+    }
+    -re ".*in .nope ().*$gdb_prompt $" {
+	# This is what happens on Solaris currently -sts 1999-08-25
+	pass "step out of main"
+    }
+    -re ".*in _int_reset ().*$gdb_prompt $" {
+	# This is what happens on Sanyo XStormy16
+	pass "step out of main"
+    }
+    -re ".*init ().*$gdb_prompt $" {
+	# This is what happens on many Mips targets
+	pass "step out of main"
+    }
+    -re ".*in ..change.mode ().*$gdb_prompt $" {
+	# This is what happens on ARM in thumb mode -fn 2000-02-01
+	pass "step out of main"
+    }
+    -re ".*__rt_entry ().*$gdb_prompt $" {
+	# This is what happens on the ARM RVDS runtime
+	pass "step out of main"
+    }
+    -re ".*in.*\\\$START\\\$.*from.*dld.sl.*$gdb_prompt $" { 
+	pass "step out of main"
+    }
+    -re ".*in __wrap__?main ().*$gdb_prompt $" {
+	pass "step out of main"
+    }
+    -re "__setup_argv_for_main (.*).*$gdb_prompt $" {
+	# On sh, another wrapper function (start_l) exists, so
+	# another `next' is necessary.
+	gdb_test "next" ".*in start_l ().*" "step out of main"
+    }
+    -re ".*in.*currently asm.*$gdb_prompt $" { 
+        pass "step out of main"
+    }
+    -re "_*start\[0-9\]* \\(\[^)\]*\\).*$gdb_prompt $" {
+        pass "step out of main"
+    }
+    -re ".*Program received signal SIGTRAP.*$gdb_prompt $" {
+        pass "step out of main"
+    }
+    -re ".*$gdb_prompt $" { fail "step out of main" }
+    timeout { fail "step out of main" }
+}
+
+# When we're talking to a program running on a real stand-alone board,
+# every BSP's exit function behaves differently, so there's no single
+# way to tell whether we've exited gracefully or not.  So don't run
+# these tests when use_gdb_stub is set, or when we're running under Cygmon.
+set program_exited_normally 0
+set program_not_exited 0
+set program_in_exit 0
+if {! [target_info exists use_gdb_stub]
+    && (! [target_info exists use_cygmon] || ! [target_info use_cygmon])} {
+    global program_exited;
+    if {[eval expr $program_exited == 0]} {
+	send_gdb "n\n"
+	gdb_expect {
+	    -re "Program exited normally.*$gdb_prompt $" {
+		# If we actually have debug info for the start function,
+		# then we won't get the "Single-stepping until function
+		# exit" message.
+		pass "step to end of run"
+		set program_exited_normally 1
+	    }
+	    -re "Single.*EXIT code 0\r\n.*Program exited normally.*$gdb_prompt $" {
+		pass "step to end of run (status wrapper)"
+		set program_exited_normally 1
+	    }
+	    -re "Single.*EXIT code 0\r\n.*$gdb_prompt $" {
+		pass "step to end of run (status wrapper)"
+	    }
+	    -re ".*Single.*Program exited.*$gdb_prompt $" {
+		pass "step to end of run"
+		set program_exited_normally 1
+	    }
+	    -re ".*Single.*in exit.*from.*dld.sl.*$gdb_prompt $" {
+		pass "step to end of run" 
+		set program_in_exit 1
+	    }
+	    -re ".*Single.*_int_reset.*$gdb_prompt $" {
+	        pass "step to end of run"
+		if {![istarget "xstormy16-*-*"]} {
+		    set program_exited_normally 1
+		}
+	    }
+	    -re ".*$gdb_prompt $" {
+		fail "step to end of run"
+		set program_not_exited 1
+	    }
+	    timeout { 
+		fail "(timeout) step to end of run" 
+		set program_not_exited 1
+	    }
+	}   
+    }
+
+    if {$program_in_exit} {
+	if {[gdb_test "c" ".*" "continue after exit"] == 0} {
+	    set program_exited_normally 1
+	}
+    } else {
+	unsupported "continue after exit"
+    }
+
+    set timeout $old_timeout
+
+    if {$program_exited_normally} {
+        gdb_test "n" ".*The program is not being run.*" "don't step after run"
+    } elseif {$program_not_exited} {
+	unresolved "don't step after run"
+    } else {
+	unsupported "don't step after run"
+    }
+
+    set exec_output [remote_exec host "ls core"]
+
+    if [ regexp "core not found" $exec_output]  {
+	pass "No core dumped on quit"
+    } else {
+	if [ regexp "No such file or directory" $exec_output] {
+	    pass "ls: core (No core dumped on quit)"
+	} else {
+	    remote_exec build "rm -f core"
+	    fail "ls: core (Core dumped on quit)"
+	}
+    }
+}
+
+#remote_exec build "rm -f ${binfile}"
+return 0
+
+
+
+

@@ -1588,7 +1588,7 @@ Pppd invokes scripts at various stages in its processing which can be
 used to perform site-specific ancillary processing.  These scripts are
 usually shell scripts, but could be executable code files instead.
 Pppd does not wait for the scripts to finish (except for the ip-pre-up
-script).  The scripts are
+and auth-fail scripts).  The scripts are
 executed as root (with the real and effective user-id set to 0), so
 that they can do things such as update routing tables or run
 privileged daemons.  Be careful that the contents of these scripts do
@@ -1667,6 +1667,11 @@ itself, for example when the \fInoauth\fR option is used.
 A program or script which is executed when the link goes down, if
 /etc/ppp/auth\-up was previously executed.  It is executed in the same
 manner with the same parameters as /etc/ppp/auth\-up.
+.TP
+.B /etc/ppp/auth\-fail
+A program or script which is executed should authentication fail.  pppd
+waits for this script to finish.  It is executed in the same manner, with
+the same parameters as /etc/ppp/auth\-up.
 .TP
 .B /etc/ppp/ip\-pre\-up
 A program or script which is executed just before the ppp network

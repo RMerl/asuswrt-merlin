@@ -1,0 +1,25 @@
+# frv testcase for fditos $FRj,$FRk
+# mach: frv
+
+	.include "testutils.inc"
+
+	float_constants
+	start
+	load_float_constants
+
+	.global fditos
+fditos:
+	set_fr_iimmed	0,0,fr2
+	set_fr_iimmed	0x0000,0x0002,fr3
+	fditos		fr2,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr32
+
+	set_fr_iimmed	0xdead,0xbeef,fr2
+	set_fr_iimmed	0xdead,0xbeef,fr3
+	fditos		fr2,fr2
+	test_fr_iimmed	0xce054904,fr2
+	test_fr_iimmed	0xce054904,fr3
+
+	pass

@@ -1,0 +1,39 @@
+# FRV testcase for icpl GRi,GRj,lock
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global icpl
+	; keep this at least 64 bytes away from doit2
+	bra		icpl
+doit1:	add		gr11,gr12,gr11
+	bralr
+
+icpl:
+	or_spr_immed	0x80000000,hsr0	; insn cache: enable
+	and_spr_immed	0xbfffffff,hsr0 ; data cache: disable
+	set_gr_immed	0,gr11
+	set_gr_immed	1,gr12
+	set_gr_immed	2,gr13
+
+	set_gr_addr	doit1,gr10
+	icpl		gr10,gr0,0	; preload insns at doit1
+	set_mem_immed	0x9600b00d,gr10	; change to add gr11,gr13,gr11
+
+	set_gr_addr	doit2,gr10
+	set_mem_immed	0x9600b00d,gr10	; change to add gr11,gr13,gr11
+
+	set_spr_addr	ok1,lr
+	bra		doit1
+ok1:	test_gr_immed	1,gr11		; used preloaded add of 1
+
+	set_spr_addr	ok2,lr
+	bra		doit2
+ok2:	test_gr_immed	3,gr11		; used changed add of 2
+
+	pass
+
+doit2:	add		gr11,gr12,gr11
+	bralr

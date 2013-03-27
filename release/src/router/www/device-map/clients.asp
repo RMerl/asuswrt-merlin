@@ -33,28 +33,36 @@ p{
 	font-family: Lucida Console;
 }
 #device_img1{
-  background: url(../images/wl_device/wl_devices.png);
-  background-position: 4px -0px; width: 26px; height: 22px;
+  background: url(../images/wl_device/wl_devices.png) no-repeat;
+  background-position: 4px 6px; width: 30px; height: 32px;
 }
 #device_img2{
-  background: url(../images/wl_device/wl_devices.png);
-  background-position: 4px -32px; width: 24px; height: 20px;
+  background: url(../images/wl_device/wl_devices.png) no-repeat;
+  background-position: 4px -25px; width: 30px; height: 32px;
 }
 #device_img3{
-  background: url(../images/wl_device/wl_devices.png);
-  background-position: 4px -62px; width: 24px; height: 20px;
+  background: url(../images/wl_device/wl_devices.png) no-repeat;
+  background-position: 4px -57px; width: 30px; height: 32px;
 }
 #device_img4{
-  background: url(../images/wl_device/wl_devices.png);
-  background-position: 4px -92px; width: 24px; height: 20px;
+  background: url(../images/wl_device/wl_devices.png) no-repeat;
+  background-position: 4px -89px; width: 30px; height: 32px;
 }
 #device_img5{
-  background: url(../images/wl_device/wl_devices.png);
-  background-position: 4px -122px; width: 24px; height: 20px;
+  background: url(../images/wl_device/wl_devices.png) no-repeat;
+  background-position: 7px -121px; width: 30px; height: 32px;
 }
 #device_img6{
-  background: url(../images/wl_device/wl_devices.png);
-  background-position: -0px -152px; width: 30px; height: 30px;
+  background: url(../images/wl_device/wl_devices.png) no-repeat;
+  background-position: 7px -152px; width: 30px; height: 33px;
+}
+#device_img7{
+  background: url(../images/wl_device/wl_devices.png) no-repeat;
+  background-position: 5px -182px; width: 30px; height: 32px;
+}
+#device_img8{
+  background: url(../images/wl_device/wl_devices.png) no-repeat;
+  background-position: 3px -215px; width: 30px; height: 32px;
 }
 </style>
 <link href="/form_style.css" rel="stylesheet" type="text/css" />
@@ -69,7 +77,7 @@ p{
 var $j = jQuery.noConflict();
 <% login_state_hook(); %>
 
-var DEVICE_TYPE = ["", "<#Device_type_01_PC#>", "<#Device_type_02_RT#>", "<#Device_type_03_AP#>", "<#Device_type_04_NS#>", "<#Device_type_05_IC#>", "<#Device_type_06_OD#>"];
+var DEVICE_TYPE = ["", "<#Device_type_01_PC#>", "<#Device_type_02_RT#>", "<#Device_type_03_AP#>", "<#Device_type_04_NS#>", "<#Device_type_05_IC#>", "<#Device_type_06_OD#>", "Printer", "TV Game Console"];
 var client_list_array;
 var client_list_row;
 var networkmap_scanning;
@@ -208,29 +216,22 @@ function showclient_list(list){
 			if(client_list_col[6] == 1)
 				overlib_str += "<p><#Device_service_iTune#></p>YES";
 
-			for(var j = 0; j < client_list_col.length-3; j++){				
+			for(var j = 0; j < client_list_col.length-3; j++){
 				if(j == 0){
 					if(client_list_col[0] == "0" || client_list_col[0] == ""){
-
 						code +='<td width="12%" height="30px;" title="'+DEVICE_TYPE[client_list_col[0]]+'"><div id="device_img6"></div></td>';
-						//if(client_list_col[1] != "")
-							//code +='<td width="12%" height="30px;"><img title="'+DEVICE_TYPE[client_list_col[0]]+'" src="/images/wl_device/6.png"></td>';
-						//else
-							//code +='<td width="12%" height="30px;"><img title="'+DEVICE_TYPE[client_list_col[0]]+'" src="/images/InternetScan.gif"></td>';
-
 						networkmap_scanning = 1;
 					}
 					else{
-						/*code +='<td width="12%" height="30px;"><img title="'+DEVICE_TYPE[client_list_col[0]]+'" src="/images/wl_device/' + client_list_col[0] +'.png"></td>';*/
 						code +='<td width="12%" height="30px;" title="'+DEVICE_TYPE[client_list_col[0]]+'">';
 						code +='<div id="device_img'+client_list_col[0]+'"></div></td>';
 					}	
 				}
 				else if(j == 1){
-					if(client_list_col[1] != "")	
-						code += '<td width="40%"><span class="ClientName" onmouseover="return overlib(\''+ overlib_str +'\');" onmouseout="nd();">'+ client_list_col[1] +'</span></td>';	//Device-name
+					if(client_list_col[1] != "")
+						code += '<td width="40%"><span class="ClientName" style="cursor:pointer;text-decoration:underline;" onclick="getOUIFromMAC(\'' + client_list_col[3] + '\');" onmouseover="return overlib(\''+ overlib_str +'\');" onmouseout="nd();">'+ client_list_col[1] +'</span></td>';	// Show Device-name
 					else
-						code += '<td width="40%"><span class="ClientName" onmouseover="return overlib(\''+ overlib_str +'\');" onmouseout="nd();" onclick="getOUIFromMAC(\'' + client_list_col[3] +'\');" style="cursor:pointer; text-decoration:underline;">'+ client_list_col[3] +'</span></td>';  //MAC 
+						code += '<td width="40%"><span class="ClientName" style="cursor:pointer;text-decoration:underline;" onclick="getOUIFromMAC(\'' + client_list_col[3] + '\');" onmouseover="return overlib(\''+ overlib_str +'\');" onmouseout="nd();">'+ client_list_col[3] +'</span></td>';	// Show MAC
 				}
 				else if(j == 2){
 					if(client_list_col[4] == "1")			
@@ -243,7 +244,6 @@ function showclient_list(list){
 				else				
 					code += '<td width="36%"><span class="ClientName" onmouseover="return overlib(\''+ overlib_str +'\');" onmouseout="nd();">'+ client_list_col[j] +'</span></td>';
 			}
-			//code += "<td>"+ gen_prio_code(client_list_col[2]) +"</td>";	
 			
 			if(parent.sw_mode == 1 && ParentalCtrl_support != -1)
 				code += '<td width="12%"><input class="remove_btn_NM" type="submit" title="<#Block#>" onclick="block_this_client(this);" value=""/></td></tr>';
@@ -270,28 +270,17 @@ function showclient_list(list){
 	parent.show_client_status();
 }
 
-/*function gen_prio_code(ip){
-			var prio_code;
-		  clients_prio = get_client_priority(ip);
-
-	   	var selected_one = ["","",""];
-			if(clients_prio == 1)
-				selected_one[0] = "selected";
-			else if(clients_prio == 4)
-				selected_one[1] = "selected";
-			else if(clients_prio == 6)
-				selected_one[2] = "selected";
-			else
-				selected_one[1] = "selected";   
+function getOUIFromMAC(mac) {
+	var top = 100;
+	var left = Math.floor(screen.availWidth * .05);
+	var width = 700
+	var height = 400
+	var tab = new Array();
 	
-			if(ip.length > 0){
-		  	prio_code = "<select class='input_option' onchange='get_changed_priority(this);'><option value='1' "+selected_one[0]+"><#Priority_Level_1#></option><option value='4' "+selected_one[1]+"><#Priority_Level_2#></option><option value='6'  "+selected_one[2]+"><#Priority_Level_3#></option></select>";
-			}
-			else{
-				prio_code = "<select disabled=disabled class='input'><option value=1><#btn_Disabled#></option></select>";
-			}
-			return prio_code;
-}*/
+	tab = mac.split(mac.substr(2,1));
+	var win = window.open("http://standards.ieee.org/cgi-bin/ouisearch?" + tab[0] + '-' + tab[1] + '-' + tab[2], 'OUI_Search', 'top=' + top + ',left=' + left + ',width=' + width + ',height=' + height + ",resizable=yes,scrollbars=yes");
+	win.focus();
+}
 
 function is_blocked_client(client_mac){
 	var macfilter_rulelist_row = macfilter_rulelist_array.split('&#60');

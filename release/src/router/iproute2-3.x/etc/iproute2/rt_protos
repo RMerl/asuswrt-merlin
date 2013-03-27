@@ -1,0 +1,30 @@
+#
+# Reserved protocols.
+#
+0	unspec
+1	redirect
+2	kernel
+3	boot
+4	static
+8	gated
+9	ra
+10	mrt
+11	zebra
+12	bird
+13	dnrouted
+14	xorp
+15	ntk
+16      dhcp
+
+#
+#	Used by me for gated
+#
+254	gated/aggr
+253	gated/bgp
+252	gated/ospf
+251	gated/ospfase
+250	gated/rip
+249	gated/static
+248	gated/conn
+247	gated/inet
+246	gated/default

@@ -1,0 +1,10 @@
+# Host: Motorola m68k running GNU/Linux.
+
+NAT_FILE= config/nm-linux.h
+NATDEPFILES= inf-ptrace.o fork-child.o \
+	corelow.o m68klinux-nat.o gcore.o \
+	proc-service.o linux-thread-db.o linux-nat.o linux-fork.o
+
+# The dynamically loaded libthread_db needs access to symbols in the
+# gdb executable.
+LOADLIBES = -ldl -rdynamic

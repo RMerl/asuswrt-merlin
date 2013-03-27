@@ -1,0 +1,113 @@
+#   Copyright 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was created by Jeff Johnston. (jjohnstn@redhat.com)
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+if {[skip_shlib_tests]} {
+    return 0
+}
+
+# TODO: Use LoadLibrary on this target instead of dlopen.
+if {[istarget arm*-*-symbianelf*]} {
+    return 0
+}
+
+set testfile "unload"
+set libfile "unloadshr"
+set libname "${libfile}.sl"
+set libsrcfile ${libfile}.c
+set srcfile $srcdir/$subdir/$testfile.c
+set binfile $objdir/$subdir/$testfile
+set shlibdir ${objdir}/${subdir}
+set libsrc  $srcdir/$subdir/$libfile.c
+set lib_sl  $objdir/$subdir/$libname
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+set lib_opts debug
+set exec_opts [list debug shlib_load additional_flags=-DSHLIB_NAME\=\"${libname}\"]
+
+if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
+     || [gdb_compile $srcfile $binfile executable $exec_opts] != ""} {
+    untested "Couldn't compile $libsrc or $srcfile."
+    return -1
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+gdb_load_shlibs $lib_sl
+
+if [target_info exists gdb_stub] {
+    gdb_step_for_stub;
+}
+
+#
+# Test setting a breakpoint in a dynamically loaded library which is
+# manually loaded and unloaded
+#
+
+gdb_test_multiple "break shrfunc1" "set pending breakpoint" {
+     -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
+	    gdb_test "y" "Breakpoint.*shrfunc1.*pending." "set pending breakpoint"
+     }
+}
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*shrfunc1.*" \
+"single pending breakpoint info"
+
+set unloadshr_line [gdb_get_line_number "unloadshr break" ${libsrcfile}]
+
+gdb_run_cmd
+gdb_test "" \
+"Breakpoint.*at.*
+Pending breakpoint \"shrfunc1\" resolved.*
+Breakpoint.*, shrfunc1 \\\(x=3\\\).*unloadshr.c:$unloadshr_line.*" \
+"running program"
+
+gdb_test "continue" \
+"Continuing.*warning: Temporarily disabling breakpoints for.*unloadshr.sl.*Program exited normally." \
+"continuing to end of program"
+
+#
+# Try to rerun program and verify that shared breakpoint is reset properly
+#
+
+gdb_run_cmd
+gdb_test "" \
+".*Breakpoint.*shrfunc1.*at.*unloadshr.c:$unloadshr_line.*" \
+"rerun to shared library breakpoint"
+
+gdb_test "continue" \
+"Continuing.*warning: Temporarily disabling breakpoints for.*unloadshr.sl.*Program exited normally." \
+"continuing to end of program second time"
+

@@ -1,0 +1,230 @@
+# Copyright 2003, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was written by Elena Zannoni (ezannoni@cygnus.com)
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+if { [skip_cplus_tests] } { continue }
+
+set testfile "annota3"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++ nowarnings}] != "" } {
+    untested annota3.exp
+    return -1
+}
+
+# are we on a target board? If so, don't run these tests.
+# note: this is necessary because we cannot use runto_main (which would
+# work for remote targets too) because of the different prompt we get
+# when using annotation level 2.
+#
+if [is_remote target] then {
+    return 0
+}
+
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if [target_info exists gdb_stub] {
+    gdb_step_for_stub;
+}
+
+#
+# line number where we need to stop in main
+#
+set main_line 25
+
+# The commands we test here produce many lines of output; disable "press 
+# <return> to continue" prompts.
+send_gdb "set height 0\n"
+gdb_expect -re "$gdb_prompt $"
+
+#
+# break at main
+#
+gdb_test "break 25" \
+    "Breakpoint.*at.* file .*$srcfile, line.*" \
+    "breakpoint main"
+
+
+#
+# NOTE: this prompt is OK only when the annotation level is > 1
+# NOTE: When this prompt is in use the gdb_test procedure cannot be used because
+# it assumes that the last char of the gdb_prompt is a white space. This is not
+# true with this annotated prompt. So we must use send_gdb and gdb_expect.
+#
+
+set old_gdb_prompt $gdb_prompt
+set gdb_prompt "\r\n\032\032pre-prompt\r\n$gdb_prompt \r\n\032\032prompt\r\n"
+
+send_gdb "set annotate 3\n" 
+gdb_expect_list "annotation set at level 3" "\r\n$gdb_prompt$" {
+    "set annotate 3"
+}
+
+send_gdb "run\n"
+gdb_expect_list "first run until main breakpoint" "$gdb_prompt$" {
+    "\r\n\032\032post-prompt\r\n"
+    "Starting program: .*annota3 \r\n"
+    "\r\n\032\032starting\r\n"
+    "\r\n\032\032breakpoint 1\r\n"
+    "\r\n"
+    "Breakpoint 1, "
+    "\r\n\032\032frame-begin 0 0x\[0-9a-z\]+\r\n"
+    "main \\(\\) at .*annota3.cc:25\r\n"
+    "\r\n\032\032source.*annota3.cc:25:.*:beg:0x\[0-9a-z\]+\r\n"
+    "\r\n\032\032stopped\r\n"
+}
+
+#
+# print class 'a' with public fields.
+#
+send_gdb "print a\n"
+gdb_expect_list "print class" "$gdb_prompt$" {
+    "\r\n\032\032post-prompt\r\n"
+    ".*= \\{x = 1, y = 2\\}\r\n"
+}
+
+#
+# continue until exit
+# this will test:
+# annotate-exited
+#
+send_gdb "continue\n"
+gdb_expect_list "continue to exit" "$gdb_prompt$" {
+    "\r\n\032\032post-prompt\r\n"
+    "Continuing.\r\n"
+    "\r\n\032\032starting\r\n"
+    "a.x is 1\r\n"
+    "\r\n\032\032exited 0\r\n"
+    "\r\n"
+    "Program exited normally.\r\n"
+    "\r\n\032\032stopped\r\n"
+}
+
+#
+# delete all breakpoints
+#
+send_gdb "delete\n"
+gdb_expect {
+  -re ".*Delete all breakpoints. \\(y or n\\) \r\n\032\032query.*$" {
+           send_gdb "y\n"
+           gdb_expect {
+	     -re "\r\n\032\032post-query\r\n$gdb_prompt$" { pass "delete bps" }
+	     -re ".*$gdb_prompt$" { fail "delete bps" }
+	     timeout  { fail "delete bps (timeout)" }
+	 }
+     }
+  -re ".*$gdb_prompt$" { fail "delete bps" }
+  timeout  { fail "delete bps (timeout)" }
+}
+
+#
+# break at first line of main. 
+#
+send_gdb "break 22\n"
+gdb_expect_list "break at main" "$gdb_prompt$" {
+    "\r\n\032\032post-prompt\r\n"
+    "Breakpoint.*at 0x\[a-z0-9\]+: file.*annota3.cc, line 22.\r\n"
+}
+
+#
+# run program up to breakpoint.
+#
+
+
+send_gdb "run\n"
+gdb_expect_list "second run until main breakpoint" "$gdb_prompt$" {
+    "\r\n\032\032post-prompt\r\n"
+    "\r\n\032\032starting\r\n"
+    "\r\n\032\032breakpoint 2\r\n"
+    "\r\n"
+    "Breakpoint 2, "
+    "\r\n\032\032frame-begin 0 0x\[0-9a-z\]+\r\n"
+    "main \\(\\) at .*annota3.cc:22\r\n"
+    "\r\n\032\032source.*annota3.cc:22:.*:beg:0x\[0-9a-z\]+\r\n"
+    "\r\n\032\032stopped\r\n"
+}
+
+#
+# set up a watch point on a.x 
+#
+send_gdb "watch a.x\n"
+gdb_expect_list "set watch on a.x" "$gdb_prompt$" {
+    "\r\n\032\032post-prompt\r\n"
+    ".*atchpoint 3: a.x\r\n" \
+}
+
+#
+# do a next, so that the watchpoint triggers. This will test:
+# annotate-watchpoint
+#
+send_gdb "next\n"
+gdb_expect {
+    -re "\r\n\032\032post-prompt\r\n\r\n\032\032starting\r\n\r\n\032\032watchpoint 3\r\n.*atchpoint 3: a.x\r\n\r\nOld value = 0\r\nNew value = 1\r\n\r\n(\032\032frame-begin 0 0x\[0-9a-z\]+\r\n|)main \\(\\) at .*$srcfile:$decimal\r\n\r\n\032\032source .*$srcfile.*beg:$hex\r\n\r\n\032\032stopped\r\n.*$gdb_prompt$" { 
+	pass "watch triggered on a.x"
+    }
+    -re "\r\n\032\032post-prompt\r\n\r\n\032\032starting\r\n\r\n\032\032source .*$srcfile.*beg:$hex\r\n\r\n\032\032stopped\r\n$gdb_prompt$" {
+	kfail "gdb/38" "watch triggered on a.x"
+    }
+    -re ".*$gdb_prompt$" {
+	fail "watch triggered on a.x"
+    }
+    timeout {
+	fail "watch triggered on a.x (timeout)"
+    }
+}
+
+#
+# send ^C to gdb, so that the quit() function gets called 
+# and annotate-quit is tested
+# test:
+# annotate-quit
+#
+# This test sometimes fails, but not reproducibly.  See gdb/544.
+#
+send_gdb "\003"
+gdb_expect_list "annotate-quit" "$gdb_prompt$" {
+    "\r\n\032\032error-begin\r\n"
+    "Quit\r\n"
+    "\r\n\032\032quit\r\n"
+}
+
+#
+# FIXME: the testsuite does not currently have tests for 
+#        annotate_catchpoints and annotate_function_call
+#        and a few variants of the annotations that are 
+#        tested (marked by FIXME on the annot?.exp files)
+#
+
+# reinstall the old prompt for the rest of the testsuite.
+
+set gdb_prompt $old_gdb_prompt
+

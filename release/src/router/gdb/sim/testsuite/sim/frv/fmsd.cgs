@@ -1,0 +1,146 @@
+# frv testcase for fmsd $FRi,$FRj,$FRk
+# mach: frv
+
+	.include "testutils.inc"
+
+	float_constants
+	start
+	load_float_constants
+	load_float_constants1
+
+	.global fmsd
+fmsd:
+	fmsd      	fr16,fr4,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	fmsd      	fr16,fr8,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr28
+	fmsd      	fr16,fr12,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	fmsd      	fr16,fr16,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr16
+	test_fr_fr	fr3,fr20
+	fmsd      	fr16,fr20,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr16
+	test_fr_fr	fr3,fr20
+	fmsd      	fr16,fr24,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	fmsd      	fr16,fr28,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr8
+	fmsd      	fr16,fr32,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	fmsd      	fr16,fr36,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	fmsd      	fr16,fr40,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	fmsd      	fr16,fr44,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	fmsd      	fr16,fr48,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+
+	fmsd      	fr20,fr4,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	fmsd      	fr20,fr8,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr28
+	fmsd      	fr20,fr12,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	fmsd      	fr20,fr16,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr16
+	test_fr_fr	fr3,fr20
+	fmsd      	fr20,fr20,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr16
+	test_fr_fr	fr3,fr20
+	fmsd      	fr20,fr24,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	fmsd      	fr20,fr28,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr8
+	fmsd      	fr20,fr32,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	fmsd      	fr20,fr36,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	fmsd      	fr20,fr40,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	fmsd      	fr20,fr44,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	fmsd      	fr20,fr48,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+
+	fmsd      	fr28,fr0,fr2
+	test_fr_fr	fr2,fr0
+	fmsd      	fr28,fr4,fr2
+	test_fr_fr	fr2,fr4
+	fmsd      	fr28,fr8,fr2
+	test_fr_fr	fr2,fr8
+	test_fr_fr	fr3,fr32
+	fmsd      	fr28,fr12,fr2
+	test_fr_fr	fr2,fr12
+	fmsd      	fr28,fr16,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr28
+	fmsd      	fr28,fr20,fr2
+	test_fr_fr	fr2,fr16
+	test_fr_fr	fr2,fr20
+	test_fr_fr	fr3,fr28
+	fmsd      	fr28,fr24,fr2
+	test_fr_fr	fr2,fr24
+	fmsd      	fr28,fr28,fr2
+	test_fr_fr	fr2,fr28
+	test_fr_fr	fr3,fr20
+	test_fr_fr	fr3,fr16
+	fmsd      	fr28,fr32,fr2
+	test_fr_fr	fr2,fr32
+	test_fr_fr	fr3,fr8
+	fmsd      	fr28,fr36,fr2
+	test_fr_fr	fr2,fr36
+	fmsd      	fr28,fr40,fr2
+	test_fr_fr	fr2,fr40
+	fmsd      	fr28,fr44,fr2
+	test_fr_fr	fr2,fr44
+	fmsd      	fr28,fr48,fr2
+	test_fr_fr	fr2,fr48
+	fmsd      	fr28,fr52,fr2
+	test_fr_fr	fr2,fr52
+
+	fmsd      	fr28,fr8,fr2
+	test_fr_fr	fr2,fr8
+	test_fr_fr	fr3,fr32
+	fmsd      	fr8,fr28,fr2
+	test_fr_fr	fr2,fr8
+
+	fmsd      	fr32,fr36,fr2
+	test_fr_fr	fr2,fr40
+	test_fr_fr	fr3,fr8
+
+	pass

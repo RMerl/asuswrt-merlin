@@ -1,0 +1,31 @@
+# sh testcase for fadd
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+	_clrpr
+
+	fldi1 fr0
+	fldi1 fr1
+	fadd fr0, fr1
+
+	fldi0 fr0
+	fldi1 fr1
+	fadd fr0, fr1
+
+	fldi1 fr0
+	fldi0 fr1
+	fadd fr0, fr1
+
+	_setpr
+double:
+	fldi1 fr0
+	fldi1 fr1
+	_s2d fr0, dr4
+	_s2d fr1, dr6
+	fadd dr4, dr6
+
+	pass

@@ -1,0 +1,12 @@
+# arm testcase for ldrh $rd,[$rb,#${offset5-6}]
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldrh_imm
+ldrh_imm:
+	ldrh r0,[r0,#0]
+
+	pass

@@ -1,0 +1,88 @@
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global stmda_wb
+stmda_wb:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global stmda
+stmda:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global stmdb_wb
+stmdb_wb:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global stmdb
+stmdb:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global stmia_wb
+stmia_wb:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global stmia
+stmia:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global stmib_wb
+stmib_wb:
+
+	pass
+# arm testcase for FIXME
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global stmib
+stmib:
+
+	pass

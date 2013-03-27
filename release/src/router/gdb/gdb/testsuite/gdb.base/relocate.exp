@@ -1,0 +1,146 @@
+# Copyright 2002, 2003, 2005, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# relocate.exp -- Expect script to test loading symbols from unrelocated
+#		  object files.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set testfile relocate
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}.o
+
+remote_exec build "rm -f ${binfile}"
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" object {debug}] != "" } {
+     untested relocate.exp
+     return -1
+}
+
+proc get_var_address { var } {
+  global gdb_prompt hex
+
+  send_gdb "print &${var}\n"
+  # Match output like:
+  # $1 = (int *) 0x0
+  # $5 = (int (*)()) 0
+  # $6 = (int (*)()) 0x24 <function_bar>
+  gdb_expect {
+    -re "\\\$\[0-9\]+ = \\(.*\\) (0|$hex)( <${var}>)?\[\r\n\]+${gdb_prompt} $"
+	{
+	  pass "get address of ${var}"
+	  if { $expect_out(1,string) == "0" } {
+	    return "0x0"
+	  } else {
+	    return $expect_out(1,string)
+	  }
+	}
+    -re "${gdb_prompt} $"
+	{ fail "get address of ${var} (unknown output)" }
+    timeout
+	{ fail "get address of ${var} (timeout)" }
+  }
+  return ""
+}
+
+
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+# Load the object file.
+gdb_test "add-symbol-file ${binfile} 0" \
+	"Reading symbols from .*${testfile}\\.o\\.\\.\\.done\\.(|\r\nUsing host libthread_db library .*libthread_db.so.*\\.)" \
+	"add-symbol-file ${testfile}.o 0" \
+	"add symbol table from file \".*${testfile}\\.o\" at\[ \t\r\n\]+\.text_addr = 0x0\[\r\n\]+\\(y or n\\) " \
+	"y"
+
+# Print the addresses of static variables.
+set static_foo_addr [get_var_address static_foo]
+set static_bar_addr [get_var_address static_bar]
+
+# Make sure they have different addresses.
+if { "${static_foo_addr}" == "${static_bar_addr}" } {
+  fail "static variables have different addresses"
+} else {
+  pass "static variables have different addresses"
+}
+
+# Print the addresses of global variables.
+set global_foo_addr [get_var_address global_foo]
+set global_bar_addr [get_var_address global_bar]
+
+# Make sure they have different addresses.
+if { "${global_foo_addr}" == "${global_bar_addr}" } {
+  fail "global variables have different addresses"
+} else {
+  pass "global variables have different addresses"
+}
+
+# Print the addresses of functions.
+set function_foo_addr [get_var_address function_foo]
+set function_bar_addr [get_var_address function_bar]
+
+# Make sure they have different addresses.
+if { "${function_foo_addr}" == "${function_bar_addr}" } {
+  fail "functions have different addresses"
+} else {
+  pass "functions have different addresses"
+}
+
+# Now use a variable as an offset to add-symbol-file, and check that
+# the functions' addresses change.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+gdb_test "set \$offset = 0x10000" ""
+
+# Load the object file.
+gdb_test "add-symbol-file ${binfile} \$offset" \
+	"Reading symbols from .*${testfile}\\.o\\.\\.\\.done\\.(|\r\nUsing host libthread_db library .*libthread_db.so.*\\.)" \
+	"add-symbol-file ${testfile}.o \$offset" \
+	"add symbol table from file \".*${testfile}\\.o\" at\[ \t\r\n\]+\.text_addr = 0x10000\[\r\n\]+\\(y or n\\) " \
+	"y"
+
+# Print the addresses of functions.
+set new_function_foo_addr [get_var_address function_foo]
+
+# Make sure they have different addresses.
+if { "${function_foo_addr}" == "${new_function_foo_addr}" } {
+  fail "function foo has a different address"
+} else {
+  pass "function foo has a different address"
+}
+
+# Now try loading the object as an exec-file; we should be able to print
+# the values of variables after we do this.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_file_cmd ${binfile}
+
+# Check the values of the variables.
+gdb_test "print static_foo" "\\\$$decimal = 1"
+gdb_test "print static_bar" "\\\$$decimal = 2"
+gdb_test "print global_foo" "\\\$$decimal = 3"
+gdb_test "print global_bar" "\\\$$decimal = 4"

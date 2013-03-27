@@ -1,0 +1,1085 @@
+Sun Sep 12 18:38:13 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_USE_EXTERNAL): Check for IDNA, LFS, SOCKS
+	support.
+	(NEON_SOCKS): Use common feature code for SOCKSv5 support.
+
+Fri Sep 10 20:52:54 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Safer autoheader template for
+	declaring stpcpy as necessary for bundled neon builds.
+	(NEON_WARNINGS): Drop -Winline.
+
+Wed Aug 25 19:44:26 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Check for poll.
+
+Sat Jul  3 11:39:01 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Pick up gethostbyname in
+	-lsocket for QNX.
+
+Fri Apr 16 11:43:10 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): If built using libtool,
+	and --with-expat specifies a libexpat.la file, add the libexpat.la
+	to NEON_LTLIBS.
+
+	* neon.m4 (NEON_COMMON_CHECKS): Substitute NEON_LTLIBS.
+
+Tue Apr 13 20:51:59 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_GSSAPI): Check for presence of
+	gssapi/gssapi_generic.h.
+
+Wed Apr  7 13:16:33 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_LARGEFILE): Check for strtoq.
+
+Mon Mar 15 19:59:36 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Be safer around getaddrinfo
+	blacklist for HP-UX and reference why it's needed.
+
+Sun Mar  7 11:15:44 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Use NE_LARGEFILE in-place
+	rather than AC_REQUIRE'ing it.
+	(NE_LARGEFILE): Add NE_LFS to CPPFLAGS for use in bundled builds.
+
+Mon Feb 23 23:02:54 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_SNPRINTF): Define HAVE_TRIO if trio is used.
+
+Mon Feb 23 00:22:39 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Give INCLUDES argument to
+	AC_CHECK_HEADERS; prevent warning from cpp test for netinet/in.h
+	on some platforms.
+
+Sun Feb 22 17:52:42 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_SEARCH_LIBS): Fix to run actions-if-found if
+	function is found without needing additional libraries.
+	(LIBNEON_SOURCE_CHECKS): Only check for gethostbyname if
+	getaddrinfo is not found.  Disable getaddrinfo on HP-UX 11.[01]*
+	here rather than ne_socket.c.
+
+Sat Jan 24 17:49:50 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Also check for __tm_gmtoff in
+	struct tm.
+
+Sat Jan 24 17:16:48 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4: Remove -ansi-pedantic and -Wimplicit-prototypes for gcc
+	3.4 compatibility (thanks to Olaf Hering).
+ 
+Sat Jan  3 14:11:14 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-test.m4: Check for stdint.h.
+
+Sat Jan  3 13:17:21 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_LARGEFILE): Add NE_LFS to neon-config --cflags
+	output.
+
+Thu Jan  1 18:42:56 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_FORMAT): Use C99 'll' rather than non-standard 'q'
+	length modifier.
+
+Thu Jan  1 17:36:39 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_LARGEFILE): New macro.
+	(LIBNEON_SOURCE_CHECKS): Call it.
+
+Sat Nov 15 09:25:43 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4, neon-xml-parser.m4: Update for latest autoconf
+	best-practice: s/AC_HELP_STRING/AS_HELP_STRING, replace AC_TRY_RUN
+	with AC_RUN_IFELSE, AC_TRY_LINK_FUNC with AC_LINK_IFELSE,
+	AC_TRY_COMPILE with AC_COMPILE_IFELSE, remove AC_LANG_C and
+	AC_PROG_CC_STDC,
+
+Fri Nov 14 13:12:10 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_LIBIDN): New macro.
+	(LIBNEON_SOURCE_CHECKS): Use NEON_LIBIDN.
+
+Fri Nov 14 11:28:58 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_ENABLE_SUPPORT, NE_DISABLE_SUPPORT): New macros.
+	Use throughout to flag support or lack of support for optional
+	features.
+
+Thu Nov 13 20:25:28 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Check for gethostbyname in
+	-lbind too.
+
+Tue Oct  7 21:20:16 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-test.m4 (NEON_TEST): Check for shutdown.
+
+Mon Sep 22 21:20:37 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_CHECK_FUNCS, NE_SEARCH_LIBS): Avoid clobbering
+	ne_save_{LIBS,CPPFLAGS}.
+
+Sun Sep 14 10:51:34 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Check for working AI_ADDRCONFIG
+	flag for getaddrinfo().
+
+Wed Sep 10 21:45:10 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_GSSAPI): Restore CPPFLAGS and NEON_LIBS if GSSAPI
+	detection fails.
+
+Thu Sep  4 21:29:06 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Check for netinet/tcp.h.
+
+Wed Jul 23 21:17:40 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_GSSAPI): New macro.
+
+Mon Apr 21 18:24:12 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (HAVE_EXPAT): Fail if --with-expat is given
+	but expat.h is not found.
+
+Wed Mar 26 20:29:11 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_SSL): And add ne_stubssl to NEON_EXTRAOBJS for
+	non-SSL build.
+
+Tue Mar 25 20:43:01 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_SSL): Add ne_openssl to NEON_EXTRAOBJS.
+
+Mon Mar 17 20:34:55 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Check for netdb.h.
+
+Sun Mar 16 14:22:02 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NE_XML_BUNDLED_EXPAT): Define
+	HAVE_XMLPARSE_H.
+
+Sun Mar 16 11:47:35 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): Also fix
+	non-included-expat build for when included expat is not an option.
+
+Sun Mar 16 11:20:23 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): Fix non-included-expat
+	build broken in previous commit.
+
+Sun Mar 16 09:06:41 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): Fix --with-included-expat
+	support.
+
+Sun Mar  9 10:08:57 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_SSL): Fail if --with-ssl is given an argument.
+
+Sun Mar  9 08:55:04 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_SEARCH_LIBS): Bug fix to always compare against
+	`extras' if given.  Add support for optional `actions-if-found'
+	argument.
+
+	* neon-xml-parser.m4: Largely rewritten. Drop support for
+	libxml 1.x; require expat 1.95.x.
+
+Sun Mar  9 08:50:22 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Check for stpcpy.
+
+Mon Mar  3 22:15:56 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_CHECK_FUNCS): Check whether h_errno is declared.
+
+Wed Feb 19 21:35:20 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_FORMAT): Revert use of 'z' modifier; breaks on
+	CygWin.
+
+Tue Jan 14 17:06:07 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_FORMAT): Prefer the C99 'z' modifier to printf
+	size_t/ssize_t values where available.
+
+Fri Jan  3 23:12:20 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_PKG_CONFIG): New macro.
+	(NEON_SSL): Use NE_PKG_CONFIG rather than PKG_CHECK_MODULES.
+
+Mon Dec 16 20:02:45 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_SSL): Only check for OpenSSL <=0.9.6 if version is
+	known to be <=0.9.7.
+
+Mon Dec 16 19:01:57 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4: Use pkg-config data to determine location OpenSSL
+	libraries/headers, if available.
+
+Tue Nov 19 11:21:31 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-test.m4 (NEON_TEST): Suggest this macro is run before
+	NEON_XML_PARSER.
+
+Mon Oct  7 22:22:12 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_CHECK_SSLVER): New macro.
+	(NEON_SSL): Use NE_CHECK_SSLVER.  Add --with-egd argument;
+	conditionally enable EGD, optionally using only a specific EGD
+	socket path, and only if using OpenSSL before 0.9.7.
+
+Tue Sep 24 21:36:01 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_ZLIB_VERSION): Removed macro.
+	(NEON_ZLIB): Removed --with-force-zlib flag; don't check zlib
+	version.
+	(NEON_SSL): Removed --with-force-ssl flag, only require OpenSSL
+	0.9.6 or later.
+
+Sat Aug 31 17:28:15 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_FORMAT_PREP): Add check for gcc -Wformat -Werror
+	sanity.
+	(NEON_FORMAT): Only use gcc -Wformat -Werror if sanity is assured.
+
+Fri Aug 30 22:07:59 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4: Set NEON_INTERFACE_VERSION according to
+	NEON_VERSION_MINOR, NEON_VERSION_RELEASE, for the duration of neon
+	0.x releases.
+
+Sun Aug 25 23:52:38 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_CHECK_FUNCS): New macro.
+	(LIBNEON_SOURCE_CHECKS): Use NE_CHECK_FUNCS rather than
+	AC_CHECK_FUNCS, so $NEON_LIBS are searched.
+
+Sun Aug 25 11:53:20 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Require inet_ntop as well for
+	USE_GETADDRINFO test.	
+
+Sun Aug 18 22:50:09 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Remove redundant check for
+	SIGPIPE definition.
+
+Sun Aug 18 22:41:15 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_SEARCH_LIBS): Take optional fourth argument.
+	(LIBNEON_SOURCE_CHECKS): Define USE_GETADDRINFO if getaddrinfo and
+	gai_strerror are present.  Otherwise, check for hstrerror,
+	possibly in -lresolv.
+
+	* neon-test.m4: Don't check for hstrerror().
+
+Sun Aug 18 22:31:13 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_FIND_PARSER_H, NEON_XML_LIBXML2):
+	Re-order checks to skip redundant tests, speeding up common case.
+
+Fri Aug  9 19:47:14 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_SSL): Require OpenSSL 0.9.6f or later.
+
+Wed Jul 31 23:01:17 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* strftime.m4, readline.m4: Removed from neon/macros CVS module.
+
+Tue Jul 30 19:09:20 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_COMMON_CHECKS): Require AC_TYPE_SIZE_T,
+	AC_TYPE_OFF_T.
+
+	* neon-test.m4 (NEON_TEST): Require AC_TYPE_PID_T.
+
+Tue Jul 30 19:06:48 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_SSL): Require OpenSSL 0.9.6e or later for security
+	fixes; add --with-force-ssl to override version check.
+
+Fri Jul 26 00:01:07 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_MACOSX): Just check for any Darwin system.
+
+Sat Jul 20 10:40:29 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_WITH_LIBS): Allow a colon-separated list of
+	directories for --with-libs argument.
+
+Thu Jul 18 20:07:43 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Require AC_FUNC_STRERROR_R.
+
+Wed Jul 17 23:26:51 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_CHECK_VERSION): Rewrite to cache results,
+	simplify, and use new ne_version_match.
+	(NE_ZLIB_VERSION): Cache result.
+	
+Fri Jul  5 12:57:56 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_SSL): Fail if openssl/opensslv.h header is not
+	found, or if OpenSSL version is earlier than 0.9.6.
+
+Sun Jun 16 14:04:18 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_FORMAT): Take optional third argument giving 
+	format string specifier to use.
+	(NEON_COMMON_CHECKS): Get format string for ssize_t; fix to
+	use 'u' specifier for size_t format string.
+
+Thu Jun 13 20:34:35 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): Undocument use of =DIR
+	parameter to --with-expat, as it gives false expectations.
+
+Wed Jun 12 23:26:40 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_WITH_LIBS): New macro.
+
+Mon Jun 10 22:31:50 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_WARNINGS): Replace -ansi-pedantic with -pedantic.
+
+Sun May 26 19:08:12 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_LIBXML2): Check for
+	libxml/xmlversion.h header too.
+
+Wed May 22 09:54:42 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_MACOSX): Cache result.
+	(NE_COMMON_CHECKS): Simplify tm_gmtoff check further: use
+	AC_CHECK_MEMBERS.
+
+Mon May 20 21:18:06 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_SEARCH_LIBS): Cache results.
+
+Mon May 20 20:55:04 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Use AC_CACHE_CHECK to check for
+	SIGPIPE in signal.h; don't invade the ac_ namespace with cache
+	variables.  Cache results of tm_gmtoff test too.
+
+Mon May 20 20:35:22 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_SNPRINTF): Simplify logic.
+
+Sun May 19 20:23:55 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_WARNINGS): Remove with_warnings variable;
+	simplify.
+
+Wed May 19 08:36:44 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Declare stpcpy on modern
+	"Linux-like" AIXes.
+
+Sun May 19 09:35:08 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_FIND_AR): Fix $PATH handling on some Linux
+	platforms.
+
+Sun May 19 09:05:22 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_FIND_AR): New macro.
+	(NEON_NORMAL_BUILD): Require NE_FIND_AR.
+
+	* neon-test.m4: Require NE_FIND_AR. Check for hstrerror().
+
+Fri May 17 23:37:19 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_SSL): Allow --without-ssl again.
+
+Wed May 15 21:00:15 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_LIBXML2): sed '-L/usr/lib ' out of
+	xml2-config --libs output.
+
+Sat May 11 15:30:38 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_SOCKS): Moved and simplified from neon-socks.m4.
+	Drop support for specifying directory argument; fail if
+	--with-socks is given and socks.h is not found.
+
+	* neon-socks.m4: Removed file.
+
+Sat May 11 15:22:36 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_DEBUG): Moved and simplified from neon-debug.m4.
+
+	* neon-debug.m4: Removed file.
+
+Sat May 11 13:40:29 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_WARNINGS): Moved and simplified from
+	neon-warnings.m4.
+
+	* neon-warnings.m4: Removed file.
+
+Sat May 11 13:26:00 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_SSL): Simplified version of NEON_SSL from
+	neon-ssl.m4.  Check for ssl.h; detect OpenSSL ENGINE correctly
+	when -lcrypto requries -ldl.
+
+	* neon-ssl.m4: Removed file.
+
+Sat May 11 13:16:27 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_SEARCH_LIBS): Allow passing 'extralibs' to include
+	in library list when link against a specified library fails.
+	Prepend found library/libraries to $NEON_LIBS.
+
+Sat May 11 12:40:24 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER),
+	* neon.m4 (NEON_REPLACE_SNPRINTF): 
+	Use AC_LIBOBJ rather than modify LIBOBJS directly, to appease
+	autoconf 2.53.
+
+Wed May  1 22:32:10 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_LIBXML1): Fix syntax error in
+	libxml 1.x detection causing spurious or missing warning message.
+
+Thu Apr 25 07:38:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_EXTERNAL_EXPAT): Check for expat.h
+	too, to support expat 1.95.x (Branko Èibej).
+
+Tue Apr 23 21:09:55 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_FIND_PARSER_H): New macro, factored out
+	from NEON_XML_LIBXML2.
+	(NEON_XML_LIBXML2, NEON_XML_LIBXML1): Use it.
+
+Tue Apr 23 20:54:30 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_LIBXML2): Check for parser.h or
+	libxml/parser.h, or fail.
+
+Sat Apr 13 22:35:01 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_SNPRINTF): Define NEON_TRIO in NEON_CFLAGS, export
+	it from 'neon-config --cflags' output.
+
+Fri Apr  5 23:40:00 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_ZLIB, NE_ZLIB_VERSION): Add --with-force-zlib, to
+	skip zlib version check.  Simplify neon_zlib_message handling a
+	little.
+
+Tue Mar 12 00:18:00 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_ZLIB_VERSION): New macro.
+	(NEON_ZLIB): Use it to require zlib 1.1.4.
+
+Sun Mar 10 22:05:26 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_ZLIB): Don't add ne_compress to NEON_EXTRAOBJS.
+
+Mon Mar  4 21:04:28 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-ssl.m4 (NEON_SSL): Avoid adding -I/usr/include to CFLAGS
+	during build as well as not exporting it via neon-config.
+
+Tue Feb 19 21:30:50 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-socks.m4 (NEON_SOCKS): Fix configure argument name, export
+	-L argument in NEON_LIBS, check for socks.h not sock.h, define
+	NEON_SOCKS.
+
+Sun Jan 13 20:07:51 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_MACOSX): New macro.
+	(NEON_COMMON_CHECKS): Call it.
+
+Sun Jan  6 21:35:08 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): Add XML_BYTE_ORDER to
+	CPPFLAGS; mini-expat doesn't pick up config.h.
+
+Tue Jan  1 23:30:03 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): Set XML_BYTE_ORDER
+	appropriately.
+
+Tue Jan  1 22:50:15 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_CHECK_VERSION): Don't add libs for external neon
+	to NEON_LIBS here.
+
+Tue Jan  1 22:44:05 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_LIBXML2, NEON_XML_LIBXML1): Alter
+	CPPFLAGS only, not CFLAGS.
+
+Tue Jan  1 21:49:16 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_USE_EXTERNAL): Factored out from NEON_COMMON.
+	(NEON_COMMON): Use NEON_USE_EXTERNAL; simplify, improve reporting.
+	
+	* neon.m4 (NEON_COMMON_CHECKS): Move check for common headers
+	here...  (LIBNEON_SOURCE_CHECKS): from here.
+
+Tue Jan  1 21:44:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-test.m4 (NEON_TEST): Check for AR and RANLIB.
+
+Fri Dec 14 22:39:57 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-test.m4 (NEON_TEST): Pick up time_t definition from
+	sys/time.h if present (fix for Solaris 2.6 and probably
+	elsewhere).
+
+Fri Dec 14 22:39:32 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_FORMAT): Allow passing in headers where type may
+	be defined.
+
+Mon Dec 10 07:36:26 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_COMMON): Fix --with-neon=PATH again.
+
+Sun Dec  9 21:40:47 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-test.m4 (NEON_TEST): Determine how to print time_t.
+
+Sun Dec  9 11:50:03 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_WITHOUT_ACL): New macro.
+	(LIBNEON_SOURCE_CHECKS): Conditionally build ACL support.
+
+Sun Dec  9 01:06:32 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_CHECK_VERSION): Use NEON_CONFIG as config script,
+	drop first argument.  Better error message if the link failed.
+	(NEON_COMMON): Cleanup.  Check for neon-config in PATH.  Stop if
+	--with-neon was given, and the external neon wasn't good enough.
+
+Sun Dec  9 00:17:19 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-test.m4 (NEON_TEST): Requires NEON_COMMON_CHECKS.
+
+	* neon-warnings.m4 (NEON_WARNINGS): Requires AC_PROG_CC.
+
+Sun Dec  9 00:13:47 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_COMMON_CHECKS): New macro; runs common C
+	language/compiler checks, which may be useful to neon applications
+	regardless of whether a bundled or external neon is being used.
+	Use AC_REQUIRE to prevent macros being expanded more than once.
+	(LIBNEON_SOURCE_CHECKS, NEON_COMMON): Require NEON_COMMON_CHECKS
+	to have been expanded.
+	
+Sat Dec  8 00:56:34 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_FORMAT): Rewrite to use cache results (should fix
+	for cross-compiling), and for GCC, actually test for warnings -
+	fix for Linux.
+
+Sat Dec  8 00:15:44 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_CHECK_SUPPORT): Send --support output to
+	/dev/null, in case it is from pre-0.18 and prints the usage
+	message.
+
+Sat Dec  8 00:13:55 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_COMMON): Prepend -lneon to NEON_LIBS rather than
+	overwriting it when using bundled build.
+
+Mon Dec  3 19:49:28 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_FORMAT_PREP, NEON_FORMAT): New macros.
+	(LIBNEON_SOURCE_CHECKS): Call them.
+
+Mon Dec  3 19:43:11 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	Fix gethostbyname() detection on Unixware 7:
+
+	* neon.m4 (NEON_COMMON): Add -lneon to NEON_LIBS after performing
+	source checks.  (NE_SEARCH_LIBS): Test using libraries from
+	NEON_LIBS too.
+
+Sat Nov 24 20:33:11 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_CHECK_SUPPORT): New macro.  (NEON_COMMON): Define
+	NEON_SUPPORTS_{SSL,ZLIB} when using an external neon.
+
+Sat Nov 24 20:25:15 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_WITHOUT_ZLIB): New function.
+	(LIBNEON_SOURCE_CHECKS): Conditionally enable zlib support.
+
+Sun Nov 18 12:29:08 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-ssl.m4 (NEON_SSL): Don't add -I/usr/include to NEON_CFLAGS.
+
+Sat Oct 27 12:20:08 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4, neon-ssl.m4: Substitute NEON_SUPPORTS_ZLIB,
+	NEON_SUPPORTS_DAV, NEON_SUPPORTS_SSL as "yes" or "no"
+	appropriately.
+
+Thu Oct 25 14:29:53 2001  Mo DeJong  <supermo@bayarea.net>
+
+        * neon.m4 (NEON_NORMAL_BUILD): Use AC_CHECK_TOOL instead of
+        AC_PATH_PROG so that cross compilation works properly.
+
+Sat Oct  6 13:36:58 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_ZLIB): New macro.  (LIBNEON_SOURCE_CHECKS):
+	print warning if struct tm lacks tm_gmtoff.
+
+Sat Oct  6 12:39:09 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4: Require autoconf 2.50.  Use AC_HELP_STRING where
+	possible, and AC_MSG_NOTICE instead of 'echo'.
+
+	* neon-ssl.m4, neon-xml-parser.m4, neon-socks.m4: Quoting fixes
+	for help strings.
+
+Tue Oct  2 21:13:24 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Check for tm_gmtoff in struct
+	tm.
+
+Sun Sep 30 23:35:03 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NE_SEARCH_LIBS): AC_SEARCH_LIBS replacement, adds found
+	libraries to NEON_LIBS instead.
+
+Sun Sep 30 11:11:19 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-test.m4: New file.
+
+Sun Sep 30 11:09:58 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4, neon-xml-parser.m4: Always add libs to $LIBS rather
+	than $NEONLIBS.
+
+	* neon.m4: Export NEON_CFLAGS.
+
+Sat Sep 29 14:12:53 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Check for zlib (zlib.h, inflate
+	in -lz).  Add ne_compress to NEON_EXTRAOBJS.
+
+Tue Sep 25 07:31:53 2001  Mo DeJong  <supermo@bayarea.net>
+
+        * neon.m4 (LIBNEON_SOURCE_CHECKS): Check for <signal.h> instead of
+	<sys/signal.h>. Define HAVE_SIGPIPE if SIGPIPE is defined in
+	<signal.h>.
+
+Mon Sep 24 20:16:47 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_EXTERNAL_EXPAT): Fix broken
+	AC_DEFINE (Mo DeJong).
+
+Mon Sep 24 17:24:42 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ac_c_bigendian_cross.m4: New file.
+
+	* neon.m4: Use AC_C_BIGENDIAN_CROSS rather than AC_C_BIGENDIAN.
+
+Mon Sep 17 23:29:11 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Check for setvbuf().
+
+Sun Sep 16 20:39:05 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-ssl.m4 (NEON_SSL): Put SSL libs in LIBS rather than
+	NEONLIBS (and lib paths).
+
+Sun Sep 16 20:36:53 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_COMMON): Add library paths to NEONLIBS rather than
+	LDFLAGS.
+
+Sat Jun  9 22:06:25 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-debug.m4: New file.
+
+Thu May 31 00:04:51 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_COMMON_BUILD): Update filenames.
+	(NEON_CHECK_VERSION): Do simple AC_TRY_LINK and warn appropriately
+	before checking version.
+
+Thu May 31 00:03:40 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-warnings.m4: Add -Wbad-function-cast.
+
+Wed May 30 23:37:48 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4: Added --with-libxml1 and --with-libxml2
+	arguments.
+
+Tue Apr 17 23:06:25 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-ssl.m4: Define neon_ssl_message for configure output.
+
+Wed Apr 11 23:14:33 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_COMMON_BUILD): Fix specifying a list of object
+	files.
+
+Fri Apr  6 23:09:58 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Call NEON_SOCKS.
+
+Fri Apr  6 23:08:39 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-socks.m4: Add basic SOCKSv5 support (untested).
+
+Mon Apr  2 21:42:40 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4: Version is 0.13.0, interface version 13:0:0.
+
+Mon Apr  2 00:27:37 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4: Move check for 'ar' program to NEON_NORMAL_BUILD, it's
+	not necessary for libtool build.
+
+Mon Apr  2 00:17:58 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): Check for xmlversion.h
+	header from libxml2.
+
+Sun Apr  1 21:23:26 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4: Add expat2 support (Sam TH <sam@uchicago.edu>).
+
+Wed Mar 21 10:56:03 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4: Add libxml2 support.
+
+Sun Mar  4 15:45:21 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): Use an m4 ifelse rather
+	than a shell test to code the conditional on whether an argument
+	was passed to the macro or not.
+
+Sun Mar  4 15:23:47 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4: Add "actions if not bundled" argument to *_BUNDLED
+	macros.
+
+Mon Feb 26 22:52:24 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4: Version is 0.12.0.
+
+Mon Feb 26 22:06:13 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4: Versionn is 0.12.0-dev.
+
+Sun Feb 25 17:12:49 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Add checks for endianness (for
+	md5 code), inline, and const.
+
+Sun Feb 25 17:00:07 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_COMMON): Rename NEON_IS_BUNDLED to
+	NEON_BUILD_BUNDLED.
+
+Sun Feb 25 16:52:19 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_COMMON): Define NEON_IS_BUNDLED to "yes" or "no"
+	appropriately.
+
+Sat Feb 24 00:06:09 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Don't set NEON_NEED_XML_PARSER
+	here.  (NEON_COMMON): ... set it here instead.
+	(NEON_WITHOUT_WEBDAV): New macro to disable WebDAV support.
+	(NEON_COMMON_BUILD): Select default set of object files to build
+	depending on whether DAV is enabled or not.
+
+Fri Feb 23 23:28:09 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_COMMON_BUILD): Use an m4 'ifelse' for the number
+	of args test.
+
+	* neon.m4 (NEON_LIBTOOL_BUILD, NEON_NORMAL_BUILD,
+	NEON_COMMON_BUILD): Set NEON_OBJEXT correctly (fixes
+	dependancies).
+
+Sun Feb  4 14:55:10 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4: Version is 0.11.0, interface version is 11:0:0.
+
+Sun Jan 28 17:16:27 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_CHECK_VERSION): Run actions-if-okay if
+	NEON_REQUIRE has not been called.
+
+Sun Jan 28 14:53:57 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4 (NEON_REQUIRE, NEON_CHECK_VERSION): New macros.
+	(NEON_COMMON): If a required version is defined, check that an
+	external neon library matches it.
+
+Sun Jan 28 10:39:31 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4: Define NEON_VERSION, NEON_VERSION_{MAJOR,MINOR} in
+	config.h rather than substituting into neon_config.h.
+
+Sat Jan 27 22:55:42 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon.m4: Include version string in library message.
+
+Tue Jan 23 23:14:33 2001  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4 (NEON_VERSIONS): New macro.  (NEON_COMMON): Call it from
+	here.
+
+Mon Jan 15 22:26:54 2001  Joe Orton  <joe@light.plus.com>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): Append rather than
+	overwrite CFLAGS.
+
+Thu Jan 11 20:49:12 2001  Joe Orton  <joe@light.plus.com>
+
+	* neon-ssl.m4: Check for OpenSSL in /usr too.
+
+Thu Jan 11 20:05:34 2001  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4 (NEON_VPATH_BUNDLED): New macro.  (NEON_BUNDLED): Call
+	NEON_COMMON_BUNDLED.  (NEON_COMMON_BUNDLED): Abstracted from
+	NEON_BUNDLED.
+
+Wed Jan 10 22:44:37 2001  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4 (NEON_LIBTOOL_BUILD, NEON_NORMAL_BUILD): Pass optional
+	set of objects to build to these macros.  Else, all objects go in
+	NEONOBJS.  (NEON_COMMON_BUILD): Implement that.  Also substitute
+	NEON_LINK_FLAGS. 
+
+Mon Jan  8 22:23:51 2001  Joe Orton  <joe@light.plus.com>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): Put XML parser libs in
+	$NEONLIBS rather than $LIBS.
+
+Mon Jan  8 22:20:51 2001  Joe Orton  <joe@light.plus.com>
+
+	* neon-ssl.m4 (NEON_SSL): Put OpenSSL libs in $NEONLIBS rather
+	than LIBS.
+
+Sun Jan  7 17:30:54 2001  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4 (NEON_BUNDLED): Add optional second argument to specify
+	builddir of bundled sources (Peter Moulder <pjm@bofh.asn.au>).
+
+Wed Jan  3 21:33:05 2001  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4: Place libraries needed to use neon in NEONLIBS.  Adding
+	them to LIBS breaks bundled builds since libneon doesn't exist at
+	configure-time, and configure uses $LIBS.
+
+Wed Jan  3 21:17:00 2001  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4 (NEON_COMMON_BUILD): Don't set top_builddir using 'pwd'.
+
+Wed Jan  3 21:15:04 2001  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4 (NEON_COMMON): If using bundled neon, add -L<bundled
+	dir> to LDFLAGS, and -lneon to LIBS.
+
+Fri Dec 22 23:13:39 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4 (NEON_NORMAL_BUILD, NEON_COMMON_BUILD): New macros.
+
+Tue Dec 19 22:13:18 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4 (NEON_LIBTOOL_BUILD): New macro.
+
+Wed Dec 13 22:07:07 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4: Add a decent interface: NEON_LIBRARY for non-bundled
+	case, NEON_BUNDLED for the bundled case.  (LIBNEON_SOURCE_CHECKS):
+	Always set NEON_NEED_XML_PARSER.
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): Only execute if
+	"$NEON_NEED_XML_PARSER" = "yes".
+
+Sun Nov 19 22:52:56 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4, neon-ssl.m4, neon-warnings.m4, neon-xml-parser.m4:
+	Clarify that the more liberal license applies to the m4 files
+	only, not neon in general.
+
+Sun Nov 19 22:40:01 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4 (NEON_LIBRARY): Don't call NEON_XML_PARSER, set
+	NEON_NEED_XML_PARSER to "yes" if it needs to be called.
+
+Sun Nov 19 22:31:26 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): Switch to useing
+	NEON_INCLUDED_EXPAT m4 macro rather than passing arguments.
+
+Sun Nov 19 22:20:36 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4 (NEON_LIBRARY): Switch to using NEON_INCLUDED_SOURCE m4
+	macro rather than passing arguments to the NEON_LIBRARY macro.
+	
+Sun Nov  5 23:26:18 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon-xml-parser.m4: Never set LIBS if using a libtool-built
+	libexpat.la (Greg Stein).
+
+2000-10-10  Joe Orton  <joe@monolith.orton.local>
+
+	* neon-xml-parser.m4: If libexpat.la is included in the
+	--with-expat parameter, then use a libtool-friendly LIBS. (Greg
+	Stein)
+
+Sat Oct  7 19:16:08 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon-xml-parser.m4: Link against a libexpat.la if found in
+	--with-expat location. (Greg Stein).
+
+Mon Sep 11 15:05:58 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4: Use AC_SEARCH_LIBS for finding gethostbyname() and
+	socket().
+
+Mon Sep 11 15:03:45 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon.m4 (NEON_REPLACE_SNPRINTF): New macro.
+
+Fri Sep  8 14:30:37 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon.m4: Check for socket() in -lsocket, -linet.
+
+Thu Sep  7 00:11:51 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon-xml-parser.m4: Added --with-expat flag (patch by Greg
+	Stein).
+
+Sun Aug 13 11:12:41 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* strftime.m4: New file, from fileutils-4.0i.
+
+Thu Jul 27 19:59:18 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon-ssl.m4: Append the SSL libs on the end of $LIBS rather than
+	redefining it completely.
+
+Thu Jul 27 19:43:38 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon.m4: Define variable neon_library_message to describe what
+	neon library is being used.
+
+Mon Jul 24 16:56:34 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon-ssl.m4: Put -lssl before -lcrypto in LIBS.
+
+Thu Jul 20 15:12:14 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): Pass directory name
+	containing bundled expat sources as $1.
+
+	* neon.m4 (NEON_LIBRARY): Pass directory name containing bundled
+	neon sources as $1, and $2 is passed to NEON_XML_PARSER for
+	similar use.
+
+Thu Jul 20 15:04:49 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon-ssl.m4: Rewritten from scratch. Support OpenSSL only.
+
+Thu Jul 20 12:41:23 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon.m4, neon-xml-parser.m4, neon_warnings.m4: Added licensing
+	information.
+
+Wed Jul 19 19:30:24 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon-warnings.m4: New file. (NEON_WARNINGS): Macro for doing
+	--enable-warnings.
+
+Sun Jun 18 12:12:23 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon.m4: Only add --with-included-neon flag if neon is bundled.
+
+Sun Jun 18 12:08:23 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* gnome-x-checks.m4: Imported from GNOME CVS macros module,
+	adding: descriptive args to AC_DEFINE HAVE_LIBSM call, requiring
+	Gtk 1.2.8 and the Gtk 'gthread' module.
+
+Mon May 29 15:10:24 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon.m4 (LIBNEON_SOURCE_CHECKS): Call NEON_SSL.
+
+Tue May 23 19:11:29 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon.m4: Renamed from neon-checks.m4.
+
+Sun May 21 23:52:27 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon-ssl.m4: New file.
+
+Sat May 13 21:08:54 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* acconfig.h: Added HAVE_LC_MESSAGE (my lcmessage.m4 is missing
+	the appropriate description arguments).
+
+Sat May 13 21:08:40 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* acconfig.h: Added PACKAGE and VERSION.
+
+Sat May 13 21:02:29 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socklen-arg-type.m4: Added file, modified from a KDE
+	configure.in.
+
+Sat May 13 20:44:56 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* gnome-x-checks.m4: Added description arguments to
+	AC_DEFINE(HAVE_LIBSM).
+
+Wed May 10 19:18:14 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon-xml-parser.m4: Error if no XML parser is found.
+
+Wed May 10 14:33:21 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon-checks.m4: New file.
+
+Wed May 10 14:26:57 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon-xml-parser.m4 (NEON_XML_PARSER): Use "neon_" prefix for
+	variables.
+
+Wed May 10 13:47:04 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* acconfig.h: New file.
+
+Wed May 10 13:42:16 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon-xml-parser.m4: New file.
+
+Sun May  7 21:57:32 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* gnome-x-checks.m4 (GNOME_X_CHECKS): Check for Gtk 1.2.7 or
+	later, passing "gthread" module argument.
+

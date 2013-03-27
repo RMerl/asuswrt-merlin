@@ -1,0 +1,37 @@
+# sh testcase for cmp/pl $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+zero:
+	mov #0, r0
+	cmp/pl r0
+	bt wrong
+
+plus:
+	mov #10, r0
+	cmp/pl r0
+	bf wrong
+
+minus:
+	mov #10, r0
+	neg r0, r0
+	cmp/pl r0
+	bt wrong
+
+large:
+	mov #10, r0
+	shll8 r0
+	add #123, r0
+	cmp/pl r0
+	bf wrong
+
+okay:
+	pass
+
+wrong:
+	fail

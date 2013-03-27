@@ -19,11 +19,56 @@
 <script language="JavaScript" type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
+<style>
+#pull_arrow{
+ 	float:center;
+ 	cursor:pointer;
+ 	border:2px outset #EFEFEF;
+ 	background-color:#CCC;
+ 	padding:3px 2px 4px 0px;
+}
+
+.WL_MAC_Block{
+	border:1px outset #999;
+	background-color:#576D73;
+	position:absolute;
+	margin-top:103px;
+	*margin-top:96px;	
+	margin-left:238px;
+	width:145px;
+	text-align:left;	
+	height:auto;
+	overflow-y:auto;
+	z-index:200;
+	padding: 1px;
+	display:none;
+}
+.WL_MAC_Block div{
+	background-color:#576D73;
+	height:auto;
+	*height:20px;
+	line-height:20px;
+	text-decoration:none;
+	font-family: Lucida Console;
+	padding-left:2px;
+}
+
+.WL_MAC_Block a{
+	background-color:#EFEFEF;
+	color:#FFF;
+	font-size:12px;
+	font-family:Arial, Helvetica, sans-serif;
+	text-decoration:none;	
+}
+.WL_MAC_Block div:hover, .WL_MAC_Block a:hover{
+	background-color:#3366FF;
+	color:#FFFFFF;
+	cursor:default;
+}	
+</style>
 <script>
 var $j = jQuery.noConflict();
-</script>
 
-<script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 
@@ -41,7 +86,7 @@ var wl_maclist_x_array = '<% nvram_get("wl_maclist_x"); %>';
 function initial(){
 	show_menu();
 
-	if(sw_mode == 2 && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
+	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
 		for(var i=3; i>=3; i--)
 			$("MainTable1").deleteRow(i);
 		for(var i=2; i>=0; i--)
@@ -52,7 +97,9 @@ function initial(){
 	}
 	else
 		show_wl_maclist_x();
-
+		
+	showWLMACList();	
+		
 	if(band5g_support == -1)	
 		$("wl_unit_field").style.display = "none";
 }
@@ -202,6 +249,60 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		return true;
 	}	
 }
+
+//Viz add 2013.01 pull out WL client mac START
+function pullWLMACList(obj){	
+	if(isMenuopen == 0){		
+		obj.src = "/images/arrow-top.gif"
+		document.getElementById("WL_MAC_List_Block").style.display = "block";
+		document.form.wl_maclist_x_0.focus();		
+		isMenuopen = 1;
+	}
+	else
+		hideClients_Block();
+}
+
+var over_var = 0;
+var isMenuopen = 0;
+
+function hideClients_Block(){
+	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById("WL_MAC_List_Block").style.display="none";
+	isMenuopen = 0;
+}
+
+
+function showWLMACList(){
+	var code = "";
+	var show_macaddr = "";
+	var wireless_list_array = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
+
+	if(wireless_list_array == "[]" || wireless_list_array == null || wireless_list_array == ""){
+			document.getElementById("pull_arrow").style.display = "none";
+	}else{
+			document.getElementById("pull_arrow").style.display = "";
+			for(var i = 0; i < wireless_list_array.length; i++){
+					var client_list_row = wireless_list_array[i];
+					if(client_list_row[0]){
+							show_macaddr = client_list_row[0];
+
+							code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientmac(\''+client_list_row[0]+'\');"><strong>'+client_list_row[0]+'</strong> ';
+							code += ' </div></a>';
+					}else{
+							code += '<div onmouseover="over_var=1;" onmouseout="over_var=0;"><strong>No Wireless Client.</strong>';
+					}
+			}
+			code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
+			$("WL_MAC_List_Block").innerHTML = code;
+	}		
+}
+
+function setClientmac(macaddr){
+	document.form.wl_maclist_x_0.value = macaddr;
+	hideClients_Block();
+	over_var = 0;
+}
+//Viz add 2013.01 pull out WL client mac END
 </script>
 </head>
 
@@ -301,8 +402,10 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 					<th width="20%">Add / Delete</th>
           		</tr>
           		<tr>
+           			<div id="WL_MAC_List_Block" class="WL_MAC_Block"></div>
             		<td width="40%">
-              			<input type="text" maxlength="17" class="input_macaddr_table" name="wl_maclist_x_0" onKeyPress="return is_hwaddr(this,event)">
+              			<input type="text" maxlength="17" class="input_macaddr_table" name="wl_maclist_x_0" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
+              			<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;display:none;" onclick="pullWLMACList(this);" title="Select the mac address of Wireless Clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
               		</td>
 			<td width="40%">
 				<input type="text" class="input_15_table" maxlenght="15" onKeypress="return is_alphanum(this,event);" name="wl_macname_x_0">

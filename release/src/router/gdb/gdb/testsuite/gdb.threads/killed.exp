@@ -1,0 +1,103 @@
+# Copyright 2002, 2003, 2005, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@gnu.org
+
+# This is a regression test for gdb/568 in the sources.redhat.com
+# GNATS database.  As of early June 2002, GDB could get sort of wedged
+# debugging the program `killed.c':
+#
+# $ $D6/gdb/gdb -nw killed
+# GNU gdb 2002-06-11-cvs
+# Copyright 2002 Free Software Foundation, Inc.
+# GDB is free software, covered by the GNU General Public License, and you are
+# welcome to change it and/or distribute copies of it under certain conditions.
+# Type "show copying" to see the conditions.
+# There is absolutely no warranty for GDB.  Type "show warranty" for details.
+# This GDB was configured as "i686-pc-linux-gnu"...
+# (gdb) run
+# Starting program: /home/jimb/foo/play/killed 
+# [New Thread 1024 (LWP 6487)]
+# [New Thread 2049 (LWP 6488)]
+# [New Thread 1026 (LWP 6489)]
+# Cannot find user-level thread for LWP 6487: generic error
+# (gdb) quit
+# The program is running.  Exit anyway? (y or n) y
+# Cannot find thread 2049: generic error
+# (gdb) kill
+# Kill the program being debugged? (y or n) y
+# Cannot find thread 2049: generic error
+# (gdb) The program is running.  Exit anyway? (y or n) y
+# Cannot find thread 2049: generic error
+# (gdb) 
+# [7]+  Stopped                 $D6/gdb/gdb -nw killed
+# $ kill %7
+# 
+# [7]+  Stopped                 $D6/gdb/gdb -nw killed
+# $ kill -9 %7
+# 
+# [7]+  Stopped                 $D6/gdb/gdb -nw killed
+# $ 
+# [7]+  Killed                  $D6/gdb/gdb -nw killed
+# $ 
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "killed"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug "incdir=${objdir}"]] != "" } {
+    return -1
+}
+
+
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+gdb_run_cmd
+gdb_expect {
+  -re "$gdb_prompt $" {
+    pass "run program to completion"
+  }
+  timeout {
+    fail "run program to completion (timeout)"
+  }
+}
+
+# Try to quit.
+send_gdb "quit\n"
+gdb_expect {
+    -re "The program is running.  Exit anyway\\? \\(y or n\\) $" {
+        send_gdb "y\n"
+        exp_continue
+    }
+    eof {
+        pass "GDB exits after multi-threaded program exits messily"
+    }
+    -re "Cannot find thread ${decimal}: generic error\[\r\n\]*$gdb_prompt $" {
+        kfail "gdb/568" "GDB exits after multi-threaded program exits messily"
+    }
+    timeout {
+        fail "GDB exits after multi-threaded program exits messily (timeout)"
+    }
+}

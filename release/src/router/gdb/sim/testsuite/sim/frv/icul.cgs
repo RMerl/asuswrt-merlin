@@ -1,0 +1,53 @@
+# FRV testcase for icul $GRi
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global icul
+icul:
+	or_spr_immed	0xc8000000,hsr0	; caches enabled -- copy-back mode
+
+	; preload and lock all the lines in set 0 of the insn cache
+	set_gr_immed	0x70000,gr10
+	set_bctrlr_0_0  gr10
+	lock_insn_cache	gr10
+
+	inc_gr_immed	0x1000,gr10
+	set_bctrlr_0_0  gr10
+	lock_insn_cache	gr10
+
+	inc_gr_immed	0x1000,gr10
+	set_bctrlr_0_0  gr10
+	lock_insn_cache	gr10
+
+	inc_gr_immed	0x1000,gr10
+	set_bctrlr_0_0  gr10
+	lock_insn_cache	gr10
+
+	; execute the pre-loaded insn
+	set_gr_immed	0x70000,gr10
+	calll		@(gr10,gr0)	; should come right back
+	inc_gr_immed	0x1000,gr10
+	calll		@(gr10,gr0)	; should come right back
+	inc_gr_immed	0x1000,gr10
+	calll		@(gr10,gr0)	; should come right back
+	inc_gr_immed	0x1000,gr10
+	calll		@(gr10,gr0)	; should come right back
+
+	; Now execute another insn which would have gone into set 0.
+	inc_gr_immed	0x1000,gr10
+	set_bctrlr_0_0  gr10
+	set_spr_immed	128,lcr
+	calll		@(gr10,gr0)	; should come right back
+
+	; Now unlock one of the lines and do it again
+	set_gr_immed	0x71000,gr10
+	icul		gr10
+	calll		@(gr10,gr0)	; should come right back
+
+	inc_gr_immed	0x3000,gr10
+	calll		@(gr10,gr0)	; should come right back
+
+	pass

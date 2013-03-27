@@ -1,0 +1,322 @@
+# Copyright 2002, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was written by Andrew Cagney (cagney at redhat dot com),
+# derived from xfullpath.exp (written by Joel Brobecker), derived from
+# selftest.exp (written by Rob Savoye).
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+# are we on a target board
+if { [is_remote target] || ![isnative] } then {
+    return
+}
+
+proc setup_test { executable } {
+    global gdb_prompt
+    global timeout
+
+    # load yourself into the debugger
+    # This can take a relatively long time, particularly for testing where
+    # the executable is being accessed over a network, or where gdb does not
+    # support partial symbols for a particular target and has to load the
+    # entire symbol table.  Set the timeout to 10 minutes, which should be
+    # adequate for most environments (it *has* timed out with 5 min on a
+    # SPARCstation SLC under moderate load, so this isn't unreasonable).
+    # After gdb is started, set the timeout to 30 seconds for the duration
+    # of this test, and then back to the original value.
+
+    set oldtimeout $timeout
+    set timeout 600
+    verbose "Timeout is now $timeout seconds" 2
+
+    global gdb_file_cmd_debug_info
+    set gdb_file_cmd_debug_info "unset"
+
+    set result [gdb_load $executable]
+    set timeout $oldtimeout
+    verbose "Timeout is now $timeout seconds" 2
+
+    if { $result != 0 } then {
+	return -1
+    }
+
+    if { $gdb_file_cmd_debug_info != "debug" } then {
+	untested "No debug information, skipping testcase."
+	return -1
+    }
+
+    # Set a breakpoint at main
+    gdb_test "break captured_command_loop" \
+            "Breakpoint.*at.* file.*, line.*" \
+            "breakpoint in captured_command_loop"
+
+    # run yourself
+    # It may take a very long time for the inferior gdb to start (lynx),
+    # so we bump it back up for the duration of this command.
+    set timeout 600
+
+    set description "run until breakpoint at captured_command_loop"
+    send_gdb "run -nw\n"
+    gdb_expect {
+        -re "Starting program.*Breakpoint \[0-9\]+,.*captured_command_loop .data.* at .*main.c:.*$gdb_prompt $" {
+            pass "$description"
+        }
+        -re "Starting program.*Breakpoint \[0-9\]+,.*captured_command_loop .data.*$gdb_prompt $" {
+            xfail "$description (line numbers scrambled?)"
+        }
+        -re "vfork: No more processes.*$gdb_prompt $" {
+            fail "$description (out of virtual memory)"
+            set timeout $oldtimeout
+            verbose "Timeout is now $timeout seconds" 2
+            return -1
+        }
+        -re ".*$gdb_prompt $" {
+            fail "$description"
+            set timeout $oldtimeout
+            verbose "Timeout is now $timeout seconds" 2
+            return -1
+        }
+        timeout {
+            fail "$description (timeout)"
+        }
+    }
+
+    set timeout $oldtimeout
+    verbose "Timeout is now $timeout seconds" 2
+
+    return 0
+}
+
+proc test_initial_complaints { } {
+
+    global gdb_prompt
+
+    # Unsupress complaints
+    gdb_test "set stop_whining = 2"
+
+    # Prime the system
+    gdb_test "call complaint (&symfile_complaints, \"Register a complaint\")" \
+	    "During symbol reading, Register a complaint."
+
+    # Check that the complaint was inserted and where
+    gdb_test "print symfile_complaints->root->fmt" \
+	    ".\[0-9\]+ =.*\"Register a complaint\""
+
+    # Re-issue the first message #1
+    gdb_test "call complaint (&symfile_complaints, symfile_complaints->root->fmt)" \
+	    "During symbol reading, Register a complaint."
+
+    # Check that there is only one thing in the list
+    gdb_test "print symfile_complaints->root->next == &complaint_sentinel" \
+	    ".\[0-9\]+ = 1" "list has one entry"
+
+    # Add a second complaint, expect it
+    gdb_test "call complaint (&symfile_complaints, \"Testing! Testing! Testing!\")" \
+	    "During symbol reading, Testing. Testing. Testing.."
+
+    return 0
+}
+
+proc test_serial_complaints { } {
+
+    global gdb_prompt
+
+    gdb_test_exact "call clear_complaints (&symfile_complaints, 1, 0)" "" "serial start"
+
+    # Prime the system
+    send_gdb "call complaint (&symfile_complaints, \"serial line  1\")\n"
+    gdb_expect {
+	-re "During symbol reading...serial line  1...$gdb_prompt " {
+	    pass "serial line 1"
+	}
+	"$gdb_prompt" {
+	    fail "serial line  1"
+	}
+	timeout {
+	    fail "serial line  1 (timeout)"
+	}
+    }
+
+    # Add a second complaint, expect it
+    send_gdb "call complaint (&symfile_complaints, \"serial line 2\")\n"
+    gdb_expect {
+	-re "serial line 2...$gdb_prompt " {
+	    pass "serial line 2"
+	}
+	"$gdb_prompt" {
+	    fail "serial line 2"
+	}
+	timeout {
+	    fail "serial line 2 (timeout)"
+	}
+    }
+
+    send_gdb "call clear_complaints (&symfile_complaints, 1, 0)\n"
+    gdb_expect {
+	-re "\r\n\r\n$gdb_prompt " {
+	    pass "serial end"
+	}
+	"$gdb_prompt" {
+	    fail "serial end"
+	}
+	timeout {
+	    fail "serial end (timeout)"
+	}
+    }
+
+    return 0
+}
+
+# For short complaints, all are the same
+
+proc test_short_complaints { } {
+
+    global gdb_prompt
+
+    gdb_test_exact "call clear_complaints (&symfile_complaints, 1, 1)" "" "short start"
+
+    # Prime the system
+    send_gdb "call complaint (&symfile_complaints, \"short line 1\")\n"
+    gdb_expect {
+	-re "short line 1...$gdb_prompt " {
+	    pass "short line 1"
+	}
+	"$gdb_prompt" {
+	    fail "short line 1"
+	}
+	timeout {
+	    fail "short line 1 (timeout)"
+	}
+    }
+
+    # Add a second complaint, expect it
+    send_gdb "call complaint (&symfile_complaints, \"short line 2\")\n"
+    gdb_expect {
+	-re "short line 2...$gdb_prompt " {
+	    pass "short line 2"
+	}
+	"$gdb_prompt" {
+	    fail "short line 2"
+	}
+	timeout {
+	    fail "short line 2 (timeout)"
+	}
+    }
+
+    send_gdb "call clear_complaints (&symfile_complaints, 1, 0)\n"
+    gdb_expect {
+	-re "\r\n\r\n$gdb_prompt " {
+	    pass "short end"
+	}
+	"$gdb_prompt" {
+	    fail "short end"
+	}
+	timeout {
+	    fail "short end (timeout)"
+	}
+    }
+
+    return 0
+}
+
+# Check that nothing comes out when there haven't been any real
+# complaints.  Note that each test is really checking the previous
+# command.
+
+proc test_empty_complaint { cmd msg } {
+    global gdb_prompt
+    send_gdb $cmd
+    gdb_expect {
+	-re "\r\n\r\n$gdb_prompt " {
+	    fail $msg
+	}
+	"\r\n$gdb_prompt" {
+	    pass $msg
+	}
+	timeout {
+	    fail "$msg (timeout)"
+	}
+    }
+  
+}
+
+proc test_empty_complaints { } {
+
+    test_empty_complaint "call clear_complaints(&symfile_complaints,0,0)\n" \
+	    "empty non-verbose non-noisy clear"
+    test_empty_complaint "call clear_complaints(&symfile_complaints,1,0)\n" \
+	    "empty verbose non-noisy clear"
+    test_empty_complaint "call clear_complaints(&symfile_complaints,1,1)\n" \
+	    "empty verbose noisy clear"
+    test_empty_complaint "call clear_complaints(&symfile_complaints,0,1)\n" \
+	    "empty non-verbose noisy clear"
+
+    return 0
+}
+
+# Find a pathname to a file that we would execute if the shell was asked
+# to run $arg using the current PATH.
+
+proc find_gdb { arg } {
+
+    # If the arg directly specifies an existing executable file, then
+    # simply use it.
+
+    if [file executable $arg] then {
+	return $arg
+    }
+
+    set result [which $arg]
+    if [string match "/" [ string range $result 0 0 ]] then {
+	return $result
+    }
+
+    # If everything fails, just return the unqualified pathname as default
+    # and hope for best.
+
+    return $arg
+}
+
+# Run the test with self.
+# Copy the file executable file in case this OS doesn't like to edit its own
+# text space.
+
+set GDB_FULLPATH [find_gdb $GDB]
+
+# Remove any old copy lying around.
+remote_file host delete x$tool
+
+gdb_start
+
+set file [remote_download host $GDB_FULLPATH x$tool]
+
+set setup_result [setup_test $file ]
+if {$setup_result <0} then {
+    return -1
+}
+
+test_initial_complaints
+test_serial_complaints
+test_short_complaints
+test_empty_complaints
+
+gdb_exit;
+catch "remote_file host delete $file";

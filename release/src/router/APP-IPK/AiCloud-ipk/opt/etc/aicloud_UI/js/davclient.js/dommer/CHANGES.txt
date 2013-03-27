@@ -1,0 +1,17 @@
+Changes in the Dommer library
+=============================
+
+Version 0.4
+-----------
+
+  * Changed the unit tests so they can be ran from py.test (using some
+    new JSBase feature, currently this rules out browser testing but that
+    should be fixed later).
+
+  * Fixed some bugs in comment handling.
+
+  * Replaced my old helpers lib with a new one, which has a slightly different
+    way of defining methods (uses a module namespace). Note that this does not
+    change the dependencies, as the functionality required is copied to the
+    main lib on release creation.
+

@@ -1,7 +1,7 @@
 /*
  * Include file private to the SOC Interconnect support files.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: siutils_priv.h 302333 2011-12-11 01:47:49Z $
+ * $Id: siutils_priv.h 347470 2012-07-26 22:51:10Z $
  */
 
 #ifndef	_siutils_priv_h_
@@ -148,6 +148,7 @@ typedef struct si_info {
 #define	ILP_DIV_5MHZ		0		/* ILP = 5 MHz */
 #define	ILP_DIV_1MHZ		4		/* ILP = 1 MHz */
 
+/* Force fast clock for 4360b0 */
 #define PCI_FORCEHT(si)	\
 	(((PCIE_GEN1(si)) && (si->pub.chip == BCM4311_CHIP_ID) && ((si->pub.chiprev <= 1))) || \
 	((PCI(si) || PCIE_GEN1(si)) && (si->pub.chip == BCM4321_CHIP_ID)) || \

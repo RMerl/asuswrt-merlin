@@ -1,7 +1,7 @@
 /*
  * Broadcom Event  protocol definitions
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  *
  * Dependencies: proto/bcmeth.h
  *
- * $Id: bcmevent.h 315348 2012-02-16 07:32:51Z $
+ * $Id: bcmevent.h 339265 2012-06-15 23:44:23Z $
  *
  */
 
@@ -179,8 +179,14 @@ typedef BWL_PRE_PACKED_STRUCT struct bcm_event {
 #define WLC_E_REASSOC_IND_NDIS		86	/* 802.11 REASSOC indication for NDIS only */
 #define WLC_E_ASSOC_REQ_IE 		87
 #define WLC_E_ASSOC_RESP_IE 		88
+#define WLC_E_ASSOC_RECREATED	89	/* association recreated on resume */
+#define WLC_E_ACTION_FRAME_RX_NDIS	90	/* rx action frame event for NDIS only */
+#define WLC_E_AUTH_REQ		91	/* authentication request received */
+#define WLC_E_TDLS_PEER_EVENT 	92	/* discovered peer, connected or disconnected peer */
+#define WLC_E_SPEEDY_RECREATE_FAIL	93	/* fast assoc recreation failed */
+#define WLC_E_NATIVE			94	/* port-specific event and payload (e.g. NDIS) */
+#define WLC_E_LAST			95	/* highest val + 1 for range checking */
 
-#define WLC_E_LAST			89	/* highest val + 1 for range checking */
 
 /* Table of event name strings for UIs and debugging dumps */
 typedef struct {
@@ -306,6 +312,11 @@ typedef struct wl_event_data_if {
 /* reason codes for WLC_E_OVERLAY_REQ event */
 #define WLC_E_OVL_DOWNLOAD		0	/* overlay download request */
 #define WLC_E_OVL_UPDATE_IND	1	/* device indication of host overlay update */
+
+/* reason codes for WLC_E_TDLS_PEER_EVENT event */
+#define WLC_E_TDLS_PEER_DISCOVERED		0	/* peer is ready to establish TDLS */
+#define WLC_E_TDLS_PEER_CONNECTED		1
+#define WLC_E_TDLS_PEER_DISCONNECTED	2
 
 /* This marks the end of a packed structure section. */
 #include <packed_section_end.h>

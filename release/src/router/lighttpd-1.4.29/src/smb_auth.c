@@ -14,7 +14,9 @@
 #include "md5.h"
 
 #if EMBEDDED_EANBLE
+#ifndef APP_IPKG
 #include "disk_share.h"
+#endif
 #endif
 
 typedef li_MD5_CTX MD5_CTX;
@@ -24,7 +26,1018 @@ typedef li_MD5_CTX MD5_CTX;
 #endif
 
 #define DBE 0
+#define LIGHTTPD_ARPPING_PID_FILE_PATH	"/tmp/lighttpd/lighttpd-arpping.pid"
 
+#ifdef APP_IPKG
+/*???start?*/
+#include <dirent.h>
+#define PROTOCOL_CIFS "cifs"
+#define PROTOCOL_FTP "ftp"
+#define PROTOCOL_MEDIASERVER "dms"
+#ifdef RTCONFIG_WEBDAV_OLD
+#define PROTOCOL_WEBDAV "webdav"
+#define MAX_PROTOCOL_NUM 4
+#else
+#define MAX_PROTOCOL_NUM 3
+#endif
+
+#define PROTOCOL_CIFS_BIT 0
+#define PROTOCOL_FTP_BIT 1
+#define PROTOCOL_MEDIASERVER_BIT 2
+#ifdef RTCONFIG_WEBDAV_OLD
+#define PROTOCOL_WEBDAV_BIT 3
+#endif
+
+#define DEFAULT_SAMBA_RIGHT 3
+#define DEFAULT_FTP_RIGHT 3
+#define DEFAULT_DMS_RIGHT 1
+#ifdef RTCONFIG_WEBDAV_OLD
+#define DEFAULT_WEBDAV_RIGHT 3
+#endif
+
+#define DEBUG_USB
+
+#ifdef DEBUG_USB
+#define usb_dbg(fmt, args...) do{ \
+                FILE *fp = fopen("/tmp/usb.log", "a+"); \
+                if(fp){ \
+                        fprintf(fp, "[usb_dbg: %s] ", __FUNCTION__); \
+                        fprintf(fp, fmt, ## args); \
+                        fclose(fp); \
+                } \
+        }while(0)
+#else
+#define usb_dbg printf
+#endif
+
+
+/* Transfer Char to ASCII */
+int char_to_ascii_safe(const char *output, const char *input, int outsize)
+{
+        char *src = (char *)input;
+        char *dst = (char *)output;
+        char *end = (char *)output + outsize - 1;
+        char *escape = "[]"; // shouldn't be more?
+
+        if (src == NULL || dst == NULL || outsize <= 0)
+                return 0;
+
+        for ( ; *src && dst < end; src++) {
+                if ((*src >='0' && *src <='9') ||
+                    (*src >='A' && *src <='Z') ||
+                    (*src >='a' && *src <='z')) {
+                        *dst++ = *src;
+                } else if (strchr(escape, *src)) {
+                        if (dst + 2 > end)
+                                break;
+                        *dst++ = '\\';
+                        *dst++ = *src;
+                } else {
+                        if (dst + 3 > end)
+                                break;
+                        dst += sprintf(dst, "%%%.02X", *src);
+                }
+        }
+        if (dst <= end)
+                *dst = '\0';
+
+        return dst - output;
+}
+
+int
+check_if_file_exist(const char *filepath)
+{
+/*
+        FILE *fp;
+        fp=fopen(filename, "r");
+        if (fp)
+        {
+                fclose(fp);
+                return 1;
+        }
+        else
+                return 0;
+*/
+        struct stat stat_buf;
+
+        if (!stat(filepath, &stat_buf))
+                return S_ISREG(stat_buf.st_mode);
+        else
+                return 0;
+}
+unsigned long f_size(const char *path)	// 4GB-1	-1 = error
+{
+        struct stat st;
+        if (stat(path, &st) == 0) return st.st_size;
+        return (unsigned long)-1;
+}
+
+
+extern int check_file_integrity(const char *const file_name){
+    unsigned long file_size;
+    char test_file[PATH_MAX];
+
+    if((file_size = f_size(file_name)) == -1){
+        usb_dbg("Fail to get the size of the file.\n");
+        return 0;
+    }
+
+    memset(test_file, 0, PATH_MAX);
+    sprintf(test_file, "%s.%lu", file_name, file_size);
+    if(!check_if_file_exist(test_file)){
+        usb_dbg("Fail to check the folder list.\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+int
+check_if_dir_exist(const char *dirpath)
+{
+/*
+        DIR *dp;
+        if (!(dp=opendir(dir)))
+                return 0;
+        closedir(dp);
+        return 1;
+*/
+        struct stat stat_buf;
+
+        if (!stat(dirpath, &stat_buf))
+                return S_ISDIR(stat_buf.st_mode);
+        else
+                return 0;
+}
+
+extern int delete_file_or_dir(char *target){
+        int ret;
+
+        if(check_if_dir_exist(target))
+                ret = rmdir(target);
+        else
+                ret = unlink(target);
+
+        return ret;
+}
+
+extern char *get_upper_str(const char *const str, char **target){
+        int len, i;
+        char *ptr;
+
+        len = strlen(str);
+        *target = (char *)malloc(sizeof(char)*(len+1));
+        if(*target == NULL){
+                printf("No memory \"*target\".\n");
+                return NULL;
+        }
+        ptr = *target;
+        for(i = 0; i < len; ++i)
+                ptr[i] = toupper(str[i]);
+        ptr[len] = 0;
+
+        return ptr;
+}
+
+extern int upper_strcmp(const char *const str1, const char *const str2){
+        char *upper_str1, *upper_str2;
+        int ret;
+
+        if(str1 == NULL || str2 == NULL)
+                return -1;
+
+        if(get_upper_str(str1, &upper_str1) == NULL)
+                return -1;
+
+        if(get_upper_str(str2, &upper_str2) == NULL){
+                free(upper_str1);
+                return -1;
+        }
+
+        ret = strcmp(upper_str1, upper_str2);
+        free(upper_str1);
+        free(upper_str2);
+
+        return ret;
+}
+
+extern int test_if_System_folder(const char *const dirname){
+        const char *const MS_System_folder[] = {"SYSTEM VOLUME INFORMATION", "RECYCLER", "RECYCLED", "$RECYCLE.BIN", NULL};
+        const char *const Linux_System_folder[] = {"lost+found", NULL};
+        int i;
+
+        for(i = 0; MS_System_folder[i] != NULL; ++i){
+                if(!upper_strcmp(dirname, MS_System_folder[i]))
+                        return 1;
+        }
+
+        for(i = 0; Linux_System_folder[i] != NULL; ++i){
+                if(!upper_strcmp(dirname, Linux_System_folder[i]))
+                        return 1;
+        }
+
+        return 0;
+}
+
+extern int get_var_file_name(const char *const account, const char *const path, char **file_name){
+    int len;
+    char *var_file;
+    char ascii_user[64];
+
+    if(path == NULL)
+        return -1;
+
+    len = strlen(path)+strlen("/.___var.txt");
+    if(account != NULL){
+        memset(ascii_user, 0, 64);
+        char_to_ascii_safe(ascii_user, account, 64);
+
+        len += strlen(ascii_user);
+    }
+    *file_name = (char *)malloc(sizeof(char)*(len+1));
+    if(*file_name == NULL)
+        return -1;
+
+    var_file = *file_name;
+    if(account != NULL)
+        sprintf(var_file, "%s/.__%s_var.txt", path, ascii_user);
+    else
+        sprintf(var_file, "%s/.___var.txt", path);
+    var_file[len] = 0;
+
+    return 0;
+}
+
+extern char *read_whole_file(const char *target){
+        FILE *fp;
+        char *buffer, *new_str;
+        int i;
+        unsigned int read_bytes = 0;
+        unsigned int each_size = 1024;
+
+        if((fp = fopen(target, "r")) == NULL)
+                return NULL;
+
+        buffer = (char *)malloc(sizeof(char)*each_size);
+        if(buffer == NULL){
+                //_dprintf("No memory \"buffer\".\n");
+                fclose(fp);
+                return NULL;
+        }
+        memset(buffer, 0, each_size);
+
+        while ((i = fread(buffer+read_bytes, each_size * sizeof(char), 1, fp)) == 1){
+                read_bytes += each_size;
+                new_str = (char *)malloc(sizeof(char)*(each_size+read_bytes));
+                if(new_str == NULL){
+                        //_dprintf("No memory \"new_str\".\n");
+                        free(buffer);
+                        fclose(fp);
+                        return NULL;
+                }
+                memset(new_str, 0, sizeof(char)*(each_size+read_bytes));
+                memcpy(new_str, buffer, read_bytes);
+
+                free(buffer);
+                buffer = new_str;
+        }
+
+        fclose(fp);
+        return buffer;
+}
+
+
+
+extern char *upper_strstr(const char *const str, const char *const target){
+        char *upper_str, *upper_target;
+        char *ret;
+        int len;
+
+        if(str == NULL || target == NULL)
+                return NULL;
+
+        if(get_upper_str(str, &upper_str) == NULL)
+                return NULL;
+
+        if(get_upper_str(target, &upper_target) == NULL){
+                free(upper_str);
+                return NULL;
+        }
+
+        ret = strstr(upper_str, upper_target);
+        if(ret == NULL){
+                free(upper_str);
+                free(upper_target);
+                return NULL;
+        }
+
+        if((len = upper_str-ret) < 0)
+                len = ret-upper_str;
+
+        free(upper_str);
+        free(upper_target);
+
+        return (char *)(str+len);
+}
+
+extern void free_2_dimension_list(int *num, char ***list) {
+    int i;
+    char **target = *list;
+
+    if (*num <= 0 || target == NULL){
+        *num = 0;
+        return;
+    }
+
+    for (i = 0; i < *num; ++i)
+        if (target[i] != NULL)
+            free(target[i]);
+
+    if (target != NULL)
+        free(target);
+
+    *num = 0;
+}
+
+extern int get_all_folder(const char *const mount_path, int *sh_num, char ***folder_list) {
+    DIR *pool_to_open;
+    struct dirent *dp;
+    char *testdir;
+    char **tmp_folder_list, **tmp_folder;
+    int len, i;
+
+    pool_to_open = opendir(mount_path);
+    if (pool_to_open == NULL) {
+        usb_dbg("Can't opendir \"%s\".\n", mount_path);
+        return -1;
+    }
+
+    *sh_num = 0;
+    while ((dp = readdir(pool_to_open)) != NULL) {
+        if (dp->d_name[0] == '.')
+            continue;
+
+        if (test_if_System_folder(dp->d_name) == 1)
+            continue;
+
+        len = strlen(mount_path)+strlen("/")+strlen(dp->d_name);
+        testdir = (char *)malloc(sizeof(char)*(len+1));
+        if (testdir == NULL) {
+            closedir(pool_to_open);
+            return -1;
+        }
+        sprintf(testdir, "%s/%s", mount_path, dp->d_name);
+        testdir[len] = 0;
+        if (!check_if_dir_exist(testdir)) {
+            free(testdir);
+            continue;
+        }
+        free(testdir);
+
+        tmp_folder = (char **)malloc(sizeof(char *)*(*sh_num+1));
+        if (tmp_folder == NULL) {
+            usb_dbg("Can't malloc \"tmp_folder\".\n");
+            return -1;
+        }
+
+        len = strlen(dp->d_name);
+        tmp_folder[*sh_num] = (char *)malloc(sizeof(char)*(len+1));
+        if (tmp_folder[*sh_num] == NULL) {
+            usb_dbg("Can't malloc \"tmp_folder[%d]\".\n", *sh_num);
+            free(tmp_folder);
+            return -1;
+        }
+        strcpy(tmp_folder[*sh_num], dp->d_name);
+        if (*sh_num != 0) {
+            for (i = 0; i < *sh_num; ++i)
+                tmp_folder[i] = tmp_folder_list[i];
+
+            free(tmp_folder_list);
+            tmp_folder_list = tmp_folder;
+        }
+        else
+            tmp_folder_list = tmp_folder;
+
+        ++(*sh_num);
+    }
+    closedir(pool_to_open);
+
+    *folder_list = tmp_folder_list;
+
+    return 0;
+}
+
+extern void set_file_integrity(const char *const file_name){
+    unsigned long file_size;
+    char test_file[PATH_MAX], test_file_name[PATH_MAX];
+    FILE *fp;
+    char target_dir[PATH_MAX], *ptr;
+    int len;
+    DIR *opened_dir;
+    struct dirent *dp;
+
+    if((ptr = strrchr(file_name, '/')) == NULL){
+        usb_dbg("Fail to get the target_dir of the file.\n");
+        return;
+    }
+    len = strlen(file_name)-strlen(ptr);
+    memset(target_dir, 0, PATH_MAX);
+    strncpy(target_dir, file_name, len);
+
+    if((file_size = f_size(file_name)) == -1){
+        usb_dbg("Fail to get the size of the file.\n");
+        return;
+    }
+
+    memset(test_file, 0, PATH_MAX);
+    sprintf(test_file, "%s.%lu", file_name, file_size);
+    if((fp = fopen(test_file, "w")) != NULL)
+        fclose(fp);
+
+    memset(test_file_name, 0, PATH_MAX);
+    ++ptr;
+    sprintf(test_file_name, "%s.%lu", ptr, file_size);
+
+    if((opened_dir = opendir(target_dir)) == NULL){
+        usb_dbg("Can't opendir \"%s\".\n", target_dir);
+        return;
+    }
+
+    len = strlen(ptr);
+    while((dp = readdir(opened_dir)) != NULL){
+        char test_path[PATH_MAX];
+
+        if(!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+            continue;
+
+        if(strncmp(dp->d_name, ptr, len) || !strcmp(dp->d_name, ptr) || !strcmp(dp->d_name, test_file_name))
+            continue;
+
+        memset(test_path, 0, PATH_MAX);
+        sprintf(test_path, "%s/%s", target_dir, dp->d_name);
+        usb_dbg("delete %s.\n", test_path);
+        delete_file_or_dir(test_path);
+    }
+    closedir(opened_dir);
+}
+
+extern int initial_var_file(const char *const account, const char *const mount_path) {
+    FILE *fp;
+    char *var_file;
+    int result, i;
+    int sh_num;
+    char **folder_list;
+    int samba_right, ftp_right, dms_right;
+#ifdef RTCONFIG_WEBDAV_OLD
+    int webdav_right;
+#endif
+
+    if (mount_path == NULL || strlen(mount_path) <= 0) {
+        usb_dbg("No input, mount_path\n");
+        return -1;
+    }
+
+    // 1. get the folder number and folder_list
+    //result = get_folder_list(mount_path, &sh_num, &folder_list);
+    result = get_all_folder(mount_path, &sh_num, &folder_list);
+
+    // 2. get the var file
+    if(get_var_file_name(account, mount_path, &var_file)){
+        usb_dbg("Can't malloc \"var_file\".\n");
+        free_2_dimension_list(&sh_num, &folder_list);
+        return -1;
+    }
+
+    // 3. get the default permission of all protocol.
+    char *aa=nvram_safe_get("http_username"); //add by zero
+
+    if(account == NULL // share mode.
+       || !strcmp(account, aa)){
+//       || !strcmp(account, nvram_safe_get("http_username"))){
+        samba_right = DEFAULT_SAMBA_RIGHT;
+        ftp_right = DEFAULT_FTP_RIGHT;
+        dms_right = DEFAULT_DMS_RIGHT;
+#ifdef RTCONFIG_WEBDAV_OLD
+        webdav_right = DEFAULT_WEBDAV_RIGHT;
+#endif
+    }
+    else{
+        samba_right = 0;
+        ftp_right = 0;
+        dms_right = 0;
+#ifdef RTCONFIG_WEBDAV_OLD
+        webdav_right = 0;
+#endif
+    }
+    free(aa);
+    // 4. write the default content in the var file
+    if ((fp = fopen(var_file, "w")) == NULL) {
+        usb_dbg("Can't create the var file, \"%s\".\n", var_file);
+        free_2_dimension_list(&sh_num, &folder_list);
+        free(var_file);
+        return -1;
+    }
+
+    for (i = -1; i < sh_num; ++i) {
+        fprintf(fp, "*");
+
+        if(i != -1)
+            fprintf(fp, "%s", folder_list[i]);
+#ifdef RTCONFIG_WEBDAV_OLD
+        fprintf(fp, "=%d%d%d%d\n", samba_right, ftp_right, dms_right, webdav_right);
+#else
+        fprintf(fp, "=%d%d%d\n", samba_right, ftp_right, dms_right);
+#endif
+    }
+
+    fclose(fp);
+    free_2_dimension_list(&sh_num, &folder_list);
+
+    // 5. set the check target of file.
+    set_file_integrity(var_file);
+    free(var_file);
+
+    return 0;
+}
+
+extern int get_permission(const char *const account,
+                              const char *const mount_path,
+                              const char *const folder,
+                              const char *const protocol) {
+        char *var_file, *var_info;
+        char *target, *follow_info;
+        int len, result;
+
+        // 1. get the var file
+        if(get_var_file_name(account, mount_path, &var_file)){
+            usb_dbg("Can't malloc \"var_file\".\n");
+            return -1;
+        }
+
+        // 2. check the file integrity.
+        if(!check_file_integrity(var_file)){
+            usb_dbg("Fail to check the file: %s.\n", var_file);
+            if(initial_var_file(account, mount_path) != 0){
+                usb_dbg("Can't initial \"%s\"'s file in %s.\n", account, mount_path);
+                free(var_file);
+                return -1;
+            }
+        }
+
+        // 3. get the content of the var_file of the account
+        var_info = read_whole_file(var_file);
+        if (var_info == NULL) {
+            usb_dbg("get_permission: \"%s\" isn't existed or there's no content.\n", var_file);
+            free(var_file);
+            return -1;
+        }
+        free(var_file);
+
+        // 4. get the target in the content
+        if(folder == NULL)
+            len = strlen("*=");
+        else
+            len = strlen("*")+strlen(folder)+strlen("=");
+        target = (char *)malloc(sizeof(char)*(len+1));
+        if (target == NULL) {
+            usb_dbg("Can't allocate \"target\".\n");
+            free(var_info);
+            return -1;
+        }
+        if(folder == NULL)
+            strcpy(target, "*=");
+        else
+            sprintf(target, "*%s=", folder);
+        target[len] = 0;
+
+        follow_info = upper_strstr(var_info, target);
+        free(target);
+        if (follow_info == NULL) {
+            if(account == NULL)
+                usb_dbg("No right about \"%s\" with the share mode.\n", (folder == NULL?"Pool":folder));
+            else
+                usb_dbg("No right about \"%s\" with \"%s\".\n", (folder == NULL?"Pool":folder), account);
+            free(var_info);
+            return -1;
+        }
+
+        follow_info += len;
+
+        if (follow_info[MAX_PROTOCOL_NUM] != '\n') {
+            if(account == NULL)
+                usb_dbg("The var info is incorrect.\nPlease reset the var file of the share mode.\n");
+            else
+                usb_dbg("The var info is incorrect.\nPlease reset the var file of \"%s\".\n", account);
+
+            free(var_info);
+            return -1;
+        }
+
+        // 5. get the right of folder
+        if (!strcmp(protocol, PROTOCOL_CIFS))
+            result = follow_info[0]-'0';
+        else if (!strcmp(protocol, PROTOCOL_FTP))
+            result = follow_info[1]-'0';
+        else if (!strcmp(protocol, PROTOCOL_MEDIASERVER))
+            result = follow_info[2]-'0';
+#ifdef RTCONFIG_WEBDAV_OLD
+        else if (!strcmp(protocol, PROTOCOL_WEBDAV))
+            result = follow_info[3]-'0';
+#endif
+        else{
+            usb_dbg("The protocol, \"%s\", is incorrect.\n", protocol);
+            free(var_info);
+            return -1;
+        }
+        free(var_info);
+
+        if (result < 0 || result > 3) {
+            if(account == NULL)
+                usb_dbg("The var info is incorrect.\nPlease reset the var file of the share mode.\n");
+            else
+                usb_dbg("The var info is incorrect.\nPlease reset the var file of \"%s\".\n", account);
+            return -1;
+        }
+
+        return result;
+    }
+
+/*???end?*/
+
+/*pids*/
+#include <errno.h>
+#include<sys/types.h>
+#include <dirent.h>
+#include <ctype.h>
+#include <stddef.h>
+enum {
+        PSSCAN_PID      = 1 << 0,
+        PSSCAN_PPID     = 1 << 1,
+        PSSCAN_PGID     = 1 << 2,
+        PSSCAN_SID      = 1 << 3,
+        PSSCAN_UIDGID   = 1 << 4,
+        PSSCAN_COMM     = 1 << 5,
+        /* PSSCAN_CMD      = 1 << 6, - use read_cmdline instead */
+        PSSCAN_ARGV0    = 1 << 7,
+        /* PSSCAN_EXE      = 1 << 8, - not implemented */
+        PSSCAN_STATE    = 1 << 9,
+        PSSCAN_VSZ      = 1 << 10,
+        PSSCAN_RSS      = 1 << 11,
+        PSSCAN_STIME    = 1 << 12,
+        PSSCAN_UTIME    = 1 << 13,
+        PSSCAN_TTY      = 1 << 14,
+        PSSCAN_SMAPS    = (1 << 15) * 0,
+        PSSCAN_ARGVN    = (1 << 16) * 1,
+        PSSCAN_START_TIME = 1 << 18,
+        /* These are all retrieved from proc/NN/stat in one go: */
+        PSSCAN_STAT     = PSSCAN_PPID | PSSCAN_PGID | PSSCAN_SID
+                        | PSSCAN_COMM | PSSCAN_STATE
+                        | PSSCAN_VSZ | PSSCAN_RSS
+                        | PSSCAN_STIME | PSSCAN_UTIME | PSSCAN_START_TIME
+                        | PSSCAN_TTY,
+};
+
+#define PROCPS_BUFSIZE 1024
+
+static int read_to_buf(const char *filename, void *buf)
+{
+        int fd;
+        /* open_read_close() would do two reads, checking for EOF.
+         * When you have 10000 /proc/$NUM/stat to read, it isn't desirable */
+        int ret = -1;
+        fd = open(filename, O_RDONLY);
+        if (fd >= 0) {
+                ret = read(fd, buf, PROCPS_BUFSIZE-1);
+                close(fd);
+        }
+        ((char *)buf)[ret > 0 ? ret : 0] = '\0';
+        return ret;
+}
+
+void* xzalloc(size_t size)
+{
+        void *ptr = malloc(size);
+        memset(ptr, 0, size);
+        return ptr;
+}
+
+void* xrealloc(void *ptr, size_t size)
+{
+        ptr = realloc(ptr, size);
+        if (ptr == NULL && size != 0)
+                perror("no memory");
+        return ptr;
+}
+
+void* xrealloc_vector_helper(void *vector, unsigned sizeof_and_shift, int idx)
+{
+        int mask = 1 << (unsigned char)sizeof_and_shift;
+
+        if (!(idx & (mask - 1))) {
+                sizeof_and_shift >>= 8; /* sizeof(vector[0]) */
+                vector = xrealloc(vector, sizeof_and_shift * (idx + mask + 1));
+                memset((char*)vector + (sizeof_and_shift * idx), 0, sizeof_and_shift * (mask + 1));
+        }
+        return vector;
+}
+
+#define xrealloc_vector(vector, shift, idx) \
+        xrealloc_vector_helper((vector), (sizeof((vector)[0]) << 8) + (shift), (idx))
+
+typedef struct procps_status_t {
+        DIR *dir;
+        unsigned char shift_pages_to_bytes;
+        unsigned char shift_pages_to_kb;
+/* Fields are set to 0/NULL if failed to determine (or not requested) */
+        unsigned int argv_len;
+        char *argv0;
+        /* Everything below must contain no ptrs to malloc'ed data:
+         * it is memset(0) for each process in procps_scan() */
+        unsigned long vsz, rss; /* we round it to kbytes */
+        unsigned long stime, utime;
+        unsigned long start_time;
+        unsigned pid;
+        unsigned ppid;
+        unsigned pgid;
+        unsigned sid;
+        unsigned uid;
+        unsigned gid;
+        unsigned tty_major,tty_minor;
+        char state[4];
+        /* basename of executable in exec(2), read from /proc/N/stat
+         * (if executable is symlink or script, it is NOT replaced
+         * by link target or interpreter name) */
+        char comm[16];
+        /* user/group? - use passwd/group parsing functions */
+} procps_status_t;
+
+        static procps_status_t* alloc_procps_scan(void)
+        {
+            unsigned n = getpagesize();
+            procps_status_t* sp = xzalloc(sizeof(procps_status_t));
+            sp->dir = opendir("/proc");
+            while (1) {
+                n >>= 1;
+                if (!n) break;
+                sp->shift_pages_to_bytes++;
+            }
+            sp->shift_pages_to_kb = sp->shift_pages_to_bytes - 10;
+            return sp;
+        }
+        void BUG_comm_size(void)
+        {
+        }
+#define ULLONG_MAX     (~0ULL)
+#define UINT_MAX       (~0U)
+
+static unsigned long long ret_ERANGE(void)
+{
+        errno = ERANGE; /* this ain't as small as it looks (on glibc) */
+        return ULLONG_MAX;
+}
+static unsigned long long handle_errors(unsigned long long v, char **endp, char *endptr)
+{
+    if (endp) *endp = endptr;
+
+    /* errno is already set to ERANGE by strtoXXX if value overflowed */
+    if (endptr[0]) {
+        /* "1234abcg" or out-of-range? */
+        if (isalnum(endptr[0]) || errno)
+            return ret_ERANGE();
+        /* good number, just suspicious terminator */
+        errno = EINVAL;
+    }
+    return v;
+}
+unsigned bb_strtou(const char *arg, char **endp, int base)
+{
+    unsigned long v;
+    char *endptr;
+
+    if (!isalnum(arg[0])) return ret_ERANGE();
+    errno = 0;
+    v = strtoul(arg, &endptr, base);
+    if (v > UINT_MAX) return ret_ERANGE();
+    return handle_errors(v, endp, endptr);
+}
+
+const char* bb_basename(const char *name)
+{
+        const char *cp = strrchr(name, '/');
+        if (cp)
+                return cp + 1;
+        return name;
+}
+
+static int comm_match(procps_status_t *p, const char *procName)
+{
+        int argv1idx;
+
+        /* comm does not match */
+        if (strncmp(p->comm, procName, 15) != 0)
+                return 0;
+
+        /* in Linux, if comm is 15 chars, it may be a truncated */
+        if (p->comm[14] == '\0') /* comm is not truncated - match */
+                return 1;
+
+        /* comm is truncated, but first 15 chars match.
+         * This can be crazily_long_script_name.sh!
+         * The telltale sign is basename(argv[1]) == procName. */
+
+        if (!p->argv0)
+                return 0;
+
+        argv1idx = strlen(p->argv0) + 1;
+        if (argv1idx >= p->argv_len)
+                return 0;
+
+        if (strcmp(bb_basename(p->argv0 + argv1idx), procName) != 0)
+                return 0;
+
+        return 1;
+}
+
+void free_procps_scan(procps_status_t* sp)
+{
+        closedir(sp->dir);
+        free(sp->argv0);
+        free(sp);
+}
+
+procps_status_t* procps_scan(procps_status_t* sp, int flags)
+{
+        struct dirent *entry;
+        char buf[PROCPS_BUFSIZE];
+        char filename[sizeof("/proc//cmdline") + sizeof(int)*3];
+        char *filename_tail;
+        long tasknice;
+        unsigned pid;
+        int n;
+        struct stat sb;
+
+        if (!sp)
+                sp = alloc_procps_scan();
+
+        for (;;) {
+                entry = readdir(sp->dir);
+                if (entry == NULL) {
+                        free_procps_scan(sp);
+                        return NULL;
+                }
+                pid = bb_strtou(entry->d_name, NULL, 10);
+                if (errno)
+                        continue;
+
+                /* After this point we have to break, not continue
+                 * ("continue" would mean that current /proc/NNN
+                 * is not a valid process info) */
+
+                memset(&sp->vsz, 0, sizeof(*sp) - offsetof(procps_status_t, vsz));
+
+                sp->pid = pid;
+                if (!(flags & ~PSSCAN_PID)) break;
+
+                filename_tail = filename + sprintf(filename, "/proc/%d", pid);
+
+                if (flags & PSSCAN_UIDGID) {
+                        if (stat(filename, &sb))
+                                break;
+                        /* Need comment - is this effective or real UID/GID? */
+                        sp->uid = sb.st_uid;
+                        sp->gid = sb.st_gid;
+                }
+
+                if (flags & PSSCAN_STAT) {
+                        char *cp, *comm1;
+                        int tty;
+                        unsigned long vsz, rss;
+
+                        /* see proc(5) for some details on this */
+                        strcpy(filename_tail, "/stat");
+                        n = read_to_buf(filename, buf);
+                        if (n < 0)
+                                break;
+                        cp = strrchr(buf, ')'); /* split into "PID (cmd" and "<rest>" */
+                        /*if (!cp || cp[1] != ' ')
+                                break;*/
+                        cp[0] = '\0';
+                        if (sizeof(sp->comm) < 16)
+                                BUG_comm_size();
+                        comm1 = strchr(buf, '(');
+                        /*if (comm1)*/
+                                strncpy(sp->comm, comm1 + 1, sizeof(sp->comm));
+
+                        n = sscanf(cp+2,
+                                "%c %u "               /* state, ppid */
+                                "%u %u %d %*s "        /* pgid, sid, tty, tpgid */
+                                "%*s %*s %*s %*s %*s " /* flags, min_flt, cmin_flt, maj_flt, cmaj_flt */
+                                "%lu %lu "             /* utime, stime */
+                                "%*s %*s %*s "         /* cutime, cstime, priority */
+                                "%ld "                 /* nice */
+                                "%*s %*s "             /* timeout, it_real_value */
+                                "%lu "                 /* start_time */
+                                "%lu "                 /* vsize */
+                                "%lu "                 /* rss */
+                        /*	"%lu %lu %lu %lu %lu %lu " rss_rlim, start_code, end_code, start_stack, kstk_esp, kstk_eip */
+                        /*	"%u %u %u %u "         signal, blocked, sigignore, sigcatch */
+                        /*	"%lu %lu %lu"          wchan, nswap, cnswap */
+                                ,
+                                sp->state, &sp->ppid,
+                                &sp->pgid, &sp->sid, &tty,
+                                &sp->utime, &sp->stime,
+                                &tasknice,
+                                &sp->start_time,
+                                &vsz,
+                                &rss);
+                        if (n != 11)
+                                break;
+                        /* vsz is in bytes and we want kb */
+                        sp->vsz = vsz >> 10;
+                        /* vsz is in bytes but rss is in *PAGES*! Can you believe that? */
+                        sp->rss = rss << sp->shift_pages_to_kb;
+                        sp->tty_major = (tty >> 8) & 0xfff;
+                        sp->tty_minor = (tty & 0xff) | ((tty >> 12) & 0xfff00);
+
+                        if (sp->vsz == 0 && sp->state[0] != 'Z')
+                                sp->state[1] = 'W';
+                        else
+                                sp->state[1] = ' ';
+                        if (tasknice < 0)
+                                sp->state[2] = '<';
+                        else if (tasknice) /* > 0 */
+                                sp->state[2] = 'N';
+                        else
+                                sp->state[2] = ' ';
+
+                }
+
+                if (flags & (PSSCAN_ARGV0|PSSCAN_ARGVN)) {
+                        free(sp->argv0);
+                        sp->argv0 = NULL;
+                        strcpy(filename_tail, "/cmdline");
+                        n = read_to_buf(filename, buf);
+                        if (n <= 0)
+                                break;
+                        if (flags & PSSCAN_ARGVN) {
+                                sp->argv_len = n;
+                                sp->argv0 = malloc(n + 1);
+                                memcpy(sp->argv0, buf, n + 1);
+                                /* sp->argv0[n] = '\0'; - buf has it */
+                        } else {
+                                sp->argv_len = 0;
+                                sp->argv0 = strdup(buf);
+                        }
+                }
+                break;
+        }
+        return sp;
+}
+
+pid_t* find_pid_by_name(const char *procName)
+{
+        pid_t* pidList;
+        int i = 0;
+        procps_status_t* p = NULL;
+
+        pidList = xzalloc(sizeof(*pidList));
+        while ((p = procps_scan(p, PSSCAN_PID|PSSCAN_COMM|PSSCAN_ARGVN))) {
+                if (comm_match(p, procName)
+                /* or we require argv0 to match (essential for matching reexeced /proc/self/exe)*/
+                 || (p->argv0 && strcmp(bb_basename(p->argv0), procName) == 0)
+                /* TOOD: we can also try /proc/NUM/exe link, do we want that? */
+                ) {
+                        if (p->state[0] != 'Z')
+                        {
+                                pidList = xrealloc_vector(pidList, 2, i);
+                                pidList[i++] = p->pid;
+                        }
+                }
+        }
+
+        pidList[i] = 0;
+        return pidList;
+}
+
+int pids(char *appname)
+{
+        pid_t *pidList;
+        pid_t *pl;
+        int count = 0;
+
+        pidList = find_pid_by_name(appname);
+        for (pl = pidList; *pl; pl++) {
+                count++;
+        }
+        free(pidList);
+
+        if (count)
+                return 1;
+        else
+                return 0;
+}
+/*pids end*/
+#endif
 const char base64_pad = '=';
 
 /* "A-Z a-z 0-9 + /" maps to 0-63 */
@@ -173,13 +1186,13 @@ int endposizition( char *str, int end )
 	while(str[tempposi]<0)  
 	{ 
 		i++;  
-	       tempposi--;  
+	    tempposi--;  
 	}  
  
 	if(i%2==0 && i!=0)  
 		posizition=end;   
 	else  
-	       posizition=end-1;     
+	    posizition=end-1;     
 
  	return posizition;  
 } 
@@ -187,26 +1200,72 @@ int endposizition( char *str, int end )
 //- 判斷開始取值位置 
 int startposizition( char *str, int start )  
 {  
-    	int i=0;            //-用於計數
-    	int posizition=0;   //- 返回位置
-    	int tempposi=start;    
-    	while(str[tempposi]<0)  
-    	{  
-       	i++;  
-        	tempposi--;  
-    	}  
+	int i=0;            //-用於計數
+    int posizition=0;   //- 返回位置
+    int tempposi=start;    
+    while(str[tempposi]<0)  
+    {  
+    	i++;  
+        tempposi--;  
+    }  
   
-    	if(i%2==0 && i!=0)  
-       	posizition=start+1;   
-    	else   
-           	posizition=start;     
-    	return posizition;  
+    if(i%2==0 && i!=0)  
+    	posizition=start+1;   
+    else   
+    	posizition=start;     
+    return posizition;  
 } 
 
 const char *get_filename_ext(const char *filename) {
     const char *dot = strrchr(filename, '.');
     if(!dot || dot == filename) return "";
     return dot + 1;
+}
+
+int extract_filename(const char* src, char** out){
+	const char *splash = strrchr(src, '/');
+    if(!splash || splash == src) return 0;
+	int len = strlen(src) - (splash - src) + 1;
+	*out = (char*)malloc(len+1);
+	memset(*out, '\0', len+1);
+	strcpy(*out, splash+1);	
+    return 1;
+}
+
+int extract_filepath(const char* src, char** out){
+	const char *splash = strrchr(src, '/');		
+    if(!splash || splash == src) return 0;
+	int len = splash - src + 1;	
+	*out = (char*)malloc(len+1);
+	memset(*out, '\0', len+1);
+	strncpy(*out, src, len);	
+	return 1;
+}
+
+int createDirectory(const char * path) {
+
+	char* p;
+	struct stat st;
+  	for( p = strchr(path+1, '/'); p; p = strchr(p+1, '/') ) {
+    	*p='\0';
+		
+		if( stat(path, &st) == -1 ){
+		    if( mkdir(path, S_IRWXU | S_IRWXG | S_IRWXO)==-1) {				
+				return 0;
+		    }
+		}
+    	*p='/';
+  	}
+
+	return 1;
+	
+	/*
+  	char * buffer = malloc((strlen(path) + 10) * sizeof(char));
+  	sprintf(buffer, "mkdir -p %s", path);
+  	int result = system(buffer);
+  	free(buffer);
+  	return result;
+  	*/
 }
 
 int smbc_wrapper_opendir(connection* con, const char *durl)
@@ -260,9 +1319,10 @@ int smbc_wrapper_stat(connection* con, const char *url, struct stat *st)
 	if(con->mode== SMB_BASIC){
 		return smbc_stat(url, st);
 	}
-	else if(con->mode == SMB_NTLM)
+	else if(con->mode == SMB_NTLM){
 		return smbc_cli_stat(con->smb_info->cli, url, st);
-
+	}
+	
 	return -1;
 	
 }
@@ -414,9 +1474,9 @@ int smbc_wrapper_parse_path2(connection* con, char *pWorkgroup, char *pServer, c
 int smbc_parse_mnt_path(
 	const char* physical_path,
 	const char* mnt_path,
-       int mnt_path_len,
-       char** usbdisk_path,
-       char** usbdisk_share_folder){
+    int mnt_path_len,
+    char** usbdisk_path,
+    char** usbdisk_share_folder){
 
 	char* aa = physical_path + mnt_path_len;
 	//Cdbg(1, "physical_path = %s, aa=%s", physical_path ,aa);
@@ -451,7 +1511,7 @@ int smbc_parse_mnt_path(
 void smbc_wrapper_response_401(server *srv, connection *con)
 {
 	data_string *ds = (data_string *)array_get_element(con->request.headers, "user-Agent");
-
+		
 	//- Browser response
 	if( ds && (strstr( ds->value->ptr, "Mozilla" )||strstr( ds->value->ptr, "Opera" )) ){
 		if(con->mode == SMB_BASIC||con->mode == DIRECT){
@@ -1100,17 +2160,12 @@ int smbc_parser_basic_authentication(server *srv, connection* con, char** userna
 	if (con->mode != SMB_BASIC&&con->mode != DIRECT) return 0;
 
 	data_string* ds = (data_string *)array_get_element(con->request.headers, "Authorization");
-	
+
 	if(con->share_link_basic_auth->used){
-		Cdbg(1, "Use for Sharelink, con->share_link_basic_auth=[%s]", con->share_link_basic_auth->ptr);
 		ds = data_string_init();
 		buffer_copy_string_buffer( ds->value, con->share_link_basic_auth );
 		buffer_reset(con->share_link_basic_auth);
-
-		con->is_share_link = 1;
 	}
-	else
-		con->is_share_link = 0;
 	
 	if (ds != NULL) {
 		char *http_authorization = NULL;
@@ -1154,7 +2209,7 @@ int smbc_parser_basic_authentication(server *srv, connection* con, char** userna
 		}
 	}
 	else
-		Cdbg(DBE, "smbc_parser_basic_authentication: ds == NULL");
+		Cdbg(DBE, "smbc_parser_basic_authentication: ds == NULL, %s", con->url.path->ptr);
 	
 	return 0;
 }
@@ -1172,17 +2227,19 @@ int smbc_aidisk_account_authentication(connection* con, const char *username, co
 	nvram_acc_list = (char*)malloc(l+1);
 	strncpy(nvram_acc_list, a, l);
 	nvram_acc_list[l] = '\0';
-
+	#ifdef APP_IPKG
+	free(a);
+	#endif
 	st_samba_mode = nvram_get_st_samba_mode();
 #else
 	int i = 100;
 	nvram_acc_list = (char*)malloc(100);
-	strcpy(nvram_acc_list, "admin<admin>jerry<jerry");
+	strcpy(nvram_acc_list, "admin>admin<jerry>jerry");
 #endif
 
 	int account_right = -1;
 
-	//- Share All, use guest account
+	//- Share All, use guest account, no need account and password.
 	if(st_samba_mode==1){
 		buffer_copy_string(con->aidisk_username, "guest");
 		buffer_copy_string(con->aidisk_passwd, "");
@@ -1245,41 +2302,46 @@ void save_sharelink_list(){
 	
 	buffer* sharelink_list = buffer_init();
 	buffer_copy_string(sharelink_list, "");
-
+	
 	for (c = share_link_info_list; c; c = c->next) {
 
 		if(c->toshare == 0)
 			continue;
 		
 		buffer* temp = buffer_init();
-
+		
 		buffer_copy_string_buffer(temp, c->shortpath);
-		buffer_append_string(temp, "<");
+		buffer_append_string(temp, ">");
 		buffer_append_string_buffer(temp, c->realpath);
-		buffer_append_string(temp, "<");
+		buffer_append_string(temp, ">");
 		buffer_append_string_buffer(temp, c->filename);
-		buffer_append_string(temp, "<");
+		//buffer_append_string_encoded(temp, CONST_BUF_LEN(c->filename), ENCODING_REL_URI);
+		buffer_append_string(temp, ">");
 		buffer_append_string_buffer(temp, c->auth);
-		buffer_append_string(temp, "<");
-
+		buffer_append_string(temp, ">");
 		char strTime[25] = {0};
 		sprintf(strTime, "%lu", c->expiretime);		
 		buffer_append_string(temp, strTime);
-
-		buffer_append_string(temp, "<");
 		
+		buffer_append_string(temp, ">");		
 		char strTime2[25] = {0};
 		sprintf(strTime2, "%lu", c->createtime);		
 		buffer_append_string(temp, strTime2);
 		
-		buffer_append_string(temp, ">");
+		buffer_append_string(temp, ">");		
+		char toshare[5] = {0};
+		sprintf(toshare, "%d", c->toshare);		
+		buffer_append_string(temp, toshare);
+		
+		buffer_append_string(temp, "<");
 			
 		buffer_append_string_buffer(sharelink_list, temp);
 		
 		buffer_free(temp);
 	}
-	
-	nvram_set_sharelink_str(sharelink_list->ptr);		
+
+	Cdbg(1, "sharelink_list = %s", sharelink_list->ptr);
+	nvram_set_sharelink_str(sharelink_list->ptr);
 	buffer_free(sharelink_list);
 #else
 	unlink(g_temp_sharelink_file);
@@ -1295,8 +2357,18 @@ void save_sharelink_list(){
 		for (c = share_link_info_list; c; c = c->next) {
 			if(c->toshare == 0)
 				continue;
-			
-			fprintf(fp, "%s<%s<%s<%s<%lu<%lu\n", c->shortpath->ptr, c->realpath->ptr, c->filename->ptr, c->auth->ptr, c->expiretime, c->createtime);
+
+#if 0
+			buffer* temp = buffer_init();
+			buffer_copy_string(temp, "");						
+			buffer_append_string_encoded(temp, CONST_BUF_LEN(c->filename), ENCODING_REL_URI);
+					
+			fprintf(fp, "%s>%s>%s>%s>%lu>%lu>%d\n", c->shortpath->ptr, c->realpath->ptr, temp->ptr, c->auth->ptr, c->expiretime, c->createtime, c->toshare);
+
+			buffer_free(temp);
+#else
+			fprintf(fp, "%s>%s>%s>%s>%lu>%lu>%d\n", c->shortpath->ptr, c->realpath->ptr, c->filename->ptr, c->auth->ptr, c->expiretime, c->createtime, c->toshare);
+#endif
 		}
 		
 		fclose(fp);
@@ -1313,6 +2385,112 @@ void free_share_link_info(share_link_info_t *smb_sharelink_info){
 
 void read_sharelink_list(){
 #if EMBEDDED_EANBLE
+
+#if 1
+	char* aa = nvram_get_sharelink_str();
+
+	if(aa==NULL){
+		return;
+	}
+
+	char* str_sharelink_list = (char*)malloc(strlen(aa)+1);
+	strcpy(str_sharelink_list, aa);
+	#ifdef APP_IPKG
+	free(aa);
+	#endif
+	if(str_sharelink_list==NULL)
+		return;
+	
+	char *pch, *pch2, *saveptr=NULL, *saveptr2=NULL;
+	pch = strtok_r(str_sharelink_list, "<", &saveptr);
+	Cdbg(DBE, "pch=%s", pch);
+
+	while(pch!=NULL){
+		char* tmp = strdup(pch);
+
+		pch2 = strtok_r(tmp, ">", &saveptr2);
+		Cdbg(DBE, "pch2=%s", pch2);
+		
+		while(pch2!=NULL){
+			
+			//pch2 = strtok_r(NULL, ">", &saveptr2);
+
+			int b_addto_list = 1;
+			
+			share_link_info_t *smb_sharelink_info;
+			smb_sharelink_info = (share_link_info_t *)calloc(1, sizeof(share_link_info_t));
+						
+			//- Share Path
+			if(pch2){
+				Cdbg(DBE, "share path=%s", pch2);
+				smb_sharelink_info->shortpath = buffer_init();
+				buffer_copy_string_len(smb_sharelink_info->shortpath, pch2, strlen(pch2));
+			}
+			
+			//- Real Path
+			pch2 = strtok_r(NULL, ">", &saveptr2);
+			if(pch2){
+				Cdbg(DBE, "real path=%s", pch2);
+				smb_sharelink_info->realpath = buffer_init();
+				buffer_copy_string_len(smb_sharelink_info->realpath, pch2, strlen(pch2));
+			}
+			
+			//- File Name
+			pch2 = strtok_r(NULL, ">", &saveptr2);
+			if(pch2){
+				Cdbg(DBE, "file name=%s", pch2);
+				smb_sharelink_info->filename = buffer_init();
+				buffer_copy_string_len(smb_sharelink_info->filename, pch2, strlen(pch2));
+			}
+			
+			//- Auth
+			pch2 = strtok_r(NULL, ">", &saveptr2);
+			if(pch2){
+				Cdbg(DBE, "auth=%s", pch2);
+				smb_sharelink_info->auth = buffer_init();
+				buffer_copy_string_len(smb_sharelink_info->auth, pch2, strlen(pch2));
+			}
+
+			//- Expire Time
+			pch2 = strtok_r(NULL, ">", &saveptr2);
+			if(pch2){				
+				smb_sharelink_info->expiretime = atoi(pch2);	
+				time_t cur_time = time(NULL);				
+				double offset = difftime(smb_sharelink_info->expiretime, cur_time);					
+				if( smb_sharelink_info->expiretime !=0 && offset < 0.0 ){
+					free_share_link_info(smb_sharelink_info);
+					free(smb_sharelink_info);
+					b_addto_list = 0;
+				}
+			}
+			
+			//- Create Time
+			pch2 = strtok_r(NULL, ">", &saveptr2);
+			if(pch2){		
+				Cdbg(DBE, "createtime=%s", pch2);
+				smb_sharelink_info->createtime = atoi(pch2);
+			}
+			
+			//- toShare
+			pch2 = strtok_r(NULL, ">", &saveptr2);
+			if(pch2){	
+				Cdbg(DBE, "toshare=%s", pch2);
+				smb_sharelink_info->toshare = atoi(pch2);
+			}
+			
+			if(b_addto_list==1)
+				DLIST_ADD(share_link_info_list, smb_sharelink_info);
+			
+			//- Next
+			pch2 = strtok_r(NULL, ">", &saveptr2);
+		}
+
+		if(tmp!=NULL)
+			free(tmp);
+		
+		pch = strtok_r(NULL, "<", &saveptr);
+	}
+#else
 	char* aa = nvram_get_sharelink_str();
 
 	if(aa==NULL){
@@ -1321,6 +2499,9 @@ void read_sharelink_list(){
 	
 	char* str_sharelink_list = (char*)malloc(strlen(aa)+1);
 	strcpy(str_sharelink_list, aa);
+#ifdef APP_IPKG
+	free(aa);
+#endif
 		
 	if(str_sharelink_list!=NULL){
 		char * pch;
@@ -1332,11 +2513,11 @@ void read_sharelink_list(){
 			
 			share_link_info_t *smb_sharelink_info;
 			smb_sharelink_info = (share_link_info_t *)calloc(1, sizeof(share_link_info_t));
-			smb_sharelink_info->toshare = 1;
+			//smb_sharelink_info->toshare = 1;
 			
 			//- Share Path
 			if(pch){
-				Cdbg(DBE, "share path=%s", pch);
+				//Cdbg(DBE, "share path=%s", pch);
 				smb_sharelink_info->shortpath = buffer_init();
 				buffer_copy_string_len(smb_sharelink_info->shortpath, pch, strlen(pch));
 			}
@@ -1344,7 +2525,7 @@ void read_sharelink_list(){
 			//- Real Path
 			pch = strtok(NULL,"<>");
 			if(pch){
-				Cdbg(DBE, "real path=%s", pch);
+				//Cdbg(DBE, "real path=%s", pch);
 				smb_sharelink_info->realpath = buffer_init();
 				buffer_copy_string_len(smb_sharelink_info->realpath, pch, strlen(pch));
 			}
@@ -1352,7 +2533,7 @@ void read_sharelink_list(){
 			//- File Name
 			pch = strtok(NULL,"<>");
 			if(pch){
-				Cdbg(DBE, "file name=%s", pch);
+				//Cdbg(DBE, "file name=%s", pch);
 				smb_sharelink_info->filename = buffer_init();
 				buffer_copy_string_len(smb_sharelink_info->filename, pch, strlen(pch));
 			}
@@ -1360,7 +2541,7 @@ void read_sharelink_list(){
 			//- Auth
 			pch = strtok(NULL,"<>");
 			if(pch){
-				Cdbg(DBE, "auth=%s", pch);
+				//Cdbg(DBE, "auth=%s", pch);
 				smb_sharelink_info->auth = buffer_init();
 				buffer_copy_string_len(smb_sharelink_info->auth, pch, strlen(pch));
 			}
@@ -1384,6 +2565,12 @@ void read_sharelink_list(){
 				smb_sharelink_info->createtime = atoi(pch);
 			}
 			
+			//- toShare
+			pch = strtok(NULL,"<>");
+			if(pch){		
+				smb_sharelink_info->toshare = atoi(pch);
+			}
+			
 			if(b_addto_list==1)
 				DLIST_ADD(share_link_info_list, smb_sharelink_info);
 			
@@ -1391,6 +2578,7 @@ void read_sharelink_list(){
 			pch = strtok(NULL,"<>");
 		}
 	}
+#endif
 
 #else
 	size_t j;
@@ -1405,47 +2593,45 @@ void read_sharelink_list(){
 			char * pch;
 			int b_addto_list = 1;
 			
-      			// strip trailing '\n' if it exists
-      			int len = strlen(str)-1;
-      			if(str[len] == '\n') 
-         			str[len] = 0;
+      		// strip trailing '\n' if it exists
+      		int len = strlen(str)-1;
+      		if(str[len] == '\n') 
+         		str[len] = 0;
 
 			share_link_info_t *smb_sharelink_info;
 			smb_sharelink_info = (share_link_info_t *)calloc(1, sizeof(share_link_info_t));
-			smb_sharelink_info->toshare = 1;
-			
+						
 			//- Share Path
-			pch = strtok(str,"<");
+			pch = strtok(str,">");
 			if(pch){
 				smb_sharelink_info->shortpath = buffer_init();			
 				buffer_copy_string_len(smb_sharelink_info->shortpath, pch, strlen(pch));
 			}
 			
 			//- Real Path
-			pch = strtok(NULL,"<");
+			pch = strtok(NULL,">");
 			if(pch){
 				smb_sharelink_info->realpath = buffer_init();			
 				buffer_copy_string_len(smb_sharelink_info->realpath, pch, strlen(pch));
 			}
 			
 			//- File Name
-			pch = strtok(NULL,"<");
+			pch = strtok(NULL,">");
 			if(pch){
 				smb_sharelink_info->filename = buffer_init();			
 				buffer_copy_string_len(smb_sharelink_info->filename, pch, strlen(pch));
 			}
 
 			//- Auth
-			pch = strtok(NULL,"<");
+			pch = strtok(NULL,">");
 			if(pch){
 				smb_sharelink_info->auth = buffer_init();			
 				buffer_copy_string_len(smb_sharelink_info->auth, pch, strlen(pch));
 			}
 
 			//- Expire Time
-			pch = strtok(NULL,"<");
+			pch = strtok(NULL,">");
 			if(pch){
-				
 				smb_sharelink_info->expiretime = atoi(pch);	
 				time_t cur_time = time(NULL);				
 				double offset = difftime(smb_sharelink_info->expiretime, cur_time);					
@@ -1457,13 +2643,20 @@ void read_sharelink_list(){
 			}
 
 			//- Create Time
-			pch = strtok(NULL,"<");
+			pch = strtok(NULL,">");
 			if(pch){
 				smb_sharelink_info->createtime = atoi(pch);
 			}
+
+			//- toShare
+			pch = strtok(NULL,">");
+			if(pch){		
+				smb_sharelink_info->toshare = atoi(pch);
+			}
 			
-			if(b_addto_list==1)
+			if(b_addto_list==1){
 				DLIST_ADD(share_link_info_list, smb_sharelink_info);
+			}
 		}
 			
 		fclose(fp);
@@ -1495,52 +2688,45 @@ void start_arpping_process(const char* scan_interface)
 		system(cmd);
 	}
 	*/	
+#ifndef APP_IPKG
 #if EMBEDDED_EANBLE
-	sprintf(cmd, "lighttpd-arpping -f %s &", scan_interface);
+	sprintf(cmd, "/usr/sbin/lighttpd-arpping -f %s &", scan_interface);
 #else
 	sprintf(cmd, "./_inst/sbin/lighttpd-arpping -f %s &", scan_interface);
 #endif
+#else
+#if EMBEDDED_EANBLE
+    sprintf(cmd, "/opt/bin/lighttpd-arpping -f %s &", scan_interface);
+#else
+    sprintf(cmd, "./_inst/sbin/lighttpd-arpping -f %s &", scan_interface);
+#endif
+#endif
 	system(cmd);
+
 }
 
 void stop_arpping_process()
 {
-	/*
-	char mybuffer[BUFSIZ]="\0";
-	char cmd[BUFSIZ]="\0";
-	int chars_read;
-	FILE* read_fp = popen("pidof lighttpd-arpping", "r");
-	if(read_fp!=NULL){
-		chars_read = fread(mybuffer, sizeof(char), BUFSIZ, read_fp);
-		if(chars_read>0){
-			sprintf(cmd, "kill -9 %s", mybuffer);
-			Cdbg(DBE, "%s", cmd);
-			system(cmd);
-		}	
-		pclose(read_fp);
-	}
-	*/
-	
 	FILE *fp;
-    	char buf[256];
-    	pid_t pid = 0;
-    	int n;
-
-	if ((fp = fopen("/tmp/lighttpd/lighttpd-arpping.pid", "r")) != NULL) {
-		if (fgets(buf, sizeof(buf), fp) != NULL)
-	            pid = strtoul(buf, NULL, 0);
-	        fclose(fp);
-	}
+    char buf[256];
+    pid_t pid = 0;
+    int n;
 	
+	if ((fp = fopen(LIGHTTPD_ARPPING_PID_FILE_PATH, "r")) != NULL) {
+		if (fgets(buf, sizeof(buf), fp) != NULL)
+	    	pid = strtoul(buf, NULL, 0);
+	    fclose(fp);
+	}
+
 	if (pid > 1 && kill(pid, SIGTERM) == 0) {
 		n = 10;	       
-	       while ((kill(pid, SIGTERM) == 0) && (n-- > 0)) {
-	            Cdbg(DBE,"Mod_smbdav: %s: waiting pid=%d n=%d\n", __FUNCTION__, pid, n);
-	            usleep(100 * 1000);
-	        }
+	    while ((kill(pid, SIGTERM) == 0) && (n-- > 0)) {
+	    	Cdbg(DBE,"Mod_smbdav: %s: waiting pid=%d n=%d\n", __FUNCTION__, pid, n);
+	        usleep(100 * 1000);
+	    }
 	}
 
-	unlink("/tmp/lighttpd/lighttpd-arpping.pid");
+	unlink(LIGHTTPD_ARPPING_PID_FILE_PATH);
 }
 
 int in_the_same_folder(buffer *src, buffer *dst) 
@@ -1582,14 +2768,18 @@ int smbc_host_account_authentication(connection* con, const char *username, cons
 	nvram_acc_list = (char*)malloc(l+1);
 	strncpy(nvram_acc_list, a, l);
 	nvram_acc_list[l] = '\0';
-
+#ifdef APP_IPKG
+	free(a);
+#endif
 	char *b = nvram_get_acc_webdavproxy();
 	if(b==NULL) return -1;
 	l = strlen(b);
 	nvram_acc_webdavproxy = (char*)malloc(l+1);
 	strncpy(nvram_acc_webdavproxy, b, l);
 	nvram_acc_webdavproxy[l] = '\0';
-
+#ifdef APP_IPKG
+	free(b);
+#endif
 	st_samba_mode = nvram_get_st_samba_mode();
 #else
 	int i = 100;
@@ -1688,4 +2878,135 @@ int smbc_host_account_authentication(connection* con, const char *username, cons
 	return account_right;
 }
 #endif
+
+//- 20121108 JerryLin add for router to router sync use.
+void process_share_link_for_router_sync_use(){
+
+	int expire = 0;
+	int toshare = 2;
+	
+#if EMBEDDED_EANBLE
+	char* username = nvram_get_http_username();
+	char* password = nvram_get_http_passwd();
+	char* a = nvram_get_share_link_param();
+
+	if(a==NULL)
+		return;
+	
+	int len = strlen(a) + 1;	
+	char* str_sharelink_param = (char*)malloc(len);
+	memset(str_sharelink_param, '\0', len);
+	memcpy(str_sharelink_param, a, len);
+	#ifdef APP_IPKG
+	free(a);
+	#endif
+	Cdbg(1, "str_sharelink_param=%s", str_sharelink_param);
+	
+#else
+	char username[20] = "admin";
+	char password[20] = "admin";
+	//char str_sharelink_param[100] = "/usbdisk/a1/>folder1</usbdisk/a2/>folder2";
+	char str_sharelink_param[100] = "delete>AICLOUD306106790";	
+#endif
+
+	char auth[100]="\0";		
+	sprintf(auth, "%s:%s", username, password);
+	char* base64_auth = ldb_base64_encode(auth, strlen(auth));
+#ifdef APP_IPKG
+	#if EMBEDDED_EANBLE
+	free(username);
+	free(password);
+	#endif
+#endif
+	buffer* return_sharelink = buffer_init();	
+	buffer_reset(return_sharelink);	
+
+	char *pch, *pch2, *saveptr=NULL, *saveptr2=NULL;
+	pch = strtok_r(str_sharelink_param, "<", &saveptr);
+
+	while(pch!=NULL){
+		char* tmp = strdup(pch);
+		pch2 = strtok_r(tmp, ">", &saveptr2);
+
+		while(pch2!=NULL){
+			
+			if(strcmp(pch2, "delete") == 0 ){
+				
+				int b_save_arpping_list = 0;
+				char* short_link = strtok_r(NULL, ">", &saveptr2);
+				
+				share_link_info_t* c;
+				for (c = share_link_info_list; c; c = c->next) {
+
+					if(c->toshare != 2)
+						continue;
+					
+					if(buffer_is_equal_string(c->shortpath, short_link, strlen(short_link))){
+						DLIST_REMOVE(share_link_info_list, c);
+						b_save_arpping_list = 1;
+						break;
+					}
+				}
+
+				if(b_save_arpping_list)
+					save_sharelink_list();
+			}
+			else{
+				char* filename = strtok_r(NULL, ">", &saveptr2);			
+				if(filename!=NULL){
+					share_link_info_t *share_link_info;
+					share_link_info = (share_link_info_t *)calloc(1, sizeof(share_link_info_t));
+					
+					char share_link[1024];			
+					struct timeval tv;
+					unsigned long long now_utime;
+					gettimeofday(&tv,NULL);
+					now_utime = tv.tv_sec * 1000000 + tv.tv_usec;  
+					sprintf( share_link, "AICLOUD%d", abs(now_utime));
+
+					buffer_append_string(return_sharelink, share_link);
+					buffer_append_string(return_sharelink, ">");
+						
+					share_link_info->shortpath = buffer_init();
+					buffer_copy_string(share_link_info->shortpath, share_link);
+					
+					share_link_info->realpath = buffer_init();
+					buffer_copy_string(share_link_info->realpath, pch2);
+
+					share_link_info->filename = buffer_init();
+					buffer_copy_string(share_link_info->filename, filename);
+								
+					share_link_info->auth = buffer_init();
+					buffer_copy_string(share_link_info->auth, base64_auth);
+					
+					share_link_info->createtime = time(NULL);
+					share_link_info->expiretime = 0;
+					share_link_info->toshare = toshare;
+					
+					DLIST_ADD(share_link_info_list, share_link_info);
+				}
+			}
+			
+			//- Next
+			pch2 = strtok_r(NULL, ">", &saveptr2);
+		}
+
+		if(tmp!=NULL)
+			free(tmp);
+		
+		//- Next
+		pch = strtok_r(NULL, "<", &saveptr);
+	}
+
+	save_sharelink_list();
+
+#if EMBEDDED_EANBLE
+	nvram_set_share_link_result(return_sharelink->ptr);
+	free(str_sharelink_param);
+#endif
+
+	Cdbg(DBE,"process_share_link_for_router_sync_use...return_sharelink=%s", return_sharelink->ptr);
+
+	buffer_free(return_sharelink);
+}
 

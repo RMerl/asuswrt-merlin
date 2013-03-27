@@ -1,0 +1,54 @@
+# frv testcase for ftno
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global ftnev
+ftnev:
+	and_spr_immed	-4081,tbr		; clear tbr.tt
+	set_gr_spr	tbr,gr7
+	inc_gr_immed	2112,gr7		; address of exception handler
+	set_mem_limmed	0x0038,0x2000,gr7	; bctrlr 0,0
+
+	set_spr_immed	128,lcr
+	set_spr_addr	bad,lr
+	set_gr_immed	0,gr7
+	set_gr_immed	4,gr8
+
+	set_fcc		0x0 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0x1 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0x2 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0x3 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0x4 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0x5 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0x6 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0x7 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0x8 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0x9 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0xa 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0xb 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0xc 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0xd 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0xe 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	set_fcc		0xf 0
+	ftno 			; should branch to tbr + (128 + 4)*16
+	pass
+bad:
+	fail

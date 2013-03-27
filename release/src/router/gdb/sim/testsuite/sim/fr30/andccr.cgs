@@ -1,0 +1,51 @@
+# fr30 testcase for andccr $u8
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global andccr
+andccr:
+	set_cc		0x00
+	set_i			0
+	set_s_system
+	andccr      	0xff
+	test_cc		0 0 0 0
+	test_i		0
+	test_s_system
+
+	set_cc		0x0f
+	set_i			1
+	set_s_user
+	andccr      	0xff
+	test_cc		1 1 1 1
+	test_i		1
+	test_s_user
+
+	set_cc		0x0f
+	set_i			1
+	set_s_user
+	andccr      	0xaa
+	test_cc		1 0 1 0
+	test_i		0
+	test_s_user
+
+	set_cc		0x0f
+	set_i			1
+	set_s_user
+	andccr      	0xc0
+	test_cc		0 0 0 0
+	test_i		0
+	test_s_system
+
+	set_cc		0x0f
+	set_i			1
+	set_s_user
+	andccr      	0x3f		; no effect
+	test_cc		1 1 1 1
+	test_i		1
+	test_s_user
+
+	pass

@@ -1,0 +1,21 @@
+# frv testcase for nfdsqrts $FRj,$FRk
+# mach: frv
+
+	.include "testutils.inc"
+
+	float_constants
+	start
+	load_float_constants
+
+	.global nfdsqrts
+nfdsqrts:
+	set_fr_iimmed	0x4049,0x0fdb,fr45	; 3.141592654
+	nfdsqrts		fr44,fr2		; 9.0
+	test_fr_fr	fr2,fr36		; 3.0
+	test_fr_iimmed	0x3fe2dfc5,fr3		; 1.7724539
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	; TODO test cases to set ne flags
+
+	pass

@@ -1,0 +1,24 @@
+# sh testcase for bt $disp8
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global taken
+taken:
+	sett
+	bt ntaken
+	fail
+	.global ntaken
+ntaken:
+	clrt
+	bt bad
+	pass
+bad:
+	fail
+	fail
+	fail
+	fail

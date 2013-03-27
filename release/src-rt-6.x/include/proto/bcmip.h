@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  *
  * Fundamental constants relating to IP Protocol
  *
- * $Id: bcmip.h 330107 2012-04-27 22:04:17Z $
+ * $Id: bcmip.h 329791 2012-04-26 22:36:58Z $
  */
 
 #ifndef _bcmip_h_
@@ -36,6 +36,15 @@
 #define IP_VER_4		4	/* version number for IPV4 */
 #define IP_VER_6		6	/* version number for IPV6 */
 
+
+
+/* IP flags. */
+#define IP_CE		0x8000		/* Flag: "Congestion"		*/
+#define IP_DF		0x4000		/* Flag: "Don't Fragment"	*/
+#define IP_MF		0x2000		/* Flag: "More Fragments"	*/
+#define IP_OFFSET	0x1FFF		/* "Fragment Offset" part	*/
+
+
 #define IP_VER(ip_body) \
 	((((uint8 *)(ip_body))[IP_VER_OFFSET] & IP_VER_MASK) >> IP_VER_SHIFT)
 
@@ -44,6 +53,7 @@
 #define IP_PROT_TCP		0x6	/* TCP protocol */
 #define IP_PROT_UDP		0x11	/* UDP protocol type */
 #define IP_PROT_ICMP6		0x3a	/* ICMPv6 protocol type */
+#define IP_PROT_GRE		0x2f	/* GRE protocol type */
 
 /* IPV4 field offsets */
 #define IPV4_VER_HL_OFFSET      0       /* version and ihl byte offset */

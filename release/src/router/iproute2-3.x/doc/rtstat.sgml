@@ -1,0 +1,52 @@
+<!doctype linuxdoc system>
+
+<article>
+
+<title>RTACCT Utility
+<author>Robert Olsson
+<date>some_negative_number, 20 Dec 2001
+
+<p>
+Here is some code for monitoring the route cache. For systems handling high
+network load, servers, routers, firewalls etc the route cache and its garbage
+collection is crucial. Linux has a solid implementation.
+
+<p>
+The kernel patch (not required since linux-2.4.7) adds statistics counters
+from route cache process into 
+/proc/net/rt_cache_stat. A companion user mode program presents the statistics
+in a vmstat or iostat manner. The ratio between cache hits and misses gives 
+the flow length.
+
+<p>
+Hopefully it can help understanding performance and DoS and other related
+issues.
+
+<p> An URL where newer versions of this utility can be (probably) found
+is ftp://robur.slu.se/pub/Linux/net-development/rt_cache_stat/
+
+
+<p><bf/Description/
+
+<p>The format of the command is:
+
+<tscreen><verb>
+       rtstat [ OPTIONS ]
+</verb></tscreen>
+
+<p> <tt/OPTIONS/ are:
+
+<itemize>
+
+<item><tt/-h/, <tt/-help/ - show help page and version of the utility.
+
+<item><tt/-i INTERVAL/ - interval between snapshots, default value is
+2 seconds.
+
+<item><tt/-s NUMBER/ - whether to print header line. 0 inhibits header line,
+1 prescribes to print it once and 2 (this is default setting) forces header
+line each 20 lines. 
+
+</itemize>
+
+</article>

@@ -1,0 +1,74 @@
+'\" t
+.\"     Title: ne_shave
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_SHAVE" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_shave \- trim whitespace from a string
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_string\&.h>
+.fi
+.ft
+.HP \w'char\ *ne_shave('u
+.BI "char *ne_shave(char\ *" "str" ", const\ char\ *" "whitespace" ");"
+.SH "DESCRIPTION"
+.PP
+\fBne_shave\fR
+returns a portion of
+\fIstr\fR
+with any leading or trailing characters in the
+\fIwhitespace\fR
+array removed\&.
+\fIstr\fR
+may be modified\&. Note that the return value may not be equal to
+\fIstr\fR\&.
+.SH "EXAMPLES"
+.PP
+The following code segment will output
+"fish":
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+char s[] = "\&.!\&.fish!\&.!";
+puts(ne_shave(s, "\&.!"));
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

@@ -1,0 +1,16 @@
+# frv testcase for stb $GRk,@($GRi,$GRj)
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global add
+add:
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_immed	0,gr7
+	set_gr_limmed	0xffff,0xffff,gr8
+	stb		gr8,@(sp,gr7)
+	test_mem_limmed	0xffad,0xbeef,sp
+
+	pass

@@ -1,0 +1,23 @@
+# frv testcase for mwtaccg $FRinti,$ACC40k
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mwtaccg
+mwtaccg:
+	test_accg_immed	0x00,accg0
+	test_acc_immed	0x00000000,acc0
+
+	set_fr_iimmed	0xdead,0xbeef,fr10
+	mwtaccg		fr10,accg0
+	test_accg_immed	0xef,accg0
+	test_acc_immed	0,acc0
+
+	set_fr_iimmed	0x1234,0x5678,fr10
+	mwtaccg		fr10,accg0
+	test_accg_immed	0x78,accg0
+	test_acc_immed	0,acc0
+
+	pass

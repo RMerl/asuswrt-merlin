@@ -1,0 +1,323 @@
+# Copyright (C) 1998, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+
+if $tracelevel then {
+        strace $tracelevel
+}
+
+if { [skip_hp_tests] } then { continue }
+
+set testfile1 "average"
+set testfile2 "sum"
+set testfile "xdb-test"
+set binfile1 ${objdir}/${subdir}/${testfile1}
+set binfile2 ${objdir}/${subdir}/${testfile2}
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/average.c" "${binfile1}.o" object {debug}] != "" } {
+     untested xdb3.exp
+     return -1
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/sum.c" "${binfile2}.o" object {debug}] != "" } {
+     untested xdb3.exp
+     return -1
+}
+
+if  { [gdb_compile "${binfile1}.o ${binfile2}.o" ${binfile} executable {debug}] != "" } {
+     untested xdb3.exp
+     return -1
+}
+
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+if { $gcc_compiled } then { continue }
+
+
+proc xdb_reinitialize_dir { subdir } {
+    global gdb_prompt
+
+   send_gdb "D\n"
+    gdb_expect {
+        -re "Reinitialize source path to empty.*y or n. " {
+            send_gdb "y\n"
+            gdb_expect {
+                -re "Source directories searched.*$gdb_prompt $" {
+                    send_gdb "D $subdir\n"
+                    gdb_expect {
+                        -re "Source directories searched.*$gdb_prompt $" {
+                            verbose "Dir set to $subdir"
+                        }
+                        -re ".*$gdb_prompt $" {
+                            perror "Dir \"$subdir\" failed."
+                        }
+                    }
+                }
+                -re ".*$gdb_prompt $" {
+                    perror "Dir \"$subdir\" failed."
+                }
+            }
+        }
+        -re ".*$gdb_prompt $" {
+            perror "Dir \"$subdir\" failed."
+        }
+    }
+}
+
+#
+#test_search
+#
+proc test_search { } {
+    gdb_test "set listsize 4" ""
+    gdb_test "list average.c:1" "1\[ \t\]+/. This is a sample .*"
+    gdb_test "/ print_average" "17\[ \t\]+void print_average\\(int \\*list.*"
+    gdb_test "/ print_average" "19\[ \t\]+void print_average\\(list, low, high\\)"
+    gdb_test "/ print_average" "42\[ \t\]+print_average \\(my_list, first, last\\);"
+    gdb_test "? print_average" "19\[ \t\]+void print_average\\(list, low, high\\)"
+    gdb_test "? sum" "9\[ \t]+extern int sum\\(\\);"
+}
+
+#
+#test_viewing_loc
+#
+proc test_viewing_loc { } {
+    gdb_test "L" "No stack."
+    gdb_test "break main" ""
+    gdb_test "R" ""
+    gdb_test "L" "#0\[ \t\]+main \\(\\) at.*average.c:38\r\n38\[ \t\]+int first = 0, last = 0;"
+}
+
+#
+#test_dir_list
+#
+proc test_dir_list { } {
+    gdb_test "ld" "Source directories searched: .*"
+}
+
+#
+#test_list_sources
+#
+proc test_list_sources { } {
+    if [istarget "hppa64-*-*"] {
+	gdb_test "lf" "Source files for which symbols have been read in:\r\n\r\n.*average\\.c.*Source files for which symbols will be read in on demand:\r\n\r\nglobals,.*\[se\]\[un\]\[md\]\\.c.*\[se\]\[un\]\[md\]\\.c"
+    } else {
+	gdb_test "lf" "Source files for which symbols have been read in:\r\n\r\n.*average\\.c.*\r\n\r\nSource files for which symbols will be read in on demand:\r\n\r\nglobals, end\\.c,.*sum\\.c"
+    }
+}
+#
+#test_vlist
+#
+proc test_vlist { } {
+    gdb_test "v main" "34\[ \t\]+main \\(\\)\r\n35\[ \t\]+#endif\r\n36\[ \t\]+.\r\n37\[ \t\]+char c;"
+}
+
+#
+#test_va
+#
+proc test_va { } {
+    if [istarget "hppa64-*-*"] {
+	gdb_test "va main" "Dump of assembler code for function main:\r\n.*0x.* <main>:\[ \t\]+std %rp,-0x10\\(%sp\\)\r\n0x.* <main\\+4>:\[ \t\]+std,ma %r3,0xd0\\(%sp\\)\r\n.*0x.* <main\\+8>:\[ \t\]+std %r4,-0xc8\\(%sp\\)\r\n.*0x.* <main\\+12>:\[ \t\]+copy %ret1,%r3\r\n.*"
+    } else {
+	gdb_test "va main" "Dump of assembler code for function main:\r\n.*0x.* <main>:\[ \t\]+stw %rp,-0x14\\(%sr0,%sp\\)\r\n0x.* <main\\+4>:\[ \t\]+ldo 0x\[48\]0\\(%sp\\),%sp\r\n.*0x.* <main\\+8>:\[ \t\]+stw %r0,-0x.*\\(%sr0,%sp\\)\r\n.*0x.* <main\\+12>:\[ \t\]+stw %r0,-0x.*\\(%sr0,%sp\\)\r\n.*"
+    }
+}
+
+#
+#test_list_globals
+#
+proc test_list_globals { } {
+    gdb_test "lg" "All defined variables:\r\n\r\nFile globals:.*"
+#    gdb_test "lg" "All defined variables:\r\n\r\nFile globals:\r\nchar __buffer.512.;\r\nint __d_eh_catch_catch;\r\nint __d_eh_catch_throw;.*"
+}
+
+#
+#test_list_registers
+#
+proc test_list_registers { } {
+    if [istarget "hppa64-*-*"] {
+	gdb_test "lr" "\[ \t\]+flags:.*r17:.*pcsqh:.*cr0:.*\r\n\[ \t\]+r1:.*r18:.*pcoqt:.*cr8:.*"
+    } else {
+	gdb_test "lr" "\[ \t\]+flags:.*r18:.*pcsqt:.*ccr:.*\r\n\[ \t\]+r1:.*r19:.*eiem:.*cr12:.*"
+    }
+    gdb_test "lr r1" "r1 .*"
+}
+
+#
+#test_backtrace
+#
+proc test_backtrace { } {
+    gdb_test "t" "#0  main \\(\\) at.*average.c:39"
+    gdb_test "T" "#0  main \\(\\) at.*average.c:39\r\n\[ \t\]+c = *.*\r\n\[ \t\]+first = 0\r\n\[ \t\]+last = 0"
+
+    gdb_test "break sum" ""
+    gdb_test "cont" ""
+    gdb_test "next"
+
+    gdb_test "t" "#0  sum \\(list=0x.*, low=0, high=9\\) at.*sum\.c:12\r\n#1  0x.* in print_average \\(list=0x.*, low=0, high=9\\) at.*average\.c:24\r\n#2  0x.* in main \\(\\) at.*average\.c:42"
+    gdb_test "t 1" "#0  sum \\(list=0x.*, low=0, high=9\\) at.*sum\.c:12\r\n\\(More stack frames follow\.\.\.\\)"
+    gdb_test "T" "#0  sum \\(list=0x.*, low=0, high=9\\) at.*sum\.c:12\r\n\[ \t\]+i = 0\r\n\[ \t\]+s = 0\r\n#1  0x.* in print_average \\(list=0x.*, low=0, high=9\\) at.*average\.c:24\r\n\[ \t\]+total = 0\r\n\[ \t\]+num_elements = 0\r\n\[ \t\]+average = 0\r\n#2  0x.* in main \\(\\) at.*average\.c:42\r\n\[ \t\]+c = *.*\r\n\[ \t\]+first = 0\r\n\[ \t\]+last = 9"
+    gdb_test "T 1" "#0  sum \\(list=0x.*, low=0, high=9\\) at.*sum\.c:12\r\n\[ \t\]+i = 0\r\n\[ \t\]+s = 0\r\n\\(More stack frames follow\.\.\.\\)"
+
+    gdb_test "V" "#0  sum \\(list=0x.*, low=0, high=9\\) at.*sum\.c:12\r\n\\12\[ \t\]+for \\(i = low;.*\\)"
+    gdb_test "V 1" "#1  0x.* in print_average \\(list=0x.*, low=0, high=9\\) at.*average\.c:24\r\n24\[ \t\]+total = sum\\(list, low, high\\);"
+}
+
+#
+# test_go
+#
+proc test_go { }  {
+    gdb_test "break main" ""
+    gdb_test "R" ""
+
+    gdb_test "g +1" "Breakpoint.*at 0x.*: file.*average\.c, line 39\.\r\nContinuing at 0x.*\.\r\nmain \\(\\) at.*average\.c:39\r\n39\[ \t\]+last = num-1;"
+    gdb_test "g 42" "Breakpoint.*at 0x.*: file.*average\.c, line 42\.\r\nContinuing at 0x.*\.\r\nmain \\(\\) at.*average\.c:42\r\n42\[ \t\]+print_average \\(my_list, first, last\\);"
+
+}
+
+#
+#test_breakpoints
+#
+proc test_breakpoints { } {
+    global gdb_prompt
+
+    gdb_test "sb" ""
+    gdb_test "lb" "Num.*Type.*Disp.*Enb.*Address.*What\r\n1\[ \r\]+breakpoint\[ \r\]+keep n.*in main at.*average\.c:38.*"
+    gdb_test "ab" ""
+    gdb_test "lb" "Num.*Type.*Disp.*Enb.*Address.*What\r\n1\[ \r\]+breakpoint\[ \r\]+keep y.*in main at.*average\.c:38.*"
+    gdb_test "ba sum" "Breakpoint.*at.*: file.*sum\.c, line 11\."
+    gdb_test "cont" ""
+    gdb_test "bx" "Breakpoint.*at.*: file.*sum.c, line 15\."
+    #gdb_test "bx if (1)" "Breakpoint.*at.*: file.*sum.c, line 15\."
+    gdb_test "bx 1" "Breakpoint.*at.*: file.*average.c, line 29\."
+    gdb_test "bx 1 if (1)" "Breakpoint.*at.*: file.*average.c, line 29\."
+    gdb_test "bc 1 2" "Will ignore next 2 crossings of breakpoint 1\."
+    gdb_test "lb 1" "Num.*Type.*Disp.*Enb.*Address.*What\r\n1\[ \r\]+breakpoint\[ \r\]+keep y.*in main at.*average\.c:38\r\n.*breakpoint already hit 1 time\r\n.*ignore next 2 hits.*"
+
+    send_gdb "db\n"
+    gdb_expect {
+        -re "Delete all breakpoints.*y or n. $" {
+            send_gdb "y\n"
+            exp_continue
+        }
+        -re "y\r\n$gdb_prompt $" {}
+        -re ".*$gdb_prompt $" { # This happens if there were no breakpoints
+            }
+        timeout { perror "Delete all breakpoints (timeout)" ; return }
+    }
+    send_gdb "lb\n"
+    gdb_expect {
+        -re "No breakpoints or watchpoints..*$gdb_prompt $" {}
+        -re ".*$gdb_prompt $" { perror "breakpoints not deleted" ; return }
+        timeout { perror "info breakpoints (timeout)" ; return }
+    }
+gdb_test "xbreak" "Breakpoint.*at.*file.*sum.c, line 15."
+gdb_test "xbreak print_average" "Breakpoint.*at.*file.*average.c, line 29."
+gdb_test "xbreak if (1)" "Note: breakpoint.*also set at pc.*Breakpoint.*at.*file.*sum.c, line 15."
+gdb_test "xbreak print_average if (1)" "Note: breakpoint.*also set at pc.*Breakpoint.*at.*file.*average.c, line 29."
+
+    send_gdb "lb\n"
+    gdb_expect {
+        -re "Num Type           Disp Enb Address    What.*breakpoint     keep y.*sum.c:15.*breakpoint     keep y.*average.c:29.*breakpoint     keep y.*sum.c:15.*stop only if 1.*breakpoint     keep y.*average.c:29.*stop only if 1.*$gdb_prompt $" {pass "lb on xbreaks"}
+        -re ".*$gdb_prompt $" { fail "breakpoints not deleted"}
+        timeout { fail "info breakpoints (timeout)" }
+    }
+
+}
+
+#
+# test_signals 
+#
+proc test_signals { } {
+    gdb_test "handle SIGTERM nostop noprint" ""
+    gdb_test "z 15 s" "Signal.*Stop.*Print.*Pass to program.*Description\r\nSIGTERM.*Yes.*Yes.*Yes.*Terminated"
+    gdb_test "z 15 r" "Signal.*Stop.*Print.*Pass to program.*Description\r\nSIGTERM.*No.*No.*Yes.*Terminated"
+    gdb_test "z 15 i" "Signal.*Stop.*Print.*Pass to program.*Description\r\nSIGTERM.*No.*No.*No.*Terminated"
+    gdb_test "z 15 r" "Signal.*Stop.*Print.*Pass to program.*Description\r\nSIGTERM.*No.*Yes.*No.*Terminated"
+    gdb_test "z 15 Q" "Signal.*Stop.*Print.*Pass to program.*Description\r\nSIGTERM.*No.*No.*No.*Terminated"
+    gdb_test "lz" "Signal.*Stop.*Print.*Pass to program.*Description\r\n\r\nSIGHUP.*Yes.*"
+}
+
+
+
+# Start with a fresh gdb.
+global GDBFLAGS
+set saved_gdbflags $GDBFLAGS
+
+set GDBFLAGS "$GDBFLAGS --xdb"
+
+gdb_exit
+gdb_start
+
+xdb_reinitialize_dir $srcdir/$subdir
+
+gdb_load ${binfile}
+send_gdb "set width 0\n"
+gdb_expect -re "$gdb_prompt $"
+test_search
+test_viewing_loc
+test_dir_list
+test_list_sources
+test_vlist
+test_va
+gdb_test "next"
+gdb_test "l" "No arguments.\r\nc = *.*\r\nfirst = 0\r\nlast = 0"
+#test_list_globals
+test_list_registers
+test_backtrace
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+xdb_reinitialize_dir $srcdir/$subdir
+
+gdb_load ${binfile}
+send_gdb "set width 0\n"
+gdb_expect -re "$gdb_prompt $"
+test_go
+
+
+gdb_exit
+gdb_start
+xdb_reinitialize_dir $srcdir/$subdir
+
+gdb_load ${binfile}
+send_gdb "set width 0\n"
+gdb_expect -re "$gdb_prompt $"
+gdb_test "break main" ""
+gdb_test "R" ""
+gdb_test "S" "39\[ \t\]+last = num-1;"
+test_breakpoints
+test_signals
+gdb_test "sm" ""
+gdb_test "info set" ".*pagination:  State of pagination is off.*"
+gdb_test "am" ""
+gdb_test "info set" ".*pagination:  State of pagination is on.*"
+gdb_exit
+
+set GDBFLAGS $saved_gdbflags
+
+return 0
+
+
+
+
+
+

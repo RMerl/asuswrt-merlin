@@ -1,0 +1,300 @@
+# Copyright 1992, 1994, 1995, 1997, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was adapted from bitfields.exp by Paul Hilfinger 
+# (Hilfinger@gnat.com)
+
+#
+# Tests for bit-fields that do not fit in type (unsigned) int, but do fit 
+# in type (unsigned) long long.  We perform essentially the same tests as
+# in bitfields.c, which considers only bit-fields that are <= 9 bits long.
+#
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "bitfields2"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    untested bitfields2.exp
+    return -1
+}
+
+set has_signed_bitfields 1
+
+#
+# Continue to expected breakpoint at FUNCTION.  Append TAG to make pass/fail 
+# messages (to make them unique).  Suppress tests on failure.
+#
+proc continue_test { function tag } {
+    global decimal
+    global srcfile
+
+    if [gdb_test "cont" "Break.*$function \\(\\) at .*$srcfile:$decimal.*" "continuing to $function $tag"] {
+	gdb_suppress_tests
+    }
+}
+
+#
+# Start next test by running to tester and then to FUNCTION.   Suppresses
+# tests on failure.
+#
+proc start_test { function } {
+    delete_breakpoints
+    if [gdb_test "break tester" "" "break tester prior to $function"] {
+	gdb_suppress_tests
+    }
+    continue_test "tester" "prior to $function"
+    if ![gdb_breakpoint $function] {
+	gdb_suppress_tests
+    }
+    continue_test $function "#0"
+}
+    
+
+#
+# Test bitfield locating and uniqueness.
+# For each member, set that member to 1 and verify that the member (and only
+# that member) is 1, then reset it back to 0.
+#
+
+proc bitfield_uniqueness {} {
+    global decimal
+    global hex
+    global gdb_prompt
+    global srcfile
+
+    start_test break1
+	
+    if [gdb_test "print flags" ".*u1 = 0, u2 = 0, u3 = 0, s1 = 1, s2 = 0, s3 = 0.*" "bitfield uniqueness; flags.s1 = 1"] {
+	gdb_suppress_tests;
+    }
+    continue_test break1 "#1"
+    if [gdb_test "print flags" ".*u1 = 1, u2 = 0, u3 = 0, s1 = 0, s2 = 0, s3 = 0.*" "bitfield uniqueness; flags.u1 = 1"] {
+	gdb_suppress_tests;
+    }
+    continue_test break1 "#2"
+    if [gdb_test "print flags" ".*u1 = 0, u2 = 0, u3 = 0, s1 = 0, s2 = 1, s3 = 0.*" "bitfield uniqueness; flags.s2 = 1"] {
+	gdb_suppress_tests;
+    }
+    continue_test break1 "#3"
+    if [gdb_test "print flags" ".*u1 = 0, u2 = 1, u3 = 0, s1 = 0, s2 = 0, s3 = 0.*" "bitfield uniqueness; flags.u2 = 1"] {
+	gdb_suppress_tests;
+    }
+    continue_test break1 "#4"
+    if [gdb_test "print flags" ".*u1 = 0, u2 = 0, u3 = 0, s1 = 0, s2 = 0, s3 = 1.*" "bitfield uniqueness; flags.s3 = 1"] {
+	gdb_suppress_tests;
+    }
+    continue_test break1 "#5"
+    if [gdb_test "print flags" ".*u1 = 0, u2 = 0, u3 = 1, s1 = 0, s2 = 0, s3 = 0.*" "bitfield uniqueness; flags.u3 = 1"] {
+	gdb_suppress_tests
+    }
+    gdb_stop_suppressing_tests;
+}
+
+
+#
+# Test bitfield containment.
+# Fill alternating fields with all 1's and verify that none of the bits
+# "bleed over" to the other fields.
+#
+
+proc bitfield_containment {} {
+    global decimal
+    global hex
+    global gdb_prompt
+    global srcfile
+
+    start_test break2
+
+    # If program is compiled with Sun CC, signed fields print out as their
+    # actual sizes; if compiled with gcc, they print out as 0xffffffff.
+    if [gdb_test "print/x flags" "= {u1 = 0x7fff, u2 = 0x0, u3 = 0xffff, s1 = 0x0, s2 = 0x(1ffffffff|f*), s3 = 0x0}" "bitfield containment; flags.u1, flags.u3, and flags.s3 to all 1s"] {
+	gdb_suppress_tests
+    }
+
+    continue_test break2 "#1"
+
+    if [gdb_test "print/x flags" "= {u1 = 0x0, u2 = 0x1ffffffff, u3 = 0x0, s1 = 0x(7fff|f*), s2 = 0x0, s3 = 0xf*}" "bitfield containment; flags.u2, flags.s1, flags.s2 to all 1s"] {
+	gdb_suppress_tests
+    }
+    gdb_stop_suppressing_tests;
+}
+
+# Test unsigned bitfields for unsignedness and range.
+# Fill the unsigned fields with the maximum positive value and verify that
+# the values are printed correctly.
+
+proc bitfield_unsignedness {} {
+    global decimal
+    global hex
+    global gdb_prompt
+    global srcfile
+
+    start_test break3
+
+    if [gdb_test "print flags" ".*u1 = 32767, u2 = 8589934591, u3 = 65535, s1 = 0, s2 = 0, s3 = 0.*" "maximum unsigned bitfield values"] {
+	gdb_suppress_tests
+    }
+    gdb_stop_suppressing_tests;
+}
+
+#
+# Test signed bitfields for signedness and range.
+# Fill the signed fields with the maximum positive value, then the maximally
+# negative value, then -1, and verify in each case that the values are
+# printed correctly.
+#
+
+proc bitfield_signedness {} {
+    global decimal
+    global hex
+    global gdb_prompt
+    global srcfile
+    global has_signed_bitfields
+
+    start_test break4
+
+    if [gdb_test "print flags" "= {.*u1 = 0, u2 = 0, u3 = 0, s1 = 16383, s2 = 4294967295, s3 = 32767.*}" "maximum signed bitfield values"] {
+	gdb_suppress_tests
+    }
+
+    continue_test break4 "#1"
+
+    # Determine if the target has signed bitfields so we can skip
+    # the signed bitfield tests if it doesn't.
+    set test "determining signed-ness of bitfields"
+    set has_signed_bitfields 0
+    gdb_test_multiple "print i" $test {
+	-re ".* = -32768.*$gdb_prompt $" {
+	    set has_signed_bitfields 1
+	    pass "determining signed-ness of bitfields"
+	}
+	-re ".* = 32768.*$gdb_prompt $" {
+	    pass "determining signed-ness of bitfields"
+	}
+	-re ".*$gdb_prompt $" {
+	    fail "determining signed-ness of bitfields"
+	    gdb_suppress_tests
+	}
+    }
+
+    set test "most negative signed bitfield values"
+    if $has_signed_bitfields then {
+        if [gdb_test "print flags" "u1 = 0, u2 = 0, u3 = 0, s1 = -16384, s2 = -4294967296, s3 = -32768.*" $test ] {
+            gdb_suppress_tests
+        }
+    } else {
+	unsupported $test
+    }
+
+    continue_test break4 "#2"
+
+    set test "signed bitfields containing -1"
+    if $has_signed_bitfields then {
+	if [gdb_test "print flags" "u1 = 0, u2 = 0, u3 = 0, s1 = -1, s2 = -1, s3 = -1.*" $test ] {
+	    gdb_suppress_tests
+	}
+    } else {
+	unsupported $test
+    }
+
+    gdb_stop_suppressing_tests;
+}
+
+
+# Test setting of long long bit fields from within GDB.
+
+proc bitfield_set {} {
+    global decimal
+    global hex
+    global gdb_prompt
+    global srcfile
+    global has_signed_bitfields
+
+    start_test break5
+
+    set big_set_failed 0
+    set test "set long long unsigned bitfield"
+    gdb_test_multiple "print flags.u2 = 0x100000000" $test {
+	-re "warning: Value does not fit.*$gdb_prompt $" {
+	    fail "$test"
+	    gdb_suppress_tests
+	}
+	-re "= 4294967296.*$gdb_prompt $" {
+	    pass "$test"
+	}
+    }
+
+    set test "set long long signed bitfield positive"
+    gdb_test_multiple "print flags.s2 = 0x80000000" $test {
+	-re "warning: Value does not fit.*$gdb_prompt $" {
+	    fail "$test"
+	    gdb_suppress_tests
+	}
+	-re "= 2147483648.*$gdb_prompt $" {
+	    pass "$test"
+	}
+    }
+
+    if [gdb_test "print flags" "u1 = 0, u2 = 4294967296, u3 = 0, s1 = 0, s2 = 2147483648, s3 = 0.*" "long long bitfield values after set"] {
+	gdb_suppress_tests
+    }
+
+    set test "set long long signed bitfield negative"
+    if $has_signed_bitfields then {
+	gdb_test_multiple "print flags.s2 = -1" $test {
+	    -re "warning: Value does not fit.*$gdb_prompt $" {
+		fail "$test"
+		gdb_suppress_tests
+	    }
+	    -re "= -1.*$gdb_prompt $" {
+		pass "$test"
+	    }
+	}
+    } else {
+	unsupported $test
+    }
+
+    set test  "long long bitfield values after set negative"
+    if $has_signed_bitfields then {
+	if [gdb_test "print flags" "u1 = 0, u2 = 4294967296, u3 = 0, s1 = 0, s2 = -1, s3 = 0.*" $test] {
+	    gdb_suppress_tests
+	}
+    } else {
+	unsupported $test
+    }
+
+    gdb_stop_suppressing_tests;
+}
+
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+send_gdb "set print sevenbit-strings\n" ; gdb_expect -re "$gdb_prompt $"
+runto_main
+
+bitfield_uniqueness
+bitfield_containment
+bitfield_unsignedness
+bitfield_signedness
+bitfield_set
+

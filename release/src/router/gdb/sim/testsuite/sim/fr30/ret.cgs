@@ -1,0 +1,75 @@
+# fr30 testcase for ret
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global ret
+
+	; Test ret
+	mvi_h_gr	0xdeadbeef,r9
+	mvi_h_gr   	#func1,r0
+	set_cc          0x0f		; condition codes shouldn't change
+call1:
+	call		@r0
+	testr_h_gr	2,r0
+	test_h_gr	0xbeefdead,r9
+	pass
+
+func1:
+	test_cc		1 1 1 1
+	mvi_h_gr	#call1,r7
+	inci_h_gr	2,r7
+	testr_h_dr	r7,rp
+	save_rp
+
+	mvi_h_gr   	#func2,r0
+	set_cc          0x0f		; condition codes shouldn't change
+call2:
+	call:d		@r0
+	ldi:8		1,r0		; Must assume this works
+	testr_h_gr	2,r0
+	restore_rp
+	ret
+func2:
+	test_cc		1 1 1 1
+	mvi_h_gr	#call2,r7
+	inci_h_gr	4,r7
+	testr_h_dr	r7,rp
+	testr_h_gr	1,r0
+	save_rp
+
+	set_cc          0x0f		; condition codes shouldn't change
+call3:
+	call		func3
+	testr_h_gr	2,r0
+	restore_rp
+	ret
+func3:
+	test_cc		1 1 1 1
+	mvi_h_gr	#call3,r7
+	inci_h_gr	2,r7
+	testr_h_dr	r7,rp
+	save_rp
+
+	set_cc          0x0f		; condition codes shouldn't change
+call4:
+	call:d		func4
+	ldi:8		1,r0		; Must assume this works
+	testr_h_gr	3,r0
+	restore_rp
+	ret:d
+	ldi:8		2,r0		; Must assume this works
+func4:
+	test_cc		1 1 1 1
+	mvi_h_gr	#call4,r7
+	inci_h_gr	4,r7
+	testr_h_dr	r7,rp
+	testr_h_gr	1,r0
+	mvi_h_gr	0xbeefdead,r9
+	ret:d
+	ldi:8		3,r0		; Must assume this works
+
+	fail

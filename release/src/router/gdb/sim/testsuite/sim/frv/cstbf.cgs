@@ -1,0 +1,120 @@
+# frv testcase for cstbf $FRk,@($GRi,$GRj),$CCi,$cond
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global cstbf
+cstbf:
+	set_spr_immed	0x1b1b,cccr
+	set_gr_gr	sp,gr20
+
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_immed	0,gr7
+	set_fr_iimmed	0xffff,0xffff,fr8
+	cstbf		fr8,@(sp,gr7),cc0,1
+	test_mem_limmed	0xffad,0xbeef,gr20
+
+	set_gr_immed	2,gr7
+	set_fr_iimmed	0xffff,0xffaa,fr8
+	cstbf		fr8,@(sp,gr7),cc0,1
+	test_mem_limmed	0xffad,0xaaef,gr20
+
+	inc_gr_immed	4,sp
+	set_gr_immed	-1,gr7
+	set_fr_iimmed	0xffff,0xffbb,fr8
+	cstbf		fr8,@(sp,gr7),cc4,1
+	test_mem_limmed	0xffad,0xaabb,gr20
+
+	set_gr_gr	gr20,sp
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_immed	0,gr7
+	set_fr_iimmed	0xffff,0xffff,fr8
+	cstbf		fr8,@(sp,gr7),cc0,0
+	test_mem_limmed	0xdead,0xbeef,gr20
+
+	set_gr_immed	2,gr7
+	set_fr_iimmed	0xffff,0xffaa,fr8
+	cstbf		fr8,@(sp,gr7),cc0,0
+	test_mem_limmed	0xdead,0xbeef,gr20
+
+	inc_gr_immed	4,sp
+	set_gr_immed	-1,gr7
+	set_fr_iimmed	0xffff,0xffbb,fr8
+	cstbf		fr8,@(sp,gr7),cc4,0
+	test_mem_limmed	0xdead,0xbeef,gr20
+
+	set_gr_gr	gr20,sp
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_immed	0,gr7
+	set_fr_iimmed	0xffff,0xffff,fr8
+	cstbf		fr8,@(sp,gr7),cc1,0
+	test_mem_limmed	0xffad,0xbeef,gr20
+
+	set_gr_immed	2,gr7
+	set_fr_iimmed	0xffff,0xffaa,fr8
+	cstbf		fr8,@(sp,gr7),cc1,0
+	test_mem_limmed	0xffad,0xaaef,gr20
+
+	inc_gr_immed	4,sp
+	set_gr_immed	-1,gr7
+	set_fr_iimmed	0xffff,0xffbb,fr8
+	cstbf		fr8,@(sp,gr7),cc5,0
+	test_mem_limmed	0xffad,0xaabb,gr20
+
+	set_gr_gr	gr20,sp
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_immed	0,gr7
+	set_fr_iimmed	0xffff,0xffff,fr8
+	cstbf		fr8,@(sp,gr7),cc1,1
+	test_mem_limmed	0xdead,0xbeef,gr20
+
+	set_gr_immed	2,gr7
+	set_fr_iimmed	0xffff,0xffaa,fr8
+	cstbf		fr8,@(sp,gr7),cc1,1
+	test_mem_limmed	0xdead,0xbeef,gr20
+
+	inc_gr_immed	4,sp
+	set_gr_immed	-1,gr7
+	set_fr_iimmed	0xffff,0xffbb,fr8
+	cstbf		fr8,@(sp,gr7),cc5,1
+	test_mem_limmed	0xdead,0xbeef,gr20
+
+	set_gr_gr	gr20,sp
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_immed	0,gr7
+	set_fr_iimmed	0xffff,0xffff,fr8
+	cstbf		fr8,@(sp,gr7),cc2,0
+	test_mem_limmed	0xdead,0xbeef,gr20
+
+	set_gr_immed	2,gr7
+	set_fr_iimmed	0xffff,0xffaa,fr8
+	cstbf		fr8,@(sp,gr7),cc2,1
+	test_mem_limmed	0xdead,0xbeef,gr20
+
+	inc_gr_immed	4,sp
+	set_gr_immed	-1,gr7
+	set_fr_iimmed	0xffff,0xffbb,fr8
+	cstbf		fr8,@(sp,gr7),cc6,0
+	test_mem_limmed	0xdead,0xbeef,gr20
+
+	set_gr_gr	gr20,sp
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_immed	0,gr7
+	set_fr_iimmed	0xffff,0xffff,fr8
+	cstbf		fr8,@(sp,gr7),cc3,1
+	test_mem_limmed	0xdead,0xbeef,gr20
+
+	set_gr_immed	2,gr7
+	set_fr_iimmed	0xffff,0xffaa,fr8
+	cstbf		fr8,@(sp,gr7),cc3,0
+	test_mem_limmed	0xdead,0xbeef,gr20
+
+	inc_gr_immed	4,sp
+	set_gr_immed	-1,gr7
+	set_fr_iimmed	0xffff,0xffbb,fr8
+	cstbf		fr8,@(sp,gr7),cc7,1
+	test_mem_limmed	0xdead,0xbeef,gr20
+
+	pass

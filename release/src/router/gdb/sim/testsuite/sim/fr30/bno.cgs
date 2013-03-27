@@ -1,0 +1,109 @@
+# fr30 testcase for bno $label9
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global bno
+bno:
+	; Test bno $label9
+	set_cc          0x0f		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x0e		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x0d		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x0c		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x0b		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x0a		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x09		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x08		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x07		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x06		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x05		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x04		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x03		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x02		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x01		; condition codes are irrelevent
+	no_branch 	bno
+
+	set_cc          0x00		; condition codes are irrelevent
+	no_branch 	bno
+
+	; Test bno:d label9
+	set_cc          0x0f		; condition codes are irrelevent
+	no_branch_d 	bno:d 0xf
+
+	set_cc          0x0e		; condition codes are irrelevent
+	no_branch_d 	bno:d 0xe
+
+	set_cc          0x0d		; condition codes are irrelevent
+	no_branch_d 	bno:d 0xd
+
+	set_cc          0x0c		; condition codes are irrelevent
+	no_branch_d 	bno:d 0xc
+
+	set_cc          0x0b		; condition codes are irrelevent
+	no_branch_d 	bno:d 0xb
+
+	set_cc          0x0a		; condition codes are irrelevent
+	no_branch_d 	bno:d 0xa
+
+	set_cc          0x09		; condition codes are irrelevent
+	no_branch_d 	bno:d 0x9
+
+	set_cc          0x08		; condition codes are irrelevent
+	no_branch_d 	bno:d 0x8
+
+	set_cc          0x07		; condition codes are irrelevent
+	no_branch_d 	bno:d 0x7
+
+	set_cc          0x06		; condition codes are irrelevent
+	no_branch_d 	bno:d 0x6
+
+	set_cc          0x05		; condition codes are irrelevent
+	no_branch_d 	bno:d 0x5
+
+	set_cc          0x04		; condition codes are irrelevent
+	no_branch_d 	bno:d 0x4
+
+	set_cc          0x03		; condition codes are irrelevent
+	no_branch_d 	bno:d 0x3
+
+	set_cc          0x02		; condition codes are irrelevent
+	no_branch_d 	bno:d 0x2
+
+	set_cc          0x01		; condition codes are irrelevent
+	no_branch_d 	bno:d 0x1
+
+	set_cc          0x00		; condition codes are irrelevent
+	no_branch_d 	bno:d 0x0
+
+	pass

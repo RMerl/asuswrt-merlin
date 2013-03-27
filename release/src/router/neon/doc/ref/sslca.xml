@@ -1,0 +1,81 @@
+    <refentry id="refsslca">
+
+      <refmeta>
+	<refentrytitle>ne_ssl_load_ca</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_ssl_load_ca">ne_ssl_load_ca</refname>
+	<refname id="ne_ssl_load_default_ca">ne_ssl_load_default_ca</refname>
+	<refpurpose>load SSL Certificate Authorities</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_session.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>int <function>ne_ssl_load_ca</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	    <paramdef>const char *<parameter>filename</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>int <function>ne_ssl_load_default_ca</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>To indicate that a given CA certificate is trusted by the user,
+the certificate can be loaded using the <function>ne_ssl_load_ca</function>
+function.  The <parameter>filename</parameter> parameter given must specify
+the location of a PEM-encoded CA certificate.</para>
+
+	<para>The SSL library in use by neon may include a default set
+of CA certificates; calling the
+<function>ne_ssl_load_default_ca</function> function will indicate
+that these CAs are trusted by the user.</para>
+
+	<para>If no CA certificates are loaded, or the server presents
+a certificate which is invalid in some way, then the certificate must
+be manually verified (see <xref linkend="ne_ssl_set_verify"/>), otherwise the
+connection will fail.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Return value</title>
+
+	<para>Both <function>ne_ssl_load_ca</function> and
+<function>ne_ssl_load_default_ca</function> functions return
+<literal>0</literal> on success, or non-zero on failure.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Examples</title>
+
+	<para>Load the CA certificate stored in <filename>/path/to/cacert.pem</filename>:</para>
+	<programlisting>&egsess;
+
+if (ne_ssl_load_ca(sess, "/path/to/cacert.pem")) {
+   printf("Could not load CA cert: %s\n", ne_get_error(sess));
+}</programlisting>
+      </refsect1>
+
+      <refsect1>
+	<title>See also</title>
+
+	<para><xref linkend="ne_get_error"/>, <xref
+	linkend="ne_ssl_set_verify"/></para> </refsect1>
+
+    </refentry>

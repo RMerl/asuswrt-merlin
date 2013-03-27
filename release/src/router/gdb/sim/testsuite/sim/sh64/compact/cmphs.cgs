@@ -1,0 +1,59 @@
+# sh testcase for cmp/hs $rm, $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+zero:
+	mov #0, r0
+	mov #0, r0
+	cmp/hs r0, r1
+
+equal:
+	mov #1, r0
+	rotr r0
+	add #3, r0
+
+	mov #1, r1
+	rotr r1
+	add #3, r1
+
+	cmp/hs r0, r1
+
+gt:
+	mov #10, r0
+	mov #12, r1
+	cmp/hs r0, r1
+
+lt:
+	mov #12, r0
+	mov #10, r1
+	cmp/hs r0, r1
+
+gtneg:
+	mov #1, r0
+	rotr r0
+	add #1, r0
+
+	mov #1, r1
+	rotr r1
+	add #3, r1
+
+	cmp/hs r0, r1
+
+ltneg:
+	mov #1, r0
+	rotr r0
+	add #3, r0
+	
+	mov #1, r1
+	rotr r1
+	add #1, r1
+
+	cmp/hs r0, r1
+
+okay:
+	pass

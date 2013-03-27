@@ -74,11 +74,15 @@
 #define	ETHER_TYPE_IP		0x0800		/* IP */
 #define ETHER_TYPE_ARP		0x0806		/* ARP */
 #define ETHER_TYPE_8021Q	0x8100		/* 802.1Q */
+#define ETHER_TYPE_PPP_SES	0x8864		/* PPPoE Session */
+#define	ETHER_TYPE_IPV6		0x86dd		/* IPv6 */
 #define	ETHER_TYPE_BRCM		0x886c		/* Broadcom Corp. */
 #define	ETHER_TYPE_802_1X	0x888e		/* 802.1x */
 #define	ETHER_TYPE_802_1X_PREAUTH 0x88c7	/* 802.1x preauthentication */
 #define ETHER_TYPE_WAI		0x88b4		/* WAI */
+#define ETHER_TYPE_89_0D	0x890d		/* 89-0d frame for TDLS */
 
+#define ETHER_TYPE_IPV6		0x86dd		/* IPV6 */
 
 /* Broadcom subtype follows ethertype;  First 2 bytes are reserved; Next 2 are subtype; */
 #define	ETHER_BRCM_SUBTYPE_LEN	4	/* Broadcom 4 byte subtype */

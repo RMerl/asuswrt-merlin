@@ -1,0 +1,3 @@
+# Host: PA-RISC HP-UX
+NATDEPFILES= fork-child.o inf-ptrace.o inf-ttrace.o \
+	hppa-hpux-nat.o corelow.o

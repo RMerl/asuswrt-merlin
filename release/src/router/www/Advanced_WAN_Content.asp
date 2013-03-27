@@ -38,10 +38,9 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
 var nowWAN = '<% get_parameter("flag"); %>';
-var wan_type_name = wans_dualwan.split(" ")[<% nvram_get("wan_unit"); %>].toUpperCase();
-
 
 if(dualWAN_support != -1){
+	var wan_type_name = wans_dualwan.split(" ")[<% nvram_get("wan_unit"); %>].toUpperCase();
 	switch(wan_type_name){
 		case "DSL":
 			location.href = "Advanced_DSL_Content.asp";
@@ -60,8 +59,17 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var original_wan_type = wan_proto;
 var original_wan_dhcpenable = parseInt('<% nvram_get("wan_dhcpenable_x"); %>');
 var original_dnsenable = parseInt('<% nvram_get("wan_dnsenable_x"); %>');
+var wan_unit_flag = '<% nvram_get("wan_unit"); %>';
 
 function initial(){
+	if(dualWAN_support == -1){
+		if(wan_unit_flag == 1){	
+			document.wanUnit_form.wan_unit.value = 0;
+			document.wanUnit_form.target = "";
+			document.wanUnit_form.submit();
+		}
+	}
+	
 	show_menu();			
 	change_wan_type(document.form.wan_proto.value, 0);	
 	fixed_change_wan_type(document.form.wan_proto.value);
@@ -173,7 +181,8 @@ function validForm(){
 		if(!valid_IP(document.form.wan_ipaddr_x, "")) return false;  //WAN IP
 		if(!valid_IP(document.form.wan_gateway_x, "GW"))return false;  //Gateway IP		
 		
-		//WAN IP conflict with LAN ip subnet
+		//Viz hold on this subnet issue cuz WAN setting hashighest prio 2013.01		
+		/*//WAN IP conflict with LAN ip subnet
 		if(matchSubnet2(document.form.wan_ipaddr_x.value, document.form.wan_netmask_x, document.form.lan_ipaddr.value, document.form.lan_netmask)){
 				document.form.wan_ipaddr_x.focus();
 				document.form.wan_ipaddr_x.select();
@@ -181,13 +190,17 @@ function validForm(){
 				return false;
 		}
 						
-		//WAN IP conflict with LAN ip subnet
-		if(matchSubnet2(document.form.wan_gateway_x.value, document.form.wan_netmask_x, document.form.lan_ipaddr.value, document.form.lan_netmask)){
+		//Gateway IP conflict with LAN ip subnet
+		var gateway_obj = document.form.wan_gateway_x;
+		var gateway_num = inet_network(gateway_obj.value);
+		if(gateway_num > 0 &&
+		   matchSubnet2(document.form.wan_gateway_x.value, document.form.wan_netmask_x, document.form.lan_ipaddr.value, document.form.lan_netmask)){
 				document.form.wan_gateway_x.focus();
 				document.form.wan_gateway_x.select();
 				alert("<#IPConnection_x_WAN_LAN_conflict#>");
 				return false;
 		}				
+		*/
 		
 		if(document.form.wan_gateway_x.value == document.form.wan_ipaddr_x.value){
 			document.form.wan_ipaddr_x.focus();
@@ -294,13 +307,15 @@ function change_wan_type(wan_type, flag){
 		
 		inputCtrl(document.form.wan_auth_x, 0);
 		inputCtrl(document.form.wan_pppoe_username, 1);
-		inputCtrl(document.form.wan_pppoe_passwd, 1);
+		$('tr_pppoe_password').style.display = "";
+		document.form.wan_pppoe_passwd.disabled = false;
 		inputCtrl(document.form.wan_pppoe_idletime, 1);
 		inputCtrl(document.form.wan_pppoe_idletime_check, 1);
 		inputCtrl(document.form.wan_pppoe_mtu, 1);
 		inputCtrl(document.form.wan_pppoe_mru, 1);
 		inputCtrl(document.form.wan_pppoe_service, 1);
 		inputCtrl(document.form.wan_pppoe_ac, 1);
+		inputCtrl(document.form.dhcpc_mode, 0);
 		
 		// 2008.03 James. patch for Oleg's patch. {
 		inputCtrl(document.form.wan_pppoe_options_x, 1);
@@ -315,13 +330,15 @@ function change_wan_type(wan_type, flag){
 		
 		inputCtrl(document.form.wan_auth_x, 0);
 		inputCtrl(document.form.wan_pppoe_username, 1);
-		inputCtrl(document.form.wan_pppoe_passwd, 1);
-		inputCtrl(document.form.wan_pppoe_idletime, 0);
-		inputCtrl(document.form.wan_pppoe_idletime_check, 0);
+		$('tr_pppoe_password').style.display = "";
+		document.form.wan_pppoe_passwd.disabled = false;
+		inputCtrl(document.form.wan_pppoe_idletime, 1);
+		inputCtrl(document.form.wan_pppoe_idletime_check, 1);
 		inputCtrl(document.form.wan_pppoe_mtu, 0);
 		inputCtrl(document.form.wan_pppoe_mru, 0);
 		inputCtrl(document.form.wan_pppoe_service, 0);
 		inputCtrl(document.form.wan_pppoe_ac, 0);
+		inputCtrl(document.form.dhcpc_mode, 0);
 		
 		// 2008.03 James. patch for Oleg's patch. {
 		inputCtrl(document.form.wan_pppoe_options_x, 1);
@@ -336,13 +353,15 @@ function change_wan_type(wan_type, flag){
 		
 		inputCtrl(document.form.wan_auth_x, 0);
 		inputCtrl(document.form.wan_pppoe_username, 1);
-		inputCtrl(document.form.wan_pppoe_passwd, 1);
+		$('tr_pppoe_password').style.display = "";
+		document.form.wan_pppoe_passwd.disabled = false;
 		inputCtrl(document.form.wan_pppoe_idletime, 0);
 		inputCtrl(document.form.wan_pppoe_idletime_check, 0);
 		inputCtrl(document.form.wan_pppoe_mtu, 0);
 		inputCtrl(document.form.wan_pppoe_mru, 0);
 		inputCtrl(document.form.wan_pppoe_service, 0);
 		inputCtrl(document.form.wan_pppoe_ac, 0);
+		inputCtrl(document.form.dhcpc_mode, 0);
 		
 		// 2008.03 James. patch for Oleg's patch. {
 		inputCtrl(document.form.wan_pppoe_options_x, 1);
@@ -357,13 +376,15 @@ function change_wan_type(wan_type, flag){
 		
 		inputCtrl(document.form.wan_auth_x, 1);
 		inputCtrl(document.form.wan_pppoe_username, (document.form.wan_auth_x.value != ""));
-		inputCtrl(document.form.wan_pppoe_passwd, (document.form.wan_auth_x.value != ""));
+		$('tr_pppoe_password').style.display = (document.form.wan_auth_x.value != "") ? "" : "none";
+		document.form.wan_pppoe_passwd.disabled = (document.form.wan_auth_x.value != "") ? false : true;
 		inputCtrl(document.form.wan_pppoe_idletime, 0);
 		inputCtrl(document.form.wan_pppoe_idletime_check, 0);
 		inputCtrl(document.form.wan_pppoe_mtu, 0);
 		inputCtrl(document.form.wan_pppoe_mru, 0);
 		inputCtrl(document.form.wan_pppoe_service, 0);
 		inputCtrl(document.form.wan_pppoe_ac, 0);
+		inputCtrl(document.form.dhcpc_mode, 0);
 		
 		// 2008.03 James. patch for Oleg's patch. {
 		inputCtrl(document.form.wan_pppoe_options_x, 0);
@@ -372,19 +393,23 @@ function change_wan_type(wan_type, flag){
 		$("vpn_server").style.display = "none";
 		$("vpn_dhcp").style.display = "none";
 	}
-	else{	// Automatic IP
+	else{	// Automatic IP or 802.11 MD or ""		
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
 		inputCtrl(document.form.wan_dnsenable_x[1], 1);
 		
-		inputCtrl(document.form.wan_auth_x, 1);
+		inputCtrl(document.form.wan_auth_x, 1);	
+		
 		inputCtrl(document.form.wan_pppoe_username, (document.form.wan_auth_x.value != ""));
-		inputCtrl(document.form.wan_pppoe_passwd, (document.form.wan_auth_x.value != ""));
+		$('tr_pppoe_password').style.display = (document.form.wan_auth_x.value != "") ? "" : "none";
+		document.form.wan_pppoe_passwd.disabled = (document.form.wan_auth_x.value != "") ? false : true;
+		
 		inputCtrl(document.form.wan_pppoe_idletime, 0);
 		inputCtrl(document.form.wan_pppoe_idletime_check, 0);
 		inputCtrl(document.form.wan_pppoe_mtu, 0);
 		inputCtrl(document.form.wan_pppoe_mru, 0);
 		inputCtrl(document.form.wan_pppoe_service, 0);
 		inputCtrl(document.form.wan_pppoe_ac, 0);
+		inputCtrl(document.form.dhcpc_mode, 1);
 		
 		// 2008.03 James. patch for Oleg's patch. {
 		inputCtrl(document.form.wan_pppoe_options_x, 0);
@@ -443,6 +468,7 @@ function fixed_change_wan_type(wan_type){
 	else if(wan_type == "static"){
 		document.form.wan_dnsenable_x[0].checked = 0;
 		document.form.wan_dnsenable_x[1].checked = 1;
+		document.form.wan_dnsenable_x[0].disabled = true;
 		change_common_radio(document.form.wan_dnsenable_x, 'IPConnection', 'wan_dnsenable_x', 0);
 	}
 	else{	// wan_type == "dhcp"
@@ -461,6 +487,21 @@ function fixed_change_wan_type(wan_type){
 			inputCtrl(document.form.wan_dns2_x, 0);
 		}
 	}
+	
+	if(wan_type != "static"){  // disable DNS server "Yes" when choosing static IP, Jieming add at 2012/12/18
+		if(document.form.wan_dhcpenable_x[0].checked){
+			inputCtrl(document.form.wan_dnsenable_x[0], 1);
+			inputCtrl(document.form.wan_dnsenable_x[1], 1);
+		}
+		else{		//wan_dhcpenable_x NO
+			document.form.wan_dnsenable_x[0].checked = 0;
+			document.form.wan_dnsenable_x[1].checked = 1;
+			
+			inputCtrl(document.form.wan_dnsenable_x[0], 1);
+			inputCtrl(document.form.wan_dnsenable_x[1], 1);
+			document.form.wan_dnsenable_x[0].disabled = true;
+		}
+	}	
 }
 
 function change_wan_dhcp_enable(flag){
@@ -550,6 +591,7 @@ function change_wan_dhcp_enable(flag){
 		
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
 		inputCtrl(document.form.wan_dnsenable_x[1], 1);
+		document.form.wan_dnsenable_x[0].disabled = true;
 	}
 }
 
@@ -579,6 +621,31 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		return true;
 	}
 }
+
+/* password item show or not */
+function pass_checked(obj){
+	if(document.form.show_pass_1.checked)
+		replace_pass_type(obj, "text");
+	else
+		replace_pass_type(obj, "password");
+}
+
+/* change password type depend on browser for fix IE issue*/
+function replace_pass_type(obj, _Type){
+	if(navigator.userAgent.indexOf("MSIE") != -1){ // fix IE issue
+		var input2 = document.createElement('<input class="input_32_table" autocapitalization="off">');  // create input element
+		with (input2){ 
+			id = obj.id; 
+			value = obj.value; 
+			type = _Type; // change input type
+			name = obj.name;
+		} 
+		obj.parentNode.replaceChild(input2,obj);
+	}
+	else{	
+		obj.type= _Type;
+	}
+}
 </script>
 </head>
 
@@ -590,11 +657,16 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 	}
 </script>
 <div id="TopBanner"></div>
-
 <div id="Loading" class="popup_bg"></div>
-
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
-
+<form method="post" name="wanUnit_form" action="/apply.cgi" target="hidden_frame">
+<input type="hidden" name="current_page" value="Advanced_WAN_Content.asp">
+<input type="hidden" name="next_page" value="Advanced_WAN_Content.asp">
+<input type="hidden" name="action_mode" value="change_wan_unit">
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="action_wait" value="">
+<input type="hidden" name="wan_unit" value="">
+</form>
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="support_cdma" value="<% nvram_get("support_cdma"); %>">
@@ -667,9 +739,9 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 									<select id="wan_proto_menu" class="input_option" name="wan_proto" onchange="change_wan_type(this.value);fixed_change_wan_type(this.value);">
 										<option value="dhcp" <% nvram_match("wan_proto", "dhcp", "selected"); %>><#BOP_ctype_title1#></option>
 										<option value="pppoe" <% nvram_match("wan_proto", "pppoe", "selected"); %>>PPPoE</option>
-										<option value="pptp" <% nvram_match("wan_proto", "pptp", "selected"); %>>PPTP</option>
-										<option value="l2tp" <% nvram_match("wan_proto", "l2tp", "selected"); %>>L2TP</option>
 										<option value="static" <% nvram_match("wan_proto", "static", "selected"); %>><#BOP_ctype_title5#></option>
+										<option value="pptp" <% nvram_match("wan_proto", "pptp", "selected"); %>>PPTP</option>
+										<option value="l2tp" <% nvram_match("wan_proto", "l2tp", "selected"); %>>L2TP</option>										
 									</select>
 								</td>
 							</tr>
@@ -772,9 +844,12 @@ function check_macaddr(obj,flag){ //control hint of input mac address
               	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,4);"><#PPPConnection_UserName_itemname#></a></th>
               	<td><input type="text" maxlength="64" class="input_32_table" name="wan_pppoe_username" value="<% nvram_get("wan_pppoe_username"); %>" onkeypress="return is_string(this, event)"></td>
             	</tr>
-            	<tr>
+            	<tr id="tr_pppoe_password">
               	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,5);"><#PPPConnection_Password_itemname#></a></th>
-              	<td><input type="password" autocapitalization="off" maxlength="64" class="input_32_table" name="wan_pppoe_passwd" value="<% nvram_get("wan_pppoe_passwd"); %>"></td>
+              	<td>
+					<div style="margin-top:2px;"><input type="password" autocapitalization="off" maxlength="64" class="input_32_table" id="wan_pppoe_passwd" name="wan_pppoe_passwd" value="<% nvram_get("wan_pppoe_passwd"); %>"></div>
+					<div style="margin-top:1px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.wan_pppoe_passwd);"><#QIS_show_pass#></div>
+				</td>
             	</tr>
 							<tr style="display:none">
               	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,6);"><#PPPConnection_IdleDisconnectTime_itemname#></a></th>
@@ -849,6 +924,17 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 					<input type="button" class="button_gen_long" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
 				</td>
         	</tr>
+
+        	<tr>
+      		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,30);">DHCP query frequency</a></th>
+        	<td>
+        	<select name="dhcpc_mode" class="input_option">
+        		<option value="0" <% nvram_match(" dhcpc_mode", "0","selected"); %>>Normal Mode</option>
+        		<option value="1" <% nvram_match(" dhcpc_mode", "1","selected"); %>>Aggressive Mode</option>
+        	</select>
+        	</td>
+        	</tr>
+
                 <tr>
                 <th>Manual clientid (for some ISPs)</th>
                 <td><input type="text" name="wan_dhcpc_options" class="input_32_table" maxlength="128" value="<% nvram_get("wan_dhcpc_options"); %>" onkeypress="return is_string(this, event)"></td>

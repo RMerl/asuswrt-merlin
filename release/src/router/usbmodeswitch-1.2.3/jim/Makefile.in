@@ -1,0 +1,198 @@
+# Tools
+CC = @CCACHE@ @CC@
+CXX = @CCACHE@ @CXX@
+RANLIB = @RANLIB@
+AR = @AR@
+STRIP = @STRIP@
+
+# Configuration
+
+SH_CFLAGS ?= @SH_CFLAGS@
+SH_LDFLAGS ?= @SH_LDFLAGS@
+SHOBJ_CFLAGS ?= @SHOBJ_CFLAGS@
+SHOBJ_LDFLAGS ?= @SHOBJ_LDFLAGS@
+CFLAGS = @CFLAGS@
+CXXFLAGS = @CXXFLAGS@
+LDFLAGS = @LDFLAGS@
+LDLIBS += @LDLIBS@
+exec_prefix ?= @exec_prefix@
+prefix ?= @prefix@
+
+CC += -D_GNU_SOURCE -Wall $(OPTIM) -I.
+CXX += -D_GNU_SOURCE -Wall $(OPTIM) -I.
+@if srcdir != .
+CFLAGS += -I@srcdir@
+CXXFLAGS += -I@srcdir@
+VPATH := @srcdir@
+@endif
+
+@if JIM_STATICLIB
+LIBJIM := libjim.a
+@else
+LIBJIM := libjim.so
+SH_LIBJIM := $(LIBJIM)
+CC += $(SH_CFLAGS)
+CXX += $(SH_CFLAGS)
+DEF_LD_PATH := @LD_LIBRARY_PATH@=`pwd` 
+@endif
+
+@if HAVE_CXX_EXTENSIONS
+JIMSH_CC := $(CXX) $(CXXFLAGS)
+@else
+JIMSH_CC := $(CC) $(CFLAGS)
+@endif
+
+OBJS := _load-static-exts.o jim-subcmd.o jim-interactive.o jim-format.o jim.o utf8.o jimregexp.o \
+    @EXTRA_OBJS@ @C_EXT_OBJS@ @TCL_EXT_OBJS@
+
+JIMSH := jimsh@EXEEXT@
+
+all: $(JIMSH) @C_EXT_SHOBJS@
+
+# Create C extensions from pure Tcl extensions
+.SUFFIXES: .tcl
+.tcl.o:
+	@tclsh@ @srcdir@/make-c-ext.tcl $< >_$*.c || ( rm _$*.c; exit 1)
+	$(CC) $(CFLAGS) -c -o $@ _$*.c || ( rm _$*.c; exit 1)
+	@rm -f _$*.c
+
+docs: Tcl.html
+
+$(JIMSH): $(LIBJIM) jimsh.o initjimsh.o
+	$(JIMSH_CC) @SH_LINKFLAGS@ $(LDFLAGS) -o $@ jimsh.o initjimsh.o $(LIBJIM) $(LDLIBS)
+
+@if JIM_INSTALL
+install: all docs @TCL_EXTS@ install-exec
+	mkdir -p $(DESTDIR)$(prefix)/lib/jim
+	cp $(LIBJIM) $(DESTDIR)$(prefix)/lib
+	cp @srcdir@/README.extensions @C_EXT_SHOBJS@ @TCL_EXTS@ $(DESTDIR)$(prefix)/lib/jim
+	mkdir -p $(DESTDIR)$(prefix)/include
+	cp @srcdir@/jim.h @srcdir@/jim-eventloop.h @srcdir@/jim-nvp.h @srcdir@/jim-signal.h \
+		@srcdir@/jim-subcmd.h @srcdir@/jim-win32compat.h $(DESTDIR)$(prefix)/include
+	cp jim-config.h $(DESTDIR)$(prefix)/include
+	mkdir -p $(DESTDIR)$(prefix)/doc/jim
+	cp Tcl.html $(DESTDIR)$(prefix)/doc/jim
+
+install-exec: all
+	mkdir -p $(DESTDIR)$(prefix)/bin
+	cp $(JIMSH) $(DESTDIR)$(prefix)/bin
+
+uninstall:
+	rm -f $(DESTDIR)$(prefix)/bin/$(JIMSH)
+	rm -f $(DESTDIR)$(prefix)/lib/$(LIBJIM)
+	for i in README.extensions @C_EXT_SHOBJS@ @TCL_EXTS@; do rm -f $(DESTDIR)$(prefix)/lib/jim/$$i; done
+	rm -f $(DESTDIR)$(prefix)/include/jim*.h
+	rm -f $(DESTDIR)$(prefix)/doc/jim/Tcl.html
+@else
+install install-exec uninstall:
+@endif
+
+test: $(JIMSH)
+	$(DEF_LD_PATH) $(MAKE) -C @srcdir@/tests jimsh=`pwd`/jimsh
+
+$(OBJS): Makefile
+
+@if JIM_UTF8
+# Generate the unicode case mapping
+utf8.o: _unicode_mapping.c
+
+_unicode_mapping.c: @srcdir@/UnicodeData.txt @srcdir@/parse-unidata.tcl
+	@tclsh@ @srcdir@/parse-unidata.tcl @srcdir@/UnicodeData.txt >$@ || ( rm $@; exit 1)
+@endif
+
+_load-static-exts.c: @srcdir@/make-load-static-exts.tcl Makefile
+	@tclsh@ @srcdir@/make-load-static-exts.tcl @STATIC_EXTS@ >$@ || ( rm $@; exit 1)
+
+@if JIM_STATICLIB
+$(LIBJIM): $(OBJS)
+	$(AR) cr $@ $(OBJS)
+	$(RANLIB) $@
+@else
+$(LIBJIM): $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SH_LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
+@endif
+
+# Note that $> $^ is for compatibility with both GNU make and BSD make
+readdir.so: jim-readdir.c
+	$(CC) $(CFLAGS) $(SHOBJ_CFLAGS) -c -o jim-readdir.o $> $^
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ jim-readdir.o $(SH_LIBJIM) 
+
+array.so: jim-array.c
+	$(CC) $(CFLAGS) $(SHOBJ_CFLAGS) -c -o jim-array.o $> $^
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ jim-array.o $(SH_LIBJIM) 
+
+clock.so: jim-clock.c
+	$(CC) $(CFLAGS) $(SHOBJ_CFLAGS) -c -o jim-clock.o $> $^
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ jim-clock.o $(SH_LIBJIM) 
+
+file.so: jim-file.c
+	$(CC) $(CFLAGS) $(SHOBJ_CFLAGS) -c -o jim-file.o $> $^
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ jim-file.o $(SH_LIBJIM) 
+
+posix.so: jim-posix.c
+	$(CC) $(CFLAGS) $(SHOBJ_CFLAGS) -c -o jim-posix.o $> $^
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ jim-posix.o $(SH_LIBJIM) 
+
+regexp.so: jim-regexp.c
+	$(CC) $(CFLAGS) $(SHOBJ_CFLAGS) -c -o jim-regexp.o $> $^
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ jim-regexp.o $(SH_LIBJIM) 
+
+syslog.so: jim-syslog.c
+	$(CC) $(CFLAGS) $(SHOBJ_CFLAGS) -c -o jim-syslog.o $> $^
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ jim-syslog.o $(SH_LIBJIM) 
+
+readline.so: jim-readline.c
+	$(CC) $(CFLAGS) $(SHOBJ_CFLAGS) -c -o jim-readline.o $> $^
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ jim-readline.o $(SH_LIBJIM) @LDLIBS_readline@
+
+pack.so: jim-pack.c
+	$(CC) $(CFLAGS) $(SHOBJ_CFLAGS) -c -o jim-pack.o $> $^
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ jim-pack.o $(SH_LIBJIM) @LDLIBS_pack@
+
+sqlite.so: jim-sqlite.c
+	$(CC) $(CFLAGS) $(SHOBJ_CFLAGS) -c -o jim-sqlite.o $> $^
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ jim-sqlite.o $(SH_LIBJIM) @LDLIBS_sqlite@
+
+sqlite3.so: jim-sqlite3.c
+	$(CC) $(CFLAGS) $(SHOBJ_CFLAGS) -c -o jim-sqlite3.o $> $^
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ jim-sqlite3.o $(SH_LIBJIM) @LDLIBS_sqlite3@
+
+win32.so: jim-win32.c
+	$(CC) $(CFLAGS) $(SHOBJ_CFLAGS) -c -o jim-win32.o $> $^
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ jim-win32.o $(SH_LIBJIM) @LDLIBS_win32@
+
+mk.so: jim-mk.cpp
+	$(CXX) $(CXXFLAGS) $(SHOBJ_CFLAGS) -c -o jim-mk.o $> $^
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ jim-mk.o $(SH_LIBJIM) @LDLIBS_mk@
+
+sdl.so: jim-sdl.c
+	$(CC) $(CFLAGS) $(SHOBJ_CFLAGS) -c -o jim-sdl.o $> $^
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ jim-sdl.o $(SH_LIBJIM) @LDLIBS_sdl@
+
+Tcl.html: jim_tcl.txt
+	@tclsh@ @srcdir@/make-index $> $^ | asciidoc -o $@ -d manpage - || cp @srcdir@/Tcl_shipped.html Tcl.html
+
+clean:
+	rm -f *.o *.so lib*.a $(JIMSH) Tcl.html _*.c
+
+distclean: clean
+	rm -f jimautoconf.h jim-config.h Makefile config.log autosetup/jimsh0.c autosetup/jimsh0@EXEEXT@
+
+ship: Tcl.html
+	cp $< Tcl_shipped.html
+
+# automake compatibility. do nothing for all these targets
+EMPTY_AUTOMAKE_TARGETS := dvi pdf ps info html tags ctags mostlyclean maintainer-clean check installcheck installdirs \
+ install-pdf install-ps install-info install-html -install-dvi uninstall install-data
+.PHONY: $(EMPTY_AUTOMAKE_TARGETS)
+$(EMPTY_AUTOMAKE_TARGETS):
+
+# automake compatibility - install sources from the current dir to $(distdir)
+distdir_full := $(shell cd $(distdir); pwd)
+distdir:
+	cd "@srcdir@"; git ls-files | cpio -pdmu $(distdir_full)
+
+reconfig:
+	CC='@CC@' @AUTOREMAKE@
+
+lib: $(LIBJIM)

@@ -1,0 +1,12 @@
+# arm testcase for ble $soffset8
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ble
+ble:
+	ble footext
+
+	pass

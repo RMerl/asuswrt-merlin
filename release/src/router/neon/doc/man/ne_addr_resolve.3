@@ -1,0 +1,149 @@
+'\" t
+.\"     Title: ne_addr_resolve
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_ADDR_RESOLVE" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_addr_resolve, ne_addr_result, ne_addr_first, ne_addr_next, ne_addr_error, ne_addr_destroy \- functions to resolve hostnames to addresses
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_socket\&.h>
+.fi
+.ft
+.HP \w'ne_sock_addr\ *ne_addr_resolve('u
+.BI "ne_sock_addr *ne_addr_resolve(const\ char\ *" "hostname" ", int\ " "flags" ");"
+.HP \w'int\ ne_addr_result('u
+.BI "int ne_addr_result(const\ ne_sock_addr\ *" "addr" ");"
+.HP \w'const\ ne_inet_addr\ *ne_addr_first('u
+.BI "const ne_inet_addr *ne_addr_first(ne_sock_addr\ *" "addr" ");"
+.HP \w'const\ ne_inet_addr\ *ne_addr_next('u
+.BI "const ne_inet_addr *ne_addr_next(ne_sock_addr\ *" "addr" ");"
+.HP \w'char\ *ne_addr_error('u
+.BI "char *ne_addr_error(const\ ne_sock_addr\ *" "addr" ", char\ *" "buffer" ", size_t\ " "bufsiz" ");"
+.HP \w'void\ ne_addr_destroy('u
+.BI "void ne_addr_destroy(ne_sock_addr\ *" "addr" ");"
+.SH "DESCRIPTION"
+.PP
+The
+\fBne_addr_resolve\fR
+function resolves the given
+\fIhostname\fR, returning an
+\fBne_sock_addr\fR
+object representing the address (or addresses) associated with the hostname\&. The
+\fIflags\fR
+parameter is currently unused, and must be passed as 0\&.
+.PP
+The
+\fIhostname\fR
+passed to
+\fBne_addr_resolve\fR
+can be a DNS hostname (e\&.g\&.
+"www\&.example\&.com") or an IPv4 dotted quad (e\&.g\&.
+"192\&.0\&.34\&.72"); or, on systems which support IPv6, an IPv6 hex address, which may be enclosed in brackets, e\&.g\&.
+"[::1]"\&.
+.PP
+To determine whether the hostname was successfully resolved, the
+\fBne_addr_result\fR
+function is used, which returns non\-zero if an error occurred\&. If an error did occur, the
+\fBne_addr_error\fR
+function can be used, which will copy the error string into a given
+\fIbuffer\fR
+(of size
+\fIbufsiz\fR)\&.
+.PP
+The functions
+\fBne_addr_first\fR
+and
+\fBne_addr_next\fR
+are used to retrieve the Internet addresses associated with an address object which has been successfully resolved\&.
+\fBne_addr_first\fR
+returns the first address;
+\fBne_addr_next\fR
+returns the next address after the most recent call to
+\fBne_addr_next\fR
+or
+\fBne_addr_first\fR, or
+NULL
+if there are no more addresses\&. The
+\fBne_inet_addr\fR
+pointer returned by these functions can be passed to
+\fBne_sock_connect\fR
+to connect a socket\&.
+.PP
+After the address object has been used, it should be destroyed using
+\fBne_addr_destroy\fR\&.
+.SH "RETURN VALUE"
+.PP
+\fBne_addr_resolve\fR
+returns a pointer to an address object, and never
+NULL\&.
+\fBne_addr_error\fR
+returns the
+\fIbuffer\fR
+parameter \&.
+.SH "EXAMPLES"
+.PP
+The code below prints out the set of addresses associated with the hostname
+www\&.google\&.com\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ne_sock_addr *addr;
+char buf[256];
+
+addr = ne_addr_resolve("www\&.google\&.com", 0);
+if (ne_addr_result(addr)) {
+    printf("Could not resolve www\&.google\&.com: %s\en",
+           ne_addr_error(addr, buf, sizeof buf));
+} else {
+    const ne_inet_addr *ia;
+    printf("www\&.google\&.com:");
+    for (ia = ne_addr_first(addr); ia != NULL; ia = ne_addr_next(addr)) {
+        printf(" %s", ne_iaddr_print(ia, buf, sizeof buf));
+    }
+    putchar(\*(Aq\en\*(Aq);
+}
+ne_addr_destroy(addr);
+.fi
+.if n \{\
+.RE
+.\}
+.SH "SEE ALSO"
+.PP
+ne_iaddr_print
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

@@ -1,0 +1,52 @@
+# sh testcase for div0s $rm, $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+init:
+	mov #0, r0
+	mov #3, r1
+	mov #4, r2
+	neg r1, r3
+	neg r2, r4
+
+perm1:
+	div0s r0, r0
+	bt wrong
+	div0s r0, r1
+	bt wrong
+	div0s r1, r0
+	bt wrong
+
+perm2:
+	div0s r0, r4
+	bf wrong
+	div0s r4, r0
+	bf wrong
+
+perm3:
+	div0s r1, r2
+	bt wrong
+	div0s r2, r1
+	bt wrong
+
+perm4:
+	div0s r3, r4
+	bt wrong
+	div0s r4, r3
+	bt wrong
+
+perm5:
+	div0s r1, r1
+	bt wrong
+	div0s r3, r3
+	bt wrong
+
+okay:	
+	pass
+
+wrong:
+	fail

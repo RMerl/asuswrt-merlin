@@ -1,0 +1,36 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Feature list</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="intro.html" title="Chapter 1. Introduction"><link rel="prev" href="intro.html" title="Chapter 1. Introduction"><link rel="next" href="using.html" title="How to use neon from your application"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Feature list</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="intro.html">Prev</a> </td><th width="60%" align="center">Chapter 1. Introduction</th><td width="20%" align="right"> <a accesskey="n" href="using.html">Next</a></td></tr></table><hr></div><div class="sect1" title="Feature list"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="features"></a>Feature list</h2></div></div></div><p>The major features of the neon library are as follows:</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>A high-level interface to common HTTP and WebDAV
+methods.  This allows you to easily dispatch a GET or a MKCOL request
+against a resource with a single function call.</p></li><li class="listitem"><p>A low-level interface for HTTP request
+handling; allowing you to implement requests using arbitrary methods
+and request headers, capture arbitrary response headers, and so
+on.</p></li><li class="listitem"><p>Persistent connection support; neon groups a
+set of requests to a server into a "session"; requests within that
+session can use a persistent (also known as "keep-alive")
+connection.</p></li><li class="listitem"><p>Modern HTTP authentication support: a complete
+implementation of the new authentication standard, RFC2617, supporting
+the Digest, Basic, and Negotiate protocols.  Credentials are supplied
+by an application-defined callback as appropriate.</p></li><li class="listitem"><p>Proxy server support; a session can be set to
+use a proxy server.  Authentication is supported for the Proxy as well
+as the origin server.  The system's proxy configuration can be
+optionally used, on some platforms.</p></li><li class="listitem"><p>Complete SSL support; a simple interface for
+enabling SSL, hiding the complexity of using an SSL library directly.
+Client certificate support, callback-based server certificate
+verification, along with functions to load trusted CA certificates.
+Smartcard-based client certs are also supported via a wrapper
+interface for PKCS#11 modules.</p></li><li class="listitem"><p>Compressed response support: responses
+	compressed using the "deflate" algorithm can be transparently
+	decompressed.</p></li><li class="listitem"><p>Generic XML parsing interface for handling XML
+response bodies using SAX-like callbacks.  Both the expat and libxml
+XML parser libraries are supported.</p></li><li class="listitem"><p>WebDAV metadata support; set and remove
+properties, query properties (PROPFIND); simple interface for
+retrieving "flat" byte-string properties, more advanced support for
+parsing "complex" structured XML properties.</p></li><li class="listitem"><p>Build environment support: the neon source
+tree is designed so that it can be embedded in your application's
+build tree; autoconf macros are supplied for integration.  To get
+started quickly a <a class="xref" href="refconfig.html" title="neon-config"><span class="refentrytitle">neon-config</span></a> script is included,
+to easily determine how to compile and link against an installed copy
+of neon</p></li><li class="listitem"><p>Complete test suite: the neon test suite
+comprises half as many lines of source code as the library itself,
+including many tests for protocol compliance in network behaviour, and
+that the library implementation meets the guarantees made by the
+API.</p></li></ul></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="intro.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="intro.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="using.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 1. Introduction </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> How to use neon from your application</td></tr></table></div></body></html>

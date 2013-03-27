@@ -108,20 +108,19 @@ function valid_form(){
           </td>
       </tr>
       <tr>
-      <th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,);"--><#ctf_disable#><!--/a--></th>
-          <td>
-              <input type="radio" name="ctf_disable_force" value="1" <% nvram_match("ctf_disable_force", "1", "checked"); %>><#checkbox_Yes#>
-              <input type="radio" name="ctf_disable_force" value="0" <% nvram_match("ctf_disable_force", "0", "checked"); %>><#checkbox_No#>
+      <th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,);"--><#ctf_enable#><!--/a--></th>
+           <td>
+              <input type="radio" name="ctf_disable_force" value="0" <% nvram_match("ctf_disable_force", "0", "checked"); %>><#checkbox_Yes#>
+              <input type="radio" name="ctf_disable_force" value="1" <% nvram_match("ctf_disable_force", "1", "checked"); %>><#checkbox_No#>
           </td>
       </tr>     
 	    <tr style="display:none">
-	      <th>Disable GRO(Generic Receive Offload)</th>
-	          <td>
-	              <input type="radio" name="gro_disable_force" value="1" <% nvram_match("gro_disable_force", 
-"1", "checked"); %>><#checkbox_Yes#>
-	              <input type="radio" name="gro_disable_force" value="0" <% nvram_match("gro_disable_force", "0", "checked"); %>><#checkbox_No#>
-	          </td>
-	      </tr>       
+	      <th>Enable GRO(Generic Receive Offload)</th>
+ 	          <td>
+	              <input type="radio" name="gro_disable_force" value="0" <% nvram_match("gro_disable_force", "0", "checked"); %>><#checkbox_Yes#>
+	              <input type="radio" name="gro_disable_force" value="1" <% nvram_match("gro_disable_force", "1", "checked"); %>><#checkbox_No#>
+ 	          </td>
+	      </tr>
 		<tr>
 		<th>Spanning-Tree Protocol</th>
 			<td>

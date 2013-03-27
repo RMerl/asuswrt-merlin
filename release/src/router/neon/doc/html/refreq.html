@@ -1,0 +1,46 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>ne_request_create</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="ref.html" title="neon API reference"><link rel="prev" href="refsessflags.html" title="ne_set_session_flag"><link rel="next" href="refreqhdr.html" title="ne_add_request_header"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">ne_request_create</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="refsessflags.html">Prev</a> </td><th width="60%" align="center">neon API reference</th><td width="20%" align="right"> <a accesskey="n" href="refreqhdr.html">Next</a></td></tr></table><hr></div><div class="refentry" title="ne_request_create"><a name="refreq"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ne_request_create, ne_request_dispatch, ne_request_destroy — low-level HTTP request handling</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="funcsynopsis"><pre class="funcsynopsisinfo">#include &lt;ne_request.h&gt;</pre><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">ne_request *<b class="fsfunc">ne_request_create</b>(</code></td><td>ne_session *<var class="pdparam">session</var>, </td></tr><tr><td> </td><td>const char *<var class="pdparam">method</var>, </td></tr><tr><td> </td><td>const char *<var class="pdparam">path</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">int <b class="fsfunc">ne_request_dispatch</b>(</code></td><td>ne_request *<var class="pdparam">req</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">void <b class="fsfunc">ne_request_destroy</b>(</code></td><td>ne_request *<var class="pdparam">req</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div></div></div><div class="refsect1" title="Description"><a name="id455639"></a><h2>Description</h2><p>An HTTP request, represented by the
+<em class="type">ne_request</em> type, specifies that some operation is to be
+performed on some resource.  The
+<code class="function">ne_request_create</code> function creates a request
+object, specifying the operation in the <code class="parameter">method</code>
+parameter. The location of the resource is determined by the server in
+use for the session given by the <code class="parameter">sess</code>
+parameter, combined with the <code class="parameter">path</code> parameter.</p><p>The <code class="parameter">path</code> string used must conform to the
+<code class="literal">abs_path</code> definition given in RFC2396, with an
+optional "?query" part, and must be URI-escaped by the caller (for
+instance, using <code class="function">ne_path_escape</code>).  If the string
+comes from an untrusted source, failure to perform URI-escaping
+results in a security vulnerability.</p><p>To dispatch a request, and process the response, the
+<code class="function">ne_request_dispatch</code> function can be used.  An
+alternative is to use the (more complex, but more flexible)
+combination of the <code class="function">ne_begin_request</code>,
+<code class="function">ne_end_request</code>, and
+<code class="function">ne_read_response_block</code> functions; see
+<code class="function">ne_begin_request</code>.</p><p>To add extra headers in the request, the functions <a class="xref" href="refreqhdr.html#ne_add_request_header">ne_add_request_header</a> and <a class="xref" href="refreqhdr.html#ne_print_request_header">ne_print_request_header</a> can be used.  To include a message
+body with the request, one of the functions
+<code class="function">ne_set_request_body_buffer</code>, <a class="xref" href="refreqbody.html#ne_set_request_body_fd">ne_set_request_body_fd</a>, or
+<code class="function">ne_set_request_body_provider</code> can be used.</p><p>The return value of
+<code class="function">ne_request_dispatch</code> indicates merely whether the
+request was sent and the response read successfully.  To discover the
+result of the operation, <a class="xref" href="refgetst.html#ne_get_status">ne_get_status</a>, along with
+any processing of the response headers and message body.</p><p>A request can only be dispatched once: calling
+	<code class="function">ne_request_dispatch</code> more than once on a
+	single <em class="type">ne_request</em> object produces undefined
+	behaviour.  Once all processing associated with the request
+	object is complete, use the
+	<code class="function">ne_request_destroy</code> function to destroy
+        the resources associated with it.  Any subsequent use of the
+	request object produces undefined behaviour.</p><p>If a request is being using a non-idempotent method such
+        as <code class="literal">POST</code>, the
+        <code class="literal">NE_REQFLAG_IDEMPOTENT</code> flag should be
+        disabled; see <a class="xref" href="refreqflags.html#ne_set_request_flag">ne_set_request_flag</a>.</p></div><div class="refsect1" title="Return value"><a name="id455805"></a><h2>Return value</h2><p>The <code class="function">ne_request_create</code> function
+returns a pointer to a request object (and never <code class="literal">NULL</code>).</p><p>The <code class="function">ne_request_dispatch</code> function
+returns zero if the request was dispatched successfully, and a
+non-zero error code otherwise.</p></div><div class="refsect1" title="Errors"><a name="id455837"></a><h2>Errors</h2><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><p><span class="term"><span class="errorcode">NE_ERROR</span></span></p></td><td>Request failed (see session error string)</td></tr><tr><td><p><span class="term"><span class="errorcode">NE_LOOKUP</span></span></p></td><td>The DNS lookup for the server (or proxy server) failed.</td></tr><tr><td><p><span class="term"><span class="errorcode">NE_AUTH</span></span></p></td><td>Authentication failed on the server.</td></tr><tr><td><p><span class="term"><span class="errorcode">NE_PROXYAUTH</span></span></p></td><td>Authentication failed on the proxy server.</td></tr><tr><td><p><span class="term"><span class="errorcode">NE_CONNECT</span></span></p></td><td>A connection to the server could not be established.</td></tr><tr><td><p><span class="term"><span class="errorcode">NE_TIMEOUT</span></span></p></td><td>A timeout occurred while waiting for the server to respond.</td></tr></tbody></table></div></div><div class="refsect1" title="Example"><a name="id455936"></a><h2>Example</h2><p>An example of applying a <code class="literal">MKCOL</code>
+	operation to the resource at the location 
+	<code class="literal">http://www.example.com/foo/bar/</code>:</p><pre class="programlisting">ne_session *sess = ne_session_create("http", "www.example.com", 80);
+ne_request *req = ne_request_create(sess, "MKCOL", "/foo/bar/");
+if (ne_request_dispatch(req)) {
+   printf("Request failed: %s\n", ne_get_error(sess));
+}
+ne_request_destroy(req);</pre></div><div class="refsect1" title="See also"><a name="id455963"></a><h2>See also</h2><p><a class="xref" href="referr.html#ne_get_error">ne_get_error</a>, <a class="xref" href="referr.html#ne_set_error">ne_set_error</a>, <a class="xref" href="refgetst.html#ne_get_status">ne_get_status</a>, <a class="xref" href="refreqhdr.html#ne_add_request_header">ne_add_request_header</a>, <a class="xref" href="refreqbody.html#ne_set_request_body_buffer">ne_set_request_body_buffer</a>, <a class="xref" href="refreqflags.html#ne_set_request_flag">ne_set_request_flag</a>.</p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="refsessflags.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ref.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="refreqhdr.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">ne_set_session_flag </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> ne_add_request_header</td></tr></table></div></body></html>

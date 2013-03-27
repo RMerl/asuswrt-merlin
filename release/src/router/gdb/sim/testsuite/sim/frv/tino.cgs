@@ -1,0 +1,53 @@
+# frv testcase for tino
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global tinev
+tinev:
+	and_spr_immed	-4081,tbr		; clear tbr.tt
+	set_gr_spr	tbr,gr7
+	inc_gr_immed	2112,gr7		; address of exception handler
+	set_mem_limmed	0x0038,0x2000,gr7	; bctrlr 0,0
+
+	set_spr_immed	128,lcr
+	set_spr_addr	bad,lr
+	set_gr_immed	0,gr7
+
+	set_icc		0x0 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0x1 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0x2 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0x3 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0x4 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0x5 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0x6 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0x7 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0x8 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0x9 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0xa 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0xb 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0xc 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0xd 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0xe 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	set_icc		0xf 0
+	tino 			; should branch to tbr + (128 + 4)*16
+	pass
+bad:
+	fail

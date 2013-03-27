@@ -1,0 +1,82 @@
+# Copyright 2002, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Tests for member data
+# 2002-05-27  Benjamin Kosnik  <bkoz@redhat.com>
+
+# This file is part of the gdb testsuite
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+if { [skip_cplus_tests] } { continue }
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+set testfile "try_catch"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     untested try_catch.exp
+     return -1
+}
+
+if [get_compiler_info ${binfile} "c++"] {
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+gdb_breakpoint [gdb_get_line_number "marker 1-throw"]
+gdb_continue_to_breakpoint "marker 1-throw"
+
+gdb_breakpoint [gdb_get_line_number "marker 1-catch"]
+gdb_continue_to_breakpoint "marker 1-catch"
+
+gdb_breakpoint [gdb_get_line_number "marker 2-start"]
+gdb_continue_to_breakpoint "marker 2-start"
+
+gdb_breakpoint [gdb_get_line_number "marker 2-next"]
+gdb_continue_to_breakpoint "marker 2-next"
+
+gdb_breakpoint [gdb_get_line_number "marker 2-throw"]
+gdb_continue_to_breakpoint "marker 2-throw"
+
+gdb_breakpoint [gdb_get_line_number "marker 2-catch"]
+gdb_continue_to_breakpoint "marker 2-catch"
+
+gdb_breakpoint [gdb_get_line_number "marker 3-throw"]
+gdb_continue_to_breakpoint "marker 3-throw"
+
+gdb_breakpoint [gdb_get_line_number "marker 3-catch"]
+gdb_continue_to_breakpoint "marker 3-catch"
+
+gdb_exit
+return 0

@@ -1,0 +1,34 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Standards compliance</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="intro.html" title="Chapter 1. Introduction"><link rel="prev" href="using.html" title="How to use neon from your application"><link rel="next" href="security.html" title="HTTP Client Security"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Standards compliance</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="using.html">Prev</a> </td><th width="60%" align="center">Chapter 1. Introduction</th><td width="20%" align="right"> <a accesskey="n" href="security.html">Next</a></td></tr></table><hr></div><div class="sect1" title="Standards compliance"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="compliance"></a>Standards compliance</h2></div></div></div><p>neon is intended to be compliant with the IETF and W3C
+	standards which it implements, with a few exceptions due to
+	practical necessity or interoperability issues.  These
+	exceptions are documented in this section.</p><div class="sect2" title="RFC 2518, HTTP Extensions for Distributed Authoring—WebDAV"><div class="titlepage"><div><div><h3 class="title"><a name="id444621"></a>RFC 2518, HTTP Extensions for Distributed Authoring—WebDAV</h3></div></div></div><p>neon is deliberately not compliant with section
+	23.4.2, and treats property names as a (namespace-URI, name)
+	pair.  This is <a class="ulink" href="http://lists.w3.org/Archives/Public/w3c-dist-auth/1999OctDec/0343.html" target="_top">generally
+	considered</a> to be correct behaviour by the WebDAV
+	working group, and is likely to formally adopted in a future
+	revision of the specification.</p></div><div class="sect2" title="RFC 2616, Hypertext Transfer Protocol—HTTP/1.1"><div class="titlepage"><div><div><h3 class="title"><a name="id444637"></a>RFC 2616, Hypertext Transfer Protocol—HTTP/1.1</h3></div></div></div><p>There is some confusion in this specification about the
+        use of the <span class="quote">“<span class="quote">identity</span>”</span>
+        <em class="firstterm">transfer-coding</em>.  neon ignores the
+        <code class="literal">Transfer-Encoding</code> response header if it
+        contains only the (now deprecated) <span class="quote">“<span class="quote">identity</span>”</span>
+        token, and will determine the response message length as if
+        the header was not present.  neon will give an error if a
+        response includes a <code class="literal">Transfer-Encoding</code>
+        header with a value other than <span class="quote">“<span class="quote">identity</span>”</span> or
+        <span class="quote">“<span class="quote">chunked</span>”</span>.</p></div><div class="sect2" title="RFC 2617, HTTP Authentication: Basic and Digest Access Authentication"><div class="titlepage"><div><div><h3 class="title"><a name="id444676"></a>RFC 2617, HTTP Authentication: Basic and Digest Access Authentication</h3></div></div></div><p>neon is not strictly compliant with the quoting rules
+        given in the grammar for the <code class="literal">Authorization</code>
+        header.  The grammar requires that the <code class="literal">qop</code>
+        and <code class="literal">algorithm</code> parameters are not quoted,
+        however one widely deployed server implementation
+        (Microsoft® IIS 5) rejects the request if these parameters
+        are not quoted.  neon sends these parameters with
+        quotes—this is not known to cause any problems with
+        other server implementations.</p></div><div class="sect2" title="Namespaces in XML"><div class="titlepage"><div><div><h3 class="title"><a name="id444704"></a>Namespaces in XML</h3></div></div></div><p>The neon XML parser interface will accept and parse
+        without error some XML documents which are well-formed
+        according to the XML specification but do not conform to the
+        "Namespaces in XML" specification <a class="xref" href="biblio.html#bib.xmlnames" title="Namespaces in XML">[<abbr class="abbrev">REC-XML-names</abbr>]</a>.  Specifically: the restrictions on
+        the first character of the <code class="literal">NCName</code> rule are
+        not all implemented; neon will allow any
+        <code class="literal">CombiningChar</code>, <code class="literal">Extender</code>
+        and some characters from the <code class="literal">Digit</code> class in
+        this position.</p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="using.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="intro.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="security.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">How to use neon from your application </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> HTTP Client Security</td></tr></table></div></body></html>

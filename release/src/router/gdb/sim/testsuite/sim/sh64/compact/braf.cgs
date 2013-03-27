@@ -1,0 +1,24 @@
+# sh testcase for braf $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global braf
+braf:
+	mov #4, r0
+	braf r0
+slot:
+	nop
+bad:
+	fail
+	fail
+okay:
+	pass
+alsobad:
+	fail
+	fail
+	fail

@@ -1,0 +1,135 @@
+<sect1 id="security">
+  
+  <title>HTTP Client Security</title>
+
+  <para>&neon; is intended to be secure against a specific threat
+  model: use of a malicious HTTP server.  Under this threat model, a
+  range of attacks are possible against a client when the user (or
+  application) can be tricked into accessing an HTTP server which is
+  controlled by an attacker.  This section documents various types of
+  possible attack and describes what mitigation is used in
+  &neon;.</para>
+
+  <sect2>
+    <title>CPU or memory consumption attacks</title>
+
+    <para>&neon; uses fixed resource limits to prevent the following
+    attacks:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>memory/CPU consumption attack using an unbounded number
+        of response header fields</para>
+      </listitem>
+
+      <listitem>
+        <para>memory consumption attack using an unbounded length of
+        individual response header lines (or continuation
+        headers)</para>
+      </listitem>
+      
+      <listitem>
+        <para>memory consumption attack against the PROPFIND code
+        using an unbounded number of properties (propstat elements)
+        per resource</para>
+      </listitem>
+
+      <listitem>
+        <para>memory consumption attack against the PROPFIND code
+        using an unbounded CDATA element in a "flat property"
+        value</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Memory consumption attacks against applications based on
+    &neon; by use of unbounded response length are also possible, but
+    must be mitigated at application level.  Memory consumption in
+    &neon; itself is fixed and is not proportional to the response
+    size.</para>
+
+    <para>Test cases for all the above attacks are present in the
+    &neon; test suite.</para>
+
+  </sect2>
+
+  <sect2>
+    <title>SSL/TLS connection security</title>
+    
+    <para>When using a connection secured by SSL/TLS, it is necessary
+    for clients to verify that the X.509 certificate presented by the
+    server matches the server's expected identity.  The algorithm
+    required for this purpose is described in RFC 2818 and RFC 3280,
+    and is implemented by &neon; in the following manner:</para>
+    
+    <itemizedlist>
+      <listitem>
+        <para>the hostname argument passed to <xref
+        linkend="ne_session_create"/> is the expected identity of the
+        server</para>
+      </listitem>
+      
+      <listitem>
+        <para>the subjectAltName extension of the certificate is used
+        for comparision against the expected identity, in preference
+        to the Subject name's commonName attribute.</para>
+      </listitem>
+
+      <listitem>
+        <para>the dNSName, iPAddress, and uniformResourceIdentifier
+        classes of GeneralName are supported in subjectAltName
+        comparison.</para>
+      </listitem>
+
+      <listitem>
+        <para>if no subjectAltName is present in the certificate, the
+        most specific commonName attribute in the Subject name is used
+        for comparison instead.</para>
+      </listitem>
+    </itemizedlist> 
+    
+    <para>In the case where a server certificate is presented that
+    does not match the expected identity (or is otherwise not
+    trusted), &neon; will fail the request by default.  This behaviour
+    can be overridden by the use of a callback installed using <xref
+    linkend="ne_ssl_set_verify"/>, which allows the application to
+    present the certificate details to a user for manual/off-line
+    verification, if possible.</para>
+  
+    <para>Test cases for the correctness of the implementation of the
+    identity verification algorithm are present in the &neon; test
+    suite.</para>
+
+  </sect2>
+
+  <sect2>
+    <title>Control character insertion in error messages</title>
+    
+    <para>Where error messages (as returned by
+    (<xref linkend="ne_get_error"/>) contain data supplied by the
+    server, the untrusted data is sanitised to remove both control
+    characters and non-ASCII characters.  This prevents any attacks
+    where such error messages are exposed to the user and can
+    potentially distort the presentation of the interface (for
+    example, through the use of a carriage return character in a text
+    user interface).</para>
+  </sect2>
+
+  <sect2>
+    <title>Attacks against authentication credentials</title>
+    
+    <para>Authentication credentials can be compromised by a
+    "downgrade attack" by an active attacker; for example, where a
+    MITM presents a Basic authentication challenge in place of the
+    server's Digest challenge.  &neon; mitigates these attacks by
+    allowing the application (and hence, user) to specify that only a
+    specific set of authentication protocols is permitted.</para>
+
+    <para>&neon; supports the Digest and Negotiate authentication
+    schemes, which both allow authentication of users without passing
+    credentials in cleartext over the wire.  The "domain" parameter is
+    supported in Digest, allowing the server to restrict an
+    authentication session to a particular set of URIs.</para>
+
+  </sect2>
+
+</sect1>

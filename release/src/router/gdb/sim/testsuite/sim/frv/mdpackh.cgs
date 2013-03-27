@@ -1,0 +1,18 @@
+# frv testcase for mdpackh $FRi,$FRj,$FRj
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mdpackh
+mdpackh:
+	set_fr_iimmed	0xdead,0xbeef,fr10
+	set_fr_iimmed	0xaaaa,0xbbbb,fr11
+	set_fr_iimmed	0x1234,0x5678,fr12
+	set_fr_iimmed	0xcccc,0xdddd,fr13
+	mdpackh		fr10,fr12,fr14
+	test_fr_limmed	0xbeef,0x5678,fr14
+	test_fr_limmed	0xbbbb,0xdddd,fr15
+
+	pass

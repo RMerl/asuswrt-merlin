@@ -1,0 +1,14 @@
+# arm testcase for lsl $rd,$rs,#$offset5
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global lsl
+lsl:
+	lsl r0,r0,#0
+
+# FIXME: Also lsl $rd,$rs
+
+	pass

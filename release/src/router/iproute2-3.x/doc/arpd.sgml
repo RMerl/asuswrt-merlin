@@ -1,0 +1,130 @@
+<!doctype linuxdoc system>
+
+<article>
+
+<title>ARPD Daemon
+<author>Alexey Kuznetsov, <tt/kuznet@ms2.inr.ac.ru/
+<date>some_negative_number, 20 Sep 2001
+<abstract>
+<tt/arpd/ is daemon collecting gratuitous ARP information, saving
+it on local disk and feeding it to kernel on demand to avoid
+redundant broadcasting due to limited size of kernel ARP cache. 
+</abstract>
+
+
+<p><bf/Description/
+
+<p>The format of the command is:
+
+<tscreen><verb>
+       arpd OPTIONS [ INTERFACE [ INTERFACE ... ] ]
+</verb></tscreen>
+
+<p> <tt/OPTIONS/ are:
+
+<itemize>
+
+<item><tt/-l/ - dump <tt/arpd/ database to stdout and exit. Output consists
+of three columns: interface index, IP address and MAC address.
+Negative entries for dead hosts are also shown, in this case MAC address
+is replaced by word <tt/FAILED/ followed by colon and time when the fact
+that host is dead was proven the last time.
+
+<item><tt/-f FILE/  - read and load <tt/arpd/ database from <tt/FILE/
+in text format similar dumped by option <tt/-l/. Exit after load,
+probably listing resulting database, if option <tt/-l/ is also given.
+If <tt/FILE/ is <tt/-/, <tt/stdin/ is read to get ARP table.
+ 
+<item><tt/-b DATABASE/  - location of database file. Default location is
+<tt>/var/lib/arpd/arpd.db</tt>.
+
+<item><tt/-a NUMBER/ - <tt/arpd/ not only passively listens ARP on wire, but
+also send brodcast queries itself. <tt/NUMBER/ is number of such queries
+to make before destination is considered as dead. When <tt/arpd/ is started
+as kernel helper (i.e. with <tt/app_solicit/ enabled in <tt/sysctl/
+or even with option <tt/-k/) without this option and still did not learn enough
+information, you can observe 1 second gaps in service. Not fatal, but
+not good.
+
+<item><tt/-k/ - suppress sending broadcast queries by kernel. It takes
+sense together with option <tt/-a/.
+
+<item><tt/-n TIME/ - timeout of negative cache. When resolution fails <tt/arpd/
+suppresses further attempts to resolve for this period. It makes sense
+only together with option <tt/-k/. This timeout should not be too much
+longer than boot time of a typical host not supporting gratuitous ARP.
+Default value is 60 seconds.
+
+<item><tt/-R RATE/ - maximal steady rate of broadcasts sent by <tt/arpd/
+in packets per second. Default value is 1.
+
+<item><tt/-B NUMBER/ - number of broadcasts sent by <tt/arpd/ back to back.
+Default value is 3. Together with option <tt/-R/ this option allows
+to police broadcasting not to exceed <tt/B+R*T/ over any interval
+of time <tt/T/.
+
+</itemize>
+
+<p><tt/INTERFACE/ is name of networking inteface to watch.
+If no interfaces given, <tt/arpd/ monitors all the interfaces.
+In this case <tt/arpd/ does not adjust <tt/sysctl/ parameters,
+it is supposed user does this himself after <tt/arpd/ is started.
+
+
+<p> Signals
+
+<p> <tt/arpd/ exits gracefully syncing database and restoring adjusted
+<tt/sysctl/ parameters, when receives <tt/SIGINT/ or <tt/SIGTERM/.
+<tt/SIGHUP/ syncs database to disk. <tt/SIGUSR1/ sends some statistics
+to <tt/syslog/. Effect of another signals is undefined, they may corrupt
+database and leave <tt/sysctl/ parameters in an unpredictable state.
+
+<p> Note
+
+<p> In order to <tt/arpd/ be able to serve as ARP resolver, kernel must be
+compiled with the option <tt/CONFIG_ARPD/ and, in the case when interface list
+is not given on command line, variable <tt/app_solicit/
+on interfaces of interest should be set in <tt>/proc/sys/net/ipv4/neigh/*</tt>.
+If this is not made <tt/arpd/ still collects gratuitous ARP information
+in its database.
+
+<p> Examples
+
+<enum>
+<item> Start <tt/arpd/ to collect gratuitous ARP, but not messing
+with kernel functionality:
+
+<tscreen><verb>
+   arpd -b /var/tmp/arpd.db
+</verb></tscreen>
+
+<item> Look at result after some time:
+
+<tscreen><verb>
+   killall arpd
+   arpd -l -b /var/tmp/arpd.db
+</verb></tscreen>
+
+<item> To enable kernel helper, leaving leading role to kernel:
+
+<tscreen><verb>
+   arpd -b /var/tmp/arpd.db -a 1 eth0 eth1
+</verb></tscreen>
+
+<item> Completely replace kernel resolution on interfaces <tt/eth0/
+and <tt/eth1/. In this case kernel still does unicast probing to
+validate entries, but all the broadcast activity is suppressed
+and made under authority of <tt/arpd/: 
+
+<tscreen><verb>
+   arpd -b /var/tmp/arpd.db -a 3 -k eth0 eth1
+</verb></tscreen>
+
+This is mode which <tt/arpd/ is supposed to work normally.
+It is not default just to prevent occasional enabling of too aggressive
+mode occasionally.
+
+</enum>
+
+</article>
+

@@ -1,0 +1,45 @@
+# Copyright 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set testfile "included"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    untested included.exp
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+gdb_test "set listsize 1" ""
+
+gdb_test "list main" ".*"
+get_debug_format
+set non_dwarf [expr ! [test_debug_format "DWARF 2"]]
+
+# We should be able to find the source file containing the definition,
+# even though it was an included header.
+if { $non_dwarf } { setup_xfail *-*-* }
+gdb_test "list integer" "int integer;"
+
+gdb_test "ptype integer" "type = int"
+
+# We should report that integer comes from the header file.
+if { $non_dwarf } { setup_xfail *-*-* }
+gdb_test "info variables integer" "\r\nFile \[^\r\n\]*/${subdir}/${testfile}.h:\r\nint integer;"

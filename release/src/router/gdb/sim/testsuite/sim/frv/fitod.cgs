@@ -1,0 +1,26 @@
+# frv testcase for fitod $FRj,$FRk
+# mach: frv
+# as(frv): -mcpu=frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global fitod
+fitod:
+	set_fr_iimmed	0,0,fr2
+	fitod		fr2,fr2
+	test_fr_iimmed	0,fr2
+	test_fr_iimmed	0,fr3
+
+	set_fr_iimmed	0x0000,0x0002,fr2
+	fitod		fr2,fr2
+	test_fr_iimmed	0x40000000,fr2
+	test_fr_iimmed	0x00000000,fr3
+
+	set_fr_iimmed	0xdead,0xbeef,fr2
+	fitod		fr2,fr2
+	test_fr_iimmed	0xc1c0a920,fr2
+	test_fr_iimmed	0x88800000,fr3
+
+	pass

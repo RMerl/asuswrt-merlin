@@ -102,7 +102,6 @@ void write_chap_secret(char *file)
 void start_pptpd(void)
 {
 	int ret = 0, mss = 0, manual_dns = 0, pptpd_opt = 0;
-	char *lpTemp;
 	FILE *fp;
 
 	int pid = getpid();
@@ -148,7 +147,7 @@ void start_pptpd(void)
 //		"ipcp-accept-local\n"
 //		"ipcp-accept-remote\n"
 		"lcp-echo-failure 10\n"
-		"lcp-echo-interval 5\n"
+		"lcp-echo-interval 6\n"
 		"deflate 0\n" "auth\n" "-chap\n"
 		"nomppe-stateful\n");
 

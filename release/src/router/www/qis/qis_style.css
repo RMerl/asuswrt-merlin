@@ -1,6 +1,6 @@
 ﻿body {         
 	margin-left: 0px;
-	margin-top: 15px;
+	/*margin-top: 15px;*/
 	background-color:#4D595D; /*#AAD1E0*/
 }
 
@@ -105,8 +105,8 @@ legend {
 
 .QISform th{
 	padding-left:10px;
-	font-size:13px;
-	font-weight:normal;
+	font-size:14px;
+	font-weight: bolder;
 	color: #FFFFFF;
 	text-align:left; 
 }
@@ -358,4 +358,15 @@ legend {
 	color:#7EA2AE;
 	/*height:20px;*/
 	border: 1px solid #334044;
+}
+.test_css{
+	padding-left:10px;
+	font-size:13px;
+	font-weight:bolder;
+	color:#FFFFFF;
+}
+.QISTutorFont_admin_pass{
+	font-family:Georgia, Arial, sans-serif;
+	line-height: 20px;
+	width:280px;
 }

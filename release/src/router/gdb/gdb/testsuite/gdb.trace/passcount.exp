@@ -1,0 +1,178 @@
+#   Copyright 1998, 2007 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Michael Snyder (msnyder@cygnus.com)
+
+load_lib "trace-support.exp";
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+gdb_exit
+gdb_start
+if [istarget "m68k-*-elf"] then {
+    set srcfile gdb_c_test.c
+    set binfile [board_info target d490_binfile];
+} else {
+    set testfile "actions"
+    set srcfile ${testfile}.c
+    set binfile $objdir/$subdir/$testfile
+    if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
+	    executable {debug nowarnings}] != "" } {
+	untested passcount.exp
+	return -1
+    }
+}
+gdb_reinitialize_dir $srcdir/$subdir
+
+# If testing on a remote host, download the source file.
+# remote_download host $srcdir/$subdir/$srcfile
+
+gdb_file_cmd $binfile
+
+# define relative source line numbers:
+# all subsequent line numbers are relative to this first one (baseline)
+set baseline  [gdb_find_recursion_test_baseline $srcfile];
+if { $baseline == -1 } then {
+    fail "Could not find gdb_recursion_test function"
+    return;
+}
+
+set testline1  [expr $baseline + 3]
+
+#
+# test "passcount" command
+#
+
+gdb_delete_tracepoints
+set trcpt1 [gdb_gettpnum gdb_c_test];
+set trcpt2 [gdb_gettpnum gdb_asm_test];
+set trcpt3 [gdb_gettpnum $testline1];
+if { $trcpt1 <= 0 || $trcpt2 <= 0 || $trcpt3 <= 0 } then {
+    fail "setting tracepoints"
+    return;
+}
+
+# 4.1 passcount of specified tracepoint
+
+gdb_test "info tracepoints" \
+    "Num Enb Address\[ \]+PassC StepC What.*$trcpt1\[\t \]+y\[\t \]+$hex\[\t \]+0\[\t \]+.*in gdb_c_test.*$trcpt2\[\t \]+y\[\t \]+$hex\[\t \]+0\[\t \]+.*gdb_asm_test.*$trcpt3\[\t \]+y\[\t \]+$hex\[\t \]+0\[\t \]+.*in gdb_recursion_test.*" \
+			"4.1a: set three tracepoints, passcounts all zero"
+
+gdb_test "passcount 2 $trcpt1" \
+	"Setting tracepoint $trcpt1.s passcount to 2" \
+	"4.1b: set 1st tracepoint's passcount to two"
+
+gdb_test "info tracepoints" \
+	"Num Enb Address\[ \]+PassC StepC What.*$trcpt1\[\t \]+y\[\t \]+$hex\[\t \]+2\[\t \]+.*in gdb_c_test.*$trcpt2\[\t \]+y\[\t \]+$hex\[\t \]+0\[\t \]+.*gdb_asm_test.*$trcpt3\[\t \]+y\[\t \]+$hex\[\t \]+0\[\t \]+.*in gdb_recursion_test.*" \
+	"4.1c: verify 1st tracepoint's passcount set to two"
+
+gdb_test "passcount 4 $trcpt2" \
+	"Setting tracepoint $trcpt2.s passcount to 4" \
+	"4.1d: set 2nd tracepoint's passcount to four"
+
+gdb_test "info tracepoints" \
+	"Num Enb Address\[ \]+PassC StepC What.*$trcpt1\[\t \]+y\[\t \]+$hex\[\t \]+2\[\t \]+.*in gdb_c_test.*$trcpt2\[\t \]+y\[\t \]+$hex\[\t \]+4\[\t \]+.*gdb_asm_test.*$trcpt3\[\t \]+y\[\t \]+$hex\[\t \]+0\[\t \]+.*in gdb_recursion_test.*" \
+	"4.1c: verify 2nd tracepoint's passcount set to four"
+
+# 4.2 passcount of last (default) tracepoint
+
+gdb_test "passcount 6" \
+	"Setting tracepoint $trcpt3.s passcount to 6" \
+	"4.2b: set last (default) tp's passcount to six"
+
+gdb_test "info tracepoints" \
+	"Num Enb Address\[ \]+PassC StepC What.*$trcpt1\[\t \]+y\[\t \]+$hex\[\t \]+2\[\t \]+.*in gdb_c_test.*$trcpt2\[\t \]+y\[\t \]+$hex\[\t \]+4\[\t \]+.*gdb_asm_test.*$trcpt3\[\t \]+y\[\t \]+$hex\[\t \]+6\[\t \]+.*in gdb_recursion_test.*" \
+	"4.2b: verify last (default) tp's passcount set to six"
+
+# 4.3 run until stopped explicitly by user
+#     [deferred to dynamic test section]
+
+# 4.4 reset the previously set passcounts to new values
+
+gdb_test "passcount 7" \
+	"Setting tracepoint $trcpt3.s passcount to 7" \
+	"4.4a: reset last (default) tp's passcount to seven"
+
+gdb_test "info tracepoints" \
+	"Num Enb Address\[ \]+PassC StepC What.*$trcpt1\[\t \]+y\[\t \]+$hex\[\t \]+2\[\t \]+.*in gdb_c_test.*$trcpt2\[\t \]+y\[\t \]+$hex\[\t \]+4\[\t \]+.*gdb_asm_test.*$trcpt3\[\t \]+y\[\t \]+$hex\[\t \]+7\[\t \]+.*in gdb_recursion_test.*" \
+	"4.4a: verify reset last (default) tp's passcount to seven"
+
+gdb_test "passcount 5 $trcpt2" \
+	"Setting tracepoint $trcpt2.s passcount to 5" \
+	"4.4b: reset second tracepoint's passcount to five"
+
+gdb_test "info tracepoints" \
+	"Num Enb Address\[ \]+PassC StepC What.*$trcpt1\[\t \]+y\[\t \]+$hex\[\t \]+2\[\t \]+.*in gdb_c_test.*$trcpt2\[\t \]+y\[\t \]+$hex\[\t \]+5\[\t \]+.*gdb_asm_test.*$trcpt3\[\t \]+y\[\t \]+$hex\[\t \]+7\[\t \]+.*in gdb_recursion_test.*" \
+	"4.4c: verify reset second tracepoint's passcount to five"
+
+# 4.20 <FIXME test number> passcount for "all"
+
+gdb_test "passcount 3 all" \
+	".*$trcpt1.s pass.* 3.*$trcpt2.s pass.* 3.*$trcpt3.s pass.* 3" \
+	"4.20a: set all three passcounts to three"
+
+gdb_test "info tracepoints" \
+	"Num Enb Address\[ \]+PassC StepC What.*$trcpt1\[\t \]+y\[\t \]+$hex\[\t \]+3\[\t \]+.*in gdb_c_test.*$trcpt2\[\t \]+y\[\t \]+$hex\[\t \]+3\[\t \]+.*gdb_asm_test.*$trcpt3\[\t \]+y\[\t \]+$hex\[\t \]+3\[\t \]+.*in gdb_recursion_test.*" \
+	"4.20a: set all three passcounts to three"
+
+gdb_test "passcount 4 all" \
+	".*$trcpt1.s pass.* 4.*$trcpt2.s pass.* 4.*$trcpt3.s pass.* 4" \
+	"4.20a: reset all three passcounts to four"
+
+gdb_test "info tracepoints" \
+	"Num Enb Address\[ \]+PassC StepC What.*$trcpt1\[\t \]+y\[\t \]+$hex\[\t \]+4\[\t \]+.*in gdb_c_test.*$trcpt2\[\t \]+y\[\t \]+$hex\[\t \]+4\[\t \]+.*gdb_asm_test.*$trcpt3\[\t \]+y\[\t \]+$hex\[\t \]+4\[\t \]+.*in gdb_recursion_test.*" \
+	"4.20b: reset all three passcounts to four"
+
+# 4.5 Verify trace stops on first "satisfied" passcount
+#     [deferred to dynamic test section]
+
+# 4.6 minimum passcount boundary condition
+
+gdb_test "passcount 0 $trcpt1" \
+	"Setting tracepoint $trcpt1.s passcount to 0" \
+	"4.6: set passcount to zero"
+
+gdb_test "info tracepoints" \
+	"Num Enb Address\[ \]+PassC StepC What.*$trcpt1\[\t \]+y\[\t \]+$hex\[\t \]+0\[\t \]+.*in gdb_c_test.*$trcpt2\[\t \]+y\[\t \]+$hex\[\t \]+4\[\t \]+.*gdb_asm_test.*$trcpt3\[\t \]+y\[\t \]+$hex\[\t \]+4\[\t \]+.*in gdb_recursion_test.*" \
+	"4.6: set passcount to zero"
+
+# 4.7 (test a very large passcount)
+
+gdb_test "passcount 32767 $trcpt1" \
+	"Setting tracepoint $trcpt1.s passcount to 32767" \
+	"4.7: set passcount to large number (32767)"
+
+gdb_test "info tracepoints" \
+	"Num Enb Address\[ \]+PassC StepC What.*$trcpt1\[\t \]+y\[\t \]+$hex\[\t \]+32767\[\t \]+.*in gdb_c_test.*$trcpt2\[\t \]+y\[\t \]+$hex\[\t \]+4\[\t \]+.*gdb_asm_test.*$trcpt3\[\t \]+y\[\t \]+$hex\[\t \]+4\[\t \]+.*in gdb_recursion_test.*" \
+	"4.7: set passcount to large number (32767)"
+
+# 4.8 set passcount for invalid tracepoint
+
+gdb_test "passcount 1 [expr $trcpt2 + $trcpt3]" \
+	"No tracepoint number [expr $trcpt2 + $trcpt3]." \
+	"4.8: invalid tracepoint number in passcount"
+
+# 4.9 help passcount
+gdb_test "help passcount" "Set the passcount for a tracepoint.*" \
+	"4.9: help passcount"
+

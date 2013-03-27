@@ -1,0 +1,97 @@
+'\" t
+.\"     Title: ne_ssl_cert_read
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_SSL_CERT_READ" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_ssl_cert_read, ne_ssl_cert_write, ne_ssl_cert_import, ne_ssl_cert_export \- functions to read or write certificates to and from files or strings
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_ssl\&.h>
+.fi
+.ft
+.HP \w'ne_ssl_certificate\ *ne_ssl_cert_read('u
+.BI "ne_ssl_certificate *ne_ssl_cert_read(const\ char\ *" "filename" ");"
+.HP \w'int\ ne_ssl_cert_write('u
+.BI "int ne_ssl_cert_write(const\ ne_ssl_certificate\ *" "cert" ", const\ char\ *" "filename" ");"
+.HP \w'ne_ssl_certificate\ *ne_ssl_cert_import('u
+.BI "ne_ssl_certificate *ne_ssl_cert_import(const\ char\ *" "data" ");"
+.HP \w'char\ *ne_ssl_cert_export('u
+.BI "char *ne_ssl_cert_export(const\ ne_ssl_certificate\ *" "cert" ");"
+.SH "DESCRIPTION"
+.PP
+The
+\fBne_ssl_cert_write\fR
+function writes a certificate to a file using the PEM encoding\&. The
+\fBne_ssl_cert_export\fR
+function returns a base64\-encoded
+NUL\-terminated string representing the certificate\&. This string is malloc\-allocated and should be destroyed using
+\fBfree\fR
+by the caller\&.
+.PP
+The
+\fBne_ssl_cert_read\fR
+function reads a certificate from a PEM\-encoded file, and returns a certificate object\&. The
+\fBne_ssl_cert_import\fR
+function returns a certificate object from a base64\-encoded string,
+\fIdata\fR, as returned by
+\fBne_ssl_cert_export\fR\&. The certificate object returned by these functions should be destroyed using
+ne_ssl_cert_free
+after use\&.
+.SH "RETURN VALUE"
+.PP
+\fBne_ssl_cert_read\fR
+returns
+NULL
+if a certificate could not be read from the file\&.
+\fBne_ssl_cert_write\fR
+returns non\-zero if the certificate could not be written to the file\&.
+\fBne_ssl_cert_export\fR
+always returns a
+NUL\-terminated string, and never
+NULL\&.
+\fBne_ssl_cert_import\fR
+returns
+NULL
+if the string was not a valid base64\-encoded certificate\&.
+.SH "ENCODING FORMATS"
+.PP
+The string produced by
+\fBne_ssl_cert_export\fR
+is the base64 encoding of the DER representation of the certificate\&. The file written by
+\fBne_ssl_cert_write\fR
+uses the PEM format: this is the base64 encoding of the DER representation with newlines every 64 characters, and start and end marker lines\&.
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

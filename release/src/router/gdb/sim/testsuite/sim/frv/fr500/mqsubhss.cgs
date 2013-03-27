@@ -1,0 +1,79 @@
+# frv testcase for mqsubhss $FRi,$FRj,$FRj
+# mach: frv fr500
+
+	.include "../testutils.inc"
+
+	start
+
+	.global msubhss
+msubhss:
+	set_fr_iimmed	0x0000,0x0000,fr10
+	set_fr_iimmed	0xdead,0x0000,fr11
+	set_fr_iimmed	0x0000,0x0000,fr12
+	set_fr_iimmed	0x0000,0xbeef,fr13
+	mqsubhss	fr10,fr12,fr14
+	test_fr_limmed	0x0000,0x0000,fr14
+	test_fr_limmed	0xdead,0x4111,fr15
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x0000,0xdead,fr10
+	set_fr_iimmed	0x1234,0x5678,fr11
+	set_fr_iimmed	0xbeef,0x0000,fr12
+	set_fr_iimmed	0x1111,0x1111,fr13
+	mqsubhss	fr10,fr12,fr14
+	test_fr_limmed	0x4111,0xdead,fr14
+	test_fr_limmed	0x0123,0x4567,fr15
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_spr_immed	0,msr0
+	set_fr_iimmed	0x1234,0x5678,fr10
+	set_fr_iimmed	0x7ffe,0x7ffe,fr11
+	set_fr_iimmed	0xffff,0xffff,fr12
+	set_fr_iimmed	0xfffe,0xffff,fr13
+	mqsubhss	fr10,fr12,fr14
+	test_fr_limmed	0x1235,0x5679,fr14
+	test_fr_limmed	0x7fff,0x7fff,fr15
+	test_spr_bits	0x3c,2,0x2,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+
+	set_spr_immed	0,msr0
+	set_fr_iimmed	0x8001,0x8001,fr10
+	set_fr_iimmed	0x8001,0x8001,fr11
+	set_fr_iimmed	0x0001,0x0002,fr12
+	set_fr_iimmed	0x0002,0x0001,fr13
+	mqsubhss	fr10,fr12,fr14
+	test_fr_limmed	0x8000,0x8000,fr14
+	test_fr_limmed	0x8000,0x8000,fr15
+	test_spr_bits	0x3c,2,0x6,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_fr_iimmed	0x0001,0x0001,fr10
+	set_fr_iimmed	0xffff,0xffff,fr11
+	set_fr_iimmed	0x8000,0x8000,fr12
+	set_fr_iimmed	0x8000,0x8000,fr13
+	mqsubhss.p	fr10,fr10,fr14
+	mqsubhss	fr12,fr10,fr16
+	test_fr_limmed	0x0000,0x0000,fr14
+	test_fr_limmed	0x0000,0x0000,fr15
+	test_fr_limmed	0x8000,0x8000,fr16
+	test_fr_limmed	0x8001,0x8001,fr17
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	0x3c,2,0xc,msr1		; msr0.sie is set
+	test_spr_bits	2,1,1,msr1		; msr1.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+
+	pass

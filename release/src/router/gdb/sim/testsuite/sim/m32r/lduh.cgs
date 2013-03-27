@@ -1,0 +1,22 @@
+# m32r testcase for lduh $dr,@$sr
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global lduh
+lduh:
+	mvaddr_h_gr r4, data_loc
+	mvi_h_gr    r5, 0
+
+	lduh r5, @r4
+
+	test_h_gr r5, 0x8010 ; big endian processor
+
+	pass
+
+data_loc:
+	.word 0x8010f020
+
+	pass

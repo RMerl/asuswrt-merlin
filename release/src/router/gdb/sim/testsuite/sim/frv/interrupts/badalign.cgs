@@ -1,0 +1,73 @@
+# frv testcase to generate interrupt for st $GRk,@($GRi,$GRj)
+# mach: fr500 frv
+	.include "testutils.inc"
+
+	start
+
+	.global align
+align:
+	and_spr_immed	-4081,tbr		; clear tbr.tt
+	set_gr_spr	tbr,gr17
+	inc_gr_immed	0x100,gr17		; address of exception handler
+	set_bctrlr_0_0  gr17
+	set_spr_immed	128,lcr
+	set_spr_addr	ok1,lr
+	set_psr_et	1
+	set_gr_immed	0xdeadbeef,gr17
+	set_gr_immed	0,gr15
+	inc_gr_immed	2,sp		; out of alignment
+
+	test_spr_bits	1,0,1,isr	; mem_address_not_aligned is masked
+	sti		gr17,@(sp,0)	; no exception
+	ldi		@(sp,-2),gr18	; stored at aligned address
+	test_gr_immed	0xdeadbeef,gr18
+	ldi		@(sp,0),gr19	; no exception
+	test_gr_immed	0xdeadbeef,gr19
+
+	and_spr_immed	0xfffffffe,isr	; turn off ISR.EMAM
+	set_gr_addr	bad1,gr16
+bad1:	sti		gr17,@(sp,0)	; misaligned write in slot I1
+	test_gr_immed	1,gr15
+
+	set_gr_addr	bad3,gr16
+	set_gr_gr	sp,gr20
+	set_gr_immed	1,gr21
+	set_gr_immed	0x10101010,gr10
+bad2:	nop.p
+bad3:	ldu		@(sp,gr21),gr10	; misaligned read in slot I2
+	test_gr_immed	2,gr15		; handler was called
+	test_gr_immed	0x10101010,gr10	; gr10 not updated
+	test_gr_immed	1,gr21		; gr21 not updated
+	inc_gr_immed	1,gr20
+	test_gr_gr	gr20,sp		; sp updated
+
+	pass
+
+; exception handler
+ok1:
+	cmpi		gr15,0,icc0
+	bne		icc0,0,load
+	; handle interrupt on store
+	test_spr_immed	0x100,esfr1		; esr8 is active
+	test_spr_gr	epcr8,gr16
+	test_spr_bits	0x0001,0,0x1,esr8	; esr8 is valid
+	test_spr_bits	0x003e,1,0xb,esr8	; esr8.ec is set
+	test_spr_bits	0x0800,11,0x1,esr8	; esr8.eav is set
+	test_spr_gr	ear8,sp
+	test_spr_bits	0x01000,12,0x1,esr8	; esr8.edv is set
+	test_spr_bits	0x1e000,13,0x3,esr8	; esr8.edn is 3
+	test_spr_gr	edr3,gr17		; edr3 is set
+	bra		ret
+load:
+	; handle interrupt on load
+	test_spr_immed	0x200,esfr1		; esr9 is active
+	test_spr_gr	epcr9,gr16
+	test_spr_bits	0x0001,0,0x1,esr9	; esr9 is valid
+	test_spr_bits	0x003e,1,0xb,esr9	; esr9.ec is set
+	test_spr_bits	0x0800,11,0x1,esr9	; esr9.eav is set
+	test_spr_gr	ear9,sp
+	test_spr_bits	0x1000,12,0x0,esr9	; esr9.edv is not set
+ret:
+	inc_gr_immed	1,gr15
+	rett		0
+	fail

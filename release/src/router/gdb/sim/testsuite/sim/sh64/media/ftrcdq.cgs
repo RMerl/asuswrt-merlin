@@ -1,0 +1,24 @@
+# sh testcase for ftrc.dq $drgh, $drf -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+init:
+	pta wrong, tr0
+
+ftrcdq:
+	movi -9, r0
+	fmov.qd r0, dr0
+	float.qd dr0, dr0
+	ftrc.dq dr0, dr2
+	fmov.dq dr2, r1
+	bne r0, r1, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

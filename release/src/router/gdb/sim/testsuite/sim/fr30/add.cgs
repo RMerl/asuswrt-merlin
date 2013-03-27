@@ -1,0 +1,55 @@
+# fr30 testcase for add $Rj,$Ri, add $u4,$Rj
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global add
+add:
+	; Test add $Rj,$Ri
+	mvi_h_gr   	1,r7
+	mvi_h_gr   	2,r8
+	set_cc          0x0f		; Set mask opposite of expected
+	add      	r7,r8
+	test_cc		0 0 0 0
+	test_h_gr  	3,r8
+
+	mvi_h_gr   	0x7fffffff,r7
+	mvi_h_gr   	1,r8
+	set_cc          0x05		; Set mask opposite of expected
+	add		r7,r8
+	test_cc		1 0 1 0
+	test_h_gr  	0x80000000,r8
+
+	set_cc          0x08		; Set mask opposite of expected
+	add		r8,r8
+	test_cc		0 1 1 1
+	test_h_gr  	0,r8
+
+	; Test add $u4Ri
+	mvi_h_gr   	4,r8
+	set_cc          0x0f		; Set mask opposite of expected
+	add		0,r8
+	test_cc		0 0 0 0
+	test_h_gr  	4,r8
+	set_cc          0x0f		; Set mask opposite of expected
+	add		1,r8
+	test_cc		0 0 0 0
+	test_h_gr  	5,r8
+	set_cc          0x0f		; Set mask opposite of expected
+	add		15,r8
+	test_cc		0 0 0 0
+	test_h_gr  	20,r8
+	mvi_h_gr   	0x7fffffff,r8	; test neg and overflow bits
+	set_cc          0x05		; Set mask opposite of expected
+	add		1,r8
+	test_cc		1 0 1 0
+	test_h_gr  	0x80000000,r8
+	set_cc          0x08		; Set mask opposite of expected
+	add		r8,r8		; test zero, carry and overflow bits
+	test_cc		0 1 1 1;
+	test_h_gr  	0,r8
+
+	pass

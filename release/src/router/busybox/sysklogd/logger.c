@@ -96,7 +96,7 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 		i |= LOG_PERROR;
 	//if (opt & 0x4) /* -t */
 	openlog(str_t, i, 0);
-	i = LOG_USER | LOG_NOTICE;
+	i = LOG_USER | LOG_WARNING;
 	if (opt & 0x1) /* -p */
 		i = pencode(str_p);
 

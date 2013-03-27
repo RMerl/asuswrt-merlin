@@ -1,0 +1,77 @@
+# Copyright 2007 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# Tests for ARM iWMMXt register setting and fetching.
+
+if ![istarget "arm*-*-*"] then {
+    verbose "Skipping iWMMXt register tests."
+    return
+}
+
+set testfile "iwmmxt-regs"
+set binfile ${objdir}/${subdir}/${testfile}
+set src1 ${srcdir}/${subdir}/${testfile}.c
+
+# Try to compile the test case.  If we can't, assume this is not an
+# iWMMXt toolchain and bail out.
+if { [gdb_compile ${src1} ${binfile} executable {quiet debug}] != "" } {
+    verbose "Skipping iWMMXt register tests."
+    return
+}
+
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+#
+# Run to `main' where we begin our tests.
+#
+
+if ![runto_main] then {
+    gdb_suppress_tests
+}
+
+# Set all the registers to arbitrary values.
+for {set i 0} {$i < 16} {incr i 1} {
+    gdb_test "set \$wR$i.u64 = ((${i}LL << 32) | ${i})" "" "set reg wR$i"
+}
+gdb_test "set \$wCSSF = 300" "" "set reg wCSSF"
+gdb_test "set \$wCASF = 200" "" "set reg wCASF"
+for {set i 0} {$i < 4} {incr i 1} {
+    gdb_test "set \$wCGR$i = 100 + $i" "" "set reg wCGR$i"
+}
+
+# See if the sets stuck.
+gdb_test "next" ".*write_regs.*" "next over read_regs"
+
+for {set i 0} {$i < 16} {incr i 1} {
+    gdb_test "p \$wR$i.u64 == ((${i}LL << 32) | ${i})" "\\\$$decimal = 1" "test reg wR$i"
+}
+# Don't test wCSSF.
+gdb_test "p \$wCASF" "\\\$$decimal = 200" "test reg wCASF"
+for {set i 0} {$i < 4} {incr i 1} {
+    gdb_test "p \$wCGR$i == 100 + $i" "\\\$$decimal = 1" "test reg wCGR$i"
+}
+
+# Also verify the copies read by the target.
+for {set i 0} {$i < 16} {incr i 1} {
+    gdb_test "p regs\[$i\] == ((${i}LL << 32) | ${i})" "\\\$$decimal = 1" "test stored wR$i"
+}
+# Don't test wcssf.
+gdb_test "p control_regs\[1\]" "\\\$$decimal = 200" "test stored wCASF"
+for {set i 0} {$i < 4} {incr i 1} {
+    gdb_test "p control_regs\[$i + 2\] == 100 + $i" "\\\$$decimal = 1" "test stored wCGR$i"
+}

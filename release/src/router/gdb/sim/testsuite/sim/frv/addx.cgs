@@ -1,0 +1,49 @@
+# frv testcase for addx $GRi,$GRj,$GRk,$ICCi_1
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global addx
+addx:
+	set_gr_immed   	1,gr7
+	set_gr_immed   	2,gr8
+	set_icc         0x0e,0		; Make sure carry bit is off
+	addx      	gr7,gr8,gr8,icc0
+	test_icc	1 1 1 0 icc0
+	test_gr_immed  	3,gr8
+
+	set_gr_limmed  	0x7fff,0xffff,gr7
+	set_gr_immed   	1,gr8
+	set_icc         0x04,0		; Make sure carry bit is off
+	addx		gr7,gr8,gr8,icc0
+	test_icc	0 1 0 0 icc0
+	test_gr_limmed 	0x8000,0x0000,gr8
+
+	set_icc         0x08,0		; Make sure carry bit is off
+	addx		gr8,gr8,gr8,icc0
+	test_icc	1 0 0 0 icc0
+	test_gr_immed  	0,gr8
+
+	set_gr_immed   	1,gr7
+	set_gr_immed   	2,gr8
+	set_icc         0x0f,0		; Make sure carry bit is on
+	addx      	gr7,gr8,gr8,icc0
+	test_icc	1 1 1 1 icc0
+	test_gr_immed  	4,gr8
+
+	set_gr_limmed  	0x7fff,0xffff,gr7
+	set_gr_immed   	0,gr8
+	set_icc         0x05,0		; Make sure carry bit is on
+	addx		gr7,gr8,gr8,icc0
+	test_icc	0 1 0 1 icc0
+	test_gr_limmed 	0x8000,0x0000,gr8
+
+	set_gr_limmed  	0x7fff,0xffff,gr7
+	set_icc         0x0b,0		; Make sure carry bit is on
+	addx		gr7,gr8,gr8,icc0
+	test_icc	1 0 1 1 icc0
+	test_gr_immed  	0,gr8
+
+	pass

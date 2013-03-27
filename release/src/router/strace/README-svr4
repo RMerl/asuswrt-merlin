@@ -1,0 +1,21 @@
+Even though SVR4 has truss, you may prefer using strace for a number
+of reasons.  Not the least of which are portability and source code.
+
+The main event loop is awkward on systems for which procfs isn't
+pollable.  I think a pollable procfs is a Solaris invention so most SVR4
+systems have this weakness.  On Solaris, strace runs as a single
+controlling process.  This is a big improvement if you are debugging a
+lot of processes at once.
+
+There is no thread support but it wouldn't be very difficult to add it.
+
+On UnixWare using the -f option to follow forked children sometimes shows
+many "unfinished" system calls as strace bounces between each runnable child.
+A crude workaround for this is available by adding
+
+    #define POLL_HACK 1
+
+to the config.h file.  This forces strace to check whether the last process
+has finished a system call before polling other processes for events.
+
+Wichert Akkerman <wakkerma@debian.org>

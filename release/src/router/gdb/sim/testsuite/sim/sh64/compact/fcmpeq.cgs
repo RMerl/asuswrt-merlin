@@ -1,0 +1,88 @@
+# sh testcase for fcmpeq -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	# 1.0 == 1.0.	
+	fldi1 fr0
+	fldi1 fr1
+	fcmp/eq fr0, fr1
+	bf wrong
+
+	# 0.0 != 1.0.
+	fldi0 fr0
+	fldi1 fr1
+	fcmp/eq fr0, fr1
+	bt wrong
+
+	# 1.0 != 0.0.
+	fldi1 fr0
+	fldi0 fr1
+	fcmp/eq fr0, fr1
+	bt wrong
+
+	# 2.0 != 1.0
+	fldi1 fr0
+	fadd fr0, fr0
+	fldi1 fr1
+	fcmp/eq fr0, fr1
+	bt wrong
+
+	bra double
+	# delay slot
+	nop
+
+wrong:
+	fail
+	
+double:
+	# 1.0 == 1.0
+	fldi1 fr0
+	fldi1 fr2
+	_s2d fr0, dr0
+	_s2d fr2, dr2
+	_setpr
+	fcmp/eq dr0, dr2
+	bf wrong
+	_clrpr
+
+	# 0.0 != 1.0
+	fldi0 fr0
+	fldi1 fr2
+	_s2d fr0, dr0
+	_s2d fr2, dr2
+	_setpr
+	fcmp/eq dr0, dr2
+	bt wrong
+	_clrpr
+
+	# 1.0 != 0.0
+	fldi1 fr0
+	fldi0 fr2
+	_s2d fr0, dr0
+	_s2d fr2, dr2
+	_setpr
+	fcmp/eq dr0, dr2
+	bt wrong2
+	_clrpr
+
+	# 2.0 != 1.0
+	fldi1 fr0
+	fadd fr0, fr0
+	fldi1 fr2
+	_s2d fr0, dr0
+	_s2d fr2, dr2
+	_setpr
+	fcmp/eq dr0, dr2
+	bt wrong2
+	_clrpr
+
+okay:
+	pass
+
+wrong2:
+	fail

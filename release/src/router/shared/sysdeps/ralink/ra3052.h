@@ -25,32 +25,12 @@
 #define RTN12_PWRLED_GPIO_IRQ   7
 #define RTN12_RESETDF_GPIO_IRQ  10
 #define RTN12_EZSETUP_GPIO_IRQ  0
-#define RTN12_SW1               9
-#define RTN12_SW2               13
-#define RTN12_SW3               11
+#define RTN12_SW1		9
+#define RTN12_SW2		13
+#define RTN12_SW3		11
 
 #define LED_ON  0       // low active (all 5xx series)
 #define LED_OFF 1
-
-#define TASK_HTTPD       0
-#define TASK_UDHCPD      1
-#define TASK_LLD2D       2
-#define TASK_WANDUCK     3
-#define TASK_UDHCPC      4
-#define TASK_NETWORKMAP  5
-#define TASK_DPROXY      6
-#define TASK_NTP         7
-#define TASK_U2EC        8
-#define TASK_OTS         9
-#define TASK_LPD         10
-#define TASK_UPNPD       11
-#define TASK_WATCHDOG    12
-#define TASK_INFOSVR     13
-#define TASK_SYSLOGD     14
-#define TASK_KLOGD       15
-#define TASK_PPPD        16
-#define TASK_PPPOE_RELAY 17
-#define TASK_IGMP	 18
 
 unsigned long task_mask;
 

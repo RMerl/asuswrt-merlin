@@ -1,0 +1,96 @@
+# Copyright 2003, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# until.exp -- Expect script to test 'until' in gdb
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set testfile "break"
+set srcfile ${testfile}.c
+set srcfile1 ${testfile}1.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}0.o" object {debug nowarnings}] != "" } {
+     untested until.exp
+     return -1
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile}1.o" object {debug nowarnings}] != "" } {
+     untested until.exp
+     return -1
+}
+
+if  { [gdb_compile "${binfile}0.o ${binfile}1.o" "${binfile}" executable {debug nowarnings}] != "" } {
+     untested until.exp
+     return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+set bp_location1 [gdb_get_line_number "set breakpoint 1 here"]
+set bp_location19 [gdb_get_line_number "set breakpoint 19 here"]
+set bp_location20 [gdb_get_line_number "set breakpoint 20 here"]
+set bp_location21 [gdb_get_line_number "set breakpoint 21 here"]
+
+if ![runto_main] then {
+    fail "Can't run to main"
+    return 0
+}
+
+# Verify that "until <location>" works.  (This is really just syntactic
+# sugar for "tbreak <location>; continue".)
+#
+gdb_test "until $bp_location1" \
+	"main .* at .*:$bp_location1.*" \
+	"until line number"
+
+# Verify that a malformed "advance" is gracefully caught.
+#
+gdb_test "until 80 then stop" \
+	"Junk at end of arguments." "malformed until"
+
+# Rerun up to factorial, outer invocation
+if { ![runto factorial] } then { gdb_suppress_tests; }
+delete_breakpoints
+
+# At this point, 'until' should continue the inferior up to when all the
+# inner invocations of factorial() are completed and we are back at this
+# frame.
+#
+gdb_test "until $bp_location19" \
+	"factorial.*value=720.*at.*${srcfile}:$bp_location19.*return \\(value\\).*" \
+	"until factorial, recursive function"
+
+# Run to a function called by main
+#
+if { ![runto marker2] } then { gdb_suppress_tests; }
+delete_breakpoints
+
+# Now issue an until with another function, not called by the current
+# frame, as argument. This should not work, i.e. the program should
+# stop at main, the caller, where we put the 'guard' breakpoint.
+#
+gdb_test "until marker3" \
+	"($hex in |)main.*argc.*argv.*envp.*at.*${srcfile}:($bp_location20.*marker2 \\(43\\)|$bp_location21.*marker3 \\(.stack., .trace.\\)).*" \
+	"until func, not called by current frame"
+

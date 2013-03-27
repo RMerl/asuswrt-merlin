@@ -1,0 +1,464 @@
+# frv testcase for cmqmulhu $GRi,$GRj,$GRk,$CCi,$cond
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global cmqmulhu
+cmqmulhu:
+	set_spr_immed	0x1b1b,cccr
+
+	set_fr_iimmed  	3,2,fr8		; multiply small numbers
+	set_fr_iimmed  	2,3,fr10
+	set_fr_iimmed  	1,2,fr9		; multiply by 1
+	set_fr_iimmed  	2,1,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc0,1
+	test_accg_immed 	0,accg0
+	test_acc_immed 	6,acc0
+	test_accg_immed 	0,accg1
+	test_acc_immed 	6,acc1
+	test_accg_immed 	0,accg2
+	test_acc_immed 	2,acc2
+	test_accg_immed 	0,accg3
+	test_acc_immed 	2,acc3
+
+	set_fr_iimmed  	0,2,fr8		; multiply by 0
+	set_fr_iimmed  	2,0,fr10
+	set_fr_iimmed 	0x3fff,2,fr9	; 15 bit result
+	set_fr_iimmed  	2,0x3fff,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc0,1
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0,acc0
+	test_accg_immed 	0,accg1
+	test_acc_immed 	0,acc1
+	test_accg_immed 	0,accg2
+	test_acc_limmed	0x0000,0x7ffe,acc2
+	test_accg_immed 	0,accg3
+	test_acc_limmed	0x0000,0x7ffe,acc3
+
+	set_fr_iimmed  	0x4000,2,fr8	; 16 bit result
+	set_fr_iimmed  	2,0x4000,fr10
+	set_fr_iimmed  	0x8000,2,fr9	; 17 bit result
+	set_fr_iimmed  	2,0x8000,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc4,1
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x0000,0x8000,acc0
+	test_accg_immed 	0,accg1
+	test_acc_limmed	0x0000,0x8000,acc1
+	test_accg_immed 	0,accg2
+	test_acc_immed 	0x00010000,acc2
+	test_accg_immed 	0,accg3
+	test_acc_immed 	0x00010000,acc3
+
+	set_fr_iimmed  	0x7fff,0x7fff,fr8	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr10
+	set_fr_iimmed  	0x8000,0x8000,fr9	; max positive result
+	set_fr_iimmed  	0x8000,0x8000,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc4,1
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0x3fff0001,acc0
+	test_accg_immed 	0,accg1
+	test_acc_immed 	0x3fff0001,acc1
+	test_accg_immed 	0,accg2
+	test_acc_limmed	0x4000,0x0000,acc2
+	test_accg_immed 	0,accg3
+	test_acc_limmed	0x4000,0x0000,acc3
+
+	set_fr_iimmed  	0xffff,0xffff,fr8	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr10
+	set_fr_iimmed  	0xffff,0xffff,fr9	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc4,1
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0xfffe,0x0001,acc0
+	test_accg_immed 	0,accg1
+	test_acc_limmed	0xfffe,0x0001,acc1
+	test_accg_immed 	0,accg2
+	test_acc_limmed	0xfffe,0x0001,acc2
+	test_accg_immed 	0,accg3
+	test_acc_limmed	0xfffe,0x0001,acc3
+
+	set_fr_iimmed  	3,2,fr8		; multiply small numbers
+	set_fr_iimmed  	2,3,fr10
+	set_fr_iimmed  	1,2,fr9		; multiply by 1
+	set_fr_iimmed  	2,1,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc1,0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	6,acc0
+	test_accg_immed 	0,accg1
+	test_acc_immed 	6,acc1
+	test_accg_immed 	0,accg2
+	test_acc_immed 	2,acc2
+	test_accg_immed 	0,accg3
+	test_acc_immed 	2,acc3
+
+	set_fr_iimmed  	0,2,fr8		; multiply by 0
+	set_fr_iimmed  	2,0,fr10
+	set_fr_iimmed 	0x3fff,2,fr9	; 15 bit result
+	set_fr_iimmed  	2,0x3fff,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc1,0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0,acc0
+	test_accg_immed 	0,accg1
+	test_acc_immed 	0,acc1
+	test_accg_immed 	0,accg2
+	test_acc_limmed	0x0000,0x7ffe,acc2
+	test_accg_immed 	0,accg3
+	test_acc_limmed	0x0000,0x7ffe,acc3
+
+	set_fr_iimmed  	0x4000,2,fr8	; 16 bit result
+	set_fr_iimmed  	2,0x4000,fr10
+	set_fr_iimmed  	0x8000,2,fr9	; 17 bit result
+	set_fr_iimmed  	2,0x8000,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc5,0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x0000,0x8000,acc0
+	test_accg_immed 	0,accg1
+	test_acc_limmed	0x0000,0x8000,acc1
+	test_accg_immed 	0,accg2
+	test_acc_immed 	0x00010000,acc2
+	test_accg_immed 	0,accg3
+	test_acc_immed 	0x00010000,acc3
+
+	set_fr_iimmed  	0x7fff,0x7fff,fr8	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr10
+	set_fr_iimmed  	0x8000,0x8000,fr9	; max positive result
+	set_fr_iimmed  	0x8000,0x8000,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc5,0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0x3fff0001,acc0
+	test_accg_immed 	0,accg1
+	test_acc_immed 	0x3fff0001,acc1
+	test_accg_immed 	0,accg2
+	test_acc_limmed	0x4000,0x0000,acc2
+	test_accg_immed 	0,accg3
+	test_acc_limmed	0x4000,0x0000,acc3
+
+	set_fr_iimmed  	0xffff,0xffff,fr8	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr10
+	set_fr_iimmed  	0xffff,0xffff,fr9	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc5,0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0xfffe,0x0001,acc0
+	test_accg_immed 	0,accg1
+	test_acc_limmed	0xfffe,0x0001,acc1
+	test_accg_immed 	0,accg2
+	test_acc_limmed	0xfffe,0x0001,acc2
+	test_accg_immed 	0,accg3
+	test_acc_limmed	0xfffe,0x0001,acc3
+
+	set_accg_immed 	0x00000011,accg0
+	set_acc_immed 	0x11111111,acc0
+	set_accg_immed 	0x00000022,accg1
+	set_acc_immed 	0x22222222,acc1
+	set_accg_immed 	0x00000033,accg2
+	set_acc_immed 	0x33333333,acc2
+	set_accg_immed 	0x00000044,accg3
+	set_acc_immed 	0x44444444,acc3
+	set_fr_iimmed  	3,2,fr8		; multiply small numbers
+	set_fr_iimmed  	2,3,fr10
+	set_fr_iimmed  	1,2,fr9		; multiply by 1
+	set_fr_iimmed  	2,1,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc0,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0,2,fr8		; multiply by 0
+	set_fr_iimmed  	2,0,fr10
+	set_fr_iimmed 	0x3fff,2,fr9	; 15 bit result
+	set_fr_iimmed  	2,0x3fff,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc0,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0x4000,2,fr8	; 16 bit result
+	set_fr_iimmed  	2,0x4000,fr10
+	set_fr_iimmed  	0x8000,2,fr9	; 17 bit result
+	set_fr_iimmed  	2,0x8000,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc4,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0x7fff,0x7fff,fr8	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr10
+	set_fr_iimmed  	0x8000,0x8000,fr9	; max positive result
+	set_fr_iimmed  	0x8000,0x8000,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc4,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0xffff,0xffff,fr8	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr10
+	set_fr_iimmed  	0xffff,0xffff,fr9	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc4,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_accg_immed 	0x00000011,accg0
+	set_acc_immed 	0x11111111,acc0
+	set_accg_immed 	0x00000022,accg1
+	set_acc_immed 	0x22222222,acc1
+	set_accg_immed 	0x00000033,accg2
+	set_acc_immed 	0x33333333,acc2
+	set_accg_immed 	0x00000044,accg3
+	set_acc_immed 	0x44444444,acc3
+	set_fr_iimmed  	3,2,fr8		; multiply small numbers
+	set_fr_iimmed  	2,3,fr10
+	set_fr_iimmed  	1,2,fr9		; multiply by 1
+	set_fr_iimmed  	2,1,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc1,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0,2,fr8		; multiply by 0
+	set_fr_iimmed  	2,0,fr10
+	set_fr_iimmed 	0x3fff,2,fr9	; 15 bit result
+	set_fr_iimmed  	2,0x3fff,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc1,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0x4000,2,fr8	; 16 bit result
+	set_fr_iimmed  	2,0x4000,fr10
+	set_fr_iimmed  	0x8000,2,fr9	; 17 bit result
+	set_fr_iimmed  	2,0x8000,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc5,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0x7fff,0x7fff,fr8	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr10
+	set_fr_iimmed  	0x8000,0x8000,fr9	; max positive result
+	set_fr_iimmed  	0x8000,0x8000,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc5,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0xffff,0xffff,fr8	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr10
+	set_fr_iimmed  	0xffff,0xffff,fr9	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc5,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_accg_immed 	0x00000011,accg0
+	set_acc_immed 	0x11111111,acc0
+	set_accg_immed 	0x00000022,accg1
+	set_acc_immed 	0x22222222,acc1
+	set_accg_immed 	0x00000033,accg2
+	set_acc_immed 	0x33333333,acc2
+	set_accg_immed 	0x00000044,accg3
+	set_acc_immed 	0x44444444,acc3
+	set_fr_iimmed  	3,2,fr8		; multiply small numbers
+	set_fr_iimmed  	2,3,fr10
+	set_fr_iimmed  	1,2,fr9		; multiply by 1
+	set_fr_iimmed  	2,1,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc2,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0,2,fr8		; multiply by 0
+	set_fr_iimmed  	2,0,fr10
+	set_fr_iimmed 	0x3fff,2,fr9	; 15 bit result
+	set_fr_iimmed  	2,0x3fff,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc2,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0x4000,2,fr8	; 16 bit result
+	set_fr_iimmed  	2,0x4000,fr10
+	set_fr_iimmed  	0x8000,2,fr9	; 17 bit result
+	set_fr_iimmed  	2,0x8000,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc6,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0x7fff,0x7fff,fr8	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr10
+	set_fr_iimmed  	0x8000,0x8000,fr9	; max positive result
+	set_fr_iimmed  	0x8000,0x8000,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc6,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0xffff,0xffff,fr8	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr10
+	set_fr_iimmed  	0xffff,0xffff,fr9	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc6,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+;
+	set_accg_immed 	0x00000011,accg0
+	set_acc_immed 	0x11111111,acc0
+	set_accg_immed 	0x00000022,accg1
+	set_acc_immed 	0x22222222,acc1
+	set_accg_immed 	0x00000033,accg2
+	set_acc_immed 	0x33333333,acc2
+	set_accg_immed 	0x00000044,accg3
+	set_acc_immed 	0x44444444,acc3
+	set_fr_iimmed  	3,2,fr8		; multiply small numbers
+	set_fr_iimmed  	2,3,fr10
+	set_fr_iimmed  	1,2,fr9		; multiply by 1
+	set_fr_iimmed  	2,1,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc3,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0,2,fr8		; multiply by 0
+	set_fr_iimmed  	2,0,fr10
+	set_fr_iimmed 	0x3fff,2,fr9	; 15 bit result
+	set_fr_iimmed  	2,0x3fff,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc3,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0x4000,2,fr8	; 16 bit result
+	set_fr_iimmed  	2,0x4000,fr10
+	set_fr_iimmed  	0x8000,2,fr9	; 17 bit result
+	set_fr_iimmed  	2,0x8000,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc7,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0x7fff,0x7fff,fr8	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr10
+	set_fr_iimmed  	0x8000,0x8000,fr9	; max positive result
+	set_fr_iimmed  	0x8000,0x8000,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc7,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	set_fr_iimmed  	0xffff,0xffff,fr8	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr10
+	set_fr_iimmed  	0xffff,0xffff,fr9	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr11
+	cmqmulhu      	fr8,fr10,acc0,cc7,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+	test_accg_immed 	0x00000022,accg1
+	test_acc_immed 	0x22222222,acc1
+	test_accg_immed 	0x00000033,accg2
+	test_acc_immed 	0x33333333,acc2
+	test_accg_immed 	0x00000044,accg3
+	test_acc_immed 	0x44444444,acc3
+
+	pass

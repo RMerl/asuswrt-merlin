@@ -1,0 +1,33 @@
+		SIM Maintainers
+
+The simulator is part of the GDB project, so see the file
+gdb/MAINTAINERS for general information about maintaining these files.
+
+If you are considering contributing a patch, please see the file
+gdb/CONTRIBUTE.  Patches to these files should be posted to:
+gdb-patches@sources.redhat.com 
+	
+	Maintainers for particular sims:
+
+arm	        Nick Clifton <nickc@redhat.com>
+frv		Dave Brolley <brolley@redhat.com>
+igen		(igen simulators)
+ppc		Andrew Cagney <ac131313@redhat.com>
+m68hc11		Stephane Carrez <stcarrez@nerim.fr>
+mips		Thiemo Seufer <ths@networkno.de>
+sh		(global maintainers)
+sh64		Dave Brolley <brolley@redhat.com>
+m32c		DJ Delorie <dj@redhat.com>
+common		Ben Elliston <bje@gnu.org>
+common		Frank Ch. Eigler <fche@redhat.com>
+*		(target, then global maintainers)
+
+	Authorized committers for particular sims:
+v850		DJ Delorie <dj@redhat.com>
+*		Hans-Peter Nilsson <hp@axis.com>
+
+	Past sim maintainers:
+
+mips		Andrew Cagney <ac131313@redhat.com>
+mips		Chris Demetriou <cgd@netbsd.org>
+ppc		Geoff Keating <geoffk@geoffk.org>

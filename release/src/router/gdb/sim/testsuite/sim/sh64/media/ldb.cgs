@@ -1,0 +1,21 @@
+# sh testcase for ld.b $rm, $disp10, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+init:
+	movi 20, r3
+	shlli r3, 8, r3
+
+ldb1:
+	ld.b r3, 0, r0
+ldb2:
+	ld.b r3, -1, r0
+ldb3:
+	ld.b r3, 1, r0
+
+okay:
+	pass

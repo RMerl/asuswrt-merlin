@@ -9,7 +9,7 @@
  *
  *   The license which is distributed with this software in the file COPYRIGHT
  *   applies to this software. If your distribution is missing this file, you
- *   may request it from <pekkas@netcore.fi>.
+ *   may request it from <reubenhwk@gmail.com>.
  *
  */
 
@@ -21,7 +21,7 @@
 #include "defaults.h"
 #include "log.h"
 
-#define CONTACT_EMAIL	"Pekka Savola <pekkas@netcore.fi>"
+#define CONTACT_EMAIL	"Reuben Hawkins <reubenhwk@gmail.com>"
 
 extern int sock;
 
@@ -221,6 +221,12 @@ int open_icmpv6_socket(void);
 /* send.c */
 int send_ra(struct Interface *iface, struct in6_addr *dest);
 int send_ra_forall(struct Interface *iface, struct in6_addr *dest);
+int really_send(
+		struct in6_addr const *dest,
+		unsigned int if_index,
+		struct in6_addr if_addr,
+		unsigned char * buff,
+		size_t len);
 
 /* process.c */
 void process(struct Interface *, unsigned char *, int,

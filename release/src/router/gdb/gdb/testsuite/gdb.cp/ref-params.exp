@@ -1,0 +1,80 @@
+# Tests for reference parameters of types and their subtypes in GDB.
+# Copyright 2006, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# written by Paul N. Hilfinger (Hilfinger@adacore.com)
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+if { [skip_cplus_tests] } { continue }
+
+set testfile "ref-params"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     untested ref-params.exp
+     return -1
+}
+
+gdb_exit
+
+proc gdb_start_again { text } {
+    global srcdir
+    global subdir
+    global binfile
+    global srcfile
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_load ${binfile}
+
+    runto ${srcfile}:[gdb_get_line_number $text]
+}
+
+gdb_start_again "marker1 here"
+gdb_test "print Q" ".*id = 42.*" "print value of a Child in main"
+gdb_test "print f1(Q)" ".* = 42.*" "print value of f1 on Child in main"
+gdb_test "print f2(Q)" ".* = 42.*" "print value of f2 on Child in main"
+
+gdb_start_again "marker1 here"
+gdb_test "print f1(QR)" ".* = 42.*" "print value of f1 on (Child&) in main"
+
+gdb_start_again "marker1 here"
+gdb_test "print f2(QR)" ".* = 42.*" "print value of f2 on (Child&) in main"
+
+gdb_start_again "marker2 here"
+gdb_test "print C" ".*id = 42.*" "print value of Child& in f2"
+gdb_test "print f1(C)" ".* = 42.*" "print value of f1 on Child& in f2"
+
+gdb_start_again "marker3 here"
+gdb_test "print R" ".*id = 42.*" "print value of Parent& in f1"
+
+gdb_start_again "breakpoint MQ here"
+gdb_test "print f1(MQ)" ".* = 53"
+gdb_test "print mf1(MQ)" ".* = 106"
+gdb_test "print mf2(MQ)" ".* = 106"
+gdb_test "print f1(MQR)" ".* = 53"
+gdb_test "print mf1(MQR)" ".* = 106"
+gdb_test "print mf2(MQR)" ".* = 106"

@@ -1,0 +1,78 @@
+# Copyright 2004, 2007 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if $tracelevel {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "cursal"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if {[gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != ""} {
+    untested "Couldn't compile $srcfile"
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_file_cmd ${binfile}
+gdb_test "set listsize 1" \
+    ".*"
+
+# initial sal should be first statement in main
+gdb_test "list" \
+    "v0 = 0;" \
+    "list before run"
+
+gdb_load ${binfile}
+if {! [runto_main]} {
+    return -1
+}
+
+gdb_test "list" \
+    "v0 = 0;" \
+    "list in main"
+
+if {! [runto "func2"]} {
+    return -1
+}
+
+gdb_test "list" \
+    "v2 = 2;" \
+    "list in func2"
+
+# make sure backtrace doesn't change current source location.
+gdb_test "backtrace" \
+    ".*"
+gdb_test "list -1" \
+    "v2 = 2;" \
+    "list after backtrace"
+
+# check the window
+gdb_test "set listsize 3" \
+    ".*"
+if {! [runto_main]} {
+    return -1
+}
+gdb_test "list" \
+    "func1 \\(\\);" \
+    "list size 3"
+
+return 0

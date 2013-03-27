@@ -1,0 +1,29 @@
+# sh testcase for jmp @$rn
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global jmp
+jmp:
+	# Load 0x1010 into r0.
+	mov #1, r0
+	shll8 r0
+	shll2 r0
+	shll2 r0
+	add #16, r0
+	jmp @r0
+slot:
+	nop
+bad:
+	fail
+okay:
+	pass
+alsobad:
+	fail
+	fail
+	fail
+

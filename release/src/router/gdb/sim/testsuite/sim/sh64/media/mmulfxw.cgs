@@ -1,0 +1,14 @@
+# sh testcase for mmulfx.w $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global mmulfxw
+mmulfxw:
+	mmulfx.w r0, r0, r0
+
+	pass

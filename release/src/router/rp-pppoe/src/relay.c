@@ -390,8 +390,8 @@ addInterface(char const *ifname,
     strncpy(i->name, ifname, IFNAMSIZ);
     i->name[IFNAMSIZ] = 0;
 
-    i->discoverySock = openInterface(ifname, Eth_PPPOE_Discovery, i->mac);
-    i->sessionSock   = openInterface(ifname, Eth_PPPOE_Session,   NULL);
+    i->discoverySock = openInterface(ifname, Eth_PPPOE_Discovery, i->mac, NULL);
+    i->sessionSock   = openInterface(ifname, Eth_PPPOE_Session,   NULL, NULL);
     i->clientOK = clientOK;
     i->acOK = acOK;
 }
@@ -955,10 +955,9 @@ relayHandlePADT(PPPoEInterface const *iface,
     SessionHash *sh;
     PPPoESession *ses;
 
-    /* Ignore PADT packets whose destination address isn't ours */
-    if (!(packet->ethHdr.h_dest[0] & 0xfe) &&
-         memcmp(packet->ethHdr.h_dest, iface->mac, ETH_ALEN)) {
-        return;
+    /* Destination address must be interface's MAC address */
+    if (memcmp(packet->ethHdr.h_dest, iface->mac, ETH_ALEN)) {
+	return;
     }
 
     sh = findSession(packet->ethHdr.h_source, packet->session);
@@ -1108,9 +1107,9 @@ relayHandlePADO(PPPoEInterface const *iface,
     acIndex = iface - Interfaces;
 
     /* Source address must be unicast */
-    if (NOT_UNICAST(packet->ethHdr.h_source)) {
+    if (BROADCAST(packet->ethHdr.h_source)) {
 	syslog(LOG_ERR,
-	       "PADO packet from %02x:%02x:%02x:%02x:%02x:%02x on interface %s not from a unicast address",
+	       "PADO packet from %02x:%02x:%02x:%02x:%02x:%02x on interface %s from broadcast address",
 	       packet->ethHdr.h_source[0],
 	       packet->ethHdr.h_source[1],
 	       packet->ethHdr.h_source[2],
@@ -1321,7 +1320,6 @@ relayHandlePADS(PPPoEInterface const *iface,
     PPPoETag tag;
     unsigned char *loc;
     int ifIndex;
-    int acIndex;
     PPPoESession *ses = NULL;
     SessionHash *sh;
 
@@ -1338,8 +1336,6 @@ relayHandlePADS(PPPoEInterface const *iface,
 	       iface->name);
 	return;
     }
-
-    acIndex = iface - Interfaces;
 
     /* Source address must be unicast */
     if (NOT_UNICAST(packet->ethHdr.h_source)) {

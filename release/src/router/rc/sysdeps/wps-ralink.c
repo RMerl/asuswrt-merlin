@@ -78,7 +78,9 @@ int is_wps_stopped(void)
 
 	switch (status) {
 		case 1:		/* Idle */
-			if (count < 5) ret = 0;
+			if (strstr("start_wps_method", nvram_safe_get("rc_service")) != NULL)
+				count = 0;
+			if (count < 15) ret = 0; // 15 would delay 750ms to avoid error since WPS not start yet.
 			break;
 		case 34:	/* Configured */
 			dbG("\nWPS Configured\n");

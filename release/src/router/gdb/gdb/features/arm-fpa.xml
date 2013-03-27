@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!-- Copyright (C) 2007 Free Software Foundation, Inc.
+
+     Copying and distribution of this file, with or without modification,
+     are permitted in any medium without royalty provided the copyright
+     notice and this notice are preserved.  -->
+
+<!DOCTYPE feature SYSTEM "gdb-target.dtd">
+<feature name="org.gnu.gdb.arm.fpa">
+  <!-- f0's regnum is set explicitly, because the FPA registers
+       historically were placed between the PC and the CPSR in the "g"
+       packet - in the middle of org.gnu.gdb.arm.core.  -->
+  <reg name="f0" bitsize="96" type="arm_fpa_ext" regnum="16"/>
+  <reg name="f1" bitsize="96" type="arm_fpa_ext"/>
+  <reg name="f2" bitsize="96" type="arm_fpa_ext"/>
+  <reg name="f3" bitsize="96" type="arm_fpa_ext"/>
+  <reg name="f4" bitsize="96" type="arm_fpa_ext"/>
+  <reg name="f5" bitsize="96" type="arm_fpa_ext"/>
+  <reg name="f6" bitsize="96" type="arm_fpa_ext"/>
+  <reg name="f7" bitsize="96" type="arm_fpa_ext"/>
+
+  <reg name="fps" bitsize="32"/>
+</feature>

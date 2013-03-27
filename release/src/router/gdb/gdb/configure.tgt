@@ -1,0 +1,258 @@
+# Mappings from configurations to GDB target definitions.  This is
+# invoked from the autoconf generated configure script.
+
+# This file sets the following shell variables:
+#  gdb_target_cpu	generic name of CPU
+#  gdb_target		name of GDB target definition to use
+
+case $target in
+ d10v-*-* | \
+ hppa*-*-hiux* | \
+ i[34567]86-ncr-* | \
+ i[34567]86-*-lynxos* | \
+ m68*-cisco*-* | \
+ m68*-tandem-* | \
+ m68*-*-os68k* | \
+ mips*-*-pe | \
+ rs6000-*-lynxos* | \
+ sh*-*-pe | \
+ null)
+    echo "*** Configuration $target is obsolete." >&2
+    echo "*** Support has been REMOVED." >&2
+    exit 1
+    ;;
+esac
+
+# Map target cpu into the config cpu subdirectory name.
+# The default is $target_cpu.
+
+case "${target_cpu}" in
+
+alpha*)			gdb_target_cpu=alpha ;;
+am33_2.0*)              gdb_target_cpu=mn10300 ;;
+arm*)			gdb_target_cpu=arm ;;
+avr*)			gdb_target_cpu=avr ;;
+hppa*)			gdb_target_cpu=pa ;;
+i[34567]86*)		gdb_target_cpu=i386 ;;
+m68hc11*|m6811*)	gdb_target_cpu=m68hc11 ;;
+m68*)			gdb_target_cpu=m68k ;;
+m88*)			gdb_target_cpu=m88k ;;
+mips*)			gdb_target_cpu=mips ;;
+powerpc* | rs6000)	gdb_target_cpu=powerpc ;;
+sparc*)			gdb_target_cpu=sparc ;;
+thumb*)			gdb_target_cpu=arm ;;
+s390*)			gdb_target_cpu=s390 ;;
+score*)			gdb_target_cpu=score ;;
+sh*)			gdb_target_cpu=sh ;;
+spu*)			gdb_target_cpu=spu ;;
+strongarm*)		gdb_target_cpu=arm ;;
+xscale*)		gdb_target_cpu=arm ;;
+x86_64*)		gdb_target_cpu=i386 ;;
+xtensa*)		gdb_target_cpu=xtensa ;;
+*)			gdb_target_cpu=$target_cpu ;;
+
+esac
+
+# map target info into gdb names.
+
+case "${target}" in
+
+x86_64-*-freebsd* | x86_64-*-kfreebsd*-gnu)
+			gdb_target=fbsd64 ;;
+*-*-freebsd* | *-*-kfreebsd*-gnu)
+			gdb_target=fbsd	;;
+
+alpha*-*-osf*)		gdb_target=alpha-osf1 ;;
+alpha*-*-linux*)	gdb_target=alpha-linux ;;
+alpha*-*-netbsd* | alpha*-*-knetbsd*-gnu)
+			gdb_target=nbsd ;;
+alpha*-*-openbsd*)	gdb_target=obsd ;;
+alpha*-*-*)		gdb_target=alpha ;;
+
+# mn10300 / am33 liunux
+am33_2.0*-*-linux*)	gdb_target=linux ;;
+
+arm*-wince-pe | arm*-*-mingw32ce*)
+			gdb_target=wince
+			build_gdbserver=yes
+			;;
+arm*-*-linux*)		gdb_target=linux
+			build_gdbserver=yes
+			;;
+arm*-*-netbsd* | arm*-*-knetbsd*-gnu)
+			gdb_target=nbsd ;;
+arm*-*-openbsd*)	gdb_target=obsd ;;
+arm*-*-* | thumb*-*-* | strongarm*-*-*)
+			gdb_target=embed
+			build_rdi_share=yes
+                        ;;
+xscale-*-*)		gdb_target=embed
+			build_rdi_share=yes
+                        ;;
+
+avr-*-*)		gdb_target=avr ;;
+
+cris*)                  gdb_target=cris ;;
+
+frv-*-*)		gdb_target=frv ;;
+
+h8300-*-*)		gdb_target=h8300 ;;
+
+hppa*64*-*-hpux11*)	gdb_target=hppa64 ;;
+hppa*-*-hpux*)		gdb_target=hppahpux ;;
+hppa*-*-linux*)		gdb_target=linux ;;
+hppa*-*-openbsd*)	gdb_target=obsd ;;
+hppa*-*-*)		gdb_target=hppa ;;
+
+i[34567]86-*-netbsd* | i[34567]86-*-knetbsd*-gnu)
+			gdb_target=nbsd ;;
+i[34567]86-*-openbsd*)	gdb_target=obsd ;;
+i[34567]86-*-nto*)	gdb_target=nto ;;
+i[34567]86-*-solaris2.1[0-9]*)	gdb_target=sol2-64 ;;
+i[34567]86-*-solaris*)	gdb_target=i386sol2 ;;
+i[34567]86-*-linux*)	gdb_target=linux
+			build_gdbserver=yes
+			;;
+i[34567]86-*-gnu*)	gdb_target=i386gnu ;;
+i[34567]86-*-cygwin*)	gdb_target=cygwin
+			build_gdbserver=yes
+			;;
+i[34567]86-*-mingw32*)	gdb_target=i386
+			build_gdbserver=yes
+			;;
+i[34567]86-*-*)		gdb_target=i386 ;;
+
+ia64-*-linux*)		gdb_target=linux
+			build_gdbserver=yes
+			;;
+ia64*-*-*)		gdb_target=ia64 ;;
+
+iq2000-*-*)		gdb_target=iq2000 ;;
+
+m32c-*-*)		gdb_target=m32c ;;
+
+m32r*-*-linux*)		gdb_target=linux
+			build_gdbserver=yes
+			;;
+m32r*-*-*)		gdb_target=m32r ;;
+
+m68hc11*-*-*|m6811*-*-*)	gdb_target=m68hc11 ;;
+
+m68*-*-aout*)		gdb_target=monitor ;;
+m68*-*-coff*)		gdb_target=monitor ;;
+m68*-*-elf*)		gdb_target=monitor ;;
+m68*-*-rtems*)		gdb_target=monitor ;;
+m68*-*-linux*)		gdb_target=linux
+			build_gdbserver=yes
+			;;
+m68*-*-netbsd* | m68*-*-knetbsd*-gnu)
+			gdb_target=nbsd ;;
+m68*-*-openbsd*)	gdb_target=obsd ;;
+m68*-*-uclinux*)	gdb_target=monitor ;;
+
+m88*-*-openbsd*)	gdb_target=obsd ;;
+
+mep-*-*)		gdb_target=mep ;;
+
+mips*-sgi-irix5*)	gdb_target=irix5 ;;
+mips*-sgi-irix6*)	gdb_target=irix6 ;;
+mips*-*-linux*)		gdb_target=linux
+			build_gdbserver=yes
+			;;
+mips*-*-netbsd* | mips*-*-knetbsd*-gnu)
+			gdb_target=nbsd ;;
+mips64*-*-openbsd*)	gdb_target=obsd64 ;;
+mips*-*-*)		gdb_target=embed ;;
+
+mn10300-*-*)		gdb_target=mn10300 ;;
+
+mt-*-*)			gdb_target=mt ;;
+
+powerpc-*-netbsd* | powerpc-*-knetbsd*-gnu)
+			gdb_target=nbsd ;;
+powerpc-*-openbsd*)	gdb_target=obsd ;;
+powerpc-*-aix* | rs6000-*-*)
+			gdb_target=aix ;;
+powerpc-*-linux*)	gdb_target=linux
+			build_gdbserver=yes
+			;;
+powerpc64-*-linux*)	gdb_target=linux
+			build_gdbserver=yes
+			;;
+powerpc*-*-*)		if test -f ../sim/ppc/Makefile; then
+			  gdb_target=ppc-sim
+			else
+			  gdb_target=ppc-eabi
+			fi ;;
+
+s390*-*-*)		gdb_target=s390
+			build_gdbserver=yes
+			;;
+
+score-*-*)		gdb_target=embed ;;
+sh-*-coff*)		gdb_target=embed ;;
+sh-*-elf*)		gdb_target=embed ;;
+# FIXME should that be sh*-*-linux*, perhaps?
+sh-*-linux*)		gdb_target=linux
+			build_gdbserver=yes
+			;;
+sh*-*-netbsdelf* | sh*-*-knetbsd*-gnu)
+			gdb_target=nbsd ;;
+sh*-*-openbsd*)		gdb_target=obsd ;;
+sh64-*-elf*)		gdb_target=sh64 ;;
+sh*)			gdb_target=embed ;;
+
+sparc-*-linux*)		gdb_target=linux ;;
+sparc64-*-linux*)	gdb_target=linux64 ;;
+sparc-*-netbsd* | sparc-*-knetbsd*-gnu)
+			gdb_target=nbsd ;;
+sparc64-*-netbsd* | sparc64-*-knetbsd*-gnu)
+			gdb_target=nbsd64 ;;
+sparc-*-openbsd*)	gdb_target=obsd ;;
+sparc64-*-openbsd*)	gdb_target=obsd64 ;;
+sparc-*-solaris2.[0-6] | sparc-*-solaris2.[0-6].*)
+			gdb_target=sol2
+			;;
+sparc-*-solaris2* | sparcv9-*-solaris2* | sparc64-*-solaris2*)
+			gdb_target=sol2-64
+			;;
+sparc-*-rtems*)		gdb_target=embed ;;
+sparc-*-*)		gdb_target=sparc ;;
+sparc64-*-*)		gdb_target=sparc64 ;;
+
+spu*-*-*)		gdb_target=spu
+			build_gdbserver=yes
+			;;
+
+xstormy16-*-*)          gdb_target=xstormy16 ;;
+
+v850*-*-elf)		gdb_target=v850 ;;
+
+vax-*-netbsd* | vax-*-knetbsd*-gnu)
+			gdb_target=nbsd ;;
+vax-*-openbsd*)		gdb_target=obsd ;;
+vax-*-*)		gdb_target=vax ;;
+
+x86_64-*-linux*)	gdb_target=linux64
+			build_gdbserver=yes
+			;;
+x86_64-*-netbsd* | x86_64-*-knetbsd*-gnu)
+			gdb_target=nbsd64 ;;
+x86_64-*-openbsd*)	gdb_target=obsd64 ;;
+
+xtensa*)		gdb_target=xtensa ;;
+
+esac
+
+# map target onto default OS ABI
+
+case "${target}" in
+*-*-freebsd*)	gdb_osabi=GDB_OSABI_FREEBSD_ELF ;;
+*-*-linux*)	gdb_osabi=GDB_OSABI_LINUX ;;
+*-*-nto*)	gdb_osabi=GDB_OSABI_QNXNTO ;;
+m68*-*-openbsd* | m88*-*-openbsd* | vax-*-openbsd*) ;;
+*-*-openbsd*)	gdb_osabi=GDB_OSABI_OPENBSD_ELF ;;
+*-*-solaris*)	gdb_osabi=GDB_OSABI_SOLARIS ;;
+*-*-*-gnu*)	;; # prevent non-GNU kernels to match the Hurd rule below
+*-*-gnu*)	gdb_osabi=GDB_OSABI_HURD ;;
+esac

@@ -1,0 +1,12 @@
+# arm testcase for sub $rd,$rs,$rn
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global sub
+sub:
+	sub r0,r0,r0
+
+	pass

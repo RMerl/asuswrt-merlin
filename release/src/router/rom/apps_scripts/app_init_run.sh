@@ -40,3 +40,5 @@ for f in $APPS_RUN_DIR/S*; do
 	fi
 done
 
+# reduce dm2_transmission-daemon's priority.
+renice 20 `ps|grep dm2_trans|grep -v grep|awk '{print $1}'`

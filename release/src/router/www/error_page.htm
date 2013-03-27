@@ -115,7 +115,7 @@
 	margin:-117px 0px 0px 410px;
 }
 .er_title{
-	color:#4b6688;
+	color:#FC0;
 	background-color:#000000;
 	font-weight:bolder;
 	width:450px;
@@ -320,7 +320,7 @@ function initial(){
 				html_code += "<ul>\n";
 				html_code += "<li><#APSurvey_action_search_again_hint2#>";
 				html_code += "<span style=\"text-align: right;\">\n";
-				html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'http://www.asusnetwork.net/QIS_wizard.htm?flag=sitesurvey\';\" value=\"Rescan\">";
+				html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'http://router.asus.com/QIS_wizard.htm?flag=sitesurvey\';\" value=\"Rescan\">";
 				html_code += "</span>\n";
 				html_code += "</li>\n";
 
@@ -389,7 +389,10 @@ function check_system_ready(){
 		$("#proceeding_img_text")[0].innerHTML = "<#Main_alert_proceeding_desc3#>";
 		$("#proceeding_action")[0].innerHTML = "<#APSurvey_action_renew_success#>";
 
-		setTimeout("parent.location = \"http://"+new_lan_ip+"/QIS_wizard.htm?flag=detect\"", 2*1000);
+		if('<% nvram_get("w_Setting"); %>' == '0' || '<% nvram_get("http_passwd"); %>' == 'admin')
+			setTimeout("parent.location = \"http://"+new_lan_ip+"/QIS_wizard.htm?flag=welcome\"", 2*1000);
+		else
+			setTimeout("parent.location = \"http://"+new_lan_ip+"/QIS_wizard.htm?flag=detect\"", 2*1000);
 	}
 }
 

@@ -1,0 +1,5 @@
+<target>
+  <feature name="single">
+    <reg name="one" bitsize="32"/>
+  </feature>
+</target>

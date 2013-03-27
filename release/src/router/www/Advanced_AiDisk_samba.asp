@@ -526,7 +526,7 @@ function onEvent(){
 		
 		$("modifyAccountBtn").onclick = function(){
 				if(!selectedAccount){
-					alert("No chosen account!");
+					alert("<#AiDisk_unselected_account#>");
 					return;
 				}
 				
@@ -552,7 +552,7 @@ function onEvent(){
 		
 		$("deleteAccountBtn").onclick = function(){
 				if(!selectedAccount){
-					alert("No chosen account!");
+					alert("<#AiDisk_unselected_account#>");
 					return;
 				}
 				
@@ -579,11 +579,11 @@ function onEvent(){
 		
 		$("createFolderBtn").onclick = function(){
 				if(selectedDiskOrder < 0){
-					alert("No chosen Disk for creating the shared-folder!");
+					alert("<#AiDisk_unselected_disk#>");
 					return;
 				}
 				if(selectedPoolOrder < 0){
-					alert("No chosen Partition for creating the shared-folder!");
+					alert("<#AiDisk_unselected_partition#>");
 					return;
 				}
 				
@@ -610,7 +610,7 @@ function onEvent(){
 		
 		$("deleteFolderBtn").onclick = function(){
 				if(selectedFolderOrder < 0){
-					alert("No chosen folder!");
+					alert("<#AiDisk_unselected_folder#>");
 					return;
 				}
 				
@@ -625,7 +625,7 @@ function onEvent(){
 		
 		$("modifyFolderBtn").onclick = function(){
 				if(selectedFolderOrder < 0){
-					alert("No chosen folder!");
+					alert("<#AiDisk_unselected_folder#>");
 					return;
 				}
 				

@@ -1,0 +1,27 @@
+0x00	default
+0x10	lowdelay
+0x08	throughput
+0x04	reliability
+# This value overlap with ECT, do not use it!
+0x02	mincost
+# These values seems do not want to die, Cisco likes them by a strange reason.
+0x20	priority
+0x40	immediate
+0x60	flash
+0x80	flash-override
+0xa0	critical
+0xc0	internet
+0xe0	network
+# Newer RFC2597 values
+0x28	AF11
+0x30	AF12
+0x38	AF13
+0x48	AF21
+0x50	AF22
+0x58	AF23
+0x68	AF31
+0x70	AF32
+0x78	AF33
+0x88	AF41
+0x90	AF42
+0x98	AF43

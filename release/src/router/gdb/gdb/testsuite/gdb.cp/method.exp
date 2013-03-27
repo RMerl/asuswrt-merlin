@@ -1,0 +1,195 @@
+# Copyright 1998, 1999, 2001, 2002, 2003, 2004, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# tests for misc. C++ method stuff
+# Written by Satish Pai <pai@apollo.hp.com> 1997-07-08
+
+# This file is part of the gdb testsuite
+
+# This tests:
+# 0. method arguments are correct
+# 1. access to class data members inside method scopes
+# 2. correct param types for methods in ptype.
+# 3. const and volatile methods
+
+# (#0 and #1 above relate to an HP specific problem -- GDB must correctly
+# integrate FPARAM symbols in HP debug info into the local var list
+# for the function or method's block.)
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+if { [skip_cplus_tests] } { continue }
+
+set testfile "method"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     untested method.exp
+     return -1
+}
+
+if [get_compiler_info $binfile "c++"] {
+  return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+
+#
+# set it up at a breakpoint so we can play with the variable values
+#
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+gdb_test "break A::foo" \
+  "Breakpoint \[0-9\]* at $hex.*file .*method.cc, line 38\\."
+
+gdb_test "continue" \
+  "Continuing\\.\r\n\r\nBreakpoint \[0-9\]*, A::foo(\\(int\\)|) \\(this=$hex, arg=13\\) at .*method\\.cc:38\r\n38\[\t \]*x \\+= arg;" \
+  "continue to A::foo"
+
+# Check ability to access this-relative stuff.
+
+gdb_test "print x" \
+   "\\$\[0-9\]* = 20" \
+   "print x in A::foo"
+
+# Check access to this pointer       
+
+gdb_test "print this" \
+   "\\$\[0-9\]* = \\((class |)A *\\* *(const|)\\) $hex" \
+   "print this in A::foo"
+
+# Now do everything over again for A::bar, because sometimes processing one method
+# (the first one) is fine, but the second one's debug info gets munged beyond recognition.
+
+gdb_test "break A::bar" \
+  "Breakpoint \[0-9\]* at $hex.*file .*method.cc, line 44\\."
+
+gdb_test "continue" \
+  "Continuing\\.\r\n\r\nBreakpoint \[0-9\]*, A::bar(|\\(int\\) const| const) \\(this=$hex, arg=15\\) at .*method\\.cc:44\r\n44\[\t \]*return arg \\+ 2 \\* x;" \
+  "continue to A::bar"
+
+# Check ability to access this-relative stuff.
+
+gdb_test "print x" \
+  "\\$\[0-9\]* = 33" \
+  "print x in A::bar"
+
+# Check access to this pointer       
+
+get_debug_format
+
+send_gdb "print this\n"
+gdb_expect {
+  -re "\\$\[0-9\]* = \\(const (class |)A *\\* *(const|)\\) $hex\r\n$gdb_prompt $" {
+    pass "print this in A::bar"
+  }
+  -re "\\$\[0-9\]* = \\((class |)A *\\* *(const|)\\) $hex\r\n$gdb_prompt $" {
+    # gcc versions up to 3.0.4 with -gstabs+ do not emit "const" indicators,
+    # so the output is "A *".  It should be "const A *" or "const A * const".
+    setup_xfail_format "stabs"
+    fail "print this in A::bar (missing const)"
+  }
+  -re "\\$\[0-9\]* = \\(const (class |)\{\\.\\.\\.\} *\\* *(const|)\\) $hex\r\n$gdb_prompt $" {
+    # gcc versions gcc-3_1-branch%20020404 and HEAD%20020404 with -gstabs+
+    # produce good stabs, but gdb prints "const class {...} *" const.
+    # This is PR gdb/277.
+    # setup_kfail "gdb/277"
+    fail "print this in A::bar (gdb/277)"
+  }
+  -re ".*$gdb_prompt $" { fail "print this in A::bar" }
+  timeout { fail "(timeout) print this in A::bar" }
+}
+
+# Check again with funk::getFunky (this is the original test case
+# for CHFts23426); sometimes having a constructor with no arguments
+# will nuke the debug info read in for other methods in the class.
+
+gdb_test "break 21" \
+  "Breakpoint \[0-9\]* at $hex.*file .*method.cc, line 21\\."
+
+gdb_test "continue" \
+  "Continuing\\.\r\n\r\nBreakpoint \[0-9\]*, funk::getFunky(\\(int, int\\)|) \\(this=$hex, a=1, b=2\\) at .*method\\.cc:21\r\n21\[\t \]*data_ = res;" \
+  "continue to 21"
+
+# Check ability to access this-relative stuff.
+
+gdb_test "print data_" \
+  "\\$\[0-9\]* = 33" \
+  "print data_ in funk::getFunky"
+
+# Check access to this pointer       
+
+gdb_test "print this" \
+  "\\$\[0-9\]* = \\((class |)funk *\\* *(const|)\\) $hex" \
+  "print this in funk::getFunky"
+
+# Check access to local variable
+
+gdb_test "print res" \
+  "\\$\[0-9\]* = -30" \
+   "print res in funk::getFunky"
+
+# Check ptype of class -- should show const/volatile methods
+
+send_gdb "ptype A\n"
+gdb_expect {
+   -re "type = class A \{\r\n\[ \]*public:\r\n\[ \]*int x;\r\n\[ \]*int y;\r\n\r\n\[ \]*int foo\\(int\\);\r\n\[ \]*int bar\\(int\\) const;\r\n\[ \]*int baz\\(int, char\\) volatile;\r\n\[ \]*int qux\\(int, float\\) (const volatile|volatile const);\r\n\}\r\n$gdb_prompt $" {
+      pass "ptype A"
+   }
+   -re "type = class A \{\r\n\[ \]*public:\r\n\[ \]*int x;\r\n\[ \]*int y;\r\n\r\n\[ \]*A & operator=\\(A const ?&\\);\r\n\[ \]*A\\(A const ?&\\);\r\n\[ \]*A\\((void|)\\);\r\n\[ \]*int foo\\(int\\);\r\n\[ \]*int bar\\(int\\) const;\r\n\[ \]*int baz\\(int, char\\) volatile;\r\n\[ \]*int qux\\(int, float\\) (const volatile|volatile const);\r\n\}\r\n$gdb_prompt $" {
+      pass "ptype A"
+   }
+   -re "type = class A \{\r\n\[ \]*public:\r\n\[ \]*int x;\r\n\[ \]*int y;\r\n\r\n\[ \]*int foo\\(int\\);\r\n\[ \]*int bar\\(int\\) const;\r\n\[ \]*int baz\\(int, char\\) volatile;\r\n\[ \]*int qux\\(int, float\\) (const volatile|volatile const);\r\n\[ \]*A & operator=\\(A const ?&\\);\r\n\[ \]*A\\(A const ?&\\);\r\n\[ \]*A\\((void|)\\);\r\n\}\r\n$gdb_prompt $" {
+      pass "ptype A"
+   }
+   -re "type = class A \{\r\n\[ \]*public:\r\n\[ \]*int x;\r\n\[ \]*int y;\r\n\r\n\[ \]*int foo\\(int\\);\r\n\[ \]*int bar\\(int\\) const;\r\n\[ \]*int baz\\(int, char\\);\r\n\[ \]*int qux\\(int, float\\) const;\r\n\}\r\n$gdb_prompt $" {
+      pass "ptype A (HP aCC bug -- volatile not indicated)"
+   }
+   -re "type = class A \{\r\n\[ \]*public:\r\n\[ \]*int x;\r\n\[ \]*int y;\r\n\r\n\[ \]*int foo\\(int\\);\r\n\[ \]*int bar\\(int\\) const;\r\n\[ \]*int baz\\(int, char\\) volatile;\r\n\[ \]*int qux\\(int, float\\) const volatile;\r\n\}\r\n$gdb_prompt $" {
+      pass "ptype A"
+   }
+   -re ".*$gdb_prompt $" { fail "ptype A" }
+   timeout { fail "(timeout) ptype A" }
+}
+
+send_gdb "cont\n"
+gdb_expect {
+    -re "Continuing.\r\n\r\nProgram exited normally.*$gdb_prompt $" {
+	pass "finish program"
+    }
+    -re "Continuing.* EXIT code 0.*Program exited normally.*$gdb_prompt $" {
+	pass "finish program (exit wrapper)" 
+    }
+    -re ".*$gdb_prompt $" { fail "finish program" }
+    default:{               fail "finish program (timeout)" }
+}
+

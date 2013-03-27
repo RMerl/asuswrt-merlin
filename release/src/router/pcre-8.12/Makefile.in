@@ -447,7 +447,7 @@ dist_noinst_DATA = $(pcrecpp_html)
 
 # The Libtool libraries to install.  We'll add to this later.
 lib_LTLIBRARIES = libpcre.la libpcreposix.la $(am__append_4)
-check_SCRIPTS = 
+check_SCRIPTS =
 dist_noinst_SCRIPTS = RunTest RunGrepTest
 
 # Additional files to delete on 'make clean' and 'make maintainer-clean'.
@@ -659,7 +659,7 @@ config.h: stamp-h1
 stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
 	@rm -f stamp-h1
 	cd $(top_builddir) && $(SHELL) ./config.status config.h
-$(srcdir)/config.h.in:  $(am__configure_deps) 
+$(srcdir)/config.h.in:  $(am__configure_deps)
 	($(am__cd) $(top_srcdir) && $(AUTOHEADER))
 	rm -f stamp-h1
 	touch $@

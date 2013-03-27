@@ -1,0 +1,138 @@
+#   Copyright 1997, 1998, 1999, 2000, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+if $tracelevel then {
+	strace $tracelevel
+	}
+
+set prms_id 0
+set bug_id 0
+
+# are we on a target board
+if ![isnative] then {
+    return
+}
+
+# This test is presently only valid on HP-UX, since it requires
+# that we use HP-UX-specific compiler & linker options to build
+# the testcase.
+#
+if {! [istarget "hppa*-*-*hpux*"] } {
+    return
+}
+
+set libfile "solib"
+set testfile "so-indr-cl"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+# Build the shared libraries this test case needs.
+#
+#cd ${subdir}
+#remote_exec build "$CC -g +z -c ${libfile}1.c -o ${libfile}1.o"
+
+
+if {$hp_cc_compiler || $hp_aCC_compiler} {
+    set additional_flags "additional_flags=+z"
+} else {
+    set additional_flags "additional_flags=-fpic"
+}
+if {[gdb_compile "${srcdir}/${subdir}/${libfile}1.c" "${objdir}/${subdir}/${libfile}1.o" object [list debug $additional_flags]] != ""} {
+    perror "Couldn't compile ${libfile}1.c"
+    return -1
+}
+
+if [istarget "hppa*-hp-hpux*"] then {
+    remote_exec build "ld -b ${objdir}/${subdir}/${libfile}1.o -o ${objdir}/${subdir}/${libfile}1.sl"
+} else {
+    set additional_flags "additional_flags=-shared"
+    gdb_compile "${objdir}/${subdir}/${libfile}1.o" "${objdir}/${subdir}/${libfile}1.sl" executable [list debug $additional_flags]
+}
+
+# Build the test case
+#remote_exec build "$CC -Aa -g ${srcfile} ${libfile}1.sl -o ${binfile}"
+
+
+if {$hp_cc_compiler} {
+    set additional_flags "additional_flags=-Ae"
+} else {
+    set additional_flags ""
+}
+if {[gdb_compile "${srcdir}/${subdir}/${srcfile} ${objdir}/${subdir}/${libfile}1.sl" "${binfile}" executable [list debug $additional_flags]] != ""} {
+    perror "Couldn't build ${binfile}"
+    return -1
+}
+
+#cd ..
+
+# Start with a fresh gdb
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# This program implicitly loads SOM shared libraries.  We wish to test
+# whether a user can set breakpoints in a shlib before running the
+# program, where the program doesn't directly call the shlib, but
+# indirectly does via passing its address to another function.
+#
+# ??rehrauer: Currently, this doesn't work, but we do catch the case
+# and explicitly disallow it.  The reason it fails appears to be that
+#
+#  [1] gdb consults only the linker symbol table in this scenario, and
+#  [2] For a shlib function that is only indirectly called from the
+#      main a.out, there is in the linker symbol table a stub whose
+#      address is negative.  Possibly this is to be interpreted as
+#      an index into the DLT??
+#
+send_gdb "break solib_main\n"
+gdb_expect {
+  -re "Cannot break on solib_main without a running program.*$gdb_prompt $"\
+          {pass "break on indirect solib call before running"}
+  -re "Breakpoint.*deferred.*\\(\"solib_main\" was not found.*$gdb_prompt $"\
+	  {pass "break on indirect solib call before running 2"}
+  -re "$gdb_prompt $"\
+          {fail "break on indirect solib call before running"}
+  timeout {fail "(timeout) break on indirect solib call before running"}
+}
+
+# However, if we do run to the program's main, we then ought to be
+# able to set a breakpoint on the indirectly called function.  (Apparently,
+# once the inferior is running, gdb consults the debug info rather than
+# the linker symbol table, and is able to find the correct address.)
+#
+if ![runto_main] then { fail "indirect solib call tests suppressed" }
+
+# Verify that we can step over the first shlib call.
+#
+send_gdb "break solib_main\n"
+gdb_expect {
+  -re ".*\[Bb\]reakpoint \[0-9\]* at 0x\[0-9a-fA-F\]*: file.*${libfile}1.c.*$gdb_prompt $"\
+          {pass "break on indirect solib call after running"}
+  -re "$gdb_prompt $"\
+          {fail "break on indirect solib call after running"}
+  timeout {fail "(timeout) break on indirect solib call after running"}
+}
+
+gdb_exit
+return 0

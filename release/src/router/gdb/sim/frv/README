@@ -1,0 +1,10 @@
+This is the frv simulator directory.
+
+It is still work-in-progress.  The current sources are
+well tested and lots of features are in.
+
+There are lots of machine generated files in the source directory!
+They are only generated if you configure with --enable-cgen-maint,
+similar in behaviour to Makefile.in, configure under automake/autoconf.
+
+For details on the generator, see ../../cgen.

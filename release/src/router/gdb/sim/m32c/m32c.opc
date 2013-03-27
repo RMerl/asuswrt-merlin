@@ -1,0 +1,2102 @@
+/* m32c.opc --- semantics for m32c opcodes.		        -*- mode: c -*-
+
+Copyright (C) 2005, 2007 Free Software Foundation, Inc.
+Contributed by Red Hat, Inc.
+
+This file is part of the GNU simulators.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "cpu.h"
+#include "mem.h"
+#include "misc.h"
+#include "int.h"
+
+#define AU  __attribute__((unused))
+
+#define tprintf if (trace) printf
+
+static unsigned char
+getbyte ()
+{
+  int tsave = trace;
+  unsigned char b;
+
+  if (trace == 1)
+    trace = 0;
+  b = mem_get_pc ();
+  regs.r_pc ++;
+  trace = tsave;
+  return b;
+}
+
+#define M32C_ONLY() /* FIXME: add something here */
+
+#define GETBYTE() (op[opi++] = getbyte())
+
+#define UNSUPPORTED() unsupported("unsupported", orig_pc)
+#define NOTYET() unsupported("unimplemented", orig_pc)
+
+static void
+unsupported (char *tag, int orig_pc)
+{
+  int i;
+  printf("%s opcode at %08x\n", tag, orig_pc);
+  regs.r_pc = orig_pc;
+  for (i=0; i<2; i++)
+    {
+      int b = mem_get_pc();
+      printf(" %s", bits(b>>4, 4));
+      printf(" %s", bits(b, 4));
+      regs.r_pc ++;
+    }
+  printf("\n");
+  regs.r_pc = orig_pc;
+  for (i=0; i<6; i++)
+    {
+      printf(" %02x", mem_get_pc ());
+      regs.r_pc ++;
+    }
+  printf("\n");
+  exit(1);
+}
+
+static int
+IMM(int bytes)
+{
+  int rv = 0;
+  switch (bytes)
+    {
+    case 1:
+      rv = mem_get_qi (get_reg(pc));
+      break;
+    case 2:
+      rv = mem_get_hi (get_reg(pc));
+      break;
+    case 3:
+      rv = mem_get_psi (get_reg(pc));
+      break;
+    case 4:
+      rv = mem_get_si (get_reg(pc));
+      break;
+    }
+  regs.r_pc += bytes;
+  return rv;
+}
+
+#define IMM4() (immm >= 8 ? 7 - immm : immm + 1)
+
+#define NO_PREFIX() PREFIX(0,0,0)
+
+/* Indicate which sorts of prefixes are allowed for the current
+   opcode.  */
+void
+prefix (src_allowed, dest_allowed, index_bytewidth)
+{
+  /* At the moment, we don't do anything with this information.  We
+     just wanted to get the information entered in some
+     machine-readable form while we were going through all the
+     opcodes.  */
+}
+
+#define MATH_OP(dc,s,c,op) \
+{ \
+  int ma, mb; \
+  ma = get_src(dc); \
+  mb = s & b2mask[dc.bytes]; \
+  ll = (long long)ma op (long long)mb op c; \
+  tprintf("0x%x " #op " 0x%x " #op " 0x%x = 0x%llx\n", ma, mb, c, ll); \
+  ma = sign_ext (ma, dc.bytes * 8); \
+  mb = sign_ext (s, dc.bytes * 8); \
+  v = ma op mb op c; \
+  tprintf("%d " #op " %d " #op " %d = %d\n", ma, mb, c, v); \
+  set_oszc (v, dc.bytes, ll > ((1 op 1) ? b2mask[dc.bytes] : 0)); \
+  put_dest (dc, v); \
+}
+
+#define LOGIC_OP(dc,s,op) \
+{ \
+  int ma, mb; \
+  ma = get_src(dc); \
+  mb = s & b2mask[dc.bytes]; \
+  v = ma op mb; \
+  tprintf("0x%x " #op " 0x%x = 0x%x\n", ma, mb, v); \
+  set_sz (v, dc.bytes); \
+  put_dest (dc, v); \
+}
+
+#define BIT_OP(dc,bit,expr)                                             \
+  b = get_bit2 (dc, bitindex == -1 ? bit : bitindex);                   \
+  v = expr;                                                             \
+  tprintf ("b=%d, bit=%d, carry=%d, %s = %d\n",                         \
+           b,  bitindex == -1 ? bit : bitindex, carry, #expr, v);       \
+  put_bit2 (dc,  bitindex == -1 ? bit : bitindex, v);
+
+#define BIT_OPC(dc,bit,expr)                                            \
+  b = get_bit2 (dc,  bitindex == -1 ? bit : bitindex);                  \
+  v = expr;                                                             \
+  tprintf ("b=%d, bit=%d, carry=%d, %s = %d\n",                         \
+           b,  bitindex == -1 ? bit : bitindex, carry, #expr, v);       \
+  set_c (v);
+
+#define carry (FLAG_C ? 1 : 0)
+
+static void
+cmp (int d, int s, int bytes)
+{
+  int a, b, f=0;
+  a = d - s;
+  b = sign_ext (d, bytes*8) - sign_ext (s, bytes*8);
+  tprintf ("cmp: %x - %x = %08x, %x - %x = %d\n",
+	   d, s, a,
+	   sign_ext(d,bytes*8), sign_ext(s,bytes*8), b);
+
+  if (b == 0)
+    f |= FLAGBIT_Z;
+  if (b & b2signbit[bytes])
+    f |= FLAGBIT_S;
+  if ((d & b2mask[bytes]) >= (s & b2mask[bytes]))
+    f |= FLAGBIT_C;
+  if (b < b2minsigned[bytes] || b > b2maxsigned[bytes])
+    f |= FLAGBIT_O;
+
+  set_flags (FLAGBIT_Z | FLAGBIT_S | FLAGBIT_O | FLAGBIT_C, f);
+}
+
+static void
+dadd_op (int ddd, int dd, int sss, int ss, int imm, int add, int cy, int w)
+{
+  srcdest sc, dc;
+  int a, b=0, res;
+
+  prefix (0, 0, 0);
+
+  if (!imm)
+    {
+      sc = decode_src23 (sss, ss, w+1);
+      b = get_src (sc);
+    }
+  dc = decode_dest23 (ddd, dd, w+1);
+  a = get_src (dc);
+  if (imm)
+    b = IMM(w+1);
+
+  a = bcd2int(a, w);
+  b = bcd2int(b, w);
+
+  tprintf("decimal: %d %s %d", a, add?"+":"-", b);
+  if (cy)
+    tprintf(" c=%d", carry);
+
+  if (add)
+    {
+      res = a + b;
+      if (cy)
+	res += carry;
+      cy = res > (w ? 9999 : 99);
+    }
+  else
+    {
+      res = a - b;
+      if (cy)
+	res -= (1-carry);
+      cy = res >= 0;
+      if (res < 0)
+	res += w ? 10000 : 100;
+    }
+
+  res = int2bcd (res, w);
+  tprintf(" = %x\n", res);
+
+  set_szc (res, w+1, cy);
+
+  put_dest (dc, res);
+}
+#define DADDV(A,C) dadd_op(ddd, dd, sss, ss, 0, A, C, w)
+#define DADDI(A,C) dadd_op(ddd, dd, 0, 0, 1, A, C, w)
+
+static void
+div_op (int sss, int ss, int u, int x, int bytes)
+{
+  srcdest sc;
+  int s, v, a, b;
+
+  if (sss == -1)
+    s = IMM(bytes);
+  else
+    {
+      sc = decode_dest23 (sss, ss, bytes);
+      s = get_src (sc);
+    }
+
+  v = get_reg (bytes > 1 ? r2r0 : r0);
+
+  if (!u)
+    {
+      /* FIXME? do we sign extend a0/a1 to .L?  Docs say zero extend.  */
+      s = sign_ext (s, bytes*8);
+      v = sign_ext (v, bytes*8);
+    }
+
+  if (s == 0)
+    {
+      set_flags (FLAGBIT_O, FLAGBIT_O);
+      return;
+    }
+
+  if (u)
+    {
+      a = (unsigned int)v / (unsigned int)s;
+      b = (unsigned int)v % (unsigned int)s;
+    }
+  else
+    {
+      a = v / s;
+      b = v % s;
+    }
+  if (x)
+    {
+      if ((s > 0 && b < 0)
+	  || (s < 0 && b > 0))
+	{
+	  a --;
+	  b += s;
+	}
+    }
+  tprintf ("%d / %d = %d rem %d\n", v, s, a, b);
+  if ((!u && (a > b2maxsigned[bytes]
+	      || a < b2minsigned[bytes]))
+      || (u && (a > b2mask[bytes])))
+    set_flags (FLAGBIT_O, FLAGBIT_O);
+  else
+    set_flags (FLAGBIT_O, 0);
+
+  switch (bytes)
+    {
+    case 1:
+      put_reg (r0l, a);
+      put_reg (r0h, b);
+      break;
+    case 2:
+      put_reg (r0, a);
+      put_reg (r2, b);
+      break;
+    case 4:
+      put_reg (r2r0, a);
+      break;
+    }
+}
+
+static void
+index_op (int sss, int ss, int do_s, int do_d, int scale, int w)
+{
+  srcdest sc = decode_src23 (sss, ss, w+1);
+  int v = get_src (sc) * scale;
+  tprintf("%d = %d * %d, %d %d\n", v, get_src(sc), scale, do_s, do_d);
+  decode_index (do_s * v, do_d * v);
+}
+#define INDEXOP(scale,do_s,do_d)                                \
+  index_op (sss, ss, do_s, do_d, scale, w); goto next_opcode
+
+static void
+rot_op (srcdest sd, int rotc, int count)
+{
+  int mask = (sd.bytes == 2) ? 0xffff : 0xff;
+  int msb = (sd.bytes == 2) ? 0x8000 : 0x80;
+  int v = get_src (sd);
+  int c = carry, ct;
+
+  tprintf("%s %x by %d\n", rotc ? "rotc" : "rot", v, count);
+  tprintf (": %s %d\n", bits(v, 8*sd.bytes), c);
+  while (count > 0)
+    {
+      ct = (v & msb) ? 1 : 0;
+      v <<= 1;
+      v |= rotc ? c : ct;
+      v &= mask;
+      c = ct;
+      tprintf (": %s %d\n", bits(v, 8*sd.bytes), c);
+      count --;
+    }
+  while (count < 0)
+    {
+      ct = v & 1;
+      v >>= 1;
+      v |= (rotc ? c : ct) * msb;
+      c = ct;
+      tprintf (": %s %d\n", bits(v, 8*sd.bytes), c);
+      count ++;
+    }
+  put_dest (sd, v);
+  set_szc (v, sd.bytes, c);
+}
+
+static void
+shift_op (srcdest sd, int arith, int count, int setc)
+{
+  int mask = (sd.bytes == 2) ? 0xffff : 0xff;
+  int msb = (sd.bytes == 2) ? 0x8000 : 0x80;
+  int v = get_src (sd);
+  int c = 0;
+  int o = 0;
+
+  if (sd.bytes == 4)
+    {
+      mask = 0xffffffffU;
+      msb = 0x80000000U;
+    }
+
+  tprintf("%s %x by %d\n", arith ? "sha" : "shl", v, count);
+  tprintf (": %s %d %d\n", bits(v, 8*sd.bytes), c, o);
+  while (count > 0)
+    {
+      c = (v & msb) ? 1 : 0;
+      v <<= 1;
+      v &= mask;
+      if (c != ((v & msb) ? 1 : 0))
+	o = 1;
+      tprintf (": %s %d %d\n", bits(v, 8*sd.bytes), c, o);
+      count --;
+    }
+  while (count < 0)
+    {
+      c = v & 1;
+      if (arith)
+	v = (v & msb) | (v >> 1);
+      else
+	v = (v >> 1) & (msb - 1);
+      tprintf (": %s %d %d\n", bits(v, 8*sd.bytes), c, o);
+      count ++;
+    }
+  put_dest (sd, v);
+  set_sz (v, sd.bytes);
+  if (setc)
+    set_c (c);
+  set_flags (FLAGBIT_O, o ? FLAGBIT_O : 0);
+}
+
+int
+decode_m32c()
+{
+  unsigned char op[40];
+  int opi;
+  int orig_pc;
+  int v, a, b;
+  long long ll;
+  srcdest sc, dc;
+  int imm;
+  int bitindex = -1;
+  int t0, t1=0, t2, t3=0;
+  int ta0, ta1, dif;
+
+  step_result = M32C_MAKE_STEPPED ();
+
+  decode_indirect (0, 0);
+  decode_index (0, 0);
+
+next_opcode:
+  opi = 0;
+  orig_pc = get_reg (pc);
+
+  tprintf("trace: decode pc = %06x\n", orig_pc);
+
+  /** VARY sss 000 001 010 011 100 */
+  /** VARY ddd 000 001 010 011 100 */
+
+  /** 0000 1001				indirect dest */
+
+  decode_indirect (0, 1);
+  goto next_opcode;
+
+  /** 0100 0001				indirect src */
+
+  decode_indirect (1, 0);
+  goto next_opcode;
+
+  /** 0100 1001				indirect src and dest */
+
+  decode_indirect (1, 1);
+  goto next_opcode;
+
+  /** 1010 ddd w dd01 1111		ABS.size dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  v = sign_ext (get_src (dc), w?16:8);
+  a = v<0 ? -v : v;
+  tprintf("abs(%d) = %d\n", v, a);
+  set_osz(a, w+1);
+  put_dest (dc, a);
+
+  /** 0000 0001 1000 ddd w dd10 1110	ADC.size #IMM,dest */
+
+  prefix (0, 0, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  imm = IMM (w+1);
+  MATH_OP (dc, imm, carry, +);
+
+  /** 0000 0001 1sss ddd w dd ss 0100	ADC.size src,dest */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, w+1);
+  dc = decode_dest23 (ddd, dd, w+1);
+  b = get_src (sc);
+  MATH_OP (dc, b, carry, +);
+
+  /** 1011 ddd w dd01 1110		ADCF.size dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  MATH_OP (dc, 0, carry, +);
+
+  /** 1000 ddd w dd10 1110		ADD.size:G #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23(ddd, dd, w+1);
+  imm = IMM(w+1);
+  MATH_OP (dc, imm, 0, +);
+
+  /** 1000 ddd0 dd11 0001		ADD.L:G #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23(ddd, dd, 4);
+  imm = IMM(4);
+  MATH_OP (dc, imm, 0, +);
+
+  /** 111L ddd w dd11 immm		ADD.size:Q #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23(ddd, dd, L ? 4 : (w+1));
+  imm = sign_ext (immm, 4);
+  MATH_OP (dc, imm, 0, +);
+
+  /** 00dd 011w				ADD.size:S #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest2(dd, w+1);
+  imm = IMM (w+1);
+  MATH_OP (dc, imm, 0, +);
+
+  /** 10i0 110d				ADD.L:S #IMM,A0/A1 */
+
+  prefix (0, 0, 0);
+  dc = reg_sd (d ? a1 : a0);
+  imm = i ? 2 : 1;
+  MATH_OP (dc, imm, 0, +);
+
+  /** 1sss ddd w dd ss 1000		ADD.size:G src,dest */
+
+  prefix (1, 1, 0);
+  sc = decode_src23(sss, ss, w+1);
+  dc = decode_dest23(ddd, dd, w+1);
+  b = get_src (sc);
+  MATH_OP (dc, b, 0, +);
+
+  /** 1sss ddd1 dd ss 0010		ADD.L:G src,dest */
+
+  prefix (1, 1, 0);
+  sc = decode_src23(sss, ss, 4);
+  dc = decode_dest23(ddd, dd, 4);
+  b = get_src (sc);
+  MATH_OP (dc, b, 0, +);
+
+  /** 1011 0110 0001 0011		ADD.L:G #IMM16,SP */
+
+  prefix (0, 0, 0);
+  dc = reg_sd (sp);
+  b = sign_ext (IMM(2), 16);
+  MATH_OP (dc, b, 0, +);
+
+  /** 01ii 001i				ADD.L:Q #IMM3,SP */
+
+  prefix (0, 0, 0);
+  dc = reg_sd (sp);
+  b = ii * 2 + i + 1;
+  MATH_OP (dc, b, 0, +);
+
+  /** 1011 0110 0000 0011		ADD.L:S #IMM8,SP */
+
+  prefix (0, 0, 0);
+  dc = reg_sd (sp);
+  b = sign_ext (IMM(1), 8);
+  MATH_OP (dc, b, 0, +);
+
+  /** 1000 ddd0 dd01 0001		ADDX #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23(ddd, dd, 4);
+  imm = sign_ext (IMM(1), 8);
+  MATH_OP (dc, imm, 0, +);
+
+  /** 1sss ddd0 dd ss 0010		ADDX src,dest */
+
+  prefix (1, 1, 0);
+  sc = decode_src23(sss, ss, 1);
+  dc = decode_dest23(ddd, dd, 4);
+  b = sign_ext (get_src (sc), 8);
+  MATH_OP (dc, b, 0, +);
+
+  /** 1111 ddd w dd01 immm		ADJNZ.size #IMM,dest,label */
+
+  prefix (0, 0, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  v = get_src (dc);
+  imm = sign_ext(immm, 4);
+  tprintf("%d + %d = %d\n", v, imm, v+imm);
+  v += imm;
+  put_dest (dc, v);
+  a = sign_ext (IMM(1), 8);
+  if ((v & (w ? 0xffff : 0xff)) != 0)
+    {
+      tprintf("jmp: %x + 2 + %d = ", get_reg (pc), a);
+      put_reg (pc, orig_pc + 2 + a);
+      tprintf("%x\n", get_reg (pc));
+    }
+
+  /** 1000 ddd w dd11 1111		AND.size:G #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23(ddd, dd, w+1);
+  imm = IMM(w+1);
+  LOGIC_OP (dc, imm, &);
+
+  /** 01dd 110w				AND.size:S #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest2(dd, w+1);
+  imm = IMM (w+1);
+  LOGIC_OP (dc, imm, &);
+
+  /** 1sss ddd w dd ss 1101		AND.size:G src,dest */
+
+  prefix (1, 1, 0);
+  sc = decode_src23(sss, ss, w+1);
+  dc = decode_dest23(ddd, dd, w+1);
+  b = get_src (sc);
+  LOGIC_OP (dc, b, &);
+
+  /** 0000 0001 1101 sss0 ss00 1bit	BAND src */
+
+  sc = decode_src23 (sss, ss, 1);
+  BIT_OPC (sc, bit, b & carry);
+
+  /** 1101 ddd0 dd11 0bit		BCLR dest */
+
+  dc = decode_dest23 (ddd, dd, 1);
+  BIT_OP (dc, bit, 0);
+
+  /** 1100 ddd w dd10 1110		BITINDEX.size src */
+
+  prefix (0, 0, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  bitindex = get_src (dc);
+  tprintf ("bitindex set to %d\n", bitindex);
+  goto next_opcode;
+
+  /** 1101 ddd0 dd01 0bit		BMcnd dest */
+
+  prefix (0, 0, 0);
+  dc = decode_dest23 (ddd, dd, 1);
+  if (condition_true (IMM (1)))
+    put_bit2 (dc, bit, 1);
+  else
+    put_bit2 (dc, bit, 0);
+
+  /** 1101 1001 0c10 1cnd		BMcnd C */
+
+  prefix (0, 0, 0);
+  if (condition_true (c * 8 + cnd))
+    set_c (1);
+  else
+    set_c (0);
+
+  /** 0000 0001 1101 sss0 ss01 1bit	BNAND src */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 1);
+  BIT_OPC (sc, bit, !b & carry);
+
+  /** 0000 0001 1101 sss0 ss11 0bit	BNOR src */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 1);
+  BIT_OPC (sc, bit, !b | carry);
+
+  /** 1101 ddd0 dd01 1bit		BNOT dest */
+
+  prefix (0, 0, 0);
+  dc = decode_dest23 (ddd, dd, 1);
+  BIT_OP (dc, bit, !b);
+
+  /** 0000 0001 1101 sss0 ss00 0bit	BNTST src */
+
+  prefix (0, 0, 0);
+  sc = decode_dest23 (sss, ss, 1);
+  b = get_bit2 (sc, bit);
+  set_zc (!b, !b);
+
+  /** 0000 0001 1101 sss0 ss11 1bit	BNXOR src */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 1);
+  BIT_OPC (sc, bit, !b ^ carry);
+
+  /** 0000 0001 1101 sss0 ss10 0bit	BOR src */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 1);
+  BIT_OPC (sc, bit, b | carry);
+
+  /** 0000 0000				BRK */
+
+  /* We report the break to our caller with the PC still pointing at the 
+     breakpoint instruction.  */
+  put_reg (pc, orig_pc);
+  if (verbose)
+    printf("[break]\n");
+  return M32C_MAKE_HIT_BREAK ();
+
+  /** 0000 1000				BRK */
+
+  if (verbose)
+    printf("[break2]\n");
+  return M32C_MAKE_HIT_BREAK ();
+
+  /** 1101 ddd0 dd11 1bit		BSET dest */
+
+  dc = decode_dest23 (ddd, dd, 1);
+  BIT_OP (dc, bit, 1);
+
+  /** 1101 sss0 ss00 0bit		BTST:G src */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 1);
+  b = get_bit2 (sc, bit);
+  set_zc (!b, b);
+
+  /** 00bb 101b				BTST:S src */
+
+  sc = decode_src23 (3, 3, 1); /* bit,base:19 */
+  b = get_bit2 (sc, bb*2 + b);
+  set_zc (!b, b);
+
+  /** 1101 ddd0 dd10 0bit		BTSTC dest */
+
+  prefix (0, 0, 0);
+  sc = decode_dest23 (ddd, dd, 1);
+  b = get_bit2 (sc, bit);
+  set_zc (!b, b);
+  put_bit2 (sc, bit, 0);
+
+  /** 1101 ddd0 dd10 1bit		BTSTS dest */
+
+  prefix (0, 0, 0);
+  sc = decode_dest23 (ddd, dd, 1);
+  b = get_bit2 (sc, bit);
+  set_zc (!b, b);
+  put_bit2 (sc, bit, 1);
+
+  /** 0000 0001 1101 sss0 ss10 1bit	BXOR src */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 1);
+  BIT_OPC (sc, bit, b ^ carry);
+
+  /** 0000 0001 1000 ddd w dd11 1110	CLIP.size #IMM1,#IMM2,dest */
+
+  prefix (0, 0, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  a = sign_ext (IMM(w+1), w*8+8);
+  b = sign_ext (IMM(w+1), w*8+8);
+  v = sign_ext (get_src (dc), w*8+8);
+  tprintf("clip %d <= %d <= %d : ", a, v, b);
+  if (a > v)
+    v = a;
+  if (v > b)
+    v = b;
+  tprintf("%d\n", v);
+  put_dest (dc, v);
+
+  /** 1001 ddd w dd10 1110		CMP.size:G #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  v = get_src (dc);
+  imm = IMM(w+1);
+  cmp (v, imm, w+1);
+
+  /** 1010 ddd0 dd11 0001		CMP.L:G #IMM32,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, 4);
+  v = get_src (dc);
+  imm = IMM(4);
+  cmp (v, imm, 4);
+
+  /** 1110 ddd w dd01 immm		CMP.size:Q #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  v = get_src (dc);
+  immm = sign_ext (immm, 4);
+  cmp (v, immm, w+1);
+
+  /** 01dd 011w				CMP.size:S #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest2 (dd, w+1);
+  v = get_src (dc);
+  imm = sign_ext (IMM(w+1),w*8+8);
+  cmp (v, imm, w+1);
+
+  /** 1sss ddd w dd ss 0110		CMP.size:G src,dest */
+
+  prefix (1, 1, 0);
+  sc = decode_src23 (sss, ss, w+1);
+  dc = decode_dest23 (ddd, dd, w+1);
+  a = get_src (dc);
+  b = get_src (sc);
+  cmp (a, b, w+1);
+
+  /** 1sss ddd1 dd ss 0001		CMP.L:G src,dest */
+
+  prefix (1, 1, 0);
+  sc = decode_src23 (sss, ss, 4);
+  dc = decode_dest23 (ddd, dd, 4);
+  a = get_src (dc);
+  b = get_src (sc);
+  cmp (a, b, 4);
+
+  /** 01dd 000w				CMP.size:S src,R0/R0L */
+
+  prefix (0, 1, 0);
+  dc = decode_dest2 (dd, w+1);
+  a = get_reg (w ? r0 : r0l);
+  b = get_src (dc);
+  cmp (a, b, w+1);
+
+  /** 1010 ddd0 dd01 0001		CMPX #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, 4);
+  v = get_src (dc);
+  imm = sign_ext (IMM(1), 8);
+  cmp (v, imm, 4);
+
+  /** 0000 0001 1000 ddd w dd00 1110	DADC.size #IMM,dest */
+
+  DADDI(1,1);
+
+  /** 0000 0001 1sss ddd w dd ss 1000	DADC.size src,dest */
+
+  DADDV(1,1);
+
+  /** 0000 0001 1000 ddd w dd01 1110	DADD.size #IMM,dest */
+
+  DADDI(1,0);
+
+  /** 0000 0001 1sss ddd w dd ss 0000	DADD.size src,dest */
+
+  DADDV(1,0);
+
+  /** 1011 ddd w dd00 1110		DEC.size dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  a = get_src (dc);
+  v = a-1;
+  tprintf ("%x -- = %x\n", a, v);
+  set_sz (v, w+1);
+  put_dest (dc, v);
+
+  /** 1011 0000 010w 0011		DIV.size #IMM */
+
+  prefix (0, 0, 0);
+  div_op (-1, 0, 0, 0, w+1);
+
+  /** 1000 sss w ss01 1110		DIV.size src */
+
+  prefix (0, 1, 0);
+  div_op (sss, ss, 0, 0, w+1);
+
+  /** 0000 0001 1010 sss1 ss01 1111	DIV.L src */
+
+  M32C_ONLY();
+  prefix (0, 0, 0);
+  div_op (sss, ss, 0, 0, 4);
+
+  /** 1011 0000 000w 0011		DIVU.size #IMM */
+
+  prefix (0, 0, 0);
+  div_op (-1, 0, 1, 0, w+1);
+
+  /** 1000 sss w ss00 1110		DIVU.size src */
+
+  prefix (0, 1, 0);
+  div_op (sss, ss, 1, 0, w+1);
+
+  /** 0000 0001 1010 sss1 ss00 1111	DIVU.L src */
+
+  M32C_ONLY();
+  prefix (0, 0, 0);
+  div_op (sss, ss, 1, 0, 4);
+
+  /** 1011 0010 010w 0011		DIVX.size #IMM */
+
+  prefix (0, 0, 0);
+  div_op (-1, 0, 0, 1, w+1);
+
+  /** 1001 sss w ss01 1110		DIVX.size src */
+
+  prefix (0, 1, 0);
+  div_op (sss, ss, 0, 1, w+1);
+
+  /** 0000 0001 1010 sss1 ss10 1111	DIVX.L src */
+
+  M32C_ONLY();
+  prefix (0, 0, 0);
+  div_op (sss, ss, 0, 1, 4);
+
+  /** 0000 0001 1001 ddd w dd00 1110	DSBB.size #IMM,dest */
+
+  DADDI(0,1);
+
+  /** 0000 0001 1sss ddd w dd ss 1010	DSBB.size src,dest */
+
+  DADDV(0,1);
+
+  /** 0000 0001 1001 ddd w dd01 1110	DSUB.size #IMM,dest */
+
+  DADDI(0,0);
+
+  /** 0000 0001 1sss ddd w dd ss 0010	DSUB.size src,dest */
+
+  DADDV(0,0);
+
+  /** 1110 1100				ENTER #IMM */
+
+  imm = IMM(1);
+  put_reg (sp, get_reg (sp) - 4);
+  mem_put_si (get_reg (sp), get_reg (fb));
+  put_reg (fb, get_reg (sp));
+  put_reg (sp, get_reg (sp) - imm);
+
+  /** 1111 1100				EXITD */
+
+  put_reg (sp, get_reg (fb));
+  put_reg (fb, mem_get_si (get_reg (sp)));
+  put_reg (sp, get_reg (sp) + 4);
+  put_reg (pc, mem_get_si (get_reg (sp)));
+  put_reg (sp, get_reg (sp) + 4);
+
+  /** 1100 ddd w dd01 1110		EXTS.size dest */
+
+  prefix (0, 0, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  v = sign_ext (get_src (dc), (w+1)*8);
+  dc = widen_sd (dc);
+  put_dest (dc, v);
+  set_sz (v, (w+1)*2);
+
+  /** 0000 0001 1sss ddd0 dd ss 0111	EXTS.B src,dest */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 1);
+  dc = decode_dest23 (ddd, dd, 2);
+  v = sign_ext (get_src (sc), 8);
+  put_dest (dc, v);
+  set_sz (v, 16);
+
+  /** 0000 0001 1sss ddd0 dd ss 1011	EXTZ src,dest */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 1);
+  dc = decode_dest23 (ddd, dd, 2);
+  v = get_src (sc);
+  put_dest (dc, v);
+  set_sz (v, 16);
+
+  /** 1101 0011 1110 1dst		FCLR dest */
+
+  set_flags (1 << dst, 0);
+
+  /** 1001 1111				FREIT */
+
+  NOTYET();
+
+  /** 1101 0001 1110 1dst		FSET dest */
+  
+  set_flags (1 << dst, 1 << dst);
+
+  /** 1010 ddd w dd00 1110		INC.size dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  a = get_src (dc);
+  v = a+1;
+  tprintf ("%x ++ = %x\n", a, v);
+  set_sz (v, w+1);
+  put_dest (dc, v);
+
+  /** 1000 sss0 ss0w 0011		INDEXB.size src */
+  INDEXOP(1, 1, 1);
+  /** 1010 sss0 ss0w 0011		INDEXBD.size src */
+  INDEXOP(1, 0, 1);
+  /** 1100 sss0 ss0w 0011		INDEXBS.size src */
+  INDEXOP(1, 1, 0);
+  /** 1001 sss0 ss1w 0011		INDEXL.size src */
+  INDEXOP(4, 1, 1);
+  /** 1011 sss0 ss1w 0011		INDEXLD.size src */
+  INDEXOP(4, 0, 1);
+  /** 1001 sss0 ss0w 0011		INDEXLS.size src */
+  INDEXOP(4, 1, 0);
+  /** 1000 sss0 ss1w 0011		INDEXW.size src */
+  INDEXOP(2, 1, 1);
+  /** 1010 sss0 ss1w 0011		INDEXWD.size src */
+  INDEXOP(2, 0, 1);
+  /** 1100 sss0 ss1w 0011		INDEXWS.size src */
+  INDEXOP(2, 1, 0);
+
+  /** 1011 1110 vector00			INT #IMM */
+
+  prefix (0, 0, 0);
+  trigger_based_interrupt (vector);
+
+  /** 1011 1111				INTO */
+
+  prefix (0, 0, 0);
+  if (FLAG_O)
+    trigger_fixed_interrupt (0xffffe0);
+
+  /** 1ccc 101c				Jcnd label */
+
+  prefix (0, 0, 0);
+  v = sign_ext (IMM(1), 8);
+  if (condition_true (ccc*2+c))
+    put_reg (pc, orig_pc + 1 + v);
+
+  /** 01dd 101d				JMP.S label */
+
+  prefix (0, 0, 0);
+  put_reg (pc, orig_pc + (dd*2+d) + 2);
+
+  /** 1011 1011				JMP.B label */
+
+  prefix (0, 0, 0);
+  imm = sign_ext (IMM(1), 8);
+  if (imm == -1)
+    {
+      if (verbose)
+	printf("[jmp-to-self detected as exit]\n");
+      return M32C_MAKE_HIT_BREAK ();
+    }
+  put_reg (pc, orig_pc + 1 + imm);
+
+  /** 1100 1110				JMP.W label */
+
+  prefix (0, 0, 0);
+  imm = sign_ext (IMM(2), 16);
+  put_reg (pc, orig_pc + 1 + imm);
+
+  /** 1100 1100				JMP.A label */
+  
+  prefix (0, 0, 0);
+  imm = IMM(3);
+  put_reg (pc, imm);
+
+  /** 1100 sss1 ss00 1111		JMPI.W src */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 2);
+  a = get_src (sc);
+  a = sign_ext (a, 16);
+  put_reg (pc, orig_pc + a);
+
+  /** 1000 sss0 ss00 0001		JMPI.A src */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 3);
+  a = get_src (sc);
+  put_reg (pc, a);
+
+  /** 1101 1100				JMPS #IMM8 */
+
+  prefix (0, 0, 0);
+  imm = IMM(1);
+  a = 0xff0000 + mem_get_hi (0xfffe00 - imm * 2);
+  put_reg (pc, a);
+
+  /** 1100 1111				JSR.W label */
+
+  prefix (0, 0, 0);
+  imm = sign_ext (IMM(2), 16);
+  put_reg (sp, get_reg (sp) - 4);
+  mem_put_si (get_reg (sp), get_reg (pc));
+  put_reg (pc, orig_pc + imm + 1);
+
+  /** 1100 1101				JSR.A label */
+
+  prefix (0, 0, 0);
+  imm = IMM(3);
+  put_reg (sp, get_reg (sp) - 4);
+  mem_put_si (get_reg (sp), get_reg (pc));
+  put_reg (pc, imm);
+
+  /** 1100 sss1 ss01 1111		JSRI.W src */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 2);
+  a = get_src (sc);
+  a = sign_ext (a, 16);
+  put_reg (sp, get_reg (sp) - 4);
+  mem_put_si (get_reg (sp), get_reg (pc));
+  put_reg (pc, orig_pc + a);
+
+  /** 1001 sss0 ss00 0001		JSRI.A src */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 3);
+  a = get_src (sc);
+  put_reg (sp, get_reg (sp) - 4);
+  mem_put_si (get_reg (sp), get_reg (pc));
+  put_reg (pc, a);
+
+  /** 1101 1101				JSRS #IMM8 */
+
+  prefix (0, 0, 0);
+  imm = IMM(1);
+  a = 0xff0000 + mem_get_hi (0xfffe00 - imm * 2);
+  put_reg (sp, get_reg (sp) - 4);
+  mem_put_si (get_reg (sp), get_reg (pc));
+  put_reg (pc, a);
+
+  /** 1101 0101 1010 1dst		LDC #IMM16,dest */
+
+  imm = IMM(2);
+  dc = decode_cr_b (dst, CR_B_DCT0);
+  put_dest (dc, imm);
+
+  /** 1101 0101 0010 1dst		LDC #IMM24,dest */
+
+  imm = IMM(3);
+  dc = decode_cr_b (dst, CR_B_INTB);
+  put_dest (dc, imm);
+
+  /** 1101 0101 0110 1dst		LDC #IMM24,dest */
+
+  imm = IMM(3);
+  dc = decode_cr_b (dst, CR_B_DMA0);
+  put_dest (dc, imm);
+
+  /** 0000 0001 1101 sss1 ss00 1dst	LDC src,dest */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 2);
+  dc = decode_cr_b (dst, CR_B_DCT0);
+  a = get_src (sc);
+  put_dest (dc, a);
+
+  /** 1101 sss1 ss00 0dst		LDC src,dest */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 3);
+  dc = decode_cr_b (dst, CR_B_INTB);
+  a = get_src (sc);
+  put_dest (dc, a);
+
+  /** 0000 0001 1101 sss1 ss00 0dst	LDC src,dest */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 3);
+  dc = decode_cr_b (dst, CR_B_DMA0);
+  a = get_src (sc);
+  put_dest (dc, a);
+
+  /** 1011 0110 1100 0011		LDCTX */
+
+  NOTYET();
+
+  /** 1101 0101 1110 1imm		LDIPL #IMM */
+
+  set_flags (0x7000, imm*0x1000);
+
+  /** 0000 0001 1000 ddd w dd11 1111	MAX.size #IMM,dest */
+
+  prefix (0, 0, 0);
+  w++;
+  dc = decode_dest23 (ddd, dd, w);
+  imm = sign_ext (IMM(w), w*8);
+  a = sign_ext (get_src (dc), w*8);
+  tprintf ("max %d %d\n", imm, a);
+  if (imm > a)
+    put_dest (dc, imm);
+
+  /** 0000 0001 1sss ddd w dd ss 1101	MAX.size src,dest */
+
+  prefix (0, 0, 0);
+  w++;
+  sc = decode_src23 (sss, ss, w);
+  dc = decode_dest23 (ddd, dd, w);
+  b = sign_ext (get_src (sc), w*8);
+  a = sign_ext (get_src (dc), w*8);
+  tprintf ("max %d %d\n", b, a);
+  if (b > a)
+    put_dest (dc, b);
+
+  /** 0000 0001 1000 ddd w dd10 1111	MIN.size #IMM,dest */
+
+  prefix (0, 0, 0);
+  w++;
+  dc = decode_dest23 (ddd, dd, w);
+  imm = sign_ext (IMM(w), w*8);
+  a = sign_ext (get_src (dc), w*8);
+  tprintf ("min %d %d\n", imm, a);
+  if (imm < a)
+    put_dest (dc, imm);
+
+  /** 0000 0001 1sss ddd w dd ss 1100	MIN.size src,dest */
+
+  prefix (0, 0, 0);
+  w++;
+  sc = decode_src23 (sss, ss, w);
+  dc = decode_dest23 (ddd, dd, w);
+  b = sign_ext (get_src (sc), w*8);
+  a = sign_ext (get_src (dc), w*8);
+  tprintf ("min %d %d\n", b, a);
+  if (b < a)
+    put_dest (dc, b);
+
+  /** 1001 ddd w dd10 1111		MOV.size:G #IMM,dest */
+
+  dc = decode_dest23 (ddd, dd, w+1);
+  imm = IMM(w+1);
+  v = imm;
+  tprintf("%x = %x\n", v, v);
+  set_sz(v, w+1);
+  put_dest (dc, v);
+
+  /** 1011 ddd0 dd11 0001		MOV.L:G #IMM,dest */
+
+  dc = decode_dest23 (ddd, dd, 4);
+  imm = IMM(4);
+  v = imm;
+  tprintf("%x = %x\n", v, v);
+  set_sz(v, 4);
+  put_dest (dc, v);
+
+  /** 1111 ddd w dd10 immm		MOV.size:Q #IMM4,dest */
+
+  dc = decode_dest23 (ddd, dd, w+1);
+  imm = sign_ext (immm, 4);
+  v = imm;
+  tprintf("%x = %d\n", v, v);
+  set_sz(v, w+1);
+  put_dest (dc, v);
+
+  /** 00dd 010w				MOV.size:S #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest2 (dd, w+1);
+  imm = IMM(w+1);
+  put_dest (dc, imm);
+  set_sz (imm, w+1);
+
+  /** 10w1 110d				MOV.size:S #IMM,a0/a1 */
+
+  imm = IMM(w ? 3 : 2);
+  put_reg (d ? a1 : a0, imm);
+  set_sz (imm & addr_mask, w+1);
+
+  /** 00dd 001w				MOV.size:Z #0,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest2 (dd, w+1);
+  put_dest (dc, 0);
+  set_sz (0, w+1);
+
+  /** 1sss ddd w dd ss 1011		MOV.size:G src,dest */
+
+  prefix (1, 1, 0);
+  sc = decode_src23 (sss, ss, w+1);
+  dc = decode_dest23 (ddd, dd, w+1);
+  v = get_src (sc);
+  put_dest (dc, v);
+  set_sz (v, w+1);
+
+  /** 1sss ddd1 dd ss 0011		MOV.L:G src,dest */
+
+  prefix (1, 1, 0);
+  sc = decode_src23 (sss, ss, 4);
+  dc = decode_dest23 (ddd, dd, 4);
+  v = get_src (sc);
+  put_dest (dc, v);
+  set_sz (v, 4);
+
+  /** VARY SS 01 10 11 */
+  /** 00SS 100w				MOV.size:S src,R0L/R0 */
+
+  prefix (0, 1, 0);
+  sc = decode_dest2 (SS, w+1);
+  v = get_src (sc);
+  put_reg (w ? r0 : r0l, v);
+  set_sz (v, w+1);
+
+  /** 01ss 111w				MOV.size:S src,R1L/R1 */
+
+  prefix (0, 1, 0);
+  sc = decode_dest2 (ss, w+1);
+  v = get_src (sc);
+  put_reg (w ? r1 : r1l, v);
+  set_sz (v, w+1);
+
+  /** VARY DD 01 10 11 */
+  /** 00DD 000w				MOV.size:S R0L/R0,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest2 (DD, w+1);
+  v = get_reg (w ? r0 : r0l);
+  put_dest (dc, v);
+  set_sz (v, w+1);
+
+  /** 01ss 100d				MOV.L:S src,A0/A1 */
+
+  prefix (0, 1, 0);
+  sc = decode_dest2 (ss, 4);
+  v = get_src (sc);
+  put_reg (d ? a1 : a0, v);
+  set_sz (v, 4);
+
+  /** 1011 ddd w dd00 1111		MOV.size:G dsp:8[SP], dest */
+
+  prefix (0, 0, 0);
+  imm = IMM(1);
+  dc = decode_dest23 (ddd, dd, w+1);
+  a = get_reg (sp) + sign_ext (imm, 8);
+  a &= addr_mask;
+  if (w)
+    v = mem_get_hi (a);
+  else
+    v = mem_get_qi (a);
+  put_dest (dc, v);
+  set_sz (v, w+1);
+
+  /** 1010 sss w ss00 1111		MOV.size:G src,dsp:8[SP] */
+
+  prefix (0, 0, 0);
+  sc = decode_dest23 (sss, ss, w+1);
+  imm = IMM(1);
+  a = get_reg (sp) + sign_ext (imm, 8);
+  a &= addr_mask;
+  v = get_src (sc);
+  if (w)
+    mem_put_hi (a, v);
+  else
+    mem_put_qi (a, v);
+  set_sz (v, w+1);
+
+  /** 1101 sss1 ss01 1dst		MOVA src,dest */
+
+  static reg_id map[8] = { r2r0, r3r1, a0, a1 };
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 1);
+  if (!sc.mem || !map[dst])
+    UNSUPPORTED();
+  put_reg (map[dst], sc.u.addr);
+
+  /** 0000 0001 1011 ddd0 dd hl 1110	MOVdir R0L,dest */
+
+  prefix (0, 0, 0);
+  dc = decode_dest23 (ddd, dd, 1);
+  a = get_src (dc);
+  b = get_reg (r0l);
+  switch (hl)
+    {
+    case 0: a = (a & 0xf0) | (b & 0x0f); break;
+    case 1: a = (a & 0xf0) | ((b>>4) & 0x0f); break;
+    case 2: a = (a & 0x0f) | ((b & 0x0f)<<4); break;
+    case 3: a = (a & 0x0f) | (b & 0xf0); break;
+    }
+  put_dest (dc, a);
+
+  /** 0000 0001 1010 sss0 ss hl 1110	MOVdir src,R0L */
+
+  prefix (0, 0, 0);
+  sc = decode_dest23 (sss, ss, 1);
+  a = get_reg (r0l);
+  b = get_src (dc);
+  switch (hl)
+    {
+    case 0: a = (a & 0xf0) | (b & 0x0f); break;
+    case 1: a = (a & 0xf0) | ((b>>4) & 0x0f); break;
+    case 2: a = (a & 0x0f) | ((b & 0x0f)<<4); break;
+    case 3: a = (a & 0x0f) | (b & 0xf0); break;
+    }
+  put_reg (r0l, a);
+
+  /** 1011 ddd0 dd01 0001		MOVX #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, 4);
+  imm = sign_ext (IMM(1), 8);
+  put_dest (dc, imm);
+  set_sz (imm, 1);
+
+  /** 1000 ddd w dd01 1111		MUL.size #IMM,dest */
+
+  prefix (0, 1, 0);
+  w ++;
+  dc = decode_dest23 (ddd, dd, w);
+  v = sign_ext (get_src (dc), w*8);
+  imm = sign_ext (IMM(w), w*8);
+  tprintf("%d * %d = %d\n", v, imm, v*imm);
+  v *= imm;
+  dc = widen_sd (dc);
+  put_dest (dc, v);
+
+  /** 1sss ddd w dd ss 1100		MUL.size src,dest */
+
+  prefix (1, 1, 0);
+  w ++;
+  sc = decode_src23 (sss, ss, w);
+  dc = decode_dest23 (ddd, dd, w);
+  a = sign_ext (get_src (sc), w*8);
+  b = sign_ext (get_src (dc), w*8);
+  tprintf("%d * %d = %d\n", a, b, a*b);
+  v = a * b;
+  dc = widen_sd (dc);
+  put_dest (dc, v);
+
+  /** 0000 0001 1000 sss1 ss01 1111	MUL.L src,R2R0 */
+
+  M32C_ONLY();
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 4);
+  a = sign_ext (get_src (sc), 32);
+  b = sign_ext (get_reg (r2r0), 32);
+  ll = (long long)a * (long long)b;
+  tprintf("%d * %d = %lld (%llx)\n", a, b, ll, ll);
+  if (ll < b2minsigned[4] || ll > b2maxsigned[4])
+    set_flags (FLAGBIT_O, FLAGBIT_O);
+  else
+    set_flags (FLAGBIT_O, 0);
+  put_reg (r2r0, (int)ll);
+
+  /** 1100 sss1 ss11 1110		MULEX src */
+
+  prefix (0, 1, 0);
+  sc = decode_dest23 (sss, ss, 2);
+  a = sign_ext (get_src (sc), 16);
+  b = sign_ext (get_reg (r2r0), 32);
+  ll = (long long)a * (long long)b;
+  tprintf("%d * %d = %lld (%llx)\n", a, b, ll, ll);
+  put_reg (r2r0, (int)ll);
+  put_reg (r1, (int)(ll >> 32));
+
+  /** 1000 ddd w dd00 1111		MULU.size #IMM,dest */
+
+  prefix (0, 1, 0);
+  w ++;
+  dc = decode_dest23 (ddd, dd, w);
+  v = get_src (dc);
+  imm = IMM(w);
+  tprintf("%d * %d = %d\n", v, imm, v*imm);
+  v *= imm;
+  dc = widen_sd (dc);
+  put_dest (dc, v);
+
+  /** 1sss ddd w dd ss 0100		MULU.size src,dest */
+
+  prefix (1, 1, 0);
+  w ++;
+  sc = decode_src23 (sss, ss, w);
+  dc = decode_dest23 (ddd, dd, w);
+  a = get_src (sc);
+  b = get_src (dc);
+  tprintf("%d * %d = %d\n", a, b, a*b);
+  v = a * b;
+  dc = widen_sd (dc);
+  put_dest (dc, v);
+
+  /** 0000 0001 1000 sss1 ss00 1111	MULU.L src,R2R0 */
+
+  M32C_ONLY();
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, 4);
+  a = get_src (sc);
+  b = get_reg (r2r0);
+  ll = (long long)a * (long long)b;
+  tprintf("%d * %d = %lld (%llx)\n", a, b, ll, ll);
+  if (ll < b2minsigned[4] || ll > b2maxsigned[4])
+    set_flags (FLAGBIT_O, FLAGBIT_O);
+  else
+    set_flags (FLAGBIT_O, 0);
+  put_reg (r2r0, (int)ll);
+
+  /** 1010 ddd w dd10 1111		NEG.size dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  a = sign_ext (get_src (dc), (w+1)*8);
+  v = -a;
+  tprintf("%d * -1 = %d\n", a, v);
+  set_oszc(v, w+1, v==0);
+  put_dest (dc, v);
+
+  /** 1101 1110				NOP */
+
+  tprintf("nop\n");
+
+  /** 1010 ddd w dd01 1110		NOT.size dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  a = get_src (dc);
+  v = ~a;
+  tprintf("~ %x = %x\n", a, v);
+  set_sz(v, w+1);
+  put_dest (dc, v);
+
+  /** 1000 ddd w dd10 1111		OR.size:G #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23(ddd, dd, w+1);
+  imm = IMM(w+1);
+  LOGIC_OP (dc, imm, |);
+
+  /** 01dd 010w				OR.size:S #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest2(dd, w+1);
+  imm = IMM (w+1);
+  LOGIC_OP (dc, imm, |);
+
+  /** 1sss ddd w dd ss 0101		OR.size:G src,dest */
+
+  prefix (1, 1, 0);
+  sc = decode_src23(sss, ss, w+1);
+  dc = decode_dest23(ddd, dd, w+1);
+  b = get_src (sc);
+  LOGIC_OP (dc, b, |);
+
+  /** 1011 ddd w dd10 1111		POP.size dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  if (w)
+    a = mem_get_hi (get_reg (sp));
+  else
+    a = mem_get_qi (get_reg (sp));
+  put_reg (sp, get_reg (sp) + 2);
+  tprintf("pop%s: %x\n", w ? "hi" : "qi", a);
+  put_dest (dc, a);
+
+  /** 1101 0011 1010 1dst		POPC dest */
+
+  prefix (0, 0, 0);
+  dc = decode_cr_b (dst, CR_B_DCT0);
+  a = mem_get_hi (get_reg (sp));
+  put_reg (sp, get_reg (sp) + 2);
+  tprintf("pophi: %x\n", a);
+  put_dest (dc, a);
+
+  /** 1101 0011 0010 1dst		POPC dest */
+
+  prefix (0, 0, 0);
+  dc = decode_cr_b (dst, CR_B_INTB);
+  a = mem_get_si (get_reg (sp));
+  put_reg (sp, get_reg (sp) + 4);
+  tprintf("popsi: %x\n", a);
+  put_dest (dc, a);
+
+  /** 1000 1110				POPM dest */
+
+  static int map[] = { r0, r1, r2, r3, a0, a1, sb, fb };
+  prefix (0, 0, 0);
+  imm = IMM(1);
+  tprintf("popm: %x\n", imm);
+  for (a=0; a<4; a++)
+    if (imm & (1<<a))
+      {
+	v = mem_get_hi (get_reg (sp));
+	put_reg (map[a], v);
+	put_reg (sp, get_reg (sp) + 2);
+      }
+  for (; a<8; a++)
+    if (imm & (1<<a))
+      {
+	v = mem_get_si (get_reg (sp));
+	put_reg (map[a], v);
+	put_reg (sp, get_reg (sp) + 4);
+      }
+
+  /** 1010 111w				PUSH.size #IMM */
+
+  prefix (0, 0, 0);
+  imm = IMM(w+1);
+  tprintf("push%s: %x\n", w ? "hi" : "qi", imm);
+  int a = get_reg (sp) - 2;
+  if (w)
+    mem_put_hi (a, imm);
+  else
+    mem_put_qi (a, imm);
+  put_reg (sp, a);
+
+  /** 1100 sss w ss00 1110		PUSH.size src */
+
+  prefix (0, 1, 0);
+  sc = decode_dest23 (sss, ss, w+1);
+  a = get_src (sc);
+  put_reg (sp, get_reg (sp) - 2);
+  if (w)
+    mem_put_hi (get_reg (sp), a);
+  else
+    mem_put_qi (get_reg (sp), a);
+  tprintf("push%s: %x\n", w ? "hi" : "qi", a);
+
+  /** 1011 0110 0101 0011		PUSH.L #IMM32 */
+
+  imm = IMM(4);
+  put_reg (sp, get_reg (sp) - 4);
+  mem_put_si (get_reg (sp), imm);
+
+  /** 1010 sss0 ss00 0001		PUSH.L src */
+
+  prefix (0, 1, 0);
+  sc = decode_dest23 (sss, ss, 4);
+  a = get_src (sc);
+  put_reg (sp, get_reg (sp) - 4);
+  mem_put_si (get_reg (sp), a);
+
+  /** 1011 0sa0 ss00 0001		PUSHA src */
+
+  prefix (0, 0, 0);
+  sc = decode_dest23 (sa, ss, 1);
+  put_reg (sp, get_reg (sp) - 4);
+  mem_put_hi (get_reg (sp), sc.u.addr);
+  tprintf("pushsi: %x\n", sc.u.addr);
+
+  /** 1101 0001 1010 1src		PUSHC src */
+
+  prefix (0, 0, 0);
+  sc = decode_cr_b (src, CR_B_DCT0);
+  a = get_src (sc);
+  put_reg (sp, get_reg (sp) - 2);
+  mem_put_hi (get_reg (sp), a);
+  tprintf("pushhi: %x\n", a);
+
+  /** 1101 0001 0010 1src		PUSHC src */
+
+  prefix (0, 0, 0);
+  sc = decode_cr_b (src, CR_B_INTB);
+  a = get_src (sc);
+  put_reg (sp, get_reg (sp) - 4);
+  mem_put_si (get_reg (sp), a);
+  tprintf("pushsi: %x\n", a);
+
+  /** 1000 1111				PUSHM src */
+
+  static int map[] = { fb, sb, a1, a0, r3, r2, r1, r0 };
+  imm = IMM(1);
+  tprintf("pushm: %x\n", imm);
+  for (a=0; a<4; a++)
+    if (imm & (1<<a))
+      {
+	put_reg (sp, get_reg (sp) - 4);
+	v = get_reg (map[a]);
+	mem_put_si (get_reg (sp), v);
+      }
+  for (; a<8; a++)
+    if (imm & (1<<a))
+      {
+	put_reg (sp, get_reg (sp) - 2);
+	v = get_reg (map[a]);
+	mem_put_hi (get_reg (sp), v);
+      }
+
+  /** 1001 1110				REIT */
+
+  a = get_reg (sp);
+  put_reg (pc, mem_get_si (a));
+  a += 4;
+  put_reg (flags, mem_get_hi (a));
+  a += 2;
+  put_reg (sp, a);
+
+  /** 1011 1000 010w 0011		RMPA.size */
+
+  int count = get_reg (r3);
+  int list1 = get_reg (a0);
+  int list2 = get_reg (a1);
+  long long sum = get_reg_ll (r3r1r2r0) & 0xffffff;
+
+  while (count)
+    {
+      if (w)
+	{
+	  a = sign_ext (mem_get_hi (list1), 16);
+	  b = sign_ext (mem_get_hi (list2), 16);
+	}
+      else
+	{
+	  a = sign_ext (mem_get_qi (list1), 8);
+	  b = sign_ext (mem_get_qi (list2), 8);
+	}
+      tprintf("%lld + %d * %d = ", sum, a, b);
+      sum += a * b;
+      tprintf("%lld\n", sum);
+      list1 += w ? 2 : 1;
+      list2 += w ? 2 : 1;
+      count --;
+    }
+  put_reg (r3, count);
+  put_reg (a0, list1);
+  put_reg (a1, list2);
+  put_reg (r2r0, (int)(sum & 0xffffffffU));
+  put_reg (r1, (int)(sum >> 32));
+
+  /** 1011 ddd w dd10 1110		ROLC.size dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  rot_op (dc, 1, 1);
+
+  /** 1010 ddd w dd10 1110		RORC.size dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  rot_op (dc, 1, -1);
+
+  /** 1110 ddd w dd10 immm		ROT.size #IMM, dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  rot_op (dc, IMM4(), -1);
+
+  /** 1010 ddd w dd11 1111		ROT.size R1H,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  a = sign_ext (get_reg (r1h), 8);
+  rot_op (dc, a, -1);
+
+  /** 1101 1111				RTS */
+
+  put_reg (pc, mem_get_si (get_reg (sp)));
+  put_reg (sp, get_reg (sp) + 4);
+
+  /** 0000 0001 1001 ddd w dd10 1110	SBB.size #IMM, dest */
+
+  prefix (0, 0, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  imm = IMM (w+1);
+  MATH_OP (dc, imm, !carry, -);
+
+  /** 0000 0001 1sss ddd w dd ss 0110	SBB.size src,dest */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, w+1);
+  dc = decode_dest23 (ddd, dd, w+1);
+  MATH_OP (dc, get_src (sc), !carry, -);
+
+  /** 1101 ddd1 dd11 cond		SCcond dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, 2);
+  if (condition_true (cond))
+    put_dest (dc, 1);
+  else
+    put_dest (dc, 0);
+
+  /** 1011 1000 110w 0011		SCMPU.size */
+
+  ta0 = get_reg (a0);
+  ta1 = get_reg (a1);
+
+  for (;;)
+    {
+      t0 = mem_get_qi (ta0);
+      t2 = mem_get_qi (ta1);
+      if (w)
+	{
+	  t1 = mem_get_qi (ta0 + 1);
+	  t3 = mem_get_qi (ta1 + 1);
+	}
+      dif = t0 - t2;
+      if (dif == 0 && t0 != 0 && w)
+	dif = t1 - t3;
+      set_oszc (dif, 1, dif > 0);
+
+      ta0 += w ? 2 : 1;
+      ta1 += w ? 2 : 1;
+
+      if (t0 == 0 || t0 != t2)
+	break;
+      if (w && (t1 == 0 || t1 != t3))
+	break;
+    }
+
+  /** 1111 ddd w dd00 immm		SHA.size #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  shift_op (dc, 1, IMM4(), 1);
+
+  /** 1010 ddd0 dd10 0001		SHA.L #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, 4);
+  imm = sign_ext (IMM(1), 8);
+  shift_op (dc, 1, imm, 1);
+
+  /** 1011 ddd w dd11 1110		SHA.size R1H,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  a = sign_ext (get_reg (r1h), 8);
+  shift_op (dc, 1, a, 1);
+
+  /** 1100 ddd0 dd01 0001		SHA.L	R1H,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, 4);
+  a = sign_ext (get_reg (r1h), 8);
+  shift_op (dc, 1, a, 1);
+
+  /** 1100 ddd0 dd10 0001		SHANC.L #IMM,dest */
+
+  M32C_ONLY();
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, 4);
+  imm = sign_ext (IMM(1), 8);
+  shift_op (dc, 1, imm, 0);
+
+  /** 1110 ddd w dd00 immm		SHL.size #IMM, dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  shift_op (dc, 0, IMM4(), 1);
+
+  /** 1001 ddd0 dd10 0001		SHL.L #IMM, dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, 4);
+  imm = sign_ext (IMM(1), 8);
+  shift_op (dc, 0, imm, 1);
+
+  /** 1010 ddd w dd11 1110		SHL.size R1H,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  a = sign_ext (get_reg (r1h), 8);
+  shift_op (dc, 0, a, 1);
+
+  /** 1100 ddd0 dd00 0001		SHL.L R1H,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, 4);
+  a = sign_ext (get_reg (r1h), 8);
+  shift_op (dc, 0, a, 1);
+
+  /** 1000 ddd0 dd10 0001		SHLNC.L #IMM,dest */
+
+  M32C_ONLY();
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, 4);
+  imm = sign_ext (IMM(1), 8);
+  shift_op (dc, 0, imm, 0);
+
+  /** 1011 0010 100w 0011		SIN.size */
+
+  v = get_reg (a0);
+  a = get_reg (a1);
+  b = get_reg (r3);
+  if (b) for (;b;)
+    {
+      if (w)
+	mem_put_hi(a, mem_get_hi (v));
+      else
+	mem_put_qi(a, mem_get_qi (v));
+      a += w ? 2 : 1;
+      b --;
+    }
+  put_reg (a0, v);
+  put_reg (a1, a);
+  put_reg (r3, b);
+
+  /** 1011 0110 100w 0011		SMOVB.size */
+
+  v = get_reg (a0);
+  a = get_reg (a1);
+  b = get_reg (r3);
+  if (b) for (;b;)
+    {
+      if (w)
+	mem_put_hi(a, mem_get_hi (v));
+      else
+	mem_put_qi(a, mem_get_qi (v));
+      v -= w ? 2 : 1;
+      a -= w ? 2 : 1;
+      b --;
+    }
+  put_reg (a0, v);
+  put_reg (a1, a);
+  put_reg (r3, b);
+
+  /** 1011 0000 100w 0011		SMOVF.size */
+
+  v = get_reg (a0);
+  a = get_reg (a1);
+  b = get_reg (r3);
+  if (b) for (;b;)
+    {
+      if (w)
+	mem_put_hi(a, mem_get_hi (v));
+      else
+	mem_put_qi(a, mem_get_qi (v));
+      v += w ? 2 : 1;
+      a += w ? 2 : 1;
+      b --;
+    }
+  put_reg (a0, v);
+  put_reg (a1, a);
+  put_reg (r3, b);
+
+  /** 1011 1000 100w 0011		SMOVU.size */
+
+  v = get_reg (a0);
+  a = get_reg (a1);
+  do
+    {
+      if (w)
+	mem_put_hi(a, (t0 = mem_get_hi (v)));
+      else
+	mem_put_qi(a, (t0 = mem_get_qi (v)));
+      v += w ? 2 : 1;
+      a += w ? 2 : 1;
+      if (t0 == 0
+	  || (w && ((t0 & 0xff) == 0 || (t0 & 0xff00) == 0)))
+	break;
+    } while (1);
+  put_reg (a0, v);
+  put_reg (a1, a);
+
+  /** 1011 0100 100w 0011		SOUT.size */
+
+  v = get_reg (a0);
+  a = get_reg (a1);
+  b = get_reg (r3);
+  for (;b;)
+    {
+      if (w)
+	mem_put_hi(a, mem_get_hi (v));
+      else
+	mem_put_qi(a, mem_get_qi (v));
+      v += w ? 2 : 1;
+      b --;
+    }
+  put_reg (a0, v);
+  put_reg (a1, a);
+  put_reg (r3, b);
+
+  /** 1011 1000 000w 0011		SSTR.size */
+
+  a = get_reg (a1);
+  b = get_reg (r3);
+  for (;b;)
+    {
+      if (w)
+	mem_put_hi(a, r0);
+      else
+	mem_put_qi(a, r0 & 0xff);
+      a += w ? 2 : 1;
+      b --;
+    }
+  put_reg (a1, a);
+  put_reg (r3, b);
+
+  /** 0000 0001 1101 ddd1 dd01 0src	STC src,dest */
+
+  prefix (0, 0, 0);
+  dc = decode_dest23 (ddd, dd, 4);
+  sc = decode_cr_b (src, CR_B_DMA0);
+  a = get_src (sc);
+  put_dest (dc, a);
+
+  /** 0000 0001 1101 ddd1 dd01 1src	STC src,dest */
+
+  prefix (0, 0, 0);
+  dc = decode_dest23 (ddd, dd, 2);
+  sc = decode_cr_b (src, CR_B_DCT0);
+  a = get_src (sc);
+  put_dest (dc, a);
+
+  /** 1101 ddd1 dd01 0src		STC src,dest */
+
+  prefix (0, 0, 0);
+  dc = decode_dest23 (ddd, dd, 4);
+  sc = decode_cr_b (src, CR_B_INTB);
+  a = get_src (sc);
+  put_dest (dc, a);
+
+  /** 1011 0110 1101 0011		STCX abs16,abs24 */
+
+  NOTYET();
+
+  /** 1001 ddd w dd01 1111		STNZ.size #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  imm = IMM(w+1);
+  if (! FLAG_Z)
+    put_dest (dc, imm);
+
+  /** 1001 ddd w dd00 1111		STZ.size #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  imm = IMM(w+1);
+  if (FLAG_Z)
+    put_dest (dc, imm);
+
+  /** 1001 ddd w dd11 1111		STZX.size #IMM1,#IMM2,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  a = IMM(w+1);
+  b = IMM(w+1);
+  if (FLAG_Z)
+    put_dest (dc, a);
+  else
+    put_dest (dc, b);
+
+  /** 1000 ddd w dd11 1110		SUB.size:G #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23(ddd, dd, w+1);
+  imm = IMM(w+1);
+  MATH_OP (dc, imm, 0, -);
+
+  /** 1001 ddd0 dd11 0001		SUB.L:G #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23(ddd, dd, 4);
+  imm = IMM(4);
+  MATH_OP (dc, imm, 0, -);
+
+  /** 00dd 111w				SUB.size:S #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest2(dd, w+1);
+  imm = IMM (w+1);
+  MATH_OP (dc, imm, 0, -);
+
+  /** 1sss ddd w dd ss 1010		SUB.size:G src,dest */
+
+  prefix (1, 1, 0);
+  sc = decode_src23(sss, ss, w+1);
+  dc = decode_dest23(ddd, dd, w+1);
+  b = get_src (sc);
+  MATH_OP (dc, b, 0, -);
+
+  /** 1sss ddd1 dd ss 0000		SUB.L:G src,dest */
+
+  prefix (1, 1, 0);
+  sc = decode_src23(sss, ss, 4);
+  dc = decode_dest23(ddd, dd, 4);
+  b = get_src (sc);
+  MATH_OP (dc, b, 0, -);
+
+  /** 1001 ddd0 dd01 0001		SUBX #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23(ddd, dd, 4);
+  imm = sign_ext (IMM(1), 8);
+  MATH_OP (dc, imm, 0, -);
+
+  /** 1sss ddd0 dd ss 0000		SUBX src,dest */
+
+  prefix (1, 1, 0);
+  sc = decode_src23(sss, ss, 1);
+  dc = decode_dest23(ddd, dd, 4);
+  b = sign_ext (get_src (sc), 8);
+  MATH_OP (dc, b, 0, -);
+
+  /** 1001 ddd w dd11 1110		TST.size:G #IMM,dest */
+
+  prefix (0, 0, 0);
+  dc = decode_dest23 (ddd, dd, w+1);
+  imm = IMM(w+1);
+  a = get_src (dc);
+  v = a & imm;
+  set_sz (v, w+1);
+
+  /** 00dd 110w				TST.size:S #IMM,dest */
+
+  prefix (0, 0, 0);
+  dc = decode_dest2 (dd, w+1);
+  imm = IMM(w+1);
+  a = get_src (dc);
+  v = a & imm;
+  set_sz (v, w+1);
+
+  /** 0000 0001 1sss ddd w dd ss 1001	TST.size:G src,dest */
+
+  prefix (0, 0, 0);
+  sc = decode_src23 (sss, ss, w+1);
+  dc = decode_dest23 (ddd, dd, w+1);
+  b = get_src (sc);
+  a = get_src (dc);
+  v = a & b;
+  set_sz (v, w+1);
+
+  /** 1111 1111				UND */
+
+  trigger_fixed_interrupt (0xffffdc);
+
+  /** 1011 0010 0000 0011		WAIT */
+
+  ;
+
+  /** 1101 ddd w dd00 1src		XCHG.size src,dest */
+
+  dc = decode_dest23 (ddd, dd, w+1);
+  sc = decode_src3 (src, w+1);
+  a = get_src (dc);
+  b = get_src (sc);
+  put_dest (dc, b);
+  put_dest (sc, a);
+
+  /** 1001 ddd w dd00 1110		XOR.size #IMM,dest */
+
+  prefix (0, 1, 0);
+  dc = decode_dest23(ddd, dd, w+1);
+  imm = IMM(w+1);
+  LOGIC_OP (dc, imm, ^);
+
+  /** 1sss ddd w dd ss 1001		XOR.size src,dest */
+
+  prefix (1, 1, 0);
+  sc = decode_src23(sss, ss, w+1);
+  dc = decode_dest23(ddd, dd, w+1);
+  b = get_src (sc);
+  LOGIC_OP (dc, b, ^);
+
+/** */
+
+  return step_result;
+}

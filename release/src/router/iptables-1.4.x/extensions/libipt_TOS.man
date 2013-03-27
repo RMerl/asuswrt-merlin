@@ -1,0 +1,11 @@
+This is used to set the 8-bit Type of Service field in the IP header.
+It is only valid in the
+.B mangle
+table.
+.TP
+.BI "--set-tos " "tos"
+You can use a numeric TOS values, or use
+.nf
+ iptables -j TOS -h
+.fi
+to see the list of valid TOS names.

@@ -30,7 +30,7 @@
 /* on linux 2.4.29 + debian/ubuntu we have crashes if this is enabled */
 #undef HAVE_POSIX_FADVISE
 
-#define DBE 1
+#define DBE 0
 //#define USE_SMB_THREAD
 //#define BUFF_SIZE (1460*4)
 //#define BUFF_SIZE 131072
@@ -57,11 +57,6 @@ static void *thread_do_smb_transition(void* chunkInfo)
 	server *srv = pchunkInfo->srv;
 	connection *con = pchunkInfo->con;
 	chunk *c = pchunkInfo->c;
-	//int fd = pchunkInfo->fd;
-	//chunkqueue *cq = pchunkInfo->cq;
-	
-	//data_string *ds_userAgent = (data_string *)array_get_element(con->request.headers, "user-Agent");	
-	//Cdbg(1, " fn =[%s], ds_userAgent=[%s]", pchunkInfo->file_name->ptr, ds_userAgent->value->ptr);
 	
 	ssize_t r, w;
 	off_t offset;
@@ -71,7 +66,6 @@ static void *thread_do_smb_transition(void* chunkInfo)
 	
 	do{
 		if(c->listcount>100){
-			Cdbg(1, "sleep...");
 			sleep(10);
 			continue;
 		}

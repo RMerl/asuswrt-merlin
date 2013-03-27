@@ -52,6 +52,8 @@ body {font-family: Verdana, Tohoma, Arial, Helvetica, sans-serif;padding:0;margi
 	font-size: 12px;
 }
 .app_state{
+	font-family:Segoe UI, Georgia, sans-serif;
+	word-break: break-all;
 	margin-top:100px;
 	margin-left:130px;
 	margin-right:130px;

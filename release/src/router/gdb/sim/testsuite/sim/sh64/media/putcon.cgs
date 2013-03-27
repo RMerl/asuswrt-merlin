@@ -1,0 +1,30 @@
+# sh testcase for putcon $rm, $crj -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	pta wrong, tr0
+
+putcon1:
+	movi 22, r0
+	putcon r0, cr0
+	getcon cr0, r1
+	bne r0, r1, tr0
+
+putcon2:
+	movi 12, r0
+	shlli r0, 35, r0
+	putcon r0, cr20
+	getcon cr20, r20
+	bne r0, r20, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

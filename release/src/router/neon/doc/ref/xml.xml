@@ -1,0 +1,56 @@
+<refentry id="refxml">
+
+  <refmeta>
+    <refentrytitle>ne_xml_create</refentrytitle>
+    <manvolnum>3</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname id="ne_xml_create">ne_xml_create</refname>
+    <refname id="ne_xml_destroy">ne_xml_destroy</refname>
+    <refpurpose>create and destroy an XML parser</refpurpose>
+  </refnamediv>
+  
+  <refsynopsisdiv>
+
+    <funcsynopsis>
+
+      <funcsynopsisinfo>#include &lt;ne_xml.h&gt;</funcsynopsisinfo>
+
+      <funcprototype>
+        <funcdef>ne_xml_parser *<function>ne_xml_create</function></funcdef>
+        <void/>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>void <function>ne_xml_destroy</function></funcdef>
+        <paramdef>ne_xml_parser *<parameter>parser</parameter></paramdef>
+      </funcprototype>
+
+    </funcsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para>The <function>ne_xml_create</function> function creates an
+    XML parser object, which can be used for parsing XML documents
+    using stacked SAX handlers.</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Return value</title>
+
+    <para><function>ne_xml_create</function> returns a pointer to an
+    XML parser object, and never &null;</para> </refsect1>
+
+  <refsect1>
+    <title>See also</title>
+
+    <para>XXX</para>
+  </refsect1>
+
+</refentry>
+

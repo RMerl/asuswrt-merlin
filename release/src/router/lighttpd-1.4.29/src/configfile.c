@@ -1153,6 +1153,7 @@ int config_read(server *srv, const char *fn) {
 		prepends = data_array_init();
 
 		/* prepend default modules */
+#ifndef APP_IPKG
 		if (NULL == array_get_element(modules->value, "mod_indexfile")) {
 			ds = data_string_init();
 			buffer_copy_string_len(ds->value, CONST_STR_LEN("mod_indexfile"));
@@ -1177,6 +1178,32 @@ int config_read(server *srv, const char *fn) {
 			buffer_copy_string_len(ds->value, CONST_STR_LEN("mod_staticfile"));
 			array_insert_unique(modules->value, (data_unset *)ds);
 		}
+#else
+	 if (NULL == array_get_element(modules->value, "aicloud_mod_indexfile")) {
+			ds = data_string_init();
+                        buffer_copy_string_len(ds->value, CONST_STR_LEN("aicloud_mod_indexfile"));
+			array_insert_unique(prepends->value, (data_unset *)ds);
+		}
+
+		prepends = (data_array *)configparser_merge_data((data_unset *)prepends, (data_unset *)modules);
+		buffer_copy_string_buffer(prepends->key, modules->key);
+		array_replace(srv->config, (data_unset *)prepends);
+		modules->free((data_unset *)modules);
+		modules = prepends;
+
+		/* append default modules */
+                if (NULL == array_get_element(modules->value, "aicloud_mod_dirlisting")) {
+			ds = data_string_init();
+                        buffer_copy_string_len(ds->value, CONST_STR_LEN("aicloud_mod_dirlisting"));
+			array_insert_unique(modules->value, (data_unset *)ds);
+		}
+
+                if (NULL == array_get_element(modules->value, "aicloud_mod_staticfile")) {
+			ds = data_string_init();
+                        buffer_copy_string_len(ds->value, CONST_STR_LEN("aicloud_mod_staticfile"));
+			array_insert_unique(modules->value, (data_unset *)ds);
+		}
+#endif
 	} else {
 		data_string *ds;
 		

@@ -1,0 +1,11 @@
+# Host: IBM PowerPC running AIX
+
+NAT_FILE= config/rs6000/nm-rs6000.h
+
+# aix-thread.o is not listed in NATDEPFILES as it is pulled in by configure.
+NATDEPFILES= fork-child.o inf-ptrace.o corelow.o rs6000-nat.o \
+	     xcoffread.o xcoffsolib.o
+
+# When compiled with cc, for debugging, this argument should be passed.
+# We have no idea who our current compiler is though, so we skip it.
+# MH_CFLAGS = -bnodelcsect

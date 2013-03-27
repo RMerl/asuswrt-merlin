@@ -1,7 +1,7 @@
 /*
  * CFE boot loader OS Abstraction Layer.
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: cfe_osl.h 241182 2011-02-17 21:50:03Z $
+ * $Id: cfe_osl.h 341899 2012-06-29 04:06:38Z $
  */
 
 #ifndef _cfe_osl_h_
@@ -124,9 +124,16 @@ extern void osl_detach(osl_t *osh);
 #define	OSL_UNCACHED(a)		((void *)UNCADDR(PHYSADDR((ulong)(a))))
 #define	OSL_CACHED(a)		((void *)KERNADDR(PHYSADDR((ulong)(a))))
 #else
-#define OSL_UNCACHED(a)		(a)
-#define OSL_CACHED(a)		(a)
+#define OSL_UNCACHED(a)		((void *)UNCADDR(PHYSADDR((ulong)(a))))
+#define OSL_CACHED(a)		((void *)KERNADDR(PHYSADDR((ulong)(a))))
+/* ARM NorthStar */
+#ifndef CFG_UNCACHED
+extern void _cfe_flushcache_rang(uint, uint);
+#define OSL_CACHE_FLUSH(va, len)	_cfe_flushcache_rang(va, len)
+#else
+#define OSL_CACHE_FLUSH(va, len)
 #endif
+#endif /* __mips__ */
 
 #ifdef __mips__
 #define OSL_PREF_RANGE_LD(va, sz) prefetch_range_PREF_LOAD_RETAINED(va, sz)

@@ -1,7 +1,7 @@
 /*
  * BCM43XX PCI/E core sw API definitions.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: nicpci.h 316716 2012-02-23 04:39:13Z $
+ * $Id: nicpci.h 348160 2012-07-31 21:25:18Z $
  */
 
 #ifndef	_NICPCI_H
@@ -28,6 +28,7 @@
 
 #define pcie_clkreq(a, b, c)	(0)
 #define pcie_lcreg(a, b, c)	(0)
+#define pcie_ltrenable(a, b, c)	(0)
 
 #define pcicore_init(a, b, c) (0x0dadbeef)
 #define pcicore_deinit(a)	do { } while (0)
@@ -79,6 +80,7 @@ extern uint32 pcie_lcreg(void *pch, uint32 mask, uint32 val);
 extern void pcie_set_L1_entry_time(void *pch, uint32 val);
 extern void pcie_disable_TL_clk_gating(void *pch);
 extern void pcie_set_error_injection(void *pch, uint32 mode);
+extern uint8 pcie_ltrenable(void *pch, uint32 mask, uint32 val);
 
 extern void *pcicore_init(si_t *sih, osl_t *osh, void *regs);
 extern void pcicore_deinit(void *pch);
@@ -124,6 +126,7 @@ extern uint32 pcie_get_link_speed(void* pch);
 	  (pi->sih->boardtype == BCM94331X28) || \
 	  (pi->sih->boardtype == BCM94331X28B) || \
 	  (pi->sih->boardtype == BCM94331X29B) || \
+	  (pi->sih->boardtype == BCM94331X29D) || \
 	  (pi->sih->boardtype == BCM94331X19C) || \
 	  (pi->sih->boardtype == BCM94331X33)))
 
@@ -131,5 +134,6 @@ extern uint32 pcie_get_link_speed(void* pch);
 	((CHIPID((sih)->chip) == BCM4331_CHIP_ID) && \
 	 ((sih)->boardtype == BCM94331X19 || \
 	  (sih)->boardtype == BCM94331X28 || \
+	  (sih)->boardtype == BCM94331X29B || \
 	  (sih)->boardtype == BCM94331X19C))
 #endif	/* _NICPCI_H */

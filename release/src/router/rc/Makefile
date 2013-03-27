@@ -6,7 +6,7 @@ CFLAGS += -I$(TOP)/openssl/include
 CFLAGS += -ffunction-sections -fdata-sections
 CFLAGS += -DDLM -DASUS_DDNS -DASUS_EXT -DBTN_SETUP -DWEB_REDIRECT
 
-CFLAGS += -DOVERWRITE_DNS -DDEBUG_RCTEST
+CFLAGS += -DDEBUG_RCTEST
 
 ifeq ($(RTCONFIG_WPS),y)
 CFLAGS += -I$(SRCBASE)/wps/brcm_apps/include
@@ -26,19 +26,27 @@ endif
 
 ifeq ($(RTAC66U), y)
 CFLAGS += -DRTAC66U
-#CFLAGS += -DACS_ONCE
+endif
+ifeq ($(RTN65U), y)
+CFLAGS += -DRTN65U
 endif
 
 #CFLAGS += -DRC_BUILDTIME=$(shell date -d "now" +"%s")
+
+ifneq ($(findstring NET_CLS_POLICE=, $(shell cat $(LINUXDIR)/.config)),)
+else
+export CFLAGS += -DCLS_ACT
+endif
 
 LDFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
 ifeq ($(STATIC),1)
 LDFLAGS += -static
 endif
+LDFLAGS += $(EXTRA_LDFLAGS)
 
 OBJS := rc.o init.o interface.o lan.o wireless.o wan.o pppd.o auth.o services.o mtd.o
-OBJS += firewall.o ppp.o services.o usdsvr.o common.o
-OBJS += watchdog.o ntp.o btnsetup.o qos.o udhcpc.o ate.o cpu.o
+OBJS += firewall.o ppp.o services.o common.o
+OBJS += watchdog.o ntp.o btnsetup.o qos.o udhcpc.o ate.o #cpu.o
 ifeq ($(RTCONFIG_FANCTRL),y)
 OBJS += phy_tempsense.o
 endif
@@ -114,6 +122,11 @@ ifeq ($(RTCONFIG_WPS),y)
 OBJS += wpsaide.o
 endif
 
+ifeq ($(RTN65U),y)
+OBJS += asm1042.o
+endif
+
+
 ifeq ($(RTCONFIG_SHP),y)
 export CFLAGS += -DMEDIA_REVIEW
 endif
@@ -187,11 +200,9 @@ endif
 
 ifeq ($(RTCONFIG_RALINK),y)
 ifeq ($(RTCONFIG_DSL),y)
-	@cd $(INSTALLDIR)/sbin && ln -sf rc 8367r
 	@cd $(INSTALLDIR)/sbin && ln -sf rc convert_dsl_wan_settings
-else
-	@cd $(INSTALLDIR)/sbin && ln -sf rc 8367m
 endif
+	@cd $(INSTALLDIR)/sbin && ln -sf rc rtkswitch
 endif
 
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wanduck
@@ -206,16 +217,26 @@ ifeq ($(RTCONFIG_USB),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_tty
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_usbbcm
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_usb_interface
+	@cd $(INSTALLDIR)/sbin && ln -sf rc usb_notify
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ejusb
 ifeq ($(RTCONFIG_DISK_MONITOR),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc disk_monitor
 endif
+	@cd $(INSTALLDIR)/sbin && ln -sf rc disk_remove
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_app_script 
 	@cd $(INSTALLDIR)/sbin && ln -sf rc restart_wireless
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ATE
+ifeq ($(RTCONFIG_RALINK),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc FWRITE
+	@cd $(INSTALLDIR)/sbin && ln -sf rc FREAD
+	@cd $(INSTALLDIR)/sbin && ln -sf rc asuscfe_2g
+	@cd $(INSTALLDIR)/sbin && ln -sf rc asuscfe_5g
+	@cd $(INSTALLDIR)/sbin && ln -sf rc stainfo_2g
+	@cd $(INSTALLDIR)/sbin && ln -sf rc stainfo_5g
 ifeq ($(RTCONFIG_DSL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc gen_ralink_config
+endif
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_telnetd 
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_pptpd
@@ -240,21 +261,19 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc free_caches
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_phy_status
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_phy_speed
-
+	@cd $(INSTALLDIR)/sbin && ln -sf rc firmware_check
 clean:
 	rm -f rc *.o .*.depend
 
 size: rc
 	mipsel-uclibc-nm --print-size --size-sort rc
 
-%.o: %.c .%.depend
+%.o: %.c
 	@echo " [rc] CC $@"
 	@$(CC) $(CFLAGS) -c $<
 
 .%.depend: %.c
 	@$(CC) $(CFLAGS) -M $< > $@
-
--include $(OBJS:%.o=.%.depend)
 
 
 

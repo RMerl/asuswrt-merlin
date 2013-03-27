@@ -1,0 +1,15 @@
+Iproute2 development is closely tied to Linux kernel networking
+development. Most new features require a kernel and a utility component.
+
+Please submit both to the Linux networking mailing list
+   <netdev@vger.kernel.org>
+
+The current source is in the git repository:
+    git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
+
+The master branch contains the source corresponding to the current
+code in the mainline Linux kernel (ie follows Linus). The net-next
+branch is a temporary branch that tracks the code intended for the
+next release; it corresponds with networking development branch in
+the kernel.
+

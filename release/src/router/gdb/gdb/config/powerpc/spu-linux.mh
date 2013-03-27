@@ -1,0 +1,7 @@
+# Target: Cell BE (PowerPC64 + SPU)
+
+# This implements a 'pseudo-native' GDB running on the
+# PPU side of the Cell BE and debugging the SPU side.
+
+NATDEPFILES = spu-linux-nat.o fork-child.o inf-ptrace.o
+

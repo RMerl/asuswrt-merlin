@@ -1,0 +1,38 @@
+# frv testcase for nlduhi @($GRi,$d12),$GRk
+# mach: frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global nlduhi
+nlduhi:
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_limmed	0xbeef,0xdead,gr8
+
+	set_gr_gr	sp,gr20
+	nlduhi 		@(sp,0),gr8
+	test_gr_limmed	0x0000,0xdead,gr8
+	test_spr_limmed	0x8840,0x0001,nesr0
+	test_spr_gr	neear0,gr20
+	test_spr_limmed	0x0000,0x0000,gner1
+	test_spr_limmed	0x0000,0x0000,gner0
+
+	inc_gr_immed	2,gr20
+	nlduhi 		@(sp,2),gr8
+	test_gr_limmed	0x0000,0xbeef,gr8
+	test_spr_limmed	0x8840,0x0401,nesr1
+	test_spr_gr	neear1,gr20
+	test_spr_limmed	0x0000,0x0000,gner1
+	test_spr_limmed	0x0000,0x0000,gner0
+
+	set_mem_limmed	0xffff,0x0000,sp
+	inc_gr_immed	4,sp
+	nlduhi 		@(sp,-2),gr8
+	test_gr_limmed	0x0000,0x0000,gr8
+	test_spr_limmed	0x8840,0x0801,nesr2
+	test_spr_gr	neear2,gr20
+	test_spr_limmed	0x0000,0x0000,gner1
+	test_spr_limmed	0x0000,0x0000,gner0
+
+	pass

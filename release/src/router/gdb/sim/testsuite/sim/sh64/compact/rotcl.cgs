@@ -1,0 +1,121 @@
+# sh testcase for rotcl $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global rotcl
+
+rotcl:
+	clrt
+	mov #1, r1
+	rotcl r1
+	assert r1, #2
+	clrt
+	rotcl r1
+	assert r1, #4
+	clrt
+	rotcl r1
+	assert r1, #8
+	clrt
+	rotcl r1
+	assert r1, #16
+	clrt
+	rotcl r1
+	assert r1, #32
+	clrt
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	bf wrong
+	rotcl r1
+	assert r1, #1
+
+	bra trotcl
+	nop
+
+wrong:
+	fail
+
+trotcl:
+	sett
+	mov #1, r1
+	rotcl r1
+	assert r1, #3
+	clrt
+	rotcl r1
+	assert r1, #6
+	clrt
+	rotcl r1
+	assert r1, #12
+	clrt
+	rotcl r1
+	assert r1, #24
+	clrt
+	rotcl r1
+	assert r1, #48
+	clrt
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	rotcl r1
+	bf wrong2
+	assert r1, #1
+	rotcl r1
+	rotcl r1
+
+okay:	
+	pass
+wrong2:
+	fail

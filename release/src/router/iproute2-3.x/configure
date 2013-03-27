@@ -1,0 +1,164 @@
+#! /bin/bash
+# This is not an autconf generated configure
+#
+INCLUDE=${1:-"$PWD/include"}
+
+check_atm()
+{
+cat >/tmp/atmtest.c <<EOF
+#include <atm.h>
+int main(int argc, char **argv) {
+	struct atm_qos qos;
+	(void) text2qos("aal5,ubr:sdu=9180,rx:none",&qos,0);
+	return 0;
+}
+EOF
+${CROSS_COMPILE}gcc -I$INCLUDE -o /tmp/atmtest /tmp/atmtest.c -latm >/dev/null 2>&1
+if [ $? -eq 0 ]
+then
+    echo "TC_CONFIG_ATM:=y" >>Config
+    echo yes
+else
+    echo no
+fi
+rm -f /tmp/atmtest.c /tmp/atmtest
+}
+
+check_xt()
+{
+#check if we have xtables from iptables >= 1.4.5.
+cat >/tmp/ipttest.c <<EOF
+#include <xtables.h>
+#include <linux/netfilter.h>
+static struct xtables_globals test_globals = {
+	.option_offset = 0,
+	.program_name = "tc-ipt",
+	.program_version = XTABLES_VERSION,
+	.orig_opts = NULL,
+	.opts = NULL,
+	.exit_err = NULL,
+};
+
+int main(int argc, char **argv)
+{
+	xtables_init_all(&test_globals, NFPROTO_IPV4);
+	return 0;
+}
+
+EOF
+
+if ${CROSS_COMPILE}gcc -I$INCLUDE $IPTC -o /tmp/ipttest /tmp/ipttest.c $IPTL -ldl -lxtables >/dev/null 2>&1
+then
+	echo "TC_CONFIG_XT:=y" >>Config
+	echo "using xtables"
+fi
+rm -f /tmp/ipttest.c /tmp/ipttest
+}
+
+check_xt_old()
+{
+# bail if previous XT checks has already succeded.
+if grep TC_CONFIG_XT Config > /dev/null
+then
+	return
+fi
+
+#check if we dont need our internal header ..
+cat >/tmp/ipttest.c <<EOF
+#include <xtables.h>
+char *lib_dir;
+unsigned int global_option_offset = 0;
+const char *program_version = XTABLES_VERSION;
+const char *program_name = "tc-ipt";
+struct afinfo afinfo = {
+	.libprefix      = "libxt_",
+};
+
+void exit_error(enum exittype status, const char *msg, ...)
+{
+}
+
+int main(int argc, char **argv) {
+
+	return 0;
+}
+
+EOF
+${CROSS_COMPILE}gcc -I$INCLUDE $IPTC -o /tmp/ipttest /tmp/ipttest.c $IPTL -ldl >/dev/null 2>&1
+
+if [ $? -eq 0 ]
+then
+	echo "TC_CONFIG_XT_OLD:=y" >>Config
+	echo "using old xtables (no need for xt-internal.h)"
+fi
+rm -f /tmp/ipttest.c /tmp/ipttest
+}
+
+check_xt_old_internal_h()
+{
+# bail if previous XT checks has already succeded.
+if grep TC_CONFIG_XT Config > /dev/null
+then
+	return
+fi
+
+#check if we need our own internal.h
+cat >/tmp/ipttest.c <<EOF
+#include <xtables.h>
+#include "xt-internal.h"
+char *lib_dir;
+unsigned int global_option_offset = 0;
+const char *program_version = XTABLES_VERSION;
+const char *program_name = "tc-ipt";
+struct afinfo afinfo = {
+	.libprefix      = "libxt_",
+};
+
+void exit_error(enum exittype status, const char *msg, ...)
+{
+}
+
+int main(int argc, char **argv) {
+
+	return 0;
+}
+
+EOF
+${CROSS_COMPILE}gcc -I$INCLUDE $IPTC -o /tmp/ipttest /tmp/ipttest.c $IPTL -ldl >/dev/null 2>&1
+
+if [ $? -eq 0 ]
+then
+	echo "using old xtables with xt-internal.h"
+	echo "TC_CONFIG_XT_OLD_H:=y" >>Config
+fi
+rm -f /tmp/ipttest.c /tmp/ipttest
+}
+
+check_ipt()
+{
+	if ! grep TC_CONFIG_XT Config > /dev/null
+	then
+		echo "using iptables"
+	fi
+}
+
+check_ipt_lib_dir()
+{
+	echo "IPT_LIB_DIR:=/usr/lib/xtables" >> Config
+}
+
+echo "# Generated config based on" $INCLUDE >Config
+
+echo "TC schedulers"
+
+echo -n " ATM	"
+check_atm
+
+echo -n " IPT	"
+check_xt
+check_xt_old
+check_xt_old_internal_h
+check_ipt
+
+echo -n "iptables modules directory: "
+check_ipt_lib_dir

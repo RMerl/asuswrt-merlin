@@ -1,0 +1,127 @@
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 2004, 2005, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check that GDB can trigger and backtrace SIGSEGV signal stacks
+# caused by both accessing (data) and executing (code) at address
+# zero.
+
+# On function descriptor architectures, a zero descriptor, instead of
+# a NULL pointer, is used.  That way the NULL code test always
+# contains a zero code reference.
+
+# For recovery, sigjmp/longjmp are used.
+
+# This also tests backtrace/gdb1476.
+
+if [target_info exists gdb,nosignals] {
+    verbose "Skipping signull.exp because of nosignals."
+    continue
+}
+
+if $tracelevel {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "signull"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    untested signull.exp
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+#
+# Run to `main' where we begin our tests.
+#
+
+if ![runto_main] then {
+    gdb_suppress_tests
+}
+
+# If we can examine what's at memory address 0, it is possible that we
+# could also execute it.  This could probably make us run away,
+# executing random code, which could have all sorts of ill effects,
+# especially on targets without an MMU.  Don't run the tests in that
+# case.
+
+send_gdb "x 0\n"
+gdb_expect {
+    -re "0x0:.*Cannot access memory at address 0x0.*$gdb_prompt $" { }
+    -re "0x0:.*Error accessing memory address 0x0.*$gdb_prompt $" { }
+    -re ".*$gdb_prompt $" {
+	untested "Memory at address 0 is possibly executable"
+	return
+    }
+}
+
+# If an attempt to call a NULL pointer leaves the inferior in main,
+# then function pointers are descriptors, probe this and remember the
+# result.
+
+gdb_test "set test = code_entry_point" "" "set for function pointer probe"
+set test "probe function pointer"
+set function_pointer code_entry_point
+gdb_test_multiple "continue" "$test" {
+    -re "Program received signal SIGSEGV.*bowler .*$gdb_prompt $" {
+	set function_pointer code_descriptor
+	pass "$test (function descriptor)"
+    }
+    -re "Program received signal SIGSEGV.*0.*$gdb_prompt $" {
+	pass "$test (function entry-point)"
+    }
+}
+
+# Re-start from scratch, breakpoint the bowler so that control is
+# regained after each test, and run up to that.
+rerun_to_main
+gdb_test "break bowler"
+gdb_test "break keeper"
+# By default Stop:Yes Print:Yes Pass:Yes
+gdb_test "handle SIGSEGV" "SIGSEGV.*Yes.*Yes.*Yes.*Segmentation fault"
+
+# For the given signal type, check that: the SIGSEGV occures; a
+# backtrace from the SEGV works; the sigsegv is delivered; a backtrace
+# through the SEGV works.
+
+proc test_segv { name tag bt_from_segv bt_from_keeper } {
+    gdb_test continue "Breakpoint.* bowler.*" "${name}; start with the bowler"
+    # NB: Don't use $tag in the testname - changes across systems.
+    gdb_test "set test = $tag" "" "${name}; select the pointer type"
+    gdb_test continue "Program received signal SIGSEGV.*" \
+	"${name}; take the SIGSEGV"
+    gdb_test backtrace $bt_from_segv "${name}; backtrace from SIGSEGV"
+    gdb_test continue "Breakpoint.* keeper.*" "${name}; continue to the keeper"
+    gdb_test backtrace $bt_from_keeper "${name}; backtrace from keeper through SIGSEGV"
+}
+
+test_segv "data read" data_read \
+    {#0 .* bowler .*#1  .* main .*} \
+    {#0 .* keeper .*#1  .* handler .*#2 .* bowler .*#3  .* main .*}
+test_segv "data write" data_write \
+    {#0 .* bowler .*#1  .* main .*} \
+    {#0 .* keeper .*#1  .* handler .*#2 .* bowler .*#3  .* main .*}
+test_segv code $function_pointer \
+    {#0 .* 0x0+ .*#1 .* bowler .*#2  .* main .*} \
+    {#0 .* keeper .*#1  .* handler .*#2 .* 0x0+ .*#3 .* bowler .*#4 .* main .*}

@@ -1,0 +1,49 @@
+# frv testcase for nfstoi $FRj,$FRk
+# mach: fr500 fr550 frv
+
+	.include "testutils.inc"
+
+	float_constants
+	start
+	load_float_constants
+
+	.global nfstoi
+nfstoi:
+	nfstoi		fr16,fr1
+	test_fr_iimmed	0,fr1
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfstoi		fr20,fr1
+	test_fr_iimmed	0,fr1
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfstoi		fr32,fr1
+	test_fr_iimmed	0x00000002,fr1
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	set_fr_iimmed	0xce05,0x4904,fr1
+	nfstoi		fr1,fr1
+	test_fr_iimmed	0xdeadbf00,fr1
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	; These were an attempt to cause overflow and nan exceptions
+	nfstoi		fr48,fr1
+	test_fr_iimmed	0x7fffffff,fr1
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfstoi		fr52,fr1
+	test_fr_iimmed	0x7fffffff,fr1
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfstoi		fr56,fr1
+	test_fr_iimmed	0x80000000,fr1
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	pass

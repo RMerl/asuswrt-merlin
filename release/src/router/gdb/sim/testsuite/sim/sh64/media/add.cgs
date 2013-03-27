@@ -1,0 +1,47 @@
+# sh testcase for add $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global add
+init:
+	pta wrong, tr0
+add:
+	movi 10, r0
+	movi 0, r1
+	add r0, r1, r3
+	movi 10, r4
+	bne r3, r4, tr0
+
+add0:
+	movi 1, r63
+	add r63, r63, r1
+	bnei r1, 0, tr0
+
+add2:
+	movi 0, r0
+	movi 10, r1
+	add r0, r1, r3
+	movi 10, r4
+	bne r3, r4, tr0
+
+add3:
+	movi 10, r1
+	add r63, r1, r3
+	movi 10, r4
+	bne r3, r4, tr0
+
+add4:
+	movi 10, r1
+	add r1, r63, r3
+	movi 10, r4
+	bne r3, r4, tr0
+
+okay:
+	pass
+wrong:
+	fail

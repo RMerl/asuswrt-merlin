@@ -1,0 +1,225 @@
+# Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Elena Zannoni (ezannoni@cygnus.com)
+
+# this file tests command line calls with functions returning structures
+# corresponding source file: call_return_struct.c
+
+
+
+if $tracelevel then {
+        strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "call-rt-st"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+
+# Test depends on printf, which the sparclet stub doesn't support.  
+if { [istarget "sparclet-*-*"] } {
+    return 0;
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
+    untested "couldn't compile ${srcdir}/${subdir}/${srcfile}"
+    return -1
+}
+
+
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+# Some targets can't do function calls, so don't even bother with this
+# test.
+if [target_info exists gdb,cannot_call_functions] {
+    setup_xfail "*-*-*" 2416
+    fail "This target can not call functions"
+    continue
+}
+
+# Set the current language to C.  This counts as a test.  If it
+# fails, then we skip the other tests.
+
+proc set_lang_c {} {
+    global gdb_prompt
+
+    send_gdb "set language c\n"
+    gdb_expect {
+	-re ".*$gdb_prompt $" {}
+	timeout { fail "set language c (timeout)" ; return 0; }
+    }
+
+    send_gdb "show language\n"
+    gdb_expect {
+	-re ".* source language is \"c\".*$gdb_prompt $" {
+	    pass "set language to \"c\""
+	    return 1
+	}
+	-re ".*$gdb_prompt $" {
+	    fail "setting language to \"c\""
+	    return 0
+	}
+	timeout {
+	    fail "can't show language (timeout)"
+	    return 0
+	}
+    }
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+send_gdb "set print sevenbit-strings\n" ; gdb_expect -re "$gdb_prompt $"
+send_gdb "set print address off\n" ; gdb_expect -re "$gdb_prompt $"
+send_gdb "set width 0\n" ; gdb_expect -re "$gdb_prompt $"
+
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+
+gdb_test "break loop_count" \
+    "Breakpoint.* file .*call-rt-st.c, line 128\\." \
+    "breakpoint loop_count"
+
+
+send_gdb "continue\n"
+gdb_expect {
+ -re  "Continuing\\..*Breakpoint.*loop_count \\(\\) at.*call-rt-st.c:128\[ \t\r\n\]+128\[\t \]+for \\(index=0; index.4; index..\\);\[\r\n \]+$gdb_prompt $" {
+                 pass "continue to loop_count"}
+      -re ".*$gdb_prompt $" { fail "continue to loop_count"}           
+      timeout           { fail "(timeout) continue to loop_count"}
+}
+
+send_gdb "finish\n"
+gdb_expect {
+    -re  "Run till exit from .0  loop_count \\(\\) at.*call-rt-st.c:128\[ \t\r\n\]+main \\(\\) at.*call-rt-st.c:777\[ \t\r\n\]+777\[\t \]+return 0;.*$gdb_prompt $" {
+	pass "finish out from loop_count (line 777)"
+    }
+    -re  "Run till exit from .0  loop_count \\(\\) at.*call-rt-st.c:128\[ \t\r\n\]+main \\(\\) at.*call-rt-st.c:775\[ \t\r\n\]+775\[\t \]+loop_count.*$gdb_prompt $" {
+	pass "finish out from loop_count (line 775)"
+    }
+    -re ".*$gdb_prompt $" {
+	fail "finish out from loop_count"
+    }
+    timeout {
+	fail "finish out from loop_count (timeout)"
+    }
+}
+
+# Ask GDB to print the value of EXPR, and expect to see the regexp
+# RESULT in the output.  If we get back the error message "Function
+# return value unknown", call that an `unsupported' test; on some
+# architectures, it's impossible to find structs returned by value
+# reliably.
+proc print_struct_call { expr result } {
+    global gdb_prompt
+
+    set command "print $expr"
+    send_gdb "${command}\n"
+    gdb_expect {
+        -re "$result\[\r\n\]+$gdb_prompt $" {
+            pass "$command"
+        }
+        -re "Function return value unknown.\[\r\n\]+$gdb_prompt $" {
+            unsupported "$command"
+        }
+        -re "$gdb_prompt $" {
+            fail "$command"
+        }
+        timeout {
+            fail "$command (timeout)"
+        }
+    }
+}
+
+
+if ![gdb_skip_stdio_test "print print_struct_rep(*struct1)"] {
+    print_struct_call "print_struct_rep(*struct1)" \
+            ".*Contents of struct1:\[ \t\n\r\]+22\[ \t\]+0\[ \t\n\r\]+.\[0-9\]+ = \\{value = 5, head = 0\\}"
+}
+
+if ![gdb_skip_stdio_test "print print_one_large_struct(...)"] {
+    print_struct_call "print_one_large_struct(*list1)" \
+            ".*\[ \t\]+4\[ \t\]+1\[ \r\n\]+.\[0-9\]+ = \\{next_index = \\{1, 2, 3, 4, 5, 6, 7, 8, 9, 10\\}, values = \\{4, 6, 8, 10, 12, 14, 16, 18, 20, 22\\}, head = 0\\}"
+}
+
+if {![gdb_skip_float_test "print print_one_double(*d1)"] && \
+        ![gdb_skip_stdio_test "print print_one_double(*d1)"] } {
+    print_struct_call "print_one_double(*d1)" \
+	    ".*Contents of one_double_t:\[ \r\n\]+1\\.111110\[ \r\n\]+.\[0-9\]+ = \\{double1 = 1\\.111\[0-9\]*\\}"
+}
+
+if {![gdb_skip_float_test "print print_two_floats(*f3)"] && \
+        ![gdb_skip_stdio_test "print print_two_floats(*f3)"] } {
+    print_struct_call "print_two_floats(*f3)" \
+            ".*Contents of two_floats_t:\[ \r\n\]+-2\\.345000\[ \t]+1\\.000000\[ \r\n\]+.\[0-9\]+ = \\{float1 = -2\\.34500003, float2 = 1\\}"
+}
+
+if ![gdb_skip_stdio_test "print print_bit_flags_char(*cflags)"] {
+    print_struct_call "print_bit_flags_char(*cflags)" \
+            ".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+.\[0-9\]+ = \\{alpha = 1 '\\\\001', beta = 0 '\\\\0', gamma = 1 '\\\\001', delta = 0 '\\\\0', epsilon = 1 '\\\\001', omega = 0 '\\\\0'\\}"
+}
+
+if ![gdb_skip_stdio_test "print print_bit_flags_short(*sflags)"] {
+    print_struct_call "print_bit_flags_short(*sflags)" \
+            ".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+.\[0-9\]+ = \\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\\}"
+}
+
+if ![gdb_skip_stdio_test "print print_bit_flags(*flags)"] {
+    print_struct_call "print_bit_flags(*flags)" \
+            ".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+.\[0-9\]+ = \\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\\}"
+}
+
+if ![gdb_skip_stdio_test "print print_bit_flags_combo(*flags_combo)"] {
+    print_struct_call "print_bit_flags_combo(*flags_combo)" \
+            ".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+ch1: y\[ \t\]+ch2: n\[ \r\n\]+.\[0-9\]+ = \\{alpha = 1, beta = 0, ch1 = 121 'y', gamma = 1, delta = 0, ch2 = 110 'n', epsilon = 1, omega = 0\\}"
+}
+
+if ![gdb_skip_stdio_test "print print_three_chars(*three_chars)"] {
+    print_struct_call "print_three_chars(*three_char)" \
+            ".*Contents of three_char_t:\[ \r\n\]+x\[ \t\]+y\[ \t\]+z\[ \r\n\]+.\[0-9\]+ = \\{ch1 = 120 'x', ch2 = 121 'y', ch3 = 122 'z'\\}"
+}
+
+if ![gdb_skip_stdio_test "print print_five_chars(*five_chars)"] {
+    print_struct_call "print_five_chars(*five_char)" \
+            ".*Contents of five_char_t:\[ \r\n\]+h\[ \t\]+e\[ \t\]+l\[ \t\]+l\[ \t\]+o\[ \r\n\]+.\[0-9\]+ = \\{ch1 = 104 'h', ch2 = 101 'e', ch3 = 108 'l', ch4 = 108 'l', ch5 = 111 'o'\\}"
+}
+
+if ![gdb_skip_stdio_test "print print_int_char_combo(*int_char_combo)"] {
+    print_struct_call "print_int_char_combo(*int_char_combo)" \
+            ".*Contents of int_char_combo_t:\[ \r\n\]+13\[ \t\]+!\[ \r\n\]+.\[0-9\]+ = \\{int1 = 13, ch1 = 33 '!'\\}"
+}
+
+return

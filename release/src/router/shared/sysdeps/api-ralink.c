@@ -27,6 +27,11 @@
 
 typedef uint32_t __u32;
 
+uint32_t gpio_dir(uint32_t gpio, int dir)
+{
+	return ralink_gpio_init(gpio, dir);
+}
+
 uint32_t get_gpio(uint32_t gpio)
 {
 	return ralink_gpio_read_bit(gpio);
@@ -69,15 +74,35 @@ uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
  */
 int check_imageheader(char *buf, long *filelen)
 {
-	long *filelenptr, tmp;
+	uint32_t checksum;
+	image_header_t header2;
+	image_header_t *hdr, *hdr2;
 
-	if(buf[0]==0x27&&buf[1]==0x05&&buf[2]==0x19&&buf[3]==0x56)
+	hdr  = (image_header_t *) buf;
+	hdr2 = &header2;
+
+	/* check header magic */
+	if (SWAP_LONG(hdr->ih_magic) != IH_MAGIC) {
+		_dprintf ("Bad Magic Number\n");
+		return 0;
+	}
+
+	/* check header crc */
+	memcpy (hdr2, hdr, sizeof(image_header_t));
+	hdr2->ih_hcrc = 0;
+	checksum = crc_calc(0, (const char *)hdr2, sizeof(image_header_t));
+	_dprintf("header crc: %X\n", checksum);
+	_dprintf("org header crc: %X\n", SWAP_LONG(hdr->ih_hcrc));
+	if (checksum != SWAP_LONG(hdr->ih_hcrc))
+	{
+		_dprintf("Bad Header Checksum\n");
+		return 0;
+	}
+
 	{
 		if(strcmp(buf+36, nvram_safe_get("productid"))==0) {
-			filelenptr=(buf+12);
-			tmp=*filelenptr;
-			*filelen=SWAP_LONG(tmp);
-			*filelen+=64;			
+			*filelen  = SWAP_LONG(hdr->ih_size);
+			*filelen += sizeof(image_header_t);
 #ifdef RTCONFIG_DSL
 			// DSL product may have modem firmware
 			*filelen+=(512*1024);			
@@ -92,14 +117,14 @@ int check_imageheader(char *buf, long *filelen)
 int
 checkcrc(char *fname)
 {
-	int ifd;
+	int ifd = -1;
 	uint32_t checksum;
 	struct stat sbuf;
-	unsigned char *ptr;
-	image_header_t header2;
-	image_header_t *hdr, *hdr2=&header2;
+	unsigned char *ptr = NULL;
+	image_header_t *hdr;
 	char *imagefile;
-	int ret=0;
+	int ret = -1;
+	int len;
 
 	imagefile = fname;
 //	fprintf(stderr, "img file: %s\n", imagefile);
@@ -107,13 +132,10 @@ checkcrc(char *fname)
 	ifd = open(imagefile, O_RDONLY|O_BINARY);
 
 	if (ifd < 0) {
-		fprintf (stderr, "Can't open %s: %s\n",
+		_dprintf("Can't open %s: %s\n",
 			imagefile, strerror(errno));
-		ret=-1;
 		goto checkcrc_end;
 	}
-
-	memset (hdr2, 0, sizeof(image_header_t));
 
 	/* We're a bit of paranoid */
 #if defined(_POSIX_SYNCHRONIZED_IO) && !defined(__sun__) && !defined(__FreeBSD__)
@@ -122,56 +144,52 @@ checkcrc(char *fname)
 	(void) fsync (ifd);
 #endif
 	if (fstat(ifd, &sbuf) < 0) {
-		fprintf (stderr, "Can't stat %s: %s\n",
+		_dprintf("Can't stat %s: %s\n",
 			imagefile, strerror(errno));
-		ret=-1;
 		goto checkcrc_fail;
 	}
 
 	ptr = (unsigned char *)mmap(0, sbuf.st_size,
 				    PROT_READ, MAP_SHARED, ifd, 0);
 	if (ptr == (unsigned char *)MAP_FAILED) {
-		fprintf (stderr, "Can't map %s: %s\n",
+		_dprintf("Can't map %s: %s\n",
 			imagefile, strerror(errno));
-		ret=-1;
 		goto checkcrc_fail;
 	}
 	hdr = (image_header_t *)ptr;
-/*
-	checksum = crc32_sp (0,
-			  (const char *)(ptr + sizeof(image_header_t)),
-			  sbuf.st_size - sizeof(image_header_t)
-			 );
-	fprintf(stderr,"data crc: %X\n", checksum);
-	fprintf(stderr,"org data crc: %X\n", SWAP_LONG(hdr->ih_dcrc));
-//	if (checksum!=SWAP_LONG(hdr->ih_dcrc))
-//		return -1;
-*/
-	memcpy (hdr2, hdr, sizeof(image_header_t));
-	memset(&hdr2->ih_hcrc, 0, sizeof(uint32_t));
-	
-	checksum = crc_calc(0,(const char *)hdr2,sizeof(image_header_t));
 
-	fprintf(stderr, "header crc: %X\n", checksum);
-	fprintf(stderr, "org header crc: %X\n", SWAP_LONG(hdr->ih_hcrc));
-
-	if (checksum!=SWAP_LONG(hdr->ih_hcrc))
+	/* check image header */
+	if(check_imageheader(hdr, &len) == 0)
 	{
-		ret=-1;
+		_dprintf("Check image heaer fail !!!\n");
 		goto checkcrc_fail;
 	}
 
-	(void) munmap((void *)ptr, sbuf.st_size);
+	/* check body crc */
+	len = SWAP_LONG(hdr->ih_size);
+
+	_dprintf("Verifying Checksum ... ");
+	checksum = crc_calc(0, (const char *)ptr + sizeof(image_header_t), len);
+	if(checksum != SWAP_LONG(hdr->ih_dcrc))
+	{
+		_dprintf("Bad Data CRC\n");
+		goto checkcrc_fail;
+	}
+	_dprintf("OK\n");
+
+	ret = 0;
 
 	/* We're a bit of paranoid */
 checkcrc_fail:
+	if(ptr != NULL)
+		munmap(ptr, sbuf.st_size);
 #if defined(_POSIX_SYNCHRONIZED_IO) && !defined(__sun__) && !defined(__FreeBSD__)
 	(void) fdatasync (ifd);
 #else
 	(void) fsync (ifd);
 #endif
 	if (close(ifd)) {
-		fprintf (stderr, "Read error on %s: %s\n",
+		_dprintf("Read error on %s: %s\n",
 			imagefile, strerror(errno));
 		ret=-1;
 	}
@@ -190,7 +208,7 @@ checkcrc_end:
 int check_imagefile(char *fname)
 {
 	if(checkcrc(fname)==0) return 1;
-	else return 1;
+	return 0;
 }
 
 int wl_ioctl(const char *ifname, int cmd, struct iwreq *pwrq)
@@ -221,8 +239,8 @@ unsigned int get_radio_status(char *ifname)
 
 	wrq.u.data.length = sizeof(data);
 	wrq.u.data.pointer = (caddr_t) &data;
-	wrq.u.data.flags = 0;
-	if (wl_ioctl(ifname, RTPRIV_IOCTL_RADIO_STATUS, &wrq) < 0)
+	wrq.u.data.flags = ASUS_SUBCMD_RADIO_STATUS;
+	if (wl_ioctl(ifname, RTPRIV_IOCTL_ASUSCMD, &wrq) < 0)
 		printf("ioctl error\n");
 
 	return data;
@@ -246,8 +264,7 @@ int get_radio(int unit, int subunit)
 
 void set_radio(int on, int unit, int subunit)
 {
-	char tmpstr[32];
-	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
+	char /*tmp[100],*/ prefix[] = "wlXXXXXXXXXXXXXX";
 
 	if (subunit > 0)
 		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
@@ -261,5 +278,29 @@ void set_radio(int on, int unit, int subunit)
 	if(unit==0)
 		doSystem("iwpriv %s set RadioOn=%d", WIF_2G, on);
 	else doSystem("iwpriv %s set RadioOn=%d", WIF, on);
+}
+
+char *wif_to_vif(char *wif)
+{
+	static char vif[32];
+	int unit = 0, subunit = 0;
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
+
+	vif[0] = '\0';
+
+	for (unit = 0; unit < 2; unit++)
+		for (subunit = 1; subunit < 4; subunit++)
+		{
+			snprintf(prefix, sizeof(prefix), "wl%d.%d", unit, subunit);
+			
+			if (nvram_match(strcat_r(prefix, "_ifname", tmp), wif))
+			{
+				sprintf(vif, "%s", prefix);
+				goto RETURN_VIF;
+			}
+		}
+
+RETURN_VIF:
+	return vif;
 }
 

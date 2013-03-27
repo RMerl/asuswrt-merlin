@@ -1,45 +1,63 @@
 /*
-	Copyright 2005, Broadcom Corporation
-	All Rights Reserved.
+ * Shell-like utility functions
+ *
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * 
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * $Id: shutils.c 337155 2012-06-06 12:17:08Z $
+ */
 
-	THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
-	KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
-	SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
-	FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
-	
-*/
-
-# ifndef _GNU_SOURCE
-#  define _GNU_SOURCE
-# endif
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <typedefs.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
+
 #include <stdarg.h>
 #include <errno.h>
-#include <error.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-//#include <net/ethernet.h>
-#include <syslog.h>
-#include <ctype.h>
-#include <wlioctl.h>
-#include <bcmnvram.h>
+#include <assert.h>
 #include <sys/sysinfo.h>
 #include <sys/mman.h>
-#include <assert.h>
-#include <dirent.h>
+#include <syslog.h>
+#include <typedefs.h>
+#include <wlioctl.h>
 
-#include "shutils.h"
+#include <bcmnvram.h>
+#include <shutils.h>
+
+/* Linux specific headers */
+#ifdef linux
+#include <error.h>
+#include <termios.h>
+#include <sys/time.h>
+//#include <net/ethernet.h>
+#else
+#include <proto/ethernet.h>
+#endif /* linux */
+
 #include "shared.h"
 
 #define T(x)		__TXT(x)
@@ -87,6 +105,68 @@ enum flag {
 	flag_short = 32,
 	flag_long = 64
 };
+
+/*
+ * Reads file and returns contents
+ * @param	fd	file descriptor
+ * @return	contents of file or NULL if an error occurred
+ */
+char *
+fd2str(int fd)
+{
+	char *buf = NULL;
+	size_t count = 0, n;
+
+	do {
+		buf = realloc(buf, count + 512);
+		n = read(fd, buf + count, 512);
+		if (n < 0) {
+			free(buf);
+			buf = NULL;
+		}
+		count += n;
+	} while (n == 512);
+
+	close(fd);
+	if (buf)
+		buf[count] = '\0';
+	return buf;
+}
+
+/*
+ * Reads file and returns contents
+ * @param	path	path to file
+ * @return	contents of file or NULL if an error occurred
+ */
+char *
+file2str(const char *path)
+{
+	int fd;
+
+	if ((fd = open(path, O_RDONLY)) == -1) {
+		perror(path);
+		return NULL;
+	}
+
+	return fd2str(fd);
+}
+
+/*
+ * Waits for a file descriptor to change status or unblocked signal
+ * @param	fd	file descriptor
+ * @param	timeout	seconds to wait before timing out or 0 for no timeout
+ * @return	1 if descriptor changed status or 0 if timed out or -1 on error
+ */
+int
+waitfor(int fd, int timeout)
+{
+	fd_set rfds;
+	struct timeval tv = { timeout, 0 };
+
+	FD_ZERO(&rfds);
+	FD_SET(fd, &rfds);
+	return select(fd + 1, &rfds, NULL, NULL, (timeout > 0) ? &tv : NULL);
+}
 
 /*
  * Concatenates NULL-terminated list of arguments into a single
@@ -233,7 +313,6 @@ EXIT:
 	_exit(errno);
 }
 
-
 /*
  * Concatenates NULL-terminated list of arguments into a single
  * commmand and executes it
@@ -283,13 +362,16 @@ _backtick(char *const argv[])
  * @param	stream	file stream
  * @return	number of items successfully read
  */
-int safe_fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
+int
+safe_fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
 	size_t ret = 0;
+
 	do {
 		clearerr(stream);
 		ret += fread((char *)ptr + (ret * size), size, nmemb - ret, stream);
 	} while (ret < nmemb && ferror(stream) && errno == EINTR);
+
 	return ret;
 }
 
@@ -301,9 +383,11 @@ int safe_fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
  * @param	stream	file stream
  * @return	number of items successfully written
  */
-int safe_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
+int
+safe_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
 	size_t ret = 0;
+
 	do {
 		clearerr(stream);
 		ret += fwrite((char *)ptr + (ret * size), size, nmemb - ret, stream);
@@ -311,7 +395,6 @@ int safe_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 
 	return ret;
 }
-
 
 /*
  * Returns the process ID.
@@ -359,28 +442,25 @@ get_pid_by_name(char *name)
 	return pid;
 }
 
-
 /*
  * Convert Ethernet address string representation to binary data
  * @param	a	string in xx:xx:xx:xx:xx:xx notation
  * @param	e	binary data
  * @return	TRUE if conversion was successful and FALSE otherwise
  */
-int ether_atoe(const char *a, unsigned char *e)
+int
+ether_atoe(const char *a, unsigned char *e)
 {
-	char *x;
-	int i;
+	char *c = (char *) a;
+	int i = 0;
 
-	i = 0;
-	while (1) {
-		e[i++] = (unsigned char) strtoul(a, &x, 16);
-		if (a == x) break;
-		if (i == ETHER_ADDR_LEN) return 1;
-		if (*x == 0) break;
-		a = x + 1;
+	memset(e, 0, ETHER_ADDR_LEN);
+	for (;;) {
+		e[i++] = (unsigned char) strtoul(c, &c, 16);
+		if (!*c++ || i == ETHER_ADDR_LEN)
+			break;
 	}
-	memset(e, 0, sizeof(e));
-	return 0;
+	return (i == ETHER_ADDR_LEN);
 }
 
 /*
@@ -389,19 +469,25 @@ int ether_atoe(const char *a, unsigned char *e)
  * @param	a	string in xx:xx:xx:xx:xx:xx notation
  * @return	a
  */
-char *ether_etoa(const unsigned char *e, char *a)
+char *
+ether_etoa(const unsigned char *e, char *a)
 {
-	sprintf(a, "%02X:%02X:%02X:%02X:%02X:%02X", e[0], e[1], e[2], e[3], e[4], e[5]);
+	char *c = a;
+	int i;
+
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
+		if (i)
+			*c++ = ':';
+		c += sprintf(c, "%02X", e[i] & 0xff);
+	}
 	return a;
 }
-
 
 char *ether_etoa2(const unsigned char *e, char *a)
 {
 	sprintf(a, "%02X%02X%02X%02X%02X%02X", e[0], e[1], e[2], e[3], e[4], e[5]);
 	return a;
 }
-
 
 void cprintf(const char *format, ...)
 {
@@ -446,7 +532,6 @@ void cprintf(const char *format, ...)
 	}
 #endif
 }
-
 
 #ifndef WL_BSS_INFO_VERSION
 #error WL_BSS_INFO_VERSION
@@ -711,7 +796,8 @@ get_ifname_unit(const char* ifname, int *unit, int *subunit)
 /* In the space-separated/null-terminated list(haystack), try to
  * locate the string "needle"
  */
-char *find_in_list(const char *haystack, const char *needle)
+char *
+find_in_list(const char *haystack, const char *needle)
 {
 	const char *ptr = haystack;
 	int needle_len = 0;
@@ -751,7 +837,8 @@ char *find_in_list(const char *haystack, const char *needle)
 
  *	@return	error code
  */
-int remove_from_list(const char *name, char *list, int listsize)
+int
+remove_from_list(const char *name, char *list, int listsize)
 {
 	int listlen = 0;
 	int namelen = 0;
@@ -798,7 +885,8 @@ int remove_from_list(const char *name, char *list, int listsize)
 
  *	@return	error code
  */
-int add_to_list(const char *name, char *list, int listsize)
+int
+add_to_list(const char *name, char *list, int listsize)
 {
 	int listlen = 0;
 	int namelen = 0;
@@ -827,34 +915,48 @@ int add_to_list(const char *name, char *list, int listsize)
 	return 0;
 }
 
-/* Utility function to remove duplicate entries in a space separated list */
+/* Utility function to remove duplicate entries in a space separated list
+ */
 
-char *remove_dups(char *inlist, int inlist_size)
+char *
+remove_dups(char *inlist, int inlist_size)
 {
 	char name[256], *next = NULL;
 	char *outlist;
 
-	if (!inlist_size) return NULL;
-	if (!inlist) return NULL;
+	if (!inlist_size)
+		return NULL;
+
+	if (!inlist)
+		return NULL;
 
 	outlist = (char *) malloc(inlist_size);
+
 	if (!outlist) return NULL;
+
 	memset(outlist, 0, inlist_size);
 
-	foreach(name, inlist, next) {
-		if (!find_in_list(outlist, name)) {
-			if (strlen(outlist) == 0) {
+	foreach(name, inlist, next)
+	{
+		if (!find_in_list(outlist, name))
+		{
+			if (strlen(outlist) == 0)
+			{
 				snprintf(outlist, inlist_size, "%s", name);
-			} else {
-				strncat(outlist, " ",  inlist_size - strlen(outlist));
+			}
+			else
+			{
+				strncat(outlist, " ", inlist_size - strlen(outlist));
 				strncat(outlist, name, inlist_size - strlen(outlist));
 			}
 		}
 	}
+
 	strncpy(inlist, outlist, inlist_size);
 
 	free(outlist);
 	return inlist;
+
 }
 
 /*
@@ -874,14 +976,15 @@ ure_any_enabled(void)
 		return 0;
 }
 
+
 #define WLMBSS_DEV_NAME	"wlmbss"
 #define WL_DEV_NAME "wl"
 #define WDS_DEV_NAME	"wds"
 
 /**
- * nvifname_to_osifname()
- * The intent here is to provide a conversion between the OS interface name
- * and the device name that we keep in NVRAM.
+ *	 nvifname_to_osifname()
+ *  The intent here is to provide a conversion between the OS interface name
+ *  and the device name that we keep in NVRAM.
  * This should eventually be placed in a Linux specific file with other
  * OS abstraction functions.
 
@@ -926,6 +1029,7 @@ nvifname_to_osifname(const char *nvifname, char *osifname_buf,
 
 	return -1;
 }
+
 
 /* osifname_to_nvifname()
  * Convert the OS interface name to the name we use internally(NVRAM, GUI, etc.)
@@ -982,8 +1086,6 @@ osifname_to_nvifname(const char *osifname, char *nvifname_buf,
 }
 
 #endif	// #if WL_BSS_INFO_VERSION >= 108
-
-
 
 /******************************************************************************/
 /*
@@ -1097,7 +1199,6 @@ static void put_ulong(strbuf_t *buf, unsigned long int value, int base,
 	}
 }
 
-
 /******************************************************************************/
 /*
  *	Dynamic sprintf implementation. Supports dynamic buffer allocation.
@@ -1193,14 +1294,14 @@ static int dsnprintf(char **s, int size, char *fmt, va_list arg, int msize)
 				}
 				if (value >= 0) {
 					if (f & flag_plus) {
-						put_ulong(&buf, value, 10, 0, T("+"), width, prec, f);
+						put_ulong(&buf, value, 10, 0, ("+"), width, prec, f);
 					} else if (f & flag_space) {
-						put_ulong(&buf, value, 10, 0, T(" "), width, prec, f);
+						put_ulong(&buf, value, 10, 0, (" "), width, prec, f);
 					} else {
 						put_ulong(&buf, value, 10, 0, NULL, width, prec, f);
 					}
 				} else {
-					put_ulong(&buf, -value, 10, 0, T("-"), width, prec, f);
+					put_ulong(&buf, -value, 10, 0, ("-"), width, prec, f);
 				}
 			} else if (c == 'o' || c == 'u' || c == 'x' || c == 'X') {
 				unsigned long int value;
@@ -1213,7 +1314,7 @@ static int dsnprintf(char **s, int size, char *fmt, va_list arg, int msize)
 				}
 				if (c == 'o') {
 					if (f & flag_hash && value != 0) {
-						put_ulong(&buf, value, 8, 0, T("0"), width, prec, f);
+						put_ulong(&buf, value, 8, 0, ("0"), width, prec, f);
 					} else {
 						put_ulong(&buf, value, 8, 0, NULL, width, prec, f);
 					}
@@ -1222,10 +1323,10 @@ static int dsnprintf(char **s, int size, char *fmt, va_list arg, int msize)
 				} else {
 					if (f & flag_hash && value != 0) {
 						if (c == 'x') {
-							put_ulong(&buf, value, 16, 0, T("0x"), width, 
+							put_ulong(&buf, value, 16, 0, ("0x"), width, 
 								prec, f);
 						} else {
-							put_ulong(&buf, value, 16, 1, T("0X"), width, 
+							put_ulong(&buf, value, 16, 1, ("0X"), width, 
 								prec, f);
 						}
 					} else {
@@ -1244,7 +1345,7 @@ static int dsnprintf(char **s, int size, char *fmt, va_list arg, int msize)
 			} else if (c == 's' || c == 'S') {
 				char *value = va_arg(arg, char *);
 				if (value == NULL) {
-					put_string(&buf, T("(null)"), -1, width, prec, f);
+					put_string(&buf, ("(null)"), -1, width, prec, f);
 				} else if (f & flag_hash) {
 					put_string(&buf,
 						value + 1, (char) *value, width, prec, f);
@@ -1254,7 +1355,7 @@ static int dsnprintf(char **s, int size, char *fmt, va_list arg, int msize)
 			} else if (c == 'p') {
 				void *value = va_arg(arg, void *);
 				put_ulong(&buf,
-					(unsigned long int) value, 16, 0, T("0x"), width, prec, f);
+					(unsigned long int) value, 16, 0, ("0x"), width, prec, f);
 			} else if (c == 'n') {
 				if (f & flag_short) {
 					short int *value = va_arg(arg, short int *);
@@ -1318,7 +1419,6 @@ int fmtAlloc(char **s, int n, char *fmt, ...)
 	return result;
 }
 
-
 /******************************************************************************/
 /*
  *	A vsprintf replacement.
@@ -1369,69 +1469,7 @@ swap_check()
 	else	return 0;
 }
 
-
 // -----------------------------------------------------------------------------
-
-
-/*
- * Reads file and returns contents
- * @param	fd	file descriptor
- * @return	contents of file or NULL if an error occurred
- */
-char *fd2str(int fd)
-{
-	char *buf = NULL;
-	size_t count = 0, n;
-
-	do {
-		buf = realloc(buf, count + 512);
-		n = read(fd, buf + count, 512);
-		if (n < 0) {
-			free(buf);
-			buf = NULL;
-		}
-		count += n;
-	} while (n == 512);
-
-	close(fd);
-	if (buf)
-		buf[count] = '\0';
-	return buf;
-}
-
-/*
- * Reads file and returns contents
- * @param	path	path to file
- * @return	contents of file or NULL if an error occurred
- */
-char *file2str(const char *path)
-{
-	int fd;
-
-	if ((fd = open(path, O_RDONLY)) == -1) {
-		perror(path);
-		return NULL;
-	}
-
-	return fd2str(fd);
-}
-
-/*
- * Waits for a file descriptor to change status or unblocked signal
- * @param	fd	file descriptor
- * @param	timeout	seconds to wait before timing out or 0 for no timeout
- * @return	1 if descriptor changed status or 0 if timed out or -1 on error
- */
-
-int waitfor(int fd, int timeout)
-{
-	fd_set rfds;
-	struct timeval tv = { timeout, 0 };
-
-	FD_ZERO(&rfds);
-	FD_SET(fd, &rfds);
-	return select(fd + 1, &rfds, NULL, NULL, (timeout > 0) ? &tv : NULL);
-}
 
 /*
  * Kills process whose PID is stored in plaintext in pidfile

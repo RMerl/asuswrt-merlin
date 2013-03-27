@@ -1,7 +1,7 @@
 /*
  * WPS Common
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wpscommon.h 295985 2011-11-13 02:57:31Z $
+ * $Id: wpscommon.h 372004 2012-11-30 03:46:58Z $
  */
 
 #ifndef _WPS_COMMON_
@@ -60,13 +60,14 @@
 #define WPS_RESULT_FAILURE					104
 #define WPS_RESULT_ENROLLMENT_PINFAIL			105
 #define WPS_RESULT_REGISTRATION_PINFAIL			106
+#define WPS_RESULT_ENROLLMENT_M2DFAIL			107
 
 typedef enum {
 	SCMODE_UNKNOWN = 0,
 	SCMODE_STA_ENROLLEE,
 	SCMODE_STA_REGISTRAR,
 	SCMODE_AP_ENROLLEE,
-	SCMODE_AP_REGISTRAR,
+	SCMODE_AP_REGISTRAR
 } WPS_SCMODE;
 
 typedef enum {

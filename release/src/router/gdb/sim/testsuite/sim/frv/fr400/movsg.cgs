@@ -1,0 +1,65 @@
+# frv testcase for movsg iacc0[hl],$GRj
+# mach: fr400
+
+	.include "../testutils.inc"
+
+	start
+
+	.global movsg
+Iacc0h:
+	set_spr_limmed	0xdead,0xbeef,iacc0h
+	set_gr_limmed	0,0,gr8
+	movsg iacc0h,gr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_spr_limmed	0xdead,0xbeef,iacc0h
+Iacc0l:
+	set_spr_limmed	0xdead,0xbeef,iacc0l
+	set_gr_limmed	0,0,gr8
+	movsg iacc0l,gr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_spr_limmed	0xdead,0xbeef,iacc0l
+
+Spr280:
+	set_spr_limmed	0xdead,0xbeef,spr[280]
+	set_gr_limmed	0,0,gr8
+	movsg spr[280],gr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_spr_limmed	0xdead,0xbeef,spr[280]
+Spr281:
+	set_spr_limmed	0xdead,0xbeef,spr[281]
+	set_gr_limmed	0,0,gr8
+	movsg spr[281],gr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_spr_limmed	0xdead,0xbeef,spr[281]
+
+Iacc0h_spr280:
+	set_spr_limmed	0xdead,0xbeef,spr[280]
+	set_spr_limmed	0xdead,0xbeef,iacc0h
+	set_gr_limmed	0,0,gr8
+	movsg iacc0h,gr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_spr_limmed	0xdead,0xbeef,spr[280]
+Iacc0l_spr281:
+	set_spr_limmed	0xdead,0xbeef,spr[281]
+	set_spr_limmed	0xdead,0xbeef,iacc0l
+	set_gr_limmed	0,0,gr8
+	movsg iacc0l,gr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_spr_limmed	0xdead,0xbeef,spr[281]
+
+Spr280_iacc0h:
+	set_spr_limmed	0xdead,0xbeef,spr[280]
+	set_spr_limmed	0xdead,0xbeef,iacc0h
+	set_gr_limmed	0,0,gr8
+	movsg spr[280],gr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_spr_limmed	0xdead,0xbeef,iacc0h
+Spr281_iacc0l:
+	set_spr_limmed	0xdead,0xbeef,spr[281]
+	set_spr_limmed	0xdead,0xbeef,iacc0l
+	set_gr_limmed	0,0,gr8
+	movsg spr[281],gr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_spr_limmed	0xdead,0xbeef,iacc0l
+
+	pass

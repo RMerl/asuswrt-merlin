@@ -1,0 +1,19 @@
+This is used to modify the IPv4 TTL header field.  The TTL field determines
+how many hops (routers) a packet can traverse until it's time to live is
+exceeded.
+.PP
+Setting or incrementing the TTL field can potentially be very dangerous,
+so it should be avoided at any cost. This target is only valid in
+.B mangle
+table.
+.PP
+.B Don't ever set or increment the value on packets that leave your local network!
+.TP
+\fB\-\-ttl\-set\fP \fIvalue\fP
+Set the TTL value to `value'.
+.TP
+\fB\-\-ttl\-dec\fP \fIvalue\fP
+Decrement the TTL value `value' times.
+.TP
+\fB\-\-ttl\-inc\fP \fIvalue\fP
+Increment the TTL value `value' times.

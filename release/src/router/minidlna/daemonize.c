@@ -40,6 +40,11 @@
 #include "config.h"
 #include "log.h"
 
+#include <rtconfig.h>
+#ifdef RTCONFIG_BCMARM
+#undef USE_DAEMON
+#endif
+
 int
 daemonize(void)
 {

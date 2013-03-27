@@ -1,0 +1,14 @@
+# arm testcase for cmp ${bit10-rd},#$offset8
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global cmp
+cmp:
+	cmp r0,#0
+
+# FIXME: Also: cmp $rd,$rs
+
+	pass

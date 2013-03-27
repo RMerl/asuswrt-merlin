@@ -1,0 +1,90 @@
+# fr30 testcase for muluh $Rj,$Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global muluh
+muluh:
+	; Test muluh $Rj,$Ri
+	; Positive operands
+	mvi_h_gr   	0xdead0003,r7		; multiply small numbers
+	mvi_h_gr   	0xbeef0002,r8
+	set_cc          0x09		; Set mask opposite of expected
+	muluh      	r7,r8
+	test_cc		0 1 0 1
+	test_h_dr  	6,mdl
+
+	mvi_h_gr   	0xdead0001,r7		; multiply by 1
+	mvi_h_gr   	0xbeef0002,r8
+	set_cc          0x08		; Set mask opposite of expected
+	muluh      	r7,r8
+	test_cc		0 1 0 0
+	test_h_dr  	2,mdl
+
+	mvi_h_gr   	0xdead0002,r7		; multiply by 1
+	mvi_h_gr   	0xbeef0001,r8
+	set_cc          0x09		; Set mask opposite of expected
+	muluh      	r7,r8
+	test_cc		0 1 0 1
+	test_h_dr  	2,mdl
+
+	mvi_h_gr   	0xdead0000,r7		; multiply by 0
+	mvi_h_gr   	0xbeef0002,r8
+	set_cc          0x09		; Set mask opposite of expected
+	muluh      	r7,r8
+	test_cc		0 1 0 1
+	test_h_dr  	0,mdl
+
+	mvi_h_gr   	0xdead0002,r7		; multiply by 0
+	mvi_h_gr   	0xbeef0000,r8
+	set_cc          0x08		; Set mask opposite of expected
+	muluh      	r7,r8
+	test_cc		0 1 0 0
+	test_h_dr  	0,mdl
+
+	mvi_h_gr   	0xdead3fff,r7	; 15 bit result
+	mvi_h_gr   	0xbeef0002,r8
+	set_cc          0x09		; Set mask opposite of expected
+	muluh      	r7,r8
+	test_cc		0 1 0 1
+	test_h_dr  	0x00007ffe,mdl
+
+	mvi_h_gr   	0xdead4000,r7	; 16 bit result
+	mvi_h_gr   	0xbeef0002,r8
+	set_cc          0x08		; Set mask opposite of expected
+	muluh      	r7,r8
+	test_cc		0 1 0 0
+	test_h_dr  	0x00008000,mdl
+
+	mvi_h_gr   	0xdead8000,r7	; 17 bit result
+	mvi_h_gr   	0xbeef0002,r8
+	set_cc          0x0b		; Set mask opposite of expected
+	muluh      	r7,r8
+	test_cc		0 1 1 1
+	test_h_dr  	0x00010000,mdl
+
+	mvi_h_gr   	0xdead7fff,r7	; max positive result
+	mvi_h_gr   	0xbeef7fff,r8
+	set_cc          0x0b		; Set mask opposite of expected
+	muluh      	r7,r8
+	test_cc		0 1 1 1
+	test_h_dr  	0x3fff0001,mdl
+
+	mvi_h_gr   	0xdead8000,r7	; max positive result
+	mvi_h_gr   	0xbeef8000,r8
+	set_cc          0x0b		; Set mask opposite of expected
+	muluh      	r7,r8
+	test_cc		0 1 1 1
+	test_h_dr  	0x40000000,mdl
+
+	mvi_h_gr   	0xdeadffff,r7	; max positive result
+	mvi_h_gr   	0xbeefffff,r8
+	set_cc          0x07		; Set mask opposite of expected
+	muluh      	r7,r8
+	test_cc		1 0 1 1
+	test_h_dr  	0xfffe0001,mdl
+
+	pass

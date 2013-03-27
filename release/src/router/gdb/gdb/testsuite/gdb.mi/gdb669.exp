@@ -1,0 +1,194 @@
+# Copyright 2002, 2003, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file checks for the bug gdb/669, where the console
+# command "info threads" and the MI command "-thread-list-ids"
+# return different threads in the system.
+
+# This only works with native configurations
+if {![isnative]} {
+  return
+}
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+gdb_exit
+if {[mi_gdb_start]} {
+    continue
+}
+
+# The procs below are all stolen from mi-pthreads.exp. Any updates
+# should also be made to the procs there.
+
+proc get_mi_thread_list {name} {
+  global expect_out
+
+  # MI will return a list of thread ids:
+  #
+  # -thread-list-ids
+  # ^done,thread-ids=[thread-id="1",thread-id="2",...],number-of-threads="N"
+  # (gdb)
+  mi_gdb_test "-thread-list-ids" \
+    {\^done,thread-ids={(thread-id="[0-9]+"(,)?)+},number-of-threads="[0-9]+"} \
+    "-thread_list_ids ($name)"
+
+  set output {}
+  if {[info exists expect_out(buffer)]} {
+    set output $expect_out(buffer)
+  }
+  set thread_list {}
+  if {![regexp {thread-ids=\{(thread-id="[0-9]+"(,)?)*\}} $output threads]} {
+    fail "finding threads in MI output ($name)"
+  } else {
+    pass "finding threads in MI output ($name)"
+
+    # Make list of console threads
+    set start [expr {[string first \{ $threads] + 1}]
+    set end   [expr {[string first \} $threads] - 1}]
+    set threads [string range $threads $start $end]
+    foreach thread [split $threads ,] {
+      if {[scan $thread {thread-id="%d"} num]} {
+	lappend thread_list $num
+      }
+    }
+  }
+
+  return $thread_list
+}
+
+# Check that MI and the console know of the same threads.
+# Appends NAME to all test names.
+proc check_mi_and_console_threads {name} {
+  global expect_out
+
+  mi_gdb_test "-thread-list-ids" \
+    {\^done,thread-ids={(thread-id="[0-9]+"(,)*)+},number-of-threads="[0-9]+"} \
+    "-thread-list-ids ($name)"
+  set mi_output {}
+  if {[info exists expect_out(buffer)]} {
+    set mi_output $expect_out(buffer)
+  }
+
+  # GDB will return a list of thread ids and some more info:
+  #
+  # (gdb) 
+  # -interpreter-exec console "info threads"
+  # ~"  4 Thread 2051 (LWP 7734)  0x401166b1 in __libc_nanosleep () at __libc_nanosleep:-1"
+  # ~"  3 Thread 1026 (LWP 7733)   () at __libc_nanosleep:-1"
+  # ~"  2 Thread 2049 (LWP 7732)  0x401411f8 in __poll (fds=0x804bb24, nfds=1, timeout=2000) at ../sysdeps/unix/sysv/linux/poll.c:63"
+  # ~"* 1 Thread 1024 (LWP 7731)  main (argc=1, argv=0xbfffdd94) at ../../../src/gdb/testsuite/gdb.mi/pthreads.c:160"
+  # FIXME: kseitz/2002-09-05: Don't use the hack-cli method.
+  mi_gdb_test "info threads" \
+    {.*(~".*"[\r\n]*)+.*} \
+    "info threads ($name)"
+  set console_output {}
+  if {[info exists expect_out(buffer)]} {
+    set console_output $expect_out(buffer)
+  }
+
+  # Make a list of all known threads to console (gdb's thread IDs)
+  set console_thread_list {}
+  foreach line [split $console_output \n] {
+    if {[string index $line 0] == "~"} {
+      # This is a line from the console; trim off "~", " ", "*", and "\""
+      set line [string trim $line ~\ \"\*]
+      if {[scan $line "%d" id] == 1} {
+	lappend console_thread_list $id
+      }
+    }
+  }
+
+  # Now find the result string from MI
+  set mi_result ""
+  foreach line [split $mi_output \n] {
+    if {[string range $line 0 4] == "^done"} {
+      set mi_result $line
+    }
+  }
+  if {$mi_result == ""} {
+    fail "finding MI result string ($name)"
+  } else {
+    pass "finding MI result string ($name)"
+  }
+
+  # Finally, extract the thread ids and compare them to the console
+  set num_mi_threads_str ""
+  if {![regexp {number-of-threads="[0-9]+"} $mi_result num_mi_threads_str]} {
+    fail "finding number of threads in MI output ($name)"
+  } else {
+    pass "finding number of threads in MI output ($name)"
+
+    # Extract the number of threads from the MI result
+    if {![scan $num_mi_threads_str {number-of-threads="%d"} num_mi_threads]} {
+      fail "got number of threads from MI ($name)"
+    } else {
+      pass "got number of threads from MI ($name)"
+
+      # Check if MI and console have same number of threads
+      if {$num_mi_threads != [llength $console_thread_list]} {
+	fail "console and MI have same number of threads ($name)"
+      } else {
+	pass "console and MI have same number of threads ($name)"
+
+	# Get MI thread list
+	set mi_thread_list [get_mi_thread_list $name]
+
+	# Check if MI and console have the same threads
+	set fails 0
+	foreach ct [lsort $console_thread_list] mt [lsort $mi_thread_list] {
+	  if {$ct != $mt} {
+	    incr fails
+	  }
+	}
+	if {$fails > 0} {
+	  fail "MI and console have same threads ($name)"
+
+	  # Send a list of failures to the log
+	  send_log "Console has thread ids: $console_thread_list\n"
+	  send_log "MI has thread ids: $mi_thread_list\n"
+	} else {
+	  pass "MI and console have same threads ($name)"
+	}
+      }
+    }
+  }
+}
+
+#
+# Start here
+#
+set testfile "pthreads"
+set srcfile "$testfile.c"
+set binfile "$objdir/$subdir/gdb669-$testfile"
+
+set options [list debug incdir=$objdir]
+if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile executable $options] != "" } {
+    return -1
+}
+
+mi_run_to_main
+check_mi_and_console_threads "at main"
+
+for {set i 0} {$i < 4} {incr i} {
+  mi_next "next, try $i"
+  check_mi_and_console_threads "try $i"
+}
+
+mi_gdb_exit
+

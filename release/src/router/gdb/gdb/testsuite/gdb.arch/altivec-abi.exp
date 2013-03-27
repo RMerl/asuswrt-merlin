@@ -1,0 +1,128 @@
+# Copyright (C) 2002, 2003, 2005, 2007 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+#
+
+# Tests for Powerpc AltiVec ABI
+
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+#
+# This file uses altivec-abi.c for input.
+#
+
+set prms_id 0
+set bug_id 0
+
+if {![istarget "powerpc*"] || [skip_altivec_tests]} then {
+    verbose "Skipping altivec abi tests."
+    verbose -log "Skipping altivec abi tests."
+    return
+}
+
+set testfile "altivec-abi"
+set binfile ${objdir}/${subdir}/${testfile}
+set srcfile ${testfile}.c
+
+set compile_flags {debug nowarnings}
+if [get_compiler_info $binfile] {
+    warning "get_compiler failed"
+    return -1
+}
+
+if [test_compiler_info gcc*] {
+    set compile_flags "$compile_flags additional_flags=-maltivec"
+} elseif [test_compiler_info xlc*] {
+    set compile_flags "$compile_flags additional_flags=-qaltivec"
+} else {
+    warning "unknown compiler"
+    return -1
+}
+
+if  { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable $compile_flags] != "" } {
+     untested altivec-abi.exp
+     return -1
+}
+
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+#
+# Run to `main' where we begin our tests.
+#
+
+if ![runto_main] then {
+    gdb_suppress_tests
+}
+
+gdb_test "b marker" "Breakpoint 2 at.*file.*altivec-abi.c, line \[0-9\]+." "break marker"
+gdb_test "continue" "Breakpoint 2.*marker.*altivec-abi.c.*" "continue to marker"
+gdb_test "finish" "Run till exit from .0.*marker.*at.*altivec-abi.c.*main \\(\\) at.*altivec-abi.c.*result = vec_func \\(vshort,.*goes in v2.*" "back to main (1)"
+
+# now all the arguments of vec_fun are initialized
+
+set pattern "vec_func .vshort_f=.111, 222, 333, 444, 555, 666, 777, 888., vushort_f=.100, 200, 300, 400, 500, 600, 700, 800., vint_f=.-10, -20, -30, -40., vuint_f=.1111, 2222, 3333, 4444., vchar_f=.abcdefghilmnopqr., vuchar_f=.ABCDEFGHILMNOPQR., vfloat_f=.1.25, 3.75, 5.5, 1.25., x_f=.1, 2, 3, 4, 5, 6, 7, 8., y_f=.12, 22, 32, 42., a_f=.vector of chars.., b_f=.5.5, 4.5, 3.75, 2.25., c_f=.1.25, 3.5, 5.5, 7.75., intv_on_stack_f=.12, 34, 56, 78.."
+
+set pattern1 $pattern
+append pattern1 " at.*altivec-abi.c.*vint_res  = vec_add.*vint_f, intv_on_stack_f.;"
+
+# Now let's call the function.  This function has > 12 args,
+# the last one will go on the stack.
+gdb_test "p vec_func(vshort,vushort,vint,vuint,vchar,vuchar,vfloat,x,y,a,b,c,intv_on_stack)" \
+".\[0-9\]+ = .2, 2, 2, 2." "call inferior function with vectors (1) "
+
+# Let's call the function again with dummy arguments.  This is to clean
+# up the contents of the vector registers before the next call.
+gdb_test "p vec_func(vshort_d,vushort_d,vint_d,vuint_d,vchar_d,vuchar_d,vfloat_d,x_d,y_d,a_d,b_d,c_d,intv_on_stack_d)" \
+".\[0-9\]+ = .0, 0, 0, 0." "call inferior function with vectors (2) "
+
+# Let's step into the function, to see if the args are printed correctly.
+gdb_test "step" \
+  $pattern1 \
+  "step into vec_fun"
+
+set pattern2 $pattern
+append pattern2 " at.*altivec-abi.c.*main.*result = vec_func .vshort,.*goes in v2.*Value returned is.*= .2, 2, 2, 2."
+
+# Let's see if the result is returned correctly.
+gdb_test "finish" \
+  "Run till exit from .0.*$pattern2" \
+  "vector value returned correctly"
+
+# can we print the args correctly for this function?
+gdb_test "break struct_of_vector_func" "" ""
+
+set pattern "struct_of_vector_func .vector_struct=.vshort1 = .1, 2, 3, 4, 5, 6, 7, 8., vshort2 = .11, 12, 13, 14, 15, 16, 17, 18., vshort3 = .21, 22, 23, 24, 25, 26, 27, 28., vshort4 = .31, 32, 33, 34, 35, 36, 37, 38... at.*altivec-abi.c.*"
+
+gdb_test "continue" \
+  "Breakpoint 3, $pattern.*vector_struct.vshort1 = vec_add .vector_struct.vshort1, vector_struct.vshort2.;" \
+  "continue to struct_of_vector_func"
+
+gdb_test "finish" \
+  "Run till exit from .0  $pattern\[ \r\n\]+main.*altivec-abi.c.*array_of_vector_func.*" \
+  "back to main (2)"
+
+gdb_test "step" "" "step into array_of_vector_func"
+gdb_test "p matrix\[0\]" ".*= .1, 2, 3, 4, 5, 6, 7, 8." "print first vector"
+gdb_test "p matrix\[1\]" ".*= .11, 12, 13, 14, 15, 16, 17, 18." "print second vector"
+gdb_test "p matrix\[2\]" ".*= .21, 22, 23, 24, 25, 26, 27, 28." "print third vector"
+gdb_test "p matrix\[3\]" ".*= .31, 32, 33, 34, 35, 36, 37, 38." "print fourth vector"
+

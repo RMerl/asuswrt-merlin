@@ -1,0 +1,62 @@
+    <refentry id="refbufutil">
+
+      <refmeta>
+	<refentrytitle>ne_buffer_clear</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_buffer_clear">ne_buffer_clear</refname>
+	<refname id="ne_buffer_grow">ne_buffer_grow</refname>
+	<refname id="ne_buffer_altered">ne_buffer_altered</refname>
+	<refpurpose>clear, grow, or mark as altered a string buffer</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_string.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_buffer_clear</function></funcdef>
+	    <paramdef>ne_buffer *<parameter>buf</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_buffer_altered</function></funcdef>
+	    <paramdef>ne_buffer *<parameter>buf</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_buffer_grow</function></funcdef>
+	    <paramdef>ne_buffer *<parameter>buf</parameter></paramdef>
+	    <paramdef>size_t <parameter>size</parameter></paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>The <function>ne_buffer_clear</function> function sets
+the string stored in <parameter>buf</parameter> to be the empty string
+(<literal>""</literal>).</para>
+
+	<para>The <function>ne_buffer_altered</function> function must
+be used after the string stored in the buffer
+<parameter>buf</parameter> is modified by directly rather than using
+<xref linkend="ne_buffer_append"/>, <xref linkend="ne_buffer_zappend"/> 
+or <xref linkend="ne_buffer_concat"/>.</para>
+
+	<para>The <function>ne_buffer_grow</function> function
+ensures that at least <parameter>size</parameter> bytes are allocated
+for the string; this can be used if a large amount of data is going to
+be appended to the buffer and may result in more efficient memory
+allocation.</para>
+
+      </refsect1>
+
+    </refentry>

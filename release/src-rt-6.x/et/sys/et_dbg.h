@@ -3,7 +3,7 @@
  * Broadcom Home Networking Division 10/100 Mbit/s Ethernet
  * Device Driver.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: et_dbg.h 286404 2011-09-27 19:29:08Z $
+ * $Id: et_dbg.h 348614 2012-08-02 19:16:22Z $
  */
 
 #ifndef _et_dbg_
@@ -54,6 +54,9 @@ extern uint32 et_msg_level;
 #elif defined(__ECOS)
 #include <et_ecos.h>
 #elif defined(linux)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
+#include <linux/config.h>
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) */
 #include <et_linux.h>
 #elif defined(PMON)
 #include <et_pmon.h>

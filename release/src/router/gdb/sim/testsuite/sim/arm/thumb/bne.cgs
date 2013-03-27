@@ -1,0 +1,12 @@
+# arm testcase for bne $soffset8
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global bne
+bne:
+	bne footext
+
+	pass

@@ -1,0 +1,18 @@
+# m32r testcase for bl $disp24
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global bl24
+bl24:
+	bl.l test0pass
+test1fail:
+	fail
+
+test0pass:
+	mvaddr_h_gr r4, test1fail
+	bne  r4, r14, test1fail
+
+	pass

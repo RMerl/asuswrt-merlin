@@ -79,11 +79,12 @@ function copytob2(){
 }
 
 function applyRule(){
-    if(validForm()){
+    if(validForm()){        
+        if(document.form.usb_fs_ntfs_sparse.value != "<% nvram_get("usb_fs_ntfs_sparse"); %>"){
+        		FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+      	}
         showLoading();
-        document.form.current_page.value = "/Advanced_AiDisk_others.asp";
-        document.form.next_page.value = "";                
-		document.form.submit();
+				document.form.submit();
      }
 }
 
@@ -98,7 +99,7 @@ function validForm(){
 		return false;
     }
         
-    var computer_name_check = new RegExp('^[a-zA-Z0-9\-\_\.\][a-zA-Z0-9\-\_\.\ ]*[a-zA-Z0-9\-\_]$','gi');      	
+    var computer_name_check = new RegExp('^[a-zA-Z0-9_]([-a-zA-Z0-9_.]*[a-zA-Z0-9_]|)$','gi');
     if(!computer_name_check.test(document.form.computer_name.value)){
         alert("<#JS_validchar#>");               
         document.form.computer_name.focus();
@@ -106,8 +107,8 @@ function validForm(){
         return false;
     }
 		
-	var workgroup_check = new RegExp('^[a-zA-Z0-9\-\_\.\][a-zA-Z0-9\-\_\.\ ]*[a-zA-Z0-9\-\_]$','gi'); 
-	if(!workgroup_check.test(document.form.st_samba_workgroup.value)){
+    var workgroup_check = new RegExp('^[a-zA-Z0-9_]([-a-zA-Z0-9_.]*[a-zA-Z0-9_]|)$','gi');
+    if(!workgroup_check.test(document.form.st_samba_workgroup.value)){
         alert("<#JS_validchar#>");                
         document.form.st_samba_workgroup.focus();
         document.form.st_samba_workgroup.select();
@@ -253,7 +254,17 @@ function done_validating(action){
                                                 </select>
                                         </td>
                                 </tr>
-                                
+
+				<tr>
+					<th>NTFS Sparse Files support</th>
+					<td>
+						<select name="usb_fs_ntfs_sparse" class="input_option">
+							<option class="content_input_fd" value="0" <% nvram_match("usb_fs_ntfs_sparse", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+							<option class="content_input_fd" value="1" <% nvram_match("usb_fs_ntfs_sparse", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+						</select>
+					</td>
+				</tr>
+
                                <!-- Viz 2011.04 tr>
                                         <th>
                                                 <a class="hintstyle" href="javascript:openHint(17, 4);"><#BasicConfig_EnableDownloadMachine_itemname#></a>

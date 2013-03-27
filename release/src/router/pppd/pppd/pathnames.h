@@ -27,6 +27,7 @@
 #define _PATH_IPPREUP	 _ROOT_PATH "/ppp/ip-pre-up"
 #define _PATH_AUTHUP	 _ROOT_PATH "/ppp/auth-up"
 #define _PATH_AUTHDOWN	 _ROOT_PATH "/ppp/auth-down"
+#define _PATH_AUTHFAIL	 _ROOT_PATH "/ppp/auth-fail"
 #define _PATH_TTYOPT	 _ROOT_PATH "/ppp/options."
 #define _PATH_CONNERRS	 _ROOT_PATH "/var/log/ppp-connect-errors"
 #define _PATH_PEERFILES	 _ROOT_PATH "/ppp/peers/"

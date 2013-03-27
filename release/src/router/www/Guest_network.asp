@@ -85,6 +85,14 @@ function initial(){
 		$('2g_radio_hint').style.fontFamily = "MS UI Gothic,MS P Gothic";
 		$('5g_radio_hint').style.fontFamily = "MS UI Gothic,MS P Gothic";
 	}	
+	
+	if("<% get_parameter("af"); %>" == "wl_NOnly_note"){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","wl_NOnly_note");
+		childsel.style.color="#FFCC00";
+		$('gn_desc').parentNode.appendChild(childsel);
+		$("wl_NOnly_note").innerHTML="* Please change the guest network authentication to WPA2 Personal AES.";	
+	}		
 }
 
 function change_wl_expire_radio(){
@@ -245,9 +253,6 @@ function applyRule(){
 		else
 			document.form.wl_expire.value = 0;
 
-		if(wl6_support != -1)
-			document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
-
 		if(Rawifi_support != -1)
 			document.form.action_wait.value = parseInt(document.form.action_wait.value)+5;			// extend waiting time for RaLink
 		
@@ -317,6 +322,7 @@ function guest_divctrl(flag){
 		if(sw_mode == "3")
 				inputCtrl(document.form.wl_lanaccess, 0);
 		$("applyButton").style.display = "";
+		automode_hint();
 	}
 	else{
 		$("guest_table2").style.display = "";
@@ -485,7 +491,7 @@ function genBWTable(_unit){
 	  <div id="subMenu"></div>
 	</td>
 	
-	<td height="380" valign="top">
+	<td valign="top">
 	  <div id="tabMenu" class="submenuBlock" style="*margin-top:-155px;"></div>
 
 <!--===================================Beginning of Main Content===========================================-->
@@ -508,7 +514,7 @@ function genBWTable(_unit){
 							<img id="guest_image" src="/images/New_ui/network_config.png">
 						</td>
 						<td>
-							<div class="formfontdesc" style="font-style: italic;font-size: 14px;"><#GuestNetwork_desc#></div>
+							<div id="gn_desc" class="formfontdesc" style="font-style: italic;font-size: 14px;"><#GuestNetwork_desc#></div>
 							
 						</td>
 					</tr>
@@ -517,7 +523,7 @@ function genBWTable(_unit){
 			
 			<!-- info table -->
 			<div id="guest_table2"></div>
-			<div id="guest_table5" style="margin-top:250px;"></div>
+			<div id="guest_table5" style="margin-top:220px;"></div>
 
 			<!-- setting table -->
 			<table width="80%" border="1" align="center" style="margin-top:10px;margin-bottom:20px;" cellpadding="4" cellspacing="0" id="gnset_table" class="FormTable">
@@ -572,7 +578,7 @@ function genBWTable(_unit){
 							<option value="2" <% nvram_match("wl_nmode_x", "2","selected"); %>>Legacy</option>
 						</select>
 						<input type="checkbox" name="wl_gmode_check" id="wl_gmode_check" value="" onClick="return change_common(this, 'WLANConfig11b', 'wl_gmode_check', '1')"> b/g Protection</input>
-						<span id="wl_nmode_x_hint" style="display:none"><#WLANConfig11n_automode_limition_hint#></span>
+						<!--span id="wl_nmode_x_hint" style="display:none"><#WLANConfig11n_automode_limition_hint#></span-->
 					</td>
 			  </tr>
 
@@ -617,6 +623,8 @@ function genBWTable(_unit){
 								<option value="psk2"    <% nvram_match("wl_auth_mode_x", "psk2",   "selected"); %>>WPA2-Personal</option>
 								<option value="pskpsk2" <% nvram_match("wl_auth_mode_x", "pskpsk2","selected"); %>>WPA-Auto-Personal</option>
 				  		</select>
+				  		<br>
+				  		<span id="wl_nmode_x_hint" style="display:none;"><#WLANConfig11n_automode_limition_hint#></span>
 					</td>
 		  	</tr>
 			  	

@@ -1,0 +1,691 @@
+#   Copyright 1988, 1990, 1991, 1992, 1994, 1995, 1996, 1997, 1998, 1999,
+#   2000, 2002, 2003, 2005, 2006, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Rob Savoye. (rob@cygnus.com)
+
+#
+# test gdb help commands
+#
+
+set prms_id 0
+set bug_id 0
+
+gdb_start
+
+# force the height of the debugger to be pretty large so no pagers getused
+gdb_test "set height 400" "" "test set height"
+
+# use a larger expect input buffer for long help outputs.
+# test help add-symbol-file
+gdb_test "help add-symbol-file" "Load symbols from FILE, assuming FILE has been dynamically loaded\.\[\r\n\]+Usage: add-symbol-file FILE ADDR \\\[-s <SECT> <SECT_ADDR> -s <SECT> <SECT_ADDR> \.\.\.\\\]\[\r\n\]+ADDR is the starting address of the file's text\.\[\r\n\]+The optional arguments are section-name section-address pairs and\[\r\n\]+should be specified if the data and bss segments are not contiguous\[\r\n\]+with the text\.  SECT is a section name to be loaded at SECT_ADDR\." "help add-symbol-file"
+# test help advance
+gdb_test "help advance" "Continue the program up to the given location \\(same form as args for break command\\)\.\[\r\n]+Execution will also stop upon exit from the current stack frame\." "help advance"
+# test help aliases
+test_class_help "aliases" {"Aliases of other commands\.\[\r\n\]+"}
+
+# test help append
+gdb_test "help append" "Append target code/data to a local file\.\[\r\n\]+List of append subcommands:.*" 
+gdb_test "help append binary" "Append target code/data to a raw binary file\.\[\r\n\]+List of append binary subcommands:.*" 
+gdb_test "help append memory" "Append contents of memory to a raw binary file\.\[\r\n\]+Arguments are FILE START STOP\.  Writes the contents of memory within the\[\r\n\]+range \\\[START \.\. STOP\\) to the specifed FILE in raw target ordered bytes\." 
+gdb_test "help append value" "Append the value of an expression to a raw binary file\.\[\r\n\]+Arguments are FILE EXPRESSION\.  Writes the value of EXPRESSION to\[\r\n\]+the specified FILE in raw target ordered bytes\." 
+gdb_test "help append binary memory" "Append contents of memory to a raw binary file\.\[\r\n\]+Arguments are FILE START STOP\.  Writes the contents of memory within the\[\r\n\]+range \\\[START \.\. STOP\\) to the specifed FILE in raw target ordered bytes\." 
+gdb_test "help append binary value" "Append the value of an expression to a raw binary file\.\[\r\n\]+Arguments are FILE EXPRESSION\.  Writes the value of EXPRESSION\[\r\n\]+to the specified FILE in raw target ordered bytes\." 
+# test help attach
+gdb_test "help attach" "Attach to a process or file outside of GDB\.\[\r\n\]+This command attaches to another target, of the same type as your last\[\r\n\]+\"target\" command \\(\"info files\" will show your target stack\\)\.\[\r\n\]+The command may take as argument a process id or a device file\.\[\r\n\]+For a process id, you must have permission to send the process a signal,\[\r\n\]+and it must have the same effective uid as the debugger\.\[\r\n\]+When using \"attach\" with a process id, the debugger finds the\[\r\n\]+program running in the process, looking first in the current working\[\r\n\]+directory, or \\(if not found there\\) using the source file search path\[\r\n\]+\\(see the \"directory\" command\\)\.  You can also use the \"file\" command\[\r\n\]+to specify the program, and to load its symbol table\." "help attach"
+# test help breakpoint "b" abbreviation
+gdb_test "help b" "Set breakpoint at specified line or function\.\[\r\n\]+break \\\[LOCATION\] \\\[thread THREADNUM\] \\\[if CONDITION\]\[\r\n\]+LOCATION may be a line number, function name, or \"\[*\]\" and an address\.\[\r\n\]+If a line number is specified, break at start of code for that line\.\[\r\n\]+If a function is specified, break at start of code for that function\.\[\r\n\]+If an address is specified, break at that exact address\.\[\r\n\]+With no LOCATION, uses current execution address of selected stack frame\.\[\r\n\]+This is useful for breaking on return to a stack frame\.\[\r\n\]+THREADNUM is the number from \"info threads\"\.\[\r\n\]+CONDITION is a boolean expression\.\[\r\n\]+Multiple breakpoints at one place are permitted, and useful if conditional\.\[\r\n\]+Do \"help breakpoints\" for info on other commands dealing with breakpoints\." "help breakpoint \"b\" abbreviation"
+# test help breakpoint "br" abbreviation
+gdb_test "help br" "Set breakpoint at specified line or function\.\[\r\n\]+break \\\[LOCATION\] \\\[thread THREADNUM\] \\\[if CONDITION\]\[\r\n\]+LOCATION may be a line number, function name, or \"\[*\]\" and an address\.\[\r\n\]+If a line number is specified, break at start of code for that line\.\[\r\n\]+If a function is specified, break at start of code for that function\.\[\r\n\]+If an address is specified, break at that exact address\.\[\r\n\]+With no LOCATION, uses current execution address of selected stack frame\.\[\r\n\]+This is useful for breaking on return to a stack frame\.\[\r\n\]+THREADNUM is the number from \"info threads\"\.\[\r\n\]+CONDITION is a boolean expression\.\[\r\n\]+Multiple breakpoints at one place are permitted, and useful if conditional\.\[\r\n\]+Do \"help breakpoints\" for info on other commands dealing with breakpoints\." "help breakpoint \"br\" abbreviation"
+# test help breakpoint "bre" abbreviation
+gdb_test "help bre" "Set breakpoint at specified line or function\.\[\r\n\]+break \\\[LOCATION\] \\\[thread THREADNUM\] \\\[if CONDITION\]\[\r\n\]+LOCATION may be a line number, function name, or \"\[*\]\" and an address\.\[\r\n\]+If a line number is specified, break at start of code for that line\.\[\r\n\]+If a function is specified, break at start of code for that function\.\[\r\n\]+If an address is specified, break at that exact address\.\[\r\n\]+With no LOCATION, uses current execution address of selected stack frame\.\[\r\n\]+This is useful for breaking on return to a stack frame\.\[\r\n\]+THREADNUM is the number from \"info threads\"\.\[\r\n\]+CONDITION is a boolean expression\.\[\r\n\]+Multiple breakpoints at one place are permitted, and useful if conditional\.\[\r\n\]+Do \"help breakpoints\" for info on other commands dealing with breakpoints\." "help breakpoint \"bre\" abbreviation"
+# test help breakpoint "brea" abbreviation
+gdb_test "help brea" "Set breakpoint at specified line or function\.\[\r\n\]+break \\\[LOCATION\] \\\[thread THREADNUM\] \\\[if CONDITION\]\[\r\n\]+LOCATION may be a line number, function name, or \"\[*\]\" and an address\.\[\r\n\]+If a line number is specified, break at start of code for that line\.\[\r\n\]+If a function is specified, break at start of code for that function\.\[\r\n\]+If an address is specified, break at that exact address\.\[\r\n\]+With no LOCATION, uses current execution address of selected stack frame\.\[\r\n\]+This is useful for breaking on return to a stack frame\.\[\r\n\]+THREADNUM is the number from \"info threads\"\.\[\r\n\]+CONDITION is a boolean expression\.\[\r\n\]+Multiple breakpoints at one place are permitted, and useful if conditional\.\[\r\n\]+Do \"help breakpoints\" for info on other commands dealing with breakpoints\." "help breakpoint \"brea\" abbreviation"
+# test help breakpoint "break" abbreviation
+gdb_test "help break" "Set breakpoint at specified line or function\.\[\r\n\]+break \\\[LOCATION\] \\\[thread THREADNUM\] \\\[if CONDITION\]\[\r\n\]+LOCATION may be a line number, function name, or \"\[*\]\" and an address\.\[\r\n\]+If a line number is specified, break at start of code for that line\.\[\r\n\]+If a function is specified, break at start of code for that function\.\[\r\n\]+If an address is specified, break at that exact address\.\[\r\n\]+With no LOCATION, uses current execution address of selected stack frame\.\[\r\n\]+This is useful for breaking on return to a stack frame\.\[\r\n\]+THREADNUM is the number from \"info threads\"\.\[\r\n\]+CONDITION is a boolean expression\.\[\r\n\]+Multiple breakpoints at one place are permitted, and useful if conditional\.\[\r\n\]+Do \"help breakpoints\" for info on other commands dealing with breakpoints\." "help breakpoint \"break\" abbreviation"
+# test help breakpoints
+test_class_help "breakpoints" {"Making program stop at certain points\.\[\r\n\]+"}
+# test help backtrace "bt" abbreviation
+gdb_test "help bt" "Print backtrace of all stack frames, or innermost COUNT frames\.\[\r\n\]+With a negative argument, print outermost -COUNT frames\.\[\r\n\]+Use of the 'full' qualifier also prints the values of the local variables\." "help backtrace \"bt\" abbreviation"
+# test help backtrace
+gdb_test "help backtrace" "Print backtrace of all stack frames, or innermost COUNT frames\.\[\r\n\]+With a negative argument, print outermost -COUNT frames\.\[\r\n\]+Use of the 'full' qualifier also prints the values of the local variables\." "help backtrace"
+# test help continue "c" abbreviation
+gdb_test "help c" "Continue program being debugged.*" "help continue \"c\" abbreviation"
+# test help continue
+gdb_test "help continue" "Continue program being debugged.*" "help continue"
+# test help call
+gdb_test "help call" "Call a function.*" "help call"
+# test help catch
+gdb_test "help catch" "Set catchpoints to catch events.*Raised signals may be caught:.*catch signal.*all signals.*catch signal.*signame.*a particular signal.*Raised exceptions may be caught:.*catch throw.*all exceptions, when thrown.*catch throw.*exceptname.*a particular exception, when thrown.*catch catch.*all exceptions, when caught.*catch catch.*exceptname.*a particular exception, when caught.*Thread or process events may be caught:.*catch thread_start.*any threads, just after creation.*catch thread_exit.*any threads, just before expiration.*catch thread_join.*any threads, just after joins.*catch start.*any processes, just after creation.*catch exit.*any processes, just before expiration.*catch fork.*calls to fork.*catch vfork.*calls to vfork.*catch exec.*calls to exec.*Dynamically.linked library events may be caught:.*catch load.*loads of any library.*catch load.*libname.*loads of a particular library.*catch unload.*unloads of any library.*catch unload.*libname.*unloads of a particular library.*The act of your program's execution stopping may also be caught:.*catch stop.*Do.*help set follow-fork-mode.*for info on debugging your program.*after a fork or vfork is caught.*Do.*help breakpoints.*for info on other commands dealing with breakpoints." "help catch"
+# test help cd
+gdb_test "help cd" "Set working directory to DIR for debugger and program being debugged\.\[\r\n\]+The change does not take effect for the program being debugged\[\r\n\]+until the next time it is started\." "help cd"
+# test help clear
+gdb_test "help clear" "Clear breakpoint at specified line or function\.\[\r\n\]+Argument may be line number, function name, or \"\\*\" and an address\.\[\r\n\]+If line number is specified, all breakpoints in that line are cleared\.\[\r\n\]+If function is specified, breakpoints at beginning of function are cleared\.\[\r\n\]+If an address is specified, breakpoints at that address are cleared\.\[\r\n\]+With no argument, clears all breakpoints in the line that the selected frame\[\r\n\]+is executing in\.\[\r\n\]+See also the \"delete\" command which clears breakpoints by number\." "help clear"
+# test help commands
+gdb_test "help commands" "Set commands to be executed when a breakpoint is hit\.\[\r\n\]+Give breakpoint number as argument after \"commands\"\.\[\r\n\]+With no argument, the targeted breakpoint is the last one set\.\[\r\n\]+The commands themselves follow starting on the next line\.\[\r\n\]+Type a line containing \"end\" to indicate the end of them\.\[\r\n\]+Give \"silent\" as the first line to make the breakpoint silent;\[\r\n\]+then no output is printed when it is hit, except what the commands print\." "help commands"
+# test help condition
+gdb_test "help condition" "Specify breakpoint number N to break only if COND is true\.\[\r\n\]+Usage is `condition N COND', where N is an integer and COND is an\[\r\n\]+expression to be evaluated whenever breakpoint N is reached." "help condition"
+# test help core-file
+gdb_test "help core-file" "Use FILE as core dump for examining memory and registers\.\[\r\n\]+No arg means have no core file\.  This command has been superseded by the\[\r\n\]+`target core' and `detach' commands\." "help core-file"
+# test help delete "d" abbreviation
+set expected_help_delete {
+    "Delete some breakpoints or auto-display expressions\.\[\r\n\]+"
+    "Arguments are breakpoint numbers with spaces in between\.\[\r\n\]+"
+    "To delete all breakpoints, give no argument\.\[\r\n\]+"
+    "Also a prefix command for deletion of other GDB objects\.\[\r\n\]+"
+    "The \"unset\" command is also an alias for \"delete\"\.\[\r\n\]+"
+}
+test_prefix_command_help {"d" "delete"} $expected_help_delete "help delete \"d\" abbreviation"
+# test help delete
+test_prefix_command_help "delete" $expected_help_delete
+# test help data
+test_class_help "data" {"Examining data\.\[\r\n\]+"}
+# test help define
+gdb_test "help define" "Define a new command.*" "help define"
+# test help delete breakpoints
+gdb_test "help delete breakpoints" "Delete some breakpoints or auto-display expressions\.\[\r\n\]+Arguments are breakpoint numbers with spaces in between\.\[\r\n\]+To delete all breakpoints, give no argument\.\[\r\n\]+This command may be abbreviated \"delete\"\." "help delete breakpoints"
+# test help delete display
+gdb_test "help delete display" "Cancel some expressions to be displayed when program stops\.\[\r\n\]+Arguments are the code numbers of the expressions to stop displaying\.\[\r\n\]+No argument means cancel all automatic-display expressions\.\[\r\n\]+Do \"info display\" to see current list of code numbers\." "help delete display"
+# test help detach
+test_prefix_command_help "detach" {
+    "Detach a process or file previously attached\.\[\r\n\]+"
+    "If a process, it is no longer traced, and it continues its execution\.\[ \r\n\]+If\[ \r\n\]+"
+    "you were debugging a file, the file is closed and gdb no longer accesses it\.\[ \r\n\]+"
+}
+# test help directory
+gdb_test "help directory" "Add directory DIR to beginning of search path for source files\.\[\r\n\]+Forget cached info on source file locations and line positions\.\[\r\n\]+DIR can also be \\\$cwd for the current working directory, or \\\$cdir for the\[\r\n\]+directory in which the source file was compiled into object code\.\[\r\n\]+With no argument, reset the search path to \\\$cdir:\\\$cwd, the default\." "help directory"
+# test help disable "dis" abbreviation
+set expected_help_disable {
+    "Disable some breakpoints\.\[\r\n\]+"
+    "Arguments are breakpoint numbers with spaces in between\.\[\r\n\]+"
+    "To disable all breakpoints, give no argument\.\[\r\n\]+"
+    "A disabled breakpoint is not forgotten, but has no effect until reenabled\.\[\r\n\]+"
+}
+test_prefix_command_help {"dis" "disable"} $expected_help_disable "help disable \"dis\" abbreviation"
+# test help disable "disa" abbreviation
+test_prefix_command_help {"disa" "disable"} $expected_help_disable "help disable \"disa\" abbreviation"
+# test help disable
+test_prefix_command_help "disable" $expected_help_disable
+# test help disable breakpoints
+gdb_test "help disable breakpoints" "Disable some breakpoints\.\[\r\n\]+Arguments are breakpoint numbers with spaces in between\.\[\r\n\]+To disable all breakpoints, give no argument\.\[\r\n\]+A disabled breakpoint is not forgotten, but has no effect until reenabled\.\[\r\n\]+This command may be abbreviated \"disable\"." "help disable breakpoints"
+# test help disable display
+gdb_test "help disable display" "Disable some expressions to be displayed when program stops\.\[\r\n\]+Arguments are the code numbers of the expressions to stop displaying\.\[\r\n\]+No argument means disable all automatic-display expressions\.\[\r\n\]+Do \"info display\" to see current list of code numbers\." "help disable display"
+# test help disassemble
+gdb_test "help disassemble" "Disassemble a specified section of memory\.\[\r\n\]+Default is the function surrounding the pc of the selected frame\.\[\r\n\]+With a single argument, the function surrounding that address is dumped\.\[\r\n\]+Two arguments are taken as a range of memory to dump\." "help disassemble"
+# test help display
+gdb_test "help display" "Print value of expression EXP each time the program stops\.\[\r\n\]+/FMT may be used before EXP as in the \"print\" command\.\[\r\n\]+/FMT \"i\" or \"s\" or including a size-letter is allowed,\[\r\n\]+as in the \"x\" command, and then EXP is used to get the address to examine\[\r\n\]+and examining is done as in the \"x\" command\.\[\r\n\]+With no argument, display all currently requested auto-display expressions\.\[\r\n\]+Use \"undisplay\" to cancel display requests previously made\." "help display"
+# test help do
+gdb_test "help do" "Select and print stack frame called by this one\.\[\r\n\]+An argument says how many frames down to go\." "help do"
+# test help document
+gdb_test "help document" "Document a user-defined command\.\[\r\n\]+Give command name as argument\.  Give documentation on following lines\.\[\r\n\]+End with a line of just \"end\"\." "help document"
+# test help down
+gdb_test "help down" "Select and print stack frame called by this one\.\[\r\n\]+An argument says how many frames down to go\." "help down"
+# test help down-silently
+gdb_test "help down-silently" "Same as the `down' command, but does not print anything\.\[\r\n\]+This is useful in command scripts\." "help down-silently"
+# test help dump 
+gdb_test "help dump" "Dump target code/data to a local file\.\[\r\n\]+List of dump subcommands:.*" 
+gdb_test "help dump binary" "Write target code/data to a raw binary file\.\[\r\n\]+List of dump binary subcommands:.*" 
+gdb_test "help dump ihex" "Write target code/data to an intel hex file\.\[\r\n\]+List of dump ihex subcommands:.*" 
+gdb_test "help dump memory" "Write contents of memory to a raw binary file\.\[\r\n\]+Arguments are FILE START STOP\.  Writes the contents of memory within the\[\r\n\]+range \\\[START \.\. STOP\\) to the specifed FILE in raw target ordered bytes\." 
+gdb_test "help dump srec" "Write target code/data to an srec file\.\[\r\n\]+List of dump srec subcommands:.*" 
+gdb_test "help dump tekhex" "Write target code/data to a tekhex file\.\[\r\n\]+List of dump tekhex subcommands:.*" 
+gdb_test "help dump value" "Write the value of an expression to a raw binary file\.\[\r\n\]+Arguments are FILE EXPRESSION\.  Writes the value of EXPRESSION to\[\r\n\]+the specified FILE in raw target ordered bytes\." 
+gdb_test "help dump binary memory" "Write contents of memory to a raw binary file\.\[\r\n\]+Arguments are FILE START STOP\.  Writes the contents of memory\[\r\n\]+within the range \\\[START \.\. STOP\\) to the specifed FILE in binary format\." 
+gdb_test "help dump binary value" "Write the value of an expression to a raw binary file\.\[\r\n\]+Arguments are FILE EXPRESSION\.  Writes the value of EXPRESSION\[\r\n\]+to the specified FILE in raw target ordered bytes\." "help dump binary value"
+gdb_test "help dump ihex memory" "Write contents of memory to an ihex file\.\[\r\n\]+Arguments are FILE START STOP\.  Writes the contents of memory within\[\r\n\]+the range \\\[START \.\. STOP\\) to the specifed FILE in intel hex format\." 
+gdb_test "help dump ihex value" "Write the value of an expression to an ihex file\.\[\r\n\]+Arguments are FILE EXPRESSION\.  Writes the value of EXPRESSION\[\r\n\]+to the specified FILE in intel hex format\." 
+gdb_test "help dump srec memory" "Write contents of memory to an srec file\.\[\r\n\]+Arguments are FILE START STOP\.  Writes the contents of memory\[\r\n\]+within the range \\\[START \.\. STOP\\) to the specifed FILE in srec format\." 
+gdb_test "help dump srec value" "Write the value of an expression to an srec file\.\[\r\n\]+Arguments are FILE EXPRESSION\.  Writes the value of EXPRESSION\[\r\n\]+to the specified FILE in srec format\." 
+gdb_test "help dump tekhex memory" "Write contents of memory to a tekhex file\.\[\r\n\]+Arguments are FILE START STOP\.  Writes the contents of memory\[\r\n\]+within the range \\\[START \.\. STOP\\) to the specifed FILE in tekhex format\." 
+gdb_test "help dump tekhex value" "Write the value of an expression to a tekhex file\.\[\r\n\]+Arguments are FILE EXPRESSION\.  Writes the value of EXPRESSION\[\r\n\]+to the specified FILE in tekhex format\." 
+# this command was removed from GDB 4.5.8
+# test help dump-me
+#send_gdb "help dump-me"
+# -re "Get fatal error; make debugger dump its core\."
+# 
+# }
+# test help echo
+gdb_test "help echo" "Print a constant string\.  Give string as argument\.\[\r\n\]+C escape sequences may be used in the argument\.\[\r\n\]+No newline is added at the end of the argument;\[\r\n\]+use \"\\\\n\" if you want a newline to be printed\.\[\r\n\]+Since leading and trailing whitespace are ignored in command arguments,\[\r\n\]+if you want to print some you must use \"\\\\\" before leading whitespace\[\r\n\]+to be printed or after trailing whitespace\." "help echo"
+# test help enable breakpoints delete
+gdb_test "help enable breakpoints delete" "Enable breakpoints and delete when hit\.  Give breakpoint numbers\.\[\r\n\]+If a breakpoint is hit while enabled in this fashion, it is deleted\." "help enable breakpoints delete"
+# test help enable breakpoints once
+gdb_test "help enable breakpoints once" "Enable breakpoints for one hit.*" "help enable breakpoints once"
+# test help enable breakpoints
+test_prefix_command_help {"enable breakpoints"} {
+    "Enable some breakpoints\.\[\r\n\]+"
+    "Give breakpoint numbers \\(separated by spaces\\) as arguments\.\[\r\n\]+"
+    "This is used to cancel the effect of the \"disable\" command\.\[\r\n\]+"
+    "May be abbreviated to simply \"enable\"\.\[\r\n\]+"
+}
+# test help enable delete
+gdb_test "help enable delete" "Enable breakpoints and delete when hit\.  Give breakpoint numbers\.\[\r\n\]+If a breakpoint is hit while enabled in this fashion, it is deleted\." "help enable delete"
+# test help enable display
+gdb_test "help enable display" "Enable some expressions to be displayed when program stops\.\[\r\n\]+Arguments are the code numbers of the expressions to resume displaying\.\[\r\n\]+No argument means enable all automatic-display expressions\.\[\r\n\]+Do \"info display\" to see current list of code numbers\." "help enable display"
+# test help enable once
+gdb_test "help enable once" "Enable breakpoints for one hit.*" "help enable once"
+# test help enable
+test_prefix_command_help "enable" {
+    "Enable some breakpoints\.\[\r\n\]+"
+    "Give breakpoint numbers \\(separated by spaces\\) as arguments\.\[\r\n\]+"
+    "With no subcommand, breakpoints are enabled until you command otherwise.\.\[\r\n\]+"
+    "This is used to cancel the effect of the \"disable\" command\.\[\r\n\]+"
+    "With a subcommand you can enable temporarily\.\[\r\n\]+"
+}
+# test help exec-file
+gdb_test "help exec-file" "Use FILE as program for getting contents of pure memory\.\[\r\n\]+If FILE cannot be found as specified, your execution directory path\[\r\n\]+is searched for a command of that name\.\[\r\n\]+No arg means have no executable file\." "help exec-file"
+# test help frame "f" abbreviation
+gdb_test "help f" "Select and print a stack frame\.\[\r\n\]+With no argument, print the selected stack frame\.  \\(See also \"info frame\"\\)\.\[\r\n\]+An argument specifies the frame to select\.\[\r\n\]+It can be a stack frame number or the address of the frame\.\[\r\n\]+With argument, nothing is printed if input is coming from\[\r\n\]+a command file or a user-defined command\." "help frame \"f\" abbreviation"
+# test help frame
+gdb_test "help frame" "Select and print a stack frame\.\[\r\n\]+With no argument, print the selected stack frame\.  \\(See also \"info frame\"\\)\.\[\r\n\]+An argument specifies the frame to select\.\[\r\n\]+It can be a stack frame number or the address of the frame\.\[\r\n\]+With argument, nothing is printed if input is coming from\[\r\n\]+a command file or a user-defined command\." "help frame"
+# test help fg
+gdb_test "help fg" "Continue program being debugged.*" "help fg"
+# test help file
+gdb_test "help file" "Use FILE as program to be debugged\.\[\r\n\]+It is read for its symbols, for getting the contents of pure memory,\[\r\n\]+and it is the program executed when you use the `run' command\.\[\r\n\]+If FILE cannot be found as specified, your execution directory path\[\r\n\]+\\(\\\$PATH\\) is searched for a command of that name\.\[\r\n\]+No arg means to have no executable file and no symbols\." "help file"
+# test help files
+gdb_test "help files" "Specifying.*" "help files"
+# test help finish
+gdb_test "help finish" "Execute until selected stack frame returns\.\[\r\n\]+Upon return, the value returned is printed and put in the value history\." "help finish"
+# test help forward-search
+gdb_test "help forward-search" "Search for regular expression \\(see regex\\(3\\)\\) from last line listed.*" "help forward-search"
+# test help gcore
+send_gdb "help gcore\n"
+gdb_expect {
+    -re "Undefined command: \"gcore\"\.  Try \"help\".*$gdb_prompt $" {
+	pass "help gcore"
+    }
+    -re "Save a core file with the current state of the debugged process\.\[\r\n\]+Argument is optional filename\.  Default filename is 'core\.<process_id>'.*$gdb_prompt $" {
+	pass "help gcore"
+    }
+    default { fail "help gcore" }
+}
+send_gdb "help generate-core-file\n"
+gdb_expect {
+    -re "Undefined command: \"generate-core-file\"\.  Try \"help\".*$gdb_prompt $" {
+	pass "help gcore"
+    }
+    -re "Save a core file with the current state of the debugged process\.\[\r\n\]+Argument is optional filename\.  Default filename is 'core\.<process_id>'.*$gdb_prompt $" {
+	pass "help gcore"
+    }
+    default { fail "help gcore" }
+}
+# test help help "h" abbreviation 
+gdb_test "help h" "Print list of commands\." "help help \"h\" abbreviation"
+# test help help
+gdb_test "help help" "Print list of commands\." "help help"
+# test help handle
+gdb_test "help handle" "Specify how to handle a signal\..*" "help handle"
+# test help info "i" abbreviation
+test_prefix_command_help {"i" "info"} {
+    "Generic command for showing things about the program being debugged\.\[\r\n\]+"
+} "help info \"i\" abbreviation"
+# test help info
+test_prefix_command_help "info" {
+    "Generic command for showing things about the program being debugged\.\[\r\n\]+"
+}
+# test help ignore
+gdb_test "help ignore" "Set ignore-count of breakpoint number N to COUNT\.\[\r\n\]+Usage is `ignore N COUNT'\." "help ignore"
+# test help info address
+gdb_test "help info address" "Describe where symbol SYM is stored\." "help info address"
+# test help info all-registers
+gdb_test "help info all-registers" "List of all registers and their contents, for selected stack frame\.\[\r\n\]+Register name as argument means describe only that register\." "help info all-registers"
+# test help info args
+gdb_test "help info args" "Argument variables of current stack frame\." "help info args"
+# test help info breakpoints
+gdb_test "help info breakpoints" "Status of user-settable breakpoints, or breakpoint number NUMBER\..*\[\r\n\]+breakpoint set\." "help info breakpoints"
+# test help info catch
+gdb_test "help info catch" "Exceptions that can be caught in the current stack frame\." "help info catch"
+# test help info copying
+gdb_test "help info copying" "Conditions for redistributing copies of GDB\." "help info copying"
+# test help info display
+gdb_test "help info display" "Expressions to display when program stops, with code numbers\." "help info display"
+# test help info frame "f" abbreviation
+gdb_test "help info f" "All about selected stack frame, or frame at ADDR\." "help info frame \"f\" abbreviation"
+# test help info frame
+gdb_test "help info frame" "All about selected stack frame, or frame at ADDR\." "help info frame"
+# test help info files
+gdb_test "help info files" "Names of targets and files being debugged\.\[\r\n\]+Shows the entire stack of targets currently in use \\(including the exec-file,\[\r\n\]+core-file, and process, if any\\), as well as the symbol file name\." "help info files"
+# test help info float
+gdb_test "help info float" "Print the status of the floating point unit" "help info float"
+# test help info functions
+gdb_test "help info functions" "All function names, or those matching REGEXP\." "help info functions"
+# test help info line
+gdb_test "help info line" "Core addresses of the code for a source line\.\[\r\n\]+Line can be specified as\[\r\n\]+  LINENUM, to list around that line in current file,\[\r\n\]+  FILE:LINENUM, to list around that line in that file,\[\r\n\]+  FUNCTION, to list around beginning of that function,\[\r\n\]+  FILE:FUNCTION, to distinguish among like-named static functions\.\[\r\n\]+Default is to describe the last source line that was listed\.\[\r\n\]+This sets the default address for \"x\" to the line's first instruction\[\r\n\]+so that \"x/i\" suffices to start examining the machine code\.\[\r\n\]+The address is also stored as the value of \"\\\$_\"\." "help info line"
+# test help info locals
+gdb_test "help info locals" "Local variables of current stack frame\." "help info locals"
+# test help info program
+gdb_test "help info program" "Execution status of the program\." "help info program"
+# test help info registers
+gdb_test "help info registers" "List of integer registers and their contents, for selected stack frame\.\[\r\n\]+Register name as argument means describe only that register\." "help info registers"
+# test help info stack "s" abbreviation
+gdb_test "help info s" "Backtrace of the stack, or innermost COUNT frames\." "help info stack \"s\" abbreviation"
+# test help info stack
+gdb_test "help info stack" "Backtrace of the stack, or innermost COUNT frames\." "help info stack"
+# test help info set
+gdb_test "help info set" "Show all GDB settings\." "help info set"
+# test help info signals
+gdb_test "help info signals" "What debugger does when program gets various signals.*" "help info signals"
+# test help info source
+gdb_test "help info source" "Information about the current source file\." "help info source"
+# test help info sources
+gdb_test "help info sources" "Source files in the program\." "help info sources"
+# test help info symbol
+gdb_test "help info symbol" "Describe what symbol is at location ADDR.*"
+# test help info target
+gdb_test "help info target" "Names of targets and files being debugged\.\[\r\n\]+Shows the entire stack of targets currently in use \\(including the exec-file,\[\r\n\]+core-file, and process, if any\\), as well as the symbol file name\." "help info target"
+# test help info terminal
+gdb_test "help info terminal" "Print inferior's saved terminal status\." "help info terminal"
+# test help info types
+gdb_test "help info types" "All type names, or those matching REGEXP\." "help info types"
+# test help info variables
+gdb_test "help info variables" "All global and static variable names, or those matching REGEXP\." "help info variables"
+# test help info warranty
+gdb_test "help info warranty" "Various kinds of warranty you do not have\." "help info warranty"
+# test help info watchpoints
+gdb_test "help info watchpoints" "Synonym for ``info breakpoints''\." "help info watchpoints"
+# test help inspect
+gdb_test "help inspect" "Same as \"print\" command, except that if you are running in the epoch\[\r\n\]+environment, the value is printed in its own window\." "help inspect"
+# test help jump
+gdb_test "help jump" "Continue program being debugged at specified line or address\.\[\r\n\]+Give as argument either LINENUM or \[*\]+ADDR, where ADDR is an expression\[\r\n\]+for an address to start at\." "help jump"
+# test help kill
+gdb_test "help kill" "Kill execution of program being debugged\." "help kill"
+# test help list "l" abbreviation
+gdb_test "help l" "List specified function or line\.\[\r\n\]+With no argument, lists ten more lines after or around previous listing\.\[\r\n\]+\"list -\" lists the ten lines before a previous ten-line listing\.\[\r\n\]+One argument specifies a line, and ten lines are listed around that line\.\[\r\n\]+Two arguments with comma between specify starting and ending lines to list\.\[\r\n\]+Lines can be specified in these ways:\[\r\n\]+  LINENUM, to list around that line in current file,\[\r\n\]+  FILE:LINENUM, to list around that line in that file,\[\r\n\]+  FUNCTION, to list around beginning of that function,\[\r\n\]+  FILE:FUNCTION, to distinguish among like-named static functions\.\[\r\n\]+  \[*\]ADDRESS, to list around the line containing that address\.\[\r\n\]+With two args if one is empty it stands for ten lines away from the other arg\." "help list \"l\" abbreviation"
+# test help list
+gdb_test "help list" "List specified function or line\.\[\r\n\]+With no argument, lists ten more lines after or around previous listing\.\[\r\n\]+\"list -\" lists the ten lines before a previous ten-line listing\.\[\r\n\]+One argument specifies a line, and ten lines are listed around that line\.\[\r\n\]+Two arguments with comma between specify starting and ending lines to list\.\[\r\n\]+Lines can be specified in these ways:\[\r\n\]+  LINENUM, to list around that line in current file,\[\r\n\]+  FILE:LINENUM, to list around that line in that file,\[\r\n\]+  FUNCTION, to list around beginning of that function,\[\r\n\]+  FILE:FUNCTION, to distinguish among like-named static functions\.\[\r\n\]+  \[*\]ADDRESS, to list around the line containing that address\.\[\r\n\]+With two args if one is empty it stands for ten lines away from the other arg\." "help list"
+# test help load
+gdb_test "help load" "Dynamically load FILE into the running program, and record its symbols\[\r\n\]+for access from GDB\.\[\r\n\]+A load OFFSET may also be given\." "help load"
+# test help make
+gdb_test "help make" "Run the ``make'' program using the rest of the line as arguments\." "help make"
+# test help next "n" abbreviation
+gdb_test "help n" "Step program, proceeding through subroutine calls\.\[\r\n\]+Like the \"step\" command as long as subroutine calls do not happen;\[\r\n\]+when they do, the call is treated as one instruction\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help next \"n\" abbreviation"
+# test help next
+gdb_test "help next" "Step program, proceeding through subroutine calls\.\[\r\n\]+Like the \"step\" command as long as subroutine calls do not happen;\[\r\n\]+when they do, the call is treated as one instruction\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help next"
+# test help nexti
+gdb_test "help ni" "Step one instruction, but proceed through subroutine calls\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help nexti"
+# all the commands that used to be here are now in "maintainance" instead
+# test help obscure
+test_class_help "obscure" {
+    "Obscure features\.\[\r\n\]+"
+}
+# test help output
+gdb_test "help output" "Like \"print\" but don't put in value history and don't print newline\.\[\r\n\]+This is useful in user-defined commands\." "help output"
+# test help overlay
+gdb_test "help overlay"       "Commands for debugging overlays.*"
+gdb_test "help overlay off"   "Disable overlay debugging\."
+gdb_test "help overlay manual" "Enable overlay debugging\."
+gdb_test "help overlay auto"  "Enable automatic overlay debugging\."
+gdb_test "help overlay list"  "List mappings of overlay sections\."
+gdb_test "help overlay map"   "Assert that an overlay section is mapped\."
+gdb_test "help overlay unmap" "Assert that an overlay section is unmapped\."
+gdb_test "help overlay load"  "Read the overlay mapping state from the target\."
+# test help print "p" abbreviation
+gdb_test "help p" "Print value of expression EXP\.\[\r\n\]+Variables accessible are those of the lexical environment of the selected.*\[\r\n\]+EXP may be preceded with /FMT, where FMT is a format letter\[\r\n\]+but no count or size letter \\(see \"x\" command\\)\." "help print \"p\" abbreviation"
+# test help print
+gdb_test "help print" "Print value of expression EXP\.\[\r\n\]+Variables accessible are those of the lexical environment of the selected.*\[\r\n\]+EXP may be preceded with /FMT, where FMT is a format letter\[\r\n\]+but no count or size letter \\(see \"x\" command\\)\." "help print"
+# test help path
+gdb_test "help path" "Add directory DIR\\(s\\) to beginning of search path for object files\.\[\r\n\]+\\\$cwd in the path means the current working directory\.\[\r\n\]+This path is equivalent to the \\\$PATH shell variable\.  It is a list of\[\r\n\]+directories, separated by colons\.  These directories are searched to find\[\r\n\]+fully linked executable files and separately compiled object files as needed\." "help path"
+# test help printcmds
+gdb_test "help printcmds" "Undefined command: \"printcmds\"\.  Try \"help\"\." "help printcmds"
+# test help printf
+gdb_test "help printf" "printf \"printf format string\", arg1, arg2, arg3, \.\.\., argn\[\r\n\]+This is useful for formatted output in user-defined commands\." "help printf"
+# test help ptype
+gdb_test "help ptype" "Print definition of type.*" "help ptype"
+# test help pwd
+gdb_test "help pwd" "Print working directory\.  This is used for your program as well\." "help pwd"
+# test help quit "q" abbreviation
+gdb_test "help q" "Exit gdb\." "help quit \"q\" abbreviation"
+# test help quit
+gdb_test "help quit" "Exit gdb\." "help quit"
+# test help run "r" abbreviation
+gdb_test "help r" "Start debugged program\.  You may specify arguments to give it\.\[\r\n\]+Args may include \"\\*\", or \"\\\[\.\.\.\\\]\"; they are expanded using \"sh\"\.\[\r\n\]+Input and output redirection with \">\", \"<\", or \">>\" are also allowed\.\[\r\n\]+With no arguments, uses arguments last specified \\(with \"run\" or \"set args\"\\)\.\[\r\n\]+To cancel previous arguments and run with no arguments,\[\r\n\]+use \"set args\" without arguments\." "help run \"r\" abbreviation"
+# test help run
+gdb_test "help run" "Start debugged program\.  You may specify arguments to give it\.\[\r\n\]+Args may include \"\\*\", or \"\\\[\.\.\.\\\]\"; they are expanded using \"sh\"\.\[\r\n\]+Input and output redirection with \">\", \"<\", or \">>\" are also allowed\.\[\r\n\]+With no arguments, uses arguments last specified \\(with \"run\" or \"set args\"\\)\.\[\r\n\]+To cancel previous arguments and run with no arguments,\[\r\n\]+use \"set args\" without arguments\." "help run"
+# test help rbreak
+gdb_test "help rbreak" "Set a breakpoint for all functions matching REGEXP\." "help rbreak"
+# test help restore
+gdb_test "help restore" "Restore the contents of FILE to target memory\.\[\r\n\]+Arguments are FILE OFFSET START END where all except FILE are optional\.\[\r\n\]+OFFSET will be added to the base address of the file \\(default zero\\)\.\[\r\n\]+If START and END are given, only the file contents within that range\[\r\n\]+\\(file relative\\) will be restored to target memory\."
+# test help return
+gdb_test "help return" "Make selected stack frame return to its caller\.\[\r\n\]+Control remains in the debugger, but when you continue\[\r\n\]+execution will resume in the frame above the one now selected\.\[\r\n\]+If an argument is given, it is an expression for the value to return\." "help return"
+# test help reverse-search
+gdb_test "help reverse-search" "Search backward for regular expression \\(see regex\\(3\\)\\) from last line listed\..*" "help reverse-search"
+# test help running
+test_class_help "running" {
+    "Running the program\.\[\r\n\]+"
+}
+# test help step "s" abbreviation
+gdb_test "help s" "Step program until it reaches a different source line\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help step \"s\" abbreviation"
+# test help step
+gdb_test "help step" "Step program until it reaches a different source line\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help step #1"
+# test help search
+gdb_test "help search" "Search for regular expression \\(see regex\\(3\\)\\) from last line listed\..*" "help search"
+# test help section
+gdb_test "help section" "Change the base address of section SECTION of the exec file to ADDR\.\[\r\n\]+This can be used if the exec file does not contain section addresses,\[\r\n\]+\\(such as in the a\.out format\\), or when the addresses specified in the\[\r\n\]+file itself are wrong\.  Each section must be changed separately\.  The\[\r\n\]+``info files'' command lists all the sections and their addresses\." "help section"
+#test help set annotate
+gdb_test "help set annotate" "Set annotation_level\.\[\r\n\]+0 == normal;     1 == fullname \\(for use when running under emacs\\)\[\r\n\]+2 == output annotated suitably for use by programs that control GDB\." "help set annotate"
+# test help set args
+gdb_test "help set args" "Set argument list to give program being debugged when it is started\.\[\r\n\]+Follow this command with any number of args, to be passed to the program\."
+# test help set check "c" abbreviation
+test_prefix_command_help {"set c" "set check"} {
+    "Set the status of the type/range checker\.\[\r\n\]+"
+} "help set check \"c\" abbreviation"
+# test help set check "ch" abbreviation
+test_prefix_command_help {"set ch" "set check"} {
+    "Set the status of the type/range checker\.\[\r\n\]+"
+} "help set check \"ch\" abbreviation"
+# test help set check
+test_prefix_command_help {"set check"} {
+    "Set the status of the type/range checker\.\[\r\n\]+"
+}
+# test help set check range
+gdb_test "help set check range" "Set range checking\.  \\(on/warn/off/auto\\)" "help set check range"
+# test help set check type
+gdb_test "help set check type" "Set type checking\.  \\(on/warn/off/auto\\)." "help set check type"
+# test help set complaints
+gdb_test "help set complaints" "Set max number of complaints about incorrect symbols\." "help set complaints"
+# test help set confirm
+gdb_test "help set confirm" "Set whether to confirm potentially dangerous operations\." "help set confirm"
+# test help set editing
+gdb_test "help set editing" "Set editing of command lines as they are typed\.\[\r\n\]+Use \"on\" to enable the editing, and \"off\" to disable it\.\[\r\n\]+Without an argument, command line editing is enabled\.  To edit, use\[\r\n\]+EMACS-like or VI-like commands like control-P or ESC\." "help set editing"
+# test help set environment
+gdb_test "help set environment" "Set environment variable value to give the program\.\[\r\n\]+Arguments are VAR VALUE where VAR is variable name and VALUE is value\.\[\r\n\]+VALUES of environment variables are uninterpreted strings\.\[\r\n\]+This does not affect the program until the next \"run\" command\." "help set environment"
+# test help set height
+gdb_test "help set height" "Set number of lines gdb thinks are in a page\." "help set height"
+# test help set history expansion
+gdb_test "help set history expansion" "Set history expansion on command input\.\[\r\n\]+Without an argument, history expansion is enabled\." "help set history expansion"
+# test help set history filename
+gdb_test "help set history filename" "Set the filename in which to record the command history\[\r\n\]+\\(the list of previous commands of which a record is kept\\)\." "help set history filename"
+# test help set history save
+gdb_test "help set history save" "Set saving of the history record on exit\.\[\r\n\]+Use \"on\" to enable the saving, and \"off\" to disable it\.\[\r\n\]+Without an argument, saving is enabled\." "help set history save"
+# test help set history size
+gdb_test "help set history size" "Set the size of the command history,\[\r\n\]+ie\. the number of previous commands to keep a record of\." "help set history size"
+# test help set history
+test_prefix_command_help {"set history"} {
+    "Generic command for setting command history parameters\.\[\r\n\]+"
+}
+# test help set language
+gdb_test "help set language" "Set the current source language\." "help set language"
+# test help set listsize
+gdb_test "help set listsize" "Set number of source lines gdb will list by default\." "help set listsize"
+# test help set print "p" abbreviation
+# FIXME -- Ultrix hangs randomly on this very long output from gdb and
+# continues with its output only if something is sent to gdb.
+# Also, if the system is slow, it may time out because the output is large.
+test_prefix_command_help {"set p" "set print"} {
+    "Generic command for setting how things print\.\[\r\n\]+"
+} "help set print \"p\" abbreviation"
+# test help set print "pr" abbreviation
+test_prefix_command_help {"set pr" "set print"} {
+    "Generic command for setting how things print\.\[\r\n\]+"
+} "help set print \"pr\" abbreviation"
+# test help set print
+test_prefix_command_help {"set print"} {
+    "Generic command for setting how things print\.\[\r\n\]+"
+}
+# test help set print address
+gdb_test "help set print address" "Set printing of addresses\." "help set print address"
+# test help set print array
+gdb_test "help set print array" "Set prettyprinting of arrays\." "help set print array"
+# test help set print asm-demangle
+gdb_test "help set print asm-demangle" "Set demangling of C\[+\]+/ObjC names in disassembly listings\." "help set print asm-demangle"
+# test help set print demangle
+gdb_test "help set print demangle" "Set demangling of encoded C\[+\]+/ObjC names when displaying symbols\." "help set print demangle"
+# test help set print elements
+gdb_test "help set print elements" "Set limit on string chars or array elements to print\.\[\r\n\]+\"set print elements 0\" causes there to be no limit\." "help set print elements"
+# test help set print object
+gdb_test "help set print object" "Set printing of object's derived type based on vtable info\." "help set print object"
+# test help set print pretty
+gdb_test "help set print pretty" "Set prettyprinting of structures\." "help set print pretty"
+# test help set print sevenbit-strings
+gdb_test "help set print sevenbit-strings" "Set printing of 8-bit characters in strings as \\\\nnn\." "help set print sevenbit-strings"
+# test help set print union
+gdb_test "help set print union" "Set printing of unions interior to structures\." "help set print union"
+# test help set print vtbl
+gdb_test "help set print vtbl" "Set printing of C\[+\]+ virtual function tables\." "help set print vtbl"
+# test help set prompt
+gdb_test "help set prompt" "Set gdb's prompt" "help set prompt"
+# test help set radix
+gdb_test "help set radix" "Set default input and output number radices\.\[\r\n\]+Use \'set input-radix\' or \'set output-radix\' to independently set each\.\[\r\n\]+Without an argument, sets both radices back to the default value of 10\." "help set radix"
+# test help set symbol-reloading
+gdb_test "help set symbol-reloading" "Set dynamic symbol table reloading multiple times in one run\." "help set symbol-reloading"
+# test help set variable
+gdb_test "help set variable" "Evaluate expression EXP and assign result to variable VAR, using assignment\[\r\n\]+syntax appropriate for the current language \\(VAR = EXP or VAR := EXP for\[\r\n\]+example\\)\.  VAR may be a debugger \"convenience\" variable \\(names starting\[\r\n\]+with \\\$\\), a register \\(a few standard names starting with \\\$\\), or an actual\[\r\n\]+variable in the program being debugged\.  EXP is any valid expression\.\[\r\n\]+This may usually be abbreviated to simply \"set\"\." "help set variable"
+# test help set verbose
+gdb_test "help set verbose" "Set verbosity\." "help set verbose"
+#test help set width
+gdb_test "help set width" "Set number of characters gdb thinks are in a line\." "help set width"
+# test help set write
+# This is only supported on targets which use exec.o.
+gdb_test "help set write" "Set writing into executable and core files\." "help set write"
+# test help set
+# FIXME -- Ultrix hangs randomly on this very long output from gdb and
+# continues with its output only if something is sent to gdb.
+# Also, if the system is slow, it may time out because the output is large.
+test_prefix_command_help "set" {
+    "Evaluate expression EXP and assign result to variable VAR, using assignment\[\r\n\]+"
+    "syntax appropriate for the current language \\(VAR = EXP or VAR := EXP for\[\r\n\]+"
+    "example\\)\.  VAR may be a debugger \"convenience\" variable \\(names starting\[\r\n\]+"
+    "with \\\$\\), a register \\(a few standard names starting with \\\$\\), or an actual\[\r\n\]+"
+    "variable in the program being debugged\.  EXP is any valid expression.*\[\r\n\]+"
+    "Use \"set variable\" for variables with names identical to set subcommands\.\[\r\n\]+"
+    "With a subcommand, this command modifies parts of the gdb environment\.\[\r\n\]+"
+    "You can see these environment settings with the \"show\" command\.\[\r\n\]+"
+}
+# test help shell
+gdb_test "help shell" "Execute the rest of the line as a shell command\.\[\r\n\]+With no arguments, run an inferior shell\." "help shell"
+#test help show annotate
+gdb_test "help show annotate" "Show annotation_level\.\[\r\n\]+0 == normal;     1 == fullname \\(for use when running under emacs\\)\[\r\n\]+2 == output annotated suitably for use by programs that control GDB\." "help show annotate"
+# test help show args
+gdb_test "help show args" "Show argument list to give program being debugged when it is started\.\[\r\n\]+Follow this command with any number of args, to be passed to the program\."
+# test help show check "c" abbreviation
+test_prefix_command_help {"show c" "show check"} {
+    "Show the status of the type/range checker\.\[\r\n\]+"
+} "help show check \"c\" abbreviation"
+# test help show check
+test_prefix_command_help {"show check"} {
+    "Show the status of the type/range checker\.\[\r\n\]+"
+}
+# test help show check range
+gdb_test "help show check range" "Show range checking\.  \\(on/warn/off/auto\\)" "help show check range"
+# test help show check type
+gdb_test "help show check type" "Show type checking\.  \\(on/warn/off/auto\\)" "help show check type"
+# test help show commands
+gdb_test "help show commands" "Show the history of commands you typed\.\[\r\n\]+You can supply a command number to start with, or a `\[+\]' to start after\[\r\n\]+the previous command number shown\." "help show commands"
+# test help show complaints
+gdb_test "help show complaints" "Show max number of complaints about incorrect symbols\." "help show complaints"
+# test help show confirm
+gdb_test "help show confirm" "Show whether to confirm potentially dangerous operations\." "help show confirm"
+# test help show convenience
+gdb_test "help show convenience" "Debugger convenience \\(\"\\\$foo\"\\) variables\.\[\r\n\]+These variables are created when you assign them values;\[\r\n\]+thus, \"print \\\$foo=1\" gives \"\\\$foo\" the value 1\.  Values may be any type\.\[\r\n\]+A few convenience variables are given values automatically:\[\r\n\]+\"\\\$_\"holds the last address examined with \"x\" or \"info lines\",\[\r\n\]+\"\\\$__\" holds the contents of the last address examined with \"x\"\." "help show convenience"
+# test help show directories
+gdb_test "help show directories" "Current search path for finding source files\.\[\r\n\]+\\\$cwd in the path means the current working directory\.\[\r\n\]+\\\$cdir in the path means the compilation directory of the source file\." "help show directories"
+# test help show editing
+gdb_test "help show editing" "Show editing of command lines as they are typed\.\[\r\n\]+Use \"on\" to enable the editing, and \"off\" to disable it\.\[\r\n\]+Without an argument, command line editing is enabled\.  To edit, use\[\r\n\]+EMACS-like or VI-like commands like control-P or ESC\." "help show editing"
+# test help show environment
+gdb_test "help show environment" "The environment to give the program, or one variable's value\.\[\r\n\]+With an argument VAR, prints the value of environment variable VAR to\[\r\n\]+give the program being debugged\.  With no arguments, prints the entire\[\r\n\]+environment to be given to the program\." "help show environment"
+# test help show height
+gdb_test "help show height" "Show number of lines gdb thinks are in a page\." "help show height"
+# test help show history expansion
+gdb_test "help show history expansion" "Show history expansion on command input\.\[\r\n\]+Without an argument, history expansion is enabled\." "help show history expansion"
+# test help show history filename
+gdb_test "help show history filename" "Show the filename in which to record the command history\[\r\n\]+\\(the list of previous commands of which a record is kept\\)\." "help show history filename"
+# test help show history save
+gdb_test "help show history save" "Show saving of the history record on exit\.\[\r\n\]+Use \"on\" to enable the saving, and \"off\" to disable it\.\[\r\n\]+Without an argument, saving is enabled\." "help show history save"
+# test help show history size
+gdb_test "help show history size" "Show the size of the command history,\[\r\n\]+ie\. the number of previous commands to keep a record of\." "help show history size"
+# test help show history
+test_prefix_command_help {"show history"} {
+    "Generic command for showing command history parameters\.\[\r\n\]+"
+}
+# test help show language
+gdb_test "help show language" "Show the current source language\." "help show language"
+# test help show listsize
+gdb_test "help show listsize" "Show number of source lines gdb will list by default\." "help show listsize"
+# test help show print "p" abbreviation
+test_prefix_command_help {"show p" "show print"} {
+    "Generic command for showing print settings\.\[\r\n\]+"
+} "help show print \"p\" abbreviation"
+# test help show print "pr" abbreviation
+test_prefix_command_help {"show pr" "show print"} {
+    "Generic command for showing print settings\.\[\r\n\]+"
+} "help show print \"pr\" abbreviation"
+# test help show print
+test_prefix_command_help {"show print"} {
+    "Generic command for showing print settings\.\[\r\n\]+"
+} "help show print \"p\" abbreviation"
+# test help show paths
+gdb_test "help show paths" "Current search path for finding object files\.\[\r\n\]+\\\$cwd in the path means the current working directory\.\[\r\n\]+This path is equivalent to the \\\$PATH shell variable\.  It is a list of\[\r\n\]+directories, separated by colons\.  These directories are searched to find\[\r\n\]+fully linked executable files and separately compiled object files as needed\." "help show paths"
+# test help show print address
+gdb_test "help show print address" "Show printing of addresses\." "help show print address"
+# test help show print array
+gdb_test "help show print array" "Show prettyprinting of arrays\." "help show print array"
+# test help show print asm-demangle
+gdb_test "help show print asm-demangle" "Show demangling of C\[+\]+/ObjC names in disassembly listings\." "help show print asm-demangle"
+# test help show print demangle
+gdb_test "help show print demangle" "Show demangling of encoded C\[+\]+/ObjC names when displaying symbols\." "help show print demangle"
+# test help show print elements
+gdb_test "help show print elements" "Show limit on string chars or array elements to print\.\[\r\n\]+\"set print elements 0\" causes there to be no limit\." "help show print elements"
+# test help show print object
+gdb_test "help show print object" "Show printing of object's derived type based on vtable info\." "help show print object"
+# test help show print pretty
+gdb_test "help show print pretty" "Show prettyprinting of structures\." "help show print pretty"
+# test help show print sevenbit-strings
+gdb_test "help show print sevenbit-strings" "Show printing of 8-bit characters in strings as \\\\nnn\." "help show print sevenbit-strings"
+# test help show print union
+gdb_test "help show print union" "Show printing of unions interior to structures\." "help show print union"
+# test help show print vtbl
+gdb_test "help show print vtbl" "Show printing of C\[+\]+ virtual function tables\." "help show print vtbl"
+# test help show prompt
+gdb_test "help show prompt" "Show gdb's prompt" "help show prompt"
+# test help show radix
+gdb_test "help show radix" "Show the default input and output number radices\.\[\r\n\]+Use \'show input-radix\' or \'show output-radix\' to independently show each\." "help show radix"
+# test help show symbol-reloading
+gdb_test "help show symbol-reloading" "Show dynamic symbol table reloading multiple times in one run\." "help show symbol-reloading"
+# test help show user
+gdb_test "help show user" "Show definitions of user defined commands\.\[\r\n\]+Argument is the name of the user defined command\.\[\r\n\]+With no argument, show definitions of all user defined commands\." "help show user"
+# test help show values
+gdb_test "help show values" "Elements of value history around item number IDX \\(or last ten\\)\." "help show values"
+# test help show verbose
+gdb_test "help show verbose" "Show verbosity\." "help show verbose"
+# test help show version
+gdb_test "help show version" "Show what version of GDB this is\." "help show version"
+# test help show width
+gdb_test "help show width" "Show number of characters gdb thinks are in a line\." "help show width"
+# test help show write
+# This is only supported on targets which use exec.o.
+gdb_test "help show write" "Show writing into executable and core files\." "help show write"
+# test help show
+# FIXME -- Ultrix hangs randomly on this very long output from gdb and
+# continues with its output only if something is sent to gdb.
+# Also, if the system is slow, it may time out because the output is large.
+test_prefix_command_help "show" {
+    "Generic command for showing things about the debugger\.\[\r\n\]+"
+}
+# test help step
+gdb_test "help step" "Step program until it reaches a different source line\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help step #2"
+# test help stepi "si" abbreviation
+gdb_test "help si" "Step one instruction exactly\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help stepi \"si\" abbreviation"
+# test help stepi
+gdb_test "help stepi" "Step one instruction exactly\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help stepi"
+# test help signal
+gdb_test "help signal" "Continue program giving it signal.*" "help signal"
+# test help source
+# vxgdb reads .vxgdbinit
+gdb_test "help source" "Read commands from a file named FILE\.\[\r\n\]+Optional -v switch \\(before the filename\\) causes each command in\[\r\n\]+FILE to be echoed as it is executed\.\[\r\n\]+Note that the file \"\[^\"\]*\" is read automatically in this way\[\r\n\]+when GDB is started\." "help source"
+# test help stack
+test_class_help "stack" {
+    "Examining the stack\..*\[\r\n\]+"
+    "When the program being debugged stops, gdb selects the innermost frame\.\[\r\n\]+"
+    "The commands below can be used to select other frames by number or address\.\[\r\n\]+"
+}
+# test help status
+test_class_help "status" {
+    "Status inquiries\.\[\r\n\]+"
+}
+
+# test help support
+# FIXME -- Ultrix hangs randomly on this very long output from gdb and
+# continues with its output only if something is sent to gdb.
+# Also, if the system is slow, it may time out because the output is large.
+test_class_help "support" {
+    "Support facilities\.\[\r\n\]+"
+}
+# test help symbol-file
+gdb_test "help symbol-file" "Load symbol table from executable file FILE\.\[\r\n\]+The `file' command can also load symbol tables, as well as setting the file\[\r\n\]+to execute\." "help symbol-file"
+# test help target child
+gdb_test "help target child" "(Unix|Win32) child process \\(started by the \"run\" command\\)\.|Undefined target command: \"child\"\.  Try \"help target\"\." "help target child"
+# test help target procfs
+gdb_test "help target procfs" "Unix /proc child process \\(started by the \"run\" command\\)\.|Undefined target command: \"procfs\"\.  Try \"help target\"\." "help target procfs (procfs version)"
+# test help target core
+gdb_test "help target core" "Use a core file as a target\.  Specify the filename of the core file\.|(Undefined target command: \"core\"\.  Try \"help target\"\.)" "help target core"
+# test help target exec
+gdb_test "help target exec" "Use an executable file as a target\.\[\r\n\]+Specify the filename of the executable file\." "help target exec"
+# test help target remote
+gdb_test "help target remote" "Use a remote computer via a serial line, using a gdb-specific protocol\.\[\r\n\]+Specify the serial device it is connected to\[\r\n\]+\\(e.g. .*" "help target remote"
+# test help target
+# the child process target may be "target child" or "target procfs"
+test_prefix_command_help "target" {
+    "Connect to a target machine or process\.\[\r\n\]+"
+    "The first argument is the type or protocol of the target machine\.\[\r\n\]+"
+    "Remaining arguments are interpreted by the target protocol\.  For more\[\r\n\]+"
+    "information on the arguments for a particular protocol, type\[\r\n\]+"
+    "`help target ' followed by the protocol name\.\[\r\n\]+"
+}
+# test help tbreak
+gdb_test "help tbreak" "Set a temporary breakpoint.*" "help tbreak"
+# test help tty
+gdb_test "help tty" "Set terminal for future runs of program being debugged\.\[\r\n\]+Usage: set inferior-tty /dev/pts/1" "help tty"
+# test help until "u" abbreviation
+gdb_test "help u" "Execute until the program reaches a source line greater than the current\[\r\n\]+or a specified location \\(same args as break command\\) within the current frame\." "help until \"u\" abbreviation"
+# test help until
+gdb_test "help until" "Execute until the program reaches a source line greater than the current\[\r\n\]+or a specified location \\(same args as break command\\) within the current frame\." "help until"
+# test help undisplay
+gdb_test "help undisplay" "Cancel some expressions to be displayed when program stops\.\[\r\n\]+Arguments are the code numbers of the expressions to stop displaying\.\[\r\n\]+No argument means cancel all automatic-display expressions\.\[\r\n\]+\"delete display\" has the same effect as this command\.\[\r\n\]+Do \"info display\" to see current list of code numbers\." "help undisplay"
+# test help unset environment
+gdb_test "help unset environment" "Cancel environment variable VAR for the program\.\[\r\n\]+This does not affect the program until the next \"run\" command\." "help unset environment"
+# test help unset
+test_prefix_command_help "unset" {
+    "Complement to certain \"set\" commands\.\[\r\n\]+"
+}
+# test help up
+gdb_test "help up" "Select and print stack frame that called this one\.\[\r\n\]+An argument says how many frames up to go\." "help up"
+# test help up-silently
+gdb_test "help up-silently" "Same as the `up' command, but does not print anything\.\[\r\n\]+This is useful in command scripts\." "help up-silently"
+# test help user-defined
+test_class_help "user-defined" {
+    "User-defined commands\.\[\r\n\]+"
+    "The commands in this class are those defined by the user\.\[\r\n\]+"
+    "Use the \"define\" command to define a command\.\[\r\n\]+"
+}
+# test help watch
+gdb_test "help watch" "Set a watchpoint for an expression\.\[\r\n\]+A watchpoint stops execution of your program whenever the value of\[\r\n\]+an expression changes\." "help watch"
+# test help whatis
+gdb_test "help whatis" "Print data type of expression EXP\." "help whatis"
+# test help where
+gdb_test "help where" "Print backtrace of all stack frames, or innermost COUNT frames\.\[\r\n\]+With a negative argument, print outermost -COUNT frames\.\[\r\n\]+Use of the 'full' qualifier also prints the values of the local variables\." "help where"
+# test help x
+gdb_test "help x" "Examine memory: x/FMT ADDRESS\.\[\r\n\]+ADDRESS is an expression for the memory address to examine\.\[\r\n\]+FMT is a repeat count followed by a format letter and a size letter\..*\[\r\n\]+Defaults for format and size letters are those previously used\.\[\r\n\]+Default count is 1\.  Default address is following last thing printed\[\r\n\]+with this command or \"print\"\." "help x"
+# test help info bogus-gdb-command
+gdb_test "help info bogus-gdb-command" "Undefined info command: \"bogus-gdb-command\"\.  Try \"help info\"\." "help info bogus-gdb-command"
+# test help gotcha
+gdb_test "help gotcha" "Undefined command: \"gotcha\"\.  Try \"help\"\." "help gotcha"
+# test apropos regex
+gdb_test "apropos \\\(print\[\^ bsiedf\\\".-\]\\\)" "handle -- Specify how to handle a signal"
+# test apropos >1 word string
+gdb_test "apropos handle a signal" "handle -- Specify how to handle a signal"
+# test apropos apropos
+gdb_test "apropos apropos" "apropos -- Search for commands matching a REGEXP"

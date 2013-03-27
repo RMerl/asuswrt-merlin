@@ -1,0 +1,12 @@
+# arm testcase for add ${bit10-rd},#$offset8
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global addi8
+addi8:
+	add r0,#0
+
+	pass

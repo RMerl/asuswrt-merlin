@@ -1,0 +1,132 @@
+# Copyright 1997, 1998, 1999, 2000, 2001, 2003, 2005, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if $tracelevel then {
+	strace $tracelevel
+	}
+
+set prms_id 0
+set bug_id 0
+
+if {[skip_shlib_tests]} {
+    return 0
+}
+
+set testfile "so-impl-ld"
+set libfile "solib1"
+set srcfile $srcdir/$subdir/$testfile.c
+set libsrc  $srcdir/$subdir/$libfile.c
+set binfile $objdir/$subdir/$testfile
+set lib_sl  $objdir/$subdir/$libfile.sl
+
+set lib_opts  debug
+set exec_opts [list debug shlib=$lib_sl]
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+if [test_compiler_info "hpcc-*"] {
+    lappend exec_opts "additional_flags=-Ae"
+}
+
+if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
+     || [gdb_compile $srcfile $binfile executable $exec_opts] != ""} {
+    untested "Couldn't compile $libsrc or $srcfile."
+    return -1
+}
+
+# Start with a fresh gdb
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+gdb_load_shlibs $lib_sl
+
+# This program implicitly loads SOM shared libraries.
+#
+if ![runto_main] then { fail "implicit solibs tests suppressed" }
+
+# Verify that we can step over the first shlib call.
+#
+send_gdb "next\n"
+gdb_expect {
+  -re "21\[ \t\]*result = solib_main .result.*$gdb_prompt $"\
+          {pass "step over solib call"}
+  -re "$gdb_prompt $"\
+          {fail "step over solib call"}
+  timeout {fail "(timeout) step over solib call"}
+}
+
+# Verify that we can step into the second shlib call.
+#
+send_gdb "step\n"
+gdb_expect {
+  -re "solib_main .arg=10000. at.*${libfile}.c:17.*$gdb_prompt $"\
+          {pass "step into solib call"}
+  -re "$gdb_prompt $"\
+          {fail "step into solib call"}
+  timeout {fail "(timeout) step into solib call"}
+}
+
+# Verify that we can step within the shlib call.
+#
+send_gdb "next\n"
+gdb_expect {
+  -re "18\[ \t\]*\}.*$gdb_prompt $"\
+          {pass "step in solib call"}
+  -re "$gdb_prompt $"\
+          {fail "step in solib call"}
+  timeout {fail "(timeout) step in solib call"}
+}
+
+# Verify that we can step out of the shlib call, and back out into
+# the caller.
+#
+send_gdb "next\n"
+gdb_expect {
+    -re "0x\[0-9a-f\]*\[ \t\]*9\[ \t\]*.*$gdb_prompt $" {
+	# we haven't left the callee yet, so do another next
+	send_gdb "next\n"
+	gdb_expect {
+	    -re "main .. at.*so-impl-ld.c:22.*$gdb_prompt $"\
+		{pass "step out of solib call"}
+	    -re "$gdb_prompt $"\
+		{fail "step out of solib call"}
+	    timeout {fail "(timeout) step out of solib call"}
+	}
+    }
+
+    -re "main .. at.*so-impl-ld.c:22.*$gdb_prompt $"\
+	{pass "step out of solib call"}
+    -re "$gdb_prompt $"\
+	{fail "step out of solib call"}
+    timeout {fail "(timeout) step out of solib call"}
+}
+
+gdb_exit
+return 0
+
+
+
+
+
+

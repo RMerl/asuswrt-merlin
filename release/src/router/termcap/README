@@ -1,0 +1,34 @@
+This is the GNU termcap library -- a library of C functions that
+enable programs to send control strings to terminals in a way
+independent of the terminal type.  The GNU termcap library does not
+place an arbitrary limit on the size of termcap entries, unlike most
+other termcap libraries.
+
+Most of this package is also distributed with GNU Emacs, but it is
+available in this separate distribution to make it easier to install
+as -ltermcap.  However, use of termcap is discouraged.  Termcap is
+being phased out in favor of the terminfo-based ncurses library, which
+contains an emulation of the termcap library routines in addition to
+an excellent curses implementation.  ncurses is available from the
+usual GNU archive sites.
+
+See the file INSTALL for compilation and installation instructions.
+Additionally:
+
+This package contains termcap.src, the latest official termcap data
+file.  By default, it is not installed.  The current version contains
+some entries that are more than 1023 bytes long, which is the largest
+value that is safe to use with the many historical applications that
+only allocate a 1024 byte termcap buffer (telnet, for example).  If
+you make sure that all of your programs allocate buffers of at least
+2500 bytes, or let the termcap library do it by passing a NULL
+pointer, then it is safe to install the new termcap file, as described
+below.
+
+You can give configure two special options:
+  --enable-install-termcap install the termcap data file
+  --with-termcap=FILE     use data file FILE instead of /etc/termcap
+
+Please report any bugs in this library to bug-gnu-emacs@prep.ai.mit.edu.
+You can check which version of the library you have by using the RCS
+`ident' command on libtermcap.a.

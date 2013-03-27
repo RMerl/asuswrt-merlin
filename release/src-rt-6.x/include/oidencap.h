@@ -3,7 +3,7 @@
  *
  * Definitions subject to change without notice.
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -11,7 +11,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: oidencap.h 281527 2011-09-02 17:12:53Z $
+ * $Id: oidencap.h 342964 2012-07-05 02:39:01Z $
  */
 
 #ifndef _oidencap_h_
@@ -62,6 +62,38 @@ typedef struct _getinformation {
 
 #define GETINFORMATION_SIZE			(sizeof(getinformation_t))
 #define GETINFORMATION_DATA(ghdr)		((UCHAR *)&(ghdr)[1])
+
+typedef struct _reqinformation_hdr {
+	ULONG version; /* REQINFORMATION_XXX_VERSION */
+	ULONG cookie;  /* OIDENCAP_COOKIE; altered by driver if more data available */
+	ULONG len;     /* REQINFORMATION_XXX_SIZE */
+} reqinformation_hdr_t;
+
+#define REQINFORMATION_HDR_SIZE			(sizeof(reqinformation_hdr_t))
+
+/* This structure should be used as a replacement to
+ * getinfomation_t and setinformation_t.
+ * When new fields are added to this structure, add them to the end
+ * and increment the version field.
+*/
+typedef struct _reqinformation_0 {
+	reqinformation_hdr_t hdr;
+	ULONG oid;     /* actual OID value for the request */
+	ULONG idx;     /* bsscfg index */
+	ULONG status;  /* NDIS_STATUS for actual OID */
+	/* Add new fields here... */
+	/* 4-byte aligned data follows */
+} reqinformation_0_t;
+
+#define REQINFORMATION_0_VERSION		0
+#define REQINFORMATION_0_SIZE			(sizeof(reqinformation_0_t))
+#define REQINFORMATION_0_DATA(ghdr)		((UCHAR *)(ghdr) + REQINFORMATION_0_SIZE)
+
+typedef reqinformation_0_t reqinformation_t;
+
+#define REQINFORMATION_VERSION			REQINFORMATION_0_VERSION
+#define REQINFORMATION_SIZE			REQINFORMATION_0_SIZE
+#define REQINFORMATION_DATA(ghdr)		REQINFORMATION_0_DATA(ghdr)
 
 #if defined(_MSC_VER)
 #pragma pack(pop)

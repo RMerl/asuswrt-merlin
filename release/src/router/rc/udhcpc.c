@@ -276,13 +276,8 @@ renew(void)
 	}
 
 	/* Update actual DNS or delayed for DHCP+PPP */
-	if (changed) {
-#ifdef OVERWRITE_DNS
+	if (changed)
 		update_resolvconf();
-#else
-		add_ns(wan_ifname);
-#endif
-	}
 
 	/* Update connected state and DNS for WEB UI,
 	 * but skip physical VPN subinterface */
@@ -366,12 +361,25 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 		NULL, NULL,	/* -x 61:wan_clientid */
 #endif
 		NULL, NULL,	/* -x 61:wan_clientid (non-DSL) */
-		NULL};
+		NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 	int index = 7;		/* first NULL */
 	int dr_enable;
 
 	/* Use unit */
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+
+	if (nvram_get_int("dhcpc_mode") == 0)
+	{
+		/* 2 discover packets max (default 3 discover packets) */
+		dhcp_argv[index++] = "-t";
+		dhcp_argv[index++] = "2";
+		/* 5 seconds between packets (default 3 seconds) */
+		dhcp_argv[index++] = "-T";
+		dhcp_argv[index++] = "5";
+		/* Wait 120 seconds before trying again (default 20 seconds) */
+		dhcp_argv[index++] = "-A";
+		dhcp_argv[index++] = "120";
+	}
 
 	if (ppid == NULL)
 		dhcp_argv[index++] = "-b";
@@ -568,7 +576,7 @@ bound_lan(void)
 		nvram_set("lan_lease", trim_r(value));
 		expires_lan(lan_ifname, atoi(value));
 	}
-	if ((value = getenv("dns")))
+	if (nvram_get_int("lan_dnsenable_x") && (value = getenv("dns")))
 		nvram_set("lan_dns", trim_r(value));
 
 _dprintf("%s: IFUP.\n", __FUNCTION__);
@@ -625,6 +633,7 @@ udhcpc_lan(int argc, char **argv)
 
 // -----------------------------------------------------------------------------
 
+#ifdef RTCONFIG_IPV6
 // copy env to nvram
 // returns 1 if new/changed, 0 if not changed/no env
 static int env2nv(char *env, char *nv)
@@ -639,7 +648,6 @@ static int env2nv(char *env, char *nv)
 	return 0;
 }
 
-#ifdef RTCONFIG_IPV6
 int dhcp6c_state_main(int argc, char **argv)
 {
 	char prefix[INET6_ADDRSTRLEN + 1];
@@ -669,11 +677,7 @@ int dhcp6c_state_main(int argc, char **argv)
 
 	if (env2nv("new_domain_name_servers", "ipv6_get_dns")) {
 		TRACE_PT("ipv6_get_dns=%s\n", nvram_safe_get("ipv6_get_dns"));
-#ifdef OVERWRITE_DNS
 		update_resolvconf();
-#else
-		add_ns(NULL);
-#endif
 	}
 
 	// (re)start radvd and httpd
@@ -684,20 +688,20 @@ int dhcp6c_state_main(int argc, char **argv)
 	return 0;
 }
 
-static unsigned long pow(int m, int n)
+static unsigned long powUL(int m, int n)
 {
 	if (m == 1)
 		return n;
 	else if (m == 0)
 		return 1;
-	return pow(m - 1, n) * n ;
+	return powUL(m - 1, n) * n ;
 }
 
 void start_dhcp6c(void)
 {
 	FILE *f;
 	int prefix_len;
-	char *wan6face = get_wan6face();
+	char *wan6face = (char*)get_wan6face();
 	char *argv[] = { "dhcp6c", "-T", "LL", NULL, NULL, NULL };
 	int argc;
 	char iaid_str[9] = {0};
@@ -733,7 +737,7 @@ void start_dhcp6c(void)
 			var = 10 + (iaid_str[i] - 0x41);
 		else if (iaid_str[i] >= 0x61 && iaid_str[i] <= 0x66) //a-f
 			var = 10 + (iaid_str[i] - 0x61);
-		var = var * pow(6 - i, 16);
+		var = var * powUL(6 - i, 16);
 		iaid += var;
 	}
 
@@ -746,19 +750,19 @@ void start_dhcp6c(void)
 	if ((f = fopen("/etc/dhcp6c.conf", "w"))) {
 		fprintf(f,
 			"interface %s {\n"
-			" send ia-pd %d;\n"
-			" send ia-na %d;\n"
+			" send ia-pd %lu;\n"
+			" send ia-na %lu;\n"
 			" send rapid-commit;\n"
 			" request domain-name-servers;\n"
 			" script \"/sbin/dhcp6c-state\";\n"
 			"};\n"
-			"id-assoc pd %d {\n"
+			"id-assoc pd %lu {\n"
 			" prefix-interface %s {\n"
 			"  sla-id 1;\n"
 			"  sla-len %d;\n"
 			" };\n"
 			"};\n"
-			"id-assoc na %d { };\n",
+			"id-assoc na %lu { };\n",
 			wan6face,
 			iaid,
 			iaid,
@@ -772,7 +776,7 @@ void start_dhcp6c(void)
 	argc = 3;
 	if (nvram_get_int("ipv6_debug"))
 		argv[argc++] = "-D";
-	argv[argc++] = wan6face;
+	argv[argc++] = (char*)wan6face;
 	argv[argc] = NULL;
 	_eval(argv, NULL, 0, NULL);
 
@@ -783,7 +787,7 @@ void stop_dhcp6c(void)
 {
 	TRACE_PT("begin\n");
 
-	char *wan6face = get_wan6face();
+	char *wan6face = (char*)get_wan6face();
 	char *lan_ifname = nvram_safe_get("lan_ifname");
 
 	if (!pids("dhcp6c")) return;

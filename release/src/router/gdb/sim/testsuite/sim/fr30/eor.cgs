@@ -1,0 +1,69 @@
+# fr30 testcase for eor $Rj,$Ri, eor $Rj,@$Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global eor
+eor:
+	; Test eor $Rj,$Ri
+	mvi_h_gr   	0xaaaaaaaa,r7
+	mvi_h_gr   	0x55555555,r8
+	set_cc          0x07		; Set mask opposite of expected
+	eor      	r7,r8
+	test_cc		1 0 1 1
+	test_h_gr  	0xffffffff,r8
+
+	mvi_h_gr   	0x00000000,r7
+	mvi_h_gr   	0x00000000,r8
+	set_cc          0x08		; Set mask opposite of expected
+	eor		r7,r8
+	test_cc		0 1 0 0
+	test_h_gr  	0x00000000,r8
+
+	mvi_h_gr   	0xaaaaaaaa,r7
+	mvi_h_gr   	0xaaaaaaaa,r8
+	set_cc          0x0b		; Set mask opposite of expected
+	eor      	r7,r8
+	test_cc		0 1 1 1
+	test_h_gr  	0x00000000,r8
+
+	mvi_h_gr   	0xdead0000,r7
+	mvi_h_gr   	0x0000beef,r8
+	set_cc          0x05		; Set mask opposite of expected
+	eor		r7,r8
+	test_cc		1 0 0 1
+	test_h_gr  	0xdeadbeef,r8
+
+	; Test eor $Rj,@$Ri
+	mvi_h_gr   	0xaaaaaaaa,r7
+	mvi_h_mem  	0x55555555,sp
+	set_cc          0x07		; Set mask opposite of expected
+	eor      	r7,@sp
+	test_cc		1 0 1 1
+	test_h_mem 	0xffffffff,sp
+
+	mvi_h_gr   	0x00000000,r7
+	mvi_h_mem  	0x00000000,sp
+	set_cc          0x08		; Set mask opposite of expected
+	eor		r7,@sp
+	test_cc		0 1 0 0
+	test_h_mem 	0x00000000,sp
+
+	mvi_h_gr   	0xaaaaaaaa,r7
+	mvi_h_mem  	0xaaaaaaaa,sp
+	set_cc          0x0b		; Set mask opposite of expected
+	eor      	r7,@sp
+	test_cc		0 1 1 1
+	test_h_mem 	0x00000000,sp
+
+	mvi_h_gr   	0xdead0000,r7
+	mvi_h_mem  	0x0000beef,sp
+	set_cc          0x05		; Set mask opposite of expected
+	eor		r7,@sp
+	test_cc		1 0 0 1
+	test_h_mem 	0xdeadbeef,sp
+
+	pass

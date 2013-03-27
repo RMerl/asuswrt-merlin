@@ -1,0 +1,12 @@
+# arm testcase for umull$cond${set-cc?} $rdlo,$rdhi,$rm,$rs
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global umull
+umull:
+	umull00 pc,pc,pc,pc
+
+	pass

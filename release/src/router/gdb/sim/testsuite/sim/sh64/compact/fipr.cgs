@@ -1,0 +1,44 @@
+# sh testcase for fipr $fvm, $fvn
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+initv1:
+	fldi1 fr0
+	# Load 2 into fr2.
+	fldi1 fr1
+	fadd fr1, fr1
+	# Load 4 into fr2.
+	fldi1 fr2
+	fadd fr2, fr2
+	fadd fr2, fr2
+	fldi0 fr3
+
+initv2:
+	fldi1 fr8
+	fldi0 fr9
+	fldi1 fr10
+	fldi0 fr11
+
+	fipr fv0, fv8
+
+	# Result will be in fr11.
+	fldi1 fr0
+	fldi1 fr1
+	# Two.
+	fadd fr1, fr0
+	# Four.
+	fadd fr0, fr0
+	# Five.
+	fadd fr1, fr0
+	fcmp/eq fr0, fr11
+	bf wrong
+
+okay:
+	pass
+
+wrong:
+	fail

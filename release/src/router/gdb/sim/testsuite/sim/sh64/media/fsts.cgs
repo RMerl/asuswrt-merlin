@@ -1,0 +1,34 @@
+# sh testcase for fst.s $rm, $disp10x4, $frf -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global fsts
+fsts:
+	movi 0x1020, r0
+	shlli r0, 8, r0
+	ori r0, 0x30, r0
+	shlli r0, 8, r0
+	ori r0, 0x40, r0
+	shlli r0, 8, r0
+	ori r0, 0x50, r0
+	shlli r0, 8, r0
+	ori r0, 0x60, r0
+	shlli r0, 8, r0
+	ori r0, 0x70, r0
+	shlli r0, 8, r0
+	ori r0, 0x80, r0
+	# Set target address.
+	movi 0x2800, r1
+	fmov.ls r0, fr0
+
+	fst.s r1, 0, fr0
+	fst.s r1, 4, fr0
+	fst.s r1, -4, fr0
+
+okay:
+	pass

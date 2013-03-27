@@ -1,0 +1,331 @@
+# Copyright (C) 2003, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Michael Snyder (msnyder@redhat.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+if ![istarget "h8300*-*-*"] {
+    verbose "Tests ignored for all but h8300s based targets."
+    return
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "t12_bit"
+set srcfile ${srcdir}/${subdir}/${testfile}.s
+set objfile ${objdir}/${subdir}/${testfile}.o
+set binfile ${objdir}/${subdir}/${testfile}.x
+
+set asm-flags "";
+set link-flags "-m h8300sxelf";
+
+
+if {[target_assemble $srcfile $objfile "${asm-flags}"] != ""} then {
+     untested t12_bit.exp
+     return -1
+}
+
+if {[target_link $objfile $binfile "${link-flags}"] != ""} then {
+     untested t12_bit.exp
+     return -1
+}
+
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+
+gdb_test "x /i _start" "bset\t#0x7,r1h" \
+	"bset #0x7,r1h"
+gdb_test "x" "bset\t#0x7,@er1" \
+	"bset #0x7,@er1"
+gdb_test "x" "bset\t#0x7,@0x12(:8|)" \
+	"bset #0x7,@0x12:8"
+gdb_test "x" "bset\t#0x7,@0x1234(:16|)" \
+	"bset #0x7,@0x1234:16"
+gdb_test "x" "bset\t#0x7,@0x12345678(:32|)" \
+	"bset #0x7,@0x12345678:32"
+gdb_test "x" "bset\tr3h,r1h" \
+	"bset r3h,r1h"
+gdb_test "x" "bset\tr3h,@er1" \
+	"bset r3h,@er1"
+gdb_test "x" "bset\tr3h,@0x12(:8|)" \
+	"bset r3h,@0x12:8"
+gdb_test "x" "bset\tr3h,@0x1234(:16|)" \
+	"bset r3h,@0x1234:16"
+gdb_test "x" "bset\tr3h,@0x12345678(:32|)" \
+	"bset r3h,@0x12345678:32"
+gdb_test "x" "bset/eq\t#0x7,@er1" \
+	"bset/eq #0x7,@er1"
+gdb_test "x" "bset/eq\t#0x7,@0x12(:8|)" \
+	"bset/eq #0x7,@0x12:8"
+gdb_test "x" "bset/eq\t#0x7,@0x1234(:16|)" \
+	"bset/eq #0x7,@0x1234:16"
+gdb_test "x" "bset/eq\t#0x7,@0x12345678(:32|)" \
+	"bset/eq #0x7,@0x12345678:32"
+gdb_test "x" "bset/eq\tr3h,@er1" \
+	"bset/eq r3h,@er1"
+gdb_test "x" "bset/eq\tr3h,@0x12(:8|)" \
+	"bset/eq r3h,@0x12:8"
+gdb_test "x" "bset/eq\tr3h,@0x1234(:16|)" \
+	"bset/eq r3h,@0x1234:16"
+gdb_test "x" "bset/eq\tr3h,@0x12345678(:32|)" \
+	"bset/eq r3h,@0x12345678:32"
+gdb_test "x" "bset/ne\t#0x7,@er1" \
+	"bset/ne #0x7,@er1"
+gdb_test "x" "bset/ne\t#0x7,@0x12(:8|)" \
+	"bset/ne #0x7,@0x12:8"
+gdb_test "x" "bset/ne\t#0x7,@0x1234(:16|)" \
+	"bset/ne #0x7,@0x1234:16"
+gdb_test "x" "bset/ne\t#0x7,@0x12345678(:32|)" \
+	"bset/ne #0x7,@0x12345678:32"
+gdb_test "x" "bset/ne\tr3h,@er1" \
+	"bset/ne r3h,@er1"
+gdb_test "x" "bset/ne\tr3h,@0x12(:8|)" \
+	"bset/ne r3h,@0x12:8"
+gdb_test "x" "bset/ne\tr3h,@0x1234(:16|)" \
+	"bset/ne r3h,@0x1234:16"
+gdb_test "x" "bset/ne\tr3h,@0x12345678(:32|)" \
+	"bset/ne r3h,@0x12345678:32"
+gdb_test "x" "bnot\t#0x7,r1h" \
+	"bnot #0x7,r1h"
+gdb_test "x" "bnot\t#0x7,@er1" \
+	"bnot #0x7,@er1"
+gdb_test "x" "bnot\t#0x7,@0x12(:8|)" \
+	"bnot #0x7,@0x12:8"
+gdb_test "x" "bnot\t#0x7,@0x1234(:16|)" \
+	"bnot #0x7,@0x1234:16"
+gdb_test "x" "bnot\t#0x7,@0x12345678(:32|)" \
+	"bnot #0x7,@0x12345678:32"
+gdb_test "x" "bnot\tr3h,r1h" \
+	"bnot r3h,r1h"
+gdb_test "x" "bnot\tr3h,@er1" \
+	"bnot r3h,@er1"
+gdb_test "x" "bnot\tr3h,@0x12(:8|)" \
+	"bnot r3h,@0x12:8"
+gdb_test "x" "bnot\tr3h,@0x1234(:16|)" \
+	"bnot r3h,@0x1234:16"
+gdb_test "x" "bnot\tr3h,@0x12345678(:32|)" \
+	"bnot r3h,@0x12345678:32"
+gdb_test "x" "bclr\t#0x7,r1h" \
+	"bclr #0x7,r1h"
+gdb_test "x" "bclr\t#0x7,@er1" \
+	"bclr #0x7,@er1"
+gdb_test "x" "bclr\t#0x7,@0x12(:8|)" \
+	"bclr #0x7,@0x12:8"
+gdb_test "x" "bclr\t#0x7,@0x1234(:16|)" \
+	"bclr #0x7,@0x1234:16"
+gdb_test "x" "bclr\t#0x7,@0x12345678(:32|)" \
+	"bclr #0x7,@0x12345678:32"
+gdb_test "x" "bclr\tr3h,r1h" \
+	"bclr r3h,r1h"
+gdb_test "x" "bclr\tr3h,@er1" \
+	"bclr r3h,@er1"
+gdb_test "x" "bclr\tr3h,@0x12(:8|)" \
+	"bclr r3h,@0x12:8"
+gdb_test "x" "bclr\tr3h,@0x1234(:16|)" \
+	"bclr r3h,@0x1234:16"
+gdb_test "x" "bclr\tr3h,@0x12345678(:32|)" \
+	"bclr r3h,@0x12345678:32"
+gdb_test "x" "bclr/eq\t#0x7,@er1" \
+	"bclr/eq #0x7,@er1"
+gdb_test "x" "bclr/eq\t#0x7,@0x12(:8|)" \
+	"bclr/eq #0x7,@0x12:8"
+gdb_test "x" "bclr/eq\t#0x7,@0x1234(:16|)" \
+	"bclr/eq #0x7,@0x1234:16"
+gdb_test "x" "bclr/eq\t#0x7,@0x12345678(:32|)" \
+	"bclr/eq #0x7,@0x12345678:32"
+gdb_test "x" "bclr/eq\tr3h,@er1" \
+	"bclr/eq r3h,@er1"
+gdb_test "x" "bclr/eq\tr3h,@0x12(:8|)" \
+	"bclr/eq r3h,@0x12:8"
+gdb_test "x" "bclr/eq\tr3h,@0x1234(:16|)" \
+	"bclr/eq r3h,@0x1234:16"
+gdb_test "x" "bclr/eq\tr3h,@0x12345678(:32|)" \
+	"bclr/eq r3h,@0x12345678:32"
+gdb_test "x" "bclr/ne\t#0x7,@er1" \
+	"bclr/ne #0x7,@er1"
+gdb_test "x" "bclr/ne\t#0x7,@0x12(:8|)" \
+	"bclr/ne #0x7,@0x12:8"
+gdb_test "x" "bclr/ne\t#0x7,@0x1234(:16|)" \
+	"bclr/ne #0x7,@0x1234:16"
+gdb_test "x" "bclr/ne\t#0x7,@0x12345678(:32|)" \
+	"bclr/ne #0x7,@0x12345678:32"
+gdb_test "x" "bclr/ne\tr3h,@er1" \
+	"bclr/ne r3h,@er1"
+gdb_test "x" "bclr/ne\tr3h,@0x12(:8|)" \
+	"bclr/ne r3h,@0x12:8"
+gdb_test "x" "bclr/ne\tr3h,@0x1234(:16|)" \
+	"bclr/ne r3h,@0x1234:16"
+gdb_test "x" "bclr/ne\tr3h,@0x12345678(:32|)" \
+	"bclr/ne r3h,@0x12345678:32"
+gdb_test "x" "btst\t#0x7,r1h" \
+	"btst #0x7,r1h"
+gdb_test "x" "btst\t#0x7,@er1" \
+	"btst #0x7,@er1"
+gdb_test "x" "btst\t#0x7,@0x12(:8|)" \
+	"btst #0x7,@0x12:8"
+gdb_test "x" "btst\t#0x7,@0x1234(:16|)" \
+	"btst #0x7,@0x1234:16"
+gdb_test "x" "btst\t#0x7,@0x12345678(:32|)" \
+	"btst #0x7,@0x12345678:32"
+gdb_test "x" "btst\tr3h,r1h" \
+	"btst r3h,r1h"
+gdb_test "x" "btst\tr3h,@er1" \
+	"btst r3h,@er1"
+gdb_test "x" "btst\tr3h,@0x12(:8|)" \
+	"btst r3h,@0x12:8"
+gdb_test "x" "btst\tr3h,@0x1234(:16|)" \
+	"btst r3h,@0x1234:16"
+gdb_test "x" "btst\tr3h,@0x12345678(:32|)" \
+	"btst r3h,@0x12345678:32"
+gdb_test "x" "bor\t#0x7,r1h" \
+	"bor #0x7,r1h"
+gdb_test "x" "bor\t#0x7,@er1" \
+	"bor #0x7,@er1"
+gdb_test "x" "bor\t#0x7,@0x12(:8|)" \
+	"bor #0x7,@0x12:8"
+gdb_test "x" "bor\t#0x7,@0x1234(:16|)" \
+	"bor #0x7,@0x1234:16"
+gdb_test "x" "bor\t#0x7,@0x12345678(:32|)" \
+	"bor #0x7,@0x12345678:32"
+gdb_test "x" "bior\t#0x7,r1h" \
+	"bior #0x7,r1h"
+gdb_test "x" "bior\t#0x7,@er1" \
+	"bior #0x7,@er1"
+gdb_test "x" "bior\t#0x7,@0x12(:8|)" \
+	"bior #0x7,@0x12:8"
+gdb_test "x" "bior\t#0x7,@0x1234(:16|)" \
+	"bior #0x7,@0x1234:16"
+gdb_test "x" "bior\t#0x7,@0x12345678(:32|)" \
+	"bior #0x7,@0x12345678:32"
+gdb_test "x" "bxor\t#0x7,r1h" \
+	"bxor #0x7,r1h"
+gdb_test "x" "bxor\t#0x7,@er1" \
+	"bxor #0x7,@er1"
+gdb_test "x" "bxor\t#0x7,@0x12(:8|)" \
+	"bxor #0x7,@0x12:8"
+gdb_test "x" "bxor\t#0x7,@0x1234(:16|)" \
+	"bxor #0x7,@0x1234:16"
+gdb_test "x" "bxor\t#0x7,@0x12345678(:32|)" \
+	"bxor #0x7,@0x12345678:32"
+gdb_test "x" "bixor\t#0x7,r1h" \
+	"bixor #0x7,r1h"
+gdb_test "x" "bixor\t#0x7,@er1" \
+	"bixor #0x7,@er1"
+gdb_test "x" "bixor\t#0x7,@0x12(:8|)" \
+	"bixor #0x7,@0x12:8"
+gdb_test "x" "bixor\t#0x7,@0x1234(:16|)" \
+	"bixor #0x7,@0x1234:16"
+gdb_test "x" "bixor\t#0x7,@0x12345678(:32|)" \
+	"bixor #0x7,@0x12345678:32"
+gdb_test "x" "band\t#0x7,r1h" \
+	"band #0x7,r1h"
+gdb_test "x" "band\t#0x7,@er1" \
+	"band #0x7,@er1"
+gdb_test "x" "band\t#0x7,@0x12(:8|)" \
+	"band #0x7,@0x12:8"
+gdb_test "x" "band\t#0x7,@0x1234(:16|)" \
+	"band #0x7,@0x1234:16"
+gdb_test "x" "band\t#0x7,@0x12345678(:32|)" \
+	"band #0x7,@0x12345678:32"
+gdb_test "x" "biand\t#0x7,r1h" \
+	"biand #0x7,r1h"
+gdb_test "x" "biand\t#0x7,@er1" \
+	"biand #0x7,@er1"
+gdb_test "x" "biand\t#0x7,@0x12(:8|)" \
+	"biand #0x7,@0x12:8"
+gdb_test "x" "biand\t#0x7,@0x1234(:16|)" \
+	"biand #0x7,@0x1234:16"
+gdb_test "x" "biand\t#0x7,@0x12345678(:32|)" \
+	"biand #0x7,@0x12345678:32"
+gdb_test "x" "bld\t#0x7,r1h" \
+	"bld #0x7,r1h"
+gdb_test "x" "bld\t#0x7,@er1" \
+	"bld #0x7,@er1"
+gdb_test "x" "bld\t#0x7,@0x12(:8|)" \
+	"bld #0x7,@0x12:8"
+gdb_test "x" "bld\t#0x7,@0x1234(:16|)" \
+	"bld #0x7,@0x1234:16"
+gdb_test "x" "bld\t#0x7,@0x12345678(:32|)" \
+	"bld #0x7,@0x12345678:32"
+gdb_test "x" "bild\t#0x7,r1h" \
+	"bild #0x7,r1h"
+gdb_test "x" "bild\t#0x7,@er1" \
+	"bild #0x7,@er1"
+gdb_test "x" "bild\t#0x7,@0x12(:8|)" \
+	"bild #0x7,@0x12:8"
+gdb_test "x" "bild\t#0x7,@0x1234(:16|)" \
+	"bild #0x7,@0x1234:16"
+gdb_test "x" "bild\t#0x7,@0x12345678(:32|)" \
+	"bild #0x7,@0x12345678:32"
+gdb_test "x" "bst\t#0x7,r1h" \
+	"bst #0x7,r1h"
+gdb_test "x" "bst\t#0x7,@er1" \
+	"bst #0x7,@er1"
+gdb_test "x" "bst\t#0x7,@0x12(:8|)" \
+	"bst #0x7,@0x12:8"
+gdb_test "x" "bst\t#0x7,@0x1234(:16|)" \
+	"bst #0x7,@0x1234:16"
+gdb_test "x" "bst\t#0x7,@0x12345678(:32|)" \
+	"bst #0x7,@0x12345678:32"
+gdb_test "x" "bstz\t#0x7,@er1" \
+	"bstz #0x7,@er1"
+gdb_test "x" "bstz\t#0x7,@0x12(:8|)" \
+	"bstz #0x7,@0x12:8"
+gdb_test "x" "bstz\t#0x7,@0x1234(:16|)" \
+	"bstz #0x7,@0x1234:16"
+gdb_test "x" "bstz\t#0x7,@0x12345678(:32|)" \
+	"bstz #0x7,@0x12345678:32"
+gdb_test "x" "bist\t#0x7,r1h" \
+	"bist #0x7,r1h"
+gdb_test "x" "bist\t#0x7,@er1" \
+	"bist #0x7,@er1"
+gdb_test "x" "bist\t#0x7,@0x12(:8|)" \
+	"bist #0x7,@0x12:8"
+gdb_test "x" "bist\t#0x7,@0x1234(:16|)" \
+	"bist #0x7,@0x1234:16"
+gdb_test "x" "bist\t#0x7,@0x12345678(:32|)" \
+	"bist #0x7,@0x12345678:32"
+gdb_test "x" "bistz\t#0x7,@er1" \
+	"bistz #0x7,@er1"
+gdb_test "x" "bistz\t#0x7,@0x12(:8|)" \
+	"bistz #0x7,@0x12:8"
+gdb_test "x" "bistz\t#0x7,@0x1234(:16|)" \
+	"bistz #0x7,@0x1234:16"
+gdb_test "x" "bistz\t#0x7,@0x12345678(:32|)" \
+	"bistz #0x7,@0x12345678:32"
+gdb_test "x" "bfld\t#0x34(:8|),@er1,r3h" \
+	"bfld #0x34:8,@er1,r3h"
+gdb_test "x" "bfld\t#0x34(:8|),@0x12(:8|),r3h" \
+	"bfld #0x34:8,@0x12:8,r3h"
+gdb_test "x" "bfld\t#0x34(:8|),@0x1234(:16|),r3h" \
+	"bfld #0x34:8,@0x1234:16,r3h"
+gdb_test "x" "bfld\t#0x34(:8|),@0x12345678(:32|),r3h" \
+	"bfld #0x34:8,@0x12345678:32,r3h"
+gdb_test "x" "bfst\tr3h,#0x34(:8|),@er1" \
+	"bfst r3h,#0x34:8,@er1"
+gdb_test "x" "bfst\tr3h,#0x34(:8|),@0x12(:8|)" \
+	"bfst r3h,#0x34:8,@0x12:8"
+gdb_test "x" "bfst\tr3h,#0x34(:8|),@0x1234(:16|)" \
+	"bfst r3h,#0x34:8,@0x1234:16"
+gdb_test "x" "bfst\tr3h,#0x34(:8|),@0x12345678(:32|)" \
+	"bfst r3h,#0x34:8,@0x12345678:32"

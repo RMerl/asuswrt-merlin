@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <netinet/in.h>
 #include <u2ec_list.h>
+#include <syslog.h>
 
 #define SWAP8(x) \
 ({ \
@@ -252,13 +253,14 @@ typedef struct _IRP_SAVE_SWAP
 #	else
 //#		define PDEBUG(fmt, args...) printf(fmt, ## args)
 #		define PDEBUG(fmt, args...) fprintf(stderr, fmt, ## args)
-//#		define PDEBUG(fmt, args...) do { \
-//			FILE *fp = fopen("/dev/console", "w"); \
-//			if (fp) { \
-//				fprintf(fp, fmt, ## args); \
-//				fclose(fp); \
-//			} \
-//		} while (0)
+/*#		define PDEBUG(fmt, args...) do { \
+			FILE *fp = fopen("/dev/console", "w"); \
+			if (fp) { \
+				fprintf(fp, fmt, ## args); \
+				fclose(fp); \
+			} \
+		} while (0)
+ */
 #	endif
 #	define PERROR(message) PDEBUG("sock error: %s.\n", message)
 #else
@@ -266,5 +268,12 @@ typedef struct _IRP_SAVE_SWAP
 #	define PDEBUG(fmt, args...)
 #	define PERROR perror
 #endif	// U2EC_DEBUG
+
+#undef PDEBUG_RET
+#define PDEBUG_RET(fmt, ret) \
+	do { \
+		if (ret < 0) \
+			syslog(LOG_ERR, fmt, ret); \
+	} while (0)
 
 #endif /*  __USBSOCK_H__ */

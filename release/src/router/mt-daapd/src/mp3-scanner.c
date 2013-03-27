@@ -371,6 +371,37 @@ int scan_init(char *path) {
     return err;
 }
 
+int
+is_dir(const char *path)
+{
+	struct stat stat_buf;
+
+	if (!stat(path, &stat_buf))
+		return S_ISDIR(stat_buf.st_mode);
+	else
+		return 0;
+}
+
+int
+is_sys_dir(const char *dirname)
+{
+	char *MS_System_folder[] = {"SYSTEM VOLUME INFORMATION", "RECYCLER", "RECYCLED", "$RECYCLE.BIN", "asusware", NULL};
+	char *Linux_System_folder[] = {"lost+found", NULL};
+	int i;
+
+	for (i = 0; MS_System_folder[i] != NULL; ++i) {
+		if (!strcasecmp(dirname, MS_System_folder[i]))
+			return 1;
+	}
+
+	for (i = 0; Linux_System_folder[i] != NULL; ++i) {
+		if (!strcasecmp(dirname, Linux_System_folder[i]))
+		return 1;
+	}
+
+	return 0;
+}
+
 /*
  * scan_path
  *
@@ -414,6 +445,10 @@ int scan_path(char *path) {
 	    continue;
 
 	snprintf(mp3_path,PATH_MAX,"%s/%s",path,pde->d_name);
+
+	if (is_dir(mp3_path) && is_sys_dir(pde->d_name))
+	    continue;
+
 	DPRINTF(E_DBG,L_SCAN,"Found %s\n",mp3_path);
 	if(stat(mp3_path,&sb)) {
 	    DPRINTF(E_WARN,L_SCAN,"Error statting: %s\n",strerror(errno));

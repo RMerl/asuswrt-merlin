@@ -8,7 +8,7 @@ dnl   All Rights Reserved.
 dnl
 dnl   The license which is distributed with this software in the file COPYRIGHT
 dnl   applies to this software. If your distribution is missing this file, you
-dnl   may request it from <pekkas@netcore.fi>.
+dnl   may request it from <reubenhwk@gmail.com>.
 dnl
 dnl
 
@@ -23,7 +23,7 @@ AC_MSG_CHECKING([architecture])
 case "$target" in
 	*linux*)
 		AC_MSG_RESULT(linux)
-		AC_DEFINE([_GNU_SOURCE], [], [whether compiling on Linux, glibc>=2.8 doesn't expose in6_pktinfo otherwise..])
+		AC_DEFINE([_GNU_SOURCE], [], [whether compiling on Linux, glibc>=2.8 does not expose in6_pktinfo otherwise..])
                 arch=linux
         ;;
         *bsd*)
@@ -37,7 +37,7 @@ case "$target" in
         *)      
 		AC_MSG_RESULT(unknown: $target)
 		AC_MSG_ERROR(
-[currently only Linux and BSD 4.4 with NRL's IPv6 code are
+[currently only Linux and BSD 4.4 with NRLs IPv6 code are
 supported. If you have such a system and it is not guessed correctly 
 you must specifiy it with --target on the configure command line])
         ;;
@@ -79,11 +79,11 @@ dnl Needed for normal compile
 AC_PROG_INSTALL
 AC_PATH_PROG(RM, rm, NOTFOUND)
 if test "x$RM" = xNOTFOUND; then
-	AC_MSG_ERROR(can't find rm in your path - check PATH)
+	AC_MSG_ERROR(can not find rm in your path - check PATH)
 fi
 AC_PATH_PROG(SED, sed, NOTFOUND)
 if test "x$SED" = xNOTFOUND; then
-	AC_MSG_ERROR(can't find sed in your path - check PATH)
+	AC_MSG_ERROR(can not find sed in your path - check PATH)
 fi
 dnl Not needed
 AC_PATH_PROG(LN, ln)
@@ -131,7 +131,7 @@ AC_CHECK_LIB(c, inet_ntop,,
  AC_CHECK_LIB(inet6, inet_ntop,
   LIBS="$LIBS -linet6"
   ,
-    AC_MSG_ERROR(can't continue without libinet6.a library - check your LDFLAGS)
+    AC_MSG_ERROR(can not continue without libinet6.a library - check your LDFLAGS)
  )
 )
 # prevent caching
@@ -157,8 +157,6 @@ AC_CHECK_HEADERS( \
 AC_HEADER_TIME
 
 dnl Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
-
 AC_MSG_CHECKING(whether struct sockaddr_in6 has sin6_scope_id)
 AC_TRY_COMPILE([#include <sys/types.h>
 #include <netinet/in.h>], [static struct sockaddr_in6 ac_sin6; int ac_size = 

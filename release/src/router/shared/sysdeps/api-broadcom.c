@@ -17,6 +17,16 @@
 #include "utils.h"
 #include "shutils.h"
 #include "shared.h"
+#include <trxhdr.h>
+#include <bcmutils.h>
+#include <bcmendian.h>
+
+uint32_t gpio_dir(uint32_t gpio, int dir)
+{
+	/* FIXME
+	return bcmgpio_connect(gpio, dir);
+	 */
+}
 
 #define swapportstatus(x) \
 { \
@@ -138,7 +148,6 @@ uint32_t get_phy_speed(uint32_t portmask)
 uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
 {
 	int fd, i, vecarg[2];
-	int model;
 	struct ifreq ifr;
 	uint32_t reg, mask, off;
 
@@ -149,21 +158,34 @@ uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
 	strcpy(ifr.ifr_name, "eth0"); // is it always the same?
 	ifr.ifr_data = (caddr_t) vecarg;
 
-	model = get_model();
+	switch (get_model()) {
 	/* 53115/53125E */
 	/* TODO: check 5356,5357 models as they have same regs according SDK */
-	if (model == MODEL_RTN16 || model == MODEL_RTN15U || model == MODEL_RTN66U || model == MODEL_RTAC66U) {
+	case MODEL_RTAC66U:
+	case MODEL_RTN66U:
+	case MODEL_RTN16:
+	case MODEL_RTN15U:
 		reg = 0x00;
 		mask= 0x083f;
 		off = 0x0800;
-	} else
+		break;
 	/* 5325E/535x */
 	/* TODO: same as above, according SDK only 5325 */
-	if (model == MODEL_RTN12 || model == MODEL_RTN10U || model == MODEL_RTN10D1 || model == MODEL_RTN53 
-		|| model == MODEL_RTN12B1 || model == MODEL_RTN12C1 || model == MODEL_RTN12D1 || model == MODEL_RTN12HP) {
+	case MODEL_RTN53:
+	case MODEL_RTN12:
+	case MODEL_RTN12B1:
+	case MODEL_RTN12C1:
+	case MODEL_RTN12D1:
+	case MODEL_RTN12HP:
+	case MODEL_RTN10U:
+	case MODEL_RTN10P:
+	case MODEL_RTN10D1:
 		reg = 0x1e;
 		mask= 0x0608;
 		off = 0x0008;
+		break;
+	default:
+		goto skip;
 	}
 
 	for (i = 0; i < 5 && (portmask >> i); i++) {
@@ -177,6 +199,8 @@ uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
 		vecarg[1] |= ctrl ? 0 : off;
 		ioctl(fd, SIOCSETCPHYWR2, (caddr_t)&ifr);
 	}
+
+skip:
 	close(fd);
 
 	return 0;
@@ -191,14 +215,82 @@ uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
  * 0: illegal image
  * 1: legal image
  */
+int
+check_crc(char *fname)
+{
+	FILE *fp;
+        int ret = 1;
+	int first_read = 1;
+        unsigned int len, count;
+
+        void *ref;
+        struct trx_header trx;
+        uint32 crc;
+        static uint32 buf[16*1024];
+
+        fp = fopen(fname, "r");
+        if (fp == NULL)
+	{
+		_dprintf("check_crc: Open trx fail!!!\n");
+                return 0;
+	}
+
+        /* Read header */
+        ret = fread((unsigned char *) &trx, 1, sizeof(struct trx_header), fp);
+        if (ret != sizeof(struct trx_header)) {
+                ret = 0;
+		_dprintf("check_crc: read header error!!!\n");
+                goto done;
+        }
+
+        /* Checksum over header */
+        crc = hndcrc32((uint8 *) &trx.flag_version,
+                       sizeof(struct trx_header) - OFFSETOF(struct trx_header, flag_version),
+                       CRC32_INIT_VALUE);
+
+        for (len = ltoh32(trx.len) - sizeof(struct trx_header); len; len -= count) {
+                if (first_read) {
+                        count = MIN(len, sizeof(buf) - sizeof(struct trx_header));
+                        first_read = 0;
+                } else
+                        count = MIN(len, sizeof(buf));
+
+                /* Read data */
+                ret = fread((unsigned char *) &buf, 1, count, fp);
+                if (ret != count) {
+                        ret = 0;
+			_dprintf("check_crc: read trx content rror!\n");
+                        goto done;
+                }
+
+                /* Checksum over data */
+                crc = hndcrc32((uint8 *) &buf, count, crc);
+        }
+        /* Verify checksum */
+	//_dprintf("checksum: %u ? %u\n", ltoh32(trx.crc32), crc);
+        if (ltoh32(trx.crc32) != crc) {
+                ret = 0;
+                goto done;
+        }
+
+done:
+        close(fp);
+
+        return ret;
+}
+
+/*
+ * 0: illegal image
+ * 1: legal image
+ */
 
 int check_imageheader(char *buf, long *filelen)
 {
 	long aligned;
 
-	if(strncmp(buf, IMAGE_HEADER, sizeof(IMAGE_HEADER)) == 0)
+	if (strncmp(buf, IMAGE_HEADER, sizeof(IMAGE_HEADER) - 1) == 0)
 	{
-		memcpy(&aligned, buf + 4, sizeof(aligned));
+		memcpy(&aligned, buf + sizeof(IMAGE_HEADER) - 1, sizeof(aligned));
 		*filelen = aligned;
 		_dprintf("image len: %x\n", aligned);
 		return 1;
@@ -224,6 +316,12 @@ int check_imagefile(char *fname)
 	} version;
 	int i, model;
 
+	int ret;
+        void *ref;
+        struct trx_header trx;
+        uint32 crc;
+        static uint32 buf[16*1024];
+
 	fp = fopen(fname, "r");
 	if (fp == NULL)
 		return 0;
@@ -242,6 +340,11 @@ int check_imagefile(char *fname)
 	for (i = 0; i < MAX_PID_LEN && version.pid[i] != '\0'; i++);
 	for (i--; i >= 0 && version.pid[i] == '\x20'; i--)
 		version.pid[i] = '\0';
+
+	if(!check_crc(fname)) {
+		_dprintf("check crc error!!!\n");
+		return 0;
+	}
 
 	model = get_model();
 

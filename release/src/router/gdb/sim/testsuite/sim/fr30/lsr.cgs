@@ -1,0 +1,65 @@
+# fr30 testcase for lsr $Rj,$Ri, lsr $u4,$Rj
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global lsr
+lsr:
+	; Test lsr $Rj,$Ri
+	mvi_h_gr   	0xdeadbee0,r7	; Shift by 0
+	mvi_h_gr   	0x80000000,r8
+	set_cc          0x05		; Set mask opposite of expected
+	lsr      	r7,r8
+	test_cc		1 0 0 0
+	test_h_gr  	0x80000000,r8
+
+	mvi_h_gr   	0xdeadbee1,r7	; Shift by 1
+	mvi_h_gr   	0x80000000,r8
+	set_cc          0x0f		; Set mask opposite of expected
+	lsr      	r7,r8
+	test_cc		0 0 1 0
+	test_h_gr  	0x40000000,r8
+
+	mvi_h_gr   	0xdeadbeff,r7	; Shift by 31
+	mvi_h_gr   	0x80000000,r8
+	set_cc          0x0f		; Set mask opposite of expected
+	lsr      	r7,r8
+	test_cc		0 0 1 0
+	test_h_gr  	1,r8
+
+	mvi_h_gr   	0xdeadbeff,r7	; clear register
+	mvi_h_gr   	0x40000000,r8
+	set_cc          0x0a		; Set mask opposite of expected
+	lsr      	r7,r8
+	test_cc		0 1 1 1
+	test_h_gr  	0x00000000,r8
+
+	; Test lsr $u4Ri
+	mvi_h_gr   	0x80000000,r8
+	set_cc          0x05		; Set mask opposite of expected
+	lsr      	0,r8
+	test_cc		1 0 0 0
+	test_h_gr  	0x80000000,r8
+
+	mvi_h_gr   	0x80000000,r8
+	set_cc          0x0f		; Set mask opposite of expected
+	lsr      	1,r8
+	test_cc		0 0 1 0
+	test_h_gr  	0x40000000,r8
+
+	mvi_h_gr   	0x80000000,r8
+	set_cc          0x0e		; Set mask opposite of expected
+	lsr      	15,r8
+	test_cc		0 0 1 0
+	test_h_gr  	0x00010000,r8
+
+	mvi_h_gr   	0x00004000,r8
+	set_cc          0x0a		; Set mask opposite of expected
+	lsr      	15,r8
+	test_cc		0 1 1 1
+	test_h_gr  	0x00000000,r8
+
+	pass

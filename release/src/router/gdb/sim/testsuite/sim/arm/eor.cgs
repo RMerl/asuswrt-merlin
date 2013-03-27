@@ -1,0 +1,36 @@
+# arm testcase for eor$cond${set-cc?} $rd,$rn,$imm12
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global eor_imm
+eor_imm:
+	eor00 pc,pc,0
+
+	pass
+# arm testcase for eor$cond${set-cc?} $rd,$rn,$rm,${operand2-shifttype} ${operand2-shiftimm}
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global eor_reg_imm_shift
+eor_reg_imm_shift:
+	eor00 pc,pc,pc,lsl 0
+
+	pass
+# arm testcase for eor$cond${set-cc?} $rd,$rn,$rm,${operand2-shifttype} ${operand2-shiftreg}
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global eor_reg_reg_shift
+eor_reg_reg_shift:
+	eor00 pc,pc,pc,lsl pc
+
+	pass

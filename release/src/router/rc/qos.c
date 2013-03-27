@@ -19,12 +19,63 @@
 #include <bcmnvram.h>
 #include <shutils.h>
 #include <shared.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
 
 static const char *qosfn = "/tmp/qos";
 static const char *mangle_fn = "/tmp/mangle_rules";
 #ifdef RTCONFIG_IPV6
 static const char *mangle_fn_ipv6 = "/tmp/mangle_rules_ipv6";
 #endif
+
+// FindMask : 
+// 1. sourceStr 	: replace "*'" to "0"
+// 2. matchStr 		: here is "*"
+// 3. replaceStr 	: here is "0" 
+// 4. Mask 		: find rule's submask 
+static int FindMask(char *sourceStr, char *matchStr, char *replaceStr, char *Mask){
+	char newStr[40];
+	int strLen;
+	int count = 0;
+
+	char *FindPos = strstr(sourceStr, matchStr);
+	if((!FindPos) || (!matchStr)) return -1;
+
+	while(FindPos != NULL){
+		count++;
+		//fprintf(stderr,"[FindMask] FindPos=%s, strLen=%d, count=%d, sourceStr=%s\n", FindPos, strLen, count, sourceStr); // tmp test
+		memset(newStr, 0, sizeof(newStr));
+		strLen = FindPos - sourceStr;
+		strncpy(newStr, sourceStr, strLen);
+		strcat(newStr, replaceStr);
+		strcat(newStr, FindPos + strlen(matchStr));
+		strcpy(sourceStr, newStr);
+
+		FindPos = strstr(sourceStr, matchStr);
+	}
+
+	switch(count){
+		case 1:
+			strcpy(Mask, "255.255.255.0");
+			break;
+		case 2:
+			strcpy(Mask, "255.255.0.0");
+			break;
+		case 3:
+			strcpy(Mask, "255.0.0.0");
+			break;
+		case 4:
+			strcpy(Mask, "0.0.0.0");
+			break;
+		default:
+			strcpy(Mask, "255.255.255.255");
+			break;
+	}
+
+	//fprintf(stderr,"[FindMask] count=%d, Mask=%s\n", count, Mask); // tmp test
+	return 0;
+}
+
 static unsigned calc(unsigned bw, unsigned pct)
 {
 	unsigned n = ((unsigned long)bw * pct) / 100;
@@ -79,6 +130,10 @@ void add_EbtablesRules(void)
 
 void del_iQosRules(void)
 {
+#ifdef CLS_ACT
+	eval("ip", "link", "set", "imq0", "down");
+#endif
+
 #ifdef CONFIG_BCMWL5 // TODO: it is only for the case, eth0 as wan, vlanx as lan
 	del_EbtablesRules(); // flush ebtables nat table
 #endif
@@ -94,18 +149,17 @@ int add_iQosRules(char *pcWANIF)
 {
 	FILE *fn;
 #ifdef RTCONFIG_IPV6
-	FILE *fn_ipv6;
+	FILE *fn_ipv6 = NULL;
 #endif
 	char *buf;
 	char *g;
 	char *p;
 	char *desc, *addr, *port, *prio, *transferred, *proto;
 	int class_num;
-	int down_class_num=6; // for download class_num = 0x6 / 0x106
-	int proto_num;
+	int down_class_num=6; 	// for download class_num = 0x6 / 0x106
 	int i, inuse;
-	char q_inuse[32]; // for inuse 
-	char dport[192], saddr[192], conn[256], end[256];
+	char q_inuse[32]; 	// for inuse 
+	char dport[192], saddr_1[192], saddr_2[192], proto_1[8], proto_2[8],conn[256], end[256];
 	int method;
 	int gum;
 	int sticky_enable;
@@ -124,6 +178,10 @@ int add_iQosRules(char *pcWANIF)
 		sticky_enable = 1;
 
 	del_iQosRules(); // flush all rules in mangle table
+
+#ifdef CLS_ACT
+	eval("ip", "link", "set", "imq0", "up");
+#endif
 	fprintf(stderr, "[qos] iptables START\n");
 
 	fprintf(fn, 
@@ -153,7 +211,7 @@ int add_iQosRules(char *pcWANIF)
   		qos_rulelist : 
 			desc>addr>port>proto>transferred>prio
 			
-			addr  : source ip or mac
+			addr  : (source) IP or MAC or IP-range
 			port  : dest port
 			proto : tcp, udp, tcp/udp, any , (icmp, igmp)
 			transferred : min:max
@@ -204,30 +262,91 @@ int add_iQosRules(char *pcWANIF)
 
 		/*************************************************/
 		/*                        addr                   */
-		/*                 src mac or src ip             */
+		/*           src mac or src ip or IP range       */
 		/*************************************************/
-		char tmp[20];
-		char *tmp_addr, *q_ip, *q_mac; 
+		char tmp[20], addr_t[40];
+		char *tmp_addr, *q_ip, *q_mac;
 
+		memset(saddr_1, 0, sizeof(saddr_1));
+		memset(saddr_2, 0, sizeof(saddr_2));
+
+		memset(tmp, 0, sizeof(tmp));
 		sprintf(tmp, "%s", addr);
 		tmp_addr = tmp;
 		q_ip  = strsep(&tmp_addr, ":");
 		q_mac = tmp_addr;
 
-		if(strcmp(addr, "") == 0 ) 
-			sprintf(saddr, "%s", addr);      // src addr
-		else{
-			if (q_mac == NULL){
-				sprintf(saddr, "-s %s", addr);      // src addr
+		memset(addr_t, 0, sizeof(addr_t));
+		sprintf(addr_t, "%s", addr);
 
-				v4v6_ok &= ipt_addr_compact(addr, v4v6_ok, (v4v6_ok==IPT_V4));
-				if (!v4v6_ok) continue;
+		// step1: check contain '-' or not, if yes, IP-range, ex. 192.168.1.10-192.168.1.100
+		// step2: check addr is NULL
+		// step3: check IP or MAC
+		// step4: check IP contain '*' or not, if yes, IP-range
+		// step5: check DUT's LAN IP shouldn't inside IP-range
+		
+		// step1: check contain '-' or not, if yes, IP-range
+		if(strchr(addr_t, '-') == NULL){
+			// step2: check addr is NULL
+			if(!strcmp(addr_t, "")){
+				sprintf(saddr_1, "%s", addr_t);	// NULL
 			}
-			else{
-				sprintf(saddr, "-m mac --mac-source %s", addr); // src mac
+			else{ // step2
+				// step3: check IP or MAC
+				if (q_mac == NULL){
+					// step4: check IP contain '*' or not, if yes, IP-range
+					if(strchr(q_ip, '*') != NULL){
+						char *rule;
+						char Mask[40];
+						struct in_addr range_A, range_B, range_C;
+
+						memset(Mask, 0, sizeof(Mask));
+						rule =  strdup(addr_t);
+						FindMask(rule, "*", "0", Mask); 				// find submask and replace "*" to "0"
+						memset(addr_t, 0, sizeof(addr_t));
+						sprintf(addr_t, "%s", rule);					// copy rule to addr_t for v4v6_ok
+
+						unsigned int ip = inet_addr(rule); 				// covert rule's IP into binary form
+						unsigned int nm = inet_addr(Mask);				// covert submask into binary form
+						unsigned int gw = inet_addr(nvram_safe_get("lan_ipaddr")); 	// covert DUT's LAN IP into binary form
+						unsigned int gw_t = htonl(gw);
+
+						range_A.s_addr = ntohl(gw_t - 1);
+						range_B.s_addr = ntohl(gw_t + 1);
+						range_C.s_addr = ip | ~nm;
+
+			//fprintf(stderr, "[addr] addr_t=%s, rule/Mask=%s/%s, ip/nm/gw=%x/%x/%x\n", addr_t, rule, Mask, ip, nm, gw); // tmp test
+						
+						// step5: check DUT's LAN IP shouldn't inside IP-range
+						// DUT's LAN IP inside IP-range
+						if( (ip & nm) == (gw & nm)){
+			//fprintf(stderr, "[addr] %x/%x/%x/%x/%s matched\n", ip_t, nm_t, gw_t, range_B.s_addr, inet_ntoa(range_B)); // tmp test
+							char range_B_addr[40];
+							sprintf(range_B_addr, "%s", inet_ntoa(range_B));
+
+							sprintf(saddr_1, "-m iprange --src-range %s-%s", rule, inet_ntoa(range_A)); 		// IP-range
+							sprintf(saddr_2, "-m iprange --src-range %s-%s", range_B_addr, inet_ntoa(range_C)); 	// IP-range
+						}
+						else{
+							sprintf(saddr_1, "-m iprange --src-range %s-%s", rule, inet_ntoa(range_C)); 		// IP-range
+						}
+					}
+					else{ // step4
+						sprintf(saddr_1, "-s %s", addr_t);	// IP
+					}
+
+					v4v6_ok &= ipt_addr_compact(addr_t, v4v6_ok, (v4v6_ok==IPT_V4));
+					if (!v4v6_ok) continue;
+				}
+				else{ // step3
+					sprintf(saddr_1, "-m mac --mac-source %s", addr_t);	// MAC
+				}
 			}
 		}
-		//fprintf(stderr, "[qos] tmp=%s, ip=%s, mac=%s, addr=%s\n", tmp, q_ip, q_mac, addr ); // tmp test
+		else{ // step1
+			sprintf(saddr_1, "-m iprange --src-range %s", addr_t);	// IP-range
+		}
+		//fprintf(stderr, "[qos] tmp=%s, ip=%s, mac=%s, addr=%s, addr_t=%s, saddr_1=%s, saddr_2=%s\n", tmp, q_ip, q_mac, addr, addr_t, saddr_1, saddr_2); // tmp test
 		
 		/*************************************************/
 		/*                      port                     */
@@ -241,7 +360,7 @@ int add_iQosRules(char *pcWANIF)
 		q_leave = tmp_port;
 
 		if(strcmp(port, "") == 0 ){
-			sprintf(dport, "");
+			sprintf(dport, "%s", "");
 		}
 		else{
 			if(q_leave != NULL) 
@@ -252,7 +371,7 @@ int add_iQosRules(char *pcWANIF)
 		//fprintf(stderr, "[qos] tmp=%s, q_port=%s, q_leave=%s, port=%s\n", tmp, q_port, q_leave, port ); // tmp test
 
 		/*************************************************/
-		/*                   transferred                  */
+		/*                   transferred                 */
 		/*   --connbytes min:max                         */
  		/*   --connbytes-dir (original/reply/both)       */
  		/*   --connbytes-mode (packets/bytes/avgpkt)     */
@@ -266,7 +385,7 @@ int add_iQosRules(char *pcWANIF)
 		q_max = tmp_trans;
 
 		if (strcmp(transferred,"") == 0){
-			sprintf(conn, ""); 
+			sprintf(conn, "%s", ""); 
 		}
 		else{
 			sprintf(tmp, "%s", q_min);
@@ -280,60 +399,118 @@ int add_iQosRules(char *pcWANIF)
 				sprintf(conn, "-m connbytes --connbytes %ld:%ld --connbytes-dir both --connbytes-mode bytes", min*1024, max*1024-1);
 			}
 		}
-		//fprintf(stderr, "[qos] tmp=%s, transferred=%s, min=%ld, max=%ld, q_max=%s, conn=%s\n", tmp,  transferred, min*1024, max*1024-1, q_max, conn ); // tmp test
-	
+		//fprintf(stderr, "[qos] tmp=%s, transferred=%s, min=%ld, max=%ld, q_max=%s, conn=%s\n", tmp, transferred, min*1024, max*1024-1, q_max, conn); // tmp test
 
 		/*************************************************/
 		/*                      proto                    */
 		/*        tcp, udp, tcp/udp, any, (icmp, igmp)   */
 		/*************************************************/
-		if(strcmp(proto, "tcp") == 0 )
+		memset(proto_1, 0, sizeof(proto_1));
+		memset(proto_2, 0, sizeof(proto_2));
+		if(!strcmp(proto, "tcp"))
 		{
-			if (v4v6_ok & IPT_V4)
-			fprintf(fn, "-A %s -p %s %s %s %s %s", chain, "tcp", dport, saddr, conn, end);
-#ifdef RTCONFIG_IPV6
-			if (ipv6_enabled() && (v4v6_ok & IPT_V6))
-			fprintf(fn_ipv6, "-A %s -p %s %s %s %s %s", chain, "tcp", dport, saddr, conn, end);
-#endif
+			sprintf(proto_1, "-p tcp");
+			sprintf(proto_2, "NO");
 		}
-		else if(strcmp(proto, "udp") == 0 )
+		else if(!strcmp(proto, "udp"))
 		{
-			if (v4v6_ok & IPT_V4)
-			fprintf(fn, "-A %s -p %s %s %s %s %s", chain, "udp", dport, saddr, conn, end);
-#ifdef RTCONFIG_IPV6
-			if (ipv6_enabled() && (v4v6_ok & IPT_V6))
-			fprintf(fn_ipv6, "-A %s -p %s %s %s %s %s", chain, "udp", dport, saddr, conn, end);
-#endif
+			sprintf(proto_1, "-p udp");
+			sprintf(proto_2, "NO");
 		}
-		//else if(strcmp(proto, "icmp") == 0 || strcmp(proto, "igmp") == 0  )
-		else if(strcmp(proto, "any") == 0)
+		else if(!strcmp(proto, "any"))
 		{
-			if (v4v6_ok & IPT_V4)
-			fprintf(fn, "-A %s %s %s %s", chain, saddr, conn, end);
-#ifdef RTCONFIG_IPV6
-			if (ipv6_enabled() && (v4v6_ok & IPT_V6))
-			fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr, conn, end);
-#endif
+			sprintf(proto_1, "%s", "");
+			sprintf(proto_2, "NO");
 		}
-		else if(strcmp(proto, "tcp/udp") == 0 ){
-			if (v4v6_ok & IPT_V4)
-			{
-				fprintf(fn, "-A %s -p %s %s %s %s %s", chain, "tcp", dport, saddr, conn, end);
-				fprintf(fn, "-A %s -p %s %s %s %s %s", chain, "udp", dport, saddr, conn, end);
-			}
-#ifdef RTCONFIG_IPV6
-			if (ipv6_enabled() && (v4v6_ok & IPT_V6))
-			{
-				fprintf(fn_ipv6, "-A %s -p %s %s %s %s %s", chain, "tcp", dport, saddr, conn, end);
-				fprintf(fn_ipv6, "-A %s -p %s %s %s %s %s", chain, "udp", dport, saddr, conn, end);
-			}
-#endif
+		else if(!strcmp(proto, "tcp/udp"))
+		{
+			sprintf(proto_1, "-p tcp");
+			sprintf(proto_2, "-p udp");
 		}
-		else
-			fprintf(stderr, "[qos] proto doesn't exist!!\n");
+		else{
+			sprintf(proto_1, "NO");
+			sprintf(proto_2, "NO");
+		}
+		//fprintf(stderr, "[qos] proto_1=%s, proto_2=%s, proto=%s\n", proto_1, proto_2, proto); // tmp test
 		
-		//fprintf(stderr,"[qos] -A %s -p %s %s %s %s %s", chain, "tcp", port, saddr, conn, end); //tmp test
+		/*******************************************************************/
+		/*                                                                 */
+		/*  build final rule for check proto_1, proto_2, saddr_1, saddr_2  */
+		/*                                                                 */
+		/*******************************************************************/
+		// step1. check proto != "NO"
+		// step2. if proto = any, no proto / dport
+		// step3. check saddr for ip-range; saddr_1 could be empty, dport only
 
+		if (v4v6_ok & IPT_V4){
+			// step1. check proto != "NO"
+			if(strcmp(proto_1, "NO")){
+				// step2. if proto = any, no proto / dport
+				if(strcmp(proto_1, "")){
+					// step3. check saddr for ip-range;saddr_1 could be empty, dport only
+						fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_1, conn, end);
+					if(strcmp(saddr_2, ""))
+						fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_2, conn, end);
+				}
+				else{
+						fprintf(fn, "-A %s %s %s %s", chain, saddr_1, conn, end);
+					if(strcmp(saddr_2, ""))
+						fprintf(fn, "-A %s %s %s %s", chain, saddr_2, conn, end);
+				}
+			}
+
+			// step1. check proto != "NO"
+			if(strcmp(proto_2, "NO")){
+				// step2. if proto = any, no proto / dport
+				if(strcmp(proto_2, "")){
+					// step3. check saddr for ip-range;saddr_1 could be empty, dport only
+						fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_1, conn, end);
+					if(strcmp(saddr_2, ""))
+						fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_2, conn, end);
+				}
+				else{
+						fprintf(fn, "-A %s %s %s %s", chain, saddr_1, conn, end);
+					if(strcmp(saddr_2, ""))
+						fprintf(fn, "-A %s %s %s %s", chain, saddr_2, conn, end);
+				}
+			}
+		}
+		
+#ifdef RTCONFIG_IPV6
+		if (ipv6_enabled() && (v4v6_ok & IPT_V6)){
+			// step1. check proto != "NO"
+			if(strcmp(proto_1, "NO")){
+				// step2. if proto = any, no proto / dport
+				if(strcmp(proto_1, "")){
+					// step3. check saddr for ip-range;saddr_1 could be empty, dport only
+						fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_1, conn, end);
+					if(strcmp(saddr_2, ""))
+						fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_2, conn, end);
+				}
+				else{
+						fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_1, conn, end);
+					if(strcmp(saddr_2, ""))
+						fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_2, conn, end);
+				}
+			}
+
+			// step1. check proto != "NO"
+			if(strcmp(proto_2, "NO")){
+				// step2. if proto = any, no proto / dport
+				if(strcmp(proto_2, "")){
+					// step3. check saddr for ip-range;saddr_1 could be empty, dport only
+						fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_1, conn, end);
+					if(strcmp(saddr_2, ""))
+						fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_2, conn, end);
+				}
+				else{
+						fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_1, conn, end);
+					if(strcmp(saddr_2, ""))
+						fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_2, conn, end);
+				}
+			}
+		}
+#endif
 	}
 	free(buf);
 
@@ -345,7 +522,6 @@ int add_iQosRules(char *pcWANIF)
 		fprintf(stderr,"[qos] lan_ipaddr doesn't exist!!\n");
 	}
 	else{
-		//fprintf(stderr,"[qos] lan_ipaddr exist!!\n");
 		sprintf(lan_addr, "%s.%s.%s.0/24", a, b, c);
 		fprintf(stderr,"[qos] lan_addr=%s\n", lan_addr);
 	}
@@ -430,9 +606,16 @@ int add_iQosRules(char *pcWANIF)
                 if ((inuse & (1 << i)) == 0) continue;
                 if (atoi(p) > 0) {
                         fprintf(fn, "-A PREROUTING -i %s -j CONNMARK --restore-mark --mask 0xff\n", pcWANIF);
+#ifdef CLS_ACT
+			fprintf(fn, "-A PREROUTING -i %s -j IMQ --todev 0\n", pcWANIF);
+#endif
 #ifdef RTCONFIG_IPV6
-			if (ipv6_enabled() && *wan6face)
-			fprintf(fn_ipv6, "-A PREROUTING -i %s -j CONNMARK --restore-mark --mask 0xff\n", wan6face);
+			if (ipv6_enabled() && *wan6face) {
+				fprintf(fn_ipv6, "-A PREROUTING -i %s -j CONNMARK --restore-mark --mask 0xff\n", wan6face);
+#ifdef CLS_ACT
+				fprintf(fn_ipv6, "-A PREROUTING -i %s -j IMQ --todev 0\n", wan6face);
+#endif
+			}
 #endif
                         break;
                 }
@@ -442,14 +625,14 @@ int add_iQosRules(char *pcWANIF)
 	fprintf(fn, "COMMIT\n");
 	fclose(fn);
 	chmod(mangle_fn, 0700);
-	eval("iptables-restore", "/tmp/mangle_rules");
+	eval("iptables-restore", (char*)mangle_fn);
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled())
 	{
 		fprintf(fn_ipv6, "COMMIT\n");
 		fclose(fn_ipv6);
 		chmod(mangle_fn_ipv6, 0700);
-		eval("ip6tables-restore", "/tmp/mangle_rules_ipv6");
+		eval("ip6tables-restore", (char*)mangle_fn_ipv6);
 	}
 #endif
 	fprintf(stderr, "[qos] iptables DONE!\n");
@@ -487,7 +670,9 @@ int start_iQos(void)
 	int first;
 	char burst_root[32];
 	char burst_leaf[32];
-	char *protocol;
+#ifdef CONFIG_BCMWL5
+	char *protocol="802.1q";
+#endif
 
 	// judge interface by get_wan_ifname
 	// add Qos iptable rules in mangle table,
@@ -529,20 +714,33 @@ int start_iQos(void)
 		"TQA=\"tc qdisc add dev $I\"\n"
 		"TCA=\"tc class add dev $I\"\n"
 		"TFA=\"tc filter add dev $I\"\n"
+#ifdef CLS_ACT
+		"DLIF=imq0\n"
+		"TQADL=\"tc qdisc add dev $DLIF\"\n"
+		"TCADL=\"tc class add dev $DLIF\"\n"
+		"TFADL=\"tc filter add dev $DLIF\"\n"
+#endif
 		"case \"$1\" in\n"
 		"start)\n"
 		"#LAN/WAN\n"
 		"\ttc qdisc del dev $I root 2>/dev/null\n"
 		"\t$TQA root handle 1: htb default %u\n"
+#ifdef CLS_ACT
+		"\ttc qdisc del dev $DLIF root 2>/dev/null\n"
+		"\t$TQADL root handle 2: htb default %u\n"
+#endif
 		"# upload 1:1\n"
-		"\t$TCA parent 1: classid 1:1 htb rate %ukbit ceil %ukbit %s\n",
+		"\t$TCA parent 1: classid 1:1 htb rate %ukbit ceil %ukbit %s\n" ,
 			get_wan_ifname(0), // judge WAN interface 
 			(atoi(nvram_safe_get("qos_default")) + 1) * 10,	
+#ifdef CLS_ACT
+			(atoi(nvram_safe_get("qos_default")) + 1) * 10,
+#endif
 			bw, bw, burst_root);
 
 	/* LAN protocol: 802.1q */
 #ifdef CONFIG_BCMWL5 // TODO: it is only for the case, eth0 as wan, vlanx as lan
-	protocol = strdup("802.1q");
+	protocol = "802.1q";
 	fprintf(f,
 		"# download 1:2\n"
 		"\t$TCA parent 1: classid 1:2 htb rate 1000000kbit ceil 1000000kbit burst 10000 cburst 10000\n"
@@ -598,7 +796,7 @@ int start_iQos(void)
 			"\t$TFA parent 1: prio 14 protocol ip u32 "
 			"match ip protocol 6 0xff "			// TCP
 			"match u8 0x05 0x0f at 0 "			// IP header length
-			"match u16 0x0000 0xffc0 at 2 "		// total length (0-63)
+			"match u16 0x0000 0xffc0 at 2 "			// total length (0-63)
 			"match u8 0x10 0xff at 33 "			// ACK only
 			"flowid 1:10\n");
 	}
@@ -608,7 +806,7 @@ int start_iQos(void)
 			"\t$TFA parent 1: prio 15 protocol ip u32 "
 			"match ip protocol 6 0xff "			// TCP
 			"match u8 0x05 0x0f at 0 "			// IP header length
-			"match u16 0x0000 0xffc0 at 2 "		// total length (0-63)
+			"match u16 0x0000 0xffc0 at 2 "			// total length (0-63)
 			"match u8 0x02 0x02 at 33 "			// SYN,*
 			"flowid 1:10\n");
 	}
@@ -618,7 +816,7 @@ int start_iQos(void)
 			"\t$TFA parent 1: prio 17 protocol ip u32 "
 			"match ip protocol 6 0xff "			// TCP
 			"match u8 0x05 0x0f at 0 "			// IP header length
-			"match u16 0x0000 0xffc0 at 2 "		// total length (0-63)
+			"match u16 0x0000 0xffc0 at 2 "			// total length (0-63)
 			"match u8 0x01 0x01 at 33 "			// FIN,*
 			"flowid 1:10\n");
 	}
@@ -628,7 +826,7 @@ int start_iQos(void)
 			"\t$TFA parent 1: prio 19 protocol ip u32 "
 			"match ip protocol 6 0xff "			// TCP
 			"match u8 0x05 0x0f at 0 "			// IP header length
-			"match u16 0x0000 0xffc0 at 2 "		// total length (0-63)
+			"match u16 0x0000 0xffc0 at 2 "			// total length (0-63)
 			"match u8 0x04 0x04 at 33 "			// RST,*
 			"flowid 1:10\n");
 	}
@@ -651,8 +849,11 @@ int start_iQos(void)
 				first = 0;
 				fprintf(f,
 					"\n"
+#if !defined(CLS_ACT)
 					"\ttc qdisc del dev $I ingress 2>/dev/null\n"
-					"\t$TQA handle ffff: ingress\n");
+					"\t$TQA handle ffff: ingress\n"
+#endif
+					);
 			}	
 
 			// rate in kb/s
@@ -662,12 +863,25 @@ int start_iQos(void)
 			unsigned int v = u / 2;
 			if (v < 50) v = 50;
 
+#ifdef CLS_ACT
+			x = (i + 1) * 10;
+			fprintf(f,
+				"# ingress %d: %u%%\n"
+				"\t$TCADL parent 2:1 classid 2:%d htb rate %ukbit %s prio %d quantum %u\n"
+				"\t$TQADL parent 2:%d handle %d: $SFQ\n"
+				"\t$TFADL parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n",
+					i, rate,
+					x, calc(bw, rate), burst_leaf, (i >= 6) ? 7 : (i + 1), mtu,
+					x, x,
+					x, i + 1, x);
+#else
 			x = i + 1;
 			fprintf(f,
 				"# ingress %d: %u%%\n"
 				"\t$TFA parent ffff: prio %d protocol ip handle %d"
 					" fw police rate %ukbit burst %ukbit drop flowid ffff:%d\n",
 					i, rate, x, x, u, v, x);
+#endif
 		}
 		free(buf);
 	}
@@ -676,12 +890,23 @@ int start_iQos(void)
 		"\t;;\n"
 		"stop)\n"
 		"\ttc qdisc del dev $I root 2>/dev/null\n"
+#ifdef CLS_ACT
+		"\ttc qdisc del dev $DLIF root 2>/dev/null\n"
+#else
 		"\ttc qdisc del dev $I ingress 2>/dev/null\n"
+#endif
 		"\t;;\n"
 		"*)\n"
+		"\t---------- Upload ----------\n"
 		"\ttc -s -d class ls dev $I\n"
-		"\techo\n"
 		"\ttc -s -d qdisc ls dev $I\n"
+		"\techo\n"
+#ifdef CLS_ACT
+		"\t--------- Download ---------\n"
+		"\ttc -s -d class ls dev $DLIF\n"
+		"\ttc -s -d qdisc ls dev $DLIF\n"
+		"\techo\n"
+#endif
 		"esac\n",
 		f);
 

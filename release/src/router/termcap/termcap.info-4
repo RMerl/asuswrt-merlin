@@ -1,0 +1,220 @@
+This is Info file ./termcap.info, produced by Makeinfo-1.55 from the
+input file ./termcap.texi.
+
+   This file documents the termcap library of the GNU system.
+
+   Copyright (C) 1988 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be stated in a
+translation approved by the Foundation.
+
+
+File: termcap.info,  Node: Cap Index,  Next: Index,  Prev: Var Index,  Up: Top
+
+Capability Index
+****************
+
+* Menu:
+
+* ae:                                   Standout.
+* al:                                   Insdel Line.
+* AL:                                   Insdel Line.
+* am:                                   Wrapping.
+* as:                                   Standout.
+* bc:                                   Cursor Motion.
+* bl:                                   Bell.
+* bs:                                   Cursor Motion.
+* bt:                                   Cursor Motion.
+* bw:                                   Cursor Motion.
+* CC:                                   Basic.
+* cd:                                   Clearing.
+* ce:                                   Clearing.
+* ch:                                   Cursor Motion.
+* cl:                                   Clearing.
+* cm:                                   Cursor Motion.
+* CM:                                   Cursor Motion.
+* co:                                   Screen Size.
+* cr:                                   Cursor Motion.
+* cS:                                   Scrolling.
+* cs:                                   Scrolling.
+* ct:                                   Initialization.
+* cv:                                   Cursor Motion.
+* da:                                   Scrolling.
+* dB:                                   Pad Specs.
+* db:                                   Scrolling.
+* dC:                                   Pad Specs.
+* DC:                                   Insdel Char.
+* dc:                                   Insdel Char.
+* dF:                                   Pad Specs.
+* dl:                                   Insdel Line.
+* DL:                                   Insdel Line.
+* dm:                                   Insdel Char.
+* dN:                                   Pad Specs.
+* do:                                   Cursor Motion.
+* DO:                                   Cursor Motion.
+* ds:                                   Status Line.
+* dT:                                   Pad Specs.
+* ec:                                   Clearing.
+* ed:                                   Insdel Char.
+* ei:                                   Insdel Char.
+* eo:                                   Basic.
+* es:                                   Status Line.
+* ff:                                   Cursor Motion.
+* fs:                                   Status Line.
+* gn:                                   Basic.
+* hc:                                   Basic.
+* hd:                                   Half-Line.
+* ho:                                   Cursor Motion.
+* hs:                                   Status Line.
+* hu:                                   Half-Line.
+* hz:                                   Basic.
+* i1:                                   Initialization.
+* i3:                                   Initialization.
+* IC:                                   Insdel Char.
+* ic:                                   Insdel Char.
+* if:                                   Initialization.
+* im:                                   Insdel Char.
+* in:                                   Insdel Char.
+* ip:                                   Insdel Char.
+* is:                                   Initialization.
+* it:                                   Initialization.
+* K1...K5:                              Keypad.
+* k1...k9:                              Keypad.
+* kA...kT:                              Keypad.
+* ka...ku:                              Keypad.
+* km:                                   Meta Key.
+* l0...l9:                              Keypad.
+* le:                                   Cursor Motion.
+* LE:                                   Cursor Motion.
+* li:                                   Screen Size.
+* ll:                                   Cursor Motion.
+* lm:                                   Scrolling.
+* LP:                                   Wrapping.
+* mb:                                   Standout.
+* md:                                   Standout.
+* me:                                   Standout.
+* mh:                                   Standout.
+* mi:                                   Insdel Char.
+* mk:                                   Standout.
+* mm:                                   Meta Key.
+* mo:                                   Meta Key.
+* mp:                                   Standout.
+* mr:                                   Standout.
+* ms:                                   Standout.
+* ms:                                   Underlining.
+* nc:                                   Cursor Motion.
+* nd:                                   Cursor Motion.
+* NF:                                   Initialization.
+* nl:                                   Cursor Motion.
+* ns:                                   Scrolling.
+* nw:                                   Cursor Motion.
+* os:                                   Basic.
+* pb:                                   Pad Specs.
+* pc:                                   Pad Specs.
+* pf:                                   Printer.
+* pO:                                   Printer.
+* po:                                   Printer.
+* ps:                                   Printer.
+* rc:                                   Cursor Motion.
+* RI:                                   Cursor Motion.
+* rp:                                   Basic.
+* rs:                                   Initialization.
+* sa:                                   Standout.
+* sc:                                   Cursor Motion.
+* se:                                   Standout.
+* SF:                                   Scrolling.
+* sf:                                   Scrolling.
+* sg:                                   Standout.
+* so:                                   Standout.
+* SR:                                   Scrolling.
+* sr:                                   Scrolling.
+* st:                                   Initialization.
+* ta:                                   Cursor Motion.
+* te:                                   Initialization.
+* ti:                                   Initialization.
+* ts:                                   Status Line.
+* uc:                                   Underlining.
+* ue:                                   Underlining.
+* ug:                                   Underlining.
+* ul:                                   Underlining.
+* up:                                   Cursor Motion.
+* UP:                                   Cursor Motion.
+* us:                                   Underlining.
+* vb:                                   Bell.
+* ve:                                   Cursor Visibility.
+* vi:                                   Cursor Visibility.
+* vs:                                   Cursor Visibility.
+* wi:                                   Windows.
+* ws:                                   Status Line.
+* xb:                                   Basic.
+* xn:                                   Wrapping.
+* xs:                                   Standout.
+* xt:                                   Cursor Motion.
+* xt:                                   Standout.
+
+
+File: termcap.info,  Node: Index,  Prev: Cap Index,  Up: Top
+
+Concept Index
+*************
+
+* Menu:
+
+* %:                                    Encode Parameters.
+* appearance modes:                     Standout.
+* bell:                                 Bell.
+* clearing the screen:                  Clearing.
+* command character:                    Basic.
+* cursor motion:                        Cursor Motion.
+* delete character:                     Insdel Char.
+* delete line:                          Insdel Line.
+* delete mode:                          Insdel Char.
+* description format:                   Format.
+* erasing:                              Clearing.
+* generic terminal type:                Basic.
+* home position:                        Cursor Motion.
+* inheritance:                          Inheriting.
+* initialization:                       Initialization.
+* insert character:                     Insdel Char.
+* insert line:                          Insdel Line.
+* insert mode:                          Insdel Char.
+* line speed:                           Output Padding.
+* magic cookie:                         Standout.
+* meta key:                             Meta Key.
+* names of terminal types:              Naming.
+* overstrike:                           Basic.
+* padding:                              Pad Specs.
+* padding:                              Padding.
+* parameters:                           Parameters.
+* printer:                              Printer.
+* repeat output:                        Basic.
+* reset:                                Initialization.
+* screen size:                          Screen Size.
+* screen size:                          Naming.
+* screen size:                          Screen Size.
+* scrolling:                            Scrolling.
+* standout:                             Standout.
+* status line:                          Status Line.
+* Superbee:                             Basic.
+* tab stops:                            Initialization.
+* termcap:                              Introduction.
+* terminal flags (kernel):              Initialize.
+* underlining:                          Underlining.
+* visibility:                           Cursor Visibility.
+* visible bell:                         Bell.
+* window:                               Windows.
+* wrapping:                             Wrapping.
+* wrapping:                             Naming.
+
+

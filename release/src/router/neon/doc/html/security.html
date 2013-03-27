@@ -1,0 +1,54 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>HTTP Client Security</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="intro.html" title="Chapter 1. Introduction"><link rel="prev" href="compliance.html" title="Standards compliance"><link rel="next" href="api.html" title="Chapter 2. The neon C language interface"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">HTTP Client Security</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="compliance.html">Prev</a> </td><th width="60%" align="center">Chapter 1. Introduction</th><td width="20%" align="right"> <a accesskey="n" href="api.html">Next</a></td></tr></table><hr></div><div class="sect1" title="HTTP Client Security"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="security"></a>HTTP Client Security</h2></div></div></div><p>neon is intended to be secure against a specific threat
+  model: use of a malicious HTTP server.  Under this threat model, a
+  range of attacks are possible against a client when the user (or
+  application) can be tricked into accessing an HTTP server which is
+  controlled by an attacker.  This section documents various types of
+  possible attack and describes what mitigation is used in
+  neon.</p><div class="sect2" title="CPU or memory consumption attacks"><div class="titlepage"><div><div><h3 class="title"><a name="id444512"></a>CPU or memory consumption attacks</h3></div></div></div><p>neon uses fixed resource limits to prevent the following
+    attacks:</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>memory/CPU consumption attack using an unbounded number
+        of response header fields</p></li><li class="listitem"><p>memory consumption attack using an unbounded length of
+        individual response header lines (or continuation
+        headers)</p></li><li class="listitem"><p>memory consumption attack against the PROPFIND code
+        using an unbounded number of properties (propstat elements)
+        per resource</p></li><li class="listitem"><p>memory consumption attack against the PROPFIND code
+        using an unbounded CDATA element in a "flat property"
+        value</p></li></ul></div><p>Memory consumption attacks against applications based on
+    neon by use of unbounded response length are also possible, but
+    must be mitigated at application level.  Memory consumption in
+    neon itself is fixed and is not proportional to the response
+    size.</p><p>Test cases for all the above attacks are present in the
+    neon test suite.</p></div><div class="sect2" title="SSL/TLS connection security"><div class="titlepage"><div><div><h3 class="title"><a name="id444586"></a>SSL/TLS connection security</h3></div></div></div><p>When using a connection secured by SSL/TLS, it is necessary
+    for clients to verify that the X.509 certificate presented by the
+    server matches the server's expected identity.  The algorithm
+    required for this purpose is described in RFC 2818 and RFC 3280,
+    and is implemented by neon in the following manner:</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>the hostname argument passed to <a class="xref" href="refsess.html#ne_session_create">ne_session_create</a> is the expected identity of the
+        server</p></li><li class="listitem"><p>the subjectAltName extension of the certificate is used
+        for comparision against the expected identity, in preference
+        to the Subject name's commonName attribute.</p></li><li class="listitem"><p>the dNSName, iPAddress, and uniformResourceIdentifier
+        classes of GeneralName are supported in subjectAltName
+        comparison.</p></li><li class="listitem"><p>if no subjectAltName is present in the certificate, the
+        most specific commonName attribute in the Subject name is used
+        for comparison instead.</p></li></ul></div><p>In the case where a server certificate is presented that
+    does not match the expected identity (or is otherwise not
+    trusted), neon will fail the request by default.  This behaviour
+    can be overridden by the use of a callback installed using <a class="xref" href="refsslvfy.html#ne_ssl_set_verify">ne_ssl_set_verify</a>, which allows the application to
+    present the certificate details to a user for manual/off-line
+    verification, if possible.</p><p>Test cases for the correctness of the implementation of the
+    identity verification algorithm are present in the neon test
+    suite.</p></div><div class="sect2" title="Control character insertion in error messages"><div class="titlepage"><div><div><h3 class="title"><a name="id445137"></a>Control character insertion in error messages</h3></div></div></div><p>Where error messages (as returned by
+    (<a class="xref" href="referr.html#ne_get_error">ne_get_error</a>) contain data supplied by the
+    server, the untrusted data is sanitised to remove both control
+    characters and non-ASCII characters.  This prevents any attacks
+    where such error messages are exposed to the user and can
+    potentially distort the presentation of the interface (for
+    example, through the use of a carriage return character in a text
+    user interface).</p></div><div class="sect2" title="Attacks against authentication credentials"><div class="titlepage"><div><div><h3 class="title"><a name="id445154"></a>Attacks against authentication credentials</h3></div></div></div><p>Authentication credentials can be compromised by a
+    "downgrade attack" by an active attacker; for example, where a
+    MITM presents a Basic authentication challenge in place of the
+    server's Digest challenge.  neon mitigates these attacks by
+    allowing the application (and hence, user) to specify that only a
+    specific set of authentication protocols is permitted.</p><p>neon supports the Digest and Negotiate authentication
+    schemes, which both allow authentication of users without passing
+    credentials in cleartext over the wire.  The "domain" parameter is
+    supported in Digest, allowing the server to restrict an
+    authentication session to a particular set of URIs.</p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="compliance.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="intro.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="api.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Standards compliance </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 2. The neon C language interface</td></tr></table></div></body></html>

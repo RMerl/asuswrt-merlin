@@ -1,0 +1,83 @@
+# frv testcase for cfstoi $FRj,$FRk,$CCi,$cond
+# mach: fr500 fr550 frv
+
+	.include "testutils.inc"
+
+	float_constants
+	start
+	load_float_constants
+
+	.global cfstoi
+cfstoi:
+	set_spr_immed	0x1b1b,cccr
+
+	cfstoi		fr16,fr1,cc0,1
+	test_fr_iimmed	0,fr1
+	cfstoi		fr20,fr1,cc0,1
+	test_fr_iimmed	0,fr1
+
+	cfstoi		fr32,fr1,cc4,1
+	test_fr_iimmed	0x00000002,fr1
+
+	set_fr_iimmed	0xce05,0x4904,fr1
+	cfstoi		fr1,fr1,cc4,1
+	test_fr_iimmed	0xdeadbf00,fr1
+
+	cfstoi		fr16,fr1,cc1,0
+	test_fr_iimmed	0,fr1
+	cfstoi		fr20,fr1,cc1,0
+	test_fr_iimmed	0,fr1
+
+	cfstoi		fr32,fr1,cc5,0
+	test_fr_iimmed	0x00000002,fr1
+
+	set_fr_iimmed	0xce05,0x4904,fr1
+	cfstoi		fr1,fr1,cc5,0
+	test_fr_iimmed	0xdeadbf00,fr1
+
+	set_fr_iimmed	0xdead,0xbeef,fr1
+	cfstoi		fr16,fr1,cc0,0
+	test_fr_iimmed	0xdeadbeef,fr1
+	cfstoi		fr20,fr1,cc0,0
+	test_fr_iimmed	0xdeadbeef,fr1
+
+	cfstoi		fr32,fr1,cc4,0
+	test_fr_iimmed	0xdeadbeef,fr1
+
+	cfstoi		fr1,fr1,cc4,0
+	test_fr_iimmed	0xdeadbeef,fr1
+
+	cfstoi		fr16,fr1,cc1,1
+	test_fr_iimmed	0xdeadbeef,fr1
+	cfstoi		fr20,fr1,cc1,1
+	test_fr_iimmed	0xdeadbeef,fr1
+
+	cfstoi		fr32,fr1,cc5,1
+	test_fr_iimmed	0xdeadbeef,fr1
+
+	cfstoi		fr1,fr1,cc5,1
+	test_fr_iimmed	0xdeadbeef,fr1
+
+	cfstoi		fr16,fr1,cc2,1
+	test_fr_iimmed	0xdeadbeef,fr1
+	cfstoi		fr20,fr1,cc2,0
+	test_fr_iimmed	0xdeadbeef,fr1
+
+	cfstoi		fr32,fr1,cc6,1
+	test_fr_iimmed	0xdeadbeef,fr1
+
+	cfstoi		fr1,fr1,cc6,0
+	test_fr_iimmed	0xdeadbeef,fr1
+
+	cfstoi		fr16,fr1,cc3,1
+	test_fr_iimmed	0xdeadbeef,fr1
+	cfstoi		fr20,fr1,cc3,0
+	test_fr_iimmed	0xdeadbeef,fr1
+
+	cfstoi		fr32,fr1,cc7,1
+	test_fr_iimmed	0xdeadbeef,fr1
+
+	cfstoi		fr1,fr1,cc7,0
+	test_fr_iimmed	0xdeadbeef,fr1
+
+	pass

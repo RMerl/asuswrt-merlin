@@ -1,0 +1,21 @@
+# fr30 testcase for copop $u4,$cc,$CRj,CRi
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global copop
+copop:
+	; Test copop copop $u4,$cc,$CRj,CRi
+	; The current implementation is a noop
+	set_cc          0x0f		; Condition codes are irrelevent
+	copop      	0,0,cr0,cr15
+	test_cc		1 1 1 1
+
+	set_cc          0x0e		; Condition codes are irrelevent
+	copop      	15,255,cr0,cr15
+	test_cc		1 1 1 0
+
+	pass

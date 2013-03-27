@@ -1,0 +1,156 @@
+'\" t
+.\"     Title: ne_ssl_set_verify
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_SSL_SET_VERIFY" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_ssl_set_verify \- register an SSL certificate verification callback
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_session\&.h>
+.fi
+.ft
+.HP \w'typedef\ int\ ne_ssl_verify_fn('u
+.BI "typedef int ne_ssl_verify_fn(void\ *" "userdata" ", int\ " "failures" ", const\ ne_ssl_certificate\ *" "cert" ");"
+.HP \w'void\ ne_ssl_set_verify('u
+.BI "void ne_ssl_set_verify(ne_session\ *" "session" ", ne_ssl_verify_fn\ " "verify_fn" ", void\ *" "userdata" ");"
+.SH "DESCRIPTION"
+.PP
+To enable manual SSL certificate verification, a callback can be registered using
+\fBne_ssl_set_verify\fR\&. If such a callback is not registered, when a connection is established to an SSL server which does not present a certificate signed by a trusted CA (see
+ne_ssl_trust_cert), or if the certificate presented is invalid in some way, the connection will fail\&.
+.PP
+When the callback is invoked, the
+\fIfailures\fR
+parameter gives a bitmask indicating in what way the automatic certificate verification failed\&. The value is equal to the bit\-wise OR of one or more of the following constants (and is guaranteed to be non\-zero):
+.PP
+\fBNE_SSL_NOTYETVALID\fR
+.RS 4
+The certificate is not yet valid\&.
+.RE
+.PP
+\fBNE_SSL_EXPIRED\fR
+.RS 4
+The certificate has expired\&.
+.RE
+.PP
+\fBNE_SSL_IDMISMATCH\fR
+.RS 4
+The hostname used for the session does not match the hostname to which the certificate was issued\&.
+.RE
+.PP
+\fBNE_SSL_UNTRUSTED\fR
+.RS 4
+The Certificate Authority which signed the certificate is not trusted\&.
+.RE
+.PP
+Note that if either of the
+\fBNE_SSL_IDMISMATCH\fR
+or
+\fBNE_SSL_UNTRUSTED\fR
+failures is given, the connection may have been intercepted by a third party, and must not be presumed to be
+\(lqsecure\(rq\&.
+.PP
+The
+\fIcert\fR
+parameter passed to the callback represents the certificate which was presented by the server\&. If the server presented a chain of certificates, the chain can be accessed using
+ne_ssl_cert_signedby\&. The
+\fIcert\fR
+object given is not valid after the callback returns\&.
+.SH "RETURN VALUE"
+.PP
+The verification callback must return zero to indicate that the certificate should be trusted; and non\-zero otherwise (in which case, the connection will fail)\&.
+.SH "EXAMPLES"
+.PP
+The following code implements an example verification callback, using the
+\fBdump_cert\fR
+function from
+ne_ssl_cert_subject
+to display certification information\&. Notice that the hostname of the server used for the session is passed as the
+\fIuserdata\fR
+parameter to the callback\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+static int
+my_verify(void *userdata, int failures, const ne_ssl_certificate *cert)
+{
+  const char *hostname = userdata;
+
+  dump_cert(cert);
+
+  puts("Certificate verification failed \- the connection may have been "
+       "intercepted by a third party!");
+
+  if (failures & NE_SSL_IDMISMATCH) { 
+    const char *id = ne_ssl_cert_identity(cert);
+    if (id) 
+      printf("Server certificate was issued to \*(Aq%s\*(Aq not \*(Aq%s\*(Aq\&.\en",
+             id, hostname);
+    else
+      printf("The certificate was not issued for \*(Aq%s\*(Aq\en", hostname);
+  }
+
+  if (failures & NE_SSL_UNTRUSTED)
+    puts("The certificate is not signed by a trusted Certificate Authority\&.");
+
+  /* \&.\&.\&. check for validity failures \&.\&.\&. */
+
+  if (prompt_user())
+    return 1; /* fail verification */
+  else
+    return 0; /* trust the certificate anyway */
+}
+
+int
+main(\&.\&.\&.)
+{
+  ne_session *sess = ne_session_create("https", "some\&.host\&.name", 443);
+  ne_ssl_set_verify(sess, my_verify, "some\&.host\&.name");
+  \&.\&.\&.
+}
+.fi
+.if n \{\
+.RE
+.\}
+.SH "SEE ALSO"
+.PP
+ne_ssl_trust_cert,
+ne_ssl_readable_dname,
+ne_ssl_cert_subject
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

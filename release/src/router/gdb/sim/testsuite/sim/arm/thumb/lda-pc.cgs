@@ -1,0 +1,12 @@
+# arm testcase for add ${bit10-rd},pc,$word8
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global lda_pc
+lda_pc:
+	add r0,pc,0
+
+	pass

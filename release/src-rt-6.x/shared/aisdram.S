@@ -1,7 +1,7 @@
 /*
  * BCM47XX Denali based memory controller initialization
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -656,6 +656,10 @@ chtref:
 	lw	t0,8(t4)		# Pick up sdram_init value for TREF
 	lw	t2,DMEMC_CONTROL29(a1)
 	beq	s4,DMEMS_CORE_ID,1f
+	nop
+
+	# Dmemc rev < 2?
+	ble	s3,1,chhalf
 	nop
 
 	li	t1,0x3fff0000

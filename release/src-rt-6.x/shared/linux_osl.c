@@ -1,7 +1,7 @@
 /*
  * Linux OS Independent Layer
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: linux_osl.c 330107 2012-04-27 22:04:17Z $
+ * $Id: linux_osl.c 341899 2012-06-29 04:06:38Z $
  */
 
 #define LINUX_PORT
@@ -264,6 +264,7 @@ osl_attach(void *pdev, uint bustype, bool pkttag)
 #ifdef BCMDBG
 	if (pkttag) {
 		struct sk_buff *skb;
+		BCM_REFERENCE(skb);
 		ASSERT(OSL_PKTTAG_SZ <= sizeof(skb->cb));
 	}
 #endif
@@ -293,11 +294,19 @@ static struct sk_buff *osl_alloc_skb(unsigned int len)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25)
 	gfp_t flags = GFP_ATOMIC;
+	struct sk_buff *skb;
 
-	return __dev_alloc_skb(len, flags);
+	skb = __dev_alloc_skb(len, flags);
+#ifdef CTFMAP
+	if (skb) {
+		skb->data = skb->head + NET_SKB_PAD_ALLOC;
+		skb->tail = skb->data;
+	}
+#endif /* CTFMAP */
+	return skb;
 #else
 	return dev_alloc_skb(len);
-#endif
+#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25) */
 }
 
 #ifdef CTFPOOL
@@ -495,8 +504,8 @@ osl_pktfastget(osl_t *osh, uint len)
 
 	/* Init skb struct */
 	skb->next = skb->prev = NULL;
-	skb->data = skb->head + 16;
-	skb->tail = skb->head + 16;
+	skb->data = skb->head + NET_SKB_PAD_ALLOC;
+	skb->tail = skb->data;
 
 	skb->len = 0;
 	skb->cloned = 0;
@@ -582,20 +591,27 @@ osl_pktfastfree(osl_t *osh, struct sk_buff *skb)
 #endif /* CTFPOOL_SPINLOCK */
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 14)
-	skb->tstamp.tv.sec = 0;
+	skb->tstamp.tv64 = 0;
 #else
 	skb->stamp.tv_sec = 0;
 #endif
 
 	/* We only need to init the fields that we change */
 	skb->dev = NULL;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
 	skb->dst = NULL;
+#endif
 	OSL_PKTTAG_CLEAR(skb);
 	skb->ip_summed = 0;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
+	skb_orphan(skb);
+#else
 	skb->destructor = NULL;
+#endif
 
 	ctfpool = (ctfpool_t *)CTFPOOLPTR(osh, skb);
-	//ASSERT(ctfpool != NULL);
+//	ASSERT(ctfpool != NULL);
 	if (ctfpool == NULL) return;
 
 	/* Add object to the ctfpool */

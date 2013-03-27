@@ -1,0 +1,16 @@
+# sh testcase for fld.p $rm, $disp10x8, $fpf -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+init:
+	movi 0x2800, r0
+
+fldp:
+	fld.p r0, 0, fp0
+	fld.p r0, 8, fp2
+	fld.p r0, -8, fp4
+	pass

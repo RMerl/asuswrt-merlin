@@ -1,0 +1,121 @@
+# Copyright 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Test essential Machine interface (MI) operations
+#
+# Verify that once binary file has changed, GDB correctly handles
+# previously defined MI variables.
+#
+
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+gdb_exit
+if [mi_gdb_start] {
+    continue
+}
+
+set testfile "var-cmd"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+    untested mi-var-invalidate.exp
+    return -1
+}
+# Just change the output binary.
+set binfile_bis ${objdir}/${subdir}/${testfile}_bis
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile_bis}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+    untested mi-var-invalidate.exp
+    return -1
+}
+
+set testfile2 "basics"
+set srcfile2 ${testfile2}.c
+set binfile2 ${objdir}/${subdir}/${testfile2}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+    untested mi-var-invalidate.exp
+    return -1
+}
+
+mi_delete_breakpoints
+mi_gdb_reinitialize_dir $srcdir/$subdir
+mi_gdb_load ${binfile}
+
+# Desc:  Create global variable.
+mi_gdb_test "-var-create global_simple * global_simple" \
+        "\\^done,name=\"global_simple\",numchild=\"6\",value=\".*\",type=\"simpleton\"" \
+	"create global variable"
+
+mi_runto do_locals_tests
+
+# Desc: create local variables
+mi_gdb_test "-var-create linteger * linteger" \
+	"\\^done,name=\"linteger\",numchild=\"0\",value=\".*\",type=\"int\"" \
+	"create local variable linteger"
+
+#
+# Reload the same binary.
+# Global variable should remain, local should be invalidated.
+#
+mi_delete_breakpoints
+mi_gdb_load ${binfile_bis}
+mi_runto main
+
+# Check local variable is "invalid".
+mi_gdb_test "-var-update linteger" \
+	"\\^done,changelist=\\\[\{name=\"linteger\",in_scope=\"invalid\"\}\\\]" \
+	"linteger not anymore in scope due to binary changes"
+
+mi_gdb_test "-var-info-type linteger" \
+	"\\^done,type=\"\"" \
+	"no type for invalid variable linteger (1)"
+
+# Check global variable is still correct.
+mi_gdb_test "-var-update global_simple" \
+	"\\^done,changelist=\\\[\]" \
+	"global_simple still alive"
+
+mi_gdb_test "-var-info-type global_simple" \
+	"\\^done,type=\"simpleton\"" \
+	"type simpleton for valid variable global_simple"
+
+
+#
+# Load an other binary.
+# All variables must be invalidated.
+#
+mi_delete_breakpoints
+mi_gdb_load ${binfile2}
+# Check local variable are "invalid"
+mi_gdb_test "-var-update linteger" \
+	"\\^done,changelist=\\\[\{name=\"linteger\",in_scope=\"invalid\"\}\\\]" \
+	"linteger not valid anymore due to binary changes"
+
+mi_gdb_test "-var-info-type linteger" \
+	"\\^done,type=\"\"" \
+	"no type for invalid variable linteger (2)"
+
+# Check global variable are still correct.
+mi_gdb_test "-var-update global_simple" \
+	"\\^done,changelist=\\\[\{name=\"global_simple\",in_scope=\"invalid\"\}\\\]" \
+	"global_simple not anymore in scope due to binary changes"
+
+mi_gdb_test "-var-info-type global_simple" \
+	"\\^done,type=\"\"" \
+	"no type for invalid variable global_simple"
+
+mi_gdb_exit
+return 0

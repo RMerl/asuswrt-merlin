@@ -1,0 +1,12 @@
+# arm testcase for strb $rd,[$rb,#$offset5]
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global strb_imm
+strb_imm:
+	strb r0,[r0,#0]
+
+	pass

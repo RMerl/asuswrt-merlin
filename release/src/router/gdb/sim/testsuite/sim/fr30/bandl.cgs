@@ -1,0 +1,30 @@
+# fr30 testcase for bandl $Rj,@$Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global bandl
+bandl:
+	; Test bandl $Rj,@$Ri
+	mvi_h_mem  	0x55555555,sp
+	set_cc          0x0f		; Condition codes should not change
+	bandl      	0x0a,@sp
+	test_cc		1 1 1 1
+	test_h_mem 	0x50555555,sp
+
+	mvi_h_mem  	0xffffffff,sp
+	set_cc          0x04		; Condition codes should not change
+	bandl		0x0a,@sp
+	test_cc		0 1 0 0
+	test_h_mem 	0xfaffffff,sp
+
+	mvi_h_mem  	0x5effffff,sp
+	set_cc          0x0a		; Condition codes should not change
+	bandl		0x07,@sp
+	test_cc		1 0 1 0
+	test_h_mem 	0x56ffffff,sp
+
+	pass

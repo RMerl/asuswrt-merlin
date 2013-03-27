@@ -68,7 +68,7 @@ function redirect(){
 
 function redirect_qis(){
 	/*if('<% nvram_get("sw_mode"); %>' == '1')
-		parent.location.href = 'http://www.asusnetwork.net/index.asp';
+		parent.location.href = 'http://router.asus.com/index.asp';
 	else*/
 		parent.location.href = 'http://'+parent.document.form.lan_ipaddr.value+'/index.asp';
 }
@@ -89,12 +89,14 @@ function initial(){
 				document.redirectForm.flag.value = getflag;
 				
 			if(parent.document.getElementById("hidden_frame")){
-
 				if(getflag == "verify_detect_reboot"){
 					setTimeout("parent.parent.check_DUT();", restart_time*1000);
 					return;
 				}
-				
+				else if(getflag == "dongle_mode"){
+					setTimeout("parent.detect3GConn();", restart_time*1000);
+					return;
+				}
 				setTimeout("qis_delay_redirect('/qis/QIS_verify_detect.htm');", restart_time*1000);
 			}
 			else{
@@ -133,11 +135,12 @@ function initial(){
 	else if(action_script.indexOf("aidisk_asusddns_register") >= 0){
 		setTimeout("parent.checkDDNSReturnCode();", 1000);
 	}
-  else if(action_script.indexOf("adm_asusddns_register") >= 0) {
-  	setTimeout("parent.parent.checkDDNSReturnCode();", 1000);
+ 	//else if(action_script.indexOf("adm_asusddns_register") >= 0) {
+	else if(action_script.indexOf("restart_ddns") >= 0) {
+  		setTimeout("parent.parent.checkDDNSReturnCode();", 1000);
 	}
 	else if(action_script.indexOf("start_webs_upgrade") >= 0) {
-  	setTimeout("parent.startDownloading();", 1000);
+  		setTimeout("parent.startDownloading();", 1000);
 	}
 	else if(action_script == "restart_cloudsync"){
 		/* if multi-rule
@@ -151,6 +154,18 @@ function initial(){
 		parent.stopFlag = 1;
 		parent.showLoading(restart_time);
 		setTimeout("parent.parent.location.href='"+next_page+"';", (restart_time+2)*1000);
+	}
+	else if(action_script == "start_diskscan"){
+		parent.show_loadingBar_field();
+	}
+	else if(action_script == "restart_diskmon"){
+		parent.document.getElementById('loadingIcon_apply').style.display = "none";
+	}
+	else if(getflag == "router_sync_ddns"){
+		parent.apply_sharelink();
+	}
+	else if(getflag == "apply_routersync"){
+		parent.show_block();
 	}
 	else if(page_modified == 1){
 		parent.showLoading(restart_time, "waiting");
@@ -170,13 +185,17 @@ function initial(){
 				parent.document.getElementById('drword').innerHTML = "<#LAN_IP_changed_suggedtion1#>"+parent.document.form.lan_ipaddr.value+"<#LAN_IP_changed_suggedtion2#><br/>";
 				setTimeout("hideLoading();",20000);
 				setTimeout("parent.dr_advise();",20000);
-				setTimeout("redirect_qis()",35000);
+				setTimeout("redirect_qis()",restart_time*1000);
 			}
 			else if(getflag == "nodetect"){
 				setTimeout("top_delay_redirect('"+current_page+"');", restart_time*1000);
 			}
 			else if(current_page.indexOf("Advanced_System_Content") >= 0){
-				setTimeout("parent.parent.location.href='"+current_page+"';", restart_time*1000);
+				if(getflag != ""){
+					setTimeout("parent.parent.location.href='"+getflag+"/"+current_page+"';", restart_time*1000);
+				}
+				else
+					setTimeout("parent.parent.location.href='"+current_page+"';", restart_time*1000);
 			}
 			else{
 				setTimeout("parent.parent.detectLANstatus('"+current_page+"', '');", restart_time*1000);

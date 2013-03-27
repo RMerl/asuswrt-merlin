@@ -1,0 +1,43 @@
+# arm testcase for bic
+# mach: all
+
+# ??? Unfinished, more tests needed.
+
+	.include "testutils.inc"
+
+	start
+
+# bic$cond${set-cc?} $rd,$rn,$imm12
+
+	.global bic_imm
+bic_imm:
+	mvi_h_gr r4,1
+	mvi_h_cnvz 0,0,0,0
+	bic r5,r4,#0
+	test_h_cnvz 0,0,0,0
+	test_h_gr r5,1
+
+# bic$cond${set-cc?} $rd,$rn,$rm,${operbic2-shifttype} ${operbic2-shiftimm}
+
+	.global bic_reg_imm_shift
+bic_reg_imm_shift:
+	mvi_h_gr r4,7
+	mvi_h_gr r5,1
+	mvi_h_cnvz 0,0,0,0
+	bic r6,r4,r5,lsl #1
+	test_h_cnvz 0,0,0,0
+	test_h_gr r6,5
+
+# bic$cond${set-cc?} $rd,$rn,$rm,${operbic2-shifttype} ${operbic2-shiftreg}
+
+	.global bic_reg_reg_shift
+bic_reg_reg_shift:
+	mvi_h_gr r4,7
+	mvi_h_gr r5,1
+	mvi_h_gr r6,1
+	mvi_h_cnvz 0,0,0,0
+	bic r7,r4,r5,lsl r6
+	test_h_cnvz 0,0,0,0
+	test_h_gr r7,5
+
+	pass

@@ -2,7 +2,7 @@
  * Common [OS-independent] header file for
  * Broadcom BCM47XX 10/100Mbps Ethernet Device Driver
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: etc.h 330107 2012-04-27 22:04:17Z $
+ * $Id: etc.h 341899 2012-06-29 04:06:38Z $
  */
 
 #ifndef _etc_h_
@@ -176,6 +176,7 @@ typedef struct etc_info {
 #define	ET_100FULL	3
 #define	ET_1000HALF	4
 #define	ET_1000FULL	5
+#define	ET_2500FULL	6
 
 /* init options */
 #define ET_INIT_FULL     0x1

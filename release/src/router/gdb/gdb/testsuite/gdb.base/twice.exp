@@ -1,0 +1,64 @@
+#   Copyright 1997, 1999, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile twice-tmp
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+set options debug
+lappend options "additional_flags=-I."
+
+set fileid [open ${objdir}/${subdir}/${srcfile} w];
+puts $fileid "#include \"twice.c\"";
+close $fileid;
+
+remote_download host ${srcdir}/${subdir}/twice.c twice.c
+
+if  { [gdb_compile "${objdir}/${subdir}/${srcfile}" "${binfile}" executable $options] != "" } {
+     untested twice.exp
+     return -1
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+
+if [runto_main] then {
+    # Test that GDB can still detect whether we have line numbers
+    # even if we're executing code in an include file.
+
+    # The bug was fixed by
+    #Tue Jun 29 11:02:58 1993  Jim Kingdon  (kingdon@lioth.cygnus.com)
+    #
+    #	* infrun.c (wait_for_inferior): Use find_pc_line not
+    #	find_pc_symtab to check whether there is line number
+    #	information.
+
+    gdb_test "step" "nothing \\(\\) at.*"
+}
+remote_exec build "rm -f twice.c" 
+return 0

@@ -1,0 +1,53 @@
+    <refentry id="refbuf">
+
+      <refmeta>
+	<refentrytitle>ne_buffer</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_buffer">ne_buffer</refname>
+	<refpurpose>string buffer handling</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+
+	<funcsynopsis><funcsynopsisinfo>#include &lt;ne_string.h&gt;
+
+typedef struct {
+    char *data;
+    size_t used;
+    size_t length;
+} <type>ne_buffer</type>;</funcsynopsisinfo></funcsynopsis>
+
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>The <type>ne_buffer</type> type represents an expandable
+memory buffer for holding &nul;-terminated strings.  The
+<structfield>data</structfield> field points to the beginnning of the
+string, the length of which is given by the
+<structfield>used</structfield> field.  The current size of memory
+allocated is given by the <structfield>length</structfield> field.  It
+is not recommended that the fields of a buffer are manipulated
+directly.  The <structfield>data</structfield> pointer may change when
+the buffer is modified.</para>
+
+	<para>A buffer is created using <xref
+linkend="ne_buffer_create"/> or <xref
+linkend="ne_buffer_create_sized"/>, and destroyed using <xref
+linkend="ne_buffer_destroy"/> or <xref linkend="ne_buffer_finish"/>.
+The functions <xref linkend="ne_buffer_append"/>, <xref
+linkend="ne_buffer_zappend"/> and <xref linkend="ne_buffer_concat"/> are
+used to append data to a buffer.</para>
+
+	<para>If the string referenced by the
+<structfield>data</structfield> pointer is modified directly (rather
+than using one of the functions listed above),
+<function>ne_buffer_altered</function> must be called.</para>
+
+      </refsect1>
+
+    </refentry>

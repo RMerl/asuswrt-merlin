@@ -1,0 +1,23 @@
+# frv testcase for mand $FRinti,$FRintj,$FRintk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mand
+mand:
+	set_fr_iimmed  	0xaaaa,0xaaaa,fr7
+	set_fr_iimmed  	0x5555,0x5555,fr8
+	mand      	fr7,fr8,fr8
+	test_fr_iimmed 	0,fr8
+
+	set_fr_iimmed  	0xffff,0x0000,fr8
+	mand		fr7,fr8,fr8
+	test_fr_iimmed 	0xaaaa0000,fr8
+
+	set_fr_iimmed	0x0000,0xffff,fr8
+	mand		fr7,fr8,fr8
+	test_fr_iimmed	0x0000aaaa,fr8
+
+	pass

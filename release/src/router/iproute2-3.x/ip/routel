@@ -1,0 +1,60 @@
+#!/bin/sh
+#$Id$
+
+#
+# Script created by: Stephen R. van den Berg <srb@cuci.nl>, 1999/04/18
+# Donated to the public domain.
+#
+# This script transforms the output of "ip" into more readable text.
+# "ip" is the Linux-advanced-routing configuration tool part of the
+# iproute package.
+#
+
+test "X-h" = "X$1" && echo "Usage: $0 [tablenr [raw ip args...]]" && exit 64
+
+test -z "$*" && set 0
+
+ip route list table "$@" |
+ while read network rest
+ do set xx $rest
+    shift
+    proto=""
+    via=""
+    dev=""
+    scope=""
+    src=""
+    table=""
+    case $network in
+       broadcast|local|unreachable) via=$network
+          network=$1
+          shift
+          ;;
+    esac
+    while test $# != 0
+    do
+       key=$1
+       val=$2
+       eval "$key=$val"
+       shift 2
+    done
+    echo "$network	$via	$src	$proto	$scope	$dev	$table"
+ done | awk -F '	' '
+BEGIN {
+   format="%15s%-3s %15s %15s %8s %8s%7s %s\n";
+   printf(format,"target","","gateway","source","proto","scope","dev","tbl");
+ }
+ { network=$1;
+   mask="";
+   if(match(network,"/"))
+    { mask=" "substr(network,RSTART+1);
+      network=substr(network,0,RSTART);
+    }
+   via=$2;
+   src=$3;
+   proto=$4;
+   scope=$5;
+   dev=$6;
+   table=$7;
+   printf(format,network,mask,via,src,proto,scope,dev,table);
+ }
+'

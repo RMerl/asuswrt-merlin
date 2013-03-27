@@ -56,7 +56,7 @@ extern const char * pidfilename;
 
 extern char uuidvalue[];
 
-#define SERIALNUMBER_MAX_LEN (10)
+#define SERIALNUMBER_MAX_LEN (48)
 extern char serialnumber[];
 
 #define MODELNUMBER_MAX_LEN (48)

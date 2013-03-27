@@ -1,0 +1,49 @@
+<refentry id="refsslcert2">
+
+  <refmeta>
+    <refentrytitle>ne_ssl_cert_cmp</refentrytitle>
+    <manvolnum>3</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname id="ne_ssl_cert_cmp">ne_ssl_cert_cmp</refname>
+    <refname id="ne_ssl_cert_free">ne_ssl_cert_free</refname>
+    <refpurpose>functions to operate on certificate objects</refpurpose>
+  </refnamediv>
+  
+  <refsynopsisdiv>
+
+    <funcsynopsis>
+
+      <funcsynopsisinfo>#include &lt;ne_header.h&gt;</funcsynopsisinfo>
+
+      <funcprototype>
+        <funcdef>int <function>ne_ssl_cert_cmp</function></funcdef>
+        <paramdef>const ne_ssl_certificate *<parameter>c1</parameter></paramdef>
+        <paramdef>const ne_ssl_certificate *<parameter>c2</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>void <function>ne_ssl_cert_free</function></funcdef>
+        <paramdef>ne_ssl_certificate *<parameter>cert</parameter></paramdef>
+      </funcprototype>
+
+    </funcsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para>The <function>ne_ssl_cert_cmp</function> function can be
+    used to compare two certificate objects; it returns zero if they
+    refer to the same certificate, and non-zero otherwise.</para>
+
+    <para>The <function>ne_ssl_cert_free</function> function can be
+    used to destroy a certificate object when it is no longer
+    needed.</para>
+
+  </refsect1>
+
+</refentry>
+

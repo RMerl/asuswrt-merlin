@@ -37,7 +37,6 @@ static BOOLEAN m_AdaptOpened;
 #include "ra_reg_rw.h"
 #include "fw_conf.h"
 
-
 static UCHAR m_RespBuf[MAX_RESP_BUF_NUM][MAX_TC_RESP_BUF_LEN];
 static USHORT m_RespLen[MAX_RESP_BUF_NUM];
 
@@ -68,6 +67,8 @@ extern void SetPollingTimer();
 extern int CreateMsgQ();
 extern int RcvMsgQ();
 extern void enable_polling(void);
+extern void disable_polling(void); //Ren
+extern void wait_polling_stop(void); //Ren
 extern int ReadyForInternet();
 extern void nvram_adslsts(char* sts);
 extern void nvram_adslsts_detail(char* sts);
@@ -75,6 +76,31 @@ extern void nvram_adslsts_detail(char* sts);
 #define MAX_ERR_MSG_LEN 1000
 static char m_ErrMsgBuf[MAX_ERR_MSG_LEN+1]; // add one for zero
 static int m_CurrErrMsgLen = 0;
+
+//Ren.B
+#define END_SYMBOL "\x0d\x0a"
+#define FILE_NAME_GET_BPC "/tmp/adsl/tc_bits_per_carrier.txt"
+#define FILE_NAME_GET_SNR "/tmp/adsl/tc_snr.txt"
+#define FILE_NAME_GET_ADSL1 "/tmp/adsl/tc_snr_adsl1.txt"
+#define FILE_NAME_GET_ADSL2_PLUS "/tmp/adsl/tc_snr_adsl2_plus.txt"
+#define TMP_FILE_NAME_GET_BPC "/tmp/adsl/tc_bits_per_carrier.tmp"
+#define TMP_FILE_NAME_GET_SNR "/tmp/adsl/tc_snr.tmp"
+#define TMP_FILE_NAME_GET_ADSL1 "/tmp/adsl/tc_snr_adsl1.tmp"
+#define TMP_FILE_NAME_GET_ADSL2_PLUS "/tmp/adsl/tc_snr_adsl2_plus.tmp"
+//Ren.E
+
+time_t timestamp=0;
+static int uptime_Saved = 0;
+
+/* Paul add 2012/12/25 */
+#include <sys/sysinfo.h>
+long adsluptime(void)
+{
+	struct sysinfo info;
+	sysinfo(&info);
+
+	return info.uptime;
+}
 
 char* strcpymax(char *to, const char*from, int max_to_len)
 {
@@ -333,16 +359,16 @@ void CreateAdslErrorFile(char* fn, UCHAR cmd, PUCHAR pData, USHORT DataLen)
     }
 }
 
-BOOLEAN SendCmdAndWaitResp(PUCHAR pResp[], USHORT MaxRespLen, PUSHORT pRespLen[], USHORT MaxResp, PUSHORT pRcvPktNum, PUCHAR pDst, UCHAR Cmd, PUCHAR pData, USHORT DataLen, UCHAR WaitRespNumInput)
+BOOLEAN SendCmdAndWaitResp(PUCHAR pResp[], USHORT MaxRespLen, PUSHORT pRespLen[], USHORT MaxResp, PUSHORT pRcvPktNum, PUCHAR pDst, UCHAR Cmd, PUCHAR pData, USHORT DataLen, USHORT WaitRespNumInput)
 {
-    UCHAR WaitRespNum = WaitRespNumInput;
+    USHORT WaitRespNum = WaitRespNumInput; //Ren: the original type is UCHAR which is wrong.
     UCHAR PktBuf[1600];
     USHORT Idx = 0;
     unsigned int PktBufLen = 0;
 
     if (g_AlwaysIgnoreAdslCmd) return FALSE;
 
-    if (WaitRespNum == 0) WaitRespNum = (UCHAR)MaxResp;
+    if (WaitRespNum == 0) WaitRespNum = (USHORT)MaxResp;
 
     memcpy(&PktBuf[Idx], pDst, MAC_LEN);
     Idx+=MAC_LEN;
@@ -384,8 +410,9 @@ BOOLEAN SendCmdAndWaitResp(PUCHAR pResp[], USHORT MaxRespLen, PUSHORT pRespLen[]
     int RespCnt = 0;
 
     int TimeoutCnt;
-    for (TimeoutCnt = 0; TimeoutCnt<100; TimeoutCnt++)
+    for (TimeoutCnt = 0; TimeoutCnt<1200; TimeoutCnt++) //Ren:100 -> 1200
     {
+        memset(pResp[RespCnt], 0, MAX_TC_RESP_BUF_LEN );//Ren
         RetVal = RcvPkt(pResp[RespCnt], MaxRespLen, &RetRespLen);
         if (RetVal)
         {
@@ -457,6 +484,135 @@ BOOLEAN SendCmdAndWaitResp(PUCHAR pResp[], USHORT MaxRespLen, PUSHORT pRespLen[]
         myprintf("*** RESP : %d\n",*pRcvPktNum);
     }
 
+    return TRUE;
+}
+
+
+
+BOOLEAN SendCmdAndWaitResp2(PUCHAR pResp[], USHORT MaxRespLen, PUSHORT pRespLen[], USHORT MaxResp, PUSHORT pRcvPktNum, PUCHAR pDst, UCHAR Cmd, PUCHAR pData, USHORT DataLen, USHORT WaitRespNumInput)
+{
+    USHORT WaitRespNum = WaitRespNumInput;
+    UCHAR PktBuf[1600];
+    USHORT Idx = 0;
+    unsigned int PktBufLen = 0;
+
+    if (g_AlwaysIgnoreAdslCmd) return FALSE;
+
+    if (WaitRespNum == 0) WaitRespNum = (USHORT)MaxResp;
+
+    memcpy(&PktBuf[Idx], pDst, MAC_LEN);
+    Idx+=MAC_LEN;
+    memcpy(&PktBuf[Idx], m_RouterMacAddr, MAC_LEN);
+    Idx+=MAC_LEN;
+    memcpy(&PktBuf[Idx], ETH_TYPE, ETH_TYPE_LEN);
+    Idx+=ETH_TYPE_LEN;
+    PktBuf[Idx] = Cmd;
+    Idx+=sizeof(Cmd);
+    if (DataLen>0 && pData != NULL)
+    {
+        if (Idx+DataLen < sizeof(PktBuf))
+        {
+            memcpy(&PktBuf[Idx], pData, DataLen);
+            Idx+=DataLen;
+        }
+    }
+
+    PktBufLen = Idx;
+    BOOLEAN RetVal = SendPkt(PktBuf, PktBufLen);
+    if (RetVal == FALSE)
+    {
+        //g_AlwaysIgnoreAdslCmd = TRUE;
+        CreateAdslErrorFile("SEND", Cmd, pData, DataLen);
+        myprintf("TP_INIT : Err send\n");
+        return FALSE;
+    }
+
+    if (m_ShowPktLog)
+    {
+        LogPktToConsole(DIR_PC_TO_ADSL, PktBuf, PktBufLen);
+    }
+
+
+    USHORT RetRespLen;
+    *pRcvPktNum = 0;
+    //*pRespLen = 0;
+
+    int RespCnt = 0;
+
+    int TimeoutCnt;
+    for (TimeoutCnt = 0; TimeoutCnt<1200; TimeoutCnt++) //Ren
+    {
+        memset(pResp[RespCnt], 0, MAX_TC_RESP_BUF_LEN );//Ren
+        RetVal = RcvPkt(pResp[RespCnt], MaxRespLen, &RetRespLen);
+        if (RetVal)
+        {
+            if (RetRespLen == 0)
+            {
+                SleepMs(100);
+                continue;
+            }
+            else
+            {
+                if (m_ShowPktLog)
+                {
+                    LogPktToConsole(DIR_ADSL_TO_PC, pResp[RespCnt], RetRespLen);
+                }
+                int PromptReceived = FALSE;
+                if (WaitRespNumInput == 0)
+                {
+                    scanner_set(GET_RESP_STR(pResp[RespCnt]), GET_RESP_LEN(RetRespLen));
+                    while (1)
+                    {
+                        token tok = scanner();
+                        if (tok == TOKEN_EOF)
+                        {
+                            break;
+                        }
+                        if (tok == TOKEN_STRING)
+                        {
+                            char* pRespStr = scanner_get_str();
+                            if (strcmp(pRespStr,"504~511") == 0)
+                            {
+                                PromptReceived = TRUE;
+                            }
+                        }
+                    }
+                }
+                (*pRcvPktNum)+=1;
+                *(pRespLen[RespCnt])=RetRespLen;
+                RespCnt++;
+                if (RespCnt >= MaxResp) break;
+                // if we have received enough packet
+                if ((*pRcvPktNum) >= WaitRespNum || PromptReceived)
+                {
+#if 0
+                    //we wait 100 ms
+                    SleepMs(100);
+                    BOOLEAN CheckPendingRetVal = RcvPkt(pResp[RespCnt], MaxRespLen, &RetRespLen);
+                    if (CheckPendingRetVal && RetRespLen > 0)
+                    {
+                        myprintf("*** Pended packet to received ***\r\n");
+                    }
+#endif
+                    break;
+                }
+                SleepMs(100);
+                continue;
+            }
+        }
+        else
+        {
+            //g_AlwaysIgnoreAdslCmd = TRUE;
+            CreateAdslErrorFile("RECV", Cmd, pData, DataLen);
+            myprintf("TP_INIT : RCV failed !!\n");
+            return FALSE;
+        }
+    }
+
+    if (m_ShowPktLog)
+    {
+        myprintf("*** RESP : %d\n",*pRcvPktNum);
+    }
     return TRUE;
 }
 
@@ -555,6 +711,7 @@ void init_resp_buf(PUCHAR pRespBuf[], PUSHORT pRespLen[])
     int i;
     for (i=0; i<MAX_RESP_BUF_NUM; i++)
     {
+        memset( &m_RespBuf[i], 0, sizeof(m_RespBuf[i]) );//Ren: Fix bug#226.
         pRespBuf[i] = &m_RespBuf[i][0];
         pRespLen[i] = &m_RespLen[i];
     }
@@ -1426,6 +1583,8 @@ static ADSL_ACTUAL_ANNEX_MODE m_AnnexSts; //Paul add 2012/4/21
 
 void UpdateAllAdslSts(int cnt, int from_ate)
 {
+		char timestampstr[32];
+
     if (from_ate == 0)
     {
         memset(&m_SysTraffic, 0, sizeof(m_SysTraffic));
@@ -1495,27 +1654,44 @@ void UpdateAllAdslSts(int cnt, int from_ate)
         fclose(fp);
         return;
     }
+		
+		/* Paul add 2012/12/25 */
+		if (strcmp(m_SysSts.LineState,"3") == 0 && uptime_Saved == 0)
+		{
+			timestamp = adsluptime();
+			memset(timestampstr, 0, 32);
+			sprintf(timestampstr, "%lu", timestamp);
+			nvram_set("adsl_timestamp", timestampstr);
+			uptime_Saved = 1;
+		}
+		else if (strcmp(m_SysSts.LineState,"3") != 0)
+		{
+			if(uptime_Saved == 1)
+				nvram_set("adsl_timestamp", "");
 
+			uptime_Saved = 0;	
+		}
 
     if (strcmp(m_SysSts.LineState,"0") == 0)
     {
-		nvram_adslsts("down");
-		nvram_adslsts_detail("down");
+			nvram_adslsts("down");
+			nvram_adslsts_detail("down");
     }
     else if (strcmp(m_SysSts.LineState,"1") == 0)
     {
-		nvram_adslsts("wait for init"); //Paul modify 2012/6/19
-		nvram_adslsts_detail("wait_for_init");
+			nvram_adslsts("wait for init"); //Paul modify 2012/6/19
+			nvram_adslsts_detail("wait_for_init");
     }
     else if (strcmp(m_SysSts.LineState,"2") == 0)
     {
-		nvram_adslsts("init"); //Paul modify 2012/6/19
-		nvram_adslsts_detail("init");
+			nvram_adslsts("init"); //Paul modify 2012/6/19
+			nvram_adslsts_detail("init");
     }
-    else if (strcmp(m_SysSts.LineState,"3") == 0)
+    //else if (strcmp(m_SysSts.LineState,"3") == 0) //Paul comment 2012/11/21 for now
+    else
     {
-		nvram_adslsts("up");
-		nvram_adslsts_detail("up");
+			nvram_adslsts("up");
+			nvram_adslsts_detail("up");
     }
 
 	if (m_DbgOutputRedirectToFile) return;
@@ -1527,10 +1703,11 @@ void UpdateAllAdslSts(int cnt, int from_ate)
     fp = fopen("/tmp/adsl/adsllog.log","wb");
 #endif
     if (fp == NULL) return;
-
-    char buf[64];
-    sprintf(buf, "Update Counter : %d\n", cnt);
-    fputs(buf,fp);
+		
+		//Paul comment 2012/12/4, no need counter.
+    //char buf[64];
+    //sprintf(buf, "Update Counter : %d\n", cnt);
+    //fputs(buf,fp);
     fputs("Modulation : ",fp);
     fputs(m_SysSts.Modulation,fp);
     fputs("\n",fp);
@@ -1988,6 +2165,202 @@ int RestoreDefault()
     }
     return ret;
 }
+
+//Ren.B
+int getBitsPerCarrier()
+{
+	char UserCmd[256] = {0};
+	FILE *bpc_fp = NULL;
+	int i;
+
+	disable_polling();
+	wait_polling_stop();
+
+	strcpy(UserCmd, "wan adsl linedata far");
+	strcat(UserCmd, END_SYMBOL);
+	declare_resp_handling_vars(pRespBuf, pRespLen, RespPktNum, tok, pRespStr);
+	SendCmdAndWaitResp(pRespBuf, MAX_RESP_BUF_SIZE, pRespLen, MAX_RESP_BUF_NUM, &RespPktNum, m_AdslMacAddr,
+	MAC_RTS_CONSOLE_CMD, (PUCHAR)UserCmd, strlen(UserCmd), 0);
+
+	unlink(FILE_NAME_GET_BPC);
+	bpc_fp = fopen( FILE_NAME_GET_BPC, "w" );
+	if( !bpc_fp )
+	{
+		fprintf(stderr, "Cannot open [%s]\n", FILE_NAME_GET_BPC );
+		enable_polling();
+		return -1;
+	}
+	
+	for(i=0; i<RespPktNum; i++)
+	{
+		scanner_set(GET_RESP_STR(pRespBuf[i]), GET_RESP_LEN(*pRespLen[i]));
+		if( strncmp( GET_RESP_STR(pRespBuf[i]), "tc>", 3 ) )
+		{
+			fputs( GET_RESP_STR(pRespBuf[i]), bpc_fp );
+		}
+	}
+
+	fclose(bpc_fp);
+
+	sprintf(UserCmd, "sed '1,6d' %s > %s", FILE_NAME_GET_BPC, TMP_FILE_NAME_GET_BPC ); //Ren
+	system(UserCmd);
+	sprintf(UserCmd, "sed -i 's/^..............//' %s", TMP_FILE_NAME_GET_BPC ); //"tone   0- 31: 00 12 34 56" => "00 12 34 56" (cut initial 14 bytes)
+	system(UserCmd);
+	sprintf(UserCmd, "sed -i 's/ //g' %s", TMP_FILE_NAME_GET_BPC ); //"00 12 34 56" => "00123456"
+	system(UserCmd);
+	sprintf(UserCmd, "sed -i ':a;N;$!ba;s/\\n//g' %s", TMP_FILE_NAME_GET_BPC ); //delete 'newline'.
+	system(UserCmd);
+	sprintf(UserCmd, "sed -i 's/./&\\n/g' %s", TMP_FILE_NAME_GET_BPC ); //"00123456" becomes a single column.
+	system(UserCmd);
+	sprintf(UserCmd, "sed -i '$d' %s", TMP_FILE_NAME_GET_BPC ); //delete last row (empty row).
+	system(UserCmd);
+	
+	enable_polling();
+	return 0;
+}
+
+//obsoletes getSNR_ADSL1 and getSNR_ADSL2_PLUS
+int getSNR()
+{
+	char UserCmd[256] = {0};
+	FILE *snr_fp = NULL;
+	int i;
+
+	disable_polling();
+	wait_polling_stop();
+
+	strcpy(UserCmd, "wan adsl snr");
+	strcat(UserCmd, END_SYMBOL);
+	declare_resp_handling_vars(pRespBuf, pRespLen, RespPktNum, tok, pRespStr);
+	SendCmdAndWaitResp(pRespBuf, MAX_RESP_BUF_SIZE, pRespLen, MAX_RESP_BUF_NUM, &RespPktNum, m_AdslMacAddr,
+	MAC_RTS_CONSOLE_CMD, (PUCHAR)UserCmd, strlen(UserCmd), 0);
+
+	unlink(FILE_NAME_GET_SNR);
+	snr_fp = fopen( FILE_NAME_GET_SNR, "w" );
+	if( !snr_fp )
+	{
+		fprintf(stderr, "Cannot open [%s]\n", FILE_NAME_GET_SNR );
+		enable_polling();
+		return -1;
+	}
+
+	for(i=0; i<RespPktNum; i++)
+	{
+		scanner_set(GET_RESP_STR(pRespBuf[i]), GET_RESP_LEN(*pRespLen[i]));
+		if( strncmp( GET_RESP_STR(pRespBuf[i]), "tc>", 3 ) )
+		{
+			fputs( GET_RESP_STR(pRespBuf[i]), snr_fp );
+		}
+	}
+
+	fclose(snr_fp);
+
+	sprintf(UserCmd, "sed -i '1d;2d' %s", FILE_NAME_GET_SNR ); //delete the first two rows.
+	system(UserCmd);
+	sprintf(UserCmd, "cat %s | awk '{print $1 \"\\t\" $2 \"\\t\" $3 \"\\t\" $4 \"\\t\" $5 \"\\t\" $6 \"\\t\" $7 \"\\t\" $8}' > %s", FILE_NAME_GET_SNR, TMP_FILE_NAME_GET_SNR ); //get "0.00    0.00    40.98   43.49   43.49   43.99   44.49   49.62"
+	system(UserCmd);
+	sprintf(UserCmd, "sed -i 's/\\t/\\n/g' %s", TMP_FILE_NAME_GET_SNR ); //translate every row to a single column.
+	system(UserCmd);
+	sprintf(UserCmd, "wc -l %s > %s", TMP_FILE_NAME_GET_SNR, "/tmp/adsl/snrlinecount" ); //just a debug record.
+	system(UserCmd);
+
+	enable_polling();
+	
+	return 0;
+}
+
+int getSNR_ADSL1()
+{
+	char UserCmd[256] = {0};
+	FILE *snr1_fp = NULL;
+	int i;
+
+	disable_polling();
+	wait_polling_stop();
+
+	strcpy(UserCmd, "wan dmt show snr");
+	strcat(UserCmd, END_SYMBOL);
+	declare_resp_handling_vars(pRespBuf, pRespLen, RespPktNum, tok, pRespStr);
+	SendCmdAndWaitResp(pRespBuf, MAX_RESP_BUF_SIZE, pRespLen, MAX_RESP_BUF_NUM, &RespPktNum, m_AdslMacAddr,
+	MAC_RTS_CONSOLE_CMD, (PUCHAR)UserCmd, strlen(UserCmd), 0);
+
+	unlink(FILE_NAME_GET_ADSL1);
+	snr1_fp = fopen( FILE_NAME_GET_ADSL1, "w" );
+	if( !snr1_fp )
+	{
+		fprintf(stderr, "Cannot open [%s]\n", FILE_NAME_GET_ADSL1 );
+		enable_polling();
+		return -1;
+	}
+
+	for(i=0; i<RespPktNum; i++)
+	{
+		scanner_set(GET_RESP_STR(pRespBuf[i]), GET_RESP_LEN(*pRespLen[i]));
+		if( strncmp( GET_RESP_STR(pRespBuf[i]), "tc>", 3 ) )
+		{
+			fputs( GET_RESP_STR(pRespBuf[i]), snr1_fp );
+		}
+	}
+
+	fclose(snr1_fp);
+
+	sprintf(UserCmd, "cat %s | awk 'NR>=2{print $1}' > %s", FILE_NAME_GET_ADSL1, TMP_FILE_NAME_GET_ADSL1 );
+	system(UserCmd);
+	sprintf(UserCmd, "sed -i '1d;$d' %s", TMP_FILE_NAME_GET_ADSL1 ); //delete the first and the last row.
+	system(UserCmd);
+
+	enable_polling();
+
+	return 0;
+}
+
+int getSNR_ADSL2_PLUS()
+{
+	char UserCmd[256] = {0};
+	FILE *snr2_fp = NULL;
+	int i;
+
+	disable_polling();
+	wait_polling_stop();
+
+	strcpy(UserCmd, "wan dmt2 show snr");
+	strcat(UserCmd, END_SYMBOL);
+	declare_resp_handling_vars(pRespBuf, pRespLen, RespPktNum, tok, pRespStr);
+	SendCmdAndWaitResp2(pRespBuf, MAX_RESP_BUF_SIZE, pRespLen, MAX_RESP_BUF_NUM, &RespPktNum, m_AdslMacAddr,
+	MAC_RTS_CONSOLE_CMD, (PUCHAR)UserCmd, strlen(UserCmd), 0);
+
+	unlink(FILE_NAME_GET_ADSL2_PLUS);
+	snr2_fp = fopen( FILE_NAME_GET_ADSL2_PLUS, "w" );
+	if( !snr2_fp )
+	{
+		fprintf(stderr, "Cannot open [%s]\n", FILE_NAME_GET_ADSL2_PLUS );
+		enable_polling();
+		return -1;
+	}
+
+	for(i=0; i<RespPktNum; i++)
+	{
+		scanner_set(GET_RESP_STR(pRespBuf[i]), GET_RESP_LEN(*pRespLen[i]));
+		//if( strncmp( GET_RESP_STR(pRespBuf[i]), "tc>", 3 ) ) //Ren: because the output of this command is different from others.
+		{
+			fputs( GET_RESP_STR(pRespBuf[i]), snr2_fp );
+		}
+	}
+
+	fclose(snr2_fp);
+
+	sprintf(UserCmd, "sed -i '1d;2d;3d' %s", FILE_NAME_GET_ADSL2_PLUS ); //delete the first three rows.
+	system(UserCmd);
+	sprintf(UserCmd, "cat %s | awk '{print $1 \"\\t\" $2 \"\\t\" $3 \"\\t\" $4 \"\\t\" $5 \"\\t\" $6 \"\\t\" $7 \"\\t\" $8}' > %s", FILE_NAME_GET_ADSL2_PLUS, TMP_FILE_NAME_GET_ADSL2_PLUS ); //get "0.00    0.00    40.98   43.49   43.49   43.99   44.49   49.62"
+	system(UserCmd);
+	sprintf(UserCmd, "sed -i 's/\\t/\\n/g' %s", TMP_FILE_NAME_GET_ADSL2_PLUS ); //translate every row to a single column.
+	system(UserCmd);
+
+	enable_polling();
+
+	return 0;
+}
+//Ren.E
 
 int SetQosToPvc(int idx, int SvcCat, int Pcr, int Scr, int Mbs)
 {

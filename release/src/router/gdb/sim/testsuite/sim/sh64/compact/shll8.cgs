@@ -1,0 +1,38 @@
+# sh testcase for shll8 $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global shll8
+shll8:
+	mov #1, r1
+	shll8 r1
+	shll8 r1
+	shll8 r1
+	shll8 r1
+	assert r1, #0
+
+another:
+	mov #1, r1
+	shll8 r1
+	mov #1, r7
+	shll r7
+	shll r7
+	shll r7
+	shll r7
+	shll r7
+	shll r7
+	shll r7
+	shll r7
+	cmp/eq r1, r7
+	bf wrong
+
+okay:
+	pass
+
+wrong:
+	fail

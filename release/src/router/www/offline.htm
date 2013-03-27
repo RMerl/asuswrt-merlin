@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+		<title><% nvram_get("productid"); %></title>
+		<style type="text/css">
+  		.linkTo{
+		    text-shadow: 0px 1px 0px white;
+		    font-weight: bolder;
+		    font-size: 28px;
+		    margin-left: 40px;
+				font-family:Segoe UI, Georgia, sans-serif;
+        color: #000;				
+				line-height: 40px;
+				text-align: left;
+			}
+		</style>
+	<script>
+			function initial(){
+				var based_modelid = "<% nvram_get("productid"); %>";
+				document.getElementById('desc1').innerHTML = "A change has been made, causing disconnection to setting page.<br>";
+				document.getElementById('desc1').innerHTML += "You may made the change in changing IP address, changing port number or disconnecting Wi-Fi to "+based_modelid+".<br>";
+				document.getElementById('desc1').innerHTML += "Please re-connect Wi-Fi and use modified IP address and port number to access setting page of "+based_modelid+".";
+			}	
+		
+ 	</script>
+</head>
+	<body style="text-align:center;background: #DDD" onload="initial();">
+    <div style="margin-top:100px;width:70%;margin-left:15%">
+      <div class="linkTo" id="desc1"></div> 
+    </div>
+	</body>
+</html>

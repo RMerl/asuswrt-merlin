@@ -199,6 +199,7 @@
 #define	BCM4320_CHIP_ID		0x4320		/* 4320 chipcommon chipid */
 #define	BCM4321_CHIP_ID		0x4321		/* 4321 chipcommon chipid */
 #define	BCM4322_CHIP_ID		0x4322		/* 4322 chipcommon chipid */
+#define	BCM43217_CHIP_ID	43217		/* 43217 chip id (OTP chipid) */
 #define	BCM43221_CHIP_ID	43221		/* 43221 chipcommon chipid (OTP chipid) */
 #define	BCM43222_CHIP_ID	43222		/* 43222 chipcommon chipid */
 #define	BCM43224_CHIP_ID	43224		/* 43224 chipcommon chipid */

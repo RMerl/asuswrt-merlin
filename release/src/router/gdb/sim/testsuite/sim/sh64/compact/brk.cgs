@@ -1,0 +1,18 @@
+# sh testcase for brk -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+	.global brk
+brk:
+	# If we hit the breakpoint, the sim will stop.
+	pass
+
+	# FIXME: breakpoint instruction.
+	# The SH4 assembler doesn't know about "brk".
+	.word 0x003b
+bad:
+	fail

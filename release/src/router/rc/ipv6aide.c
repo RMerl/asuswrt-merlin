@@ -49,14 +49,17 @@ static void ipv6aide_check(int sig)
 {
 	char tmp[64];
 	char *p = NULL;
-	char *q;
+	char *q, *r;
 
 	if (get_ipv6_service() != IPV6_NATIVE_DHCP)
 		goto END;
 
 	memset(tmp, 0, sizeof(tmp));
 	q = tmp;
-	p = strtok_r(ipv6_gateway_address(), " ", &q);
+	r = strdup(ipv6_gateway_address());
+	if (!r)
+		return;
+	p = strtok_r(r, " ", &q);
 
 	if (!p || !strlen(p) || !strlen(q))
 	{
@@ -66,6 +69,7 @@ static void ipv6aide_check(int sig)
 
 	dbG("ipv6 gateway: %s (dev %s)\n", p, q);
 	eval("route", "-A", "inet6", "add", "2000::/3", "gw", p, "dev", q);
+	free(r);
 END:
 	ipv6aide_exit(sig);
 }

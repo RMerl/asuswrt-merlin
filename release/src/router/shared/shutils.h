@@ -137,12 +137,12 @@ static inline char * strcat_r(const char *s1, const char *s2, char *buf)
 /* Simple version of _eval() (no timeout and wait for child termination) */
 #if 1
 #define eval(cmd, args...) ({ \
-	char *argv[] = { cmd, ## args, NULL }; \
+	char * const argv[] = { cmd, ## args, NULL }; \
 	_eval(argv, NULL, 0, NULL); \
 })
 #else
 #define eval(cmd, args...) ({ \
-	char *argv[] = { cmd, ## args, NULL }; \
+	char * const argv[] = { cmd, ## args, NULL }; \
 	_eval(argv, ">/dev/console", 0, NULL); \
 })
 #endif

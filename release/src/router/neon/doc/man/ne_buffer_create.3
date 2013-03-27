@@ -1,0 +1,67 @@
+'\" t
+.\"     Title: ne_buffer_create
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_BUFFER_CREATE" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_buffer_create, ne_buffer_ncreate \- create a string buffer
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_alloc\&.h>
+.fi
+.ft
+.HP \w'ne_buffer\ *ne_buffer_create('u
+.BI "ne_buffer *ne_buffer_create(void);"
+.HP \w'ne_buffer\ *ne_buffer_ncreate('u
+.BI "ne_buffer *ne_buffer_ncreate(size_t\ " "size" ");"
+.SH "DESCRIPTION"
+.PP
+\fBne_buffer_create\fR
+creates a new buffer object, with an implementation\-defined initial size\&.
+\fBne_buffer_ncreate\fR
+creates an
+\fBne_buffer\fR
+where the minimum initial size is given in the
+\fIsize\fR
+parameter\&. The buffer created will contain the empty string ("")\&.
+.SH "RETURN VALUE"
+.PP
+Both functions return a pointer to a new buffer object, and never
+NULL\&.
+.SH "SEE ALSO"
+.PP
+ne_buffer
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

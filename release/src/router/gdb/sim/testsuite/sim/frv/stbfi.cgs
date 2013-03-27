@@ -1,0 +1,24 @@
+# frv testcase for stbfi $FRk,@($GRi,$GRj)
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global stbfi
+stbfi:
+	set_gr_gr	sp,gr20
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_fr_iimmed	0xffff,0xffff,fr8
+	stbfi		fr8,@(sp,0)
+	test_mem_limmed	0xffad,0xbeef,sp
+
+	inc_gr_immed	0x801,sp	; 2049
+	stbfi		fr8,@(sp,-2048)
+	test_mem_limmed	0xffff,0xbeef,gr20
+
+	inc_gr_immed	-4094,sp
+	stbfi		fr8,@(sp,0x7ff)
+	test_mem_limmed	0xffff,0xffef,gr20
+
+	pass

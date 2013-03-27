@@ -10,7 +10,7 @@
 #define DIR_PC_TO_ADSL 0
 #define DIR_ADSL_TO_PC 1
 
-#define MAX_RESP_BUF_NUM 24
+#define MAX_RESP_BUF_NUM 1024 //Ren:24 -> 1024
 #define MAX_RESP_BUF_SIZE 256
 
 

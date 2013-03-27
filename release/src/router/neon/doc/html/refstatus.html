@@ -1,0 +1,22 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>ne_status</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="ref.html" title="neon API reference"><link rel="prev" href="refclicert.html" title="ne_ssl_client_cert"><link rel="next" href="reftok.html" title="ne_token"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">ne_status</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="refclicert.html">Prev</a> </td><th width="60%" align="center">neon API reference</th><td width="20%" align="right"> <a accesskey="n" href="reftok.html">Next</a></td></tr></table><hr></div><div class="refentry" title="ne_status"><a name="refstatus"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ne_status — HTTP status structure</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="funcsynopsis"><pre class="funcsynopsisinfo">#include &lt;ne_utils.h&gt;
+
+typedef struct {
+    int major_version, minor_version;
+    int code, klass;
+    const char *reason_phrase;
+} <em class="type">ne_status</em>;</pre></div></div><div class="refsect1" title="Description"><a name="id464077"></a><h2>Description</h2><p>An <em class="type">ne_status</em> type represents an HTTP
+response status; used in response messages giving a result of request.
+The <em class="structfield"><code>major_version</code></em> and
+<em class="structfield"><code>minor_version</code></em> fields give the HTTP version
+supported by the server issuing the response.  The
+<em class="structfield"><code>code</code></em> field gives the status code of the
+result (lying between 100 and 999 inclusive), and the
+<em class="structfield"><code>klass</code></em> field gives the
+class<sup>[<a name="id464102" href="#ftn.id464102" class="footnote">2</a>]</sup>, which is equal to the most significant digit
+of the status.</p><p>There are five classes of HTTP status code defined by
+	RFC2616:</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><p><span class="term"><code class="literal">1xx</code></span></p></td><td>Informational response.</td></tr><tr><td><p><span class="term"><code class="literal">2xx</code></span></p></td><td>Success: the operation was successful</td></tr><tr><td><p><span class="term"><code class="literal">3xx</code></span></p></td><td>Redirection</td></tr><tr><td><p><span class="term"><code class="literal">4xx</code></span></p></td><td>Client
+	    error: the request made was incorrect in some
+	    manner.</td></tr><tr><td><p><span class="term"><code class="literal">5xx</code></span></p></td><td>Server error</td></tr></tbody></table></div></div><div class="refsect1" title="See also"><a name="id464196"></a><h2>See also</h2><p><a class="xref" href="refgetst.html#ne_get_status">ne_get_status</a>.</p></div><div class="footnotes"><br><hr width="100" align="left"><div class="footnote"><p><sup>[<a id="ftn.id464102" href="#id464102" class="para">2</a>] </sup>the field is named <span class="quote">“<span class="quote">klass</span>”</span> not
+<span class="quote">“<span class="quote">class</span>”</span> so that the header can be used from a C++
+program, in which <span class="quote">“<span class="quote">class</span>”</span> is a reserved
+word)</p></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="refclicert.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ref.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="reftok.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">ne_ssl_client_cert </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> ne_token</td></tr></table></div></body></html>

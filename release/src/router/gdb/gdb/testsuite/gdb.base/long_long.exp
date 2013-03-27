@@ -1,0 +1,342 @@
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# long_long.exp   Test printing of 64-bit things in 32-bit gdb.
+#                 Also test differnet kinds of formats.
+#
+if $tracelevel then {
+	strace $tracelevel
+}
+
+if [target_info exists no_long_long] {
+    return 0
+}
+
+set testfile long_long
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+# What compiler are we using?
+#
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+if {$hp_cc_compiler} {
+    set flag "+e"
+} else {
+    set flag ""
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [concat debug additional_flags=$flag nowarnings]] != "" } {
+     untested long_long.exp
+     return -1
+}
+
+# use this to debug:
+#log_user 1
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if { ![runto known_types] } then { 
+   fail "run to known_types" 
+   return 
+}
+
+set target_bigendian_p 1
+send_gdb "show endian\n"
+gdb_expect {
+    -re "little endian.*$gdb_prompt $" { set target_bigendian_p 0 }
+    -re "big endian.*$gdb_prompt $" { }
+    -re "$gdb_prompt $" {
+	 fail "getting target endian"
+    }
+    default	{ fail "(timeout) getting target endian" }
+}
+
+# Detect the size of the target's basic types.
+
+proc get_valueof { fmt exp default } {
+    global gdb_prompt
+    send_gdb "print${fmt} ${exp}\n"
+    gdb_expect {
+	-re "\\$\[0-9\]* = (\[-\]*\[0-9\]*).*$gdb_prompt $" {
+	    set val $expect_out(1,string)
+	    pass "get value of ${exp} ($val)"
+	}
+	timeout {
+	    set size ${default}
+	    fail "get value of ${exp} (timeout)"
+	}
+    }
+    return ${val}
+}
+
+proc get_sizeof { type default } {
+    return [get_valueof "/d" "sizeof (${type})" $default]
+}
+
+set sizeof_char [get_sizeof "char" 1]
+set sizeof_short [get_sizeof "short" 2]
+set sizeof_int [get_sizeof "int" 4]
+set sizeof_long [get_sizeof "long" 4]
+set sizeof_long_long [get_sizeof "long long" 8]
+set sizeof_data_ptr [get_sizeof "void *" 4]
+set sizeof_double [get_sizeof "double" 8]
+set sizeof_long_double [get_sizeof "long double" 8]
+
+# Tests to handle ISA/ABI variants
+
+proc pat2 { n pats } {
+    set i 0
+    while { $n > 1 } {
+	set n [expr $n / 2]
+	incr i
+    }
+    return [lindex $pats $i]
+}
+
+proc gdb_test_xxx { test pat name } {
+    if { $pat == "" } {
+	setup_kfail *-*-* gdb/1672
+	gdb_test $test "xxx" $name
+    } else {
+	gdb_test $test $pat $name
+    }
+}
+
+proc gdb_test_bi { test be le } {
+    global target_bigendian_p
+
+    if { $target_bigendian_p } {
+	gdb_test_xxx $test $be $test
+    } else {
+	gdb_test_xxx $test $le $test
+    }
+}
+
+proc gdb_test_ptr { test args } {
+    global sizeof_data_ptr
+
+    gdb_test_xxx $test [pat2 $sizeof_data_ptr $args] $test
+}
+
+proc gdb_test_xptr { examine args } {
+    global sizeof_data_ptr
+    set x [pat2 $sizeof_data_ptr $args]
+    # X is of the form { VARIABLE PATTERN }
+    gdb_test_xxx "$examine [lindex $x 0]" [lindex $x 1] "$examine"
+}
+
+proc gdb_test_char { test args } {
+    global sizeof_char
+    gdb_test_xxx $test [pat2 $sizeof_char $args] $test
+}
+
+proc gdb_test_short { test args } {
+    global sizeof_short
+    gdb_test_xxx $test [pat2 $sizeof_short $args] $test
+}
+
+proc gdb_test_int { test args } {
+    global sizeof_int
+    gdb_test_xxx $test [pat2 $sizeof_int $args] $test
+}
+
+proc gdb_test_long { test args } {
+    global sizeof_long
+    gdb_test_xxx $test [pat2 $sizeof_long $args] $test
+}
+
+proc gdb_test_long_long { test args } {
+    global sizeof_long_long
+    gdb_test_xxx $test [pat2 $sizeof_long_long $args] $test
+}
+
+gdb_breakpoint [gdb_get_line_number "Stop here and look"]
+gdb_continue_to_breakpoint "Stop here and look"
+
+# Check the hack for long long prints.
+#
+gdb_test "p/x val.hex" "0x0*0" "hex print p/x"
+gdb_test "p/x val.dec" "0xab54a98ceb1f0ad2" "decimal print p/x"
+# see if 'p/<code>' is handled same as 'p /<code>'
+#
+gdb_test "p /x val.dec" "0xab54a98ceb1f0ad2" "default print val.dec"
+gdb_test "p /x val.bin" "0x123456789abcdef" "default print val.bin"
+gdb_test "p /x val.oct" "0xa72ee53977053977" "default print val.oct"
+gdb_test "p val.hex" "= 0" "default print hex"
+
+gdb_test "p/u val.dec" "12345678901234567890" "decimal print p/u"
+gdb_test "p/t val.bin" "100100011010001010110011110001001101010111100110111101111" "binary print"
+gdb_test "p/o val.oct" "01234567123456701234567" "octal print"
+gdb_test "p /d val.bin" "81985529216486895" "print +ve long long"
+gdb_test "p/d val.dec" "-6101065172474983726" "decimal print p/d"
+
+# Try all the combinations to bump up coverage.
+#
+gdb_test "p/d val.oct" "-6399925985474168457"
+gdb_test "p/u val.oct" "12046818088235383159"
+gdb_test "p/o val.oct" ""
+gdb_test "p/t val.oct" "1010011100101110111001010011100101110111000001010011100101110111"
+gdb_test_ptr "p/a val.oct" "" "" "0x77053977" "0xa72ee53977053977"
+gdb_test "p/c val.oct" "'w'"
+
+if { $sizeof_double == 8 || $sizeof_long_double == 8 } {
+    # ARM FPA floating point numbers are not strictly little endian or big
+    # endian, but a hybrid.  They are in little endian format with the two
+    # words swapped in big endian format.
+    # EABI targets default to natural-endian VFP format.
+
+    if { ([istarget "arm*-*-*"] || \
+	  [istarget "xscale*-*-*"] || \
+	  [istarget "strongarm*-*-*"]) \
+	 && !([istarget "*-*-*eabi"] || \
+	      [istarget "*-*-openbsd*"] || \
+	      [istarget "*-*-symbianelf"]) } then {
+	# assume the long long represents a floating point double in ARM format
+	gdb_test "p/f val.oct" "2.1386676354387559e\\+265"
+    } else {
+	# assume the long long represents a floating point double in little
+	# endian format
+	gdb_test "p/f val.oct" "-5.9822653797615723e-120"
+    }
+} else {
+    gdb_test "p/f val.oct" "-2.42716126e-15"
+}
+
+gdb_test_char "p/x *(char *)c" "0x1"
+gdb_test_char "p/d *(char *)c" "1"
+gdb_test_char "p/u *(char *)c" "1"
+gdb_test_char "p/o *(char *)c" "01"
+gdb_test_char "p/t *(char *)c" "1"
+gdb_test_char "p/a *(char *)c" "0x1( <.*>)?"
+gdb_test_char "p/f *(char *)c" "1"
+gdb_test_char "p/c *(char *)c" "1 '.001'"
+
+gdb_test_short "p/x *(short *)s" "" "0x123" ""
+gdb_test_short "p/d *(short *)s" "" "291" ""
+gdb_test_short "p/u *(short *)s" "" "291" ""
+gdb_test_short "p/o *(short *)s" "" "0443" ""
+gdb_test_short "p/t *(short *)s" "" "100100011" ""
+gdb_test_short "p/a *(short *)s" "" "0x123( <.*>)?" ""
+gdb_test_short "p/f *(short *)s" "" "291" ""
+gdb_test_short "p/c *(short *)s" "" "35 '.'" ""
+
+gdb_test_int "p/x *(int *)i" "" "0x123" "0x1234567" ""
+gdb_test_int "p/d *(int *)i" "" "291" "19088743" ""
+gdb_test_int "p/u *(int *)i" "" "291" "19088743" ""
+gdb_test_int "p/o *(int *)i" "" "0443" "0110642547" ""
+gdb_test_int "p/t *(int *)i" "" "100100011" "1001000110100010101100111" ""
+gdb_test_int "p/a *(int *)i" "" "" "0x1234567" ""
+gdb_test_int "p/f *(int *)i" "" "291" "2.99881655e-38" ""
+gdb_test_int "p/c *(int *)i" "" "35 '.'" "103 'g'" ""
+
+gdb_test_long "p/x *(long *)l" "" "0x123" "0x1234567" "0x123456789abcdef"
+gdb_test_long "p/d *(long *)l" "" "291" "19088743" "81985529216486895"
+gdb_test_long "p/u *(long *)l" "" "291" "19088743" "81985529216486895"
+gdb_test_long "p/o *(long *)l" "" "0443" "0110642547" "04432126361152746757"
+gdb_test_long "p/t *(long *)l" "" "100100011" "1001000110100010101100111" "100100011010001010110011110001001101010111100110111101111"
+gdb_test_ptr "p/a *(long *)l" "" "" "0x1234567" "0x123456789abcdef"
+gdb_test_long "p/f *(long *)l" "" "291" "2.99881655e-38" "3.5127005640885037e-303"
+gdb_test_long "p/c *(long *)l" "" "35 '.'" "103 'g'" "-17 '.*'"
+
+gdb_test_long_long "p/x *(long long *)ll" "" "" "" "0x123456789abcdef"
+gdb_test_long_long "p/d *(long long *)ll" "" "" "" "81985529216486895"
+gdb_test_long_long "p/u *(long long *)ll" "" "" "" "81985529216486895"
+gdb_test_long_long "p/o *(long long *)ll" "" "" "" "04432126361152746757"
+gdb_test_long_long "p/t *(long long *)ll" "" "" "" "100100011010001010110011110001001101010111100110111101111"
+gdb_test_ptr "p/a *(long long *)ll" "" "" "0x89abcdef" "0x123456789abcdef"
+gdb_test_long_long "p/f *(long long *)ll" "" "" "" "3.5127005640885037e-303"
+gdb_test_long_long "p/c *(long long *)ll" "" "" "" "-17 '.*'"
+
+# Implict Word size (except for a, c, and f)
+
+gdb_test "x/w w" "" "set examine size to w"
+gdb_test "x/x w" "0x01234567"
+gdb_test "x/d w" "19088743"
+gdb_test "x/u w" "19088743"
+gdb_test "x/o w" "0110642547"
+gdb_test "x/t w" "00000001001000110100010101100111"
+gdb_test_xptr "x/a" { b "" } { h "" } { w "0x1234567" } { g "0x123456789abcdef" }
+gdb_test "x/c b" "1 '.001'"
+if { $sizeof_double == 8 || $sizeof_long_double == 8 } {
+    gdb_test "x/f &val.oct" "-5.9822653797615723e-120"
+} else {
+    gdb_test "x/f &val.oct" "-2.42716126e-15"
+}
+
+# Implict Giant size (except for a, c, and f)
+
+gdb_test "x/g g" "" "set examine size to g"
+gdb_test "x/2x g" "0x0123456789abcdef.*0xa72ee53977053977"
+gdb_test "x/2d g" "81985529216486895.*-6399925985474168457"
+gdb_test "x/2u g" "81985529216486895.*12046818088235383159"
+gdb_test "x/2o g" "04432126361152746757.*01234567123456701234567"
+gdb_test "x/2t g" "0000000100100011010001010110011110001001101010111100110111101111.*1010011100101110111001010011100101110111000001010011100101110111"
+gdb_test_xptr "x/2a" { b "" } { h "" } { w "0x1234567.*0xa72ee539" } { g "0x123456789abcdef.*0xa72ee53977053977" }
+gdb_test "x/2c b" "1 '.001'.*-89 '.'"
+if { $sizeof_double == 8 || $sizeof_long_double == 8 } {
+    gdb_test "x/2f &val.oct" "-5.9822653797615723e-120.*-5.9041889495880968e-100"
+} else {
+    gdb_test "x/2f &val.oct" "-2.42716126e-15"
+}
+
+# Explicit sizes, and two memory locations ...
+
+gdb_test "x/2bx b" "0x01.*0xa7"
+gdb_test "x/2bd b" "1.*-89"
+gdb_test "x/2bu b" "1.*167"
+gdb_test "x/2bo b" "01.*0247"
+gdb_test "x/2bt b" "00000001.*10100111"
+gdb_test_ptr "x/2ba b" "" "" "0x1.*0xffffffa7" "0x1.*0xffffffffffffffa7"
+gdb_test "x/2bc b" "1 '.001'.*-89 '.'"
+gdb_test "x/2bf b" "1.*-89"
+
+gdb_test "x/2hx h" "0x0123.*0xa72e"
+gdb_test "x/2hd h" "291.*-22738"
+gdb_test "x/2hu h" "291.*42798"
+gdb_test "x/2ho h" "0443.*0123456"
+gdb_test "x/2ht h" "0000000100100011.*1010011100101110"
+gdb_test_ptr "x/2ha h" "" ""  "0x123.*0xffffa72e" "0x123.*0xffffffffffffa72e"
+gdb_test "x/2hc h" "35 '.'.*46 '.'"
+gdb_test "x/2hf h" "291.*-22738"
+
+gdb_test "x/2wx w" "0x01234567.*0xa72ee539"
+gdb_test "x/2wd w" "19088743.*-1490098887"
+gdb_test "x/2wu w" "19088743.*2804868409"
+gdb_test "x/2wo w" "0110642547.*024713562471"
+gdb_test "x/2wt w" "00000001001000110100010101100111.*10100111001011101110010100111001"
+gdb_test_ptr "x/2wa w" "" ""  "0x1234567.*0xa72ee539" "0x1234567.*0xffffffffa72ee539"
+gdb_test "x/2wc w" "103 'g'.*57 '9'"
+gdb_test "x/2wf w" "2.99881655e-38.*-2.42716126e-15"
+
+gdb_test "x/2gx g" "0x0123456789abcdef.*0xa72ee53977053977"
+gdb_test "x/2gd g" "81985529216486895.*-6399925985474168457"
+gdb_test "x/2gu g" "81985529216486895.*12046818088235383159"
+gdb_test "x/2go g" "04432126361152746757.*01234567123456701234567"
+gdb_test "x/2gt g" "0000000100100011010001010110011110001001101010111100110111101111.*1010011100101110111001010011100101110111000001010011100101110111"
+gdb_test_ptr "x/2ga g" "" "" "0x89abcdef.*0x77053977" "0x123456789abcdef.*0xa72ee53977053977"
+gdb_test "x/2gc g" "-17 '.'.*119 'w'"
+gdb_test "x/2gf g" "3.5127005640885037e-303.*-5.9822653797615723e-120"
+
+gdb_exit
+return 0

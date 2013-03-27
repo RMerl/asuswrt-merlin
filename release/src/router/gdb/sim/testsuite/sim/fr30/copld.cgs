@@ -1,0 +1,21 @@
+# fr30 testcase for copld $u4,$cc,$Rj,CRi
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global copld
+copld:
+	; Test copld copld $u4,$cc,$Rj,CRi
+	; The current implementation is a noop
+	set_cc          0x0f		; Condition codes are irrelevent
+	copld      	0,0,r0,cr15
+	test_cc		1 1 1 1
+
+	set_cc          0x0e		; Condition codes are irrelevent
+	copld      	15,255,r15,cr0
+	test_cc		1 1 1 0
+
+	pass

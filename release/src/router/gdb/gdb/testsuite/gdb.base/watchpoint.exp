@@ -1,0 +1,814 @@
+# Copyright 1992, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Fred Fish. (fnf@cygnus.com)
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "watchpoint"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+set wp_set 1
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested watchpoint.exp
+     return -1
+}
+
+# Prepare for watchpoint tests by setting up two breakpoints and one
+# watchpoint.
+#
+# We use breakpoints at marker functions to get past all the startup code,
+# so we can get to the watchpoints in a reasonable amount of time from a
+# known starting point.
+#
+# For simplicity, so we always know how to reference specific breakpoints or
+# watchpoints by number, we expect a particular ordering and numbering of
+# each in the combined breakpoint/watchpoint table, as follows:
+#
+#	Number		What		Where
+#	1		Breakpoint	marker1()
+#	2		Breakpoint	marker2()
+#	3		Watchpoint	ival3
+
+proc initialize {} {
+    global gdb_prompt
+    global hex
+    global decimal
+    global srcfile
+    global wp_set
+
+    # Disable hardware watchpoints if necessary.
+    if [target_info exists gdb,no_hardware_watchpoints] {
+	gdb_test "set can-use-hw-watchpoints 0" "" ""
+    }
+
+    if [gdb_test "break marker1" "Breakpoint 1 at $hex: file .*$srcfile, line $decimal.*" "set breakpoint at marker1" ] { 
+      return 0; 
+    }
+
+
+    if [gdb_test "break marker2" "Breakpoint 2 at $hex: file .*$srcfile, line $decimal.*" "set breakpoint at marker2" ] { 
+      return 0; 
+    }
+
+
+    if [gdb_test "info break" "1\[ \]*breakpoint.*marker1.*\r\n2\[ \]*breakpoint.*marker2.*" "info break in watchpoint.exp" ] { 
+      return 0; 
+    }
+
+
+    # ??rehrauer: To fix DTS #CHFts23014, in which setting a watchpoint
+    # before running can cause the inferior to croak on HP-UX 11.0 for
+    # reasons yet unknown, we've disabled the ability to set watches
+    # without a running inferior.  Verify the restriction. 
+    #
+    send_gdb "watch ival3\n"
+    gdb_expect {
+        -re ".*\[Ww\]atchpoint 3: ival3.*$gdb_prompt $" {
+            pass "set watchpoint on ival3"
+        }
+        -re "warning: can't do that without a running program; try \"break main\", \"run\" first.*$gdb_prompt $" {
+            pass "set watchpoint on ival3"
+            set wp_set 0
+            return 1
+        }
+        timeout {
+            fail "(timeout) set watchpoint on ival3"
+            return 0
+        }
+    }
+
+    # "info watch" is the same as "info break"
+
+    if [gdb_test "info watch" "1\[ \]*breakpoint.*marker1.*\r\n2\[ \]*breakpoint.*marker2.*\r\n3\[ \]*.*watchpoint.*ival3" "watchpoint found in watchpoint/breakpoint table" ] { 
+      return 0; 
+    }
+
+
+    # After installing the watchpoint, we disable it until we are ready
+    # to use it.  This allows the test program to run at full speed until
+    # we get to the first marker function.
+
+    if [gdb_test "disable 3" "disable 3\[\r\n\]+" "disable watchpoint" ] { 
+      return 0; 
+    }
+
+
+    return 1
+}
+
+#
+# Test simple watchpoint.
+#
+
+proc test_simple_watchpoint {} {
+    global gdb_prompt
+    global hex
+    global decimal
+    global wp_set
+
+    # Ensure that the watchpoint is disabled when we startup.
+
+    if { $wp_set } {
+        if [gdb_test "disable 3" "^disable 3\[\r\n\]+" "disable watchpoint in test_simple_watchpoint" ] { 
+	    return 0; 
+	}
+    }
+
+
+    # Run until we get to the first marker function.
+
+    gdb_run_cmd
+    set timeout 600
+    gdb_expect {
+	-re "Breakpoint 1, marker1 .*$gdb_prompt $" {
+	    pass "run to marker1 in test_simple_watchpoint"
+	}
+	-re ".*$gdb_prompt $" {
+	    fail "run to marker1 in test_simple_watchpoint"
+	    return
+	}
+	timeout {
+	    fail "run to marker1 in test_simple_watchpoint (timeout)"
+	    return
+	}
+    }
+
+    if { !$wp_set } {
+	# ??rehrauer: To fix DTS #CHFts23014, in which setting a watchpoint
+	# before running can cause the inferior to croak on HP-UX 11.0
+	# for reasons yet unknown, we've disabled the ability to set 
+	# watches without a running inferior.  The following testpoints used
+	# to be in [initialize].
+	#
+	send_gdb "watch ival3\n"
+	gdb_expect {
+	    -re ".*\[Ww\]atchpoint 3: ival3\r\n$gdb_prompt $" { 
+	        pass "set watchpoint on ival3"
+	    }
+	    -re ".*$gdb_prompt $" { fail "set watchpoint on ival3"  }
+	    timeout { fail "set watchpoint on ival3 (timeout)"  }
+	}
+
+        set wp_set 1
+
+	# "info watch" is the same as "info break"
+
+	send_gdb "info watch\n"
+	gdb_expect {
+	    -re "1\[ \]*breakpoint.*marker1.*\r\n2\[ \]*breakpoint.*marker2.*\r\n3\[ \]*.*watchpoint.*ival3\r\n$gdb_prompt $" {
+	        pass "watchpoint found in watchpoint/breakpoint table"
+	    }
+	    -re ".*$gdb_prompt $" {
+	        fail "watchpoint found in watchpoint/breakpoint table"
+	    }
+	    timeout {
+	       fail "watchpoint found in watchpoint/breakpoint table"
+	    }
+	}
+
+	# After installing the watchpoint, we disable it until we are ready
+	# to use it.  This allows the test program to run at full speed until
+	# we get to the first marker function.
+
+	send_gdb "disable 3\n"
+	gdb_expect {
+	    -re "disable 3\[\r\n\]+$gdb_prompt $" { pass "disable watchpoint" }
+	    -re ".*$gdb_prompt $" { fail "disable watchpoint"  }
+	    timeout { fail "disable watchpoint (timeout)"  }
+	}
+    }
+
+    # After reaching the marker function, enable the watchpoint.
+
+    if [gdb_test "enable 3" "^enable 3\[\r\n\]+" "enable watchpoint" ] { 
+      return ; 
+    }
+
+
+    gdb_test "break func1" "Breakpoint.*at.*"
+    gdb_test "set \$func1_breakpoint_number = \$bpnum" ""
+
+    gdb_test "continue" "Continuing.*Breakpoint \[0-9\]*, func1.*" \
+	"continue to breakpoint at func1"
+
+    # Continue until the first change, from -1 to 0
+
+    send_gdb "cont\n"
+    gdb_expect {
+	-re "Continuing.*\[Ww\]atchpoint.*ival3.*Old value = -1.*New value = 0.*ival3 = count; ival4 = count;.*$gdb_prompt $" {
+	    pass "watchpoint hit, first time"
+	}
+	-re "Continuing.*Breakpoint.*func1.*$gdb_prompt $" {
+	    setup_xfail "m68*-*-*" 2597
+	    fail "thought it hit breakpoint at func1 twice"
+	    gdb_test "delete \$func1_breakpoint_number" ""
+	    gdb_test "continue" "\
+Continuing.*\[Ww\]atchpoint.*ival3.*Old value = -1.*New value = 0.*ival3 = count;" \
+		"watchpoint hit, first time"
+	}
+	-re ".*$gdb_prompt $" { fail "watchpoint hit, first time" ; return }
+	timeout { fail "watchpoint hit, first time (timeout)" ; return }
+	eof { fail "watchpoint hit, first time (eof)" ; return }
+    }
+
+    # Check that the hit count is reported correctly
+    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 1 time.*" "Watchpoint hit count is 1"
+
+    gdb_test "delete \$func1_breakpoint_number" ""
+
+    # Continue until the next change, from 0 to 1.
+    gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ival3.*Old value = 0.*New value = 1.*ival3 = count; ival4 = count;.*" "watchpoint hit, second time"
+
+    # Check that the hit count is reported correctly
+    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 2 times.*" "Watchpoint hit count is 2"
+
+    # Continue until the next change, from 1 to 2.
+    gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ival3.*Old value = 1.*New value = 2.*ival3 = count; ival4 = count;.*" "watchpoint hit, third time"
+
+    # Check that the hit count is reported correctly
+    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 3 times.*" "Watchpoint hit count is 3"
+    
+    # Continue until the next change, from 2 to 3.
+    gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ival3.*Old value = 2.*New value = 3.*ival3 = count; ival4 = count;.*" "watchpoint hit, fourth time"
+
+    # Check that the hit count is reported correctly
+    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 4 times.*" "Watchpoint hit count is 4"
+
+    # Continue until the next change, from 3 to 4.
+    # Note that this one is outside the loop.
+
+    gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ival3.*Old value = 3.*New value = 4.*ival3 = count; ival4 = count;.*" "watchpoint hit, fifth time"
+
+    # Check that the hit count is reported correctly
+    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 5 times.*" "Watchpoint hit count is 5"
+
+    # Continue until we hit the finishing marker function.
+    # Make sure we hit no more watchpoints.
+
+    gdb_test "cont" "Continuing.*Breakpoint.*marker2 \(\).*" \
+	"continue to marker2"
+
+    # Disable the watchpoint so we run at full speed until we exit.
+
+    if [gdb_test "disable 3" "^disable 3\[\r\n\]+" "watchpoint disabled" ] { 
+      return ; 
+    }
+
+
+    # Run until process exits.
+
+    if [target_info exists gdb,noresults] { return }
+
+    gdb_continue_to_end "continue to exit in test_simple_watchpoint"
+}
+
+# Test disabling watchpoints.
+
+proc test_disabling_watchpoints {} {
+    global gdb_prompt
+    global binfile
+    global srcfile
+    global decimal
+    global hex
+
+    # "info watch" is the same as "info break"
+    gdb_test "info watch" "\[0-9\]+\[ \]*breakpoint.*marker1.*\r\n\[0-9\]+\[ \]*breakpoint.*marker2.*\r\n\[0-9]+\[ \]*.*watchpoint.*ival3\r\n\.*\[0-9\]+ times.*" "watchpoints found in watchpoint/breakpoint table"
+
+    # Ensure that the watchpoint is disabled when we startup.
+
+    if [gdb_test "disable 3" "^disable 3\[\r\n\]+" "disable watchpoint in test_disabling_watchpoints" ] { 
+      return 0; 
+    }
+
+
+    # Run until we get to the first marker function.
+
+    gdb_run_cmd
+    set timeout 600
+    gdb_expect {
+	-re "Breakpoint 1, marker1 .*$gdb_prompt $" {
+	    pass "run to marker1 in test_disabling_watchpoints"
+	}
+	-re ".*$gdb_prompt $" {
+	    fail "run to marker1 in test_disabling_watchpoints"
+	    return
+	}
+	timeout {
+	    fail "run to marker1 in test_disabling_watchpoints (timeout)"
+	    return
+	}
+    }
+
+    # After reaching the marker function, enable the watchpoint.
+
+    if [gdb_test "enable 3" "^enable 3\[\r\n\]+" "watchpoint enabled" ] { 
+      return ; 
+    }
+
+
+    # Continue until the first change, from -1 to 0
+    # Don't check the old value, because on VxWorks the variable value
+    # will not have been reinitialized.
+    gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ival3.*Old value = .*New value = 0.*ival3 = count; ival4 = count;.*" "watchpoint hit in test_disabling_watchpoints, first time"
+    
+    # Continue until the next change, from 0 to 1.
+    gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ival3.*Old value = 0.*New value = 1.*ival3 = count; ival4 = count;.*" "watchpoint hit in test_disabling_watchpoints, second time"
+    
+    # Disable the watchpoint but leave breakpoints
+
+    if [gdb_test "disable 3" "^disable 3\[\r\n\]+" "disable watchpoint #2 in test_disabling_watchpoints" ] { 
+      return 0; 
+    }
+
+
+    # Check watchpoint list, looking for the entry that confirms the
+    # watchpoint is disabled.
+    gdb_test "info watchpoints" "\[0-9]+\[ \]*.*watchpoint\[ \]*keep\[ \]*n\[ \]*ival3\r\n.*" "watchpoint disabled in table"
+
+    # Continue until we hit the finishing marker function.
+    # Make sure we hit no more watchpoints.
+    gdb_test "cont" "Continuing.*Breakpoint.*marker2 \\(\\).*" \
+	"disabled watchpoint skipped"
+    
+    if [target_info exists gdb,noresults] { return }
+
+    gdb_continue_to_end "continue to exit in test_disabling_watchpoints"
+}
+
+# Test stepping and other mundane operations with watchpoints enabled
+proc test_stepping {} {
+    global gdb_prompt
+
+    if [runto marker1] then {
+	gdb_test "watch ival2" ".*\[Ww\]atchpoint \[0-9\]*: ival2"
+
+	# Well, let's not be too mundane.  It should be a *bit* of a challenge
+	gdb_test "break func2 if 0" "Breakpoint.*at.*"
+	gdb_test "p \$func2_breakpoint_number = \$bpnum" " = .*"
+
+	gdb_test "p func1 ()" "= 73" \
+	    "calling function with watchpoint enabled"
+
+	# 
+	# "finish" brings us back to main.
+	# On some targets (e.g. alpha) gdb will stop from the finish in midline
+	# of the marker1 call. This is due to register restoring code on
+	# the alpha and might be caused by stack adjustment instructions
+	# on other targets. In this case we will step once more.
+	#
+
+	send_gdb "finish\n"
+	gdb_expect {
+	    -re "Run.*exit from.*marker1.* at" {
+		pass "finish from marker1"
+	    }
+	    default { fail "finish from marker1 (timeout)" ; return }
+	}
+
+	gdb_expect {
+	    -re "marker1 \\(\\);.*$gdb_prompt $" {
+		send_gdb "step\n"
+		exp_continue
+	    }
+	    -re "func1 \\(\\);.*$gdb_prompt $" {
+		pass "back at main from marker1"
+	    }
+	    -re ".*$gdb_prompt $" {
+		fail "back at main from marker1"
+	    }
+	    default { fail "back at main from marker1 (timeout)" ; return }
+	}
+
+	gdb_test "next" "for \\(count = 0.*" "next to `for' in watchpoint.exp"
+
+	# Now test that "until" works.  It's a bit tricky to test
+	# "until", because compilers don't always arrange the code
+	# exactly the same way, and we might get slightly different
+	# sequences of statements.  But the following should be true
+	# (if not it is a compiler or a debugger bug): The user who
+	# does "until" at every statement of a loop should end up
+	# stepping through the loop once, and the debugger should not
+	# stop for any of the remaining iterations.
+
+	gdb_test "until" "ival1 = count.*" "until to ival1 assignment"
+	gdb_test "until" "ival3 = count.*" "until to ival3 assignment"
+	send_gdb "until\n"
+	gdb_expect {
+	    -re "(for \\(count = 0|\}).*$gdb_prompt $" {
+		gdb_test "until" "ival1 = count; /. Outside loop ./" \
+		    "until out of loop"
+	    }
+	    -re "ival1 = count; /. Outside loop ./.*$gdb_prompt $" {
+		pass "until out of loop"
+	    }
+	    -re ".*$gdb_prompt $" {
+		fail "until out of loop"
+	    }
+	    default { fail "until out of loop (timeout)" ; return }
+	}
+
+	gdb_test "step" "ival2 = count.*" "step to ival2 assignment"
+    }
+}
+
+# Test stepping and other mundane operations with watchpoints enabled
+proc test_watchpoint_triggered_in_syscall {} {
+    global gdb_prompt
+
+    # These tests won't work without printf support.
+    if [gdb_skip_stdio_test "watchpoints triggered in syscall"] {
+	return;
+    }
+    # Run until we get to the first marker function.
+    set x 0
+    set y 0
+    set testname "Watch buffer passed to read syscall"
+    if [runto marker2] then {
+	gdb_test "watch buf\[0\]" ".*\[Ww\]atchpoint \[0-9\]*: buf\\\[0\\\]"
+	gdb_test "watch buf\[1\]" ".*\[Ww\]atchpoint \[0-9\]*: buf\\\[1\\\]"
+	gdb_test "watch buf\[2\]" ".*\[Ww\]atchpoint \[0-9\]*: buf\\\[2\\\]"
+	gdb_test "watch buf\[3\]" ".*\[Ww\]atchpoint \[0-9\]*: buf\\\[3\\\]"
+	gdb_test "watch buf\[4\]" ".*\[Ww\]atchpoint \[0-9\]*: buf\\\[4\\\]"
+	gdb_test "break marker4" ".*Breakpoint.*"
+
+	gdb_test "set doread = 1" ""
+
+	# If we send_gdb "123\n" before gdb has switched the tty, then it goes
+	# to gdb, not the inferior, and we lose.  So that is why we have
+	# watchpoint.c prompt us, so we can wait for that prompt.
+	send_gdb "continue\n";
+	gdb_expect {
+	    -re "Continuing\\.\r\ntype stuff for buf now:" {
+		pass "continue to read"
+	    }
+	    default {
+		fail "continue to read";
+		return ;
+	    }
+	}
+
+	send_gdb "123\n"
+	gdb_expect {
+	    -re ".*\[Ww\]atchpoint.*buf\\\[0\\\].*Old value = 0.*New value = 49\[^\n\]*\n" { set x [expr $x+1] ; exp_continue }
+	    -re ".*\[Ww\]atchpoint.*buf\\\[1\\\].*Old value = 0.*New value = 50\[^\n\]*\n" { set x [expr $x+1] ; exp_continue }
+	    -re ".*\[Ww\]atchpoint.*buf\\\[2\\\].*Old value = 0.*New value = 51\[^\n\]*\n" { set x [expr $x+1] ; exp_continue }
+	    -re ".*\[Ww\]atchpoint.*buf\\\[3\\\].*Old value = 0.*New value = 10\[^\n\]*\n" { set x [expr $x+1] ; exp_continue }
+	    -re ".*$gdb_prompt $" { pass "sent 123" }
+	    timeout { fail "sent 123 (timeout)" }
+	}
+
+	# Examine the values in buf to see how many watchpoints we
+	# should have printed.
+	send_gdb "print buf\[0\]\n"
+	gdb_expect {
+	    -re ".*= 49.*$gdb_prompt $" { set y [expr $y+1]; pass "print buf\[0\]"}
+	    -re ".*= 0.*$gdb_prompt $" { pass "print buf\[0\]"}
+	    -re ".*$gdb_prompt $" { fail "print buf\[0\]"}
+	    default { fail "print buf\[0\]"}
+	}
+	send_gdb "print buf\[1\]\n"
+	gdb_expect {
+	    -re ".*= 50.*$gdb_prompt $" { set y [expr $y+1]; pass "print buf\[1\]"}
+	    -re ".*= 0.*$gdb_prompt $" { pass "print buf\[1\]"}
+	    -re ".*$gdb_prompt $" { fail "print buf\[1\]"}
+	    default { fail "print buf\[1\]"}
+	}
+	send_gdb "print buf\[2\]\n"
+	gdb_expect {
+	    -re ".*= 51.*$gdb_prompt $" { set y [expr $y+1]; pass "print buf\[2\]"}
+	    -re ".*= 0.*$gdb_prompt $" { pass "print buf\[2\]"}
+	    -re ".*$gdb_prompt $" { fail "print buf\[2\]"}
+	    default { fail "print buf\[2\]"}
+	}
+	send_gdb "print buf\[3\]\n"
+	gdb_expect {
+	    -re ".*= 10.*$gdb_prompt $" { set y [expr $y+1]; pass "print buf\[3\]"}
+	    -re ".*= 0.*$gdb_prompt $" { pass "print buf\[3\]"}
+	    -re ".*$gdb_prompt $" { fail "print buf\[3\]" }
+	    default { fail "print buf\[3\]" }
+	}
+
+	# Did we find what we were looking for?  If not, flunk it.
+	if [expr $x==$y] then { pass $testname } else { fail "$testname (only triggered $x watchpoints, expected $y)"}
+
+	# Continue until we hit the finishing marker function.
+	# Make sure we hit no more watchpoints.
+	gdb_test "cont" "Continuing.*Breakpoint.*marker4 \\(\\).*" \
+	    "continue to marker4"
+
+	# Disable everything so we can finish the program at full speed
+	gdb_test "disable" "" "disable in test_watchpoint_triggered_in_syscall"
+
+	if [target_info exists gdb,noresults] { return }
+
+	gdb_continue_to_end "continue to exit in test_watchpoint_triggered_in_syscall"
+    }
+}
+
+# Do a simple test of of watching through a pointer when the pointer
+# itself changes.  Should add some more complicated stuff here.
+
+proc test_complex_watchpoint {} {
+    global gdb_prompt
+
+    if [runto marker4] then {
+	gdb_test "watch ptr1->val" ".*\[Ww\]atchpoint \[0-9\]*: ptr1->val"
+	gdb_test "break marker5" ".*Breakpoint.*"
+
+	gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ptr1->val.*Old value = 1.*New value = 2.*" "Test complex watchpoint"
+
+	# Continue until we hit the marker5 function.
+	# Make sure we hit no more watchpoints.
+
+	gdb_test "cont" "Continuing.*Breakpoint.*marker5 \\(\\).*" \
+	    "did not trigger wrong watchpoint"
+
+        # Test watches of things declared locally in a function.
+        # In particular, test that a watch of stack-based things
+        # is deleted when the stack-based things go out of scope.
+        #
+	gdb_test "disable" "" "disable in test_complex_watchpoint"
+        gdb_test "break marker6" ".*Breakpoint.*"
+        gdb_test "cont" "Continuing.*Breakpoint.*marker6 \\(\\).*" \
+            "continue to marker6"
+        gdb_test "break func2" ".*Breakpoint.*"
+        gdb_test "cont" "Continuing.*func2.*"
+
+        # Test a watch of a single stack-based variable, whose scope
+        # is the function we're now in.  This should auto-delete when
+        # execution exits the scope of the watchpoint.
+        #
+        gdb_test "watch local_a" ".*\[Ww\]atchpoint \[0-9\]*: local_a" "set local watch"
+        gdb_test "cont" "\[Ww\]atchpoint.*local_a.*" "trigger local watch"
+        gdb_test "cont" "Continuing.*\[Ww\]atchpoint .* deleted because the program has left the block in.*which its expression is valid.*" "self-delete local watch"
+
+        gdb_test "cont" "Continuing.*func2.*"
+        # We should be in "func2" again now.  Test a watch of an
+        # expression which includes both a stack-based local and
+        # something whose scope is larger than this invocation
+        # of "func2".  This should also auto-delete.
+        #
+        gdb_test "watch local_a + ival5" ".*\[Ww\]atchpoint \[0-9\]*: local_a . ival5" \
+                 "set partially local watch"
+        gdb_test "cont" "Continuing.*\[Ww\]atchpoint .*: local_a . ival5.*" \
+                 "trigger1 partially local watch"
+        gdb_test "cont" "Continuing.*\[Ww\]atchpoint .*: local_a . ival5.*" \
+                 "trigger2 partially local watch"
+        gdb_test "cont" "Continuing.*\[Ww\]atchpoint .* deleted because the program has left the block in.*which its expression is valid.*" \
+                 "self-delete partially local watch"
+
+        # We should be in "func2" again now.  Test a watch of a
+        # static (non-stack-based) local.  Since this has scope
+        # across any invocations of "func2", it should not auto-
+        # delete.
+        #
+        gdb_test "cont" "Continuing.*func2.*"
+        gdb_test "watch static_b" ".*\[Ww\]atchpoint \[0-9\]*: static_b" \
+                 "set static local watch"
+        gdb_test "cont" "Continuing.*\[Ww\]atchpoint .*: static_b.*" \
+                 "trigger static local watch"
+        gdb_test "cont" "Continuing.*marker6 \\(\\).*" \
+                 "continue after trigger static local watch"
+        gdb_test "info break" ".*watchpoint.*static_b.*" \
+                 "static local watch did not self-delete"
+
+        # We should be in "recurser" now.  Test a watch of a stack-
+        # based local.  Symbols mentioned in a watchpoint are bound
+        # at watchpoint-creation.  Thus, a watch of a stack-based
+        # local to a recursing function should be bound only to that
+        # one invocation, and should not trigger for other invocations.
+        #
+        gdb_test "tbreak recurser" ".*Breakpoint.*"
+        gdb_test "cont" "Continuing.*recurser.*"
+        gdb_test "watch local_x" ".*\[Ww\]atchpoint \[0-9\]*: local_x" \
+                 "set local watch in recursive call"
+        gdb_test "cont" "Continuing.*\[Ww\]atchpoint .*: local_x.*New value = 2.*" \
+                 "trigger local watch in recursive call"
+        gdb_test "cont" "Continuing.*\[Ww\]atchpoint .* deleted because the program has left the block in.*which its expression is valid.*" \
+                 "self-delete local watch in recursive call"
+
+	# Disable everything so we can finish the program at full speed
+	gdb_test "disable" "" "disable in test_complex_watchpoint"
+
+	if [target_info exists gdb,noresults] { return }
+
+	gdb_continue_to_end "continue to exit in test_complex_watchpoint"
+    }
+}
+
+proc test_watchpoint_and_breakpoint {} {
+    global gdb_prompt
+
+    # This is a test for PR gdb/38, which involves setting a
+    # watchpoint right after you've reached a breakpoint.
+
+    if [runto func3] then {
+	gdb_breakpoint [gdb_get_line_number "second x assignment"]
+	gdb_continue_to_breakpoint "second x assignment"
+	gdb_test "watch x" ".*atchpoint \[0-9\]+: x"
+	gdb_test_multiple "next" "next after watch x" {
+	    -re ".*atchpoint \[0-9\]+: x\r\n\r\nOld value = 0\r\nNew value = 1\r\n.*$gdb_prompt $" {
+		pass "next after watch x"
+	    }
+	    -re "\[0-9\]+\[\t \]+y = 1;\r\n$gdb_prompt $" {
+		kfail "gdb/38" "next after watch x"
+	    }
+	}
+    }
+}
+    
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+set prev_timeout $timeout
+set timeout 600	
+verbose "Timeout now 600 sec.\n"
+
+if [initialize] then {
+
+    test_simple_watchpoint
+
+    # The IDT/sim monitor only has 8 (!) open files, of which it uses
+    # 4 (!).  So we have to make sure one program exits before
+    # starting another one.
+    if [istarget "mips-idt-*"] then {
+	gdb_exit
+	gdb_start
+	gdb_reinitialize_dir $srcdir/$subdir
+	gdb_load $binfile
+	initialize
+    }
+
+    test_disabling_watchpoints
+
+    # See above.
+    if [istarget "mips-idt-*"] then {
+	gdb_exit
+	gdb_start
+	gdb_reinitialize_dir $srcdir/$subdir
+	gdb_load $binfile
+	initialize
+    }
+
+    if ![target_info exists gdb,cannot_call_functions] {
+	test_stepping
+
+	# See above.
+	if [istarget "mips-idt-*"] then {
+	    gdb_exit
+	    gdb_start
+	    gdb_reinitialize_dir $srcdir/$subdir
+	    gdb_load $binfile
+	    initialize
+	}
+    }
+
+    # Only enabled for some targets merely because it has not been tested 
+    # elsewhere.
+    # On sparc-sun-sunos4.1.3, GDB was running all the way to the marker4 
+    # breakpoint before stopping for the watchpoint.  I don't know why.
+    if {[istarget "hppa*-*-*"]} then {
+	test_watchpoint_triggered_in_syscall
+    }
+
+    # See above.
+    if [istarget "mips-idt-*"] then {
+	gdb_exit
+	gdb_start
+	gdb_reinitialize_dir $srcdir/$subdir
+	gdb_load $binfile
+	initialize
+    }
+
+    # Only enabled for some targets merely because it has not been tested 
+    # elsewhere.
+    if {[istarget "hppa*-*-*"] || \
+	    [istarget "sparc*-*-sunos*"] || \
+	    [istarget "m32r-*-*"]} then {
+	test_complex_watchpoint
+    }
+
+    # Verify that a user can force GDB to use "slow" watchpoints.
+    # (This proves rather little on kernels that don't support
+    # fast watchpoints, but still...)
+    #
+    if ![runto_main] then { fail "watch tests suppressed" }
+
+    send_gdb "set can-use-hw-watchpoints 0\n"
+    gdb_expect {
+      -re "$gdb_prompt $"\
+              {pass "disable fast watches"}
+      timeout {fail "(timeout) disable fast watches"}
+    }
+    send_gdb "show can-use-hw-watchpoints\n"
+    gdb_expect {
+      -re "Debugger's willingness to use watchpoint hardware is 0.*$gdb_prompt $"\
+              {pass "show disable fast watches"}
+      -re "$gdb_prompt $"\
+              {fail "show disable fast watches"}
+      timeout {fail "(timeout) show disable fast watches"}
+    }
+    send_gdb "watch ival3 if  count > 1\n"
+    gdb_expect {
+      -re "Watchpoint \[0-9\]*: ival3.*$gdb_prompt $"\
+              {pass "set slow conditional watch"}
+      -re "$gdb_prompt $"\
+              {fail "set slow conditional watch"}
+      timeout {fail "(timeout) set slow conditional watch"}
+    }
+    send_gdb "continue\n"
+    gdb_expect {
+      -re "Watchpoint \[0-9\]*: ival3.*Old value = 1.*New value = 2.*$gdb_prompt $"\
+              {pass "trigger slow conditional watch"}
+      -re "$gdb_prompt $"\
+              {fail "trigger slow conditional watch"}
+      timeout {fail "(timeout) trigger slow conditional watch"}
+    }
+
+    # We've explicitly disabled hardware watches.  Verify that GDB
+    # refrains from using them.
+    #
+    send_gdb "rwatch ival3\n"
+    gdb_expect {
+      -re "Expression cannot be implemented with read/access watchpoint..*$gdb_prompt $"\
+              {pass "rwatch disallowed when can-set-hw-watchpoints cleared"}
+      -re "$gdb_prompt $"\
+              {fail "rwatch disallowed when can-set-hw-watchpoints cleared"}
+      timeout {fail "(timeout) rwatch disallowed when can-use-hw-watchpoints cleared"}
+    }
+
+    # Read- and access watchpoints are unsupported on HP-UX.  Verify
+    # that GDB gracefully responds to requests to create them.
+    #
+    if [istarget "hppa*-*-hpux*"] then {
+      send_gdb "set can-use-hw-watchpoints 1\n"
+      gdb_expect {
+        -re "$gdb_prompt $"\
+                {pass "enable fast watches"}
+        timeout {fail "(timeout) enable fast watches"}
+      }
+      send_gdb "rwatch ival3\n"
+      gdb_expect {
+        -re "Target does not have this type of hardware watchpoint support.*$gdb_prompt $"\
+                {pass "read watches disallowed"}
+        -re "$gdb_prompt $"\
+                {fail "read watches disallowed"}
+        timeout {fail "(timeout) read watches disallowed"}
+      }
+
+      send_gdb "awatch ival3\n"
+      gdb_expect {
+        -re "Target does not have this type of hardware watchpoint support.*$gdb_prompt $"\
+                {pass "access watches disallowed"}
+        -re "$gdb_prompt $"\
+                {fail "access watches disallowed"}
+        timeout {fail "(timeout) access watches disallowed"}
+      }
+    }
+
+    # See above.
+    if [istarget "mips-idt-*"] then {
+	gdb_exit
+	gdb_start
+	gdb_reinitialize_dir $srcdir/$subdir
+	gdb_load $binfile
+	initialize
+    }
+
+    test_watchpoint_and_breakpoint
+}
+
+# Restore old timeout
+set timeout $prev_timeout
+verbose "Timeout now $timeout sec.\n"

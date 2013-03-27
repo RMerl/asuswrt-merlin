@@ -1,7 +1,7 @@
 #
 # 802.1x Authenticator (Network Access Server) Embedded Linux Build Makefile
 #
-# Copyright (C) 2011, Broadcom Corporation
+# Copyright (C) 2012, Broadcom Corporation
 # All Rights Reserved.
 # 
 # This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
 # or duplicated in any form, in whole or in part, without the prior
 # written permission of Broadcom Corporation.
 #
-# $Id: Makefile 315332 2012-02-16 07:06:36Z $
+# $Id: Makefile 341899 2012-06-29 04:06:38Z $
 #
 
 include ../../common.mak
@@ -35,6 +35,7 @@ CFLAGS	+= -I$(SRCBASE)/router/eapd
 LDFLAGS += -L$(TOP)/nvram -L$(INSTALLDIR)/nvram/usr/lib -lnvram
 LDFLAGS += -L$(TOP)/shared -L$(INSTALLDIR)/shared/usr/lib -lshared
 LDFLAGS += -L$(TOP)/libbcmcrypto -L$(INSTALLDIR)/libbcmcrypto/usr/lib -lbcmcrypto
+LDFLAGS += $(EXTRA_LDFLAGS)
 
 vpath %.c $(SRCBASE)/router/nas $(SRCBASE)/shared $(SRCBASE)/router/shared
 
@@ -45,7 +46,7 @@ UTLOBJS = bcmwpa.o bcmutils.o
 
 ifeq ($(wildcard ../*.c), )
 all:
-	-cp ./prebuilt/nas .
+	-cp ./prebuild/nas .
 else
 all: nas
 endif

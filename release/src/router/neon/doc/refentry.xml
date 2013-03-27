@@ -1,0 +1,56 @@
+<refentry id="refXXXX">
+
+  <refmeta>
+    <refentrytitle>ne_foo</refentrytitle>
+    <manvolnum>3</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname id="ne_foo">ne_foo</refname>
+    <refname id="ne_bar">ne_bar</refname>
+    <refpurpose>functions which do foo and bar</refpurpose>
+  </refnamediv>
+  
+  <refsynopsisdiv>
+
+    <funcsynopsis>
+
+      <funcsynopsisinfo>#include &lt;ne_header.h&gt;</funcsynopsisinfo>
+
+      <funcprototype>
+        <funcdef>void <function>ne_set_useragent</function></funcdef>
+        <paramdef>ne_session *<parameter>session</parameter></paramdef>
+        <paramdef>const char *<parameter>product</parameter></paramdef>
+      </funcprototype>
+
+    </funcsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para>XXX</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Return value</title>
+
+    <para>XXX</para>
+  </refsect1>
+
+  <refsect1>
+    <title>Examples</title>
+
+    <para>XXX</para>
+  </refsect1>
+
+  <refsect1>
+    <title>See also</title>
+
+    <para>XXX</para>
+  </refsect1>
+
+</refentry>
+

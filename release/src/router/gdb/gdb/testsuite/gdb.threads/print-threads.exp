@@ -1,0 +1,128 @@
+# Copyright (C) 1996, 1997, 2002, 2003, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Daniel Jacobowitz <drow@mvista.com>
+# (parts based on pthreads.exp by Fred Fish (fnf@cygnus.com).
+#
+# It tests miscellaneous actions with multiple threads, including
+# handling for thread exit.
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "print-threads"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+# regexp for "horizontal" text (i.e. doesn't include newline or
+# carriage return)
+set horiz "\[^\n\r\]*"
+
+if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug "incdir=${objdir}"]] != "" } {
+    return -1
+}
+
+# Now we can proceed with the real testing.
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+gdb_test "set print sevenbit-strings" ""
+#gdb_test "set print address off" ""
+gdb_test "set width 0" ""
+
+# We'll need this when we send_gdb a ^C to GDB.  Need to do it before we
+# run the program and gdb starts saving and restoring tty states.
+# On Ultrix, we don't need it and it is really slow (because shell_escape
+# doesn't use vfork).
+if ![istarget "*-*-ultrix*"] then {
+    gdb_test "shell stty intr '^C'" ""
+}
+
+proc test_all_threads { name kill } {
+    global gdb_prompt
+
+    set i 0
+    set j 0
+    send_gdb "continue\n"
+    gdb_expect {
+	-re "Breakpoint \[0-9\]+, thread_function \\(arg=.*\\) at .*print-threads.c:\[0-9\]+.*$gdb_prompt" {
+	    set i [expr $i + 1]
+	    pass "Hit thread_function breakpoint, $i ($name)"
+	    send_gdb "continue\n"
+	    exp_continue
+	}
+	-re "Breakpoint \[0-9\]+, .* kill \\(.*\\) .*$gdb_prompt" {
+	    set j [expr $j + 1]
+	    if { $kill == 1 } {
+		pass "Hit kill breakpoint, $j ($name)"
+	    } else {
+		fail "Hit kill breakpoint, $j ($name) (unexpected)"
+	    }
+	    send_gdb "continue\n"
+	    exp_continue
+	}
+	-re "Program exited normally\\.\[\r\n\]+$gdb_prompt" {
+	    pass "program exited normally"
+	    if {$i == 5} {
+		pass "all threads ran once ($name)"
+	    } else {
+		fail "all threads ran once ($name) (total $i threads ran)"
+	    }
+	}
+	-re "Program received signal SIGTRAP.*(Thread \[-0-9a-fx\]* \\(zombie\\)|0x00000000 in ).*$gdb_prompt $" {
+	    if { $kill == 1 } {
+		kfail "gdb/1265" "Running threads ($name) (zombie thread)"
+	    } else {
+		fail "Running threads ($name) (unknown output)"
+	    }
+	}
+	-re "$gdb_prompt" {
+	    fail "Running threads ($name) (unknown output)"
+	}
+	timeout {
+	    fail "Running threads ($name) (timeout)"
+	}
+    }
+}
+
+runto_main
+gdb_test "break thread_function" "Breakpoint \[0-9\]+ at 0x\[0-9a-f\]+: file .*print-threads.c, line \[0-9\]*\\."
+gdb_test "set var slow = 0" ""
+test_all_threads "fast" 0
+
+runto_main
+gdb_test "break thread_function" "Breakpoint \[0-9\]+ at 0x\[0-9a-f\]+: file .*print-threads.c, line \[0-9\]*\\." "break thread_function (2)"
+gdb_test "set var slow = 1" ""
+test_all_threads "slow" 0
+
+runto_main
+gdb_test "break thread_function" "Breakpoint \[0-9\]+ at 0x\[0-9a-f\]+: file .*print-threads.c, line \[0-9\]*\\." "break thread_function (3)"
+gdb_test "set var slow = 1" "" "set var slow = 1 (2)"
+gdb_breakpoint "kill"
+test_all_threads "slow with kill breakpoint" 1
+
+return 0

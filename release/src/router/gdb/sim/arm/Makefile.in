@@ -1,0 +1,57 @@
+#    Makefile template for Configure for the arm sim library.
+#    Copyright 1995, 1996, 1997, 2002, 2007 Free Software Foundation, Inc.
+#    Written by Cygnus Support.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## COMMON_PRE_CONFIG_FRAG
+
+SIM_EXTRA_CFLAGS = -DMODET -DNEED_UI_LOOP_HOOK -DSIM_TARGET_SWITCHES
+
+COPRO=@COPRO@
+
+SIM_OBJS = armemu26.o armemu32.o arminit.o armos.o armsupp.o \
+	armvirt.o bag.o thumbemu.o wrapper.o sim-load.o $(COPRO) 
+
+## COMMON_POST_CONFIG_FRAG
+
+
+armos.o: armos.c armdefs.h armos.h armfpe.h targ-vals.h
+
+armcopro.o: armcopro.c armdefs.h
+maverick.o: maverick.c armdefs.h
+iwmmxt.o: iwmmxt.c iwmmxt.h armdefs.h
+
+armemu26.o: armemu.c armdefs.h armemu.h 
+	$(CC) -c $(srcdir)/armemu.c -o armemu26.o $(ALL_CFLAGS)
+
+armemu32.o: armemu.c armdefs.h armemu.h
+	$(CC) -c $(srcdir)/armemu.c -o armemu32.o -DMODE32 $(ALL_CFLAGS)
+
+arminit.o: arminit.c armdefs.h armemu.h
+
+armrdi.o: armrdi.c armdefs.h armemu.h armos.h dbg_cp.h dbg_conf.h dbg_rdi.h \
+	dbg_hif.h communicate.h
+
+armsupp.o: armsupp.c armdefs.h armemu.h
+
+thumbemu.o: thumbemu.c armdefs.h armemu.h
+
+bag.o: bag.c bag.h
+
+wrapper.o: armdefs.h armemu.h dbg_rdi.h \
+	$(srcdir)/../common/run-sim.h \
+	$(srcdir)/../common/sim-utils.h \
+	$(srcdir)/../../include/gdb/sim-arm.h \
+	$(srcdir)/../../include/gdb/remote-sim.h

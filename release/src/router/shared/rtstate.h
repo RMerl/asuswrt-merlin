@@ -97,7 +97,7 @@ enum {
 	LAN_STOPPED_REASON_SYSTEM_ERR
 };
 
-#ifdef RTCONFIG_WIRELESSREPEATER
+#ifdef CONFIG_BCMWL5
 enum { 
 	WLC_STATE_INITIALIZING=0,
 	WLC_STATE_CONNECTING,
@@ -119,10 +119,7 @@ enum {
 	WLCSCAN_STATE_FINISHED,
 	WLCSCAN_STATE_STOPPED
 };
-
 #endif
-
-
 
 // the following state is maintained by wan duck
 #define WEBREDIRECT_FLAG_NOLINK 1
@@ -132,6 +129,13 @@ enum {
 #define INVOKELATER_DMS	1
 
 #ifdef RTCONFIG_USB
+enum {
+	USB_HOST_NONE=0,
+	USB_HOST_OHCI,
+	USB_HOST_EHCI,
+	USB_HOST_XHCI
+};
+
 enum {
 	APPS_AUTORUN_INITIALIZING=0,
 	APPS_AUTORUN_CHECKING_DISK,
@@ -252,10 +256,17 @@ enum {
 #define is_routing_enabled() (nvram_get_int("sw_mode")==SW_MODE_ROUTER||nvram_get_int("sw_mode")==SW_MODE_HOTSPOT)
 #define is_nat_enabled()     ((nvram_get_int("sw_mode")==SW_MODE_ROUTER||nvram_get_int("sw_mode")==SW_MODE_HOTSPOT)&&nvram_get_int("wan0_nat_x")==1)
 #define is_lan_connected()   (nvram_get_int("lan_state")==LAN_STATE_CONNECTED)
+#ifdef RTCONFIG_WIRELESSWAN
 #define is_wirelesswan_enabled() (nvram_get_int("sw_mode")==SW_MODE_HOTSPOT)
+#endif
+#define is_apmode_enabled() (nvram_get_int("sw_mode")==SW_MODE_AP)
 // todo: multiple wan
 
 int wan_primary_ifunit(void);
+#ifdef RTCONFIG_W3N
+extern int is_w3n_unit(int unit);
+extern int is_w3n_mode();
+#endif
 extern int get_wan_state(int unit);
 extern int get_wan_unit(char *ifname);
 extern char *get_wan_ifname(int unit);
@@ -263,6 +274,7 @@ extern int get_wanports_status(int wan_unit);
 extern char *get_usb_ehci_port(int port);
 extern char *get_usb_ohci_port(int port);
 extern int get_usb_port_number(const char *usb_port);
+extern int get_usb_port_host(const char *usb_port);
 #ifdef RTCONFIG_DUALWAN
 extern void set_wanscap_support(char *feature);
 extern void add_wanscap_support(char *feature);

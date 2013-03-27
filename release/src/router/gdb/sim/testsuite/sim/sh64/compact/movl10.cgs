@@ -1,0 +1,34 @@
+# sh testcase for mov.l @($imm8x4, pc), $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+init:
+	# Build up a distinctive bit pattern.
+	mov #1, r2
+	shll8 r2
+	add #12, r2
+	shll8 r2
+	add #85, r2
+	shll8 r2
+	add #170, r2
+
+	# Store to memory.
+	mov #16, r1
+	shll8 r1
+	add #32, r1
+	mov.l r2, @r1
+check:
+	# Read it back.
+	mov.l @(12, pc), r0
+	cmp/eq r2, r0
+	bf wrong
+	
+okay:
+	pass
+wrong:
+	fail

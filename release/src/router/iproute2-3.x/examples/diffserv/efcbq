@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+#
+$TC = "/root/DS-6-beta/iproute2-990530-dsing/tc/tc";
+$DEV = "dev eth1";
+print "$TC qdisc add $DEV handle 1:0 root dsmark indices 64 set_tc_index\n";
+print "$TC filter add $DEV parent 1:0 protocol ip prio 1 tcindex ".
+  "mask 0xfc shift 2\n";
+print "$TC qdisc add $DEV parent 1:0 handle 2:0 cbq bandwidth ".
+	"10Mbit cell 8 avpkt 1000 mpu 64\n";
+#
+# EF class
+#
+print "$TC class add $DEV parent 2:0 classid 2:1 cbq bandwidth ". 
+	"10Mbit rate 1500Kbit avpkt 1000 prio 1 bounded isolated ".
+	"allot 1514 weight 1 maxburst 10 \n";
+# packet fifo for EF?
+print "$TC qdisc add $DEV parent 2:1 pfifo limit 5\n";
+print "$TC filter add $DEV parent 2:0 protocol ip prio 1 ".
+	  "handle 0x2e tcindex classid 2:1 pass_on\n";
+#
+# BE class
+#
+print "#BE class(2:2) \n";
+print "$TC class add $DEV parent 2:0 classid 2:2 cbq bandwidth ". 
+	"10Mbit rate 5Mbit avpkt 1000 prio 7 allot 1514 weight 1 ".
+	"maxburst 21 borrow split 2:0 defmap 0xffff \n";
+print "$TC qdisc add $DEV parent 2:2 red limit 60KB ".
+	  "min 15KB max 45KB burst 20 avpkt 1000 bandwidth 10Mbit ".
+	  "probability 0.4\n";
+print "$TC filter add $DEV parent 2:0 protocol ip prio 2 ".
+	  "handle 0 tcindex mask 0 classid 2:2 pass_on\n";

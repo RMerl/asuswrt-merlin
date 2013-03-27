@@ -1,0 +1,357 @@
+# Copyright (C) 1998, 1999, 2001, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# written by Elena Zannoni (ezannoni@cygnus.com)
+# modified by Michael Chastain (chastain@redhat.com)
+
+# This file is part of the gdb testsuite
+#
+# tests for overloaded member functions. Set breakpoints on
+# overloaded member functions
+#
+
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+if { [skip_cplus_tests] } { continue }
+
+set testfile "ovldbreak"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     untested ovldbreak.exp
+     return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# set it up at a breakpoint so we can play with the variable values
+#
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+
+
+# When I ask gdb to set a breakpoint on an overloaded function,
+# gdb gives me a choice menu.  I might get stuck in that choice menu
+# (for example, if C++ name mangling is not working properly).
+#
+# This procedure issues a command that works at either the menu
+# prompt or the command prompt to get back to the command prompt.
+#
+# Note that an empty line won't do it (it means 'repeat the previous command'
+# at top level).  A line with a single space in it works nicely.
+
+proc take_gdb_out_of_choice_menu {} {
+    global gdb_prompt
+    send_gdb " \n"
+    gdb_expect {
+        -re ".*$gdb_prompt $" {
+        }
+        timeout {
+            perror "could not resynchronize to command prompt (timeout)"
+            continue
+        }
+    }
+}
+
+
+
+# This procedure sets an overloaded breakpoint.
+# When I ask for such a breakpoint, gdb gives me a menu of 'cancel' 'all'
+# and a bunch of choices.  I then choose from that menu by number.
+
+proc set_bp_overloaded {name expectedmenu mychoice bpnumber linenumber} {
+    global gdb_prompt hex srcfile
+
+    # Get into the overload menu.
+    send_gdb "break $name\n"
+    gdb_expect {
+        -re "$expectedmenu" {
+            pass "bp menu for $name choice $mychoice"
+
+            # Choose my choice.
+            send_gdb "$mychoice\n"
+            gdb_expect {
+                -re "Breakpoint $bpnumber at $hex: file.*$srcfile, line $linenumber.\r\n$gdb_prompt $" {
+                    pass "set bp $bpnumber on $name $mychoice line $linenumber"
+                }
+                -re ".*$gdb_prompt $" {
+                    fail "set bp $bpnumber on $name $mychoice line $linenumber (bad bp)"
+                }
+                timeout {
+                    fail "set bp $bpnumber on $name $mychoice line $linenumber (timeout)"
+                    take_gdb_out_of_choice_menu
+                }
+            }
+        }
+        -re ".*\r\n> " {
+            fail "bp menu for $name choice $mychoice (bad menu)"
+            take_gdb_out_of_choice_menu
+        }
+        -re ".*$gdb_prompt $" {
+            fail "bp menu for $name choice $mychoice (no menu)"
+        }
+        timeout {
+            fail "bp menu for $name choice $mychoice (timeout)"
+            take_gdb_out_of_choice_menu
+        }
+    }
+}
+
+# This is the expected menu for overload1arg.
+# Note the arg type variations on lines 6 and 13.
+# This accommodates different versions of g++.
+
+set menu_overload1arg "\\\[0\\\] cancel\r\n\\\[1\\\] all\r\n\\\[2\\\] foo::overload1arg\\(double\\) at.*$srcfile:121\r\n\\\[3\\\] foo::overload1arg\\(float\\) at.*$srcfile:120\r\n\\\[4\\\] foo::overload1arg\\(unsigned long\\) at.*$srcfile:119\r\n\\\[5\\\] foo::overload1arg\\(long\\) at.*$srcfile:118\r\n\\\[6\\\] foo::overload1arg\\((unsigned int|unsigned)\\) at.*$srcfile:117\r\n\\\[7\\\] foo::overload1arg\\(int\\) at.*$srcfile:116\r\n\\\[8\\\] foo::overload1arg\\(unsigned short\\) at.*$srcfile:115\r\n\\\[9\\\] foo::overload1arg\\(short\\) at.*$srcfile:114\r\n\\\[10\\\] foo::overload1arg\\(unsigned char\\) at.*$srcfile:113\r\n\\\[11\\\] foo::overload1arg\\(signed char\\) at.*$srcfile:112\r\n\\\[12\\\] foo::overload1arg\\(char\\) at.*$srcfile:111\r\n\\\[13\\\] foo::overload1arg\\((void|)\\) at.*$srcfile:110\r\n> $"
+
+
+
+# Set breakpoints on foo::overload1arg, one by one.
+
+set_bp_overloaded "foo::overload1arg" "$menu_overload1arg" 12    2 111
+set_bp_overloaded "foo::overload1arg" "$menu_overload1arg" 11    3 112
+set_bp_overloaded "foo::overload1arg" "$menu_overload1arg" 10    4 113
+set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  9    5 114
+set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  8    6 115
+set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  7    7 116
+set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  6    8 117
+set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  5    9 118
+set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  4   10 119
+set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  3   11 120
+set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  2   12 121
+set_bp_overloaded "foo::overload1arg" "$menu_overload1arg" 13   13 110
+
+
+
+# Verify the breakpoints.
+
+gdb_test "info break" \
+    "Num Type\[\t \]+Disp Enb Address\[\t \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in main at.*$srcfile:49\r
+\[\t \]+breakpoint already hit 1 time\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(char\\) at.*$srcfile:111\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(signed char\\) at.*$srcfile:112\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(unsigned char\\) at.*$srcfile:113\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(short\\) at.*$srcfile:114\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(unsigned short\\) at.*$srcfile:115\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(int\\) at.*$srcfile:116\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((unsigned|unsigned int)\\) at.*$srcfile:117\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(long\\) at.*$srcfile:118\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(unsigned long\\) at.*$srcfile:119\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(float\\) at.*$srcfile:120\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(double\\) at.*$srcfile:121\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((void|)\\) at.*$srcfile:110" \
+    "breakpoint info (after setting one-by-one)"
+
+
+
+# Test choice "cancel".
+# This is copy-and-paste from set_bp_overloaded.
+
+send_gdb "break foo::overload1arg\n" 
+gdb_expect {
+    -re "$menu_overload1arg" {
+        pass "bp menu for foo::overload1arg choice cancel"
+        # Choose cancel.
+        send_gdb "0\n"
+        gdb_expect {
+            -re "canceled\r\n$gdb_prompt $" {
+                pass "set bp on overload1arg canceled"
+            }
+	    -re "cancelled\r\n$gdb_prompt $" {
+		pass "set bp on overload1arg canceled"
+	    }
+            -re ".*$gdb_prompt $" {
+                fail "set bp on overload1arg canceled (bad message)"
+            }
+            timeout {
+                fail "set bp on overload1arg canceled (timeout)"
+                take_gdb_out_of_choice_menu
+            }
+        }
+    }
+    -re ".*\r\n> " {
+        fail "bp menu for foo::overload1arg choice cancel (bad menu)"
+        take_gdb_out_of_choice_menu
+    }
+    -re ".*$gdb_prompt $" {
+        fail "bp menu for foo::overload1arg choice cancel (no menu)"
+    }
+    timeout {
+        fail "bp menu for foo::overload1arg choice cancel (timeout)"
+        take_gdb_out_of_choice_menu
+    }
+}
+
+gdb_test "info break" \
+    "Num Type\[\t \]+Disp Enb Address\[\t \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in main at.*$srcfile:49\r
+\[\t \]+breakpoint already hit 1 time\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(char\\) at.*$srcfile:111\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(signed char\\) at.*$srcfile:112\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(unsigned char\\) at.*$srcfile:113\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(short\\) at.*$srcfile:114\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(unsigned short\\) at.*$srcfile:115\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(int\\) at.*$srcfile:116\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((unsigned|unsigned int)\\) at.*$srcfile:117\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(long\\) at.*$srcfile:118\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(unsigned long\\) at.*$srcfile:119\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(float\\) at.*$srcfile:120\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(double\\) at.*$srcfile:121\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((void|)\\) at.*$srcfile:110" \
+    "breakpoint info (after cancel)"
+
+
+
+# Delete these breakpoints.
+
+send_gdb "delete breakpoints\n"
+gdb_expect {
+    -re "Delete all breakpoints.* $" {
+        send_gdb "y\n"
+        gdb_expect {
+            -re ".*$gdb_prompt $" {
+                pass "delete all breakpoints"
+            }
+            timeout {
+                fail "delete all breakpoints (timeout)"
+            }
+        }
+    }
+    timeout {
+        fail "delete all breakpoints (timeout)"
+    }
+}
+
+gdb_test "info breakpoints" "No breakpoints or watchpoints." "breakpoint info (after delete)"
+
+
+
+# Test choice "all".
+# This is copy-and-paste from set_bp_overloaded.
+
+send_gdb "break foo::overload1arg\n" 
+gdb_expect {
+    -re "$menu_overload1arg" {
+        pass "bp menu for foo::overload1arg choice all"
+        # Choose all.
+        send_gdb "1\n"
+        gdb_expect {
+            -re "Breakpoint $decimal at $hex: file.*$srcfile, line 121.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 120.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 119.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 118.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 117.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 116.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 115.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 114.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 113.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 112.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 111.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 110.\r\nwarning: Multiple breakpoints were set.\r\nUse the .delete. command to delete unwanted breakpoints.\r\n$gdb_prompt $" {
+                pass "set bp on overload1arg all"
+            }
+            -re ".*$gdb_prompt $" {
+                fail "set bp on overload1arg all (bad message)"
+            }
+            timeout {
+                fail "set bp on overload1arg all (timeout)"
+                take_gdb_out_of_choice_menu
+            }
+        }
+    }
+    -re ".*\r\n> " {
+        fail "bp menu for foo::overload1arg choice all (bad menu)"
+        take_gdb_out_of_choice_menu
+    }
+    -re ".*$gdb_prompt $" {
+        fail "bp menu for foo::overload1arg choice all (no menu)"
+    }
+    timeout {
+        fail "bp menu for foo::overload1arg choice all (timeout)"
+        take_gdb_out_of_choice_menu
+    }
+}
+
+gdb_test "info break" \
+    "Num Type\[\t \]+Disp Enb Address\[\t \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(double\\) at.*$srcfile:121\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(float\\) at.*$srcfile:120\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(unsigned long\\) at.*$srcfile:119\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(long\\) at.*$srcfile:118\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((unsigned|unsigned int)\\) at.*$srcfile:117\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(int\\) at.*$srcfile:116\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(unsigned short\\) at.*$srcfile:115\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(short\\) at.*$srcfile:114\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(unsigned char\\) at.*$srcfile:113\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(signed char\\) at.*$srcfile:112\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(char\\) at.*$srcfile:111\r
+\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((void|)\\) at.*$srcfile:110" \
+    "breakpoint info (after setting on all)"
+
+
+
+# Run through each breakpoint.
+
+# NOTE: carlton/2003-02-03: I'm seeing failures on some of the tests,
+# with the wrong arg being printed out.  Michael Chastain sees
+# failures at times, too, albeit fewer than I do.
+
+proc continue_to_bp_overloaded {might_kfail bpnumber argtype actuals} {
+    global gdb_prompt hex decimal srcfile 
+
+    send_gdb "continue\n"
+    gdb_expect {
+	-re "Continuing.\r\n\r\nBreakpoint ${bpnumber}, (${hex} in )?foo::overload1arg(\\(${argtype}\\))? \\(this=${hex}(, )?${actuals}\\) at.*${srcfile}:${decimal}\r\n${decimal}\[\t \]+int foo::overload1arg \\(${argtype}( arg)?\\).*\r\n.*$gdb_prompt $" {
+	    pass "continue to bp overloaded : ${argtype}"
+	}
+	-re "Continuing.\r\n\r\nBreakpoint ${bpnumber}, (${hex} in )?foo::overload1arg(\\(${argtype}\\))? \\(this=${hex}, arg=.*\\) at.*${srcfile}:${decimal}\r\n${decimal}\[\t \]+int foo::overload1arg \\(${argtype}( arg)?\\).*\r\n.*$gdb_prompt $" {
+	    if $might_kfail {
+		kfail "gdb/1025" "continue to bp overloaded : ${argtype}"
+	    } else {
+		fail "continue to bp overloaded : ${argtype}"
+	    }
+	}
+        -re ".*$gdb_prompt $" {
+	    fail "continue to bp overloaded : ${argtype}" 
+	}
+        timeout {
+	    fail "continue to bp overloaded : ${argtype} (timeout)"
+	}
+    }
+}
+
+continue_to_bp_overloaded 0 25 "(void|)" ""
+continue_to_bp_overloaded 1 24 "char" "arg=2 \\'\\\\002\\'"
+continue_to_bp_overloaded 1 23 "signed char" "arg=3 \\'\\\\003\\'"
+continue_to_bp_overloaded 1 22 "unsigned char" "arg=4 \\'\\\\004\\'"
+continue_to_bp_overloaded 1 21 "short" "arg=5"
+continue_to_bp_overloaded 1 20 "unsigned short" "arg=6"
+continue_to_bp_overloaded 0 19 "int" "arg=7"
+continue_to_bp_overloaded 0 18 "(unsigned|unsigned int)" "arg=8"
+continue_to_bp_overloaded 0 17 "long" "arg=9"
+continue_to_bp_overloaded 0 16 "unsigned long" "arg=10"
+continue_to_bp_overloaded 0 15 "float" "arg=100"
+continue_to_bp_overloaded 1 14 "double" "arg=200"
+
+
+
+# That's all, folks.
+
+gdb_continue_to_end "finish program"

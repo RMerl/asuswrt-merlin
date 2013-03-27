@@ -1,0 +1,12 @@
+# arm testcase for ldsb $rd,[$rb,$ro]
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldsb
+ldsb:
+	ldsb r0,[r0,r0]
+
+	pass

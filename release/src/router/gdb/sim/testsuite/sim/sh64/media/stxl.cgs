@@ -1,0 +1,29 @@
+# sh testcase for stx.l $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	movi -1, r7
+	xori r7, 13, r7
+	movi 40, r0
+	shlli r0, 8, r0
+
+stxl1:
+	movi 0, r1
+	stx.l r0, r1, r7
+
+stxl2:
+	movi 4, r1
+	stx.l r0, r1, r7
+
+stxl3:
+	movi -4, r1
+	stx.l r0, r1, r7
+
+okay:
+	pass

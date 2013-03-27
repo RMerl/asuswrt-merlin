@@ -1,0 +1,26 @@
+# frv testcase for mhsethih $s5,$FRk
+# mach: fr400 fr550
+
+	.include "testutils.inc"
+
+	start
+
+	.global setlo
+setlo:
+	set_fr_iimmed	0xdead,0xbeef,fr1
+	mhsethih	0,fr1
+	test_fr_limmed	0x06ad,0xbeef,fr1
+
+	mhsethih	1,fr1
+	test_fr_limmed	0x0ead,0xbeef,fr1
+
+	mhsethih	0xf,fr1
+	test_fr_limmed	0x7ead,0xbeef,fr1
+
+	mhsethih	-16,fr1
+	test_fr_limmed	0x86ad,0xbeef,fr1
+
+	mhsethih	-1,fr1
+	test_fr_limmed	0xfead,0xbeef,fr1
+
+	pass

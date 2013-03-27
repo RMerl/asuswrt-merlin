@@ -1,0 +1,85 @@
+# Tests of register displays for GDB.
+#   Copyright 1994, 1995, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Stan Shebs. (shebs@cygnus.com)
+
+# This does not (yet) have an associated executable, since the IDT board
+# will display registers even without a program being loaded.
+# A more comprehensive register test would actually test reading
+# and writing of registers in a real program, although some care
+# would be required in the writing of the tests.
+
+if $tracelevel then {
+	strace $tracelevel
+	}
+
+# These tests exercise IDT-specific MIPS registers for several
+# different processor models.
+
+# This should detect the actual processor in use and change
+# the expected results appropriately.  FIXME
+
+proc idt_register_tests { } {
+	# Test the generic IDT chip.
+	gdb_test "info registers" ".*"
+	gdb_test "info register zero" "zero(r0): 0x0;"
+	# FIXME access each generic register individually
+	# Test the 3041.
+	gdb_test "set processor r3041" ".*"
+	gdb_test "info registers" ".*"
+	gdb_test "info register bus"  "bus.*0x.*"
+	gdb_test "info register ccfg" "ccfg.*0x.*"
+	gdb_test "info register port" "port.*0x.*"
+	gdb_test "info register cmp"  "cmp.*0x.*"
+	gdb_test "info register elo"  "elo: invalid register"
+	gdb_test "info register ehi"  "ehi: invalid register"
+	gdb_test "info register cfg"  "cfg: invalid register"
+	gdb_test "info register ctxt" "ctxt: invalid register"
+	# Test the 3051.
+	gdb_test "set processor r3051" ".*"
+	gdb_test "info registers" ".*"
+	gdb_test "info register bus"  "bus: invalid register"
+	gdb_test "info register ccfg" "ccfg: invalid register"
+	gdb_test "info register port" "port: invalid register"
+	gdb_test "info register cmp"  "cmp: invalid register"
+	gdb_test "info register elo"  "elo.*0x.*"
+	gdb_test "info register ehi"  "ehi.*0x.*"
+	gdb_test "info register cfg"  "cfg: invalid register"
+	gdb_test "info register ctxt" "ctxt: invalid register"
+	# Test the 3071.
+	gdb_test "set processor r3071" ".*"
+	gdb_test "info registers" ".*"
+	gdb_test "info register bus"  "bus: invalid register"
+	gdb_test "info register ccfg" "ccfg: invalid register"
+	gdb_test "info register port" "port: invalid register"
+	gdb_test "info register cmp"  "cmp: invalid register"
+	gdb_test "info register elo"  "elo.*0x.*"
+	gdb_test "info register ehi"  "ehi.*0x.*"
+	gdb_test "info register cfg"  "cfg.*0x.*"
+	gdb_test "info register ctxt" "ctxt.*0x.*"
+}
+
+if [istarget "mips*-idt-*"] then {
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    idt_register_tests
+} else {
+    verbose "regs.exp tests ignored for this target"
+}

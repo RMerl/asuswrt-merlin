@@ -1,0 +1,12 @@
+# arm testcase for mvn $rd,$rs
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global alu_mvn
+alu_mvn:
+	mvn r0,r0
+
+	pass

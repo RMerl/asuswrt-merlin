@@ -1,0 +1,89 @@
+    <refentry id="refbufapp">
+
+      <refmeta>
+	<refentrytitle>ne_buffer_append</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_buffer_append">ne_buffer_append</refname>
+	<refname id="ne_buffer_zappend">ne_buffer_zappend</refname>
+	<refname id="ne_buffer_concat">ne_buffer_concat</refname>
+	<refpurpose>append data to a string buffer</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_string.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_buffer_append</function></funcdef>
+	    <paramdef>ne_buffer *<parameter>buf</parameter></paramdef>
+	    <paramdef>const char *<parameter>string</parameter></paramdef>
+	    <paramdef>size_t <parameter>len</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_buffer_zappend</function></funcdef>
+	    <paramdef>ne_buffer *<parameter>buf</parameter></paramdef>
+	    <paramdef>const char *<parameter>string</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_buffer_concat</function></funcdef>
+	    <paramdef>ne_buffer *<parameter>buf</parameter></paramdef>
+	    <paramdef>const char *<parameter>str</parameter></paramdef>
+	    <paramdef>...</paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>The <function>ne_buffer_append</function> and
+<function>ne_buffer_zappend</function> functions append a string to
+the end of a buffer; extending the buffer as necessary.  The
+<parameter>len</parameter> passed to
+<function>ne_buffer_append</function> specifies the length of the
+string to append; there must be no &nul; terminator in the first
+<parameter>len</parameter> bytes of the string.
+<function>ne_buffer_zappend</function> must be passed a
+&nul;-terminated string.</para>
+
+	<para>The <function>ne_buffer_concat</function> function takes
+a variable-length argument list following <parameter>str</parameter>;
+each argument must be a <type>char *</type> pointer to a
+&nul;-terminated string.  A &null; pointer must be given as the last
+argument to mark the end of the list.  The strings (including
+<parameter>str</parameter>) are appended to the buffer in the order
+given. None of the strings passed to
+<function>ne_buffer_concat</function> are modified.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Examples</title>
+
+	<para>The following code will output "<literal>Hello, world.
+And goodbye.</literal>".</para>
+	
+	<programlisting>ne_buffer *buf = ne_buffer_create();
+ne_buffer_zappend(buf, "Hello");
+ne_buffer_concat(buf, ", world. ", "And ", "goodbye.", NULL);
+puts(buf->data);
+ne_buffer_destroy(buf);</programlisting>
+      </refsect1>
+
+      <refsect1>
+	<title>See also</title>
+
+	<para><xref linkend="ne_buffer"/>, <xref linkend="ne_buffer_create"/>,
+<xref linkend="ne_buffer_destroy"/></para>
+      </refsect1>
+
+    </refentry>

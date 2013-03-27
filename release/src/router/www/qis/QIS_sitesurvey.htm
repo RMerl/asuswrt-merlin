@@ -129,9 +129,9 @@ function update_site_info(){
 				setTimeout("update_site_info();", 1000);
 			else{
 				if(issubmit > 0)
-					parent.location.href = 'http://www.asusnetwork.net/QIS_wizard.htm?flag=wireless';
+					parent.location.href = 'http://router.asus.com/QIS_wizard.htm?flag=wireless';
 				else
-					parent.location.href = 'http://www.asusnetwork.net/QIS_wizard.htm?flag=sitesurvey';
+					parent.location.href = 'http://router.asus.com/QIS_wizard.htm?flag=sitesurvey';
 			}			
 		},
 		success: function(response){
@@ -151,9 +151,11 @@ function update_site_info(){
 	});	
 }
 
+var htmlCode_tmp = "";
 function showSiteTable(){
 	var htmlCode = "";
 	var overlib_str = "";
+
 	document.getElementById("SearchingIcon").style.display = "none";
 
 	htmlCode +='<table width="670px" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey" id="aplist_table">';
@@ -165,7 +167,7 @@ function showSiteTable(){
 			htmlCode += '<tr><td style="text-align:center;font-size:12px; border-collapse: collapse;border:1;" colspan="4"><span style="color:#FFCC00;line-height:25px;">';
 			if(wlc_state == 2){ // connected
 				htmlCode += '<#APSurvey_action_ConnectingStatus24#>';
-				setTimeout('parent.location.href = "http://www.asusnetwork.net/QIS_wizard.htm?flag=wireless";', 2000);
+				setTimeout('parent.location.href = "http://router.asus.com/QIS_wizard.htm?flag=wireless";', 2000);
 			}
 			else{
 				if(wlc_sbstate == 2) // auth failed
@@ -224,9 +226,13 @@ function showSiteTable(){
 		}
 	}
 	htmlCode +='</table>';
-	document.getElementById("wlscan_table").innerHTML = htmlCode;
 
-	if(document.getElementById("wlscan_table_container").scrollHeight > document.getElementById("wlscan_table_container").clientHeight)
+	if(htmlCode != htmlCode_tmp){
+		document.getElementById("wlscan_table").innerHTML = htmlCode;
+		htmlCode_tmp = htmlCode;
+	}
+
+	if(document.getElementById("wlscan_table_container").scrollHeight > document.getElementById("wlscan_table_container").clientHeight && navigator.userAgent.search("Macintosh") == -1)
 		document.getElementById("wlscan_table").style.marginLeft = "32px";
 	else
 		document.getElementById("wlscan_table").style.marginLeft = "18px";
@@ -260,11 +266,11 @@ function bind_event(){ //bind <tr> click and hover event
 		var initRow = '<tr class="inputRow" style="display:none;background-color:#708789;"><td style="height:50px;" colspan="5"><table><tr>';
 		var connectedHint = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_connected#></span></td>';
 		var unEncrypt = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_connect_open_wlan#></span></td>';
-		var networkKey = '<td style="border:0px;"><span style="color:#FFFFFF;"><#Network_key#>:</span><input type="password" autocapitalization="off" id="thekey" name="thekey" class="input_25_table"></td>';
-		var wepkeyIndex = '<td style="border:0px;"><span style="margin-left:10px;color:#FFFFFF;"><#WLANConfig11b_WEPDefaultKey_itemname#></span><select name="sta_key_index" class="input_option"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td>';
-		var wep_auth = '<td style="border:0px;"><span style="color:#FFFFFF;">Auth: </span><select name="wl_wep_auth" class="input_option"><option value="open" selected>open</option><option value="shared">shared</option></select></td>';
+		var networkKey = '<td style="border:0px;"><span style="color:#FFFFFF;"><#Network_key#>:</span><input type="password" autocapitalization="off" id="thekey" name="thekey" class="input_25_table" style="padding-left:3px;margin-left:5px;width:200px;"></td>';
+		var wepkeyIndex = '<td style="border:0px;"><span style="margin-left:5px;color:#FFFFFF;"><#WLANConfig11b_WEPDefaultKey_itemname#></span><select name="sta_key_index" class="input_option" style="margin-left:5px;"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td>';
+		var wep_auth = '<td style="border:0px;"><span style="margin-left:5px;color:#FFFFFF;">Auth:</span><select name="wl_wep_auth" class="input_option" style="margin-left:5px;"><option value="open" selected>open</option><option value="shared">shared</option></select></td>';
 		var connectBtn = '<td style="border:0px;"><input style="margin-left:10px;" id="connect_btn" type="button" value="<#CTL_Add_enrollee#>" onclick="submitForm('+ idx +')" class="button_gen"> <img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></td></tr>';
-		var showPassword = '<tr><td style="border:0px;color:#FFFFFF;"><div style="margin-left:50px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.thekey);"><#QIS_show_pass#></div></td></tr>';
+		var showPassword = '<tr><td style="border:0px;color:#FFFFFF;"><div style="*margin-left:50px;margin-left:55px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.thekey);"><#QIS_show_pass#></div></td></tr>';
 		var endOfRow = '</table></td></tr>';
 
 		if(wlc_scan_state != 3)
@@ -316,7 +322,7 @@ function bind_event(){ //bind <tr> click and hover event
 	});
 
 	for(var i=0; i<aplist.length ;i++){
-		if(aplist[i][8] == 2 || aplist[i][8] == 4){  //set the last click is selected <tr>
+		if(aplist[i][8] == 2 || aplist[i][8] == 4){  //set the last click is selected
 			lastClickTr = $("#aplist_table tbody tr").eq(i);
 			lastClickTrBg = lastClickTr.css("background-color");
 			lastClickTrC = lastClickTr.find("td").css("color");
@@ -337,7 +343,7 @@ function pass_checked(obj){
 /* change password type depend on browser for fix IE issue*/
 function replace_pass_type(obj, _Type){
 	if(navigator.userAgent.indexOf("MSIE") != -1){ // fix IE issue
-		var input2 = document.createElement('<input class="input_25_table" autocapitalization="off">');  // create input element
+		var input2 = document.createElement('<input class="input_25_table" autocapitalization="off" style="padding-left:3px;margin-left:5px;width:200px;">');  // create input element
 		with (input2){ 
 			id = obj.id; 
 			value = obj.value; 
@@ -542,6 +548,7 @@ function gotoPage(dst_url, flag){
 <input type="hidden" name="wlc_nbw_cap" value="<% nvram_get("wlc_nbw_cap"); %>">
 <input type="hidden" name="wlc_ure_ssid" value="<% nvram_get("wlc_ure_ssid"); %>">
 <input type="hidden" name="wlc_ssid" value="">
+<input type="hidden" name="wlc_psta" value="0">
 <!-- wireless client end -->
 <input type="hidden" name="lan_proto" value="dhcp">
 <input type="hidden" name="sw_mode" value="2" disabled>
@@ -561,7 +568,7 @@ function gotoPage(dst_url, flag){
 				</tr>
 			</table>
 		</div>
-		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 </div>
 
 <div style="margin-left:18px;">

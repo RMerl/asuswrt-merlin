@@ -100,19 +100,20 @@ function ddns_load_body(){
 			inputCtrl(document.form.ddns_passwd_x, 0);
 			document.form.ddns_wildcard_x[0].disabled= 1;
 			document.form.ddns_wildcard_x[1].disabled= 1;
+			showhide("wildcard_field",0);
 	}	
 	
 	hideLoading();
 
 	if(ddns_return_code == 'register,-1')
 		alert("<#LANHostConfig_x_DDNS_alarm_2#>");
-	else if(ddns_return_code == 'register,200'){
+	else if(ddns_return_code.indexOf('200')!=-1){
 		alert("<#LANHostConfig_x_DDNS_alarm_3#>");
 		showhide("wan_ip_hide2", 0);
 		showhide("wan_ip_hide3", 1);		
-	}else if(ddns_return_code == 'register,203')
+	}else if(ddns_return_code.indexOf('203')!=-1)
 		alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered#>");
-	else if(ddns_return_code == 'register,220'){
+	else if(ddns_return_code.indexOf('220')!=-1){
 		alert("<#LANHostConfig_x_DDNS_alarm_4#>");
 		showhide("wan_ip_hide2", 0);
 		showhide("wan_ip_hide3", 1);		
@@ -120,58 +121,40 @@ function ddns_load_body(){
 		alert("<#LANHostConfig_x_DDNS_alarm_5#>");
 		showhide("wan_ip_hide2", 0);
 		showhide("wan_ip_hide3", 1);		
-	}else if(ddns_return_code == 'register,233')
+	}else if(ddns_return_code.indexOf('233')!=-1)
 		alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered_2#> '"+ddns_old_name+"'.");
-	else if(ddns_return_code == 'register,296')
+	else if(ddns_return_code.indexOf('296')!=-1)
 		alert("<#LANHostConfig_x_DDNS_alarm_6#>");
-	else if(ddns_return_code == 'register,297')
+	else if(ddns_return_code.indexOf('297')!=-1)
 		alert("<#LANHostConfig_x_DDNS_alarm_7#>");
-	else if(ddns_return_code == 'register,298')
+	else if(ddns_return_code.indexOf('298')!=-1)
 		alert("<#LANHostConfig_x_DDNS_alarm_8#>");
-	else if(ddns_return_code == 'register,299')
+	else if(ddns_return_code.indexOf('299')!=-1)
 		alert("<#LANHostConfig_x_DDNS_alarm_9#>");
-	else if(ddns_return_code == 'register,401')
+	else if(ddns_return_code.indexOf('401')!=-1)
 		alert("<#LANHostConfig_x_DDNS_alarm_10#>");
-	else if(ddns_return_code == 'register,407')
+	else if(ddns_return_code.indexOf('407')!=-1)
 		alert("<#LANHostConfig_x_DDNS_alarm_11#>");
 	else if(ddns_return_code == 'Time-out')
 		alert("<#LANHostConfig_x_DDNS_alarm_1#>");
 	else if(ddns_return_code =='unknown_error')
 		alert("<#LANHostConfig_x_DDNS_alarm_2#>");
-  else if(ddns_return_code =='connect_fail')
+  	else if(ddns_return_code =='connect_fail')
 		alert("<#qis_fail_desc7#>");
-	else if(ddns_return_code == 'update,200'){
-       alert("<#LANHostConfig_x_DDNS_alarm_3#>");
-       showhide("wan_ip_hide2", 0);
-       showhide("wan_ip_hide3", 1);
-	}
-  else if(ddns_return_code == 'update,220'){
-       alert("<#LANHostConfig_x_DDNS_alarm_4#>");
-       showhide("wan_ip_hide2", 0);
-       showhide("wan_ip_hide3", 1);            
-  }
-  else if(ddns_return_code == 'update,297')
-  	alert("<#LANHostConfig_x_DDNS_alarm_7#>");
-  else if(ddns_return_code == 'update,298')
-    alert("<#LANHostConfig_x_DDNS_alarm_8#>");
-  else if(ddns_return_code == 'update,299')
-    alert("<#LANHostConfig_x_DDNS_alarm_9#>");
-  else if(ddns_return_code == 'update,401')
-    alert("<#LANHostConfig_x_DDNS_alarm_10#>");
-  else if(ddns_return_code == 'update,407')
-    alert("<#LANHostConfig_x_DDNS_alarm_11#>");
-  else if(ddns_return_code =='no_change')
-    alert("<#LANHostConfig_x_DDNS_alarm_nochange#>");
-  /*else if(ddns_return_code =='ddns_query')
-    alert("<#LANHostConfig_x_DDNSHostnameCheck_buttonname#>");*/
-  else if(ddns_return_code !='')
-    alert("<#LANHostConfig_x_DDNS_alarm_2#>");
+  	else if(ddns_return_code =='no_change')
+    		alert("<#LANHostConfig_x_DDNS_alarm_nochange#>");
+  	/*else if(ddns_return_code =='ddns_query')
+    		alert("<#LANHostConfig_x_DDNSHostnameCheck_buttonname#>");*/
+        else if(ddns_return_code =='auth_fail')
+                alert("<#qis_fail_desc1#>");
+  	else if(ddns_return_code !='')
+    		alert("<#LANHostConfig_x_DDNS_alarm_2#>");
 }
 
 function applyRule(){
 	if(validForm()){
 		if(document.form.ddns_enable_x[0].checked == true && document.form.ddns_server_x.selectedIndex == 0){
-				document.form.action_script.value = "adm_asusddns_register";				
+				//document.form.action_script.value = "adm_asusddns_register";				
 				document.form.ddns_hostname_x.value = document.form.DDNSName.value+".asuscomm.com";	
 		}
 		showLoading();
@@ -407,7 +390,7 @@ function cleandef(){
 				<th><#LANHostConfig_x_DDNSPassword_itemname#></th>
 				<td><input type="password" autocapitalization="off" maxlength="64" class="input_25_table" name="ddns_passwd_x" value="<% nvram_get("ddns_passwd_x"); %>"></td>
 			</tr>
-			<tr>
+			<tr id="wildcard_field">
 				<th><#LANHostConfig_x_DDNSWildcard_itemname#></th>
 				<td>
 					<input type="radio" value="1" name="ddns_wildcard_x" onClick="return change_common_radio(this, 'LANHostConfig', 'ddns_wildcard_x', '1')" <% nvram_match("ddns_wildcard_x", "1", "checked"); %>><#checkbox_Yes#>

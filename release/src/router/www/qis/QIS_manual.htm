@@ -5,7 +5,7 @@
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="stylesheet" type="text/css" href="/form_style.css">
-<link rel="stylesheet" type="text/css" href="qis_style.css">
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/JavaScript" src="/general.js"></script>
 <script type="text/JavaScript" src="/form.js"></script>
@@ -15,38 +15,44 @@
 var $j = jQuery.noConflict();
 
 function QKInternet_load_body(){
-	parent.set_step("t2");
-	if(repeater_support < 0)
-		$("repeaterMode").style.display = "none";
-	else{
-		if(parent.psta_support != -1)
-			$("repeaterMode_desc").innerHTML = "Media bridge";
+	if(parent.ISMOBILE){
+		parent.set_step("admin_pass");
+		hideObjs();
+		document.getElementById("field_general").style.display = "none";
+		document.getElementById("field_mobile").style.display = "";		
 	}
-	
+	else{
+		parent.set_step("t2");
+		setScenerion(parent.sw_mode);
+
+		if(repeater_support < 0)
+			$("repeaterMode").style.display = "none";
+
+		if(psta_support < 0)
+			$("MBMode").style.display = "none";
 		
-	document.getElementById("nextButton").focus();	
+		if(parent.hwmodeSwitch_support){
+			$("routerMode").style.display = "none";
+			$("repeaterMode").style.display = "none";
+			$("APMode").style.display = "none";
+
+			if(parent.sw_mode == 2)
+				$("repeaterMode").style.display = "";
+			else if(parent.sw_mode == 3)
+				$("APMode").style.display = "";
+			else if(parent.sw_mode == 4)
+				$("MBMode").style.display = "";
+			else
+				$("routerMode").style.display = "";
+		}
+
+		document.getElementById("nextButton").focus();	
+	}
 }
 
 function setScenerion(mode){
-	if(mode == '1'){
-		parent.document.QKform.sw_mode.value = 1;
-		$j("#Senario").attr("src", "/images/New_ui/rt.jpg");
-		$j("#mode_desc").html("<#OP_GW_desc#>");
-		document.form.sw_mode_radio[0].focus();
-	}	
-	else if(mode == '2'){
-		var pstaDesc = "";
-
-		if(parent.psta_support == -1){
-			pstaDesc = "<#OP_RE_desc#>";
-		}
-		else{
-			pstaDesc += "The <#Web_Title2#> can be configured in Media bridge mode.";
-			pstaDesc += "This mode provide multiple entertainment devices fastest 802.11ac wifi connection simultaneously.";
-			pstaDesc += "To setup the Media bridge mode, you need two <#Web_Title2#> routers, one configured as the Media station and the other as a router.";
-			pstaDesc += "Setup the first <#Web_Title2#> as router then configure the second <#Web_Title2#> as 802.11ac Media bridge and you can simply connect PCs, Smart TV, game console, DVR, media player to Media bridge via Ethernet cable.";
-			pstaDesc += "<br><br><br>";
-		}
+	if(mode == '2'){
+		var pstaDesc = "<#OP_RE_desc#>";
 
 		parent.document.QKform.sw_mode.value = 2;
 		$j("#Senario").attr("src", "/images/New_ui/re.jpg");
@@ -59,19 +65,43 @@ function setScenerion(mode){
 		$j("#mode_desc").html("<#OP_AP_desc#>");
 		document.form.sw_mode_radio[2].focus();
 	}
+	else if(mode == '4'){
+		var pstaDesc = "";
+		pstaDesc += "<#OP_MB_desc1#>";
+		pstaDesc += "<#OP_MB_desc2#>";
+		pstaDesc += "<#OP_MB_desc3#>";
+		pstaDesc += "<#OP_MB_desc4#>";
+		pstaDesc += "<#OP_MB_desc5#>";
+		pstaDesc += "<br><br><br>";
+
+		parent.document.QKform.sw_mode.value = 4;
+		$j("#Senario").attr("src", "/images/New_ui/re.jpg");
+		$j("#mode_desc").html(pstaDesc);
+		document.form.sw_mode_radio[3].focus();
+	}
+	else{
+		parent.document.QKform.sw_mode.value = 1;
+		$j("#Senario").attr("src", "/images/New_ui/rt.jpg");
+		$j("#mode_desc").html("<#OP_GW_desc#>");
+		document.form.sw_mode_radio[0].focus();
+	}
 }
 
 function submitForm(){
-	if(parent.document.QKform.sw_mode.value == "1"){
-		document.form.action = "/qis/QIS_detect.htm";
+	if(parent.document.QKform.sw_mode.value == "3"){
+		document.form.action = "/qis/QIS_lanip.htm";
 		document.form.submit();
 	}
 	else if(parent.document.QKform.sw_mode.value == "2"){
 		document.form.action = "/qis/QIS_sitesurvey.htm";
 		document.form.submit();
 	}
+	else if(parent.document.QKform.sw_mode.value == "4"){
+		document.form.action = "/qis/QIS_sitesurvey_mb.htm";
+		document.form.submit();
+	}
 	else{
-		document.form.action = "/qis/QIS_lanip.htm";
+		document.form.action = "/qis/QIS_detect.htm";
 		document.form.submit();
 	}
 }
@@ -99,8 +129,8 @@ function submitenter(myfield,e){
 <input type="hidden" name="flag" value="adv_ap_mode">
 <div class="QISmain">
 <div class="formfonttitle" style="padding:6 0 0 10;">
-		<div>
-			<table width="730px">
+		<div id="descTltle">
+			<table width="100%">
 				<tr>
 					<td align="left">
 						<span class="description_down"><#OP_desc1#></span>
@@ -111,20 +141,28 @@ function submitenter(myfield,e){
 				</tr>
 			</table>
 		</div>
-		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 </div>
 <br/>
 
-	<div style="width:95%; margin:0 auto; padding-bottom:3px;">
+	<div style="width:95%; margin:0 auto; padding-bottom:3px;" id="field_general">
 		<span style="font-size:16px; font-weight:bold;color:white;text-shadow: 1px 1px 0px black">
-			<input type="radio" name="sw_mode_radio" class="input" value="1" onclick="setScenerion(1);" <% nvram_match("sw_mode", "1", "checked"); %>><#OP_GW_item#>
-			&nbsp;&nbsp;
+			<span id="routerMode">
+				<input type="radio" name="sw_mode_radio" class="input" value="1" onclick="setScenerion(1);" <% nvram_match("sw_mode", "1", "checked"); %>><#OP_GW_item#>
+			</span>
+				&nbsp;&nbsp;
 			<span id="repeaterMode">
 				<input type="radio" name="sw_mode_radio" class="input" value="2" onclick="setScenerion(2);" <% nvram_match("sw_mode", "2", "checked"); %>>
 				<span id="repeaterMode_desc"><#OP_RE_item#></span>
 			</span>
 			&nbsp;&nbsp;
-			<input type="radio" name="sw_mode_radio" class="input" value="3" onclick="setScenerion(3);" <% nvram_match("sw_mode", "3", "checked"); %>><#OP_AP_item#>
+			<span id="APMode">
+				<input type="radio" name="sw_mode_radio" class="input" value="3" onclick="setScenerion(3);" <% nvram_match("sw_mode", "3", "checked"); %>><#OP_AP_item#>
+			</span>
+			&nbsp;&nbsp;
+			<span id="MBMode">
+				<input type="radio" name="sw_mode_radio" class="input" value="4" onclick="setScenerion(4);" <% nvram_match("sw_mode", "4", "checked"); %>>Media bridge
+			</span>
 		</span>
 	<div id="mode_desc" style="font-family:Segoe UI, Arial, sans-serif;position:relative;display:block;margin-top:10px;margin-left:5px;height:60px;z-index:90;">
 			<#OP_GW_desc#>
@@ -132,10 +170,26 @@ function submitenter(myfield,e){
 	<br/>
 	<div style="margin-top:40px;margin-bottom:60px;"><img id="Senario" width="100%" height="132px" src="/images/New_ui/rt.jpg">
 	</div>	
+	<div id="applyBtn" class="apply_gen" style="margin-top:30px">
+		<input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen" >
+	</div>
+</div>
 
-<div class="apply_gen" style="margin-top:30px">
-	<input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen" >
-</div>
-</div>
+<div style="display:none;margin-top:-20px;" id="field_mobile">
+	<span class="QISGeneralFont" style="margin-left:0px;"><#OP_desc1#></span><br><br>
+	<fieldset class="theFieldset">
+		<div class="row">
+			<a class="iuiA" onclick="parent.document.QKform.sw_mode.value=1;submitForm();"><#OP_GW_item#></a>
+		</div>
+		<!-- Todo: repeater support -->
+		<!--div class="row" id="siteSurvey">
+			<a class="iuiA" onclick="parent.document.QKform.sw_mode.value=3;submitForm();"><#OP_RE_item#></a>
+		</div-->
+		<div class="row_end">
+			<a class="iuiA" onclick="parent.document.QKform.sw_mode.value=3;submitForm();"><#OP_AP_item#></a>
+		</div>
+	</fieldset>
+<div>
+
 </form>
 </body>

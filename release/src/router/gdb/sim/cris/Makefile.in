@@ -1,0 +1,185 @@
+# Makefile template for Configure for the CRIS simulator, based on a mix
+# of the ones for m32r and i960.
+#
+# Copyright (C) 2004, 2005, 2007 Free Software Foundation, Inc.
+# Contributed by Axis Communications.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## COMMON_PRE_CONFIG_FRAG
+
+CRISV10F_OBJS = crisv10f.o cpuv10.o decodev10.o modelv10.o mloopv10f.o
+CRISV32F_OBJS = crisv32f.o cpuv32.o decodev32.o modelv32.o mloopv32f.o
+
+CONFIG_DEVICES =
+
+SIM_OBJS = \
+	$(SIM_NEW_COMMON_OBJS) \
+	sim-cpu.o \
+	sim-hload.o \
+	sim-hrw.o \
+	sim-model.o \
+	sim-reg.o \
+	cgen-utils.o cgen-trace.o cgen-scache.o \
+	cgen-run.o sim-reason.o sim-engine.o sim-stop.o \
+	sim-if.o arch.o \
+	$(CRISV10F_OBJS) \
+	$(CRISV32F_OBJS) \
+	traps.o devices.o \
+	$(CONFIG_DEVICES) \
+	cris-desc.o
+
+# Extra headers included by sim-main.h.
+# FIXME: $(srccom)/cgen-ops.h should be in CGEN_INCLUDE_DEPS.
+SIM_EXTRA_DEPS = \
+	$(CGEN_INCLUDE_DEPS) $(srccom)/cgen-ops.h \
+	arch.h cpuall.h cris-sim.h cris-desc.h
+
+SIM_RUN_OBJS = nrun.o
+SIM_EXTRA_CLEAN = cris-clean
+
+# This selects the cris newlib/libgloss syscall definitions.
+NL_TARGET = -DNL_TARGET_cris
+
+## COMMON_POST_CONFIG_FRAG
+
+CGEN_CPU_DIR = $(CGENDIR)/../cpu
+
+arch = cris
+
+sim-if.o: sim-if.c $(SIM_MAIN_DEPS) $(sim-core_h) $(sim-options_h)
+
+# Needs CPU-specific knowledge.
+dv-cris.o: dv-cris.c $(SIM_MAIN_DEPS) $(sim-core_h)
+
+# This is the same rule as dv-core.o etc.
+dv-rv.o: dv-rv.c $(hw_main_headers) $(sim_main_headers)
+
+arch.o: arch.c $(SIM_MAIN_DEPS)
+
+traps.o: traps.c targ-vals.h $(SIM_MAIN_DEPS) $(sim-options_h)
+devices.o: devices.c $(SIM_MAIN_DEPS)
+
+# rvdummy is just used for testing.  It does nothing if
+# --enable-sim-hardware isn't active.
+
+all: rvdummy$(EXEEXT)
+
+check: rvdummy$(EXEEXT)
+
+rvdummy$(EXEEXT): rvdummy.o $(EXTRA_LIBDEPS)
+	$(CC) $(ALL_CFLAGS) -o rvdummy$(EXEEXT) rvdummy.o $(EXTRA_LIBS)
+
+rvdummy.o: rvdummy.c config.h tconfig.h $(remote_sim_h) $(callback_h)
+
+# CRISV10 objs
+
+CRISV10F_INCLUDE_DEPS = \
+	$(CGEN_MAIN_CPU_DEPS) \
+	cpuv10.h decodev10.h engv10.h
+
+crisv10f.o: crisv10f.c cris-tmpl.c $(CRISV10F_INCLUDE_DEPS)
+
+# FIXME: What is mono and what does "Use of `mono' is wip" mean (other
+# than the apparent; some "mono" feature is work in progress)?
+mloopv10f.c engv10.h: stamp-v10fmloop
+stamp-v10fmloop: $(srcdir)/../common/genmloop.sh mloop.in Makefile
+	$(SHELL) $(srccom)/genmloop.sh \
+		-mono -no-fast -pbb -switch semcrisv10f-switch.c \
+		-cpu crisv10f -infile $(srcdir)/mloop.in
+	$(SHELL) $(srcroot)/move-if-change eng.hin engv10.h
+	$(SHELL) $(srcroot)/move-if-change mloop.cin mloopv10f.c
+	touch stamp-v10fmloop
+mloopv10f.o: mloopv10f.c semcrisv10f-switch.c $(CRISV10F_INCLUDE_DEPS)
+
+cpuv10.o: cpuv10.c $(CRISV10F_INCLUDE_DEPS)
+decodev10.o: decodev10.c $(CRISV10F_INCLUDE_DEPS)
+modelv10.o: modelv10.c $(CRISV10F_INCLUDE_DEPS)
+
+# CRISV32 objs
+
+CRISV32F_INCLUDE_DEPS = \
+	$(CGEN_MAIN_CPU_DEPS) \
+	cpuv32.h decodev32.h engv32.h
+
+crisv32f.o: crisv32f.c cris-tmpl.c $(CRISV32F_INCLUDE_DEPS)
+
+# FIXME: What is mono and what does "Use of `mono' is wip" mean (other
+# than the apparent; some "mono" feature is work in progress)?
+mloopv32f.c engv32.h: stamp-v32fmloop
+# We depend on stamp-v10fmloop to get serialization to avoid
+# racing with it for the same temporary file-names when "make -j".
+stamp-v32fmloop: stamp-v10fmloop $(srcdir)/../common/genmloop.sh mloop.in Makefile
+	$(SHELL) $(srccom)/genmloop.sh \
+		-mono -no-fast -pbb -switch semcrisv32f-switch.c \
+		-cpu crisv32f -infile $(srcdir)/mloop.in
+	$(SHELL) $(srcroot)/move-if-change eng.hin engv32.h
+	$(SHELL) $(srcroot)/move-if-change mloop.cin mloopv32f.c
+	touch stamp-v32fmloop
+mloopv32f.o: mloopv32f.c semcrisv32f-switch.c $(CRISV32F_INCLUDE_DEPS)
+
+cpuv32.o: cpuv32.c $(CRISV32F_INCLUDE_DEPS)
+decodev32.o: decodev32.c $(CRISV32F_INCLUDE_DEPS)
+modelv32.o: modelv32.c $(CRISV32F_INCLUDE_DEPS)
+
+cris-clean:
+	for v in 10 32; do \
+	  rm -f mloopv$${v}f.c engv$${v}.h stamp-v$${v}fmloop; \
+	  rm -f stamp-v$${v}fcpu; \
+	done
+	-rm -f stamp-arch stamp-desc
+	-rm -f tmp-*
+
+# cgen support, enable with --enable-cgen-maint
+CGEN_MAINT = ; @true
+# The following line is commented in or out depending upon --enable-cgen-maint.
+@CGEN_MAINT@CGEN_MAINT =
+
+# Useful when making CGEN-generated files manually, without --enable-cgen-maint.
+stamps: stamp-v10fmloop stamp-v32fmloop stamp-arch stamp-v10fcpu stamp-v32fcpu stamp-desc
+
+stamp-arch: $(CGEN_READ_SCM) $(CGEN_ARCH_SCM) $(CGEN_CPU_DIR)/cris.cpu Makefile
+	$(MAKE) cgen-arch $(CGEN_FLAGS_TO_PASS) mach=crisv10,crisv32 \
+	  archfile=$(CGEN_CPU_DIR)/cris.cpu \
+	  FLAGS="with-scache with-profile=fn"
+	touch stamp-arch
+arch.h arch.c cpuall.h: $(CGEN_MAINT) stamp-arch
+
+# The sed-hack is supposed to be temporary, until we get CGEN to emit it.
+stamp-v10fcpu: $(CGEN_READ_SCM) $(CGEN_CPU_SCM) $(CGEN_DECODE_SCM) $(CGEN_CPU_DIR)/cris.cpu Makefile
+	$(MAKE) cgen-cpu-decode $(CGEN_FLAGS_TO_PASS) \
+	  archfile=$(CGEN_CPU_DIR)/cris.cpu \
+	  cpu=crisv10f mach=crisv10 SUFFIX=v10 FLAGS="with-scache with-profile=fn" EXTRAFILES="$(CGEN_CPU_SEMSW)"
+	$(SHELL) $(srcroot)/move-if-change $(srcdir)/semv10-switch.c $(srcdir)/semcrisv10f-switch.c
+	sed -ne 'p; s/^\(#include "sim-assert.h"\)$$/#include "cgen-ops.h"/p' < $(srcdir)/decodev10.c > decodev10.c.tmp
+	mv decodev10.c.tmp $(srcdir)/decodev10.c
+	touch stamp-v10fcpu
+cpuv10.h cpuv10.c semcrisv10f-switch.c modelv10.c decodev10.c decodev10.h: $(CGEN_MAINT) stamp-v10fcpu
+
+stamp-v32fcpu: $(CGEN_READ_SCM) $(CGEN_CPU_SCM) $(CGEN_DECODE_SCM) $(CGEN_CPU_DIR)/cris.cpu Makefile
+	$(MAKE) cgen-cpu-decode $(CGEN_FLAGS_TO_PASS) \
+	  archfile=$(CGEN_CPU_DIR)/cris.cpu \
+	  cpu=crisv32f mach=crisv32 SUFFIX=v32 FLAGS="with-scache with-profile=fn" EXTRAFILES="$(CGEN_CPU_SEMSW)"
+	$(SHELL) $(srcroot)/move-if-change $(srcdir)/semv32-switch.c $(srcdir)/semcrisv32f-switch.c
+	sed -ne 'p; s/^\(#include "sim-assert.h"\)$$/#include "cgen-ops.h"/p' < $(srcdir)/decodev32.c > decodev32.c.tmp
+	mv decodev32.c.tmp $(srcdir)/decodev32.c
+	touch stamp-v32fcpu
+cpuv32.h cpuv32.c semcrisv32f-switch.c modelv32.c decodev32.c decodev32.h: $(CGEN_MAINT) stamp-v32fcpu
+
+stamp-desc: $(CGEN_READ_SCM) $(CGEN_DESC_SCM) $(CGEN_CPU_DIR)/cris.cpu Makefile
+	$(MAKE) cgen-desc $(CGEN_FLAGS_TO_PASS) \
+		archfile=$(CGEN_CPU_DIR)/cris.cpu \
+		cpu=cris mach=all
+	touch stamp-desc
+cris-desc.c cris-desc.h cris-opc.h: $(CGEN_MAINT) stamp-desc

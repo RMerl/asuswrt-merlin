@@ -1,7 +1,7 @@
 /*
  * bcmwpa.h - interface definitions of shared WPA-related functions
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: bcmwpa.h 261155 2011-05-23 23:51:32Z $
+ * $Id: bcmwpa.h 350375 2012-08-13 17:31:20Z $
  */
 
 #ifndef _BCMWPA_H_
@@ -102,6 +102,23 @@
 
 #define WPS_IE_FIXED_LEN	6
 
+/* GTK indices we use - 0-3 valid per IEEE/802.11 2012 */
+#define GTK_INDEX_1       1
+#define GTK_INDEX_2       2
+
+/* IGTK indices we use - 4-5 are valid per IEEE 802.11 2012 */
+#define IGTK_INDEX_1      4
+#define IGTK_INDEX_2      5
+
+#define IS_IGTK_INDEX(x) ((x) == IGTK_INDEX_1 || (x) == IGTK_INDEX_2)
+
+/* special reserved wsec index wsec key table for IGTK */
+#define IGTK_ID_TO_WSEC_INDEX(x) (-(int)(x))
+#define IS_IGTK_WSEC_INDEX_1(x) (x == IGTK_ID_TO_WSEC_INDEX(IGTK_INDEX_1))
+#define IS_IGTK_WSEC_INDEX_2(x) (x == IGTK_ID_TO_WSEC_INDEX(IGTK_INDEX_2))
+#define IS_IGTK_WSEC_INDEX(x) (IS_IGTK_WSEC_INDEX_1(x) || \
+	IS_IGTK_WSEC_INDEX_2(x))
+
 /* WiFi WPS Attribute fixed portion */
 typedef struct wps_at_fixed {
 	uint8 at[2];
@@ -126,7 +143,11 @@ extern bool BCMROMFN(wpa_cipher)(wpa_suite_t *suite, ushort *cipher, bool wep_ok
 
 /* Look for a WPA IE; return it's address if found, NULL otherwise */
 extern wpa_ie_fixed_t *BCMROMFN(bcm_find_wpaie)(uint8 *parse, uint len);
+#if defined(NDIS) && (NDISVER >= 0x0630) && 0
+extern wme_ie_t *bcm_find_wmeie(uint8 *parse, uint len, uint8 subtype, uint8 subtype_len);
+#else
 extern bcm_tlv_t *bcm_find_wmeie(uint8 *parse, uint len, uint8 subtype, uint8 subtype_len);
+#endif
 /* Look for a WPS IE; return it's address if found, NULL otherwise */
 extern wps_ie_fixed_t *bcm_find_wpsie(uint8 *parse, uint len);
 extern wps_at_fixed_t *bcm_wps_find_at(wps_at_fixed_t *at, int len, uint16 id);

@@ -1,0 +1,431 @@
+# Copyright 2004, 2007 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib libgloss.exp
+
+# FIXME:brobecker/2004-03-31:
+# The following function should eventually be part of dejagnu. Even after
+# this function becomes available in dejagnu, we will keep for a while
+# a copy of this function here in order to avoid increasing the dejagnu
+# version requirement.
+
+proc gdb_find_gnatmake {} {
+    global tool_root_dir
+
+    set root "$tool_root_dir/gcc"
+    set GM ""
+
+    if ![is_remote host] {
+        set file [lookfor_file $root gnatmake]
+        if { $file != "" } {
+            set GM "$file -I$root/ada/rts --GCC=$root/xgcc --GNATBIND=$root/gnatbind --GNATLINK=$root/gnatlink -cargs -B$root -largs --GCC=$root/xgcc -margs";
+        }   
+    }
+
+    if {$GM == ""} {
+        set GM [transform gnatmake]
+    }
+
+    return $GM
+}   
+
+# FIXME:brobecker/2004-03-31:
+# The following function is a copy of the function of the same name provided
+# by dejagnu, except that it has been modified to add support for building
+# Ada programs.  This copy is temporarily placed here until the changes
+# are merged into the dejagnu official release. Once the changes are merged,
+# we will likely keep this local copy for a while to avoid increasing the
+# dejagnu version requirement.
+
+proc gdb_default_target_compile {source destfile type options} {
+    global target_triplet
+    global tool_root_dir
+    global CFLAGS_FOR_TARGET
+    global compiler_flags
+
+    if { $destfile == "" && $type != "preprocess" && $type != "none" } {
+	error "Must supply an output filename for the compile to default_target_compile"
+    }
+
+    set add_flags ""
+    set libs ""
+    set compiler_type "c"
+    set compiler ""
+    set ldflags ""
+    set dest [target_info name]
+
+    if [info exists CFLAGS_FOR_TARGET] {
+	append add_flags " $CFLAGS_FOR_TARGET"
+    }
+
+    if [info exists target_info(host,name)] {
+	set host [host_info name];
+    } else {
+	set host "unix";
+    }
+
+    foreach i $options {
+	if { $i == "ada" } {
+	    set compiler_type "ada"
+	    if [board_info $dest exists adaflags] {
+		append add_flags " [target_info adaflags]"
+	    }
+	    # append add_flags " [gnatmake_include_flags]";
+	    if [board_info $dest exists gnatmake] {
+		set compiler [target_info gnatmake];
+	    } else {
+		set compiler [find_gnatmake];
+	    }
+	}
+
+	if { $i == "c++" } {
+	    set compiler_type "c++"
+	    if [board_info $dest exists cxxflags] {
+		append add_flags " [target_info cxxflags]"
+	    }
+	    append add_flags " [g++_include_flags]";
+	    if [board_info $dest exists c++compiler] {
+		set compiler [target_info c++compiler];
+	    } else {
+		set compiler [find_g++];
+	    }
+	}
+
+	if { $i == "f77" } {
+	    set compiler_type "f77"
+	    if [board_info $dest exists f77flags] {
+		append add_flags " [target_info f77flags]"
+	    }
+#	    append add_flags " [f77_include_flags]"
+	    if [board_info $dest exists f77compiler] {
+		set compiler [target_info f77compiler]
+	    } else {
+		set compiler [find_g77]
+	    }
+	}
+
+	if [regexp "^dest=" $i] {
+	    regsub "^dest=" $i "" tmp
+	    if [board_info $tmp exists name] {
+		set dest [board_info $tmp name];
+	    } else {
+		set dest $tmp;
+	    }
+	}
+	if [regexp "^compiler=" $i] {
+	    regsub "^compiler=" $i "" tmp
+	    set compiler $tmp
+	}
+	if [regexp "^additional_flags=" $i] {
+	    regsub "^additional_flags=" $i "" tmp
+	    append add_flags " $tmp"
+	}
+	if [regexp "^ldflags=" $i] {
+	    regsub "^ldflags=" $i "" tmp
+	    append ldflags " $tmp"
+	}
+	if [regexp "^libs=" $i] {
+	    regsub "^libs=" $i "" tmp
+	    append libs " $tmp"
+	}
+	if [regexp "^incdir=" $i] {
+	    regsub "^incdir=" $i "-I" tmp
+	    append add_flags " $tmp"
+	}
+	if [regexp "^libdir=" $i] {
+	    regsub "^libdir=" $i "-L" tmp
+	    append add_flags " $tmp"
+	}
+	if [regexp "^ldscript=" $i] {
+	    regsub "^ldscript=" $i "" ldscript
+	}
+ 	if [regexp "^redirect=" $i] {
+ 	    regsub "^redirect=" $i "" redirect
+ 	}
+ 	if [regexp "^optimize=" $i] {
+ 	    regsub "^optimize=" $i "" optimize
+ 	}
+ 	if [regexp "^timeout=" $i] {
+ 	    regsub "^timeout=" $i "" timeout
+ 	}
+    }
+
+    if [board_info $host exists cflags_for_target] {
+	append add_flags " [board_info $host cflags_for_target]";
+    }
+
+    global CC_FOR_TARGET
+    global CXX_FOR_TARGET
+    global F77_FOR_TARGET
+    global GNATMAKE_FOR_TARGET
+    
+    if [info exists CC_FOR_TARGET] {
+	if { $compiler == "" } {
+	    set compiler $CC_FOR_TARGET
+	}
+    }
+
+    if [info exists CXX_FOR_TARGET] {
+	if { $compiler_type == "c++" } {
+	    set compiler $CXX_FOR_TARGET
+	}
+    }
+
+    if [info exists F77_FOR_TARGET] {
+	if { $compiler_type == "f77" } {
+	    set compiler $F77_FOR_TARGET
+	}
+    }
+
+    if [info exists GNATMAKE_FOR_TARGET] {
+	if { $compiler_type == "ada" } {
+	    set compiler $GNATMAKE_FOR_TARGET
+	}
+    }
+
+    if { $compiler == "" } {
+	set compiler [board_info $dest compiler];
+	if { $compiler == "" } {
+	    return "default_target_compile: No compiler to compile with";
+	}
+    }
+
+    if ![is_remote host] {
+	if { [which $compiler] == 0 } {
+	    return "default_target_compile: Can't find $compiler."
+	}
+    }
+
+    if {$type == "object"} {
+	append add_flags " -c"
+    }
+
+    if { $type == "preprocess" } {
+	append add_flags " -E"
+    }
+    
+    if { $type == "assembly" } {
+	append add_flags " -S"
+    }
+
+    if [board_info $dest exists cflags] {
+	append add_flags " [board_info $dest cflags]"
+    }
+
+    if { $type == "executable" } {
+	# This must be added here.
+	# if [board_info $dest exists ldscript] {
+	#     append add_flags " [board_info $dest ldscript]"
+	# }
+
+	if [board_info $dest exists ldflags] {
+	    append add_flags " [board_info $dest ldflags]"
+	}
+	if { $compiler_type == "c++" } {
+	    append add_flags " [g++_link_flags]";
+	}
+	if [isnative] {
+	    # This is a lose.
+	    catch "glob -nocomplain $tool_root_dir/libstdc++/libstdc++.so* $tool_root_dir/libstdc++/libstdc++.sl" tmp
+	    if { ${tmp} != "" } {
+		if [regexp ".*solaris2.*" $target_triplet] {
+		    # Solaris 2
+		    append add_flags " -R$tool_root_dir/libstdc++"
+		} elseif [regexp ".*(osf|irix5|linux).*" $target_triplet] {
+		    # OSF/1 or Irix5
+		    append add_flags " -Wl,-rpath,$tool_root_dir/libstdc++"
+		} elseif [regexp ".*hppa.*" $target_triplet] {
+		    # HP/UX
+		    append add_flags " -Wl,-a,shared_archive"
+		}
+	    }
+	}
+    }
+
+    if ![info exists ldscript] {
+	set ldscript [board_info $dest ldscript]
+    }
+
+    foreach i $options {
+	if { $i == "debug" } {
+	    if [board_info $dest exists debug_flags] {
+		append add_flags " [board_info $dest debug_flags]";
+	    } else {
+		append add_flags " -g"
+	    }
+	}
+    }
+
+    if [info exists optimize] {
+	append add_flags " $optimize";
+    }
+
+    if { $type == "executable" } {
+	append add_flags " $ldflags"
+	foreach x $libs {
+	    if [file exists $x] {
+		append source " $x"
+	    } else {
+		append add_flags " $x";
+	    }
+	}
+
+	if [board_info $dest exists libs] {
+	    append add_flags " [board_info $dest libs]"
+	}
+
+	# This probably isn't such a good idea, but it avoids nasty
+	# hackiness in the testsuites.
+	# The math library must be linked in before the C library.  The C
+	# library is linked in by the linker script, so this must be before
+	# the linker script.
+	if [board_info $dest exists mathlib] {
+	    append add_flags " [board_info $dest mathlib]"
+	} else {
+	    append add_flags " -lm"
+	}
+
+	# This must be added here.
+	append add_flags " $ldscript";
+
+	if [board_info $dest exists remote_link] {
+	    # Relink option.
+	    append add_flags " -Wl,-r"
+	}
+	if [board_info $dest exists output_format] {
+	    append add_flags " -Wl,-oformat,[board_info $dest output_format]";
+	}
+    }
+
+    if [board_info $dest exists multilib_flags] {
+	append add_flags " [board_info $dest multilib_flags]";
+    }
+
+    verbose "doing compile"
+
+    set sources ""
+    if [is_remote host] {
+	foreach x $source {
+	    set file [remote_download host $x];
+	    if { $file == "" } {
+		warning "Unable to download $x to host."
+		return "Unable to download $x to host."
+	    } else {
+		append sources " $file";
+	    }
+	}
+    } else {
+	set sources $source
+    }
+
+    if [is_remote host] {
+	append add_flags " -o a.out"
+	remote_file host delete a.out;
+    } else {
+	if { $destfile != "" } {
+	    append add_flags " -o $destfile";
+	}
+    }
+
+    # This is obscure: we put SOURCES at the end when building an
+    # object, because otherwise, in some situations, libtool will
+    # become confused about the name of the actual source file.
+    if {$type == "object"} {
+        set opts "$add_flags $sources"
+    } else {
+        set opts "$sources $add_flags"
+    }
+
+    if [is_remote host] {
+	if [host_info exists use_at] {
+	    set fid [open "atfile" "w"];
+	    puts $fid "$opts";
+	    close $fid;
+	    set opts "@[remote_download host atfile]"
+	    remote_file build delete atfile
+	}
+    }
+
+    verbose "Invoking the compiler as $compiler $opts" 2
+
+    if [info exists redirect] {
+	verbose "Redirecting output to $redirect" 2
+	set status [remote_exec host "$compiler $opts" "" "" $redirect];
+    } else {
+	if [info exists timeout] {
+	    verbose "Setting timeout to $timeout" 2
+	    set status [remote_exec host "$compiler $opts" "" "" "" $timeout];
+	} else {
+	    set status [remote_exec host "$compiler $opts"];
+	}
+    }
+
+    set compiler_flags $opts
+    if [is_remote host] {
+	remote_upload host a.out $destfile;
+	remote_file host delete a.out;
+    }
+    set comp_output [prune_warnings [lindex $status 1]];
+    regsub "^\[\r\n\]+" $comp_output "" comp_output;
+    if { [lindex $status 0] != 0 } {
+	verbose -log "compiler exited with status [lindex $status 0]";
+    }
+    if { [lindex $status 1] != "" } {
+	verbose -log "output is:\n[lindex $status 1]" 2;
+    }
+    if { [lindex $status 0] != 0 && "${comp_output}" == "" } {
+	set comp_output "exit status is [lindex $status 0]";
+    }
+    return ${comp_output};
+}
+
+# See if the version of dejaGNU being used to run the testsuite is
+# recent enough to contain support for building Ada programs or not.
+# If not, then use the functions above in place of the ones provided
+# by dejaGNU. This is only temporary (brobecker/2004-03-31).
+
+if {[info procs find_gnatmake] == ""} {
+  proc find_gnatmake { } { return [gdb_find_gnatmake] }
+  proc default_target_compile { source destfile type options } {
+    return [gdb_default_target_compile $source $destfile $type $options]
+  }
+}
+
+# Compile some Ada code.
+
+proc gdb_compile_ada {source dest type options} {
+
+    set srcdir [file dirname $source]
+    set gprdir [file dirname $srcdir]
+    set objdir [file dirname $dest]
+
+    append options " ada"
+    append options " additional_flags=-P$gprdir/gnat_ada"
+    append options " additional_flags=-XSRC=[file tail $srcdir]"
+    append options " additional_flags=-XOBJ=$objdir"
+
+    set result [target_compile [file tail $source] $dest $type $options]
+
+    # The Ada build always produces some output, even when the build
+    # succeeds. Thus, we can not use the output the same way we do in
+    # gdb_compile to determine whether the build has succeeded or not.
+    # We therefore simply check whether the dest file has been created
+    # or not. Unless not present, the build has succeeded.
+    if ![file exists $dest] {
+        unsupported "Ada compilation failed: $result"
+        return "Ada compilation failed."
+    }
+}
+

@@ -1,0 +1,17 @@
+# sh testcase for blink $trb, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+blink:
+	pta target, tr0
+	gettr tr0, r1
+	ptabs r1, tr0
+	blink tr0, r0
+	fail
+
+target:
+	pass

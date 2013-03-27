@@ -375,6 +375,18 @@
 	border-width:0;
 	color:#FFFFFF;
 }
+.input_18_table{
+	margin-left:2px;
+	padding-left:0.4em;
+	height:23px;
+	width:160px;
+	line-height:23px \9;	/*IE*/
+	font-size:12px;
+	font-family: Lucida Console;
+	background-image:url(/images/New_ui/inputbg.png);
+	border-width:0;
+	color:#FFFFFF;
+}
 .input_15_table{
 	margin-left:2px;
 	padding-left:0.4em;
@@ -761,7 +773,7 @@ textarea{
 	position:absolute;
 	margin-top:25px;
 	margin-left:1px;
-	*margin-left:-136px;
+	*margin-left:-132px;
 	text-align:left;
 	width:250px;
 	height:400px;
@@ -805,6 +817,13 @@ textarea{
 	height:125px;/*must have for any big value*/
 }
 
+.pull_arrow{
+ 	float:left;
+ 	cursor:pointer;
+ 	border:2px outset #EFEFEF;
+ 	background-color:#CCC;
+ 	padding:3px 2px 4px 0px;
+}
 #pull_arrow{
  	float:left;
  	cursor:pointer;
@@ -1204,7 +1223,7 @@ div.tabclick {
 .tabclick_NW span {
 		font-weight: bolder;
 	  background: transparent url(images/New_ui/tabclickspan.png) no-repeat;
-		font-family: Verdana;	 
+		font-family: Arial, Helvetica, sans-serif;	 
     display: block;
     padding: 5px 4px 5px 12px;
     line-height: 20px;	
@@ -1301,18 +1320,18 @@ font-size:12px;
 
 .flowfontbt{
 font:Arial, Helvetica, sans-serif;
-background-image:url(images/New_ui/networkmap/flowbt_normal.png);
+background-image:url(images/New_ui/flowbt_normal.png);
 color:#FFFFFF;
 font-size:12px;
 }
 .flowfontbt:link{
 font:Arial, Helvetica, sans-serif;
-background-image:url(images/New_ui/networkmap/flowbt_normal.png);
+background-image:url(images/New_ui/flowbt_normal.png);
 color:#FFFFFF;
 font-size:12px;
 }
 .flowfontbt:hover{
-background-image:url(images/New_ui/networkmap/flowbt_over.png);
+background-image:url(images/New_ui/flowbt_over.png);
 }
 
 .fromdropdownbt{
@@ -1514,6 +1533,24 @@ padding-top:1px;
 	width:30px;
 	cursor: pointer;
 }
+.notificationon{
+	display:inline;
+	background-image:url(images/New_ui/notification.png);
+	background-repeat:no-repeat;	
+	background-position:2px 2px;
+	height:30px;
+	width:30px;
+	cursor: pointer;
+}
+.notificationoff{
+	display:none;
+	background-image:url(images/New_ui/notification.png);
+	background-repeat:no-repeat;	
+	background-position:2px -48px;
+	height:30px;
+	width:30px;
+	cursor: pointer;
+}
 
 .StatusClickHint_mouseover{
 	cursor: pointer;
@@ -1531,7 +1568,7 @@ padding-top:1px;
 }
 #overDiv{
 	filter:alpha(opacity=90);
-	opacity:.85;
+	opacity:.9;
 	z-index: 500;
 }
 #overDiv_table1{
@@ -1624,7 +1661,8 @@ padding-top:1px;
 	font-size: 13px;
 	font-weight: bold;
 	height:24px;
-	overflow:hidden;	
+	overflow:hidden;
+	width:144px;	
 	}
  
 .navigation li dt:hover{
@@ -1639,12 +1677,13 @@ padding-top:1px;
  
 /* 設置子選單dd */
 .navigation li dd { 
-	margin:0;
+	/*margin:0;*/
+	margin-left:3px;
 	/*padding:0;*/
 	color: #fff; 
 	background-color:#333;
 	border-bottom:solid 1px #666;
-	width:140px;
+	width:145px;
 	}
  
 .navigation li dd.last {

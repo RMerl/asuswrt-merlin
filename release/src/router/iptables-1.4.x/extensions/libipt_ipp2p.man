@@ -1,0 +1,43 @@
+This module matches certain packets in P2P flows. It is not
+designed to match all packets belonging to a P2P connection - 
+use IPP2P together with CONNMARK for this purpose. Also visit
+http://www.ipp2p.org for detailed information.
+
+Use it together with -p tcp or -p udp to search these protocols
+only or without -p switch to search packets of both protocols.
+
+IPP2P provides the following options:
+.TP
+.B "--edk "
+Matches as many eDonkey/eMule packets as possible.
+.TP
+.B "--kazaa "
+Matches as many KaZaA packets as possible.
+.TP
+.B "--gnu "
+Matches as many Gnutella packets as possible.
+.TP
+.B "--dc "
+Matches as many Direct Connect packets as possible.
+.TP
+.B "--bit "
+Matches BitTorrent packets.
+.TP
+.B "--apple "
+Matches AppleJuice packets.
+.TP
+.B "--soul "
+Matches some SoulSeek packets. Considered as beta, use careful!
+.TP
+.B "--winmx "
+Matches some WinMX packets. Considered as beta, use careful!
+.TP
+.B "--ares "
+Matches Ares and AresLite packets. Use together with -j DROP only.
+.TP
+.B "--ipp2p "
+Short hand for: --edk --kazaa --gnu --dc
+.TP
+.B "--debug "
+Prints some information about each hit into kernel logfile. May 
+produce huge logfiles so beware!

@@ -107,8 +107,9 @@ extern int check_file_integrity(const char *const file_name){
 }
 
 // Success: return value is account number. Fail: return value is -1.
-extern int get_account_list(int *acc_num, char ***account_list) {
-	char **tmp_account_list, **tmp_account;
+int get_account_list(int *acc_num, char ***account_list)
+{
+	char **tmp_account_list = NULL, **tmp_account;
 	int len, i, j;
 	char *nv, *nvp, *b;
 	char *tmp_ascii_user, *tmp_ascii_passwd;
@@ -304,7 +305,7 @@ extern int get_all_folder(const char *const mount_path, int *sh_num, char ***fol
 	DIR *pool_to_open;
 	struct dirent *dp;
 	char *testdir;
-	char **tmp_folder_list, **tmp_folder;
+	char **tmp_folder_list = NULL, **tmp_folder;
 	int len, i;
 	
 	pool_to_open = opendir(mount_path);

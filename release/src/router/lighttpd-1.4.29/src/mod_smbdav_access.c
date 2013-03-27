@@ -243,7 +243,7 @@ URIHANDLER_FUNC(mod_smbdav_access_physical_handler){
 	/* not found */
 	return HANDLER_GO_ON;
 }
-
+#ifndef APP_IPKG
 int mod_smbdav_access_plugin_init(plugin *p);
 int mod_smbdav_access_plugin_init(plugin *p) {
 	p->version     = LIGHTTPD_VERSION_ID;
@@ -260,3 +260,21 @@ int mod_smbdav_access_plugin_init(plugin *p) {
 
 	return 0;
 }
+#else
+int aicloud_mod_smbdav_access_plugin_init(plugin *p);
+int aicloud_mod_smbdav_access_plugin_init(plugin *p) {
+	p->version     = LIGHTTPD_VERSION_ID;
+	p->name        = buffer_init_string("smbdav_access");
+
+	p->init        = mod_smbdav_access_init;
+	p->set_defaults = mod_smbdav_access_set_defaults;
+	//p->handle_uri_clean = mod_smbdav_access_uri_handler;
+	p->handle_physical = mod_smbdav_access_physical_handler;
+	//p->handle_subrequest_start  = mod_smbdav_access_uri_handler;
+	p->cleanup     = mod_smbdav_access_free;
+
+	p->data        = NULL;
+
+	return 0;
+}
+#endif

@@ -1,0 +1,5 @@
+# Host: S390, running Linux
+NAT_FILE= config/nm-linux.h
+NATDEPFILES= inf-ptrace.o fork-child.o corelow.o s390-nat.o \
+	gcore.o linux-thread-db.o proc-service.o linux-nat.o linux-fork.o
+LOADLIBES = -ldl -rdynamic

@@ -1,0 +1,18 @@
+# frv testcase for not $GRj,$GRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global not
+not:
+	set_gr_limmed   0xaaaa,0xaaaa,gr7
+	not      	gr7,gr7
+	test_gr_limmed 	0x5555,0x5555,gr7
+
+	set_gr_limmed   0xdead,0xbeef,gr7
+	not      	gr7,gr7
+	test_gr_limmed 	0x2152,0x4110,gr7
+
+	pass

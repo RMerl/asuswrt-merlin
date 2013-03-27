@@ -37,7 +37,7 @@ endif
 #else
 	CFLAGS = -DSUPPORT_LPRng
 	CFLAGS += -I. -I$(TOP)/shared
-	CFLAGS += -I$(LINUXDIR)/include -I$(SRCBASE)/include
+	CFLAGS += -I$(TOP)/kernel_header/include -I$(SRCBASE)/include
 	LDFLAGS = -lpthread
 #	LDFLAGS += -L$(TOP)/libusb10/libusb/.libs -lusb-1.0
 #	LDFLAGS += -L$(TOP)/libusb/libusb/.libs -lusb

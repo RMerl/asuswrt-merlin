@@ -1,0 +1,16 @@
+# m32r testcase for mulhi $src1,$src2
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global mulhi
+mulhi:
+
+	mvi_h_gr r4, 0x40000
+	mvi_h_gr r5, 0x50000
+	mulhi r4, r5
+	test_h_accum0 0, 0x140000
+
+	pass

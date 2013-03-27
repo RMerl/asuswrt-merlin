@@ -44,9 +44,10 @@ function initial(){
 	wans_caps_primary = wans_caps;
 	wans_caps_secondary = wans_caps;
 	//wans_caps_secondary = wans_caps.replace("dsl", "").replace("  ", " ");
-
+	
 	addWANOption(document.form.wans_primary, wans_caps_primary.split(" "));
-	addWANOption(document.form.wans_second, wans_caps_secondary.split(" ").filter(function(x){return x!="dsl"}));
+	//addWANOption(document.form.wans_second, wans_caps_secondary.split(" ").filter(function(x){return x!="dsl"}));
+	addWANOption(document.form.wans_second, wans_caps_secondary.split(" "));
 	document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];	
 	form_show(wans_flag);		
 }
@@ -156,22 +157,29 @@ function applyRule(){
 		}
 	}	
 	
-	if (document.form.wans_primary.value == "dsl") document.form.next_page = "Advanced_DSL_Content.asp";
-	if (document.form.wans_primary.value == "lan") document.form.next_page = "Advanced_WAN_Content.asp";
-	if (document.form.wans_primary.value == "usb") document.form.next_page = "Advanced_Modem_Content.asp";
-		
+	if (document.form.wans_primary.value == "dsl") document.form.next_page.value = "Advanced_DSL_Content.asp";
+	if (document.form.wans_primary.value == "lan") document.form.next_page.value = "Advanced_WAN_Content.asp";
+	if (document.form.wans_primary.value == "usb") document.form.next_page.value = "Advanced_Modem_Content.asp";
+
 	showLoading();
 	document.form.submit();
 }
 
 function addWANOption(obj, wanscapItem){
 	free_options(obj);
-
+	if(dsl_support != -1 && obj.name == "wans_second"){
+		for(i=0; i<wanscapItem.length; i++){
+			if(wanscapItem[i] == "dsl"){
+				wanscapItem.splice(i,1);
+			}
+		}
+	}
+	
 	for(i=0; i<wanscapItem.length; i++){
 		if(wanscapItem[i].length > 0){
 			obj.options[i] = new Option(wanscapItem[i].toUpperCase(), wanscapItem[i]);
-		}
-	}		
+		}	
+	}
 }
 
 function changeWANProto(obj){	
@@ -185,8 +193,14 @@ function changeWANProto(obj){
 					document.form.wans_second.value = "lan";
 					document.form.wans_second.index = 2;					
 				}else if (obj.value == "lan"){
-					document.form.wans_second.value = "wan";
-					document.form.wans_second.index = 0;
+					if(dsl_support == -1){		//for DSL model, because DSL type can't set to secondary wan
+						document.form.wans_second.value = "wan";
+						document.form.wans_second.index = 0;
+					}
+					else{
+						document.form.wans_second.value = "usb";
+						document.form.wans_second.index = 1;				
+					}
 				}
 			}else if(obj.name == "wans_second"){
 				if(obj.value == "wan"){
@@ -196,8 +210,14 @@ function changeWANProto(obj){
 					document.form.wans_primary.value = "lan";
 					document.form.wans_primary.index = 2;
 				}else if (obj.value == "lan"){
-					document.form.wans_primary.value = "wan";
-					document.form.wans_primary.index = 0;
+					if(dsl_support == -1){
+						document.form.wans_primary.value = "wan";
+						document.form.wans_primary.index = 0;
+					}
+					else{
+						document.form.wans_primary.value = "dsl";
+						document.form.wans_primary.index = 0;					
+					}
 				}	
 			}			
 		}
@@ -209,8 +229,8 @@ function changeWANProto(obj){
 
 function appendLANoption1(obj){
 	if(obj.value == "lan"){
-		if(!document.form.wans_lanport1){
-			var childsel=document.createElement("select");
+		if(document.form.wans_lanport1){
+			/*var childsel=document.createElement("select");
 			childsel.setAttribute("id","wans_lanport1");
 			childsel.setAttribute("name","wans_lanport1");
 			childsel.setAttribute("class","input_option");
@@ -220,11 +240,11 @@ function appendLANoption1(obj){
 			document.form.wans_lanport1.options[2] = new Option("LAN Port 3", "3");
 			document.form.wans_lanport1.options[3] = new Option("LAN Port 4", "4");
 
-		}else{
+		}else{*/
 			document.form.wans_lanport1.style.display = "";	
 		}		
 
-		document.form.wans_lanport1.selectedIndex = '<% nvram_get("wans_lanport"); %>' - 1;		
+		//document.form.wans_lanport1.selectedIndex = '<% nvram_get("wans_lanport"); %>' - 1;		
 		
 	}
 	else if(document.form.wans_lanport1){
@@ -234,22 +254,23 @@ function appendLANoption1(obj){
 
 function appendLANoption2(obj){
 	if(obj.value == "lan"){
-		if(!document.form.wans_lanport2){
-			var childsel=document.createElement("select");
-			childsel.setAttribute("id","wans_lanport2");
-			childsel.setAttribute("name","wans_lanport2");
-			childsel.setAttribute("class","input_option");
-			obj.parentNode.appendChild(childsel);
-			document.form.wans_lanport2.options[0] = new Option("LAN Port 1", "1");
-			document.form.wans_lanport2.options[1] = new Option("LAN Port 2", "2");
-			document.form.wans_lanport2.options[2] = new Option("LAN Port 3", "3");
-			document.form.wans_lanport2.options[3] = new Option("LAN Port 4", "4");
+		if(document.form.wans_lanport2){
+			//var childsel=document.createElement("select");
+			//childsel.setAttribute("id","wans_lanport2");
+			//childsel.setAttribute("name","wans_lanport2");
+			//childsel.setAttribute("class","input_option");
+			//bj.parentNode.appendChild(childsel);
+			//document.form.wans_lanport2.options[0] = new Option("LAN Port 1", "1");
+			//document.form.wans_lanport2.options[1] = new Option("LAN Port 2", "2");
+			//document.form.wans_lanport2.options[2] = new Option("LAN Port 3", "3");
+			//document.form.wans_lanport2.options[3] = new Option("LAN Port 4", "4");
+			
 
-		}else{
+		//}else{
 			document.form.wans_lanport2.style.display = "";
 		}	
 
-		document.form.wans_lanport2.selectedIndex = '<% nvram_get("wans_lanport"); %>' - 1;			
+		//document.form.wans_lanport2.selectedIndex = '<% nvram_get("wans_lanport"); %>' - 1;			
 	}
 	else if(document.form.wans_lanport2){
 		document.form.wans_lanport2.style.display = "none";
@@ -667,12 +688,24 @@ function del_Row(obj){
 											<th>Primary WAN</th>
 											<td>
 												<select name="wans_primary" class="input_option" onchange="changeWANProto(this);"></select>
+												<select id="wans_lanport1" name="wans_lanport1" class="input_option" style="margin-left:7px;">
+													<option value="1" <% nvram_match("wans_lanport", "1", "selected"); %>>LAN Port 1</option>
+													<option value="2" <% nvram_match("wans_lanport", "2", "selected"); %>>LAN Port 2</option>
+													<option value="3" <% nvram_match("wans_lanport", "3", "selected"); %>>LAN Port 3</option>
+													<option value="4" <% nvram_match("wans_lanport", "4", "selected"); %>>LAN Port 4</option>												
+												</select>
 											</td>
 									  </tr>
 										<tr>
 											<th>Secondary WAN</th>
 											<td>
 												<select name="wans_second" class="input_option" onchange="changeWANProto(this);"></select>
+												<select id="wans_lanport2" name="wans_lanport2" class="input_option" style="margin-left:7px;">
+													<option value="1" <% nvram_match("wans_lanport", "1", "selected"); %>>LAN Port 1</option>
+													<option value="2" <% nvram_match("wans_lanport", "2", "selected"); %>>LAN Port 2</option>
+													<option value="3" <% nvram_match("wans_lanport", "3", "selected"); %>>LAN Port 3</option>
+													<option value="4" <% nvram_match("wans_lanport", "4", "selected"); %>>LAN Port 4</option>												
+												</select>											
 											</td>
 									  </tr>
 

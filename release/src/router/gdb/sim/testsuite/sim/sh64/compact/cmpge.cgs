@@ -1,0 +1,69 @@
+# sh testcase for cmp/ge $rm, $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+zero:
+	mov #0, r0
+	mov #0, r1
+	cmp/ge r0, r1
+	bf wrong
+
+onezero:
+	mov #1, r0
+	mov #0, r1
+	cmp/ge r0, r1
+	bt wrong
+
+zeroone:
+	mov #0, r0
+	mov #1, r1
+	cmp/ge r0, r1
+	bf wrong
+
+equal:
+	mov #192, r0
+	mov #192, r1
+	cmp/ge r0, r1
+	bf wrong
+
+eqlarge:
+	mov #1, r0
+	rotr r0
+	add #85, r0
+	mov #1, r1
+	rotr r1
+	add #85, r1
+	cmp/ge r0, r1
+	bf wrong
+
+large2:
+	mov #1, r0
+	rotr r0
+	add #85, r0
+	mov #1, r1
+	rotr r1
+	add #84, r1
+	cmp/ge r0, r1
+	bt wrong
+
+large3:
+	mov #1, r0
+	rotr r0
+	add #84, r0
+	mov #1, r1
+	rotr r1
+	add #85, r1
+	cmp/ge r0, r1
+	bf wrong
+
+okay:
+	pass
+
+wrong:
+	fail
+	

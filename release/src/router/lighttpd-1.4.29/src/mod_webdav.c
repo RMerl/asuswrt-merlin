@@ -25,7 +25,9 @@
 #include <dlinklist.h>
 
 #if EMBEDDED_EANBLE
+#ifndef APP_IPKG
 #include "disk_share.h"
+#endif
 #endif
 
 #if defined(HAVE_LIBXML_H) && defined(HAVE_SQLITE3_H)
@@ -36,10 +38,17 @@
 #include <sqlite3.h>
 #endif
 
+/*
 #if defined(HAVE_LIBXML_H) && defined(HAVE_SQLITE3_H) && defined(HAVE_UUID_UUID_H)
 #define USE_LOCKS
-#include <uuid/uuid.h>
+include <uuid/uuid.h>
 #endif
+*/
+
+#if defined(HAVE_LIBXML_H) && defined(HAVE_SQLITE3_H)
+#define USE_LOCKS
+#endif
+
 
 /**
  * this is a webdav for a lighttpd plugin
@@ -301,7 +310,6 @@ SETDEFAULTS_FUNC(mod_webdav_set_defaults) {
 			}
 
 			/* LOCKS */
-
 			if (SQLITE_OK != sqlite3_exec(s->sql,
 					"CREATE TABLE locks ("
 					"  locktoken TEXT NOT NULL,"
@@ -331,7 +339,7 @@ SETDEFAULTS_FUNC(mod_webdav_set_defaults) {
 
 				return HANDLER_ERROR;
 			}
-
+				
 			if (SQLITE_OK != sqlite3_prepare(s->sql,
 				CONST_STR_LEN("DELETE FROM locks WHERE locktoken = ?"),
 				&(s->stmt_remove_lock), &next_stmt)) {
@@ -676,7 +684,7 @@ static int webdav_copy_file(server *srv, connection *con, plugin_data *p, physic
 	if (stream_open(&s, src->path)) {
 		return 403;
 	}
-	
+
 	if (-1 == (ofd = open(dst->path->ptr, O_WRONLY|O_TRUNC|O_CREAT|(overwrite ? 0 : O_EXCL), WEBDAV_FILE_MODE))) {
 		/* opening the destination failed for some reason */
 		switch(errno) {
@@ -688,7 +696,7 @@ static int webdav_copy_file(server *srv, connection *con, plugin_data *p, physic
 			break;
 		case ENOENT:
 			/* at least one part in the middle wasn't existing */
-			status = 409;
+			status = 427;
 			break;
 		default:
 			status = 403;
@@ -962,7 +970,50 @@ static int webdav_get_live_property(server *srv, connection *con, plugin_data *p
 			buffer_append_string(b, "usbdisk");
 			buffer_append_string_len(b, CONST_STR_LEN("</D:gettype>"));
 			found = 1;
-		}/*else if (0 == strcmp(prop_name, "getname")) {
+		}
+		else if (0 == strcmp(prop_name, "getuseragent")) {
+			//- 20121205 Jerry add
+			buffer_append_string_len(b,CONST_STR_LEN("<D:getuseragent>"));			
+			if(con->smb_info){
+				buffer_append_string_buffer(b, con->smb_info->user_agent);
+			}
+			buffer_append_string_len(b, CONST_STR_LEN("</D:getuseragent>"));
+			found = 1;
+		}
+		else if (0 == strcmp(prop_name, "getroutersync")) {
+			//- 20121206 Jerry add
+			buffer_append_string_len(b,CONST_STR_LEN("<D:getroutersync>"));			
+			
+			share_link_info_t* c;
+			int is_router_sync_folder = 0;
+			buffer* temp = buffer_init();
+			
+			for (c = share_link_info_list; c; c = c->next) {
+
+				if(c->toshare != 2)
+					continue;
+					
+				buffer_append_string_buffer(temp, c->realpath);
+				buffer_append_string(temp, "/");
+				buffer_append_string_buffer(temp, c->filename);
+
+				if(buffer_is_equal(temp,dst->rel_path)){
+					is_router_sync_folder = 1;
+					break;
+				}
+			}
+
+			buffer_free(temp);
+
+			if(is_router_sync_folder==1)
+				buffer_append_string(b, "1");
+			else
+				buffer_append_string(b, "0");
+			
+			buffer_append_string_len(b, CONST_STR_LEN("</D:getroutersync>"));
+			found = 1;
+		}
+		/*else if (0 == strcmp(prop_name, "getname")) {
 			//- 20120920 Jerry add			
 			buffer_append_string_len(b,CONST_STR_LEN("<D:getname>"));
 			buffer_append_string_len(b,CONST_STR_LEN("sda"));
@@ -1047,6 +1098,8 @@ webdav_property live_properties[] = {
 	{ "DAV:", "getattr" },
 	{ "DAV:", "getname" },
 	{ "DAV:", "getpath" },
+	{ "DAV:", "getuseragent" },
+	{ "DAV:", "getroutersync" },
 
 	{ NULL, NULL }
 };
@@ -1289,9 +1342,10 @@ static int webdav_has_lock(server *srv, connection *con, plugin_data *p, buffer 
 		sqlite3_bind_text(stmt, 1,
 			  CONST_BUF_LEN(uri),
 			  SQLITE_TRANSIENT);
-
+		
 		while (SQLITE_ROW == sqlite3_step(stmt)) {
 			has_lock = 0;
+			Cdbg(DBE, "webdav_has_lock: uri=%s has lock", uri->ptr);
 		}
 	}
 #else
@@ -1389,9 +1443,9 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 	buffer *prop_404;
 	webdav_properties *req_props;
 	stat_cache_entry *sce = NULL;
-
+	
 	UNUSED(srv);
-
+	
 	if (!p->conf.enabled) return HANDLER_GO_ON;
 	/* physical path is setup */
 	if (con->physical.path->used == 0) return HANDLER_GO_ON;
@@ -1401,10 +1455,9 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		depth = strtol(ds->value->ptr, NULL, 10);
 	}
 
-	Cdbg(DBE, "http_method=[%d][%s], depth=[%d]", 
+	Cdbg(DBE, "http_method=[%d][%s], depth=[%d], con->url->path=[%s]", 
 		con->request.http_method, get_http_method_name(con->request.http_method), 
-		depth );	
-	Cdbg(DBE, "con->url->path = %s", con->url.path->ptr);
+		depth, con->url.path->ptr);	
 	
 	switch (con->request.http_method) {
 	case HTTP_METHOD_PROPFIND:
@@ -1422,7 +1475,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		default:
 			break;
 		}
-
+	
 #ifdef USE_PROPPATCH
 		/* any special requests or just allprop ? */
 		if (con->request.content_length) {
@@ -1514,7 +1567,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		}
 #endif
 		con->http_status = 207;
-		
+	
 		response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/xml; charset=\"utf-8\""));
 
 		b = chunkqueue_get_append_buffer(con->write_queue);
@@ -1522,7 +1575,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"));
 		
 		buffer_append_string_len(b,CONST_STR_LEN("<D:multistatus xmlns:D=\"DAV:\" xmlns:ns0=\"urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/\" "));
-
+	
 	#if 1
 		//- Key
 		buffer_append_string_len(b, CONST_STR_LEN(" key=\""));
@@ -1548,10 +1601,16 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 
 	#if EMBEDDED_EANBLE
 		buffer_append_string_len(b, CONST_STR_LEN(" readonly=\""));	
-	
+		#ifndef APP_IPKG
 		strcpy(usbdisk_path, "/");
 		strcat(usbdisk_path, nvram_get_productid());
-		
+		#else
+		char *productid = nvram_get_productid();
+		strcpy(usbdisk_path, "/");
+        strcat(usbdisk_path, productid);
+        //strcat(usbdisk_path, nvram_get_productid());
+        free(productid);
+		#endif
 		char mnt_path[5] = "/mnt/";
 		int mlen = 5;
 		char* usbdisk_rel_path=NULL;
@@ -1584,8 +1643,16 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 			buffer_append_string(b, "0");
 
 		//- Computer Name
+		#ifndef APP_IPKG
 		buffer_append_string_len(b, CONST_STR_LEN("\" computername=\""));
 		buffer_append_string(b, nvram_get_computer_name());
+		#else
+		char *computer_name = nvram_get_computer_name();
+		buffer_append_string_len(b, CONST_STR_LEN("\" computername=\""));
+        buffer_append_string(b, computer_name);
+        //buffer_append_string(b, nvram_get_computer_name());
+        free(computer_name);
+		#endif
 	#else
 		buffer_append_string_len(b, CONST_STR_LEN(" readonly=\"0"));
 	
@@ -1649,7 +1716,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 			}
 
 			buffer_append_string_len(b,CONST_STR_LEN("</D:response>\n"));
-
+			
 			break;
 		case 1:		
 			
@@ -1664,12 +1731,12 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 				while(NULL != (de = readdir(dir))) {
 					if ( de->d_name[0] == '.' && de->d_name[1] == '.' && de->d_name[2] == '\0' ) {
 						continue;
-						/* ignore the parent dir */
+						//- ignore the parent dir
 					}
 
 					if ( de->d_name[0] == '.' ) {
 						continue;
-						/* ignore the hidden file */
+						//- ignore the hidden file
 					}
 					
 					buffer_copy_string_buffer(d.path, dst->path);
@@ -1714,9 +1781,41 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 					buffer_append_string_buffer(b, con->uri.scheme);
 					buffer_append_string_len(b,CONST_STR_LEN("://"));
 					buffer_append_string_buffer(b, con->uri.authority);
+
+#if 0
+					if(con->share_link_type==2){
+						char buff[4096];
+						char* tmp = replace_str(&d.rel_path->ptr[0], 
+							                    (char*)con->share_link_realpath->ptr, 
+							                    (char*)con->share_link_shortpath->ptr, 
+							                    (char *)&buff[0]);
+						
+						buffer_append_string(b, "/");
+						buffer_append_string_encoded(b, tmp, strlen(tmp), ENCODING_REL_URI);
 					
-					buffer_append_string_encoded(b, CONST_BUF_LEN(d.rel_path), ENCODING_REL_URI);
+					}
+					else{
+						buffer_append_string_encoded(b, CONST_BUF_LEN(d.rel_path), ENCODING_REL_URI);
+					}
+#else
+					if(con->share_link_shortpath->used){
+						char buff[4096];
+						char* tmp = replace_str(&d.rel_path->ptr[0], 
+							                    (char*)con->share_link_realpath->ptr, 
+							                    (char*)con->share_link_shortpath->ptr, 
+							                    (char *)&buff[0]);
+						
+						buffer_append_string(b, "/");
+						buffer_append_string_encoded(b, tmp, strlen(tmp), ENCODING_REL_URI);
+					}
+					else{
+						Cdbg(DBE, "d.rel_path=%s", d.rel_path->ptr);
+						buffer_append_string_encoded(b, CONST_BUF_LEN(d.rel_path), ENCODING_REL_URI);
+					}
+#endif
+					
 					buffer_append_string_len(b,CONST_STR_LEN("</D:href>\n"));
+					
 					//Cdbg(1, "b=%s", d.rel_path->ptr);
 					if (!buffer_is_empty(prop_200)) {
 						buffer_append_string_len(b,CONST_STR_LEN("<D:propstat>\n"));
@@ -1762,17 +1861,17 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 			free(req_props->ptr);
 			free(req_props);
 		}
-
+		
 		buffer_free(prop_200);
 		buffer_free(prop_404);
 
 		buffer_append_string_len(b,CONST_STR_LEN("</D:multistatus>\n"));
-
+		
 		if (p->conf.log_xml) {
 			log_error_write(srv, __FILE__, __LINE__, "sb", "XML-response-body:", b);
 		}
 		con->file_finished = 1;
-
+		
 	#if EMBEDDED_EANBLE
 		free(usbdisk_rel_path);
 		free(usbdisk_share_folder);
@@ -1914,26 +2013,43 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 			return HANDLER_FINISHED;
 		}
 
+		//- JerryLin add
+		int autoCreateFolder = 0;
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "Auto-CreateFolder"))) {			
+			if (ds->value->used != 2 ||
+			    (ds->value->ptr[0] != 'F' &&
+			     ds->value->ptr[0] != 'T') )  {
+				con->http_status = 400;
+				return HANDLER_FINISHED;
+			}
+			autoCreateFolder = (ds->value->ptr[0] == 'F' ? 0 : 1);
+		}
 
+		if(autoCreateFolder){
+			char* file_path = NULL;			
+			extract_filepath(con->physical.path->ptr, &file_path);
+			createDirectory(file_path);
+			free(file_path);
+		}
+		////////////////////////////////
+		
 		assert(chunkqueue_length(cq) == (off_t)con->request.content_length);
-
+		
 		/* RFC2616 Section 9.6 PUT requires us to send 501 on all Content-* we don't support
 		 * - most important Content-Range
 		 *
 		 *
 		 * Example: Content-Range: bytes 100-1037/1038 */
-		
 		if (NULL != (ds_range = (data_string *)array_get_element(con->request.headers, "Content-Range"))) {
 			const char *num = ds_range->value->ptr;
 			off_t offset;
 			char *err = NULL;
-
+			//Cdbg(DBE,"Content-Range =%s",num);
 			if (0 != strncmp(num, "bytes ", 6)) {
 				con->http_status = 501; /* not implemented */
 
 				return HANDLER_FINISHED;
 			}
-
 			/* we only support <num>- ... */
 
 			num += 6;
@@ -1954,14 +2070,28 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 
 				return HANDLER_FINISHED;
 			}
-			
+
 			//- JerryLin modify if offset is zero, we create a new file.
-			if(offset==0){
+			if(offset==0){				
 				if (-1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_TRUNC, WEBDAV_FILE_MODE))) {
 					if (errno == ENOENT &&
 					    -1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, WEBDAV_FILE_MODE))) {
-						/* we can't open the file */
-						con->http_status = 403;
+						/* we can't open the file */						
+						switch(errno) {
+						case EEXIST:
+							con->http_status = 412;
+							break;
+						case EISDIR:
+							con->http_status = 427;
+							break;
+						case ENOENT:
+							/* at least one part in the middle wasn't existing */
+							con->http_status = 427;
+							break;
+						default:
+							con->http_status = 403;
+							break;
+						}
 
 						return HANDLER_FINISHED;
 					} 
@@ -1973,14 +2103,21 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 					con->http_status = 200; /* modified */
 				}
 			}
-			else{
+			else{				
 				if (-1 == (fd = open(con->physical.path->ptr, O_WRONLY, WEBDAV_FILE_MODE))) {
-					switch (errno) {
+					switch(errno) {
+					case EEXIST:
+						con->http_status = 412;
+						break;
+					case EISDIR:
+						con->http_status = 427;
+						break;
 					case ENOENT:
-						con->http_status = 404; /* not found */
+						/* at least one part in the middle wasn't existing */
+						con->http_status = 427;
 						break;
 					default:
-						con->http_status = 403; /* not found */
+						con->http_status = 403;
 						break;
 					}
 
@@ -2000,7 +2137,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 					//return HANDLER_FINISHED;
 				}
 			}
-			
+
 			if (-1 == lseek(fd, offset, SEEK_SET)) {
 				con->http_status = 501; /* not implemented */
 				close(fd);
@@ -2031,7 +2168,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		}
 
 		con->file_finished = 1;
-
+		
 		for (c = cq->first; c; c = cq->first) {
 			int r = 0;
 
@@ -2102,7 +2239,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 			chunkqueue_remove_finished_chunks(cq);
 		}
 		close(fd);
-
+		
 		return HANDLER_FINISHED;
 	}
 	case HTTP_METHOD_MOVE:
@@ -2110,11 +2247,12 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		buffer *destination = NULL;
 		char *sep, *sep2, *start;
 		int overwrite = 1;
-
+		
 		if (p->conf.is_readonly) {
 			con->http_status = 403;
 			return HANDLER_FINISHED;
 		}
+
 		/* is a exclusive lock set on the source */
 		if (con->request.http_method == HTTP_METHOD_MOVE) {
 			if (!webdav_has_lock(srv, con, p, con->uri.path)) {
@@ -2122,16 +2260,15 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 				return HANDLER_FINISHED;
 			}
 		}
-
+		
 		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "Destination"))) {
 			destination = ds->value;
-			Cdbg(DBE, "destination = %s", destination->ptr);
 		} else {
 			con->http_status = 400;
 			return HANDLER_FINISHED;
 		}
 
-		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "Overwrite"))) {
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "Overwrite"))) {			
 			if (ds->value->used != 2 ||
 			    (ds->value->ptr[0] != 'F' &&
 			     ds->value->ptr[0] != 'T') )  {
@@ -2190,7 +2327,25 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		buffer_copy_string_buffer(p->tmp_buf, p->uri.path_raw);
 		buffer_urldecode_path(p->tmp_buf);
 		buffer_path_simplify(p->uri.path, p->tmp_buf);
-
+		
+		//- 20121115 JerryLin add for router sync.
+		if(con->share_link_shortpath->used){
+			
+			char* a;
+			if (NULL != ( a = strstr(p->uri.path->ptr, con->share_link_shortpath->ptr))){
+				char buff[4096];
+				replace_str( a,
+					         con->share_link_shortpath->ptr, 
+					         con->share_link_realpath->ptr, 
+					         buff );
+				buffer_copy_string( p->uri.path, buff );
+			}
+			else{
+				con->http_status = 502;
+				return HANDLER_FINISHED;
+			}
+		}
+		
 		//- 20111209 Jerry add
 		buffer_copy_string(p->uri.path, change_webdav_file_path(srv, con, p->uri.path->ptr));
 		
@@ -2201,7 +2356,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		if (con->conf.force_lowercase_filenames) {
 			buffer_to_lower(p->physical.rel_path);
 		}
-
+		
 		buffer_copy_string_buffer(p->physical.path, p->physical.doc_root);
 		BUFFER_APPEND_SLASH(p->physical.path);
 		buffer_copy_string_buffer(p->physical.basedir, p->physical.path);
@@ -2212,10 +2367,9 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		} else {
 			buffer_append_string_buffer(p->physical.path, p->physical.rel_path);
 		}
-		Cdbg(DBE, "p->physical.path=%s", p->physical.path->ptr);
 		
 		/* let's see if the source is a directory
-		 * if yes, we fail with 501 */		
+		 * if yes, we fail with 501 */			
 		if (-1 == stat(con->physical.path->ptr, &st)) {
 			/* don't about it yet, unlink will fail too */
 			switch(errno) {
@@ -2226,11 +2380,13 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 				 con->http_status = 403;
 				 break;
 			}
-		} else if (S_ISDIR(st.st_mode)) {
+		} 
+		else if (S_ISDIR(st.st_mode)) {
+			/* src is a directory */	
 			int r;
-			
-			/* src is a directory */				
-			if (-1 == stat(p->physical.path->ptr, &st)) {				
+									
+			if (-1 == stat(p->physical.path->ptr, &st)) {
+				//- dst is not exist.
 				if(in_the_same_folder(con->physical.path, p->physical.path)) {
 					if( rename(con->physical.path->ptr, p->physical.path->ptr) ) {
 						con->http_status = 403;
@@ -2245,7 +2401,9 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 					con->http_status = 403;
 					return HANDLER_FINISHED;
 				}
-			} else if (!S_ISDIR(st.st_mode)) {
+			} 
+			else if (!S_ISDIR(st.st_mode)) {
+				//- dst is not folder.				
 				if (overwrite == 0) {
 					/* copying into a non-dir ? */
 					con->http_status = 409;
@@ -2258,7 +2416,15 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 					}
 				}
 			}
-			Cdbg(DBE, "copy the content of src to dest");
+			else if (S_ISDIR(st.st_mode)) {
+				//- dst folder is exist.
+				if (overwrite == 0) {
+					/* copying into a non-dir ? */
+					con->http_status = 412;
+					return HANDLER_FINISHED;
+				}
+			}
+			
 			/* copy the content of src to dest */
 			if (0 != (r = webdav_copy_dir(srv, con, p, &(con->physical), &(p->physical), overwrite))) {
 				con->http_status = r;
@@ -2276,9 +2442,9 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 			con->http_status = 201;
 			con->file_finished = 1;
 		} else {
-			/* it is just a file, good */
+			/* src is just a file, good */
 			int r;
-
+			
 			/* does the client have a lock for this connection ? */
 			if (!webdav_has_lock(srv, con, p, p->uri.path)) {
 				con->http_status = 423;
@@ -2288,16 +2454,21 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 			/* destination exists */
 			if (0 == (r = stat(p->physical.path->ptr, &st))) {
 				if (S_ISDIR(st.st_mode)) {
+					if (overwrite == 0) {
+						/* copying into a non-dir ? */
+						con->http_status = 409;
+						return HANDLER_FINISHED;
+					}
+					
 					/* file to dir/
 					 * append basename to physical path */
-
 					if (NULL != (sep = strrchr(con->physical.path->ptr, '/'))) {
 						buffer_append_string(p->physical.path, sep);
 						r = stat(p->physical.path->ptr, &st);
 					}
 				}
 			}
-
+			
 			if (-1 == r) {
 				con->http_status = 201; /* we will create a new one */
 				con->file_finished = 1;
@@ -2314,10 +2485,9 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 			} else {
 				con->http_status = 204; /* resource already existed */
 			}
-
+			
 			if (con->request.http_method == HTTP_METHOD_MOVE) {
-				/* try a rename */
-
+				/* try a rename */				
 				if (0 == rename(con->physical.path->ptr, p->physical.path->ptr)) {
 #ifdef USE_PROPPATCH
 					sqlite3_stmt *stmt;
@@ -2366,10 +2536,9 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 
 				/* rename failed, fall back to COPY + DELETE */
 			}
-
+			
 			if (0 != (r = webdav_copy_file(srv, con, p, &(con->physical), &(p->physical), overwrite))) {
 				con->http_status = r;
-
 				return HANDLER_FINISHED;
 			}
 
@@ -2552,14 +2721,13 @@ propmatch_cleanup:
 		 *   <D:href>http://www.apple.com/webdav_fs/</D:href>\n
 		 *  </D:owner>\n
 		 * </D:lockinfo>\n
-		 */
-
+		 */	
+		
 		if (depth != 0 && depth != -1) {
 			con->http_status = 400;
-
 			return HANDLER_FINISHED;
 		}
-
+		
 #ifdef USE_LOCKS
 		if (con->request.content_length) {
 			xmlDocPtr xml;
@@ -2568,19 +2736,18 @@ propmatch_cleanup:
 			if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "If"))) {
 				hdr_if = ds->value;
 			}
-
+			
 			/* we don't support Depth: Infinity on locks */
 			if (hdr_if == NULL && depth == -1) {
 				con->http_status = 409; /* Conflict */
-
 				return HANDLER_FINISHED;
 			}
-
+			
 			if (1 == webdav_parse_chunkqueue(srv, con, p, con->request_content_queue, &xml)) {
 				xmlNode *rootnode = xmlDocGetRootElement(xml);
-
+				
 				assert(rootnode);
-
+				
 				if (0 == xmlStrcmp(rootnode->name, BAD_CAST "lockinfo")) {
 					xmlNode *lockinfo;
 					const xmlChar *lockscope = NULL, *locktype = NULL; /* TODO: compiler says unused: *owner = NULL; */
@@ -2591,7 +2758,8 @@ propmatch_cleanup:
 							for (value = lockinfo->children; value; value = value->next) {
 								if ((0 == xmlStrcmp(value->name, BAD_CAST "exclusive")) ||
 								    (0 == xmlStrcmp(value->name, BAD_CAST "shared"))) {
-									lockscope = value->name;
+								    lockscope = value->name;
+									Cdbg(DBE, "lockscope=%s", lockscope);
 								} else {
 									con->http_status = 400;
 
@@ -2604,6 +2772,7 @@ propmatch_cleanup:
 							for (value = lockinfo->children; value; value = value->next) {
 								if ((0 == xmlStrcmp(value->name, BAD_CAST "write"))) {
 									locktype = value->name;
+									Cdbg(DBE, "locktype=%s", locktype);
 								} else {
 									con->http_status = 400;
 
@@ -2616,9 +2785,9 @@ propmatch_cleanup:
 						}
 					}
 
-					if (lockscope && locktype) {
+					if (lockscope && locktype) {						
 						sqlite3_stmt *stmt = p->conf.stmt_read_lock_by_uri;
-
+						
 						/* is this resourse already locked ? */
 
 						/* SELECT locktoken, resource, lockscope, locktype, owner, depth, timeout
@@ -2626,21 +2795,26 @@ propmatch_cleanup:
 						 *  WHERE resource = ? */
 
 						if (stmt) {
-
 							sqlite3_reset(stmt);
-
+							Cdbg(DBE, "check a lock...con->uri.path=%s", con->uri.path->ptr);
+							sqlite3_bind_text(stmt, 1,
+									  con->uri.path->ptr,
+									  con->uri.path->used - 1,
+									  SQLITE_TRANSIENT);
+							/*
 							sqlite3_bind_text(stmt, 1,
 									  p->uri.path->ptr,
 									  p->uri.path->used - 1,
 									  SQLITE_TRANSIENT);
-
+							*/
 							/* it is the PK */
 							while (SQLITE_ROW == sqlite3_step(stmt)) {
+								
 								/* we found a lock
 								 * 1. is it compatible ?
 								 * 2. is it ours */
 								char *sql_lockscope = (char *)sqlite3_column_text(stmt, 2);
-
+								Cdbg(DBE, "we found a lock...sql_lockscope=%s", sql_lockscope);
 								if (strcmp(sql_lockscope, "exclusive")) {
 									con->http_status = 423;
 								} else if (0 == xmlStrcmp(lockscope, BAD_CAST "exclusive")) {
@@ -2657,16 +2831,24 @@ propmatch_cleanup:
 
 						stmt = p->conf.stmt_create_lock;
 						if (stmt) {
-							/* create a lock-token */
-							uuid_t id;
+							Cdbg(DBE, "create_lock...");
+							/* create a lock-token */							
 							char uuid[37] /* 36 + \0 */;
 
+							sprintf( uuid, "%d", rand() );
+							/*
+							#if EMBEDDED_EANBLE							
+							sprintf( uuid, "%d", rand() );
+							#else
+							uuid_t id;
 							uuid_generate(id);
 							uuid_unparse(id, uuid);
-
+							#endif
+							*/
+							
 							buffer_copy_string_len(p->tmp_buf, CONST_STR_LEN("opaquelocktoken:"));
 							buffer_append_string(p->tmp_buf, uuid);
-
+							
 							/* "CREATE TABLE locks ("
 							 * "  locktoken TEXT NOT NULL,"
 							 * "  resource TEXT NOT NULL,"
@@ -2678,19 +2860,25 @@ propmatch_cleanup:
 
 							sqlite3_reset(stmt);
 
+							/* locktoken */
 							sqlite3_bind_text(stmt, 1,
 									  CONST_BUF_LEN(p->tmp_buf),
 									  SQLITE_TRANSIENT);
+							Cdbg(DBE, "locktoken: %s", p->tmp_buf->ptr);
 
+							/* resource */
 							sqlite3_bind_text(stmt, 2,
 									  CONST_BUF_LEN(con->uri.path),
 									  SQLITE_TRANSIENT);
+							Cdbg(DBE, "resource: %s", con->uri.path->ptr);
 
+							/* lockscope */
 							sqlite3_bind_text(stmt, 3,
 									  (const char *)lockscope,
 									  xmlStrlen(lockscope),
 									  SQLITE_TRANSIENT);
 
+							/* locktype */
 							sqlite3_bind_text(stmt, 4,
 									  (const char *)locktype,
 									  xmlStrlen(locktype),
@@ -2710,6 +2898,7 @@ propmatch_cleanup:
 							if (SQLITE_DONE != sqlite3_step(stmt)) {
 								log_error_write(srv, __FILE__, __LINE__, "ss",
 										"create lock:", sqlite3_errmsg(p->conf.sql));
+								Cdbg(DBE, "log_error_write create lock: = %s", sqlite3_errmsg(p->conf.sql));
 							}
 
 							/* looks like we survived */
@@ -2727,32 +2916,31 @@ propmatch_cleanup:
 				con->http_status = 400;
 				return HANDLER_FINISHED;
 			}
-		} else {
-
+		} else {			
 			if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "If"))) {
 				buffer *locktoken = ds->value;
 				sqlite3_stmt *stmt = p->conf.stmt_refresh_lock;
-
+				
 				/* remove the < > around the token */
 				if (locktoken->used < 6) {
 					con->http_status = 400;
 
 					return HANDLER_FINISHED;
 				}
-
+				
 				buffer_copy_string_len(p->tmp_buf, locktoken->ptr + 2, locktoken->used - 5);
-
+				
 				sqlite3_reset(stmt);
-
+				
 				sqlite3_bind_text(stmt, 1,
 					  CONST_BUF_LEN(p->tmp_buf),
 					  SQLITE_TRANSIENT);
-
+				
 				if (SQLITE_DONE != sqlite3_step(stmt)) {
 					log_error_write(srv, __FILE__, __LINE__, "ss",
 						"refresh lock:", sqlite3_errmsg(p->conf.sql));
 				}
-
+				
 				webdav_lockdiscovery(srv, con, p->tmp_buf, "exclusive", "write", 0);
 
 				con->http_status = 200;
@@ -2761,10 +2949,11 @@ propmatch_cleanup:
 			} else {
 				/* we need a lock-token to refresh */
 				con->http_status = 400;
-
+				
 				return HANDLER_FINISHED;
 			}
 		}
+
 		break;
 #else
 		con->http_status = 501;
@@ -2779,7 +2968,6 @@ propmatch_cleanup:
 			/* remove the < > around the token */
 			if (locktoken->used < 4) {
 				con->http_status = 400;
-
 				return HANDLER_FINISHED;
 			}
 
@@ -2800,16 +2988,20 @@ propmatch_cleanup:
 			sqlite3_bind_text(stmt, 1,
 				  CONST_BUF_LEN(p->tmp_buf),
 				  SQLITE_TRANSIENT);
-
+			Cdbg(DBE, "locktoken:%s", p->tmp_buf->ptr);
+			/*
 			sqlite3_bind_text(stmt, 2,
 				  CONST_BUF_LEN(con->uri.path),
 				  SQLITE_TRANSIENT);
-
+			Cdbg(DBE, "resource:%s", con->uri.path->ptr);
+			*/
 			if (SQLITE_DONE != sqlite3_step(stmt)) {
 				log_error_write(srv, __FILE__, __LINE__, "ss",
 					"remove lock:", sqlite3_errmsg(p->conf.sql));
-			}
 
+				Cdbg(DBE, "3.%s", sqlite3_errmsg(p->conf.sql));
+			}
+			
 			if (0 == sqlite3_changes(p->conf.sql)) {
 				con->http_status = 401;
 			} else {
@@ -3165,6 +3357,11 @@ propmatch_cleanup:
 		buffer_append_string_len(b,CONST_STR_LEN("</result>\n"));
 		
 		con->file_finished = 1;
+#if EMBEDDED_EANBLE
+#ifdef APP_IPKG
+		free(router_mac);
+#endif
+#endif
 		return HANDLER_FINISHED;
 	}
 	
@@ -3194,6 +3391,12 @@ propmatch_cleanup:
 		buffer_append_string_len(b,CONST_STR_LEN("</result>\n"));
 		
 		con->file_finished = 1;
+#if EMBEDDED_EANBLE
+#ifdef APP_IPKG
+        free(firmware_version);
+        free(build_no);
+#endif
+#endif
 		return HANDLER_FINISHED;
 	}
 	
@@ -3209,15 +3412,21 @@ propmatch_cleanup:
 		
 		char* firmware_version = nvram_get_firmware_version();
 		char* build_no = nvram_get_build_no();
-				
-		//- Computer Name
+
 		char* modal_name = nvram_get_productid();
+				
+		//- Computer Name		
 		char* computer_name = nvram_get_computer_name();
 		char* st_webdav_mode = nvram_get_st_webdav_mode();
 		char* webdav_http_port = nvram_get_webdav_http_port();
 		char* webdav_https_port = nvram_get_webdav_https_port();
+		char* http_enable = nvram_get_http_enable();
 		char* misc_http_x = nvram_get_misc_http_x();
-		char* misc_http_port = nvram_get_msie_http_port();
+		char* misc_http_port = nvram_get_misc_http_port();
+		char* misc_https_port = nvram_get_misc_https_port();
+		char* ddns_host_name = nvram_get_ddns_host_name();
+		char* disk_path = "/mnt/";
+		char* wan_ip = nvram_get_wan_ip();
 #else
 		char router_mac[20]="\0";
 		get_mac_address("eth0", &router_mac); 
@@ -3226,13 +3435,19 @@ propmatch_cleanup:
 		char* build_no = "0";
 
 		char* modal_name = "WebDAV";
+		
 		//- Computer Name
 		char* computer_name = "WebDAV";
 		char* st_webdav_mode = "0";
 		char* webdav_http_port = "8082";
 		char* webdav_https_port = "443";
+		char* http_enable = "2";
 		char* misc_http_x = "0";
 		char* misc_http_port = "8080";
+		char* misc_https_port = "8443";
+		char* ddns_host_name = "";
+		char* disk_path = "/mnt/";
+		char* wan_ip = "192.168.1.10";
 #endif
 
 		con->http_status = 200;
@@ -3254,12 +3469,12 @@ propmatch_cleanup:
 		buffer_append_string(b,".");
 		buffer_append_string(b,build_no);
 		buffer_append_string_len(b,CONST_STR_LEN("</version>"));
-		buffer_append_string_len(b,CONST_STR_LEN("<computername>"));
-		buffer_append_string(b,computer_name);
-		buffer_append_string_len(b,CONST_STR_LEN("</computername>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<modalname>"));
 		buffer_append_string(b,modal_name);
 		buffer_append_string_len(b,CONST_STR_LEN("</modalname>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<computername>"));
+		buffer_append_string(b,computer_name);
+		buffer_append_string_len(b,CONST_STR_LEN("</computername>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<webdav_mode>"));
 		buffer_append_string(b,st_webdav_mode);
 		buffer_append_string_len(b,CONST_STR_LEN("</webdav_mode>"));
@@ -3269,70 +3484,133 @@ propmatch_cleanup:
 		buffer_append_string_len(b,CONST_STR_LEN("<https_port>"));
 		buffer_append_string(b,webdav_https_port);
 		buffer_append_string_len(b,CONST_STR_LEN("</https_port>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<http_enable>"));
+		buffer_append_string(b,http_enable);
+		buffer_append_string_len(b,CONST_STR_LEN("</http_enable>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<misc_http_enable>"));
 		buffer_append_string(b,misc_http_x);
 		buffer_append_string_len(b,CONST_STR_LEN("</misc_http_enable>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<misc_http_port>"));
 		buffer_append_string(b,misc_http_port);
 		buffer_append_string_len(b,CONST_STR_LEN("</misc_http_port>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<misc_https_port>"));
+		buffer_append_string(b,misc_https_port);
+		buffer_append_string_len(b,CONST_STR_LEN("</misc_https_port>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<last_login_info>"));
+		buffer_append_string(b,srv->last_login_info->ptr);
+		buffer_append_string_len(b,CONST_STR_LEN("</last_login_info>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<ddns_host_name>"));
+		buffer_append_string(b,ddns_host_name);
+		buffer_append_string_len(b,CONST_STR_LEN("</ddns_host_name>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<wan_ip>"));
+		buffer_append_string(b,wan_ip);
+		buffer_append_string_len(b,CONST_STR_LEN("</wan_ip>"));
+		
+		DIR *dir;
+		if (NULL != (dir = opendir(disk_path))) {
+
+			buffer_append_string_len(b,CONST_STR_LEN("<disk_space>"));
+			
+			struct dirent *de;
+
+			while(NULL != (de = readdir(dir))) {
+
+				if ( de->d_name[0] == '.' && de->d_name[1] == '.' && de->d_name[2] == '\0' ) {
+					continue;
+					//- ignore the parent dir
+				}
+
+				if ( de->d_name[0] == '.' ) {
+					continue;
+					//- ignore the hidden file
+				}
+
+				buffer_append_string_len(b,CONST_STR_LEN("<item>"));
+					
+				char querycmd[100] = "\0";		
+
+				sprintf(querycmd, "df|grep -i %s%s", disk_path, de->d_name);
+								
+				buffer_append_string_len(b,CONST_STR_LEN("<DiskName>"));
+				buffer_append_string(b,de->d_name);
+				buffer_append_string_len(b,CONST_STR_LEN("</DiskName>"));
+						
+				char mybuffer[BUFSIZ]="\0";
+				FILE* fp = popen( querycmd, "r");
+				if(fp){
+					int len = fread(mybuffer, sizeof(char), BUFSIZ, fp);
+					mybuffer[len-1]="\0";
+					pclose(fp);
+					
+					char * pch;
+					pch = strtok(mybuffer, " ");
+					int count=1;
+					while(pch!=NULL){				
+						if(count==3){
+							buffer_append_string_len(b,CONST_STR_LEN("<DiskUsed>"));
+							buffer_append_string(b,pch);
+							buffer_append_string_len(b,CONST_STR_LEN("</DiskUsed>"));
+						}
+						else if(count==4){
+							buffer_append_string_len(b,CONST_STR_LEN("<DiskAvailable>"));
+							buffer_append_string(b,pch);
+							buffer_append_string_len(b,CONST_STR_LEN("</DiskAvailable>"));
+						}
+						else if(count==5){
+							buffer_append_string_len(b,CONST_STR_LEN("<DiskUsedPercent>"));
+							buffer_append_string(b,pch);
+							buffer_append_string_len(b,CONST_STR_LEN("</DiskUsedPercent>"));
+						}
+						
+						//- Next
+						pch = strtok(NULL," ");
+						count++;
+					}
+					
+				}
+
+				buffer_append_string_len(b,CONST_STR_LEN("</item>"));
+			}
+
+			buffer_append_string_len(b,CONST_STR_LEN("</disk_space>"));
+		}
+		closedir(dir);
+		
 		buffer_append_string_len(b,CONST_STR_LEN("</result>"));
 		
 		con->file_finished = 1;
+#if EMBEDDED_EANBLE
+#ifdef APP_IPKG
+        free(router_mac);
+        free(firmware_version);
+        free(build_no);
+        free(modal_name);
+        free(computer_name);
+        free(st_webdav_mode);
+        free(webdav_http_port);
+        free(webdav_https_port);
+        free(misc_http_x);
+        free(misc_http_port);
+		free(ddns_host_name);
+		free(wan_ip);
+		free(http_enable);
+		free(misc_https_port);
+#endif
+#endif
 		return HANDLER_FINISHED;
 	}
 	
 	case HTTP_METHOD_RESCANSMBPC:{
 		Cdbg(DBE, "do HTTP_METHOD_RESCANSMBPC");
 		
-		FILE *fp;
-	    char buf[256];
-	    pid_t pid = 0;
-	    int n;
+		stop_arpping_process();
 
-		if ((fp = fopen("/tmp/lighttpd/lighttpd-arpping.pid", "r")) != NULL) {
-			if (fgets(buf, sizeof(buf), fp) != NULL)
-		            pid = strtoul(buf, NULL, 0);
-		        fclose(fp);
+		#if EMBEDDED_EANBLE
+		nvram_set_smbdav_str("");			
+		#else
+		unlink("/tmp/arpping_list");
+		#endif
 			
-			//- Send message to lighttpd-arpping to rescan samba pc.
-
-			/*
-			if (pid > 1 && kill(pid, SIGUSR1) == 0) {
-				n = 10;	       
-			       while ((kill(pid, SIGUSR1) == 0) && (n-- > 0)) {
-			            #if EMBEDDED_EANBLE
-  				    nvram_set_smbdav_str("");
-				    nvram_do_commit();				
-				    #else
-				    unlink("/tmp/arpping_list");
-				    #endif
-				
-			            usleep(100 * 1000);
-			        }
-			}
-			*/
-
-			/*
-			if (pid > 1 && kill(pid, SIGUSR1) == 0) {
-				#if EMBEDDED_EANBLE
-				nvram_set_smbdav_str("");
-				nvram_do_commit();				
-				#else
-				unlink("/tmp/arpping_list");
-				#endif
-			}
-			*/
-			
-			stop_arpping_process();
-
-			#if EMBEDDED_EANBLE
-				nvram_set_smbdav_str("");
-				//nvram_do_commit();
-			#else
-				unlink("/tmp/arpping_list");
-			#endif
-		}
-		
 		con->http_status = 200;
 		con->file_finished = 1;
 		return HANDLER_FINISHED;
@@ -3348,7 +3626,7 @@ propmatch_cleanup:
 
 
 /* this function is called at dlopen() time and inits the callbacks */
-
+#ifndef APP_IPKG
 int mod_webdav_plugin_init(plugin *p);
 int mod_webdav_plugin_init(plugin *p) {
 	p->version     = LIGHTTPD_VERSION_ID;
@@ -3364,3 +3642,20 @@ int mod_webdav_plugin_init(plugin *p) {
 
 	return 0;
 }
+#else
+int aicloud_mod_webdav_plugin_init(plugin *p);
+int aicloud_mod_webdav_plugin_init(plugin *p) {
+	p->version     = LIGHTTPD_VERSION_ID;
+	p->name        = buffer_init_string("webdav");
+
+	p->init        = mod_webdav_init;
+	p->handle_uri_clean  = mod_webdav_uri_handler;
+	p->handle_physical   = mod_webdav_subrequest_handler;
+	p->set_defaults  = mod_webdav_set_defaults;
+	p->cleanup     = mod_webdav_free;
+
+	p->data        = NULL;
+
+	return 0;
+}
+#endif

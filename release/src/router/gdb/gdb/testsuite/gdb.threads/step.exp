@@ -1,0 +1,199 @@
+# step.exp -- Expect script to test gdb with step.c
+# Copyright (C) 1992, 1997, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Hiro Sugawara. (hiro@lynx.com)
+#
+# This test really needs some major surgery to be acceptable, but
+# I'm just about burnt out on lynx work, so I'm not doing it now.
+#
+#	* The test has an indeterminate number of pass/fails
+#	for each run (it runs a small group of tests until
+#	it's timer kicks off).  This is very bad for nightly
+#	automated regression testing.
+#
+#	* It tries to "step" from withint he prologue of a
+# 	function.  This isn't support in gdb (it's going
+#	to act like a continue).
+#
+#	* This test rarely check that it stopped in sensible
+#	places.  (see previous bullet -- this test doesn't
+#	catch the fact it continued rather than stepped)
+
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set program_exited 0
+
+proc set_bp { where } {
+    global gdb_prompt
+
+    send_gdb "break $where\n"
+    # The first regexp is what we get with -g, the second without -g.
+    gdb_expect {
+	-re "Break.* at .*: file .*, line \[0-9\]*.*$gdb_prompt $" {}
+	-re "Breakpoint \[0-9\]* at 0x\[0-9a-f\]*.*$gdb_prompt $" {}
+	-re "$gdb_prompt $" { fail "setting breakpoint at $where" ; return 0 }
+	timeout { fail "setting breakpoint at $where (timeout)" ; return 0 }
+    }
+    pass "set_bp"
+}
+
+proc step_it { cmd } {
+    global gdb_prompt
+    global program_exited
+
+    send_gdb "$cmd\n"
+    gdb_expect {
+	-re "0x\[0-9A-Fa-f\]* *in.*\r\n$gdb_prompt $" { pass "step_it"; return 0 }
+	-re "0x\[0-9A-Fa-f\]* *\[0-9\]*.*\r\n$gdb_prompt $" { pass "step_it"; return 1 }
+	-re "Program exited .*\n$gdb_prompt $" {
+		set program_exited 1
+		return -1
+	    }
+	-re "$gdb_prompt $"	{ fail "single-stepping ($cmd).\n" ; return -1 }
+	timeout	{ fail "single-stepping ($cmd) timout.\n" ; return -1 }
+    }
+}
+
+proc step_inst {} {
+    step_it "stepi"
+}
+
+proc step_source {} {
+    step_it "step"
+}
+
+proc continue_all {} {
+    global gdb_prompt
+
+    send_gdb "continue\n"
+    gdb_expect {
+	-re "Breakpoint \[0-9\]*, thread\[0-9\]* .*$gdb_prompt $" { 
+	    pass "continue_all"
+	    return 0
+	}
+	-re "Program exited .*\n$gdb_prompt $" {
+	    set program_exited 1
+	    return 1;
+	}
+	-re "$gdb_prompt $" { fail "continue" ; return -1 }
+	timeout { fail "continue (timeout)" ; return -1 }
+    }
+}
+
+proc check_threads { num_threads } {
+    global gdb_prompt
+
+    set curr_thread 0
+    send_gdb "info threads\n"
+    while { $num_threads > 0 } {
+	gdb_expect {
+	    -re "\\* *\[0-9\]* process \[0-9\]* thread \[0-9\]* .*\n" {
+		incr curr_thread
+		set num_threads [expr $num_threads - 1]
+	    }
+	    -re " *\[0-9\]* process \[0-9\]* thread \[0-9\]* .*\n" {
+		set num_threads [expr $num_threads - 1]
+	    }
+	    -re "$gdb_prompt $" {
+		if { $num_threads < 0 } {
+		    fail "check_threads (too many)" ; return -1
+		}
+		break
+	    }
+	    timeout { fail "check_threads (timeout)" ; return -1 }
+	}
+    }
+
+    if { $curr_thread == 0 } {
+	fail "check_threads (no current thread)\n"
+	return -1
+    }
+    if { $curr_thread > 1 } {
+	fail "check_threads (more than one current thread)\n"
+	return -1
+    }
+    return 0
+}
+
+proc test_cond_wait {} {
+    global program_exited
+
+    set_bp	135
+    runto	179
+    while { 1 } {
+	set stepi_counter 0
+	while { [step_inst] } {
+		if { $program_exited } { break }
+		incr stepi_counter
+		if { $stepi_counter > 30 } {
+			fail "too many stepi's per line\n"
+			return -1
+		}
+	}
+	if { $program_exited } { break }
+	step_source
+	if { $program_exited } { break }
+	continue_all
+	if { $program_exited } { break }
+	check_threads 3
+    }
+}
+
+proc do_tests {} {
+    global prms_id
+    global bug_id
+    global subdir
+    global objdir
+    global srcdir
+    global binfile
+    global gdb_prompt
+
+    set prms_id 0
+    set bug_id 0
+
+    # Start with a fresh gdb.
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_load $objdir/$subdir/$binfile
+
+    send_gdb "set width 0\n"
+    gdb_expect -re "$gdb_prompt $"
+
+    test_cond_wait
+}
+
+# Check to see if we have an executable to test.  If not, then either we
+# haven't tried to compile one, or the compilation failed for some reason.
+# In either case, just notify the user and skip the tests in this file.
+
+set binfile "step"
+set srcfile "step.c"
+
+if ![file exists $objdir/$subdir/$binfile] then {
+    if $all_flag then {
+	warning "$binfile does not exist; tests suppressed."
+    }
+} else {
+    do_tests
+}

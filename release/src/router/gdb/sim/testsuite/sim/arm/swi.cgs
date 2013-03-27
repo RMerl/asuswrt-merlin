@@ -1,0 +1,12 @@
+# arm testcase for swi$cond ${swi-comment}
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global swi
+swi:
+	swi0 0
+
+	pass

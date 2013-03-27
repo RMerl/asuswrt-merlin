@@ -1,0 +1,210 @@
+# Copyright (C) 2005, 2007 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Miscellaneous CRIS simulator testcases testing syscall sequences.
+
+if ![istarget cris*-*-*] {
+    return
+}
+
+set CFLAGS_FOR_TARGET "-O2"
+if [istarget cris-*-*] {
+    set mach "crisv10"
+} {
+    set mach "crisv32"
+}
+
+# Using target_compile, since it is less noisy,
+if { [target_compile $srcdir/$subdir/hello.c compilercheck.x \
+	  "executable" "" ] == "" } {
+    set has_cc 1
+} {
+    verbose -log "Can't execute C compiler"
+    set has_cc 0
+}
+
+# Like istarget, except take a list of targets as a string.
+proc anytarget { targets } {
+    set targetlist [split $targets]
+    set argc [llength $targetlist]
+    for { set i 0 } { $i < $argc } { incr i } {
+	if [istarget [lindex $targetlist $i]] {
+	    return 1
+	}
+    }
+    return 0
+}
+
+foreach src [lsort [glob -nocomplain $srcdir/$subdir/*.c]] {
+    if ![runtest_file_p $runtests $src] {
+	continue
+    }
+    set testname "[file tail $src]"
+
+    set opt_array [slurp_options $src]
+    if { $opt_array == -1 } {
+	unresolved $testname
+	return
+    }
+
+    # And again, to simplify specifying tests.
+    if ![runtest_file_p $runtests $src] {
+	continue
+    }
+
+    # Note absence of CC in results, but don't make a big fuss over it.
+    if { $has_cc == 0 } {
+	untested $testname
+	continue
+    }
+
+    # Clear default options
+    set opts(cc) ""
+    set opts(sim) ""
+    set opts(output) ""
+    set opts(progoptions) ""
+    set opts(timeout) ""
+    set opts(mach) ""
+    set opts(xerror) "no"
+    set opts(dest) "$testname.x"
+    set opts(simenv) ""
+    set opts(kfail) ""
+    set opts(xfail) ""
+    set opts(target) ""
+    set opts(notarget) ""
+
+    # Clear any machine specific options specified in a previous test case
+    if [info exists opts(sim,$mach)] {
+	unset opts(sim,$mach)
+    }
+
+    foreach i $opt_array {
+	set opt_name [lindex $i 0]
+	set opt_machs [lindex $i 1]
+	set opt_val [lindex $i 2]
+	if ![info exists opts($opt_name)] {
+	    perror "unknown option $opt_name in file $src"
+	    unresolved $testname
+	    return
+	}
+
+	# Replace specific substitutions:
+	# @exedir@ is where the test-program is located.
+	regsub -all "@exedir@" $opt_val "[pwd]" opt_val
+	# @srcdir@ is where the source of the test-program is located.
+	regsub -all "@srcdir@" $opt_val "$srcdir/$subdir" opt_val
+
+	# Multiple of these options concatenate, they don't override.
+	if { $opt_name == "output" || $opt_name == "progoptions" } {
+	    set opt_val "$opts($opt_name)$opt_val"
+	}
+
+	# Similar with "xfail", "kfail", "target" and "notarget", but
+	# arguments are space-separated.
+	if { $opt_name == "xfail" || $opt_name == "kfail" \
+		 || $opt_name == "target"  || $opt_name == "notarget" } {
+	    if { $opts($opt_name) != "" } {
+		set opt_val "$opts($opt_name) $opt_val"
+	    }
+	}
+
+	foreach m $opt_machs {
+	    set opts($opt_name,$m) $opt_val
+	}
+	if { "$opt_machs" == "" } {
+	    set opts($opt_name) $opt_val
+	}
+    }
+
+    if { $opts(output) == "" } {
+	if { "$opts(xerror)" == "no" } {
+	    set opts(output) "pass\n"
+	} else {
+	    set opts(output) "fail\n"
+	}
+    }
+
+    if { $opts(target) != "" && ![anytarget $opts(target)] } {
+	continue
+    }
+
+    if { $opts(notarget) != "" && [anytarget $opts(notarget)] } {
+	continue
+    }
+
+    # If no machine specific options, default to the general version.
+    if ![info exists opts(sim,$mach)] {
+	set opts(sim,$mach) $opts(sim)
+    }
+
+    # Change \n sequences to newline chars.
+    regsub -all "\\\\n" $opts(output) "\n" opts(output)
+
+    verbose -log "Compiling $src with $opts(cc)"
+
+    set dest "$opts(dest)"
+    if { [sim_compile $src $dest "executable" "$opts(cc)" ] != "" } {
+	unresolved $testname
+	continue
+    }
+
+    verbose -log "Simulating $src with $opts(sim,$mach)"
+
+    # Time to setup xfailures and kfailures.
+    if { "$opts(xfail)" != "" } {
+	verbose -log "xfail: $opts(xfail)"
+	# Using eval to make $opts(xfail) appear as individual
+	# arguments.
+	eval setup_xfail $opts(xfail)
+    }
+    if { "$opts(kfail)" != "" } {
+	verbose -log "kfail: $opts(kfail)"
+	eval setup_kfail $opts(kfail)
+    }
+
+    set result [sim_run $dest "$opts(sim,$mach)" "$opts(progoptions)" \
+	"" "$opts(simenv)"]
+    set status [lindex $result 0]
+    set output [lindex $result 1]
+
+    if { "$status" == "pass" } {
+	if { "$opts(xerror)" == "no" } {
+	    if [string match $opts(output) $output] {
+		pass "$mach $testname"
+	    } else {
+		verbose -log "output:  $output" 3
+		verbose -log "pattern: $opts(output)" 3
+		fail "$mach $testname (execution)"
+	    }
+	} else {
+	    verbose -log "`pass' return code when expecting failure" 3
+	    fail "$mach $testname (execution)"
+	}
+    } elseif { "$status" == "fail" } {
+	if { "$opts(xerror)" == "no" } {
+	    fail "$mach $testname (execution)"
+	} else {
+	    if [string match $opts(output) $output] {
+		pass "$mach $testname"
+	    } else {
+		verbose -log "output:  $output" 3
+		verbose -log "pattern: $opts(output)" 3
+		fail "$mach $testname (execution)"
+	    }
+	}
+    } else {
+	$status "$mach $testname"
+    }
+}

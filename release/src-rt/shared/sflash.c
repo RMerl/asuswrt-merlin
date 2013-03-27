@@ -82,8 +82,16 @@ sflash_init(si_t *sih, chipcregs_t *cc)
 			sflash.numblocks = 8;
 			break;
 		case 0x13:
-			/* ST M25P80 8 Mbit Serial Flash */
-			sflash.numblocks = 16;
+			sflash_cmd(osh, cc, SFLASH_MXIC_RDID);
+			id = R_REG(osh, &cc->flashdata);
+			if (id == SFLASH_MXIC_MFID) {
+				/* MXIC MX25L8006E 8 Mbit Serial Flash */
+				sflash.blocksize = 4 * 1024;
+				sflash.numblocks = 16 * 16;
+			} else  {
+				/* ST M25P80 8 Mbit Serial Flash */
+				sflash.numblocks = 16;
+			}
 			break;
 		case 0x14:
 			/* ST M25P16 16 Mbit Serial Flash */

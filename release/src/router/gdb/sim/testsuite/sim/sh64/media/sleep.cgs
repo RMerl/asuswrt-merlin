@@ -1,0 +1,10 @@
+# sh testcase for sleep -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+	sleep
+	pass

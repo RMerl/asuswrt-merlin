@@ -1,0 +1,18 @@
+# m32r testcase for mvtc $sr,$dcr
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global mvtc
+mvtc:
+	mvi_h_condbit 0
+	mvi_h_gr r4, 1
+
+	mvtc r4, cr1
+	bc ok
+
+	fail
+ok:
+	pass

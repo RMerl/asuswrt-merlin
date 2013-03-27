@@ -123,7 +123,7 @@
 #define HEIPV6TB_DEFAULT_PORT "80"
 #define HEIPV6TB_REQUEST "/ipv4_end.php"
 
-#define DEFAULT_TIMEOUT 16 //120
+#define DEFAULT_TIMEOUT 15 //120
 #define DEFAULT_UPDATE_PERIOD 120
 #define DEFAULT_RESOLV_PERIOD 30
 
@@ -259,6 +259,7 @@ enum {
   UPDATERES_OK = 0,
   UPDATERES_ERROR,
   UPDATERES_SHUTDOWN,
+  UPDATERES_AUTHFAIL,
 };
 
 /**************************************************/
@@ -1769,8 +1770,8 @@ int read_input(char *buf, int len)
   memcpy(&tv, &timeout, sizeof(struct timeval));
 
   ret = select(max_fd + 1, &readfds, NULL, NULL, &tv);
-  dprintf((stderr, "ret: %d\n", ret));
-
+  dprintf((stderr, "read_input ret: %d\n", ret));
+fprintf(stderr, "read_input ret: %d\n", ret);
   if(ret == -1)
   {
     dprintf((stderr, "select: %s\n", error_string));
@@ -1778,6 +1779,9 @@ int read_input(char *buf, int len)
   else if(ret == 0)
   {
     show_message("Server timeout\n");
+    nvram_set ("ddns_return_code", "Time-out");
+    nvram_set ("ddns_return_code_chk", "Time-out");
+    fprintf(stderr,"read_input: server timeout!\n");
   }
   else
   {
@@ -2002,7 +2006,7 @@ int EZIP_update_entry(void)
       {
         show_message("authentication failure\n");
       }
-      return(UPDATERES_SHUTDOWN);
+      return(UPDATERES_AUTHFAIL);
       break;
 
     default:
@@ -2156,7 +2160,7 @@ int NOIP_update_entry(void)
       {
         show_message("authentication failure\n");
       }
-      return(UPDATERES_SHUTDOWN);
+      return(UPDATERES_AUTHFAIL);
       break;
 
     default:
@@ -2232,7 +2236,7 @@ int DYNDNS_update_entry(void)
   int bytes;
   int btot;
   int ret;
-  int retval = UPDATERES_OK;
+  int retval = UPDATERES_OK; 
 
   buf[BUFFER_SIZE] = '\0';
 
@@ -2304,9 +2308,7 @@ int DYNDNS_update_entry(void)
   close(client_sockfd);
   buf[btot] = '\0';
 
-  dprintf((stderr, "server output: %s\n", buf));
-fprintf(stderr, "server output: %s\n", buf);
-show_message("server output: %s\n", buf);
+  //show_message("server output: %s\n", buf);//Yaudbg
 
   if(sscanf(buf, " HTTP/1.%*c %3d", &ret) != 1)
   {
@@ -2367,7 +2369,7 @@ show_message("server output: %s\n", buf);
         else if(strstr(buf, "\nbadauth") != NULL)
         {
           show_message("authentication failure\n");
-          retval = UPDATERES_SHUTDOWN;
+          retval = UPDATERES_AUTHFAIL;
         }
         else if(strstr(buf, "\nbadsys") != NULL)
         {
@@ -2460,7 +2462,7 @@ show_message("server output: %s\n", buf);
       {
         show_message("authentication failure\n");
       }
-      retval = UPDATERES_SHUTDOWN;
+      retval = UPDATERES_AUTHFAIL;
       break;
 
     default:
@@ -2867,7 +2869,7 @@ int DHS_update_entry(void)
       {
         show_message("authentication failure\n");
       }
-      retval = UPDATERES_SHUTDOWN;
+      retval = UPDATERES_AUTHFAIL;
       break;
 
     default:
@@ -3004,7 +3006,7 @@ int DHS_update_entry(void)
         {
           show_message("authentication failure\n");
         }
-        retval = UPDATERES_SHUTDOWN;
+        retval = UPDATERES_AUTHFAIL;
         break;
 
       default:
@@ -3441,7 +3443,7 @@ int EASYDNS_update_entry(void)
       {
         show_message("authentication failure\n");
       }
-      return(UPDATERES_SHUTDOWN);
+      return(UPDATERES_AUTHFAIL);
       break;
 
     default:
@@ -3600,7 +3602,7 @@ int EASYDNS_PARTNER_update_entry(void)
       {
         show_message("authentication failure\n");
       }
-      return(UPDATERES_SHUTDOWN);
+      return(UPDATERES_AUTHFAIL);
       break;
 
     case 403:
@@ -3945,7 +3947,7 @@ int JUSTL_update_entry(void)
       {
         show_message("authentication failure\n");
       }
-      return(UPDATERES_SHUTDOWN);
+      return(UPDATERES_AUTHFAIL);
       break;
 
     default:
@@ -4114,7 +4116,7 @@ int DYNS_update_entry(void)
       {
         show_message("authentication failure\n");
       }
-      return(UPDATERES_ERROR);
+      return(UPDATERES_AUTHFAIL);
       break;
 
     default:
@@ -4278,7 +4280,7 @@ int HN_update_entry(void)
       {
         show_message("authentication failure\n");
       }
-      return(UPDATERES_SHUTDOWN);
+      return(UPDATERES_AUTHFAIL);
       break;
 
     default:
@@ -4414,7 +4416,7 @@ int ZONEEDIT_update_entry(void)
       {
         show_message("authentication failure\n");
       }
-      return(UPDATERES_SHUTDOWN);
+      return(UPDATERES_AUTHFAIL);
       break;
 
     default:
@@ -4734,6 +4736,8 @@ int main(int argc, char **argv)
 
   dprintf((stderr, "staring...\n"));
 
+show_message("ez-ipupdate: starting...\n");
+
   program_name = argv[0];
   options = 0;
   *user = '\0';
@@ -4849,8 +4853,6 @@ int main(int argc, char **argv)
 //2007.03.14 Yau add
 #ifdef ASUS_DDNS
         if (g_asus_ddns_mode != 0)      {
-                nvram_set ("ddns_return_code", "ddns_query");
-		nvram_set ("ddns_return_code_chk", "ddns_query");
                 nvram_unset ("ddns_suggest_name");
                 nvram_unset ("ddns_old_name");
                 if (asus_private() == -1) {
@@ -4861,6 +4863,7 @@ int main(int argc, char **argv)
         }
         if (g_asus_ddns_mode == 1)      {
               retval = asus_reg_domain ();
+show_message("asus_reg_domain retval= %d\n", retval);
               goto asusddns_update;
         } else if (g_asus_ddns_mode == 2)       {
                 // override update_entry() method
@@ -5128,9 +5131,9 @@ int main(int argc, char **argv)
         show_message( "error reading cache file \"%s\": %s\n", cache_file, 
             errno == 0 ? "malformed entry" : strerror(errno));
       }
-      dprintf((stderr, "cache date: %ld\n", ipdate));
-      dprintf((stderr, "cache IP: %s\n", N_STR(ipstr)));
 
+      //show_message("cache date: %ld\n", ipdate);
+      //show_message("cache IP %s\n", N_STR(ipstr));
       // check that the cache file contained something
       if(ipstr != NULL)
       {
@@ -5162,6 +5165,7 @@ int main(int argc, char **argv)
         if(strcmp(ipstr, ipbuf) == 0)
         {
           dprintf((stderr, "cache IP doesn't need updating\n"));
+	  show_message("cache IP doesn't need updating\n");
           need_update = 0;
         }
 
@@ -5181,6 +5185,9 @@ int main(int argc, char **argv)
     if(need_update)
     {
       int res;
+
+      nvram_set ("ddns_return_code", "ddns_query");
+      nvram_set ("ddns_return_code_chk", "ddns_query");
 
       if(address == NULL && interface != NULL)
       {
@@ -5203,15 +5210,15 @@ int main(int argc, char **argv)
 
       for(i=0; i<ntrys; i++)
       {
-        if(service->update_entry() == UPDATERES_OK)
-        {
-          retval = 0;
+	retval = service->update_entry();
+        if(retval == UPDATERES_OK)
           break;
-        }
+        
         if(i+1 != ntrys) { sleep(10 + 10*i); }
       }
 
 asusddns_update:
+show_message("asusddns_update: %d\n", retval);
       // write cache file
       if(retval == 0 && cache_file)
       {
@@ -5266,6 +5273,20 @@ asusddns_update:
             }
           }
         }
+      }
+      if(!nvram_match("ddns_server_x", "WWW.ASUS.COM")) {
+	if(retval == 0){
+          nvram_set("ddns_return_code", "200");
+          nvram_set("ddns_return_code_chk", "200");
+        }
+	else if(retval == 3) {
+	  nvram_set("ddns_return_code", "auth_fail");
+	  nvram_set("ddns_return_code_chk", "auth_fail");
+	}
+	else {
+          nvram_set("ddns_return_code", "unknown_error");
+          nvram_set("ddns_return_code_chk", "unknown_error");
+	}
       }
     }
     else

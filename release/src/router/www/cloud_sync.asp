@@ -14,6 +14,8 @@
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/md5.js"></script>
+<script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
@@ -60,34 +62,84 @@
 	color:#FFFFFF;
 	cursor:pointer;
 }
-#status_gif_Img_L{
+.rsstatus_gif_Img_L{
 	background-image:url(images/cloudsync/left_right_trans.gif);
 	background-position: 10px -0px; width: 59px; height: 38px;
 }
-#status_gif_Img_LR{
+.rsstatus_gif_Img_LR{
 	background-image:url(images/cloudsync/left_right_trans.gif);
 	background-position: 10px -47px; width: 59px; height: 38px;
 }
-#status_gif_Img_R{
+.rsstatus_gif_Img_R{
+	background-image:url(images/cloudsync/left_right_trans.gif);
+	background-position: 10px -97px; width: 59px; height: 38px;
+}
+.rsstatus_png_Img_error{
+	background-image:url(images/cloudsync/left_right_done.png);
+	background-position: -0px -0px; width: 59px; height: 38px;
+}
+.rsstatus_png_Img_L_ok{
+	background-image:url(images/cloudsync/left_right_done.png);
+	background-position: -0px -47px; width: 59px; height: 38px;
+}
+.rsstatus_png_Img_R_ok{
+	background-image:url(images/cloudsync/left_right_done.png);
+	background-position: -0px -95px; width: 59px; height: 38px;
+}
+.rsstatus_png_Img_LR_ok{
+	background-image:url(images/cloudsync/left_right_done.png);
+	background-position: -0px -142px; width: 59px; height: 38px;
+}
+
+.status_gif_Img_L{
+	background-image:url(images/cloudsync/left_right_trans.gif);
+	background-position: 10px -0px; width: 59px; height: 38px;
+}
+.status_gif_Img_LR{
+	background-image:url(images/cloudsync/left_right_trans.gif);
+	background-position: 10px -47px; width: 59px; height: 38px;
+}
+.status_gif_Img_R{
 	background-image:url(images/cloudsync/left_right_trans.gif);
 	background-position: 10px -97px; width: 59px; height: 38px;
 }
 
-#status_png_Img_error{
+.status_png_Img_error{
 	background-image:url(images/cloudsync/left_right_done.png);
 	background-position: -0px -0px; width: 59px; height: 38px;
 }
-#status_png_Img_L_ok{
+.status_png_Img_L_ok{
 	background-image:url(images/cloudsync/left_right_done.png);
 	background-position: -0px -47px; width: 59px; height: 38px;
 }
-#status_png_Img_R_ok{
+.status_png_Img_R_ok{
 	background-image:url(images/cloudsync/left_right_done.png);
 	background-position: -0px -95px; width: 59px; height: 38px;
 }
-#status_png_Img_LR_ok{
+.status_png_Img_LR_ok{
 	background-image:url(images/cloudsync/left_right_done.png);
 	background-position: -0px -142px; width: 59px; height: 38px;
+}
+
+.FormTable th {
+	font-size: 14px;
+}
+
+.invitepopup_bg{
+	position:absolute;	
+	margin: auto;
+	top: 0;
+	left: 0;
+	width:100%;
+	height:100%;
+	background-color: #444F53;
+	filter:alpha(opacity=94);  /*IE5、IE5.5、IE6、IE7*/
+	background-repeat: repeat;
+	overflow:hidden;
+	display:none;
+	z-index:998;
+	visibility:visible;
+	background:rgba(0, 0, 0, 0.85) none repeat scroll 0 0 !important;
 }
 </style>
 <script>
@@ -100,21 +152,38 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
+// invitation
+var getflag = '<% get_parameter("flag"); %>';
+var decode_flag = f23.s52d(getflag);
+var decode_array = decode_flag.split(">");
+var isInvite = false;
+if(decode_array.length == 4)
+	isInvite = true;
 
 var cloud_status = "";
 var cloud_obj = "";
 var cloud_msg = "";
+var cloud_fullcapa="";
+var cloud_usedcapa="";
+<% UI_cloud_status(); %>
+
+var rs_rulenum = 0;
+var rs_status = "";
+var rs_obj = "";
+var rs_msg = "";
+var rs_fullcapa="0";
+var rs_usedcapa="0";
+<% UI_rs_status(); %>
+
 var curRule = -1;
 var enable_cloudsync = '<% nvram_get("enable_cloudsync"); %>';
-<% UI_cloud_status(); %>
 var cloud_sync = '<% nvram_show_chinese_char("cloud_sync"); %>';
 /* type>user>password>url>rule>dir>enable */
 var cloud_synclist_array = cloud_sync.replace(/>/g, "&#62").replace(/</g, "&#60"); 
 var cloud_synclist_all = new Array(); 
-var isEdit = 0;
-var isonEdit = 0;
-var maxrulenum = 1;
-var rulenum = 1;
+var showEditTable = 0;
+var isonEdit = -1;
+var rulenum;
 var disk_flag=0;
 var FromObject = "0";
 var lastClickedObj = 0;
@@ -124,12 +193,107 @@ var PROTOCOL = "cifs";
 window.onresize = cal_panel_block;
 
 function initial(){
-	show_menu();
-	showAddTable();
+	show_menu();	
 	showcloud_synclist();
+	showAddTable();
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
+
+	if('<% nvram_get("rrsut"); %>' != '1')
+		$("rrsLink").style.display = "none";
+	else{
+		if(getflag != ""){
+			setTimeout("showInvitation(getflag);", 300);
+		}
+	}
 }
+
+// Invitation
+function showInvitation(){
+	if(window.scrollTo)
+		window.scrollTo(0,0);
+
+	cal_panel_block();
+	if(!isInvite){
+		$("invitationInfo").innerHTML = "<br/> Invalid invitation code!";
+		$j("#invitation").fadeIn(300);
+		$j("#invitationBg").fadeIn(300);
+	}
+	else{
+		var htmlCode = "";
+		htmlCode += "<table width='98%' style='margin-top:15px'>";
+		htmlCode += "<tr height='40px'><td width='30%'>Descript</td><td style='font-weight:bolder;'>" + decode_array[0] + "</td></tr>";
+		htmlCode += "<tr height='40px'><td width='30%'>Rule</td><td style='font-weight:bolder;'>" + parseRule(decode_array[2]) + "</td></tr>";
+		htmlCode += "<tr height='40px'><td width='30%'>Destination</td><td style='font-weight:bolder;'>" + decode_array[1] + "</td></tr>";
+		
+		htmlCode += "<tr height='40px'><td width='30%'>Local path</td><td>";
+		htmlCode += "<input type='text' id='PATH_rs' class='input_20_table' style='margin-left:0px;height:23px;' name='cloud_dir' value='' onclick=''/>";
+		htmlCode += "<input name='button' type='button' class='button_gen_short' style='margin-left:5px;' onclick='get_disk_tree();$(\"folderTree_panel\").style.marginLeft+=30;' value='Browser'/>";
+		htmlCode += "</td></tr>";
+		
+		if(decode_array[3] != ""){
+			htmlCode += "<tr id='verification' height='40px'><td width='30%'>Verification</td><td><input id='veriCode' type='text' onkeypress='return is_number(this,event)' class='input_6_table' style='margin-left:0px;' maxlength='4' value=''>";
+			htmlCode += "<span style='color:#FC0;display:none;margin-left:5px;' id='codeHint'>Invalid verification code!</span></td></tr>";
+		}
+
+		htmlCode += "</table>";
+	
+		$("invitationInfo").innerHTML = htmlCode;
+		$j("#invitation").fadeIn(300);
+		$j("#invitationBg").fadeIn(300);
+	}
+}
+
+function parseRule(_rule){
+	if(_rule == 2)
+		return "Client to host";
+	else if(_rule == 1)
+		return "Host to client"
+	else
+		return "Two way sync";
+}
+
+function cancel_invitation(){
+	$j("#invitation").fadeOut(300);
+	$j("#invitationBg").fadeOut(300);
+}
+
+function confirm_invitation(){
+	if(!isInvite){
+		$j("#invitation").fadeOut(300);
+		$j("#invitationBg").fadeOut(300);
+		return false;
+	}
+
+	if($("veriCode")){
+		if($("veriCode").value != decode_array[3]){
+			$j("#codeHint").fadeOut(300);
+			$j("#codeHint").fadeIn(300);
+			return false;
+		}
+	}
+	
+	if($("PATH_rs")){
+		if($("PATH_rs").value == ""){
+			alert("<#JS_Shareblanktest#>");
+			$("PATH_rs").focus();
+			return false;
+		}
+	}
+
+	if(cloud_sync != "")
+		cloud_sync += "<";
+
+	cloud_sync += "1>" + f23.s52d(getflag) + ">" + $("PATH_rs").value;
+	cloud_sync.replace(":/", "/");
+
+	document.enableform.cloud_sync.value = cloud_sync;
+	document.enableform.cloud_sync.disabled = false;	
+	document.enableform.enable_cloudsync.value = 1;
+	showLoading();
+	document.enableform.submit();
+}
+// End
 
 function initial_dir(){
 	var __layer_order = "0_0";
@@ -181,36 +345,28 @@ function Do_addRow_Group(){
 	showcloud_synclist();
 }
 
-function edit_Row(r){ 	
+function edit_Row(r){
 	document.form.cloud_username.value = cloud_synclist_all[r][1];
 	document.form.cloud_password.value = cloud_synclist_all[r][2];
 	document.form.cloud_dir.value = cloud_synclist_all[r][5].substring(4);
 	document.form.cloud_rule.value = cloud_synclist_all[r][4];
 }
 
-function del_Row(r){
-	if(isonEdit == 1)
-		return false;
+function del_Row(_rulenum){
+	var cloud_synclist_row;
+	cloud_synclist_array = cloud_sync.replace(/>/g, "&#62").replace(/</g, "&#60"); 
+	cloud_synclist_row = cloud_synclist_array.split('&#60');
+	cloud_synclist_row[_rulenum-1] = "";
+	cloud_synclist_array = "";
 
-	var cloud_synclist_row = cloud_synclist_array.split('&#60'); // resample
-	var i=r.parentNode.parentNode.rowIndex+1;
-	var cloud_synclist_value = "";
-	for(k=1; k<cloud_synclist_row.length; k++){
-		if(k == i)
+	for(var i=0; i<cloud_synclist_row.length; i++){
+		if(cloud_synclist_row[i] == "")
 			continue;
-		else
-			cloud_synclist_value += "&#60";
-
-		var cloud_synclist_col = cloud_synclist_row[k].split('&#62');
-		for(j=0; j<cloud_synclist_col.length-1; j++){
-			cloud_synclist_value += cloud_synclist_col[j];
-			if(j != cloud_synclist_col.length-1)
-				cloud_synclist_value += "&#62";
-		}
+		if(cloud_synclist_array != "")
+ 			cloud_synclist_array += "<";
+		cloud_synclist_array += cloud_synclist_row[i];
 	}
-	isonEdit = 1;
-	cloud_synclist_array = cloud_synclist_value;
-	showcloud_synclist();
+
 	document.form.cloud_sync.value = cloud_synclist_array.replace(/&#62/g, ">").replace(/&#60/g, "<");
 	$("update_scan").style.display = '';
 	FormActions("start_apply.htm", "apply", "restart_cloudsync", "2");
@@ -218,18 +374,23 @@ function del_Row(r){
 	document.form.submit();
 }
 
+var hasWebStorageAcc = false;
 function showcloud_synclist(){
-	if(cloud_synclist_array != ""){
-		$("creatBtn").style.display = "none";
-	}
-
-	rulenum = 0;
+	var rsnum = 0;
 	var cloud_synclist_row = cloud_synclist_array.split('&#60');
 	var code = "";
+	rulenum = 0;
 
 	code +='<table width="99%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="cloud_synclist_table">';
-	if(enable_cloudsync == '0')
+	if(enable_cloudsync == '0' && cloud_synclist_row != ""){
 		code +='<tr height="55px"><td style="color:#FFCC00;" colspan="6"><#nosmart_sync#></td>';
+		hasWebStorageAcc = true;
+	}
+	else if(enable_cloudsync == '0'){
+		code +='<tr height="55px"><td style="color:#FFCC00;" colspan="6"><#nosmart_sync#></td>';
+	}
+	else if($("usb_status").className == "usbstatusoff")
+		code +='<tr height="55px"><td style="color:#FFCC00;" colspan="6"><#no_usb_found#></td>';
 	else if(cloud_synclist_array == "")
 		code +='<tr height="55px"><td style="color:#FFCC00;" colspan="6"><#IPConnection_VSList_Norule#></td>';
 	else{
@@ -237,42 +398,77 @@ function showcloud_synclist(){
 			rulenum++;
 			code +='<tr id="row'+i+'" height="55px">';
 			var cloud_synclist_col = cloud_synclist_row[i].split('&#62');
-			cloud_synclist_all[i] = cloud_synclist_col;
 			var wid = [10, 25, 0, 0, 10, 30, 15];
-			for(var j = 0; j < cloud_synclist_col.length; j++){
-				if(j == 2 || j == 3){
-					continue;
-				}
-				else{
-					if(j == 0)
-						code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img width="30px" src="/images/cloudsync/ASUS-WebStorage.png"></td>';
-					else if(j == 1)
-						code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family: Calibri;font-weight: bolder;text-decoration:underline; cursor:pointer"  onclick="isEdit=1;showAddTable();">'+ cloud_synclist_col[j] +'</span></td>';
-					else if(j == 4){
-						curRule = cloud_synclist_col[j];
-						if(cloud_synclist_col[j] == 2)
-							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="status_image"><div id="status_gif_Img_L"></div></div></td>';//code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img id="statusImg" width="45px" src="/images/cloudsync/left.gif"></td>';
-						else if(cloud_synclist_col[j] == 1)
-							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="status_image"><div id="status_gif_Img_R"></div></div></td>';
-						else
-							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="status_image"><div id="status_gif_Img_LR"></div></div></td>';
-					}
-					else if(j == 6){
-						code +='<td width="'+wid[j]+'%" id="cloudStatus"></td>';
+
+			if(cloud_synclist_col[0] == 0){ // ASUS WebStorage
+				$("creatBtn").style.display = "none";
+				hasWebStorageAcc = true;
+				cloud_synclist_all[i] = cloud_synclist_col;
+				for(var j = 0; j < cloud_synclist_col.length; j++){
+					if(j == 2 || j == 3){ 
+						continue;
 					}
 					else{
-						code +='<td width="'+wid[j]+'%"><span style="display:none;">'+ cloud_synclist_col[j] +'</span><span style="word-break:break-all;">'+ cloud_synclist_col[j].substr(4, cloud_synclist_col[j].length) +'</span></td>';
+						if(j == 0)
+							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img width="30px" src="/images/cloudsync/ASUS-WebStorage.png"></td>';
+						else if(j == 1)
+							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family: Calibri;font-weight: bolder;text-decoration:underline; cursor:pointer"  onclick="isonEdit='+rulenum+';showEditTable=1;showAddTable('+rulenum+');">'+ cloud_synclist_col[j] +'</span></td>';
+						else if(j == 4){
+							curRule = cloud_synclist_col[j];
+							if(cloud_synclist_col[j] == 2)
+								code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="status_image"><div class="status_gif_Img_L"></div></div></td>';//code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img id="statusImg" width="45px" src="/images/cloudsync/left.gif"></td>';
+							else if(cloud_synclist_col[j] == 1)
+								code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="status_image"><div class="status_gif_Img_R"></div></div></td>';
+							else
+								code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="status_image"><div class="status_gif_Img_LR"></div></div></td>';
+						}
+						else if(j == 6){
+							code +='<td width="'+wid[j]+'%" id="cloudStatus"></td>';
+						}
+						else{
+							code +='<td width="'+wid[j]+'%"><span style="display:none;">'+ cloud_synclist_col[j] +'</span><span style="word-break:break-all;">'+ cloud_synclist_col[j].substr(8, cloud_synclist_col[j].length) +'</span></td>';
+						}
 					}
 				}
+				code += '<td width="10%"><input class="remove_btn" onclick="del_Row('+rulenum+');" value=""/></td>';
 			}
-			code +='<td width="10%"><input class="remove_btn" onclick="del_Row(this);" value=""/></td>';
+			else if(cloud_synclist_col[0] == 1){ // Router Sync
+				for(var j = 0; j < cloud_synclist_col.length; j++){
+					if(j == 0)
+						code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img width="30px" src="/images/cloudsync/rssync.png"></td>';
+					else if(j == 1)
+						code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family:Calibri;font-weight:bolder;" onclick="">'+ cloud_synclist_col[j] +'</span></td>';
+					else if(j == 3){
+						curRule = cloud_synclist_col[j];
+						if(cloud_synclist_col[j] == 2)
+							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="rsstatus_image_'+rsnum+'"><div class="rsstatus_gif_Img_L"></div></div></td>';//code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img id="rsstatusImg" width="45px" src="/images/cloudsync/left.gif"></td>';
+						else if(cloud_synclist_col[j] == 1)
+							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="rsstatus_image_'+rsnum+'"><div class="rsstatus_gif_Img_R"></div></div></td>';
+						else
+							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="rsstatus_image_'+rsnum+'"><div class="rsstatus_gif_Img_LR"></div></div></td>';
+					}
+					else if(j == 5)
+						code +='<td width="'+wid[j]+'%"><span style="display:none;">'+ cloud_synclist_col[j] +'</span><span style="word-break:break-all;">'+ cloud_synclist_col[j].substr(4, cloud_synclist_col[j].length) +'</span></td>';
+				}				
+				code +='<td width="'+wid[j]+'%" id="rsStatus_'+rsnum+'">Waiting...</td>';
+				code += '<td width="10%"><input class="remove_btn" onclick="del_Row('+rulenum+');" value=""/></td>';
+				rsnum++;
+			}
+			else{
+				code += '';
+			}
+
+			if(updateCloudStatus_counter == 0){
+				updateCloudStatus();
+				updateCloudStatus_counter++;
+			}
 		}
-		updateCloudStatus();
 	}
 	code +='</table>';
 	$("cloud_synclist_Block").innerHTML = code;
 }
 
+var updateCloudStatus_counter = 0;
 function updateCloudStatus(){
     $j.ajax({
     	url: '/cloud_status.asp',
@@ -282,63 +478,104 @@ function updateCloudStatus(){
       		updateCloudStatus();
     	},
     	success: function(response){
-					if(cloud_status.toUpperCase() == "DOWNUP"){
-						cloud_status = "SYNC";
-						$("status_image").firstChild.id="status_gif_Img_LR";
-						//$("statusImg").src = "/images/cloudsync/left_right.gif";
-					}
-					else if(cloud_status.toUpperCase() == "ERROR"){
-						$("status_image").firstChild.id="status_png_Img_error";
-						//$("statusImg").src = "/images/cloudsync/left_right_Error.png";
-					}
-					else if(cloud_status.toUpperCase() == "UPLOAD"){
-						$("status_image").firstChild.id="status_gif_Img_L";
-						//$("statusImg").src = "/images/cloudsync/left.gif";
-					}
-					else if(cloud_status.toUpperCase() == "DOWNLOAD"){
-						$("status_image").firstChild.id="status_gif_Img_R";
-						//$("statusImg").src = "/images/cloudsync/right.gif";
-					}
-					else if(cloud_status.toUpperCase() == "SYNC"){
-						cloud_status = "Finish";
-						if(curRule == 2){
-							$("status_image").firstChild.id="status_png_Img_L_ok";
-							//$("statusImg").src = "/images/cloudsync/left_ok.png";
-						}else if(curRule == 1){
-							$("status_image").firstChild.id="status_png_Img_R_ok";
-							//$("statusImg").src = "/images/cloudsync/right_ok.png";
-						}else{
-							$("status_image").firstChild.id="status_png_Img_LR_ok";
-							//$("statusImg").src = "/images/cloudsync/left_right_ok.png";
-						}	
-					}
-
-					// handle msg
-					var _cloud_msg = "";
-					if(cloud_obj != ""){
-						_cloud_msg +=  "<b>";
-						_cloud_msg += cloud_status;
-						_cloud_msg += ": </b><br />";
-						_cloud_msg += "<span style=\\'word-break:break-all;\\'>" + decodeURIComponent(cloud_obj) + "</span>";
-					}
-					else if(cloud_msg){
-						_cloud_msg += cloud_msg;
-					}
-					else{
-						_cloud_msg += "No log.";
-					}
-
-					// handle status
-					var _cloud_status;
-					if(cloud_status != "")
-						_cloud_status = cloud_status;
-					else
-						_cloud_status = "";
-
-					if($("cloudStatus"))
+					// webstorage
+					if($("cloudStatus")){
+						if(cloud_status.toUpperCase() == "DOWNUP"){
+							cloud_status = "SYNC";
+							$("status_image").firstChild.className="status_gif_Img_LR";
+						}
+						else if(cloud_status.toUpperCase() == "ERROR"){
+							$("status_image").firstChild.className="status_png_Img_error";
+						}
+						else if(cloud_status.toUpperCase() == "UPLOAD"){
+							$("status_image").firstChild.className="status_gif_Img_L";
+						}
+						else if(cloud_status.toUpperCase() == "DOWNLOAD"){
+							$("status_image").firstChild.className="status_gif_Img_R";
+						}
+						else if(cloud_status.toUpperCase() == "SYNC"){
+							cloud_status = "Finish";
+							if(curRule == 2){
+								$("status_image").firstChild.className="status_png_Img_L_ok";
+							}else if(curRule == 1){
+								$("status_image").firstChild.className="status_png_Img_R_ok";
+							}else{
+								$("status_image").firstChild.className="status_png_Img_LR_ok";
+							}	
+						}
+	
+						// handle msg
+						var _cloud_msg = "";
+						if(cloud_obj != ""){
+							_cloud_msg +=  "<b>";
+							_cloud_msg += cloud_status;
+							_cloud_msg += ": </b><br />";
+							_cloud_msg += "<span style=\\'word-break:break-all;\\'>" + decodeURIComponent(cloud_obj) + "</span>";
+						}
+						else if(cloud_msg){
+							_cloud_msg += cloud_msg;
+						}
+						else{
+							_cloud_msg += "<#aicloud_no_record#>";
+						}
+	
+						// handle status
+						var _cloud_status;
+						if(cloud_status != "")
+							_cloud_status = cloud_status;
+						else
+							_cloud_status = "";
+	
 						$("cloudStatus").innerHTML = '<div style="text-decoration:underline; cursor:pointer" onmouseout="return nd();" onclick="return overlib(\''+ _cloud_msg +'\');">'+ _cloud_status +'</div>';
+					}
 
-			 		setTimeout("updateCloudStatus();", 2000);
+					// Router Sync
+					if(rs_rulenum == "") rs_rulenum = 0;
+					if($("rsStatus_"+rs_rulenum)){
+						if(rs_status.toUpperCase() == "DOWNUP"){
+							rs_status = "SYNC";
+							$("rsstatus_image_"+rs_rulenum).firstChild.className="rsstatus_gif_Img_LR";
+						}
+						else if(rs_status.toUpperCase() == "ERROR"){
+							$("rsstatus_image_"+rs_rulenum).firstChild.className="rsstatus_png_Img_error";
+						}
+						else if(rs_status.toUpperCase() == "UPLOAD"){
+							$("rsstatus_image_"+rs_rulenum).firstChild.className="rsstatus_gif_Img_L";
+						}
+						else if(rs_status.toUpperCase() == "DOWNLOAD"){
+							$("rsstatus_image_"+rs_rulenum).firstChild.className="rsstatus_gif_Img_R";
+						}
+						else if(rs_status.toUpperCase() == "SYNC"){
+							rs_status = "Finish";
+							if(curRule == 2){
+								$("rsstatus_image_"+rs_rulenum).firstChild.className="rsstatus_png_Img_L_ok";
+							}else if(curRule == 1){
+								$("rsstatus_image_"+rs_rulenum).firstChild.className="rsstatus_png_Img_R_ok";
+							}else{
+								$("rsstatus_image_"+rs_rulenum).firstChild.className="rsstatus_png_Img_LR_ok";
+							}	
+						}
+	
+						// handle msg
+						var _rs_msg = "";
+						if(rs_obj != ""){
+							_rs_msg +=  "<b>";
+							_rs_msg += rs_status;
+							_rs_msg += ": </b><br />";
+							_rs_msg += "<span style=\\'word-break:break-all;\\'>" + decodeURIComponent(rs_obj) + "</span>";
+						}
+						else if(rs_msg){
+							_rs_msg += rs_msg;
+						}
+						else{
+							_rs_msg += "<#aicloud_no_record#>";
+						}
+	
+						// handle status
+						$("rsStatus_"+rs_rulenum).innerHTML = '<div style="text-decoration:underline; cursor:pointer" onmouseout="return nd();" onclick="return overlib(\''+ _rs_msg +'\');">'+ rs_status +'</div>';
+					}
+
+			 		setTimeout("updateCloudStatus();", 1500);
       }
    });
 }
@@ -369,37 +606,62 @@ function validform(){
 
 function applyRule(){
 	if(validform()){
-		isonEdit = 1;
-		// 1 rule.
-		cloud_synclist_array = '0&#62'+document.form.cloud_username.value+'&#62'+document.form.cloud_password.value+'&#62none&#62'+document.form.cloud_rule.value+'&#62'+"/tmp"+document.form.cloud_dir.value+'&#621';
+		var cloud_synclist_row;
+		var cloud_synclist_array_tmp = cloud_sync; 
+
+		if(isonEdit != -1){
+			cloud_synclist_row = cloud_synclist_array_tmp.split('<');
+			cloud_synclist_row[isonEdit-1] = "";
+
+			// rebuild cloud_synclist_array_tmp
+			cloud_synclist_array_tmp = "";		
+			for(var i=0; i<cloud_synclist_row.length; i++){
+				if(cloud_synclist_row[i] == "")
+					continue;
+				if(cloud_synclist_array_tmp != "")
+		 			cloud_synclist_array_tmp += "<";
+				cloud_synclist_array_tmp += cloud_synclist_row[i];
+			}
+		}
+		
+		if(cloud_sync != "")
+			cloud_synclist_array_tmp += '<';
+
+		cloud_synclist_array_tmp += '0>'+document.form.cloud_username.value+'>'+document.form.cloud_password.value+'>none>'+document.form.cloud_rule.value+'>'+"/tmp"+document.form.cloud_dir.value+'>1';
+
 		showcloud_synclist();
-		document.form.cloud_sync.value = cloud_synclist_array.replace(/&#62/g, ">").replace(/&#60/g, "<");
+		document.form.cloud_sync.value = cloud_synclist_array_tmp;
 		document.form.cloud_username.value = '';
 		document.form.cloud_password.value = '';
 		document.form.cloud_rule.value = '';
 		document.form.cloud_dir.value = '';
 		document.form.enable_cloudsync.value = 1;
-		isEdit = 0;
+		showEditTable = 0;
 		showAddTable();
 		$("update_scan").style.display = '';
 		FormActions("start_apply.htm", "apply", "restart_cloudsync", "2");
 		showLoading();
+
+		if(document.form.cloud_sync.value.charAt(0) == "<")
+			document.form.cloud_sync.value = document.form.cloud_sync.value.substring(1);
+
 		document.form.submit();
 	}
 }
 
-function showAddTable(){
-	if(isEdit == 1){ // edit
+function showAddTable(r){
+	if(showEditTable == 1){ // edit
 		$j("#cloudAddTable").fadeIn();
 		$("creatBtn").style.display = "none";
 		$j("#applyBtn").fadeIn();
-		if(cloud_synclist_array != ""){
-			edit_Row(0);
+
+		if(typeof r != "undefined"){
+			edit_Row(r-1);
 		}
 	}
 	else{ // list
 		$("cloudAddTable").style.display = "none";
-		if(cloud_synclist_array == ""){
+		if(!hasWebStorageAcc){
 			$j("#creatBtn").fadeIn();
 			$("applyBtn").style.display = "none";
 		}
@@ -707,21 +969,20 @@ function cancel_folderTree(){
 }
 
 function confirm_folderTree(){
+	if($('PATH_rs'))
+		$('PATH_rs').value = path_directory ;
 	$('PATH').value = path_directory ;
 	this.FromObject ="0";
 	$j("#folderTree_panel").fadeOut(300);
 }
 
-function switchType(_method){
-	return 0;
-
-	if(isNotIE){
-		document.form.cloud_password.type = _method ? "text" : "password";		
-	}
+function switchType(obj, _method){
+	if(isNotIE){	
+		document.form.cloud_password.type = _method ? "text" : "password";	
+	}	
 }
 
 function switchType_IE(obj){
-	return 0;
 	if(isNotIE) return;		
 	
 	var tmp = "";
@@ -729,12 +990,12 @@ function switchType_IE(obj){
 	if(obj.id.indexOf('text') < 0){		//password
 		obj.style.display = "none";
 		document.getElementById('cloud_password_text').style.display = "";
-		document.getElementById('cloud_password_text').value = tmp;						
+		document.getElementById('cloud_password_text').value = tmp;
 		document.getElementById('cloud_password_text').focus();
-	}else{														//text					
+	}else{								//text					
 		obj.style.display = "none";
 		document.getElementById('cloud_password').style.display = "";
-		document.getElementById('cloud_password').value = tmp;
+		document.getElementById('cloud_password').value = tmp;						
 	}
 }
 
@@ -758,17 +1019,36 @@ function cal_panel_block(){
 		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
 
 	}
+
 	$("folderTree_panel").style.marginLeft = blockmarginLeft+"px";
+	$("invitation").style.marginLeft = blockmarginLeft+"px";
 }
 </script>
 </head>
 
-<body onload="initial();" onunload="return unload_body();">
-<div id="TopBanner"></div>
+	<body onload="initial();" onunload="return unload_body();">
+	<div id="TopBanner"></div>
+	
+<div id="invitationBg" class="invitepopup_bg">
+	<div id="invitation" class="panel_folder" style="margin-top:30px;">
+		<table>
+			<tr>
+				<td>
+					<div class="machineName" style="font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:20px;margin-left:30px;">You have got a new invitation!</div>
+				</td>
+			</tr>
+		</table>
+		<div id="invitationInfo" class="folder_tree" style="word-break:break-all;z-index:999;"></div>
+		<div style="background-image:url(images/Tree/bg_02.png);background-repeat:no-repeat;height:90px;">		
+			<input class="button_gen" type="button" style="margin-left:27%;margin-top:18px;" onclick="cancel_invitation();" value="<#CTL_Cancel#>">
+			<input class="button_gen" type="button"  onclick="confirm_invitation();" value="<#CTL_ok#>">
+		</div>
+	</div>
+</div>
 
 <!-- floder tree-->
 <div id="DM_mask" class="mask_bg"></div>
-<div id="folderTree_panel" class="panel_folder" >
+<div id="folderTree_panel" class="panel_folder" style="z-index:1000;">
 	<table><tr><td>
 		<div class="machineName" style="width:200px;font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:15px;margin-left:30px;"><#Web_Title2#></div>
 		</td>
@@ -821,6 +1101,9 @@ function cal_panel_block(){
 						</td>
 						<td>
 							<div class="tabclick"><span>Smart Sync</span></div>
+						</td>
+						<td>
+							<a id="rrsLink" href="cloud_router_sync.asp"><div class="tab"><span>Sync Server</span></div></a>
 						</td>
 						<td>
 							<a href="cloud_settings.asp"><div class="tab"><span>Settings</span></div></a>
@@ -926,7 +1209,7 @@ function cal_panel_block(){
 								<#AiDisk_Account#>
 							</th>			
 							<td>
-							  <input type="text" maxlength="32" class="input_32_table" style="height: 25px;" id="cloud_username" name="cloud_username" value="" onKeyPress="">
+							  <input type="text" maxlength="32" class="input_32_table" style="height: 23px;" id="cloud_username" name="cloud_username" value="" onKeyPress="">
 							</td>
 						  </tr>	
 
@@ -935,7 +1218,7 @@ function cal_panel_block(){
 								<#PPPConnection_Password_itemname#>
 							</th>			
 							<td>
-								<input id="cloud_password" name="cloud_password" type="text" autocapitalization="off" onBlur="switchType(false);" onFocus="switchType(true);switchType_IE(this);" maxlength="32" class="input_32_table" style="height: 25px;" value="">
+								<input id="cloud_password" name="cloud_password" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);switchType_IE(this);" maxlength="32" class="input_32_table" style="height: 23px;" value="">
 							  <input id="cloud_password_text" name="cloud_password_text" type="text" autocapitalization="off" onBlur="switchType_IE(this);" maxlength="32" class="input_32_table" style="height:25px; display:none;" value="">
 							</td>
 						  </tr>						  				
@@ -945,7 +1228,7 @@ function cal_panel_block(){
 								Folder
 							</th>
 							<td>
-			          <input type="text" id="PATH" class="input_32_table" style="height: 25px;" name="cloud_dir" value="" onclick=""/>
+			          <input type="text" id="PATH" class="input_32_table" style="height: 23px;" name="cloud_dir" value="" onclick=""/>
 		  					<input name="button" type="button" class="button_gen_short" onclick="get_disk_tree();" value="Browser"/>
 								<div id="noUSB" style="color:#FC0;display:none;margin-left: 3px;"><#no_usb_found#></div>
 							</td>
@@ -979,12 +1262,12 @@ function cal_panel_block(){
 						</table>
 
 	  				<div class="apply_gen" id="creatBtn" style="margin-top:30px;display:none;">
-							<input name="applybutton" id="applybutton" type="button" class="button_gen_long" onclick="isEdit=1;showAddTable();" value="<#AddAccountTitle#>" style="word-wrap:break-word;word-break:normal;">
+							<input name="applybutton" id="applybutton" type="button" class="button_gen_long" onclick="showEditTable=1;showAddTable();" value="<#AddAccountTitle#>" style="word-wrap:break-word;word-break:normal;">
 							<img id="update_scan" style="display:none;" src="images/InternetScan.gif" />
 	  				</div>
 
 	  				<div class="apply_gen" style="margin-top:30px;display:none;" id="applyBtn">
-	  					<input name="button" type="button" class="button_gen" onclick="isEdit=0;showAddTable();" value="<#CTL_Cancel#>"/>
+	  					<input name="button" type="button" class="button_gen" onclick="showEditTable=0;showAddTable();" value="<#CTL_Cancel#>"/>
 	  					<input name="button" type="button" class="button_gen" onclick="applyRule()" value="<#CTL_apply#>"/>
 	  				</div>
 
@@ -1013,6 +1296,7 @@ function cal_panel_block(){
 <input type="hidden" name="action_script" value="restart_cloudsync">
 <input type="hidden" name="action_wait" value="2">
 <input type="hidden" name="enable_cloudsync" value="<% nvram_get("enable_cloudsync"); %>">
+<input type="hidden" name="cloud_sync" value="" disabled>
 </form>
 <form method="post" name="aidiskForm" action="" target="hidden_frame">
 <input type="hidden" name="motion" id="motion" value="">

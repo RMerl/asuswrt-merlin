@@ -128,6 +128,9 @@ int http_response_write_header(server *srv, connection *con) {
 	if(ddns_host_n){
 		buffer_append_string_len(b, CONST_STR_LEN("\r\nDDNS: "));
 		buffer_append_string(b, ddns_host_n);
+#ifdef APP_IPKG
+	free(ddns_host_n);
+#endif
 	}else
 #endif
 	buffer_append_string_len(b, CONST_STR_LEN("\r\nDDNS: "));
@@ -513,17 +516,14 @@ Cdbg(DBE, "enter http_response_prepare..mode=[%d], status=[%d][%s]", con->mode, 
 		 * create physical filename
 		 * -> physical.path = docroot + rel_path
 		 *
-		 */		
+		 */
 		buffer_copy_string_buffer(con->physical.path, con->physical.doc_root);
 		BUFFER_APPEND_SLASH(con->physical.path);
 		buffer_copy_string_buffer(con->physical.basedir, con->physical.path);
+		
 		if (con->physical.rel_path->used &&
-		    con->physical.rel_path->ptr[0] == '/') {
-		    
+		    con->physical.rel_path->ptr[0] == '/') {		    
 			buffer_append_string_len(con->physical.path, con->physical.rel_path->ptr + 1, con->physical.rel_path->used - 2);
-			
-			//buffer_append_string_encoded(con->physical.path, con->physical.rel_path->ptr + 1, con->physical.rel_path->used - 2, ENCODING_REL_URI);
-			//Cdbg(1,"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa %s", con->physical.path->ptr);
 		} else {		
 			buffer_append_string_buffer(con->physical.path, con->physical.rel_path);
 		}
@@ -534,7 +534,8 @@ Cdbg(DBE, "enter http_response_prepare..mode=[%d], status=[%d][%s]", con->mode, 
 			log_error_write(srv, __FILE__, __LINE__,  "sb", "Rel-Path     :", con->physical.rel_path);
 			log_error_write(srv, __FILE__, __LINE__,  "sb", "Path         :", con->physical.path);
 		}
-		
+
+		Cdbg(DBE, "plugins_call_handle_physical.....................");
 		switch(r = plugins_call_handle_physical(srv, con)) {
 			case HANDLER_GO_ON:
 				break;
@@ -571,7 +572,9 @@ Cdbg(DBE, "enter http_response_prepare..mode=[%d], status=[%d][%s]", con->mode, 
 			log_error_write(srv, __FILE__, __LINE__,  "s",  "-- handling physical path");
 			log_error_write(srv, __FILE__, __LINE__,  "sb", "Path         :", con->physical.path);
 		}
-		
+
+		buffer* tmp = smbc_wrapper_physical_url_path(srv, con);
+		Cdbg(DBE, "sdsdsd %s", tmp->ptr);
 		if ( HANDLER_ERROR != stat_cache_get_entry(srv, con, smbc_wrapper_physical_url_path(srv, con), &sce)) {
 			/* file exists */
 
@@ -637,6 +640,7 @@ Cdbg(DBE, "enter http_response_prepare..mode=[%d], status=[%d][%s]", con->mode, 
 				break;
 			default:
 				/* we have no idea what happend. let's tell the user so. */
+				Cdbg(DBE, "500 xxxx");
 				con->http_status = 500;
 				buffer_reset(con->physical.path);
 				

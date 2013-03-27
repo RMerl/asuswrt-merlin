@@ -40,13 +40,45 @@ function initial(){
 		inputCtrl(document.form.webdav_lock_times, 0);
 		inputCtrl(document.form.webdav_lock_interval, 0);
 	}
+
+	if('<% nvram_get("rrsut"); %>' != '1')
+		$("rrsLink").style.display = "none";
 }
 
 function applyRule(){
 	validate_number_range(document.form.webdav_lock_times, 1, 10);
 	validate_number_range(document.form.webdav_lock_interval, 1, 60);
+	/*
+	validate_number_range(document.form.webdav_http_port, 1024, 65536); 
+	validate_number_range(document.form.webdav_https_port, 1024, 65536); 
+	*/
+
+	if(isPortConflict_webdav(document.form.webdav_http_port.value)){
+		alert(isPortConflict_webdav(document.form.webdav_http_port.value));
+		document.form.webdav_http_port.focus();
+		return false;
+	}
+	else if(isPortConflict_webdav(document.form.webdav_https_port.value)){
+		alert(isPortConflict_webdav(document.form.webdav_https_port.value));
+		document.form.webdav_https_port.focus();
+		return false;
+	}
+
 	showLoading();	
 	document.form.submit();	
+}
+
+function isPortConflict_webdav(_val){
+	if(_val == '<% nvram_get("login_port"); %>')
+		return Untranslated.portConflictHint + " HTTP LAN port.";
+	else if(_val == '<% nvram_get("dm_http_port"); %>')
+		return Untranslated.portConflictHint + " Download Master.";
+	else if(_val == '<% nvram_get("misc_httpsport_x"); %>')
+		return Untranslated.portConflictHint + " [<#FirewallConfig_x_WanWebPort_itemname#>(HTTPS)].";
+	else if(_val == '<% nvram_get("misc_httpport_x"); %>')
+		return Untranslated.portConflictHint + " [<#FirewallConfig_x_WanWebPort_itemname#>(HTTP)].";
+	else
+		return false;
 }
 
 function unlockAcc(){
@@ -88,6 +120,9 @@ function unlockAcc(){
 						</td>
 						<td>
 							<a href="cloud_sync.asp"><div class="tab"><span>Smart Sync</span></div></a>
+						</td>
+						<td>
+							<a id="rrsLink" href="cloud_router_sync.asp"><div class="tab"><span>Sync Server</span></div></a>
 						</td>
 						<td>
 							<div class="tabclick"><span>Settings</span></div>
@@ -150,9 +185,15 @@ function unlockAcc(){
 													<input type="text" name="webdav_lock_interval" class="input_3_table" maxlength="2" onblur="validate_number_range(this, 1, 60);" value="<% nvram_get("webdav_lock_interval"); %>"> minutes the AiCloud account will be locked.
 							            <br/>
 							            <br/>
-													<div class="apply_gen" style="background-color:#444F53;">
+													<!--div class="apply_gen" style="background-color:#444F53;">
 														<input style="margin-left:10px;" class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>
-							            </div>
+							            </div-->
+													<div>
+														<div style="margin-top:10px;">Account Status:</div>
+														<img style="margin-top:-30px;margin-left:150px" id="accIcon" width="40px" src="/images/cloudsync/account_icon.png">
+														<div style="margin-top:-30px;margin-left:200px;font-size:16px;font-weight:bolder;"><% nvram_get("http_username"); %></div>
+														<input id="unlockBtn" style="margin-top:-28px;margin-left:260px;display:none;" class="button_gen_short" onclick="unlockAcc();" type="button" value="Unlock"/>
+													</div>
 												</div>
 											</td>
 									  </tr>
@@ -165,18 +206,17 @@ function unlockAcc(){
 									  <tr bgcolor="#444f53">
 									    <td colspan="5" class="cloud_main_radius">
 												<div style="padding:30px;font-size:18px;word-break:break-all;border-style:dashed;border-radius:10px;border-width:1px;border-color:#999;">
-													AiCloud account information:
-													<div style="padding:15px;font-size:16px;">
-														<img id="accIcon" width="40px" src="/images/cloudsync/account_icon.png">
-														<div style="margin-top:-30px;margin-left:50px;font-size:16px;font-weight:bolder;">admin</div>
-														<input id="unlockBtn" style="display:none;margin-top:-27px;margin-left:120px;" class="button_gen_short" onclick="unlockAcc();" type="button" value="Unlock"/>
-													</div>
+													AiCloud web access port: <input type="text" name="webdav_https_port" class="input_6_table" maxlength="5" onKeyPress="return is_number(this,event);" value="<% nvram_get("webdav_https_port"); %>">
+													<br>
+													<br>
+													AiCloud content streaming port: <input type="text" name="webdav_http_port" class="input_6_table" maxlength="5" onKeyPress="return is_number(this,event);" value="<% nvram_get("webdav_http_port"); %>">
 												</div>
 											</td>
 									  </tr>
-
 									</table>
-
+									<div class="apply_gen">
+										<input class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>
+			            </div>
 							  </td>
 							</tr>				
 							</tbody>	

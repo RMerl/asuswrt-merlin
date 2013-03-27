@@ -22,6 +22,10 @@
 # include <valgrind/valgrind.h>
 #endif
 
+#if EMBEDDED_EANBLE
+#include <sys/sysinfo.h>
+#endif
+
 #ifndef O_LARGEFILE
 # define O_LARGEFILE 0
 #endif
@@ -393,7 +397,7 @@ int log_sys_open(server *srv) {
 			return -1;
 		}
 
-		log_sys_write(srv, "s", "Start syslog...");
+		//log_sys_write(srv, "s", "Start syslog...");
 	}
 
 	return 0;
@@ -413,10 +417,21 @@ int log_sys_write(server *srv, const char *fmt, ...) {
 	va_list ap;
 	
 	if (-1 == srv->syslog_fd) return 0;
-	
+
 	buffer* sys_time_str = buffer_init();
 	buffer_prepare_copy(sys_time_str, 255);
+
+#if EMBEDDED_EANBLE
+#ifndef APP_IPKG
+	setenv("TZ", nvram_get_time_zone(), 1);
+#else
+	char *time_zone=nvram_get_time_zone();
+	setenv("TZ", time_zone, 1);
+	free(time_zone);
+#endif
+#endif
 	strftime(sys_time_str->ptr, sys_time_str->size - 1, "%b  %d %H:%M:%S", localtime(&(srv->cur_ts)));
+
 	buffer_copy_string(srv->syslog_buf, sys_time_str->ptr);	
 	buffer_free(sys_time_str);
 

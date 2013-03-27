@@ -1,7 +1,7 @@
 /*
  * Wireless network adapter utilities
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,9 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#if	defined(__ECOS)
+#include <sys/socket.h>
+#endif
 #include <net/if.h>
 
 #include <bcmutils.h>
@@ -32,8 +35,8 @@ int
 wl_probe(char *name)
 {
 	int ret, val;
-	
-#if defined(linux)
+
+#if defined(linux) || defined(__ECOS)
 	char buf[DEV_TYPE_LEN];
 	if ((ret = wl_get_dev_type(name, buf, DEV_TYPE_LEN)) < 0)
 		return ret;

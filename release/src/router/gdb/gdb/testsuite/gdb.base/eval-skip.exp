@@ -1,0 +1,352 @@
+# Copyright 1998, 1999, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Elena Zannoni (ezannoni@cygnus.com)
+
+# This file is part of the gdb testsuite
+
+#
+# tests to cover evaluate_subexp_standard with the EVAL_SKIP flag set.
+# this happens for instance when there is short circuit evaluation in the && and ||
+# operators, or in the non returned part of a (x ? y: z) expression.
+# the part that is not evaluated is parsed and evaluated anyway, but with
+# the EVAL_SKIP flag set
+# 
+# source file "int-type.c"
+#
+
+
+if $tracelevel then {
+        strace $tracelevel
+}
+
+# Check to see if we have an executable to test.  If not, then either we
+# haven't tried to compile one, or the compilation failed for some reason.
+# In either case, just notify the user and skip the tests in this file.
+
+set testfile "int-type"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
+     untested eval-skip.exp
+     return -1
+    }
+
+if [get_compiler_info $binfile] {
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+gdb_test "set variable x=14" "" "set variable x=14"
+gdb_test "set variable y=2" "" "set variable y=2"
+gdb_test "set variable z=2" "" "set variable z=2"
+gdb_test "set variable w=3" "" "set variable w=3"
+
+send_gdb "print (0 && (x+y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x+y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x+y))" }
+    timeout           { fail "(timeout) print value of (0 && (x+y))" }
+  }
+
+
+send_gdb "print (0 && (x-y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x-y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x-y))" }
+    timeout           { fail "(timeout) print value of (0 && (x-y))" }
+  }
+
+
+send_gdb "print (0 && (x*y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x*y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x*y))" }
+    timeout           { fail "(timeout) print value of (0 && (x*y))" }
+  }
+
+
+
+send_gdb "print (0 && (x/y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x/y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x/y))" }
+    timeout           { fail "(timeout) print value of (0 && (x/y))" }
+  }
+
+
+send_gdb "print (0 && (x%y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x%y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x%y))" }
+    timeout           { fail "(timeout) print value of (0 && (x%y))" }
+  }
+
+
+send_gdb "print (0 && (x&&y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x&&y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x&&y))" }
+    timeout           { fail "(timeout) print value of (0 && (x&&y))" }
+  }
+
+
+
+send_gdb "print (0 && (x||y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x||y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x||y))" }
+    timeout           { fail "(timeout) print value of (0 && (x||y))" }
+  }
+
+
+
+send_gdb "print (0 && (x&y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x&y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x&y))" }
+    timeout           { fail "(timeout) print value of (0 && (x&y))" }
+  }
+
+
+send_gdb "print (0 && (x|y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x|y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x|y))" }
+    timeout           { fail "(timeout) print value of (0 && (x|y))" }
+  }
+
+
+send_gdb "print (0 && (x^y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x^y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x^y))" }
+    timeout           { fail "(timeout) print value of (0 && (x^y))" }
+  }
+
+
+
+send_gdb "print (0 && (x < y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x < y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x < y))" }
+    timeout           { fail "(timeout) print value of (0 && (x < y))" }
+  }
+
+
+send_gdb "print (0 && (x <= y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x <= y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x <= y))" }
+    timeout           { fail "(timeout) print value of (0 && (x <= y))" }
+  }
+
+
+
+send_gdb "print (0 && (x>y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x>y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x>y))" }
+    timeout           { fail "(timeout) print value of (0 && (x>y))" }
+  }
+
+
+send_gdb "print (0 && (x>=y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x>=y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x>=y))" }
+    timeout           { fail "(timeout) print value of (0 && (x>=y))" }
+  }
+
+
+
+send_gdb "print (0 && (x==y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x==y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x==y))" }
+    timeout           { fail "(timeout) print value of (0 && (x==y))" }
+  }
+
+
+send_gdb "print (0 && (x!=y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x!=y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x!=y))" }
+    timeout           { fail "(timeout) print value of (0 && (x!=y))" }
+  }
+
+
+send_gdb "print (0 && (x<<31))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x<<31))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x<<31))" }
+    timeout           { fail "(timeout) print value of (0 && (x<<31))" }
+  }
+
+
+send_gdb "print (0 && (x>>31))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x>>31))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x>>31))" }
+    timeout           { fail "(timeout) print value of (0 && (x>>31))" }
+  }
+
+
+
+send_gdb "print (0 && (!x))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (!x))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (!x))" }
+    timeout           { fail "(timeout) print value of (0 && (!x))" }
+  }
+
+
+send_gdb "print (0 && (~x))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (~x))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (~x))" }
+    timeout           { fail "(timeout) print value of (0 && (~x))" }
+  }
+
+send_gdb "print (0 && (-x))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (-x))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (-x))" }
+    timeout           { fail "(timeout) print value of (0 && (-x))" }
+  }
+
+
+send_gdb "print (0 && (x++))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x++))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x++))" }
+    timeout           { fail "(timeout) print value of (0 && (x++))" }
+  }
+
+
+send_gdb "print (0 && (++x))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (++x))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (++x))" }
+    timeout           { fail "(timeout) print value of (0 && (++x))" }
+  }
+
+
+send_gdb "print (0 && (x--))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x--))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x--))" }
+    timeout           { fail "(timeout) print value of (0 && (x--))" }
+  }
+
+
+send_gdb "print (0 && (--x))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (--x))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (--x))" }
+    timeout           { fail "(timeout) print value of (0 && (--x))" }
+  }
+
+send_gdb "print (0 && (x+=7))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x+=7))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x+=7))" }
+    timeout           { fail "(timeout) print value of (0 && (x+=7))" }
+  }
+
+send_gdb "print (0 && (x=y))\n"
+gdb_expect {
+    -re ".$decimal = $false\r\n$gdb_prompt $" {
+        pass "print value of (0 && (x=y))"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (0 && (x=y))" }
+    timeout           { fail "(timeout) print value of (0 && (x=y))" }
+  }
+
+gdb_exit
+return 0
+
+
+
+
+
+
+

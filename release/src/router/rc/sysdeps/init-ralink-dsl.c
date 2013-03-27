@@ -163,14 +163,14 @@ void config_switch_dsl_set_dsl()
 {
 	// DSL WAN , no IPTV , USB also goes here
 	dbG("wan port = dsl\n");
-	eval("8367r", "8", "0");					
+	eval("rtkswitch", "8", "0");					
 }
 
 void config_switch_dsl_set_iptv(int stbport)
 {
 	char param_buf[32];	
 	sprintf(param_buf, "%d", stbport);
-	eval("8367r", "8", param_buf);
+	eval("rtkswitch", "8", param_buf);
 }
 
 void config_switch_dsl_set_lan_iptv(int stbport)
@@ -184,28 +184,28 @@ void config_switch_dsl_set_lan_iptv(int stbport)
 		// 0x100
 		dbG("wan port = lan1\n");				
 		sprintf(param_buf, "%d", 0x100 + stbport);
-		eval("8367r", "8", param_buf);
+		eval("rtkswitch", "8", param_buf);
 	}
 	else if (nvram_match("wans_lanport","2"))
 	{
 		// 0x200
 		dbG("wan port = lan2\n");				
 		sprintf(param_buf, "%d", 0x200 + stbport);
-		eval("8367r", "8", param_buf);
+		eval("rtkswitch", "8", param_buf);
 	}
 	else if (nvram_match("wans_lanport","3"))
 	{
 		// 0x300
 		dbG("wan port = lan3\n");								
 		sprintf(param_buf, "%d", 0x300 + stbport);
-		eval("8367r", "8", param_buf);
+		eval("rtkswitch", "8", param_buf);
 	}
 	else
 	{
 		// 0x400
 		dbG("wan port = lan4\n");												
 		sprintf(param_buf, "%d", 0x400 + stbport);
-		eval("8367r", "8", param_buf);
+		eval("rtkswitch", "8", param_buf);
 	}
 }
 
@@ -218,25 +218,25 @@ void config_switch_dsl_set_lan()
 	{
 		// 0x100
 		dbG("wan port = lan1\n");				
-		eval("8367r", "8", "256");
+		eval("rtkswitch", "8", "256");
 	}
 	else if (nvram_match("wans_lanport","2"))
 	{
 		// 0x200
 		dbG("wan port = lan2\n");				
-		eval("8367r", "8", "512");		
+		eval("rtkswitch", "8", "512");		
 	}
 	else if (nvram_match("wans_lanport","3"))
 	{
 		// 0x300
 		dbG("wan port = lan3\n");								
-		eval("8367r", "8", "768");		
+		eval("rtkswitch", "8", "768");		
 	}
 	else
 	{
 		// 0x400
 		dbG("wan port = lan4\n");												
-		eval("8367r", "8", "1024"); 	
+		eval("rtkswitch", "8", "1024"); 	
 	}
 }
 

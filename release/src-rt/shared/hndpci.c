@@ -1,7 +1,7 @@
 /*
  * Low-Level PCI and SI support for BCM47xx
  *
- * Copyright (C) 2010, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,9 +15,10 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndpci.c,v 1.49.2.2 2010-11-16 21:44:41 Exp $
+ * $Id: hndpci.c 319422 2012-03-08 01:30:26Z $
  */
 
+#include <bcm_cfg.h>
 #include <typedefs.h>
 #include <osl.h>
 #include <pcicfg.h>
@@ -38,11 +39,7 @@
 #include "siutils_priv.h"
 
 /* debug/trace */
-#ifdef BCMDBG_PCI
-#define	PCI_MSG(args)	printf args
-#else
 #define	PCI_MSG(args)
-#endif
 
 /* to free some function memory after boot */
 #ifndef linux
@@ -184,7 +181,7 @@ config_cmd(si_t *sih, uint coreunit, uint bus, uint dev, uint func, uint off)
 		 * one external pcie device is present).
 		 */
 		if (pcie && (dev < 2) &&
-		    (pcie_readreg(osh, pcie, PCIE_PCIEREGS,
+		    (pcie_readreg(sih, pcie, PCIE_PCIEREGS,
 		    PCIE_DLLP_LSREG) & PCIE_DLLP_LSREG_LINKUP)) {
 			sbtopci1 = &pcie->sbtopcie1;
 		} else {
@@ -277,7 +274,7 @@ si_pcihb_read_config(si_t *sih, uint coreunit, uint bus, uint dev, uint func,
 			 * requires indirect access.
 			 */
 			if (off >= 256)
-				*val = pcie_readreg(osh, pcie, PCIE_CONFIGREGS,
+				*val = pcie_readreg(sih, pcie, PCIE_CONFIGREGS,
 				                    PCIE_CONFIG_INDADDR(func, off));
 			else {
 				*addr = (uint32 *)&pcie->pciecfg[func][off >> 2];
@@ -400,7 +397,7 @@ extpci_write_config(si_t *sih, uint bus, uint dev, uint func, uint off, void *bu
 			/* accesses to config registers with offsets >= 256
 			 * requires indirect access.
 			 */
-			pcie_writereg(osh, pcie, PCIE_CONFIGREGS,
+			pcie_writereg(sih, pcie, PCIE_CONFIGREGS,
 			              PCIE_CONFIG_INDADDR(func, off), val);
 
 		si_setcoreidx(sih, coreidx);
@@ -521,7 +518,7 @@ si_read_config(si_t *sih, uint bus, uint dev, uint func, uint off, void *buf, in
 	cfg = si_pci_cfg[dev][func].emu;
 
 	ASSERT(ISALIGNED(off, len));
-	ASSERT(ISALIGNED((uintptr)buf, len));
+	ASSERT(ISALIGNED(buf, len));
 
 	/* use special config space if the device does not exist */
 	if (!cfg)
@@ -558,7 +555,7 @@ si_write_config(si_t *sih, uint bus, uint dev, uint func, uint off, void *buf, i
 		return -1;
 
 	ASSERT(ISALIGNED(off, len));
-	ASSERT(ISALIGNED((uintptr)buf, len));
+	ASSERT(ISALIGNED(buf, len));
 
 	osh = si_osh(sih);
 
@@ -706,7 +703,7 @@ BCMATTACHFN(hndpci_init_pci)(si_t *sih, uint coreunit)
 	sbpcieregs_t *pcie = NULL;
 	uint32 val;
 	int ret = 0;
-	char *hbslot;
+	const char *hbslot;
 	osl_t *osh;
 	int bus;
 
@@ -810,7 +807,7 @@ BCMATTACHFN(hndpci_init_pci)(si_t *sih, uint coreunit)
 			printf("PCI: Reset RC\n");
 			OSL_DELAY(3000);
 			W_REG(osh, &pcie->control, PCIE_RST_OE);
-			OSL_DELAY(50000);		/* delay 50 ms *//* for 4706 reboot issue*/
+			OSL_DELAY(50000);		/* delay 50 ms */
 			W_REG(osh, &pcie->control, PCIE_RST | PCIE_RST_OE);
 		}
 
@@ -922,6 +919,16 @@ BCMATTACHFN(hndpci_init_pci)(si_t *sih, uint coreunit)
 			}
 		}
 
+		if ((chip == BCM4706_CHIP_ID) || (chip == BCM4716_CHIP_ID)) {
+			uint16 val16;
+			hndpci_read_config(sih, bus, pci_hbslot, 0, PCI_CFG_DEVCTRL,
+			                   &val16, sizeof(val16));
+			val16 |= (2 << 5);	/* Max payload size of 512 */
+			val16 |= (2 << 12);	/* MRRS 512 */
+			hndpci_write_config(sih, bus, pci_hbslot, 0, PCI_CFG_DEVCTRL,
+			                    &val16, sizeof(val16));
+		}
+
 		/* Enable PCI bridge BAR0 memory & master access */
 		val = PCI_CMD_MASTER | PCI_CMD_MEMORY;
 		hndpci_write_config(sih, bus, pci_hbslot, 0, PCI_CFG_CMD, &val, sizeof(val));
@@ -980,7 +987,6 @@ hndpci_arb_park(si_t *sih, uint parkid)
 	OSL_DELAY(1);
 }
 
-/*for 4706 reboot issue*/
 int
 hndpci_deinit_pci(si_t *sih, uint coreunit)
 {
@@ -1002,9 +1008,9 @@ hndpci_deinit_pci(si_t *sih, uint coreunit)
 	}
 
 	if (pci)
-			W_REG(osh, &pci->control, PCI_RST_OE);		
+			W_REG(si_osh(sih), &pci->control, PCI_RST_OE);
 	else
-			W_REG(osh, &pcie->control, PCIE_RST_OE);
+			W_REG(si_osh(sih), &pcie->control, PCIE_RST_OE);
 
 	si_core_disable(sih, 0);
 	si_setcoreidx(sih, coreidx);
@@ -1012,8 +1018,8 @@ hndpci_deinit_pci(si_t *sih, uint coreunit)
 }
 
 /*
- *  * Deinitialize PCI(e) cores 
- *   */
+ * Deinitialize PCI cores
+ */
 void
 hndpci_deinit(si_t *sih)
 {
@@ -1022,6 +1028,7 @@ hndpci_deinit(si_t *sih)
 	for (coreunit = 0; coreunit < SI_PCI_MAXCORES; coreunit++)
 		hndpci_deinit_pci(sih, coreunit);
 }
+
 /*
  * Get the PCI region address and size information.
  */
@@ -1040,7 +1047,7 @@ BCMATTACHFN(hndpci_init_regions)(si_t *sih, uint func, pci_config_regs *cfg, si_
 		} else {
 			/* In AI chips EHCI is addrspace 0, OHCI is 1 */
 			base1 = base;
-			if ((CHIPID(sih->chip) == BCM5357_CHIP_ID ||
+			if (((CHIPID(sih->chip) == BCM5357_CHIP_ID) ||
 				(CHIPID(sih->chip) == BCM4749_CHIP_ID)) &&
 			    CHIPREV(sih->chiprev) == 0)
 				base = 0x18009000;

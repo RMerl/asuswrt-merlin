@@ -1,0 +1,25 @@
+# frv testcase for fdnegs $FRj,$FRk
+# mach: frv
+
+	.include "testutils.inc"
+
+	float_constants
+	start
+	load_float_constants
+
+	.global fdnegs
+fdnegs:
+	set_fr_fr	fr8,fr1
+	fdnegs		fr0,fr2
+	test_fr_fr	fr2,fr52
+	test_fr_fr	fr3,fr28
+	set_fr_fr	fr24,fr13
+	fdnegs		fr12,fr2
+	test_fr_fr	fr2,fr24
+	test_fr_fr	fr3,fr12
+	set_fr_fr	fr52,fr29
+	fdnegs		fr28,fr2
+	test_fr_fr	fr2,fr8
+	test_fr_fr	fr3,fr0
+
+	pass

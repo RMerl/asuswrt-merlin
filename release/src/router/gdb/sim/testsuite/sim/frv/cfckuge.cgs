@@ -1,0 +1,490 @@
+# frv testcase for cfckuge $FCCi,$CCj_float,$CCi,$cond
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global cfckuge
+cfckuge:
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x0 0
+	cfckuge		fcc0,cc3,cc0,1
+	test_spr_immed	0x1b9b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x1 0
+	cfckuge		fcc0,cc3,cc0,1
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x2 0
+	cfckuge		fcc0,cc3,cc0,1
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x3 0
+	cfckuge		fcc0,cc3,cc0,1
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x4 0
+	cfckuge		fcc0,cc3,cc0,1
+	test_spr_immed	0x1b9b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x5 0
+	cfckuge		fcc0,cc3,cc0,1
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x6 0
+	cfckuge		fcc0,cc3,cc0,1
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x7 0
+	cfckuge		fcc0,cc3,cc0,1
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x8 0
+	cfckuge		fcc0,cc3,cc4,1
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x9 0
+	cfckuge		fcc0,cc3,cc4,1
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xa 0
+	cfckuge		fcc0,cc3,cc4,1
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xb 0
+	cfckuge		fcc0,cc3,cc4,1
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xc 0
+	cfckuge		fcc0,cc3,cc4,1
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xd 0
+	cfckuge		fcc0,cc3,cc4,1
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xe 0
+	cfckuge		fcc0,cc3,cc4,1
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xf 0
+	cfckuge		fcc0,cc3,cc4,1
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x0 0
+	cfckuge		fcc0,cc3,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x1 0
+	cfckuge		fcc0,cc3,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x2 0
+	cfckuge		fcc0,cc3,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x3 0
+	cfckuge		fcc0,cc3,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x4 0
+	cfckuge		fcc0,cc3,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x5 0
+	cfckuge		fcc0,cc3,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x6 0
+	cfckuge		fcc0,cc3,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x7 0
+	cfckuge		fcc0,cc3,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x8 0
+	cfckuge		fcc0,cc3,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x9 0
+	cfckuge		fcc0,cc3,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xa 0
+	cfckuge		fcc0,cc3,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xb 0
+	cfckuge		fcc0,cc3,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xc 0
+	cfckuge		fcc0,cc3,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xd 0
+	cfckuge		fcc0,cc3,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xe 0
+	cfckuge		fcc0,cc3,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xf 0
+	cfckuge		fcc0,cc3,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x0 0
+	cfckuge		fcc0,cc3,cc1,0
+	test_spr_immed	0x1b9b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x1 0
+	cfckuge		fcc0,cc3,cc1,0
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x2 0
+	cfckuge		fcc0,cc3,cc1,0
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x3 0
+	cfckuge		fcc0,cc3,cc1,0
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x4 0
+	cfckuge		fcc0,cc3,cc1,0
+	test_spr_immed	0x1b9b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x5 0
+	cfckuge		fcc0,cc3,cc1,0
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x6 0
+	cfckuge		fcc0,cc3,cc1,0
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x7 0
+	cfckuge		fcc0,cc3,cc1,0
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x8 0
+	cfckuge		fcc0,cc3,cc5,0
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x9 0
+	cfckuge		fcc0,cc3,cc5,0
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xa 0
+	cfckuge		fcc0,cc3,cc5,0
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xb 0
+	cfckuge		fcc0,cc3,cc5,0
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xc 0
+	cfckuge		fcc0,cc3,cc5,0
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xd 0
+	cfckuge		fcc0,cc3,cc5,0
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xe 0
+	cfckuge		fcc0,cc3,cc5,0
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xf 0
+	cfckuge		fcc0,cc3,cc5,0
+	test_spr_immed	0x1bdb,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x0 0
+	cfckuge		fcc0,cc3,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x1 0
+	cfckuge		fcc0,cc3,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x2 0
+	cfckuge		fcc0,cc3,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x3 0
+	cfckuge		fcc0,cc3,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x4 0
+	cfckuge		fcc0,cc3,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x5 0
+	cfckuge		fcc0,cc3,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x6 0
+	cfckuge		fcc0,cc3,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x7 0
+	cfckuge		fcc0,cc3,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x8 0
+	cfckuge		fcc0,cc3,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x9 0
+	cfckuge		fcc0,cc3,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xa 0
+	cfckuge		fcc0,cc3,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xb 0
+	cfckuge		fcc0,cc3,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xc 0
+	cfckuge		fcc0,cc3,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xd 0
+	cfckuge		fcc0,cc3,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xe 0
+	cfckuge		fcc0,cc3,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xf 0
+	cfckuge		fcc0,cc3,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x0 0
+	cfckuge		fcc0,cc3,cc2,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x1 0
+	cfckuge		fcc0,cc3,cc2,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x2 0
+	cfckuge		fcc0,cc3,cc2,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x3 0
+	cfckuge		fcc0,cc3,cc2,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x4 0
+	cfckuge		fcc0,cc3,cc2,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x5 0
+	cfckuge		fcc0,cc3,cc2,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x6 0
+	cfckuge		fcc0,cc3,cc2,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x7 0
+	cfckuge		fcc0,cc3,cc2,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x8 0
+	cfckuge		fcc0,cc3,cc6,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x9 0
+	cfckuge		fcc0,cc3,cc6,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xa 0
+	cfckuge		fcc0,cc3,cc6,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xb 0
+	cfckuge		fcc0,cc3,cc6,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xc 0
+	cfckuge		fcc0,cc3,cc6,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xd 0
+	cfckuge		fcc0,cc3,cc6,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xe 0
+	cfckuge		fcc0,cc3,cc6,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xf 0
+	cfckuge		fcc0,cc3,cc6,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x0 0
+	cfckuge		fcc0,cc3,cc3,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x1 0
+	cfckuge		fcc0,cc3,cc3,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x2 0
+	cfckuge		fcc0,cc3,cc3,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x3 0
+	cfckuge		fcc0,cc3,cc3,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x4 0
+	cfckuge		fcc0,cc3,cc3,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x5 0
+	cfckuge		fcc0,cc3,cc3,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x6 0
+	cfckuge		fcc0,cc3,cc3,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x7 0
+	cfckuge		fcc0,cc3,cc3,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x8 0
+	cfckuge		fcc0,cc3,cc7,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0x9 0
+	cfckuge		fcc0,cc3,cc7,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xa 0
+	cfckuge		fcc0,cc3,cc7,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xb 0
+	cfckuge		fcc0,cc3,cc7,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xc 0
+	cfckuge		fcc0,cc3,cc7,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xd 0
+	cfckuge		fcc0,cc3,cc7,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xe 0
+	cfckuge		fcc0,cc3,cc7,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x1b5b,cccr
+	set_fcc		0xf 0
+	cfckuge		fcc0,cc3,cc7,1
+	test_spr_immed	0x1b1b,cccr
+
+	pass

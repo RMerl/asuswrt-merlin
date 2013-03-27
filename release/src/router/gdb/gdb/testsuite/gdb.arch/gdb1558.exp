@@ -1,0 +1,72 @@
+# Copyright 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@gnu.org
+
+# This file is part of the gdb testsuite.
+
+# Tests for PR:1558.  Hits breakpoint at main after function called
+# from main.
+
+if $tracelevel {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+if ![istarget "sh-*-*"] then {
+    verbose "Skipping SH breakpoint test."
+    return
+}
+
+set testfile "gdb1558"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+# Note we have to compile WITH optimization and WITHOUT debugging information to expose the bug.
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {"additional_flags=-O2"}] != "" } {
+    untested gdb1558.exp
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+gdb_test "b main" "Breakpoint 1.*" "set breakpoint at main"
+gdb_test "b sub1" "Breakpoint 2.*" "set breakpoint at sub1"
+gdb_test "b sub2" "Breakpoint 3.*" "set breakpoint at sub2"
+
+# We can't use "runto_main" because that is exactly the problem
+# we are trying to detect, stopping somewhere before main.
+
+gdb_run_cmd
+
+gdb_expect 30 {
+    -re "Breakpoint 1.*main .*$gdb_prompt $" {
+	pass "Hits breakpoint at main after function called from main"
+    }
+    -re "Breakpoint 2.*sub1 .*$gdb_prompt $" {
+	kfail "gdb/1558" "Hits breakpoint at main after function called from main"
+    }
+    -re "$gdb_prompt $" { 
+	fail "Hits breakpoint at main after function called from main"
+    }
+    timeout { 
+	fail "Hits breakpoint at main after function called from main (timeout)"
+    }
+}

@@ -1,0 +1,12 @@
+# arm testcase for add sp,#-$sword7
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global sub_sp
+sub_sp:
+	add sp,#-0
+
+	pass

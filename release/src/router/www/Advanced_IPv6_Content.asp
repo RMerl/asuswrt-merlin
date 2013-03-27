@@ -553,15 +553,19 @@ function applyRule(){
 				
 		if(document.form.ipv6_service.value!="static6" && document.form.ipv6_service.value!="other")	//clean up ipv6_rtr_addr if not static6 or not other
 				document.form.ipv6_rtr_addr.value = "";
-			
-		document.form.ipv6_accept_ra.value=1;			// 0/1/2 default:1	
 
-		if(wl6_support != -1)
-			document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
-			
+		/*if(based_modelid.search("RT-AC56U") >= 0 || based_modelid.search("RT-AC67U") >= 0)*/
+		if(Rawifi_support == -1)
+		{ // MODELDEP: boradcom platform
+			if((document.form.ipv6_service.value == "disabled" && document.form.ipv6_service_orig.value != "disabled") ||
+				 (document.form.ipv6_service.value != "disabled" && document.form.ipv6_service_orig.value == "disabled"))
+    		FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+		}
+	
+		document.form.ipv6_accept_ra.value=1;			// 0/1/2 default:1	
 		showLoading();		
 		document.form.submit();
-}
+	}
 }
 </script>
 </head>
@@ -601,6 +605,7 @@ function applyRule(){
 <input type="hidden" name="ipv6_dhcppd" value="<% nvram_get("ipv6_dhcppd"); %>">
 <input type="hidden" name="ipv6_accept_ra" value="<% nvram_get("ipv6_accept_ra"); %>">
 <input type="hidden" name="ipv6_ifdev" value="">
+<input type="hidden" name="ipv6_service_orig" value="<% nvram_get("ipv6_service"); %>" disabled>
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
 	<td width="17">&nbsp;</td>

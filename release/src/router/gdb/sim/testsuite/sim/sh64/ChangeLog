@@ -1,0 +1,21 @@
+2001-01-06  Ben Elliston  <bje@redhat.com>
+
+	* misc/fr-dr.s: New test.
+
+2001-01-03  Ben Elliston  <bje@redhat.com>
+
+	* interwork.exp: Match .s files only.
+
+2000-12-06  Ben Elliston  <bje@redhat.com>
+
+	* interwork.exp: New test case.
+
+2000-11-16  Ben Elliston  <bje@redhat.com>
+
+	* allinsn.exp: Rename from this ..
+	* compact.exp: .. to this.
+	* media.exp: New test case.
+
+2000-11-13  Ben Elliston  <bje@redhat.com>
+
+	* allinsn.exp: New test case.

@@ -36,6 +36,10 @@ extern void DispAllPvc();
 extern int AddPvc(int idx, int vlan_id, int vpi, int vci, int encap, int mode);
 extern int DelAllPvc();
 extern int RestoreDefault(); /* Paul add 2012/8/7 */
+extern int getBitsPerCarrier(); //Ren
+extern int getSNR(); //Ren
+extern int getSNR_ADSL1(); //Ren
+extern int getSNR_ADSL2_PLUS(); //Ren
 extern void GetLinkSts(char* buf, int max_len);
 extern void myprintf(const char *fmt, ...);
 extern void SleepMs(int ms);
@@ -103,7 +107,7 @@ void init_sigaction(void)
 void init_time() 
 { 
     struct itimerval value; 
-    value.it_value.tv_sec=3; 
+    value.it_value.tv_sec=10;//Ren:3 -> 10
     value.it_value.tv_usec=0; 
     value.it_interval=value.it_value; 
     setitimer(ITIMER_REAL,&value,NULL); 
@@ -234,6 +238,44 @@ int RcvMsgQ()
             if (rst_ret == 0) strcpy(send_buf.mtext,"OK");
             else strcpy(send_buf.mtext,"FAIL");
         }
+	//Ren.B
+	else if (IPC_ATE_ADSL_GET_BITS_PER_CARRIER == receive_buf.mtype)
+	{
+		int rst_ret;
+		myprintf("TP_INIT:IPC_ATE_ADSL_GET_BITS_PER_CARRIER\n");                        
+		rst_ret = getBitsPerCarrier();
+		send_buf.mtype=IPC_ATE_ADSL_GET_BITS_PER_CARRIER;
+		if (rst_ret == 0) strcpy(send_buf.mtext,"OK");
+		else strcpy(send_buf.mtext,"FAIL");
+	}
+	else if (IPC_ATE_ADSL_GET_SNR == receive_buf.mtype)
+	{
+		int rst_ret;
+		myprintf("TP_INIT:IPC_ATE_ADSL_GET_SNR\n");                        
+		rst_ret = getSNR();
+		send_buf.mtype=IPC_ATE_ADSL_GET_SNR;
+		if (rst_ret == 0) strcpy(send_buf.mtext,"OK");
+		else strcpy(send_buf.mtext,"FAIL");
+	}
+	else if (IPC_ATE_ADSL1_GET_SNR == receive_buf.mtype)
+	{
+		int rst_ret;
+		myprintf("TP_INIT:IPC_ATE_ADSL1_GET_SNR\n");                        
+		rst_ret = getSNR_ADSL1();
+		send_buf.mtype=IPC_ATE_ADSL1_GET_SNR;
+		if (rst_ret == 0) strcpy(send_buf.mtext,"OK");
+		else strcpy(send_buf.mtext,"FAIL");
+	}
+	else if (IPC_ATE_ADSL2_PLUS_GET_SNR == receive_buf.mtype)
+	{
+		int rst_ret;
+		myprintf("TP_INIT:IPC_ATE_ADSL2_PLUS_GET_SNR\n");                        
+		rst_ret = getSNR_ADSL2_PLUS();
+		send_buf.mtype=IPC_ATE_ADSL2_PLUS_GET_SNR;
+		if (rst_ret == 0) strcpy(send_buf.mtext,"OK");
+		else strcpy(send_buf.mtext,"FAIL");
+	}
+	//Ren.E
         else if (IPC_LINK_STATE == receive_buf.mtype)
         {
 			char LinkSts[30];

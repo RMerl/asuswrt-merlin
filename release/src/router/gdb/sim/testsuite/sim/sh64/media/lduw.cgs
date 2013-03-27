@@ -1,0 +1,22 @@
+# sh testcase for ld.uw $rm, $disp10, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	movi 20, r3
+	shlli r3, 8, r3
+
+lduw1:
+	ld.uw r3, 0, r0
+lduw2:
+	ld.uw r3, -2, r0
+lduw3:
+	ld.uw r3, 2, r0
+
+okay:
+	pass

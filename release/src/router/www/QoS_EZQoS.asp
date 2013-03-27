@@ -21,7 +21,7 @@
 <script>
 var $j = jQuery.noConflict();
 </script>
-<style type="text/css">
+<!--style type="text/css">
 .qos_table{
 	width:740px;
 	padding:10px; 
@@ -36,7 +36,7 @@ var $j = jQuery.noConflict();
 	border-bottom-right-radius: 3px;
 	border-bottom-left-radius: 3px;
 }
-</style>
+</style-->
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
@@ -113,9 +113,6 @@ function submitQoS(){
   
 	if(document.form.qos_enable.value != document.form.qos_enable_orig.value)
     	FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
-			
-	if(wl6_support != -1)
-		document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
 
 	parent.showLoading();
 	document.form.submit();	
@@ -127,7 +124,7 @@ function showqos_rulelist(){
 	qos_rulelist_row = decodeURIComponent(qos_rulelist_array).split('<');	
 
 	var code = "";
-	code +='<table style="margin-left:3px;" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" class="list_table" id="qos_rulelist_table">';
+	code +='<table style="margin-left:3px;margin-bottom:30px;" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" class="list_table" id="qos_rulelist_table">';
 	if(qos_rulelist_row.length == 1)	// no exist "<"
 		code +='<tr><td style="color:#FFCC00;height:30px;" colspan="6"><#IPConnection_VSList_Norule#></td></tr>';
 	else{
@@ -212,15 +209,13 @@ function showqos_rulelist(){
 	
     <td valign="top">
 			<div id="tabMenu" class="submenuBlock"></div>
-			<br>
 		<!--===================================Beginning of Main Content===========================================-->
-		<div class="qos_table" id="qos_table">
-		<table >
+		<table width="95%" border="0" align="left" cellpadding="0" cellspacing="0" class="FormTitle" id="FormTitle">
   		<tr>
     			<td bgcolor="#4D595D" valign="top">
-    				<table>
+    				<table width="760px" border="0" cellpadding="4" cellspacing="0">
         			<tr>
-						<td>
+						<td bgcolor="#4D595D" valign="top">
 							<table width="100%">
 								<tr>
 									<td  class="formfonttitle" align="left">								
@@ -241,10 +236,10 @@ function showqos_rulelist(){
 						</td>
         			</tr>
         			<tr>
-          				<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
+          				<td height="5" bgcolor="#4D595D" valign="top"><img src="images/New_ui/export/line_export.png" /></td>
         			</tr>
         			<tr>
-          				<td height="30" align="left" valign="middle" >
+          				<td height="30" align="left" valign="top" bgcolor="#4D595D">
 										<div>
 											<table width="650px">
 												<tr>
@@ -264,8 +259,8 @@ function showqos_rulelist(){
         			</tr>
 							
 							<tr>
-								<td>
-									<table style="margin-left:3px; margin-top:15px;" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+								<td valign="top">
+									<table style="margin-left:3px;" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 										<tr>
 										<th><#Enable_defaule_rule#></th>
 											<td>
@@ -324,7 +319,7 @@ function showqos_rulelist(){
         			</tr>
         			<tr>
           				<td>
-											<table style="margin-left:3px; margin-top:15px;" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
+											<table style="margin-left:3px;" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
 											<thead>
 											<tr>
 													<td colspan="6" id="TriggerList" style="border-right:none;height:22px;"><#BM_UserList_title#></td>
@@ -347,7 +342,6 @@ function showqos_rulelist(){
       		</td>  
       	</tr>
 		</table>
-	</div>
 		<!--===================================End of Main Content===========================================-->
 		</td>
 		

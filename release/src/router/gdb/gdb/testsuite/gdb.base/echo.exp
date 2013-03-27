@@ -1,0 +1,44 @@
+#   Copyright (C) 1988, 1990, 1991, 1992, 1997, 2007
+#   Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Rob Savoye. (rob@cygnus.com)
+
+# Crank up gdb.
+gdb_start
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+#
+# test the echo command
+#
+
+# this sets the prms id number.  This is the number that will appear
+# on all the output logs.
+#	ex: set prms_id 643
+set prms_id 0
+
+# this sets the bug id id.  This is the number that will appear
+# on all the output logs. This is optional and if it is not set
+# it will appear on all output logs as a 0.
+#	ex: set bug_id 12
+set bug_id 0
+
+gdb_test "echo Hello world!\\n" "Hello world!" "Echo test"

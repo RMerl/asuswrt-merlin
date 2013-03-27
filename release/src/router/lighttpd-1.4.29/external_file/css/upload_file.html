@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title></title>
+<style>
+html{
+margin:0 0;
+padding:0px;
+}
+body{
+display: block;
+overflow: hidden;
+background: #e8e8e8;
+}
+button#cancel{	
+position: absolute;
+width: 80px;
+height: 30px;
+right: 10px;
+top: 98px;
+}
+
+div#save{	
+width: 100px;
+height: 30px;
+right: 100px;
+position: absolute;
+top: 98px;
+}
+
+#progressbar {
+background-color: black;
+border-radius: 1px; /* (height of inner div) / 2 + padding */
+padding: 1px;
+}
+
+#progressbar div {
+width: 0; /* Adjust with JavaScript */
+height: 20px;
+border-radius: 1px;
+}
+
+#progressbar #div_progress {
+background-color: #16A8E4;
+}
+
+span{
+display: inline-block;
+}
+
+span#progress{
+width: 250px;
+white-space: nowrap;
+}
+
+.install, .enableJAVA {
+-webkit-box-shadow:rgba(0,0,0,0.0.1) 0 1px 0 0;
+-moz-box-shadow:rgba(0,0,0,0.0.1) 0 1px 0 0;
+box-shadow:rgba(0,0,0,0.0.1) 0 1px 0 0;
+background-color:#5B74A8;
+border:1px solid #29447E;
+font-family:'Lucida Grande',Tahoma,Verdana,Arial,sans-serif;
+font-size:12px;
+font-weight:700;
+padding:2px 6px;
+height:28px;
+color:#fff;
+border-radius:5px;
+-moz-border-radius:5px;
+-webkit-border-radius:5px;
+width: 100px;
+height: 30px;
+}
+</style>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript" src="/smb/js/davclient_tools.js"></script>
+<script type="text/javascript" src="/smb/js/deployJava.js"></script>
+<script type="text/javascript">
+var this_url;
+var m = new lang();
+var g_storage = new myStorage();
+var is_private_ip = 0;
+var array_download_folder = [];
+var array_download_file = [];
+
+function showEnableJAVAUI(){
+	
+	var enable_html = '<input class="enableJAVA" type="button" value="Enable JAVA">';
+	$(enable_html).appendTo($("#save"));
+	
+  refresh_hint_status(m.getString("title_not_support_java"));
+  
+  $(".enableJAVA").click(function(){
+  	window.open("http://java.com/en/download/help/enable_browser.xml", "_blank");
+  }); 
+}
+
+function showInstallJAVAUI(){
+	var enable_html = '<input class="install" type="button" value="'+ m.getString('btn_install_java') + '">';
+	$(enable_html).appendTo($("#save"));
+	
+	refresh_hint_status(m.getString("title_not_install_java"));
+    
+  $(".install").click(function(){
+  	window.open("http://java.com/download", "_blank");
+ 	}); 
+}
+
+$("document").ready(function() {
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	
+	$("#progressbar").hide();
+	$('button#cancel').text(m.getString('btn_cancel'));
+	
+	var msg = "";
+	if (!navigator.javaEnabled()) {
+    showEnableJAVAUI();
+    return;
+	}
+	
+	var is_java_enabled = false;
+	if (deployJava.versionCheck("1.6.0+") || deployJava.versionCheck("1.4") || deployJava.versionCheck("1.5.0*")) {
+  	is_java_enabled = true;
+  }
+	
+	if(!is_java_enabled){
+		showInstallJAVAUI();
+		return;
+	}
+	
+	var media_hostName = window.location.host;
+	if(media_hostName.indexOf(":")!=-1)
+		media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));		
+	var jar_file = "http://" + media_hostName + ":" + g_storage.get("http_port") + '/smb/css/CloudUtil.jar';
+				
+	var applet_html = '<applet name="AiCloud_Applet" id="AiCloud_Applet" ARCHIVE="';
+	applet_html += jar_file;
+	applet_html += '" code="com.asus.aicloud.UploadFile.class" width="100%" height="100%" >';
+	applet_html += 'Your browser does not support JAVA!';
+	applet_html += '<PARAM NAME="MAYSCRIPT" VALUE="true">';
+	applet_html += '</applet>';
+	$(applet_html).appendTo($("#save"));
+	
+	array_download_folder = [];
+	array_download_file = [];
+	
+	var msg = m.getString("title_upload_file_select");
+	refresh_hint_status(msg);
+});
+
+function doCancel(e) {
+	parent.closeJqmWindow(1);
+};
+
+function getUrlVars(){
+	var vars = [], hash;
+  var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+  for(var i = 0; i < hashes.length; i++){
+  	hash = hashes[i].split('=');
+    vars.push(hash[0]);
+    vars[hash[0]] = hash[1];
+  }
+  return vars;
+}
+
+function get_user_agent(){
+	return g_storage.get('user_agent');
+}
+  	
+function get_server_url(){
+	var openurl = window.location.protocol + "//" + window.location.host + addPathSlash(g_storage.get('openurl'));
+	return openurl;
+}
+
+function get_remote_folder(){
+	return array_download_folder;	
+} 	
+
+function get_remote_file(){
+  return array_download_file;
+}
+
+function start_upload(){
+	refresh_hint_status("");
+	refresh_status("");
+	$("#save").css("left", "999px");
+}
+
+function finish_upload(){
+	refresh_status(m.getString("title_upload_finish"));
+	parent.closeJqmWindow(1);
+} 
+
+function refresh_hint_status(status){
+	$("span#hint").text(decodeURI(status));
+}
+
+function refresh_status(status){
+	$("span#progress").text(decodeURI(status));
+}
+    
+function refresh_progress(progress){
+	$("#lb_Progress").text(progress+"%");
+  $("#progressbar #div_progress").css("width", progress + "%");
+  $("#progressbar").show();
+}
+</script>
+</head>
+<body>
+
+<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="overflow:hidden;">	
+	<tr height="50px">
+  	<td>
+			<table width="100%">
+				<td><tr>		
+					<span id='hint'></span>		  
+					<span id='progress'></span>
+				</td></tr>				
+			</table>  
+    </td>    
+  </tr>
+  <tr>
+  	<td>  		
+			<div id="progressbar" style="text-align:center;position:relative;">
+				<div id="div_progress" style="position: absolute;"></div>
+				<div style="position:relative;width:100%;"><label id="lb_Progress" style="color:#ffffff;"></label></div>
+			</div>
+    </td>    
+  </tr>  
+  <tr>
+  	<td>
+  	<div class="table_block_footer" style="float:right;height:30px;">
+  		<button id="cancel" class="btnStyle" onClick="doCancel();">Close</button>
+  		<div id="save">
+			</div>
+    </div>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

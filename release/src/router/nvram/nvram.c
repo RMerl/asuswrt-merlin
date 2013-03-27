@@ -34,7 +34,10 @@
 
 #include <unistd.h>	// for sleep()
 #include <typedefs.h>
+
+#include <rtconfig.h>
 #include <bcmnvram.h>
+
 
 static void
 usage(void)
@@ -295,7 +298,7 @@ int nvram_restore_new(char *file, char *buf)
 
 		if (v != NULL)
 		{
-			*v++ = NULL;
+			*v++ = '\0';
 
 			if (issyspara(p))
 				nvram_set(p, v);

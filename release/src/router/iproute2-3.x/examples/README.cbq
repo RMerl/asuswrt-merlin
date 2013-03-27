@@ -1,0 +1,122 @@
+# CHANGES
+# -------
+# v0.3a2- fixed bug in "if" operator. Thanks kad@dgtu.donetsk.ua.
+# v0.3a-  added TIME parameter. Example:
+#         TIME=00:00-19:00;64Kbit/6Kbit
+#         So, between 00:00 and 19:00 RATE will be 64Kbit.
+#         Just start "cbq.init timecheck" periodically from cron (every 10
+#         minutes for example).
+#         !!! Anyway you MUST start "cbq.init start" for CBQ initialize.
+# v0.2 -  Some cosmetique changes. Now it more compatible with
+#         old bash version. Thanks to Stanislav V. Voronyi
+#         <stas@cnti.uanet.kharkov.ua>.
+# v0.1 -  First public release
+# 
+# README
+# ------
+# 
+# First of all - this is just a SIMPLE EXAMPLE of CBQ power.
+# Don't ask me "why" and "how" :)
+# 
+# This is an example of using CBQ (Class Based Queueing) and policy-based
+# filter for building smart ethernet shapers. All CBQ parameters are
+# correct only for ETHERNET (eth0,1,2..) linux interfaces. It works for
+# ARCNET too (just set bandwidth parameter to 2Mbit). It was tested
+# on 2.1.125-2.1.129 linux kernels (KSI linux, Nostromo version) and 
+# ip-route utility by A.Kuznetsov (iproute2-ss981101 version). 
+# You can download ip-route from ftp://ftp.inr.ac.ru/ip-routing or
+# get iproute2*.rpm (compiled with glibc) from ftp.ksi-linux.com.
+# 
+# 
+# HOW IT WORKS
+# 
+# Each shaper must be described by config file in $CBQ_PATH
+# (/etc/sysconfig/cbq/) directory - one config file for each CBQ shaper.
+# 
+# Some words about config file name:
+# Each shaper has its personal ID - two byte HEX number. Really ID is 
+# CBQ class.
+# So, filename looks like:
+# 
+# cbq-1280.My_first_shaper
+# ^^^ ^^^  ^^^^^^^^^^^^^
+#  |  |            |______ Shaper name - any word
+#  |  |___________________ ID (0000-FFFF), let ID looks like shaper's rate
+#  |______________________ Filename must begin from "cbq-" 
+# 
+# 
+# Config file describes shaper parameters and source[destination] 
+# address[port].
+# For example let's prepare /etc/sysconfig/cbq/cbq-1280.My_first_shaper:
+# 
+# ----------8<---------------------
+# DEVICE=eth0,10Mbit,1Mbit
+# RATE=128Kbit
+# WEIGHT=10Kbit
+# PRIO=5
+# RULE=192.168.1.0/24
+# ----------8<---------------------
+# 
+# This is minimal configuration, where:
+# DEVICE:  eth0   - device where we do control our traffic
+#          10Mbit - REAL ethernet card bandwidth
+#          1Mbit  - "weight" of :1 class (parent for all shapers for eth0),
+#                   as a rule of thumb weight=batdwidth/10.
+#          100Mbit adapter's example: DEVICE=eth0,100Mbit,10Mbit
+#          *** If you want to build more than one shaper per device it's
+#              enough to describe bandwidth and weight once  - cbq.init
+#              is smart :) You can put only 'DEVICE=eth0' into cbq-* 
+#              config file for eth0.
+# 
+# RATE:    Shaper's speed - Kbit,Mbit or bps (bytes per second)
+# 
+# WEIGHT:  "weight" of shaper (CBQ class). Like for DEVICE - approx. RATE/10
+# 
+# PRIO:    shaper's priority from 1 to 8 where 1 is the highest one.
+#          I do always use "5" for all my shapers.
+# 
+# RULE:    [source addr][:source port],[dest addr][:dest port]
+#          Some examples:
+# RULE=10.1.1.0/24:80         - all traffic for network 10.1.1.0 to port 80
+#                               will be shaped.
+# RULE=10.2.2.5               - shaper works only for IP address 10.2.2.5   
+# RULE=:25,10.2.2.128/25:5000 - all traffic from any address and port 25 to
+#                               address 10.2.2.128 - 10.2.2.255 and port 5000
+#                               will be shaped.
+# RULE=10.5.5.5:80,           - shaper active only for traffic from port 80 of
+#                               address 10.5.5.5
+# Multiple RULE fields per one config file are allowed. For example:
+# RULE=10.1.1.2:80
+# RULE=10.1.1.2:25
+# RULE=10.1.1.2:110
+# 
+# *** ATTENTION!!!
+# All shapers do work only for outgoing traffic!
+# So, if you want to build bidirectional shaper you must set it up for
+# both ethernet card. For example let's build shaper for our linux box like:
+# 
+#                     ---------             192.168.1.1
+# BACKBONE -----eth0-|  linux  |-eth1------*[our client]
+#                     ---------
+# 
+# Let all traffic from backbone to client will be shaped at 28Kbit and
+# traffic from client to backbone - at 128Kbit. We need two config files:
+# 
+# ---8<-----/etc/sysconfig/cbq/cbq-28.client-out----
+# DEVICE=eth1,10Mbit,1Mbit
+# RATE=28Kbit
+# WEIGHT=2Kbit
+# PRIO=5
+# RULE=192.168.1.1
+# ---8<---------------------------------------------
+# 
+# ---8<-----/etc/sysconfig/cbq/cbq-128.client-in----
+# DEVICE=eth0,10Mbit,1Mbit
+# RATE=128Kbit
+# WEIGHT=10Kbit
+# PRIO=5
+# RULE=192.168.1.1,
+# ---8<---------------------------------------------
+#                 ^pay attention to "," - this is source address!
+# 
+# Enjoy.

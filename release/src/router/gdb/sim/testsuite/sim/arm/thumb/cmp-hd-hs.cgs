@@ -1,0 +1,12 @@
+# arm testcase for cmp $hd,$hs
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global cmp_hd_hs
+cmp_hd_hs:
+	cmp r8,r8
+
+	pass

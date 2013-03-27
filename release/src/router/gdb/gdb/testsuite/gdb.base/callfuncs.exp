@@ -1,0 +1,467 @@
+# Copyright 1992, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
+# 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Fred Fish. (fnf@cygnus.com)
+# and modified by Bob Manson. (manson@cygnus.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "callfuncs"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested callfuncs.exp
+     return -1
+}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+if {$hp_aCC_compiler} {
+    set prototypes 1
+} else {
+    set prototypes 0
+}
+
+# Some targets can't do function calls, so don't even bother with this
+# test.
+if [target_info exists gdb,cannot_call_functions] {
+    setup_xfail "*-*-*" 2416
+    fail "This target can not call functions"
+    continue
+}
+
+# Set the current language to C.  This counts as a test.  If it
+# fails, then we skip the other tests.
+
+proc set_lang_c {} {
+    global gdb_prompt
+
+    send_gdb "set language c\n"
+    gdb_expect {
+	-re ".*$gdb_prompt $" {}
+	timeout { fail "set language c (timeout)" ; return 0; }
+    }
+
+    send_gdb "show language\n"
+    gdb_expect {
+	-re ".* source language is \"c\".*$gdb_prompt $" {
+	    pass "set language to \"c\""
+	    return 1
+	}
+	-re ".*$gdb_prompt $" {
+	    fail "setting language to \"c\""
+	    return 0
+	}
+	timeout {
+	    fail "can't show language (timeout)"
+	    return 0
+	}
+    }
+}
+
+# FIXME:  Before calling this proc, we should probably verify that
+# we can call inferior functions and get a valid integral value
+# returned.
+# Note that it is OK to check for 0 or 1 as the returned values, because C
+# specifies that the numeric value of a relational or logical expression
+# (computed in the inferior) is 1 for true and 0 for false.
+
+proc do_function_calls {} {
+    global prototypes
+    global gdb_prompt
+
+    # We need to up this because this can be really slow on some boards.
+    set timeout 60;
+
+    gdb_test "p t_char_values(0,0)" " = 0"
+    gdb_test "p t_char_values('a','b')" " = 1"
+    gdb_test "p t_char_values(char_val1,char_val2)" " = 1"
+    gdb_test "p t_char_values('a',char_val2)" " = 1"
+    gdb_test "p t_char_values(char_val1,'b')" " = 1"
+
+    gdb_test "p t_short_values(0,0)" " = 0"
+    gdb_test "p t_short_values(10,-23)" " = 1"
+    gdb_test "p t_short_values(short_val1,short_val2)" " = 1"
+    gdb_test "p t_short_values(10,short_val2)" " = 1"
+    gdb_test "p t_short_values(short_val1,-23)" " = 1"
+
+    gdb_test "p t_int_values(0,0)" " = 0"
+    gdb_test "p t_int_values(87,-26)" " = 1"
+    gdb_test "p t_int_values(int_val1,int_val2)" " = 1"
+    gdb_test "p t_int_values(87,int_val2)" " = 1"
+    gdb_test "p t_int_values(int_val1,-26)" " = 1"
+
+    gdb_test "p t_long_values(0,0)" " = 0"
+    gdb_test "p t_long_values(789,-321)" " = 1"
+    gdb_test "p t_long_values(long_val1,long_val2)" " = 1"
+    gdb_test "p t_long_values(789,long_val2)" " = 1"
+    gdb_test "p t_long_values(long_val1,-321)" " = 1"
+
+    if ![target_info exists gdb,skip_float_tests] {
+	gdb_test "p t_float_values(0.0,0.0)" " = 0"
+
+	# These next four tests fail on the mn10300.
+	# The first value is passed in regs, the other in memory.
+	# Gcc emits different stabs for the two parameters; the first is
+	# claimed to be a float, the second a double.
+	# dbxout.c in gcc claims this is the desired behavior.
+	setup_xfail "mn10300-*-*"
+	gdb_test "p t_float_values(3.14159,-2.3765)" " = 1"
+	setup_xfail "mn10300-*-*"
+	gdb_test "p t_float_values(float_val1,float_val2)" " = 1"
+	setup_xfail "mn10300-*-*"
+	gdb_test "p t_float_values(3.14159,float_val2)" " = 1"
+	setup_xfail "mn10300-*-*"
+	gdb_test "p t_float_values(float_val1,-2.3765)" " = 1"
+
+	# Test passing of arguments which might not be widened.
+	gdb_test "p t_float_values2(0.0,0.0)" " = 0"
+
+	# Although PR 5318 mentions SunOS specifically, this seems
+	# to be a generic problem on quite a few platforms.
+	if $prototypes then {
+	    setup_xfail "sparc-*-*" "mips*-*-*" 5318
+	    if { ! [test_compiler_info gcc-*-*] } then {
+		setup_xfail "alpha-dec-osf2*" "i*86-*-sysv4*" 5318
+	    }
+	}
+        
+	gdb_test "p t_float_values2(3.14159,float_val2)" " = 1"
+
+	gdb_test "p t_small_values(1,2,3,4,5,6,7,8,9,10)" " = 55"
+
+	gdb_test "p t_double_values(0.0,0.0)" " = 0"
+	gdb_test "p t_double_values(45.654,-67.66)" " = 1"
+	gdb_test "p t_double_values(double_val1,double_val2)" " = 1"
+	gdb_test "p t_double_values(45.654,double_val2)" " = 1"
+	gdb_test "p t_double_values(double_val1,-67.66)" " = 1"
+
+	gdb_test "p t_double_int(99.0, 1)" " = 0"
+	gdb_test "p t_double_int(99.0, 99)" " = 1"
+	gdb_test "p t_int_double(99, 1.0)" " = 0"
+	gdb_test "p t_int_double(99, 99.0)" " = 1"
+    }
+
+    gdb_test "p t_string_values(string_val2,string_val1)" " = 0"
+    gdb_test "p t_string_values(string_val1,string_val2)" " = 1"
+    gdb_test "p t_string_values(\"string 1\",\"string 2\")" " = 1"
+    gdb_test "p t_string_values(\"string 1\",string_val2)" " = 1"
+    gdb_test "p t_string_values(string_val1,\"string 2\")" " = 1"
+
+    gdb_test "p t_char_array_values(char_array_val2,char_array_val1)" " = 0"
+    gdb_test "p t_char_array_values(char_array_val1,char_array_val2)" " = 1"
+    gdb_test "p t_char_array_values(\"carray 1\",\"carray 2\")" " = 1"
+    gdb_test "p t_char_array_values(\"carray 1\",char_array_val2)" " = 1"
+    gdb_test "p t_char_array_values(char_array_val1,\"carray 2\")" " = 1"
+
+    gdb_test "p doubleit(4)" " = 8"
+    gdb_test "p add(4,5)" " = 9"
+    gdb_test "p t_func_values(func_val2,func_val1)" " = 0"
+    gdb_test "p t_func_values(func_val1,func_val2)" " = 1"
+
+    # GDB currently screws up the passing of function parameters for
+    # ABIs that use function descriptors.  Instead of passing the
+    # address of te function descriptor, GDB passes the address of the
+    # function body.  This results in the called function treating the
+    # first few instructions of the function proper as a descriptor
+    # and attempting a jump through that (a totally random address).
+    setup_kfail "rs6000*-*-aix*" gdb/1457
+    setup_kfail "powerpc*-*-aix*" gdb/1457
+    setup_kfail hppa*-*-hpux* gdb/1457
+    gdb_test "p t_func_values(add,func_val2)" " = 1"
+    setup_kfail "rs6000*-*-aix*" gdb/1457
+    setup_kfail "powerpc*-*-aix*" gdb/1457
+    setup_kfail hppa*-*-hpux* gdb/1457
+    gdb_test "p t_func_values(func_val1,doubleit)" " = 1"
+    setup_kfail "rs6000*-*-aix*" gdb/1457
+    setup_kfail "powerpc*-*-aix*" gdb/1457
+    setup_kfail hppa*-*-hpux* gdb/1457
+    gdb_test "p t_call_add(add,3,4)" " = 7"
+    gdb_test "p t_call_add(func_val1,3,4)" " = 7"
+
+    gdb_test "p t_enum_value1(enumval1)" " = 1"
+    gdb_test "p t_enum_value1(enum_val1)" " = 1"
+    gdb_test "p t_enum_value1(enum_val2)" " = 0"
+
+    gdb_test "p t_enum_value2(enumval2)" " = 1"
+    gdb_test "p t_enum_value2(enum_val2)" " = 1"
+    gdb_test "p t_enum_value2(enum_val1)" " = 0"
+
+    gdb_test "p sum_args(1,{2})" " = 2"
+    gdb_test "p sum_args(2,{2,3})" " = 5"
+    gdb_test "p sum_args(3,{2,3,4})" " = 9"
+    gdb_test "p sum_args(4,{2,3,4,5})" " = 14"
+
+    gdb_test "p sum10 (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)" " = 55"
+
+    gdb_test "p cmp10 (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)" " = 1"
+
+    gdb_test "p t_structs_c(struct_val1)" "= 120 'x'" \
+	"call inferior func with struct - returns char"
+    gdb_test "p t_structs_s(struct_val1)" "= 87" \
+	"call inferior func with struct - returns short"
+    gdb_test "p t_structs_i(struct_val1)" "= 76" \
+	"call inferior func with struct - returns int"
+    gdb_test "p t_structs_l(struct_val1)" "= 51" \
+	"call inferior func with struct - returns long"
+    gdb_test "p t_structs_f(struct_val1)" "= 2.12.*" \
+       	"call inferior func with struct - returns float"
+    gdb_test "p t_structs_d(struct_val1)" "= 9.87.*" \
+    	"call inferior func with struct - returns double"
+    gdb_test "p t_structs_a(struct_val1)" "= (.unsigned char .. )?\"foo\"" \
+    	"call inferior func with struct - returns char *"
+}
+
+# Procedure to get current content of all registers.
+proc fetch_all_registers {test} {
+    global gdb_prompt
+
+    set all_registers_lines {}
+    set bad -1
+    if {[gdb_test_multiple "info all-registers" $test {
+	-re "info all-registers\[\r\n\]+" {
+	    exp_continue
+	}
+	-ex "The program has no registers now" {
+	    set bad 1
+	    exp_continue
+	}
+	-re "^bspstore\[ \t\]+\[^\r\n\]+\[\r\n\]+" {
+	    if [istarget "ia64-*-*"] {
+		# Filter out bspstore which is specially tied to bsp,
+		# giving spurious differences.
+	    } else {
+		lappend all_registers_lines $expect_out(0,string)
+	    }
+	    exp_continue
+	}
+	-re "^\[^ \t\]+\[ \t\]+\[^\r\n\]+\[\r\n\]+" {
+	    lappend all_registers_lines $expect_out(0,string)
+	    exp_continue
+	}
+	-re ".*$gdb_prompt $" {
+	    incr bad
+	}
+	-re "^\[^\r\n\]+\[\r\n\]+" {
+	    if {!$bad} {
+		warning "Unrecognized output: $expect_out(0,string)"
+		set bad 1
+	    }
+	    exp_continue
+	}
+    }] != 0} {
+	return {}
+    }
+
+    if {$bad} {
+	fail $test
+	return {}
+    }
+
+    pass $test
+    return $all_registers_lines
+}
+
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+gdb_test "set print sevenbit-strings" ""
+gdb_test "set print address off" ""
+gdb_test "set width 0" ""
+
+if { $hp_aCC_compiler } {
+    # Do not set language explicitly to 'C'.  This will cause aCC
+    # tests to fail because promotion rules are different.  Just let
+    # the language be set to the default.
+
+    if { ![runto_main] } {
+	gdb_suppress_tests;
+    }
+
+    # However, turn off overload-resolution for aCC.  Having it on causes
+    # a lot of failures.
+
+    gdb_test "set overload-resolution 0" ".*"
+} else {
+    if { ![set_lang_c] } {
+	gdb_suppress_tests;
+    } else {
+	if { ![runto_main] } {
+	    gdb_suppress_tests;
+	}
+    }
+}
+
+get_debug_format
+
+# Make sure that malloc gets called and that the floating point unit
+# is initialized via a call to t_double_values.
+gdb_test "next" "t_double_values\\(double_val1, double_val2\\);.*" \
+  "next to t_double_values"
+gdb_test "next" "t_structs_c\\(struct_val1\\);.*" \
+  "next to t_structs_c"
+
+# Save all register contents.
+set old_reg_content [fetch_all_registers "retrieve original register contents"]
+
+# Perform function calls.
+do_function_calls
+
+# Check if all registers still have the same value.
+set new_reg_content [fetch_all_registers \
+		     "register contents after gdb function calls"]
+if {$old_reg_content == $new_reg_content} then {
+    pass "gdb function calls preserve register contents"
+} else {
+    set old_reg_content $new_reg_content
+    fail "gdb function calls preserve register contents"
+}
+
+# Set breakpoint at a function we will call from gdb.
+gdb_breakpoint add
+
+# Call function (causing a breakpoint hit in the call dummy) and do a continue,
+# make sure we are back at main and still have the same register contents.
+gdb_test "print add(4,5)" \
+	"The program being debugged stopped while.*" \
+	"stop at breakpoint in call dummy function"
+gdb_test "continue" "Continuing.*" "continue from call dummy breakpoint"
+if ![gdb_test "bt 2" \
+	      "#0  main.*" \
+	      "bt after continuing from call dummy breakpoint"] then {
+    set new_reg_content [fetch_all_registers \
+			 "register contents after stop in call dummy"]
+    if {$old_reg_content == $new_reg_content} then {
+	pass "continue after stop in call dummy preserves register contents"
+    } else {
+	fail "continue after stop in call dummy preserves register contents"
+    }
+}
+
+# Call function (causing a breakpoint hit in the call dummy) and do a finish,
+# make sure we are back at main and still have the same register contents.
+gdb_test "print add(4,5)" "The program being debugged stopped while.*" \
+	"call function causing a breakpoint then do a finish"
+gdb_test "finish" \
+	 "Value returned is .* = 9" \
+	 "finish from call dummy breakpoint returns correct value"
+if ![gdb_test "bt 2" \
+	      "#0  main.*" \
+	      "bt after finishing from call dummy breakpoint"] then {
+    set new_reg_content [fetch_all_registers \
+			 "register contents after finish in call dummy"]
+    if {$old_reg_content == $new_reg_content} then {
+	pass "finish after stop in call dummy preserves register contents"
+    } else {
+	fail "finish after stop in call dummy preserves register contents"
+    }
+}
+
+# Call function (causing a breakpoint hit in the call dummy) and do a return
+# with a value, make sure we are back at main with the same register contents.
+gdb_test "print add(4,5)" "The program being debugged stopped while.*" \
+	"call function causing a breakpoint and then do a return"
+if ![gdb_test "return 7" \
+	      "#0  main.*" \
+	      "back at main after return from call dummy breakpoint" \
+	      "Make add return now. .y or n.*" \
+	      "y"] then {
+    set new_reg_content [fetch_all_registers \
+                         "register contents after return in call dummy"]
+    if {$old_reg_content == $new_reg_content} then {
+	pass "return after stop in call dummy preserves register contents"
+    } else {
+	fail "return after stop in call dummy preserves register contents"
+    }
+}
+
+# Call function (causing a breakpoint hit in the call dummy), and
+# call another function from the call dummy frame (thereby setting up
+# several nested call dummy frames).  Test that backtrace and finish
+# work when several call dummies are nested.
+gdb_breakpoint sum10
+gdb_breakpoint t_small_values
+gdb_test "print add(2,3)" "The program being debugged stopped while.*" \
+	"stop at nested call level 1"
+gdb_test "backtrace" \
+	"\#0  add \\(a=2, b=3\\).*\#1  <function called from gdb>.*\#2  main.*" \
+	"backtrace at nested call level 1"
+gdb_test "print add(4,5)" "The program being debugged stopped while.*" \
+	"stop at nested call level 2"
+gdb_test "backtrace" \
+	"\#0  add \\(a=4, b=5\\).*\#1  <function called from gdb>.*\#2  add \\(a=2, b=3\\).*\#3  <function called from gdb>.*\#4  main.*" \
+	"backtrace at nested call level 2"
+gdb_test "print sum10(2,4,6,8,10,12,14,16,18,20)" \
+	"The program being debugged stopped while.*" \
+	"stop at nested call level 3"
+gdb_test "backtrace" \
+	"\#0  sum10 \\(i0=2, i1=4, i2=6, i3=8, i4=10, i5=12, i6=14, i7=16, i8=18, i9=20\\).*\#1  <function called from gdb>.*\#2  add \\(a=4, b=5\\).*\#3  <function called from gdb>.*\#4  add \\(a=2, b=3\\).*\#5  <function called from gdb>.*\#6  main.*" \
+	"backtrace at nested call level 3"
+gdb_test "print t_small_values(1,3,5,7,9,11,13,15,17,19)" \
+	"The program being debugged stopped while.*" \
+	"stop at nested call level 4"
+gdb_test "backtrace" \
+	"\#0  t_small_values \\(arg1=1 '.001', arg2=3, arg3=5, arg4=7 '.a', arg5=9, arg6=11 '.v', arg7=13, arg8=15, arg9=17, arg10=19\\).*\#2  sum10 \\(i0=2, i1=4, i2=6, i3=8, i4=10, i5=12, i6=14, i7=16, i8=18, i9=20\\).*\#3  <function called from gdb>.*\#4  add \\(a=4, b=5\\).*\#5  <function called from gdb>.*\#6  add \\(a=2, b=3\\).*\#7  <function called from gdb>.*\#8  main.*" \
+	"backtrace at nested call level 4"
+gdb_test "finish" "Value returned is .* = 100" \
+	"Finish from nested call level 4"
+gdb_test "backtrace" \
+	"\#0  sum10 \\(i0=2, i1=4, i2=6, i3=8, i4=10, i5=12, i6=14, i7=16, i8=18, i9=20\\).*\#1  <function called from gdb>.*\#2  add \\(a=4, b=5\\).*\#3  <function called from gdb>.*\#4  add \\(a=2, b=3\\).*\#5  <function called from gdb>.*\#6  main.*" \
+	"backtrace after finish from nested call level 4"
+gdb_test "finish" "Value returned is .* = 110" \
+	"Finish from nested call level 3"
+gdb_test "backtrace" \
+	"\#0  add \\(a=4, b=5\\).*\#1  <function called from gdb>.*\#2  add \\(a=2, b=3\\).*\#3  <function called from gdb>.*\#4  main.*" \
+	"backtrace after finish from nested call level 3"
+gdb_test "finish" "Value returned is .* = 9" \
+	"Finish from nested call level 2"
+gdb_test "backtrace" \
+	"\#0  add \\(a=2, b=3\\).*\#1  <function called from gdb>.*\#2  main.*" \
+	"backtrace after finish from nested call level 2"
+gdb_test "finish" "Value returned is .* = 5" \
+	"Finish from nested call level 1"
+gdb_test "backtrace" "\#0  main .*" \
+	"backtrace after finish from nested call level 1"
+
+set new_reg_content [fetch_all_registers \
+		     "register contents after nested call dummies"]
+if {$old_reg_content == $new_reg_content} then {
+    pass "nested call dummies preserve register contents"
+} else {
+    fail "nested call dummies preserve register contents"
+}
+
+return 0
+

@@ -1,0 +1,2 @@
+# Host: OpenBSD/m88k
+NATDEPFILES= fork-child.o inf-ptrace.o m88kbsd-nat.o

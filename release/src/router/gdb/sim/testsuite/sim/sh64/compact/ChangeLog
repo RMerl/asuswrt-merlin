@@ -1,0 +1,26 @@
+2002-01-09  Ben Elliston  <bje@redhat.com>
+
+	* macl.cgs: For good measure, clear the S bit at startup.
+
+2001-01-11  Ben Elliston  <bje@redhat.com>
+
+	* fmov.cgs (f13b): Compare R0 with R1, not R2, when testing that
+	the source register was correctly post-incremented.
+
+2000-12-01  Ben Elliston  <bje@redhat.com>
+
+	* *.cgs (ld): Link tests with -m shelf32.
+
+2000-11-24  Ben Elliston  <bje@redhat.com>
+
+	* fmov.cgs: New test case.
+	* ftrv.cgs: Populate the matrix with meaningful values.
+
+2000-11-22  Ben Elliston  <bje@redhat.com>
+
+	* *.cgs (as): Assemble tests with -isa=shcompact.
+
+2000-11-16  Ben Elliston  <bje@redhat.com>
+
+	* *.cgs: New test cases.
+

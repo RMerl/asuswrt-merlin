@@ -1,0 +1,109 @@
+# sh testcase for subc $rm, $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+zero:
+	mov #0, r0
+	mov #0, r1
+	clrt
+	subc r0, r1
+	assert r1, #0
+
+zerot:
+	mov #0, r0
+	mov #0, r1
+	sett
+	subc r0, r1
+	# Invert all 1's to all 0's for ease of comparison.
+	not r1, r1
+	assert r1, #0
+
+null:
+	mov #0, r0
+	mov #10, r1
+	clrt
+	subc r0, r1
+	assert r1, #10
+
+nullt:
+	mov #0, r0
+	mov #10, r1
+	sett
+	subc r0, r1
+	assert r1, #9
+
+subc:
+	mov #10, r0
+	mov #0, r1
+	clrt
+	subc r0, r1
+	# Again, invert ..
+	not r1, r1
+	assert r1, #9
+
+subct:
+	mov #10, r0
+	mov #0, r1
+	sett
+	subc r0, r1
+	# Again, invert ..
+	not r1, r1
+	assert r1, #10
+
+subc2:
+	mov #10, r0
+	mov #20, r1
+	clrt
+	subc r0, r1
+	assert r1, #10
+
+subc2t:
+	mov #20, r0
+	mov #10, r1
+	sett
+	subc r0, r1
+	# Again, invert ..
+	not r1, r1
+	assert r1, #10
+
+subc3:
+	mov #5, r0
+	mov #5, r1
+	clrt
+	subc r0, r1
+	assert r1, #0
+
+subc3t:
+	mov #5, r0
+	mov #5, r1
+	sett
+	subc r0, r1
+	# Again, invert ..
+	not r1, r1
+	assert r1, #0
+	
+large:
+	mov #2, r0
+	mov #10, r1
+	clrt
+	subc r1, r0
+	# Again, invert ..
+	not r0, r0
+	assert r0, #7
+
+larget:
+	mov #2, r0
+	mov #10, r1
+	sett
+	subc r0, r1
+	assert r1, #7
+
+okay:
+	pass
+
+wrong:
+	fail

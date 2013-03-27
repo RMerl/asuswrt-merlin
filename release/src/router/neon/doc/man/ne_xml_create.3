@@ -1,0 +1,63 @@
+'\" t
+.\"     Title: ne_xml_create
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_XML_CREATE" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_xml_create, ne_xml_destroy \- create and destroy an XML parser
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_xml\&.h>
+.fi
+.ft
+.HP \w'ne_xml_parser\ *ne_xml_create('u
+.BI "ne_xml_parser *ne_xml_create(void);"
+.HP \w'void\ ne_xml_destroy('u
+.BI "void ne_xml_destroy(ne_xml_parser\ *" "parser" ");"
+.SH "DESCRIPTION"
+.PP
+The
+\fBne_xml_create\fR
+function creates an XML parser object, which can be used for parsing XML documents using stacked SAX handlers\&.
+.SH "RETURN VALUE"
+.PP
+\fBne_xml_create\fR
+returns a pointer to an XML parser object, and never
+NULL
+.SH "SEE ALSO"
+.PP
+XXX
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

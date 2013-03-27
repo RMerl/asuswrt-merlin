@@ -1,6 +1,6 @@
 # Disable mimo features for wl build combinations
 #
-# Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -22,3 +22,4 @@ WLAMPDU=0
 WLAMSDU=0
 WLAMSDU_SWDEAGG=0
 RXCHAIN_PWRSAVE=0
+WLNAR=0

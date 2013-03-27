@@ -1,0 +1,521 @@
+# Simulator main loop for frv. -*- C -*-
+# Copyright (C) 1998, 1999, 2000, 2001, 2003, 2007
+  Free Software Foundation, Inc.
+# Contributed by Red Hat.
+#
+# This file is part of the GNU Simulators.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Syntax:
+# /bin/sh mainloop.in command
+#
+# Command is one of:
+#
+# init
+# support
+# extract-{simple,scache,pbb}
+# {full,fast}-exec-{simple,scache,pbb}
+#
+# A target need only provide a "full" version of one of simple,scache,pbb.
+# If the target wants it can also provide a fast version of same.
+# It can't provide more than this.
+
+# ??? After a few more ports are done, revisit.
+# Will eventually need to machine generate a lot of this.
+
+case "x$1" in
+
+xsupport)
+
+cat <<EOF
+
+static INLINE const IDESC *
+extract (SIM_CPU *current_cpu, PCADDR pc, CGEN_INSN_INT insn, ARGBUF *abuf,
+         int fast_p)
+{
+  const IDESC *id = @cpu@_decode (current_cpu, pc, insn, insn, abuf);
+  @cpu@_fill_argbuf (current_cpu, abuf, id, pc, fast_p);
+  if (! fast_p)
+    {
+      int trace_p = PC_IN_TRACE_RANGE_P (current_cpu, pc);
+      int profile_p = PC_IN_PROFILE_RANGE_P (current_cpu, pc);
+      @cpu@_fill_argbuf_tp (current_cpu, abuf, trace_p, profile_p);
+    }
+  return id;
+}
+
+static INLINE SEM_PC
+execute (SIM_CPU *current_cpu, SCACHE *sc, int fast_p)
+{
+  SEM_PC vpc;
+
+  /* Force gr0 to zero before every insn.  */
+  @cpu@_h_gr_set (current_cpu, 0, 0);
+
+  if (fast_p)
+    {
+      vpc = (*sc->argbuf.semantic.sem_fast) (current_cpu, sc);
+    }
+  else
+    {
+      ARGBUF *abuf = &sc->argbuf;
+      const IDESC *idesc = abuf->idesc;
+#if WITH_SCACHE_PBB
+      int virtual_p = CGEN_ATTR_VALUE (NULL, idesc->attrs, CGEN_INSN_VIRTUAL);
+#else
+      int virtual_p = 0;
+#endif
+
+      if (! virtual_p)
+	{
+	  /* FIXME: call x-before */
+	  if (ARGBUF_PROFILE_P (abuf))
+	    PROFILE_COUNT_INSN (current_cpu, abuf->addr, idesc->num);
+	  /* FIXME: Later make cover macros: PROFILE_INSN_{INIT,FINI}.  */
+	  if (FRV_COUNT_CYCLES (current_cpu, ARGBUF_PROFILE_P (abuf)))
+	    {
+	      @cpu@_model_insn_before (current_cpu, sc->first_insn_p);
+	      model_insn = FRV_INSN_MODEL_PASS_1;
+	      if (idesc->timing->model_fn != NULL)
+		(*idesc->timing->model_fn) (current_cpu, sc);
+	    }
+	  else
+	    model_insn = FRV_INSN_NO_MODELING;
+	  TRACE_INSN_INIT (current_cpu, abuf, 1);
+	  TRACE_INSN (current_cpu, idesc->idata,
+		      (const struct argbuf *) abuf, abuf->addr);
+	}
+#if WITH_SCACHE
+      vpc = (*sc->argbuf.semantic.sem_full) (current_cpu, sc);
+#else
+      vpc = (*sc->argbuf.semantic.sem_full) (current_cpu, abuf);
+#endif
+      if (! virtual_p)
+	{
+	  /* FIXME: call x-after */
+	  if (FRV_COUNT_CYCLES (current_cpu, ARGBUF_PROFILE_P (abuf)))
+	    {
+	      int cycles;
+	      if (idesc->timing->model_fn != NULL)
+		{
+		  model_insn = FRV_INSN_MODEL_PASS_2;
+		  cycles = (*idesc->timing->model_fn) (current_cpu, sc);
+		}
+	      else
+		cycles = 1;
+	      @cpu@_model_insn_after (current_cpu, sc->last_insn_p, cycles);
+	    }
+	  TRACE_INSN_FINI (current_cpu, abuf, 1);
+	}
+    }
+
+  return vpc;
+}
+
+static void
+@cpu@_parallel_write_init (SIM_CPU *current_cpu)
+{
+  CGEN_WRITE_QUEUE *q = CPU_WRITE_QUEUE (current_cpu);
+  CGEN_WRITE_QUEUE_CLEAR (q);
+  previous_vliw_pc = CPU_PC_GET(current_cpu);
+  frv_interrupt_state.f_ne_flags[0] = 0;
+  frv_interrupt_state.f_ne_flags[1] = 0;
+  frv_interrupt_state.imprecise_interrupt = NULL;
+}
+
+static void
+@cpu@_parallel_write_queued (SIM_CPU *current_cpu)
+{
+  int i;
+
+  FRV_VLIW *vliw = CPU_VLIW (current_cpu);
+  CGEN_WRITE_QUEUE *q = CPU_WRITE_QUEUE (current_cpu);
+
+  /* Loop over the queued writes, executing them. Set the pc to the address
+     of the insn which queued each write for the proper context in case an
+     interrupt is caused. Restore the proper pc after the writes are
+     completed.  */
+  IADDR save_pc = CPU_PC_GET (current_cpu);
+  IADDR new_pc  = save_pc;
+  int branch_taken = 0;
+  int limit = CGEN_WRITE_QUEUE_INDEX (q);
+  frv_interrupt_state.data_written.length = 0;
+
+  for (i = 0; i < limit; ++i)
+    {
+      CGEN_WRITE_QUEUE_ELEMENT *item = CGEN_WRITE_QUEUE_ELEMENT (q, i);
+
+      /* If an imprecise interrupt was generated, then, check whether the
+	 result should still be written.  */
+      if (frv_interrupt_state.imprecise_interrupt != NULL)
+	{
+	  /* Only check writes by the insn causing the exception.  */
+	  if (CGEN_WRITE_QUEUE_ELEMENT_IADDR (item)
+	      == frv_interrupt_state.imprecise_interrupt->vpc)
+	    {
+	      /* Execute writes of floating point operations resulting in
+		 overflow, underflow or inexact.  */
+	      if (frv_interrupt_state.imprecise_interrupt->kind
+		  == FRV_FP_EXCEPTION)
+		{
+		  if ((frv_interrupt_state.imprecise_interrupt
+		       ->u.fp_info.fsr_mask
+		       & ~(FSR_INEXACT | FSR_OVERFLOW | FSR_UNDERFLOW)))
+		    continue; /* Don't execute */
+		}
+	      /* Execute writes marked as 'forced'.  */
+	      else if (! (CGEN_WRITE_QUEUE_ELEMENT_FLAGS (item)
+			  & FRV_WRITE_QUEUE_FORCE_WRITE))
+		continue; /* Don't execute */
+	    }
+	}
+
+      /* Only execute the first branch on the queue.  */
+      if (CGEN_WRITE_QUEUE_ELEMENT_KIND (item) == CGEN_PC_WRITE
+          || CGEN_WRITE_QUEUE_ELEMENT_KIND (item) == CGEN_FN_PC_WRITE)
+	{
+	  if (branch_taken)
+	    continue;
+	  branch_taken = 1;
+	  if (CGEN_WRITE_QUEUE_ELEMENT_KIND (item) == CGEN_PC_WRITE)
+	    new_pc = item->kinds.pc_write.value;
+          else
+	    new_pc = item->kinds.fn_pc_write.value;
+	}
+
+      CPU_PC_SET (current_cpu, CGEN_WRITE_QUEUE_ELEMENT_IADDR (item));
+      frv_save_data_written_for_interrupts (current_cpu, item);
+      cgen_write_queue_element_execute (current_cpu, item);
+    }
+
+  /* Update the LR with the address of the next insn if the flag is set.
+     This flag gets set in frvbf_set_write_next_vliw_to_LR by the JMPL,
+     JMPIL and CALL insns.  */
+  if (frvbf_write_next_vliw_addr_to_LR)
+    {
+      frvbf_h_spr_set_handler (current_cpu, H_SPR_LR, save_pc);
+      frvbf_write_next_vliw_addr_to_LR = 0;
+    }
+
+  CPU_PC_SET (current_cpu, new_pc);
+  CGEN_WRITE_QUEUE_CLEAR (q);
+}
+
+void
+@cpu@_perform_writeback (SIM_CPU *current_cpu)
+{
+  @cpu@_parallel_write_queued (current_cpu);
+}
+
+static unsigned cache_reqno = 0x80000000; /* Start value is for debugging.  */
+
+#if 0 /* experimental */
+/* FR400 has single prefetch.  */
+static void
+fr400_simulate_insn_prefetch (SIM_CPU *current_cpu, IADDR vpc)
+{
+  int cur_ix;
+  FRV_CACHE *cache;
+
+/* The cpu receives 8 bytes worth of insn data for each fetch aligned
+   on 8 byte boundary.  */
+#define FR400_FETCH_SIZE 8
+
+  cur_ix = LS;
+  vpc &= ~(FR400_FETCH_SIZE - 1);
+  cache = CPU_INSN_CACHE (current_cpu);
+
+  /* Request a load of the current address buffer, if necessary.  */
+  if (frv_insn_fetch_buffer[cur_ix].address != vpc)
+    {
+      frv_insn_fetch_buffer[cur_ix].address = vpc;
+      frv_insn_fetch_buffer[cur_ix].reqno = cache_reqno++;
+      if (FRV_COUNT_CYCLES (current_cpu, 1))
+	frv_cache_request_load (cache, frv_insn_fetch_buffer[cur_ix].reqno,
+				frv_insn_fetch_buffer[cur_ix].address,
+				UNIT_I0 + cur_ix);
+    }
+
+  /* Wait for the current address buffer to be loaded, if necessary.  */
+  if (FRV_COUNT_CYCLES (current_cpu, 1))
+    {
+      FRV_PROFILE_STATE *ps = CPU_PROFILE_STATE (current_cpu);
+      int wait;
+
+      /* Account for any branch penalty.  */
+      if (ps->branch_penalty > 0 && ! ps->past_first_p)
+	{
+	  frv_model_advance_cycles (current_cpu, ps->branch_penalty);
+	  frv_model_trace_wait_cycles (current_cpu, ps->branch_penalty,
+				       "Branch penalty:");
+	  ps->branch_penalty = 0;
+	}
+
+      /* Account for insn fetch latency.  */
+      wait = 0;
+      while (frv_insn_fetch_buffer[cur_ix].reqno != NO_REQNO)
+	{
+	  frv_model_advance_cycles (current_cpu, 1);
+	  ++wait;
+	}
+      frv_model_trace_wait_cycles (current_cpu, wait, "Insn fetch:");
+      return;
+    }
+
+  /* Otherwise just load the insns directly from the cache.
+   */
+  if (frv_insn_fetch_buffer[cur_ix].reqno != NO_REQNO)
+    {
+      frv_cache_read (cache, cur_ix, vpc);
+      frv_insn_fetch_buffer[cur_ix].reqno = NO_REQNO;
+    }
+}
+#endif /* experimental */
+
+/* FR500 has dual prefetch.  */
+static void
+simulate_dual_insn_prefetch (SIM_CPU *current_cpu, IADDR vpc, int fetch_size)
+{
+  int i;
+  int cur_ix, pre_ix;
+  SI pre_address;
+  FRV_CACHE *cache;
+
+  /* See if the pc is within the addresses specified by either of the
+     fetch buffers.  If so, that will be the current buffer. Otherwise,
+     arbitrarily select the LD buffer as the current one since it gets
+     priority in the case of interfering load requests.  */
+  cur_ix = LD;
+  vpc &= ~(fetch_size - 1);
+  for (i = LS; i < FRV_CACHE_PIPELINES; ++i)
+    {
+      if (frv_insn_fetch_buffer[i].address == vpc)
+	{
+	  cur_ix = i;
+	  break;
+	}
+    }
+  cache = CPU_INSN_CACHE (current_cpu);
+
+  /* Request a load of the current address buffer, if necessary.  */
+  if (frv_insn_fetch_buffer[cur_ix].address != vpc)
+    {
+      frv_insn_fetch_buffer[cur_ix].address = vpc;
+      frv_insn_fetch_buffer[cur_ix].reqno = cache_reqno++;
+      if (FRV_COUNT_CYCLES (current_cpu, 1))
+	frv_cache_request_load (cache, frv_insn_fetch_buffer[cur_ix].reqno,
+				frv_insn_fetch_buffer[cur_ix].address,
+				UNIT_I0 + cur_ix);
+    }
+
+  /* If the prefetch buffer does not represent the next sequential address, then
+     request a load of the next sequential address.  */
+  pre_ix = (cur_ix + 1) % FRV_CACHE_PIPELINES;
+  pre_address = vpc + fetch_size;
+  if (frv_insn_fetch_buffer[pre_ix].address != pre_address)
+    {
+      frv_insn_fetch_buffer[pre_ix].address = pre_address;
+      frv_insn_fetch_buffer[pre_ix].reqno = cache_reqno++;
+      if (FRV_COUNT_CYCLES (current_cpu, 1))
+	frv_cache_request_load (cache, frv_insn_fetch_buffer[pre_ix].reqno,
+				frv_insn_fetch_buffer[pre_ix].address,
+				UNIT_I0 + pre_ix);
+    }
+
+  /* If counting cycles, account for any branch penalty and/or insn fetch
+     latency here.  */
+  if (FRV_COUNT_CYCLES (current_cpu, 1))
+    {
+      FRV_PROFILE_STATE *ps = CPU_PROFILE_STATE (current_cpu);
+      int wait;
+
+      /* Account for any branch penalty.  */
+      if (ps->branch_penalty > 0 && ! ps->past_first_p)
+	{
+	  frv_model_advance_cycles (current_cpu, ps->branch_penalty);
+	  frv_model_trace_wait_cycles (current_cpu, ps->branch_penalty,
+				       "Branch penalty:");
+	  ps->branch_penalty = 0;
+	}
+
+      /* Account for insn fetch latency.  */
+      wait = 0;
+      while (frv_insn_fetch_buffer[cur_ix].reqno != NO_REQNO)
+	{
+	  frv_model_advance_cycles (current_cpu, 1);
+	  ++wait;
+	}
+      frv_model_trace_wait_cycles (current_cpu, wait, "Insn fetch:");
+      return;
+    }
+
+  /* Otherwise just load the insns directly from the cache.
+   */
+  if (frv_insn_fetch_buffer[cur_ix].reqno != NO_REQNO)
+    {
+      frv_cache_read (cache, cur_ix, vpc);
+      frv_insn_fetch_buffer[cur_ix].reqno = NO_REQNO;
+    }
+  if (frv_insn_fetch_buffer[pre_ix].reqno != NO_REQNO)
+    {
+      frv_cache_read (cache, pre_ix, pre_address);
+      frv_insn_fetch_buffer[pre_ix].reqno = NO_REQNO;
+    }
+}
+
+static void
+@cpu@_simulate_insn_prefetch (SIM_CPU *current_cpu, IADDR vpc)
+{
+  SI hsr0;
+  SIM_DESC sd;
+
+  /* Nothing to do if not counting cycles and the cache is not enabled.  */
+  hsr0 = GET_HSR0 ();
+  if (! GET_HSR0_ICE (hsr0) && ! FRV_COUNT_CYCLES (current_cpu, 1))
+    return;
+
+  /* Different machines handle prefetch defferently.  */
+  sd = CPU_STATE (current_cpu);
+  switch (STATE_ARCHITECTURE (sd)->mach)
+    {
+    case bfd_mach_fr400:
+    case bfd_mach_fr450:
+      simulate_dual_insn_prefetch (current_cpu, vpc, 8);
+      break;
+    case bfd_mach_frvtomcat:
+    case bfd_mach_fr500:
+    case bfd_mach_fr550:
+    case bfd_mach_frv:
+      simulate_dual_insn_prefetch (current_cpu, vpc, 16);
+      break;
+    default:
+      break;
+    }
+}
+
+int frv_save_profile_model_p;
+EOF
+
+;;
+
+xinit)
+
+cat <<EOF
+/*xxxinit*/
+  /* If the timer is enabled, then we will enable model profiling during
+     execution.  This is because the timer needs accurate cycles counts to
+     work properly.  Save the original setting of model profiling.  */
+  if (frv_interrupt_state.timer.enabled)
+    frv_save_profile_model_p = PROFILE_MODEL_P (current_cpu);
+EOF
+
+;;
+
+xextract-simple | xextract-scache)
+
+# Inputs:  current_cpu, vpc, sc, FAST_P
+# Outputs: sc filled in
+# SET_LAST_INSN_P(last_p) called to indicate whether insn is last one
+
+cat <<EOF
+{
+  CGEN_INSN_INT insn = frvbf_read_imem_USI (current_cpu, vpc);
+  extract (current_cpu, vpc, insn, SEM_ARGBUF (sc), FAST_P);
+  SET_LAST_INSN_P ((insn & 0x80000000) != 0);
+}
+EOF
+
+;;
+
+xfull-exec-* | xfast-exec-*)
+
+# Inputs: current_cpu, vpc, FAST_P
+# Outputs:
+#   vpc contains the address of the next insn to execute
+#   pc of current_cpu must be up to date (=vpc) upon exit
+#   CPU_INSN_COUNT (current_cpu) must be updated by number of insns executed
+#
+# Unlike the non-parallel case, this version is responsible for doing the
+# scache lookup.
+
+cat <<EOF
+{
+  FRV_VLIW *vliw;
+  int first_insn_p = 1;
+  int last_insn_p = 0;
+  int ninsns;
+  CGEN_ATTR_VALUE_ENUM_TYPE slot;
+
+  /* If the timer is enabled, then enable model profiling.  This is because
+     the timer needs accurate cycles counts to work properly.  */
+  if (frv_interrupt_state.timer.enabled && ! frv_save_profile_model_p)
+    sim_profile_set_option (current_state, "-model", PROFILE_MODEL_IDX, "1");
+
+  /* Init parallel-write queue and vliw.  */
+  @cpu@_parallel_write_init (current_cpu);
+  vliw = CPU_VLIW (current_cpu);
+  frv_vliw_reset (vliw, STATE_ARCHITECTURE (CPU_STATE (current_cpu))->mach,
+                  CPU_ELF_FLAGS (current_cpu));
+  frv_current_fm_slot = UNIT_NIL;
+
+  for (ninsns = 0; ! last_insn_p && ninsns < FRV_VLIW_SIZE; ++ninsns)
+    {
+      SCACHE *sc;
+      const CGEN_INSN *insn;
+      int error;
+      /* Go through the motions of finding the insns in the cache.  */
+      @cpu@_simulate_insn_prefetch (current_cpu, vpc);
+
+      sc = @cpu@_scache_lookup (current_cpu, vpc, scache, hash_mask, FAST_P);
+      sc->first_insn_p = first_insn_p;
+      last_insn_p = sc->last_insn_p;
+
+      /* Add the insn to the vliw and set up the interrupt state.  */
+      insn = sc->argbuf.idesc->idata;
+      error = frv_vliw_add_insn (vliw, insn);
+      if (! error)
+        frv_vliw_setup_insn (current_cpu, insn);
+      frv_detect_insn_access_interrupts (current_cpu, sc);
+      slot = (*vliw->current_vliw)[vliw->next_slot - 1];
+      if (slot >= UNIT_FM0 && slot <= UNIT_FM3)
+        frv_current_fm_slot = slot;
+
+      vpc = execute (current_cpu, sc, FAST_P);
+
+      SET_H_PC (vpc); /* needed for interrupt handling */
+      first_insn_p = 0;
+    }
+
+  /* If the timer is enabled, and model profiling was not originally enabled,
+     then turn it off again.  This is the only place we can currently gain
+     control to do this.  */
+  if (frv_interrupt_state.timer.enabled && ! frv_save_profile_model_p)
+    sim_profile_set_option (current_state, "-model", PROFILE_MODEL_IDX, "0");
+
+  /* Check for interrupts.  Also handles writeback if necessary.  */
+  frv_process_interrupts (current_cpu);
+
+  CPU_INSN_COUNT (current_cpu) += ninsns;
+}
+EOF
+
+;;
+
+*)
+  echo "Invalid argument to mainloop.in: $1" >&2
+  exit 1
+  ;;
+
+esac

@@ -1,0 +1,269 @@
+# Copyright 1997, 1998, 1999, 2003, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Written by Satish Pai <pai@apollo.hp.com> 1997-07-07
+#    In the spirit of constvars.exp: added volatile, const-volatile stuff.
+
+# This file is part of the gdb testsuite
+# Tests for:
+#           volatile vars
+#           pointers to volatile vars
+#           const volatile vars
+#           pointers to const volatile vars
+#           const pointers to volatile vars
+#           volatile pointers to const vars
+#           const volatile pointers to const vars
+#           const volatile pointers to volatile vars
+#           ... etc.  (you get the idea)
+# Mostly with char and unsigned char.                    
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+# Use the same test program constvars.c.
+
+set testfile "constvars"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable debug ] != "" } {
+     untested volatile.exp
+     return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+#
+# set it up at a breakpoint so we can play with the variable values
+#
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+get_debug_format
+
+# Many tests xfail with gcc 2 -gstabs+.
+# TODO: check out the hp side of this.
+
+proc local_compiler_xfail_check { } {
+    if { [test_compiler_info gcc-2-*] } then {
+	if { ![test_debug_format "HP"] \
+		&& ![test_debug_format "DWARF 2"] } then {
+	    setup_xfail "*-*-*" 
+	}
+    }
+
+    global hp_cc_compiler
+    if { $hp_cc_compiler } {
+	setup_xfail "hppa*-*-hpux*"
+    }
+}
+
+# A few tests still xfail with gcc 3 -gstabs+ and gcc 4 -gstabs+.
+
+proc local_compiler_xfail_check_2 { } {
+    if { [test_compiler_info gcc-3-*] || [test_compiler_info gcc-4-*] } {
+	if { [test_debug_format "stabs" ] } {
+	    setup_xfail "*-*-*"
+	}
+    }
+}
+
+send_gdb "break marker1\n" ; gdb_expect -re ".*$gdb_prompt $"
+
+    send_gdb "cont\n"
+    gdb_expect {
+        -re "Break.* marker1 \\(\\) at .*:$decimal.*$gdb_prompt $" {
+            send_gdb "up\n"
+            gdb_expect {
+                -re ".*$gdb_prompt $" {}
+                timeout { fail "up from marker1" }
+            }
+        }
+        -re "Break.* marker1__.* \\(\\) at .*:$decimal.*$gdb_prompt $" {
+	    fail "continue to marker1 (demangling)"
+            send_gdb "up\n"
+            gdb_expect {
+                -re ".*$gdb_prompt $" {}
+                timeout { fail "up from marker1" }
+            }
+        }
+        -re "$gdb_prompt $" { fail "continue to marker1"  }
+        timeout { fail "(timeout) continue to marker1"  }
+    }
+
+# As of Feb 1999, GCC does not issue info about volatility of vars, so
+# these tests are all expected to fail if GCC is the compiler. -sts
+
+local_compiler_xfail_check
+gdb_test "ptype vox" "type = volatile char.*"
+
+local_compiler_xfail_check
+gdb_test "ptype victuals" "type = volatile unsigned char.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vixen" "type = volatile short.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vitriol" "type = volatile (unsigned short|short unsigned)( int)?.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vellum" "type = volatile long.*"
+
+local_compiler_xfail_check
+gdb_test "ptype valve" "type = volatile (unsigned long|long unsigned)( int)?.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vacuity" "type = volatile float.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vertigo" "type = volatile double.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vampire" "type = volatile char \\*.*"
+
+local_compiler_xfail_check
+gdb_test "ptype viper" "type = volatile unsigned char \\*.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vigour" "type = volatile short( int)? \\*.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vapour" "type = volatile (unsigned short|short unsigned)( int)? \\*.*"
+
+local_compiler_xfail_check
+gdb_test "ptype ventricle" "type = volatile long( int)? \\*.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vigintillion" "type = volatile (unsigned long|long unsigned)( int)? \\*.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vocation" "type = volatile float \\*.*"
+
+local_compiler_xfail_check
+gdb_test "ptype veracity" "type = volatile double \\*.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vapidity" "type = volatile char \\* volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype velocity" "type = volatile unsigned char \\* volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype veneer" "type = volatile short( int)? \\* volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype video" "type = volatile (unsigned short|short unsigned)( int) \\* volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vacuum" "type = volatile long( int)? \\* volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype veniality" "type = volatile (unsigned long|long unsigned)( int)? \\* volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vitality" "type = volatile float \\* volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype voracity" "type = volatile double \\* volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype victor" "type = const volatile char.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vicar" "type = const volatile unsigned char.*"
+
+local_compiler_xfail_check
+gdb_test "ptype victory" "type = const volatile char \\*.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vicarage" "type = const volatile unsigned char \\*.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vein" "type = volatile char \\* const.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vogue" "type = volatile unsigned char \\* const.*"
+
+local_compiler_xfail_check
+gdb_test "ptype cavern" "type = const volatile char \\* const.*"
+
+local_compiler_xfail_check
+gdb_test "ptype coverlet" "type = const volatile unsigned char \\* const.*"
+
+local_compiler_xfail_check
+gdb_test "ptype caveat" "type = const char \\* volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype covenant" "type = const unsigned char \\* volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vizier" "type = const volatile char \\* volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vanadium" "type = const volatile unsigned char \\* volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vane" "type = char \\* const volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype veldt" "type = unsigned char \\* const volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype cove" "type = const char \\* const volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype cavity" "type = const unsigned char \\* const volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vagus" "type = volatile char \\* const volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vagrancy" "type = volatile unsigned char \\* const volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vagary" "type = const volatile char \\* const volatile.*"
+
+local_compiler_xfail_check
+gdb_test "ptype vendor" "type = const volatile unsigned char \\* const volatile.*"
+
+# test function parameters
+local_compiler_xfail_check
+local_compiler_xfail_check_2
+send_gdb "ptype qux2\n"
+gdb_expect {
+    -re "type = int \\(volatile unsigned char, const volatile int, volatile short( int)?, volatile long( int)? \\*, float \\* volatile, const volatile signed char \\* const volatile\\).*$gdb_prompt $" {
+        pass "ptype qux2"
+    }
+    -re ".*$gdb_prompt $" { fail "ptype qux2" }
+    timeout           { fail "(timeout) ptype qux2" }
+  }   

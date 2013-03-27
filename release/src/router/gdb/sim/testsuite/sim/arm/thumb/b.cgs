@@ -1,0 +1,12 @@
+# arm testcase for b $offset11
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global b
+b:
+	b footext
+
+	pass

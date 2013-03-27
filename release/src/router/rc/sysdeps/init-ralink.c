@@ -42,27 +42,40 @@
 
 void init_devs(void)
 {
-	mknod("/dev/video0", S_IFCHR | 0x666, makedev(81, 0));
-#ifdef RTCONFIG_DSL
-	mknod("/dev/rtl8367r", S_IFCHR | 0x666, makedev(206, 0));
-#else
-	mknod("/dev/rtl8367m", S_IFCHR | 0x666, makedev(206, 0));
-#endif
-	mknod("/dev/spiS0", S_IFCHR | 0x666, makedev(217, 0));
-	mknod("/dev/i2cM0", S_IFCHR | 0x666, makedev(218, 0));
-	mknod("/dev/rdm0", S_IFCHR | 0x666, makedev(254, 0));
-	mknod("/dev/flash0", S_IFCHR | 0x666, makedev(200, 0));
-	mknod("/dev/swnat0", S_IFCHR | 0x666, makedev(210, 0));
-	mknod("/dev/hwnat0", S_IFCHR | 0x666, makedev(220, 0));
-	mknod("/dev/acl0", S_IFCHR | 0x666, makedev(230, 0));
-	mknod("/dev/ac0", S_IFCHR | 0x666, makedev(240, 0));
-	mknod("/dev/mtr0", S_IFCHR | 0x666, makedev(250, 0));
-	mknod("/dev/gpio0", S_IFCHR | 0x666, makedev(252, 0));
-	mknod("/dev/nvram", S_IFCHR | 0x666, makedev(228, 0));
-	mknod("/dev/PCM", S_IFCHR | 0x666, makedev(233, 0));
-	mknod("/dev/I2S", S_IFCHR | 0x666, makedev(234, 0));
+#define MKNOD(name,mode,dev)	if(mknod(name,mode,dev)) perror("## mknod " name)
 
-	modprobe("nvram_linux");
+#if defined(LINUX30)
+	/* Below device node are used by proprietary driver.
+	 * Thus, we cannot use GPL-only symbol to create/remove device node dynamically.
+	 */
+	MKNOD("/dev/swnat0", S_IFCHR | 0x666, makedev(210, 0));
+	MKNOD("/dev/hwnat0", S_IFCHR | 0x666, makedev(220, 0));
+	MKNOD("/dev/acl0", S_IFCHR | 0x666, makedev(230, 0));
+	MKNOD("/dev/ac0", S_IFCHR | 0x666, makedev(240, 0));
+	MKNOD("/dev/mtr0", S_IFCHR | 0x666, makedev(250, 0));
+	MKNOD("/dev/rtkswitch", S_IFCHR | 0x666, makedev(206, 0));
+	MKNOD("/dev/nvram", S_IFCHR | 0x666, makedev(228, 0));
+#else
+	MKNOD("/dev/video0", S_IFCHR | 0x666, makedev(81, 0));
+	MKNOD("/dev/rtkswitch", S_IFCHR | 0x666, makedev(206, 0));
+	MKNOD("/dev/spiS0", S_IFCHR | 0x666, makedev(217, 0));
+	MKNOD("/dev/i2cM0", S_IFCHR | 0x666, makedev(218, 0));
+	MKNOD("/dev/rdm0", S_IFCHR | 0x666, makedev(254, 0));
+	MKNOD("/dev/flash0", S_IFCHR | 0x666, makedev(200, 0));
+	MKNOD("/dev/swnat0", S_IFCHR | 0x666, makedev(210, 0));
+	MKNOD("/dev/hwnat0", S_IFCHR | 0x666, makedev(220, 0));
+	MKNOD("/dev/acl0", S_IFCHR | 0x666, makedev(230, 0));
+	MKNOD("/dev/ac0", S_IFCHR | 0x666, makedev(240, 0));
+	MKNOD("/dev/mtr0", S_IFCHR | 0x666, makedev(250, 0));
+	MKNOD("/dev/gpio0", S_IFCHR | 0x666, makedev(252, 0));
+	MKNOD("/dev/nvram", S_IFCHR | 0x666, makedev(228, 0));
+	MKNOD("/dev/PCM", S_IFCHR | 0x666, makedev(233, 0));
+	MKNOD("/dev/I2S", S_IFCHR | 0x666, makedev(234, 0));
+#endif
+	{
+		int status;
+		if((status = WEXITSTATUS(modprobe("nvram_linux"))))	printf("## modprove(nvram_linux) fail status(%d)\n", status);
+	}
 }
 
 //void init_gpio(void)
@@ -114,7 +127,7 @@ void generate_switch_para(void)
 	}
 }
 
-void init_switch_ralink()
+static void init_switch_ralink(void)
 {
 	generate_switch_para();
 
@@ -161,6 +174,7 @@ void init_switch()
 int config_switch_for_first_time = 1;
 void config_switch()
 {
+	int model;
 	int stbport;
 	int controlrate_unknown_unicast;
 	int controlrate_unknown_multicast;
@@ -168,22 +182,33 @@ void config_switch()
 	int controlrate_broadcast;
 
 	dbG("link down all ports\n");
-	eval("8367m", "17");	// link down all ports
+	eval("rtkswitch", "17");	// link down all ports
 
 	if (config_switch_for_first_time)
 		config_switch_for_first_time = 0;
 	else
 	{
 		dbG("software reset\n");
-		eval("8367m", "27");	// software reset
+		eval("rtkswitch", "27");	// software reset
 	}
 
 	if (is_routing_enabled())
 	{
+		char parm_buf[] = "XXX";
+
 		stbport = atoi(nvram_safe_get("switch_stb_x"));
 		if (stbport < 0 || stbport > 6) stbport = 0;
 		dbG("STB port: %d\n", stbport);
-
+		/* stbport:	unifi_malaysia=1	otherwise
+		 * ----------------------------------------------
+		 *	0:	LLLLW			LLLLW
+		 *	1:	LLLTW			LLLWW
+		 *	2:	LLTLW			LLWLW
+		 *	3:	LTLLW			LWLLW
+		 *	4:	TLLLW			WLLLW
+		 *	5:	TTLLW			WWLLW
+		 *	6:	LLTTW			LLWWW
+		 */
 		if(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", ""))//2012.03 Yau modify
 		{
 			char tmp[128];
@@ -199,93 +224,123 @@ void config_switch()
 			stbport = 4;	
 			voip_port = 3;
 	
-			sprintf(tmp, "8367m 29 %d", voip_port);	
+			sprintf(tmp, "rtkswitch 29 %d", voip_port);	
 			system(tmp);	
 
 			if(!strncmp(nvram_safe_get("switch_wantag"), "unifi", 5))/* Added for Unifi. Cherry Cho modified in 2011/6/28.*/
 			{
 				if(strstr(nvram_safe_get("switch_wantag"), "home"))
 				{					
-					system("8367m 38 1");/* IPTV: P0 */
+					system("rtkswitch 38 1");/* IPTV: P0 */
 					/* Internet */
-					system("8367m 36 500");
-					system("8367m 37 0");
-					system("8367m 39 51249950");
+					system("rtkswitch 36 500");
+					system("rtkswitch 37 0");
+					system("rtkswitch 39 0x02000210");
 					/* IPTV */
-					system("8367m 36 600");
-					system("8367m 37 0");
-					system("8367m 39 65553");			
+					system("rtkswitch 36 600");
+					system("rtkswitch 37 0");
+					system("rtkswitch 39 0x00010011");
 				}
 				else/* No IPTV. Business package */
 				{
 					/* Internet */
-					system("8367m 38 0");
-					system("8367m 36 500");
-					system("8367m 37 0");
-					system("8367m 39 51315487");
+					system("rtkswitch 38 0");
+					system("rtkswitch 36 500");
+					system("rtkswitch 37 0");
+					system("rtkswitch 39 0x02000210");
 				}
 			}
 			else if(!strncmp(nvram_safe_get("switch_wantag"), "singtel", 7))/* Added for SingTel's exStream issues. Cherry Cho modified in 2011/7/19. */
 			{		
 				if(strstr(nvram_safe_get("switch_wantag"), "mio"))/* Connect Singtel MIO box to P3 */
 				{
-					system("8367m 40 1");
-					system("8367m 38 3");/* IPTV: P0  VoIP: P1 */
+					system("rtkswitch 40 1");
+					system("rtkswitch 38 3");/* IPTV: P0  VoIP: P1 */
 					/* Internet */
-					system("8367m 36 10");
-					system("8367m 37 0");
-					system("8367m 39 51118876");
+					system("rtkswitch 36 10");
+					system("rtkswitch 37 0");
+					system("rtkswitch 39 0x02000210");
 					/* VoIP */
-					system("8367m 36 30");
-					system("8367m 37 4");				
-					system("8367m 39 18");//VoIP Port: P1 tag
+					system("rtkswitch 36 30");
+					system("rtkswitch 37 4");				
+					system("rtkswitch 39 0x00000012");//VoIP Port: P1 tag
 				}
 				else//Connect user's own ATA to lan port and use VoIP by Singtel WAN side VoIP gateway at voip.singtel.com
 				{
-					system("8367m 38 1");/* IPTV: P0 */
+					system("rtkswitch 38 1");/* IPTV: P0 */
 					/* Internet */
-					system("8367m 36 10");
-					system("8367m 37 0");
-					system("8367m 39 51249950");			
+					system("rtkswitch 36 10");
+					system("rtkswitch 37 0");
+					system("rtkswitch 39 0x02000210");
 				}
 
 				/* IPTV */
-				system("8367m 36 20");
-				system("8367m 37 4");
-				system("8367m 39 65553");	
+				system("rtkswitch 36 20");
+				system("rtkswitch 37 4");
+				system("rtkswitch 39 0x00010011");
 			}
 			else if(!strcmp(nvram_safe_get("switch_wantag"), "m1_fiber"))//VoIP: P1 tag. Cherry Cho added in 2012/1/13.
 			{
-				system("8367m 40 1");
-				system("8367m 38 2");/* VoIP: P1  2 = 0x10 */
+				system("rtkswitch 40 1");
+				system("rtkswitch 38 2");/* VoIP: P1  2 = 0x10 */
 				/* Internet */
-				system("8367m 36 1103");
-				system("8367m 37 1");
-				system("8367m 39 51184413");
+				system("rtkswitch 36 1103");
+				system("rtkswitch 37 1");
+				system("rtkswitch 39 0x02000210");
 				/* VoIP */
-				system("8367m 36 1107");
-				system("8367m 37 1");				
-				system("8367m 39 18");//VoIP Port: P1 tag
+				system("rtkswitch 36 1107");
+				system("rtkswitch 37 1");				
+				system("rtkswitch 39 0x00000012");//VoIP Port: P1 tag
+			}
+			else if(!strcmp(nvram_safe_get("switch_wantag"), "maxis_fiber"))//VoIP: P1 tag. Cherry Cho added in 2012/11/6.
+			{
+				system("rtkswitch 40 1");
+				system("rtkswitch 38 2");/* VoIP: P1  2 = 0x10 */
+				/* Internet */
+				system("rtkswitch 36 621");
+				system("rtkswitch 37 0");
+				system("rtkswitch 39 0x02000210");
+				/* VoIP */
+				system("rtkswitch 36 821");
+				system("rtkswitch 37 0");				
+				system("rtkswitch 39 0x00000012");//VoIP Port: P1 tag
+
+				system("rtkswitch 36 822");
+				system("rtkswitch 37 0");				
+				system("rtkswitch 39 0x00000012");//VoIP Port: P1 tag
+			}
+			else if(!strcmp(nvram_safe_get("switch_wantag"), "maxis_fiber_sp"))//VoIP: P1 tag. Cherry Cho added in 2012/11/6.
+			{
+				system("rtkswitch 40 1");
+				system("rtkswitch 38 2");/* VoIP: P1  2 = 0x10 */
+				/* Internet */
+				system("rtkswitch 36 11");
+				system("rtkswitch 37 0");
+				system("rtkswitch 39 0x02000210");
+				/* VoIP */
+				system("rtkswitch 36 14");
+				system("rtkswitch 37 0");				
+				system("rtkswitch 39 0x00000012");//VoIP Port: P1 tag
 			}
 			else/* Cherry Cho added in 2011/7/11. */
 			{
 				/* Initialize VLAN and set Port Isolation */
 				if(strcmp(nvram_safe_get("switch_wan1tagid"), "") && strcmp(nvram_safe_get("switch_wan2tagid"), ""))
-					system("8367m 38 3");// 3 = 0x11 IPTV: P0  VoIP: P1
+					system("rtkswitch 38 3");// 3 = 0x11 IPTV: P0  VoIP: P1
 				else if(strcmp(nvram_safe_get("switch_wan1tagid"), ""))
-					system("8367m 38 1");// 1 = 0x01 IPTV: P0 
+					system("rtkswitch 38 1");// 1 = 0x01 IPTV: P0 
 				else if(strcmp(nvram_safe_get("switch_wan2tagid"), ""))
-					system("8367m 38 2");// 2 = 0x10 VoIP: P1
+					system("rtkswitch 38 2");// 2 = 0x10 VoIP: P1
 				else
-					system("8367m 38 0");//No IPTV and VoIP ports
+					system("rtkswitch 38 0");//No IPTV and VoIP ports
 
 				/*++ Get and set Vlan Information */
-				if(strcmp(nvram_safe_get("switch_wan0tagid"), "") != 0)
+				if(strcmp(nvram_safe_get("switch_wan0tagid"), "") != 0)	// Internet on WAN (port 4)
 				{
 					vlan_val = atoi(nvram_safe_get("switch_wan0tagid"));
 					if((vlan_val >= 2) && (vlan_val <= 4094))
 					{											
-						sprintf(tmp, "8367m 36 %d", vlan_val);
+						sprintf(tmp, "rtkswitch 36 %d", vlan_val);
 						system(tmp);
 					}
 
@@ -294,29 +349,22 @@ void config_switch()
 						vlan_val = atoi(nvram_safe_get("switch_wan0prio"));
 						if((vlan_val >= 0) && (vlan_val <= 7))
 						{
-							sprintf(tmp, "8367m 37 %d", vlan_val);
+							sprintf(tmp, "rtkswitch 37 %d", vlan_val);
 							system(tmp);
 						}
 						else
-							system("8367m 37 0");
+							system("rtkswitch 37 0");
 					}
 
-					if(strcmp(nvram_safe_get("switch_wan1tagid"), "") && strcmp(nvram_safe_get("switch_wan2tagid"), ""))
-						system("8367m 39 51118876");//5118876 = 0x30C 031C Port: P2 P3 P4 P8 P9 Untag: P2 P3 P8 P9
-					else if(strcmp(nvram_safe_get("switch_wan1tagid"), ""))
-						system("8367m 39 51249950");//51249950 = 0x30E 031E Port: P1 P2 P3 P4 P8 P9 Untag: P1 P2 P3 P8 P9
-					else if(strcmp(nvram_safe_get("switch_wan2tagid"), ""))
-						system("8367m 39 51184413");//51184413 = 0x30D 031D Port: P0 P2 P3 P4 P8 P9 Untag: P0 P2 P3 P8 P9
-					else
-						system("8367m 39 51315487");//51315487 = 0x30F 031F
+					system("rtkswitch 39 0x02000210");
 				}
 
-				if(strcmp(nvram_safe_get("switch_wan1tagid"), "") != 0)
+				if(strcmp(nvram_safe_get("switch_wan1tagid"), "") != 0)	// IPTV on LAN4 (port 0)
 				{
 					vlan_val = atoi(nvram_safe_get("switch_wan1tagid"));
 					if((vlan_val >= 2) && (vlan_val <= 4094))
 					{								
-						sprintf(tmp, "8367m 36 %d", vlan_val);	
+						sprintf(tmp, "rtkswitch 36 %d", vlan_val);	
 						system(tmp);
 					}
 
@@ -325,23 +373,25 @@ void config_switch()
 						vlan_val = atoi(nvram_safe_get("switch_wan1prio"));
 						if((vlan_val >= 0) && (vlan_val <= 7))
 						{
-							sprintf(tmp, "8367m 37 %d", vlan_val);	
+							sprintf(tmp, "rtkswitch 37 %d", vlan_val);	
 							system(tmp);
 						}
 						else
-							system("8367m 37 0");
+							system("rtkswitch 37 0");
 					}	
 
-					system("8367m 39 65553");//IPTV Port: P0 untag 65553 = 0x10 011
+					if(!strcmp(nvram_safe_get("switch_wan1tagid"), nvram_safe_get("switch_wan2tagid")))
+						system("rtkswitch 39 0x00030013"); //IPTV=VOIP
+					else
+						system("rtkswitch 39 0x00010011");//IPTV Port: P0 untag 65553 = 0x10 011
 				}	
 
-
-				if(strcmp(nvram_safe_get("switch_wan2tagid"), "") != 0)
+				if(strcmp(nvram_safe_get("switch_wan2tagid"), "") != 0)	// VoIP on LAN3 (port 1)
 				{
 					vlan_val = atoi(nvram_safe_get("switch_wan2tagid"));
 					if((vlan_val >= 2) && (vlan_val <= 4094))
 					{					
-						sprintf(tmp, "8367m 36 %d", vlan_val);	
+						sprintf(tmp, "rtkswitch 36 %d", vlan_val);	
 						system(tmp);
 					}
 
@@ -350,44 +400,26 @@ void config_switch()
 						vlan_val = atoi(nvram_safe_get("switch_wan2prio"));
 						if((vlan_val >= 0) && (vlan_val <= 7))
 						{
-							sprintf(tmp, "8367m 37 %d", vlan_val);	
+							sprintf(tmp, "rtkswitch 37 %d", vlan_val);	
 							system(tmp);		
 						}
 						else
-							system("8367m 37 0");
+							system("rtkswitch 37 0");
 					}
 	
-					system("8367m 39 131090");//VoIP Port: P1 untag
+                                        if(!strcmp(nvram_safe_get("switch_wan1tagid"), nvram_safe_get("switch_wan2tagid")))
+                                                system("rtkswitch 39 0x00030013"); //IPTV=VOIP
+                                        else
+						system("rtkswitch 39 0x00020012");//VoIP Port: P1 untag
 				}
 
 			}
 		}
 		else
 		{
-			switch(stbport)
-			{
-				case 1:	// LLLWW
-					system("8367m 8 1");
-					break;
-				case 2:	// LLWLW
-					system("8367m 8 2");
-					break;
-				case 3:	// LWLLW
-					system("8367m 8 3");
-					break;
-				case 4:	// WLLLW
-					system("8367m 8 4");
-					break;
-				case 5:	// WWLLW
-					system("8367m 8 5");
-					break;
-				case 6: // LLWWW
-					system("8367m 8 6");
-					break;
-				default:// LLLLW
-	//				system("8367m 8 0");
-					break;
-			}
+			sprintf(parm_buf, "%d", stbport);
+			if (stbport)
+				eval("rtkswitch", "8", parm_buf);
 		}
 
 		/* unknown unicast storm control */
@@ -398,7 +430,10 @@ void config_switch()
 		if (controlrate_unknown_unicast < 0 || controlrate_unknown_unicast > 1024)
 			controlrate_unknown_unicast = 0;
 		if (controlrate_unknown_unicast)
-			eval("8367m", "22", controlrate_unknown_unicast);
+		{
+			sprintf(parm_buf, "%d", controlrate_unknown_unicast);
+			eval("rtkswitch", "22", parm_buf);
+		}
 	
 		/* unknown multicast storm control */
 		if (!nvram_get("switch_ctrlrate_unknown_multicast"))
@@ -408,7 +443,10 @@ void config_switch()
 		if (controlrate_unknown_multicast < 0 || controlrate_unknown_multicast > 1024)
 			controlrate_unknown_multicast = 0;
 		if (controlrate_unknown_multicast)
-			eval("8367m", "23", controlrate_unknown_multicast);
+		{
+			sprintf(parm_buf, "%d", controlrate_unknown_multicast);
+			eval("rtkswitch", "23", parm_buf);
+		}
 	
 		/* multicast storm control */
 		if (!nvram_get("switch_ctrlrate_multicast"))
@@ -418,7 +456,10 @@ void config_switch()
 		if (controlrate_multicast < 0 || controlrate_multicast > 1024)
 			controlrate_multicast = 0;
 		if (controlrate_multicast)
-			eval("8367m", "24", controlrate_multicast);
+		{
+			sprintf(parm_buf, "%d", controlrate_multicast);
+			eval("rtkswitch", "24", parm_buf);
+		}
 	
 		/* broadcast storm control */
 		if (!nvram_get("switch_ctrlrate_broadcast"))
@@ -428,11 +469,25 @@ void config_switch()
 		if (controlrate_broadcast < 0 || controlrate_broadcast > 1024)
 			controlrate_broadcast = 0;
 		if (controlrate_broadcast)
-			eval("8367m", "25", controlrate_broadcast);
+		{
+			sprintf(parm_buf, "%d", controlrate_broadcast);
+			eval("rtkswitch", "24", parm_buf);
+		}
+	}
+	else if (is_apmode_enabled())
+	{
+		model = get_model();
+		if (model == MODEL_RTN65U || model == MODEL_RTN36U3)
+			eval("rtkswitch", "8", "100");
 	}
 
+#ifdef RTCONFIG_DSL
 	dbG("link up all ports\n");
-	eval("8367m", "16");	// link up all ports
+	eval("rtkswitch", "16");	// link up all ports
+#else
+	dbG("link up wan port(s)\n");
+	eval("rtkswitch", "114");	// link up wan port(s)
+#endif
 }
 
 int
@@ -443,8 +498,8 @@ switch_exist(void)
 	// 0 means switch exist
 	ret = 0;
 #else
-	ret = eval("8367m", "41");
-	_dprintf("eval(8367m, 41) ret(%d)\n", ret);
+	ret = eval("rtkswitch", "41");
+	_dprintf("eval(rtkswitch, 41) ret(%d)\n", ret);
 #endif
 	return (ret == 0);
 }
@@ -453,13 +508,16 @@ void init_wl(void)
 {
 	if (!is_module_loaded("rt2860v2_ap"))
 		modprobe("rt2860v2_ap");
-
-	if (!is_module_loaded("RT3090_ap_util"))
+#if defined (RTCONFIG_WLMODULE_RT3090_AP)
+	if (!is_module_loaded("RTPCI_ap"))
 	{
-		modprobe("RT3090_ap_util");
-		modprobe("RT3090_ap");
-		modprobe("RT3090_ap_net");
+		modprobe("RTPCI_ap");
 	}
+#endif
+#if defined (RTCONFIG_WLMODULE_RT3352_INIC_MII)
+	if (!is_module_loaded("iNIC_mii"))
+		modprobe("iNIC_mii", "mode=ap", "bridge=1", "miimaster=eth2", "syncmiimac=0");	// set iNIC mac address from eeprom need insmod with "syncmiimac=0"
+#endif
 
 	sleep(1);
 }
@@ -469,12 +527,17 @@ void fini_wl(void)
 	if (is_module_loaded("hw_nat"))
 		modprobe_r("hw_nat");
 
-	if (is_module_loaded("RT3090_ap_util"))
+#if defined (RTCONFIG_WLMODULE_RT3352_INIC_MII)
+	if (is_module_loaded("iNIC_mii"))
+		modprobe_r("iNIC_mii");
+#endif
+
+#if defined (RTCONFIG_WLMODULE_RT3090_AP)
+	if (is_module_loaded("RTPCI_ap"))
 	{
-		modprobe_r("RT3090_ap_net");
-		modprobe_r("RT3090_ap");
-		modprobe_r("RT3090_ap_util");
+		modprobe_r("RTPCI_ap");
 	}
+#endif
 
 	if (is_module_loaded("rt2860v2_ap"))
 		modprobe_r("rt2860v2_ap");
@@ -484,7 +547,7 @@ void init_syspara(void)
 {
 	unsigned char buffer[16];
 	unsigned int *src;
-	unsigned int *dst;
+	char *dst;
 	unsigned int bytes;
 	int i;
 	char macaddr[]="00:11:22:33:44:55";
@@ -502,7 +565,7 @@ void init_syspara(void)
 	nvram_set("buildinfo", rt_buildinfo);
 
 	/* /dev/mtd/2, RF parameters, starts from 0x40000 */
-	dst = (unsigned int *)buffer;
+	dst = buffer;
 	bytes = 6;
 	memset(buffer, 0, sizeof(buffer));
 	memset(country_code, 0, sizeof(country_code));
@@ -564,7 +627,7 @@ void init_syspara(void)
 	}
 
 	/* reserved for Ralink. used as ASUS country code. */
-	dst = (unsigned int *)country_code;
+	dst = country_code;
 	bytes = 2;
 	if (FRead(dst, OFFSET_COUNTRY_CODE, bytes)<0)
 	{
@@ -574,7 +637,29 @@ void init_syspara(void)
 	else
 	{
 		if ((unsigned char)country_code[0]!=0xff)
-		{
+		{ 
+		   //for specific power
+		        if (country_code[0] ==0x5a  && country_code[1] == 0x31)
+			{
+			   country_code[0]='U';
+			   country_code[1]='S';
+			}   
+			else if (country_code[0] ==0x5a  && country_code[1] == 0x32)
+			{
+			   country_code[0]='G';
+			   country_code[1]='B';
+			}   
+			else if (country_code[0] ==0x5a  && country_code[1] == 0x33)
+			{
+			   country_code[0]='T';
+			   country_code[1]='W';
+			}   
+			else if (country_code[0] ==0x5a  && country_code[1] == 0x34)
+			{
+			   country_code[0]='C';
+			   country_code[1]='N';
+			}   
+			   
 			nvram_set("wl_country_code", country_code);
 			nvram_set("wl0_country_code", country_code);
 			nvram_set("wl1_country_code", country_code);
@@ -598,7 +683,7 @@ void init_syspara(void)
 	}
 
 	/* reserved for Ralink. used as ASUS pin code. */
-	dst = (unsigned int *)pin;
+	dst = (char*)pin;
 	bytes = 8;
 	if (FRead(dst, OFFSET_PIN_CODE, bytes)<0)
 	{
@@ -613,10 +698,10 @@ void init_syspara(void)
 			nvram_set("secret_code", "12345670");
 	}
 
-	src = 0x50020;	/* /dev/mtd/3, firmware, starts from 0x50000 */
-	dst = (unsigned int *)buffer;
+	src = (unsigned int*) 0x50020;	/* /dev/mtd/3, firmware, starts from 0x50000 */
+	dst = buffer;
 	bytes = 16;
-	if (FRead(dst, src, bytes)<0)
+	if (FRead(dst, (int)src, bytes)<0)
 	{
 		fprintf(stderr, "READ firmware header: Out of scope\n");
 		nvram_set("productid", "unknown");
@@ -640,7 +725,7 @@ void init_syspara(void)
 	_dprintf("bootloader version: %s\n", nvram_safe_get("blver"));
 	_dprintf("firmware version: %s\n", nvram_safe_get("firmver"));
 
-	dst = (unsigned int *)txbf_para;
+	dst = txbf_para;
 	int count_0xff = 0;
 	if (FRead(dst, OFFSET_TXBF_PARA, 33) < 0)
 	{
@@ -668,6 +753,52 @@ void init_syspara(void)
 		nvram_set("wl1_txbf_en", "0");
 	else
 		nvram_set("wl1_txbf_en", "1");
+
+#if defined (RTCONFIG_WLMODULE_RT3352_INIC_MII)
+#define EEPROM_INIC_SIZE (512)
+#define EEPROM_INIT_ADDR 0x48000
+#define EEPROM_INIT_FILE "/etc/Wireless/iNIC/iNIC_e2p.bin"
+	{
+		char eeprom[EEPROM_INIC_SIZE];
+		if(FRead(eeprom, EEPROM_INIT_ADDR, sizeof(eeprom)) < 0)
+		{
+			fprintf(stderr, "FRead(eeprom, 0x%08x, 0x%x) failed\n", EEPROM_INIT_ADDR, sizeof(eeprom));
+		}
+		else
+		{
+			FILE *fp;
+			char *filepath = EEPROM_INIT_FILE;
+
+			system("mkdir -p /etc/Wireless/iNIC/");
+			if((fp = fopen(filepath, "w")) == NULL)
+			{
+				fprintf(stderr, "fopen(%s) failed!!\n", filepath);
+			}
+			else
+			{
+				if(fwrite(eeprom, sizeof(eeprom), 1, fp) < 1)
+				{
+					perror("fwrite(eeprom)");
+				}
+				fclose(fp);
+			}
+		}
+	}
+#endif
+
+	{
+#ifdef RTCONFIG_ODMPID
+		char modelname[16];
+		FRead(modelname, OFFSET_ODMPID, sizeof(modelname));
+		modelname[sizeof(modelname)-1] = '\0';
+		if(modelname[0] != 0 && (unsigned char)(modelname[0]) != 0xff && is_valid_hostname(modelname))
+		{
+			nvram_set("odmpid", modelname);
+		}
+		else
+#endif
+			nvram_unset("odmpid");
+	}
 
 	nvram_set("firmver", rt_version);
 	nvram_set("productid", rt_buildname);
@@ -703,12 +834,12 @@ void reinit_hwnat()
 	// in restart_wireless for wlx_mrate_x
 	
 	if (nvram_get_int("hwnat")) {
-		if (is_nat_enabled() && !nvram_get_int("qos_enable") &&
+		if (is_nat_enabled() && !nvram_get_int("qos_enable") /*&&*/
 			/* TODO: consider RTCONFIG_DUALWAN case */
 //			!nvram_match("wan0_proto", "l2tp") &&
 //			!nvram_match("wan0_proto", "pptp") &&
-			(nvram_match("wl0_radio", "0") || !nvram_get_int("wl0_mrate_x")) &&
-			(nvram_match("wl1_radio", "0") || !nvram_get_int("wl1_mrate_x"))) {
+			/*(nvram_match("wl0_radio", "0") || !nvram_get_int("wl0_mrate_x")) &&
+			(nvram_match("wl1_radio", "0") || !nvram_get_int("wl1_mrate_x"))*/) {
 			if (!is_module_loaded("hw_nat")) {
 #if 0
 				system("echo 2 > /proc/sys/net/ipv4/conf/default/force_igmp_version");
@@ -743,7 +874,7 @@ char *get_wlifname(int unit, int subunit, int subunit_x, char *buf)
 	if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
 		sprintf(buf, "%s%d", wifbuf, subunit_x);
 	else
-		sprintf(buf, "");
+		sprintf(buf, "%s", "");
 	return buf;
 }
 

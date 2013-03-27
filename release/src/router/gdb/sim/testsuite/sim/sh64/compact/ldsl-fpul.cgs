@@ -1,0 +1,27 @@
+# sh testcase for lds.l @${rn}+, fpul -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global ldsl_fpul
+ldsl_fpul:
+	mov #40, r0
+	shll8 r0
+	# remember the address.
+	mov r0, r1
+	lds.l @r0+, fpul
+
+	# ensure post increment occurred.
+	add #4, r1
+	cmp/eq r0, r1
+	bf wrong
+
+okay:	
+	pass
+wrong:
+	fail
+	

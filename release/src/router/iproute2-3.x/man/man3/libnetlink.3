@@ -1,0 +1,197 @@
+.TH libnetlink 3
+.SH NAME
+libnetlink \- A library for accessing the netlink service
+.SH SYNOPSIS
+.nf
+#include <asm/types.h>
+.br
+#include <libnetlink.h>
+.br
+#include <linux/netlink.h>
+.br
+#include <linux/rtnetlink.h>
+.sp
+int rtnl_open(struct rtnl_handle *rth, unsigned subscriptions)
+.sp
+int rtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
+.sp
+int rtnl_send(struct rtnl_handle *rth, char *buf, int len)
+.sp
+int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int len)
+.sp
+int rtnl_dump_filter(struct rtnl_handle *rth,
+		     int (*filter)(struct sockaddr_nl *, struct nlmsghdr *n, void *),
+		     void *arg1,
+		     int (*junk)(struct sockaddr_nl *,struct nlmsghdr *n, void *),
+		     void *arg2)
+.sp
+int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
+	      unsigned groups, struct nlmsghdr *answer,
+.br
+	      int (*junk)(struct sockaddr_nl *,struct nlmsghdr *n, void *),
+.br
+	      void *jarg)
+.sp
+int rtnl_listen(struct rtnl_handle *rtnl, 
+	      int (*handler)(struct sockaddr_nl *,struct nlmsghdr *n, void *),
+	      void *jarg)
+.sp
+int rtnl_from_file(FILE *rtnl, 
+	      int (*handler)(struct sockaddr_nl *,struct nlmsghdr *n, void *),
+	      void *jarg)
+.sp
+int addattr32(struct nlmsghdr *n, int maxlen, int type, __u32 data)
+.sp
+int addattr_l(struct nlmsghdr *n, int maxlen, int type, void *data, int alen)
+.sp
+int rta_addattr32(struct rtattr *rta, int maxlen, int type, __u32 data)
+.sp
+int rta_addattr_l(struct rtattr *rta, int maxlen, int type, void *data, int alen)
+.SH DESCRIPTION
+libnetlink provides a higher level interface to 
+.BR rtnetlink(7). 
+The read functions return 0 on success and a negative errno on failure.
+The send functions return the amount of data sent, or -1 on error.
+.TP 
+rtnl_open
+Open a rtnetlink socket and save the state into the
+.B rth
+handle. This handle is passed to all subsequent calls. 
+.B subscriptions
+is a bitmap of the rtnetlink multicast groups the socket will be
+a member of.
+
+.TP
+rtnl_wilddump_request
+Request a full dump of the 
+.B type
+database for
+.B family
+addresses.
+.B type
+is a rtnetlink message type. 
+.\" XXX
+
+.TP
+rtnl_dump_request
+Request a full dump of the 
+.B type 
+data buffer into 
+.B buf
+with maximum length of
+.B len.
+.B type
+is a rtnetlink message type.
+
+.TP
+rtnl_dump_filter
+Receive netlink data after a request and filter it.
+The
+.B filter
+callback checks if the received message is wanted. It gets the source
+address of the message, the message itself and
+.B arg1 
+as arguments. 0 as return means that the filter passed, a negative
+value is returned
+by
+.I rtnl_dump_filter 
+in case of error. NULL for 
+.I filter
+means to not use a filter.
+.B junk
+is used to filter messages not destined to the local socket.
+Only one message bundle is received. Unless there is no message 
+pending, this function does not block.
+
+.TP
+rtnl_listen
+Receive netlink data after a request and pass it to 
+.I handler.
+.B handler
+is a callback that gets the message source address, the message itself,
+and the
+.B jarg
+cookie as arguments. It will get called for all received messages.
+Only one message bundle is received. Unless there is no message 
+pending this function does not block.
+
+.TP
+rtnl_from_file
+Works like 
+.I rtnl_listen, 
+but reads a netlink message bundle from the file
+.B file
+and passes the messages to
+.B handler
+for parsing. The file contains raw data as received from a rtnetlink socket.
+.PP
+The following functions are useful to construct custom rtnetlink messages. For
+simple database dumping with filtering it is better to use the higher level
+functions above. See
+.BR rtnetlink(3)
+and
+.BR netlink(3)
+on how to generate a rtnetlink message. The following utility functions
+require a continuous buffer that already contains a netlink message header
+and a rtnetlink request. 
+
+.TP
+rtnl_send
+Send the rtnetlink message in
+.B buf
+of length
+.B len
+to handle
+.B rth.
+
+.TP
+addattr32
+Add a __u32 attribute of type
+.B type
+and with value
+.B data
+to netlink message
+.B n,
+which is part of a buffer of length
+.B maxlen.
+
+.TP
+addattr_l
+Add a variable length attribute of type
+.B type
+and with value
+.B data
+and
+.B alen
+length to netlink message
+.B n,
+which is part of a buffer of length
+.B maxlen.
+.B data 
+is copied.
+
+.TP
+rta_addattr32
+Initialize the rtnetlink attribute
+.B rta
+with a __u32 data value.
+
+.TP
+rta_addattr32
+Initialize the rtnetlink attribute
+.B rta
+with a variable length data value.
+
+.SH BUGS
+The functions sometimes use fprintf and exit when a fatal error occurs.
+This library should be named librtnetlink.
+
+.SH AUTHORS
+netlink/rtnetlink was designed and written by Alexey Kuznetsov.
+Andi Kleen wrote the man page.
+
+.SH SEE ALSO
+.BR netlink(7),
+.BR rtnetlink(7)
+.br
+/usr/include/linux/rtnetlink.h

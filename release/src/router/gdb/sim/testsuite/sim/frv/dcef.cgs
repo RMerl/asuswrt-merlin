@@ -1,0 +1,50 @@
+# frv testcase for dcef @(GRi,GRj),a
+# mach: fr400 fr550
+
+	.include "testutils.inc"
+
+	start
+
+	.global dcef
+dcef:
+	and_spr_immed	0x7fffffff,hsr0	; data cache only: copy-back mode
+	set_gr_addr	doit,gr10
+	set_gr_immed	0,gr11
+	set_gr_immed	1,gr12
+	set_gr_immed	2,gr13
+	set_gr_immed	3,gr14
+
+	set_spr_addr	ok1,lr
+	bra		doit
+ok1:	test_gr_immed	1,gr11
+
+	set_mem_immed	0x9600b00d,gr10	; change to add gr11,gr13,gr11 in cache
+	set_spr_addr	ok2,lr
+	bra		doit
+ok2:	test_gr_immed	2,gr11		; still only added 1
+
+	set_gr_addr	doit1,gr10
+	set_mem_immed	0x9600b00d,gr10	; change to add gr11,gr13,gr11 in cache
+	dcef		@(gr10,gr0),1	; flush data cache
+	set_spr_addr	ok3,lr
+	bra		doit1
+ok3:	test_gr_immed	4,gr11		; added 2 this time
+
+	set_gr_addr	doit2,gr10
+	set_mem_immed	0x9600b00e,gr10	; change to add gr11,gr14,gr11 in cache
+	dcef		@(gr0,gr0),1	; flush data cache
+	set_spr_addr	ok4,lr
+	bra		doit2
+ok4:	test_gr_immed	7,gr11		; added 3 this time
+
+	pass
+
+doit:	add		gr11,gr12,gr11
+	bralr
+
+doit1:	add		gr11,gr12,gr11
+	bralr
+
+doit2:	add		gr11,gr12,gr11
+	bralr
+

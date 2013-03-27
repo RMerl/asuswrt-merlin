@@ -1,0 +1,217 @@
+# Copyright (C) 2001-2009 Joe Orton <joe@manyfish.co.uk>
+# Copyright (C) 1994, 1995-8, 1999, 2000 Free Software Foundation, Inc.
+# This Makefile.in is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY, to the extent permitted by law; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.
+
+# libtool bits mostly stolen from libxml and libtool/demo
+
+SHELL = @SHELL@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libdir = @libdir@
+mandir = @mandir@
+man1dir = $(mandir)/man1
+man3dir = $(mandir)/man3
+datarootdir = @datarootdir@
+datadir = @datadir@
+docdir = $(datadir)/doc/neon-@NEON_VERSION@
+includedir = @includedir@
+neonincludes = $(includedir)/neon
+pkgconfigdir = $(libdir)/pkgconfig
+localedir = $(datadir)/locale
+
+top_srcdir = @top_srcdir@
+top_builddir = .
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+@SET_MAKE@
+
+LDFLAGS = -L. @LDFLAGS@
+LIBS = @LIBS@
+CC = @CC@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL = @INSTALL@
+transform = @program_transform_name@
+
+LIBTOOL = @LIBTOOL@
+XMLTO = xmlto
+GCOV = gcov
+XGETTEXT_OPTS = --keyword=_ --keyword=N_ --msgid-bugs-address=neon@lists.manyfish.co.uk \
+		--default-domain=neon --flag ne_print_request_header:3:c-format \
+		--flag ne_snprintf:3:c-format --flag ne_vsnprintf:3:c-format \
+		--flag ne_set_error:2:c-format
+POTFILE = $(top_srcdir)/po/neon.pot
+XGETTEXT = xgettext
+MSGFMT = msgfmt
+MSGMERGE = msgmerge
+
+LINGUAS = @ALL_LINGUAS@
+
+# The headers to distribute - making up the public interface of neon
+DIST_HEADERS = ne_request.h ne_session.h ne_utils.h ne_uri.h ne_socket.h  \
+	ne_basic.h ne_207.h ne_props.h ne_xml.h ne_dates.h ne_string.h	  \
+	ne_defs.h ne_locks.h ne_alloc.h ne_md5.h ne_i18n.h ne_redirect.h  \
+	ne_auth.h ne_compress.h ne_acl.h ne_ssl.h ne_xmlreq.h ne_pkcs11.h \
+	ne_acl3744.h
+
+all: subdirs
+
+check: subdirs
+	@cd test && $(MAKE) check
+
+# Useful for doing coverage analysis; use e.g.:
+#   make TESTS=string-tests MODULE=ne_string.c cover
+cover: subdirs
+	@rm -f src/*.*da test/common/*.*da test/*.*da
+	@cd test && $(MAKE) check
+	@cd src && $(GCOV) -cb $(MODULE)
+
+# as per 'cover' target; prints list of functions without 100% coverage 
+uncover: subdirs
+	@rm -f src/*.*da test/common/*.*da test/*.*da
+	@cd test && $(MAKE) check
+	@cd src && $(GCOV) -cb $(MODULE)
+	@grep ^function src/$(MODULE).gcov | grep -v 'executed 100' | sort -nr -k 9,9
+
+subdirs:
+	@cd src && $(MAKE)
+
+# Uses Tim Waugh's excellent "xmlto" utility, see
+# http://cyberelk.net/tim/xmlto/.  (The docs target is executed at release
+# time before generating a .tar.gz)
+docs: docs-man docs-html
+
+docs-man:
+	rm -rf doc/man; mkdir doc/man
+	$(XMLTO) -o `pwd`/doc/man -x doc/man.xsl man doc/manual.xml
+
+docs-pdf:
+	$(XMLTO) -o `pwd`/doc pdf doc/manual.xml
+
+docs-ps:
+	$(XMLTO) -o `pwd`/doc ps doc/manual.xml
+
+docs-html:
+	test -d doc/html && rm -rf doc/html || true
+	mkdir doc/html
+	$(XMLTO) -o `pwd`/doc/html -x doc/html.xsl html doc/manual.xml
+
+# Validate the manual source
+docs-valid:
+	xmllint --noout --valid doc/manual.xml
+
+clean:
+	@cd src && $(MAKE) clean
+	@cd test && $(MAKE) clean
+
+distclean: clean
+	rm -rf Makefile config.h neon.pc config.status src/Makefile libtool config.log config.cache neon-config autom4te*.cache test/Makefile
+
+again: clean
+
+Makefile: $(srcdir)/Makefile.in
+	@./config.status Makefile
+
+neon-config: $(srcdir)/neon-config.in
+	@./config.status neon-config
+
+install-docs: install-man install-html
+
+install-html:
+	$(INSTALL) -d $(DESTDIR)$(docdir)/html
+	for d in $(srcdir)/doc/html/*.html; do \
+		$(INSTALL_DATA) $$d $(DESTDIR)$(docdir)/html; \
+	done
+
+install-man:
+	$(INSTALL) -d $(DESTDIR)$(man3dir)
+	$(INSTALL) -d $(DESTDIR)$(man1dir)
+	for m in $(srcdir)/doc/man/*.3; do \
+	 $(INSTALL_DATA) $$m $(DESTDIR)$(man3dir); done
+	for m in $(srcdir)/doc/man/*.1; do \
+	 $(INSTALL_DATA) $$m $(DESTDIR)$(man1dir); done
+
+install: install-@ALLOW_INSTALL@
+
+install-memleak:
+	@echo "ERROR: The neon internal memory leak checking code is for testing"
+	@echo "ERROR: purposes only; this copy of neon must not be installed."
+	@false
+
+install-yes: install-lib install-headers install-config install-docs install-nls
+
+# libtool does all the necessary magic here
+install-lib: subdirs
+	$(INSTALL) -d $(DESTDIR)$(libdir)
+	$(LIBTOOL) --mode=install $(INSTALL) src/libneon.la \
+		$(DESTDIR)$(libdir)/libneon.la
+
+install-headers:
+	$(INSTALL) -d $(DESTDIR)$(neonincludes)
+	@for h in $(DIST_HEADERS); do \
+		echo Installing $$h into $(DESTDIR)$(neonincludes); \
+		$(INSTALL_DATA) $(srcdir)/src/$$h $(DESTDIR)$(neonincludes)/$$h \
+			|| exit 1; \
+	done
+
+install-config: neon-config neon.pc
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	@echo Installing neon-config into $(DESTDIR)$(bindir)
+	@$(INSTALL_SCRIPT) neon-config \
+		$(DESTDIR)$(bindir)/`echo neon-config|sed '$(transform)'`
+	$(INSTALL) -d $(DESTDIR)$(pkgconfigdir)
+	$(INSTALL_DATA) neon.pc $(DESTDIR)$(pkgconfigdir)/neon.pc
+
+install-tests: install-lib
+	@cd test && make install
+
+install-nls: install-nls-@NE_FLAG_I18N@
+
+install-nls-no:
+	@echo NLS not enabled.
+
+install-nls-yes:
+	@for f in $(LINGUAS); do \
+	 $(INSTALL) -d $(DESTDIR)$(localedir)/$$f/LC_MESSAGES; \
+	 $(INSTALL_DATA) $(srcdir)/po/$$f.gmo $(DESTDIR)$(localedir)/$$f/LC_MESSAGES/neon.mo; \
+	done
+
+ChangeLog:
+	svn log > $@
+
+update-po:
+	@xgettext $(XGETTEXT_OPTS) $(top_srcdir)/src/ne*.c -o $(POTFILE)
+	@for f in $(LINGUAS); do \
+	 echo "> Updating \"$$f\" catalog:"; \
+	 $(MSGMERGE) --update $(top_srcdir)/po/$$f.po $(POTFILE); \
+	 $(MSGFMT) --output /dev/null --check-format $(top_srcdir)/po/$$f.po || exit 1; \
+	done
+
+compile-gmo:
+	@for f in $(LINGUAS); do \
+	 echo "> Compiling \"$$f\" catalog:"; \
+	 $(MSGFMT) --statistics -c -o po/$$f.gmo $(top_srcdir)/po/$$f.po; \
+	done
+
+update-copyright: Makefile
+	sed -n '/^Copyright/q;p' < README > README.orig
+	(cat README.orig; grep -h Copyright src/*.[ch] po/*.po macros/*.m4 \
+		| sed -r 's/\(C\) [12].+[0-9],? /(C) /;s/^\#//;s/^dnl//;s/[ ]*//;s/ *$$//;/Orton/d' | sort -u) > README
+
+doc-status:
+	@echo -n "Missing docs for:"
+	@for f in `nm src/.libs/libneon.so | grep ' T ' | colrm 1 11`; do \
+	   test -f doc/man/$$f.3 || echo -n " $$f"; \
+	done; echo
+

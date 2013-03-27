@@ -1,0 +1,74 @@
+                                                        -*- text -*-
+
+This document attempts to list RFC requirements and determine whether
+neon meets them, or where they do not apply, etc.
+
+ Yes: test written, succeeds
+ No:  test written, but currently fails
+ ???: no test written
+ ---: feature not supported
+ App: this is an application issue not a neon issue
+
+  RFC2616
+  =======
+
+3.1: MUST treat major/minor as separate digits			Yes
+3.1: MUST ignore leading zeros					Yes
+3.1: MUST only send HTTP/1.1 when appropriate			???
+
+3.2.2: MUST use abs_path of "/" in Request-URI			App
+3.2.3: comparisons of host names MUST be case-insensitive	Yes
+       comparisons of scheme names MUST be ...			Yes
+       comparison of empty abs_path equivalent to "/"		No/---
+
+3.3.1: MUST accept three date formats				App/Yes [2]
+       MUST only generate RFC1123-style dates			App
+
+3.3.1: MUST use GMT for http-dates				???
+       MUST assume GMT when parsing asctime dates		???
+
+3.4.1: MUST respect charset label provided			Yes/App
+
+3.5*: content codings						App
+
+3.6: MUST requirements for multiple transfer-codings		--- [4]
+
+3.6.1: parsing of chunked transfer coding			Yes
+       MUST be able to handle "chunked" transfer-coding		Yes
+       MUST ignore unknown chunk-extension extensions		Yes
+
+3.7: parsing of Content-Type headers				Yes
+
+3.7: MUST NOT have LWS between type/subtype in C-T hdr		App
+     SHOULD only send parameters to "new HTTP apps" (>1.0?)     App
+
+3.7.1: MUST represent HTTP message in canonical form		App
+       MUST accept CRLF/CR/LF as line-breaks in text/* media	App
+       MUST NOT use only CR or LF in HTTP control structures	???
+       MUST specify charset if not ISO-8859-1			App
+
+3.7.2: multipart types						---
+
+3.8: SHOULD have short product token				Yes/App [5]
+     SHOULD use product-version for version identifier		Yes/App
+     only product-version differs between versions		Yes/App
+
+3.9: Content Negotiation					---/App
+
+3.10: Language Tags						---/App
+
+3.11: Entity Tags						---/App
+
+
+
+
+
+[2]: date parser is provided which handles all three formats, but no 
+handling of the Date header is present within neon.
+
+[3]: not sure if neon should be handling of this internally.
+
+[4]: neon only supports using just chunked Transfer-Coding or none.
+
+[5]: these reflect that applications may add their own product tokens
+     alongside neon's.

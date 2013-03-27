@@ -2,7 +2,7 @@
  * Misc utility routines for accessing the SOC Interconnects
  * of Broadcom HNBU chips.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: siutils.h 330112 2012-04-27 22:31:26Z $
+ * $Id: siutils.h 348160 2012-07-31 21:25:18Z $
  */
 
 #ifndef	_siutils_h_
@@ -156,6 +156,21 @@ typedef void (*gpio_handler_t)(uint32 stat, void *arg);
 #define GPIO_OUT_7_EN_MASK 0x80
 
 
+#if defined(WLOFFLD)
+/* CR4 specific defines used by the host driver */
+#define SI_CR4_CAP			(0x04)
+#define SI_CR4_BANKIDX		(0x40)
+#define SI_CR4_BANKINFO		(0x44)
+
+#define	ARMCR4_TCBBNB_MASK	0xf0
+#define	ARMCR4_TCBBNB_SHIFT	4
+#define	ARMCR4_TCBANB_MASK	0xf
+#define	ARMCR4_TCBANB_SHIFT	0
+
+#define	SICF_CPUHALT		(0x0020)
+#define	ARMCR4_BSZ_MASK		0x3f
+#define	ARMCR4_BSZ_MULT		8192
+#endif 
 
 
 /* === exported functions === */
@@ -321,6 +336,7 @@ extern char *si_coded_devpathvar(si_t *sih, char *varname, int var_len, const ch
 
 extern uint8 si_pcieclkreq(si_t *sih, uint32 mask, uint32 val);
 extern uint32 si_pcielcreg(si_t *sih, uint32 mask, uint32 val);
+extern uint8 si_pcieltrenable(si_t *sih, uint32 mask, uint32 val);
 extern void si_pcie_set_error_injection(si_t *sih, uint32 mode);
 extern void si_war42780_clkreq(si_t *sih, bool clkreq);
 extern void si_pci_down(si_t *sih);
@@ -385,6 +401,9 @@ char *si_getnvramflvar(si_t *sih, const char *name);
 
 extern void BCMATTACHFN(si_muxenab)(si_t *sih, uint32 w);
 
+#if defined(WLOFFLD)
+extern uint32 si_tcm_size(si_t *sih);
+#endif 
 
 extern void si_gci_set_functionsel(si_t *sih, uint32 pin, uint8 fnsel);
 extern uint8 si_gci_get_chipctrlreg_idx(uint32 pin, uint32 *regidx, uint32 *pos);

@@ -1,0 +1,83 @@
+# frv testcase for fsubd $GRi,$GRj,$GRk
+# mach: frv
+# as(frv): -mcpu=frv
+
+	.include "testutils.inc"
+
+	double_constants
+	start
+	load_double_constants
+
+	.global fsubd
+fsubd:
+	fsubd      	fr0,fr16,fr2
+	test_dfr_dfr	fr2,fr0
+	fsubd      	fr4,fr16,fr2
+	test_dfr_dfr	fr2,fr4
+	fsubd      	fr8,fr16,fr2
+	test_dfr_dfr	fr2,fr8
+	fsubd      	fr12,fr16,fr2
+	test_dfr_dfr	fr2,fr12
+	fsubd      	fr16,fr16,fr2
+	test_dfr_dfr	fr2,fr16
+	test_dfr_dfr	fr2,fr20
+	fsubd      	fr20,fr16,fr2
+	test_dfr_dfr	fr2,fr16
+	test_dfr_dfr	fr2,fr20
+	fsubd      	fr24,fr16,fr2
+	test_dfr_dfr	fr2,fr24
+	fsubd      	fr28,fr16,fr2
+	test_dfr_dfr	fr2,fr28
+	fsubd      	fr32,fr16,fr2
+	test_dfr_dfr	fr2,fr32
+	fsubd      	fr36,fr16,fr2
+	test_dfr_dfr	fr2,fr36
+	fsubd      	fr40,fr16,fr2
+	test_dfr_dfr	fr2,fr40
+	fsubd      	fr44,fr16,fr2
+	test_dfr_dfr	fr2,fr44
+	fsubd      	fr48,fr16,fr2
+	test_dfr_dfr	fr2,fr48
+	fsubd      	fr52,fr16,fr2
+	test_dfr_dfr	fr2,fr52
+
+	fsubd      	fr0,fr20,fr2
+	test_dfr_dfr	fr2,fr0
+	fsubd      	fr4,fr20,fr2
+	test_dfr_dfr	fr2,fr4
+	fsubd      	fr8,fr20,fr2
+	test_dfr_dfr	fr2,fr8
+	fsubd      	fr12,fr20,fr2
+	test_dfr_dfr	fr2,fr12
+	fsubd      	fr16,fr20,fr2
+	test_dfr_dfr	fr2,fr16
+	test_dfr_dfr	fr2,fr20
+	fsubd      	fr20,fr20,fr2
+	test_dfr_dfr	fr2,fr16
+	test_dfr_dfr	fr2,fr20
+	fsubd      	fr24,fr20,fr2
+	test_dfr_dfr	fr2,fr24
+	fsubd      	fr28,fr20,fr2
+	test_dfr_dfr	fr2,fr28
+	fsubd      	fr32,fr20,fr2
+	test_dfr_dfr	fr2,fr32
+	fsubd      	fr36,fr20,fr2
+	test_dfr_dfr	fr2,fr36
+	fsubd      	fr40,fr20,fr2
+	test_dfr_dfr	fr2,fr40
+	fsubd      	fr44,fr20,fr2
+	test_dfr_dfr	fr2,fr44
+	fsubd      	fr48,fr20,fr2
+	test_dfr_dfr	fr2,fr48
+	fsubd      	fr52,fr20,fr2
+	test_dfr_dfr	fr2,fr52
+
+	fsubd      	fr32,fr36,fr2
+	test_dfr_dfr	fr2,fr8
+
+	fsubd      	fr44,fr40,fr2
+	test_dfr_dfr	fr2,fr36
+
+	pass
+
+

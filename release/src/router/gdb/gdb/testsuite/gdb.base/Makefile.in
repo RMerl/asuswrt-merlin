@@ -1,0 +1,32 @@
+VPATH = @srcdir@
+srcdir = @srcdir@
+
+EXECUTABLES = all-types annota1 bitfields break \
+	call-ar-st call-rt-st call-strs callfuncs callfwmall \
+	chng-syms commands compiler condbreak constvars coremaker \
+	dbx-test display ending-run execd-prog exprs \
+	foll-exec foll-fork foll-vfork funcargs int-type interrupt jump \
+	langs list long_long mips_pro miscexprs nodebug opaque overlays \
+	pointers pointers2 printcmds ptype \
+	recurse reread reread1 restore return run \
+	scope section_command setshow setvar shmain sigall signals \
+	solib solib_sl so-impl-ld so-indr-cl \
+	step-line step-test structs structs2 \
+	twice-tmp varargs vforked-prog watchpoint whatis
+
+MISCELLANEOUS = coremmap.data ../foobar.baz \
+	shr1.sl shr2.sl solib_sl.sl solib1.sl solib2.sl
+
+all info install-info dvi install uninstall installcheck check:
+	@echo "Nothing to be done for $@..."
+
+clean mostlyclean:
+	-rm -f *~ *.o a.out xgdb *.x *.ci *.tmp
+	-rm -f core core.coremaker coremaker.core corefile $(EXECUTABLES)
+	-rm -f $(MISCELLANEOUS) twice-tmp.c
+
+distclean maintainer-clean realclean: clean
+	-rm -f *~ core
+	-rm -f Makefile config.status config.log
+	-rm -f *-init.exp
+	-rm -fr *.log summary detail *.plog *.sum *.psum site.*

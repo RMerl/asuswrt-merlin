@@ -1,0 +1,113 @@
+# Copyright 2005, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if $tracelevel {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+if ![istarget "alpha*-*-*"] then {
+    verbose "Skipping alpha step tests."
+    return
+}
+
+set testfile "alpha-step"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {}] != "" } {
+    unsupported "Testcase compile failed."
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+proc test_stepi {function } {
+    # Restart the program from scratch. If GDB got confused during one
+    # of the previous tests, this makes sure that it doesn't affect
+    # this series of tests.
+    if ![runto_main] then {
+        fail "Can't run to main"
+        return 0
+    }
+
+    # Insert a breakpoint on the FP branch instruction inside FUNCTION.
+    # Since the function has been hand written, we know this instruction
+    # is a "fb$function" located at FUNCTION+4.
+    gdb_test "break *$function+4" \
+             "Breakpoint .* at .*" \
+             "breakpoint on fb$function instruction"
+    
+    gdb_test "continue" \
+             "Breakpoint .*, 0x\[0-9a-fA-F\]+ in $function\(\).*" \
+             "continue to fb$function instruction (first call)"
+    
+    # Extra check to make sure we stopped on the FP branch instruction.
+    
+    gdb_test "x /i \$pc" \
+             "0x\[0-9a-fA-F\]+ <.*>:\[ \t\]+fb$function.*" \
+             "Check breakpoint on fb$function instruction (first call)"
+    
+    # Step test, followed by the check that we landed on the expected
+    # instruction (the testcase should be written in such a way that
+    # the branch is taken on the first call to this function.
+    
+    gdb_test "stepi" \
+             "0x\[0-9a-fA-F\]+.*" \
+             "stepi on fb$function (first call)"
+    
+    gdb_test "x /i \$pc" \
+             "0x\[0-9a-fA-F\]+ <.*>:\[ \t\]+ret.*" \
+             "Check stepi over fb$function stopped on ret"
+    
+    # Continue again. FUNCTION should be called a second time, this time
+    # with an argument such that the FP branch will not be taken.
+    
+    gdb_test "continue" \
+             "Breakpoint .*, 0x\[0-9a-fA-F\]+ in $function\(\).*" \
+             "continue to fb$function instruction (second call)"
+    
+    # Extra check to make sure we stopped on the FP branch instruction.
+    
+    gdb_test "x /i \$pc" \
+             "0x\[0-9a-fA-F\]+ <.*>:\[ \t\]+fb$function.*" \
+             "Check breakpoint on fb$function instruction (second call)"
+    
+    # Step test, branch should not be taken.
+    
+    gdb_test "stepi" \
+             "0x\[0-9a-fA-F\]+.*" \
+             "stepi on fb$function (branch not taken)"
+    
+    # Extra check to verify that we landed on the instruction we expected.
+    
+    gdb_test "x /i \$pc" \
+             "0x\[0-9a-fA-F\]+ <.*>:\[ \t\]+fneg.*" \
+             "Check stepi over fb$function stopped on fneg instruction"
+
+}
+
+test_stepi "gt"
+test_stepi "ge"
+test_stepi "lt"
+test_stepi "le"
+test_stepi "eq"
+test_stepi "ne"
+

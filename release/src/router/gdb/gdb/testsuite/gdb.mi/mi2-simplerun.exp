@@ -1,0 +1,216 @@
+# Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#
+# Test essential Machine interface (MI) operations
+#
+# Verify that, using the MI, we can run a simple program and perform basic
+# debugging activities like: insert breakpoints, run the program,
+# step, next, continue until it ends and, last but not least, quit.
+#
+# The goal is not to test gdb functionality, which is done by other tests,
+# but to verify the correct output response to MI operations.
+#
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi2"
+
+gdb_exit
+if [mi_gdb_start] {
+    continue
+}
+
+set testfile "basics"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+     untested mi2-simplerun.exp
+     return -1
+}
+
+mi_delete_breakpoints
+mi_gdb_reinitialize_dir $srcdir/$subdir
+mi_gdb_reinitialize_dir $srcdir/$subdir
+mi_gdb_load ${binfile}
+
+proc test_breakpoints_creation_and_listing {} {
+    global mi_gdb_prompt
+    global srcfile
+    global hex
+
+    set line_callee4_head  [gdb_get_line_number "callee4 ("]
+    set line_callee3_head  [gdb_get_line_number "callee3 ("]
+    set line_callee2_head  [gdb_get_line_number "callee2 ("]
+    set line_callee2_body  [expr $line_callee2_head + 2]
+    set line_main_head     [gdb_get_line_number "main ("]
+    set line_main_body     [expr $line_main_head + 2]
+
+    # Insert some breakpoints and list them
+    # Also, disable some so they do not interfere with other tests
+    # Tests:
+    # -break-insert
+    # -break-list
+    # -break-disable
+    # -break-info
+
+    mi_gdb_test "200-break-insert main" \
+             "200\\^done,bkpt=\{number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",line=\"$line_main_body\",times=\"0\"\}" \
+             "break-insert operation"
+
+    mi_gdb_test "201-break-insert basics.c:callee2" \
+             "201\\^done,bkpt=\{number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"callee2\",file=\".*basics.c\",line=\"$line_callee2_body\",times=\"0\"\}" \
+             "insert breakpoint at basics.c:callee2"
+
+    mi_gdb_test "202-break-insert basics.c:$line_callee3_head" \
+             "202\\^done,bkpt=\{number=\"3\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"callee3\",file=\".*basics.c\",line=\"$line_callee3_head\",times=\"0\"\}" \
+             "insert breakpoint at basics.c:\$line_callee3_head"
+
+    mi_gdb_test "203-break-insert \"\\\"${srcfile}\\\":$line_callee4_head\"" \
+             "203\\^done,bkpt=\{number=\"4\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"callee4\",file=\".*basics.c\",line=\"$line_callee4_head\",times=\"0\"\}" \
+             "insert breakpoint at \"<fullfilename>\":\$line_callee4_head"
+
+    mi_gdb_test "204-break-list" \
+	    "204\\^done,BreakpointTable=\{.*,hdr=\\\[.*\\\],body=\\\[bkpt=\{number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",line=\"$line_main_body\",times=\"0\"\},.*\}\\\]\}" \
+                "list of breakpoints"
+
+    mi_gdb_test "205-break-disable 2 3 4" \
+                "205\\^done.*" \
+                "disabling of breakpoints"
+
+    mi_gdb_test "206-break-info 2" \
+	    "206\\^done,BreakpointTable=\{.*,hdr=\\\[.*\\\],body=\\\[bkpt=\{number=\"2\",.*,enabled=\"n\",.*\}\\\]\}" \
+                "list of breakpoints, 16 disabled"
+}
+
+proc test_running_the_program {} {
+    global mi_gdb_prompt
+    global hex
+
+    set line_main_head     [gdb_get_line_number "main ("]
+    set line_main_body     [expr $line_main_head + 2]
+
+    # Run the program without args, then specify srgs and rerun the program
+    # Tests:
+    # -exec-run
+    # -gdb-set
+
+    # mi_gdb_test cannot be used for asynchronous commands because there are
+    # two prompts involved and this can lead to a race condition.
+    # The following is equivalent to a send_gdb "000-exec-run\n"
+    mi_run_cmd
+    gdb_expect {
+	-re "000\\*stopped,reason=\"breakpoint-hit\",bkptno=\"1\",thread-id=\"\[01\]\",frame=\{addr=\"$hex\",func=\"main\",args=\\\[\\\],file=\".*basics.c\",line=\"$line_main_body\"\}\r\n$mi_gdb_prompt$" {
+	    pass "run to main"
+	}
+	-re ".*$mi_gdb_prompt$" {
+	    fail "run to main (2)"
+	}
+	timeout {
+	    fail "run to main (timeout)"
+	}
+    }
+}
+
+proc test_controlled_execution {} {
+    global mi_gdb_prompt
+    global hex
+
+    set line_callee4_head         [gdb_get_line_number "callee4 ("]
+    set line_callee4_body         [expr $line_callee4_head + 2]
+    set line_callee3_head         [gdb_get_line_number "callee3 ("]
+    set line_callee3_close_brace  [expr $line_callee3_head + 3]
+    set line_callee1_head         [gdb_get_line_number "callee1 ("]
+    set line_callee1_body         [expr $line_callee1_head + 2]
+    set line_main_head            [gdb_get_line_number "main ("]
+    set line_main_body            [expr $line_main_head + 2]
+
+    # Continue execution until a breakpoint is reached, step into calls, verifying
+    # if the arguments are correctly shown, continue to the end of a called
+    # function, step over a call (next).
+    # Tests:
+    # -exec-continue
+    # -exec-next
+    # -exec-step
+    # -exec-finish
+
+    mi_next_to "main" "" "basics.c" [expr $line_main_body + 1] "next at main"
+
+    # FIXME: A string argument is not printed right; should be fixed and
+    #        we should look for the right thing here.
+    # NOTE: The ``\\\\\"'' is for \".
+    mi_step_to "callee1" \
+	"\{name=\"intarg\",value=\"2\"\},\{name=\"strarg\",value=\"$hex \\\\\"A string argument\.\\\\\"\"\},\{name=\"fltarg\",value=\"3.5\"\}" \
+	"basics.c" "$line_callee1_body" "step at main"
+
+    # FIXME: A string argument is not printed right; should be fixed and
+    #        we should look for the right thing here.
+    mi_execute_to "exec-step 3" "end-stepping-range" "callee4" "" \
+	"basics.c" $line_callee4_body "" "step to callee4"
+
+    # FIXME: A string argument is not printed right; should be fixed and
+    #        we should look for the right thing here.
+    # NOTE: The ``.'' is part of ``gdb-result-var="$1"''
+    mi_finish_to "callee3" ".*" "basics.c" $line_callee3_close_brace ".1" "0" "exec-finish"
+}
+
+proc test_controlling_breakpoints {} {
+    global mi_gdb_prompt
+
+    # Enable, delete, set ignore counts in breakpoints
+    # (disable was already tested above)
+    # Tests:
+    # -break-delete
+    # -break-enable
+    # -break-after
+    # -break-condition
+
+}
+
+proc test_program_termination {} {
+    global mi_gdb_prompt
+
+    # Run to completion: normal and forced
+    # Tests:
+    # -exec-abort
+    # (normal termination of inferior)
+
+    # FIXME: "stopped" doesn't seem appropriate.
+    # mi_gdb_test cannot be used for asynchronous commands because there are
+    # two prompts involved and this can lead to a race condition.
+    send_gdb "999-exec-continue\n"
+    gdb_expect {
+      -re "999\\^running\r\n$mi_gdb_prompt" {
+        gdb_expect {
+          -re "999\\*stopped,reason=\"exited-normally\"\r\n$mi_gdb_prompt$" {
+            pass "continue to end"
+          }
+          -re ".*$mi_gdb_prompt$" {fail "continue to end (2)"}
+          timeout {fail "continue to end (timeout 2)"}
+        }
+      }
+      -re ".*$mi_gdb_prompt$" {fail "continue to end (1)"}
+      timeout {fail "continue to end (timeout 1)"}
+    }
+}
+
+test_breakpoints_creation_and_listing
+test_running_the_program
+test_controlled_execution
+test_controlling_breakpoints
+test_program_termination
+
+mi_gdb_exit
+return 0

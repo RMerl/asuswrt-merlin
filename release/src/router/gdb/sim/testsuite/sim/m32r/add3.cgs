@@ -1,0 +1,15 @@
+# m32r testcase for add3 $dr,$sr,#$slo16
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global add3
+add3:
+
+	mvi_h_gr r5, 1
+	add3 r4, r5, 2
+	test_h_gr r4, 3
+
+	pass

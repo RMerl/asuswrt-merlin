@@ -1,0 +1,63 @@
+    <refentry id="refreqhdr">
+
+      <refmeta>
+	<refentrytitle>ne_add_request_header</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_add_request_header">ne_add_request_header</refname>
+	<refname id="ne_print_request_header">ne_print_request_header</refname>
+	<refpurpose>add headers to a request</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_request.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_add_request_header</function></funcdef>
+	    <paramdef>ne_request *<parameter>request</parameter></paramdef>
+	    <paramdef>const char *<parameter>name</parameter></paramdef>
+	    <paramdef>const char *<parameter>value</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_print_request_header</function></funcdef>
+	    <paramdef>ne_request *<parameter>request</parameter></paramdef>
+	    <paramdef>const char *<parameter>name</parameter></paramdef>
+	    <paramdef>const char *<parameter>format</parameter></paramdef>
+	    <paramdef>...</paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>The functions <function>ne_add_request_header</function>
+and <function>ne_print_request_header</function> can be used to add
+headers to a request, before it is sent.</para>
+
+	<para><function>ne_add_request_header</function> simply adds a
+header of given <parameter>name</parameter>, with given
+<parameter>value</parameter>.</para>
+
+	<para><function>ne_print_request_header</function> adds a
+header of given <parameter>name</parameter>, taking the value from the
+<function>printf</function>-like <parameter>format</parameter> string
+parameter and subsequent variable-length argument list.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>See also</title>
+
+	<para><xref linkend="ne_request_create"/></para>
+      </refsect1>
+
+    </refentry>

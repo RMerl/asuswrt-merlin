@@ -1,0 +1,180 @@
+2002-02-25  Gary Wong  <gtw@gnu.org>
+
+	* version.c: Version 1.3.1.
+	
+	* configure.in: Update obselete macros.
+
+	* termcap.src: Regenerated from version 11.0.1 master file.
+
+	* tparam.c [!emacs]: Move #define of bcopy to after
+	#include <string.h>.  Reported by Oleg Kornilov and Iyer Viswanathan.
+
+	* termcap.c [!emacs]: Replace ospeed for building standalone
+	libtermcap, for binary compatibility.
+	
+2001-05-28  Gerd Moellmann  <gerd@gnu.org>
+
+	* termcap.c (speeds): Put in #if 0.
+
+2000-12-08  Gerd Moellmann  <gerd@gnu.org>
+
+	* tparam.c (tparam1): Change the way buffers are reallocated to be
+	portable and less obfuscated.
+
+	* termcap.c (tgetent): Change the way buffers are reallocated to
+	be portable and less obfuscated.
+
+2000-11-19  Gerd Moellmann  <gerd@gnu.org>
+
+	* termcap.c (ospeed): Remove.
+	(tputs) [!emacs]: Remove unused code.
+	(tgetent): Avoid a compiler warning.
+
+2000-06-20  Dave Love  <fx@gnu.org>
+
+	* tparam.c [emacs]: Include lisp.h.
+
+	* termcap.c [emacs]: Test HAVE_FCNTL_H, not USG5.  Include lisp.h
+	and unistd.h.
+
+2000-04-13  Gerd Moellmann  <gerd@gnu.org>
+
+	* tparam.c (tparam1): Abort when encountering an unknown `%'-specifier.
+
+Wed Aug 16 20:45:44 1995  David J. MacKenzie  <djm@geech.gnu.ai.mit.edu>
+
+	* version.c: Version 1.3.
+
+	* termcap.c (tgetent): Use the user-supplied buffer even if we
+	don't find a matching terminal, so the program can set the buffer
+	if they want (`less' does this).  From Bob Pegram
+	<pegram@emba.uvm.edu>.
+
+Wed Jul 26 11:44:51 1995  David J. MacKenzie  <djm@geech.gnu.ai.mit.edu>
+
+	* termcap.c: TERMCAP_NAME -> TERMCAP_FILE.
+
+	* configure.in: Add --enable-install-termcap and --with-termcap
+ 	options.
+
+	* Makefile.in: Add hooks for new configure options.
+
+	* Makefile.in (DISTFILES): Add termcap.src.
+	(DEFS): Remove -DNO_ARG_ARRAY.
+	(install-data, uninstall-data): New targets.
+
+	* tparam.c (tparam): Remove arg array version and the #ifdef.
+
+	* termcap.c: Move #define of bcopy to after #include <string.h>.
+
+	* termcap.h: Prototype the arg to the tputs outfun arg.
+
+	* Makefile.in: realclean -> maintainer-clean.  Use @prefix@ and
+ 	@exec_prefix@.
+
+	* Makefile.in (DISTFILES): Add install-sh.
+
+Fri Apr  7 14:57:45 1995  Richard Stallman  <rms@mole.gnu.ai.mit.edu>
+
+	* termcap.c (tgetent): Don't try to return the allocated address.
+	Always return 1 if successful.
+
+Tue Feb 14 02:34:43 1995  Richard Stallman  <rms@pogo.gnu.ai.mit.edu>
+
+	* termcap.c (speeds): Make it ints.  Add some higher speeds.
+	(tputs) [emacs]: If speed is high, convert to smaller units.
+	(tputs): Really use SPEED to calculate PADCOUNT.
+
+Sat Dec 17 07:20:24 1994  Richard Stallman  <rms@mole.gnu.ai.mit.edu>
+
+	* termcap.c (tgetst1): Let ^? stand for DEL character.
+
+Thu Jun 30 04:35:50 1994  Roland McGrath  (roland@churchy.gnu.ai.mit.edu)
+
+	* configure.in: Use AC_HAVE_HEADERS instead of AC_UNISTD_H.
+	Add AC_PROG_RANLIB.
+	* Makefile.in (AR, RANLIB): New variables.
+	(install, libtermcap.a): Use them instead of hard-wired commands.
+
+Sat Jun  4 12:21:41 1994  Roland McGrath  (roland@geech.gnu.ai.mit.edu)
+
+	* termcap.c [HAVE_CONFIG_H]: Include <sys/file.h>, and include
+	<fcntl.h> #ifdef USG5, so we get O_* defns.
+
+Wed May 25 19:05:30 1994  Roland McGrath  (roland@churchy.gnu.ai.mit.edu)
+
+	* termcap.c (O_RDONLY): Define to 0 if not already defined.
+	(tgetent): Use O_RDONLY instead of explicit 0 in call to open.
+
+Wed Jan  5 22:20:15 1993  Morten Welinder  (terra@diku.dk)
+
+	* termcap.c (tgetent) [INTERNAL_TERMINAL]: Fake internal terminal 
+	without reading any files.
+	(valid_file_name, tgetent) [MSDOS]: Drive letter support.
+	(tgetent) [MSDOS]: Use text mode for database.
+
+Fri Dec 17 00:22:43 1993  Mike Long  (mike.long@analog.com)
+
+	* termcap.c (tgetent): Replaced literal filenames for termcap
+	database with preprocessor symbol TERMCAP_NAME.
+	(TERMCAP_NAME): Define if not defined.
+
+Fri Sep 10 00:35:07 1993  Roland McGrath  (roland@churchy.gnu.ai.mit.edu)
+
+	* Makefile.in (.c.o): Put -I. before -I$(srcdir).
+	* termcap.c: Include <config.h> instead of "config.h".
+	* tparam.c: Likewise.
+
+Thu Jul 29 20:53:30 1993  David J. MacKenzie  (djm@wookumz.gnu.ai.mit.edu)
+
+	* Makefile.in (config.status): Run config.status --recheck, not
+	configure, to get the right args passed.
+
+Thu Apr 15 12:45:10 1993  David J. MacKenzie  (djm@kropotkin.gnu.ai.mit.edu)
+
+	* Version 1.2.
+
+	* tparam.c [!emacs] (xmalloc, xrealloc, memory_out): New functions.
+	(tparam1): Use them.
+
+	* termcap.c, tparam.c: Use NULL or '\0' where appropriate
+	instead of 0.  Rename some vars.
+	* termcap.c (tgetent): If EOF is reached on termcap file,
+	free allocated resources before returning.
+
+	* termcap.c (tgetent): Use /etc/termcap if TERMCAP is an entry
+	for a term type other than TERM.
+	From pjr@jet.UK (Paul J Rippin).
+
+Sat Apr 10 23:55:12 1993  Richard Stallman  (rms@mole.gnu.ai.mit.edu)
+
+	* tparam.c (tparam1): Don't set the 0200 bit on a non-0 character code.
+	From junio@twinsun.COM (Junio Hamano).
+
+Tue Dec  8 22:02:15 1992  David J. MacKenzie  (djm@kropotkin.gnu.ai.mit.edu)
+
+	* termcap.c, tparam.c: Use HAVE_STRING_H instead of USG.
+
+Thu Dec  3 13:47:56 1992  David J. MacKenzie  (djm@nutrimat.gnu.ai.mit.edu)
+
+	* termcap.c, tparam.c [HAVE_CONFIG_H]: Include config.h.
+
+Fri Oct 23 12:35:29 1992  David J. MacKenzie  (djm@goldman.gnu.ai.mit.edu)
+
+	* termcap.h [__STDC__]: Add consts.  From Franc,ois Pinard.
+
+Tue Oct 13 15:52:21 1992  David J. MacKenzie  (djm@goldman.gnu.ai.mit.edu)
+
+	* Version 1.1.
+
+Tue Sep 29 21:04:39 1992  David J. MacKenzie  (djm@geech.gnu.ai.mit.edu)
+
+	* termcap.[ch], tparam.c: Fix some lint.
+
+	* version.c: New file.
+
+Local Variables:
+mode: indented-text
+left-margin: 8
+version-control: never
+End:

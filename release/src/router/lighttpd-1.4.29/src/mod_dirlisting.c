@@ -79,8 +79,6 @@ typedef struct {
 	plugin_config conf;
 } plugin_data;
 
-#define DBE 0
-
 static excludes_buffer *excludes_buffer_init(void) {
 	excludes_buffer *exb;
 
@@ -481,7 +479,62 @@ static int http_list_directory_sizefmt(char *buf, off_t size) {
 	return (out + 3 - buf);
 }
 
+void http_list_directory_header(server *srv, connection *con, plugin_data *p, buffer *out) 
+{
+	UNUSED(srv);
+Cdbg(1,"aaaaaaaaaaaaaaaaaaaaaaaaaaa");
+	//if (p->conf.auto_layout) 
+	{
+		buffer_append_string_len(out, CONST_STR_LEN(
+			//"<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
+			//"<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\n"
+			"<!DOCTYPE html>\n"
+			"<html>\n"
+			"<head>\n"
+			"<meta charset=\"utf-8\"/>\n"
+			"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n"
+			"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />"
+			"<meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\n"
+			"<meta name=\"apple-mobile-web-app-status-bar-style\" content=\"black\">\n"
+			"<link rel=\"apple-touch-icon\" href=\"/smb/css/appicon.png\">\n"
+			"<link rel=\"apple-touch-startup-image\" href=\"/smb/css/startup.png\">\n"
+			"<title>AiCloud</title>\n"
+		));
+		
+		//- General UI
+		buffer_append_string_len(out, CONST_STR_LEN(
+				"<link rel='stylesheet' id='mainCss' href='/smb/css/style-theme1.css' type='text/css'/>\n"				
+				"<script type='text/javascript' src='/smb/js/tools.js'></script>\n"
+				"<script type='text/javascript' src='/smb/js/davclient_tools.js'></script>\n"			
+				"<script type='text/javascript' src='/smb/js/smbdav-main.min.js'></script>\n"
+			));
 
+		buffer_append_string_len(out, CONST_STR_LEN("</head>\n<body openurl='"));
+
+		buffer_append_string( out, con->url.path->ptr );
+
+		buffer_append_string_len(out, CONST_STR_LEN("' fileview_only='1'></body>\n"));
+	}
+	
+}
+
+void http_list_directory_footer(server *srv, connection *con, plugin_data *p, buffer *out) 
+{
+	UNUSED(srv);
+
+	buffer_append_string_len(out, CONST_STR_LEN(
+		"</td>\n"
+		"</tr>\n"
+		"</tbody>\n"
+		"</table>\n"
+		"</div>\n"
+		"</body>\n"
+		"</html>\n"
+	));
+}
+
+
+#if 0
 void http_list_directory_header(server *srv, connection *con, plugin_data *p, buffer *out) 
 {
 	UNUSED(srv);
@@ -542,9 +595,18 @@ void http_list_directory_header(server *srv, connection *con, plugin_data *p, bu
 
 	char usbdisk_path[50] = "/usbdisk/";
 	#if EMBEDDED_EANBLE
+	#ifndef APP_IPKG
 	strcpy(usbdisk_path, "/");
 	strcat(usbdisk_path, nvram_get_productid());
 	strcat(usbdisk_path, "/");
+	#else
+	     char *productid = nvram_get_productid();
+	strcpy(usbdisk_path, "/");
+        strcat(usbdisk_path, productid);
+        //strcat(usbdisk_path, nvram_get_productid());
+	strcat(usbdisk_path, "/");
+        free(productid);
+	#endif
 	#endif
 		
 	if(con->url.path->used && strcmp(con->url.path->ptr, usbdisk_path)==0)
@@ -615,6 +677,7 @@ void http_list_directory_footer(server *srv, connection *con, plugin_data *p, bu
 	));
 }
 
+#endif
 #if 0
 static void http_list_directory_header(server *srv, connection *con, plugin_data *p, buffer *out) {
 	UNUSED(srv);
@@ -925,11 +988,11 @@ static int http_list_directory(server *srv, connection *con, plugin_data *p, buf
 		buffer_append_string_len(out, CONST_STR_LEN("iso-8859-1"));
 	} else {
 		buffer_append_string_buffer(out, p->conf.encoding);
-	}
-	Cdbg(DBE, "http_list_directory....");
+	}	
 	buffer_append_string_len(out, CONST_STR_LEN("\"?>\n"));
 	http_list_directory_header(srv, con, p, out);
-	
+
+#if 0	
 	int b_list_view = 0;	
 	int b_query_file = 0;
 	if(con->url_options->used && strstr(con->url_options->ptr, "a=1"))
@@ -937,9 +1000,18 @@ static int http_list_directory(server *srv, connection *con, plugin_data *p, buf
 
 	char usbdisk_path[50] = "/usbdisk/";
 	#if EMBEDDED_EANBLE
+	#ifndef APP_IPKG
 	strcpy(usbdisk_path, "/");
 	strcat(usbdisk_path, nvram_get_productid());
 	strcat(usbdisk_path, "/");
+	#else
+	     char* productid = nvram_get_productid();
+	strcpy(usbdisk_path, "/");
+        strcat(usbdisk_path, productid);
+        //strcat(usbdisk_path, nvram_get_productid());
+	strcat(usbdisk_path, "/");
+        free(productid);
+	#endif
 	#endif
 		
 	if(con->url.path->used && strcmp(con->url.path->ptr, usbdisk_path)==0)
@@ -1324,7 +1396,8 @@ static int http_list_directory(server *srv, connection *con, plugin_data *p, buf
 	buffer_append_string_len(out, CONST_STR_LEN("</div>"));
 	buffer_append_string_len(out, CONST_STR_LEN("<iframe id='jqmContent' src='' frameborder='0'>"));
 	buffer_append_string_len(out, CONST_STR_LEN("</div>"));
-	
+#endif
+
 	http_list_directory_footer(srv, con, p, out);
 
 	/* Insert possible charset to Content-Type */
@@ -1346,7 +1419,7 @@ static int http_list_directory(server *srv, connection *con, plugin_data *p, buf
 URIHANDLER_FUNC(mod_dirlisting_subrequest) {
 	plugin_data *p = p_d;
 	stat_cache_entry *sce = NULL;
-Cdbg(DBE, "enter..status=[%d], uri=[%s], path=[%s], mode=[%d]", con->http_status, con->uri.path->ptr, con->physical.path->ptr, con->mode);
+//Cdbg(DBE, "enter..status=[%d], uri=[%s], path=[%s], mode=[%d]", con->http_status, con->uri.path->ptr, con->physical.path->ptr, con->mode);
 	UNUSED(srv);
 
 	/* we only handle GET, POST and HEAD */
@@ -1364,7 +1437,6 @@ Cdbg(DBE, "enter..status=[%d], uri=[%s], path=[%s], mode=[%d]", con->http_status
 	if (con->physical.path->used == 0) return HANDLER_GO_ON;
 	if (con->uri.path->used == 0) return HANDLER_GO_ON;
 	if (con->uri.path->ptr[con->uri.path->used - 2] != '/') {
-		Cdbg(DBE, "not ending with '/'..");
 		return HANDLER_GO_ON;
 	}
 	
@@ -1419,7 +1491,7 @@ Cdbg(DBE, "enter..status=[%d], uri=[%s], path=[%s], mode=[%d]", con->http_status
 }
 
 /* this function is called at dlopen() time and inits the callbacks */
-
+#ifndef APP_IPKG
 int mod_dirlisting_plugin_init(plugin *p);
 int mod_dirlisting_plugin_init(plugin *p) {
 	p->version     = LIGHTTPD_VERSION_ID;
@@ -1434,3 +1506,19 @@ int mod_dirlisting_plugin_init(plugin *p) {
 
 	return 0;
 }
+#else
+int aicloud_mod_dirlisting_plugin_init(plugin *p);
+int aicloud_mod_dirlisting_plugin_init(plugin *p) {
+	p->version     = LIGHTTPD_VERSION_ID;
+	p->name        = buffer_init_string("dirlisting");
+
+	p->init        = mod_dirlisting_init;
+	p->handle_subrequest_start  = mod_dirlisting_subrequest;
+	p->set_defaults  = mod_dirlisting_set_defaults;
+	p->cleanup     = mod_dirlisting_free;
+
+	p->data        = NULL;
+
+	return 0;
+}
+#endif

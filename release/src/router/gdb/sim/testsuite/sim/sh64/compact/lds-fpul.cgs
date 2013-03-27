@@ -1,0 +1,17 @@
+# sh testcase for lds $rn, fpul -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global lds_fpul
+lds_fpul:
+	mov #63, r0
+	shll8 r0
+	add #128, r0
+	shll16 r0
+	lds r0, fpul
+	pass

@@ -1,0 +1,1519 @@
+2006-12-21  Hans-Peter Nilsson  <hp@axis.com>
+
+	* acconfig.h: Remove.
+	* config.in: Regenerate.
+
+2006-06-13  Richard Earnshaw  <rearnsha@arm.com>
+
+	* configure: Regenerated.
+
+2006-06-05  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure: Regenerated.
+
+2006-05-31  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure: Regenerated.
+
+2005-03-23  Mark Kettenis  <kettenis@gnu.org>
+
+	* configure: Regenerate.
+
+2005-01-14  Andrew Cagney  <cagney@gnu.org>
+
+	* configure.ac: Sinclude aclocal.m4 before common.m4.  Add
+	explicit call to AC_CONFIG_HEADER.
+	* configure: Regenerate.
+
+2005-01-12  Andrew Cagney  <cagney@gnu.org>
+
+	* configure.ac: Update to use ../common/common.m4.
+	* configure: Re-generate.
+
+2005-01-11  Andrew Cagney  <cagney@localhost.localdomain>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+2005-01-07  Andrew Cagney  <cagney@gnu.org>
+
+	* configure.ac: Rename configure.in, require autoconf 2.59.
+	* configure: Re-generate.
+
+2004-12-09  Kazuhiro Inaoka <inaoka.kazuhiro@renesas.com>
+
+	Committed by Kei Sakamoto.
+	* traps-linux.c (m32r_trap): Add entries of the following dummy system
+	calls: __NR_mmap2, __NR_lchown32, __NR_getuid32, __NR_getgid32,
+	__NR_geteuid32, __NR_getegid32, __NR_getgroups32, __NR_fchown32,
+	__NR_setfsuid32, __NR_setfsgid32, __NR_getresuid32,
+	__NR_getresgid32 and __NR_chown32.
+	* syscall.h: Add new definitions of system call number.
+
+2004-12-08  Hans-Peter Nilsson  <hp@axis.com>
+
+	* configure: Regenerate for ../common/aclocal.m4 update.
+
+2004-10-07  Kazuhiro Inaoka <inaoka.kazuhiro@renesas.com>
+
+	Committed by Andrew Cagney.
+	* traps-linux.c: Don't include linux/module.h.
+	(m32r_trap): Remove dummy systemcall's entry of __NR_ustat and
+	__NR_get_kernel_syms.
+
+2004-05-18  Daniel Jacobowitz  <dan@debian.org>
+
+	* Makefile.in (stamp-xmloop, stamp-2mloop): Use -outfile-suffix.
+
+2004-02-04  Andrew Cagney  <cagney@redhat.com>
+
+	Committed by Andrew Cagney.
+	* mloopx.in: Update copyright.
+	(xextract-pbb): Fixed trap for system calls operation in parallel.
+	* mloop2.in (xextract-pbb): Ditto.
+
+2003-12-19  Kazuhiro Inaoka  <inaoka.kazuhiro@renesas.com>
+
+        * configure.in: Changed for dummy simulator of m32r-linux.
+	* configure: Regenerate.
+        * Makefile.in: Added traps-linux.o for dummy simulator of m32r-linux.
+        * traps-linux.c: Added for dummy simulator of m32r-linux.
+        * syscall.h: Ditto.
+        * sim-if.c (sim_create_inferior): Changed to setup SP for dummy
+        simulator for m32r-linux.
+        * sim-main.h (M32R_DEFAULT_MEM_SIZE): Changed for dummy simulator of
+        m32r-linux.
+
+2003-12-11  Kazuhiro Inaoka  <inaoka.kazuhiro@renesas.com>
+
+	* Makefile.in: Add support for new machine m32r2.
+	* cpu2.c: New file for m32r2 support.
+	* cpu2.h: Likewise.
+	* decode2.c: Likewise.
+	* decode2.h: Likewise.
+	* m32r2.c: Likewise.
+	* mloop2.in: Likewise.
+	* model2.c: Likewise.
+	* sem2-switch.c: Likewise.
+	* arch.c: Regenerate.
+	* arch.h: Regenerate.
+	* cpu.c: Regenerate.
+	* arch.c: Regenerate.
+	* cpuall.c: Regenerate.
+	* cpux.c: Regenerate.
+	* cpux.h: Regenerate.
+	* decode.c: Regenerate.
+	* decode.h: Regenerate.
+	* decodex.c: Regenerate.
+	* decodex.h: Regenerate.
+	* model.c: Regenerate.
+	* modelx.c: Regenerate.
+	* sem-switch.c: Regenerate.
+	* sem.c: Regenerate.
+	* semx-switch.c: Regenerate.
+	* m32r-sim.h: Add EVB register support.
+	* sim-if.c: Likewise.
+	* sim-main.h: Likewise.
+	* traps.c: Likewise.
+
+2003-09-08  Dave Brolley  <brolley@redhat.com>
+
+	On behalf of Doug Evans <dje@sebabeach.org>
+	* Makefile.in (stamp-arch,stamp-cpu,stamp-xcpu): Pass archfile to cgen.
+
+2003-02-27  Andrew Cagney  <cagney@redhat.com>
+
+	* sim-if.c (sim_open, sim_create_inferior): Rename _bfd to bfd.
+
+2002-12-19  Doug Evans  <dje@sebabeach.org>
+
+	* arch.c,arch.h,cpuall.h: Regenerate.
+	* cpu.c,cpu.h,decode.c,decode.h,model.c,sem-switch.c,sem.c: Regenerate.
+	* cpux.c,cpux.h,decodex.c,decodex.h,modelx.c,semx-switch.c: Regenerate.
+
+2002-06-16  Andrew Cagney  <ac131313@redhat.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+2001-11-14  Dave Brolley  <brolley@redhat.com>
+
+	* arch.c: Regenerate.
+	* arch.h: Regenerate.
+	* cpu.c: Regenerate.
+	* cpu.h: Regenerate.
+	* cpuall.h: Regenerate.
+	* cpux.c: Regenerate.
+	* cpux.h: Regenerate.
+	* decode.c: Regenerate.
+	* decode.h: Regenerate.
+	* decodex.c: Regenerate.
+	* decodex.h: Regenerate.
+	* model.c: Regenerate.
+	* modelx.c: Regenerate.
+	* sem-switch.c: Regenerate.
+	* sem.c: Regenerate.
+	* semx-switch.c: Regenerate.
+
+2001-07-05  Ben Elliston  <bje@redhat.com>
+
+	* Makefile.in (stamp-arch): Use $(CGEN_CPU_DIR).
+	(stamp-cpu): Likewise.
+	(stamp-xcpu): Likewise.
+
+2001-03-05  Dave Brolley  <brolley@redhat.com>
+
+	* arch.c: Regenerate.
+	* arch.h: Regenerate.
+	* cpu.c: Regenerate.
+	* cpu.h: Regenerate.
+	* cpuall.h: Regenerate.
+	* cpux.c: Regenerate.
+	* cpux.h: Regenerate.
+	* decode.c: Regenerate.
+	* decode.h: Regenerate.
+	* decodex.c: Regenerate.
+	* decodex.h: Regenerate.
+	* model.c: Regenerate.
+	* modelx.c: Regenerate.
+	* sem-switch.c: Regenerate.
+	* sem.c: Regenerate.
+	* semx-switch.c: Regenerate.
+
+2001-01-12  Frank Ch. Eigler  <fche@redhat.com>
+
+	* configure: Regenerated with sim_scache fix.
+
+2000-11-18  Greg McGary  <greg@mcgary.org>
+
+	* Makefile.in: remove `@true' commands for rules that have
+	$(CGEN_MAINT) as a prerequisite.
+
+2000-10-06  Dave Brolley  <brolley@redhat.com>
+
+	* sem.c: Regenerated.
+	* sem-switch.c: Regenerated.
+	* semx-switch.c: Regenerated.
+
+2000-08-28  Dave Brolley  <brolley@redhat.com>
+
+	* Makefile.in: Use of @true confuses VPATH. Remove it.
+	* cpu.h: Regenerated.
+	* cpux.h: Regenerated.
+	* decode.c: Regenerated.
+	* decodex.c: Regenerated.
+	* model.c: Regenerated.
+	* modelx.c: Regenerated.
+	* sem-switch.c: Regenerated.
+	* sem.c: Regenerated.
+	* semx-switch.c: Regenerated.
+
+2000-08-21  Frank Ch. Eigler  <fche@redhat.com>
+
+	* Makefile.in (m32r-clean): Add stamp-arch, stamp-cpu.
+	(stamp-arch, stamp-cpu): New targets.
+
+Tue May 23 21:39:23 2000  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+2000-03-30  Dave Brolley  <brolley@redhat.com>
+
+	* configure: Regenerated.
+
+1999-10-04  Doug Evans  <devans@casey.cygnus.com>
+
+	* arch.c,arch.h,cpuall.h: Rebuild.
+	* cpux.h,decodex.c,decodex.h,modelx.c,semx-switch.c: Rebuild.
+
+1999-09-29  Doug Evans  <devans@casey.cygnus.com>
+
+	* mloop.in: Update call to sim_engine_invalid_insn.
+	* sem.c,sem-switch.c: Rebuild.
+	* traps.c (sim_engine_invalid_insn): New arg `vpc'.  Change type of
+	result to SEM_PC.  Return vpc.
+	* mloopx.in: Ditto.
+	* semx-switch.c: Rebuild.
+
+Wed Sep 29 14:47:20 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c (sim_engine_invalid_insn): Return PC.
+
+Thu Sep  2 18:15:53 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+1999-09-01  Doug Evans  <devans@casey.cygnus.com>
+
+	* decodex.c: Rebuild.
+
+1999-08-28  Doug Evans  <devans@casey.cygnus.com>
+
+	* sem.c: Rebuild
+
+	* cpux.h: Rebuild.
+
+1999-08-09  Doug Evans  <devans@casey.cygnus.com>
+
+	* cpu.h,decode.c,decode.h,model.c,sem-switch.c,sem.c: Rebuild.
+	* cpux.h,decodex.c,decodex.h,modelx.c,semx-switch.c: Rebuild.
+
+1999-08-04  Doug Evans  <devans@casey.cygnus.com>
+
+	* m32r-sim.h (SEM_SKIP_INSN): Delete.
+	* cpu.h,cpuall.h,decode.c,model.c,sem-switch.c,sem.c: Rebuild.
+	* cpux.h,decodex.c,modelx.c,semx-switch.c: Rebuild.
+	* mloopx.in (emit_parallel): Call SEM_SKIP_COMPILE.
+	(emit_full_parallel): Ditto.
+
+1999-05-08  Felix Lee  <flee@cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+	
+Fri Apr 16 16:47:43 1999  Doug Evans  <devans@charmed.cygnus.com>
+
+	* devices.c (device_io_read_buffer): New arg `sd'.
+	(device_io_write_buffer): New arg `sd'.
+	(device_error): Give proper arg spec.
+
+1999-04-10  Doug Evans  <devans@casey.cygnus.com>
+
+	* sem-switch.c,sem.c: Rebuild.
+	* cpux.h,semx-switch.c: Rebuild.
+
+1999-03-27  Doug Evans  <devans@casey.cygnus.com>
+
+	* decode.c: Rebuild.
+	* decodex.c: Rebuild.
+
+1999-03-26  Doug Evans  <devans@casey.cygnus.com>
+
+	* m32r-sim.h (M32R_DEVICE_LEN): Fix off by one error.
+
+1999-03-22  Doug Evans  <devans@casey.cygnus.com>
+
+	* arch.c,arch.h,model.c: Rebuild.
+	* modelx.c: Rebuild.
+	* m32r-sim.h (a_m32r_h_gr_get,a_m32r_h_gr_set): Declare.
+	(a_m32r_h_cr_get,a_m32r_h_cr_set): Declare.
+	* m32r.c (m32rbf_fetch_register): Replace calls to a_m32r_h_pc_get,
+	a_m32r_h_accum_get with appropriate calls to m32rbf_*.
+	(m32rbf_store_register): Ditto.
+	(a_m32r_h_gr_get,a_m32r_h_gr_set): New functions.
+	(a_m32r_h_cr_get,a_m32r_h_cr_set): Ditto.
+	* sim-if.c (sim_open): Update call to m32r_cgen_cpu_open.
+	* traps.c (m32r_core_signal): Replace calls to a_m32r_h_*,
+	with appropriate calls to m32rbf_*.
+
+1999-03-11  Doug Evans  <devans@casey.cygnus.com>
+
+	* arch.c,arch.h,cpu.c,cpu.h,sem.c,sem-switch.c: Rebuild.
+	* cpux.c,cpux.h,semx-switch.c: Rebuild.
+	* m32r-sim.h (GET_H_*,SET_H_*, except GET_H_SM): Delete.
+	* sim-if.c (sim_open): Update call to m32r_cgen_cpu_open.
+
+1999-02-25  Doug Evans  <devans@casey.cygnus.com>
+
+	* cpu.c,cpu.h: Rebuild.
+
+1999-02-09  Doug Evans  <devans@casey.cygnus.com>
+
+	* Makefile.in (SIM_EXTRA_DEPS): Add m32r-desc.h, delete cpu-opc.h.
+	(stamp-xmloop): s/-parallel/-parallel-write/.
+	* configure.in (sim_link_files,sim_link_links): Delete.
+	* configure: Rebuild.
+	* decode.c,decode.h,model.c,sem-switch.c,sem.c: Rebuild.
+	* decodex.c,decodex.h,modelx.c,semx-switch.c: Rebuild.
+	* mloop.in (execute): CGEN_INSN_ATTR renamed to CGEN_INSN_ATTR_VALUE.
+	* sim-if.c (sim_open): m32r_cgen_cpu_open renamed from
+	m32r_cgen_opcode_open.  Set disassembler.
+	(sim_close): m32r_cgen_cpu_open renamed from m32r_cgen_opcode_open.
+	* sim-main.h: Don't include cpu-opc.h,cpu-sim.h. Include
+	m32r-desc.h,m32r-opc.h,m32r-sim.h.
+
+Thu Feb  4 16:04:26 1999  Doug Evans  <devans@canuck.cygnus.com>
+
+	* cpux.h,decodex.c,modelx.c,semx-switch.c: Regenerate.
+
+1999-01-27  Doug Evans  <devans@casey.cygnus.com>
+
+	* cpu.h,decode.c,model.c,sem-switch.c,sem.c: Rebuild.
+	* cpux.h,decodex.c,modelx.c,semx-switch.c: Rebuild.
+
+1999-01-15  Doug Evans  <devans@casey.cygnus.com>
+
+	* decode.h,model.c: Regenerate.
+	* decodex.h,modelx.c: Regenerate.
+
+1999-01-14  Doug Evans  <devans@casey.cygnus.com>
+
+	* arch.c,arch.h,cpuall.h: Regenerate.
+	* cpu.c,cpu.h,decode.c,decode.h,model.c,sem-switch.c,sem.c: Regenerate.
+	* traps.c (sim_engine_invalid_insn): PCADDR->IADDR.
+	* cpux.c,cpux.h,decodex.c,decodex.h,modelx.c,semx-switch.c: Regenerate.
+
+1999-01-11  Doug Evans  <devans@casey.cygnus.com>
+
+	* Makefile.in (m32r-clean): rm eng.h.
+	* sim-main.h: Delete inclusion of ansidecl.h.
+	* cpu.h: Regenerate.
+	* cpux.h: Regenerate.
+
+1999-01-06  Doug Evans  <devans@casey.cygnus.com>
+
+	* cpu.h: Regenerate.
+	* cpux.h: Regenerate.
+
+1999-01-05  Doug Evans  <devans@casey.cygnus.com>
+
+	* Makefile.in (MAIN_INCLUDE_DEPS): Delete.
+	(INCLUDE_DEPS,OPS_INCLUDE_DEPS): Delete.
+	(sim-if.o): Use SIM_MAIN_DEPS.
+	(arch.o,traps.o,devices.o): Ditto.
+	(M32RBF_INCLUDE_DEPS): Use CGEN_MAIN_CPU_DEPS.
+	(m32r.o,mloop.o,cpu.o,decode.o,sem.o,model.o): Simplify dependencies.
+	(m32rx.o,mloopx.o,cpux.o,decodex.o,semx.o,modelx.o): Ditto.
+	* cpu.c,cpu.h,decode.c,model.c,sem-switch.c,sem.c: Regenerate.
+	* m32r-sim.h (m32rbf_h_cr_[gs]et_handler): Declare.
+	([GS]ET_H_CR): Define.
+	(m32rbf_h_psw_[gs]et_handler): Declare.
+	([GS]ET_H_PSW): Define.
+	(m32rbf_h_accum_[gs]et_handler): Declare.
+	([GS]ET_H_ACCUM): Define.
+	(m32rxf_h_{cr,psw,accum}_[gs]et_handler): Declare.
+	(m32rxf_h_accums_[gs]et_handler): Declare.
+	([GS]ET_H_ACCUMS): Define.
+	* sim-if.c (sim_open): Model probing code moved to sim-model.c.
+	* m32r.c (WANT_CPU): Define as m32rbf.
+	(all register access fns): Rename to ..._handler.
+	* cpux.c,cpux.h,decodex.c,modelx.c,semx.c: Regenerate.
+	* m32rx.c (WANT_CPU): Define as m32rxf.
+	(all register access fns): Rename to ..._handler.
+
+1998-12-14  Doug Evans  <devans@casey.cygnus.com>
+
+	* configure.in: --enable-cgen-maint support moved to common/aclocal.m4.
+	(SIM_AC_OPTION_ALIGNMENT): Make strict.
+	* configure: Regenerate.
+
+	* sem-switch.c,sem.c,semx-switch.c: Regenerate.
+	* sim-main.h (SIM_ENGINE_HALT_HOOK,SIM_ENGINE_RESTART_HOOK): Define.
+	* traps.c (m32r_core_signal): Handle --environment=operating.
+
+1998-12-09  Doug Evans  <devans@casey.cygnus.com>
+
+	* cpu.h,decode.c,sem-switch.c,sem.c: Regenerate.
+	* cpux.h,decodex.c,semx-switch.c: Regenerate.
+
+	* sim-if.c: Include string.h or strings.h if present.
+
+1998-12-04  Doug Evans  <devans@casey.cygnus.com>
+
+	* configure.in: Call SIM_AC_OPTION_INLINE.
+	* configure: Regenerate.
+	* sim-main.h: Protect against multiple inclusion.
+	Don't include cgen-scache.h,cgen-cpu.h,cgen-trace.h,cpuall.h.
+	Done by cgen-sim.h now.
+	* tconfig.in (SIM_HAVE_MODEL): Delete, moved to cgen-types.h.
+	* cpuall.h: Regenerate.
+	* cpu.h,decode.c,sem-switch.c,sem.c: Regenerate.
+	* mloop.in (extract16): Make static inline again.
+	Simplify with call to @cpu@_fill_argbuf,@cpu@_fill_argbuf_tp.
+	(extract32): Ditto.
+	Simplify with call to @cpu@_fill_argbuf,@cpu@_fill_argbuf_tp.
+	(execute): Test ARGBUF_PROFILE_P before profiling.
+	Update calls to TRACE_INSN_INIT,TRACE_INSN_FINI.
+	* cpux.h,decodex.c,modelx.c,semx-switch.c: Regenerate.
+	* mloopx.in: Rewrite.
+
+1998-11-22  Doug Evans  <devans@tobor.to.cygnus.com>
+
+	* devices.c (device_io_write_buffer): Fix typo.
+	* sim-if.c (sim_open): Hack in call to dv_sockser_install.
+	* tconfig.in (HAVE_DV_SOCKSER): Add but comment out.
+
+1998-11-18  Doug Evans  <devans@casey.cygnus.com>
+
+	* Makefile.in (M32R_OBJS): Delete extract.o.
+	(extract.o): Delete.
+	* cpu.c,cpu.h,decode.c,decode.h,sem-switch.c,sem.c: Rebuild.
+	* mloop.in (extract16): Update type of `insn' arg.
+	Delete call to d->extract.
+	(extract32): Ditto.
+	* cpux.c,cpux.h,decodex.c,decodex.h,semx-switch.c: Rebuild.
+	* mloopx.in (extractx16): Update type of `insn' arg.
+	Delete call to d->extract.  Delete arg pbb_p.  All callers updated.
+	(extract-simple,full-exec-simple,fast-exec-simple): Delete.
+	(extractx32): Ditto.
+
+Wed Nov  4 23:55:37 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* sim-main.h: Delete inclusion of config.h, include sim-basics.h
+	before cgen-types.h.
+	* tconfig.in: Guard against multiple inclusion.
+	* cpu.h: Delete decls moved to genmloop.sh.
+	* cpux.h: Ditto.
+
+Mon Oct 19 14:13:05 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* sim-main.h: #include cpu-opc.h.
+	* arch.c,arch.h,decode.c,extract.c,model.c,sem.c: Regenerate
+	to get #include cleanup.
+	* decodex.c,extractx.c,modelx.c: Ditto.
+
+	* Makefile.in (SIM_EXTRA_DEPS): Replace cgen headers with
+	CGEN_INCLUDE_DEPS.
+	(M32RBF_INCLUDE_DEPS): Define.
+	(m32r .o's): Depend on it.
+	(mloop.c): Update call to genmloop.sh.
+	* cpu.h,cpuall.h: Regenerate.
+	* sim-main.h: Delete inclusion of cpu.h,decode.h, moved to cpuall.h.
+	#include cgen-scache.h,cgen-cpu.h.
+	* tconfig.in (WITH_FOO semantic macros): Delete.
+	* Makefile.in (M32RXF_INCLUDE_DEPS): Define.
+	(m32rx .o's): Depend on it.
+	(mloopx.c): Update call to genmloop.sh.
+	* cpux.h: Regenerate.
+
+Fri Oct 16 09:15:29 1998  Doug Evans  <devans@charmed.cygnus.com>
+
+	* sim-if.c (sim_do_command): Handle "sim info reg {bbpsw,bbpc}".
+
+Fri Oct  9 16:11:58 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	Add pseudo-basic-block execution support.
+	* Makefile.in (SIM_OBJS): Add sim-reg.o, cgen-run.o, sim-stop.o.
+	(SIM_EXTRA_DEPS): Add include/opcode/cgen.h.
+	(INCLUDE_DEPS): Delete cpu-sim.h, include/opcode/cgen.h.
+	(mloop.c): Build pseudo-basic-block version.  Depend on stamp-cpu.
+	* arch.c,arch.h,cpuall.h: Regenerate.
+	* cpu.c,cpu.h,decode.c,decode.h,extract.c,model.c: Regenerate.
+	* sem-switch.c,sem.c: Regenerate.
+	* m32r-sim.h (M32R_MISC_PROFILE): New members load_regs,
+	load_regs_pending.
+	* m32r.c (m32rbf_fetch_register): Renamed from m32rb_fetch_register.
+	(m32rbf_store_register,m32rbf_h_cr_get,m32rbf_h_cr_set,
+	m32rbf_h_psw_get,m32rbf_h_psw_set,m32rbf_h_accum_get,
+	m32rbf_h_accum_set): Likewise.
+	(m32r_model_{init,update}_insn_cycles): Delete.
+	(m32rbf_model_insn_{before,after}): New fns.
+	(m32r_model_record_cti,m32r_model_record_cycles): Delete.
+	(m32rb_model_mark_get_h_gr,m32rb_model_mark_set_h_gr): Delete.
+	(m32rb_model_mark_busy_reg,m32rb_model_mark_unbusy_reg): Delete.
+	(check_load_stall): New fn.
+	(m32rbf_model_m32r_d_u_{exec,cmp,mac,cti,load,store}): New fns.
+	(m32rbf_model_test_u_exec): New fn.
+	* mloop.in: Rewrite, use pbb support.
+	* sim-if.c (sim_stop,sim_sync_stop,sim_resume): Delete.
+	(sim_fetch_register,sim_store_register): Delete.
+	* sim-main.h (CIA_GET,CIA_SET): Fix.
+	(SIM_ENGINE_HALT_HOOK,SIM_ENGINE_RESTART_HOOK): Delete.
+	* tconfig.in (WITH_SCACHE_PBB): Define.
+	(WITH_SCACHE_PBB_M32RBF): Define.
+	* traps.c (sim_engine_invalid_insn): Renamed from ..._illegal_....
+	(m32r_trap): Pass pc to sim_engine_halt.
+	* configure.in (SIM_AC_OPTION_SCACHE): Change 1024 to 16384.
+	* configure: Regenerate.
+	* Makefile.in (M32RX_OBJS): Delete semx.o, add extract.o.
+	(mloopx.c): Build pseudo-basic-block version.
+	(semx.o): Delete.
+	(extractx.o): Add.
+	* cpux.c,cpux.h,decodex.c,decodex.h,modelx.c: Regenerate.
+	* readx.c: Delete.
+	* semx.c: Delete.
+	* extractx.c: New file.
+	* semx-switch.c: New file.
+	* m32r-sim.h (BRANCH_NEW_PC): Delete.
+	(SEM_SKIP_INSN): New macro.
+	* m32rx.c (m32rxf_fetch_register): Renamed from m32rx_fetch_register.
+	(m32rxf_store_register,m32rxf_h_cr_get,m32rxf_h_cr_set,
+	m32rxf_h_psw_get,m32rxf_h_psw_set,m32rxf_h_accum_get,
+	m32rxf_h_accum_set,m32rxf_h_accums_get,m32rxf_h_accums_set): Likewise.
+	(m32rxf_model_insn_{before,after}): New fns.
+	(m32rx_model_mark_get_h_gr,m32rx_model_mark_set_h_gr): Delete.
+	(m32rx_model_mark_busy_reg,m32rx_model_mark_unbusy_reg): Delete.
+	(check_load_stall): New fn.
+	(m32rxf_model_m32rx_u_{exec,cmp,mac,cti,load,store}): New fns.
+	* mloopx.in: Rewrite, use pbb support.
+	* tconfig.in (WITH_SCACHE_PBB_M32RXF): Define.
+	(WITH_SEM_SWITCH_FULL): Change from 0 to 1.
+
+Wed Sep 16 18:22:27 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* m32r-sim.h ({PSW,CBR,SPI,SPU,BPC,BBPSW,BBPC}_REGNUM): New macros.
+	({ACC1L,ACC1H}_REGNUM): New macros.
+	(m32r_decode_gdb_ctrl_regnum): Add prototype.
+	* m32r.c (m32r_decode_gdb_ctrl_regnum): New function.
+	(m32r_fetch_register,m32r_store_register): Rewrite.
+	* m32rx.c (m32rx_fetch_register,m32rx_store_register): Rewrite.
+
+Tue Sep 15 15:01:14 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* m32r-sim.h (GET_H_SM): New macro.
+	(UART params): Update to msa2000.
+	* devices.c (device_io_read_buffer): Update to msa2000.
+	* m32r.c (m32rb_h_cr_get,m32rb_h_cr_set): Handle bbpc,bbpsw.
+	(m32rb_h_psw_get,m32rb_h_psw_set): New functions.
+	* arch.c,arch.h,cpu.c,cpu.h,sem-switch.c,sem.c: Regenerate.
+	* m32rx.c (m32rx_h_cr_get,m32rx_h_cr_set): Handle bbpc,bbpsw.
+	(m32rx_h_psw_get,m32rx_h_psw_set): New functions.
+	* cpux.c,cpux.h,readx.c,semx.c: Regenerate.
+
+Wed Sep  9 15:29:36 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* m32r-sim.h (m32r_trap): Update prototype.
+	* traps.c (m32r_trap): New arg `pc'.
+	* sem.c,sem-switch.c: Regenerated.
+	* cpux.h,readx.c,semx.c: Regenerated.
+
+Mon Aug  3 12:59:17 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	Rename cpu m32r to m32rb to distinguish from architecture name.
+	* Makefile.in (mloop.c): cpu m32r renamed to m32rb.
+	* sim-main.h (WANT_CPU_M32RB): Renamed from WANT_CPU_M32R.
+	* tconfig.in (WANT_CPU_M32RB): Ditto.
+	* m32r.c (WANT_CPU_M32RB): Ditto.
+	(*): m32r_ cpu fns renamed to m32rb_.
+	* sim-if.c (sim_stop,sim_sync_stop,sim_resume): Update.
+	* arch.h,arch.c: Regenerate.
+	* cpu.c,cpu.h,decode.c,decode.h,extract.c,model.c: Regenerate.
+	* sem-switch.c,sem.c: Regenerate.
+
+	* sim-if.c (sim_open): Don't allocate memory on top of any user
+	specified memory.
+	(h_gr_get,h_gr_set): Delete.
+	* sim-main.h (h_gr_get,h_gr_set): Delete.
+	* traps.c (m32r_trap): Replace calls to h_gr_[gs]et with
+	a_m32r_h_gr_[gs]et.
+
+	* Makefile.in (INCLUDE_DEPS): Add include/opcode/cgen.h.
+
+	* sim-if.c (sim_open): Open opcode table.
+	(sim_close): Close it.
+
+Tue Jul 28 13:06:19 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	Add support for new versions of mulwhi,mulwlo,macwhi,macwlo that
+	accept an accumulator choice.
+	* cpux.c,decodex.c,decodex.h,modelx.c,readx.c,semx.c: Regenerate.
+
+Fri Jul 24 13:00:29 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* m32r.c: Include cgen-mem.h.
+	* traps.c (m32r_trap): Tweak for -Wall.
+	* m32rx.c: Include cgen-mem.h.
+	* semx.c: Regenerate, get -Wall cleanups.
+
+Tue Jul 21 16:53:10 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* cpu.h,extract.c: Regenerate.  pc-rel calcs done on f_dispNN now.
+	* cpux.h,readx.c,semx.c: Ditto.
+
+Wed Jul  1 16:51:15 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* Makefile.in: cgen_maint -> CGEN_MAINT.
+	* configure.in: AC_SUBST cgen,cgendir.  No longer look for guile.
+	* configure: Regenerate.
+	* arch.c,arch.h,cpuall.h: Regenerate.
+	* cpu.c,cpu.h,decode.c,decode.h,extract.c,model.c: Regenerate.
+	* sem-switch.c,sem.c: Regenerate.
+	* cpux.c,cpux.h,decodex.c,decodex.h,modelx.c,readx.c: Regenerate.
+	* semx.c: Regenerate.
+	* mloopx.in (icount): Moved here from genmloop.sh.
+
+Sat Jun 13 07:49:23 1998  Doug Evans  <devans@fallis.cygnus.com>
+
+	* m32r-sim.h (M32R_MISC_PROFILE): New members insn_cycles, cti_stall,
+	load_stall,biggest_cycles.
+	* m32r.c (m32r_model_mark_get_h_gr): Update.
+	(m32r_model_init_insn_cycles,m32r_model_update_insn_cycles): New fns.
+	(m32r_model_record_cti,m32r_model_record_cycles): New functions.
+	* mloop.in: Call cycle init/update fns.
+	* model.c: Regenerate.
+	* m32rx.c (m32rx_model_mark_get_h_gr): Update.
+	* mloopx.in: Call cycle init/update fns.
+	* modelx.c: Regenerate.
+
+Wed Jun 10 17:39:29 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* traps.c: New file.  Trap support moved here from sim-if.c.
+	* Makefile.in (SIM_OBJS): Add traps.o
+	* sim-if.c: Don't include targ-vals.h.
+	(sim_engine_illegal_insn): Moved to traps.c
+	* sim-main.h (SIM_CORE_SIGNAL): Define.
+	(m32r_core_signal): Declare.
+	* m32r-sim.h (m32r_trap): Declare.
+
+	* devices.c (device_io_read_buffer): Handle cache purging via MCCR
+	register.
+
+	* m32r-sim.h (M32R_MISC_PROFILE): Move here from sim-main.h.
+	(PROFILE_COUNT_SHORTINSNS,PROFILE_COUNT_LONGINSNS): New macros.
+	(TRAP_SYSCALL,TRAP_BREAKPOINT): New macros.
+
+	* extract.c,sem-switch.c,sem.c: Regenerate.
+	* cpux.h,readx.c,semx.c: Regenerate.
+
+Wed May 20 00:10:40 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* m32r-sim.h (PROFILE_COUNT_PARINSNS): New macro.
+	* mloopx.in (extract): Set abuf.addr for proper fill nop counting.
+	(execute): Count parallel insns.
+	* sim-if.c (print_m32r_misc_cpu): Print count.
+	* sim-main.h (M32R_MISC_PROFILE): New member parallel_count.
+
+	Zero bottom two bits of pc in jmp,jl insns.
+	* sem.c,sem-switch.c: Regenerate.
+	* semx.c: Regenerate.
+
+Tue May 19 16:45:33 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* sim-if.c (do_trap): Treat traps 2-15 as hardware does.
+
+Sat May 16 13:04:30 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* sim-if.c (sim_stop): Update call to @cpu@_engine_stop.
+	(sim_sync_stop): New function.
+
+Fri May 15 16:43:27 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* Makefile.in (devices.o): Add dependencies.
+
+	* arch.h,cpu.c,cpu.h,cpuall.h: Regenerate.
+	* sem-switch.c,sem.c: Regenerate.
+	* mloop.in (execute): Update calls to TRACE_INSN_{INIT,FINI}.
+	* cpux.c,cpux.h,modelx.c,semx.c: Regenerate.
+	* m32rx.c (m32rx_model_mark_{busy,unbusy}_reg): New functions.
+	* mloopx.in (execute): Update calls to TRACE_INSN_{INIT,FINI}.
+	Fix pc value passed to TRACE_INSN for second parallel insn.
+
+Thu May  7 02:51:35 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* Makefile.in (SIM_OBJS): Add sim-cpu.o.
+
+Wed May  6 14:51:39 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* arch.h,arch.c,cpu.h,cpuall.h: Regenerate, tweaks mostly.
+	* model.c: Ditto.  Reorganize model/mach data.
+	* cpux.h: Ditto.
+	* modelx.c: Ditto.
+
+	* Makefile.in (m32r.o,mloop.o,cpu.o,model.o): Add decode.h dependency.
+	(m32rx.o,mloopx.o,cpux.o,modelx.o): Add decodex.h dependency.
+	* decode.c,decode.h: Regenerate, introduces IDESC table.
+	* mloop.in (extract16,extract32): Add IDESC support.
+	Update names of semantic handler member names.
+	(execute): Ditto.  Delete call to PROFILE_COUNT_INSN.
+	* decodex.c,decodex.h: Regenerate, introduces IDESC table.
+	* mloopx.in: Add IDESC support.
+	Update names of semantic handler member names.
+	Delete call to PROFILE_COUNT_INSN.
+
+	* sem-switch.c: Regenerate.  Redo computed goto label handling.
+	* sem.c: Regenerate.  Call PROFILE_COUNT_INSN.
+	* readx.c: Regenerate.  Redo computed goto label handling.
+	* semx.c: Regenerate.  Call PROFILE_COUNT_INSN.  Finish profiling
+	support.
+
+	* m32r.c (m32r_fetch_register): Change result type and args to
+	conform to sim_fetch_register interface.
+	(m32r_store_register): Ditto for sim_store_register interface.
+	* m32rx.c (m32rx_fetch_register): Change result type and args to
+	conform to sim_fetch_register interface.
+	(m32rx_store_register): Ditto for sim_store_register interface.
+
+	* sim-if.c (alloc_cpu): Delete.
+	(free_state): Uninstall modules here ...
+	(sim_open): ... and not here.  Call sim_cpu_alloc_all.
+	Set default architecture/model if not specified.
+	(sim_fetch_register,sim_store_register): Rewrite.
+
+	* sim-if.c (h_pc_get,h_pc_set): Delete.  Renamed to sim_pc_[gs]et
+	and moved to common/sim-cpu.c.
+	(sim_create_inferior): Update.
+	(do_trap): Update.
+	* sim-main.h (h_pc_get,h_pc_set): Delete.
+
+	* sim-main.h (sim_cia): Change to USI.
+	(sim_cpu): Move m32r_misc_profile before machine generated part.
+
+Tue Apr 28 18:33:31 1998  Geoffrey Noer  <noer@cygnus.com>
+
+        * configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Tue Apr 28 18:05:53 1998  Nick Clifton  <nickc@cygnus.com>
+
+	* model.c: Rebuilt.
+	* modelx.c: Rebuilt.
+
+Mon Apr 27 15:36:30 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* cpu.h,model.c,sem-switch.c,sem.c: Regenerated.  Mostly comment
+	and variable renaming due to macro insn additions.
+	* mloop.in: Update to use CGEN_INSN_NUM.
+	* cpux.h,modelx.c,readx.c,semx.c: Regenerated.
+	* mloopx.in: Update to use CGEN_INSN_NUM.
+
+Sun Apr 26 15:31:55 1998  Tom Tromey  <tromey@creche>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+	* config.in: Ditto.
+
+Sun Apr 26 15:20:05 1998  Tom Tromey  <tromey@cygnus.com>
+
+	* acconfig.h: New file.
+	* configure.in: Reverted change of Apr 24; use sinclude again.
+
+Fri Apr 24 14:16:40 1998  Tom Tromey  <tromey@creche>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+	* config.in: Ditto.
+
+Fri Apr 24 11:19:26 1998  Tom Tromey  <tromey@cygnus.com>
+
+	* configure.in: Don't call sinclude.
+
+Mon Apr 20 16:12:35 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* cpu.c,sem.c,sem-switch.c: Regenerate.  From
+	- cgen/m32r.cpu (h-accum): Add attribute FUN-ACCESS.
+	* m32r.c (m32r_h_accum_get,m32r_h_accum_set): New functions.
+	#include cgen-ops.h.
+	* cpux.c,readx.c,semx.c: Regenerate.
+	* m32rx.c (m32r_h_accum_get,m32r_h_accum_set): New functions.
+	#include cgen-ops.h.  Delete inclusion of several unnecessary headers.
+	(m32r_h_accums_get): Sign extend top 8 bits.
+
+Tue Apr 14 14:04:07 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* semx.c: Regenerate.
+
+Fri Apr 10 18:22:41 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* cpu.h,decode.c,decode.h,extract.c,sem.c,sem-switch.c: Regenerate.
+	* cpux.h,decodex.c,decodex.h,readx.c,semx.c: Regenerate.
+
+Sat Apr  4 20:36:25 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Fri Mar 27 16:15:52 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Wed Mar 25 12:35:29 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Wed Mar 18 12:38:12 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Sat Mar 14 20:53:36 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* config.in (HAVE_FCNTL_H): Add.
+	* configure: Regenerate.
+	* Makefile.in (SIM_OBJS): Add devices.o.
+	* m32r-sim.h (m32r_devices): Renamed from m32r_mspr_device.
+	(UART_*): Define m32r serial port parameters.
+	(M32R_DEVICE_ADDR,M32R_DEVICE_LEN): Define.
+	* m32r.c (device_io_{read,write}_buffer,device_error): Move from here,
+	* devices.c: To here.
+	* sim-if.c: Don't include signal.h,sim-core.h.
+	(sim_open): Use M32R_DEVICE_{ADDR,LEN} in sim_core_attach call.
+	(sim_resume): Call sim_module_{resume,suspend}.
+	* m32r.c (m32r_h_cr_{get,set}): Use register number enums.
+
+	* tconfig.in (SIM_HANDLES_LMA): Define.
+
+	* sim-if.c (do_trap): Result is new pc.
+	Handle --environment=operating.
+	* sem-switch.c,sem.c: Regenerate.
+	* semx.c: Regenerate.
+
+Wed Mar 11 14:07:39 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* sim-if.c (syscall_read_mem, syscall_write_mem): Replace
+ 	sim_core_*_map with read_map, write_map, exec_map resp.
+
+Wed Mar  4 11:36:51 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* Makefile.in (SIM_EXTRA_DEPS): Add cpu-opc.h.
+	(arch.o): Delete cpu-opc.h dependency.
+	(decode.o,model.o): Likewise.
+	(decodex.o,modelx.o): Likewise.
+
+	* cpu.h,model.c,sem-switch.c,sem.c: Regenerate.
+	* cpux.h,decodex.[ch],modelx.c,readx.c,semx.c: Regenerate.
+
+Thu Feb 26 18:38:35 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* sim-if.c (sim_open): Initialize PROFILE_INFO_CPU_CALLBACK.
+
+	* sim-if.c (sim_info): Delete.
+
+Fri Feb 27 10:14:29 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* mloopx.in: Fix handling of branch in parallel with another insn.
+	* semx.c: Regenerate.
+
+Mon Feb 23 13:30:46 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* sim-main.h: #include symcat.h.
+	* m32r-sim.h (BRANCH_NEW_PC): Delete current_cpu arg.
+	(NEW_PC_{BASE,SKIP,2,4,BRANCH_P}): New macros.
+	* cpu.[ch],decode.[ch],extract.c,model.c: Regenerate.
+	* sem.c,sem-switch.c: Regenerate.
+	* m32r-sim.h (SEM_NEXT_PC): Modify to handle parallel exec.
+	* mloopx.in: Rewrite.
+	* cpux.[ch],decodex.[ch],readx.c,semx.c: Regenerate.
+
+Mon Feb 23 12:27:52 1998  Nick Clifton  <nickc@cygnus.com>
+
+	* m32r.c (m32r_h_cr_set, m32r_h_cr_get): Shadow control register 6
+	in the backup PC register.
+	* m32rx.c (m32r_h_cr_set, m32r_h_cr_get): Shadow control register 6
+	in the backup PC register.
+
+Thu Feb 19 16:39:35 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* m32r.c (do_lock,do_unlock): Delete.
+	* cpu.[ch],decode.[ch],extract.c,model.c: Regenerate.
+	* sem.c,sem-switch.c: Regenerate.
+	* cpux.[ch],decodex.[ch],readx.c,semx.c: Regenerate.
+
+Tue Feb 17 18:18:10 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* Makefile.in (M32R_OBJS): Add cpu.o.
+	(cpu.o): Add rule for.
+	(NL_TARGET): Define.
+	* configure.in: Add AC_CHECK_PROG(SCHEME).
+	* cpu.c: New file.
+	* cpuall.h,cpu.h,decode.c,decode.h,extract.c,model.c: Regenerate.
+	* sem-switch.c,sem.c: Regenerate.
+	* mloop.in (execute): Update call to semantic fn.
+	(M32RX_OBJS): Add cpux.o.
+	(cpux.o): Add rule for.
+	cpux.c: New file.
+	* cpux.h,decodex.c,decodex.h,modelx.c,readx.c,semx.c: Regenerate.
+	* m32rx.c (m32rx_h_accums_{get,set}): Rewrite.
+	(m32rx_h_cr_{get,set}): New functions.
+	(m32rx_h_accums_{get,set}): New functions.
+	* mloopx.in: Rewrite main loop.
+
+	* m32r.c (do_trap): Move from here.
+	* sim-if.c (do_trap): To here, and rewrite to use CB_SYSCALL support.
+	(sim_create_inferior): Use h_pc_set.
+	(h_pc_{get,set}): New functions.
+	(h_gr_{get,set}): New functions.
+	(syscall_{read,write}_mem): New functions.
+	* sim-main.h (h_{gr,pc}_{get,set}): Declare.
+
+Tue Feb 17 12:44:38 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* sim-if.c (sim_store_register, sim_fetch_register): Pass in
+ 	length parameter.  Return -1.
+	(sim_create_inferior): Pass 4 sim_store_register.
+
+Wed Feb 11 19:53:48 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* sim-main.h (CIA_GET,CIA_SET): Provide dummy definitions for now.
+
+	* decode.c, decode.h, sem.c, sem-switch.c, model.c: Regenerate.
+	* cpux.c, decodex.c, decodex.h, readx.c, semx.c, modelx.c: Regenerate.
+
+Mon Feb  9 19:41:54 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* decode.c, sem.c: Regenerate.
+	* cpux.h, decodex.c, readx.c, semx.c: Regenerate.
+	* m32rx.c (m32rx_h_accums_set): New function.
+	(m32rx_model_mark_[gs]et_h_gr): New function.
+	* mloopx.in: Rewrite.
+	* Makefile.in (mloopx.o): Build with -parallel.
+	* sim-main.h (_sim_cpu): Delete member `par_exec'.
+	* tconfig.in (WITH_SEM_SWITCH_FULL): Define as 0 for m32rx.
+
+Thu Feb  5 12:44:31 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* Makefile.in (m32r.o): Depend on cpu.h
+	(extract.o): Pass -DSCACHE_P.
+	* mloop.in (extract{16,32}): Update call to m32r_decode.
+	* arch.h,cpu.h,cpuall.h,decode.[ch]: Regenerate.
+	* extract.c,model.c,sem-switch.c,sem.c: Regenerate.
+	* sim-main.h: #include "ansidecl.h".
+	Don't include cpu-opc.h, done by arch.h.
+	* Makefile.in (M32RX_OBJS): Build m32rx support now.
+	(m32rx.o): New rule.
+	* m32r-sim.h (m32rx_h_cr_[gs]et): Define.
+	* m32rx.c (m32rx_{fetch,store}_register): Update {get,set} of PC.
+	(m32rx_h_accums_get): New function.
+	* mloopx.in: Update call to m32rx_decode.  Rewrite exec loop.
+	* cpux.h,decodex.[ch],modelx.c,readx.c,semx.c: Regenerate.
+
+Sun Feb  1 16:47:51 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Sat Jan 31 18:15:41 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Thu Jan 29 11:22:00 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* Makefile.in (M32RX_OBJS): Comment out until m32rx port working.
+	* arch.h (HAVE_CPU_M32R{,X}): Delete, moved to m32r-opc.h.
+	* arch.c (machs): Check ifdef HAVE_CPU_FOO for each entry.
+
+Tue Jan 20 14:16:02 1998  Nick Clifton  <nickc@cygnus.com>
+
+	* cpux.h: Fix duplicate definition of h_accums field for
+	fmt_53_sadd structure.
+
+Tue Jan 20 01:42:17 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* Makefile.in: Add m32rx objs, and rules to build them.
+	* cpux.h, decodex.h, decodex.c, readx.c, semx.c, modelx.c: New files.
+	* m32rx.c, mloopx.in: New files.
+
+Mon Jan 19 22:26:29 1998  Doug Evans  <devans@seba>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Mon Jan 19 14:13:40 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* arch.c, arch.h, cpuall.h: New files.
+	* arch-defs.h: Deleted.
+	* mloop.in: Renamed from mainloop.in.
+	* Makefile.in: Update.
+	* sem-ops.h: Deleted.
+	* mem-ops.h: Deleted.
+	(arch): Renamed from CPU.
+	* cpu.h: New file.
+	* decode.c: Redone.
+	* decode.h: Redone.
+	* extract.c: Redone.
+	* model.c: Redone.
+	* sem-switch.c: Redone.
+	* sem.c: Renamed from semantics.c, and redone.
+	* m32r-sim.h (PROFILE_COUNT_FILLNOPS): Update.
+	(GETTWI,SETTWI,BRANCH_NEW_PC): Define.
+	* m32r.c (WANT_CPU,WANT_CPU_M32R): Define.
+	(m32r_{fetch,store}_register): New functions.
+	(model_mark_{get,set}_h_gr): Prefix with m32r_.
+	(m32r_model_mark_{busy,unbusy}_reg): Prefix with m32r_.
+	(h_cr_{get,set}): Prefix with m32r_.
+	(do_trap): Fetch state from current_cpu, not current_state.
+	Call sim_engine_halt instead of engine_halt.
+	* sim-if.c (alloc_cpu): New function.
+	(free_state): New function.
+	(sim_open): Call sim_state_alloc, and malloc space for selected cpu
+	type.  Call sim_analyze_program.
+	(sim_create_inferior): Handle selected cpu type when setting PC.
+	(sim_resume): Handle m32rx.
+	(sim_stop_reason): Deleted.
+	(print_m32r_misc_cpu): Update.
+	(sim_{fetch,store}_register): Handle m32rx.
+	(sim_{read,write}): Deleted.
+	(sim_engine_illegal_insn): New function.
+	* sim-main.h: Don't include arch-defs.h,sim-core.h,sim-events.h.
+	Include arch.h,cpuall.h.  Include cpu.h,decode.h if m32r.
+	Include cpux.h,decodex.h if m32rx.
+	(_sim_cpu): Include member appropriate cpu_data member for the cpu.
+	(M32R_MISC_PROFILE): Renamed from M32R_PROFILE.
+	(sim_state): Delete members core,events,halt_jmp_buf.
+	Change `cpu' member to be a pointer to the cpu's struct, rather than
+	record inside the state struct.
+	* tconfig.in (WITH_DEVICES): Define here.
+	(WITH_FAST,WITH_SEM_SWITCH_{FULL,FAST}): Define for the cpu.
+
+Fri Jan 16 12:16:56 1998  Nick Clifton  <nickc@cygnus.com>
+
+	* arch-defs.h (INSN_NAME): Fix typo.
+
+Mon Dec 15 23:17:11 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+	* config.in: Ditto.
+
+Thu Dec  4 09:21:05 1997  Doug Evans  <devans@canuck.cygnus.com>
+
+	* m32r-sim.h (MSPR_ADDR): New macro.
+	(m32r_mspr_device): Declare.
+	(struct _device): Define.
+	* m32r.c (m32r_mspr_device): New global.
+	(device_{io_{read,write}_buffer,error}): New functions.
+	* mem-ops.h (SETMEM*): Use sim_core_write_map, not read map.
+	* sim-if.c: Delete redundant inclusion of cpu-sim.h.
+	(sim_open): Attach device to handle MSPR register.
+	* sim-main.h (WITH_DEVICES): Define as 1.
+	Include cpu-sim.h.
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Wed Dec  3 18:08:44 1997  Doug Evans  <devans@canuck.cygnus.com>
+
+	* configure.in (SIM_AC_OPTION_ENVIRONMENT): Call.
+	* configure: Regenerated.
+
+Wed Nov 19 12:17:08 1997  Doug Evans  <devans@canuck.cygnus.com>
+
+	* mem-ops.h: Rename SIM_SIG{ACCESS,ALIGN} to SIM_SIG{SEGV,BUS}.
+	* sim-if.c (sim_open): Call sim_config.
+	(sim_stop_reason): Update call to sim_signal_to_host.
+
+Tue Nov 18 15:33:48 1997  Doug Evans  <devans@canuck.cygnus.com>
+
+	* Makefile.in (SIM_OBJS): Use $(SIM_NEW_COMMON_OBJS).
+
+Fri Oct 31 18:46:46 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* sim-if.c (sim_open): Delete dead call to sim_core_attach.
+
+Mon Oct 27 12:43:54 1997  Doug Evans  <devans@canuck.cygnus.com>
+
+	* sem-ops.h (U{DIV,MOD}[BHSD]I): Use unsigned division.
+
+Fri Oct  3 09:28:00 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Wed Sep 24 17:38:57 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Tue Sep 23 11:04:38 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Tue Sep 23 10:19:51 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* Makefile.in (SIM_ENDIAN, SIM_HOSTENDIAN, SIM_SCACHE,
+ 	SIM_DEFAULT_MODEL): Delete, moved to common.
+	(SIM_EXTRA_CFLAGS): Update.
+	
+Mon Sep 22 11:46:20 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure.in (sim_link_links): Configure non-strict memory
+ 	alignment.
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Fri Sep 19 17:45:25 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Wed Sep 17 17:44:40 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* sim-if.c (sim_open): Allocate memory under sim-memopt module
+ 	using sim_do_commandf.
+	(sim_open): Set magic-number at the start.
+	(sim_do_command): Implement.
+
+	* sim-main.h (sim_engine_halt): Map onto engine_halt.
+
+Mon Sep 15 17:36:15 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Thu Sep  4 17:21:23 1997  Doug Evans  <dje@seba>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Fri Sep  5 10:21:48 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* Makefile.in (SIM_OBJS): Add sim-memopt.o module.
+
+Thu Sep  4 10:30:02 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* sim-if.c (sim_open): Pass zero modulo arg to sim_core_attach.
+
+Wed Aug 27 18:13:22 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+	* config.in: Ditto.
+
+Tue Aug 26 10:39:42 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* sim-if.c (sim_kill): Delete.
+	(sim_create_inferior): Add ABFD argument.
+	(sim_load): Move setting of PC from here.
+	(sim_create_inferior): To here.
+	(sim_load): Delete, use sim-hload.c instead.
+
+	* Makefile.in (SIM_OBJS): Add sim-hload.o module.
+
+Mon Aug 25 17:50:22 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+	* config.in: Ditto.
+
+Mon Aug 25 15:54:08 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* sim-if.c (sim_open): Add ABFD argument.
+
+Tue Jul 22 10:16:16 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* sim-main.h (M32R_DEFAULT_MEM_SIZE): New macro.
+	* sim-if.c (sim_open): Use it.
+
+Wed Jun  4 12:48:12 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* sim-main.h (WITH_ENGINE): Disable the common engine for now.
+
+Tue May 27 14:15:44 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* sim-if.c (sim_read): Pass NULL cpu to sim_core_read_buffer.
+	(sim_write): Ditto for write.
+
+	* m32r.c (do_trap): Ditto for read/write.
+
+Tue May 20 10:18:25 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* sim-if.c (sim_open): Add callback argument.
+	(sim_set_callbacks, sim_callback): Delete.
+	(sim_load): Set STATE_LOADED_P.
+
+Mon May 19 12:55:42 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* Makefile.in (SIM_OBJS): Link in sim-abort.o as a stub for
+ 	sim_engine_abort.
+
+Mon May  5 12:45:28 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* sim-if.c (sim_open): Update to reflect changes to core in
+ 	../common/.
+	* mem-ops.h (GETMEMQI, GETMEMHI, GETMEMSI, GETMEMDI, GETMEMUQI,
+ 	GETMEMUHI, GETMEMUSI, GETMEMUDI, SETMEMQI, SETMEMHI, SETMEMSI,
+ 	SETMEMDI, SETMEMUQI, SETMEMUHI, SETMEMUSI, SETMEMUDI): Ditto.
+
+Sat May  3 08:38:55 1997  Doug Evans  <dje@seba.cygnus.com>
+
+	* decode.c (decode): Add computed goto support.
+
+Fri May  2 16:30:26 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mem-ops.h: Stub additional core read/write arguments.
+
+	* sim-main.h: Declare sim_cia - type SI.
+	(struct _sim_cpu): Move base type to end per common.
+	(struct _sim_state): Ditto.
+
+Thu May  1 11:15:34 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	Merge from branch into devo.  CGEN generic files moved to common
+	directory.  K&R C support is no longer provided.
+
+Thu Apr 24 00:39:51 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+Sat Apr 12 12:57:33 1997  Felix Lee  <flee@yin.cygnus.com>
+
+	* Makefile.in, seman-cache.c: new file, for wingdb build.
+	* sim-alloca.h: fixed for wingdb.
+	
+Mon Apr  7 13:33:29 1997  Doug Evans  <dje@seba.cygnus.com>
+
+	* decode.c (*): m32r_cgen_insn_table renamed to ..._entries.
+	* mainloop.in: Use CGEN_INSN_INDEX instead of CGEN_INSN_TYPE.
+	* simdefs.h (INSN_NAME): m32r_cgen_insn_table renamed to ..._entries.
+
+Fri Apr  4 19:23:12 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* cgen-utils.in (ex_illegal): Fill in abuf->length, abuf->addr.
+	(exc_illegal): Likewise.
+	* decode.c (decode_vars): Add decode_illegal.
+	* genmloop.sh: #include "cpu-opc.h".
+	* sem-switch.c (case_INSN_ILLEGAL): Declare.
+	(labels): Add case_INSN_ILLEGAL.
+	(SWITCH): Add INSN_ILLEGAL case.
+
+Wed Mar 26 12:34:00 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* model.c (model_module): Use 0 not NULL.
+
+	* genmloop.sh (sim_main_loop): Handle k&r c.
+
+	* sem-switch.c: Regenerate to get k&r c support.
+	* semantics.c: Likewise.
+
+	* m32r.c (ADD_{OV,CA}_SI,SUB_{OV,CA}_SI): Renamed to {ADD,SUB}[OC]FSI.
+	(ADDCSI,SUBCSI): New functions.
+	* sem-switch.c (addv,addv3,addx,subv,subx): Fix carry bit handling.
+	* semantics.c (addv,addv3,addx,subv,subx): Fix carry bit handling.
+
+	* simcache.c (simcache_{install,init,uninstall}): Use
+	DECLARE_MODULE_INSTALL_HANDLER.
+	(simcache_option_handler): Use DECLARE_OPTION_HANDLER.
+
+	* utils.c: #include "semops.h".
+
+Tue Mar 11 14:30:26 1997  Doug Evans  <dje@seba.cygnus.com>
+
+	* profile.c (profile_print_simcache): Fix thinko in printf text.
+
+	* simdefs.h (struct argbuf): Add member to fmt_20 so it's not empty.
+
+Mon Mar 10 11:06:29 1997  Doug Evans  <dje@seba.cygnus.com>
+
+	* m32r.c (h_cr_get): Rewrite.
+	(h_cr_set): Rewrite.
+	* sem-switch.c (rte): bcarry renamed to bcond.
+	* semantics.c (rte): Likewise.
+	* simdefs.h (CPU_STATE): Likewise.
+
+	* config.in (HAVE_SYS_TIME_H): Add.
+	* configure.in: Check for sys/time.h.
+	* configure: Regenerated.
+	* utils.c: Include sys/time.h if present.
+
+	* common.c (sim_parse_args): Account for NULL terminating entry
+	in long_options table.
+
+	* genmloop.sh (RUN_FAST_P): Don't run fast if tracing.
+	Always use cache if configured in.
+	* mainloop.in (do_extract_insn{16,32}): New functions.
+	(normal,fast): Call them.  Handle starting in left slot.
+	* simcache.c (simcache_option_handler): Disallow -c0.
+	* sem-switch.c (TRACE_RESULT): Redefine so no tracing.
+
+	* profile.c (profile_print_simcache): Fix percentage calc.
+
+	* Makefile.in (INCLUDE_DEPS): Delete simcommon.h.
+
+Sun Mar  9 20:42:17 1997  Doug Evans  <dje@seba.cygnus.com>
+
+	* Makefile.in (COMMON_{PRE,POST}_CONFIG_FRAG): Add delimiters for.
+	(M32R_INCLUDE_DEPS): Use cpu-sim.h instead of m32r-sim.h.
+	Add mod-list.h.
+	(mrun.o): Don't depend on M32R_INCLUDE_DEPS.
+	(sim-if.o,m32r.o,utils.o): Likewise.
+	(common.o): Don't explicitly depend on mod-list.h.
+	(mainloop.c): Pass CPU to genmloop.sh.
+	(stamp-modules): Depend on configure.
+	(decode.o): Depend on decode,h, memops.h, semops.h, cpu-opc.h.
+	(extract.o): Depend on decode.h, memops.h, semops.h.
+	(semantics.o,seman-cache.o): Likewise.
+	(model.o,ops.o): Depend on memops.h.
+	(extr-cache.o): Disable building for the moment.
+
+	* simcommon.h: Delete, move contents into cgen-sim.h.
+	* cgen-sim.h: Don't include ansidecl.h,bfd.h,simfns.h.
+	(UINT,CGEN_CAT3): Define.
+	({extract,semantic}_fn_t): Renamed to {EXTRACT,SEMANTIC}_FN.
+	(decode_t): Renamed to DECODE.
+
+	* simfns.h: Delete, contents moved to memops.h,semops.h.
+	* memops.h: New file.
+	* semops.h: New file.
+	* decode.h: Renamed from semantics.h.
+
+	* sim-argv.h: New file.
+	* Makefile.in (memory.o,trace.o,profile.o,simcache.o,common): Add
+	dependency of sim-argv.h.
+
+	* sim-alloca.h: New file.
+	* common.c: Include it.
+	* Makefile.in (common.o): Add dependency.
+
+	* config.in (HAVE_TIME_H,HAVE_SYS_RESOURCE_H): Add.
+	(HAVE_GETRUSAGE,HAVE_TIME): Add.
+	* configure.in: sinclude ../common/aclocal.m4.
+	Check for headers time.h, sys/resource.h.
+	Check for functions time, getrusage.
+	(sim_link_{files,links}): Add link cpu-opc.h.
+	(sim_profile): Add simcache.
+	(SIM_AC_PROFILE): Add simcache, profile.o.
+	(simcache module): Delete extr-cache.o for now.
+	(--enable-sim-cache): Allow specification of default cache size.
+	* configure: Regenerated.
+
+	* decode.c: #include cgen-sim.h,memops.h,semops.h,decode.h,
+	cpu-sim.h,cpu-opc.h.  Don't include m32r-sim.h.
+	Regenerate.
+
+	* extract.c: #include cgen-sim.h,decode.h,cpu-sim.h.
+	Don't include m32r-sim.h.
+	(*): Define/Undef FLD macro.  Use it to reference ARGBUF.
+	Simplify profiling test with PROFILE_MODEL_P.
+	(mvfc,mvtc): Fix access of control registers.
+	* semantic.c: #include cgen-sim.h,memops.h,semops.h,decode.h,cpu-sim.h.
+	Don't include m32r-sim.h.
+	(*): Define/Undef FLD macro.  Use it to reference ARGBUF.
+	Simplify profiling test with PROFILE_MODEL_P.
+	(mvfc,mvtc): Fix access of control registers.
+
+	* sem-switch.c: New file, for GCC computed goto support.
+
+	* genmloop.sh: Add #include's of bfd.h,callback.h,cgen-sim.h,
+	memops.h,semops.h,trace.h,cpu-sim.h.
+	(RUN_FAST_P): Change default to run fast if cache size > 0
+	and not profiling.
+	(sim_main_loop): Record execution time.
+	Record instruction count even in fast mode.
+	(init): Allow cpu to provide init code in mainloop.in.
+	(FAST): Define as 0 or 1 depending on fast mode.
+	* mainloop.in (normal): Combine with fast case.
+	Add support for GCC computed gotos.  Count simcache hits/misses.
+	(init): Initialize "switch" labels if GNUC.
+
+	* cgen-utils.in: Don't include opcode/cgen.h.
+	Include cgen-sim.h, cpu-opc.h.
+	* common.c: Don't include simcommon.h,mod-list.h.  Include cgen-sim.h.
+	* m32r-sim.h: Don't include mod-list.h
+	(RUN_FAST_P): Delete.
+	* m32r.c: Don't include profile.h.  #include ansidecl.h,cgen-sim.h,
+	semops.h,memory.h,trace.h
+	(h_cr_get,h_cr_set): New functions.
+	* memory.c: #include cgen-sim.h,callback.h.
+	* ops.c: Don't include profile.h,m32r-sim.h.
+	Include cgen-sim.h,memops.h,cpu-sim.h.
+	(MEMOPS_DEFINE_INLINE): Renamed from SIMFNS_DEFINE_INLINE.
+	* trace.c: Include cgen-sim.h,cpu-opc.h.
+	* trace.h (trace_insn_{init,fini}): Declare.
+
+	* model.c: Don't include signal.h,stdlib.h,m32r-sim.h.
+	Include cgen-sim.h,cpu-sim.h,cpu-opc.h.
+	Regenerate to get new insn aliases.
+
+	* mrun.c: #include "ansidecl.h".
+	(STATE): Use struct sim_state instead.
+
+	* profile.c: Surround #include <stdlib.h> with HAVE_STDLIB_H.
+	Don't include simcommon.h.  Include cgen-sim.h,cpu-opc.h.
+	(PROFILE_{READ,WRITE}_MASK): Replace with PROFILE_MEMORY_MASK.
+	(profile_print_simcache): New function.
+	(profile_print): Call it.  Print simulator speed stats.
+	* profile.h (PROFILE_{READ,WRITE}_MASK): Replace with
+	PROFILE_MEMORY_MASK.
+	(MODULE_PROFILE_SIMCACHE_P): Define.
+	(PROFILE_SIMCACHE_MASK): Define.
+	(PROFILE_COUNT): New members total_insn_count,exec_time.
+	New members simcache_hits,simcache_misses.
+	(PROFILE_SIMCACHE_{HITS,MISSES}): Define.
+	(PROFILE_MODEL_P): New macro.
+	(PROFILE_COUNT_SIMCACHE_{HIT,MISS}): New macros.
+
+	* sim-if.c: Surround #include <stdlib.h> with HAVE_STDLIB_H.
+	Don't include simcommon.h,m32r-sim.h.  Include cgen-sim.h,cpu-sim.h.
+	(sim_resume): Use USING_SIMCACHE_P instead of RUN_FAST_P.
+	(sim_info): Pass verbose to profile_print.
+
+	* simcache.c: Include cgen-sim.h,callback.h.
+	(USING_SIMCACHE_P): Replace with SIMCACHE_P.
+	(simcache_option_handler): Ensure cache size at least 2.
+	Allow config time specification of default cache size.
+	* simcache.h (struct simcache): Support GCC computed gotos.
+	(SIMCACHE_DEFAULT_CACHE_SIZE): USe CONFIG_SIM_CACHE_SIZE if defined.
+	(USING_SIMCACHE_P): New macro.
+
+	* simdefs.h: Don't include m32r-opc.h.
+	(CGEN_MAX_SIM_INSNS): Define.
+	(CPU_STATE): Regenerate.
+	(ARGBUF): Regenerate.
+	(extract,semantic handler decls): Delete, moved to decode.h.
+
+	* tconfig.in: Don't include cgen-sim.h,m32r-sim.h.
+	(USE_SEM_SWITCH): Define.
+
+	* utils.c: Include bfd.h,time.h,sys/resource.h.
+	(sim_time_get,sim_time_elapsed): New functions.
+	* cgen-sim.h (SIM_TIME,sim_time_get,sim_time_elapsed): Declare.
+
+Fri Jan 31 20:25:06 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* configure.in (AC_CHECK_HEADERS): Handle i386-windows.
+	* configure: Regenerated.
+	* model.c: #include <stdlib.h>.
+	* simcache.c: #include "libiberty.h".
+	* simcommon.h (alloca): Handle i386-windows.
+
+	* common.c: #include libiberty.h.
+	(sim_signal_to_host): Return 5 if wingdb.
+
+Mon Jan 27 15:22:49 1997  Doug Evans  <dje@seba.cygnus.com>
+
+	* configure.in (sim_cache): Enabled by default now, pass default
+	cache size to --enable-sim-cache.
+	* simcache.c (simcache_option_handler): Allow -c 0.
+
+	* simdefs.h,simfns.h: Regenerate
+	* decode.c,extract.c,model.c,ops.c,semantics.c: Regenerate.
+
+Tue Jan 21 16:21:01 1997  Doug Evans  <dje@seba.cygnus.com>
+
+	Add model profiling support.
+	* configure.in: Handle --enable-sim-model.
+	(sim_profile): Add model.
+	* Makefile.in (model.o): Add rule.
+	* cgen-sim.h (UNIT,INSN_TIMING,MACH,MODEL): New types.
+	* extract.c (*): Add model profiling support.
+	* m32r.c (model_mark_{get,set}_h_gr): New functions.
+	(model_mark_{busy,unbusy}_reg): New functions.
+	* profile.c (profile_option_handler): Recognize --profile model.
+	(profile_print_model): New function.
+	(profile_print): Call it.
+	* profile.h (MODULE_profile_model,MODULE_PROFILE_MODEL_P): Define.
+	(PROFILE_MODEL_MASK,PROFILE_LABEL_WIDTH): Define.
+	(PROFILE_COUNT): New members cycle_count,cti_stall_count,
+	load_stall_count,taken_count,untaken_count.
+	* semantics.c (*): Add model profiling support.
+	* simcommon.h (struct sim_state): New members mach,model.
+	* simdefs.h (CPU_PROFILE,MODEL_TYPE,UNIT_TYPE): New type.
+	(MAX_MODELS,MAX_UNITS): Define.
+	* tconfig.in (STATE_EXTRA_MEMBERS): Add cpu_profile.
+
+	* Makefile.in (INCLUDE_DEPS): Add $(SIM_MODULES_HDRS).
+	(stamp-modules): Depend on genmodlist.sh.
+	* common.c (standard_options): Add --max-insns.
+	(copy_argv): New function.
+	* tconfig.in (SIM_HAVE_MAX_INSNS): Define.
+	* genmloop.sh: Allow mainloop.in to contain support code.
+	* mainloop.in: Move do_insn16,do_insn32 here.
+	* m32r.c (do_trap): Handle SYS_argvlen,SYS_argv,SYS_read.
+	* sim-if.c (sim_open): Don't set max insn count.
+	(sim_create_inferior): Save argv,envp.
+	* simcommon.h (struct sim_state): New members argv,envp.
+	* simdefs.h ([GS]ETTWI,[GS]ETTUWI,[GS]ETTAI): Define.
+	([GS]ETMEMWI,[GS]ETMEMUWI,[GS]ETMEMAI): Define.
+	(ARGBUF): New members h_gr_get, h_gr_set.
+	* trace.c (trace_insn_init,trace_insn_fini): New functions.
+	(trace_printf): Print to buffer, output later by trace_insn_fini.
+	* trace.h (TRACE_INSN_{INIT,FINI}): Define.
+
+Thu Dec 19 16:01:59 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* configure.in (AC_FUNC_ALLOCA): Call.
+	* configure: Regenerate.
+	* config.h (HAVE_ALLOCA_H): Add.
+	* simcommon.h: Add alloca support.
+	(DECLARE_MODULE_INSTALL_HANDLER): Define.
+	(DECLARE_OPTION_HANDLER): Define.
+	(MEM_FN): Declare using PARAMS.
+	(DECLARE_MEM_FN): Define.
+	* trace.c (trace_result): Tweak for !STDC.
+	* cgen-sim.h (UDI_FN_SUPPORT): Define if ! HAVE_LONGLONG.
+	* cgen-utils.in (disasm_sprintf): Fix va_arg call in !STDC case.
+	* common.c (sim_print_help_fn): Use PARAMS.
+	(standard_option_handler): Fix decl for !STDC systems.
+	* memory.c: #include <stdio.h>
+	(mem_flat_{install,init,uninstall}): Fix decl for !STDC systems.
+	(mem_flat_{read,write},mem_flat_option_handler): Likewise.
+	* profile.c (profile_install): Likewise.
+	(profile_option_handler): Likewise.
+
+Thu Dec 19 11:06:19 1996  Doug Evans  <dje@seba.cygnus.com>
+
+	* semantics.c (*): Don't suffix big unsigned numbers with "U".
+	Prefix them with 0x instead.
+
+	* cgen-sim.h (DI_FN_SUPPORT): Define if ! HAVE_LONGLONG.
+	(SLADI,SRADI,CONVSIDI,CONVDISI): Delete, moved to simfns.h.
+	* semantics.c (machi,maclo,macwhi,macwlo,mulhi,mullo): Implement.
+	(mulwhi,mulwlo,mvtachi,mvtaclo,rac,rach): Implement.
+	* simfns.h: Add decls for functional DI,UDI,SF,DF,XF,TF support.
+	Add support for boolean and/or.
+	* utils.c: Redo naming of DI functional support.
+	(ANDDI,ORDI,ADDDI,MULDI,GEDI,LEDI,CONVHIDI): New functions.
+
+Tue Dec 17 12:57:48 1996  Doug Evans  <dje@seba.cygnus.com>
+
+	* Directory created.

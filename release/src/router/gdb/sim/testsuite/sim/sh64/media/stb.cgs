@@ -1,0 +1,26 @@
+# sh testcase for st.b $rm, $disp10, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	movi -1, r7
+	xori r7, 13, r7
+	movi 40, r0
+	shlli r0, 8, r0
+
+stb1:
+	st.b r0, 0, r7
+
+stb2:
+	st.b r0, 1, r7
+
+stb3:
+	st.b r0, -1, r7
+
+okay:
+	pass

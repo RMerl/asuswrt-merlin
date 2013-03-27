@@ -1,0 +1,246 @@
+# frv testcase for bcnolr
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global bcnolr
+bcnolr:
+	; ccond is true
+	set_spr_immed	128,lcr
+	set_spr_addr	bad,lr
+	set_icc		0x0 0
+	bcnolr	
+
+	set_icc		0x1 1
+	bcnolr	
+
+	set_icc		0x2 2
+	bcnolr	
+
+	set_icc		0x3 3
+	bcnolr	
+
+	set_icc		0x4 0
+	bcnolr	
+
+	set_icc		0x5 1
+	bcnolr	
+
+	set_icc		0x6 2
+	bcnolr	
+
+	set_icc		0x7 3
+	bcnolr	
+
+	set_icc		0x8 0
+	bcnolr	
+
+	set_icc		0x9 1
+	bcnolr	
+
+	set_icc		0xa 2
+	bcnolr	
+
+	set_icc		0xb 3
+	bcnolr	
+
+	set_icc		0xc 0
+	bcnolr	
+
+	set_icc		0xd 1
+	bcnolr	
+
+	set_icc		0xe 2
+	bcnolr	
+
+	set_icc		0xf 3
+	bcnolr	
+
+	; ccond is true
+	set_spr_immed	1,lcr
+	set_spr_addr	bad,lr
+	set_icc		0x0 0
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x1 1
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x2 2
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x3 3
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x4 0
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x5 1
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x6 2
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x7 3
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x8 0
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x9 1
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0xa 2
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0xb 3
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0xc 0
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0xd 1
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0xe 2
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0xf 3
+	bcnolr	
+
+	; ccond is false
+	set_spr_immed	128,lcr
+	set_spr_addr	bad,lr
+	set_icc		0x0 0
+	bcnolr	
+
+	set_icc		0x1 1
+	bcnolr	
+
+	set_icc		0x2 2
+	bcnolr	
+
+	set_icc		0x3 3
+	bcnolr	
+
+	set_icc		0x4 0
+	bcnolr	
+
+	set_icc		0x5 1
+	bcnolr	
+
+	set_icc		0x6 2
+	bcnolr	
+
+	set_icc		0x7 3
+	bcnolr	
+
+	set_icc		0x8 0
+	bcnolr	
+
+	set_icc		0x9 1
+	bcnolr	
+
+	set_icc		0xa 2
+	bcnolr	
+
+	set_icc		0xb 3
+	bcnolr	
+
+	set_icc		0xc 0
+	bcnolr	
+
+	set_icc		0xd 1
+	bcnolr	
+
+	set_icc		0xe 2
+	bcnolr	
+
+	set_icc		0xf 3
+	bcnolr	
+
+	; ccond is false
+	set_spr_immed	1,lcr
+	set_spr_addr	bad,lr
+	set_icc		0x0 0
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x1 1
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x2 2
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x3 3
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x4 0
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x5 1
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x6 2
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x7 3
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x8 0
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0x9 1
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0xa 2
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0xb 3
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0xc 0
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0xd 1
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0xe 2
+	bcnolr	
+
+	set_spr_immed	1,lcr
+	set_icc		0xf 3
+	bcnolr	
+
+	pass
+bad:
+	fail

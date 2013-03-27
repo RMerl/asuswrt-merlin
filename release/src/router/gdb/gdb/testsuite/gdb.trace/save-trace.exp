@@ -1,0 +1,172 @@
+#   Copyright 1998, 2007 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Michael Snyder (msnyder@cygnus.com)
+
+load_lib "trace-support.exp";
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+gdb_exit
+gdb_start
+
+if [istarget "m68k-*-elf"] then {
+    set srcfile gdb_c_test.c
+    set binfile [board_info target d490_binfile];
+} else {
+    set testfile "actions"
+    set srcfile ${testfile}.c
+    set binfile $objdir/$subdir/$testfile
+    if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
+	    executable {debug nowarnings}] != "" } {
+	untested save-trace.exp
+	return -1
+    }
+}
+gdb_reinitialize_dir $srcdir/$subdir
+
+# If testing on a remote host, download the source file.
+# remote_download host $srcdir/$subdir/$srcfile
+
+gdb_file_cmd $binfile
+
+# define relative source line numbers:
+# all subsequent line numbers are relative to this first one (baseline)
+set baseline  [gdb_find_recursion_test_baseline $srcfile];
+if { $baseline == -1 } then {
+    fail "Could not find gdb_recursion_test function"
+    return;
+}
+
+set testline1 [expr $baseline + 4]
+set testline2 [expr $baseline + 5]
+set testline3 [expr $baseline + 6]
+set testline4 [expr $baseline + 7]
+set testline5 [expr $baseline + 8]
+set testline6 [expr $baseline + 9]
+
+#
+# test save-trace command
+#
+
+# setup a set of tracepoints to save
+
+gdb_delete_tracepoints
+
+foreach x { 1 2 3 4 5 6 } {
+    set testline [expr \$testline$x];
+    set trcpt [gdb_gettpnum $testline];
+    set trcpt$x $trcpt;
+    gdb_test "passcount $x" \
+	     "Setting tracepoint $trcpt.* to $x" \
+	     "10.x: set passcount for tracepoint $trcpt"
+
+    gdb_trace_setactions "10.x: set actions for tracepoint $x" \
+	    "" \
+	    "collect q$x" "^$" \
+	    "while-stepping $x" "^$" \
+	    "collect q$x" "^$" \
+	    "end" "^$"
+}
+
+
+proc gdb_verify_tracepoints { testname } {
+    global gdb_prompt;
+
+    set ws "\[\t \]+"
+    set nl "\[\r\n\]+"
+    set ourstate 1;
+    set result "pass";
+    send_gdb "info tracepoints\n";
+    gdb_expect 10 {
+	-re "y\[\t \]+0x\[0-9a-fA-F\]+\[\t \]+(\[0-9\]+)\[\t \]+(\[0-9\]+)\[\t \]+in gdb_recursion_test\[^\r\n\]+" {
+	    if { $expect_out(1,string) != $expect_out(2,string) } {
+		#set result "fail";
+	    }
+	    if { $expect_out(1,string) != $ourstate } {
+		set result "fail";
+	    }
+	    incr ourstate;
+	    exp_continue;
+	}
+	-re "$gdb_prompt $" {
+	    if { $ourstate >= 6 } {
+		set result "pass";
+	    } else {
+		set result "fail";
+	    }
+	}
+	default {
+	    set result "fail";
+	}
+    }
+    $result $testname;
+    return $result;
+}
+
+gdb_verify_tracepoints "10.x: verify trace setup";
+
+# 10.1 Save current tracepoint definitions to a file
+
+remote_file host delete savetrace.tr
+gdb_test "save-tracepoints savetrace.tr" \
+	"Tracepoints saved to file 'savetrace.tr'." \
+	"10.1: save tracepoint definitions"
+
+# 10.2 Read back tracepoint definitions
+
+gdb_delete_tracepoints
+gdb_test "info tracepoints" "No tracepoints." "10.2: delete tracepoints"
+gdb_test "source savetrace.tr" \
+	"Tracepoint \[0-9\]+ at .*" \
+	"10.2: read back saved tracepoints"
+gdb_verify_tracepoints "10.2: verify recovered tracepoints";
+remote_file host delete savetrace.tr
+
+# 10.3 repeat with a path to the file
+
+set escapedfilename [string_to_regexp $objdir/savetrace.tr]
+remote_file host delete $objdir/savetrace.tr
+gdb_test "save-tracepoints $objdir/savetrace.tr" \
+	"Tracepoints saved to file '${escapedfilename}'." \
+	"10.3: save tracepoint definitions, full path"
+
+gdb_delete_tracepoints
+gdb_test "info tracepoints" "No tracepoints." "10.3: delete tracepoints"
+gdb_test "source $objdir/savetrace.tr" \
+	"Tracepoint \[0-9\]+ at .*" \
+	"10.4: read saved tracepoints, full path"
+gdb_verify_tracepoints "10.3: verify recovered tracepoints, full path";
+remote_file host delete $objdir/savetrace.tr
+
+# 10.5 invalid filename
+#      [deferred -- not sure what a good invalid filename would be]
+
+# 10.6 save-trace (file already exists)
+#      [expect it to clobber the old one]
+
+# 10.7 help save-tracepoints
+
+gdb_test "help save-tracepoints" \
+	"Save current tracepoint definitions as a script.*" \
+	"10.7: help save-tracepoints"

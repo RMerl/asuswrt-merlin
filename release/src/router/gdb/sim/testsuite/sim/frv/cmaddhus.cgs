@@ -1,0 +1,496 @@
+# frv testcase for cmaddhus $FRi,$FRj,$FRj,$CCi,$cond
+# mach: frv fr500 fr400
+
+	.include "testutils.inc"
+
+	start
+
+	.global cmaddhus
+cmaddhus:
+	set_spr_immed	0x1b1b,cccr
+
+	set_fr_iimmed	0x0000,0x0000,fr10
+	set_fr_iimmed	0x0000,0x0000,fr11
+	cmaddhus	fr10,fr11,fr12,cc0,1
+	test_fr_limmed	0x0000,0x0000,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xdead,0x0000,fr10
+	set_fr_iimmed	0x0000,0xbeef,fr11
+	cmaddhus	fr10,fr11,fr12,cc0,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x0000,0xdead,fr10
+	set_fr_iimmed	0xbeef,0x0000,fr11
+	cmaddhus	fr10,fr11,fr12,cc0,1
+	test_fr_limmed	0xbeef,0xdead,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x1234,0x5678,fr10
+	set_fr_iimmed	0x1111,0x1111,fr11
+	cmaddhus	fr10,fr11,fr12,cc0,1
+	test_fr_limmed	0x2345,0x6789,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x7ffe,0x7ffe,fr10
+	set_fr_iimmed	0x0002,0x0001,fr11
+	cmaddhus	fr10,fr11,fr12,cc4,1
+	test_fr_limmed	0x8000,0x7fff,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xfffe,0xfffe,fr10
+	set_fr_iimmed	0x0001,0x0002,fr11
+	cmaddhus	fr10,fr11,fr12,cc4,1
+	test_fr_limmed	0xffff,0xffff,fr12
+	test_spr_bits	0x3c,2,4,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+
+	set_spr_immed	0,msr0
+	set_fr_iimmed	0x0002,0x0001,fr10
+	set_fr_iimmed	0xfffe,0xfffe,fr11
+	cmaddhus	fr10,fr11,fr12,cc4,1
+	test_fr_limmed	0xffff,0xffff,fr12
+	test_spr_bits	0x3c,2,8,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_fr_iimmed	0x0001,0x0001,fr10
+	set_fr_iimmed	0x8000,0x8000,fr11
+	cmaddhus.p	fr10,fr10,fr12,cc4,1
+	cmaddhus	fr11,fr11,fr13,cc4,1
+	test_fr_limmed	0x0002,0x0002,fr12
+	test_fr_limmed	0xffff,0xffff,fr13
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	0x3c,2,0xc,msr1		; msr1.sie is set
+	test_spr_bits	2,1,1,msr1		; msr1.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_fr_iimmed	0x0000,0x0000,fr10
+	set_fr_iimmed	0x0000,0x0000,fr11
+	cmaddhus	fr10,fr11,fr12,cc1,0
+	test_fr_limmed	0x0000,0x0000,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xdead,0x0000,fr10
+	set_fr_iimmed	0x0000,0xbeef,fr11
+	cmaddhus	fr10,fr11,fr12,cc1,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x0000,0xdead,fr10
+	set_fr_iimmed	0xbeef,0x0000,fr11
+	cmaddhus	fr10,fr11,fr12,cc1,0
+	test_fr_limmed	0xbeef,0xdead,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x1234,0x5678,fr10
+	set_fr_iimmed	0x1111,0x1111,fr11
+	cmaddhus	fr10,fr11,fr12,cc1,0
+	test_fr_limmed	0x2345,0x6789,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x7ffe,0x7ffe,fr10
+	set_fr_iimmed	0x0002,0x0001,fr11
+	cmaddhus	fr10,fr11,fr12,cc5,0
+	test_fr_limmed	0x8000,0x7fff,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xfffe,0xfffe,fr10
+	set_fr_iimmed	0x0001,0x0002,fr11
+	cmaddhus	fr10,fr11,fr12,cc5,0
+	test_fr_limmed	0xffff,0xffff,fr12
+	test_spr_bits	0x3c,2,4,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+
+	set_spr_immed	0,msr0
+	set_fr_iimmed	0x0002,0x0001,fr10
+	set_fr_iimmed	0xfffe,0xfffe,fr11
+	cmaddhus	fr10,fr11,fr12,cc5,0
+	test_fr_limmed	0xffff,0xffff,fr12
+	test_spr_bits	0x3c,2,8,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_fr_iimmed	0x0001,0x0001,fr10
+	set_fr_iimmed	0x8000,0x8000,fr11
+	cmaddhus.p	fr10,fr10,fr12,cc5,0
+	cmaddhus	fr11,fr11,fr13,cc5,0
+	test_fr_limmed	0x0002,0x0002,fr12
+	test_fr_limmed	0xffff,0xffff,fr13
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	0x3c,2,0xc,msr1		; msr1.sie is set
+	test_spr_bits	2,1,1,msr1		; msr1.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+
+	set_fr_iimmed	0xdead,0xbeef,fr12
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_fr_iimmed	0x0000,0x0000,fr10
+	set_fr_iimmed	0x0000,0x0000,fr11
+	cmaddhus	fr10,fr11,fr12,cc0,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xbeef,0x0000,fr10
+	set_fr_iimmed	0x0000,0xdead,fr11
+	cmaddhus	fr10,fr11,fr12,cc0,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x0000,0xdead,fr10
+	set_fr_iimmed	0xbeef,0x0000,fr11
+	cmaddhus	fr10,fr11,fr12,cc0,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x1234,0x5678,fr10
+	set_fr_iimmed	0x1111,0x1111,fr11
+	cmaddhus	fr10,fr11,fr12,cc0,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x7ffe,0x7ffe,fr10
+	set_fr_iimmed	0x0002,0x0001,fr11
+	cmaddhus	fr10,fr11,fr12,cc4,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xfffe,0xfffe,fr10
+	set_fr_iimmed	0x0001,0x0002,fr11
+	cmaddhus	fr10,fr11,fr12,cc4,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_spr_immed	0,msr0
+	set_fr_iimmed	0x0002,0x0001,fr10
+	set_fr_iimmed	0xfffe,0xfffe,fr11
+	cmaddhus	fr10,fr11,fr12,cc4,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xbeef,0xdead,fr13
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_fr_iimmed	0x0001,0x0001,fr10
+	set_fr_iimmed	0x8000,0x8000,fr11
+	cmaddhus.p	fr10,fr10,fr12,cc4,0
+	cmaddhus	fr11,fr11,fr13,cc4,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_fr_limmed	0xbeef,0xdead,fr13
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xdead,0xbeef,fr12
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_fr_iimmed	0x0000,0x0000,fr10
+	set_fr_iimmed	0x0000,0x0000,fr11
+	cmaddhus	fr10,fr11,fr12,cc1,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xbeef,0x0000,fr10
+	set_fr_iimmed	0x0000,0xdead,fr11
+	cmaddhus	fr10,fr11,fr12,cc1,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x0000,0xdead,fr10
+	set_fr_iimmed	0xbeef,0x0000,fr11
+	cmaddhus	fr10,fr11,fr12,cc1,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x1234,0x5678,fr10
+	set_fr_iimmed	0x1111,0x1111,fr11
+	cmaddhus	fr10,fr11,fr12,cc1,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x7ffe,0x7ffe,fr10
+	set_fr_iimmed	0x0002,0x0001,fr11
+	cmaddhus	fr10,fr11,fr12,cc5,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xfffe,0xfffe,fr10
+	set_fr_iimmed	0x0001,0x0002,fr11
+	cmaddhus	fr10,fr11,fr12,cc5,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_spr_immed	0,msr0
+	set_fr_iimmed	0x0002,0x0001,fr10
+	set_fr_iimmed	0xfffe,0xfffe,fr11
+	cmaddhus	fr10,fr11,fr12,cc5,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xbeef,0xdead,fr13
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_fr_iimmed	0x0001,0x0001,fr10
+	set_fr_iimmed	0x8000,0x8000,fr11
+	cmaddhus.p	fr10,fr10,fr12,cc5,1
+	cmaddhus	fr11,fr11,fr13,cc5,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_fr_limmed	0xbeef,0xdead,fr13
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xdead,0xbeef,fr12
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_fr_iimmed	0x0000,0x0000,fr10
+	set_fr_iimmed	0x0000,0x0000,fr11
+	cmaddhus	fr10,fr11,fr12,cc2,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xbeef,0x0000,fr10
+	set_fr_iimmed	0x0000,0xdead,fr11
+	cmaddhus	fr10,fr11,fr12,cc2,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x0000,0xdead,fr10
+	set_fr_iimmed	0xbeef,0x0000,fr11
+	cmaddhus	fr10,fr11,fr12,cc2,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x1234,0x5678,fr10
+	set_fr_iimmed	0x1111,0x1111,fr11
+	cmaddhus	fr10,fr11,fr12,cc2,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x7ffe,0x7ffe,fr10
+	set_fr_iimmed	0x0002,0x0001,fr11
+	cmaddhus	fr10,fr11,fr12,cc6,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xfffe,0xfffe,fr10
+	set_fr_iimmed	0x0001,0x0002,fr11
+	cmaddhus	fr10,fr11,fr12,cc6,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_spr_immed	0,msr0
+	set_fr_iimmed	0x0002,0x0001,fr10
+	set_fr_iimmed	0xfffe,0xfffe,fr11
+	cmaddhus	fr10,fr11,fr12,cc6,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xbeef,0xdead,fr13
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_fr_iimmed	0x0001,0x0001,fr10
+	set_fr_iimmed	0x8000,0x8000,fr11
+	cmaddhus.p	fr10,fr10,fr12,cc6,0
+	cmaddhus	fr11,fr11,fr13,cc6,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_fr_limmed	0xbeef,0xdead,fr13
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xdead,0xbeef,fr12
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_fr_iimmed	0x0000,0x0000,fr10
+	set_fr_iimmed	0x0000,0x0000,fr11
+	cmaddhus	fr10,fr11,fr12,cc3,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xbeef,0x0000,fr10
+	set_fr_iimmed	0x0000,0xdead,fr11
+	cmaddhus	fr10,fr11,fr12,cc3,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x0000,0xdead,fr10
+	set_fr_iimmed	0xbeef,0x0000,fr11
+	cmaddhus	fr10,fr11,fr12,cc3,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x1234,0x5678,fr10
+	set_fr_iimmed	0x1111,0x1111,fr11
+	cmaddhus	fr10,fr11,fr12,cc3,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x7ffe,0x7ffe,fr10
+	set_fr_iimmed	0x0002,0x0001,fr11
+	cmaddhus	fr10,fr11,fr12,cc7,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xfffe,0xfffe,fr10
+	set_fr_iimmed	0x0001,0x0002,fr11
+	cmaddhus	fr10,fr11,fr12,cc7,0
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_spr_immed	0,msr0
+	set_fr_iimmed	0x0002,0x0001,fr10
+	set_fr_iimmed	0xfffe,0xfffe,fr11
+	cmaddhus	fr10,fr11,fr12,cc7,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0xbeef,0xdead,fr13
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_fr_iimmed	0x0001,0x0001,fr10
+	set_fr_iimmed	0x8000,0x8000,fr11
+	cmaddhus.p	fr10,fr10,fr12,cc7,0
+	cmaddhus	fr11,fr11,fr13,cc7,1
+	test_fr_limmed	0xdead,0xbeef,fr12
+	test_fr_limmed	0xbeef,0xdead,fr13
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	pass

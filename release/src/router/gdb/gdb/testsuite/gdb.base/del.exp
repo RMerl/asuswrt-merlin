@@ -1,0 +1,77 @@
+# Copyright 2006, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# The intent of this testcase it to verify that various aliases and
+# shortcuts of the "delete" command never stop working.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile del
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    untested "Couldn't compile test program"
+    return -1
+}
+
+# Get things started.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# A function to test that ALIAS is working as a shortcut of the "delete"
+# command.
+
+proc test_delete_alias { alias } {
+    global srcfile
+
+    # First of all, remove all previous breakpoints if there were any,
+    # and then verify that we do not have any breakpoint lying around.
+    gdb_test "delete" \
+             "" \
+             "Remove all breakpoints ($alias)"
+    gdb_test "info break" \
+             "No breakpoints or watchpoints." \
+             "info break after removing break on main"
+
+    
+    # Now, insert a breakpoint at an easy location, and then remove it
+    # using $alias. We verified that the removal worked by checking
+    # the list of breakpoints.
+    gdb_test "break main" \
+             "Breakpoint.*at.* file .*$srcfile, line.*" \
+             "breakpoint insertion ($alias)"
+    
+    gdb_test "$alias \$bpnum" \
+             "" \
+             "Remove last breakpoint ($alias)"
+    
+    gdb_test "info break" \
+             "No breakpoints or watchpoints." \
+             "info break after removing break on main ($alias)"
+}
+
+# Test various shortcut forms of the "delete" command.
+
+test_delete_alias "del"
+test_delete_alias "d"
+

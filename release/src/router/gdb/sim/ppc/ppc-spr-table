@@ -1,0 +1,91 @@
+#
+#   This file is part of the program psim.
+#
+#   Copyright (C) 1994-1995, Andrew Cagney <cagney@highland.com.au>
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+
+# Name:reg-nr:read-only:length
+MQ:0:0:0
+XER:1:0:0
+RTCU:4:0:0
+RTCL:5:0:0
+LR:8:0:0
+CTR:9:0:0
+DSISR:18:0:0
+DAR:19:0:0
+DEC:22:0:0
+SDR1:25:0:0
+SRR0:26:0:0
+SRR1:27:0:0
+VRSAVE:256:0:0
+SPRG0:272:0:0
+SPRG1:273:0:0
+SPRG2:274:0:0
+SPRG3:275:0:0
+EAR:282:0:0
+TBL:284:0:0
+TBU:285:0:0
+PVR:287:0:0
+SPEFSCR:512:0:0
+IBAT0U:528:0:0
+IBAT0L:529:0:0
+IBAT1U:530:0:0
+IBAT1L:531:0:0
+IBAT2U:532:0:0
+IBAT2L:533:0:0
+IBAT3U:534:0:0
+IBAT3L:535:0:0
+DBAT0U:536:0:0
+DBAT0L:537:0:0
+DBAT1U:538:0:0
+DBAT1L:539:0:0
+DBAT2U:540:0:0
+DBAT2L:541:0:0
+DBAT3U:542:0:0
+DBAT3L:543:0:0
+UMMCR0:936:0:0
+UMMCR1:940:0:0
+UPMC1:937:0:0
+UPMC2:938:0:0
+USIA:939:0:0
+UPMC3:941:0:0
+UPMC4:942:0:0
+MMCR0:952:0:0
+PMC1:953:0:0
+PMC2:954:0:0
+SIA:955:0:0
+MMCR1:956:0:0
+PMC3:957:0:0
+PMC4:958:0:0
+SDA:959:0:0
+DMISS:976:0:0
+DCMP:977:0:0
+HASH1:978:0:0
+HASH2:979:0:0
+IMISS:980:0:0
+ICMP:981:0:0
+RPA:982:0:0
+HID0:1008:0:0
+HID1:1009:0:0
+IABR:1010:0:0
+DABR:1013:0:0
+L2CR:1017:0:0
+ICTC:1019:0:0
+THRM1:1020:0:0
+THRM2:1021:0:0
+THRM3:1022:0:0
+PIR:1023:0:0

@@ -1,0 +1,119 @@
+# Copyright 2003, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Tests for PR gdb/1355, which is a reference to PR gcc/12066.
+# 2003-08-26  Michael Chastain <mec@shout.net>
+
+# This file is part of the gdb testsuite.
+
+set ws "\[\r\n\t \]*"
+set nl "\[\r\n\]+"
+
+if $tracelevel then {
+    strace $tracelevel
+    }
+
+if { [skip_cplus_tests] } { continue }
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+set testfile "gdb1355"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     untested gdb1355.exp
+     return -1
+}
+
+if [get_compiler_info ${binfile} "c++"] {
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if ![runto_main] then {
+    perror "couldn't run to main"
+    continue
+} 
+
+# See http://sources.redhat.com/gdb/bugs/1355
+# See http://gcc.gnu.org/bugzilla/show_bug.cgi?id=12066
+#
+# g++ -gstabs+ does not emit stabs for fundamental types.
+# They get emitted later inside other types, so they have no names
+# and gdb cannot handle them.
+
+set s_head  "${ws}(struct|class) mystruct \{(${ws}public:|)"
+set s_tail  ".*"
+
+set f_i     "${ws}int m_int;"
+set f_c     "${ws}char m_char;"
+set f_li    "${ws}long int m_long_int;"
+set f_ui    "${ws}unsigned int m_unsigned_int;"
+set f_lui   "${ws}long unsigned int m_long_unsigned_int;"
+set f_si    "${ws}short int m_short_int;"
+set f_sui   "${ws}short unsigned int m_short_unsigned_int;"
+set f_uc    "${ws}unsigned char m_unsigned_char;"
+set f_f     "${ws}float m_float;"
+set f_d     "${ws}double m_double;"
+set f_ld    "${ws}long double m_long_double;"
+set f_b     "${ws}bool m_bool;"
+
+set itc     "<invalid type code ${decimal}>"
+set bad_i   "${ws}(${itc}|int) m_int;";
+set bad_c   "${ws}(${itc}|char) m_char;"
+set bad_li  "${ws}(${itc}|long int) m_long_int;"
+set bad_ui  "${ws}(${itc}|unsigned int) m_unsigned_int;"
+set bad_lui "${ws}(${itc}|long unsigned int) m_long_unsigned_int;"
+set bad_si  "${ws}(${itc}|short int) m_short_int;"
+set bad_sui "${ws}(${itc}|short unsigned int) m_short_unsigned_int;"
+set bad_uc  "${ws}(${itc}|unsigned char) m_unsigned_char;"
+set bad_f   "${ws}(${itc}|float) m_float;"
+set bad_d   "${ws}(${itc}|double) m_double;"
+set bad_ld  "${ws}(${itc}|long double) m_long_double;"
+set bad_b   "${ws}(${itc}|bool) m_bool;"
+
+gdb_test_multiple "ptype s1" "ptype s1" {
+    -re "type = ${s_head}${f_i}${f_c}${f_li}${f_ui}${f_lui}${f_si}${f_sui}${f_uc}${f_f}${f_d}${f_ld}${f_b}${s_tail}\}$nl$gdb_prompt $" {
+	pass "ptype s1"
+    }
+    -re "type = ${s_head}${bad_i}${bad_c}${bad_li}${bad_ui}${bad_lui}${bad_si}${bad_sui}${bad_uc}${bad_f}${bad_d}${bad_ld}${bad_b}${s_tail}\}$nl$gdb_prompt $" {
+	# This happened with gcc HEAD 2003-08-20 08:00:00 UTC, -gstabs+.
+	kfail "gdb/1355" "ptype s1"
+    }
+}
+
+gdb_test_multiple "print s1" "print s1" {
+    -re "$decimal = \{m_int = 117, m_char = 97 'a', m_long_int = 118, m_unsigned_int = 119, m_long_unsigned_int = 120, m_short_int = 123, m_short_unsigned_int = 124, m_unsigned_char = 98 'b', m_float = 125, m_double = 126, m_long_double = 127, m_bool = true\}$nl$gdb_prompt $" {
+	pass "print s1"
+    }
+    -re "$decimal = \{m_int = 117, m_char = 97 'a', m_long_int = 118, m_unsigned_int = 119, m_long_unsigned_int = 120, m_short_int = 123, m_short_unsigned_int = 124, m_unsigned_char = 98 'b', m_float = 125, m_double = 126, m_long_double = 127, m_bool = 117\}$nl$gdb_prompt $" {
+	# This pattern is very picky, but if more different output
+	# shows up, I can just add more arms.  -- chastain 2003-08-26
+	#
+	# This happened with gcc HEAD 2003-08-20 08:00:00 UTC, -gstabs+.
+	# Look at the value of m_bool.  It looks like gdb latched onto
+	# random int type and then used the data at structure offset 0.
+	kfail "gdb/1355" "print s1"
+    }
+}

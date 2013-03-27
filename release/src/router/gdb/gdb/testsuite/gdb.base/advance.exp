@@ -1,0 +1,95 @@
+# Copyright 2003, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# advance.exp -- Expect script to test 'advance' in gdb
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set testfile advance
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+remote_exec build "rm -f ${binfile}"
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    untested advance.exp
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if ![runto_main] then {
+    fail "Can't run to main"
+    return 0
+}
+
+# Verify that "advance <location>" works.  (This is really just syntactic
+# sugar for "tbreak <location>; continue".)
+#
+gdb_test "advance [gdb_get_line_number "advance this location"]" \
+	"main .* at .*:.*b = 3.*advance this location.*" \
+	"advance line number"
+
+# Verify that a malformed "advance" is gracefully caught.
+#
+gdb_test "advance [gdb_get_line_number "advance malformed"] then stop" \
+	"Junk at end of arguments." "malformed advance"
+
+# Verify that "advance <funcname>" works.
+#
+gdb_test "advance func" \
+	"func.*at.*x = x \\+ 5." \
+	"advance func"
+
+# Verify that "advance <funcname>" when funcname is NOT called by the current
+# frame, stops at the end of the current frame.
+#
+# gdb can legitimately stop on either the current line or the next line,
+# depending on whether the machine instruction for 'call' on the current
+# line has more instructions after it or not.
+#
+gdb_test "advance func3" \
+	"(in main|).*(func \\(c\\)|marker1 \\(\\)).*stop here after leaving current frame..."\
+	"advance function not called by current frame"
+
+# break at main again
+#
+gdb_test "break [gdb_get_line_number "break here"]" \
+	".*Breakpoint.* at .*" \
+	"set breakpoint at call to func3"
+gdb_test "continue" \
+	".*Breakpoint ${decimal}, main.*func3.*break here.*" \
+	"continue to call to func3 in main"
+
+# Verify that "advance <funcname>" when funcname is called as parameter to 
+# another function works.
+#
+gdb_test "advance foo" \
+	"foo \\(a=5\\).*int b = a \\+ 10;"\
+	"advance function called as param"
+
+# Verify that we get an error if we use 'advance' w/o argument
+#
+gdb_test "advance" \
+	"Argument required \\(a location\\)."\
+	"advance with no argument"
+

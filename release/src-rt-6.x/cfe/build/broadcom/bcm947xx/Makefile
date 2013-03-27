@@ -60,7 +60,7 @@ endif
 COMPRESSED_CFE := 1
 RESCUE_MODE := 1	# disable for tmp
 RTN66U := 1
-DUAL_TRX :=1
+DUAL_TRX :=0
 
 # read sdram params from nvram in internal builds                               
 CFG_SDRAM_PARAM_FROM_EMBEDDED_NVRAM := 1

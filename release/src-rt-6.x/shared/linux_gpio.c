@@ -1,7 +1,7 @@
 /*
  * Linux Broadcom BCM47xx GPIO char driver
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: linux_gpio.c 300516 2011-12-04 17:39:44Z $
+ * $Id: linux_gpio.c 342502 2012-07-03 03:08:12Z $
  *
  */
 #include <linux/module.h>
@@ -55,9 +55,15 @@ gpio_release(struct inode *inode, struct file * file)
 	return 0;
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
+static long
+gpio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+#else
 static int
 gpio_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
+#endif /* linux-2.6.22 */
 	struct gpio_ioctl gpioioc;
 
 	if (copy_from_user(&gpioioc, (struct gpio_ioctl *)arg, sizeof(struct gpio_ioctl)))
@@ -99,7 +105,11 @@ static struct file_operations gpio_fops = {
 	owner:		THIS_MODULE,
 	open:		gpio_open,
 	release:	gpio_release,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
+	unlocked_ioctl:  gpio_ioctl
+#else
 	ioctl:		gpio_ioctl
+#endif
 };
 
 static int __init
@@ -122,12 +132,16 @@ gpio_init(void)
 	}
 
 	/* Add the device gpio0 */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
+	device_create(gpiodev_class, NULL, MKDEV(gpio_major, 0), NULL, "gpio", 0);
+#else
 	class_device_create(gpiodev_class, NULL, MKDEV(gpio_major, 0), NULL, "gpio");
+#endif /* linux-2.6.36 */
 #else
 	gpiodev_handle = devfs_register(NULL, "gpio", DEVFS_FL_DEFAULT,
 	                                gpio_major, 0, S_IFCHR | S_IRUGO | S_IWUGO,
 	                                &gpio_fops, NULL);
-#endif
+#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0) */
 
 	return 0;
 }
@@ -137,7 +151,11 @@ gpio_exit(void)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
 	if (gpiodev_class != NULL) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
+		device_destroy(gpiodev_class, MKDEV(gpio_major, 0));
+#else
 		class_device_destroy(gpiodev_class, MKDEV(gpio_major, 0));
+#endif
 		class_destroy(gpiodev_class);
 	}
 
@@ -149,7 +167,7 @@ gpio_exit(void)
 		devfs_unregister(gpiodev_handle);
 	gpiodev_handle = NULL;
 	devfs_unregister_chrdev(gpio_major, "gpio");
-#endif
+#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0) */
 	si_detach(gpio_sih);
 }
 

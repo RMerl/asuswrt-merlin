@@ -1,0 +1,24 @@
+# sh testcase for mov.l @($imm8x4, gbr), r0 -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+	mov #30, r1
+	shll8 r1
+	ldc r1, gbr
+	# Store something there first.
+	mov #170, r0
+	mov r0, r7
+	mov.l r0, @(12, gbr)
+check:	
+	# Load it back.
+	mov.l @(12, gbr), r0
+	cmp/eq r0, r7
+
+okay:
+	pass
+wrong:
+	fail

@@ -1,0 +1,624 @@
+# The Polish translation for Neon.
+# Copyright (C) 2007-2009 Arfrever Frehtes Taifersar Arahesis
+# This file is distributed under the same license as the Neon package.
+# Arfrever Frehtes Taifersar Arahesis <Arfrever.FTA@gmail.com>, 2007-2009.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Neon 0.29.0\n"
+"Report-Msgid-Bugs-To: neon@lists.manyfish.co.uk\n"
+"POT-Creation-Date: 2010-10-01 13:30+0100\n"
+"PO-Revision-Date: 2009-09-04 02:00+0200\n"
+"Last-Translator: Arfrever Frehtes Taifersar Arahesis <Arfrever.FTA@gmail."
+"com>\n"
+"Language-Team: Polish Neon Translator Arfrever Frehtes Taifersar Arahesis "
+"<Arfrever.FTA@gmail.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/ne_207.c:198
+#, c-format
+msgid ""
+"Invalid HTTP status line in status element at line %d of response:\n"
+"Status line was: %s"
+msgstr ""
+"Niewłaściwa linia statusu HTTP w elemencie statusu w linii %d odpowiedzi:\n"
+"Linia statusu była: %s"
+
+#: src/ne_auth.c:134
+#, c-format
+msgid "Could not authenticate to server: %s"
+msgstr "Nie można autentykować się do serwera: %s"
+
+#: src/ne_auth.c:139
+#, c-format
+msgid "Could not authenticate to proxy server: %s"
+msgstr "Nie można autentykować się do serwera proxy: %s"
+
+#: src/ne_auth.c:374
+#, c-format
+msgid "rejected %s challenge"
+msgstr "odrzucone wezwanie %s"
+
+#: src/ne_auth.c:390
+msgid "missing realm in Basic challenge"
+msgstr "brakująca domena w wezwaniu Basic"
+
+#: src/ne_auth.c:485
+msgid "invalid Negotiate token"
+msgstr "niewłaściwy żeton Negotiate"
+
+#: src/ne_auth.c:508
+msgid "GSSAPI authentication error: "
+msgstr "Błąd autentykacji GSSAPI: "
+
+#: src/ne_auth.c:521
+#, c-format
+msgid "GSSAPI failure (code %u)"
+msgstr "Porażka GSSAPI (kod %u)"
+
+#: src/ne_auth.c:556
+msgid "ignoring empty Negotiate continuation"
+msgstr "ignorowanie pustej kontynuacji Negotiate"
+
+#: src/ne_auth.c:571
+#, c-format
+msgid "Negotiate response verification failed: invalid response header token"
+msgstr ""
+"weryfikacja odpowiedzi Negotiate nie udała się: niewłaściwy żeton nagłówka "
+"odpowiedzi"
+
+#: src/ne_auth.c:593
+#, c-format
+msgid "Negotiate response verification failure: %s"
+msgstr "porażka weryfikacji odpowiedzi Negotiate: %s"
+
+#: src/ne_auth.c:765
+msgid "unknown algorithm in Digest challenge"
+msgstr "nieznany algorytm w wezwaniu Digest"
+
+#: src/ne_auth.c:769
+msgid "incompatible algorithm in Digest challenge"
+msgstr "niekompatybilny algorytm w wezwaniu Digest"
+
+#: src/ne_auth.c:773
+msgid "missing parameter in Digest challenge"
+msgstr "brakujący parametr w wezwaniu Digest"
+
+#: src/ne_auth.c:777
+msgid "initial Digest challenge was stale"
+msgstr "początkowe wezwanie Digest było nieaktualne"
+
+#: src/ne_auth.c:784
+msgid "stale Digest challenge with new algorithm or realm"
+msgstr "nieaktualne wezwanie Digest z nowym algorytmem lub domeną"
+
+#: src/ne_auth.c:796
+msgid "could not parse domain in Digest challenge"
+msgstr "nie można parsować domeny w wezwaniu Digest"
+
+#: src/ne_auth.c:1105
+#, c-format
+msgid "Digest mutual authentication failure: missing parameters"
+msgstr "Porażka wzajemnego uwierzytelniania Digest: brakujące parametry"
+
+#: src/ne_auth.c:1110
+#, c-format
+msgid "Digest mutual authentication failure: client nonce mismatch"
+msgstr ""
+"Porażka wzajemnego uwierzytelniania Digest: niezgodność posłańca klienta"
+
+#: src/ne_auth.c:1120
+#, c-format
+msgid "Digest mutual authentication failure: could not parse nonce count"
+msgstr ""
+"Porażka wzajemnego uwierzytelniania Digest: nie można parsować licznika "
+"posłańca"
+
+#: src/ne_auth.c:1125
+#, c-format
+msgid "Digest mutual authentication failure: nonce count mismatch (%u not %u)"
+msgstr ""
+"Porażka wzajemnego uwierzytelniania Digest: niezgodność licznika posłańca (%"
+"u nie %u)"
+
+#: src/ne_auth.c:1168
+#, c-format
+msgid "Digest mutual authentication failure: request-digest mismatch"
+msgstr ""
+"Porażka wzajemnego uwierzytelniania Digest: niezgodność request-digest "
+"mismatch"
+
+#: src/ne_auth.c:1299
+#, c-format
+msgid "ignored %s challenge"
+msgstr "wezwanie %s zignorowane"
+
+#: src/ne_auth.c:1378
+msgid "could not parse challenge"
+msgstr "nie można parsować wezwania"
+
+#: src/ne_basic.c:98
+#, c-format
+msgid "Could not determine file size: %s"
+msgstr "Nie można określić rozmiaru pliku: %s"
+
+#: src/ne_basic.c:149
+#, c-format
+msgid "Response did not include requested range"
+msgstr "Odpowiedź nie zawierała wymaganego zakresu"
+
+#: src/ne_basic.c:183
+#, c-format
+msgid "Range is not satisfiable"
+msgstr "Zakres nie może być usatysfakcjonowany"
+
+#: src/ne_basic.c:188
+#, c-format
+msgid "Resource does not support ranged GET requests"
+msgstr "Zasób nie obsługuje zakresowych żądań GET"
+
+#: src/ne_compress.c:184
+#, c-format
+msgid "%s: %s (code %d)"
+msgstr "%s: %s (kod %d)"
+
+#: src/ne_compress.c:232
+msgid "Could not inflate data"
+msgstr "Nie można "
+
+#: src/ne_compress.c:293
+msgid "Could not initialize zlib"
+msgstr "Nie można zainicjalizować zlib"
+
+#: src/ne_gnutls.c:172
+#, c-format
+msgid "[unprintable:#%lu]"
+msgstr "[niedrukowalne:#%lu]"
+
+#: src/ne_gnutls.c:201
+msgid "[unprintable]"
+msgstr "[niedrukowalne]"
+
+#: src/ne_gnutls.c:817
+msgid "signed using insecure algorithm"
+msgstr "podpisane przy użyciu niebezpiecznego algorytmu"
+
+#: src/ne_gnutls.c:820
+#, c-format
+msgid "unrecognized errors (%u)"
+msgstr "nierozpoznane błędy (%u)"
+
+#: src/ne_gnutls.c:865 src/ne_openssl.c:468
+#, c-format
+msgid "Server certificate was missing commonName attribute in subject name"
+msgstr "Certyfikat serwera nie posiada atrybutu commonName w nazwie tematu"
+
+#: src/ne_gnutls.c:879
+#, c-format
+msgid "Could not verify server certificate: %s"
+msgstr "Nie można zweryfikować certyfikatu serwera: %s"
+
+#: src/ne_gnutls.c:891 src/ne_openssl.c:455
+#, c-format
+msgid "Certificate verification error: %s"
+msgstr "Błąd weryfikacji certyfikatu: %s"
+
+#: src/ne_gnutls.c:924 src/ne_openssl.c:674
+#, c-format
+msgid "SSL handshake failed, client certificate was requested: %s"
+msgstr "Uzgodnienie SSL nie udało się, certyfikat klienta został zażądany: %s"
+
+#: src/ne_gnutls.c:929 src/ne_openssl.c:679
+#, c-format
+msgid "SSL handshake failed: %s"
+msgstr "Uzgodnienie SSL nie udało się: %s"
+
+#: src/ne_gnutls.c:939
+#, c-format
+msgid "Server did not send certificate chain"
+msgstr "Serwer nie wysłał łańcucha certyfikatu"
+
+#: src/ne_locks.c:584
+msgid "LOCK response missing Lock-Token header"
+msgstr "Odpowiedź LOCK nie zawiera nagłówka Lock-Token"
+
+#: src/ne_locks.c:759
+#, c-format
+msgid "Response missing activelock for %s"
+msgstr "Odpowiedź nie zawiera aktywnej blokady dla %s"
+
+#: src/ne_locks.c:801
+#, c-format
+msgid "No activelock for <%s> returned in LOCK refresh response"
+msgstr ""
+"Nie zwrócono żadnej aktywnej blokady dla <%s> w odpowiedzi LOCK refresh"
+
+#: src/ne_openssl.c:699
+#, c-format
+msgid "SSL server did not present certificate"
+msgstr "Serwer SSL nie przedstawił certyfikatu"
+
+#: src/ne_openssl.c:708
+#, c-format
+msgid "Server certificate changed: connection intercepted?"
+msgstr "Certyfikat serwera zmienił się: połączenie przechwycone?"
+
+#: src/ne_props.c:371 src/ne_props.c:435
+msgid "Response exceeds maximum property count"
+msgstr "Odpowiedź przekracza maksymalną liczbę właściwości"
+
+#: src/ne_redirect.c:92
+#, c-format
+msgid "Could not parse redirect destination URL"
+msgstr "Nie można parsować URL-u przeadresowanego celu"
+
+#: src/ne_request.c:194
+#, c-format
+msgid "%s: connection was closed by proxy server"
+msgstr "%s: połączenie zostało zamknięte przez serwer proxy"
+
+#: src/ne_request.c:197
+#, c-format
+msgid "%s: connection was closed by server"
+msgstr "%s: połączenie zostało zamknięte przez serwer"
+
+#: src/ne_request.c:202
+#, c-format
+msgid "%s: connection timed out"
+msgstr "%s: czas połączenia się skończył"
+
+#: src/ne_request.c:305
+#, c-format
+msgid "Premature EOF in request body file"
+msgstr ""
+
+#: src/ne_request.c:312
+#, c-format
+msgid "Failed reading request body file: %s"
+msgstr ""
+
+#: src/ne_request.c:332
+msgid "offset invalid"
+msgstr "nieprawidłowe przesunięcie"
+
+#: src/ne_request.c:337
+#, c-format
+msgid "Could not seek to offset %s of request body file: %s"
+msgstr "Nie można szukać przesunięcia %s pliku ciała żądania: %s"
+
+#: src/ne_request.c:385
+msgid "Could not send request body"
+msgstr "Nie można wysłać ciała żądania"
+
+#: src/ne_request.c:728
+msgid "Could not read chunk size"
+msgstr "Nie można odczytać rozmiaru kawałka"
+
+#: src/ne_request.c:735
+msgid "Could not parse chunk size"
+msgstr "Nie można parsować rozmiaru kawałka"
+
+#: src/ne_request.c:772
+msgid "Could not read response body"
+msgstr "Nie można odczytać ciała odpowiedzi"
+
+#: src/ne_request.c:788
+msgid "Could not read chunk delimiter"
+msgstr "Nie można odczytać ogranicznika kawałka"
+
+#: src/ne_request.c:791
+msgid "Chunk delimiter was invalid"
+msgstr "Ogranicznik kawałka był nieprawidłowy"
+
+#: src/ne_request.c:896
+msgid "Could not read status line"
+msgstr "Nie można odczytać linii statusu"
+
+#: src/ne_request.c:918
+msgid "Could not parse response status line"
+msgstr "Nie można parsować linii statusu odpowiedzi"
+
+#: src/ne_request.c:930
+msgid "Could not read interim response headers"
+msgstr "Nie można odczytać nagłówków tymczasowej odpowiedzi"
+
+#: src/ne_request.c:964
+msgid "Could not send request"
+msgstr "Nie można wysłać żądania"
+
+#: src/ne_request.c:1012 src/ne_request.c:1030 src/ne_request.c:1040
+msgid "Error reading response headers"
+msgstr "Błąd podczas odczytywania nagłówków odpowiedzi"
+
+#: src/ne_request.c:1058
+#, c-format
+msgid "Response header too long"
+msgstr "Nagłówek odpowiedzi zbyt długi"
+
+#: src/ne_request.c:1140
+msgid "Response exceeded maximum number of header fields"
+msgstr "Odpowiedź przekroczyła maksymalną liczbę pól nagłówka"
+
+#: src/ne_request.c:1155
+#, c-format
+msgid "Could not resolve hostname `%s': %s"
+msgstr "Nie można rozwiązać nazwy hosta `%s': %s"
+
+#: src/ne_request.c:1286
+msgid "Unknown transfer-coding in response"
+msgstr "Nieznane transfer-coding w odpowiedzi"
+
+#: src/ne_request.c:1299
+msgid "Invalid Content-Length in response"
+msgstr "Nieprawidłowe Content-Length w odpowiedzi"
+
+#: src/ne_request.c:1372
+#, c-format
+msgid "Could not write to file: %s"
+msgstr "Nie można pisać do pliku: %s"
+
+#: src/ne_request.c:1445
+#, c-format
+msgid "Could not create SSL connection through proxy server: %s"
+msgstr "Nie można utworzyć połączenia SSL przez serwer proxy: %s"
+
+#: src/ne_request.c:1484
+#, c-format
+msgid "Could not create socket"
+msgstr "Nie można utworzyć gniazda"
+
+#: src/ne_request.c:1518
+msgid "Could not connect to server"
+msgstr "Nie można połączyć się z serwerem"
+
+#: src/ne_request.c:1520
+msgid "Could not connect to proxy server"
+msgstr "Nie można połączyć się z serwerem proxy"
+
+#: src/ne_request.c:1563
+#, c-format
+msgid "Could not find IPv4 address of hostname %s for SOCKS v4 proxy"
+msgstr "Nie można znaleźć adresu IPv4 nazwy hosta %s dla proxy SOCKS v4"
+
+#: src/ne_request.c:1621
+#, c-format
+msgid "Could not establish connection from SOCKS proxy (%s:%u): %s"
+msgstr "Nie można nawiązać połączenia z proxy SOCKS (%s:%u): %s"
+
+#: src/ne_session.c:530 src/ne_session.c:541
+msgid "[invalid date]"
+msgstr "[nieprawidłowa data]"
+
+#: src/ne_session.c:554
+msgid "certificate is not yet valid"
+msgstr "certyfikat nie jest jeszcze poprawny"
+
+#: src/ne_session.c:555
+msgid "certificate has expired"
+msgstr "certyfikat wygasł"
+
+#: src/ne_session.c:556
+msgid "certificate issued for a different hostname"
+msgstr "certyfikat wydany dla innej nazwy hosta"
+
+#: src/ne_session.c:557
+msgid "issuer is not trusted"
+msgstr "wydawca nie jest zaufany"
+
+#: src/ne_session.c:558
+msgid "bad certificate chain"
+msgstr "zły łańcuch certyfikatu"
+
+#: src/ne_session.c:559
+msgid "certificate has been revoked"
+msgstr "certyfikat został unieważniony"
+
+#: src/ne_session.c:564
+msgid "Server certificate verification failed: "
+msgstr "Weryfikacja certyfikatu serwera nie powiodła się: "
+
+#: src/ne_socket.c:516 src/ne_socket.c:612 src/ne_socket.c:716
+msgid "Connection closed"
+msgstr "Połączenie zamknięte"
+
+#: src/ne_socket.c:622 src/ne_socket.c:728
+msgid "Secure connection truncated"
+msgstr "Bezpieczne połączenie obcięte"
+
+#: src/ne_socket.c:634 src/ne_socket.c:740
+#, c-format
+msgid "SSL error: %s"
+msgstr "Błąd SSL: %s"
+
+#: src/ne_socket.c:637
+#, c-format
+msgid "SSL error code %d/%d/%lu"
+msgstr "Kod błędu SSL %d/%d/%lu"
+
+#: src/ne_socket.c:721
+#, c-format
+msgid "SSL alert received: %s"
+msgstr "Alarm SSL otrzymany: %s"
+
+#: src/ne_socket.c:736
+msgid "SSL socket read failed"
+msgstr "Odczytywanie gniazda SSL nie powiodło się"
+
+#: src/ne_socket.c:867
+msgid "Line too long"
+msgstr "Linia zbyt długa"
+
+#: src/ne_socket.c:1012 src/ne_socket.c:1018
+msgid "Host not found"
+msgstr "Host nieznaleziony"
+
+#: src/ne_socket.c:1221
+msgid "Connection timed out"
+msgstr "Czas połączenia się skończył"
+
+#: src/ne_socket.c:1412
+msgid "Socket descriptor number exceeds FD_SETSIZE"
+msgstr "Numer deskryptoru gniazda przekracza FD_SETSIZE"
+
+#: src/ne_socket.c:1474
+msgid "Socket family not supported"
+msgstr "Rodzina gniazda niewspierana"
+
+#: src/ne_socket.c:1701
+msgid "Client certificate verification failed"
+msgstr "Weryfikacja certyfikatu klienta nie powiodła się"
+
+#: src/ne_socket.c:1717
+msgid "SSL disabled due to lack of entropy"
+msgstr "SSL wyłączone z powodu braku entropii"
+
+#: src/ne_socket.c:1724
+msgid "SSL disabled due to library version mismatch"
+msgstr "SSL wyłączone z powodu niezgodności wersji biblioteki"
+
+#: src/ne_socket.c:1730
+msgid "Could not create SSL structure"
+msgstr "Nie można utworzyć struktury SSL"
+
+#: src/ne_socks.c:65
+msgid "failure"
+msgstr "porażka"
+
+#: src/ne_socks.c:68
+msgid "connection not permitted"
+msgstr "połączenie niedozwolone"
+
+#: src/ne_socks.c:71
+msgid "network unreachable"
+msgstr "sieć nieosiągalna"
+
+#: src/ne_socks.c:74
+msgid "host unreachable"
+msgstr "host nieosiągalny"
+
+#: src/ne_socks.c:77
+msgid "TTL expired"
+msgstr "TTL utraciło ważność"
+
+#: src/ne_socks.c:80
+msgid "command not supported"
+msgstr "polecenie niewspierane"
+
+#: src/ne_socks.c:83
+msgid "address type not supported"
+msgstr "typ adresu niewspierany"
+
+#: src/ne_socks.c:86
+#, c-format
+msgid "%s: unrecognized error (%u)"
+msgstr "%s: nierozpoznany błąd (%u)"
+
+#: src/ne_socks.c:128 src/ne_socks.c:328
+msgid "Could not send message to proxy"
+msgstr "Nie można wysłać wiadomości do proxy"
+
+#: src/ne_socks.c:133
+msgid "Could not read initial response from proxy"
+msgstr "Nie można odczytać początkowej odpowiedzi od proxy"
+
+#: src/ne_socks.c:136
+msgid "Invalid version in proxy response"
+msgstr "Nieprawidłowa wersja w odpowiedzi proxy"
+
+#: src/ne_socks.c:157
+msgid "Could not send login message"
+msgstr "Nie można wysłać wiadomości logowania"
+
+#: src/ne_socks.c:162
+msgid "Could not read login reply"
+msgstr "Nie można odczytać odpowiedzi logowania"
+
+#: src/ne_socks.c:165
+msgid "Invalid version in login reply"
+msgstr "Nieprawidłowa wersja w odpowiedzi logowania"
+
+#: src/ne_socks.c:168
+msgid "Authentication failed"
+msgstr "Błąd uwierzytelniania"
+
+#: src/ne_socks.c:172
+msgid "No acceptable authentication method"
+msgstr "Brak akceptowalnej metody uwierzytelniania"
+
+#: src/ne_socks.c:174
+msgid "Unexpected authentication method chosen"
+msgstr "Nieoczekiwana metoda uwierzytelniania wybrana"
+
+#: src/ne_socks.c:210
+msgid "Could not send connect request"
+msgstr "Nie można wysłać żądania połączenia"
+
+#: src/ne_socks.c:215
+msgid "Could not read connect reply"
+msgstr "Nie można odczytac odpowiedzi połączenia"
+
+#: src/ne_socks.c:218
+msgid "Invalid version in connect reply"
+msgstr "Nieprawidłowa wersja w odpowiedzi połączenia"
+
+#: src/ne_socks.c:221 src/ne_socks.c:337
+msgid "Could not connect"
+msgstr "Nie można połączyć się"
+
+#: src/ne_socks.c:235
+msgid "Could not read FQDN length in connect reply"
+msgstr "Nie można odczytać długości FQDN w odpowiedzi połączenia"
+
+#: src/ne_socks.c:240
+msgid "Unknown address type in connect reply"
+msgstr "Nieznany typ adresu w odpowiedzi połączenia"
+
+#: src/ne_socks.c:245
+msgid "Could not read address in connect reply"
+msgstr "Nie można odczytać adresu w odpowiedzi połączenia"
+
+#: src/ne_socks.c:266
+msgid "request rejected or failed"
+msgstr "żądanie odrzucone lub nieudane"
+
+#: src/ne_socks.c:269
+msgid "could not establish connection to identd"
+msgstr "Nie można połączyć się z identd"
+
+#: src/ne_socks.c:272
+msgid "rejected due to identd user mismatch"
+msgstr "odrzucone z powodu niezgodności użytkownika identd"
+
+#: src/ne_socks.c:275
+#, c-format
+msgid "%s: unrecognized failure (%u)"
+msgstr "%s: nierozpoznana porażka (%u)"
+
+#: src/ne_socks.c:333
+msgid "Could not read response from proxy"
+msgstr "Nie można odczytać odpowiedzi od proxy"
+
+#: src/ne_xml.c:280
+#, c-format
+msgid "XML parse error at line %d: invalid element name"
+msgstr "Błąd podczas parsowania XML w linii %d: nieprawidłowa nazwa elementu"
+
+#: src/ne_xml.c:474
+msgid "Unknown error"
+msgstr "Nieznany błąd"
+
+#: src/ne_xml.c:579
+msgid "Invalid Byte Order Mark"
+msgstr "Nieprawidłowy Znacznik Kolejności Bajtów"
+
+#: src/ne_xml.c:667
+#, c-format
+msgid "XML parse error at line %d: %s"
+msgstr "Błąd podczas parsowania XML w linii %d: %s"
+
+#: src/ne_xmlreq.c:36
+#, c-format
+msgid "Could not parse response: %s"
+msgstr "Nie można parsować odpowiedzi: %s"

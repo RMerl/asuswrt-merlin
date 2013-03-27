@@ -1,0 +1,27 @@
+# frv testcase for dcei @(GRi,GRj),a
+# mach: fr400 fr550
+
+	.include "testutils.inc"
+
+	start
+
+	.global dcei
+dcei:
+	or_spr_immed	0x08000000,hsr0	; data cache: copy-back mode
+
+	set_mem_immed	0xdeadbeef,sp
+	test_mem_immed	0xdeadbeef,sp
+
+	flush_data_cache sp
+	set_mem_immed	0xbeefdead,sp
+	test_mem_immed	0xbeefdead,sp
+
+	dcei		@(sp,gr0),1
+	test_mem_immed	0xdeadbeef,sp
+
+	set_mem_immed	0xbeefdead,sp
+	test_mem_immed	0xbeefdead,sp
+	dcei		@(gr0,gr0),1
+	test_mem_immed	0xdeadbeef,sp
+
+	pass

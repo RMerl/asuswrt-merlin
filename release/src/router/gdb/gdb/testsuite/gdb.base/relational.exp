@@ -1,0 +1,484 @@
+# Copyright 1998, 1999, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Elena Zannoni (ezannoni@cygnus.com)
+
+# This file is part of the gdb testsuite
+#
+# tests for correctenss of relational operators, associativity and precedence
+# with integer type variables
+# 
+
+if $tracelevel then {
+	strace $tracelevel
+	}
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+set testfile "int-type"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
+     untested relational.exp
+     return -1
+    }
+
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+
+#
+# set it up at a breakpoint so we can play with the variable values
+#
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+#
+# test expressions with "int" types
+#
+
+gdb_test "set variable x=14" "" "set variable x=14"
+gdb_test "set variable y=2" "" "set variable y=2"
+gdb_test "set variable z=2" "" "set variable z=2"
+gdb_test "set variable w=3" "" "set variable w=3"
+
+send_gdb "print x\n"
+gdb_expect {
+    -re ".*14.*$gdb_prompt $" {
+        pass "print value of x"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x" }
+    timeout           { fail "(timeout) print value of x" }    
+  }
+
+
+send_gdb "print y\n"
+gdb_expect {
+    -re ".*2.*$gdb_prompt $" {
+        pass "print value of y"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of y" }
+    timeout           { fail "(timeout) print value of y" }    
+  }
+
+send_gdb "print z\n"
+gdb_expect {
+    -re ".*2.*$gdb_prompt $" {
+        pass "print value of z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of z" }
+    timeout           { fail "(timeout) print value of z" }    
+  }
+
+send_gdb "print w\n"
+gdb_expect {
+    -re ".*3.*$gdb_prompt $" {
+        pass "print value of w"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of w" }
+    timeout           { fail "(timeout) print value of w" }    
+  }
+
+
+
+send_gdb "print x < y\n"
+gdb_expect {
+    -re ".*$false.*$gdb_prompt $" {
+        pass "print value of x<y"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x<y" }
+    timeout           { fail "(timeout) print value of x<y" }    
+  }
+
+send_gdb "print x <= y\n"
+gdb_expect {
+    -re ".*$false.*$gdb_prompt $" {
+        pass "print value of x<=y"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x<=y" }
+    timeout           { fail "(timeout) print value of x<=y" }    
+  }
+
+send_gdb "print x > y\n"
+gdb_expect {
+    -re ".*$true.*$gdb_prompt $" {
+        pass "print value of x>y"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x>y" }
+    timeout           { fail "(timeout) print value of x>y" }    
+  }
+
+send_gdb "print x >= y\n"
+gdb_expect {
+    -re ".*$true.*$gdb_prompt $" {
+        pass "print value of x>=y"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x>=y" }
+    timeout           { fail "(timeout) print value of x>=y" }    
+  }
+
+send_gdb "print x == y\n"
+gdb_expect {
+    -re ".*$false.*$gdb_prompt $" {
+        pass "print value of x==y"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x==y" }
+    timeout           { fail "(timeout) print value of x==y" }    
+  }
+
+send_gdb "print x != y\n"
+gdb_expect {
+    -re ".*$true.*$gdb_prompt $" {
+        pass "print value of x!=y"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x!=y" }
+    timeout           { fail "(timeout) print value of x!=y" }    
+  }
+
+
+
+# Test associativity of <, >, <=, >=, ==, !=
+
+gdb_test "set variable x=3" "" "set variable x"
+gdb_test "set variable y=5" ""  "set variable y"
+gdb_test "set variable z=2" ""  "set variable z"
+
+
+
+send_gdb "print x < y < z\n"
+gdb_expect {
+    -re ".*$true.*\r\n$gdb_prompt $" {
+        pass "print value of x<y<z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x<y<z" }
+    timeout           { fail "(timeout) print value of x<y<z" }    
+  }
+
+send_gdb "print x <= y <= z\n"
+gdb_expect {
+    -re ".*$true\r\n$gdb_prompt $" {
+        pass "print value of x<=y<=z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x<=y<=z" }
+    timeout           { fail "(timeout) print value of x<=y<=z" }    
+  }
+
+send_gdb "print x > y > z\n"
+gdb_expect {
+    -re ".*$false.*\r\n$gdb_prompt $" {
+        pass "print value of x>y>z"
+      }
+    -re 8".*$gdb_prompt $" { fail "print value of x>y>z" }
+    timeout           { fail "(timeout) print value of x>y>z" }    
+  }
+
+send_gdb "print x >= y >= z\n"
+gdb_expect {
+    -re ".*$false.*\r\n$gdb_prompt $" {
+        pass "print value of x>=y>=z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x>=y>=z" }
+    timeout           { fail "(timeout) print value of x>=y>=z" }    
+  }
+
+gdb_test "set variable x=2" "" "set variable x"
+gdb_test "set variable y=2" ""  "set variable y"
+gdb_test "set variable z=1" ""  "set variable z"
+
+
+send_gdb "print x == y == z\n"
+gdb_expect {
+    -re ".*$true.*$gdb_prompt $" {
+        pass "print value of x==y==z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x==y==z" }
+    timeout           { fail "(timeout) print value of x==y==z" }    
+  }
+
+gdb_test "set variable z=0" ""  "set variable z"
+
+
+send_gdb "print x != y != z\n"
+gdb_expect {
+    -re ".*$false\r\n$gdb_prompt $" {
+        pass "print value of x!=y!=z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x!=y!=z" }
+    timeout           { fail "(timeout) print value of x!=y!=z" }    
+  }
+
+
+# test precedence rules on pairs of relational operators
+
+gdb_test "set variable x=0" "" "set variable x"
+gdb_test "set variable y=2" ""  "set variable y"
+gdb_test "set variable z=2" ""  "set variable z"
+
+
+send_gdb "print x < y == z\n"
+gdb_expect {
+    -re ".*$false.*$gdb_prompt $" {
+        pass "print value of x<y==z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x<y==z" }
+    timeout           { fail "(timeout) print value of x<y==z" }    
+  }
+
+# 0  2  2
+send_gdb "print x < y != z\n"
+gdb_expect {
+    -re ".*$true.*$gdb_prompt $" {
+        pass "print value of x<y!=z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x<y!=z" }
+    timeout           { fail "(timeout) print value of x<y!=z" }    
+  }
+
+gdb_test "set variable x=2" "" "set variable x"
+gdb_test "set variable y=3" ""  "set variable y"
+gdb_test "set variable z=1" ""  "set variable z"
+
+
+# 2 3 1
+send_gdb "print x < y <= z\n"
+gdb_expect {
+    -re ".*$true.*$gdb_prompt $" {
+        pass "print value of x<y<=z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x<y<=z" }
+    timeout           { fail "(timeout) print value of x<y<=z" }    
+  }
+
+
+# 2 3 1
+send_gdb "print x < y >= z\n"
+gdb_expect {
+    -re ".*$true.*$gdb_prompt $" {
+        pass "print value of x<y>=z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x<y>=z" }
+    timeout           { fail "(timeout) print value of x<y>=z" }    
+  }
+
+
+gdb_test "set variable z=0" "" " set variable z"
+
+
+# 2 3 0
+send_gdb "print x < y > z\n"
+gdb_expect {
+    -re ".*$true.*$gdb_prompt $" {
+        pass "print value of x<y>z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x<y>z" }
+    timeout           { fail "(timeout) print value of x<y>z" }    
+  }
+
+
+gdb_test "set variable x=1" "" " set variable x"
+
+# 1 3 0
+send_gdb "print x > y >= z\n"
+gdb_expect {
+    -re ".*$true.*$gdb_prompt $" {
+        pass "print value of x>y>=z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x>y>=z" }
+    timeout           { fail "(timeout) print value of x>y>=z" }    
+  }
+
+
+gdb_test "set variable z=2" "" " set variable z"
+
+# 1 3 2
+send_gdb "print x > y == z\n"
+gdb_expect {
+    -re ".*$false.*$gdb_prompt $" {
+        pass "print value of x>y==z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x>y==z" }
+    timeout           { fail "(timeout) print value of x>y==z" }    
+  }
+
+
+gdb_test "set variable x=2" "" " set variable x"
+gdb_test "set variable z=0" "" " set variable z"
+
+# 2 3 0
+send_gdb "print x > y != z\n"
+gdb_expect {
+    -re ".*$false.*$gdb_prompt $" {
+        pass "print value of x>y!=z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x>y!=z" }
+    timeout           { fail "(timeout) print value of x>y!=z" }    
+  }
+
+
+gdb_test "set variable x=4" "" "set x to 4"
+
+# 4 3 0
+send_gdb "print x > y <= z\n"
+gdb_expect {
+    -re ".*$false.*$gdb_prompt $" {
+        pass "print value of x>y<=z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x>y<=z" }
+    timeout           { fail "(timeout) print value of x>y<=z" }    
+  }
+
+# 4 3 0
+send_gdb "print x >= y == z\n"
+gdb_expect {
+    -re ".*$false\r\n$gdb_prompt $" {
+        pass "print value of x>=y==z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x>=y==z" }
+    timeout           { fail "(timeout) print value of x>=y==z" }    
+  }
+
+
+gdb_test "set variable x=2" "" " set variable x"
+
+# 2 3 0
+send_gdb "print x >= y != z\n"
+gdb_expect {
+    -re ".*$false\r\n$gdb_prompt $" {
+        pass "print value of x>=y!=z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x>=y!=z" }
+    timeout           { fail "(timeout) print value of x>=y!=z" }    
+  }
+
+
+gdb_test "set variable x=0" "" " set variable x"
+gdb_test "set variable z=4" "" " set variable z"
+
+# 0 3 4 
+send_gdb "print x >= y <= z\n"
+gdb_expect {
+    -re ".*$true\r\n$gdb_prompt $" {
+        pass "print value of x>=y<=z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x>=y<=z" }
+    timeout           { fail "(timeout) print value of x>=y<=z" }    
+  }
+
+# 0 3 4
+send_gdb "print x <= y == z\n"
+gdb_expect {
+    -re ".*$false\r\n$gdb_prompt $" {
+        pass "print value of x<=y==z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x<=y==z" }
+    timeout           { fail "(timeout) print value of x<=y==z" }    
+  }
+
+gdb_test "set variable x=2" "" " set variable x"
+
+# 2 3 4
+send_gdb "print x <= y != z\n"
+gdb_expect {
+    -re ".*$true\r\n$gdb_prompt $" {
+        pass "print value of x<=y!=z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x<=y!=z" }
+    timeout           { fail "(timeout) print value of x<=y!=z" }    
+  }
+
+
+# 2 3 4
+send_gdb "print x == y != z\n"
+gdb_expect {
+    -re ".*$true\r\n$gdb_prompt $" {
+        pass "print value of x==y!=z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x==y!=z" }
+    timeout           { fail "(timeout) print value of x==y!=z" }    
+  }
+
+        
+
+# test use of parenthesis to enforce different order of evaluation
+
+
+gdb_test "set variable z=0" "" " set variable z"
+
+# 2 3 0
+send_gdb "print x >= (y < z)\n"
+gdb_expect {
+    -re ".*$true\r\n$gdb_prompt $" {
+        pass "print value of x>=(y<z)"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x>=(y<z)" }
+    timeout           { fail "(timeout) print value of x>=(y<z)" }    
+  }
+
+
+# 2 3 0
+send_gdb "print x >= (y != z)\n"
+gdb_expect {
+    -re ".*$true\r\n$gdb_prompt $" {
+        pass "print value of x>=(y!=z)"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x>=(y*!=z)" }
+    timeout           { fail "(timeout) print value of x>=(y!=z)" }    
+  }
+
+# 2 3 0
+send_gdb "print x == (y == z)\n"
+gdb_expect {
+    -re ".*$false\r\n$gdb_prompt $" {
+        pass "print value of x==(y==z)"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of x==(y==z)" }
+    timeout           { fail "(timeout) print value of x==(y==z)" }    
+  }
+
+
+gdb_test "set variable x=1" "" " set variable x"
+gdb_test "set variable z=4" "" " set variable z"
+
+# 1 3 4
+send_gdb "print (x == y) < z\n"
+gdb_expect {
+    -re ".*$true\r\n$gdb_prompt $" {
+        pass "print value of (x==y)<z"
+      }
+    -re ".*$gdb_prompt $" { fail "print value of (x==y)<z" }
+    timeout           { fail "(timeout) print value of (x==y)<z" }    
+  }
+
+
+
+
+
+

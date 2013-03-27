@@ -188,3 +188,27 @@ check_if_file_exist(const char *filepath)
 }
 
 
+/* Test whether we can write to a directory.
+ * @return:
+ * 0		not writable
+ * -1		invalid parameter
+ * otherwise	writable
+ */
+int check_if_dir_writable(const char *dir)
+{
+	char tmp[PATH_MAX];
+	FILE *fp;
+	int ret = 0;
+
+	if (!dir || *dir == '\0')
+		return -1;
+
+	sprintf(tmp, "%s/.test_dir_writable", dir);
+	if ((fp = fopen(tmp, "w")) != NULL) {
+		fclose(fp);
+		unlink(tmp);
+		ret = 1;
+	}
+
+	return ret;
+}

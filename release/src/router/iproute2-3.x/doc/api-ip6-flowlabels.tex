@@ -1,0 +1,429 @@
+\documentstyle[12pt,twoside]{article}
+\def\TITLE{IPv6 Flow Labels}
+\input preamble
+\begin{center}
+\Large\bf IPv6 Flow Labels in Linux-2.2.
+\end{center}
+
+
+\begin{center}
+{ \large Alexey~N.~Kuznetsov } \\
+\em Institute for Nuclear Research, Moscow \\
+\verb|kuznet@ms2.inr.ac.ru| \\
+\rm April 11, 1999
+\end{center}
+
+\vspace{5mm}
+
+\tableofcontents
+
+\section{Introduction.}
+
+Every IPv6 packet carries 28 bits of flow information. RFC2460 splits
+these bits to two fields: 8 bits of traffic class (or DS field, if you
+prefer this term) and 20 bits of flow label. Currently there exist
+no well-defined API to manage IPv6 flow information. In this document
+I describe an attempt to design the API for Linux-2.2 IPv6 stack.
+
+\vskip 1mm
+
+The API must solve the following tasks:
+
+\begin{enumerate}
+
+\item To allow user to set traffic class bits.
+
+\item To allow user to read traffic class bits of received packets.
+This feature is not so useful as the first one, however it will be
+necessary f.e.\ to implement ECN [RFC2481] for datagram oriented services
+or to implement receiver side of SRP or another end-to-end protocol
+using traffic class bits.
+
+\item To assign flow labels to packets sent by user.
+
+\item To get flow labels of received packets. I do not know
+any applications of this feature, but it is possible that receiver will
+want to use flow labels to distinguish sub-flows.
+
+\item To allocate flow labels in the way, compliant to RFC2460. Namely:
+
+\begin{itemize}
+\item
+Flow labels must be uniformly distributed (pseudo-)random numbers,
+so that any subset of 20 bits can be used as hash key.
+
+\item
+Flows with coinciding source address and flow label must have identical
+destination address and not-fragmentable extensions headers (i.e.\ 
+hop by hop options and all the headers up to and including routing header,
+if it is present.)
+
+\begin{NB}
+There is a hole in specs: some hop-by-hop options can be
+defined only on per-packet base (f.e.\  jumbo payload option).
+Essentially, it means that such options cannot present in packets
+with flow labels.
+\end{NB}
+\begin{NB}
+NB notes here and below reflect only my personal opinion,
+they should be read with smile or should not be read at all :-).
+\end{NB}
+
+
+\item
+Flow labels have finite lifetime and source is not allowed to reuse
+flow label for another flow within the maximal lifetime has expired,
+so that intermediate nodes will be able to invalidate flow state before
+the label is taken over by another flow.
+Flow state, including lifetime, is propagated along datagram path
+by some application specific methods
+(f.e.\ in RSVP PATH messages or in some hop-by-hop option).
+
+
+\end{itemize}
+
+\end{enumerate}
+
+\section{Sending/receiving flow information.}
+
+\paragraph{Discussion.}
+\addcontentsline{toc}{subsection}{Discussion}
+It was proposed (Where? I do not remember any explicit statement)
+to solve the first four tasks using
+\verb|sin6_flowinfo| field added to \verb|struct| \verb|sockaddr_in6|
+(see RFC2553).
+
+\begin{NB}
+	This method is difficult to consider as reasonable, because it
+	puts additional overhead to all the services, despite of only
+	very small subset of them (none, to be more exact) really use it.
+	It contradicts both to IETF spirit and the letter. Before RFC2553
+	one justification existed, IPv6 address alignment left 4 byte
+	hole in \verb|sockaddr_in6| in any case. Now it has no justification.
+\end{NB}
+
+We have two problems with this method. The first one is common for all OSes:
+if \verb|recvmsg()| initializes \verb|sin6_flowinfo| to flow info
+of received packet, we loose one very important property of BSD socket API,
+namely, we are not allowed to use received address for reply directly
+and have to mangle it, even if we are not interested in flowinfo subtleties.
+
+\begin{NB}
+	RFC2553 adds new requirement: to clear \verb|sin6_flowinfo|.
+	Certainly, it is not solution but rather attempt to force applications
+	to make unnecessary work. Well, as usually, one mistake in design
+	is followed by attempts	to patch the hole and more mistakes...
+\end{NB}
+
+Another problem is Linux specific. Historically Linux IPv6 did not
+initialize \verb|sin6_flowinfo| at all, so that, if kernel does not
+support flow labels, this field is not zero, but a random number.
+Some applications also did not take care about it. 
+
+\begin{NB}
+Following RFC2553 such applications can be considered as broken,
+but I still think that they are right: clearing all the address
+before filling known fields is robust but stupid solution.
+Useless wasting CPU cycles and
+memory bandwidth is not a good idea. Such patches are acceptable
+as temporary hacks, but not as standard of the future.
+\end{NB}
+
+
+\paragraph{Implementation.}
+\addcontentsline{toc}{subsection}{Implementation}
+By default Linux IPv6 does not read \verb|sin6_flowinfo| field
+assuming that common applications are not obliged to initialize it
+and are permitted to consider it as pure alignment padding.
+In order to tell kernel that application
+is aware of this field, it is necessary to set socket option
+\verb|IPV6_FLOWINFO_SEND|.
+
+\begin{verbatim}
+  int on = 1;
+  setsockopt(sock, SOL_IPV6, IPV6_FLOWINFO_SEND,
+             (void*)&on, sizeof(on));
+\end{verbatim}
+
+Linux kernel never fills \verb|sin6_flowinfo| field, when passing
+message to user space, though the kernels which support flow labels
+initialize it to zero. If user wants to get received flowinfo, he
+will set option \verb|IPV6_FLOWINFO| and after this he will receive
+flowinfo as ancillary data object of type \verb|IPV6_FLOWINFO|
+(cf.\ RFC2292).
+
+\begin{verbatim}
+  int on = 1;
+  setsockopt(sock, SOL_IPV6, IPV6_FLOWINFO, (void*)&on, sizeof(on));
+\end{verbatim}
+
+Flowinfo received and latched by a connected TCP socket also may be fetched
+with \verb|getsockopt()| \verb|IPV6_PKTOPTIONS| together with
+another optional information.
+
+Besides that, in the spirit of RFC2292 the option \verb|IPV6_FLOWINFO|
+may be used as alternative way to send flowinfo with \verb|sendmsg()| or
+to latch it with \verb|IPV6_PKTOPTIONS|.
+
+\paragraph{Note about IPv6 options and destination address.}
+\addcontentsline{toc}{subsection}{IPv6 options and destination address}
+If \verb|sin6_flowinfo| does contain not zero flow label,
+destination address in \verb|sin6_addr| and non-fragmentable
+extension headers are ignored. Instead, kernel uses the values
+cached at flow setup (see below). However, for connected sockets
+kernel prefers the values set at connection time.
+
+\paragraph{Example.}
+\addcontentsline{toc}{subsection}{Example}
+After setting socket option \verb|IPV6_FLOWINFO|
+flowlabel and DS field are received as ancillary data object
+of type \verb|IPV6_FLOWINFO| and level \verb|SOL_IPV6|.
+In the cases when it is convenient to use \verb|recvfrom(2)|,
+it is possible to replace library variant with your own one,
+sort of:
+
+\begin{verbatim}
+#include <sys/socket.h>
+#include <netinet/in6.h>
+
+size_t recvfrom(int fd, char *buf, size_t len, int flags,
+                struct sockaddr *addr, int *addrlen)
+{
+  size_t cc;
+  char cbuf[128];
+  struct cmsghdr *c;
+  struct iovec iov = { buf, len };
+  struct msghdr msg = { addr, *addrlen,
+                        &iov,  1,
+                        cbuf, sizeof(cbuf),
+                        0 };
+
+  cc = recvmsg(fd, &msg, flags);
+  if (cc < 0)
+    return cc;
+  ((struct sockaddr_in6*)addr)->sin6_flowinfo = 0;
+  *addrlen = msg.msg_namelen;
+  for (c=CMSG_FIRSTHDR(&msg); c; c = CMSG_NEXTHDR(&msg, c)) {
+    if (c->cmsg_level != SOL_IPV6 ||
+      c->cmsg_type != IPV6_FLOWINFO)
+        continue;
+    ((struct sockaddr_in6*)addr)->sin6_flowinfo = *(__u32*)CMSG_DATA(c);
+  }
+  return cc;
+}
+\end{verbatim}
+
+
+
+\section{Flow label management.}
+
+\paragraph{Discussion.}
+\addcontentsline{toc}{subsection}{Discussion}
+Requirements of RFC2460 are pretty tough. Particularly, lifetimes
+longer than boot time require to store allocated labels at stable
+storage, so that the full implementation necessarily includes user space flow
+label manager. There are at least three different approaches:
+
+\begin{enumerate}
+\item {\bf ``Cooperative''. } We could leave flow label allocation wholly
+to user space. When user needs label he requests manager directly. The approach
+is valid, but as any ``cooperative'' approach it suffers of security problems.
+
+\begin{NB}
+One idea is to disallow not privileged user to allocate flow
+labels, but instead to pass the socket to manager via \verb|SCM_RIGHTS|
+control message, so that it will allocate label and assign it to socket
+itself. Hmm... the idea is interesting.
+\end{NB}
+
+\item {\bf ``Indirect''.} Kernel redirects requests to user level daemon
+and does not install label until the daemon acknowledged the request.
+The approach is the most promising, it is especially pleasant to recognize
+parallel with IPsec API [RFC2367,Craig]. Actually, it may share API with
+IPsec.
+
+\item {\bf ``Stupid''.} To allocate labels in kernel space. It is the simplest
+method, but it suffers of two serious flaws: the first,
+we cannot lease labels with lifetimes longer than boot time, the second, 
+it is sensitive to DoS attacks. Kernel have to remember all the obsolete
+labels until their expiration and malicious user may fastly eat all the
+flow label space.
+
+\end{enumerate}
+
+Certainly, I choose the most ``stupid'' method. It is the cheapest one
+for implementor (i.e.\ me), and taking into account that flow labels
+still have no serious applications it is not useful to work on more
+advanced API, especially, taking into account that eventually we
+will get it for no fee together with IPsec.
+
+
+\paragraph{Implementation.}
+\addcontentsline{toc}{subsection}{Implementation}
+Socket option \verb|IPV6_FLOWLABEL_MGR| allows to
+request flow label manager to allocate new flow label, to reuse
+already allocated one or to delete old flow label.
+Its argument is \verb|struct| \verb|in6_flowlabel_req|:
+
+\begin{verbatim}
+struct in6_flowlabel_req
+{
+        struct in6_addr flr_dst;
+        __u32           flr_label;
+        __u8            flr_action;
+        __u8            flr_share;
+        __u16           flr_flags;
+        __u16           flr_expires;
+        __u16           flr_linger;
+        __u32         __flr_reserved;
+        /* Options in format of IPV6_PKTOPTIONS */
+};
+\end{verbatim}
+
+\begin{itemize}
+
+\item \verb|dst| is IPv6 destination address associated with the label.
+
+\item \verb|label| is flow label value in network byte order. If it is zero,
+kernel will allocate new pseudo-random number. Otherwise, kernel will try
+to lease flow label ordered by user. In this case, it is user task to provide
+necessary flow label randomness.
+
+\item \verb|action| is requested operation. Currently, only three operations
+are defined:
+
+\begin{verbatim}
+#define IPV6_FL_A_GET   0   /* Get flow label */
+#define IPV6_FL_A_PUT   1   /* Release flow label */
+#define IPV6_FL_A_RENEW 2   /* Update expire time */
+\end{verbatim}
+
+\item \verb|flags| are optional modifiers. Currently
+only \verb|IPV6_FL_A_GET| has modifiers:
+
+\begin{verbatim}
+#define IPV6_FL_F_CREATE 1   /* Allowed to create new label */
+#define IPV6_FL_F_EXCL   2   /* Do not create new label */
+\end{verbatim}
+
+
+\item \verb|share| defines who is allowed to reuse the same flow label.
+
+\begin{verbatim}
+#define IPV6_FL_S_NONE    0   /* Not defined */
+#define IPV6_FL_S_EXCL    1   /* Label is private */
+#define IPV6_FL_S_PROCESS 2   /* May be reused by this process */
+#define IPV6_FL_S_USER    3   /* May be reused by this user */
+#define IPV6_FL_S_ANY     255 /* Anyone may reuse it */
+\end{verbatim}
+
+\item \verb|linger| is time in seconds. After the last user releases flow
+label, it will not be reused with different destination and options at least
+during this time. If \verb|share| is not \verb|IPV6_FL_S_EXCL| the label
+still can be shared by another sockets. Current implementation does not allow
+unprivileged user to set linger longer than 60 sec.
+
+\item \verb|expires| is time in seconds. Flow label will be kept at least
+for this time, but it will not be destroyed before user released it explicitly
+or closed all the sockets using it. Current implementation does not allow
+unprivileged user to set timeout longer than 60 sec. Proviledged applications
+MAY set longer lifetimes, but in this case they MUST save allocated
+labels at stable storage and restore them back after reboot before the first
+application allocates new flow.
+
+\end{itemize}
+
+This structure is followed by optional extension headers associated
+with this flow label in format of \verb|IPV6_PKTOPTIONS|. Only
+\verb|IPV6_HOPOPTS|, \verb|IPV6_RTHDR| and, if \verb|IPV6_RTHDR| presents,
+\verb|IPV6_DSTOPTS| are allowed.
+
+\paragraph{Example.}
+\addcontentsline{toc}{subsection}{Example}
+ The function \verb|get_flow_label| allocates
+private flow label.
+
+\begin{verbatim}
+int get_flow_label(int fd, struct sockaddr_in6 *dst, __u32 fl)
+{
+        int on = 1;
+        struct in6_flowlabel_req freq;
+
+        memset(&freq, 0, sizeof(freq));
+        freq.flr_label = htonl(fl);
+        freq.flr_action = IPV6_FL_A_GET;
+        freq.flr_flags = IPV6_FL_F_CREATE | IPV6_FL_F_EXCL;
+        freq.flr_share = IPV6_FL_S_EXCL;
+        memcpy(&freq.flr_dst, &dst->sin6_addr, 16);
+        if (setsockopt(fd, SOL_IPV6, IPV6_FLOWLABEL_MGR,
+                       &freq, sizeof(freq)) == -1) {
+                perror ("can't lease flowlabel");
+                return -1;
+        }
+        dst->sin6_flowinfo |= freq.flr_label;
+
+        if (setsockopt(fd, SOL_IPV6, IPV6_FLOWINFO_SEND,
+                       &on, sizeof(on)) == -1) {
+                perror ("can't send flowinfo");
+
+                freq.flr_action = IPV6_FL_A_PUT;
+                setsockopt(fd, SOL_IPV6, IPV6_FLOWLABEL_MGR,
+                           &freq, sizeof(freq));
+                return -1;
+        }
+        return 0;
+}
+\end{verbatim}
+
+A bit more complicated example using routing header can be found
+in \verb|ping6| utility (\verb|iputils| package). Linux rsvpd backend
+contains an example of using operation \verb|IPV6_FL_A_RENEW|.
+
+\paragraph{Listing flow labels.} 
+\addcontentsline{toc}{subsection}{Listing flow labels}
+List of currently allocated
+flow labels may be read from \verb|/proc/net/ip6_flowlabel|.
+
+\begin{verbatim}
+Label S Owner Users Linger Expires Dst                              Opt
+A1BE5 1 0     0     6      3       3ffe2400000000010a0020fffe71fb30 0
+\end{verbatim}
+
+\begin{itemize}
+\item \verb|Label| is hexadecimal flow label value.
+\item \verb|S| is sharing style.
+\item \verb|Owner| is ID of creator, it is zero, pid or uid, depending on
+		sharing style.
+\item \verb|Users| is number of applications using the label now.
+\item \verb|Linger| is \verb|linger| of this label in seconds.
+\item \verb|Expires| is time until expiration of the label in seconds. It may
+	be negative, if the label is in use.
+\item \verb|Dst| is IPv6 destination address.
+\item \verb|Opt| is length of options, associated with the label. Option
+	data are not accessible.
+\end{itemize}
+
+
+\paragraph{Flow labels and RSVP.} 
+\addcontentsline{toc}{subsection}{Flow labels and RSVP}
+RSVP daemon supports IPv6 flow labels
+without any modifications to standard ISI RAPI. Sender must allocate
+flow label, fill corresponding sender template and submit it to local rsvp
+daemon. rsvpd will check the label and start to announce it in PATH
+messages. Rsvpd on sender node will renew the flow label, so that it will not
+be reused before path state expires and all the intermediate
+routers and receiver purge flow state.
+
+\verb|rtap| utility is modified to parse flow labels. F.e.\ if user allocated
+flow label \verb|0xA1234|, he may write:
+
+\begin{verbatim}
+RTAP> sender 3ffe:2400::1/FL0xA1234 <Tspec>
+\end{verbatim}
+
+Receiver makes reservation with command:
+\begin{verbatim}
+RTAP> reserve ff 3ffe:2400::1/FL0xA1234 <Flowspec>
+\end{verbatim}
+
+\end{document}

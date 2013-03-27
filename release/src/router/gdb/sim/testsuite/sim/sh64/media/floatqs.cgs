@@ -1,0 +1,12 @@
+# sh testcase for float.qs $drgh, $frf -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+	movi 1, r0
+	fmov.qd r0, dr0
+	float.qs dr0, fr1
+	pass

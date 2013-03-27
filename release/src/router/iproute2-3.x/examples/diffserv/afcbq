@@ -1,0 +1,105 @@
+#!/usr/bin/perl
+#
+#
+# AF using CBQ for a single interface eth0 
+# 4 AF classes using GRED and one BE using RED
+# Things you might want to change:
+#	- the device bandwidth (set at 10Mbits)
+#	- the bandwidth allocated for each AF class and the BE class	
+#	- the drop probability associated with each AF virtual queue
+#
+# AF DSCP values used (based on AF draft 04)
+# -----------------------------------------
+# AF DSCP values
+# AF1 1. 0x0a 2. 0x0c 3. 0x0e
+# AF2 1. 0x12 2. 0x14 3. 0x16
+# AF3 1. 0x1a 2. 0x1c 3. 0x1e
+# AF4 1. 0x22 2. 0x24 3. 0x26
+
+#
+# 
+# A simple DSCP-class relationship formula used to generate
+# values in the for loop of this script; $drop stands for the
+# DP
+#	$dscp = ($class*8+$drop*2)
+#
+#  if you use GRIO buffer sharing, then GRED priority is set as follows:
+#  $gprio=$drop+1; 
+#
+
+$TC = "/usr/src/iproute2-current/tc/tc";
+$DEV = "dev lo";
+$DEV = "dev eth1";
+$DEV = "dev eth0";
+# the BE-class number
+$beclass = "5";  
+
+#GRIO buffer sharing on or off?
+$GRIO = "";
+$GRIO = "grio";
+# The bandwidth of your device
+$linerate="10Mbit";
+# The BE and AF rates
+%rate_table=();
+$berate="1500Kbit";
+$rate_table{"AF1rate"}="1500Kbit";
+$rate_table{"AF2rate"}="1500Kbit";
+$rate_table{"AF3rate"}="1500Kbit";
+$rate_table{"AF4rate"}="1500Kbit";
+#
+#
+#
+print "\n# --- General setup  ---\n";
+print "$TC qdisc add $DEV handle 1:0 root dsmark indices 64 set_tc_index\n";
+print "$TC filter add $DEV parent 1:0 protocol ip prio 1 tcindex mask 0xfc " .
+   "shift 2 pass_on\n";
+   #"shift 2\n";
+print "$TC qdisc add $DEV parent 1:0 handle 2:0 cbq bandwidth $linerate ".
+  "cell 8 avpkt 1000 mpu 64\n";
+print "$TC filter add $DEV parent 2:0 protocol ip prio 1 tcindex ".
+  "mask 0xf0 shift 4 pass_on\n";
+for $class (1..4) {
+    print "\n# --- AF Class $class specific setup---\n";
+    $AFrate=sprintf("AF%drate",$class);
+    print "$TC class add $DEV parent 2:0 classid 2:$class cbq ".
+      "bandwidth $linerate rate $rate_table{$AFrate} avpkt 1000 prio ".
+      (6-$class)." bounded allot 1514 weight 1 maxburst 21\n";
+    print "$TC filter add $DEV parent 2:0 protocol ip prio 1 handle $class ".
+      "tcindex classid 2:$class\n";
+    print "$TC qdisc add $DEV parent 2:$class gred setup DPs 3 default 2 ".
+      "$GRIO\n";
+# 
+# per DP setup
+#
+    for $drop (1..3) {
+    print "\n# --- AF Class $class DP $drop---\n";
+	$dscp = $class*8+$drop*2;
+	$tcindex = sprintf("1%x%x",$class,$drop);
+	print "$TC filter add $DEV parent 1:0 protocol ip prio 1 ".
+	  "handle $dscp tcindex classid 1:$tcindex\n";
+	$prob = $drop*0.02;
+        if ($GRIO) {
+	$gprio = $drop+1;
+	print "$TC qdisc change $DEV parent 2:$class gred limit 60KB min 15KB ".
+	  "max 45KB burst 20 avpkt 1000 bandwidth $linerate DP $drop ".
+	  "probability $prob ".
+          "prio $gprio\n";
+        } else {
+	print "$TC qdisc change $DEV parent 2:$class gred limit 60KB min 15KB ".
+	  "max 45KB burst 20 avpkt 1000 bandwidth $linerate DP $drop ".
+	  "probability $prob \n";
+	}
+    }
+}
+#
+#
+print "\n#------BE Queue setup------\n";
+print "$TC filter add $DEV parent 1:0 protocol ip prio 2 ".
+          "handle 0 tcindex mask 0 classid 1:1\n";
+print "$TC class add $DEV parent 2:0 classid 2:$beclass cbq ".
+      "bandwidth $linerate rate $berate avpkt 1000 prio 6 " .
+      "bounded allot 1514 weight 1 maxburst 21 \n";
+print "$TC filter add $DEV parent 2:0 protocol ip prio 1 handle 0 tcindex ".
+  "classid 2:5\n";
+print "$TC qdisc add $DEV parent 2:5 red limit 60KB min 15KB max 45KB ".
+  "burst 20 avpkt 1000 bandwidth $linerate probability 0.4\n";

@@ -1,0 +1,148 @@
+# Copyright 1997, 1998, 1999, 2000, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Elena Zannoni (ezannoni@cygnus.com)
+
+
+# this file tests command line calls with functions having variable
+# args list
+# corresponding source file: varargs.c
+
+#print find_max1(5,1,2,3,4,5)
+#print find_max1(1,3)
+#call find_max1(10,1,2,3,4,5,6,7,8,29,0)
+#print find_max2(3,1,2,3)
+#print find_max_double(5,1.0,17.0,2.0,3.0,4.0)
+#quit
+
+
+if $tracelevel then {
+        strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set prototypes 0
+set testfile "varargs"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+if {$hp_cc_compiler} {
+    set additional_flags "additional_flags=-Ae"
+} else {
+    set additional_flags ""
+}
+
+# build the first test case
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug ${additional_flags}}] != "" } {
+     untested varargs.exp
+     return -1
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+send_gdb "set print sevenbit-strings\n" ; gdb_expect -re "$gdb_prompt $"
+send_gdb "set print address off\n" ; gdb_expect -re "$gdb_prompt $"
+send_gdb "set width 0\n" ; gdb_expect -re "$gdb_prompt $"
+
+if [gdb_skip_stdio_test "varargs.exp"] {
+    # Nothing in this module is testable without printf.
+    return;
+}
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+if { $hp_aCC_compiler } {
+    # When compiled w/ aCC we need to disable overload resolution
+    # for command line calls.
+    # We need it for vararg calls since the aCC compiler gives us no
+    # information about the undeclared arguments, or even that there 
+    # _are_ undeclared arguments. As far as gdb is concerned it only
+    # knows about the declared arguments. So we need to force the call
+    # even though the overload resolution mechanism says that the types
+    # don't match. 
+    # - guo
+    gdb_test "set overload-resolution 0" ""
+}
+
+send_gdb "print find_max1(5,1,2,3,4,5)\n"
+gdb_expect {
+    -re ".*find_max\\(5, 1, 2, 3, 4, 5\\) returns 5\[ \r\n\]+.\[0-9\]+ = 5.*$gdb_prompt $" {
+        pass "print find_max1(5,1,2,3,4,5)"
+      }
+    -re ".*$gdb_prompt $" { fail "print find_max1(5,1,2,3,4,5)" }
+    timeout           { fail "(timeout) print find_max1(5,1,2,3,4,5)" }
+  }
+
+
+
+
+send_gdb "print find_max1(1,3)\n"
+gdb_expect {
+    -re ".*find_max\\(1, 3\\) returns 3\[ \r\n\]+.\[0-9\]+ = 3.*$gdb_prompt $" {
+        pass "print find_max1(1,3)"
+      }
+    -re ".*$gdb_prompt $" { fail "print find_max1(1,3)" }
+    timeout           { fail "(timeout) print find_max1(1,3)" }
+  }
+
+
+send_gdb "print find_max1(10,1,2,3,4,5,6,7,8,29,0)\n"
+gdb_expect {
+    -re ".*find_max\\(10, 1, 2, 3, 4, 5, 6, 7, 8, 29, 0\\) returns 29\[ \r\n\]+.\[0-9\]+ = 29.*$gdb_prompt $" {
+        pass "print find_max1(10,1,2,3,4,5,6,7,8,29,0)"
+      }
+    -re ".*$gdb_prompt $" { fail "print find_max1(10,1,2,3,4,5,6,7,8,29,0)" }
+    timeout           { fail "(timeout) print find_max1(10,1,2,3,4,5,6,7,8,29,0)" }
+  }
+
+
+
+send_gdb "print find_max2(3,1,2,3)\n"
+gdb_expect {
+    -re ".*find_max\\(3, 1, 2, 3\\) returns 3\[ \r\n\]+.\[0-9\]+ = 3.*$gdb_prompt $" {
+        pass "print find_max2(3,1,2,3)"
+      }
+    -re ".*$gdb_prompt $" { fail "print find_max2(3,1,2,3)" }
+    timeout           { fail "(timeout) print find_max2(3,1,2,3)" }
+  }
+
+
+if {![target_info exists gdb,skip_float_tests]} {
+  send_gdb "print find_max_double(5,1.0,17.0,2.0,3.0,4.0)\n"
+  gdb_expect {
+    -re ".*find_max\\(.*\\) returns 17\\.000000\[ \r\n\]+.\[0-9\]+ = 17.*$gdb_prompt $" {
+      pass "print find_max_double(5,1.0,17.0,2.0,3.0,4.0)"
+    }
+    -re ".*$gdb_prompt $" { fail "print find_max_double(5,1.0,17.0,2.0,3.0,4.0)" }
+    timeout           { fail "(timeout) print find_max_double(5,1.0,17.0,2.0,3.0,4.0)" }
+  }
+}
+

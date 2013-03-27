@@ -1,0 +1,631 @@
+2006-12-21  Hans-Peter Nilsson  <hp@axis.com>
+
+	* config.in: Regenerate.
+
+2006-06-13  Richard Earnshaw  <rearnsha@arm.com>
+
+	* configure: Regenerated.
+
+2006-06-05  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure: Regenerated.
+
+2006-05-31  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure: Regenerated.
+
+2006-03-29  Hans-Peter Nilsson  <hp@axis.com>
+
+	* configure: Regenerate.
+
+2005-03-23  Mark Kettenis  <kettenis@gnu.org>
+
+	* configure: Regenerate.
+
+2005-01-14  Andrew Cagney  <cagney@gnu.org>
+
+	* configure.ac: Sinclude aclocal.m4 before common.m4.  Add
+	explicit call to AC_CONFIG_HEADER.
+	* configure: Regenerate.
+
+2005-01-11  Andrew Cagney  <cagney@localhost.localdomain>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+2005-01-07  Andrew Cagney  <cagney@gnu.org>
+
+	* configure.ac: Rename configure.in, require autoconf 2.59.
+	* configure: Re-generate.
+
+2004-12-08  Hans-Peter Nilsson  <hp@axis.com>
+
+	* configure: Regenerate for ../common/aclocal.m4 update.
+
+2004-06-15  Alan Modra  <amodra@bigpond.net.au>
+
+	* interp.c (sim_prepare_for_program): Use bfd_get_section_size
+	instead of bfd_get_section_size_before_reloc.
+
+2003-08-08  Stephane Carrez  <stcarrez@nerim.fr>
+
+	* dv-m68hc11tim.c (cycle_to_string): Add flags parameter to better
+	control the translation.
+	(m68hc11tim_print_timer): Update cycle_to_string conversion.
+	(m68hc11tim_timer_event): Fix handling of output
+	compare register with its interrupts.
+	(m68hc11tim_io_write_buffer): Check output compare
+	after setting M6811_TMSK1.
+	(m68hc11tim_io_read_buffer): Fix compilation warning.
+	* dv-m68hc11.c (m68hc11_option_handler): Likewise.
+	* dv-m68hc11spi.c (m68hc11spi_info): Likewise.
+	* dv-m68hc11sio.c (m68hc11sio_info): Likewise.
+	* interrupts.c (interrupts_info): Likewise.
+	(interrupts_reset): Recognize bootstrap mode.
+	* sim-main.h (PRINT_CYCLE, PRINT_TIME): New defines.
+	(_sim_cpu): Add cpu_start_mode.
+	(cycle_to_string): Add flags member.
+	* m68hc11_sim.c (OPTION_CPU_BOOTSTRAP): New option.
+	(cpu_options): Declare new option bootstrap.
+	(cpu_option_handler): Handle it.
+	(cpu_info): Update call to cycle_to_string.
+
+2003-08-08  Stephane Carrez  <stcarrez@nerim.fr>
+
+	* sim-main.h (phys_to_virt): Use memory bank parameters to translate
+	the physical address in virtual address.
+	(struct _sim_cpu): Add memory bank members.
+	* m68hc11_sim.c (cpu_initialize): Clear memory bank parameters.
+	* interp.c (sim_hw_configure): Create memory bank according to memory
+	bank parameters.
+	(sim_get_bank_parameters): New function to obtain memory bank config
+	from the symbol table.
+	(sim_prepare_for_program): Call it to obtain the memory bank parameters.
+	(sim_open): Call sim_prepare_for_program.
+	* dv-m68hc11.c (m68hc11cpu_io_write_buffer): Use memory bank parameters
+	to check if address is within bank window.
+	(m68hc11cpu_io_read_buffer): Likewise.
+	(attach_m68hc11_regs): Map the memory bank according to memory bank
+	parameters.
+
+2003-08-08  Stephane Carrez  <stcarrez@nerim.fr>,
+
+	* sim-main.h (PAGE_REGNUM, Z_REGNUM): Use same numbering as gdb.
+
+2003-08-08  Stephane Carrez  <stcarrez@nerim.fr>,
+	    Gary Piercey <gpiercey@northstar-technical.com>
+
+	* m68hc11_sim.c (print_io_word): New function to print 16-bit value.
+	* sim-main.h (print_io_word): Declare.
+	* dv-m68hc11tim.c (tmsk1_desc): New description table for TMSK1.
+	(tflg1_desc): Likewise for TFLG1.
+	(m68hc11tim_info): Print input and output compare registers
+
+2003-03-02  Stephane Carrez  <stcarrez@nerim.fr>
+
+	* Makefile.in (SIM_EXTRA_CFLAGS): Set WITH_TARGET_ADDRESS_BITSIZE
+	to 32 to support memory bank switching; temporarily use 32-bit for
+	WORD_BITSIZE to avoid a bug in sim-common.
+
+2003-03-01  Stephane Carrez  <stcarrez@nerim.fr>
+
+	* interp.c (sim_fetch_register): Only store a single byte for
+	1 byte registers.
+
+2003-02-27  Andrew Cagney  <cagney@redhat.com>
+
+	* interp.c (sim_prepare_for_program, sim_open)
+	(sim_create_inferior): Rename _bfd to bfd.
+
+2002-08-13  Stephane Carrez  <stcarrez@nerim.fr>
+
+	* dv-m68hc11eepr.c (struct m68hc11eepr ): Use const char* for filename.
+
+2002-08-13  Marko Kohtala  <marko.kohtala@luukku.com>
+
+	* interp.c (sim_prepare_for_program): Look up the image for the 
+	reset vector and set cpu_use_elf_start to 1 if not found.
+	(sim_open): Do not set cpu_use_elf_start.
+
+2002-08-13  Marko Kohtala  <marko.kohtala@luukku.com>
+
+	* interp.c (sim_hw_configure): Return 1 for success.
+	(sim_prepare_for_program): Use the sim_hw_configure exit code to
+	return SIM_RC_FAIL.
+
+2002-08-13  Stephane Carrez  <stcarrez@nerim.fr>
+
+	* dv-m68hc11.c (m68hc11cpu_io_read_buffer): Translate memory
+	bank window to some virtual address to read from extended memory.
+	(m68hc11cpu_io_write_buffer): Likewise for writing.
+	(attach_m68hc11_regs): When use_bank property is defined, attach
+	to the 68HC12 16K memory bank window.
+	* interp.c (sim_hw_configure): Create memory region for banked
+	memory.
+
+2002-08-13  Stephane Carrez  <Stephane.Carrez@nerim.fr>
+
+	* interp.c (sim_hw_configure): Connect port-X to cpu-write-port.
+	* dv-m68hc11.c (m68hc11cpu_ports): Add cpu-write-port input.
+	(m68hc11cpu_port_event): Handle CPU_WRITE_PORT event.
+
+2002-08-13  Marko Kohtala  <marko.kohtala@luukku.com>
+
+	* dv-m68hc11.c (m68hc11cpu_io_write): Fix to update IO mapping
+	when IO mapping changed, not when internal RAM mapping is changed.
+
+2002-08-13  Stephane Carrez  <stcarrez@nerim.fr>
+
+	* m68hc11_sim.c (cpu_special): Handle call and rtc instructions.
+	* sim-main.h (M6812_CALL_INDIRECT): Add to enum.
+	(m6811_regs): Add page register.
+	(cpu_set_page, cpu_get_page): New macros.
+	(phys_to_virt): New function.
+	(cpu_get_indexed_operand_addr, cpu_return): Declare.
+	* gencode.c: Identify indirect addressing mode for call and fix daa.
+	(gen_function_entry): New param to tell if src8/dst8 locals are 
+	necessary.
+	(gen_interpreter): Use it to avoid generation of unused variables.
+	* interp.c (sim_fetch_register): Allow to read page register; page
+	register, A, B and CCR are only 1 byte wide.
+	(sim_store_register): Likewise for writing.
+
+2002-06-16  Andrew Cagney  <ac131313@redhat.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+2002-06-09  Andrew Cagney  <cagney@redhat.com>
+
+	* Makefile.in (INCLUDE): Update path to callback.h.
+	* sim-main.h: Include "gdb/callback.h" and "gdb/remote-sim.h".
+
+2002-03-07  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* m68hc11_sim.c (cpu_move8): Call sim_engine_abort in default case.
+	(cpu_move16): Likewise.
+	(sim_memory_error): Use sim_io_printf.
+	(cpu_option_handler): Fix compilation warning.
+	* interp.c (sim_hw_configure): Fix compilation warning; 
+	remove m68hc12sio@2 device.
+	(sim_open): Likewise.
+	* dv-m68hc11tim.c (m68hc11tim_port_event): Fix clear of TFLG2 
+	flags when reset.
+	(cycle_to_string): Improve convertion of cpu cycle number.
+	(m68hc11tim_info): Print info about PACNT.
+	(m68hc11tim_io_write_buffer): Fix clearing of TFLG2; handle
+	TCTL1 and TCTL2 registers.
+	* dv-m68hc11.c (m68hc11_info): Print 6811 current running mode.
+
+2002-03-07  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* interp.c (sim_hw_configure): Save the HW cpu pointer in the 
+	cpu struct.
+	(sim_hw_configure): Connect the capture input/output events.
+	* sim-main.h (_sim_cpu): New member hw_cpu.
+	(m68hc11cpu_set_oscillator): Declare.
+	(m68hc11cpu_clear_oscillator): Declare.
+	(m68hc11cpu_set_port): Declare.
+	* dv-m68hc11.c (m68hc11_options): New for oscillator commands.
+	(m68hc11cpu_ports): New input ports and output ports to reflect
+	the HC11 IOs.
+	(m68hc11_delete): Cleanup any running oscillator.
+	(attach_m68hc11_regs): Create the input oscillators.
+	(make_oscillator): New function.
+	(find_oscillator): New function.
+	(oscillator_handler): New function.
+	(reset_oscillators): New function.
+	(m68hc11cpu_port_event): Handle the new input ports.
+	(m68hc11cpu_set_oscillator): New function.
+	(m68hc11cpu_clear_oscillator): New function.
+	(get_frequency): New function.
+	(m68hc11_option_handler): New function.
+	(m68hc11cpu_set_port): New function.
+	(m68hc11cpu_io_write): Post the port output events.
+	* dv-m68hc11spi.c (set_bit_port): Use m68hc11cpu_set_port to set
+	the output port value.
+	* dv-m68hc11tim.c (m68hc11tim_port_event): Handle CAPTURE event
+	by latching the TCNT value in the register.
+
+2002-03-07  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* sim-main.h (cpu_frame, cpu_frame_list): Remove.
+	(cpu_frame_reg, cpu_print_frame): Remove.
+	(cpu_m68hc11_push_uint8, cpu_m68hc11_pop_uint8): Cleanup.
+	(cpu_m68hc11_push_uint16, cpu_m68hc11_pop_uint16): Likewise.
+	(cpu_m68hc12_push_uint8, cpu_m68hc12_push_uint16): Likewise.
+	(cpu_m68hc12_pop_uint8, cpu_m68hc12_pop_uint16): Likewise.
+	* m68hc11_sim.c (cpu_find_frame): Remove.
+	(cpu_create_frame_list): Remove.
+	(cpu_remove_frame_list, cpu_create_frame, cpu_free_frame): Remove.
+	(cpu_frame_reg, cpu_print_frame, cpu_update_frame): Remove.
+	(cpu_call): Cleanup to remove #if HAVE_FRAME and calls to the above.
+	(cpu_update_frame): Likewise.
+	(cpu_return): Likewise.
+	(cpu_reset): Likewise.
+	(cpu_initialize): Likewise.	
+	* interp.c (sim_do_command): Remove call to cpu_print_frame.
+
+2002-03-07  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* interrupts.c (interrupts_reset): New function, setup interrupt
+	vector address according to cpu mode.
+	(interrupts_initialize): Move reset portion to the above.
+	(interrupt_names): New table to give a name to interrupts.
+	(idefs): Handle pulse accumulator interrupts.
+	(interrupts_info): Print the interrupt history.
+	(interrupt_option_handler): New function.
+	(interrupt_options): New table of options.
+	(interrupts_update_pending): Keep track of when interrupts are
+	raised and implement breakpoint-on-raise-interrupt.
+	(interrupts_process): Keep track of when interrupts are taken
+	and implement breakpoint-on-interrupt.
+	* interrupts.h (struct interrupt_history): Define.
+	(struct interrupt): Keep track of the interrupt history.
+	(interrupts_reset): Declare.
+	(interrupts_initialize): Update prototype.
+	* m68hc11_sim.c (cpu_reset): Reset interrupts.
+	(cpu_initialize): Cleanup.
+
+2001-07-28  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* dv-m68hc11eepr.c (m68hc11eepr_info): Fix print of current write
+	address.
+	(m68hc11eepr_port_event): Fix detach/attach logic.
+
+2001-07-22  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* Makefile.in (SIM_OBJS): Remove sim-resume.o
+	* interp.c (sim_resume): New function from sim-resume.c, install
+	the stepping event after having processed the pending ticks.
+	(has_stepped): Likewise.
+	(sim_info): Produce an output only if verbose or STATE_VERBOSE_P.
+
+2001-07-10  Andrew Cagney  <ac131313@redhat.com>
+
+	* Makefile.in (gencode): Provide explicit path to gencode.c.
+
+2001-05-20  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* Makefile.in (M68HC11_OBJS): Add m68hc12int.o.
+	(m68hc12int.c): Generate using gencode -m6812.
+	(m68hc11int.c): Likewise with -m6811.
+
+	* gencode.c (m6811_opcode_patterns): New patterns for 68HC12.
+	(m6811_page1_opcodes): Remove duplicate entries.
+	(m6811_page2_opcodes): Likewise.
+	(m6811_page3_opcodes): Likewise.
+	(m6811_page4_opcodes): Likewise.
+	(m6812_page1_opcodes): New table for 68HC12 instructions.
+	(m6812_page2_opcodes): Likewise.
+	(gen_fetch_operands): New modes [] and &[] for 68HC12 operands.
+	(gen_save_result): Likewise.
+	(gen_interpreter_for_table): Handle 68HC11 and 68HC12 opcodes.
+	(cmp_opcode): New function for opcode comparision.
+	(prepare_table): Sort the opcodes.
+	(gen_interpreter): Prepare all the tables and generate either
+	a 68HC11 or a 68HC12 simulator.
+	(main): New options -m6811 and -m6812.
+
+	* m68hc11_sim.c (cpu_single_step): Use pointer to cpu interpretor.
+	(cpu_special): Simulation of some 68HC12 instructions.
+	(cpu_exg): New function.
+	(cpu_dbcc): Likewise.
+	(cpu_fetch_relbranch16): Likewise.
+	(cpu_push_all): Push according to 68HC11 or 68HC12.
+	(cpu_move16): Likewise.
+	(cpu_move8): Likewise.
+	(cpu_get_indexed_operand16): Likewise.
+	(cpu_get_indexed_operand8): Likewise.
+	(cpu_get_indexed_operand_addr): Likewise.
+	(cpu_set_reg, cpu_set_dst_reg, cpu_get_src_reg, cpu_get_reg): Likewise.
+	(cpu_reset): Setup INIT register according to architecture.
+	
+	* sim-main.h (M6811_Special): Add 68HC12 specific instructions.
+	(_sim_cpu): Keep track of the cpu being simulated.
+	(cpu_get_tmp3, cpu_get_tmp2, cpu_set_tmp3, cpu_set_tmp2): New.
+	(cpu_m68hc11_push_uintxx): Rename of cpu_push_uintxx.
+	(cpu_m68hc11_pop_uint8): Likewise.
+	(cpu_m68hc12_push_uintxx): New functions for 68HC12.
+	(cpu_m68hc12_pop_uintxx): Likewise.
+	(cpu_exg, cpu_dbcc, cpu_move8, cpu_move16): Likewise,
+	(cpu_fetch_relbranch16): Likewise.
+	(cpu_interp_m6811): Rename of cpu_interp.
+	(cpu_interp_m6812): New function.	
+	* interp.c (free_state): New function.
+	(dev_list_68hc12): New table.
+	(sim_board_reset): Reset depending on the cpu (HC11 or HC12).
+	(sim_hw_configure): New function.
+	(sim_prepare_for_program): New function.
+	(sim_open): Use above new functions.
+	(sim_close): Call free_state().
+	(sim_info): Print info according to cpu.
+	(sim_create_inferior): Use sim_prepare_for_program.
+	(sim_do_command): Configure the hardware after a change of the
+	architecture.
+
+2001-05-20  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* dv-m68hc11sio.c (m68hc11sio_tx_poll): Always check for
+	pending interrupts.
+	* interrupts.c (interrupts_process): Keep track of the last number
+	of masked insn cycles.
+	(interrupts_initialize): Clear last number of masked insn cycles.
+	(interrupts_info): Report them.
+	(interrupts_update_pending): Compute clear and set masks of 
+	interrupts and clear the interrupt bits before setting them 
+	(due to SCI interrupt sharing).
+	* interrupts.h (struct interrupts): New members last_mask_cycles
+	and xirq_last_mask_cycles.
+
+2000-11-26  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* dv-m68hc11.c (m68hc11cpu_io_read_buffer): Use attach_size
+	instead of a hard-coded value.
+	(m68hc11cpu_io_write_buffer): Likewise.
+	(dv_m68hc11_descriptor): Define a 68hc12 device.
+	* dv-m68hc11eepr.c (dv_m68hc11eepr_descriptor): Likewise.
+	* dv-m68hc11tim.c (dv_m68hc11tim_descriptor): Likewise.
+	* dv-m68hc11spi.c (dv_m68hc11spi_descriptor): Likewise.
+	* dv-m68hc11sio.c (dv_m68hc11sio_descriptor): Likewise.
+
+2000-11-22  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* dv-m68hc11.c (attach_m68hc11_regs): Register a delete handler.
+	(m68hc11cpu_delete): Delete handler to detach the address space.
+
+2000-11-24  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* dv-m68hc11eepr.c (attach_m68hc11eepr_regs): Use hw_malloc.
+	* dv-nvram.c (attach_nvram_regs): Use hw_free and hw_malloc
+	instead of free and malloc.
+
+2000-09-11  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* Makefile.in: Was missing from initial patch.
+
+2000-09-10  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* interp.c (sim_store_register): Remove soft register hack.
+	(sim_fetch_register): Likewise.
+	(sim_create_inferior): Likewise.
+	* sim-main.h: Likewise.
+
+2000-09-10  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* interrupts.c (interrupts_update_pending): Clear the mask of
+	pending interrupts here.
+	(interrupts_get_current): Don't clear the mask of pending interrupts.
+
+2000-09-10  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* sim-main.h: Define cycle_to_string.
+	* dv-m68hc11tim.c (cycle_to_string): New function to translate 
+	the cpu cycle into some formatted time string.
+	(m68hc11tim_print_timer): Use it.
+	* dv-m68hc11sio.c (m68hc11sio_info): Use cycle_to_string.
+	* dv-m68hc11spi.c (m68hc11spi_info): Likewise.
+	* interrupts.c (interrupts_info): Likewise.
+	* m68hc11_sim.c (cpu_info): Likewise.
+
+2000-09-06  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* dv-m68hc11tim.c (m68hc11tim_timer_event): Compute the overflow
+	interrupt and compare events accurately.  Take into account the
+	pending ticks not processed by the simulator yet (introduced a shift).
+	(m68hc11_port_event): Reset the timer interrupt delays.
+	(m68hc11tim_io_read_buffer): Be able to read several bytes.
+	(m68hc11tim_io_write_buffer): Likewise for write.
+	(m68hc11tim_io_write_buffer): Recompute the timer overflow interrupt.
+
+2000-09-06  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* dv-m68hc11spi.c (m68hc11spi_io_read_buffer): Clear the interrupts.
+	(m68hc11spi_io_write_buffer): Likewise and fix the spi frame.
+	(m68hc11spi_info): Clarify the status report
+	of the SPI when a byte is being sent.
+	(m68hc11spi_clock): Fix the spi send frame.
+	
+2000-08-11  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* sim-main.h (m68hc11_map_level): Define level of address mappings.
+	* dv-m68hc11eepr.c (struct m68hc11eepr ): New flag to indicate
+	whether the eeprom is currently mapped or not.
+	(m68hc11eepr_port_event): Use the flag to see if we must unmap
+	or map the eeprom.  Update the flag to reflect the current state.
+	Use M6811_EEPROM_LEVEL when mapping the eeprom.
+	(m68hc11eepr_finish): Remove overlap hack.
+	(attach_m68hc11eepr_regs): Use M6811_IO_LEVEL when mapping the
+	config and control registers.
+	* dv-m68hc11.c (m68hc11cpu_finish): Remove overlap hack.
+	(attach_m68hc11_regs): Use M6811_IO_LEVEL.
+	(m68hc11cpu_io_write): Likewise when unmapping and re-mapping.
+	* dv-m68hc11spi.c (m68hc11spi_finish): Likewise.
+	(attach_m68hc11spi_regs): Likewise.
+	* dv-m68hc11tim.c (m68hc11tim_finish): Likewise.
+	(attach_m68hc11tim_regs): Likewise.
+	* dv-m68hc11sio.c (m68hc11sio_finish): Likewise.
+	(attach_m68hc11sio_regs): Likewise.
+	* interp.c (sim_open): Likewise.
+	* dv-nvram.c (attach_nvram_regs): Likewise.
+
+Thu Jul 27 21:27:25 2000  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure, config.in: Regenerate.
+
+2000-06-25  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* Makefile.in (SIM_RUN_OBJS): Define to use nrun.c
+	* dv-m68hc11.c (m68hc11cpu_finish): Register detach address callback.
+	(dv_m6811_detach_address_callback): New function to detach a
+	device from an address space.
+	* dv-m68hc11eepr.c (m68hc11eepr_port_event): Initialize
+	config register according to --cpu-config option.
+	* sim-main.h (_sim_cpu): Add cpu_config member.
+	* interp.c (sim_open): Delete specific simulator options.
+	* m68hc11_sim.c (cpu_option_handler): New options
+	--emulos and -cpu-config <val> to configure the simulator.
+	(cpu_initialize): Initialize cpu_config member.
+
+2000-06-24  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* emulos.c: Fix indentation and comments.
+	* gencode.c: Likewise.
+	* dv-m68hc11tim.c (m68hc11tim_timer_event): Handle COMPARE_EVENT.
+	(m68hc11tim_io_write_buffer): Write compare registers and
+	setup compare event.
+	* interp.c: Remove unused global variables.
+	* interrupts.c (idefs): New compare interrupts.
+	Fix indentation and comments.
+	* interrupts.h: Likewise.
+
+2000-06-18  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* dv-m68hc11sio.c: Fix indentation and comments.
+	Remove INT_PORT.
+	* dv-m68hc11.c: Fix indentation and comments.
+	(m68hc11cpu_port_event): Move initialization of M6811_HPRIO from here.
+	* m68hc11_sim.c (cpu_reset): To here.
+	* dv-m68hc11eepr.c: Fix indentation and comments.
+	
+2000-06-17  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* dv-nvram.c: New file, rename from dv-pram.c.
+	* dv-pram.c: Delete file.
+	* sim-main.h: Incorporate m68hc11_sim.h.
+	* m68hc11_sim.h: Delete file.
+	* configure.in: Rename pram into nvram.
+	* interp.c (sim_open): Likewise in creation of device tree.
+	
+2000-05-31  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* interp.c (sim_open): Create the SPI device.
+	* dv-m68hc11spi.c: New file for SPI device simulation.
+	* configure.in (hw_extra_devices): Add SPI device.
+
+2000-05-28  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* interrupts.c (interrupts_initialize): Clear XIRQ accounting.
+	(interrupts_process): Separate IRQ and XIRQ accounting.
+	(interrupts_info): Report XIRQ accounting.
+	* interrupts.h (struct interrupts): Added accounting for XIRQ.
+
+2000-04-16  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* dv-pram.c (attach_pram_regs): Fix the 'save-modified' mode.
+	* m68hc11_sim.h (_sim_cpu): Allow configuration of cpu mode.
+	* dv-m68hc11.c (attach_m68hc11_regs): Get the cpu MODA,MODB 
+	configuration from the 'mode' device tree property.
+	(m68hc11cpu_port_event): Reset M6811_HPRIO to the cpu MODA, MODB
+	configuration.
+
+2000-02-24  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* sim-main.h: Remove WITH_TARGET_* defines.
+	* Makefile.in (SIM_EXTRA_CFLAGS): Specify the WITH_TARGET_* flags.
+
+2000-02-08  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* dv-m68hc11sio.c (m68hc11sio_port_event): Setup the SCI to
+	1200 baud when cpu is in bootstrap mode.
+
+	* dv-m68hc11tim.c (m68hc11tim_io_write_buffer): Be able to
+	write in the TCTN timer register.
+
+	* dv-m68hc11sio.c (m68hc11sio_io_write_buffer): Divide cpu clock
+	by 4 to obtain the E clock frequency.
+	(sccr2_desc): Use M6811_TIE for TIE bit.
+	(m68hc11sio_info): Fix baud rate report.
+
+	* dv-m68hc11tim.c (to_realtime): Likewise.
+
+	* interp.c (sim_open): When building device tree, only provide
+	devices that do not exist yet.
+
+	* emulos.c: Fix compilation pb under Windows.
+
+	* dv-m68hc11.c (attach_m68hc11_regs): Get the clock frequency
+	from the 'clock' property.
+
+2000-01-02  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* m68hc11_sim.h (*_REGNUM): Define.
+	(_sim_cpu): New member cpu_page0_reg table.
+	* interp.c (sim_create_inferior): Fill the cpu_page0_reg table with
+	addresses of soft registers in .page0.
+	(sim_fetch_register, sim_store_register): Use cpu_page0_reg table 
+	to get/set soft registers.
+
+1999-12-31  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* dv-m68hc11.c (m68hc11cpu_io_write_buffer): Clear byte to avoid
+	returning random values.
+
+1999-12-17  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* gencode.c: Fix "subb N,x" that used a instead of b.
+
+1999-09-09  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* gencode.c: Fixed sbc8 and adc8 when there was a initial carry.
+
+1999-09-01  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* sim-main.h (SIM_HANDLES_LMA): Define to enable loading using lma.
+
+1999-08-14  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* dv-m68hc11.c (attach_m68hc11_regs): Save the size of the
+	register region in the m68hc11cpu struct.
+	(m68hc11cpu_io_write): When the IO mapping addres changes,
+	detach the register region and re-attach it at the new address.
+	(m68hc11cpu_io_read_buffer): Renamed base_address into
+	attach_address.
+	(m68hc11cpu_io_write_buffer): Likewise. Pass the hw pointer
+	to m68hc11cpu_io_write.
+
+1999-08-13  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* gencode.c: For sbc8, check the carry and increment the source
+	before trying to set the carry for the result.
+
+1999-05-24  John S. Kallal <kallal@voicenet.com>
+	
+	* interp.c (sim_get_info): Don't crash if the command line is 0.
+	Define prototype for sim_get_info() and init_system().
+	(sim_info): Correct call to sim_get_info().
+	
+1999-05-16  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* configure.in: Recognize m6811-*-*.
+	* configure: Regenerate.
+	* m68hc11_sim.h (cpu_ccr_update_add8, cpu_ccr_update_add16,
+	cpu_ccr_update_sub8, cpu_ccr_update_sub16):
+	Correct the computation of carry of 8 and 16-bits add and subtract.
+	* gencode.c: Use cpu_ccr_update_sub8 for subtraction (carry and
+	overflow set in a different manner than add).
+
+1999-05-14  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* dv-m68hc11.c (dv_m6811_attach_address_callback): Removed a
+	trace message.
+	* interp.c (sim_open, sim_create_inferior): Initialize the
+	cpu_elf_start from the ELF header.
+	* m68hc11_sim.c (cpu_initialize): Clear the new data members.
+	(cpu_restart): Use cpu_elf_start as the starting address when
+	the flag is set.
+	(cpu_special): When cpu_use_elf_start is set, the WAI instruction
+	exits the simulator (exit status is in D).
+	* m68hc11_sim.h (_sim_cpu): Added members cpu_use_elf_start and
+	cpu_elf_star to start execution at address specified in ELF file.
+
+1999-05-02  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* Makefile.in, config.in, configure, configure.in: New files.
+	* gencode.c: New file, generation of 68HC11 interpreter.
+	* m68hc11_sim.h, m68hc11_sim.c: New files, specific operations
+	for interpreter.
+	* interrupts.c, interrupts.h: New files, management of interrupts.
+	* interp.c, sim-main.h, 
+	* dv-m68hc11.c, dv-m68hc11eepr.c, dv-m68hc11sio.c,
+	dv-m68hc11tim.c, dv-pram.c: New files representing devices for
+	68HC11 (dv-pram.c is generic and could probably migrate to common).
+	* emulos.c: New file, basic emulation of some os.

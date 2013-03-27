@@ -3,9 +3,9 @@
 # Makefile
 #
 #***********************************************************************
-#CC = mipsel-linux-gcc
+CC = mipsel-linux-gcc
 
-CFLAGS = -g -rdynamic
+#CFLAGS = -g -rdynamic -DMYDEBUG -DDEBUG
 LIBS = -lpthread
 
 #all: asuswebstorage inotify

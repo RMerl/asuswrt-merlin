@@ -1,0 +1,95 @@
+<refentry id="refsslcertio">
+
+  <refmeta>
+    <refentrytitle>ne_ssl_cert_read</refentrytitle>
+    <manvolnum>3</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname id="ne_ssl_cert_read">ne_ssl_cert_read</refname>
+    <refname id="ne_ssl_cert_write">ne_ssl_cert_write</refname>
+    <refname id="ne_ssl_cert_import">ne_ssl_cert_import</refname>
+    <refname id="ne_ssl_cert_export">ne_ssl_cert_export</refname>
+    <refpurpose>functions to read or write certificates to and from files or strings</refpurpose>
+  </refnamediv>
+  
+  <refsynopsisdiv>
+
+    <funcsynopsis>
+
+      <funcsynopsisinfo>#include &lt;ne_ssl.h&gt;</funcsynopsisinfo>
+
+      <funcprototype>
+        <funcdef>ne_ssl_certificate *<function>ne_ssl_cert_read</function></funcdef>
+        <paramdef>const char *<parameter>filename</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>int <function>ne_ssl_cert_write</function></funcdef>
+        <paramdef>const ne_ssl_certificate *<parameter>cert</parameter></paramdef>
+        <paramdef>const char *<parameter>filename</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>ne_ssl_certificate *<function>ne_ssl_cert_import</function></funcdef>
+        <paramdef>const char *<parameter>data</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>char *<function>ne_ssl_cert_export</function></funcdef>
+        <paramdef>const ne_ssl_certificate *<parameter>cert</parameter></paramdef>
+      </funcprototype>
+
+    </funcsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para>The <function>ne_ssl_cert_write</function> function writes a
+    certificate to a file using the PEM encoding.  The
+    <function>ne_ssl_cert_export</function> function returns a
+    base64-encoded &nul;-terminated string representing the
+    certificate.  This string is malloc-allocated and should be
+    destroyed using <function>free</function> by the caller.</para>
+
+    <para>The <function>ne_ssl_cert_read</function> function reads a
+    certificate from a PEM-encoded file, and returns a certificate
+    object.  The <function>ne_ssl_cert_import</function> function
+    returns a certificate object from a base64-encoded string,
+    <parameter>data</parameter>, as returned by
+    <function>ne_ssl_cert_export</function>.  The certificate object
+    returned by these functions should be destroyed using <xref
+    linkend="ne_ssl_cert_free"/> after use.</para>
+
+
+  </refsect1>
+
+  <refsect1>
+    <title>Return value</title>
+
+    <para><function>ne_ssl_cert_read</function> returns &null; if a
+    certificate could not be read from the file.
+    <function>ne_ssl_cert_write</function> returns non-zero if the
+    certificate could not be written to the file.
+    <function>ne_ssl_cert_export</function> always returns a
+    &nul;-terminated string, and never &null;.
+    <function>ne_ssl_cert_import</function> returns &null; if the
+    string was not a valid base64-encoded certificate.</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Encoding Formats</title>
+
+    <para>The string produced by
+    <function>ne_ssl_cert_export</function> is the base64 encoding of
+    the DER representation of the certificate.  The file written by
+    <function>ne_ssl_cert_write</function> uses the PEM format: this
+    is the base64 encoding of the DER representation with newlines
+    every 64 characters, and start and end marker lines.</para>
+  </refsect1>
+
+</refentry>
+

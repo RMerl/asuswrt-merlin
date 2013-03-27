@@ -75,7 +75,7 @@ function SwitchBand(){
 			document.form.wps_band.value = 1;
 	}
 	else{
-		$("wps_band_hint").innerHTML = "* Please turn off WPS first.";
+		$("wps_band_hint").innerHTML = "* <#WLANConfig11b_x_WPSband_hint#>";
 		return false;
 	}
 
@@ -99,10 +99,6 @@ function enableWPS(){
 	document.form.action_script.value = "restart_wireless";
 	document.form.action_mode.value = "apply";
 	document.form.action_wait.value = "3";
-
-	if(wl6_support != -1)
-		document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
-
 	applyRule();
 }
 
@@ -305,6 +301,15 @@ function show_wsc_status(wps_infos){
 	// show connecting btn
 	/*
 	if(wps_infos[0].firstChild.nodeValue == "Idle" || wps_infos[0].firstChild.nodeValue == "Configured"){
+		show_method = 1;
+	}
+	else if(Rawifi_support != -1){ //ralink solutions
+		var wpsState = wps_infos[0].firstChild.nodeValue;
+		if(wpsState.search("Received M") != -1 || wpsState.search("Send M") != -1 || wpsState == "Success")
+			show_method = 1;
+	}
+
+	if(show_method == 1) {
 		$("addEnrolleebtn_client").style.display = "";
 		$("WPSConnTble").style.display = "";
 		$("wpsDesc").style.display = "";

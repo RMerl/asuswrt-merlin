@@ -1,0 +1,380 @@
+# frv testcase for mcutssi $ACC40i,$s6,$FRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mcutssi
+mcutssi:
+	set_accg_immed   0xffffffe7,accg0
+	set_acc_immed   0x89abcdef,acc0
+
+	mcutssi      	acc0,0,fr11
+	test_fr_iimmed  0xe789abcd,fr11
+
+	mcutssi      	acc0,1,fr11
+	test_fr_iimmed  0xcf13579b,fr11
+
+	mcutssi      	acc0,2,fr11
+	test_fr_iimmed  0x9e26af37,fr11
+
+	mcutssi      	acc0,3,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,4,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,5,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,6,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,7,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,8,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,9,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,10,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,11,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,12,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,13,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,14,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,15,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,16,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,17,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,18,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,19,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,20,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,21,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,22,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,23,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,24,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,25,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,26,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,27,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,28,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,29,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,30,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,31,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	mcutssi      	acc0,-1,fr11
+	test_fr_iimmed  0xf3c4d5e6,fr11
+
+	mcutssi      	acc0,-2,fr11
+	test_fr_iimmed  0xf9e26af3,fr11
+
+	mcutssi      	acc0,-3,fr11
+	test_fr_iimmed  0xfcf13579,fr11
+
+	mcutssi      	acc0,-4,fr11
+	test_fr_iimmed  0xfe789abc,fr11
+
+	mcutssi      	acc0,-5,fr11
+	test_fr_iimmed  0xff3c4d5e,fr11
+
+	mcutssi      	acc0,-6,fr11
+	test_fr_iimmed  0xff9e26af,fr11
+
+	mcutssi      	acc0,-7,fr11
+	test_fr_iimmed  0xffcf1357,fr11
+
+	mcutssi      	acc0,-8,fr11
+	test_fr_iimmed  0xffe789ab,fr11
+
+	mcutssi      	acc0,-9,fr11
+	test_fr_iimmed  0xfff3c4d5,fr11
+
+	mcutssi      	acc0,-10,fr11
+	test_fr_iimmed  0xfff9e26a,fr11
+
+	mcutssi      	acc0,-11,fr11
+	test_fr_iimmed  0xfffcf135,fr11
+
+	mcutssi      	acc0,-12,fr11
+	test_fr_iimmed  0xfffe789a,fr11
+
+	mcutssi      	acc0,-13,fr11
+	test_fr_iimmed  0xffff3c4d,fr11
+
+	mcutssi      	acc0,-14,fr11
+	test_fr_iimmed  0xffff9e26,fr11
+
+	mcutssi      	acc0,-15,fr11
+	test_fr_iimmed  0xffffcf13,fr11
+
+	mcutssi      	acc0,-16,fr11
+	test_fr_iimmed  0xffffe789,fr11
+
+	mcutssi      	acc0,-17,fr11
+	test_fr_iimmed  0xfffff3c4,fr11
+
+	mcutssi      	acc0,-18,fr11
+	test_fr_iimmed  0xfffff9e2,fr11
+
+	mcutssi      	acc0,-19,fr11
+	test_fr_iimmed  0xfffffcf1,fr11
+
+	mcutssi      	acc0,-20,fr11
+	test_fr_iimmed  0xfffffe78,fr11
+
+	mcutssi      	acc0,-21,fr11
+	test_fr_iimmed  0xffffff3c,fr11
+
+	mcutssi      	acc0,-22,fr11
+	test_fr_iimmed  0xffffff9e,fr11
+
+	mcutssi      	acc0,-23,fr11
+	test_fr_iimmed  0xffffffcf,fr11
+
+	mcutssi      	acc0,-24,fr11
+	test_fr_iimmed  0xffffffe7,fr11
+
+	mcutssi      	acc0,-25,fr11
+	test_fr_iimmed  0xfffffff3,fr11
+
+	mcutssi      	acc0,-26,fr11
+	test_fr_iimmed  0xfffffff9,fr11
+
+	mcutssi      	acc0,-27,fr11
+	test_fr_iimmed  0xfffffffc,fr11
+
+	mcutssi      	acc0,-28,fr11
+	test_fr_iimmed  0xfffffffe,fr11
+
+	mcutssi      	acc0,-29,fr11
+	test_fr_iimmed  0xffffffff,fr11
+
+	mcutssi      	acc0,-30,fr11
+	test_fr_iimmed  0xffffffff,fr11
+
+	mcutssi      	acc0,-31,fr11
+	test_fr_iimmed  0xffffffff,fr11
+
+	mcutssi      	acc0,-32,fr11
+	test_fr_iimmed  0xffffffff,fr11
+
+	set_accg_immed   0xffffff67,accg0
+	set_acc_immed   0x89abcdef,acc0
+
+	mcutssi      	acc0,-1,fr11
+	test_fr_iimmed  0x33c4d5e6,fr11
+
+	mcutssi      	acc0,-2,fr11
+	test_fr_iimmed  0x19e26af3,fr11
+
+	mcutssi      	acc0,-3,fr11
+	test_fr_iimmed  0x0cf13579,fr11
+
+	mcutssi      	acc0,-4,fr11
+	test_fr_iimmed  0x06789abc,fr11
+
+	mcutssi      	acc0,-5,fr11
+	test_fr_iimmed  0x033c4d5e,fr11
+
+	mcutssi      	acc0,-6,fr11
+	test_fr_iimmed  0x019e26af,fr11
+
+	mcutssi      	acc0,-7,fr11
+	test_fr_iimmed  0x00cf1357,fr11
+
+	mcutssi      	acc0,-8,fr11
+	test_fr_iimmed  0x006789ab,fr11
+
+	mcutssi      	acc0,-9,fr11
+	test_fr_iimmed  0x0033c4d5,fr11
+
+	mcutssi      	acc0,-10,fr11
+	test_fr_iimmed  0x0019e26a,fr11
+
+	mcutssi      	acc0,-11,fr11
+	test_fr_iimmed  0x000cf135,fr11
+
+	mcutssi      	acc0,-12,fr11
+	test_fr_iimmed  0x0006789a,fr11
+
+	mcutssi      	acc0,-13,fr11
+	test_fr_iimmed  0x00033c4d,fr11
+
+	mcutssi      	acc0,-14,fr11
+	test_fr_iimmed  0x00019e26,fr11
+
+	mcutssi      	acc0,-15,fr11
+	test_fr_iimmed  0x0000cf13,fr11
+
+	mcutssi      	acc0,-16,fr11
+	test_fr_iimmed  0x00006789,fr11
+
+	mcutssi      	acc0,-17,fr11
+	test_fr_iimmed  0x000033c4,fr11
+
+	mcutssi      	acc0,-18,fr11
+	test_fr_iimmed  0x000019e2,fr11
+
+	mcutssi      	acc0,-19,fr11
+	test_fr_iimmed  0x00000cf1,fr11
+
+	mcutssi      	acc0,-20,fr11
+	test_fr_iimmed  0x00000678,fr11
+
+	mcutssi      	acc0,-21,fr11
+	test_fr_iimmed  0x0000033c,fr11
+
+	mcutssi      	acc0,-22,fr11
+	test_fr_iimmed  0x0000019e,fr11
+
+	mcutssi      	acc0,-23,fr11
+	test_fr_iimmed  0x000000cf,fr11
+
+	mcutssi      	acc0,-24,fr11
+	test_fr_iimmed  0x00000067,fr11
+
+	mcutssi      	acc0,-25,fr11
+	test_fr_iimmed  0x00000033,fr11
+
+	mcutssi      	acc0,-26,fr11
+	test_fr_iimmed  0x00000019,fr11
+
+	mcutssi      	acc0,-27,fr11
+	test_fr_iimmed  0x0000000c,fr11
+
+	mcutssi      	acc0,-28,fr11
+	test_fr_iimmed  0x00000006,fr11
+
+	mcutssi      	acc0,-29,fr11
+	test_fr_iimmed  0x00000003,fr11
+
+	mcutssi      	acc0,-30,fr11
+	test_fr_iimmed  0x00000001,fr11
+
+	mcutssi      	acc0,-31,fr11
+	test_fr_iimmed  0x00000000,fr11
+
+	mcutssi      	acc0,-32,fr11
+	test_fr_iimmed  0x00000000,fr11
+
+	; Examples from the customer
+	set_accg_immed   0xffffffff,accg0
+	set_acc_immed   0xffe00000,acc0
+
+	mcutssi    	acc0,16,fr11
+	test_fr_iimmed  0xe0000000,fr11
+
+	mcutssi    	acc0,17,fr11
+	test_fr_iimmed  0xc0000000,fr11
+
+	mcutssi    	acc0,18,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	set_accg_immed   0,accg0
+	set_acc_immed   0x003fffff,acc0
+
+	mcutssi    	acc0,16,fr11
+	test_fr_iimmed  0x3fffff00,fr11
+
+	mcutssi    	acc0,17,fr11
+	test_fr_iimmed  0x7ffffe00,fr11
+
+	set_accg_immed   0x7f,accg0
+	set_acc_immed   0xffe00000,acc0
+
+	mcutssi    	acc0,16,fr11
+	test_fr_iimmed  0x7fffffff,fr11		; saturated
+
+	mcutssi    	acc0,17,fr11
+	test_fr_iimmed  0x7fffffff,fr11		; saturated
+
+	mcutssi    	acc0,18,fr11
+	test_fr_iimmed  0x7fffffff,fr11		; saturated
+
+	set_accg_immed   0x08,accg0
+	set_acc_immed   0x003fffff,acc0
+
+	mcutssi    	acc0,16,fr11
+	test_fr_iimmed  0x7fffffff,fr11		; saturated
+
+	mcutssi    	acc0,17,fr11
+	test_fr_iimmed  0x7fffffff,fr11		; saturated
+
+	set_accg_immed   0xff,accg0
+	set_acc_immed   0xefe00000,acc0
+
+	mcutssi    	acc0,16,fr11
+	test_fr_iimmed  0x80000000,fr11		; saturated
+
+	mcutssi    	acc0,17,fr11
+	test_fr_iimmed  0x80000000,fr11		; saturated
+
+	mcutssi    	acc0,18,fr11
+	test_fr_iimmed  0x80000000,fr11		; saturated
+
+	set_accg_immed   0x80,accg0
+	set_acc_immed   0x003fffff,acc0
+
+	mcutssi    	acc0,16,fr11
+	test_fr_iimmed  0x80000000,fr11		; saturated
+
+	mcutssi    	acc0,17,fr11
+	test_fr_iimmed  0x80000000,fr11		; saturated
+
+	set_accg_immed   0xffffffaf,accg0
+	set_acc_immed   0x5a5a5a5a,acc0
+
+	mcutssi    	acc0,-4,fr11
+	test_fr_iimmed  0xfaf5a5a5,fr11
+
+	set_accg_immed   0x0000002f,accg0
+	set_acc_immed   0x5a5a5a5a,acc0
+
+	mcutssi    	acc0,-7,fr11
+	test_fr_iimmed  0x005eb4b4,fr11
+
+	pass

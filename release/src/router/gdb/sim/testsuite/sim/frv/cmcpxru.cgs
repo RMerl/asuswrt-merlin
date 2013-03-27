@@ -1,0 +1,544 @@
+# frv testcase for cmcpxru $GRi,$GRj,$GRk,$CCi,$cond
+# mach: frv fr500 fr400
+
+	.include "testutils.inc"
+
+	start
+
+	.global cmcpxru
+cmcpxru:
+	set_spr_immed	0x1b1b,cccr
+
+	set_fr_iimmed  	4,2,fr7		; multiply small numbers
+	set_fr_iimmed  	5,3,fr8
+	cmcpxru      	fr7,fr8,acc0,cc0,1
+	test_accg_immed 	0,accg0
+	test_acc_immed 	14,acc0
+
+	set_fr_iimmed  	1,2,fr7		; multiply by 1
+	set_fr_iimmed  	3,1,fr8
+	cmcpxru      	fr7,fr8,acc0,cc0,1
+	test_accg_immed 	0,accg0
+	test_acc_immed 	1,acc0
+
+	set_fr_iimmed  	0,2,fr7		; multiply by 0
+	set_fr_iimmed  	2,0,fr8
+	cmcpxru      	fr7,fr8,acc0,cc0,1
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0,acc0
+
+	set_fr_iimmed 	0x3fff,1,fr7	; 15 bit result
+	set_fr_iimmed  	2,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc0,1
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x0000,0x7ffd,acc0
+
+	set_fr_iimmed  	0x4000,1,fr7	; 16 bit result
+	set_fr_iimmed  	4,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc0,1
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x0000,0xffff,acc0
+
+	set_fr_iimmed  	0x8000,1,fr7	; 17 bit result
+	set_fr_iimmed  	4,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc0,1
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0x0001ffff,acc0
+
+	set_fr_iimmed  	0x7fff,0x0000,fr7	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc4,1
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0x3fff0001,acc0
+
+	set_fr_iimmed  	0x8000,0x8000,fr7	; max positive result
+	set_fr_iimmed  	0x8000,0x0000,fr8
+	cmcpxru      	fr7,fr8,acc0,cc4,1
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x4000,0x0000,acc0
+
+	set_fr_iimmed  	0xffff,0x0000,fr7	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc4,1
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0xfffe,0x0001,acc0
+
+	set_fr_iimmed  	0x0000,0x0001,fr7	; saturation
+	set_fr_iimmed  	0xffff,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc4,1
+	test_spr_bits	0x3c,2,0x8,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf is set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf is set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt is set
+	test_accg_immed 	0,accg0
+	test_acc_immed	0,acc0
+
+	set_fr_iimmed  	0x0000,0xffff,fr7	; saturation
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc4,1
+	test_spr_bits	0x3c,2,0x8,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf is set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf is set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt is set
+	test_accg_immed 	0,accg0
+	test_acc_immed	0,acc0
+
+	set_fr_iimmed  	0xfffe,0xffff,fr7	; saturation
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc4,1
+	test_spr_bits	0x3c,2,0x8,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf is set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf is set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt is set
+	test_accg_immed 	0,accg0
+	test_acc_immed	0,acc0
+
+	set_fr_iimmed  	4,2,fr7		; multiply small numbers
+	set_fr_iimmed  	5,3,fr8
+	cmcpxru      	fr7,fr8,acc0,cc1,0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	14,acc0
+
+	set_fr_iimmed  	1,2,fr7		; multiply by 1
+	set_fr_iimmed  	3,1,fr8
+	cmcpxru      	fr7,fr8,acc0,cc1,0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	1,acc0
+
+	set_fr_iimmed  	0,2,fr7		; multiply by 0
+	set_fr_iimmed  	2,0,fr8
+	cmcpxru      	fr7,fr8,acc0,cc1,0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0,acc0
+
+	set_fr_iimmed 	0x3fff,1,fr7	; 15 bit result
+	set_fr_iimmed  	2,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc1,0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x0000,0x7ffd,acc0
+
+	set_fr_iimmed  	0x4000,1,fr7	; 16 bit result
+	set_fr_iimmed  	4,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc1,0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x0000,0xffff,acc0
+
+	set_fr_iimmed  	0x8000,1,fr7	; 17 bit result
+	set_fr_iimmed  	4,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc1,0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0x0001ffff,acc0
+
+	set_fr_iimmed  	0x7fff,0x0000,fr7	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc5,0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0x3fff0001,acc0
+
+	set_fr_iimmed  	0x8000,0x8000,fr7	; max positive result
+	set_fr_iimmed  	0x8000,0x0000,fr8
+	cmcpxru      	fr7,fr8,acc0,cc5,0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x4000,0x0000,acc0
+
+	set_fr_iimmed  	0xffff,0x0000,fr7	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc5,0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0xfffe,0x0001,acc0
+
+	set_fr_iimmed  	0x0000,0x0001,fr7	; saturation
+	set_fr_iimmed  	0xffff,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc5,0
+	test_spr_bits	0x3c,2,0x8,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf is set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf is set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt is set
+	test_accg_immed 	0,accg0
+	test_acc_immed	0,acc0
+
+	set_fr_iimmed  	0x0000,0xffff,fr7	; saturation
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc5,0
+	test_spr_bits	0x3c,2,0x8,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf is set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf is set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt is set
+	test_accg_immed 	0,accg0
+	test_acc_immed	0,acc0
+
+	set_fr_iimmed  	0xfffe,0xffff,fr7	; saturation
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc5,0
+	test_spr_bits	0x3c,2,0x8,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf is set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf is set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt is set
+	test_accg_immed 	0,accg0
+	test_acc_immed	0,acc0
+
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_accg_immed 	0x00000011,accg0
+	set_acc_immed 	0x11111111,acc0
+	set_fr_iimmed  	4,2,fr7		; multiply small numbers
+	set_fr_iimmed  	5,3,fr8
+	cmcpxru      	fr7,fr8,acc0,cc0,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	1,2,fr7		; multiply by 1
+	set_fr_iimmed  	3,1,fr8
+	cmcpxru      	fr7,fr8,acc0,cc0,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0,2,fr7		; multiply by 0
+	set_fr_iimmed  	2,0,fr8
+	cmcpxru      	fr7,fr8,acc0,cc0,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed 	0x3fff,1,fr7	; 15 bit result
+	set_fr_iimmed  	2,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc0,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x4000,1,fr7	; 16 bit result
+	set_fr_iimmed  	4,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc0,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x8000,1,fr7	; 17 bit result
+	set_fr_iimmed  	4,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc0,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x7fff,0x0000,fr7	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc4,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x8000,0x8000,fr7	; max positive result
+	set_fr_iimmed  	0x8000,0x0000,fr8
+	cmcpxru      	fr7,fr8,acc0,cc4,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0xffff,0x0000,fr7	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc4,0
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x0000,0x0001,fr7	; saturation
+	set_fr_iimmed  	0xffff,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc4,0
+	test_spr_bits	0x3c,2,0x0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf is clear
+	test_spr_bits	2,1,0,msr1		; msr1.ovf is clear
+	test_spr_bits	1,0,0,msr0		; msr0.aovf is clear
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt is clear
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x0000,0xffff,fr7	; saturation
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc4,0
+	test_spr_bits	0x3c,2,0x0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf is clear
+	test_spr_bits	2,1,0,msr1		; msr1.ovf is clear
+	test_spr_bits	1,0,0,msr0		; msr0.aovf is clear
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt is clear
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0xfffe,0xffff,fr7	; saturation
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc4,0
+	test_spr_bits	0x3c,2,0x0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf is clear
+	test_spr_bits	2,1,0,msr1		; msr1.ovf is clear
+	test_spr_bits	1,0,0,msr0		; msr0.aovf is clear
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt is clear
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_accg_immed 	0x00000011,accg0
+	set_acc_immed 	0x11111111,acc0
+	set_fr_iimmed  	4,2,fr7		; multiply small numbers
+	set_fr_iimmed  	5,3,fr8
+	cmcpxru      	fr7,fr8,acc0,cc1,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	1,2,fr7		; multiply by 1
+	set_fr_iimmed  	3,1,fr8
+	cmcpxru      	fr7,fr8,acc0,cc1,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0,2,fr7		; multiply by 0
+	set_fr_iimmed  	2,0,fr8
+	cmcpxru      	fr7,fr8,acc0,cc1,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed 	0x3fff,1,fr7	; 15 bit result
+	set_fr_iimmed  	2,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc1,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x4000,1,fr7	; 16 bit result
+	set_fr_iimmed  	4,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc1,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x8000,1,fr7	; 17 bit result
+	set_fr_iimmed  	4,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc1,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x7fff,0x0000,fr7	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc5,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x8000,0x8000,fr7	; max positive result
+	set_fr_iimmed  	0x8000,0x0000,fr8
+	cmcpxru      	fr7,fr8,acc0,cc5,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0xffff,0x0000,fr7	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc5,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x0000,0x0001,fr7	; saturation
+	set_fr_iimmed  	0xffff,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc5,1
+	test_spr_bits	0x3c,2,0x0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf is clear
+	test_spr_bits	2,1,0,msr1		; msr1.ovf is clear
+	test_spr_bits	1,0,0,msr0		; msr0.aovf is clear
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt is clear
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x0000,0xffff,fr7	; saturation
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc5,1
+	test_spr_bits	0x3c,2,0x0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf is clear
+	test_spr_bits	2,1,0,msr1		; msr1.ovf is clear
+	test_spr_bits	1,0,0,msr0		; msr0.aovf is clear
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt is clear
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0xfffe,0xffff,fr7	; saturation
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc5,1
+	test_spr_bits	0x3c,2,0x0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf is clear
+	test_spr_bits	2,1,0,msr1		; msr1.ovf is clear
+	test_spr_bits	1,0,0,msr0		; msr0.aovf is clear
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt is clear
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_accg_immed 	0x00000011,accg0
+	set_acc_immed 	0x11111111,acc0
+	set_fr_iimmed  	4,2,fr7		; multiply small numbers
+	set_fr_iimmed  	5,3,fr8
+	cmcpxru      	fr7,fr8,acc0,cc2,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	1,2,fr7		; multiply by 1
+	set_fr_iimmed  	3,1,fr8
+	cmcpxru      	fr7,fr8,acc0,cc2,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0,2,fr7		; multiply by 0
+	set_fr_iimmed  	2,0,fr8
+	cmcpxru      	fr7,fr8,acc0,cc2,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed 	0x3fff,1,fr7	; 15 bit result
+	set_fr_iimmed  	2,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc2,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x4000,1,fr7	; 16 bit result
+	set_fr_iimmed  	4,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc2,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x8000,1,fr7	; 17 bit result
+	set_fr_iimmed  	4,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc2,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x7fff,0x0000,fr7	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc6,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x8000,0x8000,fr7	; max positive result
+	set_fr_iimmed  	0x8000,0x0000,fr8
+	cmcpxru      	fr7,fr8,acc0,cc6,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0xffff,0x0000,fr7	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc6,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x0000,0x0001,fr7	; saturation
+	set_fr_iimmed  	0xffff,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc6,1
+	test_spr_bits	0x3c,2,0x0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf is clear
+	test_spr_bits	2,1,0,msr1		; msr1.ovf is clear
+	test_spr_bits	1,0,0,msr0		; msr0.aovf is clear
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt is clear
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x0000,0xffff,fr7	; saturation
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc6,1
+	test_spr_bits	0x3c,2,0x0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf is clear
+	test_spr_bits	2,1,0,msr1		; msr1.ovf is clear
+	test_spr_bits	1,0,0,msr0		; msr0.aovf is clear
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt is clear
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0xfffe,0xffff,fr7	; saturation
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc6,1
+	test_spr_bits	0x3c,2,0x0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf is clear
+	test_spr_bits	2,1,0,msr1		; msr1.ovf is clear
+	test_spr_bits	1,0,0,msr0		; msr0.aovf is clear
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt is clear
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+;
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_accg_immed 	0x00000011,accg0
+	set_acc_immed 	0x11111111,acc0
+	set_fr_iimmed  	4,2,fr7		; multiply small numbers
+	set_fr_iimmed  	5,3,fr8
+	cmcpxru      	fr7,fr8,acc0,cc3,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	1,2,fr7		; multiply by 1
+	set_fr_iimmed  	3,1,fr8
+	cmcpxru      	fr7,fr8,acc0,cc3,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0,2,fr7		; multiply by 0
+	set_fr_iimmed  	2,0,fr8
+	cmcpxru      	fr7,fr8,acc0,cc3,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed 	0x3fff,1,fr7	; 15 bit result
+	set_fr_iimmed  	2,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc3,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x4000,1,fr7	; 16 bit result
+	set_fr_iimmed  	4,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc3,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x8000,1,fr7	; 17 bit result
+	set_fr_iimmed  	4,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc3,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x7fff,0x0000,fr7	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc7,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x8000,0x8000,fr7	; max positive result
+	set_fr_iimmed  	0x8000,0x0000,fr8
+	cmcpxru      	fr7,fr8,acc0,cc7,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0xffff,0x0000,fr7	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc7,1
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x0000,0x0001,fr7	; saturation
+	set_fr_iimmed  	0xffff,0x0001,fr8
+	cmcpxru      	fr7,fr8,acc0,cc7,1
+	test_spr_bits	0x3c,2,0x0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf is clear
+	test_spr_bits	2,1,0,msr1		; msr1.ovf is clear
+	test_spr_bits	1,0,0,msr0		; msr0.aovf is clear
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt is clear
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0x0000,0xffff,fr7	; saturation
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc7,1
+	test_spr_bits	0x3c,2,0x0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf is clear
+	test_spr_bits	2,1,0,msr1		; msr1.ovf is clear
+	test_spr_bits	1,0,0,msr0		; msr0.aovf is clear
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt is clear
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	set_fr_iimmed  	0xfffe,0xffff,fr7	; saturation
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	cmcpxru      	fr7,fr8,acc0,cc7,1
+	test_spr_bits	0x3c,2,0x0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf is clear
+	test_spr_bits	2,1,0,msr1		; msr1.ovf is clear
+	test_spr_bits	1,0,0,msr0		; msr0.aovf is clear
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt is clear
+	test_accg_immed 	0x00000011,accg0
+	test_acc_immed 	0x11111111,acc0
+
+	pass

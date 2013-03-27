@@ -1,0 +1,38 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>ne_set_server_auth</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="ref.html" title="neon API reference"><link rel="prev" href="refreqbody.html" title="ne_set_request_body_buffer"><link rel="next" href="refshave.html" title="ne_shave"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">ne_set_server_auth</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="refreqbody.html">Prev</a> </td><th width="60%" align="center">neon API reference</th><td width="20%" align="right"> <a accesskey="n" href="refshave.html">Next</a></td></tr></table><hr></div><div class="refentry" title="ne_set_server_auth"><a name="refauth"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ne_set_server_auth, ne_set_proxy_auth, ne_forget_auth — register authentication callbacks</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="funcsynopsis"><pre class="funcsynopsisinfo">#include &lt;ne_auth.h&gt;</pre><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">typedef int (*<b class="fsfunc">ne_auth_creds</b>)(</code></td><td>void *<var class="pdparam">userdata</var>, </td></tr><tr><td> </td><td>const char *<var class="pdparam">realm</var>, </td></tr><tr><td> </td><td>int <var class="pdparam">attempt</var>, </td></tr><tr><td> </td><td>char *<var class="pdparam">username</var>, </td></tr><tr><td> </td><td>char *<var class="pdparam">password</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">void <b class="fsfunc">ne_set_server_auth</b>(</code></td><td>ne_session *<var class="pdparam">session</var>, </td></tr><tr><td> </td><td>ne_auth_creds <var class="pdparam">callback</var>, </td></tr><tr><td> </td><td>void *<var class="pdparam">userdata</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">void <b class="fsfunc">ne_set_proxy_auth</b>(</code></td><td>ne_session *<var class="pdparam">session</var>, </td></tr><tr><td> </td><td>ne_auth_creds <var class="pdparam">callback</var>, </td></tr><tr><td> </td><td>void *<var class="pdparam">userdata</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">void <b class="fsfunc">ne_forget_auth</b>(</code></td><td>ne_session *<var class="pdparam">session</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div></div></div><div class="refsect1" title="Description"><a name="id459199"></a><h2>Description</h2><p>The <em class="type">ne_auth_creds</em> function type defines a
+callback which is invoked when a server or proxy server requires user
+authentication for a particular request.  The
+<code class="parameter">realm</code> string is supplied by the server.  The <code class="parameter">attempt</code> is a counter giving the
+number of times the request has been retried with different
+authentication credentials.  The first time the callback is invoked
+for a particular request, <code class="parameter">attempt</code> will be zero.</p><p>To retry the request using new authentication
+credentials, the callback should return zero, and the
+<code class="parameter">username</code> and <code class="parameter">password</code>
+buffers must contain <code class="literal">NUL</code>-terminated strings.  The
+<code class="literal">NE_ABUFSIZ</code> constant gives the size of these
+buffers.</p><div class="tip" title="Tip" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Tip</h3><p>If you only wish to allow the user one attempt to enter
+credentials, use the value of the <code class="parameter">attempt</code>
+parameter as the return value of the callback.</p></div><p>To abort the request, the callback should return a
+non-zero value; in which case the contents of the
+<code class="parameter">username</code> and <code class="parameter">password</code>
+buffers are ignored.</p><p>The <code class="function">ne_forget_auth</code> function can be
+used to discard the cached authentication credentials.</p></div><div class="refsect1" title="Examples"><a name="id459294"></a><h2>Examples</h2><pre class="programlisting">
+/* Function which prompts for a line of user input: */
+extern char *prompt_for(const char *prompt);
+
+static int
+my_auth(void *userdata, const char *realm, int attempts,
+        char *username, char *password)
+{
+   strncpy(username, prompt_for("Username: "), NE_ABUFSIZ);
+   strncpy(password, prompt_for("Password: "), NE_ABUFSIZ);
+   return attempts;
+}
+
+int main(...)
+{
+   ne_session *sess = ne_session_create(...);
+
+   ne_set_server_auth(sess, my_auth, NULL);
+
+   /* ... */
+}</pre></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="refreqbody.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ref.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="refshave.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">ne_set_request_body_buffer </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> ne_shave</td></tr></table></div></body></html>

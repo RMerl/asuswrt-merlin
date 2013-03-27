@@ -1,0 +1,3 @@
+#! /bin/sh
+
+sed -i "75s/^.*$/PTHREAD_LDFLAGS=-lpthread/" source3/Makefile

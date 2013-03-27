@@ -1,0 +1,14 @@
+# m32r testcase for ldi $dr,$slo16
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldi16
+ldi16:
+	ldi r4, #0x1234
+
+	test_h_gr r4, 0x1234
+
+	pass

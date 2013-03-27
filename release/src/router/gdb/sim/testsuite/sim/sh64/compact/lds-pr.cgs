@@ -1,0 +1,23 @@
+# sh testcase for lds $rn, pr
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global lds_pr
+lds_pr:
+	mov #40, r0
+	shll8 r0
+	lds r0, pr
+readback:
+	sts pr, r1
+	cmp/eq r0, r1
+	bf wrong
+
+okay:
+	pass
+wrong:
+	fail

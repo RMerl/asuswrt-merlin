@@ -146,7 +146,10 @@ function initial(){
 	else{
 		$("rt_table").style.display = "none";
 		$("ap_table").style.display = "";
-		if((sw_mode == 2 || sw_mode == 3 ) && decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc_ssid"); %>").length >= 28){
+		if(sw_mode == 3)
+			$('RemoteAPtd').style.display = "none";
+		
+		if((sw_mode == 2 || sw_mode == 3 || sw_mode == 4) && decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc_ssid"); %>").length >= 28){
 			showtext($("RemoteAP"), decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc_ssid"); %>").substring(0, 26)+"...");
 			$("RemoteAPtd").title = decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc_ssid"); %>");
 		}else				

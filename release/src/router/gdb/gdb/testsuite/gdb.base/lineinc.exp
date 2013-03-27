@@ -1,0 +1,126 @@
+# Test macro handling of #included files.
+# Copyright 2003, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# The test program lineinc.c contains a mix of #line directives and
+# #include directives that will cause the compiler to attribute more
+# than one #inclusion to the same source line.  You can get similar
+# effects using things like GCC's '-imacros' flag.
+#
+# Compiling lineinc.c with Dwarf 2 macro information will produce
+# something like this:
+# 
+#     $ gcc -g3 lineinc.c -o lineinc
+#     $ readelf -wml lineinc
+#     ...
+#      The File Name Table:
+#       Entry	Dir	Time	Size	Name
+#       1	0	0	0	lineinc.c
+#       2	0	0	0	lineinc1.h
+#       3	0	0	0	lineinc2.h
+#       4	0	0	0	lineinc3.h
+#     ...
+#     Contents of the .debug_macinfo section:
+#     
+#      DW_MACINFO_start_file - lineno: 0 filenum: 1
+#      DW_MACINFO_define - lineno : 1 macro : __VERSION__ "3.2 20020903 (Red Hat Linux 8.0 3.2-7)"
+#      DW_MACINFO_define - lineno : 2 macro : __USER_LABEL_PREFIX__ 
+#     ...
+#      DW_MACINFO_define - lineno : 1 macro : __i386__ 1
+#      DW_MACINFO_define - lineno : 1 macro : __tune_i386__ 1
+#      DW_MACINFO_start_file - lineno: 10 filenum: 2
+#      DW_MACINFO_define - lineno : 1 macro : FOO 1
+#      DW_MACINFO_end_file
+#      DW_MACINFO_start_file - lineno: 10 filenum: 3
+#      DW_MACINFO_undef - lineno : 1 macro : FOO
+#      DW_MACINFO_define - lineno : 2 macro : FOO 2
+#      DW_MACINFO_end_file
+#      DW_MACINFO_start_file - lineno: 11 filenum: 4
+#      DW_MACINFO_undef - lineno : 1 macro : FOO
+#      DW_MACINFO_define - lineno : 2 macro : FOO 3
+#      DW_MACINFO_end_file
+#      DW_MACINFO_end_file
+#     $   
+#
+# Note how the inclusions of lineinc1.h and lineinc2.h are both
+# attributed to line 10 of lineinc.c, and the #inclusion of lineinc3.h
+# is attributed to line 11.  This is all correct, given the #line
+# directives in lineinc.c.
+#
+# Dwarf 2 macro information doesn't contain enough information to
+# allow GDB to figure out what's really going on here --- it makes no
+# mention of the #line directives --- so we just try to cope as best
+# we can.  If the macro table were to attribute more than one
+# #inclusion to the same source line, then GDB wouldn't be able to
+# tell which #included file's #definitions and #undefinitions come
+# first, so it can't tell which #definitions are in scope following
+# all the #inclusions.  To cope with this, GDB puts all the files
+# #included by a given source file in a list sorted by the line at
+# which they were #included; this gives GDB the chance to detect
+# multiple #inclusions at the same line, complain, and assign
+# distinct, albiet incorrect, line numbers to each #inclusion.
+#
+# However, at one point GDB was sorting the list in reverse order,
+# while the code to assign new, distinct line numbers assumed it was
+# sorted in ascending order; GDB would get an internal error trying to
+# read the above debugging info.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "lineinc"
+set binfile ${objdir}/${subdir}/${testfile}
+
+
+if {[gdb_compile "${srcdir}/${subdir}/${testfile}.c" ${binfile} executable {debug}] != ""} {
+    untested lineinc.exp
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# Any command that causes GDB to read the debugging info for the
+# lineinc.c compilation unit will do here.
+set test_name "tolerate macro info with multiple #inclusions per line"
+gdb_test_multiple "break main" $test_name {
+    -re "Breakpoint 1 at 0x.*: file .*lineinc.c.*\\.\r\n${gdb_prompt}" {
+        pass $test_name
+    }
+    -re ".*internal-error:.*.y or n. " {
+        fail $test_name
+        send_gdb "y\n"
+        gdb_expect {
+            -re ".*.y or n. " {
+                send_gdb "n\n"
+                exp_continue
+            }
+            -re "$gdb_prompt" {
+            }                
+            timeout {
+                fail "$test_name (timeout)"
+            }
+        }
+    }
+}

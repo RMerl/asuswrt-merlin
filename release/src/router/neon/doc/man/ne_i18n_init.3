@@ -1,0 +1,93 @@
+'\" t
+.\"     Title: ne_i18n_init
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_I18N_INIT" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_i18n_init \- functions to initialize internationalization support
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_i18n\&.h>
+.fi
+.ft
+.HP \w'void\ ne_i18n_init('u
+.BI "void ne_i18n_init(const\ char\ *" "encoding" ");"
+.SH "DESCRIPTION"
+.PP
+The
+\fBne_i18n_init\fR
+function can be used to enable support for translated messages in the neon library\&. The
+\fIencoding\fR
+parameter, if non\-NULL, specifies the character encoding required for generated translated string\&. If it is
+NULL, the appropriate character encoding for the process locale will be used\&.
+.PP
+This call is only strictly necessary if either:
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+neon has been installed into a different prefix than the
+gettext
+implementation on which it depends for i18n purposes, or
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+the caller requires that translated messages are in a particular character encoding\&.
+.RE
+.PP
+If
+\fBne_i18n_init\fR
+is never called, the message catalogs will not be found if case (a) applies (and so English error messages will be used), and will use the default character encoding specified by the process locale\&. The library will otherwise operate correctly\&.
+.PP
+Note that the encoding used is a process\-global setting and so results may be unexpected if other users of neon within the process call
+\fBne_i18n_init\fR
+with a different encoding parameter\&.
+.SH "SEE ALSO"
+.PP
+ne_sock_init
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

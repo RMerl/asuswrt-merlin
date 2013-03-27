@@ -16,83 +16,47 @@
 #include <sys/ioctl.h>
 #include <bcmutils.h>
 #include <wlutils.h>
-#ifdef RTCONFIG_WIRELESSREPEATER
+#ifdef CONFIG_BCMWL5
 #include <semaphore_mfp.h>
 #endif
-
 
 //	ref: http://wiki.openwrt.org/OpenWrtDocs/nas
 
 //	#define DEBUG_TIMING
 
+#ifdef REMOVE
 static int security_on(int idx, int unit, int subunit, void *param)
 {
 	return nvram_get_int(wl_nvname("radio", unit, 0)) && (!nvram_match(wl_nvname("security_mode", unit, subunit), "disabled"));
 }
-#ifdef REMOVE
 static int is_wds(int idx, int unit, int subunit, void *param)
 {
 	return nvram_get_int(wl_nvname("radio", unit, 0)) && nvram_get_int(wl_nvname("wds_enable", unit, subunit));
 }
-#endif
 #ifndef CONFIG_BCMWL5
 static int is_sta(int idx, int unit, int subunit, void *param)
 {
 	return nvram_match(wl_nvname("mode", unit, subunit), "sta");
 }
 #endif
-#ifdef REMOVE
 int wds_enable(void)
 {
 	return foreach_wif(1, NULL, is_wds);
 }
 #endif
 #ifdef CONFIG_BCMWL5
-int
+void
 start_nas(void)
 {
-	int ret = eval("nas");
+	stop_nas();
 
-#ifdef __CONFIG_MEDIA_IPTV__
-
-	pid_t pid;
-	pid_t prev_pid = -1;
-	int found = 0;
-
-	/* Iterate a few times to allow nas to finish daemonizing itself. */
-	do {
-		sleep(1);
-		if ((pid = get_pid_by_name("nas")) <= 0)
-			break;
-		found = (pid == prev_pid) ? found + 1 : 1;
-		prev_pid = pid;
-	} while (found < 3);
-
-	if (found == 3)
-		pmon_register(pid, &start_nas);
-
-#endif /* __CONFIG_MEDIA_IPTV__ */
-
-	return ret;
+	system("nas&");
 }
 
-int
+void
 stop_nas(void)
 {
-	int ret;
-
-#ifdef __CONFIG_MEDIA_IPTV__
-
-	pid_t pid;
-
-	if ((pid = pmon_get_pid(&start_nas)) > 0) 
-		pmon_unregister(pid);
-
-#endif /* __CONFIG_MEDIA_IPTV__ */
-
-	ret = eval("killall", "nas");
-
-	return ret;
+	killall_tk("nas");
 }
 #ifdef REMOVE
 void notify_nas(const char *ifname)
@@ -143,10 +107,7 @@ void notify_nas(const char *ifname)
 #endif /* CONFIG_BCMWL5 */
 }
 #endif
-#endif /* CONFIG_BCMWL5 */
 
-
-#ifdef RTCONFIG_WIRELESSREPEATER
 #define APSCAN_INFO "/tmp/apscan_info.txt"
 
 static void wlcscan_safeleave(int signo) {
@@ -188,6 +149,10 @@ int wlcscan_main(void)
 	nvram_set_int("wlc_scan_state", WLCSCAN_STATE_FINISHED);
 	return 1;
 }
+
+#endif /* CONFIG_BCMWL5 */
+
+#ifdef RTCONFIG_WIRELESSREPEATER
 
 static void wlcconnect_safeleave(int signo) {
 	signal(SIGTERM, SIG_IGN);

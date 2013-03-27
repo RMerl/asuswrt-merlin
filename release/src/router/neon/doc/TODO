@@ -1,0 +1,156 @@
+/* List of interfaces needing reference documentation.             -*- c -*- */
+
+/* ne_session.h */
+
+### DONE: basics
+ne_session *ne_session_create(const char *scheme, const char *hostname, int port);
+void ne_session_destroy(ne_session *sess);
+void ne_close_connection(ne_session *sess);
+void ne_session_proxy(ne_session *sess, const char *hostname, int port);
+
+### DONE: error handling
+void ne_set_error(ne_session *sess, const char *format, ...);
+const char *ne_get_error(ne_session *sess);
+
+### DONE: options
+void ne_set_useragent(ne_session *sess, const char *product);
+void ne_set_expect100(ne_session *sess, int use_expect100);
+void ne_set_persist(ne_session *sess, int persist);
+void ne_set_read_timeout(ne_session *sess, int timeout);
+
+### TODO: progress + status callbcacks
+void ne_set_progress(ne_session *sess, ne_progress progress, void *userdata);
+
+### TODO: status callback
+typedef enum ne_conn_status;
+typedef void (*ne_notify_status)(void *userdata, ne_conn_status status, const char *info);
+void ne_set_status(ne_session *sess, ne_notify_status status, void *userdata);
+
+### DONE: SSL verification
+
+typedef struct ne_ssl_dname;
+char *ne_ssl_readable_dname(const ne_ssl_dname *dn);
+typedef struct ne_ssl_certificate;
+#define NE_SSL_*
+typedef int (*ne_ssl_verify_fn)(void *userdata, int failures,
+				const ne_ssl_certificate *cert);
+void ne_ssl_set_verify(ne_session *sess, ne_ssl_verify_fn fn, void *userdata);
+
+### DONE: SSL server certs
+int ne_ssl_load_ca(ne_session *sess, const char *file);
+int ne_ssl_load_default_ca(ne_session *sess);
+
+### TODO: SSL client certs
+typedef int (*ne_ssl_keypw_fn)(void *userdata, char *pwbuf, size_t len);
+void ne_ssl_keypw_prompt(ne_session *sess, ne_ssl_keypw_fn fn, void *ud);
+int ne_ssl_load_pkcs12(ne_session *sess, const char *fn);
+int ne_ssl_load_pem(ne_session *sess, const char *certfn, const char *keyfn);
+typedef void (*ne_ssl_provide_fn)(void *userdata, ne_session *sess,
+				  const ne_ssl_dname *server);
+void ne_ssl_provide_ccert(ne_session *sess, ne_ssl_provide_fn fn, void *userdata);
+
+#ifdef NEON_SSL
+SSL_CTX *ne_ssl_get_context(ne_session *sess);
+X509 *ne_ssl_server_cert(ne_session *req);
+#endif
+
+### TODO: utility functions
+int ne_version_pre_http11(ne_session *sess);
+const char *ne_get_server_hostport(ne_session *sess);
+const char *ne_get_scheme(ne_session *sess);
+void ne_fill_server_uri(ne_session *sess, ne_uri *uri);
+
+/* end of ne_session.h *****************************************/
+
+/* ne_request.h */
+
+### DONE: request basics
+ne_request *ne_request_create(ne_session *sess, const char *method, const char *path);
+int ne_request_dispatch(ne_request *req);
+void ne_request_destroy(ne_request *req);
+
+### DONE: request status
+const ne_status *ne_get_status(ne_request *req);
+
+### TODO: request bodies
+void ne_set_request_body_buffer(ne_request *req, const char *buf, size_t count);
+int ne_set_request_body_fd(ne_request *req, int fd, size_t count);
+
+typedef ssize_t (*ne_provide_body)(void *userdata, 
+				   char *buffer, size_t buflen);
+void ne_set_request_body_provider(ne_request *req, size_t size,
+				  ne_provide_body provider, void *userdata);
+
+### TODO: response bodies
+typedef int (*ne_accept_response)(void *userdata, ne_request *req, ne_status *st);
+int ne_accept_2xx(void *userdata, ne_request *req, ne_status *st);
+int ne_accept_always(void *userdata, ne_request *req, ne_status *st);
+void ne_add_response_body_reader(ne_request *req, ne_accept_response accpt,
+				 ne_block_reader reader, void *userdata);
+
+### TODO: response headers
+typedef void (*ne_header_handler)(void *userdata, const char *value);
+void ne_add_response_header_handler(ne_request *req, const char *name, 
+				    ne_header_handler hdl, void *userdata);
+void ne_add_response_header_catcher(ne_request *req, 
+				    ne_header_handler hdl, void *userdata);
+
+void ne_duplicate_header(void *userdata, const char *value);
+void ne_handle_numeric_header(void *userdata, const char *value);
+
+### DONE: request headers
+void ne_add_request_header(ne_request *req, const char *name, const char *value);
+void ne_print_request_header(ne_request *req, const char *name, const char *format, ...);
+
+### TODO: misc
+ne_session *ne_get_session(ne_request *req);
+
+### TODO: caller-pulls request interface
+int ne_begin_request(ne_request *req);
+int ne_end_request(ne_request *req);
+ssize_t ne_read_response_block(ne_request *req, char *buffer, size_t buflen);
+
+### TODO: hooks
+typedef void (*ne_free_hooks)(void *cookie);
+typedef void (*ne_create_request_fn)(void *userdata, ne_request *req,
+				     const char *method, const char *path);
+void ne_hook_create_request(ne_session *sess, ne_create_request_fn fn, void *userdata);
+
+typedef void (*ne_pre_send_fn)(void *userdata, ne_buffer *header);
+void ne_hook_pre_send(ne_session *sess, ne_pre_send_fn fn, void *userdata);
+
+typedef int (*ne_post_send_fn)(void *userdata, const ne_status *status);
+void ne_hook_post_send(ne_session *sess, ne_post_send_fn fn, void *userdata);
+
+typedef void (*ne_destroy_fn)(void *userdata);
+void ne_hook_destroy_request(ne_session *sess, ne_destroy_fn fn, void *userdata);
+
+void ne_hook_destroy_session(ne_session *sess, ne_destroy_fn fn, void *userdata);
+
+typedef void *(*ne_accessor_fn)(void *userdata);
+void ne_hook_session_accessor(ne_session *sess, const char *id, ne_accessor_fn, void *userdata);
+void ne_hook_request_accessor(ne_request *req, const char *id, ne_accessor_fn, void *userdata);
+
+void *ne_null_accessor(void *userdata);
+
+void *ne_session_hook_private(ne_session *sess, const char *id);
+
+void *ne_request_hook_private(ne_request *req, const char *id);
+
+/* ne_207.h */
+/* ne_acl.h */
+/* DONE: ne_alloc.h */
+/* DONE: ne_auth.h */
+/* ne_basic.h */
+/* ne_compress.h */
+/* ne_cookies.h */
+/* ne_dates.h */
+/* ne_locks.h */
+/* ne_props.h */
+/* ne_redirect.h */
+/* ne_socket.h */
+/* MOSTLY DONE: ne_string.h */
+/* ne_uri.h */
+/* ne_utils.h */
+/* ne_xml.h */
+

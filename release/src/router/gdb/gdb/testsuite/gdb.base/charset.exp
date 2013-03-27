@@ -1,0 +1,549 @@
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 2001, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@gnu.org
+
+# Test GDB's character set support.
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "charset"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    untested "couldn't compile ${srcdir}/${subdir}/${srcfile}"
+    return -1
+}
+
+# Start with a fresh gdb.
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# Parse the output from a `show charset' command.  Return the host
+# and target charset as a two-element list.
+proc parse_show_charset_output {testname} {
+    global gdb_prompt
+
+    gdb_expect {
+        -re "The current host and target character set is `(.*)'\\.\[\r\n\]+$gdb_prompt $" {
+            set host_charset $expect_out(1,string)
+            set target_charset $expect_out(1,string)
+	    set retlist [list $host_charset $target_charset]
+            pass $testname
+        }
+        -re "The current host character set is `(.*)'\\.\[\r\n\]+The current target character set is `(.*)'\\.\[\r\n\]+$gdb_prompt $" {
+            set host_charset $expect_out(1,string)
+            set target_charset $expect_out(2,string)
+	    set retlist [list $host_charset $target_charset]
+            pass $testname
+        }
+        -re "The host character set is \"(.*)\"\\.\[\r\n\]+$gdb_prompt $" {
+            set host_charset $expect_out(1,string)
+	    set retlist [list $host_charset]
+            pass $testname
+        }
+        -re "The target character set is \"(.*)\"\\.\[\r\n\]+$gdb_prompt $" {
+            set target_charset $expect_out(1,string)
+	    set retlist [list $target_charset]
+            pass $testname
+        }
+        -re ".*$gdb_prompt $" {
+            fail $testname
+        }
+        timeout {
+            fail "$testname (timeout)"
+        }
+    }
+
+    return $retlist
+}
+
+
+# Try the various `show charset' commands.  These are all aliases of each
+# other; `show target-charset' and `show host-charset' actually print
+# both the host and target charsets.
+
+send_gdb "show charset\n"
+set show_charset [parse_show_charset_output "show charset"]
+
+send_gdb "show target-charset\n"
+set show_target_charset [parse_show_charset_output "show target-charset"]
+
+if {[lsearch $show_charset $show_target_charset] >= 0} {
+    pass "check `show target-charset' against `show charset'"
+} else {
+    fail "check `show target-charset' against `show charset'"
+}
+
+send_gdb "show host-charset\n"
+set show_host_charset [parse_show_charset_output "show host-charset"]
+
+if {[lsearch $show_charset $show_host_charset] >= 0} {
+    pass "check `show host-charset' against `show charset'"
+} else {
+    fail "check `show host-charset' against `show charset'"
+}
+
+
+# Get the list of supported (host) charsets as possible completions.
+send_gdb "set charset \t\t"
+
+# Check that we can at least use ASCII as a host character set.
+sleep 1
+gdb_expect {
+    -re "^set charset .*\r\nASCII.*\r\n$gdb_prompt set charset " {
+	# We got the output that we wanted, including ASCII as possible
+	# charset. Send a newline to get us back to the prompt. This will
+	# also generate an error message. Let's not check here that the error
+	# message makes sense, we do that below, as a separate testcase.
+        send_gdb "\n"
+        gdb_expect {
+	    -re ".*Requires an argument.*$gdb_prompt $" {
+		pass "get valid character sets"
+	    }
+	    -re ".*$gdb_prompt $" {
+		send_gdb "\n"
+		gdb_expect {
+		    -re ".*$gdb_prompt $" {
+			fail "get valid character sets"
+		    }
+		}
+	    }
+	    timeout {
+		fail "(timeout) get valid character sets"
+	    }
+	}
+    }
+    -re ".*$gdb_prompt $" {
+	# We got some output that ended with a regular prompt
+        fail "get valid character sets"
+    }
+    -re ".*$gdb_prompt set charset.*$" {
+	# We got some other output, send a cntrl-c to gdb to get us back
+        # to the prompt.
+	send_gdb "\003"
+        fail "get valid character sets"
+    }
+    timeout {
+        fail "get valid character sets (timeout)"
+    }
+}
+
+# Try a malformed `set charset'.
+gdb_test "set charset" \
+         "Requires an argument. Valid arguments are.*" \
+         "try malformed `set charset'"
+
+# Try using `set host-charset' on an invalid character set.
+gdb_test "set host-charset my_grandma_bonnie" \
+         "Undefined item: \"my_grandma_bonnie\"." \
+         "try `set host-charset' with invalid charset"
+
+# Try using `set target-charset' on an invalid character set.
+gdb_test "set target-charset my_grandma_bonnie" \
+         "Undefined item: \"my_grandma_bonnie\"." \
+         "try `set target-charset' with invalid charset"
+
+# A Tcl array mapping the names of all the character sets we've seen
+# to "1" if the character set can be used as a host character set, or
+# "0" otherwise.  We can use `array names charsets' just to get a list
+# of all character sets.
+array set charsets {}
+
+proc all_charset_names {} {
+    global charsets
+    return [array names charsets]
+}
+
+proc valid_host_charset {charset} {
+    global charsets
+    return $charsets($charset)
+}
+
+send_gdb "set host-charset\n"
+gdb_expect {
+    -re "Requires an argument. Valid arguments are (\[^ \t\n\r,.\]*)" {
+	#set host_charset_list $expect_out(1,string)
+	set charsets($expect_out(1,string)) 1
+	exp_continue
+	#pass "capture valid host charsets"
+    }
+
+    -re ", (\[^ \t\n\r,.\]*)" {
+	#set host_charset_list $expect_out(1,string)
+	set charsets($expect_out(1,string)) 1
+	exp_continue
+	#pass "capture valid host charsets"
+    }
+
+    -re "\\.\r\n$gdb_prompt $" {
+	#set host_charset_list $expect_out(1,string)
+	pass "capture valid host charsets"
+    }
+
+    -re ".*$gdb_prompt $" {
+	fail "capture valid host charsets"
+    }
+    timeout {
+	fail "(timeout) capture valid host charsets"
+    }
+}
+
+
+send_gdb "set target-charset\n"
+gdb_expect {
+    -re "Requires an argument. Valid arguments are (\[^ \t\n\r,.\]*)" {
+	set target_charset $expect_out(1,string)
+	if {! [info exists charsets($target_charset)]} {
+	    set charsets($target_charset) 0
+	}
+	exp_continue
+    }
+
+    -re ", (\[^ \t\n\r,.\]*)" {
+	set target_charset $expect_out(1,string)
+	if {! [info exists charsets($target_charset)]} {
+	    set charsets($target_charset) 0
+	}
+	exp_continue
+    }
+
+    -re "\\.\r\n$gdb_prompt $" {
+	pass "capture valid target charsets"
+
+    }
+
+    -re ".*$gdb_prompt $" {
+	fail "capture valid target charsets"
+    }
+
+    timeout {
+	fail "(timeout) capture valid target charsets"
+    }
+}
+
+# Make sure that GDB supports every host/target charset combination.
+foreach host_charset [all_charset_names] {
+    if {[valid_host_charset $host_charset]} {
+
+        set testname "try `set host-charset $host_charset'"
+        send_gdb "set host-charset $host_charset\n"
+        gdb_expect {
+            -re "GDB doesn't know of any character set named.*\[\r\n]+${gdb_prompt} $" {
+                # How did it get into `charsets' then?
+                fail "$testname (didn't recognize name)"
+            }
+            -re "GDB can't use `.*' as its host character set\\.\[\r\n]+${gdb_prompt} $" {
+                # Well, then why does its `charsets' entry say it can?
+                fail $testname
+            }
+            -re "${gdb_prompt} $" {
+                pass $testname
+            }
+            timeout {
+                fail "$testname (timeout)"
+            }
+        }
+
+        # Check that the command actually had its intended effect:
+        # $host_charset should now be the host character set.
+        send_gdb "show charset\n"
+        set result [parse_show_charset_output "parse `show charset' after `set host-charset $host_charset'"]
+        if {! [string compare [lindex $result 0] $host_charset]} {
+            pass "check effect of `set host-charset $host_charset'"
+        } else {
+            fail "check effect of `set host-charset $host_charset'"
+        }
+
+        # Now try setting every possible target character set,
+        # given that host charset.
+        foreach target_charset [all_charset_names] {
+            set testname "try `set target-charset $target_charset'"
+            send_gdb "set target-charset $target_charset\n"
+            gdb_expect {
+                -re "GDB doesn't know of any character set named.*\[\r\n]+${gdb_prompt} $" {
+                    fail "$testname (didn't recognize name)"
+                }
+                -re "GDB can't convert from the .* character set to .*\\.\[\r\n\]+${gdb_prompt} $" {
+                    # This is a serious problem.  GDB should be able to convert
+                    # between any arbitrary pair of character sets.
+                    fail "$testname (can't convert)"
+                }
+                -re "${gdb_prompt} $" {
+                    pass $testname
+                }
+                timeout {
+                    fail "$testname (timeout)"
+                }
+            }
+
+            # Check that the command actually had its intended effect:
+            # $target_charset should now be the target charset.
+            send_gdb "show charset\n"
+            set result [parse_show_charset_output "parse `show charset' after `set target-charset $target_charset'"]
+            if {! [string compare $result [list $host_charset $target_charset]]} {
+                pass "check effect of `set target-charset $target_charset'"
+            } else {
+                fail "check effect of `set target-charset $target_charset'"
+            }
+
+            # Test handling of characters in the host charset which
+            # can't be translated into the target charset.  \xA2 is
+            # `cent' in ISO-8859-1, which has no equivalent in ASCII.
+            #
+            # On some systems, the pseudo-tty through which we
+            # communicate with GDB insists on stripping the high bit
+            # from input characters, meaning that `cent' turns into
+            # `"'.  Since ISO-8859-1 and ASCII are identical in the
+            # lower 128 characters, it's tough to see how we can test
+            # this behavior on such systems, so we just xfail it.
+	    #
+	    # Note: the \x16 (Control-V) is an escape to allow \xA2 to
+	    # get past readline.
+            if {! [string compare $host_charset iso-8859-1] && ! [string compare $target_charset ascii]} {
+
+                set testname "untranslatable character in character literal"
+                send_gdb "print '\x16\xA2'\n"
+                gdb_expect {
+                    -re "There is no character corresponding to .* in the target character set .*\\.\[\r\n\]+$gdb_prompt $" {
+                        pass $testname
+                    }
+                    -re " = 34 '\"'\[\r\n\]+$gdb_prompt $" {
+                        xfail "$testname (DejaGNU's pseudo-tty strips eighth bit)"
+                    }
+                    -re "$gdb_prompt $" {
+                        fail $testname
+                    }
+                    timeout {
+                        fail "$testname (timeout)"
+                    }
+                }
+
+                set testname "untranslatable character in string literal"
+                # If the PTTY zeros bit seven, then this turns into
+                #   print """
+                # which gets us a syntax error.  We don't care.
+                send_gdb "print \"\x16\xA2\"\n"
+                gdb_expect {
+                    -re "There is no character corresponding to .* in the target character set .*\\.\[\r\n\]+$gdb_prompt $" {
+                        pass $testname
+                    }
+                    -re "Unterminated string in expression.\[\r\n\]+$gdb_prompt $" {
+                        xfail "$testname (DejaGNU's pseudo-tty strips eighth bit)"
+                    }
+                    -re "$gdb_prompt $" {
+                        fail $testname
+                    }
+                    timeout {
+                        fail "$testname (timeout)"
+                    }
+                }
+
+                set testname "untranslatable characters in backslash escape"
+                send_gdb "print '\\\x16\xA2'\n"
+                gdb_expect {
+                    -re "The escape sequence .* is equivalent to plain .*, which has no equivalent\[\r\n\]+in the .* character set\\.\[\r\n\]+$gdb_prompt $" {
+                        pass $testname
+                    }
+                    -re " = 34 '\"'\[\r\n\]+$gdb_prompt $" {
+                        xfail "$testname (DejaGNU's pseudo-tty strips eighth bit)"
+                    }
+                    -re "$gdb_prompt $" {
+                        fail $testname
+                    }
+                    timeout {
+                        fail "$testname (timeout)"
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+# Set the host character set to plain ASCII, and try actually printing
+# some strings in various target character sets.  We need to run the
+# test program to the point at which the strings have been
+# initialized.
+gdb_test "break ${srcfile}:[gdb_get_line_number "all strings initialized"]" \
+         ".*Breakpoint.* at .*" \
+         "set breakpoint after all strings have been initialized"
+gdb_run_cmd
+gdb_expect {
+    -re "Breakpoint.*all strings initialized.*$gdb_prompt $" {
+        pass "run until all strings have been initialized"
+    }
+    -re "$gdb_prompt $" {
+        fail "run until all strings have been initialized"
+    }
+    timeout {
+        fail "run until all strings have been initialized (timeout)"
+    }
+}
+
+
+gdb_test "set host-charset ASCII" ""
+foreach target_charset [all_charset_names] {
+    send_gdb "set target-charset $target_charset\n" 
+    gdb_expect {
+        -re "$gdb_prompt $" {
+            pass "set target-charset $target_charset"
+        }
+        timeout {
+            fail "set target-charset $target_charset (timeout)"
+        }
+    }
+
+    # Try printing the null character.  There seems to be a bug in
+    # gdb_test that requires us to use gdb_expect here.
+    send_gdb "print '\\0'\n"
+    gdb_expect {
+        -re "\\\$${decimal} = 0 '\\\\0'\[\r\n\]+$gdb_prompt $" {
+            pass "print the null character in ${target_charset}"
+        }
+        -re "$gdb_prompt $" {
+            fail "print the null character in ${target_charset}"
+        }
+        timeout {
+            fail "print the null character in ${target_charset} (timeout)"
+        }
+    }
+
+    # Compute the name of the variable in the test program that holds
+    # a string in $target_charset.  The variable's name is the
+    # character set's name, in lower-case, with all non-identifier
+    # characters replaced with '_', with "_string" stuck on the end.
+    set var_name [string tolower "${target_charset}_string"]
+    regsub -all -- "\[^a-z0-9_\]" $var_name "_" var_name
+    
+    # Compute a regexp matching the results we expect.  This is static,
+    # but it's easier than writing it out.
+    regsub -all "." "abfnrtv" "(\\\\&|x)" escapes
+    set uppercase "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    set lowercase "abcdefghijklmnopqrstuvwxyz"
+    set digits "0123456789"
+    set octal_escape "\\\\\[0-9\]\[0-9\]\[0-9\]"
+
+    send_gdb "print $var_name\n"
+    # ${escapes}${uppercase}${lowercase}${digits}${octal}${octal}
+    gdb_expect {
+        -re ".* = \"(\\\\a|x)(\\\\b|x)(\\\\f|x)(\\\\n|x)(\\\\r|x)(\\\\t|x)(\\\\v|x)${uppercase}${lowercase}${digits}(\\\\\[0-9\]\[0-9\]\[0-9\]|x)(\\\\\[0-9\]\[0-9\]\[0-9\]|x).*\"\[\r\n\]+$gdb_prompt $" {
+            pass "print string in $target_charset"
+        }
+        -re "$gdb_prompt $" {
+            fail "print string in $target_charset"
+        }
+        timeout {
+            fail "print string in $target_charset (timeout)"
+        }
+    }
+
+    # Try entering a character literal, and see if it comes back unchanged.
+    gdb_test "print 'A'" \
+             " = \[0-9-\]+ 'A'" \
+             "parse character literal in ${target_charset}"
+
+    # Check that the character literal was encoded correctly.
+    gdb_test "print 'A' == $var_name\[7\]" \
+             " = 1" \
+             "check value of parsed character literal in ${target_charset}"
+
+    # Try entering a string literal, and see if it comes back unchanged.
+    gdb_test "print \"abcdefABCDEF012345\"" \
+             " = \"abcdefABCDEF012345\"" \
+             "parse string literal in ${target_charset}"
+
+    # Check that the string literal was encoded correctly.
+    gdb_test "print \"q\"\[0\] == $var_name\[49\]" \
+             " = 1" \
+             "check value of parsed string literal in ${target_charset}"
+
+    # Test handling of characters in the target charset which
+    # can't be translated into the host charset.
+    if {! [string compare $target_charset iso-8859-1]} {
+        gdb_test "print iso_8859_1_string\[69\]" \
+                 " = \[0-9-\]+ '\\\\242'" \
+                 "print character with no equivalent in host character set"
+        gdb_test "print iso_8859_1_string + 70" \
+                 " = ${hex} \"\\\\242.*\"" \
+                 "print string with no equivalent in host character set"
+    }
+
+    # Make sure that we don't apply the ISO-8859-1 `print_literally'
+    # function to ASCII.
+    if {! [string compare $target_charset ascii]} {
+        gdb_test "print iso_8859_1_string\[69\]" \
+                 " = \[0-9-\]+ '\\\\242'" \
+                 "print ASCII unprintable character"
+        gdb_test "print iso_8859_1_string + 70" \
+                 " = ${hex} \"\\\\242.*\"" \
+                 "print ASCII unprintable string"
+    }
+
+    # Try printing characters with backslash escape equivalents.
+    set escapees {a b f n r t v}
+    for {set i 0} {$i < [llength $escapees]} {incr i} {
+        set escape [lindex $escapees $i]
+        send_gdb "print $var_name\[$i\]\n"
+        set have_escape 1
+        gdb_expect {
+            -re "= \[0-9-\]+ '\\\\${escape}'\[\r\n\]+$gdb_prompt $" {
+                pass "try printing '\\${escape}' in ${target_charset}"
+            }
+            -re "= \[0-9-\]+ 'x'\[\r\n\]+$gdb_prompt $" {
+                xfail "try printing '\\${escape}' in ${target_charset} (no such escape)"
+                set have_escape 0
+            }
+            -re "$gdb_prompt $" {
+                fail "try printing '\\${escape}' in ${target_charset}"
+            }
+            timeout {
+                fail "try printing '\\${escape}' in ${target_charset} (timeout)"
+            }
+        }
+
+        if {$have_escape} {
+
+            # Try parsing a backslash escape in a character literal.
+            gdb_test "print '\\${escape}' == $var_name\[$i\]" \
+                     " = 1" \
+                     "check value of '\\${escape}' in ${target_charset}"
+
+            # Try parsing a backslash escape in a string literal.
+            gdb_test "print \"\\${escape}\"\[0\] == $var_name\[$i\]" \
+                     " = 1" \
+                     "check value of \"\\${escape}\" in ${target_charset}"
+        }
+    }
+
+    # Try printing a character escape that doesn't exist.  We should 
+    # get the unescaped character, in the target character set.
+    gdb_test "print '\\q'" " = \[0-9-\]+ 'q'" \
+             "print escape that doesn't exist in $target_charset"
+    gdb_test "print '\\q' == $var_name\[49\]" " = 1" \
+             "check value of escape that doesn't exist in $target_charset"
+}
+
+gdb_exit 

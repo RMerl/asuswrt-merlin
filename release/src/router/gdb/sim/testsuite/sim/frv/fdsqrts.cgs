@@ -1,0 +1,17 @@
+# frv testcase for fdsqrts $FRj,$FRk
+# mach: frv
+
+	.include "testutils.inc"
+
+	float_constants
+	start
+	load_float_constants
+
+	.global fdsqrts
+fdsqrts:
+	set_fr_iimmed	0x4049,0x0fdb,fr45	; 3.141592654
+	fdsqrts		fr44,fr2		; 9.0
+	test_fr_fr	fr2,fr36		; 3.0
+	test_fr_iimmed	0x3fe2dfc5,fr3		; 1.7724539
+
+	pass

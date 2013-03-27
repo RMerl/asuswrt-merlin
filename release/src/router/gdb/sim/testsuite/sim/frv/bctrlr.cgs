@@ -1,0 +1,29 @@
+# frv testcase for bctrlr $ccond,$hint
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global bctrlr
+bctrlr:
+	set_spr_addr	bad,lr
+	set_spr_immed	1,lcr
+	bctrlr 		0,0
+
+	set_spr_addr	ok1,lr
+	set_spr_immed	2,lcr
+	bctrlr 		0,0
+	fail
+ok1:
+	set_spr_addr	bad,lr
+	set_spr_immed	2,lcr
+	bctrlr 		1,0
+
+	set_spr_addr	ok2,lr
+	bctrlr 		1,0
+	fail
+ok2:
+	pass
+bad:
+	fail

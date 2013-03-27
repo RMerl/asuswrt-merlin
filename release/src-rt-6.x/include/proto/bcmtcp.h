@@ -1,7 +1,7 @@
 /*
  * Fundamental constants relating to TCP Protocol
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmtcp.h 324300 2012-03-28 20:29:37Z $
+ * $Id: bcmtcp.h 327600 2012-04-14 17:50:36Z $
  */
 
 #ifndef _bcmtcp_h_
@@ -60,6 +60,9 @@ BWL_PRE_PACKED_STRUCT struct bcmtcp_hdr
 #define TCP_HDRLEN_MASK 0xf0
 #define TCP_HDRLEN_SHIFT 4
 #define TCP_HDRLEN(hdrlen) (((hdrlen) & TCP_HDRLEN_MASK) >> TCP_HDRLEN_SHIFT)
+
+#define TCP_FLAGS_MASK  0x1f
+#define TCP_FLAGS(hdrlen) ((hdrlen) & TCP_FLAGS_MASK)
 
 /* This marks the end of a packed structure section. */
 #include <packed_section_end.h>

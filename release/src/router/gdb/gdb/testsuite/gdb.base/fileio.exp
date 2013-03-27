@@ -1,0 +1,259 @@
+#   Copyright 2002, 2003, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Corinna Vinschen <vinschen@redhat.com>
+
+if [target_info exists gdb,nofileio] {
+    verbose "Skipping fileio.exp because of no fileio capabilities."
+    continue
+}
+
+if $tracelevel then {
+        strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "fileio"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    untested fileio.exp
+    return -1
+}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+remote_exec build {sh -xc test\ -r\ dir2.fileio.test\ &&\ chmod\ -f\ +w\ dir2.fileio.test}
+remote_exec build {sh -xc rm\ -rf\ *.fileio.test}
+
+set oldtimeout $timeout
+set timeout [expr "$timeout + 60"]
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+send_gdb "set print sevenbit-strings\n" ; gdb_expect -re "$gdb_prompt $"
+send_gdb "set print address off\n" ; gdb_expect -re "$gdb_prompt $"
+send_gdb "set width 0\n" ; gdb_expect -re "$gdb_prompt $"
+
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+send_gdb "break stop\n" ; gdb_expect -re "Breakpoint .*$srcfile.*$gdb_prompt $"
+set stop_msg ".*Breakpoint .* stop \\(\\) at.*$srcfile:.*static void stop \\(\\) {}.*"
+
+gdb_test continue \
+"Continuing\\..*open 1:.*OK$stop_msg" \
+"Open a file"
+
+gdb_test continue \
+"Continuing\\..*open 2:.*EEXIST$stop_msg" \
+"Creating already existing file returns EEXIST"
+
+gdb_test continue \
+"Continuing\\..*open 3:.*EISDIR$stop_msg" \
+"Open directory for writing returns EISDIR"
+
+gdb_test continue \
+"Continuing\\..*open 4:.*ENOENT$stop_msg" \
+"Opening nonexistant file returns ENOENT"
+
+send_gdb "continue\n" ; gdb_expect -re "$gdb_prompt $"
+catch "system \"chmod -f -w nowrt.fileio.test\""
+
+gdb_test continue \
+"Continuing\\..*open 5:.*EACCES$stop_msg" \
+"Open for write but no write permission returns EACCES"
+
+gdb_test continue \
+"Continuing\\..*write 1:.*OK$stop_msg" \
+"Writing to a file"
+
+gdb_test continue \
+"Continuing\\..*write 2:.*EBADF$stop_msg" \
+"Write using invalid file descriptor returns EBADF"
+
+gdb_test continue \
+"Continuing\\..*write 3:.*EBADF$stop_msg" \
+"Writing to a read-only file returns EBADF"
+
+gdb_test continue \
+"Continuing\\..*read 1:.*OK$stop_msg" \
+"Reading from a file"
+
+gdb_test continue \
+"Continuing\\..*read 2:.*EBADF$stop_msg" \
+"Read using invalid file descriptor returns EBADF"
+
+gdb_test continue \
+"Continuing\\..*lseek 1:.*OK$stop_msg" \
+"Lseeking CUR a file"
+
+gdb_test continue \
+"Continuing\\..*lseek 2:.*OK$stop_msg" \
+"Lseeking END a file"
+
+gdb_test continue \
+"Continuing\\..*lseek 3:.*OK$stop_msg" \
+"Lseeking SET a file"
+
+
+gdb_test continue \
+"Continuing\\..*close 1:.*OK$stop_msg" \
+"Closing a file"
+
+gdb_test continue \
+"Continuing\\..*close 2:.*EBADF$stop_msg" \
+"Closing an invalid file descriptor returns EBADF"
+
+gdb_test continue \
+"Continuing\\..*stat 1:.*OK$stop_msg" \
+"Stat a file"
+
+gdb_test continue \
+	"Continuing\\..*stat 2:.*(ENOENT|EFAULT)$stop_msg" \
+"Stat a NULL pathname returns ENOENT or EFAULT"
+
+gdb_test continue \
+"Continuing\\..*stat 3:.*ENOENT$stop_msg" \
+"Stat an empty pathname returns ENOENT"
+
+gdb_test continue \
+"Continuing\\..*stat 4:.*ENOENT$stop_msg" \
+"Stat a nonexistant file returns ENOENT"
+
+gdb_test continue \
+"Continuing\\..*fstat 1:.*OK$stop_msg" \
+"Fstat an open file"
+
+gdb_test continue \
+"Continuing\\..*fstat 2:.*EBADF$stop_msg" \
+"Fstat an invalid file descriptor returns EBADF"
+
+gdb_test continue \
+"Continuing\\..*isatty 1:.*OK$stop_msg" \
+"Isatty (stdin)"
+
+gdb_test continue \
+"Continuing\\..*isatty 2:.*OK$stop_msg" \
+"Isatty (stdout)"
+
+gdb_test continue \
+"Continuing\\..*isatty 3:.*OK$stop_msg" \
+"Isatty (stderr)"
+
+gdb_test continue \
+"Continuing\\..*isatty 4:.*OK$stop_msg" \
+"Isatty (invalid fd)"
+
+gdb_test continue \
+"Continuing\\..*isatty 5:.*OK$stop_msg" \
+"Isatty (open file)"
+
+gdb_test continue \
+"Continuing\\..*system 1:.*OK$stop_msg" \
+"System says shell is available"
+
+send_gdb "set remote system-call-allowed 1\n"; gdb_expect -re ".*$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*system 2:.*OK$stop_msg" \
+"System(3) call"
+
+# Is this ok?  POSIX says system returns a waitpid status?
+gdb_test continue \
+"Continuing\\..*system 3:.*OK$stop_msg" \
+"System with invalid command returns 127"
+
+gdb_test continue \
+"Continuing\\..*rename 1:.*OK$stop_msg" \
+"Rename a file"
+
+gdb_test continue \
+"Continuing\\..*rename 2:.*EISDIR$stop_msg" \
+"Renaming a file to existing directory returns EISDIR"
+
+set test "Renaming a directory to a non-empty directory returns ENOTEMPTY or EEXIST"
+gdb_test_multiple continue "${test}" {
+    -re "Continuing\\..*rename 3:.*(ENOTEMPTY|EEXIST)$stop_msg$gdb_prompt $" {
+	pass "${test}"
+    }
+    -re "Continuing\\..*rename 3:.*EBUSY$stop_msg$gdb_prompt $" {
+	# At least version <= 2.6/2004-01-08 of the Linux Kernel gets
+	# this wrong (reporting EBUSY) when the file system is NFS
+	# mounted.
+	setup_xfail *-*-*linux* gdb/1502
+	fail "${test}"
+    }
+}
+
+gdb_test continue \
+"Continuing\\..*rename 4:.*EINVAL$stop_msg" \
+"Renaming a directory to a subdir of itself returns EINVAL"
+
+gdb_test continue \
+"Continuing\\..*rename 5:.*ENOENT$stop_msg" \
+"Renaming a nonexistant file returns ENOENT"
+
+gdb_test continue \
+"Continuing\\..*unlink 1:.*OK$stop_msg" \
+"Unlink a file"
+
+# This test fails on Cygwin because unlink() succeeds on Win32 systems
+# in that situation.
+if [ishost *cygwin*] {
+    setup_xfail "*-*-*"
+}
+gdb_test continue \
+"Continuing\\..*unlink 2:.*EACCES$stop_msg" \
+"Unlinking a file in a directory w/o write access returns EACCES"
+
+gdb_test continue \
+"Continuing\\..*unlink 3:.*ENOENT$stop_msg" \
+"Unlinking a nonexistant file returns ENOENT"
+
+gdb_test continue \
+"Continuing\\..*time 1:.*OK$stop_msg" \
+"Time(2) call returns the same value as in parameter"
+
+sleep 2
+gdb_test continue \
+"Continuing\\..*time 2:.*OK$stop_msg" \
+"Time(2) returns feasible values"
+
+send_gdb "quit\n"
+send_gdb "y\n"
+
+remote_exec build {sh -xc test\ -r\ dir2.fileio.test\ &&\ chmod\ -f\ +w\ dir2.fileio.test}
+remote_exec build {sh -xc rm\ -rf\ *.fileio.test}
+
+set timeout $oldtimeout
+return 0

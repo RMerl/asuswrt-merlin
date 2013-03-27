@@ -1,0 +1,80 @@
+# frv testcase for mqmulxhu $GRi,$GRj,$GRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mqmulxhu
+mqmulxhu:
+	set_fr_iimmed  	3,2,fr8		; multiply small numbers
+	set_fr_iimmed  	3,2,fr10
+	set_fr_iimmed  	1,2,fr9		; multiply by 1
+	set_fr_iimmed  	1,2,fr11
+	mqmulxhu      	fr8,fr10,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	6,acc0
+	test_accg_immed 	0,accg1
+	test_acc_immed 	6,acc1
+	test_accg_immed 	0,accg2
+	test_acc_immed 	2,acc2
+	test_accg_immed 	0,accg3
+	test_acc_immed 	2,acc3
+
+	set_fr_iimmed  	0,2,fr8		; multiply by 0
+	set_fr_iimmed  	0,2,fr10
+	set_fr_iimmed 	0x3fff,2,fr9	; 15 bit result
+	set_fr_iimmed  	0x3fff,2,fr11
+	mqmulxhu      	fr8,fr10,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0,acc0
+	test_accg_immed 	0,accg1
+	test_acc_immed 	0,acc1
+	test_accg_immed 	0,accg2
+	test_acc_limmed	0x0000,0x7ffe,acc2
+	test_accg_immed 	0,accg3
+	test_acc_limmed	0x0000,0x7ffe,acc3
+
+	set_fr_iimmed  	0x4000,2,fr8	; 16 bit result
+	set_fr_iimmed  	0x4000,2,fr10
+	set_fr_iimmed  	0x8000,2,fr9	; 17 bit result
+	set_fr_iimmed  	0x8000,2,fr11
+	mqmulxhu      	fr8,fr10,acc0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x0000,0x8000,acc0
+	test_accg_immed 	0,accg1
+	test_acc_limmed	0x0000,0x8000,acc1
+	test_accg_immed 	0,accg2
+	test_acc_immed 	0x00010000,acc2
+	test_accg_immed 	0,accg3
+	test_acc_immed 	0x00010000,acc3
+
+	set_fr_iimmed  	0x7fff,0x7fff,fr8	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr10
+	set_fr_iimmed  	0x8000,0x8000,fr9	; max positive result
+	set_fr_iimmed  	0x8000,0x8000,fr11
+	mqmulxhu      	fr8,fr10,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0x3fff0001,acc0
+	test_accg_immed 	0,accg1
+	test_acc_immed 	0x3fff0001,acc1
+	test_accg_immed 	0,accg2
+	test_acc_limmed	0x4000,0x0000,acc2
+	test_accg_immed 	0,accg3
+	test_acc_limmed	0x4000,0x0000,acc3
+
+	set_fr_iimmed  	0xffff,0xffff,fr8	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr10
+	set_fr_iimmed  	0xffff,0xffff,fr9	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr11
+	mqmulxhu      	fr8,fr10,acc0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0xfffe,0x0001,acc0
+	test_accg_immed 	0,accg1
+	test_acc_limmed	0xfffe,0x0001,acc1
+	test_accg_immed 	0,accg2
+	test_acc_limmed	0xfffe,0x0001,acc2
+	test_accg_immed 	0,accg3
+	test_acc_limmed	0xfffe,0x0001,acc3
+
+	pass

@@ -1,0 +1,55 @@
+
+	    Notes on Using the Scripts in This Subdirectory
+
+The scripts in this subdirectory are examples of post-processing
+lsof field output.  Some are contributed by lsof users and are
+reproduced substantially as written by those users.  Since the
+scripts are examples, they are not guaranteed to work on all UNIX
+dialects.  Use them to learn about processing field output, don't
+expect them to be ready for production, and expect to be required
+to modify them to make them work.
+
+If you want to do field output post-processing in a C program, take
+a look at the test suite C library in ../tests/LTlib.c.  You may
+be able to adapt it to your needs.
+
+The scripts are written in AWK, Perl 4 (4.036), and Perl 5 (5.001e
+through 5.006).  AWK scripts have a suffix of ``.awk''; Perl 4
+(which will work under Perl 5) scripts have a ``.perl4'' suffix;
+and Perl 5 scripts, ``.perl''.
+
+Supply AWK scripts to your AWK interpreter with its -f option.  Supply
+lsof field output via a pipe -- e.g.,
+
+	lsof -F | awk -f list_fields.awk
+
+The Perl scripts use the Unix command interpreter line feature to
+specify the location of Perl -- i.e., the first line begins with
+``#!'' and the path to the Perl interpreter follows.  If your system
+supports the command interpreter feature, but your Perl interpreters
+have different paths to them, just change the interpreter lines in
+the scripts.  These scripts assume:
+
+	Path to:	Is:
+	=======		==
+
+	Perl 4		/usr/local/bin/perl4
+
+	Perl 5		/usr/local/bin/perl
+
+If your system doesn't support the command interpreter feature,
+you'll have to supply the scripts to your Perl interpreter on its
+command line -- e.g.,
+
+	lsof -F | /<path_to_your_perl_4> list_fields.perl
+
+The Perl scripts attempt to establish a path to lsof, putting their
+result in the $LSOF variable.  Assuming you'll run them from the
+scripts subdirectory, they look there first, then in the directories
+of the PATH environment variable.  If that proves unsuitable, modify
+the &isexec() subroutine calls in the scripts to suit your lsof
+location.
+
+
+Vic Abell
+April 4, 2002

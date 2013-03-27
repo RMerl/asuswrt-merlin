@@ -1,0 +1,152 @@
+#   Copyright 1999, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+set testfile "async"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
+    untested async.exp
+    return -1
+}
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+########################################
+##
+## Don't do any of these tests until we reach consensus on this file.
+##
+return 0
+########################################
+
+set board [target_info name]
+set current_target [target_info gdb_protocol]
+if { $current_target == "remote" } {
+  unset_board_info "gdb_protocol"
+  set_board_info "gdb_protocol" "async"
+  } else {
+      return 0
+  }
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+if [target_info exists gdb_stub] {
+    gdb_step_for_stub;
+}
+
+#
+# set it up at a breakpoint so we can play with it
+#
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+gdb_test "break baz" "" ""
+
+#
+# Make sure we get a 'completed' message when the target is done.
+#
+gdb_test "set display-exec-done on" "" ""
+
+
+send_gdb "next&\n" 
+gdb_expect {
+    -re "^next&\r\n$gdb_prompt.*z = 9.*completed\.\r\n" { pass "next &" }
+    -re "$gdb_prompt.*completed\.$" { fail "next &" }
+    timeout  { fail "(timeout) next &" }
+}
+
+send_gdb "step&\n" 
+gdb_expect {
+    -re "^step&\r\n$gdb_prompt.*y = foo \\(\\).*completed\.\r\n" { pass "step &" }
+    -re "$gdb_prompt.*completed\.$" { fail "step &" }
+    timeout  { fail "(timeout) step &" }
+}
+
+send_gdb "step&\n" 
+gdb_expect {
+    -re "^step&\r\n$gdb_prompt foo \\(\\) at .*async.c.*x = 5.*completed\.\r\n" \
+	    { pass "step &" }
+    -re "$gdb_prompt.*completed\.$" { fail "step &" }
+    timeout  { fail "(timeout) step &" }
+}
+
+send_gdb "stepi&\n" 
+gdb_expect {
+    -re "^stepi&\r\n$gdb_prompt.*$hex.*x = 5.*completed\.\r\n" { pass "stepi &" }
+    -re "$gdb_prompt.*completed\.$" { fail "stepi &" }
+    timeout  { fail "(timeout) stepi &" }
+}
+
+send_gdb "nexti&\n" 
+gdb_expect {
+    -re "^nexti&\r\n$gdb_prompt.*y = 3.*completed\.\r\n" { pass "nexti &" }
+    -re "$gdb_prompt.*completed\.$" { fail "nexti &" }
+    timeout  { fail "(timeout) nexti &" }
+}
+
+send_gdb "finish&\n" 
+gdb_expect {
+    -re "^finish&\r\nRun till exit from #0  foo \\(\\) at.*async.c.*\r\n$gdb_prompt.*$hex in main \\(\\) at.*async.c.*y = foo \\(\\).*Value returned is.*= 8.*completed\.\r\n" \
+	    { pass "finish &" }
+    -re "$gdb_prompt.*completed\.$" { fail "finish &" }
+    timeout  { fail "(timeout) finish &" }
+}
+
+send_gdb "jump 33&\n" 
+gdb_expect {
+    -re "^jump 33&.*Continuing at $hex.*$gdb_prompt.*Breakpoint 2, baz \\(\\) at.*async.c.*return 5.*completed\.\r\n" \
+	    { pass "jump &" }
+    -re ".*$gdb_prompt.*completed\.$" { fail "jump &" }
+    timeout  { fail "(timeout) jump &" }
+}
+
+send_gdb "until 35&\n" 
+gdb_expect {
+    -re "^until 35&.*$gdb_prompt.*$hex in main \\(\\) at.*async.c.*y = baz \\(\\).*completed\.\r\n" \
+	    { pass "until &" }
+    -re "$gdb_prompt.*completed\.$" { fail "until &" }
+    timeout  { fail "(timeout) until &" }
+}
+
+gdb_test "set display-exec-done off" "" ""
+
+unset_board_info "gdb_protocol"
+set_board_info "gdb_protocol" "remote"
+
+
+
+
+
+

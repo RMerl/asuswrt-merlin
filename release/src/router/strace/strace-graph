@@ -1,0 +1,338 @@
+#!/usr/bin/perl
+
+# This script processes strace -f output.  It displays a graph of invoked
+# subprocesses, and is useful for finding out what complex commands do.
+
+# You will probably want to invoke strace with -q as well, and with
+# -s 100 to get complete filenames.
+
+# The script can also handle the output with strace -t, -tt, or -ttt.
+# It will add elapsed time for each process in that case.
+
+# This script is Copyright (C) 1998 by Richard Braakman <dark@xs4all.nl>.
+
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#	$Id$
+
+my %unfinished;
+
+# Scales for strace slowdown.  Make configurable!
+my $scale_factor = 3.5;
+
+while (<>) {
+    my ($pid, $call, $args, $result, $time);
+    chop;
+
+    s/^(\d+)\s+//;
+    $pid = $1;
+
+    if (s/^(\d\d):(\d\d):(\d\d)(?:\.(\d\d\d\d\d\d))? //) {
+	$time = $1 * 3600 + $2 * 60 + $3;
+	if (defined $4) {
+	    $time = $time + $4 / 1000000;
+	    $floatform = 1;
+	}
+    } elsif (s/^(\d+)\.(\d\d\d\d\d\d) //) {
+	$time = $1 + ($2 / 1000000);
+	$floatform = 1;
+    }
+
+    if (s/ <unfinished ...>$//) {
+	$unfinished{$pid} = $_;
+	next;
+    }
+
+    if (s/^<... \S+ resumed> //) {
+	unless (exists $unfinished{$pid}) {
+	    print STDERR "$0: $ARGV: cannot find start of resumed call on line $.";
+	    next;
+	}
+	$_ = $unfinished{$pid} . $_;
+	delete $unfinished{$pid};
+    }
+
+    if (/^--- SIG(\S+) \(.*\) ---$/) {
+	# $pid received signal $1
+	# currently we don't do anything with this
+	next;
+    }
+
+    if (/^\+\+\+ killed by SIG(\S+) \+\+\+$/) {
+	# $pid received signal $1
+	handle_killed($pid, $time);
+	next;
+    }
+
+    ($call, $args, $result) = /(\S+)\((.*)\)\s+= (.*)$/;
+    unless (defined $result) {
+	print STDERR "$0: $ARGV: $.: cannot parse line.\n";
+	next;
+    }
+
+    handle_trace($pid, $call, $args, $result, $time);
+}
+
+display_trace();
+
+exit 0;
+
+sub parse_str {
+    my ($in) = @_;
+    my $result = "";
+
+    while (1) {
+	if ($in =~ s/^\\(.)//) {
+	    $result .= $1;
+	} elsif ($in =~ s/^\"//) {
+	    if ($in =~ s/^\.\.\.//) {
+		return ("$result...", $in);
+	    }
+	    return ($result, $in);
+	} elsif ($in =~ s/([^\\\"]*)//) {
+	    $result .= $1;
+	} else {
+	    return (undef, $in);
+	}
+    }
+}
+
+sub parse_one {
+    my ($in) = @_;
+
+    if ($in =~ s/^\"//) {
+	($tmp, $in) = parse_str($in);
+	if (not defined $tmp) {
+	    print STDERR "$0: $ARGV: $.: cannot parse string.\n";
+	    return (undef, $in);
+	}
+	return ($tmp, $in);
+    } elsif ($in =~ s/^0x(\x+)//) {
+	return (hex $1, $in);
+    } elsif ($in =~ s/^(\d+)//) {
+	return (int $1, $in);
+    } else {
+	print STDERR "$0: $ARGV: $.: unrecognized element.\n";
+	return (undef, $in);
+    }
+}
+
+sub parseargs {
+    my ($in) = @_;
+    my @args = ();
+    my $tmp;
+
+    while (length $in) {
+	if ($in =~ s/^\[//) {
+	    my @subarr = ();
+	    if ($in =~ s,^/\* (\d+) vars \*/\],,) {
+		push @args, $1;
+	    } else {
+		while ($in !~ s/^\]//) {
+		    ($tmp, $in) = parse_one($in);
+		    defined $tmp or return undef;
+		    push @subarr, $tmp;
+		    unless ($in =~ /^\]/ or $in =~ s/^, //) {
+			print STDERR "$0: $ARGV: $.: missing comma in array.\n";
+			return undef;
+		    }
+		    if ($in =~ s/^\.\.\.//) {
+			push @subarr, "...";
+		    }
+		}
+		push @args, \@subarr;
+	    }
+	} elsif ($in =~ s/^\{//) {
+	    my %subhash = ();
+	    while ($in !~ s/^\}//) {
+		my $key;
+		unless ($in =~ s/^(\w+)=//) {
+		    print STDERR "$0: $ARGV: $.: struct field expected.\n";
+		    return undef;
+		}
+		$key = $1;
+		($tmp, $in) = parse_one($in);
+		defined $tmp or return undef;
+		$subhash{$key} = $tmp;
+		unless ($in =~ s/, //) {
+		    print STDERR "$0: $ARGV: $.: missing comma in struct.\n";
+		    return undef;
+		}
+	    }
+	    push @args, \%subhash;
+	} else {
+	    ($tmp, $in) = parse_one($in);
+	    defined $tmp or return undef;
+	    push @args, $tmp;
+	}
+	unless (length($in) == 0 or $in =~ s/^, //) {
+	    print STDERR "$0: $ARGV: $.: missing comma.\n";
+	    return undef;
+	}
+    }
+    return @args;
+}
+
+
+my $depth = "";
+
+# process info, indexed by pid.
+# fields:
+#    parent         pid number
+#    seq            forks and execs for this pid, in sequence  (array)
+
+#  filename and argv (from latest exec)
+#  basename (derived from filename)
+# argv[0] is modified to add the basename if it differs from the 0th argument.
+
+my %pr;
+
+sub handle_trace {
+    my ($pid, $call, $args, $result, $time) = @_;
+    my $p;
+
+    if (defined $time and not defined $pr{$pid}{start}) {
+	$pr{$pid}{start} = $time;
+    }
+
+    if ($call eq 'execve') {
+	return if $result != 0;
+
+	my ($filename, $argv) = parseargs($args);
+	($basename) = $filename =~ m/([^\/]*)$/;
+	if ($basename ne $$argv[0]) {
+	    $$argv[0] = "$basename($$argv[0])";
+        }
+	my $seq = $pr{$pid}{seq};
+	$seq = [] if not defined $seq;
+
+	push @$seq, ['EXEC', $filename, $argv];
+
+	$pr{$pid}{seq} = $seq;
+    } elsif ($call eq 'fork' || $call eq 'clone' || $call eq 'vfork') {
+	return if $result == 0;
+
+	my $seq = $pr{$pid}{seq};
+	$seq = [] if not defined $seq;
+	push @$seq, ['FORK', $result];
+	$pr{$pid}{seq} = $seq;
+	$pr{$result}{parent} = $pid;
+    } elsif ($call eq '_exit') {
+	$pr{$pid}{end} = $time if defined $time;
+    }
+}
+
+sub handle_killed {
+    my ($pid, $time) = @_;
+    $pr{$pid}{end} = $time if defined $time;
+}
+
+sub straight_seq {
+    my ($pid) = @_;
+    my $seq = $pr{$pid}{seq};
+
+    for $elem (@$seq) {
+	if ($$elem[0] eq 'EXEC') {
+	    my $argv = $$elem[2];
+	    print "$$elem[0] $$elem[1] @$argv\n";
+	} elsif ($$elem[0] eq 'FORK') {
+	    print "$$elem[0] $$elem[1]\n";
+	} else {
+	    print "$$elem[0]\n";
+	}
+    }
+}
+
+sub first_exec {
+    my ($pid) = @_;
+    my $seq = $pr{$pid}{seq};
+
+    for $elem (@$seq) {
+	if ($$elem[0] eq 'EXEC') {
+	    return $elem;
+	}
+    }
+    return undef;
+}
+
+sub display_pid_trace {
+    my ($pid, $lead) = @_;
+    my $i = 0;
+    my @seq = @{$pr{$pid}{seq}};
+    my $elapsed;
+
+    if (not defined first_exec($pid)) {
+	unshift @seq, ['EXEC', '', ['(anon)'] ];
+    }
+
+    if (defined $pr{$pid}{start} and defined $pr{$pid}{end}) {
+	$elapsed = $pr{$pid}{end} - $pr{$pid}{start};
+	$elapsed /= $scale_factor;
+	if ($floatform) {
+	    $elapsed = sprintf("%0.02f", $elapsed);
+	} else {
+	    $elapsed = int $elapsed;
+	}
+    }
+
+    for $elem (@seq) {
+	$i++;
+	if ($$elem[0] eq 'EXEC') {
+	    my $argv = $$elem[2];
+	    if (defined $elapsed) {
+		print "$lead [$elapsed] @$argv\n";
+		undef $elapsed;
+	    } else {
+		print "$lead @$argv\n";
+	    }
+	} elsif ($$elem[0] eq 'FORK') {
+	    if ($i == 1) {
+                if ($lead =~ /-$/) {
+		    display_pid_trace($$elem[1], "$lead--+--");
+                } else {
+		    display_pid_trace($$elem[1], "$lead  +--");
+                }
+	    } elsif ($i == @seq) {
+		display_pid_trace($$elem[1], "$lead  `--");
+	    } else {
+		display_pid_trace($$elem[1], "$lead  +--");
+	    }
+	}
+	if ($i == 1) {
+	    $lead =~ s/\`--/   /g;
+	    $lead =~ s/-/ /g;
+	    $lead =~ s/\+/|/g;
+	}
+    }
+}
+
+sub display_trace {
+    my ($startpid) = @_;
+
+    $startpid = (keys %pr)[0];
+    while ($pr{$startpid}{parent}) {
+	$startpid = $pr{$startpid}{parent};
+    }
+
+    display_pid_trace($startpid, "");
+}

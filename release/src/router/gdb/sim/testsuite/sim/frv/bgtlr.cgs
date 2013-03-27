@@ -1,0 +1,80 @@
+# frv testcase for bgtlr $ICCi,$hint
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global bgtlr
+bgtlr:
+	set_spr_addr	ok1,lr
+	set_icc		0x0 0
+	bgtlr		icc0,0
+	fail
+ok1:
+	set_spr_addr	ok2,lr
+	set_icc		0x1 1
+	bgtlr		icc1,1
+	fail
+ok2:
+	set_spr_addr	bad,lr
+	set_icc		0x2 2
+	bgtlr		icc2,2
+
+	set_spr_addr	bad,lr
+	set_icc		0x3 3
+	bgtlr		icc3,3
+
+	set_spr_addr	bad,lr
+	set_icc		0x4 0
+	bgtlr		icc0,0
+
+	set_spr_addr	bad,lr
+	set_icc		0x5 1
+	bgtlr		icc1,1
+
+	set_spr_addr	bad,lr
+	set_icc		0x6 2
+	bgtlr		icc2,2
+
+	set_spr_addr	bad,lr
+	set_icc		0x7 3
+	bgtlr		icc3,3
+
+	set_spr_addr	bad,lr
+	set_icc		0x8 0
+	bgtlr		icc0,0
+
+	set_spr_addr	bad,lr
+	set_icc		0x9 1
+	bgtlr		icc1,1
+
+	set_spr_addr	okb,lr
+	set_icc		0xa 2
+	bgtlr		icc2,2
+	fail
+okb:
+	set_spr_addr	okc,lr
+	set_icc		0xb 3
+	bgtlr		icc3,3
+	fail
+okc:
+	set_spr_addr	bad,lr
+	set_icc		0xc 0
+	bgtlr		icc0,0
+
+	set_spr_addr	bad,lr
+	set_icc		0xd 1
+	bgtlr		icc1,1
+
+	set_spr_addr	bad,lr
+	set_icc		0xe 2
+	bgtlr		icc2,2
+
+	set_spr_addr	bad,lr
+	set_icc		0xf 3
+	bgtlr		icc3,3
+
+	pass
+bad:
+	fail

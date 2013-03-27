@@ -1,0 +1,12 @@
+# arm testcase for bhi $soffset8
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global bhi
+bhi:
+	bhi footext
+
+	pass

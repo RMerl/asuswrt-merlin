@@ -1,0 +1,60 @@
+# frv testcase for cfsqrts $FRj,$FRk,$CCi,$cond
+# mach: fr500 fr550 frv
+
+	.include "testutils.inc"
+
+	float_constants
+	start
+	load_float_constants
+
+	.global cfsqrts
+cfsqrts:
+	set_spr_immed	0x1b1b,cccr
+
+	cfsqrts		fr44,fr1,cc0,1		; 9.0
+	test_fr_fr	fr1,fr36		; 3.0
+
+	set_fr_iimmed	0x4049,0x0fdb,fr10	; 3.141592654
+	cfsqrts		fr10,fr10,cc4,1
+	test_fr_iimmed	0x3fe2dfc5,fr10		; 1.7724539
+
+	cfsqrts		fr44,fr1,cc1,0		; 9.0
+	test_fr_fr	fr1,fr36		; 3.0
+
+	set_fr_iimmed	0x4049,0x0fdb,fr10	; 3.141592654
+	cfsqrts		fr10,fr10,cc5,0
+	test_fr_iimmed	0x3fe2dfc5,fr10		; 1.7724539
+
+	set_fr_fr	fr0,fr1
+	cfsqrts		fr44,fr1,cc0,0		; 9.0
+	test_fr_fr	fr1,fr0
+
+	set_fr_iimmed	0x4049,0x0fdb,fr10	; 3.141592654
+	cfsqrts		fr10,fr10,cc4,0
+	test_fr_iimmed	0x40490fdb,fr10
+
+	set_fr_fr	fr0,fr1
+	cfsqrts		fr44,fr1,cc1,1		; 9.0
+	test_fr_fr	fr1,fr0
+
+	set_fr_iimmed	0x4049,0x0fdb,fr10	; 3.141592654
+	cfsqrts		fr10,fr10,cc5,1
+	test_fr_iimmed	0x40490fdb,fr10
+
+	set_fr_fr	fr0,fr1
+	cfsqrts		fr44,fr1,cc2,0		; 9.0
+	test_fr_fr	fr1,fr0
+
+	set_fr_iimmed	0x4049,0x0fdb,fr10	; 3.141592654
+	cfsqrts		fr10,fr10,cc6,1
+	test_fr_iimmed	0x40490fdb,fr10
+
+	set_fr_fr	fr0,fr1
+	cfsqrts		fr44,fr1,cc3,1		; 9.0
+	test_fr_fr	fr1,fr0
+
+	set_fr_iimmed	0x4049,0x0fdb,fr10	; 3.141592654
+	cfsqrts		fr10,fr10,cc7,0
+	test_fr_iimmed	0x40490fdb,fr10
+
+	pass

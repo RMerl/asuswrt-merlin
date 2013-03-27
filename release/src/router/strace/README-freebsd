@@ -1,0 +1,26 @@
+Here's a preliminary port of strace to FreeBSD.
+
+Here are some notes about it :
+
+- This couldn't have been done without the sources of the truss
+  utility by Sean Eric Fagan, which were of great help.
+
+- The tracing mecanism used by FreeBD is a lot like the SVR4 one, so
+  this port shares a lot of code with the SVR4 port, including the
+  akward event loop when tracing multiple processes.
+
+- This works for i386 binaries, although support for alpha processor
+  should be quite straight forward, but I do not have an alpha to
+  test it on.
+
+- Tracing linux binaries is not supported yet, but should be possible
+  with some work.
+
+- There are some issues with following forks, and only a few FreeBSD
+  specific syscalls are decoded right now.
+
+- This was tested on FreeBSD 4.0. I believe the tracing interface is
+  present since at least FreeBSD 3.0, so it "should" work on all
+  latest releases. I have no idea for other BSDs, though.
+
+Gaël Roualland <gael.roualland@iname.com>

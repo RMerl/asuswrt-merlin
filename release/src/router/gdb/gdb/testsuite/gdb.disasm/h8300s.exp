@@ -1,0 +1,698 @@
+# Copyright (C) 2000, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Kazu Hirata. (kazu@hxi.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+if ![istarget "h8300*-*-*"] {
+    verbose "Tests ignored for all but h8300s based targets."
+    return
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "h8300s"
+set srcfile ${srcdir}/${subdir}/${testfile}.s
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcfile}" "${binfile}" executable {debug additional_flags=-ms}] != "" } {
+     untested h8300s.exp
+     return -1
+}
+
+proc all_set_machine_h8300s { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "set machine h8300s\n"
+    gdb_expect {
+	-re "$gdb_prompt $" {}
+    }
+}
+
+proc all_movb_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/9i movb_tests\n"
+    gdb_expect {
+	-re "
+.*mov.b\tr0l,r0h.*
+.*mov.b\t#0x12,r1l.*
+.*mov.b\t@er0,r1h.*
+.*mov.b\t@\\(0x1234:16,er0\\),r2l.*
+.*mov.b\t@\\(0x12345678:32,er0\\),r2h.*
+.*mov.b\t@er0\\+,r3l.*
+.*mov.b\t@0x12:8,r3h.*
+.*mov.b\t@0x1234:16,r4l.*
+.*mov.b\t@0x12345678:32,r4h.*
+.*$gdb_prompt $" { pass "movb_tests" }
+	-re "$gdb_prompt $" { fail "movb_tests" }
+	timeout { fail "(timeout) movb_tests" }
+    }
+}
+
+proc all_movw_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/8i movw_tests\n"
+    gdb_expect {
+	-re "
+.*mov.w\te0,r0.*
+.*mov.w\t#0x1234,r1.*
+.*mov.w\t@er0,r2.*
+.*mov.w\t@\\(0x1234:16,er0\\),r3.*
+.*mov.w\t@\\(0x12345678:32,er0\\),r4.*
+.*mov.w\t@er0\\+,r5.*
+.*mov.w\t@0x1234:16,r6.*
+.*mov.w\t@0x12345678:32,r7.*
+.*$gdb_prompt $" { pass "movw_tests" }
+	-re "$gdb_prompt $" { fail "movw_tests" }
+	timeout { fail "(timeout) movw_tests" }
+    }
+}
+
+proc all_movl_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/8i movl_tests\n"
+    gdb_expect {
+	-re "
+.*mov.l\ter0,er1.*
+.*mov.l\t#0x12345678,er1.*
+.*mov.l\t@er0,er2.*
+.*mov.l\t@\\(0x1234:16,er0\\),er3.*
+.*mov.l\t@\\(0x12345678:32,er0\\),er4.*
+.*mov.l\t@er0\\+,er5.*
+.*mov.l\t@0x1234:16,er6.*
+.*mov.l\t@0x12345678:32,er7.*
+.*$gdb_prompt $" { pass "movl_tests" }
+	-re "$gdb_prompt $" { fail "movl_tests" }
+	timeout { fail "(timeout) movl_tests" }
+    }
+}
+
+proc all_ldm_stm_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/6i ldm_stm_tests\n"
+    gdb_expect {
+	-re "
+.*ldm.l\t@sp\\+,er0-er1.*
+.*ldm.l\t@sp\\+,er0-er2.*
+.*ldm.l\t@sp\\+,er0-er3.*
+.*stm.l\ter0\\-er1,@-sp.*
+.*stm.l\ter0\\-er2,@-sp.*
+.*stm.l\ter0\\-er3,@-sp.*
+.*$gdb_prompt $" { pass "ldm_stm_tests" }
+	-re "$gdb_prompt $" { fail "ldm_stm_tests" }
+	timeout { fail "(timeout) ldm_stm_tests" }
+    }
+}
+
+proc all_movfpe_movtpe_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/2i movfpe_movtpe_tests\n"
+    gdb_expect {
+	-re "
+.*movfpe\t@0x1234:16,r2l.*
+.*movtpe\tr2l,@0x1234:16.*
+.*$gdb_prompt $" { pass "movfpe_movtpe_tests" }
+	-re "$gdb_prompt $" { fail "movfpe_movtpe_tests" }
+	timeout { fail "(timeout) movfpe_movtpe_tests" }
+    }
+}
+
+proc all_add_sub_addx_subx_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/15i add_sub_addx_subx_tests\n"
+    gdb_expect {
+	-re "
+.*add.b\t#0x12,r0l.*
+.*add.b\tr1l,r1h.*
+.*add.w\t#0x1234,r2.*
+.*add.w\tr3,r4.*
+.*add.l\t#0x12345678,er5.*
+.*add.l\ter6,er7.*
+.*sub.b\tr1l,r1h.*
+.*sub.w\t#0x1234,r2.*
+.*sub.w\tr3,r4.*
+.*sub.l\t#0x12345678,er5.*
+.*sub.l\ter6,er7.*
+.*addx\t#0x12,r0l.*
+.*addx\tr1l,r1h.*
+.*subx\t#0x12,r0l.*
+.*subx\tr1l,r1h.*
+.*$gdb_prompt $" { pass "add_sub_addx_subx_tests" }
+	-re "$gdb_prompt $" { fail "add_sub_addx_subx_tests" }
+	timeout { fail "(timeout) add_sub_addx_subx_tests" }
+    }
+}
+
+proc all_inc_dec_adds_subs_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/16i inc_dec_adds_subs_tests\n"
+    gdb_expect {
+	-re "
+.*inc(.b|)\tr0l.*
+.*inc.w\t#(0x|)1,r4.*
+.*inc.w\t#(0x|)2,r3.*
+.*inc.l\t#(0x|)1,er2.*
+.*inc.l\t#(0x|)2,er1.*
+.*dec.b\tr0l.*
+.*dec.w\t#(0x|)1,r4.*
+.*dec.w\t#(0x|)2,r3.*
+.*dec.l\t#(0x|)1,er2.*
+.*dec.l\t#(0x|)2,er1.*
+.*adds\t#(0x|)1,er7.*
+.*adds\t#(0x|)2,er6.*
+.*adds\t#(0x|)4,er5.*
+.*subs\t#(0x|)1,er7.*
+.*subs\t#(0x|)2,er6.*
+.*subs\t#(0x|)4,er5.*
+.*$gdb_prompt $" { pass "inc_dec_adds_subs_tests" }
+	-re "$gdb_prompt $" { fail "inc_dec_adds_subs_tests" }
+	timeout { fail "(timeout) inc_dec_adds_subs_tests" }
+    }
+}
+
+proc all_daa_das_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/2i daa_das_tests\n"
+    gdb_expect {
+	-re "
+.*daa\tr0l.*
+.*das\tr0h.*
+.*$gdb_prompt $" { pass "daa_das_tests" }
+	-re "$gdb_prompt $" { fail "daa_das_tests" }
+	timeout { fail "(timeout) daa_das_tests" }
+    }
+}
+
+proc all_mul_div_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/8i mul_div_tests\n"
+    gdb_expect {
+	-re "
+.*mulxs.b\tr0l,r1.*
+.*mulxs.w\tr2,er3.*
+.*mulxu.b\tr0l,e1.*
+.*mulxu.w\te2,er3.*
+.*divxs.b\tr0l,r1.*
+.*divxs.w\tr2,er3.*
+.*divxu.b\tr0l,e1.*
+.*divxu.w\te2,er3.*
+.*$gdb_prompt $" { pass "mul_div_tests" }
+	-re "$gdb_prompt $" { fail "mul_div_tests" }
+	timeout { fail "(timeout) mul_div_tests" }
+    }
+}
+
+proc all_cmp_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/8i cmp_tests\n"
+    gdb_expect {
+	-re "
+.*cmp.b\t#0x12,r0l.*
+.*cmp.b\tr1l,r1h.*
+.*cmp.w\t#0x1234,r2.*
+.*cmp.w\tr3,e3.*
+.*cmp.l\t#0x12345678,er4.*
+.*cmp.l\ter5,er6.*
+.*$gdb_prompt $" { pass "cmp_tests" }
+	-re "$gdb_prompt $" { fail "cmp_tests" }
+	timeout { fail "(timeout) cmp_tests" }
+    }
+}
+
+proc all_neg_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/3i neg_tests\n"
+    gdb_expect {
+	-re "
+.*neg.b\tr0l.*
+.*neg.w\tr2.*
+.*neg.l\ter3.*
+.*$gdb_prompt $" { pass "neg_tests" }
+	-re "$gdb_prompt $" { fail "neg_tests" }
+	timeout { fail "(timeout) neg_tests" }
+    }
+}
+
+proc all_ext_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/4i ext_tests\n"
+    gdb_expect {
+	-re "
+.*exts.w\tr0.*
+.*exts.l\ter1.*
+.*extu.w\tr2.*
+.*extu.l\ter3.*
+.*$gdb_prompt $" { pass "ext_tests" }
+	-re "$gdb_prompt $" { fail "ext_tests" }
+	timeout { fail "(timeout) ext_tests" }
+    }
+}
+
+proc all_tas_mac_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/7i tas_mac_tests\n"
+    gdb_expect {
+	-re "
+.*tas\t@er0.*
+.*mac\t@er1\\+,@er2\\+.*
+.*clrmac.*
+.*ldmac\ter4,mach.*
+.*ldmac\ter5,macl.*
+.*stmac\tmach,er6.*
+.*stmac\tmacl,er7.*
+.*$gdb_prompt $" { pass "tas_mac_tests" }
+	-re "$gdb_prompt $" { fail "tas_mac_tests" }
+	timeout { fail "(timeout) tas_mac_tests" }
+    }
+}
+
+proc all_logic_operations_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/21i logic_operations_tests\n"
+    gdb_expect {
+	-re "
+.*and.b\t#0x12,r0l.*
+.*and.b\tr1l,r2h.*
+.*and.w\t#0x1234,r0.*
+.*and.w\tr1,r2.*
+.*and.l\t#0x12345678,er0.*
+.*and.l\ter1,er2.*
+.*or.b\t#0x12,r0l.*
+.*or.b\tr1l,r2h.*
+.*or.w\t#0x1234,r0.*
+.*or.w\tr1,r2.*
+.*or.l\t#0x12345678,er0.*
+.*or.l\ter1,er2.*
+.*xor(.b|)\t#0x12,r0l.*
+.*xor(.b|)\tr1l,r2h.*
+.*xor.w\t#0x1234,r0.*
+.*xor.w\tr1,r2.*
+.*xor.l\t#0x12345678,er0.*
+.*xor.l\ter1,er2.*
+.*not.b\tr0l.*
+.*not.w\tr1.*
+.*not.l\ter2.*
+.*$gdb_prompt $" { pass "logic_operations_tests" }
+	-re "$gdb_prompt $" { fail "logic_operations_tests" }
+	timeout { fail "(timeout) logic_operations_tests" }
+    }
+}
+
+proc all_sha_shl_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/12i sha_shl_tests\n"
+    gdb_expect {
+	-re "
+.*shal(.b|)\tr0l.*
+.*shal(.w|)\tr1.*
+.*shal(.l|)\ter2.*
+.*shar(.b|)\tr3l.*
+.*shar(.w|)\tr4.*
+.*shar(.l|)\ter5.*
+.*shll(.b|)\tr0l.*
+.*shll(.w|)\tr1.*
+.*shll(.l|)\ter2.*
+.*shlr(.b|)\tr3l.*
+.*shlr(.w|)\tr4.*
+.*shlr(.l|)\ter5.*
+.*$gdb_prompt $" { pass "sha_shl_tests" }
+	-re "$gdb_prompt $" { fail "sha_shl_tests" }
+	timeout { fail "(timeout) sha_shl_tests" }
+    }
+}
+
+proc all_rot_rotx_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/12i rot_rotx_tests\n"
+    gdb_expect {
+	-re "
+.*rotl(.b|)\tr0l.*
+.*rotl(.w|)\tr1.*
+.*rotl(.l|)\ter2.*
+.*rotr(.b|)\tr3l.*
+.*rotr(.w|)\tr4.*
+.*rotr(.l|)\ter5.*
+.*rotxl(.b|)\tr0l.*
+.*rotxl(.w|)\tr1.*
+.*rotxl(.l|)\ter2.*
+.*rotxr(.b|)\tr3l.*
+.*rotxr(.w|)\tr4.*
+.*rotxr(.l|)\ter5.*
+.*$gdb_prompt $" { pass "rot_rotx_tests" }
+	-re "$gdb_prompt $" { fail "rot_rotx_tests" }
+	timeout { fail "(timeout) rot_rotx_tests" }
+    }
+}
+
+proc all_bset_bclr_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/20i bset_bclr_tests\n"
+    gdb_expect {
+	-re "
+.*bset\t#0x7,r0l.*
+.*bset\t#0x6,@er1.*
+.*bset\t#0x5,@0x12:8.*
+.*bset\t#0x4,@0x1234:16.*
+.*bset\t#0x3,@0x12345678:32.*
+.*bset\tr7l,r0h.*
+.*bset\tr6l,@er1.*
+.*bset\tr5l,@0x12:8.*
+.*bset\tr4l,@0x1234:16.*
+.*bset\tr3l,@0x12345678:32.*
+.*bclr\t#0x7,r0l.*
+.*bclr\t#0x6,@er1.*
+.*bclr\t#0x5,@0x12:8.*
+.*bclr\t#0x4,@0x1234:16.*
+.*bclr\t#0x3,@0x12345678:32.*
+.*bclr\tr7h,r0h.*
+.*bclr\tr6h,@er1.*
+.*bclr\tr5h,@0x12:8.*
+.*bclr\tr4h,@0x1234:16.*
+.*bclr\tr3h,@0x12345678:32.*
+.*$gdb_prompt $" { pass "bset_bclr_tests" }
+	-re "$gdb_prompt $" { fail "bset_bclr_tests" }
+	timeout { fail "(timeout) bset_bclr_tests" }
+    }
+}
+
+proc all_bnot_btst_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/20i bnot_btst_tests\n"
+    gdb_expect {
+	-re "
+.*bnot\t#0x7,r0l.*
+.*bnot\t#0x6,@er1.*
+.*bnot\t#0x5,@0x12:8.*
+.*bnot\t#0x4,@0x1234:16.*
+.*bnot\t#0x3,@0x12345678:32.*
+.*bnot\tr7l,r0h.*
+.*bnot\tr6l,@er1.*
+.*bnot\tr5l,@0x12:8.*
+.*bnot\tr4l,@0x1234:16.*
+.*bnot\tr3l,@0x12345678:32.*
+.*btst\t#0x7,r0l.*
+.*btst\t#0x6,@er1.*
+.*btst\t#0x5,@0x12:8.*
+.*btst\t#0x4,@0x1234:16.*
+.*btst\t#0x3,@0x12345678:32.*
+.*btst\tr7h,r0h.*
+.*btst\tr6h,@er1.*
+.*btst\tr5h,@0x12:8.*
+.*btst\tr4h,@0x1234:16.*
+.*btst\tr3h,@0x12345678:32.*
+.*$gdb_prompt $" { pass "bnot_btst_tests" }
+	-re "$gdb_prompt $" { fail "bnot_btst_tests" }
+	timeout { fail "(timeout) bnot_btst_tests" }
+    }
+}
+
+proc all_band_bor_bxor_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/15i band_bor_bxor_tests\n"
+    gdb_expect {
+	-re "
+.*band\t#0x7,r0l.*
+.*band\t#0x6,@er1.*
+.*band\t#0x5,@0x12:8.*
+.*band\t#0x4,@0x1234:16.*
+.*band\t#0x3,@0x12345678:32.*
+.*bor\t#0x7,r0l.*
+.*bor\t#0x6,@er1.*
+.*bor\t#0x5,@0x12:8.*
+.*bor\t#0x4,@0x1234:16.*
+.*bor\t#0x3,@0x12345678:32.*
+.*bxor\t#0x7,r0l.*
+.*bxor\t#0x6,@er1.*
+.*bxor\t#0x5,@0x12:8.*
+.*bxor\t#0x4,@0x1234:16.*
+.*bxor\t#0x3,@0x12345678:32.*
+.*$gdb_prompt $" { pass "band_bor_bxor_tests" }
+	-re "$gdb_prompt $" { fail "band_bor_bxor_tests" }
+	timeout { fail "(timeout) band_bor_bxor_tests" }
+    }
+}
+
+proc all_bld_bst_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/20i bld_bst_tests\n"
+    gdb_expect {
+	-re "
+.*bld\t#0x7,r0l.*
+.*bld\t#0x6,@er1.*
+.*bld\t#0x5,@0x12:8.*
+.*bld\t#0x4,@0x1234:16.*
+.*bld\t#0x3,@0x12345678:32.*
+.*bild\t#0x7,r0l.*
+.*bild\t#0x6,@er1.*
+.*bild\t#0x5,@0x12:8.*
+.*bild\t#0x4,@0x1234:16.*
+.*bild\t#0x3,@0x12345678:32.*
+.*bst\t#0x7,r0l.*
+.*bst\t#0x6,@er1.*
+.*bst\t#0x5,@0x12:8.*
+.*bst\t#0x4,@0x1234:16.*
+.*bst\t#0x3,@0x12345678:32.*
+.*bist\t#0x7,r0l.*
+.*bist\t#0x6,@er1.*
+.*bist\t#0x5,@0x12:8.*
+.*bist\t#0x4,@0x1234:16.*
+.*bist\t#0x3,@0x12345678:32.*
+.*$gdb_prompt $" { pass "bld_bst_tests" }
+	-re "$gdb_prompt $" { fail "bld_bst_tests" }
+	timeout { fail "(timeout) bld_bst_tests" }
+    }
+}
+
+proc all_branch_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/25i branch_tests\n"
+    gdb_expect {
+	-re "
+.*bra\t(branch_tests|.-2 ).*
+.*brn\t(branch_tests|.-4 ).*
+.*bhi\t(branch_tests|.-6 ).*
+.*bls\t(branch_tests|.-8 ).*
+.*bcc\t(branch_tests|.-10 ).*
+.*bcs\t(branch_tests|.-12 ).*
+.*bne\t(branch_tests|.-14 ).*
+.*beq\t(branch_tests|.-16 ).*
+.*bvc\t(branch_tests|.-18 ).*
+.*bvs\t(branch_tests|.-20 ).*
+.*bpl\t(branch_tests|.-22 ).*
+.*bmi\t(branch_tests|.-24 ).*
+.*bge\t(branch_tests|.-26 ).*
+.*blt\t(branch_tests|.-28 ).*
+.*bgt\t(branch_tests|.-30 ).*
+.*ble\t(branch_tests|.-32 ).*
+.*jmp\t@er0.*
+.*jmp\t@(branch_tests|0x).*
+.*jmp\t@@0 \\((0x|)0\\).*
+.*bsr\t(branch_tests|.-42 ).*
+.*bsr\t(branch_tests|.-46 ).*
+.*jsr\t@er0.*
+.*jsr\t@(branch_tests|0x).*
+.*jsr\t@@0 \\((0x|)0\\).*
+.*rts.*
+.*$gdb_prompt $" { pass "branch_tests" }
+	-re "$gdb_prompt $" { fail "branch_tests" }
+	timeout { fail "(timeout) branch_tests" }
+    }
+}
+
+proc all_system_control_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/40i system_control_tests\n"
+    gdb_expect {
+	-re "
+.*trapa\t#0x2.*
+.*rte.*
+.*sleep.*
+.*ldc\t#0x12,ccr*.
+.*ldc\tr3l,ccr.*
+.*ldc\t@er0,ccr.*
+.*ldc\t@\\(0x1234:16,er0\\),ccr.*
+.*ldc\t@\\(0x12345678:32,er0\\),ccr.*
+.*ldc\t@er1\\+,ccr.*
+.*ldc\t@0x1234:16,ccr.*
+.*ldc\t@0x12345678:32,ccr.*
+.*stc\tccr,r3l.*
+.*stc\tccr,@er0.*
+.*stc\tccr,@\\(0x1234:16,er0\\).*
+.*stc\tccr,@\\(0x12345678:32,er0\\).*
+.*stc\tccr,@\\-er1.*
+.*stc\tccr,@0x1234:16.*
+.*stc\tccr,@0x12345678:32.*
+.*andc\t#0x12,ccr.*
+.*orc\t#0x34,ccr.*
+.*xorc\t#0x56,ccr.*
+.*ldc\t#0x12,exr*.
+.*ldc\tr3l,exr.*
+.*ldc\t@er0,exr.*
+.*ldc\t@\\(0x1234:16,er0\\),exr.*
+.*ldc\t@\\(0x12345678:32,er0\\),exr.*
+.*ldc\t@er1\\+,exr.*
+.*ldc\t@0x1234:16,exr.*
+.*ldc\t@0x12345678:32,exr.*
+.*stc\texr,r3l.*
+.*stc\texr,@er0.*
+.*stc\texr,@\\(0x1234:16,er0\\).*
+.*stc\texr,@\\(0x12345678:32,er0\\).*
+.*stc\texr,@\\-er1.*
+.*stc\texr,@0x1234:16.*
+.*stc\texr,@0x12345678:32.*
+.*andc\t#0x12,exr.*
+.*orc\t#0x34,exr.*
+.*xorc\t#0x56,exr.*
+.*nop.*
+.*$gdb_prompt $" { pass "system_control_tests" }
+	-re "$gdb_prompt $" { fail "system_control_tests" }
+	timeout { fail "(timeout) system_control_tests" }
+    }
+}
+
+proc all_block_data_transfer_tests { } {
+    global gdb_prompt
+    global hex
+    global decimal
+
+    send_gdb "x/2i block_data_transfer_tests\n"
+    gdb_expect {
+	-re "
+.*eepmov.b.*
+.*eepmov.w.*
+.*$gdb_prompt $" { pass "block_data_transfer_tests" }
+	-re "$gdb_prompt $" { fail "block_data_transfer_tests" }
+	timeout { fail "(timeout) block_data_transfer_tests" }
+    }
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+all_set_machine_h8300s
+gdb_load $binfile
+
+# Data transfer
+all_movb_tests
+all_movw_tests
+all_movl_tests
+all_ldm_stm_tests
+all_movfpe_movtpe_tests
+
+# Arithmetic operations
+all_add_sub_addx_subx_tests
+all_inc_dec_adds_subs_tests
+all_daa_das_tests
+all_mul_div_tests
+all_cmp_tests
+all_neg_tests
+all_ext_tests
+all_tas_mac_tests
+
+# Logic operations
+all_logic_operations_tests
+
+# Shift
+all_sha_shl_tests
+all_rot_rotx_tests
+
+# Bit manipulation
+all_bset_bclr_tests
+all_bnot_btst_tests
+all_band_bor_bxor_tests
+all_bld_bst_tests
+
+# Branch
+all_branch_tests
+
+# System control
+all_system_control_tests
+
+# Block data transfer
+all_block_data_transfer_tests

@@ -1,0 +1,36 @@
+# sh testcase for fsub.s $frg, $frh, $frf -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global fsubs
+init:
+	pta wrong, tr0
+
+fsubs:
+	movi 9, r0
+	fmov.ls r0, fr0
+	float.ls fr0, fr0
+
+	movi 3, r0
+	fmov.ls r0, fr1 
+	float.ls fr1, fr1
+
+	fsub.s fr0, fr1, fr2
+	
+	movi 6, r0
+	fmov.ls r0, fr3
+	float.ls fr3, fr3
+
+	fcmpeq.s fr2, fr3, r7
+	bnei r7, 1, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

@@ -1,0 +1,8 @@
+This directory contains header files necessary to build a thread-aware GDB on
+systems based on OSF's CMA threads package.
+
+The latest version of these header files are available for free from:
+
+	http://www.osf.org/mall/dce/SW-code
+
+Currently, the only port of GDB which supports CMA threads is HP/UX-10.10.

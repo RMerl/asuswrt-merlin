@@ -1,0 +1,286 @@
+# Copyright (C) 1994, 1997, 2005, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was adapted from old Chill tests by Stan Shebs
+# (shebs@cygnus.com).
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+# Set the current language to fortran.  This counts as a test.  If it
+# fails, then we skip the other tests.
+
+proc set_lang_fortran {} {
+    global gdb_prompt
+    
+    if [gdb_test "set language fortran" ""] {
+	return 0;
+    }
+
+    if ![gdb_test "show language" ".* source language is \"fortran\".*"] {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+proc test_integer_literals_accepted {} {
+    global gdb_prompt
+
+    # Test various decimal values.
+
+    gdb_test "p 123" " = 123"
+    gdb_test "p -123" " = -123"
+}
+
+proc test_character_literals_accepted {} {
+    global gdb_prompt
+
+    # Test various character values.
+
+    gdb_test "p 'a'" " = 'a'"
+
+    # Test various substring expression.
+    gdb_test "p 'abcdefg'(2:4)" " = 'bcd'"
+    gdb_test "p 'abcdefg'(:3)"  " = 'abc'"
+    gdb_test "p 'abcdefg'(5:)"  " = 'efg'"
+    gdb_test "p 'abcdefg'(:)" " = 'abcdefg'"
+
+}
+
+proc test_integer_literals_rejected {} {
+    global gdb_prompt
+
+    test_print_reject "p _"
+}
+
+proc test_logical_literals_accepted {} {
+    global gdb_prompt
+
+    # Test the only possible values for a logical, TRUE and FALSE.
+
+    gdb_test "p .TRUE." " = .TRUE."
+    gdb_test "p .FALSE." " = .FALSE."
+}
+
+proc test_float_literals_accepted {} {
+    global gdb_prompt
+
+    # Test various floating point formats
+
+    gdb_test "p .44 .LT. .45" " = .TRUE."
+    gdb_test "p .44 .GT. .45" " = .FALSE."
+    gdb_test "p 0.44 .LT. 0.45" " = .TRUE."
+    gdb_test "p 0.44 .GT. 0.45" " = .FALSE."
+    gdb_test "p 44. .LT. 45." " = .TRUE."
+    gdb_test "p 44. .GT. 45." " = .FALSE."
+    gdb_test "p 44.0 .LT. 45.0" " = .TRUE."
+    gdb_test "p 44.0 .GT. 45.0" " = .FALSE."
+    gdb_test "p 10D20 .LT. 10D21" " = .TRUE."
+    gdb_test "p 10D20 .GT. 10D21" " = .FALSE."
+    gdb_test "p 10d20 .LT. 10d21" " = .TRUE."
+    gdb_test "p 10d20 .GT. 10d21" " = .FALSE."
+    gdb_test "p 10E20 .LT. 10E21" " = .TRUE."
+    gdb_test "p 10E20 .GT. 10E21" " = .FALSE."
+    gdb_test "p 10e20 .LT. 10e21" " = .TRUE."
+    gdb_test "p 10e20 .GT. 10e21" " = .FALSE."
+    gdb_test "p 10.D20 .LT. 10.D21" " = .TRUE."
+    gdb_test "p 10.D20 .GT. 10.D21" " = .FALSE."
+    gdb_test "p 10.d20 .LT. 10.d21" " = .TRUE."
+    gdb_test "p 10.d20 .GT. 10.d21" " = .FALSE."
+    gdb_test "p 10.E20 .LT. 10.E21" " = .TRUE."
+    gdb_test "p 10.E20 .GT. 10.E21" " = .FALSE."
+    gdb_test "p 10.e20 .LT. 10.e21" " = .TRUE."
+    gdb_test "p 10.e20 .GT. 10.e21" " = .FALSE."
+    gdb_test "p 10.0D20 .LT. 10.0D21" " = .TRUE."
+    gdb_test "p 10.0D20 .GT. 10.0D21" " = .FALSE."
+    gdb_test "p 10.0d20 .LT. 10.0d21" " = .TRUE."
+    gdb_test "p 10.0d20 .GT. 10.0d21" " = .FALSE."
+    gdb_test "p 10.0E20 .LT. 10.0E21" " = .TRUE."
+    gdb_test "p 10.0E20 .GT. 10.0E21" " = .FALSE."
+    gdb_test "p 10.0e20 .LT. 10.0e21" " = .TRUE."
+    gdb_test "p 10.0e20 .GT. 10.0e21" " = .FALSE."
+    gdb_test "p 10.0D+20 .LT. 10.0D+21" " = .TRUE."
+    gdb_test "p 10.0D+20 .GT. 10.0D+21" " = .FALSE."
+    gdb_test "p 10.0d+20 .LT. 10.0d+21" " = .TRUE."
+    gdb_test "p 10.0d+20 .GT. 10.0d+21" " = .FALSE."
+    gdb_test "p 10.0E+20 .LT. 10.0E+21" " = .TRUE."
+    gdb_test "p 10.0E+20 .GT. 10.0E+21" " = .FALSE."
+    gdb_test "p 10.0e+20 .LT. 10.0e+21" " = .TRUE."
+    gdb_test "p 10.0e+20 .GT. 10.0e+21" " = .FALSE."
+    gdb_test "p 10.0D-11 .LT. 10.0D-10" " = .TRUE."
+    gdb_test "p 10.0D-11 .GT. 10.0D-10" " = .FALSE."
+    gdb_test "p 10.0d-11 .LT. 10.0d-10" " = .TRUE."
+    gdb_test "p 10.0d-11 .GT. 10.0d-10" " = .FALSE."
+    gdb_test "p 10.0E-11 .LT. 10.0E-10" " = .TRUE."
+    gdb_test "p 10.0E-11 .GT. 10.0E-10" " = .FALSE."
+    gdb_test "p 10.0e-11 .LT. 10.0e-10" " = .TRUE."
+    gdb_test "p 10.0e-11 .GT. 10.0e-10" " = .FALSE."
+}
+
+proc test_convenience_variables {} {
+    global gdb_prompt
+
+    gdb_test "set \$foo = 101"	" = 101\[\r\n\]*" \
+	"Set a new convenience variable"
+
+    gdb_test "print \$foo"		" = 101" \
+	"Print contents of new convenience variable"
+
+    gdb_test "set \$foo = 301"	" = 301\[\r\n\]*" \
+	"Set convenience variable to a new value"
+
+    gdb_test "print \$foo"		" = 301" \
+	"Print new contents of convenience variable"
+
+    gdb_test "set \$_ = 11"		" = 11\[\r\n\]*" \
+	"Set convenience variable \$_"
+
+    gdb_test "print \$_"		" = 11" \
+	"Print contents of convenience variable \$_"
+
+    gdb_test "print \$foo + 10"	" = 311" \
+	"Use convenience variable in arithmetic expression"
+
+    gdb_test "print (\$foo = 32) + 4"	" = 36" \
+	"Use convenience variable assignment in arithmetic expression"
+
+    gdb_test "print \$bar"		" = VOID" \
+	"Print contents of uninitialized convenience variable"
+}
+
+proc test_value_history {} {
+    global gdb_prompt
+
+    gdb_test "print 101"	"\\\$1 = 101" \
+	"Set value-history\[1\] using \$1"
+
+    gdb_test "print 102" 	"\\\$2 = 102" \
+	"Set value-history\[2\] using \$2"
+
+    gdb_test "print 103"	"\\\$3 = 103" \
+	"Set value-history\[3\] using \$3"
+
+    gdb_test "print \$\$"	"\\\$4 = 102" \
+	"Print value-history\[MAX-1\] using inplicit index \$\$"
+
+    gdb_test "print \$\$"	"\\\$5 = 103" \
+	"Print value-history\[MAX-1\] again using implicit index \$\$"
+
+    gdb_test "print \$"	"\\\$6 = 103" \
+	"Print value-history\[MAX\] using implicit index \$"
+
+    gdb_test "print \$\$2"	"\\\$7 = 102" \
+	"Print value-history\[MAX-2\] using explicit index \$\$2"
+
+    gdb_test "print \$0"	"\\\$8 = 102" \
+	"Print value-history\[MAX\] using explicit index \$0"
+
+    gdb_test "print 108"	"\\\$9 = 108" ""
+
+    gdb_test "print \$\$0"	"\\\$10 = 108" \
+	"Print value-history\[MAX\] using explicit index \$\$0"
+
+    gdb_test "print \$1"	"\\\$11 = 101" \
+	"Print value-history\[1\] using explicit index \$1"
+
+    gdb_test "print \$2"	"\\\$12 = 102" \
+	"Print value-history\[2\] using explicit index \$2"
+
+    gdb_test "print \$3"	"\\\$13 = 103" \
+	"Print value-history\[3\] using explicit index \$3"
+
+    gdb_test "print \$-3"	"\\\$14 = 100" \
+	"Print (value-history\[MAX\] - 3) using implicit index \$"
+
+    gdb_test "print \$1 + 3"	"\\\$15 = 104" \
+	"Use value-history element in arithmetic expression"
+}
+
+proc test_arithmetic_expressions {} {
+    global gdb_prompt
+
+    # Test unary minus with various operands
+
+#    gdb_test "p -(TRUE)"	" = -1"	"unary minus applied to bool"
+#    gdb_test "p -('a')"	" = xxx"	"unary minus applied to char"
+    gdb_test "p -(1)"		" = -1"	"unary minus applied to int"
+    gdb_test "p -(1.0)"	" = -1"	"unary minus applied to real"
+
+    # Test addition with various operands
+
+    gdb_test "p .TRUE. + 1"	" = 2"	"bool plus int"
+    gdb_test "p 1 + 1"		" = 2"	"int plus int"
+    gdb_test "p 1.0 + 1"	" = 2"	"real plus int"
+    gdb_test "p 1.0 + 2.0"	" = 3"	"real plus real"
+
+    # Test subtraction with various operands
+
+    gdb_test "p .TRUE. - 1"	" = 0"	"bool minus int"
+    gdb_test "p 3 - 1"		" = 2"	"int minus int"
+    gdb_test "p 3.0 - 1"	" = 2"	"real minus int"
+    gdb_test "p 5.0 - 2.0"	" = 3"	"real minus real"
+
+    # Test multiplication with various operands
+
+    gdb_test "p .TRUE. * 1"	" = 1"	"bool times int"
+    gdb_test "p 2 * 3"		" = 6"	"int times int"
+    gdb_test "p 2.0 * 3"	" = 6"	"real times int"
+    gdb_test "p 2.0 * 3.0"	" = 6"	"real times real"
+
+    # Test division with various operands
+
+    gdb_test "p .TRUE. / 1"	" = 1"	"bool divided by int"
+    gdb_test "p 6 / 3"		" = 2"	"int divided by int"
+    gdb_test "p 6.0 / 3"	" = 2"	"real divided by int"
+    gdb_test "p 6.0 / 3.0"	" = 2"	"real divided by real"
+
+    # Test exponentiation with various operands
+    
+    gdb_test "p 2 ** 3" " = 8" "int powered by int"
+    gdb_test "p 2 ** 2 ** 3" " = 256" "combined exponentiation expression"
+    gdb_test "p (2 ** 2) ** 3" " = 64" "combined exponentiation expression in specified order"
+    gdb_test "p 4 ** 0.5" " = 2" "int powered by real"
+    gdb_test "p 4.0 ** 0.5" " = 2" "real powered by real"
+
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+gdb_test "set print sevenbit-strings" ""
+
+if [set_lang_fortran] then {
+    test_value_history
+    test_convenience_variables
+    test_integer_literals_accepted
+    test_integer_literals_rejected
+    test_logical_literals_accepted
+    test_character_literals_accepted
+    test_float_literals_accepted
+    test_arithmetic_expressions
+} else {
+    warning "$test_name tests suppressed." 0
+}

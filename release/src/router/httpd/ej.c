@@ -139,14 +139,6 @@ static char *
 translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
 {
 	char *end = NULL, *name = NULL, *desc = NULL;
-#ifdef RTCONFIG_ODMPID
-	static char pattern1[1024];
-	static char pattern2[1024];
-	char *p_PID_STR = NULL;
-	char *PID_STR = nvram_safe_get("productid");
-	char *OEM_PID_STR = nvram_safe_get("odmpid");
-	int odm_product = strlen(OEM_PID_STR);
-#endif
 	if (s == NULL || e == NULL || f == NULL || pkw == NULL || s >= e)       {
 		return NULL;
 	}
@@ -162,16 +154,33 @@ translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
 		desc = search_desc (pkw, name);
 		if (desc != NULL) {
 #ifdef RTCONFIG_ODMPID
-			if (odm_product)
-			while((p_PID_STR = strstr(desc, PID_STR)))
-			{
-				memset(pattern1, 0, sizeof(pattern1));
-				memcpy(pattern1, desc, p_PID_STR - desc);
-				memcpy(pattern1 + (p_PID_STR - desc), OEM_PID_STR, strlen(OEM_PID_STR));
-				strcpy(pattern1 + (p_PID_STR - desc) + strlen(OEM_PID_STR), p_PID_STR + strlen(PID_STR));
-				memset(pattern2, 0, sizeof(pattern2));
-				strcpy(pattern2, pattern1);
-				desc = pattern2;
+			static char pattern1[1024];
+			char *p_PID_STR = NULL;
+			char *PID_STR = nvram_safe_get("productid");
+			char *OEM_PID_STR = nvram_safe_get("odmpid");
+			char *pSrc, *pDest;
+			int pid_len, odm_len;
+
+			pid_len = strlen(PID_STR);
+			odm_len = strlen(OEM_PID_STR);
+
+			if (odm_len && strcmp(PID_STR, OEM_PID_STR) != 0) {
+				pSrc  = desc;
+				pDest = pattern1;
+				while((p_PID_STR = strstr(pSrc, PID_STR)))
+				{
+					memcpy(pDest, pSrc, p_PID_STR - pSrc);
+					pDest += (p_PID_STR - pSrc);
+					pSrc   =  p_PID_STR + pid_len;
+
+					memcpy(pDest, OEM_PID_STR, odm_len);
+					pDest += odm_len;
+				}
+				if(pDest != pattern1)
+				{
+					strcpy(pDest, pSrc);
+					desc = pattern1;
+				}
 			}
 #endif
 			fprintf (f, "%s", desc);

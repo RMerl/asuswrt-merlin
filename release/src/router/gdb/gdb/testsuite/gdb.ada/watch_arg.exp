@@ -1,0 +1,59 @@
+# Copyright 2006, 2007 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+load_lib "ada.exp"
+
+set testdir "watch_arg"
+set testfile "${testdir}/watch"
+set srcfile ${srcdir}/${subdir}/${testfile}.adb
+set binfile ${objdir}/${subdir}/${testfile}
+
+file mkdir ${objdir}/${subdir}/${testdir}
+if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug ]] != "" } {
+  return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+set bp_location [gdb_get_line_number "BREAK1" ${testdir}/watch.adb]
+runto "watch.adb:$bp_location"
+
+# Insert a watchpoint on argument X
+
+gdb_test "watch x" \
+         ".*atchpoint \[0-9\]+: x" \
+         "Set watchpoint on function argument X"
+
+# Then insert a breakpoint at the location we'd like to continue to...
+set bp_location [gdb_get_line_number "BREAK2" ${testdir}/watch.adb]
+gdb_test "break watch.adb:$bp_location" \
+         "Breakpoint \[0-9\]+ at.*: file .*watch.adb, line \[0-9\]+." \
+         "insert second breakpoint in watch.adb"
+
+# Then continue to that breakpoint, and verify that the watchpoint
+# did not interfere with that.
+
+gdb_test "cont" \
+         "Breakpoint \[0-9\]+, watch \\(\\).*" \
+         "Continuing to second breakpoint"
+
+

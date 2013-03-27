@@ -1,0 +1,83 @@
+# sh testcase for fneg -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	# neg(0.0) = 0.0.
+	fldi0 fr0
+	fldi0 fr1
+	fneg fr0
+	fcmp/eq fr0, fr1
+	bf wrong
+
+	# neg(1.0) = fsub(0,1)
+	fldi1 fr0
+	fneg fr0
+	fldi0 fr1
+	fldi1 fr2
+	fsub fr2, fr1
+	fcmp/eq fr0, fr1
+	bf wrong
+	
+	# neg(neg(1.0)) = 1.0.
+	fldi1 fr0
+	fldi1 fr1
+	fneg fr0
+	fneg fr0
+	fcmp/eq fr0, fr1
+	bf wrong
+
+	bra double
+	nop
+
+wrong:
+	fail
+
+double:
+	# neg(0.0) = 0.0.
+	fldi0 fr0
+	fldi0 fr2
+	_s2d fr0, dr0
+	_s2d fr2, dr2
+	_setpr
+	fneg dr0
+	fcmp/eq dr0, dr2
+	bf wrong2
+	_clrpr
+
+	# neg(1.0) = fsub(0,1)
+	fldi1 fr0
+	_s2d fr0, dr0
+	_setpr
+	fneg dr0
+	_clrpr
+	fldi0 fr2
+	fldi1 fr3
+	fsub fr3, fr2
+	_s2d fr2, dr2
+	_setpr
+	fcmp/eq fr0, fr2
+	bf wrong2
+	_clrpr
+	
+	# neg(neg(1.0)) = 1.0.
+	fldi1 fr0
+	_s2d fr0, dr0
+	fldi1 fr2
+	_s2d fr2, dr2
+	_setpr
+	fneg dr0
+	fneg dr2
+	fcmp/eq dr0, dr2
+	bf wrong2
+	_clrpr
+		
+okay:
+	pass
+
+wrong2:	
+	fail

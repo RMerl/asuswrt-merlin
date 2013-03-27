@@ -1,0 +1,38 @@
+# sh testcase for sub.l $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	pta wrong, tr0
+
+subl1:
+	# Test that the top 32 bits are ignored.
+	movi 1, r0
+	shlli r0, 32, r0
+	ori r0, 7, r0
+
+	movi 1, r1
+	shlli r1, 32, r1
+	ori r1, 2, r1
+
+	sub.l r0, r1, r2
+	bnei r2, 5, tr0
+
+subl2:
+	# Test that 0 - 1 is sign extended.
+	movi 0, r0
+	movi 1, r1
+	sub.l r0, r1, r2
+	addi r2, 1, r2
+	bnei r2, 0, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

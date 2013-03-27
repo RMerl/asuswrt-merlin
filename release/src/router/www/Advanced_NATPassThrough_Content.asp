@@ -104,7 +104,7 @@ function applyRule(){
 											</td>
 									  </tr>
 
-										<tr>
+						<tr>
   	         					<th><#NAT_RTSP_Passthrough#></th>
     	       					<td>
 												<select name="fw_pt_rtsp" class="input_option">
@@ -114,15 +114,35 @@ function applyRule(){
         	    				</td>
            					</tr>
 
+						<tr>
+							<th><#NAT_H323_Passthrough#></th>
+						<td>
+												<select name="fw_pt_h323" class="input_option">
+													<option class="content_input_fd" value="0" <% nvram_match("fw_pt_h323", "0","selected"); %>><#btn_disable#></option>
+													<option class="content_input_fd" value="1"<% nvram_match("fw_pt_h323", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+												</select>
+						</td>
+						</tr>
+
+						<tr>
+							<th><#NAT_SIP_Passthrough#></th>
+						<td>
+												<select name="fw_pt_sip" class="input_option">
+													<option class="content_input_fd" value="0" <% nvram_match("fw_pt_sip", "0","selected"); %>><#btn_disable#></option>
+													<option class="content_input_fd" value="1"<% nvram_match("fw_pt_sip", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+												</select>
+						</td>
+						</tr>
+
 										<tr>
-  	         					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,11);"><#PPPConnection_x_PPPoERelay_itemname#></a></th>
+							<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,11);"><#PPPConnection_x_PPPoERelay_itemname#></a></th>
     	       					<td>
 												<select name="fw_pt_pppoerelay" class="input_option">
 													<option class="content_input_fd" value="0" <% nvram_match("fw_pt_pppoerelay", "0","selected"); %>><#btn_disable#></option>
 													<option class="content_input_fd" value="1"<% nvram_match("fw_pt_pppoerelay", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
-												</select>			
-        	    				</td>
-           					</tr>
+												</select>
+						</td>
+						</tr>
 							
 									</table>
 											

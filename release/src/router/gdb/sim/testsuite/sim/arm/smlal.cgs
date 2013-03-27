@@ -1,0 +1,12 @@
+# arm testcase for smlal$cond${set-cc?} $rdlo,$rdhi,$rm,$rs
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global smlal
+smlal:
+	smlal00 pc,pc,pc,pc
+
+	pass

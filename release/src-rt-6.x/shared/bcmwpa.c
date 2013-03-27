@@ -1,7 +1,7 @@
 /*
  *   bcmwpa.c - shared WPA-related functions
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: bcmwpa.c 300516 2011-12-04 17:39:44Z $
+ * $Id: bcmwpa.c 327534 2012-04-14 00:29:02Z $
  */
 
 #include <bcmendian.h>
@@ -310,7 +310,7 @@ BCMROMFN(wpa_calc_ptk)(struct ether_addr *auth_ea, struct ether_addr *sta_ea,
 
 	/* generate the PTK */
 	ASSERT(strlen(prefix) + data_len + 1 <= PRF_MAX_I_D_LEN);
-	fPRF(pmk, (int)pmk_len, (const uchar *)prefix, strlen(prefix), data, data_len,
+	fPRF(pmk, (int)pmk_len, (uchar *)prefix, strlen(prefix), data, data_len,
 	     prf_buff, (int)ptk_len);
 	bcopy(prf_buff, (char*)ptk, ptk_len);
 }

@@ -35,7 +35,13 @@ var apps_state_switch = "<% nvram_get("apps_state_switch"); %>";
 var apps_state_autorun = "<% nvram_get("apps_state_autorun"); %>";
 var apps_state_install = "<% nvram_get("apps_state_install"); %>";
 var apps_state_error = "<% nvram_get("apps_state_error"); %>";
+var apps_download_file = "<% nvram_get("apps_download_file"); %>";
+var apps_download_percent = "<% nvram_get("apps_download_percent"); %>";
 var apps_dev = "<% nvram_get("apps_dev"); %>";
+var apps_download_percent_done = 0;
+var apps_depend_do = "<% nvram_get("apps_depend_do"); %>";
+var apps_depend_action = "<% nvram_get("apps_depend_action"); %>";
+var apps_depend_action_target = "<% nvram_get("apps_depend_action_target"); %>";
 
 <% apps_action(); %> //trigger apps_action.
 
@@ -72,7 +78,7 @@ function initial(){
 												["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer.png"],
 												["3G/4G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png"]];
 	
-	if(media_support == -1){
+	if(!media_support){
 			default_apps_array[1].splice(2,1,"<#MediaServer_Help#>");						
 	}											
 
@@ -80,7 +86,7 @@ function initial(){
 		default_apps_array[3][2] += "<br><br>Make sure Dual WAN support is enabled first.";
 	}
 
-	if(sw_mode == 2 || sw_mode == 3){
+	if(sw_mode == 2 || sw_mode == 3 || sw_mode == 4){
 		default_apps_array.splice(3, 1);
 		default_apps_array.splice(0, 1);
 	}
@@ -181,116 +187,150 @@ function check_appstate(){
 		(apps_state_update == 2 || apps_state_update == "") && (apps_state_remove == 2 || apps_state_remove == "") &&
 		(apps_state_switch == 5 || apps_state_switch == "") && (apps_state_autorun == 4 || apps_state_autorun == "") && 
 		(apps_state_install == 4 || apps_state_install == "")){
-		return true;
+		if(apps_state_install == 4 || apps_state_upgrade == 3){
+			if(installPercent > 1 && installPercent < 95)
+				installPercent = 95;
+			/*else if(installPercent < 98)
+				installPercent = installPercent + 1;*/
+			else
+				return true;
+		}
+		else
+			return true;
 	}
 
 	var errorcode;
+	var proceed = 0.6;
 
-	if(apps_state_upgrade != 3 && apps_state_upgrade != ""){ // upgrade error handler
+	if(apps_state_install == 4 || apps_state_upgrade == 3 || (apps_state_enable == 1 && apps_state_install == 3)){
+		$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+	}
+	else if(apps_state_upgrade != 3 && apps_state_upgrade != ""){ // upgrade error handler
 		errorcode = "apps_state_upgrade = " + apps_state_upgrade;
 		if(apps_state_error == 1)
-			$("apps_state_desc").innerHTML = "Input error!";
+			$("apps_state_desc").innerHTML = "<#usb_inputerror#>";
 		else if(apps_state_error == 2)
-			$("apps_state_desc").innerHTML = "Mount error!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
 		else if(apps_state_error == 4)
-			$("apps_state_desc").innerHTML = "Initiate upgrading fail!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_install#>";
 		else if(apps_state_error == 6)
-			$("apps_state_desc").innerHTML = "No response from the remote server.";
+			$("apps_state_desc").innerHTML = "<#usb_failed_remote_responding#>";
 		else if(apps_state_error == 7)
-			$("apps_state_desc").innerHTML = "Application upgrade fail. It may result from incorrect file or error transmission.";
+			$("apps_state_desc").innerHTML = "<#usb_failed_upgrade#>";
 		else if(apps_state_error == 9)
-			$("apps_state_desc").innerHTML = "Can't remove!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_unmount#>";
 		else if(apps_state_error == 10)
-			$("apps_state_desc").innerHTML = "USB storage device abnormal!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_dev_responding#>";
 		else if(apps_state_upgrade == 0)
-			$("apps_state_desc").innerHTML = "Initializing, it may take several minutes to download package...";
+			$("apps_state_desc").innerHTML = "<#usb_initializing#>";
 		else if(apps_state_upgrade == 1)
-			$("apps_state_desc").innerHTML = "Removing...";
+			$("apps_state_desc").innerHTML = "<#usb_uninstalling#>";
 		else if(apps_state_upgrade == 2){
-			if(installPercent > 99)
-				installPercent = 99;
-			$("loadingicon").style.display = "none";
-			$("apps_state_desc").innerHTML = "Upgrading... <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
-			installPercent = installPercent + 3.5;		
+			if(apps_download_percent > 0 && apps_download_percent < 100){
+				$("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>" + apps_download_percent + "</b> <span style='font-size: 16px;'>%</span>";
+				apps_download_percent_done = 0;
+			}
+			else if(apps_download_percent_done > 5){
+				if(installPercent > 99)
+					installPercent = 99;
+				$("loadingicon").style.display = "none";
+				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				installPercent = installPercent + proceed;
+			}
+			else if(apps_download_percent == ""){
+				$("apps_state_desc").innerHTML = "<#usb_initializing#>...";
+				apps_download_percent_done++;
+			}
+			else if(apps_download_percent == 100){
+				$("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>99</b> <span style='font-size: 16px;'>%</span>";
+				apps_download_percent_done++;
+			}
+			else{
+				if(installPercent > 99)
+					installPercent = 99;
+				$("loadingicon").style.display = "none";
+				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				installPercent = installPercent + proceed;
+			}
 		}
 		else
-			$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>...";
+			$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>";
 	}
 	else if(apps_state_enable != 2 && apps_state_enable != ""){
 		errorcode = "apps_state_enable = " + apps_state_enable;
 		if(apps_state_error == 1)
-			$("apps_state_desc").innerHTML = "An error occurred!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_unknown#>";
 		else if(apps_state_error == 2)
-			$("apps_state_desc").innerHTML = "Mount error!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
 		else if(apps_state_error == 3)
-			$("apps_state_desc").innerHTML = "Create Swap error!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_create_swap#>";
         else if(apps_state_error == 8)
             $("apps_state_desc").innerHTML = "Enable error!";
 		else{
 			$("loadingicon").style.display = "";
-			$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>...";
+			$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>";
 		}
 	}
 	else if(apps_state_update != 2 && apps_state_update != ""){
 		errorcode = "apps_state_update = " + apps_state_update;
 		if(apps_state_error == 1)
-			$("apps_state_desc").innerHTML = "BASEAPPS...";
+			$("apps_state_desc").innerHTML = "<#USB_Application_Preparing#>";
 		else if(apps_state_error == 2)
-			$("apps_state_desc").innerHTML = "No interent!";
+			$("apps_state_desc").innerHTML = "<#USB_Application_No_Internet#>";
 		else
 			$("apps_state_desc").innerHTML = "Updating...";
 	}
 	else if(apps_state_remove != 2 && apps_state_remove != ""){
 		errorcode = "apps_state_remove = " + apps_state_remove;
-		$("apps_state_desc").innerHTML = "Uninstall...";
+		$("apps_state_desc").innerHTML = "<#uninstall_processing#>";
 	}
 	else if(apps_state_switch != 4 && apps_state_switch != 5 && apps_state_switch != ""){
 		errorcode = "apps_state_switch = " + apps_state_switch;
 		if(apps_state_error == 1)
-			$("apps_state_desc").innerHTML = "An error occurred!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_unknown#>";
 		else if(apps_state_error == 2)
-			$("apps_state_desc").innerHTML = "Mount error!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
 		else if(apps_state_switch == 1)
-			$("apps_state_desc").innerHTML = "Stop Apps...";
+			$("apps_state_desc").innerHTML = "<#USB_Application_Stopping#>";
 		else if(apps_state_switch == 2)
-			$("apps_state_desc").innerHTML = "Stop Swap...";
+			$("apps_state_desc").innerHTML = "<#USB_Application_Stopwapping#>";
 		else if(apps_state_switch == 3)
-			$("apps_state_desc").innerHTML = "Checking Choosed Part...";
+			$("apps_state_desc").innerHTML = "<#USB_Application_Partition_Check#>";
 		else
-			$("apps_state_desc").innerHTML = "Executing...";
+			$("apps_state_desc").innerHTML = "<#Excute_processing#>";
 	}
 	else if(apps_state_autorun != 4 && apps_state_autorun != ""){
 		errorcode = "apps_state_autorun = " + apps_state_autorun;
 		if(apps_state_error == 1)
-			$("apps_state_desc").innerHTML = "An error occurred!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_unknown#>";
 		else if(apps_state_error == 2)
-			$("apps_state_desc").innerHTML = "Mount error!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
 		else if(apps_state_autorun == 1)
-			$("apps_state_desc").innerHTML = "Checking Disk...";
+			$("apps_state_desc").innerHTML = "<#USB_Application_disk_checking#>";
 		else if(apps_state_install == 2)
-			$("apps_state_desc").innerHTML = "Creating Swap...";
+			$("apps_state_desc").innerHTML = "<#USB_Application_Swap_creating#>";
 		else
-			$("apps_state_desc").innerHTML = "Auto Installing...";
+			$("apps_state_desc").innerHTML = "<#Auto_Install_processing#>";
 	}
 	else if(apps_state_install != 4 && apps_state_error > 0){ // install error handler
 		if(apps_state_error == 1)
-			$("apps_state_desc").innerHTML = "Input error!";
+			$("apps_state_desc").innerHTML = "<#usb_inputerror#>";
 		else if(apps_state_error == 2)
-			$("apps_state_desc").innerHTML = "Mount error!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
 		else if(apps_state_error == 3)
-			$("apps_state_desc").innerHTML = "Create Swap error!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_create_swap#>";
 		else if(apps_state_error == 4)
-			$("apps_state_desc").innerHTML = "Initiate upgrading fail!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_install#>";
 		else if(apps_state_error == 5)
-			$("apps_state_desc").innerHTML = "Couldn't connect to Internet!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_connect_internet#>";
 		else if(apps_state_error == 6)
-			$("apps_state_desc").innerHTML = "No response from the remote server.";
+			$("apps_state_desc").innerHTML = "<#usb_failed_remote_responding#>";
 		else if(apps_state_error == 7)
-			$("apps_state_desc").innerHTML = "Application upgrade fail. It may result from incorrect file or error transmission.";
+			$("apps_state_desc").innerHTML = "<#usb_failed_upgrade#>";
 		else if(apps_state_error == 9)
-			$("apps_state_desc").innerHTML = "Can't remove!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_unmount#>";
 		else if(apps_state_error == 10)
-			$("apps_state_desc").innerHTML = "USB storage device abnormal!";
+			$("apps_state_desc").innerHTML = "<#usb_failed_dev_responding#>";
 
 		isinstall = 0;
 	}
@@ -299,22 +339,48 @@ function check_appstate(){
 		errorcode = "_apps_state_install = " + apps_state_install;
 
 		if(apps_state_install == 0)
-			$("apps_state_desc").innerHTML = "Preparing Partition...";
+			$("apps_state_desc").innerHTML = "<#usb_partitioning#>";
 		else if(apps_state_install == 1)
-			$("apps_state_desc").innerHTML = "Checking Disk...";
+			$("apps_state_desc").innerHTML = "<#USB_Application_disk_checking#>";
 		else if(apps_state_install == 2)
-			$("apps_state_desc").innerHTML = "Creating Swap...";
+			$("apps_state_desc").innerHTML = "<#USB_Application_Swap_creating#>";
 		else{
-			if(installPercent > 99)
-				installPercent = 99;
-			$("loadingicon").style.display = "none";
-			$("apps_state_desc").innerHTML = "Installing... <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
-			installPercent = installPercent + 1.5;
+			if(apps_download_percent > 0 && apps_download_percent < 100){
+				$("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>" + apps_download_percent + "</b> <span style='font-size: 16px;'>%</span>";
+				apps_download_percent_done = 0;
+			}
+			else if(apps_download_percent_done > 5){
+				if(installPercent > 99)
+					installPercent = 99;
+				$("loadingicon").style.display = "none";
+				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				installPercent = installPercent + proceed;
+			}
+			else if(apps_download_percent == ""){
+				$("apps_state_desc").innerHTML = "<#usb_initializing#>...";
+				apps_download_percent_done++;
+			}
+			else if(apps_download_percent == 100 && apps_depend_action_target != "terminated" && apps_depend_action_target != "error"){
+				if(apps_depend_action_target == "")
+					$("apps_state_desc").innerHTML = "<b>[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> </b>";
+				else
+					$("apps_state_desc").innerHTML = "<b>[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> </b>"
+							+"<br> <span style='font-size: 16px;'> <#Excute_processing#>："+apps_depend_do+"</span>"
+							+"<br> <span style='font-size: 16px;'>"+apps_depend_action+"  "+apps_depend_action_target+"</span>"
+							;
+			}
+			else{
+				if(installPercent > 99)
+					installPercent = 99;
+				$("loadingicon").style.display = "none";
+				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				installPercent = installPercent + proceed;
+			}
 		}
 	}
 	else{
 		$("loadingicon").style.display = "";
-		$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>...";
+		$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>";
 	}
 	
 	if(apps_state_error != 0){
@@ -336,14 +402,20 @@ function show_apps(){
 	var counter = 0;
 	appnum = 0;
 
-	if(dm_http_port == "")
-		dm_http_port = "8081";
-
 	if(apps_array == "" && (appnet_support != -1 || appbase_support != -1)){
 		apps_array = [["downloadmaster", "", "", "no", "no", "", "", "Download tools", "downloadmaster.png", "", "", ""],
 									["mediaserver", "", "", "no", "no", "", "", "", "mediaserver.png", "", "", ""]];
 		if(nodm_support != -1)
 			apps_array[1][0] = "mediaserver2";
+
+		if(aicloudipk_support)
+			apps_array.push(["aicloud", "", "", "no", "no", "", "", "AiCloud utilities", "aicloud.png", "", "", ""]);
+	}
+
+	if(!aicloudipk_support){
+		var aicloud_idx = apps_array.getIndexByValue2D("aicloud");
+		if(aicloud_idx[1] != -1 && aicloud_idx != -1)
+			apps_array.splice(aicloud_idx[0], 1);
 	}
 
 	if(nodm_support != -1){
@@ -352,16 +424,7 @@ function show_apps(){
 			apps_array.splice(dm_idx[0], 1);
 	}
 
-	if(media_support == -1){
-		if(nodm_support != -1)
-			var media_idx = apps_array.getIndexByValue2D("mediaserver");
-		else
-			var media_idx = apps_array.getIndexByValue2D("mediaserver2");
-
-		if(media_idx[1] != -1 && media_idx != -1)
-			apps_array.splice(media_idx[0], 1);
-	} 
-	else{
+	if(media_support || nomedia_support){ // buildin or not support 
 		// remove mediaserver
 		var media_idx = apps_array.getIndexByValue2D("mediaserver");
 		if(media_idx[1] != -1 && media_idx != -1)
@@ -371,6 +434,21 @@ function show_apps(){
 		var media2_idx = apps_array.getIndexByValue2D("mediaserver2");
 		if(media2_idx[1] != -1 && media2_idx != -1)
 			apps_array.splice(media2_idx[0], 1);
+	}
+	else{
+		if(nodm_support != -1)
+			var media_idx = apps_array.getIndexByValue2D("mediaserver");
+		else
+			var media_idx = apps_array.getIndexByValue2D("mediaserver2");
+
+		if(media_idx[1] != -1 && media_idx != -1)
+			apps_array.splice(media_idx[0], 1);
+
+		var media_idx = apps_array.getIndexByValue2D("mediaserver");
+		if(nodm_support == -1 && (media_idx == -1 || media_idx[1] == -1)){
+			var apps_len = apps_array.length;
+			apps_array[apps_len] = ["mediaserver", "", "", "no", "no", "", "", "", "mediaserver.png", "", "", ""];
+		}
   }
 
 	// calculate div height
@@ -389,16 +467,16 @@ function show_apps(){
 		if(apps_array[i][0] == "DM2_Utility")
 			$("DMUtilityLink").href = apps_array[i][5]+ "/" + apps_array[i][12];
 
-		if(apps_array[i][0] != "downloadmaster" && apps_array[i][0] != "mediaserver" && apps_array[i][0] != "mediaserver2") // discard unneeded apps
+		if(apps_array[i][0] != "downloadmaster" && apps_array[i][0] != "mediaserver" && apps_array[i][0] != "mediaserver2" && apps_array[i][0] != "aicloud") // discard unneeded apps
 			continue;
-		else if((apps_array[i][0] == "downloadmaster" || apps_array[i][0] == "mediaserver" || apps_array[i][0] == "mediaserver2" || apps_array[i][0] == "cloudsync") && apps_array[i][3] == "yes" && apps_array[i][4] == "yes"){
+		else if((apps_array[i][0] == "downloadmaster" || apps_array[i][0] == "mediaserver" || apps_array[i][0] == "mediaserver2" || apps_array[i][0] == "aicloud") && apps_array[i][3] == "yes" && apps_array[i][4] == "yes"){
 			if(location.host.split(":").length > 1)
 				apps_array[i][6] = "http://" + location.host.split(":")[0] + ":" + dm_http_port;
 			else
 				apps_array[i][6] = "http://" + location.host + ":" + dm_http_port;
 
-			if(apps_array[i][0] == "cloudsync") // append URL
-				apps_array[i][6] += "/cloudui/Setting.asp";
+			if(apps_array[i][0] == "aicloud") // append URL
+				apps_array[i][6] = "/cloud_main.asp";
 			else if(apps_array[i][0] == "mediaserver" || apps_array[i][0] == "mediaserver2")
 				apps_array[i][6] += "/mediaserverui/mediaserver.asp";
 		}
@@ -432,8 +510,8 @@ function show_apps(){
 			apps_array[i][0] = "Download Master";
 		else if(apps_array[i][0] == "mediaserver" || apps_array[i][0] == "mediaserver2")
 			apps_array[i][0] = "Media Server";
-		else if(apps_array[i][0] == "cloudsync")
-			apps_array[i][0] = "Cloud Sync";
+		else if(apps_array[i][0] == "aicloud")
+			apps_array[i][0] = "AiCloud";
 
 		if(apps_array[i][6] != ""){ // with hyper-link
 			htmlcode += '<div class="app_name">';
@@ -472,8 +550,8 @@ function show_apps(){
 			else
 				apps_array[i][0] = "mediaserver2";
 		}
-		else if(apps_array[i][0] == "Cloud Sync")
-			apps_array[i][0] = "cloudsync";
+		else if(apps_array[i][0] == "AiCloud")
+			apps_array[i][0] = "aicloud";
 
 		// apps_desc
 		if(apps_array[i][4] == "no" && apps_array[i][3] == "yes"){
@@ -492,18 +570,25 @@ function show_apps(){
 				htmlcode += '<span class="app_action" onclick="apps_form(\'enable\',\''+ apps_array[i][0] +'\',\'no\');">Disable</span>\n';
 			else
 				htmlcode += '<span class="app_action" onclick="apps_form(\'enable\',\''+ apps_array[i][0] +'\',\'yes\');">Enable</span>\n';
-
-			if(parseInt(apps_array[i][2].replace(/[.]/gi,"")) > parseInt(apps_array[i][1].replace(/[.]/gi,"")))
-				htmlcode += '<span class="app_action" onclick="apps_form(\'upgrade\',\''+ apps_array[i][0] +'\',\'\');">Upgrade</span>\n';
 		}
 		else{
-			if(apps_array[i][0] == "downloadmaster" || apps_array[i][0] == "mediaserver" || apps_array[i][0] == "cloudsync" || apps_array[i][0] == "mediaserver2")
+			if(apps_array[i][0] == "downloadmaster" || apps_array[i][0] == "mediaserver" || apps_array[i][0] == "aicloud" || apps_array[i][0] == "mediaserver2")
 				htmlcode += '<span class="app_action" onclick="_appname=\''+apps_array[i][0]+'\';divdisplayctrl(\'none\', \'\', \'none\', \'none\');location.href=\'#\';">Install</span>\n';
 			else
 				htmlcode += '<span class="app_action" onclick="apps_form(\'install\',\''+ apps_array[i][0] +'\',\''+ partitions_array[i] +'\');">Install</span>\n';
 		}
-		if(apps_array[i][0] == "downloadmaster" && apps_array[i][3] == "yes")
-			htmlcode += '<span class="app_action" onclick="divdisplayctrl(\'none\', \'none\', \'none\', \'\');">Help</span>\n';
+
+		if(apps_array[i][0] == "downloadmaster"){
+			if(apps_array[i][3] == "yes"){
+				htmlcode += '<span class="app_action" onclick="divdisplayctrl(\'none\', \'none\', \'none\', \'\');">Help</span>\n';
+			}
+
+			cookie_help.set("dm_install", apps_array[i][3], 1000);
+			cookie_help.set("dm_enable", apps_array[i][4], 1000);
+		}
+
+		if(parseInt(apps_array[i][2].replace(/[.]/gi,"")) > parseInt(apps_array[i][1].replace(/[.]/gi,"")))
+			htmlcode += '</div><div style="color:#FC0;margin-top:10px;"><span class="app_action" onclick="apps_form(\'upgrade\',\''+ apps_array[i][0] +'\',\'\');">An Update is Available</span>\n';
 		
 		htmlcode += '</div><br/><br/></td></tr>\n';
 	
@@ -520,6 +605,7 @@ function show_apps(){
 	divdisplayctrl("", "none", "none", "none");
 	stoppullstate = 1;
 	calHeight(1);
+	cookie_help.set("hwaddr", '<% nvram_get("et0macaddr"); %>', 1000);
 }
 
 var partitions_array = "";
@@ -599,6 +685,8 @@ function detectUSBStatusApp(){
 }
 
 function apps_form(_act, _name, _flag){
+	cookie_help.set("apps_last", _name, 1000);
+
 	document.app_form.apps_action.value = _act;
 	document.app_form.apps_name.value = _name;
 	document.app_form.apps_flag.value = _flag;
@@ -640,10 +728,11 @@ function divdisplayctrl(flag1, flag2, flag3, flag4){
 		$("usbHint").style.display = "none";
 }
 
-window.onbeforeunload = function(){
-	cookie_help.set("apps_last", _appname, 1000);
-	cookie_help.set("dm_install", _dm_install, 1000);
-	cookie_help.set("dm_enable", _dm_enable, 1000);
+function reloadAPP(){
+	document.app_form.apps_action.value = "";
+	document.app_form.apps_name.value = "";
+	document.app_form.apps_flag.value = "";
+	location.href = "/APP_Installation.asp";
 }
 </script>
 </head>
@@ -698,7 +787,7 @@ window.onbeforeunload = function(){
 								<span class="formfonttitle"><#Menu_usb_application#></span>
 							</td>
 							<td>
-								<img id="return_btn" onclick="show_apps();" align="right" style="cursor:pointer;position:absolute;margin-left:-30px;margin-top:-25px;" title="Back to USB Extension" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">
+								<img id="return_btn" onclick="reloadAPP();" align="right" style="cursor:pointer;position:absolute;margin-left:-30px;margin-top:-25px;" title="Back to USB Extension" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">
 							</td>
 						</tr>
 					</table>
@@ -717,7 +806,7 @@ window.onbeforeunload = function(){
   <tr>
    	<td valign="top">
 		<div id="partition_div"></div>
-		<div id="app_state" class="app_state"><span id="apps_state_desc">Loading APP list...</span><img id="loadingicon" style="margin-left:5px;" src="/images/InternetScan.gif"></div>
+		<div id="app_state" class="app_state"><img id="loadingicon" style="" src="/images/InternetScan.gif"><span style="margin-left:15px;" id="apps_state_desc">Loading APP list...</span></div>
 		<div id="DMDesc" style="display:none;">
 			<div style="margin-left:10px;" id="isInstallDesc">
 				<h2>Download Master install success!</h2>
@@ -740,10 +829,10 @@ window.onbeforeunload = function(){
 								<a id="faq2" href="" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF">Download Master Tool FAQ</a>
 							</li>
 							<li style="margin-top:10px;">
-								<a id="DMUtilityLink" href="http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/DM2_2017.zip" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF">Download "Download Master Tool" Now!</a>
+								<a id="DMUtilityLink" href="http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/DM2_2037.zip" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF">Download "Download Master Tool" Now!</a>
 							</li>
 							<li style="margin-top:10px;">
-								<a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://www.youtube.com/v/Em6Hddyytlw">Click to open tutorial video.</a>
+								<a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://www.youtube.com/v/Em6Hddyytlw"><#Video_Link1#></a>
 							</li>
 						</ul>
 					</td>

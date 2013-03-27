@@ -1,7 +1,7 @@
 #
 # Linux router libbcmcrypto Makefile
 #
-# Copyright (C) 2011, Broadcom Corporation
+# Copyright (C) 2012, Broadcom Corporation
 # All Rights Reserved.
 # 
 # This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,12 +9,12 @@
 # or duplicated in any form, in whole or in part, without the prior
 # written permission of Broadcom Corporation.
 #
-# $Id: Makefile 311083 2012-01-27 13:47:05Z $
+# $Id: Makefile 341899 2012-06-29 04:06:38Z $
 #
 
 include $(TOP)/.config
 
-CFLAGS	+= -Wsign-compare -I. -I../httpd -I$(SRCBASE)/include -Wall
+CFLAGS	+= -Wsign-compare -I. -I../httpd -I$(SRCBASE)/include -Wall -fPIC
 #CFLAGS	+= -g -DDEBUG
 CFLAGS	+= -s
 LDFLAGS += -L.
@@ -36,7 +36,7 @@ MAP := .map
 UNR := .unresolved
 SYM := .symbols
 
-all: libbcmcrypto.so libbcmcrypto.a
+all: libbcmcrypto.so
 
 install: all
 	install -d $(INSTALLDIR)/usr/lib
@@ -49,20 +49,21 @@ clean:
 libbcmcrypto.so: $(OBJS)
 	$(LD) -shared -o $@ $^
 
-libbcmcrypto.a: $(OBJS)
-	@rm -f $@
-	$(AR) cruv $@ $^
-
 # rule for removing unneeded symbols in the shared library
-optimize: libbcmcrypto.so libbcmcrypto.a
+optimize: libbcmcrypto.so
 	$(NM) -o --defined-only --no-sort libbcmcrypto.so | cut -d' ' -f3 > $(MAP)
+ifeq ($(MKSYM),)
 	$(NM) --dynamic -u --no-sort $(BINARIES) | sort -u > $(UNR)
 	rm -rf $(SYM)
 	for symbol in `cat $(UNR)` ; do \
 	if grep -q "^$${symbol}$$" $(MAP) ; then echo "-u $${symbol}" >> $(SYM) ;  \
 	fi ; done
+else
+	$(NM) --dynamic -u --no-sort $(BINARIES) | sort -u | $(MKSYM) $(MAP) > $(SYM)
+endif
 	# if no symbols are needed then delete the shared lib
 	if ls $(SYM) ; then \
+	$(AR) cr libbcmcrypto.a $(OBJS) ; \
 	xargs -t $(LD) -shared -o libbcmcrypto.so libbcmcrypto.a < $(SYM) ; \
 	install libbcmcrypto.so $(TARGETDIR)/usr/lib ; \
 	$(STRIP) $(TARGETDIR)/usr/lib/libbcmcrypto.so ; \

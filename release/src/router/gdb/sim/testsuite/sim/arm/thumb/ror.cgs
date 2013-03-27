@@ -1,0 +1,12 @@
+# arm testcase for ror $rd,$rs
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global alu_ror
+alu_ror:
+	ror r0,r0
+
+	pass

@@ -1,0 +1,66 @@
+# Test reading debug information from in object files.
+
+if { [skip_hp_tests] } { continue }
+
+if { ![istarget "hppa*-*-hpux*"] } {
+    verbose "HPUX test ignored for non-hppa targets."
+    return 0
+}
+
+set testfile "test"
+set srcsubdir ${srcdir}/${subdir}/objdbg04
+set objdbgdir ${objdir}/${subdir}/objdbg04
+set binfile ${objdbgdir}/${testfile}
+set toolssubdir ${srcdir}/${subdir}/tools
+set symaddrfile ${toolssubdir}/symaddr
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+if {!$hp_aCC_compiler && !$hp_cc_compiler} {
+  return 0
+}
+
+if { [gdb_compile "${toolssubdir}/test-objdbg.cc" "${objdbgdir}/test-objdbg.o" object "debug c++ {additional_flags=-I${toolssubdir} +objdebug}"] != "" } {
+    untested objdbg04.exp
+    return -1
+}
+
+if { [gdb_compile "${srcsubdir}/x1.cc" "${objdbgdir}/x1.o" object "debug c++ {additional_flags=-I${srcsubdir} +objdebug}"] != "" } {
+    perror "Couldn't compile x1.cc"
+    return -1
+}
+
+if { [gdb_compile "${srcsubdir}/x2.cc" "${objdbgdir}/x2.o" object "debug c++ {additional_flags=-I${srcsubdir} +objdebug}"] != "" } {
+    perror "Couldn't compile x2.cc"
+    return -1
+}
+
+if { [gdb_compile "${objdbgdir}/x1.o ${objdbgdir}/x2.o" "${binfile}0" executable "debug c++ {additional_flags=-I${srcsubdir} +objdebug}"] != "" } {
+    perror "Couldn't compile x1.cc"
+    return -1
+}
+
+if { [gdb_compile "${objdbgdir}/x2.o ${objdbgdir}/x1.o" "${binfile}1" executable "debug c++ {additional_flags=-I${srcsubdir} +objdebug}"] != "" } {
+    perror "Couldn't compile x1.cc"
+    return -1
+}
+
+# Test two executables. The first has x1.cc linked first, the second
+# has x2.cc linked first.  The difference is which COMDAT section was
+# picked.
+
+for {set filenum 0} {$filenum < 2} {incr filenum 1} {
+  gdb_exit
+  gdb_start
+  gdb_reinitialize_dir ${srcsubdir}
+  gdb_load ${binfile}${filenum}
+
+  gdb_test "ptype Adder" "type = template <class T> (class |)Adder {..*T val.*;.*}(.*template instantiations:.*Adder<int>|)"
+  gdb_test "ptype Adder<int>" "type = (class |)Adder<int> {.*private:.*int val;.*public:.*void set( |)\\(int\\);.*int get( |)\\(void\\);.*int add( |)\\(int\\);.*}"
+  gdb_test "ptype Adder" "type = template <class T> (class |)Adder {..*T val.*;.*}(.*template instantiations:.*Adder<int>|)"
+
+}

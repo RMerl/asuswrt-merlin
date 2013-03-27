@@ -1,7 +1,7 @@
 /*
  * Misc useful os-independent macros and functions.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmutils.h 320903 2012-03-13 15:26:38Z $
+ * $Id: bcmutils.h 342324 2012-07-02 14:57:04Z $
  */
 
 #ifndef	_bcmutils_h_
@@ -146,6 +146,8 @@ typedef struct {
 						        increases with use ('inverse' of max_avail)
 				          */
 	uint32 queue_capacity; /* the maximum capacity of the queue */
+	uint32 rtsfail;        /* count of rts attempts that failed to receive cts */
+	uint32 acked;          /* count of packets sent (acked) successfully */
 } pktq_counters_t;
 #endif /* PKTQ_LOG */
 
@@ -162,7 +164,9 @@ struct pktq {
 	/* q array must be last since # of elements can be either PKTQ_MAX_PREC or 1 */
 	struct pktq_prec q[PKTQ_MAX_PREC];
 #ifdef PKTQ_LOG
-	pktq_counters_t	_prec_cnt[PKTQ_MAX_PREC];		/* Counters per queue  */
+	pktq_counters_t	_prec_cnt[PKTQ_MAX_PREC];     /* Counters per queue  */
+	pktq_counters_t _prec_bytes[PKTQ_MAX_PREC];   /* Byte count per queue  */
+	uint32 _logtime;                   /* timestamp of last counter clear  */
 #endif
 };
 
@@ -645,6 +649,24 @@ extern int bcm_format_ssid(char* buf, const uchar ssid[], uint ssid_len);
 #define	MAX(a, b)		(((a) > (b)) ? (a) : (b))
 #endif /* MAX */
 
+/* limit to [min, max] */
+#ifndef LIMIT_TO_RANGE
+#define LIMIT_TO_RANGE(x, min, max) \
+	((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
+#endif /* LIMIT_TO_RANGE */
+
+/* limit to  max */
+#ifndef LIMIT_TO_MAX
+#define LIMIT_TO_MAX(x, max) \
+	(((x) > (max) ? (max) : (x)))
+#endif /* LIMIT_TO_MAX */
+
+/* limit to min */
+#ifndef LIMIT_TO_MIN
+#define LIMIT_TO_MIN(x, min) \
+	(((x) < (min) ? (min) : (x)))
+#endif /* LIMIT_TO_MIN */
+
 #define CEIL(x, y)		(((x) + ((y) - 1)) / (y))
 #define	ROUNDUP(x, y)		((((x) + ((y) - 1)) / (y)) * (y))
 #define	ISALIGNED(a, x)		(((uintptr)(a) & ((x) - 1)) == 0)
@@ -687,6 +709,8 @@ extern void *_bcmutils_dummy_fn;
 #define	isset(a, i)	(((const uint8 *)a)[(i) / NBBY] & (1 << ((i) % NBBY)))
 #define	isclr(a, i)	((((const uint8 *)a)[(i) / NBBY] & (1 << ((i) % NBBY))) == 0)
 #endif /* setbit */
+
+#define	isbitset(a, i)	(((a) & (1 << (i))) != 0)
 
 #define	NBITS(type)	(sizeof(type) * 8)
 #define NBITVAL(nbits)	(1 << (nbits))

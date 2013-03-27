@@ -79,18 +79,31 @@ _dprintf("*** jffs2: %d, %d\n", part, size);
 		notice_set("jffs", format ? "Formatted" : "Loaded");
 		return;
 	}
-	if (!mtd_unlock("jffs2")) {
-		error("unlocking");
-		return;
+	if (nvram_get_int("jffs2_clean_fs")) {
+		if (!mtd_unlock("jffs2")) {
+			error("unlocking");
+			return;
+		}
 	}
 	modprobe(JFFS_NAME);
 	sprintf(s, MTD_BLKDEV(%d), part);
+
 	if (mount(s, "/jffs", JFFS_NAME, MS_NOATIME, "") != 0) {
 _dprintf("*** jffs2 mount error\n");
-		//modprobe_r(JFFS_NAME);
-		error("mounting");
-		return;
+		if (!mtd_erase(JFFS_NAME)) {
+			error("formatting");
+			return;
+		}
+
+		format = 1;
+		if (mount(s, "/jffs", JFFS_NAME, MS_NOATIME, "") != 0) {
+			_dprintf("*** jffs2 2-nd mount error\n");
+			//modprobe_r(JFFS_NAME);
+			error("mounting");
+			return;
+		}
 	}
+
 #ifdef TEST_INTEGRITY
 	int test;
 
@@ -107,6 +120,12 @@ _dprintf("*** jffs2 mount error\n");
 		return;
 	}
 #endif
+
+	if (nvram_get_int("jffs2_clean_fs")) {
+		_dprintf("Clean /jffs/*\n");
+		system("rm -fr /jffs/*");
+		nvram_unset("jffs2_clean_fs");
+	}
 
 	notice_set("jffs", format ? "Formatted" : "Loaded");
 
@@ -125,6 +144,9 @@ _dprintf("*** jffs2 mount error\n");
 void stop_jffs2(void)
 {
 	struct statfs sf;
+#if defined(RTCONFIG_PSISTLOG)
+	int restart_syslogd = 0;
+#endif
 
 	if (!wait_action_idle(10)) return;
 
@@ -134,7 +156,27 @@ void stop_jffs2(void)
 		run_nvscript("script_autostop", "/jffs", 5);
 	}
 
+#if defined(RTCONFIG_PSISTLOG)
+	if (!strncmp(get_syslog_fname(0), "/jffs/", 6)) {
+		restart_syslogd = 1;
+		stop_syslogd();
+		eval("cp", "/jffs/syslog.log", "/jffs/syslog.log-1", "/tmp");
+	}
+#endif
+
 	notice_set("jffs", "Stopped");
 	umount2("/jffs", MNT_DETACH);
 	modprobe_r(JFFS_NAME);
+
+#if defined(RTCONFIG_PSISTLOG)
+	if (restart_syslogd)
+		start_syslogd();
+#endif
+}
+
+void erase_jffs_partition(void)
+{
+	_dprintf("Erase MTD partition: %s\n", JFFS_NAME);
+	eval("mtd-erase","-d", JFFS_NAME);
+	_dprintf("Erase MTD partition: %s done.\n", JFFS_NAME);
 }

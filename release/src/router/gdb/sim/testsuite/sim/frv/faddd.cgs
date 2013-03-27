@@ -1,0 +1,93 @@
+# frv testcase for faddd $GRi,$GRj,$GRk
+# mach: frv
+# as(frv): -mcpu=frv
+
+	.include "testutils.inc"
+
+	double_constants
+	start
+	load_double_constants
+
+	.global faddd
+faddd:
+	faddd      	fr16,fr0,fr2
+	test_dfr_dfr	fr2,fr0
+	faddd      	fr16,fr4,fr2
+	test_dfr_dfr	fr2,fr4
+	faddd      	fr16,fr8,fr2
+	test_dfr_dfr	fr2,fr8
+	faddd      	fr16,fr12,fr2
+	test_dfr_dfr	fr2,fr12
+	faddd      	fr16,fr16,fr2
+	test_dfr_dfr	fr2,fr16
+	test_dfr_dfr	fr2,fr20
+	faddd      	fr16,fr20,fr2
+	test_dfr_dfr	fr2,fr26
+	test_dfr_dfr	fr2,fr20
+	faddd      	fr16,fr24,fr2
+	test_dfr_dfr	fr2,fr24
+	faddd      	fr16,fr28,fr2
+	test_dfr_dfr	fr2,fr28
+	faddd      	fr16,fr32,fr2
+	test_dfr_dfr	fr2,fr32
+	faddd      	fr16,fr36,fr2
+	test_dfr_dfr	fr2,fr36
+	faddd      	fr16,fr40,fr2
+	test_dfr_dfr	fr2,fr40
+	faddd      	fr16,fr44,fr2
+	test_dfr_dfr	fr2,fr44
+	faddd      	fr16,fr48,fr2
+	test_dfr_dfr	fr2,fr48
+	faddd      	fr16,fr52,fr2
+	test_dfr_dfr	fr2,fr52
+
+	faddd      	fr20,fr0,fr2
+	test_dfr_dfr	fr2,fr0
+	faddd      	fr20,fr4,fr2
+	test_dfr_dfr	fr2,fr4
+	faddd      	fr20,fr8,fr2
+	test_dfr_dfr	fr2,fr8
+	faddd      	fr20,fr12,fr2
+	test_dfr_dfr	fr2,fr12
+	faddd      	fr20,fr16,fr2
+	test_dfr_dfr	fr2,fr16
+	test_dfr_dfr	fr2,fr20
+	faddd      	fr20,fr20,fr2
+	test_dfr_dfr	fr2,fr26
+	test_dfr_dfr	fr2,fr20
+	faddd      	fr20,fr24,fr2
+	test_dfr_dfr	fr2,fr24
+	faddd      	fr20,fr28,fr2
+	test_dfr_dfr	fr2,fr28
+	faddd      	fr20,fr32,fr2
+	test_dfr_dfr	fr2,fr32
+	faddd      	fr20,fr36,fr2
+	test_dfr_dfr	fr2,fr36
+	faddd      	fr20,fr40,fr2
+	test_dfr_dfr	fr2,fr40
+	faddd      	fr20,fr44,fr2
+	test_dfr_dfr	fr2,fr44
+	faddd      	fr20,fr48,fr2
+	test_dfr_dfr	fr2,fr48
+	faddd      	fr20,fr52,fr2
+	test_dfr_dfr	fr2,fr52
+
+	faddd      	fr8,fr28,fr2
+	test_dfr_dfr	fr2,fr16
+	test_dfr_dfr	fr2,fr20
+	faddd      	fr12,fr24,fr2
+	test_dfr_dfr	fr2,fr16
+	test_dfr_dfr	fr2,fr20
+	faddd      	fr24,fr12,fr2
+	test_dfr_dfr	fr2,fr16
+	test_dfr_dfr	fr2,fr20
+	faddd      	fr28,fr8,fr2
+	test_dfr_dfr	fr2,fr16
+	test_dfr_dfr	fr2,fr20
+
+	faddd      	fr36,fr40,fr2
+	test_dfr_dfr	fr2,fr44
+
+	pass
+
+

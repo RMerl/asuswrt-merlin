@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <shared.h>
+#include <rc.h>
 
 static void wps_pbc(int sig)
 {

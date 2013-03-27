@@ -10,7 +10,9 @@
 #include <dlinklist.h>
 
 #if EMBEDDED_EANBLE
+#ifndef APP_IPKG
 #include "disk_share.h"
+#endif
 #endif
 
 #define DBE 0
@@ -162,7 +164,13 @@ URIHANDLER_FUNC(mod_craete_captcha_image_physical_handler){
 	buffer_append_string_len(b,CONST_STR_LEN("<enable>"));
 
 	#if EMBEDDED_EANBLE
+	#ifndef APP_IPKG
 	buffer_append_string(b,nvram_get_enable_webdav_captcha());
+	#else
+	char *enable_webdav_captcha = nvram_get_enable_webdav_captcha();
+   	buffer_append_string(b,enable_webdav_captcha);
+   	free(enable_webdav_captcha);
+	#endif
 	#else
 	buffer_append_string(b,"0");
 	#endif
@@ -191,7 +199,7 @@ URIHANDLER_FUNC(mod_craete_captcha_image_physical_handler){
 	/* not found */
 	//return HANDLER_GO_ON;
 }
-
+#ifndef APP_IPKG
 int mod_create_captcha_image_plugin_init(plugin *p);
 int mod_create_captcha_image_plugin_init(plugin *p) {
 	p->version     = LIGHTTPD_VERSION_ID;
@@ -206,3 +214,19 @@ int mod_create_captcha_image_plugin_init(plugin *p) {
 
 	return 0;
 }
+#else
+int aicloud_mod_create_captcha_image_plugin_init(plugin *p);
+int aicloud_mod_create_captcha_image_plugin_init(plugin *p) {
+	p->version     = LIGHTTPD_VERSION_ID;
+	p->name        = buffer_init_string("create_captcha_image");
+
+	p->init        = mod_craete_captcha_image_init;
+	p->set_defaults = mod_craete_captcha_image_set_defaults;
+	p->handle_physical = mod_craete_captcha_image_physical_handler;
+	p->cleanup     = mod_craete_captcha_image_free;
+
+	p->data        = NULL;
+
+	return 0;
+}
+#endif

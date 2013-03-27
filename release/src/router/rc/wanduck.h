@@ -77,6 +77,7 @@ int max_disconn_count = MAX_DISCONN_COUNT;
 #define C2D			3
 #define D2C			4
 #define PHY_RECONN	5
+#define SET_ETH_MODEM	6
 
 #define CASE_NONE          0
 #define CASE_DISWAN        1
@@ -151,7 +152,6 @@ typedef struct REQCLIENT{
 #pragma pack() // End.
 
 // var
-#define DUT_DOMAIN_NAME "www.asusnetwork.net"
 char router_name[PATHLEN];
 int sw_mode, isFirstUse;
 #ifdef RTCONFIG_DUALWAN

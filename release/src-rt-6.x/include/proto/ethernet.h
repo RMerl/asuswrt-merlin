@@ -1,7 +1,7 @@
 /*
  * From FreeBSD 2.2.7: Fundamental constants relating to ethernet.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ethernet.h 333173 2012-05-14 18:07:40Z $
+ * $Id: ethernet.h 345992 2012-07-19 21:29:37Z $
  */
 
 #ifndef _NET_ETHERNET_H_	    /* use native BSD ethernet.h when available */
@@ -74,6 +74,7 @@
 #define	ETHER_TYPE_IP		0x0800		/* IP */
 #define ETHER_TYPE_ARP		0x0806		/* ARP */
 #define ETHER_TYPE_8021Q	0x8100		/* 802.1Q */
+#define ETHER_TYPE_PPP_SES	0x8864		/* PPPoE Session */
 #define	ETHER_TYPE_IPV6		0x86dd		/* IPv6 */
 #define	ETHER_TYPE_BRCM		0x886c		/* Broadcom Corp. */
 #define	ETHER_TYPE_802_1X	0x888e		/* 802.1x */
@@ -163,6 +164,7 @@ do { \
 
 static const struct ether_addr ether_bcast = {{255, 255, 255, 255, 255, 255}};
 static const struct ether_addr ether_null = {{0, 0, 0, 0, 0, 0}};
+static const struct ether_addr ether_ipv6_mcast = {{0x33, 0x33, 0x00, 0x00, 0x00, 0x01}};
 
 #define ETHER_ISBCAST(ea)	((((const uint8 *)(ea))[0] &		\
 	                          ((const uint8 *)(ea))[1] &		\

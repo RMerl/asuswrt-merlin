@@ -1,0 +1,7 @@
+This target allows to selectively work around known ECN blackholes.
+It can only be used in the mangle table.
+.TP
+\fB\-\-ecn\-tcp\-remove\fP
+Remove all ECN bits from the TCP header.  Of course, it can only be used
+in conjunction with
+\fB\-p tcp\fP.

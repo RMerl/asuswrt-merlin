@@ -1,0 +1,20 @@
+# frv testcase for mbtoh $FRj,$FRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mbtoh
+mbtoh:
+	set_fr_iimmed	0xdead,0xbeef,fr10
+	mbtoh		fr10,fr12
+	test_fr_limmed	0x00de,0x00ad,fr12
+	test_fr_limmed	0x00be,0x00ef,fr13
+
+	set_fr_iimmed	0x1234,0x5678,fr10
+	mbtoh		fr10,fr12
+	test_fr_limmed	0x0012,0x0034,fr12
+	test_fr_limmed	0x0056,0x0078,fr13
+
+	pass

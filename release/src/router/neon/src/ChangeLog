@@ -1,0 +1,5563 @@
+Sun Sep 12 19:21:30 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c (ne_lock_refresh): Fix to pass correct userdata to
+	callbacks, and do call lk_cdata.
+
+Sun Sep 12 18:53:15 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (libneon.a): Remove the archive first, avoiding
+	strange problems when build $(OBJECTS) change.
+
+Sun Sep 12 18:40:50 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.h: Add NE_FEATURE_SOCKS.
+	
+	* ne_utils.c (ne_has_support): Add NE_FEATURE_SOCKS.
+	(version_string): Use NE_HAVE_SOCKS, add NE_HAVE_IDNA.
+
+	* ne_socket.c (ne_sock_init): Use NE_HAVE_SOCKS.
+
+Sun Sep 12 17:29:54 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.c (version_string): Declare as array rather than
+	pointer; include "IPv6" component as necessary
+
+Sun Sep 12 15:51:38 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_iaddr_typeof): New function.
+
+Sun Sep 12 12:00:10 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_defs.h (ne_attribute_malloc): New macro.
+
+	* ne_alloc.h: Use it to avoid warnings with older GCCs.
+
+Wed Aug 25 21:03:40 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.h (split_string, split_string_c, pair_string,
+	split_string_free, pair_string_free): Remove obsolete interfaces.
+
+Wed Aug 25 21:01:03 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_cookies.c, ne_cookies.h: Drop cookies support: used old spec
+	revision and wasn't very complete anyway.
+
+Wed Aug 25 20:40:26 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c: Remove ne_read, ne_write macros and just use recv
+	and send; remove unused SOCK_ERR macro.
+
+Wed Aug 25 20:27:43 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c (declare_nspaces): Drop rejection of names including a
+	colon to prevent breaking SVN deployments.
+
+Wed Aug 25 19:45:20 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (readable_raw): Use poll where available.
+	(ne_sock_connect): Fail if not using poll and fd returned by
+	socket() is greater than FD_SETSIZE.
+
+Wed Aug 25 18:40:28 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.h (ne_xml_parse): Clarify that a len=0 call is required
+	to signify end-of-document.
+
+Wed Aug 25 18:37:13 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (resolve_first, resolve_next): New functions.
+	(lookup_host): Use them to allow user-forced addresses.
+
+	* ne_session.c (ne_set_addrlist): New function.
+
+	* ne_private.h (struct ne_session_s): Add addrlist, numaddrs,
+	curaddr fields.
+
+Wed Aug 25 18:25:31 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c (struct ne_xml_parser_s): Add bom_pos field.
+	(ne_xml_parse): Skip over the UTF-8 Byte Order Mark since
+	the XML parsers do not support it yet.
+
+Wed Jul  7 16:07:44 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (do_connect): Fix ne_conn_connected status call
+	(Shameek Basu).
+
+Mon Jul  5 18:40:35 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (ne_content_type_handler): Use us-ascii as default
+	charset for text/xml, as per RFC3280.
+
+Mon Jul  5 10:56:19 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c (struct ne_decompress_s): Add acceptor field.
+	(gz_acceptor): New function.
+	(ne_decompress_reader): Fix to pass the user-supplied userdata
+	pointer to the user-supplied acceptor callback, via gz_acceptor.
+
+Mon Jul  5 10:52:40 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c (do_inflate): Don't invoke the reader callback if
+	no bytes where produced by inflate().
+	(process_footer): Call the reader callback with size=0 to indicate
+	end-of-response for a good checksum match.
+
+Sat Jul  3 14:33:56 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (auth_challenge): Fix to set got_qop in challenge
+	correctly (Hideaki Takahashi).
+
+Mon May 17 15:03:54 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.h (ne_addr_resolve): Clarify that 'flags' must
+	be passed as zero for forwards-compat.
+
+Sun May  2 21:14:14 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	Fix buffer overflow in RFC1036 date parser, CVE CAN-2004-0389.
+	
+	* ne_dates.c (RFC1036_FORMAT): Specify maximum field with for day
+	name.
+	(ne_rfc1123_parse, ne_rfc1036_parse, ne_asctime_parse): Make
+	thread-safe; remove static buffers.
+
+Sun May  2 16:59:39 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_dates.c [RFC1123_TEST] (main): Remove embedded test cases.
+
+Sun May  2 13:18:29 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (LINK): Add -no-undefined.
+
+Fri Apr 16 22:53:59 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c (declare_nspaces, expand_qname): Don't try to include
+	document context in error strings.	
+
+Fri Apr 16 11:44:34 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (LIBS): Include NEON_LTLIBS.
+
+Wed Apr 14 10:39:53 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	Fix format string vulnerabilities, CVE CAN-2004-0179:
+	
+	* ne_207.c (ne_simple_request): Avoid format string
+	vulnerabilities.
+
+	* ne_xml.c (ne_xml_set_error): Likewise.
+
+	* ne_props.c (propfind): Likewise.
+
+	* ne_locks.c (ne_lock, ne_lock_refresh): Likewise.
+
+Wed Apr 14 10:33:46 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (ah_post_send): Avoid false positives from gcc
+	-Wformat-security.
+
+Tue Apr 13 20:51:41 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c: Conditionally include gssapi_generic.h.
+
+Thu Apr  8 13:40:03 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_props.h: Don't use an anonymous enum for the proppatch
+	operation type, as some C++ compilers don't like it.
+
+Wed Apr  7 13:50:10 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (add_fixed_headers): Don't both sending Keep-Alive
+	header if persistent connections are disabled.
+
+Wed Apr  7 13:47:46 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (auth_challenge): Allow Negotiate challenges from
+	a proxy.
+
+Wed Apr  7 13:36:55 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (clean_session): Remove redundant assignment of
+	GSS_C_NO_CONTEXT; gss_delete_sec_context already does this.
+
+Wed Apr  7 13:33:10 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (get_gss_name): Handle failure case internally.
+	(auth_register): Updated accordingly.
+
+Wed Apr  7 13:15:57 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c: Use strtoq to print off_t's where necessary.
+
+Wed Apr  7 11:14:24 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (get_gss_name): Take a hostname string.
+	(auth_register): Pass proxy or server hostname to get_gss_name as
+	appropriate.
+
+Wed Apr  7 11:09:50 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (continue_negotiate): If given no input token, and the
+	gssctx is not in the initial state, reset it.
+
+Mon Mar 29 17:06:49 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c: Adjust to cope with GSSAPI continuation:
+	(struct auth_session_s): Store GSSAPI context, name and mechanism.
+	(get_gss_name): Take an ne_session.
+	(continue_negotiate): Renamed from gssapi_challenge; take input
+	token, handle GSS_S_CONTINUE_NEEDED return value.
+	(verify_digest_response): Renamed from verify_response.
+	(verify_negotiate_response): New function.
+	(auth_challenge): Cope with Negotiate responses which gratuitously
+	break the auth-param grammar.
+	(ah_post_send): Handle Negotiate responses.
+	(free_auth, clean_session): Free persisted GSSAPI objects.
+	(auth_register): Initialize GSSAPI objects.
+
+Sun Mar 28 03:03:17 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (get_gss_name): Don't leak token.value.
+
+Sun Mar 28 02:59:58 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (get_cnonce): Only use RAND_pseudo_bytes() if the PRNG
+	is seeded.
+
+Sun Mar 28 02:47:20 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (gssapi_challenge, get_gss_name): Simplify.
+
+Sun Mar 28 02:35:48 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (request_gssapi, get_gss_name, auth_challenge):
+	Implement the Negotiate protocol rather than the obsoleted
+	GSS-Negotiate.
+	(make_gss_error): New function.
+	(gssapi_challenge): Use it for better error handling (set session
+	error string); fix memory leaks.  Don't delegate credentials.
+
+Sat Mar 27 20:49:24 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (ah_post_send): Clear auth header collector buffers
+	after each request.
+
+Fri Mar 26 12:16:15 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (init_ssl): Just initialize the SSL library; delay
+	seeding PRNG until really necessary (performance fix).
+	(seed_ssl_prng): Split from init_ssl.
+	(ne_sock_connect_ssl): Call seed_ssl_prng().
+	(ne_sock_init): Adjust since init_ssl() can't fail.
+
+Fri Mar 26 12:01:38 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.c: Include zlib.h before ne_*.h to fix issues
+	on platforms where zconf.h does "#define const".
+
+Thu Mar 11 23:38:01 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (provide_client_cert): Avoid malloc(0) when server
+	sends no CA names in CertificateRequest.
+	(ne_ssl_cert_write): Be paranoid and clear the OpenSSL error stack
+	on write failures.
+
+Sun Mar  7 11:17:04 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (CFLAGS): Don't use NEON_CFLAGS.
+
+Mon Feb 23 23:03:08 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_vsnprintf, ne_snprintf): New functions.
+
+Sun Feb 22 23:34:47 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_private.h (struct ne_session_s): Remove expect100_works field.
+
+	* ne_request.c (ne_set_request_expect100): New function.
+	(ne_begin_request): Remove req->use_expect100 manipulation.
+	(send_request): Handle enabling 100continue without a request
+	body.
+
+	* ne_session.c (ne_set_expect100): Removed function.
+
+Sun Feb 22 20:17:04 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (error_ossl): Check for ERR_reason_error_string
+	returning NULL.
+
+Sun Feb 22 17:54:43 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c: Don't disable getaddrinfo support here.
+
+Sun Feb 22 17:40:07 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.h (min): Remove definition to...
+
+	* ne_uri.c (min): ...here.
+
+Sun Feb 22 17:31:35 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_props.h: Give the 'type' enum a tag name. 
+
+Sun Feb 22 17:27:28 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_207.c (end_element): Strip whitespace from cdata.
+
+Sun Feb 22 16:27:58 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (struct auth_request): Make auth_hdr, auth_info_hdr
+	fields into ne_buffer *'s.
+	(ah_collect_header): New function.
+	(ah_create): Create ne_buffers for auth_{,info_}hdr; use
+	ah_collect_header rather than ne_duplicate_header to fix handling
+	of multiple auth challenge headers.
+	(ah_post_send): Adjust for char * -> ne_buffer *.
+	(tokenize): Recognize a challenge scheme which is terminated with
+	a comma (i.e. with no challange parameters).
+	(auth_challenge): Fix handling of unrecognized challenges.
+	(ah_destroy): Destroy ne_buffers.
+
+Sun Feb 22 15:04:46 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (ne_set_request_body_provider64): New function.
+
+Sun Feb 15 13:37:03 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_ssl.h: Define that ne_ssl_readable_dname returns UTF-8
+	encoded strings.
+
+	* ne_openssl.c (ne_ssl_readable_dname): Convert dname strings to
+	UTF-8, or use "???".
+
+Sat Feb 14 21:57:25 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c (invalid_ncname_ch1): New macro.
+	(declare_nspaces): Use it, to reject some more invalid namespace
+	prefixes; also check for a colon anywhere in the NCName.
+	(expand_qname): Likewise for the element name.
+
+Mon Feb  9 21:38:03 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_dates.c [WIN32] (GMTOFF): Use gmt_to_local_win32;
+	(gmt_to_local_win32): New function, from Jiang Lei.
+
+Mon Jan 26 14:38:05 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_sock_connect_ssl): Check that OpenSSL version
+	matches between library at run-time and headers at compile-time.
+
+Sat Jan 24 17:49:27 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_dates.c (HAVE_STRUCT_TM___TM_GMTOFF): Alternative GMTOFF()
+	macro.
+
+Sat Jan 24 16:49:30 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (basic_challenge): Cast first parameter to ne_base64
+	to unsigned char * to fix warnings with some compilers.
+
+Sat Jan  3 13:17:36 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.h (ne_set_request_body_fd64): Define conditional on
+	NE_LFS.
+
+	* ne_request.c (ne_set_request_body_fd64): Likewise.
+
+Thu Jan  1 18:01:45 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c: Use NE_HAVE_LFS not _LARGEFILE64_SOURCE in
+	conditional support for off64_t.
+
+Thu Jan  1 17:38:55 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.h [_LARGEFILE64_SOURCE] (ne_set_request_body_fd64):
+	New function.
+	
+	* ne_request.c: Define ne_lseek, ne_off_t, ne_strtoff,
+	NE_OFFT_MAX, FMT_NE_OFF_T appropriately for _LARGEFILE64_SOURCE or
+	otherwise.
+	(struct ne_request_s): Use ne_off_t in place of off_t throughout.
+	(body_fd_send): Use ne_lseek; reset 'remain' after seeking.
+	(clength_hdr_handler): Use ne_off_t, ne_strtoff and NE_OFFT_MAX.
+	(set_body_length): Take an ne_off_t length parameter; use
+	FMT_NE_OFF_T to print it.
+	(ne_set_request_body_fd64): New function.
+
+	* ne_utils.h (NE_FEATURE_LFS): New feature.
+
+	* ne_utils.c (ne_has_support): Support NE_FEATURE_LFS.
+
+Mon Nov 24 20:13:14 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (struct ne_response): Split handling for chunked vs
+	clength-delimited responses into a union.  Use off_t for storing
+	whole-length-of-response values.
+	(read_response_block, ne_read_response_block): Update accordingly.
+	(ne_begin_request): Remove unnecessary variable assignments.
+
+Sun Nov 23 16:03:22 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.h (ne_set_request_body_fd): Take offset and length
+	arguments, return void.
+	(ne_set_request_body_provider): Take off_t length argument.
+
+	* ne_request.c (struct ne_request_s): Store current position
+	within buffer/file used as request body source.  Store request
+	body lengths using off_t type.
+	(body_string_send): Adjust for renamed fields.
+	(body_fd_send): Seek to requested offset; don't read past
+	requested body length.
+	(set_body_length): Renamed from set_body_size.
+
+	* ne_basic.c (ne_put): Determine file size here; adjust for new
+	ne_set_request_body_fd API.
+
+Sun Nov 23 15:05:12 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c, ne_basic.h: Remove two-functions-in-one,
+	ne_put_if_unmodified.
+
+Fri Nov 14 14:05:32 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.c (ne_has_support): Add NE_FEATURE_IDNA.
+
+Fri Nov 14 13:11:49 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (set_hostinfo): [NE_HAVE_LIBIDN]: Use string from
+	IDNA ToAscii operation on provided hostname if successful.
+
+Fri Nov 14 11:23:16 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	All files: replace use of NEON_NODAV with NE_HAVE_DAV, NEON_SSL
+	with NE_HAVE_SSL, NEON_ZLIB with NE_HAVE_ZLIB.  Use NE_HAVE_DAV
+	not USE_DAV_LOCKS.
+
+	* ne_utils.c (ne_has_support): New feature detection interface,
+	replaces ne_supports_ssl.
+
+Thu Nov 13 20:38:28 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (ne_begin_request): Presume a 205 response has no
+	message-body too; RFC2616 compliance fix.
+
+Thu Nov 13 20:31:07 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (ah_post_send): Treat a 401 response to a CONNECT
+	request as a valid proxy auth challenge, to work around buggy
+	proxies.
+
+Tue Nov 11 21:13:18 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Place library-internal symbols in the "ne__" namespace.
+	
+	* ne_request.c (ne__pull_request_body): Renamed from
+	ne_pull_request_body; all callers updated.
+
+	* ne_session.c (ne__negotiate_ssl): Renamed from
+	ne_negotiate_ssl; all callers updated.
+
+Tue Nov 11 21:08:54 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_alloc.h: Mark all allocation functions as having 'malloc'
+	attribute for GCC.
+
+Tue Nov 11 20:36:12 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.h (ne_xml_failure): Replaces ne_xml_valid,
+	inverted and more useful return value.
+
+	* ne_xml.c (struct ne_xml_parser_s): Replace 'valid' field with
+	'failure', with inverted logic.
+	(start_element, end_element, char_data): Check failure flag
+	appropriately.  Set failure flag to return value of callback.
+	Set failure flag to positive integer on a parse error.
+	(ne_xml_create): Don't initialize failure flag.
+	(ne_xml_parse): Check/set failure flag appropriately.
+	(sax_error): Only set an error string (and the error flag)
+	if failure is zero.
+
+	* ne_207.c (ne_simple_request): Adjust to use ne_xml_failure.
+
+	* ne_locks.c (ne_lock, ne_lock_refresh): Likewise.
+
+	* ne_props.c (propfind): Likewise.	
+
+Wed Oct 22 22:19:19 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (read_response_block): Treat an EOF without clean
+	SSL closure as a valid request body delimiter in any case.
+
+Wed Oct 22 21:44:48 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_defs.h (ne_attribute): New macro.
+
+	* ne_request.h, ne_session.h, ne_utils.h: Use ne_attribute instead
+	of littering #ifdef __GNUC__ and __attribute__ everywhere.
+
+Tue Oct 21 20:03:47 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Fix various strict signedness bugs:
+	
+	* ne_auth.c (auth_session): Make nonce_count argument unsigned.
+	(get_cnonce): Use unsigned data buffer.
+	(get_gss_name, gssapi_challenge): Use unsigned integers for status
+	variables.
+	(request_digest): Print nonce count as unsigned.
+	(verify_response): Make nonce_count unsigned.
+
+Tue Oct  7 20:52:06 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	When using SSL via a proxy, don't leak server auth credentials to
+	the proxy, and vice versa.
+	
+	* ne_auth.c (auth_session): Add context field.
+	(ah_create): Ignore challenges in a bad context.
+	(ah_pre_send, ah_destroy): Check that the request-private cookie
+	is not NULL.
+	(auth_register): Take an isproxy flag; set context field
+	appropriately in session structure.
+	(ne_set_server_auth, ne_set_proxy_auth): Adjust accordingly.
+
+Tue Oct  7 19:58:52 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (ne_negotiate_ssl): If the returned cert chain was
+	NULL, try and create one from the peer certificate alone (fix for
+	use of SSLv2 connections).
+
+Mon Sep 29 21:57:40 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c [WIN32]: Include windows.h to fix non-SSL build.
+
+Thu Sep 25 20:05:18 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c (ne_xml_create): Specify an initial error string.
+
+Sun Sep 21 23:00:10 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_cookies.c (set_cookie_hdl): Strip whitespace around cookie
+	name and value.
+
+Sun Sep 14 10:50:01 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_addr_resolve): Use result of autoconf test for
+	working AI_ADDRCONFIG support.
+
+Sat Sep  6 12:05:00 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (check_identity): Take an optional server address
+	argument; check identity against IPaddress extension too if given.
+	(check_certificate): Optionally pass server address to
+	check_identity.
+	(populate_cert): Adjust accordingly.
+
+Thu Sep  4 21:41:38 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_sock_init): Succeed even if PRNG was not seeded.
+
+Thu Sep  4 21:33:34 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_set_useragent): Build and store the entire
+	User-Agent header field in sess->user_agent.
+
+	* ne_request.c (add_fixed_headers): Adjust accordingly; avoid
+	unnecessary calls to ne_buffer_*.	
+
+Thu Sep  4 21:27:34 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c: Include netinet/tcp.h.
+	(ne_sock_connect): Disable the Nagle algorithm; thanks to Jim
+	Whitehead and Teng Xu for the analysis.
+
+Thu Sep  4 11:24:04 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_defs.h: Define ssize_t here for Win32.
+
+	* ne_socket.h: Don't define ssize_t here.
+
+Tue Sep  2 20:20:16 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (auth_challenge): Update to use ne_token not
+	split_string, patch by Tom Lee <i_am_gnomey@hotmail.com>.
+
+Wed Jul 30 21:54:38 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_cookies.c (set_cookie_hdl): Fix NULL pointer dereference;
+	thanks to Markus Mueller <markus-m.mueller@ubs.com>.
+
+Fri Jul 25 11:05:52 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (do_connect): On failure to connect, set error
+	string and call ne_sock_close directly rather than using
+	aborted(); fix leak of socket structure.
+
+Wed Jul 23 23:20:42 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Fix SEGV if inflateInit2 fails with Z_MEM_ERROR etc.	
+	
+	* ne_compress.c (set_zlib_error): New function.
+	(do_inflate, gz_reader): Use it.
+
+Wed Jul 23 22:50:50 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Add support for GSS-Negotiate; patch from Risko Gergely and Burjan
+	Gabor:
+
+	* ne_auth.c [HAVE_GSSAPI]: Include gssapi.h.
+	(auth_scheme): Add auth_scheme_gssapi.
+	(auth_session): Add gssapi_token.
+	(clean_session): Free gssapi_token.
+	(request_gssapi, get_gss_name, gssapi_challenge): New functions.
+	(tokenize): Handle challenge with single token.
+	(auth_challenge): Accept and process a GSS-Negotiate challenge.
+	(ah_pre_send): Send GSS-Negotiate handshake.
+
+Wed Jul 23 22:46:28 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_207.c (ne_207_set_response_handlers,
+	ne_207_set_propstat_handlers): Fix to match declarations (thanks
+	to Diego Tártara).
+
+Fri Jun 27 20:30:45 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c [OPENSSL_VERSION_NUMBER < 0x0090700fL]:
+	Fix build against OpenSSL < 0.9.7.
+
+Sun Jun 22 23:07:45 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_session_destroy): Replace unnecessary use of
+	NE_FREE with ne_free.
+	(set_hostinfo): Don't free hostport/hostinfo here.
+	(ne_session_proxy): Free existing proxy hostname here if
+	necessary.
+
+Sat Jun 21 12:58:25 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (ne_begin_request): Set or clear is_http11 flag
+	for each request.
+
+Wed Jun 18 20:54:44 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c: Add AI_ADDRCONFIG support;
+	[USE_CHECK_IPV6]: Define only if __linux__.
+	(init_ipv6) [USE_CHECK_IPV6]: New conditional.
+	(ne_addr_resolve) [USE_ADDRCONFIG]: Use AI_ADDRCONFIG.
+
+Wed Jun 18 20:03:13 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_sock_create): New function (renamed from
+	create_sock).
+	(ne_sock_connect): Take an ne_socket *, return int.
+	(ne_sock_accept): Likewise.
+	(ne_sock_close): Only call ne_close if fd is non-negative.
+
+	* ne_request.c (aborted): Handle NE_SOCK_* errors specially.
+	(do_connect): Adapt for ne_sock_create/connect interface.  Set
+	sess->connected here on success.
+	(open_connection): Don't set sess->connected here.
+
+Sun Jun 15 12:14:22 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_ssl.h (ne_ssl_cert_digest): Pass digest as a pointer rather
+	than an array.
+
+Sun Jun 15 11:00:09 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_stubssl.c (ne_ssl_cert_cmp): Add stub.
+
+Wed May 28 21:37:27 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (ne_ssl_context_create): Enable workarounds in
+	OpenSSL for better interop with buggy SSL servers.
+
+Fri May 23 23:13:30 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_stubssl.c (ne_ssl_set_clicert): Add stub.
+
+Sat May 10 17:05:26 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c: Rename struct ne_xml_handler to struct handler.
+
+Thu May  8 20:55:46 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (ne_ssl_clicert_read): Pass "b" to fopen.
+
+Tue May  6 22:08:08 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (check_certificate): Re-order verify failure
+	handling to allow caller to set a custom session error string.
+
+Tue May  6 20:21:27 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_md5.c (md5_stream): Restore.
+
+Sat Apr 26 19:21:03 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (te_hdr_handler): Treat presence of any T-E
+	response header as implying the response is chunked, regardless of
+	value.
+
+Sat Apr 26 18:11:24 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c: Rename struct ne_xml_nspace to struct namespace.
+
+Wed Apr 23 22:19:29 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (ne_ssl_cert_export): Don't bother checking for
+	i2d_X509() failure; no OpenSSL code ever checks, so everyone's
+	doomed if it really can fail.
+
+Wed Apr 23 22:01:23 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (ne_ssl_cert_import, ne_ssl_cert_export,
+	ne_ssl_cert_write): Clear OpenSSL error stack on errors.
+
+Wed Apr 23 18:23:53 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_stubssl.c (ne_ssl_cert_write, ne_ssl_cert_import,
+	ne_ssl_cert_export): Add stubs.
+
+Wed Apr 23 14:05:32 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (ne_ssl_cert_write): New function.
+
+Tue Apr 22 23:21:22 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_unbase64): Optimise out some redundant branches.
+
+Tue Apr 22 20:24:44 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (ne_ssl_cert_export, ne_ssl_cert_import,
+	ne_ssl_cert_cmp): New functions.
+
+Tue Apr 22 18:31:55 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_unbase64): New function.
+
+Tue Apr 22 15:53:41 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_base64): Fix encoding binary data; take unsigned
+	argument.
+
+Tue Apr 22 13:07:48 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_stubssl.c (ne_ssl_cert_validity): Add stub.
+
+Tue Apr 22 09:22:26 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (ne_ssl_cert_validity): New function.
+	(asn1time_to_string): Format into a fixed-size buffer.
+
+Tue Apr 22 08:38:30 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c (ne_lock_discover, ne_lock): Don't leak the cdata
+	buffer.
+
+	* ne_props.c (ne_propfind_destroy): Don't leak the value buffer.
+
+Mon Apr 21 23:52:25 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c (ne_xml_destroy): Free root element.
+
+Mon Apr 21 23:46:17 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (dup_client_cert): Set decrypted state; dup the
+	friendly name.
+	(ne_ssl_clicert_free): Free friendly name.
+
+Mon Apr 21 19:44:55 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_md5.h (ne_md5_buffer, ne_md5_stream): Remove unused
+	functions.
+
+Mon Apr 21 18:17:14 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c, ne_207.c: s/NE_ELM_/ELM_/ since no element ids are
+	exported.
+
+Mon Apr 21 16:38:14 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Redesign the XML interface: have startelm callback map {nspace,
+	name} onto a state integer or decline.  Remove "valid"/"invalid";
+	don't abort the parse if no handler accepts an element.  Push
+	cdata accumulation down into the caller; drop collect mode,
+	stripws mode.
+	
+	* ne_xml.h (ne_xml_elmid, struct ne_xml_elm): Removed.
+	(ne_xml_startelm_cb): Return a state/acceptance integer, take a
+	state integer, nspace, name and atts.
+	(ne_xml_endelm_cb, ne_xml_cdata_cb): Take a state integer.
+	(ne_xml_push_mixed_handler): Removed.
+	(ne_xml_push_handler): Removed element list argument.
+	(struct ne_xml_idmap, ne_xml_mapid): New interface.
+
+	* ne_xml.c (struct element): Replaces ne_xml_state.  Add name,
+	nspace, state fields.
+	(friendly_name, find_handler, parse_element,
+	ne_xml_push_mixed_handler, push_handler): Removed functions.
+	(declare_nspaces, expand_qname): Factored out from find_handler
+	and parse_element.
+	(start_element): Use expand_qname, declare_nspaces.  Find
+	appropriate handler here.  Guarantee not to pass a NULL atts array
+	to the start-element callback.  Drop collect mode.
+	(end_element): Drop collect mode
+	(ne_xml_push_handler): Fold push_handler back in.
+	(ne_xml_mapid): New function.
+
+	* ne_207.h (NE_ELM_*): Don't export element id.
+	(NE_207_STATE_PROP, NE_207_STATE_TOP): Export state integers.
+
+	* ne_207.c (struct ne_207_parser_s): Add cdata field.
+	(map207): Replace element list with idmap array.
+	(can_handle): New function, replacing check_context logic.
+	(start_element): Determine new state integer; only accept the
+	element in valid states.  Clear cdata.
+	(end_element): Use state rather than element id.  Do nothing for
+	end of 'response' element if element is incomplete.
+	(ne_207_create): Create cdata buffer.
+	(ne_207_destroy): Destroy cdata buffer.
+	(ne_207_ignore_unknown): Removed function.
+	(ne_simple_request): Don't call ne_207_ignore_unknown.
+
+	* ne_props.h (NE_PROPS_STATE_TOP): Define state.
+	
+	* ne_props.c (struct ne_propfind_handler_s): Add value and depth
+	fields.
+	(ELM_flatprop): Define state.
+	(flat_elms): Removed array.
+	(chardata): Append to value field when in ELM_flatprop state.
+	(startelm): Decline everything other than elements within the
+	'prop' state.  Collect flatprop contents.
+	(endelm): Collect flatprop contents.
+
+	* ne_locks.c (struct discover_ctx, struct lock_ctx): Store cdata.
+	(element_map): Replace element list with idmap array.
+	(can_accept): Replaces check_context callback.
+	(ld_startelm, lk_cdata, ld_cdata): New functions.
+
+Mon Apr 14 00:04:20 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_207.h (ne_207_start_response, ne_207_end_response,
+	ne_207_start_propstat, ne_207_end_propstat): Use ANSI-style
+	function pointers in typedefs.
+
+	* ne_207.c (struct ne_207_parser_s): Updated accordingly.
+
+Mon Apr 14 00:02:10 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (read_response_block): Better error messages for
+	invalid chunks, don't use strncmp for a two-character comparison.
+
+Mon Apr  7 22:26:50 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_stubssl.c (ne_ssl_cert_identity): New function.
+
+Mon Apr  7 22:16:16 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (struct ne_ssl_certificate_s): Add identity field.
+	(check_identity): Add optional identity argument.
+	(populate_cert): Retrieve cert identity using check_identity.
+	(check_certificate): Pass extra NULL to check_identity.
+	(ne_ssl_cert_identity): New function.
+	(ne_ssl_cert_free): Free the identity field.
+
+Mon Apr  7 21:29:54 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (check_identity): Take a string hostname rather
+	than a session object.
+	(check_certificate): Adjust accordingly.
+
+Sun Apr  6 21:26:05 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.h (NE_HEX2ASC): Cast result to char to avoid warnings
+	with some compilers.
+ 
+Sun Apr  6 20:11:42 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (ne_ssl_readable_dname): Include commonName or
+	emailAddress in returned string if either is the only attribute.
+
+Sun Mar 30 10:54:20 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Split decryption of client certs into two steps
+	
+	* ne_openssl.c (ne_ssl_clicert_encrypted, ne_ssl_clicert_decrypt):
+	New functions.
+	(ne_ssl_client_cert_s): Add p12 and decrypted fields.
+	(find_friendly_name): New function.
+	(get_friendly_name): Removed function.
+	(ne_ssl_clicert_read): Drop password callback; on decrypt failure,
+	extract friendly name and set decrypted state of clicert.
+
+Sun Mar 30 10:54:01 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_stubssl.c (ne_ssl_clicert_encrypted, ne_ssl_clicert_decrypt):
+	New stubs.
+	(ne_ssl_clicert_read): Adjusted for API change.
+
+Sat Mar 29 14:23:37 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (ne_ssl_dname_cmp): New function.
+
+	* ne_stubssl.c (ne_ssl_dname_cmp): New function.
+
+Sat Mar 29 13:52:47 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (struct ne_ssl_client_cert_s): Add 'friendly_name'
+	field.
+	(get_friendly_name, ne_ssl_clicert_name): New functions.
+	(ne_ssl_clicert_read): Store the cert's friendly name.
+
+	* ne_stubssl.c (ne_ssl_clicert_name): New function.
+
+Sat Mar 29 13:16:14 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_openssl.c (ne_ssl_clicert_owner): New function.
+
+Fri Mar 28 22:12:57 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_stubssl.c (ne_ssl_cert_digest): New function.
+
+	* ne_openssl.c (ne_ssl_cert_digest): New function.
+
+Wed Mar 26 20:41:57 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_ssl_trust_cert) [NEON_SSL]: Only build when SSL
+	support is present.
+
+Wed Mar 26 20:01:00 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Begin abstraction of SSL layer to better isolate
+	SSL-library-specific code, and to improve certificate handling
+	interface.
+
+	Drop support for PEM-encoded client certificates.
+
+	* ne_session.h (ne_ssl_trust_cert): Replaces ne_ssl_load_ca, in
+	conjunction with ne_ssl_load_cert.
+	(ne_ssl_trust_default_ca): Replaces ne_ssl_load_default_ca.
+	(ne_ssl_keypw_prompt): Removed function, no longer needed.
+	(ne_ssl_set_clicert): Replaces ne_ssl_load_pkcs12, in conjunction
+	with ne_ssl_clicert_read.
+	(ne_ssl_provide_clicert): Replaces ne_ssl_provide_ccert, callback
+	type changed.
+	
+	* ne_openssl.c: New file; much code moved from ne_session.c.
+
+	* ne_privssl.h: New file, private interface between ne_socket.c
+	and ne_openssl.c.
+	
+	* ne_ssl.h: New file.
+
+	* ne_private.h (struct ne_session_s): Store pointers to
+	ne_ssl_client_cert etc opaque objects, not OpenSSL structures.
+	
+	* ne_session.c: Most of ne_ssl_* moved to ne_openssl.c.
+	(ne_session_create, ne_session_destroy): Use ne_ssl_cert_* etc to
+	manage cert objects.
+
+	* ne_socket.c (struct ne_socket_s): Replace SSL *, SSL_CTX *
+	pointers with an ne_ssl_socket * pointer.
+	(readable_ossl, error_ossl, read_ossl, write_ossl, ne_sock_close):
+	Compensate for above change.
+	(ne_sock_use_ssl): Removed function.
+	(ne_sock_switch_ssl): Pass in SSL * as void for time being.
+	(ne_sock_connect_ssl): Renamed and cleaned up version of
+	ne_sock_use_ssl_os.
+	(ne_sock_sslsock): New function.
+
+	* Makefile.in: Add deps for ne_openssl.c.
+	
+Sun Mar 23 13:02:58 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_set_useragent): Use ne_malloc.
+
+Sat Mar 22 21:06:45 2003  Joe Orton  <joe@manyfish.co.uk>
+
+     * ne_socket.c (raw_connect): Fill in sin6_family or sin_family
+     since AIX 4.3 fails to do so.
+
+Wed Mar 19 20:44:11 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c [NEON_SSL] (free_client_cert): Build conditional on
+	NEON_SSL.
+
+Mon Mar 17 20:33:32 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c: Include netdb.h conditional on HAVE_NETDB_H. (fix
+	build for older versions of CygWin).
+
+Sun Mar 16 23:30:20 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (check_identity): Fix leak of subject alt. name
+	structures.
+
+Sun Mar 16 19:21:22 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (free_client_cert): New function.
+	(ne_session_destroy, ne_ssl_load_pem, ne_ssl_load_pkcs12): Call
+	it; prevent memory leak if ne_ssl_load_{pem,pkcs12} are called >1
+	per session.
+
+Sun Mar 16 18:00:34 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (provide_client_cert): Free peer certificate after
+	use.
+	(ne_session_destroy): Free client cert and key if present.
+
+Sun Mar 16 14:23:05 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c [HAVE_EXPAT]: Include xmlparse.h for bundled expat
+	build.
+
+	* ne_utils.c: Only include expat.h if HAVE_XMLPARSE_H is not
+	defined.
+
+Wed Mar 12 15:04:13 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_redirect.c (struct redirect): Add 'valid' field.
+	(post_send): Set and clear 'valid' to keep track of whether stored
+	URI is valid.
+	(ne_redirect_location): Return NULL if stored URI is not valid.
+
+Wed Mar 12 14:52:49 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_uri.c (ne_uri_free): Zero-initialize structure after
+	free'ing.
+
+Tue Mar 11 22:01:11 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_redirect.c (ne_redirect_location): Return NULL if no redirect
+	session is registered, rather than SEGV; Ralf Mattes
+	<rm@fabula.de>.
+
+Sun Mar  9 16:33:24 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Fix a memory leak if an XML parse error occurs during a PROPFIND
+	response:
+	
+	* ne_props.c (ne_propfind_current_private): Return NULL if no
+	propset is being processed.
+	(free_propset): Free propset href here.
+	(end_response): Don't free propset href here.  Set current field
+	of handler to NULL after free'ing propset.
+	(ne_propfind_destroy): Free current propset if one was being
+	processed.
+
+Sun Mar  9 11:53:58 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_207.c (ne_207_destroy): Fix possible leak of reason_phrase
+	string.
+
+Sun Mar  9 11:01:15 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.c (ne_parse_statusline): Use ne_strclean.
+	
+	* ne_session.c (ne_get_error): Use ne_strclean.
+
+Sun Mar  9 10:53:52 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c: Remove broken "UTF-8 decoding" support used for libxml
+	1.x.
+
+Sun Mar  9 09:55:26 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c: Drop support for expat < 1.95.0 and libxml 1.x.
+
+	* ne_utils.c (version_string): Include expat version string.
+
+Sun Mar  9 09:54:00 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c: Don't declare h_errno on Win32 either.
+
+Sun Mar  9 08:49:40 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (do_concat) [HAVE_STPCPY]: Use stpcpy rather than
+	strlen/memcpy, when available.
+
+Mon Mar  3 22:17:04 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c [!USE_GETADDRINFO && !HAVE_DECL_H_ERRNO): Declare
+	h_errno (fix build on SCO OpenServer 5.0).
+
+Sat Mar  1 21:22:19 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_redirect.c (free_redirect): Fix once-per-session memory leak.
+
+Sat Mar  1 20:23:47 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Add implemention of simple memory leak tracking, for testing
+	purposes.
+
+	* ne_alloc.c [NEON_MEMLEAK] (tracking_malloc, ne_free_ml,
+	ne_malloc_ml, ne_calloc_ml, ne_realloc_ml, ne_strdup_ml,
+	ne_strndup_ml, ne_memleak_dump): New functions.
+
+	* memleak.h: New header.
+
+Sat Mar  1 13:44:26 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	First step towards automated memory leak tests.
+	
+	* ne_alloc.c (ne_free): New function.
+
+	* All files: replace use of free() with ne_free().
+
+Sat Mar  1 09:48:39 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_uri.c (ne_path_unescape): Fix memory leak on invalid URI.
+
+Sat Mar  1 08:03:18 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_strclean): New function.
+
+Wed Feb 26 21:45:12 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (ne_begin_request, proxy_tunnel, open_connection)
+	[NEON_SSL] Don't build CONNECT tunnel support code if SSL is not
+	supported.
+
+Wed Feb 26 21:44:18 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.c (ne_debug_init): Allow ne_debug_init(NULL, 0) to turn
+	off debugging.  Fix to produce debug output if the any of the
+	specified "channels" are active, not all.  (also fixing
+	NE_DBG_FLUSH support).
+
+Tue Feb 25 23:12:31 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c (process_footer): Mention number of extra bytes in
+	error message for oversized footer.
+
+Sun Feb 23 21:19:20 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (verify_response): Fix to parse nonce count as hex
+	string rather than decimal; fix verification of >9 responses.
+
+Thu Feb 13 20:35:45 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_set_useragent): Fix to append "neon/x.y.z" to
+	application-supplied token rather prepend.
+
+Thu Feb 13 09:06:22 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (open_connection): Fix for CONNECT tunnelling
+	(regression since 0.23.x), thanks to Nathan Hand
+	<Nathan.Hand@defence.gov.au>.
+
+Mon Feb  3 22:10:54 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Implement Daniel Stenberg's trick to avoid the slow AF_UNSPEC
+	lookups on Linux:
+	
+	* ne_socket.c (init_ipv6, ipv6_disabled): New function and global.
+	(ne_sock_init): Call init_ipv6.
+	(ne_addr_resolve) [USE_GETADDRINFO]: Pass AF_INET in hints if
+	ipv6_disabled is set.
+
+Mon Feb  3 20:55:47 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c [__hpux && USE_GETADDRINFO]: Undefine
+	USE_GETADDRINFO to work around broken implementation in HP-UX
+	11.11.
+
+Mon Jan 27 21:39:31 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (write_raw): Fix for handling EINTR during write(),
+	from Sergey N Ushakov.
+
+Thu Jan 16 21:59:03 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Allow _init after _finish to succeed: Sergey N Ushakov.
+	* ne_socket.c (init_result): New global variable.
+	(ne_sock_init): Use init_result global rather than result.
+	(ne_sock_finish): Clear init_result.
+
+Fri Dec 27 17:03:17 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (build_request): Remove redundant call to
+	ne_buffer_clear.
+
+Fri Dec 27 14:38:08 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (ne_request_create): strdup the method string.
+	(ne_request_destroy): free the method.
+
+Mon Dec 23 17:04:32 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_write, ne_read, ne_close, ne_errno): Renamed
+	macros from NEON_WRITE, NEON_READ, NEON_CLOSE, NEON_ERRNO.
+	All callers changed.
+
+Mon Dec 23 16:58:43 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Add proper Win32 socket error handling, merged efforts of Johan
+	Lindh and Sergey N Ushakov <ushakov@int.com.ru>:
+	
+	* ne_socket.c (ne_errno, NE_ISINTR, NE_ISRESET, NE_ISCLOSED): New
+	macros.
+	[WIN32] (print_error): New function.
+	(set_strerror) [WIN32]: Use print_error.
+	(readable_raw, read_raw, write_raw): Use new error handling
+	macros.
+	(ne_addr_resolve) [WIN32]: Use WSAGetLastError() rather than
+	h_errno.
+	(ne_addr_error) [WIN32]: Use print_error.
+
+Tue Dec 10 21:41:26 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_iaddr_print): Renamed from ne_addr_print for
+	consistency with other ne_iaddr_ functions.
+
+Sun Dec  8 20:08:31 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (get_cnonce): Use GetCurrentThreadId() on Win32.
+
+Sun Nov 24 18:45:32 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c: Remove qop_values and algorithm_names arrays.
+	(request_digest): Inlined qop, algorithm name lookups accordingly.
+
+Sun Nov 24 16:45:39 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.h: Renamed ne_request_auth typedef to ne_auth_creds.
+
+	* ne_auth.c (auth_session): Renamed reqcreds, recreds_ud fields to
+	creds, userdata.
+	(auth_register, ne_set_proxy_auth, ne_set_server_auth): Update for
+	ne_request_auth rename.
+
+Fri Nov 22 17:39:35 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (auth_challenge): Fix support for RFC2617-style digest
+	auth; notice the qop= parameter in challenge.  Fix leak of parsed
+	qop array.
+
+Fri Nov 22 17:08:01 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (get_cnonce): Rewrite to use either pseudo-random data
+	from the SSL library (if available), or really-not-random data
+	from gettimeofday/getpid otherwise.
+
+Sun Nov 17 22:13:49 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_addr_print) [USE_GETADDRINFO]: Use the SACAST()
+	macro.
+
+Sun Nov 17 19:29:23 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_sock_connect): Make address argument const.
+	(raw_connect): Make address argument const; adjust to use a copy
+	of the sockaddr structure, which is correct anyway.
+	(ne_addr_first, ne_addr_next): Make return pointer const.
+
+	* ne_private.h (struct host_info): Store current address as const.
+
+Sun Nov 17 19:03:01 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_register_progress): Removed function.
+
+	* ne_socket.h (ne_block_reader, ne_progress,
+	ne_register_progress): Removed.
+
+	* ne_request.c (do_connect): Don't call ne_register_progress.
+
+	* ne_request.h: Add ne_block_reader typedef.
+
+	* ne_session.h: Include sys/types.h; add ne_progress typedef.
+	
+Sun Nov 17 18:59:29 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_iaddr_make, ne_iaddr_cmp, ne_iaddr_free):
+	New functions.
+	
+Mon Nov 11 19:51:24 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Allow discovery of document encoding.
+	
+	* ne_xml.c [HAVE_EXPAT]: (struct ne_xml_parser_s): Add encoding
+	field.  (decl_handler): New function.
+	(ne_xml_doc_encoding): New function.
+
+Mon Nov 11 19:48:43 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c (sax_handler): Use sax_error for fatal error callback.
+
+Fri Oct 11 23:50:01 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_private.h (struct ne_session_s): Change 'connected' to be a
+	simple boolean flag.
+
+	* ne_session.c (ne_close_connection): Treat 'connected' as a
+	boolean.
+
+	* ne_request.c (open_connection): Greatly simplified.
+
+Fri Oct 11 00:46:52 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_props.c (end_propstat): Fix NULL pointer dereference
+	if no status object is given.
+
+Tue Oct  8 20:10:24 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c (ne_xml_create) [!HAVE_EXPAT]: Set 'replaceEntities'
+	flag in created parser so that entities are dereferenced in
+	attribute values.
+
+Mon Oct  7 22:08:46 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (init_ssl): Attempt to seed PRNG using EGD socket at
+	path EGD_PATH or a set of predetermined locations if EGD_PATH is
+	not defined.  No longer try $EGDSOCKET or $HOME/.entropy.
+
+Mon Oct  7 21:32:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (register_hooks): Removed function.
+	(auth_register): Fold in register_hooks.
+
+Tue Sep 24 21:24:44 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (ne_request_create): Pass Request-URI to
+	create_request hooks.
+
+Tue Sep 24 20:42:45 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c [__hpux]: Define _XOPEN_SOURCE_EXTENDED to 1, to
+	pick up h_errno definition on HP-UX 10.20.
+
+Wed Sep 18 21:46:28 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c (struct ne_decompress_s): Add zstrinit field.
+	(gz_reader): Set zstrinit after inflateInit2 succeeds.
+	(ne_decompress_destroy): Only call inflateEnd if zstrinit is set.
+
+Wed Sep 18 19:56:00 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c: Remove incomplete domain support.
+
+Tue Sep 17 21:05:11 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Fix rejection of server certificates which have commonName as the
+	least specific attribute.
+
+	* ne_session.c (check_identity): Don't ignore commonName if it is
+	the least specific attribute.
+
+Tue Sep 10 21:08:18 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (lookup_host): Destroy cached address if resolve
+	fails; fix segfault if a second request in the session is
+	dispatched after the DNS lookup fails on the first.
+
+Mon Sep  9 22:26:03 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (RETRY_RET): Treat SSL truncation as a legitimate
+	persistent connection timeout.
+
+Fri Aug 30 21:58:45 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (read_response_block): Clear can_persist flag if an
+	EOF was read (fix for read-till-EOF response terminated by an
+	unclean SSL shutdown).
+
+Mon Aug 26 18:05:00 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c: Fix HAVE_LIMITS check (Blair Zajac).
+
+Sun Aug 25 23:29:06 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (do_connect): Add debug message for connection
+	attempt.
+
+Sun Aug 25 22:54:04 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.h (ne_addr_print): Make address argument const.
+
+Sun Aug 25 11:52:32 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_addr_print): New function.
+
+Sun Aug 25 10:09:10 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Fix interop with Tomcat/3.2 SSL server, which performs an unclean
+	shutdown on an HTTP/1.0 response without a C-L header.
+
+	* ne_request.c (read_response_block): Ignore SSL connection
+	truncation for a read-till-EOF response, where no reseponse
+	content has been read yet.
+	(ne_read_response_block): Always increase 'total' counter.
+
+Sun Aug 25 08:47:41 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (aborted): Handle code=0 case specifically, and
+	NE_SOCK_* as default.
+
+Sun Aug 25 08:24:48 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.h: Add `NE_SOCK_TRUNC' return value.
+	
+	* ne_socket.c (error_ossl): Return NE_SOCK_TRUNC when an EOF is
+	received without a close_notify.
+
+Sat Aug 24 17:37:14 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.h (ne_inet_addr): New type.
+	(ne_addr_first, ne_addr_next): New public interface.
+	(ne_sock_connect): Change first parameter to ne_inet_addr.
+
+	* ne_socket.c: Predefine ne_inet_addr for ne_socket.h, replacing
+	ne_raw_addr.
+	(ne_addr_first, ne_addr_first): Renamed from addr_first,
+	addr_next; return type now ne_inet_addr; made public.
+	(ne_sock_connect): Fold in make_socket() macro; just connect to
+	single IP address passed in.
+
+	* ne_private.h (struct host_info): Renamed 'addr' to 'address',
+	dded 'current' field, removed 'resolved' field.
+
+	* ne_request.c (lookup_host): Adjust for addr->address rename.
+	(ne_begin_request): Call lookup_host if 'address' is NULL in
+	host_info structure, don't use 'resolved' flag.
+	(do_connect): Replaces init_socket; factor more code out from
+	open_connection.  Loop over available addresses until an
+	ne_sock_connect call succeeds.
+	(open_connection): Moved code into do_connect.
+
+	* ne_session.c (ne_session_destroy): Adjust for addr->address
+	rename.
+
+Sat Aug 24 13:45:26 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (count_concat, do_concat): Compact into while()
+	loops.
+
+Sat Aug 24 13:36:04 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_private.h (VERSION_PRE11): Removed macro.
+	(struct ne_session_s): Add is_http11 field; removed version_major,
+	version_minor fields.
+
+	* ne_request.c (add_fixed_headers): Use is_http11 flag rather than
+	VERSION_PRE11 macro.
+	(ne_begin_request): Set and use is_http11 flag.
+
+	* ne_session.c (ne_version_pre_http11): Use is_http11 flag.
+	(ne_session_create): Don't set version_major, version_minor fields.
+
+Sat Aug 24 09:00:13 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (struct ne_request_s): Removed abs_path field.
+	(ne_set_request_uri): Removed function.
+	(ne_request_create): Set req->uri to be the actual Request-URI.
+	Don't use an absoluteURI in Request-URI if using SSL via a proxy
+	tunnel, or if passed-in path does not begin with a '/'.
+	(build_request): Use pre-determined Request-URI.
+	(proxy_tunnel): Pass true Request-URI to ne_request_create.
+	(ne_request_destroy): Don't free abs_path.
+
+Sat Aug 24 00:37:25 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (aborted): Fix handling of _CLOSED and _TIMEOUT
+	socket errors, and of non-socket errors.  Presume ne_sock_error
+	cannot return NULL.
+
+Sat Aug 24 00:07:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_cookies.c (set_cookie_hdl): Ensure that each cookie field is
+	safe to free().
+
+Fri Aug 23 23:46:58 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (aborted): Close the connection after setting the
+	session error, otherwise the socket error is lost.
+
+Fri Aug 23 22:50:30 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_sock_init): Set SIGPIPE disposition before SSL
+	library initalization, so it happens even if SSL library
+	initialization fails.
+
+Fri Aug 23 22:03:26 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c [USE_GETADDRINFO] (make_socket): Pass SOCK_STREAM to
+	socket() rather than ai_socktype: on RHL6.2, ai_socktype is
+	returned as zero.
+
+Wed Aug 21 18:06:36 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c: Reinstate stdlib.h include.
+
+	* ne_socket.h: Reinstate sys/socket.h include.
+
+Wed Aug 21 12:58:47 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_addr_resolve): Accept IPv6 addresses enclosed in
+	square brackets.
+
+Wed Aug 21 09:37:24 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_uri.c (ne_uri_parse): Parse literal IPv6 address using the
+	RFC2732 `[address]' syntax.
+
+Mon Aug 19 17:18:45 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_addr_error): Override a horribly generic error
+	message from gai_strerror().
+
+Mon Aug 19 16:24:37 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.h: Remove netinet/in.h etc includes.
+	(ne_sock_addr): Add new opaque type.
+	(ne_addr_resolve, ne_addr_result, ne_addr_error, ne_addr_destroy):
+	New functions.
+	(ne_sock_connect): Changes address argument to `ne_sock_addr *'.
+	(ne_name_lookup): Removed function.
+
+	* ne_socket.c: Added netinet/in.h etc includes.
+	(ne_sock_addr, ne_raw_addr): Define types.
+	(make_socket): New macro.
+	(ne_addr_resolve): Replace ne_name_lookup; store results (multiple
+	addresses if returned) in returned ne_sock_addr object.  Use
+	getaddrinfo() if available.
+	(raw_connect, addr_first, addr_next, ne_addr_result,
+	ne_addr_error, ne_addr_destroy): New functions.
+	(ne_sock_connect): Re-implement to loop through available
+	addresses until a connect() succeeds; use make_socket, raw_connect
+	auxiliaries.
+
+	* ne_private.h (struct host_info): Store an ne_sock_addr pointer.
+
+	* ne_request.c (lookup_host): Use new ne_addr_* interface.
+
+	* ne_session.c (ne_session_destroy): Destroy address objects.
+	
+Mon Aug 19 00:19:49 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c: Move prng_seeded inside ifdef NEON_SSL region to
+	prevent unused variable warning for non-SSL build.
+
+Sun Aug 18 23:21:21 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.h (ne_strerror): Return buffer.
+
+Sun Aug 18 23:17:56 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (set_error): Use ne_strnzcpy.
+
+Sun Aug 18 23:14:07 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_strerror): Use ne_strnzcpy.
+
+Sun Aug 18 23:11:45 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.h (ne_strnzcpy): New macro.
+
+Sun Aug 18 22:48:27 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_sock_init): Check directly for SIGPIPE
+	definition rather than HAVE_SIGPIPE.
+
+Sun Aug 18 13:49:49 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (set_hostport): Use %u for printing unsigned int.
+
+Sun Aug 18 13:47:43 2002  Joe Orton  <joe@manyfish.co.uk>
+	
+	* ne_utils.h (NE_DBG_SSL): New constant.
+
+	* ne_session.c [NEON_SSL] (everywhere): Use NE_DBG_SSL channel for
+	debugging messages.
+
+Sun Aug 18 08:17:19 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (match_hostname): Fix to use case-insensitive
+	string comparison.
+
+Sun Aug 18 08:10:12 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (check_identity): Check the commonName if no
+	alt. names of DNS type were found.
+
+Sun Aug 18 07:39:35 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (check_identity): Use the most specific commonName
+	attribute found, not the first.  (for RFC2818 compliance)
+
+Sun Aug 18 01:54:53 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (match_hostname): Invert return value.
+	(check_identity): New function; split out commonName check from
+	check_certificate, check subjectAltName extension instead if
+	present.
+	(check_certificate): Use check_identity.
+
+Sat Aug 17 19:59:21 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (check_certificate): Extend debugging code to dump
+	the whole certificate chain, but #if 0 it by default.
+
+Mon Aug 12 12:04:51 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (aborted): Use NE_FMT_SSIZE_T to print ssize_t
+	value.
+
+Mon Aug 12 11:08:35 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Support PRNG seeding via EGD to make SSL work on platforms which
+	lack /dev/random:
+
+	* ne_socket.c (init_ssl): New function.
+	(ne_sock_init): Call init_ssl, set prng_seeded global on success.
+	(ne_sock_use_ssl_os): Fail early if prng_seeded is not set, and
+	RAND_status returns false.
+
+Tue Aug  6 07:18:30 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_sock_use_ssl_os): Remove goto-based error
+	handling.  Don't call SSL_shutdown after SSL_connect fails.
+
+Mon Aug  5 23:18:55 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_ssl_keypw_prompt): Don't set SSL_CTX default
+	password callbacks, since these are never invoked.  Implement
+	once, stub for !NEON_SSL is no longer needed.
+
+Mon Aug  5 21:01:54 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_ssl_load_pem): Pass private key prompt callback
+	to PEM_read_X509, PEM_read_PrivateKey (patch by Daniel Berlin).
+	Also handle errors properly; call ERR_get_error() to pop the
+	errors of the error stack.
+
+Mon Aug  5 20:15:10 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (provide_client_cert): Increase reference count on
+	key and certificate, to prevent them being free'd too early.
+
+Sun Aug  4 22:35:27 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Fix `retry_after_abort' test in request.c:
+
+	* ne_request.c (send_request): Don't use the 'persisted' flag
+	until after a new connection has been opened, when it may have
+	been reset.
+
+Sun Aug  4 17:26:37 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (struct ne_request_s): Remove reqbuf field.
+	(ne_request_create, ne_request_destroy): Don't (de)allocate reqbuf.
+	(build_request): Allocate the returned buffer internally.
+	(ne_begin_request): Destroy the buffer after use.
+
+Sun Aug  4 15:36:01 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_ssl_load_pem): Close file after use.
+
+Sun Aug  4 12:55:49 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Factor out EPIPE, ECONNRESET handling from write_raw:
+	
+	* ne_socket.c (MAP_ERR): New macro.
+	(write_raw, error_ossl): Use MAP_ERR.
+
+Sun Aug  4 12:25:34 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_sock_switch_ssl): New function.
+
+Sun Aug  4 12:24:23 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_sock_switch_ssl): New function, really just for
+	test suite.
+
+Sat Aug  3 22:11:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (ne_forget_auth): Fix segfault if either server or
+	proxy auth is not in use.
+
+Sat Aug  3 22:06:32 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_redirect.c (create, post_send, ne_redirect_register,
+	ne_redirect_location): Updated for new hook interface.
+
+Sat Aug  3 19:02:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Adjustment of hook interface and use: fixing a design flaw causing
+	a segfault in the auth hooks when two requests are used
+	concurrently for a single session during a CONNECT tunnel.
+	
+	* ne_request.h, ne_session.h:
+	(ne_get_request_private, ne_get_session_private): Replace
+	ne_request_hook_private, ne_session_hook_private.
+	(ne_set_session_private, ne_set_request_private): Replace
+	ne_hook_session_accessor, ne_hook_request_accessor.
+
+	* ne_request.h (ne_create_request_fn, ne_pre_send_fn,
+	ne_post_send_fn): Add ne_request pointer as first argument.
+	(ne_hook_destroy_request): Take ne_destroy_req_fn function.
+	(ne_hook_destroy_session): Take ne_destroy_sess_fn function.
+	
+	* ne_request.c (struct ne_request_s): Renamed `accessor_hooks'
+	field to `private'.
+	(get_private): Renamed from call_access; don't invoke function.
+	(ne_null_accessor): Removed function.
+
+	* ne_auth.c (struct auth_class): Store hook id.
+	(auth_session): Remove auth_request pointer.
+	(ah_create): Store auth_request pointer as request-private data.
+	(ah_pre_send, ah_post_send, ah_destroy): Retrieve auth_request
+	pointer from request-private data.
+	(register_hooks, ne_forget_auth): Use
+	ne_{get,set}_session_private.
+
+	* ne_locks.c (struct lh_req_cookie): New structure.
+	(struct ne_lock_store_s): Remove submit_locks field.
+	(lk_create, lk_pre_send, submit_lock, ne_lock_using_resource,
+	ne_lock_using_parent, lk_destroy): Adjust to use lh_req_cookie
+	pointer as request-private data.
+
+	* ne_cookies.c (create, pre_send): Adjust for hook prototype
+	changes.
+
+Wed Jul 31 23:46:17 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c [NEON_SSL]: Include limits.h for INT_MAX definition.
+
+Mon Jul 29 20:55:57 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (struct auth_class): New structure; abstracts out
+	proxy/server generic auth handling more cleanly.
+	(ah_server_class, ah_proxy_class): Declare variables.
+	(auth_session): Reference an auth_class structure.
+	(auth_register): Replaces auth_create.
+	(ne_set_server_auth, ne_set_proxy_auth): Simplify, use
+	auth_register.
+	(everywhere): Reference req_hdr etc via ->spec-> reference.
+
+Sun Jul 28 12:29:23 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (proxy_tunnel): Reset 'persisted' flag, so that a
+	newly tunnelled connection is not treated as persistent.
+
+Sun Jul 28 12:26:49 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.h (CONCAT2, CONCAT3, CONCAT4): Removed macros.
+
+Thu Jul 25 23:16:00 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (send_request): Don't clear retry until a
+	status-line has been read.
+
+Thu Jul 25 00:03:17 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (basic_challenge, request_basic): Use ne_concat not
+	the CONCAT? macros.
+
+	* ne_basic.c (ne_mkcol): Use ne_concat not the CONCAT2 macro.
+
+Wed Jul 24 00:16:39 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (count_concat, do_concat): Factored out from
+	ne_buffer_concat.
+	(ne_buffer_concat): Rewrite to use count_concat, do_concat.
+	(ne_concat): New (resurrected) function.
+
+Thu Jul 18 21:52:12 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (proxy_tunnel): Don't use server.hostport in
+	Request-URI; always include `:port' even if default port is used;
+	fix CONNECT through Inktomi Traffic-Server.
+
+Thu Jul 18 21:33:43 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (aborted, ne_set_request_body_fd): Use ne_strerror.
+
+	* ne_session.c (ne_ssl_load_pem, ne_ssl_load_pkcs12): Use ne_strerror.
+
+	* ne_basic.c (get_to_fd): Use ne_strerror.
+
+Thu Jul 18 20:19:30 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_strerror): New function.
+
+	* ne_socket.c (set_strerror): Move portability logic to
+	ne_strerror; just use that here.
+
+Thu Jul 18 20:00:46 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (read_raw, write_raw): Don't re-evaluate 'errno',
+	per Ulrich Drepper's advice.
+
+Wed Jul 17 23:47:01 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (struct ne_socket_s): Store buffer for error string.
+	(set_error, set_strerror): New macros.
+	(everywhere): Use set_error, set_strerror or ne_snprintf to set
+	the socket error string.
+
+Wed Jul 17 23:19:18 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.c (ne_version_match): Fix inverted minor version test.
+
+Sun Jul 14 20:13:59 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_uri.h (ne_uri): Store port as unsigned.
+
+	* ne_uri.c (ne_uri_defaultport): Return unsigned int, and zero for
+	undefined port.
+
+Sun Jul 14 20:07:35 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_session_proxy): Take port parameter as unsigned
+	int, as per ne_session_create.
+
+Sun Jul 14 20:03:21 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (strip_eol): Take ssize_t 'len' parameter.
+	(read_message_header): Use ssize_t for 'n'.
+
+Sun Jul 14 12:45:40 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_sock_use_ssl_os): Unconditionally enable
+	SSL_MODE_AUTO_RETRY now OpenSSL 0.9.6 is required.
+
+Sun Jul 14 12:15:40 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.h (NE_XML_MEDIA_TYPE): New definition.
+
+	* ne_acl.c (ne_acl_set),
+	* ne_props.c (ne_proppatch, propfind): Use NE_XML_MEDIA_TYPE,
+	rather than hard-coding the incorrect "text/xml" media type.
+
+Sun Jul 14 10:53:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.c (ne_version_match): Replace ne_version_minimum.
+
+Sat Jul 13 11:40:37 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_negotiate_ssl): Include socket error string in
+	session error if SSL negotiation fails.
+
+Sat Jul 13 11:27:50 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (error_ossl): New function.
+	(ERROR_SSL_STRING): Removed macro.
+	(CAST2INT): New macro; safety harness for OpenSSL compatibility.
+	(read_ossl, write_ossl): Use error_ossl, CAST2INT.
+	(ne_sock_use_ssl_os): Use error_ssl.
+
+Sat Jul 13 11:16:07 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c: Define ECONNRESET as WSAECONNRESET on Win32.
+
+Sat Jul 13 10:10:03 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_private.h (struct ne_session_s): Replace 'reqcount' with
+	'persisted' flag.
+
+	* ne_request.c (ne_end_request): Set 'persisted' flag if
+	connection is left open.
+	(send_request): Adjust to allow retry if 'persisted' flag is set.
+	(init_socket): Clear 'persisted' flag here...
+	(open_connection): ... rather than here.
+
+Wed Jul 10 22:51:39 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (RETRY_RET): Retry on an NE_SOCK_RESET too.
+	(send_request): Fix to only retry if not on the first request on a
+	connection (close_not_retried test).
+
+Sun Jul  7 20:49:09 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.h: Add NE_SOCK_RESET return value; improve comments.
+
+	* ne_socket.c (read_raw, write_raw): Return NE_SOCK_RESET if an
+	ECONNRESET error is received when reading or writing.
+
+Sat Jul  6 13:30:15 2002  Joe Orton  <joe@manyfish.co.uk>
+	
+	* ne_request.c (read_status_line, discard_headers): New functions,
+	split out from send_request.
+	(send_request_body): Move debugging here from send_request.
+	(RETRY_RET): Renamed from CAN_RETRY.
+	(send_request): Simplify: remove complex 100-continue graceful
+	failure logic; use read_status_line, discard_headers, RETRY_RET.
+	Fix to only send request body once (expect_100_once test case).
+	Fix to not return NE_RETRY if reading status-line other than the
+	first fails (fail_eof_continued test case).
+
+Fri Jul  5 21:47:49 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (build_request): Fix from previous commit: clear
+	the buffer before building the request.
+
+Fri Jul  5 21:00:20 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (build_request): Fold Host header and Request-Line
+	into single ne_buffer_concat call.  Don't set req->use_expect100
+	here.  Fold an if/else into an ?:.  Optimise to use
+	ne_buffer_append to add 100-continue, user-supplied headers, and
+	trailing EOL, since they all have known lengths.
+	(send_request): Take request data as argument.
+	(ne_begin_request): Call build_request here; pass to send_request.
+	Move Expect100 logic here.
+
+Fri Jul  5 17:12:56 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (ne_read_file): Removed function.
+
+Fri Jul  5 17:10:11 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c (process_footer): Take unsigned char buffer.
+	Store calculated CRC in a uLong.
+	(do_inflate, gz_reader): Cast buffers to unsigned char for
+	strict compatibility with zlib interface.
+
+Wed Jul  3 19:21:17 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (struct ne_request_s): Use a fixed char array for
+	respbuf field.
+	(ne_request_create, ne_request_destroy): Don't allocate respbuf
+	dynamically.
+	(send_request): Move 'buffer' to appropriate scope.
+	(ne_request_dispatch): Remove 'buffer'; read into respbuf.
+
+Tue Jul  2 08:35:05 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (proxy_tunnel): Remove redundant sess->connected
+	assignment.
+
+Sun Jun 30 21:04:50 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (ne_begin_request): Only set host->resolved if
+	lookup is successful.
+
+Sun Jun 30 18:25:51 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (SOCK_ERR): New macro.
+	(struct ne_request_s): Remove 'forced_close' field.
+	(aborted): Renamed from set_sockerr; also closes connection and
+	prints message in debug log.
+	(send_request_body): Don't use set_sockerr or set forced_close.
+	(read_response_block, read_message_header): Use SOCK_ERR; adjust
+	to use aborted().
+	(ne_read_response_block, read_response_headers): Don't set
+	forced_close.
+	(CAN_RETRY): New macro.
+	(send_request): Adjust to use CAN_RETRY(); use aborted() to make
+	sure connection is closed in error cases.
+	(ne_begin_request): Don't close connection here in error cases;
+	don't use forced_close.
+	(open_connection): Adjust to use aborted() not set_sockerr().
+
+Sun Jun 30 17:26:41 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_close_connection): Clarify debug messages.
+
+Sun Jun 30 14:36:11 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (read_response_block): Fail on chunk size lines
+	which contain no valid chunk size digits.
+
+Sun Jun 30 12:35:35 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_negotiate_ssl): Use ne_get_session rather
+	than req->session.
+
+	* ne_request.c (struct header_handler, struct body_reader,
+	struct ne_request_s): Moved from ne_private.h.
+
+Sun Jun 30 12:13:58 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Cleanup of response handling:
+	
+	* ne_private.h (struct ne_response): Replace 'is_chunked' field with
+	'mode' enum.
+
+	* ne_request.c (te_hdr_handler): Set mode.
+	(connection_hdr_handler): Reset can_persist for 'close'.
+	(clength_hdr_handler): New function.
+	(ne_request_create): Use clength_hdr_handler to parse Content-Length
+	header.
+	(read_response_block, ne_read_response_block): Adapt for 'mode' enum; 
+	simplify.
+	(normalize_response_length): Removed function.
+	(ne_begin_request): Fold in normalize_response_length logic.
+	(ne_end_request): Simplify logic.
+
+Sun Jun 30 11:08:26 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c: Remove X509_NAME workaround in favour of a
+	neon.mak change.
+
+Tue Jun 25 23:14:34 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c: Undefine X509_NAME if it is defined (by a Windows
+	header).
+
+Tue Jun 25 22:51:15 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c: Rename READ_BUFFER to RDBUFSIZ.
+
+Tue Jun 25 21:07:13 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_private.h (struct host_info): Store port as unsigned int.
+
+	* ne_session.c (set_hostport, set_hostinfo, ne_session_create):
+	Take port argument as unsigned int.
+
+	* ne_socket.c (ne_sock_connect): Take port argument as unsigned
+	int.
+
+Tue Jun 25 20:59:14 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.h [__GNUCC__] (NE_DEBUG): Remove implementation using
+	GNU C extensions.
+
+Sun Jun 23 22:47:52 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (set_request_uri): Renamed from ne_set_request_uri;
+	made static.
+	(ne_request_create): Update accordingly.
+
+	* ne_private.h (ne_set_request_uri): Removed prototype.
+	
+Sun Jun 23 15:40:57 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (send_request, ne_request_destroy): Free
+	reason_phrase now it is malloc-allocated.
+
+Sun Jun 23 14:59:04 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Simplify given loss of const qualifier on ne_status.reason_phrase:
+
+	* ne_props.c (struct propstat): Remove r_phrase field.
+	(end_propstat, free_propset): Use status.reason_phrase not
+	r_phrase field.
+
+Sun Jun 23 14:42:22 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_207.h (ne_207_end_response, ne_207_end_propstat): Remove
+	status_line parameter from callbacks.
+
+	* ne_207.c (struct ne_207_parser_s): Remove status_line field.
+	(end_element): Don't store status_line.
+	(handle_error): Drop status_line argument, recreate dummy status
+	line from status object.
+	(end_response, end_propstat): Drop status_line arguments.
+
+	* ne_props.c (end_propstat, end_response): Drop status_line
+	arguments.
+
+Sun Jun 23 14:39:00 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.h (ne_status): Remove const qualifier from
+	'reason_phrase' field.
+	
+	* ne_utils.c (ne_parse_statusline): strdup the reason_phrase on
+	successful return.
+
+Sun Jun 23 11:39:24 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c (struct ne_decompress_s): Replace footer union
+	with buffer.
+	(BUF2UINT): New macro.
+	(process_footer): Convert footer to integer in a portable manner,
+	using BUF2UINT.
+
+Sun Jun 23 09:05:25 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c (ne_decompress_s): Use unsigned int for 32-bit
+	integers, not uLong (fix for 64-bit platforms).
+
+Wed Jun 19 18:46:40 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_session_destroy): Don't leak the proxy
+	hostname.
+
+Sun Jun 16 14:09:31 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (read_response_block): Use NE_FMT_SSIZE_T rather
+	than %d, cast field precision argument to int.
+	(ne_pull_request_body): Use ssize_t for store callback return
+	value, use NE_FMT_SSIZE_T rather than %d, cast field precision
+	argument to int.
+
+Sun Jun 16 12:15:19 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_negotiate_ssl): Don't leak peer certificate in
+	error cases.  Fix spelling mistake in error message.
+
+Sun Jun 16 11:23:23 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (open_connection): When SSL negotation fails after
+	doing CONNECT request, use ne_close_connection so that
+	sess->connection is reset to 0, and ne_sock_close isn't called
+	twice for the socket.
+
+Wed Jun 12 23:22:20 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_props.c (ne_proppatch): Add missing call to
+	ne_lock_using_resource.
+
+Mon Jun 10 20:45:27 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (verify_response): Remove redundant prototype, fix
+	sscanf format string to use signed integer.
+
+Mon Jun 10 20:13:57 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c (do_inflate): Continue calling inflate() whilst
+	unconsumed input remains: fix from Justin Erenkrantz
+	<jerenkrantz@apache.org>.
+
+Mon Jun 10 19:53:59 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_sock_readline): If a complete line is found in
+	the buffer, avoid the memmove() and simply copy the line directly
+	out of the buffer.
+
+Sun Jun  9 11:39:20 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_redirect.c (post_send): Perform simple relative URI
+	resolution.
+
+Tue Jun  4 16:51:54 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_uri.c (ne_path_parent): Simplify.
+
+Mon Jun  3 17:50:27 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_cookies.c (set_cookie_hdl): Avoid free'ing cookie name/value,
+	thanks to Dan Mullen.
+
+Mon Jun  3 17:45:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_base64): Use size_t for outlen.
+
+Mon Jun  3 17:42:34 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.h, ne_socket.h [WIN32]: Move ssize_t definition to
+	ne_socket.h.
+
+Mon Jun  3 17:27:21 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (read_response_block): Use correct types for
+	passing to/from ne_sock_*.
+
+Mon Jun  3 11:32:20 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c (ne_decompress_destroy): Don't fail if response
+	reader callback is never invoked.
+
+Sun Jun  2 12:51:35 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (read_ossl, read_raw): Call readable_{ossl,raw}
+	function here.
+	(ne_sock_read, ne_sock_peek, ne_sock_readline): Remove explicit
+	calls to ops->readable before ops->read.
+
+Thu May 30 22:00:07 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (ne_sock_readline): Optimise to use socket read
+	buffer directly, and use ->read (and ->readable) functions.
+
+Tue May 28 17:00:34 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_session_destroy): Don't free proxy.hostport,
+	since it's no longer set.
+
+Sun May 26 19:11:46 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c: #error if no expat header is configured; flatten
+	nested #if's, include libxml/xmlversion.h if present.
+
+Sun May 26 19:09:04 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.c: Include libxml/xmlversion.h if present.
+
+Sun May 26 11:55:30 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (set_hostport): Renamed from get_hostport: set
+	host_info field directly; take defaultport argument.
+	(set_hostinfo): Don't use get_hostport.
+	(ne_session_create): Use set_hostinfo and set_hostport; pass
+	in default port correctly for http:/https:.
+
+Thu May 23 19:44:44 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c (resolve_nspace): Split out from parse_element.
+	(ne_xml_get_attr): Take parser object, and optional
+	namespace; resolve the namespace if necessary.
+	(parse_element): Use resolve_nspace.
+
+	* ne_props.c (startelm): Use new ne_xml_get_attr interface.
+
+Wed May 22 22:29:05 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_dates.c: Renamed HAVE_TM_GMTOFF to HAVE_STRUCT_TM_TM_GMTOFF
+	from use of AC_CHECK_MEMBERS.
+
+Tue May 21 21:21:31 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_redirect.c (ne_redirect_register): Drop confirm, notify,
+	userdata arguments.
+	(struct redirect): Drop most fields; add a uri structure.
+	(auto_redirect): Removed function.
+	(post_send): Remove functionality which retries a request with a
+	different URI to automatically follow redirects.  Qualify the URI
+	if non-absolute.
+	(create): Remove now redundant code.
+	(ne_redirect_location): Return an ne_uri object.
+
+Sun May 19 18:53:22 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_set_useragent): Use strcat/malloc/strcpy
+	directly, rather than CONCAT2; allow compiler optimisations.
+	(AGENT): Renamed from NEON_USERAGENT, append space.
+
+Sun May 19 17:31:43 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Move everything exported by ne_socket.h into ne_*/NE_* namespace;
+	purge inappropriate and unused interfaces.  Renaming done by Olof
+	Oberg.
+	
+	* ne_socket.h:
+
+	(SOCK_FULL): Removed constant.
+	(sock_call_progress, sock_transfer, sock_sendline,
+	sock_send_string, sock_readfile_blocked): Removed functions.
+	
+	(NE_SOCK_ERROR, NE_SOCK_TIMEOUT, NE_SOCK_CLOSED):
+	Renamed constants.
+
+	(ne_progress, ne_block_reader): Renamed types.
+
+	(ne_register_progress, ne_sock_init, ne_sock_exit, ne_sock_read,
+	ne_sock_peek, ne_sock_block, ne_sock_fullwrite, ne_sock_readline,
+	ne_sock_connect, ne_sock_accept, ne_sock_fd, ne_sock_error,
+	ne_sock_read_timeout, ne_name_lookup, ne_service_lookup,
+	ne_sock_use_ssl, ne_sock_use_ssl_os): Renamed functions.
+	
+	* ne_private.h, ne_request.c, ne_session.c: Update accordingly.
+
+	* ne_request.c (build_request): Return the ne_buffer pointer.
+	(send_request): Remove redundant strlen(), use known buffer
+	length.
+
+	* ne_request.h: Drop ne_block_reader definition.
+
+Sun May 19 13:32:12 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (ne_get_session, ne_get_request): Take const
+	request pointer.
+
+Sun May 19 13:21:17 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_buffer_ncreate): Renamed from
+	ne_buffer_create_sized.
+
+	* ne_session.c (check_certificate, provide_client_cert): Update
+	accordingly.
+
+	* ne_request.c (ne_request_create): Update accordingly.
+	
+Sun May 19 13:12:14 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_token): Drop quotes parameter.
+	(ne_qtoken): Split out from ne_token.
+
+	* ne_basic.c (dav_hdr_handler, ne_content_type_handler): Use
+	ne_qtoken.
+
+	* ne_compress.c (find_token): Removed function.
+	(gz_reader): Compare header value directly against "gzip",
+	remove a stale comment.
+
+Sun May 19 09:45:28 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.h (sock_fullread): Return ssize_t; takes buflen as
+	size_t.
+	(sock_read, sock_peek): Fix prototypes to match actual definition.
+
+	* ne_socket.c (write_raw): Return ssize_t.
+
+Sat May 18 14:53:45 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.h (ne_buffer): Remove separate struct ne_buffer_s
+	definition.
+
+	* ne_string.c (ne_buffer_create_sized): Don't use struct
+	ne_buffer_s.
+
+Sun May 12 11:33:02 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_base64): Moved from base64.c.
+
+	* base64.c, base64.h: Removed files.
+
+	* Makefile.in: Updated accordingly.
+
+	* ne_auth.c: Don't include base64.h.
+
+Sun May 12 11:26:05 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.h (ne_utf8_decode, ne_utf8_encode): Removed functions.
+
+Sat May 11 15:42:24 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	As part of patch from Olof Oberg <mill@pedgr571.sn.umu.se>:
+	
+	* ne_request.h (ne_destroy_fn): Renamed from typo'ed
+	ne_destory_fn.
+
+	* ne_request.c (ne_request_destroy, ne_hook_destroy_request,
+	ne_hook_destroy_session): Update accordingly.
+
+	* ne_session.c (ne_session_destroy): Update accordingly.
+
+Thu May  9 21:44:15 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Major improvements to socket layer to incorporate socket read
+	buffering and rewrite sock_readline, and add an abstraction layer
+	to simplify SSL support.  Grunt work by Jeff Johnson
+	<jbj@redhat.com>
+	
+	* ne_socket.c (struct iofns): New type.
+	(struct nsocket_s): Store 'ops' pointer to I/O functions in use
+	for the socket.  Add buffer, bufpos, bufavail fields for read
+	buffering.
+	(sock_block, sock_read, sock_peek): Reimplement to add read
+	buffer, simplify to use I/O functions abstraction.
+	(readable_raw, read_raw, write_raw, readable_ossl, read_ossl,
+	write_ossl): Factored out from sock_read/fullwrite, avoiding
+	in-lined ifdefs.
+	(sock_fullwrite): Just use ops->write.
+	(sock_readline): Simplify greatly to exploit read-buffering, return
+	ssize_t.
+	(sock_fullread): Simplify, removing unnecessary local variables,
+	return ssize_t.
+	(create_sock, sock_enable_ssl_os): Set ops pointer.
+
+Wed May  8 11:54:48 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (sock_name_lookup): Avoid casts; use INADDR_NONE.
+	[!INADDR_NONE]: Define to (unsigned long) -1.
+
+Wed May  1 22:19:18 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.h (ne_lock): Document that ->token and ->owner fields
+	must be malloc-allocated if non-NULL.
+
+Wed May  1 22:15:41 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c (get_ltoken_hdr): New function.
+	(ne_lock): Correctly parse Coded-URL from Lock-Token response
+	header.
+
+Wed May  1 22:03:08 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_redirect.c (post_send): Adjust for ne_uri_parse handling of
+	unspecified port.
+
+Wed May  1 22:00:50 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (provide_client_cert): Fail if peer certificate not
+	known when client cert requested.
+
+Wed May  1 21:58:35 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.h (ne_ssl_provide_fn): Adjust callback typedef to
+	return void.
+
+Wed May  1 21:52:40 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.h: Remove NE_SERVERAUTH and NE_AUTHPROXY; fix
+	NE_PROXYAUTH description.
+
+Wed May  1 21:32:54 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_uri.c (ne_uri_parse): For consistency, port field is 0 if
+	unspecified.
+
+Tue Apr 30 10:05:48 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (shave_string): Removed function.
+
+Tue Apr 23 21:19:53 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_props.c (start_propstat, startelm): Use ne_realloc not
+	realloc (thanks to Jeff Johnson).
+
+Tue Apr 23 20:55:56 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c: Include parser.h or libxml/parser.h, depending on
+	which is found.
+
+Mon Apr 15 00:37:43 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (build_request, send_request): Simplify logic.
+
+Sun Apr 14 16:59:50 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_props.c: Remove unused accidental 'propstat' global.
+	(struct propstat): Add r_phrase field.
+	(end_propstat): Dup the reason_phrase string.
+	(free_propset): Free the reason_phrase.  Avoid another possible
+	free(NULL) call.
+
+Sun Apr 14 12:00:54 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (ne_content_type_handler): For text/* media types,
+	use default charset of ISO-8859-1.
+
+Sat Apr 13 23:11:07 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.h: Include trio.h if NEON_TRIO is defined.
+
+Sun Apr  7 17:38:14 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (read_response_headers): Don't zero-initialize hdr.
+
+Sun Apr  7 17:15:23 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (read_response_headers): Ignore whitespace between
+	header name and colon, simplify logic a little.
+
+Sun Apr  7 14:09:07 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_ssl_readable_dname): New function.
+
+Sun Apr  7 12:32:25 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_buffer_destroy): Remove redundant check for data
+	pointer being NULL.
+
+Wed Apr  3 19:44:59 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Optimisation/simplification of header name hashing.
+
+	* ne_request.c (hash_and_lower): Renamed from hdr_hash; convert
+	string to lower-case in-place too.
+	(lower_string): Removed function.
+	(ne_add_response_header_handler): Use hash_and_lower rather than
+	lower_string.
+	(HH_ITERATE): Change parameter name to 'ch'.
+
+Fri Mar 29 23:00:57 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_uri.c (ne_uri_parse): Minor optimisation.
+
+Mon Mar 25 21:45:36 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Pass a lock context around during LOCK processing; search for the
+	correct <activelock> element in the response body.
+	
+	* ne_locks.c (ne_lock_create): Don't take a path argument.
+	(ne_unlock): Constify lock parameter.
+	(discover_results): Don't parse out href here...
+	(ld_create): do it here instead; renamed from create_private.
+	(lk_startelm): New function.
+	(lk_endelm): Renamed from end_element_lock.
+	(ne_lock): Require a Lock-Token response header; pass lock context
+	to callbacks.  Copy lock back out.
+
+Mon Mar 25 21:35:42 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.h (NE_SSL_FAILMASK): New constant.
+	(NE_SSL_*): Shift right one bit.
+
+Mon Mar 25 21:21:18 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_close_connection): Return void.
+
+Mon Mar 25 20:09:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_props.c (free_propset): Avoid free(NULL).
+
+Mon Mar 11 19:59:04 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c (ne_lock_using_parent): Iterate over the lock list by
+	hand: check for infinite depth locks with cover the parent too
+	(fixing if_covered_child test).
+
+Mon Mar 11 19:25:44 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (ne_request_dispatch): Move variable to scope in
+	which is is used.
+
+Sun Mar 10 22:04:58 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (NEON_BASEOBJS): Always build ne_compress.o.
+
+Sun Mar 10 22:01:54 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c [!NEON_ZLIB] (ne_decompress_reader,
+	ne_decompress_destroy): Add stubs.
+
+Sun Mar 10 21:42:11 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c (struct discover_ctx): Store an ne_session pointer.
+	(discover_results): If lock URI is not an absoluteURI, qualify it
+	using the server host/port/scheme from the session.  Don't leak
+	the lock object.
+	(create_private): Simplify, use ne_lock_create.
+
+Thu Mar  7 20:08:07 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_uri.c (ne_uri_defaultport): Fix default port number for https
+	scheme.
+
+Wed Mar  6 21:22:23 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c (lk_pre_send): Use an absoluteURI in the If: header.
+
+Wed Mar  6 21:15:00 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_uri.c (ne_uri_unparse): New function.
+
+Tue Mar  5 22:57:00 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_uri.c (ne_uri_cmp): Compare hostnames and schemes
+	case-insensitively, and compare empty abspath and "/" as
+	equivalent, as per RFC 2616.
+
+Tue Mar  5 20:53:54 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_uri.c (ne_uri_defaultport): New function.
+
+Mon Mar  4 21:10:29 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_uri.h (ne_uri): Renamed from struct uri.
+
+	* ne_uri.c (ne_path_parent): Renamed from uri_parent.
+	(ne_path_has_trailing_slash): Renamed from uri_has_trailing_slash.
+	(uri_abspath, uri_absolute): Removed.
+	(ne_uri_parse): Renamed from uri_parse, don't take a 'defaults'
+	parameter.
+	(ne_uri_free): Renamed from uri_free.
+	(ne_path_unescape): Renamed from uri_unescape.
+	(ne_path_escape): Renamed from uri_abspath_escape.
+	(ne_uri_cmp): Renamed from uri_cmp.
+	(ne_path_compare): Renamed from uri_compare.
+	(ne_path_childof): Renamed from uri_childof.
+
+	* ne_basic.c, ne_locks.c, ne_uri.c, ne_redirect.c, ne_session.c,
+	ne_session.h: all callers changed.
+
+Mon Mar  4 01:03:23 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (strip_eol): Fix potential segfault.
+
+Mon Mar  4 00:38:10 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c (insert_lock): New function.
+	(ne_lockstore_add, submit_lock): use insert_lock.
+
+Mon Mar  4 00:33:39 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c (ne_lockstore_remove): Free list item.
+
+Mon Mar  4 00:31:08 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c (free_list): Really destroy the lock.
+	(ne_lock_free): Don't free the lock object itself.
+
+Mon Mar  4 00:17:18 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (ne_request_destroy): Free accessor hook list.
+
+Sun Mar  3 20:35:09 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Changes to lock interface; replacing "lock session" with a lock
+	store, which can be registered with an ne_session.  Lock objects
+	now store URI as complete URI structure.
+	
+	* ne_locks.h (struct ne_lock): Store URI as complete URI
+	structure.  Remove next/prev fields.
+	(ne_lock_store): New type.
+
+	* ne_locks.c (struct lock_list): New type.
+	(struct ne_lock_store_s): Replaces ne_lock_session_s; store
+	lock_list pointers for stored locks, cursor, and locks to
+	submit.
+	(ne_lock_create): New function.
+	(lk_create): Renamed from create.
+	(lk_pre_send): Renamed from pre_send; adjust for lock list
+	type and to use URI path.
+	(free_list): New function; split out from old 'destroy'.
+	(lk_destroy): Renamed from destroy; use free_list.
+	(ne_lockstore_create, ne_lockstore_destroy, 
+	ne_lockstore_first, ne_lockstore_next): New functions.
+	(ne_lockstore_register): Most of old ne_lock_register.
+	(submit_lock): Adjusted for lock_list type.
+	(ne_lockstore_findbyuri): Renamed from ne_lock_find; use
+	full URI structure.
+	(ne_lock_using_resource, ne_lock_using_parent): Adjusted
+	for lock_list/full URI changes.
+	(ne_lock_iterate): Removed function.
+	(ne_lockstore_add, ne_lockstore_remove): Renamed from
+	ne_lock_add, ne_lock_copy; adjusted for lock_list/full URI.
+	(ne_lock_copy): Adjusted for full URI.
+	(ne_lock_create, ne_lock_destroy): New function.
+	(ne_lock, ne_lock_refresh, ne_unlock): Adjusted for full URI.
+
+Sun Mar  3 15:23:40 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_uri.c (uri_cmp): New function.
+
+Sun Mar  3 11:01:30 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_fill_server_uri): New function.
+
+Mon Feb 25 21:25:27 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.c (version_string): Add zlib version.
+
+Mon Feb 25 20:49:07 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* (everywhere): Replace use of snprintf, vsnprintf with
+	ne_snprintf, ne_vsnprintf so that trio replacements are used when
+	appropriate.
+
+	* ne_dates.h: Pick up ne_utils.h for ne_{v,}snprintf defines.
+	
+Sun Feb 24 11:23:05 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.h: Define ne_snprintf, ne_vsnprintf for trio or
+	non-trio builds.
+
+Sun Feb 24 11:20:42 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (check-incl): Add target to check that each header
+	file can be included standalone.
+
+Sun Feb 24 11:17:54 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.h: Add missing sys/types.h include.
+
+Sun Feb 24 11:12:22 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.h: Remove HTTP_QUOTES, HTTP_WHITESPACE globals.
+
+	* ne_cookies.c (set_cookie_hdl): Don't use HTTP_QUOTES,
+	HTTP_WHITESPACE globals.
+
+Wed Feb 20 19:32:48 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (set_sockerr, ne_set_request_body_fd,
+	send_request): Use ne_set_error rather than accessing session
+	error directly.
+
+Tue Feb 19 21:34:59 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.c (version_string) [NEON_SOCKS]: Mention SOCKSv5
+	support.
+
+	* ne_socket.c (sock_init) [NEON_SOCKS]: Call SOCKSinit.
+
+Tue Feb 19 19:21:07 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (open_connection): Remove notify_status call
+	duplicated with ne_negotiate_ssl.
+
+Tue Feb 19 19:16:44 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (sock_get_version): Removed function.
+
+Tue Feb 19 19:12:52 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_ssl_provide_ccert): Moved outside ifdef
+	NEON_SSL.
+	[!NEON_SSL] (ne_ssl_load_pem, ne_ssl_load_pkcs12,
+	ne_ssl_keypw_prompt): Added stubs.
+
+Sun Feb 17 21:15:34 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_session_create, ne_session_destroy): Only use
+	the SSL context is SSL is being used for the session.
+
+Sun Feb 17 20:19:05 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	Add back client certificate support, much improved.
+
+	* ne_private.h (struct ne_session_s): Add client cert/key fields,
+	provider, privkey password callbacks.
+	
+	* ne_socket.c (sock_init): Call PKCS12_PBE_add.
+	(sock_enable_ssl_os): Add optional 'appdata' argument.
+	(sock_enable_ssl): Adjust accordingly.
+
+	* ne_session.c (provide_client_cert, privkey_prompt,
+	ne_ssl_keypw_prompt, ne_ssl_load_pkcs12, ne_ssl_load_pem,
+	ne_ssl_provide_ccert): New functions.
+	(ne_negotiate_ssl): Pass session as appdata to sock_enable_ssl_os.
+
+Sun Feb 17 12:32:34 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (make_dname): New function.
+	(check_certificate): Use make_dname.
+
+Sun Feb 17 11:29:10 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (struct get_context): Remove unused 'progress' field,
+	add 'session' field.
+	(get_to_fd, content_range_hdr_handler, clength_hdr_handler): Set
+	session error directly.
+	(clength_hdr_handler): Also fix check for expected range.
+	(everywhere): Initialize session field, don't set session error;
+	use NE_FMT_OFF_T to print off_t's rather than casting to long int.
+
+Sat Feb 16 23:24:10 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.h (NE_XML_STRIPWS): New element flag.
+	
+	* ne_xml.c (start_element): Clear cdata buffer if not in mixed
+	mode.  (char_data): Only strip leading whitespace if
+	NE_XML_STRIPWS is set for the element.
+
+Sat Feb 16 14:52:59 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c (enum state): New state NE_Z_AFTER_DATA.
+	(struct ne_decompress_s): Add fields for storing and parsing
+	stream footer; add checksum field for storing current crc.
+	(process_footer): New function.
+	(do_inflate): Compute checksum.  Switch to AFTER_DATA state and
+	process footer after reading DEFLATE data.
+	(gz_reader): Fail on trailing content.  Handle AFTER_DATA state.
+	(ne_decompress_destroy): Return error if final state was not
+	PASSTHROUGH, or FINISHED.
+	(ne_decompress_reader): Initialize crc.
+
+Sat Feb 16 14:26:54 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c (ne_decompress_destroy): Fix potential segfault
+	with use-after-free.
+
+Thu Feb 14 16:50:40 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (read_response_headers): Ignore header lines
+	without a ':', rather than failing the request.
+
+Tue Feb 12 20:17:49 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (read_response_block): Read chunk size as unsigned
+	using strtoul; check that it fits within an unsigned int (and
+	hence, probably a size_t).
+
+Tue Feb 12 20:15:13 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.h (STRIP_EOL): Removed macro.
+
+Mon Feb 11 22:11:03 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (match_hostname): Match fully-qualified hostnames
+	against commonName with leading "*." wildcard.
+
+Mon Feb 11 20:47:28 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (match_hostname): New function.
+	(check_certificate): Use it.
+
+Sun Feb 10 00:50:49 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (lookup_host): Set error string on lookup failure.
+
+Sun Feb 10 00:34:42 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (strip_eol): New function; more efficient
+	STRIP_EOL.
+	(send_request): Use strip_eol.
+	(read_message_header): Use strip_eol, simplify, remove redundant
+	variables.
+
+Sat Feb  9 21:02:31 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_set_error): Drop STRIP_EOL call.
+
+Sat Feb  9 21:01:01 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_set_error): Take printf-style format string +
+	varargs list.
+
+Sat Feb  9 16:15:09 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.h (SOCKET_READ_TIMEOUT): Moved to ne_socket.c.
+	
+	* ne_socket.c (struct nsocket_s): Add rdtimeout field.
+	(create_sock): Initialize rdtimeout to SOCKET_READ_TIMEOUT.
+	(sock_read, sock_recv): Use ->rdtimeout field for read timeout.
+	(sock_set_read_timeout): New function.
+
+	* ne_private.h (struct ne_session_s): Add rdtimeout field.
+	
+	* ne_session.c (ne_set_read_timeout): New function.
+
+	* ne_request.c (init_socket): New function.
+	(open_connection): Use init_socket.
+	
+Sat Feb  9 15:11:59 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_session_destroy): Don't leak the server cert.
+
+Sat Feb  9 09:59:11 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (check_certificate): Only call verification
+	callback once per certificate; watch for the server cert
+	changing and fail if it does.
+
+Wed Feb  6 20:28:27 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (check_certificate): Only call verification
+	callback if failures is non-zero.
+	(ne_ssl_load_ca): Renamed from ne_ssl_add_ca.
+	(ne_ssl_load_default_ca): New function.
+
+Wed Feb  6 20:21:29 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (sock_init): Cache and return result of
+	initialization.
+
+Wed Feb  6 01:12:20 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (check_certificate): Ignore cert validity errors
+	from OpenSSL since these are duplicated.
+
+Wed Feb  6 01:08:57 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_negotiate_ssl): Fix for invalidating cached
+	SSL_SESSION.
+
+Wed Feb  6 01:03:37 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c [!NEON_SSL] (STUB): New function.
+	(ne_negotiate_ssl, ne_ssl_add_ca): Implement using STUB.
+
+Tue Feb  5 19:56:43 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.h (ne_ssl_certificate): New type.
+	
+	* ne_session.c (ne_session_create) [NEON_SSL]: Create the SSL_CTX
+	structure.  
+	(ne_ssl_get_context): Return the SSL_CTX rather than setting it.  
+	(ne_session_destroy): Free the SSL_CTX.
+
+	(asn1time_to_string): Function moved in from sslcerts.c.
+	(check_certificate): Use OpenSSL's internal validity result.
+	Pass back an ne_ssl_certificate to the verification function; 
+	including validity dates.
+	(ne_ssl_add_ca): New function, registers CA certs.
+
+Sat Feb  2 14:05:26 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (sock_enable_ssl_os): Take an optional SSL_SESSION
+	argument.
+
+	* ne_private.h (struct ne_session_s): Add an SSL_SESSION field.
+	
+	* ne_session.c (ne_negotiate_ssl): Pass stored SSL session to
+	sock_enable_ssl_os, cache session after successful negotiation.
+	(ne_session_destroy): Free cached session.
+
+Sat Feb  2 10:45:46 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c, ne_utils.c: Globally replace ENABLE_SSL cpp symbol
+	with NEON_SSL.
+
+Sat Feb  2 09:43:27 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (check_certificate): Use 1K on-stack buffer.
+
+Sat Feb  2 08:27:08 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_private.h (struct host_info): Add 'resolved' flag.
+	(struct ne_session_s): Add scheme field, rename have_proxy to
+	use_proxy, remove proxy_decider.
+	(struct ne_request_s): Remove use_proxy field.
+
+	* ne_request.c (set_sockerr, ne_set_request_uri, build_request, 
+	open_connection): Use session->use_proxy field to determine
+	whether proxy is used.
+	(ne_request_create): Drop use of proxy_decider callback.
+	(lookup_host): Moved here from ne_session.c.
+	(ne_begin_request): Lookup server/proxy hostname if not already
+	resolved.
+
+	* ne_session.c (ne_session_create): Moved within file; takes
+	scheme, and server hostname, port as arguments.
+	(ne_ssl_enable, ne_session_decide_proxy, ne_session_server):
+	Removed functions.
+	(ne_get_scheme): Simply return scheme field.
+
+Fri Feb  1 23:12:38 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (add_fixed_headers): Remove last traces of TLS
+	upgrade support.
+
+Thu Jan 31 20:50:12 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_private.h (struct ne_session_s): Rename use_secure to
+	use_ssl; removed nssl_context, added SSL_CTX, server cert, verify
+	callback pointers.
+
+	* ne_request.c (send_request): Remove support for TLS upgrade.
+	(open_connection): Use ne_negotiate_ssl; close socket properly if
+	negotiation fails.
+
+	* ne_session.c (ne_session_destroy): Free SSL_CTX stored in
+	session.
+	(ne_ssl_set_context, ne_ssl_set_verify, verify_err, getx509field,
+	check_context, ne_negotiate_ssl, ne_ssl_server_cert): New
+	functions.
+	(ne_set_secure_context, ne_set_request_secure_upgrade,
+	ne_set_accept_secure_upgrade): Removed functions.
+	(ne_ssl_enable): Renamed from ne_set_secure.
+
+	* ne_socket.c (struct nssl_context_s): Removed type.
+	(sock_create_ssl_context, sock_destroy_ssl_context,
+	sock_disable_*, key_prompt_cb, sock_set_key_prompt,
+	sock_set_client_cert): Removed functions.
+	(sock_enable_ssl_os): Renamed from sock_make_secure; take an
+	SSL_CTX pointer, and optionally pass out the SSL structure.
+	(sock_enable_ssl): New function.
+	
+Wed Jan 30 19:47:42 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_buffer_concat, ne_buffer_zappend,
+	ne_buffer_append, ne_buffer_grow): Don't return success value,
+	presume universe ends at OOM.
+
+Sat Jan 26 10:57:42 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c: Renamed enum state constants to have prefix
+	NE_Z_, to avoid conflict with Windows headers (Branko Èibej).
+
+Mon Jan 14 20:26:31 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_concat): Removed function - it didn't work, and
+	it wasn't used.
+
+Mon Jan 14 02:09:38 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (ne_content_type_handler): Parse charset parameter.
+
+Sun Jan 13 14:29:00 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (ne_content_type_handler): Remove trailing '/' from
+	parsed type, fix search for parms separator (Greg Stein).
+
+Sun Jan 13 12:07:51 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_207.c (ne_simple_request): Drop unused Content-Type handling.
+
+Thu Jan 10 00:39:17 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (hdr_hash): Mark as inline.
+
+Tue Jan  8 22:03:42 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c (add_timeout_header): New function.  (ne_lock,
+	ne_lock_refresh): Send a Timeout header if lock->timeout is set.
+
+Mon Jan  7 21:48:38 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c (parse_timeout): Fix parsing lock timeout (Arun
+	Garg).
+
+Mon Dec 17 22:46:36 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_private.h (struct ne_session_s): Make expect100_works a plain
+	integer (rather than a bitfield).
+
+Sun Dec  9 14:04:27 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_buffer_grow, ne_buffer_create_sized): Don't
+	zero-fill new memory.  (ne_buffer_concat): Zero terminate the
+	string as _grow doesn't do it.
+
+Sun Dec  9 13:31:55 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_buffer_zappend): Minor optimisation; implement
+	using ne_buffer_append.
+
+Sun Dec  9 13:18:35 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_buffer_concat): Optimise to use time O(n) [n ==
+	total string length).
+
+Sun Dec  9 11:57:56 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (NEON_DAVOBJS): Remove ne_acl.o.
+
+Sat Dec  8 01:11:30 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (ne_pull_request_body): Use NE_FMT_SIZE_T in
+	debugging message; cast size_t to int to avoid GCC warning for
+	field size parameter.  (set_body_size): Use NE_FMT_SIZE_T.
+
+	* ne_xml.c (ne_xml_parse): Similarly.
+
+Mon Dec  3 19:56:07 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c (ne_session_destroy): Return void.
+
+Sat Dec  1 18:37:43 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (ah_create): Reset attempt counter
+	here... (ah_post_send): ...rather than here.
+
+Tue Nov 27 21:26:01 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (send_with_progress): Actually call the callback;
+	fix for correct sock_fullwrite return codes.
+
+Tue Nov 27 20:20:40 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_private.h (VERSION_PRE11): Define macro; as
+	ne_version_pre_http11.
+
+	* ne_session.c (ne_version_pre_http11): Use VERSION_PRE11.
+
+	* ne_request.c (add_fixed_headers, build_request, ne_end_request):
+	Use VERSION_PRE11.
+
+Sun Nov 18 19:32:56 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c (discover_results): Check status is 2xx before
+	invoking callback; pass NULL lock and non-NULL status pointer in
+	failure cases.  (create_private): Initialize lock to some "value
+	unspecified" defaults.
+
+Sun Nov 18 19:25:10 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (auth_session): Rename 'tries' field to 'attempt'.
+	(get_credentials, ah_pre_send, ah_post_send): Increment attempt
+	counter only when requesting credentials; reset it to zero when no
+	auth failure is signaled.
+
+Sun Nov 18 15:49:00 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.h (ne_request_auth): Pass username and password as
+	buffers of size NE_ABUFSIZ to callback.  Add 'attempt' argument.
+
+	* ne_auth.c (auth_session): Store username in buffer.
+	(get_credentials, basic_challenge, digest_challenge): Updated for
+	callback prototype changes.  (ah_post_send): Request credentials,
+	and retry authentication until callback returns non-zero.
+
+Mon Nov 12 20:57:56 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (get_to_fd): Really cope with short writes (thanks to
+	rado <dzusto@yahoo.com>).
+
+Sun Nov  4 15:09:03 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_props.h: Define NE_ELM_PROPS_UNUSED for picking element ids
+	for use with the propfind XML parser.
+
+Sat Nov  3 19:06:04 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_props.c (NSPACE): New macro.  (set_body, pnamecmp, startelm,
+	free_propset): Handle property having NULL nspace element in
+	propfind code.
+
+Sun Oct 28 22:04:49 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c (parse_element): Prevent false matches of found prefix
+	"abcde" against stored prefix "abcdeFGH".  Compare
+	case-sensitively.
+
+Fri Oct 26 20:28:03 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (send_request): Fix case where persistent
+	connection times out, and improve error handling.
+
+Thu Oct 25 20:42:24 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_props.c (ne_proppatch): Really handle properties with a NULL
+	namespace correctly; use the "D:" prefix for elements in the
+	"DAV:" namespace; allow properties to have no namespace.
+
+Tue Oct 16 08:54:46 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c (parse_element): Fail the parse if a namespace prefix
+	definition is given with an empty value.
+
+Tue Oct 16 08:52:40 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_props.h, ne_207.h: Move ne_propname definition into
+	ne_props.h.
+
+Tue Oct 16 08:49:42 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_props.c (ne_proppatch): Handle properties with a NULL nspace
+	field correctly.
+
+Sun Oct  7 19:31:06 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_acl.c (ne_acl_set) [USE_DAV_LOCKS]: Notify use of resource to
+	locking code.
+
+Sun Oct  7 17:45:01 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_acl.c, ne_acl.h: New files, contributed by Arun Garg
+	<arung@pspl.co.in>.
+
+	* Makefile.in: Add ne_acl.* to build.
+
+Sun Oct  7 16:10:05 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_private (struct ne_session_s): Add 'reqcount' field.
+
+	* ne_request.c (send_request): Refactor slightly; don't loop, but
+	return NE_RETRY when appropriate.  Increment reqcount.
+	(ne_begin_request): Loop if send_request returns NE_RETRY.
+	(open_connection): Reset reqcount field.
+
+Tue Oct  2 21:11:39 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_dates.c (GMTOFF): New macro.  (ne_iso8601_parse,
+	ne_rfc1123_parse, ne_rfc1036_parse, ne_asctime_parse): Use new
+	macro, fix up date handling on some platforms.
+
+Sat Sep 29 14:20:47 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c (gz_reader): Fix tests 4 and 7: don't try to
+	inflate after reading header if no bytes are left in the buffer.
+
+Sat Sep 29 14:04:11 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c: Fix API; return an opaque object which must
+	be destroyed later.
+	
+	(ne_decompress_reader): Renamed from ne_gzip_response_body_reader.
+	Doesn't need the session object passed in any more.
+	(ne_decompress_destroy): Merge of co_destroy, co_post_end.
+
+Sat Sep 29 13:50:43 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (ne_get_session): New function.
+
+Sat Sep 29 12:52:31 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c (parse_header): Bail if flags are set to something
+	unexpected.
+
+Sat Sep 29 11:15:30 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_compress.c, ne_compress.h: New files.
+
+	* Makefile.in: Add deps for ne_compress.
+
+Thu Sep 27 09:05:24 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_redirect.c: Adapted for new hooks interface.
+
+	* ne_cookies.c: Adapted for new hooks interface.
+	(ne_cookie_register): New function.
+
+Thu Sep 27 09:01:03 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c, ne_locks.c: Adapted for new hooks interface.  Store
+	pointer to per-request object in the per-session object.
+
+Thu Sep 27 08:48:16 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	Re-write hooks interface to register callbacks individually rather
+	than as a block.  Inspired by the Apache 2.0/APR hooks interface.
+
+	* ne_private.h (struct hook): Store a callback, userdata, id.
+	(struct hook_request): Removed.  (struct ne_session_s): Store
+	hooks lists for create_req, pre_send, post_send, destroy_req,
+	destroy_sess, accessor.  (struct ne_request_s): Store accessor
+	hooks list.
+	
+	* ne_request.c (ne_add_hooks): Removed.
+	(ne_hook_create_request, ne_hook_pre_send, ne_hook_post_send,
+	ne_hook_destroy_request, ne_hook_destroy_session,
+	ne_hook_session_accessor, ne_hook_request_accessor,
+	ne_null_accessor, call_access, add_hook): New functions.
+	(ne_request_create, ne_request_destroy, build_request,
+	ne_end_request): Adapt for new interface.
+
+	* ne_session.c (destroy_hooks): New function.
+	(ne_session_destroy): Use it to destroy hooks lists appropriately.
+
+Tue Sep 25 07:46:32 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.c: Only decode UTF-8 for parsers other than libxml 1.x.
+
+Tue Sep 25 07:33:09 2001  Mo DeJong  <supermo@bayarea.net>
+
+	* src/ne_socket.c: Include <signal.h> instead of <sys/signal.h>.
+	(sock_init): Only use signal() to ignore SIGPIPE if both
+	HAVE_SIGNAL and HAVE_SIGPIPE are defined.
+
+Tue Sep 25 07:09:53 2001  Mo DeJong  <supermo@bayarea.net>
+
+	* ne_socket.c (sock_init): Declare local variables before invoking
+	any instructions since that is not valid C code.
+
+Sun Sep 23 10:30:54 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c (struct auth_challenge): Make members const.
+	(clean_session): Free the realm string.  (basic_challenge,
+	digest_challenge): strdup the realm string.  (request_digest):
+	opaque is no longer stored quoted.  (tokenize): New function.
+	(verify_response, auth_challenge): Rejig to use tokenize().
+
+Sat Sep 22 20:17:00 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_shave): Fix possible memory corruption when
+	result should be the empty string.
+
+Thu Sep 20 21:27:57 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (ne_pull_request_body): Add debugging dump of body
+	blocks.
+
+Thu Sep 20 21:23:43 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_private.h: Remove obsolete 'if_locks' member from struct
+	ne_request_s.
+
+Tue Sep 18 23:35:30 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (ne_get_range): Handle write errors too.
+
+Tue Sep 18 22:14:49 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.h (ne_xml_validate_cb): Take userdata parameter.
+
+	* ne_xml.c (find_handler): Pass validate callback the handler's
+	userdata.
+
+	* ne_207.c, ne_props.c, ne_locks.c: All users changed.
+
+Tue Sep 18 21:49:14 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c (ne_lock_refresh): New function.
+
+Tue Sep 18 21:17:29 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (copy_or_move): Take a depth parameter, add depth
+	header, for COPY requests.  (ne_copy): Take depth parameter, pass
+	through.  (ne_move): Adjusted accordingly.
+
+Mon Sep 17 23:29:58 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.c (ne_debug_init): Set debug stream to be unbuffered if
+	setvbuf() is available.
+
+Mon Aug 27 00:36:37 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_207.c (start_element, end_element): Remember when context is
+	valid for a <propstat>, and only invoke callback then.
+
+Sun Aug 26 22:30:39 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (ne_get_range): Better error handling.  Cope with
+	Apache's 416 problem.
+
+Sun Aug 26 18:58:47 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c: Store unquoted challenge parameters in session
+	object, prevent having to unquote/free them >1 times.
+
+Sun Aug 26 18:57:51 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (sock_init): Do nothing on any calls after first.
+
+Sun Aug 26 12:45:04 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (server_hdr_handler): Remove function. (ne_options):
+	Don't add server_hdr_handler.
+
+Tue Jul 17 11:25:06 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (sock_init): Set signal dispostion for SIGPIPE to
+	ignore.
+
+Sat Jun 30 12:11:44 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.c (ne_supports_ssl): New function.
+
+Tue Jun 19 21:57:49 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_dates.c (ne_iso8601_parse): Fix month off-by-one bug, use
+	separate vars for offsets.  (ne_rfc1036_parse): Fix Y2K bug,
+	parsing problem.
+
+Tue Jun 19 21:57:42 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_dates.c (ne_iso8601_parse): New function.
+
+Sun Jun 10 15:39:40 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (send_with_progress): New function.
+	(send_request_body): Use send_with_progress to trigger progress
+	callbacks if necessary.
+
+Sat Jun  9 15:42:33 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.h: Bring back NE_ASC2HEX/HEX2ASC.
+
+	* ne_md5.c: Use them.
+
+Sat Jun  9 15:42:08 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_xml.h: Include ne_defs.h.
+
+Fri Jun  8 23:02:49 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.h, ne_socket.c: Update for includes (Mo DeJong).
+
+Fri Jun  8 21:34:00 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (dav_hdr_handler): Use ne_token.
+
+Sat Jun  2 14:37:07 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_private.h: Renamed from http_private.h.
+
+Sat Jun  2 14:35:23 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_auth.c, ne_auth.h: Renamed from http_auth.c, ne_auth.h.
+
+Sat Jun  2 14:35:02 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_cookies.c, ne_cookies.h: Renamed from http_cookies.c,
+	http_cookies.h.
+
+Sat Jun  2 14:34:51 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_dates.c, ne_dates.h: Renamed from dates.c, dates.h
+
+Sat Jun  2 14:22:49 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_redirect.c, ne_redirect.h: Renamed from http_redirect.c,
+	http_redirec.h. Big rename... s/http_/ne_g/
+
+Sat Jun  2 12:54:51 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_md5.c (md5_process_block): Fix for word alignment issue on
+	Sparc from Kai Sommerfeld.
+
+Wed May 30 23:15:31 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (ne_put, ne_get, ne_put_if_unmodified, ne_get_range,
+	ne_post): Take an integer fd rather than FILE * stream.
+	(get_to_fd): Write to fd rather than stream.
+
+Wed May 30 23:08:55 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_i18n.h, ne_i18n.c: Renamed from neon_i18n.h, neon_i18n.c.
+
+	* *.c: All changed accordingly.
+	
+Wed May 30 23:02:47 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_defs.h: Renamed from neon_defs.h.
+
+	* *.h: All changed accordingly.
+
+Wed May 30 22:58:57 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_md5.c, ne_md5.h: Renamed from md5.c, neon_md5.h
+
+Wed May 30 22:55:19 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.h: In-line ne_debug for GCC which can cope with varargs
+	preprocessor macros.  
+
+Wed May 30 00:43:05 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_auth.c (ah_use_body): Removed function.  (digest_body): New
+	function.  (request_digest): Use ne_pull_request_body to find the
+	MD5 digest of the request body, when necessary.
+
+Wed May 30 00:30:52 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_redirect.c: Store Request-URI, session pointer, and method
+	string in redirect object.  Avoid looking inside
+	ne_request/ne_session internals.
+
+Wed May 30 00:04:30 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c: Re-implement request body handling in terms of a
+	callback which provides the request body blocks on demand.  Remove
+	'use_body' hook, in favour of the hooks calling
+	ne_pull_request_body when necessary.  (ne_pull_request_body,
+	body_fd_send, body_string_send): New functions.
+	(send_request_body): Re-implemented using ne_pull_request_body.
+	(run_set_body_hooks): Removed function.  (ne_set_request_body_fd):
+	Replacement for ne_set_request_body_stream, using a raw fd rather
+	than a FILE *.
+
+Tue May 29 22:39:39 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dav_basic.h, dav_basic.h: Removed.
+
+Tue May 29 22:38:54 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_207.c (ne_simple_request, etc): Copied in from dav_basic.c.
+
+Tue May 29 22:12:23 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c, ne_locks.h, ne_props.c, ne_props.h, ne_207.c,
+	ne_207.h: Big rename. dav_* -> ne_*, and so on.
+
+Tue May 29 22:06:24 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (ne_add_depth_header): Moved from dav_basic.c.
+
+Tue May 29 21:55:30 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_props.c, ne_props.h: Renamed from dav_props.c, dav_props.h.
+
+Tue May 29 21:43:15 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_207.c, ne_207.h: Renamed from dav_207.c, dav_207.h.
+
+Tue May 29 21:22:25 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_locks.c, ne_locks.h: Renamed from dav_locks.c, dav_locks.h.
+
+Tue May 29 21:21:44 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c (sock_fullwrite): Cast return value of SSL_write to
+	size_t to prevent comparison of signed with unsigned.
+
+Tue May 29 21:05:27 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c [!NEON_NODAV]: Move ne_copy, ne_mkcol, ne_move,
+	ne_delete in here.
+
+Tue May 29 20:12:50 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_uri.c, ne_uri.h: Renamed from uri.c, uri.h.
+
+Tue May 29 19:17:09 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_socket.c, ne_socket.h: Renamed from socket.c, nsocket.h.
+
+Tue May 29 18:58:51 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (ne_mkcol, ne_copy, ne_move, ne_delete): Renamed from
+	dav_*.
+
+Tue May 29 17:58:09 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c (copy_or_move, dav_copy, dav_move, dav_delete,
+	dav_mkcol): Copied in from dav_basic.c.
+
+Tue May 29 17:55:33 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_basic.c, ne_basic.h: Renamed from http_basic.c, http_basic.h.
+
+Tue May 29 17:47:50 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_auth.c (ah_create, ah_pre_send): Add the response body
+	handler in pre_send, and only if qop=auth-int.
+
+Wed May 16 20:54:51 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (ne_get_request_headers): Removed function.
+
+Sat May 12 18:48:46 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c (read_message_header, read_response_headers): Use a
+	fixed-size char * buffer argument rather than an ne_buffer.
+	Append directly to it when header-folding.
+
+Mon May  7 10:42:38 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c (ne_token): Use an optimized search (strchr) if
+	quotes is NULL.
+
+Mon May  7 01:33:48 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_auth.c (basic_challenge, get_cnonce): Updated for ne_base64
+	change.
+
+Mon May  7 01:32:22 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* base64.c (ne_base64): Take length parameter.  [BASE64_TEST]
+	(main): Remove function, obsoleted by test code.
+
+Wed May  2 12:06:59 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c, ne_string.h (ne_token, ne_shave): New functions,
+	destined to replace split_string, shave_string, etc.
+
+	* ne_string.c [SPLIT_STRING_TEST, PAIR_STRING_TEST] (main): Remove
+	tests, functions are obsolete.
+
+Tue May  1 22:14:14 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dates.c (ne_httpdate_parse): Moved from ne_utils.c.
+
+Tue May  1 21:55:45 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_utils.c, ne_utils.h: Renamed from http_utils.c, http_utils.h.
+	Big rename.  http_* -> ne_*. neon_* -> ne_*. DEBUG() ->
+	NE_DEBUG().  DEBUG_* -> NE_DBG_*.
+
+Tue May  1 21:35:10 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_request.c: Updated for ne_buffer changes.
+
+Tue May  1 21:28:58 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.h (ne_buffer_size): Implement as macro.
+
+	* ne_string.c (ne_buffer_size): Remove function.
+
+Tue May  1 21:23:47 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c, ne_string.h: Make ne_buffer a transparent type, and
+	no longer be an implicit pointer type.  (ne_buffer_*): All
+	changed.  (ne_buffer_data, NE_BUFFER_CAST): Removed.
+
+Tue May  1 21:17:40 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c, ne_string.h: Renamed sbuffer -> ne_buffer.
+	Implicit pointer removed ne_buffer type.
+
+Tue May  1 21:12:15 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_string.c, ne_string.h: Renamed from string_utils.c,
+	string_utils.h (CVS copy'n'delete).
+
+Tue May  1 20:49:46 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* md5.c (ASC2HEX, HEX2ASC): Moved here from string_utils.h.
+
+	* string_utils.h: As above.
+
+Tue May  1 20:47:20 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c, http_request.h: Removed files.
+
+	* ne_request.c, ne_request.h: Copied from old http_request.[ch].
+	Renamed http_* -> ne_*.
+
+Tue May  1 20:43:11 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* hip_xml.c renamed to ne_xml.c, hip_xml.h renamed to ne_xml.h:
+	CVS repository copy'n'delete.
+
+Tue May  1 20:41:03 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* hip_xml.c, hip_xml.h: Big rename. hip_xml_* -> ne_xml_*.
+
+Tue May  1 20:37:13 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_basic.c, http_basic.h: Big rename. http_* -> ne_*.
+
+Tue May  1 19:59:01 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.c: Renamed http_* to ne_*.
+
+Tue May  1 19:55:47 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_alloc.h (NE_FREE): Renamed from HTTP_FREE() in http_utils.h
+
+Tue May  1 19:54:42 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (sock_make_secure): Set SSL_MODE_AUTO_RETRY when
+	available.
+
+Mon Apr 30 00:36:34 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_session.[ch]: New files, split down from http_request.[ch].
+
+Sun Apr 29 15:02:23 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri.c [URITEST] (main): Remove, obsoleted by new test suite.
+
+Sun Apr 29 15:01:30 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri.c (uri_has_trailing_slash): Return false if uri is "".
+
+Sun Apr 29 13:53:41 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dates.c (ne_asctime_parse, ne_rfc1123_date, ne_rfc1036_parse):
+	Set tm_isdst to -1 in struct tm.
+
+Sun Apr 29 13:28:26 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_utils.c (http_parse_statusline): Skip leading whitespace.
+	(Johan Lindh).  (http_parse_statusline): Ensure status-code is not
+	more than three digits.
+
+Sun Apr 29 13:26:47 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (build_request): Don't add "Content-Length: 0"
+	header if no body: Squid 2.3-STABLE1 doesn't like this.
+
+Sun Apr 29 13:25:16 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_auth.c (everywhere): Renamed md5_* -> ne_md5_*.
+
+Sun Apr 29 13:24:12 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* md5.c: Renamed md5_* -> ne_md5_*.  (ne_ascii_to_md5,
+	ne_md5_to_ascii): Moved from string_utils.c.
+
+Thu Apr 26 22:39:05 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri.c (uri_parse): A zero-length URI is invalid.
+
+Wed Apr 25 23:11:51 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dav_props.c (startelm): Check for xml:lang attribute and store
+	as prop->lang.  (dav_propset_lang): New function.  (free_propset):
+	Free lang.
+
+Wed Apr 25 23:08:52 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* hip_xml.c (hip_xml_get_attr): New function.
+
+Sun Apr 22 21:48:06 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri.c (uri_parse): Skip a userinfo@ segment if present (Johan
+	Lindh <johan@link-Data.com>).
+
+Wed Apr 18 13:29:46 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dav_locks.c (dav_lock_copy): Allow owner to be NULL.
+
+Tue Apr 17 22:57:50 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_alloc.h, dav_locks.h: Add C++ inclusion safety.
+
+Tue Apr 17 22:56:50 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri.c (uri_parse): Correctly handle URIs with no scheme or
+	hostport segments (i.e. just a path).
+
+Tue Apr 10 00:29:25 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c [HAVE_SOCKS_H]: Include socks.h for SOCKSv5 support.
+
+Wed Apr  4 21:41:47 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_utils.h [WIN32]: Define ssize_t (Kai).
+
+Tue Apr  3 21:03:28 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dav_locks.c (dav_lock_discover): Cope with below API change.
+
+Tue Apr  3 20:43:50 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dav_props.c (propfind): Register the flat element handler here,
+	to pick up *any* properties and store them as 'flat' if they are
+	not handled by a handler further down the stack.  (make_elms,
+	free_elms, dav_propfind_set_flat, dav_propfind_set_complex):
+	Removed functions.  (dav_propfind_named): Take the list of
+	property names, and call set_body here.
+	(dav_propfind_set_private): New function.
+
+Tue Apr  3 09:33:09 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_auth.h: Added C++ inclusion safety. (Kai Sommerfeld)
+
+Mon Apr  2 02:39:18 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* hip_xml.c (sax_error): Add parse error callback for libxml.
+
+Mon Apr  2 02:23:06 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_redirect.c (post_send): Clean up and fix logic.  Only check
+	for confirmation for same-server redirects.
+
+Mon Apr  2 02:13:48 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_redirect.c (http_redirect_location): New function.
+	(destroy): Removed function.  (create): Free location.
+	(post_send): Only call notify callback for followed redirects.
+
+Mon Apr  2 01:55:27 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (http_set_request_uri): Allow using the '*' URI
+	even when using a proxy server.
+
+Mon Apr  2 01:32:06 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_redirect.c (post_send): Give up on trying to follow a
+	redirect to another server.  Return HTTP_REDIRECT on such a
+	redirect.
+
+	* http_redirect.c (post_send): Fix leaks of URI object (Kai
+	Sommerfeld).
+
+Mon Apr  2 01:08:33 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (read_response_headers): Don't read more than 100
+	response headers.
+
+Mon Apr  2 00:54:43 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (http_request_dispatch): Remove mapping of auth
+	status codes to return values, the hook does it now.
+
+Mon Apr  2 00:53:20 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (http_set_request_uri): New function, split out
+	from http_request_create. (http_request_create): Use it.
+
+Mon Apr  2 00:51:23 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_auth.c (http_set_proxy_auth, http_set_server_auth): Add
+	failure codes.  (ah_post_send): Return failure code if
+	authentication fails.
+
+Mon Apr  2 00:19:17 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_utils.c: Pick up xmlversion.h from libxml2.
+	(neon_version_string): Include libxml2 version string if defined.
+
+Sun Apr  1 21:40:00 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_basic.c (http_get_range): Fix total length
+	calculation. (Johan Lindh <johan@linkdata.se>).
+	(clength_hdr_handler): Use range->total.
+
+Sun Apr  1 21:26:09 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* hip_xml.c: Add expat2 support (Sam TH <sam@uchicago.edu>).
+
+Sun Apr  1 21:07:19 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* string_utils.h (CONCAT2, CONCAT3, CONCAT4): Use ne_malloc.
+
+Sun Apr  1 20:59:09 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dav_props.c (propfind, dav_proppatch): As below.
+
+Sun Apr  1 20:32:29 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_basic.c (http_post): Changed as per
+	http_set_request_body_buffer change.
+
+	* dav_locks.c (dav_lock): Likewise.
+
+Sun Apr  1 20:31:06 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (http_set_request_body_buffer): Pass in size
+	parameter too.  (send_request_body): Use sized rather than
+	NUL-terminated buffer.
+
+Sun Apr  1 20:12:51 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_private.h: Added 'body_callback' request body type, and
+	body_cb, body_ud fields to http_req.
+
+	* http_request.c (http_set_request_body_provider): New function.
+	(set_body_size): New function, factored out from old
+	http_set_request_body_*.  (http_set_request_body_stream,
+	http_set_request_body_buffer): Use it.
+
+Sun Apr  1 19:56:17 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dav_props.c: Replaced 'uri' and 'depth' fields in propfind
+	handler object with an 'http_req' pointer.  (dav_propfind_create):
+	Create the request object here, and set the depth header.
+	(propfind): Changed accordingly.  (dav_propfind_destroy): Destroy
+	request object too.
+
+	* dav_props.c (dav_propfind_get_request): New function.
+	
+Fri Mar 30 16:50:51 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* hip_xml.c (start_element): Quote attributes in collect (Kai
+	Sommerfeld).
+
+Fri Mar 30 16:36:08 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_basic.c (http_put_if_unmodified): Changed as below.
+
+Thu Mar 22 14:05:52 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_utils.c (http_dateparse): Changed as below.
+
+	* http_auth.c (get_conce, basic_challenge): Likewise.
+
+Thu Mar 22 14:04:54 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dates.c (ne_rfc1123_date, ne_rfc1123_date, ne_asctime_parse,
+	ne_rfc1036_parse): Added ne_ prefix.
+
+Thu Mar 22 14:03:12 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* base64.c (ne_base64): Renamed from base64.
+
+Tue Mar 20 20:34:44 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dav_props.c (make_elms): Don't request UTF-8 decoding of
+	property values.
+
+Tue Mar 20 20:33:39 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* string_utils.c (ne_utf8_decode): New function.
+
+Mon Mar 19 22:08:45 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_basic.c (get_callback): Removed function.  (http_get,
+	http_read_file, http_post): Use callbacks directly rather than
+	indirectly through get_callback.
+
+Mon Mar 19 21:55:19 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (notify_status, http_set_status,
+	http_set_progress): New functions: request status and progress
+	callbacks.  (open_connection, lookup_host): Use notify_status to
+	trigger status callbacks, and register socket progress callbacks.
+
+Mon Mar 19 21:53:07 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (sock_register_notify): Removed function.
+	(sock_connect_u): Renamed to sock_connect.
+	(sock_register_progress): Per-socket progress callbacks rather
+	than global ones.  (sock_call_progress): Take socket argument.
+	(all callers changed).
+
+Mon Mar 19 21:52:50 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (sock_get_version): New function.
+
+Mon Mar 19 13:59:21 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dav_props.c (propfind): Destroy the handler.
+
+Mon Mar 19 13:36:55 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dav_props.c (dav_propnames): New function.
+
+Wed Mar 14 22:42:12 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.h (http_begin_request, http_end_request,
+	http_read_response_block): New functions.
+	(http_request_dispatch): Reimplemented using new caller-pulls
+	interface.
+
+Wed Mar 14 22:20:38 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_auth.c (ah_post_send): If authentication fails (i.e. bad
+	credentials), clean the session details.
+
+Wed Mar 14 20:46:55 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_auth.c: Retry the request simply if it has not been tried
+	before with authentication details, otherwise, fail on 40[17].
+
+Wed Mar 14 20:12:52 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (open_connection): Make sure to close the
+	connection, and return HTTP_CONNECT if the SSL negotiation fails.
+
+Tue Mar  6 18:37:43 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_alloc.c (ne_strndup): Allocate n+1 bytes not 'n' (Kai
+	Sommerfeld).
+
+Mon Mar  5 01:05:31 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c: Moved local sbuffer variables of
+	http_request_dispatch into http_req members 'reqbuf' and
+	'respbuf'.  (build_request): Return a const char * of the request.
+	(send_request): Call build_request directly, use req->respbuf.
+	(http_request_dispatch): Don't call build_request.  Removed 'goto'
+	exception handling (hoorah).  (http_request_create,
+	http_request_destroy): Create and destroy reqbuf and respbuf here.
+
+Mon Mar  5 00:43:40 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (http_set_request_body_stream): Set
+	req->body_size and Content-Length header here: return success
+	value.  (http_set_request_body_buffer): Likewise (but no return
+	value).  (get_request_bodysize): Removed function.
+	(build_request): Add Content-Length: 0 header if no request body.
+
+Mon Mar  5 00:27:24 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_auth.c (http_forget_auth): New function.
+
+Mon Mar  5 00:25:15 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (http_request_hook_private): Renamed from
+	http_get_hook_private.  (http_session_hook_private): New function.
+
+	* dav_locks.c (dav_lock_using_resource, dav_lock_using_parent):
+	Renamed simiarly.
+
+Sun Mar  4 23:12:12 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_auth.c: Moved per-request state into struct auth_request.
+	(request_digest): Take struct auth_request argument.  (free_auth):
+	New function.  (http_add_hooks): Pass free_auth as cleanup
+	function for auth session.
+
+Sun Mar  4 23:08:46 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_redirect.c (auto_redirect): Auto-redirect OPTIONS requests.
+	(free_redirect): New function.  (http_redirect_register): Pass
+	cleanup function.
+
+Sun Mar  4 23:07:01 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dav_locks.c (dav_lock_unregister): Removed function.
+	(free_locks): New function.  (dav_lock_register): Pass free_locks
+	as cleanup function for hooks.
+
+Sun Mar  4 22:54:57 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.h (http_add_hooks): Added fourth argument to
+	register a cleanup function for the cookie.
+
+Sun Mar  4 19:53:03 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_auth.c (request_digest): Use an sbuffer to create the
+	header value.
+
+Sun Mar  4 19:44:18 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_auth.c: Remove namespace protection for private
+	functions. s/http_auth/auth/g.
+
+Sun Mar  4 19:39:13 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_auth.c (ah_pre_send): Increase attempt counter here, ...
+	(ah_post_send): instead of here.
+
+Sun Mar  4 18:40:03 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (http_request_dispatch): Simplify post_send hook
+	invocation: run them until one doesn't return HTTP_OK. Don't run
+	pre_send hooks here.  Loop while a hook returns HTTP_RETRY.
+	(build_request): Run pre_send hooks here.
+
+	* http_request.c (read_response_body): Call
+	normalize_response_length here.
+
+Sun Mar  4 18:12:26 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	Re-implemented HTTP authentication using generic hooks interface.
+
+	* http_auth.c: Added http_auth.h.  (http_auth_init,
+	http_auth_set_creds_cb, http_auth_new_request,
+	http_auth_request_header): Removed functions, merged into new
+	hooks code.  (ah_create, ah_post_send, ah_pre_send, ah_use_body,
+	ah_destroy): New functions.  (auth_body_reader,
+	http_set_server_auth, http_set_proxy_auth): Moved over from
+	http_request.c and redone for hooks interface.
+
+	* http_request.c (http_set_server_auth, http_set_proxy_auth,
+	give_creds, auth_body_reader): Moved to http_auth.c.
+	(http_accept_always): Renamed from always_accept_response and made
+	public.  (http_request_create, build_request,
+	http_request_dispatch): Removed authentication code.
+
+Tue Feb 27 19:49:42 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dav_props.c (set_body): Remove UTF-8 encoding again.
+
+Mon Feb 26 22:38:41 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	Patch from Kai Sommerfeld to remove URI escaping from inside neon.
+	
+	* dav_207.c (end_element): Don't unescape href elements.
+
+	* http_request.c (http_request_create): Don't escape Request-URI.
+
+	* dav_basic.c (copy_or_move): Don't escape destination URI.
+
+Mon Feb 26 21:44:56 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dav_props.c (set_body): UTF-8 encode the property name and
+	value.  (make_elms): Request UTF-8 decoding of property values.
+
+Mon Feb 26 21:40:14 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* hip_xml.c: Do perform UTF-8 decoding when using libxml.
+	(char_data): Fix UTF-8 decoding bug where the byte after a
+	multi-byte encoded sequence would be skipped.
+
+Sun Feb 25 20:04:05 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* string_utils.c (ne_utf8_encode): New function.
+
+Sun Feb 25 19:52:01 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* ne_alloc.c (ne_realloc): New function.
+
+Sun Feb 25 17:00:32 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (all): Rename NEON_IS_BUNDLED to NEON_BUILD_BUNDLED.
+
+Sun Feb 25 16:52:43 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in (all): Build according to NEON_IS_BUNDLED.
+
+Fri Feb 23 23:38:10 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* Makefile.in: Fix deps: neon_config.h has gone.
+
+Fri Feb 23 22:57:47 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* dav_props.c (dav_simple_propfind): Support a NULL 'props'
+	argument to do an allprop request, as per the advertising
+	literature.  Register a catch-all handler in this case.
+
+Fri Feb 23 22:16:42 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (http_session_destroy): Free up hooks list.
+
+Thu Feb 22 21:54:36 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.h (http_add_hooks): Make request_hooks 'const'.
+
+Thu Feb 15 08:36:56 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (read_response_body): Accept SOCK_CLOSED as
+	end-of-response if we don't have a Content-Length (and not
+	chunked). (Kai Sommerfeld).
+
+Thu Feb 15 08:36:23 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (add_fixed_headers): Don't add the Host header
+	here.  (http_request_dispatch): Add it here instead.
+
+	* http_request.c (set_hostinfo): Dup the hostname.
+	(http_session_destroy): Free the hostname.  (Kai Sommerfeld).
+
+Thu Feb 15 08:35:49 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_private.h: Make hostname in struct host_info char *. (Kai
+	Sommerfeld).
+
+Thu Feb 15 08:08:50 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_redirect.h: Add C++ header-inclusion safety macros (Kai
+	Sommerfeld <kai.sommerfeld@germany.sun.com>).
+
+Wed Feb 14 23:37:57 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (read_response_body): Use a size_t for readlen,
+	as read_response_block requires.
+
+Wed Feb 14 23:25:44 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_auth.c (request_digest): Fix incorrect signed-ness of
+	buffer.
+
+Wed Feb 14 23:22:13 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* uri.h, string_utils.h: Comment-out tokens after #endif.
+
+Sun Feb  4 14:36:11 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_redirect.c (post_send): Prototype change.
+
+Sun Feb  4 14:31:42 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c: Added key_prompt, key_userdata, key_file to
+	nssl_context.  (sock_set_key_prompt, key_prompt_cb): New
+	functions.  (sock_make_secure): Set ctx->key_file to private key
+	filename.
+
+Sun Feb  4 13:31:44 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.h: Make http_status argument of post_send a const
+	pointer.
+
+Sun Feb  4 10:38:12 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_request.c (set_sockerr): Only use the socket error if it is
+	NULL, else print generic "something went wrong"-type error
+	message.
+
+Sun Feb  4 10:29:37 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (sock_set_client_cert): Call SSL_CTX_check_private_key
+	to ensure that the cert and private key match.
+
+Sun Feb  4 10:28:02 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (sock_make_secure): In error cases after SSL_connect
+	succeeds, call SSL_shutdown and assign sock->ssl = NULL before
+	returning.
+
+Sat Feb  3 18:33:56 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (sock_close): Call SSL_shutdown before close()'ing the
+	fd.
+
+Sat Feb  3 18:30:48 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c: Store an default SSL_CTX in nsocket, to be used when
+	no nssl_context is supplied.  (create_socket): Create default
+	SSL_CTX (sock_close): Free it here.  (sock_make_secure): Use it
+	here.
+
+Sat Feb  3 15:52:15 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c (sock_set_client_cert): New function.
+
+Sat Feb  3 15:48:51 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* socket.c: Rejig of nssl_context handling.  An nssl_context is
+	now really a wrapper for an SSL_CTX.  (sock_create_ssl_context):
+	Create the SSL_CTX here.  (sock_disable_tlsv1, sock_disable_sslv2,
+	sock_disable_sslv3): Set the SSL_CTX option directly.
+	(sock_make_secure): Create an SSL_CTX if no nssl_context is
+	supplied, otherwise use SSL_CTX from nssl_context.
+
+Sun Jan 28 13:52:03 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* http_utils.c (neon_version_minimum): New function.
+
+Sun Jan 28 10:37:28 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* neon_config.h.in: Removed file.
+
+	* http_request.c, http_utils.c: Don't include neon_config.h.
+
+Sat Jan 27 22:52:37 2001  Joe Orton  <joe@light.plus.com>
+
+	* socket.c: Use closesocket() as NEON_CLOSE (Markus Fleck
+	<fleck@isoc.de>).
+
+Sat Jan 27 22:35:16 2001  Joe Orton  <joe@light.plus.com>
+
+	* hip_xml.c: Add 'char_data' as libxml cdataBlock handler.
+
+Tue Jan 23 23:17:00 2001  Joe Orton  <joe@light.plus.com>
+
+	* neon_config.h.in: Renamed from neon_config.h.  Define
+	NEON_VERSION_MAJOR and NEON_VERSION_MINOR too: all picked up from
+	the NEON_VERSIONS macro.
+
+Sun Jan 21 22:07:34 2001  Joe Orton  <joe@light.plus.com>
+
+	* string_utils.c (ne_concat): New function.
+
+Thu Jan 18 22:25:34 2001  Joe Orton  <joe@light.plus.com>
+
+	* ne_alloc.h: Added ne_oom_callback.
+
+	* ne_alloc.c: Added DO_MALLOC macro to do the malloc and oom
+	callback test.  (ne_malloc): Use DO_MALLOC.  (ne_strdup,
+	ne_calloc, ne_strndup): Reimplement using DO_MALLOC rather than
+	calling ne_malloc().
+
+Tue Jan 16 20:16:35 2001  Joe Orton  <joe@light.plus.com>
+
+	* neon_config.h: Bumped version to 0.10.1.
+
+Tue Jan 16 20:14:40 2001  Joe Orton  <joe@light.plus.com>
+
+	* http_request.c (http_session_create): Default expect-100 support
+	to OFF.
+
+Mon Jan 15 22:59:33 2001  Joe Orton  <joe@light.plus.com>
+
+	* neon_config.h: Bumped version to 0.10.0.
+
+Mon Jan 15 22:58:04 2001  Joe Orton  <joe@light.plus.com>
+
+	* dav_basic.c (dav_simple_request): Use dav_207_ignore_unknown.
+
+Sun Jan 14 22:52:31 2001  Joe Orton  <joe@light.plus.com>
+
+	* dav_props.c (propfind): Call dav_207_ignore_unknown.
+
+Sun Jan 14 22:49:06 2001  Joe Orton  <joe@light.plus.com>
+
+	* dav_207.c: Don't handle unknown elements in normal handler.
+	(ignore_cc, dav_207_ignore_unknown): New functions, for ignoring
+	any unknown elements in the parse.
+
+Sun Jan 14 21:53:00 2001  Joe Orton  <joe@light.plus.com>
+
+	* hip_xml.c: Renamed 'handlers' back to top_handlers.
+	(push_handler): Now, p->root->handlers points to BASE of stack,
+	p->top_handlers points to TOP of stack.  (hip_xml_destroy):
+	Changed to start from new BASE of stack.
+
+Sun Jan 14 10:50:09 2001  Joe Orton  <joe@light.plus.com>
+
+	* http_request.c (http_session_server): Do perform the DNS lookup
+	if we have a proxy_decider function, since that means we MIGHT
+	need to know the IP address of the origin server.
+	(http_request_create): Pass the real scheme back to the proxy
+	decider callback.
+
+Wed Jan 10 22:43:16 2001  Joe Orton  <joe@light.plus.com>
+
+	* Makefile.in: Rename OBJ_EXT to NEON_OBJEXT.  Remove
+	NEON_INTERFACE_VERSION, use NEON_LINK_FLAGS instead.
+
+Wed Jan 10 22:02:02 2001  Joe Orton  <joe@light.plus.com>
+
+	* dav_locks.c (create_private): New function.
+	(dav_lock_discover): Switch to using new dav_propfind_set_complex
+	API.
+
+Wed Jan 10 21:59:36 2001  Joe Orton  <joe@light.plus.com>
+
+	* dav_props.h (dav_propfind_set_complex): Switch the
+	'sizeof_private' argument for a callback 'creator': the return
+	value of this callback is used as the 'private' field for the
+	current resource.
+
+Mon Jan  8 22:09:55 2001  Joe Orton  <joe@light.plus.com>
+
+	* dav_locks.h (dav_lock_result): Re-order arguments.  Make lock
+	object const.
+	
+	* dav_locks.c (dav_lock_copy): New function.  (discover_results):
+	Set lock->uri given href for current results.  Free lock object
+	after passing to results.
+
+Sun Jan  7 21:55:14 2001  Joe Orton  <joe@light.plus.com>
+
+	* dav_locks.c (dav_lock): Destroy XML parser after use.  Remove
+	handling of Lock-Token header: it wasn't used and it leaked.
+
+Sun Jan  7 19:58:29 2001  Joe Orton  <joe@light.plus.com>
+
+	* dav_props.c (free_propset): Free the property values, and the
+	result set URI too.
+
+Sun Jan  7 16:58:19 2001  Joe Orton  <joe@light.plus.com>
+
+	* http_request.c (read_response_block): Fix handling of
+	SOCK_CLOSED from sock_read as end-of-connection.
+
+Sat Jan  6 15:02:57 2001  Joe Orton  <joe@light.plus.com>
+
+	* hip_xml.c (struct hip_xml_parser): Renamed 'top_handlers' to
+	'handlers' in hip_xml_parser.  (push_handler): New function.
+	(hip_xml_push_handler, hip_xml_push_mixed_handler): Use
+	push_handler.
+
+	* hip_xml.c (find_handler): Begin the search for a new handler
+	from the handler of the current (parent) element, and work up the
+	stack.
+
+Sat Jan  6 11:15:17 2001  Joe Orton  <joe@light.plus.com>
+
+	* hip_xml.c (find_handler): Display error message for unknown XML
+	element as 'elmname (in nspace)' rather than 'nspace:elmname'
+	since the latter produces confusing errors like
+	'DAV::displayname'.
+
+Wed Jan  3 21:34:44 2001  Joe Orton  <joe@light.plus.com>
+
+	* Makefile.in: Hard-code top_builddir as '..' (possibly wrong, but
+	true for all neon apps so far).  Remove INCLUDES, now unused.  Add
+	top_srcdir.
+
+Fri Dec 22 22:51:27 2000  Joe Orton  <joe@light.plus.com>
+
+	* dav_props.c: Added 'has_props' field to propfind_handler struct.
+	(set_body): Only add leading 'prop' element if has_props is not
+	set.  Set has_props.  Don't add trailing </prop> element here.
+	(dav_propfind_named): ... add it here instead.
+	(dav_propfind_set_complex, dav_propfind_set_flat): New set_body
+	interface.
+
+Fri Dec 22 21:10:39 2000  Joe Orton  <joe@light.plus.com>
+
+	* socket.c (sock_transfer): Don't use NEON_READ here, this is
+	for reading from a non-socket fd.
+
+Wed Dec 20 00:19:34 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon_config.h: Bumped version to 0.9.1.
+
+Wed Dec 20 00:19:09 2000  Joe Orton  <joe@light.plus.com>
+
+	* dav_props.c (free_propset): Don't free the private structure,
+	make this the caller's responsibility.
+
+Wed Dec 20 00:12:36 2000  Joe Orton  <joe@light.plus.com>
+
+	* dav_props.c (end_propstat): Rename propstat argument to
+	'pstat_v' to kill warnings.
+
+Tue Dec 19 23:42:39 2000  Joe Orton  <joe@light.plus.com>
+
+	* dav_props.c (start_response): Zero-out the private structure on
+	creation.
+
+Tue Dec 19 22:54:06 2000  Joe Orton  <joe@light.plus.com>
+
+	* http_request.c (read_response_block): Rename local variable
+	'socket' to 'sock'.
+
+Tue Dec 19 22:52:56 2000  Joe Orton  <joe@light.plus.com>
+
+	* http_request.h: Rename argument from 'stat' in post_send
+	definition.
+
+Tue Dec 19 22:52:32 2000  Joe Orton  <joe@light.plus.com>
+
+	* http_utils.h: Add 'const' to char * argument.
+
+Tue Dec 19 22:19:28 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon_config.h: Bumped version to 0.9.0.
+
+Tue Dec 19 22:12:19 2000  Joe Orton  <joe@light.plus.com>
+
+	* Makefile.in: New file.
+
+Tue Dec 19 22:07:50 2000  Joe Orton  <joe@light.plus.com>
+
+	* Makefile.incl: Removed file.
+
+Tue Dec 19 22:06:06 2000  Joe Orton  <joe@light.plus.com>
+
+	* dav_locks.c (dav_lock_discover): New callback-based lock
+	discovery interface.  Re-implemented using new propfind interface.
+
+Tue Dec 19 21:22:43 2000  Joe Orton  <joe@light.plus.com>
+
+	* dav_props.h: Replace old dav_propfind_* interface with better
+	one.  (dav_simple_propfind): Renamed from dav_get_props.
+	(dav_propfind_current_private, dav_propfind_set_complex,
+	dav_propfind_set_flat): New functions.
+	(dav_propfind_get_current_resource): Removed function.
+	(dav_propfind_named, dav_propfind_allprop): Change second argument
+	to be the results callback.
+
+	* dav_props.c: Replace implementatino of old interface with new
+	one.  (dav_simple_propfind): Re-implemented on top of new
+	all-singing all-dancing dav_propfind_* interface.
+
+Sun Dec 17 18:24:50 2000  Joe Orton  <joe@light.plus.com>
+
+	* dav_props.c: Add dav_get_props, and all its auxiliaries.
+
+Sun Dec 17 15:43:55 2000  Joe Orton  <joe@light.plus.com>
+
+	* dav_props.c (propfind): Destroy the request after calling
+	http_get_status.
+
+Sun Dec 17 18:04:58 2000  Joe Orton  <joe@light.plus.com>
+
+	* hip_xml.c (find_handler): Allow using NULL as name and nspace in
+	HIP_ELM_unknown elements.
+
+Sun Dec 17 18:03:03 2000  Joe Orton  <joe@light.plus.com>
+
+	* dav_207.c (check_context): Don't handle the unknown element when
+	it is a child of the prop element, this prevents handling allprop
+	responses.
+
+Thu Dec 14 21:48:06 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon_config.h: Bumped version to 0.8.0.
+
+Thu Dec 14 21:43:31 2000  Joe Orton  <joe@light.plus.com>
+
+	* dav_basic.c, dav_locks.c, dav_props.c (everywhere): Changed to
+	new response-status interface, and _class->klass change.
+
+Thu Dec 14 21:37:38 2000  Joe Orton  <joe@light.plus.com>
+
+	* http_request.c (http_get_status): Add new response-status
+	interface.
+
+Thu Dec 14 21:30:25 2000  Joe Orton  <joe@light.plus.com>
+
+	* http_basic.c (everywhere): Use new status interface.
+
+Thu Dec 14 21:25:03 2000  Joe Orton  <joe@light.plus.com>
+
+	* http_private.h: Made http_status pointer in http_req a declared
+	object.
+
+	* http_request.h: Removed passing status pointer to
+	http_request_dispatch.
+
+	* http_request.c (everywhere): Removed passing extra http_status *
+	to auxiliaries, use req->status instead.  Renamed '_class' to
+	'klass' everywhere.
+	
+Thu Dec 14 21:15:54 2000  Joe Orton  <joe@light.plus.com>
+
+	* http_utils.h: Renamed '_class' member of http_status to 'klass'.
+	(http_parse_statusline): Change accordingly.
+
+Wed Dec 13 23:00:23 2000  Joe Orton  <joe@light.plus.com>
+
+	* socket.c: Changes for pre-BONE BeOS (David Reid
+	<dreid@jetnet.co.uk>).
+
+Wed Dec 13 21:29:36 2000  Joe Orton  <joe@light.plus.com>
+
+	* uri.c (ESCAPE): Explicitly cast the character to const unsigned
+	int.  (uri_abspath_escape): Make 'pnt' a normal const char *.
+
+Wed Dec 13 21:17:31 2000  Joe Orton  <joe@light.plus.com>
+
+	* http_request.c: Remove netinet/in.h include, add limits.h
+	include. (Peter Boos) (read_response_block): Make readlen a size_t
+	(David Reid).
+
+Wed Dec 13 21:08:08 2000  Joe Orton  <joe@light.plus.com>
+
+	* ne_alloc.h [WIN32]: Include stdlib.h. (Peter Boos)
+
+Wed Dec 13 20:54:27 2000  Joe Orton  <joe@light.plus.com>
+
+	Patches from Peter Boos and David Reid for Win32 and
+	BeOS changes respectively:
+	
+	* socket.c: Add NEON_READ, NEON_WRITE, NEON_CLOSE macros to use
+	send/recv/closesocket for BeOS, send/recv/close for Win32,
+	write/read/close otherwise.  Include WinSock2.h in Windows.  Add
+	arpa/inet.h check. (sock_read, sock_write): Use the NEON_ macros.
+	(sock_connect, sock_close): Use NEON_CLOSE. (sock_init): Winsock
+	initialization.  (sock_exit) Winsock cleanup.  (sock_fullwrite):
+	Use size_t rather than ssize_t for 'sent'.  (sock_connect,
+	sock_connect_u): Make 'port' parameter an unsigned short int.
+
+Wed Dec 13 20:42:18 2000  Joe Orton  <joe@light.plus.com>
+
+	* http_basic.c (clength_hdr_handler): Use an off_t for len, to
+	avoid comparison with size_t.
+
+Wed Dec 13 20:38:59 2000  Joe Orton  <joe@light.plus.com>
+
+	* hip_xml.c (char_data): Use an 'int' for wslen, avoid comparison
+	between size_t (which is signed) and int (which [is|might be?]
+	unsigned).
+
+Wed Dec 13 20:29:12 2000  Joe Orton  <joe@light.plus.com>
+
+	* nsocket.h [WIN32]: Use Windows headers rather than Unixy ones.
+	(sock_exit): New function.
+
+Wed Dec 13 20:21:22 2000  Joe Orton  <joe@light.plus.com>
+
+	* string_utils.c, string_utils.h, uri.h: Includes change (Peter
+	Boos).
+
+Wed Dec 13 20:20:09 2000  Joe Orton  <joe@light.plus.com>
+
+	* http_auth.c (http_auth_response_body): Don't make
+	inline. Includes change.  (both by Peter Boos).
+
+Wed Dec 13 20:18:38 2000  Joe Orton  <joe@light.plus.com>
+
+	* uri.c (uri_unescape): Cast strtol return to (char). Includes
+	change as below (both by Peter Boos).
+
+Wed Dec 13 20:07:38 2000  Joe Orton  <joe@light.plus.com>
+
+	* base64.c, dates.c, dates.h, dav_207.c, dav_207.h, dav_basic.h,
+	dav_locks.h, hip_xml.h, http_auth.h, http_basic.h, http_cookies.c,
+	http_redirect.c, http_redirect.h, http_request.h, http_utils.c,
+	md5.c, ne_alloc.c: Use #include "..." rather than #include <...>
+	for neon headers. (Peter Boos <PediB@colorfullife.com>).
+
+Thu Dec  7 21:45:02 2000  Joe Orton  <joe@light.plus.com>
+
+	* socket.c (sock_read): Return zero immediately if a zero count
+	parameter is passed, following SUSv2 semantics.
+
+Thu Dec  7 21:41:36 2000  Joe Orton  <joe@light.plus.com>
+
+	* nsocket.h (sock_readfile_blocked): Define an interface, allow
+	taking -1 as the length parameter.  Only return SOCK_CLOSED if
+	length == -1 is NOT passed.
+
+Sun Nov 26 09:46:53 2000  Joe Orton  <joe@light.plus.com>
+
+	* nsocket.h: Fix use of 'socket' in function prototypes.
+
+Sun Nov 19 00:29:48 2000  Joe Orton  <joe@light.plus.com>
+
+	* nsocket.h: Increase read timeout to 120 seconds.
+
+Sun Nov  5 14:42:46 2000  Joe Orton  <joe@light.plus.com>
+
+	* dav_locks.c: Fix element id's (fixes segfault when using locks).
+
+Thu Oct 26 22:28:17 2000  Joe Orton  <joe@light.plus.com>
+
+	* socket.c (sock_peek): Return SOCK_CLOSED if recv() returns zero.
+
+Thu Oct 26 22:24:14 2000  Joe Orton  <joe@light.plus.com>
+
+	* socket.c (sock_block): Return "got data" if SSL_pending
+	indicates data pending.  Otherwise select on socket as normal.
+
+Thu Oct 26 22:15:14 2000  Joe Orton  <joe@light.plus.com>
+
+	* socket.c (sock_readline, sock_peek): Check whether SSL
+	connection has been closed if SSL_peek returns 0 (thanks to Jeff
+	Costlow <j.costlow@f5.com>).
+
+Thu Oct 14 19:57:31 2000  Joe Orton  <joe@light.plus.com>
+
+	* Makefile.incl: Fix spurius backslash at line 69 (thanks to 
+	Dirk Bergstrom <dirk@juniper.net>).
+
+Sat Oct 14 19:51:44 2000  Joe Orton  <joe@light.plus.com>
+
+	* dav_basic.c (copy_or_move): Use http_get_scheme rather than
+	hard-coding "http".
+
+2000-10-02  Joe Orton  <joe@light.plus.com>
+
+	* http_request.c (http_get_scheme): New function.
+
+Tue Oct 10 19:56:42 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon_config.h: Bumped version to 0.7.5.
+
+Sat Oct  7 19:26:58 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon_config.h: Bumped version to 0.7.4.
+
+Sat Oct  7 19:19:37 2000  Joe Orton  <joe@light.plus.com>
+
+	* http_auth.c (request_digest): Quote algorithm and qop parameters
+	in digest header.
+
+Sat Oct  7 19:15:29 2000  Joe Orton  <joe@light.plus.com>
+
+	* socket.c (sock_connect_u): Don't leak the fd if connect fails
+	(David Sloat).
+
+Sat Sep 16 16:49:57 2000  Joe Orton  <joe@light.plus.com>
+
+	* hip_xml.h: Add 'HIP_ELM_UNUSED', defining lowest element ID
+	which should be used.
+
+	* hip_xml.c, hip_xml.h (hip_xml_push_handler,
+	hip_xml_push_mixed_handler): Renamed from hip_xml_add_handler /
+	hip_xml_add_mixed_handler to reflect stack-like usage of handlers.
+	'handlers' field of hip_xml_parser renamed to top_handler for same
+	reason (globally search'n'replaced).
+
+	* hip_xml.h: Documentation update.
+	
+Thu Sep 14 22:37:33 2000  Joe Orton  <joe@light.plus.com>
+
+	* http_auth.c (request_digest): Quote qop= value, fixes
+	IIS5 interop.
+
+Thu Sep 14 00:40:04 2000  Joe Orton  <joe@light.plus.com>
+
+	* socket.c (sock_connect_u): If connect() fails, close the socket
+	before returning: thanks to David Sloat <d.sloat@f5.com>.
+
+Tue Sep 12 20:08:40 2000  Joe Orton  <joe@light.plus.com>
+
+	* http_request.c (read_response_headers): Remove redundant
+	tolower().
+
+Tue Sep 12 00:41:39 2000  Joe Orton  <joe@light.plus.com>
+
+	* neon_config.h: Bumped version to 0.7.3.
+
+Mon Sep 11 15:31:13 2000  Joe Orton  <joe@light.plus.com>
+
+	* http_request.c, http_auth.c: Include snprintf.h if
+	HAVE_SNPRINTF_H is defined.
+
+Fri Sep  8 10:46:53 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h: Bumped version to 0.7.2.
+
+Fri Sep  8 10:44:42 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.c (sock_block): Return immediately if this is an SSL
+	socket.
+
+Thu Sep  7 00:31:12 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* hip_xml.h: Correct order of hip_xml_validate_cb arguments in
+	prototype (thanks to Greg Stein).
+
+Thu Sep  7 00:27:29 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_props.c (propfind): Don't destroy the handler after use.
+	(dav_propfind_destroy): New function.
+
+Thu Sep  7 00:08:45 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.incl: Added targets for ne_alloc.o, string_utils.o,
+	uri.o, base64.o.
+
+Tue Aug 15 21:53:53 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h: Bumped version to 0.7.1.
+
+Tue Aug 15 21:16:34 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (http_request_create): Only add authentication
+	response body callbacks if a supply-credentials callback has been
+	set for the session.  (http_request_dispatch): Similarly for
+	response header callbacks.
+
+Mon Aug 14 09:28:38 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h: Bumped version to 0.7.0.
+
+Mon Aug 14 09:23:54 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* string_utils.h (SBUFFER_CAST): New macro.
+
+Mon Aug 14 09:13:05 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_private.h: Use a hash table for storing response header
+	handlers.  Added response header 'catchers', which are passed ALL
+	response headers.
+
+	* http_request.c (http_add_response_header_handler): Place the
+	handler in the correct hash bucket. (hdr_hash): New function.
+	(http_add_response_header_catcher): New function.
+	(http_request_destroy): Destroy the header catchers, and iterate
+	over the hash table to destroy the handlers.
+	(read_response_headers): Optimisation: hash and search for ':' in
+	a single loop.  Remove another local variable.  Iterate through
+	catchers too.
+
+Sun Aug 13 15:57:35 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h: Bumped version to 0.6.1.
+
+Sun Aug 13 15:50:42 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (send_request): Only go through the loop at most
+	twice.
+
+Sun Aug 13 15:49:52 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_redirect.c (destroy): Don't free the redirect structure.
+
+Sat Aug 12 17:10:32 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h: Bumped version to 0.6.0.
+
+Sat Aug 12 16:48:47 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (http_session_decide_proxy): New function.
+	(http_request_create): Call proxy "decider callback" to determine
+	whether to use the proxy server for a given request or not.
+
+Sat Aug 12 16:39:10 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.incl: Updated for http_private.h and
+	http_redirect.[ch].
+
+Sat Aug 12 16:36:49 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c: Removed data structure definitions.
+
+	* http_private.h: New file, contains data structure definitions.
+	Interface NOT exported.
+
+Sat Aug 12 16:31:32 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_redirect.c (destroy): No return value.
+
+Sat Aug 12 16:04:02 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_redirect.[ch]: First cut at HTTP redirect handling.
+
+Sat Aug 12 11:05:13 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h: Bumped version to 0.5.1.
+
+Sat Aug 12 02:04:15 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_locks.c (dav_lock_using_resource, dav_lock_using_parent):
+	Prevent segfault if locking is not in use.
+
+Fri Aug 11 17:19:06 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h: Bumped version to 0.5.0.
+
+Fri Aug 11 16:31:23 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (read_message_header): Take a buffer for storing
+	continuation lines. (read_response_headers): No need to strip EOL
+	since read_message_header does this already.  Use one less
+	variable.
+
+Fri Aug  4 22:12:04 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (send_request): Don't retry sending the request
+	more than once.
+
+Wed Aug  2 11:08:31 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* ne_alloc.[ch]: Renamed from xalloc.[ch].
+
+Wed Aug  2 02:15:32 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.c (sock_transfer): Return SOCK_CLOSED, or set sock->error
+	appropriately on read failure.
+
+Tue Aug  1 13:04:27 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.c, nsocket.h (sock_progress, sock_call_progress,
+	sock_transfer, sock_readfile_blocked): Use 'off_t' not 'size_t' as
+	file size type.
+
+Fri Jul 28 13:32:37 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h: Bumped version to 0.4.2.
+
+Fri Jul 28 13:31:38 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (send_request): Fix sending request body after
+	getting 100-continue response.
+
+Fri Jul 28 11:26:47 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h: Bumped version to 0.4.1.
+
+Fri Jul 28 10:32:34 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h: Bumped version to 0.4.0.
+
+Fri Jul 28 10:28:21 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_basic.[ch] (http_post): New function, from Sander Alberink
+	<sander.alberink@cmg.nl>.
+
+Thu Jul 27 18:55:49 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_utils.c (neon_debug): No conditional compilation for
+	function body: compile it all regardless of whether debugging is
+	enabled or not, to allow applications to be debugged regardless of
+	whether debugging is compiled into the library or not.
+
+Thu Jul 27 16:59:26 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_basic.c (clength_hdr_handler): Cast off_t to long int for
+	printing.
+
+Tue Jul 25 18:14:15 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (read_message_header): Iterate over header
+	handler list before placing zero-terminator at ':': if a handler
+	has a NULL name field, pass it the entire header value.
+
+Tue Jul 25 18:00:49 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (http_get_request_headers): New function.
+
+Mon Jul 24 16:55:29 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h: Bumped version to 0.3.9.
+
+Mon Jul 24 16:54:33 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_basic.h: Use 'off_t' in http_content_range.
+
+	* http_basic.c (http_get_range): Cast range values to (long int)
+	to prevent compiler warnings.
+
+Thu Jul 20 20:03:30 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.[ch], socket.c, http_basic.c: Include nsocket.h not
+	socket.h.
+
+Thu Jul 20 20:02:20 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_utils.c (version_string): Indicate which XML parser is
+	supported.
+
+Thu Jul 20 20:01:12 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* nsocket.h: Renamed from socket.h.
+
+Thu Jul 20 15:02:35 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_utils.c, socket.c, http_request.c: SSL_ENABLE renamaed to
+	ENABLE_SSL.
+
+Thu Jul 20 12:20:13 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* md5.c, http_auth.h: Include neon_md5.h.
+
+Thu Jul 20 12:19:23 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_md5.h: Renamed from md5.h.
+
+Wed Jul 19 22:33:46 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_basic.c (dav_simple_request): Don't leak ctype.value.
+
+Wed Jul 19 22:32:03 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_207.c (check_context): Accept unknown elements.
+
+Wed Jul 19 22:31:10 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_locks.c (dav_lock_iterate): Allow passing func as NULL.
+
+Wed Jul 19 22:26:13 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.h (SOCKET_READ_TIMEOUT): Increase to 60.
+
+Wed Jul 19 22:25:51 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_locks.h: Include http_request.h.
+
+Mon Jul 17 11:41:16 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dates.c (asctime_parse, rfc1036_parse): Actually pass the string
+	to sscanf (thanks to lclint).  (rfc1123_date): Check for gmtime()
+	returning NULL.
+
+Mon Jul 17 09:16:43 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h: Bumped version to 0.3.1.
+
+Mon Jul 17 09:07:58 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_locks.c: Include limits.h: thanks to Paul D'Anna.
+
+Sun Jul 16 18:47:15 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h: Bumped version to 0.3.0.
+
+Sun Jul 16 16:44:25 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_i18n.c (neon_i18n_init) [ENABLE_NLS && NEON_IS_LIBRARY]:
+	New compilation conditions.
+
+Sun Jul 16 16:41:12 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_i18n.c: New file.
+
+Sun Jul 16 16:15:02 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* string_utils.c (sbuffer_*): Change to assert postcondition
+	(buf->used == strlen(buf->data) + 1).  (sbuffer_append): Fix
+	brokenness.
+
+Sun Jul 16 16:11:05 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.c (sock_transfer): Increase sum length written correctly.
+
+Sun Jul 16 16:10:23 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (http_get_hook_private): New function.
+
+Sun Jul 16 16:07:11 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* hip_xml.c (find_handler): Call validate_cb for any handler which
+	recognizes the element.  Allow return codes
+	HIP_XML_{VALID,INVALID,DECLINE} from validate_cb.  If DECLINE is
+	returned, continue searching handlers until one returns
+	(IN)VALID.  (start_element): Don't call validate_cb.
+
+	* hip_xml.c (start_element, end_element): In collect mode, don't
+	print namespace prefix if present.
+
+Sun Jul 16 15:30:19 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_locks.[ch]: New file, code mainly taken from cadaver and
+	adapted for neon HTTP request/response handling.
+
+Sun Jul 16 15:28:25 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_basic.c (copy_or_move, dav_move, dav_copy): Pass overwrite
+	as parameter.
+
+Sun Jul 16 15:26:24 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* uri.c (uri_compare): Fixed to only return equal if *shorter*
+	string has no trailing slash.
+
+Sat Jul 15 20:14:07 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_207.c (dav_207_get_current_response,
+	dav_207_get_current_propstat): New functions.
+
+	* dav_props.c (dav_propfind_get_current_resource): Implement using
+	dav_207_get_current_response.
+
+Sat Jul 15 17:36:37 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* xalloc.c (xcalloc): New function.
+
+Sat Jul 15 14:11:14 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_utils.[ch] and elsewhere: Replace 'class' field of
+	http_status with '_class' to be C++-safe. (patch from Tom
+	Bednarz).
+
+Thu Jul  6 18:48:52 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_basic.c (copy_or_move): Escape the destination URI.
+
+Thu Jul  6 18:45:51 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_props.c (end_response): Added description parameter.
+
+Thu Jul  6 18:43:14 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_207.[ch] (end_element): Fix handling of responsedescription.
+	Add "description" parameter to dav_207_end_response callback, and
+	pass the contents of responsedescription.
+
+	* dav_basic.c (handle_error, end_response, end_propstat): Pass
+	description and add to error string when present.
+
+Tue Jul  4 11:43:03 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_basic.c, dav_props.c, http_basic.c: Use
+	http_{add,print}_request_header rather than
+	http_get_request_header.
+
+Tue Jul  4 11:41:00 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.[ch] (http_add_request_header,
+	http_print_request_header): New functions.
+	(http_get_request_header): Removed function.
+
+Mon Jul  3 21:50:40 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c: Add basic support for TLS upgrade (RFC2817).
+	(http_set_request_secure_upgrade, http_set_accept_secure_upgrade):
+	New functions.  (send_request): If upgrade is requested, and a 101
+	response is received, negotiate the TLS connection.
+	(add_fixed_headers): Add Upgrade header if necessary.
+
+Mon Jul  3 21:46:00 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (send_request): Don't go into an infinite loop.
+	(read_message_header): Simplyify checking for end-of-line.
+
+Tue Jun 13 00:29:42 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (http_session_proxy, http_session_server): Allow
+	calling >1 time per session, to switch servers.  (send_request):
+	Only retry sending request once.
+
+Mon Jun 12 21:50:41 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (http_add_hooks): New function.
+
+Mon Jun 12 21:37:24 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_cookies.[ch]: Added basic cookies support.
+
+Mon Jun 12 21:33:33 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.c (sock_create_ssl_context, sock_destroy_ssl_context,
+	sock_disable_tlsv1, sock_disable_sslv2, sock_disable_sslv3,
+	sock_make_secure): Added nssl_context handling.
+
+Mon Jun 12 21:29:52 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (http_request_dispatch, http_request_create,
+	http_request_destroy, http_set_request_body_buffer,
+	http_set_request_body_stream): Added hook support.
+
+Mon Jun 12 21:04:00 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (http_set_secure): Store an nssl_context.
+	(open_connection): Give the nssl_context.
+
+Sun Jun 11 16:37:52 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* sslcerts.c: Import of SSL support from mutt, relicensed under
+	the LGPL for use in neon by the author, Tommi Komulainen
+	<Tommi.Komulainen@iki.fi>.
+
+Sun Jun 11 11:30:16 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (set_sockerr): Updated to use sock_get_error.
+
+Sun Jun 11 11:29:29 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* uri.c (uri_parse): Allow scheme to be omitted.
+
+Fri Jun  9 20:39:24 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.c (sock_get_error): New function.  (sock_*): Set
+	sock->error and SOCK_ERROR on error.
+
+Mon May 29 16:32:46 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* uri.c (uri_abspath_escape): Allocate the exact amount of memory
+	needed.
+
+Mon May 29 15:53:33 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_basic.c (dav_simple_request): Correct invalid XML logic.
+
+Mon May 29 15:52:08 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.c (create_sock, sock_accept, sock_get_fd): New
+	functions.  (sock_connect_u): Use create_sock.
+
+Sun May 28 21:00:37 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_utils.c (neon_version_string): New function.
+
+Sun May 28 19:36:45 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.c (sock_connect_u): Zero out allocated nsocket object.
+
+Thu May 25 01:27:04 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* *.h: Include other neon headers with <braces>.
+
+Thu May 25 01:02:12 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_props.c: Include stdlib.h for 'free'.
+
+Wed May 24 20:15:08 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (read_message_header): Return HTTP_RETRY if more
+	headers to read, HTTP_OK on end-of-headers.
+	(read_response_headers): Changed accordingly.
+
+Wed May 24 19:56:29 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (send_request_body): Return a SOCK_* code.
+	(send_request): Re-send request if socket has been closed (due to
+	persistent connection timeout).
+
+Wed May 24 19:00:01 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* hip_xml.c (find_element): Fix unknown element handling.
+
+Tue May 23 19:12:26 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_props.c (propfind): Destroy the request body sbuffer after
+	use.
+
+Tue May 23 15:43:42 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.c (sock_make_secure) [SSL_ENABLE]: Conditionally compile
+	SSL code. [!SSL_ENABLE]: Return failure.  (sock_close)
+	[SSL_ENABLE]: Conditionally compile SSL code.
+
+Tue May 23 15:37:53 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (http_session_create): Renamed from
+	http_session_init.  (http_session_destroy): Renamed frmo
+	http_session_finish.
+
+Sun May 21 23:50:58 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (lookup_host): Use sock_name_lookup.
+
+Sun May 21 23:40:39 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (http_request_create): Allow passing NULL uri
+	(internal use only).  (http_set_secure): New function.
+	(read_response_block, read_message_headers): Redone for new socket
+	API.  (build_request): Moved http_auth_new_request calls here
+	(from http_request_dispatch).  (send_request): Always call
+	open_connection before sending the request.
+	(read_message_header, read_response_headers): Looser check for
+	empty line.  (normalize_response_length): Set response body length
+	to zero on 2xx class response whilst in CONNECT, if no other
+	response body length is given.  (http_request_dispatch): Don't
+	close the connection on a HTTP/1.0 2xx class response after a
+	CONNECT request.  (proxy_tunnel): New function.
+	(open_connection): Use an SSL connection where appropriate.  Use
+	proxy_tunnel for tunnelling through a proxy.
+
+Sun May 21 01:35:40 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* src/socket.c: Added 'nsocket' ADT for handling sockets.
+	(sock_*): All changed to take 'nsocket *' argument rather than
+	integer file descriptor.  Added 'sock_secure_details' to
+	sock_status enum.  (sock_make_secure, sock_init): New function.
+	(sock_peek): Renamed from sock_recv.  (send_file_*, recv_file_*):
+	Removed functions.  (sock_name_lookup): Renamed from host_lookup.
+	(sock_service_lookup): Renamed from get_tcp_port.  (sock_block,
+	sock_read, sock_fullwrite, sock_peek, sock_readline): Added SSL
+	support.  (sock_transfer): Use sock_fullwrite and sock_read.
+
+Sun May 21 01:25:03 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (http_request_destroy): Free header handlers and
+	body readers.
+
+Sun May 21 01:24:30 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_props.h: Removed obsolte got_property callback type.
+
+Sun May 21 01:23:59 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_props.c (propfind): Free handler object after use.
+
+Sun May 21 01:23:12 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_207.c (dav_207_destroy): Don't try to free the 'response'
+	field.
+
+Sat May 20 21:45:32 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c: Changed 'te' enum of struct http_response to
+	'is_chunked' boolean.
+
+Sun May 14 01:00:42 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_props.c (propfind): Return error on parse error.
+
+Sun May 14 00:40:50 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h (NEON_VERSION): Bumped to 0.2.0.
+
+Sat May 13 23:31:28 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_defs.h (BEGIN_NEON_DECLS, END_NEON_DECLS): Added C++ safety
+	macros.
+
+	* *.h: Surround with C++ safety macros.
+
+Sat May 13 22:36:06 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* hip_xml.c (hip_xml_destroy): Free handlers.
+
+Sat May 13 21:12:14 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* hip_xml.c (hip_xml_valid): Reversed return value.
+
+Sat May 13 21:11:17 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_utils.c: Renamed http_debug_mask to neon_debug_mask,
+	similarly neon_debug_stream.  (neon_debug_init): Renamed from
+	http_debug_init.
+
+Sat May 13 19:24:40 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_utils.c: Initialize http_debug_mask to zero.
+	(http_debug_init): New function.
+
+	* http_utils.h: Fixed #ifdef DEBUGGING. Only define relevant
+	DEBUG_* constants.
+	
+Sat May 13 19:23:34 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_config.h: New file.
+
+	* http_request.c: Include neon_config.h for NEON_VERSION.
+
+Sat May 13 18:28:05 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_props.c (dav_propfind_create): Create a hip_xml_parser, a
+	207 parser, register start+end response handlers with 207 layer.
+	(propfind): Fix allprop (Michael Sobolev).
+
+	* dav_basic.c (dav_simple_request): Create and destroy
+	hip_xml_parser and 207 parser appropriately.
+
+Sat May 13 18:24:49 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_207.c: Now takes an externally-declared hip_xml parser
+	pointer. (dav_207_create, dav_207_destroy): New functions.
+	(dav_207_init, dav_207_init_with_handler, dav_207_parse,
+	dav_207_error, dav_207_finish): Removed functions.
+
+Sat May 13 17:32:45 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* hip_xml.[ch]: Rewritten to use opaque hip_xml_parser pointer.
+	struct hip_xml_handler and struct hip_xml_state removed from
+	external interface. struct hip_xml_elm * passed to startelm_cb and
+	endelm_cb. (hip_xml_add_handler, hip_xml_valid, hip_xml_create,
+	hip_xml_destroy, hip_xml_set_error, hip_xml_get_error): New
+	functions.  (hip_xml_init, hip_xml_destroy): Removed functions.
+
+Sat May 13 13:43:56 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon.h: Removed.
+
+Sat May 13 13:42:20 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* string_utils.h: Don't include config.h. (CONCAT*): Don't use
+	xmalloc, use malloc and abort manually.
+
+Sat May 13 13:32:46 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_utils.h, dates.h, http_basic.h: Don't include config.h
+
+Sat May 13 13:31:37 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* hip_xml.[ch], dav_207.c: Use HIP_ERR_SIZE for size of parser
+	error string.
+
+Sat May 13 13:30:40 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.incl: Use obj_ext for object file extension.
+
+Thu May 11 18:21:53 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon.h: Bumped version to 0.1.1.
+
+Thu May 11 18:16:08 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_basic.c (get_to_fd): Fix short writes.
+
+Wed May 10 19:22:01 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon.h: Bumped version to 0.1.0.
+
+Wed May 10 17:46:48 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* uri.c (uri_parse, uri_free): New functions.
+
+Wed May 10 17:43:37 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_basic.c (get_to_fd, http_get): Set error appropriately if
+	fwrite() fails.
+
+Wed May 10 14:25:38 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_utils.c (http_debug): New function.
+
+Wed May 10 14:25:08 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_basic.c (get_callback): Call sock_call_progress.
+
+Wed May 10 14:24:20 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.c (sock_call_progress): New function.  (many places): Use
+	it.
+
+Wed May 10 14:22:48 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* uri.c (uri_has_trailing_slash): Moved from being inline.
+
+Tue May  9 23:34:25 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_props.c: Use handler as userdata for 207 callbacks, unified
+	handler and context structures.  (start_prop, end_prop,
+	start_propelm, end_propelm): Removed functions.
+	(dav_propfind_get_current_resource): New function.
+
+Tue May  9 23:29:44 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* xalloc.[ch]: New files.
+
+Tue May  9 23:05:47 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_207.[ch]: Removed property and property element callbacks.
+
+Tue May  9 23:01:00 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_207.c: Use separate name/namespace for element names.
+	(dav_207_init_with_handler): New function.  (end_element):
+	Unescape URI in href element.
+
+Tue May  9 19:54:07 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_props.c (dav_propfind_allprop, dav_propfind_named, propfind,
+	start_response, end_response, start_prop, end_prop, start_propelm,
+	end_propelm): New functions; PROPFIND support.
+
+Tue May  9 19:45:17 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (build_request): Renamed from make_request.
+
+Tue May  9 19:36:01 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.[ch]: Added sock_block_reader.
+
+Tue May  9 15:52:56 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* uri.c (uri_childof): Return false when parent is the same length
+	as child.
+
+Sun May  7 15:07:49 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_207.c: Separated element namespace/names.
+
+Tue May  2 16:40:59 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* hip_xml.[ch]: Added HIP_XML_UTF8DECODE flag.
+
+Tue May  2 16:16:57 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* hip_xml.[ch]: Separate element name and namespace.
+
+Mon May  1 00:21:24 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_207.c (dav_accept_207): Moved function from dav_basic.c.
+
+	* dav_basic.c (dav_accept_207, dav_parse_xml_block): Removed
+	functions.
+
+Sun Apr 30 22:47:47 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_props.[ch]: Renamed dav_proppatch_item to
+	dav_proppatch_operation.
+
+Sun Apr 30 22:45:04 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* hip_xml.c (start_element): Clearer error message.
+
+Sun Apr 30 19:12:07 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_basic.c (http_content_type_handler, dav_hdr_handler): New
+	functions.  (http_options): Handle DAV header.
+
+Sun Apr 30 18:08:53 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_props.c (dav_proppatch): New function.
+
+Sun Apr 30 18:05:55 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_basic.c (handle_error): New function.  (end_response,
+	end_propstat): Use it.  (dav_simple_request): Don't return the 207
+	error string if we get all 2xx class status elements.
+
+Sun Apr 30 16:56:41 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_basic.c (dav_add_depth_header): New function.
+
+Sun Apr 30 14:49:06 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_207.c (start_element): Unknown element is only a property if
+	the parent is DAV:propstat.
+
+Sun Apr 30 14:43:28 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_basic.c (end_response, end_propstat): Only write error line
+	if we have status information and the status is not a 424.
+
+Sun Apr 30 14:28:23 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_basic.h: Added DAV_DEPTH_*.
+
+Sun Apr 30 12:47:50 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_207.c (check_context): Allow (and ignore) unknown elements
+	anywhere other than as the root.
+
+Sun Apr 30 12:35:39 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* string_utils.h (ASC2HEX, HEX2ASC): New macros.
+
+Sun Apr 30 12:34:37 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_auth.c [STANDALONE]: Removed. (everywhere): Switch to using
+	md5_to_ascii rather than md5_hexify.
+
+Sun Apr 30 12:32:35 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (read_response_block): Fixed to return errors
+	properly and block length to parameter.  (read_response_body):
+	Changed accordingly.
+
+Sun Apr 30 12:29:45 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* hip_xml.c (friendly_name): New function, was PRETTY_NAME macro.
+	(start_element, end_element): Fix COLLECT handling.
+	(hip_xml_parse): Only write parse error if the document has not
+	already been marked invalid.
+
+Sun Apr 30 12:28:36 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_basic.c (dav_simple_request): Rewritten for new 207
+	interface.  (start_response, end_response, end_propstat): New
+	functions.
+
+Sun Apr 30 12:27:52 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_207.c (dav_207_error): Return the parser error.
+
+Sat Apr 29 14:46:48 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.c (sock_register_progress, sock_register_notify): New
+	functions.  (everywhere): Use progress + notify callbacks rather
+	than fe_*.
+
+Sat Apr 29 14:15:23 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* string_utils.c (md5_to_ascii, ascii_to_md5): New functions.
+
+Sat Apr 29 13:55:39 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* hip_xml.c (hip_xml_init): abort() on out-of-memory.
+
+Sat Apr 29 12:56:11 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon_i18n.h: New file.
+
+Sat Apr 29 12:55:24 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_207.[ch]: Re-implemented with sensible interface.
+
+Fri Apr 28 14:56:01 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_auth.c (http_auth_request_header): Renamed from
+	http_auth_request.
+
+	* http_request.c (make_request): As above.
+
+Thu Apr 13 11:52:14 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_basic.c (http_put): Switched URI and stream arguments.
+
+Thu Apr 13 09:51:21 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c: Added user_agent field to session structure.
+	(http_set_useragent): New function.  (add_fixed_headers): Only set
+	user-agent if sess->user_agent is set.
+
+Thu Apr 13 09:49:32 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (lookup_host): New function, split from
+	set_hostinfo.  (set_hostinfo): Doesn't perform DNS lookup.
+	(http_session_server): Don't do a DNS lookup if we have a proxy.
+
+Wed Apr 12 22:32:21 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (http_request_dispatch, http_request_create):
+	Store auth header values in local variables rather than request
+	structure.  (http_request_create): Don't leak everything on error.
+	Handle http_auth_challenge return value.
+
+Wed Apr 12 22:30:06 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_basic.c (http_options): Pass server capabilites object,
+	parse Server header to detect Apache/1.3.6 and before, indicating
+	broken 100-continue support.  (server_hdr_handler): New function.
+
+Mon Apr 10 17:42:07 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.c: Use 'int' for return values.
+
+Mon Apr 10 17:41:40 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_auth.c (is_in_domain): Dummy implementation.
+
+Mon Apr 10 17:40:21 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c: Handle read() returning 0 when it shouldn't.
+	i18n'ized error messages.
+
+Mon Apr 10 14:45:09 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dates.[ch], md5.[ch], base64.[ch]: Imported date handling
+	utilities, MD5 checksum functions, and text->base64 converter.
+
+Mon Apr 10 14:44:08 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.incl: Dependancies updated for socket.[ch].
+
+Mon Apr 10 14:43:36 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* dav_207.c: Replaced malloc() calls with xmalloc() calls.
+
+Mon Apr 10 14:42:35 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_auth.c, uri.c, string_utils.h: Replaced malloc() calls with
+	xmalloc() calls.
+
+Mon Apr 10 14:41:40 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* socket.[ch]: Imported socket handling utilities.
+
+Mon Apr 10 14:36:03 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* string_utils.h (CONCAT*): Use xmalloc.
+
+Mon Apr 10 13:52:17 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (set_sockerr): Added handling for socket errors.
+
+Sat Apr  8 13:49:07 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* string_utils.[ch]: Imported string utilites.
+
+Sat Apr  8 00:26:06 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (http_set_persist, http_set_expect100): New
+	functions.
+
+Sat Apr  8 00:25:37 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_basic.c (http_options): New function.
+
+Fri Apr  7 13:01:35 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* neon.h: New file.
+
+Fri Apr  7 12:59:40 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (normalize_response_length, read_response_body):
+	New functions.  (http_add_response_body_reader): Take a callback
+	to determine whether the body reader wants to read the response
+	body.
+
+Fri Apr  7 11:46:41 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (http_set_server_auth, http_set_proxy_auth): New
+	functions.  (give_creds): Use supplied callbacks for
+	authentication.  (get_request_bodysize): Send Content-Length: 0 if
+	no entity-body is being sent with a request.  (te_hdr_handler,
+	connection_hdr_handler): New functions.  (make_request): Don't use
+	Expect: 100-continue if server is not HTTP/1.1 compliant.
+	(read_message_header): Only read until HTTP_MAXIMUM_HEADER_LENGTH
+	bytes of header have been read.  (read_response_headers): No
+	hard-coded header handling.  (http_request_create): Set
+	req->method_is_head here.
+
+Thu Apr  6 14:39:28 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* hip_xml.c [HIP_XML_DECODE_UTF8] (decode_utf8_double): New
+	function.  (char_data) [HIP_XML_DECODE_UTF8]: Decode UTF-8.
+
+Tue Mar 28 13:54:51 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* Makefile.incl: Imported makefile fragment.
+
+Tue Mar 28 13:54:09 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.[ch] (http_get_error): New function.
+
+Thu Mar 23 18:48:42 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* hip_xml.[ch]: Imported generic XML parsing layer.
+
+	* dav_207.[ch]: Imported generic WebDAV 207 response handling.
+	
+	* dav_basic.[ch]: Imported/implemented DAV response handling and
+	basic Class 1 namespace methods.
+
+Thu Mar 23 18:46:14 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.c (add_hooks, run_hooks, http_add_destroy_hook):
+	Adding hooks support.  (add_fixed_headers): Send TE token in
+	Connection header. Only send Keep-Alive header & token to pre-1.1
+	origin servers (i.e., not proxies).
+
+Thu Mar 23 12:49:01 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_auth.[ch], uri.[ch]: Imported HTTP authentication and URI
+	handling modules.
+
+Thu Mar 23 12:47:05 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_utils.c: Imported HTTP utility functions.
+
+Thu Mar 23 12:44:38 2000  Joe Orton  <joe@orton.demon.co.uk>
+
+	* http_request.[ch]: Implemented modular HTTP request handling.
+
+	* http_basic.[ch]: Implemented basic HTTP methods GET, PUT, and
+	PUT with If-Unmodified.
+

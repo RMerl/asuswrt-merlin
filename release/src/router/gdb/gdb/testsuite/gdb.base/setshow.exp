@@ -1,0 +1,246 @@
+# Copyright 1992, 1994, 1996, 1997, 1998, 2001, 2003, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Michael Snyder (msnyder@cygnus.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "setshow"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable {debug}] != "" } {
+     untested setshow.exp
+     return -1
+}
+
+# Start with a fresh gdb
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# make sure $pc is sane, in case we're talking to a board.
+if { ![runto_main] } {
+    gdb_suppress_tests;
+}
+
+#
+# Test gdb set and show commands.
+# Add tests here for show and set that don't fit neatly elsewhere.
+# FIXME: many rudimentary tests for set and show commands have been
+#        added below, but most do nothing more than check that a 
+#        variable has been set successfully, ie. they do not test
+#        whether setting the variable has had the desired effect.
+#
+
+#test default annotation_level is 0
+gdb_test "show annotate" "Annotation_level is 0..*"  "default annotation_level is zero"
+
+#test set annotate 2
+send_gdb "set annotate 2\n"
+gdb_expect {
+	-re ".*\032\032pre-prompt.*$gdb_prompt .*\032\032prompt.*$" \
+				{ pass "set annotate 2" }
+ 	-re ".*$gdb_prompt $"	{ fail "set annotate 2" }
+	timeout			{ fail "(timeout) set annotate 2" }
+    }
+
+send_gdb "show annotate\n"
+gdb_expect {
+	-re ".*\032\032post-prompt.*Annotation_level is 2..*\032\032pre-prompt.*$gdb_prompt .*\032\032prompt.*$" \
+				{ pass "show annotate (2)" }
+ 	-re ".*$gdb_prompt $"	{ fail "show annotate (2)" }
+	timeout			{ fail "(timeout) show annotate (2)" }
+    }
+
+#test annotation_level 2
+send_gdb "info line 1\n"
+gdb_expect {
+	-re ".*\032\032post-prompt.*Line 1 of .* is at address .* but contains no code.*:1:0:beg:0x.*\032\032pre-prompt.*$gdb_prompt .*\032\032prompt.*$" \
+				{ pass "annotation_level 2" }
+	-re ".*$gdb_prompt $"	{ fail "annotation_level 2" }
+	timeout			{ fail "(timeout) annotation_level 2" }
+    }
+
+#test set annotate 1
+gdb_test "set annotate 1" ".*post-prompt.*"  "set annotate 1" 
+gdb_test "show annotate" "Annotation_level is 1..*"  "show annotate (1)" 
+#test annotation_level 1
+gdb_test "info line 1" "Line 1 of .* is at address .* but contains no code.*:1:0:beg:0x.*"  "annotation_level 1" 
+#test set annotate 0
+gdb_test "set annotate 0" "" "set annotate 0" 
+gdb_test "show annotate" "Annotation_level is 0..*"  "show annotate (0)" 
+#test annotation_level 0
+gdb_test "info line 1" "Line 1 of .* is at address .* but contains no code.*"  "annotation_level 0" 
+#test set args
+gdb_test "set args foo bar blup baz bubble" "" "set args" 
+#test show args
+gdb_test "show args" "Argument list to give program being debugged when it is started is \"foo bar blup baz bubble\"..*" "show args"
+
+# Don't test if we can't pass args or if we're using a stub.
+if { ![target_info exists use_gdb_stub] && ![target_info exists noargs] } {
+    #test passing args
+    gdb_test "cont" "Continuing.*" "continuing"
+    delete_breakpoints
+    gdb_test "run" "Starting program:.*foo bar blup baz bubble.*" "passing args"
+}
+#test set check range on
+gdb_test "set check range on" "" "set check range on" 
+#test show check range on
+gdb_test "show check range" "Range checking is \"on\"\..*" "show check range (on)" 
+#test set check range auto
+gdb_test "set check range auto" "" "set check range auto" 
+#test show check range auto
+gdb_test "show check range" "Range checking is \"auto; currently .*" "show check range (auto)" 
+#test set check type on
+gdb_test "set check type on" "" "set check type on" 
+#test show check type on
+gdb_test "show check type" "Type checking is \"on\"..*" "show check type (on)" 
+#test set check type auto
+gdb_test "set check type auto" "" "set check type auto" 
+#test show check type
+gdb_test "show check type" "Type checking is \"auto; currently .*" "show check type (auto)" 
+#test set complaints 100
+gdb_test "set complaints 100" "" "set complaints 100" 
+#test show complaints 100
+gdb_test "show complaints" "Max number of complaints about incorrect symbols is 100..*" "show complaints (100)" 
+#test set complaints 0
+gdb_test "set complaints 0" "" "set complaints 0" 
+#test show complaints 0
+gdb_test "show complaints" "Max number of complaints about incorrect symbols is 0..*" "show complaints (0)" 
+#test set confirm off
+gdb_test "set confirm off" "" "set confirm off" 
+#test show confirm off
+gdb_test "show confirm" "Whether to confirm potentially dangerous operations is off..*" "show confirm (off)" 
+#test set confirm on
+gdb_test "set confirm on" "" "set confirm on" 
+#test show confirm on
+gdb_test "show confirm" "Whether to confirm potentially dangerous operations is on..*" "show confirm (on)" 
+#test set editing off
+gdb_test "set editing off" "" "set editing off" 
+#test show editing off
+gdb_test "show editing" "Editing of command lines as they are typed is off..*" "show editing (off)" 
+#test set editing on
+#gdb_test "set editing on" "" "set editing on" 
+#test show editing on
+#gdb_test "show editing" "Editing of command lines as they are typed is on..*" "show editing (on)" 
+#test set environment FOOBARBAZ
+gdb_test "set environment FOOBARBAZ = grbxgrbxgrbx" ""    "set environment FOOBARBAZ" 
+#test show environment FOOBARBAZ
+gdb_test "show environment FOOBARBAZ" "FOOBARBAZ = grbxgrbxgrbx.*"  "show environment FOOBARBAZ" 
+#test set height 100
+gdb_test "set height 100" "" "set height 100" 
+#test show height 100
+gdb_test "show height" "Number of lines gdb thinks are in a page is 100..*" "show height" 
+# back to infinite height to avoid pagers
+gdb_test "set height 0" "" "" 
+#test set history expansion on
+gdb_test "set history expansion on" "" "set history expansion on" 
+#test show history expansion on
+gdb_test "show history expansion on" "History expansion on command input is on.*" "show history expansion" 
+#test set history filename foobar.baz
+gdb_test "set history filename foobar.baz" ""    "set history filename foobar.baz" 
+#test show history filename foobar.baz
+gdb_test "show history filename" "The filename in which to record the command history is \"foobar.baz\"..*"  "show history filename (foobar.baz)" 
+#test set history save on
+gdb_test "set history save on" "" "set history save on" 
+#test show history save on
+gdb_test "show history save" "Saving of the history record on exit is on..*"  "show history save (on)" 
+#test set history size 100
+gdb_test "set history size 100" "" "set history size 100" 
+#test show history size 100
+gdb_test "show history size" "The size of the command history is 100..*" "show history size (100)" 
+#test set language asm
+gdb_test "set language asm" "" "set language asm" 
+#test show language asm
+gdb_test "show language" "The current source language is \"asm\"..*" "show language (asm)" 
+#test set language auto
+gdb_test "set language auto" "" "set language auto" 
+#test show language
+gdb_test "show language" "The current source language is \"auto.*\"..*" "show language (auto)" 
+#test set listsize 100
+gdb_test "set listsize 100" "" "set listsize 100" 
+#test show listsize 100
+gdb_test "show listsize" "Number of source lines gdb will list by default is 100..*" "show listsize (100)" 
+
+if ![board_info target exists gdb_prompt] {
+    #test set prompt (FooBarBaz) 
+    set newprompt "\\(FooBarBaz\\)"
+    send_gdb "set prompt (FooBarBaz) \n"
+    gdb_expect {
+	-re "$newprompt $"	{ pass "set prompt (FooBarBaz) " }
+	timeout			{ fail "(timeout) set prompt (FooBarBaz) " }
+    }
+
+    #test show prompt (FooBarBaz) 
+    send_gdb "show prompt\n"
+    gdb_expect {
+	-re "Gdb's prompt is \"$newprompt \"..* $" \
+		{ pass "show prompt (FooBarBaz) " }
+	timeout			{ fail "(timeout) show prompt (FooBarBaz) " }
+    }
+
+    #test set prompt (gdb) 
+    send_gdb "set prompt (gdb) \n"
+    gdb_expect {
+	-re "$gdb_prompt $"		{ pass "set prompt (gdb) " }
+	timeout			{ fail "(timeout) set prompt (gdb) " }
+    }
+}
+
+#test set radix 11
+gdb_test "set radix 11" "Unsupported output radix ``decimal 11''; output radix unchanged..*"  "set radix 11" 
+#test set radix 16
+gdb_test "set radix 16" "Input and output radices now set to decimal 16, hex 10, octal 20..*"  "set radix 16" 
+#test show radix 16
+gdb_test "show radix" "Input and output radices set to decimal 16, hex 10, octal 20..*"  "show radix (16)" 
+#test set radix 10
+gdb_test "set radix" "Input and output radices now set to decimal 10, hex a, octal 12..*"  "set radix 10" 
+#test show radix 10
+gdb_test "show radix" "Input and output radices set to decimal 10, hex a, octal 12..*" "show radix (10)" 
+#test set width 90
+gdb_test "set width 90" "" "set width 90"
+#test show width 90
+gdb_test "show width" "Number of characters gdb thinks are in a line is 90..*" "show width (90)" 
+#test set write on
+# This is only supported on targets which use exec.o.
+gdb_test "set write on" ""  "set write on" 
+#test show write on
+# This is only supported on targets which use exec.o.
+gdb_test "show write" "Writing into executable and core files is on..*" "show write (on)" 
+#test set symbol-reloading on
+gdb_test "set symbol-reloading on" "" "set symbol-reloading on" 
+#test show symbol-reloading on
+gdb_test "show symbol-reloading" "Dynamic symbol table reloading multiple times in one run is on..*" "show symbol-reloading (on)" 
+#test show user
+gdb_test "show user" "" "show user" 
+#test set verbose on
+gdb_test "set verbose on" "" "set verbose on" 
+#test show verbose on
+gdb_test "show verbose" "Verbose printing of informational messages is on..*" "show verbose (on)" 
+#test set verbose off
+gdb_test "set verbose off" "" "set verbose off" 
+#test show verbose off
+gdb_test "show verbose" "Verbosity is off..*" "show verbose (off)" 

@@ -432,7 +432,7 @@ int main(int argc, char *argv[])
 					}
 					else{
 						int count = get_list_strings_count(folder_list, sh_num, folder_list[n]);
-						if ((!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) && (count <= 1) {
+						if ((!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) && (count <= 1)) {
 							fprintf(fp, "[%s]\n", folder_list[n]);
 						} else {
 							fprintf(fp, "[%s (at %s)]\n", folder_list[n], mount_folder);
@@ -548,7 +548,7 @@ int main(int argc, char *argv[])
 					int i, first;
 					
 					int count = get_list_strings_count(folder_list, sh_num, folder_list[n]);
-					if ((!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) && (count <= 1) {
+					if ((!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) && (count <= 1)) {
 						fprintf(fp, "[%s]\n", folder_list[n]);
 					} else {
 						fprintf(fp, "[%s (at %s)]\n", folder_list[n], mount_folder);

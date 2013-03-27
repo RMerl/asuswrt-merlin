@@ -1,0 +1,14 @@
+# sh testcase for ldhi.l $rm, $disp6, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global ldhil
+ldhil:
+	ldhi.l r0, 0, r0
+
+	pass

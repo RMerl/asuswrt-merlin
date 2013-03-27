@@ -33,6 +33,10 @@
 #include <shutils.h>
 #include <rc.h>
 
+#ifdef RTCONFIG_USB_MODEM
+#include <usb_info.h>
+#endif
+
 #ifdef RTCONFIG_IPV6
 static int wait_ppp_count = 0;
 #endif
@@ -40,31 +44,30 @@ static int wait_ppp_count = 0;
 /*
 * parse ifname to retrieve unit #
 */
-#if 0
 int
 ppp_ifunit(char *ifname)
 {
-	if (strncmp(ifname, "ppp", 3))
-		return -1;
-	if (!isdigit(ifname[3]))
-		return -1;
-	return atoi(&ifname[3]);
-}
-#else
-int ppp_ifunit(char *ifname){
 	int unit;
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 
-	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-
-		if(nvram_match(strcat_r(prefix, "pppoe_ifname", tmp), ifname))
+		if (nvram_match(strcat_r(prefix, "pppoe_ifname", tmp), ifname))
 			return unit;
 	}
 
 	return -1;
 }
-#endif
+
+int
+ppp_linkunit(char *linkname)
+{
+	if (strncmp(linkname, "wan", 3))
+		return -1;
+	if (!isdigit(linkname[3]))
+		return -1;
+	return atoi(&linkname[3]);
+}
 
 /*
  * Called when link comes up
@@ -74,46 +77,30 @@ ipup_main(int argc, char **argv)
 {
 	FILE *fp;
 	char *wan_ifname = safe_getenv("IFNAME");
-	char *value = NULL;
-	char buf[256];
-	int unit, i;
+	char *wan_linkname = safe_getenv("LINKNAME");
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
-	char *pppd_pid = safe_getenv("PPPD_PID");
-	char *DEVICE = safe_getenv("DEVICE");
-	char *PPPLOGNAME = safe_getenv("PPPLOGNAME");
-	char *LINKNAME = safe_getenv("LINKNAME");
-	char *BUNDLE = safe_getenv("BUNDLE");
-	char *MACREMOTE = safe_getenv("MACREMOTE");
-	char *PEERNAME = safe_getenv("PEERNAME");
+	char buf[256], *value;
+	int unit;
 
 	_dprintf("%s():: %s\n", __FUNCTION__, argv[0]);
 
-	_dprintf("%s: argc=%d.\n", __FUNCTION__, argc);
-	for(i = 1; i < argc; ++i)
-		_dprintf("%s: argv[%d]=%s.\n", __FUNCTION__, i, argv[i]);
-	_dprintf("%s: pppd_pid=%s.\n", __FUNCTION__, pppd_pid);
-	_dprintf("%s: DEVICE=%s.\n", __FUNCTION__, DEVICE);
-	_dprintf("%s: PPPLOGNAME=%s.\n", __FUNCTION__, PPPLOGNAME);
-	_dprintf("%s: LINKNAME=%s.\n", __FUNCTION__, LINKNAME);
-	_dprintf("%s: BUNDLE=%s.\n", __FUNCTION__, BUNDLE);
-	_dprintf("%s: MACREMOTE=%s.\n", __FUNCTION__, MACREMOTE);
-	_dprintf("%s: PEERNAME=%s.\n", __FUNCTION__, PEERNAME);
-
-	if(LINKNAME == NULL || strlen(LINKNAME) <= 0)
+	/* Get unit from LINKNAME: ppp[UNIT] */
+	if ((unit = ppp_linkunit(wan_linkname)) < 0)
 		return 0;
 
-	unit = atoi(LINKNAME+3);
-_dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
-
+	_dprintf("%s: unit=%d ifname=%s\n", __FUNCTION__, unit, wan_ifname);
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+
+	/* Stop triggering demand connection */
+	if (nvram_get_int(strcat_r(prefix, "pppoe_demand", tmp)))
+		nvram_set_int(strcat_r(prefix, "pppoe_demand", tmp), 1);
 
 #ifdef RTCONFIG_USB_MODEM
 	// wanX_ifname is used for device for USB Modem
-	if(isSerialNode(DEVICE) || isACMNode(DEVICE))
-		nvram_set(strcat_r(prefix, "ifname", tmp), DEVICE);
+	if ((value = getenv("DEVICE")) &&
+	    (isSerialNode(value) || isACMNode(value)))
+		nvram_set(strcat_r(prefix, "ifname", tmp), value);
 #endif
-	if(strcmp(nvram_safe_get(strcat_r(prefix, "pppoe_demand", tmp)), "1") != 0)
-		nvram_set(strcat_r(prefix, "pppoe_ifname", tmp), wan_ifname);
 
 	/* Touch connection file */
 	if (!(fp = fopen(strcat_r("/tmp/ppp/link.", wan_ifname, tmp), "a"))) {
@@ -133,17 +120,25 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 	if ((value = getenv("IPREMOTE")))
 		nvram_set(strcat_r(prefix, "gateway", tmp), value);
 
-	strcpy(buf, "");
-	if (getenv("DNS1"))
-		sprintf(buf, "%s", getenv("DNS1"));
-	if (getenv("DNS2"))
-		sprintf(buf + strlen(buf), "%s%s", strlen(buf) ? " " : "", getenv("DNS2"));
+#ifdef RTCONFIG_DSL
+	/* Paul add 2013/1/23, only for Auto DNS and 3G/4G */
+	if (!nvram_match(strcat_r(prefix, "dnsenable_x", tmp), "0")) {
+#endif
+		strcpy(buf, "");
+		if ((value = getenv("DNS1")))
+			sprintf(buf, "%s", value);
+		if ((value = getenv("DNS2")))
+			sprintf(buf + strlen(buf), "%s%s", strlen(buf) ? " " : "", value);
 
-	if (nvram_match(strcat_r(prefix, "dnsenable_x", tmp), "1"))
+		/* set PPP DNS, no DNS/usepeerdns forces update_resolvconf use xdns value */
 		nvram_set(strcat_r(prefix, "dns", tmp), buf);
+#ifdef RTCONFIG_DSL
+	}
+#endif
 
 	wan_up(wan_ifname);
-	_dprintf("ipup_main:: done\n");
+
+	_dprintf("%s:: done\n", __FUNCTION__);
 	return 0;
 }
 
@@ -154,26 +149,22 @@ int
 ipdown_main(int argc, char **argv)
 {
 	char *wan_ifname = safe_getenv("IFNAME");
-	int unit;
+	char *wan_linkname = safe_getenv("LINKNAME");
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
-	char *value = NULL;
-	char buf[256];
-	int pid, orig_pid;
-	char *LINKNAME = safe_getenv("LINKNAME");
+	int unit;
 
 	_dprintf("%s():: %s\n", __FUNCTION__, argv[0]);
 
-	if(LINKNAME == NULL || strlen(LINKNAME) <= 0)
+	/* Get unit from LINKNAME: ppp[UNIT] */
+	if ((unit = ppp_linkunit(wan_linkname)) < 0)
 		return 0;
+
+	_dprintf("%s: unit=%d ifname=%s\n", __FUNCTION__, unit, wan_ifname);
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
 #ifdef RTCONFIG_IPV6
         wait_ppp_count = -2;
 #endif
-
-	unit = atoi(LINKNAME+3);
-_dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
-
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
 	wan_down(wan_ifname);
 
@@ -184,7 +175,38 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 
 	preset_wan_routes(wan_ifname);
 
-	_dprintf("ipdown_main:: done\n");
+	_dprintf("%s:: done\n", __FUNCTION__);
+	return 0;
+}
+
+/*
+ * Called when interface comes up
+ */
+int
+ippreup_main(int argc, char **argv)
+{
+	char *wan_ifname = safe_getenv("IFNAME");
+	char *wan_linkname = safe_getenv("LINKNAME");
+	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
+	int unit;
+
+	_dprintf("%s():: %s\n", __FUNCTION__, argv[0]);
+
+	/* Get unit from LINKNAME: ppp[UNIT] */
+	if ((unit = ppp_linkunit(wan_linkname)) < 0)
+		return 0;
+
+	_dprintf("%s: unit=%d ifname=%s\n", __FUNCTION__, unit, wan_ifname);
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+
+	/* Set wanX_pppoe_ifname to real interface name */
+	nvram_set(strcat_r(prefix, "pppoe_ifname", tmp), wan_ifname);
+
+	/* Start triggering demand connection */
+	if (nvram_get_int(strcat_r(prefix, "pppoe_demand", tmp)))
+		nvram_set_int(strcat_r(prefix, "pppoe_demand", tmp), 2);
+
+	_dprintf("%s:: done\n", __FUNCTION__);
 	return 0;
 }
 
@@ -231,52 +253,32 @@ int ip6down_main(int argc, char **argv)
 #endif  // IPV6
 
 /*
- * Called when link goes up with auth 
+ * Called when link closing with auth fail
  */
 int
-authup_main(int argc, char **argv)
+authfail_main(int argc, char **argv)
 {
+	char *wan_ifname = safe_getenv("IFNAME");
+	char *wan_linkname = safe_getenv("LINKNAME");
+	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	int unit;
-	char *value = NULL;
-	char buf[256];
-	char *LINKNAME = safe_getenv("LINKNAME");
 
 	_dprintf("%s():: %s\n", __FUNCTION__, argv[0]);
 
-	if(LINKNAME == NULL || strlen(LINKNAME) <= 0)
+	/* Get unit from LINKNAME: ppp[UNIT] */
+	if ((unit = ppp_linkunit(wan_linkname)) < 0)
 		return 0;
 
-	unit = atoi(LINKNAME+3);
-_dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
-
-	_dprintf("authup_main:: done\n");
-	return 0;
-}
-
-/*
- * Called when link goes down with auth fail
- */
-int
-authdown_main(int argc, char **argv)
-{
-	int unit;
-	char prefix[] = "wanXXXXXXXXXX_";
-	char *value = NULL;
-	char buf[256];
-	char *LINKNAME = safe_getenv("LINKNAME");
-
-	_dprintf("%s():: %s\n", __FUNCTION__, argv[0]);
-
-	if(LINKNAME == NULL || strlen(LINKNAME) <= 0)
-		return 0;
-
-	unit = atoi(LINKNAME+3);
-_dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
-
+	_dprintf("%s: unit=%d ifname=%s\n", __FUNCTION__, unit, wan_ifname);
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
-	update_wan_state(prefix, WAN_STATE_STOPPED, pppstatus());
+	/* Stop triggering demand connection */
+	if (nvram_get_int(strcat_r(prefix, "pppoe_demand", tmp)))
+		nvram_set_int(strcat_r(prefix, "pppoe_demand", tmp), 1);
 
-	_dprintf("authdown_main:: done\n");
+	// override wan_state
+	update_wan_state(prefix, WAN_STATE_STOPPED, WAN_STOPPED_REASON_PPP_AUTH_FAIL);
+
+	_dprintf("%s:: done\n", __FUNCTION__);
 	return 0;
 }

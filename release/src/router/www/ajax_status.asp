@@ -11,4 +11,6 @@
   <wan>psta:<% wlc_psta_state(); %></wan>
   <wan>umount=<% nvram_get("usb_path1_removed"); %></wan>
   <wan>umount=<% nvram_get("usb_path2_removed"); %></wan>
+  <wan>ddnsRet=<% nvram_get("ddns_return_code_chk"); %></wan>
+  <wan>ddnsUpdate=<% nvram_get("ddns_updated"); %></wan>
 </devicemap>

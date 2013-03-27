@@ -1,0 +1,108 @@
+
+version 2.0 05-02-96
+--------------------
+
+* Switched to bfd library. Any supported format (elf, coff, ...) can be used.
+* The UART devices can be set through -uart1 and -uart2 switches.
+* Switched to GNU readline.
+* Added -c option to run batch files at startup
+* 'reg' command can show different register windows (eg 'reg w3').
+* Use 'help' for online help on simulator commands
+
+version 1.8.1 20-01-96
+--------------------
+
+* added -mevrev0 switch to simulate MEC rev.0 bugs in timer and uart
+
+* added -iurev0 switch to simulate IU rev.0 jmpl/restore bug
+
+* Added sis command 'batch' to run batch files
+
+
+version 1.8 30-10-95
+--------------------
+
+* Added s-record support. Use the '-s' switch with sis or the 'load' command.
+
+* IU load dependencies are now modelled
+
+version 1.7 30-10-95
+--------------------
+
+* Power-down mode implemented in erc32.c.
+  
+* Performance display shows the ratio between simulator-time and real-time.
+
+
+version 1.6.2 25-10-95
+--------------------
+
+* The UARTs can now be run at a given speed (simulator time) to better
+  simulate the behaviour of interrupt routines. The "true mode" is
+  selected through a compile switch in the makefile.
+
+
+version 1.6 28-09-95
+--------------------
+
+* Major reorganisation of the code. mec.c and mem.c merged into erc32.c.
+
+* The load command does NOT longer load the initialised data at an address
+  defined by .bdata. This is done in srt0.s using _environ.
+
+* Additional MEC functionallity added - software reset, memory access
+  protection and waitstate configuration register.
+
+* interf.c - a GDB interface added
+
+* -v switch (verbose) added
+
+version 1.5 14-09-95
+--------------------
+
+* Added a instruction trace buffer, enabled through the 'hist' command.
+
+* Added a 'perf' command to display statistics such as instruction mix,
+  CPI, FPU holds etc.
+
+* Added -nfp switch to disable FPU.
+
+* Added -freq switch to set simulated frequency.
+
+version 1.4 22-08-95
+--------------------
+
+* A -g is provided for those who have problems with GNU readline(). 
+
+version 1.3 26-07-95
+--------------------
+
+* No major news, just a bug fix release ...
+
+
+version 1.2 13-07-95
+--------------------
+
+* Added setting of IU registers through the 'reg' command. See README.
+
+* The GNU readline() function is used for command input. However, a
+ctrl-D still kills the simulator ...
+
+
+version 1.1 07-07-95
+--------------------
+
+
+* Added a 'go' command
+
+* Added cycle counting for interrupt overhead.
+
+* Function 'get_mem_ptr' takes one more parameter to avoid segmentation 
+   faults if a.out files are loaded outside the simulated memory. See README.
+
+* Added user-defined function sim_stop().
+
+* Added a reset command. See README.
+
+* Implemented buffered output for MEC uarts to improve output speed.
+

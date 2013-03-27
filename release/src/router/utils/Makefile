@@ -12,7 +12,12 @@
 # $Id: Makefile,v 1.41 2011-01-20 03:08:08 Exp $
 #
 
+include ../common.mak
+
 WLU_OBJS := wlu.o wlu_cmd.o wlu_iov.o wlu_linux.o bcmutils.o bcmwifi_channels.o wlu_client_shared.o wlu_pipe.o wlu_pipe_linux.o miniopt.o bcm_app_utils.o
+ifeq ($(RTCONFIG_BCMWL6),y)
+WLU_OBJS += wlu_rates_matrix.o
+endif
 ifneq ($(wildcard $(SRCBASE)/wl/exe/wlu_common.c),)
 WLU_OBJS += wlu_common.o
 endif
@@ -59,6 +64,10 @@ CFLAGS += -DD11AC_IOTYPES
 CFLAGS += -DWLCNT
 #endif
 
+ifeq ($(CONFIG_TRAFFIC_MGMT),y)
+CFLAGS += -DTRAFFIC_MGMT
+endif
+
 vpath %.c $(SRCBASE)/tools/misc
 
 ifneq ($(wildcard $(SRCBASE)/et/linux/et.c),)
@@ -69,7 +78,7 @@ endif
 ifneq ($(wildcard $(SRCBASE)/wl/exe),)
 CFLAGS += -I$(SRCBASE)/wl/exe
 UTILS += wl
-vpath %.c $(SRCBASE)/wl/exe $(SRCBASE)/wl/bcmwifi/src $(SRCBASE)/shared
+vpath %.c $(SRCBASE)/wl/exe $(SRCBASE)/shared
 endif
 
 ifeq ($(RWL),1)
@@ -83,12 +92,12 @@ endif
 
 ifneq ($(wildcard $(SRCBASE)/wl/exe),)
 UTILS += $(SERVER_SOCKET)
-vpath %.c $(SRCBASE)/wl/exe $(SRCBASE)/wl/bcmwifi/src $(SRCBASE)/shared
+vpath %.c $(SRCBASE)/wl/exe $(SRCBASE)/shared
 endif
 
 ifneq ($(wildcard $(SRCBASE)/wl/exe),)
 UTILS += $(SERVER_WIFI)
-vpath %.c $(SRCBASE)/wl/exe $(SRCBASE)/wl/bcmwifi/src $(SRCBASE)/shared
+vpath %.c $(SRCBASE)/wl/exe $(SRCBASE)/shared
 endif
 endif
 
@@ -133,7 +142,7 @@ ttcp: epi_ttcp.c
 
 clean:
 	rm -f *.o *~ $(UTILS)
-	rm -rf socket wifi
+	rm -rf socket wifi epi_ttcp
 
 install: all
 	install -d $(INSTALLDIR)/usr/sbin

@@ -1,7 +1,7 @@
 /*
  * BCM43XX PCIE core hardware definitions.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: pcie_core.h 316716 2012-02-23 04:39:13Z $
+ * $Id: pcie_core.h 348160 2012-07-31 21:25:18Z $
  */
 #ifndef	_PCIE_CORE_H
 #define	_PCIE_CORE_H
@@ -114,6 +114,33 @@ typedef struct sbpcieregs {
 #define PCIE_INTNFATAL	0x08	/* PCIE INTNONFATAL message is received */
 #define PCIE_INTCORR	0x10	/* PCIE INTCORR message is received */
 #define PCIE_INTPME	0x20	/* PCIE INTPME message is received */
+
+#define PCIE_INT_MB_FN0_0 0x0100 /* PCIE to SB Mailbox int Fn0.0 is received */
+#define PCIE_INT_MB_FN0_1 0x0200 /* PCIE to SB Mailbox int Fn0.1 is received */
+#define PCIE_INT_MB_FN1_0 0x0400 /* PCIE to SB Mailbox int Fn1.0 is received */
+#define PCIE_INT_MB_FN1_1 0x0800 /* PCIE to SB Mailbox int Fn1.1 is received */
+#define PCIE_INT_MB_FN2_0 0x1000 /* PCIE to SB Mailbox int Fn2.0 is received */
+#define PCIE_INT_MB_FN2_1 0x2000 /* PCIE to SB Mailbox int Fn2.1 is received */
+#define PCIE_INT_MB_FN3_0 0x4000 /* PCIE to SB Mailbox int Fn3.0 is received */
+#define PCIE_INT_MB_FN3_1 0x8000 /* PCIE to SB Mailbox int Fn3.1 is received */
+
+/* PCIE MailboxInt/MailboxIntMask register */
+#define PCIE_MB_TOSB_FN0_0   0x0001 /* write to assert PCIEtoSB Mailbox interrupt */
+#define PCIE_MB_TOSB_FN0_1   0x0002
+#define PCIE_MB_TOSB_FN1_0   0x0004
+#define PCIE_MB_TOSB_FN1_1   0x0008
+#define PCIE_MB_TOSB_FN2_0   0x0010
+#define PCIE_MB_TOSB_FN2_1   0x0020
+#define PCIE_MB_TOSB_FN3_0   0x0040
+#define PCIE_MB_TOSB_FN3_1   0x0080
+#define PCIE_MB_TOPCIE_FN0_0 0x0100 /* int status/mask for SBtoPCIE Mailbox interrupts */
+#define PCIE_MB_TOPCIE_FN0_1 0x0200
+#define PCIE_MB_TOPCIE_FN1_0 0x0400
+#define PCIE_MB_TOPCIE_FN1_1 0x0800
+#define PCIE_MB_TOPCIE_FN2_0 0x1000
+#define PCIE_MB_TOPCIE_FN2_1 0x2000
+#define PCIE_MB_TOPCIE_FN3_0 0x4000
+#define PCIE_MB_TOPCIE_FN3_1 0x8000
 
 /* SB to PCIE translation masks */
 #define SBTOPCIE0_MASK	0xfc000000
@@ -261,6 +288,7 @@ typedef struct sbpcieregs {
 
 #define MDIODATA2_DONE			0x80000000	/* rd/wr transaction done */
 #define MDIODATA2_MASK			0x7FFFFFFF	/* rd/wr transaction data */
+#define MDIODATA2_DEVADDR_SHF		4		/* Physmedia devaddr shift */
 
 
 /* MDIO devices (SERDES modules)
@@ -330,6 +358,8 @@ typedef struct sbpcieregs {
 #define PCIE_CAP_LCREG_ASPML0s		0x01	/* ASPM L0s in linkctrl */
 #define PCIE_CAP_LCREG_ASPML1		0x02	/* ASPM L1 in linkctrl */
 #define PCIE_CLKREQ_ENAB		0x100	/* CLKREQ Enab in linkctrl */
+#define PCIE_LINKSPEED_MASK       	0xF0000	/* bits 0 - 3 of high word */
+#define PCIE_LINKSPEED_SHIFT      	16	/* PCIE_LINKSPEED_SHIFT */
 
 /* Devcontrol reg offset in PCIE Cap */
 #define PCIE_CAP_DEVCTRL_OFFSET		8	/* devctrl offset in pcie cap */
@@ -350,6 +380,10 @@ typedef struct sbpcieregs {
 #define PCIE_ASPM_L1_ENAB		2	/* ASPM L0s & L1 in linkctrl */
 #define PCIE_ASPM_L0s_ENAB		1	/* ASPM L0s & L1 in linkctrl */
 #define PCIE_ASPM_DISAB			0	/* ASPM L0s & L1 in linkctrl */
+
+/* Devcontrol2 reg offset in PCIE Cap */
+#define PCIE_CAP_DEVCTRL2_OFFSET	0x28	/* devctrl2 offset in pcie cap */
+#define PCIE_CAP_DEVCTRL2_LTR_ENAB_MASK	0x400	/* Latency Tolerance Reporting Enable */
 
 /* Status reg PCIE_PLP_STATUSREG */
 #define PCIE_PLP_POLARITYINV_STAT	0x10

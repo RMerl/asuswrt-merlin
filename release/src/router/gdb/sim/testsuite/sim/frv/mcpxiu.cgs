@@ -1,0 +1,76 @@
+# frv testcase for mcpxiu $GRi,$GRj,$GRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mcpxiu
+mcpxiu:
+	set_fr_iimmed  	4,2,fr7		; multiply small numbers
+	set_fr_iimmed  	3,5,fr8
+	mcpxiu      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	26,acc0
+
+	set_fr_iimmed  	1,2,fr7		; multiply by 1
+	set_fr_iimmed  	1,3,fr8
+	mcpxiu      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	5,acc0
+
+	set_fr_iimmed  	0,2,fr7		; multiply by 0
+	set_fr_iimmed  	0,2,fr8
+	mcpxiu      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0,acc0
+
+	set_fr_iimmed 	0x3fff,1,fr7	; 15 bit result
+	set_fr_iimmed  	0x0001,2,fr8
+	mcpxiu      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x0000,0x7fff,acc0
+
+	set_fr_iimmed  	0x4000,1,fr7	; 16 bit result
+	set_fr_iimmed  	0x0001,2,fr8
+	mcpxiu      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x0000,0x8001,acc0
+
+	set_fr_iimmed  	0x4000,1,fr7	; 17 bit result
+	set_fr_iimmed  	0x0001,4,fr8
+	mcpxiu      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0x00010001,acc0
+
+	set_fr_iimmed  	0x7fff,0x0000,fr7	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr8
+	mcpxiu      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0x3fff0001,acc0
+
+	set_fr_iimmed  	0x8000,0x8000,fr7	; max positive result
+	set_fr_iimmed  	0x0000,0x8000,fr8
+	mcpxiu      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x4000,0x0000,acc0
+
+	set_fr_iimmed  	0xffff,0x0000,fr7	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	mcpxiu      	fr7,fr8,acc0
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0xfffe,0x0001,acc0
+
+	set_fr_iimmed  	0xfffe,0xffff,fr7	; almost max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	mcpxiu      	fr7,fr8,acc0
+	test_accg_immed 1,accg0
+	test_acc_immed	0xfffb0003,acc0
+
+	set_fr_iimmed  	0xffff,0xffff,fr7	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr8
+	mcpxiu      	fr7,fr8,acc0
+	test_accg_immed 1,accg0
+	test_acc_immed	0xfffc0002,acc0
+
+	pass

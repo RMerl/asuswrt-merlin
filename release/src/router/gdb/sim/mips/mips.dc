@@ -1,0 +1,16 @@
+# most instructions
+# ------ options ------ : Fst : Lst : ff : fl : fe : word : --- fmt --- : model ...
+# { : mask : value : word }
+
+# Top level - create a very big switch statement.
+
+  padded-switch,combine :  31 :  26 :    :    :    :      :             :
+
+  switch,combine        :   5 :   0 :    :    :    :      :             :
+
+  switch,combine        :  20 :  16 :    :    :    :      :             :
+
+  switch,combine        :  25 :  21 :    :    :    :      :             :
+
+  switch,combine        :  10 :   6 :    :    :    :      :             :
+

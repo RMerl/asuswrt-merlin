@@ -5,7 +5,7 @@
  *
  * Definitions subject to change without notice.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: dhdioctl.h 291086 2011-10-21 01:17:24Z $
+ * $Id: dhdioctl.h 327775 2012-04-16 18:54:32Z $
  */
 
 #ifndef _dhdioctl_h_
@@ -83,7 +83,11 @@ enum {
 #define DHD_GLOM_VAL	0x0400
 #define DHD_EVENT_VAL	0x0800
 #define DHD_BTA_VAL	0x1000
+#if defined(NDIS) && (NDISVER >= 0x0630) && 0
+#define DHD_SCAN_VAL	0x2000
+#else
 #define DHD_ISCAN_VAL	0x2000
+#endif
 #define DHD_ARPOE_VAL	0x4000
 
 #ifdef SDTEST

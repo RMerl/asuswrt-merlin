@@ -1,0 +1,12 @@
+# arm testcase for adc $rd,$rs
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global alu_adc
+alu_adc:
+	adc r0,r0
+
+	pass

@@ -1,7 +1,7 @@
 /*
  * Broadcom 53xx RoboSwitch device driver.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmrobo.c 336121 2012-05-31 23:04:23Z $
+ * $Id: bcmrobo.c 341899 2012-06-29 04:06:38Z $
  */
 
 
@@ -24,6 +24,7 @@
 #include <osl.h>
 #include <bcmutils.h>
 #include <siutils.h>
+#include <sbchipc.h>
 #include <hndsoc.h>
 #include <bcmutils.h>
 #include <bcmendian.h>
@@ -564,6 +565,279 @@ static dev_ops_t mdcmdio = {
 	"MII (MDC/MDIO)"
 };
 
+
+/*
+ * BCM4707, 4708 and 4709 use ChipcommonB Switch Register Access Bridge Registers (SRAB)
+ * to access the switch registers
+ */
+
+#ifdef ROBO_SRAB
+#define SRAB_ENAB()	(1)
+#define NS_CHIPCB_SRAB		0x18007000	/* NorthStar Chip Common B SRAB base */
+#define SET_ROBO_SRABREGS(robo)	((robo)->srabregs = \
+	(srabregs_t *)REG_MAP(NS_CHIPCB_SRAB, SI_CORE_SIZE))
+#define SET_ROBO_SRABOPS(robo)	((robo)->ops = &srab)
+#else
+#define SRAB_ENAB()	(0)
+#define SET_ROBO_SRABREGS(robo)
+#define SET_ROBO_SRABOPS(robo)
+#endif /* ROBO_SRAB */
+
+#ifdef ROBO_SRAB
+#define SRAB_MAX_RETRY		1000
+static int
+srab_request_grant(robo_info_t *robo)
+{
+	int i, ret = 0;
+	uint32 val32;
+
+	val32 = R_REG(si_osh(robo->sih), &robo->srabregs->ctrls);
+	val32 |= CFG_F_rcareq_MASK;
+	W_REG(si_osh(robo->sih), &robo->srabregs->ctrls, val32);
+
+	/* Wait for command complete */
+	for (i = SRAB_MAX_RETRY * 10; i > 0; i --) {
+		val32 = R_REG(si_osh(robo->sih), &robo->srabregs->ctrls);
+		if ((val32 & CFG_F_rcagnt_MASK))
+			break;
+	}
+
+	/* timed out */
+	if (!i) {
+		ET_ERROR(("srab_request_grant: timeout"));
+		ret = -1;
+	}
+
+	return ret;
+}
+
+static void
+srab_release_grant(robo_info_t *robo)
+{
+	uint32 val32;
+
+	val32 = R_REG(si_osh(robo->sih), &robo->srabregs->ctrls);
+	val32 &= ~CFG_F_rcareq_MASK;
+	W_REG(si_osh(robo->sih), &robo->srabregs->ctrls, val32);
+}
+
+static int
+srab_interface_reset(robo_info_t *robo)
+{
+	int i, ret = 0;
+	uint32 val32;
+
+	/* Wait for switch initialization complete */
+	for (i = SRAB_MAX_RETRY * 10; i > 0; i --) {
+		val32 = R_REG(si_osh(robo->sih), &robo->srabregs->ctrls);
+		if ((val32 & CFG_F_sw_init_done_MASK))
+			break;
+	}
+
+	/* timed out */
+	if (!i) {
+		ET_ERROR(("srab_interface_reset: timeout sw_init_done"));
+		ret = -1;
+	}
+
+	/* Set the SRAU reset bit */
+	W_REG(si_osh(robo->sih), &robo->srabregs->cmdstat, CFG_F_sra_rst_MASK);
+
+	/* Wait for it to auto-clear */
+	for (i = SRAB_MAX_RETRY * 10; i > 0; i --) {
+		val32 = R_REG(si_osh(robo->sih), &robo->srabregs->cmdstat);
+		if ((val32 & CFG_F_sra_rst_MASK) == 0)
+			break;
+	}
+
+	/* timed out */
+	if (!i) {
+		ET_ERROR(("srab_interface_reset: timeout sra_rst"));
+		ret |= -2;
+	}
+
+	return ret;
+}
+
+static int
+srab_wreg(robo_info_t *robo, uint8 page, uint8 reg, void *val, int len)
+{
+	uint16 val16;
+	uint32 val32;
+	uint32 val_h = 0, val_l = 0;
+	int i, ret = 0;
+	uint8 *ptr = (uint8 *)val;
+
+	/* validate value length and buffer address */
+	ASSERT(len == 1 || len == 6 || len == 8 ||
+	       ((len == 2) && !((int)val & 1)) || ((len == 4) && !((int)val & 3)));
+
+	ET_MSG(("%s: [0x%x-0x%x] := 0x%x (len %d)\n", __FUNCTION__, page, reg,
+	       VARG(val, len), len));
+
+	srab_request_grant(robo);
+
+	/* Load the value to write */
+	switch (len) {
+	case 8:
+		val16 = ptr[7];
+		val16 = ((val16 << 8) | ptr[6]);
+		val_h = val16 << 16;
+		/* FALLTHRU */
+
+	case 6:
+		val16 = ptr[5];
+		val16 = ((val16 << 8) | ptr[4]);
+		val_h |= val16;
+
+		val16 = ptr[3];
+		val16 = ((val16 << 8) | ptr[2]);
+		val_l = val16 << 16;
+		val16 = ptr[1];
+		val16 = ((val16 << 8) | ptr[0]);
+		val_l |= val16;
+		break;
+
+	case 4:
+		val_l = *(uint32 *)val;
+		break;
+
+	case 2:
+		val_l = *(uint16 *)val;
+		break;
+
+	case 1:
+		val_l = *(uint8 *)val;
+		break;
+	}
+	W_REG(si_osh(robo->sih), &robo->srabregs->wd_h, val_h);
+	W_REG(si_osh(robo->sih), &robo->srabregs->wd_l, val_l);
+
+	/* We don't need this variable */
+	if (robo->page != page)
+		robo->page = page;
+
+	/* Issue the write command */
+	val32 = ((page << CFG_F_sra_page_R)
+		| (reg << CFG_F_sra_offset_R)
+		| CFG_F_sra_gordyn_MASK
+		| CFG_F_sra_write_MASK);
+	W_REG(si_osh(robo->sih), &robo->srabregs->cmdstat, val32);
+
+	/* Wait for command complete */
+	for (i = SRAB_MAX_RETRY; i > 0; i --) {
+		val32 = R_REG(si_osh(robo->sih), &robo->srabregs->cmdstat);
+		if ((val32 & CFG_F_sra_gordyn_MASK) == 0)
+			break;
+	}
+
+	/* timed out */
+	if (!i) {
+		ET_ERROR(("srab_wreg: timeout"));
+		srab_interface_reset(robo);
+		ret = -1;
+	}
+
+	srab_release_grant(robo);
+
+	return ret;
+}
+
+static int
+srab_rreg(robo_info_t *robo, uint8 page, uint8 reg, void *val, int len)
+{
+	uint32 val32;
+	uint32 val_h = 0, val_l = 0;
+	int i, ret = 0;
+	uint8 *ptr = (uint8 *)val;
+
+	/* validate value length and buffer address */
+	ASSERT(len == 1 || len == 6 || len == 8 ||
+	       ((len == 2) && !((int)val & 1)) || ((len == 4) && !((int)val & 3)));
+
+	srab_request_grant(robo);
+
+	/* We don't need this variable */
+	if (robo->page != page)
+		robo->page = page;
+
+	/* Assemble read command */
+	srab_request_grant(robo);
+
+	val32 = ((page << CFG_F_sra_page_R)
+		| (reg << CFG_F_sra_offset_R)
+		| CFG_F_sra_gordyn_MASK);
+	W_REG(si_osh(robo->sih), &robo->srabregs->cmdstat, val32);
+
+	/* is operation finished? */
+	for (i = SRAB_MAX_RETRY; i > 0; i --) {
+		val32 = R_REG(si_osh(robo->sih), &robo->srabregs->cmdstat);
+		if ((val32 & CFG_F_sra_gordyn_MASK) == 0)
+			break;
+	}
+
+	/* timed out */
+	if (!i) {
+		ET_ERROR(("srab_read: timeout"));
+		srab_interface_reset(robo);
+		ret = -1;
+		goto err;
+	}
+
+	/* Didn't time out, read and return the value */
+	val_h = R_REG(si_osh(robo->sih), &robo->srabregs->rd_h);
+	val_l = R_REG(si_osh(robo->sih), &robo->srabregs->rd_l);
+
+	switch (len) {
+	case 8:
+		ptr[7] = (val_h >> 24);
+		ptr[6] = ((val_h >> 16) & 0xff);
+		/* FALLTHRU */
+
+	case 6:
+		ptr[5] = ((val_h >> 8) & 0xff);
+		ptr[4] = (val_h & 0xff);
+		ptr[3] = (val_l >> 24);
+		ptr[2] = ((val_l >> 16) & 0xff);
+		ptr[1] = ((val_l >> 8) & 0xff);
+		ptr[0] = (val_l & 0xff);
+		break;
+
+	case 4:
+		*(uint32 *)val = val_l;
+		break;
+
+	case 2:
+		*(uint16 *)val = (uint16)(val_l & 0xffff);
+		break;
+
+	case 1:
+		*(uint8 *)val = (uint8)(val_l & 0xff);
+		break;
+	}
+
+	ET_MSG(("%s: [0x%x-0x%x] => 0x%x (len %d)\n", __FUNCTION__, page, reg,
+	       VARG(val, len), len));
+
+err:
+	srab_release_grant(robo);
+
+	return ret;
+}
+
+/* SRAB interface functions */
+static dev_ops_t srab = {
+	NULL,
+	NULL,
+	srab_wreg,
+	srab_rreg,
+	"SRAB"
+};
+#else
+#define srab_interface_reset(a) do {} while (0)
+#define srab_rreg(a, b, c, d, e) 0
+#endif /* ROBO_SRAB */
+
 /* High level switch configuration functions. */
 
 /* Get access to the RoboSwitch */
@@ -577,6 +851,7 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	int mdcport = 0, phyaddr = 0;
 #endif /* _CFE_ */
 	int lan_portenable = 0;
+	int rc;
 
 	/* Allocate and init private state */
 	if (!(robo = MALLOC(si_osh(sih), sizeof(robo_info_t)))) {
@@ -592,6 +867,10 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	robo->miird = miird;
 	robo->miiwr = miiwr;
 	robo->page = -1;
+
+	if (SRAB_ENAB() && sih->chip == BCM4707_CHIP_ID) {
+		SET_ROBO_SRABREGS(robo);
+	}
 
 	/* Enable center tap voltage for LAN ports using gpio23. Usefull in case when
 	 * romboot CFE loads linux over WAN port and Linux enables LAN ports later
@@ -640,6 +919,10 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 			 */
 			robo->corerev = 3;
 		}
+		else if (SRAB_ENAB() && sih->chip == BCM4707_CHIP_ID) {
+			srab_interface_reset(robo);
+			rc = srab_rreg(robo, PAGE_MMR, REG_VERSION_ID, &robo->corerev, 1);
+		}
 		else {
 			mii_rreg(robo, PAGE_STATUS, REG_STATUS_REV, &robo->corerev, 1);
 		}
@@ -647,9 +930,23 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 		ET_MSG(("%s: Internal robo rev %d\n", __FUNCTION__, robo->corerev));
 	}
 
-	if (miird && miiwr) {
+	if (SRAB_ENAB() && sih->chip == BCM4707_CHIP_ID) {
+		rc = srab_rreg(robo, PAGE_MMR, REG_DEVICE_ID, &robo->devid, sizeof(uint32));
+
+		ET_MSG(("%s: devid read %ssuccesfully via srab: 0x%x\n",
+			__FUNCTION__, rc ? "un" : "", robo->devid));
+
+		SET_ROBO_SRABOPS(robo);
+		if ((rc != 0) || (robo->devid == 0)) {
+			ET_ERROR(("%s: error reading devid\n", __FUNCTION__));
+			MFREE(si_osh(robo->sih), robo, sizeof(robo_info_t));
+			return NULL;
+		}
+		ET_MSG(("%s: devid: 0x%x\n", __FUNCTION__, robo->devid));
+	}
+	else if (miird && miiwr) {
 		uint16 tmp;
-		int rc, retry_count = 0;
+		int retry_count = 0;
 
 		/* Read the PHY ID */
 		tmp = miird(h, PSEUDO_PHYAD, 2);
@@ -702,9 +999,11 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 
 	/* Enable switch leds */
 	if (sih->chip == BCM5356_CHIP_ID) {
-		si_pmu_chipcontrol(sih, 2, (1 << 25), (1 << 25));
-		/* also enable fast MII clocks */
-		si_pmu_chipcontrol(sih, 0, (1 << 1), (1 << 1));
+		if (PMUCTL_ENAB(sih)) {
+			si_pmu_chipcontrol(sih, 2, (1 << 25), (1 << 25));
+			/* also enable fast MII clocks */
+			si_pmu_chipcontrol(sih, 0, (1 << 1), (1 << 1));
+		}
 	} else if ((sih->chip == BCM5357_CHIP_ID) || (sih->chip == BCM53572_CHIP_ID)) {
 		uint32 led_gpios = 0;
 		const char *var;
@@ -715,7 +1014,7 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 		var = getvar(vars, "et_swleds");
 		if (var)
 			led_gpios = bcm_strtoul(var, NULL, 0);
-		if (led_gpios)
+		if (PMUCTL_ENAB(sih) && led_gpios)
 			si_pmu_chipcontrol(sih, 2, (0x3ff << 8), (led_gpios << 8));
 	}
 
@@ -765,7 +1064,8 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	       (robo->devid == DEVID5397) ||
 	       (robo->devid == DEVID5398) ||
 	       (robo->devid == DEVID53115) ||
-	       (robo->devid == DEVID53125));
+	       (robo->devid == DEVID53125) ||
+	       ROBO_IS_BCM5301X(robo->devid));
 
 #ifndef	_CFE_
 	/* nvram variable switch_mode controls the power save mode on the switch
@@ -806,6 +1106,9 @@ error:
 void
 bcm_robo_detach(robo_info_t *robo)
 {
+	if (SRAB_ENAB() && robo->srabregs)
+		REG_UNMAP(robo->srabregs);
+
 	MFREE(si_osh(robo->sih), robo, sizeof(robo_info_t));
 }
 
@@ -895,6 +1198,59 @@ pdesc_t pdesc25[] = {
 	/* mii port */ {1 << 11, 1 << 5, REG_VLAN_PTAG5, 1},
 };
 
+/* Find the first vlanXXXXports which the last port include '*' or 'u' */
+static void
+robo_cpu_port_upd(robo_info_t *robo, pdesc_t *pdesc, int pdescsz)
+{
+	int vid;
+
+	for (vid = 0; vid < VLAN_NUMVLANS; vid ++) {
+		char vlanports[] = "vlanXXXXports";
+		char port[] = "XXXX", *next;
+		const char *ports, *cur;
+		int pid, len;
+
+		/* no members if VLAN id is out of limitation */
+		if (vid > VLAN_MAXVID)
+			return;
+
+		/* get vlan member ports from nvram */
+		sprintf(vlanports, "vlan%dports", vid);
+		ports = getvar(robo->vars, vlanports);
+		if (!ports)
+			continue;
+
+		/* search last port include '*' or 'u' */
+		for (cur = ports; cur; cur = next) {
+			/* tokenize the port list */
+			while (*cur == ' ')
+				cur ++;
+			next = bcmstrstr(cur, " ");
+			len = next ? next - cur : strlen(cur);
+			if (!len)
+				break;
+			if (len > sizeof(port) - 1)
+				len = sizeof(port) - 1;
+			strncpy(port, cur, len);
+			port[len] = 0;
+
+			/* make sure port # is within the range */
+			pid = bcm_atoi(port);
+			if (pid >= pdescsz) {
+				ET_ERROR(("robo_cpu_upd: port %d in vlan%dports is out "
+				          "of range[0-%d]\n", pid, vid, pdescsz));
+				continue;
+			}
+
+			if (strchr(port, FLAG_LAN) || strchr(port, FLAG_UNTAG)) {
+				/* Change it and return */
+				pdesc[pid].cpu = 1;
+				return;
+			}
+		}
+	}
+}
+
 /* Configure the VLANs */
 int
 bcm_robo_config_vlan(robo_info_t *robo, uint8 *mac_addr)
@@ -967,6 +1323,9 @@ bcm_robo_config_vlan(robo_info_t *robo, uint8 *mac_addr)
 
 		pdesc = pdesc97;
 		pdescsz = sizeof(pdesc97) / sizeof(pdesc_t);
+
+		if (SRAB_ENAB() && ROBO_IS_BCM5301X(robo->devid))
+			robo_cpu_port_upd(robo, pdesc97, pdescsz);
 	}
 
 	/* setup each vlan. max. 16 vlans. */
@@ -1125,7 +1484,8 @@ vlan_setup:
 
 			if ((robo->devid == DEVID5395) ||
 				(robo->devid == DEVID53115) ||
-				(robo->devid == DEVID53125)) {
+				(robo->devid == DEVID53125) ||
+				ROBO_IS_BCM5301X(robo->devid)) {
 				vtble = REG_VTBL_ENTRY_5395;
 				vtbli = REG_VTBL_INDX_5395;
 				vtbla = REG_VTBL_ACCESS_5395;
@@ -1243,8 +1603,14 @@ bcm_robo_enable_switch(robo_info_t *robo)
 
 		/* No spanning tree for unmanaged mode */
 		val8 = 0;
-		max_port_ind = ((robo->devid == DEVID5398) ? REG_CTRL_PORT7 : REG_CTRL_PORT4);
+		if (robo->devid == DEVID5398 || ROBO_IS_BCM5301X(robo->devid))
+			max_port_ind = REG_CTRL_PORT7;
+		else
+			max_port_ind = REG_CTRL_PORT4;
+
 		for (i = REG_CTRL_PORT0; i <= max_port_ind; i++) {
+			if (ROBO_IS_BCM5301X(robo->devid) && i == REG_CTRL_PORT6)
+				continue;
 			robo->ops->write_reg(robo, PAGE_CTRL, i, &val8, sizeof(val8));
 		}
 
@@ -1260,6 +1626,46 @@ bcm_robo_enable_switch(robo_info_t *robo)
 		robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MIIPO, &val8, sizeof(val8));
 		/* Init the EEE feature */
 		robo_eee_advertise_init(robo);
+	}
+
+	if (SRAB_ENAB() && ROBO_IS_BCM5301X(robo->devid)) {
+		int pdescsz = sizeof(pdesc97) / sizeof(pdesc_t);
+		uint8 gmiiport;
+
+		/*
+		 * Port N GMII Port States Override Register (Page 0x00, address Offset: 0x0e,
+		 * 0x58-0x5d and 0x5f ) SPEED/ DUPLEX_MODE/ LINK_STS
+		 */
+#ifdef CFG_SIM
+		/* Over ride Port0 ~ Port4 status to make it link by default */
+		/* (Port0 ~ Port4) LINK_STS bit default is 0x1(link up), do it anyway */
+		for (i = REG_CTRL_PORT0_GMIIPO; i <= REG_CTRL_PORT4_GMIIPO; i++) {
+			val8 = 0;
+			robo->ops->read_reg(robo, PAGE_CTRL, i, &val8, sizeof(val8));
+			val8 |= 0x71;	/* Make it link by default. */
+			robo->ops->write_reg(robo, PAGE_CTRL, i, &val8, sizeof(val8));
+		}
+#endif
+
+		/* Find the first cpu port and do software override */
+		for (i = 0; i < pdescsz; i++) {
+			/* Port 6 is not able to use */
+			if (i == 6 || !pdesc97[i].cpu)
+				continue;
+
+			if (i == pdescsz - 1)
+				gmiiport = REG_CTRL_MIIPO;
+			else
+				gmiiport = REG_CTRL_PORT0_GMIIPO + i;
+
+			/* Software override port speed and link up */
+			val8 = 0;
+			robo->ops->read_reg(robo, PAGE_CTRL, gmiiport, &val8, sizeof(val8));
+			/* (GMII_SPEED_UP_2G|SW_OVERRIDE|TXFLOW_CNTL|RXFLOW_CNTL|LINK_STS) */
+			val8 |= 0xf1;
+			robo->ops->write_reg(robo, PAGE_CTRL, gmiiport, &val8, sizeof(val8));
+			break;
+		}
 	}
 
 	/* Disable management interface access */
@@ -1331,18 +1737,36 @@ robo_dump_regs(robo_info_t *robo, struct bcmstrbuf *b)
 		}
 
 	} else {
+		uint8 vtble, vtbli, vtbla;
+
+		if ((robo->devid == DEVID5395) ||
+			(robo->devid == DEVID53115) ||
+			(robo->devid == DEVID53125) ||
+			ROBO_IS_BCM5301X(robo->devid)) {
+			vtble = REG_VTBL_ENTRY_5395;
+			vtbli = REG_VTBL_INDX_5395;
+			vtbla = REG_VTBL_ACCESS_5395;
+		} else {
+			vtble = REG_VTBL_ENTRY;
+			vtbli = REG_VTBL_INDX;
+			vtbla = REG_VTBL_ACCESS;
+		}
+
 		for (i = 0; i <= VLAN_MAXVID; i++) {
-			/* VLAN Table Address Index Register (Page 0x05, Address 0x61-0x62) */
+			/*
+			 * VLAN Table Address Index Register
+			 * (Page 0x05, Address 0x61-0x62/0x81-0x82)
+			 */
 			val16 = i;		/* vlan id */
-			robo->ops->write_reg(robo, PAGE_VTBL, REG_VTBL_INDX, &val16,
+			robo->ops->write_reg(robo, PAGE_VTBL, vtbli, &val16,
 			                     sizeof(val16));
-			/* VLAN Table Access Register (Page 0x34, Address 0x60) */
+			/* VLAN Table Access Register (Page 0x34, Address 0x60/0x80) */
 			val8 = ((1 << 7) | 	/* start command */
 			        1);		/* read */
-			robo->ops->write_reg(robo, PAGE_VTBL, REG_VTBL_ACCESS, &val8,
+			robo->ops->write_reg(robo, PAGE_VTBL, vtbla, &val8,
 			                     sizeof(val8));
-			/* VLAN Table Entry Register (Page 0x05, Address 0x63-0x66) */
-			robo->ops->read_reg(robo, PAGE_VTBL, REG_VTBL_ENTRY, &val32,
+			/* VLAN Table Entry Register (Page 0x05, Address 0x63-0x66/0x83-0x86) */
+			robo->ops->read_reg(robo, PAGE_VTBL, vtble, &val32,
 			                    sizeof(val32));
 			bcm_bprintf(b, "VLAN %d untag bits: 0x%02x member bits: 0x%02x\n",
 			            i, (val32 & 0x3fe00) >> 9, (val32 & 0x1ff));

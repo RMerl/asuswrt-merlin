@@ -1,0 +1,21 @@
+# sh testcase for div0u -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global div0u
+div0u:
+	div0u
+	# Can't easily test Q and M (other than visually inspecting
+	# the simulator's trace output).
+	bt wrong
+
+okay:	
+	pass
+
+wrong:
+	fail

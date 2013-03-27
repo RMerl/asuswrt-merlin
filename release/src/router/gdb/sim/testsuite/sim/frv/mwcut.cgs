@@ -1,0 +1,269 @@
+# frv testcase for mwcut $FRi,FRj,$FRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mwcut
+mwcut:
+	set_fr_iimmed   0x0123,0x4567,fr8
+	set_fr_iimmed   0x89ab,0xcdef,fr9
+
+	set_fr_iimmed	0,0,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x01234567,fr11
+
+	set_fr_iimmed	0,1,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x02468acf,fr11
+
+	set_fr_iimmed	0,2,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x048d159e,fr11
+
+	set_fr_iimmed	0,3,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x091a2b3c,fr11
+
+	set_fr_iimmed	0,4,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x12345678,fr11
+
+	set_fr_iimmed	0,5,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x2468acf1,fr11
+
+	set_fr_iimmed	0,6,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x48d159e2,fr11
+
+	set_fr_iimmed	0,7,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x91a2b3c4,fr11
+
+	set_fr_iimmed	0,8,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x23456789,fr11
+
+	set_fr_iimmed	0,9,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x468acf13,fr11
+
+	set_fr_iimmed	0,10,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x8d159e26,fr11
+
+	set_fr_iimmed	0,11,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x1a2b3c4d,fr11
+
+	set_fr_iimmed	0,12,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x3456789a,fr11
+
+	set_fr_iimmed	0,13,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x68acf135,fr11
+
+	set_fr_iimmed	0,14,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xd159e26a,fr11
+
+	set_fr_iimmed	0,15,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xa2b3c4d5,fr11
+
+	set_fr_iimmed	0,16,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x456789ab,fr11
+
+	set_fr_iimmed	0,17,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x8acf1357,fr11
+
+	set_fr_iimmed	0,18,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x159e26af,fr11
+
+	set_fr_iimmed	0,19,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x2b3c4d5e,fr11
+
+	set_fr_iimmed	0,20,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x56789abc,fr11
+
+	set_fr_iimmed	0,21,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xacf13579,fr11
+
+	set_fr_iimmed	0,22,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x59e26af3,fr11
+
+	set_fr_iimmed	0,23,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xb3c4d5e6,fr11
+
+	set_fr_iimmed	0,24,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x6789abcd,fr11
+
+	set_fr_iimmed	0,25,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xcf13579b,fr11
+
+	set_fr_iimmed	0,26,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x9e26af37,fr11
+
+	set_fr_iimmed	0,27,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x3c4d5e6f,fr11
+
+	set_fr_iimmed	0,28,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x789abcde,fr11
+
+	set_fr_iimmed	0,29,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xf13579bd,fr11
+
+	set_fr_iimmed	0,30,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xe26af37b,fr11
+
+	set_fr_iimmed	0,31,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xc4d5e6f7,fr11
+
+	set_fr_iimmed	0,32,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x89abcdef,fr11
+
+	set_fr_iimmed	0,33,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x13579bde,fr11
+
+	set_fr_iimmed	0,34,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x26af37bc,fr11
+
+	set_fr_iimmed	0,35,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x4d5e6f78,fr11
+
+	set_fr_iimmed	0,36,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x9abcdef0,fr11
+
+	set_fr_iimmed	0,37,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x3579bde0,fr11
+
+	set_fr_iimmed	0,38,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x6af37bc0,fr11
+
+	set_fr_iimmed	0,39,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xd5e6f780,fr11
+
+	set_fr_iimmed	0,40,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xabcdef00,fr11
+
+	set_fr_iimmed	0,41,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x579bde00,fr11
+
+	set_fr_iimmed	0,42,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xaf37bc00,fr11
+
+	set_fr_iimmed	0,43,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x5e6f7800,fr11
+
+	set_fr_iimmed	0,44,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xbcdef000,fr11
+
+	set_fr_iimmed	0,45,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x79bde000,fr11
+
+	set_fr_iimmed	0,46,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xf37bc000,fr11
+
+	set_fr_iimmed	0,47,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xe6f78000,fr11
+
+	set_fr_iimmed	0,48,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xcdef0000,fr11
+
+	set_fr_iimmed	0,49,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x9bde0000,fr11
+
+	set_fr_iimmed	0,50,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x37bc0000,fr11
+
+	set_fr_iimmed	0,51,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x6f780000,fr11
+
+	set_fr_iimmed	0,52,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xdef00000,fr11
+
+	set_fr_iimmed	0,53,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xbde00000,fr11
+
+	set_fr_iimmed	0,54,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x7bc00000,fr11
+
+	set_fr_iimmed	0,55,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xf7800000,fr11
+
+	set_fr_iimmed	0,56,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xef000000,fr11
+
+	set_fr_iimmed	0,57,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xde000000,fr11
+
+	set_fr_iimmed	0,58,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xbc000000,fr11
+
+	set_fr_iimmed	0,59,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x78000000,fr11
+
+	set_fr_iimmed	0,60,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xf0000000,fr11
+
+	set_fr_iimmed	0,61,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xe0000000,fr11
+
+	set_fr_iimmed	0,62,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0xc0000000,fr11
+
+	set_fr_iimmed	0,63,fr10
+	mwcut      	fr8,fr10,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	pass

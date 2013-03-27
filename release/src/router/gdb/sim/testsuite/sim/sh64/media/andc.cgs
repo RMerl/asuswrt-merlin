@@ -1,0 +1,50 @@
+# sh testcase for andc $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	pta wrong, tr0
+
+andc1:
+	# X . !X = 0.
+	movi 3, r0
+	movi 3, r1
+	andc r0, r1, r2
+	bnei r2, 0, tr0
+
+andc2:
+	# X . 0 = X.
+	movi 3, r0
+	movi 0, r1
+	andc r0, r1, r2
+	bnei r2, 3, tr0
+
+andc3:
+	# wide X . 0 = wide X.
+	movi 0x1020, r0
+	shlli r0, 8, r0
+	ori r0, 0x30, r0
+	shlli r0, 8, r0
+	ori r0, 0x40, r0
+	shlli r0, 8, r0
+	ori r0, 0x50, r0
+	shlli r0, 8, r0
+	ori r0, 0x60, r0
+	shlli r0, 8, r0
+	ori r0, 0x70, r0
+	shlli r0, 8, r0
+	ori r0, 0x80, r0
+	movi 0, r1
+	andc r0, r1, r2
+	bne r0, r2, tr0
+
+okay:	
+	pass
+
+wrong:
+	fail

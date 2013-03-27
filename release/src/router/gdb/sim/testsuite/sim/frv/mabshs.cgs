@@ -1,0 +1,67 @@
+# frv testcase for mabshs $FRj,$FRk
+# mach: fr400
+
+	.include "testutils.inc"
+
+	start
+
+	.global mabshs
+mabshs:
+	set_fr_iimmed	0x0000,0x0000,fr10
+	mabshs		fr10,fr11
+	test_fr_limmed	0x0000,0x0000,fr11
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x0001,0xffff,fr10
+	mabshs		fr10,fr11
+	test_fr_limmed	0x0001,0x0001,fr11
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_fr_iimmed	0x7fff,0x8001,fr10
+	mabshs		fr10,fr11
+	test_fr_limmed	0x7fff,0x7fff,fr11
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+
+	set_spr_immed	0,msr0
+	set_fr_iimmed	0x7fff,0x8000,fr10
+	mabshs		fr10,fr11
+	test_fr_limmed	0x7fff,0x7fff,fr11
+	test_spr_bits	0x3c,2,0x4,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+
+	set_spr_immed	0,msr0
+	set_fr_iimmed	0x8000,0x7fff,fr10
+	mabshs		fr10,fr11
+	test_fr_limmed	0x7fff,0x7fff,fr11
+	test_spr_bits	0x3c,2,0x8,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_fr_iimmed	0x7fff,0x8000,fr10
+	set_fr_iimmed	0x8000,0x7fff,fr11
+	mabshs.p	fr10,fr12
+	mabshs		fr11,fr13
+	test_fr_limmed	0x7fff,0x7fff,fr12
+	test_fr_limmed	0x7fff,0x7fff,fr13
+	test_spr_bits	0x3c,2,0x4,msr0		; msr0.sie is set
+	test_spr_bits	0x3c,2,0x8,msr1		; msr1.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf set
+	test_spr_bits	2,1,1,msr1		; msr1.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+
+	pass

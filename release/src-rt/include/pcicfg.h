@@ -1,7 +1,7 @@
 /*
  * pcicfg.h: PCI configuration constants and structures.
  *
- * Copyright (C) 2010, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: pcicfg.h,v 1.50 2009-12-07 21:56:06 Exp $
+ * $Id: pcicfg.h 316716 2012-02-23 04:39:13Z $
  */
 
 #ifndef	_h_pcicfg_
@@ -137,6 +137,7 @@ typedef struct _pci_config_regs {
 #define	SZPCR		(sizeof (pci_config_regs))
 #define	MINSZPCR	64		/* offsetof (dev_dep[0] */
 
+#endif /* !LINUX_POSTMOGRIFY_REMOVAL */
 /* A structure for the config registers is nice, but in most
  * systems the config space is not memory mapped, so we need
  * field offsetts. :-(
@@ -168,6 +169,8 @@ typedef struct _pci_config_regs {
 #define	PCI_CFG_PIN		0x3d
 #define	PCI_CFG_MINGNT		0x3e
 #define	PCI_CFG_MAXLAT		0x3f
+#define	PCI_CFG_DEVCTRL		0xd8
+#ifndef LINUX_POSTMOGRIFY_REMOVAL
 
 #ifdef __NetBSD__
 #undef	PCI_CLASS_DISPLAY
@@ -402,7 +405,7 @@ typedef struct _ppb_config_regs {
 #define PCI_CAP_VENDSPEC_ID		0x09
 #define PCI_CAP_PCIECAP_ID		0x10
 
-/* Data structure to define the Message Signalled Interrupt facility 
+/* Data structure to define the Message Signalled Interrupt facility
  * Valid for PCI and PCIE configurations
  */
 typedef struct _pciconfig_cap_msi {
@@ -493,7 +496,6 @@ typedef struct _pcie_enhanced_caphdr {
 #define sprom_control	dev_dep[0x88 - 0x40]
 #endif /* LINUX_POSTMOGRIFY_REMOVAL */
 #define	PCI_BAR0_WIN		0x80	/* backplane addres space accessed by BAR0 */
-#ifndef LINUX_POSTMOGRIFY_REMOVAL
 #define	PCI_BAR1_WIN		0x84	/* backplane addres space accessed by BAR1 */
 #define	PCI_SPROM_CONTROL	0x88	/* sprom property control */
 #define	PCI_BAR1_CONTROL	0x8c	/* BAR1 region burst control */
@@ -515,14 +517,22 @@ typedef struct _pcie_enhanced_caphdr {
 						 * 8KB window, so their address is the "regular"
 						 * address plus 4K
 						 */
-#endif /* LINUX_POSTMOGRIFY_REMOVAL */
+/*
+ * PCIE GEN2 changed some of the above locations for
+ * Bar0WrapperBase, SecondaryBAR0Window and SecondaryBAR0WrapperBase
+ * BAR0 maps 32K of register space
+*/
+#define PCIE2_BAR0_WIN2		0x70 /* backplane addres space accessed by second 4KB of BAR0 */
+#define PCIE2_BAR0_CORE2_WIN	0x74 /* backplane addres space accessed by second 4KB of BAR0 */
+#define PCIE2_BAR0_CORE2_WIN2	0x78 /* backplane addres space accessed by second 4KB of BAR0 */
+
 #define PCI_BAR0_WINSZ		(16 * 1024)	/* bar0 window size Match with corerev 13 */
-#ifndef LINUX_POSTMOGRIFY_REMOVAL
 /* On pci corerev >= 13 and all pcie, the bar0 is now 16KB and it maps: */
 #define	PCI_16KB0_PCIREGS_OFFSET (8 * 1024)	/* bar0 + 8K accesses pci/pcie core registers */
 #define	PCI_16KB0_CCREGS_OFFSET	(12 * 1024)	/* bar0 + 12K accesses chipc core registers */
 #define PCI_16KBB0_WINSZ	(16 * 1024)	/* bar0 window size */
 
+#ifndef LINUX_POSTMOGRIFY_REMOVAL
 /* On AI chips we have a second window to map DMP regs are mapped: */
 #define	PCI_16KB0_WIN2_OFFSET	(4 * 1024)	/* bar0 + 4K is "Window 2" */
 
@@ -534,6 +544,7 @@ typedef struct _pcie_enhanced_caphdr {
 #define	PCI_SBIM_MASK		0xff00	/* backplane core interrupt mask */
 #define	PCI_SBIM_MASK_SERR	0x4	/* backplane SBErr interrupt mask */
 
+#ifndef LINUX_POSTMOGRIFY_REMOVAL
 /* PCI_SPROM_CONTROL */
 #define SPROM_SZ_MSK		0x02	/* SPROM Size Mask */
 #define SPROM_LOCKED		0x08	/* SPROM Locked */
@@ -542,6 +553,7 @@ typedef struct _pcie_enhanced_caphdr {
 #define SPROM_BOOTROM_WE	0x20	/* external bootrom write enable */
 #define SPROM_BACKPLANE_EN	0x40	/* Enable indirect backplane access */
 #define SPROM_OTPIN_USE		0x80	/* device OTP In use */
+#endif /* LINUX_POSTMOGRIFY_REMOVAL */
 
 /* Bits in PCI command and status regs */
 #define PCI_CMD_IO		0x00000001	/* I/O enable */
@@ -552,4 +564,6 @@ typedef struct _pcie_enhanced_caphdr {
 #define PCI_CMD_VGA_PAL		0x00000040	/* VGA Palate */
 #define PCI_STAT_TA		0x08000000	/* target abort status */
 #endif /* LINUX_POSTMOGRIFY_REMOVAL */
+
+#define PCI_CONFIG_SPACE_SIZE	256
 #endif	/* _h_pcicfg_ */

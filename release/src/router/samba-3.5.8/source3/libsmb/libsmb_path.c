@@ -363,8 +363,9 @@ SMBC_parse_path(TALLOC_CTX *ctx,
   	while (q!=NULL)
   	{
   		index = q-p+1;
-    		//fprintf (stderr, "found at %d\n",index);
-    		q = strchr_m(q+1, '@');
+    	//fprintf (stderr, "found at %d\n",index);
+    	q = strchr_m(q+1, '@');
+		break;
   	}
 	
 	if(index>0)

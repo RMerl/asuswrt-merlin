@@ -1,0 +1,361 @@
+#   Copyright 1997, 1998, 1999, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+if $tracelevel then {
+	strace $tracelevel
+	}
+
+set prms_id 0
+set bug_id 0
+
+# are we on a target board
+if ![isnative] then {
+    return
+}
+
+# This test is presently only valid on HP-UX.  It verifies GDB's
+# ability to catch loads and unloads of shared libraries.
+#
+
+#setup_xfail "*-*-*"
+#clear_xfail "hppa*-*-*hpux*"
+if {![istarget "hppa*-*-hpux*"]} {
+    return 0
+}
+
+set testfile "solib"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+# build the first test case
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested solib.exp
+     return -1
+}
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+# Build the shared libraries this test case needs.
+#
+#cd ${subdir}
+#remote_exec build "$CC -g +z -c ${testfile}1.c -o ${testfile}1.o"
+#remote_exec build "$CC -g +z -c ${testfile}2.c -o ${testfile}2.o"
+
+if {$gcc_compiled == 0} {
+    if [istarget "hppa*-hp-hpux*"] then {
+	set additional_flags "additional_flags=+z"
+    } else {
+	# don't know what the compiler is...
+	set additional_flags ""
+    }
+} else {
+    set additional_flags "additional_flags=-fpic"
+}
+
+if {[gdb_compile "${srcdir}/${subdir}/${testfile}1.c" "${binfile}1.o" object [list debug $additional_flags]] != ""} {
+    perror "Couldn't compile ${testfile}1.c"
+    #return -1
+}
+if {[gdb_compile "${srcdir}/${subdir}/${testfile}2.c" "${binfile}2.o" object [list debug, $additional_flags]] != ""} {
+    perror "Couldn't compile ${testfile}2.c"
+    #return -1
+}
+
+if [istarget "hppa*-*-hpux*"] {
+    remote_exec build "ld -b ${binfile}1.o -o ${binfile}1.sl"
+    remote_exec build "ld -b ${binfile}2.o -o ${binfile}2.sl"
+} else {
+    set additional_flags "additional_flags=-shared"
+    gdb_compile "${binfile}1.o" "${binfile}1.sl" executable [list debug $additional_flags]
+    gdb_compile "${binfile}2.o" "${binfile}2.sl" executable [list debug $additional_flags]
+}
+
+# Build a version where the main program is in a shared library.  For
+# testing an indirect call made in a shared library.
+
+if {[gdb_compile "${srcdir}/${subdir}/${testfile}.c" "${binfile}_sl.o" object [list debug $additional_flags]] != ""} {
+    perror "Couldn't compile ${testfile}.c for ${binfile}_sl.o"
+    #return -1
+}
+
+if { [istarget "hppa*-*-hpux*"] } {
+    remote_exec build "ld -b ${binfile}_sl.o -o ${binfile}_sl.sl"
+} else {
+    set additional_flags "additional_flags=-shared"
+    gdb_compile "${binfile}_sl.o" "${binfile}_sl.sl" executable [list debug $additional_flags]
+}
+
+if { [istarget "hppa*-*-hpux*"] } {
+    set additional_flags "-Wl,-u,main"
+    if { [gdb_compile "${binfile}_sl.sl" "${binfile}_sl" executable [list debug $additional_flags]] != "" } {
+        untested solib.exp
+        return -1
+    }
+} else {
+    # FIXME: need to fill this part in for non-HP build
+}
+
+#cd ..
+
+# Start with a fresh gdb
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# This program manually loads and unloads SOM shared libraries, via calls
+# to shl_load and shl_unload.
+#
+if ![runto_main] then { fail "catch load/unload tests suppressed" }
+
+# Verify that we complain if the user tells us to catch something we
+# don't understand.
+#
+send_gdb "catch a_cold\n"
+gdb_expect {
+  -re "Unknown event kind specified for catch.*$gdb_prompt $"\
+          {pass "bogus catch kind is disallowed"}
+  -re "$gdb_prompt $"\
+          {fail "bogus catch kind is disallowed"}
+  timeout {fail "(timeout) bogus catch kind is disallowed"}
+}
+
+# Verify that we can set a generic catchpoint on shlib loads.  I.e., that
+# we can catch any shlib load, without specifying the name.
+#
+send_gdb "catch load\n"
+gdb_expect {
+  -re "Catchpoint \[0-9\]* .load <any library>.*$gdb_prompt $"\
+          {pass "set generic catch load"}
+  -re "$gdb_prompt $"\
+          {fail "set generic catch load"}
+  timeout {fail "(timeout) set generic catch load"}
+}
+
+send_gdb "continue\n"
+gdb_expect {
+  -re "Catchpoint \[0-9\] .loaded gdb.base/solib1.sl.*$gdb_prompt $"\
+          {pass "caught generic solib load"}
+  -re "$gdb_prompt $"\
+          {fail "caught generic solib load"}
+  timeout {fail "(timeout) caught generic solib load"}
+}
+
+# Set a breakpoint on the line following the shl_load call, and
+# continue.
+#
+# ??rehrauer: It appears that we can't just say "finish" from here;
+# GDB is getting confused by the dld's presense on the stack.
+#
+send_gdb "break 27\n"
+gdb_expect {
+  -re "Breakpoint \[0-9\]* at.*$gdb_prompt $"\
+          {pass "set break after shl_load"}
+  -re "$gdb_prompt $"\
+          {fail "set break after shl_load"}
+  timeout {fail "(timeout) set break after shl_load"}
+}
+
+send_gdb "continue\n"
+gdb_expect {
+  -re "Breakpoint \[0-9\]*, main .. at .*solib.c:27.*$gdb_prompt $"\
+          {pass "continue after generic catch load"}
+  -re "$gdb_prompt $"\
+          {fail "continue after generic catch load"}
+  timeout {fail "(timeout) continue after generic catch load"}
+}
+
+# Step over the call to shl_findsym.
+#
+# ??rehrauer: In theory, since the call to shl_load asked for
+# immediate binding of the shlib's symbols, and since the
+# shlib's symbols should have been auto-loaded, we ought to
+# be able to set a breakpoint on solib_main now.  However,
+# that seems not to be the case.  Dunno why for sure; perhaps
+# the breakpoint wants to be set on an import stub in the
+# main program for solib_main?  There wouldn't be one, in
+# this case...
+# 
+send_gdb "next\n"
+gdb_expect {
+  -re "$gdb_prompt $"\
+          {pass "step over shl_findsym"}
+  timeout {fail "(timeout) step over shl_findsym"}
+}
+
+# Verify that we can catch an unload of any library.
+#
+send_gdb "catch unload\n"
+gdb_expect {
+  -re "Catchpoint \[0-9\]* .unload <any library>.*$gdb_prompt $"\
+          {pass "set generic catch unload"}
+  -re "$gdb_prompt $"\
+          {fail "set generic catch unload"}
+  timeout {fail "(timeout) set generic catch load"}
+}
+
+send_gdb "continue\n"
+gdb_expect {
+  -re "Catchpoint \[0-9\] .unloaded gdb.base/solib1.sl.*$gdb_prompt $"\
+          {pass "caught generic solib unload"}
+  -re "$gdb_prompt $"\
+          {fail "caught generic solib unload"}
+  timeout {fail "(timeout) caught generic solib unload"}
+}
+
+# Verify that we can catch a load of a specific library.  (Delete
+# all the other catchpoints first, so that the generic catchpoints
+# we've previously set don't trigger.)
+#
+send_gdb "delete\n"
+gdb_expect {
+  -re "Delete all breakpoints.*y or n.*"\
+          {send_gdb "y\n"
+           gdb_expect {
+             -re "$gdb_prompt $"\
+                     {pass "delete all catchpoints"}
+             timeout {fail "(timeout) delete all catchpoints"}
+           }
+          }
+  -re "$gdb_prompt $"\
+          {fail "delete all catchpoints"}
+  timeout {fail "(timeout) delete all catchpoints"}
+}
+
+send_gdb "catch load gdb.base/solib2.sl\n"
+gdb_expect {
+  -re "Catchpoint \[0-9\]* .load gdb.base/solib2.sl.*$gdb_prompt $"\
+          {pass "set specific catch load"}
+  -re "$gdb_prompt $"\
+          {fail "set specific catch load"}
+  timeout {fail "(timeout) set specific catch load"}
+}
+
+send_gdb "continue\n"
+gdb_expect {
+  -re "Catchpoint \[0-9\] .loaded gdb.base/solib2.sl.*$gdb_prompt $"\
+          {pass "caught specific solib load"}
+  -re "$gdb_prompt $"\
+          {fail "caught specific solib load"}
+  timeout {fail "(timeout) caught specific solib load"}
+}
+
+# Verify that we can catch an unload of a specific library.
+#
+send_gdb "catch unload gdb.base/solib2.sl\n"
+gdb_expect {
+  -re "Catchpoint \[0-9\]* .unload gdb.base/solib2.sl.*$gdb_prompt $"\
+          {pass "set specific catch unload"}
+  -re "$gdb_prompt $"\
+          {fail "set specific catch unload"}
+  timeout {fail "(timeout) set specific catch unload"}
+}
+
+send_gdb "continue\n"
+gdb_expect {
+  -re "Catchpoint \[0-9\] .unloaded gdb.base/solib2.sl.*$gdb_prompt $"\
+          {pass "caught specific solib unload"}
+  -re "$gdb_prompt $"\
+          {fail "caught specific solib unload"}
+  timeout {fail "(timeout) caught specific solib unload"}
+}
+
+# Verify that we can set a catchpoint on a specific library that
+# happens not to be loaded by the program.  And, that this catchpoint
+# won't trigger inappropriately when other shlibs are loaded.
+#
+send_gdb "break 55\n"
+gdb_expect {
+  -re "Breakpoint \[0-9\]* at.*$gdb_prompt $"\
+          {pass "set break on shl_unload"}
+  -re "$gdb_prompt $"\
+          {fail "set break on shl_unload"}
+  timeout {fail "(timeout) set break on shl_unload"}
+}
+
+send_gdb "break 58\n"
+gdb_expect {
+  -re "Breakpoint \[0-9\]* at.*$gdb_prompt $"\
+          {pass "set break after shl_unload"}
+  -re "$gdb_prompt $"\
+          {fail "set break after shl_unload"}
+  timeout {fail "(timeout) set break after shl_unload"}
+}
+
+send_gdb "catch load foobar.sl\n"
+gdb_expect {
+  -re "Catchpoint \[0-9\]* .load foobar.sl.*$gdb_prompt $"\
+          {pass "set specific catch load for nonloaded shlib"}
+  -re "$gdb_prompt $"\
+          {fail "set specific catch load for nonloaded shlib"}
+  timeout {fail "(timeout) set specific catch load for nonloaded shlib"}
+}
+
+send_gdb "catch unload foobar.sl\n"
+gdb_expect {
+  -re "Catchpoint \[0-9\]* .unload foobar.sl.*$gdb_prompt $"\
+          {pass "set specific catch unload for nonloaded shlib"}
+  -re "$gdb_prompt $"\
+          {fail "set specific catch unload for nonloaded shlib"}
+  timeout {fail "(timeout) set specific catch unload for nonloaded shlib"}
+}
+
+send_gdb "continue\n"
+gdb_expect {
+  -re "Breakpoint \[0-9\]*.*$gdb_prompt $"\
+          {pass "specific catch load doesn't trigger inappropriately"}
+  -re "$gdb_prompt $"\
+          {fail "specific catch load doesn't trigger inappropriately"}
+  timeout {fail "(timeout) specific catch load doesn't trigger inappropriately"}
+}
+
+send_gdb "continue\n"
+gdb_expect {
+  -re "Breakpoint \[0-9\]*.*$gdb_prompt $"\
+          {pass "specific catch unload doesn't trigger inappropriately"}
+  -re "$gdb_prompt $"\
+          {fail "specific catch unload doesn't trigger inappropriately"}
+  timeout {fail "(timeout) specific catch unload doesn't trigger inappropriately"}
+}
+
+# ??rehrauer: There ought to be testpoints here that verify that
+# load/unload catchpoints can use conditionals, can be temporary,
+# self-disabling, etc etc.
+#
+
+gdb_exit
+
+#
+# Test stepping into an indirect call in a shared library.
+#
+
+gdb_start
+gdb_load ${binfile}_sl
+gdb_test "break main" ".*deferred. at .main..*" "break on main"
+gdb_test "run" ".*Breakpoint.*main.*solib.c.*" "hit breakpoint at main"
+gdb_test "break 45" "Breakpoint.*solib.c, line 45.*" "break on indirect call"
+gdb_test "continue" "Continuing.*solib.c:45.*" \
+	"continue to break on indirect call"
+gdb_test "step" "solib_main.*solib1.c:17.*return arg.arg.*" \
+	"step into indirect call from a shared library"
+gdb_exit
+
+return 0

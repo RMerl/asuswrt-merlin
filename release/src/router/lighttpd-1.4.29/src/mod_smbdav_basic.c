@@ -60,7 +60,7 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 			get_account_from_smb_info = 1;
 		}
 		
-		Cdbg(DBE, "fail smbc_parser_basic_authentication-> %s, %s", user->ptr, pass->ptr);
+		Cdbg(DBE, "fail smbc_parser_basic_authentication and get account from smb_info %s, %s", user->ptr, pass->ptr);
 	}
 	else{
 		buffer_copy_string(user, auth_username);
@@ -68,14 +68,14 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 		free(auth_username);
 		free(auth_password);
 	}
-
+	
 	time_t cur_time = time(NULL);
 	
 	double result = difftime(cur_time, con->smb_info->auth_time);
 	
 	if(con->smb_info->qflag == SMB_HOST_QUERY) {
-		data_string *ds2 = (data_string *)array_get_element(con->request.headers, "user-Agent");	
-		
+		//data_string *ds2 = (data_string *)array_get_element(con->request.headers, "user-Agent");	
+	
 		//- MUST login again more than 30 minutes
 		if(result>1800){
 			goto error_401;
@@ -98,8 +98,15 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 		char* webav_pass = nvram_get_http_passwd();
 		char* enable_webdav_block = nvram_get_enable_webdav_lock();
 		char* is_webdav_block = nvram_get_webdav_acc_lock();
+		#ifndef APP_IPKG
 		int try_times = atoi(nvram_get_webdav_lock_times());
 		int try_interval = atoi(nvram_get_webdav_lock_interval())*60;
+		#else
+		char* lock_times = nvram_get_webdav_lock_times();
+		char* lock_interval = nvram_get_webdav_lock_interval();
+		int try_times = atoi(lock_times);
+        int try_interval = atoi(lock_interval)*60;
+		#endif
 		#else
 		char* webav_user = "admin";
 		char* webav_pass = "admin";
@@ -112,9 +119,19 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 
 		if( isBrowser==1 && strcmp(enable_webdav_block, "1") == 0 && strcmp(is_webdav_block, "1") == 0 ){
 			Cdbg(DBE, "Direct go to 455 error page");
+#if EMBEDDED_EANBLE
+#ifdef APP_IPKG
+	        free(webav_user);
+	        free(webav_pass);
+	        free(enable_webdav_block);
+	        free(is_webdav_block);
+	        free(lock_times);
+	        free(lock_interval);
+#endif
+#endif
 			goto error_455;
 		}
-			
+		
 		if( strcmp(user->ptr, webav_user)!=0 || 
 		    strcmp(pass->ptr, webav_pass)!=0 ){
 			
@@ -139,16 +156,35 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 					
 					#if EMBEDDED_EANBLE
 					nvram_set_webdav_acc_lock("1");
+					nvram_do_commit();
 					#else
 					g_is_webdav_block = "1";
 					#endif
 
 					Cdbg(DBE, "error_455...");
-					
+#if EMBEDDED_EANBLE
+#ifdef APP_IPKG
+                    free(webav_user);
+                    free(webav_pass);
+                    free(enable_webdav_block);
+                    free(is_webdav_block);
+                    free(lock_times);
+                    free(lock_interval);
+#endif
+#endif
 					goto error_455;
 				}
 			}
-			
+#if EMBEDDED_EANBLE
+#ifdef APP_IPKG
+            free(webav_user);
+            free(webav_pass);
+            free(enable_webdav_block);
+            free(is_webdav_block);
+            free(lock_times);
+            free(lock_interval);
+#endif
+#endif
 			goto error_401;
 		}
 		
@@ -175,8 +211,19 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 			nvram_set_webdav_last_login_info(srv->last_login_info->ptr);
 			#endif
 		}
+#if EMBEDDED_EANBLE
+#ifdef APP_IPKG
+            free(webav_user);
+            free(webav_pass);
+            free(enable_webdav_block);
+            free(is_webdav_block);
+            free(lock_times);
+            free(lock_interval);
+#endif
+#endif
 	}
 	else {
+		
 		//- check user / password
 		struct stat st;
 		
@@ -201,7 +248,7 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 			
 			return HANDLER_FINISHED;
 		}
-		else if(res != 0) { //the username/password for smb_server is not correct				
+		else if(res != 0) { //the username/password for smb_server is not correct		
 			if(con->smb_info->username->used && con->smb_info->password->used){
 				buffer_copy_string_buffer(user, con->smb_info->username);			
 				buffer_copy_string_buffer(pass, con->smb_info->password);
@@ -220,6 +267,7 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 											    con->smb_info->workgroup->ptr, 
 											    user->ptr, 
 											    pass->ptr);
+				
 				if(res != 0) 
 					goto error_401;
 			}
@@ -245,7 +293,6 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 	return HANDLER_UNSET;
 
 error_401:
-	
 	buffer_free(user);
 	buffer_free(pass);
 	

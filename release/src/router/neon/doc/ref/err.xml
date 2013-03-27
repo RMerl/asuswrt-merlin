@@ -1,0 +1,80 @@
+    <refentry id="referr">
+
+      <refmeta>
+	<refentrytitle>ne_get_error</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_get_error">ne_get_error</refname>
+	<refname id="ne_set_error">ne_set_error</refname>
+	<refpurpose>error handling for HTTP sessions</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_session.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>const char *<function>ne_get_error</function></funcdef>
+	    <paramdef>ne_sesssion *<parameter>session</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_set_error</function></funcdef>
+	    <paramdef>ne_sesssion *<parameter>session</parameter></paramdef>
+	    <paramdef>const char *<parameter>format</parameter></paramdef>
+	    <paramdef>...</paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+      
+      <refsect1>
+	<title>Description</title>
+
+	<para>The session error string is used to store any
+human-readable error information associated with any errors which
+occur whilst using the HTTP session.</para>
+
+	<para>The <function>ne_get_error</function> function returns
+	the current session error string.  This string persists only
+	until it is changed by a subsequent operation on the session.
+	If localisation was enabled at build time, and if necessary
+	enabled at run-time if necessary using <xref
+	linkend="ne_i18n_init"/>, the returned string may have been
+	translated into the user's current locale.</para>
+
+        <para>The <function>ne_set_error</function> function can be
+        used to set a new session error string, using a
+        <function>printf</function>-style format string
+        interface.</para>
+
+      </refsect1>
+
+      <refsect1>
+        <title>Return value</title>
+
+        <para><function>ne_set_error</function> returns a constant
+        &nul;-terminated string.  In the default English locale, the
+        returned string will <emphasis>not</emphasis> have a
+        terminating <quote>.</quote> period character.</para>
+      </refsect1>
+
+      <refsect1>
+	<title>Examples</title>
+	<para>Retrieve the current error string:</para>
+	<programlisting>&egsess;
+...
+printf("Error was: %s\n", ne_get_error(sess));</programlisting>
+
+	<para>Set a new error string:</para>
+	<programlisting>&egsess;
+...
+ne_set_error(sess, "Response missing header %s", "somestring");</programlisting>
+      </refsect1>
+      
+    </refentry>

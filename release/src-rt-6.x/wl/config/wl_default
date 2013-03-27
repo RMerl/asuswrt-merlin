@@ -1,6 +1,6 @@
 # Broadcom 802.11abg Networking Device Driver Configuration file
 #
-# Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -52,4 +52,4 @@ BCMECICOEX=1
 #ifndef LINUX_CRYPTO
 LINUX_CRYPTO=0
 #endif
-PPRDEV_ENABLED=1
+PPR_API=1

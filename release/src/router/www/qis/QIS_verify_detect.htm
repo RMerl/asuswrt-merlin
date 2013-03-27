@@ -5,16 +5,8 @@
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <script type="text/javascript" src="/help.js"></script>
-<link type="text/css" rel="stylesheet" href="/qis/qis_style.css">
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <link type="text/css" rel="stylesheet" href="/form_style.css">
-<style>
-.test_css{
-	padding-left:10px;
-	font-size:13px;
-	font-weight:bolder;
-	color:#FFFFFF;
-}
-</style>
 <script type="text/JavaScript" src="/jquery.js"></script>
 <script type="text/javascript">
 
@@ -33,6 +25,11 @@ function QKDetect_load_body(){
 	parent.set_step("t1");
 	parent.document.title = "<#Web_Title#> - <#QKSet_detect_sanglass#>";
 	setTimeout("getWANStatus();", 3000);
+	if(parent.ISMOBILE){
+		hideObjs();
+		document.getElementById("tblsetting_1").style.marginTop = "-30px";
+		parent.set_step("");
+	}
 }
 
 function getWANStatus(){
@@ -66,12 +63,24 @@ function getWANStatus(){
 					--RetryCountDown;
 
 				if(RetryCountDown < 1){
-					if(confirm("<#QIS_detect_timeout#>")){
-						RetryCountDown = 5;
-						getWANStatus();
+					if(parent.ISMOBILE){
+						document.getElementById("QISmain").style.display = "none";
+						document.getElementById("QISmain_m").style.display = "";
 					}
-					else
-						redirect_page("fail");
+					else{
+						if(confirm("<#QIS_detect_timeout#>")){
+							RetryCountDown = 5;
+							getWANStatus();
+						}
+						else{
+							if(QIS_usb_path1 == "modem" || QIS_usb_path2 == "modem"){
+								redirect_page("modem");
+							}	
+							else{
+								redirect_page("fail");
+							}
+						}
+					}
 				}
 				else
 					setTimeout("getWANStatus();", 2000);
@@ -82,8 +91,14 @@ function getWANStatus(){
 			else{
 				if(wanauxstate != 1 && wanstate == 2){ //success case
 					successcase++;
-					if(successcase > 1)
-						redirect_page("wireless");
+					if(successcase > 1){
+						if(QIS_usb_path1 == "modem" || QIS_usb_path2 == "modem"){
+							redirect_page("modem");
+						}	
+						else{
+							redirect_page("wireless");
+						}
+					}
 					else
 						setTimeout("getWANStatus();", 2000);
 				}
@@ -94,12 +109,25 @@ function getWANStatus(){
 						--RetryCountDown;
 						setTimeout("getWANStatus();", 2000);
 					}
-					else
-						redirect_page("fail");								
+					else{
+						if(QIS_usb_path1 == "modem" || QIS_usb_path2 == "modem"){
+							redirect_page("modem");
+						}	
+						else{
+							redirect_page("fail");
+						}
+					}
 				}
 			}
 		}
 	});
+}
+
+function rescan_m(){
+	document.getElementById("QISmain").style.display = "";
+	document.getElementById("QISmain_m").style.display = "none";
+	RetryCountDown = 5;
+	getWANStatus();
 }
 
 function redirect_page(redirect_flag){
@@ -120,24 +148,24 @@ function redirect_page(redirect_flag){
 <input type="hidden" name="action_wait" value="">
 <input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 
-<div class="QISmain">
-		<div class="formfonttitle" style="padding:6 0 0 10;">
-				<div>
-					<table width="730px">
-						<tr>
-							<td align="left">
-								<span class="description_down"><#QKSet_detect_desc2#></span>
-							</td>
-							<td align="right">
-								<!--img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'"-->
-							</td>
-						</tr>
-					</table>
-				</div>
-				<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+<div class="QISmain" id="QISmain">
+	<div id="descTltle" class="formfonttitle" style="padding:6 0 0 10;">
+		<div>
+			<table width="100%">
+				<tr>
+					<td align="left">
+						<span class="description_down"><#QKSet_detect_desc2#></span>
+					</td>
+					<td align="right">
+						<!--img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'"-->
+					</td>
+				</tr>
+			</table>
 		</div>
+		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+	</div>
   <br/><br/>
-	<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
+	<table id="tblsetting_1" class="QISform" width="auto" border=0 align="center" cellpadding="5" cellspacing="0">
 	  <tr>
 		<td align="right">
 			<img src="/images/InternetScan.gif"></span>
@@ -149,6 +177,18 @@ function redirect_page(redirect_flag){
 	</table>
 </div>
 </form>
+
+<div style="display:none;" id="QISmain_m">
+	<div><#QIS_detect_timeout#></div><br>
+	<fieldset class="theFieldset">
+		<div class="row">
+			<a class="iuiA" onclick="rescan_m();"><#QKSet_detect_freshbtn#></a>
+		</div>
+		<div class="row_end" id="siteSurvey">
+			<a class="iuiA" onclick="redirect_page('fail');"><#CTL_next#></a>
+		</div>
+	</fieldset>
+</div>
 
 <form method="post" name="redirectForm" action="">
 <input type="hidden" name="flag" value="">

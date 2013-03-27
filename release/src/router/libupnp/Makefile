@@ -47,4 +47,4 @@ install: all
 clean:
 	rm -f $(UPNPLIB_NAME) $(OBJFILES)
 
-.PHONY: clean
+.PHONY: all clean

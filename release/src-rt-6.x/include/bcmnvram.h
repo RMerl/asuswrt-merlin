@@ -1,7 +1,7 @@
 /*
  * NVRAM variable manipulation
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmnvram.h 320657 2012-03-12 20:24:32Z $
+ * $Id: bcmnvram.h 349220 2012-08-07 10:36:24Z $
  */
 
 #ifndef _bcmnvram_h_
@@ -50,6 +50,7 @@ extern char *nvram_default_get(const char *name);
  * platforms.
  */
 extern int nvram_init(void *sih);
+extern int nvram_deinit(void *sih);
 
 /*
  * Append a chunk of nvram variables to the global list
@@ -104,7 +105,7 @@ nvram_safe_get(const char *name)
  *		to match or FALSE otherwise
  */
 static INLINE int
-nvram_match(char *name, char *match)
+nvram_match(const char *name, const char *match)
 {
 	const char *value = nvram_get(name);
 	return (value && !strcmp(value, match));
@@ -118,7 +119,7 @@ nvram_match(char *name, char *match)
  *		equal to invmatch or FALSE otherwise
  */
 static INLINE int
-nvram_invmatch(char *name, char *invmatch)
+nvram_invmatch(const char *name, const char *invmatch)
 {
 	const char *value = nvram_get(name);
 	return (value && strcmp(value, invmatch));
@@ -177,10 +178,11 @@ uint8 nvram_calc_crc(struct nvram_header * nvh);
 #define NVRAM_VERSION		1
 #define NVRAM_HEADER_SIZE	20
 #if (defined(RTCONFIG_NVRAM_64K) || defined(CONFIG_NVRAM_64K))
-	#define NVRAM_SPACE		0x10000
+#define NVRAM_SPACE		0x10000
 #else
-	#define NVRAM_SPACE		0x8000
+#define NVRAM_SPACE		0x8000
 #endif
+#define ROM_ENVRAM_SPACE	0x1000
 
 #define NVRAM_MAX_VALUE_LEN 255
 #define NVRAM_MAX_PARAM_LEN 64

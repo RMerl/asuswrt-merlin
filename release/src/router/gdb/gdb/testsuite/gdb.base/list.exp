@@ -1,0 +1,549 @@
+# Copyright 1992, 1994, 1995, 1996, 1997, 1998, 1999, 2002, 2003, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Fred Fish. (fnf@cygnus.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "list"
+set binfile ${objdir}/${subdir}/${testfile}
+
+# Need to download the header to the host.
+remote_download host ${srcdir}/${subdir}/list0.h list0.h
+
+
+if  { [gdb_compile "${srcdir}/${subdir}/list0.c" "${binfile}0.o" object {debug}] != "" } {
+     untested list.exp
+     return -1
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/list1.c" "${binfile}1.o" object {debug}] != "" } {
+     untested list.exp
+     return -1
+}
+
+if  { [gdb_compile "${binfile}0.o ${binfile}1.o" ${binfile} executable {debug}] != "" } {
+     untested list.exp
+     return -1
+}
+
+
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+#
+# Local utility proc just to set and verify listsize
+# Return 1 if success, 0 if fail.
+#
+
+set set_listsize_count 0;
+
+proc set_listsize { arg } {
+    global gdb_prompt
+    global set_listsize_count;
+
+    incr set_listsize_count;
+    if [gdb_test "set listsize $arg" "" "setting listsize to $arg #$set_listsize_count"] {
+	return 0;
+    }
+    if { $arg <= 0 } {
+	set arg "unlimited";
+    }
+
+    if [gdb_test "show listsize" "Number of source lines.* is ${arg}.*" "show listsize $arg #$set_listsize_count"] {
+	return 0;
+    }
+    return 1
+}
+
+#
+# Test display of listsize lines around a given line number.
+#
+
+proc test_listsize {} {
+    global gdb_prompt
+    global hp_cc_compiler
+    global hp_aCC_compiler
+
+    # Show default size
+
+    gdb_test "show listsize" "Number of source lines gdb will list by default is 10.*" "show default list size"
+    
+    # Show the default lines
+    # Note that remote targets that have debugging info for _start available will
+    # list the lines there instead of main, so we skip this test for remote targets.
+    # The second case is for optimized code, it is still correct.
+    
+    if [is_remote target] {
+	runto_main;
+	unsupported "list default lines around main";
+    } else {
+	gdb_test "list" "(1\[ \t\]+#include \"list0.h\".*10\[ \t\]+x = 0;|2.*11\[ \t\]+foo .x\[+)\]+;)" "list default lines around main"
+    }
+
+    # Ensure we can limit printouts to one line
+
+    if [set_listsize 1] {
+	gdb_test "list 1" "1\[ \t\]+#include \"list0.h\"" "list line 1 with listsize 1"
+	gdb_test "list 2" "2\[ \t\]+" "list line 2 with listsize 1"
+    }    
+
+    # Try just two lines
+    
+    if [ set_listsize 2 ] {
+	gdb_test "list 1" "1\[ \t\]+#include \"list0.h\"\r\n2\[ \t\]+" "list line 1 with listsize 2"
+	gdb_test "list 2" "1\[ \t\]+#include \"list0.h\"\r\n2\[ \t\]+" "list line 2 with listsize 2"
+	gdb_test "list 3" "2\[ \t\]+\r\n3\[ \t\]+int main \[)(\]+" "list line 3 with listsize 2"
+    }
+
+    # Try small listsize > 1 that is an odd number
+
+    if [ set_listsize 3 ] {
+	gdb_test "list 1" "1\[ \t\]+#include \"list0.h\".*3\[ \t\]+int main \[)(\]+" "list line 1 with listsize 3"
+	gdb_test "list 2" "1\[ \t\]+#include \"list0.h\".*3\[ \t\]+int main \[)(\]+" "list line 2 with listsize 3"
+	gdb_test "list 3" "2\[ \t\]+\r\n3\[ \t\]+int main \[(\]+\[)\]+\r\n4\[ \t\]+\{" "list line 3 with listsize 3"
+    }
+
+    # Try small listsize > 2 that is an even number.
+
+    if [ set_listsize 4 ] then {
+	gdb_test "list 1" "1\[ \t\]+#include \"list0.h\".*4\[ \t\]+\{" "list line 1 with listsize 4"
+	gdb_test "list 2" "1\[ \t\]+#include \"list0.h\".*4\[ \t\]+\{" "list line 2 with listsize 4"
+	
+	gdb_test "list 3" "1\[ \t\]+#include \"list0.h\".*4\[ \t\]+\{" "list line 3 with listsize 4"
+	gdb_test "list 4" "2\[ \t\]+\r\n.*5\[ \t\]+int x;.*" "list line 4 with listsize 4"
+    }
+
+    # Try a size larger than the entire file.
+
+    if [ set_listsize 100 ] then {
+	gdb_test "list 1" "1\[ \t\]+#include \"list0.h\".*\r\n4\[23\]\[ \t\]+\}" "list line 1 with listsize 100"
+	
+	gdb_test "list 10" "1\[ \t\]+#include \"list0.h\".*\r\n4\[23\]\[ \t\]+\}" "list line 10 with listsize 100"
+    }
+
+    # Try listsize of 0 which suppresses printing.
+
+    set_listsize 0
+    gdb_test "list 1" "" "listsize of 0 suppresses output"
+
+    # Try listsize of -1 which is special, and means unlimited.
+
+    set_listsize -1
+    setup_xfail "*-*-*"
+    gdb_test "list 1" "1\[ \t\]+#include .*\r\n39\[ \t\]+\}" "list line 1 with unlimited listsize"
+}
+
+#
+# Test "list filename:number" for C include file
+#
+
+proc test_list_include_file {} {
+    global gdb_prompt
+
+    setup_xfail_format "COFF"
+    gdb_test "list list0.h:1" "1\[ \t\]+/\[*\]+ An include file .*10\[ \t\]+bar \\(x\\+\\+\\);" "list line 1 in include file"
+
+    setup_xfail_format "COFF"
+    gdb_test "list list0.h:100" "Line number 95 out of range; .*list0.h has 3\[67\] lines." "list message for lines past EOF"
+}
+
+#
+# Test "list filename:number" for C source file
+#
+
+proc test_list_filename_and_number {} {
+    global gdb_prompt
+
+    set testcnt 0
+
+    send_gdb "list list0.c:1\n"
+    gdb_expect {
+	-re "1\[ \t\]+#include \"list0.h\".*10\[ \t]+x = 0;\r\n$gdb_prompt $" {
+	    incr testcnt 
+	}
+	-re ".*$gdb_prompt $" { fail "list list0.c:1" ; gdb_suppress_tests }
+	timeout { fail "list list0.c:1 (timeout)" ; gdb_suppress_tests }
+    }
+    send_gdb "list list0.c:10\n"
+    gdb_expect {
+	-re "5\[ \t\]+int x;.*14\[ \t\]+foo .x\[+)\]+;\r\n$gdb_prompt $" {
+	    incr testcnt 
+	}
+	-re ".*$gdb_prompt $" { fail "list list.c:10" ; gdb_suppress_tests }
+	timeout { fail "list list.c:10 (timeout)" ; gdb_suppress_tests }
+    }
+    send_gdb "list list1.c:1\n"
+    gdb_expect {
+	-re "1\[ \t\]+\#include.*4\[ \t\]+.*int oof\[ \t\]*\(.*\);\r\n.*$gdb_prompt $" {
+	    incr testcnt 
+	}
+	-re ".*$gdb_prompt $" { fail "list list1.c:1" ; gdb_suppress_tests }
+	timeout { fail "list list1.c:1 (timeout)" ; gdb_suppress_tests }
+    }
+    send_gdb "list list1.c:12\n"
+    gdb_expect {
+	-re "12\[ \t\]+long_line \[(\]+.*\[)\]+;.*13\[ \t\]+\}\r\n.*$gdb_prompt $" {
+	    incr testcnt 
+	}
+	-re ".*$gdb_prompt $" { fail "list list1.c:12" ; gdb_suppress_tests }
+	timeout { fail "list list1.c:12 (timeout)" ; gdb_suppress_tests }
+    }
+    pass "list filename:number ($testcnt tests)"
+    gdb_stop_suppressing_tests;
+}
+
+#
+# Test "list function" for C source file
+#
+
+proc test_list_function {} {
+    global gdb_prompt
+
+    # gcc appears to generate incorrect debugging information for code
+    # in include files, which breaks this test.
+    # SunPRO cc is the second case below, it's also correct.
+    gdb_test "list main" "(5\[ \t\]+int x;.*14\[ \t\]+foo \[(\]+.*\[)\]+;|1\[ \t\]+#include .*10\[ \t\]+x = 0;)" "list function in source file 1"
+
+    # Ultrix gdb takes the second case below; it's also correct.
+    # SunPRO cc is the third case.
+    gdb_test "list bar" "(4\[ \t\]+void.*\[ \t\]*long_line.*;.*bar.*9\[ \t\]*.*|1\[ \t\]+void.*8\[ \t\]+\}|1\[ \t\]+void.*7\[ \t\]*long_line ..;|7\[ \t\]+void.*14\[ \t\]+\})" "list function in source file 2"
+
+    # Test "list function" for C include file
+    # Ultrix gdb is the second case, still correct.
+    # SunPRO cc is the third case.
+    gdb_test "list foo" "(3\[ \t\]+.*12\[ \t\]+bar \[(\]+.*\[)\]+;|2\[ \t\]+including file.*11\[ \t\]+bar \[(\]+.*\[)\]+;|1\[ \t\]+/. An include file.*10\[ \t\]+bar \[(\]+.*\[)\]+;)" "list function in include file"
+}
+
+proc test_list_forward {} {
+    global gdb_prompt
+
+    set testcnt 0
+
+    send_gdb "list list0.c:10\n"
+    gdb_expect {
+	-re "5\[ \t\]+int x;.*14\[ \t\]+foo \[(\]+.*\[)\]+;\r\n$gdb_prompt $" { incr testcnt }
+	-re ".*$gdb_prompt $" { fail "list list0.c:10" ; gdb_suppress_tests }
+	timeout { fail "list list0.c:10 (timeout)" ; gdb_suppress_tests }
+    }
+
+    send_gdb "list\n"
+    gdb_expect {
+	-re "15\[ \t\]+foo \[(\]+.*\[)\]+;.*24\[ \t\]+foo \[(\]+.*\[)\]+;\r\n$gdb_prompt $" { incr testcnt }
+	-re ".*$gdb_prompt $" { fail "list 15-24" ; gdb_suppress_tests }
+	timeout { fail "list 15-24 (timeout)" ; gdb_suppress_tests }
+    }
+
+    send_gdb "list\n"
+    gdb_expect {
+	-re "25\[ \t\]+foo \[(\]+.*\[)\]+;.*34\[ \t\]+foo \[(\]+.*\[)\]+;\r\n$gdb_prompt $" { incr testcnt }
+	-re ".*$gdb_prompt $" { fail "list 25-34" ; gdb_suppress_tests }
+	timeout { fail "list 25-34 (timeout)" ; gdb_suppress_tests }
+    }
+
+    send_gdb "list\n"
+    gdb_expect {
+	-re "35\[ \t\]+foo \\(.*\\);.*42\[ \t\]+.*\}\r\n$gdb_prompt $" { incr testcnt }
+	-re ".*$gdb_prompt $" { fail "list 35-42" ; gdb_suppress_tests }
+	timeout { fail "list 35-42 (timeout)" ; gdb_suppress_tests }
+    }
+
+    pass "successive list commands to page forward ($testcnt tests)"
+    gdb_stop_suppressing_tests;
+}
+
+# Test that repeating the list linenum command doesn't print the same
+# lines over again.  Note that this test makes sure that the argument
+# linenum is dropped, when we repeat the previous command. 'x/5i $pc'
+# works the same way.  
+
+proc test_repeat_list_command {} {
+    global gdb_prompt
+
+    set testcnt 0
+
+    send_gdb "list list0.c:10\n"
+    gdb_expect {
+	-re "5\[ \t\]+int x;.*14\[ \t\]+foo \[(\]+.*\[)\]+;\r\n$gdb_prompt $" { incr testcnt }
+	-re ".*$gdb_prompt $" { fail "list list0.c:10" ; gdb_suppress_tests }
+	timeout { fail "list list0.c:10 (timeout)" ; gdb_suppress_tests }
+    }
+
+    send_gdb "\n"
+    gdb_expect {
+	-re "15\[ \t\]+foo \[(\]+.*\[)\]+;.*24\[ \t\]+foo \[(\]+.*\[)\]+;\r\n$gdb_prompt $" { incr testcnt }
+	-re ".*$gdb_prompt $" { fail "list 15-24" ; gdb_suppress_tests }
+	timeout { fail "list 15-24 (timeout)" ; gdb_suppress_tests }
+    }
+
+    send_gdb "\n"
+    gdb_expect {
+	-re "25\[ \t\]+foo \[(\]+.*\[)\]+;.*34\[ \t\]+foo \[(\]+.*\[)\]+;\r\n$gdb_prompt $" { incr testcnt }
+	-re ".*$gdb_prompt $" { fail "list 25-34" ; gdb_suppress_tests }
+	timeout { fail "list 25-34 (timeout)" ; gdb_suppress_tests }
+    }
+
+    send_gdb "\n"
+    gdb_expect {
+	-re "35\[ \t\]+foo \\(.*\\);.*42\[ \t\]+.*\}\r\n$gdb_prompt $" { incr testcnt }
+	-re ".*$gdb_prompt $" { fail "list 35-42" ; gdb_suppress_tests }
+	timeout { fail "list 35-42 (timeout)" ; gdb_suppress_tests }
+    }
+
+    pass "repeat list commands to page forward using 'return' ($testcnt tests)"
+    gdb_stop_suppressing_tests;
+}
+
+proc test_list_backwards {} {
+    global gdb_prompt
+
+    set testcnt 0
+
+    send_gdb "list list0.c:33\n"
+    gdb_expect {
+	-re "28\[ \t\]+foo \\(.*\\);.*37\[ \t\]+\}\r\n$gdb_prompt $" { incr testcnt }
+	-re ".*$gdb_prompt $" { fail "list list0.c:33" ; gdb_suppress_tests }
+	timeout { fail "list list0.c:33 (timeout)" ; gdb_suppress_tests }
+    }
+
+    send_gdb "list -\n"
+    gdb_expect {
+	-re "18\[ \t\]+foo \[(\]+.*\[)\]+;.*27\[ \t\]+foo \[(\]+.*\[)\]+;\r\n$gdb_prompt $" { incr testcnt }
+	-re ".*$gdb_prompt $" { fail "list 18-27" ; gdb_suppress_tests }
+	timeout { fail "list 18-27 (timeout)" ; gdb_suppress_tests }
+    }
+
+    send_gdb "list -\n"
+    gdb_expect {
+	-re "8\[ \t\]+breakpoint\[(\]\[)\];.*17\[ \t\]+foo \[(\]+.*\[)\]+;\r\n$gdb_prompt $" { incr testcnt }
+	-re ".*$gdb_prompt $" { fail "list 8-17" ; gdb_suppress_tests }
+	timeout { fail "list 8-17 (timeout)" ; gdb_suppress_tests }
+    }
+
+    send_gdb "list -\n"
+    gdb_expect {
+	-re "1\[ \t\]+#include .*7\[ \t\]+set_debug_traps\[(\]\[)\]+;\r\n$gdb_prompt $" { incr testcnt }
+	-re ".*$gdb_prompt $" { fail "list 1-7" ; gdb_suppress_tests }
+	timeout { fail "list 1-7 (timeout)" ; gdb_suppress_tests }
+    }
+
+    pass "$testcnt successive \"list -\" commands to page backwards"
+    gdb_stop_suppressing_tests;
+}
+
+#
+# Test "list first,last"
+#
+
+proc test_list_range {} {
+    global gdb_prompt
+
+    gdb_test "list list0.c:2,list0.c:5" "2\[ \t\]+\r\n3\[ \t\]+int main \[)(\]+.*5\[ \t\]+int x;" "list range; filename:line1,filename:line2"
+
+    gdb_test "list 2,5" "2\[ \t\]+\r\n3\[ \t\]+int main \[)(\]+.*5\[ \t\]+int x;" "list range; line1,line2"
+
+#    gdb_test     "list -1,6" 	"Line number 0 out of range; .*list0.c has 39 lines." "list range; lower bound negative"
+
+#    gdb_test     "list -100,-40" 	"Line number -60 out of range; .*list0.c has 39 lines." "list range; both bounds negative"
+
+    gdb_test "list 30,45" "30\[ \t\]+foo \(.*\);.*43\[ \t\]+\}" "list range; upper bound past EOF"
+
+    gdb_test "list 45,100" "Line number 45 out of range; .*list0.c has 43 lines." "list range; both bounds past EOF"
+
+    gdb_test "list list0.c:2,list1.c:17" "Specified start and end are in different files." "list range, must be same files"
+}
+
+#
+# Test "list filename:function"
+#
+
+proc test_list_filename_and_function {} {
+    global gdb_prompt
+
+    set testcnt 0
+
+    # gcc appears to generate incorrect debugging information for code
+    # in include files, which breaks this test.
+    # SunPRO cc is the second case below, it's also correct.
+    send_gdb "list list0.c:main\n"
+    gdb_expect {
+	-re "1\[ \t\]+#include .*10\[ \t\]+x = 0;\r\n$gdb_prompt $" {
+	    incr testcnt
+	}
+	-re "5\[ \t\]+int x;.*14\[ \t\]+foo \[(\]+.*\[)\]+;\r\n$gdb_prompt $" {
+	    pass "list function in source file 1"
+	}
+	-re ".*$gdb_prompt $" { fail "list list0.c:main" }
+	timeout { fail "list list0.c:main (timeout)" }
+    }
+
+    # Not sure what the point of having this function be unused is.
+    # AIX is legitimately removing it.
+    setup_xfail "rs6000-*-aix*"
+    send_gdb "list list0.c:unused\n"
+    gdb_expect {
+	-re "40\[ \t\]+unused.*43\[ \t\]+\}\r\n$gdb_prompt $" {
+	    incr testcnt
+	}
+	-re "37.*42\[ \t\]+\}\r\n$gdb_prompt $" {
+	    incr testcnt
+	}
+	-re ".*$gdb_prompt $" { fail "list list0.c:unused" }
+	timeout { fail "list list0.c:unused (timeout)" }
+    }
+    clear_xfail "rs6000-*-aix*"
+
+    # gcc appears to generate incorrect debugging information for code
+    # in include files, which breaks this test.
+    # Ultrix gdb is the second case, one line different but still correct.
+    # SunPRO cc is the third case.
+    setup_xfail "rs6000-*-*" 1804
+    setup_xfail_format "COFF"
+    send_gdb "list list0.h:foo\n"
+    gdb_expect {
+	-re "2\[ \t\]+including file.  This.*11\[ \t\]+bar \[(\]+.*\[)\]+;\r\n$gdb_prompt $" {
+	    incr testcnt
+	}
+	-re "1\[ \t\]+/. An include file.*10\[ \t\]+bar \[(\]+.*\[)\]+;\r\n$gdb_prompt $" {
+	    incr testcnt
+	}
+	-re "3\[ \t\]+.*12\[ \t\]+bar \[(\]+.*\[)\]+;\r\n$gdb_prompt $" {
+	    incr testcnt
+	}
+	-re "No source file named list0.h.\r\n$gdb_prompt $" {
+	    fail "list list0.h:foo"
+	}
+	-re ".*$gdb_prompt $" { fail "list list0.h:foo" }
+	timeout { fail "list list0.h:foo (timeout)" }
+    }
+
+    # Ultrix gdb is the second case.
+    send_gdb "list list1.c:bar\n"
+    gdb_expect {
+	-re "4\[ \t\]+void.*13\[ \t\]+\}\r\n$gdb_prompt $" {
+	    incr testcnt
+	}
+	-re "4\[ \t\]+void.*12\[ \t\]*long_line ..;\r\n$gdb_prompt $" {
+	    incr testcnt
+	}
+	-re "4\[ \t\]+void.*11\[ \t\]*\r\n$gdb_prompt $" {
+	    incr testcnt
+	}
+	-re ".*$gdb_prompt $" { fail "list list1.c:bar" }
+	timeout { fail "list list1.c:bar (timeout)" }
+    }
+
+    # Not sure what the point of having this function be unused is.
+    # AIX is legitimately removing it.
+    setup_xfail "rs6000-*-aix*"
+    send_gdb "list list1.c:unused\n"
+    gdb_expect {
+	-re "12\[ \t\]+long_line \[(\]\[)\];.*13\[ \t\]+\}\r\n.*$gdb_prompt $" {
+	    incr testcnt
+	}
+	-re "14.*19\[ \t\]+\}\r\n.*$gdb_prompt $" {
+	    incr testcnt
+	}
+	-re ".*$gdb_prompt $" { fail "list list1.c:unused" }
+	timeout { fail "list list1.c:unused (timeout)" }
+    }
+    clear_xfail "rs6000-*-aix*"
+
+    pass "list filename:function ($testcnt tests)"
+
+    # Test some invalid specs
+    # The following test takes the FIXME result on most systems using
+    # DWARF.  It fails to notice that main() is not in the file requested.
+   
+    setup_xfail "*-*-*"
+
+# Does this actually work ANYWHERE?  I believe not, as this is an `aspect' of
+# lookup_symbol(), where, when it is given a specific symtab which does not
+# contain the requested symbol, it will subsequently search all of the symtabs
+# for the requested symbol.
+
+    gdb_test "list list0.c:foo" "Function \"foo\" not defined in .*list0.c" "list filename:function; wrong filename rejected"
+
+    gdb_test "list foobar.c:main" "No source file named foobar.c.|Location not found" "list filename:function; nonexistant file"
+
+    gdb_test "list list0.h:foobar" "Function \"foobar\" not defined.|Location not found" "list filename:function; nonexistant function"
+
+}
+
+proc test_forward_search {} {
+	global timeout
+
+	gdb_test "set listsize 4" ""
+	# On SunOS4, this gives us lines 19-22.  On AIX, it gives us
+	# lines 20-23.  This depends on whether the line number of a function
+	# is considered to be the openbrace or the first statement--either one
+	# is acceptable.
+	gdb_test "list long_line" "24\[ \t\]+long_line .*"
+
+	gdb_test "search 4321" " not found"
+
+	gdb_test "search 6789" "28\[ \t\]+oof .6789.;"
+
+	# Test that GDB won't crash if the line being searched is extremely long.
+
+	set oldtimeout $timeout
+	set timeout [expr "$timeout + 300"]
+	verbose "Timeout is now $timeout seconds" 2
+	gdb_test "search 1234" ".*1234.*" "search extremely long line (> 5000 chars)"
+	set timeout $oldtimeout
+	verbose "Timeout is now $timeout seconds" 2
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if [target_info exists gdb_stub] {
+    gdb_step_for_stub;
+}
+
+gdb_test "set width 0" "" "set width 0"
+
+test_listsize
+get_debug_format
+if [ set_listsize 10 ] then {
+    test_list_include_file
+    test_list_filename_and_number
+    test_list_function
+    test_list_forward
+    test_list_backwards
+    test_repeat_list_command
+    test_list_range
+    test_list_filename_and_function
+    test_forward_search
+}
+
+remote_exec build "rm -f list0.h"

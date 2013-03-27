@@ -1,0 +1,16 @@
+# frv testcase for movgf $GRj,$FRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global movgf
+movgf:
+	set_gr_limmed	0xdead,0xbeef,gr8
+	set_fr_iimmed	0,0,fr8
+	movgf gr8,fr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_fr_limmed	0xdead,0xbeef,fr8
+
+	pass

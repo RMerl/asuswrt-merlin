@@ -127,15 +127,20 @@ void led_control_normal(void)
 	// in case LED_WPS != LED_POWER
 	led_control(LED_POWER, LED_ON);
 }
- 
+
+extern int restore_defaults_g;
+
 void btn_check(void)
 {
 #ifdef BTN_SETUP
 	if (btn_pressed_setup == BTNSETUP_NONE)
 	{
 #endif
-
+#ifndef RTCONFIG_N56U_SR2
 	if (button_pressed(BTN_RESET))
+#else
+	if (0)
+#endif
 	{
 		TRACE_PT("button RESET pressed\n");
 
@@ -278,11 +283,19 @@ void btn_check(void)
 	}
 
 	if (btn_pressed != 0) return;
-
+#ifdef CONFIG_BCMWL5
+	// wait until wl is ready
+	if (restore_defaults_g) return;
+#endif
 	// Added WPS button radio toggle option
+#if defined(RTCONFIG_WIFI_TOG_BTN)
+	if (button_pressed(BTN_WIFI_TOG))
+#else
 	if (button_pressed(BTN_WPS) && nvram_match("btn_ez_radiotoggle", "1") 
 		&& (nvram_get_int("sw_mode") != SW_MODE_REPEATER)) // repeater mode not support HW radio
+#endif
 	{
+		TRACE_PT("button WIFI_TOG pressed\n");
 		if (btn_pressed_toggle_radio == 0){
 			eval("radio","toggle");
 			btn_pressed_toggle_radio = 1;
@@ -295,7 +308,10 @@ void btn_check(void)
 
 	if (btn_pressed_setup < BTNSETUP_START)
 	{
-		if (!no_need_to_start_wps() && nvram_match("btn_ez_radiotoggle", "0") &&
+		if (!no_need_to_start_wps() && 
+#if ! defined(RTCONFIG_WIFI_TOG_BTN)
+nvram_match("btn_ez_radiotoggle", "0") &&
+#endif
 			!nvram_match("wps_ign_btn", "1") && button_pressed(BTN_WPS))
 		{
 			TRACE_PT("button WPS pressed\n");
@@ -525,7 +541,7 @@ void timecheck(void)
 {
 	int activeNow;
 	char *svcDate, *svcTime, *svcTime2;
-	char prefix[]="wlXXXXXX_", tmp[100];
+	char prefix[]="wlXXXXXX_", tmp[100], tmp2[100];
 	char word[256], *next;
 	int unit, item;
 	char *lan_ifname;
@@ -554,8 +570,9 @@ void timecheck(void)
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
-		//dbG("[watchdog] timecheck unit=%s radio=%s\n", prefix, nvram_safe_get(strcat_r(prefix, "radio", tmp))); // radio toggle test
-		if (nvram_match(strcat_r(prefix, "radio", tmp), "0")){
+		//dbG("[watchdog] timecheck unit=%s radio=%s, timesched=%s\n", prefix, nvram_safe_get(strcat_r(prefix, "radio", tmp)), nvram_safe_get(strcat_r(prefix, "timesched", tmp2))); // radio toggle test
+		if (nvram_match(strcat_r(prefix, "radio", tmp), "0") || 
+			nvram_match(strcat_r(prefix, "timesched", tmp2), "0")){
 			item++;
 			unit++;
 			continue;
@@ -651,6 +668,9 @@ cpu_usage_monitor()
 }
 #endif
 
+#ifdef RTCONFIG_RALINK
+int need_restart_wsc = 0;
+#endif
 static void catch_sig(int sig)
 {
 	if (sig == SIGUSR1)
@@ -690,7 +710,9 @@ static void catch_sig(int sig)
 	else if (sig == SIGTTIN)
 	{
 		wsc_user_commit();
+		need_restart_wsc = 1;
 	}
+#if 0
 	else if (sig == SIGHUP)
 	{
 		int model = get_model();
@@ -703,6 +725,7 @@ static void catch_sig(int sig)
 			break;
 		}
 	}
+#endif
 #endif
 }
 
@@ -812,7 +835,102 @@ void led_check(void)
 //	WAN_STATE_CONNECTED means internet connected
 //	else means internet disconnted
 
+/* Paul add 2012/10/25 */
+#ifdef RTCONFIG_DSL
+#ifndef RTCONFIG_DUALWAN
+if (nvram_match("dsltmp_adslsyncsts","up") && nvram_match("wan0_state_t","2"))
+	led_DSLWAN();
+#endif
+#endif
 }
+
+/* Paul add 2012/10/25 */
+#ifdef RTCONFIG_DSL
+#ifndef RTCONFIG_DUALWAN
+unsigned long get_dslwan_count()
+{
+	FILE *f;
+	char buf[256];
+	char *ifname, *p;
+	unsigned long counter1, counter2;
+
+	if((f = fopen("/proc/net/dev", "r"))==NULL) return -1;
+
+	fgets(buf, sizeof(buf), f);
+	fgets(buf, sizeof(buf), f);
+
+	counter1=counter2=0;
+
+	while (fgets(buf, sizeof(buf), f)) {
+		if((p=strchr(buf, ':'))==NULL) continue;
+		*p = 0;
+		if((ifname = strrchr(buf, ' '))==NULL) ifname = buf;
+		else ++ifname;
+
+		if (nvram_match("dsl0_proto","pppoe") || nvram_match("dsl0_proto","pppoa"))
+		{
+			if(strcmp(ifname, "ppp0")) continue;
+		}
+		else //Mer, IPoA
+		{
+			if(strcmp(ifname, "eth2.1.1")) continue;
+		}
+
+		if(sscanf(p+1, "%lu%*u%*u%*u%*u%*u%*u%*u%*u%lu", &counter1, &counter2)!=2) continue; 
+	}
+	fclose(f);
+
+	return counter1;
+}
+
+void led_DSLWAN(void)
+{
+	static unsigned int blink_dslwan_check = 0;
+	static unsigned int blink_dslwan = 0;	
+	static unsigned int data_dslwan = 0;
+	unsigned long count_dslwan;	
+	int i;
+	static int j;
+	static int status = -1;
+	static int status_old;
+
+	// check data per 10 count
+	if((blink_dslwan_check%10)==0) {
+		count_dslwan = get_dslwan_count();
+		if(count_dslwan && data_dslwan!=count_dslwan) {
+			blink_dslwan = 1;
+			data_dslwan = count_dslwan;
+}
+		else blink_dslwan = 0;
+		led_control(LED_WAN, LED_ON);
+	}
+
+	if(blink_dslwan) {
+		j = rand_seed_by_time() % 3;
+		for(i=0;i<10;i++) {
+			usleep(33*1000);
+
+			status_old = status;
+			if (((i%2)==0) && (i > (3 + 2*j)))
+				status = 0;
+			else
+				status = 1;
+
+			if (status != status_old)
+			{
+				if (status)
+					led_control(LED_WAN, LED_ON);
+				else
+					led_control(LED_WAN, LED_OFF);
+			}
+		}
+		led_control(LED_WAN, LED_ON);
+	}
+ 
+	blink_dslwan_check++;
+}
+#endif
+#endif
 
 #ifdef RTCONFIG_SWMODE_SWITCH
 // copied from 2.x code
@@ -866,18 +984,22 @@ void ddns_check(void)
 		if (pids("ez-ipupdate")) //ez-ipupdate is running!
 			return;
 
+		if( nvram_match("ddns_updated", "1") ) //already updated success
+			return;
+
 		if( nvram_match("ddns_server_x", "WWW.ASUS.COM") ){
-			if((strcmp(nvram_safe_get("ddns_return_code_chk"),"Time-out") != 0) &&
-		     	   (strcmp(nvram_safe_get("ddns_return_code_chk"),"connect_fail") != 0) ) {
+			if( !(  !strcmp(nvram_safe_get("ddns_return_code_chk"),"Time-out") ||
+		     	   	!strcmp(nvram_safe_get("ddns_return_code_chk"),"connect_fail") ||
+				strstr(nvram_safe_get("ddns_return_code_chk"), "-1") ) ) 
 				return;
-			}
 		}
 		else{ //non asusddns service
-			 if( nvram_match("ddns_updated", "1") )
+			 if( !strcmp(nvram_safe_get("ddns_return_code_chk"),"auth_fail") )
 				return;
 		}
-		logmessage("watchdog", "start ddns.");
+		nvram_set("ddns_update_by_wdog", "1");
 		unlink("/tmp/ddns.cache");
+		logmessage("watchdog", "start ddns.");
 		notify_rc("start_ddns");
 	}
 	return;
@@ -898,6 +1020,20 @@ void watchdog(int sig)
 	if(nvram_match("asus_mfg", "0"))
 		led_check();
 
+#ifdef RTCONFIG_RALINK
+	if(need_restart_wsc)
+	{
+		char word[256], *next;
+		foreach (word, nvram_safe_get("wl_ifnames"), next) {
+			eval("iwpriv", word, "set", "WscConfMode=0");
+		}
+		stop_wpsfix();
+
+		need_restart_wsc = 0;
+		start_wsc_pin_enrollee();
+		start_wpsfix();
+	}
+#endif
 #ifdef RTCONFIG_SWMODE_SWITCH
  	swmode_check();
 #endif
@@ -953,6 +1089,7 @@ watchdog_main(int argc, char *argv[])
 	signal(SIGALRM, watchdog);
 #ifdef RTCONFIG_RALINK
 	signal(SIGTTIN, catch_sig);
+#if 0
 	int model = get_model();
 	switch (model) {
 	case MODEL_RTN56U:
@@ -962,6 +1099,7 @@ watchdog_main(int argc, char *argv[])
 	signal(SIGHUP, catch_sig);
 	break;
 	}
+#endif
 #endif
 
 #ifdef RTCONFIG_DSL //Paul add 2012/6/27

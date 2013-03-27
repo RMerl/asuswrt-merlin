@@ -1,7 +1,7 @@
 /*
  * Wireless interface translation utility functions
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: wlif_utils.c 300516 2011-12-04 17:39:44Z $
+ * $Id: wlif_utils.c 349051 2012-08-06 22:19:21Z $
  */
 
 #include <typedefs.h>
@@ -239,7 +239,7 @@ get_wlname_by_mac(unsigned char *mac, char *wlname)
 
 	ether_etoa(mac, eabuf);
 	/* find out the wl name from mac */
-	for (i = 0; i < WLIFU_MAX_NO_BRIDGE; i++) {
+	for (i = 0; i < MAX_NVPARSE; i++) {
 		sprintf(wlname, "wl%d", i);
 		sprintf(tmptr, "wl%d_hwaddr", i);
 		wl_hw = nvram_get(tmptr);
@@ -351,7 +351,7 @@ get_ifname_by_wlmac(unsigned char *mac, char *name)
  *	wl_wds<N>=mac,role,crypto,auth,ssid,passphrase
  */
 bool
-get_wds_wsec(int unit, int which, unsigned char *mac, char *role,
+get_wds_wsec(int unit, int which, char *mac, char *role,
              char *crypto, char *auth, ...)
 {
 	char name[] = "wlXXXXXXX_wdsXXXXXXX", value[1000], *next;
@@ -361,7 +361,7 @@ get_wds_wsec(int unit, int which, unsigned char *mac, char *role,
 	next = value;
 
 	/* separate mac */
-	strcpy((char *)mac, strsep(&next, ","));
+	strcpy(mac, strsep(&next, ","));
 	if (!next)
 		return FALSE;
 
@@ -404,7 +404,7 @@ fail:
 }
 
 bool
-set_wds_wsec(int unit, int which, unsigned char *mac, char *role,
+set_wds_wsec(int unit, int which, char *mac, char *role,
              char *crypto, char *auth, ...)
 {
 	char name[] = "wlXXXXXXX_wdsXXXXXXX", value[10000];
@@ -449,9 +449,9 @@ del_wds_wsec(int unit, int which)
 
 /* Get wireless security setting by interface name */
 int
-get_wsec(wsec_info_t *info, char *mac, char *osifname)
+get_wsec(wsec_info_t *info, unsigned char *mac, char *osifname)
 {
-	int i, unit, wds = 0, wds_wsec = 0;
+	int i, unit, wds = 0, wds_wsec = 0, dwds = 0;
 	char nv_name[16], os_name[16], wl_prefix[16], comb[32], key[8];
 	char wds_role[8], wds_ssid[48], wds_psk[80], wds_akms[16], wds_crypto[16],
 	        remote[ETHER_ADDR_LEN];
@@ -488,6 +488,11 @@ get_wsec(wsec_info_t *info, char *mac, char *osifname)
 	strcat(wl_prefix, "_");
 	memset(info, 0, sizeof(wsec_info_t));
 
+	/* if dwds is enabled then dont configure the wds interface */
+	dwds = atoi(nvram_safe_get(strcat_r(wl_prefix, "dwds", comb)));
+	if (dwds)
+		wds = 0;
+
 	/* get wds setting */
 	if (wds) {
 		/* remote address */
@@ -503,7 +508,7 @@ get_wsec(wsec_info_t *info, char *mac, char *osifname)
 			if (get_wds_wsec(unit, i, macaddr, wds_role, wds_crypto, wds_akms, wds_ssid,
 			                 wds_psk) &&
 			    ((ether_atoe(macaddr, ea) && !bcmp(ea, remote, ETHER_ADDR_LEN)) ||
-			     (!strcmp(mac, "*")))) {
+			     ((mac[0] == '*') && (mac[1] == '\0')))) {
 			     /* found wds settings */
 			     wds_wsec = 1;
 			     break;
@@ -587,7 +592,8 @@ get_wsec(wsec_info_t *info, char *mac, char *osifname)
 	}
 	/* overwrite flags */
 	if (wds) {
-		unsigned char buf[32], *ptr, lrole;
+		char buf[32];
+		unsigned char *ptr, lrole;
 
 		/* did not find WDS link configuration, use wireless' */
 		if (!wds_wsec)
@@ -602,7 +608,7 @@ get_wsec(wsec_info_t *info, char *mac, char *osifname)
 			lrole = WL_WDS_WPA_ROLE_AUTO;
 
 		strcpy(buf, "wds_wpa_role");
-		ptr = buf + strlen(buf) + 1;
+		ptr = (unsigned char *)buf + strlen(buf) + 1;
 		bcopy(info->remote, ptr, ETHER_ADDR_LEN);
 		ptr[ETHER_ADDR_LEN] = lrole;
 		if (wl_ioctl(os_name, WLC_SET_VAR, buf, sizeof(buf)))

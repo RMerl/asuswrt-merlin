@@ -1,0 +1,40 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>How to use neon from your application</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="intro.html" title="Chapter 1. Introduction"><link rel="prev" href="features.html" title="Feature list"><link rel="next" href="compliance.html" title="Standards compliance"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">How to use neon from your application</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="features.html">Prev</a> </td><th width="60%" align="center">Chapter 1. Introduction</th><td width="20%" align="right"> <a accesskey="n" href="compliance.html">Next</a></td></tr></table><hr></div><div class="sect1" title="How to use neon from your application"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="using"></a>How to use neon from your application</h2></div></div></div><p>This section describes how to add neon support to an
+      application.  If you just want to quickly try out neon, use
+      the <a class="xref" href="refconfig.html" title="neon-config"><span class="refentrytitle">neon-config</span></a> script.</p><p>The neon source code is designed to be easily embedded
+      into an application source tree.  neon has no dependencies on
+      libraries other than an SSL toolkit and XML parser, though the
+      source tree can be configured to have no support for SSL or XML
+      if desired.  To configure the neon source code some <a class="ulink" href="http://www.gnu.org/software/autoconf/" target="_top">GNU autoconf</a>
+      macros are supplied, which can be used in a number of ways, as
+      follows:</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>autoconf macros are distributed in the 'macros'
+	  subdirectory of the neon distribution.  Use the NEON_LIBRARY
+	  macro from your configure.in to check for the presence of
+	  the neon library installed on the system.  The macro adds an
+	  '--with-neon=...'  argument to configure, which allows the
+	  user to specify a location for the library (the standard
+	  /usr and /usr/local directories are checked automatically
+	  without having to be specified).</p></li><li class="listitem"><p>The 'src' directory of the neon package can be
+	  imported directly into your application, if you do not wish
+	  to add an external dependency.  If you wish to bundle, use
+	  the NEON_BUNDLED macro to configure neon in your application:
+	  here, the neon sources are bundled in a directory called
+	  'libneon':</p><pre class="programlisting">NEON_BUNDLED(libneon, ...)</pre><p>If your application supports builds where srcdir != builddir,
+	  you should use the NEON_VPATH_BUNDLED macro like this:</p><pre class="programlisting">NEON_VPATH_BUNDLED(${srcdir}/libneon, libneon, ...)</pre><p>If you use this macro, a '--with-included-neon' option
+	  will be added to the generated configure script.  This
+	  allows the user to force the bundled neon to be used in the
+	  application, rather than any neon library found on the
+	  system. If you allow neon to be configured this way, you
+	  must also configure an XML parser. Use the NEON_XML_PARSER
+	  macro to do this.</p></li><li class="listitem"><p>The final argument to the _BUNDLED macros is a
+	  set of actions which are executed if the bundled build *is*
+	  chosen (rather than an external neon which might have been
+	  found on the user's system).  In here, use either the
+	  NEON_LIBTOOL_BUILD or NEON_NORMAL_BUILD macro to set up the
+	  neon Makefile appropriately: including adding the neon source
+	  directory to the recursive make.</p></li></ul></div><p>A full fragment might be:</p><pre class="programlisting">NEON_BUNDLED(libneon, [
+  NEON_NORMAL_BUILD
+  NEON_XML_PARSER
+  SUBDIRS="libneon $SUBDIRS"
+])</pre><p>This means the bundled neon source directory (called 'libneon')
+	is used if no neon is found on the system, and the standard XML
+	parser search is used.</p></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="features.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="intro.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="compliance.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Feature list </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Standards compliance</td></tr></table></div></body></html>

@@ -57,9 +57,6 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/wcdma_list.js"></script>
-<script type="text/javascript" src="/cdma2000_list.js"></script>
-<script type="text/javascript" src="/td-scdma_list.js"></script>
-<script type="text/javascript" src="/wimax_list.js"></script>
 <script type="text/javaScript" src="/jquery.js"></script>
 <script>
 
@@ -135,9 +132,6 @@ function initial(){
 			}
 		}
   }
-
-	
-	
 	check_dongle_status();	
 }
 

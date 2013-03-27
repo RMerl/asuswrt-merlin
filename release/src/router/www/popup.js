@@ -49,6 +49,8 @@ function LoadingProgress(seconds){
 		if(seconds != 0){
 			$("proceeding_img").style.width = Math.round(y) + "%";
 			$("proceeding_img_text").innerHTML = Math.round(y) + "%";
+			if($("loading_block1"))
+				$("proceeding_img_text").style.width = document.getElementById("loading_block1").clientWidth;
 			--seconds;
 			setTimeout("LoadingProgress("+seconds+");", 1000);
 		}
@@ -165,7 +167,8 @@ function showLoadingBar(seconds){
 	blockmarginTop= winHeight*0.3			
 	
 	$("loadingBarBlock").style.marginTop = blockmarginTop+"px";
-	$("loadingBarBlock").style.marginLeft = blockmarginLeft+"px";
+	// marked by Jerry 2012.11.14 using CSS to decide the margin
+	//$("loadingBarBlock").style.marginLeft = blockmarginLeft+"px";
 
 	
 	/*blockmarginTop = document.documentElement.scrollTop + 200;

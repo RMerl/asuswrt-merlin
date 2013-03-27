@@ -29,11 +29,12 @@
 #include <disk_share.h>
 #include <disk_initial.h>
 
-#include <linux/version.h>
-
 #include <bin_sem_asus.h>
 
 char *usb_dev_file = "/proc/bus/usb/devices";
+
+#define ERR_DISK_FS_RDONLY "1"
+#define ERR_DISK_SCSI_KILL "10"
 
 #define USB_CLS_PER_INTERFACE	0	/* for DeviceClass */
 #define USB_CLS_AUDIO		1
@@ -82,6 +83,9 @@ void tune_bdflush(void)
 #endif // LINUX26
 
 #define USBCORE_MOD	"usbcore"
+#ifdef RTCONFIG_USB_XHCI
+#define USB30_MOD	"xhci-hcd"
+#endif
 #define USB20_MOD	"ehci-hcd"
 #define USBSTORAGE_MOD	"usb-storage"
 #define SCSI_MOD	"scsi_mod"
@@ -193,7 +197,7 @@ test_user(char *target, char *pattern)
 	strcpy(s, target);
 	strcpy(p, pattern);
 	start = s;
-	while (pp=strchr(start, ';'))
+	while ((pp=strchr(start, ';')) != NULL)
 	{
 		*pp='\0';
 		if (! strcmp(start, p))
@@ -243,7 +247,7 @@ void start_usb(void)
 		modprobe(USBCORE_MOD);
 
 		/* mount usb device filesystem */
-        	mount(USBFS, "/proc/bus/usb", USBFS, MS_MGC_VAL, NULL);
+		mount(USBFS, "/proc/bus/usb", USBFS, MS_MGC_VAL, NULL);
 
 #ifdef LINUX26
 		if ((i = nvram_get_int("led_usb_gpio")) != 255) {
@@ -286,6 +290,12 @@ void start_usb(void)
 				modprobe("/usr/lib/ufsd.ko");
 #endif
 #endif
+		}
+#endif
+
+#ifdef RTCONFIG_USB_XHCI
+		if (nvram_get_int("usb_usb3") == 1) {
+			modprobe(USB30_MOD);
 		}
 #endif
 
@@ -353,7 +363,7 @@ void stop_usb(void)
 
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 #if defined(RTCONFIG_APP_PREINSTALLED) && defined(RTCONFIG_CLOUDSYNC)
-	if(pids("inotify") || pids("asuswebstorage")){
+	if(pids("inotify") || pids("asuswebstorage") || pids("webdav_client")){
 		_dprintf("%s: stop_cloudsync.\n", __FUNCTION__);
 		stop_cloudsync();
 	}
@@ -418,6 +428,9 @@ void stop_usb(void)
 	if (disabled || nvram_get_int("usb_ohci") != 1) modprobe_r(USBOHCI_MOD);
 	if (disabled || nvram_get_int("usb_uhci") != 1) modprobe_r(USBUHCI_MOD);
 	if (disabled || nvram_get_int("usb_usb2") != 1) modprobe_r(USB20_MOD);
+#ifdef RTCONFIG_USB_XHCI
+	if (disabled || nvram_get_int("usb_usb3") != 1) modprobe_r(USB30_MOD);
+#endif
 
 #ifdef LINUX26
 	modprobe_r("leds-usb");
@@ -430,13 +443,16 @@ void stop_usb(void)
 		modprobe_r(USBOHCI_MOD);
 		modprobe_r(USBUHCI_MOD);
 		modprobe_r(USB20_MOD);
+#ifdef RTCONFIG_USB_XHCI
+		modprobe_r(USB30_MOD);
+#endif
 		modprobe_r(USBCORE_MOD);
 	}
 }
 
 
 #ifdef RTCONFIG_USB_PRINTER
-void start_usblpsrv()
+void start_usblpsrv(void)
 {
 	nvram_set("u2ec_device", "");
 	nvram_set("u2ec_busyip", "");
@@ -490,6 +506,7 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 				sprintf(options + strlen(options), ",iocharset=%s%s", 
 					isdigit(nvram_get("smbd_cset")[0]) ? "cp" : "",
 						nvram_get("smbd_cset"));
+
 			if (nvram_invmatch("smbd_cpage", "")) {
 				char *cp = nvram_safe_get("smbd_cpage");
 				sprintf(options + strlen(options), ",codepage=%s" + (options[0] ? 0 : 1), cp);
@@ -503,6 +520,7 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 				modprobe(flagfn);
 				nvram_set("smbd_nlsmod", flagfn);
 			}
+
 			sprintf(options + strlen(options), ",shortname=winnt" + (options[0] ? 0 : 1));
 #ifdef LINUX26
 			sprintf(options + strlen(options), ",flush" + (options[0] ? 0 : 1));
@@ -518,6 +536,20 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 				sprintf(options + strlen(options), "%siocharset=%s%s", options[0] ? "," : "",
 					isdigit(nvram_get("smbd_cset")[0]) ? "cp" : "",
 						nvram_get("smbd_cset"));
+
+			if (nvram_invmatch("smbd_cpage", "")) {
+				char *cp = nvram_safe_get("smbd_cpage");
+				sprintf(options + strlen(options), ",codepage=%s" + (options[0] ? 0 : 1), cp);
+				sprintf(flagfn, "nls_cp%s", cp);
+				TRACE_PT("USB %s(%s) is setting the code page to %s!\n", mnt_dev, type, flagfn);
+			
+				cp = nvram_get("smbd_nlsmod");
+				if ((cp) && (*cp != 0) && (strcmp(cp, flagfn) != 0))
+				modprobe_r(cp);
+			
+				modprobe(flagfn);
+				nvram_set("smbd_nlsmod", flagfn);
+			}
 
 			if (nvram_invmatch("usb_ntfs_opt", ""))
 				sprintf(options + strlen(options), "%s%s", options[0] ? "," : "", nvram_safe_get("usb_ntfs_opt"));
@@ -543,14 +575,14 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 				sprintf(options + strlen(options), ",noatime,nodev" + (options[0] ? 0 : 1));
 
 				if (nvram_get_int("usb_fs_ntfs")) {
-					if(!nvram_get_int("usb_fs_ntfs3g")){
-						if(nvram_get_int("usb_fs_ntfs_sparse"))
-							ret = eval("mount", "-t", "ufsd", "-o", options, "-o", "force", "-o", "sparse", mnt_dev, mnt_dir);
-						else
-							ret = eval("mount", "-t", "ufsd", "-o", options, "-o", "force", mnt_dev, mnt_dir);
-					}
-					else 
-						ret = eval("ntfs-3g", "-o", options, mnt_dev, mnt_dir);
+#ifdef RTCONFIG_NTFS3G
+					ret = eval("ntfs-3g", "-o", options, mnt_dev, mnt_dir);
+#else
+					if(nvram_get_int("usb_fs_ntfs_sparse"))
+						ret = eval("mount", "-t", "ufsd", "-o", options, "-o", "force", "-o", "sparse", mnt_dev, mnt_dir);
+					else
+						ret = eval("mount", "-t", "ufsd", "-o", options, "-o", "force", mnt_dev, mnt_dir);
+#endif
 				}
 			}
 #endif
@@ -712,26 +744,29 @@ int umount_mountpoint(struct mntent *mnt, uint flags)
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 #if defined(RTCONFIG_APP_PREINSTALLED) && defined(RTCONFIG_CLOUDSYNC)
 	char word[PATH_MAX], *next_word;
-	char *cloud_setting;
+	char *cloud_setting, *b, *nvp, *nv;
 	char sync_dir[PATH_MAX];
 
 	cloud_setting = nvram_safe_get("cloud_sync");
-
-	count = 0;
-	foreach_62(word, cloud_setting, next_word){
-		switch(count){
-			case 5: // dir
-				memset(sync_dir, 0, PATH_MAX);
-				strncpy(sync_dir, word, PATH_MAX);
-				break;
+	nv = nvp = strdup(nvram_safe_get("cloud_sync"));
+	if(nv){
+		while((b = strsep(&nvp, "<")) != NULL){
+			count = 0;
+			foreach_62(word, b, next_word){
+				switch(count){
+					case 5: // dir
+						memset(sync_dir, 0, PATH_MAX);
+						strncpy(sync_dir, word, PATH_MAX);
+						break;
+				}			
+				++count;
+			}
 		}
-
-		++count;
+		free(nv);
 	}
 _dprintf("cloudsync: dir=%s.\n", sync_dir);
 
 	char mounted_path[PATH_MAX], *ptr, *other_path;
-
 	ptr = sync_dir+strlen(POOL_MOUNT_ROOT)+1;
 _dprintf("cloudsync: ptr=%s.\n", ptr);
 	if((other_path = strchr(ptr, '/')) != NULL){
@@ -747,13 +782,15 @@ _dprintf("cloudsync: other_path=%s.\n", other_path);
 _dprintf("cloudsync: mounted_path=%s.\n", mounted_path);
 
 	if(!strcmp(mounted_path, mnt->mnt_dir)){
-		_dprintf("%s: stop_cloudsync.\n", __FUNCTION__);
+_dprintf("%s: stop_cloudsync.\n", __FUNCTION__);
 		stop_cloudsync();
 	}
 #endif
 
 	if(nvram_match("apps_mounted_path", mnt->mnt_dir))
 		stop_app();
+
+	usb_notify();
 #endif
 
 	run_custom_script_blocking("unmount", mnt->mnt_dir);
@@ -775,8 +812,10 @@ _dprintf("cloudsync: mounted_path=%s.\n", mounted_path);
 		sleep(1);
 	}
 
-	if (ret == 0)
+	if (ret == 0) {
+		_dprintf("USB partition unmounted from %s\n", mnt->mnt_dir);
 		syslog(LOG_INFO, "USB partition unmounted from %s", mnt->mnt_dir);
+	}
 
 	if (ret && ((flags & EFH_SHUTDN) != 0)) {
 		/* If system is stopping (not restarting), and we couldn't unmount the
@@ -796,6 +835,7 @@ _dprintf("cloudsync: mounted_path=%s.\n", mounted_path);
 		 * busy when they move away from it. And then it disappears for real.
 		 */
 		ret = umount2(mnt->mnt_dir, MNT_DETACH);
+		_dprintf("USB partition busy - will unmount ASAP from %s\n", mnt->mnt_dir);
 		syslog(LOG_INFO, "USB partition busy - will unmount ASAP from %s", mnt->mnt_dir);
 	}
 
@@ -810,7 +850,6 @@ _dprintf("cloudsync: mounted_path=%s.\n", mounted_path);
 	if(nvram_match("apps_mounted_path", mnt->mnt_dir)){
 		nvram_set("apps_dev", "");
 		nvram_set("apps_mounted_path", "");
-		nvram_set("apps_pool_error", "");
 	}
 #endif
 
@@ -895,27 +934,26 @@ done:
 		chmod(mountpoint, 0777);
 
 #ifdef RTCONFIG_USB_MODEM
-		int i, max_ports, port_num = 0;
+		int got_port, port_num = 0;
 		char nvram_name[32];
 
 		ptr = dev_name+5;
 
-		max_ports = 0;
-		foreach(word, nvram_safe_get("ehci_ports"), next_word)
-			++max_ports;
-_dprintf("%s: max_ports=%d.\n", __FUNCTION__, max_ports);
-
-		for(i = 1; i <= max_ports; ++i){
+		got_port = 0;
+		port_num = 1;
+		foreach(word, nvram_safe_get("ehci_ports"), next_word){
 			memset(nvram_name, 0, 32);
-			sprintf(nvram_name, "usb_path%d_fs_path0", i);
+			sprintf(nvram_name, "usb_path%d_fs_path0", port_num);
 
 			if(!strcmp(ptr, nvram_safe_get(nvram_name))){
-				port_num = i;
+				got_port = 1;
 				break;
 			}
+
+			++port_num;
 		}
 
-		if(port_num){
+		if(got_port){
 			char vid[8], pid[8];
 
 			memset(nvram_name, 0, 32);
@@ -943,9 +981,9 @@ _dprintf("%s: max_ports=%d.\n", __FUNCTION__, max_ports);
 			char buff1[64], buff2[64];
 
 			memset(buff1, 0, 64);
-			sprintf(buff1, "%s/asusware/.asusrouter", mountpoint);
+			sprintf(buff1, "%s/%s/.asusrouter", mountpoint, nvram_safe_get("apps_install_folder"));
 			memset(buff2, 0, 64);
-			sprintf(buff2, "%s/asusware/.asusrouter.disabled", mountpoint);
+			sprintf(buff2, "%s/%s/.asusrouter.disabled", mountpoint, nvram_safe_get("apps_install_folder"));
 
 			if(check_if_file_exist(buff1) && !check_if_file_exist(buff2)){
 				// fsck the partition.
@@ -964,7 +1002,7 @@ _dprintf("%s: max_ports=%d.\n", __FUNCTION__, max_ports);
 				system("rm -rf /tmp/opt");
 
 				memset(command, 0, PATH_MAX);
-				sprintf(command, "ln -sf %s/asusware /tmp/opt", mountpoint);
+				sprintf(command, "ln -sf %s/%s /tmp/opt", mountpoint, nvram_safe_get("apps_install_folder"));
 				system(command);
 
 				memset(buff1, 0, 64);
@@ -975,14 +1013,16 @@ _dprintf("%s: max_ports=%d.\n", __FUNCTION__, max_ports);
 				putenv(buff2);
 				/* Run user *.asusrouter and post-mount scripts if any. */
 				memset(command, 0, PATH_MAX);
-				//sprintf(command, "%s/asusware", mountpoint);
+				//sprintf(command, "%s/%s", mountpoint, nvram_safe_get("apps_install_folder"));
 				//run_userfile(command, ".asusrouter", NULL, 3);
-				sprintf(command, "%s/asusware/.asusrouter", mountpoint);
+				sprintf(command, "%s/%s/.asusrouter", mountpoint, nvram_safe_get("apps_install_folder"));
 				system(command);
 				unsetenv("APPS_DEV");
 				unsetenv("APPS_MOUNTED_PATH");
 			}
 		}
+
+		usb_notify();
 #endif
 
 		// check the permission files.
@@ -996,7 +1036,7 @@ _dprintf("%s: max_ports=%d.\n", __FUNCTION__, max_ports);
 
 #if defined(RTCONFIG_APP_PREINSTALLED) && defined(RTCONFIG_CLOUDSYNC)
 		char word[PATH_MAX], *next_word;
-		char *cloud_setting;
+		char *cloud_setting, *b, *nvp, *nv;
 		int type = 0, rule = 0, enable = 0;
 		char username[64], password[64], url[PATH_MAX], sync_dir[PATH_MAX];
 		int count;
@@ -1007,135 +1047,108 @@ _dprintf("%s: max_ports=%d.\n", __FUNCTION__, max_ports);
 		if(!nvram_get_int("enable_cloudsync") || strlen(cloud_setting) <= 0)
 			return (ret == MOUNT_VAL_RONLY || ret == MOUNT_VAL_RW);
 
-		if(pids("inotify") || pids("asuswebstorage"))
+		if(pids("inotify") || pids("asuswebstorage") || pids("webdav_client"))
 			return (ret == MOUNT_VAL_RONLY || ret == MOUNT_VAL_RW);
 
-		count = 0;
-		foreach_62(word, cloud_setting, next_word){
-			switch(count){
-				case 0: // type
-					type = atoi(word);
-					break;
-				case 1: // username
-					memset(username, 0, 64);
-					strncpy(username, word, 64);
-					break;
-				case 2: // password
-					memset(password, 0, 64);
-					strncpy(password, word, 64);
-					break;
-				case 3: // url
-					memset(url, 0, PATH_MAX);
-					strncpy(url, word, PATH_MAX);
-					break;
-				case 4: // rule
-					rule = atoi(word);
-					break;
-				case 5: // dir
-					memset(sync_dir, 0, PATH_MAX);
-					strncpy(sync_dir, word, PATH_MAX);
-					break;
-				case 6: // enable
-					enable = atoi(word);
-					break;
-			}
-
-			++count;
-		}
+		nv = nvp = strdup(nvram_safe_get("cloud_sync"));
+		if(nv){
+			while((b = strsep(&nvp, "<")) != NULL){
+				count = 0;
+				foreach_62(word, b, next_word){
+					switch(count){
+						case 0: // type
+							type = atoi(word);
+							break;
+					}
+					++count;
+				}
+	
+				if(type == 1){
+						start_cloudsync();
+				}
+				else{
+					count = 0;
+					foreach_62(word, cloud_setting, next_word){
+						switch(count){
+							case 0: // type
+								type = atoi(word);
+								break;
+							case 1: // username
+								memset(username, 0, 64);
+								strncpy(username, word, 64);
+								break;
+							case 2: // password
+								memset(password, 0, 64);
+								strncpy(password, word, 64);
+								break;
+							case 3: // url
+								memset(url, 0, PATH_MAX);
+								strncpy(url, word, PATH_MAX);
+								break;
+							case 4: // rule
+								rule = atoi(word);
+								break;
+							case 5: // dir
+								memset(sync_dir, 0, PATH_MAX);
+								strncpy(sync_dir, word, PATH_MAX);
+								break;
+							case 6: // enable
+								enable = atoi(word);
+								break;
+						}
+			
+						++count;
+					}
 _dprintf("cloudsync: enable=%d, type=%d, user=%s, dir=%s.\n", enable, type, username, sync_dir);
-
-		if(!enable)
-			return (ret == MOUNT_VAL_RONLY || ret == MOUNT_VAL_RW);
-
-		memset(cloud_token, 0, PATH_MAX);
-		sprintf(cloud_token, "%s/.__cloudsync_%d_%s.txt", mountpoint, type, username);
+			
+					if(!enable)
+						return (ret == MOUNT_VAL_RONLY || ret == MOUNT_VAL_RW);
+			
+					memset(cloud_token, 0, PATH_MAX);
+					sprintf(cloud_token, "%s/.__cloudsync_%d_%s.txt", mountpoint, type, username);
 _dprintf("cloudsync: cloud_token=%s.\n", cloud_token);
-
-		if(check_if_file_exist(cloud_token)){
-			char mounted_path[PATH_MAX], *other_path;
-			char true_cloud_setting[PATH_MAX];
-
-			ptr = sync_dir+strlen(POOL_MOUNT_ROOT)+1;
-			if((other_path = strchr(ptr, '/')) != NULL){
-				ptr = other_path;
-				++other_path;
-			}
-			else
-				ptr = "";
+			
+					if(check_if_file_exist(cloud_token)){
+						char mounted_path[PATH_MAX], *other_path;
+						char true_cloud_setting[PATH_MAX];
+			
+						ptr = sync_dir+strlen(POOL_MOUNT_ROOT)+1;
+						if((other_path = strchr(ptr, '/')) != NULL){
+							ptr = other_path;
+							++other_path;
+						}
+						else
+							ptr = "";
 _dprintf("cloudsync: ptr=%s.\n", ptr);
 _dprintf("cloudsync: other_path=%s.\n", other_path);
-
-			memset(mounted_path, 0, PATH_MAX);
-			strncpy(mounted_path, sync_dir, (strlen(sync_dir)-strlen(ptr)));
+			
+						memset(mounted_path, 0, PATH_MAX);
+						strncpy(mounted_path, sync_dir, (strlen(sync_dir)-strlen(ptr)));
 _dprintf("cloudsync:   mountpoint=%s.\n", mountpoint);
 _dprintf("cloudsync: mounted_path=%s.\n", mounted_path);
-
-			if(strcmp(mounted_path, mountpoint)){
-				memset(true_cloud_setting, 0, PATH_MAX);
-				sprintf(true_cloud_setting, "%d>%s>%s>%s>%d>%s%s%s>%d", type, username, password, url, rule, mountpoint, (other_path != NULL)?"/":"", (other_path != NULL)?other_path:"", enable);
+			
+						if(strcmp(mounted_path, mountpoint)){
+							memset(true_cloud_setting, 0, PATH_MAX);
+							sprintf(true_cloud_setting, "%d>%s>%s>%s>%d>%s%s%s>%d", type, username, password, url, rule, mountpoint, (other_path != NULL)?"/":"", (other_path != NULL)?other_path:"", enable);
 _dprintf("cloudsync: true_cloud_setting=%s.\n", true_cloud_setting);
 _dprintf("cloudsync: set nvram....\n");
-				nvram_set("cloud_sync", true_cloud_setting);
+							nvram_set("cloud_sync", true_cloud_setting);
 _dprintf("cloudsync: wait a second...\n");
-				sleep(1); // wait the nvram be ready.
+							sleep(1); // wait the nvram be ready.
 _dprintf("cloudsync: finished.\n");
+						}
+			
+_dprintf("%s: start_cloudsync.\n", __FUNCTION__);
+						start_cloudsync();
+					}
+				}
 			}
-
-			_dprintf("%s: start_cloudsync.\n", __FUNCTION__);
-			start_cloudsync();
+			free(nv);
 		}
 #endif
 	}
 	return (ret == MOUNT_VAL_RONLY || ret == MOUNT_VAL_RW);
 }
-
-#if 0 /* LINUX26 */
-
-/* 
- * Finds SCSI Host number. Returns the host number >=0 if found, or (-1) otherwise.
- * The name and host number of scsi block device in kernel 2.6 (for attached devices) can be found as
- * 	/sys($DEVPATH)/host<host_no>/target<*>/<id>/block:[sda|sdb|...]
- * where $DEVPATH is passed to hotplug events, and looks like
- * 	/devices/pci0000:00/0000:00:04.1/usb1/1-1/1-1:1.2
- *
- * For printers this function finds a minor assigned to a printer
- *	/sys($DEVPATH)/usb:lp[0|1|2|...]
- */
-int find_dev_host(const char *devpath)
-{
-	DIR *usb_devpath;
-	struct dirent *dp;
-	char buf[256];
-	int host = -1;	/* Scsi Host */
-
-	sprintf(buf, "/sys%s", devpath);
-	if ((usb_devpath = opendir(buf))) {
-		while ((dp = readdir(usb_devpath))) {
-			errno = 0;
-			if (strncmp(dp->d_name, "host", 4) == 0) {
-				host = strtol(dp->d_name + 4, (char **)NULL, 10);
-				if (errno)
-					host = -1;
-				else
-					break;
-			}
-			else if (strncmp(dp->d_name, "usb:lp", 6) == 0) {
-				host = strtol(dp->d_name + 6, (char **)NULL, 10);
-				if (errno)
-					host = -1;
-				else
-					break;
-			}
-			else
-				continue;
-		}
-		closedir(usb_devpath);
-	}
-	return (host);
-}
-
-#endif	/* LINUX26 */
-
 
 /* Mount or unmount all partitions on this controller.
  * Parameter: action_add:
@@ -1276,7 +1289,8 @@ void hotplug_usb(void)
 	char *product = getenv("PRODUCT");
 #ifdef LINUX26
 	char *device = getenv("DEVICENAME");
-	int is_block = strcmp(getenv("SUBSYSTEM") ? : "", "block") == 0;
+	char *subsystem = getenv("SUBSYSTEM");
+	int is_block = strcmp(subsystem ? : "", "block") == 0;
 #else
 	char *device = getenv("DEVICE");
 #endif
@@ -1284,7 +1298,7 @@ void hotplug_usb(void)
 	char *usbport = getenv("USBPORT");
 
 	_dprintf("%s hotplug INTERFACE=%s ACTION=%s USBPORT=%s HOST=%s DEVICE=%s\n",
-		getenv("SUBSYSTEM") ? : "USB", interface, action, usbport, scsi_host, device);
+		subsystem ? : "USB", interface, action, usbport, scsi_host, device);
 
 	if (!nvram_get_int("usb_enable")) return;
 #ifdef LINUX26
@@ -1334,7 +1348,12 @@ void hotplug_usb(void)
 			host == -2 ? 0 : EFH_USER);
 	}
 #ifdef LINUX26
-	else if (is_block && strcmp(getenv("MAJOR") ? : "", "8") == 0 && strcmp(getenv("PHYSDEVBUS") ? : "", "scsi") == 0) {
+	else if (is_block && strcmp(getenv("MAJOR") ? : "", "8") == 0
+#ifndef LINUX30
+		&& strcmp(getenv("PHYSDEVBUS") ? : "", "scsi") == 0
+#endif
+		)
+	{
 		/* scsi partition */
 		char devname[64];
 		int lock;
@@ -1394,28 +1413,6 @@ void hotplug_usb(void)
 // !!TB - FTP Server
 
 #ifdef RTCONFIG_FTP
-static char *get_full_storage_path(char *val)
-{
-	static char buf[128];
-	int len;
-
-	if (val[0] == '/')
-		len = sprintf(buf, "%s", val);
-	else
-		len = sprintf(buf, "%s/%s", POOL_MOUNT_ROOT, val);
-
-	if (len > 1 && buf[len - 1] == '/')
-		buf[len - 1] = 0;
-
-	return buf;
-}
-
-static char *nvram_storage_path(char *var)
-{
-	char *val = nvram_safe_get(var);
-	return get_full_storage_path(val);
-}
-
 /* VSFTPD code mostly stolen from Oleg's ASUS Custom Firmware GPL sources */
 
 void write_ftpd_conf()
@@ -1445,15 +1442,13 @@ void write_ftpd_conf()
 	fprintf(fp, "xferlog_enable=NO\n");
 	fprintf(fp, "syslog_enable=NO\n");
 	fprintf(fp, "connect_from_port_20=YES\n");
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,0,0)
+#ifndef LINUX30
 	fprintf(fp, "use_sendfile=NO\n");
 #endif
-//	fprintf(fp, "listen=YES\n");
-	fprintf(fp, "listen%s=YES\n",
 #ifdef RTCONFIG_IPV6
-	ipv6_enabled() ? "_ipv6" : "");
+	fprintf(fp, "listen%s=YES\n", ipv6_enabled() ? "_ipv6" : "");
 #else
-	"");
+	fprintf(fp, "listen=YES\n");
 #endif
 	fprintf(fp, "pasv_enable=YES\n");
 	fprintf(fp, "ssl_enable=NO\n");
@@ -1499,7 +1494,7 @@ void write_ftpd_conf()
  */
 
 void
-start_ftpd()
+start_ftpd(void)
 {
 	if(getpid()!=1) {
 		notify_rc_after_wait("start_ftpd");
@@ -1537,7 +1532,7 @@ void stop_ftpd(void)
 // !!TB - Samba
 
 #ifdef RTCONFIG_SAMBASRV
-void create_custom_passwd()
+void create_custom_passwd(void)
 {
 	FILE *fp;
 	int result, n=0, i;
@@ -1729,11 +1724,7 @@ void start_dms(void)
 	FILE *f;
 	int port, pid;
 	char dbdir[100], *dmsdir;
-#if 0
 	char *argv[] = { MEDIA_SERVER_APP, "-f", "/etc/"MEDIA_SERVER_APP".conf", "-R", NULL };
-#else
-	char *argv[] = { MEDIA_SERVER_APP, "-f", "/etc/"MEDIA_SERVER_APP".conf", NULL };
-#endif
 	static int once = 1;
 	int i;
 	char serial[18];
@@ -1765,7 +1756,7 @@ void start_dms(void)
 			dmsdir = nvram_safe_get("dms_dir");
 			if(!check_if_dir_exist(dmsdir)) 
 				dmsdir = nvram_default_get("dms_dir");
-			
+
 			if(strcmp(dmsdir, nvram_default_get("dms_dir"))==0)
 				strcpy(dbdir, "/var/cache/minidlna");
 			else {
@@ -1799,7 +1790,7 @@ void start_dms(void)
 				"\n",
 				nvram_safe_get("lan_ifname"),
 				(port < 0) || (port >= 0xffff) ? 0 : port,
-				nvram_get("computer_name") && is_valid_hostname(nvram_get("computer_name")) ? nvram_get("computer_name") : get_productid(),
+				is_valid_hostname(nvram_get("computer_name")) ? nvram_get("computer_name") : get_productid(),
 				dbdir,
 				nvram_get_int("dms_tivo") ? "yes" : "no",
 				nvram_get_int("dms_stdlna") ? "yes" : "no",
@@ -2019,21 +2010,21 @@ void write_webdav_server_pem()
 #endif
 	if(!f_exists("/tmp/lighttpd/server.pem")){
 		f_read("/dev/urandom", &sn, sizeof(sn));
-		sprintf(t, "%llu", sn & 0x7FFFFFFFFFFFFFFFUL);
+		sprintf(t, "%llu", sn & 0x7FFFFFFFFFFFFFFFULL);
 		eval("gencert.sh", t);
 
 		system("cp -f /etc/server.pem /tmp/lighttpd/");
 	}
 }
 
-void start_webdav()	// added by Vanic
+void start_webdav(void)	// added by Vanic
 {
 	if(getpid()!=1) {
 		notify_rc("start_webdav");
 		return;
 	}
 
-	static char *lighttpd_monitor_argv[] = { "lighttpd-monitor", NULL, NULL };
+	//static char *lighttpd_monitor_argv[] = { "lighttpd-monitor", NULL, NULL };
 
 	if(nvram_get_int("sw_mode") != SW_MODE_ROUTER) return;
 
@@ -2067,10 +2058,10 @@ void start_webdav()	// added by Vanic
 	if (!f_exists("/tmp/lighttpd.conf")) return;
 
 	if (!pids("lighttpd")){
-		system("lighttpd -f /tmp/lighttpd.conf -D &");
+		system("/usr/sbin/lighttpd -f /tmp/lighttpd.conf -D &");
 	}
 	if (!pids("lighttpd-monitor")){
-		system("lighttpd-monitor &");
+		system("/usr/sbin/lighttpd-monitor &");
 	   //_eval(lighttpd_monitor_argv, NULL, 0, NULL);
 	}
 
@@ -2109,9 +2100,10 @@ void stop_webdav(void)
 #endif	// RTCONFIG_WEBDAV
 
 #ifdef RTCONFIG_CLOUDSYNC
-void start_cloudsync(){
+void start_cloudsync(void)
+{
 	char word[PATH_MAX], *next_word;
-	char *cloud_setting;
+	char *cloud_setting, *b, *nvp, *nv;
 	int type = 0, enable = 0;
 	char username[64], sync_dir[PATH_MAX];
 	int count;
@@ -2121,6 +2113,7 @@ void start_cloudsync(){
 	char *cmd1_argv[] = { "inotify", NULL };
 	char *cmd2_argv[] = { "asuswebstorage", NULL };
 	char *cmd3_argv[] = { "touch", cloud_token, NULL };
+	char *cmd4_argv[] = { "webdav_client", NULL };
 
 	if(getpid()!=1) {
 		notify_rc("start_cloudsync");
@@ -2136,101 +2129,131 @@ void start_cloudsync(){
 
 	cloud_setting = nvram_safe_get("cloud_sync");
 
-	count = 0;
-	foreach_62(word, cloud_setting, next_word){
-		switch(count){
-			case 0: // type
-				type = atoi(word);
-				break;
-			case 1: // username
-				memset(username, 0, 64);
-				strncpy(username, word, 64);
-				break;
-			case 5: // dir
-				memset(sync_dir, 0, PATH_MAX);
-				strncpy(sync_dir, word, PATH_MAX);
-				break;
-			case 6: // enable
-				enable = atoi(word);
-				break;
+	nv = nvp = strdup(nvram_safe_get("cloud_sync"));
+	if(nv){
+		while((b = strsep(&nvp, "<")) != NULL){
+			count = 0;
+			foreach_62(word, b, next_word){
+				switch(count){
+					case 0: // type
+						type = atoi(word);
+						break;
+				}
+				++count;
+			}
+
+			if(type == 1){
+				if(!pids("inotify"))
+					_eval(cmd1_argv, NULL, 0, &pid);
+			
+				if(!pids("webdav_client"))
+					_eval(cmd4_argv, NULL, 0, &pid);
+
+				if(pids("inotify") && pids("webdav_client"))
+					logmessage("Webdav client", "daemon is started");
+			}
+			else{
+				count = 0;
+				foreach_62(word, b, next_word){
+					switch(count){
+						case 0: // type
+							type = atoi(word);
+							break;
+						case 1: // username
+							memset(username, 0, 64);
+							strncpy(username, word, 64);
+							break;
+						case 5: // dir
+							memset(sync_dir, 0, PATH_MAX);
+							strncpy(sync_dir, word, PATH_MAX);
+							break;
+						case 6: // enable
+							enable = atoi(word);
+							break;
+					}
+			
+					++count;
+				}
+				if(!enable){
+					logmessage("Cloudsync client", "manually disabled");
+					return;
+				}
+			
+				ptr = sync_dir+strlen(POOL_MOUNT_ROOT)+1;
+				if((other_path = strchr(ptr, '/')) != NULL){
+					ptr = other_path;
+					++other_path;
+				}
+				else
+					ptr = "";
+			
+				memset(mounted_path, 0, PATH_MAX);
+				strncpy(mounted_path, sync_dir, (strlen(sync_dir)-strlen(ptr)));
+			
+				FILE *fp;
+				char check_target[PATH_MAX], line[PATH_MAX];
+				int got_mount = 0;
+			
+				memset(check_target, 0, PATH_MAX);
+				sprintf(check_target, " %s ", mounted_path);
+			
+				if((fp = fopen(MOUNT_FILE, "r")) == NULL){
+					logmessage("Cloudsync client", "Could read the disk's data");
+					return;
+				}
+			
+				while(fgets(line, sizeof(line), fp) != NULL){
+					if(strstr(line, check_target)){
+						got_mount = 1;
+						break;
+					}
+				}
+				fclose(fp);
+			
+				if(!got_mount){
+					logmessage("Cloudsync client", "The specific disk isn't existed");
+					return;
+				}
+			
+				if(strlen(sync_dir))
+					mkdir_if_none(sync_dir);
+			
+				memset(cloud_token, 0, PATH_MAX);
+				sprintf(cloud_token, "%s/.__cloudsync_%d_%s.txt", mounted_path, type, username);
+			
+				_eval(cmd3_argv, NULL, 0, NULL);
+
+				if(!pids("inotify"))
+					_eval(cmd1_argv, NULL, 0, &pid);
+				
+				if(!pids("asuswebstorage"))
+					_eval(cmd2_argv, NULL, 0, &pid);
+				sleep(2); // wait asuswebstorage.
+			
+				if(pids("inotify") && pids("asuswebstorage"))
+					logmessage("Cloudsync client", "daemon is started");
+			}
 		}
-
-		++count;
+		free(nv);
 	}
-
-	if(!enable){
-		logmessage("Cloudsync client", "manually disabled");
-		return;
-	}
-
-	ptr = sync_dir+strlen(POOL_MOUNT_ROOT)+1;
-	if((other_path = strchr(ptr, '/')) != NULL){
-		ptr = other_path;
-		++other_path;
-	}
-	else
-		ptr = "";
-
-	memset(mounted_path, 0, PATH_MAX);
-	strncpy(mounted_path, sync_dir, (strlen(sync_dir)-strlen(ptr)));
-
-	FILE *fp;
-	char check_target[PATH_MAX], line[PATH_MAX];
-	int got_mount = 0;
-
-	memset(check_target, 0, PATH_MAX);
-	sprintf(check_target, " %s ", mounted_path);
-
-	if((fp = fopen(MOUNT_FILE, "r")) == NULL){
-		logmessage("Cloudsync client", "Could read the disk's data");
-		return;
-	}
-
-	while(fgets(line, sizeof(line), fp) != NULL){
-		if(strstr(line, check_target)){
-			got_mount = 1;
-			break;
-		}
-	}
-	fclose(fp);
-
-	if(!got_mount){
-		logmessage("Cloudsync client", "The specific disk isn't existed");
-		return;
-	}
-
-	if(strlen(sync_dir))
-		mkdir_if_none(sync_dir);
-
-	memset(cloud_token, 0, PATH_MAX);
-	sprintf(cloud_token, "%s/.__cloudsync_%d_%s.txt", mounted_path, type, username);
-
-	_eval(cmd3_argv, NULL, 0, NULL);
-
-	if(!pids("inotify"))
-		_eval(cmd1_argv, NULL, 0, &pid);
-
-	if(!pids("asuswebstorage"))
-		_eval(cmd2_argv, NULL, 0, &pid);
-	sleep(2); // wait asuswebstorage.
-
-	if(pids("inotify") && pids("asuswebstorage"))
-		logmessage("Cloudsync client", "daemon is started");
 }
 
-void stop_cloudsync(){
+void stop_cloudsync(void)
+{
 	if(getpid()!=1) {
 		notify_rc("stop_cloudsync");
 		return;
 	}
-
-	if(pids("inotify"))
+  if(pids("inotify"))
 		killall_tk("inotify");
+
+  if(pids("webdav_client"))
+		killall_tk("webdav_client");
 
 	if(pids("asuswebstorage"))
 		killall_tk("asuswebstorage");
 
-	logmessage("Cloudsync client", "daemon is stoped");
+	logmessage("Cloudsync client and Webdav_client", "daemon is stoped");
 }
 #endif
 
@@ -2288,7 +2311,7 @@ void stop_nas_services(int force)
 	}
 
 #ifdef RTCONFIG_MEDIA_SERVER
-	stop_dms();
+	force_stop_dms();
 	stop_mt_daapd();
 #endif
 #ifdef RTCONFIG_FTP
@@ -2364,20 +2387,25 @@ void restart_sambaftp(int stop, int start)
 	file_unlock(fd);
 }
 
-int ejusb_main(int argc, const char *argv[]){
+int ejusb_main(int argc, char *argv[])
+{
 	disk_info_t *disk_list, *disk_info;
 	partition_info_t *partition_info;
 	char nvram_name[32], device_name[8], devpath[16];
 	int got_usb_port;
+	int restart_nasapps = 1;
 
-	if(argc != 2){
-		printf("Usage: ejusb [disk_port]\n");
+	if(argc != 2 && argc != 3){
+		printf("Usage: ejusb [disk_port] [0|1]\n");
 		return 0;
 	}
 
+	if (argc == 3)
+		restart_nasapps = atoi(argv[2]);
+
 	got_usb_port = atoi(argv[1]);
 	if(got_usb_port < 1 || got_usb_port > 3){
-		printf("Usage: ejusb [disk_port]\n");
+		printf("Usage: ejusb [disk_port] [0|1]\n");
 		return 0;
 	}
 
@@ -2415,9 +2443,13 @@ int ejusb_main(int argc, const char *argv[]){
 	}
 	free_disk_data(&disk_list);
 
-//_dprintf("restart_nas_services(%d): test 7.\n", getpid());
-	//restart_nas_services(1, 1);
-	notify_rc_after_wait("restart_nasapps");
+	if (restart_nasapps) {
+		_dprintf("restart_nas_services(%d): test 7.\n", getpid());
+		//restart_nas_services(1, 1);
+		notify_rc_after_wait("restart_nasapps");
+	} else {
+		_dprintf("restart_nas_services(%d) is skipped: test 7.\n", getpid());
+	}
 
 	return 0;
 }
@@ -2483,7 +2515,7 @@ static void start_diskscan()
 
 	disk_list = read_disk_data();
 	if(disk_list == NULL){
-		printf("Can't get any disk's information.\n");
+		cprintf("Can't get any disk's information.\n");
 		return;
 	}
 
@@ -2492,6 +2524,11 @@ static void start_diskscan()
 			continue;
 
 		for(partition_info = disk_info->partitions; partition_info != NULL; partition_info = partition_info->next){
+			if(partition_info->mount_point == NULL){
+				cprintf("Skip to scan %s: It can't be mounted.\n");
+				continue;
+			}
+
 			if(!strcmp(policy, "part") && strcmp(monpart, partition_info->device))
 				continue;
 
@@ -2511,14 +2548,7 @@ static void start_diskscan()
 			eval("mount"); /* what for ??? */
 			cprintf("disk_monitor: scan partition %s...\n", partition_info->device);
 			diskmon_status(DISKMON_SCAN);
-			if(!strcmp(partition_info->file_system, "ntfs") || !strcmp(partition_info->file_system, "ufsd"))
-				eval("chkntfs", "-a", "-f", devpath);
-			else{
-				char cmd[16];
-				sprintf(cmd, "fsck.%s", partition_info->file_system);
-				cprintf("disk_monitor: %s partition %s...\n", cmd, partition_info->device);
-				eval(cmd, "-p", devpath);
-			}
+			eval("app_fsck.sh", partition_info->file_system, devpath);
 
 			if(stop_diskscan())
 				goto stop_scan;
@@ -2543,19 +2573,34 @@ stop_scan:
 	diskmon_status(DISKMON_FORCE_STOP);
 }
 
+#define NO_SIG -1
+
+static int diskmon_signal = NO_SIG;
+
 static void diskmon_sighandler(int sig)
 {
 	switch(sig) {
-	case SIGTERM:
-		cprintf("disk_monitor: Finish!\n");
-		unlink("/var/run/disk_monitor.pid");
-		exit(0);
-	case SIGUSR1:
-		cprintf("disk_monitor: Check status: %d.\n", diskmon_status(-1));
-		break;
-	case SIGALRM:
-		cprintf("disk_monitor: Got SIGALRM...\n");
-		break;
+		case SIGTERM:
+			cprintf("disk_monitor: Finish!\n");
+			unlink("/var/run/disk_monitor.pid");
+			diskmon_signal = sig;
+			exit(0);
+		case SIGUSR1:
+			cprintf("disk_monitor: Check status: %d.\n", diskmon_status(-1));
+			diskmon_signal = sig;
+			break;
+		case SIGUSR2:
+			cprintf("disk_monitor: Scan manually...\n");
+			diskmon_status(DISKMON_START);
+			start_diskscan();
+			sleep(10);
+			diskmon_status(DISKMON_IDLE);
+			diskmon_signal = sig;
+			break;
+		case SIGALRM:
+			cprintf("disk_monitor: Got SIGALRM...\n");
+			diskmon_signal = sig;
+			break;
 	}
 }
 
@@ -2582,7 +2627,7 @@ void stop_diskmon(void)
 	killall_tk("disk_monitor");
 }
 
-int diskmon_main(int argc, const char *argv[])
+int diskmon_main(int argc, char *argv[])
 {
 	FILE *fp;
 	sigset_t mask;
@@ -2591,12 +2636,12 @@ int diskmon_main(int argc, const char *argv[])
 	struct tm local;
 	char *nv, *nvp;
 	char *set_day, *set_week, *set_hour;
-	int val_day, val_hour;
-	int wait_second, wait_hour;
+	int val_day = 0, val_hour = 0;
+	int wait_second = 0, wait_hour;
 
 	fp = fopen("/var/run/disk_monitor.pid", "w");
 	if(fp != NULL) {
-		fprintf(fp, "%d\n", getpid());
+		fprintf(fp, "%d", getpid());
 		fclose(fp);
 	}
 
@@ -2607,78 +2652,213 @@ int diskmon_main(int argc, const char *argv[])
 
 	signal(SIGTERM, diskmon_sighandler);
 	signal(SIGUSR1, diskmon_sighandler);
+	signal(SIGUSR2, diskmon_sighandler);
 	signal(SIGALRM, diskmon_sighandler);
 
 	sigfillset(&mask);
 	sigdelset(&mask, SIGTERM);
 	sigdelset(&mask, SIGUSR1);
+	sigdelset(&mask, SIGUSR2);
 	sigdelset(&mask, SIGALRM);
 
 	diskmon_freq = nvram_get_int("diskmon_freq");
+	if(diskmon_freq != DISKMON_FREQ_DISABLE){
+		nv = nvp = strdup(nvram_safe_get("diskmon_freq_time"));
+		if(!nv || strlen(nv) <= 0){
+			cprintf("disk_monitor: Finish without setting the running time!\n");
+			exit(0);
+		}
 
-	nv = nvp = strdup(nvram_safe_get("diskmon_freq_time"));
-	if(!nv || strlen(nv) <= 0){
-		cprintf("disk_monitor: Finish without setting the running time!\n");
-		exit(0);
-	}
+		if((vstrsep(nvp, ">", &set_day, &set_week, &set_hour) != 3)){
+			cprintf("disk_monitor: Finish without the correct running time!\n");
+			exit(0);
+		}
 
-	if((vstrsep(nvp, ">", &set_day, &set_week, &set_hour) != 3)){
-		cprintf("disk_monitor: Finish without the correct running time!\n");
-		exit(0);
+		val_hour = atoi(set_hour);
+		if(diskmon_freq == DISKMON_FREQ_MONTH)
+			val_day = atoi(set_day);
+		else if(diskmon_freq == DISKMON_FREQ_WEEK)
+			val_day = atoi(set_week);
+		else if(diskmon_freq == DISKMON_FREQ_DAY)
+			val_day = -1;
 	}
-
-	val_hour = atoi(set_hour);
-	if(diskmon_freq == DISKMON_FREQ_MONTH)
-		val_day = atoi(set_day);
-	else if(diskmon_freq == DISKMON_FREQ_WEEK)
-		val_day = atoi(set_week);
-	else if(diskmon_freq == DISKMON_FREQ_DAY){
-		val_day = -1;
-	}
-	else{ // DISKMON_FREQ_DISABLE
-		cprintf("disk_monitor: Finish without setting the frequency!\n");
-		exit(0);
-	}
+	else
+		cprintf("disk_monitor: Just run after getting SIGUSR2!\n");
 
 	while(1){
 		time(&now);
 		localtime_r(&now, &local);
-cprintf("\ndisk_monitor: day=%d, week=%d, time=%d:%d.\n", local.tm_mday, local.tm_wday, local.tm_hour, local.tm_min);
+cprintf("disk_monitor: day=%d, week=%d, time=%d:%d.\n", local.tm_mday, local.tm_wday, local.tm_hour, local.tm_min);
 
-		if(local.tm_min <= DISKMON_SAFE_RANGE){
-			if(val_hour == local.tm_hour){
-				if((diskmon_freq == DISKMON_FREQ_MONTH && val_day == local.tm_mday) || 
-				   (diskmon_freq == DISKMON_FREQ_WEEK && val_day == local.tm_wday) ||
-				   (diskmon_freq == DISKMON_FREQ_DAY)){
-					// Running!!
-					diskmon_status(DISKMON_START);
-					start_diskscan();
-					sleep(10);
-					diskmon_status(DISKMON_IDLE);
-				}
-				wait_hour = DISKMON_DAY_HOUR;
-			}
-			else if(val_hour > local.tm_hour)
-				wait_hour = val_hour-local.tm_hour;
-			else // val_hour < local.tm_hour
-				wait_hour = 23-local.tm_hour+val_hour;
-
-			wait_second = wait_hour*DISKMON_HOUR_SEC;
+		if(diskmon_signal == SIGUSR2){
+cprintf("disk_monitor: wait more %d seconds and avoid to scan too often.\n", DISKMON_SAFE_RANGE*60);
+			wait_second = DISKMON_SAFE_RANGE*60;
 		}
-		else
-			wait_second = (60-local.tm_min)*60;
+		else if(diskmon_signal == SIGALRM){
+cprintf("disk_monitor: decide if scan the target...\n");
+			if(local.tm_min <= DISKMON_SAFE_RANGE){
+				if(val_hour == local.tm_hour){
+					if((diskmon_freq == DISKMON_FREQ_MONTH && val_day == local.tm_mday)
+							|| (diskmon_freq == DISKMON_FREQ_WEEK && val_day == local.tm_wday)
+							|| (diskmon_freq == DISKMON_FREQ_DAY)){
+						// Running!!
+						diskmon_status(DISKMON_START);
+						start_diskscan();
+						sleep(10);
+						diskmon_status(DISKMON_IDLE);
+					}
+					wait_hour = DISKMON_DAY_HOUR;
+				}
+				else if(val_hour > local.tm_hour)
+					wait_hour = val_hour-local.tm_hour;
+				else // val_hour < local.tm_hour
+					wait_hour = 23-local.tm_hour+val_hour;
 
+				wait_second = wait_hour*DISKMON_HOUR_SEC;
+			}
+			else
+				wait_second = (60-local.tm_min)*60;
+		}
+
+		if(diskmon_signal == SIGUSR2 || diskmon_signal == SIGALRM){
 cprintf("disk_monitor: wait_second=%d...\n", wait_second);
-		alarm(wait_second);
+			alarm(wait_second);
+		}
+
+cprintf("disk_monitor: Pause...\n\n");
+		diskmon_signal = NO_SIG;
 		sigsuspend(&mask);
 	}
 
 	unlink("/var/run/disk_monitor.pid");
+
+	return 0;
+}
+
+void record_pool_error(const char *device, const char *flag){
+	char word[PATH_MAX], *next;
+	char tmp[100], prefix[] = "usb_pathXXXXXXXXXX_";
+	char *pool_act;
+	int port, len;
+	int orig_val;
+
+	port = 1;
+	foreach(word, nvram_safe_get("ehci_ports"), next){
+		snprintf(prefix, sizeof(prefix), "usb_path%d_", port);
+
+		pool_act = nvram_safe_get(strcat_r(prefix, "act", tmp));
+		len = strlen(pool_act);
+		if(len > 0 && !strncmp(device, pool_act, len)){
+			orig_val = strtol(nvram_safe_get(strcat_r(prefix, "pool_error", tmp)), NULL, 0);
+			if(orig_val == 0)
+				nvram_set(tmp, flag);
+
+			break;
+		}
+
+		++port;
+	}
+}
+
+void remove_scsi_device(int host, int channel, int id, int lun){
+	char buf[128];
+
+	if(nvram_match("diskremove_bad_device", "0")){
+_dprintf("diskremove: don't remove the bad device: %d:%d:%d:%d.\n", host, channel, id, lun);
+		return;
+	}
+
+	memset(buf, 0, 128);
+	sprintf(buf, "echo \"scsi remove-single-device %d %d %d %d\" > /proc/scsi/scsi", host, channel, id, lun);
+
+_dprintf("diskremove: removing the device: %d:%d:%d:%d.\n", host, channel, id, lun);
+	system(buf);
+
+	sleep(1);
+}
+
+void remove_pool_error(const char *device, const char *flag){
+	char word[PATH_MAX], *next;
+	char tmp[100], prefix[] = "usb_pathXXXXXXXXXX_";
+	char *pool_act;
+	int port, len;
+	int host, channel, id, lun;
+_dprintf("diskremove: device=%s, flag=%s.\n", device, flag);
+
+	if(flag == NULL || !strcmp(flag, "0"))
+		return;
+
+	port = 1;
+	foreach(word, nvram_safe_get("ehci_ports"), next){
+		snprintf(prefix, sizeof(prefix), "usb_path%d_", port);
+
+		pool_act = nvram_safe_get(strcat_r(prefix, "act", tmp));
+_dprintf("diskremove: pool_act=%s.\n", pool_act);
+		len = strlen(pool_act);
+		if(len > 0 && !strncmp(device, pool_act, len)){
+			host = channel = id = lun = -2;
+			if(find_disk_host_info(pool_act, &host, &channel, &id, &lun) == -1){
+				_dprintf("diskremove: Didn't get the correct info of the device.\n");
+				return;
+			}
+
+			if(strcmp(flag, ERR_DISK_FS_RDONLY)){
+_dprintf("diskremove: host=%d, channel=%d, id=%d, lun=%d.\n", host, channel, id, lun);
+				remove_scsi_device(host, channel, id, lun);
+			}
+			else{
+_dprintf("diskremove: stop_app.\n");
+				stop_app();
+			}
+
+			break;
+		}
+
+		++port;
+	}
+}
+
+int diskremove_main(int argc, char *argv[]){
+	char *subsystem = getenv("SUBSYSTEM");
+	char *device = getenv("DEVICE");
+	char *flag = getenv("FLAG");
+	int host, channel, id, lun;
+
+	if(!subsystem || strlen(subsystem) <= 0
+			|| !device || strlen(device) <= 0
+			|| !flag || strlen(flag) <= 0)
+		return -1;
+_dprintf("diskremove: SUBSYSTEM=%s, DEVICE=%s, FLAG=%s.\n", subsystem, device, flag);
+
+	record_pool_error(device, flag);
+
+	if(!strcmp(subsystem, "filesystem")){
+		remove_pool_error(device, flag);
+	}
+	else if(!strcmp(subsystem, "scsi")){
+		host = channel = id = lun = -2;
+		if(find_str_host_info(device, &host, &channel, &id, &lun) == -1){
+_dprintf("diskremove: Didn't get the correct info of the SCSI device.\n");
+			return -1;
+		}
+
+		if(!strcmp(flag, ERR_DISK_SCSI_KILL)){
+_dprintf("diskremove: host=%d, channel=%d, id=%d, lun=%d.\n", host, channel, id, lun);
+			remove_scsi_device(host, channel, id, lun);
+		}
+	}
+
+	return 0;
+}
+#else
+int diskremove_main(int argc, char *argv[]){
+	return 0;
 }
 #endif
 
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
-int start_app(){
+int start_app(void)
+{
 	char cmd[PATH_MAX];
 	char *apps_dev = nvram_safe_get("apps_dev");
 	char *apps_mounted_path = nvram_safe_get("apps_mounted_path");
@@ -2693,7 +2873,8 @@ int start_app(){
 	return 0;
 }
 
-int stop_app(){
+int stop_app(void)
+{
 	char *apps_dev = nvram_safe_get("apps_dev");
 	char *apps_mounted_path = nvram_safe_get("apps_mounted_path");
 
@@ -2704,6 +2885,38 @@ int stop_app(){
 	sync();
 
 	return 0;
+}
+
+void usb_notify(){
+	char target_dir[128], target[128], buf[16];
+	DIR *dp;
+	struct dirent *entry;
+
+	memset(target_dir, 0, 128);
+	sprintf(target_dir, "%s/%s", NOTIFY_DIR, NOTIFY_TYPE_USB);
+	if(!check_if_dir_exist(target_dir))
+		return;
+
+	if(!(dp = opendir(target_dir)))
+		return;
+
+	while((entry = readdir(dp)) != NULL){
+		if(entry->d_name[0] == '.')
+			continue;
+
+		memset(target, 0, 128);
+		sprintf(target, "%s/%s", target_dir, entry->d_name);
+
+		if(!pids(entry->d_name)){
+			unlink(target);
+			continue;
+		}
+
+		f_read_string(target, buf, 16);
+
+		killall(entry->d_name, atoi(buf));
+	}
+	closedir(dp);
 }
 #endif
 #endif // RTCONFIG_USB

@@ -4,24 +4,25 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
-<link type="text/css" rel="stylesheet" href="/qis/qis_style.css">
 <link type="text/css" rel="stylesheet" href="/form_style.css">
-<style>
-.test_css{
-	padding-left:10px;
-	font-size:13px;
-	font-weight:bolder;
-	color: #FFFFFF;
-}
-</style>
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <script type="text/JavaScript" src="/jquery.js"></script>
 <script type="text/javascript">
 var now_flag = '<% get_parameter("flag"); %>';
 
 function initial(){
+	if(parent.ISMOBILE){
+		parent.set_step("internet_type");
+		hideObjs();
+		document.getElementById("QISmain").style.display = "none";
+		document.getElementById("QISmain_m").style.display = "";		
+	}
+	else{
+		parent.set_step("t1");
+		document.getElementById("go_detect").focus();
+	}
+
 	parent.doResetModem();
-	parent.set_step("t1");
-	document.getElementById("go_detect").focus();
 }
 
 function gotoPage(dst_url, flag, isParent){
@@ -52,7 +53,7 @@ function submitenter(myfield,e)
 </head>
 
 <body onLoad="initial();" onKeyPress="submitenter(this,event)">
-<div class="QISmain">
+<div class="QISmain" id="QISmain">
 	<div id='waitarea'>
 		<div class="formfonttitle" style="padding:6 0 0 10;">
 				<div>
@@ -67,7 +68,7 @@ function submitenter(myfield,e)
 						</tr>
 					</table>
 				</div>
-				<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+				<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 		</div>
 		<p class="QISGeneralFont"><#QIS_modem2_desc2#></p>
 		<p class="QISGeneralFont"><#QIS_modem2_desc3#></p>
@@ -89,6 +90,16 @@ function submitenter(myfield,e)
 	</div>
 </div>
 
+<div id="QISmain_m" style="display:none;">
+	<div><#QIS_modem2_desc1#></div><br>
+	<div><#QIS_modem2_desc2#></div><br>
+	<div><#QIS_modem2_desc3#></div><br>
+	<fieldset class="theFieldset">
+		<div class="row_end">
+			<a class="iuiA" onclick="gotoPage('/qis/QIS_verify_detect.htm', 'resetModem', 0);"><#CTL_next#></a>
+		</div>
+	</fieldset>
+</div>
 
 <form method="post" name="redirectForm" action="" target="">
 <input type="hidden" name="flag" value="">

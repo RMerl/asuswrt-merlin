@@ -5,7 +5,7 @@
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="stylesheet" type="text/css" href="/form_style.css">
-<link rel="stylesheet" type="text/css" href="qis_style.css">
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/JavaScript" src="/general.js"></script>
 <script type="text/JavaScript" src="/form.js"></script>
@@ -20,34 +20,56 @@
 <script type="text/JavaScript">
 function QKInternet_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_ISP_head#>";
-	parent.set_step("t2");
 	
-	// protocol checkbox
-        if('<% nvram_get("lan_proto"); %>' == 'static'){
-                change_ip_setting('static');
-                document.form.lan_proto_radio[0].checked = 0;
-                document.form.lan_proto_radio[1].checked = 1;
-        }
-        else{
-                change_ip_setting('dhcp');
-                document.form.lan_proto_radio[0].checked = 1;
-                document.form.lan_proto_radio[1].checked = 0;
-        }
+	if(parent.ISMOBILE){
+		parent.set_step("manual");
+		hideObjs();
+		document.getElementById("tblsetting_1").style.display = "none";
+		document.getElementById("field_mobile").style.display = "";
+		document.getElementById("theFieldset").style.display = "";
+		displayDNSCtrl();
+		displayLANIPCtrl();
+	}
+	else{
+		parent.set_step("t2");
+		if('<% nvram_get("sw_mode"); %>' == '3'){
+		// protocol checkbox
+		if('<% nvram_get("lan_proto"); %>' == 'static'){
+			change_ip_setting('static');
+	      document.form.lan_proto_radio[0].checked = 0;
+	      document.form.lan_proto_radio[1].checked = 1;
+	    }
+	    else{
+	      change_ip_setting('dhcp');
+	      document.form.lan_proto_radio[0].checked = 1;
+	      document.form.lan_proto_radio[1].checked = 0;
+	    }
 	
-	// dns checkbox
-        if('<% nvram_get("lan_dnsenable_x"); %>' == '0'){
-                display_lan_dns(0);
-                document.form.lan_dnsenable_x_radio[0].checked = 0;
-                document.form.lan_dnsenable_x_radio[1].checked = 1;
-        }
-        else{
-                display_lan_dns(1);
-                document.form.lan_dnsenable_x_radio[0].checked = 1;
-                document.form.lan_dnsenable_x_radio[1].checked = 0;
-        }
+			// dns checkbox
+	    if('<% nvram_get("lan_dnsenable_x"); %>' == '0'){
+	      display_lan_dns(0);
+	      document.form.lan_dnsenable_x_radio[0].checked = 0;
+	      document.form.lan_dnsenable_x_radio[1].checked = 1;
+	    }
+	    else{
+	      display_lan_dns(1);
+	      document.form.lan_dnsenable_x_radio[0].checked = 1;
+	      document.form.lan_dnsenable_x_radio[1].checked = 0;
+	    }
+		}
+		else{ // if mode switching, DHCP
+			// force to set lan_proto to dhcp
+		  change_ip_setting('dhcp');
+		  document.form.lan_proto_radio[0].checked = 1;
+		  document.form.lan_proto_radio[1].checked = 0;
+			// force to set lan_dns to automatic
+			display_lan_dns(1);
+			document.form.lan_dnsenable_x_radio[0].checked = 1;
+			document.form.lan_dnsenable_x_radio[1].checked = 0;
+		}
 	
-
-	document.getElementById("nextButton").focus();
+		document.getElementById("nextButton").focus();
+	}
 }
 
 function display_lan_dns(flag){
@@ -116,6 +138,14 @@ function validForm(){
 	var ip_obj = document.form.lan_ipaddr;
 	var ip_num = inet_network(ip_obj.value);
 	var ip_class = "";
+
+	if(parent.ISMOBILE){
+		document.form.lan_ipaddr.value = 	document.form.lan_ipaddr_m.value;
+		document.form.lan_netmask.value = document.form.lan_netmask_m.value;
+		document.form.lan_gateway.value = document.form.lan_gateway_m.value;
+		document.form.lan_dns1_x.value = document.form.lan_dns1_x_m.value;
+		document.form.lan_dns2_x.value = document.form.lan_dns2_x_m.value;
+	}
 
 	if(document.form.lan_dnsenable_x_radio[0].checked == 1)
 		document.form.lan_dnsenable_x.value = 1;
@@ -211,6 +241,42 @@ function submitenter(myfield,e)
 	else
    	return true;
 }
+
+function displayLANIPCtrl(){
+	if(document.getElementById("toggleLANIP").getAttribute("toggled") == "true"){
+		document.getElementById("LANIPDiv").style.display = "none";
+	  document.form.lan_proto_radio[0].checked = 1;
+	  document.form.lan_proto_radio[1].checked = 0;
+		change_ip_setting('dhcp');
+		document.getElementById("DNSautoDiv").style.display = "";
+		document.getElementById("toggleDNS").setAttribute("toggled", true);
+		document.getElementById("DNSDiv").style.display = "none";
+	}
+	else{
+	  document.form.lan_proto_radio[0].checked = 0;
+	  document.form.lan_proto_radio[1].checked = 1;
+	  document.form.lan_dnsenable_x_radio[0].checked = 0;
+	  document.form.lan_dnsenable_x_radio[1].checked = 1;
+		change_ip_setting('static');
+		document.getElementById("LANIPDiv").style.display = "";
+		document.getElementById("DNSautoDiv").style.display = "none";
+		document.getElementById("toggleDNS").setAttribute("toggled", false);
+		document.getElementById("DNSDiv").style.display = "";
+	}
+}
+
+function displayDNSCtrl(){
+	if(document.getElementById("toggleDNS").getAttribute("toggled") == "true"){
+		document.getElementById("DNSDiv").style.display = "none";
+	  document.form.lan_dnsenable_x_radio[0].checked = 1;
+	  document.form.lan_dnsenable_x_radio[1].checked = 0;
+	}
+	else{
+		document.getElementById("DNSDiv").style.display = "";
+	  document.form.lan_dnsenable_x_radio[0].checked = 0;
+	  document.form.lan_dnsenable_x_radio[1].checked = 1;
+	}
+}
 </script>
 </head>
 
@@ -224,8 +290,8 @@ function submitenter(myfield,e)
 <input type="hidden" name="lan_dnsenable_x" value="<% nvram_get("lan_dnsenable_x"); %>">
 <div class="QISmain">
 <div class="formfonttitle" style="padding:6 0 0 10;">
-		<div>
-			<table width="730px">
+		<div id="descTltle">
+			<table width="100%">
 				<tr>
 					<td align="left">
 						<span class="description_down"><#LANHostConfig_display1_sectionname#></span>
@@ -236,7 +302,7 @@ function submitenter(myfield,e)
 				</tr>
 			</table>
 		</div>
-		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 </div>
 <br/>
 
@@ -303,11 +369,73 @@ function submitenter(myfield,e)
       </tr>  
 		</table>
 
-<div class="apply_gen" style="margin-top:30px">
+<div id="applyBtn" class="apply_gen" style="margin-top:30px">
 	<!--input type="button" id="prevButton" value="<#CTL_prev#>" onclick="back_to_Adv();" class="button_gen"-->
 	<!--input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen"-->
 	<input type="button" id="nextButton" value="<#CTL_next#>" class="button_gen" onclick="submitForm();">
 </div>
+
+<div style="display:none;margin-top:-20px;" id="field_mobile">
+	<div class="itemTitle">LAN IP Setup</div>
+	<fieldset>
+		<div class="row">
+			<label>Automatic</label>
+			<div id="toggleLANIP" class="toggle" onclick="displayLANIPCtrl();" toggled="true">
+				<span class="thumb"></span>
+				<span class="toggleOn"><#checkbox_Yes#></span>
+				<span class="toggleOff"><#checkbox_No#></span>
+			</div>
+		</div>
+
+		<div id="LANIPDiv" style="display:none">
+			<div class="row">
+				<label><#IPConnection_ExternalIPAddress_itemname#></label>
+				<input type="text" name="lan_ipaddr_m" placeholder="" maxlength="32" value=""/>
+			</div>
+			<div class="row">
+				<label><#IPConnection_x_ExternalSubnetMask_itemname#></label>
+				<input name="lan_netmask_m" type="text" placeholder="" autocapitalization="off" maxlength="65">
+			</div>
+			<div class="row_end">
+				<label><#IPConnection_x_ExternalGateway_itemname#></label>
+				<input name="lan_gateway_m" type="text" placeholder="" autocapitalization="off" maxlength="65">
+			</div>
+		</div>
+	</fieldset>	
+
+	<br />
+
+	<div class="itemTitle">DNS Server</div>
+	<fieldset>
+		<div class="row" id="DNSautoDiv">
+			<label>Automatic</label>
+			<div id="toggleDNS" class="toggle" onclick="displayDNSCtrl();" toggled="true">
+				<span class="thumb"></span>
+				<span class="toggleOn"><#checkbox_Yes#></span>
+				<span class="toggleOff"><#checkbox_No#></span>
+			</div>
+		</div>
+
+		<div id="DNSDiv" style="display:none">
+			<div class="row">
+				<label><#IPConnection_x_DNSServer1_itemname#></label>
+				<input type="text" name="lan_dns1_x_m" placeholder="" maxlength="32" value=""/>
+			</div>
+			<div class="row_end">
+				<label><#IPConnection_x_DNSServer2_itemname#></label>
+				<input name="lan_dns2_x_m" type="text" placeholder="" autocapitalization="off" maxlength="65">
+			</div>
+		</div>
+	</fieldset>
+	<br />
+</div>
+
+<fieldset class="theFieldset" id="theFieldset" style="display:none;">
+	<div class="row_end">
+		<a id="loadingIcon_iui" class="iuiA" onclick="submitForm();"><#CTL_next#></a>
+	</div>
+</fieldset>
+
 </div>
 </form>
 </body>

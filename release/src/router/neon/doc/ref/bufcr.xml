@@ -1,0 +1,60 @@
+    <refentry id="refbufcr">
+
+      <refmeta>
+	<refentrytitle>ne_buffer_create</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_buffer_create">ne_buffer_create</refname>
+	<refname id="ne_buffer_create_sized">ne_buffer_ncreate</refname>
+	<refpurpose>create a string buffer</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_alloc.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>ne_buffer *<function>ne_buffer_create</function></funcdef>
+	    <void/>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>ne_buffer *<function>ne_buffer_ncreate</function></funcdef>
+	    <paramdef>size_t <parameter>size</parameter></paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para><function>ne_buffer_create</function> creates a new
+buffer object, with an implementation-defined initial size.
+<function>ne_buffer_ncreate</function> creates an
+<type>ne_buffer</type> where the minimum initial size is given in the
+<parameter>size</parameter> parameter.  The buffer created will
+contain the empty string (<literal>""</literal>).</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Return value</title>
+
+	<para>Both functions return a pointer to a new buffer object,
+and never &null;.</para>
+
+       </refsect1>
+
+      <refsect1>
+	<title>See also</title>
+
+	<para><xref linkend="ne_buffer"/></para>
+      </refsect1>
+
+    </refentry>

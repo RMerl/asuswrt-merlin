@@ -1,0 +1,27 @@
+# sh testcase for fcnv.ds $drgh, $frf -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+init:
+	pta wrong, tr0
+
+fcnvds:
+	movi 9, r0
+	fmov.qd r0, dr0
+	float.qd dr0, dr0
+	fcnv.ds dr0, fr3
+	movi 9, r0
+	fmov.ls r0, fr4
+	float.ls fr4, fr4
+	fcmpeq.s fr3, fr4, r7
+	bnei r7, 1, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

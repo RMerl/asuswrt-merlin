@@ -1,0 +1,16 @@
+# m32r testcase for mullo $src1,$src2
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global mullo
+mullo:
+
+	mvi_h_gr r4, 4
+	mvi_h_gr r5, 5
+	mullo r4, r5
+	test_h_accum0 0, 0x140000
+
+	pass

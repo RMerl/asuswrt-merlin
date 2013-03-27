@@ -9,9 +9,6 @@ include ../common.mak
 #CFLAGS = -Wall -O -D_GNU_SOURCE -g -DDEBUG
 CFLAGS = -Wall -Os -D_GNU_SOURCE $(EXTRACFLAGS)
 
-CFLAGS += -I../iptables/include
-LDFLAGS = -L../iptables -liptc
-
 RM = rm -f
 INSTALL = install
 STRIP = strip
@@ -31,13 +28,33 @@ NETFILTEROBJS = netfilter/iptcrdr.o
 
 ALLOBJS = $(BASEOBJS) $(LNXOBJS) $(NETFILTEROBJS)
 
-LIBS = -liptc
-
 ifdef IPTABLESPATH
 CFLAGS := $(CFLAGS) -I$(IPTABLESPATH)/include/
 LDFLAGS := $(LDFLAFGS) -L$(IPTABLESPATH)/libiptc/
+
+# get iptables version and set IPTABLES_143 macro if needed
+IPTABLESVERSION := $(shell grep "\#define VERSION" $(IPTABLESPATH)/config.h | tr -d \" |cut -d" " -f3 )
+IPTABLESVERSION1 := $(shell echo $(IPTABLESVERSION) | cut -d. -f1 )
+IPTABLESVERSION2 := $(shell echo $(IPTABLESVERSION) | cut -d. -f2 )
+IPTABLESVERSION3 := $(shell echo $(IPTABLESVERSION) | cut -d. -f3 )
+
+# test if iptables version >= 1.4.3
+TEST := $(shell [ \( \( $(IPTABLESVERSION1) -ge 1 \) -a \( $(IPTABLESVERSION2) -ge 4 \) \) -a \( $(IPTABLESVERSION3) -ge 3 \) ] && echo 1 )
+ifeq ($(TEST), 1)
+CFLAGS := $(CFLAGS) -DIPTABLES_143
+# the following sucks, but works
+LIBS = $(IPTABLESPATH)/libiptc/.libs/libip4tc.o
+#LIBS = $(IPTABLESPATH)/libiptc/.libs/libiptc.a
+else	# ifeq ($(TEST), 1)
 LIBS = $(IPTABLESPATH)/libiptc/libiptc.a
-endif
+endif	# ifeq ($(TEST), 1)
+
+else	#ifdef IPTABLESPATH
+
+CFLAGS += -I../iptables/include
+LDFLAGS = -L../iptables -liptc
+
+endif	#ifdef IPTABLESPATH
 
 TESTUPNPDESCGENOBJS = testupnpdescgen.o upnpdescgen.o
 
@@ -69,7 +86,7 @@ clean:
 genuuid:
 	sed -i -e "s/^uuid=[-0-9a-f]*/uuid=`(genuuid||uuidgen) 2>/dev/null`/" miniupnpd.conf
 
-miniupnpd:	$(BASEOBJS) $(LNXOBJS) $(NETFILTEROBJS)
+miniupnpd:	$(BASEOBJS) $(LNXOBJS) $(NETFILTEROBJS) $(LIBS)
 
 testupnpdescgen:	$(TESTUPNPDESCGENOBJS)
 

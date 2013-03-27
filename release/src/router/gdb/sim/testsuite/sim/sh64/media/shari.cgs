@@ -1,0 +1,28 @@
+# sh testcase for shari $rm, $imm, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	pta wrong, tr0
+
+shari1:
+	movi 128, r0
+	shari r0, 3, r2
+	bnei r2, 16, tr0
+
+shari2:
+	movi -4, r0
+	shari r0, 2, r2
+	addi r2, 1, r2
+	bnei r2, 0, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

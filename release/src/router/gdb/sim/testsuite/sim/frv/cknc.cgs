@@ -1,0 +1,90 @@
+# frv testcase for cknc $ICCi,$CCj_int
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global cknc
+cknc:
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0x0 0
+	cknc		icc0,cc7
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0x1 0
+	cknc		icc0,cc7
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0x2 0
+	cknc		icc0,cc7
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0x3 0
+	cknc		icc0,cc7
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0x4 0
+	cknc		icc0,cc7
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0x5 0
+	cknc		icc0,cc7
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0x6 0
+	cknc		icc0,cc7
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0x7 0
+	cknc		icc0,cc7
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0x8 0
+	cknc		icc0,cc7
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0x9 0
+	cknc		icc0,cc7
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0xa 0
+	cknc		icc0,cc7
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0xb 0
+	cknc		icc0,cc7
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0xc 0
+	cknc		icc0,cc7
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0xd 0
+	cknc		icc0,cc7
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0xe 0
+	cknc		icc0,cc7
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x1b1b,cccr
+	set_icc		0xf 0
+	cknc		icc0,cc7
+	test_spr_immed	0x9b1b,cccr
+
+	pass

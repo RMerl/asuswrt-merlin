@@ -1,0 +1,1346 @@
+# Copyright 1999, 2000, 2002, 2003, 2004, 2005, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was based on a file written by Fred Fish. (fnf@cygnus.com)
+
+# Test setup routines that work with the MI interpreter.
+
+# The variable mi_gdb_prompt is a regexp which matches the gdb mi prompt.
+# Set it if it is not already set.
+global mi_gdb_prompt
+if ![info exists mi_gdb_prompt] then {
+    set mi_gdb_prompt "\[(\]gdb\[)\] \r\n"
+}
+
+global mi_inferior_spawn_id
+global mi_inferior_tty_name
+
+set MIFLAGS "-i=mi"
+
+#
+# mi_gdb_exit -- exit the GDB, killing the target program if necessary
+#
+proc mi_gdb_exit {} {
+    catch mi_uncatched_gdb_exit
+}
+
+proc mi_uncatched_gdb_exit {} {
+    global GDB
+    global GDBFLAGS
+    global verbose
+    global gdb_spawn_id;
+    global gdb_prompt
+    global mi_gdb_prompt
+    global MIFLAGS
+
+    gdb_stop_suppressing_tests;
+
+    if { [info procs sid_exit] != "" } {
+	sid_exit
+    }
+
+    if ![info exists gdb_spawn_id] {
+	return;
+    }
+
+    verbose "Quitting $GDB $GDBFLAGS $MIFLAGS"
+
+    if { [is_remote host] && [board_info host exists fileid] } {
+	send_gdb "999-gdb-exit\n";
+	gdb_expect 10 {
+	    -re "y or n" {
+		send_gdb "y\n";
+		exp_continue;
+	    }
+            -re "Undefined command.*$gdb_prompt $" {
+                send_gdb "quit\n"
+		exp_continue;
+            }
+	    -re "DOSEXIT code" { }
+	    default { }
+	}
+    }
+
+    if ![is_remote host] {
+	remote_close host;
+    }
+    unset gdb_spawn_id
+}
+
+#
+# mi_gdb_start [INFERIOR_PTY] -- start gdb running, default procedure
+#
+# INFERIOR_PTY should be set to separate-inferior-tty to have the inferior work 
+# with it's own PTY. If set to same-inferior-tty, the inferior shares GDB's PTY. 
+# The default value is same-inferior-tty.
+#
+# When running over NFS, particularly if running many simultaneous
+# tests on different hosts all using the same server, things can
+# get really slow.  Give gdb at least 3 minutes to start up.
+#
+proc mi_gdb_start { args } {
+    global verbose
+    global GDB
+    global GDBFLAGS
+    global gdb_prompt
+    global mi_gdb_prompt
+    global timeout
+    global gdb_spawn_id;
+    global MIFLAGS
+
+    gdb_stop_suppressing_tests;
+    set inferior_pty no-tty
+
+    if { [llength $args] == 1} {
+	set inferior_pty [lindex $args 0]
+    }
+
+    set separate_inferior_pty [string match $inferior_pty separate-inferior-tty]
+
+    # Start SID.
+    if { [info procs sid_start] != "" } {
+	verbose "Spawning SID"
+	sid_start
+    }
+
+    verbose "Spawning $GDB -nw $GDBFLAGS $MIFLAGS"
+
+    if [info exists gdb_spawn_id] {
+	return 0;
+    }
+
+    if ![is_remote host] {
+	if { [which $GDB] == 0 } then {
+	    perror "$GDB does not exist."
+	    exit 1
+	}
+    }
+
+    # Create the new PTY for the inferior process.
+    if { $separate_inferior_pty } {
+	spawn -pty
+	global mi_inferior_spawn_id
+	global mi_inferior_tty_name
+	set mi_inferior_spawn_id $spawn_id
+	set mi_inferior_tty_name $spawn_out(slave,name)
+    }
+
+    set res [remote_spawn host "$GDB -nw $GDBFLAGS $MIFLAGS [host_info gdb_opts]"];
+    if { $res < 0 || $res == "" } {
+	perror "Spawning $GDB failed."
+	return 1;
+    }
+    gdb_expect {
+	-re "~\"GNU.*\r\n~\".*$mi_gdb_prompt$" {
+	    # We have a new format mi startup prompt.  If we are
+	    # running mi1, then this is an error as we should be
+	    # using the old-style prompt.
+	    if { $MIFLAGS == "-i=mi1" } {
+	        perror "(mi startup) Got unexpected new mi prompt."
+	        remote_close host;
+	        return -1;
+	    }
+	    verbose "GDB initialized."
+	}
+	-re "\[^~\].*$mi_gdb_prompt$" {
+	    # We have an old format mi startup prompt.  If we are
+	    # not running mi1, then this is an error as we should be
+	    # using the new-style prompt.
+	    if { $MIFLAGS != "-i=mi1" } {
+	        perror "(mi startup) Got unexpected old mi prompt."
+	        remote_close host;
+	        return -1;
+	    }
+	    verbose "GDB initialized."
+	}
+	-re ".*$gdb_prompt $" {
+	    untested "Skip mi tests (got non-mi prompt)."
+	    remote_close host;
+	    return -1;
+	}
+	-re ".*unrecognized option.*for a complete list of options." {
+	    untested "Skip mi tests (not compiled with mi support)."
+	    remote_close host;
+	    return -1;
+	}
+	-re ".*Interpreter `mi' unrecognized." {
+	    untested "Skip mi tests (not compiled with mi support)."
+	    remote_close host;
+	    return -1;
+	}
+	timeout {
+	    perror "(timeout) GDB never initialized after 10 seconds."
+	    remote_close host;
+	    return -1
+	}
+    }
+    set gdb_spawn_id -1;
+
+    # FIXME: mi output does not go through pagers, so these can be removed.
+    # force the height to "unlimited", so no pagers get used
+    send_gdb "100-gdb-set height 0\n"
+    gdb_expect 10 {
+	-re ".*100-gdb-set height 0\r\n100\\\^done\r\n$mi_gdb_prompt$" { 
+	    verbose "Setting height to 0." 2
+	}
+	timeout {
+	    warning "Couldn't set the height to 0"
+	}
+    }
+    # force the width to "unlimited", so no wraparound occurs
+    send_gdb "101-gdb-set width 0\n"
+    gdb_expect 10 {
+	-re ".*101-gdb-set width 0\r\n101\\\^done\r\n$mi_gdb_prompt$" {
+	    verbose "Setting width to 0." 2
+	}
+	timeout {
+	    warning "Couldn't set the width to 0."
+	}
+    }
+    # If allowing the inferior to have its own PTY then assign the inferior
+    # its own terminal device here.
+    if { $separate_inferior_pty } {
+	send_gdb "102-inferior-tty-set $mi_inferior_tty_name\n"
+	gdb_expect 10 {
+	    -re ".*102\\\^done\r\n$mi_gdb_prompt$" {
+		verbose "redirect inferior output to new terminal device."
+	    }
+	    timeout {
+	    	warning "Couldn't redirect inferior output." 2
+	    }
+    	}
+    }
+
+    return 0;
+}
+
+# Many of the tests depend on setting breakpoints at various places and
+# running until that breakpoint is reached.  At times, we want to start
+# with a clean-slate with respect to breakpoints, so this utility proc 
+# lets us do this without duplicating this code everywhere.
+#
+
+proc mi_delete_breakpoints {} {
+    global mi_gdb_prompt
+
+# FIXME: The mi operation won't accept a prompt back and will use the 'all' arg
+    send_gdb "102-break-delete\n"
+    gdb_expect 30 {
+	 -re "Delete all breakpoints.*y or n.*$" {
+	    send_gdb "y\n";
+	    exp_continue
+         }
+	 -re "102-break-delete\r\n102\\\^done\r\n$mi_gdb_prompt$" {
+            # This happens if there were no breakpoints
+	 }
+	 timeout { perror "Delete all breakpoints in mi_delete_breakpoints (timeout)" ; return }
+    }
+
+# The correct output is not "No breakpoints or watchpoints." but an
+# empty BreakpointTable. Also, a query is not acceptable with mi.
+    send_gdb "103-break-list\n"
+    gdb_expect 30 {
+	 -re "103-break-list\r\n103\\\^done,BreakpointTable=\{\}\r\n$mi_gdb_prompt$" {}
+	 -re "103-break-list\r\n103\\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[\\\]\}" {}
+	 -re "103-break-list\r\n103\\\^doneNo breakpoints or watchpoints.\r\n\r\n$mi_gdb_prompt$" {warning "Unexpected console text received"}
+	 -re "$mi_gdb_prompt$" { perror "Breakpoints not deleted" ; return }
+	 -re "Delete all breakpoints.*or n.*$" {
+	    warning "Unexpected prompt for breakpoints deletion";
+	    send_gdb "y\n";
+	    exp_continue
+	}
+	 timeout { perror "-break-list (timeout)" ; return }
+    }
+}
+
+proc mi_gdb_reinitialize_dir { subdir } {
+    global mi_gdb_prompt
+    global MIFLAGS
+
+    global suppress_flag
+    if { $suppress_flag } {
+	return
+    }
+
+    if [is_remote host] {
+	return "";
+    }
+
+    if { $MIFLAGS == "-i=mi1" } {
+      send_gdb "104-environment-directory\n"
+      gdb_expect 60 {
+	-re ".*Reinitialize source path to empty.*y or n. " {
+            warning "Got confirmation prompt for dir reinitialization."
+	    send_gdb "y\n"
+	    gdb_expect 60 {
+		-re "$mi_gdb_prompt$" {}
+                timeout {error "Dir reinitialization failed (timeout)"}
+	    }
+	}
+	-re "$mi_gdb_prompt$" {}
+        timeout {error "Dir reinitialization failed (timeout)"}
+      }
+    } else {
+      send_gdb "104-environment-directory -r\n"
+      gdb_expect 60 {
+	-re "104\\\^done,source-path=.*\r\n$mi_gdb_prompt$" {}
+	-re "$mi_gdb_prompt$" {}
+        timeout {error "Dir reinitialization failed (timeout)"}
+      }
+    }
+
+    send_gdb "105-environment-directory $subdir\n"
+    gdb_expect 60 {
+	-re "Source directories searched.*$mi_gdb_prompt$" {
+	    verbose "Dir set to $subdir"
+	}
+	-re "105\\\^done.*\r\n$mi_gdb_prompt$" {
+            # FIXME: We return just the prompt for now.
+	    verbose "Dir set to $subdir"
+	    # perror "Dir \"$subdir\" failed."
+	}
+    }
+}
+
+# Send GDB the "target" command.
+# FIXME: Some of these patterns are not appropriate for MI.  Based on
+# config/monitor.exp:gdb_target_command.
+proc mi_gdb_target_cmd { targetname serialport } {
+    global mi_gdb_prompt
+
+    set serialport_re [string_to_regexp $serialport]
+    for {set i 1} {$i <= 3} {incr i} {
+	send_gdb "47-target-select $targetname $serialport\n"
+	gdb_expect 60 {
+	    -re "47\\^connected.*$mi_gdb_prompt$" {
+		verbose "Set target to $targetname";
+		return 0;
+	    }
+	    -re "Couldn't establish connection to remote.*$mi_gdb_prompt$" {
+		verbose "Connection failed";
+	    }
+	    -re "Remote MIPS debugging.*$mi_gdb_prompt$" {
+		verbose "Set target to $targetname";
+		return 0;
+	    }
+	    -re "Remote debugging using .*$serialport_re.*$mi_gdb_prompt$" {
+		verbose "Set target to $targetname";
+		return 0;
+	    }
+	    -re "Remote target $targetname connected to.*$mi_gdb_prompt$" {
+		verbose "Set target to $targetname";
+		return 0;
+	    }
+	    -re "Connected to.*$mi_gdb_prompt$" { 
+		verbose "Set target to $targetname";
+		return 0;
+	    }
+	    -re "Ending remote.*$mi_gdb_prompt$" { }
+	    -re "Connection refused.*$mi_gdb_prompt$" {
+		verbose "Connection refused by remote target.  Pausing, and trying again."
+		sleep 5
+		continue
+	    }
+	    -re "Timeout reading from remote system.*$mi_gdb_prompt$" {
+		verbose "Got timeout error from gdb.";
+	    }
+	    timeout {
+		send_gdb "";
+		break
+	    }
+	}
+    }
+    return 1
+}
+
+#
+# load a file into the debugger (file command only).
+# return a -1 if anything goes wrong.
+#
+proc mi_gdb_file_cmd { arg } {
+    global verbose
+    global loadpath
+    global loadfile
+    global GDB
+    global mi_gdb_prompt
+    global last_loaded_file
+    upvar timeout timeout
+
+    set last_loaded_file $arg
+
+    if [is_remote host] {
+	set arg [remote_download host $arg];
+	if { $arg == "" } {
+	    error "download failed"
+	    return -1;
+	}
+    }
+
+# FIXME: Several of these patterns are only acceptable for console
+# output.  Queries are an error for mi.
+    send_gdb "105-file-exec-and-symbols $arg\n"
+    gdb_expect 120 {
+        -re "Reading symbols from.*done.*$mi_gdb_prompt$" {
+            verbose "\t\tLoaded $arg into the $GDB"
+            return 0
+        }
+        -re "has no symbol-table.*$mi_gdb_prompt$" {
+            perror "$arg wasn't compiled with \"-g\""
+            return -1
+        }
+        -re "Load new symbol table from \".*\".*y or n. $" {
+            send_gdb "y\n"
+            gdb_expect 120 {
+                -re "Reading symbols from.*done.*$mi_gdb_prompt$" {
+                    verbose "\t\tLoaded $arg with new symbol table into $GDB"
+                    # All OK
+                }
+                timeout {
+                    perror "(timeout) Couldn't load $arg, other program already loaded."
+                    return -1
+                }
+            }
+	}
+        -re "No such file or directory.*$mi_gdb_prompt$" {
+            perror "($arg) No such file or directory\n"
+            return -1
+        }
+        -re "105-file-exec-and-symbols .*\r\n105\\\^done\r\n$mi_gdb_prompt$" {
+            # We (MI) are just giving the prompt back for now, instead of giving
+	    # some acknowledgement.
+	    return 0
+	}
+        timeout {
+            perror "couldn't load $arg into $GDB (timed out)."
+            return -1
+        }
+	eof {
+            # This is an attempt to detect a core dump, but seems not to
+            # work.  Perhaps we need to match .* followed by eof, in which
+            # gdb_expect does not seem to have a way to do that.
+            perror "couldn't load $arg into $GDB (end of file)."
+            return -1
+        }
+    }
+}
+
+#
+# connect to the target and download a file, if necessary.
+# return a -1 if anything goes wrong.
+#
+proc mi_gdb_target_load { } {
+    global verbose
+    global loadpath
+    global loadfile
+    global GDB
+    global mi_gdb_prompt
+    upvar timeout timeout
+
+    if { [info procs gdbserver_gdb_load] != "" } {
+	mi_gdb_test "kill" ".*" ""
+	set res [gdbserver_gdb_load]
+	set protocol [lindex $res 0]
+	set gdbport [lindex $res 1]
+
+	if { [mi_gdb_target_cmd $protocol $gdbport] != 0 } {
+	    return -1
+	}
+    } elseif { [info procs send_target_sid] != "" } {
+	# For SID, things get complex
+	send_gdb "kill\n"
+	gdb_expect 10 {
+	    -re ".*$mi_gdb_prompt$"
+	}
+	send_target_sid
+	gdb_expect 60 {
+	    -re "\\^done.*$mi_gdb_prompt$" {
+	    }
+	    timeout {
+		perror "Unable to connect to SID target"
+		return -1
+	    }
+	}
+	send_gdb "48-target-download\n"
+	gdb_expect 10 {
+	    -re "48\\^done.*$mi_gdb_prompt$" {
+	    }
+	    timeout {
+		perror "Unable to download to SID target"
+		return -1
+	    }
+	}
+    } elseif { [target_info protocol] == "sim" } {
+	# For the simulator, just connect to it directly.
+	send_gdb "47-target-select sim\n"
+	gdb_expect 10 {
+	    -re "47\\^connected.*$mi_gdb_prompt$" {
+	    }
+	    timeout {
+		perror "Unable to select sim target"
+		return -1
+	    }
+	}
+	send_gdb "48-target-download\n"
+	gdb_expect 10 {
+	    -re "48\\^done.*$mi_gdb_prompt$" {
+	    }
+	    timeout {
+		perror "Unable to download to sim target"
+		return -1
+	    }
+	}
+    } elseif { [target_info gdb_protocol] == "remote" } {
+	# remote targets
+	if { [mi_gdb_target_cmd "remote" [target_info netport]] != 0 } {
+	    perror "Unable to connect to remote target"
+	    return -1
+	}
+	send_gdb "48-target-download\n"
+	gdb_expect 10 {
+	    -re "48\\^done.*$mi_gdb_prompt$" {
+	    }
+	    timeout {
+		perror "Unable to download to remote target"
+		return -1
+	    }
+	}
+    }
+    return 0
+}
+
+#
+# load a file into the debugger.
+# return a -1 if anything goes wrong.
+#
+proc mi_gdb_load { arg } {
+    if { $arg != "" } {
+	return [mi_gdb_file_cmd $arg]
+    }
+    return 0
+}
+
+# mi_gdb_test COMMAND PATTERN MESSAGE [IPATTERN] -- send a command to gdb; 
+#   test the result.
+#
+# COMMAND is the command to execute, send to GDB with send_gdb.  If
+#   this is the null string no command is sent.
+# PATTERN is the pattern to match for a PASS, and must NOT include
+#   the \r\n sequence immediately before the gdb prompt.
+# MESSAGE is the message to be printed.  (If this is the empty string, 
+#   then sometimes we don't call pass or fail at all; I don't 
+#   understand this at all.)
+# IPATTERN is the pattern to match for the inferior's output.  This parameter
+#   is optional.  If present, it will produce a PASS if the match is 
+#   successful, and a FAIL if unsuccessful.
+#
+# Returns:
+#    1 if the test failed,
+#    0 if the test passes,
+#   -1 if there was an internal error.
+#  
+proc mi_gdb_test { args } {
+    global verbose
+    global mi_gdb_prompt
+    global GDB expect_out
+    upvar timeout timeout
+
+    set command [lindex $args 0]
+    set pattern [lindex $args 1]
+    set message [lindex $args 2]
+
+    if [llength $args]==4 {
+	set ipattern [lindex $args 3]
+    }
+
+    if [llength $args]==5 {
+	set question_string [lindex $args 3];
+	set response_string [lindex $args 4];
+    } else {
+	set question_string "^FOOBAR$"
+    }
+
+    if $verbose>2 then {
+	send_user "Sending \"$command\" to gdb\n"
+	send_user "Looking to match \"$pattern\"\n"
+	send_user "Message is \"$message\"\n"
+    }
+
+    set result -1
+    set string "${command}\n";
+    set string_regex [string_to_regexp $command]
+
+    if { $command != "" } {
+	while { "$string" != "" } {
+	    set foo [string first "\n" "$string"];
+	    set len [string length "$string"];
+	    if { $foo < [expr $len - 1] } {
+		set str [string range "$string" 0 $foo];
+		if { [send_gdb "$str"] != "" } {
+		    global suppress_flag;
+
+		    if { ! $suppress_flag } {
+			perror "Couldn't send $command to GDB.";
+		    }
+		    fail "$message";
+		    return $result;
+		}
+		gdb_expect 2 {
+		    -re "\[\r\n\]" { }
+		    timeout { }
+		}
+		set string [string range "$string" [expr $foo + 1] end];
+	    } else {
+		break;
+	    }
+	}
+	if { "$string" != "" } {
+	    if { [send_gdb "$string"] != "" } {
+		global suppress_flag;
+
+		if { ! $suppress_flag } {
+		    perror "Couldn't send $command to GDB.";
+		}
+		fail "$message";
+		return $result;
+	    }
+	}
+    }
+
+    if [info exists timeout] {
+	set tmt $timeout;
+    } else {
+	global timeout;
+	if [info exists timeout] {
+	    set tmt $timeout;
+	} else {
+	    set tmt 60;
+	}
+    }
+    gdb_expect $tmt {
+	 -re "\\*\\*\\* DOSEXIT code.*" {
+	     if { $message != "" } {
+		 fail "$message";
+	     }
+	     gdb_suppress_entire_file "GDB died";
+	     return -1;
+	 }
+	 -re "Ending remote debugging.*$mi_gdb_prompt\[ \]*$" {
+	    if ![isnative] then {
+		warning "Can`t communicate to remote target."
+	    }
+	    gdb_exit
+	    gdb_start
+	    set result -1
+	}
+	 -re "^($string_regex\[\r\n\]+)?($pattern\[\r\n\]+$mi_gdb_prompt\[ \]*)" {
+	    # At this point, $expect_out(1,string) is the MI input command.
+	    # and $expect_out(2,string) is the MI output command.
+	    # If $expect_out(1,string) is "", then there was no MI input command here.
+
+	    # NOTE, there is no trailing anchor because with GDB/MI, 
+	    # asynchronous responses can happen at any point, causing more 
+	    # data to be available.  Normally an anchor is used to make 
+	    # sure the end of the output is matched, however, $mi_gdb_prompt 
+	    # is just as good of an anchor since mi_gdb_test is meant to 
+	    # match a single mi output command.  If a second GDB/MI output 
+	    # response is sent, it will be in the buffer for the next 
+	    # time mi_gdb_test is called.
+	    if ![string match "" $message] then {
+		pass "$message"
+	    }
+	    set result 0
+	}
+	 -re "(${question_string})$" {
+	    send_gdb "$response_string\n";
+	    exp_continue;
+	}
+	 -re "Undefined.* command:.*$mi_gdb_prompt\[ \]*$" {
+	    perror "Undefined command \"$command\"."
+            fail "$message"
+	    set result 1
+	}
+	 -re "Ambiguous command.*$mi_gdb_prompt\[ \]*$" {
+	    perror "\"$command\" is not a unique command name."
+            fail "$message"
+	    set result 1
+	}
+	 -re "Program exited with code \[0-9\]+.*$mi_gdb_prompt\[ \]*$" {
+	    if ![string match "" $message] then {
+		set errmsg "$message (the program exited)"
+	    } else {
+		set errmsg "$command (the program exited)"
+	    }
+	    fail "$errmsg"
+	    return -1
+	}
+	 -re "The program is not being run.*$mi_gdb_prompt\[ \]*$" {
+	    if ![string match "" $message] then {
+		set errmsg "$message (the program is no longer running)"
+	    } else {
+		set errmsg "$command (the program is no longer running)"
+	    }
+	    fail "$errmsg"
+	    return -1
+	}
+	 -re ".*$mi_gdb_prompt\[ \]*$" {
+	    if ![string match "" $message] then {
+		fail "$message"
+	    }
+	    set result 1
+	}
+	 "<return>" {
+	    send_gdb "\n"
+	    perror "Window too small."
+            fail "$message"
+	}
+	 -re "\\(y or n\\) " {
+	    send_gdb "n\n"
+	    perror "Got interactive prompt."
+            fail "$message"
+	}
+	 eof {
+	     perror "Process no longer exists"
+	     if { $message != "" } {
+		 fail "$message"
+	     }
+	     return -1
+	}
+	 full_buffer {
+	    perror "internal buffer is full."
+            fail "$message"
+	}
+	timeout	{
+	    if ![string match "" $message] then {
+		fail "$message (timeout)"
+	    }
+	    set result 1
+	}
+    }
+
+    # If the GDB output matched, compare the inferior output.
+    if { $result == 0 } {
+	if [ info exists ipattern ] {
+	    if { ![target_info exists gdb,noinferiorio] } {
+		global mi_inferior_spawn_id
+		expect {
+		    -i $mi_inferior_spawn_id -re "$ipattern" {
+			pass "$message inferior output"
+		    }
+		    timeout {
+			fail "$message inferior output (timeout)"
+			set result 1
+		    }
+		}
+	    } else {
+		unsupported "$message inferior output"
+	    }
+        }
+    }
+
+    return $result
+}
+
+#
+# MI run command.  (A modified version of gdb_run_cmd)
+#
+
+# In patterns, the newline sequence ``\r\n'' is matched explicitly as
+# ``.*$'' could swallow up output that we attempt to match elsewhere.
+
+proc mi_run_cmd {args} {
+    global suppress_flag
+    if { $suppress_flag } {
+	return -1
+    }
+    global mi_gdb_prompt
+
+    if [target_info exists gdb_init_command] {
+	send_gdb "[target_info gdb_init_command]\n";
+	gdb_expect 30 {
+	    -re "$mi_gdb_prompt$" { }
+	    default {
+		perror "gdb_init_command for target failed";
+		return;
+	    }
+	}
+    }
+
+    if { [mi_gdb_target_load] < 0 } {
+	return
+    }
+
+    if [target_info exists use_gdb_stub] {
+	if [target_info exists gdb,do_reload_on_run] {
+	    send_gdb "000-exec-continue\n";
+	    gdb_expect 60 {
+		-re "000\\^running\[\r\n\]+$mi_gdb_prompt$" {}
+		default {}
+	    }
+	    return;
+	}
+
+	if [target_info exists gdb,start_symbol] {
+	    set start [target_info gdb,start_symbol];
+	} else {
+	    set start "start";
+	}
+
+	# HACK: Should either use 000-jump or fix the target code
+	# to better handle RUN.
+	send_gdb  "jump *$start\n"
+	warning "Using CLI jump command, expect run-to-main FAIL"
+	return
+    }
+
+    send_gdb "000-exec-run $args\n"
+    gdb_expect {
+	-re "000\\^running\r\n${mi_gdb_prompt}" {
+	}
+	timeout {
+	    perror "Unable to start target"
+	    return
+	}
+    }
+    # NOTE: Shortly after this there will be a ``000*stopped,...(gdb)''
+}
+
+#
+# Just like run-to-main but works with the MI interface
+#
+
+proc mi_run_to_main { } {
+    global suppress_flag
+    if { $suppress_flag } {
+	return -1
+    }
+
+    global srcdir
+    global subdir
+    global binfile
+    global srcfile
+
+    mi_delete_breakpoints
+    mi_gdb_reinitialize_dir $srcdir/$subdir
+    mi_gdb_load ${binfile}
+
+    mi_runto main
+}
+
+
+# Just like gdb's "runto" proc, it will run the target to a given
+# function.  The big difference here between mi_runto and mi_execute_to
+# is that mi_execute_to must have the inferior running already.  This
+# proc will (like gdb's runto) (re)start the inferior, too.
+#
+# FUNC is the linespec of the place to stop (it inserts a breakpoint here).
+# It returns:
+#   -1  if test suppressed, failed, timedout
+#    0  if test passed
+
+proc mi_runto_helper {func run_or_continue} {
+  global suppress_flag
+  if { $suppress_flag } {
+    return -1
+  }
+
+  global mi_gdb_prompt expect_out
+  global hex decimal fullname_syntax
+
+  set test "mi runto $func"
+  mi_gdb_test "200-break-insert -t $func" \
+    "200\\^done,bkpt=\{number=\"\[0-9\]+\",type=\"breakpoint\",disp=\"del\",enabled=\"y\",addr=\"$hex\",func=\"$func\(\\\(.*\\\)\)?\",file=\".*\",line=\"\[0-9\]*\",times=\"0\"\}" \
+    "breakpoint at $func"
+
+  if {![regexp {number="[0-9]+"} $expect_out(buffer) str]
+      || ![scan $str {number="%d"} bkptno]} {
+    set bkptno {[0-9]+}
+  }
+
+  if {$run_or_continue == "run"} {
+      mi_run_cmd
+  } else {
+      send_gdb "000-exec-continue\n"
+      gdb_expect {
+	  -re "000\\^running\r\n${mi_gdb_prompt}" {
+	  }
+	  timeout {
+	    fail "$test"
+	    return -1
+	  }
+      }
+  }
+
+  gdb_expect {
+    -re ".*000\\*stopped,thread-id=\"$decimal\",frame=\{addr=\"$hex\",func=\"$func\",args=\(\\\[.*\\\]\|\{.*\}\),file=\".*\",fullname=\"${fullname_syntax}.*\",line=\"\[0-9\]*\"\}\r\n$mi_gdb_prompt$" {
+      pass "$test"
+      return 0
+    }
+    -re ".*$mi_gdb_prompt$" {
+      fail "$test (2)"
+    }
+    timeout {
+      fail "$test (timeout)"
+      return -1
+    }
+  }
+}
+
+proc mi_runto {func} {
+    mi_runto_helper $func "run"
+}
+
+# Next to the next statement
+# For return values, see mi_execute_to_helper
+
+proc mi_next { test } {
+  return [mi_next_to {.*} {.*} {.*} {.*} $test]
+}
+
+
+# Step to the next statement
+# For return values, see mi_execute_to_helper
+
+proc mi_step { test } {
+  return [mi_step_to {.*} {.*} {.*} {.*} $test]
+}
+
+# cmd should not include the number or newline (i.e. "exec-step 3", not
+# "220-exec-step 3\n"
+
+# Can not match -re ".*\r\n${mi_gdb_prompt}", because of false positives
+# after the first prompt is printed.
+
+proc mi_execute_to_helper { cmd reason func args file line extra test } {
+    global suppress_flag
+    if { $suppress_flag } {
+	return -1
+    }
+    global mi_gdb_prompt
+    global hex
+    global decimal
+    global fullname_syntax
+    send_gdb "220-$cmd\n"
+    gdb_expect {
+	-re "220\\^running\r\n${mi_gdb_prompt}.*220\\*stopped,reason=\"$reason\",thread-id=\"$decimal\",frame=\{addr=\"$hex\",func=\"$func\",args=$args,file=\".*$file\",fullname=\"${fullname_syntax}$file\",line=\"$line\"\}$extra\r\n$mi_gdb_prompt$" {
+	    pass "$test"
+	    return 0
+	}
+	-re "220\\^running\r\n${mi_gdb_prompt}.*220\\*stopped,reason=\"$reason\",thread-id=\"$decimal\",frame=\{addr=\"$hex\",func=\".*\",args=\[\\\[\{\].*\[\\\]\}\],file=\".*\",fullname=\"${fullname_syntax}.*\",line=\"\[0-9\]*\"\}.*\r\n$mi_gdb_prompt$" {
+	    fail "$test (stopped at wrong place)"
+	    return -1
+	}
+	-re "220\\^running\r\n${mi_gdb_prompt}.*\r\n${mi_gdb_prompt}$" {
+	    fail "$test (unknown output after running)"
+	    return -1
+	}
+	timeout {
+	    fail "$test (timeout)"
+	    return -1
+	}
+    }
+}
+
+proc mi_execute_to { cmd reason func args file line extra test } {
+    mi_execute_to_helper "$cmd" "$reason" "$func" "\\\[$args\\\]" \
+	"$file" "$line" "$extra" "$test"
+}
+
+proc mi_next_to { func args file line test } {
+    mi_execute_to "exec-next" "end-stepping-range" "$func" "$args" \
+	"$file" "$line" "" "$test"
+}
+
+proc mi_step_to { func args file line test } {
+    mi_execute_to "exec-step" "end-stepping-range" "$func" "$args" \
+	"$file" "$line" "" "$test"
+}
+
+proc mi_finish_to { func args file line result ret test } {
+    mi_execute_to "exec-finish" "function-finished" "$func" "$args" \
+	"$file" "$line" \
+	",gdb-result-var=\"$result\",return-value=\"$ret\"" \
+	"$test"
+}
+
+proc mi_continue_to {func} {
+    mi_runto_helper $func "continue"
+}
+
+proc mi0_execute_to { cmd reason func args file line extra test } {
+    mi_execute_to_helper "$cmd" "$reason" "$func" "\{$args\}" \
+	"$file" "$line" "$extra" "$test"
+}
+
+proc mi0_next_to { func args file line test } {
+    mi0_execute_to "exec-next" "end-stepping-range" "$func" "$args" \
+	"$file" "$line" "" "$test"
+}
+
+proc mi0_step_to { func args file line test } {
+    mi0_execute_to "exec-step" "end-stepping-range" "$func" "$args" \
+	"$file" "$line" "" "$test"
+}
+
+proc mi0_finish_to { func args file line result ret test } {
+    mi0_execute_to "exec-finish" "function-finished" "$func" "$args" \
+	"$file" "$line" \
+	",gdb-result-var=\"$result\",return-value=\"$ret\"" \
+	"$test"
+}
+
+proc mi0_continue_to { bkptno func args file line test } {
+    mi0_execute_to "exec-continue" "breakpoint-hit\",bkptno=\"$bkptno" \
+	"$func" "$args" "$file" "$line" "" "$test"
+}
+
+# Creates varobj named NAME for EXPRESSION.
+# Name cannot be "-".
+proc mi_create_varobj { name expression testname } {
+    mi_gdb_test "-var-create $name * $expression" \
+        "\\^done,name=\"$name\",numchild=\"\[0-9\]+\",value=\".*\",type=.*" \
+        $testname
+}
+
+# Deletes the specified NAME. 
+proc mi_delete_varobj { name testname } {
+    mi_gdb_test "-var-delete $name" \
+        "\\^done,ndeleted=.*" \
+        $testname
+}
+
+# Updates varobj named NAME and checks that all varobjs in EXPECTED
+# are reported as updated, and no other varobj is updated.
+# Assumes that no varobj is out of scope and that no varobj changes
+# types.
+proc mi_varobj_update { name expected testname } {
+    set er "\\^done,changelist=\\\["
+    set first 1
+    foreach item $expected {
+        set v "{name=\"$item\",in_scope=\"true\",type_changed=\"false\"}"
+        if {$first == 1} {
+            set er "$er$v"
+            set first 0
+        } else {
+            set er "$er,$v"
+        }
+    }
+    set er "$er\\\]"
+
+    verbose -log "Expecting: $er" 2
+    mi_gdb_test "-var-update $name" $er $testname
+}
+
+proc mi_check_varobj_value { name value testname } {
+
+    mi_gdb_test "-var-evaluate-expression $name" \
+	"\\^done,value=\"$value\"" \
+	$testname
+}
+
+# Check the results of the:
+#
+#   -var-list-children VARNAME
+#
+# command.  The CHILDREN parement should be a list of lists.
+# Each inner list can have either 3 or 4 elements, describing
+# fields that gdb is expected to report for child variable object,
+# in the following order
+#
+#   - Name
+#   - Expression
+#   - Number of children
+#   - Type
+#
+# If inner list has 3 elements, the gdb is expected to output no
+# type for a child.
+#
+proc mi_list_varobj_children { varname children testname } {
+
+    set numchildren [llength $children]
+    set children_exp {}
+    set whatever "\"\[^\"\]+\""
+
+    foreach item $children {
+
+        set name [lindex $item 0]
+        set exp [lindex $item  1]
+        set numchild [lindex $item 2]
+        if {[llength $item] == 4} {
+            set type [lindex $item 3]
+
+            lappend children_exp\
+                "child={name=\"$name\",exp=\"$exp\",numchild=\"$numchild\",type=\"$type\"}"
+        } else {
+            lappend children_exp\
+                "child={name=\"$name\",exp=\"$exp\",numchild=\"$numchild\"}"
+        }
+    }
+    set children_exp_j [join $children_exp ","]
+    set expected "\\^done,numchild=\"$numchildren\",children=\\\[$children_exp_j\\\]"
+
+    verbose -log "Expecting: $expected"
+
+    mi_gdb_test "-var-list-children $varname" $expected $testname
+}
+
+# A list of two-element lists.  First element of each list is
+# a Tcl statement, and the second element is the line
+# number of source C file where the statement originates.
+set mi_autotest_data ""
+# The name of the source file for autotesting.
+set mi_autotest_source ""
+
+proc count_newlines { string } {
+    return [regexp -all "\n" $string]
+}
+
+# Prepares for running inline tests in FILENAME.
+# See comments for mi_run_inline_test for detailed
+# explanation of the idea and syntax.
+proc mi_prepare_inline_tests { filename } {
+
+    global srcdir
+    global subdir
+    global mi_autotest_source
+    global mi_autotest_data
+
+    set mi_autotest_data {}
+
+    set mi_autotest_source $filename
+    
+    if { ! [regexp "^/" "$filename"] } then {
+	set filename "$srcdir/$subdir/$filename"
+    }
+
+    set chan [open $filename]
+    set content [read $chan]
+    set line_number 1
+    while {1} {
+        set start [string first "/*:" $content]
+        if {$start != -1} {
+            set end [string first ":*/" $content]
+            if {$end == -1} {
+                error "Unterminated special comment in $filename"
+            }
+            
+            set prefix [string range $content 0 $start]
+            set prefix_newlines [count_newlines $prefix]
+            
+            set line_number [expr $line_number+$prefix_newlines]
+            set comment_line $line_number
+
+            set comment [string range $content [expr $start+3] [expr $end-1]]
+
+            set comment_newlines [count_newlines $comment]
+            set line_number [expr $line_number+$comment_newlines]
+            
+            set comment [string trim $comment]
+            set content [string range $content [expr $end+3] \
+                             [string length $content]]
+            lappend mi_autotest_data [list $comment $comment_line]
+        } else {        
+           break
+        }        
+    }
+    close $chan
+}
+
+# Helper to mi_run_inline_test below.
+# Return the list of all (statement,line_number) lists
+# that comprise TESTCASE.  The begin and end markers
+# are not included.
+proc mi_get_inline_test {testcase} {
+
+    global mi_gdb_prompt
+    global mi_autotest_data
+    global mi_autotest_source
+
+    set result {}
+
+    set seen_begin 0
+    set seen_end 0
+    foreach l $mi_autotest_data {
+
+        set comment [lindex $l 0]
+
+        if {$comment == "BEGIN: $testcase"} {
+            set seen_begin 1
+        } elseif {$comment == "END: $testcase"} {
+            set seen_end 1
+            break
+        } elseif {$seen_begin==1} {
+            lappend result $l
+        }
+    }
+
+    if {$seen_begin == 0} {
+        error "Autotest $testcase not found" 
+    }
+
+    if {$seen_begin == 1 && $seen_end == 0} {
+        error "Missing end marker for test $testcase"
+    }
+
+    return $result
+}
+
+# Sets temporary breakpoint at LOCATION.
+proc mi_tbreak {location} {
+
+    global mi_gdb_prompt
+
+    mi_gdb_test "-break-insert -t $location" \
+        {\^done,bkpt=.*} \
+        "run to $location (set breakpoint)"    
+}
+
+# Send COMMAND that must be a command that resumes
+# the inferiour (run/continue/next/etc) and consumes
+# the "^running" output from it.
+proc mi_send_resuming_command {command test} {
+
+    global mi_gdb_prompt
+
+    send_gdb "220-$command\n"
+    gdb_expect {
+        -re "220\\^running\r\n${mi_gdb_prompt}" {
+        }
+        timeout {
+            fail $test
+        }
+    }
+}
+
+# Helper to mi_run_inline_test below.
+# Sets a temporary breakpoint at LOCATION and runs
+# the program using COMMAND.  When the program is stopped
+# returns the line at which it.  Returns -1 if line cannot
+# be determined.
+# Does not check that the line is the same as requested.
+# The caller can check itself if required.
+proc mi_continue_to_line {location test} {
+
+    mi_tbreak $location   
+    mi_send_resuming_command "exec-continue" "run to $location (exec-continue)"
+    return [mi_wait_for_stop $test]
+}
+
+# Wait until gdb prints the current line.
+proc mi_wait_for_stop {test} {
+
+  global mi_gdb_prompt
+
+  gdb_expect {
+      -re ".*line=\"(.*)\".*\r\n$mi_gdb_prompt$" {
+          return $expect_out(1,string)
+      }
+      -re ".*$mi_gdb_prompt$" {
+          fail "wait for stop ($test)"
+      }
+      timeout {
+          fail "wait for stop ($test)"
+      }
+  }
+}
+
+# Run a MI test embedded in comments in a C file.
+# The C file should contain special comments in the following
+# three forms:
+#
+#    /*: BEGIN: testname :*/
+#    /*:  <Tcl statements> :*/
+#    /*: END: testname :*/
+#
+# This procedure find the begin and end marker for the requested
+# test. Then, a temporary breakpoint is set at the begin
+# marker and the program is run (from start).
+#
+# After that, for each special comment between the begin and end
+# marker, the Tcl statements are executed.  It is assumed that
+# for each comment, the immediately preceding line is executable
+# C statement.  Then, gdb will be single-stepped until that
+# preceding C statement is executed, and after that the
+# Tcl statements in the comment will be executed.
+#
+# For example:
+#
+#     /*: BEGIN: assignment-test :*/
+#     v = 10;
+#     /*: <Tcl code to check that 'v' is indeed 10 :*/
+#     /*: END: assignment-test :*/
+#
+# The mi_prepare_inline_tests function should be called before
+# calling this function.  A given C file can contain several
+# inline tests.  The names of the tests must be unique within one
+# C file.
+#
+proc mi_run_inline_test { testcase } {
+
+    global mi_gdb_prompt
+    global hex
+    global decimal
+    global fullname_syntax
+    global mi_autotest_source
+
+    set commands [mi_get_inline_test $testcase]
+
+    set first 1
+    set line_now 1
+
+    foreach c $commands {
+        set statements [lindex $c 0]
+        set line [lindex $c 1]
+        set line [expr $line-1]
+
+        # We want gdb to be stopped at the expression immediately
+        # before the comment.  If this is the first comment, the
+        # program is either not started yet or is in some random place,
+        # so we run it.  For further comments, we might be already
+        # standing at the right line. If not continue till the
+        # right line.
+
+        if {$first==1} {
+            # Start the program afresh.
+            mi_tbreak "$mi_autotest_source:$line"
+            mi_run_cmd
+            set line_now [mi_wait_for_stop "$testcase: step to $line"]
+            set first 0
+        } elseif {$line_now!=$line} {
+            set line_now [mi_continue_to_line "$mi_autotest_source:$line" "continue to $line"]
+        }
+
+        if {$line_now!=$line} {
+            fail "$testcase: go to line $line"
+        }
+
+        # We're not at the statement right above the comment.
+        # Execute that statement so that the comment can test
+        # the state after the statement is executed.
+
+        # Single-step past the line.
+        mi_send_resuming_command "exec-next" "$testcase: step over $line"
+        set line_now [mi_wait_for_stop "$testcase: step over $line"]
+
+        # We probably want to use 'uplevel' so that statements
+        # have direct access to global variables that the
+        # main 'exp' file has set up.  But it's not yet clear,
+        # will need more experience to be sure.
+        eval $statements
+    }
+}

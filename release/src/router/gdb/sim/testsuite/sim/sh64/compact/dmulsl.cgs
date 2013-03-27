@@ -1,0 +1,115 @@
+# sh testcase for dmuls.l $rm, $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	mov #0, r0
+	mov #0, r1
+	dmuls.l r0, r1
+	# check result
+	sts mach, r3
+	sts macl, r4
+	assert r3, #0
+	assert r4, #0
+
+test2:	
+	mov #0, r0
+	mov #5, r1
+	dmuls.l r0, r1
+	# check result
+	sts mach, r3
+	sts macl, r4
+	assert r3, #0
+	assert r4, #0
+
+test3:	
+	mov #5, r0
+	mov #0, r1
+	dmuls.l r0, r1
+	# check result
+	sts mach, r3
+	sts macl, r4
+	assert r3, #0
+	assert r4, #0
+
+test4:	
+	mov #1, r0
+	mov #5, r1
+	dmuls.l r0, r1
+	# check result
+	sts mach, r3
+	sts macl, r4
+	assert r3, #0
+	assert r4, #5
+
+test5:	
+	mov #5, r0
+	mov #1, r1
+	dmuls.l r0, r1
+	# check result
+	sts mach, r3
+	sts macl, r4
+	assert r3, #0
+	assert r4, #5
+
+	bra test6
+	nop
+
+wrong:
+	fail
+
+test6:	
+	mov #2, r0
+	mov #2, r1
+	dmuls.l r0, r1
+	# check result
+	sts mach, r3
+	sts macl, r4
+	assert r3, #0
+	assert r4, #4
+
+test7:	
+	mov #1, r0
+	neg r0, r0
+	mov #2, r1
+	dmuls.l r0, r1
+	# check result
+	sts mach, r3
+	sts macl, r4
+
+	mov #0, r8
+	not r8, r9
+	not r8, r10
+	shll r10
+	cmp/eq r3, r9
+	bf wrong
+	cmp/eq r4, r10
+	bf wrong
+
+test8:	
+	mov #1, r0
+	neg r0, r0
+	mov #1, r1
+	neg r1, r1
+	dmuls.l r0, r1
+	# check result
+	sts mach, r3
+	sts macl, r4
+	assert r3, #0
+	assert r4, #1
+
+test9:	
+	mov #1, r0
+	neg r0, r0
+	shlr r0
+	mov #1, r1
+	neg r1, r1
+	shlr r1
+	dmuls.l r0, r1
+	
+okay:	
+	pass

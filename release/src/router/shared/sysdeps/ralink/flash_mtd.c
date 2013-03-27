@@ -33,7 +33,8 @@ int flash_mtd_init_info(void)
 {
 	FILE *fp;
 	char line[128];
-	int i, sz, esz, nm[12];
+	int i, sz, esz;
+	char nm[12];
 	int total_sz;
 
 	memset(info, 0, sizeof(info));
@@ -269,7 +270,7 @@ int flash_mtd_write(int offset, int value)
 	return 0;
 }
 
-int FWrite(char *src, int offset, int count)
+int FWrite(const char *src, int offset, int count)
 {
 	int i, o, fd, off, addr, sz;
 	unsigned char *buf;

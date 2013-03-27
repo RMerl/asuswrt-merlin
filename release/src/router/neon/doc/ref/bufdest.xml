@@ -1,0 +1,81 @@
+    <refentry id="refbufdest">
+
+      <refmeta>
+	<refentrytitle>ne_buffer_destroy</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_buffer_destroy">ne_buffer_destroy</refname>
+	<refname id="ne_buffer_finish">ne_buffer_finish</refname>
+	<refpurpose>destroy a buffer object</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_string.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_buffer_destroy</function></funcdef>
+	    <paramdef>ne_buffer *<parameter>buf</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>char *<function>ne_buffer_finish</function></funcdef>
+	    <paramdef>ne_buffer *<parameter>buf</parameter></paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para><function>ne_buffer_destroy</function> frees all memory
+associated with the buffer.  <function>ne_buffer_finish</function>
+frees the buffer structure, but not the actual string stored in the
+buffer, which is returned and must be <function>free</function>()d by
+the caller.</para>
+
+	<para>Any use of the buffer object after calling either of these
+functions gives undefined behaviour.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Return value</title>
+
+	<para><function>ne_buffer_finish</function> returns the
+<function>malloc</function>-allocated string stored in the buffer.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Examples</title>
+
+	<para>An example use of <function>ne_buffer_finish</function>;
+the <function>duplicate</function> function returns a string made up of 
+<parameter>n</parameter> copies of <parameter>str</parameter>:</para>
+
+	<programlisting>static char *duplicate(int n, const char *str)
+{
+  ne_buffer *buf = ne_buffer_create();
+  while (n--) {
+    ne_buffer_zappend(buf, str);
+  }
+  return ne_buffer_finish(buf);
+}</programlisting>
+
+      </refsect1>
+
+      <refsect1>
+	<title>See also</title>
+
+	<para><xref linkend="ne_buffer"/>, <xref linkend="ne_buffer_create"/>,
+<xref linkend="ne_buffer_zappend"/></para>
+      </refsect1>
+
+    </refentry>

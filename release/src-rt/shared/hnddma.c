@@ -1170,6 +1170,11 @@ _dma_rxfill(dma_info_t *di)
 		/* the di->rxbufsize doesn't include the extra headroom, we need to add it to the
 		   size to be allocated
 		*/
+		if (di->rxbufsize > BCMEXTRAHDROOM)
+			extra_offset = di->rxextrahdrroom;
+		else
+			extra_offset = 0;
+
 		if (POOL_ENAB(di) && di->rxbufsize > PKTPOOL_MIN_LEN) {
 			ASSERT(di->pktpool);
 			p = pktpool_get(di->pktpool);
@@ -1179,10 +1184,6 @@ _dma_rxfill(dma_info_t *di)
 #endif /* BCMDBG_POOL */
 		}
 		else {
-			if (di->rxbufsize > BCMEXTRAHDROOM)
-				extra_offset = di->rxextrahdrroom;
-			else
-				extra_offset = 0;
 
 			p = PKTGET(di->osh, (di->rxbufsize + extra_offset +  alignment_req - 1),
 				FALSE);
@@ -1218,8 +1219,8 @@ _dma_rxfill(dma_info_t *di)
 
 #ifdef CTFMAP
 		/* mark as ctf buffer for fast mapping */
-		if(CTF_ENAB(kcih)) {
-			ASSERT((((uint32)PKTDATA(di->osh, p)) & 31)==0);
+		if (CTF_ENAB(kcih)) {
+			ASSERT((((uint32)PKTDATA(di->osh, p)) & 31) == 0);
 			PKTSETCTF(di->osh, p);
 		}
 #endif /* CTFMAP */

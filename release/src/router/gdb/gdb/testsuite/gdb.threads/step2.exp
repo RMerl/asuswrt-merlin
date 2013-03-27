@@ -1,0 +1,149 @@
+# step2.exp -- Expect script to test gdb step.c
+# Copyright (C) 1992, 1997, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Jeff Law. (law@cygnus.com)
+#
+
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set program_exited 0
+
+# A simple and crude test to see that we can step two threads independently
+proc test_multi_threaded_stepping {} {
+    global gdb_prompt
+    global hex
+    global srcfile
+    global decimal
+
+    # Set breakpoints in code that we know is executed in only
+    # thread of control.
+    gdb_test "break thread1" \
+	     "Break.* at $hex: file .*$srcfile, line $decimal\\."
+    gdb_test "break thread2" \
+	     "Break.* at $hex: file .*$srcfile, line $decimal\\."
+
+    # the order in which things happen is indeterminate.  So we basically
+    # look for a set of events and note that each one happens and that
+    # all of the required events have happened when we're done.
+    #
+    # Right now we only verify that both threads start and that they
+    # both call pthread_cond_wait twice.
+    set thread1started 0
+    set thread1condwait 0
+    set thread2started 0
+    set thread2condwait 0
+    
+    send_gdb "run\n"
+    gdb_expect {
+	-re "The program .* has been started already.*y or n. $" {
+	    send_gdb "y\n"
+	    exp_continue
+	}
+	-re ".*Breakpoint \[0-9\]+,.*thread1.* at .*$srcfile:.*\[\t \].*$gdb_prompt $" {
+	    if { $thread1started != 0 } then {
+		fail "thread1 started"
+		return
+	    } else {
+		set thread1started 1
+		pass "thread1 started"
+	    }
+	    send_gdb "step\n"
+	    exp_continue
+	}
+	-re ".*Breakpoint \[0-9\]+,.*thread2.* at .*$srcfile:.*\[\t \].*$gdb_prompt $" {
+	    if { $thread2started != 0 } then {
+		fail "thread2 started"
+		return
+	    } else {
+		set thread2started 1
+		pass "thread2 started"
+	    }
+	    send_gdb "step\n"
+	    exp_continue
+	}
+	-re ".*pthread_cond_wait.*cv_a.*$gdb_prompt" {
+	    if { $thread1started == 0 } then {
+		fail "thread1 condwait"
+		return
+	    }
+	    if { $thread1condwait < 2 } then {
+		pass "thread1 condwait"
+		incr thread1condwait
+	    }
+	    if { $thread2condwait == 2 } then {
+		pass "multi threaded stepping"
+		return
+	    }
+	    send_gdb "step\n"
+	    exp_continue
+	}
+		    
+	-re ".*pthread_cond_wait.*cv_b.*$gdb_prompt" {
+	    if { $thread2started == 0 } then {
+		fail "thread2 condwait"
+		return
+	    }
+	    if { $thread2condwait < 2 } then {
+		pass "thread2 condwait"
+		incr thread2condwait
+	    }
+	    if { $thread1condwait == 2 } then {
+		pass "multi threaded stepping"
+		return
+	    }
+	    send_gdb "step\n"
+	    exp_continue
+	}
+		    
+	-re "$gdb_prompt" {
+	    send_gdb "step\n"
+	    exp_continue
+	}
+	default { fail "multi threaded stepping" }
+    }
+}
+
+# Check to see if we have an executable to test.  If not, then either we
+# haven't tried to compile one, or the compilation failed for some reason.
+# In either case, just notify the user and skip the tests in this file.
+
+set binfile "step"
+set srcfile "step.c"
+
+if ![file exists $objdir/$subdir/$binfile] then {
+    if $all_flag then {
+	warning "$binfile does not exist; tests suppressed."
+    }
+    return
+}
+
+set prms_id 0
+set bug_id 0
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $objdir/$subdir/$binfile
+
+test_multi_threaded_stepping

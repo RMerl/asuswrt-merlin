@@ -46,8 +46,7 @@ int config_insert_values_internal(server *srv, array *ca, const config_values_t 
 					if (da->value->data[j]->type == TYPE_STRING) {
 						data_string *ds = data_string_init();
 
-						buffer_copy_string_buffer(ds->value, ((data_string *)(da->value->data[j]))->value);
-						
+						buffer_copy_string_buffer(ds->value, ((data_string *)(da->value->data[j]))->value);						
 						if (!da->is_index_key) {
 							/* the id's were generated automaticly, as we copy now we might have to renumber them
 							 * this is used to prepend server.modules by mod_indexfile as it has to be loaded
@@ -203,7 +202,7 @@ int config_insert_values_global(server *srv, array *ca, const config_values_t cv
 
 		buffer_copy_string_len(touched->value, CONST_STR_LEN(""));
 		buffer_copy_string_buffer(touched->key, du->key);
-
+		
 		array_insert_unique(srv->config_touched, (data_unset *)touched);		
 	}
 	

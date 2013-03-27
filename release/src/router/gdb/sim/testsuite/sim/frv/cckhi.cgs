@@ -1,0 +1,490 @@
+# frv testcase for cckhi $ICCi,$CCj_int,$CCi,$cond
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global cckhi
+cckhi:
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x0 0
+	cckhi		icc0,cc7,cc0,1
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x1 0
+	cckhi		icc0,cc7,cc0,1
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x2 0
+	cckhi		icc0,cc7,cc0,1
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x3 0
+	cckhi		icc0,cc7,cc0,1
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x4 0
+	cckhi		icc0,cc7,cc0,1
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x5 0
+	cckhi		icc0,cc7,cc0,1
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x6 0
+	cckhi		icc0,cc7,cc0,1
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x7 0
+	cckhi		icc0,cc7,cc0,1
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x8 0
+	cckhi		icc0,cc7,cc4,1
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x9 0
+	cckhi		icc0,cc7,cc4,1
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xa 0
+	cckhi		icc0,cc7,cc4,1
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xb 0
+	cckhi		icc0,cc7,cc4,1
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xc 0
+	cckhi		icc0,cc7,cc4,1
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xd 0
+	cckhi		icc0,cc7,cc4,1
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xe 0
+	cckhi		icc0,cc7,cc4,1
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xf 0
+	cckhi		icc0,cc7,cc4,1
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x0 0
+	cckhi		icc0,cc7,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x1 0
+	cckhi		icc0,cc7,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x2 0
+	cckhi		icc0,cc7,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x3 0
+	cckhi		icc0,cc7,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x4 0
+	cckhi		icc0,cc7,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x5 0
+	cckhi		icc0,cc7,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x6 0
+	cckhi		icc0,cc7,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x7 0
+	cckhi		icc0,cc7,cc0,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x8 0
+	cckhi		icc0,cc7,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x9 0
+	cckhi		icc0,cc7,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xa 0
+	cckhi		icc0,cc7,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xb 0
+	cckhi		icc0,cc7,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xc 0
+	cckhi		icc0,cc7,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xd 0
+	cckhi		icc0,cc7,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xe 0
+	cckhi		icc0,cc7,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xf 0
+	cckhi		icc0,cc7,cc4,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x0 0
+	cckhi		icc0,cc7,cc1,0
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x1 0
+	cckhi		icc0,cc7,cc1,0
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x2 0
+	cckhi		icc0,cc7,cc1,0
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x3 0
+	cckhi		icc0,cc7,cc1,0
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x4 0
+	cckhi		icc0,cc7,cc1,0
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x5 0
+	cckhi		icc0,cc7,cc1,0
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x6 0
+	cckhi		icc0,cc7,cc1,0
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x7 0
+	cckhi		icc0,cc7,cc1,0
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x8 0
+	cckhi		icc0,cc7,cc5,0
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x9 0
+	cckhi		icc0,cc7,cc5,0
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xa 0
+	cckhi		icc0,cc7,cc5,0
+	test_spr_immed	0xdb1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xb 0
+	cckhi		icc0,cc7,cc5,0
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xc 0
+	cckhi		icc0,cc7,cc5,0
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xd 0
+	cckhi		icc0,cc7,cc5,0
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xe 0
+	cckhi		icc0,cc7,cc5,0
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xf 0
+	cckhi		icc0,cc7,cc5,0
+	test_spr_immed	0x9b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x0 0
+	cckhi		icc0,cc7,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x1 0
+	cckhi		icc0,cc7,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x2 0
+	cckhi		icc0,cc7,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x3 0
+	cckhi		icc0,cc7,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x4 0
+	cckhi		icc0,cc7,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x5 0
+	cckhi		icc0,cc7,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x6 0
+	cckhi		icc0,cc7,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x7 0
+	cckhi		icc0,cc7,cc1,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x8 0
+	cckhi		icc0,cc7,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x9 0
+	cckhi		icc0,cc7,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xa 0
+	cckhi		icc0,cc7,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xb 0
+	cckhi		icc0,cc7,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xc 0
+	cckhi		icc0,cc7,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xd 0
+	cckhi		icc0,cc7,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xe 0
+	cckhi		icc0,cc7,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xf 0
+	cckhi		icc0,cc7,cc5,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x0 0
+	cckhi		icc0,cc7,cc2,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x1 0
+	cckhi		icc0,cc7,cc2,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x2 0
+	cckhi		icc0,cc7,cc2,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x3 0
+	cckhi		icc0,cc7,cc2,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x4 0
+	cckhi		icc0,cc7,cc2,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x5 0
+	cckhi		icc0,cc7,cc2,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x6 0
+	cckhi		icc0,cc7,cc2,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x7 0
+	cckhi		icc0,cc7,cc2,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x8 0
+	cckhi		icc0,cc7,cc6,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x9 0
+	cckhi		icc0,cc7,cc6,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xa 0
+	cckhi		icc0,cc7,cc6,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xb 0
+	cckhi		icc0,cc7,cc6,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xc 0
+	cckhi		icc0,cc7,cc6,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xd 0
+	cckhi		icc0,cc7,cc6,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xe 0
+	cckhi		icc0,cc7,cc6,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xf 0
+	cckhi		icc0,cc7,cc6,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x0 0
+	cckhi		icc0,cc7,cc3,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x1 0
+	cckhi		icc0,cc7,cc3,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x2 0
+	cckhi		icc0,cc7,cc3,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x3 0
+	cckhi		icc0,cc7,cc3,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x4 0
+	cckhi		icc0,cc7,cc3,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x5 0
+	cckhi		icc0,cc7,cc3,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x6 0
+	cckhi		icc0,cc7,cc3,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x7 0
+	cckhi		icc0,cc7,cc3,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x8 0
+	cckhi		icc0,cc7,cc7,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0x9 0
+	cckhi		icc0,cc7,cc7,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xa 0
+	cckhi		icc0,cc7,cc7,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xb 0
+	cckhi		icc0,cc7,cc7,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xc 0
+	cckhi		icc0,cc7,cc7,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xd 0
+	cckhi		icc0,cc7,cc7,1
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xe 0
+	cckhi		icc0,cc7,cc7,0
+	test_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0x5b1b,cccr
+	set_icc		0xf 0
+	cckhi		icc0,cc7,cc7,1
+	test_spr_immed	0x1b1b,cccr
+
+	pass

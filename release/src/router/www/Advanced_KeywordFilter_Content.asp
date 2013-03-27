@@ -115,7 +115,7 @@ function applyRule(){
 			tmp_value = "";	
 		document.form.keyword_rulelist.value = tmp_value;
 
-		updateDateTime(document.form.current_page.value);
+		//updateDateTime(document.form.current_page.value);
 
 		if(document.form.keyword_enable_x[0].checked == true && document.form.keyword_enable_x_orig.value != 1 ||
 				document.form.keyword_enable_x[1].checked == true && document.form.keyword_enable_x_orig.value != 0)

@@ -1,0 +1,86 @@
+# Copyright 2000, 2002, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test framework for GDB (remote protocol) using a "gdbserver",
+# ie. a debug agent running as a native process on the same or
+# a different host.
+
+#
+# This module to be used for testing gdb with a "gdbserver" 
+# built either from libremote or from gdb/gdbserver.  
+#
+
+#
+# To be addressed or set in your baseboard config file:
+#
+#   set_board_info gdb_protocol "remote"
+#	Unles you have a gdbserver that uses a different protocol...
+#
+#   set_board_info use_gdb_stub 1
+#	This tells the rest of the test suite not to do things
+#	like "run" which don't work well on remote targets.
+#
+#   set_board_info gdb,do_reload_on_run 1
+#	Unles you have a gdbserver that can handle multiple sessions.
+#
+#   set_board_info noargs 1
+#	At present there is no provision in the remote protocol
+#	for passing arguments.  This test framework does not
+#	address the issue, so it's best to set this variable
+#	in your baseboard configuration file.  
+#	FIXME: there's no reason why the test harness couldn't
+#	pass commandline args when it spawns gdbserver.
+#
+#   set_board_info gdb,noinferiorio 1
+#	Neither the traditional gdbserver nor the one in libremote
+#	can presently capture stdout and relay it to GDB via the
+#	'O' packet.  This means that tests involving printf will
+#	fail unles you set this varibale in your baseboard
+#	configuration file.
+#   
+#   set_board_info gdb,no_hardware_watchpoints 1
+#	Unles you have a gdbserver that supports hardware watchpoints.
+#	FIXME: gdb should detect if the target doesn't support them,
+#	and fall back to using software watchpoints.
+#
+#   set_board_info gdb_server_prog
+#	This will be the path to the gdbserver program you want to test.
+#	Defaults to "gdbserver".
+#
+#   set_board_info sockethost
+#	The name of the host computer whose socket is being used.
+#	Defaults to "localhost".  Note: old gdbserver requires 
+#	that you define this, but libremote/gdbserver does not.
+#
+#   set_board_info gdb,socketport
+#	Port id to use for socket connection.  If not set explicitly,
+#	it will start at "2345" and increment for each use.
+#
+
+# The guts live in gdbserver-support.exp now.
+
+load_lib gdbserver-support.exp
+
+proc gdbserver_gdb_load { } {
+    return [gdbserver_spawn ""]
+}
+
+proc gdb_reload { } {
+    return [gdbserver_run ""]
+}
+
+proc gdb_reconnect { } {
+    return [gdbserver_reconnect]
+}

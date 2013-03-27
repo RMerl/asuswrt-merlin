@@ -386,6 +386,10 @@ genaNotifyThread( IN void *input )
         TPJobInit( &job, ( start_routine ) genaNotifyThread, input );
         TPJobSetFreeFunction( &job, ( free_function ) free_notify_struct );
         TPJobSetPriority( &job, MED_PRIORITY );
+	/* Sleep a little before creating another thread otherwise if there is
+	 * a lot of notifications to send, the device will take 100% of the CPU
+	 * to create threads and push them back to the job queue. */
+	imillisleep(1);
         ThreadPoolAdd( &gSendThreadPool, &job, NULL );
 
         freeSubscription( &sub_copy );

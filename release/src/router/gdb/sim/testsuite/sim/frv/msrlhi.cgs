@@ -1,0 +1,30 @@
+# frv testcase for msrlhi $FRi,$s6,$FRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global msrlhi
+msrlhi:
+	set_fr_iimmed   2,2,fr8
+	msrlhi      	fr8,0x20,fr8	; Shift by 0
+	test_fr_limmed  2,2,fr8
+
+	set_fr_iimmed   2,2,fr8
+	msrlhi      	fr8,0,fr8	; Shift by 0
+	test_fr_limmed  2,2,fr8
+
+	set_fr_iimmed   3,2,fr8
+	msrlhi      	fr8,1,fr8	; Shift by 1
+	test_fr_limmed  1,1,fr8
+
+	set_fr_iimmed   0xffff,0x8000,fr8
+	msrlhi      	fr8,31,fr8	; Shift by 15
+	test_fr_limmed 	0x0001,0x0001,fr8
+
+	set_fr_iimmed  	0xdead,0xbeef,fr8
+	msrlhi      	fr8,15,fr8
+	test_fr_iimmed  0x00010001,fr8
+
+	pass

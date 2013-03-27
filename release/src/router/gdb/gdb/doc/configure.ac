@@ -1,0 +1,5 @@
+AC_PREREQ(2.59)
+AC_INIT(refcard.tex)
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_OUTPUT(Makefile)

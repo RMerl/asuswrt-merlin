@@ -1,0 +1,622 @@
+		GDB Maintainers
+		===============
+
+
+		   Overview
+		   --------
+
+This file describes different groups of people who are, together, the
+maintainers and developers of the GDB project.  Don't worry - it sounds
+more complicated than it really is.
+
+There are four groups of GDB developers, covering the patch development and
+review process:
+
+  - The Global Maintainers.
+
+    These are the developers in charge of most daily development.  They
+    have wide authority to apply and reject patches, but defer to the
+    Responsible Maintainers (see below) within their spheres of
+    responsibility.
+
+  - The Responsible Maintainers.
+
+    These are developers who have expertise and interest in a particular
+    area of GDB, who are generally available to review patches, and who
+    prefer to enforce a single vision within their areas.
+
+  - The Authorized Committers.
+
+    These are developers who are trusted to make changes within a specific
+    area of GDB without additional oversight.
+
+  - The Write After Approval Maintainers.
+
+    These are developers who have write access to the GDB source tree.  They
+    can check in their own changes once a developer with the appropriate
+    authority has approved the changes; they can also apply the Obvious
+    Fix Rule (below).
+
+All maintainers are encouraged to post major patches to the gdb-patches
+mailing list for comments, even if they have the authority to commit the
+patch without review from another maintainer.  This especially includes
+patches which change internal interfaces (e.g. global functions, data
+structures) or external interfaces (e.g. user, remote, MI, et cetera).
+
+The term "review" is used in this file to describe several kinds of feedback
+from a maintainer: approval, rejection, and requests for changes or
+clarification with the intention of approving a revised version.  Review is
+a privilege and/or responsibility of various positions among the GDB
+Maintainers.  Of course, anyone - whether they hold a position but not the
+relevant one for a particular patch, or are just following along on the
+mailing lists for fun, or anything in between - may suggest changes or
+ask questions about a patch!
+
+There's also a couple of other people who play special roles in the GDB
+community, separately from the patch process:
+
+  - The GDB Steering Committee.
+
+    These are the official (FSF-appointed) maintainers of GDB.  They have
+    final and overriding authority for all GDB-related decisions, including
+    anything described in this file.  The committee is not generally
+    involved in day-to-day development (although its members may be, as
+    individuals).
+
+  - The Release Manager.
+
+    This developer is in charge of making new releases of GDB.
+
+  - The Patch Champions.
+
+    These volunteers make sure that no contribution is overlooked or
+    forgotten.
+
+Most changes to the list of maintainers in this file are handled by
+consensus among the global maintainers and any other involved parties.
+In cases where consensus can not be reached, the global maintainers may
+ask the Steering Committee for a final decision.
+
+
+			The Obvious Fix Rule
+			--------------------
+
+All maintainers listed in this file, including the Write After Approval
+developers, are allowed to check in obvious fixes.
+
+An "obvious fix" means that there is no possibility that anyone will
+disagree with the change.
+
+A good mental test is "will the person who hates my work the most be
+able to find fault with the change" - if so, then it's not obvious and
+needs to be posted first. :-)
+
+Something like changing or bypassing an interface is _not_ an obvious
+fix, since such a change without discussion will result in
+instantaneous and loud complaints.
+
+For documentation changes, about the only kind of fix that is obvious
+is correction of a typo or bad English usage.
+
+
+	     GDB Steering Committee
+	     ----------------------
+
+The members of the GDB Steering Committee are the FSF-appointed
+maintainers of the GDB project.
+
+The Steering Committee has final authority for all GDB-related topics;
+they may make whatever changes that they deem necessary, or that the FSF
+requests.  However, they are generally not involved in day-to-day
+development.
+
+The current members of the steering committee are listed below, in
+alphabetical order.  Their affiliations are provided for reference only -
+their membership on the Steering Committee is individual and not through
+their affiliation, and they act on behalf of the GNU project.
+
+	Jim Blandy (CodeSourcery)
+	Andrew Cagney (Red Hat)
+	Robert Dewar (AdaCore, NYU)
+	Klee Dienes (Apple)
+	Paul Hilfinger (UC Berkeley)
+	Dan Jacobowitz (CodeSourcery)
+	Stan Shebs (Mozilla)
+	Richard Stallman (FSF)
+	Ian Lance Taylor (C2)
+	Todd Whitesel
+
+
+		  Global Maintainers
+		  ------------------
+
+The global maintainers may review and commit any change to GDB, except in
+areas with a Responsible Maintainer available.  For major changes, or
+changes to areas with other active developers, global maintainers are
+strongly encouraged to post their own patches for feedback before
+committing.
+
+The global maintainers are responsible for reviewing patches to any area
+for which no Responsible Maintainer is listed.
+
+Global maintainers also have the authority to revert patches which should
+not have been applied, e.g. patches which were not approved, controversial
+patches committed under the Obvious Fix Rule, patches with important bugs
+that can't be immediately fixed, or patches which go against an accepted and
+documented roadmap for GDB development.  Any global maintainer may request
+the reversion of a patch.  If no global maintainer, or responsible
+maintainer in the affected areas, supports the patch (except for the
+maintainer who originally committed it), then after 48 hours the maintainer
+who called for the reversion may revert the patch.
+
+No one may reapply a reverted patch without the agreement of the maintainer
+who reverted it, or bringing the issue to the GDB Steering Committee for
+discussion.
+
+At the moment there are no documented roadmaps for GDB development; in the
+future, if there are, a reference to the list will be included here.
+
+The current global maintainers are (in alphabetical order):
+
+Jim Blandy			jimb@codesourcery.com
+Joel Brobecker			brobecker@adacore.com
+Kevin Buettner			kevinb@redhat.com
+Andrew Cagney			cagney@gnu.org
+Daniel Jacobowitz		dan@debian.org
+Mark Kettenis           	kettenis@gnu.org
+Stan Shebs			shebs@mozilla.com
+Michael Snyder			Michael.Snyder@access-company.com
+Ulrich Weigand			Ulrich.Weigand@de.ibm.com
+Elena Zannoni			ezannoni@redhat.com
+Eli Zaretskii			eliz@gnu.org
+
+
+			Release Manager
+			---------------
+
+The current release manager is: Joel Brobecker  <brobecker@adacore.com>
+
+His responsibilities are:
+
+    * organizing, scheduling, and managing releases of GDB.
+
+    * deciding the approval and commit policies for release branches,
+      and can change them as needed.
+
+
+
+			Patch Champions
+			---------------
+
+These volunteers track all patches submitted to the gdb-patches list.  They
+endeavor to prevent any posted patch from being overlooked; work with
+contributors to meet GDB's coding style and general requirements, along with
+FSF copyright assignments; remind (ping) responsible maintainers to review
+patches; and ensure that contributors are given credit.
+
+Current patch champions (in alphabetical order):
+
+	Randolph Chung     <tausq@debian.org>
+
+
+
+			Responsible Maintainers
+			-----------------------
+
+These developers have agreed to review patches in specific areas of GDB, in
+which they have knowledge and experience.  These areas are generally broad;
+the role of a responsible maintainer is to provide coherent and cohesive
+structure within their area of GDB, to assure that patches from many
+different contributors all work together for the best results.
+
+Global maintainers will defer to responsible maintainers within their areas,
+as long as the responsible maintainer is active.  Active means that
+responsible maintainers agree to review submitted patches in their area
+promptly; patches and followups should generally be answered within a week.
+If a responsible maintainer is interested in reviewing a patch but will not
+have time within a week of posting, the maintainer should send an
+acknowledgement of the patch to the gdb-patches mailing list, and
+plan to follow up with a review within a month.  These deadlines are for
+initial responses to a patch - if the maintainer has suggestions
+or questions, it may take an extended discussion before the patch
+is ready to commit.  There are no written requirements for discussion,
+but maintainers are asked to be responsive.
+
+If a responsible maintainer misses these deadlines occasionally (e.g.
+vacation or unexpected workload), it's not a disaster - any global
+maintainer may step in to review the patch.  But sometimes life intervenes
+more permanently, and a maintainer may no longer have time for these duties.
+When this happens, he or she should step down (either into the Authorized
+Committers section if still interested in the area, or simply removed from
+the list of Responsible Maintainers if not).
+
+If a responsible maintainer is unresponsive for an extended period of time
+without stepping down, please contact the Global Maintainers; they will try
+to contact the maintainer directly and fix the problem - potentially by
+removing that maintainer from their listed position.
+
+If there are several maintainers for a given domain then any one of them
+may review a submitted patch.
+
+Target Instruction Set Architectures:
+
+The *-tdep.c files.  ISA (Instruction Set Architecture) and OS-ABI
+(Operating System / Application Binary Interface) issues including CPU
+variants.
+
+The Target/Architecture maintainer works with the host maintainer when
+resolving build issues.  The Target/Architecture maintainer works with
+the native maintainer when resolving ABI issues.
+
+	alpha		--target=alpha-elf ,-Werror
+
+	arm		--target=arm-elf ,-Werror
+			Richard Earnshaw	rearnsha@arm.com
+
+	avr		--target=avr ,-Werror
+
+	cris		--target=cris-elf ,-Werror ,
+			(sim does not build with -Werror)
+
+	frv		--target=frv-elf ,-Werror
+
+	h8300		--target=h8300-elf ,-Werror
+
+	i386		--target=i386-elf ,-Werror
+			Mark Kettenis           kettenis@gnu.org
+
+	ia64		--target=ia64-linux-gnu ,-Werror
+			(--target=ia64-elf broken)
+
+	m32c		--target=m32c-elf ,-Werror
+			Jim Blandy, jimb@codesourcery.com
+
+	m32r		--target=m32r-elf ,-Werror
+
+	m68hc11		--target=m68hc11-elf ,-Werror ,
+			Stephane Carrez		stcarrez@nerim.fr
+
+	m68k		--target=m68k-elf ,-Werror
+
+	m88k		--target=m88k-openbsd ,-Werror
+			Mark Kettenis		kettenis@gnu.org
+
+	mcore		Deleted
+
+	mep		--target=mep-elf ,-Werror
+			Kevin Buettner		kevinb@redhat.com
+
+	mips		--target=mips-elf ,-Werror
+
+	mn10300		--target=mn10300-elf broken
+			(sim/ dies with make -j)
+			Michael Snyder		Michael.Snyder@access-company.com
+
+	ms1		--target=ms1-elf ,-Werror
+			Kevin Buettner		kevinb@redhat.com
+
+	ns32k		Deleted
+
+	pa		--target=hppa-elf ,-Werror
+
+	powerpc		--target=powerpc-eabi ,-Werror
+
+	s390		--target=s390-linux-gnu ,-Werror
+
+	score	--target=score-elf
+			Qinwei		qinwei@sunnorth.com.cn
+
+	sh		--target=sh-elf ,-Werror
+			--target=sh64-elf ,-Werror
+
+	sparc		--target=sparc64-solaris2.10 ,-Werror
+			(--target=sparc-elf broken)
+
+	spu		--target=spu-elf ,-Werror
+			Ulrich Weigand		uweigand@de.ibm.com
+
+	v850		--target=v850-elf ,-Werror
+
+	vax		--target=vax-netbsd ,-Werror
+
+	x86-64		--target=x86_64-linux-gnu ,-Werror
+
+	xstormy16	--target=xstormy16-elf
+			Corinna Vinschen	vinschen@redhat.com
+
+	xtensa		--target=xtensa-elf
+			Maxim Grigoriev		maxim2405@gmail.com
+
+All developers recognized by this file can make arbitrary changes to
+OBSOLETE targets.
+
+The Bourne shell script gdb_mbuild.sh can be used to rebuild all the
+above targets.
+
+
+Host/Native:
+
+The Native maintainer is responsible for target specific native
+support - typically shared libraries and quirks to procfs/ptrace/...
+The Native maintainer works with the Arch and Core maintainers when
+resolving more generic problems.
+
+The host maintainer ensures that gdb can be built as a cross debugger on
+their platform.
+
+AIX			Joel Brobecker		brobecker@adacore.com
+
+djgpp native		Eli Zaretskii		eliz@gnu.org
+GNU Hurd		Alfred M. Szmidt	ams@gnu.org
+MS Windows (NT, '00, 9x, Me, XP) host & native
+			Chris Faylor		cgf@alum.bu.edu
+GNU/Linux/x86 native & host
+			Mark Kettenis		kettenis@gnu.org
+GNU/Linux MIPS native & host
+			Daniel Jacobowitz	dan@debian.org
+GNU/Linux m68k		Andreas Schwab		schwab@suse.de
+FreeBSD native & host	Mark Kettenis		kettenis@gnu.org
+
+
+
+Core: Generic components used by all of GDB
+
+tracing			Michael Snyder		Michael.Snyder@access-company.com
+threads			Michael Snyder		Michael.Snyder@access-company.com
+			Mark Kettenis		kettenis@gnu.org
+language support
+  C++			Daniel Jacobowitz	dan@debian.org
+  Objective C support   Adam Fedor		fedor@gnu.org
+shared libs		Kevin Buettner		kevinb@redhat.com
+
+documentation		Eli Zaretskii		eliz@gnu.org
+  (including NEWS)
+testsuite
+  gdbtk (gdb.gdbtk)     Keith Seitz             keiths@redhat.com
+  threads (gdb.threads) Michael Snyder          Michael.Snyder@access-company.com
+  trace (gdb.trace)     Michael Snyder          Michael.Snyder@access-company.com
+
+
+UI: External (user) interfaces.
+
+gdbtk (c & tcl)		Fernando Nasser         fnasser@redhat.com
+			Keith Seitz		keiths@redhat.com
+libgui (w/foundry, sn)	Keith Seitz		keiths@redhat.com
+
+
+Misc:
+
+gdb/gdbserver		Daniel Jacobowitz	dan@debian.org
+
+Makefile.in, configure*	ALL
+
+mmalloc/		ALL Host maintainers
+
+sim/			See sim/MAINTAINERS
+
+readline/		Master version: ftp://ftp.cwru.edu/pub/bash/
+			ALL
+			Host maintainers (host dependant parts)
+			(but get your changes into the master version)
+
+tcl/ tk/ itcl/		ALL
+
+
+		Authorized Committers
+		---------------------
+
+These are developers working on particular areas of GDB, who are trusted to
+commit their own (or other developers') patches in those areas without
+further review from a Global Maintainer or Responsible Maintainer.  They are
+under no obligation to review posted patches - but, of course, are invited
+to do so!
+
+PowerPC			Andrew Cagney		cagney@gnu.org
+CRIS			Hans-Peter Nilsson	hp@bitrange.com
+IA64			Jeff Johnston		jjohnstn@redhat.com
+MIPS			Joel Brobecker		brobecker@adacore.com
+m32r			Kei Sakamoto		sakamoto.kei@renesas.com
+PowerPC			Kevin Buettner		kevinb@redhat.com
+CRIS			Orjan Friberg		orjanf@axis.com
+HPPA			Randolph Chung		tausq@debian.org
+S390			Ulrich Weigand		uweigand@de.ibm.com
+djgpp			DJ Delorie		dj@delorie.com
+			[Please use this address to contact DJ about DJGPP]
+tui			Stephane Carrez		stcarrez@nerim.fr
+ia64			Kevin Buettner		kevinb@redhat.com
+AIX			Kevin Buettner		kevinb@redhat.com
+GNU/Linux PPC native	Kevin Buettner		kevinb@redhat.com
+gdb.java tests		Anthony Green		green@redhat.com
+FreeBSD native & host	David O'Brien		obrien@freebsd.org
+event loop		Elena Zannoni		ezannoni@redhat.com
+generic symtabs		Elena Zannoni		ezannoni@redhat.com
+dwarf readers		Elena Zannoni		ezannoni@redhat.com
+elf reader		Elena Zannoni		ezannoni@redhat.com
+stabs reader		Elena Zannoni		ezannoni@redhat.com
+readline/		Elena Zannoni		ezannoni@redhat.com
+NetBSD native & host	Jason Thorpe		thorpej@netbsd.org
+Pascal support		Pierre Muller		muller@sources.redhat.com
+avr			Theodore A. Roth	troth@openavr.org
+Modula-2 support	Gaius Mulley		gaius@glam.ac.uk
+
+
+			Write After Approval
+			   (alphabetic)
+
+To get recommended for the Write After Approval list you need a valid
+FSF assignment and have submitted one good patch.
+
+Pedro Alves					pedro_alves@portugalmail.pt
+David Anderson					davea@sgi.com
+John David Anglin				dave.anglin@nrc-cnrc.gc.ca
+Shrinivas Atre					shrinivasa@kpitcummins.com
+Scott Bambrough					scottb@netwinder.org
+Jan Beulich					jbeulich@novell.com
+Jim Blandy					jimb@codesourcery.com
+Philip Blundell					philb@gnu.org
+Per Bothner					per@bothner.com
+Joel Brobecker					brobecker@adacore.com
+Dave Brolley					brolley@redhat.com
+Paul Brook					paul@codesourcery.com
+Julian Brown					julian@codesourcery.com
+Kevin Buettner					kevinb@redhat.com
+Andrew Cagney					cagney@gnu.org
+David Carlton					carlton@bactrian.org
+Stephane Carrez					stcarrez@nerim.fr
+Michael Chastain				mec.gnu@mindspring.com
+Eric Christopher				echristo@apple.com
+Randolph Chung					tausq@debian.org
+Nick Clifton					nickc@redhat.com
+J.T. Conklin					jtc@acorntoolworks.com
+Brendan Conoboy					blc@redhat.com
+Ludovic Courtès					ludo@gnu.org
+DJ Delorie					dj@redhat.com
+Philippe De Muyter				phdm@macqel.be
+Dhananjay Deshpande				dhananjayd@kpitcummins.com
+Klee Dienes					kdienes@apple.com
+Gabriel Dos Reis                                gdr@integrable-solutions.net
+Richard Earnshaw				rearnsha@arm.com
+Steve Ellcey					sje@cup.hp.com
+Frank Ch. Eigler				fche@redhat.com
+Ben Elliston					bje@gnu.org
+Adam Fedor					fedor@gnu.org
+Brian Ford					ford@vss.fsi.com
+Orjan Friberg					orjanf@axis.com
+Nathan Froyd					froydnj@codesourcery.com
+Gary Funck					gary@intrepid.com
+Paul Gilliam					pgilliam@us.ibm.com
+Raoul Gough					RaoulGough@yahoo.co.uk
+Anthony Green			 		green@redhat.com
+Matthew Green					mrg@eterna.com.au
+Maxim Grigoriev					maxim2405@gmail.com
+Jerome Guitton					guitton@act-europe.fr
+Ben Harris					bjh21@netbsd.org
+Richard Henderson				rth@redhat.com
+Aldy Hernandez					aldyh@redhat.com
+Paul Hilfinger					hilfinger@gnat.com
+Matt Hiller					hiller@redhat.com
+Kazu Hirata					kazu@cs.umass.edu
+Jeff Holcomb					jeffh@redhat.com
+Don Howard					dhoward@redhat.com
+Martin Hunt					hunt@redhat.com
+Jim Ingham					jingham@apple.com
+Baurzhan Ismagulov				ibr@radix50.net
+Manoj Iyer					manjo@austin.ibm.com
+Daniel Jacobowitz				dan@debian.org
+Andreas Jaeger					aj@suse.de
+Jeff Johnston					jjohnstn@redhat.com
+Geoff Keating					geoffk@redhat.com
+Mark Kettenis					kettenis@gnu.org
+Jim Kingdon					kingdon@panix.com
+Jan Kratochvil					jan.kratochvil@redhat.com
+Jonathan Larmour				jlarmour@redhat.co.uk
+Jeff Law					law@redhat.com
+David Lecomber					david@streamline-computing.com
+Robert Lipe					rjl@sco.com
+H.J. Lu						hjl@lucon.org
+Michal Ludvig                                   mludvig@suse.cz
+Glen McCready					gkm@redhat.com
+Greg McGary					greg@mcgary.org
+Roland McGrath					roland@redhat.com
+Bryce McKinlay					mckinlay@redhat.com
+Jason Merrill					jason@redhat.com
+David S. Miller					davem@redhat.com
+Mark Mitchell					mark@codesourcery.com
+Marko Mlinar                                    markom@opencores.org
+Alan Modra					amodra@bigpond.net.au
+Jason Molenda					jmolenda@apple.com
+Pierre Muller					muller@sources.redhat.com
+Gaius Mulley                                    gaius@glam.ac.uk
+Joseph Myers					joseph@codesourcery.com
+Fernando Nasser					fnasser@redhat.com
+Adam Nemet					anemet@caviumnetworks.com
+Nathanael Nerode				neroden@gcc.gnu.org
+Hans-Peter Nilsson				hp@bitrange.com
+David O'Brien					obrien@freebsd.org
+Alexandre Oliva					aoliva@redhat.com
+Denis Pilat					denis.pilat@st.com
+Vladimir Prus                                   vladimir@codesourcery.com
+Qinwei						qinwei@sunnorth.com.cn
+Ramana Radhakrishnan 				ramana.radhakrishnan@codito.com
+Frederic Riss					frederic.riss@st.com
+Tom Rix						trix@redhat.com
+Nick Roberts					nickrob@snap.net.nz
+Bob Rossi 					bob_rossi@cox.net
+Theodore A. Roth				troth@openavr.org
+Ian Roxborough					irox@redhat.com
+Maciej W. Rozycki				macro@linux-mips.org
+Grace Sainsbury					graces@redhat.com
+Kei Sakamoto					sakamoto.kei@renesas.com
+Mark Salter					msalter@redhat.com
+Richard Sandiford				richard@codesourcery.com
+Peter Schauer					Peter.Schauer@mytum.de
+Andreas Schwab					schwab@suse.de
+Keith Seitz					keiths@redhat.com
+Stan Shebs					shebs@mozilla.com
+Mark Shinwell					shinwell@codesourcery.com
+Aidan Skinner					aidan@velvet.net
+Jiri Smid					smid@suse.cz
+David Smith					dsmith@redhat.com
+Stephen P. Smith				ischis2@cox.net
+Jackie Smith Cashion				jsmith@redhat.com
+Michael Snyder					Michael.Snyder@access-company.com
+Petr Sorfa					petrs@caldera.com
+Andrew Stubbs					andrew.stubbs@st.com
+Ian Lance Taylor				ian@airs.com
+Gary Thomas					gthomas@redhat.com
+Jason Thorpe					thorpej@netbsd.org
+Caroline Tice					ctice@apple.com
+Tom Tromey					tromey@redhat.com
+David Ung					davidu@mips.com
+D Venkatasubramanian				dvenkat@noida.hcltech.com
+Corinna Vinschen				vinschen@redhat.com
+Keith Walker					keith.walker@arm.com
+Kris Warkentin					kewarken@qnx.com
+Ulrich Weigand					uweigand@de.ibm.com
+Nathan Williams					nathanw@wasabisystems.com
+Bob Wilson					bob.wilson@acm.org
+Jim Wilson					wilson@specifixinc.com
+Elena Zannoni					ezannoni@redhat.com
+Eli Zaretskii					eliz@gnu.org
+Wu Zhou						woodzltc@cn.ibm.com
+Yoshinori Sato					ysato@users.sourceforge.jp
+
+
+			Past Maintainers
+
+Whenever removing yourself, or someone else, from this file, consider
+listing their areas of development here for posterity.
+
+Jimmy Guo (gdb.hp, tui)				guo at cup dot hp dot com
+Jeff Law (hppa)					law at cygnus dot com
+Daniel Berlin (C++ support)			dan at cgsoftware dot com
+Nick Duffek (powerpc, SCO, Sol/x86)		nick at duffek dot com
+David Taylor (d10v, sparc, utils, defs,
+  expression evaluator, language support)	taylor at candd dot org
+J.T. Conklin (dcache, NetBSD, remote, global)	jtc at acorntoolworks dot com
+Frank Ch. Eigler (sim)				fche at redhat dot com
+Per Bothner (Java)				per at bothner dot com
+Anthony Green (Java)				green at redhat dot com
+Fernando Nasser (testsuite/, mi, cli, KOD)      fnasser at redhat dot com
+Mark Salter (testsuite/lib+config)		msalter at redhat dot com
+Jim Kingdon (web pages)				kingdon at panix dot com
+Jim Ingham (gdbtk, libgui)			jingham at apple dot com
+Mark Kettenis (hurd native)			kettenis at gnu dot org
+Ian Roxborough (in-tree tcl, tk, itcl)		irox at redhat dot com
+Robert Lipe (SCO/Unixware)			rjl at sco dot com
+Peter Schauer (global, AIX, xcoffsolib,
+  Solaris/x86)					Peter.Schauer at mytum dot de
+Scott Bambrough (ARM)				scottb at netwinder dot org
+Philippe De Muyter (coff)			phdm at macqel dot be
+Michael Chastain (testsuite)			mec.gnu at mindspring dot com
+Fred Fish (global)
+
+
+
+Folks that have been caught up in a paper trail:
+
+David Carlton					carlton@bactrian.org
+
+;; Local Variables:
+;; coding: utf-8
+;; End:

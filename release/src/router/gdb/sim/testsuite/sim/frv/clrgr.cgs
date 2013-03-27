@@ -1,0 +1,27 @@
+# frv testcase for clrgr $GRk
+# mach: frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global clrgr
+clrgr:
+	nldi		@(sp,0),gr20	; Activate gr20 with nesr.fr==0
+	or_spr_immed	0x00100000,gner1
+	nldfi		@(sp,0),fr20	; Activate fr20 with nesr.fr==1
+	or_spr_immed	0x00200000,gner1
+	nldi		@(sp,0),gr52	; Activate gr52 with nesr.fr==0
+	or_spr_immed	0x00100000,gner0
+
+	clrgr		gr20
+	test_spr_immed	0x00200000,gner1
+	test_spr_immed	0x00100000,gner0
+	test_spr_immed	0,nesr0
+	test_spr_immed	0,neear0
+	test_spr_immed	0xd4800401,nesr1
+	test_spr_gr	neear1,sp
+	test_spr_immed	0xb4800801,nesr2
+	test_spr_gr	neear2,sp
+
+	pass

@@ -1,0 +1,76 @@
+    <refentry id="reftok">
+
+      <refmeta>
+	<refentrytitle>ne_token</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname>ne_token</refname>
+	<refname>ne_qtoken</refname>
+	<refpurpose>string tokenizers</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_string.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>char *<function>ne_token</function></funcdef>
+	    <paramdef>char **<parameter>str</parameter></paramdef>
+	    <paramdef>char <parameter>sep</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>char *<function>ne_qtoken</function></funcdef>
+	    <paramdef>char **<parameter>str</parameter></paramdef>
+	    <paramdef>char <parameter>sep</parameter></paramdef>
+	    <paramdef>const char *<parameter>quotes</parameter></paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<!-- FIXME: italics on tokenize -->
+
+	<para><function>ne_token</function> and
+<function>ne_qtoken</function> tokenize the string at the location
+stored in the pointer <parameter>str</parameter>.  Each time the
+function is called, it returns the next token, and modifies the
+<parameter>str</parameter> pointer to point to the remainer of the
+string, or &null; if there are no more tokens in the string.  A token
+is delimited by the separator character <parameter>sep</parameter>; if
+<function>ne_qtoken</function> is used any quoted segments of the
+string are skipped when searching for a separator.  A quoted segment
+is enclosed in a pair of one of the characters given in the
+<parameter>quotes</parameter> string.</para>
+
+	<para>The string being tokenized is modified each time
+the tokenizing function is called; replacing the next separator
+character with a &nul; terminator.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Examples</title>
+
+	<para>The following function prints out each token in a
+comma-separated string <parameter>list</parameter>, which is
+modified in-place:</para>
+
+	<programlisting>static void splitter(char *list)
+{
+  do {
+    printf("Token: %s\n", ne_token(&amp;list, ','));
+  while (list);
+}</programlisting>
+
+ </refsect1>
+
+    </refentry>

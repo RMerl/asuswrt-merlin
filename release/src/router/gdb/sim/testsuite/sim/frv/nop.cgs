@@ -1,0 +1,12 @@
+# frv testcase for nop
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global nop
+nop:
+	nop
+
+	pass

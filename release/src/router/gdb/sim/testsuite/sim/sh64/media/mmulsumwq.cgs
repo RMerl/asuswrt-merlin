@@ -1,0 +1,14 @@
+# sh testcase for mmulsum.wq $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global mmulsumwq
+mmulsumwq:
+	mmulsum.wq r0, r0, r0
+
+	pass

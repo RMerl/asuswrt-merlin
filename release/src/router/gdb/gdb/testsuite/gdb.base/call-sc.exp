@@ -1,0 +1,500 @@
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test "return", "finish", and "call" of functions that a scalar (int,
+# float, enum) and/or take a single scalar parameter.
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+# Some targets can't call functions, so don't even bother with this
+# test.
+
+if [target_info exists gdb,cannot_call_functions] {
+    setup_xfail "*-*-*"
+    fail "This target can not call functions"
+    continue
+}
+
+set testfile "call-sc"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+# Create and source the file that provides information about the
+# compiler used to compile the test case.
+
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+# Use the file name, compiler and tuples to set up any needed KFAILs.
+
+proc setup_kfails { file tuples bug } {
+    global testfile
+    if [string match $file $testfile] {
+	foreach f $tuples { setup_kfail $f $bug }
+    }
+}
+
+proc setup_compiler_kfails { file compiler format tuples bug } {
+    global testfile
+    if {[string match $file $testfile] && [test_compiler_info $compiler]  && [test_debug_format $format]} {
+	foreach f $tuples { setup_kfail $f $bug }
+    }
+}
+
+# Compile a variant of scalars.c using TYPE to specify the type of the
+# parameter and return-type.  Run the compiled program up to "main".
+# Also updates the global "testfile" to reflect the most recent build.
+
+proc start_scalars_test { type } {
+    global testfile
+    global srcfile
+    global binfile
+    global objdir
+    global subdir
+    global srcdir
+    global gdb_prompt
+    global expect_out
+
+    # Create the additional flags
+    set flags "debug additional_flags=-DT=${type}"
+    set testfile "call-sc-${type}"
+
+    set binfile ${objdir}/${subdir}/${testfile}
+    if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "${flags}"] != "" } {
+	# built the second test case since we can't use prototypes
+	warning "Prototypes not supported, rebuilding with -DNO_PROTOTYPES"
+	if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "${flags} additional_flags=-DNO_PROTOTYPES"] != "" } {
+	    untested call-sc.exp
+	    return -1
+	}
+    }
+
+    # Start with a fresh gdb.
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_load ${binfile}
+
+    # Make certain that the output is consistent
+    gdb_test "set print sevenbit-strings" "" \
+	    "set print sevenbit-strings; ${testfile}"
+    gdb_test "set print address off" "" \
+	    "set print address off; ${testfile}"
+    gdb_test "set width 0" "" \
+	    "set width 0; ${testfile}"
+
+    # Advance to main
+    if { ![runto_main] } then {
+	gdb_suppress_tests;
+    }
+
+    # Get the debug format
+    get_debug_format
+
+    # check that type matches what was passed in
+    set test "ptype; ${testfile}"
+    set foo_t "xxx"
+    gdb_test_multiple "ptype ${type}" "${test}" {
+	-re "type = (\[^\r\n\]*)\r\n$gdb_prompt $" {
+	    set foo_t "$expect_out(1,string)"
+	    pass "$test (${foo_t})"
+	}
+    }
+    gdb_test "ptype foo" "type = ${foo_t}" "ptype foo; ${testfile} $expect_out(1,string)"
+}
+
+
+# Given N (0..25), return the corresponding alphabetic letter in lower
+# or upper case.  This is ment to be i18n proof.
+
+proc i2a { n } {
+    return [string range "abcdefghijklmnopqrstuvwxyz" $n $n]
+}
+
+proc I2A { n } {
+    return [string toupper [i2a $n]]
+}
+
+
+# Use the file name, compiler and tuples to set up any needed KFAILs.
+
+proc setup_kfails { file tuples bug } {
+    global testfile
+    if [string match $file $testfile] {
+	foreach f $tuples { setup_kfail $f $bug }
+    }
+}
+
+proc setup_compiler_kfails { file compiler format tuples bug } {
+    global testfile
+    if {[string match $file $testfile] && [test_compiler_info $compiler]  && [test_debug_format $format]} {
+	foreach f $tuples { setup_kfail $f $bug }
+    }
+}
+
+# Test GDB's ability to make inferior function calls to functions
+# returning (or passing) in a single scalar.
+
+# start_scalars_test() will have previously built a program with a
+# specified scalar type.  To ensure robustness of the output, "p/c" is
+# used.
+
+# This tests the code paths "which return-value convention?" and
+# "extract return-value from registers" called by "infcall.c".
+
+proc test_scalar_calls { } {
+    global testfile
+    global gdb_prompt
+
+    # Check that GDB can always extract a scalar-return value from an
+    # inferior function call.  Since GDB always knows the location of
+    # an inferior function call's return value these should never fail
+    
+    # Implemented by calling the parameterless function "fun" and then
+    # examining the return value printed by GDB.
+
+    set tests "call ${testfile}"
+
+    # Call fun, checking the printed return-value.
+    gdb_test "p/c fun()" "= 49 '1'" "p/c fun(); ${tests}"
+
+    # Check that GDB can always pass a structure to an inferior function.
+    # This test can never fail.
+
+    # Implemented by calling the one parameter function "Fun" which
+    # stores its parameter in the global variable "L".  GDB then
+    # examining that global to confirm that the value is as expected.
+
+    gdb_test "call Fun(foo)" "" "call Fun(foo); ${tests}"
+    gdb_test "p/c L" " = 49 '1'" "p/c L; ${tests}"
+}
+
+# Test GDB's ability to both return a function (with "return" or
+# "finish") and correctly extract/store any corresponding
+# return-value.
+
+# Check that GDB can consistently extract/store structure return
+# values.  There are two cases - returned in registers and returned in
+# memory.  For the latter case, the return value can't be found and a
+# failure is "expected".  However GDB must still both return the
+# function and display the final source and line information.
+
+# N identifies the number of elements in the struct that will be used
+# for the test case.  FAILS is a list of target tuples that will fail
+# this test.
+
+# This tests the code paths "which return-value convention?", "extract
+# return-value from registers", and "store return-value in registers".
+# Unlike "test struct calls", this test is expected to "fail" when the
+# return-value is in memory (GDB can't find the location).  The test
+# is in three parts: test "return"; test "finish"; check that the two
+# are consistent.  GDB can sometimes work for one command and not the
+# other.
+
+proc test_scalar_returns { } {
+    global gdb_prompt
+    global testfile
+
+    set tests "return ${testfile}"
+
+
+    # Check that "return" works.
+
+    # GDB must always force the return of a function that has
+    # a struct result.  Dependant on the ABI, it may, or may not be
+    # possible to store the return value in a register.
+
+    # The relevant code looks like "L{n} = fun{n}()".  The test forces
+    # "fun{n}" to "return" with an explicit value.  Since that code
+    # snippet will store the the returned value in "L{n}" the return
+    # is tested by examining "L{n}".  This assumes that the
+    # compiler implemented this as fun{n}(&L{n}) and hence that when
+    # the value isn't stored "L{n}" remains unchanged.  Also check for
+    # consistency between this and the "finish" case.
+
+    # Get into a call of fun
+    gdb_test "advance fun" \
+	    "fun .*\[\r\n\]+\[0-9\].*return foo.*" \
+	    "advance to fun for return; ${tests}"
+
+    # Check that the program invalidated the relevant global.
+    gdb_test "p/c L" " = 90 'Z'" "zed L for return; ${tests}"
+
+    # Force the "return".  This checks that the return is always
+    # performed, and that GDB correctly reported this to the user.
+    # GDB 6.0 and earlier, when the return-value's location wasn't
+    # known, both failed to print a final "source and line" and misplaced
+    # the frame ("No frame").
+
+    # The test is writen so that it only reports one FAIL/PASS for the
+    # entire operation.  The value returned is checked further down.
+    # "return_value_unknown", if non-empty, records why GDB realised
+    # that it didn't know where the return value was.
+
+    set test "return foo; ${tests}"
+    set return_value_unknown 0
+    set return_value_unimplemented 0
+    gdb_test_multiple "return foo" "${test}" {
+	-re "The location" {
+	    # Ulgh, a struct return, remember this (still need prompt).
+	    set return_value_unknown 1
+	    exp_continue
+	}
+	-re "A structure or union" {
+	    # Ulgh, a struct return, remember this (still need prompt).
+	    set return_value_unknown 1
+	    # Double ulgh.  Architecture doesn't use return_value and
+	    # hence hasn't implemented small structure return.
+	    set return_value_unimplemented 1
+	    exp_continue
+	}
+	-re "Make fun return now.*y or n. $" {
+	    gdb_test_multiple "y" "${test}" {
+		-re "L *= fun.*${gdb_prompt} $" {
+		    # Need to step off the function call
+		    gdb_test "next" "zed.*" "${test}"
+		}
+		-re "zed \\(\\);.*$gdb_prompt $" {
+		    pass "${test}"
+		}
+	    }
+	}
+    }
+
+    # If the previous test did not work, the program counter might
+    # still be inside foo() rather than main().  Make sure the program
+    # counter is is main().
+    #
+    # This happens on ppc64 GNU/Linux with gcc 3.4.1 and a buggy GDB
+
+    set test "return foo; synchronize pc to main()"
+    for {set loop_count 0} {$loop_count < 2} {incr loop_count} {
+      gdb_test_multiple "backtrace 1" $test {
+        -re "#0.*main \\(\\).*${gdb_prompt} $" {
+          pass $test
+          set loop_count 2
+        }
+        -re "#0.*fun \\(\\).*${gdb_prompt} $" {
+          if {$loop_count < 1} {
+            gdb_test "finish" ".*" ""
+          } else {
+            fail $test
+            set loop_count 2
+          }
+        }
+      }
+    }
+
+    # Check that the return-value is as expected.  At this stage we're
+    # just checking that GDB has returned a value consistent with
+    # "return_value_unknown" set above.
+
+    set test "value foo returned; ${tests}"
+    gdb_test_multiple "p/c L" "${test}" {
+	-re " = 49 '1'.*${gdb_prompt} $" {
+	    if $return_value_unknown {
+		# This contradicts the above claim that GDB didn't
+		# know the location of the return-value.
+		fail "${test}"
+	    } else {
+		pass "${test}"
+	    }
+	}
+	-re " = 90 .*${gdb_prompt} $" {
+	    if $return_value_unknown {
+		# The struct return case.  Since any modification
+		# would be by reference, and that can't happen, the
+		# value should be unmodified and hence Z is expected.
+		# Is this a reasonable assumption?
+		pass "${test}"
+	    } else {
+		# This contradicts the above claim that GDB knew
+		# the location of the return-value.
+		fail "${test}"
+	    }
+	}
+	-re ".*${gdb_prompt} $" {
+	    if $return_value_unimplemented {
+		# What a suprize.  The architecture hasn't implemented
+		# return_value, and hence has to fail.
+		kfail "$test" gdb/1444
+	    } else {
+		fail "$test"
+	    }
+	}
+    }	
+    
+    # Check that a "finish" works.
+
+    # This is almost but not quite the same as "call struct funcs".
+    # Architectures can have subtle differences in the two code paths.
+
+    # The relevant code snippet is "L{n} = fun{n}()".  The program is
+    # advanced into a call to  "fun{n}" and then that function is
+    # finished.  The returned value that GDB prints, reformatted using
+    # "p/c", is checked.
+
+    # Get into "fun()".
+    gdb_test "advance fun" \
+	    "fun .*\[\r\n\]+\[0-9\].*return foo.*" \
+	    "advance to fun for finish; ${tests}"
+
+    # Check that the program invalidated the relevant global.
+    gdb_test "p/c L" " = 90 'Z'" "zed L for finish; ${tests}"
+
+    # Finish the function, set 'finish_value_unknown" to non-empty if the
+    # return-value was not found.
+    set test "finish foo; ${tests}"
+    set finish_value_unknown 0
+    gdb_test_multiple "finish" "${test}" {
+	-re "Value returned is .*${gdb_prompt} $" {
+	    pass "${test}"
+	}
+	-re "Cannot determine contents.*${gdb_prompt} $" {
+	    # Expected bad value.  For the moment this is ok.
+	    set finish_value_unknown 1
+	    pass "${test}"
+	}
+    }
+
+    # Re-print the last (return-value) using the more robust
+    # "p/c".  If no return value was found, the 'Z' from the previous
+    # check that the variable was cleared, is printed.
+    set test "value foo finished; ${tests}"
+    gdb_test_multiple "p/c" "${test}" {
+	-re " = 49 '1'\[\r\n\]+${gdb_prompt} $" {
+	    if $finish_value_unknown {
+		# This contradicts the above claim that GDB didn't
+		# know the location of the return-value.
+		fail "${test}"
+	    } else {
+		pass "${test}"
+	    }
+	}
+	-re " = 90 'Z'\[\r\n\]+${gdb_prompt} $" {
+	    # The value didn't get found.  This is "expected".
+	    if $finish_value_unknown {
+		pass "${test}"
+	    } else {
+		# This contradicts the above claim that GDB did
+		# know the location of the return-value.
+		fail "${test}"
+	    }
+	}
+    }
+
+    # Finally, check that "return" and finish" have consistent
+    # behavior.
+
+    # Since both "return" and "finish" use equivalent "which
+    # return-value convention" logic, both commands should have
+    # identical can/can-not find return-value messages.
+
+    # Note that since "call" and "finish" use common code paths, a
+    # failure here is a strong indicator of problems with "store
+    # return-value" code paths.  Suggest looking at "return_value"
+    # when investigating a fix.
+
+    set test "return and finish use same convention; ${tests}"
+    if {$finish_value_unknown == $return_value_unknown} {
+	pass "${test}"
+    } else {
+	kfail gdb/1444 "${test}"
+    }
+}
+
+# ABIs pass anything >8 or >16 bytes in memory but below that things
+# randomly use register and/and structure conventions.  Check all
+# possible sized char scalars in that range.  But only a restricted
+# range of the other types.
+
+# NetBSD/PPC returns "unnatural" (3, 5, 6, 7) sized scalars in memory.
+
+# d10v is weird. 5/6 byte scalars go in memory.  2 or more char
+# scalars go in memory.  Everything else is in a register!
+
+# Test every single char struct from 1..17 in size.  This is what the
+# original "scalars" test was doing.
+
+start_scalars_test tc
+test_scalar_calls
+test_scalar_returns
+
+
+# Let the fun begin.
+
+# Assuming that any integer struct larger than 8 bytes goes in memory,
+# come up with many and varied combinations of a return struct.  For
+# "struct calls" test just beyond that 8 byte boundary, for "struct
+# returns" test up to that boundary.
+
+# For floats, assumed that up to two struct elements can be stored in
+# floating point registers, regardless of their size.
+
+# The approx size of each structure it is computed assumed that tc=1,
+# ts=2, ti=4, tl=4, tll=8, tf=4, td=8, tld=16, and that all fields are
+# naturally aligned.  Padding being added where needed.  Note that
+# these numbers are just approx, the d10v has ti=2, a 64-bit has has
+# tl=8.
+
+# Approx size: 2, 4, ...
+start_scalars_test ts
+test_scalar_calls
+test_scalar_returns
+
+# Approx size: 4, 8, ...
+start_scalars_test ti
+test_scalar_calls
+test_scalar_returns
+
+# Approx size: 4, 8, ...
+start_scalars_test tl
+test_scalar_calls
+test_scalar_returns
+
+# Approx size: 8, 16, ...
+start_scalars_test tll
+test_scalar_calls
+test_scalar_returns
+
+# Approx size: 4, 8, ...
+start_scalars_test tf
+test_scalar_calls
+test_scalar_returns
+
+# Approx size: 8, 16, ...
+start_scalars_test td
+test_scalar_calls
+test_scalar_returns
+
+# Approx size: 16, 32, ...
+start_scalars_test tld
+test_scalar_calls
+test_scalar_returns
+
+# Approx size: 4, 8, ...
+start_scalars_test te
+test_scalar_calls
+test_scalar_returns
+
+return 0

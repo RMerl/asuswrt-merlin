@@ -1,0 +1,14 @@
+# sh testcase for shlri.l $rm, $imm6, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global shlril
+shlril:
+	shlri.l r0, 0, r0
+
+	pass

@@ -15,13 +15,19 @@
 .Bar_container{
 	width:85%;
 	height:21px;
-	border:2px inset #999;
+	border:1px inset #999;
 	margin:0 auto;
+	margin-top:20px \9;
 	background-color:#FFFFFF;
 	z-index:100;
 }
 #proceeding_img_text{
-	position:absolute; z-index:101; font-size:11px; color:#000000; margin-left:110px; line-height:21px;
+	position:absolute; 
+	z-index:101; 
+	font-size:11px; color:#000000; 
+	line-height:21px;
+	width: 83%;
+	text-align: center;
 }
 #proceeding_img{
  	height:21px;
@@ -71,12 +77,16 @@ function detect_firmware(){
 
     		success: function(){
       			if(webs_state_update==0){
-      					$('update_scan').style.display="none";
+      					//$('update_scan').style.display="none";
       					setTimeout("detect_firmware();", 1000);
       			}else{
-      					if(webs_state_error==1){
+      					if(webs_state_error==1 && webs_state_info==""){
       								$('update_scan').style.display="none";
       								$('update_states').innerHTML="<#connect_failed#>";
+      								return;
+      					}else if(webs_state_error==1 && webs_state_info != ""){
+      								$('update_scan').style.display="none";
+      								$('update_states').innerHTML="<#FIRM_fail_desc#>";
       								return;
       					}else{
 
@@ -94,7 +104,6 @@ function detect_firmware(){
       										if(confirm("<#exist_new#>")){
       												document.start_update.action_mode.value="apply";
       												document.start_update.action_script.value="start_webs_upgrade";
-      												document.start_update.action_wait.value="270";
 															document.start_update.submit();
 															return;
       										}
@@ -123,7 +132,7 @@ function detect_update(){
 	//setCookie("after_check", 1, 365);
   document.start_update.action_mode.value="apply";
   document.start_update.action_script.value="start_webs_update";
-  document.start_update.action_wait.value="12";
+  document.start_update.action_wait.value="60";
   $('update_states').innerHTML="<#check_proceeding#>";
   $('update_scan').style.display="";
 	document.start_update.submit();
@@ -206,16 +215,19 @@ function isDownloading(){
 					if(rebooting > 20){
 						$("hiddenMask").style.visibility = "hidden";
 						showLoadingBar(180);
-    				setTimeout("location.href='index.asp';", 180000); // force to refresh
 					}
 					else
 						rebooting++
     		},
     		success: function(){
 					rebooting = 0;
-					if(webs_state_upgrade == 1 && webs_state_error == 1){
+					if(webs_state_error == 1 || webs_state_error == 3){
 						$("drword").innerHTML = "<#FIRM_fail_desc#>";
 						return false;
+					}
+					else if(webs_state_error == 2){
+						$("drword").innerHTML = Untranslated.fw_size_higher_mem;
+						return false;						
 					}
 					else if(webs_state_upgrade != 0 && webs_state_error == 0){
 						$("hiddenMask").style.visibility = "hidden";
@@ -233,7 +245,7 @@ function isDownloading(){
 function startDownloading(){
 	disableCheckChangedStatus();			
 	dr_advise();
-	$("drword").innerHTML = "&nbsp;&nbsp;&nbsp;Firmware downloading...";
+	$("drword").innerHTML = "&nbsp;&nbsp;&nbsp;"+Untranslated.file_downloading+"...";
 	isDownloading();
 }
 </script>
@@ -248,7 +260,7 @@ function startDownloading(){
 	<tr>
 		<td height="80">
 		<div id="loading_block1" class="Bar_container">
-			<span id="proceeding_img_text" ></span>
+			<span id="proceeding_img_text"></span>
 			<div id="proceeding_img"></div>
 		</div>
 		<div id="loading_block2" style="margin:5px auto; width:85%;"><#FIRM_ok_desc#></div>
@@ -264,7 +276,7 @@ function startDownloading(){
 	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center" style="height:100px;">
 		<tr>
 		<td>
-			<div class="drword" id="drword" style=""><#Main_alert_proceeding_desc1#>...</div>
+			<div class="drword" id="drword" style="">&nbsp;&nbsp;&nbsp;&nbsp;<#Main_alert_proceeding_desc1#>...</div>
 		</td>
 		</tr>
 	</table>

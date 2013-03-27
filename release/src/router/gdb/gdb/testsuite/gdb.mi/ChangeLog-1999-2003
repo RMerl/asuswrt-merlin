@@ -1,0 +1,768 @@
+2003-08-07  Andrew Cagney  <cagney@redhat.com>
+
+	* mi2-basics.exp: Copy base MI .exp file, set MIFLAGS to -i=mi2.
+	* mi2-break.exp, mi2-cli.exp, mi2-console.exp: Ditto.
+	* mi2-disassemble.exp, mi2-eval.exp, mi2-file.exp: Ditto.
+	* mi2-hack-cli.exp, mi2-pthreads.exp, mi2-read-memory.exp: Ditto.
+	* mi2-regs.exp, mi2-return.exp, mi2-simplerun.exp: Ditto.
+	* mi2-stack.exp, mi2-stepi.exp, mi2-syn-frame.exp: Ditto.
+	* mi2-until.exp, mi2-var-block.exp, mi2-var-child.exp: Ditto.
+	* mi2-var-cmd.exp, mi2-var-display.exp, mi2-watch.exp: Ditto.
+
+2003-05-03  J. Brobecker  <brobecker@gnat.com>
+
+	From Thierry Schneider  <tpschneider1@yahoo.com>:
+	* mi1-symbol.exp (-symbol-list-lines): New test file to
+	validate all symbol-related commands
+
+2003-04-08  Andrew Cagney  <cagney@redhat.com>
+
+	* gdb792.exp: Skip when C++.
+
+2003-02-23  Stephane Carrez  <stcarrez@nerim.fr>
+
+	* mi-syn-frame.exp: Don't run this test when gdb,nosignals is set.
+
+2002-12-13  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* mi-basics.exp: Change tests for -environment-directory.  Also add
+	tests for -environment-cd, -environment-pwd, and -environment-path.
+	Part of fix for PR gdb/741.
+
+2002-11-05  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* gdb792.cc: New file to test patch for PR gdb/792.
+	* gdb792.exp: Ditto.
+
+2002-11-04  Elena Zannoni  <ezannoni@redhat.com>
+
+        * mi-console.exp: Use mi_runto, mi_run_to_main, mi_next_to,
+	mi_step_to wherever possible.  Update copyright notices.
+	* mi-disassemble.exp: Ditto.
+	* mi-eval.exp: Ditto.
+	* mi-read-memory.exp: Ditto.
+	* mi-regs.exp: Ditto.
+	* mi-return.exp: Ditto.
+	* mi-stack.exp: Ditto.
+	* mi-stepi.exp: Ditto.
+	* mi-var-block.exp: Ditto.
+	* mi-var-cmd.exp: Ditto.
+	* mi-watch.exp: Ditto.
+	* mi1-console.exp: Ditto.
+	* mi1-disassemble.exp: Ditto.
+	* mi1-eval.exp: Ditto.
+	* mi1-read-memory.exp: Ditto.
+	* mi1-regs.exp: Ditto.
+	* mi1-return.exp: Ditto.
+	* mi1-stack.exp: Ditto.
+	* mi1-stepi.exp: Ditto.
+	* mi1-var-block.exp: Ditto.
+	* mi1-var-cmd.exp: Ditto.
+        * mi1-watch.exp: Ditto.
+
+2002-10-23  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* mi-var-cmd.exp: Add tests to verify that a -var-assign that changes
+	a value shows up in the changelist of a -var-update.  Part of fix
+	for gdb/702.
+	* mi1-var-cmd.exp: Ditto.
+
+2002-10-03  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* mi-return.exp: Change expected frame output to remove extraneous
+	space in level field when frame level is single digit.  Part of
+	fix for PR gdb/192.
+	* mi-stack.exp: Ditto.
+	* mi1-return.exp: Ditto.
+	* mi1-stack.exp: Ditto.
+
+2002-10-03  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* mi-var-block.exp: Change expected output from -var-update
+	command to expect list format for "changelist".  Fix for
+	PR gdb/672.
+	* mi-var-cmd.exp: Ditto.
+	* mi-var-child: Ditto.
+
+2002-09-25  Keith Seitz  <keiths@redhat.com>
+
+	* mi-pthreads.exp (get_mi_thread_list): Check if expect_out
+	exists before using it.
+	(check_mi_and_console_threads): Likewise.
+	* gdb669.exp (get_mi_thread_list): Likewise.
+	(check_mi_and_console_threads): Likewise.
+
+2002-09-24  Keith Seitz  <keiths@redhat.com>
+
+	* configure.in: Add config header.
+	Check for pthread.h.
+	* configure: Regenerate.
+	* config.in: New file.
+	* pthreads.c: New file.
+	* mi-pthreads.exp: New file to test thread functionality.
+	* gdb669.exp: New file.
+
+2002-09-17  Keith Seitz  <keiths@redhat.com>
+
+	* mi-var-cmd.exp: Add tests to check when varobj pinned to a
+	selected frame changes type.
+
+2002-09-17  Keith Seitz  <keiths@redhat.com>
+
+	* mi-console.exp: Update copyright.
+	* mi-var-block.exp: Likewise.
+	* mi-var-cmd.exp: Likewise.
+	* mi-var-display.exp: Likewise.
+	* mi0-console.exp: Likewise.
+	* mi0-var-child.exp: Likewise.
+	* mi0-var-cmd.exp: Likewise.
+	* mi0-var-display.exp: Likewise.
+
+2002-09-16  Keith Seitz  <keiths@redhat.com>
+
+	* gdb701.exp: New file for testing varobj target type bug.
+	* gdb701.c: New file.
+
+2002-09-13  Keith Seitz  <keiths@redhat.com>
+
+	* mi-var-child.exp: Use mi_step_to and mi_execute_to instead
+	of a bunch of repeated send_gdb/gdb_expect statements.
+	Fix line numbers.
+
+2002-09-10  Keith Seitz  <keiths@redhat.com>
+
+	* mi-simplerun.exp (test_controlled_execution): Follow renaming of
+	mi_run_to to mi_execute_to.
+	* mi-var-cmd.exp: Likewise.
+	* mi0-simplerun.exp: Likewise.
+	* mi0-var-cmd.exp: Likewise.
+
+2002-09-03  Keith Seitz  <keiths@redhat.com>
+
+	* gdb680.exp: New file to test to check for uiout list/tuple
+	nesting bug.
+
+2002-03-04  Michael Chastain  <mec@shout.net>
+
+	* mi-var-cmd.exp: In test "create local variable func",
+	accommodate gcc v3 function signature.
+	* mi0-var-cmd-exp: Ditto.
+
+2002-02-05  Jim Blandy  <jimb@redhat.com>
+
+	* mi-regs.exp: Various cleanups for SPARC-only tests.
+	(test_breakpoints_creation_and_listing): Format of breakpoint
+	table has changed.
+	(sparc_register_tests): Expand floating-point number regexp to
+	recognize NaN values, too.  Replace ineffectual single backslash
+	before a hyphen with a double backslash.  Don't check the exact
+	numbers of the registers which have changed, since there's no way
+	to know which registers changed, exactly; just check that the
+	result is well-formed.
+	* mi0-regs.exp: (sparc_register_tests): Same as for
+	sparc_register_tests in mi-regs.exp.
+
+	* mi-var-child.exp ("get children of struct_declarations", "get
+	children of struct_declarations.s2.u2.u1s2", "get children of
+	weird"): Tolerate argument types when they appear in function
+	types.  (Dwarf 2 includes prototype info; STABS does not.)
+	* mi0-var-child.exp: Same.
+
+2001-12-19  Keith Seitz  <keiths@redhat.com>
+
+	* mi-var-display.exp: char* variables have a child. Update all
+	occurences.
+	* mi0-var-display.exp: Likewise.
+
+2001-08-29  Andrew Cagney  <cagney@redhat.com>
+
+	* mi-var-cmd.exp, mi0-var-cmd.exp: Variable lpcharacter has one
+	child.  Soften floating point tests.
+
+2001-08-09  Andrew Cagney  <ac131313@redhat.com>
+
+	* mi0-var-block.exp, mi0-stack.exp, mi0-simplerun.exp,
+	mi0-regs.exp, mi0-watch.exp, mi0-stepi.exp, mi0-until.exp,
+	mi0-return.exp, mi0-read-memory.exp, mi0-eval.exp,
+	mi0-disassemble.exp, mi0-console.exp, mi-watch.exp,
+	mi-var-display.exp, mi-var-cmd.exp, mi-var-child.exp,
+	mi-until.exp, mi-var-block.exp, mi-stepi.exp, mi-stack.exp,
+	mi-simplerun.exp, mi-return.exp, mi-regs.exp, mi-read-memory.exp,
+	mi-disassemble.exp, mi-eval.exp, mi-console.exp: Replace pattern
+	matching thread=0 with one to also match thread=1.
+	Fix PR gdb/190.
+
+2001-08-18  Andrew Cagney  <ac131313@redhat.com>
+
+	* mi0-until.exp, mi-until.exp, mi0-stepi.exp, mi-stepi.exp,
+	mi-simplerun.exp, mi0-simplerun.exp, mi0-return.exp,
+	mi-return.exp, mi0-console.exp, mi-console.exp: Recognize an
+	unexpected run-to-main response. Report as a fail.
+
+2001-06-27  Andrew Cagney  <ac131313@redhat.com>
+
+	* mi-disassemble.exp: Update to accept mi1 breakpoint tables.
+	* mi-basics.exp: Ditto.
+	* mi-simplerun.exp: Ditto.
+	* mi-watch.exp: Ditto. Add check for full header.
+	* mi-break.exp: Ditto. Add check for full header.
+
+2001-06-26  Andrew Cagney  <ac131313@redhat.com>
+
+	* mi-stack.exp: Update.  Output for args=... and
+	locals=... changed to a list.
+	
+2001-06-26  Andrew Cagney  <ac131313@redhat.com>
+
+	* mi-stack.exp: Update. Output for stack=..., args=... and
+	stack-args=... changed to a list.
+
+2001-06-25  Andrew Cagney  <ac131313@redhat.com>
+
+	* mi-console.exp: Update args=... part of stop-reason
+	patterns. Output changed to a list of arguments.
+	* mi-disassemble.exp: Ditto.
+	* mi-simplerun.exp: Ditto.
+	* mi-return.exp: Ditto.
+	* mi-read-memory.exp: Ditto.
+	* mi-eval.exp: Ditto.
+	* mi-watch.exp: Ditto.
+	* mi-var-display.exp: Ditto.
+	* mi-var-cmd.exp: Ditto.
+	* mi-var-child.exp: Ditto.
+	* mi-var-block.exp: Ditto.
+	* mi-until.exp: Ditto.
+	* mi-stepi.exp: Ditto.
+	* mi-stack.exp: Ditto.
+	* mi-regs.exp: Ditto.
+
+2001-06-25  Andrew Cagney  <ac131313@redhat.com>
+
+	* mi-read-memory.exp: Update patterns matching data-read-memory.
+	Outputs a list.
+
+2001-06-25  Andrew Cagney  <ac131313@redhat.com>
+
+	* mi-regs.exp: Update patterns matching register-values.  Outputs a
+	list.
+
+2001-06-25  Andrew Cagney  <ac131313@redhat.com>
+
+	* mi-regs.exp: Update patters matching register-names.  Now
+	outputs a list.
+
+2001-06-25  Andrew Cagney  <ac131313@redhat.com>
+
+	* mi-regs.exp: Update patterns matching changed-registers.  Now
+	outputs a list.
+
+2001-06-23  Andrew Cagney  <ac131313@redhat.com>
+
+	* ChangeLog-mi: Rename to ChangeLog.
+	* mi-basics.exp: Remove local emacs variable defining
+	change-log-default-name.
+	* mi-break.exp, mi-console.exp, mi-disassemble.exp: Ditto.
+	* mi-eval.exp, mi-hack-cli.exp, mi-read-memory.exp: Ditto.
+	* mi-regs.exp, mi-return.exp, mi-simplerun.exp: Ditto.
+	* mi-stack.exp, mi-stepi.exp, mi-until.exp: Ditto.
+	* mi-var-block.exp, mi-var-child.exp, mi-var-cmd.exp: Ditto.
+	* mi-var-display.exp, mi-watch.exp, mi0-basics.exp: Ditto.
+	* mi0-break.exp, mi0-console.exp, mi0-disassemble.exp: Ditto.
+	* mi0-eval.exp, mi0-hack-cli.exp, mi0-read-memory.exp: Ditto.
+	* mi0-regs.exp, mi0-return.exp, mi0-simplerun.exp: Ditto.
+	* mi0-stack.exp, mi0-stepi.exp, mi0-until.exp: Ditto.
+	* mi0-var-block.exp, mi0-var-child.exp, mi0-var-cmd.exp: Ditto.
+	* mi0-var-display.exp, mi0-watch.exp: Ditto.
+
+2001-06-23  Andrew Cagney  <ac131313@redhat.com>
+
+	* mi-disassemble.exp: Update patterns matching data-disassemble
+	output.  Now produces a list of instructions and a list of
+	source/assembly lines.
+
+2001-06-18  Andrew Cagney  <ac131313@redhat.com>
+
+	* mi-basics.exp, mi-break.exp, mi-console.exp, mi-disassemble.exp,
+	mi-eval.exp, mi-hack-cli.exp, mi-read-memory.exp, mi-regs.exp,
+	mi-return.exp, mi-simplerun.exp, mi-stack.exp, mi-stepi.exp,
+	mi-until.exp, mi-var-block.exp, mi-var-child.exp, mi-var-cmd.exp,
+	mi-var-display.exp, mi-watch.exp, mi0-basics.exp, mi0-break.exp,
+	mi0-console.exp, mi0-disassemble.exp, mi0-eval.exp,
+	mi0-hack-cli.exp, mi0-read-memory.exp, mi0-regs.exp,
+	mi0-return.exp, mi0-simplerun.exp, mi0-stack.exp, mi0-stepi.exp,
+	mi0-until.exp, mi0-var-block.exp, mi0-var-child.exp,
+	mi0-var-cmd.exp, mi0-var-display.exp, mi0-watch.exp: Use MIFLAGS
+	to explictly select an interpreter.
+
+2001-06-16  Andrew Cagney  <ac131313@redhat.com>
+
+	MI0 was the never enabled MI interface included in GDB 5.0.
+	* mi0-basics.exp: Copy mi-basics.exp.
+	* mi0-break.exp: Copy mi-break.exp.
+	* mi0-console.exp: Copy mi-console.exp.
+	* mi0-disassemble.exp: Copy mi-disassemble.exp.
+	* mi0-eval.exp: Copy mi-eval.exp.
+	* mi0-hack-cli.exp: Copy mi-hack-cli.exp.
+	* mi0-read-memory.exp: Copy mi-read-memory.exp.
+	* mi0-regs.exp: Copy mi-regs.exp.
+	* mi0-return.exp: Copy mi-return.exp.
+	* mi0-simplerun.exp: Copy mi-simplerun.exp.
+	* mi0-stack.exp: Copy mi-stack.exp.
+	* mi0-stepi.exp: Copy mi-stepi.exp.
+	* mi0-until.exp: Copy mi-until.exp.
+	* mi0-var-block.exp: Copy mi-var-block.exp.
+	* mi0-var-child.exp: Copy mi-var-child.exp.
+	* mi0-var-cmd.exp: Copy mi-var-cmd.exp.
+	* mi0-var-display.exp: Copy mi-var-display.exp.
+	* mi0-watch.exp: Copy mi-watch.exp.
+	
+2001-05-11  Fernando Nasser  <fnasser@redhat.com>
+
+	* mi-var-child.exp: Adjust for the fact that now (char *) can be
+	dereferenced.
+
+2001-03-06  Kevin Buettner  <kevinb@redhat.com>
+
+	* mi-basics.exp, mi-break.exp, mi-disassemble.exp,
+	mi-eval.exp, mi-hack-cli.exp, mi-read-memory.exp, mi-regs.exp,
+	mi-return.exp, mi-simplerun.exp, mi-stack.exp, mi-stepi.exp,
+	mi-until.exp, mi-watch.exp: Update/correct copyright notices.
+
+2001-01-20  Mark Kettenis  <kettenis@gnu.org>
+
+	* mi-support.exp (mi_gdb_start): Skip mi tests if -i flag is
+	recognized (i.e. if GDB was compiled with UI_OUT, but the mi
+	interpreter wasn't recognized (because it wasn't compiled in).
+
+Tue Apr 18 15:36:07 2000  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* Makefile.in (clean mostlyclean): Do not delete $(MISCELLANEOUS).
+
+Tue Mar 14 15:54:57 2000  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* basics.c: Add EMACS local variable pointing change-log at this
+ 	file.
+	* Makefile.in: Ditto
+
+2000-03-13  James Ingham  <jingham@leda.cygnus.com>
+
+	* mi-var-block.exp: The error report from varobj_create changed
+	since I am now trapping parse_exp_1 errors.  Change the tests to
+	match the new error message.
+	* mi-var-child.exp: Ditto.
+	* mi-var-cmd.exp: Ditto.
+
+2000-03-06  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-disassemble.exp: Don't assume numbers for the offset
+ 	values. They can be different depending on the architecture.
+
+	* mi-watch.exp (test_watchpoint_triggering): In same cases the
+ 	type can be 'hw wathcpoint' not just 'watchpoint'. Adjust for that.
+
+	* basics.c (callee4): Make the function return something,
+ 	otherwise the return value is undefined.
+
+2000-03-06  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-basics.exp: Comment out test for a still unimplemented operation.
+
+	* mi-disassemble.exp: Rewrite most of the tests to conform to new
+ 	disassemble interface.
+
+Sat Mar  4 13:55:08 2000  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	From Fri 3 Mar 2000 Peter Schauer:
+	* mi-support.exp (mi_gdb_start): When GDB doesn't recongize -i=mi
+ 	option, assume no MI support present.
+
+2000-02-01  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-support.exp (mi_gdb_start): Update to recognize start up
+ 	message with 'UI_OUT' instead of 'HEADLESS'.
+
+2000-01-27  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-regs.exp (test_running_the_program): Add global var 'hex'.
+
+	* mi-stack.exp, mi-stepi.exp, mi-until.exp, mi-watch.exp,
+ 	mi-var-display.exp, mi-var-cmd.exp, mi-var-child.exp,
+ 	mi-var-block.exp: Update all stopped messages.
+
+2000-01-17  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-console.exp, mi-disassemble.exp, mi-eval.exp,
+ 	mi-read-memory.exp, mi-regs.exp, mi-return.exp, mi-simplerun.exp:
+ 	Update stopped messages, update copyright.
+	
+	* mi-disassemble.exp: Update error messages output.
+	
+	* mi-support.exp (proc mi_step): Make gdb do a 'step' command, not
+ 	a 'next'. Update stopped message.
+	(proc mi_next): Update stop message.
+	(proc mi_run_to_main): Update stopped message.
+	Update copyright.
+
+2000-01-11  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-simplerun.exp: Remove stack frames tests from here, to:
+
+	* mi-stack.exp: New file, tests for stack commands.
+
+	* mi-support.exp (mi_run_to_main, mi_next, mi_step) : Update to
+ 	include thread-id in stopped message.
+
+	* mi-regs.exp: Update break-insert output.
+
+	* (mi-console.exp, mi-disassemble.exp, mi-eval.exp,
+ 	mi-read-memory.exp, mi-regs.exp, mi-return.exp, mi-simplerun.exp,
+ 	mi-stepi.exp, mi-until.exp, mi-var-block.exp, mi-var-child.exp,
+ 	mi-var-cmd.exp, mi-var-display.exp, mi-watch.exp): Update stopped
+ 	message to include thread-id.
+
+Wed Dec 29 22:06:05 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mi-watch.exp, mi-var-display.exp, mi-var-cmd.exp,
+ 	mi-var-child.exp, mi-var-block.exp, mi-until.exp, mi-stepi.exp,
+ 	mi-simplerun.exp, mi-return.exp, mi-support.exp, mi-eval.exp,
+ 	mi-console.exp, mi-disassemble.exp, mi-break.exp: Update to
+ 	reflect extended output from -break-insert command.
+	
+	* mi-break.exp (test_rbreak_creation_and_listing): XFAIL regexp
+ 	tests.  -r flag broken by above.
+	
+Sun Dec 19 19:28:13 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* cpp_variable.cc, cpp_variable.h, c_variable.c: Delete.
+
+Fri Dec 17 20:59:55 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mi-read-memory.exp: Test of ``-o <offset>'' now works.
+
+1999-12-16  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-var-cmd.exp: Fix 2 tests outputs.
+
+	* mi-var-child.exp: Add many more tests.
+
+	* mi-var-display.exp: Add many more tests.
+
+	* var-cmd.c: Change type of incr_a parameter to char.
+
+1999-12-15  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-var-block.exp: Set up xfails fro known problems.
+
+	* mi-var-display.exp: Set up printing of values of 'e' and 'anone'
+ 	as xfails.
+
+	* mi-var-child.exp: Fix typos.
+
+1999-12-15  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mi-var-child.exp: Space was missing before ``[10]''.
+
+Wed Dec 15 19:23:38 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mi-read-memory.exp: Add test for ``-o <offset>''.  Update checks
+ 	and match next-row et.al.
+
+1999-12-14  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-var-display.exp : New file. Tests for format and type, with
+ 	unions, structs and enums.
+	
+	* mi-var-cmd.exp: Add some var-assign tests.
+
+1999-12-14 Elena Zannoni <ezannoni@kwikemart.cygnus.com> 
+
+	* mi-var-cmd.exp, mi-var-block.exp, mi-var-child.exp: New files
+ 	some tests for -var* commands.
+
+	* var-cmd.c: New source file for var-* commands tests.
+	* gdb.mi/Makefile.in (PROGS): Add var-cmd.
+	
+Mon Dec 13 18:06:09 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mi-break.exp: Fix quoting.  Changed "srcfile.c":6 to
+ 	"\"srcfile.c\":6".
+	* mi-simplerun.exp: Fix quoting.
+
+Sat Dec 11 21:33:37 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mi-simplerun.exp (exec-finish): Fix return value was zero,
+ 	should have been three.
+
+	* mi-disassemble.exp: Reduce number of wild card matches in
+ 	* patterns.  Remove all numeric constants.
+
+1999-12-09  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-eval.exp: New file. Some initial tests for
+ 	-data-evaluate-expression.
+
+1999-12-09  Fernando Nasser  <fnasser@totem.to.cygnus.com>
+
+	* c_variable.c, cpp_variable.cc, cpp_variable.h: New files.  Used
+	for testing "var" operations.
+	* Makefile.in: Add reference to the above files.
+
+1999-12-08  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-regs.exp: Fix test for format 'N' for
+ 	data-list-register-values.
+
+1999-12-07  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-disassemble.exp: Update expected output. Break test of
+ 	disassembly in mixed mode into 2 functions.
+
+	* mi-regs.exp: Initial register tests. Works only on sparc right
+ 	now.
+
+1999-12-02  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-stepi.exp: New file. Tests exec-step-instruction and
+ 	exec-next-instruction.
+	* mi-until.exp: New file. Tests exec-until.
+	* until.c: New file.
+	* mi-return.exp: New file. Tests exec-return.
+
+Thu Dec  2 09:38:23 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mi-hack-cli.exp: New test.  Check the hacked up access to the
+ 	CLI.
+
+Wed Dec  1 16:47:40 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mi-basics.exp: Delete calls to mi_delete_breakpoints,
+ 	mi_gdb_reinitialize_dir and mi_gdb_load.  This test is checking
+ 	that these can work.
+
+	* mi-support.exp (mi_step, mi_next, mi_run_to_main): New
+	procedures.
+
+	* mi-read-memory.exp, mi-read-memory.c: New files.  Test
+ 	data-read-memory command.
+	
+Tue Nov 30 23:54:16 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mi-support.exp: Don't start SID until after GDB has been started
+ 	and verified.
+	
+Tue Nov 30 22:21:33 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mi-support.exp (mi_uncatched_gdb_exit): When SID, call sid_exit.
+	(mi_gdb_start): When SID, call sid_start.
+	(mi_gdb_start): Add MIFLAGS to spawn-GDB command.  Check for
+ 	HEADLESS gdb.  Return non-zero when GDB fails to start.
+	(mi_gdb_load): When SID or SIM, download program.
+	(mi_run_cmd): Don't do download here.  Assume target supports the
+ 	00-exec-run command.
+	(skip_mi_tests, setup_gdbmi, unset_gdbmi): Delete.  Merged into
+ 	mi_gdb_start.
+
+	* mi-basics.exp, mi-break.exp, mi-console.exp, mi-disassemble.exp,
+ 	mi-simplerun.exp, mi-watch.exp: Update.  Check status from
+ 	mi_gdb_start indicating that GDB started correctly.
+
+Tue Nov 30 15:22:08 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mi-support.exp (setup_gdbmi, unset_gdbmi): New
+ 	procedures.  Setup/unset dejagnu for mi tests.
+	* mi-basics.exp, mi-console.exp, mi-simplerun.exp, mi-break.exp,
+ 	mi-disassemble.exp, mi-watch.exp: Update.
+
+1999-11-29  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-simplerun.exp (test_running_the_program): Remove XFAIL. The
+ 	output is fixed now.
+	(test_program_termination): Update output pattern.
+
+Tue Nov 30 00:19:10 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mi-console.c, mi-console.exp: New files. Test console output.
+
+Mon Nov 29 17:59:13 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mi-support.exp (mi_run_command): Check for exec-run command
+ 	failure due to MI not having an active target.
+	(mi_run_command): Check for and handle a builtin simulator target.
+	(mi_run_command): Don't check/handle for ``The program has been
+ 	started already'', not a valid MI response.
+	
+	* mi-simplerun.exp (test_running_the_program): Update all patterns
+ 	to match async output.
+	(test_running_the_program): Mark ``step to callee4'' as XFAIL.  MI
+ 	output contains {,reason="end-stepping-range"}+.
+
+	* mi-simplerun.exp: Limit the timeout for ``step to callee4'' to
+ 	30 seconds.
+
+Mon Nov 29 17:30:00 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* mi-support.exp (skip_mi_tests): Print UNTESTED when MI interface
+ 	isn't available.  Start/stop instead of assuming GDB is running.
+	(MIFLAGS): Define.
+	* mi-simplerun.exp, mi-disassemble.exp, mi-break.exp,
+ 	mi-basics.exp, mi-watch.exp: Update.
+
+1999-11-26  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* mi-simplerun.exp: Move break-insert {-t, -r} from here.
+	* mi-break.exp: To here. New file.
+	* mi-watch.exp: New file. Tests for watchpoints.
+
+Wed Nov 24 17:42:07 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* gdb.mi/ChangeLog-mi: MI entries moved to here.
+
+Wed Nov 24 17:31:04 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* gdb.mi/mi-basics.exp, gdb.mi/mi-disassemble.exp,
+ 	gdb.mi/mi-simplerun.exp: Print warning message when test isn't
+ 	run.
+
+1999-11-23  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* gdb.mi/mi-simplerun.exp: Update output of break-list to account for
+	"times" field.
+
+1999-11-05  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* gdb.mi/mi-simplerun.exp: Add tests for temporary breakpoints
+	and bp based on regular expressions.
+	* gdb.mi/mi-disassemble.exp: Fix typo.
+
+1999-11-04  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* gdb.mi/mi-disassemble.exp: Update output of execution commands
+ 	to reflect new 'reason' field.
+	* gdb.mi/mi-simplerun.exp: Ditto.
+
+1999-10-25  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* gdb.mi/mi-simplerun.exp: Add more stack-list-frames tests.
+
+	* gdb.mi/mi-disassemble.exp: Update 'run to main' output.  
+
+	* gdb.mi/mi-simplerun.exp: Update execution commands
+ 	output. Update backtrace output.
+	
+1999-10-18  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* gdb.mi/mi-disassemble.exp: Add new tests for the new
+	disassembly command parameter, number of lines.
+
+Mon Oct 11 13:57:21 1999  Andrew Cagney  <cagney@amy.cygnus.com>
+
+	* lib/mi-support.exp: Break complicated gdb_expect containing
+ 	exp_continue into a while within an expect.  Don't attempt a start
+ 	more than three times.  Check return value from gdb_load.
+	
+1999-10-06  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* gdb.mi/mi-disassemble.exp: New file.
+
+Wed Oct  6 12:05:58 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* lib/mi-support.exp (mi_run_cmd): Give up after two restart
+ 	attempts.
+
+1999-09290  Fernando Nasser  <fnasser@totem.to.cygnus.com>
+
+	* gdb.mi/mi-basics.exp: Update to current syntax and output formats.
+	* gdb.mi/mi-simplerun.exp: Ditto.
+	* lib/mi-support.exp (mi_delete_breakpoints): Ditto.
+
+1999-06-30  Fernando Nasser  <fnasser@totem.to.cygnus.com>
+
+	* gdb.mi/basics.c (main): Fix return code.  Add a print "Hello,
+	World".
+	* gdb.mi/mi-basics.exp: Fix message texts and numbering.
+	* gdb.mi/mi-simplerun.exp: Ditto. Also, add new tests and improve
+	some patterns.
+
+1999-06-30  Fernando Nasser  <fnasser@totem.to.cygnus.com>
+
+	* lib/mi-support.exp (mi_gdb_reinitialize_dir): Remove query as an
+	acceptable response to the environment-dir command.
+
+1999-06-30  Fernando Nasser  <fnasser@totem.to.cygnus.com>
+
+	* lib/mi-support.exp (mi_delete_breakpoints): Remove references to
+	gdb-cli.
+	(mi_run_cmd): Ditto.
+
+1999-06-25  Fernando Nasser  <fnasser@totem.to.cygnus.com>
+
+	* lib/mi-support.exp (skip_mi_tests): Use gdb-version to check for
+	headless output format.
+
+1999-06-24  Fernando Nasser  <fnasser@totem.to.cygnus.com>
+
+	* gdb.mi/mi-simplerun.exp (test_controlled_execution): Add global
+	spec for hex.
+
+1999-06-24  Fernando Nasser  <fnasser@totem.to.cygnus.com>
+
+	* lib/mi-support.exp (mi_run_cmd): Fix pattern and add a timeout
+ 	clause.
+
+1999-06-24  Fernando Nasser  <fnasser@totem.to.cygnus.com>
+
+	* lib/mi-support.exp: Use mi_gdb_prompt instead of a modified
+	gdb_prompt.  Remove uneeded loading of libgloss.
+	(mi_gdb_exit): Remove prompt argument.
+	(mi_uncatched_gdb_exit): Ditto.
+	(mi_run_cmd): New proc. MI version of gdb_run.
+	(skip_mi_tests): New proc. Check if gdb is capable of producing
+	headless formatted output.
+	* gdb.mi/mi-basics.exp: Use mi_gdb_prompt instead of a modified
+	gdb_prompt.  Eliminate parameter to mi_gdb_exit (as a result of
+	the above).  Test for skip_mi_tests before running.
+	Note: The above changes are interelated (need each other).
+	* gdb.mi/mi-simplerun.exp: Same changes as for mi-basics.exe
+	above.
+	(test_breakpoint_creation_and_listing): Remove insertion of
+	breakpoint at callee1 (and renumber tokens). Add tests for
+	break-list, break-disable and break-info.
+	(test_running_the_program): Use mi_run_cmd so it can run on remote
+	targets.
+	(test_controlled_execution): Fix broken test.
+	(test_program_termination): Test implemented.
+	* gdb.mi/basic.c (main): Small change to allow for testing of both
+	exec-next and exec-step operations.
+
+1999-06-22  Fernando Nasser  <fnasser@totem.to.cygnus.com>
+
+        * lib/mi-support.exp (mi_gdb_test): New proc.  MI version of gdb_test.
+        * gdb.mi/mi-basics.exp: Use the above instead of gdb_test.
+        * gdb.mi/mi-simplerun.exp: Ditto.
+
+1999-06-22  Fernando Nasser  <fnasser@totem.to.cygnus.com>
+
+        * gdb.mi/mi-simplerun.exp: New file. Tests simple debugging tasks. 
+        * gdb.mi/mi-basics.exp: Remove tests moved to above new file.
+        * lib/mi-support.exp: New file.  Support procedures for mi tests.
+
+1999-06-08  Fernando Nasser  <fnasser@totem.to.cygnus.com>
+
+	* gdb.mi/mi-basics.exp: Skip all tests if the MI interpreter is
+	not active.
+
+1999-06-03  Fernando Nasser  <fnasser@totem.to.cygnus.com>
+
+	* gdb.mi: New directory.
+	* configure.in: Configure it.
+	* configure: Regenerate.
+	* gdb.mi/{Makefile.in,configure.in,configure}: New files.
+	* gdb.mi/{mi-basics.exp,basics.c,testcmds}: New files.
+
+
+Local Variables:
+mode: indented-text
+left-margin: 8
+fill-column: 74
+version-control: never
+End:

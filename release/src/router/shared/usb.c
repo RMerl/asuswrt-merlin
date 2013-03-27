@@ -206,7 +206,6 @@ int is_no_partition(const char *discname)
 int exec_for_host(int host, int obsolete, uint flags, host_exec func)
 {
 	DIR *usb_dev_disc;
-	char bfr[256];	/* Will be: /dev/discs/disc#					*/
 	char ptname[32];/* Will be: discDN_PN	 					*/
 	char dsname[16];/* Will be: discDN	 					*/
 	int host_no;	/* SCSI controller/host # */
@@ -215,66 +214,81 @@ int exec_for_host(int host, int obsolete, uint flags, host_exec func)
 	int siz;
 	char line[256];
 	int result = 0;
-
-	_dprintf("exec_for_host(%d, %d, %d, %d)\n", host, obsolete, flags, func);
-
-	flags |= EFH_1ST_HOST;
-
 #ifdef LINUX26
-	char hostbuf[16];
-	DIR *dir_host;
-
-	/*
-	 * Scsi block devices in kernel 2.6 (for attached devices) can be found as
-	 * 	/sys/bus/scsi/devices/<host_no>:x:x:x/block:[sda|sdb|...]
-	 */
-	if ((usb_dev_disc = opendir("/sys/bus/scsi/devices"))) {
-		sprintf(hostbuf, "%d:", host);
-
-		while ((dp = readdir(usb_dev_disc))) {
-			if (host >= 0 && strncmp(dp->d_name, hostbuf, strlen(hostbuf)) != 0)
-				continue;
-			if (sscanf(dp->d_name, "%d:%*s:%*s:%*s", &host_no) != 1)
-				continue;
-			sprintf(bfr, "/sys/bus/scsi/devices/%s", dp->d_name);
-			if ((dir_host = opendir(bfr))) {
-				while ((dp = readdir(dir_host))) {
-					if (strncmp(dp->d_name, "block:", 6) != 0)
-						continue;
-					strncpy(dsname, dp->d_name + 6, sizeof(dsname));
-					siz = strlen(dsname);
-
-					flags |= EFH_1ST_DISC;
-					if (func && (prt_fp = fopen("/proc/partitions", "r"))) {
-						while (fgets(line, sizeof(line) - 2, prt_fp)) {
-							if (sscanf(line, " %*s %*s %*s %s", ptname) == 1) {
-								if (strncmp(ptname, dsname, siz) == 0) {
-									if ((strcmp(ptname, dsname) == 0) && !is_no_partition(dsname))
-										continue;
-									sprintf(line, "/dev/%s", ptname);
-									result = (*func)(line, host_no, dsname, ptname, flags) || result;
-									flags &= ~(EFH_1ST_HOST | EFH_1ST_DISC);
-								}
-							}
-						}
-						fclose(prt_fp);
-					}
-				}
-				closedir(dir_host);
-			}
-		}
-		closedir(usb_dev_disc);
-	}
-
-#else	/* !LINUX26 */
+	int ret;
+	char hostbuf[16], device_path[PATH_MAX], linkbuf[PATH_MAX], *h;
+#else
 	char link[256];	/* Will be: ../scsi/host#/bus0/target0/lun#  that bfr links to. */
 			/* When calling the func, will be: /dev/discs/disc#/part#	*/
+	char bfr[256];	/* Will be: /dev/discs/disc#					*/
 	char bfr2[128];	/* Will be: /dev/discs/disc#/disc     for the BLKRRPART.	*/
 	char *cp;
 	int len;
 	int disc_num;	/* Disc # */
 	int part_num;	/* Parition # */
 	char *mp;	/* Ptr to after any leading ../ path */
+#endif
+
+	_dprintf("exec_for_host(%d, %d, %d, %d)\n", host, obsolete, flags, func);
+	if (!func)
+		return 0;
+
+	flags |= EFH_1ST_HOST;
+
+#ifdef LINUX26
+	/* /sys/bus/scsi/devices/X:X:X:X/block:sdX doesn't exist in kernel 3.0
+	 * 1. Enumerate sub-directory, DIR, of /sys/block.
+	 * 2. Skip ., .., loop*, mtdblock*, ram*, etc.
+	 * 3. read DIR/device link. Check whether X:X:X:X exist. e.g.
+	 *    56U: ../../devices/platform/rt3xxx-ehci/usb1/1-1/1-1:1.0/host1/target1:0:0/1:0:0:0
+	 *    65U: ../../devices/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-2/1-2:1.0/host1/target1:0:0/1:0:0:0
+	 * 4. If yes, DIR would be sda, sdb, etc.
+	 * 5. Search DIR in /proc/partitions.
+	 */
+	sprintf(hostbuf, "%d:", host);
+	if (!(usb_dev_disc = opendir("/sys/block")))
+		return 0;
+	while ((dp = readdir(usb_dev_disc))) {
+		if (!strncmp(dp->d_name, "loop", 4) ||
+		    !strncmp(dp->d_name, "mtdblock", 8) ||
+		    !strncmp(dp->d_name, "ram", 3) ||
+		    !strcmp(dp->d_name, ".") ||
+		    !strcmp(dp->d_name, "..")
+		   )
+			continue;
+		snprintf(device_path, sizeof(device_path), "/sys/block/%s/device", dp->d_name);
+		if (readlink(device_path, linkbuf, sizeof(linkbuf)) == -1)
+			continue;
+		h = strstr(linkbuf, "/host");
+		if (!h)	continue;
+		if ((ret = sscanf(h, "/host%*d/target%*d:%*d:%*d/%d:%*d:%*d:%*d", &host_no)) != 1) {
+			_dprintf("%s(): sscanf can't distinguish host_no from [%s]. ret %d\n", __func__, linkbuf, ret);
+			continue;
+		}
+		if (host >= 0 && host != host_no)
+			continue;
+		snprintf(dsname, sizeof(dsname), dp->d_name);
+		siz = strlen(dsname);
+		flags |= EFH_1ST_DISC;
+		if (!(prt_fp = fopen("/proc/partitions", "r")))
+			continue;
+		while (fgets(line, sizeof(line) - 2, prt_fp)) {
+			if (sscanf(line, " %*s %*s %*s %s", ptname) != 1)
+				continue;
+
+			if (!strncmp(ptname, dsname, siz)) {
+				if (!strcmp(ptname, dsname) && !is_no_partition(dsname))
+					continue;
+				sprintf(line, "/dev/%s", ptname);
+				result = (*func)(line, host_no, dsname, ptname, flags) || result;
+				flags &= ~(EFH_1ST_HOST | EFH_1ST_DISC);
+			}
+		}
+		fclose(prt_fp);
+	}
+	closedir(usb_dev_disc);
+
+#else	/* !LINUX26 */
 
 	if ((usb_dev_disc = opendir(DEV_DISCS_ROOT))) {
 		while ((dp = readdir(usb_dev_disc))) {
@@ -518,11 +532,6 @@ ret:
 void *xmalloc(size_t siz)
 {
 	return (malloc(siz));
-}
-
-static void *xrealloc(void *old, size_t size)
-{
-	return realloc(old, size);
 }
 
 ssize_t full_read(int fd, void *buf, size_t len)

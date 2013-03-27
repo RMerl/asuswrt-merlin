@@ -1,0 +1,17 @@
+This is used to modify the Hop Limit field in IPv6 header. The Hop Limit field
+is similar to what is known as TTL value in IPv4.  Setting or incrementing the
+Hop Limit field can potentially be very dangerous, so it should be avoided at
+any cost. This target is only valid in
+.B mangle
+table.
+.PP
+.B Don't ever set or increment the value on packets that leave your local network!
+.TP
+\fB\-\-hl\-set\fP \fIvalue\fP
+Set the Hop Limit to `value'.
+.TP
+\fB\-\-hl\-dec\fP \fIvalue\fP
+Decrement the Hop Limit `value' times.
+.TP
+\fB\-\-hl\-inc\fP \fIvalue\fP
+Increment the Hop Limit `value' times.

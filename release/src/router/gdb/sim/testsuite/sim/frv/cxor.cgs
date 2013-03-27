@@ -1,0 +1,180 @@
+# frv testcase for cxor $GRi,$GRj,$GRk,$CCi,$cond
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global cxor
+cxor:
+	set_spr_immed	0x1b1b,cccr
+
+	set_gr_limmed   0xaaaa,0xaaaa,gr7
+	set_gr_limmed   0x5555,0x5555,gr8
+	set_icc         0x07,0		; Set mask opposite of expected
+	cxor      	gr7,gr8,gr8,cc0,1
+	test_icc	0 1 1 1 icc0
+	test_gr_limmed 	0xffff,0xffff,gr8
+
+	set_gr_immed	0x00000000,gr7
+	set_gr_immed	0x00000000,gr8
+	set_icc         0x08,0		; Set mask opposite of expected
+	cxor		gr7,gr8,gr8,cc0,1
+	test_icc	1 0 0 0 icc0
+	test_gr_immed  	0x00000000,gr8
+
+	set_gr_limmed   0xaaaa,0xaaaa,gr7
+	set_gr_limmed   0xaaaa,0xaaaa,gr8
+	set_icc         0x0b,0		; Set mask opposite of expected
+	cxor      	gr7,gr8,gr8,cc4,1
+	test_icc	1 0 1 1 icc0
+	test_gr_immed  	0x00000000,gr8
+
+	set_gr_limmed   0xdead,0x0000,gr7
+	set_gr_limmed   0x0000,0xbeef,gr8
+	set_icc         0x05,0		; Set mask opposite of expected
+	cxor		gr7,gr8,gr8,cc4,1
+	test_icc	0 1 0 1 icc0
+	test_gr_limmed  0xdead,0xbeef,gr8
+
+	set_gr_limmed   0xaaaa,0xaaaa,gr7
+	set_gr_limmed   0x5555,0x5555,gr8
+	set_icc         0x07,0		; Set mask opposite of expected
+	cxor      	gr7,gr8,gr8,cc0,0
+	test_icc	0 1 1 1 icc0
+	test_gr_limmed 	0x5555,0x5555,gr8
+
+	set_gr_immed	0x00007fff,gr7
+	set_gr_immed	0x00000000,gr8
+	set_icc         0x08,0		; Set mask opposite of expected
+	cxor		gr7,gr8,gr8,cc0,0
+	test_icc	1 0 0 0 icc0
+	test_gr_immed  	0x00000000,gr8
+
+	set_gr_limmed   0xaaaa,0xaaaa,gr7
+	set_gr_limmed   0xaaaa,0xaaaa,gr8
+	set_icc         0x0b,0		; Set mask opposite of expected
+	cxor      	gr7,gr8,gr8,cc4,0
+	test_icc	1 0 1 1 icc0
+	test_gr_limmed 	0xaaaa,0xaaaa,gr8
+
+	set_gr_limmed   0xdead,0x0000,gr7
+	set_gr_limmed   0x0000,0xbeef,gr8
+	set_icc         0x05,0		; Set mask opposite of expected
+	cxor		gr7,gr8,gr8,cc4,0
+	test_icc	0 1 0 1 icc0
+	test_gr_limmed  0x0000,0xbeef,gr8
+
+	set_gr_limmed   0xaaaa,0xaaaa,gr7
+	set_gr_limmed   0x5555,0x5555,gr8
+	set_icc         0x07,1		; Set mask opposite of expected
+	cxor      	gr7,gr8,gr8,cc1,0
+	test_icc	0 1 1 1 icc1
+	test_gr_limmed 	0xffff,0xffff,gr8
+
+	set_gr_immed	0x00000000,gr7
+	set_gr_immed	0x00000000,gr8
+	set_icc         0x08,1		; Set mask opposite of expected
+	cxor		gr7,gr8,gr8,cc1,0
+	test_icc	1 0 0 0 icc1
+	test_gr_immed  	0x00000000,gr8
+
+	set_gr_limmed   0xaaaa,0xaaaa,gr7
+	set_gr_limmed   0xaaaa,0xaaaa,gr8
+	set_icc         0x0b,1		; Set mask opposite of expected
+	cxor      	gr7,gr8,gr8,cc5,0
+	test_icc	1 0 1 1 icc1
+	test_gr_immed  	0x00000000,gr8
+
+	set_gr_limmed   0xdead,0x0000,gr7
+	set_gr_limmed   0x0000,0xbeef,gr8
+	set_icc         0x05,1		; Set mask opposite of expected
+	cxor		gr7,gr8,gr8,cc5,0
+	test_icc	0 1 0 1 icc1
+	test_gr_limmed  0xdead,0xbeef,gr8
+
+	set_gr_limmed   0xaaaa,0xaaaa,gr7
+	set_gr_limmed   0x5555,0x5555,gr8
+	set_icc         0x07,1		; Set mask opposite of expected
+	cxor      	gr7,gr8,gr8,cc1,1
+	test_icc	0 1 1 1 icc1
+	test_gr_limmed 	0x5555,0x5555,gr8
+
+	set_gr_immed	0x00007fff,gr7
+	set_gr_immed	0x00000000,gr8
+	set_icc         0x08,1		; Set mask opposite of expected
+	cxor		gr7,gr8,gr8,cc1,1
+	test_icc	1 0 0 0 icc1
+	test_gr_immed  	0x00000000,gr8
+
+	set_gr_limmed   0xaaaa,0xaaaa,gr7
+	set_gr_limmed   0xaaaa,0xaaaa,gr8
+	set_icc         0x0b,1		; Set mask opposite of expected
+	cxor      	gr7,gr8,gr8,cc5,1
+	test_icc	1 0 1 1 icc1
+	test_gr_limmed 	0xaaaa,0xaaaa,gr8
+
+	set_gr_limmed   0xdead,0x0000,gr7
+	set_gr_limmed   0x0000,0xbeef,gr8
+	set_icc         0x05,1		; Set mask opposite of expected
+	cxor		gr7,gr8,gr8,cc5,1
+	test_icc	0 1 0 1 icc1
+	test_gr_limmed  0x0000,0xbeef,gr8
+
+	set_gr_limmed   0xaaaa,0xaaaa,gr7
+	set_gr_limmed   0x5555,0x5555,gr8
+	set_icc         0x07,2		; Set mask opposite of expected
+	cxor      	gr7,gr8,gr8,cc2,0
+	test_icc	0 1 1 1 icc2
+	test_gr_limmed 	0x5555,0x5555,gr8
+
+	set_gr_immed	0x00007fff,gr7
+	set_gr_immed	0x00000000,gr8
+	set_icc         0x08,2		; Set mask opposite of expected
+	cxor		gr7,gr8,gr8,cc2,0
+	test_icc	1 0 0 0 icc2
+	test_gr_immed  	0x00000000,gr8
+
+	set_gr_limmed   0xaaaa,0xaaaa,gr7
+	set_gr_limmed   0xaaaa,0xaaaa,gr8
+	set_icc         0x0b,2		; Set mask opposite of expected
+	cxor      	gr7,gr8,gr8,cc6,1
+	test_icc	1 0 1 1 icc2
+	test_gr_limmed 	0xaaaa,0xaaaa,gr8
+
+	set_gr_limmed   0xdead,0x0000,gr7
+	set_gr_limmed   0x0000,0xbeef,gr8
+	set_icc         0x05,2		; Set mask opposite of expected
+	cxor		gr7,gr8,gr8,cc6,1
+	test_icc	0 1 0 1 icc2
+	test_gr_limmed  0x0000,0xbeef,gr8
+
+	set_gr_limmed   0xaaaa,0xaaaa,gr7
+	set_gr_limmed   0x5555,0x5555,gr8
+	set_icc         0x07,3		; Set mask opposite of expected
+	cxor      	gr7,gr8,gr8,cc3,0
+	test_icc	0 1 1 1 icc3
+	test_gr_limmed 	0x5555,0x5555,gr8
+
+	set_gr_immed	0x00007fff,gr7
+	set_gr_immed	0x00000000,gr8
+	set_icc         0x08,3		; Set mask opposite of expected
+	cxor		gr7,gr8,gr8,cc3,0
+	test_icc	1 0 0 0 icc3
+	test_gr_immed  	0x00000000,gr8
+
+	set_gr_limmed   0xaaaa,0xaaaa,gr7
+	set_gr_limmed   0xaaaa,0xaaaa,gr8
+	set_icc         0x0b,3		; Set mask opposite of expected
+	cxor      	gr7,gr8,gr8,cc7,1
+	test_icc	1 0 1 1 icc3
+	test_gr_limmed 	0xaaaa,0xaaaa,gr8
+
+	set_gr_limmed   0xdead,0x0000,gr7
+	set_gr_limmed   0x0000,0xbeef,gr8
+	set_icc         0x05,3		; Set mask opposite of expected
+	cxor		gr7,gr8,gr8,cc7,1
+	test_icc	0 1 0 1 icc3
+	test_gr_limmed  0x0000,0xbeef,gr8
+
+	pass

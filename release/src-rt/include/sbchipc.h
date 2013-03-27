@@ -876,6 +876,9 @@ typedef volatile struct {
 #define SFLASH_ST_CSA		0x1000		/* Keep chip select asserted */
 #define SFLASH_ST_SSE		0x0220		/* Sub-sector Erase */
 
+#define SFLASH_MXIC_RDID	0x0390		/* Read Manufacture ID */
+#define SFLASH_MXIC_MFID	0xc2		/* MXIC Manufacture ID */
+
 /* Status register bits for ST flashes */
 #define SFLASH_ST_WIP		0x01		/* Write In Progress */
 #define SFLASH_ST_WEL		0x02		/* Write Enable Latch */
@@ -1274,7 +1277,9 @@ typedef volatile struct {
 #define CCTRL5357_EXTPA                 (1<<14) /* extPA in ChipControl 1, bit 14 */ 
 #define CCTRL5357_ANT_MUX_2o3		(1<<15) /* 2o3 in ChipControl 1, bit 15 */ 
 #define CCTRL5357_NFLASH		(1<<16) /* Nandflash in ChipControl 1, bit 16 */
-
+/* 43217 Chip specific ChipControl register bits */
+#define CCTRL43217_EXTPA_C0             (1<<13) /* core0 extPA in ChipControl 1, bit 13 */
+#define CCTRL43217_EXTPA_C1             (1<<8)  /* core1 extPA in ChipControl 1, bit 8 */ 
 /* 4328 resources */
 #define RES4328_EXT_SWITCHER_PWM	0	/* 0x00001 */
 #define RES4328_BB_SWITCHER_PWM		1	/* 0x00002 */

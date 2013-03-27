@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  *
  * Fundamental constants relating to ARP Protocol
  *
- * $Id: bcmarp.h 241182 2011-02-17 21:50:03Z $
+ * $Id: bcmarp.h 332293 2012-05-09 20:49:03Z $
  */
 
 #ifndef _bcmarp_h_
@@ -18,6 +18,7 @@
 #ifndef _TYPEDEFS_H_
 #include <typedefs.h>
 #endif
+#include <proto/bcmip.h>
 
 /* This marks the start of a packed structure section. */
 #include <packed_section_start.h>
@@ -51,6 +52,22 @@ BWL_PRE_PACKED_STRUCT struct bcmetharp {
 	struct ether_header	eh;
 	struct bcmarp	arp;
 } BWL_POST_PACKED_STRUCT;
+
+/* IPv6 Neighbor Advertisement */
+#define NEIGHBOR_ADVERTISE_SRC_IPV6_OFFSET	8		/* src IPv6 address offset */
+#define NEIGHBOR_ADVERTISE_TYPE_OFFSET		40		/* type offset */
+#define NEIGHBOR_ADVERTISE_CHECKSUM_OFFSET	42		/* check sum offset */
+#define NEIGHBOR_ADVERTISE_FLAGS_OFFSET		44		/* R,S and O flags offset */
+#define NEIGHBOR_ADVERTISE_TGT_IPV6_OFFSET	48		/* target IPv6 address offset */
+#define NEIGHBOR_ADVERTISE_OPTION_OFFSET	64		/* options offset */
+#define NEIGHBOR_ADVERTISE_TYPE		136
+#define NEIGHBOR_SOLICITATION_TYPE	135
+
+#define OPT_TYPE_SRC_LINK_ADDR		1
+#define OPT_TYPE_TGT_LINK_ADDR		2
+
+#define NEIGHBOR_ADVERTISE_DATA_LEN	72	/* neighbor advertisement data length */
+#define NEIGHBOR_ADVERTISE_FLAGS_VALUE	0x60	/* R=0, S=1 and O=1 */
 
 /* This marks the end of a packed structure section. */
 #include <packed_section_end.h>

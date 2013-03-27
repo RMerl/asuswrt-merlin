@@ -1,0 +1,16 @@
+# GNU linker version script for neon.
+# All symbols in <= 0.28.x use default unversioned.
+
+NEON_0_29 {
+    ne_iaddr_raw;
+    ne_sock_writev;
+    ne_sock_fullwritev;
+    ne_sock_set_error;
+    ne_sock_proxy;
+    ne_session_system_proxy;
+    ne_session_socks_proxy;
+    ne_acl3744_set;
+    ne_buffer_qappend;
+    ne_strnqdup;
+    ne_iaddr_parse;
+};

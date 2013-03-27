@@ -1,0 +1,11 @@
+﻿CACHE MANIFEST
+
+# <% nvram_get("productid"); %> <% nvram_get("buildinfo"); %>
+
+CACHE:
+
+NETWORK:
+*
+
+FALLBACK:
+/ offline.htm

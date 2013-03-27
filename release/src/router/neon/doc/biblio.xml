@@ -1,0 +1,73 @@
+<bibliography id="biblio"> <!-- -*- xml -*- -->
+
+<biblioentry id="bib.ssltls">
+  <abbrev>SSL-and-TLS</abbrev>
+  <title><ulink url="http://www.rtfm.com/sslbook/">SSL and
+  TLS: Designing and Building Secure Systems</ulink></title>
+  <author><firstname>Eric</firstname><surname>Rescorla</surname></author>
+  <isbn>0-201-62598-3</isbn>
+  <publisher><publishername>Addison-Wesley</publishername></publisher>
+  <pubdate>March 2001</pubdate>
+</biblioentry>
+
+<biblioentry id="bib.xmlnames">
+  <abbrev>REC-XML-names</abbrev>
+  <corpauthor>World Wide Web Consortium</corpauthor>
+  <title><ulink url="http://www.w3.org/TR/REC-xml-names">Namespaces in XML</ulink></title>
+  <pubdate>January 1999</pubdate>
+</biblioentry>
+
+<biblioentry id="bib.rfc2616">
+  <abbrev>RFC2616</abbrev>
+  <title><ulink url="http://www.ietf.org/rfc/rfc2616.txt">Hypertext Transfer 
+  Protocol&mdash;HTTP/1.1</ulink></title>
+  <authorgroup>
+    <author><firstname>Roy</firstname><surname>Fielding</surname></author>
+    <author><firstname>Jim</firstname><surname>Gettys</surname></author>
+    <author><firstname>Jeff</firstname><surname>Mogul</surname></author>
+    <author><firstname>Henrik</firstname><surname>Frystyk</surname></author>
+    <author><firstname>Larry</firstname><surname>Masinter</surname></author>
+    <author><firstname>Paul</firstname><surname>Leach</surname></author>
+    <author><firstname>Tim</firstname><surname>Berners-Lee</surname></author>
+  </authorgroup>
+  <publishername>IETF</publishername>
+  <pubdate>June 1999</pubdate>
+</biblioentry>
+
+<biblioentry id="bib.rfc2518">
+  <abbrev>RFC2518</abbrev>
+  <title><ulink url="http://www.ietf.org/rfc/rfc2518.txt">HTTP Extensions for Distributed Authoring&mdash;WEBDAV</ulink></title>
+  <authorgroup>
+    <author><firstname>Yaron</firstname><surname>Goland</surname></author>
+    <author><firstname>Jim</firstname><surname>Whitehead</surname></author>
+    <author><firstname>Asad</firstname><surname>Faizi</surname></author>
+    <author><firstname>Steve</firstname><surname>Carter</surname></author>
+    <author><firstname>Del</firstname><surname>Jensen</surname></author>
+  </authorgroup>
+  <publishername>IETF</publishername>
+  <pubdate>February 1999</pubdate>
+</biblioentry>
+
+<biblioentry id="bib.rfc3280">
+  <abbrev>RFC3280</abbrev>
+  <title><ulink url="http://www.ietf.org/rfc/rfc3280.txt">Internet X.509 Public Key Infrastructure
+       Certificate and Certificate Revocation List (CRL) Profile</ulink></title>
+  <authorgroup>
+    <author><firstname>Russel</firstname><surname>Housley</surname></author>
+    <author><firstname>Warwick</firstname><surname>Ford</surname></author>
+    <author><firstname>Tim</firstname><surname>Polk</surname></author>
+    <author><firstname>David</firstname><surname>Solo</surname></author>
+  </authorgroup>
+  <publishername>IETF</publishername>
+  <pubdate>April 2002</pubdate>
+</biblioentry>
+
+<!-- RFCs: 2617 -->
+
+<!-- Other interesting RFCs:
+
+ 3490 : Internationalizing Domain Names in Applications (IDNA) 
+ 3493 : Basic Socket Interface Extensions for IPv6 
+ -->
+
+</bibliography>

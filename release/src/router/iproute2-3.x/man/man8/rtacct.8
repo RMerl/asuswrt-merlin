@@ -1,0 +1,48 @@
+.TH RTACCT 8 "27 June, 2007"
+
+.SH NAME
+nstat, rtacct - network statistics tools.
+
+.SH SYNOPSIS
+Usage: nstat [ -h?vVzrnasd:t: ] [ PATTERN [ PATTERN ] ]
+.br
+Usage: rtacct [ -h?vVzrnasd:t: ] [ ListOfRealms ]
+
+.SH DESCRIPTION
+.B nstat
+and
+.B rtacct
+are simple tools to monitor kernel snmp counters and network interface statistics.
+
+.SH OPTIONS
+.TP
+-h -?
+Print help
+.TP
+-v -V
+Print version
+.TP
+-z
+Dump zero counters too. By default they are not shown.
+.TP
+-r
+Reset history.
+.TP
+-n
+Do not display anything, only update history.
+.TP
+-a
+Dump absolute values of counters. The default is to calculate increments since the previous use.
+.TP
+-s
+Do not update history, so that the next time you will see counters including values accumulated to the moment of this measurement too.
+.TP
+-d <INTERVAL>
+Run in daemon mode collecting statistics. <INTERVAL> is interval between measurements in seconds.
+.TP
+-t <INTERVAL>
+Time interval to average rates. Default value is 60 seconds.
+
+.SH SEE ALSO
+lnstat(8)
+

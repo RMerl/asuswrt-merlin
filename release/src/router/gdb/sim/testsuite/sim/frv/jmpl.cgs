@@ -1,0 +1,18 @@
+# frv testcase for jmpl @($GRi,$GRj)
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global jmpl
+jmpl:
+	set_spr_immed	0,lr
+	set_gr_addr	ok1,gr8
+	set_gr_immed	1,gr9		; target gets aligned down
+	jmpl		@(gr8,gr9)
+	fail
+ok1:
+	test_spr_immed	0,lr
+
+	pass

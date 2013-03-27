@@ -37,6 +37,7 @@
 #include <typedefs.h>
 #include<stdarg.h>
 #include <bcmnvram.h>
+#include <syslog.h>
 #include "shutils.h"
 #include "shared.h"
 #include "notify_rc.h"
@@ -80,9 +81,12 @@ static void logmessage(char *logheader, char *fmt, ...)
 static void notify_rc_internal(const char *event_name, bool do_wait, int wait)
 {
 	int i;
+	char p1[16], p2[16];
 
-	_dprintf("notify_rc: %s\n", event_name);
-	logmessage("notify_rc ", event_name);
+	psname(nvram_get_int("rc_service_pid"), p1, sizeof(p1));
+	psname(getpid(), p2, sizeof(p2));
+	_dprintf("%s %d:notify_rc: %s\n", p2, getpid(), event_name);
+	logmessage("rc_service", "%s %d:notify_rc %s", p2, getpid(), event_name);
 
 	i=wait;
 	int first_try = 1, got_right = 1;
@@ -92,7 +96,7 @@ static void notify_rc_internal(const char *event_name, bool do_wait, int wait)
 			first_try = 0;
 		}
 
-		_dprintf("wait for previous script(%d/%d): %s %d.\n", i, wait, nvram_safe_get("rc_service"), nvram_get_int("rc_service_pid"));
+		_dprintf("%d %s: wait for previous script(%d/%d): %s %d %s.\n", getpid(), p2, i, wait, nvram_safe_get("rc_service"), nvram_get_int("rc_service_pid"), p1);
 		sleep(1);
 
 		if(i <= 0)
@@ -113,7 +117,7 @@ static void notify_rc_internal(const char *event_name, bool do_wait, int wait)
 	{
 		i = wait;
 		while((nvram_match("rc_service", (char *)event_name))&&(i-- > 0)) {
-			dprintf("%s %d: waiting after %d/%d.\n", event_name, getpid(), i, wait);
+			_dprintf("%s %d: waiting after %d/%d.\n", event_name, getpid(), i, wait);
 			sleep(1);
 		}
 	}

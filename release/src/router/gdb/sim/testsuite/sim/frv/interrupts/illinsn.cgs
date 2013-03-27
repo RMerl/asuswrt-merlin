@@ -1,0 +1,38 @@
+# FRV testcase
+# mach: fr500 fr550 fr400
+
+	.include "testutils.inc"
+
+	start
+
+	.global tra
+tra:
+	and_spr_immed	0x3fffffff,hsr0		; no caches enabled
+
+	and_spr_immed	-4081,tbr		; clear tbr.tt
+	set_gr_spr	tbr,gr7
+	inc_gr_immed	0x070,gr7		; address of exception handler
+	set_bctrlr_0_0  gr7
+	inc_gr_immed	0x790,gr7		; address of exception handler
+	set_bctrlr_0_0  gr7
+	set_spr_immed	128,lcr
+	set_psr_et	1
+	set_spr_addr	ok0,lr
+
+	set_gr_addr	ill1,gr7
+	set_mem_immed	0x81f80000,gr7	; unknown opcode: 7E
+ill1:	tira		gr0,0		; should be overridden
+ill2:	nop				; also illegal, but prev has priority
+bad0:	fail
+
+	; check interrupt
+ok0:	test_spr_addr	ill1,pcsr
+	test_spr_immed	1,esfr1		; esr0 active
+	test_spr_bits	0x3f,0,0xb,esr0
+	movsg		psr,gr28
+	srli		gr28,28,gr28
+	subicc 		gr28,0x3,gr0,icc3 ; is fr550?
+	beq 		icc3,0,no_epcr
+	test_spr_addr	ill1,epcr0
+no_epcr:
+	pass

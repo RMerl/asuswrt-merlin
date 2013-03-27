@@ -1,0 +1,401 @@
+#   Copyright 1997, 1999, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+if $tracelevel then {
+	strace $tracelevel
+	}
+
+if { ![isnative] } then {
+    continue
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "foll-exec"
+set testfile2 "execd-prog"
+set srcfile ${testfile}.c
+set srcfile2 ${testfile2}.c
+set binfile ${objdir}/${subdir}/${testfile}
+set binfile2 ${objdir}/${subdir}/${testfile2}
+
+# build the first test case
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {debug}] != "" } {
+     untested foll-exec.exp
+     return -1
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested foll-exec.exp
+     return -1
+}
+
+
+# Until "catch exec" is implemented on other targets...
+#
+if ![istarget "hppa*-hp-hpux*"] then {
+    continue
+}
+
+proc zap_session {} {
+   global gdb_prompt
+   global binfile
+
+   send_gdb "kill\n"
+   gdb_expect {
+     -re ".*Kill the program being debugged.*y or n. $" {
+       send_gdb "y\n"
+       send_gdb "file $binfile\n"
+       gdb_expect {
+         -re ".*Load new symbol table from.*y or n. $" {
+           send_gdb "y\n"
+           gdb_expect {
+             -re "Reading symbols from.*$gdb_prompt $" {}
+             timeout { fail "loading symbols (timeout)"; return }
+           }
+         }
+         -re ".*gdb_prompt $" {}
+         timeout { fail "loading symbols (timeout)"; return }
+       }
+    }
+    -re ".*$gdb_prompt $" {}
+    timeout { fail "killing inferior (timeout)" ; return }
+   }
+}
+
+proc do_exec_tests {} {
+   global gdb_prompt
+   global binfile
+   global srcfile
+   global srcfile2
+   global testfile
+   global testfile2
+
+   # Start the program running, and stop at main.
+   #
+   if ![runto_main] then {
+     perror "Couldn't run ${testfile}"
+     return
+   }
+
+   # Verify that we can see various global and local variables
+   # in this program, and that they have expected values.  Some
+   # of these variables are also declared in the program we'll
+   # exec in a moment.
+   #
+   send_gdb "next 3\n"
+   gdb_expect {
+     -re "20.*execlp.*$gdb_prompt $"\
+                     {pass "step to exec call"}
+     -re "$gdb_prompt $" {fail "step to exec call"}
+     timeout         {fail "(timeout) step to exec call"}
+   }
+   send_gdb "print global_i\n"
+   gdb_expect {
+     -re ".* = 100.*$gdb_prompt $"\
+                     {pass "print follow-exec/global_i"}
+     -re "$gdb_prompt $" {fail "print follow-exec/global_i"}
+     timeout         {fail "(timeout) print follow-exec/global_i"}
+   }
+   send_gdb "print local_j\n"
+   gdb_expect {
+     -re ".* = 101.*$gdb_prompt $"\
+                     {pass "print follow-exec/local_j"}
+     -re "$gdb_prompt $" {fail "print follow-exec/local_j"}
+     timeout         {fail "(timeout) print follow-exec/local_j"}
+   }
+   send_gdb "print local_k\n"
+   gdb_expect {
+     -re ".* = 102.*$gdb_prompt $"\
+                     {pass "print follow-exec/local_k"}
+     -re "$gdb_prompt $" {fail "print follow-exec/local_k"}
+     timeout         {fail "(timeout) print follow-exec/local_k"}
+   }
+
+   # Try stepping through an execlp call, without catching it.
+   # We should stop in execd-program, at its first statement.
+   #
+   send_gdb "next\n"
+   gdb_expect {
+     -re "Executing new program: .*${testfile2}.*${srcfile2}:23.*int  local_j = argc;.*$gdb_prompt $"\
+                     {pass "step through execlp call"}
+     -re "$gdb_prompt $" {fail "step through execlp call"}
+     timeout         {fail "(timeout) step through execlp call"}
+   }
+
+   # Verify that we can see the variables defined in the newly-exec'd
+   # program, and CANNOT see those defined in the exec'ing program.
+   #
+   send_gdb "next\n"
+   gdb_expect {
+     -re "26.*printf.*$gdb_prompt $"\
+                     {pass "step after execlp call"}
+     -re "$gdb_prompt $" {fail "step after execlp call"}
+     timeout         {fail "(timeout) step after execlp call"}
+   }
+   send_gdb "print global_i\n"
+   gdb_expect {
+     -re ".* = 0.*$gdb_prompt $"\
+                     {pass "print execd-program/global_i (after execlp)"}
+     -re "$gdb_prompt $" {fail "print execd-program/global_i (after execlp)"}
+     timeout         {fail "(timeout) print execd-program/global_i (after execlp)"}
+   }
+   send_gdb "print local_j\n"
+   gdb_expect {
+     -re ".* = 2.*$gdb_prompt $"\
+                     {pass "print execd-program/local_j (after execlp)"}
+     -re "$gdb_prompt $" {fail "print execd-program/local_j (after execlp)"}
+     timeout         {fail "(timeout) print execd-program/local_j (after execlp)"}
+   }
+   send_gdb "print local_k\n"
+   gdb_expect {
+     -re "No symbol \"local_k\" in current context.*$gdb_prompt $"\
+                     {pass "print follow-exec/local_k (after execlp)"}
+     -re "$gdb_prompt $" {fail "print follow-exec/local_k (after execlp)"}
+     timeout         {fail "(timeout) print follow-exec/local_k (after execlp)"}
+   }
+
+   # Explicitly kill this program, or a subsequent rerun actually runs
+   # the exec'd program, not the original program...
+   zap_session
+
+   # Start the program running, and stop at main.
+   #
+   if ![runto_main] then {
+     perror "Couldn't run ${testfile} (2nd try)"
+     return
+   }
+
+   # Verify that we can catch an exec event, and then continue
+   # to follow through the exec.  (Since there's a breakpoint on
+   # "main", it'll also be transferred to the exec'd program,
+   # and we expect to stop there.)
+   #
+   send_gdb "catch exec\n"
+   gdb_expect {
+     -re "Catchpoint .*(exec).*$gdb_prompt $"\
+                     {pass "set catch exec"}
+     -re "$gdb_prompt $" {fail "set catch exec"}
+     timeout         {fail "(timeout) set catch exec"}
+   }
+
+   # Verify that the catchpoint is mentioned in an "info breakpoints",
+   # and further that the catchpoint mentions no program name.
+   #
+   send_gdb "info breakpoints\n"
+   gdb_expect {
+     -re ".*catch exec.*keep y.*$gdb_prompt $"\
+                     {pass "info shows catchpoint without exec pathname"}
+     -re ".*catch exec.*program \"\".*$gdb_prompt $"\
+                     {fail "info shows catchpoint without exec pathname"}
+     -re "$gdb_prompt $" {fail "info shows catchpoint without exec pathname"}
+     timeout         {fail "(timeout) info shows catchpoint without exec pathname"}
+   }
+
+   # DTS CLLbs16760
+   # PA64 doesn't know about $START$ in dld.sl at this point.  It should.
+   # - Michael Coulter
+   setup_xfail hppa2.0w-hp-hpux* CLLbs16760
+   send_gdb "continue\n"
+   gdb_expect {
+     -re ".*Executing new program:.*${testfile2}.*Catchpoint .*(exec\'d .*${testfile2}).*in .START..*$gdb_prompt $"\
+                     {pass "hit catch exec"}
+     -re "$gdb_prompt $" {fail "hit catch exec"}
+     timeout         {fail "(timeout) hit catch exec"}
+   }
+
+   # DTS CLLbs16760
+   # test gets out of sync if previous test fails.
+   gdb_test "bt" ".*" "sync up after possible failure 1"
+   gdb_test "bt" "#0.*" "sync up after possible failure 2"
+
+   # Verify that the catchpoint is mentioned in an "info breakpoints",
+   # and further that the catchpoint managed to capture the exec'd
+   # program's name.
+   #
+   send_gdb "info breakpoints\n"
+   gdb_expect {
+     -re ".*catch exec .*program \".*${testfile2}\".*$gdb_prompt $"\
+                     {pass "info shows catchpoint exec pathname"}
+     -re "$gdb_prompt $" {fail "info shows catchpoint exec pathname"}
+     timeout         {fail "(timeout) info shows catchpoint exec pathname"}
+   }
+
+   # Verify that we can continue from the catchpoint, and land in the
+   # main of the newly-exec'd program.
+   #
+   send_gdb "continue\n"
+   gdb_expect {
+     -re ".*${srcfile2}:23.*$gdb_prompt $"\
+                     {pass "continue after hit catch exec"}
+     -re "$gdb_prompt $" {fail "continue after hit catch exec"}
+     timeout         {fail "(timeout) continue after hit catch exec"}
+   }
+
+   # Explicitly kill this program, or a subsequent rerun actually runs
+   # the exec'd program, not the original program...
+   zap_session
+
+   # Start the program running, and stop at main.
+   #
+   if ![runto_main] then {
+     perror "Couldn't run ${testfile} (3rd try)"
+     return
+   }
+
+   # Verify that we can follow through follow an execl()
+   # call.  (We must jump around earlier exec* calls.)
+   #
+   send_gdb "tbreak 27\n"
+   gdb_expect {
+     -re "Breakpoint .*file .*${srcfile}, line 27.*$gdb_prompt $"\
+                     {pass "prepare to jump to execl call"}
+     -re "$gdb_prompt $" {fail "prepare to jump to execl call"}
+     timeout         {fail "(timeout) prepare to jump to execl call"}
+   }
+   send_gdb "jump 27\n"
+   gdb_expect {
+     -re "main.* at .*${srcfile}:27.*$gdb_prompt $"\
+                     {pass "jump to execl call"}
+     -re "$gdb_prompt $" {fail "jump to execl call"}
+     timeout         {fail "(timeout) jump to execl call"}
+   }
+   # Note that stepping through an exec call causes the step-count
+   # to be reset to zero.  I.e.: you may specify "next 2" at the
+   # call, but you'll actually stop at the first breakpoint set in
+   # the newly-exec'd program, not after the remaining step-count
+   # reaches zero.
+   #
+   send_gdb "next 2\n"
+   gdb_expect {
+     -re "Executing new program: .*${testfile2}.*${srcfile2}:23.*int  local_j = argc;.*$gdb_prompt $"\
+                     {pass "step through execl call"}
+     -re "$gdb_prompt $" {fail "step through execl call"}
+     timeout         {fail "(timeout) step through execl call"}
+   }
+   send_gdb "next\n"
+   gdb_expect {
+     -re "26.*printf.*$gdb_prompt $"\
+                     {pass "step after execl call"}
+     -re "$gdb_prompt $" {fail "step after execl call"}
+     timeout         {fail "(timeout) step after execl call"}
+   }
+
+   # Verify that we can print a local variable (which happens to be
+   # assigned the value of main's argc).
+   #
+   send_gdb "print local_j\n"
+   gdb_expect {
+     -re ".* = 3.*$gdb_prompt $"\
+                     {pass "print execd-program/local_j (after execl)"}
+     -re "$gdb_prompt $" {fail "print execd-program/local_j (after execl)"}
+     timeout         {fail "(timeout) print execd-program/local_j (after execl)"}
+   }
+
+   # Explicitly kill this program, or a subsequent rerun actually runs
+   # the exec'd program, not the original program...
+   zap_session
+
+   # Start the program running, and stop at main.
+   #
+   if ![runto_main] then {
+     perror "Couldn't run ${testfile} (4th try)"
+     return
+   }
+
+   # Verify that we can follow through follow an execv()
+   # call.  (We must jump around earlier exec* calls.)
+   #
+   send_gdb "tbreak 41\n"
+   gdb_expect {
+     -re "Breakpoint .*file .*${srcfile}, line 41.*$gdb_prompt $"\
+                     {pass "prepare to jump to execv call"}
+     -re "$gdb_prompt $" {fail "prepare to jump to execv call"}
+     timeout         {fail "(timeout) prepare to jump to execv call"}
+   }
+   send_gdb "jump 41\n"
+   gdb_expect {
+     -re "main.* at .*${srcfile}:41.*$gdb_prompt $"\
+                     {pass "jump to execv call"}
+     -re "$gdb_prompt $" {fail "jump to execv call"}
+     timeout         {fail "(timeout) jump to execv call"}
+   }
+   send_gdb "next\n"
+   gdb_expect {
+     -re "Executing new program: .*${testfile2}.*${srcfile2}:23.*int  local_j = argc;.*$gdb_prompt $"\
+                     {pass "step through execv call"}
+     -re "$gdb_prompt $" {fail "step through execv call"}
+     timeout         {fail "(timeout) step through execv call"}
+   }
+   send_gdb "next\n"
+   gdb_expect {
+     -re "26.*printf.*$gdb_prompt $"\
+                     {pass "step after execv call"}
+     -re "$gdb_prompt $" {fail "step after execv call"}
+     timeout         {fail "(timeout) step after execv call"}
+   }
+
+   # Verify that we can print a local variable (which happens to be
+   # assigned the value of main's argc).
+   #
+   send_gdb "print local_j\n"
+   gdb_expect {
+     -re ".* = 2.*$gdb_prompt $"\
+                     {pass "print execd-program/local_j (after execv)"}
+     -re "$gdb_prompt $" {fail "print execd-program/local_j (after execv)"}
+     timeout         {fail "(timeout) print execd-program/local_j (after execv)"}
+   }
+
+   # Explicitly kill this program, or a subsequent rerun actually runs
+   # the exec'd program, not the original program...
+   zap_session
+
+   # Start the program running, and stop at main.
+   #
+   if ![runto_main] then {
+     perror "Couldn't run ${testfile} (5th try)"
+     return
+   }
+
+   # Verify that we can just continue and thereby follow through an
+   # exec call.  (Since the breakpoint on "main" is reset, we should
+   # just stop in main of the newly-exec'd program.)
+   #
+   send_gdb "continue\n"
+   gdb_expect {
+     -re "Executing new program: .*${testfile2}.*${srcfile2}:23.*int  local_j = argc;.*$gdb_prompt $"\
+                     {pass "continue through exec"}
+     -re "$gdb_prompt $" {fail "continue through exec"}
+     timeout         {fail "(timeout) continue through exec"}
+   }
+}
+
+# Start with a fresh gdb
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+
+# This is a test of gdb's ability to follow a process through a
+# Unix exec() system call.
+#
+do_exec_tests
+
+return 0

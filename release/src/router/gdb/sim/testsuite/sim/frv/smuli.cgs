@@ -1,0 +1,210 @@
+# frv testcase for smuli $GRi,$GRj,$GRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global smuli
+smuli:
+	; Positive operands
+	set_gr_immed   	3,gr7		; multiply small numbers
+	set_icc		0x0,0
+	smuli      	gr7,2,gr8
+	test_icc	0 0 0 0 icc0
+	test_gr_immed  	0,gr8
+	test_gr_immed  	6,gr9
+
+	set_gr_immed   	1,gr7		; multiply by 1
+	set_icc		0x1,0
+	smuli      	gr7,2,gr8
+	test_icc	0 0 0 1 icc0
+	test_gr_immed  	0,gr8
+	test_gr_immed  	2,gr9
+
+	set_gr_immed   	2,gr7		; multiply by 1
+	set_icc		0x2,0
+	smuli      	gr7,1,gr8
+	test_icc	0 0 1 0 icc0
+	test_gr_immed  	0,gr8
+	test_gr_immed  	2,gr9
+
+	set_gr_immed   	0,gr7		; multiply by 0
+	set_icc		0x3,0
+	smuli      	gr7,2,gr8
+	test_icc	0 0 1 1 icc0
+	test_gr_immed  	0,gr8
+	test_gr_immed  	0,gr9
+
+	set_gr_immed   	2,gr7		; multiply by 0
+	set_icc		0x4,0
+	smuli      	gr7,0,gr8
+	test_icc	0 1 0 0 icc0
+	test_gr_immed  	0,gr8
+	test_gr_immed  	0,gr9
+
+	set_gr_limmed	0x3fff,0xffff,gr7	; 31 bit result
+	set_icc		0x5,0
+	smuli      	gr7,2,gr8
+	test_icc	0 1 0 1 icc0
+	test_gr_immed  	0,gr8
+	test_gr_limmed	0x7fff,0xfffe,gr9
+
+	set_gr_limmed	0x4000,0x0000,gr7	; 32 bit result
+	set_icc		0x6,0
+	smuli      	gr7,2,gr8
+	test_icc	0 1 1 0 icc0
+	test_gr_immed  	0,gr8
+	test_gr_limmed	0x8000,0x0000,gr9
+
+	set_gr_limmed	0x4000,0x0000,gr7	; 33 bit result
+	set_icc		0x7,0
+	smuli      	gr7,4,gr8
+	test_icc	0 1 1 1 icc0
+	test_gr_immed  	1,gr8
+	test_gr_limmed	0x0000,0x0000,gr9
+
+	set_gr_limmed	0x7fff,0xffff,gr7	; max positive result
+	set_icc		0x8,0
+	smuli      	gr7,0x7ff,gr8
+	test_icc	1 0 0 0 icc0
+	test_gr_immed 	0x3ff,gr8
+	test_gr_limmed 	0x7fff,0xf801,gr9
+
+	; Mixed operands
+	set_gr_immed   	-3,gr7		; multiply small numbers
+	set_icc		0x9,0
+	smuli      	gr7,2,gr8
+	test_icc	1 0 0 1 icc0
+	test_gr_immed  	-1,gr8
+	test_gr_immed  	-6,gr9
+
+	set_gr_immed   	3,gr7		; multiply small numbers
+	set_icc		0xa,0
+	smuli      	gr7,-2,gr8
+	test_icc	1 0 1 0 icc0
+	test_gr_immed  	-1,gr8
+	test_gr_immed  	-6,gr9
+
+	set_gr_immed   	1,gr7		; multiply by 1
+	set_icc		0xb,0
+	smuli      	gr7,-2,gr8
+	test_icc	1 0 1 1 icc0
+	test_gr_immed  	-1,gr8
+	test_gr_immed  	-2,gr9
+
+	set_gr_immed   	-2,gr7		; multiply by 1
+	set_icc		0xc,0
+	smuli      	gr7,1,gr8
+	test_icc	1 1 0 0 icc0
+	test_gr_immed  	-1,gr8
+	test_gr_immed  	-2,gr9
+
+	set_gr_immed   	0,gr7		; multiply by 0
+	set_icc		0xd,0
+	smuli      	gr7,-2,gr8
+	test_icc	1 1 0 1 icc0
+	test_gr_immed  	0,gr8
+	test_gr_immed  	0,gr9
+
+	set_gr_immed   	-2,gr7		; multiply by 0
+	set_icc		0xe,0
+	smuli      	gr7,0,gr8
+	test_icc	1 1 1 0 icc0
+	test_gr_immed  	0,gr8
+	test_gr_immed  	0,gr9
+
+	set_gr_limmed  	0x2000,0x0001,gr7	; 31 bit result
+	set_icc		0xf,0
+	smuli      	gr7,-2,gr8
+	test_icc	1 1 1 1 icc0
+	test_gr_limmed	0xffff,0xffff,gr8
+	test_gr_limmed	0xbfff,0xfffe,gr9
+
+	set_gr_limmed	0x4000,0x0000,gr7	; 32 bit result
+	set_icc		0x0,0
+	smuli      	gr7,-2,gr8
+	test_icc	0 0 0 0 icc0
+	test_gr_limmed	0xffff,0xffff,gr8
+	test_gr_limmed	0x8000,0x0000,gr9
+
+	set_gr_limmed	0x4000,0x0001,gr7	; 32 bit result
+	set_icc		0x1,0
+	smuli      	gr7,-2,gr8
+	test_icc	0 0 0 1 icc0
+	test_gr_limmed	0xffff,0xffff,gr8
+	test_gr_limmed	0x7fff,0xfffe,gr9
+
+	set_gr_limmed	0x4000,0x0000,gr7	; 33 bit result
+	set_icc		0x2,0
+	smuli      	gr7,-4,gr8
+	test_icc	0 0 1 0 icc0
+	test_gr_limmed	0xffff,0xffff,gr8
+	test_gr_limmed	0x0000,0x0000,gr9
+
+	set_gr_limmed	0x7fff,0xffff,gr7	; max negative result
+	set_icc		0x3,0
+	smuli      	gr7,-2048,gr8
+	test_icc	0 0 1 1 icc0
+	test_gr_limmed	0xffff,0xfc00,gr8
+	test_gr_limmed	0x0000,0x0800,gr9
+
+	; Negative operands
+	set_gr_immed   	-3,gr7		; multiply small numbers
+	set_icc		0x4,0
+	smuli      	gr7,-2,gr8
+	test_icc	0 1 0 0 icc0
+	test_gr_immed  	0,gr8
+	test_gr_immed  	6,gr9
+
+	set_gr_immed   	-1,gr7		; multiply by 1
+	set_icc		0x5,0
+	smuli      	gr7,-2,gr8
+	test_icc	0 1 0 1 icc0
+	test_gr_immed  	0,gr8
+	test_gr_immed  	2,gr9
+
+	set_gr_immed   	-2,gr7		; multiply by 1
+	set_icc		0x6,0
+	smuli      	gr7,-1,gr8
+	test_icc	0 1 1 0 icc0
+	test_gr_immed  	0,gr8
+	test_gr_immed  	2,gr9
+
+	set_gr_limmed	0xc000,0x0001,gr7	; 31 bit result
+	set_icc		0x7,0
+	smuli      	gr7,-2,gr8
+	test_icc	0 1 1 1 icc0
+	test_gr_immed  	0,gr8
+	test_gr_limmed	0x7fff,0xfffe,gr9
+
+	set_gr_limmed	0xc000,0x0000,gr7	; 32 bit result
+	set_icc		0x8,0
+	smuli      	gr7,-2,gr8
+	test_icc	1 0 0 0 icc0
+	test_gr_immed  	0,gr8
+	test_gr_limmed	0x8000,0x0000,gr9
+
+	set_gr_limmed	0xc000,0x0000,gr7	; 33 bit result
+	set_icc		0x9,0
+	smuli      	gr7,-4,gr8
+	test_icc	1 0 0 1 icc0
+	test_gr_immed  	1,gr8
+	test_gr_immed  	0x00000000,gr9
+
+	set_gr_limmed	0x8000,0x0001,gr7	; almost max positive result
+	set_icc		0xa,0
+	smuli      	gr7,-2048,gr8
+	test_icc	1 0 1 0 icc0
+	test_gr_limmed	0x0000,0x03ff,gr8
+	test_gr_limmed 	0xffff,0xf800,gr9
+
+
+	set_gr_limmed	0x8000,0x0000,gr7	; max positive result
+	set_icc		0xb,0
+	smuli      	gr7,-2048,gr8
+	test_icc	1 0 1 1 icc0
+	test_gr_limmed	0x0000,0x0400,gr8
+	test_gr_limmed 	0x0000,0x0000,gr9
+
+	pass

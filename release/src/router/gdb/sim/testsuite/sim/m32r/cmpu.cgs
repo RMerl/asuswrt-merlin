@@ -1,0 +1,23 @@
+# m32r testcase for cmpu $src1,$src2
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global cmpu
+cmpu:
+	mvi_h_condbit 0
+	mvi_h_gr r4, 1
+	mvi_h_gr r5, -2
+	cmpu r4, r5
+	bc ok
+not_ok:
+	fail
+ok:
+	mvi_h_condbit 1
+	mvi_h_gr r4, -1
+	cmpu r4, r5
+	bc not_ok
+
+	pass

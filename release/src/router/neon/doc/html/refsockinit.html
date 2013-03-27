@@ -1,0 +1,51 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>ne_sock_init</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="ref.html" title="neon API reference"><link rel="prev" href="refshave.html" title="ne_shave"><link rel="next" href="refcert.html" title="ne_ssl_cert_identity"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">ne_sock_init</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="refshave.html">Prev</a> </td><th width="60%" align="center">neon API reference</th><td width="20%" align="right"> <a accesskey="n" href="refcert.html">Next</a></td></tr></table><hr></div><div class="refentry" title="ne_sock_init"><a name="refsockinit"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ne_sock_init, ne_sock_exit — perform library initialization</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="funcsynopsis"><pre class="funcsynopsisinfo">#include &lt;ne_socket.h&gt;</pre><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">int <b class="fsfunc">ne_sock_init</b>(</code></td><td><code>void)</code>;</td><td> </td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">void <b class="fsfunc">ne_sock_exit</b>(</code></td><td><code>void)</code>;</td><td> </td></tr></table><div class="funcprototype-spacer"> </div></div></div><div class="refsect1" title="Description"><a name="id459975"></a><h2>Description</h2><p>In some platforms and configurations, neon may be using
+    some socket or SSL libraries which require global initialization
+    before use.  To perform this initialization, the
+    <code class="function">ne_sock_init</code> function must be called before
+    any other library functions are used.</p><p>Once all use of neon is complete,
+    <code class="function">ne_sock_exit</code> can be called to perform
+    de-initialization of socket or SSL libraries, if necessary.  Uses
+    of <code class="function">ne_sock_init</code> and
+    <code class="function">ne_sock_exit</code> are "reference counted"; if N
+    calls to <code class="function">ne_sock_init</code> are made, only the Nth
+    call to <code class="function">ne_sock_exit</code> will have effect.</p><p><code class="function">ne_sock_init</code> will set the disposition
+    of the <code class="literal">SIGPIPE</code> signal to
+    <span class="emphasis"><em>ignored</em></span>.  No change is made to the
+    <code class="literal">SIGPIPE</code> disposition by
+    <code class="function">ne_sock_exit</code>.</p><p>Both the SSL libraries supported by neon — OpenSSL
+    and GnuTLS — require callbacks to be registered to allow
+    thread-safe use of SSL.  These callbacks are stored as global
+    variables and so their state persists for as long as the library
+    in question is loaded into the process.  If multiple users of the
+    SSL library exist within the process, this can be problematic,
+    particularly if one is dynamically loaded (and may subsequently be
+    unloaded).</p><p>If neon is configured using the
+    <code class="literal">--enable-threadsafe-ssl</code> flag, thread-safe SSL
+    support will be enabled automatically, as covered in the following
+    section.  Otherwise, it is not safe to use neon with SSL in a
+    multi-threaded process.  The <a class="xref" href="reffeat.html#ne_has_support">ne_has_support</a>
+    function can be used to determine whether neon is built to
+    enable thread-safety support in the SSL library.</p><div class="refsect2" title="Thread-safe SSL with OpenSSL"><a name="id460070"></a><h3>Thread-safe SSL with OpenSSL</h3><p>neon follows two simple rules when dealing with the
+      OpenSSL locking callbacks:
+
+      </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><code class="function">ne_sock_init</code> will set
+        thread-safety locking callbacks if and only if no locking
+        callbacks are already registered.</li><li class="listitem"><code class="function">ne_sock_exit</code> will
+        unset the thread-safety locking callbacks if and only if the
+        locking callbacks registered are those registered by
+        <code class="function">ne_sock_init</code>.</li></ul></div><p>
+
+      Applications and libraries should be able to co-operate to
+      ensure that SSL use is always thread-safe if similar rules are
+      always followed.</p></div><div class="refsect2" title="Thread-safe SSL with GnuTLS"><a name="id460109"></a><h3>Thread-safe SSL with GnuTLS</h3><p>The cryptography library used by GnuTLS, libgcrypt, only
+      supports an initialization operation to register thread-safety
+      callbacks.  <code class="function">ne_sock_init</code> will register the
+      thread-safe locking callbacks on first use;
+      <code class="function">ne_sock_exit</code> cannot unregister them.  If
+      multiple users of GnuTLS are present within the process, it is
+      unsafe to dynamically unload neon from the process if neon
+      is configured with thread-safe SSL support enabled (since the
+      callbacks would be left pointing at unmapped memory once neon
+      is unloaded).</p></div></div><div class="refsect1" title="Return value"><a name="id460135"></a><h2>Return value</h2><p><code class="function">ne_sock_init</code> returns zero on success,
+    or non-zero on error.  If an error occurs, no further use of the
+    neon library should be attempted.</p></div><div class="refsect1" title="See also"><a name="id460150"></a><h2>See also</h2><p><a class="xref" href="refneon.html" title="neon"><span class="refentrytitle">neon</span></a>, <a class="xref" href="reffeat.html" title="ne_has_support"><span class="refentrytitle">ne_has_support</span></a></p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="refshave.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ref.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="refcert.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">ne_shave </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> ne_ssl_cert_identity</td></tr></table></div></body></html>

@@ -1,0 +1,131 @@
+# frv testcase for msubaccs $ACC40Si,$ACC40Sk
+# mach: fr400
+
+	.include "../testutils.inc"
+
+	start
+
+	.global msubaccs
+msubaccs:
+	set_accg_immed	0,accg0
+	set_acc_immed	0x00000000,acc0
+	set_accg_immed	0,accg1
+	set_acc_immed	0x00000000,acc1
+	msubaccs	acc0,acc3
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+	test_accg_immed	0,accg3
+	test_acc_limmed	0x0000,0x0000,acc3
+
+	set_accg_immed	0,accg0
+	set_acc_immed	0xdead0000,acc0
+	set_accg_immed	0,accg1
+	set_acc_immed	0x0000beef,acc1
+	msubaccs	acc0,acc3
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+	test_accg_immed	0,accg3
+	test_acc_limmed	0xdeac,0x4111,acc3
+
+	set_accg_immed	0,accg0
+	set_acc_immed	0x0000dead,acc0
+	set_accg_immed	0,accg1
+	set_acc_immed	0xbeef0000,acc1
+	msubaccs	acc0,acc3
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+	test_accg_immed	0xff,accg3
+	test_acc_limmed	0x4111,0xdead,acc3
+
+	set_accg_immed	0,accg0
+	set_acc_immed	0x12345678,acc0
+	set_accg_immed	0,accg1
+	set_acc_immed	0x11111111,acc1
+	msubaccs	acc0,acc3
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+	test_accg_immed	0,accg3
+	test_acc_limmed	0x0123,0x4567,acc3
+
+	set_accg_immed	0,accg0
+	set_acc_immed	0x12345678,acc0
+	set_accg_immed	0,accg1
+	set_acc_immed	0xffffffff,acc1
+	msubaccs	acc0,acc3
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+	test_accg_immed	0xff,accg3
+	test_acc_limmed	0x1234,0x5679,acc3
+
+	set_accg_immed	0,accg0
+	set_acc_immed	0x12345678,acc0
+	set_accg_immed	0xff,accg1
+	set_acc_immed	0xffffffff,acc1
+	msubaccs	acc0,acc3
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,0,msr0	; msr0.mtt not set
+	test_accg_immed	0,accg3
+	test_acc_limmed	0x1234,0x5679,acc3
+
+	set_spr_immed	0,msr0
+	set_accg_immed	0x7f,accg0
+	set_acc_immed	0xfffffffe,acc0
+	set_accg_immed	0xff,accg1
+	set_acc_immed	0xfffffffe,acc1
+	msubaccs	acc0,acc3
+	test_spr_bits	0x3c,2,0x8,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+	test_accg_immed	0x7f,accg3
+	test_acc_limmed	0xffff,0xffff,acc3
+
+	set_spr_immed	0,msr0
+	set_accg_immed	0x80,accg0
+	set_acc_immed	0x00000001,acc0
+	set_accg_immed	0,accg1
+	set_acc_immed	0x00000002,acc1
+	msubaccs	acc0,acc3
+	test_spr_bits	0x3c,2,0x8,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+	test_accg_immed	0x80,accg3
+	test_acc_limmed	0x0000,0x0000,acc3
+
+	set_spr_immed	0,msr0
+	set_spr_immed	0,msr1
+	set_accg_immed	0,accg0
+	set_acc_immed	0x00000001,acc0
+	set_accg_immed	0,accg1
+	set_acc_immed	0x00000001,acc1
+	set_accg_immed	0,accg2
+	set_acc_immed	0x00000001,acc2
+	set_accg_immed	0x80,accg3
+	set_acc_immed	0x00000000,acc3
+	msubaccs.p	acc0,acc1
+	msubaccs	acc2,acc3
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	0x3c,2,0x8,msr1		; msr0.sie is set
+	test_spr_bits	2,1,1,msr1		; msr1.ovf set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt set
+	test_accg_immed	0,accg1
+	test_acc_limmed	0x0000,0x0000,acc1
+	test_accg_immed	0x7f,accg3
+	test_acc_limmed	0xffff,0xffff,acc3
+
+	pass

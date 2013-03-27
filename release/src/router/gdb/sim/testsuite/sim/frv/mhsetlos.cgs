@@ -1,0 +1,26 @@
+# frv testcase for mhsetlos $u12,$FRk
+# mach: fr400 fr550
+
+	.include "testutils.inc"
+
+	start
+
+	.global setlo
+setlo:
+	set_fr_iimmed	0xdead,0xbeef,fr1
+	mhsetlos	0,fr1
+	test_fr_limmed	0xdead,0x0000,fr1
+
+	mhsetlos	1,fr1
+	test_fr_limmed	0xdead,0x0001,fr1
+
+	mhsetlos	0x07ff,fr1
+	test_fr_limmed	0xdead,0x07ff,fr1
+
+	mhsetlos	-2048,fr1
+	test_fr_limmed	0xdead,0xf800,fr1
+
+	mhsetlos	-1,fr1
+	test_fr_limmed	0xdead,0xffff,fr1
+
+	pass

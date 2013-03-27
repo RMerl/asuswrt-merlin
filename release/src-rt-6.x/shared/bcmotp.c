@@ -1,7 +1,7 @@
 /*
  * OTP support.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmotp.c 322632 2012-03-21 05:17:48Z $
+ * $Id: bcmotp.c 350340 2012-08-13 10:22:57Z $
  */
 
 #include <bcm_cfg.h>
@@ -265,8 +265,9 @@ get_otpinfo(void)
 
 /* OTP unification */
 #if defined(USBSDIOUNIFIEDOTP)
-/* USB MANIFID tuple offset in the SDIO CIS in (16-bit) words */
-#define USB_MANIFID_OFFSET_4319	42
+/* Offset in OTP from upper GUR to HNBU_UMANFID tuple value in (16-bit) words */
+#define USB_MANIFID_OFFSET_4319		42
+#define USB_MANIFID_OFFSET_43143	45 /* See Confluence 43143 SW notebook #1 */
 #endif /* USBSDIOUNIFIEDOTP */
 
 #if defined(BCMNVRAMW)
@@ -370,6 +371,8 @@ ipxotp_bt_region_get(otpinfo_t *oi, uint16 *start, uint16 *end)
 		*end = OTP_BT_END_4330;
 		break;
 	case BCM4324_CHIP_ID:
+	case BCM43242_CHIP_ID:
+	case BCM43243_CHIP_ID:
 		*start = OTP_BT_BASE_4324;
 		*end = OTP_BT_END_4324;
 		break;
@@ -566,6 +569,10 @@ ipxotp_uotp_usbmanfid_offset(otpinfo_t *oi)
 			oi->usbmanfid_offset = USB_MANIFID_OFFSET_4319;
 			oi->buotp = TRUE;
 			break;
+		case BCM43143_CHIP_ID:
+			oi->usbmanfid_offset = USB_MANIFID_OFFSET_43143;
+			oi->buotp = TRUE;
+			break;
 		default:
 			OTP_ERR(("chip=0x%x does not support Unified OTP.\n",
 				CHIPID(oi->sih->chip)));
@@ -639,10 +646,14 @@ BCMNMIATTACHFN(_ipxotp_init)(otpinfo_t *oi, chipcregs_t *cc)
 		(CHIPID(oi->sih->chip) == BCM43237_CHIP_ID) ||
 		(CHIPID(oi->sih->chip) == BCM43239_CHIP_ID) ||
 		(CHIPID(oi->sih->chip) == BCM4324_CHIP_ID) ||
+		(CHIPID(oi->sih->chip) == BCM43242_CHIP_ID) ||
+		(CHIPID(oi->sih->chip) == BCM43243_CHIP_ID) ||
+		(CHIPID(oi->sih->chip) == BCM43143_CHIP_ID) ||
 		(CHIPID(oi->sih->chip) == BCM4331_CHIP_ID) ||
 		(CHIPID(oi->sih->chip) == BCM43431_CHIP_ID) ||
 		(CHIPID(oi->sih->chip) == BCM4335_CHIP_ID) ||
 		(CHIPID(oi->sih->chip) == BCM4360_CHIP_ID) ||
+		(CHIPID(oi->sih->chip) == BCM4352_CHIP_ID) ||
 		(CHIPID(oi->sih->chip) == BCM43526_CHIP_ID) ||
 	0) {
 		uint32 p_bits;
@@ -662,6 +673,9 @@ BCMNMIATTACHFN(_ipxotp_init)(otpinfo_t *oi, chipcregs_t *cc)
 		switch (CHIPID(oi->sih->chip)) {
 			/* Add cases for supporting chips */
 			case BCM4319_CHIP_ID:
+				oi->buotp = TRUE;
+				break;
+			case BCM43143_CHIP_ID:
 				oi->buotp = TRUE;
 				break;
 			default:
@@ -1815,7 +1829,10 @@ ipxotp_write_region(void *oh, int region, uint16 *data, uint wlen)
 			ipxotp_write_bit(oi, cc, otpgu_bit_base + OTPGU_HWP_OFF);
 			if (CHIPID(oi->sih->chip) == BCM4336_CHIP_ID ||
 				CHIPID(oi->sih->chip) == BCM43362_CHIP_ID ||
-			    CHIPID(oi->sih->chip) == BCM4324_CHIP_ID)
+				CHIPID(oi->sih->chip) == BCM43242_CHIP_ID ||
+				CHIPID(oi->sih->chip) == BCM43243_CHIP_ID ||
+				CHIPID(oi->sih->chip) == BCM43143_CHIP_ID ||
+				CHIPID(oi->sih->chip) == BCM4324_CHIP_ID)
 				ipxotp_write_bit(oi, cc, otpgu_bit_base + OTPGU_NEWCISFORMAT_OFF);
 			break;
 		case OTP_SW_RGN:
@@ -1971,8 +1988,13 @@ exit:
 }
 
 static int
-ipxotp_cis_append_region(si_t *sih, int region, char *vars, int count)
+_ipxotp_cis_append_region(si_t *sih, int region, char *vars, int count)
 {
+#define TUPLE_MATCH(_s1, _s2, _s3, _v1, _v2, _v3) \
+	(((_s1) == 0x80) ? \
+		(((_s1) == (_v1)) && ((_s2) == (_v2)) && ((_s3) == (_v3))) \
+		: (((_s1) == (_v1)) && ((_s2) == (_v2))))
+
 	uint8 *cis;
 	osl_t *osh;
 	uint sz = OTP_SZ_MAX/2; /* size in words */
@@ -2054,22 +2076,13 @@ ipxotp_cis_append_region(si_t *sih, int region, char *vars, int count)
 
 			/* Find the place to append */
 			for (; i < (int)sz*2; i++) {
-				int j;
 				if (cis[i] == 0)
 					break;
-				/* If the tuple exist, check if it can be overwritten */
-				if (cis[i + 2] == vars[2]) {
-					if (cis[i+1] == vars[1]) {
-						/* found, check if it is compiatable for fix */
-						for (j = 0; j < cis[i+1] + 2; j++) {
-							if ((cis[i+j] ^ vars[j]) & cis[i+j]) {
-								break;
-							}
-						}
-						if (j == cis[i+1] + 2) {
-							overwrite = i;
-						}
-					}
+
+				/* find the last tuple with same BMCM HNBU */
+				if (TUPLE_MATCH(cis[i], cis[i+1], cis[i+2],
+					vars[0], vars[1], vars[2])) {
+					overwrite = i;
 				}
 				i += ((int)cis[i+1] + 1);
 			}
@@ -2077,8 +2090,22 @@ ipxotp_cis_append_region(si_t *sih, int region, char *vars, int count)
 				if (cis[end] != 0)
 					break;
 			}
+
+			/* If the tuple exist, check if it can be overwritten */
 			if (overwrite)
-				i = overwrite;
+			{
+				int j;
+
+				/* found, check if it is compiatable for fix */
+				for (j = 0; j < cis[overwrite+1] + 2; j++) {
+					if ((cis[overwrite+j] ^ vars[j]) & cis[overwrite+j]) {
+						break;
+					}
+				}
+				if (j == cis[overwrite+1] + 2) {
+					i = overwrite;
+				}
+			}
 
 			newlen = i + count;
 			if (newlen & 1)		/* make it even-sized buffer */
@@ -2112,6 +2139,54 @@ ipxotp_cis_append_region(si_t *sih, int region, char *vars, int count)
 		MFREE(osh, cis, OTP_SZ_MAX);
 
 	return (rc);
+}
+
+static int
+ipxotp_cis_append_region(si_t *sih, int region, char *vars, int count)
+{
+	int result;
+	char *tuple;
+	int tuplePos;
+	int tupleCount;
+	int remainingCount;
+
+	result = BCME_ERROR;
+
+	/* zero count for read, non-zero count for write */
+	if (count) {
+		if (count < (int)(*(vars + 1) + 2)) {
+			OTP_MSG(("vars (count): %d bytes; tuple len: %d bytes\n",
+				count, (int)(*(vars + 1))));
+			return BCME_ERROR;
+		}
+
+		/* get first tuple from vars. */
+		tuplePos = 0;
+		remainingCount = count;
+
+		/* seperate vars into tuples */
+		do {
+			tupleCount = (int)(*(vars + tuplePos + 1) + 2);
+			if (remainingCount < tupleCount) {
+				OTP_MSG(("vars (remainingCount): %d bytes; tuple len: %d bytes\n",
+					remainingCount, tupleCount));
+				return (result);
+			}
+			tuple = vars + tuplePos;
+
+			result = _ipxotp_cis_append_region(sih, region, tuple, tupleCount);
+			if (result != BCME_OK)
+				return (result);
+
+			/* get next tuple from vars. */
+			remainingCount -= tupleCount;
+			tuplePos += (((int)*(tuple + 1)) + 2);
+		} while (remainingCount > 0);
+	} else {
+		return (_ipxotp_cis_append_region(sih, region, vars, count));
+	}
+
+	return (result);
 }
 
 /* No need to lock for IPXOTP */

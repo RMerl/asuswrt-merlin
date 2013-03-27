@@ -1,7 +1,7 @@
 /*
  * HND SiliconBackplane PMU support.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndpmu.h 241182 2011-02-17 21:50:03Z $
+ * $Id: hndpmu.h 344148 2012-07-11 10:53:20Z $
  */
 
 #ifndef _hndpmu_h_
@@ -71,6 +71,8 @@ extern void si_pmu_radio_enable(si_t *sih, bool enable);
 extern uint32 si_pmu_waitforclk_on_backplane(si_t *sih, osl_t *osh, uint32 clk, uint32 delay);
 extern void si_pmu_set_4330_plldivs(si_t *sih, uint8 dacrate);
 extern void si_pmu_pllreset(si_t *sih);
+
+typedef void (*si_pmu_callback_t)(void* arg);
 
 extern void si_pmu_otp_power(si_t *sih, osl_t *osh, bool on);
 extern void si_sdiod_drive_strength_init(si_t *sih, osl_t *osh, uint32 drivestrength);

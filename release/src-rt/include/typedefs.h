@@ -321,8 +321,10 @@ typedef signed char	int8;
 typedef signed short	int16;
 #endif
 
+#ifndef _SLHC_H
 #ifndef TYPEDEF_INT32
 typedef signed int	int32;
+#endif
 #endif
 
 #ifndef TYPEDEF_INT64

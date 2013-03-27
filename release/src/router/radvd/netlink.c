@@ -9,7 +9,7 @@
  *
  *   The license which is distributed with this software in the file COPYRIGHT
  *   applies to this software. If your distribution is missing this file, you
- *   may request it from <pekkas@netcore.fi>.
+ *   may request it from <reubenhwk@gmail.com>.
  *
  */
 
@@ -86,7 +86,6 @@ int netlink_socket(void)
 		flog(LOG_ERR, "Unable to setsockopt NETLINK_NO_ENOBUFS: %s", strerror(errno));
 	}
 #endif
-
 	memset(&snl, 0, sizeof(snl));
 	snl.nl_family = AF_NETLINK;
 	snl.nl_groups = RTMGRP_LINK;

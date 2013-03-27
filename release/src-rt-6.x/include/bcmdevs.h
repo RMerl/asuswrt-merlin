@@ -1,7 +1,7 @@
 /*
  * Broadcom device-specific manifest constants.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmdevs.h 330812 2012-05-02 19:03:25Z $
+ * $Id: bcmdevs.h 349610 2012-08-09 02:14:56Z $
  */
 
 #ifndef	_BCMDEVS_H
@@ -57,6 +57,8 @@
 #define BCM_DNGL_BL_PID_43239   0xbd1b
 #define BCM_DNGL_BL_PID_4324	0xbd1c
 #define BCM_DNGL_BL_PID_4360	0xbd1d
+#define BCM_DNGL_BL_PID_43143	0xbd1e
+#define BCM_DNGL_BL_PID_43242	0xbd1f
 #define BCM_DNGL_BL_PID_4335	0xbd20
 
 #define BCM_DNGL_BDC_PID	0x0bdc
@@ -141,6 +143,7 @@
 #define BCM43131_D11N2G_ID	0x43aa		/* 43131 802.11n 2.4GHz device */
 #define BCM4314_D11N2G_ID	0x4364		/* 4314 802.11n 2.4G device */
 #define BCM43142_D11N2G_ID	0x4365		/* 43142 802.11n 2.4G device */
+#define BCM43143_D11N2G_ID	0x4366		/* 43143 802.11n 2.4G device */
 #define BCM4334_D11N_ID		0x4380		/* 4334 802.11n dualband device */
 #define BCM4334_D11N2G_ID	0x4381		/* 4334 802.11n 2.4G device */
 #define BCM4334_D11N5G_ID	0x4382		/* 4334 802.11n 5G device */
@@ -158,6 +161,11 @@
 #define BCM943228HMB_SSID_VEN1	0x0607
 #define BCM94313HMGBL_SSID_VEN1	0x0608
 #define BCM94313HMG_SSID_VEN1	0x0609
+#define BCM943142HM_SSID_VEN1	0x0611
+
+#define BCM43242_D11N_ID	0x4367		/* 43242 802.11n dualband device */
+#define BCM43242_D11N2G_ID	0x4368		/* 43242 802.11n 2.4G device */
+#define BCM43242_D11N5G_ID	0x4369		/* 43242 802.11n 5G device */
 
 
 #define	BCMGPRS_UART_ID		0x4333		/* Uart id used by 4306/gprs card */
@@ -196,6 +204,8 @@
 #define	BCM47XX_GIGETH_ID	0x471f		/* 47xx GbE (5700) */
 #define	BCM4712_MIPS_ID		0x4720		/* 4712 base devid */
 #define	BCM4716_DEVICE_ID	0x4722		/* 4716 base devid */
+#define	BCM47XX_USB30H_ID	0x472a		/* 47xx usb 3.0 host */
+#define	BCM47XX_USB30D_ID	0x472b		/* 47xx usb 3.0 device */
 #define BCM47XX_SMBUS_EMU_ID	0x47fe		/* 47xx emulated SMBus device */
 #define	BCM47XX_XOR_EMU_ID	0x47ff		/* 47xx emulated XOR engine */
 #define	EPI41210_DEVICE_ID	0xa0fa		/* bcm4210 */
@@ -251,18 +261,23 @@
 #define BCM6362_CHIP_ID		0x6362		/* 6362 chipcommon chipid */
 #define BCM4314_CHIP_ID		0x4314		/* 4314 chipcommon chipid */
 #define BCM43142_CHIP_ID	43142		/* 43142 chipcommon chipid */
+#define BCM43143_CHIP_ID	43143		/* 43143 chipcommon chipid */
 #define	BCM4324_CHIP_ID		0x4324		/* 4324 chipcommon chipid */
 #define	BCM43242_CHIP_ID	43242		/* 43242 chipcommon chipid */
+#define	BCM43243_CHIP_ID	43243		/* 43243 chipcommon chipid */
 #define BCM4334_CHIP_ID		0x4334		/* 4334 chipcommon chipid */
 #define BCM4335_CHIP_ID     0x4335
 #define BCM4360_CHIP_ID		0x4360
 #define BCM43526_CHIP_ID	0xAA06
 #define BCM4352_CHIP_ID		0x4352
+#define BCM43341_CHIP_ID	43341		/* 43341 chipcommon chipid */
+#define BCM43342_CHIP_ID	43342		/* 43342 chipcommon chipid */
 
 #define	BCM4342_CHIP_ID		4342		/* 4342 chipcommon chipid (OTP, RBBU) */
 #define	BCM4402_CHIP_ID		0x4402		/* 4402 chipid */
 #define	BCM4704_CHIP_ID		0x4704		/* 4704 chipcommon chipid */
 #define	BCM4706_CHIP_ID		0x5300		/* 4706 chipcommon chipid */
+#define BCM4707_CHIP_ID		53010		/* 4707 chipcommon chipid */
 #define	BCM4710_CHIP_ID		0x4710		/* 4710 chipid */
 #define	BCM4712_CHIP_ID		0x4712		/* 4712 chipcommon chipid */
 #define	BCM4716_CHIP_ID		0x4716		/* 4716 chipcommon chipid */
@@ -323,6 +338,10 @@
 #define BCM4314SDIO_ARM_PKG_ID		(8 | 3)	/* 4314 QFN SDIO (ARM-less) package id */
 #define BCM4314SDIO_FPBGA_PKG_ID	(8 | 4)	/* 4314 FpBGA SDIO package id */
 #define BCM4314DEV_PKG_ID		(8 | 6)	/* 4314 Developement package id */
+
+#define BCM4707_PKG_ID		1		/* 4707 package id */
+#define BCM4708_PKG_ID		2		/* 4708 package id */
+#define BCM4709_PKG_ID		0		/* 4709 package id */
 
 #define PCIXX21_FLASHMEDIA0_ID	0x8033		/* TI PCI xx21 Standard Host Controller */
 #define PCIXX21_SDIOH0_ID	0x8034		/* TI PCI xx21 Standard Host Controller */
@@ -416,7 +435,23 @@
 						/* ucode control of eLNA during Tx */
 #define BFL2_4313_RADIOREG	0x10000000
 									   /*  board rework */
+#define BFL2_DYNAMIC_VMID	0x10000000  /* enable dynamic Vmid in idle TSSI CAL for 4331 */
+
 #define BFL2_SDR_EN		0x20000000	/* SDR enabled or disabled */
+
+/* SROM 11 - 11ac boardflag definitions */
+#define BFL_SROM11_BTCOEX  0x00000001  /* Board supports BTCOEX */
+#define BFL_SROM11_WLAN_BT_SH_XTL  0x00000002  /* bluetooth and wlan share same crystal */
+#define BFL_SROM11_EXTLNA	0x00001000  /* Board has an external LNA in 2.4GHz band */
+#define BFL_SROM11_EXTLNA_5GHz	0x10000000  /* Board has an external LNA in 5GHz band */
+#define BFL_SROM11_GAINBOOSTA01	0x20000000  /* 5g Gainboost for core0 and core1 */
+#define BFL2_SROM11_APLL_WAR	0x00000002  /* Flag to implement alternative A-band PLL settings */
+#define BFL2_SROM11_ANAPACTRL_2G  0x00100000  /* 2G ext PAs are ctrl-ed by analog PA ctrl lines */
+#define BFL2_SROM11_ANAPACTRL_5G  0x00200000  /* 5G ext PAs are ctrl-ed by analog PA ctrl lines */
+
+/* boardflags3 */
+#define BFL3_FEMCTRL_SUB	0x00000007  /* acphy, subrevs of femctrl on top of srom_femctrl */
+
 
 /* board specific GPIO assignment, gpio 0-3 are also customer-configurable led */
 #define	BOARD_GPIO_BTC3W_IN	0x850	/* bit 4 is RF_ACTIVE, bit 6 is STATUS, bit 11 is PRI */
@@ -746,6 +781,7 @@
 #define BCM94331X12_2G_SSID       0x00EC	/* X12 2G */
 #define BCM94331X12_5G_SSID       0x00ED	/* X12 5G */
 #define BCM94331X29B              0x00EF	/* X29B */
+#define BCM94331X29D              0x010F	/* X29D */
 #define BCM94331CSAX_SSID         BCM94331X29B
 #define BCM94331X19C              0x00F5	/* X19C */
 #define BCM94331X33	          0x00F4	/* X33 */
@@ -787,6 +823,13 @@
 #define BCM94334FCAGBI_SSID	0x05df
 #define BCM94334WLAGBI_SSID	0x05dd
 
+/* 4335 Boards */
+#define BCM94335X52             0x0114
+
+/* 4360 Boards */
+#define BCM94360X29C            0X0112
+#define BCM94360X51             0x0111
+
 /* 43217 Boards */
 #define BCM943217BU_SSID	0x05d5
 #define BCM943217HM2L_SSID	0x05d6
@@ -810,17 +853,29 @@
 #define RDL_RAM_BASE_4328 0x80000000
 #define RDL_RAM_SIZE_4322 0x60000
 #define RDL_RAM_BASE_4322 0x60000000
-#define RDL_RAM_SIZE_4360  0xE0000
+#define RDL_RAM_SIZE_4360  0xA0000
 #define RDL_RAM_BASE_4360  0x60000000
+#define RDL_RAM_SIZE_43242  0x90000
+#define RDL_RAM_BASE_43242  0x60000000
 
 /* generic defs for nvram "muxenab" bits
 * Note: these differ for 4335a0. refer bcmchipc.h for specific mux options.
 */
 #define MUXENAB_UART		0x00000001
 #define MUXENAB_GPIO		0x00000002
-#define MUXENAB_ERCX		0x00000004
+#define MUXENAB_ERCX		0x00000004	/* External Radio BT coex */
 #define MUXENAB_JTAG		0x00000008
-#define MUXENAB_HOST_WAKE	0x00000010
+#define MUXENAB_HOST_WAKE	0x00000010	/* configure GPIO for SDIO host_wake */
+#define MUXENAB_I2S_EN		0x00000020
+#define MUXENAB_I2S_MASTER	0x00000040
+#define MUXENAB_I2S_FULL	0x00000080
+#define MUXENAB_SFLASH		0x00000100
+#define MUXENAB_RFSWCTRL0	0x00000200
+#define MUXENAB_RFSWCTRL1	0x00000400
+#define MUXENAB_RFSWCTRL2	0x00000800
+#define MUXENAB_SECI		0x00001000
+#define MUXENAB_BT_LEGACY	0x00002000
+#define MUXENAB_HOST_WAKE1	0x00004000	/* configure alternative GPIO for SDIO host_wake */
 
 /* Boot flags */
 #define FLASH_KERNEL_NFLASH	0x00000001

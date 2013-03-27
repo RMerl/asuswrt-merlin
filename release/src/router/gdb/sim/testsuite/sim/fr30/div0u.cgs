@@ -1,0 +1,25 @@
+# fr30 testcase for div0u $Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global div0u
+div0u:
+	; Test div0u $Rj,$Ri
+	; operand register has no effect
+	mvi_h_gr   	0xdeadbeef,r2
+	mvi_h_dr   	0xdeadbeef,mdh
+	mvi_h_dr   	0x0ffffff0,mdl
+	set_dbits	0x3		; Set opposite of expected
+	set_cc          0x0f		; Condition codes should not change
+	div0u      	r2
+	test_cc		1 1 1 1
+	test_h_gr  	0xdeadbeef,r2
+	test_h_dr  	0x00000000,mdh
+	test_h_dr  	0x0ffffff0,mdl
+	test_dbits	0x0
+
+	pass

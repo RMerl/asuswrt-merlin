@@ -25,7 +25,6 @@
 #include <sys/stat.h>
 #include <linux/major.h>
 #include <linux/kdev_t.h>
-#include <scsi/scsi.h>
 #include <scsi/scsi_ioctl.h>
 #include <scsi/sg.h>
 
@@ -33,6 +32,10 @@
 #define IS_SCSI_DISK(rdev)	SCSI_DISK_MAJOR(MAJOR(rdev))
 #else
 #define IS_SCSI_DISK(rdev)	(MAJOR(rdev)==SCSI_DISK_MAJOR)
+#endif
+
+#ifndef START_STOP
+#define START_STOP            0x1b
 #endif
 
 int main(int argc, char *argv[])

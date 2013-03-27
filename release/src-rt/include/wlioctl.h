@@ -803,6 +803,11 @@ typedef struct {
 #define BRCM_AUTH_PSK           0x0100  /* BRCM specific PSK */
 #define BRCM_AUTH_DPT		0x0200	/* DPT PSK without group keys */
 #endif /* LINUX_POSTMOGRIFY_REMOVAL */
+#ifdef BCMWAPI_WAI
+#define WAPI_AUTH_NONE		WPA_AUTH_NONE	/* none (IBSS) */
+#define WAPI_AUTH_UNSPECIFIED	0x0400	/* over AS */
+#define WAPI_AUTH_PSK		0x0800	/* Pre-shared key */
+#endif /* BCMWAPI_WAI */
 #define WPA2_AUTH_MFP           0x1000  /* MFP (11w) in contrast to CCX */
 
 #define WPA_AUTH_PFN_ANY	0xffffffff	/* for PFN, match only ssid */
@@ -3438,6 +3443,20 @@ typedef struct assertlog_results {
 #define LOGRRC_FIX_LEN	8
 #define IOBUF_ALLOWED_NUM_OF_LOGREC(type, len) ((len - LOGRRC_FIX_LEN)/sizeof(type))
 
+#ifdef BCMWAPI_WAI
+#define IV_LEN 16
+struct wapi_sta_msg_t
+{
+	uint16	msg_type;
+	uint16	datalen;
+	uint8	vap_mac[6];
+	uint8	reserve_data1[2];
+	uint8	sta_mac[6];
+	uint8	reserve_data2[2];
+	uint8	gsn[IV_LEN];
+	uint8	wie[256];
+};
+#endif /* BCMWAPI_WAI */
 
 /* channel interference measurement (chanim) related defines */
 

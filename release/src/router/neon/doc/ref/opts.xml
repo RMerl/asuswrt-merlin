@@ -1,0 +1,114 @@
+    <refentry id="refopts">
+
+      <refmeta>
+	<refentrytitle>ne_set_useragent</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_set_useragent">ne_set_useragent</refname>
+	<refname id="ne_set_read_timeout">ne_set_read_timeout</refname>
+	<refname id="ne_set_connect_timeout">ne_set_connect_timeout</refname>
+	<refname id="ne_get_scheme">ne_get_scheme</refname>
+	<refname id="ne_get_server_hostport">ne_get_server_hostport</refname>
+	<refpurpose>common properties for HTTP sessions</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_session.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_set_useragent</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	    <paramdef>const char *<parameter>product</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_set_read_timeout</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	    <paramdef>int <parameter>timeout</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_set_connect_timeout</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	    <paramdef>int <parameter>timeout</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>const char *<function>ne_get_scheme</function></funcdef>
+	    <paramdef>ne_sesssion *<parameter>session</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>const char *<function>ne_get_server_hostport</function></funcdef>
+	    <paramdef>ne_sesssion *<parameter>session</parameter></paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+	
+	<para>The <literal>User-Agent</literal> request header is used
+to identify the software which generated the request for statistical
+or debugging purposes.  neon does not send a
+<literal>User-Agent</literal> header unless a call is made to the
+<function>ne_set_useragent</function>.
+<function>ne_set_useragent</function> must be passed a product string
+conforming to RFC2616's product token grammar; of the form
+<literal>"Product/Version"</literal>.</para>
+
+	<para>When neon reads from a socket, by default the read
+operation will time out after 60 seconds, and the request will fail
+giving an <errorcode>NE_TIMEOUT</errorcode> error.  To configure this
+timeout interval, call <function>ne_set_read_timeout</function> giving
+the desired number of seconds as the <parameter>timeout</parameter>
+parameter.</para>
+
+	<para>When a connection is being established to a server,
+	normally only the system's TCP timeout handling will apply.
+	To configure a specific (and probably shorter) timeout, the
+	<function>ne_set_connect_timeout</function> can be used,
+	giving the desired number of seconds as the
+	<parameter>timeout</parameter> parameter.  If
+	<literal>0</literal> is passed, then the default behaviour of
+	using the system TCP timeout will be used.</para>
+
+         <para>The scheme used to initially create the session will be
+         returned by <function>ne_get_scheme</function>.</para>
+
+         <para>The hostport pair with which the session is associated
+         will be returned by the
+         <function>ne_get_server_hostport</function>; for example
+         <literal>www.example.com:8080</literal>.  Note that the
+         <literal>:port</literal> will be omitted if the default port
+         for the scheme is used.</para>
+
+      </refsect1>      
+
+      <refsect1>
+	<title>Examples</title>
+	<para>Set a user-agent string:</para>
+	<programlisting>&egsess;
+ne_set_useragent(sess, "MyApplication/2.1");</programlisting>
+
+	<para>Set a 30 second read timeout:</para>
+	<programlisting>&egsess;
+ne_set_read_timeout(sess, 30);</programlisting>
+
+      </refsect1>
+
+      <refsect1>
+	<title>See also</title>
+	
+	<para><xref linkend="ne_session_create"/>, <xref
+	linkend="ne_set_session_flag"/>.</para>
+      </refsect1>
+
+    </refentry>

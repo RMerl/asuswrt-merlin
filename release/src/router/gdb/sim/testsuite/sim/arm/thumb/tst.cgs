@@ -1,0 +1,12 @@
+# arm testcase for tst $rd,$rs
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global alu_tst
+alu_tst:
+	tst r0,r0
+
+	pass

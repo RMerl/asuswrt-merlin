@@ -1,0 +1,108 @@
+'\" t
+.\"     Title: ne_get_response_header
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_GET_RESPONSE_HEAD" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_get_response_header, ne_response_header_iterate \- functions to access response headers
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_request\&.h>
+.fi
+.ft
+.HP \w'const\ char\ *ne_get_response_header('u
+.BI "const char *ne_get_response_header(ne_request\ *" "request" ", const\ char\ *" "name" ");"
+.HP \w'void\ *ne_response_header_iterate('u
+.BI "void *ne_response_header_iterate(ne_request\ *" "request" ", void\ *" "cursor" ", const\ char\ **" "name" ", const\ char\ **" "value" ");"
+.SH "DESCRIPTION"
+.PP
+To retrieve the value of a response header field, the
+\fBne_get_response_header\fR
+function can be used, and is given the name of the header to return\&.
+.PP
+To iterate over all the response headers returned, the
+\fBne_response_header_iterate\fR
+function can be used\&. This function takes a
+\fIcursor\fR
+parameter which should be
+NULL
+to retrieve the first header\&. The function stores the name and value of the next header header in the
+\fIname\fR
+and
+\fIvalue\fR
+parameters, and returns a new cursor pointer which can be passed to
+\fBne_response_header_iterate\fR
+to retrieve the next header\&.
+.SH "RETURN VALUE"
+.PP
+\fBne_get_response_header\fR
+returns a string, or
+NULL
+if no header with that name was given\&. If used during request processing, the return value pointer is valid only until the next call to
+\fBne_begin_request\fR, or else, until the request object is destroyed\&.
+.PP
+Likewise, the cursor, names, and values returned by
+\fBne_response_header_iterate\fR
+are only valid until the next call to
+\fBne_begin_request\fR
+or until the request object is destroyed\&.
+.SH "EXAMPLES"
+.PP
+The following code will output the value of the
+Last\-Modified
+header for a resource:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ne_request *req = ne_request_create(sess, "GET", "/foo\&.txt");
+if (ne_request_dispatch(req) == NE_OK) {
+    const char *mtime = ne_get_response_header(req, "Last\-Modified");
+    if (mtime) {
+        printf("/foo\&.txt has last\-modified value %s\en", mtime);
+    }
+}
+ne_request_destroy(req);
+.fi
+.if n \{\
+.RE
+.\}
+.SH "SEE ALSO"
+.PP
+ne_request_create,
+ne_request_destroy\&.
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

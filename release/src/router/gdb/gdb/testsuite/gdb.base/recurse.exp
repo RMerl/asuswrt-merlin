@@ -1,0 +1,168 @@
+# Copyright 1992, 1994, 1995, 1996, 1997, 1999, 2000, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Jeff Law. (law@cs.utah.edu)
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "recurse"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested recurse.exp
+     return -1
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+proc recurse_tests {} {
+
+    # Disable hardware watchpoints if necessary.
+    if [target_info exists gdb,no_hardware_watchpoints] {
+	gdb_test "set can-use-hw-watchpoints 0" "" ""
+    }
+
+    if [runto recurse] then {
+	# First we need to step over the assignment of b, so it has a known
+	# value.
+	gdb_test "next" "if \\(a == 1\\)" "next over b = 0 in first instance"
+	gdb_test "watch b" ".*\[Ww\]atchpoint \[0-9]*: b" \
+	    "set first instance watchpoint"
+
+	# Continue until initial set of b.
+	if [gdb_test "continue" \
+	    "Continuing.*\[Ww\]atchpoint.*: b.*Old value = 0.*New value = 10.*" \
+	    "continue to first instance watchpoint, first time"] then {
+	    gdb_suppress_tests;
+	}
+
+	# Continue inward for a few iterations
+	gdb_test "continue" "Breakpoint.* recurse \\(a=9\\).*" \
+	    "continue to recurse (a = 9)"
+	gdb_test "continue" "Breakpoint.* recurse \\(a=8\\).*" \
+	    "continue to recurse (a = 8)"
+	gdb_test "continue" "Breakpoint.* recurse \\(a=7\\).*" \
+	    "continue to recurse (a = 7)"
+	gdb_test "continue" "Breakpoint.* recurse \\(a=6\\).*" \
+	    "continue to recurse (a = 6)"
+	gdb_test "continue" "Breakpoint.* recurse \\(a=5\\).*" \
+	    "continue to recurse (a = 5)"
+
+	# Put a watchpoint on another instance of b
+	# First we need to step over the assignment of b, so it has a known
+	# value.
+	gdb_test "next" "if \\(a == 1\\)" "next over b = 0 in second instance"
+	gdb_test "watch b" ".*\[Ww\]atchpoint \[0-9]*: b" \
+	    "set second instance watchpoint"
+
+	# Continue until initial set of b (second instance).
+	if [gdb_test "continue" \
+	    "Continuing.*\[Ww\]atchpoint.*: b.*Old value = 0.*New value = 5.*"\
+	    "continue to second instance watchpoint, first time"] then {
+	gdb_suppress_tests;
+	}
+
+	# Continue inward for a few iterations
+	gdb_test "continue" "Breakpoint.* recurse \\(a=4\\).*" \
+	    "continue to recurse (a = 4)"
+	gdb_test "continue" "Breakpoint.* recurse \\(a=3\\).*" \
+	    "continue to recurse (a = 3)"
+	gdb_test "continue" "Breakpoint.* recurse \\(a=2\\).*" \
+	    "continue to recurse (a = 2)"
+	gdb_test "continue" "Breakpoint.* recurse \\(a=1\\).*" \
+	    "continue to recurse (a = 1)"
+
+	# Continue until second set of b (second instance).
+	if [gdb_test "continue" \
+	    "Continuing.*\[Ww\]atchpoint.*: b.*Old value = 5.*New value = 120.*return.*" \
+	    "continue to second instance watchpoint, second time"] then { 
+	    gdb_suppress_tests;
+	}
+
+	# Continue again.  We should have a watchpoint go out of scope now
+	if [gdb_test "continue" \
+	    "Continuing.*\[Ww\]atchpoint.*deleted.*recurse \\(a=6\\) .*" \
+	    "second instance watchpoint deleted when leaving scope"] then {
+	    gdb_suppress_tests;
+	}
+
+	# Continue until second set of b (first instance).
+	# 24320 is allowed as the final value for b as that's the value
+	# b would have on systems with 16bit integers.
+	#
+	# We could fix the test program to deal with this too.
+	if [gdb_test "continue" \
+	    "Continuing.*\[Ww\]atchpoint.*b.*Old value = 10.*New value = \(3628800|24320\).*return.*" \
+	    "continue to first instance watchpoint, second time"] then {
+	    gdb_suppress_tests
+	}
+
+	# Continue again.  We should have a watchpoint go out of scope now.
+	#
+	# The former version expected the test to return to main().
+	# Now it expects the test to return to main or to stop in the
+	# function's epilogue.
+	# 
+	# The problem is that gdb needs to (but doesn't) understand
+	# function epilogues in the same way as for prologues.
+	# 
+	# If there is no hardware watchpoint (such as a x86 debug register),
+	# then watchpoints are done "the hard way" by single-stepping the
+	# target until the value of the watched variable changes.  If you
+	# are single-stepping, you will eventually step into an epilogue.
+	# When you do that, the "top" stack frame may become partially
+	# deconstructed (as when you pop the frame pointer, for instance),
+	# and from that point on, GDB can no longer make sense of the stack.
+	# 
+	# A test which stops in the epilogue is trying to determine when GDB
+	# leaves the stack frame in which the watchpoint was created.  It does
+	# this basically by watching for the frame pointer to change.  When
+	# the frame pointer changes, the test expects to be back in main, but
+	# instead it is still in the epilogue of the callee.
+	if [gdb_test "continue" \
+	    "Continuing.*\[Ww\]atchpoint.*deleted.*\(main \\(\\) \|21.*\}\).*" \
+	    "first instance watchpoint deleted when leaving scope"] then {
+	    gdb_suppress_tests;
+	}
+    }
+    gdb_stop_suppressing_tests;
+}
+
+# Preserve the old timeout, and set a new one that should be
+# sufficient to avoid timing out during this test.
+set oldtimeout $timeout
+set timeout [expr "$timeout + 60"]
+verbose "Timeout is now $timeout seconds" 2
+
+recurse_tests
+
+# Restore the preserved old timeout value.
+set timeout $oldtimeout
+verbose "Timeout is now $timeout seconds" 2
+

@@ -1,0 +1,35 @@
+# XSCALE testcase for MIAPH
+# mach: xscale
+# as: -mcpu=xscale
+
+	.include "testutils.inc"
+
+	start
+
+	.global miaph
+miaph:
+	# Enable access to CoProcessors 0 & 1 before
+        # we attempt these instructions.
+
+	mvi_h_gr   r1, 3
+	mcr        p15, 0, r1, cr15, cr1, 0
+
+	# Test Multilply Accumulate
+	
+	mvi_h_gr   r0, 0x11223344
+	mvi_h_gr   r1, 0x55667788
+	mvi_h_gr   r2, 0x12345678
+	mvi_h_gr   r3, 0x9abcdef0
+
+	mar	   acc0, r0, r1
+
+	miaph	   acc0, r2, r3
+	
+	mra	   r0, r1, acc0
+	
+	test_h_gr  r0, 0xfec3f9f4
+	test_h_gr  r1, 0x55667787
+	test_h_gr  r2, 0x12345678
+	test_h_gr  r3, 0x9abcdef0
+
+	pass

@@ -1,0 +1,23 @@
+# fr30 testcase for leave
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global leave
+leave:
+	; Test leave $u10
+	mvr_h_gr	sp,r7			; save Stack pointer
+	mvr_h_gr	sp,r14
+	inci_h_gr	-4,r14
+	mvi_h_mem	0xdeadbeef,r14
+	mvi_h_gr	0xbeefdead,r15
+	set_cc	0x0f			; Condition codes are irrelevent
+	leave
+	test_cc	1 1 1 1
+	testr_h_gr	sp,r7
+	test_h_gr	0xdeadbeef,r14
+
+	pass

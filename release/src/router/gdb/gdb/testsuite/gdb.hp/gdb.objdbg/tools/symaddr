@@ -1,0 +1,8 @@
+#!/bin/ksh
+
+# Get the address of a symbol in Hex.
+# $1 = object/executable file name
+# $2 = symbol name
+${srcdir}/gdb.hp/tools/odump -sym "$1" | grep "$2"$ | awk '{print $1}'
+
+exit 0

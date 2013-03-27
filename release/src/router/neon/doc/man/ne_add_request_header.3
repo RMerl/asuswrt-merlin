@@ -1,0 +1,72 @@
+'\" t
+.\"     Title: ne_add_request_header
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_ADD_REQUEST_HEADE" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_add_request_header, ne_print_request_header \- add headers to a request
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_request\&.h>
+.fi
+.ft
+.HP \w'void\ ne_add_request_header('u
+.BI "void ne_add_request_header(ne_request\ *" "request" ", const\ char\ *" "name" ", const\ char\ *" "value" ");"
+.HP \w'void\ ne_print_request_header('u
+.BI "void ne_print_request_header(ne_request\ *" "request" ", const\ char\ *" "name" ", const\ char\ *" "format" ", \&.\&.\&.);"
+.SH "DESCRIPTION"
+.PP
+The functions
+\fBne_add_request_header\fR
+and
+\fBne_print_request_header\fR
+can be used to add headers to a request, before it is sent\&.
+.PP
+\fBne_add_request_header\fR
+simply adds a header of given
+\fIname\fR, with given
+\fIvalue\fR\&.
+.PP
+\fBne_print_request_header\fR
+adds a header of given
+\fIname\fR, taking the value from the
+\fBprintf\fR\-like
+\fIformat\fR
+string parameter and subsequent variable\-length argument list\&.
+.SH "SEE ALSO"
+.PP
+ne_request_create
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

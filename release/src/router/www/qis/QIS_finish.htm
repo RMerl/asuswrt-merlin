@@ -5,7 +5,6 @@
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="stylesheet" type="text/css" href="../form_style.css">
-<link rel="stylesheet" type="text/css" href="qis_style.css">
 <style>
 span{
 	border:0px solid #FFFFFF;
@@ -24,6 +23,7 @@ span{
 	margin-left: 10px;
 }
 </style>
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <script type="text/JavaScript" src="/jquery.js"></script>
 
 <script>
@@ -63,14 +63,20 @@ function doLiveUpdate(_do){
 		document.start_update.submit();
 	}
 	else{
-		document.getElementById("QISmain").style.display = "";
-		document.getElementById("liveUpdate_div").style.display = "none";
+		if(parent.ISMOBILE){
+			document.getElementById("mainDiv_finish").style.display = "";
+			document.getElementById("liveUpdate_div").style.display = "none";
+		}
+		else{
+			document.getElementById("QISmain").style.display = "";
+			document.getElementById("liveUpdate_div").style.display = "none";
+		}
 	}
 }
 
 function showCancel(){
-        document.getElementById("newFWCancel").style.display = "";
-        document.getElementById("newFWDetected").style.display = "none";
+	document.getElementById("newFWCancel").style.display = "";
+ 	document.getElementById("newFWDetected").style.display = "none";
 }
 
 var dead = 0;
@@ -81,20 +87,30 @@ function detect_httpd(){
 		timeout: 2000,
 		error: function(xhr){
 			dead++;
-			if(dead < 30)
+			if(dead < 50)
 				setTimeout("detect_httpd();", 1000);
 			else{
+				progressBar = 100;
+				document.getElementById('progress_bar_no').innerHTML = "100%";
 				document.getElementById("updateProgress").style.width = "100%";
 				document.getElementById("newFWgradedFail").style.display = "";
 			}
 		},
 		success: function(){
-			if(webs_state_error == "1"){
+			if(webs_state_error == "1" || webs_state_error == "3"){
+				progressBar = 100;
 				document.getElementById('progress_bar_no').innerHTML = "100%";
 				document.getElementById("updateProgress").style.width = "100%";
 				document.getElementById("liveUpdateResult").innerHTML = "<#FIRM_fail_desc#>";
 				document.getElementById("newFWgraded").style.display = "";
 				return false;
+			}else if(webs_state_error == "2"){
+				progressBar = 100;
+				document.getElementById('progress_bar_no').innerHTML = "100%";
+				document.getElementById("updateProgress").style.width = "100%";
+				document.getElementById("liveUpdateResult").innerHTML = "Memory space is NOT enough to upgrade on internet. Please wait for rebooting.";
+				document.getElementById("newFWgraded").style.display = "";
+				return false;				
 			}
 
 			if(webs_state_upgrade == ""){
@@ -112,14 +128,21 @@ function detect_httpd(){
 
 var progressBar = 0;
 function showLoadingUpdate(){
-	if(progressBar == 90){
+	if(progressBar == 100){
+		return false;
+	}
+	else if(progressBar == 10){
+		detect_httpd();
+		setTimeout("showLoadingUpdate();", 2700);
+	}
+	else if(progressBar == 80){
 		detect_httpd();
 		return false;
 	}
 	else{	
 		document.getElementById("updateProgress").style.width = progressBar+"%";
 		document.getElementById('progress_bar_no').innerHTML = progressBar+"%";
-		setTimeout("showLoadingUpdate();", 3000);
+		setTimeout("showLoadingUpdate();", 2700);
 	}
 	
 	progressBar++;	
@@ -127,24 +150,7 @@ function showLoadingUpdate(){
 
 function QKfinish_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_all_title#>";
-	parent.set_step("t3");
-	parent.$("LoadingBar").style.visibility = 'hidden';
 
-	if(parent.new_FW){
-		document.getElementById("QISmain").style.display = "none";
-		document.getElementById("liveUpdate_div").style.display = "";
-		$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno; 
-		$("#latestFW")[0].innerHTML = "" 
-		for(var i=0; i<parent.Latest_firm.length; i++){
-			$("#latestFW")[0].innerHTML += parent.Latest_firm.charAt(i);
-			if(i == parent.Latest_firm.length - 1)
-				$("#latestFW")[0].innerHTML += "_";
-			else
-				$("#latestFW")[0].innerHTML += ".";
-		}
-		$("#latestFW")[0].innerHTML += parent.Latest_buildno;
-	}
-	
 	// Wireless Security
 	$("#ssid_2_item")[0].innerHTML = "<#QIS_finish_wireless_item1#>";
 	$("#ssid_2")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>');
@@ -262,7 +268,6 @@ function QKfinish_load_body(){
 			}
 		}
 
-	
 	//Repeater mode wireless LAN 2.4G/5G
 	if('<% nvram_get("sw_mode"); %>' == "2"){
 		
@@ -394,7 +399,6 @@ function QKfinish_load_body(){
 				}
 		}	
 	}		
-	
 
 	// Connection Status
 	$("#mac_item")[0].innerHTML = "MAC";
@@ -428,7 +432,7 @@ function QKfinish_load_body(){
 			$("#wlcstate")[0].innerHTML = "<#APSurvey_action_ConnectingStatus24#>";
 		}
 		else{
-			$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://www.asusnetwork.net/QIS_wizard.htm?flag=sitesurvey\';\"><#APSurvey_action_ConnectingStatus0#></span>";
+			$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://router.asus.com/QIS_wizard.htm?flag=sitesurvey\';\"><#APSurvey_action_ConnectingStatus0#></span>";
 		}
 
 		$("#wlcip")[0].innerHTML = reIP;
@@ -449,7 +453,53 @@ function QKfinish_load_body(){
 	$("#password_item")[0].innerHTML = "<#QIS_finish_admin_item2#>";
 	$("#password")[0].innerHTML = '<% nvram_get("http_passwd"); %>';
 	
-	document.getElementById("nextButton").focus();
+
+	if(parent.ISMOBILE){
+		hideObjs();
+		document.getElementById("tblsetting_1").style.display = "none";
+		document.getElementById("timeObject").style.display = "none";
+		document.getElementById("mainDiv_finish").style.display = "";
+		document.getElementById("wanip_m").innerHTML = document.getElementById("wanip").innerHTML;
+		document.getElementById("wantype_m").innerHTML = wanlink_type_conv;
+		document.getElementById("lanip_m").innerHTML = document.getElementById("lanip").innerHTML;
+		document.getElementById("mac_m").innerHTML = document.getElementById("mac").innerHTML;
+
+		if(parent.new_FW){
+			document.getElementById("mainDiv_finish").style.display = "none";
+			document.getElementById("liveUpdate_div").style.display = "";
+			document.getElementById("liveUpdateTitle").style.display = "none";
+			$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno; 
+			$("#latestFW")[0].innerHTML = "" 
+			for(var i=0; i<parent.Latest_firm.length; i++){
+				$("#latestFW")[0].innerHTML += parent.Latest_firm.charAt(i);
+				if(i == parent.Latest_firm.length - 1)
+					$("#latestFW")[0].innerHTML += "_";
+				else
+					$("#latestFW")[0].innerHTML += ".";
+			}
+			$("#latestFW")[0].innerHTML += parent.Latest_buildno;
+		}
+	}
+	else{
+		if(parent.new_FW){
+			document.getElementById("QISmain").style.display = "none";
+			document.getElementById("liveUpdate_div").style.display = "";
+			$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno; 
+			$("#latestFW")[0].innerHTML = "" 
+			for(var i=0; i<parent.Latest_firm.length; i++){
+				$("#latestFW")[0].innerHTML += parent.Latest_firm.charAt(i);
+				if(i == parent.Latest_firm.length - 1)
+					$("#latestFW")[0].innerHTML += "_";
+				else
+					$("#latestFW")[0].innerHTML += ".";
+			}
+			$("#latestFW")[0].innerHTML += parent.Latest_buildno;
+		}
+	
+		parent.set_step("t3");
+		parent.$("LoadingBar").style.visibility = 'hidden';
+		document.getElementById("nextButton").focus();
+	}
 }
 
 function gotoASUS(){
@@ -457,9 +507,10 @@ function gotoASUS(){
 }
 
 function goto_tutorial(){
-	if(parent.downsize_support == -1)
+	// remove QIS_tutorial
+	/*if(parent.downsize_support == -1)
 		location.href = "QIS_tutorial.htm";
-	else
+	else*/
 		parent.location.href = "/index.asp";
 }
 
@@ -548,8 +599,8 @@ function showclock(){
 <input type="hidden" name="wl0_wpa_psk" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>">
 <input type="hidden" name="wl1_wpa_psk" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_wpa_psk"); %>">
 <div class="QISmain" id="QISmain">
-		<div>
-			<table width="730px">
+		<div id="descTltle">
+			<table width="100%">
 				<tr>
 					<td align="left">
 						<span class="description_down"><#qis_finish_title1#></span>
@@ -560,154 +611,191 @@ function showclock(){
 				</tr>
 			</table>
 		</div>
-		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
-		<br/>
-		<p class="QISGeneralFont" style="margin-top:-5px;"><#General_x_SystemTime_itemname#>: <span id="system_time" size="40" class="devicepin" style="font-size:12px;"></span>&nbsp&nbsp<a href="/Advanced_System_Content.asp?af=time_zone_select" TARGET="_top" style="color:#FC0;font-family:Lucida Console;text-decoration:underline;"><#System_Change_TimeZone#></a></p>
-		<br/>
-		<table id="tblsetting_1" class="QISform_finish" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="margin-top:-10px;">
-			<!-- WL 2.4GHz -->
-			<tr id="freqtitle2">
-				<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_1#> <span style="color:#5AD;" id="desc2g">(2.4GHz)</span></td>	
-			</tr>
-			<tr id="ssid2_block">
-			  <th width="180"><span id="ssid_2_item"></span></th>
-			  <td class="QISformtd" width="300px">
-					<span id="ssid_2"></span>
-			  </td>
-			</tr>
-			<tr id="key2_block">
-			  <th width="180"><span id="key2_item"></span></th>
-			  <td class="QISformtd">
-					<span id="key2"></span>
-			  </td>
-			</tr>
-			<tr id="security2_block">
-			  <th width="180"><span id="security_item2"></span></th>
-			  <td class="QISformtd">
-					<span id="security2"></span>
-			  </td>
-			</tr>
-		
-		
-			<!-- WL 5GHz -->
-			<tr id="freqtitle5">
-				<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_1#> <span style="color:#5AD;">(5GHz)</span></td>	
-			</tr>
-			<tr id="ssid5_block">
-			  <th width="180"><span id="ssid_5_item"></span></th>
-			  <td class="QISformtd">
-					<span id="ssid_5"></span>
-			  </td>
-			</tr>
-			<tr id="key5_block">
-			  <th width="180"><span id="key5_item"></span></th>
-			  <td class="QISformtd">
-					<span id="key5"></span>
-			  </td>
-			</tr>
-			<tr id="security5_block">
-			  <th width="180"><span id="security_item5"></span></th>
-			  <td class="QISformtd">
-					<span id="security5"></span>
-			  </td>
-			</tr>
-		
-			<!-- WAN -->
-			<tr class="reItem">
-				<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_3#></td>	
-			</tr>
-			<tr class="reItem">
-			  <th width="180"><span id="wantype_item"></span></th>
-			  <td class="QISformtd">
-					<span id="wantype"></span>
-			  </td>
-			</tr>
-			<tr class="reItem">
-			  <th width="180"><span id="wanip_item"></span></th>
-			  <td class="QISformtd">
-					<span id="wanip"></span>
-			  </td>
-			</tr>
-		
-			<!-- LAN -->
-			<tr class="reItem">
-				<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_2#></td>	
-			</tr>
-			<tr class="reItem">
-			  <th width="180"><span id="lanip_item"></span></th>
-			  <td class="QISformtd">
-					<span id="lanip"></span>
-			  </td>
-			</tr>
-		
-			<tr class="reItem">
-			  <th width="180"><span id="mac_item"></span></th>
-			  <td class="QISformtd">
-					<span id="mac"></span>
-			  </td>
-			</tr>
-		
-			<tr style="display:none;">
-			  <th width="180"><span id="account_item"></span></th>
-			  <td class="QISformtd">
-					<span id="account"></span>
-			  </td>
-			</tr>
-			<tr style="display:none;">
-			  <th width="180"><span id="password_item"></span></th>
-			  <td class="QISformtd">
-					<span id="password"></span>
-			  </td>
-			</tr>
-		
-			<!-- WLC -->
-			<tr class="wlcItem">
-				<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#OP_RE_item#></td>	
-			</tr>
-			<tr class="wlcItem">
-			  <th width="180"><span id="wlcssid_item"><#Wireless_name#>(Remote)</span></th>
-			  <td class="QISformtd">
-					<span id="wlcssid"></span>
-			  </td>
-			</tr>
-		
-			<tr class="wlcItem">
-			  <th width="180"><span id="wlcstate_item"><#statusTitle_AP#></span></th>
-			  <td class="QISformtd">
-					<span id="wlcstate"></span>
-			  </td>
-			</tr>
-		
-			<tr class="wlcItem">
-			  <th width="180"><span id="wlcip_item"><#QIS_internet_success_item1#></span></th>
-			  <td class="QISformtd">
-					<span id="wlcip"></span>
-			  </td>
-			</tr>
-		
-		</table>
-	
-		<div class="apply_gen" style="margin-top:5px">
-			<input type="button" id="nextButton" value="<#CTL_next#>" onclick="goto_tutorial();" class="button_gen">
+		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+<br/>
+<p id="timeObject" class="QISGeneralFont" style="margin-top:-5px;"><#General_x_SystemTime_itemname#>: <span  id="system_time" size="40" class="devicepin"   style="font-size:12px;"></span>&nbsp&nbsp<a href="/Advanced_System_Content.asp?af=time_zone_select" TARGET="_top" style="color:#FC0;font-family:Lucida Console;text-decoration:underline;"><#System_Change_TimeZone#></a></p>
+<br/>
+
+<table id="tblsetting_1" class="QISform_finish" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="margin-top:-10px;">
+	<!-- WL 2.4GHz -->
+	<tr id="freqtitle2">
+		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_1#> <span style="color:#5AD;" id="desc2g">(2.4GHz)</span></td>	
+	</tr>
+	<tr id="ssid2_block">
+	  <th width="180"><span id="ssid_2_item"></span></th>
+	  <td class="QISformtd" width="300px">
+			<span id="ssid_2"></span>
+	  </td>
+	</tr>
+	<tr id="key2_block">
+	  <th width="180"><span id="key2_item"></span></th>
+	  <td class="QISformtd">
+			<span id="key2"></span>
+	  </td>
+	</tr>
+	<tr id="security2_block">
+	  <th width="180"><span id="security_item2"></span></th>
+	  <td class="QISformtd">
+			<span id="security2"></span>
+	  </td>
+	</tr>
+
+
+	<!-- WL 5GHz -->
+	<tr id="freqtitle5">
+		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_1#> <span style="color:#5AD;">(5GHz)</span></td>	
+	</tr>
+	<tr id="ssid5_block">
+	  <th width="180"><span id="ssid_5_item"></span></th>
+	  <td class="QISformtd">
+			<span id="ssid_5"></span>
+	  </td>
+	</tr>
+	<tr id="key5_block">
+	  <th width="180"><span id="key5_item"></span></th>
+	  <td class="QISformtd">
+			<span id="key5"></span>
+	  </td>
+	</tr>
+	<tr id="security5_block">
+	  <th width="180"><span id="security_item5"></span></th>
+	  <td class="QISformtd">
+			<span id="security5"></span>
+	  </td>
+	</tr>
+
+	<!-- WAN -->
+	<tr class="reItem">
+		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_3#></td>	
+	</tr>
+	<tr class="reItem">
+	  <th width="180"><span id="wantype_item"></span></th>
+	  <td class="QISformtd">
+			<span id="wantype"></span>
+	  </td>
+	</tr>
+	<tr class="reItem">
+	  <th width="180"><span id="wanip_item"></span></th>
+	  <td class="QISformtd">
+			<span id="wanip"></span>
+	  </td>
+	</tr>
+
+	<!-- LAN -->
+	<tr class="reItem">
+		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_2#></td>	
+	</tr>
+	<tr class="reItem">
+	  <th width="180"><span id="lanip_item"></span></th>
+	  <td class="QISformtd">
+			<span id="lanip"></span>
+	  </td>
+	</tr>
+
+	<tr class="reItem">
+	  <th width="180"><span id="mac_item"></span></th>
+	  <td class="QISformtd">
+			<span id="mac"></span>
+	  </td>
+	</tr>
+
+	<tr style="display:none;">
+	  <th width="180"><span id="account_item"></span></th>
+	  <td class="QISformtd">
+			<span id="account"></span>
+	  </td>
+	</tr>
+	<tr style="display:none;">
+	  <th width="180"><span id="password_item"></span></th>
+	  <td class="QISformtd">
+			<span id="password"></span>
+	  </td>
+	</tr>
+
+	<!-- WLC -->
+	<tr class="wlcItem">
+		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#OP_RE_item#></td>	
+	</tr>
+	<tr class="wlcItem">
+	  <th width="180"><span id="wlcssid_item"><#Wireless_name#>(Remote)</span></th>
+	  <td class="QISformtd">
+			<span id="wlcssid"></span>
+	  </td>
+	</tr>
+
+	<tr class="wlcItem">
+	  <th width="180"><span id="wlcstate_item"><#statusTitle_AP#></span></th>
+	  <td class="QISformtd">
+			<span id="wlcstate"></span>
+	  </td>
+	</tr>
+
+	<tr class="wlcItem">
+	  <th width="180"><span id="wlcip_item"><#QIS_internet_success_item1#></span></th>
+	  <td class="QISformtd">
+			<span id="wlcip"></span>
+	  </td>
+	</tr>
+</table>
+
+<div id="mainDiv_finish" style="display:none;margin-top:-40px;">
+	<div class="itemTitle"><#menu5_3#></div>
+	<fieldset>
+		<div class="row">
+			<label>WAN IP</label>
+			<div id="wanip_m"></div>
 		</div>
+		<div class="row_end">
+			<label>WAN Type</label>
+			<div id="wantype_m"></div>
+		</div>
+	</fieldset>
+	<br />
+	<div class="itemTitle"><#menu5_2#></div>
+	<fieldset>
+		<div class="row">
+			<label>LAN IP</label>
+			<div id="lanip_m"></div>
+		</div>
+		<div class="row_end">
+			<label>MAC</label>
+			<div id="mac_m"></div>
+		</div>
+	</fieldset>
+	<br />
+
+	<fieldset>
+		<div class="row_end"><a class="iuiA" onclick="parent.location.href='/Logout.asp';"><#t1Logout#></a></div>
+	</fieldset>
+
+	<!-- support Live update -->
+	<!--fieldset class="theFieldset">
+		<div class="row_end"><a class="iuiA" onclick="">check FW</a></div>
+	</fieldset-->
 </div>
 
+<div id="applyBtn" class="apply_gen" style="margin-top:5px">
+	<input type="button" id="nextButton" value="<#CTL_next#>" onclick="goto_tutorial();" class="button_gen">
+</div>
+</div>
 <div id="liveUpdate_div" style="display:none">
-	<div>
-		<table width="730px">
-			<tr>
-				<td align="left">
-					<span class="description_down"><#menu5_6_3#></span>
-				</td>
-				<td align="right">
-					<!--img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'"-->
-				</td>
-			</tr>
-		</table>
+	<div id="liveUpdateTitle">
+		<div>
+			<table width="100%">
+				<tr>
+					<td align="left">
+						<span class="description_down"><#menu5_6_3#></span>
+					</td>
+					<td align="right">
+						<!--img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'"-->
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		<br>
+		<br>
 	</div>
-	<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
-	<br>
-	<br>
 
 	<div id="newFWDetected">
 		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;font-size:18px;">
@@ -740,7 +828,7 @@ function showclock(){
       <br>
       <br>
       <div class="apply_gen" style="margin-top:5px">
-         <input type="button" id="nextButton" value="<#btn_next#>" onclick="doLiveUpdate(false);" class="button_gen">
+         <input type="button" id="nextButton" value="OK" onclick="doLiveUpdate(false);" class="button_gen">
       </div>
   </div>
 
@@ -793,7 +881,6 @@ function showclock(){
 		</div>
 	</div>
 </div>
-
 </form>
 
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>

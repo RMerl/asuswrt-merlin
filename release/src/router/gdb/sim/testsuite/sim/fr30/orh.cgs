@@ -1,0 +1,33 @@
+# fr30 testcase for orh $Rj,$Ri, orh $Rj,@$Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global orh
+orh:
+	; Test orh $Rj,@$Ri
+	mvi_h_gr   	0xaaaaaaaa,r7
+	mvi_h_mem  	0x55555555,sp
+	set_cc          0x07		; Set mask opposite of expected
+	orh      	r7,@sp
+	test_cc		1 0 1 1
+	test_h_mem 	0xffff5555,sp
+
+	mvi_h_gr   	0xffff0000,r7
+	mvi_h_mem  	0x0000ffff,sp
+	set_cc          0x08		; Set mask opposite of expected
+	orh		r7,@sp
+	test_cc		0 1 0 0
+	test_h_mem 	0x0000ffff,sp
+
+	mvi_h_gr   	0x0000de00,r7
+	mvi_h_mem  	0x00adbeef,sp
+	set_cc          0x05		; Set mask opposite of expected
+	orh		r7,@sp
+	test_cc		1 0 0 1
+	test_h_mem 	0xdeadbeef,sp
+
+	pass

@@ -1,0 +1,1276 @@
+Changes in release 0.29.6:
+* Don't abort SSL handshake with GnuTLS if a client cert is requested
+  but none is configured/available (thanks to Patrick Ohly)
+* Fix GnuTLS build with Nettle (Arfrever Frehtes Taifersar Arahesis)
+* Win32: Fix handling of SSPI challenges (Ivan Zhakov)
+* Fix the method string passed to create_request hooks to have the same
+  lifetime as the request object (Patrick Ohly)
+* Docs updates.
+
+Changes in release 0.29.5:
+* Fix GnuTLS handshakes failures with 'TLS warning alert' (Bryan Cain)
+* Further fix for SSPI support on Win32 (Danil Shopyrin)
+
+Changes in release 0.29.4:
+* Fix SNI support (Tobias Gruetzmacher)
+* Fix possible Solaris linker errors if building static library
+* Win32: Fix Kerberos authentication support with SSPI (Danil Shopyrin)
+* Fix error handling when pulling a request body from an file
+  (thanks to Lou Montulli)
+* Fix ne_request_dispatch() return value for SOCKS proxy failure cases
+* Tighten SSL cert ID checks to deny a wildcard match against an IP address
+
+Changes in release 0.29.3:
+* Change ne_sock_close() to no longer wait for SSL closure alert:
+ - fixes possible hang with IIS servers when closing SSL connection
+ - this reverts the behaviour with OpenSSL to match 0.28.x, and
+   changes the behaviour with GnuTLS to match that with OpenSSL
+* Fix memory leak with GnuTLS
+* API clarification in ne_sock_close():
+ - SSL closure handling now documented
+ - return value semantics fixed to describe the implementation
+
+Changes in release 0.29.2:
+* Fix spurious 'certificate verify failed' errors with OpenSSL (Tom C)
+* Fix unnecessary re-authentication with SSPI (Danil Shopyrin)
+
+Changes in release 0.29.1:
+* Fixes for (Unix) NTLM implementation:
+ - fix handling of session timeout (Kai Sommerfeld)
+ - fix possible crash (basic@mozdev.org)
+* Build fixes for Win32:
+  - fix use of socklen_t with recent SDKs (Stefan Kung)
+  - fix USE_GETADDRINFO on Win2K (Kai Sommerfeld)
+* Fix build with versions of GnuTLS older than 2.8.0.
+
+Changes in release 0.29.0:
+* Interface changes:
+ - none, API and ABI backwards-compatible with 0.28.x and 0.27.x
+* New interfaces and features:
+ - added NTLM auth support for Unix builds (Kai Sommerfeld, Daniel Stenberg)
+ - ne_auth.h: added NE_AUTH_GSSAPI and NE_AUTH_NTLM auth protocol codes
+ - added ne_acl3744.h, updated WebDAV ACL support (Henrik Holst)
+ - added built-in SOCKS v4/v4a/v5 support: ne_socket.h:ne_sock_proxy(),       
+   and ne_session.h:ne_session_socks_proxy()
+ - added support for system-default proxies: ne_session_system_proxy(),
+   implemented using libproxy where available
+ - ne_session.h: added NE_SESSFLAG_EXPECT100 session flag, SSL verification
+   failure bits extended by NE_SSL_BADCHAIN and NE_SSL_REVOKED, better 
+   handling of failures within the cert chain (thanks to Ludwig Nussel)
+ - ne_utils.h: added feature code NE_FEATURE_SYSPROXY
+ - ne_socket.h: ne_sock_writev() (Julien Reichel), ne_sock_set_error(),
+   ne_iaddr_raw(), ne_iaddr_parse()
+ - ne_string.h: ne_buffer_qappend(), ne_strnqdup()
+* Deprecated interfaces:
+ - ne_acl.h is obsoleted by ne_acl3744.h (but is still present)
+ - obsolete feature "NE_FEATURE_SOCKS" now never marked present
+* Other changes:
+ - fix handling of "stale" flag in RFC2069-style Digest auth challenge
+ - ne_free() implemented as a function on Win32 (thanks to Helge Hess)
+ - symbol versioning used for new symbols, where supported
+ - ensure SSL connections are closed cleanly with OpenSSL
+ - fix build with OpenSSL 1.0 beta
+ - updated Polish (pl) translation (Arfrever Frehtes Taifersar Arahesis)
+
+Changes in release 0.28.6:
+* SECURITY (CVE-2009-2473): Fix "billion laughs" attack against expat;
+  could allow a Denial of Service attack by a malicious server.
+* SECURITY (CVE-2009-2474): Fix handling of an embedded NUL byte in
+  a certificate subject name with OpenSSL; could allow an undetected
+  MITM attack against an SSL server if a trusted CA issues such a cert.
+
+Changes in release 0.28.5:
+* Enable support for X.509v1 CA certificates in GnuTLS.
+* Fix handling of EINTR in connect() calls.
+* Fix use of builds with SOCK_CLOEXEC support on older Linux kernels.
+
+Changes in release 0.28.4:
+* Fix ne_forget_auth (Kai Sommerfeld)
+* GnuTLS support fixes:
+ - fix handling of PKCS#12 client certs with multiple certs or keys
+ - fix crash with OpenPGP certificate
+ - use pkg-config data in configure, in preference to libgnutls-config
+* Add PKCS#11 support for OpenSSL builds (where pakchois is available)
+* Fix small memory leak in PKCS#11 code.
+* Fix build on Haiku (scott mc)
+
+Changes in release 0.28.3:
+* SECURITY (CVE-2008-3746): Fix potential NULL pointer dereference in
+  Digest domain parameter support; could allow a DoS by a malicious server
+* Fix parsing of *-Authenticate response header with LWS after quoted value
+* Fix ne_set_progress(, NULL, ) to match pre-0.27 behaviour (and not crash)
+* Fix to disable Nagle on Win32 with newer toolchain (thanks to Stefan Küng)
+* Fix build on Netware (Guenter Knauf)
+* Document existing ne_uri_parse() API postcondition and ne_uri_resolve()
+  pre/postconditions regarding the ->path field in ne_uri structures 
+* Mark ne_{,buffer_}concat with sentinel attribute for GCC >= 4.
+* Distinguish the error message for an SSL handshake which fails after a 
+ client cert was requested.
+* Compile with PIC flags by default even for static library builds
+
+Changes in release 0.28.2:
+* Support "Proxy-Connection: Keep-Alive" for compatibility with HTTP/1.0
+ proxies which require persistent connections for NTLM authentication
+* Fix an fd leak in ne_ssl_{,cli}cert_read (GnuTLS only)
+* Enable fast initialization in GnuTLS.
+
+Changes in release 0.28.1:
+* Fix Win32 build
+* Fix build on SCO OpenServer 5.0.x (thanks to Nico Kadel-Garcia)
+* Fix handling of Digest domain parameter values without a trailing slash
+* Fix build against apr-util's bundled libexpat.la in Subversion
+* Add --without-pakchois to configure (Arfrever Frehtes Taifersar Arahesis)
+* zh message catalog renamed to zh_CN, translation updated (Dongsheng Song)
+
+Changes in release 0.28.0:
+* Interface changes:
+ - none, API and ABI backwards-compatible with 0.27.x
+* New interfaces:
+ - ne_pkcs11.h: added basic PKCS#11 support (requires GnuTLS and pakchois)
+ - ne_auth.h: added NE_AUTH_ALL and NE_AUTH_DEFAULT constants
+ - ne_socket.h: added ne_sock_peer(), ne_sock_prebind(), ne_sock_cipher()
+ - ne_session.h: NE_SESSFLAG_TLSSNI flag added; TLS SNI support is enabled
+   by default, where supported; ne_set_localaddr() added
+ - ne_request.h: added close_conn hooks (Robert J. van der Boon)
+ - ne_basic.h: added ne_options2()
+* Other changes:
+ - add Polish (pl) translation (Arfrever Frehtes Taifersar Arahesis)
+ - add support for the 'domain' parameter in Digest authentication
+ - fix fd leak in ne_sock_connect() error path (Andrew Teirney)
+ - the FD_CLOEXEC flag is set on socket fds
+ - fix timezone handling in ne_dates for more platforms (Alessandro Vesely)
+ - fix ne_simple_propfind() to print XML namespaces in flat property values
+ - fix ne_get_range() for unspecified end-range case (Henrik Holst)
+ - fix ne_strclean() to be locale-independent and avoid possible Win32 crash
+ - fix ne_get_error() to not "clean" localized error strings
+ - fix ne_ssl_clicert_read() to fail for client certs missing cert or key
+ - Win32: fix build with VS 2008 (Stefan Kueng)
+ - Win32: fix neon.mak to not double-quote $(MAKE) (Henrik Holst)
+ - improve strength of Digest cnonces in GnuTLS builds
+
+Changes in release 0.27.2:
+* Fix crash in GSSAPI Negotiate response header verification (regression
+  since 0.26.x)
+
+Changes in release 0.27.1:
+* Fix regression in response progress counter for notifier/progress callbacks
+* Fix interface description for ne_set_notifier() callback; sr.total
+  is set to -1 not 0 for an indeterminate response length
+
+Changes in release 0.27.0:
+* New interfaces:
+ - ne_session.h: ne_fill_proxy_uri() retrieves configured proxy,
+   ne_hook_post_headers() adds a hook after response headers are read,
+   ne_set_connect_timeout() sets session connection timeout,
+   NE_SESSFLAG_RFC4918, NE_SESSFLAG_CONNAUTH flags added
+ - ne_socket.h: ne_sock_connect_timeout() sets connection timeout,
+   ne_iaddr_reverse() performs reverse DNS lookup
+ - ne_string.h: ne_buffer_snprintf() prints to a buffer object
+ - ne_xml.h: ne_xml_resolve_nspace() resolves namespace prefixes
+* Interface changes:
+ - ne_set_notifier() replaces ne_set_status(); finer-grained and type-safe
+   connection status information now provided; obsoletes ne_set_progress()
+ - ne_xml_dispatch_request() now only invokes the XML parser for 
+   response entities with an XML content-type, following RFC 3023 rules
+ - ne_acl_set() now takes a "const" entries array
+ - LFS compatibility functions *64 removed: all functions taking an
+   off_t now take an ne_off_t which is off64_t for LFS builds
+* GnuTLS support now mostly feature-complete with OpenSSL support:
+ - greatly improved SSL distinguished name handling with GnuTLS >= 1.7.8
+* Other changes:
+ - descriptive error messages for authentication failures
+ - SSPI support uses canonical DNS server name (Yves Martin)
+ - fixes for handling of "stale" parameter in Digest authentication
+ - added support for URIs in SSL server certificate subjectAltName field
+ - fix compiler warnings with expat 2.x
+ - fix handling of "Transfer-Encoding: identity" responses from privoxy
+
+Changes in release 0.26.4:
+* Fix Negotiate Authentication-Info response header verification with GSSAPI
+* Fix multiple handlers with ne_add_{server,proxy}_auth (Werner Baumann)
+* Fix SSPI build with some versions of MinGW (Gisle Vanem)
+* Fix for SSPI segfault in response header verification (Mike DiCuccio)
+* Fix error strings for CONNECT SSL proxy tunnel request failure
+* Fix install-nls for VPATH builds (Hans Meine)
+* Fix use of unencrypted client certs with GnuTLS
+* Fix ne_lock* If: header insertion to use CRLF-terminated headers
+* Fix test suite failures on QNX by working around send() length limit
+* Fix handling of POSIX strerror_r failure case in ne_strerror
+* Fix alignment issues in test suite MD5 code
+
+Changes in release 0.26.3:
+* Fix buffer under-read in URI parser (Laszlo Boszormenyi, CVE-2007-0157)
+* Fix regression in handling of "attempt" argument passed to auth callbacks;
+  ensure the value only increments for each invocation of the callback
+* Fix handling of "nextnonce" parameter in Digest authentication
+
+Changes in release 0.26.2:
+* Fix error reported for LOCK responses lacking a Lock-Token header.
+* Use Libs.private in neon.pc for newer versions of pkg-config.
+* Build fix for platforms without libintl.h.
+* Build fixes for MinGW. (Matthias Miller)
+* Build fix for h_errno detection on HP-UX 10. (Albert Chin)
+* Win32: enable debugging; build fixes with some SDKs. (Kiyo Kelvin Lee)
+
+Changes in release 0.26.1:
+* Build fixes for Win32 (D.J. Heap) and OS X.
+* Add Simplified Chinese translation (Dongsheng Song).
+
+Changes in release 0.26.0:
+* Added internationalization support:
+ - ne_i18n.h exposes ne_i18n_init(), a process-global initializer
+   which may be required for some applications
+ - (partial) message catalogs for cs, de, fr, ja, nn, ru and tr
+ - NE_FEATURE_I18N feature code added to indicate support
+* Added support for GnuTLS (thanks to Aleix Conchillo Flaque):
+ - pass --with-ssl=gnutls to configure; GnuTLS >= 1.0.22 required
+ - use --with-ca-bundle to specify a default SSL CA root bundle
+ - some remaining issues with PKCS#12 certs in current GnuTLS releases,
+   distinguished name handling is sub-standard relative to OpenSSL
+* Changes and additions to URI support:
+ - ne_uri structure: add query, fragment fields; authinfo renamed
+   to userinfo
+ - ne_uri_parse() now takes a URI-reference as input rather than 
+   the previous pseudo-URI syntax; the query and fragment components
+   are now parsed out.  Many malformed URIs are now rejected
+ - ne_uri_unparse() changed to respect the new fields
+ - ne_uri_resolve(): new function; resolves relative URI references
+ - ne_uri_copy(): new function, copies a URI structure
+* Changed results callbacks for ne_lock_discover, PROPFIND interfaces:
+ - take URI as parsed ne_uri * structure rather than char *
+* Added functions which give control over authentication protocol use:
+ - ne_add_server_auth(), ne_add_proxy_auth()
+* Added ne_unhook_* functions to remove hooks
+* Added ne_set_session_flags()/ne_get_session_flags() functions:
+ - flags to disable persistent connection support, enable "ICY"
+   protocol support, and to disable SSLv2 protocol support.
+ - replaces ne_set_persist()
+* Added ne_set_request_flags()/ne_get_request_flags() functions:
+ - flags to enable 100-continue support, mark requests as non-idempotent
+ - replaces ne_set_request_expect100()
+* Change ne_md5.h interface to make struct ne_md5_ctx opaque:
+ - added ne_md5_create_ctx(), ne_md5_destroy_ctx(), ne_md5_reset_ctx(),
+   ne_md5_finish_ascii(); removed ne_md5_init_ctx()
+ - fix alignment issues which could cause crashes in Digest code
+* Fixed ne_get_range(), added ne_get_range64() (thanks to Lennart Poettering)
+* Removed NE_FREE() macro from ne_alloc.h
+* Added ne_strcasecmp(), ne_strncasecmp(), ne_tolower() functions
+  to ne_string.h - locale-independent string comparison
+* Changed ne_sock_init()/ne_sock_exit() such that ne_sock_exit() 
+  only has effect once called an equal number of times to _init().
+* Added "--enable-threadsafe-ssl=posix" configure flag, to enable
+  thread-safe SSL support using POSIX threads in OpenSSL/GnuTLS
+ - NE_FEATURE_TS_SSL feature code added to indicate support
+* The manual is now licensed under the GPL rather than the GFDL
+
+Changes in release 0.25.5:
+* ne_ssl_clicert_decrypt(): catch and fail to load a client cert
+  with mismatched key/cert pair.
+* Fix build issue on AIX 5.1.
+* Fix warnings if built against OpenSSL >= 0.9.8.
+* Win32: fix issues in SSPI implementation (Stefan Küng).
+
+Changes in release 0.25.4:
+* GSSAPI fixes for non-MIT implementations (Mikhail Teterin).
+* Fix ne_print_request_header() et al to use 8K buffer size on all
+ platforms (fixes issue with long Destination: URLs on Win32).
+* Win32 build fix for !USE_GETADDRINFO configuration.
+* Documentation updates.
+
+Changes in release 0.25.3:
+* ne_lock() and ne_unlock(): fix cases where NE_ERROR would be returned 
+  instead of e.g. NE_AUTH on auth failure.
+* Prevent use of poll() on Darwin.
+* Fix gethostbyname-based resolver on LP64 platforms (Matthew Sanderson).
+
+Changes in release 0.25.2:
+* Really fix the Win32 build.
+
+Changes in release 0.25.1:
+* ne_get_content_type(): fix cases where the charset field was not set
+  to NULL after successful return (Johannes Schneider)
+* Compressed response handling fixes:
+ - fix double invocation of reader callback with len=0
+ - fix cases where the reader callback return value was ignored
+* Cache the new SSL session if the old one was expired (Robert Eiglmaier)
+* Win32: fix build issues.
+
+Changes in release 0.25.0:
+* New interfaces:
+ - ne_get_response_header() replaces ne_add_response_header_handler
+ - ne_read_response_to_fd() and ne_discard_response() for use with
+   ne_begin_request/ne_end_request style response handling
+ - ne_xmlreq.h: ne_xml_parse_response() and ne_xml_dispatch_request()
+ - ne_has_support() for feature detection, replaces ne_support_ssl()
+ - ne_set_addrlist() can be used to bypass normal DNS hostname resolver
+ - ne_buffer_czappend(), convenience wrapper for ne_buffer_append.
+ - ne_iaddr_typeof() returns type of a socket object
+ - ne_get_content_type() replaces ne_content_type_handler()
+ - ne_set_request_expect100() replaces ne_set_expect100()
+* New interfaces on LFS systems for large file support:
+ - ne_set_request_body_fd64() call for using an fd opened using O_LARGEFILE
+ - ne_set_request_body_provider64(), takes an off64_t length argument
+* Interface changes:
+ - ne_set_request_body_fd takes offset and length arguments and returns void
+ - ne_set_request_body_provider takes length as off_t rather than size_t;
+   provider callbacks now MUST set session error string if returning an error
+ - response body reader callback returns an integer and can abort the response
+ - ne_decompress_destroy() returns void; errors are caught earlier
+ - ne_xml_failed() replaces ne_xml_valid(), with different return value logic
+ - ne_xml_parse() can return an error; ne_xml_parse_v() aborts the response if 
+   the parse either fails or is aborted by a handler returning NE_XML_ABORT
+ - ne_path_escape() now escapes all but unreserved characters
+ - ne_ssl_clicert_name() and ne_ssl_cert_identity() clarified to return UTF-8
+ - ne_ssl_clicert_name() clicert object argument is now const
+ - ne_uri_parse()/ne_uri_free() memory handling clarified
+ - removed the buffer length requirement for ne_read_response_block()
+* Bug fixes:
+ - properly handle multiple Authentication challenges per request
+ - fixes and improvements to the Negotiate auth implementation
+ - handle proxies which send a 401 auth challenge to a CONNECT request
+ - XML: handle the UTF-8 BOM even if the underlying parser does not
+ - Win32: Fix timezone handling (Jiang Lei)
+ - ne_lock_refresh() works and will update timeout of passed-in lock
+ - persistent connection timeout handling fixes for CygWin et al
+ - impose hard limit of 1024 props per resource in ne_props.h response parsing
+* New platform-specific features:
+ - Win32: Negotiate/NTLM support using SSPI (Vladimir Berezniker)
+ - Win32: Add IPv6 support using ENABLE_IPV6 neon.mak flag (Kai Sommerfeld)
+* Removed features:
+ - the cookies interface has been removed
+ - removed functions: ne_service_lookup(), ne_put_if_unmodified()
+ - "qop=auth-int" support removed from Digest auth implementation
+* Default XML parser search changed to check for expat before libxml2.
+
+Changes in release 0.24.7:
+* Compression interface fixes:
+ - fix issues handling content decoding and request retries from
+ authentication challenges (Justin Erenkrantz)
+ - fix places where reader callback would receive spurious size=0 calls
+ - fix to pass user-supplied userdata to user-supplied acceptance callback
+* Fix for RFC2617-style digest authentication (Hideaki Takahashi).
+* Fix to pick up gethostbyname() on QNX 6.2.
+
+Changes in release 0.24.6:
+* SECURITY (CVE CAN-2004-0398): Fix sscanf overflow in ne_rfc1036_parse,
+ thanks to Stefan Esser.
+* Link libneon against libexpat during Subversion build using bundled neon.
+* Win32 build script update (Jon Foster).
+
+Changes in release 0.24.5:
+* SECURITY (CVE CAN-2004-0179): Fix format string vulnerabilities in
+ XML/207 response handling, reported by greuff@void.at.
+* Performance fix: avoid seeding the SSL PRNG if not creating an SSL socket.
+* ne_ssl_readable_dname() is now defined to return UTF-8 strings.
+* Fix case where gssapi/gssapi_generic.h was included but not present.
+* Fix ne_utils.c build on platforms where zlib does "#define const".
+* Fix use of ne_proppatch_operation with some C++ compilers.
+* Update libtool for fix to --enable-shared on Darwin.
+* BeOS: check for gethostbyname in -lbind (David Reid).
+
+Changes in release 0.24.4:
+* Ignore unclean SSL closure when response body is delimited by EOF
+ ("Could not read response body: Secure connection truncated" errors
+ with some buggy SSL servers).
+* Fix test/ssl.c syntax errors with C89 compilers (Radu Greab).
+
+Changes in release 0.24.3:
+* Respect configure's --datadir argument (Max Bowsher).
+* Fix build on Windows when OpenSSL is not used.
+* Fix use of SSLv2 (spurious "Server did not present certificate" error).
+* When using SSL via a proxy, prevent leaking server auth credentials
+ to the proxy, or proxy auth credentials to the server.
+
+Changes in release 0.24.2:
+* Fix name resolver with some old versions of glibc.
+* Fix problems with configure's "time_t format string" detection.
+* Fix problems when a broken Kerberos installation is found.
+* When verifying SSL certificates, check iPaddress names in the
+ subjectAltName extension.
+
+Changes in release 0.24.1:
+* Add support for "GSS-Negotiate" Kerberos authentication scheme (from
+ Risko Gergely and Burjan Gabor).
+* Disable Nagle to improve performance of small requests (thanks to
+ Jim Whitehead and Teng Xu).
+* Fix compatibility with OpenSSL 0.9.6 (broken in 0.24.0).
+* Fix prototype mismatch in ne_207.c.
+* Define ssize_t from ne_request.h for Win32.
+* Prevent segfault on zlib initialization failures.
+* ne_sock_init does not fail if PRNG could not be seeded.
+* Fix segfault in cookies code (Markus Mueller).
+* Documentation updates.
+
+Changes in release 0.24.0:
+* Major changes to XML interface:
+ - have the start-element callback either accept, decline, abort, 
+ or return a state integer.
+ - remove 'struct ne_xml_elm'; callbacks are passed {nspace, name}
+ strings along with a state integer.
+ - dropped "collect", "strip-leading-whitespace" modes
+ - push responsibility for accumulating cdata onto caller; drop 'cdata'
+ argument from end-element callback.
+ - don't abort if no handler accepts a particular element, just ignore
+ that branch of the tree.
+ - dropped support for libxml 1.x and expat < 1.95.0.
+ - guarantee that start_element callback is not passed attrs=NULL
+ - add ne_xml_doc_encoding() to retrieve encoding of parsed XML document.
+* Major changes to SSL interface:
+ - rewrite of interfaces for handling server and client certificates;
+ ne_ssl.h: many new functions available.
+ - only PKCS#12-encoded client certs are supported.
+ - changes to most names of SSL-related functions operating on an
+ ne_session, e.g. ne_ssl_load_cert->ne_ssl_trust_cert.
+ - client cert provider callback is passed the set of acceptable CA
+ names sent by the server
+ - the entire chain of certs presented by server is now accessible
+* Remove unused ne_register_progress() from socket layer.
+* Changes to resolver interface: ne_addr_first and _next return const;
+ ne_addr_print renamed to ne_iaddr_print; ne_iaddr_make and ne_iaddr_free
+ have been added.
+* ne_request_create() now duplicates the method string passed in.
+* ne_redirect_location() will now return NULL in some cases.
+* Split socket creation to ne_sock_create() from ne_sock_connect:
+ - should report connect() error messages properly on Win32.
+* Fix several memory leaks in error handling paths.
+* Add a pkg-config file, neon.pc.in.
+
+Changes in release 0.23.9:
+* Fix inability to connect on AIX 4.3.
+* neon-config exports includes needed for OpenSSL given by pkg-config.
+* ne_redirect_location will return NULL if redirect hooks have not
+ been registered for the session (Ralf Mattes <rm@fabula.de>).
+
+Changes in release 0.23.8:
+* SECURITY: Prevent control characters from being included in the
+ reason_phrase field filled in by ne_parse_statusline(), and in
+ the session error string.
+* Disable getaddrinfo() support on HP-UX; fix resolver for HP-UX 11.11.
+* Fix digest auth response verification for >9 responses in session
+ (bug manifests as "Server was not authenticated correctly" error).
+* On Linux, skip slow lookup for IPv6 addresses when IPv6 support is
+ not loaded in kernel (thanks to Daniel Stenberg for this technique).
+* Update to autoconf 2.57 and libtool 1.4.3.
+
+Changes in release 0.23.7:
+* Fix for handling EINTR during write() call (Sergey N Ushakov).
+* When available, use pkg-config to determine compiler flags needed to 
+ use OpenSSL headers and libraries.
+
+Changes in release 0.23.6:
+* Fixes for error handling in socket layer on Win32 from Johan Lindh
+ and Sergey N Ushakov <ushakov@int.com.ru>:
+ - meaningful error messages rather than "No error"
+ - handle persistent connection timeouts properly
+* Fix to use RFC2617-style digest auth when possible (had reverted to 
+ only using RFC2068-style in 0.16.1).
+* Fix NULL pointer dereference on certain ill-formed PROPFIND responses.
+* Allow ne_sock_init to re-initialize after ne_sock_finish has been called
+ (Sergey N Ushakov).
+
+Changes in release 0.23.5:
+* Fix rejection of SSL server certificates which had commonName as
+ the least specific attribute in the subject name.
+* Fix to dereference entities (e.g. "&amp;") in attribute values with libxml.
+* Fix ne_socket.c build on HP-UX 10.20 (thanks to Branko Èibej)
+* Remove misguided insistence on "secure" versions of zlib/OpenSSL;
+ no checks for zlib version are now performed, only OpenSSL 0.9.6 is
+ required.  --with-force-ssl, --with-force-zlib option removed.
+* Add --with-egd[=PATH] option, conditionally enable EGD support; either 
+ using EGD socket at PATH, or fall back on system defaults.  $EGDSOCKET 
+ and $HOME/.entropy are no longer used.
+* Add support for `--la-file' argument to neon-config, which prints the
+ full path of the installed libneon.la file.
+
+Changes in release 0.23.4:
+* Ignore an unclean SSL shutdown on persistent connection timeout
+ (fixing spurious "Secure connection truncated" errors).
+* Fix a segfault on second and subsequent requests using a given
+ session, when the first fails with NE_LOOKUP.
+* Fix configure for gcc installations which produce warnings by default
+ (such as gcc on hppa2.0n-hp-hpux11.00 using native as)
+
+Changes in release 0.23.3:
+* Further build fixes for Win32 (Blair Zajac).
+* Another fix for use of SSL against Tomcat 3.2.
+
+Changes in release 0.23.2:
+* Build fix for Win32 (Blair Zajac).
+
+Changes in release 0.23.1:
+* Identify as correct version, not 0.22.
+
+Changes in release 0.23.0:
+* Improved address resolver (ne_addr_*) replacing ne_name_lookup():
+ - use getaddrinfo() if found; include support for IPv6 (based on work
+ by Noriaki Takamiya <takamiya@po.ntts.co.jp>)
+* For a hostname with multiple addresses, each address is tried in turn
+ until a connection is made.
+* Support for seeding OpenSSL's PRNG via $EGDSOCKET or $HOME/.entropy,
+ to enable SSL on platforms which lack a /dev/random device.
+* RFC2818 compliance for certificate identity checks in SSL:
+ - use `dNSname' values in subjectAltName extension if present
+ - hostname comparison fixed to not be case-sensitive
+* Fix interop with buggy SSL implementation in Tomcat 3.2.
+* Added NE_DBG_SSL debug channel.
+* ne_strerror changed to return the passed-in buffer.
+* Added ne_strnzcpy macro to ne_string.h.
+* Win32 build fixes, improvements, and documentation updates, from 
+ Blair Zajac <blair@orcaware.com>.
+* Fix ne_sock_init so SIGPIPE signals are ignored even if SSL library
+ initialization fails (e.g. platforms without /dev/random).
+* Added reference documentation:
+ - ne_sock_init, ne_addr_*.
+
+Changes in release 0.22.0:
+* Remove the const qualifier from the reason_phrase field in ne_status.
+ - ne_parse_statusline() now strdup's the reason_phrase
+* Remove the status_line argument from ne_207_end_propstat and _end_response
+* Change ne_session_create, ne_session_proxy, ne_sock_connect, and the 
+ 'port' field of the ne_uri structure to use an unsigned int for port numbers
+* ne_uri_defaultport returns unsigned and '0' on an unknown port (not -1).
+* Changes to hooks interface:
+ - pass an ne_request pointer to per-request hooks
+ - replace "accessor" hooks with ne_{get,set}_{request,session}_private
+* Authentication changes:
+ - the hooks changes fix a segfault if auth is enabled for an SSL session
+ through a proxy server
+ - fix ne_forget_auth segfault if either proxy or server auth are not used
+* Improvements to persistent connection retry logic and error handling 
+ in request code; fixing some cases where some errors where incorrectly
+ treated as a persistent connection timeout
+ - a TCP RST at the appropriate time is now treated as a persistent 
+ connection timeout.
+ - handle persistent connection timeouts on SSL connections
+* Changes to SSL support:
+ - improved error handling
+ - OpenSSL 0.9.6f or later is required for security fixes and functional
+ correctness; 0.9.6 or later required for functional correctness
+ - use --with-force-ssl to override OpenSSL version check
+ - fix for proxy CONNECT tunnelling with some proxies (e.g. Traffic-Server)
+ - fix potential segfault if client cert. provider callback is used
+ - fix to use supplied password callback for PEM-encoded client certificates
+ (Daniel Berlin <dberlin@dberlin.org>)
+* strerror_r is used if available for thread-safe error handling.
+* Remove ne_read_file().
+* ne_version_match replaces ne_version_minimum (semantics changed slightly).
+* XML request bodies use a content-type of "application/xml" now; 
+ applications can use NE_XML_MEDIA_TYPE from ne_xml.h
+* Fix decompress code on big-endian or 64-bit platforms.
+* Fix to build on Darwin 6 (aka Mac OS X 10.2) (Wilfredo Sánchez,
+ <wsanchez@mit.edu>)
+* Win32 changes:
+ - remove conflict between OpenSSL's X509_NAME and recent versions of
+ the Platform SDK (Branko Èibej)
+ - fix inverted debug/non-debug build logic (Branko Èibej)
+ - add NODAV and OPENSSL_STATIC flags to neon.mak (Gerald Richter)
+
+Changes in release 0.21.3:
+* Fix segfault if using proxy server with SSL session and server
+ certificate verification fails.
+* Fix leak of proxy hostname once per session (if a proxy is used).
+* Add --with-libs configure argument; e.g. --with-libs=/usr/local picks
+ up any support libraries in /usr/local/{lib,include}
+
+Changes in release 0.21.2:
+* Fix 'make install' for VPATH builds.
+* Use $(mandir) for installing man pages (Rodney Dawes).
+* Follow some simple (yet illegal) relativeURI redirects.
+* Always build ne_compress.obj in Win32 build (Branko Èibej).
+* Fix decompression logic bug (Justin Erenkrantz <jerenkrantz@apache.org>)
+ (could give a decompress failure for particular responses)
+* Fix ne_proppatch() to submit lock tokens for available locks.
+* More optimisation of ne_sock_readline.
+
+Changes in release 0.21.1:
+* Don't include default SSL port in Host request header, which can
+ help interoperability with misbehaving servers (thanks to Rodney Dawes
+ <dobey@ximian.com>).
+* Don't give a "truncated response" error from ne_decompress_destroy if
+ the acceptance function returns non-zero.
+* Fix for Win32 build (Sander Striker <striker@apache.org>).
+* Fix for cookie name/value being free()d (thanks to Dan Mullen).
+* Optimisation of ne_sock_readline.
+
+Changes in release 0.21.0:
+* Socket layer implements read buffering; efficiency and performance 
+ improvement. Based on work by Jeff Johnson <jbj@redhat.com>
+* Cleanup of socket interface:
+ - renamed everything, s/sock_/ne_sock_/, s/SOCK_/NE_SOCK_/
+ - removed unused and inappropriate interfaces.
+ - renaming done by Olof Oberg <mill@pedgr571.sn.umu.se>
+ - see src/ChangeLog for the gory details.
+* Fix typoed 'ne_destroy_fn' typedef (Olof Oberg).
+* Support OpenSSL/ENGINE branch.
+* Bogus ne_utf8_encode/decode functions removed.
+* ne_base64() moved to ne_string.[ch].
+* ne_token drops 'quotes' parameter; ne_qtoken added.
+* ne_buffer_create_sized renamed to ne_buffer_ncreate.
+* ne_xml_get_attr takes extra arguments and can resolve namespaces.
+* ne_accept_response function type takes const ne_status pointer.
+* Drop support for automatically following redirects:
+ - ne_redirect_register just takes a session pointer
+ - ne_redirect_location returns an ne_uri pointer
+* configure changes: --with-ssl and --with-socks no longer take a directory
+ argument.  To use SOCKS or SSL libraries/headers in non-system locations, 
+ use ./configure CPPFLAGS=-I/... LDFLAGS=-L/... 
+* Reference documentation included for most of ne_alloc.h and ne_string.h,
+ and parts of ne_session.h and ne_request.h.
+ - see installed man pages, HTML documentation.
+
+Changes in release 0.20.0:
+* Major changes to DAV lock handling interface (ne_locks.h):
+ - struct ne_lock uses a full URI structure to identify locked resource
+ - ne_lock() requires that owner/token fields are malloc-allocated (or NULL)
+ on entry
+ - introduce a "lock store" type, ne_lock_store, to replace the lock session;
+ accessor functions all renamed to ne_lockstore_*.
+ - ne_lock_iterate replaced with a first/next "cursor"-style interface
+ - If: headers use an absoluteURI (RFC2518 compliance fix).
+ - fix for handling shared locks on DAV servers which return many active locks
+ in the LOCK response (thanks to Keith Wannamaker)
+* Moved URI/path manipulation functions under ne_* namespace (ne_uri.h):
+ - path handling functions renamed to ne_path_*
+ - URI structure handling to ne_uri_*; struct uri becomes ne_uri.
+ - ne_uri_parse doesn't take a 'defaults' parameter any more
+ - if URI port is unspecified, ne_uri_parse sets port to 0 not -1.
+ - added ne_uri_unparse and ne_uri_defaultport functions.
+* New 'ne_fill_server_uri' function to initialize a URI structure with
+ the server details for a given session (useful with locks interface).
+* ne_decompress_{reader,destroy} are defined as passthrough-functions
+ if zlib support is not enabled.
+* API change: ne_ssl_provide_fn returns void not int.
+* Added NE_SSL_FAILMASK for verify failure sanity check.
+* Removed return codes NE_SERVERAUTH and and NE_AUTHPROXY; correct
+ documentation, NE_PROXYAUTH is given for proxy auth failure.
+* Require zlib >= 1.1.4 to avoid possible vulnerability in earlier versions.
+ See http://www.gzip.org/zlib/advisory-2002-03-11.txt for more details.
+ (version check can be skipped by passing --with-force-zlib to configure)
+* New 'ne_ssl_readable_dname' function to create a human-readable string
+ from an X509 distinguished name.
+* Fix support for newer versions of libxml2 (thanks to Jon Trowbridge 
+ <trow@gnu.org>).
+* Fix corruption of reason_phrase in status object returned by
+ ne_propset_status.
+* More lenient handling of whitespace in response headers.
+* ne_content_type_handler will give a charset of "ISO-8859-1" if no charset
+ parameter is specified for a text/* media type (as per RFC2616).
+* Miscellaneous cleanups and fixes (Jeff Johnson <jbj@redhat.com>).
+
+Changes in release 0.19.4:
+* Support bundled build of expat 1.95.x (Branko Èibej).
+
+Changes in release 0.19.3:
+* For platforms lacking snprintf or vsnprintf in libc, require trio.
+* Add NE_FMT_OFF_T to fix Win32 build (Dan Berlin, Branko Èibej).
+* Fix SSL support in Win32 build (Branko Èibej).
+
+Changes in release 0.19.2:
+* Fix non-SSL build broken in 0.19.1.
+* Working SOCKSv5 support (thanks to Torsten Kalix <torsten.kalix@bredex.de>)
+
+Changes in release 0.19.1:
+* Add missing stubs for ne_ssl_* functions for non-SSL build.
+* Fix some error messages in new SSL code.
+
+Changes in release 0.19.0:
+* Major API change: ne_session_create now takes (scheme, hostname, port) 
+ arguments: a session is clarified to be "a group of requests to a
+ certain server".
+ - removal of ne_session_server, ne_set_secure, and ne_set_proxy_decider
+ - ne_session_proxy returns void.
+ - DNS lookups are delayed until request dispatch time.
+* Significant improvements to TLS/SSL support:
+ - SSL is enabled if scheme passed to ne_session_create is "https"
+ - new interfaces to load CA certs and to load SSL library's bundled CA certs
+ - add server cert verification callback.  An SSL connection to a server
+ with an unknown CA will now fail unless a verification callback is used.
+ - enable SSL session caching (performance improvement)
+ - support for wildcard server certs where commonName is "*.example.com".
+ - thanks to Tommi Komulainen for the contribution of code from mutt's
+ IMAP/SSL implementation under the LGPL, from which bits of this were derived.
+* Improved SSL client certificate support:
+ - far simpler interface, all done at ne_session.h level.
+ - supports PKCS#12 and PEM-encoded certificates.
+ - optional callback for only providing client when demanded by server.
+* Support for TLS upgrade is removed, since it isn't useful.
+* If NEON_SSL is defined, API extensions are available to:
+ - allow access to the SSL_CTX * to adjust session SSL options
+ - retrieve the server certificate (X509 *)
+* Decompress fixes:
+ - fix potential segfault in ne_decompress_destroy
+ - check the CRC of the deflated output (and fail if it doesn't match)
+ - fail appropriately on truncated responses, and trailing bytes in response. 
+* Added ne_set_read_timeout to use configurable timeout on socket reads.
+* Malformed response headers will be ignored rather than failing the request.
+* ne_set_error takes printf-style vararg.
+* Fixes for ne_get_range and improve error handling. 
+* Functions which append to an ne_buffer do not return a success value,
+ but they do use ne_realloc/ne_malloc under the hood now, so an OOM callback
+ will be used (with the usual caveats).
+* XML interface does not strip leading whitespace from cdata by default,
+ the NE_XML_STRIPWS flag is available to restore this feature if required.
+* Upgraded to libtool 1.4.2:
+ - should fix --enable-shared on Mac OS X 10.1
+* Test suite now contains over one hundred tests.
+
+Changes in release 0.18.5:
+* Removed old neon.dsp, neon.dsw.
+* Update Win32 build to add OpenSSL and zlib support (Branko Èibej).
+* Fix ne_compress.c to compile on Win32 (Branko Èibej).
+
+Changes in release 0.18.4:
+* Fixes for Content-Type parsing using ne_content_type_handler (Greg Stein)
+ - also now parses the charset parameter from header value.
+* Removed ne_concat() function, which didn't work and wasn't used.
+
+Changes in release 0.18.3:
+* Fix parsing lock timeout from server (Arun Garg).
+* Send Timeout headers in LOCK and refresh LOCK requests (Arun Garg).
+* Updated neon.mak and config.hw.in for Win32 build (patch from
+ Branko Èibej <brane@xbc.nu>).
+* Define XML_BYTE_ORDER for bundled expat build in support macro
+ NEON_XML_PARSER().
+
+Changes in release 0.18.2:
+* Fix --with-neon=PATH in support macros.
+* Support DESTDIR in Makefile install targets (patch by
+ Pawel Golaszewski <blues@blysk.ds.pg.gda.pl>).
+* Portability fixes:
+ - fix configure check for time_t on some platforms (e.g Solaris 2.6).
+ - remove expect100_works bitfield in ne_session structure (thanks to 
+ Yan Periard <yperiard@ems.net>).
+
+Changes in release 0.18.1:
+* Minor fix for authentication: "attempt" counter was not reset correctly
+ after authentication failed, so subsequent requests would not authenticate
+ correctly either.
+* API change: ne_session_destroy returns void (there was no error case).
+* Portability fixes (non-GCC compilers, 64-bit platforms, UnixWare 7)
+* Optimisations in string manipulation routines.
+* config.hw is included in the release tarball again.
+* Improvements in the autoconf support macros:
+ - check for neon-config in PATH if --with-neon is not given
+ - stop if --with-neon is used, and the check for external neon fails
+ - added NEON_WITHOUT_ACL to prevent build of ne_acl.o
+
+Changes in release 0.18.0:
+* API change: authentication callback is passed fixed-size username/password
+ buffers, and an 'attempt' counter.  Authentication is retried *forever*
+ until either it succeeds, or the callback returns non-zero.
+* API clarifications:
+ - ne_propname may have a NULL nspace field, indicating the property has no 
+ namespace.  This holds for properties returned by the propfind interfaces.
+ - added NE_ELM_PROPS_UNUSED as the lowest element number which should
+ be used with handlers added to the XML parser returned by 
+ ne_propfind_get_parser.
+* Fixes and cleanups of lock discovery interface.
+* Fix for short write handling in ne_get() (thanks to rado <dzusto@yahoo.com>).
+* Fix for XML namespace prefix handling where a prefix could be mapped to an 
+ incorrect URI (e.g. in PROPFINDs against mod_dav with >10 namespaces used)
+* Add '--support <feature>' option to neon-config; the script exits with
+ success if given feature is supported. Known features are ssl, dav, zlib.
+* Support for SSL, DAV, zlib is exported by neon.m4 as shell variable 
+ NEON_SUPPORTS_{SSL,DAV,ZLIB}={yes,no} for bundled and external builds.
+* `neon-config --cflags` won't include -I/usr/include for SSL build.
+* Fix to call progress callbacks while sending request bodies again.
+* Test changes:
+ - portability fixes, auth interface and progress tests.
+
+Changes in release 0.17.2:
+* Accept Status-Lines with no reason phrase (Jeremy Elson).
+* Fix handling of persistent connection timeout, and better error
+ handling if sending a request fails.
+* Fix crashes in locking code.
+* Return parse error on XML namespace prefix declaration with
+ an empty value. Thanks to Julian Reschke.
+* Allow passing property names with NULL namespace to ne_proppatch.
+* Fix for cross-compilation (Mo DeJong).
+* Moved ne_propname definition from ne_207.h to ne_props.h.
+* Test changes:
+ - updated for Status-Line parsing changes (Jeremy Elson)
+ - better persistent connection tests
+ - fixed for --disable-webdav build
+
+Changes in release 0.17.1:
+* Add support for ACL method (Arun Garg <arung@pspl.co.in>),
+ see ne_acl.h.
+* Fixes and clean up of libraries exported via `neon-config --libs'
+* Fix timezone handling when parsing dates (on some platforms).
+* Upgrade to autoconf 2.52 and libtool 1.4 (thanks to Mo DeJong).
+* Cleanup/simplification of request dispatching:
+ - better handling of error cases, including fix for a possible
+ infinite loop when the server closes the connection prematurely.
+* Add '--without-zlib' configure option.
+* Test changes:
+ - prettify output; imitate Perl test suite output.
+ - add tests for interim 1xx responses, persistent connections, more
+ unbounded operations.
+
+Changes in release 0.17.0:
+* Add support for decoding gzip Content-Encoding: see ne_compress.h.
+ - built if zlib is found; `neon-config --cflags' will define NEON_ZLIB if so.
+* Rewrite hooks interface to register individual callbacks.
+ - inspired by the Apache 2.0/APR hooks interface
+* Register cookies hooks using ne_cookie_register().
+* Clean up configure scripts to enable use of autoconf 2.5x (Mo DeJong).
+* Use new endianess configure macro to allow cross-compiling (Mo DeJong).
+* Fix invalid C code in sock_init() in Win32 build (Mo DeJong).
+* Fix use of signal() on Win32 (Mo DeJong).
+* Workaround libxml 1.x string handling not being UTF-8.	
+* Test changes:
+ - add tests for decompression interface.
+
+Changes in release 0.16.1:
+* Also handle write errors in ne_get_range.
+* Dump request body blocks in debugging mode.
+* Fix ne_shave() causing memory corruption when the result should 
+  have been the empty string.
+* Refactor auth header parsing code; more efficient now. 
+ - fixes digest auth RFC2617-style broken in 0.16.0
+
+Changes in release 0.16.0:
+* API change: ne_copy takes a depth parameter (thanks to Arun Garg, Medha Atre)
+* API change: validate callback to ne_xml also takes a userdata arg.
+* Added 'ne_lock_refresh' for performing lock refresh (Arun Garg).
+* Add SSL support to Win32 build (Peter Boos <PediB@colorfullife.com>)
+  (see INSTALL.win32 for details).  Compile with USE_DAV_LOCKS also.
+* Remove Server header parser for 100-continue support in ne_options.
+  (and remove broken_expect100 from ne_server_capabilities).
+* Set SIGPIPE disposition to "ignored" in sock_init().
+* On platforms with setvbuf(), turn off buffering for the debug log 
+  stream.
+* Ignore repeated calls to sock_init().
+* Fixes to error handling in ne_get_range.
+* Minor improvements to memory handling in auth code.
+* Fix for start_propstat callback being called with NULL response
+  argument when given invalid XML, causing a segfault in propfind code.
+* Test changes:
+ - add regression test for the propfind segfault.
+ - handle segfaults better (reap the child, flush the debug log).
+
+Changes in release 0.15.3:
+* Fix --with-expat=DIR build.
+
+Changes in release 0.15.2:
+* Fix Win32 for XML parser changes (Gerald Richter).
+* Substitute versions into config.hw at distribution time.
+* Add date parser for ISO8601-formatted dates as defined by RFC2518, e.g. 
+  the creationdate property (Taisuke Yamada <tai@iij.ad.jp>).
+* Fix Y2K bug in RFC1036 date parsing algorithm.
+* Test changes:
+ - add tests for date parsing functions.
+
+Changes in release 0.15.1:
+* Win32 update from Gerald Richter <richter@ecos.de>
+ - new files neon.mak, INSTALL.win32
+* Fix for ne_socket.h includes (Mo DeJong).
+* More improvements for XML parser selection logic:
+ - if parser is required, be sure to fail configure if none is found.
+ - added --with-included-expat for bundled expat logic.
+* Rename --enable-debugging to --enable-debug (Mo DeJong).
+ - added NEON_DEBUG macro to exported autoconf macros.
+* Call progress callbacks for request bodies.
+* Test changes:
+ - check that reading response headers is a bounded operation.
+ - use a pipe between child and parent to avoid race condition and 
+ tedious sleep().
+
+Changes in release 0.15.0:
+* Major API renaming to use ne_/NE_ namespace:
+ - http_ to ne_, HTTP_ to NE_, dav_ to ne_, DAV_ to NE_, neon_ to ne_
+ - hip_xml_ to ne_xml_, HIP_ELM_ to NE_ELM_, HIP_XML_ -> NE_XML_
+ - sbuffer_ to ne_buffer_
+ - DEBUG() to NE_DEBUG(), DEBUG_ to NE_DBG_
+* Type renames:
+ - http_req to ne_request
+ - sbuffer to 'ne_buffer *'
+* Note, 'ne_buffer' is not an implicit pointer type, you must 
+  specify the '*' now, e.g. 'ne_buffer *buf = ne_buffer_create();'.
+* ne_buffer is no longer opaque.
+ - ne_buffer_data() removed: use buf->data instead.
+ - ne_buffer_size() is a macro.
+* Header renames and additions:
+ - http_request.h -> ne_request.h
+ - Session code split into ne_session.h
+ - hip_xml.h -> ne_xml.h, nsocket.h -> ne_socket.h, http_utils.h -> ne_utils.h
+ - neon_md5.h -> ne_md5.h, dav_207.h -> ne_207.h
+ - http_basic.h and dav_basic.h merged into ne_basic.h
+* New functions:
+ - ne_token and ne_shave, to obsolete split_string, shave_string.
+* Removed: ne_get_request_headers().
+* autoconf changes:
+ - disable building shared neon library by default.
+ - option --enable-libxml is replaced by --with-libxml1 and
+ --with-libxml2 to force use of a particular parser.
+* Fix auth code to only take MD5 digests of response body blocks when
+  necessary (thanks to Kai Sommerfeld).
+* Fix alignment bug in MD5 code which could cause SIGBUS on Sparc 
+  architectures (Kai Sommerfeld).
+* Rewrite of request body handling:
+ - ne_set_request_body_fd replaces _stream, using an int fd rather than
+ a FILE *.
+ - added ne_set_request_body_provider to give a callback which is called
+ to provide request body blocks.
+ - removal of 'use_body' hook in favour of 'ne_pull_request_body' function
+ to allow hooks to manually read the request body.
+ - ne_{put,get,post,put_if_unmodified} all take an integer fd rather than a
+ FILE * stream.
+* Test changes:
+ - added framework for testing "over the wire" (fork a server process)
+ - added tests for response message length handling, chunked responses, 
+ header folding, sending request bodies.
+ - start at listing RFC2616 requirements and whether they are met
+ or not in test/STATUS.
+ - test for MD5 alignment bug on Sparc (thanks to Kai Sommerfeld).
+
+Changes in release 0.14.0:
+* Add C++ inclusion safety to http_auth.h (Kai Sommerfeld).
+* Define ssize_t on Win32. (Kai Sommerfeld).
+* Add C++ inclusion safety to dav_locks.h and ne_alloc.h (thanks to
+  Gregor Bornemann <Gregor.Bornemann@germany.sun.com>).
+* Significant API change to properties code, to allow use of allprop
+  and complex properties:
+ - dav_propfind_set_complex and _set_flat are removed.
+ - add parameter to dav_propfind_named to take the list of property names 
+   to be fetched.
+ - new function dav_propfind_set_private to set private callback.
+ - all properties not handled by caller are stored as flat properties.
+* Untested: add basic SOCKSv5 support: configure --with-socks.
+ - please report success/failure to neon@webdav.org
+* Win32/MSVC build files from Magnus Sirwiö <sirwio@hotmail.com>.
+* Fix for expat detection from Shane Mayer <shanemayer42@yahoo.com>.
+* Namespace-protect md5 code and more.
+ - md5_* -> ne_md5_*
+ - ascii_to_md5 -> ne_ascii_to_md5 (and moved to neon_md5.h)
+* Parse authinfo segment in URIs (Johan Lindh <johan@link-Data.com>).
+ - added 'authinfo' field to struct uri.
+* New API: hip_xml_get_attr to retrieve attributes.
+* Store language for properties, access with dav_propset_lang.
+ - only if property is defined on the property element itself.
+* Started a simple test suite (test/*).
+ - includes some simple HTTP server tests.
+* Remove "Content-Length: 0" header for request with no body, fixing
+  interop with Squid 2.3-STABLE1 (thanks to Kai Sommerfeld).
+* http_parse_statusline skips leading whitespace. (Johan Lindh). 
+* Partial fix for timezone/date parsing problems.
+
+Changes in release 0.13.0:
+* Fix ne_strndup allocating one byte less than it should (Kai Sommerfeld)
+ - if you use uri_parse, this bug may have caused subtle memory corruption 
+   in your application. 
+* Revert API changes in 0.12: property values are not UTF-8 encoded/decoded
+  internally.  (thanks to Greg Stein)
+* Add another optional argument to NEON_BUNDLED macros, actions to
+  be run if bundled build is *not* selected.
+* API change: added argument to http_add_hooks to register cleanup function
+  for the cookie.
+* Removed dav_lock_unregister in favour of automatic cleanup when session
+  is destroyed.
+* Fixed leaks in redirect code (Kai Sommerfeld).
+* Fixed crashes in hip_xml_destroy (Kai Sommerfeld).
+* Redirects to a different hostname/port/scheme are never followed: the request
+  will fail with HTTP_REDIRECT instead.  Redirect notification callback is 
+  only called for *followed* redirects.
+  New API: http_redirect_location() for retrieving location of last redirect.
+* Authentication is now implemented as a hook, independently of http_request.c:
+ - API change: removed 'hostname' argument from auth callbacks.
+ - API change: you must now include http_auth.h from your application.
+ - Also fixes case of using server and proxy authentication simultaneously
+* Added 'http_forget_auth' to clear authentication session.
+* New API: http_session_hook_private for retrieving private per-session cookie 
+  for hooks.
+* API change: http_set_request_body_stream has a return error value.
+* API change: http_set_request_body_buffer now takes the buffer length too.
+* New API: caller-pulls interface for reading response body: 
+  http_begin_request, http_end_request, http_read_response_block. 
+  An alternative to using the (much simpler) http_request_dispatch.
+* Make --disable-webdav build work.
+* New API: dav_propnames for retrieving property names.
+* New API: dav_propfind_get_request to access request object of handler.
+* API change: progress and connection status callbacks implemented at
+  http_request.h level. Socket-level status callbacks removed, progress
+  callbacks made per-socket.
+* Supports new expat (Sam TH <sam@uchicago.edu>)
+* Supports libxml2 (in preference to libxml1).
+* API change: added namespace protection to base64 and dates functions:
+  all have ne_ prefix now.
+* Fixed ranged GETs where a specific range is requested (Johan Lindh 
+  <johan@linkdata.se>).
+* Limit number of response header fields to 100.
+* Allow requests for the '*' URI even if a proxy server is in use.
+* libxml: Get useful error messages for parse errors.
+
+Changes in release 0.12.0:
+* Portability fixes to http_request.c and http_auth.c.
+ - fixes digest auth on big-endian architectures.
+* Fix warnings from stray tokens after #endif's in uri.h and string_utils.h.
+* Add C++ inclusion safety to http_redirect.h (Kai Sommerfeld 
+  <kai.sommerfeld@germany.sun.com>).
+* Make redirects to a different host work (Kai Sommerfeld).
+* Fix reading response bodies when non-chunked and no Content-Length
+  (Kai Sommerfeld).
+* API change: 'http_add_hooks takes a 'const' request object.
+* Fixed memory leaks in session hooks (thanks to Kai Sommerfeld).
+* Fix passing NULL props argument to dav_simple_propfind, to support
+  allprop requests.
+**** MAJOR INTERFACE CHANGE ****
+ - URIs passed to http_request_create() are NOT escaped by neon. You 
+   MUST do this yourself to remain HTTP compliant, using e.g. 
+   uri_abspath_escape. (Kai Sommerfeld)
+* Added --disable-webdav flag to configure, to disable DAV support in
+  the library.  This allows building neon without an XML parser. 
+* Corresponding NEON_WITHOUT_WEBDAV macro for use in bundled builds.
+* Fix Makefile dependancies.
+* A bundled neon directory builds or doesn't build automatically
+  (i.e. you recurse into it unconditionally).
+* API clarification:
+ - dav_propset_status may return NULL if the server does not return
+   a response for the given property (issue is open for debate).
+* API change up for debate:
+ - Property values to dav_proppatch are UTF-8 encoded internally.
+ - Property values in dav_propfind_* are UTF-8 decoded internally.
+* API additions: ne_realloc, ne_utf8_encode.
+
+Changes in release 0.11.0:
+* Added SSL client certificate support with 'sock_set_client_cert'.
+ - Supports certs in PEM-encoded files.
+ - Specify a callback for prompting the user for the password with 
+     sock_set_key_prompt.
+* Added 'ne_oom_callback', to register a callback which is used if
+  malloc() returns NULL.  (Mike Rosellini <m@icopyright.com>)
+* Register appropriate callback with libxml to handle <![CDATA blocks
+  as normal character data (fixes PROPFINDs against sharemation.com).
+* Added 'NEON_REQUIRE' macro to declare that you require a neon library
+  of a given minimum version, e.g.  NEON_REQUIRE(0,10) means "I need 
+  neon 0.11 or later".  The _BUNDLED macros will fall back on the bundled
+  copy if an external library is found which is not of a new enough version.
+* Added neon_version_minimum() function call for run-time version detection.
+* neon_config.h has been removed.
+* Use closesocket() to close sockets on Win32 (Markus Fleck <fleck@isoc.de>).
+
+Changes in release 0.10.1:
+* Default expect-100 to OFF.
+
+Changes in release 0.10.0:
+* hip_xml API changes:
+ - The search for a handler for a new child element begins at the
+   handler of the parent element, and carries on up the stack.
+   (previously, it always started from the base of the stack)
+ - Documentation written: doc/parsing-xml.txt
+* Remove memory leaks and tidy debugging output in new properties code.
+* API changes to DAV locking interface: 
+ - New function: dav_lock_copy to copy a lock object.
+ - Re-ordered arguments to callback of dav_lock_discover, and made the
+   lock object passed back const.
+ - Fix leaks and crashes due to vague interface definitions.
+* API change to dav_propfind_set_complex: use a callback to return the
+  'private' structure.
+* NEON_NORMAL_BUILD and NEON_LIBTOOL_BUILD macros defined for setting
+  up neon's Makefile in a bundled build: see macros/neon.m4.
+* NEON_VPATH_BUNDLED macro added which takes separate srcdir and
+  builddir arguments for supporting VPATH builds (thanks to Peter Moulder 
+  <pjm@bofh.asn.au>).
+* Added optional final argument to NEON_(VPATH_)BUNDLED, which gives
+  a set of actions to be run if the bundled build is chosen.
+* NEON_SSL checks for OpenSSL in /usr too.
+* API change: when using http_session_decide_proxy, it MUST be called
+  before using http_session_server to prevent the DNS lookup on the origin
+  server being optimised out.  The real scheme in use is passed to the 
+  callback now.
+* New function, dav_207_ignore_unknown, to ignore any unknown XML fragments
+  in the 207 response.  Used by properties layer.
+
+Changes in release 0.9.2:
+* Fix using both dav_propfind_set_complex and dav_propfind_set_flat with the
+  same propfind_handler.
+
+Changes in release 0.9.1:
+* dav_propfind interface
+ - Guarantee that the 'private' structure will be initialized to zero on
+   creation.
+ - Make it the *callers* responsibility to free() the private structure.
+* Fix a few arguments/variables which mirrored globally declared symbols.
+
+Changes in release 0.9.0:
+* Removed old dav_propfind_* interface, replaced with a better, more
+  powerful, and easier to use interface:
+ - 'dav_simple_propfind' interface for just fetching "flat" (byte-string)
+   properties.
+ - 'dav_propfind_*' interface for fetching flat and/or "complex" (structured
+   XML) properties.
+ - Lets you retrieve the 'status' information, to see what happened if
+   fetching the property failed (e.g 404 Not Found).
+* Fixes to doc/using-neon.txt (thanks to Greg Stein).
+* Allow building when srcdir != builddir (Mo DeJong <mdejong@cygnus.com>)
+
+Changes in release 0.8.1:
+* Fix segfault in PROPFIND code.
+
+Changes in release 0.8.0:
+* Fix for using COPY/MOVE over SSL (thanks to David Sloat).
+* Fix for using a proxy server and SSL.
+* Added 'http_get_scheme' API call.
+* Added 'http_redirect.h' to list of installed headers (thanks to everyone ;).
+* Changes for building on Windows (Peter Boos <PediB@colorfullife.com>)
+* Fixes for building on BeOS (Sam TH <sam@uchicago.edu> and David Reid
+  <dreid@jetnet.co.uk>).
+* Add buffering to socket code for pre-BONE BeOS systems (David Reid).
+* Interface changes for hip_xml:
+ - Renamed hip_xml_add_(mixed_)handler to hip_xml_push_(mixed_)handler
+ - Documentation updates.
+ - Added HIP_ELM_UNUSED for lowest element id which should be used.
+*** MAJOR INTERFACE CHANGE ***
+ - Removed 'http_status *' pointer from http_request_dispatch.
+ - Added http_get_status(req) to retrieve the response-status information
+   instead. You don't have to declare an http_status object yourself now.
+* Similarly, added DAV_ELM_207_UNUSED for lowest element id which should
+  be used by users of dav_207_* code (incl. use of dav_propfind_*
+  code).
+* New NEON_* autoconf macro interface:
+ - Use NEON_BUNDLED if sources are bundled, otherwise NEON_LIBRARY.
+ - The NEON_XML_PARSER macro is NOT called automatically.  You must
+   call this yourself if using NEON_BUNDLED; see doc/using-neon.txt
+   for details.
+* Fix use of 'socket' in nsocket.h function prototypes (Greg Stein).
+* Remove extra backslash at line 69 of src/Makefile.incl (Dirk Bergstrom).
+* Examples directory is now a separate package.
+
+Changes in release 0.7.7:
+* Another fix for linking against a libtool-built expat (Greg Stein).
+
+Changes in release 0.7.6:
+* Better check for closed SSL connection after doing SSL_peek. (thanks
+  to Jeff Costlow <j.costlow@f5.com>).
+* Attempt at correct sock_block() implementation for SSL.
+* sock_peek() will return SOCK_CLOSED correctly.
+
+Changes in release 0.7.5:
+* Fixed workaround for linking against a libtool-built expat (Greg Stein).
+
+Changes in release 0.7.4:
+* Fix for fd leak on connect failure (David Sloat <d.sloat@f5.com>).
+* Fix for Digest auth against IIS5 (David Sloat).
+* Workaround for linking against a libtool-built libexpat.la (Greg Stein).
+
+Changes in release 0.7.3:
+* Check for -lsocket and -linet in configure.
+* Workaround for SSL problems.
+
+Changes in release 0.7.2:
+* Define SHELL in Makefile (thanks to Eric Mumpower <nocturne@arepa.com>).
+* Added 'all' target to Makefile (Greg Stein <gstein@lyra.org>)
+* Added '--with-expat' argument to configure (Greg Stein)
+* Added 'dav_propfind_destroy' function.
+
+Changes in release 0.7.1:
+* Don't register response body/header authentication callbacks if no 
+  credentials-supplying callback has been registered (speed optimisation).
+
+Changes in release 0.7.0:
+* Deprecated use of 'NULL' to http_add_response_header_handler.
+  New interface, http_add_response_header_catcher, to register
+  a callback which is passed ALL response headers regardless of name.
+* Speed optimisation (~10%?): storing response-header handlers in a
+  hash table for faster look.
+* New SBUFFER_CAST() macro for getting to the 'char *' of an sbuffer
+  as fast as possible.
+
+Changes in release 0.6.1:
+* Fix for retrying request if connection is closed by server.
+* Make redirect hook work for >1 request per session.
+
+Changes in release 0.6.0:
+* New interface to allow following HTTP redirects (301/302 responses).
+  A callback must be given to get user confirmation if the request method
+  is not GET, HEAD, or PROPFIND.
+* New interface to determine whether the proxy server should be used
+  for a given request: http_session_decide_proxy.
+* Fix nget build again. Support automatic redirects in 'nget'.
+* Add --with-extra-includes and --with-extra-libs configure parameters
+  to point configure at 
+
+Changes in release 0.5.1:
+* Prevent segfault if USE_DAV_LOCKS is defined, and a locking session
+  is not registered (thanks to David Sloat).
+
+Changes in release 0.5.0:
+* Rename xmalloc, xstrdup etc to ne_malloc, ne_strdup etc.
+* Some speed optimisation in response-header reading.
+* Use 'off_t' rather than 'size_t' in sock_progress callback,
+  sock_readfile_blocked, and sock_transfer.
+
+Changes in release 0.4.2:
+* Fix for sending request bodies after getting 100-continue response.
+
+Changes in release 0.4.1:
+* Fix nget build.
+
+Changes in release 0.4.0:
+* Install library headers into .../include/neon not .../include/libneon
+* Install all necessary library headers.
+* Compile support for WebDAV locking throughout the library
+* Rename md5.h to neon_md5.h (avoids conflict with md5.h in OpenSSL)
+* Rename socket.h to nsocket.h (avoids possible conflict with C library)
+* Update licensing notice on macros/neon*.m4: note that these files are
+  NOT under the LGPL, and can be used in other packages regardless of
+  the license the package uses.
+* Update NEON_LIBRARY m4 function to allow optional specification of
+  names of bundled neon/expat source directories.
+* Increase socket read timeout to 60 seconds.
+* Added an POST method: from Sander Alberink <sander.alberink@cmg.nl>.
+* Added 'http_get_request_headers' to return the sbuffer containing
+  all request headers.
+* Allow passing NULL as name to http_add_response_header_handler: 
+  the handler callback is passed the entire header string, of ALL 
+  response headers.
+
+Changes in release 0.3.1:
+* Compile fix for dav_locks.c (thanks to Paul D'Anna)
+
+Changes in release 0.3.0:
+* Rewrite of socket handling layer. All sock_* functions changed.
+* Added basic SSL support: --with-ssl (requires OpenSSL).
+  NOTE: Certificates are NOT presented for verification.
+* 'nget' accepts URL's using the 'https' scheme.
+* New example program, 'nserver', to display the Server: string, 
+  e.g. 'nserver https://www.eu.c2.net/'
+* Fixed request re-send when persistent connection times out.
+* "Hooks" support: allow external hooks into the HTTP request/
+  response dispatch loop.
+* New printf-style interface for adding request headers.
+* Make symbols used in header files C++-safe (Tom Bednarz).
+* WebDAV locking support: lock discovery, LOCK (exclusive/shared)
+  UNLOCK. "If:" headers are sent as appropriate. Simple interface
+  for implementors of new methods to indicate which locks are 
+  required for the method.
+* Primitive HTTP cookies support.
+* Primitive hack at a GNOME-based GUI example program "nbrowse".
+  Enable build with --enable-gnome-examples. It crashes, and
+  not much else. Requires GNOME and POSIX threads. Example usage:
+       'nbrowse dav.ics.uci.edu /msdav/'
+  Many thanks to Lee Mallabone for Gtk help, and showing how to
+  use Gtk and threads. 
+
+Changes in release 0.2.0:
+* Use libtool: new configure options to select whether to build
+  shared and/or static libraries. Should build shared libraries
+  portably now.  
+* Complete rewrite of the hip_xml interface to use opaque pointers.
+  New functions: hip_xml_create, hip_xml_destroy: create parser.
+  hip_xml_{set,get}_error: Access to error string.
+  hip_xml_add_handler: Register callbacks for a set of elements.
+  hip_xml_valid: Returns whether the parse was valid or not.
+  Removed functions: hip_xml_init, hip_xml_finish.
+* Removed functions made reduntant by above changes in dav_207.
+* Don't include config.h in header files
+* Fix PROPFIND allprop request body (Michael Sobolev)
+* Added C++ safety macros around header files.
+* Added neon-config script for getting correct CFLAGS and LIBS
+  values for using libneon in applications.
+
+Changes in release 0.1.1:
+* Fix for short writes in GET
+
+Changes in release 0.1.0:
+* Initial release.

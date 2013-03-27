@@ -1,0 +1,28 @@
+# frv testcase for calll @($GRi,$GRj)
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global calll
+calll:
+	set_gr_addr	ok2,gr8
+	inc_gr_immed	-4,gr8
+	inc_gr_immed	4,gr9
+	calll		@(gr8,gr9)
+bad2:
+	fail
+ok2:
+	test_spr_addr	bad2,lr
+
+	set_gr_addr	ok3,gr8
+	inc_gr_immed	4,gr8
+	set_gr_immed	-4,gr9
+	calll		@(gr8,gr9)
+bad3:
+	fail
+ok3:
+	test_spr_addr	bad3,lr
+
+	pass

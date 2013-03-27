@@ -1,0 +1,130 @@
+# frv testcase to generate interrupts for bad register alignment
+# mach: frv
+	.include "testutils.inc"
+
+	start
+
+	.global align
+align:
+	and_spr_immed	-4081,tbr		; clear tbr.tt
+	set_gr_spr	tbr,gr17
+	inc_gr_immed	0x080,gr17		; address of exception handler
+	set_bctrlr_0_0  gr17
+	inc_gr_immed	0x050,gr17		; address of exception handler
+	set_bctrlr_0_0  gr17
+	set_spr_immed	128,lcr
+	set_spr_addr	ok1,lr
+	set_psr_et	1
+
+	; Make the the register number odd at bad[1-4], bad9 and bada.
+	; We can't simply code an odd register number because the assembler
+	; will catch the error.
+	set_gr_mem	bad1,gr10
+	or_gr_immed	0x02000000,gr10
+	set_mem_gr	gr10,bad1
+	set_gr_addr	bad1,gr10
+	flush_data_cache gr10
+	set_gr_mem	bad2,gr10
+	or_gr_immed	0x02000000,gr10
+	set_mem_gr	gr10,bad2
+	set_gr_addr	bad2,gr10
+	flush_data_cache gr10
+	set_gr_mem	bad3,gr10
+	or_gr_immed	0x02000000,gr10
+	set_mem_gr	gr10,bad3
+	set_gr_addr	bad3,gr10
+	flush_data_cache gr10
+	set_gr_mem	bad4,gr10
+	or_gr_immed	0x02000000,gr10
+	set_mem_gr	gr10,bad4
+	set_gr_addr	bad4,gr10
+	flush_data_cache gr10
+	set_gr_mem	bad9,gr10
+	or_gr_immed	0x02000000,gr10
+	set_mem_gr	gr10,bad9
+	set_gr_addr	bad9,gr10
+	flush_data_cache gr10
+	set_gr_mem	bada,gr10
+	or_gr_immed	0x02000000,gr10
+	set_mem_gr	gr10,bada
+	set_gr_addr	bada,gr10
+	flush_data_cache gr10
+
+	set_gr_immed	4,gr20		; PC increment
+	set_gr_immed	0,gr15
+	inc_gr_immed	-12,sp		; for memory alignment
+
+	set_gr_addr	bad1,gr17
+bad1:	stdi	gr0,@(sp,0)		; misaligned reg
+	test_gr_immed	1,gr15
+
+	set_gr_addr	bad2,gr17
+bad2:	lddi	@(sp,0),gr8		; misaligned reg
+	test_gr_immed	2,gr15
+
+	set_gr_addr	bad3,gr17
+bad3:	stdc	cpr0,@(sp,gr0)		; misaligned reg
+	test_gr_immed	3,gr15
+
+	set_gr_addr	bad4,gr17
+bad4:	lddc	@(sp,gr0),cpr8		; misaligned reg
+	test_gr_immed	4,gr15
+
+	set_gr_addr	bad5,gr17
+bad5:	stqi	gr2,@(sp,0)		; misaligned reg
+	test_gr_immed	5,gr15
+
+	set_gr_addr	bad6,gr17
+bad6:	ldqi	@(sp,0),gr10		; misaligned reg
+	test_gr_immed	6,gr15
+
+	set_gr_addr	bad7,gr17
+bad7:	stqc	cpr2,@(sp,gr0)		; misaligned reg
+	test_gr_immed	7,gr15
+
+	set_gr_addr	bad8,gr17
+bad8:	ldqc	@(sp,gr0),cpr10		; misaligned reg
+	test_gr_immed   8,gr15
+
+	set_gr_immed	0,gr20		; PC increment
+	set_gr_addr	bad9,gr17
+bad9:	stdfi	fr0,@(sp,0)		; misaligned reg
+	test_gr_immed	9,gr15
+
+	set_gr_addr	bada,gr17
+bada:	lddfi	@(sp,0),fr8		; misaligned reg
+	test_gr_immed	10,gr15
+
+	set_gr_addr	badb,gr17
+badb:	stqfi	fr2,@(sp,0)		; misaligned reg
+	test_gr_immed   11,gr15
+
+	set_gr_addr	badc,gr17
+badc:	ldqfi	@(sp,0),fr10		; misaligned reg
+	test_gr_immed	12,gr15
+
+	pass
+
+; exception handler
+ok1:
+	cmpi		gr20,0,icc0
+	beq		icc0,0,float
+
+	; check register_exception
+	test_spr_immed	0x1,esfr1		; esr0 is active
+	test_spr_gr	epcr0,gr17
+	test_spr_bits	0x0001,0,0x1,esr0	; esr0 is valid
+	test_spr_bits	0x003e,1,0xc,esr0	; esr0.ec is set
+	test_spr_bits	0x00c0,6,0x1,esr0	; esr0.rec is set
+	test_spr_bits	0x0800,11,0x0,esr0	; esr0.eav is not set
+	movsg		pcsr,gr60
+	add		gr60,gr20,gr60
+	movgs		gr60,pcsr
+	bra		ret
+float:
+	; check fp_exception
+	test_spr_immed	0,esfr1			; no esr's active
+ret:
+	inc_gr_immed	1,gr15
+	rett		0
+	fail

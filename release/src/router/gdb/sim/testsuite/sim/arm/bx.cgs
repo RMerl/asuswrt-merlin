@@ -1,0 +1,12 @@
+# arm testcase for bx$cond $rn
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global bx
+bx:
+	bx0 pc
+
+	pass

@@ -1571,6 +1571,11 @@ var dateFormatters = {
 	tt	: function(d)	{ return d.getHours() < 12 ? 'am' : 'pm' },
 	T	: function(d)	{ return d.getHours() < 12 ? 'A' : 'P' },
 	TT	: function(d)	{ return d.getHours() < 12 ? 'am' : 'pm' },
+	JJ	: function(d)	{ 		//Jieming added at 2012/11/21
+		var temp_hour = (d.getHours()+1);
+		if(temp_hour < 10)
+			temp_hour = "0" + temp_hour 
+			return "~" + temp_hour},
 	u	: function(d)	{ return formatDate(d, "yyyy-MM-dd'T'HH:mm:ss'Z'") },
 	S	: function(d)	{
 		var date = d.getDate();
@@ -2802,7 +2807,7 @@ setDefaults({
 	firstHour: 0,
 	slotMinutes: 60,
 	defaultEventMinutes: 60,
-	axisFormat: 'h tt',
+	axisFormat: 'HH JJ',
 	timeFormat: {
 		agenda: ''
 		//agenda: 'HH{ ~ HH}'

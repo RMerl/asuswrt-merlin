@@ -5,8 +5,7 @@
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="stylesheet" type="text/css" href="/form_style.css">
-<link rel="stylesheet" type="text/css" href="qis_style.css">
-
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/javascript" src="/alttxt.js"></script>
 <script type="text/javascript" src="/general.js"></script>
@@ -19,15 +18,23 @@ var now_flag = '<% get_parameter("flag"); %>';
 <% wan_get_parameter(); %>
 
 function QKISP_load_body(){
-//	load_alttxt_enviroment();
 	parent.document.title = "<#Web_Title#> - <#QKSet_ISP_head#>";
-	parent.set_step("t2");
-	hideLinkTag();
-	flash_button();
+
+	if(parent.ISMOBILE){
+		parent.set_step("internet_type");
+		hideObjs();
+		document.getElementById("QISmain").style.display = "none";
+		document.getElementById("QISmain_m").style.display = "";		
+	}
+	else{
+		parent.set_step("t2");
+		hideLinkTag();
+		flash_button();
+		show_next_button();	
+		document.getElementById("nextButton").focus();
+	}
+
 	get_value_from_parent();
-	show_next_button();
-	
-	document.getElementById("nextButton").focus();
 }
 
 function get_value_from_parent(){
@@ -71,6 +78,17 @@ function showMAC(){
 	document.form.wan_hwaddr_x.focus();
 }
 
+function showMAC_m(){
+	var tempMAC = "";
+	if(document.getElementById("toggleDNS").getAttribute("toggled") == "true"){	
+		document.form.wan_hwaddr_x_m.value = this.client_mac;
+		document.form.wan_hwaddr_x.value = this.client_mac;
+	}
+	else{
+		document.form.wan_hwaddr_x_m.value = "";
+	}
+}
+
 function validForm(){
 	if(!validate_string(document.form.wan_hostname)){
 		document.form.wan_hostname.select();
@@ -88,6 +106,11 @@ function validForm(){
 }
 
 function submitForm(){
+	if(parent.ISMOBILE){
+		document.form.wan_hostname.value = document.form.wan_hostname_m.value;
+		document.form.wan_hwaddr_x.value = document.form.wan_hwaddr_x_m.value;
+	}
+
 	if(validForm() == true){
 		
 		if(now_flag == "auto_way_static" || now_flag == "auto_way"){
@@ -172,9 +195,7 @@ function submitenter(myfield,e)
 <input type="hidden" name="current_page" value="QIS_internet_isp.htm">
 <input type="hidden" name="next_page" value="QIS_internet_ip.htm">
 <input type="hidden" name="prev_page" value="">
-
 <input type="hidden" name="wan_proto" value="" disabled>
-
 <input type="hidden" name="wan_dhcpenable_x" value="" disabled>
 <input type="hidden" name="wan_ipaddr_x" value="" disabled>
 <input type="hidden" name="wan_netmask_x" value="" disabled>
@@ -184,12 +205,10 @@ function submitenter(myfield,e)
 <input type="hidden" name="wan_dns2_x" value="" disabled>
 <input type="hidden" name="wan_heartbeat_x" value="" disabled>
 <input type="hidden" name="wan_unit" value="0">
-
 <input type="hidden" name="x_Setting" id="x_Setting" value="" disabled>
-<div class="QISmain">
-
+<div class="QISmain" id="QISmain">
 		<div>
-			<table width="730px">
+			<table width="100%">
 				<tr>
 					<td align="left">
 						<span class="description_down"><#QIS_auto_ip_conn_Setup#></span>
@@ -200,7 +219,7 @@ function submitenter(myfield,e)
 				</tr>
 			</table>
 		</div>
-		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 
 <table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
 	<tr>
@@ -220,7 +239,8 @@ function submitenter(myfield,e)
 		</th>
 	  <td class="QISformtd">
 		<input type="text" name="wan_hwaddr_x" onkeypress="return is_hwaddr(this,event);" class="input_20_table" maxlength="17" value=""/>
-		&nbsp&nbsp&nbsp<input type="button" class="button_gen_long" onclick="showMAC();" value="<#BOP_isp_MACclone#>">		
+		&nbsp&nbsp&nbsp
+		<input type="button" class="button_gen_long" onclick="showMAC();" value="<#BOP_isp_MACclone#>">		
 	  </td>
 	</tr>
 </table>
@@ -234,7 +254,42 @@ function submitenter(myfield,e)
   	<input type="submit" id="nextButton" class="button_gen" value="<#CTL_next#>" align="center">
 	</div>
 </div>
-</form>
 
+<div id="QISmain_m" style="display:none;">
+	<div class="itemTitle"><#QIS_auto_ip_conn_Setup#></div>
+	<fieldset>
+		<div id="DNSDiv">
+			<div class="row">
+				<label><#BOP_isp_host_item#></label>
+				<input type="text" name="wan_hostname_m" placeholder="" maxlength="32" value=""/>
+			</div>
+
+			<div class="row">
+				<label><#BOP_isp_MACclone#></label>
+				<div id="toggleDNS" class="toggle" onclick="showMAC_m();" toggled="false">
+					<span class="thumb"></span>
+					<span class="toggleOn"><#checkbox_Yes#></span>
+					<span class="toggleOff"><#checkbox_No#></span>
+				</div>
+			</div>
+
+			<div class="row_end">
+				<label>MAC Address:</label>
+				<input name="wan_hwaddr_x_m" type="text" placeholder="" onkeypress="return is_hwaddr(this,event);" autocapitalization="off" maxlength="17">
+			</div>
+		</div>
+	</fieldset>
+	<br />
+	<div><#qis_isp_desc1#></div>
+	<br />
+	<fieldset class="theFieldset" id="theFieldset">
+		<div class="row_end">
+			<a id="loadingIcon_iui" class="iuiA" onclick="submitForm();"><#CTL_next#></a>
+		</div>
+	</fieldset>
+</div>
+
+</div>
+</form>
 </body>
 </html>

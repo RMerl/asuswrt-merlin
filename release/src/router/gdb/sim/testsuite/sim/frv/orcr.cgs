@@ -1,0 +1,59 @@
+# frv testcase for orcr $CCi,$CCj,$CCk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global orcr
+orcr:
+	set_spr_immed	0x1b1b,cccr
+	orcr		cc7,cc7,cc3
+	test_spr_immed	0x1b1b,cccr
+
+	orcr		cc7,cc6,cc3
+	test_spr_immed	0x1b1b,cccr
+
+	orcr		cc7,cc5,cc3
+	test_spr_immed	0x1b9b,cccr
+
+	orcr		cc7,cc4,cc3
+	test_spr_immed	0x1bdb,cccr
+
+	orcr		cc6,cc7,cc3
+	test_spr_immed	0x1b1b,cccr
+
+	orcr		cc6,cc6,cc3
+	test_spr_immed	0x1b1b,cccr
+
+	orcr		cc6,cc5,cc3
+	test_spr_immed	0x1b9b,cccr
+
+	orcr		cc6,cc4,cc3
+	test_spr_immed	0x1bdb,cccr
+
+	orcr		cc5,cc7,cc3
+	test_spr_immed	0x1b9b,cccr
+
+	orcr		cc5,cc6,cc3
+	test_spr_immed	0x1b9b,cccr
+
+	orcr		cc5,cc5,cc3
+	test_spr_immed	0x1b9b,cccr
+
+	orcr		cc5,cc4,cc3
+	test_spr_immed	0x1bdb,cccr
+
+	orcr		cc4,cc7,cc3
+	test_spr_immed	0x1bdb,cccr
+
+	orcr		cc4,cc6,cc3
+	test_spr_immed	0x1bdb,cccr
+
+	orcr		cc4,cc5,cc3
+	test_spr_immed	0x1bdb,cccr
+
+	orcr		cc4,cc4,cc3
+	test_spr_immed	0x1bdb,cccr
+
+	pass

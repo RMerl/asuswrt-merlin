@@ -1,0 +1,4 @@
+MH_CFLAGS=
+NATDEPFILES= i386-nat.o win32-nat.o
+NAT_FILE=nm-cygwin.h
+XM_CLIBS=

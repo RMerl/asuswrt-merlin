@@ -1,0 +1,27 @@
+# frv testcase for ldsb @($GRi,$GRj),$GRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global ldsb
+ldsb:
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_limmed	0xbeef,0xdead,gr8
+
+	set_gr_immed	0,gr7
+	ldsb 		@(sp,gr7),gr8
+	test_gr_limmed	0xffff,0xffde,gr8
+
+	set_gr_immed	1,gr7
+	ldsb 		@(sp,gr7),gr8
+	test_gr_limmed	0xffff,0xffad,gr8
+
+	set_mem_limmed	0xffff,0xff00,sp
+	inc_gr_immed	4,sp
+	set_gr_immed	-1,gr7
+	ldsb 		@(sp,gr7),gr8
+	test_gr_immed	0,gr8
+
+	pass

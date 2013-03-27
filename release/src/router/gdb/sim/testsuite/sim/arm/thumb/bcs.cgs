@@ -1,0 +1,12 @@
+# arm testcase for bcs $soffset8
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global bcs
+bcs:
+	bcs footext
+
+	pass

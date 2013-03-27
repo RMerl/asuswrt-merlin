@@ -1,0 +1,16 @@
+<target>
+  <xi:include href="core-regs.xml"/>
+  <feature name="extra">
+    <vector id="v4int8" type="int8" count="4"/>
+    <vector id="v2int16" type="int16" count="2"/>
+    <union id="vecint">
+      <field name="v4" type="v4int8"/>
+      <field name="v2" type="v2int16"/>
+    </union>
+
+    <reg name="extrareg" bitsize="32"/>
+    <reg name="uintreg" bitsize="32" type="uint32"/>
+    <reg name="vecreg" bitsize="32" type="v4int8"/>
+    <reg name="unionreg" bitsize="32" type="vecint"/>
+  </feature>
+</target>

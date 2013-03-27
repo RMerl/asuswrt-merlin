@@ -1,0 +1,11 @@
+# sh testcase for brk -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+	# brk will cause the sim to trap, so avoid it.
+	pass
+	brk

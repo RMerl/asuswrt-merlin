@@ -1,0 +1,36 @@
+# sh testcase for swap.q $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+init:
+	movi 10, r0
+	shlli r0, 8, r0
+	ori r0, 20, r0
+	shlli r0, 8, r0
+	ori r0, 30, r0
+	shlli r0, 8, r0
+	ori r0, 40, r0
+	shlli r0, 8, r0
+	ori r0, 50, r0
+	shlli r0, 8, r0
+	ori r0, 60, r0
+	shlli r0, 8, r0
+	ori r0, 70, r0
+	shlli r0, 8, r0
+	ori r0, 80, r0
+
+	# Set up two address operands.
+	
+	movi 40, r1
+	shlli r1, 8, r1
+	movi 8, r2
+	
+swapq:
+	swap.q r1, r2, r0
+
+okay:	
+	pass

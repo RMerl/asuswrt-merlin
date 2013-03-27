@@ -1,0 +1,10 @@
+# sh testcase for alloco $rm, $disp6x32 -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+	alloco r0, 32
+	pass

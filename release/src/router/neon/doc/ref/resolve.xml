@@ -1,0 +1,145 @@
+<refentry id="refresolve">
+
+  <refmeta>
+    <refentrytitle>ne_addr_resolve</refentrytitle>
+    <manvolnum>3</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname id="ne_addr_resolve">ne_addr_resolve</refname>
+    <refname id="ne_addr_result">ne_addr_result</refname>
+    <refname id="ne_addr_first">ne_addr_first</refname>
+    <refname id="ne_addr_next">ne_addr_next</refname>
+    <refname id="ne_addr_error">ne_addr_error</refname>
+    <refname id="ne_addr_destroy">ne_addr_destroy</refname>
+    <refpurpose>functions to resolve hostnames to addresses</refpurpose>
+  </refnamediv>
+  
+  <refsynopsisdiv>
+
+    <funcsynopsis>
+
+      <funcsynopsisinfo>#include &lt;ne_socket.h&gt;</funcsynopsisinfo>
+
+      <funcprototype>
+        <funcdef>ne_sock_addr *<function>ne_addr_resolve</function></funcdef>
+        <paramdef>const char *<parameter>hostname</parameter></paramdef>
+        <paramdef>int <parameter>flags</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>int <function>ne_addr_result</function></funcdef>
+        <paramdef>const ne_sock_addr *<parameter>addr</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>const ne_inet_addr *<function>ne_addr_first</function></funcdef>
+        <paramdef>ne_sock_addr *<parameter>addr</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>const ne_inet_addr *<function>ne_addr_next</function></funcdef>
+        <paramdef>ne_sock_addr *<parameter>addr</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>char *<function>ne_addr_error</function></funcdef>
+        <paramdef>const ne_sock_addr *<parameter>addr</parameter></paramdef>
+        <paramdef>char *<parameter>buffer</parameter></paramdef>
+        <paramdef>size_t <parameter>bufsiz</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>void <function>ne_addr_destroy</function></funcdef>
+        <paramdef>ne_sock_addr *<parameter>addr</parameter></paramdef>
+      </funcprototype>
+
+    </funcsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para>The <function>ne_addr_resolve</function> function resolves
+    the given <parameter>hostname</parameter>, returning an
+    <type>ne_sock_addr</type> object representing the address (or
+    addresses) associated with the hostname.  The
+    <parameter>flags</parameter> parameter is currently unused, and
+    must be passed as 0.</para>
+
+    <para>The <parameter>hostname</parameter> passed to
+    <function>ne_addr_resolve</function> can be a DNS hostname
+    (e.g. <literal>"www.example.com"</literal>) or an IPv4 dotted quad
+    (e.g. <literal>"192.0.34.72"</literal>); or, on systems which
+    support IPv6, an IPv6 hex address, which may be enclosed in
+    brackets, e.g. <literal>"[::1]"</literal>.</para>
+
+    <para>To determine whether the hostname was successfully resolved,
+    the <function>ne_addr_result</function> function is used, which
+    returns non-zero if an error occurred.  If an error did occur, the
+    <function>ne_addr_error</function> function can be used, which
+    will copy the error string into a given
+    <parameter>buffer</parameter> (of size
+    <parameter>bufsiz</parameter>).</para>
+
+    <para>The functions <function>ne_addr_first</function> and
+    <function>ne_addr_next</function> are used to retrieve the
+    Internet addresses associated with an address object which has
+    been successfully resolved.  <function>ne_addr_first</function>
+    returns the first address; <function>ne_addr_next</function>
+    returns the next address after the most recent call to
+    <function>ne_addr_next</function> or
+    <function>ne_addr_first</function>, or &null; if there are no more
+    addresses.  The <type>ne_inet_addr</type> pointer returned by
+    these functions can be passed to
+    <function>ne_sock_connect</function> to connect a socket.</para>
+
+    <para>After the address object has been used, it should be
+    destroyed using <function>ne_addr_destroy</function>.</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Return value</title>
+
+    <para><function>ne_addr_resolve</function> returns a pointer to an
+    address object, and never &null;.
+    <function>ne_addr_error</function> returns the
+    <parameter>buffer</parameter> parameter .</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Examples</title>
+
+    <para>The code below prints out the set of addresses associated
+    with the hostname <literal>www.google.com</literal>.</para>
+
+    <programlisting>ne_sock_addr *addr;
+char buf[256];
+
+addr = ne_addr_resolve("www.google.com", 0);
+if (ne_addr_result(addr)) {
+    printf("Could not resolve www.google.com: %s\n",
+           ne_addr_error(addr, buf, sizeof buf));
+} else {
+    const ne_inet_addr *ia;
+    printf("www.google.com:");
+    for (ia = ne_addr_first(addr); ia != NULL; ia = ne_addr_next(addr)) {
+        printf(" %s", ne_iaddr_print(ia, buf, sizeof buf));
+    }
+    putchar('\n');
+}
+ne_addr_destroy(addr);
+</programlisting>
+  </refsect1>
+
+  <refsect1>
+    <title>See also</title>
+
+    <para><xref linkend="ne_iaddr_print"/></para>
+  </refsect1>
+
+</refentry>
+

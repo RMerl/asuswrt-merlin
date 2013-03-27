@@ -1,0 +1,115 @@
+#   Copyright 2006, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test setting breakpoints on shared library functions provided by more
+# than one shared library, when one of the implementations is a "weak"
+# symbol.  GDB should set a breakpoint at the first copy it finds.
+
+if {[skip_shlib_tests]} {
+    return 0
+}
+
+# These targets have shared libraries, but weak symbols are not meaningful.
+if {([istarget arm*-*-symbianelf*]
+     || [istarget *-*-mingw*]
+     || [istarget *-*-cygwin*]
+     || [istarget *-*-pe*])} {
+    return 0
+}
+
+# This test uses GCC-specific syntax.
+if [get_compiler_info not-used] {
+    return -1
+}
+
+if {![test_compiler_info "gcc-*"]} {
+    return 0
+}
+
+proc do_test { lib1opts lib2opts lib1first } {
+    global objdir srcdir subdir
+
+    set testopts ""
+    if {$lib1opts == ""} {
+	append testopts "lib1 nodebug, "
+    } else {
+	append testopts "lib1 debug, "
+    }
+    if {$lib2opts == ""} {
+	append testopts "lib2 nodebug, "
+    } else {
+	append testopts "lib2 debug, "
+    }
+    if {$lib1first} {
+	append testopts "lib1 first"
+    } else {
+	append testopts "lib2 first"
+    }
+
+    set testfile "solib-weak"
+    set srcfile ${testfile}.c
+    set binfile ${objdir}/${subdir}/${testfile}
+
+    set libfile1 "weaklib1"
+    set libfile2 "weaklib2"
+    set lib1src ${srcdir}/${subdir}/${libfile1}.c
+    set lib2src ${srcdir}/${subdir}/${libfile2}.c
+    set lib1 ${objdir}/${subdir}/${libfile1}.sl
+    set lib2 ${objdir}/${subdir}/${libfile2}.sl
+
+    if $lib1first {
+	set exec_opts [list debug shlib=${lib1} shlib=${lib2}]
+	set expected_file ${libfile1}
+    } else {
+	set exec_opts [list debug shlib=${lib2} shlib=${lib1}]
+	set expected_file ${libfile2}
+    }
+
+    if { [gdb_compile_shlib ${lib1src} ${lib1} ${lib1opts}] != ""
+	 || [gdb_compile_shlib ${lib2src} ${lib2} ${lib2opts}] != ""
+	 || [gdb_compile "${srcdir}/${subdir}/${srcfile}" ${binfile} executable $exec_opts] != ""} {
+	return -1
+    }
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_load ${binfile}
+    gdb_load_shlibs $lib1 $lib2
+
+    runto_main
+
+    gdb_breakpoint "bar"
+
+    # If the library which will be used is compiled without debugging
+    # information, GDB will pick the wrong copy of "bar", i.e. the one
+    # with debugging information.
+
+    if {(${lib1opts} == "" && ${lib2opts} != "" && ${lib1first} == 1)
+	|| (${lib1opts} != "" && ${lib2opts} == "" && ${lib1first} == 0)} {
+	setup_kfail *-*-* gdb/1824
+    }
+
+    gdb_test "continue" "Breakpoint .* bar .*${expected_file}\\..*" \
+	"run to breakpoint - $testopts"
+}
+
+foreach lib1opts {{} {debug}} {
+    foreach lib2opts {{} {debug}} {
+	foreach lib1first {1 0} {
+	    do_test $lib1opts $lib2opts $lib1first
+	}
+    }
+}

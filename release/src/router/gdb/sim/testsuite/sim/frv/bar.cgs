@@ -1,0 +1,12 @@
+# frv testcase for bar
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global bar
+bar:
+	bar
+
+	pass

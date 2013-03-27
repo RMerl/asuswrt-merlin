@@ -1,0 +1,79 @@
+    <sect1 id="features">
+      <title>Feature list</title>
+
+      <para>The major features of the neon library are as follows:</para>
+
+      <itemizedlist>
+
+	<listitem><para>A high-level interface to common HTTP and WebDAV
+methods.  This allows you to easily dispatch a GET or a MKCOL request
+against a resource with a single function call.</para></listitem>
+
+	<listitem><para>A low-level interface for HTTP request
+handling; allowing you to implement requests using arbitrary methods
+and request headers, capture arbitrary response headers, and so
+on.</para></listitem>
+
+	<listitem><para>Persistent connection support; neon groups a
+set of requests to a server into a "session"; requests within that
+session can use a persistent (also known as "keep-alive")
+connection.</para></listitem>
+
+	<listitem><para>Modern HTTP authentication support: a complete
+implementation of the new authentication standard, RFC2617, supporting
+the Digest, Basic, and Negotiate protocols.  Credentials are supplied
+by an application-defined callback as appropriate.</para></listitem>
+
+	<listitem><para>Proxy server support; a session can be set to
+use a proxy server.  Authentication is supported for the Proxy as well
+as the origin server.  The system's proxy configuration can be
+optionally used, on some platforms.</para></listitem>
+
+	<listitem><para>Complete SSL support; a simple interface for
+enabling SSL, hiding the complexity of using an SSL library directly.
+Client certificate support, callback-based server certificate
+verification, along with functions to load trusted CA certificates.
+Smartcard-based client certs are also supported via a wrapper
+interface for PKCS#11 modules.</para></listitem>
+
+	<listitem><para>Compressed response support: responses
+	compressed using the "deflate" algorithm can be transparently
+	decompressed.</para></listitem>
+
+	<listitem><para>Generic XML parsing interface for handling XML
+response bodies using SAX-like callbacks.  Both the expat and libxml
+XML parser libraries are supported.</para></listitem>
+
+	<listitem><para>WebDAV metadata support; set and remove
+properties, query properties (PROPFIND); simple interface for
+retrieving "flat" byte-string properties, more advanced support for
+parsing "complex" structured XML properties.</para></listitem>
+
+<!--
+	<listitem><para>WebDAV locking support</para></listitem>
+-->
+
+	<listitem><para>Build environment support: the neon source
+tree is designed so that it can be embedded in your application's
+build tree; autoconf macros are supplied for integration.  To get
+started quickly a <xref linkend="refconfig"/> script is included,
+to easily determine how to compile and link against an installed copy
+of neon</para></listitem>
+
+	<listitem><para>Complete test suite: the neon test suite
+comprises half as many lines of source code as the library itself,
+including many tests for protocol compliance in network behaviour, and
+that the library implementation meets the guarantees made by the
+API.</para> </listitem>
+
+<!-- 
+
+	<listitem><para>Thorough documentation: neon documentation is
+provided in HTML and man page formats (from a single DocBook XML
+source)</para></listitem>
+
+-->
+
+      </itemizedlist>
+	
+    </sect1>

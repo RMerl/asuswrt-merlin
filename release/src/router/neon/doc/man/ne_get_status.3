@@ -1,0 +1,83 @@
+'\" t
+.\"     Title: ne_get_status
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_GET_STATUS" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_get_status \- retrieve HTTP response status for request
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_request\&.h>
+.fi
+.ft
+.HP \w'const\ ne_status\ *ne_get_status('u
+.BI "const ne_status *ne_get_status(const\ ne_request\ *" "request" ");"
+.SH "DESCRIPTION"
+.PP
+The
+\fBne_get_status\fR
+function returns a pointer to the HTTP status object giving the result of a request\&. The object returned only becomes valid once the request has been
+\fIsuccessfully\fR
+dispatched (the return value of
+\fBne_request_dispatch\fR
+or
+\fBne_begin_request\fR
+was zero)\&. The object remains valid until the associated request object is destroyed\&.
+.SH "SEE ALSO"
+.PP
+ne_status,
+ne_request_create
+.SH "EXAMPLE"
+.PP
+Display the response status code of applying the
+HEAD
+method to some resource\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ne_request *req = ne_request_create(sess, "HEAD", "/foo/bar");
+if (ne_request_dispatch(req))
+   /* handle errors\&.\&.\&. */
+else
+   printf("Response status code was %d\en", ne_get_status(req)\->code);
+ne_request_destroy(req);
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

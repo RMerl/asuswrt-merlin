@@ -16,6 +16,11 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/detect.js"></script>
+<style>
+.FormTable{
+ 	margin-top:10px;	
+}
+</style>
 <script>
 
 <% login_state_hook(); %>
@@ -26,6 +31,7 @@ var dsl_pvc_enabled = ["0", "0", "0", "0", "0", "0", "0", "0"];
 
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
 <% wan_get_parameter(); %>
+var original_dnsenable = parseInt('<% nvram_get("dslx_dnsenable"); %>');
 
 if(dualWAN_support != -1){
 	var wan_type_name = wans_dualwan.split(" ")[<% nvram_get("wan_unit"); %>];
@@ -579,6 +585,13 @@ function validForm(){
 				|| !validate_string(document.form.dslx_pppoe_ac))
 			return false;
 	}
+	
+	if(document.form.dslx_hwaddr.value.length > 0)
+		if(!check_macaddr(document.form.dslx_hwaddr, check_hwaddr_flag(document.form.dslx_hwaddr))){
+				document.form.dslx_hwaddr.select();
+				document.form.dslx_hwaddr.focus();
+				return false;
+		}
 
 	return true;
 }
@@ -588,14 +601,16 @@ function done_validating(action){
 }
 
 function disable_pvc_summary() {
-	$("dsl_pvc_summary").style.display = "none";
+	//$("dsl_pvc_summary").style.display = "none";
+	$("DSL_WAN_table").style.display = "none";
 	if(dualWAN_support != -1){
 		$("WANscap").style.display = "none";
 	}
 }
 
 function enable_pvc_summary() {
-	$("dsl_pvc_summary").style.display = "";
+	//$("dsl_pvc_summary").style.display = "";
+	$("DSL_WAN_table").style.display = "";
 	if(dualWAN_support != -1){
 		$("WANscap").style.display = "";
 	}
@@ -646,6 +661,7 @@ function change_dsl_type(dsl_type){
 		// 2008.03 James. patch for Oleg's patch. {
 		inputCtrl(document.form.dslx_pppoe_options, 1);
 		// 2008.03 James. patch for Oleg's patch. }
+		showhide("PPPsetting",1);
 	}
 	else if(dsl_type == "ipoa"){
 		inputCtrl(document.form.dslx_dnsenable[0], 0);
@@ -661,6 +677,7 @@ function change_dsl_type(dsl_type){
 		// 2008.03 James. patch for Oleg's patch. {
 		inputCtrl(document.form.dslx_pppoe_options, 0);
 		// 2008.03 James. patch for Oleg's patch. }
+		showhide("PPPsetting",0);
 	}
 	else if(dsl_type == "mer"){
 		inputCtrl(document.form.dslx_dnsenable[0], 1);
@@ -677,6 +694,7 @@ function change_dsl_type(dsl_type){
 		// 2008.03 James. patch for Oleg's patch. {
 		inputCtrl(document.form.dslx_pppoe_options, 0);
 		// 2008.03 James. patch for Oleg's patch. }
+		showhide("PPPsetting",0);
 	}
 	else if(dsl_type == "bridge") {
 		inputCtrl(document.form.dslx_dnsenable[0], 0);
@@ -692,6 +710,7 @@ function change_dsl_type(dsl_type){
 		// 2008.03 James. patch for Oleg's patch. {
 		inputCtrl(document.form.dslx_pppoe_options, 0);
 		// 2008.03 James. patch for Oleg's patch. }
+		showhide("PPPsetting",0);
 	}
 	else {
 		alert("error");
@@ -710,11 +729,11 @@ function fixed_change_dsl_type(dsl_type){
 	}
 
 	if(dsl_type == "pppoe" || dsl_type == "pppoa"){
-		document.form.dslx_dnsenable[0].checked = 1;
-		document.form.dslx_dnsenable[1].checked = 0;
+		document.form.dslx_dnsenable[0].checked = original_dnsenable;
+		document.form.dslx_dnsenable[1].checked = !original_dnsenable;
 		change_common_radio(document.form.dslx_dnsenable, 'IPConnection', 'dslx_dnsenable', 0);
-		inputCtrl(document.form.dslx_dns1, 0);
-		inputCtrl(document.form.dslx_dns2, 0);
+		inputCtrl(document.form.dslx_dns1, !original_dnsenable);
+		inputCtrl(document.form.dslx_dns2, !original_dnsenable);
 		inputCtrl(document.form.dslx_hwaddr, 1);
 		inputCtrl(document.form.dslx_link_enable[0], 1);
 		inputCtrl(document.form.dslx_link_enable[1], 1);
@@ -722,6 +741,10 @@ function fixed_change_dsl_type(dsl_type){
 		inputCtrl(document.form.dslx_nat[1], 1);
 		inputCtrl(document.form.dslx_upnp_enable[0], 1);
 		inputCtrl(document.form.dslx_upnp_enable[1], 1);
+		showhide("t2BC",1);
+		showhide("IPsetting",1);
+		showhide("DNSsetting",1);
+		showhide("vpn_server",1);
 	}
 	else if(dsl_type == "ipoa"){
 		document.form.dslx_dnsenable[0].checked = 0;
@@ -734,6 +757,10 @@ function fixed_change_dsl_type(dsl_type){
 		inputCtrl(document.form.dslx_nat[1], 1);
 		inputCtrl(document.form.dslx_upnp_enable[0], 1);
 		inputCtrl(document.form.dslx_upnp_enable[1], 1);
+		showhide("t2BC",1);
+		showhide("IPsetting",1);
+		showhide("DNSsetting",1);
+		showhide("vpn_server",1);
 	}
 	else if(dsl_type == "mer"){
 		inputCtrl(document.form.dslx_DHCPClient[0], 1);
@@ -745,6 +772,10 @@ function fixed_change_dsl_type(dsl_type){
 		inputCtrl(document.form.dslx_nat[1], 1);
 		inputCtrl(document.form.dslx_upnp_enable[0], 1);
 		inputCtrl(document.form.dslx_upnp_enable[1], 1);
+		showhide("t2BC",1);
+		showhide("IPsetting",1);
+		showhide("DNSsetting",1);
+		showhide("vpn_server",1);
 	}
 	else if(dsl_type == "bridge"){
 		document.form.dslx_dnsenable[0].checked = 1;
@@ -760,6 +791,10 @@ function fixed_change_dsl_type(dsl_type){
 		inputCtrl(document.form.dslx_nat[1], 0);
 		inputCtrl(document.form.dslx_upnp_enable[0], 0);
 		inputCtrl(document.form.dslx_upnp_enable[1], 0);
+		showhide("t2BC",0);
+		showhide("IPsetting",0);
+		showhide("DNSsetting",0);
+		showhide("vpn_server",0);
 	}
 	else {
 		alert("error");
@@ -824,6 +859,12 @@ function change_dsl_dhcp_enable(){
 		inputCtrl(document.form.dslx_ipaddr, !wan_dhcpenable);
 		inputCtrl(document.form.dslx_netmask, !wan_dhcpenable);
 		inputCtrl(document.form.dslx_gateway, !wan_dhcpenable);
+		
+		if(document.form.dslx_DHCPClient[1].checked)
+		{
+			inputCtrl(document.form.dslx_dns1, 1);
+			inputCtrl(document.form.dslx_dns2, 1);
+		}
 	}
 	else if(dsl_type == "ipoa"){
 		document.form.dslx_DHCPClient[0].checked = 0;
@@ -853,8 +894,8 @@ function change_dsl_dhcp_enable(){
 		document.form.dslx_dnsenable[1].checked = 1;
 		change_common_radio(document.form.dslx_dnsenable, 'IPConnection', 'dslx_dnsenable', 0);
 
-		inputCtrl(document.form.dslx_dnsenable[0], 1);
-		inputCtrl(document.form.dslx_dnsenable[1], 1);
+		inputCtrl(document.form.dslx_dnsenable[0], 0);
+		inputCtrl(document.form.dslx_dnsenable[1], 0);
 	}
 }
 /*
@@ -929,6 +970,51 @@ function showMAC(){
 	document.form.dslx_hwaddr.value = login_mac_str();
 }
 
+function check_macaddr(obj,flag){ //control hint of input mac address
+	if(flag == 1){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","check_mac");
+		childsel.style.color="#FFCC00";
+		obj.parentNode.appendChild(childsel);
+		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		return false;
+	}else if(flag ==2){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","check_mac");
+		childsel.style.color="#FFCC00";
+		obj.parentNode.appendChild(childsel);
+		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
+		return false;
+	}else{
+		$("check_mac") ? $("check_mac").style.display="none" : true;
+		return true;
+	}
+}
+
+/* password item show or not */
+function pass_checked(obj){
+	if(document.form.show_pass_1.checked)
+		replace_pass_type(obj, "text");
+	else
+		replace_pass_type(obj, "password");
+}
+
+/* change password type depend on browser for fix IE issue*/
+function replace_pass_type(obj, _Type){
+	if(navigator.userAgent.indexOf("MSIE") != -1){ // fix IE issue
+		var input2 = document.createElement('<input class="input_32_table" autocapitalization="off">');  // create input element
+		with (input2){ 
+			id = obj.id; 
+			value = obj.value; 
+			type = _Type; // change input type
+			name = obj.name;
+		} 
+		obj.parentNode.replaceChild(input2,obj);
+	}
+	else{	
+		obj.type= _Type;
+	}
+}
 </script>
 </head>
 
@@ -954,338 +1040,353 @@ function showMAC(){
 <input type="hidden" name="dsl_unit" value="" />
 <input type="hidden" name="dsl_enable" value="" />
 <input type="hidden" name="wan_enable" value="" disabled>
-<input type="hidden" name="wan_unit" value="" disabled>
+<!--input type="hidden" name="wan_unit" value="" disabled-->
 <span id="bridgePPPoE_relay"></span>
-
 <table class="content" align="center" cellpadding="0" cellspacing="0">
-  <tr>
-	<td width="17">&nbsp;</td>
-	<!--=====Beginning of Main Menu=====-->
-	<td valign="top" width="202">
-	  <div id="mainMenu"></div>
-	  <div id="subMenu"></div>
-	</td>
-
-	<td height="430" valign="top">
-	  <div id="tabMenu" class="submenuBlock"></div>
-
-	  <!--===================================Beginning of Main Content===========================================-->
-	<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 	<tr>
-		<td align="left" valign="top">
-			<table width="760px" border="0" cellpadding="5" cellspacing="0" class="FormTitle" id="FormTitle">
-			<tbody>
-				<tr height="10px">
-		  			<td bgcolor="#4D595D" valign="top">
-		  			<div>&nbsp;</div>
-		  			<div class="formfonttitle"><#menu5_3#> - <#menu5_3_1#></div>
-		  			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-					<div id="desc_default" class="formfontdesc"><#dsl_wan_page_desc#></div>
-		  			<div id="desc_edit" class="formfontdesc"><#Layer3Forwarding_x_ConnectionType_sectiondesc#></div>
-					</td>
-	  		</tr>
-				<tr id="WANscap" height="10px">
-					<td bgcolor="#4D595D" valign="top">
-						<table  width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-							<thead>
-							<tr>
-								<td colspan="2">WAN index</td>
-							</tr>
-							</thead>
-							<tr>
-								<th>WAN Type</th>
-								<td align="left">
-									<select id="" class="input_option" name="wan_unit" onchange="change_wan_unit();">
-									</select>
-								</td>
-							</tr>
-						</table>
-					</td>
-	  		</tr>
+		<td width="17">&nbsp;</td>
+	<!--=====Beginning of Main Menu=====-->
+		<td valign="top" width="202">
+		  <div id="mainMenu"></div>
+		  <div id="subMenu"></div>
+		</td>
 
-				<tr id="dsl_pvc_summary">
-            <td bgcolor="#4D595D" valign="top">
-            <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="DSL_WAN_table">
-                <thead>
-                <tr>
-                    <td colspan="9">PVC Summary</td>
-                </tr>
-                </thead>
-					<tr>
-						<th style="width: 7%;"><center>Index</center></th>
-						<th style="width: 9%;"><center>VPI</center></th>
-						<th style="width: 9%;"><center>VCI</center></th>
-						<th style="width: 12%;"><center>Protocol</center></th>
-						<th style="width: 13%;"><center>Encapsulation</center></th>
-						<th style="width: 10%;"><center>Internet</center></th>
-						<th style="width: 10%;"><center>IPTV</center></th>
-						<th style="width: 15%;"><center>Edit PVC</center></th>
-						<th style="width: 15%;"><center>Add / Delete</center></th>
-					</tr>
-            </table>
-            </td>
-            </tr>
-
-
-				<tr id="dslSettings">
-					<td bgcolor="#4D595D" valign="top">
-						<table  width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-							<thead>
-							<tr>
-								<td colspan="2">PVC Settings</td>
-							</tr>
-							</thead>
-							<tr>
-								<th>PVC</th>
-								<td><span id="pvc_sel" style="color:white;"></span></td>
-							</tr>
-							<tr>
-								<th><#Layer3Forwarding_x_ConnectionType_itemname#></th>
-								<td align="left">
-									<select class="input_option" name="dsl_proto" onchange="change_dsl_type(this.value);fixed_change_dsl_type(this.value);">
-										<option value="pppoe" <% nvram_match("dsl_proto", "pppoe", "selected"); %>>PPPoE</option>
-										<option value="pppoa" <% nvram_match("dsl_proto", "pppoa", "selected"); %>>PPPoA</option>
-										<option value="ipoa" <% nvram_match("dsl_proto", "ipoa", "selected"); %>>IPoA</option>
-										<option value="mer" <% nvram_match("dsl_proto", "mer", "selected"); %>>MER</option>
-										<option value="bridge" <% nvram_match("dsl_proto", "bridge", "selected"); %>>Bridge</option>
-									</select>
-								</td>
-							</tr>
-							<tr>
-								<th>VPI</th>
-								<td><input type="text" name="dsl_vpi" maxlength="3" class="input_12_table" value="<% nvram_get("dsl_vpi"); %>" onKeyPress="" onKeyUp="">&nbsp;0 - 255</td>
-							</tr>
-							<tr>
-								<th>VCI</th>
-								<td><input type="text" name="dsl_vci" maxlength="5" class="input_12_table" value="<% nvram_get("dsl_vci"); %>" onKeyPress="" onKeyUp="">&nbsp;0 - 65535</td>
-							</tr>
-							<tr>
-								<th>Encapsulation Mode</th>
-								<td align="left">
-									<select id="" class="input_option" name="dsl_encap" onchange="">
-										<option value="0" <% nvram_match("dsl_encap", "0", "selected"); %>>LLC</option>
-										<option value="1" <% nvram_match("dsl_encap", "1", "selected"); %>>VC</option>
-									</select>
-								</td>
-							</tr>
-							<tr>
-								<th>Service Category</th>
-								<td align="left">
-									<select id="" class="input_option" name="dsl_svc_cat" onchange="change_svc_cat(this.value);">
-										<option value="0" <% nvram_match("dsl_svc_cat", "0", "selected"); %>>UBR without PCR</option>
-										<option value="1" <% nvram_match("dsl_svc_cat", "1", "selected"); %>>UBR with PCR</option>
-										<option value="2" <% nvram_match("dsl_svc_cat", "2", "selected"); %>>CBR</option>
-										<option value="3" <% nvram_match("dsl_svc_cat", "3", "selected"); %>>VBR</option>
-										<option value="4" <% nvram_match("dsl_svc_cat", "4", "selected"); %>>GFR</option>
-										<option value="5" <% nvram_match("dsl_svc_cat", "5", "selected"); %>>NRT_VBR</option>
-									</select>
-								</td>
-							</tr>
-							<tr>
-								<th>PCR</th>
-								<td><input type="text" name="dsl_pcr" maxlength="4" class="input_12_table" value="<% nvram_get("dsl_pcr"); %>" onKeyPress="" onKeyUp="">&nbsp;1 - 1887</td>
-							</tr>
-							<tr>
-								<th>SCR</th>
-								<td><input type="text" name="dsl_scr" maxlength="4" class="input_12_table" value="<% nvram_get("dsl_scr"); %>" onKeyPress="" onKeyUp="">&nbsp;1 - 1887</td>
-							</tr>
-							<tr>
-								<th>MBS</th>
-								<td><input type="text" name="dsl_mbs" maxlength="3" class="input_12_table" value="<% nvram_get("dsl_mbs"); %>" onKeyPress="" onKeyUp="">&nbsp;1 - 300</td>
-							</tr>
-						</table>
-					</td>
-	  		</tr>
-
-
-				<tr id="t2BC">
-		  			<td bgcolor="#4D595D">
-						<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-						  <thead>
-						  <tr>
-							<td colspan="2"><#t2BC#></td>
-						  </tr>
-						  </thead>
-							<tr>
-								<th><#Enable_WAN#></th>
-								<td>
-									<input type="radio" name="dslx_link_enable" class="input" value="1" <% nvram_match("dslx_link_enable", "1", "checked"); %>><#checkbox_Yes#>
-									<input type="radio" name="dslx_link_enable" class="input" value="0" <% nvram_match("dslx_link_enable", "0", "checked"); %>><#checkbox_No#>
-								</td>
-							</tr>
-
-							<tr>
-								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,22);"><#Enable_NAT#></a></th>
-								<td>
-									<input type="radio" name="dslx_nat" class="input" value="1" <% nvram_match("dslx_nat", "1", "checked"); %>><#checkbox_Yes#>
-									<input type="radio" name="dslx_nat" class="input" value="0" <% nvram_match("dslx_nat", "0", "checked"); %>><#checkbox_No#>
-								</td>
-							</tr>
-
-							<tr>
-								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,23);"><#BasicConfig_EnableMediaServer_itemname#></a></th>
-								<td>
-									<input type="radio" name="dslx_upnp_enable" class="input" value="1" onclick="return change_common_radio(this, 'LANHostConfig', 'dslx_upnp_enable', '1')" <% nvram_match("dslx_upnp_enable", "1", "checked"); %>><#checkbox_Yes#>
-									<input type="radio" name="dslx_upnp_enable" class="input" value="0" onclick="return change_common_radio(this, 'LANHostConfig', 'dslx_upnp_enable', '0')" <% nvram_match("dslx_upnp_enable", "0", "checked"); %>><#checkbox_No#>
-								</td>
-							</tr>
-						</table>
-					</td>
-				</tr>
-
-				<tr id="IPsetting">
-					<td bgcolor="#4D595D" id="ip_sect">
-						<table  width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-							<thead>
-							<tr>
-								<td colspan="2"><#IPConnection_ExternalIPAddress_sectionname#></td>
-							</tr>
-							</thead>
-
-							<tr>
-								<th><#Layer3Forwarding_x_DHCPClient_itemname#></th>
-								<td>
-									<input type="radio" name="dslx_DHCPClient" class="input" value="1" onclick="change_dsl_dhcp_enable();" <% nvram_match("dslx_DHCPClient", "1", "checked"); %>><#checkbox_Yes#>
-									<input type="radio" name="dslx_DHCPClient" class="input" value="0" onclick="change_dsl_dhcp_enable();" <% nvram_match("dslx_DHCPClient", "0", "checked"); %>><#checkbox_No#>
-								</td>
-							</tr>
-
-							<tr>
-								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,1);"><#IPConnection_ExternalIPAddress_itemname#></a></th>
-								<td><input type="text" name="dslx_ipaddr" maxlength="15" class="input_15_table" value="<% nvram_get("dslx_ipaddr"); %>" onKeyPress="return is_ipaddr(this,event);"></td>
-							</tr>
-
-							<tr>
-								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,2);"><#IPConnection_x_ExternalSubnetMask_itemname#></a></th>
-								<td><input type="text" name="dslx_netmask" maxlength="15" class="input_15_table" value="<% nvram_get("dslx_netmask"); %>" onKeyPress="return is_ipaddr(this,event);"></td>
-							</tr>
-
-							<tr>
-								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,3);"><#IPConnection_x_ExternalGateway_itemname#></a></th>
-								<td><input type="text" name="dslx_gateway" maxlength="15" class="input_15_table" value="<% nvram_get("dslx_gateway"); %>" onKeyPress="return is_ipaddr(this,event);"></td>
-							</tr>
-						</table>
-					</td>
-	  		</tr>
-
-	  		<tr id="DNSsetting">
-	    		<td bgcolor="#4D595D" id="dns_sect">
-						<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-          		<thead>
-            	<tr>
-              <td colspan="2"><#IPConnection_x_DNSServerEnable_sectionname#></td>
-            	</tr>
-          		</thead>
-         			<tr>
-            		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,12);"><#IPConnection_x_DNSServerEnable_itemname#></a></th>
-								<td>
-			  					<input type="radio" name="dslx_dnsenable" class="input" value="1" onclick="change_dsl_dns_enable()" <% nvram_match("dslx_dnsenable", "1", "checked"); %> /><#checkbox_Yes#>
-			  					<input type="radio" name="dslx_dnsenable" class="input" value="0" onclick="change_dsl_dns_enable()" <% nvram_match("dslx_dnsenable", "0", "checked"); %> /><#checkbox_No#>
-								</td>
-          		</tr>
-
-          		<tr>
-            		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,13);"><#IPConnection_x_DNSServer1_itemname#></a></th>
-            		<td><input type="text" maxlength="15" class="input_15_table" name="dslx_dns1" value="<% nvram_get("dslx_dns1"); %>" onkeypress="return is_ipaddr(this,event)" /></td>
-          		</tr>
-          		<tr>
-            		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,14);"><#IPConnection_x_DNSServer2_itemname#></a></th>
-            		<td><input type="text" maxlength="15" class="input_15_table" name="dslx_dns2" value="<% nvram_get("dslx_dns2"); %>" onkeypress="return is_ipaddr(this,event)" /></td>
-          		</tr>
-        		</table>
-        	</td>
-	  		</tr>
-
-	  		<tr id="PPPsetting">
-	    		<td bgcolor="#4D595D" id="account_sect">
-				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-            	<thead>
-            	<tr>
-              	<td colspan="2"><#PPPConnection_UserName_sectionname#></td>
-            	</tr>
-            	</thead>
-              	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,4);"><#PPPConnection_UserName_itemname#></a></th>
-              	<td><input type="text" maxlength="64" class="input_32_table" name="dslx_pppoe_username" value="<% nvram_get("dslx_pppoe_username"); %>" onkeypress="return is_string(this, event)" onblur=""></td>
-			</tr>
-            	<tr>
-              	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,5);"><#PPPConnection_Password_itemname#></a></th>
-              	<td><input type="password" maxlength="64" class="input_32_table" name="dslx_pppoe_passwd" value="<% nvram_get("dslx_pppoe_passwd"); %>"></td>
-            	</tr>
-              	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,6);"><#PPPConnection_IdleDisconnectTime_itemname#></a></th>
-              	<td>
-                	<input type="text" maxlength="10" class="input_12_table" name="dslx_pppoe_idletime" value="<% nvram_get("dslx_pppoe_idletime"); %>" onkeypress="return is_number(this,event)" />
-              	</td>
-            	</tr>
-            	<tr>
-              	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,7);"><#PPPConnection_x_PPPoEMTU_itemname#></a></th>
-              	<td><input type="text" maxlength="5" name="dslx_pppoe_mtu" class="input_6_table" value="<% nvram_get("dslx_pppoe_mtu"); %>" onKeyPress="return is_number(this,event);"/>&nbsp;576 - 1492</td>
-            	</tr>
-<!--
-            	<tr>
-              	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,8);"><#PPPConnection_x_PPPoEMRU_itemname#></a></th>
-              	<td><input type="text" maxlength="5" name="wan_pppoe_mru" class="input_6_table" value="<% nvram_get("wan_pppoe_mru"); %>" onKeyPress="return is_number(this,event);"/></td>
-            	</tr>
--->
-            	<tr>
-              	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,9);"><#PPPConnection_x_ServiceName_itemname#></a></th>
-              	<td><input type="text" maxlength="32" class="input_32_table" name="dslx_pppoe_service" value="<% nvram_get("dslx_pppoe_service"); %>" onkeypress="return is_string(this, event)" onblur=""/></td>
-            	</tr>
-            	<tr>
-              	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,10);"><#PPPConnection_x_AccessConcentrator_itemname#></a></th>
-              	<td><input type="text" maxlength="32" class="input_32_table" name="dslx_pppoe_ac" value="<% nvram_get("dslx_pppoe_ac"); %>" onkeypress="return is_string(this, event)"/></td>
-            	</tr>
-            	<!-- 2008.03 James. patch for Oleg's patch. { -->
+		<td height="430" valign="top">
+			<div id="tabMenu" class="submenuBlock"></div>
+		  <!--===================================Beginning of Main Content===========================================-->
+			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 				<tr>
-				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,18);"><#PPPConnection_x_AdditionalOptions_itemname#></a></th>
-				<td><input type="text" name="dslx_pppoe_options" value="<% nvram_get("dslx_pppoe_options"); %>" class="input_32_table" maxlength="255" onKeyPress="return is_string(this, event)" onBlur="validate_string(this)"></td>
-				</tr>
-				<!-- 2008.03 James. patch for Oleg's patch. } -->
-				</table>
-          </td>
-	  </tr>
-                <tr id="vpn_server">
-                <td bgcolor="#4D595D">
-      <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-	  	<thead>
-		<tr>
-            	<td colspan="2"><#PPPConnection_x_HostNameForISP_sectionname#></td>
-            	</tr>
-		</thead>
-        	<tr>
-          	<th ><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,16);"><#PPPConnection_x_MacAddressForISP_itemname#></a></th>
-				<td>
-					<input type="text" name="dslx_hwaddr" class="input_20_table" maxlength="17" value="<% nvram_get("dslx_hwaddr"); %>" onKeyPress="return is_hwaddr(this,event)" onblur="check_macaddr(this,check_hwaddr_temp(this))">
-					<input type="button" class="button_gen" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
-				</td>
-        	</tr>
-		</table>
-      	  </td>
-				</tr>
-				<tr id="btn_apply">
-				<td bgcolor="#4D595D" valign="top">
-				  <div class="apply_gen">
-					<input class="button_gen" onclick="exit_to_main();" type="button" value="<#CTL_Cancel#>"/>
-					<input class="button_gen" onclick="applyRule();" type="button" value="<#CTL_ok#>"/>
-				  </div>
-      	  </td>
-      	  </tr>
+					<td valign="top">
+						<table width="760px" border="0" cellpadding="5" cellspacing="0" class="FormTitle" id="FormTitle">
+							<tbody>
+								<tr>
+								<td bgcolor="#4D595D" valign="top">
+									<div>&nbsp;</div>
+									<div class="formfonttitle"><#menu5_3#> - <#menu5_3_1#></div>
+									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div id="desc_default" class="formfontdesc"><#dsl_wan_page_desc#></div>
+									<div id="desc_edit" class="formfontdesc"><#Layer3Forwarding_x_ConnectionType_sectiondesc#></div>
 
-</tbody>
+									<table id="WANscap" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+										<thead>
+										<tr>
+											<td colspan="2">WAN index</td>
+										</tr>
+										</thead>
+										<tr>
+											<th>WAN Type</th>
+											<td align="left">
+												<select id="wan_unit" class="input_option" name="wan_unit" onchange="change_wan_unit();"></select>											
+											</td>
+										</tr>
+									</table>
 
-</table>
-</td>
-</form>
+									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="DSL_WAN_table">
+										<thead>
+										<tr>
+											<td colspan="9">PVC Summary</td>
+										</tr>
+										</thead>
+											<tr>
+												<th style="width: 7%;"><center>Index</center></th>
+												<th style="width: 9%;"><center>VPI</center></th>
+												<th style="width: 9%;"><center>VCI</center></th>
+												<th style="width: 12%;"><center>Protocol</center></th>
+												<th style="width: 13%;"><center>Encapsulation</center></th>
+												<th style="width: 10%;"><center>Internet</center></th>
+												<th style="width: 10%;"><center>IPTV</center></th>
+												<th style="width: 15%;"><center>Edit PVC</center></th>
+												<th style="width: 15%;"><center>Add / Delete</center></th>
+											</tr>
+									</table>
 
+									<table id="dslSettings" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+										<thead>
+										<tr>
+											<td colspan="2">PVC Settings</td>
+										</tr>
+										</thead>
+										<tr>
+											<th>PVC</th>
+											<td><span id="pvc_sel" style="color:white;"></span></td>
+										</tr>
+										<tr>
+											<th><#Layer3Forwarding_x_ConnectionType_itemname#></th>
+											<td align="left">
+												<select class="input_option" name="dsl_proto" onchange="change_dsl_type(this.value);fixed_change_dsl_type(this.value);">
+													<option value="pppoe" <% nvram_match("dsl_proto", "pppoe", "selected"); %>>PPPoE</option>
+													<option value="pppoa" <% nvram_match("dsl_proto", "pppoa", "selected"); %>>PPPoA</option>
+													<option value="ipoa" <% nvram_match("dsl_proto", "ipoa", "selected"); %>>IPoA</option>
+													<option value="mer" <% nvram_match("dsl_proto", "mer", "selected"); %>>MER</option>
+													<option value="bridge" <% nvram_match("dsl_proto", "bridge", "selected"); %>>Bridge</option>
+												</select>
+											</td>
+										</tr>
+										<tr>
+											<th>VPI</th>
+											<td>
+												<input type="text" name="dsl_vpi" maxlength="3" class="input_12_table" value="<% nvram_get("dsl_vpi"); %>" onKeyPress="" onKeyUp="">&nbsp;0 - 255
+											</td>
+										</tr>
+										<tr>
+											<th>VCI</th>
+											<td>
+												<input type="text" name="dsl_vci" maxlength="5" class="input_12_table" value="<% nvram_get("dsl_vci"); %>" onKeyPress="" onKeyUp="">&nbsp;0 - 65535
+											</td>
+										</tr>
+										<tr>
+											<th>Encapsulation Mode</th>
+											<td align="left">
+												<select id="" class="input_option" name="dsl_encap" onchange="">
+													<option value="0" <% nvram_match("dsl_encap", "0", "selected"); %>>LLC</option>
+													<option value="1" <% nvram_match("dsl_encap", "1", "selected"); %>>VC</option>
+												</select>
+											</td>
+										</tr>
+										<tr>
+											<th>Service Category</th>
+											<td align="left">
+												<select id="" class="input_option" name="dsl_svc_cat" onchange="change_svc_cat(this.value);">
+													<option value="0" <% nvram_match("dsl_svc_cat", "0", "selected"); %>>UBR without PCR</option>
+													<option value="1" <% nvram_match("dsl_svc_cat", "1", "selected"); %>>UBR with PCR</option>
+													<option value="2" <% nvram_match("dsl_svc_cat", "2", "selected"); %>>CBR</option>
+													<option value="3" <% nvram_match("dsl_svc_cat", "3", "selected"); %>>VBR</option>
+													<option value="4" <% nvram_match("dsl_svc_cat", "4", "selected"); %>>GFR</option>
+													<option value="5" <% nvram_match("dsl_svc_cat", "5", "selected"); %>>NRT_VBR</option>
+												</select>
+											</td>
+										</tr>
+										<tr>
+											<th>PCR</th>
+											<td>
+												<input type="text" name="dsl_pcr" maxlength="4" class="input_12_table" value="<% nvram_get("dsl_pcr"); %>" onKeyPress="" onKeyUp="">&nbsp;1 - 1887
+											</td>
+										</tr>
+										<tr>
+											<th>SCR</th>
+											<td>
+												<input type="text" name="dsl_scr" maxlength="4" class="input_12_table" value="<% nvram_get("dsl_scr"); %>" onKeyPress="" onKeyUp="">&nbsp;1 - 1887
+											</td>
+										</tr>
+										<tr>
+											<th>MBS</th>
+											<td>
+												<input type="text" name="dsl_mbs" maxlength="3" class="input_12_table" value="<% nvram_get("dsl_mbs"); %>" onKeyPress="" onKeyUp="">&nbsp;1 - 300
+											</td>
+										</tr>
+									</table>
 
+									<table id="t2BC" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+										<thead>
+										<tr>
+											<td colspan="2"><#t2BC#></td>
+										</tr>
+										</thead>
+										<tr>
+											<th><#Enable_WAN#></th>
+											<td>
+												<input type="radio" name="dslx_link_enable" class="input" value="1" <% nvram_match("dslx_link_enable", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" name="dslx_link_enable" class="input" value="0" <% nvram_match("dslx_link_enable", "0", "checked"); %>><#checkbox_No#>
+											</td>
+										</tr>
+										<tr>
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,22);"><#Enable_NAT#></a></th>
+											<td>
+												<input type="radio" name="dslx_nat" class="input" value="1" <% nvram_match("dslx_nat", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" name="dslx_nat" class="input" value="0" <% nvram_match("dslx_nat", "0", "checked"); %>><#checkbox_No#>
+											</td>
+										</tr>
+										<tr>
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,23);"><#BasicConfig_EnableMediaServer_itemname#></a></th>
+											<td>
+												<input type="radio" name="dslx_upnp_enable" class="input" value="1" onclick="return change_common_radio(this, 'LANHostConfig', 'dslx_upnp_enable', '1')" <% nvram_match("dslx_upnp_enable", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" name="dslx_upnp_enable" class="input" value="0" onclick="return change_common_radio(this, 'LANHostConfig', 'dslx_upnp_enable', '0')" <% nvram_match("dslx_upnp_enable", "0", "checked"); %>><#checkbox_No#>
+											</td>
+										</tr>
+									</table>
+
+									<table id="IPsetting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+										<thead>
+										<tr>
+											<td colspan="2"><#IPConnection_ExternalIPAddress_sectionname#></td>
+										</tr>
+										</thead>
+
+										<tr>
+											<th><#Layer3Forwarding_x_DHCPClient_itemname#></th>
+											<td>
+												<input type="radio" name="dslx_DHCPClient" class="input" value="1" onclick="change_dsl_dhcp_enable();" <% nvram_match("dslx_DHCPClient", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" name="dslx_DHCPClient" class="input" value="0" onclick="change_dsl_dhcp_enable();" <% nvram_match("dslx_DHCPClient", "0", "checked"); %>><#checkbox_No#>
+											</td>
+										</tr>
+
+										<tr>
+											<th>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,1);"><#IPConnection_ExternalIPAddress_itemname#></a>
+											</th>
+											<td>
+												<input type="text" name="dslx_ipaddr" maxlength="15" class="input_15_table" value="<% nvram_get("dslx_ipaddr"); %>" onKeyPress="return is_ipaddr(this,event);">
+											</td>
+										</tr>
+
+										<tr>
+											<th>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,2);"><#IPConnection_x_ExternalSubnetMask_itemname#></a>
+											</th>
+											<td>
+												<input type="text" name="dslx_netmask" maxlength="15" class="input_15_table" value="<% nvram_get("dslx_netmask"); %>" onKeyPress="return is_ipaddr(this,event);">
+											</td>
+										</tr>
+
+										<tr>
+											<th>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,3);"><#IPConnection_x_ExternalGateway_itemname#></a>
+											</th>
+											<td>
+												<input type="text" name="dslx_gateway" maxlength="15" class="input_15_table" value="<% nvram_get("dslx_gateway"); %>" onKeyPress="return is_ipaddr(this,event);">
+											</td>
+										</tr>
+									</table>
+
+									<table id="DNSsetting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+										<thead>
+										<tr>
+											<td colspan="2"><#IPConnection_x_DNSServerEnable_sectionname#></td>
+										</tr>
+										</thead>
+										<tr>
+											<th>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,12);"><#IPConnection_x_DNSServerEnable_itemname#></a>
+											</th>
+											<td>
+												<input type="radio" name="dslx_dnsenable" class="input" value="1" onclick="change_dsl_dns_enable()" <% nvram_match("dslx_dnsenable", "1", "checked"); %> /><#checkbox_Yes#>
+												<input type="radio" name="dslx_dnsenable" class="input" value="0" onclick="change_dsl_dns_enable()" <% nvram_match("dslx_dnsenable", "0", "checked"); %> /><#checkbox_No#>
+											</td>
+										</tr>
+										<tr>
+											<th>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,13);"><#IPConnection_x_DNSServer1_itemname#></a>
+											</th>
+											<td>
+												<input type="text" maxlength="15" class="input_15_table" name="dslx_dns1" value="<% nvram_get("dslx_dns1"); %>" onkeypress="return is_ipaddr(this,event)" />
+											</td>
+										</tr>
+										<tr>
+											<th>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,14);"><#IPConnection_x_DNSServer2_itemname#></a>
+											</th>
+											<td>
+												<input type="text" maxlength="15" class="input_15_table" name="dslx_dns2" value="<% nvram_get("dslx_dns2"); %>" onkeypress="return is_ipaddr(this,event)" />
+											</td>
+										</tr>
+									</table>
+
+									<table id="PPPsetting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+										<thead>
+										<tr>
+											<td colspan="2"><#PPPConnection_UserName_sectionname#></td>
+										</tr>
+										</thead>
+										<th>
+											<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,4);"><#PPPConnection_UserName_itemname#></a>
+										</th>
+										<td>
+											<input type="text" maxlength="64" class="input_32_table" name="dslx_pppoe_username" value="<% nvram_get("dslx_pppoe_username"); %>" onkeypress="return is_string(this, event)" onblur="">
+										</td>
+							
+										<tr>
+											<th>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,5);"><#PPPConnection_Password_itemname#></a>
+											</th>
+											<td>
+												<div style="margin-top:2px;"><input type="password" maxlength="64" class="input_32_table" id="dslx_pppoe_passwd" name="dslx_pppoe_passwd" value="<% nvram_get("dslx_pppoe_passwd"); %>"></div>
+												<div style="margin-top:1px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.dslx_pppoe_passwd);"><#QIS_show_pass#></div>
+											</td>
+										</tr>
+										<tr>
+											<th>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,6);"><#PPPConnection_IdleDisconnectTime_itemname#></a>
+											</th>
+											<td>
+												<input type="text" maxlength="10" class="input_12_table" name="dslx_pppoe_idletime" value="<% nvram_get("dslx_pppoe_idletime"); %>" onkeypress="return is_number(this,event)" />
+											</td>
+										</tr>
+										<tr>
+											<th>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,7);"><#PPPConnection_x_PPPoEMTU_itemname#></a>
+											</th>
+											<td>
+												<input type="text" maxlength="5" name="dslx_pppoe_mtu" class="input_6_table" value="<% nvram_get("dslx_pppoe_mtu"); %>" onKeyPress="return is_number(this,event);"/>&nbsp;576 - 1492
+											</td>
+										</tr>
+						<!--
+										<tr>
+										<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,8);"><#PPPConnection_x_PPPoEMRU_itemname#></a></th>
+										<td><input type="text" maxlength="5" name="wan_pppoe_mru" class="input_6_table" value="<% nvram_get("wan_pppoe_mru"); %>" onKeyPress="return is_number(this,event);"/></td>
+										</tr>
+						-->
+										<tr>
+											<th>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,9);"><#PPPConnection_x_ServiceName_itemname#></a>
+											</th>
+											<td>
+												<input type="text" maxlength="32" class="input_32_table" name="dslx_pppoe_service" value="<% nvram_get("dslx_pppoe_service"); %>" onkeypress="return is_string(this, event)" onblur=""/>
+											</td>
+										</tr>
+										<tr>
+											<th>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,10);"><#PPPConnection_x_AccessConcentrator_itemname#></a>
+											</th>
+											<td>
+												<input type="text" maxlength="32" class="input_32_table" name="dslx_pppoe_ac" value="<% nvram_get("dslx_pppoe_ac"); %>" onkeypress="return is_string(this, event)"/>
+											</td>
+										</tr>
+										<!-- 2008.03 James. patch for Oleg's patch. { -->
+										<tr>
+											<th>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,18);"><#PPPConnection_x_AdditionalOptions_itemname#></a>
+											</th>
+											<td>
+												<input type="text" name="dslx_pppoe_options" value="<% nvram_get("dslx_pppoe_options"); %>" class="input_32_table" maxlength="255" onKeyPress="return is_string(this, event)" onBlur="validate_string(this)">
+											</td>
+										</tr>
+										<!-- 2008.03 James. patch for Oleg's patch. } -->
+									</table>
+
+									<table id="vpn_server" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+										<thead>
+										<tr>
+											<td colspan="2"><#PPPConnection_x_HostNameForISP_sectionname#></td>
+										</tr>
+										</thead>
+										<tr>
+											<th>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,16);"><#PPPConnection_x_MacAddressForISP_itemname#></a>
+											</th>
+											<td>
+												<input type="text" name="dslx_hwaddr" class="input_20_table" maxlength="17" value="<% nvram_get("dslx_hwaddr"); %>" onKeyPress="return is_hwaddr(this,event)">
+												<input type="button" class="button_gen_long" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
+											</td>
+										</tr>
+									</table>
+
+									<div id="btn_apply" class="apply_gen" style="height:auto">
+										<input class="button_gen" onclick="exit_to_main();" type="button" value="<#CTL_Cancel#>"/>
+										<input class="button_gen" onclick="applyRule();" type="button" value="<#CTL_ok#>"/>
+									</div>
+
+								</td>
+							</tr>
+							</tbody>
+						</table>
+					</td>
+				</form>
 			</table>
 		</td>
 		<!--===================================Ending of Main Content===========================================-->
-
-    <td width="10" align="center" valign="top">&nbsp;</td>
+		<td width="10" align="center" valign="top">&nbsp;</td>
 	</tr>
 </table>
-
 <div id="footer"></div>
-
 </body>
 </html>

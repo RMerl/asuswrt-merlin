@@ -1,0 +1,12 @@
+# arm testcase for stmia $rb!,{$rlist}
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global stmia
+stmia:
+	stmia r0!,{0}
+
+	pass

@@ -1,0 +1,4 @@
+# Host: Solaris x86_64
+NATDEPFILES= fork-child.o amd64-nat.o i386v4-nat.o i386-sol2-nat.o \
+	procfs.o proc-api.o proc-events.o proc-flags.o proc-why.o gcore.o
+NAT_FILE= nm-i386sol2.h

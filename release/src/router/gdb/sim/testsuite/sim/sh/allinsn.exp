@@ -1,0 +1,89 @@
+# sh tests
+
+set all "sh shdsp"
+
+set global_as_options ""
+set global_ld_options ""
+
+foreach opt $board_variant_list {
+    switch "x$opt" {
+	x-ml { set global_as_options "-little --defsym LITTLE=1"
+	       set global_ld_options "-EL" }
+    }
+}
+
+if [istarget sh-*elf] {
+    run_sim_test add.s    $all
+    run_sim_test and.s    $all
+    run_sim_test bandor.s sh
+    run_sim_test bandornot.s sh
+    run_sim_test bclr.s   sh
+    run_sim_test bld.s    sh
+    run_sim_test bldnot.s sh
+    run_sim_test bset.s   sh
+    run_sim_test bst.s    sh
+    run_sim_test bxor.s   sh
+    run_sim_test clip.s   sh
+    run_sim_test div.s    sh
+    run_sim_test dmxy.s   shdsp
+    run_sim_test fabs.s   sh
+    run_sim_test fadd.s   sh
+    run_sim_test fcmpeq.s sh
+    run_sim_test fcmpgt.s sh
+    run_sim_test fcnvds.s sh
+    run_sim_test fcnvsd.s sh
+    run_sim_test fdiv.s   sh
+    run_sim_test fipr.s   sh
+    run_sim_test fldi0.s  sh
+    run_sim_test fldi1.s  sh
+    run_sim_test flds.s   sh
+    run_sim_test float.s  sh
+    run_sim_test fmac.s   sh
+    run_sim_test fmov.s   sh
+    run_sim_test fmul.s   sh
+    run_sim_test fneg.s   sh
+    run_sim_test fpchg.s  sh
+    run_sim_test frchg.s  sh
+    run_sim_test fschg.s  sh
+    run_sim_test fsqrt.s  sh
+    run_sim_test fsub.s   sh
+    run_sim_test ftrc.s   sh
+    run_sim_test ldrc.s   shdsp
+    run_sim_test loop.s   shdsp
+    run_sim_test macl.s   sh
+    run_sim_test macw.s   sh
+    run_sim_test mov.s    $all
+    run_sim_test movi.s   $all
+    run_sim_test movli.s  $all
+    run_sim_test movua.s  $all
+    run_sim_test movxy.s  shdsp
+    run_sim_test mulr.s   sh
+    run_sim_test pabs.s   shdsp
+    run_sim_test paddc.s  shdsp
+    run_sim_test padd.s   shdsp
+    run_sim_test pand.s   shdsp
+    run_sim_test pclr.s   shdsp
+    run_sim_test pdec.s   shdsp
+    run_sim_test pdmsb.s  shdsp
+    run_sim_test pinc.s   shdsp
+    run_sim_test pmuls.s  shdsp
+    run_sim_test prnd.s   shdsp
+    run_sim_test pshai.s  shdsp
+    run_sim_test pshar.s  shdsp
+    run_sim_test pshli.s  shdsp
+    run_sim_test pshlr.s  shdsp
+    run_sim_test psub.s   shdsp
+    run_sim_test pswap.s  shdsp
+    run_sim_test pushpop.s sh
+    run_sim_test resbank.s sh
+    run_sim_test sett.s   sh
+    run_sim_test shll.s   $all
+    run_sim_test shll2.s  $all
+    run_sim_test shll8.s  $all
+    run_sim_test shll16.s $all
+    run_sim_test shlr.s   $all
+    run_sim_test shlr2.s  $all
+    run_sim_test shlr8.s  $all
+    run_sim_test shlr16.s $all
+    run_sim_test swap.s   $all
+}

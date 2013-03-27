@@ -1,0 +1,78 @@
+'\" t
+.\"     Title: ne_malloc
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_MALLOC" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_malloc, ne_calloc, ne_realloc, ne_strdup, ne_strndup, ne_oom_callback \- memory allocation wrappers
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_alloc\&.h>
+.fi
+.ft
+.HP \w'void\ *ne_malloc('u
+.BI "void *ne_malloc(size_t\ " "size" ");"
+.HP \w'void\ *ne_calloc('u
+.BI "void *ne_calloc(size_t\ " "size" ");"
+.HP \w'void\ *ne_realloc('u
+.BI "void *ne_realloc(void\ *" "size" ", size_t\ " "len" ");"
+.HP \w'char\ *ne_strdup('u
+.BI "char *ne_strdup(const\ char\ *" "s" ");"
+.HP \w'char\ *ne_strndup('u
+.BI "char *ne_strndup(const\ char\ *" "s" ", size_t\ " "size" ");"
+.HP \w'void\ ne_oom_callback('u
+.BI "void ne_oom_callback(void\ (*" "callback" ")(void));"
+.SH "DESCRIPTION"
+.PP
+The functions
+\fBne_malloc\fR,
+\fBne_calloc\fR,
+\fBne_realloc\fR,
+\fBne_strdup\fR
+and
+\fBne_strdnup\fR
+provide wrappers for the equivalent functions in the standard C library\&. The wrappers provide the extra guarantee that if the C library equivalent returns
+NULL
+when no memory is available, an optional callback will be called, and the library will then call
+\fBabort\fR()\&.
+.PP
+\fBne_oom_callback\fR
+registers a callback which will be invoked if an out of memory error is detected\&.
+.SH "NOTES"
+.PP
+If the operating system uses optimistic memory allocation, the C library memory allocation routines will not return
+NULL, so it is not possible to gracefully handle memory allocation failures\&.
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

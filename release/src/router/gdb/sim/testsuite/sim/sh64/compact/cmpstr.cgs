@@ -1,0 +1,148 @@
+# sh testcase for cmp/str $rm, $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+.macro rot8
+	rotr r0
+	rotr r0
+	rotr r0
+	rotr r0
+	rotr r0
+	rotr r0
+	rotr r0
+	rotr r0
+.endm
+
+	start
+
+# Use multiple "wrong" labels because this program is quite long. It's
+# likely that some instructions will be too far away from the branch
+# target to use PC-relative branches.
+	
+match0:
+	# No bytes matching.
+	mov #1, r0
+	neg r0, r0
+	xor #170, r0
+	rot8
+	xor #170, r0
+	rot8
+	xor #170, r0
+	rot8
+	xor #170, r0
+	rot8
+	mov r0, r1
+	mov #1, r0
+	neg r0, r0
+	xor #85, r0
+	rot8
+	xor #85, r0
+	rot8
+	xor #85, r0
+	rot8
+	xor #85, r0
+	rot8
+	cmp/str r0, r1
+	bt wrong0
+
+	bra match1
+	nop
+wrong0:
+	fail
+
+match1:
+	# One byte matching.
+	mov #1, r0
+	neg r0, r0
+	xor #170, r0
+	rot8
+	xor #170, r0
+	rot8
+	xor #170, r0
+	rot8
+	mov r0, r1
+	mov #1, r0
+	neg r0, r0
+	xor #85, r0
+	rot8
+	xor #85, r0
+	rot8
+	xor #85, r0
+	rot8
+	cmp/str r0, r1
+	bf wrong1
+
+	bra match2
+	nop
+wrong1:
+	fail
+
+match2:
+	# Two bytes matching.
+	mov #1, r0
+	neg r0, r0
+	xor #170, r0
+	rot8
+	xor #170, r0
+	rot8
+	mov r0, r1
+	mov #1, r0
+	neg r0, r0
+	xor #85, r0
+	rot8
+	xor #85, r0
+	rot8
+	cmp/str r0, r1
+	bf wrong2
+
+	bra match3
+	nop
+wrong2:
+	fail
+	
+byte0:
+match3:
+	# One byte matching.
+	# This is also the test for byte 0.
+	mov #85, r0
+	mov #85, r1
+	cmp/str r0, r1
+	bf wrong3
+
+byte1:
+	# Match in byte position 1.
+	mov #85, r0
+	shll8 r0
+	mov #85, r1
+	shll8 r1
+	cmp/str r0, r1
+	bf wrong3
+
+byte2:
+	# Match in byte position 2.
+	mov #85, r0
+	shll16 r0
+	mov #85, r1
+	shll16 r1
+	cmp/str r0, r1
+	bf wrong3
+
+byte3:
+	# Match in byte position 3.
+	mov #85, r0
+	shll16 r0
+	shll8 r0
+	mov #85, r1
+	shll16 r1
+	shll8 r1
+	cmp/str r0, r1
+	bf wrong3
+
+okay:
+	pass
+wrong3:
+	fail
+	

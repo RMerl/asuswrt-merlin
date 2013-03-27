@@ -1,7 +1,7 @@
 /*
  * Misc system wide definitions
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmdefs.h 316696 2012-02-23 03:29:35Z $
+ * $Id: bcmdefs.h 346153 2012-07-20 07:39:53Z $
  */
 
 #ifndef	_bcmdefs_h_
@@ -99,7 +99,7 @@ extern bool attach_part_reclaimed;
 #define	BCMNMIATTACHDATA(_data)	_data
 #define CONST	const
 #ifndef BCMFASTPATH
-#ifdef mips
+#if defined(mips) || defined(__ARM_ARCH_7A__)
 #define BCMFASTPATH		__attribute__ ((__section__ (".text.fastpath")))
 #define BCMFASTPATH_HOST	__attribute__ ((__section__ (".text.fastpath_host")))
 #else
@@ -260,9 +260,9 @@ typedef struct {
 #define BCMEXTRAHDROOM 220
 #else /* BCM_RPC_NOCOPY || BCM_RPC_TXNOCOPY */
 #ifdef CTFMAP
-#define BCMEXTRAHDROOM 176
+#define BCMEXTRAHDROOM 208
 #else /* CTFMAP */
-#define BCMEXTRAHDROOM 172
+#define BCMEXTRAHDROOM 204
 #endif /* CTFMAP */
 #endif /* BCM_RPC_NOCOPY || BCM_RPC_TXNOCOPY */
 

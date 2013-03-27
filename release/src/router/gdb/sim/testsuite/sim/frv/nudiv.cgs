@@ -1,0 +1,49 @@
+# frv testcase for nudiv $GRi,$GRj,$GRk
+# mach: fr500 fr550 frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global nudiv
+nudiv:
+	set_spr_immed	0,gner0
+	set_spr_immed	0,gner1
+
+	; simple division 12 / 3
+	set_gr_immed   	0x00000003,gr2
+	set_gr_immed   	0x0000000c,gr3
+	nudiv      	gr3,gr2,gr3
+	test_gr_immed  	0x00000003,gr2
+	test_gr_immed  	0x00000004,gr3
+	test_spr_immed	0,gner0
+	test_spr_immed	0,gner1
+
+	; example 1 from the fr30 manual
+	set_gr_limmed  	0x0123,0x4567,gr2
+	set_gr_limmed  	0xfedc,0xba98,gr3
+	nudiv      	gr3,gr2,gr3
+	test_gr_limmed 	0x0123,0x4567,gr2
+	test_gr_immed  	0x000000e0,gr3
+	test_spr_immed	0,gner0
+	test_spr_immed	0,gner1
+
+	or_spr_immed	0x20,isr	; turn on isr.edem
+	nudiv      	gr1,gr0,gr32	; divide by zero
+	test_spr_immed	1,gner0
+	test_spr_immed	0,gner1
+
+	and_spr_immed	-33,isr		; turn off isr.edem
+	nudiv      	gr1,gr0,gr10	; divide by zero
+	test_spr_immed	1,gner0
+	test_spr_immed	0x00000400,gner1
+
+	; simple division 12 / 3 -- should turn off ne flag
+	set_gr_immed   	12,gr1
+	set_gr_immed   	3,gr3
+	nudiv      	gr1,gr3,gr10
+	test_gr_immed  	4,gr10
+	test_spr_immed	1,gner0
+	test_spr_immed	0,gner1
+
+	pass

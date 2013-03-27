@@ -17,6 +17,8 @@
 #ifndef VSF_SYSUTIL_H
 #define VSF_SYSUTIL_H
 
+#include "shared.h"
+
 // 2007.05 James {
 #define DENIED_DIR "...DENIED_DIR"
 // 2007.05 James }
@@ -274,6 +276,11 @@ void vsf_sysutil_activate_keepalive(int fd);
 void vsf_sysutil_set_iptos_throughput(int fd);
 void vsf_sysutil_activate_reuseaddr(int fd);
 void vsf_sysutil_set_nodelay(int fd);
+#ifdef RTCONFIG_SHP
+void vsf_sysutil_set_lfp(int fd);
+#else
+#define vsf_sysutil_set_lfp(fd) do {} while (0)
+#endif
 void vsf_sysutil_activate_sigurg(int fd);
 void vsf_sysutil_activate_oobinline(int fd);
 void vsf_sysutil_activate_linger(int fd);

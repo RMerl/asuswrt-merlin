@@ -1,0 +1,2168 @@
+Wed May 29 22:57:40 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
+
+	* ChangeLog.00, ChangeLog: ChangeLog from gdb-4.16 becomes
+        ChangeLog.00
+
+Thu Apr  4 15:17:22 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* INSTALL: Fix some long lines and remove x86 specific options in
+	the examples.
+
+Sun Mar 31 15:47:33 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
+
+        * INSTALL: Update to reflect gdb-4.16.
+
+        * RUN: Update to reflect gdb-4.16.  Review notes on building a BSD
+        runtime environment.
+
+	* README: Point out copyright status of simulator in introduction.
+
+Thu Mar  7 19:53:49 1996  Michael Meissner  <meissner@cygnus.com>
+
+	* emul_netbsd.c: Only include sys/mount.h if HAVE_SYS_MOUNT_H is
+	defined.
+	* configure.in: Test for sys/mount.h.
+	* configure,config.in: Regenerate.
+
+Thu Feb 22 22:48:57 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* README, RUN, INSTALL: Update to reflect announcement
+	* psim: PSIM 1.0.1 released
+
+Thu Feb 22 14:01:56 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* emul_bugapi.c (emul_bugapi_do_read): New function to handle
+	reads.
+	(emul_bugapi_instruction_call): Add support for .INCHR/.INLN
+	system calls.
+
+	* emul_bugapi.c (emul_bugapi_do_write): Call flush_stdoutput.
+	* emul_netbsd.c (do_write): Call flush_stdoutput.
+
+	* main.c (flush_stdoutput): Do fflush (stdout).
+	* sim_calls.c (flush_stdoutput): Do gdb_flush (gdb_stdout);
+	* sim_callbacks.h (flush_stdoutput): Declare.
+
+Wed Feb 21 10:39:35 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* emul_bugapi.c (bug_mapping): New structure to map bug system
+	call numbers to a string.
+	(toplevel): Add remaining bugapi system calls.
+	(emul_bugapi_instruction_name): Map bugapi system call number to a
+	string.
+	(emul_bugapi_do_write): Common code to process write system calls.
+	(emul_bugapi_instruction_call): If os-emul tracing is on, trace
+	the system call.  Use the name to print unknown system call.
+	Correct implementation of _OUTLN.  Add support for _OUTSTR and
+	_PCRLR system calls.
+
+Wed Feb 21 17:07:27 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* NOTES: New file.  Ramblings on why things were done they way
+ 	they were.
+	
+	* psim.c (psim_options): Didn't enter the model value into the
+ 	device tree as a string.
+	
+  	* cpu.c (cpu_synchronize_context): Wrong test for conditional
+ 	flush of cache.
+
+	* emul_generic.c (emul_add_tree_hardware): reg value didn't match
+ 	bus address.
+	
+	* ppc-opcode-flat: new file. Generate an instruction decode
+ 	function like ppc-opcode-complex but use switch statements.
+
+	* INSTALL: document new opcode file, add example configurations.
+
+Tue Feb 20 18:42:31 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* main.c (main): rename psim instance (system) to simulation and
+ 	make global.
+	* main.c (error): print out performance even when an error occures.
+
+	* emul_bugapi.c (emul_bugapi_create): Fix argument passing.
+
+	* emul_generic.c (emul_add_tree_hardware): Move hardware devices
+ 	to 0x80000000 from 0x400000.
+
+Mon Feb 19 22:54:40 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* ppc-instructions (TLB Invalidate Entry, TLB Invalidate ALL):
+        Implement by passing on request to all processors.
+	* ppc-instructions (TLB Synchronize): Implement as empty, processor
+	tlb's are always in sync.
+
+	* cpu.c (cpu_page_tlb_invalidate_all): New function.  Pass on TLB
+        invalidate request to processors VM sub-system.
+	* cpu.c (cpu_page_tlb_invalidate_entry): Ditto.
+
+	* vm.c (vm_page_tlb_invalidate_all): New function. Mark all page
+        TLB entries as invalid.
+	* vm.c (vm_page_tlb_invalidate_entry): New function. Ditt but only
+	invalidate one TLB entry.
+
+	* psim.c (psim_init): Invalidate TLB's before (re)starting.
+
+Mon Feb 19 21:25:56 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* emul_generic.c (emul_add_tree_options): Add argument
+        oea_interrupt_prefix (0 or 1) that specifies the prefix MSR[IP]
+        and hence the location of the interrupt vectors.  Add this to the
+        device tree.
+
+	* emul_chirp.c (emul_chirp_create): Allow configuration of
+        floating-point and interrupt prefix (default 0) using the above.
+
+	* emul_netbsd.c (emul_netbsd_create): Pass dummy arg for
+        interrupt-prefix.
+
+	* emul_bugapi.c (emul_bugapi_create): Allow configuration of
+        interrupt prefix (default 1) and configure interrupt table traps
+        accordingly.
+
+	* emul_generic.c (emul_add_tree_hardware): Include a small eeprom
+        in the list of devices.
+
+	* device_table.c: For moment fake eeprom device by a memory
+        device.  In future will need a proper eeprom device.
+
+Tue Feb 20 17:01:26 1996  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+	* config.in: Regenerated.
+
+Fri Feb 16 10:42:27 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* psim.c: Include options.h so print_options is declared.
+
+Thu Feb 15 18:10:13 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* emul_netbsd.c (toplevel): Do not include sys/resource.h if the
+	system doesn't have it, and turn off getrusage processing.
+	(write_rusage): #ifdef out if we don't have getrusage.
+	(do_getrusage): Define as 0 if we don't have getrusage.
+
+Wed Feb 14 17:38:12 1996  J. T. Conklin  <jtc@cygnus.com>
+
+	* configure.in (AC_HEADER_DIRENT): Add, so that we can figure out
+	where the directory functions are declared.
+	* configure: Regenerate
+
+	* emul_netbsd.c: Use the macros defined by configure to find the
+	appropriate directory functions.
+
+Thu Feb  8 00:53:13 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* configure.in (xor_endian): Trace setting of xor-endian flag.
+
+Wed Feb  7 18:20:56 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* psim.c (psim_usage): Extend documentation.
+
+	* ppc-instructions (model-print): fix typo.
+
+Sun Feb  4 23:58:02 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* configure.in (with-smp): Default configuration allow up to
+	five processors (but enable only one).
+
+	* emul_bugapi.c (emul_bugapi_create): If floating-point is
+	allowed, enable the floating point instruction set in the
+	msr.
+
+Tue Jan 30 22:52:32 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* emul_chirp.c (chirp_emul_seek, chirp_emul_read,
+        chirp_emul_write): Tolerate invalid ihandles.
+
+	* device.c (device_instance_create, device_instance_delete):
+	init/delete instance name
+
+	* emul_chirp.c (emul_chirp_instruction_call): Read the nr args and
+        returns when determining the service.
+
+	* emul_chirp.c (chirp_read_t2h_args): Allow variable number of
+        args for the method "call-method".
+
+	* emul_chirp.c (chirp_emul_getprop): Tolerate a n_returns of zero
+        - should be one. Some OpenBoot code doesn't pass correct arg.
+
+	* emul_chirp.c (chirp_emul_getprop): Trace more property types.
+
+Tue Jan 30 19:12:29 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* RUN: New file. Describe how to run PSIM
+	* INSTALL: New file. Describe how to install PSIM
+	* README: New file. Overview PSIM.
+	* BUGS: New file. Briefly discuss bugs and limitations
+	
+Wed Jan 24 20:28:08 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* emul_bugapi.c (OEA_START_ADDRESS): Put it back to 0x100000,
+        wasn't correctly using GLD.
+
+Mon Jan 22 22:44:13 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* emul_generic.c (emul_add_tree_options): Make default number of
+	active processors 1 (even when SMP enabled).
+
+Mon Jan 22 22:37:34 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* device_table.c (icu_io_read_buffer_callback): Add extra register
+        (at addr + 4) that returns number of processors.
+
+	* emul_generic.c (emul_add_tree_hardware): Update device node to
+        match.
+
+Mon Jan 22 22:00:42 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* emul_bugapi.c (OEA_START_ADDRESS): Change to 0x4000 so that it
+        matches gas-960116/ld.
+
+Fri Jan 19 00:32:27 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* psim-960119 released - psim-1.0b01.
+
+Fri Jan 19 00:32:27 1996  Andrew Cagney - aka Noid  <cagney@highland.au.com>
+
+	* psim.c (psim_create): Re-order so that all options are set
+        before the CPU's are created.  Was breaking mon_create();
+
+	* psim.c (psim_create): Tidy up conflicting configuration errors.
+
+	* debug.c: Add missing print-info entry to trace table.
+
+	* os_emul.c (os_emul_create): Fix `-e' option. Was looking under
+        wrong name.
+
+	* psim.c (psim_options): Fix `-r' option. Was entering under wrong
+        name.
+
+Thu Jan 18 20:33:48 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* vm.c (om_unpack_bats): Fix checking of bat bits.
+
+	* emul_chirp.c (emul_chirp_create): Store address of OB in memory
+ 	in the os_emul_data structure.
+
+	* emul_bugapi.c (emul_bugapi_create): Store the address of the
+ 	bugapi code (in main memory) in the os_emul_data structure.
+
+Thu Jan 18 01:14:55 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* vm.c (om_translate_effective_to_real): Fix trace output.
+
+Wed Jan 17 22:21:55 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* device_table.c (generic_device_init_address): Create memory from
+        information obtained from `reg' property.
+	* device_table.c (vm_init_address_callback): Use information
+        obtained from properties.
+	* emul_netbsd.c (emul_netbsd_create): Update to create device and
+        property entries to match
+
+Tue Jan 16 09:50:53 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* idecode_expression.h (ALU_END): Add ITRACE of the result.
+
+	* ppc-instructions (Equivalent): Enable this instruction.
+	(Add to Minus One Extended): Ditto.
+	(Subtract from Minus One Extended): Ditto.
+	(Add/And/Or/Xor Immediate): Add alu trace of result.
+	(Add/And/Or/Xor Shifted Immediate): Ditto.
+	(And/Or/Equivalent/Nand/Nor): Ditto.
+	(And/Or with Complement): Ditto.
+	(Extend Sign Byte/Half Word): Ditto.
+	(Count Leading Zeros): Ditto.
+	(Shift Right Algerbraic Word): Ditto.
+	(Shift Right Algerbraic Word Immediate): Ditto.
+
+Tue Jan  9 15:10:27 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* emul_bugapi.c (emul_bugapi_instruction_call) : Make format type
+ 	correct.
+	* emul_chirp.c (map_over_chirp_note) : Ditto
+	* emul_chirp.c (chirp_emul_test) : Ditto
+	* device_table.c (register_init): Ditto
+
+Tue Jan  9 14:16:26 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* configure.in: Make disable-sim-switch default.  Switch only
+ 	useful if using --enable-sim-opcode=ppc-opcode-stupid and then
+ 	only marginally so.
+
+Mon Jan  8 12:17:22 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* device_table.c (register_init): Make format type correct.
+
+Wed Jan  3 19:21:46 1996  Andrew Cagney  <cagney@highland.com.au>
+
+	* emul_bugapi.c (emul_bugapi_create): Add nodes to init the
+ 	system-call trap to the emul instruction call instruction (Along
+ 	with an rfi and infinate loop).
+
+	* emul_bugapi.c (emul_bugapi_instruction_call): Expand to include
+ 	a few real PPC bug calls.  Test with simple hello world.
+
+Tue Jan  2 20:51:19 1996  Andrew Cagney - aka Noid  <cagney@highland.com.au>
+
+	* device.h, device.c (device_child, device_sibling): New
+        functions.  Return corresponding device value.
+
+	* emul_chirp.c (chirp_emul_child, chirp_emul_peer,
+        chirp_emul_parent): New functions - emulate corresponding OpenBoot
+        interfaces.
+
+	* device_table.c (register_init): Extend properties attached to
+        register init node to allow a specific processor's register to be
+        specified.
+
+	* emul_chirp.c (emul_chirp_create): Init SMP correctly - the
+        initial PC for all processors is an infinate loop but then, for
+        processor zero, is quickly changed to be the correct code starting
+        address.
+
+	* emul_chirp.c (emul_chirp_create): Add fake bootpath
+        et.al. properties to tree.
+
+	* emul_chirp.c (chirp_emul_getproplen): New function.  Emulate the
+        getproplen OpenBoot call.
+
+	* emul_chirp.c (emul_chirp_instruction_call): Document other
+        possible chirp emulation internal states.
+
+	* emul_chirp.c (emul_chirp_instruction_call): Trace failed lookups
+ 	as well as successful ones.
+	
+	* emul_chirp.c (emul_chirp_open): New function - handle open
+        client call.
+
+	* Makefile.in (maintainer-clean): Proper rule that eliminates more
+        junk.
+
+Tue Dec 19 13:00:11 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* emul_chirp.c (chirp_emul_exit): Full out call.
+
+	* device_table.c (htab_map_page): Wasn't handling byte swap when
+	creating entries in the hash table.
+
+	* device.c (device_tree_find_node): Allow primative wild-card match
+ 	of device names with the path.
+
+	FIXME: As mentioned earlier, the device stuff needs work to bring
+ 	it into line with OpenBoot.  Part of this work is rewriting the
+	find_node function so that it behaves as specified in p1275.
+
+Mon Dec 18 19:58:56 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* emul_chrp.c (chirp_emul_write, chirp_emul_finddevice): add
+ 	better tracing.
+
+	* emul_chrp.c: Change return type of emul functions to int.  Emul
+ 	functions either return -1 or zero so unsigned was a bit
+ 	dangerous.
+	
+	* inline.h (*), igen.c, dgen.c, *: Update INLINE macros so that
+        they are paramaterised with the type of the function.  Gets around
+        the problem of `static' needing to come first with `attribute'
+        comming last.  Format declarations and definitions so that emacs
+	doesn't get confused.
+
+Fri Dec 15 17:06:44 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* std-config.h (PSIM_INLINE): Add missing inline configuration
+ 	control for the main loop.
+
+	* mon.c (mon_print_info): If monitoring disabled still print out
+ 	the number seconds used.
+
+	* psim.c (run_until_stop): Don't monitor the cache misses when
+ 	monitoring is disabled.
+
+	* configure.in (sim_mon, sim_monitor): Correct typo - sim_mon ->
+ 	sim_monitor for shell variable (or should that have been the other
+ 	way around?).
+
+	* vm.c (vm_synchronize_context): Fix wrong test for unsuported
+ 	change in endian-mode.
+	
+	* std-config.h (WITH_REGPARM), inline.h (IDECODE_INLINE,
+	SEMANTICS_INLINE): Add -DWITH_REGPARM=<n> option.  Enables the
+	__attribute__((__regparm(WITH_REGPARM))) for some functions.
+	configure with --enable-sim-cflags="-DWITH_REGPARAM=3" (say).
+	Unfortunatly it tickles a bug (gcc?) and can't be used.
+
+Mon Dec 18 13:36:06 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* device.c (device_tree_add_device): Make trace fprintf arguments
+	type correct.
+	* device_table.c (htab_decode_hash_table): Ditto.
+	(htab_map_binary): Ditto.
+	(htab_init_callback): Ditto.
+	* vm.c (om_virtual_to_real): Ditto.
+
+Sat Dec 16 09:54:18 1995  Michael Meissner  <meissner@wogglebug.tiac.net>
+
+	* emul_netbsd.c (emul_netbsd_create): Deal with new BFD that
+	changed how big/little endian support is recorded, while remaining
+	compatible with the old BFD with #ifdefs.
+	* emul_chirp.c (emul_chirp_create): Ditto.
+	* emul_bugapi.c (emul_bugapi_create): Ditto.
+
+Fri Dec 15 15:55:56 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* std-config.h (MODEL_INLINE): Turn off INLINE_MODULE by default.
+
+	* corefile.h: Delete declarations for unknown functions.
+	* device.h: Ditto.
+	* interrupts.h: Ditto.
+	* interrupts.c: Ditto.
+
+Thu Dec 14 18:49:34 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* lf.c (lf_print_function_type): New function.  Munges a function
+ 	type so that the prefix (eg INLINE...) is inserted after the type
+ 	but before any `*'.
+
+	* igen.c: Change to output functions using this.
+
+Wed Dec 13 23:47:00 1995  Andrew Cagney   <cagney@highland.com.au>
+
+	FIXME: Emul CHIRP does not correctly implement the find device
+ 	function.
+
+	FIXME: Emul CHIRP and device do not implement device instance
+ 	operations.
+
+Wed Dec 13 23:47:00 1995  Andrew Cagney   <cagney@highland.com.au>
+
+	* options.c (options_inline): Function to output meaningful
+        description of the INLINE options.
+
+	* configure.in (inline): Replace inline magic numbers with macro
+        names. Map 1->LOCALS_INLINE and 2->ALL_INLINE.
+
+	* inline.h, inline.c: update to use inline method.
+
+	* std-config.h (CPU_INLINE), cpu.h, inline.h, inline.c: make cpu.h
+        inline always.
+
+	* std-config.h (EVENTS_INLINE): Inline events in psim.
+
+Wed Dec 13 22:01:21 1995  Andrew Cagney   <cagney@highland.com.au>
+
+	* device_table.c (htab_sum_binary): DMA binaries to correct byte
+        within a page.
+
+Tue Dec 12 22:51:18 1995  Andrew Cagney   <cagney@highland.com.au>
+
+	* psim.c (psim_merge_device_file): Change `=' to `==', was this an
+        error?
+
+Tue Dec  5 11:56:14 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* ppc-instructions (ppc_nr_mtcrf_crs, ppc_branch_conditional_name,
+ 	ppc_function_unit_name): Simplify by declaring these arrays as
+ 	pure and simple static (instead of STATIC_MODEL).
+
+Tue Dec  5 00:45:34 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* sim_calls.c (sim_create, sim_load), main.c (main), psim.c: Pass
+        an options device into psim_create() so that options can be merged
+        into the tree.
+
+	* device.c (*add*): Change semantics so the add functions only add
+        when the new device (or property) doesn't already exist.  This
+        allows merging of options and data.
+
+Mon Dec  4 17:12:13 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* Makefile.in (BASICS_H): Didn't include basics.h in the list of
+        header files to depend on.
+
+Mon Dec  4 17:12:13 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* std-config.h: (*_MODULE): Extend the <module>_inline macro's so
+        that they also allow control over static functions.  Rewrite
+        document to reflect this.
+
+	* std-config.h: (INLINE): Simplify definition, the above and
+        earlier changes to igen.h eliminate the need to be defensive about
+        enabling the inline of static functions.
+
+	* std-config.h: (SIM_ENDIAN_INLINE, BITS_INLINE): Document limited
+        suport for inlineing of modules for all callers.  Adjust relevant
+        macro's so that DEFAULT_INLINE will enable this.
+
+	* basics.h: Re-order #includes and definitions so that c-code for
+        basic include files does not call functions delcared in later
+        #includes.
+
+	* basics.h (__attribute__), sim_callbacks.h: Move attribute macro
+        to basics.h and add hack (include <stdio.h>) to try and bring that
+        and other possible conflicting macros into scope much earler.
+
+	* sim-endian.h,c (SIM_ENDIAN_INLINE) bits.h,c (BITS_INLINE):
+        Change to use the updated inline definitions.  If enabled
+        immediatly include the corresponding c-code so that it will inline
+        for all modules.
+
+	* inline.h, inline.c (SIM_ENDIAN_INLINE, BITS_INLINE): Remove
+        these cases, moved to module specific header files.
+
+Sat Dec  2 18:37:51 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* vm.c, vm_n.c: Fix htab code.
+
+	* vm.c (vm_data_map_read_buffer): Was using EA not RA when reading
+        the data from core.
+
+	* device.c: Fix htab create code.
+
+Fri Nov 24 23:10:09 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* bits.h, bits.c (EXTRACTED): Convert to function, fix - had &&
+        instead of &.
+
+	* sim-endian.h (SWAP_N), sim-endian-n.h, sim-endian.c: How
+        embarasing - fix yet another bug in the swap code!  Simplify
+        everything by using more functions. Add host to big-endian byte
+        swapping support.
+
+Fri Nov 24 23:10:09 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* devices.h, devices.c: delete, replaced by the files
+        device_table.[ch] and device.[ch].
+	* device_tree.h, device_tree.c: ditto
+
+	* device_table.h, device_table.c: New files.  Contain a table of
+        devices.
+
+	* device.h, device.c, Makefile.in, std-config.h (DEVICE_INLINE),
+        options.c (print_options): New files.  Define the device object
+        along with any attached properties.
+
+	* device_tree.h, device_tree.c: Update to use new device object.
+        For convenience, change the printd functions into device_tree_add
+        functions.
+
+	* psim.c (create_*_tree): Use new device_tree create functions.
+
+	* corefile.h, corefile.c corefile-n.h (core_n.h): Update to use
+        the new device.h / device_table.h interface.  Rename core_n.h to
+        corefile-n.h to be consistent with other n files.
+
+	* Makefile.in (run): add corefile-n.h to dependencies for
+        corefile.
+
+	* basics.h (device_instance), device.h, device.c, device_table.h,
+        device_table.c: Add the concept of a device instance and operators
+        on these instances - corresponds to ihandle in OpenBoot speak.
+        Don't yet implement it.
+
+Tue Nov 14 12:27:08 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* emul_generic.h, emul_generic.c (emul_syscall_enter,
+ 	emul_syscall_exit): rename from emul_enter_call /
+ 	emul_exit_call. As only used by emul_do_system_call simplify
+ 	associated code.
+
+	* os_emul.h, os_emul.c, emul_generic.h: Correct and fill an
+ 	os_emul interface.
+
+	* os_emul.c, emul_bugapi.h, emul_bugapi.c, Makefile.in: Add
+ 	preliminary hooks for a kernel mode rom emulation.
+	
+	* cap.h (new), cap.c (new): Capability data base.  Some emulations
+ 	pass object identifiers (capabilities?) to/from the simulated code
+ 	(for instance the phandle in OpenBoot).  The cap object is able to
+ 	check/map between internal and external (target program)
+ 	representations of each identifier.
+	
+	* os_emul.c, emul_chirp.h, emul_chirp.c, Makefile.in: Add
+ 	preliminary hooks for a kernel mode IEEE-1275 emulation.
+
+	* cpu.h, cpu.c (cpu_create, cpu_os_emulation, cpu): Add os_emul to
+ 	list of arguments passed in when creating a cpu.  Grant access to
+ 	the element.
+
+	* std-config.h (OS_EMUL_INLINE), options.c (print_options),
+	inline.h, inline.c: New to allow control over inline of
+	corresponding code files.
+
+	* ppc-instructions (instruction_call): Add illegal instruction to
+ 	call the instruction-call emulation handler.
+	
+	* interrupts.c (system_call_interrupt): Call renamed
+        os_emul_system_call function().
+
+	* emul_netbsd.c: Update to interface to generic emulation.  Since
+        all its functions are called via a table don't worry about any
+        inline.
+
+	* emul_generic.h, emul_generic.c, spa-*(delete): Remove references
+        and code for spa, no longer to be used.
+
+	* psim.c (create_chirp_device_tree): Fill out what was previously
+        the openboot create function so that it starts to create a full
+        OpenBoot device tree.
+
+Tue Nov 28 21:48:06 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* debug.h, debug.c: pte trace is made redundant by htab trace,
+        delete it.  Add vm to list of options.  Simplify tracing output so
+        lines are not as long.
+
+Tue Nov 14 12:27:08 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* events.h, events.c (event_queue_init), psim.c (psim_init): (re)
+ 	initialize the event queue.
+
+
+
+
+
+
+Tue Nov 28 13:38:26 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* sim-endian.h: Look at WORDS_BIGENDIAN to determine if the host
+	is big endian or little endian.  For SWAP_n, use htonl/htons if
+	host is little endian, not big endian and if WITH_NTOH is defined.
+
+	* configure{,.in} (--enable-sim-model-issue): Instead of defining
+	0/1, define it to be MODEL_ISSUE_{PROCESS,IGNORE}.  Add
+	AC_C_BIGENDIAN to determine if the host is big endian or not.
+	* config.in: Regenerate.
+
+	* std-config.h (WITH_MODEL_ISSUE): Default to 0.
+	(CURRENT_MODEL_ISSUE): Reference WITH_MODEL_ISSUE, and if that is
+	0, use current_model_issue.
+	(MODEL_ISSUE_{PROCESS,IGNORE}): Define as -1/1.
+
+	* psim.c (current_model_issue): New global variable.
+
+	* cpu.c (cpu_create): Use CURRENT_MODEL_ISSUE > 0 instead of
+	WITH_MODEL_ISSUE.
+	(cpu_{init,halt}): Ditto.
+	* mon.c (mon_print_info): Ditto.
+	* ppc-instructions (PPC_INSN_* macros, branch handling): Ditto.
+
+	* mon.c (mon_print_info): Print instructions/second if verbose > 0,
+	rather than > 1.
+
+	* main.c (main): Set current_model_issue to MODEL_ISSUE_PROCESS if
+	the -I switch is used.
+	* sim_calls (sim_open): Ditto.
+
+	* ppc-instructions (model support): Add support for determining
+	when we don't have enough writeback slots.  Add tracing for the
+	beginning of each cycle.
+
+Mon Nov 27 17:46:33 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* mon.c: Check for whether to include sys/types.h and sys/time.h.
+
+	* configure.in: Check for include files sys/types.h and
+	sys/time.h.
+	* configure: Regenerate.
+	* config.in: Regenerate.
+
+	* cpu.h (CONST_ATTRIBUTE): Define as __attribute__((__const__)) if
+	not already defined.
+	(cpu_system): Use CONST_ATTRIBUTE, so that when we're not inlining
+	the world, the optimizer has a fair chance of CSE'ing function
+	calls.
+	(cpu_{monitor,nr,registers,model}): Ditto.
+
+	* std-config.h (MODEL_INLINE): If not defined, define as 1 if
+	DEFAULT_INLINE is non-zero, 0 otherwise, rather than just the
+	value of DEFAULT_INLINE.
+
+Fri Nov 24 11:24:34 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* lf.h (__attribute__): If not GCC and at least 2.7.0, define as
+	nothing.
+ 	(lf_printf): Add printf __attribute__, so the compiler will
+	automatically check the format string.
+
+	* configure{,.in} (--enable-sim-icache): If argument is define,
+	add -R to flags passed to igen.
+
+	* igen.c (stdlib.h): Include if the system supplies one.
+	(semantics_use_cache_struct): New global for -R flag to say
+	semantics is to use the cache structure directly rather than
+	putting the values into local variables.
+	(first_undef, last_undef): New structures to remember names to
+	#undef if -R.
+	(lf_print_c_extraction): If -R and this is semantics, emit names
+	as #defines pointing to the cache structure, rather than loading
+	the values into local variables.
+	(lf_print_c_semantic_function): If -R, #undef all of the names
+	defined in lf_print_c_extraction.
+	(main): Recognize -R.
+
+	* idecode_fields.h (SPR_*): Redefine spr_* macros as SPR_* to
+	avoid a name confict if -R passed to igen.
+
+	* ppc-instructions (mfspr, mtspr): Rename spr field to SPR.
+	(model_data): Add field to count the various # of CRs that the
+	mtcrf instruction used.
+	(model_mon_info): Return structures counting the # of CRs that the
+	mtcrf instruction used.
+	(branches, sync instructions): Do not call model functions if
+	WITH_MODEL_ISSUE is 0.
+
+	* mon.c (stdlib.h): Include if the system supplies one.
+ 	(mon_sort_instruction_names): New function to sort instruction
+	names alphabetically.
+	(mon_print_info): Call qsort with mon_sort_instruction_names to
+	sort instruction names.  Don't abort if WITH_MODEL_ISSUE is 0.
+	
+	* debug.h (ITRACE): Make printf_filtered arguments type correct.
+	* idecode_expression.h (CR0_COMPARE): Ditto.
+	* psim.c (psim_read_register): Ditto.
+
+	* igen.c (lf_print_my_prefix): Use __attribute__((__unused__)) to
+	silence compiler warnings about unused automatically generated
+	variables.
+	(lf_print_c_extraction): Ditto.
+	* idecode_expression.h (FPSCR_BEGIN): Ditto.
+
+	* ppc-cache-rules: Define rules for making a bitmask for all
+	registers.
+
+	* ppc-instructions: Rewrite model specific functions to use the
+	bitmask of the register number, instead of using the register
+	pointer to get the register number, and then making the bitmask.
+
+Wed Nov 22 15:24:27 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* ppc-instructions (model_branches): Add conditional argument to
+	count the number of times each type of conditional branch is used.
+	(conditional branches): Pass B0 or -1 to model_branches.
+	(model_mon_info): Print out conditional branch counts.
+	(model-data): Add support for printing out conditional branch
+	types.
+
+Tue Nov 21 16:31:25 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* igen.c (insn_table_load_insns): Add support for model-static for
+	internal functions that should not be inlined.
+	(lf_print_c_semantic): Remove model_cleanup.
+	(gen_model_{c,h}): Ditto.
+
+	* ppc-instructions: Redo model specific support once again.  Add
+	floating point support to the model specific information.  Flesh
+	out all of the floating mutiply add/subtract instructions.  Add
+	better tracing support to the model specific information.
+
+Sun Nov 19 23:00:52 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* ppc-instructions (model data, model_busy): Rather than using a
+	bit mask for the busy units, just use a char array.  Also, only
+	support 2 function units an insn can use, rather than a loop.
+
+Fri Nov 17 14:08:08 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* table.c (table_entry_read): Move setting entry->line_nr to after
+	the model specific fields so the line numbers for the annex are
+	correct.
+
+	* cpu.c (cpu_{create,init,halt}): Check for WITH_MODEL_ISSUE
+	before calling the model functions.
+
+	* debug.c (trace_descriptor): Add trace_model support.
+	* debug.h (trace_options): Ditto.
+
+	* igen.c (gen_icache_h): Create type idecode_cache as void if not
+	caching instructions.
+	(gen_model_{c,h}): Drop model_issue support.  Add support for
+	model_cleanup.
+	(lf_print_my_prefix): Initialize a const itable_index with the
+	current index.
+	(lf_print_c_semantic): Call model_cleanup at the end of the
+	function to check for instructions that aren't supported yet by
+	the scheduling code.
+	
+	* mon.h (count_type): New type for counters.
+	* mon.c: Use count_type instead of unsigned.
+
+	* ppc-instructions: Redo scheduling code once again.  Make it all
+	inline friendly.  Instead of having general code emitted by igen,
+	go the route of having each semantic routine call the appropriate
+	module.
+
+Thu Nov 16 09:52:26 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* table.c (table_entry_read): Allow the annex to have blank lines.
+
+	* ppc-instructions: Change lines in model stuff that just have a
+	tab to just newline.  Add 601 support.  Document most instructions
+	in terms of model specific timing information.  Drop 'FUNCTION'
+	from PPC_FUNCTION_UNIT_xxx enums.  Change PPC_UNIT_UNKNOWN ->
+	PPC_UNIT_BAD.  Add TRACE(trace_tbd) for all data cache
+	instruction.s.  Signal illegal instruciton if data cache block
+	invalidate is issued from problem state.
+
+	* igen.c (max_model_fields_len): New static to keep track of the
+	max size for the model specific fields.
+	(model_c_insn): Use max_model_fields_len to size fields.
+	(insn_table_insert_insn): Set max_model_fields_len.
+	(model_table_insert): Ditto.
+	(gen_model_{c,h}): Model_issue is now called with a processor
+	argument.
+
+	* debug.c (trace_description): Add support for trace_tbd.
+
+	* mon.c (mon_issue): Pass processor argument to model_issue.
+
+	* Makefile.in: Delete all function unit support, since the newer
+	table driven model support replaces it.
+	* cpu.{c,h}: Ditto.
+	* mon.c: Ditto.
+	* inline.{c,h}: Ditto.
+	* std-config.h: Ditto.
+	* options.c: Ditto.
+	* configure{,.in}: Ditto.
+	* Makefile.in: Ditto.
+	* psim.c: Ditto.
+	* function_unit.{c,h}: Delete these now usused files.
+
+	* std-config.h (WITH_MODEL_ISSUE): Add new macro on whether to
+	trace instructions in a model specific manor.
+	* options.c (print_options): Print it out.
+	* configure{,.in}: Add --enable-sim-model-issue option.
+	* Makefile.in: Add --enable-sim-model-issue flags.
+	* igen.c (lf_print_c_semantic): Add call to mon_issue here.  Check
+	for WITH_MODEL_ISSUE.
+	* mon.c (mon_issue): Remove call to mon_issue_here.
+
+	* ppc-instructions: Move branch tracing to the actual branch
+	instructions, rather than testing it in model_issue.  Add code to
+	code successful/unsuccessful branch predictions, and the number of
+	conditional branches that fell through.
+
+Wed Nov 15 17:32:13 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* cpu.h (cpu_model): Add declaration.
+
+	* cpu.c (struct _cpu): Add model_ptr to hold model specific
+	information.
+	(cpu_model): Return the model internal pointer.
+	(cpu_{create,init,halt}): Call the appropriate model function.
+
+	* inline.c (mon.c): Move include of mon.c after model.c.
+
+	* mon.c (_cpu_mon): Add fields to count unaligned memory
+	references.
+	(mon_issue): Call model_issue, not function_unit_issue.
+	(mon_{read,write}): Count # of unaligned memory accesses.
+	(mon_print_info): Switch to calling model_mon_info and
+	model_mon_info_free instead of function_unit version.  Print out
+	number of unaligned reads/writes.
+
+	* {ppc-instructions,igen.c}: More global changes to add model
+	specific features.
+
+	* inline.{c,h}: Provide for inlining options.c.
+	* options.{c,h}: Ditto.
+	* std-config.h: Add OPTIONS_INLINE.
+
+Tue Nov 14 04:47:25 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* Makefile.in (devices.o, main.o): Update dependency.
+
+	* igen.c (gen_model_h): Use correct variable in loop.
+	(gen_model_c): Use strcmp, strcasecmp.
+	(gen_model_c): Use EXTERN_MODEL for arrays.
+	(gen_model_h): Use STATIC_MODEL for arrays.
+	(lf_print_c_semantic_function_header): Delete unused function.
+
+	* main.c (cpu.h): Include cpu.h to get model.h.
+
+	* inline.h ({EXTERN,STATIC}_MODEL): Define.
+
+Mon Nov 13 09:14:13 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* igen.c ({insn,model}_table_fields): Spell mnemonic correctly.
+	(gen_itable_h,itable_c_insn): Ditto.
+	(model support): Move model support around, add support for
+	model-data, model-internal.  Use annex field for model-macros
+	now.
+
+	* configure.in (--enable-sim-inline): If --enable-sim-inline=no,
+	also define INLINE as nothing.
+	* configure: Regenerate.
+
+	* std-config.h (INLINE): Rather than nuking INLINE, only define it
+	as __inline__ if any of the INLINE flags are non-zero.
+
+	* options.c (print_options): Print out WITH_XOR_ENDAIN.
+
+Mon Nov 13 23:03:45 1995  Andrew Cagney   <cagneyhighland.com.au>
+
+	* ppc-instructions (rfi): Add missing code.
+
+	* cpu.c (cpu_get_time_base): Fix calculation of current value of
+        time base register.
+
+	* ppc-spr-table (TBL, TBU): Fix TBL/TBU entries - was confusing
+        m[tf]tb with m[tf]spr.
+
+	* ppc-instructions (mtspr, mfspr): Fix mttbl - wasn't storing
+        lower word.
+
+Mon Nov 13 21:35:37 1995  Andrew Cagney   <cagneyhighland.com.au>
+
+	* std-config.h (INLINE, STATIC_INLINE): Was being set to static
+        inline..  Only problem being that with ppc-opcode-simple this gave
+        it the chance to inline all the idecode functions with potentially
+        disasterous results on a 16mb PC.  For moment hobble INLINE.
+
+	* configure.in, std-config.h (WITH_SMP): Make that 5 processors by
+        default ...
+
+	* configure.in: Tweek flags passed to gcc for --with-sim-warnings.
+        Firstly make them errors and secondly remove the options gcc-245
+        doesn't reconize.
+
+Mon Nov 13 17:57:24 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* misc.c (zalloc), cpu.c (cpu_init), devices
+ 	(console_io_read_buffer_callback, icu_io_read_buffer_callback,
+ 	vm_io_read_buffer_callback), main.c (zalloc), mon.c (memset),
+ 	sim_calls.c (zalloc) : replace bzero() with memset().
+
+	* emul_netbsd.c (write_direntries), psim.c (psim_read_register,
+ 	psim_write_register): replace bcopy() with memcpy().
+	
+Sun Nov 12 20:55:41 1995  Andrew Cagney   <cagneyhighland.com.au>
+
+	* configure.in: for --disable-sim-inline (--enable-sim-inline=no),
+        force DEFAULT_INLINE to 0 rather then trusting the std
+        configuration.
+
+Sun Nov 12 20:55:41 1995  Andrew Cagney   <cagneyhighland.com.au>
+
+	* igen.c (lf_print_idecode_table, idecode_table_leaf): Fix
+        generation of switch entries in tables - treat the same as
+        cracking/semantic functions.
+
+	* igen.c (idecode_switch_end, idecode_switch_leaf): Fix generation
+        of a boolean switch statement (field zero or non-zero).
+
+	* ppc-opcode-test-1, ppc-opcode-test-2: New files.  These test the
+        switch/table generation ability of igen.
+
+	* igen.c (idecode_switch_leaf): Fix code output when a switch
+        statement needs to look up a table.
+
+	* igen.c (idecode_declare_if_switch): New function called from
+        gen_idecode_c - need to declare any idecode switch functions
+        before they are used in idecode tables.
+
+	* igen.c (lf_print_c_cracker_function, idecode_crack_leaf,
+        idecode_crack_insn): Add is_inline_function argument to code
+        printing cracker functions which indicates if STATIC_IDECODE or
+        STATIC_INLINE_IDECODE should be used for definition.  For
+        idecode_crack_insn (which implies not duplicating/expanding) don't
+        declare function as inline - we assume that the only time this is
+        code is generated is when things are being tested.  For
+        idecode_crack_leaf, make static (instead of INLINE) if the
+        instructions parent is a table as function will always be called
+        via a table.
+
+	* igen.c (idecode_expand_if_switch): Declare as STATIC_IDECODE not
+        STATIC_INLINE_IDECODE. Only the outermost idecode switch will be
+        called directly, all others are called via a table.
+
+	* igen.c (lf_print_semantic_function_header, semantics_h_leaf,
+        semantics_h_insn, semantics_h_function,
+        lf_print_c_semantic_function, semantics_c_function): Add
+        is_inline_function argument to lf_print_semantic_function_header
+        to indicate if an inline or static function declaration/definition
+        should be output.  Depending on situtation call accordingly:
+        functions (not instruction semantic routines) are always inline;
+        Semantic routines are made inline when there is no icache (cache
+        will contain the function address) and are duplicating (see above)
+        and the parent of the instruction is a switch statement.
+
+	* igen.c (opcode_field_new): Delete.  Code changed to use ZALLOC
+        and moved to insn_table_find_opcode_field.
+
+	* table.c (table_open): Fix typo (nr_model_fields vs nr_fields).
+
+	* igen.c (model_c_insn): Suggestion - document the name of the
+        instruction on each line of the instruction model table.
+
+Fri Nov 10 00:44:38 1995  Andrew Cagney   <cagneyhighland.com.au>
+
+	* emul_netbsd.c (do_ioctl): Cleanup compilation.
+
+	* sim_callbacks.h (__attribute__): Only define if not defined (was
+        already defined on NetBSD host).
+
+Wed Nov  8 21:49:52 1995  Andrew Cagney   <cagneyhighland.com.au>
+
+	* std-config.h (WITH_XOR_ENDIAN), configure.in, Makefile.in: New
+        macro, indicates if the PowerPC's horrible XOR endian mode should
+        be suported.  Add to configure and make.
+
+	* vm_n.h (vm_data_map_read_N, vm_data_map_write_N), vm.c
+        (vm_instruction_map_read): If XOR endian, xor the address
+	with a value from an xor table (indexed by size of access).
+
+	* vm.c (vm_synchronize_context), cpu.c (cpu_synchronize_context):
+        set up xor table to xor if there is a conflict between the
+        CURRENT_TARGET_ENDIAN and the endian indicated in the MSR.  Move
+        check of suported change of endian mode from cpu.c to vm.c.
+
+	* vm.c (vm_data_map_write_buffer, vm_data_map_read_buffer):
+        Hopefully added correct hack to handle XOR endian mode.
+
+	FIXME: If NONSTRICT alignment and XOR ENDIAN and MSR indicates
+        little endian mode, the model accepts miss aligned transfers.
+
+	FIXME: Need to create an `init' device that, during
+        initializatioin for XOR mode, it mushes (XOR address) all the dma
+        data before passing it on to the core for storage. Just like the
+        real thing really.
+
+Wed Nov  8 21:49:52 1995  Andrew Cagney   <cagneyhighland.com.au>
+
+	* devices.c (halt_io_write_buffer_callback): Use value written to
+        halt device to determine exit status.  Thus allowing
+        success/failure of OEA tests.
+
+Wed Nov  8 00:10:38 1995  Andrew Cagney   <cagneyhighland.com.au>
+
+	* ppc-instructions (icbi): If icache present flush it.
+
+Tue Nov  7 23:36:31 1995  Andrew Cagney   <cagneyhighland.com.au>
+
+	* devices.c (htab_init_callback): Add code to create htab/pte.
+
+	* devices.c (dma_file, file_init_callback, htab_init_callback):
+        New function - Dma the named file into memory at the specified
+        address.  Use.
+
+	* device_tree.h, device_tree.c (scand_*): New functions.
+
+Tue Nov  7 23:36:31 1995  Andrew Cagney   <cagneyhighland.com.au>
+
+	* filter_filename.c, Makefile.in: Change so that only dependant on
+        a very limited nr of files.  Stops an unnecessary dependency.
+
+Tue Nov  7 15:44:33 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* core.c (core_map_find_mapping): Use cpu_halt rather than error
+ 	to abort an access to an undefined address.
+
+Sun Nov 12 07:58:09 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* igen.c (model_table_insert_{macro,function}): New functions.
+	(insn_table_load_insns): Call them.
+	(gen_model_h): Move section emiting model-macros to be first.
+	(model_{c,h}_function): New functions cloned from semantic
+	functions to print out the prototype and function for
+	model-functions.
+	(gen_model_{c,h}): Print out model-functions.
+
+	* ppc-instructions (model_{start,halt,print_info}): Add dummy
+	model-functions.
+
+	* options.c (print_options): Print out WITH_{,DEFAULT_}MODEL, not
+	WITH_PPC_{,DEFAULT_}_MODEL.
+	(options_ppc): Delete now unused function.
+	(cpu.h): Include cpu.h, not just basics.h.
+
+	* std-config.h (WITH_{,DEFAULT_}MODEL): Define.
+
+	* igen.c (model_macros, last_model_macro): New statics to keep
+	track of macros to go in model.h.
+	(insn_table_load_insns): Add model-macros to model_macros linked
+	list.
+	(model_table_fields): Add field for printable name.
+	(gen_model_h): If there are model macros defined, print them out.
+	Print out DEFAULT_MODEL as the first model if there any models
+	specified, otherwise MODEL_NONE.  Print out external decl for
+	current_model.  Print out decl for model_set.
+	(gen_model_c): Add function model_set.  Switch to use printable
+	name for the model, not the internal identifier used.
+
+	* psim.c (current_model): New global variable.
+
+	* ppc-instructions: Add macros for flag defines.  Switch first
+	model so 604 is first.
+
+	* main.c (main): Call model_set, not function_unit_model.
+	* sim_calls.c (sim_open): Ditto.
+	* sim_calls.c, Makefile.in: sim_calls.c now includes cpu.h.
+
+Sat Nov 11 07:27:41 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* mon.h (mon_events): New enumeration for other events we want to
+	handle.
+	(mon_event): Add declaration for function.
+
+	* mon.c (mon_event): New function.
+	(mon_print_info): Print icache misses.
+
+	* psim.c (run_until_stop): Monitor icache misses.
+
+	* configure.in (--enable-sim-inline): Fix typos in handling comma
+	separated inline options.
+	(--enable-sim-icache): Echo icache size.
+	* configure: Regenerate.
+
+	* igen.c (semantics_h_print_function): Emit STATIC_SEMANTICS
+	instead of INLINE_SEMANTICS so that the compiler won't keep all of
+	the semantic functions as inline RTL, given that the address of
+	the function is taken which forces outline calls anyway.
+	(lf_print_c_semantic_function_header): Ditto.
+	(gen_semantics_h): Define STATIC_SEMANTICS as nothing if not
+	defined.
+	(lf_print_c_cracker_function): Emit STATIC_IDECODE instead of
+	STATIC_INLINE_IDECODE.
+	(gen_idecode_c): Define STATIC_IDECODE if not defined.
+	(gen_model_h): Use #ifdefs to define types to hold model units,
+	cycles, and flags.
+	(model_table_insert): Add a sentinel functional unit at the end to
+	simplify loop processing.
+	(model_c_insn): Use <function-unit>_SENTINAL instead of 0 for any
+	instruction not specifing a function unit for the current model.
+	(gen_model_{c,h}): Provide bounds for model_time_mapping.
+	
+	* inline.h (STATIC_SEMANTICS): Define to be static if
+	SEMANTICS_INLINE is defined.
+	(STATIC_IDECODE): Define to be static if IDECODE_INLINE is
+	defined.
+	
+	* options.c (print_options): Fix typo.
+
+Fri Nov 10 06:39:46 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* configure.in (--enable-sim-{opcode,config}): Use $srcdir when
+	check for the existence of files.
+	* configure: Regenerate.
+
+	* table.c (table): New field nr_model_fields.
+	(table_open): New parameter nr_model_fields.
+	(table_entry_read): Parse model fields that begin with a '*' after
+	each instruction.
+	* igen.c, dgen.c: Change callers of table_open.
+
+	* igen.c: Add support for dumping model specific information in
+	model.h and model.c.
+	(insn_field_name): Delete unused array.
+	(global variables): Make global variables static, so we can tell
+	when they are no longer used.
+	(cache_semantic_actual): Delete unused variable.
+	(insn_table_load_insns): If the insn is really a machine model,
+	call model_table_insert instead of other processing.
+	(model_table_insert): New function to handle defining the
+	functional units of a particular machine model.
+	(insn_table): Add last_function field so we can add functions at
+	the end.
+	(insn_table_insert_function): Use last_function field when
+	appending new function.
+
+	* ppc-instructions: Add a few model specific information for 603,
+	603e, and 604 for testing purposes.
+	
+	* table.h (table_model_entry): New linked list to hold model
+	specific information, one per line.
+	(table_entry): Add model_first, model_last fields.
+
+	* configure.in (--enable-sim-inline): If gcc is found and
+	--enable-sim-inline is not specified, defaine DEFAULT_INLINE to 1,
+	not 2.
+	(--enable-sim-reserved-bits): New switch to check whether reserved
+	bits are set in the instruction.
+	(--enable-sim-opcode): Make complex the default.
+	(all switches): Add appropriate checks and error messages.
+	* configure: Regenerate.
+
+	* Makefile.in (RESERVED_CFLAGS): New variable set by
+	--enable-sim-reserved-bits.
+	(CONFIG_CFLAGS): Include RESERVED_CFLAGS.
+	(BUILT_SRC): igen now generates model.c and model.h.
+	(LIB_OBJ): Include table.o.
+	(tmp-igen): Add -m/-M options to write model.c/model.h.
+	(model.o): New object.
+	(CPU_H): Include model.h.
+
+	* cpu.h: Include model.h.
+
+	* std-config.h (WITH_RESERVED_BITS): Define.
+	(MODEL_INLINE): Ditto.
+
+	* options.c (print_options): Print out WITH_RESERVED_BITS.
+
+Thu Nov  9 12:22:15 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* configure.in: If --silent, don't output information messages.
+	* configure: Regenerate.
+
+	* configure.in (--enable-sim-alignment): Fix typo in specifing non
+	strict alignment.
+	(--enable-sim-switch): Make default on.
+	(--enable-sim-duplicate): Make default on.
+	(--enable-sim-smp): Make default 0.
+	(--enable-sim-mon): Don't set sim_float if not set.
+	(--enable-sim-inline): If gcc is found and --enable-sim-inline is
+	not specified, define DEFAULT_INLINE to be 2.
+	(all --enable-sim-* rules): Echo rules set to non empty to file
+	descriptor 6.
+	* configure: Regenerate.
+
+	* options.c (options_env): Fix typo if WITH_ENV is 0.
+	(print_options): Print GCC compiler version if available and
+	date/time options was compiled.  If OPCODE_RULES, IGEN_FLAGS,
+	and/or DGEN_FLAGS are defined, print them.
+
+	* Makefile.in (all link actions): Pass SIM_CFLAGS as well as
+	CFLAGS.
+	(options.o): Compile options.o with OPCODE_RULES, IGEN_FLAGS, and
+	DGEN_FLAGS defined, so they can be printed out.
+
+	* igen.c (lf_print_c_validate): Check for WITH_ASSERT, so that
+	this test can be compiled away if the user really wants a fast
+	simulator by not doing assertion failures.
+
+Wed Nov  8 13:19:47 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* options.c: New file to print out all of the WITH_ options.
+	* options.h: New include file to declare print_options.
+	* debug.h (trace_options): Add trace_opts to call print_options.
+	* debug.c (trace_description): Add trace_opts support.
+	* main.c (main): If user requested options, print them.
+	* sim_calls.c (sim_open): Ditto.
+	
+	* igen.c (opcode_field_new): Add void to make it a proper prototype.
+
+	* emul_generic.c (emul_enter_call): Make printf_filtered arguments
+	type correct.
+	* emul_netbsd.c (do_kill): Ditto.
+	* registers.c (registers_dump): Ditto.
+	* vm.c (om_translate_effective_to_real): Ditto.
+	* vm_n.h (vm_data_map_read_N): Ditto.
+	(vm_data_map_write_N): Ditto.
+	* devices.h (DTRACE_INIT): Ditto.
+	(DTRACE_{ATTACH,DETACH}_ADDRESS): Ditto.
+	(DTRACE_IO_{READ,WRITE}_BUFFER): Ditto.
+	(DTRACE_DMA_{READ,WRITE}_BUFFER): Ditto.
+	* devices.c (update_for_binary_section): Ditto.
+	(write_stack_arguments): Ditto.
+	(stack_ioctl_callback): Ditto.
+	* device_tree.c (device_tree_add_passthrough): Ditto.
+	(device_tree_{add,find}_device): Ditto.
+	(device_tree_{add,find}_integer): Ditto.
+	(device_tree_find_{string,boolean}): Ditto.
+	(device_tree_init{,_device}): Ditto.
+	(device_tree_dump): Ditto.
+	* sim_calls.c (sim_{read,write}): Ditto.
+	(sim_{fetch,store}_register): Ditto.
+	(sim_stop_reason): Ditto.
+
+	* sim_callbacks.h (printf_filtered): Declare with attribute
+	printf, so we can enable format checks.
+
+	* devices.c (console_io_{read,write}_buffer_callback): Cast swtich
+	argument to int, since ANSI doesn't allow long switch values.
+	* emul_netbsd.c (do___sysctl): Ditto.
+
+	* emul_netbsd.c (do___sysctl): Fix up printf call.
+	
+	* corefile.c (core_translate): Don't do arithmetic with void *
+	pointers.  Cast to char * first.
+	
+	* function_unit.c (FUNC_{LOAD,STORE}): Rename from {LOAD,STORE}
+	and change all uses.
+
+	* Makefile.in ({FUNC,MODEL,WARNING}_CFLAGS): New flags set by
+	configure --enable switches.
+	(CONFIG_CFLAGS): Include FUNC_CFLAGS and MODE_CFLAGS.
+	(.c.o): Include WARNING_CFLAGS.
+	(CPU_H): Include function_unit.h.
+	(LIB_OBJ): Include function_unit.o.
+	(BUILT_SRC_WO_CONFIG): Split from BUILT_SRC and do not include
+	config.h or ppc-config.h.
+	(BUILT_SRC): Include BUILT_SRC_WO_CONFIG, config.h and
+	ppc-config.h.
+	(filter_filename.o): Include config.h/ppc-config.h dependencies.
+	(idecode.o, semantics.o, psim.o): Specify CC line without
+	WARNING_CFLAGS so that we don't get all of the unused variable
+	warnings that are generated.
+	(function_unit.o): Add rule to build.
+	(main.o, sim_calls.o): Add function_unit.h, itable.h dependencies.
+	(mon.o): Include mon.c dependency.
+	(TAGS): Depend on BUILT_SRC.
+	(clean): Don't delete config.h or ppc-config.h
+
+	* basics.h (sim_callbacks.h): Move include after the include of
+	config.h and ppc-config.h.
+
+	* bits.{h,c} (ROTL32,ROTL64): Move these functions to bits.c.  Add
+	support for BITS_INLINE to inline these.  Add declarations to
+	bits.h.
+
+	* configure.in (--enable-sim-warnings): Add new option to specify
+	compiler warnings for all modules except idecode.o and semantics.o
+	which have lots of unused variables because they are machine
+	generated.
+	(--enable-sim-function-unit): New switch to configure whether
+	function unit support is compiled in or not.
+	(--enable-sim-{,default-}mode): New switches to control which cpu
+	model is used.
+	* configure: Regenerate.
+
+	* corefile.c (core_attach_address_callback): Delete unused
+	variable device_address.
+
+	* cpu.c (struct _cpu): Add function unit pointer field func_unit.
+	(cpu_create): If WITH_FUNCTION_UNIT, call function_unit_create.
+	(cpu_init): If WITH_FUNCTION_UNIT, call function_unit_init.
+	(cpu_halt): If WITH_FUNCTION_UNIT, call function_unit_halt.
+	(cpu_function_unit): New function to return func_unit field.
+
+	* cpu.h (function_unit.h): Include new include file.
+	(cpu_function_unit): Declare.
+
+	* debug.c (stdlib.h): Test HAVE_STDLIB_H, not HAVE_STDLIB.
+	(config.h): Include config.h.
+
+	* devices.c (icu_io_write_buffer_callback): Delete unused variable
+	system.
+
+	* emul_generic.c (emul_exit_call): Print out status value.
+
+	* emul_netbsd.c (do_read): Delete unused variable nr_moved.
+
+	* filter_filename.h (includes): Include config.h, ppc-config.h,
+	not basics.h.
+
+	* inline.c: Include bits.c if BITS_INLINE.  Include
+	function_unit.c if FUNCTION_UNIT_INLINE.
+
+	* inline.h (INLINE_BITS): Define if BITS_INLINE.
+	(INLINE_FUNCTION_UNIT): Define if FUNCTION_UNIT_INLINE.
+
+	* interrupts.c (instruction_storage_interrupt): Delete unused
+	variable nia.
+
+	* lf.h (config.h): Include config.h.
+
+	* main.c (includes): Include function_unit.c.  If HAVE_UNISTD_H,
+	include unistd.h.
+	(usage): Update for -m model, -i, and -I options.
+	(main): Delete unused variables stack_pointer and i.  Add support
+	for -i, -m model arguments.  Call psim_print_info with verbose ==
+	1 if -i, and verbose == 2 if -I.
+
+	* mon.c (stdio.h): Include stdio.h to pick up sprintf prototype.
+	(mon_issue): Call function_unit_issue if function units are
+	supported.
+	(mon_print_info): Take psim * argument.  Print out information
+	from function_unit if available.  Move read/write stats to always
+	print, instead of printing if verbose > 1.  Fix up plural
+	vs. singular usage.
+
+	* mon.h (mon_print_info): Update prototype.
+
+	* psim.c (current_ppc_model): Add global variable.
+	(psim_print_info): Pass system argument to mon_print_info.
+
+	* sim_calls.c (function_unit.h): Include.
+	(sim_open): Add support for -i and -m model options.  If -i call
+	psim_print_info with verbose == 1, if -I, with verbose == 2.
+	(sim_resume): Delete unused variable program_counter.
+
+	* std-config.h (WITH_FUNCTION_UNIT): Define.
+	(ppc_model): Add enumeration giving all PowerPC models currently
+	known about.
+	({WITH,CURRENT}_PPC_MODEL): Define.
+	(FUNCTION_UNIT_INLINE): Define.
+
+	* table.c (config.h): Include config.h.
+
+	* vm.c (om_virtual_to_real): Print pte_word_{0,1} so the compiler
+	doesn't complain that they're unused.
+
+	* vm_n.h (vm_data_map_read_N): Delete unused variable rval.
+	
+Mon Nov  6 23:15:54 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* sim-endian.c (ppc-endian.c), sim-endian.h (ppc-endian.h):
+        renameed.  These files are target independant.
+	* Makefile.in, basics.h: update for new name.
+
+	* sim-endian.h (SWAP_N), sim-endian.c (_SWAP_1): Rename existing
+        SWAP_<N> to _SWAP_<N> so that sim-endian.h can contain SWAP_N
+        macro's as required.
+
+	* sim-endian.c, sim-endian-n.h (new file): Move endian code into a
+        debugable header file.
+
+	* ppc-instructions (Byte-Reverse): Enable byte reverse
+        instructions using SWAP_N macros.
+
+Mon Nov  6 10:39:28 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* Makefile.in (config.status): Remove references to config.make
+	and config.hdr.
+
+	* config.{make,hdr}: Delete, no longer used.
+	* build-psim: Ditto.
+
+Mon Nov  6 20:49:56 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* sim_calls.c (sim_open): Fix parsing of `target sim' options.
+
+	* device_tree.c (device_tree_add_string): Wasn't saving the value
+ 	of the string being entered into the tree.
+
+	* psim.c (create_filed_device_tree): Not terminating string device
+ 	names with a null.
+	
+	* psim.c (psim_create): Use `env' instead of
+ 	`environment-architecture' to be consistent with configure.
+  	Reconize user/uea, virtual/vea and operating/oea.
+
+Sat Nov  4 12:29:45 1995  Fred Fish  <fnf@cygnus.com>
+
+	* core.c:  Rename to corefile.c
+	* core.h:  Rename to corefile.h
+	* inline.c: Include corefile.h, renamed from core.h.
+	* cpu.h: Include corefile.h, renamed from core.h
+	* vm.c: Include corefile.h, renamed from core.h
+	* corefile.c: Include corefile.h rather than core.h
+	* README.psim (KNOWN PROBLEMS): Change core.* references to corefile.*
+	references.
+	* Makefile.in (CPU_H): Change core.h to corefile.h
+	(vm.o):  Change dependency to corefile.h
+	(LIB_SRC): Change core.c to corefile.c.
+	(LIB_OBJ): Change core.o to corefile.o.
+	(corefile.o):  Change dependencies to corefile.c, corefile.h.
+
+Fri Nov  3 11:37:24 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* ppc-instructions (data cache instructions): Make all data cache
+	instructions nops instead of invalid instructions.
+
+	* Makefile.in (CONFIG_CFLAGS): Add ALIGNMENT_CFLAGS and
+	TIMEBASE_CFLAGS which weren't included.
+
+Thu Nov  2 08:54:04 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* Makefile.in: Uncomment built file dependencies.
+	
+	* configure.in: Rewrite --enable-sim switch handling to use the
+	autoconf builtins so it works correctly if the configure or
+	Makefile.in files are modified and make decides to rebuild
+	Makefile.  Also document all of the --enable-sim switches
+	supported.  Check whether getrusage and sys/resource.h are
+	supported.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+	* Makefile.in: Add support for all of the variables set with
+	--enable-sim switches.
+
+	* Makefile.in (clean): make clean now removes all built sources as
+	well.
+	
+	* cpu.c: Use HAVE_STRING_H, HAVE_STRINGS_H, HAVE_UNISTD_H,
+	HAVE_TIME_H, HAVE_SYS_TIMES_H, HAVE_SYS_RESOURCE_H defined in
+	the generated config.h.
+	* debug.c: Ditto.
+	* device_tree.c: Ditto.
+	* devices.c: Ditto.
+	* dgen.c: Ditto.
+	* emul_netbsd.c: Ditto.
+	* igen.c: Ditto.
+	* lf.c: Ditto.
+	* misc.c: Ditto.
+	* psim.c: Ditto.
+	* registers.c: Ditto.
+	* sim_calls.c: Ditt.
+	* table.c: Ditto.
+
+
+	* main.c (main): Call psim_print_info with verbose == 2.
+
+	* mon.c (mon_print_info): Align the cpu number and number of
+	instructions fields.  Do not print an instruction category if the
+	CPU did not execute any of those instructions.  Print out number
+	of reads and writes.  If getrusage is supported, print out number
+	of simulated instructins per second.
+	
+	* configure.in: Add support for --enable-sim-opcode=stupid.
+	* configure: Regenerate.
+
+Wed Nov  1 23:46:59 1995  Andrew Cagney   <cagney@highland.com.au>
+
+	* std-config (INLINE_DEVICE_TREE): Don't inline either of
+        device_tree.c or devices.c.  There is no significant gain.
+
+	* configure.in, Makefile.in: add --enable-sim-icache=[0-9]* and
+ 	IGEN_ICACHE macro.
+	
+Wed Nov  1 23:46:59 1995  Andrew Cagney   <cagney@highland.com.au>
+
+	* igen.c (main), misc.h (target_a2i, i2target), misc.c: Add
+        functions to convert between target and igen internal bit numbers.
+        Make IO go through these functions. Add -b (bit size) and -h (high
+        bit nr) options to igen.  Typical usage would be: ./igen -b 16 -h
+        15 for a 16 bit instruction format with the msb given a number 15.
+
+Wed Nov  1 22:17:32 1995  Andrew Cagney   <cagney@highland.com.au>
+
+	* dgen.c (main): Was outputting optarg even when it was NULL.
+
+Tue Oct 31 23:48:33 1995  Andrew Cagney   <cagney@highland.com.au>
+
+	* vm_n.h (vm_data_map_load_N, vm_data_map_store_n), debug.h,
+        debug.c: Add tracing of load/store unit (virtual) with -t
+        load-store.
+
+Tue Oct 31 21:44:01 1995  Andrew Cagney   <cagney@highland.com.au>
+
+        * std-config.h (WITH_ENVIRONMENT): Add USER_ENVIRONMENT which does
+        not include things such as the time base and events.
+
+	* interrupt.c, sim_calls.c, cpu.h, vm.c, configure.in: Add UEA to
+ 	all environment switches for above.
+
+	* psim.c (psim_create): ditto - new device tree node name is
+        /options/environment-architecture with values user, virtual and
+        operating.
+
+Tue Oct 31 21:31:32 1995  Andrew Cagney   <cagney@highland.com.au>
+
+	* ppc-opcode-stupid: Third example of use of opcode table - this
+        one expands all mtspr/mfspr and branch instructions.  Appears to
+        give about a 10% gain in performance if everything enabled.  Also
+        takes about 150mb of swap to build.
+
+Wed Nov  1 10:49:48 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* emul_netbsd.c (do_exit): Print arguments and close parenthesis
+	if tracing, since exit doesn't go through emul_exit_call.
+	(do_read): Print arguments if tracing.
+	(do_write): Ditto.
+	(do_open): Ditto.
+	(do_break): Ditto.
+	(do_kill): Ditto.
+	(do_dup): Ditto.
+	(do_sigprocmask): Replace trace with printing arguments if
+	tracing.
+	(do_ioctl): Print arguments if tracing.
+	(do_umask): Ditto.
+	(do_dup2): Ditto.
+	(do_fcntl): Ditto.
+	(do_gettimeofday): Ditto.
+	(do_getrusage): Ditto.
+	(do_fstatfs): Ditto.
+
+	* filter_filename.c: New file to provide filter_filename to strip
+	the directory prefix from a file.
+	* filter_filename.h: New include file to declare filter_filename.
+
+	* debug.h: Include filter_filename.h.
+	(TRACE,DTRACE,ERROR): Use filter_filename on __FILE__.
+
+	* misc.h: Include filter_filename.h.
+ 	(ASSERT): Use filter_filename on __FILE__.
+
+	* igen.c (lf_print_my_prefix): Use filter_filename on the filename
+	argument.
+
+	* Makefile.in: Add filter_filename support.
+
+	* ppc-instructions (dcbi, icbi): Make these NOPs rather than
+	invalid instructions.
+
+	* configure.in: Add support for more --enable-sim-* switches.
+	Use config.make and config.hdr to write to Makefile and config.h
+	respectively.  Don't rewrite Makefile, just append to it.
+	* configure: Regenerate.
+	* config.{make,hdr}: New shell scripts.
+	
+	* Makefile.in: Remove all variables set by configure.in.
+	(psim.o): Depend on $(BUILT_SRC) also.
+
+	* emul_netbsd.c (do_gettimeofday,do_getrusage): When comparing an
+	integer, use 0, not NULL.
+
+Tue Oct 31 15:20:04 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* configure.in: Add support for --enable-sim-inline,
+	--enable-sim-bswap, --enable-sim-cflags, --enable-sim-complex,
+	--enable-sim-switch, --enable-sim-duplicate, --enable-sim-filter,
+	and --enable-sim-endian switch to control various Makefile
+	variables.
+	* configure: Regenerate from configure.in.
+	* Makefile.in: Add various Make variables that the various
+	switches alter.
+
+	* std-config.h (DEFAULT_INLINE): Don't set this to 2 if using GCC
+	and optimizing by default.
+
+Fri Oct 27 19:26:27 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* bits.h (ROTL32, ROTL64): Were functions, made them macros, now
+ 	make them functions again.  Appears 2.6.3 is confused by just a
+ 	macro.
+
+Thu Oct 26 18:31:58 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* ppc-endian.c (SWAP_8): Fix 8 byte swap!
+
+	* psim.c (psim_create): Not correctly checking that runtime
+ 	configuration of things like ENDIAN, ENVIRONMENT and ALIGNMENT
+ 	matched the compiled in ones.
+
+	* debug.h (ITRACE), igen.c: Tidy up more tracing flags -
+ 	trace_semantics is now different to trace_idecode, the former
+ 	checks the cache.
+	
+Tue Oct 24 21:54:13 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* ppc-instructions (mtsrin): Missing instruction
+	* ppc-instructions (mfsrin): Missing instruction
+	* ppc-instructions (eieio): Missing instruction
+
+Tue Oct 24 20:55:29 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* build-psim: New shell script - see internals for usage,
+ 	simplifies the process of building custom simulators.
+
+Mon Oct 23 23:48:59 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* std-config.h (SEMANTICS_INLINE): Tidy up notes on each of the
+        INLINE macros.  Make SEMANTICS_INLINE == 1 if DEFAULT_INLINE == 2.
+        Don't use DEFAULT_INLINE to define REGISTERS_INLINE DEVICES_INLINE
+        DEVICE_TREE_INLINE or INTERRUPTS_INLINE as none of these are on
+        the instruction or data critical paths.
+  	
+	* FIXME: devices.c/emul_netbsd.c would benefit (slightly) from
+ 	the inclusion of device_tree.c/emul_generic.c.
+
+Mon Oct 23 00:31:50 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* os_emul.[hc], emul_generic.[hc], emul_netbsd.[hc]: replace
+        system.[hc].  Start of suport for multiple emulations and
+        emulation state (os_emul object).
+
+	* emul_generic.[hc]: Start of code to implement proper system call
+	tracing (from spy).
+
+Sun Oct 22 21:33:51 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* cpu.h, cpu.c (cpu_init): New function, zero the registers before
+        the processor is started. Fixes problem of registers being
+        undefined when restarting from within gdb.
+
+	* cpu.h, cpu.c (cpu_flush_icache): New function, flushes the
+        instruction cache (if present).  Fixes problem of cpu caching gdb
+        breakpoint instructions.
+
+	FIXME: PSIM sometimes aborts calling error(), it should instead
+ 	call sim_error() say which takes care of housekeeping such as
+ 	saving the CIA before calling error.
+	
+	* NOTE: cpu_flush_cache() instead of cpu_synchronize_context() is
+ 	used when restarting a simulation because the latter has the
+ 	unwanted side effect (well I as a kernel hacker think it is) of
+ 	performing an isync when the instruction stream doesn't contain
+ 	one.
+
+Sun Oct 22 19:27:48 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* mon.h (new), mon.c (new), std-config.h (WITH_MON): Performance
+        monitoring module. Counts both instructions issued and
+        load/stores.
+
+	* NOTE: mon does not contain to count instruction loads as this
+ 	information is already available from the mon_issue() hook.
+
+	* igen.c (lf_print_c_semantic), vm_n.h: Add counting code.
+
+	* psim.h, psim.c (psim_create), cpu.h, cpu.c (cpu_create): Attach
+        a common monitor to each of the cpus. Delete
+        cpu_increment_number_of_insns() and cpu_get_number_of_insns()
+        replaced by copied code in mon.[hc].
+
+Sun Oct 22 18:42:45 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* sim_calls.c, main.c, psim.c (psim_create): always create
+        `WITH_SMP' cpus.  The actual number of CPU's active in a
+        simulation run is taken from the device node: /init/smp (an
+        integer). WITH_SMP changed to 2 (remember to put it back to 0).
+
+Fri Oct 20 17:26:54 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* system.c: More system call emulation.  If code appears NetBSD
+ 	specific, make conditional to being compiled on a NetBSD system
+ 	(sigh).
+
+Wed Oct 18 23:02:20 1995  Andrew Cagney  <cagney@highland.com.au>
+	
+	* Makefile.in, gen.c(delete), igen.c(new), dgen.c(new),
+ 	lf.[ch](new), table.[ch](new): Split into two generators - igen
+ 	that outputs the instruction tables and dgen that outputs the spr
+ 	tables.  Add -f (filter out) flag to igen to filter out certain
+ 	instructions (ex 64 bit ones) from the created tables.  Include
+ 	$(LIBIBERTY_LIB) in link options in case host lacks some libc
+ 	functions.
+
+	* NOTE: igen, since it was originally written for the
+ 	PowerPC/RS6000, things the MSB is 0 and the LSB is 63{31}.
+	
+	* Makefile.in, std-config.h, ppc-cache-rules(new),
+ 	ppc-opcode-complex(new), ppc-opcode-simple(new): (for igen) Create
+ 	cache-rule and opcode-rule tables from macros found std-config.h.
+ 	Delete corresponding macro's from std-config.h.
+  	
+	* igen.c (gen_itable_c, gen_itable_h), Makefile.in: code to output
+ 	an table of all the instructions.  Code to output a type
+ 	enumerating all the instructin names.
+
+	* igen.c(lf_print_c_semantic): Move call to increment instruction
+ 	counter so that it occures _after_ the instruction has been fully
+ 	validated, was double counting illegal/invalid instructions.  Add
+ 	conditional so only compiled in when WITH_PROFILE enabled (enabled
+ 	by default).
+	
+	* igen.c, cpu.h, cpu.c(cpu_increment_number_of_insns): Include
+ 	itable.h, count individual instruction types not just total,
+ 	adjust reporting functions to output this.
+	
+	* ppc-instructions (64 bit Load Doubleword with Update Indexed):
+ 	Had 32./ instead of 31./
+
+	* ppc-instructions (64 bit Store Double Word Conditional Indexed):
+ 	bitrot - updated to use newer CR register operators.
+
+	* ppc-instructions (64bit Floating Convert from Integer
+ 	Doubleword): Correct call to Round_Float().
+
+Mon Oct 16 00:31:20 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* basics.h: #include "sim_callbacks.h" earlier so that its
+ 	prototypes are declared in all other header files.
+
+	* bits.h, bits.c, idecode_expression.h (ROTL32, ROTL64): Update
+ 	doc in bits.h, remove dead code in bits.c, move ROTL32/ROTL64 into
+ 	bits.h.
+
+	* cpu.c(cpu_add_commas), device_tree.h, device_tree.c(scand_*):
+ 	Add size of buffer argument to functions writing a string into a
+ 	buffer.  Check for buffer overflow.
+	
+Sun Oct 15 22:16:11 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* devices.h, devices.c, debug.h, debug.c: add macro's for tracing
+        of each device.  Make parameter names consistent so macros work.
+        Use macro's in device functions.
+
+	* device_tree.c, devices.h, devices.c: include path to device in a
+        devices node when creating it.
+
+	* device_tree.c, debug.h, debug.c: Add tracing of `device-tree'.
+
+	* core.c: add tracing of core-device, adjust parameter names in
+ 	core functions to be consistent with those in devices*.
+
+Sun Oct 15 20:33:20 1995  Andrew Cagney  <cagney@highland.com.au>
+
+        * debug.h, debug.c (trace_option): New function. Parses the trace
+        option, updating the trace array.
+
+	* debug.h, debug.c (trace_usage): New function. Outputs the list
+        of all possible trace options.
+
+	* sim_calls.c (sim_open), main.c (main): Use new trace_option() to
+ 	parse trace options specified with the simpler -t flag.  Adjust
+ 	usage.
+
+	* FIXME: basic parsing of command line options is still duplicated
+ 	by main.c and sim_calls.c
+
+Thu Oct 26 10:42:28 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* Makefile.in (clean): Delete *.i and *.out files.
+
+	* ppc-endian.c (SWAP_n): Add SET argument to allow use of SWAP
+	macros for either assignment or return.  Fix SWAP_8 to use a
+	union, and two SWAP_4's.  Delete SWAP_N, since nobody uses it now.
+	(ENDIAN_N): Add SET argument to SWAP_n calls.  Delete macro defs
+	that hardwired swapping on/off, let optimizer delete dead code.
+
+	* main.c (main): Add printf that we caught a signal and print out
+	the failing address.
+
+Thu Oct 19 21:43:39 1995  Fred Fish  <fnf@fishfood.amigalib.com>
+
+	* Makefile.in:  Remove tabs from otherwise empty line.
+	Confuses many non-GNU versions of "make".
+
+Wed Oct 18 08:51:25 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* Makefile.in (clean): Delete files produced by gen.
+
+Mon Oct 16 17:34:24 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* gen.c (lf_print_c_semantic_function): Move counting # of
+	instructions here so it works with caching.
+	(gen_idecode_c): Move from here.
+
+Wed Oct 11 17:13:15 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* gen.c, ppc-instructions, psim.c: Fix code for generating
+	cracking instruction cache.  Delete the code that cached just the
+	result from doing an instruction lookup - this ran slower than no
+	cache at all.
+
+Fri Oct 13 09:58:43 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* Makefile.in (gen.o): Include $(INLINE_CFLAGS).
+
+	* debug.h (ppc_trace): Rename from trace, to avoid a conflict with
+	TCL when gdb is linked with the simulator.
+	* debug.c (ppc_trace): Ditto.
+	* sim_calls.c (sim_open): Change trace -> ppc_trace.
+	* main.c (main): Ditto.
+
+	* cpu.c (cpu_add_commas): Remove extra static.
+
+Thu Oct 12 11:35:53 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* Makefile.in (psim.o): Now that inlines are turned on, make
+	psim.o depend on all sources.
+
+	* cpu.c (cpu_add_commas): New function to format a long with
+	commas.
+	(cpu_print_info): Use it to print number_of_insns.
+	
+	* ppc-endian.c (SWAP_n): New macros to speed up byte swapping for
+	2, 4, and 8 bytes.
+	(ENDIAN_N): If both target and host byte orders are known, don't
+	bother testing CURRENT_{TARGET,HOST}_BYTE_ORDER.
+
+	* ppc-endian.h (target specific H2T_n/T2H_n macros): Remove #if 0
+	to allow target specific H2T_n/T2H_n macros to be used.
+	(htonl, ntohl): If compiled on a 486 by GCC and WITH_BSWAP is
+	non-zero, redefine the htonl/ntohl macros to use the BSWAP instead
+	of the 3 instruction sequence that runs on 386s.
+
+	* std-config.h (WITH_{HOST,TARGET}_BYTE_ORDER): Don't override if
+	specified on the compile line.
+	(WITH_BSWAP): If not defined, define as 0.
+
+	* Makefile.in (INLINE_CFLAGS): Add -DDEFAULT_INLINE=2 to add
+	default inline support.  Pass INLINE_CFLAGS when compiling.
+
+	* devices.{h,c} (unimp_device_ioctl): Use STATIC_DEVICES, not
+	INLINE_DEVICES since GCC doesn't like inline functions that
+	accept variable arguments.
+	(stack_ioctl_callback): Make function just static because GCC
+	doesn't like inline functions that accept variable arguments.
+
+	* devices.h (STATIC_DEVICES): Define as empty if not defined.
+
+	* inline.c: Correct pathnames of included C files to match current
+	implementation.
+
+	* inline.h (STATIC_DEVICES): If DEVICES_INLINE is defined to be
+	non-zero, define STATIC_DEVICES to be static.
+
+	* std-config.h (INLINE): If GNU C and optimizing, define this as
+	__inline__.
+	(DEFAULT_INLINE): If not defined, define as 0.
+	(ENDIAN_INLINE): If not defined, define as DEFAULT_INLINE.
+	({CORE,VM,CPU,EVENTS,REGISTERS,INTERRUPTS}_INLINE): Ditto.
+	({SPREG,IDECODE}_INLINE): Ditto.	
+	
+Wed Oct 11 17:13:15 1995  Andrew Cagney  <cagney@highland.com.au>
+
+        * ppc-instructions: Initial cut of floating point suport added.
+  	Of note include - use of host IEEE floating point instructions,
+ 	use of PowerPC manual pseudo code to handle the FPSCR.  It is not
+ 	currently a pretty sight.
+	
+	* memory_map.h, memory_map.c, memory_map_n.h, core.h, core.c:
+ 	merge into core.h, core.c, core_n.h. The type memory_map replaced
+ 	with core_map.  This removes a level of pointer indirection when
+ 	translating an address.
+
+	* memory_map.h, memory_map.c, memory_map_n.h: delete.
+
+	* Makefile.in et.al (sorry): tweek to use new core, core_map and
+ 	core.h.
+	
+Wed Oct 11 12:10:26 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* sim_calls.c, main.c: Add -g (trace_gdb) option, add tracing to
+ 	most of the other functions in sim_calls.c.
+
+	* basics.h (CONCAT3), memory_map.c, memory_map_n.h, Makefile.in:
+ 	Add macros to better cover up `generic' code.  Makes it possible
+ 	to step through the generic code!
+
+	* vm.c, vm_n.h, Makefile.in: ditto
+	
+Tue Oct 10 15:42:59 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* devices.h, devices.c, memory_map.h, memory_map.c: Changed
+ 	callback interface so that there is a read/write buffer but no
+ 	read/write_word.  VEA default memory read/write handler sometimes
+ 	couldn't resolve an access and of those some were for a memory
+ 	fault and some were because gdb was making a bogus request.
+
+	* devices.h, devices.c, memory_map.h, memory_map.c, vm.h, vm.c:
+ 	eliminate transfer_mode (raw or cooked) parameter from read/write
+ 	buffer.
+	
+Fri Oct  6 20:23:56 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* ppc-instructions (fmul, fmuls): correct instruction format - had
+ 	FRB instead of FRC.
+
+Wed Oct  4 17:31:12 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* psim.c, device_tree.h, device_tree.c, devices.c (printd_*,
+ 	scand_*): new functions to parse/print fields in device names
+ 	while hiding any machine dependency.
+
+	* devices.c, psim.c: Change the stack init code so that it is
+ 	handled by a device.  Arguments passed across using a device ioctl
+ 	(hack).
+
+	* devices.h, devices.c: device ioctl callback changed to allow a
+ 	variable number of arguments.  This gives greater flexability and
+ 	greater chance of bugs.
+
+Tue Oct  3 22:01:56 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* main.c (printf_filtered, error): Missing va_end() to close off
+        variable argument use.
+
+	* Makefile.in (tmp-gencode): comment out hack to get around some
+        versions of make not handling files being created as side-effects.
+
+	* gen.c (lf_open): Add -n (real_file_name) option.  Specifies an
+        alternative file name to use in output files for things like #line
+        macros.
+
+        Makefile.in (tmp-gencode): Use gen -n so that debug info is
+        correct.
+
+	* Makefile.in (TARGETLIB): Use this instead of libsim.a in the
+	Makefile.
+
+Sat Oct  7 22:40:59 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* sim_calls.c (sim_set_callbacks): Define new function.
+
+Fri Oct  6 17:23:10 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* psim.c (psim_print_info): Print exit status or signal number.
+
+Mon Oct  2 11:46:37 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* cpu.c (struct _cpu): Add number_of_insns field to trace how many
+	instructions are executed.
+	(cpu_increment_number_of_insns): New function to increment the
+	number of instructions issued.
+	(cpu_get_number_of_insns): New function to return the number of
+	instructions issued.
+	(cpu_print_info): New function to print cpu related information.
+	At present, print the number of instructions executed.
+
+	* gen_idecode_c: Emit call to cpu_increment_number_of_insns within
+	idecode_issue.
+
+	* psim.c (psim_print_info): New function to iterate over each of
+	the CPU's calling cpu_print_info.
+	
+	* psim.h,cpu.h: Add new declarations.
+
+	* sim_calls.c (sim_open): Add argument processing to add the same
+	switches main.c accepts for the standalone processor.
+	(sim_close): Call psim_print_info if -I.
+
+	* main.c (main): Add comment saying to update sim_calls.c when
+	adding switches.  Add -I to call psim_print_info when done.
+	(usage): Update usage message.
+
+Sun Oct  1 13:52:59 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* main.c (printf_filtered): Correct to match new prototype.
+
+Sat Sep 30 20:47:05 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* sim_callbacks.h (printf_filtered): Correct prototype.
+
+Thu Sep 21 16:26:49 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* device_tree.c (OEA_MEMORY_SIZE): Define if not defined to
+	0x100000.
+	(clayton_memory_size): Define as OEA_MEMORY_SIZE.
+
+	* std-config.h (WITH_TRACE): Default to 1 now.
+
+	* psim.c (write_stack_arguments): Don't write any stack arguments
+	if OEA.
+
+	* main.c (main): Switch to using getopt.  Make -p also set
+	trace_semantics.  Make -a turn on all trace flags.  Make -C turn
+	on console tracing.
+
+	* device_tree.c (create_option_device_node): Assume a program is
+	OEA if the start address is < 4096, not just == 0.
+
+Wed Sep 20 13:36:06 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (maintainer-clean): New synonym for realclean.
+
+Sun Sep 10 10:23:56 1995  Michael Tiemann  <tiemann@axon.cygnus.com>
+
+	* registers.c (register_description): Add gdb synonyms for cr
+	(cnd) and msr (ps).
+
+Fri Sep  8 13:16:10 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (install): Don't install in $(tooldir).
+
+	* configure.in: Call AC_CONFIG_HEADER.  Don't try to use
+	bfd/hosts/*.h file or bfd/config/*.mh file.  Call AC_PROG_CC and
+	AC_PROG_RANLIB.  Substitute in values for CFLAGS, HDEFINES, AR,
+	and CC_FOR_BUILD.  Call AC_CHECK_HEADERS for various header files.
+	Touch stamp.h if creating config.h.
+	* configure: Rebuild.
+	* config.in: New file, created by autoheader.
+	* Makefile.in (AR): Define as @AR@.
+	(CC): New variable, defined as @CC@.
+	(CFLAGS): Define as @CFLAGS@.
+	(CC_FOR_BUILD): New variable, defined as @CC_FOR_BUILD@.
+	(RANLIB): Define as @RANLIB@.
+	(HDEFINES, TDEFINES): New variables.
+	(@host_makefile_frag@): Remove.
+	(mostlyclean): Make the same as clean, not distclean.
+	(clean): Remove config.log.
+	(distclean): Remove config.h and stamp-h.
+	(Makefile): Don't depend upon @frags@.  Just rebuild Makefile when
+	invoking config.status.
+	(config.h, stamp-h): New targets.
+	(gen, gen.o): Build with CC_FOR_BUILD, not CC.
+	(ppc-config.h): Rename from old config.h build.
+	* (basics.h,gen.c,ppc-endian.c,psim.c): Include ppc-config.h.
+	
+Fri Sep  8 09:51:03 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* configure{,.in}: Don't include sysdep.h from bfd, since bfd no
+	longer provides it.
+	* basics.h (sysdep.h): Don't include it.
+	* Makefile.in (BASICS_H): Remove sysdep.h.
+
+Wed Sep  6 13:25:42 1995  Andrew Cagney  <cagney@highland.com.au>
+ 
+ 	* core.c (core_add_data): First growth of bss was being put at
+        wrong address (0) instead of &end.
+ 
+ 	* core.c (core_add_stack, core_add_data): Was not handling case
+        where bss/stack is grown across the current end-of-{bss,stack}.
+
+Wed Sep  6 00:46:10 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* system.c (system_call): Fix SYS_break - was aligning bss to a
+        page boundary instead of just an 8 byte one; On first call sbrk(0)
+        != sbrk(0).
+
+Thu Aug 24 14:48:54 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* Makefile.in (install): Fix install rule.
+
+Tue Aug 22 09:31:18 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* system.c (system_call): Add read support.
+
+	* main.c (main): -t sets trace_device_tree.  Correct usage message
+	to current reality.
+
+	* device_tree.c (update_memory_node_for_section): Make tracing
+	output line up.  If not code or readonly, assume that the section
+	is a data section and has read/write permissions.  Add readonly
+	support.
+
+	* core.c (create_core_from_addresses): Print end address in traces
+	and make tracing output line up.
+
+	* Makefile.in: Rewrite from Makefile to work with the Cygnus
+	environment, and support compiling in a different directory than
+	the sources reside in.
+
+	* ppc-endian.h: Rename from endian.h so that it doesn't get
+	confused with /usr/include/sys/endian.h on Linux.  Add Linux
+	endian support.
+
+	* ppc-endian.c: Rename to be consistant with ppc-endian.h.
+	Include ppc-endian.h, not endian.h.
+
+	* basics.h (sysdep.h): Include sysdep.h that configure makes.
+	Include ppc-endian.h, not endian.h.
+
+	* std-config.h: Rename from ppc-config.  Put #ifndefs around most
+	configuration macros, so they can be overridden via CFLAGS.  By
+	default, turn off tracing.
+
+	* configure.in: Clone from other simulator targets.
+	* configure: Generate via autoconf from configure.in.
+
+Sat Aug 19 09:05:32 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* ppc-instructions: fix srawi (was geting XER[CA] real wrong).
+
+	* interrupts.c (data_storage_interrupt): allow stack to grow by
+        upto one MB per increment.
+
+	* ppc-instructions: divw was computing rA / rA not rA / rB
+
+	* main.c (main): really stupid. Wasn't exiting with correct status
+
+Fri Aug 18 00:38:01 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* system.c (system_call): add system calls kill(2) and getpid(2).
+
+	* main.c (main): Check/return exit status when simulation
+        finishes.
+
+Thu Aug 17 14:29:18 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* device_tree.c (create_option_device_node): Alignment rules (at
+ 	least for the moment) now are for strict alignment only for LE OEA
+ 	mode.  (Because of compiler problems).
+
+	* system.c (system_call) SYS_exit: Wasn't exiting with correct status.
+
+Thu Aug 17 01:16:38 1995  Andrew Cagney  <cagney@highland.com.au>
+
+	* vm.c (DEFINE_VM_DATA_MAP_WRITE_N): For miss aligned transfer
+        forgot to return.
+
+	* system.c (system_call): didn't page align break argument before
+        determining increment break increment.
+
+	* psim/ppc: Re-arange entire directory structure so that
+        everything lives in the one directory.  While a pain for cleaning,
+        makes building across multiple architectures much simpler.
+
+	* devices.c, device_tree.c: Added code that provides a simple
+        illustration of how an interrupt control device could be
+        implemented.
+
+	* devices.c: Added code so that the dumb console device can read
+        (from stdin) as well as write to stdout.
+

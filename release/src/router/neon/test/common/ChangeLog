@@ -1,0 +1,245 @@
+Wed Aug 25 19:27:26 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (reset_socket): New function.
+
+Mon Jul  5 18:38:08 2004  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (main): Print 'xfail' for expected failures.
+
+Tue Oct  7 21:19:56 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (close_socket): New function.
+	(server_child, spawn_server_repeat): Use it.
+
+Fri Jul 25 12:13:59 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Add support for test type which is expected to fail
+	memory leak checks.
+	
+	* tests.h (T_XLEAKY, T_EXPECT_LEAKS): New defines.
+
+	* test.c (main) [NEON_MEMLEAK]: If T_EXPECT_LEAKS is set, fail if
+	the test did not leak memory.
+
+Wed Jun 18 20:10:45 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (server_child, spawn_server_repeat): Adapt for new
+	socket API.
+
+Sun Mar  9 17:52:11 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* test.h (T_EXPECT_FAIL): New constant.
+	(T_XFAIL): New test function wrapper.
+	
+	* tests.c (main): Handle expected failures.
+
+Sat Mar  1 21:04:35 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	Extend the ne_test structure with a 'flags' field which can
+	optionally request leak checking at run-time.
+	
+	* tests.h (ne_test): Add 'flags' field.
+	(T_CHECK_LEAKS): New flag.
+	(T): Use T_CHECK_LEAKS flag by default.
+	(T_LEAKY): Like T, but with no flags set.
+
+	* tests.c (main) [NEON_MEMLEAK]: If leak checking is requested,
+	if a test passes, but leaks memory, fail the test.
+
+Wed Feb 26 21:52:15 2003  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (main): Test the "disable debugging" mode of
+	ne_debug_init, NE_DBG_FLUSH, and a ne_debug() with no output.
+
+Fri Aug 23 22:54:35 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (main): Call ne_sock_init after ne_debug_init, so that
+	debugging messages are caught from ne_sock_init.  Print a warning
+	message if ne_sock_init fails.
+
+Wed Aug 21 13:29:20 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.h (ONCMP): New macro.
+
+Mon Aug 19 16:53:20 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (lookup_localhost): Just use inet_addr to resolve
+	127.0.0.1.
+
+Sun Aug 18 13:50:30 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (TEST_DEBUG): Add NE_DBG_SSL.
+
+Sat Aug 10 10:19:18 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (server_send): Fix declaration.
+	(discard_body): Use NE_FMT_SSIZE_T for print ssize_t's.
+
+Sat Jul  6 08:42:37 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (discard_body): New function.
+
+Sun Jun 30 10:26:33 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (server_send): New function.
+	(discard_request): Fail with appropriate error.
+
+Sun Jun 30 09:03:51 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (main): Reap server after each test has run.
+
+Sun Jun 30 09:00:43 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (reap_server): Set `child' to 0 so child can't be reaped
+	twice.
+
+Sun Jun 23 12:09:09 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (serve_file): Use large buffer when sending in chunked
+	mode to support large chunk sizes.
+
+Sun Jun 23 09:35:09 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (serve_file): Use NE_FMT_OFF_T and NE_FMT_SSIZE_T.
+
+Thu May 30 21:57:39 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (minisleep): Export function.
+
+Sun May 19 18:23:19 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c, tests.c: s/sock_/ne_sock_/, s/SOCK_/NE_SOCK_/ for
+	socket layer API change.
+
+	* child.h (SEND_STRING): New macro.
+
+Sun May 19 08:57:21 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (lookup_hostname): Conditionally use hstrerror().
+
+Mon Feb 25 20:54:56 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (t_context): Use ne_vsnprintf.
+
+Mon Feb 11 21:52:23 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (lookup_hostname): New function.
+	(server_child, do_listen): Pass around struct in_addr argument.
+	(spawn_server_addr): Renamed from spawn_server, take bind_local
+	flag to use localhost or "real" hostname to bind to.
+	(spawn_server): New function, use spawn_server
+
+Mon Feb 11 20:51:27 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (minisleep) [HAVE_USLEEP]: Use nice short usleep()
+	rather than boring long sleep().
+
+Sat Feb  2 14:15:25 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (spawn_server_repeat): Exit child process (with failure)
+	if the server callback fails.
+
+Fri Jan  4 22:06:17 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.h: Add SKIPREST result value.
+	
+	* tests.c (TEST_DEBUG): Add NE_DBG_LOCKS.  (main): Support
+	SKIPREST.
+
+Tue Jan  1 20:36:58 2002  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.h: Make test_suite symbol have external linkage.
+
+Sat Nov 10 22:28:55 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c, test.h: Export name of test suite.
+
+Sun Nov  4 13:56:42 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (discard_request): Support retrieving arbitrary header
+	values from request via want_request, got_request globals.
+
+Wed Oct 24 21:41:39 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.h (ONV): New macro.  (ON, ONN): Redefine in terms of ONV.
+
+Wed Oct 24 20:44:59 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (main, t_warning, segv): Use colours when stdout is a
+	terminal device.
+
+Wed Oct 24 20:36:38 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (t_context, t_warning): Renamed from i_am, warning.
+	(t_context): Take printf varargs. 
+
+	* tests.h (ONN, ON): Update, simplify.
+
+	* child.c: Update.
+
+Tue Oct 23 22:15:17 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (main): Vertically align results after warnings.
+
+Tue Oct  2 23:36:44 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (do_listen): Refactored from server_socket, only does
+	bind/listen.  (spawn_server): Moved awaken/accept calls here.
+	(spawn_server_repeat, dead_server): New functions.
+
+Sun Sep 30 10:14:35 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.h: Use a function/name structure for tests, add 'T' macro
+	for easily writing initializers.  Rename 'name' global variable to
+	'test_context' to avoid parameter name collisions.
+
+	* child.c (spawn_server): Update accordingly.
+
+	* tests.c (i_am): Update accordingly.  (main): Update; prettify
+	output using new 'name' from test structure. Cope better when all
+	tests in a suite are skipped.
+
+Sat Sep 29 11:04:40 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (serve_file): If 'chunks' is set in argument object,
+	then deliver the file as a series of chunks.
+
+Thu Sep 27 20:28:45 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (serve_file): New function.
+
+Thu Sep 27 20:28:41 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (discard_request): Reset clength.
+
+Mon Aug 27 00:31:09 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (test_num): Expose test counter.  (segv): Handle
+	segfault nicely.
+
+Mon Aug 27 00:30:20 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* child.c (discard_request): New function, from request.c in
+	neon/test.
+
+Wed Aug  8 22:09:21 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c, test.h: Only define test_argc/argv once.
+
+Mon Jul 16 16:30:28 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (warning): Take printf-style arguments list.
+
+Mon Jul 16 16:16:08 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (main): Cope with skipped tests properly.
+
+Mon Jul 16 16:00:59 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (warning): New function.  (main): Cope with warnings.
+
+Sun Jul  8 16:09:33 2001  Joe Orton  <joe@manyfish.co.uk>
+
+	* tests.c (main): Export argc/argv as test_argc, test_argv.
+
+

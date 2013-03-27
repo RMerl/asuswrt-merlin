@@ -985,13 +985,7 @@ get_machine_name(void *data)
 
     int ret;
     struct utsname unamebuf;
-    char *productid = nvram_safe_get("productid");
-#ifdef RTCONFIG_ODMPID
-    char *odmpid = nvram_safe_get("odmpid");
-    char* machine_name = strlen(odmpid) ? odmpid : strlen(productid) ? productid : "ASUS Router";
-#else
-    char* machine_name = strlen(productid) ? productid : "ASUS Router";
-#endif
+    char* machine_name = strlen(get_productid()) ? get_productid() : "ASUS Router";
 
     /* use uname() to get the system's hostname */
     ret = uname(&unamebuf);

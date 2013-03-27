@@ -1,7 +1,7 @@
 /*
  * BCM43XX Sonics SiliconBackplane PCMCIA core hardware definitions.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: sbpcmcia.h 323241 2012-03-23 14:34:48Z $
+ * $Id: sbpcmcia.h 350740 2012-08-15 06:35:40Z $
  */
 
 #ifndef	_SBPCMCIA_H
@@ -310,8 +310,15 @@
 #define HNBU_NOISELVL		0x61
 #define HNBU_RXGAIN_ERR		0x62
 #define HNBU_AGBGA		0x63
+#define HNBU_USBDESC_COMPOSITE  0x64    /* USB WLAN/BT composite descriptor */
 #define HNBU_PATCH_AUTOINC8	0x65	/* Auto increment patch entry for 8 byte patching */
 #define HNBU_PATCH8		0x66	/* Patch entry for 8 byte patching */
+#define HNBU_ACRXGAINS_C0	0x67	/* ACPHY rxgains: chain 0 */
+#define HNBU_ACRXGAINS_C1	0x68	/* ACPHY rxgains: chain 1 */
+#define HNBU_ACRXGAINS_C2	0x69	/* ACPHY rxgains: chain 2 */
+#define HNBU_TXDUTY		0x6a	/* Tx duty cycle for ACPHY 5g 40/80 Mhz */
+#define HNBU_USBUTMI_CTL        0x6b    /* 2 byte USB UTMI/LDO Control */
+#define HNBU_PDOFF_2G		0x6c
 
 #define HNBU_SROM3SWRGN		0x80	/* 78 bytes; srom rev 3 s/w region without crc8
 					 * plus extra info appended.
@@ -319,6 +326,8 @@
 #define HNBU_RESERVED		0x81	/* Reserved for non-BRCM post-mfg additions */
 #define HNBU_CUSTOM1		0x82	/* 4 byte; For non-BRCM post-mfg additions */
 #define HNBU_CUSTOM2		0x83	/* Reserved; For non-BRCM post-mfg additions */
+
+
 #endif /* !defined(LINUX_POSTMOGRIFY_REMOVAL) */
 
 /* sbtmstatelow */

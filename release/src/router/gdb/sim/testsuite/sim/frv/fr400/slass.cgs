@@ -1,0 +1,104 @@
+# frv testcase for slass $GRi,$GRj,$GRk
+# mach: fr405 fr450
+
+	.include "../testutils.inc"
+
+	start
+
+	.global sll
+slass0:
+	set_gr_immed  	0,gr7			; Shift by 0
+	set_gr_immed   	2,gr8
+	slass      	gr8,gr7,gr6
+	test_gr_immed  	2,gr8
+	test_gr_immed	0,gr7
+	test_gr_immed  	2,gr6
+slass1:
+	set_gr_immed  	1,gr7			; Shift by 1
+	set_gr_immed   	2,gr8
+	slass      	gr8,gr7,gr6
+	test_gr_immed  	2,gr8
+	test_gr_immed	1,gr7
+	test_gr_immed  	4,gr6
+
+slass2:
+	set_gr_immed  	31,gr7			; Shift 1 by 31
+	set_gr_immed   	1,gr8
+	slass      	gr8,gr7,gr6
+	test_gr_immed  	1,gr8
+	test_gr_immed	31,gr7
+	test_gr_limmed	0x7fff,0xffff,gr6
+
+slass3:
+	set_gr_immed  	31,gr7			; Shift -1 by 31
+	set_gr_immed   	-1,gr8
+	slass      	gr8,gr7,gr6
+	test_gr_immed  	-1,gr8
+	test_gr_immed	31,gr7
+	test_gr_limmed	0x8000,0x0000,gr6
+
+slass4:
+	set_gr_immed  	14,gr7			; Shift 0xffff0000 by 14
+	set_gr_limmed	0xffff,0x0000,gr8
+	slass      	gr8,gr7,gr6
+	test_gr_limmed	0xffff,0x0000,gr8
+	test_gr_immed	14,gr7
+	test_gr_limmed	0xc000,0x0000,gr6
+
+slass5:
+	set_gr_immed  	15,gr7			; Shift 0xffff0000 by 15
+	set_gr_limmed	0xffff,0x0000,gr8
+	slass      	gr8,gr7,gr6
+	test_gr_limmed	0xffff,0x0000,gr8
+	test_gr_immed	15,gr7
+	test_gr_limmed	0x8000,0x0000,gr6
+
+slass6:
+	set_gr_immed  	20,gr7			; Shift 0xffff0000 by 20
+	set_gr_limmed	0xffff,0x0000,gr8
+	slass      	gr8,gr7,gr6
+	test_gr_limmed	0xffff,0x0000,gr8
+	test_gr_immed	20,gr7
+	test_gr_limmed	0x8000,0x0000,gr6
+
+slass7:
+	set_gr_immed  	14,gr7			; Shift 0x0000ffff by 14
+	set_gr_limmed	0x0000,0xffff,gr8
+	slass      	gr8,gr7,gr6
+	test_gr_limmed	0x0000,0xffff,gr8
+	test_gr_immed	14,gr7
+	test_gr_limmed	0x3fff,0xc000,gr6
+
+slass8:
+	set_gr_immed  	15,gr7			; Shift 0x0000ffff by 15
+	set_gr_limmed  	0x0000,0xffff,gr8
+	slass      	gr8,gr7,gr6
+	test_gr_limmed	0x0000,0xffff,gr8
+	test_gr_immed	15,gr7
+	test_gr_limmed	0x7fff,0x8000,gr6
+
+slass9:
+	set_gr_immed  	20,gr7			; Shift 0x0000ffff by 20
+	set_gr_limmed  	0x0000,0xffff,gr8
+	slass      	gr8,gr7,gr6
+	test_gr_limmed	0x0000,0xffff,gr8
+	test_gr_immed	20,gr7
+	test_gr_limmed	0x7fff,0xffff,gr6
+
+slass10:
+	set_gr_immed  	30,gr7			; Shift 1 by 30
+	set_gr_immed   	1,gr8
+	slass      	gr8,gr7,gr6
+	test_gr_immed  	1,gr8
+	test_gr_immed	30,gr7
+	test_gr_limmed	0x4000,0x0000,gr6
+
+slass11:
+	set_gr_immed  	30,gr7			; Shift -1 by 30
+	set_gr_immed   	-1,gr8
+	slass      	gr8,gr7,gr6
+	test_gr_immed  	-1,gr8
+	test_gr_immed	30,gr7
+	test_gr_limmed	0xc000,0000,gr6
+
+	pass

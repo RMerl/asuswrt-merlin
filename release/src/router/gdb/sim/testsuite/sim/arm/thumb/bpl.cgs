@@ -1,0 +1,12 @@
+# arm testcase for bpl $soffset8
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global bpl
+bpl:
+	bpl footext
+
+	pass

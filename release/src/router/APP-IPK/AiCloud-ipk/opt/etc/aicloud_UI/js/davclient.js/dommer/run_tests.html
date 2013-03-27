@@ -1,0 +1,53 @@
+<!-- 
+
+    run_tests.html - file for testing Dommer, serves also as an example
+    Copyright (C) 2004-2005 Guido Wesdorp
+    email johnny@debris.demon.nl
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    
+-->
+<html>
+<head>
+<title>Unit tests for Dommer</title>
+<script type="text/javascript" src="../ecmaunit/ecmaunit.js"> </script>
+<script type="text/javascript" src="../jsbase/array.js"> </script>
+<script type="text/javascript" src="../jsbase/string.js"> </script>
+<script type="text/javascript" src="../minisax.js/minisax.js"> </script>
+<script type="text/javascript" src="dommer.js"> </script>
+<script type="text/javascript" src="tests.js"> </script>
+<script type="text/javascript">
+//<![CDATA[
+
+    function runTests() {
+        var body = document.getElementById('body');
+        var testsuite = new TestSuite(new HTMLReporter(body, true));
+        testsuite.registerTest(DOMTestCase);
+        if (navigator.appName.indexOf('Netscape') > -1 ||
+                navigator.appName.indexOf('Konqueror') > -1) {
+            // disable browser tests in IE, for they will fail...
+            testsuite.registerTest(BrowserDOMTestCase);
+        };
+        testsuite.runSuite();
+    };
+
+//]]>
+</script>
+</head>
+
+<body onload="runTests()" id="body">
+<div style="display:none" id="testdiv" ></div>
+</body>
+</html>

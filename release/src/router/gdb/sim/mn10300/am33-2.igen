@@ -1,0 +1,2285 @@
+// data cache pre-fetch:
+
+// 1111 1001 1010 0110 Rm.. 0000; dcpf (Rm)
+8.0xf9+8.0xa6+4.RN2,4.0000:D1a:::dcpf
+"dcpf"
+*am33_2
+{
+  int srcreg;
+
+  PC = cia;
+
+  srcreg = translate_rreg (SD_, RN2);
+  load_word (State.regs[srcreg]);
+}
+
+// 1111 1001 1010 0111 0000 0000; dcpf (sp)
+8.0xf9+8.0xa7+8.0x00:D1b:::dcpf
+"dcpf"
+*am33_2
+{
+  PC = cia;
+
+  load_word (SP);
+}
+
+// 1111 1011 1010 0110 Ri.. Rm.. 0000 0000; dcpf (Ri,Rm)
+8.0xfb+8.0xa6+4.RN2,4.RN0+8.0x00:D2a:::dcpf
+"dcpf"
+*am33_2
+{
+  int srci, srcm;
+
+  PC = cia;
+
+  srci = translate_rreg (SD_, RN2);
+  srcm = translate_rreg (SD_, RN0);
+
+  load_word (State.regs[srci] + State.regs[srcm]);
+}
+
+// 1111 1011 1010 0111 Rm.. 0000 IMM8; dcpf (d8,Rm)
+8.0xfb+8.0xa7+4.RN2,4.0000+8.IMM8:D2b:::dcpf
+"dcpf"
+*am33_2
+{
+  int srcreg;
+
+  PC = cia;
+
+  srcreg = translate_rreg (SD_, RN2);
+
+  load_word (State.regs[srcreg] + EXTEND8 (IMM8));
+}
+
+// 1111 1101 1010 0111 Rm.. 0000 IMM24; dcpf (d24,Rm)
+8.0xfd+8.0xa7+4.RN2,4.0000+8.IMM24A+8.IMM24B+8.IMM24C:D4a:::dcpf
+"dcpf"
+*am33_2
+{
+  int srcreg;
+
+  PC = cia;
+
+  srcreg = translate_rreg (SD_, RN2);
+
+  load_word (State.regs[srcreg] + EXTEND24 (FETCH24 (IMM24A,
+						     IMM24B, IMM24C)));
+}
+
+// 1111 1110 0100 0110 Rm.. 0000 IMM32; dcpf (d32,Rm)
+8.0xfe+8.0x46+4.RN2,4.0000+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5a:::dcpf
+"dcpf"
+*am33_2
+{
+  int srcreg;
+
+  PC = cia;
+
+  srcreg = translate_rreg (SD_, RN2);
+
+  load_word (State.regs[srcreg]
+	     + FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D));
+}
+
+// bit operations with imm8,(abs16) addressing mode:
+
+// 1111 1110 1000 0010 ABS16 IMM8; btst imm8,(abs16)
+8.0xfe+8.0x82+8.IMM16A+8.IMM16B+8.IMM8:D3:::btst
+"btst"
+*am33_2
+{
+  PC = cia;
+  genericBtst (IMM8, FETCH16 (IMM16A, IMM16B));
+}
+
+// 1111 1110 1000 0000 ABS16 IMM8; bset imm8,(abs16)
+8.0xfe+8.0x80+8.IMM16A+8.IMM16B+8.IMM8:D3:::bset
+"bset"
+*am33_2
+{
+  unsigned32 temp;
+  int z;
+  
+  PC = cia;
+  temp = load_byte (FETCH16 (IMM16A, IMM16B));
+  z = (temp & IMM8) == 0;
+  temp |= IMM8;
+  store_byte (FETCH16 (IMM16A, IMM16B), temp);
+  PSW &= ~(PSW_Z | PSW_N | PSW_C | PSW_V);
+  PSW |= (z ? PSW_Z : 0);
+}
+
+// 1111 1110 1000 0001 ABS16 IMM8; bclr imm8,(abs16)
+8.0xfe+8.0x81+8.IMM16A+8.IMM16B+8.IMM8:D3:::bclr
+"bclr"
+*am33_2
+{
+  unsigned32 temp;
+  int z;
+  
+  PC = cia;
+  temp = load_byte (FETCH16 (IMM16A, IMM16B));
+  z = (temp & IMM8) == 0;
+  temp = temp & ~(IMM8);
+  store_byte (FETCH16 (IMM16A, IMM16B), temp);
+  PSW &= ~(PSW_Z | PSW_N | PSW_C | PSW_V);
+  PSW |= (z ? PSW_Z : 0);
+}
+
+// single precision fmov:
+
+// 1111 1001 0010 000X Rm.. Sn..; fmov (Rm),FSn
+8.0xf9+4.2,3.0,1.X+4.Rm,4.Sn:D1a:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      XS2FS (X,Sn) = load_word (State.regs[reg]);
+    }
+}
+
+// 1111 1001 0010 001X Rm.. Sn..; fmov (Rm+),FSn
+8.0xf9+4.2,3.1,1.X+4.Rm,4.Sn:D1b:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      XS2FS (X,Sn) = load_word (State.regs[reg]);
+      State.regs[reg] += 4;
+    }
+}
+
+// 1111 1001 0010 010X ---- Sn..; fmov (SP),FSn
+8.0xf9+4.2,3.2,1.X+4.0,4.Sn:D1c:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      XS2FS (X,Sn) = load_word (State.regs[reg]);
+    }
+}
+
+// 1111 1001 0010 011X Rm.. Sn..; fmov Rm,FSn
+8.0xf9+4.2,3.3,1.X+4.Rm,4.Sn:D1d:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      XS2FS (X,Sn) = State.regs[reg];
+    }
+}
+
+// 1111 1001 0011 00Y0 Sm.. Rn..; fmov FSm,(Rn)
+8.0xf9+4.3,2.0,1.Y,1.0+4.Sm,4.Rn:D1e:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_word (State.regs[reg], XS2FS (Y,Sm));
+    }
+}
+
+// 1111 1001 0011 00Y1 Sm.. Rn..; fmov FSm,(Rn+)
+8.0xf9+4.3,2.0,1.Y,1.1+4.Sm,4.Rn:D1f:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_word (State.regs[reg], XS2FS (Y,Sm));
+      State.regs[reg] += 4;
+    }
+}
+
+// 1111 1001 0011 01Y0 Sm.. ----; fmov FSm,(SP)
+8.0xf9+4.3,2.1,1.Y,1.0+4.Sm,4.0:D1g:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      store_word (State.regs[reg], XS2FS (Y,Sm));
+    }
+}
+
+// 1111 1001 0011 01Y1 Sm.. Rn..; fmov FSm,Rn
+8.0xf9+4.3,2.1,1.Y,1.1+4.Sm,4.Rn:D1h:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      State.regs[reg] = XS2FS (Y,Sm);
+    }
+}
+
+// 1111 1001 0100 00YX Sm.. Sn..; fmov FSm,FSn
+8.0xf9+4.4,2.0,1.Y,1.X+4.Sm,4.Sn:D1i:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    XS2FS (X,Sn) = XS2FS (Y,Sm);
+}
+
+// 1111 1011 0010 000X Rm.. Sn.. d8; fmov (d8,Rm),FSn
+8.0xfb+4.2,3.0,1.X+4.Rm,4.Sn+8.IMM8:D2a:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      XS2FS (X, Sn) = load_word (State.regs[reg] + EXTEND8 (IMM8));
+    }
+}
+
+// 1111 1011 0010 001X Rm.. Sn.. d8; fmov (Rm+,imm8),FSn
+8.0xfb+4.2,3.1,1.X+4.Rm,4.Sn+8.IMM8:D2b:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      XS2FS (X, Sn) = load_word (State.regs[reg] + EXTEND8 (IMM8));
+      State.regs[reg] += 4;
+    }
+}
+
+// 1111 1011 0010 010X ---- Sn.. d8; fmov (d8,SP),FSn
+8.0xfb+4.2,3.2,1.X+4.0,4.Sn+8.IMM8:D2c:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      XS2FS (X, Sn) = load_word (State.regs[reg] + IMM8);
+    }
+}
+
+// 1111 1011 0010 0111 Ri.. Rm.. Sn.. --Z-; fmov (Ri,Rm),FSn
+8.0xfb+8.0x27+4.Ri,4.Rm+4.Sn,2.0,1.Z,1.0:D2d:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int ri = translate_rreg (SD_, Ri);
+      int rm = translate_rreg (SD_, Rm);
+      XS2FS (Z, Sn) = load_word (State.regs[ri] + State.regs[rm]);
+    }
+}
+
+// 1111 1011 0011 00Y0 Sm.. Rn.. d8; fmov FSm,(d8,Rn)
+8.0xfb+4.3,2.0,1.Y,1.0+4.Sm,4.Rn+8.IMM8:D2e:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_word (State.regs[reg] + EXTEND8 (IMM8), XS2FS (Y, Sm));
+    }
+}
+
+// 1111 1011 0011 00Y1 Sm.. Rn.. d8; fmov FSm,(Rn+,d8)
+8.0xfb+4.3,2.0,1.Y,1.1+4.Sm,4.Rn+8.IMM8:D2f:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_word (State.regs[reg] + EXTEND8 (IMM8), XS2FS (Y, Sm));
+      State.regs[reg] += 4;
+    }
+}
+
+// 1111 1011 0011 01Y0 Sm.. ---- d8; fmov FSm,(d8,SP)
+8.0xfb+4.3,2.1,1.Y,1.0+4.Sm,4.0+8.IMM8:D2g:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      store_word (State.regs[reg] + IMM8, XS2FS (Y, Sm));
+    }
+}
+
+// 1111 1011 0011 0111 Ri.. Rm.. Sm.. --Z-; fmov FSm,(Ri,Rm)
+8.0xfb+8.0x37+4.Ri,4.Rm+4.Sm,2.0,1.Z,1.0:D2h:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int ri = translate_rreg (SD_, Ri);
+      int rm = translate_rreg (SD_, Rm);
+      store_word (State.regs[ri] + State.regs[rm], XS2FS (Z, Sm));
+    }
+}
+
+// 1111 1101 0010 000X Rm.. Sn.. d24; fmov (d24,Rm),FSn
+8.0xfd+4.2,3.0,1.X+4.Rm,4.Sn+8.IMM24A+8.IMM24B+8.IMM24C:D4a:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      XS2FS (X, Sn) = load_word (State.regs[reg]
+				 + EXTEND24 (FETCH24 (IMM24A,
+						      IMM24B, IMM24C)));
+    }
+}
+
+// 1111 1101 0010 001X Rm.. Sn.. d24; fmov (Rm+,imm24),FSn
+8.0xfd+4.2,3.1,1.X+4.Rm,4.Sn+8.IMM24A+8.IMM24B+8.IMM24C:D4b:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      XS2FS (X, Sn) = load_word (State.regs[reg]
+				 + EXTEND24 (FETCH24 (IMM24A,
+						      IMM24B, IMM24C)));
+      State.regs[reg] += 4;
+    }
+}
+
+// 1111 1101 0010 010X ---- Sn.. d24; fmov (d24,SP),FSn
+8.0xfd+4.2,3.2,1.X+4.0,4.Sn+8.IMM24A+8.IMM24B+8.IMM24C:D4c:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      XS2FS (X, Sn) = load_word (State.regs[reg] + FETCH24 (IMM24A,
+							    IMM24B, IMM24C));
+    }
+}
+
+// 1111 1101 0011 00Y0 Sm.. Rn.. d24; fmov FSm,(d24,Rn)
+8.0xfd+4.3,2.0,1.Y,1.0+4.Sm,4.Rn+8.IMM24A+8.IMM24B+8.IMM24C:D4e:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_word (State.regs[reg]
+		  + EXTEND24 (FETCH24 (IMM24A,
+				       IMM24B, IMM24C)), XS2FS (Y, Sm));
+    }
+}
+
+// 1111 1101 0011 00Y1 Sm.. Rn.. d24; fmov FSm,(Rn+,d24)
+8.0xfd+4.3,2.0,1.Y,1.1+4.Sm,4.Rn+8.IMM24A+8.IMM24B+8.IMM24C:D4f:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_word (State.regs[reg]
+		  + EXTEND24 (FETCH24 (IMM24A,
+				       IMM24B, IMM24C)), XS2FS (Y, Sm));
+      State.regs[reg] += 4;
+    }
+}
+
+// 1111 1101 0011 01Y0 Sm.. ---- d24; fmov FSm,(d24,SP)
+8.0xfd+4.3,2.1,1.Y,1.0+4.Sm,4.0+8.IMM24A+8.IMM24B+8.IMM24C:D4g:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      store_word (State.regs[reg]
+		  + FETCH24 (IMM24A,
+			     IMM24B, IMM24C), XS2FS (Y, Sm));
+    }
+}
+
+// 1111 1110 0010 000X Rm.. Sn.. d32; fmov (d32,Rm),FSn
+8.0xfe+4.2,3.0,1.X+4.Rm,4.Sn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5a:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      XS2FS (X, Sn) = load_word (State.regs[reg]
+				 + EXTEND32 (FETCH32 (IMM32A, IMM32B,
+						      IMM32C, IMM32D)));
+    }
+}
+
+// 1111 1110 0010 001X Rm.. Sn.. d32; fmov (Rm+,imm32),FSn
+8.0xfe+4.2,3.1,1.X+4.Rm,4.Sn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5b:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      XS2FS (X, Sn) = load_word (State.regs[reg]
+				 + EXTEND32 (FETCH32 (IMM32A, IMM32B,
+						      IMM32C, IMM32D)));
+      State.regs[reg] += 4;
+    }
+}
+
+// 1111 1110 0010 010X ---- Sn.. d32; fmov (d32,SP),FSn
+8.0xfe+4.2,3.2,1.X+4.0,4.Sn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5c:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      XS2FS (X, Sn) = load_word (State.regs[reg]
+				 + FETCH32 (IMM32A, IMM32B,
+					    IMM32C, IMM32D));
+    }
+}
+
+// 1111 1110 0010 011X ---- Sn.. d32; fmov imm32,FSn
+8.0xfe+4.2,3.3,1.X+4.0,4.Sn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5d:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    XS2FS (X, Sn) = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
+}
+
+// 1111 1110 0011 00Y0 Sm.. Rn.. d32; fmov FSm,(d32,Rn)
+8.0xfe+4.3,2.0,1.Y,1.0+4.Sm,4.Rn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5e:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_word (State.regs[reg]
+		  + EXTEND32 (FETCH32 (IMM32A, IMM32B,
+				       IMM32C, IMM32D)), XS2FS (Y, Sm));
+    }
+}
+
+// 1111 1110 0011 00Y1 Sm.. Rn.. d32; fmov FSm,(Rn+,d32)
+8.0xfe+4.3,2.0,1.Y,1.1+4.Sm,4.Rn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5f:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_word (State.regs[reg]
+		  + EXTEND32 (FETCH32 (IMM32A, IMM32B,
+				       IMM32C, IMM32D)), XS2FS (Y, Sm));
+      State.regs[reg] += 4;
+    }
+}
+
+// 1111 1110 0011 01Y0 Sm.. ---- d32; fmov FSm,(d32,SP)
+8.0xfe+4.3,2.1,1.Y,1.0+4.Sm,4.0+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5g:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      store_word (State.regs[reg]
+		  + FETCH32 (IMM32A, IMM32B,
+			     IMM32C, IMM32D), XS2FS (Y, Sm));
+    }
+}
+
+// double precision fmov:
+
+// 1111 1001 1010 000X Rm.. fn.-; fmov (Rm),FDn
+8.0xf9+4.0xa,3.0,1.X+4.Rm,3.fn,1.0:D1j:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      Xf2FD (X,fn) = load_dword (State.regs[reg]);
+    }
+}
+
+// 1111 1001 1010 001X Rm.. fn.-; fmov (Rm+),FDn
+8.0xf9+4.0xa,3.1,1.X+4.Rm,3.fn,1.0:D1k:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      Xf2FD (X,fn) = load_dword (State.regs[reg]);
+      State.regs[reg] += 8;
+    }
+}
+
+// 1111 1001 1010 010X ---- fn.-; fmov (SP),FDn
+8.0xf9+4.0xa,3.2,1.X+4.0,3.fn,1.0:D1l:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      Xf2FD (X,fn) = load_dword (State.regs[reg]);
+    }
+}
+
+// 1111 1001 1011 00Y0 fm.- Rn..; fmov FDm,(Rn)
+8.0xf9+4.0xb,2.0,1.Y,1.0+3.fm,1.0,4.Rn:D1m:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_dword (State.regs[reg], Xf2FD (Y,fm));
+    }
+}
+
+// 1111 1001 1011 00Y1 fm.- Rn..; fmov FDm,(Rn+)
+8.0xf9+4.0xb,2.0,1.Y,1.1+3.fm,1.0,4.Rn:D1n:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_dword (State.regs[reg], Xf2FD (Y,fm));
+      State.regs[reg] += 8;
+    }
+}
+
+// 1111 1001 1011 01Y0 fm.- ----; fmov FDm,(SP)
+8.0xf9+4.0xb,2.1,1.Y,1.0+3.fm,1.0,4.0:D1o:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      store_dword (State.regs[reg], Xf2FD (Y,fm));
+    }
+}
+
+// 1111 1001 1100 00YX fm.- fn.-; fmov FDm,FDn
+8.0xf9+4.0xc,2.0,1.Y,1.X+3.fm,1.0,3.fn,1.0:D1p:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1011 0100 0111 Ri.. Rm.. fn.- --Z-; fmov (Ri,Rm),FDn
+8.0xfb+8.0x47+4.Ri,4.Rm+3.fn,1.0,2.0,1.Z,1.0:D2i:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int ri = translate_rreg (SD_, Ri);
+      int rm = translate_rreg (SD_, Rm);
+      Xf2FD (Z,fn) = load_dword (State.regs[ri] + State.regs[rm]);
+    }
+}
+      
+// 1111 1011 0101 0111 Ri.. Rn.. fm.- --Z-; fmov FDm,(Ri,Rn)
+8.0xfb+8.0x57+4.Ri,4.Rn+3.fm,1.0,2.0,1.Z,1.0:D2j:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int ri = translate_rreg (SD_, Ri);
+      int rn = translate_rreg (SD_, Rn);
+      store_dword (State.regs[ri] + State.regs[rn], Xf2FD (Z,fm));
+    }
+}
+      
+// 1111 1011 1010 000X Rm.. fn.- d8; fmov (d8,Rm),FDn
+8.0xfb+4.0xa,3.0,1.X+4.Rm,4.fn+8.IMM8:D2k:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      Xf2FD (X, fn) = load_dword (State.regs[reg] + EXTEND8 (IMM8));
+    }
+}
+
+// 1111 1011 1010 001X Rm.. fn.- d8; fmov (Rm+,imm8),FDn
+8.0xfb+4.0xa,3.1,1.X+4.Rm,4.fn+8.IMM8:D2l:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      Xf2FD (X, fn) = load_dword (State.regs[reg] + EXTEND8 (IMM8));
+      State.regs[reg] += 8;
+    }
+}
+
+// 1111 1011 1010 010X ---- fn.- d8; fmov (d8,SP),FDn
+8.0xfb+4.0xa,3.2,1.X+4.0,4.fn+8.IMM8:D2m:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      Xf2FD (X, fn) = load_dword (State.regs[reg] + IMM8);
+    }
+}
+
+// 1111 1011 1011 00Y0 fm.- Rn.. d8; fmov FDm,(d8,Rn)
+8.0xfb+4.0xb,2.0,1.Y,1.0+4.fm,4.Rn+8.IMM8:D2n:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_dword (State.regs[reg] + EXTEND8 (IMM8), Xf2FD (Y, fm));
+    }
+}
+
+// 1111 1011 1011 00Y1 fm.- Rn.. d8; fmov FDm,(Rn+,d8)
+8.0xfb+4.0xb,2.0,1.Y,1.1+4.fm,4.Rn+8.IMM8:D2o:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_dword (State.regs[reg] + EXTEND8 (IMM8), Xf2FD (Y, fm));
+      State.regs[reg] += 8;
+    }
+}
+
+// 1111 1011 1011 01Y0 fm.- ---- d8; fmov FDm,(d8,SP)
+8.0xfb+4.0xb,2.1,1.Y,1.0+4.fm,4.0+8.IMM8:D2p:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      store_dword (State.regs[reg] + IMM8, Xf2FD (Y, fm));
+    }
+}
+
+// 1111 1101 1010 000X Rm.. fn.- d24; fmov (d24,Rm),FDn
+8.0xfd+4.0xa,3.0,1.X+4.Rm,4.fn+8.IMM24A+8.IMM24B+8.IMM24C:D4k:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      Xf2FD (X, fn) = load_dword (State.regs[reg]
+				  + EXTEND24 (FETCH24 (IMM24A,
+						       IMM24B, IMM24C)));
+    }
+}
+
+// 1111 1101 1010 001X Rm.. fn.- d24; fmov (Rm+,imm24),FDn
+8.0xfd+4.0xa,3.1,1.X+4.Rm,4.fn+8.IMM24A+8.IMM24B+8.IMM24C:D4l:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      Xf2FD (X, fn) = load_dword (State.regs[reg]
+				  + EXTEND24 (FETCH24 (IMM24A,
+						       IMM24B, IMM24C)));
+      State.regs[reg] += 8;
+    }
+}
+
+// 1111 1101 1010 010X ---- fn.- d24; fmov (d24,SP),FDn
+8.0xfd+4.0xa,3.2,1.X+4.0,4.fn+8.IMM24A+8.IMM24B+8.IMM24C:D4m:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      Xf2FD (X, fn) = load_dword (State.regs[reg]
+				  + FETCH24 (IMM24A,
+					     IMM24B, IMM24C));
+    }
+}
+
+// 1111 1101 1011 00Y0 fm.- Rn.. d24; fmov FDm,(d24,Rn)
+8.0xfd+4.0xb,2.0,1.Y,1.0+4.fm,4.Rn+8.IMM24A+8.IMM24B+8.IMM24C:D4n:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_dword (State.regs[reg]
+		   + EXTEND24 (FETCH24 (IMM24A,
+					IMM24B, IMM24C)), Xf2FD (Y, fm));
+    }
+}
+
+// 1111 1101 1011 00Y1 fm.- Rn.. d24; fmov FDm,(Rn+,d24)
+8.0xfd+4.0xb,2.0,1.Y,1.1+4.fm,4.Rn+8.IMM24A+8.IMM24B+8.IMM24C:D4o:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_dword (State.regs[reg]
+		   + EXTEND24 (FETCH24 (IMM24A,
+					IMM24B, IMM24C)), Xf2FD (Y, fm));
+      State.regs[reg] += 8;
+    }
+}
+
+// 1111 1101 1011 01Y0 fm.- ---- d24; fmov FDm,(d24,SP)
+8.0xfd+4.0xb,2.1,1.Y,1.0+4.fm,4.0+8.IMM24A+8.IMM24B+8.IMM24C:D4p:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      store_dword (State.regs[reg] + FETCH24 (IMM24A,
+					      IMM24B, IMM24C), Xf2FD (Y, fm));
+    }
+}
+
+// 1111 1110 1010 000X Rm.. fn.- d32; fmov (d32,Rm),FDn
+8.0xfe+4.0xa,3.0,1.X+4.Rm,4.fn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5k:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      Xf2FD (X, fn) = load_dword (State.regs[reg]
+				  + EXTEND32 (FETCH32 (IMM32A, IMM32B,
+						       IMM32C, IMM32D)));
+    }
+}
+
+// 1111 1110 1010 001X Rm.. fn.- d32; fmov (Rm+,imm32),FDn
+8.0xfe+4.0xa,3.1,1.X+4.Rm,4.fn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5l:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      Xf2FD (X, fn) = load_dword (State.regs[reg]
+				  + EXTEND32 (FETCH32 (IMM32A, IMM32B,
+						       IMM32C, IMM32D)));
+      State.regs[reg] += 8;
+    }
+}
+
+// 1111 1110 1010 010X ---- fn.- d32; fmov (d32,SP),FDn
+8.0xfe+4.0xa,3.2,1.X+4.0,4.fn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5m:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      Xf2FD (X, fn) = load_dword (State.regs[reg]
+				  + FETCH32 (IMM32A, IMM32B,
+					     IMM32C, IMM32D));
+    }
+}
+
+// 1111 1110 1011 00Y0 fm.- Rn.. d32; fmov FDm,(d32,Rn)
+8.0xfe+4.0xb,2.0,1.Y,1.0+4.fm,4.Rn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5n:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_dword (State.regs[reg]
+		   + EXTEND32 (FETCH32 (IMM32A, IMM32B,
+					IMM32C, IMM32D)), Xf2FD (Y, fm));
+    }
+}
+
+// 1111 1110 1011 00Y1 fm.- Rn.. d32; fmov FDm,(Rn+,d32)
+8.0xfe+4.0xb,2.0,1.Y,1.1+4.fm,4.Rn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5o:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      store_dword (State.regs[reg]
+		   + EXTEND32 (FETCH32 (IMM32A, IMM32B,
+					IMM32C, IMM32D)), Xf2FD (Y, fm));
+      State.regs[reg] += 8;
+    }
+}
+
+// 1111 1110 1011 01Y0 fm.- ---- d32; fmov FDm,(d32,SP)
+8.0xfe+4.0xb,2.1,1.Y,1.0+4.fm,4.0+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5p:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = REG_SP;
+      store_dword (State.regs[reg]
+		   + FETCH32 (IMM32A, IMM32B,
+			      IMM32C, IMM32D), Xf2FD (Y, fm));
+    }
+}
+
+// FPCR fmov:
+
+// 1111 1001 1011 0101 Rm.. ----; fmov Rm,FPCR
+8.0xf9+8.0xb5+4.Rm,4.0:D1q:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rm);
+      unsigned32 val = State.regs[reg];
+      FPCR = (val & (EC_MASK | EE_MASK | FCC_MASK))
+	| ((FPCR & ~val) & EF_MASK);
+    }
+}
+
+// 1111 1001 1011 0111 ---- Rn..; fmov FPCR,Rn
+8.0xf9+8.0xb7+4.0,4.Rn:D1r:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      int reg = translate_rreg (SD_, Rn);
+      State.regs[reg] = FPCR & FPCR_MASK;
+    }
+}
+
+// 1111 1101 1011 0101 imm32; fmov imm32,FPCR
+8.0xfd+8.0xb5+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5:::fmov
+"fmov"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      unsigned32 val = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
+      FPCR = (val & (EC_MASK | EE_MASK | FCC_MASK))
+	| ((FPCR & ~val) & EF_MASK);
+    }
+}
+
+// fabs:
+
+// 1111 1001 0100 010X ---- Sn..; fabs FSn
+8.0xf9+4.4,3.2,1.X+4.0,4.Sn:D1a:::fabs
+"fabs"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      sim_fpu in, out;
+
+      FS2FPU (XS2FS (X,Sn), in);
+      sim_fpu_abs (&out, &in);
+      FPU2FS (out, XS2FS (X,Sn));
+    }
+}
+
+// 1111 1001 1100 010X ---- Sn..; fabs FDn
+8.0xf9+4.0xc,3.2,1.X+4.0,3.fn,1.0:D1b:::fabs
+"fabs"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1011 0100 0100 Sm.. ---- Sn.. X-Z-; fabs FSm,FSn
+8.0xfb+8.0x44+4.Sm,4.0+4.Sn,1.X,1.0,1.Z,1.0:D2a:::fabs
+"fabs"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      sim_fpu in, out;
+
+      FS2FPU (XS2FS (X,Sm), in);
+      sim_fpu_abs (&out, &in);
+      FPU2FS (out, XS2FS (Z,Sn));
+    }
+}
+
+// 1111 1011 1100 0100 fm.- ---- fn.- X-Z-; fabs FDm,FDn
+8.0xfb+8.0xc4+3.fm,1.0,4.0+3.fn,1.0,1.X,1.0,1.Z,1.0:D2b:::fabs
+"fabs"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1001 0100 011X ---- Sn..; fneg FSn
+8.0xf9+4.4,3.3,1.X+4.0,4.Sn:D1a:::fneg
+"fneg"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      sim_fpu in, out;
+
+      FS2FPU (XS2FS (X,Sn), in);
+      sim_fpu_neg (&out, &in);
+      FPU2FS (out, XS2FS (X,Sn));
+    }
+}
+
+// 1111 1001 1100 011X ---- Sn..; fneg FDn
+8.0xf9+4.0xc,3.3,1.X+4.0,3.fn,1.0:D1b:::fneg
+"fneg"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1011 0100 0110 Sm.. ---- Sn.. X-Z-; fneg FSm,FSn
+8.0xfb+8.0x46+4.Sm,4.0+4.Sn,1.X,1.0,1.Z,1.0:D2a:::fneg
+"fneg"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      sim_fpu in, out;
+
+      FS2FPU (XS2FS (X,Sm), in);
+      sim_fpu_neg (&out, &in);
+      FPU2FS (out, XS2FS (Z,Sn));
+    }
+}
+
+// 1111 1011 1100 0110 fm.- ---- fn.- X-Z-; fneg FDm,FDn
+8.0xfb+8.0xc6+3.fm,1.0,4.0+3.fn,1.0,1.X,1.0,1.Z,1.0:D2b:::fneg
+"fneg"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1001 0101 000X ---- Sn..; frsqrt FSn
+8.0xf9+4.5,3.0,1.X+4.0,4.Sn:D1a:::frsqrt
+"frsqrt"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_rsqrt (SD, CPU, cia, &XS2FS (X,Sn), &XS2FS (X,Sn), FP_SINGLE);
+}
+
+// 1111 1001 1101 000X ---- fn.-; frsqrt FDn
+8.0xf9+4.0xd,3.0,1.X+4.0,3.fn,1.0:D1b:::frsqrt
+"frsqrt"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1011 0101 0000 Sm.. ---- Sn.. X-Z-; frsqrt FSm,FSn
+8.0xfb+8.0x50+4.Sm,4.0+4.Sn,1.X,1.0,1.Z,1.0:D2a:::frsqrt
+"frsqrt"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_rsqrt (SD, CPU, cia, &XS2FS (X,Sm), &XS2FS (Z,Sn), FP_SINGLE);
+}
+
+// 1111 1011 1101 0000 fm.- ---- fn.- X-Z-; frsqrt FDm,FDn
+8.0xfb+8.0xd0+3.fm,1.0,4.0+3.fn,1.0,1.X,1.0,1.Z,1.0:D2b:::frsqrt
+"frsqrt"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1001 0101 001X ---- Sn..; fsqrt FSn
+8.0xf9+4.5,3.1,1.X+4.0,4.Sn:D1a:::fsqrt
+"fsqrt"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1001 1101 001X ---- fn.-; fsqrt FDn
+8.0xf9+4.0xd,3.1,1.X+4.0,3.fn,1.0:D1b:::fsqrt
+"fsqrt"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1011 0101 0100 Sm.. ---- Sn.. X-Z-; fsqrt FSm,FSn
+8.0xfb+8.0x54+4.Sm,4.0+4.Sn,1.X,1.0,1.Z,1.0:D2a:::fsqrt
+"fsqrt"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1011 1101 0100 fm.- ---- fn.- X-Z-; fsqrt FDm,FDn
+8.0xfb+8.0xd4+3.fm,1.0,4.0+3.fn,1.0,1.X,1.0,1.Z,1.0:D2b:::fsqrt
+"fsqrt"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1001 0101 01YX Sm.. Sn..; fcmp FSm, FSn
+8.0xf9+4.5,2.1,1.Y,1.X+4.Sm,4.Sn:D1a:::fcmp
+"fcmp"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_cmp (SD, CPU, cia, &XS2FS (X,Sn), &XS2FS (Y,Sm), FP_SINGLE);
+}
+
+// 1111 1001 1101 01YX fm.- fn.-; fcmp FDm, FDn
+8.0xf9+4.0xd,2.1,1.Y,1.X+3.fm,1.0,3.fn,1.0:D1b:::fcmp
+"fcmp"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1110 0011 01Y1 Sm.. ---- IMM32; fcmp imm32, FSm
+8.0xfe+4.3,2.1,1.Y,1.1+4.Sm,4.0+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5:::fcmp
+"fcmp"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      uint32 imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
+
+      fpu_cmp (SD, CPU, cia, &XS2FS (Y,Sm), &imm, FP_SINGLE);
+    }
+}
+
+// 1111 1001 0110 00YX Sm.. Sn..; fadd FSm, FSn
+8.0xf9+4.6,2.0,1.Y,1.X+4.Sm,4.Sn:D1a:::fadd
+"fadd"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_add (SD, CPU, cia,
+	     &XS2FS (Y,Sm), &XS2FS (X,Sn), &XS2FS (X,Sn), FP_SINGLE);
+}
+
+// 1111 1001 1110 00YX fm.- fn.-; fadd FDm, FDn
+8.0xf9+4.0xe,2.0,1.Y,1.X+3.fm,1.0,3.fn,1.0:D1b:::fadd
+"fadd"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1011 0110 0000 Sm1. Sm2. Sn.. XYZ-; fadd FSm1, FSm2, FSn
+8.0xfb+8.0x60+4.Sm1,4.Sm2+4.Sn,1.X,1.Y,1.Z,1.0:D2a:::fadd
+"fadd"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_add (SD, CPU, cia,
+	     &XS2FS (X,Sm1), &XS2FS (Y,Sm2), &XS2FS (Z,Sn), FP_SINGLE);
+}
+
+// 1111 1011 1110 0000 fm1- fm2- fn.- XYZ-; fadd FDm1, FDm2, FDn
+8.0xfb+8.0xe0+3.fm1,1.0,3.fm2,1.0+3.fn,1.0,1.X,1.Y,1.Z,1.0:D2b:::fadd
+"fadd"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+
+// 1111 1110 0110 00YX Sm.. Sn.. IMM32; fadd imm32, FSm, FSn
+8.0xfe+4.6,2.0,1.Y,1.X+4.Sm,4.Sn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5:::fadd
+"fadd"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      uint32 imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
+
+      fpu_add (SD, CPU, cia,
+	       &XS2FS (Y,Sm), &imm, &XS2FS (X,Sn), FP_SINGLE);
+    }
+}
+
+// 1111 1001 0110 01YX Sm.. Sn..; fsub FSm, FSn
+8.0xf9+4.6,2.1,1.Y,1.X+4.Sm,4.Sn:D1a:::fsub
+"fsub"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_sub (SD, CPU, cia,
+	     &XS2FS (X,Sn), &XS2FS (Y,Sm), &XS2FS (X,Sn), FP_SINGLE);
+}
+
+// 1111 1001 1110 01YX fm.- fn.-; fsub FDm, FDn
+8.0xf9+4.0xe,2.1,1.Y,1.X+3.fm,1.0,3.fn,1.0:D1b:::fsub
+"fsub"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1011 0110 0100 Sm1. Sm2. Sn.. XYZ-; fsub FSm1, FSm2, FSn
+8.0xfb+8.0x64+4.Sm1,4.Sm2+4.Sn,1.X,1.Y,1.Z,1.0:D2a:::fsub
+"fsub"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_sub (SD, CPU, cia,
+	     &XS2FS (Y,Sm2), &XS2FS (X,Sm1), &XS2FS (Z,Sn), FP_SINGLE);
+}
+
+// 1111 1011 1110 0100 fm1- fm2- fn.- XYZ-; fsub FDm1, FDm2, FDn
+8.0xfb+8.0xe4+3.fm1,1.0,3.fm2,1.0+3.fn,1.0,1.X,1.Y,1.Z,1.0:D2b:::fsub
+"fsub"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+
+// 1111 1110 0110 01YX Sm.. Sn.. IMM32; fsub imm32, FSm, FSn
+8.0xfe+4.6,2.1,1.Y,1.X+4.Sm,4.Sn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5:::fsub
+"fsub"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      uint32 imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
+
+      fpu_sub (SD, CPU, cia,
+	       &XS2FS (Y,Sm), &imm, &XS2FS (X,Sn), FP_SINGLE);
+    }
+}
+
+// 1111 1001 0111 00YX Sm.. Sn..; fmul FSm, FSn
+8.0xf9+4.7,2.0,1.Y,1.X+4.Sm,4.Sn:D1a:::fmul
+"fmul"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_mul (SD, CPU, cia,
+	     &XS2FS (Y,Sm), &XS2FS (X,Sn), &XS2FS (X,Sn), FP_SINGLE);
+}
+
+// 1111 1001 1111 00YX fm.- fn.-; fmul FDm, FDn
+8.0xf9+4.0xf,2.0,1.Y,1.X+3.fm,1.0,3.fn,1.0:D1b:::fmul
+"fmul"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1011 0111 0000 Sm1. Sm2. Sn.. XYZ-; fmul FSm1, FSm2, FSn
+8.0xfb+8.0x70+4.Sm1,4.Sm2+4.Sn,1.X,1.Y,1.Z,1.0:D2a:::fmul
+"fmul"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_mul (SD, CPU, cia,
+	     &XS2FS (X,Sm1), &XS2FS (Y,Sm2), &XS2FS (Z,Sn), FP_SINGLE);
+}
+
+// 1111 1011 1111 0000 fm1- fm2- fn.- XYZ-; fmul FDm1, FDm2, FDn
+8.0xfb+8.0xf0+3.fm1,1.0,3.fm2,1.0+3.fn,1.0,1.X,1.Y,1.Z,1.0:D2b:::fmul
+"fmul"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+
+// 1111 1110 0111 00YX Sm.. Sn.. IMM32; fmul imm32, FSm, FSn
+8.0xfe+4.7,2.0,1.Y,1.X+4.Sm,4.Sn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5:::fmul
+"fmul"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      uint32 imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
+
+      fpu_mul (SD, CPU, cia,
+	       &imm, &XS2FS (Y,Sm), &XS2FS (X,Sn), FP_SINGLE);
+    }
+}
+
+// 1111 1001 0111 01YX Sm.. Sn..; fdiv FSm, FSn
+8.0xf9+4.7,2.1,1.Y,1.X+4.Sm,4.Sn:D1a:::fdiv
+"fdiv"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_div (SD, CPU, cia,
+	     &XS2FS (X,Sn), &XS2FS (Y,Sm), &XS2FS (X,Sn), FP_SINGLE);
+}
+
+// 1111 1001 1111 01YX fm.- fn.-; fdiv FDm, FDn
+8.0xf9+4.0xf,2.1,1.Y,1.X+3.fm,1.0,3.fn,1.0:D1b:::fdiv
+"fdiv"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1011 0111 0100 Sm1. Sm2. Sn.. XYZ-; fdiv FSm1, FSm2, FSn
+8.0xfb+8.0x74+4.Sm1,4.Sm2+4.Sn,1.X,1.Y,1.Z,1.0:D2a:::fdiv
+"fdiv"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_div (SD, CPU, cia,
+	     &XS2FS (Y,Sm2), &XS2FS (X,Sm1), &XS2FS (Z,Sn), FP_SINGLE);
+}
+
+// 1111 1011 1111 0100 fm1- fm2- fn.- XYZ-; fdiv FDm1, FDm2, FDn
+8.0xfb+8.0xf4+3.fm1,1.0,3.fm2,1.0+3.fn,1.0,1.X,1.Y,1.Z,1.0:D2b:::fdiv
+"fdiv"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+
+// 1111 1110 0111 01YX Sm.. Sn.. IMM32; fdiv imm32, FSm, FSn
+8.0xfe+4.7,2.1,1.Y,1.X+4.Sm,4.Sn+8.IMM32A+8.IMM32B+8.IMM32C+8.IMM32D:D5:::fdiv
+"fdiv"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    {
+      uint32 imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
+
+      fpu_div (SD, CPU, cia,
+	       &XS2FS (Y,Sm), &imm, &XS2FS (X,Sn), FP_SINGLE);
+    }
+}
+
+// 1111 1011 1000 00Sn Sm1. Sm2. Sm3. XYZA; fmadd FSm1, FSm2, FSm3, FSn
+8.0xfb+4.8,2.0,2.Sn+4.Sm1,4.Sm2+4.Sm3,1.X,1.Y,1.Z,1.A:D2:::fmadd
+"fmadd"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_fmadd (SD, CPU, cia,
+	       &XS2FS (X,Sm1), &XS2FS (Y,Sm2), &XS2FS (Z,Sm3),
+	       &AS2FS (A,Sn), FP_SINGLE);
+}
+    
+// 1111 1011 1000 01Sn Sm1. Sm2. Sm3. XYZA; fmsub FSm1, FSm2, FSm3, FSn
+8.0xfb+4.8,2.1,2.Sn+4.Sm1,4.Sm2+4.Sm3,1.X,1.Y,1.Z,1.A:D2:::fmsub
+"fmsub"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_fmsub (SD, CPU, cia,
+	       &XS2FS (X,Sm1), &XS2FS (Y,Sm2), &XS2FS (Z,Sm3),
+	       &AS2FS (A,Sn), FP_SINGLE);
+}
+
+// 1111 1011 1001 00Sn Sm1. Sm2. Sm3. XYZA; fnmadd FSm1, FSm2, FSm3, FSn
+8.0xfb+4.9,2.0,2.Sn+4.Sm1,4.Sm2+4.Sm3,1.X,1.Y,1.Z,1.A:D2:::fnmadd
+"fnmadd"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_fnmadd (SD, CPU, cia,
+		&XS2FS (X,Sm1), &XS2FS (Y,Sm2), &XS2FS (Z,Sm3),
+		&AS2FS (A,Sn), FP_SINGLE);
+}
+    
+// 1111 1011 1001 01Sn Sm1. Sm2. Sm3. XYZA; fnmsub FSm1, FSm2, FSm3, FSn
+8.0xfb+4.9,2.1,2.Sn+4.Sm1,4.Sm2+4.Sm3,1.X,1.Y,1.Z,1.A:D2:::fnmsub
+"fnmsub"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_fnmsub (SD, CPU, cia,
+		&XS2FS (X,Sm1), &XS2FS (Y,Sm2), &XS2FS (Z,Sm3),
+		&AS2FS (A,Sn), FP_SINGLE);
+}
+
+// conversion:
+
+// 1111 1011 0100 0000 Sm.. ---- Sn.. X-Z-; ftoi FSm,FSn
+8.0xfb+8.0x40+4.Sm,4.0+4.Sn,1.X,1.0,1.Z,1.0:D2:::ftoi
+"ftoi"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1011 0100 0010 Sm.. ---- Sn.. X-Z-; itof FSm,FSn
+8.0xfb+8.0x42+4.Sm,4.0+4.Sn,1.X,1.0,1.Z,1.0:D2:::itof
+"itof"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1011 0101 0010 Sm.. ---- fn.- X-Z-; ftod FSm,FDn
+8.0xfb+8.0x52+4.Sm,4.0+3.fn,1.0,1.X,1.0,1.Z,1.0:D2:::ftod
+"ftod"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// 1111 1011 0101 0110 fm.- ---- Sn.. X-Z-; dtof FDm,FSn
+8.0xfb+8.0x56+3.fm,1.0,4.0+4.Sn,1.X,1.0,1.Z,1.0:D2:::dtof
+"dtof"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else
+    fpu_unimp_exception (SD, CPU, cia);
+}
+
+// branching:
+
+// 1111 1000 1101 0000 d8; fbeq (d8,PC) (d8 is sign-extended)
+8.0xf8+8.0xd0+8.D8:D1:::fbeq
+"fbeq"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & FCC_E))
+    {
+      State.regs[REG_PC] += EXTEND8 (D8);
+      nia = PC;
+    }
+}
+
+// 1111 1000 1101 0001 d8; fbne (d8,PC) (d8 is sign-extended)
+8.0xf8+8.0xd1+8.D8:D1:::fbne
+"fbne"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_U | FCC_L | FCC_G)))
+    {
+      State.regs[REG_PC] += EXTEND8 (D8);
+      nia = PC;
+    }
+}
+
+// 1111 1000 1101 0010 d8; fbgt (d8,PC) (d8 is sign-extended)
+8.0xf8+8.0xd2+8.D8:D1:::fbgt
+"fbgt"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & FCC_G))
+    {
+      State.regs[REG_PC] += EXTEND8 (D8);
+      nia = PC;
+    }
+}
+
+// 1111 1000 1101 0011 d8; fbge (d8,PC) (d8 is sign-extended)
+8.0xf8+8.0xd3+8.D8:D1:::fbge
+"fbge"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_G | FCC_E)))
+    {
+      State.regs[REG_PC] += EXTEND8 (D8);
+      nia = PC;
+    }
+}
+
+// 1111 1000 1101 0100 d8; fblt (d8,PC) (d8 is sign-extended)
+8.0xf8+8.0xd4+8.D8:D1:::fblt
+"fblt"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & FCC_L))
+    {
+      State.regs[REG_PC] += EXTEND8 (D8);
+      nia = PC;
+    }
+}
+
+// 1111 1000 1101 0101 d8; fble (d8,PC) (d8 is sign-extended)
+8.0xf8+8.0xd5+8.D8:D1:::fble
+"fble"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_L | FCC_E)))
+    {
+      State.regs[REG_PC] += EXTEND8 (D8);
+      nia = PC;
+    }
+}
+
+// 1111 1000 1101 0110 d8; fbuo (d8,PC) (d8 is sign-extended)
+8.0xf8+8.0xd6+8.D8:D1:::fbuo
+"fbuo"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & FCC_U))
+    {
+      State.regs[REG_PC] += EXTEND8 (D8);
+      nia = PC;
+    }
+}
+
+// 1111 1000 1101 0111 d8; fblg (d8,PC) (d8 is sign-extended)
+8.0xf8+8.0xd7+8.D8:D1:::fblg
+"fblg"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_L | FCC_G)))
+    {
+      State.regs[REG_PC] += EXTEND8 (D8);
+      nia = PC;
+    }
+}
+// 1111 1000 1101 1000 d8; fbleg (d8,PC) (d8 is sign-extended)
+8.0xf8+8.0xd8+8.D8:D1:::fbleg
+"fbleg"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_L | FCC_E | FCC_G)))
+    {
+      State.regs[REG_PC] += EXTEND8 (D8);
+      nia = PC;
+    }
+}
+
+// 1111 1000 1101 1001 d8; fbug (d8,PC) (d8 is sign-extended)
+8.0xf8+8.0xd9+8.D8:D1:::fbug
+"fbug"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_U | FCC_G)))
+    {
+      State.regs[REG_PC] += EXTEND8 (D8);
+      nia = PC;
+    }
+}
+
+// 1111 1000 1101 1010 d8; fbuge (d8,PC) (d8 is sign-extended)
+8.0xf8+8.0xda+8.D8:D1:::fbuge
+"fbuge"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_U | FCC_G | FCC_E)))
+    {
+      State.regs[REG_PC] += EXTEND8 (D8);
+      nia = PC;
+    }
+}
+
+// 1111 1000 1101 1011 d8; fbul (d8,PC) (d8 is sign-extended)
+8.0xf8+8.0xdb+8.D8:D1:::fbul
+"fbul"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_U | FCC_L)))
+    {
+      State.regs[REG_PC] += EXTEND8 (D8);
+      nia = PC;
+    }
+}
+
+// 1111 1000 1101 1100 d8; fbule (d8,PC) (d8 is sign-extended)
+8.0xf8+8.0xdc+8.D8:D1:::fbule
+"fbule"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_U | FCC_L | FCC_E)))
+    {
+      State.regs[REG_PC] += EXTEND8 (D8);
+      nia = PC;
+    }
+}
+
+// 1111 1000 1101 1101 d8; fbue (d8,PC) (d8 is sign-extended)
+8.0xf8+8.0xdd+8.D8:D1:::fbue
+"fbue"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_U | FCC_E)))
+    {
+      State.regs[REG_PC] += EXTEND8 (D8);
+      nia = PC;
+    }
+}
+
+// 1111 0000 1101 0000; fleq
+8.0xf0+8.0xd0:D0:::fleq
+"fleq"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & FCC_E))
+    {
+      State.regs[REG_PC] = State.regs[REG_LAR] - 4;
+      nia = PC;
+    }
+}
+
+// 1111 0000 1101 0001; flne
+8.0xf0+8.0xd1:D0:::flne
+"flne"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_U | FCC_L | FCC_G)))
+    {
+      State.regs[REG_PC] = State.regs[REG_LAR] - 4;
+      nia = PC;
+    }
+}
+
+// 1111 0000 1101 0010; flgt
+8.0xf0+8.0xd2:D0:::flgt
+"flgt"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & FCC_G))
+    {
+      State.regs[REG_PC] = State.regs[REG_LAR] - 4;
+      nia = PC;
+    }
+}
+
+// 1111 0000 1101 0011; flge
+8.0xf0+8.0xd3:D0:::flge
+"flge"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_G | FCC_E)))
+    {
+      State.regs[REG_PC] = State.regs[REG_LAR] - 4;
+      nia = PC;
+    }
+}
+
+// 1111 0000 1101 0100; fllt
+8.0xf0+8.0xd4:D0:::fllt
+"fllt"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & FCC_L))
+    {
+      State.regs[REG_PC] = State.regs[REG_LAR] - 4;
+      nia = PC;
+    }
+}
+
+// 1111 0000 1101 0101; flle
+8.0xf0+8.0xd5:D0:::flle
+"flle"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_L | FCC_E)))
+    {
+      State.regs[REG_PC] = State.regs[REG_LAR] - 4;
+      nia = PC;
+    }
+}
+
+// 1111 0000 1101 0110; fluo
+8.0xf0+8.0xd6:D0:::fluo
+"fluo"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & FCC_U))
+    {
+      State.regs[REG_PC] = State.regs[REG_LAR] - 4;
+      nia = PC;
+    }
+}
+
+// 1111 0000 1101 0111; fllg
+8.0xf0+8.0xd7:D0:::fllg
+"fllg"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_L | FCC_G)))
+    {
+      State.regs[REG_PC] = State.regs[REG_LAR] - 4;
+      nia = PC;
+    }
+}
+// 1111 0000 1101 1000; flleg
+8.0xf0+8.0xd8:D0:::flleg
+"flleg"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_L | FCC_E | FCC_G)))
+    {
+      State.regs[REG_PC] = State.regs[REG_LAR] - 4;
+      nia = PC;
+    }
+}
+
+// 1111 0000 1101 1001; flug
+8.0xf0+8.0xd9:D0:::flug
+"flug"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_U | FCC_G)))
+    {
+      State.regs[REG_PC] = State.regs[REG_LAR] - 4;
+      nia = PC;
+    }
+}
+
+// 1111 0000 1101 1010; fluge
+8.0xf0+8.0xda:D0:::fluge
+"fluge"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_U | FCC_G | FCC_E)))
+    {
+      State.regs[REG_PC] = State.regs[REG_LAR] - 4;
+      nia = PC;
+    }
+}
+
+// 1111 0000 1101 1011; flul
+8.0xf0+8.0xdb:D0:::flul
+"flul"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_U | FCC_L)))
+    {
+      State.regs[REG_PC] = State.regs[REG_LAR] - 4;
+      nia = PC;
+    }
+}
+
+// 1111 0000 1101 1100; flule
+8.0xf0+8.0xdc:D0:::flule
+"flule"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_U | FCC_L | FCC_E)))
+    {
+      State.regs[REG_PC] = State.regs[REG_LAR] - 4;
+      nia = PC;
+    }
+}
+
+// 1111 0000 1101 1101; flue
+8.0xf0+8.0xdd:D0:::flue
+"flue"
+*am33_2
+{
+  PC = cia;
+
+  if (FPU_DISABLED)
+    fpu_disabled_exception (SD, CPU, cia);
+  else if ((FPCR & (FCC_U | FCC_E)))
+    {
+      State.regs[REG_PC] = State.regs[REG_LAR] - 4;
+      nia = PC;
+    }
+}

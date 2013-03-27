@@ -1,0 +1,136 @@
+Building neon on Windows uses a single Nmake neon.mak file.  By
+placing various parameters on nmake's command line, you can specify
+exactly the features and behavior of the Neon libraries.  The
+parameters are additive, so to add more features, add the command line
+options specified in the particular section below.
+
+All the builds described below should work with Microsoft VC++ 5 and
+6.
+
+Build neon
+__________
+
+This is the most basic version of the Neon library you can build.  It
+does not require any third party libraries, but you do not get the
+full capabilities of Neon.
+
+Compile Neon with no parameters
+
+  nmake /f neon.mak
+
+After compiling the library, the directory contains libneon.lib,
+against which you can link your program.
+
+
+Build neon with WebDAV support
+______________________________
+
+To compile Neon with WebDAV support, Neon must compile and link
+against a third-party XML parser, either expat, expat-lite, libxml or
+libxml2.  This Windows neon.mak file is designed to compile and link
+against the pre-built Expat Windows libraries version 1.95.X or newer.
+This library is available for download from
+
+  http://sourceforge.net/projects/expat/
+
+Download the latest expat_win32bin package named
+
+  expat_win32bin_X_YY_Z.exe
+
+and install it on your system.  It wants to install itself into
+Q:\some\dir\Expat-X.Y.ZZ.  Choose your installation location for expat
+and then compile Neon with
+
+  nmake /f neon.mak EXPAT_SRC=\path\to\Expat-X.YY.Z
+
+NOTE: When you run your program make sure the LIBEXPAT.DLL from expat
+is accessible, i.e. is in your PATH.
+
+This should work with Microsoft VC++ 5 and 6.
+
+
+Build neon with dynamically linked SSL support
+______________________________________________
+
+To build neon on Windows with SSL support you need OpenSSL already
+installed on your system (I used OpenSSL 0.9.7g).  It can be
+downloaded from
+
+  http://www.openssl.org/source/openssl-0.9.7g.tar.gz
+
+After compiling OpenSSL, now simply point make to the OpenSSL sources:
+
+  nmake /f neon.mak OPENSSL_SRC=\path\to\openssl
+
+NOTE: The include files for OpenSSL reside in inc32/ directory
+("../openssl-0.9.7g/inc32").
+
+NOTE: Make sure that your program is linked against libeay32.lib and
+ssleay32.lib (normally in "../openssl-0.9.7g/out32dll") and that
+libeay32.dll and ssleay32.dll is accessible, i.e. is in your PATH.
+
+
+Build neon with statically linked OpenSSL support
+_________________________________________________
+
+If you want to statically link against OpenSSL, then add the
+OPENSSL_STATIC parameter.
+
+  nmake /f neon.mak OPENSSL_SRC=\path\to\openssl OPENSSL_STATIC=yes
+
+
+Build neon with statically linked Zlib support
+______________________________________________
+
+If you want to build Neon with the capability to decompress compressed
+content, then you need to compile against the Zlib library.
+
+Neon's neon.mak file will compile and link the Zlib sources. You need
+Zlib 1.2.1 or later, as previous versions do not include build scripts
+for Win32.
+
+Here's how to compile in Zlib support.
+
+  1) Get one of the Zlib source file packages in Zip format from
+     http://www.gzip.org/zlib/; for example,
+     http://www.gzip.org/zlib/zlib121.zip
+  2) Unzip it.
+
+Now add the ZLIB_SRC parameter to Neon's neon.mak pointing to your
+newly compiled zlib.
+
+  nmake /f neon.mak ZLIB_SRC=\path\to\zlib
+
+
+Build neon with dynamically linked Zlib support
+_______________________________________________
+
+To build Neon with dynamically linked Zlib support, use the
+instructions for the statically linked Zlib support above and add the
+ZLIB_DLL parameter
+
+  nmake /f neon.mak ZLIB_SRC=\path\to\zlib ZLIB_DLL=yes
+
+
+Build neon with IPv6 support
+____________________________
+
+To build neon with support for IPv6, use parameter ENABLE_IPV6.
+
+  nmake /f neon.mak ENABLE_IPV6=yes
+
+This requires a copy of the Platform SDK which contains the IPv6
+headers and libraries.
+
+Build neon with debugging support
+_________________________________
+
+Set the DEBUG_BUILD parameter
+
+  nmake /f neon.mak DEBUG_BUILD=yes
+
+It does not matter what value DEBUG_BUILD is set to, as long as it is
+not set to "".
+
+After compiling the library, the directory contains libneonD.lib,
+against which you can link your program.

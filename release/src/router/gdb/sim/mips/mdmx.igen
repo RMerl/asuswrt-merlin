@@ -1,0 +1,592 @@
+// -*- C -*-
+
+// Simulator definition for the MIPS MDMX ASE.
+// Copyright (C) 2002 Free Software Foundation, Inc.
+// Contributed by Ed Satterthwaite and Chris Demetriou, of Broadcom
+// Corporation (SiByte).
+//
+// This file is part of GDB, the GNU debugger.
+// 
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+//  Reference: MIPS64 Architecture Volume IV-b:
+//             The MDMX Application-Specific Extension
+
+//  Notes on "format selectors" (FMTSEL):
+//
+//   A selector with final bit 0 indicates OB format.
+//   A selector with final bits 01 indicates QH format.
+//   A selector with final bits 11 has UNPREDICTABLE result per the spec.
+//
+//  Similarly, for the single-bit fields which differentiate between
+//  formats (FMTOP), 0 is OB format and 1 is QH format.
+
+//  If you change this file to add instructions, please make sure that model
+//  "sb1" configurations still build, and that you've added no new
+//  instructions to the "sb1" model.
+
+
+// Helper:
+//
+// Check whether MDMX is usable, and if not signal an appropriate exception.
+//
+
+:function:::void:check_mdmx:instruction_word insn
+*mdmx:
+{
+  if (! COP_Usable (1))
+    SignalExceptionCoProcessorUnusable (1);
+  if ((SR & (status_MX|status_FR)) != (status_MX|status_FR))
+    SignalExceptionMDMX ();
+  check_u64 (SD_, insn);
+}
+
+
+// Helper:
+//
+// Check whether a given MDMX format selector indicates a valid and usable
+// format, and if not signal an appropriate exception.
+//
+
+:function:::int:check_mdmx_fmtsel:instruction_word insn, int fmtsel
+*mdmx:
+{
+  switch (fmtsel & 0x03)
+    {
+    case 0x00:     /* ob */
+    case 0x02:
+    case 0x01:     /* qh */
+      return 1;
+    case 0x03:     /* UNPREDICTABLE */
+      SignalException (ReservedInstruction, insn);
+      return 0;
+    }
+  return 0;
+}
+
+
+// Helper:
+//
+// Check whether a given MDMX format bit indicates a valid and usable
+// format, and if not signal an appropriate exception.
+//
+
+:function:::int:check_mdmx_fmtop:instruction_word insn, int fmtop
+*mdmx:
+{
+  switch (fmtop & 0x01)
+    {
+    case 0x00:     /* ob */
+    case 0x01:     /* qh */
+      return 1;
+    }
+  return 0;
+}
+
+
+:%s::::FMTSEL:int fmtsel
+*mdmx:
+*sb1:
+{
+  if ((fmtsel & 0x1) == 0)
+    return "ob";
+  else if ((fmtsel & 0x3) == 1)
+    return "qh";
+  else
+    return "?";
+}
+
+
+:%s::::FMTOP:int fmtop
+*mdmx:
+*sb1:
+{
+  switch (fmtop)
+    {
+    case 0: return "ob";
+    case 1: return "qh";
+    default: return "?";
+    }
+}
+
+
+:%s::::SHOP:int shop
+*mdmx:
+*sb1:
+{
+  if ((shop & 0x11) == 0x00)
+    switch ((shop >> 1) & 0x07)
+      {
+      case 3:  return "upsl.ob";
+      case 4:  return "pach.ob";
+      case 6:  return "mixh.ob";
+      case 7:  return "mixl.ob";
+      default: return "?";
+      }
+  else if ((shop & 0x03) == 0x01)
+    switch ((shop >> 2) & 0x07)
+      {
+      case 0:  return "mixh.qh";
+      case 1:  return "mixl.qh";
+      case 2:  return "pach.qh";
+      case 4:  return "bfla.qh";
+      case 6:  return "repa.qh";
+      case 7:  return "repb.qh";
+      default: return "?";
+      }
+  else
+    return "?";
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,001011:MDMX:64::ADD.fmt
+"add.%s<FMTSEL> v<VD>, v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_Add(ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,0,0000,110111:MDMX:64::ADDA.fmt
+"adda.%s<FMTSEL> v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    MX_AddA(ValueFPR(VS,fmt_mdmx),VT,FMTSEL);
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,1,0000,110111:MDMX:64::ADDL.fmt
+"addl.%s<FMTSEL> v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    MX_AddL(ValueFPR(VS,fmt_mdmx),VT,FMTSEL);
+}
+
+
+011110,00,3.IMM,5.VT,5.VS,5.VD,0110,1.FMTOP,0:MDMX:64::ALNI.fmt
+"alni.%s<FMTOP> v<VD>, v<VS>, v<VT>, <IMM>"
+*mdmx:
+*sb1:
+{
+  unsigned64 result;
+  int s;
+  check_mdmx (SD_, instruction_0);
+  check_mdmx_fmtop (SD_, instruction_0, FMTOP);
+  s = (IMM << 3);
+  result = ValueFPR(VS,fmt_mdmx) << s;
+  if (s != 0)  // x86 gcc treats >> 64 as >> 0
+    result |= ValueFPR(VT,fmt_mdmx) >> (64 - s);
+  StoreFPR(VD,fmt_mdmx,result);
+}
+
+
+011110,5.RS,5.VT,5.VS,5.VD,0110,1.FMTOP,1:MDMX:64::ALNV.fmt
+"alnv.%s<FMTOP> v<VD>, v<VS>, v<VT>, r<RS>"
+*mdmx:
+*sb1:
+{
+  unsigned64 result;
+  int s;
+  check_mdmx (SD_, instruction_0);
+  check_mdmx_fmtop (SD_, instruction_0, FMTOP);
+  s = ((GPR[RS] & 0x7) << 3);
+  result = ValueFPR(VS,fmt_mdmx) << s;
+  if (s != 0)  // x86 gcc treats >> 64 as >> 0
+    result |= ValueFPR(VT,fmt_mdmx) >> (64 - s);
+  StoreFPR(VD,fmt_mdmx,result);
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,001100:MDMX:64::AND.fmt
+"and.%s<FMTSEL> v<VD>, v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_And(ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,00000,000001:MDMX:64::C.EQ.fmt
+"c.eq.%s<FMTSEL> v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    MX_Comp(ValueFPR(VS,fmt_mdmx),MX_C_EQ,VT,FMTSEL);
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,00000,000101:MDMX:64::C.LE.fmt
+"c.le.%s<FMTSEL> v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    MX_Comp(ValueFPR(VS,fmt_mdmx),MX_C_LT|MX_C_EQ,VT,FMTSEL);
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,00000,000100:MDMX:64::C.LT.fmt
+"c.lt.%s<FMTSEL> v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    MX_Comp(ValueFPR(VS,fmt_mdmx),MX_C_LT,VT,FMTSEL);
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,000111:MDMX:64::MAX.fmt
+"max.%s<FMTSEL> v<VD>, v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_Max(ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,000110:MDMX:64::MIN.fmt
+"min.%s<FMTSEL> v<VD>, v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_Min(ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}
+
+
+011110,3.SEL,01,5.VT,5.VS,5.VD,000000:MDMX:64::MSGN.QH
+"msgn.qh v<VD>, v<VS>, v<VT>"
+*mdmx:
+{
+  check_mdmx (SD_, instruction_0);
+  StoreFPR(VD,fmt_mdmx,MX_Msgn(ValueFPR(VS,fmt_mdmx),VT,qh_fmtsel(SEL)));
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,110000:MDMX:64::MUL.fmt
+"mul.%s<FMTSEL> v<VD>, v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_Mul(ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,0,0000,110011:MDMX:64::MULA.fmt
+"mula.%s<FMTSEL> v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    MX_MulA(ValueFPR(VS,fmt_mdmx),VT,FMTSEL);
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,1,0000,110011:MDMX:64::MULL.fmt
+"mull.%s<FMTSEL> v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    MX_MulL(ValueFPR(VS,fmt_mdmx),VT,FMTSEL);
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,0,0000,110010:MDMX:64::MULS.fmt
+"muls.%s<FMTSEL> v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    MX_MulS(ValueFPR(VS,fmt_mdmx),VT,FMTSEL);
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,1,0000,110010:MDMX:64::MULSL.fmt
+"mulsl.%s<FMTSEL> v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    MX_MulSL(ValueFPR(VS,fmt_mdmx),VT,FMTSEL);
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,001111:MDMX:64::NOR.fmt
+"nor.%s<FMTSEL> v<VD>, v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_Nor(ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,001110:MDMX:64::OR.fmt
+"or.%s<FMTSEL> v<VD>, v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_Or(ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,000010:MDMX:64::PICKF.fmt
+"pickf.%s<FMTSEL> v<VD>, v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_Pick(0,ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,000011:MDMX:64::PICKT.fmt
+"pickt.%s<FMTSEL> v<VD>, v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_Pick(1,ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}
+
+
+011110,1000,1.FMTOP,00000,00000,5.VD,111111:MDMX:64::RACH.fmt
+"rach.%s<FMTOP> v<VD>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_mdmx_fmtop (SD_, instruction_0, FMTOP);
+  StoreFPR(VD,fmt_mdmx,MX_RAC(MX_RAC_H,FMTOP));
+}
+
+
+011110,0000,1.FMTOP,00000,00000,5.VD,111111:MDMX:64::RACL.fmt
+"racl.%s<FMTOP> v<VD>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_mdmx_fmtop (SD_, instruction_0, FMTOP);
+  StoreFPR(VD,fmt_mdmx,MX_RAC(MX_RAC_L,FMTOP));
+}
+
+
+011110,0100,1.FMTOP,00000,00000,5.VD,111111:MDMX:64::RACM.fmt
+"racm.%s<FMTOP> v<VD>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_mdmx_fmtop (SD_, instruction_0, FMTOP);
+  StoreFPR(VD,fmt_mdmx,MX_RAC(MX_RAC_M,FMTOP));
+}
+
+
+011110,3.SEL,01,5.VT,00000,5.VD,100101:MDMX:64::RNAS.QH
+"rnas.qh v<VD>, v<VT>"
+*mdmx:
+{
+  check_mdmx (SD_, instruction_0);
+  StoreFPR(VD,fmt_mdmx,MX_RNAS(VT,qh_fmtsel(SEL)));
+}
+
+
+011110,5.FMTSEL,5.VT,00000,5.VD,100001:MDMX:64::RNAU.fmt
+"rnau.%s<FMTSEL> v<VD>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_RNAU(VT,FMTSEL));
+}
+
+
+011110,3.SEL,01,5.VT,00000,5.VD,100110:MDMX:64::RNES.QH
+"rnes.qh v<VD>, v<VT>"
+*mdmx:
+{
+  check_mdmx (SD_, instruction_0);
+  StoreFPR(VD,fmt_mdmx,MX_RNES(VT,qh_fmtsel(SEL)));
+}
+
+
+011110,5.FMTSEL,5.VT,00000,5.VD,100010:MDMX:64::RNEU.fmt
+"rneu.%s<FMTSEL> v<VD>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_RNEU(VT,FMTSEL));
+}
+
+
+011110,3.SEL,01,5.VT,00000,5.VD,100100:MDMX:64::RZS.QH
+"rzs.qh v<VD>, v<VT>"
+*mdmx:
+{
+  check_mdmx (SD_, instruction_0);
+  StoreFPR(VD,fmt_mdmx,MX_RZS(VT,qh_fmtsel(SEL)));
+}
+
+
+011110,5.FMTSEL,5.VT,00000,5.VD,100000:MDMX:64::RZU.fmt
+"rzu.%s<FMTSEL> v<VD>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_RZU(VT,FMTSEL));
+}
+
+
+011110,5.SHOP,5.VT,5.VS,5.VD,011111:MDMX:64::SHFL.op.fmt
+"shfl.%s<SHOP> v<VD>, v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, SHOP))
+    StoreFPR(VD,fmt_mdmx,MX_SHFL(SHOP,ValueFPR(VS,fmt_mdmx),ValueFPR(VT,fmt_mdmx)));
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,010000:MDMX:64::SLL.fmt
+"sll.%s<FMTSEL> v<VD>, v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_ShiftLeftLogical(ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}
+
+
+011110,3.SEL,01,5.VT,5.VS,5.VD,010011:MDMX:64::SRA.QH
+"sra.qh v<VD>, v<VS>, v<VT>"
+*mdmx:
+{
+  check_mdmx (SD_, instruction_0);
+  StoreFPR(VD,fmt_mdmx,MX_ShiftRightArith(ValueFPR(VS,fmt_mdmx),VT,qh_fmtsel(SEL)));
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,010010:MDMX:64::SRL.fmt
+"srl.%s<FMTSEL> v<VD>, v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_ShiftRightLogical(ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,001010:MDMX:64::SUB.fmt
+"sub.%s<FMTSEL> v<VD>, v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_Sub(ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,0,0000,110110:MDMX:64::SUBA.fmt
+"suba.%s<FMTSEL> v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    MX_SubA(ValueFPR(VS,fmt_mdmx),VT,FMTSEL);
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,1,0000,110110:MDMX:64::SUBL.fmt
+"subl.%s<FMTSEL> v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    MX_SubL(ValueFPR(VS,fmt_mdmx),VT,FMTSEL);
+}
+
+
+011110,1000,1.FMTOP,00000,5.VS,00000,111110:MDMX:64::WACH.fmt
+"wach.%s<FMTOP> v<VS>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_mdmx_fmtop (SD_, instruction_0, FMTOP);
+  MX_WACH(FMTOP,ValueFPR(VS,fmt_mdmx));
+}
+
+
+011110,0000,1.FMTOP,5.VT,5.VS,00000,111110:MDMX:64::WACL.fmt
+"wacl.%s<FMTOP> v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_mdmx_fmtop (SD_, instruction_0, FMTOP);
+  MX_WACL(FMTOP,ValueFPR(VS,fmt_mdmx),ValueFPR(VT,fmt_mdmx));
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,001101:MDMX:64::XOR.fmt
+"xor.%s<FMTSEL> v<VD>, v<VS>, v<VT>"
+*mdmx:
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  if (check_mdmx_fmtsel (SD_, instruction_0, FMTSEL))
+    StoreFPR(VD,fmt_mdmx,MX_Xor(ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}

@@ -1,0 +1,122 @@
+// -*- C -*-
+//
+// Simulator definition for the SmartMIPS extensions.
+// Copyright (C) 2005 Free Software Foundation, Inc.
+// Contributed by Nigel Stephens (nigel@mips.com) and 
+//                David Ung (davidu@mips.com) of MIPS Technologies.
+//
+// This file is part of GDB, the GNU debugger.
+// 
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+011100,5.BASE,5.INDEX,5.RD,00010,001000:SPECIAL:32::LWXS
+"lwxs r<RD>, <INDEX>(r<BASE>)"
+*smartmips:
+{
+  GPR[RD] = EXTEND32 (do_load(SD_, AccessLength_WORD, GPR[BASE], GPR[INDEX]<<2));
+}
+
+011100,5.RS,5.RT,00000,10001,000001:SPECIAL:32::MADDP
+"maddp r<RS>, r<RT>"
+*smartmips:
+{
+  unsigned64 res;
+  unsigned64 rs, rt;
+  int i;
+
+  check_mult_hilo (SD_, HIHISTORY, LOHISTORY);
+  TRACE_ALU_INPUT2 (GPR[RS], GPR[RT]);
+
+  res = 0;
+  rs = GPR[RS];
+  rt = GPR[RT];
+  for (i = 0; i < 32; i++)
+  {
+      if (rs & 1)
+	  res ^= rt;
+      rs >>= 1;
+      rt <<= 1;
+  }
+  LO ^= EXTEND32 (VL4_8 (res));
+  HI ^= EXTEND32 (VH4_8 (res));
+  TRACE_ALU_RESULT2 (HI, LO);
+}
+
+
+000000,0000000000,5.RD,00001,010010:SPECIAL:32::MFLHXU
+"mflhxu r<RD>"
+*smartmips:
+{
+  check_mf_hilo (SD_, HIHISTORY, LOHISTORY);
+  TRACE_ALU_INPUT3 (ACX,HI,LO);
+  GPR[RD] = LO;
+  LO = HI;
+  HI = ACX;
+  ACX = 0;
+  TRACE_ALU_RESULT4 (ACX,HI,LO,GPR[RD]);
+}
+
+000000,5.RS,000000000000001,010011:SPECIAL:32::MTLHX
+"mtlhx r<RS>"
+*smartmips:
+{
+  check_mf_hilo (SD_, HIHISTORY, LOHISTORY);
+  TRACE_ALU_INPUT3 (HI,LO,GPR[RS]);
+  ACX = HI;
+  HI = LO;
+  LO = GPR[RS];
+  TRACE_ALU_RESULT4 (ACX,HI,LO,GPR[RS]);
+}
+
+000000,5.RS,5.RT,00000,10001,011001:SPECIAL:32::MULTP
+"multp r<RS>, r<RT>"
+*smartmips:
+{
+  unsigned64 res;
+  unsigned64 rs, rt;
+  int i;
+  check_mult_hilo (SD_, HIHISTORY, LOHISTORY);
+  TRACE_ALU_INPUT2 (GPR[RS], GPR[RT]);
+
+  res = 0;
+  rs = GPR[RS];
+  rt = GPR[RT];
+  for (i = 0; i < 32; i++)
+  {
+      if (rs & 1)
+	  res ^= rt;
+      rs >>= 1;
+      rt <<= 1;
+  }
+  LO = EXTEND32 (VL4_8 (res));
+  HI = EXTEND32 (VH4_8 (res));
+  ACX = 0;
+  TRACE_ALU_RESULT2 (HI, LO);
+}
+
+011100,5.RS,5.RT,00000,10010,000001:SPECIAL:32::PPERM
+"pperm r<RS>, r<RT>"
+*smartmips:
+{
+  int i;
+  ACX = (ACX << 6) | MSEXTRACTED(HI,26,31);
+  HI = EXTEND32 ((HI << 6) | MSEXTRACTED(LO,26,31));
+  LO = EXTEND32 (LO << 6);
+  for (i = 0; i < 6; i++) {
+    int sbit = 5*i;
+    int ebit = sbit + 4;
+    int tbit = EXTRACTED(GPR[RT],sbit,ebit);
+    LO |= MSEXTRACTED(GPR[RS],tbit,tbit) << i;
+  }
+}

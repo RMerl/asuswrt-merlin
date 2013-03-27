@@ -1,0 +1,123 @@
+'\" t
+.\"     Title: ne_set_useragent
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_SET_USERAGENT" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_set_useragent, ne_set_read_timeout, ne_set_connect_timeout, ne_get_scheme, ne_get_server_hostport \- common properties for HTTP sessions
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_session\&.h>
+.fi
+.ft
+.HP \w'void\ ne_set_useragent('u
+.BI "void ne_set_useragent(ne_session\ *" "session" ", const\ char\ *" "product" ");"
+.HP \w'void\ ne_set_read_timeout('u
+.BI "void ne_set_read_timeout(ne_session\ *" "session" ", int\ " "timeout" ");"
+.HP \w'void\ ne_set_connect_timeout('u
+.BI "void ne_set_connect_timeout(ne_session\ *" "session" ", int\ " "timeout" ");"
+.HP \w'const\ char\ *ne_get_scheme('u
+.BI "const char *ne_get_scheme(ne_sesssion\ *" "session" ");"
+.HP \w'const\ char\ *ne_get_server_hostport('u
+.BI "const char *ne_get_server_hostport(ne_sesssion\ *" "session" ");"
+.SH "DESCRIPTION"
+.PP
+The
+User\-Agent
+request header is used to identify the software which generated the request for statistical or debugging purposes\&. neon does not send a
+User\-Agent
+header unless a call is made to the
+\fBne_set_useragent\fR\&.
+\fBne_set_useragent\fR
+must be passed a product string conforming to RFC2616\*(Aqs product token grammar; of the form
+"Product/Version"\&.
+.PP
+When neon reads from a socket, by default the read operation will time out after 60 seconds, and the request will fail giving an
+\fBNE_TIMEOUT\fR
+error\&. To configure this timeout interval, call
+\fBne_set_read_timeout\fR
+giving the desired number of seconds as the
+\fItimeout\fR
+parameter\&.
+.PP
+When a connection is being established to a server, normally only the system\*(Aqs TCP timeout handling will apply\&. To configure a specific (and probably shorter) timeout, the
+\fBne_set_connect_timeout\fR
+can be used, giving the desired number of seconds as the
+\fItimeout\fR
+parameter\&. If
+0
+is passed, then the default behaviour of using the system TCP timeout will be used\&.
+.PP
+The scheme used to initially create the session will be returned by
+\fBne_get_scheme\fR\&.
+.PP
+The hostport pair with which the session is associated will be returned by the
+\fBne_get_server_hostport\fR; for example
+www\&.example\&.com:8080\&. Note that the
+:port
+will be omitted if the default port for the scheme is used\&.
+.SH "EXAMPLES"
+.PP
+Set a user\-agent string:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ne_session *sess = ne_session_create(\&.\&.\&.);
+ne_set_useragent(sess, "MyApplication/2\&.1");
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+Set a 30 second read timeout:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ne_session *sess = ne_session_create(\&.\&.\&.);
+ne_set_read_timeout(sess, 30);
+.fi
+.if n \{\
+.RE
+.\}
+.SH "SEE ALSO"
+.PP
+ne_session_create,
+ne_set_session_flag\&.
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

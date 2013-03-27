@@ -1,0 +1,138 @@
+# Copyright 2000, 2004, 2006, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Anthony Green. (green@redhat.com)
+#
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+load_lib "java.exp"
+
+set testfile "jmisc"
+set srcfile ${srcdir}/$subdir/${testfile}.java
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [compile_java_from_source ${srcfile} ${binfile} "-g"] != "" } {
+    untested "Couldn't compile ${srcfile}"
+    return -1
+}
+
+# Set the current language to java.  This counts as a test.  If it
+# fails, then we skip the other tests.
+
+proc set_lang_java {} {
+    global gdb_prompt
+    global binfile objdir subdir
+
+    verbose "loading file '$binfile'"
+    gdb_load $binfile
+
+    send_gdb "set language java\n"
+    gdb_expect {
+	-re ".*$gdb_prompt $" {}
+	timeout { fail "set language java (timeout)" ; return 0 }
+    }
+
+    return [gdb_test "show language" ".* source language is \"java\".*" \
+	"set language to \"java\""]
+}
+
+set prms_id 0
+set bug_id 0
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+gdb_test "set print sevenbit-strings" ".*"
+
+if ![set_lang_java] then {
+    # Ref PR gdb:java/1565.  Don't use the simpler "break jmisc.main".
+    # As of 2004-02-24 it wasn't working and is being tested separatly.
+    # Before GCJ 4.1 (approximately) the demangled name did not include
+    # a method signature; after that point it does include a trailing
+    # signature.
+    runto_main
+    set function "${testfile}.main(java.lang.String\[\])"
+    gdb_breakpoint "\'$function\'" { allow-pending }
+    gdb_breakpoint "\'${function}void\'" { allow-pending }
+    gdb_continue_to_breakpoint $function
+
+    send_gdb "ptype jmisc\n"   
+    gdb_expect {   
+	-re "type = class jmisc  extends java.lang.Object \{\[\r\n\ \t]+void main\\(java\.lang\.String\\\[]\\);\[\r\n\ \t]+jmisc\\(\\);\[\r\n\ \t]+\}\[\r\n\ \t]+$gdb_prompt $"
+	    { pass "ptype jmisc" }
+	-re "type = class jmisc  extends java.lang.Object \{\[\r\n\ \t]+void main\\(java\.lang\.String\\\[]\\)void;\[\r\n\ \t]+jmisc\\(\\);\[\r\n\ \t]+\}\[\r\n\ \t]+$gdb_prompt $" {
+	    # Just because GCC includes the signature doesn't mean we
+	    # should print it here.  We already show the return type.
+	    kfail "ptype jmisc" gdb/2215
+	}
+	-re ".*$gdb_prompt $"             { fail "ptype jmisc" }
+	timeout { fail "ptype jmisc (timeout)" ; return }
+    }
+
+    send_gdb "p args\n"
+    gdb_expect {   
+	-re "\\\$1 = java\.lang\.String\\\[]@\[a-f0-9]+\[\r\n\ \t]+$gdb_prompt $"                                        { pass "p args" }
+	-re ".*$gdb_prompt $"             { fail "p args" }
+	timeout { fail "p args (timeout)" ; return }
+    }
+
+    send_gdb "p *args\n"
+    gdb_expect {   
+	-re "\\\$2 = \{length: 0\}\[\r\n\ \t]+$gdb_prompt $"                                                             { pass "p *args" }
+	-re "\\\$2 = cannot find java.lang.Object.*$gdb_prompt $" {
+	    # Sometimes GCC 4.x does not emit the necessary information
+	    # about java.lang.Object.
+	    kfail "p *args" gdb/2214
+	}
+	-re ".*$gdb_prompt $"             { fail "p *args" }
+	timeout { fail "p *args (timeout)" ; return }
+    }
+
+    # The idea of running to 'exit' is that 'exit' is in a different
+    # objfile from the rest of the program (provided that program is
+    # linked normally with a shared libc).  That causes gdb to examine
+    # fresh objfiles.  There is nothing important about 'exit'
+    # semantics; it could be any symbol that is in a shared library.
+    # -- chastain 2003-08-06
+
+    if [gdb_breakpoint exit] {
+	pass "break exit"
+    }
+    gdb_test_multiple "continue" "continue to exit" {
+	-re ".*Breakpoint $decimal, .*exit.*$gdb_prompt $" {
+	    pass "continue to exit"
+	}
+	-re ".*internal-error: sect_index_text not initialized.*\\(y or n\\) " {
+	    # gdb choked on the "anonymous objfile" (probably).
+	    kfail "gdb/1322" "continue to exit"
+	    # get back to the gdb prompt
+	    gdb_test_multiple "no" "internal sync 1" {
+		-re ".*\\(y or n\\) " {
+		    gdb_test_multiple "no" "internal sync 2" {
+			-re ".*$gdb_prompt $" { ; }
+		    }
+		}
+	    }
+	}
+    }
+}

@@ -1,0 +1,26 @@
+# sh testcase for ftrc.sl $frgh, $frf -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global ftrcsl
+init:
+	pta wrong, tr0
+
+ftrcsl:
+	movi -9, r0
+	fmov.ls r0, fr0
+	float.ls fr0, fr0
+	ftrc.sl fr0, fr1
+	fmov.sl fr1, r1
+	bne r0, r1, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

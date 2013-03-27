@@ -1,0 +1,9 @@
+This module matches the 8 bits of Type of Service field in the IP
+header (ie. including the precedence bits).
+.TP
+.BI "--tos " "tos"
+The argument is either a standard name, (use
+.br
+ iptables -m tos -h
+.br
+to see the list), or a numeric value to match.

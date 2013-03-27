@@ -1,0 +1,67 @@
+# Copyright 2002, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+#
+# test gdb/701
+#
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+gdb_exit
+if [mi_gdb_start] {
+    continue
+}
+
+set testfile gdb701
+set srcfile "$testfile.c"
+set binfile $objdir/$subdir/$testfile
+if {[gdb_compile $srcdir/$subdir/$srcfile $binfile executable debug] != ""} {
+  untested gdb701.exp
+  return -1
+}
+
+# When varobj reports the types of objects, it often isn't really reporting
+# the type as GDB knows it. For example, in this testcase, we have a
+# structure which has been typedefed. A varobj of this type would really have
+# a type of "TYPE_CODE_TYPEDEF". It's target type is "TYPE_CODE_STRUCT". Varobj
+# should skip over the TYPEDEF type when figuring out the varobj's children.
+# If it doesn't, Bad Things Happen(TM).
+
+# Run to main
+mi_run_to_main
+
+# Step over "foo = 0"
+mi_next "step over \"foo = 0\""
+
+mi_gdb_test "-var-create fooPtr * foo" \
+  "(&\".*\"\r\n)*\\^done,name=\"fooPtr\",numchild=\"3\",value=\".*\",type=\"Foo \\*\"" \
+  "create fooPtr"
+
+mi_gdb_test "-var-list-children fooPtr" \
+  "(&\".*\"\r\n)*\\^done,numchild=\"3\",.*" \
+  "list children of fooPtr"
+
+foreach i [list x y z] {
+  mi_gdb_test "-var-list-children fooPtr.$i" \
+    "(&\".*\"\r\n)*\\^done,numchild=\"0\"" \
+    "list children of fooPtr.$i"
+}
+
+mi_gdb_exit
+return 0

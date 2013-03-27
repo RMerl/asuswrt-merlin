@@ -1,0 +1,23 @@
+# sh testcase for fmov.dq $drgh, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	pta wrong, tr0
+
+fmovdq:
+	movi 4, r0
+	fmov.qd r0, dr0
+	fmov.dq dr0, r1
+	bne r0, r1, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

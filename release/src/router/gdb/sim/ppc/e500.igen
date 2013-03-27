@@ -1,0 +1,3346 @@
+# e500 core instructions, for PSIM, the PowerPC simulator.
+
+# Copyright 2003  Free Software Foundation, Inc.
+
+# Contributed by Red Hat Inc; developed under contract from Motorola.
+# Written by matthew green <mrg@redhat.com>.
+
+# This file is part of GDB.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#
+# e500 Core Complex Instructions
+#
+
+:cache:e500::signed_word *:rAh:RA:(cpu_registers(processor)->e500.gprh + RA)
+:cache:e500::signed_word *:rSh:RS:(cpu_registers(processor)->e500.gprh + RS)
+:cache:e500::signed_word *:rBh:RB:(cpu_registers(processor)->e500.gprh + RB)
+
+# Flags for model.h
+::model-macro:::
+	#define PPC_INSN_INT_SPR(OUT_MASK, IN_MASK, SPR) \
+		do { \
+		  if (CURRENT_MODEL_ISSUE > 0) \
+		    ppc_insn_int_spr(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK, SPR); \
+		} while (0)
+
+# Schedule an instruction that takes 2 integer register and produces a special purpose output register plus an integer output register
+void::model-function::ppc_insn_int_spr:itable_index index, model_data *model_ptr, const unsigned32 out_mask, const unsigned32 in_mask, const unsigned nSPR
+	const unsigned32 int_mask = out_mask | in_mask;
+	model_busy *busy_ptr;
+
+	while ((model_ptr->int_busy & int_mask) != 0 || model_ptr->spr_busy[nSPR] != 0) {
+	  if (WITH_TRACE && ppc_trace[trace_model])
+	    model_trace_busy_p(model_ptr, int_mask, 0, 0, nSPR);
+
+	  model_ptr->nr_stalls_data++;
+	  model_new_cycle(model_ptr);
+	}
+
+	busy_ptr = model_wait_for_unit(index, model_ptr, &model_ptr->timing[index]);
+	busy_ptr->int_busy |= out_mask;
+	model_ptr->int_busy |= out_mask;
+	busy_ptr->spr_busy = nSPR;
+	model_ptr->spr_busy[nSPR] = 1;
+	busy_ptr->nr_writebacks = (PPC_ONE_BIT_SET_P(out_mask)) ? 3 : 2;
+	TRACE(trace_model,("Making register %s busy.\n", spr_name(nSPR)));
+
+#
+# SPE Modulo Fractional Multiplication handling support
+#
+:function:e500::unsigned64:ev_multiply16_smf:signed16 a, signed16 b, int *sat
+	signed32 a32 = a, b32 = b, rv32;
+	rv32 = a * b;
+	*sat = (rv32 & (3<<30)) == (3<<30);
+	return (signed64)rv32 << 1;
+
+:function:e500::unsigned64:ev_multiply32_smf:signed32 a, signed32 b, int *sat
+	signed64 rv64, a64 = a, b64 = b;
+	rv64 = a64 * b64;
+	*sat = (rv64 & ((signed64)3<<62)) == ((signed64)3<<62);
+	/* Loses top sign bit.  */
+	return rv64 << 1;
+#
+# SPE Saturation handling support
+#
+:function:e500::signed32:ev_multiply16_ssf:signed16 a, signed16 b, int *sat
+	signed32 rv32;
+	if (a == 0xffff8000 && b == 0xffff8000)
+	  {
+	    rv32 = 0x7fffffffL;
+	    * sat = 1;
+	    return rv32;
+	  }
+	else
+	  {
+	    signed32 a32 = a, b32 = b;
+	    
+	    rv32 = a * b;
+	    * sat = (rv32 & (3<<30)) == (3<<30);
+	    return (signed64)rv32 << 1;
+	  }
+
+:function:e500::signed64:ev_multiply32_ssf:signed32 a, signed32 b, int *sat
+	signed64 rv64;
+	if (a == 0x80000000 && b == 0x80000000)
+	  {
+	    rv64 = 0x7fffffffffffffffLL;
+	    * sat = 1;
+	    return rv64;
+	  }
+	else
+	  {
+	    signed64 a64 = a, b64 = b;
+	    rv64 = a64 * b64;
+	    *sat = (rv64 & ((signed64)3<<62)) == ((signed64)3<<62);
+	    /* Loses top sign bit.  */
+	    return rv64 << 1;
+	  }
+
+#
+# SPE FP handling support
+#
+
+:function:e500::void:ev_check_guard:sim_fpu *a, int fg, int fx, cpu *processor
+	unsigned64 guard;
+	guard = sim_fpu_guard(a, 0);
+	if (guard & 1)
+	  EV_SET_SPEFSCR_BITS(fg);
+	if (guard & ~1)
+	  EV_SET_SPEFSCR_BITS(fx);
+
+:function:e500::void:booke_sim_fpu_32to:sim_fpu *dst, unsigned32 packed
+	sim_fpu_32to (dst, packed);
+
+	/* Set normally unused fields to allow booke arithmetic.  */
+	if (dst->class == sim_fpu_class_infinity)
+	  {
+	    dst->normal_exp = 128;
+	    dst->fraction = ((unsigned64)1 << 60);
+	  }
+	else if (dst->class == sim_fpu_class_qnan
+		 || dst->class == sim_fpu_class_snan)
+	  {
+	    dst->normal_exp = 128;
+	    /* This is set, but without the implicit bit, so we have to or
+	       in the implicit bit.  */
+	    dst->fraction |= ((unsigned64)1 << 60);
+	  }
+
+:function:e500::int:booke_sim_fpu_add:sim_fpu *d, sim_fpu *a, sim_fpu *b, int inv, int over, int under, cpu *processor
+	int invalid_operand, overflow_result, underflow_result;
+	int dest_exp;
+
+	invalid_operand = 0;
+	overflow_result = 0;
+	underflow_result = 0;
+
+	/* Treat NaN, Inf, and denorm like normal numbers, and signal invalid
+	   operand if it hasn't already been done.  */
+	if (EV_IS_INFDENORMNAN (a))
+	  {
+	    a->class = sim_fpu_class_number;
+
+	    EV_SET_SPEFSCR_BITS (inv);
+	    invalid_operand = 1;
+	  }
+	if (EV_IS_INFDENORMNAN (b))
+	  {
+	    b->class = sim_fpu_class_number;
+
+	    if (! invalid_operand)
+	      {
+		EV_SET_SPEFSCR_BITS (inv);
+		invalid_operand = 1;
+	      }
+	  }
+
+	sim_fpu_add (d, a, b);
+
+	dest_exp = booke_sim_fpu_exp (d);
+	/* If this is a denorm, force to zero, and signal underflow if
+	   we haven't already indicated invalid operand.  */
+	if (dest_exp <= -127)
+	  {
+	    int sign = d->sign;
+
+	    *d = sim_fpu_zero;
+	    d->sign = sign;
+	    if (! invalid_operand)
+	      {
+		EV_SET_SPEFSCR_BITS (under);
+		underflow_result = 1;
+	      }
+	  }
+	/* If this is Inf/NaN, force to pmax/nmax, and signal overflow if
+	   we haven't already indicated invalid operand.  */
+	else if (dest_exp >= 127)
+	  {
+	    int sign = d->sign;
+
+	    *d = sim_fpu_max32;
+	    d->sign = sign;
+	    if (! invalid_operand)
+	      {
+		EV_SET_SPEFSCR_BITS (over);
+		overflow_result = 1;
+	      }
+	  }
+	/* Destination sign is sign of operand with larger magnitude, or
+	   the sign of the first operand if operands have the same
+	   magnitude.  Thus if the result is zero, we force it to have
+	   the sign of the first operand.  */
+	else if (d->fraction == 0)
+	  d->sign = a->sign;
+
+	return invalid_operand || overflow_result || underflow_result;
+
+:function:e500::unsigned32:ev_fs_add:unsigned32 aa, unsigned32 bb, int inv, int over, int under, int fg, int fx, cpu *processor
+	sim_fpu a, b, d;
+	unsigned32 w;
+	int exception;
+
+	booke_sim_fpu_32to (&a, aa);
+	booke_sim_fpu_32to (&b, bb);
+
+	exception = booke_sim_fpu_add (&d, &a, &b, inv, over, under,
+				       processor);
+
+	sim_fpu_to32 (&w, &d);
+	if (! exception)
+	  ev_check_guard(&d, fg, fx, processor);
+	return w;
+
+:function:e500::unsigned32:ev_fs_sub:unsigned32 aa, unsigned32 bb, int inv, int over, int under, int fg, int fx, cpu *processor
+	sim_fpu a, b, d;
+	unsigned32 w;
+	int exception;
+
+	booke_sim_fpu_32to (&a, aa);
+	booke_sim_fpu_32to (&b, bb);
+
+	/* Invert sign of second operand, and add.  */
+	b.sign = ! b.sign;
+	exception = booke_sim_fpu_add (&d, &a, &b, inv, over, under,
+				       processor);
+
+	sim_fpu_to32 (&w, &d);
+	if (! exception)
+	  ev_check_guard(&d, fg, fx, processor);
+	return w;
+
+# sim_fpu_exp leaves the normal_exp field undefined for Inf and NaN.
+# The booke algorithms require exp values, so we fake them here.
+# fixme: It also apparently does the same for zero, but should not.
+:function:e500::unsigned32:booke_sim_fpu_exp:sim_fpu *x
+	int y = sim_fpu_is (x);
+	if (y == SIM_FPU_IS_PZERO || y == SIM_FPU_IS_NZERO)
+	  return 0;
+	else if (y == SIM_FPU_IS_SNAN || y == SIM_FPU_IS_QNAN
+		 || y == SIM_FPU_IS_NINF || y == SIM_FPU_IS_PINF)
+	  return 128;
+	else
+	  return sim_fpu_exp (x);
+
+:function:e500::unsigned32:ev_fs_mul:unsigned32 aa, unsigned32 bb, int inv, int over, int under, int fg, int fx, cpu *processor
+	sim_fpu a, b, d;
+	unsigned32 w;
+	int sa, sb, ea, eb, ei;
+	sim_fpu_32to (&a, aa);
+	sim_fpu_32to (&b, bb);
+	sa = sim_fpu_sign(&a);
+	sb = sim_fpu_sign(&b);
+	ea = booke_sim_fpu_exp(&a);
+	eb = booke_sim_fpu_exp(&b);
+	ei = ea + eb + 127;
+	if (sim_fpu_is_zero (&a) || sim_fpu_is_zero (&b))
+	  w = 0;
+	else if (sa == sb) {
+	  if (ei >= 254) {
+	    w = EV_PMAX;
+	    EV_SET_SPEFSCR_BITS(over);
+	  } else if (ei < 1) {
+	    d = sim_fpu_zero;
+	    sim_fpu_to32 (&w, &d);
+	    w &= 0x7fffffff;	/* Clear sign bit.  */
+	  } else {
+	    goto normal_mul;
+	  }
+	} else {
+	  if (ei >= 254) {
+	    w = EV_NMAX;
+	    EV_SET_SPEFSCR_BITS(over);
+	  } else if (ei < 1) {
+	    d = sim_fpu_zero;
+	    sim_fpu_to32 (&w, &d);
+	    w |= 0x80000000;	/* Set sign bit.  */
+	  } else {
+	normal_mul:
+	    if (EV_IS_INFDENORMNAN(&a) || EV_IS_INFDENORMNAN(&b))
+	      EV_SET_SPEFSCR_BITS(inv);
+	    sim_fpu_mul (&d, &a, &b);
+	    sim_fpu_to32 (&w, &d);
+	  }
+	}
+	return w;
+
+:function:e500::unsigned32:ev_fs_div:unsigned32 aa, unsigned32 bb, int inv, int over, int under, int dbz, int fg, int fx, cpu *processor
+	sim_fpu a, b, d;
+	unsigned32 w;
+	int sa, sb, ea, eb, ei;
+	
+	sim_fpu_32to (&a, aa);
+	sim_fpu_32to (&b, bb);
+	sa = sim_fpu_sign(&a);
+	sb = sim_fpu_sign(&b);
+	ea = booke_sim_fpu_exp(&a);
+	eb = booke_sim_fpu_exp(&b);
+	ei = ea - eb + 127;
+
+	/* Special cases to handle behaviour of e500 hardware.
+	   cf case 107543.  */
+	if (sim_fpu_is_nan (&a) || sim_fpu_is_nan (&b)
+	  || sim_fpu_is_zero (&a) || sim_fpu_is_zero (&b))
+	{
+	  if (sim_fpu_is_snan (&a) || sim_fpu_is_snan (&b))
+	    {
+	      if (bb == 0x3f800000)
+	        w = EV_PMAX;
+	      else if (aa == 0x7fc00001)
+	        w = 0x3fbffffe;
+	      else
+	        goto normal_div;
+	    }
+	  else
+	    goto normal_div;
+	}
+	else if (sim_fpu_is_infinity (&a) && sim_fpu_is_infinity (&b))
+	{
+	  if (sa == sb)
+	    sim_fpu_32to (&d, 0x3f800000);
+	  else
+	    sim_fpu_32to (&d, 0xbf800000);
+	  sim_fpu_to32 (&w, &d);
+	}
+	else if (sa == sb) {
+	  if (ei > 254) {
+	    w = EV_PMAX;
+	    EV_SET_SPEFSCR_BITS(over);
+	  } else if (ei <= 1) {
+	    d = sim_fpu_zero;
+	    sim_fpu_to32 (&w, &d);
+	    w &= 0x7fffffff;	/* Clear sign bit.  */
+	  } else {
+	    goto normal_div;
+	  }
+	} else {
+	  if (ei > 254) {
+	    w = EV_NMAX;
+	    EV_SET_SPEFSCR_BITS(over);
+	  } else if (ei <= 1) {
+	    d = sim_fpu_zero;
+	    sim_fpu_to32 (&w, &d);
+	    w |= 0x80000000;	/* Set sign bit.  */
+	  } else {
+	normal_div:
+	    if (EV_IS_INFDENORMNAN(&a) || EV_IS_INFDENORMNAN(&b))
+	      EV_SET_SPEFSCR_BITS(inv);
+	    if (sim_fpu_is_zero (&b))
+	      {
+	        if (sim_fpu_is_zero (&a))
+	          EV_SET_SPEFSCR_BITS(dbz);
+	        else 
+	          EV_SET_SPEFSCR_BITS(inv);
+	        w = sa ? EV_NMAX : EV_PMAX;
+	      }
+	    else
+	      {
+	        sim_fpu_div (&d, &a, &b);
+	        sim_fpu_to32 (&w, &d);
+	        ev_check_guard(&d, fg, fx, processor);
+	      }
+	  }
+	}
+	return w;
+	
+
+#
+# A.2.7 Integer SPE Simple Instructions
+#
+
+0.4,6.RS,11.RA,16.RB,21.512:X:e500:evaddw %RS,%RA,%RB:Vector Add Word
+	unsigned32 w1, w2;
+	w1 = *rBh + *rAh;
+	w2 = *rB + *rA;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+		//printf("evaddw: *rSh = %08x; *rS = %08x; w1 = %08x w2 = %08x\n", *rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.IMM,16.RB,21.514:X:e500:evaddiw %RS,%RB,%IMM:Vector Add Immediate Word
+	unsigned32 w1, w2;
+	w1 = *rBh + IMM;
+	w2 = *rB + IMM;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+		//printf("evaddiw: *rSh = %08x; *rS = %08x; w1 = %08x w2 = %08x\n", *rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.516:X:e500:evsubfw %RS,%RA,%RB:Vector Subtract from Word
+	unsigned32 w1, w2;
+	w1 = *rBh - *rAh;
+	w2 = *rB - *rA;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+		//printf("evsubfw: *rSh = %08x; *rS = %08x; w1 = %08x w2 = %08x\n", *rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.IMM,16.RB,21.518:X:e500:evsubifw %RS,%RB,%IMM:Vector Subtract Immediate from Word
+	unsigned32 w1, w2;
+	w1 = *rBh - IMM;
+	w2 = *rB - IMM;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+		//printf("evsubifw: *rSh = %08x; *rS = %08x; IMM = %d\n", *rSh, *rS, IMM);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.0,21.520:X:e500:evabs %RS,%RA:Vector Absolute Value
+	signed32 w1, w2;
+	w1 = *rAh;
+	if (w1 < 0 && w1 != 0x80000000)
+	  w1 = -w1;
+	w2 = *rA;
+	if (w2 < 0 && w2 != 0x80000000)
+	  w2 = -w2;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.0,21.521:X:e500:evneg %RS,%RA:Vector Negate
+	signed32 w1, w2;
+	w1 = *rAh;
+	/* the negative most negative number is the most negative number */
+	if (w1 != 0x80000000)
+	  w1 = -w1;
+	w2 = *rA;
+	if (w2 != 0x80000000)
+	  w2 = -w2;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.0,21.522:X:e500:evextsb %RS,%RA:Vector Extend Signed Byte
+	unsigned64 w1, w2;
+	w1 = *rAh & 0xff;
+	if (w1 & 0x80)
+	  w1 |= 0xffffff00;
+	w2 = *rA & 0xff;
+	if (w2 & 0x80)
+	  w2 |= 0xffffff00;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK , 0);
+
+0.4,6.RS,11.RA,16.0,21.523:X:e500:evextsb %RS,%RA:Vector Extend Signed Half Word
+	unsigned64 w1, w2;
+	w1 = *rAh & 0xffff;
+	if (w1 & 0x8000)
+	  w1 |= 0xffff0000;
+	w2 = *rA & 0xffff;
+	if (w2 & 0x8000)
+	  w2 |= 0xffff0000;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.529:X:e500:evand %RS,%RA,%RB:Vector AND
+	unsigned32 w1, w2;
+	w1 = *rBh & *rAh;
+	w2 = *rB & *rA;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.535:X:e500:evor %RS,%RA,%RB:Vector OR
+	unsigned32 w1, w2;
+	w1 = *rBh | *rAh;
+	w2 = *rB | *rA;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.534:X:e500:evxor %RS,%RA,%RB:Vector XOR
+	unsigned32 w1, w2;
+	w1 = *rBh ^ *rAh;
+	w2 = *rB ^ *rA;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.542:X:e500:evnand %RS,%RA,%RB:Vector NAND
+	unsigned32 w1, w2;
+	w1 = ~(*rBh & *rAh);
+	w2 = ~(*rB & *rA);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.536:X:e500:evnor %RS,%RA,%RB:Vector NOR
+	unsigned32 w1, w2;
+	w1 = ~(*rBh | *rAh);
+	w2 = ~(*rB | *rA);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.537:X:e500:eveqv %RS,%RA,%RB:Vector Equivalent
+	unsigned32 w1, w2;
+	w1 = (~*rBh) ^ *rAh;
+	w2 = (~*rB) ^ *rA;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.530:X:e500:evandc %RS,%RA,%RB:Vector AND with Compliment
+	unsigned32 w1, w2;
+	w1 = (~*rBh) & *rAh;
+	w2 = (~*rB) & *rA;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+		//printf("evandc: *rSh = %08x; *rS = %08x\n", *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.539:X:e500:evorc %RS,%RA,%RB:Vector OR with Compliment
+	unsigned32 w1, w2;
+	w1 = (~*rBh) | *rAh;
+	w2 = (~*rB) | *rA;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+		//printf("evorc: *rSh = %08x; *rS = %08x\n", *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.552:X:e500:evrlw %RS,%RA,%RB:Vector Rotate Left Word
+	unsigned32 nh, nl, w1, w2;
+	nh = *rBh & 0x1f;
+	nl = *rB & 0x1f;
+	w1 = ((unsigned32)*rAh) << nh | ((unsigned32)*rAh) >> (32 - nh);
+	w2 = ((unsigned32)*rA) << nl | ((unsigned32)*rA) >> (32 - nl);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+		//printf("evrlw: nh %d nl %d *rSh = %08x; *rS = %08x\n", nh, nl, *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.554:X:e500:evrlwi %RS,%RA,%UIMM:Vector Rotate Left Word Immediate
+	unsigned32 w1, w2, imm;
+	imm = (unsigned32)UIMM;
+	w1 = ((unsigned32)*rAh) << imm | ((unsigned32)*rAh) >> (32 - imm);
+	w2 = ((unsigned32)*rA) << imm | ((unsigned32)*rA) >> (32 - imm);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.548:X:e500:evslw %RS,%RA,%RB:Vector Shift Left Word
+	unsigned32 nh, nl, w1, w2;
+	nh = *rBh & 0x1f;
+	nl = *rB & 0x1f;
+	w1 = ((unsigned32)*rAh) << nh;
+	w2 = ((unsigned32)*rA) << nl;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.550:X:e500:evslwi %RS,%RA,%UIMM:Vector Shift Left Word Immediate
+	unsigned32 w1, w2, imm = UIMM;
+	w1 = ((unsigned32)*rAh) << imm;
+	w2 = ((unsigned32)*rA) << imm;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.545:X:e500:evsrws %RS,%RA,%RB:Vector Shift Right Word Signed
+	signed32 w1, w2;
+	unsigned32 nh, nl;
+	nh = *rBh & 0x1f;
+	nl = *rB & 0x1f;
+	w1 = ((signed32)*rAh) >> nh;
+	w2 = ((signed32)*rA) >> nl;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+		//printf("evsrws: nh %d nl %d *rSh = %08x; *rS = %08x\n", nh, nl, *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.544:X:e500:evsrwu %RS,%RA,%RB:Vector Shift Right Word Unsigned
+	unsigned32 w1, w2, nh, nl;
+	nh = *rBh & 0x1f;
+	nl = *rB & 0x1f;
+	w1 = ((unsigned32)*rAh) >> nh;
+	w2 = ((unsigned32)*rA) >> nl;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.547:X:e500:evsrwis %RS,%RA,%UIMM:Vector Shift Right Word Immediate Signed
+	signed32 w1, w2;
+	unsigned32 imm = UIMM;
+	w1 = ((signed32)*rAh) >> imm;
+	w2 = ((signed32)*rA) >> imm;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.546:X:e500:evsrwiu %RS,%RA,%UIMM:Vector Shift Right Word Immediate Unsigned
+	unsigned32 w1, w2, imm = UIMM;
+	w1 = ((unsigned32)*rAh) >> imm;
+	w2 = ((unsigned32)*rA) >> imm;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.0,21.525:X:e500:evcntlzw %RS,%RA:Vector Count Leading Zeros Word
+	unsigned32 w1, w2, mask, c1, c2;
+	for (c1 = 0, mask = 0x80000000, w1 = *rAh;
+	      !(w1 & mask) && mask != 0; mask >>= 1)
+	  c1++;
+	for (c2 = 0, mask = 0x80000000, w2 = *rA;
+	      !(w2 & mask) && mask != 0; mask >>= 1)
+	  c2++;
+	EV_SET_REG2(*rSh, *rS, c1, c2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.0,21.526:X:e500:evcntlsw %RS,%RA:Vector Count Leading Sign Bits Word
+	unsigned32 w1, w2, mask, sign_bit, c1, c2;
+	for (c1 = 0, mask = 0x80000000, w1 = *rAh, sign_bit = w1 & mask;
+	     ((w1 & mask) == sign_bit) && mask != 0;
+	     mask >>= 1, sign_bit >>= 1)
+	  c1++;
+	for (c2 = 0, mask = 0x80000000, w2 = *rA, sign_bit = w2 & mask;
+	     ((w2 & mask) == sign_bit) && mask != 0;
+	     mask >>= 1, sign_bit >>= 1)
+	  c2++;
+	EV_SET_REG2(*rSh, *rS, c1, c2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.0,21.524:X:e500:evrndw %RS,%RA:Vector Round Word
+	unsigned32 w1, w2;
+	w1 = ((unsigned32)*rAh + 0x8000) & 0xffff0000;
+	w2 = ((unsigned32)*rA + 0x8000) & 0xffff0000;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+		//printf("evrndw: *rSh = %08x; *rS = %08x\n", *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.556:X:e500:evmergehi %RS,%RA,%RB:Vector Merge Hi
+	unsigned32 w1, w2;
+	w1 = *rAh;
+	w2 = *rBh;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.557:X:e500:evmergelo %RS,%RA,%RB:Vector Merge Low
+	unsigned32 w1, w2;
+	w1 = *rA;
+	w2 = *rB;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.559:X:e500:evmergelohi %RS,%RA,%RB:Vector Merge Low Hi
+	unsigned32 w1, w2;
+	w1 = *rA;
+	w2 = *rBh;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.558:X:e500:evmergehilo %RS,%RA,%RB:Vector Merge Hi Low
+	unsigned32 w1, w2;
+	w1 = *rAh;
+	w2 = *rB;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.SIMM,16.0,21.553:X:e500:evsplati %RS,%SIMM:Vector Splat Immediate
+	unsigned32 w;
+	w = SIMM & 0x1f;
+	if (w & 0x10)
+	  w |= 0xffffffe0;
+	EV_SET_REG2(*rSh, *rS, w, w);
+	PPC_INSN_INT(RS_BITMASK, 0, 0);
+
+0.4,6.RS,11.SIMM,16.0,21.555:X:e500:evsplatfi %RS,%SIMM:Vector Splat Fractional Immediate
+	unsigned32 w;
+	w = SIMM << 27;
+	EV_SET_REG2(*rSh, *rS, w, w);
+	PPC_INSN_INT(RS_BITMASK, 0, 0);
+
+0.4,6.BF,9.0,11.RA,16.RB,21.561:X:e500:evcmpgts %BF,%RA,%RB:Vector Compare Greater Than Signed
+	signed32 ah, al, bh, bl;
+	int w, ch, cl;
+	ah = *rAh;
+	al = *rA;
+	bh = *rBh;
+	bl = *rB;
+	if (ah > bh)
+	  ch = 1;
+	else
+	  ch = 0;
+	if (al > bl)
+	  cl = 1;
+	else
+	  cl = 0;
+	w = ch << 3 | cl << 2 | (ch | cl) << 1 | (ch & cl);
+	CR_SET(BF, w);
+	PPC_INSN_INT_CR(0, RA_BITMASK | RB_BITMASK, BF_BITMASK);
+
+0.4,6.BF,9.0,11.RA,16.RB,21.560:X:e500:evcmpgtu %BF,%RA,%RB:Vector Compare Greater Than Unsigned
+	unsigned32 ah, al, bh, bl;
+	int w, ch, cl;
+	ah = *rAh;
+	al = *rA;
+	bh = *rBh;
+	bl = *rB;
+	if (ah > bh)
+	  ch = 1;
+	else
+	  ch = 0;
+	if (al > bl)
+	  cl = 1;
+	else
+	  cl = 0;
+	w = ch << 3 | cl << 2 | (ch | cl) << 1 | (ch & cl);
+	CR_SET(BF, w);
+	PPC_INSN_INT_CR(0, RA_BITMASK | RB_BITMASK, BF_BITMASK);
+
+0.4,6.BF,9.0,11.RA,16.RB,21.563:X:e500:evcmplts %BF,%RA,%RB:Vector Compare Less Than Signed
+	signed32 ah, al, bh, bl;
+	int w, ch, cl;
+	ah = *rAh;
+	al = *rA;
+	bh = *rBh;
+	bl = *rB;
+	if (ah < bh)
+	  ch = 1;
+	else
+	  ch = 0;
+	if (al < bl)
+	  cl = 1;
+	else
+	  cl = 0;
+	w = ch << 3 | cl << 2 | (ch | cl) << 1 | (ch & cl);
+	CR_SET(BF, w);
+	PPC_INSN_INT_CR(0, RA_BITMASK | RB_BITMASK, BF_BITMASK);
+
+0.4,6.BF,9.0,11.RA,16.RB,21.562:X:e500:evcmpltu %BF,%RA,%RB:Vector Compare Less Than Unsigned
+	unsigned32 ah, al, bh, bl;
+	int w, ch, cl;
+	ah = *rAh;
+	al = *rA;
+	bh = *rBh;
+	bl = *rB;
+	if (ah < bh)
+	  ch = 1;
+	else
+	  ch = 0;
+	if (al < bl)
+	  cl = 1;
+	else
+	  cl = 0;
+	w = ch << 3 | cl << 2 | (ch | cl) << 1 | (ch & cl);
+	CR_SET(BF, w);
+	PPC_INSN_INT_CR(0, RA_BITMASK | RB_BITMASK, BF_BITMASK);
+
+0.4,6.BF,9.0,11.RA,16.RB,21.564:X:e500:evcmpeq %BF,%RA,%RB:Vector Compare Equal
+	unsigned32 ah, al, bh, bl;
+	int w, ch, cl;
+	ah = *rAh;
+	al = *rA;
+	bh = *rBh;
+	bl = *rB;
+	if (ah == bh)
+	  ch = 1;
+	else
+	  ch = 0;
+	if (al == bl)
+	  cl = 1;
+	else
+	  cl = 0;
+	w = ch << 3 | cl << 2 | (ch | cl) << 1 | (ch & cl);
+	CR_SET(BF, w);
+		//printf("evcmpeq: ch %d cl %d BF %d, CR is now %08x\n", ch, cl, BF, CR);
+	PPC_INSN_INT_CR(0, RA_BITMASK | RB_BITMASK, BF_BITMASK);
+
+0.4,6.RS,11.RA,16.RB,21.79,29.CRFS:X:e500:evsel %RS,%RA,%RB,%CRFS:Vector Select
+	unsigned32 w1, w2;
+	int cr;
+	cr = CR_FIELD(CRFS);
+	if (cr & 8)
+	  w1 = *rAh;
+	else
+	  w1 = *rBh;
+	if (cr & 4)
+	  w2 = *rA;
+	else
+	  w2 = *rB;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.527:X:e500:brinc %RS,%RA,%RB:Bit Reversed Increment
+	unsigned32 w1, w2, a, d, mask;
+	mask = (*rB) & 0xffff;
+	a = (*rA) & 0xffff;
+	d = EV_BITREVERSE16(1 + EV_BITREVERSE16(a | ~mask));
+	*rS = ((*rA) & 0xffff0000) | (d & 0xffff);
+		//printf("brinc: *rS = %08x\n", *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+#
+# A.2.8 Integer SPE Complex Instructions
+#
+
+0.4,6.RS,11.RA,16.RB,21.1031:EVX:e500:evmhossf %RS,%RA,%RB:Vector Multiply Half Words Odd Signed Saturate Fractional
+	signed16 al, ah, bl, bh;
+	signed32 tl, th;
+	int movl, movh;
+	
+	al = (signed16) EV_LOHALF (*rA);
+	ah = (signed16) EV_LOHALF (*rAh);
+	bl = (signed16) EV_LOHALF (*rB);
+	bh = (signed16) EV_LOHALF (*rBh);
+	tl = ev_multiply16_ssf (al, bl, &movl);
+	th = ev_multiply16_ssf (ah, bh, &movh);
+	EV_SET_REG2 (*rSh, *rS, EV_SATURATE (movh, 0x7fffffff, th),
+			        EV_SATURATE (movl, 0x7fffffff, tl));
+	EV_SET_SPEFSCR_OV (movl, movh);
+	PPC_INSN_INT_SPR (RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1063:EVX:e500:evmhossfa %RS,%RA,%RB:Vector Multiply Half Words Odd Signed Saturate Fractional Accumulate
+	signed16 al, ah, bl, bh;
+	signed32 tl, th;
+	int movl, movh;
+	
+	al = (signed16) EV_LOHALF (*rA);
+	ah = (signed16) EV_LOHALF (*rAh);
+	bl = (signed16) EV_LOHALF (*rB);
+	bh = (signed16) EV_LOHALF (*rBh);
+	tl = ev_multiply16_ssf (al, bl, &movl);
+	th = ev_multiply16_ssf (ah, bh, &movh);
+	EV_SET_REG2 (*rSh, *rS, EV_SATURATE (movh, 0x7fffffff, th),
+			        EV_SATURATE (movl, 0x7fffffff, tl));
+	EV_SET_SPEFSCR_OV (movl, movh);
+	PPC_INSN_INT_SPR (RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1039:EVX:e500:evmhosmf %RS,%RA,%RB:Vector Multiply Half Words Odd Signed Modulo Fractional
+	signed16 al, ah, bl, bh;
+	signed32 tl, th;
+	int dummy;
+	
+	al = (signed16) EV_LOHALF (*rA);
+	ah = (signed16) EV_LOHALF (*rAh);
+	bl = (signed16) EV_LOHALF (*rB);
+	bh = (signed16) EV_LOHALF (*rBh);
+	tl = ev_multiply16_smf (al, bl, & dummy);
+	th = ev_multiply16_smf (ah, bh, & dummy);
+	EV_SET_REG2 (*rSh, *rS, th, tl);
+	PPC_INSN_INT (RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1071:EVX:e500:evmhosmfa %RS,%RA,%RB:Vector Multiply Half Words Odd Signed Modulo Fractional Accumulate
+	signed32 al, ah, bl, bh;
+	signed32 tl, th;
+	int dummy;
+	
+	al = (signed16) EV_LOHALF (*rA);
+	ah = (signed16) EV_LOHALF (*rAh);
+	bl = (signed16) EV_LOHALF (*rB);
+	bh = (signed16) EV_LOHALF (*rBh);
+	tl = ev_multiply16_smf (al, bl, & dummy);
+	th = ev_multiply16_smf (ah, bh, & dummy);
+	EV_SET_REG2_ACC (*rSh, *rS, th, tl);
+	PPC_INSN_INT (RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1037:EVX:e500:evmhosmi %RS,%RA,%RB:Vector Multiply Half Words Odd Signed Modulo Integer
+	signed32 al, ah, bl, bh, tl, th;
+	al = (signed32)(signed16)EV_LOHALF(*rA);
+	ah = (signed32)(signed16)EV_LOHALF(*rAh);
+	bl = (signed32)(signed16)EV_LOHALF(*rB);
+	bh = (signed32)(signed16)EV_LOHALF(*rBh);
+	tl = al * bl;
+	th = ah * bh;
+	EV_SET_REG2(*rSh, *rS, th, tl);
+		//printf("evmhosmi: *rSh = %08x; *rS = %08x\n", *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1069:EVX:e500:evmhosmia %RS,%RA,%RB:Vector Multiply Half Words Odd Signed Modulo Integer Accumulate
+	signed32 al, ah, bl, bh, tl, th;
+	al = (signed32)(signed16)EV_LOHALF(*rA);
+	ah = (signed32)(signed16)EV_LOHALF(*rAh);
+	bl = (signed32)(signed16)EV_LOHALF(*rB);
+	bh = (signed32)(signed16)EV_LOHALF(*rBh);
+	tl = al * bl;
+	th = ah * bh;
+	EV_SET_REG2_ACC(*rSh, *rS, th, tl);
+		//printf("evmhosmia: ACC = %08x; *rSh = %08x; *rS = %08x\n", ACC, *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1036:EVX:e500:evmhoumi %RS,%RA,%RB:Vector Multiply Half Words Odd Unsigned Modulo Integer
+	unsigned32 al, ah, bl, bh, tl, th;
+	al = (unsigned32)(unsigned16)EV_LOHALF(*rA);
+	ah = (unsigned32)(unsigned16)EV_LOHALF(*rAh);
+	bl = (unsigned32)(unsigned16)EV_LOHALF(*rB);
+	bh = (unsigned32)(unsigned16)EV_LOHALF(*rBh);
+	tl = al * bl;
+	th = ah * bh;
+	EV_SET_REG2(*rSh, *rS, th, tl);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1068:EVX:e500:evmhoumia %RS,%RA,%RB:Vector Multiply Half Words Odd Unsigned Modulo Integer Accumulate
+	unsigned32 al, ah, bl, bh, tl, th;
+	al = (unsigned32)(unsigned16)EV_LOHALF(*rA);
+	ah = (unsigned32)(unsigned16)EV_LOHALF(*rAh);
+	bl = (unsigned32)(unsigned16)EV_LOHALF(*rB);
+	bh = (unsigned32)(unsigned16)EV_LOHALF(*rBh);
+	tl = al * bl;
+	th = ah * bh;
+	EV_SET_REG2_ACC(*rSh, *rS, th, tl);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1027:EVX:e500:evmhessf %RS,%RA,%RB:Vector Multiply Half Words Even Signed Saturate Fractional
+	signed16 al, ah, bl, bh;
+	signed32 tl, th;
+	int movl, movh;
+	
+	al = (signed16) EV_HIHALF (*rA);
+	ah = (signed16) EV_HIHALF (*rAh);
+	bl = (signed16) EV_HIHALF (*rB);
+	bh = (signed16) EV_HIHALF (*rBh);
+	tl = ev_multiply16_ssf (al, bl, &movl);
+	th = ev_multiply16_ssf (ah, bh, &movh);
+	EV_SET_REG2 (*rSh, *rS, EV_SATURATE (movh, 0x7fffffff, th),
+			       EV_SATURATE (movl, 0x7fffffff, tl));
+	EV_SET_SPEFSCR_OV (movl, movh);
+	PPC_INSN_INT_SPR (RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1059:EVX:e500:evmhessfa %RS,%RA,%RB:Vector Multiply Half Words Even Signed Saturate Fractional Accumulate
+	signed16 al, ah, bl, bh;
+	signed32 tl, th;
+	int movl, movh;
+	
+	al = (signed16) EV_HIHALF (*rA);
+	ah = (signed16) EV_HIHALF (*rAh);
+	bl = (signed16) EV_HIHALF (*rB);
+	bh = (signed16) EV_HIHALF (*rBh);
+	tl = ev_multiply16_ssf (al, bl, &movl);
+	th = ev_multiply16_ssf (ah, bh, &movh);
+	EV_SET_REG2_ACC (*rSh, *rS, EV_SATURATE (movh, 0x7fffffff, th),
+				    EV_SATURATE (movl, 0x7fffffff, tl));
+	EV_SET_SPEFSCR_OV (movl, movh);
+	PPC_INSN_INT_SPR (RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1035:EVX:e500:evmhesmf %RS,%RA,%RB:Vector Multiply Half Words Even Signed Modulo Fractional
+	signed16 al, ah, bl, bh;
+	signed64 tl, th;
+	int movl, movh;
+	
+	al = (signed16) EV_HIHALF (*rA);
+	ah = (signed16) EV_HIHALF (*rAh);
+	bl = (signed16) EV_HIHALF (*rB);
+	bh = (signed16) EV_HIHALF (*rBh);
+	tl = ev_multiply16_smf (al, bl, &movl);
+	th = ev_multiply16_smf (ah, bh, &movh);
+	EV_SET_REG2 (*rSh, *rS, th, tl);
+	EV_SET_SPEFSCR_OV (movl, movh);
+	PPC_INSN_INT_SPR (RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1067:EVX:e500:evmhesmfa %RS,%RA,%RB:Vector Multiply Half Words Even Signed Modulo Fractional Accumulate
+	signed16 al, ah, bl, bh;
+	signed32 tl, th;
+	int dummy;
+	
+	al = (signed16) EV_HIHALF (*rA);
+	ah = (signed16) EV_HIHALF (*rAh);
+	bl = (signed16) EV_HIHALF (*rB);
+	bh = (signed16) EV_HIHALF (*rBh);
+	tl = ev_multiply16_smf (al, bl, & dummy);
+	th = ev_multiply16_smf (ah, bh, & dummy);
+	EV_SET_REG2_ACC (*rSh, *rS, th, tl);
+	PPC_INSN_INT (RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1033:EVX:e500:evmhesmi %RS,%RA,%RB:Vector Multiply Half Words Even Signed Modulo Integer
+	signed16 al, ah, bl, bh;
+	signed32 tl, th;
+	
+	al = (signed16) EV_HIHALF (*rA);
+	ah = (signed16) EV_HIHALF (*rAh);
+	bl = (signed16) EV_HIHALF (*rB);
+	bh = (signed16) EV_HIHALF (*rBh);
+	tl = al * bl;
+	th = ah * bh;
+	EV_SET_REG2 (*rSh, *rS, th, tl);
+	PPC_INSN_INT (RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1065:EVX:e500:evmhesmia %RS,%RA,%RB:Vector Multiply Half Words Even Signed Modulo Integer Accumulate
+	signed32 al, ah, bl, bh, tl, th;
+	al = (signed32)(signed16)EV_HIHALF(*rA);
+	ah = (signed32)(signed16)EV_HIHALF(*rAh);
+	bl = (signed32)(signed16)EV_HIHALF(*rB);
+	bh = (signed32)(signed16)EV_HIHALF(*rBh);
+	tl = al * bl;
+	th = ah * bh;
+	EV_SET_REG2_ACC(*rSh, *rS, th, tl);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1032:EVX:e500:evmheumi %RS,%RA,%RB:Vector Multiply Half Words Even Unsigned Modulo Integer
+	unsigned32 al, ah, bl, bh, tl, th;
+	al = (unsigned32)(unsigned16)EV_HIHALF(*rA);
+	ah = (unsigned32)(unsigned16)EV_HIHALF(*rAh);
+	bl = (unsigned32)(unsigned16)EV_HIHALF(*rB);
+	bh = (unsigned32)(unsigned16)EV_HIHALF(*rBh);
+	tl = al * bl;
+	th = ah * bh;
+	EV_SET_REG2(*rSh, *rS, th, tl);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1064:EVX:e500:evmheumia %RS,%RA,%RB:Vector Multiply Half Words Even Unsigned Modulo Integer Accumulate
+	unsigned32 al, ah, bl, bh, tl, th;
+	al = (unsigned32)(unsigned16)EV_HIHALF(*rA);
+	ah = (unsigned32)(unsigned16)EV_HIHALF(*rAh);
+	bl = (unsigned32)(unsigned16)EV_HIHALF(*rB);
+	bh = (unsigned32)(unsigned16)EV_HIHALF(*rBh);
+	tl = al * bl;
+	th = ah * bh;
+	EV_SET_REG2_ACC(*rSh, *rS, th, tl);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1287:EVX:e500:evmhossfaaw %RS,%RA,%RB:Vector Multiply Half Words Odd Signed Saturate Fractional and Accumulate into Words
+	signed16 al, ah, bl, bh;
+	signed32 t1, t2;
+	signed64 tl, th;
+	int movl, movh, ovl, ovh;
+	
+	al = (signed16) EV_LOHALF (*rA);
+	ah = (signed16) EV_LOHALF (*rAh);
+	bl = (signed16) EV_LOHALF (*rB);
+	bh = (signed16) EV_LOHALF (*rBh);
+	t1 = ev_multiply16_ssf (ah, bh, &movh);
+	t2 = ev_multiply16_ssf (al, bl, &movl);
+	th = EV_ACCHIGH + EV_SATURATE (movh, 0x7fffffff, t1);
+	tl = EV_ACCLOW  + EV_SATURATE (movl, 0x7fffffff, t2);
+	ovh = EV_SAT_P_S32 (th);
+	ovl = EV_SAT_P_S32 (tl);
+	EV_SET_REG2_ACC (*rSh, *rS, EV_SATURATE_ACC (ovh, th, 0x80000000, 0x7fffffff, th),
+			            EV_SATURATE_ACC (ovl, tl, 0x80000000, 0x7fffffff, tl));
+	EV_SET_SPEFSCR_OV (movl | ovl, movh | ovh);
+	PPC_INSN_INT_SPR (RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1285:EVX:e500:evmhossiaaw %RS,%RA,%RB:Vector Multiply Half Words Odd Signed Saturate Integer and Accumulate into Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	int ovl, ovh;
+	al = (signed32)(signed16)EV_LOHALF(*rA);
+	ah = (signed32)(signed16)EV_LOHALF(*rAh);
+	bl = (signed32)(signed16)EV_LOHALF(*rB);
+	bh = (signed32)(signed16)EV_LOHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = EV_ACCHIGH + t1;
+	tl = EV_ACCLOW + t2;
+	ovh = EV_SAT_P_S32(th);
+	ovl = EV_SAT_P_S32(tl);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE_ACC(ovh, th, 0x80000000, 0x7fffffff, th),
+			           EV_SATURATE_ACC(ovl, tl, 0x80000000, 0x7fffffff, tl));
+		//printf("evmhossiaaw: ovh %d ovl %d al %d ah %d bl %d bh %d t1 %qd t2 %qd tl %qd th %qd\n", ovh, ovl, al, ah, bl, bh, t1, t2, tl, th);
+		//printf("evmhossiaaw: ACC = %08x.%08x; *rSh = %08x; *rS = %08x\n", (int)(ACC >> 32), (int)ACC, *rSh, *rS);
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1295:EVX:e500:evmhosmfaaw %RS,%RA,%RB:Vector Multiply Half Words Odd Signed Modulo Fractional and Accumulate into Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	al = (signed32)(signed16)EV_LOHALF(*rA);
+	ah = (signed32)(signed16)EV_LOHALF(*rAh);
+	bl = (signed32)(signed16)EV_LOHALF(*rB);
+	bh = (signed32)(signed16)EV_LOHALF(*rBh);
+	t1 = ((signed64)ah * bh) << 1;
+	t2 = ((signed64)al * bl) << 1;
+	th = EV_ACCHIGH + (t1 & 0xffffffff);
+	tl = EV_ACCLOW + (t2 & 0xffffffff);
+	EV_SET_REG2_ACC(*rSh, *rS, th & 0xffffffff, tl & 0xffffffff);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1293:EVX:e500:evmhosmiaaw %RS,%RA,%RB:Vector Multiply Half Words Odd Signed Modulo Integer and Accumulate into Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	al = (signed32)(signed16)EV_LOHALF(*rA);
+	ah = (signed32)(signed16)EV_LOHALF(*rAh);
+	bl = (signed32)(signed16)EV_LOHALF(*rB);
+	bh = (signed32)(signed16)EV_LOHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = EV_ACCHIGH + t1;
+	tl = EV_ACCLOW + t2;
+	EV_SET_REG2_ACC(*rSh, *rS, th & 0xffffffff, tl & 0xffffffff);
+		//printf("evmhosmiaaw: al %d ah %d bl %d bh %d t1 %qd t2 %qd tl %qd th %qd\n", al, ah, bl, bh, t1, t2, tl, th);
+		//printf("evmhosmiaaw: ACC = %08x.%08x; *rSh = %08x; *rS = %08x\n", (int)(ACC >> 32), (int)ACC, *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1284:EVX:e500:evmhousiaaw %RS,%RA,%RB:Vector Multiply Half Words Odd Unsigned Saturate Integer and Accumulate into Words
+	unsigned32 al, ah, bl, bh;
+	unsigned64 t1, t2;
+	signed64 tl, th;
+	int ovl, ovh;
+	al = (unsigned32)(unsigned16)EV_LOHALF(*rA);
+	ah = (unsigned32)(unsigned16)EV_LOHALF(*rAh);
+	bl = (unsigned32)(unsigned16)EV_LOHALF(*rB);
+	bh = (unsigned32)(unsigned16)EV_LOHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = (signed64)EV_ACCHIGH + (signed64)t1;
+	tl = (signed64)EV_ACCLOW + (signed64)t2;
+	ovh = EV_SAT_P_U32(th);
+	ovl = EV_SAT_P_U32(tl);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE_ACC(ovh, th, 0, 0xffffffff, th),
+			           EV_SATURATE_ACC(ovl, tl, 0, 0xffffffff, tl));
+		//printf("evmhousiaaw: al %u ah %u bl %u bh %u t1 %qu t2 %qu tl %qu th %qu\n", al, ah, bl, bh, t1, t2, tl, th);
+		//printf("evmhousiaaw: ACC = %08x.%08x; *rSh = %08x; *rS = %08x\n", (int)(ACC >> 32), (int)ACC, *rSh, *rS);
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1292:EVX:e500:evmhoumiaaw %RS,%RA,%RB:Vector Multiply Half Words Odd Unsigned Modulo Integer and Accumulate into Words
+	unsigned32 al, ah, bl, bh;
+	unsigned32 t1, t2;
+	signed64 tl, th;
+	al = (unsigned32)(unsigned16)EV_LOHALF(*rA);
+	ah = (unsigned32)(unsigned16)EV_LOHALF(*rAh);
+	bl = (unsigned32)(unsigned16)EV_LOHALF(*rB);
+	bh = (unsigned32)(unsigned16)EV_LOHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = EV_ACCHIGH + t1;
+	tl = EV_ACCLOW + t2;
+	EV_SET_REG2_ACC(*rSh, *rS, th & 0xffffffff, tl & 0xffffffff);
+		//printf("evmhoumiaaw: al %u ah %u bl %u bh %u t1 %qu t2 %qu tl %qu th %qu\n", al, ah, bl, bh, t1, t2, tl, th);
+		//printf("evmhoumiaaw: ACC = %08x.%08x; *rSh = %08x; *rS = %08x\n", (int)(ACC >> 32), (int)ACC, *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1283:EVX:e500:evmhessfaaw %RS,%RA,%RB:Vector Multiply Half Words Even Signed Saturate Fractional and Accumulate into Words
+	signed16 al, ah, bl, bh;
+	signed32 t1, t2;
+	signed64 tl, th;
+	int movl, movh, ovl, ovh;
+	
+	al = (signed16) EV_HIHALF (*rA);
+	ah = (signed16) EV_HIHALF (*rAh);
+	bl = (signed16) EV_HIHALF (*rB);
+	bh = (signed16) EV_HIHALF (*rBh);
+	t1 = ev_multiply16_ssf (ah, bh, &movh);
+	t2 = ev_multiply16_ssf (al, bl, &movl);
+	th = EV_ACCHIGH + EV_SATURATE (movh, 0x7fffffff, t1);
+	tl = EV_ACCLOW  + EV_SATURATE (movl, 0x7fffffff, t2);
+	ovh = EV_SAT_P_S32 (th);
+	ovl = EV_SAT_P_S32 (tl);
+	EV_SET_REG2_ACC (*rSh, *rS, EV_SATURATE_ACC (ovh, th, 0x80000000, 0x7fffffff, th),
+			            EV_SATURATE_ACC (ovl, tl, 0x80000000, 0x7fffffff, tl));
+	EV_SET_SPEFSCR_OV (movl | ovl, movh | ovh);
+	PPC_INSN_INT_SPR (RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1281:EVX:e500:evmhessiaaw %RS,%RA,%RB:Vector Multiply Half Words Even Signed Saturate Integer and Accumulate into Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	int ovl, ovh;
+	al = (signed32)(signed16)EV_HIHALF(*rA);
+	ah = (signed32)(signed16)EV_HIHALF(*rAh);
+	bl = (signed32)(signed16)EV_HIHALF(*rB);
+	bh = (signed32)(signed16)EV_HIHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = EV_ACCHIGH + t1;
+	tl = EV_ACCLOW + t2;
+	ovh = EV_SAT_P_S32(th);
+	ovl = EV_SAT_P_S32(tl);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE_ACC(ovh, th, 0x80000000, 0x7fffffff, th),
+			           EV_SATURATE_ACC(ovl, tl, 0x80000000, 0x7fffffff, tl));
+		//printf("evmhessiaaw: ovh %d ovl %d al %d ah %d bl %d bh %d t1 %qd t2 %qd tl %qd th %qd\n", ovh, ovl, al, ah, bl, bh, t1, t2, tl, th);
+		//printf("evmhessiaaw: ACC = %08x.%08x; *rSh = %08x; *rS = %08x\n", (int)(ACC >> 32), (int)ACC, *rSh, *rS);
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1291:EVX:e500:evmhesmfaaw %RS,%RA,%RB:Vector Multiply Half Words Even Signed Modulo Fractional and Accumulate into Words
+	signed16 al, ah, bl, bh;
+	signed32 t1, t2, th, tl;
+	int dummy;
+
+	al = (signed16)EV_HIHALF(*rA);
+	ah = (signed16)EV_HIHALF(*rAh);
+	bl = (signed16)EV_HIHALF(*rB);
+	bh = (signed16)EV_HIHALF(*rBh);
+	t1 = ev_multiply16_smf (ah, bh, &dummy);
+	t2 = ev_multiply16_smf (al, bl, &dummy);
+	th = EV_ACCHIGH + t1;
+	tl = EV_ACCLOW + t2;
+	EV_SET_REG2_ACC(*rSh, *rS, th, tl);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1289:EVX:e500:evmhesmiaaw %RS,%RA,%RB:Vector Multiply Half Words Even Signed Modulo Integer and Accumulate into Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	al = (signed32)(signed16)EV_HIHALF(*rA);
+	ah = (signed32)(signed16)EV_HIHALF(*rAh);
+	bl = (signed32)(signed16)EV_HIHALF(*rB);
+	bh = (signed32)(signed16)EV_HIHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = EV_ACCHIGH + t1;
+	tl = EV_ACCLOW + t2;
+	EV_SET_REG2_ACC(*rSh, *rS, th & 0xffffffff, tl & 0xffffffff);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1280:EVX:e500:evmheusiaaw %RS,%RA,%RB:Vector Multiply Half Words Even Unsigned Saturate Integer and Accumulate into Words
+	unsigned32 al, ah, bl, bh;
+	unsigned64 t1, t2;
+	signed64 tl, th;
+	int ovl, ovh;
+	al = (unsigned32)(unsigned16)EV_HIHALF(*rA);
+	ah = (unsigned32)(unsigned16)EV_HIHALF(*rAh);
+	bl = (unsigned32)(unsigned16)EV_HIHALF(*rB);
+	bh = (unsigned32)(unsigned16)EV_HIHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = (signed64)EV_ACCHIGH + (signed64)t1;
+	tl = (signed64)EV_ACCLOW + (signed64)t2;
+	ovh = EV_SAT_P_U32(th);
+	ovl = EV_SAT_P_U32(tl);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE_ACC(ovh, th, 0, 0xffffffff, th),
+			           EV_SATURATE_ACC(ovl, tl, 0, 0xffffffff, tl));
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1288:EVX:e500:evmheumiaaw %RS,%RA,%RB:Vector Multiply Half Words Even Unsigned Modulo Integer and Accumulate into Words
+	unsigned32 al, ah, bl, bh;
+	unsigned32 t1, t2;
+	unsigned64 tl, th;
+	al = (unsigned32)(unsigned16)EV_HIHALF(*rA);
+	ah = (unsigned32)(unsigned16)EV_HIHALF(*rAh);
+	bl = (unsigned32)(unsigned16)EV_HIHALF(*rB);
+	bh = (unsigned32)(unsigned16)EV_HIHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = EV_ACCHIGH + t1;
+	tl = EV_ACCLOW + t2;
+	EV_SET_REG2_ACC(*rSh, *rS, th & 0xffffffff, tl & 0xffffffff);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+
+0.4,6.RS,11.RA,16.RB,21.1415:EVX:e500:evmhossfanw %RS,%RA,%RB:Vector Multiply Half Words Odd Signed Saturate Fractional and Accumulate Negative into Words
+	signed16 al, ah, bl, bh;
+	signed32 t1, t2;
+	signed64 tl, th;
+	int movl, movh, ovl, ovh;
+	
+	al = (signed16) EV_LOHALF (*rA);
+	ah = (signed16) EV_LOHALF (*rAh);
+	bl = (signed16) EV_LOHALF (*rB);
+	bh = (signed16) EV_LOHALF (*rBh);
+	t1 = ev_multiply16_ssf (ah, bh, &movh);
+	t2 = ev_multiply16_ssf (al, bl, &movl);
+	th = EV_ACCHIGH - EV_SATURATE (movh, 0x7fffffff, t1);
+	tl = EV_ACCLOW  - EV_SATURATE (movl, 0x7fffffff, t2);
+	ovh = EV_SAT_P_S32 (th);
+	ovl = EV_SAT_P_S32 (tl);
+	EV_SET_REG2_ACC (*rSh, *rS, EV_SATURATE_ACC (ovh, th, 0x80000000, 0x7fffffff, th),
+			            EV_SATURATE_ACC (ovl, tl, 0x80000000, 0x7fffffff, tl));
+	EV_SET_SPEFSCR_OV (movl | ovl, movh | ovh);
+	PPC_INSN_INT_SPR (RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1413:EVX:e500:evmhossianw %RS,%RA,%RB:Vector Multiply Half Words Odd Signed Saturate Integer and Accumulate Negative into Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	int ovl, ovh;
+	al = (signed32)(signed16)EV_LOHALF(*rA);
+	ah = (signed32)(signed16)EV_LOHALF(*rAh);
+	bl = (signed32)(signed16)EV_LOHALF(*rB);
+	bh = (signed32)(signed16)EV_LOHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = EV_ACCHIGH - t1;
+	tl = EV_ACCLOW - t2;
+	ovh = EV_SAT_P_S32(th);
+	ovl = EV_SAT_P_S32(tl);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE_ACC(ovh, th, 0x80000000, 0x7fffffff, th),
+			           EV_SATURATE_ACC(ovl, tl, 0x80000000, 0x7fffffff, tl));
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+		//printf("evmhossianw: ACC = %08x; *rSh = %08x; *rS = %08x\n", ACC, *rSh, *rS);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1423:EVX:e500:evmhosmfanw %RS,%RA,%RB:Vector Multiply Half Words Odd Signed Modulo Fractional and Accumulate Negative into Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	al = (signed32)(signed16)EV_LOHALF(*rA);
+	ah = (signed32)(signed16)EV_LOHALF(*rAh);
+	bl = (signed32)(signed16)EV_LOHALF(*rB);
+	bh = (signed32)(signed16)EV_LOHALF(*rBh);
+	t1 = ((signed64)ah * bh) << 1;
+	t2 = ((signed64)al * bl) << 1;
+	th = EV_ACCHIGH - (t1 & 0xffffffff);
+	tl = EV_ACCLOW - (t2 & 0xffffffff);
+	EV_SET_REG2_ACC(*rSh, *rS, th & 0xffffffff, tl & 0xffffffff);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1421:EVX:e500:evmhosmianw %RS,%RA,%RB:Vector Multiply Half Words Odd Signed Modulo Integer and Accumulate Negative into Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	al = (signed32)(signed16)EV_LOHALF(*rA);
+	ah = (signed32)(signed16)EV_LOHALF(*rAh);
+	bl = (signed32)(signed16)EV_LOHALF(*rB);
+	bh = (signed32)(signed16)EV_LOHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = EV_ACCHIGH - t1;
+	tl = EV_ACCLOW - t2;
+	EV_SET_REG2_ACC(*rSh, *rS, th & 0xffffffff, tl & 0xffffffff);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1412:EVX:e500:evmhousianw %RS,%RA,%RB:Vector Multiply Half Words Odd Unsigned Saturate Integer and Accumulate Negative into Words
+	unsigned32 al, ah, bl, bh;
+	unsigned64 t1, t2;
+	signed64 tl, th;
+	int ovl, ovh;
+	al = (unsigned32)(unsigned16)EV_LOHALF(*rA);
+	ah = (unsigned32)(unsigned16)EV_LOHALF(*rAh);
+	bl = (unsigned32)(unsigned16)EV_LOHALF(*rB);
+	bh = (unsigned32)(unsigned16)EV_LOHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = (signed64)EV_ACCHIGH - (signed64)t1;
+	tl = (signed64)EV_ACCLOW - (signed64)t2;
+	ovl = EV_SAT_P_U32(tl);
+	ovh = EV_SAT_P_U32(th);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE_ACC(ovh, th, 0, 0xffffffff, th),
+			           EV_SATURATE_ACC(ovl, tl, 0, 0xffffffff, tl));
+		//printf("evmhousianw: ovh %d ovl %d al %d ah %d bl %d bh %d t1 %qd t2 %qd tl %qd th %qd\n", ovh, ovl, al, ah, bl, bh, t1, t2, tl, th);
+		//printf("evmoussianw: ACC = %08x.%08x; *rSh = %08x; *rS = %08x\n", (int)(ACC >> 32), (int)ACC, *rSh, *rS);
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1420:EVX:e500:evmhoumianw %RS,%RA,%RB:Vector Multiply Half Words Odd Unsigned Modulo Integer and Accumulate Negative into Words
+	unsigned32 al, ah, bl, bh;
+	unsigned32 t1, t2;
+	unsigned64 tl, th;
+	al = (unsigned32)(unsigned16)EV_LOHALF(*rA);
+	ah = (unsigned32)(unsigned16)EV_LOHALF(*rAh);
+	bl = (unsigned32)(unsigned16)EV_LOHALF(*rB);
+	bh = (unsigned32)(unsigned16)EV_LOHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = EV_ACCHIGH - t1;
+	tl = EV_ACCLOW - t2;
+	EV_SET_REG2_ACC(*rSh, *rS, th & 0xffffffff, tl & 0xffffffff);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1411:EVX:e500:evmhessfanw %RS,%RA,%RB:Vector Multiply Half Words Even Signed Saturate Fractional and Accumulate Negative into Words
+	signed16 al, ah, bl, bh;
+	signed32 t1, t2;
+	signed64 tl, th;
+	int movl, movh, ovl, ovh;
+	
+	al = (signed16) EV_HIHALF (*rA);
+	ah = (signed16) EV_HIHALF (*rAh);
+	bl = (signed16) EV_HIHALF (*rB);
+	bh = (signed16) EV_HIHALF (*rBh);
+	t1 = ev_multiply16_ssf (ah, bh, &movh);
+	t2 = ev_multiply16_ssf (al, bl, &movl);
+	th = EV_ACCHIGH - EV_SATURATE (movh, 0x7fffffff, t1);
+	tl = EV_ACCLOW  - EV_SATURATE (movl, 0x7fffffff, t2);
+	ovh = EV_SAT_P_S32 (th);
+	ovl = EV_SAT_P_S32 (tl);
+	EV_SET_REG2_ACC (*rSh, *rS, EV_SATURATE_ACC (ovh, th, 0x80000000, 0x7fffffff, th),
+			            EV_SATURATE_ACC (ovl, tl, 0x80000000, 0x7fffffff, tl));
+	EV_SET_SPEFSCR_OV (movl | ovl, movh | ovh);
+	PPC_INSN_INT_SPR (RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1409:EVX:e500:evmhessianw %RS,%RA,%RB:Vector Multiply Half Words Even Signed Saturate Integer and Accumulate Negative into Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	int ovl, ovh;
+	al = (signed32)(signed16)EV_HIHALF(*rA);
+	ah = (signed32)(signed16)EV_HIHALF(*rAh);
+	bl = (signed32)(signed16)EV_HIHALF(*rB);
+	bh = (signed32)(signed16)EV_HIHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = EV_ACCHIGH - t1;
+	tl = EV_ACCLOW - t2;
+	ovh = EV_SAT_P_S32(th);
+	ovl = EV_SAT_P_S32(tl);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE_ACC(ovh, th, 0x80000000, 0x7fffffff, th),
+			           EV_SATURATE_ACC(ovl, tl, 0x80000000, 0x7fffffff, tl));
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1419:EVX:e500:evmhesmfanw %RS,%RA,%RB:Vector Multiply Half Words Even Signed Modulo Fractional and Accumulate Negative into Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	al = (unsigned32)(unsigned16)EV_HIHALF(*rA);
+	ah = (unsigned32)(unsigned16)EV_HIHALF(*rAh);
+	bl = (unsigned32)(unsigned16)EV_HIHALF(*rB);
+	bh = (unsigned32)(unsigned16)EV_HIHALF(*rBh);
+	t1 = ((signed64)ah * bh) << 1;
+	t2 = ((signed64)al * bl) << 1;
+	th = EV_ACCHIGH - (t1 & 0xffffffff);
+	tl = EV_ACCLOW - (t2 & 0xffffffff);
+	EV_SET_REG2_ACC(*rSh, *rS, th & 0xffffffff, tl & 0xffffffff);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1417:EVX:e500:evmhesmianw %RS,%RA,%RB:Vector Multiply Half Words Even Signed Modulo Integer and Accumulate Negative into Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	al = (signed32)(signed16)EV_HIHALF(*rA);
+	ah = (signed32)(signed16)EV_HIHALF(*rAh);
+	bl = (signed32)(signed16)EV_HIHALF(*rB);
+	bh = (signed32)(signed16)EV_HIHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = EV_ACCHIGH - t1;
+	tl = EV_ACCLOW - t2;
+	EV_SET_REG2_ACC(*rSh, *rS, th & 0xffffffff, tl & 0xffffffff);
+		//printf("evmhesmianw: al %d ah %d bl %d bh %d t1 %qd t2 %qd tl %qd th %qd\n", al, ah, bl, bh, t1, t2, tl, th);
+		//printf("evmhesmianw: ACC = %08x.%08x; *rSh = %08x; *rS = %08x\n", (int)(ACC >> 32), (int)ACC, *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1408:EVX:e500:evmheusianw %RS,%RA,%RB:Vector Multiply Half Words Even Unsigned Saturate Integer and Accumulate Negative into Words
+	unsigned32 al, ah, bl, bh;
+	unsigned64 t1, t2;
+	signed64 tl, th;
+	int ovl, ovh;
+	al = (unsigned32)(unsigned16)EV_HIHALF(*rA);
+	ah = (unsigned32)(unsigned16)EV_HIHALF(*rAh);
+	bl = (unsigned32)(unsigned16)EV_HIHALF(*rB);
+	bh = (unsigned32)(unsigned16)EV_HIHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = (signed64)EV_ACCHIGH - (signed64)t1;
+	tl = (signed64)EV_ACCLOW - (signed64)t2;
+	ovl = EV_SAT_P_U32(tl);
+	ovh = EV_SAT_P_U32(th);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE_ACC(ovh, th, 0, 0xffffffff, th),
+			           EV_SATURATE_ACC(ovl, tl, 0, 0xffffffff, tl));
+		//printf("evmheusianw: ovh %d ovl %d al %u ah %u bl %u bh %u t1 %qu t2 %qu tl %qd th %qd\n", ovh, ovl, al, ah, bl, bh, t1, t2, tl, th);
+		//printf("evmheusianw: ACC = %08x.%08x; *rSh = %08x; *rS = %08x\n", (int)(ACC >> 32), (int)ACC, *rSh, *rS);
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1416:EVX:e500:evmheumianw %RS,%RA,%RB:Vector Multiply Half Words Even Unsigned Modulo Integer and Accumulate Negative into Words
+	unsigned32 al, ah, bl, bh;
+	unsigned32 t1, t2;
+	unsigned64 tl, th;
+	al = (unsigned32)(unsigned16)EV_HIHALF(*rA);
+	ah = (unsigned32)(unsigned16)EV_HIHALF(*rAh);
+	bl = (unsigned32)(unsigned16)EV_HIHALF(*rB);
+	bh = (unsigned32)(unsigned16)EV_HIHALF(*rBh);
+	t1 = ah * bh;
+	t2 = al * bl;
+	th = EV_ACCHIGH - t1;
+	tl = EV_ACCLOW - t2;
+	EV_SET_REG2_ACC(*rSh, *rS, th & 0xffffffff, tl & 0xffffffff);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1327:EVX:e500:evmhogsmfaa %RS,%RA,%RB:Multiply Half Words Odd Guarded Signed Modulo Fractional and Accumulate
+	signed32 a, b;
+	signed64 t1, t2;
+	a = (signed32)(signed16)EV_LOHALF(*rA);
+	b = (signed32)(signed16)EV_LOHALF(*rB);
+	t1 = EV_MUL16_SSF(a, b);
+	if (t1 & ((unsigned64)1 << 32))
+	  t1 |= 0xfffffffe00000000;
+	t2 = ACC + t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1325:EVX:e500:evmhogsmiaa %RS,%RA,%RB:Multiply Half Words Odd Guarded Signed Modulo Integer and Accumulate
+	signed32 a, b;
+	signed64 t1, t2;
+	a = (signed32)(signed16)EV_LOHALF(*rA);
+	b = (signed32)(signed16)EV_LOHALF(*rB);
+	t1 = (signed64)a * (signed64)b;
+	t2 = (signed64)ACC + t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+		//printf("evmhogsmiaa: a %d b %d t1 %qd t2 %qd\n", a, b, t1, t2);
+		//printf("evmhogsmiaa: ACC = %08x.%08x; *rSh = %08x; *rS = %08x\n", (int)(ACC >> 32), (int)ACC, *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1324:EVX:e500:evmhogumiaa %RS,%RA,%RB:Multiply Half Words Odd Guarded Unsigned Modulo Integer and Accumulate
+	unsigned32 a, b;
+	unsigned64 t1, t2;
+	a = (unsigned32)(unsigned16)EV_LOHALF(*rA);
+	b = (unsigned32)(unsigned16)EV_LOHALF(*rB);
+	t1 = a * b;
+	t2 = ACC + t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1323:EVX:e500:evmhegsmfaa %RS,%RA,%RB:Multiply Half Words Even Guarded Signed Modulo Fractional and Accumulate
+	signed32 a, b;
+	signed64 t1, t2;
+	a = (signed32)(signed16)EV_HIHALF(*rA);
+	b = (signed32)(signed16)EV_HIHALF(*rB);
+	t1 = EV_MUL16_SSF(a, b);
+	if (t1 & ((unsigned64)1 << 32))
+	  t1 |= 0xfffffffe00000000;
+	t2 = ACC + t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1321:EVX:e500:evmhegsmiaa %RS,%RA,%RB:Multiply Half Words Even Guarded Signed Modulo Integer and Accumulate
+	signed32 a, b;
+	signed64 t1, t2;
+	a = (signed32)(signed16)EV_HIHALF(*rA);
+	b = (signed32)(signed16)EV_HIHALF(*rB);
+	t1 = (signed64)(a * b);
+	t2 = ACC + t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1320:EVX:e500:evmhegumiaa %RS,%RA,%RB:Multiply Half Words Even Guarded Unsigned Modulo Integer and Accumulate
+	unsigned32 a, b;
+	unsigned64 t1, t2;
+	a = (unsigned32)(unsigned16)EV_HIHALF(*rA);
+	b = (unsigned32)(unsigned16)EV_HIHALF(*rB);
+	t1 = a * b;
+	t2 = ACC + t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+
+0.4,6.RS,11.RA,16.RB,21.1455:EVX:e500:evmhogsmfan %RS,%RA,%RB:Multiply Half Words Odd Guarded Signed Modulo Fractional and Accumulate Negative
+	signed32 a, b;
+	signed64 t1, t2;
+	a = (signed32)(signed16)EV_LOHALF(*rA);
+	b = (signed32)(signed16)EV_LOHALF(*rB);
+	t1 = EV_MUL16_SSF(a, b);
+	if (t1 & ((unsigned64)1 << 32))
+	  t1 |= 0xfffffffe00000000;
+	t2 = ACC - t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1453:EVX:e500:evmhogsmian %RS,%RA,%RB:Multiply Half Words Odd Guarded Signed Modulo Integer and Accumulate Negative
+	signed32 a, b;
+	signed64 t1, t2;
+	a = (signed32)(signed16)EV_LOHALF(*rA);
+	b = (signed32)(signed16)EV_LOHALF(*rB);
+	t1 = (signed64)a * (signed64)b;
+	t2 = ACC - t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+		//printf("evmhogsmian: a %d b %d t1 %qd t2 %qd\n", a, b, t1, t2);
+		//printf("evmhogsmian: ACC = %08x.%08x; *rSh = %08x; *rS = %08x\n", (int)(ACC >> 32), (int)ACC, *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1452:EVX:e500:evmhogumian %RS,%RA,%RB:Multiply Half Words Odd Guarded Unsigned Modulo Integer and Accumulate Negative
+	unsigned32 a, b;
+	unsigned64 t1, t2;
+	a = (unsigned32)(unsigned16)EV_LOHALF(*rA);
+	b = (unsigned32)(unsigned16)EV_LOHALF(*rB);
+	t1 = (unsigned64)a * (unsigned64)b;
+	t2 = ACC - t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1451:EVX:e500:evmhegsmfan %RS,%RA,%RB:Multiply Half Words Even Guarded Signed Modulo Fractional and Accumulate Negative
+	signed32 a, b;
+	signed64 t1, t2;
+	a = (signed32)(signed16)EV_HIHALF(*rA);
+	b = (signed32)(signed16)EV_HIHALF(*rB);
+	t1 = EV_MUL16_SSF(a, b);
+	if (t1 & ((unsigned64)1 << 32))
+	  t1 |= 0xfffffffe00000000;
+	t2 = ACC - t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1449:EVX:e500:evmhegsmian %RS,%RA,%RB:Multiply Half Words Even Guarded Signed Modulo Integer and Accumulate Negative
+	signed32 a, b;
+	signed64 t1, t2;
+	a = (signed32)(signed16)EV_HIHALF(*rA);
+	b = (signed32)(signed16)EV_HIHALF(*rB);
+	t1 = (signed64)a * (signed64)b;
+	t2 = ACC - t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1448:EVX:e500:evmhegumian %RS,%RA,%RB:Multiply Half Words Even Guarded Unsigned Modulo Integer and Accumulate Negative
+	unsigned32 a, b;
+	unsigned64 t1, t2;
+	a = (unsigned32)(unsigned16)EV_HIHALF(*rA);
+	b = (unsigned32)(unsigned16)EV_HIHALF(*rB);
+	t1 = (unsigned64)a * (unsigned64)b;
+	t2 = ACC - t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+
+0.4,6.RS,11.RA,16.RB,21.1095:EVX:e500:evmwhssf %RS,%RA,%RB:Vector Multiply Word High Signed Saturate Fractional
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2;
+	int movl, movh;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = ev_multiply32_ssf(al, bl, &movl);
+	t2 = ev_multiply32_ssf(ah, bh, &movh);
+	EV_SET_REG2(*rSh, *rS, EV_SATURATE(movh, 0x7fffffff, t2 >> 32),
+			       EV_SATURATE(movl, 0x7fffffff, t1 >> 32));
+	EV_SET_SPEFSCR_OV(movl, movh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1127:EVX:e500:evmwhssfa %RS,%RA,%RB:Vector Multiply Word High Signed Saturate Fractional and Accumulate
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2;
+	int movl, movh;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = ev_multiply32_ssf(al, bl, &movl);
+	t2 = ev_multiply32_ssf(ah, bh, &movh);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE(movh, 0x7fffffff, t2 >> 32),
+			           EV_SATURATE(movl, 0x7fffffff, t1 >> 32));
+	EV_SET_SPEFSCR_OV(movl, movh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1103:EVX:e500:evmwhsmf %RS,%RA,%RB:Vector Multiply Word High Signed Modulo Fractional
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = EV_MUL32_SSF(al, bl);
+	t2 = EV_MUL32_SSF(ah, bh);
+	EV_SET_REG2(*rSh, *rS, t2 >> 32, t1 >> 32);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+	
+0.4,6.RS,11.RA,16.RB,21.1135:EVX:e500:evmwhsmfa %RS,%RA,%RB:Vector Multiply Word High Signed Modulo Fractional and Accumulate
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = EV_MUL32_SSF(al, bl);
+	t2 = EV_MUL32_SSF(ah, bh);
+	EV_SET_REG2_ACC(*rSh, *rS, t2 >> 32, t1 >> 32);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1101:EVX:e500:evmwhsmi %RS,%RA,%RB:Vector Multiply Word High Signed Modulo Integer
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = (signed64)al * (signed64)bl;
+	t2 = (signed64)ah * (signed64)bh;
+	EV_SET_REG2(*rSh, *rS, t2 >> 32, t1 >> 32);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1133:EVX:e500:evmwhsmia %RS,%RA,%RB:Vector Multiply Word High Signed Modulo Integer and Accumulate
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = (signed64)al * (signed64)bl;
+	t2 = (signed64)ah * (signed64)bh;
+	EV_SET_REG2_ACC(*rSh, *rS, t2 >> 32, t1 >> 32);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1100:EVX:e500:evmwhumi %RS,%RA,%RB:Vector Multiply Word High Unsigned Modulo Integer
+	unsigned32 al, ah, bl, bh;
+	unsigned64 t1, t2;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = (unsigned64)al * (unsigned64)bl;
+	t2 = (unsigned64)ah * (unsigned64)bh;
+	EV_SET_REG2(*rSh, *rS, t2 >> 32, t1 >> 32);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1132:EVX:e500:evmwhumia %RS,%RA,%RB:Vector Multiply Word High Unsigned Modulo Integer and Accumulate
+	unsigned32 al, ah, bl, bh;
+	unsigned64 t1, t2;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = (unsigned64)al * (unsigned64)bl;
+	t2 = (unsigned64)ah * (unsigned64)bh;
+	EV_SET_REG2_ACC(*rSh, *rS, t2 >> 32, t1 >> 32);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+
+0.4,6.RS,11.RA,16.RB,21.1091:EVX:e500:evmwlssf %RS,%RA,%RB:Vector Multiply Word Low Signed Saturate Fractional
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2;
+	int movl, movh;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = ev_multiply32_ssf(al, bl, &movl);
+	t2 = ev_multiply32_ssf(ah, bh, &movh);
+	EV_SET_REG2(*rSh, *rS, EV_SATURATE(movh, 0xffffffff, t2),
+			       EV_SATURATE(movl, 0xffffffff, t1));
+	EV_SET_SPEFSCR_OV(movl, movh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1123:EVX:e500:evmwlssfa %RS,%RA,%RB:Vector Multiply Word Low Signed Saturate Fractional and Accumulate
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2;
+	int movl, movh;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = ev_multiply32_ssf(al, bl, &movl);
+	t2 = ev_multiply32_ssf(ah, bh, &movh);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE(movh, 0xffffffff, t2),
+			           EV_SATURATE(movl, 0xffffffff, t1));
+	EV_SET_SPEFSCR_OV(movl, movh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1099:EVX:e500:evmwlsmf %RS,%RA,%RB:Vector Multiply Word Low Signed Modulo Fractional
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = EV_MUL32_SSF(al, bl);
+	t2 = EV_MUL32_SSF(ah, bh);
+	EV_SET_REG2(*rSh, *rS, t2, t1);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1131:EVX:e500:evmwlsmfa %RS,%RA,%RB:Vector Multiply Word Low Signed Modulo Fractional and Accumulate
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = EV_MUL32_SSF(al, bl);
+	t2 = EV_MUL32_SSF(ah, bh);
+	EV_SET_REG2_ACC(*rSh, *rS, t2, t1);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1096:EVX:e500:evmwlumi %RS,%RA,%RB:Vector Multiply Word Low Unsigned Modulo Integer
+	unsigned32 al, ah, bl, bh;
+	unsigned64 t1, t2;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = (unsigned64)al * (unsigned64)bl;
+	t2 = (unsigned64)ah * (unsigned64)bh;
+	EV_SET_REG2(*rSh, *rS, t2, t1);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1128:EVX:e500:evmwlumia %RS,%RA,%RB:Vector Multiply Word Low Unsigned Modulo Integer and Accumulate
+	unsigned32 al, ah, bl, bh;
+	unsigned64 t1, t2;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = (unsigned64)al * (unsigned64)bl;
+	t2 = (unsigned64)ah * (unsigned64)bh;
+	EV_SET_REG2_ACC(*rSh, *rS, t2, t1);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+
+0.4,6.RS,11.RA,16.RB,21.1347:EVX:e500:evmwlssfaaw %RS,%RA,%RB:Vector Multiply Word Low Signed Saturate Fractional and Accumulate in Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	int movl, movh, ovl, ovh;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = ev_multiply32_ssf(ah, bh, &movh);
+	t2 = ev_multiply32_ssf(al, bl, &movl);
+	th = EV_ACCHIGH + EV_SATURATE(movh, 0xffffffff, t1);
+	tl = EV_ACCLOW + EV_SATURATE(movl, 0xffffffff, t2);
+	ovh = EV_SAT_P_S32(th);
+	ovl = EV_SAT_P_S32(tl);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE_ACC(ovh, th, 0x80000000, 0x7fffffff, th),
+			           EV_SATURATE_ACC(ovl, tl, 0x80000000, 0x7fffffff, tl));
+	EV_SET_SPEFSCR_OV(movl | ovl, movh | ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1345:EVX:e500:evmwlssiaaw %RS,%RA,%RB:Vector Multiply Word Low Signed Saturate Integer and Accumulate in Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	int ovl, ovh;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = (signed64)ah * (signed64)bh;
+	t2 = (signed64)al * (signed64)bl;
+	th = EV_ACCHIGH + (t1 & 0xffffffff);
+	tl = EV_ACCLOW + (t2 & 0xffffffff);
+	ovh = EV_SAT_P_S32(th);
+	ovl = EV_SAT_P_S32(tl);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE_ACC(ovh, th, 0x80000000, 0x7fffffff, th),
+			           EV_SATURATE_ACC(ovl, tl, 0x80000000, 0x7fffffff, tl));
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1355:EVX:e500:evmwlsmfaaw %RS,%RA,%RB:Vector Multiply Word Low Signed Modulo Fractional and Accumulate in Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2;
+	int mov;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = ev_multiply32_smf(ah, bh, &mov);
+	t2 = ev_multiply32_smf(al, bl, &mov);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_ACCHIGH + (t1 & 0xffffffff),
+				 EV_ACCLOW + (t2 & 0xffffffff));
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1353:EVX:e500:evmwlsmiaaw %RS,%RA,%RB:Vector Multiply Word Low Signed Modulo Integer and Accumulate in Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = (signed64)ah * (signed64)bh;
+	t2 = (signed64)al * (signed64)bl;
+	EV_SET_REG2_ACC(*rSh, *rS, EV_ACCHIGH + (t1 & 0xffffffff),
+				 EV_ACCLOW + (t2 & 0xffffffff));
+		//printf("evmwlsmiaaw: al %d ah %d bl %d bh %d t1 %qd t2 %qd\n", al, ah, bl, bh, t1, t2);
+		//printf("evmwlsmiaaw: *rSh = %08x; *rS = %08x\n", *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1344:EVX:e500:evmwlusiaaw %RS,%RA,%RB:Vector Multiply Word Low Unsigned Saturate Integer and Accumulate in Words
+	unsigned32 al, ah, bl, bh;
+	unsigned64 t1, t2, tl, th;
+	int ovl, ovh;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = (unsigned64)ah * (unsigned64)bh;
+	t2 = (unsigned64)al * (unsigned64)bl;
+	th = EV_ACCHIGH + (t1 & 0xffffffff);
+	tl = EV_ACCLOW + (t2 & 0xffffffff);
+	ovh = (th >> 32);
+	ovl = (tl >> 32);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE(ovh, 0xffffffff, th),
+			           EV_SATURATE(ovl, 0xffffffff, tl));
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1352:EVX:e500:evmwlumiaaw %RS,%RA,%RB:Vector Multiply Word Low Unsigned Modulo Integer and Accumulate in Words
+	unsigned32 al, ah, bl, bh;
+	unsigned64 t1, t2;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = (unsigned64)ah * (unsigned64)bh;
+	t2 = (unsigned64)al * (unsigned64)bl;
+	EV_SET_REG2_ACC(*rSh, *rS, EV_ACCHIGH + (t1 & 0xffffffff),
+				 EV_ACCLOW + (t2 & 0xffffffff));
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+
+0.4,6.RS,11.RA,16.RB,21.1475:EVX:e500:evmwlssfanw %RS,%RA,%RB:Vector Multiply Word Low Signed Saturate Fractional and Accumulate Negative in Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	int movl, movh, ovl, ovh;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = ev_multiply32_ssf(ah, bh, &movh);
+	t2 = ev_multiply32_ssf(al, bl, &movl);
+	th = EV_ACCHIGH - EV_SATURATE(movh, 0xffffffff, t1);
+	tl = EV_ACCLOW - EV_SATURATE(movl, 0xffffffff, t2);
+	ovh = EV_SAT_P_S32(th);
+	ovl = EV_SAT_P_S32(tl);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE_ACC(ovh, th, 0x80000000, 0x7fffffff, th),
+			           EV_SATURATE_ACC(ovl, tl, 0x80000000, 0x7fffffff, tl));
+	EV_SET_SPEFSCR_OV(movl | ovl, movh | ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1473:EVX:e500:evmwlssianw %RS,%RA,%RB:Vector Multiply Word Low Signed Saturate Integer and Accumulate Negative in Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2, tl, th;
+	int ovl, ovh;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = (signed64)ah * (signed64)bh;
+	t2 = (signed64)al * (signed64)bl;
+	th = EV_ACCHIGH - (t1 & 0xffffffff);
+	tl = EV_ACCLOW - (t2 & 0xffffffff);
+	ovh = EV_SAT_P_S32(th);
+	ovl = EV_SAT_P_S32(tl);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE_ACC(ovh, th, 0x80000000, 0x7fffffff, th),
+			           EV_SATURATE_ACC(ovl, tl, 0x80000000, 0x7fffffff, tl));
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1483:EVX:e500:evmwlsmfanw %RS,%RA,%RB:Vector Multiply Word Low Signed Modulo Fractional and Accumulate Negative in Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2;
+	int mov;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = ev_multiply32_smf(ah, bh, &mov);
+	t2 = ev_multiply32_smf(al, bl, &mov);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_ACCHIGH - (t1 & 0xffffffff),
+				 EV_ACCLOW - (t2 & 0xffffffff));
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1481:EVX:e500:evmwlsmianw %RS,%RA,%RB:Vector Multiply Word Low Signed Modulo Integer and Accumulate Negative in Words
+	signed32 al, ah, bl, bh;
+	signed64 t1, t2;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = (signed64)ah * (signed64)bh;
+	t2 = (signed64)al * (signed64)bl;
+	EV_SET_REG2_ACC(*rSh, *rS, EV_ACCHIGH - (t1 & 0xffffffff),
+				 EV_ACCLOW - (t2 & 0xffffffff));
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1472:EVX:e500:evmwlusianw %RS,%RA,%RB:Vector Multiply Word Low Unsigned Saturate Integer and Accumulate Negative in Words
+	unsigned32 al, ah, bl, bh;
+	unsigned64 t1, t2, tl, th;
+	int ovl, ovh;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = (unsigned64)ah * (unsigned64)bh;
+	t2 = (unsigned64)al * (unsigned64)bl;
+	th = EV_ACCHIGH - (t1 & 0xffffffff);
+	tl = EV_ACCLOW - (t2 & 0xffffffff);
+	ovh = (th >> 32);
+	ovl = (tl >> 32);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE(ovh, 0xffffffff, th),
+			           EV_SATURATE(ovl, 0xffffffff, tl));
+		//printf("evmwlusianw: ovl %d ovh %d al %d ah %d bl %d bh %d t1 %qd t2 %qd th %qd tl %qd\n", ovl, ovh, al, ah, al, bh, t1, t2, th, tl);
+		//printf("evmwlusianw: ACC = %08x.%08x; *rSh = %08x; *rS = %08x\n", (int)(ACC >> 32), (int)ACC, *rSh, *rS);
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1480:EVX:e500:evmwlumianw %RS,%RA,%RB:Vector Multiply Word Low Unsigned Modulo Integer and Accumulate Negative in Words
+	unsigned32 al, ah, bl, bh;
+	unsigned64 t1, t2;
+	al = *rA;
+	ah = *rAh;
+	bl = *rB;
+	bh = *rBh;
+	t1 = (unsigned64)ah * (unsigned64)bh;
+	t2 = (unsigned64)al * (unsigned64)bl;
+	EV_SET_REG2_ACC(*rSh, *rS, EV_ACCHIGH - (t1 & 0xffffffff),
+				   EV_ACCLOW - (t2 & 0xffffffff));
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+
+0.4,6.RS,11.RA,16.RB,21.1107:EVX:e500:evmwssf %RS,%RA,%RB:Vector Multiply Word Signed Saturate Fractional
+	signed32 a, b;
+	signed64 t;
+	int movl;
+	a = *rA;
+	b = *rB;
+	t = ev_multiply32_ssf(a, b, &movl);
+	EV_SET_REG1(*rSh, *rS, EV_SATURATE(movl, 0x7fffffffffffffff, t));
+	EV_SET_SPEFSCR_OV(movl, 0);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1139:EVX:e500:evmwssfa %RS,%RA,%RB:Vector Multiply Word Signed Saturate Fractional and Accumulate
+	signed32 a, b;
+	signed64 t;
+	int movl;
+	a = *rA;
+	b = *rB;
+	t = ev_multiply32_ssf(a, b, &movl);
+	EV_SET_REG1_ACC(*rSh, *rS, EV_SATURATE(movl, 0x7fffffffffffffff, t));
+	EV_SET_SPEFSCR_OV(movl, 0);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1115:EVX:e500:evmwsmf %RS,%RA,%RB:Vector Multiply Word Signed Modulo Fractional
+	signed32 a, b;
+	signed64 t;
+	int movl;
+	a = *rA;
+	b = *rB;
+	t = ev_multiply32_smf(a, b, &movl);
+	EV_SET_REG1(*rSh, *rS, t);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1147:EVX:e500:evmwsmfa %RS,%RA,%RB:Vector Multiply Word Signed Modulo Fractional and Accumulate
+	signed32 a, b;
+	signed64 t;
+	int movl;
+	a = *rA;
+	b = *rB;
+	t = ev_multiply32_smf(a, b, &movl);
+	EV_SET_REG1_ACC(*rSh, *rS, t);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1113:EVX:e500:evmwsmi %RS,%RA,%RB:Vector Multiply Word Signed Modulo Integer
+	signed32 a, b;
+	signed64 t;
+	int movl;
+	a = *rA;
+	b = *rB;
+	t = (signed64)a * (signed64)b;
+	EV_SET_REG1(*rSh, *rS, t);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1145:EVX:e500:evmwsmia %RS,%RA,%RB:Vector Multiply Word Signed Modulo Integer and Accumulate
+	signed32 a, b;
+	signed64 t;
+	int movl;
+	a = *rA;
+	b = *rB;
+	t = (signed64)a * (signed64)b;
+	EV_SET_REG1_ACC(*rSh, *rS, t);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1112:EVX:e500:evmwumi %RS,%RA,%RB:Vector Multiply Word Unigned Modulo Integer
+	unsigned32 a, b;
+	unsigned64 t;
+	int movl;
+	a = *rA;
+	b = *rB;
+	t = (signed64)a * (signed64)b;
+	EV_SET_REG1(*rSh, *rS, t);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1144:EVX:e500:evmwumia %RS,%RA,%RB:Vector Multiply Word Unigned Modulo Integer and Accumulate
+	unsigned32 a, b;
+	unsigned64 t;
+	int movl;
+	a = *rA;
+	b = *rB;
+	t = (signed64)a * (signed64)b;
+	EV_SET_REG1_ACC(*rSh, *rS, t);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+
+0.4,6.RS,11.RA,16.RB,21.1363:EVX:e500:evmwssfaa %RS,%RA,%RB:Vector Multiply Word Signed Saturate Fractional Add and Accumulate
+	signed64 t1, t2;
+	signed32 a, b;
+	int movl;
+	a = *rA;
+	b = *rB;
+	t1 = ev_multiply32_ssf(a, b, &movl);
+	t2 = ACC + EV_SATURATE(movl, 0x7fffffffffffffff, t1);
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	EV_SET_SPEFSCR_OV(movl, 0);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1371:EVX:e500:evmwsmfaa %RS,%RA,%RB:Vector Multiply Word Signed Modulo Fractional Add and Accumulate
+	signed64 t1, t2;
+	signed32 a, b;
+	int movl;
+	a = *rA;
+	b = *rB;
+	t1 = ev_multiply32_smf(a, b, &movl);
+	t2 = ACC + t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1369:EVX:e500:evmwsmiaa %RS,%RA,%RB:Vector Multiply Word Signed Modulo Integer And and Accumulate
+	signed64 t1, t2;
+	signed32 a, b;
+	a = *rA;
+	b = *rB;
+	t1 = (signed64)a * (signed64)b;
+	t2 = ACC + t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1368:EVX:e500:evmwumiaa %RS,%RA,%RB:Vector Multiply Word Unsigned Modulo Integer Add and Accumulate
+	unsigned64 t1, t2;
+	unsigned32 a, b;
+	a = *rA;
+	b = *rB;
+	t1 = (unsigned64)a * (unsigned64)b;
+	t2 = ACC + t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+
+0.4,6.RS,11.RA,16.RB,21.1491:EVX:e500:evmwssfan %RS,%RA,%RB:Vector Multiply Word Signed Saturate Fractional and Accumulate Negative
+	signed64 t1, t2;
+	signed32 a, b;
+	int movl;
+	a = *rA;
+	b = *rB;
+	t1 = ev_multiply32_ssf(a, b, &movl);
+	t2 = ACC - EV_SATURATE(movl, 0x7fffffffffffffff, t1);
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	EV_SET_SPEFSCR_OV(movl, 0);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.1499:EVX:e500:evmwsmfan %RS,%RA,%RB:Vector Multiply Word Signed Modulo Fractional and Accumulate Negative
+	signed64 t1, t2;
+	signed32 a, b;
+	int movl;
+	a = *rA;
+	b = *rB;
+	t1 = ev_multiply32_smf(a, b, &movl);
+	t2 = ACC - t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1497:EVX:e500:evmwsmian %RS,%RA,%RB:Vector Multiply Word Signed Modulo Integer and Accumulate Negative
+	signed64 t1, t2;
+	signed32 a, b;
+	a = *rA;
+	b = *rB;
+	t1 = (signed64)a * (signed64)b;
+	t2 = ACC - t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1496:EVX:e500:evmwumian %RS,%RA,%RB:Vector Multiply Word Unsigned Modulo Integer and Accumulate Negative
+	unsigned64 t1, t2;
+	unsigned32 a, b;
+	a = *rA;
+	b = *rB;
+	t1 = (unsigned64)a * (unsigned64)b;
+	t2 = ACC - t1;
+	EV_SET_REG1_ACC(*rSh, *rS, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+
+0.4,6.RS,11.RA,16.0,21.1217:EVX:e500:evaddssiaaw %RS,%RA:Vector Add Signed Saturate Integer to Accumulator Word
+	signed64 t1, t2;
+	signed32 al, ah;
+	int ovl, ovh;
+	al = *rA;
+	ah = *rAh;
+	t1 = (signed64)EV_ACCHIGH + (signed64)ah;
+	t2 = (signed64)EV_ACCLOW + (signed64)al;
+	ovh = EV_SAT_P_S32(t1);
+	ovl = EV_SAT_P_S32(t2);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE_ACC(ovh, t1 & ((unsigned64)1 << 32), 0x80000000, 0x7fffffff, t1),
+			           EV_SATURATE_ACC(ovl, t2 & ((unsigned64)1 << 32), 0x80000000, 0x7fffffff, t2));
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.0,21.1225:EVX:e500:evaddsmiaaw %RS,%RA:Vector Add Signed Modulo Integer to Accumulator Word
+	signed64 t1, t2;
+	signed32 al, ah;
+	al = *rA;
+	ah = *rAh;
+	t1 = (signed64)EV_ACCHIGH + (signed64)ah;
+	t2 = (signed64)EV_ACCLOW + (signed64)al;
+	EV_SET_REG2_ACC(*rSh, *rS, t1, t2);
+		//printf("evaddsmiaaw: al %d ah %d t1 %qd t2 %qd\n", al, ah, t1, t2);
+		//printf("evaddsmiaaw: ACC = %08x.%08x; *rSh = %08x; *rS = %08x\n", (int)(ACC >> 32), (int)ACC, *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.0,21.1216:EVX:e500:evaddusiaaw %RS,%RA:Vector Add Unsigned Saturate Integer to Accumulator Word
+	signed64 t1, t2;
+	unsigned32 al, ah;
+	int ovl, ovh;
+	al = *rA;
+	ah = *rAh;
+	t1 = (signed64)EV_ACCHIGH + (signed64)ah;
+	t2 = (signed64)EV_ACCLOW + (signed64)al;
+	ovh = EV_SAT_P_U32(t1);
+	ovl = EV_SAT_P_U32(t2);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE(ovh, 0xffffffff, t1),
+				   EV_SATURATE(ovl, 0xffffffff, t2));
+		//printf("evaddusiaaw: ovl %d ovh %d al %d ah %d t1 %qd t2 %qd\n", ovl, ovh, al, ah, t1, t2);
+		//printf("evaddusiaaw: ACC = %08x.%08x; *rSh = %08x; *rS = %08x\n", (int)(ACC >> 32), (int)ACC, *rSh, *rS);
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.0,21.1224:EVX:e500:evaddumiaaw %RS,%RA:Vector Add Unsigned Modulo Integer to Accumulator Word
+	unsigned64 t1, t2;
+	unsigned32 al, ah;
+	al = *rA;
+	ah = *rAh;
+	t1 = (unsigned64)EV_ACCHIGH + (unsigned64)ah;
+	t2 = EV_ACCLOW + al;
+	EV_SET_REG2_ACC(*rSh, *rS, t1, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+
+0.4,6.RS,11.RA,16.0,21.1219:EVX:e500:evsubfssiaaw %RS,%RA:Vector Subtract Signed Saturate Integer to Accumulator Word
+	signed64 t1, t2;
+	signed32 al, ah;
+	int ovl, ovh;
+	al = *rA;
+	ah = *rAh;
+	t1 = (signed64)EV_ACCHIGH - (signed64)ah;
+	t2 = (signed64)EV_ACCLOW - (signed64)al;
+	ovh = EV_SAT_P_S32(t1);
+	ovl = EV_SAT_P_S32(t2);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE_ACC(ovh, t1, 0x80000000, 0x7fffffff, t1),
+			           EV_SATURATE_ACC(ovl, t2, 0x80000000, 0x7fffffff, t2));
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.0,21.1227:EVX:e500:evsubfsmiaaw %RS,%RA:Vector Subtract Signed Modulo Integer to Accumulator Word
+	signed64 t1, t2;
+	signed32 al, ah;
+	al = *rA;
+	ah = *rAh;
+	t1 = (signed64)EV_ACCHIGH - (signed64)ah;
+	t2 = (signed64)EV_ACCLOW - (signed64)al;
+	EV_SET_REG2_ACC(*rSh, *rS, t1, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.0,21.1218:EVX:e500:evsubfusiaaw %RS,%RA:Vector Subtract Unsigned Saturate Integer to Accumulator Word
+	signed64 t1, t2;
+	unsigned32 al, ah;
+	int ovl, ovh;
+	
+	al = *rA;
+	ah = *rAh;
+	t1 = (signed64)EV_ACCHIGH - (signed64)ah;
+	t2 = (signed64)EV_ACCLOW - (signed64)al;
+	ovh = EV_SAT_P_U32(t1);
+	ovl = EV_SAT_P_U32(t2);
+	EV_SET_REG2_ACC(*rSh, *rS, EV_SATURATE(ovh, 0, t1),
+			           EV_SATURATE(ovl, 0, t2));
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.0,21.1226:EVX:e500:evsubfumiaaw %RS,%RA:Vector Subtract Unsigned Modulo Integer to Accumulator Word
+	unsigned64 t1, t2;
+	unsigned32 al, ah;
+	al = *rA;
+	ah = *rAh;
+	t1 = (unsigned64)EV_ACCHIGH - (unsigned64)ah;
+	t2 = (unsigned64)EV_ACCLOW - (unsigned64)al;
+	EV_SET_REG2_ACC(*rSh, *rS, t1, t2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+
+0.4,6.RS,11.RA,16.0,21.1220:EVX:e500:evmra %RS,%RA:Initialize Accumulator
+	EV_SET_REG2_ACC(*rSh, *rS, *rAh, *rA);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.1222:EVX:e500:evdivws %RS,%RA,%RB:Vector Divide Word Signed
+	signed32 dividendh, dividendl, divisorh, divisorl;
+	signed32 w1, w2;
+	int ovh, ovl;
+	dividendh = *rAh;
+	dividendl = *rA;
+	divisorh = *rBh;
+	divisorl = *rB;
+	if (dividendh < 0 && divisorh == 0) {
+	  w1 = 0x80000000;
+	  ovh = 1;
+	} else if (dividendh > 0 && divisorh == 0) {
+	  w1 = 0x7fffffff;
+	  ovh = 1;
+	} else if (dividendh == 0x80000000 && divisorh == -1) {
+	  w1 = 0x7fffffff;
+	  ovh = 1;
+	} else {
+	  w1 = dividendh / divisorh;
+	  ovh = 0;
+	}
+	if (dividendl < 0 && divisorl == 0) {
+	  w2 = 0x80000000;
+	  ovl = 1;
+	} else if (dividendl > 0 && divisorl == 0) {
+	  w2 = 0x7fffffff;
+	  ovl = 1;
+	} else if (dividendl == 0x80000000 && divisorl == -1) {
+	  w2 = 0x7fffffff;
+	  ovl = 1;
+	} else {
+	  w2 = dividendl / divisorl;
+	  ovl = 0;
+	}
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK, spr_spefscr);
+	
+
+0.4,6.RS,11.RA,16.RB,21.1223:EVX:e500:evdivwu %RS,%RA,%RB:Vector Divide Word Unsigned
+	unsigned32 dividendh, dividendl, divisorh, divisorl;
+	unsigned32 w1, w2;
+	int ovh, ovl;
+	dividendh = *rAh;
+	dividendl = *rA;
+	divisorh = *rBh;
+	divisorl = *rB;
+	if (divisorh == 0) {
+	  w1 = 0xffffffff;
+	  ovh = 1;
+	} else {
+	  w1 = dividendh / divisorh;
+	  ovh = 0;
+	}
+	if (divisorl == 0) {
+	  w2 = 0xffffffff;
+	  ovl = 1;
+	} else {
+	  w2 = dividendl / divisorl;
+	  ovl = 0;
+	}
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	EV_SET_SPEFSCR_OV(ovl, ovh);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK, spr_spefscr);
+
+
+#
+# A.2.9 Floating Point SPE Instructions
+#
+
+0.4,6.RS,11.RA,16.0,21.644:EVX:e500:evfsabs %RS,%RA:Vector Floating-Point Absolute Value
+	unsigned32 w1, w2;
+	w1 = *rAh & 0x7fffffff;
+	w2 = *rA & 0x7fffffff;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.0,21.645:EVX:e500:evfsnabs %RS,%RA:Vector Floating-Point Negative Absolute Value
+	unsigned32 w1, w2;
+	w1 = *rAh | 0x80000000;
+	w2 = *rA | 0x80000000;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.0,21.646:EVX:e500:evfsneg %RS,%RA:Vector Floating-Point Negate
+	unsigned32 w1, w2;
+	w1 = *rAh;
+	w2 = *rA;
+	w1 = (w1 & 0x7fffffff) | ((~w1) & 0x80000000);
+	w2 = (w2 & 0x7fffffff) | ((~w2) & 0x80000000);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.640:EVX:e500:evfsadd %RS,%RA,%RB:Vector Floating-Point Add
+	unsigned32 w1, w2;
+	w1 = ev_fs_add (*rAh, *rBh, spefscr_finvh, spefscr_fovfh, spefscr_funfh, spefscr_fgh, spefscr_fxh, processor);
+	w2 = ev_fs_add (*rA, *rB, spefscr_finv, spefscr_fovf, spefscr_funf, spefscr_fgh, spefscr_fxh, processor);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.641:EVX:e500:evfssub %RS,%RA,%RB:Vector Floating-Point Subtract
+	unsigned32 w1, w2;
+	w1 = ev_fs_sub (*rAh, *rBh, spefscr_finvh, spefscr_fovfh, spefscr_funfh, spefscr_fgh, spefscr_fxh, processor);
+	w2 = ev_fs_sub (*rA, *rB, spefscr_finv, spefscr_fovf, spefscr_funf, spefscr_fgh, spefscr_fxh, processor);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.648:EVX:e500:evfsmul %RS,%RA,%RB:Vector Floating-Point Multiply
+	unsigned32 w1, w2;
+	w1 = ev_fs_mul (*rAh, *rBh, spefscr_finvh, spefscr_fovfh, spefscr_funfh, spefscr_fgh, spefscr_fxh, processor);
+	w2 = ev_fs_mul (*rA, *rB, spefscr_finv, spefscr_fovf, spefscr_funf, spefscr_fgh, spefscr_fxh, processor);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.649:EVX:e500:evfsdiv %RS,%RA,%RB:Vector Floating-Point Divide
+	signed32 w1, w2;
+	w1 = ev_fs_div (*rAh, *rBh, spefscr_finvh, spefscr_fovfh, spefscr_funfh, spefscr_fdbzh, spefscr_fgh, spefscr_fxh, processor);
+	w2 = ev_fs_div (*rA, *rB, spefscr_finv, spefscr_fovf, spefscr_funf, spefscr_fdbz, spefscr_fg, spefscr_fx, processor);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.BF,9./,11.RA,16.RB,21.652:EVX:e500:evfscmpgt %BF,%RA,%RB:Vector Floating-Point Compare Greater Than
+	sim_fpu al, ah, bl, bh;
+	int w, ch, cl;
+	sim_fpu_32to (&al, *rA);
+	sim_fpu_32to (&ah, *rAh);
+	sim_fpu_32to (&bl, *rB);
+	sim_fpu_32to (&bh, *rBh);
+	if (EV_IS_INFDENORMNAN(&al) || EV_IS_INFDENORMNAN(&bl))
+	  EV_SET_SPEFSCR_BITS(spefscr_finv);
+	if (EV_IS_INFDENORMNAN(&ah) || EV_IS_INFDENORMNAN(&bh))
+	  EV_SET_SPEFSCR_BITS(spefscr_finvh);
+	if (sim_fpu_is_gt(&ah, &bh))
+	  ch = 1;
+	else
+	  ch = 0;
+	if (sim_fpu_is_gt(&al, &bl))
+	  cl = 1;
+	else
+	  cl = 0;
+	w = ch << 3 | cl << 2 | (ch | cl) << 1 | (ch & cl);
+	CR_SET(BF, w);
+	PPC_INSN_INT_SPR(0, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.BF,9./,11.RA,16.RB,21.653:EVX:e500:evfscmplt %BF,%RA,%RB:Vector Floating-Point Compare Less Than
+	sim_fpu al, ah, bl, bh;
+	int w, ch, cl;
+	sim_fpu_32to (&al, *rA);
+	sim_fpu_32to (&ah, *rAh);
+	sim_fpu_32to (&bl, *rB);
+	sim_fpu_32to (&bh, *rBh);
+	if (EV_IS_INFDENORMNAN(&al) || EV_IS_INFDENORMNAN(&bl))
+	  EV_SET_SPEFSCR_BITS(spefscr_finv);
+	if (EV_IS_INFDENORMNAN(&ah) || EV_IS_INFDENORMNAN(&bh))
+	  EV_SET_SPEFSCR_BITS(spefscr_finvh);
+	if (sim_fpu_is_lt(&ah, &bh))
+	  ch = 1;
+	else
+	  ch = 0;
+	if (sim_fpu_is_lt(&al, &bl))
+	  cl = 1;
+	else
+	  cl = 0;
+	w = ch << 3 | cl << 2 | (ch | cl) << 1 | (ch & cl);
+	CR_SET(BF, w);
+	PPC_INSN_INT_SPR(0, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.BF,9./,11.RA,16.RB,21.654:EVX:e500:evfscmpeq %BF,%RA,%RB:Vector Floating-Point Compare Equal
+	sim_fpu al, ah, bl, bh;
+	int w, ch, cl;
+	sim_fpu_32to (&al, *rA);
+	sim_fpu_32to (&ah, *rAh);
+	sim_fpu_32to (&bl, *rB);
+	sim_fpu_32to (&bh, *rBh);
+	if (EV_IS_INFDENORMNAN(&al) || EV_IS_INFDENORMNAN(&bl))
+	  EV_SET_SPEFSCR_BITS(spefscr_finv);
+	if (EV_IS_INFDENORMNAN(&ah) || EV_IS_INFDENORMNAN(&bh))
+	  EV_SET_SPEFSCR_BITS(spefscr_finvh);
+	if (sim_fpu_is_eq(&ah, &bh))
+	  ch = 1;
+	else
+	  ch = 0;
+	if (sim_fpu_is_eq(&al, &bl))
+	  cl = 1;
+	else
+	  cl = 0;
+	w = ch << 3 | cl << 2 | (ch | cl) << 1 | (ch & cl);
+	CR_SET(BF, w);
+	PPC_INSN_INT_SPR(0, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.BF,9./,11.RA,16.RB,21.668:EVX:e500:evfststgt %BF,%RA,%RB:Vector Floating-Point Test Greater Than
+	sim_fpu al, ah, bl, bh;
+	int w, ch, cl;
+	sim_fpu_32to (&al, *rA);
+	sim_fpu_32to (&ah, *rAh);
+	sim_fpu_32to (&bl, *rB);
+	sim_fpu_32to (&bh, *rBh);
+	if (sim_fpu_is_gt(&ah, &bh))
+	  ch = 1;
+	else
+	  ch = 0;
+	if (sim_fpu_is_gt(&al, &bl))
+	  cl = 1;
+	else
+	  cl = 0;
+	w = ch << 3 | cl << 2 | (ch | cl) << 1 | (ch & cl);
+	CR_SET(BF, w);
+	PPC_INSN_INT_CR(0, RA_BITMASK | RB_BITMASK, BF_BITMASK);
+
+0.4,6.BF,9./,11.RA,16.RB,21.669:EVX:e500:evfststlt %BF,%RA,%RB:Vector Floating-Point Test Less Than
+	sim_fpu al, ah, bl, bh;
+	int w, ch, cl;
+	sim_fpu_32to (&al, *rA);
+	sim_fpu_32to (&ah, *rAh);
+	sim_fpu_32to (&bl, *rB);
+	sim_fpu_32to (&bh, *rBh);
+	if (sim_fpu_is_lt(&ah, &bh))
+	  ch = 1;
+	else
+	  ch = 0;
+	if (sim_fpu_is_lt(&al, &bl))
+	  cl = 1;
+	else
+	  cl = 0;
+	w = ch << 3 | cl << 2 | (ch | cl) << 1 | (ch & cl);
+	CR_SET(BF, w);
+	PPC_INSN_INT_CR(0, RA_BITMASK | RB_BITMASK, BF_BITMASK);
+
+0.4,6.BF,9./,11.RA,16.RB,21.670:EVX:e500:evfststeq %BF,%RA,%RB:Vector Floating-Point Test Equal
+	sim_fpu al, ah, bl, bh;
+	int w, ch, cl;
+	sim_fpu_32to (&al, *rA);
+	sim_fpu_32to (&ah, *rAh);
+	sim_fpu_32to (&bl, *rB);
+	sim_fpu_32to (&bh, *rBh);
+	if (sim_fpu_is_eq(&ah, &bh))
+	  ch = 1;
+	else
+	  ch = 0;
+	if (sim_fpu_is_eq(&al, &bl))
+	  cl = 1;
+	else
+	  cl = 0;
+	w = ch << 3 | cl << 2 | (ch | cl) << 1 | (ch & cl);
+	CR_SET(BF, w);
+	PPC_INSN_INT_CR(0, RA_BITMASK | RB_BITMASK, BF_BITMASK);
+
+0.4,6.RS,11.0,16.RB,21.656:EVX:e500:evfscfui %RS,%RB:Vector Convert Floating-Point from Unsigned Integer
+	unsigned32 f, w1, w2;
+	sim_fpu b;
+	
+	sim_fpu_u32to (&b, *rBh, sim_fpu_round_default);
+	sim_fpu_to32 (&w1, &b);
+	sim_fpu_u32to (&b, *rB, sim_fpu_round_default);
+	sim_fpu_to32 (&w2, &b);
+	
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.664:EVX:e500:evfsctuiz %RS,%RB:Vector Convert Floating-Point to Unsigned Integer with Round toward Zero
+	unsigned32 w1, w2;
+	sim_fpu b;
+	
+	sim_fpu_32to (&b, *rBh);
+	sim_fpu_to32u (&w1, &b, sim_fpu_round_zero);
+	sim_fpu_32to (&b, *rB);
+	sim_fpu_to32u (&w2, &b, sim_fpu_round_zero);
+
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.657:EVX:e500:evfscfsi %RS,%RB:Vector Convert Floating-Point from Signed Integer 
+	signed32 w1, w2;
+	sim_fpu b, x, y;
+	
+	sim_fpu_i32to (&b, *rBh, sim_fpu_round_default);
+	sim_fpu_to32 (&w1, &b);
+	sim_fpu_i32to (&b, *rB, sim_fpu_round_default);
+	sim_fpu_to32 (&w2, &b);
+
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.658:EVX:e500:evfscfuf %RS,%RB:Vector Convert Floating-Point from Unsigned Fraction
+	unsigned32 w1, w2, bh, bl;
+	sim_fpu b, x, y;
+	bh = *rBh;
+	if (bh == 0xffffffff)
+	  sim_fpu_to32 (&w1, &sim_fpu_one);
+	else {
+	  sim_fpu_u64to (&x, 0x100000000, sim_fpu_round_default);
+	  sim_fpu_u32to (&y, bh, sim_fpu_round_default);
+	  sim_fpu_div (&b, &y, &x);
+	  sim_fpu_to32 (&w1, &b);
+	}
+	bl = *rB;
+	if (bl == 0xffffffff)
+	  sim_fpu_to32 (&w2, &sim_fpu_one);
+	else {
+	  sim_fpu_u64to (&x, 0x100000000, sim_fpu_round_default);
+	  sim_fpu_u32to (&y, bl, sim_fpu_round_default);
+	  sim_fpu_div (&b, &y, &x);
+	  sim_fpu_to32 (&w2, &b);
+	}
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.659:EVX:e500:evfscfsf %RS,%RB:Vector Convert Floating-Point from Signed Fraction
+	unsigned32 w1, w2;
+	sim_fpu b, x, y;
+	
+	sim_fpu_u32to (&x, 0x80000000, sim_fpu_round_default);
+	sim_fpu_i32to (&y, *rBh, sim_fpu_round_default);
+	sim_fpu_div (&b, &y, &x);
+	sim_fpu_to32 (&w1, &b);
+	
+	sim_fpu_u32to (&x, 0x80000000, sim_fpu_round_default);
+	sim_fpu_i32to (&y, *rB, sim_fpu_round_default);
+	sim_fpu_div (&b, &y, &x);
+	sim_fpu_to32 (&w2, &b);
+	
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.660:EVX:e500:evfsctui %RS,%RB:Vector Convert Floating-Point to Unsigned Integer
+	unsigned32 w1, w2;
+	sim_fpu b;
+	
+	sim_fpu_32to (&b, *rBh);
+	sim_fpu_to32u (&w1, &b, sim_fpu_round_default);
+	sim_fpu_32to (&b, *rB);
+	sim_fpu_to32u (&w2, &b, sim_fpu_round_default);
+	
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.661:EVX:e500:evfsctsi %RS,%RB:Vector Convert Floating-Point to Signed Integer
+	signed32 w1, w2;
+	sim_fpu b;
+	
+	sim_fpu_32to (&b, *rBh);
+	sim_fpu_to32i (&w1, &b, sim_fpu_round_default);
+	sim_fpu_32to (&b, *rB);
+	sim_fpu_to32i (&w2, &b, sim_fpu_round_default);
+	
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.666:EVX:e500:evfsctsiz %RS,%RB:Vector Convert Floating-Point to Signed Integer with Round toward Zero
+	signed32 w1, w2;
+	sim_fpu b;
+	
+	sim_fpu_32to (&b, *rBh);
+	sim_fpu_to32i (&w1, &b, sim_fpu_round_zero);
+	sim_fpu_32to (&b, *rB);
+	sim_fpu_to32i (&w2, &b, sim_fpu_round_zero);
+	
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.662:EVX:e500:evfsctuf %RS,%RB:Vector Convert Floating-Point to Unsigned Fraction
+	unsigned32 w1, w2;
+	sim_fpu b, x, y;
+	
+	sim_fpu_u64to (&x, 0x100000000, sim_fpu_round_default);
+	sim_fpu_32to (&y, *rBh);
+	sim_fpu_mul (&b, &y, &x);
+	sim_fpu_to32u (&w1, &b, sim_fpu_round_default);
+	
+	sim_fpu_u64to (&x, 0x100000000, sim_fpu_round_default);
+	sim_fpu_32to (&y, *rB);
+	sim_fpu_mul (&b, &y, &x);
+	sim_fpu_to32u (&w2, &b, sim_fpu_round_default);
+	
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.663:EVX:e500:evfsctsf %RS,%RB:Vector Convert Floating-Point to Signed Fraction
+	signed32 w1, w2;
+	sim_fpu b, x, y;
+	
+	sim_fpu_32to (&y, *rBh);
+	sim_fpu_u32to (&x, 0x80000000, sim_fpu_round_default);
+	sim_fpu_mul (&b, &y, &x);
+	sim_fpu_to32i (&w1, &b, sim_fpu_round_near);
+	
+	sim_fpu_32to (&y, *rB);
+	sim_fpu_u32to (&x, 0x80000000, sim_fpu_round_default);
+	sim_fpu_mul (&b, &y, &x);
+	sim_fpu_to32i (&w2, &b, sim_fpu_round_near);
+	
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+
+0.4,6.RS,11.RA,16.0,21.708:EVX:e500:efsabs %RS,%RA:Floating-Point Absolute Value
+	unsigned32 w1, w2;
+	w1 = *rSh;
+	w2 = *rA & 0x7fffffff;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.0,21.709:EVX:e500:efsnabs %RS,%RA:Floating-Point Negative Absolute Value
+	unsigned32 w1, w2;
+	w1 = *rSh;
+	w2 = *rA | 0x80000000;
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.0,21.710:EVX:e500:efsneg %RS,%RA:Floating-Point Negate
+	unsigned32 w1, w2;
+	w1 = *rSh;
+	w2 = (*rA & 0x7fffffff) | ((~*rA) & 0x80000000);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.RB,21.704:EVX:e500:efsadd %RS,%RA,%RB:Floating-Point Add
+	unsigned32 w;
+	w = ev_fs_add (*rA, *rB, spefscr_finv, spefscr_fovf, spefscr_funf, spefscr_fgh, spefscr_fxh, processor);
+	EV_SET_REG(*rS, w);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.705:EVX:e500:efssub %RS,%RA,%RB:Floating-Point Subtract
+	unsigned32 w;
+	w = ev_fs_sub (*rA, *rB, spefscr_finv, spefscr_fovf, spefscr_funf, spefscr_fgh, spefscr_fxh, processor);
+	EV_SET_REG(*rS, w);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.712:EVX:e500:efsmul %RS,%RA,%RB:Floating-Point Multiply
+	unsigned32 w;
+	w = ev_fs_mul (*rA, *rB, spefscr_finv, spefscr_fovf, spefscr_funf, spefscr_fgh, spefscr_fxh, processor);
+	EV_SET_REG(*rS, w);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.RS,11.RA,16.RB,21.713:EVX:e500:efsdiv %RS,%RA,%RB:Floating-Point Divide
+	unsigned32 w;
+	w = ev_fs_div (*rA, *rB, spefscr_finv, spefscr_fovf, spefscr_funf, spefscr_fdbz, spefscr_fg, spefscr_fx, processor);
+	EV_SET_REG(*rS, w);
+	PPC_INSN_INT_SPR(RS_BITMASK, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.BF,9./,11.RA,16.RB,21.716:EVX:e500:efscmpgt %BF,%RA,%RB:Floating-Point Compare Greater Than
+	sim_fpu a, b;
+	int w, cl;
+	sim_fpu_32to (&a, *rA);
+	sim_fpu_32to (&b, *rB);
+	if (EV_IS_INFDENORMNAN(&a) || EV_IS_INFDENORMNAN(&b))
+	  EV_SET_SPEFSCR_BITS(spefscr_finv);
+	if (sim_fpu_is_gt(&a, &b))
+	  cl = 1;
+	else
+	  cl = 0;
+	w = cl << 2 | cl << 1;
+	CR_SET(BF, w);
+	PPC_INSN_INT_SPR(0, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.BF,9./,11.RA,16.RB,21.717:EVX:e500:efscmplt %BF,%RA,%RB:Floating-Point Compare Less Than
+	sim_fpu al, bl;
+	int w, cl;
+	sim_fpu_32to (&al, *rA);
+	sim_fpu_32to (&bl, *rB);
+	if (EV_IS_INFDENORMNAN(&al) || EV_IS_INFDENORMNAN(&bl))
+	  EV_SET_SPEFSCR_BITS(spefscr_finv);
+	if (sim_fpu_is_lt(&al, &bl))
+	  cl = 1;
+	else
+	  cl = 0;
+	w = cl << 2 | cl << 1;
+	CR_SET(BF, w);
+	PPC_INSN_INT_SPR(0, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.BF,9./,11.RA,16.RB,21.718:EVX:e500:efscmpeq %BF,%RA,%RB:Floating-Point Compare Equal
+	sim_fpu al, bl;
+	int w, cl;
+	sim_fpu_32to (&al, *rA);
+	sim_fpu_32to (&bl, *rB);
+	if (EV_IS_INFDENORMNAN(&al) || EV_IS_INFDENORMNAN(&bl))
+	  EV_SET_SPEFSCR_BITS(spefscr_finv);
+	if (sim_fpu_is_eq(&al, &bl))
+	  cl = 1;
+	else
+	  cl = 0;
+	w = cl << 2 | cl << 1;
+	CR_SET(BF, w);
+	PPC_INSN_INT_SPR(0, RA_BITMASK | RB_BITMASK, spr_spefscr);
+
+0.4,6.BF,9./,11.RA,16.RB,21.732:EVX:e500:efststgt %BF,%RA,%RB:Floating-Point Test Greater Than
+	sim_fpu al, bl;
+	int w, cl;
+	sim_fpu_32to (&al, *rA);
+	sim_fpu_32to (&bl, *rB);
+	if (sim_fpu_is_gt(&al, &bl))
+	  cl = 1;
+	else
+	  cl = 0;
+	w = cl << 2 | cl << 1;
+	CR_SET(BF, w);
+	PPC_INSN_INT_CR(0, RA_BITMASK | RB_BITMASK, BF_BITMASK);
+
+0.4,6.BF,9./,11.RA,16.RB,21.733:EVX:e500:efststlt %BF,%RA,%RB:Floating-Point Test Less Than
+	sim_fpu al, bl;
+	int w, cl;
+	sim_fpu_32to (&al, *rA);
+	sim_fpu_32to (&bl, *rB);
+	if (sim_fpu_is_lt(&al, &bl))
+	  cl = 1;
+	else
+	  cl = 0;
+	w = cl << 2 | cl << 1;
+	CR_SET(BF, w);
+	PPC_INSN_INT_CR(0, RA_BITMASK | RB_BITMASK, BF_BITMASK);
+
+0.4,6.BF,9./,11.RA,16.RB,21.734:EVX:e500:efststeq %BF,%RA,%RB:Floating-Point Test Equal
+	sim_fpu al, bl;
+	int w, cl;
+	sim_fpu_32to (&al, *rA);
+	sim_fpu_32to (&bl, *rB);
+	if (sim_fpu_is_eq(&al, &bl))
+	  cl = 1;
+	else
+	  cl = 0;
+	w = cl << 2 | cl << 1;
+	CR_SET(BF, w);
+	PPC_INSN_INT_CR(0, RA_BITMASK | RB_BITMASK, BF_BITMASK);
+
+0.4,6.RS,11.0,16.RB,21.721:EVX:e500:efscfsi %RS,%RB:Convert Floating-Point from Signed Integer
+	signed32 f, w1, w2;
+	sim_fpu b;
+	w1 = *rSh;
+	sim_fpu_i32to (&b, *rB, sim_fpu_round_default);
+	sim_fpu_to32 (&w2, &b);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.720:EVX:e500:efscfui %RS,%RB:Convert Floating-Point from Unsigned Integer
+	unsigned32 w1, w2;
+	sim_fpu b;
+	w1 = *rSh;
+	sim_fpu_u32to (&b, *rB, sim_fpu_round_default);
+	sim_fpu_to32 (&w2, &b);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.723:EVX:e500:efscfsf %RS,%RB:Convert Floating-Point from Signed Fraction
+	unsigned32 w1, w2;
+	sim_fpu b, x, y;
+	w1 = *rSh;
+	sim_fpu_u32to (&x, 0x80000000, sim_fpu_round_default);
+	sim_fpu_i32to (&y, *rB, sim_fpu_round_default);
+	sim_fpu_div (&b, &y, &x);
+	sim_fpu_to32 (&w2, &b);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.722:EVX:e500:efscfuf %RS,%RB:Convert Floating-Point from Unsigned Fraction
+	unsigned32 w1, w2, bl;
+	sim_fpu b, x, y;
+	w1 = *rSh;
+	bl = *rB;
+	if (bl == 0xffffffff)
+	  sim_fpu_to32 (&w2, &sim_fpu_one);
+	else {
+	  sim_fpu_u64to (&x, 0x100000000, sim_fpu_round_default);
+	  sim_fpu_u32to (&y, bl, sim_fpu_round_default);
+	  sim_fpu_div (&b, &y, &x);
+	  sim_fpu_to32 (&w2, &b);
+	}
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.725:EVX:e500:efsctsi %RS,%RB:Convert Floating-Point to Signed Integer
+	signed64 temp;
+	signed32 w1, w2;
+	sim_fpu b;
+	w1 = *rSh;
+	sim_fpu_32to (&b, *rB);
+	sim_fpu_to32i (&w2, &b, sim_fpu_round_default);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.730:EVX:e500:efsctsiz %RS,%RB:Convert Floating-Point to Signed Integer with Round toward Zero
+	signed64 temp;
+	signed32 w1, w2;
+	sim_fpu b;
+	w1 = *rSh;
+	sim_fpu_32to (&b, *rB);
+	sim_fpu_to32i (&w2, &b, sim_fpu_round_zero);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.724:EVX:e500:efsctui %RS,%RB:Convert Floating-Point to Unsigned Integer
+	unsigned64 temp;
+	signed32 w1, w2;
+	sim_fpu b;
+	w1 = *rSh;
+	sim_fpu_32to (&b, *rB);
+	sim_fpu_to32u (&w2, &b, sim_fpu_round_default);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.728:EVX:e500:efsctuiz %RS,%RB:Convert Floating-Point to Unsigned Integer with Round toward Zero
+	unsigned64 temp;
+	signed32 w1, w2;
+	sim_fpu b;
+	w1 = *rSh;
+	sim_fpu_32to (&b, *rB);
+	sim_fpu_to32u (&w2, &b, sim_fpu_round_zero);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.727:EVX:e500:efsctsf %RS,%RB:Convert Floating-Point to Signed Fraction
+	unsigned32 w1, w2;
+	sim_fpu b, x, y;
+	w1 = *rSh;
+	sim_fpu_32to (&y, *rB);
+	sim_fpu_u32to (&x, 0x80000000, sim_fpu_round_default);
+	sim_fpu_mul (&b, &y, &x);
+	sim_fpu_to32i (&w2, &b, sim_fpu_round_default);
+	sim_fpu_to32 (&w2, &b);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+0.4,6.RS,11.0,16.RB,21.726:EVX:e500:efsctuf %RS,%RB:Convert Floating-Point to Unsigned Fraction
+	unsigned32 w1, w2;
+	sim_fpu b, x, y;
+	w1 = *rSh;
+	sim_fpu_u64to (&x, 0x100000000, sim_fpu_round_default);
+	sim_fpu_32to (&y, *rB);
+	sim_fpu_mul (&b, &y, &x);
+	sim_fpu_to32u (&w2, &b, sim_fpu_round_default);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, RB_BITMASK, 0);
+
+
+#
+# A.2.10 Vector Load/Store Instructions
+#
+
+0.4,6.RS,11.RA,16.UIMM,21.769:EVX:e500:evldd %RS,%RA,%UIMM:Vector Load Double Word into Double Word
+	unsigned64 m;
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 3);
+	m = MEM(unsigned, EA, 8);
+	EV_SET_REG1(*rSh, *rS, m);
+		//printf("evldd(%d<-%d + %u): m %08x.%08x, *rSh %x *rS %x\n", RS, RA, UIMM, (int)(m >> 32), (int)m, *rSh, *rS);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.768:EVX:e500:evlddx %RS,%RA,%RB:Vector Load Double Word into Double Word Indexed
+	unsigned64 m;
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	m = MEM(unsigned, EA, 8);
+	EV_SET_REG1(*rSh, *rS, m);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.771:EVX:e500:evldw %RS,%RA,%UIMM:Vector Load Double into Two Words
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned32 w1, w2;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 3);
+	w1 = MEM(unsigned, EA, 4);
+	w2 = MEM(unsigned, EA + 4, 4);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.770:EVX:e500:evldwx %RS,%RA,%RB:Vector Load Double into Two Words Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned32 w1, w2;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	w1 = MEM(unsigned, EA, 4);
+	w2 = MEM(unsigned, EA + 4, 4);
+	EV_SET_REG2(*rSh, *rS, w1, w2);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.773:EVX:e500:evldh %RS,%RA,%UIMM:Vector Load Double into 4 Half Words
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2, h3, h4;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 3);
+	h1 = MEM(unsigned, EA, 2);
+	h2 = MEM(unsigned, EA + 2, 2);
+	h3 = MEM(unsigned, EA + 4, 2);
+	h4 = MEM(unsigned, EA + 6, 2);
+	EV_SET_REG4(*rSh, *rS, h1, h2, h3, h4);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.772:EVX:e500:evldhx %RS,%RA,%RB:Vector Load Double into 4 Half Words Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2, h3, h4;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	h1 = MEM(unsigned, EA, 2);
+	h2 = MEM(unsigned, EA + 2, 2);
+	h3 = MEM(unsigned, EA + 4, 2);
+	h4 = MEM(unsigned, EA + 6, 2);
+	EV_SET_REG4(*rSh, *rS, h1, h2, h3, h4);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.785:EVX:e500:evlwhe %RS,%RA,%UIMM:Vector Load Word into Two Half Words Even
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2, h3, h4;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 2);
+	h1 = MEM(unsigned, EA, 2);
+	h2 = 0;
+	h3 = MEM(unsigned, EA + 2, 2);
+	h4 = 0;
+	EV_SET_REG4(*rSh, *rS, h1, h2, h3, h4);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.784:EVX:e500:evlwhex %RS,%RA,%RB:Vector Load Word into Two Half Words Even Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2, h3, h4;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	h1 = MEM(unsigned, EA, 2);
+	h2 = 0;
+	h3 = MEM(unsigned, EA + 2, 2);
+	h4 = 0;
+	EV_SET_REG4(*rSh, *rS, h1, h2, h3, h4);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.789:EVX:e500:evlwhou %RS,%RA,%UIMM:Vector Load Word into Two Half Words Odd Unsigned zero-extended
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2, h3, h4;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 2);
+	h1 = 0;
+	h2 = MEM(unsigned, EA, 2);
+	h3 = 0;
+	h4 = MEM(unsigned, EA + 2, 2);
+	EV_SET_REG4(*rSh, *rS, h1, h2, h3, h4);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.788:EVX:e500:evlwhoux %RS,%RA,%RB:Vector Load Word into Two Half Words Odd Unsigned Indexed zero-extended
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2, h3, h4;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	h1 = 0;
+	h2 = MEM(unsigned, EA, 2);
+	h3 = 0;
+	h4 = MEM(unsigned, EA + 2, 2);
+	EV_SET_REG4(*rSh, *rS, h1, h2, h3, h4);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.791:EVX:e500:evlwhos %RS,%RA,%UIMM:Vector Load Word into Half Words Odd Signed with sign extension
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2, h3, h4;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 2);
+	h2 = MEM(unsigned, EA, 2);
+	if (h2 & 0x8000)
+	  h1 = 0xffff;
+	else
+	  h1 = 0;
+	h4 = MEM(unsigned, EA + 2, 2);
+	if (h4 & 0x8000)
+	  h3 = 0xffff;
+	else
+	  h3 = 0;
+	EV_SET_REG4(*rSh, *rS, h1, h2, h3, h4);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.790:EVX:e500:evlwhosx %RS,%RA,%RB:Vector Load Word into Half Words Odd Signed Indexed with sign extension
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2, h3, h4;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	h2 = MEM(unsigned, EA, 2);
+	if (h2 & 0x8000)
+	  h1 = 0xffff;
+	else
+	  h1 = 0;
+	h4 = MEM(unsigned, EA + 2, 2);
+	if (h4 & 0x8000)
+	  h3 = 0xffff;
+	else
+	  h3 = 0;
+	EV_SET_REG4(*rSh, *rS, h1, h2, h3, h4);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.793:EVX:e500:evlwwsplat %RS,%RA,%UIMM:Vector Load Word into Word and Splat
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned32 w1;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 2);
+	w1 = MEM(unsigned, EA, 4);
+	EV_SET_REG2(*rSh, *rS, w1, w1);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.792:EVX:e500:evlwwsplatx %RS,%RA,%RB:Vector Load Word into Word and Splat Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned32 w1;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	w1 = MEM(unsigned, EA, 4);
+	EV_SET_REG2(*rSh, *rS, w1, w1);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.797:EVX:e500:evlwhsplat %RS,%RA,%UIMM:Vector Load Word into 2 Half Words and Splat
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 2);
+	h1 = MEM(unsigned, EA, 2);
+	h2 = MEM(unsigned, EA + 2, 2);
+	EV_SET_REG4(*rSh, *rS, h1, h1, h2, h2);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.796:EVX:e500:evlwhsplatx %RS,%RA,%RB:Vector Load Word into 2 Half Words and Splat Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	h1 = MEM(unsigned, EA, 2);
+	h2 = MEM(unsigned, EA + 2, 2);
+	EV_SET_REG4(*rSh, *rS, h1, h1, h2, h2);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.777:EVX:e500:evlhhesplat %RS,%RA,%UIMM:Vector Load Half Word into Half Words Even and Splat
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 1);
+	h = MEM(unsigned, EA, 2);
+	EV_SET_REG4(*rSh, *rS, h, 0, h, 0);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.776:EVX:e500:evlhhesplatx %RS,%RA,%RB:Vector Load Half Word into Half Words Even and Splat Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	h = MEM(unsigned, EA, 2);
+	EV_SET_REG4(*rSh, *rS, h, 0, h, 0);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.781:EVX:e500:evlhhousplat %RS,%RA,%UIMM:Vector Load Half Word into Half Word Odd Unsigned and Splat
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 1);
+	h = MEM(unsigned, EA, 2);
+	EV_SET_REG4(*rSh, *rS, 0, h, 0, h);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.780:EVX:e500:evlhhousplatx %RS,%RA,%RB:Vector Load Half Word into Half Word Odd Unsigned and Splat Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	h = MEM(unsigned, EA, 2);
+	EV_SET_REG4(*rSh, *rS, 0, h, 0, h);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.783:EVX:e500:evlhhossplat %RS,%RA,%UIMM:Vector Load Half Word into Half Word Odd Signed and Splat
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 1);
+	h2 = MEM(unsigned, EA, 2);
+	if (h2 & 0x8000)
+	  h1 = 0xffff;
+	else
+	  h1 = 0;
+	EV_SET_REG4(*rSh, *rS, h1, h2, h1, h2);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.782:EVX:e500:evlhhossplatx %RS,%RA,%RB:Vector Load Half Word into Half Word Odd Signed and Splat Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	h2 = MEM(unsigned, EA, 2);
+	if (h2 & 0x8000)
+	  h1 = 0xffff;
+	else
+	  h1 = 0;
+	EV_SET_REG4(*rSh, *rS, h1, h2, h1, h2);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+
+0.4,6.RS,11.RA,16.UIMM,21.801:EVX:e500:evstdd %RS,%RA,%UIMM:Vector Store Double of Double
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 3);
+	STORE(EA, 4, (*rSh));
+	STORE(EA + 4, 4, (*rS));
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.800:EVX:e500:evstddx %RS,%RA,%RB:Vector Store Double of Double Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	STORE(EA, 4, (*rSh));
+	STORE(EA + 4, 4, (*rS));
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.803:EVX:e500:evstdw %RS,%RA,%UIMM:Vector Store Double of Two Words
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned32 w1, w2;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 3);
+	w1 = *rSh;
+	w2 = *rS;
+	STORE(EA + 0, 4, w1);
+	STORE(EA + 4, 4, w2);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.802:EVX:e500:evstdwx %RS,%RA,%RB:Vector Store Double of Two Words Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned32 w1, w2;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	w1 = *rSh;
+	w2 = *rS;
+	STORE(EA + 0, 4, w1);
+	STORE(EA + 4, 4, w2);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.805:EVX:e500:evstdh %RS,%RA,%UIMM:Vector Store Double of Four Half Words
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2, h3, h4;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 3);
+	h1 = EV_HIHALF(*rSh);
+	h2 = EV_LOHALF(*rSh);
+	h3 = EV_HIHALF(*rS);
+	h4 = EV_LOHALF(*rS);
+	STORE(EA + 0, 2, h1);
+	STORE(EA + 2, 2, h2);
+	STORE(EA + 4, 2, h3);
+	STORE(EA + 6, 2, h4);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.804:EVX:e500:evstdhx %RS,%RA,%RB:Vector Store Double of Four Half Words Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2, h3, h4;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	h1 = EV_HIHALF(*rSh);
+	h2 = EV_LOHALF(*rSh);
+	h3 = EV_HIHALF(*rS);
+	h4 = EV_LOHALF(*rS);
+	STORE(EA + 0, 2, h1);
+	STORE(EA + 2, 2, h2);
+	STORE(EA + 4, 2, h3);
+	STORE(EA + 6, 2, h4);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.825:EVX:e500:evstwwe %RS,%RA,%UIMM:Vector Store Word of Word from Even
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned32 w;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 3);
+	w = *rSh;
+	STORE(EA, 4, w);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.824:EVX:e500:evstwwex %RS,%RA,%RB:Vector Store Word of Word from Even Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned32 w;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	w = *rSh;
+	STORE(EA, 4, w);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.829:EVX:e500:evstwwo %RS,%RA,%UIMM:Vector Store Word of Word from Odd
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned32 w;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 3);
+	w = *rS;
+	STORE(EA, 4, w);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.828:EVX:e500:evstwwox %RS,%RA,%RB:Vector Store Word of Word from Odd Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned32 w;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	w = *rS;
+	STORE(EA, 4, w);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.817:EVX:e500:evstwhe %RS,%RA,%UIMM:Vector Store Word of Two Half Words from Even
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 3);
+	h1 = EV_HIHALF(*rSh);
+	h2 = EV_HIHALF(*rS);
+	STORE(EA + 0, 2, h1);
+	STORE(EA + 2, 2, h2);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.816:EVX:e500:evstwhex %RS,%RA,%RB:Vector Store Word of Two Half Words from Even Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	h1 = EV_HIHALF(*rSh);
+	h2 = EV_HIHALF(*rS);
+	STORE(EA + 0, 2, h1);
+	STORE(EA + 2, 2, h2);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.4,6.RS,11.RA,16.UIMM,21.821:EVX:e500:evstwho %RS,%RA,%UIMM:Vector Store Word of Two Half Words from Odd
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + (UIMM << 3);
+	h1 = EV_LOHALF(*rSh);
+	h2 = EV_LOHALF(*rS);
+	STORE(EA + 0, 2, h1);
+	STORE(EA + 2, 2, h2);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.4,6.RS,11.RA,16.RB,21.820:EVX:e500:evstwhox %RS,%RA,%RB:Vector Store Word of Two Half Words from Odd Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	unsigned16 h1, h2;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	h1 = EV_LOHALF(*rSh);
+	h2 = EV_LOHALF(*rS);
+	STORE(EA + 0, 2, h1);
+	STORE(EA + 2, 2, h2);
+	PPC_INSN_INT(RS_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+
+#
+# 4.5.1 Integer Select Instruction
+#
+
+0.31,6.RS,11.RA,16.RB,21.CRB,26.30:X:e500:isel %RS,%RA,%RB,%CRB:Integer Select
+	if (CR & (1 << (31 - (unsigned)CRB)))
+	  if (RA_is_0)
+	    EV_SET_REG1(*rSh, *rS, 0);
+	  else
+	    EV_SET_REG2(*rSh, *rS, *rAh, *rA);
+	else
+	  EV_SET_REG2(*rSh, *rS, *rBh, *rB);
+	PPC_INSN_INT(RS_BITMASK, RA_BITMASK | RB_BITMASK, 0);

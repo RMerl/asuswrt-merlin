@@ -1,0 +1,642 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.4: http://docutils.sourceforge.net/" />
+<title>DavClient documentation</title>
+<style type="text/css">
+
+/*
+:Author: David Goodger
+:Contact: goodger@users.sourceforge.net
+:Date: $Date: 2011/11/09 06:36:04 $
+:Revision: $Revision: 1.1.1.1 $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin-left: 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left {
+  clear: left }
+
+img.align-right {
+  clear: right }
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font-family: serif ;
+  font-size: 100% }
+
+pre.literal-block, pre.doctest-block {
+  margin-left: 2em ;
+  margin-right: 2em ;
+  background-color: #eeeeee }
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+tt.docutils {
+  background-color: #eeeeee }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="davclient-documentation">
+<h1 class="title">DavClient documentation</h1>
+<p>API documentation for the 'davlib' JavaScript WebDAV library.</p>
+<div class="section">
+<h1><a id="davlib" name="davlib">davlib</a></h1>
+<p>davlib.STATUS_CODES = #0={100: &quot;Continue&quot;, 101: ... : &quot;Insufficient Storage&quot;}</p>
+<p>davlib.DEBUG = 0</p>
+<div class="section">
+<h2><a id="functions" name="functions">functions</a></h2>
+<div class="section">
+<h3><a id="davlib-debug-text" name="davlib-debug-text">davlib.debug(text)</a></h3>
+<p>simple debug function</p>
+<p>set the DEBUG global to some true value, and messages will appear
+on the bottom of the document</p>
+</div>
+<div class="section">
+<h3><a id="davlib-getxmlhttprequest" name="davlib-getxmlhttprequest">davlib.getXmlHttpRequest()</a></h3>
+<p>instantiate an XMLHTTPRequest</p>
+<p>this can be improved by testing the user agent better and, in case
+of IE, finding out which MSXML is installed and such, but it
+seems to work just fine for now</p>
+</div>
+</div>
+<div class="section">
+<h2><a id="davlib-davclient" name="davlib-davclient">davlib.DavClient()</a></h2>
+<p>Low level (subset of) WebDAV client implementation</p>
+<p>Basically what one would expect from a basic DAV client, it
+provides a method for every HTTP method used in basic DAV, it
+parses PROPFIND requests to handy JS structures and accepts
+similar structures for PROPPATCH.</p>
+<p>Requests are handled asynchronously, so instead of waiting until
+the response is sent back from the server and returning the
+value directly, a handler is registered that is called when
+the response is available and the method that sent the request
+is ended. For that reason all request methods accept a 'handler'
+argument, which will be called (with 3 arguments: statuscode,
+statusstring and content (the latter only where appropriate))
+when the request is handled by the browser.
+The reason for this choice is that Mozilla sometimes freezes
+when using XMLHttpRequest for synchronous requests.</p>
+<p>The only 'public' methods on the class are the 'initialize'
+method, that needs to be called first thing after instantiating
+a DavClient object, and the methods that have a name similar to
+an HTTP method (GET, PUT, etc.). The latter all get at least a
+'path' argument, a 'handler' argument and a 'context' argument:</p>
+<blockquote>
+<ul>
+<li><p class="first">'path'</p>
+<p>an absolute path to the target resource</p>
+</li>
+<li><p class="first">'handler'</p>
+<p>a function or method that will be called once
+the request has finished (see below)</p>
+</li>
+<li><p class="first">'context'</p>
+<p>the context used to call the handler, the
+'this' variable inside methods, so usually the
+object (instance) the handler is bound to (ignore
+when the handler is a function)</p>
+</li>
+</ul>
+</blockquote>
+<p>All handlers are called with the same 3 arguments:</p>
+<blockquote>
+<ul>
+<li><p class="first">'status'</p>
+<p>the HTTP status code</p>
+</li>
+<li><p class="first">'statusstring'</p>
+<p>a string representation (see STATUS_CODES
+array above) of the status code</p>
+</li>
+<li><p class="first">'content'</p>
+<p>can be a number of different things:</p>
+<blockquote>
+<ul class="simple">
+<li>when there was an error in a method that targets
+a single resource, this contains the error body</li>
+<li>when there was an error in a method that targets
+a set of resources (multi-status) it contains
+a Root object instance (see below) that contains
+the error messages of all the objects</li>
+<li>if the method was GET and there was no error, it
+will contain the contents of the resource</li>
+<li>if the method was PROPFIND and there was no error,
+it will contain a Root object (see below) that
+contains the properties of all the resources
+targeted</li>
+<li>if there was no error and there is no content to
+return, it will contain null</li>
+</ul>
+</blockquote>
+</li>
+<li><p class="first">'headers'</p>
+<p>a mapping (associative array) from lowercase header
+name to value (string)</p>
+</li>
+</ul>
+</blockquote>
+<p>Basic usage example:</p>
+<pre class="literal-block">
+function handler(status, statusstring, content, headers) {
+    if (content) {
+        if (status != '200' &amp;&amp; status != '204') {
+            if (status == '207') {
+                alert('not going to show multi-status ' +
+                        here...');
+            };
+            alert('Error: ' + statusstring);
+        } else {
+            alert('Content: ' + content);
+        };
+    };
+};
+
+var dc = new DavClient();
+dc.initialize('localhost');
+
+// create a directory
+dc.MKCOL('/foo', handler);
+
+// create a file and save some contents
+dc.PUT('/foo/bar.txt', 'baz?', handler);
+
+// load and alert it (alert happens in the handler)
+dc.GET('/foo/bar.txt', handler);
+
+// lock the file, we need to store the lock token from
+// the result
+function lockhandler(status, statusstring, content, headers) {
+    if (status != '200') {
+        alert('Error unlocking: ' + statusstring);
+    } else {
+        window.CURRENT_LOCKTOKEN = headers.locktoken;
+    };
+};
+dc.LOCK('/foo/bar.txt', 'http://johnnydebris.net/',
+            lockhandler);
+
+// run the following bit only if the lock was set properly
+if (window.CURRENT_LOCKTOKEN) {
+    // try to delete it: this will fail
+    dc.DELETE('/foo/bar.txt', handler);
+
+    // now unlock it using the lock token stored above
+    dc.UNLOCK('/foo/bar.txt', window.CURRENT_LOCKTOKEN, handler);
+};
+
+// delete the dir
+dc.DELETE('/foo', handler);
+</pre>
+<p>For detailed information about the HTTP methods and how they
+can/should be used in a DAV context, see <a class="reference" href="http://www.webdav.org">http://www.webdav.org</a>.</p>
+<p>This library depends on version 0.3 of the 'dommer' package
+and version 0.2 of the 'minisax.js' package, both of which
+should be available from <a class="reference" href="http://johnnydebris.net">http://johnnydebris.net</a> under the
+same license as this one (GPL).</p>
+<p>If you have questions, bug reports, or patches, please send an
+email to <a class="reference" href="mailto:johnny&#64;johnnydebris.net">johnny&#64;johnnydebris.net</a>.</p>
+<div class="section">
+<h3><a id="davlib-davclient-initialize-host-port-protocol" name="davlib-davclient-initialize-host-port-protocol">davlib.DavClient.initialize(host, port, protocol)</a></h3>
+<p>the 'constructor' (needs to be called explicitly!!)</p>
+<ul class="simple">
+<li>'host' - the host name or IP</li>
+<li>'port' - HTTP port of the host (optional, defaults to 80)</li>
+<li>'protocol' - protocol part of URLs (optional, defaults to http)</li>
+</ul>
+</div>
+<div class="section">
+<h3><a id="davlib-davclient-options-path-handler-context" name="davlib-davclient-options-path-handler-context">davlib.DavClient.OPTIONS(path, handler, context)</a></h3>
+<p>perform an OPTIONS request</p>
+<p>find out which HTTP methods are understood by the server</p>
+</div>
+<div class="section">
+<h3><a id="davlib-davclient-get-path-handler-context" name="davlib-davclient-get-path-handler-context">davlib.DavClient.GET(path, handler, context)</a></h3>
+<p>perform a GET request</p>
+<p>retrieve the contents of a resource</p>
+</div>
+<div class="section">
+<h3><a id="davlib-davclient-put-path-content-handler-context-locktoken" name="davlib-davclient-put-path-content-handler-context-locktoken">davlib.DavClient.PUT(path, content, handler, context, locktoken)</a></h3>
+<p>perform a PUT request</p>
+<p>save the contents of a resource to the server</p>
+<ul class="simple">
+<li>'content' - the contents of the resource</li>
+</ul>
+</div>
+<div class="section">
+<h3><a id="davlib-davclient-delete-path-handler-context-locktoken" name="davlib-davclient-delete-path-handler-context-locktoken">davlib.DavClient.DELETE(path, handler, context, locktoken)</a></h3>
+<p>perform a DELETE request</p>
+<p>remove a resource (recursively)</p>
+</div>
+<div class="section">
+<h3><a id="davlib-davclient-mkcol-path-handler-context-locktoken" name="davlib-davclient-mkcol-path-handler-context-locktoken">davlib.DavClient.MKCOL(path, handler, context, locktoken)</a></h3>
+<p>perform a MKCOL request</p>
+<p>create a collection</p>
+</div>
+<div class="section">
+<h3><a id="davlib-davclient-copy-path-topath-handler-context-overwrite-locktoken" name="davlib-davclient-copy-path-topath-handler-context-overwrite-locktoken">davlib.DavClient.COPY(path, topath, handler, context, overwrite, locktoken)</a></h3>
+<p>perform a COPY request</p>
+<p>create a copy of a resource</p>
+<ul class="simple">
+<li>'topath' - the path to copy the resource to</li>
+<li>'overwrite' - whether or not to fail when the resource
+already exists (optional)</li>
+</ul>
+</div>
+<div class="section">
+<h3><a id="davlib-davclient-move-path-topath-handler-context-overwrite-locktoken" name="davlib-davclient-move-path-topath-handler-context-overwrite-locktoken">davlib.DavClient.MOVE(path, topath, handler, context, overwrite, locktoken)</a></h3>
+<p>perform a MOVE request</p>
+<p>move a resource from location</p>
+<ul class="simple">
+<li>'topath' - the path to move the resource to</li>
+<li>'overwrite' - whether or not to fail when the resource
+already exists (optional)</li>
+</ul>
+</div>
+<div class="section">
+<h3><a id="davlib-davclient-propfind-path-handler-context-depth" name="davlib-davclient-propfind-path-handler-context-depth">davlib.DavClient.PROPFIND(path, handler, context, depth)</a></h3>
+<p>perform a PROPFIND request</p>
+<p>read the metadata of a resource (optionally including its children)</p>
+<ul class="simple">
+<li>'depth' - control recursion depth, default 0 (only returning the
+properties for the resource itself)</li>
+</ul>
+</div>
+<div class="section">
+<h3><a id="davlib-davclient-proppatch-path-handler-context-setprops-delprops-locktoken" name="davlib-davclient-proppatch-path-handler-context-setprops-delprops-locktoken">davlib.DavClient.PROPPATCH(path, handler, context, setprops, delprops, locktoken)</a></h3>
+<p>perform a PROPPATCH request</p>
+<p>set the metadata of a (single) resource</p>
+<ul class="simple">
+<li>'setprops' - a mapping {&lt;namespace&gt;: {&lt;key&gt;: &lt;value&gt;}} of
+variables to set</li>
+<li>'delprops' - a mapping {&lt;namespace&gt;: [&lt;key&gt;]} of variables
+to delete</li>
+</ul>
+</div>
+<div class="section">
+<h3><a id="davlib-davclient-lock-path-owner-handler-context-scope-type-depth-timeout-locktoken" name="davlib-davclient-lock-path-owner-handler-context-scope-type-depth-timeout-locktoken">davlib.DavClient.LOCK(path, owner, handler, context, scope, type, depth, timeout, locktoken)</a></h3>
+<p>perform a LOCK request</p>
+<p>set a lock on a resource</p>
+<ul class="simple">
+<li>'owner' - a URL to identify the owner of the lock to be set</li>
+<li>'scope' - the scope of the lock, can be 'exclusive' or 'shared'</li>
+<li>'type' - the type of lock, can be 'write' (somewhat strange, eh?)</li>
+<li>'depth' - can be used to lock (part of) a branch (use 'infinity' as
+value) or just a single target (default)</li>
+<li>'timeout' - set the timeout in seconds</li>
+</ul>
+</div>
+<div class="section">
+<h3><a id="davlib-davclient-unlock-path-locktoken-handler-context" name="davlib-davclient-unlock-path-locktoken-handler-context">davlib.DavClient.UNLOCK(path, locktoken, handler, context)</a></h3>
+<p>perform an UNLOCK request</p>
+<p>unlock a previously locked file</p>
+<ul class="simple">
+<li>'token' - the opaque lock token, as can be retrieved from
+content.locktoken using a LOCK request.</li>
+</ul>
+</div>
+</div>
+<div class="section">
+<h2><a id="davlib-davfs" name="davlib-davfs">davlib.DavFS()</a></h2>
+<p>High level implementation of a WebDAV client</p>
+<div class="section">
+<h3><a id="davlib-davfs-initialize-host-port-protocol" name="davlib-davfs-initialize-host-port-protocol">davlib.DavFS.initialize(host, port, protocol)</a></h3>
+</div>
+<div class="section">
+<h3><a id="davlib-davfs-read-path-handler-context" name="davlib-davfs-read-path-handler-context">davlib.DavFS.read(path, handler, context)</a></h3>
+<p>get the contents of a file</p>
+<p>when done, handler is called with 2 arguments, the status code
+and the content, optionally in context &lt;context&gt;</p>
+</div>
+<div class="section">
+<h3><a id="davlib-davfs-write-path-content-handler-context-locktoken" name="davlib-davfs-write-path-content-handler-context-locktoken">davlib.DavFS.write(path, content, handler, context, locktoken)</a></h3>
+<p>write the new contents of an existing or new file</p>
+<p>when done handler will be called with one argument,
+the status code of the response, optionally in context
+&lt;context&gt;</p>
+</div>
+<div class="section">
+<h3><a id="davlib-davfs-remove-path-handler-context-locktoken" name="davlib-davfs-remove-path-handler-context-locktoken">davlib.DavFS.remove(path, handler, context, locktoken)</a></h3>
+<p>remove a file or directory recursively from the fs</p>
+<p>when done handler will be called with one argument,
+the status code of the response, optionally in context
+&lt;context&gt;</p>
+<p>when the status code is 'Multi-Status', the handler will
+get a second argument passed in, which is a parsed tree of
+the multi-status response body</p>
+</div>
+<div class="section">
+<h3><a id="davlib-davfs-mkdir-path-handler-context-locktoken" name="davlib-davfs-mkdir-path-handler-context-locktoken">davlib.DavFS.mkDir(path, handler, context, locktoken)</a></h3>
+<p>create a dir (collection)</p>
+<p>when done, handler is called with 2 arguments, the status code
+and the content, optionally in context &lt;context&gt;</p>
+</div>
+<div class="section">
+<h3><a id="davlib-davfs-copy-path-topath-handler-context-overwrite-locktoken" name="davlib-davfs-copy-path-topath-handler-context-overwrite-locktoken">davlib.DavFS.copy(path, topath, handler, context, overwrite, locktoken)</a></h3>
+<p>copy an item (resource or collection) to another location</p>
+<p>when done, handler is called with 1 argument, the status code,
+optionally in context &lt;context&gt;</p>
+</div>
+<div class="section">
+<h3><a id="davlib-davfs-move-path-topath-handler-context-locktoken" name="davlib-davfs-move-path-topath-handler-context-locktoken">davlib.DavFS.move(path, topath, handler, context, locktoken)</a></h3>
+<p>move an item (resource or collection) to another location</p>
+<p>when done, handler is called with 1 argument, the status code,
+optionally in context &lt;context&gt;</p>
+</div>
+<div class="section">
+<h3><a id="davlib-davfs-listdir-path-handler-context-cached" name="davlib-davfs-listdir-path-handler-context-cached">davlib.DavFS.listDir(path, handler, context, cached)</a></h3>
+<p>list the contents of a collection</p>
+<p>when done, handler is called with 2 arguments, the status code
+and an array with filenames, optionally in context &lt;context&gt;</p>
+</div>
+<div class="section">
+<h3><a id="davlib-davfs-getprops-path-handler-context-cached" name="davlib-davfs-getprops-path-handler-context-cached">davlib.DavFS.getProps(path, handler, context, cached)</a></h3>
+<p>get the value of one or more properties</p>
+</div>
+<div class="section">
+<h3><a id="davlib-davfs-setprops-path-setprops-delprops-handler-context-locktoken" name="davlib-davfs-setprops-path-setprops-delprops-handler-context-locktoken">davlib.DavFS.setProps(path, setprops, delprops, handler, context, locktoken)</a></h3>
+</div>
+<div class="section">
+<h3><a id="davlib-davfs-lock-path-owner-handler-context-scope-type-depth-timeout-locktoken" name="davlib-davfs-lock-path-owner-handler-context-scope-type-depth-timeout-locktoken">davlib.DavFS.lock(path, owner, handler, context, scope, type, depth, timeout, locktoken)</a></h3>
+<p>Lock an item</p>
+<p>when done, handler is called with 2 arguments, the status code
+and an array with filenames, optionally in context &lt;context&gt;</p>
+<p>optional args:</p>
+<p>&lt;owner&gt; is a URL that identifies the owner, &lt;type&gt; can currently
+only be 'write' (according to the DAV specs), &lt;depth&gt; should be
+either 1 or 'Infinity' (default), timeout is in seconds and
+locktoken is the result of a previous lock (serves to refresh a
+lock)</p>
+</div>
+<div class="section">
+<h3><a id="davlib-davfs-unlock-path-locktoken-handler-context" name="davlib-davfs-unlock-path-locktoken-handler-context">davlib.DavFS.unlock(path, locktoken, handler, context)</a></h3>
+<p>Release a lock from an item</p>
+<p>when done, handler is called with 1 argument, the status code,
+optionally in context &lt;context&gt;</p>
+<p>&lt;locktoken&gt; is a lock token returned by a previous DavFS.lock()
+call</p>
+</div>
+</div>
+<div class="section">
+<h2><a id="davlib-resource-href-props" name="davlib-resource-href-props">davlib.Resource(href, props)</a></h2>
+<p>a single resource in a multi-status tree</p>
+<p>davlib.Resource.items = []
+davlib.Resource.properties = #0={}</p>
+</div>
+</div>
+</div>
+</body>
+</html>

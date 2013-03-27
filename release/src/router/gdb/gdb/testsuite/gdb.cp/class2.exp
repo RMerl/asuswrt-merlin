@@ -1,0 +1,119 @@
+# Copyright 2003, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if $tracelevel then {
+    strace $tracelevel
+    }
+
+if { [skip_cplus_tests] } { continue }
+
+set prms_id 0
+set bug_id 0
+
+set testfile "class2"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+if [get_compiler_info ${binfile} "c++"] {
+    return -1
+}
+
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+    untested class2.exp
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# Start with "set print object off".
+
+gdb_test "set print object off" ""
+
+if ![runto_main] then {
+    perror "couldn't run to main"
+    continue
+}
+
+get_debug_format
+
+gdb_test "break [gdb_get_line_number "marker return 0"]" \
+    "Breakpoint.*at.* file .*" ""
+
+gdb_test "continue" "Breakpoint .* at .*" ""
+
+# Access the "A" object.
+
+gdb_test "print alpha" \
+    "= {.*a1 = 100.*}" \
+    "print alpha at marker return 0"
+
+# Access the "B" object.
+
+gdb_test "print beta" \
+    "= {.*a1 = 200.*b1 = 201.*b2 = 202}" \
+    "print beta at marker return 0"
+
+# Access the "A" object through an "A *" pointer.
+
+gdb_test_multiple "print * aap" "print * aap at marker return 0" {
+    -re "= {.*a1 = 100.*}\r\n$gdb_prompt $" {
+	# gcc 2.95.3 -gstabs+
+	# gcc 3.3.2 -gdwarf-2
+	# gcc 3.3.2 -gstabs+
+	pass "print * aap at marker return 0"
+    }
+    -re "= {.*a1 = .*}\r\n$gdb_prompt $" {
+	if { [test_compiler_info gcc-2-*] && [test_debug_format "DWARF 2"] } {
+	    # gcc 2.95.3 -gdwarf-2
+	    setup_kfail "gdb/1465" "*-*-*"
+	}
+	fail "print * aap at marker return 0"
+    }
+}
+
+# Access the "B" object through a "B *" pointer.
+
+gdb_test "print * bbp" \
+    "= {.*a1 = 200.*b1 = 201.*b2 = 202}" \
+    "print * bbp at marker return 0"
+
+# Access the "B" object through an "A *" pointer.
+# This should print using the "A" type.
+
+gdb_test_multiple "print * abp" "print * abp at marker return 0, s-p-o off" {
+    -re "= {.*a1 = 200.*b1 = .*b2 = .*}\r\n$gdb_prompt $" {
+	# This would violate the documentation for "set print object off".
+	fail "print * abp at marker return 0, s-p-o off"
+    }
+    -re "= {.*a1 = 200.*}\r\n$gdb_prompt $" {
+	pass "print * abp at marker return 0, s-p-o off"
+    }
+}
+
+# Access the "B" object through a "B *" pointer expression.
+# This should print using the "B" type.
+
+gdb_test "print * (B *) abp" \
+    "= {.*a1 = 200.*b1 = 201.*b2 = 202}" \
+    "print * (B *) abp at marker return 0"
+
+# Printing the value of an object containing no data fields:
+
+gdb_test "p e" "= \{<No data fields>\}" "print object with no data fields"

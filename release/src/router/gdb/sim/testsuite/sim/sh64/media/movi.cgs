@@ -1,0 +1,29 @@
+# sh testcase for movi $imm16, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+init:
+	pta wrong, tr0
+
+movi0:
+	movi 0, r0
+	bnei r0, 0, tr0
+movi1:
+	movi 1, r0
+	bnei r0, 1, tr0
+movi2:
+	movi 23, r0
+	bnei r0, 23, tr0
+movn:
+	movi -1, r0
+	addi r0, 1, r0
+	bnei r0, 0, tr0
+
+okay:
+	pass
+wrong:
+	fail

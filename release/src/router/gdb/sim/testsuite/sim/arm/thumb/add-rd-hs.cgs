@@ -1,0 +1,12 @@
+# arm testcase for add $rd,$hs
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global add_rd_hs
+add_rd_hs:
+	add r0,r8
+
+	pass

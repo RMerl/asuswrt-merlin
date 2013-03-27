@@ -1,0 +1,89 @@
+'\" t
+.\"     Title: ne_token
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_TOKEN" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_token, ne_qtoken \- string tokenizers
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_string\&.h>
+.fi
+.ft
+.HP \w'char\ *ne_token('u
+.BI "char *ne_token(char\ **" "str" ", char\ " "sep" ");"
+.HP \w'char\ *ne_qtoken('u
+.BI "char *ne_qtoken(char\ **" "str" ", char\ " "sep" ", const\ char\ *" "quotes" ");"
+.SH "DESCRIPTION"
+.PP
+\fBne_token\fR
+and
+\fBne_qtoken\fR
+tokenize the string at the location stored in the pointer
+\fIstr\fR\&. Each time the function is called, it returns the next token, and modifies the
+\fIstr\fR
+pointer to point to the remainer of the string, or
+NULL
+if there are no more tokens in the string\&. A token is delimited by the separator character
+\fIsep\fR; if
+\fBne_qtoken\fR
+is used any quoted segments of the string are skipped when searching for a separator\&. A quoted segment is enclosed in a pair of one of the characters given in the
+\fIquotes\fR
+string\&.
+.PP
+The string being tokenized is modified each time the tokenizing function is called; replacing the next separator character with a
+NUL
+terminator\&.
+.SH "EXAMPLES"
+.PP
+The following function prints out each token in a comma\-separated string
+\fIlist\fR, which is modified in\-place:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+static void splitter(char *list)
+{
+  do {
+    printf("Token: %s\en", ne_token(&list, \*(Aq,\*(Aq));
+  while (list);
+}
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

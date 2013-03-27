@@ -1,0 +1,12 @@
+<!-- Test file for a description containing unknown elements.  -->
+<target>
+  <unknown>
+    <something>
+      <tag/>
+    </something>
+    <other/>
+    <third>
+      <tag/>
+    </third>
+  </unknown>
+</target>

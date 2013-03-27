@@ -1,0 +1,12 @@
+# arm testcase for mov $hd,$rs
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global mov_hd_rs
+mov_hd_rs:
+	mov r8,r0
+
+	pass

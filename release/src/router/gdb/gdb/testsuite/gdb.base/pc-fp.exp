@@ -1,0 +1,94 @@
+#   Copyright 2002, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# The doco makes reference to built-in registers -- $pc and $fp.  If
+# the ISA contains registers by that name then they should be
+# displayed.  If the ISA contains registers identified as being
+# equivalent, but have different names, then GDB will provide these as
+# aliases.  If the ISA doesn't provide any equivalent registers, then
+# GDB will provide registers that map onto the frame's PC and FP.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+set testfile "pc-fp"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
+    untested pc-fp.exp
+    return -1
+}
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+proc get_valueofx { fmt exp default } {
+    global gdb_prompt
+    send_gdb "print${fmt} ${exp}\n"
+    gdb_expect {
+	-re "\\$\[0-9\]* = (0x\[0-9a-zA-Z\]+).*$gdb_prompt $" {
+	    set val $expect_out(1,string)
+	    pass "get value of ${exp}"
+	}
+	timeout {
+	    set val ${default}
+	    fail "get value of ${exp} (timeout)"
+	}
+    }
+    return ${val}
+}
+
+# Get the value of PC and FP
+
+set valueof_pc [get_valueofx "/x" "\$pc" "0"]
+set valueof_fp [get_valueofx "/x" "\$fp" "0"]
+
+# Check that the sequence $REGNAME -> REGNUM -> $REGNAME works.  Use
+# display since that encodes and then decodes the expression parameter
+# (and hence uses the mechanisms we're trying to test).
+
+gdb_test "display/i \$pc" "1: x/i +\\\$pc( +|\r\n)${valueof_pc}.*"
+gdb_test "display/w \$fp" "2: x/xw +\\\$fp +${valueof_fp}.*"
+
+# FIXME: cagney/2002-09-04: Should also check that ``info registers
+# $pc'' et.al.'' come back with the same value as the above displays
+# and a print --- assuming that is that people agree to such behavour.
+# Need to re-write default_print_registers_info() for it to work (and
+# such a rewrite is on the reggroups branch).
+
+# gdb_test "info registers \$pc" "${valueof_pc}"
+# gdb_test "info registers \$fp" "${valueof_fp}"

@@ -1,0 +1,444 @@
+2006-12-21  Hans-Peter Nilsson  <hp@axis.com>
+
+	* config.in, configure: Regenerate.
+
+2006-10-18  Dave Brolley  <brolley@redhat.com>
+
+	* Contribute the following changes:
+
+	2006-06-14  Dave Brolley  <brolley@redhat.com>
+
+	* sh64-sim.h (sh64_fipr,sh64_fiprs,sh64_fldp,sh64_fstp,sh64_ftrv)
+	(sh64_fpref): New functions.
+	* sh64.c (sh64_fipr,sh64_fiprs,sh64_fldp,sh64_fstp,sh64_ftrv)
+	(sh64_fpref): New functions.
+	(sh_models): Add sh2e, sh2a, sh2a_nofpu, sh4_nofpu, sh4a,
+	sh4a_nofpu and sh4al.
+	(sh2e_mach): New MACH.
+	(sh2a_fpu_mach): New MACH.
+	(sh2a_nofpu_mach): New MACH.
+	(sh4_nofpu): New MACH.
+	(sh4a_mach): New MACH.
+	(sh4a_nofpu_mach): New MACH.
+	(sh4al_mach): New MACH.
+	* Makefile.in (stamp-*): Depend on $(CGEN_CPU_DIR)/sh-sim.cpu. Pass
+	archfile to CGEN script.
+	* arch.c: Regenerated.
+	* arch.h: Regenerated.
+	* cpu.c: Regenerated.
+	* cpu.h: Regenerated.
+	* cpuall.h: Regenerated.
+	* decode-compact.c: Regenerated.
+	* decode-compact.h: Regenerated.
+	* decode-media.c: Regenerated.
+	* decode-media.h: Regenerated.
+	* defs-compact.h: Regenerated.
+	* defs-media.h: Regenerated.
+	* sem-compact-switch.c: Regenerated.
+	* sem-compact.c: Regenerated.
+	* sem-media-switch.c: Regenerated.
+	* sem-media.c: Regenerated.
+	* sh-desc.c: Regenerated.
+	* sh-desc.h: Regenerated.
+	* sh-opc.h: Regenerated.
+
+2006-06-05  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure: Regenerated.
+
+2006-05-31  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure: Regenerated.
+
+2005-05-02  Corinna Vinschen  <vinschen@redhat.com>
+
+	* sh-desc.h: Move extern declaration of sh_cgen_ifld_table after
+	inclusion of cgen.h.
+
+2005-04-15  Corinna Vinschen  <vinschen@redhat.com>
+
+	* configure.ac: New file.
+	* configure.in: Remove.
+	* configure: Regenerate.
+	* defs-media.h (sem_fields): Add missing sfmt_ldhil member.
+	* sim-if.c (sim_open): Use struct bfd instead of struct _bfd.
+	(sim_create_inferior): Ditto.
+
+2004-12-08  Hans-Peter Nilsson  <hp@axis.com>
+
+	* configure: Regenerate for ../common/aclocal.m4 update.
+
+Fri Feb 21 19:49:45 2003  J"orn Rennecke <joern.rennecke@superh.com>
+
+	* sem-media-switch.c, sem-media.c: Regenerate.
+
+2002-06-24  Richard Sandiford  <rsandifo@redhat.com>
+
+        * sh64.c: Update path of "callback.h".
+
+2002-06-20  Elena Zannoni  <ezannoni@redhat.com>
+
+        * sh64.c: Include correct file for register numbers.
+
+Fri May 17 14:27:41 2002  J"orn Rennecke <joern.rennecke@superh.com>
+
+	* sim-if.c (sh64_disassemble_insn): Use  print_insn_sh instead of
+	print_insn_shl.
+
+2001-07-05  Ben Elliston  <bje@redhat.com>
+
+	* Makefile.in (stamp-arch): Use $(CGEN_CPU_DIR).
+	(stamp-desc): Likewise.
+	(stamp-cpu): Likewise.
+	(stamp-defs-compact): Likewise.
+	(stamp-defs-media): Likewise.
+	(stamp-decode-compact): Likewise.
+	(stamp-decode-media): Likewise.
+
+2001-03-30  Ben Elliston  <bje@redhat.com>
+
+	* sim-if.c (sim_open): Set sh64_idesc_{media,compact} to NULL.
+	* sh64-sim.h (sh64_idesc_{compact,media}): Declare extern.
+	* sh64.c (sh64_idesc_{compact,media}): Make non-static.
+
+2001-01-30  Ben Elliston  <bje@redhat.com>
+
+	* sh64.c (SYS_argc, SYS_argn, SYS_argnlen): Define.
+	(trap_handler): Implement these syscalls.
+	(count_argc): New function.
+
+2001-01-24  Alexandre Oliva  <aoliva@redhat.com>
+
+	* sh64.c (trap_handler): Implement time.
+
+	* sh64.c (fetch_str): New function.
+	(trap_handler): Re-implement write, and implement lseek, read,
+	open and close.
+
+2001-01-18  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
+
+	* sh64.c (sh64_fetch_register): When fetching the PC, return the
+ 	PC value and set the LSB according to the current ISA.
+
+2001-01-18  Ben Elliston  <bje@redhat.com>
+
+	* sh64.c (trap_handler): Use sim_engine_halt to indicate a program
+	has terminated, not exit!
+
+2001-01-12  Ben Elliston  <bje@redhat.com>
+
+	* sh64.c (sh64_fcnvds): Re-implement.
+
+	* sh64.c: Include "bfd.h".
+	(trap_handler): New function. Consolidate function bodies of
+	sh64_trapa and sh64_compact_trapa.
+	(sh64_trapa): Use it.
+	(sh64_compact_trapa): Likewise.
+
+2001-01-11  Ben Elliston  <bje@redhat.com>
+
+	* sem-media.c, sem-media-switch.c: Regenerate.
+	* sem-compact.c, sem-compact-switch.c: Likewise.
+
+	* sh64.c (sh64_trapa): Adhere to SH64 sys call conventions.
+
+	* cpu.h, sh-desc.c, sh-desc.h, sh-opc.h: Regenerate.
+	* decode-media.c, decode-media.h, defs-media.h: Likewise.
+	* sem-compact.c, sem-compact-switch.c: Likewise.
+	* sem-media.c, sem-media-switch.c: Likewise.
+
+2001-01-10  Ben Elliston  <bje@redhat.com>
+
+	* sim-main.h (CIA_SET): Encode the current instruction set mode
+	when setting the cia.
+
+2001-01-08  Ben Elliston  <bje@redhat.com>
+
+	* sh64.c (sh64_store_register): Do not set insn set mode--allow
+	sh64_h_pc_set() to do it.
+	(shmedia_init_cpu): Do not initialise the insn set mode--let the
+	loader set it based on bit 0 of the executable's starting address.
+	(shcompact_init_cpu): Likewise.
+	* mloop-compact.c (sh64_compact_pbb_begin): Emit a warning message
+	about malformed programs which have illegal insns in delay slots.
+	(sh64_compact_pbb_cti_chain): Examine the least significant bit of
+	the new pc, not the current instruction set mode to determine if
+	the next pbb in the chain will consist of SHmedia instructions.
+	* mloop-media.c (sh64_media_pbb_cti_chain): Likewise for SHcompact
+	switches. Set bit 0 when setting the pc for the next SHmedia pbb.
+
+	* cpu.c, cpu.h: Regenerate.
+	* sem-compact.c, sem-compact-switch.c: Likewise.
+	* sem-media.c, sem-media-switch.c: Likewise.
+
+	* sh64.c (sh64_compact_trapa): Use sim_io_write_{stdout,error}(),
+	not stdio functions to emit output when executing write traps.
+
+2001-01-07  Alexandre Oliva  <aoliva@redhat.com>
+
+	* sh64.c (sh64_compact_trapa): Support writing to stderr.  Flush
+	output stream after each (compound) write.
+
+2001-01-06  Ben Elliston  <bje@redhat.com>
+
+	* sem-media.c, sem-media-switch.c: Regenerate.
+
+2001-01-04  Ben Elliston  <bje@redhat.com>
+
+	* sem-compact.c, sem-compact-switch.c: Regenerate.
+	* cpu.h: Regenerate.
+
+2001-01-03  Ben Elliston  <bje@redhat.com>
+
+	* cpu.c, cpu.h: Regenerate.
+	* sem-media.c, sem-media-switch.c: Likewise.
+
+2001-01-02  Ben Elliston  <bje@redhat.com>
+
+	* sim-if.c (sh64_disassemble_insn): Set arch and mach fields using
+	BFD primitives.
+
+	* sem-compact.c, sem-compact-switch.c: Regenerate.
+
+2000-12-30  Alexandre Oliva  <aoliva@redhat.com>
+
+	* sh64.c (sh64_nsb): Re-implement correctly.
+
+2000-12-26  Alexandre Oliva  <aoliva@redhat.com>
+
+	* sh64.c (sh64_nsb): Re-implement.
+
+2000-12-27  Ben Elliston  <bje@redhat.com>
+
+	* cpu.c, cpu.h: Regenerate.
+	* sem-compact.c, sem-compact-switch.c: Likewise.
+	* sem-media.c, sem-media-switch.c: Likewise.
+	* sh-desc.c: Likewise.
+
+2000-12-26  Ben Elliston  <bje@redhat.com>
+
+	* mloop-compact.in, mloop-media.in: Remove.
+	* mloop-compact.c, mloop-media.c: New files.
+	* eng-compact.c, eng-media.c: Likewise.
+	* Makefile.in (mloop-compact.c): Remove target.
+	(stamp-mloop-compact): Likewise.
+	(mloop-media.c): Likewise.
+	(stamp-mloop-media): Likewise.
+	(sh64-clean): Update.
+	(stamp-mloop): Remove.
+
+2000-12-23  Ben Elliston  <bje@redhat.com>
+
+	* sh64.c (sh64_prepare_run): Rename from shmedia_prepare_run.
+	(shcompact_prepare_run): Remove.
+	(sh2_mach, sh3_mach, sh3e_mach, sh4_mach, sh5_mach): Update.
+
+2000-12-22  Ben Elliston  <bje@redhat.com>
+
+	* sh64.c (sh64_idesc_media, sh64_idesc_compact): New variables.
+	(sh64_dump): Remove.
+	(sh64_engine_run_full): Only compute idesc tables once.
+	(sh64_engine_run_fast): Likewise.
+	(shmedia_prepare_run): Do nothing.
+	(shcompact_prepare_run): Likewise.
+
+	* sem-compact.c, sem-compact-switch.c: Regenerate.
+	* sem-media.c, sem-media-switch.c: Likewise.
+
+2000-12-19  Ben Elliston  <bje@redhat.com>
+
+	* sem-media.c, sem-media-switch.c: Regenerate.
+
+2000-12-15  Ben Elliston  <bje@redhat.com>
+
+	* sh64.c (sh64_store_register): When storing a new PC, set ISA
+	mode based on the value of bit 0.
+
+	* sh64.c: Include "sim-sh64.h" for GDB interfacing.
+	(sh64_fetch_register): Implement.
+	(sh64_store_register): Likewise.
+
+	* sh64-sim.h (sh64_fmacs): Declare.
+	(sh64_ftrcdl, sh64_ftrcdq, sh64_ftrcsl): Likewise.
+
+	* sem-media.c, sem-media-switch.c: Regenerate.
+
+2000-12-13  Ben Elliston  <bje@redhat.com>
+
+	* sh64-sim.h (sh64_compact_trapa): Renamed from sh64_trapa.
+	(sh64_trapa): Renamed from sh64_trap.
+	* sh64.c (sh64_trapa): Call sh64_compact_trapa for handling.
+	Apply renaming described above.
+
+	* decode-media.c, decode-media.h, defs-media.h: Regenerate.
+	* sem-media.c sem-media-switch.c: Likewise.
+	* sh-desc.c, sh-desc.h, sh-opc.h: Likewise.
+
+2000-12-12  Ben Elliston  <bje@redhat.com>
+
+	* cpu.c, cpu.h, sh-desc.c: Regenerate.
+	* sem-media.c, sem-media-switch.c: Likewise.
+	* sem-compact.c, sem-compact-switch.c: Likewise.
+	* sh64-sim.h (sh64_ftrvs): Declare.
+	* sh64.c (sh64_ftrvs): Bug fixes.
+
+	* sh64.c (sh64_fcmpgtd): Fix order of arguments to sim_fpu_is_gt.
+	(sh64_fcmpgts): Likewise.
+
+2000-12-11  Ben Elliston  <bje@redhat.com>
+
+	* decode-media.c, decode-media.h: Regenerate.
+	* defs-media.h: Likewise.
+	* sem-media.c, sem-media-switch.c: Likewise.
+	* sh-desc.c: Likewise.
+
+2000-12-08  Ben Elliston  <bje@redhat.com>
+
+	* decode-media.c, decode-media.h: Regenerate.
+	* defs-media.h: Likewise.
+	* sem-media.c, sem-media-switch.c: Likewise.
+
+2000-12-07  Ben Elliston  <bje@redhat.com>
+
+	* decode-media.c, decode-media.h: Regenerate.
+	* sem-media.c, sem-media-switch.c: Likewise.
+
+	* defs-media.h: Regenete.
+	* decode-compact.c, decode-media.c: Likewise.
+
+2000-12-06  Ben Elliston  <bje@redhat.com>
+
+	* sh64.c (sh64_fcmpund): Return a BI.
+	(sh64_fcmpuns): Likewise.
+	(sh64_nsb): Treat source value as unsigned.
+	(sh64_compact_model_insn_before): New function.
+	(sh64_media_model_insn_before): Likewise.
+	(sh64_compact_model_insn_after): Likewise.
+	(sh64_media_model_insn_after): Likewise.
+	(sh_models): Use sh5_mach for "sh5".
+	* sh64-sim.h: Add missing function prototypes.
+
+	* cpu.c, cpu.h, defs-media.h, sh-desc.c: Regenerate.
+	* decode-media.c, decode-media.h: Likewise.
+	* sem-media.c, sem-media-switch.c: Likewise.
+
+2000-12-05  Ben Elliston  <bje@redhat.com>
+
+	* mloop-compact.in, mloop-media.in: Use @prefix@.
+	* Makefile.in (stamp-mloop-compact): Pass -outfile-suffix option
+	to make generated files safe in the presence of parallel makes.
+	(stamp-mloop-media): Likewise.
+
+	* decode-media.c, defs-media.h: Regenerate.
+
+2000-12-04  Ben Elliston  <bje@redhat.com>
+
+	* sh64-sim.h: Add function prototypes from sh64.c.
+
+	* Makefile.in (SH64_OBJS): Add ISA variant objects.
+	(SIM_EXTRA_DEPS): Do not depend on opcodes headers.
+	(SH64_INCLUDE_DEPS): Update for ISA variants.
+	(stamp-mloop-compact, stamp-mloop-media): New targets.
+	(decode-compact.o, sem-compact.o): New rules.
+	(decode-media.o, sem-media.o): Likewise.
+	(sh64-clean): Update.
+	(stamp-all, stamp-mloop, stamp-decode, stamp-defs): New targets.
+	(stamp-desc, stamp-cpu): Likewise.
+	(stamp-defs-compact, stamp-defs-media): Likewise.
+	(stamp-decode-compact, stamp-decode-media): Likewise.	
+
+	* defs-compact.h, defs-media.h: Regenerate.
+
+2000-12-03  Ben Elliston  <bje@redhat.com>
+
+	* sh64-sim.h (sh64_fcmpeqd, sh64_fcmpeqs): Declare.
+	(sh64_fcmpged, sh64_fcmpges): Likewise.
+	(sh64_fcmpgtd, sh64_fcmpgts): Likewise.
+
+	* sh64.c (sh64_endian): New function.
+	(sh64_fcmpeqd, sh64_fcmpeqs): Return a BI.
+	(sh64_fcmpged, sh64_fcmpges): Likewise.
+	(sh64_fcmpgtd, sh64_fcmpgts): Likewise.
+	(sh64_trap): Implement a basic syscall facility.
+	(sh64_trapa): Exit with return code in R5, not 0.
+	(sh64_model_sh5_u_exec): Remove.
+	(sh64_engine_run_full): New function.
+	(sh64_engine_run_fast): Likewise.
+	(shmedia_prepare_run): Likewise.
+	(shcompact_prepare_run): Likewise.
+	(sh64_get_idata): Likewise.
+	(sh64_init_cpu): Likewise.
+	(shmedia_init_cpu): Likewise.
+	(shcompact_init_cpu): Likewise.
+	(sh64_model_init): Likewise.
+	(sh_models): Define.
+	(sh5_imp_properties): Likewise.
+	(sh2_mach, sh3_mach, sh4_mach, sh5_mach): Define.
+
+	* sem-compact.c, sem-compact-switch.c: Regenerate.
+
+2000-12-01  Ben Elliston  <bje@redhat.com>
+
+	* sh64-sim.h (sh64_endian): Declare.
+	* sim-main.h (sim_cia): Use UDI, not USI.
+	(WITH_PROFILE_MODEL_P): Remove.
+	* sim-if.c (sim_sh64_disassemble_insn): Remove.
+	(sh64_disassemble_insn): New function.
+	(sim_open): Use as this CPU's disassembler.
+	* eng.h: New file.
+	* decode.h (WITH_PROFILE_MODEL_P): Undefine.
+
+	* decode-compact.c, decode-media.c: Regenerate.
+	* defs-compact.h, defs-media.h: Likewise.
+	* sem-compact.c, sem-compact-switch.c: Likewise.
+	* sh-desc.c, sh-desc.h: Likewise.
+	* cpu.c, cpu.h, cpuall.h: Likewise.
+
+2000-11-30  Ben Elliston  <bje@redhat.com>
+
+	* arch.c, sh-desc.c, sh-desc.h: Regenerate.
+
+	* tconfig.in (SIM_HAVE_BIENDIAN): Define.
+	* configure.in (SIM_AC_OPTION_BIGENDIAN): Do not hard-wire a
+	target byte order, but default to big endian.
+	* configure: Regenerate.
+
+2000-11-27  Ben Elliston  <bje@redhat.com>
+
+	* sim-main.h (WITH_PROFILE_MODEL_P): Define.
+	* sh64-sim.h (ISM_COMPACT, ISM_MEDIA): New enums.
+
+	* sh-desc.c, sh-desc.h: Regenerate.
+	* arch.c, cpu.h, cpuall.h: Regenerate.
+	* decode.h (WITH_PROFILE_MODEL_P): Remove.
+
+	* mloop-compact.in, mloop-media.in: New files.
+	* decode.h: Likewise.
+
+2000-11-26  Ben Elliston  <bje@redhat.com>
+
+	* sem-compact.c, sem-compact-switch.c: Generate.
+	* sem-media.c, sem-media-switch.c: Likewise.
+
+2000-11-25  Ben Elliston  <bje@redhat.com>
+
+	* sh-desc.c, sh-desc.h, sh-opc.h: Generate.
+
+	* arch.c, arch.h, cpuall.h, cpu.c, cpu.h: Generate.
+	* decode-compact.c, decode-compact.h: Likewise.
+	* decode-media.c, decode-media.h: Likewise.
+	* sh64-sim.h: New file.
+	* sim-main.h: Likewise.
+
+2000-11-22  Ben Elliston  <bje@redhat.com>
+
+	* sim-if.c: New file.
+	* sh64.c: Likewise.
+
+2000-11-16  Ben Elliston  <bje@redhat.com>
+
+	* config.in: New file.
+	* tconfig.in: Likewise.
+	* configure.in: Likewise.
+	* configure: Generate.
+	* Makefile.in: New file.

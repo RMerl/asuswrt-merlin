@@ -1,0 +1,36 @@
+# sh testcase for fcmpeq.d $drg, $drh, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	pta wrong, tr0
+
+fcmpeq1:
+	movi 1, r0
+	fmov.ls r0, fr0
+	fmov.ls r0, fr1
+	float.ld fr0, dr2
+	float.ld fr1, dr4
+	fcmpeq.d dr2, dr2, r7
+	bnei r7, 1, tr0 
+
+fcmpeq2:
+	movi 1, r0
+	fmov.ls r0, fr0
+	movi 2, r1
+	fmov.ls r1, fr1
+	float.ld fr0, dr4
+	float.ld fr1, dr6
+	fcmpeq.d dr4, dr6, r7
+	bnei r7, 0, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

@@ -1,0 +1,98 @@
+<refentry id="refresphdr">
+
+  <refmeta>
+    <refentrytitle>ne_get_response_header</refentrytitle>
+    <manvolnum>3</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname id="ne_get_response_header">ne_get_response_header</refname>
+    <refname id="ne_response_header_iterate">ne_response_header_iterate</refname>
+    <refpurpose>functions to access response headers</refpurpose>
+  </refnamediv>
+  
+  <refsynopsisdiv>
+
+    <funcsynopsis>
+
+      <funcsynopsisinfo>#include &lt;ne_request.h&gt;</funcsynopsisinfo>
+
+      <funcprototype>
+        <funcdef>const char *<function>ne_get_response_header</function></funcdef>
+        <paramdef>ne_request *<parameter>request</parameter></paramdef>
+        <paramdef>const char *<parameter>name</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>void *<function>ne_response_header_iterate</function></funcdef>
+        <paramdef>ne_request *<parameter>request</parameter></paramdef>
+        <paramdef>void *<parameter>cursor</parameter></paramdef>
+        <paramdef>const char **<parameter>name</parameter></paramdef>
+        <paramdef>const char **<parameter>value</parameter></paramdef>
+      </funcprototype>
+
+    </funcsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para>To retrieve the value of a response header field, the
+    <function>ne_get_response_header</function> function can be used,
+    and is given the name of the header to return.</para>
+
+    <para>To iterate over all the response headers returned, the
+    <function>ne_response_header_iterate</function> function can be
+    used.  This function takes a <parameter>cursor</parameter>
+    parameter which should be &null; to retrieve the first header. The
+    function stores the name and value of the next header header in
+    the <parameter>name</parameter> and <parameter>value</parameter>
+    parameters, and returns a new cursor pointer which can be passed
+    to <function>ne_response_header_iterate</function> to retrieve the
+    next header.</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Return value</title>
+
+    <para><function>ne_get_response_header</function> returns a
+    string, or &null; if no header with that name was given.  If used
+    during request processing, the return value pointer is valid only
+    until the next call to <function>ne_begin_request</function>, or
+    else, until the request object is destroyed.</para>
+
+    <para>Likewise, the cursor, names, and values returned by
+    <function>ne_response_header_iterate</function> are only valid
+    until the next call to <function>ne_begin_request</function> or
+    until the request object is destroyed.</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Examples</title>
+
+    <para>The following code will output the value of the
+    <literal>Last-Modified</literal> header for a resource:</para>
+
+    <programlisting>ne_request *req = ne_request_create(sess, "GET", "/foo.txt");
+if (ne_request_dispatch(req) == NE_OK) {
+    const char *mtime = ne_get_response_header(req, "Last-Modified");
+    if (mtime) {
+        printf("/foo.txt has last-modified value %s\n", mtime);
+    }
+}
+ne_request_destroy(req);</programlisting>
+
+  </refsect1>
+
+  <refsect1>
+    <title>See also</title>
+
+    <para><xref linkend="ne_request_create"/>, <xref
+    linkend="ne_request_destroy"/>.</para>
+  </refsect1>
+
+</refentry>
+

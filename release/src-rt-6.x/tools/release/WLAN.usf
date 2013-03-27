@@ -1,1 +1,2 @@
-WLAN_AllComponentPaths=src/wl/bcmwifi src/wl/clm
+WLAN_AllComponentPaths=src-rt-6.x/shared/bcmwifi src-rt-6.x/wl/clm src-rt-6.x/wl/lwip
+WLAN_GenDir=generated

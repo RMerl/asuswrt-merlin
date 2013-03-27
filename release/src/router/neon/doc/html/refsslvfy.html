@@ -1,0 +1,66 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>ne_ssl_set_verify</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="ref.html" title="neon API reference"><link rel="prev" href="refsslca.html" title="ne_ssl_trust_cert"><link rel="next" href="refclicert.html" title="ne_ssl_client_cert"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">ne_ssl_set_verify</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="refsslca.html">Prev</a> </td><th width="60%" align="center">neon API reference</th><td width="20%" align="right"> <a accesskey="n" href="refclicert.html">Next</a></td></tr></table><hr></div><div class="refentry" title="ne_ssl_set_verify"><a name="refsslvfy"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ne_ssl_set_verify — register an SSL certificate verification callback</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="funcsynopsis"><pre class="funcsynopsisinfo">#include &lt;ne_session.h&gt;</pre><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">typedef int <b class="fsfunc">ne_ssl_verify_fn</b>(</code></td><td>void *<var class="pdparam">userdata</var>, </td></tr><tr><td> </td><td>int <var class="pdparam">failures</var>, </td></tr><tr><td> </td><td>const ne_ssl_certificate *<var class="pdparam">cert</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">void <b class="fsfunc">ne_ssl_set_verify</b>(</code></td><td>ne_session *<var class="pdparam">session</var>, </td></tr><tr><td> </td><td>ne_ssl_verify_fn <var class="pdparam">verify_fn</var>, </td></tr><tr><td> </td><td>void *<var class="pdparam">userdata</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div></div></div><div class="refsect1" title="Description"><a name="id462711"></a><h2>Description</h2><p>To enable manual SSL certificate verification, a
+callback can be registered using
+<code class="function">ne_ssl_set_verify</code>.  If such a callback is not
+registered, when a connection is established to an SSL server which
+does not present a certificate signed by a trusted CA (see <a class="xref" href="refsslca.html#ne_ssl_trust_cert">ne_ssl_trust_cert</a>), or if the certificate presented is invalid in
+some way, the connection will fail.</p><p>When the callback is invoked, the
+<code class="parameter">failures</code> parameter gives a bitmask indicating
+in what way the automatic certificate verification failed.  The value
+is equal to the bit-wise OR of one or more of the following
+constants (and is guaranteed to be non-zero):</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><p><span class="term"><code class="constant">NE_SSL_NOTYETVALID</code></span></p></td><td>The certificate is not yet valid.</td></tr><tr><td><p><span class="term"><code class="constant">NE_SSL_EXPIRED</code></span></p></td><td>The certificate has expired.</td></tr><tr><td><p><span class="term"><code class="constant">NE_SSL_IDMISMATCH</code></span></p></td><td>The hostname used for the session does not match
+the hostname to which the certificate was issued.</td></tr><tr><td><p><span class="term"><code class="constant">NE_SSL_UNTRUSTED</code></span></p></td><td>The Certificate Authority which signed the certificate
+is not trusted.</td></tr></tbody></table></div><p>Note that if either of the
+	<code class="constant">NE_SSL_IDMISMATCH</code> or
+	<code class="constant">NE_SSL_UNTRUSTED</code> failures is given, the
+	connection may have been intercepted by a third party, and
+	must not be presumed to be <span class="quote">“<span class="quote">secure</span>”</span>.</p><p>The <code class="parameter">cert</code> parameter passed to the
+callback represents the certificate which was presented by the server.
+If the server presented a chain of certificates, the chain can be
+accessed using <a class="xref" href="refcert.html#ne_ssl_cert_signedby">ne_ssl_cert_signedby</a>.  The
+<code class="parameter">cert</code> object given is not valid after the
+callback returns.</p></div><div class="refsect1" title="Return value"><a name="id462833"></a><h2>Return value</h2><p>The verification callback must return zero to indicate
+that the certificate should be trusted; and non-zero otherwise (in
+which case, the connection will fail).</p></div><div class="refsect1" title="Examples"><a name="id462844"></a><h2>Examples</h2><p>The following code implements an example verification
+	callback, using the <code class="function">dump_cert</code> function
+	from <a class="xref" href="refcert.html#ne_ssl_cert_subject">ne_ssl_cert_subject</a> to display
+	certification information.  Notice that the hostname of the
+	server used for the session is passed as the
+	<code class="parameter">userdata</code> parameter to the
+	callback.</p><pre class="programlisting">
+static int
+my_verify(void *userdata, int failures, const ne_ssl_certificate *cert)
+{
+  const char *hostname = userdata;
+
+  dump_cert(cert);
+
+  puts("Certificate verification failed - the connection may have been "
+       "intercepted by a third party!");
+
+  if (failures &amp; NE_SSL_IDMISMATCH) { 
+    const char *id = ne_ssl_cert_identity(cert);
+    if (id) 
+      printf("Server certificate was issued to '%s' not '%s'.\n",
+             id, hostname);
+    else
+      printf("The certificate was not issued for '%s'\n", hostname);
+  }
+
+  if (failures &amp; NE_SSL_UNTRUSTED)
+    puts("The certificate is not signed by a trusted Certificate Authority.");
+
+  /* ... check for validity failures ... */
+
+  if (prompt_user())
+    return 1; /* fail verification */
+  else
+    return 0; /* trust the certificate anyway */
+}
+
+int
+main(...)
+{
+  ne_session *sess = ne_session_create("https", "some.host.name", 443);
+  ne_ssl_set_verify(sess, my_verify, "some.host.name");
+  ...
+}</pre></div><div class="refsect1" title="See also"><a name="id462889"></a><h2>See also</h2><p><a class="xref" href="refsslca.html#ne_ssl_trust_cert">ne_ssl_trust_cert</a>, <a class="xref" href="refssldname.html#ne_ssl_readable_dname">ne_ssl_readable_dname</a>, <a class="xref" href="refcert.html#ne_ssl_cert_subject">ne_ssl_cert_subject</a></p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="refsslca.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ref.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="refclicert.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">ne_ssl_trust_cert </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> ne_ssl_client_cert</td></tr></table></div></body></html>

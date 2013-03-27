@@ -1,0 +1,26 @@
+# frv testcase for mdunpackh $FRi,$FRj
+# mach: frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global mdunpackh
+mdunpackh:
+	set_fr_iimmed	0xdead,0xbeef,fr10
+	set_fr_iimmed	0x1234,0x5678,fr11
+	mdunpackh	fr10,fr12
+	test_fr_limmed	0xdead,0xdead,fr12
+	test_fr_limmed	0xbeef,0xbeef,fr13
+	test_fr_limmed	0x1234,0x1234,fr14
+	test_fr_limmed	0x5678,0x5678,fr15
+
+	set_fr_iimmed	0x1234,0x5678,fr10
+	set_fr_iimmed	0xdead,0xbeef,fr11
+	mdunpackh	fr10,fr12
+	test_fr_limmed	0x1234,0x1234,fr12
+	test_fr_limmed	0x5678,0x5678,fr13
+	test_fr_limmed	0xdead,0xdead,fr14
+	test_fr_limmed	0xbeef,0xbeef,fr15
+
+	pass

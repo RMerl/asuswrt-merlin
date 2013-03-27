@@ -1,0 +1,202 @@
+2006-12-21  Hans-Peter Nilsson  <hp@axis.com>
+
+	* acconfig.h: Remove.
+	* config.in: Regenerate.
+
+2006-06-13  Richard Earnshaw  <rearnsha@arm.com>
+
+	* configure: Regenerated.
+
+2006-06-05  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure: Regenerated.
+
+2006-05-31  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure: Regenerated.
+
+2005-03-23  Mark Kettenis  <kettenis@gnu.org>
+
+	* configure: Regenerate.
+
+2005-02-21  Corinna Vinschen  <vinschen@redhat.com>
+
+	* iq2000.c: Eliminate need to include gdb/sim-iq2000.h.
+
+2005-02-18  Corinna Vinschen  <vinschen@redhat.com>
+
+	* configure.ac: Rename from configure.in and pull up to autoconf 2.59.
+	* configure: Regenerate.
+
+2002-03-18  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* sem-switch.c: Regenerated.
+	* sem.c: Ditto.
+
+2002-01-28  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* arch.c: Regenerated.
+	* arch.h: Ditto.
+	* cpu.c: Ditto.
+	* cpu.h: Ditto.
+	* cpuall.h: Ditto.
+	* decode.c: Ditto.
+	* decode.h: Ditto.
+	* model.c: Ditto.
+	* sem-switch.c: Ditto.
+	* sem.c: Ditto.
+
+2001-11-16  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* decode.c: Regenerated after putting orui into machine-specific
+	files.
+	* decode.h: Ditto.
+	* model.c: Ditto.
+	* sem-switch.c: Ditto.
+	* sem.c: Ditto.
+
+2001-11-13  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* cpu.h: Regenerated after changing jump and branch operands
+	so that no bit masking is performed.
+	* decode.c: Ditto.
+	* iq2000.c (get_h_pc): Change to return h_pc directly.
+	(set_h_pc): Change to always set the insn mask bit.
+	* sim-if.c (iq2000bf_disassemble_insn): Change to pass the
+	pc untouched.
+	(sim_create_inferior): Changed so starting address is taken
+	directly from link.  If not specified, start address is
+	0 with insn mask set on.
+
+2001-11-08  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* cpu.h: Regenerated after making jump operand UINT.
+	* decode.c: Ditto.
+
+2001-10-31  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* sem-switch.c: Regenerated after fixing lb, lbu, lh, lw,
+	sb, sh, and sw insns handling of offset operand.
+	* sem.c: Ditto.
+
+2001-10-30  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* cpu.c: Regenerated.
+	* cpu.h: Ditto.
+	* decode.c: Ditto.
+	* sem-switch.c: Ditto.
+	* sem.c: Ditto.
+	* iq2000.c (get_h_pc): New routine.
+	(set_h_pc): Ditto.
+	(fetch_str): Translate cpu data addresses to data area.
+	(do_syscall): Ditto.
+	(iq2000bf_fetch_register): Use get_h_pc.
+	(iq2000bf_store_register): Use set_h_pc.
+	* mloop.in: Change all calls to GETIMEMxxx to use CPU2INSN
+	on the pc value passed first.
+	* sim-if.c (iq2000bf_disassemble_insn): New function.
+	(sim_open): Add extra memory region for insn memory vs data memory.
+	Also change disassembler to be iq2000bf_disassemble_insn.
+	(sim_create_inferior): Translate start address using INSN2CPU macro.
+	* sim-main.h (CPU2INSN, CPU2DATA, INSN2CPU, DATA2CPU): New macros
+	to translate between Harvard and cpu addresses.
+
+2001-10-26  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* sem-switch.c: Regenerated after reverting addiu
+	change.
+	* sem.c: Ditto.
+
+2001-10-25  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* Makefile.in: Add -UHAVE_CPU_IQ10 for time-being until
+	iq10 simulator merged here.
+	* cpu.h: Regenerated after fixing addiu insn.
+	* cpuall.h: Ditto.
+	* decode.c: Ditto.
+	* decode.h: Ditto.
+	* model.c: Ditto.
+	* sem-switch.c: Ditto.
+	* sem.c: Ditto.
+
+2001-09-12  Stan Cox  <scox@redhat.com>
+
+	* iq2000/{cpu.c, cpu.h, decode.c, decode.h, model.c, sem-switch.c,
+	sem.c}: Regen'd.
+	* iq2000.c (do_syscall): Support system traps.
+	
+2001-07-05  Ben Elliston  <bje@redhat.com>
+
+	* Makefile.in (stamp-arch): Use $(CGEN_CPU_DIR).
+	(stamp-cpu): Likewise.
+
+2001-04-02  Ben Elliston  <bje@redhat.com>
+
+	* arch.c, arch.h: Regnerate to track recent cgen improvements.
+	* cpu.c, cpu.h, cpuall.h, decode.c, decode.h: Likewise.
+	* model.c, sem-switch.c, sem.c: Likewise.
+
+2001-01-22  Ben Elliston  <bje@redhat.com>
+
+	* cpu.h, decode.c, decode.h, model.c: Regenerate.
+	* sem.c, sem-switch.c: Likewise.
+
+	* arch.c, arch.h, cpu.c, cpu.h, cpuall.h: Regenerate.
+	* decode.c, decode.h, model.c, sem.c, sem-switch.c: Likewise.
+
+2000-07-05  Ben Elliston  <bje@redhat.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+2000-07-04  Ben Elliston  <bje@redhat.com>
+
+	* sem.c, sem-switch.c: Regenerate.
+
+	* iq2000.c (do_break): Use sim_engine_halt ().
+	* arch.c, decode.c, decode.h, sem.c, sem-switch.c: Regenerate.
+
+2000-07-03  Ben Elliston  <bje@redhat.com>
+
+	* iq2000.c (do_syscall): Examine syscall register (nominally %11).
+	(do_break): Handle breakpoints.
+	* tconfig.in (SIM_HAVE_BREAKPOINTS): Define.
+	(SIM_BREAKPOINT, SIM_BREAKPOINT_SIZE): Likewise.
+
+2000-06-29  Andrew Cagney  <cagney@redhat.com>
+
+	* iq2000.c (iq2000bf_fetch_register): Implement.
+	(iq2000bf_store_register): Ditto.
+
+2000-05-17  Ben Elliston  <bje@redhat.com>
+
+	* mloop.in (extract-simple, extract-scache): Use SEM_SKIP_COMPILE
+	to set the skip count for the (skip ..) rtx.
+	(extract-pbb): Likewise.
+	(extract-pbb): Include the delay slot instruction of all CTI
+	instructions in the pbb, not just those that may nullify their
+	delay slot (eg. likely branches).
+
+	* sem.c, sem-switch.c: Regenerate.
+
+2000-05-16  Ben Elliston  <bje@redhat.com>
+
+	* arch.c, cpu.c, cpu.h, decode.c, decode.h: Regenerate.
+	* sem.c, sem-switch.c: Likewise.
+	* mloop.in (extract-pbb): Prohibit branch instructions in the
+	delay slot of branch likely instructions.
+
+2000-05-16  Ben Elliston  <bje@redhat.com>
+
+	* Makefile.in: New file.
+	* configure.in: Ditto.
+	* acconfig.h: Ditto.
+	* config.in, configure: Generate.
+	* arch.c, arch.h, cpu.c, cpu.h, cpuall.h: Ditto.
+	* decode.c, decode.h: Ditto.
+	* model.c, sem-switch.c, sem.c: Ditto.
+	* mloop.in: New file.
+	* iq2000.c: Ditto.
+	* iq2000-sim.h: Ditto.
+	* sim-if.c: Ditto.
+	* sim-main.h: Ditto.
+	* tconfig.in: Ditto

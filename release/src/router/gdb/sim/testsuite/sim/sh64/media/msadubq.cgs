@@ -1,0 +1,14 @@
+# sh testcase for msad.ubq $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global msadubq
+msadubq:
+	msad.ubq r0, r0, r0
+
+	pass

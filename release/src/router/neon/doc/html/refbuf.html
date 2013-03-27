@@ -1,0 +1,20 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>ne_buffer</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="ref.html" title="neon API reference"><link rel="prev" href="refresolve.html" title="ne_addr_resolve"><link rel="next" href="refbufapp.html" title="ne_buffer_append"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">ne_buffer</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="refresolve.html">Prev</a> </td><th width="60%" align="center">neon API reference</th><td width="20%" align="right"> <a accesskey="n" href="refbufapp.html">Next</a></td></tr></table><hr></div><div class="refentry" title="ne_buffer"><a name="refbuf"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ne_buffer — string buffer handling</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="funcsynopsis"><pre class="funcsynopsisinfo">#include &lt;ne_string.h&gt;
+
+typedef struct {
+    char *data;
+    size_t used;
+    size_t length;
+} <em class="type">ne_buffer</em>;</pre></div></div><div class="refsect1" title="Description"><a name="id449192"></a><h2>Description</h2><p>The <em class="type">ne_buffer</em> type represents an expandable
+memory buffer for holding <code class="literal">NUL</code>-terminated strings.  The
+<em class="structfield"><code>data</code></em> field points to the beginnning of the
+string, the length of which is given by the
+<em class="structfield"><code>used</code></em> field.  The current size of memory
+allocated is given by the <em class="structfield"><code>length</code></em> field.  It
+is not recommended that the fields of a buffer are manipulated
+directly.  The <em class="structfield"><code>data</code></em> pointer may change when
+the buffer is modified.</p><p>A buffer is created using <a class="xref" href="refbufcr.html#ne_buffer_create">ne_buffer_create</a> or <a class="xref" href="refbufcr.html#ne_buffer_create_sized">ne_buffer_ncreate</a>, and destroyed using <a class="xref" href="refbufdest.html#ne_buffer_destroy">ne_buffer_destroy</a> or <a class="xref" href="refbufdest.html#ne_buffer_finish">ne_buffer_finish</a>.
+The functions <a class="xref" href="refbufapp.html#ne_buffer_append">ne_buffer_append</a>, <a class="xref" href="refbufapp.html#ne_buffer_zappend">ne_buffer_zappend</a> and <a class="xref" href="refbufapp.html#ne_buffer_concat">ne_buffer_concat</a> are
+used to append data to a buffer.</p><p>If the string referenced by the
+<em class="structfield"><code>data</code></em> pointer is modified directly (rather
+than using one of the functions listed above),
+<code class="function">ne_buffer_altered</code> must be called.</p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="refresolve.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ref.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="refbufapp.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">ne_addr_resolve </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> ne_buffer_append</td></tr></table></div></body></html>

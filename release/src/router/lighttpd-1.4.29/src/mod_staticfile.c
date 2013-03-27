@@ -556,7 +556,7 @@ Cdbg(DBE, "set to 403\n\n\n\n\n");
 }
 
 /* this function is called at dlopen() time and inits the callbacks */
-
+#ifndef APP_IPKG
 int mod_staticfile_plugin_init(plugin *p);
 int mod_staticfile_plugin_init(plugin *p) {
 	p->version     = LIGHTTPD_VERSION_ID;
@@ -571,3 +571,19 @@ int mod_staticfile_plugin_init(plugin *p) {
 
 	return 0;
 }
+#else
+int aicloud_mod_staticfile_plugin_init(plugin *p);
+int aicloud_mod_staticfile_plugin_init(plugin *p) {
+	p->version     = LIGHTTPD_VERSION_ID;
+	p->name        = buffer_init_string("staticfile");
+
+	p->init        = mod_staticfile_init;
+	p->handle_subrequest_start = mod_staticfile_subrequest;
+	p->set_defaults  = mod_staticfile_set_defaults;
+	p->cleanup     = mod_staticfile_free;
+
+	p->data        = NULL;
+
+	return 0;
+}
+#endif

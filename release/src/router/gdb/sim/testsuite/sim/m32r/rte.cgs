@@ -1,0 +1,87 @@
+# m32r testcase for rte
+# mach(): m32r m32rx
+
+	.include "testutils.inc"
+
+	start
+
+	.global rte
+rte:
+
+; Test 1: bbpsw = 0, bpsw = 1, psw = 0
+
+	; bbsm = 0, bie = 0, bbcond = 0
+	mvi_h_gr r4, 0
+	mvtc r4, cr8
+
+	; bsm = 1, bie = 1, bcond = 1, sm = 0, ie = 0, cond = 0
+	mvi_h_gr r4, 0xc100
+	mvtc r4, cr0
+
+	; bbpc = 0
+	mvaddr_h_gr r4, 0
+	mvtc r4, bbpc
+
+	; bpc = ret1
+	mvaddr_h_gr r4, ret1
+	mvtc r4, bpc
+
+	rte
+	fail
+
+ret1:
+	; test bbsm = 0, bbie = 0, bbcond = 0
+	mvfc r4, cr8
+	test_h_gr r4, 0
+
+	; test bsm = 0, bie = 0, bcond = 0, sm = 1, ie = 1, cond = 1
+	mvfc r4, cr0
+	test_h_gr r4, 0xc1
+
+	; test bbpc = 0
+	mvfc r4, bbpc
+	test_h_gr r4, 0
+
+	; test bpc = 0
+	mvfc r4, bpc
+	test_h_gr r4, 0
+
+; Test 2: bbpsw = 1, bpsw = 0, psw = 1
+
+	; bbsm = 1, bie = 1, bbcond = 1
+	mvi_h_gr r4, 0xc1
+	mvtc r4, cr8
+
+	; bsm = 0, bie = 0, bcond = 0, sm = 1, ie = 1, cond = 1
+	mvi_h_gr r4, 0xc1
+	mvtc r4, cr0
+
+	; bbpc = 42
+	mvaddr_h_gr r4, 42
+	mvtc r4, bbpc
+
+	; bpc = ret2 + 2
+	mvaddr_h_gr r4, ret2 + 2
+	mvtc r4, bpc
+
+	rte
+	fail
+
+ret2:
+	; test bbsm = 1, bbie = 1, bbcond = 1
+	mvfc r4, cr8
+	test_h_gr r4, 0xc1
+
+	; test bsm = 1, bie = 1, bcond = 1, sm = 0, ie = 0, cond = 0
+	mvfc r4, cr0
+	test_h_gr r4, 0xc100
+
+	; test bbpc = 42
+	mvfc r4, bbpc
+	test_h_gr r4, 42
+
+	; test bpc = 42
+	mvfc r4, bpc
+	test_h_gr r4, 42
+
+	pass

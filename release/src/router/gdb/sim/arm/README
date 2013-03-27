@@ -1,0 +1,27 @@
+
+This directory contains the standard release of the ARMulator from
+Advanced RISC Machines, and was ftp'd from.
+
+ftp.cl.cam.ac.uk:/arm/gnu
+
+It likes to use TCP/IP between the simulator and the host, which is
+nice, but is a pain to use under anything non-unix.
+
+I've added created a new Makefile.in (the original in Makefile.orig)
+to build a version of the simulator without the TCP/IP stuff, and a
+wrapper.c to link directly into gdb and the run command.
+
+It should be possible (barring major changes in the layout of
+the armulator) to upgrade the simulator by copying all the files
+out of a release into this directory and renaming the Makefile.
+
+(Except that I changed armos.c to work more simply with our
+simulator rigs)
+
+Steve
+
+sac@cygnus.com
+
+Mon May 15 12:03:28 PDT 1995
+
+

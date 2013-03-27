@@ -11,7 +11,11 @@
 
 #if defined(HAVE_LIBXML_H) && defined(HAVE_SQLITE3_H) && defined(HAVE_UUID_UUID_H)
 #define USE_LOCKS
+
+#ifndef EMBEDDED_EANBLE
 #include <uuid/uuid.h>
+#endif
+
 #endif
 
 #include <unistd.h>

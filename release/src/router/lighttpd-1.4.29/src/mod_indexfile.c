@@ -204,7 +204,7 @@ URIHANDLER_FUNC(mod_indexfile_subrequest) {
 }
 
 /* this function is called at dlopen() time and inits the callbacks */
-
+#ifndef APP_IPKG
 int mod_indexfile_plugin_init(plugin *p);
 int mod_indexfile_plugin_init(plugin *p) {
 	p->version     = LIGHTTPD_VERSION_ID;
@@ -219,3 +219,19 @@ int mod_indexfile_plugin_init(plugin *p) {
 
 	return 0;
 }
+#else
+int aicloud_mod_indexfile_plugin_init(plugin *p);
+int aicloud_mod_indexfile_plugin_init(plugin *p) {
+	p->version     = LIGHTTPD_VERSION_ID;
+	p->name        = buffer_init_string("indexfile");
+
+	p->init        = mod_indexfile_init;
+	p->handle_subrequest_start = mod_indexfile_subrequest;
+	p->set_defaults  = mod_indexfile_set_defaults;
+	p->cleanup     = mod_indexfile_free;
+
+	p->data        = NULL;
+
+	return 0;
+}
+#endif

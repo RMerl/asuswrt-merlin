@@ -42,26 +42,38 @@
 #include <net/if_arp.h>
 #include <signal.h>
 
-int check_process_exist(int pid){
-	char path[32];
+static int
+handle_special_char_for_pppd(char *buf, size_t buf_size, char *src)
+{
+	const char special_chars[] = "'\\";
+	char *p, *q;
+	size_t len;
 
-	memset(path, 0, 32);
-	sprintf(path, "/proc/%d", pid);
+	if (!buf || !src || buf_size <= 1)
+		return -1;
 
-	return check_if_dir_exist(path);
+	for (p = src, q = buf, len = buf_size; *p != '\0' && len > 1; ++p, --len) {
+		if (strchr(special_chars, *p))
+			*q++ = '\\';
+
+		*q++ = *p;
+	}
+
+	*q++ = '\0';
+
+	return 0;
 }
 
-int start_pppd(int unit)
+int
+start_pppd(int unit)
 {
-	int ret;
-	
 	FILE *fp;
 	char options[80];
 	char *pppd_argv[] = { "/usr/sbin/pppd", "file", options, NULL};
-	char *l2tpd_argv[] = { "/usr/sbin/l2tpd", NULL};
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
+	char buf[256];	/* although maximum length of pppoe_username/pppoe_passwd is 64. pppd accepts up to 256 characters. */
 	mode_t mask;
-	int pid;
+	int ret = 0;
 
 _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 
@@ -82,13 +94,12 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 	/* do not authenticate peer and do not use eap */
 	fprintf(fp, "noauth\n");
 	fprintf(fp, "refuse-eap\n");
-	fprintf(fp, "user '%s'\n",
-		nvram_safe_get(strcat_r(prefix, "pppoe_username", tmp)));
-	fprintf(fp, "password '%s'\n",
-		nvram_safe_get(strcat_r(prefix, "pppoe_passwd", tmp)));
+	handle_special_char_for_pppd(buf, sizeof(buf), nvram_safe_get(strcat_r(prefix, "pppoe_username", tmp)));
+	fprintf(fp, "user '%s'\n", buf);
+	handle_special_char_for_pppd(buf, sizeof(buf), nvram_safe_get(strcat_r(prefix, "pppoe_passwd", tmp)));
+	fprintf(fp, "password '%s'\n", buf);
 
-	if (nvram_match(strcat_r(prefix, "proto", tmp), "pptp"))
-	{
+	if (nvram_match(strcat_r(prefix, "proto", tmp), "pptp")) {
 		fprintf(fp, "plugin pptp.so\n");
 		fprintf(fp, "pptp_server '%s'\n",
 			nvram_invmatch(strcat_r(prefix, "heartbeat_x", tmp), "") ?
@@ -100,96 +111,78 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 			fprintf(fp, "nomppe nomppc\n");
 		} else
 		if (nvram_match(strcat_r(prefix, "pptp_options_x", tmp), "+mppe-40")) {
+			fprintf(fp, "require-mppe\n");
 			fprintf(fp, "require-mppe-40\n");
 		} else
 		if (nvram_match(strcat_r(prefix, "pptp_options_x", tmp), "+mppe-56")) {
 			fprintf(fp, "nomppe-40\n"
+				    "require-mppe\n"
 				    "require-mppe-56\n");
 		} else
 		if (nvram_match(strcat_r(prefix, "pptp_options_x", tmp), "+mppe-128")) {
 			fprintf(fp, "nomppe-40\n"
 				    "nomppe-56\n"
+				    "require-mppe\n"
 				    "require-mppe-128\n");
 		}
 	} else {
 		fprintf(fp, "nomppe nomppc\n");
 	}
 
-	if (nvram_match(strcat_r(prefix, "proto", tmp), "pppoe"))
-	{
-#ifdef RTCONFIG_DSL	
-		FILE* fp_dsl_mac;
-		char buf_mac[32];
-		int trp_cnt;
-		int rm_cnt;
-#endif
-		
-		fprintf(fp, "plugin rp-pppoe.so");
+	if (nvram_match(strcat_r(prefix, "proto", tmp), "pppoe")) {
+		fprintf(fp, "plugin rp-pppoe.so nic-%s\n",
+			nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
 
 		if (nvram_invmatch(strcat_r(prefix, "pppoe_service", tmp), "")) {
-			fprintf(fp, " rp_pppoe_service '%s'",
+			fprintf(fp, "rp_pppoe_service '%s'\n",
 				nvram_safe_get(strcat_r(prefix, "pppoe_service", tmp)));
 		}
 
 		if (nvram_invmatch(strcat_r(prefix, "pppoe_ac", tmp), "")) {
-			fprintf(fp, " rp_pppoe_ac '%s'",
+			fprintf(fp, "rp_pppoe_ac '%s'\n",
 				nvram_safe_get(strcat_r(prefix, "pppoe_ac", tmp)));
 		}
 
-		fprintf(fp, " nic-%s\n", nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
+#ifdef RTCONFIG_DSL
+		if (nvram_match("dsl0_proto", "pppoa")) {
+			FILE *fp_dsl_mac;
+			char *dsl_mac = NULL;
+			int timeout = 10; /* wait up to 10 seconds */
+
+			while (timeout--) {
+				fp_dsl_mac = fopen("/tmp/adsl/tc_mac.txt","r");
+				if (fp_dsl_mac != NULL) {
+					dsl_mac = fgets(tmp, sizeof(tmp), fp_dsl_mac);
+					dsl_mac = strsep(&dsl_mac, "\r\n");
+					fclose(fp_dsl_mac);
+					break;
+				}
+				usleep(1000*1000);
+			}
+
+			fprintf(fp, "rp_pppoe_sess %d:%s\n", 154,
+				(dsl_mac && *dsl_mac) ? dsl_mac : "00:11:22:33:44:55");
+		}
+#endif
 
 		fprintf(fp, "mru %s mtu %s\n",
 			nvram_safe_get(strcat_r(prefix, "pppoe_mru", tmp)),
 			nvram_safe_get(strcat_r(prefix, "pppoe_mtu", tmp)));
-
-
-	// wait 10 seconds for DSL MAC address file ready
-#ifdef RTCONFIG_DSL
-		if (nvram_match("dsl0_proto", "pppoa"))
-		{
-			strcpy(buf_mac, "00:11:22:33:44:55");
-			for (trp_cnt = 0; trp_cnt < 10; trp_cnt++)
-			{
-				fp_dsl_mac = fopen("/tmp/adsl/tc_mac.txt","r");
-				if (fp_dsl_mac != NULL)
-				{
-					fgets(buf_mac,sizeof(buf_mac),fp_dsl_mac);
-					fclose(fp_dsl_mac);					 
-					break;
-				}
-				usleep(1000*1000);				
-			}
-			// remove cr lf in buf_mac
-            for (rm_cnt = 0; rm_cnt < sizeof(buf_mac); rm_cnt++)
-            {
-            	if (buf_mac[rm_cnt] == 0) break;
-            	if (buf_mac[rm_cnt] == 0x0a || buf_mac[rm_cnt] == 0x0d)
-            	{
-            		buf_mac[rm_cnt]=0;
-            		break;
-        		}
-            }			
-			fprintf(fp, "rp_pppoe_sess %d:%s\n", 154, buf_mac);									
-		}
-#endif		
-			
 	}
 
-	if (nvram_invmatch(strcat_r(prefix, "proto", tmp), "l2tp")){
+	if (nvram_invmatch(strcat_r(prefix, "proto", tmp), "l2tp")) {
 		ret = nvram_get_int(strcat_r(prefix, "pppoe_idletime", tmp));
-		if (ret && nvram_match(strcat_r(prefix, "pppoe_demand", tmp), "1"))
-		{
+		if (ret && nvram_get_int(strcat_r(prefix, "pppoe_demand", tmp))) {
 			fprintf(fp, "idle %d ", ret);
 			if (nvram_invmatch(strcat_r(prefix, "pppoe_txonly_x", tmp), "0"))
 				fprintf(fp, "tx_only ");
 			fprintf(fp, "demand\n");
 		}
-
 		fprintf(fp, "persist\n");
 	}
 
-	fprintf(fp, "holdoff %s\n", nvram_invmatch(strcat_r(prefix, "pppoe_holdoff", tmp), "")?nvram_safe_get(tmp):"10");	// pppd re-call-time(s)
-	fprintf(fp, "maxfail 0\n");
+	fprintf(fp, "holdoff %d\n", nvram_get_int(strcat_r(prefix, "pppoe_holdoff", tmp)) ? : 10);
+	fprintf(fp, "maxfail %d\n", nvram_get_int(strcat_r(prefix, "pppoe_maxfail", tmp)));
 
 	if (nvram_invmatch(strcat_r(prefix, "dnsenable_x", tmp), "0"))
 		fprintf(fp, "usepeerdns\n");
@@ -208,6 +201,11 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 	/* echo failures */
 	fprintf(fp, "lcp-echo-interval 6\n");
 	fprintf(fp, "lcp-echo-failure 10\n");
+
+	/* pptp has Echo Request/Reply, l2tp has Hello packets */
+	if (nvram_match(strcat_r(prefix, "proto", tmp), "pptp") ||
+	    nvram_match(strcat_r(prefix, "proto", tmp), "l2tp"))
+		fprintf(fp, "lcp-echo-adaptive\n");
 
 	fprintf(fp, "unit %d\n", unit);
 	fprintf(fp, "linkname wan%d\n", unit);
@@ -228,6 +226,10 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 
 	fclose(fp);
 
+	/* shut down previous instance if any */
+	stop_pppd(unit);
+	nvram_set(strcat_r(prefix, "pppoe_ifname", tmp), "");
+
 	if (nvram_match(strcat_r(prefix, "proto", tmp), "l2tp"))
 	{
 		if (!(fp = fopen("/tmp/l2tp.conf", "w"))) {
@@ -247,32 +249,29 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 			"hostname %s\n"
 			"lac-handler sync-pppd\n"
 			"persist yes\n"
-			"maxfail %s\n"
-			"holdoff %s\n"
+			"maxfail %d\n"
+			"holdoff %d\n"
 			"hide-avps no\n"
 			"section cmd\n\n",
 			options,
                         nvram_invmatch(strcat_r(prefix, "heartbeat_x", tmp), "") ?
                                 nvram_safe_get(strcat_r(prefix, "heartbeat_x", tmp)) :
                                 nvram_safe_get(strcat_r(prefix, "gateway_x", tmp)),
-			nvram_invmatch(strcat_r(prefix, "hostname", tmp), "") ?	// ham 0509
+			nvram_invmatch(strcat_r(prefix, "hostname", tmp), "") ?
 				nvram_safe_get(strcat_r(prefix, "hostname", tmp)) : "localhost",
-			nvram_invmatch(strcat_r(prefix, "pppoe_maxfail", tmp), "") ?
-				nvram_safe_get(strcat_r(prefix, "pppoe_maxfail", tmp)) : "32767",
-			nvram_invmatch(strcat_r(prefix, "pppoe_holdoff", tmp), "") ?
-				nvram_safe_get(strcat_r(prefix, "pppoe_holdoff", tmp)) : "10");
+			nvram_get_int(strcat_r(prefix, "pppoe_maxfail", tmp))  ? : 32767,
+			nvram_get_int(strcat_r(prefix, "pppoe_holdoff", tmp)) ? : 10);
 
 		fclose(fp);
 
 		/* launch l2tp */
-		ret = _eval(l2tpd_argv, NULL, 0, &pid);
+		eval("/usr/sbin/l2tpd");
 
-		int retry = 3;
-		while(!pids("l2tpd") && retry--){
-			_dprintf("%s: wait l2tpd up at %d seconds...\n", __FUNCTION__, retry);
-			sleep(1);
-		}
-		sleep(1); // when the pid of l2tpd is existed, also need to wait a more second.
+		ret = 3;
+		do {
+			_dprintf("%s: wait l2tpd up at %d seconds...\n", __FUNCTION__, ret);
+			usleep(1000*1000);
+		} while (!pids("l2tpd") && ret--);
 
 		/* start-session */
 		ret = eval("/usr/sbin/l2tp-control", "start-session 0.0.0.0");
@@ -280,53 +279,70 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 		/* pppd sync nodetach noaccomp nobsdcomp nodeflate */
 		/* nopcomp novj novjccomp file /tmp/ppp/options.l2tp */
 
-	} else{
-		char pid_file[256], *value;
-		int orig_pid;
-		int wait_time = 0;
-
-		memset(pid_file, 0, 256);
-		snprintf(pid_file, 256, "/var/run/ppp-wan%d.pid", unit);
-
-		if((value = file2str(pid_file)) != NULL && (orig_pid = atoi(value)) > 1){
-_dprintf("%s: kill pppd(%d).\n", __FUNCTION__, orig_pid);
-			kill(orig_pid, SIGHUP);
-			sleep(1);
-			while(check_process_exist(orig_pid) && wait_time < MAX_WAIT_FILE){
-_dprintf("%s: kill pppd(%d).\n", __FUNCTION__, orig_pid);
-				++wait_time;
-				kill(orig_pid, SIGTERM);
-				sleep(1);
-			}
-
-			if(check_process_exist(orig_pid)){
-				kill(orig_pid, SIGKILL);
-				sleep(1);
-			}
-		}
-		if(value != NULL)
-			free(value);
-
+	} else
 		ret = _eval(pppd_argv, NULL, 0, NULL);
-	}
-	
-	return 0;
+
+	return ret;
 }
 
-void stop_pppoe_relay()
-{	
-	killall_tk("pppoe-relay");
-}
-
-void start_pppoe_relay(char *wan_if)
+void
+stop_pppd(int unit)
 {
-	if (nvram_match("fw_pt_pppoerelay", "1"))
-	{
-		char *pppoerelay_argv[] = {"/usr/sbin/pppoe-relay", "-C", "br0", "-S", wan_if, "-F", NULL};
-		int ret;
-		pid_t pid;
+	char pidfile[sizeof("/var/run/ppp-wanXXXXXXXXXX.pid")];
 
-		killall_tk("pppoe-relay");
-		ret = _eval(pppoerelay_argv, NULL, 0, &pid);
+	snprintf(pidfile, sizeof(pidfile), "/var/run/ppp-wan%d.pid", unit);
+	if (kill_pidfile_s(pidfile, SIGHUP) == 0 &&
+	    kill_pidfile_s(pidfile, SIGTERM) == 0) {
+		usleep(1000*1000);
+		kill_pidfile_tk(pidfile);
 	}
+}
+
+int
+start_demand_ppp(int unit, int wait)
+{
+	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
+	char *ping_argv[] = { "ping", "-c1", "203.69.138.19", NULL };
+	char *value;
+	pid_t pid;
+
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+
+	value = nvram_safe_get(strcat_r(prefix, "proto", tmp));
+	if (strcmp(value, "pppoe") != 0 && strcmp(value, "pptp") != 0)
+		return -1;
+	if (nvram_get_int(strcat_r(prefix, "pppoe_demand", tmp)) != 2)
+		return -1;
+
+	value = nvram_safe_get(strcat_r(prefix, "gateway", tmp));
+	if (inet_addr_(value) != INADDR_ANY)
+		ping_argv[2] = value;
+
+	_dprintf("%s: %s\n", __FUNCTION__, "trigger the PPP connection via %s", value);
+	logmessage("WAN Connection", "trigger the PPP connection via %s", value);
+
+	return _eval(ping_argv, NULL, 0, wait ? NULL : &pid);
+}
+
+int
+start_pppoe_relay(char *wan_if)
+{
+	char *pppoerelay_argv[] = {"/usr/sbin/pppoe-relay",
+		"-C", "br0",
+		"-S", wan_if,
+		"-F", NULL};
+	pid_t pid;
+	int ret = 0;
+
+	killall_tk("pppoe-relay");
+	if (nvram_get_int("fw_pt_pppoerelay"))
+		ret = _eval(pppoerelay_argv, NULL, 0, &pid);
+
+	return ret;
+}
+
+void
+stop_pppoe_relay(void)
+{
+	killall_tk("pppoe-relay");
 }

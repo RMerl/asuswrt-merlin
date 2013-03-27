@@ -1,0 +1,22 @@
+# sh testcase for bsrf $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+bsrf:
+	mov #4, r0
+	bsrf r0
+slot:
+	nop
+bad:
+	fail
+	fail
+okay:
+	pass
+alsobad:
+	fail
+	fail

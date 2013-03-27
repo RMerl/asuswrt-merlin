@@ -19,12 +19,15 @@ int nvram_is_ddns_enable();
 
 char* nvram_get_ddns_server_name();
 char* nvram_get_ddns_host_name();
+char* nvram_get_ddns_host_name2();
 int nvram_get_st_samba_mode();
 char* nvram_get_http_username();
 char* nvram_get_http_passwd();
 char* nvram_get_computer_name();
 char* nvram_get_webdavaidisk();
+int nvram_set_webdavaidisk(const char* enable);
 char* nvram_get_webdavproxy();
+int nvram_set_webdavproxy(const char* enable);
 
 char* nvram_get_router_mac();
 char* nvram_get_firmware_version();
@@ -34,8 +37,11 @@ char* nvram_get_st_webdav_mode();
 char* nvram_get_webdav_http_port();
 char* nvram_get_webdav_https_port();
 
+char* nvram_get_http_enable();
 char* nvram_get_misc_http_x();
-char* nvram_get_msie_http_port();
+char* nvram_get_misc_http_port();
+char* nvram_get_misc_https_port();
+
 
 char* nvram_get_enable_webdav_captcha();
 
@@ -52,6 +58,13 @@ char* nvram_get_webdav_last_login_info();
 int nvram_set_webdav_last_login_info(const char* last_login_info);
 char* nvram_get_latest_version();
 int nvram_get_webs_state_error();
+
+char* nvram_get_share_link_param();
+char* nvram_get_time_zone();
+int nvram_set_share_link_result(const char* result);
+int nvram_wan_primary_ifunit();
+char* nvram_get_wan_ip();
+
 
 
 

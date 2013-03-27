@@ -1,0 +1,179 @@
+# frv testcase for nfadds $GRi,$GRj,$GRk
+# mach: fr500 fr550 frv
+
+	.include "testutils.inc"
+
+	float_constants
+	start
+	load_float_constants
+
+	.global nfadds
+nfadds:
+	nfadds      	fr16,fr0,fr1
+	test_fr_fr	fr1,fr0
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr16,fr4,fr1
+	test_fr_fr	fr1,fr4
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr16,fr8,fr1
+	test_fr_fr	fr1,fr8
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr16,fr12,fr1
+	test_fr_fr	fr1,fr12
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr16,fr16,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr16,fr20,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr16,fr24,fr1
+	test_fr_fr	fr1,fr24
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr16,fr28,fr1
+	test_fr_fr	fr1,fr28
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr16,fr32,fr1
+	test_fr_fr	fr1,fr32
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr16,fr36,fr1
+	test_fr_fr	fr1,fr36
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr16,fr40,fr1
+	test_fr_fr	fr1,fr40
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr16,fr44,fr1
+	test_fr_fr	fr1,fr44
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr16,fr48,fr1
+	test_fr_fr	fr1,fr48
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr16,fr52,fr1
+	test_fr_fr	fr1,fr52
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfadds      	fr20,fr0,fr1
+	test_fr_fr	fr1,fr0
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr20,fr4,fr1
+	test_fr_fr	fr1,fr4
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr20,fr8,fr1
+	test_fr_fr	fr1,fr8
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr20,fr12,fr1
+	test_fr_fr	fr1,fr12
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr20,fr16,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr20,fr20,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr20,fr24,fr1
+	test_fr_fr	fr1,fr24
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr20,fr28,fr1
+	test_fr_fr	fr1,fr28
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr20,fr32,fr1
+	test_fr_fr	fr1,fr32
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr20,fr36,fr1
+	test_fr_fr	fr1,fr36
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr20,fr40,fr1
+	test_fr_fr	fr1,fr40
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr20,fr44,fr1
+	test_fr_fr	fr1,fr44
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr20,fr48,fr1
+	test_fr_fr	fr1,fr48
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr20,fr52,fr1
+	test_fr_fr	fr1,fr52
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfadds      	fr8,fr28,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr12,fr24,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr24,fr12,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+	nfadds      	fr28,fr8,fr1
+	test_fr_fr	fr1,fr16
+	test_fr_fr	fr1,fr20
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfadds      	fr36,fr40,fr1
+	test_fr_fr	fr1,fr44
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	; try to cause exceptions
+	nfadds      	fr48,fr28,fr1
+;	test_fr_fr	fr1,fr44
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfadds      	fr52,fr28,fr1
+;	test_fr_fr	fr1,fr44
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfadds      	fr56,fr28,fr1
+;	test_fr_fr	fr1,fr44
+	test_spr_immed	0,fner1
+	test_spr_immed	0,fner0
+
+	nfadds      	fr60,fr28,fr1
+;	test_fr_fr	fr1,fr44
+	test_spr_immed	2,fner1
+	test_spr_immed	0,fner0
+
+	pass
+
+

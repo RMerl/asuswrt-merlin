@@ -1,0 +1,95 @@
+I. About the distribution tables
+
+The table used for "synthesizing" the distribution is essentially a scaled,
+translated, inverse to the cumulative distribution function.
+
+Here's how to think about it: Let F() be the cumulative distribution
+function for a probability distribution X.  We'll assume we've scaled
+things so that X has mean 0 and standard deviation 1, though that's not
+so important here.  Then:
+
+	F(x) = P(X <= x) = \int_{-inf}^x f
+
+where f is the probability density function.
+
+F is monotonically increasing, so has an inverse function G, with range
+0 to 1.  Here, G(t) = the x such that P(X <= x) = t.  (In general, G may
+have singularities if X has point masses, i.e., points x such that
+P(X = x) > 0.)
+
+Now we create a tabular representation of G as follows:  Choose some table
+size N, and for the ith entry, put in G(i/N).  Let's call this table T.
+
+The claim now is, I can create a (discrete) random variable Y whose
+distribution has the same approximate "shape" as X, simply by letting
+Y = T(U), where U is a discrete uniform random variable with range 1 to N.
+To see this, it's enough to show that Y's cumulative distribution function,
+(let's call it H), is a discrete approximation to F.  But
+
+	H(x) = P(Y <= x)
+	     = (# of entries in T <= x) / N   -- as Y chosen uniformly from T
+	     = i/N, where i is the largest integer such that G(i/N) <= x
+	     = i/N, where i is the largest integer such that i/N <= F(x)
+	     		-- since G and F are inverse functions (and F is
+	     		   increasing)
+	     = floor(N*F(x))/N
+
+as desired.
+
+II. How to create distribution tables (in theory)
+
+How can we create this table in practice? In some cases, F may have a
+simple expression which allows evaluating its inverse directly.  The
+pareto distribution is one example of this.  In other cases, and
+especially for matching an experimentally observed distribution, it's
+easiest simply to create a table for F and "invert" it.  Here, we give
+a concrete example, namely how the new "experimental" distribution was
+created.
+
+1. Collect enough data points to characterize the distribution.  Here, I
+collected 25,000 "ping" roundtrip times to a "distant" point (time.nist.gov).
+That's far more data than is really necessary, but it was fairly painless to
+collect it, so...
+
+2. Normalize the data so that it has mean 0 and standard deviation 1.
+
+3. Determine the cumulative distribution.  The code I wrote creates a table
+covering the range -10 to +10, with granularity .00005.  Obviously, this
+is absurdly over-precise, but since it's a one-time only computation, I
+figured it hardly mattered.
+
+4. Invert the table: for each table entry F(x) = y, make the y*TABLESIZE
+(here, 4096) entry be x*TABLEFACTOR (here, 8192).  This creates a table
+for the ("normalized") inverse of size TABLESIZE, covering its domain 0
+to 1 with granularity 1/TABLESIZE.  Note that even with the granularity
+used in creating the table for F, it's possible not all the entries in
+the table for G will be filled in.  So, make a pass through the
+inverse's table, filling in any missing entries by linear interpolation.
+
+III. How to create distribution tables (in practice)
+
+If you want to do all this yourself, I've provided several tools to help:
+
+1. maketable does the steps 2-4 above, and then generates the appropriate
+header file.  So if you have your own time distribution, you can generate
+the header simply by:
+
+	maketable < time.values > header.h
+
+2. As explained in the other README file, the somewhat sleazy way I have
+of generating correlated values needs correction.  You can generate your
+own correction tables by compiling makesigtable and makemutable with
+your header file.  Check the Makefile to see how this is done.
+
+3. Warning: maketable, makesigtable and especially makemutable do
+enormous amounts of floating point arithmetic.  Don't try running
+these on an old 486.  (NIST Net itself will run fine on such a
+system, since in operation, it just needs to do a few simple integral
+calculations.  But getting there takes some work.)
+
+4. The tables produced are all normalized for mean 0 and standard
+deviation 1.  How do you know what values to use for real?  Here, I've
+provided a simple "stats" utility.  Give it a series of floating point
+values, and it will return their mean (mu), standard deviation (sigma),
+and correlation coefficient (rho).  You can then plug these values
+directly into NIST Net.

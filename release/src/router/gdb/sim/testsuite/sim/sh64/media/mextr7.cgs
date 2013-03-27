@@ -1,0 +1,67 @@
+# sh testcase for mextr7 $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	# Put a distinguised bit pattern in R0.
+	movi 0x1020, r0
+	shlli r0, 8, r0
+	ori r0, 0x30, r0
+	shlli r0, 8, r0
+	ori r0, 0x40, r0
+	shlli r0, 8, r0
+	ori r0, 0x50, r0
+	shlli r0, 8, r0
+	ori r0, 0x60, r0
+	shlli r0, 8, r0
+	ori r0, 0x70, r0
+	shlli r0, 8, r0
+	ori r0, 0x80, r0
+
+	# Put another distinguished bit pattern in R1.
+	movi 0x1525, r1
+	shlli r1, 8, r1
+	ori r1, 0x35, r1
+	shlli r1, 8, r1
+	ori r1, 0x45, r1
+	shlli r1, 8, r1
+	ori r1, 0x55, r1
+	shlli r1, 8, r1
+	ori r1, 0x65, r1
+	shlli r1, 8, r1
+	ori r1, 0x75, r1
+	shlli r1, 8, r1
+	ori r1, 0x85, r1
+ 
+mextr7:
+	mextr7 r0, r1, r2
+
+check:
+        # Put the result in R3.
+        movi 0x8510, r3
+        shlli r3, 8, r3
+        ori r3, 0x20, r3
+        shlli r3, 8, r3
+        ori r3, 0x30, r3
+        shlli r3, 8, r3
+        ori r3, 0x40, r3
+        shlli r3, 8, r3
+        ori r3, 0x50, r3
+        shlli r3, 8, r3
+        ori r3, 0x60, r3
+        shlli r3, 8, r3
+        ori r3, 0x70, r3
+
+        pta wrong, tr0
+        bne r2, r3, tr0
+
+okay:
+	pass
+
+wrong:
+	fail

@@ -1,0 +1,114 @@
+    <refentry id="refauth">
+
+      <refmeta>
+	<refentrytitle>ne_set_server_auth</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_set_server_auth">ne_set_server_auth</refname>
+	<refname id="ne_set_proxy_auth">ne_set_proxy_auth</refname>
+	<refname id="ne_forget_auth">ne_forget_auth</refname>
+	<refpurpose>register authentication callbacks</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_auth.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>typedef int (*<function>ne_auth_creds</function>)</funcdef>
+	    <paramdef>void *<parameter>userdata</parameter></paramdef>
+	    <paramdef>const char *<parameter>realm</parameter></paramdef>
+	    <paramdef>int <parameter>attempt</parameter></paramdef>
+	    <paramdef>char *<parameter>username</parameter></paramdef>
+	    <paramdef>char *<parameter>password</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_set_server_auth</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	    <paramdef>ne_auth_creds <parameter>callback</parameter></paramdef>
+	    <paramdef>void *<parameter>userdata</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_set_proxy_auth</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	    <paramdef>ne_auth_creds <parameter>callback</parameter></paramdef>
+	    <paramdef>void *<parameter>userdata</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_forget_auth</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>The <type>ne_auth_creds</type> function type defines a
+callback which is invoked when a server or proxy server requires user
+authentication for a particular request.  The
+<parameter>realm</parameter> string is supplied by the server. <!--
+FIXME --> The <parameter>attempt</parameter> is a counter giving the
+number of times the request has been retried with different
+authentication credentials.  The first time the callback is invoked
+for a particular request, <parameter>attempt</parameter> will be zero.</para>
+
+	<para>To retry the request using new authentication
+credentials, the callback should return zero, and the
+<parameter>username</parameter> and <parameter>password</parameter>
+buffers must contain &nul;-terminated strings.  The
+<literal>NE_ABUFSIZ</literal> constant gives the size of these
+buffers.</para>
+
+	<tip>
+	  <para>If you only wish to allow the user one attempt to enter
+credentials, use the value of the <parameter>attempt</parameter>
+parameter as the return value of the callback.</para>
+	</tip>
+
+	<para>To abort the request, the callback should return a
+non-zero value; in which case the contents of the
+<parameter>username</parameter> and <parameter>password</parameter>
+buffers are ignored.</para>
+
+	<para>The <function>ne_forget_auth</function> function can be
+used to discard the cached authentication credentials.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Examples</title>
+
+	<programlisting>
+/* Function which prompts for a line of user input: */
+extern char *prompt_for(const char *prompt);
+
+static int
+my_auth(void *userdata, const char *realm, int attempts,
+        char *username, char *password)
+{
+   strncpy(username, prompt_for("Username: "), NE_ABUFSIZ);
+   strncpy(password, prompt_for("Password: "), NE_ABUFSIZ);
+   return attempts;
+}
+
+int main(...)
+{
+   &egsess;
+
+   ne_set_server_auth(sess, my_auth, NULL);
+
+   /* ... */
+}</programlisting>
+      </refsect1>
+
+    </refentry>

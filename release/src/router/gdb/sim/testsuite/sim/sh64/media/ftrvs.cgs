@@ -1,0 +1,67 @@
+# sh testcase for ftrv.s $mtrxg, $fvh, $fvf -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	.macro _load val, fpreg
+	# This macro clobbers r0.
+	movi \val, r0
+	fmov.ls r0, \fpreg 
+	float.ls \fpreg, \fpreg
+	.endm
+
+	start
+
+init:
+	pta wrong, tr0
+
+	_load 1,  fr0
+	_load 2,  fr4
+	_load 3,  fr8
+	_load 4,  fr12
+	_load 5,  fr1
+	_load 6,  fr5
+	_load 7,  fr9
+	_load 8,  fr13
+	_load 9,  fr2
+	_load 10, fr6
+	_load 11, fr10
+	_load 12, fr14
+	_load 13, fr3
+	_load 14, fr7
+	_load 15, fr11
+	_load 16, fr15
+
+	_load 1, fr16
+	_load 2, fr17
+	_load 3, fr18
+	_load 4, fr19
+
+ftrvs:
+	ftrv.s mtrx0, fv16, fv20
+
+check:
+	_load 30, fr0
+	_load 70, fr1
+	_load 110, fr2
+	_load 150, fr3
+
+	fcmpeq.s fr0, fr20, r0
+	bnei r0, 1, tr0
+	
+	fcmpeq.s fr1, fr21, r0
+	bnei r0, 1, tr0
+
+	fcmpeq.s fr2, fr22, r0
+	bnei r0, 1, tr0
+
+	fcmpeq.s fr3, fr23, r0
+	bnei r0, 1, tr0
+	
+okay:
+	pass
+
+wrong:
+	fail

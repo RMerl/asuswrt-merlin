@@ -1,0 +1,55 @@
+# frv testcase for cjmpl @($GRi,$GRj),$CCi,$cond
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global cjmpl
+cjmpl:
+	set_spr_immed	0x1b1b,cccr
+
+	set_spr_immed	0,lr
+	set_gr_addr	ok1,gr8
+	set_gr_immed	0,gr9
+	cjmpl		@(gr8,gr9),cc0,1
+	fail
+ok1:
+	test_spr_immed	0,lr
+
+	set_spr_immed	0,lr
+	set_gr_addr	bad,gr8
+	set_gr_immed	0,gr9
+	cjmpl		@(gr8,gr9),cc0,0
+	test_spr_immed	0,lr
+
+	set_spr_immed	0,lr
+	set_gr_addr	ok4,gr8
+	set_gr_immed	3,gr9			; target gets aligned down
+	cjmpl		@(gr8,gr9),cc1,0
+	fail
+ok4:
+	test_spr_immed	0,lr
+
+	set_spr_immed	0,lr
+	set_gr_addr	bad,gr8
+	set_gr_immed	0,gr9
+	cjmpl		@(gr8,gr9),cc1,1
+	test_spr_immed	0,lr
+
+	set_spr_immed	0,lr
+	set_gr_addr	bad,gr8
+	set_gr_immed	0,gr9
+	cjmpl		@(gr8,gr9),cc2,0
+	test_spr_immed	0,lr
+
+	set_spr_immed	0,lr
+	set_gr_addr	bad,gr8
+	set_gr_immed	0,gr9
+	cjmpl		@(gr8,gr9),cc3,1
+	test_spr_immed	0,lr
+
+	pass
+bad:
+	fail
+

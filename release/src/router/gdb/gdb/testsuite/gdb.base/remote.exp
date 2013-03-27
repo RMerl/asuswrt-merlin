@@ -1,0 +1,180 @@
+# Copyright 1999, 2001, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+
+# test only on a remote target board
+if {! [is_remote target]} {
+    return
+}
+
+set testfile "remote"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+gdb_start
+
+set result [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}]
+if {$result != "" } then {
+    untested remote.exp
+    return -1
+}
+
+
+#
+# Part ONE: Check the down load commands
+#
+
+gdb_test "show remote memory-write-packet-size" \
+	"The memory-write-packet-size is 0. Packets are limited to \[0-9\]+ bytes." \
+	"write-packet default"
+
+gdb_test "set remote memory-write-packet-size" \
+	"Argument required .integer, `fixed' or `limited'.\." \
+	"set write-packet - NULL"
+
+gdb_test "set remote memory-write-packet-size 20" ""
+gdb_test "show remote memory-write-packet-size" \
+	"The memory-write-packet-size is 20. Packets are limited to 20 bytes." \
+	"set write-packet - small"
+
+gdb_test "set remote memory-write-packet-size 1" ""
+gdb_test "show remote memory-write-packet-size" \
+	"The memory-write-packet-size is 1. Packets are limited to 20 bytes." \
+	"set write-packet - very-small"
+
+#
+# Part TWO: Check the download behavour
+#
+
+proc gdb_load_timed {executable class writesize} {
+    global test gdb_prompt
+    set test "timed download `[file tail $executable]' - $class, $writesize"
+
+    if {$writesize != ""} then {
+	gdb_test "set remote memory-write-packet-size $writesize" \
+		"" "$test - set packet size"
+
+	send_gdb "set remote memory-write-packet-size $class\n"
+	gdb_expect 5 {
+	    -re ".*Change the packet size.*$" {
+		send_gdb "y\n"
+		gdb_expect 5 {
+		    -re ".*$gdb_prompt $" {
+			pass "$test - set write size class"
+		    }
+		    timeout {
+			fail "$test - set write size class"
+			return
+		    }
+		}
+	    }
+	    -re ".*$gdb_prompt $" { }
+	    timeout {
+		fail "$test - set write size class"
+		return
+	    }
+	}
+    }
+
+    set load_begin_time [clock clicks]
+    set result [gdb_load $executable]
+    set load_end_time [clock clicks]
+    if { $result != 0 } then {
+	fail "$test - loading executable"
+	return
+    }
+    verbose "$test - time [expr ($load_end_time - $load_begin_time) / 1000] ms"
+    pass $test
+}
+
+gdb_load_timed $binfile "" {}
+
+# Typically about 400-1 bytes can be downloaded
+gdb_load_timed $binfile "limit" 398
+gdb_load_timed $binfile "limit" 400
+
+# Absolute max is 16384
+gdb_load_timed $binfile "fixed" 0
+gdb_load_timed $binfile "fixed" 16385
+
+# fall back to the default
+gdb_load_timed $binfile "limit" 0
+
+# Get size of data uploaded
+
+#
+# Query GDB for the size of various types
+#
+
+proc get_sizeof { type default } {
+    global gdb_prompt
+    send_gdb "print/d sizeof (${type})\n"
+    gdb_expect {
+	-re "\\$\[0-9\]* = (\[0-9\]*).*$gdb_prompt $" {
+	    set size $expect_out(1,string)
+	    pass "get sizeof ${type} ($size)"
+	}
+	timeout {
+	    set size ${default}
+	    fail "get sizeof ${type} (timeout)"
+	}
+    }
+    return ${size}
+}
+
+# Get the size of random_data table (defaults to 48K).
+set sizeof_random_data [get_sizeof "random_data" 48*1024]
+
+#
+# Part THREE: Check the upload behavour
+#
+if ![runto_main] then {
+    fail "Cannot run to main"
+}
+
+# Carefully check memory around each of the most common packet edge
+# conditions
+
+gdb_test "x/8ub random_data" \
+	"<random_data>:\[ \t\]+60\[ \t\]+74\[ \t\]+216\[ \t\]+38\[ \t\]+149\[ \t\]+49\[ \t\]+207\[ \t\]+44"
+
+gdb_test "x/8ub random_data + 400 - 4" \
+	"<random_data\\+396>:\[ \t\]+185\[ \t\]+255\[ \t\]+50\[ \t\]+140\[ \t\]+237\[ \t\]+172\[ \t\]+143\[ \t\]+93"
+
+if {$sizeof_random_data > 16380 } then {
+    gdb_test "x/8ub random_data + 16384 - 4" \
+	"<random_data\\+16380>:\[ \t\]+178\[ \t\]+180\[ \t\]+135\[ \t\]+93\[ \t\]+70\[ \t\]+62\[ \t\]+205\[ \t\]+76"
+}
+
+# Read a chunk just larger than the packet size (reduce the packet
+# size to make life easier)
+gdb_test "set remote memory-read-packet-size 16" \
+	""
+gdb_test "show remote memory-read-packet-size" \
+	"The memory-read-packet-size is 16. Packets are limited to 20 bytes."
+gdb_test "x/17ub random_data" \
+	"<random_data>:\[ \t\]+60\[ \t\]+74\[ \t\]+216\[ \t\]+38\[ \t\]+149\[ \t\]+49\[ \t\]+207\[ \t\]+44.*<random_data\\+8>:\[ \t\]+124\[ \t\]+38\[ \t\]+93\[ \t\]+125\[ \t\]+232\[ \t\]+67\[ \t\]+228\[ \t\]+56.*<random_data\\+16>:\[ \t\]+161"
+
+gdb_exit

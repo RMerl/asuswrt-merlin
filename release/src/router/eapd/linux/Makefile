@@ -5,7 +5,6 @@ include $(SRCBASE)/router/.config
 INCLUDE += -I. -I.. -I$(SRCBASE)/include -I$(SRCBASE)/shared -I$(SRCBASE)/router/shared -I$(SRCBASE)/router/nas
 
 CFLAGS += $(INCLUDE)
-CFLAGS += $(WLAN_ComponentIncPath)
 CFLAGS += -DEAPD_WKSP_AUTO_CONFIG
 #CFLAGS += -DNAS_GTK_PER_STA
 CFLAGS += -Wall -DEAPDDUMP
@@ -19,12 +18,18 @@ endif
 
 LDFLAGS += -L$(TOP)/nvram -L$(INSTALLDIR)/nvram/usr/lib -lnvram
 LDFLAGS += -L$(TOP)/shared -L$(INSTALLDIR)/shared/usr/lib -lshared
+LDFLAGS += $(EXTRA_LDFLAGS)
 
 vpath %.c $(SRCBASE)/router/eapd $(SRCBASE)/shared
 
 OBJS = eapd.o eapd_linux.o
 OBJS += nas_eap.o wps_eap.o ses_eap.o
 
+#ifdef BCMWAPI_WAI
+ifeq ($(CONFIG_WAPI),y)
+OBJS += wai_eap.o
+endif
+#endif
 
 #ifdef BCM_DCS
 #ifeq ($(CONFIG_BCMDCS),y)
@@ -35,7 +40,7 @@ CFLAGS += -DBCM_DCS
 
 ifeq ($(wildcard $(SRCBASE)/router/eapd/*.c),)
 all:
-	-cp prebuilt/eapd eapd
+	-cp prebuild/eapd eapd
 else
 all: eapd
 endif

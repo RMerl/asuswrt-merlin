@@ -34,6 +34,8 @@ var pptpd_dns1_orig = '<% nvram_get("pptpd_dns1"); %>';
 var pptpd_dns2_orig = '<% nvram_get("pptpd_dns2"); %>';
 var pptpd_wins1_orig = '<% nvram_get("pptpd_wins1"); %>';
 var pptpd_wins2_orig = '<% nvram_get("pptpd_wins2"); %>';
+var pptpd_mru_orig = '<% nvram_get("pptpd_mru"); %>';
+var pptpd_mtu_orig = '<% nvram_get("pptpd_mtu"); %>';
 
 var origin_lan_ip = '<% nvram_get("lan_ipaddr"); %>';
 var lan_ip_subnet = origin_lan_ip.split(".")[0]+"."+origin_lan_ip.split(".")[1]+"."+origin_lan_ip.split(".")[2]+".";
@@ -579,7 +581,16 @@ function check_dns_wins(){
 			            		<th><#IPConnection_x_WINSServer2_itemname#></th>
 			            		<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_wins2" value="<% nvram_get("pptpd_wins2"); %>" onkeypress="return is_ipaddr(this, event)" ></td>
 			          		</tr>
-
+<!-- Yau add mru/mtu-->
+                                                <tr>
+                                                <th><a class="hintstyle" href="javascript:void(0);">MRU</a></th>
+                                                <td><input type="text" maxlength="15" class="input_15_table" name="pptpd_mru" value="<% nvram_get("pptpd_mru"); %>" ></td>
+                                                </tr>
+                                                <tr>
+                                                <th><a class="hintstyle" href="javascript:void(0);">MTU</a></th>
+                                                <td><input type="text" maxlength="15" class="input_15_table" name="pptpd_mtu" value="<% nvram_get("pptpd_mtu"); %>" ></td>
+                                                </tr>
+<!-- Yau -->
 			          		<tr>
 			            		<th><#vpn_client_ip#></th>
 			            		<td>

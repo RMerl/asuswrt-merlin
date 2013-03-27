@@ -1,0 +1,7 @@
+# Host: FreeBSD/i386
+NATDEPFILES= fork-child.o inf-ptrace.o \
+	fbsd-nat.o i386-nat.o i386bsd-nat.o i386fbsd-nat.o \
+	gcore.o bsd-kvm.o
+NAT_FILE= nm-fbsd.h
+
+LOADLIBES= -lkvm

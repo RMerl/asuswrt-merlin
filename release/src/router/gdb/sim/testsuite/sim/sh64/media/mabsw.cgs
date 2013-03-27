@@ -1,0 +1,38 @@
+# sh testcase for mabs.w $rm, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+init:
+	pta wrong, tr0
+
+mabsw1:
+	# Pack { 1 3 5 7 } into R0.
+	_packw 1, 3, 5, 7, r0
+
+	mabs.l r0, r1
+
+	# Test for { 1 3 5 7 } in R0.
+	_packw 1, 3, 5, 7, r2
+	bne r0, r2, tr0
+
+mabsw2:
+	# Pack { -1, -1, -1, -1 } into R0.
+	_packw 1, 1, 1, 1, r0
+
+	# Set the left sign bit
+	movi 1, r1
+	shlli r1, 63, r1
+	or r0, r1, r0
+
+	mabs.w r0, r2
+
+okay:
+	pass
+
+wrong:
+	fail

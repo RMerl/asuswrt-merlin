@@ -1,0 +1,13 @@
+# sh testcase for nop
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global nop
+nop:
+	nop
+	pass

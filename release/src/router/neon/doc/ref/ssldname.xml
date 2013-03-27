@@ -1,0 +1,73 @@
+
+    <refentry id="refssldname">
+
+      <refmeta>
+	<refentrytitle>ne_ssl_dname</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_ssl_readable_dname">ne_ssl_readable_dname</refname>
+        <refname id="ne_ssl_dname_cmp">ne_ssl_dname_cmp</refname>
+	<refpurpose>SSL distinguished name handling</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_ssl.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>const char *<function>ne_ssl_readable_dname</function></funcdef>
+	    <paramdef>const ne_ssl_dname *<parameter>dname</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>int <function>ne_ssl_dname_cmp</function></funcdef>
+	    <paramdef>const ne_ssl_dname *<parameter>dn1</parameter></paramdef>
+	    <paramdef>const ne_ssl_dname *<parameter>dn2</parameter></paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>The <function>ne_ssl_readable_dname</function> function
+creates a single-line, human-readable string out of an
+<type>ne_ssl_dname</type> object.  The returned string is
+<function>malloc</function>()-allocated, and must be
+<function>free</function>()d by the caller.</para>
+
+	<para>The <function>ne_ssl_dname_cmp</function> function
+	compares two distinguished names, and returns zero if they are
+	equal, or non-zero otherwise.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Return value</title>
+
+	<para><function>ne_ssl_readable_dname</function> returns a <function>malloc</function>-allocated
+        string, and never &null;.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Examples</title>
+
+        <para>See <xref linkend="ne_ssl_cert_subject"/> for an example
+        use of <function>ne_ssl_readable_dname</function>.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>See also</title>
+
+	<para><xref linkend="ne_ssl_cert_subject"/></para>
+      </refsect1>
+
+    </refentry>

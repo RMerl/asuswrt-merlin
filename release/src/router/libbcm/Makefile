@@ -24,7 +24,7 @@ OBJS := bcmgpio.o
 
 ifeq ($(wildcard ./*.c),)
 all:
-	cp -f ./prebuilt/libbcm.so . 
+	cp -f ./prebuild/libbcm.so .
 else
 all: libbcm.so
 endif

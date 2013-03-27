@@ -1,0 +1,15 @@
+
+This is the source directory of the 'neon' HTTP/WebDAV client library,
+which can be bundled inside other packages. For the complete neon
+package, see:
+
+	http://www.webdav.org/neon/
+
+This source directory may be distributed and/or modified under the
+terms of the GNU Library General Public License, as given in
+COPYING.LIB.
+
+Please send questions, bug reports, feature requests, etc, regarding
+the neon library, to the mailing list at:
+
+	neon@lists.manyfish.co.uk

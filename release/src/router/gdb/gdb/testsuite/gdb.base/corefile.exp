@@ -1,0 +1,243 @@
+# Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Fred Fish. (fnf@cygnus.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+# are we on a target board
+if ![isnative] then {
+    return
+}
+
+set testfile "coremaker"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested corefile.exp
+     return -1
+}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+# Create a core file named "corefile" rather than just "core", to
+# avoid problems with sys admin types that like to regularly prune all
+# files named "core" from the system.
+#
+# Arbitrarily try setting the core size limit to "unlimited" since
+# this does not hurt on systems where the command does not work and
+# allows us to generate a core on systems where it does.
+#
+# Some systems append "core" to the name of the program; others append
+# the name of the program to "core"; still others (like Linux, as of
+# May 2003) create cores named "core.PID".  In the latter case, we
+# could have many core files lying around, and it may be difficult to
+# tell which one is ours, so let's run the program in a subdirectory.
+set found 0
+set coredir "${objdir}/${subdir}/coredir.[getpid]"
+file mkdir $coredir
+catch "system \"(cd ${coredir}; ulimit -c unlimited; ${binfile}; true) >/dev/null 2>&1\""
+#      remote_exec host "${binfile}"
+foreach i "${coredir}/core ${coredir}/core.coremaker.c ${binfile}.core" {
+    if [remote_file build exists $i] {
+	remote_exec build "mv $i ${objdir}/${subdir}/corefile"
+	set found 1
+    }
+}
+# Check for "core.PID".
+if { $found == 0 } {
+    set names [glob -nocomplain -directory $coredir core.*]
+    if {[llength $names] == 1} {
+        set corefile [file join $coredir [lindex $names 0]]
+        remote_exec build "mv $corefile ${objdir}/${subdir}/corefile"
+        set found 1
+    }
+}
+if { $found == 0 } {
+    # The braindamaged HPUX shell quits after the ulimit -c above
+    # without executing ${binfile}.  So we try again without the
+    # ulimit here if we didn't find a core file above.
+    # Oh, I should mention that any "braindamaged" non-Unix system has
+    # the same problem. I like the cd bit too, it's really neat'n stuff.
+    catch "system \"(cd ${objdir}/${subdir}; ${binfile}; true) >/dev/null 2>&1\""
+    foreach i "${objdir}/${subdir}/core ${objdir}/${subdir}/core.coremaker.c ${binfile}.core" {
+	if [remote_file build exists $i] {
+	    remote_exec build "mv $i ${objdir}/${subdir}/corefile"
+	    set found 1
+	}
+    }
+}
+
+# Try to clean up after ourselves. 
+remote_file build delete [file join $coredir coremmap.data]
+remote_exec build "rmdir $coredir"
+    
+if { $found == 0  } {
+    warning "can't generate a core file - core tests suppressed - check ulimit -c"
+    return 0
+}
+
+#
+# Test that we can simply startup with a "-core=corefile" command line arg
+# and recognize that the core file is a valid, usable core file.
+# To do this, we must shutdown the currently running gdb and restart
+# with the -core args.  We can't use gdb_start because it looks for
+# the first gdb prompt, and the message we are looking for occurs
+# before the first prompt.  Also, we can't include GDBFLAGS because
+# if it is empty, this confuses gdb with an empty argument that it
+# grumbles about (said grumbling currently being ignored in gdb_start).
+# **FIXME**
+#
+# Another problem is that on some systems (solaris for example), there
+# is apparently a limit on the length of a fully specified path to 
+# the coremaker executable, at about 80 chars.  For this case, consider
+# it a pass, but note that the program name is bad.
+
+gdb_exit
+if $verbose>1 then {
+    send_user "Spawning $GDB -nw $GDBFLAGS -core=$objdir/$subdir/corefile\n"
+}
+
+set oldtimeout $timeout
+set timeout [expr "$timeout + 60"]
+verbose "Timeout is now $timeout seconds" 2
+eval "spawn $GDB -nw $GDBFLAGS -core=$objdir/$subdir/corefile"
+expect {
+    -re "Couldn't find .* registers in core file.*$gdb_prompt $" {
+        fail "args: -core=corefile (couldn't find regs)"
+    }
+    -re "Core was generated by .*coremaker.*\r\n\#0  .*\(\).*\r\n$gdb_prompt $" {
+	pass "args: -core=corefile"
+    }
+    -re "Core was generated by .*\r\n\#0  .*\(\).*\r\n$gdb_prompt $" {
+	pass "args: -core=corefile (with bad program name)"
+    }
+    -re ".*registers from core file: File in wrong format.* $" {
+	fail "args: -core=corefile (could not read registers from core file)"
+    }
+    -re ".*$gdb_prompt $"	{ fail "args: -core=corefile" }
+    timeout 		{ fail "(timeout) starting with -core" }
+}
+
+
+#
+# Test that startup with both an executable file and -core argument.
+# See previous comments above, they are still applicable.
+#
+
+close;
+
+if $verbose>1 then {
+    send_user "Spawning $GDB -nw $GDBFLAGS $binfile -core=$objdir/$subdir/corefile\n"
+}
+
+
+eval "spawn $GDB -nw $GDBFLAGS $binfile -core=$objdir/$subdir/corefile";
+expect {
+    -re "Core was generated by .*coremaker.*\r\n\#0  .*\(\).*\r\n$gdb_prompt $" {
+	pass "args: execfile -core=corefile"
+    }
+    -re "Core was generated by .*\r\n\#0  .*\(\).*\r\n$gdb_prompt $"	 {
+	pass "args: execfile -core=corefile (with bad program name)"
+    }
+    -re ".*registers from core file: File in wrong format.* $" {
+	fail "args: execfile -core=corefile (could not read registers from core file)"
+    }
+    -re ".*$gdb_prompt $"	{ fail "args: execfile -core=corefile" }
+    timeout 		{ fail "(timeout) starting with -core" }
+}
+set timeout $oldtimeout
+verbose "Timeout is now $timeout seconds" 2
+
+close;
+
+# Now restart normally.
+
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# Test basic corefile recognition via core-file command.
+
+send_gdb "core-file $objdir/$subdir/corefile\n"
+gdb_expect {
+    -re ".* program is being debugged already.*y or n. $" {
+	# gdb_load may connect us to a gdbserver.
+	send_gdb "y\n"
+	exp_continue;
+    }
+    -re "Core was generated by .*coremaker.*\r\n\#0  .*\(\).*\r\n$gdb_prompt $" {
+	pass "core-file command"
+    }
+    -re "Core was generated by .*\r\n\#0  .*\(\).*\r\n$gdb_prompt $" {
+	pass "core-file command (with bad program name)"
+    }
+    -re ".*registers from core file: File in wrong format.* $" {
+	fail "core-file command (could not read registers from core file)"
+    }
+    -re ".*$gdb_prompt $"	{ fail "core-file command" }
+    timeout 		{ fail "(timeout) core-file command" }
+}
+
+# Test correct mapping of corefile sections by printing some variables.
+
+gdb_test "print coremaker_data" "\\\$$decimal = 202"
+gdb_test "print coremaker_bss" "\\\$$decimal = 10"
+gdb_test "print coremaker_ro" "\\\$$decimal = 201"
+
+gdb_test "print func2::coremaker_local" "\\\$$decimal = \\{0, 1, 2, 3, 4\\}"
+
+# Somehow we better test the ability to read the registers out of the core
+# file correctly.  I don't think the other tests do this.
+
+gdb_test "bt" "abort.*func2.*func1.*main.*" "backtrace in corefile.exp"
+gdb_test "up" "#\[0-9\]* *\[0-9xa-fH'\]* in .* \\(.*\\).*" "up in corefile.exp"
+
+# Test ability to read mmap'd data
+
+gdb_test "x/8bd buf1" ".*:.*0.*1.*2.*3.*4.*5.*6.*7" "accessing original mmap data in core file"
+setup_xfail "*-*-sunos*" "*-*-ultrix*" "*-*-aix*"
+set test "accessing mmapped data in core file"
+gdb_test_multiple "x/8bd buf2" "$test" {
+    -re ".*:.*0.*1.*2.*3.*4.*5.*6.*7.*$gdb_prompt $" {
+	pass "$test"
+    }
+    -re "0x\[f\]*:.*Cannot access memory at address 0x\[f\]*.*$gdb_prompt $" {
+	fail "$test (mapping failed at runtime)"
+    }
+    -re "0x.*:.*Cannot access memory at address 0x.*$gdb_prompt $" {
+	fail "$test (mapping address not found in core file)"
+    }
+}
+
+# test reinit_frame_cache
+
+gdb_load ${binfile}
+gdb_test "up" "#\[0-9\]* *\[0-9xa-fH'\]* in .* \\(.*\\).*" "up in corefile.exp (reinit)"
+
+gdb_test "core" "No core file now."

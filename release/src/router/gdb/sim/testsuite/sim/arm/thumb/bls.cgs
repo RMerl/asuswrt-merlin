@@ -1,0 +1,12 @@
+# arm testcase for bls $soffset8
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global bls
+bls:
+	bls footext
+
+	pass

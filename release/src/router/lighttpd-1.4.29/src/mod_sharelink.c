@@ -11,7 +11,9 @@
 #include <dirent.h>
 
 #if EMBEDDED_EANBLE
+#ifndef APP_IPKG
 #include "disk_share.h"
+#endif
 #endif
 
 #define DBE 1
@@ -124,6 +126,81 @@ void substr(char *dest, const char* src, unsigned int start, unsigned int cnt) {
 	dest[cnt] = 0;
 }
 
+output_folder_list(server *srv, connection *con, char* fullpath, char* filename, buffer *out) {
+	buffer* buffer_filename = buffer_init();
+	buffer_copy_string(buffer_filename,filename);
+	buffer_urldecode_path(buffer_filename);
+	
+	buffer_append_string_len(out, CONST_STR_LEN("<div class='albumDiv' title=''>\n"));
+	buffer_append_string_len(out, CONST_STR_LEN("<table class='thumb-table-parent'>\n"));
+	buffer_append_string_len(out, CONST_STR_LEN("<tbody><tr><td>\n"));
+	buffer_append_string_len(out, CONST_STR_LEN("<div class='picDiv'>"));
+
+	int use_http_connect = 0;
+	
+	buffer_append_string_len(out, CONST_STR_LEN("<div id='fileviewicon' class='folderDiv bicon'>"));
+	
+	buffer_append_string_len(out, CONST_STR_LEN("<div class='selectDiv sicon'></div>"));
+	buffer_append_string_len(out, CONST_STR_LEN("<div class='selectHintDiv sicon'></div>"));
+	buffer_append_string_len(out, CONST_STR_LEN("</div></div></td></tr><tr><td><div class='albuminfo' style='font-size:80%'>"));
+	buffer_append_string_len(out, CONST_STR_LEN("<a id='list_item' qtype='1' isdir='0' playhref='"));
+
+#if EMBEDDED_EANBLE
+	char* webdav_http_port = nvram_get_webdav_http_port();
+#else
+	char* webdav_http_port = "8082";
+#endif
+	
+	if(use_http_connect==1){
+		buffer_append_string_len(out, CONST_STR_LEN("http://"));
+		buffer_append_string_buffer(out, con->uri.authority);
+		
+		if( !strstr( con->uri.authority->ptr, ":" ) ){
+			buffer_append_string_len(out, CONST_STR_LEN(":"));
+			buffer_append_string(out, webdav_http_port);
+		}
+	}
+	else{
+		buffer_append_string_buffer(out, con->uri.scheme);
+		buffer_append_string_len(out, CONST_STR_LEN("://"));
+		buffer_append_string_buffer(out, con->uri.authority);
+	}
+	
+	buffer_append_string_len(out, CONST_STR_LEN("/"));
+	buffer_append_string_buffer(out, con->share_link_shortpath);
+	buffer_append_string_len(out, CONST_STR_LEN("/"));
+	buffer_append_string_buffer(out, con->share_link_filename);	
+	buffer_append_string_len(out, CONST_STR_LEN("/"));
+	buffer_append_string(out, filename);
+
+	Cdbg(1, "111111111111111111111111111111 fullpath = %s", fullpath);
+	buffer_append_string_len(out, CONST_STR_LEN("' uhref='"));
+
+	buffer_append_string_buffer(out, con->uri.scheme);
+	buffer_append_string_len(out, CONST_STR_LEN("://"));
+	buffer_append_string_buffer(out, con->uri.authority);
+	buffer_append_string_len(out, CONST_STR_LEN("/"));
+	buffer_append_string_buffer(out, con->share_link_shortpath);
+	buffer_append_string_len(out, CONST_STR_LEN("/"));
+	buffer_append_string_buffer(out, con->share_link_filename);	
+	buffer_append_string_len(out, CONST_STR_LEN("/"));
+	buffer_append_string(out, filename);
+	
+	buffer_append_string_len(out, CONST_STR_LEN("' title='"));
+	buffer_append_string_buffer(out, buffer_filename);
+	
+	buffer_append_string_len(out, CONST_STR_LEN("' ext='"));
+							
+	buffer_append_string_len(out, CONST_STR_LEN("' freadonly='true' fhidden='false' target='_parent'>"));
+	
+	buffer_append_string_buffer( out, buffer_filename );
+	buffer_append_string_len(out, CONST_STR_LEN("</a></div></td></tr>"));
+	
+	buffer_append_string_len(out, CONST_STR_LEN("</tbody></table></div>"));
+
+	buffer_free(buffer_filename);
+}
+
 output_file_list(server *srv, connection *con, char* fullpath, char* filename, buffer *out) {
 
 	buffer* buffer_filename = buffer_init();
@@ -204,6 +281,11 @@ output_file_list(server *srv, connection *con, char* fullpath, char* filename, b
 		if( !strstr( con->uri.authority->ptr, ":" ) ){
 			buffer_append_string_len(out, CONST_STR_LEN(":"));
 			buffer_append_string(out, webdav_http_port);
+#if EMBEDDED_EANBLE
+#ifdef APP_IPKG
+			free(webdav_http_port);
+#endif
+#endif
 		}
 	}
 	else{
@@ -258,18 +340,27 @@ URIHANDLER_FUNC(mod_sharelink_physical_handler){
 	plugin_data *p = p_d;
 	int s_len;
 	size_t k;
-
+	
 	if (con->mode != SMB_BASIC&&con->mode != DIRECT) return HANDLER_GO_ON;
+	
 	if (con->uri.path->used == 0) return HANDLER_GO_ON;
-	if(con->is_share_link == 0)  return HANDLER_GO_ON;
+	
+	//- share_link_type: 0: none, 1: sharelink for general use, 2: sharelink for router sync
+	if(con->share_link_type != 1)  return HANDLER_GO_ON;
+	
 	if(!con->share_link_shortpath->used)  return HANDLER_GO_ON;
 	
 	char mnt_path[5] = "/mnt/";
 	int mlen = 5;
 	struct stat st;
 	int r;
+	
+	if( con->request.http_method != HTTP_METHOD_GET )
+		return HANDLER_GO_ON;
 
-	if( con->mode == DIRECT && strncmp( con->physical.path->ptr, mnt_path,  mlen ) == 0 ){
+	Cdbg(DBE, "mod_sharelink_physical_handler");
+	
+	if( con->mode == DIRECT && strncmp( con->physical.path->ptr, mnt_path, mlen ) == 0 ){
 		r =  stat(con->physical.path->ptr, &st);
 	}
 	else if( con->mode == SMB_BASIC ){
@@ -277,10 +368,10 @@ URIHANDLER_FUNC(mod_sharelink_physical_handler){
 	}
 
 	if (-1 == r) {		
-		/* don't about it yet, rmdir will fail too */
+		con->http_status = 404;
 		return HANDLER_FINISHED;
 	}
-
+	
 	if (S_ISDIR(st.st_mode)) {
 			
 		buffer *out;
@@ -294,13 +385,17 @@ URIHANDLER_FUNC(mod_sharelink_physical_handler){
 				"<!DOCTYPE html>\n"
 				"<html>\n"
 				"<head>\n"
-				"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n"	
-				"<title>AiCloud Share Link</title>\n"
+				"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n"
 			));
-				
+
+		buffer_append_string_len(out, CONST_STR_LEN("<title>"));
+		buffer_append_string_buffer(out, con->share_link_filename);
+		buffer_append_string_len(out, CONST_STR_LEN("</title>"));
+		
 		buffer_append_string_len(out, CONST_STR_LEN(
 				"<link rel='stylesheet' id='mainCss' href='/smb/css/sharelink.css' type='text/css'/>\n"
 				"<script type='text/javascript' src='/smb/js/tools.js'></script>\n"
+				"<script type='text/javascript' src='/smb/js/davclient_tools.js'></script>\n"
 				"<script type='text/javascript' src='/smb/js/smbdav-sharelink.min.js'></script>\n"
 			));
 				
@@ -318,106 +413,33 @@ URIHANDLER_FUNC(mod_sharelink_physical_handler){
 		
 		buffer_append_string_len(out, CONST_STR_LEN("</div>"));
 
-		buffer_append_string_len(out, CONST_STR_LEN("<div id='fileview' class='unselectable' style='height:100%;'>\n"));
+		buffer_append_string_len(out, CONST_STR_LEN("<div id='fileview' class='unselectable' style='height:100%;'"));
 
-		DIR *dir;
+		buffer_append_string_len(out, CONST_STR_LEN(" rootpath='/"));
+		buffer_append_string_buffer(out, con->share_link_shortpath);
+		buffer_append_string_len(out, CONST_STR_LEN("/"));
+		//buffer_append_string_buffer(out, con->share_link_filename);
+		buffer_append_string_encoded(out, CONST_BUF_LEN(con->share_link_filename), ENCODING_REL_URI);
+		buffer_append_string_len(out, CONST_STR_LEN("'"));
+
+		buffer_append_string_len(out, CONST_STR_LEN(" port='"));
+#if EMBEDDED_EANBLE	
+#ifndef APP_IPKG
+		buffer_append_string(out, nvram_get_webdav_http_port());
+#else
+		char *webdav_http_port=nvram_get_webdav_http_port();
+		buffer_append_string(out,webdav_http_port );
+		free(webdav_http_port);
+#endif
+#else
+		buffer_append_string_len(out, CONST_STR_LEN("8082"));
+#endif
+		buffer_append_string_len(out, CONST_STR_LEN("'"));
 		
-		if( con->mode == DIRECT ){
-			if (NULL != (dir = opendir(con->physical.path->ptr))) {
-				struct dirent *de;
-				physical d;
-				physical *dst = &(con->physical);
-
-				d.path = buffer_init();
-				d.rel_path = buffer_init();
-
-				while(NULL != (de = readdir(dir))) {
-					if ( de->d_name[0] == '.' && de->d_name[1] == '.' && de->d_name[2] == '\0' ) {
-						continue;
-						/* ignore the parent dir */
-					}
-
-					if ( de->d_name[0] == '.' ) {
-						continue;
-						/* ignore the hidden file */
-					}
-					
-					buffer_copy_string_buffer(d.path, dst->path);
-					BUFFER_APPEND_SLASH(d.path);
-
-					buffer_copy_string_buffer(d.rel_path, dst->rel_path);
-					BUFFER_APPEND_SLASH(d.rel_path);
-
-					if (de->d_name[0] == '.' && de->d_name[1] == '\0') {
-						/* don't append the . */
-					} else {
-						buffer_append_string(d.path, de->d_name);
-						buffer_append_string(d.rel_path, de->d_name);
-					}
-
-					Cdbg(DBE,"SMB_FILE_QUERY: d.path %s", d.path->ptr);
-
-					r =  stat(d.path->ptr, &st);
-					if (r != -1 && S_ISREG(st.st_mode))
-						output_file_list(srv, con, d.path->ptr, de->d_name, out);
-				}
-
-				closedir(dir);
-				buffer_free(d.path);
-				buffer_free(d.rel_path);
-			}
-		}
-		else if( con->mode == SMB_BASIC ){			
-			if (-1 != (dir = smbc_wrapper_opendir(con, con->url.path->ptr))) {
-				struct smbc_dirent *de;
-				physical d;
-					
-				physical *dst = &(con->url);
-
-				d.path = buffer_init();
-				d.rel_path = buffer_init();
-
-				while(NULL != (de = smbc_wrapper_readdir(con, dir))) {
-					if( (de->name[0] == '.' && de->name[1] == '.' && de->name[2] == '\0') ||
-						(de->name[0] == '.') ){
-						continue;
-						// ignore the parent dir
-					}
-
-					buffer* de_name = buffer_init();
-					buffer_copy_string(de_name, "");						
-					buffer_append_string_encoded(de_name, de->name, strlen(de->name), ENCODING_REL_URI);
-
-					buffer_copy_string_buffer(d.path, dst->path);
-					BUFFER_APPEND_SLASH(d.path);
-
-					buffer_copy_string_buffer(d.rel_path, dst->rel_path);
-					BUFFER_APPEND_SLASH(d.rel_path);
-
-					if (de->name[0] == '.' && de->name[1] == '\0') {
-						/* don't append the . */
-					} else {
-						buffer_append_string_buffer(d.path, de_name);
-						buffer_append_string_buffer(d.rel_path, de_name);
-					}
-						
-					int r = smbc_wrapper_stat(con, d.path->ptr, &st);
-					if (r != -1 && S_ISREG(st.st_mode)) {
-						//Cdbg(DBE,"SMB_FILE_QUERY: de->name %s, d.path %s", de_name->ptr, d.path->ptr);			
-						output_file_list(srv, con, d.path->ptr, de_name->ptr, out);			
-					}
-					
-					buffer_free(de_name);
-						
-				}
-				smbc_wrapper_closedir(con,dir);
-				buffer_free(d.path);
-				buffer_free(d.rel_path);
-			}
-		}
-
+		buffer_append_string_len(out, CONST_STR_LEN(">\n"));
+		
 		buffer_append_string_len(out, CONST_STR_LEN("</div>\n"));
-
+		
 		buffer_append_string_len(out, CONST_STR_LEN("<div id='bottom_region' class='unselectable'>"));
 		buffer_append_string_len(out, CONST_STR_LEN("<span>ASUSTeK Computer Inc. All rights reserved</span>"));
 		buffer_append_string_len(out, CONST_STR_LEN("</div>"));
@@ -425,8 +447,6 @@ URIHANDLER_FUNC(mod_sharelink_physical_handler){
 		buffer_append_string_len(out, CONST_STR_LEN("</body>\n"));
 		
 		con->file_finished = 1;
-
-		Cdbg(DBE, "123This is share link! %s", con->url.path->ptr);
 			
 		return HANDLER_FINISHED;
 
@@ -435,7 +455,7 @@ URIHANDLER_FUNC(mod_sharelink_physical_handler){
 	/* not found */
 	return HANDLER_GO_ON;
 }
-
+#ifndef APP_IPKG
 int mod_sharelink_plugin_init(plugin *p);
 int mod_sharelink_plugin_init(plugin *p) {
 	p->version     = LIGHTTPD_VERSION_ID;
@@ -450,3 +470,19 @@ int mod_sharelink_plugin_init(plugin *p) {
 
 	return 0;
 }
+#else
+int aicloud_mod_sharelink_plugin_init(plugin *p);
+int aicloud_mod_sharelink_plugin_init(plugin *p) {
+	p->version     = LIGHTTPD_VERSION_ID;
+	p->name        = buffer_init_string("mod_sharelink");
+
+	p->init        = mod_sharelink_init;
+	p->set_defaults = mod_sharelink_set_defaults;
+	p->handle_physical = mod_sharelink_physical_handler;
+	p->cleanup     = mod_sharelink_free;
+
+	p->data        = NULL;
+
+	return 0;
+}
+#endif

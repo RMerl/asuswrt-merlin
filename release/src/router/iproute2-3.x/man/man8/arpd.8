@@ -1,0 +1,66 @@
+.TH ARPD 8 "28 June, 2007"
+
+.SH NAME
+arpd \- userspace arp daemon.
+
+.SH SYNOPSIS
+Usage: arpd [ -lkh? ] [ -a N ] [ -b dbase ] [ -B number ] [ -f file ] [ -n time ] [ -R rate ] [ interfaces ]
+
+.SH DESCRIPTION
+The
+.B arpd
+daemon collects gratuitous ARP information, saving it on local disk and feeding it to kernel on demand to avoid redundant broadcasting due to limited size of kernel ARP cache.
+
+.SH OPTIONS
+.TP
+-h -?
+Print help
+.TP
+-l
+Dump arpd database to stdout and exit. Output consists of three columns: interface index, IP address and MAC address. Negative entries for dead hosts are also shown, in this case MAC address is replaced by word FAILED followed by colon and time when the fact that host is dead was proven the last time.
+.TP
+-f <FILE>
+Read and load arpd database from FILE in text format similar dumped by option -l. Exit after load, probably listing resulting database, if option -l is also given. If FILE is -, stdin is read to get ARP table.
+.TP
+-b <DATABASE>
+location of database file. Default location is /var/lib/arpd/arpd.db
+.TP
+-a <NUMBER>
+arpd not only passively listens ARP on wire, but also send brodcast queries itself. NUMBER is number of such queries to make before destination is considered as dead. When arpd is started as kernel helper (i.e. with app_solicit enabled in sysctl or even with option -k) without this option and still did not learn enough information, you can observe 1 second gaps in service. Not fatal, but not good.
+.TP
+-k
+Suppress sending broadcast queries by kernel. It takes sense together with option -a.
+.TP
+-n <TIME>
+Timeout of negative cache. When resolution fails arpd suppresses further attempts to resolve for this period. It makes sense only together with option -k This timeout should not be too much longer than boot time of a typical host not supporting gratuitous ARP. Default value is 60 seconds.
+.TP
+-R <RATE>
+Maximal steady rate of broadcasts sent by arpd in packets per second. Default value is 1.
+.TP
+-B <NUMBER>
+Number of broadcasts sent by <tt/arpd/ back to back. Default value is 3. Together with option <tt/-R/ this option allows to police broadcasting not to exceed B+R*T over any interval of time T.
+.P
+<INTERFACE> is the name of networking interface to watch. If no interfaces given, arpd monitors all the interfaces. In this case arpd does not adjust sysctl parameters, it is supposed user does this himself after arpd is started.
+.P
+Signals
+.br
+arpd exits gracefully syncing database and restoring adjusted sysctl parameters, when receives SIGINT or SIGTERM. SIGHUP syncs database to disk. SIGUSR1 sends some statistics to syslog. Effect of another signals is undefined, they may corrupt database and leave sysctl praameters in an unpredictable state.
+.P
+Note
+.br
+In order for arpd to be able to serve as ARP resolver, kernel must be compiled with the option CONFIG_ARPD and, in the case when interface list in not given on command line, variable app_solicit on interfaces of interest should be in /proc/sys/net/ipv4/neigh/*. If this is not made arpd still collects gratuitous ARP information in its database.
+.SH EXAMPLES
+.TP
+arpd -b /var/tmp/arpd.db
+Start arpd to collect gratuitous ARP, but not messing with kernel functionality.
+.TP
+killall arpd ; arpd -l -b /var/tmp/arpd.db
+Look at result after some time.
+.TP
+arpd -b /var/tmp/arpd.db -a 1 eth0 eth1
+Enable kernel helper, leaving leading role to kernel.
+.TP
+arpd -b /var/tmp/arpd.db -a 3 -k eth0 eth1
+Completely replace kernel resolution on interfaces eth0 and eth1. In this case kernel still does unicast probing to validate entries, but all the broadcast activity is suppressed and made under authority of arpd.
+.PP
+This is mode which arpd is supposed to work normally. It is not default just to prevent occasional enabling of too aggressive mode occasionally.

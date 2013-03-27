@@ -1,0 +1,771 @@
+# Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002, 2003,
+# 2004, 2006, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was written by Fred Fish. (fnf@cygnus.com)
+# And rewritten by Michael Chastain. (mec.gnu@mindspring.com)
+
+set ws  "\[\r\n\t \]+"
+set nl  "\[\r\n\]+"
+set vhn "\\$\[0-9\]+"
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+if { [skip_cplus_tests] } { continue }
+
+load_lib "cp-support.exp"
+
+set testfile "inherit"
+set srcfile misc.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     untested inherit.exp
+     return -1
+}
+
+# Single inheritance, print type definitions.
+
+proc test_ptype_si { } {
+    global gdb_prompt
+    global ws
+    global nl
+
+    # A simple class.
+
+    cp_test_ptype_class \
+	"ptype A" "ptype A (FIXME)" "class" "A" \
+	{
+	    { field public "int a;" }
+	    { field public "int x;" }
+	}
+    cp_test_ptype_class "ptype class A" "ptype class A (FIXME)" "class" "A" ibid
+    cp_test_ptype_class "ptype g_A" "ptype g_A (FIXME)" "class" "A" ibid
+
+    # A derived class.
+
+    cp_test_ptype_class \
+	"ptype B" "" "class" "B" \
+	{
+	    { base         "public A" }
+	    { field public "int b;" }
+	    { field public "int x;" }
+	}
+    cp_test_ptype_class "ptype class B" "" "class" "B" ibid
+    cp_test_ptype_class "ptype g_B" "" "class" "B" ibid
+
+    # Another derived class.
+
+    cp_test_ptype_class \
+	"ptype C" "" "class" "C" \
+	{
+	    { base         "public A" }
+	    { field public "int c;" }
+	    { field public "int x;" }
+	}
+    cp_test_ptype_class "ptype class C" "" "class" "C" ibid
+    cp_test_ptype_class "ptype g_C" "" "class" "C" ibid
+
+    # A structure with no tag.
+    # TODO: move this mess into a separate file, and re-specify
+    # which results are PASS, KFAIL, XFAIL, and FAIL.
+
+    set re_tag		"tagless_struct"
+    set XX_tag		"\\._1"
+    set re_class	"(class $re_tag \{${ws}public:|class \{${ws}public:|struct $re_tag \{|struct \{)"
+    set XX_class	"(class $XX_tag \{${ws}public:|struct $XX_tag \{)"
+    set re_fields	"int one;${ws}int two;"
+    set re_synth_gcc_23	"$re_tag & operator=\\($re_tag const ?&\\);${ws}$re_tag\\($re_tag const ?&\\);${ws}$re_tag\\((void|)\\);"
+    set XX_synth_gcc_23	"($re_tag|$XX_tag) & operator=\\($XX_tag const ?&\\);${ws}$XX_tag\\($XX_tag const ?&\\);${ws}$XX_tag\\((void|)\\);"
+
+    set name "ptype tagless struct"
+    gdb_test_multiple "ptype tagless_struct" $name {
+	-re "type = $XX_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
+	    # gcc 2.95.3 -gdwarf-2
+	    pass "$name"
+	}
+	-re "type = $re_class${ws}$re_fields${ws}$XX_synth_gcc_23$nl\}$nl$gdb_prompt $" {
+	    # gcc 2.95.3 -gstabs+
+	    pass "$name"
+	}
+	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
+	    # gcc 3.3.4 -gdwarf-2
+	    # gcc 3.4.1 -gdwarf-2
+	    # gcc HEAD 2004-07-31 -gdwarf-2
+	    # gcc HEAD 2004-07-31 -gstabs+
+	    pass "$name"
+	}
+	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
+	    # gcc 3.3.4 -gstabs+
+	    # gcc 3.4.1 -gstabs+
+	    pass "$name"
+	}
+    }
+
+    set name "ptype variable of type tagless struct"
+    gdb_test_multiple "ptype v_tagless" $name {
+	-re "type = $XX_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
+	    # gcc 2.95.3 -gdwarf-2
+	    pass "$name"
+	}
+	-re "type = $re_class${ws}$re_fields${ws}$XX_synth_gcc_23$nl\}$nl$gdb_prompt $" {
+	    # gcc 2.95.3 -gstabs+
+	    pass "$name"
+	}
+	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
+	    # gcc 3.3.4 -gdwarf-2
+	    # gcc 3.4.1 -gdwarf-2
+	    # gcc HEAD 2004-07-31 -gdwarf-2
+	    # gcc HEAD 2004-07-31 -gstabs+
+	    pass "$name"
+	}
+	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
+	    # gcc 3.3.4 -gstabs+
+	    # gcc 3.4.1 -gstabs+
+	    pass "$name"
+	}
+    }
+}
+
+# Multiple inheritance, print type definitions.
+
+proc test_ptype_mi { } {
+
+    # A class with two bases.
+
+    cp_test_ptype_class \
+	"ptype D" "" "class" "D" \
+	{
+	    { base         "public B" }
+	    { base         "public C" }
+	    { field public "int d;" }
+	    { field public "int x;" }
+	}
+    cp_test_ptype_class "ptype class D" "" "class" "D" ibid
+    cp_test_ptype_class "ptype g_D" "" "class" "D" ibid
+
+    # A class derived from the previous class.
+
+    cp_test_ptype_class \
+	"ptype E" "" "class" "E" \
+	{
+	    { base         "public D" }
+	    { field public "int e;" }
+	    { field public "int x;" }
+	}
+    cp_test_ptype_class "ptype class E" "" "class" "E" ibid
+    cp_test_ptype_class "ptype g_E" "" "class" "E" ibid
+}
+
+# Single virtual inheritance, print type definitions.
+
+proc test_ptype_vi { } {
+
+    # class vA
+
+    cp_test_ptype_class \
+	"ptype vA" "" "class" "vA" \
+	{
+	    { field public "int va;" }
+	    { field public "int vx;" }
+	}
+    cp_test_ptype_class "ptype class vA" "" "class" "vA" ibid
+    cp_test_ptype_class "ptype g_vA" "" "class" "vA" ibid
+
+    # class vB
+
+    cp_test_ptype_class \
+	"ptype vB" "" "class" "vB" \
+	{
+	    { base         "public virtual vA" }
+	    { vbase        "vA" }
+	    { field public "int vb;" }
+	    { field public "int vx;" }
+	}
+    cp_test_ptype_class "ptype class vB" "" "class" "vB" ibid
+    cp_test_ptype_class "ptype g_vB" "" "class" "vB" ibid
+
+    # class vC
+
+    cp_test_ptype_class \
+	"ptype vC" "" "class" "vC" \
+	{
+	    { base         "public virtual vA" }
+	    { vbase        "vA" }
+	    { field public "int vc;" }
+	    { field public "int vx;" }
+	}
+    cp_test_ptype_class "ptype class vC" "" "class" "vC" ibid
+    cp_test_ptype_class "ptype g_vC" "" "class" "vC" ibid
+
+}
+
+# Multiple virtual inheritance, print type definitions.
+
+proc test_ptype_mvi { } {
+
+    # class vD
+
+    cp_test_ptype_class \
+	"ptype vD" "" "class" "vD" \
+	{
+	    { base         "public virtual vB" }
+	    { base         "public virtual vC" }
+	    { vbase        "vC" }
+	    { vbase        "vB" }
+	    { field public "int vd;" }
+	    { field public "int vx;" }
+	}
+    cp_test_ptype_class "ptype class vD" "" "class" "vD" ibid
+    cp_test_ptype_class "ptype g_vD" "" "class" "vD" ibid
+
+    # class vE
+
+    cp_test_ptype_class \
+	"ptype vE" "" "class" "vE" \
+	{
+	    { base         "public virtual vD" }
+	    { vbase        "vD" }
+	    { field public "int ve;" }
+	    { field public "int vx;" }
+	}
+    cp_test_ptype_class "ptype class vE" "" "class" "vE" ibid
+    cp_test_ptype_class "ptype g_vE" "" "class" "vE" ibid
+
+}
+
+# Single inheritance, print individual members.
+
+proc test_print_si_members { } {
+    global vhn
+
+    # Print all members of g_A using fully qualified form.
+    gdb_test "print g_A.A::a" "$vhn = 1"
+    gdb_test "print g_A.A::x" "$vhn = 2"
+
+    # Print members of g_A using nonambiguous compact form.
+    gdb_test "print g_A.a" "$vhn = 1"
+    gdb_test "print g_A.x" "$vhn = 2"
+
+    # Print all members of g_B using fully qualified form.
+    gdb_test "print g_B.A::a" "$vhn = 3"
+    gdb_test "print g_B.A::x" "$vhn = 4"
+    gdb_test "print g_B.B::b" "$vhn = 5"
+    gdb_test "print g_B.B::x" "$vhn = 6"
+
+    # Print members of g_B using nonambiguous compact form.
+    gdb_test "print g_B.a" "$vhn = 3"
+    gdb_test "print g_B.b" "$vhn = 5"
+    gdb_test "print g_B.x" "$vhn = 6"
+
+    # Print all members of g_C using fully qualified form.
+    gdb_test "print g_C.A::a" "$vhn = 7"
+    gdb_test "print g_C.A::x" "$vhn = 8"
+    gdb_test "print g_C.C::c" "$vhn = 9"
+    gdb_test "print g_C.C::x" "$vhn = 10"
+
+    # Print members of g_C using nonambiguous compact form.
+    gdb_test "print g_C.a" "$vhn = 7"
+    gdb_test "print g_C.c" "$vhn = 9"
+    gdb_test "print g_C.x" "$vhn = 10"
+}
+
+# Single inheritance, print complete classes.
+
+proc test_print_si_classes { } {
+    global vhn
+
+    # Print all members of g_A, g_B, g_C.
+    gdb_test "print g_A" "$vhn = \{a = 1, x = 2\}"
+    gdb_test "print g_B" "$vhn = \{<(class A|A)> = \{a = 3, x = 4\}, b = 5, x = 6\}"
+    gdb_test "print g_C" "$vhn = \{<(class A|A)> = \{a = 7, x = 8\}, c = 9, x = 10\}"
+}
+
+# Multiple inheritance, print individual members.
+
+proc test_print_mi_members {} {
+    global gdb_prompt
+    global nl
+    global vhn
+
+    # Print all members of g_A.
+    gdb_test "print g_A.A::a" "$vhn = 1"
+    gdb_test "print g_A.A::x" "$vhn = 2"
+
+    # Print all members of g_B.
+    gdb_test "print g_B.A::a" "$vhn = 3"
+    gdb_test "print g_B.A::x" "$vhn = 4"
+    gdb_test "print g_B.B::b" "$vhn = 5"
+    gdb_test "print g_B.B::x" "$vhn = 6"
+
+    # Print all members of g_C.
+    gdb_test "print g_C.A::a" "$vhn = 7"
+    gdb_test "print g_C.A::x" "$vhn = 8"
+    gdb_test "print g_C.C::c" "$vhn = 9"
+    gdb_test "print g_C.C::x" "$vhn = 10"
+
+    # Print all members of g_D.
+    #
+    # g_D.A::a and g_D.A::x are ambiguous member accesses, and gdb
+    # should detect these.  There are no ways to PASS these tests
+    # because I don't know what the gdb message will be.  -- chastain
+    # 2004-01-27.
+
+    set name "print g_D.A::a"
+    gdb_test_multiple "print g_D.A::a" $name {
+	-re "$vhn = (15|11)$nl$gdb_prompt $" {
+	    kfail "gdb/68" "print g_D.A::a"
+	}
+    }
+
+    set name "print g_D.A::x"
+    gdb_test_multiple "print g_D.A::x" $name {
+	-re "$vhn = (16|12)$nl$gdb_prompt $" {
+	    kfail "gdb/68" "print g_D.A::x"
+	}
+    }
+
+    gdb_test "print g_D.B::b" "$vhn = 13"
+    gdb_test "print g_D.B::x" "$vhn = 14"
+    gdb_test "print g_D.C::c" "$vhn = 17"
+    gdb_test "print g_D.C::x" "$vhn = 18"
+    gdb_test "print g_D.D::d" "$vhn = 19"
+    gdb_test "print g_D.D::x" "$vhn = 20"
+
+    # Print all members of g_E.
+    # g_E.A::a and g_E.A::x are ambiguous.
+
+    set name "print g_E.A::a"
+    gdb_test_multiple "print g_E.A::a" $name {
+	-re "$vhn = (21|25)$nl$gdb_prompt $" {
+	    kfail "gdb/68" "print g_E.A::a"
+	}
+    }
+
+    set name "print g_E.A::x"
+    gdb_test_multiple "print g_E.A::x" $name {
+	-re "$vhn = (26|22)$nl$gdb_prompt $" {
+	    kfail "gdb/68" "print g_E.A::x"
+	}
+    }
+
+    gdb_test "print g_E.B::b" "$vhn = 23"
+    gdb_test "print g_E.B::x" "$vhn = 24"
+    gdb_test "print g_E.C::c" "$vhn = 27"
+    gdb_test "print g_E.C::x" "$vhn = 28"
+    gdb_test "print g_E.D::d" "$vhn = 29"
+    gdb_test "print g_E.D::x" "$vhn = 30"
+    gdb_test "print g_E.E::e" "$vhn = 31"
+    gdb_test "print g_E.E::x" "$vhn = 32"
+}
+
+# Multiple inheritance, print individual member types.
+
+proc test_print_mi_member_types {} {
+    global gdb_prompt
+    global nl
+    global vhn
+
+    # Print the types of some members of g_D without qualifying them.
+    gdb_test "ptype g_D.b" "type = int"
+    gdb_test "ptype g_D.c" "type = int"
+    gdb_test "ptype g_D.d" "type = int"
+
+    # Print the types of qualified members; none of these tests pass today.
+
+    # Print all members of g_A.
+    gdb_test "ptype g_A.A::a" "type = int"
+    gdb_test "ptype g_A.A::x" "type = int"
+
+    # Print all members of g_B.
+    gdb_test "ptype g_B.A::a" "type = int"
+    gdb_test "ptype g_B.A::x" "type = int"
+    gdb_test "ptype g_B.B::b" "type = int"
+    gdb_test "ptype g_B.B::x" "type = int"
+
+    # Print all members of g_C.
+    gdb_test "ptype g_C.A::a" "type = int"
+    gdb_test "ptype g_C.A::x" "type = int"
+    gdb_test "ptype g_C.C::c" "type = int"
+    gdb_test "ptype g_C.C::x" "type = int"
+
+    # Print all members of g_D.
+    #
+    # g_D.A::a and g_D.A::x are ambiguous member accesses, and gdb
+    # should detect these.  There are no ways to PASS these tests
+    # because I don't know what the gdb message will be.  -- chastain
+    # 2004-01-27.
+
+    set name "ptype g_D.A::a"
+    gdb_test_multiple "ptype g_D.A::a" $name {
+	-re "type = int$nl$gdb_prompt $" {
+	    kfail "gdb/68" "ptype g_D.A::a"
+	}
+    }
+
+    set name "ptype g_D.A::x"
+    gdb_test_multiple "ptype g_D.A::x" $name {
+	-re "type = int$nl$gdb_prompt $" {
+	    kfail "gdb/68" "ptype g_D.A::x"
+	}
+    }
+
+    gdb_test "ptype g_D.B::b" "type = int"
+    gdb_test "ptype g_D.B::x" "type = int"
+    gdb_test "ptype g_D.C::c" "type = int"
+    gdb_test "ptype g_D.C::x" "type = int"
+    gdb_test "ptype g_D.D::d" "type = int"
+    gdb_test "ptype g_D.D::x" "type = int"
+
+    # Print all members of g_E.
+    # g_E.A::a and g_E.A::x are ambiguous.
+
+    set name "ptype g_E.A::a"
+    gdb_test_multiple "ptype g_E.A::a" $name {
+	-re "type = int$nl$gdb_prompt $" {
+	    kfail "gdb/68" "ptype g_E.A::a"
+	}
+    }
+
+    set name "ptype g_E.A::x"
+    gdb_test_multiple "ptype g_E.A::x" $name {
+	-re "type = int$nl$gdb_prompt $" {
+	    kfail "gdb/68" "ptype g_E.A::x"
+	}
+    }
+
+    gdb_test "ptype g_E.B::b" "type = int"
+    gdb_test "ptype g_E.B::x" "type = int"
+    gdb_test "ptype g_E.C::c" "type = int"
+    gdb_test "ptype g_E.C::x" "type = int"
+    gdb_test "ptype g_E.D::d" "type = int"
+    gdb_test "ptype g_E.D::x" "type = int"
+    gdb_test "ptype g_E.E::e" "type = int"
+    gdb_test "ptype g_E.E::x" "type = int"
+}
+
+# Multiple inheritance, print complete classes.
+
+proc test_print_mi_classes { } {
+    global vhn
+
+    # Print all members of g_D.
+    gdb_test "print g_D" "$vhn = \{\<(class |)B\> = \{\<(class |)A\> = \{a = 11, x = 12\}, b = 13, x = 14\}, \<(class |)C\> = \{\<(class |)A\> = \{a = 15, x = 16\}, c = 17, x = 18\}, d = 19, x = 20\}"
+
+    # Print all members of g_E.
+    gdb_test "print g_E" "$vhn = \{\<(class |)D\> = \{\<(class |)B\> = \{\<(class |)A\> = \{a = 21, x = 22\}, b = 23, x = 24\}, \<(class |)C\> = \{\<(class |)A\> = \{a = 25, x = 26\}, c = 27, x = 28\}, d = 29, x = 30\}, e = 31, x = 32\}"
+}
+
+# Single inheritance, print anonymous unions.
+# GDB versions prior to 4.14 entered an infinite loop when printing
+# the type of a class containing an anonymous union, and they were also
+# incapable of printing the member of an anonymous union.
+# We test the printing of the member first, and perform the other tests
+# only if the test succeeds, to avoid the infinite loop.
+#
+# GDB HEAD 2004-01-27 with hp aCC A.03.45 crashes on the first test.
+# -- chastain 2004-01-27
+
+proc test_print_anon_union {} {
+    global gdb_prompt
+    global ws
+    global nl
+    global vhn
+
+    gdb_test "print g_anon_union.a" "$vhn = 2" "print anonymous union member"
+
+    set name "print variable of type anonymous union"
+    gdb_test_multiple "print g_anon_union" $name {
+	-re "$vhn = \{one = 1, \{a = 2, b = 2\}\}$nl$gdb_prompt $" {
+	    pass $name
+	}
+    }
+
+    # The nested union prints as a multi-line field, but the class body
+    # scanner is inherently line-oriented.  This is ugly but it works.
+
+    cp_test_ptype_class \
+	"ptype g_anon_union" "print type of anonymous union" \
+	"class" "class_with_anon_union" \
+	{
+	    { field public "int one;" }
+	    { field public "union \{" }
+	    { field public "int a;" }
+	    { field public "long int b;" }
+	    { field public "\};" }
+	}
+
+}
+
+
+# Single virtual inheritance, print individual members.
+
+proc test_print_svi_members { } {
+    global vhn
+
+    # Print all members of g_vA.
+    gdb_test "print g_vA.vA::va" "$vhn = 1"
+    gdb_test "print g_vA.vA::vx" "$vhn = 2"
+
+    # Print members of g_vA using compact form.
+    gdb_test "print g_vA.va" "$vhn = 1"
+    gdb_test "print g_vA.vx" "$vhn = 2"
+
+    # Print all members of g_vB.
+    gdb_test "print g_vB.vA::va" "$vhn = 3"
+    gdb_test "print g_vB.vA::vx" "$vhn = 4"
+    gdb_test "print g_vB.vB::vb" "$vhn = 5"
+    gdb_test "print g_vB.vB::vx" "$vhn = 6"
+
+    # Print members of g_vB using compact form.
+    gdb_test "print g_vB.va" "$vhn = 3"
+    gdb_test "print g_vB.vb" "$vhn = 5"
+    gdb_test "print g_vB.vx" "$vhn = 6"
+
+    # Print all members of g_vC.
+    gdb_test "print g_vC.vA::va" "$vhn = 7"
+    gdb_test "print g_vC.vA::vx" "$vhn = 8"
+    gdb_test "print g_vC.vC::vc" "$vhn = 9"
+    gdb_test "print g_vC.vC::vx" "$vhn = 10"
+
+    # Print members of g_vC using compact form.
+    gdb_test "print g_vC.va" "$vhn = 7" "print g_vC.va"
+    gdb_test "print g_vC.vc" "$vhn = 9" "print g_vC.vc"
+    gdb_test "print g_vC.vx" "$vhn = 10" "print g_vC.vx"
+}
+
+# Single virtual inheritance, print complete classes.
+
+proc test_print_svi_classes { } {
+    global gdb_prompt
+    global hex
+    global nl
+    global vhn
+
+    # Print all members of g_vA.
+    gdb_test "print g_vA" "$vhn = \{va = 1, vx = 2\}"
+
+    # Print all members of g_vB.
+    set re_vbptr_2	"(_vb.2vA|_vb.vA)"
+    set re_vbptr_3	"_vptr.vB"
+
+    set name "print g_vB"
+    gdb_test_multiple "print g_vB" $name {
+	-re "$vhn = \{<vA> = \{va = 3, vx = 4\}, $re_vbptr_2 = $hex, vb = 5, vx = 6\}$nl$gdb_prompt $" {
+	    # gcc 2.95.3 -gdwarf-2
+	    # gcc 2.95.3 -gstabs+
+	    pass $name
+	}
+	-re "$vhn = \{<vA> = \{va = 3, vx = 4\}, $re_vbptr_3 = $hex, vb = 5, vx = 6\}$nl$gdb_prompt $" {
+	    # gcc 3.3.4 -gdwarf-2
+	    # gcc 3.4.1 -gdwarf-2
+	    # gcc 3.4.1 -gstabs+
+	    # gcc HEAD 2004-07-31 -gdwarf-2
+	    pass "$name (FIXME v3 vtbl ptr)"
+	}
+	-re "$vhn = \{<vA> = \{va = 3, vx = 4\}, $re_vbptr_3 = $hex <VTT for vB>, vb = 5, vx = 6\}$nl$gdb_prompt $" {
+	    # gcc 3.3.4 -gstabs+
+	    pass $name
+	}
+	-re "$vhn = \{<vA> = \{va = 3, vx = 4\}, $re_vbptr_3 = $hex <typeinfo for vB>, vb = 5, vx = 6\}$nl$gdb_prompt $" {
+	    # gcc HEAD 2004-07-31 -gstabs+
+	    pass $name
+	}
+    }
+
+    # Print all members of g_vC.
+    set re_vbptr_2	"(_vb.2vA|_vb.vA)"
+    set re_vbptr_3	"_vptr.vC"
+
+    set name "print g_vC"
+    gdb_test_multiple "print g_vC" $name {
+	-re "$vhn = \{<vA> = \{va = 7, vx = 8\}, $re_vbptr_2 = $hex, vc = 9, vx = 10\}$nl$gdb_prompt $" {
+	    # gcc 2.95.3 -gdwarf-2
+	    # gcc 2.95.3 -gstabs+
+	    pass $name
+	}
+	-re "$vhn = \{<vA> = \{va = 7, vx = 8\}, $re_vbptr_3 = $hex, vc = 9, vx = 10\}$nl$gdb_prompt $" {
+	    # gcc 3.3.4 -gdwarf-2
+	    # gcc 3.4.1 -gdwarf-2
+	    # gcc 3.4.1 -gstabs+
+	    # gcc HEAD 2004-07-31 -gdwarf-2
+	    pass "$name (FIXME v3 vtbl ptr)"
+	}
+	-re "$vhn = \{<vA> = \{va = 7, vx = 8\}, $re_vbptr_3 = $hex <VTT for vC>, vc = 9, vx = 10\}$nl$gdb_prompt $" {
+	    # gcc 3.3.4 -gstabs+
+	    pass $name
+	}
+	-re "$vhn = \{<vA> = \{va = 7, vx = 8\}, $re_vbptr_3 = $hex <typeinfo for vC>, vc = 9, vx = 10\}$nl$gdb_prompt $" {
+	    # gcc HEAD 2004-07-31 -gstabs+
+	    pass $name
+	}
+    }
+}
+
+# Multiple virtual inheritance, print individual members.
+
+proc test_print_mvi_members { } {
+    global vhn
+
+    # Print all members of g_vD.
+    gdb_test "print g_vD.vA::va" "$vhn = 19"
+    gdb_test "print g_vD.vA::vx" "$vhn = 20"
+    gdb_test "print g_vD.vB::vb" "$vhn = 21"
+    gdb_test "print g_vD.vB::vx" "$vhn = 22"
+    gdb_test "print g_vD.vC::vc" "$vhn = 23"
+    gdb_test "print g_vD.vC::vx" "$vhn = 24"
+    gdb_test "print g_vD.vD::vd" "$vhn = 25"
+    gdb_test "print g_vD.vD::vx" "$vhn = 26"
+
+    # Print all members of g_vE.
+    gdb_test "print g_vE.vA::va" "$vhn = 0"
+    gdb_test "print g_vE.vA::vx" "$vhn = 0"
+    gdb_test "print g_vE.vB::vb" "$vhn = 0"
+    gdb_test "print g_vE.vB::vx" "$vhn = 0"
+    gdb_test "print g_vE.vC::vc" "$vhn = 0"
+    gdb_test "print g_vE.vC::vx" "$vhn = 0"
+    gdb_test "print g_vE.vD::vd" "$vhn = 0"
+    gdb_test "print g_vE.vD::vx" "$vhn = 0"
+    gdb_test "print g_vE.vE::ve" "$vhn = 27"
+    gdb_test "print g_vE.vE::vx" "$vhn = 28"
+}
+
+# Multiple virtual inheritance, print complete classes.
+
+proc test_print_mvi_classes { } {
+    global gdb_prompt
+    global hex
+    global ws
+    global nl
+    global vhn
+
+    # Virtual base pointers for everybody.
+
+    set re_vbptr_2_vA	"(_vb.2vA|_vb.vA)"
+    set re_vbptr_2_vB	"(_vb.2vB|_vb.vB)"
+    set re_vbptr_2_vC	"(_vb.2vC|_vb.vC)"
+    set re_vbptr_2_vD	"(_vb.2vD|_vb.vD)"
+    set re_vbptr_3_vA	"_vptr.vA"
+    set re_vbptr_3_vB	"_vptr.vB"
+    set re_vbptr_3_vC	"_vptr.vC"
+    set re_vbptr_3_vD	"_vptr.vD"
+    set re_vbptr_3_vE	"_vptr.vE"
+
+    # Print all members of g_vD.
+
+    set name "print g_vD"
+    gdb_test_multiple "print g_vD" $name {
+	-re "$vhn = \{<vB> = \{<vA> = \{va = 19, vx = 20\}, $re_vbptr_2_vA = $hex, vb = 21, vx = 22\}, <vC> = \{$re_vbptr_2_vA = $hex, vc = 23, vx = 24\}, $re_vbptr_2_vC = $hex, $re_vbptr_2_vB = $hex, vd = 25, vx = 26\}$nl$gdb_prompt $" {
+	    # gcc 2.95.3 -gdwarf-2
+	    # gcc 2.95.3 -gstabs+
+	    pass $name
+	}
+	-re "$vhn = \{<vB> = \{<vA> = \{va = 19, vx = 20\}, $re_vbptr_3_vB = $hex, vb = 21, vx = 22\}, <vC> = \{$re_vbptr_3_vC = $hex, vc = 23, vx = 24\}, $re_vbptr_3_vD = $hex, vd = 25, vx = 26\}$nl$gdb_prompt $" {
+	    # gcc 3.3.2 -gdwarf-2
+	    # gcc HEAD 2004-01-21 -gdwarf-2
+	    # gcc HEAD 2004-01-21 -gstabs+
+	    pass "$name (FIXME v3 vtbl ptr)"
+	}
+	-re "$vhn = \{<vB> = \{<vA> = \{va = 19, vx = 20\}, $re_vbptr_3_vB = $hex, vb = 21, vx = 22\}, <vC> = \{$re_vbptr_3_vC = $hex <VTT for vD>, vc = 23, vx = 24\}, $re_vbptr_3_vD = $hex, vd = 25, vx = 26\}$nl$gdb_prompt $" {
+	    # gcc 3.3.2 -gstabs+
+	    pass "$name"
+	}
+    }
+
+    # Print all members of g_vE.
+
+    set name "print g_vE"
+    gdb_test_multiple "print g_vE" $name {
+	-re "$vhn = \{<vD> = \{<vB> = \{<vA> = \{va = 0, vx = 0\}, $re_vbptr_2_vA = $hex, vb = 0, vx = 0\}, <vC> = \{$re_vbptr_2_vA = $hex, vc = 0, vx = 0\}, $re_vbptr_2_vC = $hex, $re_vbptr_2_vB = $hex, vd = 0, vx = 0\}, $re_vbptr_2_vD = $hex, ve = 27, vx = 28\}$nl$gdb_prompt $" {
+	    # gcc 2.95.3 -gdwarf-2
+	    # gcc 2.95.3 -gstabs+
+	    pass $name
+	}
+	-re "$vhn = \{<vD> = \{<vB> = \{<vA> = \{va = 0, vx = 0\}, $re_vbptr_3_vB = $hex, vb = 0, vx = 0\}, <vC> = \{$re_vbptr_3_vC = $hex, vc = 0, vx = 0\}, $re_vbptr_3_vD = $hex, vd = 0, vx = 0\}, $re_vbptr_3_vE = $hex, ve = 27, vx = 28\}$nl$gdb_prompt $" {
+	    # gcc 3.3.4 -gdwarf-2
+	    # gcc 3.3.4 -gstabs+
+	    # gcc 3.4.1 -gdwarf-2
+	    # gcc 3.4.1 -gstabs+
+	    # gcc HEAD 2004-07-31 -gdwarf-2
+	    pass "$name (FIXME v3 vtbl ptr)"
+	}
+	-re "$vhn = \{<vD> = \{<vB> = \{<vA> = \{va = 0, vx = 0\}, $re_vbptr_3_vB = $hex, vb = 0, vx = 0\}, <vC> = \{$re_vbptr_3_vC = $hex <VTT for vD>, vc = 0, vx = 0\}, $re_vbptr_3_vD = $hex, vd = 0, vx = 0\}, $re_vbptr_3_vE = $hex, ve = 27, vx = 28\}$nl$gdb_prompt $" {
+	    # gcc 3.2.7-rh -gstabs+
+	    pass $name
+	}
+	-re "$vhn = \{<vD> = \{<vB> = \{<vA> = \{va = 0, vx = 0\}, $re_vbptr_3_vB = $hex, vb = 0, vx = 0\}, <vC> = \{$re_vbptr_3_vC = $hex <typeinfo for vE>, vc = 0, vx = 0\}, $re_vbptr_3_vD = $hex, vd = 0, vx = 0\}, $re_vbptr_3_vE = $hex, ve = 27, vx = 28\}$nl$gdb_prompt $" {
+	    # gcc HEAD 2004-07-31 -gstabs+
+	    pass $name
+	}
+    }
+}
+
+proc do_tests { } {
+    global prms_id
+    global bug_id
+    global subdir
+    global objdir
+    global srcdir
+    global binfile
+
+    set prms_id 0
+    set bug_id 0
+
+    # Start with a fresh gdb.
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_load $binfile
+
+    gdb_test "set language c++" ""
+    gdb_test "set width 0" ""
+
+    if { ![runto_main] } then {
+	perror "couldn't run to main"
+	return
+    }
+
+    test_ptype_si
+    test_ptype_mi
+    test_ptype_vi
+    test_ptype_mvi
+
+    if { ![runto 'inheritance2'] } then {
+	perror "couldn't run to inheritance2"
+	return
+    }
+
+    test_print_si_members
+    test_print_si_classes
+    test_print_mi_members
+    test_print_mi_member_types
+    test_print_mi_classes
+    test_print_anon_union
+
+    if { ![runto 'inheritance4'] } {
+	perror "couldn't run to inheritance4"
+	return
+    }
+
+    test_print_svi_members
+    test_print_svi_classes
+    test_print_mvi_members
+    test_print_mvi_classes
+}
+
+do_tests

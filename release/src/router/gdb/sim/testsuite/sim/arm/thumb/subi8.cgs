@@ -1,0 +1,12 @@
+# arm testcase for sub ${bit10-rd},#$offset8
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global subi8
+subi8:
+	sub r0,#0
+
+	pass

@@ -1,0 +1,40 @@
+# sh testcase for beqi$likely $rm, $imm6, $tra -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global beqi
+init:
+	# Load up the branch target registers.
+	pta beqi2, tr0
+	pta beqi3, tr1
+	pta wrong, tr2
+
+beqi1:
+	# Always true, so branch likely.
+	movi 1, r0
+	beqi/l r0, 1, tr0
+	# We should branch over this.
+	fail
+
+beqi2:
+	movi 22, r3
+	beqi r3, 22, tr1
+	# We should branch over this.
+	fail
+
+beqi3:	
+	movi 27, r7
+	# We shouldn't branch here.
+	beqi/u r7, 23, tr2
+	# We should proceed to pass here.
+
+okay:
+	pass
+	
+wrong:
+	fail

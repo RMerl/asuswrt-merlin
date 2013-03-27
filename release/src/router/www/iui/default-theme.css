@@ -1,0 +1,129 @@
+/* default-theme.css (c) 2007-2012 by iUI Project Members, see LICENSE.txt for license */
+body {
+    color: #000000;
+}
+
+li > a[selected], li > a:active {
+    background-image: url(listArrowSel.png), url(selection.png) !important;
+}
+
+li > a[selected="progress"] {
+    background-image: url(loading.gif), url(selection.png) !important;
+}
+
+/************************************************************************************************/
+
+body > .toolbar {
+    /*background: url(toolbar.png) #6d84a2 repeat-x;*/
+    background: #000;
+    /*background: url(Top_low.jpg);*/
+	  background-repeat:no-repeat;
+	  background-size:100% 100%;
+}
+
+.button {
+    -webkit-border-image: url(backButton.png) 0 5 0 5;
+    -moz-border-image: url(backButton.png) 0 5 0 5;
+}
+
+.button_back{
+	background-image:url(/iui/backButton.png);
+	background-repeat:no-repeat;	
+	background-position:2px -48px;
+	height:30px;
+	width:30px;
+}
+
+.button_right {
+    -webkit-border-image: url(toolButton.png) 0 5 0 5;
+    -moz-border-image: url(toolButton.png) 0 5 0 5;
+}
+
+.blueButton {
+    -webkit-border-image: url(blueButton.png) 0 5 0 5;
+    -moz-border-image: url(blueButton.png) 0 5 0 5;
+}
+
+#backButton {
+    -webkit-border-image: url(backButtonBrdr.png) 0 8 0 14;
+    -moz-border-image: url(backButtonBrdr.png) 0 8 0 14;
+    background: url(backButtonBack.png) repeat-x;
+}
+
+#backButton:active {
+    -webkit-border-image: url(backButtonSel.png) 0 8 0 14;
+    -moz-border-image: url(backButtonSel.png) 0 8 0 14;
+    background: url(backButtonSel.png) repeat-x;
+}
+
+.whiteButton {
+    -webkit-border-image: url(whiteButton.png) 0 12 0 12;
+    -moz-border-image: url(whiteButton.png) 0 12 0 12;
+    text-shadow: rgba(255, 255, 255, 0.7) 0 1px 0;
+}
+
+.redButton {
+    -webkit-border-image: url(redButton.png) 0 12 0 12;
+    -moz-border-image: url(redButton.png) 0 12 0 12;
+}
+
+.grayButton {
+    -webkit-border-image: url(grayButton.png) 0 12 0 12;
+    -moz-border-image: url(grayButton.png) 0 12 0 12;
+    color: #FFFFFF;
+}
+
+/************************************************************************************************/
+
+body > ul > li.group {
+	opacity:0.7;
+    background: url(listGroup.png) repeat-x;
+}
+
+body > ul > li > a {
+    background: url(listArrow.png) no-repeat right center;
+}
+
+/************************************************************************************************/
+    
+.dialog > fieldset {
+    background: url(toolbar.png) #7388a5 repeat-x;
+}
+
+/************************************************************************************************/
+
+body > .panel {
+/*    background: #c5ccd4 url(pinstripes.png);*/
+/*	    background: url(Button_low.jpg);*/
+	    background: #000;
+		  background-repeat:no-repeat;
+		  background-size:100% 100%;
+}
+
+.toggle {
+    border: 1px solid #888888;
+    background: #FFFFFF url(toggle.png) repeat-x;
+}
+
+.thumb {
+    background: #ffffff url(thumb.png) repeat-x;
+}
+
+/************************************************************************************************/
+#preloader {
+    display: none;
+    background-image: url(loading.gif), url(backButtonSel.png), url(selection.png),
+        url(blueButton.png), url(listArrowSel.png), url(listArrowSel.png), url(listGroup.png);
+}
+
+.toolbar > h1.titleImg {
+  background: url(title-img.png) no-repeat top center;
+  color: rgba(0,0,0,0);
+}
+
+.backButtonImg {
+  width: 50px;
+  background: url(back-img.png) no-repeat center left,
+              url(backButtonBack.png) repeat-x top left !important;
+  color: rgba(0,0,0,0);
+}

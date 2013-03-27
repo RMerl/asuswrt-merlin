@@ -1,0 +1,42 @@
+# frv testcase for nld @($GRi,$GRj),$GRk
+# mach: frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global nld
+nld:
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_limmed	0xbeef,0xdead,gr8
+
+	set_gr_gr	sp,gr20
+	set_gr_immed	0,gr7
+	nld 		@(sp,gr7),gr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_spr_limmed	0x8880,0x0001,nesr0
+	test_spr_gr	neear0,gr20
+	test_spr_limmed	0x0000,0x0000,gner1
+	test_spr_limmed	0x0000,0x0000,gner0
+
+	set_gr_limmed	0xbeef,0xdead,gr8
+	inc_gr_immed	-4,sp
+	set_gr_immed	4,gr7
+	nld 		@(sp,gr7),gr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_spr_limmed	0x8880,0x0401,nesr1
+	test_spr_gr	neear1,gr20
+	test_spr_limmed	0x0000,0x0000,gner1
+	test_spr_limmed	0x0000,0x0000,gner0
+
+	set_gr_limmed	0xbeef,0xdead,gr8
+	inc_gr_immed	8,sp
+	set_gr_immed	-4,gr7
+	nld 		@(sp,gr7),gr8
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_spr_limmed	0x8880,0x0801,nesr2
+	test_spr_gr	neear2,gr20
+	test_spr_limmed	0x0000,0x0000,gner1
+	test_spr_limmed	0x0000,0x0000,gner0
+
+	pass

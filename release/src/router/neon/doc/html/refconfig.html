@@ -1,0 +1,32 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>neon-config</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="ref.html" title="neon API reference"><link rel="prev" href="refneon.html" title="neon"><link rel="next" href="refresolve.html" title="ne_addr_resolve"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">neon-config</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="refneon.html">Prev</a> </td><th width="60%" align="center">neon API reference</th><td width="20%" align="right"> <a accesskey="n" href="refresolve.html">Next</a></td></tr></table><hr></div><div class="refentry" title="neon-config"><a name="refconfig"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>neon-config — script providing information about installed copy
+	of neon library</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">neon-config</code>  [<code class="option">--prefix</code>] [[<code class="option">--cflags</code>] |  [<code class="option">--libs</code>] |  [<code class="option">--la-file</code>] |  [<code class="option">--support</code> <em class="replaceable"><code>feature</code></em>] |  [<code class="option">--help</code>] |  [<code class="option">--version</code>]]</p></div></div><div class="refsect1" title="Description"><a name="id447774"></a><h2>Description</h2><p>The <span class="command"><strong>neon-config</strong></span> script provides
+information about an installed copy of the neon library.  The
+<code class="option">--cflags</code> and <code class="option">--libs</code> options instruct
+how to compile and link an application against the library; the
+<code class="option">--version</code> and <code class="option">--support</code> options can
+help determine whether the library meets the applications
+requirements.</p></div><div class="refsect1" title="Options"><a name="id447804"></a><h2>Options</h2><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><p><span class="term"><code class="option">--cflags</code></span></p></td><td>Print the flags which should be passed to
+the C compiler when compiling object files, when the object files use
+neon header files.</td></tr><tr><td><p><span class="term"><code class="option">--libs</code></span></p></td><td>Print the flags which should be passed to
+the linker when linking an application which uses the neon
+library</td></tr><tr><td><p><span class="term"><code class="option">--la-file</code></span></p></td><td>Print the location of the libtool library
+script, <code class="filename">libneon.la</code>, which can be used to link against
+neon by applications using libtool.</td></tr><tr><td><p><span class="term"><code class="option">--version</code></span></p></td><td>Print the version of the library</td></tr><tr><td><p><span class="term"><code class="option">--prefix</code> <em class="replaceable"><code>dir</code></em></span></p></td><td>If <em class="replaceable"><code>dir</code></em> is given; relocate output of
+<code class="option">--cflags</code> and <code class="option">--libs</code> as if neon was
+installed in given prefix directory.  Otherwise, print the
+installation prefix of the library.</td></tr><tr><td><p><span class="term"><code class="option">--support</code> <em class="replaceable"><code>feature</code></em></span></p></td><td>The script exits with success if
+<em class="replaceable"><code>feature</code></em> is supported by the
+library.</td></tr><tr><td><p><span class="term"><code class="option">--help</code></span></p></td><td>Print help message; includes list of known
+	    features and whether they are supported or not.</td></tr></tbody></table></div></div><div class="refsect1" title="Example"><a name="example"></a><h2>Example</h2><p>Below is a Makefile fragment which could be used to
+build an application against an installed neon library, when the
+<span class="command"><strong>neon-config</strong></span> script can be found in
+<code class="envar">$PATH</code>.</p><pre class="programlisting">CFLAGS = `neon-config --cflags`
+LIBS = `neon-config --libs`
+OBJECTS = myapp.o
+TARGET = myapp
+
+$(TARGET): $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
+
+myapp.o: myapp.c
+	$(CC) $(CFLAGS) -c myapp.c -o myapp.o</pre></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="refneon.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ref.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="refresolve.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">neon </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> ne_addr_resolve</td></tr></table></div></body></html>

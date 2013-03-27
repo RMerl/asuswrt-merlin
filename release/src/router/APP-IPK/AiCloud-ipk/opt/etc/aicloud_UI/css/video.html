@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title></title>
+<style>
+html{
+	margin:0 0;
+	padding:0px;
+}
+body{
+	display: block;
+	overflow:hidden;
+}
+#playerRegion{
+	width:100%;
+	height:350px;
+	left:0px;
+	top:0px;
+	position:absolute;
+}
+#video_area{
+	width:100%;
+	height:350px;
+}
+
+video:-webkit-full-screen     { max-height: 100%; }
+video:-moz-full-screen        { max-height: 100%; }
+</style>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript" src="/smb/js/jplayer/jquery.jplayer.min.js"></script>
+<link rel="stylesheet" href="/smb/css/jplayer.blue.monday.css" type="text/css">
+<script type="text/javascript">
+	
+var m = new lang();
+var g_storage = new myStorage();
+var g_is_fullscreen = false;
+
+function getUrlVars()
+{
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++)
+    {
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars;
+}
+    
+$("document").ready(function() {
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	
+	$('button#cancel').text(m.getString('btn_close'));
+	
+	var this_video = getUrlVars()["v"];	
+	
+	$("#jquery_jplayer_1").jPlayer({
+
+		ready: function () {
+			$(this).jPlayer("setMedia", {
+				m4v: this_video
+			});
+		},
+		swfPath: "/smb/js/jplayer/",
+		supplied: "m4v, mp4, m4a",
+		//solution: "flash, html",
+		solution: "html, flash",
+		size: {
+			width: "640px",
+			height: "360px",
+			cssClass: "jp-video-360p"
+		},
+		errorAlerts: false,
+ 		warningAlerts: false
+	});
+	
+	$("a.jp-full-screen").click(function(){
+		
+		if($(this).attr("title")=="full screen"){
+	  	$(".hover, ul#navigation").hide()
+	  }
+	  
+	  /*
+	  //parent.fullscreenJqmWindow();
+	  var video = $("video");
+
+		// Mozilla
+		video.mozRequestFullScreen();
+		
+		// Webkit for video elements only
+		video.webkitEnterFullScreen();
+		*/
+		
+		//doFullScreen();
+	});
+	
+	
+	$("a.jp-restore-screen").click(function(){
+		if($(this).attr("title")=="restore screen"){
+	  	$(".hover, ul#navigation").show()
+	  }
+	});
+});
+
+function doClose(e) {
+	$("#jquery_jplayer_1").jPlayer("stop");
+	$("#jquery_jplayer_1").jPlayer("clearMedia");
+	parent.closeJqmWindow(0);
+};
+
+function fullscreen(elem) {
+	var domPrefixes = 'Webkit Moz O ms Khtml'.split(' ');
+				
+	var prefix;
+	// Mozilla and webkit intialise fullscreen slightly differently
+	for ( var i = -1, len = domPrefixes.length; ++i < len; ) {
+		prefix = domPrefixes[i].toLowerCase();
+				  
+		if ( elem[prefix + 'EnterFullScreen'] ) {
+			// Webkit uses EnterFullScreen for video
+			return prefix + 'EnterFullScreen';
+			break;
+		} 
+		else if( elem[prefix + 'RequestFullScreen'] ) {
+			// Mozilla uses RequestFullScreen for all elements and webkit uses it for non video elements
+			return prefix + 'RequestFullScreen';
+			break;
+		}
+	}
+		
+	return false;
+};
+				
+function doFullScreen(e){
+	
+	var user_agent = navigator.userAgent.toLowerCase();
+	
+	if( user_agent.indexOf("msie") > -1 ||
+		  user_agent.indexOf("firefox") > -1/* ||
+		  user_agent.indexOf("chrome") > -1*/ ){
+		alert(user_agent);
+		//var fullScreen = $("#jquery_jplayer_1").jPlayer({fullScreen: "true"});
+		$("#jquery_jplayer_1").jPlayer("option", "fullScreen", "true");
+		
+		//var playSelector = $("#jquery_jplayer_1").jPlayer("option", "fullScreen", "true");		
+		alert(fullScreen);
+	}
+	else{
+	
+		var $ = function(selector,context){return(context||document).querySelector(selector)};
+		var video  = $("video");
+	
+		if(video){
+			var fullscreenvideo = fullscreen(document.createElement("video"));
+			
+			// Should add prefixed events for potential ms/o or unprefixed support too
+			video.addEventListener("webkitfullscreenchange",function(){
+					g_is_fullscreen = document.webkitIsFullScreen;
+			}, false);
+			
+			video.addEventListener("mozfullscreenchange",function(){
+				g_is_fullscreen = document.mozFullScreen;
+			}, false);
+					
+			video[fullscreenvideo]();		
+		}
+	}
+}
+</script>
+</head>
+<body>
+	
+<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+	<tr style='height:350px'>
+  	<td>
+    <div id="jp_container_1" class="jp-video jp-video-360p">
+			<div class="jp-type-single">
+				<div id="jquery_jplayer_1" class="jp-jplayer" style="width: 640px; height: 360px; ">
+					<video id="jp_video_0" preload="metadata" style="width: 0px; height: 0px; "></video>
+				</div>
+				<div class="jp-gui">
+					<div class="jp-video-play" style="display: block; ">
+						<a href="javascript:;" class="jp-video-play-icon" tabindex="1">play</a>
+					</div>
+					<div class="jp-interface">
+						<div class="jp-progress">
+							<div class="jp-seek-bar" style="width: 100%; ">
+								<div class="jp-play-bar" style="width: 0%; "></div>
+							</div>
+						</div>
+						<div class="jp-duration">00:00</div>
+						<div class="jp-split">/</div>
+						<div class="jp-current-time">00:00</div>
+						<div class="jp-controls-holder">
+							<ul class="jp-controls">
+								<li><a href="javascript:;" class="jp-play" tabindex="1">play</a></li>
+								<li><a href="javascript:;" class="jp-pause" tabindex="1" style="display: block; ">pause</a></li>
+								<li><a href="javascript:;" class="jp-stop" tabindex="1">stop</a></li>
+								<li><a href="javascript:;" class="jp-mute" tabindex="1" title="mute">mute</a></li>
+								<li><a href="javascript:;" class="jp-unmute" tabindex="1" title="unmute" style="display: none; ">unmute</a></li>
+								<li><a href="javascript:;" class="jp-volume-max" tabindex="1" title="max volume">max volume</a></li>								
+							</ul>
+							<div class="jp-volume-bar">
+								<div class="jp-volume-bar-value" style="width: 80%; "></div>
+							</div>
+							
+							<ul class="jp-toggles">
+								<li><a href="javascript:;" class="jp-full-screen" tabindex="1" title="full screen">full screen</a></li>
+								<li><a href="javascript:;" class="jp-restore-screen" tabindex="1" title="restore screen" style="display: block; ">restore screen</a></li>								
+							</ul>
+							
+						</div>						
+					</div>
+				</div>				
+			</div>
+		</div>
+    </td>    
+  </tr>
+  <tr style='height:10px'></tr>
+  <tr>
+  	<td>
+  	<div class="table_block_footer" style="text-align:right">
+  		<button id="fullscreen" class="btnStyle" onClick="doFullScreen();">fullscreen</button> 
+    	<button id="cancel" class="btnStyle" onClick="doClose();">Close</button> 
+    </div>
+    </td>
+  </tr>
+</table>
+	
+</body>
+</html>

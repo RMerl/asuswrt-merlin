@@ -1,0 +1,14 @@
+# sh testcase for mshard.l $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global mshardl
+mshardl:
+	mshard.l r0, r0, r0
+
+	pass

@@ -1,0 +1,20 @@
+# Miscellaneous ARM simulator testcases
+
+if { [istarget arm*-*-*] || [istarget thumb*-*-*] || [istarget xscale*-*-*] } {
+    # load support procs
+    # load_lib cgen.exp
+
+    # all machines
+    set all_machs "arm7tdmi"
+
+    # The .ms suffix is for "miscellaneous .s".
+    foreach src [lsort [glob -nocomplain $srcdir/$subdir/*.ms]] {
+	# If we're only testing specific files and this isn't one of them,
+	# skip it.
+	if ![runtest_file_p $runtests $src] {
+	    continue
+	}
+
+	run_sim_test $src $all_machs
+    }
+}

@@ -1,0 +1,29 @@
+# sh testcase for exts.b $rm, $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global extsb
+extsb:
+	mov #42, r1
+	exts.b r1, r2
+	assert r2, #42
+signed:
+	mov #0, r0
+	or #255, r0
+	exts.b r0, r1
+	mov #0, r7
+	not r7, r7
+	cmp/eq r1, r7
+	bf wrong
+	
+okay:
+	pass
+
+wrong:
+	fail
+	

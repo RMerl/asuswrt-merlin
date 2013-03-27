@@ -1,0 +1,974 @@
+This is Info file ./termcap.info, produced by Makeinfo-1.55 from the
+input file ./termcap.texi.
+
+   This file documents the termcap library of the GNU system.
+
+   Copyright (C) 1988 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be stated in a
+translation approved by the Foundation.
+
+
+File: termcap.info,  Node: Naming,  Next: Inheriting,  Prev: Capability Format,  Up: Data Base
+
+Terminal Type Name Conventions
+==============================
+
+   There are conventions for choosing names of terminal types.  For one
+thing, all letters should be in lower case.  The terminal type for a
+terminal in its most usual or most fundamental mode of operation should
+not have a hyphen in it.
+
+   If the same terminal has other modes of operation which require
+different terminal descriptions, these variant descriptions are given
+names made by adding suffixes with hyphens.  Such alternate descriptions
+are used for two reasons:
+
+   * When the terminal has a switch that changes its behavior.  Since
+     the computer cannot tell how the switch is set, the user must tell
+     the computer by choosing the appropriate terminal type name.
+
+     For example, the VT-100 has a setup flag that controls whether the
+     cursor wraps at the right margin.  If this flag is set to "wrap",
+     you must use the terminal type `vt100-am'.  Otherwise you must use
+     `vt100-nam'.  Plain `vt100' is defined as a synonym for either
+     `vt100-am' or `vt100-nam' depending on the preferences of the
+     local site.
+
+     The standard suffix `-am' stands for "automatic margins".
+
+   * To give the user a choice in how to use the terminal.  This is done
+     when the terminal has a switch that the computer normally controls.
+
+     For example, the Ann Arbor Ambassador can be configured with many
+     screen sizes ranging from 20 to 60 lines.  Fewer lines make bigger
+     characters but more lines let you see more of what you are editing.
+     As a result, users have different preferences.  Therefore, termcap
+     provides terminal types for many screen sizes.  If you choose type
+     `aaa-30', the terminal will be configured to use 30 lines; if you
+     choose `aaa-48', 48 lines will be used, and so on.
+
+   Here is a list of standard suffixes and their conventional meanings:
+
+`-w'
+     Short for "wide".  This is a mode that gives the terminal more
+     columns than usual.  This is normally a user option.
+
+`-am'
+     "Automatic margins".  This is an alternate description for use when
+     the terminal's margin-wrap switch is on; it contains the `am'
+     flag.  The implication is that normally the switch is off and the
+     usual description for the terminal says that the switch is off.
+
+`-nam'
+     "No automatic margins".  The opposite of `-am', this names an
+     alternative description which lacks the `am' flag.  This implies
+     that the terminal is normally operated with the margin-wrap switch
+     turned on, and the normal description of the terminal says so.
+
+`-na'
+     "No arrows".  This terminal description initializes the terminal to
+     keep its arrow keys in local mode.  This is a user option.
+
+`-rv'
+     "Reverse video".  This terminal description causes text output for
+     normal video to appear as reverse, and text output for reverse
+     video to come out as normal.  Often this description differs from
+     the usual one by interchanging the two strings which turn reverse
+     video on and off.
+
+     This is a user option; you can choose either the "reverse video"
+     variant terminal type or the normal terminal type, and termcap will
+     obey.
+
+`-s'
+     "Status".  Says to enable use of a status line which ordinary
+     output does not touch (*note Status Line::.).
+
+     Some terminals have a special line that is used only as a status
+     line.  For these terminals, there is no need for an `-s' variant;
+     the status line commands should be defined by default.  On other
+     terminals, enabling a status line means removing one screen line
+     from ordinary use and reducing the effective screen height.  For
+     these terminals, the user can choose the `-s' variant type to
+     request use of a status line.
+
+`-NLINES'
+     Says to operate with NLINES lines on the screen, for terminals
+     such as the Ambassador which provide this as an option.  Normally
+     this is a user option; by choosing the terminal type, you control
+     how many lines termcap will use.
+
+`-NPAGESp'
+     Says that the terminal has NPAGES pages worth of screen memory,
+     for terminals where this is a hardware option.
+
+`-unk'
+     Says that description is not for direct use, but only for
+     reference in `tc' capabilities.  Such a description is a kind of
+     subroutine, because it describes the common characteristics of
+     several variant descriptions that would use other suffixes in
+     place of `-unk'.
+
+
+File: termcap.info,  Node: Inheriting,  Next: Changing,  Prev: Naming,  Up: Data Base
+
+Inheriting from Related Descriptions
+====================================
+
+   When two terminal descriptions are similar, their identical parts do
+not need to be given twice.  Instead, one of the two can be defined in
+terms of the other, using the `tc' capability.  We say that one
+description "refers to" the other, or "inherits from" the other.
+
+   The `tc' capability must be the last one in the terminal description,
+and its value is a string which is the name of another terminal type
+which is referred to.  For example,
+
+     N9|aaa|ambassador|aaa-30|ann arbor ambassador/30 lines:\
+             :ti=\E[2J\E[30;0;0;30p:\
+             :te=\E[60;0;0;30p\E[30;1H\E[J:\
+             :li#30:tc=aaa-unk:
+
+defines the terminal type `aaa-30' (also known as plain `aaa') in terms
+of `aaa-unk', which defines everything about the Ambassador that is
+independent of screen height.  The types `aaa-36', `aaa-48' and so on
+for other screen heights are likewise defined to inherit from `aaa-unk'.
+
+   The capabilities overridden by `aaa-30' include `li', which says how
+many lines there are, and `ti' and `te', which configure the terminal
+to use that many lines.
+
+   The effective terminal description for type `aaa' consists of the
+text shown above followed by the text of the description of `aaa-unk'.
+The `tc' capability is handled automatically by `tgetent', which finds
+the description thus referenced and combines the two descriptions
+(*note Find::.).  Therefore, only the implementor of the terminal
+descriptions needs to think about using `tc'.  Users and application
+programmers do not need to be concerned with it.
+
+   Since the reference terminal description is used last, capabilities
+specified in the referring description override any specifications of
+the same capabilities in the reference description.
+
+   The referring description can cancel out a capability without
+specifying any new value for it by means of a special trick.  Write the
+capability in the referring description, with the character `@' after
+the capability name, as follows:
+
+     NZ|aaa-30-nam|ann arbor ambassador/30 lines/no automatic-margins:\
+             :am@:tc=aaa-30:
+
+
+File: termcap.info,  Node: Changing,  Prev: Inheriting,  Up: Data Base
+
+When Changes in the Data Base Take Effect
+=========================================
+
+   Each application program must read the terminal description from the
+data base, so a change in the data base is effective for all jobs
+started after the change is made.
+
+   The change will usually have no effect on a job that have been in
+existence since before the change. The program probably read the
+terminal description once, when it was started, and is continuing to
+use what it read then.  If the program does not have a feature for
+reexamining the data base, then you will need to run it again (probably
+killing the old job).
+
+   If the description in use is coming from the `TERMCAP' environment
+variable, then the data base file is effectively overridden, and
+changes in it will have no effect until you change the `TERMCAP'
+variable as well.  For example, some users' `.login' files
+automatically copy the terminal description into `TERMCAP' to speed
+startup of applications.  If you have done this, you will need to
+change the `TERMCAP' variable to make the changed data base take effect.
+
+
+File: termcap.info,  Node: Capabilities,  Next: Summary,  Prev: Data Base,  Up: Top
+
+Definitions of the Terminal Capabilities
+****************************************
+
+   This section is divided into many subsections, each for one aspect of
+use of display terminals.  For writing a display program, you usually
+need only check the subsections for the operations you want to use.
+For writing a terminal description, you must read each subsection and
+fill in the capabilities described there.
+
+   String capabilities that are display commands may require numeric
+parameters (*note Parameters::.).  Most such capabilities do not use
+parameters.  When a capability requires parameters, this is explicitly
+stated at the beginning of its definition.  In simple cases, the first
+or second sentence of the definition mentions all the parameters, in
+the order they should be given, using a name in upper case for each
+one.  For example, the `rp' capability is a command that requires two
+parameters; its definition begins as follows:
+
+     String of commands to output a graphic character C, repeated N
+     times.
+
+   In complex cases or when there are many parameters, they are
+described explicitly.
+
+   When a capability is described as obsolete, this means that programs
+should not be written to look for it, but terminal descriptions should
+still be written to provide it.
+
+   When a capability is described as very obsolete, this means that it
+should be omitted from terminal descriptions as well.
+
+* Menu:
+
+* Basic::       Basic characteristics.
+* Screen Size::  Screen size, and what happens when it changes.
+* Cursor Motion::  Various ways to move the cursor.
+* Wrapping::    What happens if you write a character in the last column.
+* Scrolling::   Pushing text up and down on the screen.
+* Windows::     Limiting the part of the window that output affects.
+* Clearing::    Erasing one or many lines.
+* Insdel Line::  Making new blank lines in mid-screen; deleting lines.
+* Insdel Char::  Inserting and deleting characters within a line.
+* Standout::    Highlighting some of the text.
+* Underlining::  Underlining some of the text.
+* Cursor Visibility::  Making the cursor more or less easy to spot.
+* Bell::        Attracts user's attention; not localized on the screen.
+* Keypad::      Recognizing when function keys or arrows are typed.
+* Meta Key::    META acts like an extra shift key.
+* Initialization::  Commands used to initialize or reset the terminal.
+* Pad Specs::   Info for the kernel on how much padding is needed.
+* Status Line::  A status line displays "background" information.
+* Half-Line::   Moving by half-lines, for superscripts and subscripts.
+* Printer::     Controlling auxiliary printers of display terminals.
+
+
+File: termcap.info,  Node: Basic,  Next: Screen Size,  Up: Capabilities
+
+Basic Characteristics
+=====================
+
+   This section documents the capabilities that describe the basic and
+nature of the terminal, and also those that are relevant to the output
+of graphic characters.
+
+`os'
+     Flag whose presence means that the terminal can overstrike.  This
+     means that outputting a graphic character does not erase whatever
+     was present in the same character position before.  The terminals
+     that can overstrike include printing terminals, storage tubes (all
+     obsolete nowadays), and many bit-map displays.
+
+`eo'
+     Flag whose presence means that outputting a space erases a
+     character position even if the terminal supports overstriking.  If
+     this flag is not present and overstriking is supported, output of
+     a space has no effect except to move the cursor.
+
+     (On terminals that do not support overstriking, you can always
+     assume that outputting a space at a position erases whatever
+     character was previously displayed there.)
+
+`gn'
+     Flag whose presence means that this terminal type is a generic type
+     which does not really describe any particular terminal.  Generic
+     types are intended for use as the default type assigned when the
+     user connects to the system, with the intention that the user
+     should specify what type he really has.  One example of a generic
+     type is the type `network'.
+
+     Since the generic type cannot say how to do anything interesting
+     with the terminal, termcap-using programs will always find that the
+     terminal is too weak to be supported if the user has failed to
+     specify a real terminal type in place of the generic one.  The
+     `gn' flag directs these programs to use a different error message:
+     "You have not specified your real terminal type", rather than
+     "Your terminal is not powerful enough to be used".
+
+`hc'
+     Flag whose presence means this is a hardcopy terminal.
+
+`rp'
+     String of commands to output a graphic character C, repeated N
+     times.  The first parameter value is the ASCII code for the desired
+     character, and the second parameter is the number of times to
+     repeat the character.  Often this command requires padding
+     proportional to the number of times the character is repeated.
+     This effect can be had by using parameter arithmetic with
+     `%'-sequences to compute the amount of padding, then generating
+     the result as a number at the front of the string so that `tputs'
+     will treat it as padding.
+
+`hz'
+     Flag whose presence means that the ASCII character `~' cannot be
+     output on this terminal because it is used for display commands.
+
+     Programs handle this flag by checking all text to be output and
+     replacing each `~' with some other character(s).  If this is not
+     done, the screen will be thoroughly garbled.
+
+     The old Hazeltine terminals that required such treatment are
+     probably very rare today, so you might as well not bother to
+     support this flag.
+
+`CC'
+     String whose presence means the terminal has a settable command
+     character.  The value of the string is the default command
+     character (which is usually ESC).
+
+     All the strings of commands in the terminal description should be
+     written to use the default command character.  If you are writing
+     an application program that changes the command character, use the
+     `CC' capability to figure out how to translate all the display
+     commands to work with the new command character.
+
+     Most programs have no reason to look at the `CC' capability.
+
+`xb'
+     Flag whose presence identifies Superbee terminals which are unable
+     to transmit the characters ESC and `Control-C'.  Programs which
+     support this flag are supposed to check the input for the code
+     sequences sent by the F1 and F2 keys, and pretend that ESC or
+     `Control-C' (respectively) had been read.  But this flag is
+     obsolete, and not worth supporting.
+
+
+File: termcap.info,  Node: Screen Size,  Next: Cursor Motion,  Prev: Basic,  Up: Capabilities
+
+Screen Size
+===========
+
+   A terminal description has two capabilities, `co' and `li', that
+describe the screen size in columns and lines.  But there is more to
+the question of screen size than this.
+
+   On some operating systems the "screen" is really a window and the
+effective width can vary.  On some of these systems, `tgetnum' uses the
+actual width of the window to decide what value to return for the `co'
+capability, overriding what is actually written in the terminal
+description.  On other systems, it is up to the application program to
+check the actual window width using a system call.  For example, on BSD
+4.3 systems, the system call `ioctl' with code `TIOCGWINSZ' will tell
+you the current screen size.
+
+   On all window systems, termcap is powerless to advise the application
+program if the user resizes the window.  Application programs must deal
+with this possibility in a system-dependent fashion.  On some systems
+the C shell handles part of the problem by detecting changes in window
+size and setting the `TERMCAP' environment variable appropriately.
+This takes care of application programs that are started subsequently.
+It does not help application programs already running.
+
+   On some systems, including BSD 4.3, all programs using a terminal get
+a signal named `SIGWINCH' whenever the screen size changes.  Programs
+that use termcap should handle this signal by using `ioctl TIOCGWINSZ'
+to learn the new screen size.
+
+`co'
+     Numeric value, the width of the screen in character positions.
+     Even hardcopy terminals normally have a `co' capability.
+
+`li'
+     Numeric value, the height of the screen in lines.
+
+
+File: termcap.info,  Node: Cursor Motion,  Next: Wrapping,  Prev: Screen Size,  Up: Capabilities
+
+Cursor Motion
+=============
+
+   Termcap assumes that the terminal has a "cursor", a spot on the
+screen where a visible mark is displayed, and that most display
+commands take effect at the position of the cursor.  It follows that
+moving the cursor to a specified location is very important.
+
+   There are many terminal capabilities for different cursor motion
+operations.  A terminal description should define as many as possible,
+but most programs do not need to use most of them.  One capability,
+`cm', moves the cursor to an arbitrary place on the screen; this by
+itself is sufficient for any application as long as there is no need to
+support hardcopy terminals or certain old, weak displays that have only
+relative motion commands.  Use of other cursor motion capabilities is an
+optimization, enabling the program to output fewer characters in some
+common cases.
+
+   If you plan to use the relative cursor motion commands in an
+application program, you must know what the starting cursor position
+is.  To do this, you must keep track of the cursor position and update
+the records each time anything is output to the terminal, including
+graphic characters.  In addition, it is necessary to know whether the
+terminal wraps after writing in the rightmost column.  *Note Wrapping::.
+
+   One other motion capability needs special mention: `nw' moves the
+cursor to the beginning of the following line, perhaps clearing all the
+starting line after the cursor, or perhaps not clearing at all.  This
+capability is a least common denominator that is probably supported
+even by terminals that cannot do most other things such as `cm' or `do'.
+Even hardcopy terminals can support `nw'.
+
+`cm'
+     String of commands to position the cursor at line L, column C.
+     Both parameters are origin-zero, and are defined relative to the
+     screen, not relative to display memory.
+
+     All display terminals except a few very obsolete ones support `cm',
+     so it is acceptable for an application program to refuse to
+     operate on terminals lacking `cm'.
+
+`ho'
+     String of commands to move the cursor to the upper left corner of
+     the screen (this position is called the "home position").  In
+     terminals where the upper left corner of the screen is not the
+     same as the beginning of display memory, this command must go to
+     the upper left corner of the screen, not the beginning of display
+     memory.
+
+     Every display terminal supports this capability, and many
+     application programs refuse to operate if the `ho' capability is
+     missing.
+
+`ll'
+     String of commands to move the cursor to the lower left corner of
+     the screen.  On some terminals, moving up from home position does
+     this, but programs should never assume that will work.  Just
+     output the `ll' string (if it is provided); if moving to home
+     position and then moving up is the best way to get there, the `ll'
+     command will do that.
+
+`cr'
+     String of commands to move the cursor to the beginning of the line
+     it is on.  If this capability is not specified, many programs
+     assume they can use the ASCII carriage return character for this.
+
+`le'
+     String of commands to move the cursor left one column.  Unless the
+     `bw' flag capability is specified, the effect is undefined if the
+     cursor is at the left margin; do not use this command there.  If
+     `bw' is present, this command may be used at the left margin, and
+     it wraps the cursor to the last column of the preceding line.
+
+`nd'
+     String of commands to move the cursor right one column.  The
+     effect is undefined if the cursor is at the right margin; do not
+     use this command there, not even if `am' is present.
+
+`up'
+     String of commands to move the cursor vertically up one line.  The
+     effect of sending this string when on the top line is undefined;
+     programs should never use it that way.
+
+`do'
+     String of commands to move the cursor vertically down one line.
+     The effect of sending this string when on the bottom line is
+     undefined; programs should never use it that way.
+
+     Some programs do use `do' to scroll up one line if used at the
+     bottom line, if `sf' is not defined but `sr' is.  This is only to
+     compensate for certain old, incorrect terminal descriptions.  (In
+     principle this might actually lead to incorrect behavior on other
+     terminals, but that seems to happen rarely if ever.)  But the
+     proper solution is that the terminal description should define
+     `sf' as well as `do' if the command is suitable for scrolling.
+
+     The original idea was that this string would not contain a newline
+     character and therefore could be used without disabling the
+     kernel's usual habit of converting of newline into a
+     carriage-return newline sequence.  But many terminal descriptions
+     do use newline in the `do' string, so this is not possible; a
+     program which sends the `do' string must disable output conversion
+     in the kernel (*note Initialize::.).
+
+`bw'
+     Flag whose presence says that `le' may be used in column zero to
+     move to the last column of the preceding line.  If this flag is
+     not present, `le' should not be used in column zero.
+
+`nw'
+     String of commands to move the cursor to start of next line,
+     possibly clearing rest of line (following the cursor) before
+     moving.
+
+`DO', `UP', `LE', `RI'
+     Strings of commands to move the cursor N lines down vertically, up
+     vertically, or N columns left or right.  Do not attempt to move
+     past any edge of the screen with these commands; the effect of
+     trying that is undefined.  Only a few terminal descriptions provide
+     these commands, and most programs do not use them.
+
+`CM'
+     String of commands to position the cursor at line L, column C,
+     relative to display memory.  Both parameters are origin-zero.
+     This capability is present only in terminals where there is a
+     difference between screen-relative and memory-relative addressing,
+     and not even in all such terminals.
+
+`ch'
+     String of commands to position the cursor at column C in the same
+     line it is on.  This is a special case of `cm' in which the
+     vertical position is not changed.  The `ch' capability is provided
+     only when it is faster to output than `cm' would be in this
+     special case.  Programs should not assume most display terminals
+     have `ch'.
+
+`cv'
+     String of commands to position the cursor at line L in the same
+     column.  This is a special case of `cm' in which the horizontal
+     position is not changed.  The `cv' capability is provided only
+     when it is faster to output than `cm' would be in this special
+     case.  Programs should not assume most display terminals have `cv'.
+
+`sc'
+     String of commands to make the terminal save the current cursor
+     position.  Only the last saved position can be used.  If this
+     capability is present, `rc' should be provided also.  Most
+     terminals have neither.
+
+`rc'
+     String of commands to make the terminal restore the last saved
+     cursor position.  If this capability is present, `sc' should be
+     provided also.  Most terminals have neither.
+
+`ff'
+     String of commands to advance to the next page, for a hardcopy
+     terminal.
+
+`ta'
+     String of commands to move the cursor right to the next hardware
+     tab stop column.  Missing if the terminal does not have any kind of
+     hardware tabs.  Do not send this command if the kernel's terminal
+     modes say that the kernel is expanding tabs into spaces.
+
+`bt'
+     String of commands to move the cursor left to the previous hardware
+     tab stop column.  Missing if the terminal has no such ability; many
+     terminals do not.  Do not send this command if the kernel's
+     terminal modes say that the kernel is expanding tabs into spaces.
+
+   The following obsolete capabilities should be included in terminal
+descriptions when appropriate, but should not be looked at by new
+programs.
+
+`nc'
+     Flag whose presence means the terminal does not support the ASCII
+     carriage return character as `cr'.  This flag is needed because
+     old programs assume, when the `cr' capability is missing, that
+     ASCII carriage return can be used for the purpose.  We use `nc' to
+     tell the old programs that carriage return may not be used.
+
+     New programs should not assume any default for `cr', so they need
+     not look at `nc'.  However, descriptions should contain `nc'
+     whenever they do not contain `cr'.
+
+`xt'
+     Flag whose presence means that the ASCII tab character may not be
+     used for cursor motion.  This flag exists because old programs
+     assume, when the `ta' capability is missing, that ASCII tab can be
+     used for the purpose.  We use `xt' to tell the old programs not to
+     use tab.
+
+     New programs should not assume any default for `ta', so they need
+     not look at `xt' in connection with cursor motion.  Note that `xt'
+     also has implications for standout mode (*note Standout::.).  It
+     is obsolete in regard to cursor motion but not in regard to
+     standout.
+
+     In fact, `xt' means that the terminal is a Teleray 1061.
+
+`bc'
+     Very obsolete alternative name for the `le' capability.
+
+`bs'
+     Flag whose presence means that the ASCII character backspace may be
+     used to move the cursor left.  Obsolete; look at `le' instead.
+
+`nl'
+     Obsolete capability which is a string that can either be used to
+     move the cursor down or to scroll.  The same string must scroll
+     when used on the bottom line and move the cursor when used on any
+     other line.  New programs should use `do' or `sf', and ignore `nl'.
+
+     If there is no `nl' capability, some old programs assume they can
+     use the newline character for this purpose.  These programs follow
+     a bad practice, but because they exist, it is still desirable to
+     define the `nl' capability in a terminal description if the best
+     way to move down is *not* a newline.
+
+
+File: termcap.info,  Node: Wrapping,  Next: Scrolling,  Prev: Cursor Motion,  Up: Capabilities
+
+Wrapping
+========
+
+   "Wrapping" means moving the cursor from the right margin to the left
+margin of the following line.  Some terminals wrap automatically when a
+graphic character is output in the last column, while others do not.
+Most application programs that use termcap need to know whether the
+terminal wraps.  There are two special flag capabilities to describe
+what the terminal does when a graphic character is output in the last
+column.
+
+`am'
+     Flag whose presence means that writing a character in the last
+     column causes the cursor to wrap to the beginning of the next line.
+
+     If `am' is not present, writing in the last column leaves the
+     cursor at the place where the character was written.
+
+     Writing in the last column of the last line should be avoided on
+     terminals with `am', as it may or may not cause scrolling to occur
+     (*note Scrolling::.).  Scrolling is surely not what you would
+     intend.
+
+     If your program needs to check the `am' flag, then it also needs
+     to check the `xn' flag which indicates that wrapping happens in a
+     strange way.  Many common terminals have the `xn' flag.
+
+`xn'
+     Flag whose presence means that the cursor wraps in a strange way.
+     At least two distinct kinds of strange behavior are known; the
+     termcap data base does not contain anything to distinguish the two.
+
+     On Concept-100 terminals, output in the last column wraps the
+     cursor almost like an ordinary `am' terminal.  But if the next
+     thing output is a newline, it is ignored.
+
+     DEC VT-100 terminals (when the wrap switch is on) do a different
+     strange thing: the cursor wraps only if the next thing output is
+     another graphic character.  In fact, the wrap occurs when the
+     following graphic character is received by the terminal, before the
+     character is placed on the screen.
+
+     On both of these terminals, after writing in the last column a
+     following graphic character will be displayed in the first column
+     of the following line.  But the effect of relative cursor motion
+     characters such as newline or backspace at such a time depends on
+     the terminal.  The effect of erase or scrolling commands also
+     depends on the terminal.  You can't assume anything about what
+     they will do on a terminal that has `xn'.  So, to be safe, you
+     should never do these things at such a time on such a terminal.
+
+     To be sure of reliable results on a terminal which has the `xn'
+     flag, output a `cm' absolute positioning command after writing in
+     the last column.  Another safe thing to do is to output
+     carriage-return newline, which will leave the cursor at the
+     beginning of the following line.
+
+`LP'
+     Flag whose presence means that it is safe to write in the last
+     column of the last line without worrying about undesired
+     scrolling.  `LP' indicates the DEC flavor of `xn' strangeness.
+
+
+File: termcap.info,  Node: Scrolling,  Next: Windows,  Prev: Wrapping,  Up: Capabilities
+
+Scrolling
+=========
+
+   "Scrolling" means moving the contents of the screen up or down one or
+more lines.  Moving the contents up is "forward scrolling"; moving them
+down is "reverse scrolling".
+
+   Scrolling happens after each line of output during ordinary output
+on most display terminals.  But in an application program that uses
+termcap for random-access output, scrolling happens only when
+explicitly requested with the commands in this section.
+
+   Some terminals have a "scroll region" feature.  This lets you limit
+the effect of scrolling to a specified range of lines.  Lines outside
+the range are unaffected when scrolling happens.  The scroll region
+feature is available if either `cs' or `cS' is present.
+
+`sf'
+     String of commands to scroll the screen one line up, assuming it is
+     output with the cursor at the beginning of the bottom line.
+
+`sr'
+     String of commands to scroll the screen one line down, assuming it
+     is output with the cursor at the beginning of the top line.
+
+`do'
+     A few programs will try to use `do' to do the work of `sf'.  This
+     is not really correct--it is an attempt to compensate for the
+     absence of a `sf' command in some old terminal descriptions.
+
+     Since these terminal descriptions do define `sr', perhaps at one
+     time the definition of `do' was different and it could be used for
+     scrolling as well.  But it isn't desirable to combine these two
+     functions in one capability, since scrolling often requires more
+     padding than simply moving the cursor down.  Defining `sf' and
+     `do' separately allows you to specify the padding properly.  Also,
+     all sources agree that `do' should not be relied on to do
+     scrolling.
+
+     So the best approach is to add `sf' capabilities to the
+     descriptions of these terminals, copying the definition of `do' if
+     that does scroll.
+
+`SF'
+     String of commands to scroll the screen N lines up, assuming it is
+     output with the cursor at the beginning of the bottom line.
+
+`SR'
+     String of commands to scroll the screen N lines down, assuming it
+     is output with the cursor at the beginning of the top line.
+
+`cs'
+     String of commands to set the scroll region.  This command takes
+     two parameters, START and END, which are the line numbers
+     (origin-zero) of the first line to include in the scroll region
+     and of the last line to include in it.  When a scroll region is
+     set, scrolling is limited to the specified range of lines; lines
+     outside the range are not affected by scroll commands.
+
+     Do not try to move the cursor outside the scroll region.  The
+     region remains set until explicitly removed.  To remove the scroll
+     region, use another `cs' command specifying the full height of the
+     screen.
+
+     The cursor position is undefined after the `cs' command is set, so
+     position the cursor with `cm' immediately afterward.
+
+`cS'
+     String of commands to set the scroll region using parameters in
+     different form.  The effect is the same as if `cs' were used.
+     Four parameters are required:
+
+       1. Total number of lines on the screen.
+
+       2. Number of lines above desired scroll region.
+
+       3. Number of lines below (outside of) desired scroll region.
+
+       4. Total number of lines on the screen, the same as the first
+          parameter.
+
+     This capability is a GNU extension that was invented to allow the
+     Ann Arbor Ambassador's scroll-region command to be described; it
+     could also be done by putting non-Unix `%'-sequences into a `cs'
+     string, but that would have confused Unix programs that used the
+     `cs' capability with the Unix termcap.  Currently only GNU Emacs
+     uses the `cS' capability.
+
+`ns'
+     Flag which means that the terminal does not normally scroll for
+     ordinary sequential output.  For modern terminals, this means that
+     outputting a newline in ordinary sequential output with the cursor
+     on the bottom line wraps to the top line.  For some obsolete
+     terminals, other things may happen.
+
+     The terminal may be able to scroll even if it does not normally do
+     so.  If the `sf' capability is provided, it can be used for
+     scrolling regardless of `ns'.
+
+`da'
+     Flag whose presence means that lines scrolled up off the top of the
+     screen may come back if scrolling down is done subsequently.
+
+     The `da' and `db' flags do not, strictly speaking, affect how to
+     scroll.  But programs that scroll usually need to clear the lines
+     scrolled onto the screen, if these flags are present.
+
+`db'
+     Flag whose presence means that lines scrolled down off the bottom
+     of the screen may come back if scrolling up is done subsequently.
+
+`lm'
+     Numeric value, the number of lines of display memory that the
+     terminal has.  A value of zero means that the terminal has more
+     display memory than can fit on the screen, but no fixed number of
+     lines.  (The number of lines may depend on the amount of text in
+     each line.)
+
+   Any terminal description that defines `SF' should also define `sf';
+likewise for `SR' and `sr'.  However, many terminals can only scroll by
+one line at a time, so it is common to find `sf' and not `SF', or `sr'
+without `SR'.
+
+   Therefore, all programs that use the scrolling facilities should be
+prepared to work with `sf' in the case that `SF' is absent, and
+likewise with `sr'.  On the other hand, an application program that
+uses only `sf' and not `SF' is acceptable, though slow on some
+terminals.
+
+   When outputting a scroll command with `tputs', the NLINES argument
+should be the total number of lines in the portion of the screen being
+scrolled.  Very often these commands require padding proportional to
+this number of lines.  *Note Padding::.
+
+
+File: termcap.info,  Node: Windows,  Next: Clearing,  Prev: Scrolling,  Up: Capabilities
+
+Windows
+=======
+
+   A "window", in termcap, is a rectangular portion of the screen to
+which all display operations are restricted.  Wrapping, clearing,
+scrolling, insertion and deletion all operate as if the specified
+window were all the screen there was.
+
+`wi'
+     String of commands to set the terminal output screen window.  This
+     string requires four parameters, all origin-zero:
+       1. The first line to include in the window.
+
+       2. The last line to include in the window.
+
+       3. The first column to include in the window.
+
+       4. The last column to include in the window.
+
+   Most terminals do not support windows.
+
+
+File: termcap.info,  Node: Clearing,  Next: Insdel Line,  Prev: Windows,  Up: Capabilities
+
+Clearing Parts of the Screen
+============================
+
+   There are several terminal capabilities for clearing parts of the
+screen to blank.  All display terminals support the `cl' string, and
+most display terminals support all of these capabilities.
+
+`cl'
+     String of commands to clear the entire screen and position the
+     cursor at the upper left corner.
+
+`cd'
+     String of commands to clear the line the cursor is on, and all the
+     lines below it, down to the bottom of the screen.  This command
+     string should be used only with the cursor in column zero; their
+     effect is undefined if the cursor is elsewhere.
+
+`ce'
+     String of commands to clear from the cursor to the end of the
+     current line.
+
+`ec'
+     String of commands to clear N characters, starting with the
+     character that the cursor is on.  This command string is expected
+     to leave the cursor position unchanged.  The parameter N should
+     never be large enough to reach past the right margin; the effect
+     of such a large parameter would be undefined.
+
+   Clear to end of line (`ce') is extremely important in programs that
+maintain an updating display.  Nearly all display terminals support this
+operation, so it is acceptable for a an application program to refuse to
+work if `ce' is not present.  However, if you do not want this
+limitation, you can accomplish clearing to end of line by outputting
+spaces until you reach the right margin.  In order to do this, you must
+know the current horizontal position.  Also, this technique assumes
+that writing a space will erase.  But this happens to be true on all
+the display terminals that fail to support `ce'.
+
+
+File: termcap.info,  Node: Insdel Line,  Next: Insdel Char,  Prev: Clearing,  Up: Capabilities
+
+Insert/Delete Line
+==================
+
+   "Inserting a line" means creating a blank line in the middle of the
+screen, and pushing the existing lines of text apart.  In fact, the
+lines above the insertion point do not change, while the lines below
+move down, and one is normally lost at the bottom of the screen.
+
+   "Deleting a line" means causing the line to disappear from the
+screen, closing up the gap by moving the lines below it upward.  A new
+line appears at the bottom of the screen.  Usually this line is blank,
+but on terminals with the `db' flag it may be a line previously moved
+off the screen bottom by scrolling or line insertion.
+
+   Insertion and deletion of lines is useful in programs that maintain
+an updating display some parts of which may get longer or shorter.
+They are also useful in editors for scrolling parts of the screen, and
+for redisplaying after lines of text are killed or inserted.
+
+   Many terminals provide commands to insert or delete a single line at
+the cursor position.  Some provide the ability to insert or delete
+several lines with one command, using the number of lines to insert or
+delete as a parameter.  Always move the cursor to column zero before
+using any of these commands.
+
+`al'
+     String of commands to insert a blank line before the line the
+     cursor is on.  The existing line, and all lines below it, are
+     moved down.  The last line in the screen (or in the scroll region,
+     if one is set) disappears and in most circumstances is discarded.
+     It may not be discarded if the `db' is present (*note
+     Scrolling::.).
+
+     The cursor must be at the left margin before this command is used.
+     This command does not move the cursor.
+
+`dl'
+     String of commands to delete the line the cursor is on.  The
+     following lines move up, and a blank line appears at the bottom of
+     the screen (or bottom of the scroll region).  If the terminal has
+     the `db' flag, a nonblank line previously pushed off the screen
+     bottom may reappear at the bottom.
+
+     The cursor must be at the left margin before this command is used.
+     This command does not move the cursor.
+
+`AL'
+     String of commands to insert N blank lines before the line that
+     the cursor is on.  It is like `al' repeated N times, except that
+     it is as fast as one `al'.
+
+`DL'
+     String of commands to delete N lines starting with the line that
+     the cursor is on.  It is like `dl' repeated N times, except that
+     it is as fast as one `dl'.
+
+   Any terminal description that defines `AL' should also define `al';
+likewise for `DL' and `dl'.  However, many terminals can only insert or
+delete one line at a time, so it is common to find `al' and not `AL',
+or `dl' without `DL'.
+
+   Therefore, all programs that use the insert and delete facilities
+should be prepared to work with `al' in the case that `AL' is absent,
+and likewise with `dl'.  On the other hand, it is acceptable to write
+an application that uses only `al' and `dl' and does not look for `AL'
+or `DL' at all.
+
+   If a terminal does not support line insertion and deletion directly,
+but does support a scroll region, the effect of insertion and deletion
+can be obtained with scrolling.  However, it is up to the individual
+user program to check for this possibility and use the scrolling
+commands to get the desired result.  It is fairly important to implement
+this alternate strategy, since it is the only way to get the effect of
+line insertion and deletion on the popular VT100 terminal.
+
+   Insertion and deletion of lines is affected by the scroll region on
+terminals that have a settable scroll region.  This is useful when it is
+desirable to move any few consecutive lines up or down by a few lines.
+*Note Scrolling::.
+
+   The line pushed off the bottom of the screen is not lost if the
+terminal has the `db' flag capability; instead, it is pushed into
+display memory that does not appear on the screen.  This is the same
+thing that happens when scrolling pushes a line off the bottom of the
+screen.  Either reverse scrolling or deletion of a line can bring the
+apparently lost line back onto the bottom of the screen.  If the
+terminal has the scroll region feature as well as `db', the pushed-out
+line really is lost if a scroll region is in effect.
+
+   When outputting an insert or delete command with `tputs', the NLINES
+argument should be the total number of lines from the cursor to the
+bottom of the screen (or scroll region).  Very often these commands
+require padding proportional to this number of lines.  *Note Padding::.
+
+   For `AL' and `DL' the NLINES argument should *not* depend on the
+number of lines inserted or deleted; only the total number of lines
+affected.  This is because it is just as fast to insert two or N lines
+with `AL' as to insert one line with `al'.
+

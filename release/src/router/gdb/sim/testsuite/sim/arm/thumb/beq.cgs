@@ -1,0 +1,12 @@
+# arm testcase for beq $soffset8
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global beq
+beq:
+	beq footext
+
+	pass

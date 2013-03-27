@@ -1,0 +1,344 @@
+# Tests for anonymous union support.
+# Copyright 1998, 1999, 2003, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Written by Satish Pai <pai@apollo.hp.com> 1997-08-19
+
+# This file is part of the gdb testsuite
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+#
+# test running programs
+#
+
+set prms_id 0
+set bug_id 0
+
+if { [skip_cplus_tests] } { continue }
+
+set testfile "anon-union"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     perror "Testcase compile failed" 0
+     continue
+}
+
+# Start with a fresh gdb
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+send_gdb "set width 0\n"
+gdb_expect -re "$gdb_prompt $"
+
+#send_gdb "ptype foo\n"
+#gdb_expect {
+#   -re "\r\n$gdb_prompt $" {
+#      pass "ptype foo"
+#    }
+#    -re ".*$gdb_prompt $" { fail "ptype foo" }
+#    timeout { fail "(timeout) ptype foo" }
+#}
+
+#send_gdb "ptype bar\n"
+#gdb_expect {
+#   -re "\r\n$gdb_prompt $" {
+#      pass "ptype foo"
+#    }
+#    -re ".*$gdb_prompt $" { fail "ptype foo" }
+#    timeout { fail "(timeout) ptype foo" }
+#}
+
+# NOTE: Add -- ptype foo.x, etc. when things are working
+
+#Initialize foo
+send_gdb "next\n"
+gdb_expect {
+   -re "40\[ \t\]*foo.paper = 33;\r\n$gdb_prompt $" {
+      pass "next 1"
+    }
+    -re ".*$gdb_prompt $" { fail "next 1" }
+    timeout { fail "(timeout) next 1" }
+}
+
+# Print out the big anon union.
+send_gdb "print foo\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = \{num1 = \{zero = 0, one = 0\}, \{pebble = 0, x = \{rock = 0, rock2 = 0\}, \{qux = 0, mux = 0\}, boulder = 0\}, \{paper = 0, cloth = 0\}, num2 = \{two = 0, three = 0\}\}\r\n$gdb_prompt $" {
+      pass "print foo 1"
+    }
+    -re ".*$gdb_prompt $" { fail "print foo 1" }
+    timeout { fail "(timeout) print foo 1" }
+}
+
+# Step over assignment to member
+
+send_gdb "next\n"
+gdb_expect {
+   -re "41\[ \t\]*foo.pebble = 44;\r\n$gdb_prompt $" {
+      pass "next 1"
+    }
+    -re ".*$gdb_prompt $" { fail "next 1" }
+    timeout { fail "(timeout) next 1" }
+}
+
+# Now print out anon union again
+send_gdb "print foo\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = \{num1 = \{zero = 0, one = 0\}, \{pebble = 0, x = \{rock = 0, rock2 = 0\}, \{qux = 0, mux = 0\}, boulder = 0\}, \{paper = 33, cloth = 33\}, num2 = \{two = 0, three = 0\}\}\r\n$gdb_prompt $" {
+      pass "print foo 2"
+    }
+    -re ".*$gdb_prompt $" { fail "print foo 2" }
+    timeout { fail "(timeout) print foo 2" }
+}
+
+# Modify the member just set
+send_gdb "set var foo.cloth = 35\n"
+gdb_expect {
+   -re "\r\n$gdb_prompt $" {
+      pass "set var foo.cloth"
+    }
+    timeout { fail "(timeout) set var foo.cloth" }
+}
+
+# Now print out anon union again to see if the right member was set 
+send_gdb "print foo\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = \{num1 = \{zero = 0, one = 0\}, \{pebble = 0, x = \{rock = 0, rock2 = 0\}, \{qux = 0, mux = 0\}, boulder = 0\}, \{paper = 35, cloth = 35\}, num2 = \{two = 0, three = 0\}\}\r\n$gdb_prompt $" {
+      pass "print foo 3"
+    }
+    -re ".*$gdb_prompt $" { fail "print foo 3" }
+    timeout { fail "(timeout) print foo 3" }
+}
+
+
+# Step over next assignment to member
+
+send_gdb "next\n"
+gdb_expect {
+   -re "42\[ \t\]*foo.mux = 55;\r\n$gdb_prompt $" {
+      pass "next 2"
+    }
+    -re ".*$gdb_prompt $" { fail "next 2" }
+    timeout { fail "(timeout) next 2" }
+}
+
+# Now print out anon union again 
+send_gdb "print foo\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = \{num1 = \{zero = 0, one = 0\}, \{pebble = 44, x = \{rock = 44, rock2 = 0\}, \{qux = 44, mux = 44\}, boulder = 44\}, \{paper = 35, cloth = 35\}, num2 = \{two = 0, three = 0\}\}\r\n$gdb_prompt $" {
+      pass "print foo 4"
+    }
+    -re ".*$gdb_prompt $" { fail "print foo 4" }
+    timeout { fail "(timeout) print foo 4" }
+}
+
+# Modify the member just set
+send_gdb "set var foo.pebble = 45\n"
+gdb_expect {
+   -re "\r\n$gdb_prompt $" {
+      pass "set var foo.pebble"
+    }
+    timeout { fail "(timeout) set var foo.pebble" }
+}
+
+# Now print out anon union again to see if the right member was set 
+send_gdb "print foo\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = \{num1 = \{zero = 0, one = 0\}, \{pebble = 45, x = \{rock = 45, rock2 = 0\}, \{qux = 45, mux = 45\}, boulder = 45\}, \{paper = 35, cloth = 35\}, num2 = \{two = 0, three = 0\}\}\r\n$gdb_prompt $" {
+      pass "print foo 5"
+    }
+    -re ".*$gdb_prompt $" { fail "print foo 5" }
+    timeout { fail "(timeout) print foo 5" }
+}
+
+# Modify another member at a different level
+send_gdb "set var foo.qux = 46\n"
+gdb_expect {
+   -re "\r\n$gdb_prompt $" {
+      pass "set var foo.qux"
+    }
+    timeout { fail "(timeout) set var foo.qux" }
+}
+
+# Now print out anon union again to see if the right member was set 
+send_gdb "print foo\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = \{num1 = \{zero = 0, one = 0\}, \{pebble = 46, x = \{rock = 46, rock2 = 0\}, \{qux = 46, mux = 46\}, boulder = 46\}, \{paper = 35, cloth = 35\}, num2 = \{two = 0, three = 0\}\}\r\n$gdb_prompt $" {
+      pass "print foo 6"
+    }
+    -re ".*$gdb_prompt $" { fail "print foo 6" }
+    timeout { fail "(timeout) print foo 6" }
+}
+
+# Modify the member at another level, but not the first one in the union
+send_gdb "set var foo.mux = 47\n"
+gdb_expect {
+   -re "\r\n$gdb_prompt $" {
+      pass "set var foo.mux"
+    }
+    timeout { fail "(timeout) set var foo.mux" }
+}
+
+# Now print out anon union again to see if things worked
+send_gdb "print foo\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = \{num1 = \{zero = 0, one = 0\}, \{pebble = 47, x = \{rock = 47, rock2 = 0\}, \{qux = 47, mux = 47\}, boulder = 47\}, \{paper = 35, cloth = 35\}, num2 = \{two = 0, three = 0\}\}\r\n$gdb_prompt $" {
+      pass "print foo 7"
+    }
+    -re ".*$gdb_prompt $" { fail "print foo 7" }
+    timeout { fail "(timeout) print foo 7" }
+}
+
+# Modify a member of a struct in an anon union
+send_gdb "set var foo.x.rock = 48\n"
+gdb_expect {
+   -re "\r\n$gdb_prompt $" {
+      pass "set var foo.x.rock"
+    }
+    timeout { fail "(timeout) set var foo.x.rock" }
+}
+
+# Now print out anon union again to see if things worked
+send_gdb "print foo\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = \{num1 = \{zero = 0, one = 0\}, \{pebble = 48, x = \{rock = 48, rock2 = 0\}, \{qux = 48, mux = 48\}, boulder = 48\}, \{paper = 35, cloth = 35\}, num2 = \{two = 0, three = 0\}\}\r\n$gdb_prompt $" {
+      pass "print foo 8"
+    }
+    -re ".*$gdb_prompt $" { fail "print foo 8" }
+    timeout { fail "(timeout) print foo 8" }
+}
+
+# Modify a member of a struct in an anon union, but something
+# that doesn't alias to some other union member
+send_gdb "set var foo.x.rock2 = 49\n"
+gdb_expect {
+   -re "\r\n$gdb_prompt $" {
+      pass "set var foo.x.rock2"
+    }
+    timeout { fail "(timeout) set var foo.x.rock2" }
+}
+
+# Now print out anon union again to see if things worked
+send_gdb "print foo\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = \{num1 = \{zero = 0, one = 0\}, \{pebble = 48, x = \{rock = 48, rock2 = 49\}, \{qux = 48, mux = 48\}, boulder = 48\}, \{paper = 35, cloth = 35\}, num2 = \{two = 0, three = 0\}\}\r\n$gdb_prompt $" {
+      pass "print foo 9"
+    }
+    -re ".*$gdb_prompt $" { fail "print foo 9" }
+    timeout { fail "(timeout) print foo 9" }
+}
+
+
+# Step over next four assignments
+send_gdb "next 4\n"
+gdb_expect {
+   -re "53\[ \t\]*w = 45;\r\n$gdb_prompt $" {
+      pass "next 3"
+    }
+    -re ".*$gdb_prompt $" { fail "next 3" }
+    timeout { fail "(timeout) next 3" }
+}
+
+# Tests for anon unions that are not members of a class or struct
+
+send_gdb "print w\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 0\r\n$gdb_prompt $" {
+      pass "print w 1"
+    }
+    -re ".*$gdb_prompt $" { fail "print w 1" }
+    timeout { fail "(timeout) print w 1" }
+}
+
+send_gdb "print z\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 0\r\n$gdb_prompt $" {
+      pass "print z 1"
+    }
+    -re ".*$gdb_prompt $" { fail "print z 1" }
+    timeout { fail "(timeout) print z 1" }
+}
+
+# Step over next assignment to w
+send_gdb "next\n"
+gdb_expect {
+    -re "55\[ \t\]*int j = 0;\r\n$gdb_prompt $" {
+      pass "next 4"
+    }
+    -re ".*$gdb_prompt $" { fail "next 4" }
+    timeout { fail "(timeout) next 4" }
+}
+
+# See if the change in value is noticed
+send_gdb "print w\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 45\r\n$gdb_prompt $" {
+      pass "print w 2"
+    }
+    -re ".*$gdb_prompt $" { fail "print w 2" }
+    timeout { fail "(timeout) print w 2" }
+}
+
+# See if z shows the same value
+send_gdb "print z\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 45\r\n$gdb_prompt $" {
+      pass "print z 2"
+    }
+    -re ".*$gdb_prompt $" { fail "print z 2" }
+    timeout { fail "(timeout) print z 2" }
+}
+
+# Set the anon union member 
+send_gdb "set var z = 27\n"
+gdb_expect {
+   -re "\r\n$gdb_prompt $" {
+      pass "set var z"
+    }
+    timeout { fail "(timeout) set var z" }
+}
+
+# See if the change in value is noticed
+send_gdb "print w\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 27\r\n$gdb_prompt $" {
+      pass "print w 3"
+    }
+    -re ".*$gdb_prompt $" { fail "print w 3" }
+    timeout { fail "(timeout) print w 3" }
+}
+
+# See if z shows the same value
+send_gdb "print z\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 27\r\n$gdb_prompt $" {
+      pass "print z 3"
+    }
+    -re ".*$gdb_prompt $" { fail "print z 3" }
+    timeout { fail "(timeout) print z 3" }
+}

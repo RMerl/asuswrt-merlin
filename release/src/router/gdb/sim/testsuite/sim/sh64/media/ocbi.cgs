@@ -1,0 +1,10 @@
+# sh testcase for ocbi $rm, $disp6x32 -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+	ocbi r0, 0
+	pass

@@ -1,0 +1,78 @@
+'\" t
+.\"     Title: ne_ssl_dname
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NE_SSL_DNAME" "3" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ne_ssl_readable_dname, ne_ssl_dname_cmp \- SSL distinguished name handling
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <ne_ssl\&.h>
+.fi
+.ft
+.HP \w'const\ char\ *ne_ssl_readable_dname('u
+.BI "const char *ne_ssl_readable_dname(const\ ne_ssl_dname\ *" "dname" ");"
+.HP \w'int\ ne_ssl_dname_cmp('u
+.BI "int ne_ssl_dname_cmp(const\ ne_ssl_dname\ *" "dn1" ", const\ ne_ssl_dname\ *" "dn2" ");"
+.SH "DESCRIPTION"
+.PP
+The
+\fBne_ssl_readable_dname\fR
+function creates a single\-line, human\-readable string out of an
+\fBne_ssl_dname\fR
+object\&. The returned string is
+\fBmalloc\fR()\-allocated, and must be
+\fBfree\fR()d by the caller\&.
+.PP
+The
+\fBne_ssl_dname_cmp\fR
+function compares two distinguished names, and returns zero if they are equal, or non\-zero otherwise\&.
+.SH "RETURN VALUE"
+.PP
+\fBne_ssl_readable_dname\fR
+returns a
+\fBmalloc\fR\-allocated string, and never
+NULL\&.
+.SH "EXAMPLES"
+.PP
+See
+ne_ssl_cert_subject
+for an example use of
+\fBne_ssl_readable_dname\fR\&.
+.SH "SEE ALSO"
+.PP
+ne_ssl_cert_subject
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

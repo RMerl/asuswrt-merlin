@@ -1,23 +1,31 @@
 /*
- * Copyright (C) 2008, Broadcom Corporation
- * All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
- * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
- * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
- * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Low resolution timer interface linux specific implementation.
  *
- * $Id: linux_timer.c,v 1.14 2008/07/17 09:22:40 Exp $
+ * $Id: linux_timer.c 342502 2012-07-03 03:08:12Z $
  */
 
-// xref: nas,upnp
- 
 /*
- * debug facilities
- */
+* debug facilities
+*/
+#ifdef BCMDBG
+#define TIMER_DEBUG	1 /* Turn on the debug */
+#else
 #define TIMER_DEBUG	0 /* Turn off the debug */
+#endif
 #if TIMER_DEBUG
 #define TIMERDBG(fmt, args...) printf("%s: " fmt "\n", __FUNCTION__ , ## args)
 #else
@@ -108,7 +116,6 @@ typedef long uclock_t;
 #define TFLAG_NONE	0
 #define TFLAG_CANCELLED	(1<<0)
 #define TFLAG_DELETED	(1<<1)
-#define TFLAG_QUEUED	(1<<2)
 
 struct event {
     struct timeval it_interval;
@@ -141,7 +148,6 @@ static struct event *event_freelist;
 static uint g_granularity;
 static int g_maxevents = 0;
 
-#ifdef TIMER_PROFILE
 uclock_t uclock()
 {
 	struct timeval tv;
@@ -149,7 +155,7 @@ uclock_t uclock()
 	gettimeofday(&tv, NULL);
 	return ((tv.tv_sec * US_PER_SEC) + tv.tv_usec);
 }
-#endif
+
 
 void init_event_queue(int n)
 {
@@ -168,17 +174,18 @@ void init_event_queue(int n)
 	tv.it_interval.tv_sec = 0;
 	tv.it_interval.tv_usec = 1;
 	tv.it_value.tv_sec = 0;
-	tv.it_value.tv_usec = 1;
-
-	signal(SIGALRM, alarm_handler);
+	tv.it_value.tv_usec = 0;
 
 	setitimer(ITIMER_REAL, &tv, 0);
 	setitimer(ITIMER_REAL, 0, &tv);
+
+	if (tv.it_interval.tv_usec == 0)
+		tv.it_interval.tv_usec = 1;
+
 	g_granularity = tv.it_interval.tv_usec;
+	signal(SIGALRM, alarm_handler);
 }
 
-
-#if 0
 int clock_gettime(
 	clockid_t         clock_id, /* clock ID (always CLOCK_REALTIME) */
 	struct timespec * tp        /* where to store current time */
@@ -193,7 +200,6 @@ int clock_gettime(
 
 	return n;
 }
-#endif
 
 
 int timer_create(
@@ -226,7 +232,6 @@ int timer_create(
 
 	event_freelist = event->next;
 	event->next = NULL;
-	event->flags &= ~TFLAG_QUEUED;
 
 	check_event_queue();
 
@@ -407,7 +412,6 @@ int timer_settime
 	}
 
 	event->flags &= ~TFLAG_CANCELLED;
-	event->flags |= TFLAG_QUEUED;
 
 	unblock_timer();
 
@@ -504,6 +508,11 @@ static void alarm_handler(int i)
 	/* Loop through the event queue and remove the first event plus any */
 	/* subsequent events that will expire very soon thereafter (within 'small_interval'}. */
 	/* */
+	if (!event_queue) {
+		unblock_timer();
+		return;
+	}
+
 	do {
 		/* remove the top event. */
 		event = event_queue;
@@ -523,15 +532,7 @@ static void alarm_handler(int i)
 		(*(event->func))((timer_t) event, (int)event->arg);
 
 		/* If the event has been cancelled, do NOT put it back on the queue. */
-		/* Check for TFLAG_QUEUED is to avoid pathologic case, when after
-		 * dequeueing event handler deletes its own timer and allocates new one
-		 * which (at least in some cases) gets the same pointer and thus its
-		 * 'flags' will be rewritten, most notably TFLAG_CANCELLED, and, to
-		 * complete the disaster, it will be queued. alarm_handler tries to
-		 * enqueue 'event' (which is on the same memory position as newly
-		 * allocated timer), which results in queueing the same pointer once
-		 * more. And this way, loop in event queue is created. */
-		if (!(event->flags & TFLAG_CANCELLED) && !(event->flags & TFLAG_QUEUED)) {
+		if (!(event->flags & TFLAG_CANCELLED)) {
 
 			/* if the event is a recurring event, reset the timer and
 			 * find its correct place in the sorted list of events.
@@ -574,7 +575,6 @@ static void alarm_handler(int i)
 				/* link our new event into the pending event queue. */
 				event->next = *ppevent;
 				*ppevent = event;
-				event->flags |= TFLAG_QUEUED;
 			} else {
 				/* there is no interval, so recycle the event structure.
 				 * timer_delete((timer_t) event);
@@ -770,7 +770,7 @@ int bcm_timer_module_enable(bcm_timer_module_id module_id, int enable)
 
 int bcm_timer_create(bcm_timer_module_id module_id, bcm_timer_id *timer_id)
 {
-//	module_id = 0;
+	module_id = 0;
 	return timer_create(CLOCK_REALTIME, NULL, (timer_t *)timer_id);
 }
 

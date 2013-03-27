@@ -150,10 +150,9 @@ define platformKernelConfig
 		sed -i "/CONFIG_CRYPTO_CBC/d" $(1); \
 		echo "# CONFIG_CRYPTO_CBC is not set" >> $(1); \
 	fi; \
-	if [ -d $(SRCBASE)/wl/sysdeps/$(BUILD_NAME) ]; then \
-		cp -rf $(SRCBASE)/wl/sysdeps/$(BUILD_NAME)/linux $(SRCBASE)/wl/. ; \
-	else \
-		cp -rf $(SRCBASE)/wl/sysdeps/default/linux $(SRCBASE)/wl/. ; \
-	fi; \
+	[ -d $(SRCBASE)/wl/sysdeps/default ] && \
+		cp -rf $(SRCBASE)/wl/sysdeps/default/* $(SRCBASE)/wl/; \
+	[ -d $(SRCBASE)/wl/sysdeps/$(BUILD_NAME) ] && \
+		cp -rf $(SRCBASE)/wl/sysdeps/$(BUILD_NAME)/* $(SRCBASE)/wl/; \
 	)
 endef

@@ -4,7 +4,7 @@
 *
 * Implementation of a user-space PPPoE server
 *
-* Copyright (C) 2000 Roaring Penguin Software Inc.
+* Copyright (C) 2000-2012 Roaring Penguin Software Inc.
 *
 * This program may be distributed according to the terms of the GNU
 * General Public License, version 2 or (at your option) any later version.
@@ -37,6 +37,7 @@ static char const RCSID[] =
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <sys/file.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -132,14 +133,26 @@ EventSelector *event_selector;
 /* Use Linux kernel-mode PPPoE? */
 static int UseLinuxKernelModePPPoE = 0;
 
+/* Requested max_ppp_payload */
+static UINT16_t max_ppp_payload = 0;
+
 /* File with PPPD options */
 static char *pppoptfile = NULL;
+
+static char *pppd_path = PPPD_PATH;
+static char *pppoe_path = PPPOE_PATH;
 
 static int Debug = 0;
 static int CheckPoolSyntax = 0;
 
 /* Synchronous mode */
 static int Synchronous = 0;
+
+/* Ignore PADI if no free sessions */
+static int IgnorePADIIfNoFreeSessions = 0;
+
+static int KidPipe[2] = {-1, -1};
+static int LockFD = -1;
 
 /* Random seed for cookie generation */
 #define SEED_LEN 16
@@ -420,6 +433,15 @@ parsePADITags(UINT16_t type, UINT16_t len, unsigned char *data,
 	      void *extra)
 {
     switch(type) {
+    case TAG_PPP_MAX_PAYLOAD:
+	if (len == sizeof(max_ppp_payload)) {
+	    memcpy(&max_ppp_payload, data, sizeof(max_ppp_payload));
+	    max_ppp_payload = ntohs(max_ppp_payload);
+	    if (max_ppp_payload <= ETH_PPPOE_MTU) {
+		max_ppp_payload = 0;
+	    }
+	}
+	break;
     case TAG_SERVICE_NAME:
 	/* Copy requested service name */
 	requestedService.type = htons(type);
@@ -456,6 +478,15 @@ parsePADRTags(UINT16_t type, UINT16_t len, unsigned char *data,
 	      void *extra)
 {
     switch(type) {
+    case TAG_PPP_MAX_PAYLOAD:
+	if (len == sizeof(max_ppp_payload)) {
+	    memcpy(&max_ppp_payload, data, sizeof(max_ppp_payload));
+	    max_ppp_payload = ntohs(max_ppp_payload);
+	    if (max_ppp_payload <= ETH_PPPOE_MTU) {
+		max_ppp_payload = 0;
+	    }
+	}
+	break;
     case TAG_RELAY_SESSION_ID:
 	relayId.type = htons(type);
 	relayId.length = htons(len);
@@ -596,6 +627,12 @@ processPADI(Interface *ethif, PPPoEPacket *packet, int len)
 	return;
     }
 
+    /* If no free sessions and "-i" flag given, ignore */
+    if (IgnorePADIIfNoFreeSessions && !FreeSessions) {
+	syslog(LOG_INFO, "PADI ignored - No free session slots available");
+	return;
+    }
+
     /* If number of sessions per MAC is limited, check here and don't
        send PADO if already max number of sessions. */
     if (MaxSessionsPerMac) {
@@ -620,6 +657,8 @@ processPADI(Interface *ethif, PPPoEPacket *packet, int len)
     relayId.type = 0;
     hostUniq.type = 0;
     requestedService.type = 0;
+    max_ppp_payload = 0;
+
     parsePacket(packet, parsePADITags, NULL);
 
     /* If PADI specified non-default service name, and we do not offer
@@ -665,6 +704,27 @@ processPADI(Interface *ethif, PPPoEPacket *packet, int len)
     memcpy(cursor, &acname, acname_len + TAG_HDR_SIZE);
     cursor += acname_len + TAG_HDR_SIZE;
 
+    /* If we asked for an MTU, handle it */
+    if (max_ppp_payload > ETH_PPPOE_MTU && ethif->mtu > 0) {
+	/* Shrink payload to fit */
+	if (max_ppp_payload > ethif->mtu - TOTAL_OVERHEAD) {
+	    max_ppp_payload = ethif->mtu - TOTAL_OVERHEAD;
+	}
+	if (max_ppp_payload > ETH_JUMBO_LEN - TOTAL_OVERHEAD) {
+	    max_ppp_payload = ETH_JUMBO_LEN - TOTAL_OVERHEAD;
+	}
+	if (max_ppp_payload > ETH_PPPOE_MTU) {
+	    PPPoETag maxPayload;
+	    UINT16_t mru = htons(max_ppp_payload);
+	    maxPayload.type = htons(TAG_PPP_MAX_PAYLOAD);
+	    maxPayload.length = htons(sizeof(mru));
+	    memcpy(maxPayload.payload, &mru, sizeof(mru));
+	    CHECK_ROOM(cursor, pado.payload, sizeof(mru) + TAG_HDR_SIZE);
+	    memcpy(cursor, &maxPayload, sizeof(mru) + TAG_HDR_SIZE);
+	    cursor += sizeof(mru) + TAG_HDR_SIZE;
+	    plen += sizeof(mru) + TAG_HDR_SIZE;
+	}
+    }
     /* If no service-names specified on command-line, just send default
        zero-length name.  Otherwise, add all service-name tags */
     servname.type = htons(TAG_SERVICE_NAME);
@@ -824,6 +884,8 @@ processPADR(Interface *ethif, PPPoEPacket *packet, int len)
 	    return;
 	}
     }
+
+    max_ppp_payload = 0;
     parsePacket(packet, parsePADRTags, NULL);
 
     /* Check that everything's cool */
@@ -941,10 +1003,15 @@ processPADR(Interface *ethif, PPPoEPacket *packet, int len)
 	return;
     }
 
-    /* In the child process.  */
+    /* In the child process */
+
+    /* Reset signal handlers to default */
+    signal(SIGTERM, SIG_DFL);
+    signal(SIGINT, SIG_DFL);
 
     /* Close all file descriptors except for socket */
     closelog();
+    if (LockFD >= 0) close(LockFD);
     for (i=0; i<CLOSEFD; i++) {
 	if (i != sock) {
 	    close(i);
@@ -978,6 +1045,29 @@ processPADR(Interface *ethif, PPPoEPacket *packet, int len)
     memcpy(cursor, &requestedService, TAG_HDR_SIZE+slen);
     cursor += TAG_HDR_SIZE+slen;
     plen += TAG_HDR_SIZE+slen;
+
+    /* If we asked for an MTU, handle it */
+    if (max_ppp_payload > ETH_PPPOE_MTU && ethif->mtu > 0) {
+	/* Shrink payload to fit */
+	if (max_ppp_payload > ethif->mtu - TOTAL_OVERHEAD) {
+	    max_ppp_payload = ethif->mtu - TOTAL_OVERHEAD;
+	}
+	if (max_ppp_payload > ETH_JUMBO_LEN - TOTAL_OVERHEAD) {
+	    max_ppp_payload = ETH_JUMBO_LEN - TOTAL_OVERHEAD;
+	}
+	if (max_ppp_payload > ETH_PPPOE_MTU) {
+	    PPPoETag maxPayload;
+	    UINT16_t mru = htons(max_ppp_payload);
+	    maxPayload.type = htons(TAG_PPP_MAX_PAYLOAD);
+	    maxPayload.length = htons(sizeof(mru));
+	    memcpy(maxPayload.payload, &mru, sizeof(mru));
+	    CHECK_ROOM(cursor, pads.payload, sizeof(mru) + TAG_HDR_SIZE);
+	    memcpy(cursor, &maxPayload, sizeof(mru) + TAG_HDR_SIZE);
+	    cursor += sizeof(mru) + TAG_HDR_SIZE;
+	    plen += sizeof(mru) + TAG_HDR_SIZE;
+	    cliSession->requested_mtu = max_ppp_payload;
+	}
+    }
 
     if (relayId.type) {
 	memcpy(cursor, &relayId, ntohs(relayId.length) + TAG_HDR_SIZE);
@@ -1052,6 +1142,9 @@ usage(char const *argv0)
     fprintf(stderr, "   -o offset      -- Assign session numbers starting at offset+1.\n");
     fprintf(stderr, "   -f disc:sess   -- Set Ethernet frame types (hex).\n");
     fprintf(stderr, "   -s             -- Use synchronous PPP mode.\n");
+    fprintf(stderr, "   -X pidfile     -- Write PID and lock pidfile.\n");
+    fprintf(stderr, "   -q /path/pppd  -- Specify full path to pppd.\n");
+    fprintf(stderr, "   -Q /path/pppoe -- Specify full path to pppoe.\n");
 #ifdef HAVE_LINUX_KERNEL_PPPOE
     fprintf(stderr, "   -k             -- Use kernel-mode PPPoE.\n");
 #endif
@@ -1065,8 +1158,9 @@ usage(char const *argv0)
     fprintf(stderr, "   -1             -- Allow only one session per user.\n");
 #endif
 
+    fprintf(stderr, "   -i             -- Ignore PADI if no free sessions.\n");
     fprintf(stderr, "   -h             -- Print usage information.\n\n");
-    fprintf(stderr, "PPPoE-Server Version %s, Copyright (C) 2001-2006 Roaring Penguin Software Inc.\n", VERSION);
+    fprintf(stderr, "PPPoE-Server Version %s, Copyright (C) 2001-2009 Roaring Penguin Software Inc.\n", VERSION);
 
 #ifndef HAVE_LICENSE
     fprintf(stderr, "PPPoE-Server comes with ABSOLUTELY NO WARRANTY.\n");
@@ -1098,14 +1192,17 @@ main(int argc, char **argv)
     int found;
     unsigned int discoveryType, sessionType;
     char *addressPoolFname = NULL;
+    char *pidfile = NULL;
+    char c;
+
 #ifdef HAVE_LICENSE
     int use_clustering = 0;
 #endif
 
 #ifndef HAVE_LINUX_KERNEL_PPPOE
-    char *options = "x:hI:C:L:R:T:m:FN:f:O:o:sp:lrudPc:S:1";
+    char *options = "X:ix:hI:C:L:R:T:m:FN:f:O:o:sp:lrudPc:S:1q:Q:";
 #else
-    char *options = "x:hI:C:L:R:T:m:FN:f:O:o:skp:lrudPc:S:1";
+    char *options = "X:ix:hI:C:L:R:T:m:FN:f:O:o:skp:lrudPc:S:1q:Q:";
 #endif
 
     if (getuid() != geteuid() ||
@@ -1127,6 +1224,9 @@ main(int argc, char **argv)
     /* Parse command-line options */
     while((opt = getopt(argc, argv, options)) != -1) {
 	switch(opt) {
+	case 'i':
+	    IgnorePADIIfNoFreeSessions = 1;
+	    break;
 	case 'x':
 	    if (sscanf(optarg, "%d", &MaxSessionsPerMac) != 1) {
 		usage(argv[0]);
@@ -1155,6 +1255,21 @@ main(int argc, char **argv)
 	    }
 	    NumServiceNames++;
 	    break;
+	case 'q':
+	    pppd_path = strdup(optarg);
+	    if (!pppd_path) {
+		fprintf(stderr, "Out of memory");
+		exit(1);
+	    }
+	    break;
+	case 'Q':
+	    pppoe_path = strdup(optarg);
+	    if (!pppoe_path) {
+		fprintf(stderr, "Out of memory");
+		exit(1);
+	    }
+	    break;
+
 	case 'c':
 #ifndef HAVE_LICENSE
 	    fprintf(stderr, "Clustering capability not available.\n");
@@ -1187,6 +1302,9 @@ main(int argc, char **argv)
 	    SET_STRING(addressPoolFname, optarg);
 	    break;
 
+	case 'X':
+	    SET_STRING(pidfile, optarg);
+	    break;
 	case 's':
 	    Synchronous = 1;
 	    /* Pass the Synchronous option on to pppoe */
@@ -1461,7 +1579,8 @@ main(int argc, char **argv)
 
     /* Open all the interfaces */
     for (i=0; i<NumInterfaces; i++) {
-	interfaces[i].sock = openInterface(interfaces[i].name, Eth_PPPOE_Discovery, interfaces[i].mac);
+	interfaces[i].mtu = 0;
+	interfaces[i].sock = openInterface(interfaces[i].name, Eth_PPPOE_Discovery, interfaces[i].mac, &interfaces[i].mtu);
     }
 
     /* Ignore SIGPIPE */
@@ -1471,12 +1590,6 @@ main(int argc, char **argv)
     event_selector = Event_CreateSelector();
     if (!event_selector) {
 	rp_fatal("Could not create EventSelector -- probably out of memory");
-    }
-
-    /* Set signal handlers for SIGTERM and SIGINT */
-    if (Event_HandleSignal(event_selector, SIGTERM, termHandler) < 0 ||
-	Event_HandleSignal(event_selector, SIGINT, termHandler) < 0) {
-	fatalSys("Event_HandleSignal");
     }
 
     /* Control channel */
@@ -1526,12 +1639,45 @@ main(int argc, char **argv)
 
     /* Daemonize -- UNIX Network Programming, Vol. 1, Stevens */
     if (beDaemon) {
+	if (pipe(KidPipe) < 0) {
+	    fatalSys("pipe");
+	}
 	i = fork();
 	if (i < 0) {
 	    fatalSys("fork");
 	} else if (i != 0) {
 	    /* parent */
-	    exit(EXIT_SUCCESS);
+	    close(KidPipe[1]);
+	    KidPipe[1] = -1;
+	    /* Wait for child to give the go-ahead */
+	    while(1) {
+		int r = read(KidPipe[0], &c, 1);
+		if (r == 0) {
+		    fprintf(stderr, "EOF from child - something went wrong; please check logs.\n");
+		    exit(EXIT_FAILURE);
+		}
+		if (r < 0) {
+		    if (errno == EINTR) continue;
+		    fatalSys("read");
+		}
+		break;
+	    }
+
+	    if (c == 'X') {
+		exit(EXIT_SUCCESS);
+	    }
+
+	    /* Read error message from child */
+	    while (1) {
+		int r = read(KidPipe[0], &c, 1);
+		if (r == 0) exit(EXIT_FAILURE);
+		if (r < 0) {
+		    if (errno == EINTR) continue;
+		    fatalSys("read");
+		}
+		fprintf(stderr, "%c", c);
+	    }
+	    exit(EXIT_FAILURE);
 	}
 	setsid();
 	signal(SIGHUP, SIG_IGN);
@@ -1544,6 +1690,11 @@ main(int argc, char **argv)
 
 	chdir("/");
 
+	if (KidPipe[0] >= 0) {
+	    close(KidPipe[0]);
+	    KidPipe[0] = -1;
+	}
+
 	/* Point stdin/stdout/stderr to /dev/null */
 	for (i=0; i<3; i++) {
 	    close(i);
@@ -1555,6 +1706,45 @@ main(int argc, char **argv)
 	    dup2(i, 2);
 	    if (i > 2) close(i);
 	}
+    }
+
+    if (pidfile) {
+	FILE *foo = NULL;
+	if (KidPipe[1] >= 0) foo = fdopen(KidPipe[1], "w");
+	struct flock fl;
+	char buf[64];
+	fl.l_type = F_WRLCK;
+	fl.l_whence = SEEK_SET;
+	fl.l_start = 0;
+	fl.l_len = 0;
+	LockFD = open(pidfile, O_RDWR|O_CREAT, 0666);
+	if (LockFD < 0) {
+	    syslog(LOG_INFO, "Could not open PID file %s: %s", pidfile, strerror(errno));
+	    if (foo) fprintf(foo, "ECould not open PID file %s: %s\n", pidfile, strerror(errno));
+	    exit(1);
+	}
+	if (fcntl(LockFD, F_SETLK, &fl) < 0) {
+	    syslog(LOG_INFO, "Could not lock PID file %s: Is another process running?", pidfile);
+	    if (foo) fprintf(foo, "ECould not lock PID file %s: Is another process running?\n", pidfile);
+	    exit(1);
+	}
+	ftruncate(LockFD, 0);
+	snprintf(buf, sizeof(buf), "%lu\n", (unsigned long) getpid());
+	write(LockFD, buf, strlen(buf));
+	/* Do not close fd... use it to retain lock */
+    }
+
+    /* Set signal handlers for SIGTERM and SIGINT */
+    if (Event_HandleSignal(event_selector, SIGTERM, termHandler) < 0 ||
+	Event_HandleSignal(event_selector, SIGINT, termHandler) < 0) {
+	fatalSys("Event_HandleSignal");
+    }
+
+    /* Tell parent all is cool */
+    if (KidPipe[1] >= 0) {
+	write(KidPipe[1], "X", 1);
+	close(KidPipe[1]);
+	KidPipe[1] = -1;
     }
 
     for(;;) {
@@ -1586,10 +1776,8 @@ serverProcessPacket(Interface *i)
 	return;
     }
 
-    /* Check length */
-    if (ntohs(packet.length) + HDR_SIZE > len) {
-	syslog(LOG_ERR, "Bogus PPPoE length field (%u)",
-	       (unsigned int) ntohs(packet.length));
+    if (len < HDR_SIZE) {
+	/* Impossible - ignore */
 	return;
     }
 
@@ -1598,6 +1786,14 @@ serverProcessPacket(Interface *i)
 	/* Syslog an error */
 	return;
     }
+
+    /* Check length */
+    if (ntohs(packet.length) + HDR_SIZE > len) {
+	syslog(LOG_ERR, "Bogus PPPoE length field (%u)",
+	       (unsigned int) ntohs(packet.length));
+	return;
+    }
+
     switch(packet.code) {
     case CODE_PADI:
 	processPADI(i, &packet, len);
@@ -1694,7 +1890,7 @@ void
 startPPPDUserMode(ClientSession *session)
 {
     /* Leave some room */
-    char *argv[32];
+    char *argv[64];
 
     char buffer[SMALLBUF];
 
@@ -1705,7 +1901,7 @@ startPPPDUserMode(ClientSession *session)
 
     /* Let's hope service-name does not have ' in it... */
     snprintf(buffer, SMALLBUF, "%s -n -I %s -e %u:%02x:%02x:%02x:%02x:%02x:%02x%s -S '%s'",
-	     PPPOE_PATH, session->ethif->name,
+	     pppoe_path, session->ethif->name,
 	     (unsigned int) ntohs(session->sess),
 	     session->eth[0], session->eth[1], session->eth[2],
 	     session->eth[3], session->eth[4], session->eth[5],
@@ -1740,23 +1936,32 @@ startPPPDUserMode(ClientSession *session)
     }
     argv[c++] = "nodetach";
     argv[c++] = "noaccomp";
-    argv[c++] = "nobsdcomp";
-    argv[c++] = "nodeflate";
     argv[c++] = "nopcomp";
-    argv[c++] = "novj";
-    argv[c++] = "novjccomp";
     argv[c++] = "default-asyncmap";
     if (Synchronous) {
 	argv[c++] = "sync";
     }
     if (PassUnitOptionToPPPD) {
 	argv[c++] = "unit";
-	sprintf(buffer, "%u", (unsigned int) (ntohs(session->sess) - 1));
+	sprintf(buffer, "%u", (unsigned int) (ntohs(session->sess) - 1 - SessOffset));
 	argv[c++] = buffer;
     }
+    if (session->requested_mtu > 1492) {
+	sprintf(buffer, "%u", (unsigned int) session->requested_mtu);
+	argv[c++] = "mru";
+	argv[c++] = buffer;
+	argv[c++] = "mtu";
+	argv[c++] = buffer;
+    } else {
+	argv[c++] = "mru";
+	argv[c++] = "1492";
+	argv[c++] = "mtu";
+	argv[c++] = "1492";
+    }
+
     argv[c++] = NULL;
 
-    execv(PPPD_PATH, argv);
+    execv(pppd_path, argv);
     exit(EXIT_FAILURE);
 }
 
@@ -1826,19 +2031,27 @@ startPPPDLinuxKernelMode(ClientSession *session)
     }
     argv[c++] = "nodetach";
     argv[c++] = "noaccomp";
-    argv[c++] = "nobsdcomp";
-    argv[c++] = "nodeflate";
     argv[c++] = "nopcomp";
-    argv[c++] = "novj";
-    argv[c++] = "novjccomp";
     argv[c++] = "default-asyncmap";
     if (PassUnitOptionToPPPD) {
 	argv[c++] = "unit";
-	sprintf(buffer, "%u", (unsigned int) (ntohs(session->sess) - 1));
+	sprintf(buffer, "%u", (unsigned int) (ntohs(session->sess) - 1 - SessOffset));
 	argv[c++] = buffer;
     }
+    if (session->requested_mtu > 1492) {
+	sprintf(buffer, "%u", (unsigned int) session->requested_mtu);
+	argv[c++] = "mru";
+	argv[c++] = buffer;
+	argv[c++] = "mtu";
+	argv[c++] = buffer;
+    } else {
+	argv[c++] = "mru";
+	argv[c++] = "1492";
+	argv[c++] = "mtu";
+	argv[c++] = "1492";
+    }
     argv[c++] = NULL;
-    execv(PPPD_PATH, argv);
+    execv(pppd_path, argv);
     exit(EXIT_FAILURE);
 }
 
@@ -2002,6 +2215,7 @@ pppoe_alloc_session(void)
     ses->flags = 0;
     ses->startTime = time(NULL);
     ses->serviceName = "";
+    ses->requested_mtu = 0;
 #ifdef HAVE_LICENSE
     memset(ses->user, 0, MAX_USERNAME_LEN+1);
     memset(ses->realm, 0, MAX_USERNAME_LEN+1);
@@ -2061,6 +2275,7 @@ pppoe_free_session(ClientSession *ses)
     /* Initialize fields to sane values */
     ses->funcs = &DefaultSessionFunctionTable;
     ses->pid = 0;
+    memset(ses->eth, 0, ETH_ALEN);
     ses->flags = 0;
 #ifdef HAVE_L2TP
     ses->l2tp_ses = NULL;

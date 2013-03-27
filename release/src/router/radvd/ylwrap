@@ -1,10 +1,10 @@
 #! /bin/sh
 # ylwrap - wrapper for lex/yacc invocations.
 
-scriptversion=2009-04-28.21; # UTC
+scriptversion=2011-08-25.18; # UTC
 
 # Copyright (C) 1996, 1997, 1998, 1999, 2001, 2002, 2003, 2004, 2005,
-# 2007, 2009 Free Software Foundation, Inc.
+# 2007, 2009, 2010, 2011 Free Software Foundation, Inc.
 #
 # Written by Tom Tromey <tromey@cygnus.com>.
 #
@@ -99,7 +99,11 @@ esac
 # FIXME: add hostname here for parallel makes that run commands on
 # other machines.  But that might take us over the 14-char limit.
 dirname=ylwrap$$
-trap "cd '`pwd`'; rm -rf $dirname > /dev/null 2>&1" 1 2 3 15
+do_exit="cd '`pwd`' && rm -rf $dirname > /dev/null 2>&1;"' (exit $ret); exit $ret'
+trap "ret=129; $do_exit" 1
+trap "ret=130; $do_exit" 2
+trap "ret=141; $do_exit" 13
+trap "ret=143; $do_exit" 15
 mkdir $dirname || exit 1
 
 cd $dirname
@@ -133,19 +137,19 @@ if test $ret -eq 0; then
     # Handle y_tab.c and y_tab.h output by DOS
     if test $y_tab_nodot = "yes"; then
       if test $from = "y.tab.c"; then
-    	from="y_tab.c"
+        from="y_tab.c"
       else
-    	if test $from = "y.tab.h"; then
-    	  from="y_tab.h"
-    	fi
+        if test $from = "y.tab.h"; then
+          from="y_tab.h"
+        fi
       fi
     fi
     if test -f "$from"; then
       # If $2 is an absolute path name, then just use that,
       # otherwise prepend `../'.
       case "$2" in
-    	[\\/]* | ?:[\\/]*) target="$2";;
-    	*) target="../$2";;
+        [\\/]* | ?:[\\/]*) target="$2";;
+        *) target="../$2";;
       esac
 
       # We do not want to overwrite a header file if it hasn't
@@ -155,8 +159,8 @@ if test $ret -eq 0; then
       # Makefile.  Divert the output of all other files to a temporary
       # file so we can compare them to existing versions.
       if test $first = no; then
-	realtarget="$target"
-	target="tmp-`echo $target | sed s/.*[\\/]//g`"
+        realtarget="$target"
+        target="tmp-`echo $target | sed s/.*[\\/]//g`"
       fi
       # Edit out `#line' or `#' directives.
       #
@@ -180,10 +184,10 @@ if test $ret -eq 0; then
 
       # Check whether header files must be updated.
       if test $first = no; then
-	if test -f "$realtarget" && cmp -s "$realtarget" "$target"; then
-	  echo "$2" is unchanged
-	  rm -f "$target"
-	else
+        if test -f "$realtarget" && cmp -s "$realtarget" "$target"; then
+          echo "$2" is unchanged
+          rm -f "$target"
+        else
           echo updating "$2"
           mv -f "$target" "$realtarget"
         fi

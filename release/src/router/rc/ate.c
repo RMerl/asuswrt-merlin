@@ -3,11 +3,13 @@
 #ifdef RTCONFIG_RALINK
 #include <ralink.h>
 #endif
+#include "ate.h"
 
 #define MULTICAST_BIT  0x0001
 #define UNIQUE_OUI_BIT 0x0002
 
-int isValidMacAddr(const char* mac) {
+int isValidMacAddr(const char* mac)
+{
 	int sec_byte;
 	int i = 0, s = 0;
 
@@ -34,9 +36,9 @@ int isValidMacAddr(const char* mac) {
 }
 
 int
-isValidCountryCode(char *Ccode)
+isValidCountryCode(const char *Ccode)
 {
-	char *c = Ccode;
+	const char *c = Ccode;
 	int i = 0;
 
 	if(strlen(Ccode)==2) {
@@ -50,6 +52,27 @@ isValidCountryCode(char *Ccode)
 		}
 	}
 	if( i == 2 )
+		return 1;
+	else
+		return 0;
+}
+
+int
+isNumber(const char *num)
+{
+	const char *c = num;
+	int i = 0, len = 0;
+
+	len = strlen(num);
+	while(i<len) { //0~9
+		if( (*c>='0' && *c<='9') ) {
+			i++;
+			c++;
+		}
+		else
+			break;
+	}
+	if( i == len )
 		return 1;
 	else
 		return 0;
@@ -80,7 +103,8 @@ isValidRegrev(char *regrev) {
 }
 
 int
-isValidChannel(int is_2G, char *channel) {
+isValidChannel(int is_2G, char *channel)
+{
 	char *c = channel;
 	int len, i = 0, ret=0;
 
@@ -215,6 +239,23 @@ Get_USB_Port_Folder(int port_x)
 	return 1;
 }
 
+#if defined(RTCONFIG_USB_XHCI)
+int
+Get_USB_Port_DataRate(int port_x)
+{
+	char output_buf[16];
+	char usb_speed[19];
+	sprintf(usb_speed, "usb_path%d_speed", port_x);
+	if( strcmp(nvram_safe_get(usb_speed),"") ) {
+		sprintf(output_buf, "%sMbps", nvram_safe_get(usb_speed));
+		puts(output_buf);
+	}
+	else
+		puts("N/A");
+	return 1;
+}
+#endif	/* RTCONFIG_USB_XHCI */
+
 int
 Get_SD_Card_Info(void)
 {
@@ -231,7 +272,7 @@ Get_SD_Card_Info(void)
 	sprintf(check_cmd, "test_disk2 %s &> /var/sd_info.txt", nvram_get("usb_path3_fs_path0"));
 	system(check_cmd);
 
-	if(fp = fopen("/var/sd_info.txt", "r")) {
+	if ((fp = fopen("/var/sd_info.txt", "r")) != NULL) {
 		while(fgets(sd_info_buf, 128, fp)!=NULL) {
 			if(strstr(sd_info_buf, "No partition")||strstr(sd_info_buf, "No disk"))
 				get_sd_card=0;
@@ -265,15 +306,17 @@ int Ej_device(const char *dev_no)
 	if( dev_no==NULL || *dev_no<'1' || *dev_no>'9' ) 
 		return 0;
 	else {
-		eval("ejusb", dev_no);
+		eval("ejusb", (char*)dev_no);
 		sleep(4);
 		puts("1");
 	}
 	return 1;
 }
 
-int asus_ate_command(const char *command, const char *value, const char *value2){
+int asus_ate_command(const char *command, const char *value, const char *value2)
+{
 	_dprintf("===[ATE %s %s]===\n", command, value);
+	/*** ATE Set function ***/
 	if(!strcmp(command, "Set_StartATEMode")) {
 		nvram_set("asus_mfg", "1");
 		if(nvram_match("asus_mfg", "1")) {
@@ -395,7 +438,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 	else if (!strcmp(command, "Set_40M_Channel_2G")) {
-		if(!set40M_Channel_2G(value))
+		if(!set40M_Channel_2G((char*)value))
 		{
 			puts("ATE_ERROR_INCORRECT_PARAMETER");
 			return EINVAL;
@@ -403,7 +446,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 	else if (!strcmp(command, "Set_40M_Channel_5G")) {
-		if(!set40M_Channel_5G(value))
+		if(!set40M_Channel_5G((char*)value))
 		{
 			puts("ATE_ERROR_INCORRECT_PARAMETER");
 			return EINVAL;
@@ -431,6 +474,35 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #endif
+#ifdef CONFIG_BCMWL5
+	else if (!strcmp(command, "Set_TelnetEnabled")) {
+		if( !setTelnetEnable(value) )
+		{
+			puts("ATE_ERROR_INCORRECT_PARAMETER");
+			return EINVAL;
+		}
+		return 0;
+	}
+	else if (!strcmp(command, "Set_WaitTime")) {
+		if( !setWaitTime(value) )
+		{
+			puts("ATE_ERROR_INCORRECT_PARAMETER");
+			return EINVAL;
+		}
+		return 0;
+	}
+#endif
+#ifdef RTCONFIG_RALINK
+	else if (!strcmp(command, "Set_DevFlags")) {
+		if( Set_Device_Flags(value) < 0 )
+		{
+			puts("ATE_ERROR_INCORRECT_PARAMETER");
+			return EINVAL;
+		}
+		return 0;
+	}
+#endif
+	/*** ATE Get functions ***/
 	else if (!strcmp(command, "Get_FWVersion")) {
 		char fwver[12];
 		sprintf(fwver, "%s.%s", nvram_safe_get("firmver"), nvram_safe_get("buildno"));
@@ -541,33 +613,23 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 #endif
 	else if (!strcmp(command, "Get_ChannelList_2G")) {
-		if(!Get_channel_list(0))
+		if(!Get_ChannelList_2G())
 			puts("ATE_ERROR");
 		return 0;
 	}
 	else if (!strcmp(command, "Get_ChannelList_5G")) {
-		if(!Get_channel_list(1))
+		if (!Get_ChannelList_5G())
 			puts("ATE_ERROR");
 		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb3p0_Port1_Infor")) {
-		puts("ATE_ERROR"); //Need to implement
+		if (!Get_USB3_Port_Info(1))
+			puts("ATE_ERROR");
 		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb3p0_Port2_Infor")) {
-		puts("ATE_ERROR"); //Need to implement
-		return 0;
-	}
-	else if (!strcmp(command, "Get_Usb3p0_Port3_Infor")) {
-		puts("ATE_ERROR"); //Need to implement
-		return 0;
-	}
-	else if (!strcmp(command, "Get_Usb3p0_Port1_Infor")) {
-		puts("ATE_ERROR"); //Need to implement
-		return 0;
-	}
-	else if (!strcmp(command, "Get_Usb3p0_Port2_Infor")) {
-		puts("ATE_ERROR"); //Need to implement
+		if (!Get_USB3_Port_Info(2))
+			puts("ATE_ERROR");
 		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb3p0_Port3_Infor")) {
@@ -575,24 +637,28 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb3p0_Port1_Folder")) {
-		puts("ATE_ERROR"); //Need to implement
-		return EINVAL;
+		if (!Get_USB3_Port_Folder(1))
+			puts("ATE_ERROR");
+		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb3p0_Port2_Folder")) {
-		puts("ATE_ERROR"); //Need to implement
-		return EINVAL;
+		if (!Get_USB3_Port_Folder(2))
+			puts("ATE_ERROR");
+		return 0;
 	}
  	else if (!strcmp(command, "Get_Usb3p0_Port3_Folder")) {
 		puts("ATE_ERROR"); //Need to implement
 		return EINVAL;
 	}
 	else if (!strcmp(command, "Get_Usb3p0_Port1_DataRate")) {
-		puts("ATE_ERROR"); //Need to implement
-		return EINVAL;
+		if (!Get_USB3_Port_DataRate(1))
+			puts("ATE_ERROR");
+		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb3p0_Port2_DataRate")) {
-		puts("ATE_ERROR"); //Need to implement
-		return EINVAL;
+		if (!Get_USB3_Port_DataRate(2))
+			puts("ATE_ERROR");
+		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb3p0_Port3_DataRate")) {
 		puts("ATE_ERROR"); //Need to implement
@@ -620,6 +686,14 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	else if (!strcmp(command, "Ra_Asuscfe_5G")) {
 		return asuscfe(value, WIF_5G);
 	}
+	else if (!strcmp(command, "Set_SwitchPort_LEDs")) {
+		if(Set_SwitchPort_LEDs(value, value2) < 0)
+		{
+			puts("ATE_ERROR");
+			return EINVAL;
+		}
+		return 0;
+	}
 #endif
 #ifdef RTCONFIG_DSL //For HW WiFi On/Off button check
 	else if (!strcmp(command, "Get_WifiSwStatus")) {
@@ -635,13 +709,24 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		puts(nvram_safe_get("x_Setting"));
 		return 0;
 	}
-	else if (!strcmp(command, "Set_Eject")) {
-		if( !Ej_device(value)) {
-			puts("ATE_ERROR_INCORRECT_PARAMETER");
+	else if (!strcmp(command, "Get_TelnetEnabled")) {
+		puts(nvram_safe_get("Ate_telnet"));
+		return 0;
+	}
+	else if (!strcmp(command, "Get_WaitTime")) {
+		puts(nvram_safe_get("wait_time"));
+		return 0;
+	}
+#ifdef RTCONFIG_RALINK
+	else if (!strcmp(command, "Get_DevFlags")) {
+		if( Get_Device_Flags() < 0)
+		{
+			puts("ATE_ERROR");
 			return EINVAL;
 		}
 		return 0;
 	}
+#endif
 	else 
 	{
 		puts("ATE_UNSUPPORT");

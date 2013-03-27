@@ -32,7 +32,9 @@
 /*
  * The number of bytes in an ethernet (MAC) address.
  */
+#ifndef ETHER_ADDR_LEN
 #define	ETHER_ADDR_LEN		6
+#endif
 
 /*
  * The number of bytes in the type field.
@@ -47,12 +49,16 @@
 /*
  * The length of the combined header.
  */
+#ifndef ETHER_HDR_LEN
 #define	ETHER_HDR_LEN		(ETHER_ADDR_LEN*2+ETHER_TYPE_LEN)
+#endif
 
 /*
  * The minimum packet length.
  */
+#ifndef ETHER_MIN_LEN
 #define	ETHER_MIN_LEN		64
+#endif
 
 /*
  * The minimum packet user data length.
@@ -62,7 +68,9 @@
 /*
  * The maximum packet length.
  */
+#ifndef ETHER_MAX_LEN
 #define	ETHER_MAX_LEN		1518
+#endif
 
 /*
  * The maximum packet user data length.

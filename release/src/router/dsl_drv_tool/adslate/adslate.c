@@ -278,7 +278,7 @@ void adsl_ate(int argc, char* argv[])
 		// reset switch IC and link all port together
 		// 8 = change switich ic VLAN
 		// 100 = reset and enable adsl bridge
-		system("8367r 8 100");
+		system("rtkswitch 8 100");
 #else
 #error "new model"
 #endif
@@ -352,6 +352,39 @@ void adsl_ate(int argc, char* argv[])
         strcpy(send_buf.mtext,"sysdefault");
         myprintf("msg :%s\n",send_buf.mtext);
     }
+	//Ren.B	
+	else if (strcmp(argv[1],"getbpc") == 0) //get bits per carrier
+	{
+		myprintf("IPC_ATE_ADSL_GET_BITS_PER_CARRIER\n");    
+		send_buf.mtype=IPC_ATE_ADSL_GET_BITS_PER_CARRIER;
+		strcpy(send_buf.mtext,"getbpc");
+		myprintf("msg :%s\n",send_buf.mtext);
+	}
+
+	else if (strcmp(argv[1],"getsnr") == 0) //get snr, TC3162 side will decide adsl1 or 2 automatically.
+	{
+		myprintf("IPC_ATE_ADSL_GET_SNR\n");
+		send_buf.mtype=IPC_ATE_ADSL_GET_SNR;
+		strcpy(send_buf.mtext,"getsnr");
+		myprintf("msg :%s\n",send_buf.mtext);
+	}
+
+	else if (strcmp(argv[1],"getadsl1snr") == 0) //get adsl 1,2 snr
+	{
+		myprintf("IPC_ATE_ADSL1_GET_SNR\n");    
+		send_buf.mtype=IPC_ATE_ADSL1_GET_SNR;
+		strcpy(send_buf.mtext,"getadsl1snr");
+		myprintf("msg :%s\n",send_buf.mtext);
+	}
+	
+	else if (strcmp(argv[1],"getadsl2snr") == 0) //get adsl 2+ snr
+	{
+		myprintf("IPC_ATE_ADSL2_PLUS_GET_SNR\n");    
+		send_buf.mtype=IPC_ATE_ADSL2_PLUS_GET_SNR;
+		strcpy(send_buf.mtext,"getadsl2snr");
+		myprintf("msg :%s\n",send_buf.mtext);
+	}
+	//Ren.E
     else if (strcmp(argv[1],"setadslmode") == 0)
     {
         int mode,type;    

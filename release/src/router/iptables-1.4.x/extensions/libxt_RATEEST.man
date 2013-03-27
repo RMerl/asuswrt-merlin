@@ -1,0 +1,12 @@
+The RATEEST target collects statistics, performs rate estimation calculation
+and saves the results for later evaluation using the \fBrateest\fP match.
+.TP
+\fB\-\-rateest\-name\fP \fIname\fP
+Count matched packets into the pool referred to by \fIname\fP, which is freely
+choosable.
+.TP
+\fB\-\-rateest\-interval\fP \fIamount\fP{\fBs\fP|\fBms\fP|\fBus\fP}
+Rate measurement interval, in seconds, milliseconds or microseconds.
+.TP
+\fB\-\-rateest\-ewmalog\fP \fIvalue\fP
+Rate measurement averaging time constant.

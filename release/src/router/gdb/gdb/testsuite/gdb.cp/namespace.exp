@@ -1,0 +1,291 @@
+# Copyright 1997, 1998, 2000, 2001, 2002, 2003, 2004, 2007
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# tests for namespaces
+# Originally written by Satish Pai <pai@apollo.hp.com> 1997-07-23
+
+# This file is part of the gdb testsuite
+
+# Note: The original tests were geared to the HP aCC compiler,
+# which has an idiosyncratic way of emitting debug info
+# for namespaces.
+# Note: As of 2000-06-03, they passed under g++ - djb
+
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+set prms_id 0
+set bug_id 0
+
+if { [skip_cplus_tests] } { continue }
+
+set testfile "namespace"
+set srcfile ${testfile}.cc
+set objfile ${objdir}/${subdir}/${testfile}.o
+set srcfile1 ${testfile}1.cc
+set objfile1 ${objdir}/${subdir}/${testfile}1.o
+set binfile ${objdir}/${subdir}/${testfile}
+
+if [get_compiler_info ${binfile} c++] {
+    return -1;
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${objfile}" object {debug c++}] != "" } {
+     untested namespace.exp
+     return -1
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${objfile1}" object {debug c++}] != "" } {
+     untested namespace.exp
+     return -1
+}
+
+if  { [gdb_compile "${objfile} ${objfile1}" "${binfile}" executable {debug c++}] != "" } {
+     untested namespace.exp
+     return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+
+#
+# set it up at a breakpoint so we can play with the variable values
+#
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+if ![runto 'marker1'] then {
+    perror "couldn't run to marker1"
+    continue
+}
+
+gdb_test "up" ".*main.*" "up from marker1"
+
+# Access a data item inside a namespace using colons and
+# single quotes. :-(
+
+# NOTE: carlton/2003-09-24: the quotes are becoming less necessary (or
+# even desirable.)  For tests where it should still work with quotes,
+# I'm including versions both with and without quotes; for tests that
+# shouldn't work with quotes, I'm only including one version.
+
+send_gdb "print 'AAA::c'\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 0 '\\\\(0|000)'\r\n$gdb_prompt $" { pass "print 'AAA::c'" }
+   -re ".*$gdb_prompt $" { fail "print 'AAA::c'" }
+   timeout { fail "(timeout) print 'AAA::c'" }
+}
+
+send_gdb "print AAA::c\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 0 '\\\\(0|000)'\r\n$gdb_prompt $" { pass "print AAA::c" }
+   -re ".*$gdb_prompt $" { fail "print AAA::c" }
+   timeout { fail "(timeout) print AAA::c" }
+}
+
+# An object declared using "using".
+
+send_gdb "print ina\n"
+gdb_expect {
+   -re "\\$\[0-9\]+ = {xx = 33}.*$gdb_prompt $" {
+      pass "print ina"
+   }
+   -re ".*$gdb_prompt $" { fail "print ina" }
+   timeout { fail "(timeout) print ina" }
+}
+
+send_gdb "ptype ina\n"
+gdb_expect {
+   -re "type = class (AAA::|)inA \{\r\n\[ \]*public:\r\n\[ \]*int xx;\r\n\[ \]*\r\n\[ \]*.*int fum\\(int\\);\r\n\}\r\n$gdb_prompt $" {
+       pass "ptype ina"
+   }
+   -re "type = class (AAA::|)inA \{\r\n\[ \]*public:\r\n\[ \]*int xx;\r\n\[ \]*\r\n\[ \]*int fum\\(int\\);\r\n.*\}\r\n$gdb_prompt $" {
+       pass "ptype ina"
+   }
+   -re ".*$gdb_prompt $" { fail "ptype ina" }
+   timeout { fail "(timeout) ptype ina" }
+}
+
+# Check all functions are known to GDB
+
+setup_xfail hppa*-*-*11* CLLbs14869
+send_gdb "info func xyzq\n"
+gdb_expect {
+   -re "All functions.*File.*namespace.cc:\r\nint AAA::A_xyzq\\(int\\);\r\nint BBB::B_xyzq\\(int\\);\r\nchar AAA::xyzq\\(char\\);\r\nchar BBB::xyzq\\(char\\);\r\nchar BBB::CCC::xyzq\\(char\\);\r\nchar BBB::Class::xyzq\\(char\\);\r\n$gdb_prompt $" {
+       pass "info func xyzq"
+   }    
+   -re "All functions.*File.*namespace.cc:\r\nint AAA::A_xyzq\\(int\\);\r\nchar AAA::xyzq\\(char\\);\r\nint BBB::B_xyzq\\(int\\);\r\nchar BBB::CCC::xyzq\\(char\\);\r\nchar BBB::Class::xyzq\\(char\\);\r\nchar BBB::xyzq\\(char\\);\r\n$gdb_prompt $" {
+       pass "info func xyzq"
+   }    
+   -re ".*$gdb_prompt $" { fail "info func xyzq" }
+   timeout { fail "(timeout) info func xyzq" }
+}
+
+# Call a function in a namespace
+
+send_gdb "print 'AAA::xyzq'('x')\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 97 'a'\r\n$gdb_prompt $" {
+       pass "print 'AAA::xyzq'('x')"
+   }
+   -re ".*$gdb_prompt $" { fail "print 'AAA::xyzq'('x')" }
+   timeout { fail "(timeout) print 'AAA::xyzq'('x')" }
+}
+       
+send_gdb "print AAA::xyzq('x')\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 97 'a'\r\n$gdb_prompt $" {
+       pass "print AAA::xyzq('x')"
+   }
+   -re ".*$gdb_prompt $" { fail "print AAA::xyzq('x')" }
+   timeout { fail "(timeout) print AAA::xyzq('x')" }
+}
+       
+# Break on a function in a namespace
+
+send_gdb "break AAA::xyzq\n"
+gdb_expect {
+    -re "Breakpoint.*at $hex: file.*namespace.cc, line 42\\.\r\n$gdb_prompt $" {
+         pass "break AAA::xyzq"
+    }    
+   -re ".*$gdb_prompt $" { fail "break AAA::xyzq" }
+   timeout { fail "(timeout) break AAA::xyzq" }
+}
+
+# Call a function in a nested namespace
+
+send_gdb "print 'BBB::CCC::xyzq'('x')\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 122 'z'\r\n$gdb_prompt $" {
+       pass "print 'BBB::CCC::xyzq'('x')"
+   }
+   -re ".*$gdb_prompt $" { fail "print 'BBB::CCC::xyzq'('x')" }
+   timeout { fail "(timeout) print 'BBB::CCC::xyzq'('x')" }
+}
+       
+send_gdb "print BBB::CCC::xyzq('x')\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 122 'z'\r\n$gdb_prompt $" {
+       pass "print BBB::CCC::xyzq('x')"
+   }
+   -re ".*$gdb_prompt $" { fail "print BBB::CCC::xyzq('x')" }
+   timeout { fail "(timeout) print BBB::CCC::xyzq('x')" }
+}
+       
+# Break on a function in a nested namespace
+
+send_gdb "break BBB::CCC::xyzq\n"
+gdb_expect {
+    -re "Breakpoint.*at $hex: file.*namespace.cc, line 58\\.\r\n$gdb_prompt $" {
+         pass "break BBB::CCC::xyzq"
+    }    
+   -re ".*$gdb_prompt $" { fail "break BBB::CCC::xyzq" }
+   timeout { fail "(timeout) break BBB::CCC::xyzq" }
+}
+
+# Print address of a function in a class in a namespace
+
+send_gdb "print 'BBB::Class::xyzq'\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = \{char \\((BBB::|)Class \\*( const|), (char|int)\\)\} $hex <BBB::Class::xyzq\\(char\\)>\r\n$gdb_prompt $" {
+       pass "print 'BBB::Class::xyzq'"
+   }
+   -re ".*$gdb_prompt $" { fail "print 'BBB::Class::xyzq'" }
+   timeout { fail "(timeout) print 'BBB::Class::xyzq'" }
+}
+
+send_gdb "print BBB::Class::xyzq\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = \{char \\((BBB::|)Class \\*( const|), (char|int)\\)\} $hex <BBB::Class::xyzq\\(char\\)>\r\n$gdb_prompt $" {
+       pass "print BBB::Class::xyzq"
+   }
+   -re ".*$gdb_prompt $" { fail "print BBB::Class::xyzq" }
+   timeout { fail "(timeout) print BBB::Class::xyzq" }
+}
+
+# Break on a function in a class in a namespace
+
+send_gdb "break BBB::Class::xyzq\n"
+gdb_expect {
+    -re "Breakpoint.*at $hex: file.*namespace.cc, line 63\\.\r\n$gdb_prompt $" {
+         pass "break BBB::Class::xyzq"
+    }    
+   -re ".*$gdb_prompt $" { fail "break BBB::Class::xyzq" }
+   timeout { fail "(timeout) break BBB::Class::xyzq" }
+}
+
+# Test to see if the appropriate namespaces are in scope when trying
+# to print out stuff from within a function defined within a
+# namespace.
+
+if ![runto "C::D::marker2"] then {
+    perror "couldn't run to marker2"
+    continue
+}
+
+gdb_test "print c" "\\$\[0-9\].* = 1"
+gdb_test "print cc" "No symbol \"cc\" in current context."
+gdb_test "print 'C::cc'" "\\$\[0-9\].* = 2"
+gdb_test "print C::cc" "\\$\[0-9\].* = 2"
+gdb_test "print cd" "\\$\[0-9\].* = 3"
+gdb_test "print C::D::cd" "No type \"D\" within class or namespace \"C::C\"."
+gdb_test "print 'E::cde'" "\\$\[0-9\].* = 5"
+gdb_test "print E::cde" "\\$\[0-9\].* = 5"
+gdb_test "print shadow" "\\$\[0-9\].* = 13"
+gdb_test "print E::ce" "No symbol \"ce\" in namespace \"C::D::E\"."
+gdb_test "ptype C" "type = namespace C::C"
+gdb_test "ptype E" "type = namespace C::D::E"
+
+gdb_test "ptype CClass" "type = (class C::CClass \{\r\n  public:|struct C::CClass \{)\r\n    int x;\r\n\}"
+gdb_test "ptype CClass::NestedClass" "type = (class C::CClass::NestedClass \{\r\n  public:|struct C::CClass::NestedClass \{)\r\n    int y;\r\n\}"
+gdb_test "ptype NestedClass" "No symbol \"NestedClass\" in current context."
+setup_kfail "gdb/1448" "*-*-*"
+gdb_test "ptype ::C::CClass" "type = class C::CClass \{\r\n  public:\r\n    int x;\r\n\}"
+setup_kfail "gdb/1448" "*-*-*"
+gdb_test "ptype ::C::CClass::NestedClass" "type = class C::CClass::NestedClass \{\r\n  public:\r\n    int y;\r\n\}"
+setup_kfail "gdb/1448" "*-*-*"
+gdb_test "ptype ::C::NestedClass" "No symbol \"NestedClass\" in namespace \"C\"."
+gdb_test "ptype C::CClass" "No symbol \"CClass\" in namespace \"C::C\"."
+gdb_test "ptype C::CClass::NestedClass" "No type \"CClass\" within class or namespace \"C::C\"."
+gdb_test "ptype C::NestedClass" "No symbol \"NestedClass\" in namespace \"C::C\"."
+
+# Tests involving multiple files
+
+gdb_test "print cOtherFile" "\\$\[0-9\].* = 316"
+gdb_test "ptype OtherFileClass" "type = (class C::OtherFileClass \{\r\n  public:|struct C::OtherFileClass \{)\r\n    int z;\r\n\}"
+setup_kfail "gdb/1448" "*-*-*"
+gdb_test "ptype ::C::OtherFileClass" "type = class C::OtherFileClass \{\r\n  public:\r\n    int z;\r\n\}"
+gdb_test "ptype C::OtherFileClass" "No symbol \"OtherFileClass\" in namespace \"C::C\"."
+
+# Some anonymous namespace tests.
+
+gdb_test "print cX" "\\$\[0-9\].* = 6"
+gdb_test "print 'F::cXf'" "\\$\[0-9\].* = 7"
+gdb_test "print F::cXf" "\\$\[0-9\].* = 7"
+gdb_test "print F::cXfX" "\\$\[0-9\].* = 8"
+gdb_test "print X" "\\$\[0-9\].* = 9"
+gdb_test "print 'G::Xg'" "\\$\[0-9\].* = 10"
+gdb_test "print G::Xg" "\\$\[0-9\].* = 10"
+gdb_test "print G::XgX" "\\$\[0-9\].* = 11"
+gdb_test "print cXOtherFile" "No symbol \"cXOtherFile\" in current context."
+gdb_test "print XOtherFile" "No symbol \"XOtherFile\" in current context."

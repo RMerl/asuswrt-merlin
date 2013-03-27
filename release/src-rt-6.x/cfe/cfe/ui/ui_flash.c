@@ -479,8 +479,8 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
     char *scode = "secret_code";
     uint8_t SCODE[5] = {0x53, 0x43, 0x4F, 0x44, 0x45};
 #endif // RESCUE_MODE
-#ifdef DUAL_TRX
     int cfe = 0;
+#ifdef DUAL_TRX
     int write_trx2 = 0;
 #endif
 

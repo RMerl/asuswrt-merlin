@@ -1,0 +1,12 @@
+# arm testcase for sub $rd,$rs,#$offset3
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global subi
+subi:
+	sub r0,r0,#0
+
+	pass

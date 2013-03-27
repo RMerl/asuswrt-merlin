@@ -1,0 +1,217 @@
+#   Copyright 1997, 1998, 1999, 2000, 2001, 2003, 2007
+#   Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# display.exp   Test display commands
+#               Also do some printing stuff for coverage's sake.
+#
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set testfile display
+set srcfile  ${testfile}.c
+set binfile  ${objdir}/${subdir}/${testfile}
+
+
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
+    untested display.exp
+    return -1
+}
+if [target_info exists gdb_stub] {
+    gdb_step_for_stub;
+}
+
+# Preserve the old timeout, and set a new one that should be
+# sufficient to avoid timing out during this test.
+set oldtimeout $timeout
+set timeout [expr "$timeout + 60"]
+verbose "Timeout is now $timeout seconds" 2
+
+# use this to debug:
+#log_user 1
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# Some coverage stuff
+#
+if ![target_info exists use_gdb_stub] {
+    gdb_test "kill" ".*The program is not being run.*"
+    gdb_test "detach" ".*"
+    gdb_test "run" ".*"
+
+    gdb_load ${binfile}
+    gdb_test "kill" ".*" "kill again"
+    gdb_test "detach" ".*" "detach again"
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_load ${binfile}
+}
+
+# Ok, on to real life
+#
+if ![runto_main] then {
+    fail "Could not run to main - other tests will fail."
+    continue
+}
+
+# Disable hardware watchpoints if necessary.
+if [target_info exists gdb,no_hardware_watchpoints] {
+    gdb_test "set can-use-hw-watchpoints 0" "" ""
+}
+
+gdb_test "break 14" ".*Breakpoint 2.*"           "break  do_loops"
+gdb_test "cont"     ".*Breakpoint 2, do_loops.*" "get to do_loops"
+
+# Create stopping points.
+#
+gdb_test "watch sum"    ".*\[Ww\]atchpoint 3: sum.*" "set watch"
+gdb_test "break 19"     ".*Breakpoint 4.*" "break 19"
+
+# Create displays for those points
+#
+gdb_test "info disp" ".*There are no auto-display expressions now..*" "inf disp"
+gdb_test "disp i" ".*1: i = 0.*" "display i"
+gdb_test "disp/x j" ".*2: /x j = 0x0.*" "display j"
+gdb_test "disp/i &k" ".*3: x/i &k(\r\n|  )$hex:.*" "display &k"
+gdb_test "disp/f f" ".*4: /f f = 3.1415*" "display/f f"
+gdb_test "disp/s &sum" ".*5: x/s &sum  $hex.*sum.:.*" "display/s &sum"
+
+# Hit the displays
+#
+gdb_test "cont" ".*\[Ww\]atchpoint 3: sum.*\[1-9\]*: x/s &sum.*\[1-9\]*: /f f = 3.1415\r\n\[1-9\]*: x/i &k.*\r\n\[1-9\]*: /x j = 0x0\r\n\[1-9\]*: i = 0.*" "first disp"
+gdb_test "cont" ".*\[Ww\]atchpoint 3: sum.*\[1-9\]*: x/s &sum.*\[1-9\]*: /f f = 4.1415\r\n\[1-9\]*: x/i &k.*\r\n\[1-9\]*: /x j = 0x0.*\[1-9\]*: i = 0.*" "second disp"
+
+gdb_test "enab  disp 6" ".*No display number 6..*" "catch err"
+gdb_test "disab disp 1" ".*" "disab disp 1"
+gdb_test "disab disp 2" ".*" "disab disp 2"
+gdb_test "enab disp 1"  ".*" "re-enab"
+gdb_test "enab disp 1"  ".*" "re-enab of enab"
+gdb_test "undisp 5"     ".*" "undisp"
+gdb_test "info disp"    ".*Auto-display expressions now in effect.*y  /f f.*y  /1bi &k.*n  /x j.*y  i.*" "info disp"
+
+gdb_test "cont" ".*\[Ww\]atch.*5.1415.*.*i = 0.*" "next hit"
+
+send_gdb "undisp\n"
+gdb_expect {
+    -re ".*Delete all auto-display expressions.*y or n. $" {
+        send_gdb "y\n"
+        gdb_expect {
+            -re "y\r\n$gdb_prompt $" {
+                pass "undisp all"
+            }
+            -re ".*$gdb_prompt $" {
+                fail "some un-helpful response"
+            }
+            -re ".*Delete all.*$" {
+                fail "re-ask question"
+            }
+            timeout { fail "timeout" }
+        }
+    }
+    -re ".*$gdb_prompt $" {
+        fail "undisp all"
+    }
+    timeout { fail "timeout" }
+}
+
+gdb_test "disab 3" ".*.*" "disab 3"
+gdb_test "cont" ".*Breakpoint 4.*" "watch off"
+
+# Now the printf tests
+#
+# The "finish" command may leave us mid-line in the caller on some
+# targets, including but not limited to the m68k, i386 & PA.  So we
+# have to arrange to step until we hit the line with the call to
+# "do_vars".
+send_gdb "finish\n"
+gdb_expect {
+    -re ".*do_loops\\(\\);.*$gdb_prompt $" {
+	send_gdb "step\n"
+	exp_continue
+    }
+    -re ".*do_vars.*$gdb_prompt $" {
+	pass "finish"
+    }
+    -re ".*$gdb_prompt $" {
+	fail "finish"
+	gdb_suppress_tests
+    }
+    timeout  {
+	fail "(timeout) finish"
+	gdb_suppress_tests
+    }
+}
+
+gdb_test "step"      ".*do_vars.*.*27.*"
+gdb_test "tbreak 37" ".*Breakpoint 5 a.*"
+gdb_test "cont"      ".*do_vars.*37.*37.*"
+
+# Beat on printf a bit
+#
+gdb_test "printf" ".*Argument required.*"
+gdb_test "printf %d" ".*Bad format string, missing.*"
+gdb_test "printf \"%d" ".*Bad format string, non-terminated.*"
+gdb_test "printf \"%d%d\",i" ".*Wrong number of arguments.*"
+gdb_test "printf \"\\\\!\\a\\f\\r\\t\\v\\b\\n\"" ".*!.*"
+gdb_test "printf \"\"" ".*" "re-set term"
+gdb_test "printf \"\\w\"" ".*Unrecognized escape character.*"
+gdb_test "printf \"%d\" j" ".*Invalid argument syntax.*"
+gdb_test "printf \"%p\\n\", 0" "\\(nil\\)"
+gdb_test "printf \"%p\\n\", 1" "0x1"
+
+# play with "print", too
+#
+gdb_test "print/r j" ".*Undefined output format.*"
+gdb_test "print j"   ".*" "debug test output"
+
+# x/0 j doesn't produce any output and terminates PA64 process when testing
+if [istarget "hppa2.0w-hp-hpux11*"] {
+    xfail "'x/0 j' terminates PA64 process - skipped test point"
+} else {
+    gdb_test "x/0 j" ".*"
+}
+if [istarget "hppa*-hp-hpux*"] {
+    # on HP-UX you could access the first page without getting an error
+    gdb_test "x/rx j" ".*(Cannot access|Error accessing) memory.*|.*0xa:\[ \t\]*\[0-9\]+.*"
+}
+gdb_test "print/0 j" ".*Item count other than 1 is meaningless.*" "print/0 j"
+gdb_test "print/s sum" " = 1000" "ignored s"
+gdb_test "print/i sum" ".*Format letter.*is meaningless.*.*" "no i"
+gdb_test "print/a &sum" ".*= $hex.*<sum>.*"
+# If the constant below is larger than the length of main, then
+# this test will (incorrectly) fail.  So use a small number.
+gdb_test "print/a main+4" ".*= $hex.*<.*>.*"
+gdb_test "print/a \$pc" ".*= $hex.*<do_vars+.*>.*"
+gdb_test "print/a &&j" ".*A .* error in expression.*"
+
+# Done!
+#
+gdb_exit
+
+# Restore the preserved old timeout value.
+set timeout $oldtimeout
+verbose "Timeout is now $timeout seconds" 2
+
+return 0

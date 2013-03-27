@@ -1,0 +1,84 @@
+# frv testcase for cmovgf $GRj,$FRk,$CCi,$cond
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global cmovgf
+cmovgf:
+	set_spr_immed	0x1b1b,cccr
+
+	set_gr_limmed	0xdead,0xbeef,gr8
+	set_fr_iimmed	0,0,fr8
+	cmovgf 		gr8,fr8,cc0,1
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_fr_limmed	0xdead,0xbeef,fr8
+
+	set_gr_limmed	0xdead,0xbeef,gr8
+	set_fr_iimmed	0,0,fr8
+	cmovgf 		gr8,fr8,cc4,1
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_fr_limmed	0xdead,0xbeef,fr8
+
+	set_gr_limmed	0xdead,0xbeef,gr8
+	set_fr_iimmed	0,0,fr8
+	cmovgf 		gr8,fr8,cc0,0
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_fr_limmed	0,0,fr8
+
+	set_gr_limmed	0xdead,0xbeef,gr8
+	set_fr_iimmed	0,0,fr8
+	cmovgf 		gr8,fr8,cc4,0
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_fr_limmed	0,0,fr8
+
+	set_gr_limmed	0xdead,0xbeef,gr8
+	set_fr_iimmed	0,0,fr8
+	cmovgf 		gr8,fr8,cc1,0
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_fr_limmed	0xdead,0xbeef,fr8
+
+	set_gr_limmed	0xdead,0xbeef,gr8
+	set_fr_iimmed	0,0,fr8
+	cmovgf 		gr8,fr8,cc5,0
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_fr_limmed	0xdead,0xbeef,fr8
+
+	set_gr_limmed	0xdead,0xbeef,gr8
+	set_fr_iimmed	0,0,fr8
+	cmovgf 		gr8,fr8,cc1,1
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_fr_limmed	0,0,fr8
+
+	set_gr_limmed	0xdead,0xbeef,gr8
+	set_fr_iimmed	0,0,fr8
+	cmovgf 		gr8,fr8,cc5,1
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_fr_limmed	0,0,fr8
+
+	set_gr_limmed	0xdead,0xbeef,gr8
+	set_fr_iimmed	0,0,fr8
+	cmovgf 		gr8,fr8,cc2,0
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_fr_limmed	0,0,fr8
+
+	set_gr_limmed	0xdead,0xbeef,gr8
+	set_fr_iimmed	0,0,fr8
+	cmovgf 		gr8,fr8,cc6,0
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_fr_limmed	0,0,fr8
+
+	set_gr_limmed	0xdead,0xbeef,gr8
+	set_fr_iimmed	0,0,fr8
+	cmovgf 		gr8,fr8,cc3,1
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_fr_limmed	0,0,fr8
+
+	set_gr_limmed	0xdead,0xbeef,gr8
+	set_fr_iimmed	0,0,fr8
+	cmovgf 		gr8,fr8,cc7,0
+	test_gr_limmed	0xdead,0xbeef,gr8
+	test_fr_limmed	0,0,fr8
+
+	pass

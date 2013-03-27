@@ -53,13 +53,7 @@
 
 #include <mtd.h>
 
-//#if 0
-#define XSTR(s) STR(s)
-#define STR(s) #s
-
 void update_lan_status(int);
-static char list[2048];
-//#endif
 
 // oleg patch ~
 in_addr_t
@@ -276,7 +270,6 @@ void init_switch_mode()
 	{
 		nvram_set("wan_nat_x", "1");
 		nvram_set("wan_route_x", "IP_Routed");
-		nvram_set("wl_mode_ex", "ap");
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
 		nvram_set("wlc_psta", "0");
@@ -290,7 +283,6 @@ void init_switch_mode()
 	{
 		nvram_set("wan_nat_x", "0");
 		nvram_set("wan_route_x", "IP_Routed");
-		nvram_set("wl_mode_ex", "ap");
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
 		nvram_set("wlc_psta", "0");
@@ -305,7 +297,6 @@ void init_switch_mode()
 	{
 		nvram_set("wan_nat_x", "0");
 		nvram_set("wan_route_x", "IP_Bridged");
-		nvram_set("wl_mode_ex", "re");
 		
 		nvram_set("wl0_vifs", "wl0.1");
 		
@@ -337,14 +328,19 @@ void init_switch_mode()
 		nvram_set("wlc_psta", "0");
 #endif
 #endif
+#ifdef RTCONFIG_W3N
+		nvram_set("wlc_w3n", 0);
+#endif
 	}
 #endif	/* RTCONFIG_WIRELESSREPEATER */
 	else if (nvram_match("sw_mode_ex", "3"))		// AP mode
 	{
 		nvram_set("wan_nat_x", "0");
 		nvram_set("wan_route_x", "IP_Bridged");
-		nvram_set("wl_mode_ex", "ap");
 		nvram_set("ure_disable", "1");
+#ifdef RTCONFIG_W3N
+		nvram_set("wlc_w3n", 0);
+#endif
 	}
 	else
 	{
@@ -352,7 +348,6 @@ void init_switch_mode()
 		nvram_set("sw_mode_ex", "1");
 		nvram_set("wan_nat_x", "1");
 		nvram_set("wan_route_x", "IP_Routed");
-		nvram_set("wl_mode_ex", "ap");
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
 		nvram_set("wlc_psta", "0");
@@ -361,6 +356,9 @@ void init_switch_mode()
 #endif
 #endif
 		nvram_set("ure_disable", "1");
+#ifdef RTCONFIG_W3N
+		nvram_set("wlc_w3n", 0);
+#endif
 	}
 }
 
@@ -731,7 +729,7 @@ void setup_ftp_conntrack(int port)
 	}
 }
 
-void setup_udp_timeout(int connflag) 
+void setup_udp_timeout(int connflag)
 {
 	unsigned int v[10];
 	const char *p;
@@ -894,13 +892,13 @@ void setup_conntrack(void)
 	else if (f_read_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_max", buf, sizeof(buf)) > 0) {
 		if (atoi(buf) > 0) nvram_set("ct_max", buf);
 	}
-
-	//if (!nvram_match("nf_rtsp", "0")) {
-	//	ct_modprobe("rtsp");
-	//}
-	//else {
-	//	ct_modprobe_r("rtsp");
-	//}
+#if 0
+	if (!nvram_match("nf_rtsp", "0")) {
+		ct_modprobe("rtsp");
+	}
+	else {
+		ct_modprobe_r("rtsp");
+	}
 
 	if (!nvram_match("nf_h323", "0")) {
 		ct_modprobe("h323");
@@ -917,7 +915,7 @@ void setup_conntrack(void)
 		ct_modprobe_r("sip");
 	}
 #endif
-
+#endif
 	// !!TB - FTP Server
 #ifdef RTCONFIG_FTP
 	i = nvram_get_int("ftp_port");
@@ -951,7 +949,7 @@ void setup_conntrack(void)
 	}
 }
 
-void setup_pt_conntrack()
+void setup_pt_conntrack(void)
 {
 	if (!nvram_match("fw_pt_rtsp", "0")) {
 		ct_modprobe("rtsp", "ports=554,8554");
@@ -959,6 +957,22 @@ void setup_pt_conntrack()
 	else {
 		ct_modprobe_r("rtsp");
 	}
+
+	if (!nvram_match("fw_pt_h323", "0")) {
+		ct_modprobe("h323");
+	}
+	else {
+		ct_modprobe_r("h323");
+	}
+
+#ifdef LINUX26
+	if (!nvram_match("fw_pt_sip", "0")) {
+		ct_modprobe("sip");
+	}
+	else {
+		ct_modprobe_r("sip");
+	}
+#endif
 }
 
 void inc_mac(char *mac, int plus)
@@ -1295,22 +1309,22 @@ is_invalid_char_for_hostname(char c)
 {
 	int ret = 0;
 
-	if (c <= 0x2c)
+	if (c <= 0x2c)				/* SPACE !"#$%&'()*+, */
 		ret = 1;
-	else if (c >= 0x2e && c <= 0x2f)
+	else if (c >= 0x2e && c <= 0x2f)	/* ./ */
 		ret = 1;
-	else if (c >= 0x3a && c <= 0x40)
+	else if (c >= 0x3a && c <= 0x40)	/* :;<=>?@ */
 		ret = 1;
 #if 0
-	else if (c >= 0x5b && c <= 0x60)
+	else if (c >= 0x5b && c <= 0x60)	/* [\]^_ */
 		ret = 1;
 #else	/* allow '_' */
-	else if (c >= 0x5b && c <= 0x5e)
+	else if (c >= 0x5b && c <= 0x5e)	/* [\]^ */
 		ret = 1;
-	else if (c == 0x60)
+	else if (c == 0x60)			/* ` */
 		ret = 1;
 #endif
-	else if (c >= 0x7b)
+	else if (c >= 0x7b)			/* {|}~ DEL */
 		ret = 1;
 #if 0
 	printf("%c (0x%02x) is %svalid for hostname\n", c, c, (ret == 0) ? "  " : "in");
@@ -1337,6 +1351,30 @@ is_valid_hostname(const char *name)
 	printf("%s is %svalid for hostname\n", name, len ? "" : "in");
 #endif
 	return len;
+}
+
+int get_meminfo_item(const char *name)
+{
+	int ret = 0;
+	FILE *fp;
+	char memdata[256] = {0};
+	int mem = 0;
+
+	if (!name || *name == '\0')
+		return -1;
+
+	if ((fp = fopen("/proc/meminfo", "r")) != NULL) {
+		/* get one memory parameter specified by the name */
+		while (fgets(memdata, 255, fp) != NULL) {
+			if (strstr(memdata, name) != NULL) {
+				ret = sscanf(memdata, "%*s %d kB", &mem);
+				break;
+			}
+		}
+		fclose(fp);
+	}
+
+	return mem;
 }
 
 #ifdef RTCONFIG_OLD_PARENTALCTRL
@@ -1402,7 +1440,7 @@ void setup_dnsmq(int mode)
 		eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-d", "10.0.0.1", "--dport", "80", "-j", "DNAT", "--to-destination", strcat_r(nvram_safe_get("lan_ipaddr"), ":80", tmp)); 
 	
 		//sprintf(v, "%x my.%s", inet_addr("10.0.0.1"), get_productid());
-		sprintf(v, "%x www.asusnetwork.net", inet_addr(nvram_safe_get("lan_ipaddr")));
+		sprintf(v, "%x %s", inet_addr(nvram_safe_get("lan_ipaddr")), DUT_DOMAIN_NAME);
 		f_write_string("/proc/net/dnsmqctrl", v, 0, 0);
 	}
 	else {

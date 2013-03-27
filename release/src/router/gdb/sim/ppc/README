@@ -1,0 +1,353 @@
+
+
+		PSIM 1.0.1 - Model of the PowerPC Environments
+
+
+    Copyright (C) 1994-1996, Andrew Cagney <cagney@highland.com.au>.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+ 
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ 
+
+    ----------------------------------------------------------------------
+
+
+PSIM is a program written in extended ANSI-C that implements an
+instruction level simulation of the PowerPC environment.  It is freely
+available in source code form under the terms of the GNU General
+Public License (version 2 or later).
+
+The PowerPC Architecture is described as having three levels of
+compliance:
+
+	UEA - User Environment Architecture
+	VEA - Virtual Environment Architecture
+	OEA - Operating Environment Architecture
+
+PSIM both implements all three levels of the PowerPC and includes (for
+each level) a corresponding simulated run-time environment.
+
+In addition, PSIM, to the execution unit level, models the performance
+of most of the current PowerPC implementations (contributed by Michael
+Meissner).  This detailed performance monitoring (unlike many other
+simulators) resulting in only a relatively marginal reduction in the
+simulators performance.
+
+
+A description of how to build PSIM is contained in the file:
+
+		ftp://ftp.ci.com.au/pub/psim/INSTALL
+	or	ftp://cambridge.cygnus.com/pub/psim/INSTALL
+
+while an overview of how to use PSIM is in:
+
+	ftp://ftp.ci.com.au/pub/psim/RUN
+or	ftp://cambridge.cygnus.com/pub/psim/RUN
+
+This file is found in:
+
+	ftp://ftp.ci.com.au/pub/psim/README
+or	ftp://cambridge.cygnus.com/pub/psim/README
+
+
+Thanks goes firstly to:
+
+	Corinthian Engineering Pty Ltd
+	Cygnus Support
+	Highland Logic Pty Ltd
+
+who provided the resources needed for making this software available
+on the Internet.
+
+More importantly I'd like to thank the following individuals who each
+contributed in their own unique way:
+
+	Allen Briggs, Bett Koch, David Edelsohn, Gordon Irlam,
+	Michael Meissner, Bob Mercier, Richard Perini, Dale Rahn,
+	Richard Stallman, Mitchele Walker
+
+
+				Andrew Cagney
+				Feb, 1995
+
+
+    ----------------------------------------------------------------------
+
+
+    What features does PSIM include?
+
+	Monitoring and modeling
+
+		PSIM includes (thanks to Michael Meissner)
+		a detailed model of most of the PowerPC
+		implementations to the functional unit level.
+
+
+	SMP
+		
+		The PowerPC ISA defines SMP synchronizing instructions.
+		This simulator implements a limited, but functional,
+		subset of the PowerPC synchronization instructions
+		behaviour.  Programs that restrict their synchronization
+		primitives to those that work with this functional
+		sub-set (eg P() and V()) are able to run on the SMP
+		version of PSIM.
+
+		People intending to use this system should study
+		the code implementing the lwarx instruction.
+		
+	ENDIAN SUPPORT
+
+		PSIM implements the PowerPC's big and little (xor
+		endian) modes and correctly simulates code that
+		switches between these two modes.
+
+		In addition, psim can model a true little-endian
+		machine.
+
+	ISA (Instruction Set Architecture) models
+
+		PSIM includes a model of the UEA, VEA and OEA.  This
+		includes the time base registers (VEA) and HTAB
+		and BATS (OEA).
+
+		In addition, a preliminary model of the 64 bit
+		PowerPC architecture is implemented.
+
+	IO Hardware
+
+		PSIM's internals are based around the concept
+		of a Device Tree.  This tree intentionally
+		resembles that of the Device Tree found in
+		OpenBoot firmware.  PSIM is flexible enough
+		to allow the user to fully configure this device
+		tree (and consequently the hardware model) at
+		run time.
+
+	Run-time environments:
+
+		PSIM's UEA model includes emulation for BSD
+		based UNIX system calls.
+
+		PSIM's OEA model includes emulation of either:
+
+			o	OpenBoot client interface
+
+			o	MOTO's BUG interface.
+
+
+	Floating point
+
+		Preliminary support for floating point is included.
+
+
+    Who would be interested in PSIM?
+
+	o	the curious
+
+		Using psim, gdb, gcc and binutils the curious
+		user can construct an environment that allows
+		them to play with PowerPC Environment without
+		the need for real hardware.
+
+
+	o	the analyst
+
+		PSIM includes many (contributed) monitoring
+		features which (unlike many other simulators)
+		do not come with a great penalty in performance.
+
+		Thus the performance analyst is able to use
+		this simulator to analyse the performance of
+		the system under test.
+
+		If PSIM doesn't monitor a components of interest,
+		the source code is freely available, and hence
+		there is no hinderance to changing things
+		to meet a specific analysts needs.
+
+
+	o	the serious SW developer
+
+		PSIM models all three levels of the PowerPC
+		Architecture: UEA, VEA and OEA.  Further,
+		the internal design is such that PSIM can
+		be extended to support additional requirements.
+
+
+    What performance analysis measurements can PSIM perform?
+
+	Below is the output from a recent analysis run
+	(contributed by Michael Meissner):
+
+	For the following program:
+
+	long
+	simple_rand ()
+	{
+	  static unsigned long seed = 47114711;
+	  unsigned long this = seed * 1103515245 + 12345;
+	  seed = this;
+	/* cut-cut-cut - see the file RUN.psim */
+	}
+
+	Here is the current output generated with the -I switch on a P90
+	(the compiler used is the development version of GCC with a new
+	scheduler replacing the old one):
+	
+	CPU #1 executed     41,994 AND instructions.
+	CPU #1 executed    519,785 AND Immediate instructions.
+	.
+	.
+	.
+	CPU #1 executed          1 System Call instruction.
+	CPU #1 executed    207,746 XOR instructions.
+	
+	CPU #1 executed 23,740,856 cycles.
+	CPU #1 executed 10,242,780 stalls waiting for data.
+	CPU #1 executed          1 stall waiting for a function unit.
+	.
+	.
+	.
+	CPU #1 executed  3,136,229 branch functional unit instructions.
+	CPU #1 executed 16,949,396 instructions that were accounted for in timing info.
+	CPU #1 executed    871,920 data reads.
+	CPU #1 executed    971,926 data writes.
+	CPU #1 executed        221 icache misses.
+	CPU #1 executed 16,949,396 instructions in total.
+	
+	Simulator speed was 250,731 instructions/second
+
+
+    What motivated PSIM?
+
+	As an idea, psim was first discussed seriously during mid
+	1994.  At that time its main objectives were:
+
+
+		o	good performance
+
+			Many simulators loose out by only providing
+			a binary interface to the internals.  This
+			interface eventually becomes a bottle neck
+			in the simulators performance.
+
+			It was intended that PSIM would avoid this
+			problem by giving the user access to the
+			full source code.
+
+			Further, by exploiting the power of modern
+			compilers it was hoped that PSIM would achieve
+			good performance with out having to compromise
+			its internal design.
+
+
+		o	practical portability
+
+			Rather than try to be portable to every
+			C compiler on every platform, it was decided
+			that PSIM would restrict its self to supporting
+			ANSI compilers that included the extension
+			of a long long type.
+
+			GCC is one such compiler, consequently PSIM
+			should be portable to any machine running GCC.
+
+
+		o	flexibility in its design
+
+			PSIM should allow the user to select the
+			features required and customise the build
+			accordingly.  By having the source code,
+			the compiler is able to eliminate any un
+			used features of the simulator.
+
+			After all, let the compiler do the work.
+
+
+		o	SMP
+
+			A model that allowed the simulation of
+			SMP platforms with out the large overhead
+			often encountered with such models.
+
+
+	PSIM achieves each of these objectives.
+
+
+    Is PSIM PowerPC Platform (PPCP) (nee CHRP) Compliant?
+
+	No.
+
+	Among other things it does not have an Apple ROM socket.
+
+
+    Could PSIM be extended so that it models a CHRP machine?
+
+	Yes.
+
+	PSIM has been designed with the CHRP spec in mind. To model
+	a CHRP desktop the following would need to be added:
+
+		o	An apple ROM socket :-)
+
+		o	Model of each of the desktop IO devices
+
+		o	An OpenPIC device.
+
+		o	RTAS (Run Time Abstraction Services).
+
+		o	A fully populated device tree.
+
+
+    Is the source code available?
+
+	Yes.
+
+	The source code to PSIM is available under the terms of
+	the GNU Public Licence.  This allows you to distribute
+	the source code for free but with certain conditions.
+
+	See the file:
+
+		ftp://archie.au/gnu/COPYING
+
+	For details of the terms and conditions.
+
+
+    Where do I send bugs or report problems?
+
+	There is a mailing list (subscribe through majordomo@ci.com.au) at:
+
+	powerpc-psim@ci.com.au
+
+	If I get the ftp archive updated I post a note to that mailing list.
+	In addition your welcome to send bugs or problems either to me or to
+	that e-mail list.
+
+	This list currently averages zero articles a day.
+
+
+     Does PSIM have any limitations or problems?
+
+	PSIM can't run rs6000/AIX binaries - At present PSIM can only
+	simulate static executables.  Since an AIX executable is
+	never static, PSIM is unable to simulate its execution.
+
+	PSIM is still under development - consequently there are going
+	to be bugs.
+
+	See the file BUGS (included in the distribution) for any
+	other outstanding issues.
+

@@ -1,0 +1,205 @@
+# frv testcase for mwcuti $FRi,s6,$FRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mwcuti
+mwcuti:
+	set_fr_iimmed   0x0123,0x4567,fr8
+	set_fr_iimmed   0x89ab,0xcdef,fr9
+
+	mwcuti      	fr8,0,fr11
+	test_fr_iimmed  0x01234567,fr11
+
+	mwcuti      	fr8,1,fr11
+	test_fr_iimmed  0x02468acf,fr11
+
+	mwcuti      	fr8,2,fr11
+	test_fr_iimmed  0x048d159e,fr11
+
+	mwcuti      	fr8,3,fr11
+	test_fr_iimmed  0x091a2b3c,fr11
+
+	mwcuti      	fr8,4,fr11
+	test_fr_iimmed  0x12345678,fr11
+
+	mwcuti      	fr8,5,fr11
+	test_fr_iimmed  0x2468acf1,fr11
+
+	mwcuti      	fr8,6,fr11
+	test_fr_iimmed  0x48d159e2,fr11
+
+	mwcuti      	fr8,7,fr11
+	test_fr_iimmed  0x91a2b3c4,fr11
+
+	mwcuti      	fr8,8,fr11
+	test_fr_iimmed  0x23456789,fr11
+
+	mwcuti      	fr8,9,fr11
+	test_fr_iimmed  0x468acf13,fr11
+
+	mwcuti      	fr8,10,fr11
+	test_fr_iimmed  0x8d159e26,fr11
+
+	mwcuti      	fr8,11,fr11
+	test_fr_iimmed  0x1a2b3c4d,fr11
+
+	mwcuti      	fr8,12,fr11
+	test_fr_iimmed  0x3456789a,fr11
+
+	mwcuti      	fr8,13,fr11
+	test_fr_iimmed  0x68acf135,fr11
+
+	mwcuti      	fr8,14,fr11
+	test_fr_iimmed  0xd159e26a,fr11
+
+	mwcuti      	fr8,15,fr11
+	test_fr_iimmed  0xa2b3c4d5,fr11
+
+	mwcuti      	fr8,16,fr11
+	test_fr_iimmed  0x456789ab,fr11
+
+	mwcuti      	fr8,17,fr11
+	test_fr_iimmed  0x8acf1357,fr11
+
+	mwcuti      	fr8,18,fr11
+	test_fr_iimmed  0x159e26af,fr11
+
+	mwcuti      	fr8,19,fr11
+	test_fr_iimmed  0x2b3c4d5e,fr11
+
+	mwcuti      	fr8,20,fr11
+	test_fr_iimmed  0x56789abc,fr11
+
+	mwcuti      	fr8,21,fr11
+	test_fr_iimmed  0xacf13579,fr11
+
+	mwcuti      	fr8,22,fr11
+	test_fr_iimmed  0x59e26af3,fr11
+
+	mwcuti      	fr8,23,fr11
+	test_fr_iimmed  0xb3c4d5e6,fr11
+
+	mwcuti      	fr8,24,fr11
+	test_fr_iimmed  0x6789abcd,fr11
+
+	mwcuti      	fr8,25,fr11
+	test_fr_iimmed  0xcf13579b,fr11
+
+	mwcuti      	fr8,26,fr11
+	test_fr_iimmed  0x9e26af37,fr11
+
+	mwcuti      	fr8,27,fr11
+	test_fr_iimmed  0x3c4d5e6f,fr11
+
+	mwcuti      	fr8,28,fr11
+	test_fr_iimmed  0x789abcde,fr11
+
+	mwcuti      	fr8,29,fr11
+	test_fr_iimmed  0xf13579bd,fr11
+
+	mwcuti      	fr8,30,fr11
+	test_fr_iimmed  0xe26af37b,fr11
+
+	mwcuti      	fr8,31,fr11
+	test_fr_iimmed  0xc4d5e6f7,fr11
+
+	mwcuti      	fr8,32,fr11
+	test_fr_iimmed  0x89abcdef,fr11
+
+	mwcuti      	fr8,33,fr11
+	test_fr_iimmed  0x13579bde,fr11
+
+	mwcuti      	fr8,34,fr11
+	test_fr_iimmed  0x26af37bc,fr11
+
+	mwcuti      	fr8,35,fr11
+	test_fr_iimmed  0x4d5e6f78,fr11
+
+	mwcuti      	fr8,36,fr11
+	test_fr_iimmed  0x9abcdef0,fr11
+
+	mwcuti      	fr8,37,fr11
+	test_fr_iimmed  0x3579bde0,fr11
+
+	mwcuti      	fr8,38,fr11
+	test_fr_iimmed  0x6af37bc0,fr11
+
+	mwcuti      	fr8,39,fr11
+	test_fr_iimmed  0xd5e6f780,fr11
+
+	mwcuti      	fr8,40,fr11
+	test_fr_iimmed  0xabcdef00,fr11
+
+	mwcuti      	fr8,41,fr11
+	test_fr_iimmed  0x579bde00,fr11
+
+	mwcuti      	fr8,42,fr11
+	test_fr_iimmed  0xaf37bc00,fr11
+
+	mwcuti      	fr8,43,fr11
+	test_fr_iimmed  0x5e6f7800,fr11
+
+	mwcuti      	fr8,44,fr11
+	test_fr_iimmed  0xbcdef000,fr11
+
+	mwcuti      	fr8,45,fr11
+	test_fr_iimmed  0x79bde000,fr11
+
+	mwcuti      	fr8,46,fr11
+	test_fr_iimmed  0xf37bc000,fr11
+
+	mwcuti      	fr8,47,fr11
+	test_fr_iimmed  0xe6f78000,fr11
+
+	mwcuti      	fr8,48,fr11
+	test_fr_iimmed  0xcdef0000,fr11
+
+	mwcuti      	fr8,49,fr11
+	test_fr_iimmed  0x9bde0000,fr11
+
+	mwcuti      	fr8,50,fr11
+	test_fr_iimmed  0x37bc0000,fr11
+
+	mwcuti      	fr8,51,fr11
+	test_fr_iimmed  0x6f780000,fr11
+
+	mwcuti      	fr8,52,fr11
+	test_fr_iimmed  0xdef00000,fr11
+
+	mwcuti      	fr8,53,fr11
+	test_fr_iimmed  0xbde00000,fr11
+
+	mwcuti      	fr8,54,fr11
+	test_fr_iimmed  0x7bc00000,fr11
+
+	mwcuti      	fr8,55,fr11
+	test_fr_iimmed  0xf7800000,fr11
+
+	mwcuti      	fr8,56,fr11
+	test_fr_iimmed  0xef000000,fr11
+
+	mwcuti      	fr8,57,fr11
+	test_fr_iimmed  0xde000000,fr11
+
+	mwcuti      	fr8,58,fr11
+	test_fr_iimmed  0xbc000000,fr11
+
+	mwcuti      	fr8,59,fr11
+	test_fr_iimmed  0x78000000,fr11
+
+	mwcuti      	fr8,60,fr11
+	test_fr_iimmed  0xf0000000,fr11
+
+	mwcuti      	fr8,61,fr11
+	test_fr_iimmed  0xe0000000,fr11
+
+	mwcuti      	fr8,62,fr11
+	test_fr_iimmed  0xc0000000,fr11
+
+	mwcuti      	fr8,63,fr11
+	test_fr_iimmed  0x80000000,fr11
+
+	pass

@@ -151,7 +151,9 @@ function addRow_Group(upper){
 		document.form.dhcp_staticip_x_0.focus();
 		document.form.dhcp_staticip_x_0.select();
 		return false;
-	}else if(check_macaddr(document.form.dhcp_staticmac_x_0, check_hwaddr_flag(document.form.dhcp_staticmac_x_0)) == true  && valid_IP_form(document.form.dhcp_staticip_x_0,0) == true){
+	}else if(check_macaddr(document.form.dhcp_staticmac_x_0, check_hwaddr_flag(document.form.dhcp_staticmac_x_0)) == true &&
+		 valid_IP_form(document.form.dhcp_staticip_x_0,0) == true &&
+		 validate_dhcp_range(document.form.dhcp_staticip_x_0) == true){
 		
 		//Viz check same rule  //match(ip or mac) is not accepted
 		if(item_num >=2){	
@@ -257,9 +259,7 @@ function applyRule(){
 		    (document.form.lan_domain.value != lan_domain_curr)) {
 
 			document.form.action_script.value = "restart_net_and_phy";
-
-			if(wl6_support != -1)
-				document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
+		
 		} else {
 			document.form.action_script.value = "restart_dnsmasq";
 			document.form.action_wait.value = 5;
@@ -296,8 +296,8 @@ function validate_dhcp_range(ip_obj){
 	return 1;
 }
 
-function validForm(){
-	var re = new RegExp('^[a-zA-Z0-9][a-zA-Z0-9\-\_\.]*[a-zA-Z0-9\-\_]$','gi');
+function validForm(){	
+	var re = new RegExp('^[a-zA-Z0-9][a-zA-Z0-9\.\-]*[a-zA-Z0-9]$','gi');
   if(!re.test(document.form.lan_domain.value) && document.form.lan_domain.value != ""){
       alert("<#JS_validchar#>");                
       document.form.lan_domain.focus();

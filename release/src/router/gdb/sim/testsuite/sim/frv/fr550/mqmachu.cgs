@@ -1,0 +1,144 @@
+# frv testcase for mqmachu $GRi,$GRj,$GRk
+# mach: all
+
+	.include "../testutils.inc"
+
+	start
+
+	.global mqmachu
+mqmachu:
+	set_fr_iimmed  	3,2,fr8		; multiply small numbers
+	set_fr_iimmed  	2,3,fr10
+	set_fr_iimmed  	1,2,fr9		; multiply by 1
+	set_fr_iimmed  	2,1,fr11
+	mqmachu      	fr8,fr10,acc0
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt always set
+	test_accg_immed 	0,accg0
+	test_acc_immed 	6,acc0
+	test_accg_immed 	0,accg1
+	test_acc_immed 	6,acc1
+	test_accg_immed 	0,accg2
+	test_acc_immed 	2,acc2
+	test_accg_immed 	0,accg3
+	test_acc_immed 	2,acc3
+
+	set_fr_iimmed  	0,2,fr8		; multiply by 0
+	set_fr_iimmed  	2,0,fr10
+	set_fr_iimmed 	0x3fff,2,fr9	; 15 bit result
+	set_fr_iimmed  	2,0x3fff,fr11
+	mqmachu      	fr8,fr10,acc0
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt always set
+	test_accg_immed 	0,accg0
+	test_acc_immed 	6,acc0
+	test_accg_immed 	0,accg1
+	test_acc_immed 	6,acc1
+	test_accg_immed 	0,accg2
+	test_acc_limmed	0x0000,0x8000,acc2
+	test_accg_immed 	0,accg3
+	test_acc_limmed	0x0000,0x8000,acc3
+
+	set_fr_iimmed  	0x4000,2,fr8	; 16 bit result
+	set_fr_iimmed  	2,0x4000,fr10
+	set_fr_iimmed  	0x8000,2,fr9	; 17 bit result
+	set_fr_iimmed  	2,0x8000,fr11
+	mqmachu      	fr8,fr10,acc0
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt always set
+	test_accg_immed 	0,accg0
+	test_acc_limmed	0x0000,0x8006,acc0
+	test_accg_immed 	0,accg1
+	test_acc_limmed	0x0000,0x8006,acc1
+	test_accg_immed 	0,accg2
+	test_acc_immed 	0x00018000,acc2
+	test_accg_immed 	0,accg3
+	test_acc_immed 	0x00018000,acc3
+
+	set_fr_iimmed  	0x7fff,0x7fff,fr8	; max positive result
+	set_fr_iimmed  	0x7fff,0x7fff,fr10
+	set_fr_iimmed  	0x8000,0x8000,fr9	; max positive result
+	set_fr_iimmed  	0x8000,0x8000,fr11
+	mqmachu      	fr8,fr10,acc0
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt always set
+	test_accg_immed 	0,accg0
+	test_acc_immed 	0x3fff8007,acc0
+	test_accg_immed 	0,accg1
+	test_acc_immed 	0x3fff8007,acc1
+	test_accg_immed 	0,accg2
+	test_acc_limmed	0x4001,0x8000,acc2
+	test_accg_immed 	0,accg3
+	test_acc_limmed	0x4001,0x8000,acc3
+
+	set_fr_iimmed  	0xffff,0xffff,fr8	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr10
+	set_fr_iimmed  	0xffff,0xffff,fr9	; max positive result
+	set_fr_iimmed  	0xffff,0xffff,fr11
+	mqmachu      	fr8,fr10,acc0
+	test_spr_bits	0x3c,2,0,msr0		; msr0.sie is clear
+	test_spr_bits	2,1,0,msr0		; msr0.ovf not set
+	test_spr_bits	1,0,0,msr0		; msr0.aovf not set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt always set
+	test_accg_immed 	1,accg0
+	test_acc_limmed	0x3ffd,0x8008,acc0
+	test_accg_immed 	1,accg1
+	test_acc_limmed	0x3ffd,0x8008,acc1
+	test_accg_immed 	1,accg2
+	test_acc_limmed	0x3fff,0x8001,acc2
+	test_accg_immed 	1,accg3
+	test_acc_limmed	0x3fff,0x8001,acc3
+
+	set_accg_immed 	0xff,accg0		; saturation
+	set_acc_immed	0xffffffff,acc0
+	set_accg_immed 	0xff,accg1
+	set_acc_immed	0xffffffff,acc1
+	set_accg_immed 	0xff,accg2		; saturation
+	set_acc_immed	0xffffffff,acc2
+	set_accg_immed 	0xff,accg3
+	set_acc_immed	0xffffffff,acc3
+	set_fr_iimmed  	1,1,fr8
+	set_fr_iimmed  	1,1,fr10
+	set_fr_iimmed  	1,1,fr9
+	set_fr_iimmed  	1,1,fr11
+	mqmachu      	fr8,fr10,acc0
+	test_spr_bits	0x3c,2,0xf,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf is set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf is set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt is set
+	test_accg_immed 	0xff,accg0
+	test_acc_limmed	0xffff,0xffff,acc0
+	test_accg_immed 	0xff,accg1
+	test_acc_limmed	0xffff,0xffff,acc1
+	test_accg_immed 	0xff,accg2
+	test_acc_limmed	0xffff,0xffff,acc2
+	test_accg_immed 	0xff,accg3
+	test_acc_limmed	0xffff,0xffff,acc3
+
+	set_fr_iimmed  	0xffff,0x0000,fr8
+	set_fr_iimmed  	0xffff,0xffff,fr10
+	set_fr_iimmed  	0x0000,0xffff,fr9
+	set_fr_iimmed  	0xffff,0xffff,fr11
+	mqmachu      	fr8,fr10,acc0
+	test_spr_bits	0x3c,2,0x9,msr0		; msr0.sie is set
+	test_spr_bits	2,1,1,msr0		; msr0.ovf is set
+	test_spr_bits	1,0,1,msr0		; msr0.aovf is set
+	test_spr_bits	0x7000,12,1,msr0	; msr0.mtt is set
+	test_accg_immed 	0xff,accg0
+	test_acc_limmed	0xffff,0xffff,acc0
+	test_accg_immed 	0xff,accg1
+	test_acc_limmed	0xffff,0xffff,acc1
+	test_accg_immed 	0xff,accg2
+	test_acc_limmed	0xffff,0xffff,acc2
+	test_accg_immed 	0xff,accg3
+	test_acc_limmed	0xffff,0xffff,acc3
+
+	pass

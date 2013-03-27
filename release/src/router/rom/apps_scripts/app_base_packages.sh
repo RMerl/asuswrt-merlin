@@ -2,6 +2,9 @@
 # $1: device name.
 
 
+apps_ipkg_old=`nvram get apps_ipkg_old`
+is_arm_machine=`uname -m |grep arm`
+
 autorun_file=.asusrouter
 nonautorun_file=$autorun_file.disabled
 APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
@@ -12,8 +15,18 @@ wget_timeout=`nvram get apps_wget_timeout`
 wget_options="-q -t 2 -T $wget_timeout"
 apps_from_internet=`nvram get rc_support |grep appnet`
 apps_local_space=`nvram get apps_local_space`
+apps_local_test=`nvram get apps_local_test`
 
 link_internet=`nvram get link_internet`
+
+if [ -n "$is_arm_machine" ]; then
+	pkg_type="arm"
+else
+	pkg_type="mipsel"
+	if [ -z "$apps_from_internet" ]; then
+		third_lib="oleg"
+	fi
+fi
 
 if [ -z "$APPS_DEV" ]; then
 	echo "Wrong"
@@ -47,60 +60,123 @@ if [ ! -f "$APPS_INSTALL_PATH/$nonautorun_file" ]; then
 		exit 1
 	fi
 else
-	rm -f $APPS_INSTALL_PATH/$autorun_file
+	rm -rf $APPS_INSTALL_PATH/$autorun_file
 fi
 
-if [ ! -f "$APPS_INSTALL_PATH/bin/ipkg" ] || [ ! -f "$APPS_INSTALL_PATH/lib/libuClibc-0.9.28.so" ]; then
+had_uclibc=`ls $APPS_INSTALL_PATH/lib/libuClibc-*.so`
+if [ ! -f "$APPS_INSTALL_PATH/bin/ipkg" ] || [ -z "$had_uclibc" ]; then
 	echo "Installing the base apps!"
+
+	base_file=asus_base_apps_$pkg_type.tgz
+
+	target=$APPS_INSTALL_PATH/$base_file
 	CURRENT_PWD=`pwd`
-	cd $APPS_INSTALL_PATH
+	rm -rf $target
+
+	# TODO: just for test.
+	if [ -n "$apps_local_test" ] && [ "$apps_local_test" -eq "1" ]; then
+		local=`nvram get lan_ipaddr`
+		dl_path="http://$local"
+	elif [ -z "$is_arm_machine" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
+		dl_path=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless
+	else
+		dl_path=$ASUS_SERVER
+	fi
 
 	if [ -z "$apps_from_internet" ]; then
-		tar xzf $apps_local_space/asus_base_apps.tgz # uclibc-opt & ipkg-opt.
-		cp -f $apps_local_space/optware.asus $APPS_INSTALL_PATH/lib/ipkg/lists/
-		cp -f $apps_local_space/optware.oleg $APPS_INSTALL_PATH/lib/ipkg/lists/
+		cp -f $apps_local_space/$base_file $target
+		cd $APPS_INSTALL_PATH
+		tar xzf $base_file # uclibc-opt & ipkg-opt.
 		if [ "$?" != "0" ]; then
 			cd $CURRENT_PWD
 			nvram set apps_state_error=10
 			exit 1
 		fi
+		cp -f $apps_local_space/optware.asus $APPS_INSTALL_PATH/lib/ipkg/lists/
+		if [ -z "$is_arm_machine" ]; then
+			cp -f $apps_local_space/optware.$third_lib $APPS_INSTALL_PATH/lib/ipkg/lists/
+		fi
+		cd $CURRENT_PWD
+		rm -rf $target
 	else
+		if [ -n "$is_arm_machine" ]; then
+			base_size=503297
+		elif [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
+			base_size=1042891
+		else
+			base_size=936886
+		fi
+
 		if [ "$link_internet" != "1" ]; then
-			cd $CURRENT_PWD
 			echo "Couldn't connect Internet to install the base apps!"
 			nvram set apps_state_error=5
 			exit 1
 		fi
 
-		rm -f asus_base_apps.tgz
-		sync
-
-		# TODO: just for test.
-		dl_path=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless
-
-		echo "wget -c $wget_options $dl_path/asus_base_apps.tgz"
-		wget -c $wget_options $dl_path/asus_base_apps.tgz
+		nvram set apps_download_file=$target
+		echo "wget --spider $wget_options $dl_path/$base_file"
+		wget --spider $wget_options $dl_path/$base_file
 		if [ "$?" != "0" ]; then
-			rm -f asus_base_apps.tgz
-			sync
-
-			cd $CURRENT_PWD
-			echo "Failed to get asus_base_apps.tgz from Internet!"
+			echo "There is no $base_file from Internet!"
 			nvram set apps_state_error=6
-			exit 1
+			return 1
 		fi
 
-		tar xzf asus_base_apps.tgz # uclibc-opt & ipkg-opt.
+		echo "wget -c $wget_options $dl_path/$base_file -O $target"
+		wget -c $wget_options $dl_path/$base_file -O $target &
+		wget_pid=`pidof wget`
+		if [ -z "$wget_pid" ] || [ $wget_pid -lt 1 ]; then
+			echo "Failed to get $base_file from Internet!"
+			nvram set apps_state_error=6
+			return 1
+		fi
+		i=0
+		while [ $i -lt $wget_timeout ] && [ ! -f "$target" ]; do
+			i=$(($i+1))
+			sleep 1
+		done
+
+		wget_pid=`pidof wget`
+		target_size=`ls -l $target |awk '{printf $5}'`
+		percent=$(($target_size*100/$base_size))
+		nvram set apps_download_percent=$percent
+		while [ -n "$wget_pid" ] && [ -n "$target_size" ] && [ $target_size -lt $base_size ]; do
+			sleep 1
+
+			wget_pid=`pidof wget`
+			target_size=`ls -l $target |awk '{printf $5}'`
+			percent=$(($target_size*100/$base_size))
+			nvram set apps_download_percent=$percent
+		done
+
+		target_size=`ls -l $target |awk '{printf $5}'`
+		percent=$(($target_size*100/$base_size))
+		nvram set apps_download_percent=$percent
+		if [ -z "$percent" ] || [ $percent -ne 100 ]; then
+			echo "Couldn't complete to download $base_file from Internet!"
+			nvram set apps_state_error=6
+			return 1
+		fi
+
+		cd $APPS_INSTALL_PATH
+		tar xzf $base_file # uclibc-opt & ipkg-opt.
 		if [ "$?" != "0" ]; then
 			cd $CURRENT_PWD
 			nvram set apps_state_error=10
 			exit 1
 		fi
 
-		rm -f asus_base_apps.tgz
+		cd $CURRENT_PWD
+		rm -rf $target
 	fi
 
-	cd $CURRENT_PWD
+	if [ -n "$apps_local_test" ] && [ "$apps_local_test" -eq "1" ]; then
+		sed -i '3c src/gz optware.asus '"$dl_path" $APPS_INSTALL_PATH/etc/ipkg.conf
+	elif [ -z "$is_arm_machine" ] && [ -z "$apps_from_internet" ]; then
+		if [ -z "$apps_ipkg_old" ] || [ "$apps_ipkg_old" != "1" ]; then
+			sed -i '3c src/gz optware.asus '"$ASUS_SERVER" $APPS_INSTALL_PATH/etc/ipkg.conf
+		fi
+	fi
 fi
 
 APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
@@ -117,5 +193,8 @@ if [ "$?" != "0" ]; then
 	# apps_state_error was already set by app_base_link.sh.
 	exit 1
 fi
+
+nvram set apps_download_file=
+nvram set apps_download_percent=
 
 echo "Success to build the base environment!"

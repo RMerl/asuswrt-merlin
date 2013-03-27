@@ -1,0 +1,736 @@
+// -*- C -*-
+
+// Simulator definition for the MIPS DSP REV 2 ASE.
+// Copyright (C) 2007 Free Software Foundation, Inc.
+// Contributed by MIPS Technologies, Inc.
+// Written by Chao-ying Fu (fu@mips.com).
+//
+// This file is part of GDB, the GNU debugger.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+// op: 0 = ADD, 1 = SUB
+// sat: 0 = no saturation, 1 = saturation
+:function:::void:do_u_ph_op:int rd, int rs, int rt, int op, int sat
+{
+  int i;
+  unsigned32 h0;
+  unsigned16 h1, h2;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  unsigned32 result = 0;
+  for (i = 0; i < 32; i += 16, v1 >>= 16, v2 >>= 16)
+    {
+      h1 = (unsigned16)(v1 & 0xffff);
+      h2 = (unsigned16)(v2 & 0xffff);
+      if (op == 0) // ADD
+	h0 = (unsigned32)h1 + (unsigned32)h2;
+      else // SUB
+	h0 = (unsigned32)h1 - (unsigned32)h2;
+      if (op == 0 && (h0 > (unsigned32)0x0000ffff)) // ADD SAT
+	{
+	  DSPCR |= DSPCR_OUFLAG4;
+	  if (sat == 1)
+	    h0 = 0xffff;
+	}
+      else if (op == 1 && h1 < h2) // SUB SAT
+	{
+	  DSPCR |= DSPCR_OUFLAG4;
+	  if (sat == 1)
+	    h0 = 0x0;
+	}
+      result |= ((unsigned32)((unsigned16)h0) << i);
+    }
+  GPR[rd] = EXTEND32 (result);
+}
+
+// op: 0 = ADD, 1 = SUB
+// round: 0 = no rounding, 1 = rounding
+:function:::void:do_uh_qb_op:int rd, int rs, int rt, int op, int round
+{
+  int i;
+  unsigned32 h0;
+  unsigned8 h1, h2;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  unsigned32 result = 0;
+  for (i = 0; i < 32; i += 8, v1 >>= 8, v2 >>= 8)
+    {
+      h1 = (unsigned8)(v1 & 0xff);
+      h2 = (unsigned8)(v2 & 0xff);
+      if (op == 0) // ADD
+	h0 = (unsigned32)h1 + (unsigned32)h2;
+      else // SUB
+	h0 = (unsigned32)h1 - (unsigned32)h2;
+      if (round == 1)
+	h0 = (h0 + 1) >> 1;
+      else
+	h0 = h0 >> 1;
+      result |= ((unsigned32)((unsigned8)h0) << i);
+    }
+  GPR[rd] = EXTEND32 (result);
+}
+
+// op: 0 = EQ, 1 = LT, 2 = LE
+:function:::void:do_qb_cmpgdu:int rd, int rs, int rt, int op
+{
+  int i, j;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  unsigned8 h1, h2;
+  unsigned32 result = 0;
+  unsigned32 mask;
+  for (i = 0, j = 0; i < 32; i += 8, j++, v1 >>= 8, v2 >>= 8)
+    {
+      h1 = (unsigned8)(v1 & 0xff);
+      h2 = (unsigned8)(v2 & 0xff);
+      mask = ~(1 << (DSPCR_CCOND_SHIFT + j));
+      DSPCR &= mask;
+      if (op == 0) // EQ
+	{
+	  result |= ((h1 == h2) << j);
+	  DSPCR |= ((h1 == h2) << (DSPCR_CCOND_SHIFT + j));
+	}
+      else if (op == 1) // LT
+	{
+	  result |= ((h1 < h2) << j);
+	  DSPCR |= ((h1 < h2) << (DSPCR_CCOND_SHIFT + j));
+	}
+      else // LE
+	{
+	  result |= ((h1 <= h2) << j);
+	  DSPCR |= ((h1 <= h2) << (DSPCR_CCOND_SHIFT + j));
+	}
+    }
+  GPR[rd] = EXTEND32 (result);
+}
+
+// op: 0 = DPA 1 = DPS
+:function:::void:do_w_ph_dot_product:int ac, int rs, int rt, int op
+{
+  int i;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  signed16 h1, h2;
+  signed32 result;
+  unsigned32 lo = DSPLO(ac);
+  unsigned32 hi = DSPHI(ac);
+  signed64 prod = (signed64)((((unsigned64)hi) << 32) + (unsigned64)lo);
+  for (i = 0; i < 32; i += 16, v1 >>= 16, v2 >>= 16)
+    {
+      h1 = (signed16)(v1 & 0xffff);
+      h2 = (signed16)(v2 & 0xffff);
+      result = (signed32)h1 * (signed32)h2;
+      if (op == 0) // DPA
+        prod += (signed64)result;
+      else // DPS
+        prod -= (signed64)result;
+    }
+  DSPLO(ac) = EXTEND32 (prod);
+  DSPHI(ac) = EXTEND32 (prod >> 32);
+}
+
+// round: 0 = no rounding, 1 = rounding
+:function:::void:do_w_mulq:int rd, int rs, int rt, int round
+{
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  signed32 w1, w2;
+  signed64 prod;
+  unsigned32 result;
+  w1 = (signed32) v1;
+  w2 = (signed32 )v2;
+  if (w1 == (signed32) 0x80000000 && w2 == (signed32) 0x80000000)
+    {
+      DSPCR |= DSPCR_OUFLAG5;
+      prod = 0x7fffffff;
+    }
+  else
+    {
+      prod = ((signed64) w1 * (signed64) w2) << 1;
+      if (round == 1)
+	prod += 0x0000000080000000LL;
+      prod = prod >> 32;
+    }
+  result = (unsigned32) prod;
+  GPR[rd] = EXTEND32 (result);
+}
+
+// round: 0 = no rounding, 1 = rounding
+:function:::void:do_precr_sra:int rt, int rs, int sa, int round
+{
+  unsigned32 v1 = GPR[rt];
+  unsigned32 v2 = GPR[rs];
+  signed32 w1 = (signed32) v1;
+  signed32 w2 = (signed32) v2;
+  signed32 result;
+  if (sa != 0)
+    {
+      if (round == 1 && (w1 & (1 << (sa - 1))))
+	w1 = (w1 >> sa) + 1;
+      else
+	w1 = w1 >> sa;
+
+      if (round == 1 && (w2 & (1 << (sa - 1))))
+	w2 = (w2 >> sa) + 1;
+      else
+	w2 = w2 >> sa;
+    }
+  result = (w1 << 16) | (w2 & 0xffff);
+  GPR[rt] = EXTEND32 (result);
+}
+
+// round: 0 = no rounding, 1 = rounding
+:function:::void:do_qb_shra:int rd, int rt, int shift, int round
+{
+  int i, j;
+  signed8 q0;
+  unsigned32 v1 = GPR[rt];
+  unsigned32 result = 0;
+  for (i = 0; i < 32; i += 8, v1 >>= 8)
+    {
+      q0 = (signed8)(v1 & 0xff);
+      if (shift != 0)
+ 	{
+	  if (round == 1 && (q0 & (1 << (shift - 1))))
+	    q0 = (q0 >> shift) + 1;
+	  else
+	    q0 = q0 >> shift;
+ 	}
+      result |= ((unsigned32)((unsigned8)q0) << i);
+    }
+  GPR[rd] = EXTEND32 (result);
+}
+
+:function:::void:do_ph_shrl:int rd, int rt, int shift
+{
+  int i, j;
+  unsigned16 h0;
+  unsigned32 v1 = GPR[rt];
+  unsigned32 result = 0;
+  for (i = 0; i < 32; i += 16, v1 >>= 16)
+    {
+      h0 = (unsigned16)(v1 & 0xffff);
+      h0 = h0 >> shift;
+      result |= ((unsigned32)h0 << i);
+    }
+  GPR[rd] = EXTEND32 (result);
+}
+
+// op: 0 = ADD, 1 = SUB
+// round: 0 = no rounding, 1 = rounding
+:function:::void:do_qh_ph_op:int rd, int rs, int rt, int op, int round
+{
+  int i;
+  signed32 h0;
+  signed16 h1, h2;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  unsigned32 result = 0;
+  for (i = 0; i < 32; i += 16, v1 >>= 16, v2 >>= 16)
+    {
+      h1 = (signed16)(v1 & 0xffff);
+      h2 = (signed16)(v2 & 0xffff);
+      if (op == 0) // ADD
+	h0 = (signed32)h1 + (signed32)h2;
+      else // SUB
+	h0 = (signed32)h1 - (signed32)h2;
+      if (round == 1)
+	h0 = (h0 + 1) >> 1;
+      else
+	h0 = h0 >> 1;
+      result |= ((unsigned32)((unsigned16)h0) << i);
+    }
+  GPR[rd] = EXTEND32 (result);
+}
+
+// op: 0 = ADD, 1 = SUB
+// round: 0 = no rounding, 1 = rounding
+:function:::void:do_qh_w_op:int rd, int rs, int rt, int op, int round
+{
+  int i;
+  signed64 v0;
+  signed32 v1 = (signed32)GPR[rs];
+  signed32 v2 = (signed32)GPR[rt];
+  if (op == 0) // ADD
+    v0 = (signed64)v1 + (signed64)v2;
+  else // SUB
+    v0 = (signed64)v1 - (signed64)v2;
+  if (round == 1)
+    v0 = (v0 + 1) >> 1;
+  else
+    v0 = v0 >> 1;
+  GPR[rd] = EXTEND32 (v0);
+}
+
+// op: 0 = DPAX, 1 = DPSX
+:function:::void:do_x_w_ph_dot_product:int ac, int rs, int rt, int op
+{
+  int i;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  signed16 h1, h2;
+  signed32 result;
+  unsigned32 lo = DSPLO(ac);
+  unsigned32 hi = DSPHI(ac);
+  signed64 prod = (signed64)((((unsigned64)hi) << 32) + (unsigned64)lo);
+  for (i = 0; i < 32; i += 16, v1 >>= 16, v2 <<= 16)
+    {
+      h1 = (signed16)(v1 & 0xffff);
+      h2 = (signed16)((v2 & 0xffff0000) >> 16);
+      result = (signed32)h1 * (signed32)h2;
+      if (op == 0) // DPAX
+        prod += (signed64)result;
+      else // DPSX
+        prod -= (signed64)result;
+    }
+  DSPLO(ac) = EXTEND32 (prod);
+  DSPHI(ac) = EXTEND32 (prod >> 32);
+}
+
+// op: 0 = DPAQX, 1 = DPSQX
+// sat: 0 = no saturation, 1 = saturation of the accumulator
+:function:::void:do_qx_w_ph_dot_product:int ac, int rs, int rt, int op, int sat
+{
+  int i;
+  unsigned32 v1 = GPR[rs];
+  unsigned32 v2 = GPR[rt];
+  signed16 h1, h2;
+  signed32 result;
+  unsigned32 lo = DSPLO(ac);
+  unsigned32 hi = DSPHI(ac);
+  signed64 prod = (signed64)((((unsigned64)hi) << 32) + (unsigned64)lo);
+  signed64 max, min;
+  for (i = 0; i < 32; i += 16, v1 >>= 16, v2 <<= 16)
+    {
+      h1 = (signed16)(v1 & 0xffff);
+      h2 = (signed16)((v2 & 0xffff0000) >> 16);
+      if (h1 == (signed16)0x8000 && h2 == (signed16)0x8000)
+	{
+	  DSPCR |= (1 << (DSPCR_OUFLAG_SHIFT + ac));
+	  result = 0x7fffffff;
+	}
+      else
+	result = ((signed32)h1 * (signed32)h2) << 1;
+      if (op == 0) // DPAQX
+        prod += (signed64)result;
+      else // DPSQX
+        prod -= (signed64)result;
+    }
+  // Saturation on the accumulator.
+  if (sat == 1)
+    {
+      max = (signed64) 0x7fffffffLL;
+      min = (signed64) 0xffffffff80000000LL;
+      if (prod > max)
+	{
+	  DSPCR |= (1 << (DSPCR_OUFLAG_SHIFT + ac));
+	  prod = max;
+	}
+      else if (prod < min)
+	{
+	  DSPCR |= (1 << (DSPCR_OUFLAG_SHIFT + ac));
+	  prod = min;
+	}
+    }
+  DSPLO(ac) = EXTEND32 (prod);
+  DSPHI(ac) = EXTEND32 (prod >> 32);
+}
+
+011111,00000,5.RT,5.RD,00001,010010:SPECIAL3:32::ABSQ_S.QB
+"absq_s.qb r<RD>, r<RT>"
+*dsp2:
+{
+  int i;
+  signed8 q0;
+  unsigned32 v1 = GPR[RT];
+  unsigned32 result = 0;
+  for (i = 0; i < 32; i += 8, v1 >>= 8)
+    {
+      q0 = (signed8)(v1 & 0xff);
+      if (q0 == (signed8)0x80)
+        {
+          DSPCR |= DSPCR_OUFLAG4;
+          q0 = 0x7f;
+        }
+      else if (q0 & 0x80)
+        q0 = -q0;
+      result |= ((unsigned32)((unsigned8)q0) << i);
+    }
+  GPR[RD] = EXTEND32 (result);
+}
+
+011111,5.RS,5.RT,5.RD,01000,010000:SPECIAL3:32::ADDU.PH
+"addu.ph r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_u_ph_op (SD_, RD, RS, RT, 0, 0);
+}
+
+011111,5.RS,5.RT,5.RD,01100,010000:SPECIAL3:32::ADDU_S.PH
+"addu_s.ph r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_u_ph_op (SD_, RD, RS, RT, 0, 1);
+}
+
+011111,5.RS,5.RT,5.RD,00000,011000:SPECIAL3:32::ADDUH.QB
+"adduh.qb r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_uh_qb_op (SD_, RD, RS, RT, 0, 0);
+}
+
+011111,5.RS,5.RT,5.RD,00010,011000:SPECIAL3:32::ADDUH_R.QB
+"adduh_r.qb r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_uh_qb_op (SD_, RD, RS, RT, 0, 1);
+}
+
+011111,5.RS,5.RT,5.SA,00000,110001:SPECIAL3:32::APPEND
+"append r<RT>, r<RS>, <SA>"
+*dsp2:
+{
+  unsigned32 v0 = GPR[RS];
+  unsigned32 v1 = GPR[RT];
+  unsigned32 result;
+  unsigned32 mask = (1 << SA) - 1;
+  result = (v1 << SA) | (v0 & mask);
+  GPR[RT] = EXTEND32 (result);
+}
+
+011111,5.RS,5.RT,000,2.BP,10000,110001:SPECIAL3:32::BALIGN
+"balign r<RT>, r<RS>, <BP>"
+*dsp2:
+{
+  unsigned32 v0 = GPR[RS];
+  unsigned32 v1 = GPR[RT];
+  unsigned32 result;
+  if (BP == 0)
+    result = v1;
+  else
+    result = (v1 << 8 * BP) | (v0 >> 8 * (4 - BP));
+  GPR[RT] = EXTEND32 (result);
+}
+
+011111,5.RS,5.RT,5.RD,11000,010001:SPECIAL3:32::CMPGDU.EQ.QB
+"cmpgdu.eq.qb r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qb_cmpgdu (SD_, RD, RS, RT, 0);
+}
+
+011111,5.RS,5.RT,5.RD,11001,010001:SPECIAL3:32::CMPGDU.LT.QB
+"cmpgdu.lt.qb r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qb_cmpgdu (SD_, RD, RS, RT, 1);
+}
+
+011111,5.RS,5.RT,5.RD,11010,010001:SPECIAL3:32::CMPGDU.LE.QB
+"cmpgdu.le.qb r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qb_cmpgdu (SD_, RD, RS, RT, 2);
+}
+
+011111,5.RS,5.RT,000,2.AC,00000,110000:SPECIAL3:32::DPA.W.PH
+"dpa.w.ph ac<AC>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_w_ph_dot_product (SD_, AC, RS, RT, 0);
+}
+
+011111,5.RS,5.RT,000,2.AC,00001,110000:SPECIAL3:32::DPS.W.PH
+"dps.w.ph ac<AC>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_w_ph_dot_product (SD_, AC, RS, RT, 1);
+}
+
+011111,5.RS,5.RT,5.RD,01100,011000:SPECIAL3:32::MUL.PH
+"mul.ph r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_ph_op (SD_, RD, RS, RT, 2, 0);
+}
+
+011111,5.RS,5.RT,5.RD,01110,011000:SPECIAL3:32::MUL_S.PH
+"mul_s.ph r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_ph_op (SD_, RD, RS, RT, 2, 1);
+}
+
+011111,5.RS,5.RT,5.RD,10111,011000:SPECIAL3:32::MULQ_RS.W
+"mulq_rs.w r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_w_mulq (SD_, RD, RS, RT, 1);
+}
+
+011111,5.RS,5.RT,5.RD,11110,010000:SPECIAL3:32::MULQ_S.PH
+"mulq_s.ph r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_ph_mulq (SD_, RD, RS, RT, 0);
+}
+
+011111,5.RS,5.RT,5.RD,10110,011000:SPECIAL3:32::MULQ_S.W
+"mulq_s.w r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_w_mulq (SD_, RD, RS, RT, 0);
+}
+
+011111,5.RS,5.RT,000,2.AC,00010,110000:SPECIAL3:32::MULSA.W.PH
+"mulsa.w.ph ac<AC>, r<RS>, r<RT>"
+*dsp2:
+{
+  int i;
+  unsigned32 v1 = GPR[RS];
+  unsigned32 v2 = GPR[RT];
+  signed16 h1, h2;
+  signed32 result;
+  unsigned32 lo = DSPLO(AC);
+  unsigned32 hi = DSPHI(AC);
+  signed64 prod = (signed64)((((unsigned64)hi) << 32) + (unsigned64)lo);
+  for (i = 0; i < 32; i += 16, v1 >>= 16, v2 >>= 16)
+    {
+      h1 = (signed16)(v1 & 0xffff);
+      h2 = (signed16)(v2 & 0xffff);
+      result = (signed32)h1 * (signed32)h2;
+
+      if (i == 0)
+        prod -= (signed64) result;
+      else
+        prod += (signed64) result;
+    }
+  DSPLO(AC) = EXTEND32 (prod);
+  DSPHI(AC) = EXTEND32 (prod >> 32);
+}
+
+011111,5.RS,5.RT,5.RD,01101,010001:SPECIAL3:32::PRECR.QB.PH
+"precr.qb.ph r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  unsigned32 v1 = GPR[RS];
+  unsigned32 v2 = GPR[RT];
+  unsigned32 tempu = (v1 & 0xff0000) >> 16;
+  unsigned32 tempv = (v1 & 0xff);
+  unsigned32 tempw = (v2 & 0xff0000) >> 16;
+  unsigned32 tempx = (v2 & 0xff);
+  GPR[RD] = EXTEND32 ((tempu << 24) | (tempv << 16) | (tempw << 8) | tempx);
+}
+
+011111,5.RS,5.RT,5.SA,11110,010001:SPECIAL3:32::PRECR_SRA.PH.W
+"precr_sra.ph.w r<RT>, r<RS>, <SA>"
+*dsp2:
+{
+  do_precr_sra (SD_, RT, RS, SA, 0);
+}
+
+011111,5.RS,5.RT,5.SA,11111,010001:SPECIAL3:32::PRECR_SRA_R.PH.W
+"precr_sra_r.ph.w r<RT>, r<RS>, <SA>"
+*dsp2:
+{
+  do_precr_sra (SD_, RT, RS, SA, 1);
+}
+
+011111,5.RS,5.RT,5.SA,00001,110001:SPECIAL3:32::PREPEND
+"prepend r<RT>, r<RS>, <SA>"
+*dsp2:
+{
+  unsigned32 v0 = GPR[RS];
+  unsigned32 v1 = GPR[RT];
+  unsigned32 result;
+  if (SA == 0)
+    result = v1;
+  else
+    result = (v0 << (32 - SA)) | (v1 >> SA);
+  GPR[RT] = EXTEND32 (result);
+}
+
+011111,00,3.SHIFT3,5.RT,5.RD,00100,010011:SPECIAL3:32::SHRA.QB
+"shra.qb r<RD>, r<RT>, <SHIFT3>"
+*dsp2:
+{
+  do_qb_shra (SD_, RD, RT, SHIFT3, 0);
+}
+
+011111,00,3.SHIFT3,5.RT,5.RD,00101,010011:SPECIAL3:32::SHRA_R.QB
+"shra_r.qb r<RD>, r<RT>, <SHIFT3>"
+*dsp2:
+{
+  do_qb_shra (SD_, RD, RT, SHIFT3, 1);
+}
+
+011111,5.RS,5.RT,5.RD,00110,010011:SPECIAL3:32::SHRAV.QB
+"shrav.qb r<RD>, r<RT>, r<RS>"
+*dsp2:
+{
+  unsigned32 shift = GPR[RS] & 0x7;
+  do_qb_shra (SD_, RD, RT, shift, 0);
+}
+
+011111,5.RS,5.RT,5.RD,00111,010011:SPECIAL3:32::SHRAV_R.QB
+"shrav_r.qb r<RD>, r<RT>, r<RS>"
+*dsp2:
+{
+  unsigned32 shift = GPR[RS] & 0x7;
+  do_qb_shra (SD_, RD, RT, shift, 1);
+}
+
+011111,0,4.SHIFT4,5.RT,5.RD,11001,010011:SPECIAL3:32::SHRL.PH
+"shrl.ph r<RD>, r<RT>, <SHIFT4>"
+*dsp2:
+{
+  do_ph_shrl (SD_, RD, RT, SHIFT4);
+}
+
+011111,5.RS,5.RT,5.RD,11011,010011:SPECIAL3:32::SHRLV.PH
+"shrlv.ph r<RD>, r<RT>, r<RS>"
+*dsp2:
+{
+  unsigned32 shift = GPR[RS] & 0xf;
+  do_ph_shrl (SD_, RD, RT, shift);
+}
+
+011111,5.RS,5.RT,5.RD,01001,010000:SPECIAL3:32::SUBU.PH
+"subu.ph r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_u_ph_op (SD_, RD, RS, RT, 1, 0);
+}
+
+011111,5.RS,5.RT,5.RD,01101,010000:SPECIAL3:32::SUBU_S.PH
+"subu_s.ph r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_u_ph_op (SD_, RD, RS, RT, 1, 1);
+}
+
+011111,5.RS,5.RT,5.RD,00001,011000:SPECIAL3:32::SUBUH.QB
+"subuh.qb r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_uh_qb_op (SD_, RD, RS, RT, 1, 0);
+}
+
+011111,5.RS,5.RT,5.RD,00011,011000:SPECIAL3:32::SUBUH_R.QB
+"subuh_r.qb r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_uh_qb_op (SD_, RD, RS, RT, 1, 1);
+}
+
+011111,5.RS,5.RT,5.RD,01000,011000:SPECIAL3:32::ADDQH.PH
+"addqh.ph r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qh_ph_op (SD_, RD, RS, RT, 0, 0);
+}
+
+011111,5.RS,5.RT,5.RD,01010,011000:SPECIAL3:32::ADDQH_R.PH
+"addqh_r.ph r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qh_ph_op (SD_, RD, RS, RT, 0, 1);
+}
+
+011111,5.RS,5.RT,5.RD,10000,011000:SPECIAL3:32::ADDQH.W
+"addqh.w r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qh_w_op (SD_, RD, RS, RT, 0, 0);
+}
+
+011111,5.RS,5.RT,5.RD,10010,011000:SPECIAL3:32::ADDQH_R.W
+"addqh_r.w r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qh_w_op (SD_, RD, RS, RT, 0, 1);
+}
+
+011111,5.RS,5.RT,5.RD,01001,011000:SPECIAL3:32::SUBQH.PH
+"subqh.ph r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qh_ph_op (SD_, RD, RS, RT, 1, 0);
+}
+
+011111,5.RS,5.RT,5.RD,01011,011000:SPECIAL3:32::SUBQH_R.PH
+"subqh_r.ph r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qh_ph_op (SD_, RD, RS, RT, 1, 1);
+}
+
+011111,5.RS,5.RT,5.RD,10001,011000:SPECIAL3:32::SUBQH.W
+"subqh.w r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qh_w_op (SD_, RD, RS, RT, 1, 0);
+}
+
+011111,5.RS,5.RT,5.RD,10011,011000:SPECIAL3:32::SUBQH_R.W
+"subqh_r.w r<RD>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qh_w_op (SD_, RD, RS, RT, 1, 1);
+}
+
+011111,5.RS,5.RT,000,2.AC,01000,110000:SPECIAL3:32::DPAX.W.PH
+"dpax.w.ph ac<AC>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_x_w_ph_dot_product (SD_, AC, RS, RT, 0);
+}
+
+011111,5.RS,5.RT,000,2.AC,01001,110000:SPECIAL3:32::DPSX.W.PH
+"dpsx.w.ph ac<AC>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_x_w_ph_dot_product (SD_, AC, RS, RT, 1);
+}
+
+011111,5.RS,5.RT,000,2.AC,11000,110000:SPECIAL3:32::DPAQX_S.W.PH
+"dpaqx_s.w.ph ac<AC>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qx_w_ph_dot_product (SD_, AC, RS, RT, 0, 0);
+}
+
+011111,5.RS,5.RT,000,2.AC,11010,110000:SPECIAL3:32::DPAQX_SA.W.PH
+"dpaqx_sa.w.ph ac<AC>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qx_w_ph_dot_product (SD_, AC, RS, RT, 0, 1);
+}
+
+011111,5.RS,5.RT,000,2.AC,11001,110000:SPECIAL3:32::DPSQX_S.W.PH
+"dpsqx_s.w.ph ac<AC>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qx_w_ph_dot_product (SD_, AC, RS, RT, 1, 0);
+}
+
+011111,5.RS,5.RT,000,2.AC,11011,110000:SPECIAL3:32::DPSQX_SA.W.PH
+"dpsqx_sa.w.ph ac<AC>, r<RS>, r<RT>"
+*dsp2:
+{
+  do_qx_w_ph_dot_product (SD_, AC, RS, RT, 1, 1);
+}

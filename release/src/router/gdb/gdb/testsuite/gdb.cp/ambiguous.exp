@@ -1,0 +1,234 @@
+# Copyright 1998, 1999, 2003, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the gdb testsuite
+
+# tests relating to ambiguous class members
+# Written by Satish Pai <pai@apollo.hp.com> 1997-07-28
+
+# This file is part of the gdb testsuite
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+#
+# test running programs
+#
+
+set prms_id 0
+set bug_id 0
+
+if { [skip_cplus_tests] } { continue }
+
+set testfile "ambiguous"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if [get_compiler_info ${binfile} "c++"] {
+    return -1;
+}
+
+if { [test_compiler_info gcc-*] } then { continue }
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     untested ambiguous.exp
+     return -1
+}
+
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+
+#
+# set it up at a breakpoint so we can play with the variable values
+#
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+send_gdb "break marker1\n" ; gdb_expect -re ".*$gdb_prompt $"
+    send_gdb "cont\n"
+    gdb_expect {
+        -re "Break.* marker1 \\(\\) at .*:$decimal.*$gdb_prompt $" {
+            send_gdb "up\n"
+            gdb_expect {
+                -re ".*$gdb_prompt $" { pass "up from marker1" }
+                timeout { fail "up from marker1" }
+            }
+        }
+        -re "$gdb_prompt $" { fail "continue to marker1"  }
+        timeout { fail "(timeout) continue to marker1"  }
+    }
+
+# print out various class objects' members.  The values aren't
+# important, just check that the warning is emitted at the
+# right times. 
+
+# X is derived from A1 and A2; both A1 and A2 have a member 'x'
+send_gdb "print x.x\n"
+gdb_expect {
+   -re "warning: x ambiguous; using X::A2::x. Use a cast to disambiguate.\r\n\\$\[0-9\]* = \[-\]*\[0-9\]*\r\n$gdb_prompt $" {
+       pass "print x.x"
+   }
+   -re "warning: x ambiguous; using X::A1::x. Use a cast to disambiguate.\r\n\\$\[0-9\]* = \[-\]*\[0-9\]*\r\n$gdb_prompt $" {
+       pass "print x.x"
+   }
+   -re ".*$gdb_prompt $" { fail "print x.x" }
+   timeout { fail "(timeout) print x.x" }
+}
+
+
+# N is derived from A1 and A2, but not immediately -- two steps
+# up in the hierarchy. Both A1 and A2 have a member 'x'.
+send_gdb "print n.x\n"
+gdb_expect {
+   -re "warning: x ambiguous; using N::M::A2::x. Use a cast to disambiguate.\r\n\\$\[0-9\]* = \[-\]*\[0-9\]*\r\n$gdb_prompt $" {
+       pass "print n.x"
+   }
+   -re "warning: x ambiguous; using N::L::A1::x. Use a cast to disambiguate.\r\n\\$\[0-9\]* = \[-\]*\[0-9\]*\r\n$gdb_prompt $" {
+       pass "print n.x"
+   }
+   -re ".*$gdb_prompt $" { fail "print n.x" }
+   timeout { fail "(timeout) print n.x" }
+}
+
+# J is derived from A1 twice.  A1 has a member x. 
+send_gdb "print j.x\n"
+gdb_expect {
+   -re "warning: x ambiguous; using J::L::A1::x. Use a cast to disambiguate.\r\n\\$\[0-9\]* = \[-\]*\[0-9\]*\r\n$gdb_prompt $" {
+       pass "print j.x"
+   }
+   -re "warning: x ambiguous; using J::K::A1::x. Use a cast to disambiguate.\r\n\\$\[0-9\]* = \[-\]*\[0-9\]*\r\n$gdb_prompt $" {
+       pass "print j.x"
+   }
+   -re ".*$gdb_prompt $" { fail "print j.x" }
+   timeout { fail "(timeout) print j.x" }
+}
+
+# JV is derived from A1 but A1 is a virtual base. Should not
+# report an ambiguity in this case. 
+send_gdb "print jv.x\n"
+gdb_expect {
+   -re "warning: x ambiguous.*Use a cast to disambiguate.\r\n\\$\[0-9\]* = \[-\]*\[0-9\]*\r\n$gdb_prompt $" {
+       fail "print jv.x (ambiguity reported)"
+   }
+   -re "\\$\[0-9\]* = \[-\]*\[0-9\]*\r\n$gdb_prompt $" { pass "print jv.x" }
+   -re ".*$gdb_prompt $" { fail "print jv.x (??)" }
+   timeout { fail "(timeout) print jv.x" }
+}
+
+# JVA1 is derived from A1; A1 occurs as a virtual base in two
+# ancestors, and as a non-virtual immediate base. Ambiguity must
+# be reported. 
+send_gdb "print jva1.x\n"
+gdb_expect {
+   -re "warning: x ambiguous; using JVA1::A1::x. Use a cast to disambiguate.\r\n\\$\[0-9\]* = \[-\]*\[0-9\]*\r\n$gdb_prompt $" {
+       pass "print jva1.x"
+   }
+   -re "warning: x ambiguous; using JVA1::KV::A1::x. Use a cast to disambiguate.\r\n\\$\[0-9\]* = \[-\]*\[0-9\]*\r\n$gdb_prompt $" {
+       pass "print jva1.x"
+   }
+   -re ".*$gdb_prompt $" { fail "print jva1.x" }
+   timeout { fail "(timeout) print jva1.x" }
+}
+
+# JVA2 is derived from A1 & A2; A1 occurs as a virtual base in two
+# ancestors, and A2 is a non-virtual immediate base. Ambiguity must
+# be reported as A1 and A2 both have a member 'x'.
+send_gdb "print jva2.x\n"
+gdb_expect {
+   -re "warning: x ambiguous; using JVA2::A2::x. Use a cast to disambiguate.\r\n\\$\[0-9\]* = \[-\]*\[0-9\]*\r\n$gdb_prompt $" {
+       pass "print jva2.x"
+   }
+   -re "warning: x ambiguous; using JVA2::KV::A1::x. Use a cast to disambiguate.\r\n\\$\[0-9\]* = \[-\]*\[0-9\]*\r\n$gdb_prompt $" {
+       pass "print jva2.x"
+   }
+   -re ".*$gdb_prompt $" { fail "print jva2.x" }
+   timeout { fail "(timeout) print jva2.x" }
+}
+
+# JVA1V is derived from A1; A1 occurs as a virtual base in two
+# ancestors, and also as a virtual immediate base. Ambiguity must
+# not be reported.
+send_gdb "print jva1v.x\n"
+gdb_expect {
+   -re "warning: x ambiguous.*Use a cast to disambiguate.\r\n\\$\[0-9\]* = \[-\]*\[0-9\]*\r\n$gdb_prompt $" {
+       fail "print jva1v.x (ambiguity reported)"
+   }
+   -re "\\$\[0-9\]* = \[-\]*\[0-9\]*\r\n$gdb_prompt $" { pass "print jva1v.x" }
+   -re ".*$gdb_prompt $" { fail "print jva1v.x (??)" }
+   timeout { fail "(timeout) print jva1v.x" }
+}
+
+# Now check for ambiguous bases.
+
+# J is derived from A1 twice; report ambiguity if a J is
+# cast to an A1.
+send_gdb "print (A1)j\n"
+gdb_expect {
+   -re "warning: A1 ambiguous; using J::L::A1. Use a cast to disambiguate.\r\n\\$\[0-9\]* = \{x = \[-\]*\[0-9\]*, y = \[-\]*\[0-9\]*\}\r\n$gdb_prompt $" {
+       pass "print (A1)j"
+   }
+   -re "warning: A1 ambiguous; using J::K::A1. Use a cast to disambiguate.\r\n\\$\[0-9\]* = \{x = \[-\]*\[0-9\]*, y = \[-\]*\[0-9\]*\}\r\n$gdb_prompt $" {
+       pass "print (A1)j"
+   }
+   -re ".*$gdb_prompt $" { fail "print (A1)j" }
+   timeout { fail "(timeout) print (A1)j" }
+}
+
+# JV is derived from A1 twice, but A1 is a virtual base; should
+# not report ambiguity when a JV is cast to an A1.
+send_gdb "print (A1)jv\n"
+gdb_expect {
+   -re "warning: A1 ambiguous.*Use a cast to disambiguate.\r\n\\$\[0-9\]* = \{x = \[-\]*\[0-9\]*, y = \[-\]*\[0-9\]*\}\r\n$gdb_prompt $" {
+       fail "print (A1)jv (ambiguity reported)"
+   }
+   -re "\\$\[0-9\]* = \{x = \[-\]*\[0-9\]*, y = \[-\]*\[0-9\]*\}\r\n$gdb_prompt $" { pass "print (A1)jv" }
+   -re ".*$gdb_prompt $" { fail "print (A1)jv (??)" }
+   timeout { fail "(timeout) print (A1)jv" }
+}
+
+# JVA1 is derived from A1; A1 is a virtual base and also a
+# non-virtual base.  Must report ambiguity if a JVA1 is cast to an A1.
+send_gdb "print (A1)jva1\n"
+gdb_expect {
+   -re "warning: A1 ambiguous; using JVA1::A1. Use a cast to disambiguate.\r\n\\$\[0-9\]* = \{x = \[-\]*\[0-9\]*, y = \[-\]*\[0-9\]*\}\r\n$gdb_prompt $" {
+       pass "print (A1)jva1"
+   }
+   -re "warning: A1 ambiguous; using JVA1::KV::A1. Use a cast to disambiguate.\r\n\\$\[0-9\]* = \{x = \[-\]*\[0-9\]*, y = \[-\]*\[0-9\]*\}\r\n$gdb_prompt $" {
+       pass "print (A1)jva1"
+   }
+   -re ".*$gdb_prompt $" { fail "print (A1)jva1" }
+   timeout { fail "(timeout) print (A1)jva1" }
+}
+
+# JVA1V is derived from A1; A1 is a virtual base indirectly
+# and also directly; must not report ambiguity when a JVA1V is cast to an A1.
+send_gdb "print (A1)jva1v\n"
+gdb_expect {
+   -re "warning: A1 ambiguous.*Use a cast to disambiguate.\r\n\\$\[0-9\]* = \{x = \[-\]*\[0-9\]*, y = \[-\]*\[0-9\]*\}\r\n$gdb_prompt $" {
+       fail "print (A1)jva1v (ambiguity reported)"
+   }
+   -re "\\$\[0-9\]* = \{x = \[-\]*\[0-9\]*, y = \[-\]*\[0-9\]*\}\r\n$gdb_prompt $" { pass "print (A1)jva1v"
+   }
+   -re ".*$gdb_prompt $" { fail "print (A1)jva1v (??)" }
+   timeout { fail "(timeout) print (A1)jva1v" }
+}
+

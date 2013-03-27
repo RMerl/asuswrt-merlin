@@ -1,0 +1,46 @@
+# sh testcase for add #$imm8, $rn -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+init:
+	# Initialise some registers with values which help us to verify
+	# that the correct source registers are used by the ADD instruction.
+	mov #0, r0
+	mov #1, r1
+	mov #2, r2
+	mov #3, r3
+	mov #5, r5
+	mov #15, r15
+
+addi:
+	# 0 + 0 = 0.
+	add #0, r0
+	assert r0, #0
+
+	# 0 + 1 = 1.
+	add #0, r1
+	assert r1, #1
+
+	# 2 + 2 = 4.
+	add #2, r2
+	assert r2, #4
+
+	# 120 + 5 = 125.
+	add #120, r5
+	assert r5, #125
+
+large:
+	mov #1, r0
+	neg r0, r0
+	add #2, r0
+	assert r0, #1
+
+okay:	
+	pass
+
+wrong:
+	fail

@@ -1,0 +1,6 @@
+# Host: FreeBSD/alpha
+NATDEPFILES= fork-child.o inf-ptrace.o \
+	fbsd-nat.o alphabsd-nat.o bsd-kvm.o \
+	gcore.o corelow.o core-regset.o
+
+LOADLIBES= -lkvm

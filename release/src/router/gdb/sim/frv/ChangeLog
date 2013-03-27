@@ -1,0 +1,2609 @@
+2006-12-21  Hans-Peter Nilsson  <hp@axis.com>
+
+	* config.in: Regenerate.
+
+2006-06-13  Richard Earnshaw  <rearnsha@arm.com>
+
+	* configure: Regenerated.
+
+2006-06-05  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure: Regenerated.
+
+2006-05-31  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure: Regenerated.
+
+2005-10-28  Dave Brolley  <brolley@redhat.com>
+
+	* cpu.c,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+	
+	Contribute the following changes:
+	2003-09-29  Dave Brolley  <brolley@redhat.com>
+
+	* frv-sim.h: Use CGEN_ATTR_VALUE_ENUM_TYPE in place of
+	CGEN_ATTR_VALUE_TYPE.
+	* mloop.in: Ditto.
+	* pipeline.c: Ditto.
+	* traps.c: Ditto.
+
+2005-03-23  Mark Kettenis  <kettenis@gnu.org>
+
+	* configure: Regenerate.
+
+2005-01-14  Andrew Cagney  <cagney@gnu.org>
+
+	* configure.ac: Sinclude aclocal.m4 before common.m4.  Add
+	explicit call to AC_CONFIG_HEADER.
+	* configure: Regenerate.
+
+2005-01-12  Andrew Cagney  <cagney@gnu.org>
+
+	* configure.ac: Update to use ../common/common.m4.
+	* configure: Re-generate.
+
+2005-01-11  Andrew Cagney  <cagney@localhost.localdomain>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+2005-01-07  Andrew Cagney  <cagney@gnu.org>
+
+	* configure.ac: Rename configure.in, require autoconf 2.59.
+	* configure: Re-generate.
+
+2004-12-08  Hans-Peter Nilsson  <hp@axis.com>
+
+	* configure: Regenerate for ../common/aclocal.m4 update.
+
+2004-08-27  Richard Sandiford  <rsandifo@redhat.com>
+
+	* cpu.[ch], arch.[ch], decode.[ch]: Regenerated.
+	* cpuall.h, model.c, sem.c: Regenerated.
+
+2004-03-01  Richard Sandiford  <rsandifo@redhat.com>
+
+	* Makefile.in (SIM_OBJS): Add profile-fr450.o.
+	(profile-fr450.o): New dependency.
+	(stamp-cpu): Add fr450 to the list of machs.
+	* sim-frv.h (SPR_IS_ACC): New macro.
+	(H_SPR_ACC4, H_SPR_ACC63, H_SPR_ACCG4, H_SPR_ACCG63): Delete.
+	* cache.c (frv_cache_init, non_cache_access): Handle bfd_mach_fr450.
+	* frv.c (check_register_alignment, check_fr_register_alignment)
+	(check_memory_alignment, do_media_average): Likewise.
+	(frvbf_clear_accumulators): Likewise.  Use a mask of valid registers
+	rather than a consecutive range.
+	* interrupts.c (frv_queue_illegal_instruction_interrupt)
+	(frv_queue_non_implemented_instruction_interrupt): Handle
+	bfd_mach_fr450.
+	* memory.c (check_data_read_address, check_readwrite_address)
+	(check_insn_read_address, check_write_address): Likewise.
+	* mloop.in (@cpu@_simulate_insn_prefetch): Likewise.
+	* profile.c (reset_gr_flags, reset_fr_flags, reset_acc_flags)
+	(frvbf_model_insn_before, frvbf_model_insn_after): Likewise.
+	* profile-fr450.c: New file.
+	* registers.c (fr450_spr): New array.
+	(frv_register_control_init): Check its size.  Use it for fr450.
+	(frv_check_register_access): Handle bfd_mach_fr450.
+	(frv_check_spr_read_access): Likewise. Generalize accumulator check.
+	* traps.c (frv_core_signal, frvbf_media_cr_not_aligned): Likewise.
+	(frvbf_media_acc_not_aligned): Likewise.
+	(frvbf_media_register_not_aligned): Likewise.
+	* arch.c: Regenerate.
+	* arch.h: Regenerate.
+	* cpu.h: Regenerate.
+	* cpuall.h: Regenerate.
+	* decode.h: Regenerate.
+	* model.c: Regenerate.
+
+2004-03-01  Richard Sandiford  <rsandifo@redhat.com>
+
+	* cache.c (frv_cache_init): Change fr400 cache statistics to match
+	the fr405.
+	(non_cache_access): Add missing breaks.
+	* interrupts.c (set_exception_status_registers): Always set EAR15
+	for data_access_errors.
+	* memory.c (fr400_check_write_address): Remove redundant alignment
+	check.
+	* model.c: Regenerate.
+
+2004-03-01  Richard Sandiford  <rsandifo@redhat.com>
+
+	* frv.c (frvbf_iacc_cut): Rework, taking rounding into account.
+
+2004-03-01  Richard Sandiford  <rsandifo@redhat.com>
+
+	* decode.c, decode.h, model.c, sem.c: Regenerate.
+
+2003-11-24  Kevin Buettner  <kevinb@redhat.com>
+
+	* frv-sim.h (GR_REGNUM_MAX, FR_REGNUM_MAX, PC_REGNUM, SPR_REGNUM_MIN)
+	(SPR_REGNUM_MAX): Delete.
+	* frv.c (gdb/sim-frv.h): Include.
+	(frvbf_fetch_register, frvbf_store_register): Use register number
+	constants from gdb/sim-frv.h.  Check availability of general
+	purpose and float registers.
+
+2003-11-03  Dave Brolley  <brolley@redhat.com>
+
+	* cache.c (address_interference): Check for higher priority requests
+	in the same pipeline.
+
+2003-10-31  Dave Brolley  <brolley@redhat.com>
+
+	* frv-sim.h (LR_REGNUM): Removed.
+	(SPR_REGNUM_MIN,SPR_REGNUM_MAX): New macros.
+	* frv.c (frvbf_fetch_register): Fetch SPR registers based on
+	SPR_REGNUM_MIN and SPR_REGNUM_MAX. Check whether SPRs are implemented.
+	Return 0 for an unimplemented register. Return the length of the data
+	for an implemented register.
+	(frvbf_store_register): Ditto.
+
+2003-10-30  Andrew Cagney  <cagney@redhat.com>
+
+	* traps.c: Replace "struct symbol_cache_entry" with "struct
+	bfd_symbol".
+
+2003-10-10  Dave Brolley  <brolley@redhat.com>
+
+	* cpu.h, sem.c: Regenerate.
+
+2003-10-06  Dave Brolley  <brolley@redhat.com>
+
+	* profile-fr550.[ch]: New files.
+	* configure.in: Move frv handling to alphabetically correct placement.
+	* Makefile.in: Add fr550 support.
+	* frv-sim.h,frv.c,interrups.c,memory.c,mloop.in,pipeline.c,
+	profile.[ch],registers.c,traps.c: Add fr550 support.
+	* arch.c,arch.h,cpu.c,cpu.h,cpuall.h,model.h,decode.c,decode.h,sem.c:
+	Regenerate.
+
+2003-09-25  Dave Brolley  <brolley@redhat.com>
+
+	* reset.c (frv_initialize): Call frv_register_control_init first.
+
+2003-09-24  Dave Brolley  <brolley@redhat.com>
+
+	* profile.h (update_FR_ptime): New prototype.
+	(update_FRdouble_ptime): Ditto.
+	(update_SPR_ptime): Ditto.
+	(increase_ACC_busy): Ditto.
+	(enforce_full_acc_latency): Ditto.
+	(post_wait_for_SPR): Ditto.
+	* profile.c (update_FR_ptime): Moved here from profile-fr500.c.
+	(update_FRdouble_ptime): Ditto.
+	(update_SPR_ptime): New function.
+	(increase_ACC_busy): Ditto.
+	(enforce_full_acc_latency): Ditto.
+	(vliw_wait_for_fdiv_resource): Correct resource name.
+	(vliw_wait_for_fsqrt_resource): Ditto.
+	(post_wait_for_SPR): New function.
+	* profile-fr500.c (frvbf_model_fr500_u_commit): New function.
+	(frvbf_model_fr500_u_gr2fr): Pass out_FRk as output register to
+	adjust_float_register_busy.
+	(frvbf_model_fr500_u_gr_load): Record latency of SPR registers.
+	(frvbf_model_fr500_u_fr_load): Wait for and record latency of SPR
+	registers.
+	(frvbf_model_fr500_u_float_arith): Ditto.
+	(frvbf_model_fr500_u_float_dual_arith): Ditto.
+	(frvbf_model_fr500_u_float_div): Ditto.
+	(frvbf_model_fr500_u_float_sqrt): Ditto.
+	(frvbf_model_fr500_u_float_convert): Ditto.
+	(update_FR_ptime): Moved to profile.c
+	(update_FRdouble_ptime): Moved to profile.c
+	* profile-fr400.c (update_FR_ptime): Removed. Identical to functions
+	for other machines.
+	(update_FRdouble_ptime): Ditto.
+	* arch.h,cpu.h,sem.c,decode.[ch],model.c,sem.c: Regenerated.
+
+2003-09-12  Dave Brolley  <brolley@redhat.com>
+
+	* registers.c (frv_check_spr_read_access): Check for access to
+	ACC4-ACC63 and ACCG4-ACCG63.
+	* profile.h (frv-desc.h): #include it.
+	(spr_busy): New member of FRV_PROFILE_STATE.
+	(spr_latency): Ditto.
+	(GNER_FOR_GR): New macro.
+	(FNER_FOR_FR): New maccro.
+	(update_SPR_latency): New function.
+	(vliw_wait_for_SPR): New function.
+	* profile.c (update_latencies): Update SPR latencies.
+	(update_target_latencies): Ditto.
+	(update_SPR_latency): New function.
+	(vliw_wait_for_SPR): New function.
+	* profile-fr500.c (frvbf_model_fr500_u_idiv): Record GNER latency.
+	(frvbf_model_fr500_u_trap): Removed unused variable, ps.
+	(frvbf_model_fr500_u_check): Ditto.
+	(frvbf_model_fr500_u_clrgr): New unit modeller for fr500.
+	(frvbf_model_fr500_u_clrfr): Ditto.
+	(frvbf_model_fr500_u_spr2gr): Wait for SPR.
+	(frvbf_model_fr500_u_gr2spr): Ditto.
+	* frv-sim.h (H_SPR_ACC4): New macro.
+	(H_SPR_ACCG4): New macro;
+	(H_SPR_ACC0): Removed.
+	(H_SPR_ACCG0): Removed.
+	* arch.h,model.c,sem[ch],decode.[ch]: Regenerated.
+
+2003-09-10  Dave Brolley  <brolley@redhat.com>
+
+	* profile.c (slot_names): FM1 was listed twice. Changed first
+	instance to FM0. Added IALL, FMALL and FMLOW.
+	(print_parallel): Don't examine slots with no insns.
+
+2003-09-09  Dave Brolley  <brolley@redhat.com>
+
+	* frv.c (do_media_average): Select machine using a switch.
+
+2003-09-08  Dave Brolley  <brolley@redhat.com>
+
+	On behalf of Doug Evans <dje@sebabeach.org>
+	* Makefile.in (stamp-arch,stamp-cpu): Pass archfile to cgen.
+	Remove copying of .cpu file to cgen/cpu, no longer needed.
+
+2003-09-03  Dave Brolley  <brolley@redhat.com>
+
+	* cpu.h, model.c, sem.c, decode.h, decode.c: Regenerated.
+
+2003-08-29  Dave Brolley  <brolley@redhat.com>
+
+	* Makefile.in (stamp-arch): Copy frv.cpu from $(srcdir)../../cpu
+	temporarily when regenerating files.
+	(stamp-cpu): Ditto.
+
+2003-08-20  Micheal Snyder  <msnyder@redhat.com>
+
+	* All generated files: Regenerate.
+
+2001-10-11  Dave Brolley  <brolley@redhat.com>
+
+	* cpu.h,decode.c,decode.h,sem.c: Regenerate.
+
+2001-10-09  Dave Brolley  <brolley@redhat.com>
+
+	* traps.c (frv_rett): Halt if PSR.S and PSR.ET are both set or both
+	not set.
+	* reset.c (frv_hardware_reset): Invalidate both caches.
+	* registers.c: Update init, reset and read-only masks for all registers
+	on all machines.
+	* profile.h (cur_gr_complex): New field of FRV_PROFILE_STATE
+	(prev_gr_complex): New field of FRV_PROFILE_STATE
+	(set_use_is_gr_complex): New function.
+	(set_use_not_gr_complex): New function.
+	(use_is_gr_complex): New function.
+	(decrease_GR_busy): New function.
+	* profile.c (reset_gr_flags): New function.
+	(reset_cc_flags): New function.
+	(set_use_is_gr_complex): New function.
+	(set_use_not_gr_complex): New function.
+	(use_is_gr_complex): New function.
+	(update_latencies): Reset gr and cc flags when latency reaches 0.
+	(decrease_GR_busy): New function.
+	* profile-fr400.h (fr500_reset_acc_flags): Removed.
+	(fr500_reset_cc_flags): New function.
+	* profile-fr500.c (frvbf_model_fr400_u_*): Reflect latencies from fr500
+	LSI version 1.41.
+	* profile-fr400.h (fr400_reset_gr_flags): New function.
+	(fr400_reset_fr_flags): New function.
+	(fr400_reset_acc_flags): New function.
+	* profile-fr400.c (set_use_not_media_p4): New function.
+	(set_use_not_media_p6): New function.
+	(set_acc_use_not_media_p2): New function.
+	(set_acc_use_not_media_p4): New function.
+	(fr400_reset_gr_flags): New function.
+	(fr400_reset_fr_flags): New function.
+	(fr400_reset_acc_flags): New function.
+	(frvbf_model_fr400_u_*): Reflect latencies from fr400 LSI version 1.1.
+	(frvbf_model_fr400_u_media_hilo): New function.
+	* pipeline.c (frv_vliw_setup_insn): Don't clear MSR0.MTT.
+	* memory.c (fr400_check_data_read_address): Check address range only
+	for double word loads. Don't check alignment here.
+	(fr400_check_readwrite_address): New function.
+	(fr500_check_readwrite_address): New function.
+	(check_readwrite_address): New function.
+	(fr500_check_insn_read_address): Correct address ranges.
+	(frvbf_read_mem_*): Check address range here.
+	(frv_address_forbidden): Removed.
+	(fr400_check_write_address): New function.
+	(check_write_address): New function.
+	(frvbf_write_mem_*): Don't check address range here.
+	(frvbf_mem_set_*): Check address range here.
+	* interrupts.c (frv_queue_data_access_error_interrupt): Now takes an
+	address as second argument.
+	(frv_queue_data_access_exception_interrupt): New function.
+	(frv_queue_illegal_instruction_interrupt): Generate fp_exception for
+	media insns on fr400.
+	(frv_queue_non_implemented_instruction_interrupt): Generate mp_exception
+	for media insns on fr400.
+	(frv_detect_insn_access_interrupts): Don't check for illegal addresses
+	of insns here.  Check for MTRAP insn if PSR.EM is not set.
+	(frv_set_mp_exception_registers): Only set MSR0.MTT if it is not already
+	set.
+	(set_exception_status_registers): Do not always set EPCR. Set EAR for
+	data_acess_error only if not fr400.
+	* frv.c (do_media_average): New function.
+	(frvbf_media_average): New function.
+	(frvbf_insn_cache_invalidate): Check for illegal invocation.
+	(frvbf_data_cache_invalidate): Ditto.
+	(frvbf_data_cache_flush): Ditto.
+	* frv-sim.h (GET_FSR_QNE): New macro.
+	(frv_msr_mtt): Remove MTT_SEQUENCE_ERROR.
+	(GET_MSR_SRDAV): New macro.
+	(GET_MSR_RDAV): New macro.
+	(GET_MSR_RD): New macro.
+	(frv_queue_data_access_error_interrupt): Now takes an address as second
+	argument.
+	(frv_address_forbidden): Removed.
+	* cache.c (non_cache_access): Correct address ranges. Now takes cache
+	as first argument.
+	* arch.h,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+2001-08-20  Dave Brolley  <brolley@redhat.com>
+
+	* sim-main.h (_sim_cpu): New field 'elf_flags'.
+	* sim-if.c (sim_open): Extract the elf_flags from the input file and
+	save them with each cpu.
+	* mloop.in (main loop): Pass elf flags to frv_vliw_reset.  Set
+	last_insn_p before executing the insn.
+	* cache.c (frv_cache_invalidate): Flush scache if this is the cpu's
+	insn cache.
+	(frv_cache_invalidate_all): Ditto.
+
+2001-08-20  Richard Sandiford  <rsandifo@redhat.com>
+
+	* traps.c (syscall_read_mem): Flush the data cache before reading.
+	(syscall_write_mem): Flush the data cache before writing.
+	Invalidate both caches.
+
+2001-07-05  Ben Elliston  <bje@redhat.com>
+
+	* Makefile.in (stamp-arch): Use $(CGEN_CPU_DIR).
+	(stamp-cpu): Likewise.
+
+2001-05-23  Dave Brolley  <brolley@redhat.com>
+
+	* profile-fr400.c (acc_use_is_media_p2): New function.
+	(frvbf_model_fr400_u_media_2): Account for latency of output
+	accumulators.
+	(frvbf_model_fr400_u_media_2_quad): Ditto.
+	(frvbf_model_fr400_u_media_2_acc): New function.
+	(frvbf_model_fr400_u_media_2_acc_dual): New function.
+	(frvbf_model_fr400_u_media_2_add_sub): New function.
+	(frvbf_model_fr400_u_media_2_add_sub_dual): New function.
+	(frvbf_model_fr400_u_media_3_dual): New function.
+	(frvbf_model_fr400_u_media_4_acc_dual): New function.
+	* arch.h,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+2001-05-15  Dave Brolley  <brolley@redhat.com>
+
+	* registers.c (fr400_spr): Enable write access to HSR0.CBM.
+	* profile.h (FRV_PROFILE_STATE): New field 'all_cache_entries'.
+	* profile.c (CACHE_QUEUE_ELEMENT): New 'all' field.
+	(request_cache_flush): Save 'all' argument.
+	(request_cache_invalidate): Save all_cache_entries from profile state
+	to 'all' field of the request.
+	(submit_cache_request): Pass the 'all' field of the request to
+	frv_cache_request_invalidate.
+	* frv.c (frv_insn_cache_invalidate): Add new 'all' parameter. Perform
+	operation even if HSR0.ICE is not set.
+	(frv_data_cache_invalidate): Add new 'all' parameter. Perform
+	operation even if HSR0.DCE is not set.
+	(frv_data_cache_flush): Ditto.
+	* frv-sim.h (frv_insn_cache_invalidate): Add new 'all' parameter.
+	(frv_data_cache_invalidate): Add new 'all' parameter.
+	(frv_data_cache_flush): Add new 'all' parameter.
+	* cache.h (FRV_CACHE_INVALIDATE_REQUEST): Add new 'all' field.
+	(frv_cache_request_invalidate): Add new 'all' parameter.
+	* cache.c (frv_cache_request_invalidate): Add new 'all' parameter. Save
+	its value in the invalidate request.
+	(address_interference): Accept the value '-1' for the address argument
+	to mean 'any address'.
+	(handle_req_invalidate): Handle request to invalidate all cache lines.
+	* cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+2001-05-14  Dave Brolley  <brolley@redhat.com>
+
+	* profile.h (past_first_p): New field of profiling state.
+	(branch_penalty): Ditto.
+	(branch_hint): Ditto.
+	(update_branch_penalty): New function.
+	* profile.c (frvbf_model_insn_after): Reset past_first_p and
+	branch_address fields of the profiling state.
+	(frvbf_model_branch): New function.
+	(update_branch_penalty): New function.
+	* profile-fr500.c (frvbf_model_fr500_u_branch): Remove ICCi_3 and
+	FCCi_3 inputs.
+	(frvbf_model_fr500_u_trap): New function.
+	(frvbf_model_fr500_u_check): New function.
+	(frvbf_model_fr500_u_media_dual_htob): post-processing latency is 3
+	cycles.
+	* profile-fr400.c (frvbf_model_fr400_u_branch): Set branch penalties
+	as documented in the fr400 LSI. Remove ICCi_3 and FCCi_3 inputs.
+	(frvbf_model_fr400_u_media_dual_expand): Check resource usage as
+	documented in teh fr400 LSI.
+	(frvbf_model_fr400_u_media_dual_htob): Ditto.
+	(frvbf_model_fr400_u_media_dual_unpack): Removed.
+	(frvbf_model_fr500_u_trap): New function.
+	(frvbf_model_fr500_u_check): New function.
+	* mloop.in (simulate_dual_insn_prefetch): New function.
+	(@cpu@_simulate_insn_prefetch): Call simulate_dual_insn_prefetch with
+	arguments for each machine type.
+	* arch.h,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+2001-05-09  Dave Brolley  <brolley@redhat.com>
+
+	* Makefile.in (profile.o): Add profile-fr400.h as a dependency.
+	(profile-fr400.o): New target.
+	* profile.c: New file.
+	* profile.h: New file.
+	* profile-fr400.c: New file.
+	* profile-fr400.h: New file.
+	* profile-fr500.c: New file.
+	* profile-fr500.h: New file.
+	* arch.h,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+2001-05-02  Dave Brolley  <brolley@redhat.com>
+
+	* sim-main.h (profile.h): #include it.
+	(CPU_PROFILE_STATE): New macro.
+	(profile_state): New frv specific cpu field.
+	* reset.c (frv_initialize): insn_fetch_address and branch_address now
+	part of global profiling state.
+	* Makefile.in (SIM_OBJS): Add profile.o and profile-fr500.o.
+	(SIM_EXTRA_DEPS): Add profile.h.
+	(registers.o): Correct name of source file.
+	(profile.o): New target.
+	(profile-fr500.o): New target.
+	* frv-sim.h: Move profile related data structures to profile.h.
+	* frv.c: Move fr500 specific functions to profile-fr500.c.
+	* cpu.h: Regenerated.
+
+2001-04-27  Dave Brolley  <brolley@redhat.com>
+
+	* sim-main.h (CPU_PIPELINE): Renamed to CPU_VLIW.
+	* interrupts.c: Rename FRV_PIPELINE to FRV_VLIW.
+	Rename pipeline to vliw. Rename CPU_PIPELINE to CPU_VLIW.
+	Rename PIPE_* to UNIT_*.
+	(frv_queue_illegal_instruction_interrupt): Use
+	frv_is_float_insn and frv_is_media_insn.
+	(frv_queue_non_implemented_instruction_interrupt): Ditto.
+	(frv_detect_insn_access_interrupts): Ditto.
+	* frv.c: Rename FRV_PIPELINE to FRV_VLIW. Rename pipeline to vliw.
+	Rename CPU_PIPELINE to CPU_VLIW. Rename PIPE_* to UNIT_*.
+	* memory.c: Ditto.
+	* pipeline.c: Ditto.
+	* mloop.in: Ditto.
+	* frv-sim.h (frv_pipeline_setup_insn): Renamed to frv_vliw_setup_insn.
+	* cache.c: Rename PIPE_* to UNIT_*.
+
+2001-04-24  Dave Brolley  <brolley@redhat.com>
+
+	* frv.c (frvbf_load_quad_GR): Delete have_data and hsr0.
+	(frvbf_load_quad_FRint): Ditto.
+	(frvbf_load_quad_CPR): Ditto.
+	* cache.c (frv_cache_init): Initialize cache for fr400 vs other
+	machines.
+	(bfd.h): #include it.
+	(non_cache_access): Update for revised fr500 and for fr400.
+	* registers.c (frv_spr): Don't reset PSR.PS.
+	(fr500_spr): Ditto.
+	(frv_reset_spr): Set PSR.PS to the former value of PSR.S.
+
+2001-04-23  Dave Brolley  <brolley@redhat.com>
+
+	* traps.c (frv_core_signal): On fr400, generate data_access_error.
+	(frvbf_media_cr_not_aligned): On fr400, generate illegal_instruction.
+	(frvbf_media_acc_not_aligned): Ditto.
+	(frvbf_media_register_not_aligned): Ditto.
+	(frvbf_division_exception): Use GET_ISR_EDE.
+	* registers.c (frv_check_spr_read_access): New function.
+	(frv_check_spr_write_access): New function.
+	(frv_check_spr_access): Deleted.
+	(frv_check_register_access): On fr400, generate illegal_instruction.
+	* memory.c (fr400_check_data_read_address): New function.
+	(fr500_check_data_read_address): Ditto.
+	(check_data_read_address): Ditto.
+	(fr400_check_insn_read_address): Ditto.
+	(fr500_check_insn_read_address): Ditto.
+	(check_insn_read_address): Ditto.
+	(frvbf_read_mem_QI): Call check_data_read_access.
+	(frvbf_read_mem_UQI): Ditto.
+	(frvbf_read_mem_HI): Ditto.
+	(frvbf_read_mem_UHI): Ditto.
+	(frvbf_read_mem_SI): Ditto.
+	(frvbf_read_mem_DI): Ditto.
+	(frvbf_read_mem_DF): Ditto.
+	(frvbf_read_imem_USI): Call check_insn_read_access.
+	(frv_address_forbidden): Now takes cpu as first argument. Check based
+	on machine type.
+	(fr400_mem_address_unaligned): New function.
+	(fr500_mem_address_unaligned): Ditto.
+	(check_write_address): Ditto.
+	(frvbf_mem_set_QI): Call check_write_address.
+	(frvbf_mem_set_HI): Ditto.
+	(frvbf_mem_set_SI): Ditto.
+	(frvbf_mem_set_DI): Ditto.
+	(frvbf_mem_set_DF): Ditto.
+	(frvbf_mem_set_XI): Ditto.
+	* interrupts.c (bfd.h): #include it.
+	(frv_queue_data_access_error_interrupt): New function.
+	(frv_queue_instruction_access_error_interrupt): New function.
+	(frv_queue_instruction_access_exception_interrupt): New function.
+	(frv_queue_illegal_instruction_interrupt): No fp_exception on fr400.
+	(frv_queue_non_implemented_instruction_interrupt): Ditto.
+	(frv_detect_insn_access_interrupts): Reorder tests to match priority
+	from the LSI manual.
+	(set_isr_exception_fields): Accumulate dtt bits.
+	* frv.c (check_register_alignment): New function.
+	(check_fr_register_alignment): New function.
+	(check_memory_alignment): New function.
+	(frvbf_h_gr_double_get_handler): Call check_register_alignment.
+	(frvbf_h_gr_double_set_handler): Ditto.
+	(frvbf_h_cpr_double_get_handler): Ditto.
+	(frvbf_h_cpr_double_set_handler): Ditto.
+	(frvbf_h_gr_quad_set_handler): Ditto.
+	(frvbf_h_cpr_quad_set_handler): Ditto.
+	(frvbf_h_fr_double_get_handler): Call check_fr_register_alignment.
+	(frvbf_h_fr_double_set_handler): Ditto.
+	(frvbf_h_fr_quad_set_handler): Ditto.
+	(frvbf_h_spr_get_handler): Call frv_check_spr_read_access.
+	(frvbf_h_spr_set_handler): Call frv_check_spr_write_access.
+	(frvbf_load_quad_GR): Call check_memory_aligment.
+	(frvbf_load_quad_FRint): Ditto.
+	(frvbf_load_quad_CPR): Ditto.
+	(frvbf_store_quad_GR): Call check_memory_aligment and
+	check_register_alignment.
+	(frvbf_store_quad_FRint): Ditto.
+	(frvbf_store_quad_CPR): Ditto.
+	(frvbf_signed_integer_divide: Use GET_ISR_EDEM.
+	* frv-sim.h (H_SPR_ACC0): New macro.
+	(H_SPR_ACC63): New macro.
+	(H_SPR_ACCG0): New macro.
+	(H_SPR_ACCG63): New macro.
+	(frv_dtt): New enumerator.
+	(GET_ISR_EDE): Renamed from GET_ISR_EDEM.
+	(GET_ISR_DTT): New macro.
+	(frv_queue_data_access_error_interrupt): New function.
+	(frv_queue_instruction_access_error_interrupt): New function.
+	(frv_queue_instruction_access_exception_interrupt): New function.
+	(frv_address_forbidden): Now takes cpu as first argument.
+	* cpu.h: Regenerate.
+
+2001-04-10  Dave Brolley  <brolley@redhat.com>
+
+	* registers.c (fr500_spr): Add new fields to fr500 PSR register.
+	(fr500_spr): Add STBAR and MMCR unimplemented registers for fr500.
+	(fr400_spr): Implement SPR registers for fr400.
+	(frv_register_control_init): Handle bfd_mach_fr400 properly.
+	* frv.c (spr_bpsr_get_handler): Mask field before shifting.
+	(spr_psr_get_handler): Ditto.
+	(spr_ccr_get_handler): Ditto.
+	(spr_cccr_get_handler): Ditto.
+	(frvbf_clear_accumulators): Only 4 accumulators on fr400.
+	* frv-sim.h: Update comment about MCCR_* macros.
+	* cpu.c,cpu.h: Regenerate.
+
+2001-04-05  Dave Brolley  <brolley@redhat.com>
+
+	* cpu.h,decode.c,model.c,sem.c:	Regenerate.
+
+2001-04-05  Dave Brolley  <brolley@redhat.com>
+
+	* reset.c: Update copyright.
+	* registers.c (frv_register_control_init): Handle bfd_mach_fr400.
+	* frv.c (frvbf_model_fr400_u_exec): New function.
+	* Makefile.in (stamp-cpu): Add fr400 to list of machines.
+	* arch.c,arch.h,cpu.c,cpu.h,cpuall.h,model.h,decode.c,decode.h,sem.c:
+	Regenerate.
+
+2000-11-22  Dave Brolley  <brolley@redhat.com>
+
+	* arch.c,arch.h,cpu.c,cpu.h,cpuall.h,model.h,decode.c,decode.h,sem.c:
+	Regenerate.
+
+2000-11-10  Dave Brolley  <brolley@redhat.com>
+
+	* decode.c: Regenerate.
+
+2000-09-12  Dave Brolley  <brolley@redhat.com>
+
+	* traps.c (frv_sim_engine_halt_hook): New function.
+	(frv_itrap): Caches now invalidated in sim_engine_halt via
+	SIM_ENGINE_HALT_HOOK.
+	(frv_break): Ditto.
+	* sim-main.h (frv_sim_engine_halt_hook): New function.
+	(SIM_ENGINE_HALT_HOOK): New macro.
+	(SIM_ENGINE_RESTART_HOOK): New macro.
+	* interrupts.c: Call to frv_term now done within sim_engine_halt via
+	SIM_ENGINE_HALT_HOOK.
+
+2000-09-08  Dave Brolley  <brolley@redhat.com>
+
+	* traps.c (frv_itrap): Invalidate and flush the data and insn caches
+	respectively when stopping for a breakpoint.
+	(frv_break): Ditto.
+	* cache.h (frv_cache_invalidate_all): New function.
+	* cache.c (frv_cache_invalidate_all): New function.
+
+2000-09-05  Dave Brolley  <brolley@redhat.com>
+
+	* traps.c (frv_break): If SIM_HAVE_BREAKPOINTS, call
+	sim_handle_breakpoint. Otherwise if environment != operating call
+	sim_engine_halt. Otherwise handle normally.
+	* interrupts.c (frv_queue_break_interrupt): Don't handle debugger
+	breakpoints here. Moved to frv_break in traps.c.
+
+	* sem.c: Regenerate.
+
+2000-09-01  Dave Brolley  <brolley@redhat.com>
+
+        * interrupts.c (frv_queue_break_interrupt): Call sim_handle_breakpoint
+	before queuing an interrupt in order to allow 'break' to be used as
+	the breakpoint insn.
+
+2000-08-29  Dave Brolley  <brolley@redhat.com>
+
+	* traps.c (frv_itrap): Invalidate the insn cache at a breakpoint.
+
+2000-07-27  Dave Brolley  <brolley@redhat.com>
+
+	* cpu.h,decode.c: Rebuild.
+
+2000-07-26  Dave Brolley  <brolley@redhat.com>
+
+	* frv.c (spr_cccr_get_handler): Change CRx to CCx.
+	(spr_cccr_set_handler): Change CRx to CCx.
+	* cpu.h,decode.c,decode.h,model.c,sem.c: Rebuild.
+
+2000-07-24  Dave Brolley  <brolley@redhat.com>
+
+	* sem.c: Regenerate.
+	* frv.c (frvbf_unsigned_integer_divide): Queue a write for the result.
+	Don't write it directly.
+
+Thu Jul  6 13:51:12 2000  Dave Brolley  <brolley@topaz>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+2000-07-05  Ben Elliston  <bje@redhat.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+2000-06-28  Dave Brolley  <brolley@redhat.com>
+
+	* cpu.h,decode.c,decode.h,model.c,sem.c: Rebuild.
+
+2000-06-21  Dave Brolley  <brolley@redhat.com>
+
+	* pipeline.c: All code except frv_pipeline_setup_insn moved to
+	frv.opc.
+	* mloop.in (main loop): frv_pipeline_add_insn broken up into
+	frv_pipeline_add_insn and frv_pipeline_setup_insn.
+	* frv-sim.h: Move pipeline status code to frv.opc.
+	* model.c: Regenerate.
+
+2000-06-12  Dave Brolley  <brolley@redhat.com>
+
+	* options.c (frv_option_handler): --profile-parallel implies
+	--profile-model.
+	* mloop.in (fetch_buffer): Removed.
+	(@cpu@_simulate_insn_prefetch): Monitoring of fetch buffer moved to
+	run_caches.  Use cache directly if not counting cycles.  Don't use
+	cache at all if not counting cycles and cache not enabled.
+	* frv.c (frv_insn_fetch_buffer): New global variable. 
+	(run_caches): Monitor the status of insn prefetch requests.
+	* frv-sim.h (FRV_INSN_FETCH_BUFFER): New struct type.
+	(frv_insn_fetch_buffer): New global variable.
+
+2000-06-12  Dave Brolley  <brolley@redhat.com>
+
+	* mloop.in (fetch_buffer): New static struct.
+	(@cpu@_simulate_insn_prefetch): Rewritten.
+	* cache.c (frv_cache_request_invalidate): Don't invalidate return
+	buffer.
+	(address_interference): Defer to any WAR request in either pipeline.
+
+2000-06-09  Dave Brolley  <brolley@redhat.com>
+
+	* pipeline.c (insns_in_slot): New Array.
+	(frv_pipeline_add_insn): Call COUNT_INSNS_IN_SLOT.
+	* options.c (frv_options): Remove 'NONBLOCK' argument from data-cache
+	option.
+	(parse_cache_option): New function.
+	(frv_option_handler): Call parse_cache_option.
+	* frv.c (vliw_branch_taken): New variable.
+	(vliw_load_stall): New variable.
+	(handle_resource_wait): Update vliw_load_stall.
+	(frvbf_model_insn_before): Initialize vliw_branch_taken and
+	vliw_load_stall.
+	(frvbf_model_insn_after): Increment PROFILE_MODEL_LOAD_STALL_CYCLES.
+	(load_wait_for_FR): Update vliw_load_stall.
+	(load_wait_for_GR): Update vliw_load_stall.
+	(load_wait_for_FRdouble): Update vliw_load_stall.
+	(load_wait_for_GRdouble): Update vliw_load_stall.
+	(frvbf_model_fr500_u_branch): Count branches taken and not taken.
+	(slot_names): New static array.
+	(print_parallel): Now takes second argument 'verbose'. Print cycles per
+	VLIW insn and instructions per cycle. Also tabulate the number of insns
+	in each type of VLIW slot.
+	(frv_profile_info): Call print_parallel with new second argument.
+	* frv-sim.h (insn_in_slot): New array.
+	(COUNT_INSNS_IN_SLOT): New macro.
+	(INSNS_IN_SLOT): New macro.
+	* cache.c: Remove references to non_blocking_count. Remove references to
+	last_was_hit. Remove references to req_none.
+	(handle_req_store): Adjust statistics before requeuing the store
+	request.
+	(handle_req_WAR): Don't let the WAR request affect the cache statistics.
+	* cache.h: Remove references to non_blocking_count. Remove references to
+	last_was_hit. Remove references to req_none.
+	* model.c: Regenerate.
+
+2000-06-08  Dave Brolley  <brolley@redhat.com>
+
+	* frv.c (request_complete): Copy load data from the correct return
+	buffer.
+
+2000-06-07  Dave Brolley  <brolley@redhat.com>
+
+	* traps.c (frv_core_signal): Call frv_term before exiting.
+	(frv_itrap): Call frv_term before exiting.
+	(next_available_nesr): Make sure NECR is implemented before reading it.
+	(next_valid_nesr): Ditto.
+	(frvbf_check_non_excepting_load): Ditto.
+	(frvbf_clear_ne_flags): Ditto.
+	(frvbf_commit): Ditto.
+	(frvbf_check_recovering_store): Delay cache operation if 'model_insn'.
+	* sim-main.h (_sim_cpu): Add load_address, load_length, load_flag and
+	store_flag members.
+	(CPU_LOAD_ADDRESS): New macro.
+	(CPU_LOAD_LENGTH): New macro.
+	(CPU_LOAD_SIGNED): New macro.
+	(CPU_LOAD_LOCK): New macro.
+	* reset.c (frv_term): New function.
+	(frv_power_on_reset): Use SETMEMSI if the cache is not enabled.
+	(frv_hardware_reset): Use SETMEMSI if the cache is not enabled.
+	(frv_software_reset): Use SETMEMSI if the cache is not enabled.
+	* mloop.in (execute): Call FRV_COUNT_CYCLES to decide whether to model
+	the insn. Model the insn in two passes. One before and one after
+	execution.
+	(cache_reqno): new static variable.
+	(@cpu@_simulate_insn_prefetch): Model fetch latency by waiting for the
+	cache rather than assuming a fixed latency.
+	(xinit): Turn on PROFILE_MODEL_P before each vliw insn if the timer is
+	enabled so that modeling data is collected by cgen during execution.
+	(full-exec): Restore PROFILE_MODEL_P after each vliw insn.
+	* memory.c (data_non_cache_access): Removed.
+	(insn_non_cache_access): Removed.
+	(frvbf_read_mem_QI): Delay read operation if 'model_insn'.
+	(frvbf_read_mem_UQI): Delay read operation if 'model_insn'.
+	(frvbf_read_mem_HI): Delay read operation if 'model_insn'.
+	(frvbf_read_mem_UHI): Delay read operation if 'model_insn'.
+	(frvbf_read_mem_SI): Delay read operation if 'model_insn'.
+	(frvbf_read_mem_DI): Delay read operation if 'model_insn'.
+	(frvbf_read_mem_DF): Delay read operation if 'model_insn'.
+	(frvbf_read_imem_USI): Read the cache or ememory passively.
+	(frvbf_write_mem_QI): Don't check for non-cache access here.
+	(frvbf_write_mem_UQI): Call frvbf_write_mem_QI.
+	(frvbf_write_mem_HI): Don't check for non-cache access here.
+	(frvbf_write_mem_UHI): Call frvbf_write_mem_QI.
+	(frvbf_write_mem_SI): Don't check for non-cache access here.
+	(frvbf_write_mem_DI): Don't check for non-cache access here.
+	(frvbf_write_mem_DF): Don't check for non-cache access here.
+	(frvbf_mem_set_QI): Use cycle-accurate cache write if 'model_insn'.
+	(frvbf_mem_set_HI): Use cycle-accurate cache write if 'model_insn'.
+	(frvbf_mem_set_SI): Use cycle-accurate cache write if 'model_insn'.
+	(frvbf_mem_set_DI): Use cycle-accurate cache write if 'model_insn'.
+	(frvbf_mem_set_DF): Use cycle-accurate cache write if 'model_insn'.
+	(frvbf_mem_set_XI): Use cycle-accurate cache write if 'model_insn'.
+	* interrupts.c (check_reset): Read the cache and memory passively.
+	(frv_program_or_software_interrupt): Call frv_term before calling
+	sim_engine_halt.
+	* frv.c (all modeling functions): Break into two passes. One before
+	execuetion and one after. call load_wait_for_* for all GR and FR
+	registers.
+	(frvbf_load_quad_GR): Delay performing the load if 'model_insn'.
+	(frvbf_load_quad_FRint): Delay performing the load if 'model_insn'.
+	(frvbf_load_quad_CPR): Delay performing the load if 'model_insn'.
+	(frvbf_insn_cache_preload): Delay cache operation if 'model_insn'.
+	(frvbf_data_cache_preload): Delay cache operation if 'model_insn'.
+	(frvbf_insn_cache_unlock): Delay cache operation if 'model_insn'.
+	(frvbf_data_cache_unlock): Delay cache operation if 'model_insn'.
+	(frvbf_insn_cache_invalidate): Delay cache operation if 'model_insn'.
+	(frvbf_data_cache_invalidate): Delay cache operation if 'model_insn'.
+	(frvbf_data_cache_flush): Delay cache operation if 'model_insn'.
+	(model_insn): New global variable.
+	(fr_ptime): New array.
+	(cache_request): New enumeration.
+	(CACHE_QUEUE_ELEMENT): New struct type.
+	(CACHE_QUEUE_SIZE): New macro.
+	(cache_queue): New static struct.
+	(request_cache_load): New function.
+	(request_cache_flush): New function.
+	(request_cache_invalidate): New function.
+	(request_cache_preload): New function.
+	(request_cache_unlock): New function.
+	(submit_cache_request): New function.
+	(activate_cache_requests): New function.
+	(load_pending_for_register): New function.
+	(flush_pending_for_address): New function.
+	(remove_cache_queue_element): New function.
+	(copy_load_data): New function.
+	(request_complete): New function.
+	(run_caches): New function.
+	(frv_model_trace_wait_cycles): New function.
+	(wait_for_flush): New function.
+	(frvbf_model_insn_before): Insn prefect wait now modeled in
+	frvbf_simulate_insn_prefetch. Incremement vliw_insns here. Call
+	wait_for_flush.
+	(frvbf_model_insn_after): Call activate_cache_requests. Don't increment
+	vliw_insns here anymore.
+	(update_FR_latency_for_load): New function.
+	(update_FRdouble_latency_for_load): New function.
+	(update_FR_ptime): New function.
+	(update_FRdouble_ptime): New function.
+	(update_GR_latency_for_swap): New function.
+	(load_wait_for_GR): New function.
+	(load_wait_for_FR): New function.
+	(load_wait_for_GRdouble): New function.
+	(load_wait_for_FRdouble): New function.
+	(frvbf_model_fr500_u_ici): New function.
+	(frvbf_model_fr500_u_dci): New function.
+	(frvbf_model_fr500_u_dcf): New function.
+	(frvbf_model_fr500_u_icpl): New function.
+	(frvbf_model_fr500_u_dcpl): New function.
+	(frvbf_model_fr500_u_icul): New function.
+	(frvbf_model_fr500_u_dcul): New function.
+	* frv-sim.h (frv_term): New function.
+	(insn_non_cache_access): Removed.
+	(FRV_COUNT_CYCLES): New macro.
+	(frv_save_peofile_model_p): New global variable.
+	(model_insn): New enumerated global variable.
+	(frv_model_advance_cycles): New function.
+	(frv_model_trace_wait_cycles): New function.
+	* cache.h (FRV_CACHE_REQUEST_KIND): New enumeration.
+	(FRV_CACHE_WAR_REQUEST): New struct type.
+	(FRV_CACHE_STORE_REQUEST): New struct type.
+	(FRV_CACHE_INVALIDATE_REQUEST): New struct type.
+	(FRV_CACHE_PRELOAD_REQUEST): New struct type.
+	(FRV_CACHE_REQUEST): New struct type.
+	(FRV_CACHE_RETURN_BUFFER): New struct type.
+	(FRV_CACHE_FLUSH_STATUS): New struct type.
+	(FRV_CACHE_STATUS): New struct type.
+	(FRV_CACHE_STAGE): New struct type.
+	(FRV_CACHE_STAGES): New enumeration.
+	(FRV_CACHE_WAR): New struct type.
+	(FRV_CACHE_PIPELINE): New struct type.
+	(FRV_CACHE_ARS): New struct type.
+	(FRV_CACHE_STATISTICS): New struct type.
+	(FRV_CACHE): Add pipeline, statistics, BARS and NARS.
+	(CACHE_RETURN_DATA): 'return_buffer' is now within 'status'.
+	(CACHE_RETURN_DATA_ADDRESS): New macro.
+	(frv_cache_read): Now takes pipe index as second argument.
+	(frv_cache_enabled): New function.
+	(frv_cache_request_load): New function.
+	(frv_cache_request_store): New function.
+	(frv_cache_request_invalidate): New function.
+	(frv_cache_request_preload): New function.
+	(frv_cache_request_unlock): New function.
+	(frv_cache_run): New function.
+	(frv_cache_read_passive_SI): New function.
+	(frv_cache_data_in_buffer): New function.
+	(frv_cache_data_flushed): New function.
+	* cache.c (frv_cache_init): Initialize pipelines and xARS registers.
+	(frv_cache_enabled): New function.
+	(non_cache_access): New function.
+	(write_data_to_memory): Count write accesses for each mode. Write to
+	memory using sim_core_write_unaligned_1;
+	(read_data_from_memory): New function.
+	(fill_line_from_memory): Use read_data_from_memory.
+	(copy_line_to_return_buffer): New function.
+	(copy_memory_to_return_buffer): New function.
+	(set_return_buffer_reqno): New function.
+	(frv_cache_read): Now takes pipe index as second argument. Check for
+	non-cache access.
+	(frv_cache_preload): Check for non-cache access.
+	(frv_cache_unlock): Check for non-cache access.
+	(invalidate_return_buffer): New function.
+	(frv_cache_invalidate): Check for non-cache access.
+	(convert_slot_to_index): New function.
+	(FREE_CHAIN_SIZE): New macro.
+	(frv_cache_request_free_chain): New static variable.
+	(frv_store_request_free_chain): New static variable.
+	(allocate_new_cache_requests): New function.
+	(new_cache_request): New function.
+	(free_cache_request): New function.
+	(new_store_request): New function.
+	(pipeline_remove_request): New function.
+	(pipeline_add_request): New function.
+	(pipeline_requeue_request): New function.
+	(next_priority): New function.
+	(add_WAR_request): New function.
+	(pipeline_next_request): New function.
+	(pipeline_stage_request): New function.
+	(advance_pipelines): New function.
+	(frv_cache_request_load): New function.
+	(frv_cache_request_store): New function.
+	(frv_cache_request_invalidate): New function.
+	(frv_cache_request_preload): New function.
+	(frv_cache_request_unlock): New function.
+	(address_interference): New function.
+	(wait_for_WAR): New function.
+	(wait_in_WAR): New function.
+	(handle_req_load): New function.
+	(handle_req_preload): New function.
+	(handle_req_store): New function.
+	(handle_req_invalidate): New function.
+	(handle_req_unlock): New function.
+	(handle_req_WAR): New function.
+	(arbitrate_requests): New function.
+	(move_ARS_to_WAR): New function.
+	(decrease_latencies): New function.
+	(frv_cache_run): New function.
+	(frv_cache_read_passive_SI): New function.
+	(frv_cache_data_in_buffer): New function.
+	(frv_cache_data_flushed): New function.
+	* arch.h,decode.c,decode.h,model.c,sem.c: Rebuild.
+
+Wed May 24 14:40:34 2000  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+2000-05-19  Dave Brolley  <brolley@redhat.com>
+
+	* traps.c (frv_rett): Check for exceptions in the order specified in the
+	architecture spec. Allow privileged_instruction interrrupt to be handled
+	normally.
+	* registers.c (frv_register_control_init): Handle bfd_mach_frvtomcat.
+	* frv.c (frvbf_signed_integer_divide): Use updated dtt to decide whether
+	to clear the NE flag.
+	(frvbf_model_tomcat_u_exec): New function.
+	* frv-sim.h (frvbf_division_exception): Now returns updated dtt.
+	* Makefile.in (stamp-cpu): Add 'tomcat' to 'mach' value.
+	* arch.c,arch.h,cpu.h,cpuall.h,model.h,decode.c,sem.c: Regenerate.
+
+2000-05-18  Dave Brolley  <brolley@redhat.com>
+
+	* sim-if.c (elf-bfd.h): #include it.
+	(sim_open): Set machine amd architecture based on elf flags.
+
+2000-04-04  Dave Brolley  <brolley@redhat.com>
+
+	* frv-sim.h (frv_h_psr_esr_set_handler): Removed.
+	Delete '#if 0' blocks.
+	* frv.c: Delete '#if 0' blocks.
+	(spr_psr_set_handler): Remove special handling for circular referencing of handlers for
+	PSR.S and PSR.ESR.
+	(frv_h_psr_esr_set_handler): Removed.
+	* interrupts.c: Delete '#if 0' blocks.
+	* memory.c: Delete '#if 0' blocks.
+	* cpu.c,cpu.h: Regenerate.
+
+2000-04-03  Dave Brolley  <brolley@redhat.com>
+
+	* traps.c (frvbf_check_recovering_store): Invalidate data cache line
+	containing the target address.
+	(clear_nesr_neear): No longer takes hi_available and lo_available.
+	Remove bogus check for available GR registers.
+	(frvbf_clear_ne_flags): Update call to clear_nesr_neear.
+	(frvbf_commit): Update call to clear_nesr_neear.
+	* interrupts.c (next_available_esr): Removed.
+	(next_available_edr): Removed.
+	(next_available_fq): Removed.
+	* frv.c (frvbf_fetch_register): Remove "FIXME" comment.
+	(frvbf_store_register): Remove "FIXME" comment.
+	* frv-sim.h (UART_INCHAR_ADDR): Removed.
+	(UART_OUTCHAR_ADDR):  Removed.
+	(UART_STATUS_ADDR):  Removed.
+	(UART_INPUT_READY):  Removed.
+	(UART_OUTPUT_READY):  Removed.
+	(FRV_DEVICE_ADDR):  Removed.
+	(FRV_DEVICE_LEN):  Removed.
+	(SET_NESR): Call frvbf_force_update.
+	(SET_NEEAR): Call frvbf_force_update.
+	(SET_NE_FLAGS): Call frvbf_force_update.
+
+2000-03-30  Dave Brolley  <brolley@redhat.com>
+
+	* configure: Regenerated.
+
+2000-03-30  Dave Brolley  <brolley@redhat.com>
+
+	* registers.c (fr500_spr): Define ESR14-15 and EPCSR14-15 for fr500.
+	* memory.c (frvbf_write_mem_*): Save slot containing the insn
+	performing the write.
+	(frvbf_mem_set_*): Overwrite the slot information of the interrupt
+	queue element with the information in the interrupt state.
+	* interrupts.c (frv_queue_interrupt): Call frv_set_interrupt_queue_slot.
+	(frv_queue_fp_exception_interrupt): Initialize 'new_element'.
+	(frv_set_interrupt_queue_slot): New function.
+	(esr_for_data_access_exception): New function.
+	(set_edr_register): edr_index is now passed in.
+	(fq_for_exception): New function.
+	(set_fp_exception_registers): Call fq_for_exception. Interrupt queue
+	element now passed in.
+	(set_exception_status_registers): Obtain slot from interrupt queue
+	element. Call esr_for_data_access_exception. Use ESR14
+	for data_store_error. Use ESR15 for data_access_error. Use EDR0.
+	(frv_save_data_written_for_interrupts): Save slot containing the insn
+	performing the write.
+	* frv-sim.h (struct frv_fp_exception_info): Use frv_fsr_traps and
+	frv_fsr_ftt.
+	(struct frv_interrupt_state): Add 'slot' field.
+	(frv_set_interrupt_queue_slot): New function.
+	(frv_set_write_queue_slot): New function.
+
+2000-03-24  Dave Brolley  <brolley@redhat.com>
+
+	* mloop.in (_parallel_write_init): Initialize
+	frv_interrupt_state.imprecise_interrupt.
+	(_parallel_write_queued): After an imprecise interrupt, only perform
+	forced writes and floating point writes (for certain exceptions).
+	* interrupts.c (handle_interrupt): Set
+	frv_interrupt_state.imprecise_interrupt for writeback after an imprecise
+	interrupt.
+	(frv_process_interrupts): No need to clear f_ne_flags.
+	* frv.c (frvbf_signed_integer_divide): Queue writes to GR registers and
+	force them to happen even if there is an overflow exception.
+	(frvbf_force_update): New function.
+	* frv-sim.h (frvbf_force_update): New function.
+	(struct frv_interrupt_state): Add imprecise_interrupt.
+	(FRV_WRITE_QUEUE_FORCE_WRITE): New macro.
+	* sem.c: Regenerate.
+
+2000-03-23  Dave Brolley  <brolley@redhat.com>
+
+	* traps.c (frv_rett): Queue FRV_ILLEGAL_INSTRUCTION directly.
+	* registers.c (frv_spr): MCIRL -> MCILR.
+	* interrupts.c (frv_queue_non_implemented_instruction_interrupt):
+	New function.
+	(frv_detect_insn_access_interrupts):
+	Call frv_queue_non_implemented_instruction_interrupt.
+	(frv_process_interrupts): Clear accumulated NE flags.
+	* frv.c (frvbf_media_cop): New function.
+	(frvbf_set_ne_index): Now takes (SIM_CPU *) as first argument.  Clear
+	the NE flag of the given target register.
+	(frvbf_model_fr500_u_float_arith): Account for FRdouble registers.
+	(frvbf_model_fr500_u_float_dual_arith): Account for FRdouble registers.
+	(frvbf_model_fr500_u_float_dual_sqrt): New function.
+	(frvbf_model_fr500_u_float_convert): Account for FRdouble registers.
+	(frvbf_model_fr500_u_float_dual_convert): New function.
+	* frv-sim.h (frvbf_media_cop): New function.
+	(GET_FQ): Use H_SPR_FQST0.
+	(SET_FQ): Use H_SPR_FQST0.
+	(SET_FQ_OPC): Use J_SPR_FQOP0.
+	(GET_MSR_EMCI): New macro.
+	(frv_queue_non_implemented_instruction_interrupt): New function.
+	* arch.h,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+2000-03-08  Dave Brolley  <brolley@redhat.com>
+
+	* traps.c (frv_rett): Align new_pc.
+	* memory.c (frvbf_read_mem_HI): Align address.
+	(frvbf_read_mem_UHI): Align address.
+	(frvbf_read_mem_SI): Align address.
+	(frvbf_read_mem_DI): Align address.
+	(frvbf_read_mem_DF): Align address.
+	(frvbf_read_imem_USI): Align address.
+	(frvbf_mem_set_HI): Align address.
+	(frvbf_mem_set_SI): Align address.
+	(frvbf_mem_set_DI): Align address.
+	(frvbf_mem_set_DF): Align address.
+	(frvbf_mem_set_XI): Align address.
+	* registers.c (frv_spr): Initialize FSR0.NS to 1.
+	(fr500_spr): Initialize FSR0.NS to 1.
+	* interrupts.c (frv_queue_mem_address_not_aligned_interrupt): Check
+	whether the exception is masked.
+	* frv.c (frvbf_load_quad_GR): Align address.
+	(frvbf_store_quad_GR): Align address.
+	(frvbf_load_quad_FRint): Align address.
+	(frvbf_store_quad_FRint): Align address.
+	(frvbf_load_quad_CPR): Align address.
+	(frvbf_store_quad_CPR): Align address.
+	* frv-sim.h (GET_ISR_EMAM): New macro.
+
+2000-03-08  Dave Brolley  <brolley@redhat.com>
+
+	* traps.c (frvbf_division_exception): Check for masked overflow and
+	set NE flags, if necessary.
+	(frvbf_check_recovering_store): Queue writes to the hardware.
+	(check_registers_available): Removed.
+	(which_registers_available): Call frv_{fr,gr}_registers_available.
+	(frvbf_clear_ne_flags): Call check_register_access.
+	(frvbf_commit): Call check_register_access.
+	* registers.h (frv_fr_registers_available): New function.
+	(frv_gr_registers_available): New function.
+	(frv_check_register_access): New function.
+	(frv_check_gr_access): New function.
+	(frv_check_fr_access): New function.
+	* registers.c (frv_spr): Correct initial value of ISR.
+	(fr500_spr): Correct initial value of ISR.
+	(frv_fr_registers_available): New function.
+	(frv_gr_registers_available): New function.
+	(frv_check_register_access): New function.
+	(frv_check_gr_access): New function.
+	(frv_check_fr_access): New function.
+	* interrupts.c (frv_queue_division_exception_interrupt): New function.
+	(set_isr_exception_fields): New function.
+	(set_exception_status_registers): Set ISR fields for division exception.
+	(frv_save_data_written_for_interrupts): Handle CGEN_FN_SF_WRITE.
+	* frv.c (frvbf_h_gr_get_handler): New function.
+	(frvbf_h_gr_set_handler): New function.
+	(frvbf_h_fr_get_handler): New function.
+	(frvbf_h_fr_set_handler): New function.
+	(frvbf_h_spr_get_handler): Remove special handling for ISR.
+	(frvbf_h_spr_set_handler): Remove special handling for ISR.
+	(spr_isr_get_handler): Removed.
+	(spr_isr_set_handler): Removed.
+	(frvbf_signed_integer_divide): New funciton.
+	(frvbf_unsigned_integer_divide): New funciton.
+	* frv-sim.h (frvbf_h_gr_get_handler): New function.
+	(frvbf_h_gr_set_handler): New function.
+	(frvbf_h_fr_get_handler): New function.
+	(frvbf_h_fr_set_handler): New function.
+	(frvbf_signed_integer_divide): New funciton.
+	(frvbf_unsigned_integer_divide): New funciton.
+	(frv_dtt): New enumeration.
+	(struct frv_interrupt_queue_element): Add dtt member.
+	(GET_ISR): New macro.
+	(SET_ISR): New macro.
+	(GET_ISR_EDEM): New macro.
+	(SET_ISR_DTT): New macro.
+	(SET_ISR_AEXC): New macro.
+	(frvbf_division_exception): Add 2 'int' arguments.
+	(frvbf_check_non_excepting_divide): Removed.
+	* cpu.c,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+2000-02-29  Dave Brolley  <brolley@redhat.com>
+
+	* traps.c (frv_itrap): Use GET_H_GR, SET_H_GR, GET_H_FR.
+	(frv_rett): Use hardware access macros. Write PSR as a whole.
+	(next_available_nesr): Check that NECR is valid.
+	(next_valid_nesr): Check that NECR is valid.
+	(frvbf_check_non_excepting_load): User new NECR access macros. Don't
+	call hardware access functions. Use cover macros.
+	(check_registers_available): New function.
+	(clear_nesr_near): Check register availability.
+	(clear_ne_flags): Check register availability.
+	(frvbf_clear_ne_flags): Check register availability.
+	(frvbf_commit): Check register availability.
+	(which_registers_available): New function.
+	* sim-main.h (registers.h): #include it.
+	(register_control): New cpu field.
+	(CPU_REGISTER_CONTROL): New macro.
+	* reset.c (frv_initialize): Set HSR0 fields for cache here.
+	(frv_power_on_reset): Initialize SPR registers and RSTR.
+	(frv_hardware_reset): Initialize SPR registers and RSTR.
+	(frv_software_reset): Reset SPR registers and RSTR.
+	* options.c (frv_option_handler): Don't set HSR0 fields for cache here.
+	Call frv_cache_init.
+	* mloop.in (main loop): Check for insn access interrupts before
+	executing the insn.
+	* interrupts.c (frv_queue_external_interrupt): Use GET_H_PSR_ET.
+	(frv_detect_insn_access_interrupts): Don't call hardware access
+	functions directly. Use cover macros.
+	(check_reset): Don't reset RSTR here.
+	(next_available_esr): ESFR -> ESFR_FLAG.
+	(next_available_edr): ESFR -> ESFR_FLAG.
+	(clear_exception_status_registers): Use GET_ESFR and SET_ESFR.
+	ESFR -> ESFR_FLAG.
+	(frv_break_interrupt): Don't call hardware access functions directly.
+	Use cover macros.
+	(frv_program_or_software_interrupt): Ditto.
+	(frv_external_interrupt): Ditto.
+	* frv.c (frvbf_fetch_register): Don't call 'get' functions directly.
+	(frvbf_store_register): Don't call 'set' functions directly.
+	(frvbf_h_gr_double_get_handler): Use GET_H_GR.
+	(frvbf_h_gr_double_set_handler): Use SET_H_GR.
+	(frvbf_h_fr_double_get_handler): Use GET_H_FR.
+	(frvbf_h_fr_double_set_handler): Use SET_H_FR.
+	(frvbf_h_fr_int_get_handler): Use GET_H_FR.
+	(frvbf_h_fr_int_set_handler): Use SET_H_FR.
+	(frvbf_h_cpr_double_get_handler): Use GET_H_CPR.
+	(frvbf_h_cpr_double_set_handler): Use SET_H_CPR.
+	(frvbf_h_gr_quad_set_handler): Use SET_H_GR.
+	(frvbf_h_fr_quad_set_handler): Use SET_H_FR.
+	(frvbf_h_spr_get_handler): Check SPR access. Call renamed functions.
+	Support shadow registers.
+	(frvbf_h_spr_set_handler): Check SPR access. Call renamed functions.
+	Support shadow registers.
+	(spr_psr_get_handler): Renamed from frvbf_h_psr_get_handler.
+	(spr_psr_set_handler): Renamed from frvbf_h_psr_set_handler.
+	(spr_tbr_get_handler): Renamed from frvbf_h_tbr_get_handler.
+	(spr_tbr_set_handler): Renamed from frvbf_h_tbr_set_handler.
+	(spr_bpsr_get_handler): Renamed from frvbf_h_bpsr_get_handler.
+	(spr_bpsr_set_handler): Renamed from frvbf_h_bpsr_set_handler.
+	(spr_ccr_get_handler): Renamed from frvbf_h_ccr_get_handler.
+	(spr_ccr_set_handler): Renamed from frvbf_h_ccr_set_handler.
+	(spr_lr_get_handler): Renamed from frvbf_h_lr_get_handler.
+	(spr_lr_set_handler): Renamed from frvbf_h_lr_set_handler.
+	(spr_cccr_get_handler): Renamed from frvbf_h_cccr_get_handler.
+	(spr_cccr_set_handler): Renamed from frvbf_h_cccr_set_handler.
+	(spr_isr_get_handler): Renamed from frvbf_h_isr_get_handler.
+	(spr_isr_set_handler): Renamed from frvbf_h_isr_set_handler.
+	(spr_sr_get_handler): Renamed from frvbf_h_sr_get_handler.
+	(spr_sr_set_handler): Renamed from frvbf_h_sr_set_handler.
+	(frvbf_h_psr_esr_set_handler): Update to conform to FRV architecture
+	version 1.3a.
+	(spr_ccr_get_handler): Don't reference the hardware directly.
+	(spr_ccr_set_handler): Don't reference the hardware directly.
+	(spr_cccr_get_handler): Don't reference the hardware directly.
+	(spr_cccr_set_handler): Don't reference the hardware directly.
+	(spr_sr_get_handler): New function.
+	(spr_sr_set_handler): New function.
+	(frvbf_switch_supervisor_user_context): Temporarily switch to
+	supervisor mode.
+	(frvbf_store_quad_GR): Don't call handler directly.
+	(frvbf_store_quad_FRint): Don't call handler directly.
+	(frvbf_store_quad_CPR): Don't call handler directly.
+	(frvbf_clear_all_accumulators): Removed.
+	(frvbf_clear_accumulators): New function.
+	(frvbf_model_fr500_u_media): Expand busy_adjustment to 8 members.
+	Account for in_ACCGi and out_ACCGk.
+	* frv-sim.h (RSTR_HARDWARE_RESET): New macro.
+	(RSTR_SOFTWARE_RESET): New macro.
+	(spr_psr_get_handler): Renamed from frvbf_h_psr_get_handler.
+	(spr_psr_set_handler): Renamed from frvbf_h_psr_set_handler.
+	(spr_tbr_get_handler): Renamed from frvbf_h_tbr_get_handler.
+	(spr_tbr_set_handler): Renamed from frvbf_h_tbr_set_handler.
+	(spr_bpsr_get_handler): Renamed from frvbf_h_bpsr_get_handler.
+	(spr_bpsr_set_handler): Renamed from frvbf_h_bpsr_set_handler.
+	(spr_ccr_get_handler): Renamed from frvbf_h_ccr_get_handler.
+	(spr_ccr_set_handler): Renamed from frvbf_h_ccr_set_handler.
+	(spr_lr_get_handler): Renamed from frvbf_h_lr_get_handler.
+	(spr_lr_set_handler): Renamed from frvbf_h_lr_set_handler.
+	(spr_cccr_get_handler): Renamed from frvbf_h_cccr_get_handler.
+	(spr_cccr_set_handler): Renamed from frvbf_h_cccr_set_handler.
+	(spr_isr_get_handler): Renamed from frvbf_h_isr_get_handler.
+	(spr_isr_set_handler): Renamed from frvbf_h_isr_set_handler.
+	(spr_sr_get_handler): Renamed from frvbf_h_sr_get_handler.
+	(spr_sr_set_handler): Renamed from frvbf_h_sr_set_handler.
+	(frvbf_clear_all_accumulators): Removed.
+	(frvbf_clear_accumulators): New function.
+	(GET_HSR0): Use GET_H_SPR.
+	(SET_HSR0): Use SET_H_SPR.
+	(CLEAR_HSR0_ICE): New macro.
+	(CLEAR_HSR0_DCE): New macro.
+	(GET_IHSR8): Use GET_H_SPR.
+	(GET_PSR): New macro.
+	(SET_PSR_ET): New macro.
+	(GET_PSR_PS): New macro.
+	(SET_PSR_S): New macro.
+	(GET_ESFR): Changed to reference entire register.
+	(SET_ESFR): Changed to reference entire register.
+	(GET_ESFR_FLAG): New macro.
+	(SET_ESFR_FLAG): New macro.
+	(NECR_ELOS): Removed.
+	(NECR_NEN): Removed.
+	(NECR_VALID): Removed.
+	(GET_NECR): New macro.
+	(GET_NECR_ELOS): New macro.
+	(GET_NECR_NEN): New macro.
+	(GET_NECR_VALID): New macro.
+	(NESR_RANGE): Removed.
+	(GET_NESR): Use GET_H_SPR.
+	(GET_NE_FLAGS): Use GET_H_SPR.
+	* cache.h (CACHE_INITIALIZED): New macro.
+	* Makefile.in (SIM_OBJS): Add registers.o.
+	(SIM_EXTRA_DEPS): Add registers.h.
+	(registers.o): New target.
+	* cpu.c,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+2000-02-17  Dave Brolley  <brolley@redhat.com>
+
+	* interrupts.c (frv_interrupt_table): Update priority order and handler
+	offsets to conform to the architecture version 1.3a.
+	* frv-sim.h (frv_interrupt_kind): Update priority order to conform
+	to the architecture version 1.3a.
+
+2000-02-17  Dave Brolley  <brolley@redhat.com>
+
+	* interrupts.c (frv_interrupt_table): Update priority order and handler
+	offsets to conform to the latest specifications.
+	(frv_queue_interrupt): Correct comment. Identical interrupts can be
+	queued. New variable 'iclass' used to test for external interrupts.
+	* frv-sim.h (frv_interrupt_kind): Update priority order to conform
+	to the latest specifications.
+
+2000-01-20  Dave Brolley  <brolley@redhat.com>
+
+	* sim-if.c (sim_open): Move frv-specific initialization to
+	frv_initialize in reset.c.
+	* interrupts.c (check_reset): Use RSTR_ADDRESS. Check and reset RSTR
+	status bits for hardware vs software reset.
+	* reset.c: New file.
+	* frv-sim.h (frv_initialize): New function.
+	(frv_power_on_reset): New function.
+	(frv_hardware_reset): New function.
+	(frv_software_reset): New function.
+	(RSTR_ADDRESS): New macro.
+	(RSTR_INITIAL_VALUE): New macro.
+	(GET_RSTR_HR): New macro.
+	(GET_RSTR_SR): New macro.
+	(SET_RSTR_H): New macro.
+	(SET_RSTR_S): New macro.
+	(CLEAR_RSTR_P): New macro.
+	(CLEAR_RSTR_H): New macro.
+	(CLEAR_RSTR_S): New macro.
+	(CLEAR_RSTR_HR): New macro.
+	(CLEAR_RSTR_SR): New macro.
+
+2000-01-03  Dave Brolley  <brolley@cygnus.com>
+
+	* mloop.in (execute): Only call modeling function if the pointer is not
+	NULL.
+	* frv.c (frvbf_model_insn_after): Only access FR500_MODEL_DATA for
+	fr500.
+
+2000-01-03  Dave Brolley  <brolley@cygnus.com>
+
+	* options.c (OPTION_FRV_MEMORY_LATENCY): New enumerator.
+	(frv_options): Add --memory-latency.
+	(frv_option_handler): Handle FRV_OPTION_MEMORY_LATENCY.
+	* mloop.in (@cpu@_simulate_insn_prefetch): Use cache memory_latency.
+	* frv.c (SET_ACC_USE_IS_MEDIA_P1): operate on d->curr_acc_p1
+	(SET_ACC_USE_NOT_MEDIA_P1): operate on d->curr_acc_p1
+	(SET_ACC_USE_IS_MEDIA_P2): operate on d->curr_acc_p1
+	(SET_ACC_USE_NOT_MEDIA_P2): operate on d->curr_acc_p1
+	(update_latencies): Only clear usage flags if the register has no
+	target latency.
+	(frvbf_model_insn_before): Update cur_acc_p1 and cur_acc_p2. Use | (or)
+	not |= (or assgnment).
+	(frvbf_model_insn_after): Print post processing wait for all insns.
+	Update prev_acc_p1 and prev_acc_p2.
+	(frvbf_model_fr500_u_gr_load_store): Use cache memory_latency.
+	(frvbf_model_fr500_u_fr_load_store): Use cache memory_latency.
+	(frvbf_model_fr500_u_swap): Use cache memory_latency.
+	(frvbf_model_fr500_u_media): Use busy_adjustment[4] for out_ACC40Sk.
+	(frvbf_model_fr500_u_media): Use busy_adjustment[5] for out_ACC40Uk.
+	(frvbf_model_fr500_u_media_quad_arith): New function.
+	(frvbf_model_fr500_u_media_dual_mul): New function.
+	(frvbf_model_fr500_u_media_quad_mul): New function.
+	(frvbf_model_fr500_u_media_quad_complex): New function.
+	(frvbf_model_fr500_u_media_dual_expand): New function.
+	(frvbf_model_fr500_u_media_dual_unpack): New function.
+	(frvbf_model_fr500_u_media_dual_btoh): New function.
+	(frvbf_model_fr500_u_media_dual_htob): New function.
+	(frvbf_model_fr500_u_media_dual_btohe): New function.
+	(frv_ref_SI): New function.
+	* cache.h (FRV_CACHE): Add memory_latency field.
+	* cache.c (frv_cache_init): Initialize memory_latency.
+	* arch.h,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+1999-12-17  Dave Brolley  <brolley@cygnus.com>
+
+	* sim-if.c (sim_open): Initialize insn prefetch and reset register.
+	* options.c (OPTIONS_FRV_PROFILE_CACHE): New enumeration.
+	(OPTIONS_FRV_PROFILE_PARALLEL): New enumeration.
+	(OPTIONS_FRV_TIMER): New enumeration.
+	(frv_options): Add --profile-cache, --profile-parallel, --timer.
+	(frv_option_handler): Override common implementation of -p. Handle
+	--profile-cache, --profile-parallel, --timer.
+	* mloop.in (execute): Call profiling functions if the timer interrupt
+	is enabled.
+	(@cpu@_simulate_insn_prefetch): New function.
+	(main loop): Call @cpu@_simulate_insn_prefetch.
+	* interrupts.c (frv_queue_interrupt): Don't queue two external
+	interrupts of the same priority.
+	(frv_queue_external_interrupt): New function.
+	(frv_external_interrupt): New function.
+	(handle_interrupt): Handle external interrupts.
+	(check_reset): New function.
+	(frv_process_interrupts): Call check_reset.
+	* frv.c: Include "bfd.h"
+	(frvbf_h_psr_get_handler): Set the PIL field.
+	(frvbf_h_psr_set_handler): Get the PIL field.
+	(DUAL_REG): New macro.
+	(DUAL_DOUBLE): New macro.
+	(SET_USE_IS_FPOP): New macro.
+	(SET_USE_NOT_FPOP): New macro.
+	(USE_IS_FPOP): New macro.
+	(SET_USE_IS_MEDIA): New macro.
+	(SET_USE_NOT_MEDIA): New macro.
+	(USE_IS_MEDIA_P1): New macro.
+	(SET_USE_IS_MEDIA_P1): New macro.
+	(SET_USE_NOT_MEDIA_P1): New macro.
+	(SET_USE_IS_MEDIA_P2): New macro.
+	(SET_USE_NOT_MEDIA_P2): New macro.
+	(USE_IS_MEDIA_P2): New macro.
+	(SET_ACC_USE_IS_MEDIA_P1): New macro.
+	(SET_ACC_USE_NOT_MEDIA_P1): New macro.
+	(ACC_USE_IS_MEDIA_P1): New macro.
+	(SET_ACC_USE_IS_MEDIA_P2): New macro.
+	(SET_ACC_USE_NOT_MEDIA_P2): New macro.
+	(ACC_USE_IS_MEDIA_P2): New macro.
+	(RESOURCE_IDIV): New macro.
+	(RESOURCE_FDIV): New macro.
+	(RESOURCE_SQRT): New macro.
+	(fr_busy_adjust): New array.
+	(acc_busy_adjust): New array.
+	(apply_latency_adjustments): New function.
+	(update_latencies): New function.
+	(handle_wait_cycles): New function.
+	(handle_resource_wait): New function.
+	(update_target_latencies): New function.
+	(frvbf_model_insn_before): Add resource latency to cycle counts.
+	(frvbf_model_insn_after): Add resource latency to cycle counts.
+	(update_GR_latency): New function.
+	(update_GRdouble_latency): New function.
+	(update_FR_latency): New function.
+	(update_FRdouble_latency): New function.
+	(decrease_ACC_busy): New function.
+	(decrease_FR_busy): New function.
+	(increase_FR_busy): New function.
+	(update_ACC_latency): New function.
+	(update_CCR_latency): New function.
+	(update_idiv_resource_latency): New function.
+	(update_fdiv_resource_latency): New function.
+	(update_fsqrt_resource_latency): New function.
+	(vliw_wait_for_GR): New function.
+	(vliw_wait_for_GRdouble): New function.
+	(vliw_wait_for_FR): New function.
+	(vliw_wait_for_FRdouble): New function.
+	(vliw_wait_for_CCR): New function.
+	(vliw_wait_for_ACC): New function.
+	(vliw_wait_for_idiv_resource): New function.
+	(vliw_wait_for_fdiv_resource): New function.
+	(vliw_wait_for_fsqrt_resource): New function.
+	(enforce_full_fr_latency): New function.
+	(frvbf_model_fr500_u_exec): New function.
+	(frvbf_model_fr500_u_integer): New function.
+	(frvbf_model_fr500_u_imul): New function.
+	(frvbf_model_fr500_u_idiv): New function.
+	(frvbf_model_fr500_u_branch): New function.
+	(frvbf_model_fr500_u_set_hilo): New function.
+	(frvbf_model_fr500_u_gr_load_store): New function.
+	(frvbf_model_fr500_u_fr_load_store): New function.
+	(frvbf_model_fr500_u_swap): New function.
+	(frvbf_model_fr500_u_fr2fr): New function.
+	(frvbf_model_fr500_u_fr2gr): New function.
+	(frvbf_model_fr500_u_spr2gr): New function.
+	(frvbf_model_fr500_u_gr2fr): New function.
+	(frvbf_model_fr500_u_gr2spr): New function.
+	(post_wait_for_FR): New function.
+	(post_wait_for_FRdouble): New function.
+	(post_wait_for_ACC): New function.
+	(post_wait_for_CCR): New function.
+	(post_wait_for_fdiv): New function.
+	(post_wait_for_fsqrt): New function.
+	(adjust_float_register_busy): New function.
+	(adjust_double_register_busy): New function.
+	(restore_float_register_busy): New function.
+	(restore_double_register_busy): New function.
+	(frvbf_model_fr500_u_float_arith): New function.
+	(frvbf_model_fr500_u_float_dual_arith): New function.
+	(frvbf_model_fr500_u_float_div): New function.
+	(frvbf_model_fr500_u_float_sqrt): New function.
+	(frvbf_model_fr500_u_float_compare): New function.
+	(frvbf_model_fr500_u_float_dual_compare): New function.
+	(frvbf_model_fr500_u_float_convert): New function.
+	(frvbf_model_fr500_u_media): New function.
+	(frvbf_model_fr500_u_barrier): New function.
+	(frvbf_model_fr500_u_membar): New function.
+	* frv-sim.h (LEUINT): New macro.
+	(GET_HSR0_SA): New macro.
+	(struct frv_interrupt_timer): New struct.
+	(struct frv_interrupt_state): Add timer fiield.
+	(frv_queue_external_interrupt): New function.
+	(frv_external_interrupt): New function.
+	(frv_profile_info): New function.
+	(PROFILE_CACHE_IDX): New enumerator.
+	(PROFILE_PARALLEL_IDX): New enumerator.
+	(PROFILE_cache): New macro.
+	(PROFILE_parallel): New macro.
+	(WITH_PROFILE_CACHE_P): New macro.
+	(WITH_PROFILE_PARALLEL_P): New macro.
+	* cache.h (FRV_CACHE): Add last_was_hit field.
+	* cache.c (get_tag): Use new last_was_hit field.
+	(frv_cache_read): Ditto.
+	(frv_cache_write): Ditto.
+	* arch.h,cpu.c,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+1999-12-13  Dave Brolley  <brolley@cygnus.com>
+
+	* frv.c (frvbf_h_spr_set_handler): Handle accumulator guards.
+	(frvbf_clear_all_accumulators): Pass frvbf_h_acc40S_set to
+	sim_queue_fn_di_write.
+	(frvbf_media_cut_ss): New function.
+	* frv-sim.h (frvbf_media_cut_ss): New function.
+	* cpu.c,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+1999-12-13  Dave Brolley  <brolley@cygnus.com>
+
+	* pipeline.c (check_insn_major_constraints): F-4, F-8 and M-8 have
+	no constraints.
+	* interrupts.c (frv_queue_illegal_instruction_interrupt): Use
+	FRV_IS_FLOAT_INSN and FRV_IS_MEDIA_INSN.
+	(frv_detect_insn_access_interrupts): Use FRV_IS_FLOAT_INSN and
+	FRV_IS_MEDIA_INSN.
+	* frv.c (frvbf_model_simple_u_exec): New function.
+	* frv-sim.h (FRV_IS_FLOAT_INSN): Range includes F-8.
+	(FRV_IS_MEDIA_INSN): Range includes M-8.
+
+	* Makefile.in (stamp-cpu): add 'simple' to the list of machines.
+	* arch.c,arch.h,cpu.h,cpuall.h,decode.c,decode.h,model.c,sem.c:
+	Regenerate.
+
+1999-12-10  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c (check_registers_available): New function.
+	(clear_ne_flags): Generate register_exception if register(s) not
+	available.
+	(frvbf_commit): Generate register_exception if register(s) not
+	available.
+	* interrupts.c (frv_program_or_software_interrupt): No need to copy
+	GR4-GR7 to SR0-SR4.
+	* frv.c (frvbf_h_psr_set_handler): Special handling for PSR.S and
+	PSR.ESR.
+	(frvbf_h_psr_s_set_handler): New function.
+	(frvbf_h_psr_esr_set_handler): New function.
+	(frvbf_switch_supervisor_user_context): New function.
+	(frvbf_scan_result): Reflect latest ISA.
+	* frv-sim.h (frvbf_h_psr_s_set_handler): New function.
+	(frvbf_h_psr_esr_set_handler): New function.
+	(frvbf_switch_supervisor_user_context): New function.
+	(GET_HSR0_FRN): New Macro.
+	(GET_HSR0_GRN): New Macro.
+	(GET_HSR0_FRHE): New Macro.
+	(GET_HSR0_FRLE): New Macro.
+	(GET_HSR0_GRHE): New Macro.
+	(GET_HSR0_GRLE): New Macro.
+	(frv_ec): New value for FRV_EC_COMMIT_EXCEPTION.
+	(GET_ESFR): New bit ordering.
+	(SET_ESFR): New bit ordering.
+	* cpu.c,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+1999-12-10  Michael Meissner  <meissner@cygnus.com>
+
+	* Makefile.in (sim-if.o): Add eng.h dependency.
+
+1999-12-09  Dave Brolley  <brolley@cygnus.com>
+
+	* mloop.in (execute): Pass sc->first_insn_p to @cpu@_model_insn_before.
+	Pass sc->last_insn_p to @cpu@_model_insn_before.
+	(main loop): Compute sc->first_insn_p.
+	* frv.c (frvbf_model_insn_before): Set state variables.
+	(frvbf_model_insn_after): Count basic cycles. Set state variables.
+	(frvbf_model_fr500_u_integer): Remove.
+	* arch.h,cpu.h,decode.h,model.c: Regenerate.
+
+1999-12-07  Dave Brolley  <brolley@cygnus.com>
+
+	* sim-main.h (cache.h): Include it.
+	(insn_cache): New member.
+	(data_cache): New member.
+	(CPU_INSN_CACHE): New macro.
+	(CPU_DATA_CACHE): New macro.
+	* sim-if.c (WANT_CPU): New macro.
+	(WANT_CPU_FRVBF): New macro.
+	(sim_open): Call sim_add_option_table. Call frv_cache_init for the
+	data and insn caches for each cpu.
+	(sim_close): Call frv_cache_term for the insn and data caches of each
+	cpu.
+	* mloop.in (extract): Read insn from the cache.
+	(main loop): Access the insn cache in order to maintain stats.
+	* memory.c (data_non_cache_access): New function.
+	(insn_non_cache_access): New function.
+	(frvbf_read_mem_QI): Attempt to read from the cache first.
+	(frvbf_read_mem_UQI): Ditto.
+	(frvbf_read_mem_HI): Ditto.
+	(frvbf_read_mem_UHI): Ditto.
+	(frvbf_read_mem_SI): Ditto.
+	(frvbf_read_mem_DI): Ditto.
+	(frvbf_read_mem_DF): Ditto.
+	(frvbf_read_imem_USI): New function.
+	(frvbf_write_mem_QI): Write through the cache is it is enabled.
+	(frvbf_write_mem_UQI): Ditto.
+	(frvbf_write_mem_HI): Ditto.
+	(frvbf_write_mem_UHI): Ditto.
+	(frvbf_write_mem_SI): Ditto.
+	(frvbf_write_mem_DI): Ditto.
+	(frvbf_write_mem_DF): Ditto.
+	(frvbf_mem_set_QI): New function.
+	(frvbf_mem_set_HI): New function.
+	(frvbf_mem_set_SI): New function.
+	(frvbf_mem_set_DI): New function.
+	(frvbf_mem_set_DF): New function.
+	(frvbf_mem_set_XI): New function.
+	* interrupts.c (frv_save_data_written_for_interrupts): Handle
+	CGEN_FN_MEM_QI_WRITE,
+	CGEN_FN_MEM_HI_WRITE, CGEN_FN_MEM_SI_WRITE, CGEN_FN_MEM_DI_WRITE,
+	CGEN_FN_MEM_DF_WRITE, CGEN_FN_MEM_XI_WRITE.
+	* frv.c (frvbf_load_quad_GR): Call frvbf_read_mem_SI.
+	Call sim_queue_fn_mem_xi_write.
+	(frvbf_load_quad_FRint): Call frvbf_read_mem_SI.
+	Call sim_queue_fn_mem_xi_write.
+	(frvbf_load_quad_CPR): Call frvbf_read_mem_SI.
+	Call sim_queue_fn_mem_xi_write.
+	(frvbf_insn_cache_preload): New function. 
+	(frvbf_data_cache_preload): New function. 
+	(frvbf_insn_cache_unlock): New function. 
+	(frvbf_data_cache_unlock): New function. 
+	(frvbf_insn_cache_invalidate): New function. 
+	(frvbf_data_cache_invalidate): New function. 
+	(frvbf_data_cache_flush): New function. 
+	* frv-sim.h (sim-options.h): Include it.
+	(GET_HSR0): New macro.
+	(SET_HSR0): New macro. 
+	(GET_HSR0_ICE): New macro. 
+	(SET_HSR0_ICE): New macro. 
+	(GET_HSR0_DCE): New macro. 
+	(SET_HSR0_DCE): New macro. 
+	(GET_HSR0_CBM): New macro. 
+	(GET_HSR0_RME): New macro. 
+	(GET_IHSR8): New macro. 
+	(GET_IHSR8_NBC): New macro. 
+	(frvbf_insn_cache_preload): New function.
+	(frvbf_data_cache_preload): New function.
+	(frvbf_insn_cache_unlock): New function.
+	(frvbf_data_cache_unlock): New function.
+	(frvbf_insn_cache_invalidate): New function.
+	(frvbf_data_cache_invalidate): New function.
+	(frvbf_data_cache_flush): New function.
+	(insn_non_cache_access): New function.
+	(frvbf_read_imem_USI): New function.
+	(frvbf_mem_set_QI): New function.
+	(frvbf_mem_set_HI): New function.
+	(frvbf_mem_set_SI): New function.
+	(frvbf_mem_set_DI): New function.
+	(frvbf_mem_set_DF): New function.
+	(frvbf_mem_set_XI): New function.
+	(frv_options): FRV specific command line options.
+	* Makefile.in (SIM_OBJS): Add options.o and cache.o.
+	(SIM_EXTRA_DEPS): Add $(sim-options_h).
+	(cache.o): New target.
+	(options.o): New target.
+	* cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+	* cache.h: New file.
+	* cache.c: New file.
+	* options.c: New file.
+
+1999-11-29  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c (frvbf_check_non_excepting_load): Use new NE_FLAG macros.
+	(frvbf_check_non_excepting_divide): Ditto.
+	(clear_ne_flags): Ditto
+	(frvbf_commit): Ditto.
+	* pipeline.c (frv_pipeline_add_insn): Clear the NE index for all insns.
+	* mloop.in (_parallel_write_init): Clear NE flags here.
+	* interrupts.c (frv_queue_fp_exception_interrupt): Set NE flags here
+	for non excepting insns. Also check for masked interrupts here.
+	(frv_process_interrupts): Write NE flags here.
+	(set_fp_exception_registers): No longer check for masked interrupts
+	here.
+	(check_for_compound_interrupt): No need to worry about masked
+	interrupts.
+	* frv-sim.h (frv_interrupt_state): Add f_ne_flags member.
+	(GET_NE_FLAGS): New macro.
+	(SET_NE_FLAGS): New macro.
+	(GET_NE_FLAG): Operate on accumulated argument.
+	(SET_NE_FLAG): Operate on accumulated argument.
+	(CLEAR_NE_FLAG): Operate on accumulated argument.
+	* Makefile.in (FRVBF_INCLUDE_DEPS): Add $(SIM_EXTRA_DEPS)
+	(frv.o): Correct dependencies.
+	(traps.o): Ditto.
+	(pipeline.o): Ditto.
+	(interrupts.o): Ditto.
+	(memory.o): Ditto.
+	* sem.c: Regenerate.
+
+1999-11-26  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c (frvbf_fpu_error): Only call frv_queue_fp_exception if
+	there is an exception indicated in the mask.
+	* pipeline.c (frv_pipeline_add_insn): Clear ne_index in the interrupt
+	state when adding a floating point insn to the pipeline.
+	* interrupts.c (set_fp_exception_registers): Set NE flag for
+	non-excepting insns.
+	* frv-sim.h (frvbf_h_fr_double_get_handler): Mode of data is DF.
+	(frvbf_h_fr_double_set_handler): Mode of data is DF.
+	(frvbf_h_fr_int_get_handler): New function.
+	(frvbf_h_fr_int_set_handler): New function.
+	(frvbf_set_ne_index): New function.
+	(NE_NOFLAG): New macro.
+	(frv_interrupt_state): Add ne_index member.
+	* frv.c (frvbf_h_fr_double_get_handler): Mode of data is DF.
+	(frvbf_h_fr_double_set_handler): Mode of data is DF.
+	(frvbf_h_fr_int_get_handler): New function.
+	(frvbf_h_fr_int_set_handler): New function.
+	(frvbf_set_ne_index): New function.
+	* cpu.c,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+1999-11-24  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+1999-11-23  Dave Brolley  <brolley@cygnus.com>
+
+	* frv-sim.h (frvbf_media_cut): New function.
+	* frv.c (frvbf_media_cut): New function.
+	* cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+1999-11-22  Dave Brolley  <brolley@cygnus.com>
+
+	* frv-sim.h (frvbf_clear_all_accumulators): New function.
+	* frv.c.h (frvbf_clear_all_accumulators): New function.
+	* cpu.c,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+1999-11-18  Dave Brolley  <brolley@cygnus.com>
+
+	* pipeline.c (frv_pipeline_add_insn): Only clear MSR0 and FSR0 fields
+	if this is the first insn of its class in the pipeline.
+	* frv-sim.h (frvbf_media_register_not_aligned): New function.
+	* traps.c (frvbf_media_register_not_aligned): New function.
+	* cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+1999-11-17  Dave Brolley  <brolley@cygnus.com>
+
+	* pipeline.c (frv_pipeline_add_insn): Clear MSRx.SIE fields.
+	* frv-sim.h (OR_MSR_SIE): New macro.
+	(CLEAR_MSR_SIE): New macro.
+	(frvbf_media_overflow): Now takes sie argument.
+	(frv_set_mp_exception_registers): Now takes sie argument.
+	* interrupts.c (frv_set_mp_exception_registers): Now takes sie argument.
+	Set MSRx.SIE field.
+	* cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+1999-11-15  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c (frv_mtrap): New function.
+	(frvbf_media_cr_not_aligned): New function.
+	(frvbf_media_acc_not_aligned): New function.
+	(frvbf_media_overflow): New function.
+	* pipeline.c (frv_pipeline_add_insn): Clear MSR fields.
+	* interrupts.c: Call frv_set_mp_exception_registers.
+	(frv_set_mp_exception_registers): New function.
+	* frv-sim.h (frv_msr_mtt): New enumeration.
+	(GET_MSR): New macro.
+	(SET_MSR): New macro.
+	(GET_MSR_AOVF): New macro.
+	(SET_MSR_AOVF): New macro.
+	(GET_MSR_OVF): New macro.
+	(SET_MSR_OVF): New macro.
+	(CLEAR_MSR_OVF): New macro.
+	(GET_MSR_MTT): New macro.
+	(SET_MSR_MTT): New macro.
+	(frv_set_mp_exception_registers): New function.
+	(frv_mtrap): New function.
+	(FRV_IS_MEDIA_INSN): New macro.
+	* cpu.c,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+1999-11-10  Dave Brolley  <brolley@cygnus.com>
+
+	* sim-main.h (_sim_cpu): Add debug_state member.
+	* mloop.in (_parallel_write_queued): Clear data_written.length.
+	* interrupts.c (frv_interrupt_table): Offset of BREAK_EXCEPTION
+	handler is 0xff.
+	(frv_queue_break_interrupt): New function.
+	(frv_break_interrupt): New function.
+	(handle_interrupt): Handle break_interrupt.
+	(frv_non_operating_interrupt): Now takes interrupt_kind.
+	* frv-sim.h (frv_queue_break_interrupt): New function.
+	(frv_break_interrupt): New function.
+	(frv_break): New function.
+	(frv_non_operating_interrupt): Now takes interrupt_kind.
+	* cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+1999-11-09  Dave Brolley  <brolley@cygnus.com>
+
+	* pipeline.c (frv_pipeline_add_insn): Clear FSR0.FTT when adding
+	a floating point insn.
+	* traps.c (frvbf_fpu_error): Map fpu status to frv interrupts.
+	* interrupts.c (frv_queue_illegal_instruction_interrupt): Call
+	frv_queue_fp_exception_interrupt.
+	(frv_queue_fp_exception_interrupt): New function.
+	(next_available_fq): New function.
+	(set_fp_exception_registers): New function.
+	(set_exception_status_registers): Now returns 1 if interrupt not masked.
+	(check_for_compound_interrupt): Now returns NULL if interrupt masked.
+	(frv_program_interrupt): Don't process interrupt if it is masked.
+	* frv.c (frvbf_h_fr_double_get_handler): Call
+	frv_queue_fp_exception_interrupt.
+	(frvbf_h_fr_double_set_handler): Call frv_queue_fp_exception_interrupt.
+	(frvbf_h_fr_quad_set_handler): Call frv_queue_fp_exception_interrupt.
+	(frvbf_store_quad_FRint): Call frv_queue_fp_exception_interrupt.
+	* frv-sim.h: Get/set hardware directly in GET/SET macros.
+	(frv_fp_exception_info): New struct type.
+	(frv_interrupt_queue_element): Add fp_info member.
+	(frv_fsr_traps): New enumeration.
+	(frv_fsr_ftt): New enumeration.
+	(frv_sie): New enumeration.
+	(frv_miv): New enumeration.
+	(GET_FSR): New macro.
+	(SET_FSR): New macro.
+	(GET_FSR_TEM): New macro.
+	(SET_FSR_QNE): New macro.
+	(SET_FSR_FTT): New macro.
+	(GET_FSR_AEXC): New macro.
+	(SET_FSR_AEXC): New macro.
+	(GET_FQ): New macro.
+	(SET_FQ): New macro.
+	(SET_FQ_OPC): New macro.
+	(SET_FQ_MIV): New macro.
+	(SET_FQ_SIE): New macro.
+	(SET_FQ_FTT): New macro.
+	(SET_FQ_CEXC): New macro.
+	(GET_FQ_VALID): New macro.
+	(SET_FQ_VALID): New macro.
+	(frv_queue_fp_exception_interrupt): New function.
+	(FRV_IS_FLOAT_INSN): New macro.
+
+1999-11-04  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c (frvbf_fpu_error): No floating point errors need to be
+	detected.
+	* interrupts.c (clear_exception_status_registers): Clear 'valid' fields
+	of the ESR registers too.
+	(set_exception_status_registers): Don't set EAR for any precise
+	interrupts. Register index should be 1 for insns in PIPE_I1. Clear
+	ESR.EAV and ESR.EDV if not setting them. Set ESR.VALID.
+	(non_operating_interrupt): No need for return code.
+	(frv_program_or_software_interrupt): Process interrupt regardless
+	of operating mode. If PSR.ET was not set at the start of processing,
+	then stop the simulation with a message.
+	(frv_save_data_written_for_interrupts): Handle CGEN_FN_XI_WRITE and
+	CGEN_MEM_XI_WRITE.
+	* frv.c (frvbf_h_gr_quad_set_handler): New function.
+	(frvbf_h_fr_quad_set_handler): New function.
+	(frvbf_h_cpr_quad_set_handler): New function.
+	(frvbf_load_quad_GR): Renamed from frvbf_load_multiple_GR. Use new
+	sim_queue_fn_xi_write.
+	(frvbf_load_quad_FRint): Renamed from frvbf_load_multiple_GR. Use new
+	sim_queue_fn_xi_write.
+	(frvbf_load_quad_CPR): Renamed from frvbf_load_multiple_GR. Use new
+	sim_queue_fn_xi_write.
+	(frvbf_store_quad_GR): Renamed from frvbf_store_multiple_GR. Use new
+	sim_queue_mem_xi_write.
+	(frvbf_store_quad_FRint): Renamed from frvbf_store_multiple_GR. Use new
+	sim_queue_mem_xi_write.
+	(frvbf_store_quad_CPR): Renamed from frvbf_store_multiple_GR. Use new
+	sim_queue_mem_xi_write.
+	* frv-sim.h (frvbf_h_gr_quad_set_handler): New function.
+	(frvbf_h_fr_quad_set_handler): New function.
+	(frvbf_h_cpr_quad_set_handler): New function.
+	(SET_ESR_VALID): New macro.
+	(CLEAR_ESR_VALID): New macro.
+	(CLEAR_ESR_EAV): New macro.
+	(CLEAR_ESR_EDV): New macro.
+	* sem.c: Regenerate.
+
+1999-11-02  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c (frv_core_signal): Call
+	frv_queue_mem_address_not_aligned_interrupt.
+	* mloop.in (_parallel_write_queued): Call
+	frv_save_data_written_for_interrupts.
+	* frv.c (frvbf_h_gr_double_get_handler): Call
+	frv_queue_register_exception_interrupt.
+	(frvbf_h_cpr_double_get_handler): Call
+	frv_queue_register_exception_interrupt.
+	(frvbf_h_cpr_double_set_handler): Call
+	frv_queue_register_exception_interrupt.
+	(frvbf_load_multiple_GR): Call
+	frv_queue_register_exception_interrupt.
+	(frvbf_store_multiple_GR): Call
+	frv_queue_register_exception_interrupt.
+	(frvbf_load_multiple_CPR): Call
+	frv_queue_register_exception_interrupt.
+	(frvbf_store_multiple_CPR): Call
+	frv_queue_register_exception_interrupt.
+	(frvbf_h_tbr_get_handler): Fix TBR.TBA mask.
+	* interrupts.c (frv_queue_software_interrupt): Now returns interrupt
+	queue element.
+	(frv_queue_program_interrupt): Now returns interrupt queue element.
+	(frv_queue_illegal_instruction_interrupt): Now returns interrupt queue
+	element.
+	(frv_queue_interrupt): Now returns interrupt queue element.
+	(frv_queue_register_exception_interrupt): New function.
+	(frv_queue_mem_address_not_aligned_interrupt): New function.
+	(frv_save_data_written_for_interrupts): New function.
+	(next_available_edr): EDR registers available in blocks of 4.
+	(clear_exception_status_registers): New function.
+	(set_exception_status_registers): Pass esr to SET_ESR* macros.
+
+	* frv-sim.h (struct frv_data_written): New struct type.
+	(frv_interrupt_queue_element): Add data_written member.
+	(frv_queue_software_interrupt): Now returns interrupt queue element.
+	(frv_queue_program_interrupt): Now returns interrupt queue element.
+	(frv_queue_illegal_instruction_interrupt): Now returns interrupt queue
+	element.
+	(frv_queue_interrupt): Now returns interrupt queue element.
+	(frv_queue_register_exception_interrupt): New function.
+	(frv_queue_mem_address_not_aligned_interrupt): New function.
+	(frv_save_data_written_for_interrupts): New function.
+
+1999-10-27  Dave Brolley  <brolley@cygnus.com>
+
+	* interrupts.c (ITABLE_ENTRY): New macro.
+	(frv_interrupt_table): Add exception codes.
+	(next_available_esr): New function.
+	(next_available_edr): New function.
+	(set_edr_register): New function.
+	(set_exception_status_registers): New function.
+	(check_for_compound_interrupt): Record information on all interrupts
+	found.
+	(frv_program_interrupt): Always call check_for_compound_interrupt.
+	* frv.c (frvbf_h_pc_set_handler): Removed.
+	(frvbf_h_spr_get_handler): Handle LR register.
+	(frvbf_h_spr_set_handler): Handle LR register.
+	(frvbf_h_lr_get_handler): New function.
+	(frvbf_h_lr_set_handler): New function.
+	* frv-sim.h (frvbf_h_lr_get_handler): New function.
+	(frvbf_h_lr_set_handler): New function.
+	(frv_ec): New enumeration.
+	(frv_interrupt): Add frv_ec field.
+	(frv_rec): New enumeration.
+	(frv_daec): New enumeration.
+	(frv_interrupt_queue_element): Add eaddress, rec, iaec, daec fields.
+	(SET_ESR_EC): New macro.
+	(SET_ESR_REC): New macro.
+	(SET_ESR_IAEC): New macro.
+	(SET_ESR_DAEC): New macro.
+	(SET_ESR_EAV): New macro.
+	(GET_ESR_EDV): New macro.
+	(SET_ESR_EDV): New macro.
+	(GET_ESR_EDN): New macro.
+	(SET_ESR_EDN): New macro.
+	(GET_ESR): New macro.
+	(SET_ESR): New macro.
+	(SET_EPCR): New macro.
+	(SET_EAR): New macro.
+	(SET_EDR): New macro.
+	(GET_ESFR): New macro.
+	(SET_ESFR): New macro.
+	* cpu.c,cpu.h,sem.c: Rebuild.
+
+1999-10-26  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c (frvbf_check_non_excepting_load): Only set NESR, NECR, NEEAR
+	if mach is frv.
+	(clear_nesr_neear): Only execute if mach is frv.
+
+1999-10-22  Dave Brolley  <brolley@cygnus.com>
+
+	* sim-main.h (sim_cpu): Add pipeline.
+	(CPU_PIPELINE): New macro.
+	* mloop.in (_parallel_write_queued): Maintain pc in cpu during writes.
+	(main loop): Maintain pc in cpu.
+	* frv-sim.h (frv_queue_software_interrupt): New interface.
+	(frv_queue_program_interrupt): New interface.
+	(frv_queue_illegal_instruction_interrupt: New interface.
+	(frv_queue_interrupt): New interface.
+	(frv_detect_insn_access_interrupts): New interface.
+	(frv_process_interrupts): New interface.
+	(frv_program_interrupt): New interface.
+	(frv_software_interrupt): New interface.
+	(frv_program_or_software_interrupt): New interface.
+	(FRV_PIPELINE): Moved from pipline.c.
+	(frv_pipeline_reset): New interface.
+	(frv_pipeline_add_insn): New interface.
+	* interrupts.c (frv_queue_software_interrupt): New interface.
+	(frv_queue_program_interrupt): New interface.
+	(frv_queue_illegal_instruction_interrupt: New interface.
+	(frv_queue_interrupt): New interface.
+	(frv_detect_insn_access_interrupts): New interface.
+	(frv_process_interrupts): New interface.
+	(frv_program_interrupt): New interface.
+	(frv_software_interrupt): New interface.
+	(frv_program_or_software_interrupt): New interface.
+	* frv.c: Use new interfaces.
+	* pipeline.c: Use new interfaces.
+	* traps.c: Use new interfaces.
+	* memory.c: Use new interfaces.
+	(frv_address_forbidden): No longer static.
+
+1999-10-19  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c (frvbf_check_non_excepting_load): Set NESR.DAEC, NESR.REC and
+	NESR.EC.
+	* mloop.in (_parallel_write_queued): Handle CGEN_FN_PC_WRITE.
+	* frv.c (frvbf_h_pc_set_handler): New function.
+	* interrupts.c (frv_detect_data_interrupt): Removed.
+	(address_forbidden): Removed.
+	* frv-sim.h (frv_detect_data_interrupt): Removed.
+	(NESR_MEM_ADDRESS_NOT_ALIGNED): New macro.
+	(NESR_REGISTER_NOT_ALIGNED): New macro.
+	(NESR_UQI_SIZE): New macro.
+	(NESR_QI_SIZE): New macro.
+	(NESR_UHI_SIZE): New macro.
+	(NESR_HI_SIZE): New macro.
+	(NESR_SI_SIZE): New macro.
+	(NESR_DI_SIZE): New macro.
+	(NESR_XI_SIZE): New macro.
+	(GET_NESR_DAEC): New macro.
+	(SET_NESR_DAEC): New macro.
+	(GET_NESR_REC): New macro.
+	(SET_NESR_REC): New macro.
+	(GET_NESR_EC): New macro.
+	(SET_NESR_EC): New macro.
+	(frvbf_read_mem_QI): New function.
+	(frvbf_read_mem_UQI): New function.
+	(frvbf_read_mem_HI): New function.
+	(frvbf_read_mem_UHI): New function.
+	(frvbf_read_mem_SI): New function.
+	(frvbf_read_mem_WI): New function.
+	(frvbf_read_mem_DI): New function.
+	(frvbf_read_mem_DF): New function.
+	(frvbf_write_mem_QI): New function.
+	(frvbf_write_mem_UQI): New function.
+	(frvbf_write_mem_HI): New function.
+	(frvbf_write_mem_UHI): New function.
+	(frvbf_write_mem_SI): New function.
+	(frvbf_write_mem_WI): New function.
+	(frvbf_write_mem_DI): New function.
+	(frvbf_write_mem_DF): New function.
+	* Makefile.in (SIM_OBJS): Add memory.o.
+	* cpu.c,cpu.h,sem.c: Rebuild.
+
+1999-10-18  Dave Brolley  <brolley@cygnus.com>
+
+	* sim-if.c (sim_open): Use a real fpu error function.
+	* pipeline.c (frv_pipeline_add_insn): Don't add invalid insns.
+	* mloop.in (_parallel_write_queued): Clear queue after writing.
+	* interrupts.c (check_for_compound_interrupt): New function.
+	(non_operating_interrupt): New function.
+	* frv-sim.h (frvbf_h_gr_double_get_handler): New function.
+	(frvbf_h_gr_double_set_handler): New function.
+	(frvbf_h_fr_double_get_handler): New function.
+	(frvbf_h_fr_double_set_handler): New function.
+	(frvbf_h_cpr_double_get_handler): New function.
+	(frvbf_h_cpr_double_set_handler): New function.
+	(frv_interrupt_queue_element): New struct type.
+	(frv_queue_program_interrupt): Now takes pc.
+	(frv_queue_illegal_instruction_interrupt): Now takes pc.
+	(frv_queue_interrupt): Now takes pc.
+	(frv_program_interrupt): Now takes frv_interrupt_queue_element.
+	(frv_software_interrupt): Now takes frv_interrupt_queue_element.
+	(frvbf_division_exception): New function.
+	(frvbf_fpu_error): New function.
+	(frvbf_load_multiple_GR): New function.
+	(frvbf_load_multiple_FR): New function.
+	(frvbf_load_multiple_CPR): New function.
+	* frv.c (frvbf_h_gr_double_get_handler): New function.
+	(frvbf_h_gr_double_set_handler): New function.
+	(frvbf_h_fr_double_get_handler): New function.
+	(frvbf_h_fr_double_set_handler): New function.
+	(frvbf_h_cpr_double_get_handler): New function.
+	(frvbf_h_cpr_double_set_handler): New function.
+	(frv_interrupt_queue_element): New struct type.
+	(frv_queue_program_interrupt): Now takes pc.
+	(frv_queue_illegal_instruction_interrupt): Now takes pc.
+	(frv_queue_interrupt): Now takes pc.
+	(frv_program_interrupt): Now takes frv_interrupt_queue_element.
+	(frv_software_interrupt): Now takes frv_interrupt_queue_element.
+	(frvbf_fpu_error): New function.
+	(frvbf_load_multiple_GR): New function.
+	(frvbf_load_multiple_FR): New function.
+	(frvbf_load_multiple_CPR): New function.
+	* traps.c (frvbf_division_exception): New function.
+	* cpu.c,cpu.h,decode.c,decode.h,model.c,sem.c: Rebuild.
+
+1999-10-12  Dave Brolley  <brolley@cygnus.com>
+
+	* mloop.in (new_vpc): New variable.
+	(main loop): Call frv_detect_insn_access_interrupts. Call
+	frv_detect_data_interrupts.
+	* interrupts.c (access_queued_to): New function.
+	(frv_detect_data_interrupts): New function.
+	(frv_detect_insn_access_interrupts): New function.
+	(frv_program_or_software_interrupt): Set PSR.S.
+	* frv-sim.h (frv_detect_data_interrupts): New function.
+	(frv_detect_insn_interrupts): New function.
+
+1999-10-07  Dave Brolley  <brolley@cygnus.com>
+
+	* frv-sim.h (frvbf_h_gr_hi_get_handler): New function.
+	(frvbf_h_gr_hi_set_handler): New function.
+	(frvbf_h_gr_lo_get_handler): New function.
+	(frvbf_h_gr_lo.set_handler): New function.
+	* frv.c (frvbf_h_gr_hi_get_handler): New function.
+	(frvbf_h_gr_hi_set_handler): New function.
+	(frvbf_h_gr_lo_get_handler): New function.
+	(frvbf_h_gr_lo.set_handler): New function.
+	(frvbf_model_fr500_u_integer): New function.
+	* arch.h,cpu.h,cpu.c,decode.h,decode.c,model.c,sem.c: Rebuild.
+
+1999-10-04  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c: Use sim_engine_abort.
+	* pipeline.c (frv_pipeline): Add field for insn major.
+	(add_next_to_pipe): Return address of matching pipeline.
+	(find_major_in_pipeline): New function.
+	(check_insn_major_constraints: New function.
+	(frv_pipeline_add_insn): Add checks for insn major constraints.
+	* interrupts.c (frv_process_interrupts): Use sim_engine_abort.
+	* frv.c (frvbf_h_spr_get_handler): No need to abort.
+
+Thu Sep 30 18:10:25 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* pipeline.c: New file.
+	* mloop.in (main loop): Call frv_pipeline_reset.
+ 	Call frv_pipeline_add_insn.
+	* frv-sim.h (frv_pipeline_reset): New function.
+	(frv_pipeline_add_insn): New function.
+	* Makefile.in (SIM_OBJS): Add pipeline.o
+
+1999-09-29  Doug Evans  <devans@casey.cygnus.com>
+
+	* sem.c: Rebuild.
+	* traps.c (sim_engine_invalid_insn): New arg `vpc'.  Change type of
+	result to SEM_PC.  Return vpc.
+
+Wed Sep 29 16:01:52 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* interrupts.c (frv_interrupt_table): DATA_STORE_ERROR is imprecise.
+	(frv_queue_interrupt): Don't detect identical interrupts here.
+
+Wed Sep 29 14:49:52 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* interrupts.c: New file.
+	* traps.c (sim_engine_invalid_insn): Return PC of next insn.
+	(frv_software_interrupt): Moved to interrupts.c.
+	(frv_itrap): New interface. Call frv_queue_software_interrupt.
+	* mloop.in (@cpu@_parallel_write_init): set previous_vliw_pc.
+	(@cpu@_perform_writeback): New function.
+	(main loop): Call frv_process_interrupts.
+	* frv-sim.h (frvbf_write_next_vliw_addr_to_PCSR): Removed.
+	(frv_itrap): New interface.
+	(frv_interrupt_class): New enumeration.
+	(frv_interrupt_kind): New enumeration.
+	(struct frv_interrupt): New struct type.
+	(frv_interrupt_table): New table of interrupt information.
+	(FRV_INTERRUPT_QUEUE_SIZE): New macro.
+	(struct frv_interrupt_state): New struct type.
+	(frv_interrupt_state): New global variable.
+	(previous_vliw_pc): New global variable.
+	(frv_queue_software_interrupt): New function.
+	(frv_queue_program_interrupt): New function.
+	(frv_queue_interrupt): New function.
+	(frv_process_interrupts): New function.
+	(frv_program_interrupt): New function.
+	(frv_software_interrupt): New function.
+	(frv_program_or_software_interrupt): New function.
+	(frv_clear_interrupt_classes): New function.
+	* frv.c (frvbf_write_next_vliw_addr_to_PCSR): Removed.
+	* Makefile.in (SIM_OBJS): Add interrupts.o
+	* sem.c: Rebuild.
+
+1999-09-25  Doug Evans  <devans@casey.cygnus.com>
+
+	* cpu.h,cpuall.h,decode.c,sem.c: Rebuild.
+
+Tue Sep 21 17:16:47 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* mloop.in (main loop): Determine last insn from scache entry.
+	* cpu.h: Rebuild.
+	* cpuall.h: Rebuild.
+
+Tue Sep 14 14:21:31 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* frv-sim.h (frvbf_write_next_vliw_addr_to_PCSR): New flag.
+	(NECR_ELOS): Define as unshifted value.
+	(NECR_NEN): Define as unshifted value.
+	(NECR_VALID): Define as unshifted value.
+	(SET_NESR): Rewite to use post-write queue.
+	(SET_NESR_VALID): Rewite to operate on argument.
+	(SET_NESR_EAV): Rewite to operate on argument.
+	(SET_NESR_FR): Rewite to operate on argument.
+	(CLEAR_NESR_FR): Rewite to operate on argument.
+	(SET_NESR_DRN): Rewite to operate on argument.
+	(SET_NESR_SIZE): Rewite to operate on argument.
+	(SET_NESR_NEAN): Rewite to operate on argument.
+	(SET_NEEAR): Rewite to use post-write queue.
+	(SET_NE_FLAG): Rewite to use post-write queue.
+	(CLEAR_NE_FLAG): Rewite to use post-write queue.
+	* traps.c (frv_software_interrupt): Rewite to use post-write queue.
+	(frv_rett): Rewite to use post-write queue.
+	(next_available_nesr): Rewrite to use new macro interfaces.
+	(next_valid_nesr): Ditto.
+	(frvbf_check_non_excepting_load): Ditto.
+	(frvbf_check_recovering_store): Ditto.
+	(clear_nesr_neear): Ditto.
+	(clear_ne_flags): Ditto.
+	* mloop.in (main loop): Update PCSR with address of next VLIW insn
+	when flag is set.
+	* frv.c (frvbf_h_spr_get_handler): Shift register fields here now.
+	(frvbf_store_multiple_GR): Rewite to use post-write queue.
+	(frvbf_store_multiple_FRint): Rewite to use post-write queue.
+	(frvbf_store_multiple_CPR): Rewite to use post-write queue.
+	* Makefile.in (frv.o): Depend on cgen-par.h.
+
+Fri Sep 10 17:03:15 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* frv-sim.h (frvbf_set_write_next_vliw_addr_to_LR): New function.
+	(frvbf_write_next_vliw_addr_to_LR): New flag.
+	* frv.c (frvbf_set_write_next_vliw_addr_to_LR): New function.
+	* mloop.in: Only take the first branch in a VLIW insn. Set LR to the
+	address of the next VLIW insn if flag is set.
+	* cpu.h,decode.c,sem.c: Rebuild.
+
+Tue Sep  7 13:44:23 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* mloop.in: Limit parallel insns to MAX_PARALLEL_INSNS.
+	* sem.c: Rebuild.
+
+1999-09-02  Doug Evans  <devans@casey.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+1999-09-01  Doug Evans  <devans@casey.cygnus.com>
+
+	* decode.c: Rebuild.
+
+Mon Aug 30 17:54:57 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c (frv_rett): New function.
+	* frv.c (frvbf_h_spr_get_handler): Handle bpsr.
+	(frvbf_h_spr_set_handler): Handle bpsr.
+	(frvbf_h_bpsr_get_handler): New function.
+	(frvbf_h_bpsr_set_handler): New function.
+	* frv-sim.h (frv_rett): New function.
+	(frvbf_h_bpsr_get_handler): New function.
+	(frvbf_h_bpsr_set_handler): New function.
+	* mloop.in: Read actual packing bit.
+	* cpu.c,cpu.h,decode.c,decode.h,model.c,sem.c: Rebuild.
+
+Tue Aug 31 16:04:37 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c (WANT_CPU): New macro.
+	(WANT_CPU_FRVBF): New macro.
+	(frvbf_check_recovering_store): Use registers for source and queue
+ 	writes.
+	* mloop.in: New main loop for parallel support.
+	(@cpu@_parallel_write_init): New function.
+	(@cpu@_parallel_write_queued): New function.
+	* frv-sim.h (set_icc_for_shift_left): New interface.
+	(set_icc_for_shift_right): New interface.
+	(frvbf_check_recovering_store): New interface.
+	* frv.c (set_icc_for_shift_left): Pass and return icc value.
+	(set_icc_for_shift_right): Pass and return icc value.
+	(frvbf_check_recovering_store): New interface.
+	* Makefile.in (FRV_OBJS): Add cgen-par.o.
+	(stamp-mloop): Add cgen parallel options.
+	(stamp-arch): Remove with-profile option.
+	(stamp-cpu): Add cgen parallel options.
+	* arch.h,cpu.h,decode.c,decode.h,model.c,sem.c: Rebuild.
+
+1999-08-28  Doug Evans  <devans@casey.cygnus.com>
+
+	* cpu.h,decode.c,sem.c: Rebuild.
+
+Wed Aug 25 12:25:04 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* arch.h,cpu.h,decode.h,model.c,sem.c: Rebuild.
+
+Thu Aug 19 17:59:00 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* configure.in: fr500 now the default model.
+	* configure: Regenerate.
+	* frv.c: Change frv-1 to frv-gen.
+	(frvbf_model_fr500_u_exec): New function.
+	* Makefile.in (stamp-cpu): Use 'mach=frv,fr500' to build decoder.
+	* mloop.in: Fix typos in comments.
+	* arch.c,arch.h,cpu.h,cpuall.h,decode.h,model.c,sem.c: Rebuild.
+
+1999-08-17  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.h,decode.c,decode.h,model.c,sem.c: Rebuild.
+
+1999-08-09  Doug Evans  <devans@casey.cygnus.com>
+
+	* cpu.h,decode.c,decode.h,model.c,sem.c: Rebuild.
+
+1999-08-04  Doug Evans  <devans@casey.cygnus.com>
+
+	* cpu.h,cpuall.h,decode.c,model.c,sem.c: Rebuild.
+
+Fri Jul 16 14:50:15 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* frv.c (frvbf_fetch_register): Use GDB register number macros.
+	(frvbf_store_register): Use GDB register number macros.
+	(frvbf_cut): New function.
+	* frv-sim.h (GR_REGNUM_MAX): New macro.
+	(FR_REGNUM_MAX): New macro.
+	(PC_REGNUM): New macro.
+	(LR_REGNUM): New macro.
+	(frvbf_cut): New function.
+	* cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
+
+1999-07-15  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* frv.c (frvbf_fetch_register): Add ability to get LR register,
+ 	add default for unhandled registers.
+	(frvbf_store_register): Add ability to set LR register.
+
+1999-07-14  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* frv.c (frvbf_fetch_register, frvbf_store_register): Fill in.
+	(decode_gdb_dr_regnum): Remove, not used.
+
+1999-07-13  Michael Meissner  <meissner@cygnus.com>
+
+	* Makefile.in (SIM_EXTRA_FLAGS): Incorporate @sim_trapdump@.
+
+	* configure.in (--enable-sim-trapdump): New switch to make unknown
+	traps dump the register contents, instead of doing the trap thing.
+	* configure: Regenerate.
+
+	* frv-sim.h (TRAP_BREAKPOINT): Define as 81, so it can be used.
+	(TRAP_REGDUMP{1,2}): Define to provide register dumping support
+	temporarily.
+
+	* traps.h (toplevel): Include bfd.h, libiberity.h.
+	(frv_itrap): Add support for --enable-sim-trapdump and traps 2,3
+	dumping the registers.
+
+Thu Jul  8 10:57:39 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* Makefile.in (SIM_EXTRA_LIBS): Removed. libm no longer needed.
+
+Wed Jul  7 17:01:12 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.c,cpu.h,decode.c,model.c,sem.c: Rebuild.
+
+Tue Jul  6 16:12:18 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* frv.c (frvbf_square_root_SF): Removed.
+	(frvbf_square_root_DF): Removed.
+	(frvbf_h_fr_double_get_handler): Removed.
+	(frvbf_h_fr_double_set_handler): Removed.
+	(frvbf_h_fr_int_get_handler): Removed.
+	(frvbf_h_fr_int_set_handler): Removed.
+	* frv-sim.h (frvbf_square_root_SF): Removed.
+	(frvbf_square_root_DF): Removed.
+	(frvbf_h_fr_double_get_handler): Removed.
+	(frvbf_h_fr_double_set_handler): Removed.
+	(frvbf_h_fr_int_get_handler): Removed.
+	(frvbf_h_fr_int_set_handler): Removed.
+	* decode.c,decode.h,model.c,sem.c: Rebuild.
+
+1999-07-05  Doug Evans  <devans@casey.cygnus.com>
+
+	* Makefile.in (SIM_OBJS): Add cgen-fpu.o, cgen-accfp.o.
+	* cpu.c,cpu.h,decode.c,decode.h,model.c,sem.c: Rebuild.
+	* sim-if.c (sim_open): Initialize fpu.
+	* frv-sim.h (SETMEMSF,SETMEMDF): Delete.
+	* frv.c (frvbf_store_multiple_FRint): Replace frvbf_h_fr_int_get
+	with frvbf_h_fr_get.
+
+Wed Jun 30 15:56:56 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* frv-sim.h (NESR_RANGE): New macro.
+	(NO_NESR): New macro.
+	(GET_NESR_VALID): New macro.
+	(next_ne_index): Removed.
+	* traps.c (next_available_nesr): New function.
+	(next_valid_nesr): New function.
+	(frvbf_check_non_excepting_load): Use next_available_nesr.
+	(frvbf_check_recovering_store): Use next_available_nesr and
+	next_valid_nesr.
+	(clear_nesr_neear): Use next_available_nesr and	next_valid_nesr.
+	(frvbf_check_recovering_store): Only consider one matching register.
+	* sem.c: Rebuild.
+
+Tue Jun 29 16:54:32 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* frv.c (frvbf_square_root_SF): New function.
+	(frvbf_square_root_DF): New function.
+	(frvbf_h_fr_double_get_handler): New function.
+	(frvbf_h_fr_double_set_handler): New function.
+	* frv-sim.h (frvbf_square_root_SF): New function.
+	(frvbf_square_root_DF): New function.
+	(frvbf_h_fr_double_get_handler): New function.
+	(frvbf_h_fr_double_set_handler): New function.
+	* cpu.h,cpu.c,decode.c,decode.h,model.c,sem.c: Rebuild.
+
+1999-06-28  Dave Brolley  <brolley@cygnus.com>
+
+	* decode.c,decode.h,model.c,sem.c: Regenerate.
+
+Thu Jun 24 17:26:32 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* Makefile.in (SIM_EXTRA_LIBS): Add -lm.
+	* frv-sim.h (frvbf_h_fr_int_get_handler): New function.
+	(frvbf_h_fr_int_set_handler): New function.
+	(frvbf_store_multiple_FRint): New function.
+	(frvbf_square_root_SF): New function.
+	* frv.c (frvbf_h_fr_int_get_handler): New function.
+	(frvbf_h_fr_int_set_handler): New function.
+	(frvbf_store_multiple_FRint): New function.
+	(frvbf_square_root_SF): New function.
+	* cpu.h,cpu.c,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+1999-06-23  Doug Evans  <devans@casey.cygnus.com>
+
+	* Makefile.in (stamp-mloop): Delete -fast -pbb -switch args
+	to genmloop.sh.  Pass -scache instead.
+	(mloop.o): Delete sem-switch.c dependency.
+	(sem-switch.c): Delete rule.
+	(stamp-cpu): Don't build sem-switch.c.
+	* sem-switch.c: Delete.
+	* mloop.in (xfull-exec-*): Fix call to execute.
+	* tconfig.in (WITH_SCACHE_PBB): Define as 0.
+
+	* cpu.h,decode.c,model.c,sem-switch.c,sem.c: Rebuild.
+
+Tue Jun 22 16:23:57 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.h,decode.c,sem.c,sem-switch.c: Regenerate.
+
+Mon Jun 21 17:34:10 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* mloop.in (execute): Force gr0 to zero before each insn.
+	* cpu.h,cpu.c,decode.c,sem.c,sem-switch.c: Regenerate.
+
+1999-06-18  Doug Evans  <devans@casey.cygnus.com>
+
+	* cpu.h,decode.c,model.c,sem-switch.c,sem.c: Rebuild.
+
+Fri Jun 18 17:49:23 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* frv.c (frvbf_h_gr_get_handler): New function.
+	(frvbf_h_gr_set_handler): New function:
+	(frvbf_store-multiple_GR): New function:
+	(frvbf_store-multiple_FR): New function:
+	(frvbf_store-multiple_CPR): New function:
+	* frv-sim.h (frvbf_h_gr_get_handler): New function.
+	(frvbf_h_gr_set_handler): New function:
+	(frvbf_store-multiple_GR): New function:
+	(frvbf_store-multiple_FR): New function:
+	(frvbf_store-multiple_CPR): New function:
+	* traps.c (frv_itrap): Implement proper syscalls interface.
+	* cpu.h,cpu.c,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+Fri Jun 18 14:36:23 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c (frvbf_check_non_excepting_divide): New function.
+	(frvbf_check_recovering_store): New function.
+	(clear_nesr_neear): New function.
+	(clear_ne_flags): New function.
+	(frvbf_commit): New function.
+
+	* frv-sim.h (frvbf_check_non_excepting_divide): New function.
+	(frvbf_check_recovering_store): New function.
+	(clear_nesr_neear): New function.
+	(clear_ne_flags): New function.
+	(frvbf_commit): New function.
+	* cpu.h,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+1999-06-16  Dave Brolley  <brolley@cygnus.com>
+
+	* frv.c (frvbf_h_spr_get_handler): Handle SPR_NECR.
+	(frvbf_h_spr_set_handler): Handle SPR_NECR.
+	* traps.c (next_ne_index): New variable.
+	(frvbf_check_non_excepting_load): New function.
+	* frv-sim.h (NECR_ELOS): New macro.
+	(NECR_NEN): New macro.
+	(NECR_VALID): New macro.
+	(SET_NESR_VALID): New macro.
+	(SET_NESR_EAV): New macro.
+	(SET_NESR_FR): New macro.
+	(CLEAR_NESR_FR): New macro.
+	(SET_NESR_DRN): New macro.
+	(SET_NESR_SIZE): New macro.
+	(SET_NESR_NEAN): New macro.
+	(SET_NEEAR): New macro.
+	(GET_NE_FLAG): New macro.
+	(SET_NE_FLAG): New macro.
+	(CLEAR_NE_FLAG): New macro.
+	(frvbf_check_non_excepting_load): New function:
+	* cpu.h,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+Wed Jun  9 18:12:49 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.h,decode.c,model.c,sem.c,sem-switch.c: Regenerate.
+
+Tue Jun  8 18:13:51 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* frv.c (cr_logic): Correct andcr, nandcr, andncr and nandncr.
+	* cpu.h,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+Mon Jun  7 17:09:15 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.h,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+1999-06-07  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.h,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+Thu Jun  3 17:33:31 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.h,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+Wed Jun  2 17:50:21 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.h,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+Tue Jun  1 17:58:53 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.h,decode.c,model.c,sem.c,sem-switch.c: Regenerate.
+
+Mon May 31 17:57:25 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c (frv_software_interrupt): Pass current_cpu to
+	frvbf_h_psr_esr_get.
+	(frv_software_interrupt): Calculate the new PC based on TBR.
+	* cpu.h,decode.c,model.c,sem.c,sem-switch.c: Regenerate.
+
+1999-05-31  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.h,decode.c,model.c,sem.c,sem-switch.c: Regenerate.
+
+Thu May 27 17:42:00 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* frv-sim.h (frvbf_h_cccr_get_handler): New function.
+	(frvbf_h_cccr_set_handler): New function.
+	(frvbf_scan_result): New function.
+	(frvbf_cr_logic): New function.
+	* frv.c (frvbf_h_cccr_get_handler): New function.
+	(frvbf_h_cccr_set_handler): New function.
+	(frvbf_scan_result): New function.
+	(frvbf_cr_logic): New function.
+	(cr_ops,cr_result,cr_logic): New table.
+	* cpu.h,decode.c,model.c,sem.c,sem-switch.c: Regenerate.
+
+1999-05-25  Dave Brolley  <brolley@cygnus.com>
+
+	* frv.c (frvbf_h_spr_get_handler): Add support for TBR and PSR.
+	(frvbf_h_spr_set_handler): Add support for TBR and PSR.
+	(frv_psr_get_handler): New function.
+	(frv_psr_set_handler): New function.
+	(frv_tbr_get_handler): New function.
+	(frv_tbr_set_handler): New function.
+	(frvbf_h_ccr_get_handler): Add support for fCC.
+	(frvbf_h_ccr_set_handler): Add support for fCC.
+	* frv-sim.h (frv_psr_get_handler): New function.
+	(frv_psr_set_handler): New function.
+	(frv_tbr_get_handler): New function.
+	(frv_tbr_set_handler): New function.
+	* traps.c (frv_software_interrupt): Implement.
+	* cpu.h,cpu.c,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+Thu May 20 16:39:27 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.h,cpu.c,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+1999-05-18  Dave Brolley  <brolley@cygnus.com>
+
+	* frv.c: (frvbf_set_icc_for_shift_left): New function.
+	(frvbf_set_icc_for_shift_right): New function.
+	* frv-sim.h (frvbf_set_icc_for_shift_left): New function.
+	(frvbf_set_icc_for_shift_right): New function.
+	(SETMEMSF): New Macro.
+	(SETMEMDF): New Macro.
+	* cpu.h,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+Thu May 13 17:14:49 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* frv.c (frvbf_h_ccr_get_handler): New function.
+	(frvbf_h_ccr_set_handler): New function.
+	* cpu.h,cpu.c,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+Tue May 11 16:13:15 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* frv-sim.h (frvbf_h_spr_get_handler,frvbf_h_spr_set_handler,
+ 	frvbf_h_isr_get_handler, frvbf_h_isr_set_handler): New functions.
+	* frv.c: Likewise.
+	* cpu.h,cpu.c,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+1999-05-10  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.h,cpu.c,decode.c,model.c,sem.c,sem-switch.c: Regenerate.
+
+Thu May  6 16:48:21 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.h,decode.c,sem.c,sem-switch.c: Regenerate.
+	* frv-sim.h (TRAP_SYSCALL): Define as 0x80.
+
+Wed May  5 11:52:24 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* traps.c (frv_software_interrupt): New function.
+	(frv_itrap): New function.
+	* frv-sim.h (TRAP_SYSCALL): define as 0.
+	* cpu.h,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+Mon May  3 13:49:21 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* cpu.h,decode.c,decode.h,model.c,sem.c,sem-switch.c: Regenerate.
+
+Thu Apr 29 17:37:06 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* Directory created.

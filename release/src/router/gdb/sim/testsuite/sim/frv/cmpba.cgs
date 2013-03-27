@@ -1,0 +1,41 @@
+# frv testcase for cmpba $GRi,$GRj,$ICCi_1
+# mach: fr400 fr550
+
+	.include "testutils.inc"
+
+	start
+
+	.global cmpba
+cmpba:
+	set_gr_limmed  	0xdead,0xbeef,gr7
+	set_gr_limmed  	0xdead,0xbeef,gr8
+	set_icc         0x0e,0		; Set mask opposite of expected
+	cmpba		gr7,gr8,icc0
+	test_icc	0 0 0 1 icc0
+
+	set_gr_limmed  	0x21ad,0xbeef,gr8
+	set_icc         0x0e,0		; Set mask opposite of expected
+	cmpba		gr7,gr8,icc0
+	test_icc	0 0 0 1 icc0
+
+	set_gr_limmed  	0xde52,0xbeef,gr8
+	set_icc         0x0e,0		; Set mask opposite of expected
+	cmpba		gr7,gr8,icc0
+	test_icc	0 0 0 1 icc0
+
+	set_gr_limmed  	0xdead,0x41ef,gr8
+	set_icc         0x0e,0		; Set mask opposite of expected
+	cmpba		gr7,gr8,icc0
+	test_icc	0 0 0 1 icc0
+
+	set_gr_limmed  	0xdead,0xbe10,gr8
+	set_icc         0x03,0		; Set mask opposite of expected
+	cmpba		gr7,gr8,icc0
+	test_icc	0 0 0 1 icc0
+
+	set_gr_limmed  	0xbeef,0xdead,gr8
+	set_icc         0x0f,0		; Set mask opposite of expected
+	cmpba		gr7,gr8,icc0
+	test_icc	0 0 0 0 icc0
+
+	pass

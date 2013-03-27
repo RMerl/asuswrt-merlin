@@ -1,0 +1,13 @@
+Package: aicloud
+Architecture: mipsel
+Priority: optional
+Section: net
+Version: 1.0.0.3
+Maintainer: ASUS
+Source: http://127.0.0.1/
+URL: http://192.168.1.1:8082
+Description: webdav server
+Depends: pcre,sqlite,libxml2
+Suggests: 
+Conflicts: 
+Enabled: yes

@@ -67,6 +67,9 @@
 #define WSEC_ENABLED(wsec)	((wsec) & (WEP_ENABLED | TKIP_ENABLED | AES_ENABLED))
 #endif /* BCMWAPI_WPI */
 #define WSEC_SES_OW_ENABLED(wsec)	((wsec) & SES_OW_ENABLED)
+#ifdef BCMWAPI_WAI
+#define WSEC_SMS4_ENABLED(wsec)	((wsec) & SMS4_ENABLED)
+#endif /* BCMWAPI_WAI */
 #define IS_WPA_AUTH(auth)	((auth) == WPA_AUTH_NONE || \
 				 (auth) == WPA_AUTH_UNSPECIFIED || \
 				 (auth) == WPA_AUTH_PSK)
@@ -97,6 +100,13 @@
 				   BRCM_AUTH_DPT))
 #endif 
 
+#ifdef BCMWAPI_WAI
+#define IS_WAPI_AUTH(auth)	((auth) == WAPI_AUTH_UNSPECIFIED || \
+				 (auth) == WAPI_AUTH_PSK)
+#define INCLUDES_WAPI_AUTH(auth) \
+				((auth) & (WAPI_AUTH_UNSPECIFIED | \
+					   WAPI_AUTH_PSK))
+#endif /* BCMWAPI_WAI */
 
 #if defined(BCMEXTCCX)
 #define IS_CCKM_AUTH(auth) ((auth) == WPA_AUTH_CCKM || (auth) == WPA2_AUTH_CCKM)
@@ -112,6 +122,11 @@
 				 (akm) == RSN_AKM_FBT_PSK)
 #define IS_MFP_AKM(akm)	((akm) == RSN_AKM_MFP_1X || \
 				 (akm) == RSN_AKM_MFP_PSK)
+#ifdef BCMWAPI_WAI
+#define IS_WAPI_AKM(akm)	((akm) == RSN_AKM_NONE || \
+				 (akm) == RSN_AKM_UNSPECIFIED || \
+				 (akm) == RSN_AKM_PSK)
+#endif /* BCMWAPI_WAI */
 
 /* Broadcom(OUI) authenticated key managment suite */
 #define BRCM_AKM_NONE           0

@@ -713,6 +713,37 @@ filter_media(const struct dirent *d)
 	       ) ));
 }
 
+int
+is_dir(const char *path)
+{
+	struct stat stat_buf;
+
+	if (!stat(path, &stat_buf))
+		return S_ISDIR(stat_buf.st_mode);
+	else
+		return 0;
+}
+
+int
+is_sys_dir(const char *dirname)
+{
+	char *MS_System_folder[] = {"SYSTEM VOLUME INFORMATION", "RECYCLER", "RECYCLED", "$RECYCLE.BIN", NULL};
+	char *Linux_System_folder[] = {"lost+found", NULL};
+	int i;
+
+	for (i = 0; MS_System_folder[i] != NULL; ++i) {
+		if (!strcasecmp(dirname, MS_System_folder[i]))
+			return 1;
+	}
+
+	for (i = 0; Linux_System_folder[i] != NULL; ++i) {
+		if (!strcasecmp(dirname, Linux_System_folder[i]))
+		return 1;
+	}
+
+	return 0;
+}
+
 void
 ScanDirectory(const char * dir, const char * parent, enum media_types dir_type)
 {
@@ -767,9 +798,11 @@ ScanDirectory(const char * dir, const char * parent, enum media_types dir_type)
 		sprintf(full_path, "%s/%s", dir, namelist[i]->d_name);
 		name = escape_tag(namelist[i]->d_name, 1);
 		if(strstr(full_path,"/Download2/InComplete") || strstr(full_path,"/Download2/Seeds") || strstr(full_path,"/Download2/config") || strstr(full_path,"/Download2/action"))
-			 continue;
+			continue;
 		if((strncmp(name,"asusware",8) == 0))//eric added for have no need to scan asusware folder
 			continue;
+		if (is_dir(full_path) && is_sys_dir(name))
+                        continue;
 		if( namelist[i]->d_type == DT_DIR )
 		{
 			type = TYPE_DIR;
@@ -806,6 +839,9 @@ ScanDirectory(const char * dir, const char * parent, enum media_types dir_type)
 		DPRINTF(E_WARN, L_SCANNER, _("Scanning %s finished (%llu files)!\n"), dir, fileno);
 	}
 }
+
+extern void create_scantag();
+extern void remove_scantag();
 
 void
 start_scanner()

@@ -66,14 +66,6 @@ function applyRule(){
 		}
 		
 		save_checkbox();
-		
-		/* Viz banned 2012.07.30
-		if(document.form.qos_enable.value != document.form.qos_enable_orig.value)
-    	FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>"); */
-    	
-		if(wl6_support != -1)
-			document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
-
 		showLoading();	 	
 		document.form.submit();
 	}

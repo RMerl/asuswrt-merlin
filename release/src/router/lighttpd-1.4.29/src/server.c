@@ -139,6 +139,9 @@ static void sigaction_handler(int sig, siginfo_t *si, void *context) {
 		break;
 	case SIGCHLD:
 		break;
+	case SIGUSR2:
+		process_share_link_for_router_sync_use();		
+		break;
 	}
 }
 #elif defined(HAVE_SIGNAL) || defined(HAVE_SIGACTION)
@@ -980,8 +983,15 @@ int main (int argc, char **argv) {
 	}
 
 	#if EMBEDDED_EANBLE
+	#ifndef APP_IPKG
 	buffer_copy_string( srv->last_login_info, nvram_get_webdav_last_login_info() );
 	buffer_copy_string( srv->cur_login_info, nvram_get_webdav_last_login_info() );
+	#else
+	char *last_login_info = nvram_get_webdav_last_login_info();
+    buffer_copy_string( srv->last_login_info, last_login_info);
+    buffer_copy_string( srv->cur_login_info, last_login_info);
+    free(last_login_info);
+	#endif
 	#else
 	buffer_copy_string( srv->last_login_info, "admin>2012/08/08 18:28:28>100.100.100.100" );
 	buffer_copy_string( srv->cur_login_info, "admin>2012/08/08 18:28:28>100.100.100.100" );
@@ -1057,6 +1067,9 @@ int main (int argc, char **argv) {
 	sigaction(SIGALRM, &act, NULL);
 	sigaction(SIGCHLD, &act, NULL);
 
+	//- 20121108 JerryLin add
+	sigaction(SIGUSR2, &act, NULL);
+	
 #elif defined(HAVE_SIGNAL)
 	/* ignore the SIGPIPE from sendfile() */
 	signal(SIGPIPE, SIG_IGN);
@@ -1065,18 +1078,22 @@ int main (int argc, char **argv) {
 	signal(SIGTERM, signal_handler);
 	signal(SIGHUP,  signal_handler);
 	signal(SIGCHLD,  signal_handler);
-	signal(SIGINT,  signal_handler);
+	signal(SIGINT,  signal_handler);	
 #endif
 
 #if EMBEDDED_EANBLE
 	sigset_t sigs_to_catch;
 
 	/* set the signal handler */
-    	sigemptyset(&sigs_to_catch);
-    	sigaddset(&sigs_to_catch, SIGTERM);
-    	sigprocmask(SIG_UNBLOCK, &sigs_to_catch, NULL);
+    sigemptyset(&sigs_to_catch);
+    sigaddset(&sigs_to_catch, SIGTERM);
+	sigaddset(&sigs_to_catch, SIGUSR2);
+    sigprocmask(SIG_UNBLOCK, &sigs_to_catch, NULL);
 
-    	signal(SIGTERM, sigaction_handler);  
+    signal(SIGTERM, sigaction_handler);
+
+	//- 20121108 JerryLin add
+	signal(SIGUSR2, sigaction_handler);
 #endif
 
 #ifdef USE_ALARM
@@ -1225,7 +1242,7 @@ int main (int argc, char **argv) {
 			return -1;
 		}
 	}
-
+	
 	/* main-loop */
 	while (!srv_shutdown) {
 		int n;
@@ -1282,7 +1299,7 @@ int main (int argc, char **argv) {
 				int cs = 0;
 				connections *conns = srv->conns;
 				handler_t r;
-
+				
 				switch(r = plugins_call_handle_trigger(srv)) {
 				case HANDLER_GO_ON:
 					break;

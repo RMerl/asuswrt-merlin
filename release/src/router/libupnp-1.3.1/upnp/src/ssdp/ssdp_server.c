@@ -516,6 +516,9 @@ unique_service_name( IN char *cmd,
 
         ptr1 = strstr( cmd, ":" );
         if( ptr1 != NULL ) {
+		        if( ( ptr3 - ptr1 ) > COMMAND_LEN )
+		            return -1;
+
             strncpy( TempBuf, ptr1, ptr3 - ptr1 );
             TempBuf[ptr3 - ptr1] = '\0';
             sprintf( Evt->DeviceType, "urn%s", TempBuf );

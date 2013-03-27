@@ -1,0 +1,30 @@
+# fr30 testcase for borl $Rj,@$Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global borl
+borl:
+	; Test borl $Rj,@$Ri
+	mvi_h_mem  	0x55555555,sp
+	set_cc          0x0f		; Condition codes should not change
+	borl      	0x0a,@sp
+	test_cc		1 1 1 1
+	test_h_mem 	0x5f555555,sp
+
+	mvi_h_mem  	0xf0ffffff,sp
+	set_cc          0x04		; Condition codes should not change
+	borl		0x00,@sp
+	test_cc		0 1 0 0
+	test_h_mem 	0xf0ffffff,sp
+
+	mvi_h_mem  	0xdcadbeef,sp
+	set_cc          0x09		; Condition codes should not change
+	borl		0x02,@sp
+	test_cc		1 0 0 1
+	test_h_mem 	0xdeadbeef,sp
+
+	pass

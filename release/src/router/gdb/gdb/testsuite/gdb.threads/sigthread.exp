@@ -1,0 +1,55 @@
+# sigthread.exp -- Expect script to test thread and signal interaction
+# Copyright (C) 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+set testfile sigthread
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
+	 executable { debug }] != "" } {
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if ![runto_main] then {
+   fail "Can't run to main"
+   return 0
+}
+
+gdb_test "handle SIGUSR1 nostop noprint pass"
+gdb_test "handle SIGUSR2 nostop noprint pass"
+
+send_gdb "continue\n"
+gdb_expect {
+    -re "Continuing" {
+	pass "continue"
+    }
+    timeout {
+	fail "continue (timeout)"
+    }
+}
+
+# For this to work we must be sure to consume the "Continuing."
+# message first, or GDB's signal handler may not be in place.
+after 500 {send_gdb "\003"}
+
+# Make sure we do not get an internal error from hitting Control-C
+# while many signals are flying back and forth.
+gdb_test "" "Program received signal SIGINT.*" "stop with control-c"

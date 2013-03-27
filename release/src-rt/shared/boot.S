@@ -508,14 +508,6 @@ checkalign:
 	move	a0,t3				# set block bus address, and
 	move	a1,t1				# set page size for nfl_check_badb
 
-	/* Wait until nflash controller interface ready */
-	li	t9,NIST_CTRL_READY
-	li	t8,NIST_FLASH_READY
-	or	t9,t9,t8
-1:	lw	t8,CC_NAND_INTFC_STATUS(s2)
-	and	t7,t8,t9
-	bne	t7,t9,1b
-	nop
 
 	la	t0,nfl_check_badb		# a0: block bus address, a1: page size
 	add	t0,t0,s5			# relocate address

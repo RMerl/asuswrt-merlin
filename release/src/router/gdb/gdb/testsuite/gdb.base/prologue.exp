@@ -1,0 +1,67 @@
+# Test for prologue skipping in minimal symbols with line info.
+# Copyright 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if { [skip_cplus_tests] } { continue }
+
+set testfile "prologue"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested prologue.exp
+     return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+proc find_breakpoint_pc { sym } {
+    global decimal hex gdb_prompt
+
+    if { [gdb_breakpoint $sym temporary] } {
+	pass "setting breakpoint at $sym"
+    }
+
+    gdb_test "continue" "marker \\(.*\\) at.*" "continue to $sym"
+
+    set pc 0
+    set msg "reading \$pc: $sym"
+    gdb_test_multiple "print/x \$pc" $msg {
+	-re "\\\$$decimal = ($hex)\r\n$gdb_prompt $" {
+	    set pc $expect_out(1,string)
+	    pass $msg
+	}
+    }
+
+    return $pc
+}
+
+# GDB would skip the prologue differently when given a symbol with
+# debug info than when given a minimal symbol from the symbol table.
+# Make sure this is fixed.
+
+set pc1 [find_breakpoint_pc "marker"]
+
+set pc2 [find_breakpoint_pc "other"]
+
+gdb_test "print $pc1 == $pc2" "\\\$$decimal = 1" "same pc from minimal symbol"

@@ -1,0 +1,44 @@
+# frv testcase for stdcu $CPk,@($GRi,$GRj)
+# mach: frv
+# as(frv): -mcpu=frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global stdcu
+stdcu:
+	set_mem_limmed	0xbeef,0xdead,sp
+	inc_gr_immed	-4,sp
+	set_mem_limmed	0xdead,0xbeef,sp
+	set_gr_gr	sp,gr20
+	set_gr_immed	0,gr7
+	set_cpr_limmed	0xbeef,0xdead,cpr8
+	set_cpr_limmed	0xdead,0xbeef,cpr9
+	stdcu		cpr8,@(sp,gr7)
+	test_gr_gr	sp,gr20
+	test_mem_limmed	0xbeef,0xdead,sp
+	inc_gr_immed	4,sp
+	test_mem_limmed	0xdead,0xbeef,sp
+
+	inc_gr_immed	-12,sp
+	set_gr_immed	8,gr7
+	set_cpr_limmed	0x1234,0x5678,cpr8
+	set_cpr_limmed	0x9abc,0xdef0,cpr9
+	stdcu		cpr8,@(sp,gr7)
+	test_gr_gr	sp,gr20
+	test_mem_limmed	0x1234,0x5678,sp
+	inc_gr_immed	4,sp
+	test_mem_limmed	0x9abc,0xdef0,sp
+
+	inc_gr_immed	4,sp
+	set_gr_immed	-8,gr7
+	set_cpr_limmed	0xfedc,0xba98,cpr8
+	set_cpr_limmed	0x7654,0x3210,cpr9
+	stdcu		cpr8,@(sp,gr7)
+	test_gr_gr	sp,gr20
+	test_mem_limmed	0xfedc,0xba98,sp
+	inc_gr_immed	4,sp
+	test_mem_limmed	0x7654,0x3210,sp
+
+	pass

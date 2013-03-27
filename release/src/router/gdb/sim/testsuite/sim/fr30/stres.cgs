@@ -1,0 +1,25 @@
+# fr30 testcase for stres $@Ri+,$u4
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global stres
+stres:
+	; Test stres $@Ri+,$u4
+	; The current implementation simply increments Ri
+	mvi_h_gr   	0x1000,r7
+	set_cc          0x0f		; Condition codes are irrelevent
+	stres      	0,@r7+
+	test_cc		1 1 1 1
+	test_h_gr  	0x1004,r7
+
+	mvi_h_gr   	0x1000,r7
+	set_cc          0x0f		; Condition codes are irrelevent
+	stres      	0xf,@r7+
+	test_cc		1 1 1 1
+	test_h_gr  	0x1004,r7
+
+	pass

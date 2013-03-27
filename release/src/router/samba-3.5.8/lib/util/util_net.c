@@ -53,6 +53,9 @@ bool interpret_string_addr_internal(struct addrinfo **ppres,
 	/* By default make sure it supports TCP. */
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = flags;
+#ifdef APP_IPKG
+	hints.ai_family = 2;//added by zero
+#endif
 
 	/* Linux man page on getaddinfo() says port will be
 	   uninitialized when service string in NULL */

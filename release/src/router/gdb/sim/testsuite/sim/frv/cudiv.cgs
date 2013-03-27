@@ -1,0 +1,96 @@
+# frv testcase for cudiv $GRi,$GRj,$GRk,$CCi,$cond
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global cudiv
+cudiv:
+	set_spr_immed	0x1b1b,cccr
+
+	; simple division 12 / 3
+	set_gr_immed   	0x00000003,gr2
+	set_gr_immed   	0x0000000c,gr3
+	cudiv      	gr3,gr2,gr3,cc0,1
+	test_gr_immed  	0x00000003,gr2
+	test_gr_immed  	0x00000004,gr3
+
+	; example 1 from division in the fr30 manual
+	set_gr_limmed  	0x0123,0x4567,gr2
+	set_gr_limmed  	0xfedc,0xba98,gr3
+	cudiv      	gr3,gr2,gr3,cc4,1
+	test_gr_limmed 	0x0123,0x4567,gr2
+	test_gr_immed  	0x000000e0,gr3
+
+	; simple division 12 / 3
+	set_gr_immed   	0x00000003,gr2
+	set_gr_immed   	0x0000000c,gr3
+	cudiv      	gr3,gr2,gr3,cc0,0
+	test_gr_immed  	0x00000003,gr2
+	test_gr_immed  	0x0000000c,gr3
+
+	; example 1 from division in the fr30 manual
+	set_gr_limmed  	0x0123,0x4567,gr2
+	set_gr_limmed  	0xfedc,0xba98,gr3
+	cudiv      	gr3,gr2,gr3,cc4,0
+	test_gr_limmed 	0x0123,0x4567,gr2
+	test_gr_limmed 	0xfedc,0xba98,gr3
+
+	; simple division 12 / 3
+	set_gr_immed   	0x00000003,gr2
+	set_gr_immed   	0x0000000c,gr3
+	cudiv      	gr3,gr2,gr3,cc1,0
+	test_gr_immed  	0x00000003,gr2
+	test_gr_immed  	0x00000004,gr3
+
+	; example 1 from division in the fr30 manual
+	set_gr_limmed  	0x0123,0x4567,gr2
+	set_gr_limmed  	0xfedc,0xba98,gr3
+	cudiv      	gr3,gr2,gr3,cc5,0
+	test_gr_limmed 	0x0123,0x4567,gr2
+	test_gr_immed  	0x000000e0,gr3
+
+	; simple division 12 / 3
+	set_gr_immed   	0x00000003,gr2
+	set_gr_immed   	0x0000000c,gr3
+	cudiv      	gr3,gr2,gr3,cc1,1
+	test_gr_immed  	0x00000003,gr2
+	test_gr_immed  	0x0000000c,gr3
+
+	; example 1 from division in the fr30 manual
+	set_gr_limmed  	0x0123,0x4567,gr2
+	set_gr_limmed  	0xfedc,0xba98,gr3
+	cudiv      	gr3,gr2,gr3,cc5,1
+	test_gr_limmed 	0x0123,0x4567,gr2
+	test_gr_limmed 	0xfedc,0xba98,gr3
+
+	; simple division 12 / 3
+	set_gr_immed   	0x00000003,gr2
+	set_gr_immed   	0x0000000c,gr3
+	cudiv      	gr3,gr2,gr3,cc2,0
+	test_gr_immed  	0x00000003,gr2
+	test_gr_immed  	0x0000000c,gr3
+
+	; example 1 from division in the fr30 manual
+	set_gr_limmed  	0x0123,0x4567,gr2
+	set_gr_limmed  	0xfedc,0xba98,gr3
+	cudiv      	gr3,gr2,gr3,cc6,1
+	test_gr_limmed 	0x0123,0x4567,gr2
+	test_gr_limmed 	0xfedc,0xba98,gr3
+
+	; simple division 12 / 3
+	set_gr_immed   	0x00000003,gr2
+	set_gr_immed   	0x0000000c,gr3
+	cudiv      	gr3,gr2,gr3,cc3,0
+	test_gr_immed  	0x00000003,gr2
+	test_gr_immed  	0x0000000c,gr3
+
+	; example 1 from division in the fr30 manual
+	set_gr_limmed  	0x0123,0x4567,gr2
+	set_gr_limmed  	0xfedc,0xba98,gr3
+	cudiv      	gr3,gr2,gr3,cc7,1
+	test_gr_limmed 	0x0123,0x4567,gr2
+	test_gr_limmed 	0xfedc,0xba98,gr3
+
+	pass

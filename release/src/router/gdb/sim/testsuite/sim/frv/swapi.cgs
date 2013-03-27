@@ -1,0 +1,39 @@
+# frv testcase for swapi @($GRi,$GRj),$GRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global swapi
+swapi:
+	set_gr_gr		sp,gr20
+	set_mem_limmed		0xdead,0xbeef,sp
+	inc_gr_immed		-4,sp
+	set_gr_gr		sp,gr21
+	set_mem_limmed		0xbeef,0xdead,sp
+	inc_gr_immed		-4,sp
+	set_gr_gr		sp,gr22
+	set_mem_limmed		0xdead,0xbeef,sp
+	inc_gr_immed		4,sp
+
+	set_gr_limmed		0xbeef,0xdead,gr8
+	swapi 			@(sp,-4),gr8
+	test_gr_limmed		0xdead,0xbeef,gr8
+	test_mem_limmed		0xbeef,0xdead,gr22
+	test_mem_limmed		0xbeef,0xdead,gr21
+	test_mem_limmed		0xdead,0xbeef,gr20
+
+	swapi 			@(sp,0),gr8
+	test_gr_limmed		0xbeef,0xdead,gr8
+	test_mem_limmed		0xbeef,0xdead,gr22
+	test_mem_limmed		0xdead,0xbeef,gr21
+	test_mem_limmed		0xdead,0xbeef,gr20
+
+	swapi 			@(sp,4),gr8
+	test_gr_limmed		0xdead,0xbeef,gr8
+	test_mem_limmed		0xbeef,0xdead,gr22
+	test_mem_limmed		0xdead,0xbeef,gr21
+	test_mem_limmed		0xbeef,0xdead,gr20
+
+	pass

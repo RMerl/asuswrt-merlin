@@ -1,0 +1,26 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>ne_get_response_header</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="ref.html" title="neon API reference"><link rel="prev" href="refreqhdr.html" title="ne_add_request_header"><link rel="next" href="refopts.html" title="ne_set_useragent"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">ne_get_response_header</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="refreqhdr.html">Prev</a> </td><th width="60%" align="center">neon API reference</th><td width="20%" align="right"> <a accesskey="n" href="refopts.html">Next</a></td></tr></table><hr></div><div class="refentry" title="ne_get_response_header"><a name="refresphdr"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ne_get_response_header, ne_response_header_iterate — functions to access response headers</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="funcsynopsis"><pre class="funcsynopsisinfo">#include &lt;ne_request.h&gt;</pre><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">const char *<b class="fsfunc">ne_get_response_header</b>(</code></td><td>ne_request *<var class="pdparam">request</var>, </td></tr><tr><td> </td><td>const char *<var class="pdparam">name</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">void *<b class="fsfunc">ne_response_header_iterate</b>(</code></td><td>ne_request *<var class="pdparam">request</var>, </td></tr><tr><td> </td><td>void *<var class="pdparam">cursor</var>, </td></tr><tr><td> </td><td>const char **<var class="pdparam">name</var>, </td></tr><tr><td> </td><td>const char **<var class="pdparam">value</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div></div></div><div class="refsect1" title="Description"><a name="id457036"></a><h2>Description</h2><p>To retrieve the value of a response header field, the
+    <code class="function">ne_get_response_header</code> function can be used,
+    and is given the name of the header to return.</p><p>To iterate over all the response headers returned, the
+    <code class="function">ne_response_header_iterate</code> function can be
+    used.  This function takes a <code class="parameter">cursor</code>
+    parameter which should be <code class="literal">NULL</code> to retrieve the first header. The
+    function stores the name and value of the next header header in
+    the <code class="parameter">name</code> and <code class="parameter">value</code>
+    parameters, and returns a new cursor pointer which can be passed
+    to <code class="function">ne_response_header_iterate</code> to retrieve the
+    next header.</p></div><div class="refsect1" title="Return value"><a name="id457088"></a><h2>Return value</h2><p><code class="function">ne_get_response_header</code> returns a
+    string, or <code class="literal">NULL</code> if no header with that name was given.  If used
+    during request processing, the return value pointer is valid only
+    until the next call to <code class="function">ne_begin_request</code>, or
+    else, until the request object is destroyed.</p><p>Likewise, the cursor, names, and values returned by
+    <code class="function">ne_response_header_iterate</code> are only valid
+    until the next call to <code class="function">ne_begin_request</code> or
+    until the request object is destroyed.</p></div><div class="refsect1" title="Examples"><a name="id457128"></a><h2>Examples</h2><p>The following code will output the value of the
+    <code class="literal">Last-Modified</code> header for a resource:</p><pre class="programlisting">ne_request *req = ne_request_create(sess, "GET", "/foo.txt");
+if (ne_request_dispatch(req) == NE_OK) {
+    const char *mtime = ne_get_response_header(req, "Last-Modified");
+    if (mtime) {
+        printf("/foo.txt has last-modified value %s\n", mtime);
+    }
+}
+ne_request_destroy(req);</pre></div><div class="refsect1" title="See also"><a name="id457150"></a><h2>See also</h2><p><a class="xref" href="refreq.html#ne_request_create">ne_request_create</a>, <a class="xref" href="refreq.html#ne_request_destroy">ne_request_destroy</a>.</p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="refreqhdr.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ref.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="refopts.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">ne_add_request_header </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> ne_set_useragent</td></tr></table></div></body></html>

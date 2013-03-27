@@ -65,7 +65,7 @@
 #iflock{ 
 }
 
-.iconUSBdisk{ background:url(images/New_ui/networkmap/map-iconUSBdisk.png) no-repeat 0% 0%;	width:91px; height:96px; cursor:pointer;}
+.iconUSBdisk{ background:url(images/New_ui/networkmap/USB_2.png) no-repeat 0% 0%;	width:91px; height:95px; cursor:pointer;}
 
 #iconClient{ background:url(images/New_ui/networkmap/map-iconClient.png) no-repeat 0% 0%; width:95px; height:95px; cursor:pointer;}
 .iconPrinter{ background:url(images/New_ui/networkmap/map-iconPrinter.png) no-repeat 0% 0%;	width:91px; height:96px; cursor:pointer;}

@@ -1,0 +1,83 @@
+#!/bin/sh
+#
+# Add2TestDB -- add the current test to the lsof test suite DB
+#
+# This script saves the current TestDB file in TestDB.old and adds
+# the words in config.cflags to it.  "-D" prefixes on the words are
+# removed, the words are sorted, and they are joint in a single
+# line that is catenated to TestDB if it isn't already there.
+#
+# $Id: Add2TestDB,v 1.2 2002/04/19 11:53:37 abe Exp $
+
+# Check for config.flags.
+
+if test ! -r config.cflags
+then
+  echo "$0: no ./config.cflags file"
+  exit 1
+fi
+
+# Check for a current data base file.
+
+if test ! -r TestDB
+then
+  echo "$0: no ./TestDB file"
+  exit 1
+fi
+
+# Form a new data base line.
+
+new=""
+for i in `sort < config.cflags`
+do
+  w=`echo $i | sed 's/^-D//'`
+  if test "X$new" = "X"
+  then
+    new=$w
+  else
+    new="$new $w"
+  fi
+done
+
+# See if the new line is already in the data base.
+
+grep "$new" TestDB > /dev/null 2>&1
+if test $? -eq 0
+then
+  echo "\"$new\" is already in TestDB."
+  exit 1
+fi
+
+# Build a new data base file.
+
+if test ! -w TestDB
+then
+  echo "$0: can't write the following to the end of TestDB:"
+  echo  "    \"$new\""
+  exit 1
+fi
+rm -f TestDB.new
+cp TestDB TestDB.new
+chmod 644 TestDB.new
+echo "$new" >> TestDB.new
+
+# Archive the current data base file, if possible.
+
+if test -d OLD
+then
+  dt=`date`
+  dtm="========== $dt =========="
+  if test -r OLD/TestDB
+  then
+    echo "$dtm" >> OLD/TestDB
+  else
+    echo "$dtm" > OLD/TestDB
+  fi
+  cat TestDB >> OLD/TestDB
+fi
+
+# Put the new data base file in place.
+
+mv TestDB.new TestDB
+echo "\"$new\" added to TestDB."
+exit 0

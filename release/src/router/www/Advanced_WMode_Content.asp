@@ -83,7 +83,7 @@ function initial(){
 	insertExtChannelOption();
 	document.form.wl_channel.value = document.form.wl_channel_orig.value;	
 
-	if(sw_mode == 2 && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
+	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
 		for(var i=5; i>=3; i--)
 			$("MainTable1").deleteRow(i);
 		for(var i=2; i>=0; i--)
@@ -370,8 +370,8 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		  	<div class="formfonttitle"><#menu5_1#> - <#menu5_1_3#></div>
 		  	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		  	<div class="formfontdesc"><#WLANConfig11b_display3_sectiondesc#></div>
-		  	<div style="margin-left:10px;">(2.4GHz MAC) <% nvram_get("wl0_hwaddr"); %></div>
-		  	<div id="mac_5g" style="margin-left:10px;">(5GHz MAC) <% nvram_get("wl1_hwaddr"); %></div>
+		  	<div style="margin-left:40px;">(2.4GHz MAC) <% nvram_get("wl0_hwaddr"); %></div>
+		  	<div id="mac_5g" style="margin-left:40px;">(5GHz MAC) <% nvram_get("wl1_hwaddr"); %></div>
 			
 			<table id="MainTable1" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 			  <thead>

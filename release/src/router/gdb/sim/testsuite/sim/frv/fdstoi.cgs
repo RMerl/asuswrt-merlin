@@ -1,0 +1,23 @@
+# frv testcase for fdstoi $FRj,$FRk
+# mach: frv
+
+	.include "testutils.inc"
+
+	float_constants
+	start
+	load_float_constants
+
+	.global fdstoi
+fdstoi:
+	set_fr_fr	fr20,fr17
+	fdstoi		fr16,fr2
+	test_fr_iimmed	0,fr2
+	test_fr_iimmed	0,fr3
+
+	set_fr_iimmed	0xce05,0x4904,fr2
+	set_fr_fr	fr32,fr3
+	fdstoi		fr2,fr2
+	test_fr_iimmed	0xdeadbf00,fr2
+	test_fr_iimmed	0x00000002,fr3
+
+	pass

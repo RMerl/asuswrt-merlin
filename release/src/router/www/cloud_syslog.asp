@@ -26,6 +26,9 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 
 function initial(){
 	show_menu();
+
+	if('<% nvram_get("rrsut"); %>' != '1')
+		$("rrsLink").style.display = "none";
 }
 </script>
 </head>
@@ -61,6 +64,9 @@ function initial(){
 							<a href="cloud_sync.asp"><div class="tab"><span>Smart Sync</span></div></a>
 						</td>
 						<td>
+							<a id="rrsLink" href="cloud_router_sync.asp"><div class="tab"><span>Sync Server</span></div></a>
+						</td>
+						<td>
 							<a href="cloud_settings.asp"><div class="tab"><span>Settings</span></div></a>
 						</td>
 						<td>
@@ -78,24 +84,32 @@ function initial(){
 							<tbody>
 							<tr>
 							  <td bgcolor="#4D595D" valign="top">
-									<div>&nbsp;</div>
-									<div class="formfonttitle">AiCloud - Settings</div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+								<div>&nbsp;</div>
+								<div class="formfonttitle">AiCloud - Settings</div>
+								<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+								<div class="formfontdesc" style="font-style: italic;font-size: 14px;">This page shows the detailed AiCloud's activities.</div>
 
-								  <div class="formfontdesc" style="font-style: italic;font-size: 14px;">This page shows the detailed AiCloud's activities.</div>
-
-									<table width="100%" style="border-collapse:collapse;">
-
-									  <tr>
-									    <td>
-												<div style="margin-top:8px">
-													<textarea cols="63" rows="27" wrap="off" readonly="readonly" id="textarea" style="width:99%; font-family:'Courier New', Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("clouddisk.log",""); %></textarea>
-												</div>
-											</td>
-									  </tr>
-
+								<table width="100%" style="border-collapse:collapse;">
+									<tr>
+										<td>
+											<div style="margin-top:8px">
+												<textarea cols="63" rows="27" wrap="off" readonly="readonly" id="textarea" style="width:99%; font-family:'Courier New', Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("clouddisk.log",""); %></textarea>
+											</div>
+										</td>
+									</tr>
+								</table>
+									
+								<div>
+									<table class="apply_gen">
+										<tr class="apply_gen" valign="top">
+											<td width="40%" align="center" >
+												<form method="post" name="form3" action="apply.cgi">
+													<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
+												</form>
+											</td>	
+										</tr>
 									</table>
-
+								</div>
 							  </td>
 							</tr>				
 							</tbody>	

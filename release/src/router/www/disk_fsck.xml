@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<xml>
+	<disk1><% apps_fsck_log("1"); %></disk1>
+	<disk2><% apps_fsck_log("2"); %></disk2>
+</xml>

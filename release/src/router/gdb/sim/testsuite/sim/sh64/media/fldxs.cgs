@@ -1,0 +1,16 @@
+# sh testcase for fldx.s $rm, $rn, $frf -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+	movi 0x2800, r0
+	movi 0, r1
+	fldx.s r0, r1, fr0
+	movi 4, r1
+	fldx.s r0, r1, fr0
+	movi -4, r1
+	fldx.s r0, r1, fr0
+	pass

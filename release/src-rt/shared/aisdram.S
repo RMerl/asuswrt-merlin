@@ -147,10 +147,10 @@ ddr1_init:
 	.word	142,	0x002ee004
 	.word	143,	0x002ee004
 	.word	146,	0x000f0033
-	.word	147,	0xf4113c17
-	.word	148,	0xf4113c17
-	.word	149,	0x26c00300
-	.word	150,	0x26c00300
+	.word	147,	0xf4103c17
+	.word	148,	0xf4103c17
+	.word	149,	0x26c00301
+	.word	150,	0x26c00301
 	.word	DMEMC_TABLE_END
 
 ddr2_init:
@@ -550,6 +550,9 @@ init_regs:
 fixs:	bne	s4,DMEMS_CORE_ID,fix2
 	nop
 
+	lw	t1,DMEMC_DDR_CTRL(a1)
+	li	t2,0x00000001			# Set DDR_CTRL bit 0 if SDR
+	or	t1,t1,t2
 	li	t0,0x02020002
 	beq	a3,DM_STAT_SDR,1f
 	nop
@@ -564,8 +567,11 @@ fixs:	bne	s4,DMEMS_CORE_ID,fix2
 	sw	t0,DMEMC_CONTROL32(a1)
 
 	li	t0,0x02000002
+	li	t2,~0x00000001			# Clear DDR_CTRL bit 0 if DDR1
+	and	t1,t1,t2
 
 1:	sw	t0,DMEMC_CONTROL52(a1)
+	sw	t1,DMEMC_DDR_CTRL(a1)
 	li	t0,0x00000001
 	sw	t0,DMEMC_CONTROL53(a1)
 
@@ -585,7 +591,7 @@ fix2:	li	t0,CID_ID_MASK
 	sw	t0,DMEMC_CONTROL22(a1)
 
 	/* Override the dll delays from nvram if provided */
-nvover:	beqz	s8,chhalf
+nvover:	beqz	s8,chtref
 	nop
 
 	# Check for dmems (any rev)
@@ -630,7 +636,7 @@ nvover:	beqz	s8,chhalf
 	or	t0,t0,t1
 	sw	t0,DMEMC_CONTROL143(a1)
 
-	b	chhalf
+	b	chtref
 	nop
 
 old_ncdl:
@@ -643,6 +649,34 @@ old_ncdl:
 	sw	t0,DMEMC_CONTROL23(a1)
 
 	sw	s8,DMEMC_CONTROL22(a1)
+
+chtref:
+	lw	t0,8(t4)		# Pick up sdram_init value for TREF
+	lw	t2,DMEMC_CONTROL29(a1)
+	beq	s4,DMEMS_CORE_ID,1f
+	nop
+
+	li	t1,0x3fff0000
+	and	t0,t0,t1
+	beqz	t0,chhalf
+	nop
+
+	li	t1,~0x3fff0000
+	and	t2,t2,t1
+	b	settref
+	nop
+1:
+	li	t1,0x0fff0000
+	and	t0,t0,t1
+	beqz	t0,chhalf
+	nop
+
+	li	t1,~0x0fff0000
+	and	t2,t2,t1
+
+settref:
+	or	t0,t0,t2
+	sw	t0,DMEMC_CONTROL29(a1)
 
 	/* Check for half-width */
 chhalf:	li	t0,0x80
@@ -1008,11 +1042,22 @@ LEAF(nfl_size_block)
 	nop
 END(nfl_size_block)
 
+	.balign 0x200
+
 
 LEAF(nfl_check_badb)
 	add	t9,a0,zero
 	move	t5,zero
 check_spare:
+	/* Wait until nflash controller interface ready */
+	li	v0,NIST_CTRL_READY
+	li	t8,NIST_FLASH_READY
+	or	v0,v0,t8
+1:	lw	t8,CC_NAND_INTFC_STATUS(s2)
+	and	t7,t8,v0
+	bne	t7,v0,1b
+	nop
+
 	sw	t9,CC_NAND_CMD_ADDR(s2)
 	lw	t9,CC_NAND_CMD_ADDR(s2)		# read back
 	li	t9,NCMD_SPARE_RD

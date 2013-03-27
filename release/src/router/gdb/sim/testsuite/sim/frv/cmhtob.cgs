@@ -1,0 +1,103 @@
+# frv testcase for cmhtob $FRj,$FRk,$CCi,$cond
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global cmhtob
+cmhtob:
+	set_spr_immed	0x1b1b,cccr
+
+	set_fr_iimmed	0x00ad,0x00ef,fr10
+	set_fr_iimmed	0x0034,0x0078,fr11
+	cmhtob		fr10,fr12,cc0,1
+	test_fr_limmed	0xadef,0x3478,fr12
+
+	set_fr_iimmed	0xdead,0xbeef,fr10
+	set_fr_iimmed	0x1234,0x5678,fr11
+	cmhtob		fr10,fr12,cc0,1
+	test_fr_limmed	0xffff,0xffff,fr12
+
+	set_fr_iimmed	0x0134,0x0878,fr10
+	set_fr_iimmed	0x10ad,0x80ef,fr11
+	cmhtob		fr10,fr12,cc4,1
+	test_fr_limmed	0xffff,0xffff,fr12
+
+	set_fr_iimmed	0x00ad,0x00ef,fr10
+	set_fr_iimmed	0x0034,0x0078,fr11
+	cmhtob		fr10,fr12,cc1,0
+	test_fr_limmed	0xadef,0x3478,fr12
+
+	set_fr_iimmed	0xdead,0xbeef,fr10
+	set_fr_iimmed	0x1234,0x5678,fr11
+	cmhtob		fr10,fr12,cc1,0
+	test_fr_limmed	0xffff,0xffff,fr12
+
+	set_fr_iimmed	0x0134,0x0878,fr10
+	set_fr_iimmed	0x10ad,0x80ef,fr11
+	cmhtob		fr10,fr12,cc5,0
+	test_fr_limmed	0xffff,0xffff,fr12
+
+	set_fr_iimmed	0x1111,0x1111,fr12
+	set_fr_iimmed	0x00ad,0x00ef,fr10
+	set_fr_iimmed	0x0034,0x0078,fr11
+	cmhtob		fr10,fr12,cc0,0
+	test_fr_limmed	0x1111,0x1111,fr12
+
+	set_fr_iimmed	0xdead,0xbeef,fr10
+	set_fr_iimmed	0x1234,0x5678,fr11
+	cmhtob		fr10,fr12,cc0,0
+	test_fr_limmed	0x1111,0x1111,fr12
+
+	set_fr_iimmed	0x0134,0x0878,fr10
+	set_fr_iimmed	0x10ad,0x80ef,fr11
+	cmhtob		fr10,fr12,cc4,0
+	test_fr_limmed	0x1111,0x1111,fr12
+
+	set_fr_iimmed	0x00ad,0x00ef,fr10
+	set_fr_iimmed	0x0034,0x0078,fr11
+	cmhtob		fr10,fr12,cc1,1
+	test_fr_limmed	0x1111,0x1111,fr12
+
+	set_fr_iimmed	0xdead,0xbeef,fr10
+	set_fr_iimmed	0x1234,0x5678,fr11
+	cmhtob		fr10,fr12,cc1,1
+	test_fr_limmed	0x1111,0x1111,fr12
+
+	set_fr_iimmed	0x0134,0x0878,fr10
+	set_fr_iimmed	0x10ad,0x80ef,fr11
+	cmhtob		fr10,fr12,cc5,1
+	test_fr_limmed	0x1111,0x1111,fr12
+
+	set_fr_iimmed	0x00ad,0x00ef,fr10
+	set_fr_iimmed	0x0034,0x0078,fr11
+	cmhtob		fr10,fr12,cc2,1
+	test_fr_limmed	0x1111,0x1111,fr12
+
+	set_fr_iimmed	0xdead,0xbeef,fr10
+	set_fr_iimmed	0x1234,0x5678,fr11
+	cmhtob		fr10,fr12,cc2,0
+	test_fr_limmed	0x1111,0x1111,fr12
+
+	set_fr_iimmed	0x0134,0x0878,fr10
+	set_fr_iimmed	0x10ad,0x80ef,fr11
+	cmhtob		fr10,fr12,cc6,1
+	test_fr_limmed	0x1111,0x1111,fr12
+
+	set_fr_iimmed	0x00ad,0x00ef,fr10
+	set_fr_iimmed	0x0034,0x0078,fr11
+	cmhtob		fr10,fr12,cc3,1
+	test_fr_limmed	0x1111,0x1111,fr12
+
+	set_fr_iimmed	0xdead,0xbeef,fr10
+	set_fr_iimmed	0x1234,0x5678,fr11
+	cmhtob		fr10,fr12,cc7,0
+	test_fr_limmed	0x1111,0x1111,fr12
+
+	set_fr_iimmed	0x0134,0x0878,fr10
+	set_fr_iimmed	0x10ad,0x80ef,fr11
+	cmhtob		fr10,fr12,cc7,1
+	test_fr_limmed	0x1111,0x1111,fr12
+
+	pass

@@ -1,0 +1,165 @@
+# Copyright (C) 1997, 1998, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# GDB tests for sized enumerations
+
+# This is aimed at HP-UX systems.  The HP C compiler
+# allows specifying "char" or "short" for an enum, to
+# indicate that it is 1 or 2 bytes long.
+
+# This file was written by Satish Pai <pai@apollo.hp.com>
+# 1997-09-24
+
+if $tracelevel then {
+	strace $tracelevel
+	}
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+if { [skip_hp_tests] } then { continue }
+
+set testfile "sized-enum"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+if { $gcc_compiled } then { continue }
+if {$hp_aCC_compiler} {continue}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested sized-enum.exp
+     return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+#
+# set it up at a breakpoint so we can play with the variable values
+#
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+# set a breakpoint and go there
+send_gdb "break 34\n"   
+gdb_expect {   
+   -re "Breakpoint.*line 34.*$gdb_prompt $" { pass "set break 34" }
+   -re "$gdb_prompt $"                     { fail "set break 34" }
+   timeout                             { fail "(timeout) set break 34" }
+}
+send_gdb "continue\n"   
+gdb_expect {   
+   -re "Continuing\\.\r\n\r\nBreakpoint \[0-9\]*, main....at.*sized-enum\\.c:34\r\n34.*\r\n$gdb_prompt $" { pass "continue" }
+   -re "$gdb_prompt $"                     { fail "continue" }
+   timeout                             { fail "(timeout) continue" }
+}
+
+# print stuff
+send_gdb "print normal\n"   
+gdb_expect {   
+   -re "\\$\[0-9\]* = \\{red, blue, green\\}.*$gdb_prompt $" { pass "print normal" }
+   -re "$gdb_prompt $"                     { fail "print normal" }
+   timeout                             { fail "(timeout) print normal" }
+}
+send_gdb "print small\n"   
+gdb_expect {   
+   -re "\\$\[0-9\]* = \\{pink, cyan, grey\\}.*$gdb_prompt $" { pass "print small" }
+   -re "$gdb_prompt $"                     { fail "print small" }
+   timeout                             { fail "(timeout) print small" }
+}
+send_gdb "print tiny\n"   
+gdb_expect {   
+   -re "\\$\[0-9\]* = \\{orange, yellow, brown\\}.*$gdb_prompt $" { pass "print tiny" }
+   -re "$gdb_prompt $"                     { fail "print tiny" }
+   timeout                             { fail "(timeout) print tiny" }
+}
+
+# print type sizes
+send_gdb "print sizeof (Normal)\n"   
+gdb_expect {   
+   -re "\\$\[0-9\]* = 4.*$gdb_prompt $" { pass "print sizeof (Normal)" }
+   -re "$gdb_prompt $"                     { fail "print sizeof (Normal)" }
+   timeout                             { fail "(timeout) print sizeof (Normal)" }
+}
+send_gdb "print sizeof (Small)\n"   
+gdb_expect {   
+   -re "\\$\[0-9\]* = 2.*$gdb_prompt $" { pass "print sizeof (Small)" }
+   -re "$gdb_prompt $"                     { fail "print sizeof (Small)" }
+   timeout                             { fail "(timeout) print sizeof (Small)" }
+}
+send_gdb "print sizeof (Tiny)\n"   
+gdb_expect {   
+   -re "\\$\[0-9\]* = 1.*$gdb_prompt $" { pass "print sizeof (Tiny)" }
+   -re "$gdb_prompt $"                     { fail "print sizeof (Tiny)" }
+   timeout                             { fail "(timeout) print sizeof (Tiny)" }
+}
+
+# print types
+send_gdb "ptype normal\n"   
+gdb_expect {   
+   -re "type = enum Normal \\{red, blue, green\\} \\\[3\\\].*$gdb_prompt $" { pass "ptype normal" }
+   -re "$gdb_prompt $"                     { fail "ptype normal" }
+   timeout                             { fail "(timeout) ptype normal" }
+}
+send_gdb "ptype small\n"   
+gdb_expect {   
+   -re "type = short enum Small \\{pink, cyan, grey\\} \\\[3\\\].*$gdb_prompt $" { pass "ptype small" }
+   -re "$gdb_prompt $"                     { fail "ptype small" }
+   timeout                             { fail "(timeout) ptype small" }
+}
+send_gdb "ptype tiny\n"   
+gdb_expect {   
+   -re "type = char enum Tiny \\{orange, yellow, brown\\} \\\[3\\\].*$gdb_prompt $" { pass "ptype tiny" }
+   -re "$gdb_prompt $"                     { fail "ptype tiny" }
+   timeout                             { fail "(timeout) ptype tiny" }
+}
+
+# convert to int
+send_gdb "print (int) blue\n"   
+gdb_expect {   
+   -re "\\$\[0-9\]* = 1.*$gdb_prompt $" { pass "print (int) blue" }
+   -re "$gdb_prompt $"                     { fail "print (int) blue" }
+   timeout                             { fail "(timeout) print (int) blue" }
+}
+send_gdb "print (int) cyan\n"   
+gdb_expect {   
+   -re "\\$\[0-9\]* = 1.*$gdb_prompt $" { pass "print (int) cyan" }
+   -re "$gdb_prompt $"                     { fail "print (int) cyan" }
+   timeout                             { fail "(timeout) print (int) cyan" }
+}
+send_gdb "print (int) yellow\n"   
+gdb_expect {   
+   -re "\\$\[0-9\]* = 1.*$gdb_prompt $" { pass "print (int) yellow" }
+   -re "$gdb_prompt $"                     { fail "print (int) yellow" }
+   timeout                             { fail "(timeout) print (int) yellow" }
+}
+
+
+

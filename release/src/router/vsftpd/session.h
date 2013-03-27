@@ -19,17 +19,6 @@
 
 #include <stdio.h>
 
-#if 1
-#define ftp_dbg(fmt, args...) do{ \
-		FILE *fpp = fopen("/dev/console", "a+"); \
-		if(fpp){ \
-			fprintf(fpp, "[ftp: %s] ", __FUNCTION__); \
-			fprintf(fpp, fmt, ## args); \
-			fclose(fpp); \
-		} \
-	}while(0)
-#endif
-
 #ifndef VSFTP_STR_H
 #include "str.h"
 #endif

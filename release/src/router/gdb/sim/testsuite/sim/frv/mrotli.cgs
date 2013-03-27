@@ -1,0 +1,34 @@
+# frv testcase for mrotli $FRi,$s6,$FRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mrotli
+mrotli:
+	set_fr_iimmed   0,2,fr8
+	mrotli      	fr8,0x20,fr8	; Shift by 0
+	test_fr_iimmed  2,fr8
+
+	set_fr_iimmed   0,2,fr8
+	mrotli      	fr8,0,fr8	; Shift by 0
+	test_fr_iimmed  2,fr8
+
+	set_fr_iimmed   0,2,fr8
+	mrotli      	fr8,1,fr8	; Shift by 1
+	test_fr_iimmed  4,fr8
+
+	set_fr_iimmed   0,1,fr8
+	mrotli      	fr8,31,fr8	; Shift by 31
+	test_fr_iimmed 	0x80000000,fr8
+
+	set_fr_iimmed  	0,2,fr8
+	mrotli      	fr8,31,fr8	; max rotation
+	test_fr_iimmed  1,fr8
+
+	set_fr_iimmed  	0xdead,0xbeef,fr8
+	mrotli      	fr8,16,fr8
+	test_fr_iimmed  0xbeefdead,fr8
+
+	pass

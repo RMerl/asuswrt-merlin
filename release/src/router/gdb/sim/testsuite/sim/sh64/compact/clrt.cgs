@@ -1,0 +1,16 @@
+# sh testcase for clrt -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global clrt
+clrt:
+	clrt
+	bt wrong
+	pass
+wrong:
+	fail

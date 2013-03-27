@@ -1,0 +1,983 @@
+#   Copyright 1988, 1990, 1991, 1992, 1994, 1995, 1996, 1997, 1998, 1999,
+#   2000, 2002, 2003, 2004, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# Based on break.exp, written by Rob Savoye. (rob@cygnus.com)
+# Modified to test gdb's handling of separate debug info files.
+# Modified to test gdb's handling of a debug-id retrieval.
+
+# This file has two parts. The first is testing that gdb behaves
+# normally after reading in an executable and its corresponding
+# separate debug file. The second moves the .debug file to a different
+# location and tests the "set debug-file-directory" command.
+# The third is for testing build-id retrievel by finding the separate
+# ".debug-id/ab/cdef.debug" file.
+
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+set testfile "sepdebug"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
+    untested sepdebug.exp
+    return -1
+}
+
+# Note: the procedure gdb_gnu_strip_debug will produce an executable called
+# ${binfile}, which is just like the executable ($binfile) but without
+# the debuginfo. Instead $binfile has a .gnudebuglink section which contains
+# the name of a debuginfo only file. This file will be stored in the
+# gdb.base/.debug subdirectory.
+
+if [gdb_gnu_strip_debug $binfile] {
+    # check that you have a recent version of strip and objcopy installed
+    unsupported "cannot produce separate debug info files"
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if [target_info exists gdb_stub] {
+    gdb_step_for_stub;
+}
+#
+# test simple breakpoint setting commands
+#
+
+# Test deleting all breakpoints when there are none installed,
+# GDB should not prompt for confirmation.
+# Note that gdb-init.exp provides a "delete_breakpoints" proc
+# for general use elsewhere.
+
+send_gdb "delete breakpoints\n"
+gdb_expect {
+     -re "Delete all breakpoints.*$" {
+	    send_gdb "y\n"
+	    gdb_expect {
+		-re "$gdb_prompt $" {
+		    fail "Delete all breakpoints when none (unexpected prompt)"
+		}
+		timeout	{ fail "Delete all breakpoints when none (timeout after unexpected prompt)" }
+	    }
+	}
+     -re ".*$gdb_prompt $"       { pass "Delete all breakpoints when none" }
+    timeout	            { fail "Delete all breakpoints when none (timeout)" }
+}
+
+#
+# test break at function
+#
+gdb_test "break main" \
+    "Breakpoint.*at.* file .*$srcfile, line.*" \
+    "breakpoint function"
+
+#
+# test break at quoted function
+#
+gdb_test "break \"marker2\"" \
+    "Breakpoint.*at.* file .*$srcfile, line.*" \
+    "breakpoint quoted function"
+
+#
+# test break at function in file
+#
+gdb_test "break $srcfile:factorial" \
+    "Breakpoint.*at.* file .*$srcfile, line.*" \
+    "breakpoint function in file"
+
+set bp_location1 [gdb_get_line_number "set breakpoint 1 here"]
+
+#
+# test break at line number
+#
+# Note that the default source file is the last one whose source text
+# was printed.  For native debugging, before we've executed the
+# program, this is the file containing main, but for remote debugging,
+# it's wherever the processor was stopped when we connected to the
+# board.  So, to be sure, we do a list command.
+#
+gdb_test "list main" \
+    ".*main \\(argc, argv, envp\\).*" \
+    "use `list' to establish default source file"
+gdb_test "break $bp_location1" \
+    "Breakpoint.*at.* file .*$srcfile, line $bp_location1\\." \
+    "breakpoint line number"
+
+#
+# test duplicate breakpoint
+#
+gdb_test "break $bp_location1" \
+    "Note: breakpoint \[0-9\]+ also set at pc.*Breakpoint \[0-9\]+ at.* file .*$srcfile, line $bp_location1\\." \
+    "breakpoint duplicate"
+
+set bp_location2 [gdb_get_line_number "set breakpoint 2 here"]
+
+#
+# test break at line number in file
+#
+gdb_test "break $srcfile:$bp_location2" \
+    "Breakpoint.*at.* file .*$srcfile, line $bp_location2\\." \
+    "breakpoint line number in file"
+
+set bp_location3 [gdb_get_line_number "set breakpoint 3 here"]
+set bp_location4 [gdb_get_line_number "set breakpoint 4 here"]
+
+#
+# Test putting a break at the start of a multi-line if conditional.
+# Verify the breakpoint was put at the start of the conditional.
+#
+gdb_test "break multi_line_if_conditional" \
+    "Breakpoint.*at.* file .*$srcfile, line $bp_location3\\." \
+    "breakpoint at start of multi line if conditional"
+
+gdb_test "break multi_line_while_conditional" \
+    "Breakpoint.*at.* file .*$srcfile, line $bp_location4\\." \
+    "breakpoint at start of multi line while conditional"
+
+set bp_location5 [gdb_get_line_number "set breakpoint 5 here"]
+set bp_location6 [gdb_get_line_number "set breakpoint 6 here"]
+
+#
+# check to see what breakpoints are set
+#
+if [target_info exists gdb_stub] {
+    set main_line $bp_location5
+} else {
+    set main_line $bp_location6
+}
+
+set bp_location7 [gdb_get_line_number "set breakpoint 7 here"]
+set bp_location8 [gdb_get_line_number "set breakpoint 8 here"]
+set bp_location9 [gdb_get_line_number "set breakpoint 9 here"]
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$main_line.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in marker2 at .*$srcfile:($bp_location8|$bp_location9).*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in factorial at .*$srcfile:$bp_location7.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$bp_location1.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$bp_location1.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$bp_location2.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in multi_line_if_conditional at .*$srcfile:$bp_location3.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in multi_line_while_conditional at .*$srcfile:$bp_location4" \
+    "breakpoint info"
+
+# FIXME: The rest of this test doesn't work with anything that can't
+# handle arguments.
+# Huh? There doesn't *appear* to be anything that passes arguments
+# below.
+if [istarget "mips-idt-*"] then {
+    return
+}
+
+#
+# run until the breakpoint at main is hit. For non-stubs-using targets.
+#
+gdb_run_cmd
+gdb_expect {
+    -re "Breakpoint \[0-9\]+,.*main .*argc.*argv.* at .*$srcfile:$bp_location6.*$bp_location6\[\t \]+if .argc.* \{.*$gdb_prompt $" {
+	pass "run until function breakpoint"
+    }
+    -re "$gdb_prompt $" {
+	fail "run until function breakpoint"
+    }
+    timeout {
+	fail "run until function breakpoint (timeout)"
+    }
+}
+
+#
+# run until the breakpoint at a line number
+#
+gdb_test continue "Continuing\\..*Breakpoint \[0-9\]+, main \\(argc=.*, argv=.*, envp=.*\\) at .*$srcfile:$bp_location1.*$bp_location1\[\t \]+printf.*factorial.*" \
+			"run until breakpoint set at a line number"
+
+#
+# Run until the breakpoint set in a function in a file
+#
+for {set i 6} {$i >= 1} {incr i -1} {
+	gdb_test continue "Continuing\\..*Breakpoint \[0-9\]+, factorial \\(value=$i\\) at .*$srcfile:$bp_location7.*$bp_location7\[\t \]+.*if .value > 1. \{.*" \
+			"run until file:function($i) breakpoint"
+}
+
+#
+# Run until the breakpoint set at a quoted function
+#
+gdb_test continue "Continuing\\..*Breakpoint \[0-9\]+, (0x\[0-9a-f\]+ in )?marker2 \\(a=43\\) at .*$srcfile:($bp_location8|$bp_location9).*" \
+		"run until quoted breakpoint"
+#
+# run until the file:function breakpoint at a line number in a file
+#
+gdb_test continue "Continuing\\..*Breakpoint \[0-9\]+, main \\(argc=.*, argv=.*, envp=.*\\) at .*$srcfile:$bp_location2.*$bp_location2\[\t \]+argc = \\(argc == 12345\\);.*" \
+		"run until file:linenum breakpoint"
+
+# Test break at offset +1
+set bp_location10 [gdb_get_line_number "set breakpoint 10 here"]
+
+gdb_test "break +1" \
+    "Breakpoint.*at.* file .*$srcfile, line $bp_location10\\." \
+    "breakpoint offset +1"
+
+# Check to see if breakpoint is hit when stepped onto
+
+gdb_test "step" \
+    ".*Breakpoint \[0-9\]+, main \\(argc=.*, argv=.*, envp=.*\\) at .*$srcfile:$bp_location10.*$bp_location10\[\t \]+return argc;.*breakpoint 10 here.*" \
+    "step onto breakpoint"
+
+#
+# delete all breakpoints so we can start over, course this can be a test too
+#
+delete_breakpoints
+
+#
+# test temporary breakpoint at function
+#
+
+gdb_test "tbreak main" "Breakpoint.*at.* file .*$srcfile, line.*" "Temporary breakpoint function"
+
+#
+# test break at function in file
+#
+
+gdb_test "tbreak $srcfile:factorial" "Breakpoint.*at.* file .*$srcfile, line.*" \
+	"Temporary breakpoint function in file"
+
+#
+# test break at line number
+#
+send_gdb "tbreak $bp_location1\n"
+gdb_expect {
+    -re "Breakpoint.*at.* file .*$srcfile, line $bp_location1.*$gdb_prompt $" { pass "Temporary breakpoint line number #1" }
+	-re ".*$gdb_prompt $"   { pass "Temporary breakpoint line number #1" }
+	timeout	    { fail "breakpoint line number #1 (timeout)" }
+}
+
+gdb_test "tbreak $bp_location6" "Breakpoint.*at.* file .*$srcfile, line $bp_location6.*" "Temporary breakpoint line number #2"
+
+#
+# test break at line number in file
+#
+send_gdb "tbreak $srcfile:$bp_location2\n"
+gdb_expect {
+    -re "Breakpoint.*at.* file .*$srcfile, line $bp_location2.*$gdb_prompt $" { pass "Temporary breakpoint line number in file #1" }
+	-re ".*$gdb_prompt $"   { pass "Temporary breakpoint line number in file #1" }
+	timeout	    { fail "Temporary breakpoint line number in file #1 (timeout)" }
+}
+
+set bp_location11 [gdb_get_line_number "set breakpoint 11 here"]
+gdb_test  "tbreak $srcfile:$bp_location11" "Breakpoint.*at.* file .*$srcfile, line $bp_location11.*" "Temporary breakpoint line number in file #2"
+
+#
+# check to see what breakpoints are set (temporary this time)
+#
+gdb_test "info break" "Num Type.*Disp Enb Address.*What.*\[\r\n\]
+\[0-9\]+\[\t \]+breakpoint     del.*y.*in main at .*$srcfile:$main_line.*\[\r\n\]
+\[0-9\]+\[\t \]+breakpoint     del.*y.*in factorial at .*$srcfile:$bp_location7.*\[\r\n\]
+\[0-9\]+\[\t \]+breakpoint     del.*y.*in main at .*$srcfile:$bp_location1.*\[\r\n\]
+\[0-9\]+\[\t \]+breakpoint     del.*y.*in main at .*$srcfile:$bp_location6.*\[\r\n\]
+\[0-9\]+\[\t \]+breakpoint     del.*y.*in main at .*$srcfile:$bp_location2.*\[\r\n\]
+\[0-9\]+\[\t \]+breakpoint     del.*y.*in main at .*$srcfile:$bp_location11.*" \
+    "Temporary breakpoint info"
+
+
+#***********
+
+# Verify that catchpoints for fork, vfork and exec don't trigger
+# inappropriately.  (There are no calls to those system functions
+# in this test program.)
+#
+if ![runto_main] then { fail "break tests suppressed" }
+
+send_gdb "catch\n"
+gdb_expect {
+  -re "Catch requires an event name.*$gdb_prompt $"\
+          {pass "catch requires an event name"}
+  -re "$gdb_prompt $"\
+          {fail "catch requires an event name"}
+  timeout {fail "(timeout) catch requires an event name"}
+}
+
+
+set name "set catch fork, never expected to trigger"
+send_gdb "catch fork\n"
+gdb_expect {
+  -re "Catchpoint \[0-9\]* .fork..*$gdb_prompt $"
+          {pass $name}
+  -re "Catch of fork not yet implemented.*$gdb_prompt $"
+	  {pass $name}
+  -re "$gdb_prompt $"
+          {fail $name}
+  timeout {fail "(timeout) $name"}
+}
+
+
+set name "set catch vfork, never expected to trigger"
+send_gdb "catch vfork\n"
+
+# If we are on HP-UX 10.20, we expect an error message to be
+# printed if we type "catch vfork" at the gdb gdb_prompt.  This is
+# because on HP-UX 10.20, we cannot catch vfork events.
+
+if [istarget "hppa*-hp-hpux10.20"] then {
+    gdb_expect {
+	-re "Catch of vfork events not supported on HP-UX 10.20..*$gdb_prompt $"
+		{pass $name}
+	-re "$gdb_prompt $"
+		{fail $name}
+	timeout {fail "(timeout) $name"}
+    }
+} else {
+    gdb_expect {
+	-re "Catchpoint \[0-9\]* .vfork..*$gdb_prompt $"
+		{pass $name}
+	-re "Catch of vfork not yet implemented.*$gdb_prompt $"
+		{pass $name}
+	-re "$gdb_prompt $"
+		{fail $name}
+	timeout {fail "(timeout) $name"}
+    }
+}
+
+set name "set catch exec, never expected to trigger"
+send_gdb "catch exec\n"
+gdb_expect {
+  -re "Catchpoint \[0-9\]* .exec..*$gdb_prompt $"
+          {pass $name}
+  -re "Catch of exec not yet implemented.*$gdb_prompt $"
+	  {pass $name}
+  -re "$gdb_prompt $" {fail $name}
+  timeout {fail "(timeout) $name"}
+}
+
+# Verify that GDB responds gracefully when asked to set a breakpoint
+# on a nonexistent source line.
+#
+send_gdb "break 999\n"
+gdb_expect {
+  -re "No line 999 in file .*$gdb_prompt $"\
+          {pass "break on non-existent source line"}
+  -re "$gdb_prompt $"\
+          {fail "break on non-existent source line"}
+  timeout {fail "(timeout) break on non-existent source line"}
+}
+
+# Run to the desired default location. If not positioned here, the
+# tests below don't work.
+#
+gdb_test "until $bp_location1" "main .* at .*:$bp_location1.*" "until bp_location1"
+
+
+# Verify that GDB allows one to just say "break", which is treated
+# as the "default" breakpoint.  Note that GDB gets cute when printing
+# the informational message about other breakpoints at the same
+# location.  We'll hit that bird with this stone too.
+#
+send_gdb "break\n"
+gdb_expect {
+  -re "Breakpoint \[0-9\]*.*$gdb_prompt $"\
+          {pass "break on default location, 1st time"}
+  -re "$gdb_prompt $"\
+          {fail "break on default location, 1st time"}
+  timeout {fail "(timeout) break on default location, 1st time"}
+}
+
+send_gdb "break\n"
+gdb_expect {
+  -re "Note: breakpoint \[0-9\]* also set at .*Breakpoint \[0-9\]*.*$gdb_prompt $"\
+          {pass "break on default location, 2nd time"}
+  -re "$gdb_prompt $"\
+          {fail "break on default location, 2nd time"}
+  timeout {fail "(timeout) break on default location, 2nd time"}
+}
+
+send_gdb "break\n"
+gdb_expect {
+  -re "Note: breakpoints \[0-9\]* and \[0-9\]* also set at .*Breakpoint \[0-9\]*.*$gdb_prompt $"\
+          {pass "break on default location, 3rd time"}
+  -re "$gdb_prompt $"\
+          {fail "break on default location, 3rd time"}
+  timeout {fail "(timeout) break on default location, 3rd time"}
+}
+
+send_gdb "break\n"
+gdb_expect {
+  -re "Note: breakpoints \[0-9\]*, \[0-9\]* and \[0-9\]* also set at .*Breakpoint \[0-9\]*.*$gdb_prompt $"\
+          {pass "break on default location, 4th time"}
+  -re "$gdb_prompt $"\
+          {fail "break on default location, 4th time"}
+  timeout {fail "(timeout) break on default location, 4th time"}
+}
+
+# Verify that a "silent" breakpoint can be set, and that GDB is indeed
+# "silent" about its triggering.
+#
+if ![runto_main] then { fail "break tests suppressed" }
+
+send_gdb "break $bp_location1\n"
+gdb_expect {
+  -re "Breakpoint (\[0-9\]*) at .*, line $bp_location1.*$gdb_prompt $"\
+          {pass "set to-be-silent break bp_location1"}
+  -re "$gdb_prompt $"\
+          {fail "set to-be-silent break bp_location1"}
+  timeout {fail "(timeout) set to-be-silent break bp_location1"}
+}
+
+send_gdb "commands $expect_out(1,string)\n"
+send_gdb "silent\n"
+send_gdb "end\n"
+gdb_expect {
+  -re ".*$gdb_prompt $"\
+          {pass "set silent break bp_location1"}
+  timeout {fail "(timeout) set silent break bp_location1"}
+}
+
+send_gdb "info break $expect_out(1,string)\n"
+gdb_expect {
+  -re "\[0-9\]*\[ \t\]*breakpoint.*:$bp_location1\r\n\[ \t\]*silent.*$gdb_prompt $"\
+          {pass "info silent break bp_location1"}
+  -re "$gdb_prompt $"\
+          {fail "info silent break bp_location1"}
+  timeout {fail "(timeout) info silent break bp_location1"}
+}
+send_gdb "continue\n"
+gdb_expect {
+  -re "Continuing.\r\n$gdb_prompt $"\
+          {pass "hit silent break bp_location1"}
+  -re "$gdb_prompt $"\
+          {fail "hit silent break bp_location1"}
+  timeout {fail "(timeout) hit silent break bp_location1"}
+}
+send_gdb "bt\n"
+gdb_expect {
+  -re "#0  main .* at .*:$bp_location1.*$gdb_prompt $"\
+          {pass "stopped for silent break bp_location1"}
+  -re "$gdb_prompt $"\
+          {fail "stopped for silent break bp_location1"}
+  timeout {fail "(timeout) stopped for silent break bp_location1"}
+}
+
+# Verify that GDB can at least parse a breakpoint with the
+# "thread" keyword.  (We won't attempt to test here that a
+# thread-specific breakpoint really triggers appropriately.
+# The gdb.threads subdirectory contains tests for that.)
+#
+set bp_location12 [gdb_get_line_number "set breakpoint 12 here"]
+send_gdb "break $bp_location12 thread 999\n"
+gdb_expect {
+  -re "Unknown thread 999.*$gdb_prompt $"\
+          {pass "thread-specific breakpoint on non-existent thread disallowed"}
+  -re "$gdb_prompt $"\
+          {fail "thread-specific breakpoint on non-existent thread disallowed"}
+  timeout {fail "(timeout) thread-specific breakpoint on non-existent thread disallowed"}
+}
+send_gdb "break $bp_location12 thread foo\n"
+gdb_expect {
+  -re "Junk after thread keyword..*$gdb_prompt $"\
+          {pass "thread-specific breakpoint on bogus thread ID disallowed"}
+  -re "$gdb_prompt $"\
+          {fail "thread-specific breakpoint on bogus thread ID disallowed"}
+  timeout {fail "(timeout) thread-specific breakpoint on bogus thread ID disallowed"}
+}
+
+# Verify that GDB responds gracefully to a breakpoint command with
+# trailing garbage.
+#
+send_gdb "break $bp_location12 foo\n"
+gdb_expect {
+  -re "Junk at end of arguments..*$gdb_prompt $"\
+          {pass "breakpoint with trailing garbage disallowed"}
+  -re "$gdb_prompt $"\
+          {fail "breakpoint with trailing garbage disallowed"}
+  timeout {fail "(timeout) breakpoint with trailing garbage disallowed"}
+}
+
+# Verify that GDB responds gracefully to a "clear" command that has
+# no matching breakpoint.  (First, get us off the current source line,
+# which we know has a breakpoint.)
+#
+send_gdb "next\n"
+gdb_expect {
+  -re ".*$gdb_prompt $"\
+          {pass "step over breakpoint"}
+  timeout {fail "(timeout) step over breakpoint"}
+}
+send_gdb "clear 81\n"
+gdb_expect {
+  -re "No breakpoint at 81..*$gdb_prompt $"\
+          {pass "clear line has no breakpoint disallowed"}
+  -re "$gdb_prompt $"\
+          {fail "clear line has no breakpoint disallowed"}
+  timeout {fail "(timeout) clear line has no breakpoint disallowed"}
+}
+send_gdb "clear\n"
+gdb_expect {
+  -re "No breakpoint at this line..*$gdb_prompt $"\
+          {pass "clear current line has no breakpoint disallowed"}
+  -re "$gdb_prompt $"\
+          {fail "clear current line has no breakpoint disallowed"}
+  timeout {fail "(timeout) clear current line has no breakpoint disallowed"}
+}
+
+# Verify that we can set and clear multiple breakpoints.
+#
+# We don't test that it deletes the correct breakpoints.  We do at
+# least test that it deletes more than one breakpoint.
+#
+gdb_test "break marker3" "Breakpoint.*at.*" "break marker3 #1"
+gdb_test "break marker3" "Breakpoint.*at.*" "break marker3 #2"
+gdb_test "clear marker3" {Deleted breakpoints [0-9]+ [0-9]+.*}
+
+# Verify that a breakpoint can be set via a convenience variable.
+#
+send_gdb "set \$foo=$bp_location11\n"
+gdb_expect {
+  -re "$gdb_prompt $"\
+          {pass "set convenience variable \$foo to bp_location11"}
+  timeout {fail "(timeout) set convenience variable \$foo to bp_location11"}
+}
+send_gdb "break \$foo\n"
+gdb_expect {
+  -re "Breakpoint (\[0-9\]*) at .*, line $bp_location11.*$gdb_prompt $"\
+          {pass "set breakpoint via convenience variable"}
+  -re "$gdb_prompt $"\
+          {fail "set breakpoint via convenience variable"}
+  timeout {fail "(timeout) set breakpoint via convenience variable"}
+}
+
+# Verify that GDB responds gracefully to an attempt to set a
+# breakpoint via a convenience variable whose type is not integer.
+#
+send_gdb "set \$foo=81.5\n"
+gdb_expect {
+  -re "$gdb_prompt $"\
+          {pass "set convenience variable \$foo to 81.5"}
+  timeout {fail "(timeout) set convenience variable \$foo to 81.5"}
+}
+send_gdb "break \$foo\n"
+gdb_expect {
+  -re "Convenience variables used in line specs must have integer values..*$gdb_prompt $"\
+          {pass "set breakpoint via non-integer convenience variable disallowed"}
+  -re "$gdb_prompt $"\
+          {fail "set breakpoint via non-integer convenience variable disallowed"}
+  timeout {fail "(timeout) set breakpoint via non-integer convenience variable disallowed"}
+}
+
+# Verify that we can set and trigger a breakpoint in a user-called function.
+#
+send_gdb "break marker2\n"
+gdb_expect {
+    -re "Breakpoint (\[0-9\]*) at .*, line ($bp_location8|$bp_location9).*$gdb_prompt $"\
+          {pass "set breakpoint on to-be-called function"}
+  -re "$gdb_prompt $"\
+          {fail "set breakpoint on to-be-called function"}
+  timeout {fail "(timeout) set breakpoint on to-be-called function"}
+}
+send_gdb "print marker2(99)\n"
+gdb_expect {
+  -re "The program being debugged stopped while in a function called from GDB.\r\nWhen the function .marker2. is done executing, GDB will silently\r\nstop .instead of continuing to evaluate the expression containing\r\nthe function call...*$gdb_prompt $"\
+          {pass "hit breakpoint on called function"}
+  -re "$gdb_prompt $"\
+          {fail "hit breakpoint on called function"}
+  timeout {fail "(timeout) hit breakpoint on called function"}
+}
+
+# As long as we're stopped (breakpointed) in a called function,
+# verify that we can successfully backtrace & such from here.
+#
+# In this and the following test, the _sr4export check apparently is needed
+# for hppa*-*-hpux.
+#
+send_gdb "bt\n"
+gdb_expect {
+    -re "#0\[ \t\]*($hex in )?marker2.*:($bp_location8|$bp_location9)\r\n#1.*_sr4export.*$gdb_prompt $"\
+            {pass "backtrace while in called function"}
+    -re "#0\[ \t\]*($hex in )?marker2.*:($bp_location8|$bp_location9)\r\n#1.*function called from gdb.*$gdb_prompt $"\
+	    {pass "backtrace while in called function"}
+    -re "$gdb_prompt $"\
+            {fail "backtrace while in called function"}
+    timeout {fail "(timeout) backtrace while in called function"}
+}
+
+# Return from the called function.  For remote targets, it's important to do
+# this before runto_main, which otherwise may silently stop on the dummy
+# breakpoint inserted by GDB at the program's entry point.
+#
+send_gdb "finish\n"
+gdb_expect {
+    -re "Run till exit from .*marker2.* at .*($bp_location8|$bp_location9)\r\n.* in _sr4export.*$gdb_prompt $"\
+            {pass "finish from called function"}
+    -re "Run till exit from .*marker2.* at .*($bp_location8|$bp_location9)\r\n.*function called from gdb.*$gdb_prompt $"\
+            {pass "finish from called function"}
+    -re "Run till exit from .*marker2.* at .*($bp_location8|$bp_location9)\r\n.*Value returned.*$gdb_prompt $"\
+            {pass "finish from called function"}
+    -re "$gdb_prompt $"\
+            {fail "finish from called function"}
+    timeout {fail "(timeout) finish from called function"}
+}
+
+# Verify that GDB responds gracefully to a "finish" command with
+# arguments.
+#
+if ![runto_main] then { fail "break tests suppressed" }
+
+send_gdb "finish 123\n"
+gdb_expect {
+  -re "The \"finish\" command does not take any arguments.\r\n$gdb_prompt $"\
+          {pass "finish with arguments disallowed"}
+  -re "$gdb_prompt $"\
+          {fail "finish with arguments disallowed"}
+  timeout {fail "(timeout) finish with arguments disallowed"}
+}
+
+# Verify that GDB responds gracefully to a request to "finish" from
+# the outermost frame.  On a stub that never exits, this will just
+# run to the stubs routine, so we don't get this error...  Thus the 
+# second condition.
+#
+
+send_gdb "finish\n"
+gdb_expect {
+  -re "\"finish\" not meaningful in the outermost frame.\r\n$gdb_prompt $"\
+          {pass "finish from outermost frame disallowed"}
+  -re "Run till exit from.*\r\n$gdb_prompt $" {
+     pass "finish from outermost frame disallowed"
+  }
+  -re "$gdb_prompt $"\
+          {fail "finish from outermost frame disallowed"}
+  timeout {fail "(timeout) finish from outermost frame disallowed"}
+}
+
+# Verify that we can explicitly ask GDB to stop on all shared library
+# events, and that it does so.
+#
+if [istarget "hppa*-*-hpux*"] then {
+  if ![runto_main] then { fail "break tests suppressed" }
+
+  send_gdb "set stop-on-solib-events 1\n"
+  gdb_expect {
+    -re "$gdb_prompt $"\
+            {pass "set stop-on-solib-events"}
+    timeout {fail "(timeout) set stop-on-solib-events"}
+  }
+
+  send_gdb "run\n"
+  gdb_expect {
+    -re ".*Start it from the beginning.*y or n. $"\
+            {send_gdb "y\n"
+             gdb_expect {
+               -re ".*Stopped due to shared library event.*$gdb_prompt $"\
+                       {pass "triggered stop-on-solib-events"}
+               -re "$gdb_prompt $"\
+                       {fail "triggered stop-on-solib-events"}
+               timeout {fail "(timeout) triggered stop-on-solib-events"}
+             }
+            }
+    -re "$gdb_prompt $"\
+            {fail "rerun for stop-on-solib-events"}
+    timeout {fail "(timeout) rerun for stop-on-solib-events"}
+  }
+
+  send_gdb "set stop-on-solib-events 0\n"
+  gdb_expect {
+    -re "$gdb_prompt $"\
+            {pass "reset stop-on-solib-events"}
+    timeout {fail "(timeout) reset stop-on-solib-events"}
+  }
+}
+
+# Hardware breakpoints are unsupported on HP-UX.  Verify that GDB
+# gracefully responds to requests to create them.
+#
+if [istarget "hppa*-*-hpux*"] then {
+  if ![runto_main] then { fail "break tests suppressed" }
+
+  send_gdb "hbreak\n"
+  gdb_expect {
+    -re "No hardware breakpoint support in the target.*$gdb_prompt $"\
+            {pass "hw breaks disallowed"}
+    -re "$gdb_prompt $"\
+            {fail "hw breaks disallowed"}
+    timeout {fail "(timeout) hw breaks disallowed"}
+  }
+
+  send_gdb "thbreak\n"
+  gdb_expect {
+    -re "No hardware breakpoint support in the target.*$gdb_prompt $"\
+            {pass "temporary hw breaks disallowed"}
+    -re "$gdb_prompt $"\
+            {fail "temporary hw breaks disallowed"}
+    timeout {fail "(timeout) temporary hw breaks disallowed"}
+  }
+}
+
+#********
+
+
+#
+# Test "next" over recursive function call.
+#
+
+proc test_next_with_recursion {} { 
+    global gdb_prompt
+    global decimal
+    global binfile
+
+    gdb_test "kill" "" "kill program" "Kill the program being debugged.*y or n. $" "y"
+    delete_breakpoints
+
+    gdb_test "break factorial" "Breakpoint $decimal at .*" "break at factorial"
+
+    # Run until we call factorial with 6
+
+    gdb_run_cmd
+    gdb_expect {
+	-re "Break.* factorial .value=6. .*$gdb_prompt $" {}
+	-re ".*$gdb_prompt $" {
+	    fail "run to factorial(6)";
+	    gdb_suppress_tests;
+	}
+	timeout { fail "run to factorial(6) (timeout)" ; gdb_suppress_tests }
+    }
+
+    # Continue until we call factorial recursively with 5.
+
+    if [gdb_test "continue" \
+	"Continuing.*Break.* factorial .value=5. .*" \
+	"continue to factorial(5)"] then { gdb_suppress_tests }
+
+    # Do a backtrace just to confirm how many levels deep we are.
+
+    if [gdb_test "backtrace" \
+	"#0\[ \t\]+ factorial .value=5..*" \
+	"backtrace from factorial(5)"] then { gdb_suppress_tests }
+
+    # Now a "next" should position us at the recursive call, which
+    # we will be performing with 4.
+
+    if [gdb_test "next" \
+	".* factorial .value - 1.;.*" \
+	"next to recursive call"] then { gdb_suppress_tests }
+
+    # Disable the breakpoint at the entry to factorial by deleting them all.
+    # The "next" should run until we return to the next line from this
+    # recursive call to factorial with 4.
+    # Buggy versions of gdb will stop instead at the innermost frame on
+    # the line where we are trying to "next" to.
+
+    delete_breakpoints
+
+    if [istarget "mips*tx39-*"] {
+	set timeout 60
+    }
+    # We used to set timeout here for all other targets as well.  This
+    # is almost certainly wrong.  The proper timeout depends on the
+    # target system in use, and how we communicate with it, so there
+    # is no single value appropriate for all targets.  The timeout
+    # should be established by the Dejagnu config file(s) for the
+    # board, and respected by the test suite.
+    #
+    # For example, if I'm running GDB over an SSH tunnel talking to a
+    # portmaster in California talking to an ancient 68k board running
+    # a crummy ROM monitor (a situation I can only wish were
+    # hypothetical), then I need a large timeout.  But that's not the
+    # kind of knowledge that belongs in this file.
+
+    gdb_test next "\[0-9\]*\[\t \]+return \\(value\\);.*" \
+	    "next over recursive call"
+
+    # OK, we should be back in the same stack frame we started from.
+    # Do a backtrace just to confirm.
+
+    set result [gdb_test "backtrace" \
+	    "#0\[ \t\]+ factorial .value=120.*\r\n#1\[ \t\]+ \[0-9a-fx\]+ in factorial .value=6..*" \
+	    "backtrace from factorial(5.1)"]
+    if { $result != 0 } { gdb_suppress_tests }
+
+    if [target_info exists gdb,noresults] { gdb_suppress_tests }
+  gdb_continue_to_end "recursive next test"
+   gdb_stop_suppressing_tests;
+}
+
+test_next_with_recursion
+
+
+#********
+
+proc test_different_dir {type test_different_dir xfail} {
+    global srcdir subdir objdir binfile srcfile timeout gdb_prompt
+    global pf_prefix
+    global bp_location6 decimal hex
+
+    set old_pf_prefix $pf_prefix
+    append pf_prefix " $type:"
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_test "set debug-file-directory ${test_different_dir}" ".*" "set separate debug location"
+    gdb_load ${binfile}
+
+    if [target_info exists gdb_stub] {
+	gdb_step_for_stub;
+    }
+
+    #
+    # test break at function
+    #
+    if {$xfail} {
+	setup_xfail "*-*-*"
+    }
+    gdb_test "break main" \
+	"Breakpoint.*at.* file .*$srcfile, line.*" \
+	"breakpoint function, optimized file"
+
+    #
+    # test break at function
+    #
+    if {$xfail} {
+	setup_xfail "*-*-*"
+    }
+    gdb_test "break marker4" \
+	"Breakpoint.*at.* file .*$srcfile, line.*" \
+	"breakpoint small function, optimized file"
+
+    #
+    # run until the breakpoint at main is hit. For non-stubs-using targets.
+    #
+    gdb_run_cmd
+    if {$xfail} {
+	setup_xfail "*-*-*"
+    }
+    gdb_expect {
+	-re "Breakpoint \[0-9\]+,.*main .*argc.*argv.* at .*$srcfile:$bp_location6.*$bp_location6\[\t \]+if .argc.* \{.*$gdb_prompt $" {
+	    pass "run until function breakpoint, optimized file"
+	}
+	-re "Breakpoint \[0-9\]+,.*main .*argc.*argv.* at .*$gdb_prompt $" {
+	    pass "run until function breakpoint, optimized file (code motion)"
+	}
+	-re "$gdb_prompt $" {
+	    fail "run until function breakpoint, optimized file"
+	}
+	timeout {
+	    fail "run until function breakpoint, optimized file (timeout)"
+	}
+    }
+
+    #
+    # run until the breakpoint at a small function
+    #
+
+    #
+    # Add a second pass pattern.  The behavior differs here between stabs
+    # and dwarf for one-line functions.  Stabs preserves two line symbols
+    # (one before the prologue and one after) with the same line number, 
+    # but dwarf regards these as duplicates and discards one of them.
+    # Therefore the address after the prologue (where the breakpoint is)
+    # has no exactly matching line symbol, and GDB reports the breakpoint
+    # as if it were in the middle of a line rather than at the beginning.
+
+    set bp_location13 [gdb_get_line_number "set breakpoint 13 here"]
+    set bp_location14 [gdb_get_line_number "set breakpoint 14 here"]
+    send_gdb "continue\n"
+    if {$xfail} {
+	setup_xfail "*-*-*"
+    }
+    gdb_expect {
+	-re "Breakpoint $decimal, marker4 \\(d=177601976\\) at .*$srcfile:$bp_location13\[\r\n\]+$bp_location13\[\t \]+void marker4.*" {
+	    pass "run until breakpoint set at small function, optimized file"
+	}
+	-re "Breakpoint $decimal, $hex in marker4 \\(d=177601976\\) at .*$srcfile:$bp_location13\[\r\n\]+$bp_location13\[\t \]+void marker4.*" {
+	    pass "run until breakpoint set at small function, optimized file"
+	}
+	-re "Breakpoint $decimal, marker4 \\(d=177601976\\) at .*$srcfile:$bp_location14\[\r\n\]+$bp_location14\[\t \]+void marker4.*" {
+	    # marker4() is defined at line 46 when compiled with -DPROTOTYPES
+	    pass "run until breakpoint set at small function, optimized file (line bp_location14)"
+	}
+	-re ".*$gdb_prompt " {
+	    fail "run until breakpoint set at small function, optimized file"
+	}
+	timeout {
+	    fail "run until breakpoint set at small function, optimized file (timeout)"
+	}
+    }
+
+
+    # Reset the default arguments for VxWorks
+    if [istarget "*-*-vxworks*"] {
+	set timeout 10
+	verbose "Timeout is now $timeout seconds" 2
+	send_gdb "set args main\n"
+	gdb_expect -re ".*$gdb_prompt $" {}
+    }
+
+    set pf_prefix $old_pf_prefix
+# proc test_different_dir
+}
+
+
+# now move the .debug file to a different location so that we can test
+# the "set debug-file-directory" command.
+  
+remote_exec build "mv ${objdir}/${subdir}/.debug/${testfile}.debug ${objdir}/${subdir}"
+set debugfile "${objdir}/${subdir}/${testfile}.debug"
+
+test_different_dir debuglink "${objdir}/${subdir}" 0
+
+
+# NT_GNU_BUILD_ID / .note.gnu.build-id test:
+
+set build_id_debug_filename [build_id_debug_filename_get $binfile]
+if {$build_id_debug_filename eq ""} {
+    unsupported "build-id is not supported by the compiler"
+
+    # Spare debug files may confuse testsuite runs in the future.
+    remote_exec build "rm -f $debugfile"
+} else {
+    set build_id_debugself_filename [build_id_debug_filename_get $debugfile]
+    set test "build-id support by binutils"
+    set xfail 0
+    if {$build_id_debugself_filename eq ""} {
+	unsupported $test
+	set xfail 1
+    } elseif {$build_id_debugself_filename ne $build_id_debug_filename} {
+	fail $test
+    } else {
+	pass $test
+    }
+
+    file mkdir [file dirname ${objdir}/${subdir}/${build_id_debug_filename}]
+    remote_exec build "mv $debugfile ${objdir}/${subdir}/${build_id_debug_filename}"
+
+    test_different_dir build-id "${objdir}/${subdir}" $xfail
+
+    # Spare debug files may confuse testsuite runs in the future.
+    remote_exec build "rm -f ${objdir}/${subdir}/${build_id_debug_filename}"
+}

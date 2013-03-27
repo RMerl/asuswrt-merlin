@@ -1,0 +1,5000 @@
+#
+#   This file is part of the program psim.
+#
+#   Copyright 1994, 1995, 1996, 1997, 2003, 2004 Andrew Cagney
+#
+#   --
+#
+#   The pseudo-code that appears below, translated into C, was copied
+#   by Andrew Cagney of Moss Vale, Australia.
+#
+#   This pseudo-code is copied by permission from the publication
+#   "The PowerPC Architecture: A Specification for A New Family of
+#   RISC Processors" (ISBN 1-55860-316-6) copyright 1993, 1994 by
+#   International Business Machines Corporation.
+#
+#   THIS PERMISSION IS PROVIDED WITHOUT WARRANTY OF ANY KIND, EITHER
+#   EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES
+#   OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#   --
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+
+:cache::::RA:RA:
+:cache:::signed_word *:rA:RA:(cpu_registers(processor)->gpr + RA)
+:cache:::unsigned32:RA_BITMASK:RA:(1 << RA)
+:compute:::int:RA_is_0:RA:(RA == 0)
+:cache::::RT:RT:
+:cache:::signed_word *:rT:RT:(cpu_registers(processor)->gpr + RT)
+:cache:::unsigned32:RT_BITMASK:RT:(1 << RT)
+:cache::::RS:RS:
+:cache:::signed_word *:rS:RS:(cpu_registers(processor)->gpr + RS)
+:cache:::unsigned32:RS_BITMASK:RS:(1 << RS)
+:cache::::RB:RB:
+:cache:::signed_word *:rB:RB:(cpu_registers(processor)->gpr + RB)
+:cache:::unsigned32:RB_BITMASK:RB:(1 << RB)
+:scratch::::FRA:FRA:
+:cache:::unsigned64 *:frA:FRA:(cpu_registers(processor)->fpr + FRA)
+:cache:::unsigned32:FRA_BITMASK:FRA:(1 << FRA)
+:scratch::::FRB:FRB:
+:cache:::unsigned64 *:frB:FRB:(cpu_registers(processor)->fpr + FRB)
+:cache:::unsigned32:FRB_BITMASK:FRB:(1 << FRB)
+:scratch::::FRC:FRC:
+:cache:::unsigned64 *:frC:FRC:(cpu_registers(processor)->fpr + FRC)
+:cache:::unsigned32:FRC_BITMASK:FRC:(1 << FRC)
+:scratch::::FRS:FRS:
+:cache:::unsigned64 *:frS:FRS:(cpu_registers(processor)->fpr + FRS)
+:cache:::unsigned32:FRS_BITMASK:FRS:(1 << FRS)
+:scratch::::FRT:FRT:
+:cache:::unsigned64 *:frT:FRT:(cpu_registers(processor)->fpr + FRT)
+:cache:::unsigned32:FRT_BITMASK:FRT:(1 << FRT)
+:cache:::unsigned_word:EXTS_SI:SI:((signed_word)(signed16)instruction)
+:scratch::::BI:BI:
+:cache::::BIT32_BI:BI:BIT32(BI)
+:cache::::BF:BF:
+:cache:::unsigned32:BF_BITMASK:BF:(1 << BF)
+:scratch::::BA:BA:
+:cache::::BIT32_BA:BA:BIT32(BA)
+:cache:::unsigned32:BA_BITMASK:BA:(1 << BA)
+:scratch::::BB:BB:
+:cache::::BIT32_BB:BB:BIT32(BB)
+:cache:::unsigned32:BB_BITMASK:BB:(1 << BB)
+:cache::::BT:BT:
+:cache:::unsigned32:BT_BITMASK:BT:(1 << BT)
+:cache:::unsigned_word:EXTS_BD_0b00:BD:(((signed_word)(signed16)instruction) & ~3)
+:cache:::unsigned_word:EXTS_LI_0b00:LI:((((signed_word)(signed32)(instruction << 6)) >> 6) & ~0x3)
+:cache:::unsigned_word:EXTS_D:D:((signed_word)(signed16)(instruction))
+:cache:::unsigned_word:EXTS_DS_0b00:DS:(((signed_word)(signed16)instruction) & ~0x3)
+#:compute:::int:SPR_is_256:SPR:(SPR == 256)
+
+# PowerPC models
+::model:604:ppc604:  PPC_UNIT_BAD,   PPC_UNIT_BAD,   1,  1,  0
+::model:603e:ppc603e:PPC_UNIT_BAD,   PPC_UNIT_BAD,   1,  1,  0
+::model:603:ppc603:  PPC_UNIT_BAD,   PPC_UNIT_BAD,   1,  1,  0
+::model:601:ppc601:  PPC_UNIT_BAD,   PPC_UNIT_BAD,   1,  1,  0
+
+# Flags for model.h
+::model-macro:::
+	#define PPC_INSN_INT(OUT_MASK, IN_MASK, RC) \
+		do { \
+		  if (CURRENT_MODEL_ISSUE > 0) { \
+		    if (RC) \
+		      ppc_insn_int_cr(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK, 1 << 0); \
+		    else \
+		      ppc_insn_int(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK); \
+		  } \
+		} while (0)
+
+	#define PPC_INSN_INT_CR(OUT_MASK, IN_MASK, CR_MASK) \
+		do { \
+		  if (CURRENT_MODEL_ISSUE > 0) \
+		    ppc_insn_int_cr(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK, CR_MASK); \
+		} while (0)
+
+	#define PPC_INSN_CR(OUT_MASK, IN_MASK) \
+		do { \
+		  if (CURRENT_MODEL_ISSUE > 0) \
+		    ppc_insn_cr(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK); \
+		} while (0)
+
+	#define PPC_INSN_FLOAT(OUT_MASK, IN_MASK, RC) \
+		do { \
+		  if (CURRENT_MODEL_ISSUE > 0) { \
+		    if (RC) \
+		      ppc_insn_float(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK); \
+		    else \
+		      ppc_insn_float_cr(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK, 1 << 0); \
+		  } \
+		} while (0)
+
+	#define PPC_INSN_FLOAT_CR(OUT_MASK, IN_MASK, CR_MASK) \
+		do { \
+		  if (CURRENT_MODEL_ISSUE > 0) \
+		    ppc_insn_float_cr(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK, CR_MASK); \
+		} while (0)
+
+	#define PPC_INSN_INT_FLOAT(OUT_INT_MASK, OUT_FP_MASK, IN_INT_MASK, IN_FP_MASK) \
+		do { \
+		  if (CURRENT_MODEL_ISSUE > 0) \
+		    ppc_insn_int_float(MY_INDEX, cpu_model(processor), OUT_INT_MASK, OUT_FP_MASK, IN_INT_MASK, IN_FP_MASK); \
+		} while (0)
+
+	#define PPC_INSN_FROM_SPR(INT_MASK, SPR) \
+		do { \
+		  if (CURRENT_MODEL_ISSUE > 0) \
+		    ppc_insn_from_spr(MY_INDEX, cpu_model(processor), INT_MASK, SPR); \
+		} while (0)
+
+	#define PPC_INSN_TO_SPR(INT_MASK, SPR) \
+		do { \
+		  if (CURRENT_MODEL_ISSUE > 0) \
+		    ppc_insn_to_spr(MY_INDEX, cpu_model(processor), INT_MASK, SPR); \
+		} while (0)
+
+	#define PPC_INSN_MFCR(INT_MASK) \
+		do { \
+		  if (CURRENT_MODEL_ISSUE > 0) \
+		    ppc_insn_mfcr(MY_INDEX, cpu_model(processor), INT_MASK); \
+		} while (0)
+
+	#define PPC_INSN_MTCR(INT_MASK, FXM) \
+		do { \
+		  if (CURRENT_MODEL_ISSUE > 0) \
+		    ppc_insn_mtcr(MY_INDEX, cpu_model(processor), INT_MASK, FXM); \
+		} while (0)
+
+::model-data:::
+	typedef enum _ppc_function_unit {
+	  PPC_UNIT_BAD,				/* unknown function unit */
+	  PPC_UNIT_IU,				/* integer unit (601/603 style) */
+	  PPC_UNIT_SRU,				/* system register unit (601/603 style) */
+	  PPC_UNIT_SCIU1,			/* 1st single cycle integer unit (604 style) */
+	  PPC_UNIT_SCIU2,			/* 2nd single cycle integer unit (604 style) */
+	  PPC_UNIT_MCIU,			/* multiple cycle integer unit (604 style) */
+	  PPC_UNIT_FPU,				/* floating point unit */
+	  PPC_UNIT_LSU,				/* load/store unit */
+	  PPC_UNIT_BPU,				/* branch unit */
+	  nr_ppc_function_units
+	} ppc_function_unit;
+
+	/* Structure to hold timing information on a per instruction basis */
+	struct _model_time {
+	  ppc_function_unit first_unit;			/* first functional unit this insn could use */
+	  ppc_function_unit second_unit;		/* second functional unit this insn could use */
+	  signed16	    issue;			/* # cycles before function unit can process other insns */
+	  signed16	    done;			/* # cycles before insn is done */
+	  unsigned32	    flags;			/* any flags that are needed */
+	};
+
+	/* Register mappings in status masks */
+	#define PPC_CR_REG	0			/* start of CR0 .. CR7 */
+	#define PPC_FPSCR_REG	(PPC_CR_REG + 8)	/* start of fpscr register */
+
+	#define PPC_NO_SPR	(-1)			/* flag for no SPR register */
+
+	/* Return if 1 bit set */
+	#define PPC_ONE_BIT_SET_P(x) (((x) & ((x)-1)) == 0)
+
+	/* Structure for each functional unit that is busy */
+	typedef struct _model_busy model_busy;
+	struct _model_busy {
+	  model_busy *next;				/* next function unit */
+	  ppc_function_unit unit;			/* function unit name */
+	  unsigned32 int_busy;				/* int registers that are busy */
+	  unsigned32 fp_busy;				/* floating point registers that are busy */
+	  unsigned32 cr_fpscr_busy;			/* CR/FPSCR registers that are busy */
+	  signed16 spr_busy;				/* SPR register that is busy or PPC_NO_SPR */
+	  unsigned32 vr_busy;				/* AltiVec registers that are busy */
+	  signed16 vscr_busy;				/* AltiVec status register busy */
+	  signed16 issue;				/* # of cycles until unit can accept another insn */
+	  signed16 done;				/* # of cycles until insn is done */
+	  signed16 nr_writebacks;			/* # of registers this unit writes back */
+	};
+	
+	/* Structure to hold the current state information for the simulated CPU model */
+	struct _model_data {
+	  cpu *processor;				/* point back to processor */
+	  const char *name;				/* model name */
+	  const model_time *timing;			/* timing information */
+	  model_busy busy_head;				/* dummy entry to head list of busy function units */
+	  model_busy *busy_tail;			/* tail of list of busy function units */
+	  model_busy *free_list;			/* list of model_busy structs not in use */
+	  count_type nr_cycles;				/* # cycles */
+	  count_type nr_branches;			/* # branches */
+	  count_type nr_branches_fallthrough;		/* # conditional branches that fell through */
+	  count_type nr_branch_predict_trues;		/* # branches predicted correctly */
+	  count_type nr_branch_predict_falses;		/* # branches predicted incorrectly */
+	  count_type nr_branch_conditional[32];		/* # of each type of bc */
+	  count_type nr_mtcrf_crs[9];			/* # of CR's moved in a mtcrf instruction */
+	  count_type nr_stalls_data;			/* # of stalls for data */
+	  count_type nr_stalls_unit;			/* # of stalls waiting for a function unit */
+	  count_type nr_stalls_serialize;		/* # of stalls waiting for things to quiet down */
+	  count_type nr_stalls_writeback;		/* # of stalls waiting for a writeback slot */
+	  count_type nr_units[nr_ppc_function_units];	/* function unit counts */
+	  int max_nr_writebacks;			/* max # of writeback slots available */
+	  unsigned32 int_busy;				/* int registers that are busy */
+	  unsigned32 fp_busy;				/* floating point registers that are busy */
+	  unsigned32 cr_fpscr_busy;			/* CR/FPSCR registers that are busy */
+	  unsigned8 spr_busy[nr_of_sprs];		/* SPR registers that are busy */
+	  unsigned32 vr_busy;				/* AltiVec registers that are busy */
+	  unsigned8 vscr_busy;				/* AltiVec SC register busy */
+	  unsigned8 busy[nr_ppc_function_units];	/* whether a function is busy or not */
+	};
+
+	static const char *const ppc_function_unit_name[ (int)nr_ppc_function_units ] = {
+	  "unknown functional unit instruction",
+	  "integer functional unit instruction",
+	  "system register functional unit instruction",
+	  "1st single cycle integer functional unit instruction",
+	  "2nd single cycle integer functional unit instruction",
+	  "multiple cycle integer functional unit instruction",
+	  "floating point functional unit instruction",
+	  "load/store functional unit instruction",
+	  "branch functional unit instruction",
+	};
+
+	static const char *const ppc_branch_conditional_name[32] = {
+	  "branch if --CTR != 0 and condition is FALSE",				/* 0000y */
+	  "branch if --CTR != 0 and condition is FALSE, reverse branch likely",
+	  "branch if --CTR == 0 and condition is FALSE",				/* 0001y */
+	  "branch if --CTR == 0 and condition is FALSE, reverse branch likely",
+	  "branch if the condition is FALSE",						/* 001zy */
+	  "branch if the condition is FALSE, reverse branch likely",
+	  "branch if the condition is FALSE (ignored bit 1 set to 1)",			/* 001zy */
+	  "branch if the condition is FALSE, reverse branch likely (ignored bit 4 set to 1)",
+	  "branch if --CTR != 0 and condition is TRUE",					/* 0100y */
+	  "branch if --CTR != 0 and condition is TRUE, reverse branch likely",
+	  "branch if --CTR == 0 and condition is TRUE",					/* 0101y */
+	  "branch if --CTR == 0 and condition is TRUE, reverse branch likely",
+	  "branch if the condition is TRUE",						/* 011zy */
+	  "branch if the condition is TRUE, reverse branch likely",
+	  "branch if the condition is TRUE (ignored bit 1 set to 1)",			/* 011zy */
+	  "branch if the condition is TRUE, reverse branch likely (ignored bit 4 set to 1)",
+	  "branch if --CTR != 0",							/* 1z00y */
+	  "branch if --CTR != 0, reverse branch likely",
+	  "branch if --CTR == 0",							/* 1z01y */
+	  "branch if --CTR == 0, reverse branch likely",
+	  "branch always",								/* 1z1zz */
+	  "branch always (ignored bit 5 set to 1)",
+	  "branch always (ignored bit 4 set to 1)",					/* 1z1zz */
+	  "branch always (ignored bits 4,5 set to 1)",
+	  "branch if --CTR != 0 (ignored bit 1 set to 1)",				/* 1z00y */
+	  "branch if --CTR != 0, reverse branch likely (ignored bit 1 set to 1)",
+	  "branch if --CTR == 0 (ignored bit 1 set to 1)",				/* 1z01y */
+	  "branch if --CTR == 0, reverse branch likely (ignored bit 1 set to 1)",
+	  "branch always (ignored bit 1 set to 1)",					/* 1z1zz */
+	  "branch always (ignored bits 1,5 set to 1)",
+	  "branch always (ignored bits 1,4 set to 1)",					/* 1z1zz */
+	  "branch always (ignored bits 1,4,5 set to 1)",
+	};
+
+	static const char *const ppc_nr_mtcrf_crs[9] = {
+	  "mtcrf moving 0 CRs",
+	  "mtcrf moving 1 CR",
+	  "mtcrf moving 2 CRs",
+	  "mtcrf moving 3 CRs",
+	  "mtcrf moving 4 CRs",
+	  "mtcrf moving 5 CRs",
+	  "mtcrf moving 6 CRs",
+	  "mtcrf moving 7 CRs",
+	  "mtcrf moving all CRs",
+	};
+
+# Trace releasing resources
+void::model-static::model_trace_release:model_data *model_ptr, model_busy *busy
+	int i;
+	TRACE(trace_model,("done, %s, %d writeback%s\n", ppc_function_unit_name[busy->unit],
+			   busy->nr_writebacks, busy->nr_writebacks == 1 ? "" : "s"));
+	if (busy->int_busy) {
+	  for(i = 0; i < 32; i++) {
+	    if (((1 << i) & busy->int_busy) != 0) {
+	      TRACE(trace_model, ("Register r%d is now available.\n", i));
+	    }
+	  }
+	}
+	if (busy->fp_busy) {
+	  for(i = 0; i < 32; i++) {
+	    if (((1 << i) & busy->fp_busy) != 0) {
+	      TRACE(trace_model, ("Register f%d is now available.\n", i));
+	    }
+	  }
+	}
+	if (busy->cr_fpscr_busy) {
+	  for(i = 0; i < 8; i++) {
+	    if (((1 << i) & busy->cr_fpscr_busy) != 0) {
+	      TRACE(trace_model, ("Register cr%d is now available.\n", i));
+	    }
+	  }
+	  if (busy->cr_fpscr_busy & 0x100)
+	    TRACE(trace_model, ("Register fpscr is now available.\n"));
+	}
+	if (busy->spr_busy != PPC_NO_SPR)
+	  TRACE(trace_model, ("Register %s is now available.\n", spr_name(busy->spr_busy)));
+	if (busy->vr_busy) {
+	  for(i = 0; i < 32; i++) {
+	    if (((1 << i) & busy->vr_busy) != 0) {
+	      TRACE(trace_model, ("Register v%d is now available.\n", i));
+	    }
+	  }
+	}
+	if (busy->vscr_busy)
+	  TRACE(trace_model, ("VSCR Register is now available.\n", spr_name(busy->spr_busy)));
+
+# Trace making registers busy
+void::model-static::model_trace_make_busy:model_data *model_ptr, unsigned32 int_mask, unsigned32 fp_mask, unsigned32 cr_mask
+	int i;
+	if (int_mask) {
+	  for(i = 0; i < 32; i++) {
+	    if (((1 << i) & int_mask) != 0) {
+	      TRACE(trace_model, ("Register r%d is now busy.\n", i));
+	    }
+	  }
+	}
+	if (fp_mask) {
+	  for(i = 0; i < 32; i++) {
+	    if (((1 << i) & fp_mask) != 0) {
+	      TRACE(trace_model, ("Register f%d is now busy.\n", i));
+	    }
+	  }
+	}
+	if (cr_mask) {
+	  for(i = 0; i < 8; i++) {
+	    if (((1 << i) & cr_mask) != 0) {
+	      TRACE(trace_model, ("Register cr%d is now busy.\n", i));
+	    }
+	  }
+	}
+
+# Trace waiting for registers to become available
+void::model-static::model_trace_busy_p:model_data *model_ptr, unsigned32 int_busy, unsigned32 fp_busy, unsigned32 cr_or_fpscr_busy, int spr_busy
+	int i;
+	if (int_busy) {
+	  int_busy &= model_ptr->int_busy;
+	  for(i = 0; i < 32; i++) {
+	    if (((1 << i) & int_busy) != 0) {
+	      TRACE(trace_model, ("Waiting for register r%d.\n", i));
+	    }
+	  }
+	}
+	if (fp_busy) {
+	  fp_busy &= model_ptr->fp_busy;
+	  for(i = 0; i < 32; i++) {
+	    if (((1 << i) & fp_busy) != 0) {
+	      TRACE(trace_model, ("Waiting for register f%d.\n", i));
+	    }
+	  }
+	}
+	if (cr_or_fpscr_busy) {
+	  cr_or_fpscr_busy &= model_ptr->cr_fpscr_busy;
+	  for(i = 0; i < 8; i++) {
+	    if (((1 << i) & cr_or_fpscr_busy) != 0) {
+	      TRACE(trace_model, ("Waiting for register cr%d.\n", i));
+	    }
+	  }
+	  if (cr_or_fpscr_busy & 0x100)
+	    TRACE(trace_model, ("Waiting for register fpscr.\n"));
+	}
+	if (spr_busy != PPC_NO_SPR && model_ptr->spr_busy[spr_busy])
+	  TRACE(trace_model, ("Waiting for register %s.\n", spr_name(spr_busy)));
+
+# Advance state to next cycle, releasing any registers allocated
+void::model-internal::model_new_cycle:model_data *model_ptr
+	model_busy *cur_busy  = model_ptr->busy_head.next;
+	model_busy *free_list = model_ptr->free_list;
+	model_busy *busy_tail = &model_ptr->busy_head;
+	int nr_writebacks     = model_ptr->max_nr_writebacks;
+	model_busy *next;
+
+	model_ptr->nr_cycles++;
+	TRACE(trace_model,("New cycle %lu\n", (unsigned long)model_ptr->nr_cycles));
+	for ( ; cur_busy; cur_busy = next) {
+	  next = cur_busy->next;
+	  if (--cur_busy->done <= 0) {		/* function unit done, release registers if we have writeback slots */
+	    nr_writebacks -= cur_busy->nr_writebacks;
+	    if (nr_writebacks >= 0) {
+	      model_ptr->int_busy &= ~cur_busy->int_busy;
+	      model_ptr->fp_busy &= ~cur_busy->fp_busy;
+	      model_ptr->cr_fpscr_busy &= ~cur_busy->cr_fpscr_busy;
+	      if (cur_busy->spr_busy != PPC_NO_SPR)
+		model_ptr->spr_busy[cur_busy->spr_busy] = 0;
+	      model_ptr->vr_busy &= ~cur_busy->vr_busy;
+	      model_ptr->vscr_busy = ~cur_busy->vscr_busy;
+
+	      if (WITH_TRACE && ppc_trace[trace_model])
+		model_trace_release(model_ptr, cur_busy);
+
+	      model_ptr->busy[cur_busy->unit] = 0;
+	      cur_busy->next = free_list;
+	      free_list = cur_busy;
+	    }
+	    else {	/* writeback slots not available */
+	      TRACE(trace_model,("%d writeback slot%s not available for %s\n",
+				 cur_busy->nr_writebacks,
+				 cur_busy->nr_writebacks == 1 ? " is" : "s are",
+				 ppc_function_unit_name[cur_busy->unit]));
+	      cur_busy->done++;			/* undo -- above */
+	      model_ptr->nr_stalls_writeback++;
+	      busy_tail->next = cur_busy;
+	      busy_tail = cur_busy;
+	    }
+	  }
+	  else if (--cur_busy->issue <= 0) {	/* function unit pipelined, allow new use */
+	    TRACE(trace_model,("pipeline, %s ready for next client\n", ppc_function_unit_name[cur_busy->unit]));
+	    model_ptr->busy[cur_busy->unit] = 0;
+	    busy_tail->next = cur_busy;
+	    busy_tail = cur_busy;
+	  }
+	  else {
+	    TRACE(trace_model,("%s still working, issue = %d, done = %d\n",
+			       ppc_function_unit_name[cur_busy->unit],
+			       cur_busy->issue,
+			       cur_busy->done));
+	    busy_tail->next = cur_busy;
+	    busy_tail = cur_busy;
+	  }
+	}
+
+	busy_tail->next = (model_busy *)0;
+	model_ptr->busy_tail = busy_tail;
+	model_ptr->free_list = free_list;
+
+# Mark a function unit as busy, return the busy structure
+model_busy *::model-internal::model_make_busy:model_data *model_ptr, ppc_function_unit unit, int issue, int done
+	model_busy *busy;
+
+	TRACE(trace_model,("unit = %s, issue = %d, done = %d\n", ppc_function_unit_name[unit], issue, done));
+
+	if (!model_ptr->free_list) {
+	  busy = ZALLOC(model_busy);
+	}
+	else {
+	  busy = model_ptr->free_list;
+	  model_ptr->free_list = busy->next;
+	  busy->next = (model_busy *)0;
+	  busy->int_busy = 0;
+	  busy->fp_busy = 0;
+	  busy->cr_fpscr_busy = 0;
+	  busy->nr_writebacks = 0;
+	  busy->vr_busy = 0;
+	  busy->vscr_busy = 0;
+	}
+
+	busy->unit = unit;
+	busy->issue = issue;
+	busy->done = done;
+	busy->spr_busy = PPC_NO_SPR;
+	model_ptr->busy_tail->next = busy;
+	model_ptr->busy_tail = busy;
+	model_ptr->busy[unit] = 1;
+	model_ptr->nr_units[unit]++;
+	return busy;
+
+# Wait until a function unit is non-busy, and then allocate a busy pointer & return the pointer
+model_busy *::model-internal::model_wait_for_unit:itable_index index, model_data *const model_ptr, const model_time *const time_ptr
+	ppc_function_unit first_unit = time_ptr->first_unit;
+	ppc_function_unit second_unit = time_ptr->second_unit;
+	int stall_increment = 0;
+
+	for (;;) {
+	  if (!model_ptr->busy[first_unit])
+	    return model_make_busy(model_ptr, first_unit,
+				   model_ptr->timing[index].issue,
+				   model_ptr->timing[index].done);
+
+	  if (!model_ptr->busy[second_unit])
+	    return model_make_busy(model_ptr, second_unit,
+				   model_ptr->timing[index].issue,
+				   model_ptr->timing[index].done);
+
+	  TRACE(trace_model,("all function units are busy for %s\n", itable[index].name));
+	  model_ptr->nr_stalls_unit += stall_increment;		/* don't count first stall */
+	  stall_increment = 1;
+	  model_new_cycle(model_ptr);
+	}
+
+# Serialize the processor, waiting for all instructions to drain out before adding an instruction.
+void::model-function::model_serialize:itable_index index, model_data *model_ptr
+	while (model_ptr->busy_head.next) {
+	  TRACE(trace_model,("waiting for pipeline to empty\n"));
+	  model_ptr->nr_stalls_serialize++;
+	  model_new_cycle(model_ptr);
+	}
+	(void) model_make_busy(model_ptr,
+			       model_ptr->timing[index].first_unit,
+			       model_ptr->timing[index].issue,
+			       model_ptr->timing[index].done);
+
+# Wait for a CR to become unbusy
+void::model-function::model_wait_for_cr:model_data *model_ptr, unsigned CRBIT
+	unsigned u;
+	unsigned32 cr_mask;
+	int cr_var = 0;
+	for (u = 0xc0000000; (u != 0) && (CRBIT & u) == 0; u >>= 4 )
+	  cr_var++;
+
+	cr_mask = (1 << cr_var);
+	while ((model_ptr->cr_fpscr_busy & cr_mask) != 0) {
+	  TRACE(trace_model,("waiting for CR %d\n", cr_var));
+	  model_ptr->nr_stalls_data++;
+	  model_new_cycle(model_ptr);
+	}
+
+# Schedule an instruction that takes integer input registers and produces output registers
+void::model-function::ppc_insn_int:itable_index index, model_data *model_ptr, const unsigned32 out_mask, const unsigned32 in_mask
+	const unsigned32 int_mask = out_mask | in_mask;
+	model_busy *busy_ptr;
+
+	if ((model_ptr->int_busy & int_mask) != 0) {
+	  model_new_cycle(model_ptr);			/* don't count first dependency as a stall */
+
+	  while ((model_ptr->int_busy & int_mask) != 0) {
+	    if (WITH_TRACE && ppc_trace[trace_model])
+	      model_trace_busy_p(model_ptr, int_mask, 0, 0, PPC_NO_SPR);
+
+	    model_ptr->nr_stalls_data++;
+	    model_new_cycle(model_ptr);
+	  }
+	}
+
+	busy_ptr = model_wait_for_unit(index, model_ptr, &model_ptr->timing[index]);
+	model_ptr->int_busy |= out_mask;
+	busy_ptr->int_busy |= out_mask;
+	if (out_mask)
+	  busy_ptr->nr_writebacks = (PPC_ONE_BIT_SET_P(out_mask)) ? 1 : 2;
+
+	if (WITH_TRACE && ppc_trace[trace_model])
+	  model_trace_make_busy(model_ptr, out_mask, 0, 0);
+
+# Schedule an instruction that takes integer input registers and produces output registers & sets a CR register
+void::model-function::ppc_insn_int_cr:itable_index index, model_data *model_ptr, const unsigned32 out_mask, const unsigned32 in_mask, const unsigned32 cr_mask
+	const unsigned32 int_mask = out_mask | in_mask;
+	model_busy *busy_ptr;
+
+	if ((model_ptr->int_busy & int_mask) || (model_ptr->cr_fpscr_busy & cr_mask)) {
+	  model_new_cycle(model_ptr);			/* don't count first dependency as a stall */
+
+	  while ((model_ptr->int_busy & int_mask) || (model_ptr->cr_fpscr_busy & cr_mask)) {
+	    if (WITH_TRACE && ppc_trace[trace_model])
+	      model_trace_busy_p(model_ptr, int_mask, 0, cr_mask, PPC_NO_SPR);
+
+	    model_ptr->nr_stalls_data++;
+	    model_new_cycle(model_ptr);
+	  }
+	}
+
+	busy_ptr = model_wait_for_unit(index, model_ptr, &model_ptr->timing[index]);
+	model_ptr->int_busy |= out_mask;
+	busy_ptr->int_busy |= out_mask;
+	model_ptr->cr_fpscr_busy |= cr_mask;
+	busy_ptr->cr_fpscr_busy |= cr_mask;
+	if (out_mask)
+	  busy_ptr->nr_writebacks = (PPC_ONE_BIT_SET_P(out_mask)) ? 1 : 2;
+
+	if (cr_mask)
+	  busy_ptr->nr_writebacks++;
+
+	if (WITH_TRACE && ppc_trace[trace_model])
+	  model_trace_make_busy(model_ptr, out_mask, 0, cr_mask);
+
+
+# Schedule an instruction that takes CR input registers and produces output CR registers
+void::model-function::ppc_insn_cr:itable_index index, model_data *model_ptr, const unsigned32 out_mask, const unsigned32 in_mask
+	const unsigned32 cr_mask = out_mask | in_mask;
+	model_busy *busy_ptr;
+
+	if ((model_ptr->cr_fpscr_busy & cr_mask) != 0) {
+	  model_new_cycle(model_ptr);			/* don't count first dependency as a stall */
+
+	  while ((model_ptr->cr_fpscr_busy & cr_mask) != 0) {
+	    if (WITH_TRACE && ppc_trace[trace_model])
+	      model_trace_busy_p(model_ptr, 0, 0, cr_mask, PPC_NO_SPR);
+
+	    model_ptr->nr_stalls_data++;
+	    model_new_cycle(model_ptr);
+	  }
+	}
+
+	busy_ptr = model_wait_for_unit(index, model_ptr, &model_ptr->timing[index]);
+	model_ptr->cr_fpscr_busy |= out_mask;
+	busy_ptr->cr_fpscr_busy |= out_mask;
+	if (out_mask)
+	  busy_ptr->nr_writebacks = 1;
+
+	if (WITH_TRACE && ppc_trace[trace_model])
+	  model_trace_make_busy(model_ptr, 0, 0, out_mask);
+
+
+# Schedule an instruction that takes floating point input registers and produces an output fp register
+void::model-function::ppc_insn_float:itable_index index, model_data *model_ptr, const unsigned32 out_mask, const unsigned32 in_mask
+	const unsigned32 fp_mask = out_mask | in_mask;
+	model_busy *busy_ptr;
+
+	if ((model_ptr->fp_busy & fp_mask) != 0) {
+	  model_new_cycle(model_ptr);			/* don't count first dependency as a stall */
+
+	  while ((model_ptr->fp_busy & fp_mask) != 0) {
+	    if (WITH_TRACE && ppc_trace[trace_model])
+	      model_trace_busy_p(model_ptr, 0, fp_mask, 0, PPC_NO_SPR);
+
+	    model_ptr->nr_stalls_data++;
+	    model_new_cycle(model_ptr);
+	  }
+	}
+
+	busy_ptr = model_wait_for_unit(index, model_ptr, &model_ptr->timing[index]);
+	model_ptr->fp_busy |= out_mask;
+	busy_ptr->fp_busy |= out_mask;
+	busy_ptr->nr_writebacks = 1;
+	if (WITH_TRACE && ppc_trace[trace_model])
+	  model_trace_make_busy(model_ptr, 0, out_mask, 0);
+
+
+# Schedule an instruction that takes floating point input registers and produces an output fp register & sets a CR reg
+void::model-function::ppc_insn_float_cr:itable_index index, model_data *model_ptr, const unsigned32 out_mask, const unsigned32 in_mask, const unsigned32 cr_mask
+	const unsigned32 fp_mask = out_mask | in_mask;
+	model_busy *busy_ptr;
+
+	if ((model_ptr->fp_busy & fp_mask) || (model_ptr->cr_fpscr_busy & cr_mask)) {
+	  model_new_cycle(model_ptr);			/* don't count first dependency as a stall */
+
+	  while ((model_ptr->fp_busy & fp_mask) || (model_ptr->cr_fpscr_busy & cr_mask)) {
+	    if (WITH_TRACE && ppc_trace[trace_model])
+	      model_trace_busy_p(model_ptr, 0, fp_mask, cr_mask, PPC_NO_SPR);
+
+	    model_ptr->nr_stalls_data++;
+	    model_new_cycle(model_ptr);
+	  }
+	}
+
+	busy_ptr = model_wait_for_unit(index, model_ptr, &model_ptr->timing[index]);
+	model_ptr->fp_busy |= out_mask;
+	busy_ptr->fp_busy |= out_mask;
+	model_ptr->cr_fpscr_busy |= cr_mask;
+	busy_ptr->cr_fpscr_busy |= cr_mask;
+	busy_ptr->nr_writebacks = (cr_mask) ? 2 : 1;
+	if (WITH_TRACE && ppc_trace[trace_model])
+	  model_trace_make_busy(model_ptr, 0, out_mask, cr_mask);
+
+
+# Schedule an instruction that takes both int/float input registers and produces output int/float registers
+void::model-function::ppc_insn_int_float:itable_index index, model_data *model_ptr, const unsigned32 out_int_mask, const unsigned32 out_fp_mask, const unsigned32 in_int_mask, const unsigned32 in_fp_mask
+	const unsigned32 int_mask = out_int_mask | in_int_mask;
+	const unsigned32 fp_mask = out_fp_mask | in_fp_mask;
+	model_busy *busy_ptr;
+
+	if ((model_ptr->int_busy & int_mask) || (model_ptr->fp_busy & fp_mask)) {
+	  model_new_cycle(model_ptr);			/* don't count first dependency as a stall */
+
+	  while ((model_ptr->int_busy & int_mask) || (model_ptr->fp_busy & fp_mask)) {
+	    if (WITH_TRACE && ppc_trace[trace_model])
+	      model_trace_busy_p(model_ptr, int_mask, fp_mask, 0, PPC_NO_SPR);
+
+	    model_ptr->nr_stalls_data++;
+	    model_new_cycle(model_ptr);
+	  }
+
+	  busy_ptr = model_wait_for_unit(index, model_ptr, &model_ptr->timing[index]);
+	  model_ptr->int_busy |= out_int_mask;
+	  busy_ptr->int_busy |= out_int_mask;
+	  model_ptr->fp_busy |= out_fp_mask;
+	  busy_ptr->fp_busy |= out_fp_mask;
+	  busy_ptr->nr_writebacks = ((out_int_mask) ? 1 : 0) + ((out_fp_mask) ? 1 : 0);
+	  if (WITH_TRACE && ppc_trace[trace_model])
+	    model_trace_make_busy(model_ptr, out_int_mask, out_fp_mask, 0);
+	  return;
+	}
+
+# Schedule an MFSPR instruction that takes 1 special purpose register and produces an integer output register
+void::model-function::ppc_insn_from_spr:itable_index index, model_data *model_ptr, const unsigned32 int_mask, const unsigned nSPR
+	model_busy *busy_ptr;
+
+	while ((model_ptr->int_busy & int_mask) != 0 || model_ptr->spr_busy[nSPR] != 0) {
+	  if (WITH_TRACE && ppc_trace[trace_model])
+	    model_trace_busy_p(model_ptr, int_mask, 0, 0, nSPR);
+
+	  model_ptr->nr_stalls_data++;
+	  model_new_cycle(model_ptr);
+	}
+
+	busy_ptr = model_wait_for_unit(index, model_ptr, &model_ptr->timing[index]);
+	model_ptr->int_busy |= int_mask;
+	busy_ptr->int_busy |= int_mask;
+	busy_ptr->nr_writebacks = 1;
+	if (WITH_TRACE && ppc_trace[trace_model])
+	  model_trace_make_busy(model_ptr, int_mask, 0, 0);
+
+# Schedule an MTSPR instruction that takes 1 integer register and produces a special purpose output register
+void::model-function::ppc_insn_to_spr:itable_index index, model_data *model_ptr, const unsigned32 int_mask, const unsigned nSPR
+	model_busy *busy_ptr;
+
+	while ((model_ptr->int_busy & int_mask) != 0 || model_ptr->spr_busy[nSPR] != 0) {
+	  if (WITH_TRACE && ppc_trace[trace_model])
+	    model_trace_busy_p(model_ptr, int_mask, 0, 0, nSPR);
+
+	  model_ptr->nr_stalls_data++;
+	  model_new_cycle(model_ptr);
+	}
+
+	busy_ptr = model_wait_for_unit(index, model_ptr, &model_ptr->timing[index]);
+	busy_ptr->spr_busy = nSPR;
+	model_ptr->spr_busy[nSPR] = 1;
+	busy_ptr->nr_writebacks = 1;
+	TRACE(trace_model,("Making register %s busy.\n", spr_name(nSPR)));
+
+# Schedule a MFCR instruction that moves the CR into an integer regsiter
+void::model-function::ppc_insn_mfcr:itable_index index, model_data *model_ptr, unsigned32 int_mask
+	const unsigned32 cr_mask = 0xff;
+	model_busy *busy_ptr;
+
+	while (((model_ptr->int_busy & int_mask) | (model_ptr->cr_fpscr_busy & cr_mask)) != 0) {
+	  if (WITH_TRACE && ppc_trace[trace_model])
+	    model_trace_busy_p(model_ptr, int_mask, 0, cr_mask, PPC_NO_SPR);
+
+	  model_ptr->nr_stalls_data++;
+	  model_new_cycle(model_ptr);
+	}
+
+	busy_ptr = model_wait_for_unit(index, model_ptr, &model_ptr->timing[index]);
+	model_ptr->int_busy |= int_mask;
+	busy_ptr->int_busy |= int_mask;
+	busy_ptr->nr_writebacks = 1;
+	if (WITH_TRACE && ppc_trace[trace_model])
+	  model_trace_make_busy(model_ptr, int_mask, 0, 0);
+
+# Schedule a MTCR instruction that moves an integer register into the CR
+void::model-function::ppc_insn_mtcr:itable_index index, model_data *model_ptr, unsigned32 int_mask, unsigned FXM
+	int f;
+	int nr_crs = 0;
+	unsigned32 cr_mask = 0;
+	const model_time *normal_time = &model_ptr->timing[index];
+	static const model_time ppc604_1bit_time = { PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0 };
+	model_busy *busy_ptr;
+
+	for (f = 0; f < 8; f++) {
+	  if (FXM & (0x80 >> f)) {
+	    cr_mask |= (1 << f);
+	    nr_crs++;
+	  }
+	}
+
+	while (((model_ptr->int_busy & int_mask) | (model_ptr->cr_fpscr_busy & cr_mask)) != 0) {
+	  if (WITH_TRACE && ppc_trace[trace_model])
+	    model_trace_busy_p(model_ptr, int_mask, 0, cr_mask, PPC_NO_SPR);
+
+	  model_ptr->nr_stalls_data++;
+	  model_new_cycle(model_ptr);
+	}
+
+	/* If only one CR is being moved, use the SCIU, not the MCIU on the 604 */
+	if (CURRENT_MODEL == MODEL_ppc604 && nr_crs == 1) {
+	  normal_time = &ppc604_1bit_time;
+	}
+
+	busy_ptr = model_wait_for_unit(index, model_ptr, normal_time);
+	busy_ptr->cr_fpscr_busy |= cr_mask;
+	model_ptr->cr_fpscr_busy |= cr_mask;
+	model_ptr->nr_mtcrf_crs[nr_crs]++;
+	busy_ptr->nr_writebacks = 1;
+	if (WITH_TRACE && ppc_trace[trace_model])
+	  model_trace_make_busy(model_ptr, 0, 0, cr_mask);
+
+model_data *::model-function::model_create:cpu *processor
+	model_data *model_ptr = ZALLOC(model_data);
+	model_ptr->name = model_name[CURRENT_MODEL];
+	model_ptr->timing = model_time_mapping[CURRENT_MODEL];
+	model_ptr->processor = processor;
+	model_ptr->nr_cycles = 1;
+	model_ptr->busy_tail = &model_ptr->busy_head;
+	switch (CURRENT_MODEL) {
+	case MODEL_ppc601:  model_ptr->max_nr_writebacks = 1; break;	/* ??? */
+	case MODEL_ppc603:  model_ptr->max_nr_writebacks = 2; break;
+	case MODEL_ppc603e: model_ptr->max_nr_writebacks = 2; break;
+	case MODEL_ppc604:  model_ptr->max_nr_writebacks = 2; break;
+	default: error ("Unknown model %d\n", CURRENT_MODEL);
+	}
+	return model_ptr;
+
+void::model-function::model_init:model_data *model_ptr
+
+void::model-function::model_halt:model_data *model_ptr
+	/* Let pipeline drain */
+	while (model_ptr->busy_head.next)
+	  model_new_cycle(model_ptr);
+
+unsigned_word::model-function::model_get_number_of_stalls:model_data *model_ptr
+	return (model_ptr->nr_stalls_data
+	        + model_ptr->nr_stalls_unit
+	        + model_ptr->nr_stalls_serialize
+	        + model_ptr->nr_stalls_writeback);
+
+unsigned_word::model-function::model_get_number_of_cycles:model_data *model_ptr
+	return (model_ptr->nr_cycles);
+
+model_print *::model-function::model_mon_info:model_data *model_ptr
+	model_print *head;
+	model_print *tail;
+	ppc_function_unit i;
+	count_type nr_insns;
+	int j;
+
+	head = tail = ZALLOC(model_print);
+	tail->count = model_ptr->nr_cycles;
+	tail->name = "cycle";
+	tail->suffix_plural = "s";
+	tail->suffix_singular = "";
+
+	if (model_ptr->nr_stalls_data) {
+	  tail->next = ZALLOC(model_print);
+	  tail = tail->next;
+	  tail->count = model_ptr->nr_stalls_data;
+	  tail->name = "stall";
+	  tail->suffix_plural = "s waiting for data";
+	  tail->suffix_singular = " waiting for data";
+	}
+
+	if (model_ptr->nr_stalls_unit) {
+	  tail->next = ZALLOC(model_print);
+	  tail = tail->next;
+	  tail->count = model_ptr->nr_stalls_unit;
+	  tail->name = "stall";
+	  tail->suffix_plural = "s waiting for a function unit";
+	  tail->suffix_singular = " waiting for a function unit";
+	}
+
+	if (model_ptr->nr_stalls_serialize) {
+	  tail->next = ZALLOC(model_print);
+	  tail = tail->next;
+	  tail->count = model_ptr->nr_stalls_serialize;
+	  tail->name = "stall";
+	  tail->suffix_plural = "s waiting for serialization";
+	  tail->suffix_singular = " waiting for serialization";
+	}
+
+	if (model_ptr->nr_stalls_writeback) {
+	  tail->next = ZALLOC(model_print);
+	  tail = tail->next;
+	  tail->count = model_ptr->nr_stalls_writeback;
+	  tail->name = "";
+	  tail->suffix_plural = "times a write-back slot was unavailable";
+	  tail->suffix_singular = "time a writeback was unavailable";
+	}
+
+	if (model_ptr->nr_branches) {
+	  tail->next = ZALLOC(model_print);
+	  tail = tail->next;
+	  tail->count = model_ptr->nr_branches;
+	  tail->name = "branch";
+	  tail->suffix_plural = "es";
+	  tail->suffix_singular = "";
+	}
+
+	if (model_ptr->nr_branches_fallthrough) {
+	  tail->next = ZALLOC(model_print);
+	  tail = tail->next;
+	  tail->count = model_ptr->nr_branches_fallthrough;
+	  tail->name = "conditional branch";
+	  tail->suffix_plural = "es fell through";
+	  tail->suffix_singular = " fell through";
+	}
+
+	if (model_ptr->nr_branch_predict_trues) {
+	  tail->next = ZALLOC(model_print);
+	  tail = tail->next;
+	  tail->count = model_ptr->nr_branch_predict_trues;
+	  tail->name = "successful branch prediction";
+	  tail->suffix_plural = "s";
+	  tail->suffix_singular = "";
+	}
+
+	if (model_ptr->nr_branch_predict_falses) {
+	  tail->next = ZALLOC(model_print);
+	  tail = tail->next;
+	  tail->count = model_ptr->nr_branch_predict_falses;
+	  tail->name = "unsuccessful branch prediction";
+	  tail->suffix_plural = "s";
+	  tail->suffix_singular = "";
+	}
+
+	for (j = 0; j < (sizeof(ppc_branch_conditional_name) / sizeof(ppc_branch_conditional_name[0])) ; j++) {
+	  if (model_ptr->nr_branch_conditional[j]) {
+	    tail->next = ZALLOC(model_print);
+	    tail = tail->next;
+	    tail->count = model_ptr->nr_branch_conditional[j];
+	    tail->name = ppc_branch_conditional_name[j];
+	    tail->suffix_plural = " conditional branches";
+	    tail->suffix_singular = " conditional branch";
+	  }
+	}
+
+	for (j = 0; j < 9; j++) {
+	  if (model_ptr->nr_mtcrf_crs[j]) {
+	    tail->next = ZALLOC(model_print);
+	    tail = tail->next;
+	    tail->count = model_ptr->nr_mtcrf_crs[j];
+	    tail->name = ppc_nr_mtcrf_crs[j];
+	    tail->suffix_plural = " instructions";
+	    tail->suffix_singular = " instruction";
+	  }
+	}
+
+	nr_insns = 0;
+	for (i = PPC_UNIT_BAD; i < nr_ppc_function_units; i++) {
+	  if (model_ptr->nr_units[i]) {
+	    nr_insns += model_ptr->nr_units[i];
+	    tail->next = ZALLOC(model_print);
+	    tail = tail->next;
+	    tail->count = model_ptr->nr_units[i];
+	    tail->name = ppc_function_unit_name[i];
+	    tail->suffix_plural = "s";
+	    tail->suffix_singular = "";
+	  }
+	}
+
+	tail->next = ZALLOC(model_print);
+	tail = tail->next;
+	tail->count = nr_insns;
+	tail->name = "instruction";
+	tail->suffix_plural = "s that were accounted for in timing info";
+	tail->suffix_singular = " that was accounted for in timing info";
+
+	tail->next = (model_print *)0;
+	return head;
+
+void::model-function::model_mon_info_free:model_data *model_ptr, model_print *ptr
+	while (ptr) {
+	  model_print *next = ptr->next;
+	  free((void *)ptr);
+	  ptr = next;
+	}
+
+void::model-function::model_branches:model_data *model_ptr, int failed, int conditional
+	model_ptr->nr_units[PPC_UNIT_BPU]++;
+	if (failed)
+	  model_ptr->nr_branches_fallthrough++;
+	else
+	  model_ptr->nr_branches++;
+	if (conditional >= 0)
+	  model_ptr->nr_branch_conditional[conditional]++;
+	model_new_cycle(model_ptr);	/* A branch always ends the current cycle */
+
+void::model-function::model_branch_predict:model_data *model_ptr, int success
+	if (success)
+	  model_ptr->nr_branch_predict_trues++;
+	else
+	  model_ptr->nr_branch_predict_falses++;
+
+
+# The following (illegal) instruction is `known' by gen and is
+# called when ever an illegal instruction is encountered
+::internal::illegal
+	program_interrupt(processor, cia,
+	                  illegal_instruction_program_interrupt);
+
+
+# The following (floating point unavailable) instruction is `known' by gen
+# and is called when ever an a floating point instruction is to be
+# executed but floating point is make unavailable by the MSR
+::internal::floating_point_unavailable
+	floating_point_unavailable_interrupt(processor, cia);
+
+
+#
+# Floating point support functions
+#
+
+# Convert 32bit single to 64bit double
+unsigned64::function::DOUBLE:unsigned32 WORD
+	unsigned64 FRT;
+	if (EXTRACTED32(WORD, 1, 8) > 0
+	    && EXTRACTED32(WORD, 1, 8) < 255) {
+	  /* normalized operand */
+	  int not_word_1_1 = !EXTRACTED32(WORD, 1, 1); /*2.6.3 bug*/
+	  FRT = (INSERTED64(EXTRACTED32(WORD, 0, 1), 0, 1)
+	         | INSERTED64(not_word_1_1, 2, 2)
+	         | INSERTED64(not_word_1_1, 3, 3)
+	         | INSERTED64(not_word_1_1, 4, 4)
+	         | INSERTED64(EXTRACTED32(WORD, 2, 31), 5, (63 - 29)));
+	}
+	else if (EXTRACTED32(WORD, 1, 8) == 0
+	         && EXTRACTED32(WORD, 9, 31) != 0) {
+	  /* denormalized operand */
+	  int sign = EXTRACTED32(WORD, 0, 0);
+	  int exp = -126;
+	  unsigned64 frac = INSERTED64(EXTRACTED32(WORD, 9, 31), 1, (52 - 29));
+	  /* normalize the operand */
+	  while (MASKED64(frac, 0, 0) == 0) {
+	    frac <<= 1;
+	    exp -= 1;
+	  }
+	  FRT = (INSERTED64(sign, 0, 0)
+	         | INSERTED64(exp + 1023, 1, 11)
+	         | INSERTED64(EXTRACTED64(frac, 1, 52), 12, 63));
+	}
+	else if (EXTRACTED32(WORD, 1, 8) == 255
+		 || EXTRACTED32(WORD, 1, 31) == 0) {
+	  FRT = (INSERTED64(EXTRACTED32(WORD, 0, 1), 0, 1)
+	         | INSERTED64(EXTRACTED32(WORD, 1, 1), 2, 2)
+	         | INSERTED64(EXTRACTED32(WORD, 1, 1), 3, 3)
+	         | INSERTED64(EXTRACTED32(WORD, 1, 1), 4, 4)
+	         | INSERTED64(EXTRACTED32(WORD, 2, 31), 5, (63 - 29)));
+	}
+	else {
+	  error("DOUBLE - unknown case\n");
+	  FRT = 0;
+	}
+	return FRT;
+
+# Convert 64bit single to 32bit double
+unsigned32::function::SINGLE:unsigned64 FRS
+	unsigned32 WORD;
+	if (EXTRACTED64(FRS, 1, 11) > 896
+	    || EXTRACTED64(FRS, 1, 63) == 0) {
+	  /* no denormalization required (includes Zero/Infinity/NaN) */
+	  WORD = (INSERTED32(EXTRACTED64(FRS, 0, 1), 0, 1)
+	          | INSERTED32(EXTRACTED64(FRS, 5, 34), 2, 31));
+	}
+	else if (874 <= EXTRACTED64(FRS, 1, 11)
+	         && EXTRACTED64(FRS, 1, 11) <= 896) {
+	  /* denormalization required */
+	  int sign = EXTRACTED64(FRS, 0, 0);
+	  int exp = EXTRACTED64(FRS, 1, 11) - 1023;
+	  unsigned64 frac = (BIT64(0)
+	                     | INSERTED64(EXTRACTED64(FRS, 12, 63), 1, 52));
+	  /* denormalize the operand */
+	  while (exp < -126) {
+	    frac = INSERTED64(EXTRACTED64(frac, 0, 62), 1, 63);
+	    exp += 1;
+	  }
+	  WORD = (INSERTED32(sign, 0, 0)
+	          | INSERTED32(0x00, 1, 8)
+	          | INSERTED32(EXTRACTED64(frac, 1, 23), 9, 31));
+	}
+	else {
+	  WORD = 0x0; /* ??? */
+	}	  
+	return WORD;
+
+
+# round 64bit double to 64bit but single
+void::function::Round_Single:cpu *processor, int sign, int *exp, unsigned64 *frac_grx
+	/* comparisons ignore u bits */
+	unsigned64 out;
+	int inc = 0;
+	int lsb = EXTRACTED64(*frac_grx, 23, 23);
+	int gbit = EXTRACTED64(*frac_grx, 24, 24);
+	int rbit = EXTRACTED64(*frac_grx, 25, 25);
+	int xbit = EXTRACTED64(*frac_grx, 26, 55) != 0;
+	if ((FPSCR & fpscr_rn) == fpscr_rn_round_to_nearest) {
+	  if (lsb == 1 && gbit == 1) inc = 1;
+	  if (lsb == 0 && gbit == 1 && rbit == 1) inc = 1;
+	  if (lsb == 0 && gbit == 1 && xbit == 1) inc = 1;
+	}
+	if ((FPSCR & fpscr_rn) == fpscr_rn_round_towards_pos_infinity) {
+	  if (sign == 0 && gbit == 1) inc = 1;
+	  if (sign == 0 && rbit == 1) inc = 1;
+	  if (sign == 0 && xbit == 1) inc = 1;
+	}
+	if ((FPSCR & fpscr_rn) == fpscr_rn_round_towards_neg_infinity) {
+	  if (sign == 1 && gbit == 1) inc = 1;
+	  if (sign == 1 && rbit == 1) inc = 1;
+	  if (sign == 1 && xbit == 1) inc = 1;
+	}
+	/* work out addition in low 25 bits of out */
+	out = EXTRACTED64(*frac_grx, 0, 23) + inc;
+	*frac_grx = INSERTED64(out, 0, 23);
+	if (out & BIT64(64 - 23 - 1 - 1)) {
+	  *frac_grx = (BIT64(0) |
+	               INSERTED64(EXTRACTED64(*frac_grx, 0, 22), 1, 23));
+	  *exp = *exp + 1;
+	}
+	/* frac_grx[24:52] = 0 already */
+	FPSCR_SET_FR(inc);
+	FPSCR_SET_FI(gbit || rbit || xbit);
+
+
+#
+void::function::Round_Integer:cpu *processor, int sign, unsigned64 *frac, int *frac64, int gbit, int rbit, int xbit, fpscreg round_mode
+	int inc = 0;
+	if (round_mode == fpscr_rn_round_to_nearest) {
+	  if (*frac64 == 1 && gbit == 1) inc = 1;
+	  if (*frac64 == 0 && gbit == 1 && rbit == 1) inc = 1;
+	  if (*frac64 == 0 && gbit == 1 && xbit == 1) inc = 1;
+	}
+	if (round_mode == fpscr_rn_round_towards_pos_infinity) {
+	  if (sign == 0 && gbit == 1) inc = 1;
+	  if (sign == 0 && rbit == 1) inc = 1;
+	  if (sign == 0 && xbit == 1) inc = 1;
+	}
+	if (round_mode == fpscr_rn_round_towards_neg_infinity) {
+	  if (sign == 1 && gbit == 1) inc = 1;
+	  if (sign == 1 && rbit == 1) inc = 1;
+	  if (sign == 1 && xbit == 1) inc = 1;
+	}
+	/* frac[0:64] = frac[0:64} + inc */
+	*frac += (*frac64 && inc ? 1 : 0);
+	*frac64 = (*frac64 + inc) & 0x1;
+	FPSCR_SET_FR(inc);
+	FPSCR_SET_FI(gbit | rbit | xbit);
+
+
+void::function::Round_Float:cpu *processor, int sign, int *exp, unsigned64 *frac, fpscreg round_mode
+	int carry_out;
+	int inc = 0;
+	int lsb = EXTRACTED64(*frac, 52, 52);
+	int gbit = EXTRACTED64(*frac, 53, 53);
+	int rbit = EXTRACTED64(*frac, 54, 54);
+	int xbit = EXTRACTED64(*frac, 55, 55);
+	if (round_mode == fpscr_rn_round_to_nearest) {
+	  if (lsb == 1 && gbit == 1) inc = 1;
+	  if (lsb == 0 && gbit == 1 && rbit == 1) inc = 1;
+	  if (lsb == 0 && gbit == 1 && xbit == 1) inc = 1;
+	}
+	if (round_mode == fpscr_rn_round_towards_pos_infinity) {
+	  if (sign == 0 && gbit == 1) inc = 1;
+	  if (sign == 0 && rbit == 1) inc = 1;
+	  if (sign == 0 && xbit == 1) inc = 1;
+	}
+	if (round_mode == fpscr_rn_round_towards_neg_infinity) {
+	  if (sign == 1 && gbit == 1) inc = 1;
+	  if (sign == 1 && rbit == 1) inc = 1;
+	  if (sign == 1 && xbit == 1) inc = 1;
+	}
+	/* frac//carry_out = frac + inc */
+	*frac = (*frac >> 1) + (INSERTED64(inc, 52, 52) >> 1);
+	carry_out = EXTRACTED64(*frac, 0, 0);
+	*frac <<= 1;
+	if (carry_out == 1) *exp = *exp + 1;
+	FPSCR_SET_FR(inc);
+	FPSCR_SET_FI(gbit | rbit | xbit);
+	FPSCR_SET_XX(FPSCR & fpscr_fi);
+
+
+# conversion of FP to integer
+void::function::convert_to_integer:cpu *processor, unsigned_word cia, unsigned64 *frt, unsigned64 frb, fpscreg round_mode, int tgt_precision
+	int i;
+	int exp = 0;
+	unsigned64 frac = 0;
+	int frac64 = 0;
+	int gbit = 0;
+	int rbit = 0;
+	int xbit = 0;
+	int sign = EXTRACTED64(frb, 0, 0);
+	/***/
+	  if (EXTRACTED64(frb, 1, 11) == 2047 && EXTRACTED64(frb, 12, 63) == 0)
+	    GOTO(Infinity_Operand);
+	  if (EXTRACTED64(frb, 1, 11) == 2047 && EXTRACTED64(frb, 12, 12) == 0)
+	    GOTO(SNaN_Operand);
+	  if (EXTRACTED64(frb, 1, 11) == 2047 && EXTRACTED64(frb, 12, 12) == 1)
+	    GOTO(QNaN_Operand);
+	  if (EXTRACTED64(frb, 1, 11) > 1086) GOTO(Large_Operand);
+	  if (EXTRACTED64(frb, 1, 11) > 0) exp = EXTRACTED64(frb, 1, 11) - 1023;
+	  if (EXTRACTED64(frb, 1, 11) == 0) exp = -1022;
+	  if (EXTRACTED64(frb, 1, 11) > 0) { /* normal */
+	    frac = BIT64(1) | INSERTED64(EXTRACTED64(frb, 12, 63), 2, 53);
+	    frac64 = 0;
+	  }
+	  if (EXTRACTED64(frb, 1, 11) == 0) { /* denorm */
+	    frac = INSERTED64(EXTRACTED64(frb, 12, 63), 2, 53);
+	    frac64 = 0;
+	  }
+	  gbit = 0, rbit = 0, xbit = 0;
+	  for (i = 1; i <= 63 - exp; i++) {
+	    xbit = rbit | xbit;
+	    rbit = gbit;
+	    gbit = frac64;
+	    frac64 = EXTRACTED64(frac, 63, 63);
+	    frac = INSERTED64(EXTRACTED64(frac, 0, 62), 1, 63);
+	  }
+	  Round_Integer(processor, sign, &frac, &frac64, gbit, rbit, xbit, round_mode);
+	  if (sign == 1) { /* frac[0:64] = ~frac[0:64] + 1 */
+	    frac = ~frac;
+	    frac64 ^= 1;
+	    frac += (frac64 ? 1 : 0);
+	    frac64 = (frac64 + 1) & 0x1;
+	  }
+	  if (tgt_precision == 32 /* can ignore frac64 in compare */
+	      && (signed64)frac > (signed64)MASK64(33+1, 63)/*2^31-1 >>1*/)
+	    GOTO(Large_Operand);
+	  if (tgt_precision == 64 /* can ignore frac64 in compare */
+	      && (signed64)frac > (signed64)MASK64(1+1, 63)/*2^63-1 >>1*/)
+	    GOTO(Large_Operand);
+	  if (tgt_precision == 32 /* can ignore frac64 in compare */
+	      && (signed64)frac < (signed64)MASK64(0, 32+1)/*-2^31 >>1*/)
+	    GOTO(Large_Operand);
+	  if (tgt_precision == 64 /* can ignore frac64 in compare */
+	      && (signed64)frac < (signed64)MASK64(0, 0+1)/*-2^63 >>1*/)
+	    GOTO(Large_Operand);
+	  FPSCR_SET_XX(FPSCR & fpscr_fi);
+	  if (tgt_precision == 32)
+	    *frt = MASKED64(*frt, 0, 31) | (EXTRACTED64(frac, 33, 63) << 1) | frac64;
+	  if (tgt_precision == 64)
+	    *frt = (EXTRACTED64(frac, 1, 63) << 1) | frac64;
+	  /*FPSCR[fprf] = undefined */
+	  GOTO(Done);
+	  /**/
+	LABEL(Infinity_Operand):
+	  FPSCR_SET_FR(0);
+	  FPSCR_SET_FI(0);
+	  FPSCR_OR_VX(fpscr_vxcvi);
+	  if ((FPSCR & fpscr_ve) == 0) {
+	    if (tgt_precision == 32) {
+	      if (sign == 0) *frt = MASKED64(*frt, 0, 31) | 0x7FFFFFFF;
+	      if (sign == 1) *frt = MASKED64(*frt, 0, 31) | 0x80000000;
+	    }
+	    else {
+	      if (sign == 0) *frt = MASK64(1, 63); /*0x7FFF_FFFF_FFFF_FFFF*/
+	      if (sign == 1) *frt = BIT64(0); /*0x8000_0000_0000_0000*/
+	    }
+	    /* FPSCR[FPRF] = undefined */
+	  }
+	  GOTO(Done);
+	/**/
+	LABEL(SNaN_Operand):
+	  FPSCR_SET_FR(0);
+	  FPSCR_SET_FI(0);
+	  FPSCR_OR_VX(fpscr_vxsnan | fpscr_vxcvi);
+	  if ((FPSCR & fpscr_ve) == 0) {
+	    if (tgt_precision == 32) *frt = MASKED64(*frt, 0, 31) | 0x80000000;
+	    if (tgt_precision == 64) *frt = BIT64(0); /*0x8000_0000_0000_0000*/
+	    /* FPSCR[fprf] = undefined */
+	  }
+	  GOTO(Done);
+	/**/
+	LABEL(QNaN_Operand):
+	  FPSCR_SET_FR(0);
+	  FPSCR_SET_FI(0);
+	  FPSCR_OR_VX(fpscr_vxcvi);
+	  if ((FPSCR & fpscr_ve) == 0) {
+	    if (tgt_precision == 32) *frt = MASKED64(*frt, 0, 31) | 0x80000000;
+	    if (tgt_precision == 64) *frt = BIT64(0);/*0x8000_0000_0000_0000*/
+	    /* FPSCR[fprf] = undefined */
+	  }
+	  GOTO(Done);
+	/**/
+	LABEL(Large_Operand):
+	  FPSCR_SET_FR(0);
+	  FPSCR_SET_FI(0);
+	  FPSCR_OR_VX(fpscr_vxcvi);
+	  if ((FPSCR & fpscr_ve) == 0) {
+	    if (tgt_precision == 32) {
+	      if (sign == 0) *frt = MASKED64(*frt, 0, 31) | 0x7fffffff;
+	      if (sign == 1) *frt = MASKED64(*frt, 0, 31) | 0x80000000;
+	    }
+	    else {
+	      if (sign == 0) *frt = MASK64(1, 63); /*0x7FFF_FFFF_FFFF_FFFF*/
+	      if (sign == 1) *frt = BIT64(0); /*0x8000_0000_0000_0000*/
+	    }
+	    /* FPSCR[fprf] = undefined */
+	  }
+	/**/
+	LABEL(Done):;
+
+
+# extract out raw fields of a FP number
+int::function::sign:unsigned64 FRS
+	return (MASKED64(FRS, 0, 0)
+	        ? -1
+	        : 1);
+int::function::biased_exp:unsigned64 frs, int single
+	if (single)
+	  return EXTRACTED64(frs, 1, 8);
+	else
+	  return EXTRACTED64(frs, 1, 11);
+unsigned64::function::fraction:unsigned64 frs, int single
+	if (single)
+	  return EXTRACTED64(frs, 9, 31);
+	else
+	  return EXTRACTED64(frs, 12, 63);
+
+# a number?, each of the below return +1 or -1 (based on sign bit)
+# if true.
+int::function::is_nor:unsigned64 frs, int single
+	int exp = biased_exp(frs, single);
+	return (exp >= 1
+	        && exp <= (single ? 254 : 2046));
+int::function::is_zero:unsigned64 FRS
+	return (MASKED64(FRS, 1, 63) == 0
+	        ? sign(FRS)
+	        : 0);
+int::function::is_den:unsigned64 frs, int single
+	int exp = biased_exp(frs, single);
+	unsigned64 frac = fraction(frs, single);
+	return (exp == 0 && frac != 0
+	        ? sign(frs)
+	        : 0);
+int::function::is_inf:unsigned64 frs, int single
+	int exp = biased_exp(frs, single);
+	unsigned64 frac = fraction(frs, single);
+	return (exp == (single ? 255 : 2047) && frac == 0
+	        ? sign(frs)
+	        : 0);
+int::function::is_NaN:unsigned64 frs, int single
+	int exp = biased_exp(frs, single);
+	unsigned64 frac = fraction(frs, single);
+	return (exp == (single ? 255 : 2047) && frac != 0
+	        ? sign(frs)
+	        : 0);
+int::function::is_SNaN:unsigned64 frs, int single
+	return (is_NaN(frs, single)
+	        && !(frs & (single ? MASK64(9, 9) : MASK64(12, 12)))
+	             ? sign(frs)
+	             : 0);
+int::function::is_QNaN:unsigned64 frs, int single
+	return (is_NaN(frs, single) && !is_SNaN(frs, single));
+int::function::is_less_than:unsigned64 *fra, unsigned64 *frb
+	return *(double*)fra < *(double*)frb;
+int::function::is_greater_than:unsigned64 *fra, unsigned64 *frb
+	return *(double*)fra > *(double*)frb;
+int::function::is_equan_to:unsigned64 *fra, unsigned64 *frb
+	return *(double*)fra == *(double*)frb;
+
+
+# which quiet nan should become the result
+unsigned64::function::select_qnan:unsigned64 fra, unsigned64 frb, unsigned64 frc, int instruction_is_frsp, int generate_qnan, int single
+	unsigned64 frt = 0;
+	if (is_NaN(fra, single))
+	  frt = fra;
+	else if (is_NaN(frb, single))
+	  if (instruction_is_frsp)
+	    frt = MASKED64(frb, 0, 34);
+	  else
+	    frt = frb;
+	else if (is_NaN(frc, single))
+	  frt = frc;
+	else if (generate_qnan)
+	  frt = MASK64(1, 12); /* 0x7FF8_0000_0000_0000 */
+	else
+	  error("select_qnan - default reached\n");
+	return frt;
+
+
+# detect invalid operation
+int::function::is_invalid_operation:cpu *processor, unsigned_word cia, unsigned64 fra, unsigned64 frb, fpscreg check, int single, int negate
+	int fail = 0;
+	if ((check & fpscr_vxsnan)
+	    && (is_SNaN(fra, single) || is_SNaN(frb, single))) {
+	  FPSCR_OR_VX(fpscr_vxsnan);
+	  fail = 1;
+	}
+	if ((check & fpscr_vxisi)
+	    && (is_inf(fra, single) && is_inf(frb, single))
+	    && ((negate && sign(fra) != sign(frb))
+	        || (!negate && sign(fra) == sign(frb)))) {
+	   /*FIXME: don't handle inf-inf VS inf+-inf */
+	  FPSCR_OR_VX(fpscr_vxisi);
+	  fail = 1;
+	}
+	if ((check & fpscr_vxidi)
+	    && (is_inf(fra, single) && is_inf(frb, single))) {
+	  FPSCR_OR_VX(fpscr_vxidi);
+	  fail = 1;
+	}
+	if ((check & fpscr_vxzdz)
+	    && (is_zero(fra) && is_zero(frb))) {
+	  FPSCR_OR_VX(fpscr_vxzdz);
+	  fail = 1;
+	}
+	if ((check & fpscr_vximz)
+	    && (is_zero(fra) && is_inf(frb, single))) {
+	  FPSCR_OR_VX(fpscr_vximz);
+	  fail = 1;
+	}
+	if ((check & fpscr_vxvc)
+	    && (is_NaN(fra, single) || is_NaN(frb, single))) {
+	  FPSCR_OR_VX(fpscr_vxvc);
+	  fail = 1;
+	}
+	if ((check & fpscr_vxsoft)) {
+	  FPSCR_OR_VX(fpscr_vxsoft);
+	  fail = 1;
+	}
+	if ((check & fpscr_vxsqrt)
+	    && sign(fra) < 0) {
+	  FPSCR_OR_VX(fpscr_vxsqrt);
+	  fail = 1;
+	}
+	/* if ((check && fpscr_vxcvi) {
+	    && (is_inf(fra, single) || is_NaN(fra, single) || is_large(fra, single)))
+	  FPSCR_OR_VX(fpscr_vxcvi);
+	  fail = 1;
+	}
+	*/
+	return fail;
+
+
+
+
+
+# handle case of invalid operation
+void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia, unsigned64 *frt, unsigned64 fra, unsigned64 frb, unsigned64 frc, int instruction_is_frsp, int instruction_is_convert_to_64bit, int instruction_is_convert_to_32bit, int single
+	if (FPSCR & fpscr_ve) {
+	  /* invalid operation exception enabled */
+	  /* FRT unchaged */
+	  FPSCR_SET_FR(0);
+	  FPSCR_SET_FI(0);
+	  /* fpscr_FPRF unchanged */
+	}
+	else {
+	  /* invalid operation exception disabled */
+	  if (instruction_is_convert_to_64bit) {
+	    error("oopsi");
+	  }
+	  else if (instruction_is_convert_to_32bit) {
+	    error("oopsi");
+	  }
+	  else { /* arrith, frsp */
+	    *frt = select_qnan(fra, frb, frc,
+	                       instruction_is_frsp, 1/*generate*/, single);
+	    FPSCR_SET_FR(0);
+	    FPSCR_SET_FI(0);
+	    FPSCR_SET_FPRF(fpscr_rf_quiet_nan);
+	  }
+	}
+
+
+
+
+# detect divide by zero
+int::function::is_invalid_zero_divide:cpu *processor, unsigned_word cia, unsigned64 fra, unsigned64 frb, int single
+	int fail = 0;
+	if (is_zero (frb)) {
+	  FPSCR_SET_ZX (1);
+	  fail = 1;
+	}
+	return fail;
+
+
+
+
+# handle case of invalid operation
+void::function::invalid_zero_divide_operation:cpu *processor, unsigned_word cia, unsigned64 *frt, unsigned64 fra, unsigned64 frb, int single
+	if (FPSCR & fpscr_ze) {
+	  /* zero-divide exception enabled */
+	  /* FRT unchaged */
+	  FPSCR_SET_FR(0);
+	  FPSCR_SET_FI(0);
+	  /* fpscr_FPRF unchanged */
+	}
+	else {
+	  /* zero-divide exception disabled */
+	  FPSCR_SET_FR(0);
+	  FPSCR_SET_FI(0);
+	  if ((sign (fra) < 0 && sign (frb) < 0)
+	      || (sign (fra) > 0 && sign (frb) > 0)) {
+	    *frt = MASK64 (1, 11); /* 0 : 2047 : 0..0 */
+	    FPSCR_SET_FPRF(fpscr_rf_pos_infinity);
+	  }
+	  else {
+	    *frt = MASK64 (0, 11); /* 1 : 2047 : 0..0 */
+	    FPSCR_SET_FPRF(fpscr_rf_neg_infinity);
+	  }
+	}
+
+
+
+
+
+#
+# 0.0.0.0 Illegal instruction used for kernel mode emulation
+#
+0.0,6./,11./,16./,21./,31.1:X:::instruction_call
+	if (!os_emul_instruction_call(processor, cia, real_addr(cia, 1)))
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+
+#
+# I.2.4.1 Branch Instructions
+#
+0.18,6.LI,30.AA,31.LK:I:::Branch
+*601: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+*603: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+*603e:PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+*604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+	/* option_mpc860c0:
+	No problem here because this branch is predicted taken (unconditional). */
+	if (AA) NIA = IEA(EXTS(LI_0b00));
+	else    NIA = IEA(CIA + EXTS(LI_0b00));
+	if (LK) LR = (spreg)CIA+4;
+	if (CURRENT_MODEL_ISSUE > 0)
+	  model_branches(cpu_model(processor), 1, -1);
+
+0.16,6.BO,11.BI,16.BD,30.AA,31.LK:B:::Branch Conditional
+*601: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+*603: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+*603e:PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+*604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+	int M, ctr_ok, cond_ok, succeed;
+	if (CURRENT_MODEL_ISSUE > 0 && ! BO{0})
+	  model_wait_for_cr(cpu_model(processor), BIT32_BI);
+	if (is_64bit_implementation && is_64bit_mode) M = 0;
+	else                                          M = 32;
+	if (!BO{2}) CTR = CTR - 1;
+	ctr_ok = BO{2} || ((MASKED(CTR, M, 63) != 0) != (BO{3}));
+	cond_ok = BO{0} || ((CR{BI}) == (BO{1}));
+	if (ctr_ok && cond_ok) {
+	  if (AA) NIA = IEA(EXTS(BD_0b00));
+	  else    NIA = IEA(CIA + EXTS(BD_0b00));
+	  succeed = 1;
+	}
+	else
+	  succeed = 0;
+	if (LK) LR = (spreg)IEA(CIA + 4);
+	if (option_mpc860c0 && (!BO{0} || !BO{2}) && !BO{4}) {
+	  /* This branch is predicted as "normal".
+	  If this is a forward branch and it is near the end of a page,
+	  we've detected a problematic branch. */
+	  if (succeed && NIA > CIA) {
+	    if (PAGE_SIZE - (CIA & (PAGE_SIZE-1)) <= option_mpc860c0)
+	      program_interrupt(processor, cia, mpc860c0_instruction_program_interrupt);
+	  }
+	}
+	if (CURRENT_MODEL_ISSUE > 0)
+	  model_branches(cpu_model(processor), succeed, BO);
+	if (! BO{0}) {
+	  int reverse;
+	  if (BO{4}) {	/* branch prediction bit set, reverse sense of test */
+	    reverse = EXTS(BD_0b00) < 0;
+	  } else {	/* branch prediction bit not set */
+	    reverse = EXTS(BD_0b00) >= 0;
+	  }
+	  if (CURRENT_MODEL_ISSUE > 0)
+	    model_branch_predict(cpu_model(processor), reverse ? !succeed : succeed);
+	}
+
+0.19,6.BO,11.BI,16./,21.16,31.LK:XL:::Branch Conditional to Link Register
+*601: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+*603: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+*603e:PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+*604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+	int M, ctr_ok, cond_ok, succeed;
+	if (is_64bit_implementation && is_64bit_mode) M = 0;
+	else                                          M = 32;
+	if (CURRENT_MODEL_ISSUE > 0 && ! BO{0})
+	  model_wait_for_cr(cpu_model(processor), BIT32_BI);
+	if (!BO{2}) CTR = CTR - 1;
+	ctr_ok = BO{2} || ((MASKED(CTR, M, 63) != 0) != BO{3});
+	cond_ok = BO{0} || (CR{BI} == BO{1});
+	if (ctr_ok && cond_ok) {
+	  NIA = IEA(LR_0b00);
+	  succeed = 1;
+	}
+	else
+	  succeed = 0;
+	if (LK) LR = (spreg)IEA(CIA + 4);
+	if (option_mpc860c0 && (!BO{0} || !BO{2}) && !BO{4}) {
+	  /* This branch is predicted as not-taken.
+	  If this is a forward branch and it is near the end of a page,
+	  we've detected a problematic branch. */
+	  if (succeed && NIA > CIA) {
+	    if (PAGE_SIZE - (CIA & (PAGE_SIZE-1)) <= option_mpc860c0)
+	      program_interrupt(processor, cia, mpc860c0_instruction_program_interrupt);
+	  }
+	}
+	if (CURRENT_MODEL_ISSUE > 0) {
+	  model_branches(cpu_model(processor), succeed, BO);
+	  if (! BO{0})
+	    model_branch_predict(cpu_model(processor), BO{4} ? !succeed : succeed);
+	}
+
+0.19,6.BO,11.BI,16./,21.528,31.LK:XL:::Branch Conditional to Count Register
+*601: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+*603: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+*603e:PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+*604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+	int cond_ok, succeed;
+	if (CURRENT_MODEL_ISSUE > 0 && ! BO{0})
+	  model_wait_for_cr(cpu_model(processor), BIT32_BI);
+	cond_ok = BO{0} || (CR{BI} == BO{1});
+	if (cond_ok) {
+	  NIA = IEA(CTR_0b00);
+	  succeed = 1;
+	}
+	else
+	  succeed = 0;
+	if (LK) LR = (spreg)IEA(CIA + 4);
+	if (option_mpc860c0 && (!BO{0} || !BO{2}) && !BO{4}) {
+	  /* This branch is predicted as not-taken.
+	  If this is a forward branch and it is near the end of a page,
+	  we've detected a problematic branch. */
+	  if (succeed && NIA > CIA) {
+	    if (PAGE_SIZE - (CIA & (PAGE_SIZE-1)) <= option_mpc860c0)
+	      program_interrupt(processor, cia, mpc860c0_instruction_program_interrupt);
+	  }
+	}
+	if (CURRENT_MODEL_ISSUE > 0) {
+	  model_branches(cpu_model(processor), succeed, BO);
+	  if (! BO{0})
+	    model_branch_predict(cpu_model(processor), BO{4} ? !succeed : succeed);
+	}
+
+#
+# I.2.4.2 System Call Instruction
+#
+0.17,6./,11./,16./,30.1,31./:SC:::System Call
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   3,  3,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   3,  3,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	if (CURRENT_MODEL_ISSUE > 0)
+	  model_serialize(MY_INDEX, cpu_model(processor));
+	system_call_interrupt(processor, cia);
+
+#
+# I.2.4.3 Condition Register Logical Instructions
+#
+0.19,6.BT,11.BA,16.BB,21.257,31./:XL::crand:Condition Register AND
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+	BLIT32(CR, BT, CR{BA} && CR{BB});
+	PPC_INSN_CR(BT_BITMASK, BA_BITMASK | BB_BITMASK);
+
+0.19,6.BT,11.BA,16.BB,21.449,31./:XL::cror:Condition Register OR
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+	BLIT32(CR, BT, CR{BA} || CR{BB});
+	PPC_INSN_CR(BT_BITMASK, BA_BITMASK | BB_BITMASK);
+
+0.19,6.BT,11.BA,16.BB,21.193,31./:XL::crxor:Condition Register XOR
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+	BLIT32(CR, BT, CR{BA} != CR{BB});
+	PPC_INSN_CR(BT_BITMASK, BA_BITMASK | BB_BITMASK);
+
+0.19,6.BT,11.BA,16.BB,21.225,31./:XL::crnand:Condition Register NAND
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+	BLIT32(CR, BT, !(CR{BA} && CR{BB}));
+	PPC_INSN_CR(BT_BITMASK, BA_BITMASK | BB_BITMASK);
+
+0.19,6.BT,11.BA,16.BB,21.33,31./:XL::crnor:Condition Register NOR
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+	BLIT32(CR, BT, !(CR{BA} || CR{BB}));
+	PPC_INSN_CR(BT_BITMASK, BA_BITMASK | BB_BITMASK);
+
+0.19,6.BT,11.BA,16.BB,21.289,31./:XL::creqv:Condition Register Equivalent
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+	BLIT32(CR, BT, CR{BA} == CR{BB});
+	PPC_INSN_CR(BT_BITMASK, BA_BITMASK | BB_BITMASK);
+
+0.19,6.BT,11.BA,16.BB,21.129,31./:XL::crandc:Condition Register AND with Complement
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+	BLIT32(CR, BT, CR{BA} && !CR{BB});
+	PPC_INSN_CR(BT_BITMASK, BA_BITMASK | BB_BITMASK);
+
+0.19,6.BT,11.BA,16.BB,21.417,31./:XL::crorc:Condition Register OR with Complement
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+	BLIT32(CR, BT, CR{BA} || !CR{BB});
+	PPC_INSN_CR(BT_BITMASK, BA_BITMASK | BB_BITMASK);
+
+#
+# I.2.4.4 Condition Register Field Instruction
+#
+0.19,6.BF,9./,11.BFA,14./,16./,21.0,31./:XL:::Move Condition Register Field
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
+	MBLIT32(CR, 4*BF, 4*BF+3, EXTRACTED32(CR, 4*BFA, 4*BFA+3));
+	PPC_INSN_CR(BF_BITMASK, 1 << BFA);
+
+
+#
+# I.3.3.2 Fixed-Point Load Instructions
+#
+
+0.34,6.RT,11.RA,16.D:D:::Load Byte and Zero
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	*rT = MEM(unsigned, EA, 1);
+	PPC_INSN_INT(RT_BITMASK, (RA_BITMASK & ~1), 0);
+
+
+0.31,6.RT,11.RA,16.RB,21.87,31./:X:::Load Byte and Zero Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	*rT = MEM(unsigned, EA, 1);
+	PPC_INSN_INT(RT_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.35,6.RT,11.RA,16.D:D:::Load Byte and Zero with Update
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word EA;
+	if (RA_is_0 || RA == RT)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + EXTS(D);
+	*rT = MEM(unsigned, EA, 1);
+	*rA = EA;
+	PPC_INSN_INT(RT_BITMASK | RA_BITMASK, RA_BITMASK, 0);
+
+0.31,6.RT,11.RA,16.RB,21.119,31./:X:::Load Byte and Zero with Update Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word EA;
+	if (RA_is_0 || RA == RT)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + *rB;
+	*rT = MEM(unsigned, EA, 1);
+	*rA = EA;
+	PPC_INSN_INT(RT_BITMASK | RA_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.40,6.RT,11.RA,16.D:D:::Load Halfword and Zero
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	*rT = MEM(unsigned, EA, 2);
+	PPC_INSN_INT(RT_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.31,6.RT,11.RA,16.RB,21.279,31./:X:::Load Halfword and Zero Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	*rT = MEM(unsigned, EA, 2);
+	PPC_INSN_INT(RT_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.41,6.RT,11.RA,16.D:D:::Load Halfword and Zero with Update
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word EA;
+	if (RA_is_0 || RA == RT)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + EXTS(D);
+	*rT = MEM(unsigned, EA, 2);
+	*rA = EA;
+	PPC_INSN_INT(RT_BITMASK | RA_BITMASK, RA_BITMASK, 0);
+
+0.31,6.RT,11.RA,16.RB,21.311,31./:X:::Load Halfword and Zero with Update Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word EA;
+	if (RA_is_0 || RA == RT)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + *rB;
+	*rT = MEM(unsigned, EA, 2);
+	*rA = EA;
+	PPC_INSN_INT(RT_BITMASK | RA_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.42,6.RT,11.RA,16.D:D:::Load Halfword Algebraic
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	*rT = MEM(signed, EA, 2);
+	PPC_INSN_INT(RT_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.31,6.RT,11.RA,16.RB,21.343,31./:X:::Load Halfword Algebraic Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	*rT = MEM(signed, EA, 2);
+	PPC_INSN_INT(RT_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.43,6.RT,11.RA,16.D:D:::Load Halfword Algebraic with Update
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word EA;
+	if (RA_is_0 || RA == RT)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + EXTS(D);
+	*rT = MEM(signed, EA, 2);
+	*rA = EA;
+	PPC_INSN_INT(RT_BITMASK | RA_BITMASK, RA_BITMASK, 0);
+
+0.31,6.RT,11.RA,16.RB,21.375,31./:X:::Load Halfword Algebraic with Update Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word EA;
+	if (RA_is_0 || RA == RT)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + *rB;
+	*rT = MEM(signed, EA, 2);
+	*rA = EA;
+	PPC_INSN_INT(RT_BITMASK | RA_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.32,6.RT,11.RA,16.D:D:::Load Word and Zero
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	*rT = MEM(unsigned, EA, 4);
+	PPC_INSN_INT(RT_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.31,6.RT,11.RA,16.RB,21.23,31./:X:::Load Word and Zero Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	*rT = MEM(unsigned, EA, 4);
+	PPC_INSN_INT(RT_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.33,6.RT,11.RA,16.D:D:::Load Word and Zero with Update
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word EA;
+	if (RA_is_0 || RA == RT)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + EXTS(D);
+	*rT = MEM(unsigned, EA, 4);
+	*rA = EA;
+	PPC_INSN_INT(RT_BITMASK | RA_BITMASK, RA_BITMASK, 0);
+
+0.31,6.RT,11.RA,16.RB,21.55,31./:X:::Load Word and Zero with Update Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+	unsigned_word EA;
+	if (RA_is_0 || RA == RT)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + *rB;
+	*rT = MEM(unsigned, EA, 4);
+	*rA = EA;
+	PPC_INSN_INT(RT_BITMASK | RA_BITMASK, RA_BITMASK | RB_BITMASK, 0);
+
+0.58,6.RT,11.RA,16.DS,30.2:DS:64::Load Word Algebraic
+#	unsigned_word b;
+#	unsigned_word EA;
+#	if (RA_is_0) b = 0;
+#	else         b = *rA;
+#	EA = b + EXTS(DS_0b00);
+#	*rT = MEM(signed, EA, 4);
+
+0.31,6.RT,11.RA,16.RB,21.341,31./:X:64::Load Word Algebraic Indexed
+#	unsigned_word b;
+#	unsigned_word EA;
+#	if (RA_is_0) b = 0;
+#	else         b = *rA;
+#	EA = b + *rB;;
+#	*rT = MEM(signed, EA, 4);
+
+0.31,6.RT,11.RA,16.RB,21.373,31./:X:64::Load Word Algebraic with Update Indexed
+#	unsigned_word EA;
+#	if (RA_is_0 || RA == RT)
+#	  program_interrupt(processor, cia
+#	                    illegal_instruction_program_interrupt);
+#	EA = *rA + *rB;
+#	*rT = MEM(signed, EA, 4);
+#	*rA = EA;
+
+0.58,6.RT,11.RA,16.DS,30.0:DS:64::Load Doubleword
+#	unsigned_word b;
+#	unsigned_word EA;
+#	if (RA_is_0) b = 0;
+#	else         b = *rA;
+#	EA = b + EXTS(DS_0b00);
+#	*rT = MEM(unsigned, EA, 8);
+
+0.31,6.RT,11.RA,16.RB,21.21,31./:X:64::Load Doubleword Indexed
+#	unsigned_word b;
+#	unsigned_word EA;
+#	if (RA_is_0) b = 0;
+#	else         b = *rA;
+#	EA = b + *rB;
+#	*rT = MEM(unsigned, EA, 8);
+
+0.58,6.RT,11.RA,16.DS,30.1:DS:64::Load Doubleword with Update
+#	unsigned_word EA;
+#	if (RA_is_0 || RA == RT)
+#	  program_interrupt(processor, cia
+#	                    illegal_instruction_program_interrupt);
+#	EA = *rA + EXTS(DS_0b00);
+#	*rT = MEM(unsigned, EA, 8);
+#	*rA = EA;
+
+0.31,6.RT,11.RA,16.RB,21.53,31./:DS:64::Load Doubleword with Update Indexed
+#	unsigned_word EA;
+#	if (RA_is_0 || RA == RT)
+#	  program_interrupt(processor, cia
+#	                    illegal_instruction_program_interrupt);
+#	EA = *rA + *rB;
+#	*rT = MEM(unsigned, EA, 8);
+#	*rA = EA;
+
+
+
+#
+# I.3.3.3 Fixed-Point Store Instructions
+#
+
+0.38,6.RS,11.RA,16.D:D:::Store Byte
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	STORE(EA, 1, *rS);
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RS_BITMASK, 0);
+
+0.31,6.RS,11.RA,16.RB,21.215,31./:X:::Store Byte Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	STORE(EA, 1, *rS);
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RB_BITMASK | RS_BITMASK, 0);
+
+0.39,6.RS,11.RA,16.D:D:::Store Byte with Update
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word EA;
+	if (RA_is_0)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + EXTS(D);
+	STORE(EA, 1, *rS);
+	*rA = EA;
+	PPC_INSN_INT(RA_BITMASK, RA_BITMASK | RS_BITMASK, 0);
+
+0.31,6.RS,11.RA,16.RB,21.247,31./:X:::Store Byte with Update Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word EA;
+	if (RA_is_0)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + *rB;
+	STORE(EA, 1, *rS);
+	*rA = EA;
+	PPC_INSN_INT(RA_BITMASK, RA_BITMASK | RB_BITMASK | RS_BITMASK, 0);
+
+0.44,6.RS,11.RA,16.D:D:::Store Half Word
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	STORE(EA, 2, *rS);
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RS_BITMASK, 0);
+
+0.31,6.RS,11.RA,16.RB,21.407,31./:X:::Store Half Word Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	STORE(EA, 2, *rS);
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RB_BITMASK | RS_BITMASK, 0);
+
+0.45,6.RS,11.RA,16.D:D:::Store Half Word with Update
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word EA;
+	if (RA_is_0)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + EXTS(D);
+	STORE(EA, 2, *rS);
+	*rA = EA;
+	PPC_INSN_INT(RA_BITMASK, RA_BITMASK | RS_BITMASK, 0);
+
+0.31,6.RS,11.RA,16.RB,21.439,31./:X:::Store Half Word with Update Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word EA;
+	if (RA_is_0)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + *rB;
+	STORE(EA, 2, *rS);
+	*rA = EA;
+	PPC_INSN_INT(RA_BITMASK, RA_BITMASK | RB_BITMASK | RS_BITMASK, 0);
+
+0.36,6.RS,11.RA,16.D:D:::Store Word
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	STORE(EA, 4, *rS);
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RS_BITMASK, 0);
+
+0.31,6.RS,11.RA,16.RB,21.151,31./:X:::Store Word Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	STORE(EA, 4, *rS);
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RB_BITMASK | RS_BITMASK, 0);
+
+0.37,6.RS,11.RA,16.D:D:::Store Word with Update
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word EA;
+	if (RA_is_0)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + EXTS(D);
+	STORE(EA, 4, *rS);
+	*rA = EA;
+	PPC_INSN_INT(RA_BITMASK, RA_BITMASK | RS_BITMASK, 0);
+
+0.31,6.RS,11.RA,16.RB,21.183,31./:X:::Store Word with Update Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word EA;
+	if (RA_is_0)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + *rB;
+	STORE(EA, 4, *rS);
+	*rA = EA;
+	PPC_INSN_INT(RA_BITMASK, RA_BITMASK | RB_BITMASK | RS_BITMASK, 0);
+
+0.62,6.RS,11.RA,16.DS,30.0:DS:64::Store Doubleword
+#	unsigned_word b;
+#	unsigned_word EA;
+#	if (RA_is_0) b = 0;
+#	else         b = *rA;
+#	EA = b + EXTS(DS_0b00);
+#	STORE(EA, 8, *rS);
+0.31,6.RS,11.RA,16.RB,21.149,31./:X:64::Store Doubleword Indexed
+#	unsigned_word b;
+#	unsigned_word EA;
+#	if (RA_is_0) b = 0;
+#	else         b = *rA;
+#	EA = b + *rB;
+#	STORE(EA, 8, *rS);
+0.62,6.RS,11.RA,16.DS,30.1:DS:64::Store Doubleword with Update
+#	unsigned_word EA;
+#	if (RA_is_0)
+#	  program_interrupt(processor, cia
+#	                    illegal_instruction_program_interrupt);
+#	EA = *rA + EXTS(DS_0b00);
+#	STORE(EA, 8, *rS);
+#	*rA = EA;
+0.31,6.RS,11.RA,16.RB,21.181,31./:X:64::Store Doubleword with Update Indexed
+#	unsigned_word EA;
+#	if (RA_is_0)
+#	  program_interrupt(processor, cia
+#	                    illegal_instruction_program_interrupt);
+#	EA = *rA + *rB;
+#	STORE(EA, 8, *rS);
+#	*rA = EA;
+
+
+#
+# I.3.3.4 Fixed-Point Load and Store with Byte Reversal Instructions
+#
+
+0.31,6.RT,11.RA,16.RB,21.790,31./:X:::Load Halfword Byte-Reverse Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	*rT = SWAP_2(MEM(unsigned, EA, 2));
+	PPC_INSN_INT(RT_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.31,6.RT,11.RA,16.RB,21.534,31./:X:::Load Word Byte-Reverse Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	*rT = SWAP_4(MEM(unsigned, EA, 4));
+	PPC_INSN_INT(RT_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.31,6.RS,11.RA,16.RB,21.918,31./:X:::Store Half Word Byte-Reversed Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	STORE(EA, 2, SWAP_2(*rS));
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RB_BITMASK | RS_BITMASK, 0);
+
+0.31,6.RS,11.RA,16.RB,21.662,31./:X:::Store Word Byte-Reversed Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	STORE(EA, 4, SWAP_4(*rS));
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RB_BITMASK | RS_BITMASK, 0);
+
+
+#
+# I.3.3.5 Fixed-Point Load and Store Multiple Instrctions
+#
+
+0.46,6.RT,11.RA,16.D:D:::Load Multiple Word
+	unsigned_word EA;
+	unsigned_word b;
+	int r;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	r = RT;
+	if (RA >= r)
+	  program_interrupt(processor, cia,
+	                  illegal_instruction_program_interrupt);
+	if (CURRENT_ALIGNMENT == STRICT_ALIGNMENT || (EA % 4 != 0))
+	  alignment_interrupt(processor, cia, EA);
+	while (r <= 31) {
+	  GPR(r) = MEM(unsigned, EA, 4);
+	  r = r + 1;
+	  EA = EA + 4;
+	}
+
+0.47,6.RS,11.RA,16.D:D:::Store Multiple Word
+	unsigned_word EA;
+	unsigned_word b;
+	int r;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	if (CURRENT_ALIGNMENT == STRICT_ALIGNMENT
+	    || (EA % 4 != 0))
+	  alignment_interrupt(processor, cia, EA);
+	r = RS;
+	while (r <= 31) {
+	  STORE(EA, 4, GPR(r));
+	  r = r + 1;
+	  EA = EA + 4;
+	}
+
+
+#
+# I.3.3.6 Fixed-Point Move Assist Instructions
+#
+
+0.31,6.RT,11.RA,16.NB,21.597,31./:X:::Load String Word Immediate
+	unsigned_word EA;
+	int n;
+	int r;
+	int i;
+	int nr;
+	if (RA_is_0) EA = 0;
+	else         EA = *rA;
+	if (NB == 0) n = 32;
+	else         n = NB;
+	r = RT - 1;
+	i = 32;
+	nr = (n + 3) / 4;
+	if ((RT + nr >= 32)
+	    ? (RA >= RT || RA < (RT + nr) % 32)
+	    : (RA >= RT && RA < RT + nr))
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	if (CURRENT_ALIGNMENT == STRICT_ALIGNMENT)
+	  alignment_interrupt(processor, cia, EA);
+	while (n > 0) {
+	  if (i == 32) {
+	    r = (r + 1) % 32;
+	    GPR(r) = 0;
+	  }
+	  GPR(r) |= INSERTED(MEM(unsigned, EA, 1), i, i+7);
+	  i = i + 8;
+	  if (i == 64) i = 32;
+	  EA = EA + 1;
+	  n = n - 1;
+	}
+
+0.31,6.RT,11.RA,16.RB,21.533,31./:X:::Load String Word Indexed
+	unsigned_word EA;
+	unsigned_word b;
+	int n;
+	int r;
+	int i;
+	int nr;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	n = EXTRACTED32(XER, 25, 31);
+	r = RT - 1;
+	i = 32;
+	nr = (n + 3) / 4;
+	if (((RT + nr >= 32)
+	     ? ((RA >= RT || RA < (RT + nr) % 32)
+	        || (RB >= RT || RB < (RT + nr) % 32))
+	     : ((RA >= RT && RA < RT + nr)
+	        || (RB >= RT && RB < RT + nr)))
+	    || (RT == RA || RT == RB))
+	  program_interrupt(processor, cia,
+	                  illegal_instruction_program_interrupt);
+	if (CURRENT_ALIGNMENT == STRICT_ALIGNMENT)
+	  alignment_interrupt(processor, cia, EA);
+	while (n > 0) {
+	  if (i == 32) {
+	    r = (r + 1) % 32;
+	    GPR(r) = 0;
+	  }
+	  GPR(r) |= INSERTED(MEM(unsigned, EA, 1), i, i+7);
+	  i = i + 8;
+	  if (i == 64) i = 32;
+	  EA = EA + 1;
+	  n = n - 1;
+	}
+
+0.31,6.RS,11.RA,16.NB,21.725,31./:X:::Store String Word Immedate
+	unsigned_word EA;
+	int n;
+	int r;
+	int i;
+	if (RA_is_0) EA = 0;
+	else         EA = *rA;
+	if (NB == 0) n = 32;
+	else         n = NB;
+	r = RS - 1;
+	i = 32;
+	if (CURRENT_ALIGNMENT == STRICT_ALIGNMENT)
+	  alignment_interrupt(processor, cia, EA);
+	while (n > 0) {
+	  if (i == 32) r = (r + 1) % 32;
+	  STORE(EA, 1, EXTRACTED(GPR(r), i, i+7));
+	  i = i + 8;
+	  if (i == 64) i = 32;
+	  EA = EA + 1;
+	  n = n - 1;
+	}
+
+0.31,6.RS,11.RA,16.RB,21.661,31./:X:::Store String Word Indexed
+	unsigned_word EA;
+	unsigned_word b;
+	int n;
+	int r;
+	int i;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	if (CURRENT_ALIGNMENT == STRICT_ALIGNMENT)
+	  alignment_interrupt(processor, cia, EA);
+	n = EXTRACTED32(XER, 25, 31);
+	r = RS - 1;
+	i = 32;
+	while (n > 0) {
+	  if (i == 32) r = (r + 1) % 32;
+	  STORE(EA, 1, EXTRACTED(GPR(r), i, i+7));
+	  i = i + 8;
+	  if (i == 64) i = 32;
+	  EA = EA + 1;
+	  n = n - 1;
+	}
+
+
+#
+# I.3.3.7 Storage Synchronization Instructions
+#
+# HACK: Rather than monitor addresses looking for a reason
+#       to cancel a reservation.  This code instead keeps
+#	a copy of the data read from memory.  Before performing
+#	a store, the memory area is checked to see if it has
+#	been changed.
+0.31,6.RT,11.RA,16.RB,21.20,31./:X:::Load Word And Reserve Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    2,  2,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_IU,    1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_IU,    1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	RESERVE = 1;
+	RESERVE_ADDR = real_addr(EA, 1/*is-read?*/);
+	RESERVE_DATA = MEM(unsigned, EA, 4);
+	*rT = RESERVE_DATA;
+	PPC_INSN_INT(RT_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.31,6.RT,11.RA,16.RB,21.84,31./:X:64::Load Doubleword And Reserve Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	RESERVE = 1;
+	RESERVE_ADDR = real_addr(EA, 1/*is-read?*/);
+	RESERVE_DATA = MEM(unsigned, EA, 8);
+	*rT = RESERVE_DATA;
+	PPC_INSN_INT(RT_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.31,6.RS,11.RA,16.RB,21.150,31.1:X:::Store Word Conditional Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   8,  8,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   8,  8,  0
+*604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	if (RESERVE) {
+	  if (RESERVE_ADDR == real_addr(EA, 0/*is-read?*/)
+	      && /*HACK*/ RESERVE_DATA == MEM(unsigned, EA, 4)) {
+	    STORE(EA, 4, *rS);
+	    CR_SET_XER_SO(0, cr_i_zero);
+	  }
+	  else {
+	    /* ment to randomly to store, we never do! */	
+	    CR_SET_XER_SO(0, 0);
+	  }
+	  RESERVE = 0;
+	}
+	else {
+	  CR_SET_XER_SO(0, 0);
+	}
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RB_BITMASK | RS_BITMASK, 1/*Rc*/);
+
+0.31,6.RS,11.RA,16.RB,21.214,31.1:X:64::Store Doubleword Conditional Indexed
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	if (RESERVE) {
+	  if (RESERVE_ADDR == real_addr(EA, 0/*is-read?*/)
+	      && /*HACK*/ RESERVE_DATA == MEM(unsigned, EA, 8)) {
+	    STORE(EA, 8, *rS);
+	    CR_SET_XER_SO(0, cr_i_zero);
+	  }
+	  else {
+	    /* ment to randomly to store, we never do */	
+	    CR_SET_XER_SO(0, 0);
+	  }
+	  RESERVE = 0;
+	}
+	else {
+	  CR_SET_XER_SO(0, 0);
+	}
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RB_BITMASK | RS_BITMASK, 1/*Rc*/);
+
+0.31,6./,11./,16./,21.598,31./:X::sync:Synchronize
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  1,  0
+	/* do nothing */
+
+
+#
+# I.3.3.9 Fixed-Point Arithmetic Instructions
+#
+
+0.14,6.RT,11.RA,16.SI:D:::Add Immediate
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	if (RA_is_0)	*rT = EXTS(SI);
+	else		*rT = *rA + EXTS(SI);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rT, (long)*rT));
+	PPC_INSN_INT(RT_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.15,6.RT,11.RA,16.SI:D:::Add Immediate Shifted
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	if (RA_is_0)	*rT = EXTS(SI) << 16;
+	else		*rT = *rA + (EXTS(SI) << 16);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rT, (long)*rT));
+	PPC_INSN_INT(RT_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.31,6.RT,11.RA,16.RB,21.OE,22.266,31.Rc:XO:::Add
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	ALU_BEGIN(*rA);
+	ALU_ADD(*rB);
+	ALU_END(*rT, 0/*CA*/, OE, Rc);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RT,11.RA,16.RB,21.OE,22.40,31.Rc:XO:::Subtract From
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	ALU_BEGIN(*rA);
+	ALU_NOT;
+	ALU_ADD(*rB);
+	ALU_ADD(1);
+	ALU_END(*rT, 0/*CA*/, OE, Rc);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK | RB_BITMASK, Rc);
+
+0.12,6.RT,11.RA,16.SI:D:::Add Immediate Carrying
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	ALU_BEGIN(*rA);
+	ALU_ADD(EXTS(SI));
+	ALU_END(*rT, 1/*CA*/, 0/*OE*/, 0/*Rc*/);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK, 0/*Rc*/);
+
+0.13,6.RT,11.RA,16.SI:D:::Add Immediate Carrying and Record
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	ALU_BEGIN(*rA);
+	ALU_ADD(EXTS(SI));
+	ALU_END(*rT, 1/*CA*/, 0/*OE*/, 1/*Rc*/);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK, 1/*Rc*/);
+
+0.8,6.RT,11.RA,16.SI:D:::Subtract From Immediate Carrying
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	ALU_BEGIN(*rA);
+	ALU_NOT;
+	ALU_ADD(EXTS(SI));
+	ALU_ADD(1);
+	ALU_END(*rT, 1/*CA*/, 0/*OE*/, 0/*Rc*/);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK, 0/*Rc*/);
+
+0.31,6.RT,11.RA,16.RB,21.OE,22.10,31.Rc:XO:::Add Carrying
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	ALU_BEGIN(*rA);
+	ALU_ADD(*rB);
+	ALU_END(*rT, 1/*CA*/, OE, Rc);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RT,11.RA,16.RB,21.OE,22.8,31.Rc:XO:::Subtract From Carrying
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	/* RT <- ~RA + RB + 1 === RT <- RB - RA */
+	ALU_BEGIN(*rA);
+	ALU_NOT;
+	ALU_ADD(*rB);
+	ALU_ADD(1);
+	ALU_END(*rT, 1/*CA*/, OE, Rc);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RT,11.RA,16.RB,21.OE,22.138,31.Rc:XO:::Add Extended
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	ALU_BEGIN(*rA);
+	ALU_ADD(*rB);
+	ALU_ADD_CA;
+	ALU_END(*rT, 1/*CA*/, OE, Rc);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RT,11.RA,16.RB,21.OE,22.136,31.Rc:XO:::Subtract From Extended
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	ALU_BEGIN(*rA);
+	ALU_NOT;
+	ALU_ADD(*rB);
+	ALU_ADD_CA;
+	ALU_END(*rT, 1/*CA*/, OE, Rc);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RT,11.RA,16./,21.OE,22.234,31.Rc:XO:::Add to Minus One Extended
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	ALU_BEGIN(*rA);
+	ALU_ADD_CA;
+	ALU_ADD(-1);
+	ALU_END(*rT, 1/*CA*/, OE, Rc);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK, Rc);
+
+0.31,6.RT,11.RA,16./,21.OE,22.232,31.Rc:XO:::Subtract From Minus One Extended
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	ALU_BEGIN(*rA);
+	ALU_NOT;
+	ALU_ADD_CA;
+	ALU_ADD(-1);
+	ALU_END(*rT, 1/*CA*/, OE, Rc);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK, Rc);
+
+0.31,6.RT,11.RA,16./,21.OE,22.202,31.Rc:XO::addze:Add to Zero Extended
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	ALU_BEGIN(*rA);
+	ALU_ADD_CA;
+	ALU_END(*rT, 1/*CA*/, OE, Rc);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK, Rc);
+
+0.31,6.RT,11.RA,16./,21.OE,22.200,31.Rc:XO:::Subtract from Zero Extended
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	ALU_BEGIN(*rA);
+	ALU_NOT;
+	ALU_ADD_CA;
+	ALU_END(*rT, 1/*CA*/, OE, Rc);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK, Rc);
+
+0.31,6.RT,11.RA,16./,21.OE,22.104,31.Rc:XO:::Negate
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	ALU_BEGIN(*rA);
+	ALU_NOT;
+	ALU_ADD(1);
+	ALU_END(*rT,0/*CA*/,OE,Rc);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK, Rc);
+
+0.7,6.RT,11.RA,16.SI:D::mulli:Multiply Low Immediate
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    5,  5,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    3,  3,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    3,  3,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  3,  3,  0
+	signed_word prod = *rA * EXTS(SI);
+	*rT = prod;
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK, 0/*Rc*/);
+
+0.31,6.RT,11.RA,16.RB,21.OE,22.233,31.Rc:D:64::Multiply Low Doubleword
+
+0.31,6.RT,11.RA,16.RB,21.OE,22.235,31.Rc:XO::mullw:Multiply Low Word
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    5,  5,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    5,  5,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    5,  5,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  4,  4,  0
+	signed64 a = (signed32)(*rA);
+	signed64 b = (signed32)(*rB);
+	signed64 prod = a * b;
+	signed_word t = prod;
+	*rT = *rA * *rB;
+	if (t != prod && OE)
+	  XER |= (xer_overflow | xer_summary_overflow);
+	CR0_COMPARE(t, 0, Rc);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RT,11.RA,16.RB,21./,22.73,31.Rc:XO:64::Multiply High Doubleword
+
+0.31,6.RT,11.RA,16.RB,21./,22.75,31.Rc:XO::mulhw:Multiply High Word
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    5,  5,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    5,  5,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    5,  5,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  4,  4,  0
+	signed64 a = (signed32)(*rA);
+	signed64 b = (signed32)(*rB);
+	signed64 prod = a * b;
+	signed_word t = EXTRACTED64(prod, 0, 31);
+	*rT = t;
+	CR0_COMPARE(t, 0, Rc);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RT,11.RA,16.RB,21./,22.9,31.Rc:XO:64::Multiply High Doubleword Unsigned
+
+0.31,6.RT,11.RA,16.RB,21./,22.11,31.Rc:XO::mulhwu:Multiply High Word Unsigned
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    10, 10, 0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    6,  6,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    6,  6,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  4,  4,  0
+	unsigned64 a = (unsigned32)(*rA);
+	unsigned64 b = (unsigned32)(*rB);
+	unsigned64 prod = a * b;
+	signed_word t = EXTRACTED64(prod, 0, 31);
+	*rT = t;
+	CR0_COMPARE(t, 0, Rc);
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RT,11.RA,16.RB,21.OE,22.489,31.Rc:XO:64::Divide Doubleword
+
+0.31,6.RT,11.RA,16.RB,21.OE,22.491,31.Rc:XO::divw:Divide Word
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    36, 36, 0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    37, 37, 0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    37, 37, 0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  20, 20, 0
+	signed64 dividend = (signed32)(*rA);
+	signed64 divisor = (signed32)(*rB);
+	if (divisor == 0 /* nb 0x8000..0 is sign extended */
+	    || (dividend == 0x80000000 && divisor == -1)) {
+	  if (OE)
+	    XER |= (xer_overflow | xer_summary_overflow);
+	  CR0_COMPARE(0, 0, Rc);
+	}
+	else {
+	  signed64 quotent = dividend / divisor;
+	  *rT = quotent;
+	  CR0_COMPARE((signed_word)quotent, 0, Rc);
+	}
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RT,11.RA,16.RB,21.OE,22.457,31.Rc:XO:64::Divide Doubleword Unsigned
+
+0.31,6.RT,11.RA,16.RB,21.OE,22.459,31.Rc:XO::divwu:Divide Word Unsigned
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    36, 36, 0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    37, 37, 0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    37, 37, 0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  20, 20, 0
+	unsigned64 dividend = (unsigned32)(*rA);
+	unsigned64 divisor = (unsigned32)(*rB);
+	if (divisor == 0) {
+	  if (OE)
+	    XER |= (xer_overflow | xer_summary_overflow);
+	  CR0_COMPARE(0, 0, Rc);
+	}
+	else {
+	  unsigned64 quotent = dividend / divisor;
+	  *rT = quotent;
+	  CR0_COMPARE((signed_word)quotent, 0, Rc);
+	}
+	PPC_INSN_INT(RT_BITMASK, RA_BITMASK | RB_BITMASK, Rc);
+
+
+#
+# I.3.3.10 Fixed-Point Compare Instructions
+#
+
+0.11,6.BF,9./,10.L,11.RA,16.SI:D:::Compare Immediate
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	if (!is_64bit_mode && L)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	else {
+	  signed_word a;
+	  signed_word b = EXTS(SI);
+	  if (L == 0)
+	    a = EXTENDED(*rA);
+	  else
+	    a = *rA;
+	  CR_COMPARE(BF, a, b);
+	}
+	PPC_INSN_INT_CR(0, RA_BITMASK, BF_BITMASK);
+
+0.31,6.BF,9./,10.L,11.RA,16.RB,21.0,31./:X:::Compare
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	if (!is_64bit_mode && L)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	else {
+	  signed_word a;
+	  signed_word b;
+	  if (L == 0) {
+	    a = EXTENDED(*rA);
+	    b = EXTENDED(*rB);
+	  }
+	  else {
+	    a = *rA;
+	    b = *rB;
+	  }
+	  CR_COMPARE(BF, a, b);
+	}
+	PPC_INSN_INT_CR(0, RA_BITMASK | RB_BITMASK, BF_BITMASK);
+
+0.10,6.BF,9./,10.L,11.RA,16.UI:D:::Compare Logical Immediate
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	if (!is_64bit_mode && L)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	else {
+	  unsigned_word a;
+	  unsigned_word b = UI;
+	  if (L == 0)
+	    a = MASKED(*rA, 32, 63);
+	  else
+	    a = *rA;
+	  CR_COMPARE(BF, a, b);
+	}
+	PPC_INSN_INT_CR(0, RA_BITMASK, BF_BITMASK);
+
+0.31,6.BF,9./,10.L,11.RA,16.RB,21.32,31./:X:::Compare Logical
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	if (!is_64bit_mode && L)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	else {
+	  unsigned_word a;
+	  unsigned_word b;
+	  if (L == 0) {
+	    a = MASKED(*rA, 32, 63);
+	    b = MASKED(*rB, 32, 63);
+	  }
+	  else {
+	    a = *rA;
+	    b = *rB;
+	  }
+	  CR_COMPARE(BF, a, b);
+	}
+	PPC_INSN_INT_CR(0, RA_BITMASK | RB_BITMASK, BF_BITMASK);
+
+
+#
+# I.3.3.11 Fixed-Point Trap Instructions
+#
+
+0.2,6.TO,11.RA,16.SI:D:64::Trap Doubleword Immediate
+	if (!is_64bit_mode)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	else {
+	  signed_word a = *rA;
+	  signed_word b = EXTS(SI);
+	  if ((a < b && TO{0})
+	      || (a > b && TO{1})
+	      || (a == b && TO{2})
+	      || ((unsigned_word)a < (unsigned_word)b && TO{3})
+	      || ((unsigned_word)a > (unsigned_word)b && TO{4})
+	      )
+	    program_interrupt(processor, cia,
+	                      trap_program_interrupt);
+	}
+
+0.3,6.TO,11.RA,16.SI:D:::Trap Word Immediate
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    2,  2,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    2,  2,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	signed_word a = EXTENDED(*rA);
+	signed_word b = EXTS(SI);
+	if ((a < b && TO{0})
+	    || (a > b && TO{1})
+	    || (a == b && TO{2})
+	    || ((unsigned_word)a < (unsigned_word)b && TO{3})
+	    || ((unsigned_word)a > (unsigned_word)b && TO{4})
+	    )
+	  program_interrupt(processor, cia,
+	                    trap_program_interrupt);
+
+0.31,6.TO,11.RA,16.RB,21.68,31./:X:64::Trap Doubleword
+	if (!is_64bit_mode)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	else {
+	  signed_word a = *rA;
+	  signed_word b = *rB;
+	  if ((a < b && TO{0})
+	      || (a > b && TO{1})
+	      || (a == b && TO{2})
+	      || ((unsigned_word)a < (unsigned_word)b && TO{3})
+	      || ((unsigned_word)a > (unsigned_word)b && TO{4})
+	      )
+	    program_interrupt(processor, cia,
+	                      trap_program_interrupt);
+	}
+
+0.31,6.TO,11.RA,16.RB,21.4,31./:X:::Trap Word
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    2,  2,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    2,  2,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	signed_word a = EXTENDED(*rA);
+	signed_word b = EXTENDED(*rB);
+	if (TO == 12 && rA == rB) {
+	  ITRACE(trace_breakpoint, ("breakpoint\n"));
+	  cpu_halt(processor, cia, was_trap, 0);
+	}
+	else if ((a < b && TO{0})
+	    || (a > b && TO{1})
+	    || (a == b && TO{2})
+	    || ((unsigned_word)a < (unsigned_word)b && TO{3})
+	    || ((unsigned_word)a > (unsigned_word)b && TO{4})
+	    )
+	  program_interrupt(processor, cia,
+	                    trap_program_interrupt);
+
+#
+# I.3.3.12 Fixed-Point Logical Instructions
+#
+
+0.28,6.RS,11.RA,16.UI:D:::AND Immediate
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = *rS & UI;
+	CR0_COMPARE(*rA, 0, 1/*Rc*/);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK, 1/*Rc*/);
+
+0.29,6.RS,11.RA,16.UI:D:::AND Immediate Shifted
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = *rS & (UI << 16);
+	CR0_COMPARE(*rA, 0, 1/*Rc*/);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK, 1/*Rc*/);
+
+0.24,6.RS,11.RA,16.UI:D:::OR Immediate
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = *rS | UI;
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK, 0/*Rc*/);
+
+0.25,6.RS,11.RA,16.UI:D:::OR Immediate Shifted
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = *rS | (UI << 16);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK, 0/*Rc*/);
+
+0.26,6.RS,11.RA,16.UI:D:::XOR Immediate
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = *rS ^ UI;
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK, 0/*Rc*/);
+
+0.27,6.RS,11.RA,16.UI:D:::XOR Immediate Shifted
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = *rS ^ (UI << 16);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK, 0/*Rc*/);
+
+0.31,6.RS,11.RA,16.RB,21.28,31.Rc:X:::AND
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = *rS & *rB;
+	CR0_COMPARE(*rA, 0, Rc);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RS,11.RA,16.RB,21.444,31.Rc:X:::OR
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = *rS | *rB;
+	CR0_COMPARE(*rA, 0, Rc);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RS,11.RA,16.RB,21.316,31.Rc:X:::XOR
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = *rS ^ *rB;
+	CR0_COMPARE(*rA, 0, Rc);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RS,11.RA,16.RB,21.476,31.Rc:X:::NAND
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = ~(*rS & *rB);
+	CR0_COMPARE(*rA, 0, Rc);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RS,11.RA,16.RB,21.124,31.Rc:X:::NOR
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = ~(*rS | *rB);
+	CR0_COMPARE(*rA, 0, Rc);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RS,11.RA,16.RB,21.284,31.Rc:X:::Equivalent
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = ~(*rS ^ *rB); /* A === B */
+	CR0_COMPARE(*rA, 0, Rc);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RS,11.RA,16.RB,21.60,31.Rc:X:::AND with Complement
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = *rS & ~*rB;
+	CR0_COMPARE(*rA, 0, Rc);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RS,11.RA,16.RB,21.412,31.Rc:X:::OR with Complement
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = *rS | ~*rB;
+	CR0_COMPARE(*rA, 0, Rc);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK | RB_BITMASK, Rc);
+
+0.31,6.RS,11.RA,16./,21.954,31.Rc:X::extsb:Extend Sign Byte
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = (signed_word)(signed8)*rS;
+	CR0_COMPARE(*rA, 0, Rc);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK, Rc);
+
+0.31,6.RS,11.RA,16./,21.922,31.Rc:X::extsh:Extend Sign Half Word
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	*rA = (signed_word)(signed16)*rS;
+	CR0_COMPARE(*rA, 0, Rc);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK, Rc);
+
+0.31,6.RS,11.RA,16./,21.986,31.Rc:X:64::Extend Sign Word
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+#	*rA = (signed_word)(signed32)*rS;
+#	CR0_COMPARE(*rA, 0, Rc);
+
+0.31,6.RS,11.RA,16./,21.58,31.Rc:X:64::Count Leading Zeros Doubleword
+#	int count = 0;
+#	unsigned64 mask = BIT64(0);
+#	unsigned64 source = *rS;
+#	while (!(source & mask) && mask != 0) {
+#	  mask >>= 1;
+#	  count++;
+#	}
+#	*rA = count;
+#	CR0_COMPARE(count, 0, Rc); /* FIXME - is this correct */
+
+0.31,6.RS,11.RA,16./,21.26,31.Rc:X:::Count Leading Zeros Word
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	int count = 0;
+	unsigned32 mask = BIT32(0);
+	unsigned32 source = *rS;
+	while (!(source & mask) && mask != 0) {
+	  mask >>= 1;
+	  count++;
+	}
+	*rA = count;
+	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+	CR0_COMPARE(count, 0, Rc); /* FIXME - is this correct */
+
+
+#
+# I.3.3.13 Fixed-Point Rotate and Shift Instructions
+#
+
+0.30,6.RS,11.RA,16.sh_0_4,21.mb,27.0,30.sh_5,31.Rc:MD:64::Rotate Left Doubleword Immediate then Clear Left
+#	long n = (sh_5 << 4) | sh_0_4;
+#	unsigned_word r = ROTL64(*rS, n);
+#	long b = (mb_5 << 4) | mb_0_4;
+#	unsigned_word m = MASK(b, 63);
+#	signed_word result = r & m;
+#	*rA = result;
+#	ITRACE(trace_alu, (" Result = %ld (0x%lx)\n", (long)*rA, (long)*rA));
+#	CR0_COMPARE(result, 0, Rc); /* FIXME - is this correct */
+
+0.30,6.RS,11.RA,16.sh_0_4,21.me,27.1,30.sh_5,31.Rc:MD:64::Rotate Left Doubleword Immediate then Clear Right
+#	long n = (sh_5 << 4) | sh_0_4;
+#	unsigned_word r = ROTL64(*rS, n);
+#	long e = (me_5 << 4) | me_0_4;
+#	unsigned_word m = MASK(0, e);
+#	signed_word result = r & m;
+#	*rA = result;
+#	CR0_COMPARE(result, 0, Rc); /* FIXME - is this correct */
+
+0.30,6.RS,11.RA,16.sh_0_4,21.mb,27.2,30.sh_5,31.Rc:MD:64::Rotate Left Doubleword Immediate then Clear
+#	long n = (sh_5 << 4) | sh_0_4;
+#	unsigned_word r = ROTL64(*rS, n);
+#	long b = (mb_5 << 4) | mb_0_4;
+#	unsigned_word m = MASK(0, (64-n));
+#	signed_word result = r & m;
+#	*rA = result;
+#	CR0_COMPARE(result, 0, Rc); /* FIXME - is this correct */
+
+0.21,6.RS,11.RA,16.SH,21.MB,26.ME,31.Rc:M:::Rotate Left Word Immediate then AND with Mask
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	long n = SH;
+	unsigned32 s = *rS;
+	unsigned32 r = ROTL32(s, n);
+	unsigned32 m = MASK(MB+32, ME+32);
+	signed_word result = r & m;
+	*rA = result;
+	CR0_COMPARE(result, 0, Rc);
+	ITRACE(trace_alu,
+	       ("n=%ld, s=0x%lx, r=0x%lx, m=0x%lx, result=0x%lx, cr=0x%lx\n",
+	        n, (unsigned long)s, (unsigned long)r, (unsigned long)m,
+		(unsigned long)result, (unsigned long)CR));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK, Rc);
+
+0.30,6.RS,11.RA,16.RB,21.mb,27.8,31.Rc:MDS:64::Rotate Left Doubleword then Clear Left
+#	long n = MASKED(*rB, 58, 63);
+#	unsigned_word r = ROTL64(*rS, n);
+#	long b = (mb_5 << 4) | mb_0_4;
+#	unsigned_word m = MASK(b, 63);
+#	signed_word result = r & m;
+#	*rA = result;
+#	CR0_COMPARE(result, 0, Rc);
+
+0.30,6.RS,11.RA,16.RB,21.me,27.9,31.Rc:MDS:64::Rotate Left Doubleword then Clear Right
+#	long n = MASKED(*rB, 58, 63);
+#	unsigned_word r = ROTL64(*rS, n);
+#	long e = (me_5 << 4) | me_0_4;
+#	unsigned_word m = MASK(0, e);
+#	signed_word result = r & m;
+#	*rA = result;
+#	CR0_COMPARE(result, 0, Rc);
+
+0.23,6.RS,11.RA,16.RB,21.MB,26.ME,31.Rc:M:::Rotate Left Word then AND with Mask
+	long n = MASKED(*rB, 59, 63);
+	unsigned32 r = ROTL32(*rS, n);
+	unsigned32 m = MASK(MB+32, ME+32);
+	signed_word result = r & m;
+	*rA = result;
+	CR0_COMPARE(result, 0, Rc);
+
+0.30,6.RS,11.RA,16.sh_0_4,21.mb,27.3,30.sh_5,31.Rc:MD:64::Rotate Left Doubleword Immediate then Mask Insert
+#	long n = (sh_5 << 4) | sh_0_4;
+#	unsigned_word r = ROTL64(*rS, n);
+#	long b = (mb_5 << 4) | mb_0_4;
+#	unsigned_word m = MASK(b, (64-n));
+#	signed_word result = (r & m) | (*rA & ~m)
+#	*rA = result;
+#	CR0_COMPARE(result, 0, Rc);
+
+0.20,6.RS,11.RA,16.SH,21.MB,26.ME,31.Rc:M::rlwimi:Rotate Left Word Immediate then Mask Insert
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	long n = SH;
+	unsigned32 r = ROTL32(*rS, n);
+	unsigned32 m = MASK(MB+32, ME+32);
+	signed_word result = (r & m) | (*rA & ~m);
+	*rA = result;
+	ITRACE(trace_alu, (": n=%ld *rS=0x%lx r=0x%lx m=0x%lx result=0x%lx\n",
+	                   n, (unsigned long)*rS, (unsigned long)r, (unsigned long)m,
+			   (unsigned long)result));
+	CR0_COMPARE(result, 0, Rc);
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK, Rc);
+
+
+0.31,6.RS,11.RA,16.RB,21.27,31.Rc:X:64::Shift Left Doubleword
+
+0.31,6.RS,11.RA,16.RB,21.24,31.Rc:X:::Shift Left Word
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	int n = MASKED(*rB, 58, 63);
+	unsigned32 source = *rS;
+	signed_word shifted;
+	if (n < 32)
+	  shifted = (source << n);
+	else
+	  shifted = 0;
+	*rA = shifted;
+	CR0_COMPARE(shifted, 0, Rc);
+	ITRACE(trace_alu,
+	       ("n=%d, source=0x%lx, shifted=0x%lx\n",
+	        n, (unsigned long)source, (unsigned long)shifted));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK, Rc);
+
+0.31,6.RS,11.RA,16.RB,21.539,31.Rc:X:64::Shift Right Doubleword
+
+0.31,6.RS,11.RA,16.RB,21.536,31.Rc:X:::Shift Right Word
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	int n = MASKED(*rB, 58, 63);
+	unsigned32 source = *rS;
+	signed_word shifted;
+	if (n < 32)
+	  shifted = (source >> n);
+	else
+	  shifted = 0;
+	*rA = shifted;
+	CR0_COMPARE(shifted, 0, Rc);
+	ITRACE(trace_alu, \
+	       ("n=%d, source=0x%lx, shifted=0x%lx\n",
+	        n, (unsigned long)source, (unsigned long)shifted));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK, Rc);
+
+0.31,6.RS,11.RA,16.sh_0_4,21.413,30.sh_5,31.Rc:XS:64::Shift Right Algebraic Doubleword Immediate
+
+0.31,6.RS,11.RA,16.SH,21.824,31.Rc:X:::Shift Right Algebraic Word Immediate
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	int n = SH;
+	signed_word r = ROTL32(*rS, /*64*/32-n);
+	signed_word m = MASK(n+32, 63);
+	int S = MASKED(*rS, 32, 32);
+	signed_word shifted = (r & m) | (S ? ~m : 0);
+	*rA = shifted;
+	if (S && ((r & ~m) & MASK(32, 63)) != 0)
+	  XER |= xer_carry;
+	else
+	  XER &= ~xer_carry;
+	CR0_COMPARE(shifted, 0, Rc);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx), XER = %ld\n",
+			   (long)*rA, (long)*rA, (long)XER));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK, Rc);
+
+0.31,6.RS,11.RA,16.RB,21.794,31.Rc:X:64::Shift Right Algebraic Doubleword
+
+0.31,6.RS,11.RA,16.RB,21.792,31.Rc:X:::Shift Right Algebraic Word
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603e:PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
+	unsigned64 mask;
+	int n = MASKED(*rB, 59, 63);
+	signed32 source = (signed32)*rS; /* signed to keep sign bit */
+	signed32 shifted = source >> n;
+	int S = (MASKED(*rS,32,32) != 0);
+	signed64 r = ((unsigned64) source);
+	r = ((unsigned64) source) << 32 | (unsigned32) source;
+	r = ROTL64(r,64-n);
+	if (MASKED(*rB,58,58) == 0)
+		mask = (unsigned64) MASK64(n+32,63);
+	else
+		mask = (unsigned64) 0;
+	*rA = (signed_word) (r & mask | ((signed64) -1*S) & ~mask); /* if 64bit will sign extend */
+	if (S && (MASKED(r & ~mask,32,63)!=0))
+	  XER |= xer_carry;
+	else
+	  XER &= ~xer_carry;
+	CR0_COMPARE(*rA, 0, Rc);
+	ITRACE(trace_alu, (" Result = %ld (0x%lx), XER = %ld\n",
+			   (long)*rA, (long)*rA, (long)XER));
+	PPC_INSN_INT(RA_BITMASK, RS_BITMASK, Rc);
+
+#
+# I.3.3.14 Move to/from System Register Instructions
+#
+
+0.31,6.RS,11.SPR,21.467,31./:XFX::mtspr %SPR, %RS:Move to Special Purpose Register
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   2,  2,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   2,  2,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  1,  1,  0
+	int n = (SPR{5:9} << 5) | SPR{0:4};
+	if (SPR{0} && IS_PROBLEM_STATE(processor))
+	  program_interrupt(processor, cia,
+	                    privileged_instruction_program_interrupt);
+	else if (!spr_is_valid(n)
+	         || spr_is_readonly(n))
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	else {
+	  spreg new_val = (spr_length(n) == 64
+			   ? *rS
+			   : MASKED(*rS, 32, 63));
+	  /* HACK - time base registers need to be updated immediatly */
+	  if (WITH_TIME_BASE) {
+	    switch (n) {
+	    case spr_tbu:
+	      cpu_set_time_base(processor,
+	                        (MASKED64(cpu_get_time_base(processor), 32, 63)
+	                         | INSERTED64(new_val, 0, 31)));
+	      break;
+	    case spr_tbl:
+	      cpu_set_time_base(processor,
+	                        (MASKED64(cpu_get_time_base(processor), 0, 31)
+	                         | INSERTED64(new_val, 32, 63)));
+	      break;
+	    case spr_dec:
+	      cpu_set_decrementer(processor, new_val);
+	      break;
+	    default:
+	      SPREG(n) = new_val;
+	      break;
+	    }
+	  }
+	  else {
+	    SPREG(n) = new_val;
+	  }
+	}
+	PPC_INSN_TO_SPR(RS_BITMASK, n);
+
+0.31,6.RT,11.SPR,21.339,31./:XFX::mfspr %RT, %SPR:Move from Special Purpose Register
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  3,  3,  0
+	int n = (SPR{5:9} << 5) | SPR{0:4};
+	if (SPR{0} && IS_PROBLEM_STATE(processor))
+	  program_interrupt(processor, cia,
+	                    privileged_instruction_program_interrupt);
+	else if (!spr_is_valid(n))
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	else {
+	  /* HACK - time base registers need to be calculated */
+	  if (WITH_TIME_BASE) {
+	    switch (n) {
+	    case spr_dec:
+	      *rT = cpu_get_decrementer(processor);
+	      break;
+	    case spr_tbu:
+	    case spr_tbl:
+	      /* NOTE - these SPR's are not readable. Use mftb[ul] */
+	    default:
+	      *rT = SPREG(n);
+	      break;
+	    }
+	  }
+	  else {
+	    *rT = SPREG(n);
+	  }
+	}
+	PPC_INSN_FROM_SPR(RT_BITMASK, n);
+
+0.31,6.RS,11./,12.FXM,20./,21.144,31./:XFX::mtfcr:Move to Condition Register Fields
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    2,  2,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  1,  1,  0
+	if (FXM == 0xff) {
+	  CR = *rS;
+	}
+	else {
+	  unsigned_word mask = 0;
+	  unsigned_word f;
+	  for (f = 0; f < 8; f++) {
+	    if (FXM & (0x80 >> f))
+	      mask |= (0xf << 4*(7-f));
+	  }
+	  CR = (MASKED(*rS, 32, 63) & mask) | (CR & ~mask);
+	}
+	PPC_INSN_MTCR(RS_BITMASK, FXM);
+
+0.31,6.BF,9./,11./,16./,21.512,31./:X:::Move to Condition Register from XER
+#	CR_SET(BF, EXTRACTED32(XER, 0, 3));
+#	MBLIT32(XER, 0, 3, 0);
+
+0.31,6.RT,11./,16./,21.19,31./:X:::Move From Condition Register
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  3,  3,  0
+	*rT = (unsigned32)CR;
+	PPC_INSN_MFCR(RT_BITMASK);
+
+#
+# I.4.6.2 Floating-Point Load Instructions
+#
+
+0.48,6.FRT,11.RA,16.D:D:f:lfs:Load Floating-Point Single
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    3,  3,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	*frT = DOUBLE(MEM(unsigned, EA, 4));
+	PPC_INSN_INT_FLOAT(0, FRT_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.31,6.FRT,11.RA,16.RB,21.535,31./:X:f::Load Floating-Point Single Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    3,  3,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	*frT = DOUBLE(MEM(unsigned, EA, 4));
+	PPC_INSN_INT_FLOAT(0, FRT_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.49,6.FRT,11.RA,16.D:D:f::Load Floating-Point Single with Update
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    3,  3,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word EA;
+	if (RA_is_0)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + EXTS(D);
+	*frT = DOUBLE(MEM(unsigned, EA, 4));
+	*rA = EA;
+	PPC_INSN_INT_FLOAT(RA_BITMASK, FRT_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.31,6.FRT,11.RA,16.RB,21.567,31./:X:f::Load Floating-Point Single with Update Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    3,  3,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word EA;
+	if (RA_is_0)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + *rB;
+	*frT = DOUBLE(MEM(unsigned, EA, 4));
+	*rA = EA;
+	PPC_INSN_INT_FLOAT(RA_BITMASK, FRT_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.50,6.FRT,11.RA,16.D:D:f::Load Floating-Point Double
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    3,  3,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	*frT = MEM(unsigned, EA, 8);
+	PPC_INSN_INT_FLOAT(0, FRT_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.31,6.FRT,11.RA,16.RB,21.599,31./:X:f::Load Floating-Point Double Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    3,  3,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	*frT = MEM(unsigned, EA, 8);
+	PPC_INSN_INT_FLOAT(0, FRT_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.51,6.FRT,11.RA,16.D:D:f::Load Floating-Point Double with Update
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    3,  3,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word EA;
+	if (RA_is_0)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + EXTS(D);
+	*frT = MEM(unsigned, EA, 8);
+	*rA = EA;
+	PPC_INSN_INT_FLOAT(RA_BITMASK, FRT_BITMASK, (RA_BITMASK & ~1), 0);
+
+0.31,6.FRT,11.RA,16.RB,21.631,31./:X:f::Load Floating-Point Double with Update Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    3,  3,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word EA;
+	if (RA_is_0)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + *rB;
+	*frT = MEM(unsigned, EA, 8);
+	*rA = EA;
+	PPC_INSN_INT_FLOAT(RA_BITMASK, FRT_BITMASK, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+
+#
+# I.4.6.3 Floating-Point Store Instructions
+#
+
+0.52,6.FRS,11.RA,16.D:D:f::Store Floating-Point Single
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	STORE(EA, 4, SINGLE(*frS));
+	PPC_INSN_INT_FLOAT(0, 0, (RA_BITMASK & ~1), FRS_BITMASK);
+
+0.31,6.FRS,11.RA,16.RB,21.663,31./:X:f::Store Floating-Point Single Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	STORE(EA, 4, SINGLE(*frS));
+	PPC_INSN_INT_FLOAT(0, 0, (RA_BITMASK & ~1) | RB_BITMASK, FRS_BITMASK);
+
+0.53,6.FRS,11.RA,16.D:D:f::Store Floating-Point Single with Update
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word EA;
+	if (RA_is_0)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + EXTS(D);
+	STORE(EA, 4, SINGLE(*frS));
+	*rA = EA;
+	PPC_INSN_INT_FLOAT(RA_BITMASK, 0, (RA_BITMASK & ~1), FRS_BITMASK);
+
+0.31,6.FRS,11.RA,16.RB,21.695,31./:X:f::Store Floating-Point Single with Update Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word EA;
+	if (RA_is_0)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + *rB;
+	STORE(EA, 4, SINGLE(*frS));
+	*rA = EA;
+	PPC_INSN_INT_FLOAT(RA_BITMASK, 0, (RA_BITMASK & ~1) | RB_BITMASK, FRS_BITMASK);
+
+0.54,6.FRS,11.RA,16.D:D:f::Store Floating-Point Double
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	STORE(EA, 8, *frS);
+	PPC_INSN_INT_FLOAT(0, 0, (RA_BITMASK & ~1), FRS_BITMASK);
+
+0.31,6.FRS,11.RA,16.RB,21.727,31./:X:f::Store Floating-Point Double Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	STORE(EA, 8, *frS);
+	PPC_INSN_INT_FLOAT(0, 0, (RA_BITMASK & ~1) | RB_BITMASK, FRS_BITMASK);
+
+0.31,6.FRS,11.RA,16.RB,21.983,31./:X:f::Store Floating-Point Integer Word Indexed
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word b;
+	unsigned_word EA;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	STORE(EA, 4, *frS);
+	PPC_INSN_INT_FLOAT(0, 0, (RA_BITMASK & ~1) | RB_BITMASK, FRS_BITMASK);
+
+0.55,6.FRS,11.RA,16.D:D:f::Store Floating-Point Double with Update
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word EA;
+	if (RA_is_0)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + EXTS(D);
+	STORE(EA, 8, *frS);
+	*rA = EA;
+	PPC_INSN_INT_FLOAT(RA_BITMASK, 0, (RA_BITMASK & ~1), FRS_BITMASK);
+
+0.31,6.FRS,11.RA,16.RB,21.759,31./:X:f::Store Floating-Point Double with Update Indexed
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	unsigned_word EA;
+	if (RA_is_0)
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	EA = *rA + *rB;
+	STORE(EA, 8, *frS);
+	*rA = EA;
+	PPC_INSN_INT_FLOAT(RA_BITMASK, 0, (RA_BITMASK & ~1) | RB_BITMASK, FRS_BITMASK);
+
+
+#
+# I.4.6.4 Floating-Point Move Instructions
+#
+
+0.63,6.FRT,11./,16.FRB,21.72,31.Rc:X:f::Floating Move Register
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	*frT = *frB;
+	CR1_UPDATE(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRB_BITMASK, Rc);
+
+0.63,6.FRT,11./,16.FRB,21.40,31.Rc:X:f::Floating Negate
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	*frT = *frB ^ BIT64(0);
+	CR1_UPDATE(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRB_BITMASK, Rc);
+
+0.63,6.FRT,11./,16.FRB,21.264,31.Rc:X:f::Floating Absolute Value
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	*frT = *frB & ~BIT64(0);
+	CR1_UPDATE(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRB_BITMASK, Rc);
+
+0.63,6.FRT,11./,16.FRB,21.136,31.Rc:X:f::Floating Negative Absolute Value
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	*frT = *frB | BIT64(0);
+	CR1_UPDATE(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRB_BITMASK, Rc);
+
+
+#
+# I.4.6.5 Floating-Point Arithmetic Instructions
+#
+
+0.63,6.FRT,11.FRA,16.FRB,21./,26.21,31.Rc:A:f:fadd:Floating Add
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frB,
+	                         fpscr_vxsnan | fpscr_vxisi,
+	                         0, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, *frA, *frB, 0,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  double s = *(double*)frA + *(double*)frB;
+	  *(double*)frT = s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK, Rc);
+
+0.59,6.FRT,11.FRA,16.FRB,21./,26.21,31.Rc:A:f:fadds:Floating Add Single
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frB,
+	                         fpscr_vxsnan | fpscr_vxisi,
+	                         1, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, *frA, *frB, 0,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                1); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  float s = *(double*)frA + *(double*)frB;
+	  *(double*)frT = s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK, Rc);
+
+0.63,6.FRT,11.FRA,16.FRB,21./,26.20,31.Rc:A:f:fsub:Floating Subtract
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frB,
+	                         fpscr_vxsnan | fpscr_vxisi,
+	                         0, /*single?*/
+	                         1) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, *frA, *frB, 0,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  double s = *(double*)frA - *(double*)frB;
+	  *(double*)frT = s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK, Rc);
+
+0.59,6.FRT,11.FRA,16.FRB,21./,26.20,31.Rc:A:f:fsubs:Floating Subtract Single
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frB,
+	                         fpscr_vxsnan | fpscr_vxisi,
+	                         1, /*single?*/
+	                         1) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, *frA, *frB, 0,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                1); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  float s = *(double*)frA - *(double*)frB;
+	  *(double*)frT = s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK, Rc);
+
+0.63,6.FRT,11.FRA,16./,21.FRC,26.25,31.Rc:A:f:fmul:Floating Multiply
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   5,  5,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   2,  4,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   2,  4,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frC,
+	                         fpscr_vxsnan | fpscr_vximz,
+	                         0, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, *frA, 0, *frC,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  double s = *(double*)frA * *(double*)frC;
+	  *(double*)frT = s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRC_BITMASK, Rc);
+
+0.59,6.FRT,11.FRA,16./,21.FRC,26.25,31.Rc:A:f:fmuls:Floating Multiply Single
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frC,
+	                         fpscr_vxsnan | fpscr_vximz,
+	                         1, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, *frA, 0, *frC,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                1); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  float s = *(double*)frA * *(double*)frC;
+	  *(double*)frT = s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRC_BITMASK, Rc);
+
+0.63,6.FRT,11.FRA,16.FRB,21./,26.18,31.Rc:A:f:fdiv:Floating Divide
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   31, 31, 0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   33, 33, 0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   33, 33, 0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   32, 32, 0
+	FPSCR_BEGIN;
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frB,
+	                         fpscr_vxsnan | fpscr_vxzdz,
+	                         0, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, *frA, *frB, 0,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else if (is_invalid_zero_divide (processor, cia,
+	                                 *frA, *frB,
+	                                 0 /*single?*/)) {
+	  invalid_zero_divide_operation (processor, cia,
+	                                 frT, *frA, *frB,
+	                                 0 /*single?*/);
+	}
+	else {
+	  /*HACK!*/
+	  double s = *(double*)frA / *(double*)frB;
+	  *(double*)frT = s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK, Rc);
+
+0.59,6.FRT,11.FRA,16.FRB,21./,26.18,31.Rc:A:f:fdivs:Floating Divide Single
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   17, 17, 0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   18, 18, 0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   18, 18, 0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   18, 18, 0
+	FPSCR_BEGIN;
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frB,
+	                         fpscr_vxsnan | fpscr_vxzdz,
+	                         1, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, *frA, *frB, 0,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                1); /*single-precision*/
+	}
+	else if (is_invalid_zero_divide (processor, cia,
+	                                 *frA, *frB,
+	                                 1 /*single?*/)) {
+	  invalid_zero_divide_operation (processor, cia,
+	                                 frT, *frA, *frB,
+	                                 1 /*single?*/);
+	}
+	else {
+	  /*HACK!*/
+	  float s = *(double*)frA / *(double*)frB;
+	  *(double*)frT = s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK, Rc);
+
+0.63,6.FRT,11.FRA,16.FRB,21.FRC,26.29,31.Rc:A:f:fmadd:Floating Multiply-Add
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   5,  5,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   2,  4,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   2,  4,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	double product; /*HACK! - incorrectly loosing precision ... */
+	/* compute the multiply */
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frC,
+	                         fpscr_vxsnan | fpscr_vximz,
+	                         0, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                (unsigned64*)&product, *frA, 0, *frC,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  product = *(double*)frA * *(double*)frC;
+	}
+	/* compute the add */
+	if (is_invalid_operation(processor, cia,
+	                         product, *frB,
+	                         fpscr_vxsnan | fpscr_vxisi,
+	                         0, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, product, *frB, 0,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  double s = product + *(double*)frB;
+	  *(double*)frT = s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK | FRC_BITMASK, Rc);
+
+0.59,6.FRT,11.FRA,16.FRB,21.FRC,26.29,31.Rc:A:f::Floating Multiply-Add Single
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	float product; /*HACK! - incorrectly loosing precision ... */
+	/* compute the multiply */
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frC,
+	                         fpscr_vxsnan | fpscr_vximz,
+	                         1, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                (unsigned64*)&product, *frA, 0, *frC,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  product = *(double*)frA * *(double*)frC;
+	}
+	/* compute the add */
+	if (is_invalid_operation(processor, cia,
+	                         product, *frB,
+	                         fpscr_vxsnan | fpscr_vxisi,
+	                         1, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, product, *frB, 0,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  float s = product + *(double*)frB;
+	  *(double*)frT = (double)s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK | FRC_BITMASK, Rc);
+
+0.63,6.FRT,11.FRA,16.FRB,21.FRC,26.28,31.Rc:A:f::Floating Multiply-Subtract
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   5,  5,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   2,  4,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   2,  4,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	double product; /*HACK! - incorrectly loosing precision ... */
+	/* compute the multiply */
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frC,
+	                         fpscr_vxsnan | fpscr_vximz,
+	                         0, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                (unsigned64*)&product, *frA, 0, *frC,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  product = *(double*)frA * *(double*)frC;
+	}
+	/* compute the subtract */
+	if (is_invalid_operation(processor, cia,
+	                         product, *frB,
+	                         fpscr_vxsnan | fpscr_vxisi,
+	                         0, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, product, *frB, 0,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  double s = product - *(double*)frB;
+	  *(double*)frT = s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK | FRC_BITMASK, Rc);
+
+0.59,6.FRT,11.FRA,16.FRB,21.FRC,26.28,31.Rc:A:f::Floating Multiply-Subtract Single
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	float product; /*HACK! - incorrectly loosing precision ... */
+	/* compute the multiply */
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frC,
+	                         fpscr_vxsnan | fpscr_vximz,
+	                         1, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                (unsigned64*)&product, *frA, 0, *frC,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  product = *(double*)frA * *(double*)frC;
+	}
+	/* compute the subtract */
+	if (is_invalid_operation(processor, cia,
+	                         product, *frB,
+	                         fpscr_vxsnan | fpscr_vxisi,
+	                         1, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, product, *frB, 0,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  float s = product - *(double*)frB;
+	  *(double*)frT = (double)s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK | FRC_BITMASK, Rc);
+
+0.63,6.FRT,11.FRA,16.FRB,21.FRC,26.31,31.Rc:A:f::Floating Negative Multiply-Add
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   5,  5,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   2,  4,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   2,  4,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	double product; /*HACK! - incorrectly loosing precision ... */
+	/* compute the multiply */
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frC,
+	                         fpscr_vxsnan | fpscr_vximz,
+	                         0, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                (unsigned64*)&product, *frA, 0, *frC,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  product = *(double*)frA * *(double*)frC;
+	}
+	/* compute the add */
+	if (is_invalid_operation(processor, cia,
+	                         product, *frB,
+	                         fpscr_vxsnan | fpscr_vxisi,
+	                         0, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, product, *frB, 0,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  double s = -(product + *(double*)frB);
+	  *(double*)frT = s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK | FRC_BITMASK, Rc);
+
+0.59,6.FRT,11.FRA,16.FRB,21.FRC,26.31,31.Rc:A:f::Floating Negative Multiply-Add Single
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	float product; /*HACK! - incorrectly loosing precision ... */
+	/* compute the multiply */
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frC,
+	                         fpscr_vxsnan | fpscr_vximz,
+	                         1, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                (unsigned64*)&product, *frA, 0, *frC,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  product = *(double*)frA * *(double*)frC;
+	}
+	/* compute the add */
+	if (is_invalid_operation(processor, cia,
+	                         product, *frB,
+	                         fpscr_vxsnan | fpscr_vxisi,
+	                         1, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, product, *frB, 0,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  float s = -(product + *(double*)frB);
+	  *(double*)frT = (double)s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK | FRC_BITMASK, Rc);
+
+0.63,6.FRT,11.FRA,16.FRB,21.FRC,26.30,31.Rc:A:f::Floating Negative Multiply-Subtract
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   5,  5,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   2,  4,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   2,  4,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	double product; /*HACK! - incorrectly loosing precision ... */
+	/* compute the multiply */
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frC,
+	                         fpscr_vxsnan | fpscr_vximz,
+	                         0, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                (unsigned64*)&product, *frA, 0, *frC,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  product = *(double*)frA * *(double*)frC;
+	}
+	/* compute the subtract */
+	if (is_invalid_operation(processor, cia,
+	                         product, *frB,
+	                         fpscr_vxsnan | fpscr_vxisi,
+	                         0, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, product, *frB, 0,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  double s = -(product - *(double*)frB);
+	  *(double*)frT = s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK | FRC_BITMASK, Rc);
+
+0.59,6.FRT,11.FRA,16.FRB,21.FRC,26.30,31.Rc:A:f::Floating Negative Multiply-Subtract Single
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	float product; /*HACK! - incorrectly loosing precision ... */
+	/* compute the multiply */
+	if (is_invalid_operation(processor, cia,
+	                         *frA, *frC,
+	                         fpscr_vxsnan | fpscr_vximz,
+	                         1, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                (unsigned64*)&product, *frA, 0, *frC,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  product = *(double*)frA * *(double*)frC;
+	}
+	/* compute the subtract */
+	if (is_invalid_operation(processor, cia,
+	                         product, *frB,
+	                         fpscr_vxsnan | fpscr_vxisi,
+	                         1, /*single?*/
+	                         0) /*negate?*/) {
+	  invalid_arithemetic_operation(processor, cia,
+	                                frT, product, *frB, 0,
+	                                0, /*instruction_is_frsp*/
+	                                0, /*instruction_is_convert_to_64bit*/
+	                                0, /*instruction_is_convert_to_32bit*/
+	                                0); /*single-precision*/
+	}
+	else {
+	  /*HACK!*/
+	  float s = -(product - *(double*)frB);
+	  *(double*)frT = (double)s;
+	}
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK | FRC_BITMASK, Rc);
+
+
+#
+# I.4.6.6 Floating-Point Rounding and Conversion Instructions
+#
+
+0.63,6.FRT,11./,16.FRB,21.12,31.Rc:X:f::Floating Round to Single-Precision
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	int sign;
+	int exp;
+	unsigned64 frac_grx;
+	/***/
+	  /* split off cases for what to do */
+	  if (EXTRACTED64(*frB, 1, 11) < 897
+	      && EXTRACTED64(*frB, 1, 63) > 0) {
+	      if ((FPSCR & fpscr_ue) == 0) GOTO(Disabled_Exponent_Underflow);
+	      if ((FPSCR & fpscr_ue) != 0) GOTO(Enabled_Exponent_Underflow);
+	  }
+	  if (EXTRACTED64(*frB, 1, 11) > 1150
+	      && EXTRACTED64(*frB, 1, 11) < 2047) {
+	      if ((FPSCR & fpscr_oe) == 0) GOTO(Disabled_Exponent_Overflow);
+	      if ((FPSCR & fpscr_oe) != 0) GOTO(Enabled_Exponent_Overflow);
+	  }
+	  if (EXTRACTED64(*frB, 1, 11) > 896
+	      && EXTRACTED64(*frB, 1, 11) < 1151) GOTO(Normal_Operand);
+	  if (EXTRACTED64(*frB, 1, 63) == 0) GOTO(Zero_Operand);
+	  if (EXTRACTED64(*frB, 1, 11) == 2047) {
+	    if (EXTRACTED64(*frB, 12, 63) == 0) GOTO(Infinity_Operand);
+	    if (EXTRACTED64(*frB, 12, 12) == 1) GOTO(QNaN_Operand);
+	    if (EXTRACTED64(*frB, 12, 12) == 0
+	        && EXTRACTED64(*frB, 13, 63) > 0) GOTO(SNaN_Operand);
+	  }
+	/**/
+	LABEL(Disabled_Exponent_Underflow):
+	  sign = EXTRACTED64(*frB, 0, 0);
+	  if (EXTRACTED64(*frB, 1, 11) == 0) {
+	    exp = -1022;
+	    frac_grx = INSERTED64(EXTRACTED64(*frB, 12, 63), 1, 52);
+	  }
+	  if (EXTRACTED64(*frB, 1, 11) > 0) {
+	    exp = EXTRACTED64(*frB, 1, 11) - 1023;
+	    frac_grx = BIT64(0) | INSERTED64(EXTRACTED64(*frB, 12, 63), 1, 52);
+	  }
+	    /* G|R|X == zero from above */
+	    while (exp < -126) {
+	      exp = exp + 1;
+	      frac_grx = (INSERTED64(EXTRACTED64(frac_grx, 0, 54), 1, 55)
+	                  | MASKED64(frac_grx, 55, 55));
+	    }
+	  FPSCR_SET_UX(EXTRACTED64(frac_grx, 24, 55) > 0);
+	  Round_Single(processor, sign, &exp, &frac_grx);
+	  FPSCR_SET_XX(FPSCR & fpscr_fi);
+	  if (EXTRACTED64(frac_grx, 0, 52) == 0) {
+	    *frT = INSERTED64(sign, 0, 0);
+	    if (sign == 0) FPSCR_SET_FPRF(fpscr_rf_pos_zero);
+	    if (sign == 1) FPSCR_SET_FPRF(fpscr_rf_neg_zero);
+	  }
+	  if (EXTRACTED64(frac_grx, 0, 52) > 0) {
+	    if (EXTRACTED64(frac_grx, 0, 0) == 1) {
+	      if (sign == 0) FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
+	      if (sign == 1) FPSCR_SET_FPRF(fpscr_rf_neg_normal_number);
+	    }
+	    if (EXTRACTED64(frac_grx, 0, 0) == 0) {
+	      if (sign == 0) FPSCR_SET_FPRF(fpscr_rf_pos_denormalized_number);
+	      if (sign == 1) FPSCR_SET_FPRF(fpscr_rf_neg_denormalized_number);
+	    }
+	    /*Normalize_Operand:*/
+	      while (EXTRACTED64(frac_grx, 0, 0) == 0) {
+	        exp = exp - 1;
+	        frac_grx = INSERTED64(EXTRACTED64(frac_grx, 1,  52), 0, 51);
+	      }
+	    *frT = (INSERTED64(sign, 0, 0)
+	            | INSERTED64(exp + 1023, 1, 11)
+	            | INSERTED64(EXTRACTED64(frac_grx, 1, 52), 12, 63));
+	  }
+	  GOTO(Done);
+	/**/
+	LABEL(Enabled_Exponent_Underflow):
+	  FPSCR_SET_UX(1);
+	  sign = EXTRACTED64(*frB, 0, 0);
+	  if (EXTRACTED64(*frB, 1, 11) == 0) {
+	    exp = -1022;
+	    frac_grx = INSERTED64(EXTRACTED64(*frB, 12, 63), 1, 52);
+	  }
+	  if (EXTRACTED64(*frB, 1, 11) > 0) {
+	    exp = EXTRACTED64(*frB, 1, 11) - 1023;
+	    frac_grx = (BIT64(0) |
+	                INSERTED64(EXTRACTED64(*frB, 12, 63), 1, 52));
+	  }
+	  /*Normalize_Operand:*/
+	    while (EXTRACTED64(frac_grx, 0, 0) == 0) {
+	      exp = exp - 1;
+	      frac_grx = INSERTED64(EXTRACTED64(frac_grx, 1, 52), 0, 51);
+	    }
+	  Round_Single(processor, sign, &exp, &frac_grx);
+	  FPSCR_SET_XX(FPSCR & fpscr_fi);
+	  exp = exp + 192;
+	  *frT = (INSERTED64(sign, 0, 0)
+	          | INSERTED64(exp + 1023, 1, 11)
+	          | INSERTED64(EXTRACTED64(frac_grx, 1, 52), 12, 63));
+	  if (sign == 0) FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
+	  if (sign == 1) FPSCR_SET_FPRF(fpscr_rf_neg_normal_number);
+	  GOTO(Done);
+	/**/
+	LABEL(Disabled_Exponent_Overflow):
+	  FPSCR_SET_OX(1);
+	  if ((FPSCR & fpscr_rn) == fpscr_rn_round_to_nearest) {
+	    if (EXTRACTED64(*frB, 0, 0) == 0) {
+	      *frT = INSERTED64(0x7FF00000, 0, 31) | 0x00000000;
+	      FPSCR_SET_FPRF(fpscr_rf_pos_infinity);
+	    }
+	    if (EXTRACTED64(*frB, 0, 0) == 1) {
+	      *frT = INSERTED64(0xFFF00000, 0, 31) | 0x00000000;
+	      FPSCR_SET_FPRF(fpscr_rf_neg_infinity);
+	    }
+	  }
+	  if ((FPSCR & fpscr_rn) == fpscr_rn_round_towards_zero) {
+	    if (EXTRACTED64(*frB, 0, 0) == 0) {
+	      *frT = INSERTED64(0x47EFFFFF, 0, 31) | 0xE0000000;
+	      FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
+	    }
+	    if (EXTRACTED64(*frB, 0, 0) == 1) {
+	      *frT = INSERTED64(0xC7EFFFFF, 0, 31) | 0xE0000000;
+	      FPSCR_SET_FPRF(fpscr_rf_neg_normal_number);
+	    }
+	  }
+	  if ((FPSCR & fpscr_rn) == fpscr_rn_round_towards_pos_infinity) {
+	    if (EXTRACTED64(*frB, 0, 0) == 0) {
+	      *frT = INSERTED64(0x7FF00000, 0, 31) | 0x00000000;
+	      FPSCR_SET_FPRF(fpscr_rf_pos_infinity);
+	    }
+	    if (EXTRACTED64(*frB, 0, 0) == 1) {
+	      *frT = INSERTED64(0xC7EFFFFF, 0, 31) | 0xE0000000;
+	      FPSCR_SET_FPRF(fpscr_rf_neg_normal_number);
+	    }
+	  }
+	  if ((FPSCR & fpscr_rn) == fpscr_rn_round_towards_neg_infinity) {
+	    if (EXTRACTED64(*frB, 0, 0) == 0) {
+	      *frT = INSERTED64(0x47EFFFFF, 0, 31) | 0xE0000000;
+	      FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
+	    }
+	    if (EXTRACTED64(*frB, 0, 0) == 1) {
+	      *frT = INSERTED64(0xFFF00000, 0, 31) | 0x00000000;
+	      FPSCR_SET_FPRF(fpscr_rf_neg_infinity);
+	    }
+	  }
+	  /* FPSCR[FR] <- undefined */
+	  FPSCR_SET_FI(1);
+	  FPSCR_SET_XX(1);
+	  GOTO(Done);
+	/**/
+	LABEL(Enabled_Exponent_Overflow):
+	  sign = EXTRACTED64(*frB, 0, 0);
+	  exp = EXTRACTED64(*frB, 1, 11) - 1023;
+	  frac_grx = BIT64(0) | INSERTED64(EXTRACTED64(*frB, 12, 63), 1, 52);
+	  Round_Single(processor, sign, &exp, &frac_grx);
+	  FPSCR_SET_XX(FPSCR & fpscr_fi);
+	/**/
+	LABEL(Enabled_Overflow):
+	  FPSCR_SET_OX(1);
+	  exp = exp - 192;
+	  *frT = (INSERTED64(sign, 0, 0)
+	          | INSERTED64(exp + 1023, 1, 11)
+	          | INSERTED64(EXTRACTED64(frac_grx, 1, 52), 12, 63));
+	  if (sign == 0) FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
+	  if (sign == 1) FPSCR_SET_FPRF(fpscr_rf_neg_normal_number);
+	  GOTO(Done);
+	/**/
+	LABEL(Zero_Operand):
+	  *frT = *frB;
+	  if (EXTRACTED64(*frB, 0, 0) == 0) FPSCR_SET_FPRF(fpscr_rf_pos_zero);
+	  if (EXTRACTED64(*frB, 0, 0) == 1) FPSCR_SET_FPRF(fpscr_rf_neg_zero);
+	  FPSCR_SET_FR(0);
+	  FPSCR_SET_FI(0);
+	  GOTO(Done);
+	/**/
+	LABEL(Infinity_Operand):
+	  *frT = *frB;
+	  if (EXTRACTED64(*frB, 0, 0) == 0) FPSCR_SET_FPRF(fpscr_rf_pos_infinity);
+	  if (EXTRACTED64(*frB, 0, 0) == 1) FPSCR_SET_FPRF(fpscr_rf_neg_infinity);
+	  FPSCR_SET_FR(0);
+	  FPSCR_SET_FI(0);
+	  GOTO(Done);
+	/**/
+	LABEL(QNaN_Operand):
+	  *frT = INSERTED64(EXTRACTED64(*frB, 0, 34), 0, 34);
+	  FPSCR_SET_FPRF(fpscr_rf_quiet_nan);
+	  FPSCR_SET_FR(0);
+	  FPSCR_SET_FI(0);
+	  GOTO(Done);
+	/**/
+	LABEL(SNaN_Operand):
+	  FPSCR_OR_VX(fpscr_vxsnan);
+	  if ((FPSCR & fpscr_ve) == 0) {
+	    *frT = (MASKED64(*frB, 0, 11)
+	            | BIT64(12)
+	            | MASKED64(*frB, 13, 34));
+	    FPSCR_SET_FPRF(fpscr_rf_quiet_nan);
+	  }
+	  FPSCR_SET_FR(0);
+	  FPSCR_SET_FI(0);
+	  GOTO(Done);
+	/**/
+	LABEL(Normal_Operand):
+	  sign = EXTRACTED64(*frB, 0, 0);
+	  exp = EXTRACTED64(*frB, 1, 11) - 1023;
+	  frac_grx = BIT64(0) | INSERTED64(EXTRACTED64(*frB, 12, 63), 1, 52);
+	  Round_Single(processor, sign, &exp, &frac_grx);
+	  FPSCR_SET_XX(FPSCR & fpscr_fi);
+	  if (exp > 127 && (FPSCR & fpscr_oe) == 0) GOTO(Disabled_Exponent_Overflow);
+	  if (exp > 127 && (FPSCR & fpscr_oe) != 0) GOTO(Enabled_Overflow);
+	  *frT = (INSERTED64(sign, 0, 0)
+	          | INSERTED64(exp + 1023, 1, 11)
+	          | INSERTED64(EXTRACTED64(frac_grx, 1, 52), 12, 63));
+	  if (sign == 0) FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
+	  if (sign == 1) FPSCR_SET_FPRF(fpscr_rf_neg_normal_number);
+	  GOTO(Done);
+	/**/
+	LABEL(Done):
+	  PPC_INSN_FLOAT(FRT_BITMASK, FRB_BITMASK, Rc);
+
+
+0.63,6.FRT,11./,16.FRB,21.814,31.Rc:X:64,f::Floating Convert To Integer Doubleword
+	floating_point_assist_interrupt(processor, cia);
+
+0.63,6.FRT,11./,16.FRB,21.815,31.Rc:X:64,f::Floating Convert To Integer Doubleword with round towards Zero
+	floating_point_assist_interrupt(processor, cia);
+
+0.63,6.FRT,11./,16.FRB,21.14,31.Rc:X:f::Floating Convert To Integer Word
+	floating_point_assist_interrupt(processor, cia);
+
+0.63,6.FRT,11./,16.FRB,21.15,31.Rc:X:f:fctiwz:Floating Convert To Integer Word with round towards Zero
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	convert_to_integer(processor, cia,
+	                   frT, *frB,
+	                   fpscr_rn_round_towards_zero, 32);
+	FPSCR_END(Rc);
+	PPC_INSN_FLOAT(FRT_BITMASK, FRB_BITMASK, Rc);
+
+0.63,6.FRT,11./,16.FRB,21.846,31.Rc:X:64,f::Floating Convert from Integer Doubleword
+	int sign = EXTRACTED64(*frB, 0, 0);
+	int exp = 63;
+	unsigned64 frac = *frB;
+	/***/
+	  if (frac == 0) GOTO(Zero_Operand);
+	  if (sign == 1) frac = ~frac + 1;
+	  while (EXTRACTED64(frac, 0, 0) == 0) {
+	    /*??? do the loop 0 times if (FRB) = max negative integer */
+	    frac = INSERTED64(EXTRACTED64(frac, 1, 63), 0, 62);
+	    exp = exp - 1;
+	  }
+	  Round_Float(processor, sign, &exp, &frac, FPSCR & fpscr_rn);
+	  if (sign == 0) FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
+	  if (sign == 1) FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
+	  *frT = (INSERTED64(sign, 0, 0)
+	          | INSERTED64(exp + 1023, 1, 11)
+	          | INSERTED64(EXTRACTED64(frac, 1, 52), 12, 63));
+	  GOTO(Done);
+	/**/
+	LABEL(Zero_Operand):
+	  FPSCR_SET_FR(0);
+	  FPSCR_SET_FI(0);
+	  FPSCR_SET_FPRF(fpscr_rf_pos_zero);
+	  *frT = 0;
+	  GOTO(Done);
+	/**/
+	LABEL(Done):
+	  PPC_INSN_FLOAT(FRT_BITMASK, FRB_BITMASK, Rc);
+
+
+#
+# I.4.6.7 Floating-Point Compare Instructions
+#
+
+0.63,6.BF,9./,11.FRA,16.FRB,21.0,31./:X:f:fcmpu:Floating Compare Unordered
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	unsigned c;
+	if (is_NaN(*frA, 0) || is_NaN(*frB, 0))
+	  c = cr_i_summary_overflow; /* 0b0001 - (FRA) ? (FRB) */
+	else if (is_less_than(frA, frB))
+	  c = cr_i_negative; /* 0b1000 - (FRA) < (FRB) */
+	else if (is_greater_than(frA, frB))
+	  c = cr_i_positive; /* 0b0100 - (FRA) > (FRB) */
+	else
+	  c = cr_i_zero; /* 0b0010 - (FRA) = (FRB) */
+	FPSCR_SET_FPCC(c);
+	CR_SET(BF, c); /* CR[4*BF..4*BF+3] = c */
+	if (is_SNaN(*frA, 0) || is_SNaN(*frB, 0))
+	  FPSCR_OR_VX(fpscr_vxsnan);
+	FPSCR_END(0);
+	PPC_INSN_FLOAT_CR(0, FRA_BITMASK | FRB_BITMASK, BF_BITMASK);
+
+0.63,6.BF,9./,11.FRA,16.FRB,21.32,31./:X:f:fcmpo:Floating Compare Ordered
+*601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	FPSCR_BEGIN;
+	unsigned c;
+	if (is_NaN(*frA, 0) || is_NaN(*frB, 0))
+	  c = cr_i_summary_overflow; /* 0b0001 - (FRA) ? (FRB) */
+	else if (is_less_than(frA, frB))
+	  c = cr_i_negative; /* 0b1000 - (FRA) < (FRB) */
+	else if (is_greater_than(frA, frB))
+	  c = cr_i_positive; /* 0b0100 - (FRA) > (FRB) */
+	else
+	  c = cr_i_zero; /* 0b0010 - (FRA) = (FRB) */
+	FPSCR_SET_FPCC(c);
+	CR_SET(BF, c); /* CR[4*BF..4*BF+3] = c */
+	if (is_SNaN(*frA, 0) || is_SNaN(*frB, 0)) {
+	  FPSCR_OR_VX(fpscr_vxsnan);
+	  if ((FPSCR & fpscr_ve) == 0)
+	    FPSCR_OR_VX(fpscr_vxvc);
+	}
+	else if (is_QNaN(*frA, 0) || is_QNaN(*frB, 0)) {
+	  FPSCR_OR_VX(fpscr_vxvc);
+	}
+	FPSCR_END(0);
+	PPC_INSN_FLOAT_CR(0, FRA_BITMASK | FRB_BITMASK, BF_BITMASK);
+
+
+#
+# I.4.6.8 Floating-Point Status and Control Register Instructions
+#
+
+0.63,6.FRT,11./,16./,21.583,31.Rc:X:f::Move From FPSCR
+	FPSCR_BEGIN;
+	*frT = FPSCR;
+	FPSCR_END(Rc);
+
+0.63,6.BF,9./,11.BFA,14./,16./,21.64,31./:X:f::Move to Condition Register from FPSCR
+	FPSCR_BEGIN;
+	unsigned field = FPSCR_FIELD(BFA);
+	CR_SET(BF, field);
+	FPSCR_SET(BFA, 0); /* FPSCR_END fixes up FEX/VX */
+	FPSCR_END(0);
+
+0.63,6.BF,9./,11./,16.U,20./,21.134,31.Rc:X:f::Move To FPSCR Field Immediate
+	FPSCR_BEGIN;
+	FPSCR_SET(BF, U);
+	FPSCR_END(Rc);
+
+0.63,6./,7.FLM,15./,16.FRB,21.711,31.Rc:XFL:f::Move To FPSCR Fields
+	FPSCR_BEGIN;
+	int i;
+	for (i = 0; i < 8; i++) {
+	  if ((FLM & BIT8(i))) {
+	    FPSCR &= ~MASK32(i*4, i*4+3);
+	    FPSCR |= MASKED32(*frB, i*4, i*4+3);
+	  }
+	}
+	FPSCR_END(Rc);
+
+0.63,6.BT,11./,16./,21.70,31.Rc:X:f::Move To FPSCR Bit 0
+	FPSCR_BEGIN;
+	unsigned32 bit = BIT32(BT);
+	FPSCR &= ~bit;
+	FPSCR_END(Rc);
+
+0.63,6.BT,11./,16./,21.38,31.Rc:X:f::Move To FPSCR Bit 1
+	FPSCR_BEGIN;
+	unsigned32 bit = BIT32(BT);
+	if (bit & fpscr_fi)
+	  bit |= fpscr_xx;
+	if ((bit & fpscr_vx_bits))
+	  bit |= fpscr_fx;
+	/* note - omit vx bit */
+	if ((bit & (fpscr_ox | fpscr_ux | fpscr_zx | fpscr_xx)))
+	  bit |= fpscr_fx;
+	FPSCR |= bit;
+	FPSCR_END(Rc);
+
+#
+# I.A.1.2 Floating-Point Arithmetic Instructions
+#
+
+0.63,6.FRT,11./,16.FRB,21./,26.22,31.Rc:A:f,o::Floating Square Root
+	program_interrupt(processor, cia, optional_instruction_program_interrupt);
+
+0.59,6.FRT,11./,16.FRB,21./,26.22,31.Rc:A:f,o::Floating Square Root Single
+	program_interrupt(processor, cia, optional_instruction_program_interrupt);
+
+0.59,6.FRT,11./,16.FRB,21./,26.24,31.Rc:A:f,o::Floating Reciprocal Estimate Single
+	program_interrupt(processor, cia, optional_instruction_program_interrupt);
+
+0.63,6.FRT,11./,16.FRB,21./,26.26,31.Rc:A:f,o::Floating Reciprocal Square Root Estimate
+	program_interrupt(processor, cia, optional_instruction_program_interrupt);
+
+#
+# I.A.1.3 Floating-Point Select Instruction
+#
+
+0.63,6.FRT,11.FRA,16.FRB,21.FRC,26.23,31.Rc:A:f,o::Floating Select
+*601: PPC_UNIT_BAD,   PPC_UNIT_BAD,   0,  0,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	if (CURRENT_MODEL == MODEL_ppc601) {
+	  program_interrupt(processor, cia, optional_instruction_program_interrupt);
+	} else {
+	  unsigned64 zero = 0;
+	  FPSCR_BEGIN;
+	  if (is_NaN(*frA, 0) || is_less_than (frA, &zero)) *frT = *frB;
+	  else						    *frT = *frC;
+	  FPSCR_END(Rc);
+	  PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK | FRC_BITMASK, Rc);
+	}
+
+#
+# II.3.2 Cache Management Instructions
+#
+
+0.31,6./,11.RA,16.RB,21.982,31./:X::icbi:Instruction Cache Block Invalidate
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  1,  0
+	/* blindly flush all instruction cache entries */
+	#if WITH_IDECODE_CACHE_SIZE
+	cpu_flush_icache(processor);
+	#endif
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RB_BITMASK, 0);
+
+0.19,6./,11./,16./,21.150,31./:XL::isync:Instruction Synchronize
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  1,  0
+	cpu_synchronize_context(processor, cia);
+	PPC_INSN_INT(0, 0, 0);
+
+
+#
+# II.3.2.2 Data Cache Instructions
+#
+
+0.31,6./,11.RA,16.RB,21.278,31./:X:::Data Cache Block Touch
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   2,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   2,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  1,  0
+	TRACE(trace_tbd,("Data Cache Block Touch\n"));
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RB_BITMASK, 0/*Rc*/);
+
+0.31,6./,11.RA,16.RB,21.246,31./:X:::Data Cache Block Touch for Store
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   2,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   2,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	TRACE(trace_tbd,("Data Cache Block Touch for Store\n"));
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RB_BITMASK, 0/*Rc*/);
+
+0.31,6./,11.RA,16.RB,21.1014,31./:X:::Data Cache Block set to Zero
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   10, 10, 0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   10, 10, 0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	TRACE(trace_tbd,("Data Cache Block set to Zero\n"));
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RB_BITMASK, 0/*Rc*/);
+
+0.31,6./,11.RA,16.RB,21.54,31./:X:::Data Cache Block Store
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   5,  5,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   5,  5,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  1,  0
+	TRACE(trace_tbd,("Data Cache Block Store\n"));
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RB_BITMASK, 0/*Rc*/);
+
+0.31,6./,11.RA,16.RB,21.86,31./:X:::Data Cache Block Flush
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   5,  5,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   5,  5,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  1,  0
+	TRACE(trace_tbd,("Data Cache Block Flush\n"));
+	PPC_INSN_INT(0, (RA_BITMASK & ~1) | RB_BITMASK, 0/*Rc*/);
+
+#
+# II.3.3 Enforce In-order Execution of I/O Instruction
+#
+
+0.31,6./,11./,16./,21.854,31./:X::eieio:Enforce In-order Execution of I/O
+	/* Since this model has no instruction overlap
+	   this instruction need do nothing */
+
+#
+# II.4.1 Time Base Instructions
+#
+
+0.31,6.RT,11.tbr,21.371,31./:XFX::mftb:Move From Time Base
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  3,  3,  0
+	int n = (tbr{5:9} << 5) | tbr{0:4};
+	if (n == 268) {
+	  if (is_64bit_implementation) *rT = TB;
+	  else                         *rT = EXTRACTED64(TB, 32, 63);
+	}
+	else if (n == 269) {
+	  if (is_64bit_implementation) *rT = EXTRACTED64(TB, 0, 31);
+	  else                         *rT = EXTRACTED64(TB, 0, 31);
+	}
+	else
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+
+
+#
+# III.2.3.1 System Linkage Instructions
+#
+
+0.19,6./,11./,16./,21.50,31./:XL::rfi:Return From Interrupt
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   3,  3,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   3,  3,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  3,  3,  0
+	if (IS_PROBLEM_STATE(processor)) {
+	  program_interrupt(processor, cia,
+	                    privileged_instruction_program_interrupt);
+	}
+	else {
+	  MSR = (MASKED(SRR1, 0, 32)
+	         | MASKED(SRR1, 37, 41)
+	         | MASKED(SRR1, 48, 63));
+	  NIA = MASKED(SRR0, 0, 61);
+	  cpu_synchronize_context(processor, cia);
+	  check_masked_interrupts(processor);
+	}
+
+#
+# III.3.4.1 Move to/from System Register Instructions
+#
+
+#0.31,6.RS,11.SPR,21.467,31./:XFX:::Move To Special Purpose Register
+#0.31,6.RT,11.SPR,21.339,31./:XFX:::Move From Special Purpose Register
+0.31,6.RS,11./,16./,21.146,31./:X:::Move To Machine State Register
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   2,  2,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   2,  2,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  1,  1,  0
+	if (IS_PROBLEM_STATE(processor))
+	  program_interrupt(processor, cia,
+	                    privileged_instruction_program_interrupt);
+	else {
+	  MSR = *rS;
+	  check_masked_interrupts(processor);
+	}
+
+0.31,6.RT,11./,16./,21.83,31./:X:::Move From Machine State Register
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   1,  1,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  3,  3,  0
+	if (IS_PROBLEM_STATE(processor))
+	  program_interrupt(processor, cia,
+	                    privileged_instruction_program_interrupt);
+	else {
+	  *rT = MSR;
+	  check_masked_interrupts(processor);
+	}
+
+
+#
+# III.4.11.1 Cache Management Instructions
+#
+
+0.31,6./,11.RA,16.RB,21.470,31./:X::dcbi:Data Cache Block Invalidate
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   2,  2,  0
+*603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   2,  2,  0
+*604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
+	if (IS_PROBLEM_STATE(processor))
+	  program_interrupt(processor, cia,
+	                    privileged_instruction_program_interrupt);
+	else
+	  TRACE(trace_tbd,("Data Cache Block Invalidate\n"));
+
+#
+# III.4.11.2 Segment Register Manipulation Instructions
+#
+
+0.31,6.RS,11./,12.SR,16./,21.210,31./:X:32:mtsr %SR,%RS:Move To Segment Register
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   2,  2,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   2,  2,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  1,  1,  0
+	if (IS_PROBLEM_STATE(processor))
+	  program_interrupt(processor, cia,
+	                    privileged_instruction_program_interrupt);
+	else
+	  SEGREG(SR) = *rS;
+
+0.31,6.RS,11./,16.RB,21.242,31./:X:32:mtsrin %RS,%RB:Move To Segment Register Indirect
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   2,  2,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   2,  2,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  1,  1,  0
+	if (IS_PROBLEM_STATE(processor))
+	  program_interrupt(processor, cia,
+	                    privileged_instruction_program_interrupt);
+	else
+	  SEGREG(EXTRACTED32(*rB, 0, 3)) = *rS;
+
+0.31,6.RT,11./,12.SR,16./,21.595,31./:X:32:mfsr %RT,%RS:Move From Segment Register
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    2,  2,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   3,  3,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   3,  3,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  1,  1,  0
+	if (IS_PROBLEM_STATE(processor))
+	  program_interrupt(processor, cia,
+	                    privileged_instruction_program_interrupt);
+	else
+	  *rT = SEGREG(SR);
+
+0.31,6.RT,11./,16.RB,21.659,31./:X:32:mfsrin %RT,%RB:Move From Segment Register Indirect
+*601: PPC_UNIT_IU,    PPC_UNIT_IU,    2,  2,  0
+*603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   3,  3,  0
+*603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   3,  3,  0
+*604: PPC_UNIT_MCIU,  PPC_UNIT_MCIU,  1,  1,  0
+	if (IS_PROBLEM_STATE(processor))
+	  program_interrupt(processor, cia,
+	                    privileged_instruction_program_interrupt);
+	else
+	  *rT = SEGREG(EXTRACTED32(*rB, 0, 3));
+
+
+#
+# III.4.11.3 Lookaside Buffer Management Instructions (Optional)
+#
+
+0.31,6./,11./,16.RB,21.434,31./:X:64::SLB Invalidate Entry
+
+0.31,6./,11./,16./,21.498,31./:X:64::SLB Invalidate All
+
+0.31,6./,11./,16.RB,21.306,31./:X:::TLB Invalidate Entry
+	if (IS_PROBLEM_STATE(processor))
+	  program_interrupt(processor, cia,
+	                    privileged_instruction_program_interrupt);
+	else {
+	  int nr = 0;
+	  cpu *proc;
+	  while (1) {
+	    proc = psim_cpu(cpu_system(processor), nr);
+	    if (proc == NULL) break;
+	    cpu_page_tlb_invalidate_entry(proc, *rB);
+	    nr++;
+	  }
+	}
+
+0.31,6./,11./,16./,21.370,31./:X:::TLB Invalidate All
+	if (IS_PROBLEM_STATE(processor))
+	  program_interrupt(processor, cia,
+	                    privileged_instruction_program_interrupt);
+	else {
+	  int nr = 0;
+	  cpu *proc;
+	  while (1) {
+	    proc = psim_cpu(cpu_system(processor), nr);
+	    if (proc == NULL) break;
+	    cpu_page_tlb_invalidate_all(proc);
+	    nr++;
+	  }
+	}
+
+0.31,6./,11./,16./,21.566,31./:X:::TLB Synchronize
+	/* nothing happens here - always in sync */
+
+#
+# III.A.1.2 External Access Instructions
+#
+
+0.31,6.RT,11.RA,16.RB,21.310,31./:X:earwax::External Control In Word Indexed
+
+0.31,6.RS,11.RA,16.RB,21.438,31./:X:earwax::External Control Out Word Indexed
+
+:include:::altivec.igen
+:include:::e500.igen

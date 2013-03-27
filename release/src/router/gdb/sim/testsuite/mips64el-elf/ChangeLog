@@ -1,0 +1,10 @@
+2005-01-07  Andrew Cagney  <cagney@gnu.org>
+
+	* configure.ac: Rename configure.in, require autoconf 2.59.
+	* configure: Re-generate.
+
+Thu Aug 13 22:37:29 EDT 1998  Jim Lemke  <jlemke@cygnus.com>
+
+	* Makefile.in, configure, configure.in:
+	Create a minimal testsuite.
+

@@ -2,6 +2,8 @@
 #define __INOTIFY_UTILS_H
 
 #include "event_queue.h"
+#include <pthread.h>
+
 
 #define ACT 1
 //#define BASIC_PATH                  "../../asuswebstorage"
@@ -21,33 +23,35 @@
 
 
 #define ASUSWEBSTORAGE      0
-#define BOOKSNET            1
-#define WEBDAV              2
+#define BOOKSNET            2
+#define WEBDAV              1
 #define SKYDRIVER           3
+
+#define MY_IN_ALL_EVENTS	 (IN_MODIFY | IN_CLOSE_WRITE | IN_DELETE_SELF | IN_MOVE_SELF  \
+                          | IN_OPEN | IN_MOVED_FROM	      \
+                          | IN_MOVED_TO | IN_CREATE | IN_DELETE	)
 
 /* get all items struct*/
 
 char mount_path[256];
 
-typedef struct FOLDER
-{
-    int type;
-    char name[512];
-}Folder;
 
-typedef struct FOLDERS
+int inotify_fd;
+pthread_mutex_t mutex_allfolderlist,mutex_inotify_fd,mutex_pathlist;
+
+/*typedef struct FOLDERS
 {
-  int number;
-  Folder folderlist[512];
+    int number;
+    Folder folderlist[512];
 }Folders;
 
 typedef struct PATHS
 {
-  int number;
-  Folder folderlist[8];
-}Paths;
+    int number;
+    Folder **folderlist;
+}Paths;*/
 
-void handle_event (queue_entry_t event);
+void handle_event (queue_entry_t event,int fd);
 int read_event (int fd, struct inotify_event *event);
 int event_check (int fd);
 int process_inotify_events (queue_t q, int fd);

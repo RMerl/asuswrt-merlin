@@ -1,0 +1,33 @@
+# fr30 testcase for orb $Rj,$Ri, orb $Rj,@$Ri
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global orb
+orb:
+	; Test orb $Rj,@$Ri
+	mvi_h_gr   	0xaaaaaaaa,r7
+	mvi_h_mem  	0x55555555,sp
+	set_cc          0x07		; Set mask opposite of expected
+	orb      	r7,@sp
+	test_cc		1 0 1 1
+	test_h_mem 	0xff555555,sp
+
+	mvi_h_gr   	0xffffff00,r7
+	mvi_h_mem  	0x00ffffff,sp
+	set_cc          0x08		; Set mask opposite of expected
+	orb		r7,@sp
+	test_cc		0 1 0 0
+	test_h_mem 	0x00ffffff,sp
+
+	mvi_h_gr   	0x000000d0,r7
+	mvi_h_mem  	0x0eadbeef,sp
+	set_cc          0x05		; Set mask opposite of expected
+	orb		r7,@sp
+	test_cc		1 0 0 1
+	test_h_mem 	0xdeadbeef,sp
+
+	pass

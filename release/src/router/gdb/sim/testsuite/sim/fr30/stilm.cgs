@@ -1,0 +1,41 @@
+# fr30 testcase for stilm $i8
+# mach(): fr30
+
+	.include "testutils.inc"
+
+	START
+
+	.text
+	.global stilm
+stilm:
+	stilm      	0
+	test_ilm	0
+
+	stilm		0xe0
+	test_ilm	0
+
+	stilm		1
+	test_ilm	1
+
+	stilm		15
+	test_ilm	15
+
+	stilm		16
+	test_ilm	16
+
+	stilm		0
+	test_ilm	16
+
+	stilm		1
+	test_ilm	17
+
+	stilm		18
+	test_ilm	18
+
+	stilm		31
+	test_ilm	31
+
+	stilm		0xff
+	test_ilm	31
+
+	pass

@@ -1,0 +1,262 @@
+#   Copyright 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was created by Jeff Johnston. (jjohnstn@redhat.com)
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+if {[skip_shlib_tests]} {
+    return 0
+}
+
+set testfile "pending"
+set libfile "pendshr"
+set srcfile $testfile.c
+set libsrc  $srcdir/$subdir/$libfile.c
+set binfile $objdir/$subdir/$testfile
+set lib_sl  $objdir/$subdir/$libfile.sl
+
+set lib_opts  debug
+set exec_opts [list debug shlib=$lib_sl]
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
+     || [gdb_compile $srcdir/$subdir/$srcfile $binfile executable $exec_opts] != ""} {
+    untested "Could not compile either $libsrc or $srcdir/$subdir/$srcfile."
+    return -1
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+gdb_load_shlibs $lib_sl
+
+if [target_info exists gdb_stub] {
+    gdb_step_for_stub;
+}
+#
+# Test setting, querying, and modifying pending breakpoints
+#
+
+gdb_test_multiple "break pendfunc1" "set pending breakpoint" {
+     -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
+	    gdb_test "y" "Breakpoint.*pendfunc1.*pending." "set pending breakpoint"
+     }
+}
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendfunc1.*" \
+"single pending breakpoint info"
+
+#
+# Test breaking at existing function
+#
+
+set mainline [gdb_get_line_number "break main here"]
+
+gdb_test "break main" \
+    "Breakpoint.*at.* file .*$srcfile, line $mainline.*" \
+    "breakpoint function"
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendfunc1.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline" \
+"pending plus real breakpoint info"
+
+
+# 
+# Test not setting a pending breakpoint 
+#
+gdb_test_multiple "break pendfunc2" "Don't set pending breakpoint" {
+     -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
+	    gdb_test "n" "" "Don't set pending breakpoint"
+     }
+}
+
+#
+# Add condition to pending breakpoint 
+#
+
+gdb_test "condition 1 k == 1" ""
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendfunc1.*
+\[\t \]+stop only if k == 1.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline" \
+"pending plus condition"
+
+#
+# Disable pending breakpoint
+#
+
+gdb_test "disable 1" ""
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep n.*PENDING.*pendfunc1.*
+\[\t \]+stop only if k == 1.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline" \
+"pending disabled"
+
+#
+# Add commands to pending breakpoint
+#
+gdb_test "commands 1\nprint k\nend" "" \
+        "Set commands for pending breakpoint"
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep n.*PENDING.*pendfunc1.*
+\[\t \]+stop only if k == 1.*
+\[\t \]+print k.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline" \
+"pending disabled plus commands"
+
+#
+# Try a pending break for a line in a source file with a condition
+#
+
+set bp2_loc [gdb_get_line_number "y = x + 4" ${libfile}.c]
+gdb_test_multiple "break pendshr.c:$bp2_loc if x > 3" "Set pending breakpoint 2" {
+     -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
+	    gdb_test "y" "Breakpoint.*pendshr.c:$bp2_loc.*pending." \
+		"Set pending breakpoint 2"
+     }
+}
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep n.*PENDING.*pendfunc1.*
+\[\t \]+stop only if k == 1.*
+\[\t \]+print k.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendshr.c:$bp2_loc if x > 3.*" \
+"multiple pending breakpoints"
+
+
+#
+# Try a pending break for a line in a source file with ignore count:
+#
+
+set bp3_loc [gdb_get_line_number "printf" ${libfile}.c]
+gdb_test_multiple "break pendshr.c:$bp3_loc" "Set pending breakpoint 3" {
+     -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
+	    gdb_test "y" "Breakpoint.*pendshr.c:$bp3_loc.*pending." \
+		"Set pending breakpoint 3"
+     }
+}
+
+gdb_test {ignore $bpnum 2} "Will ignore next 2 crossings of breakpoint .*" \
+    "set ignore count on pending breakpoint 3"
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep n.*PENDING.*pendfunc1.*
+\[\t \]+stop only if k == 1.*
+\[\t \]+print k.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendshr.c:$bp2_loc if x > 3.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendshr.c:$bp3_loc.*ignore next 2 hits.*" \
+"multiple pending breakpoints 2"
+
+#
+# Run to main which should resolve a pending breakpoint
+#
+
+gdb_run_cmd
+gdb_test "" \
+"Breakpoint.*at.*
+Pending breakpoint \"pendshr.c:$bp2_loc if x > 3\" resolved.*
+Breakpoint.*, main.*$mainline.*" \
+"running to main"
+
+#
+# Re-enable the first pending breakpoint which should resolve
+#
+
+gdb_test "enable 1" \
+"Breakpoint.*at.*
+Pending breakpoint \"pendfunc1.* resolved.*" \
+"re-enabling pending breakpoint that can resolve instantly"
+
+#
+# Continue to verify conditionals and commands for breakpoints are honored
+#
+
+gdb_test "continue" \
+".*Breakpoint.*pendfunc1.*at.*pendshr.c:$bp2_loc.*4;" \
+"continue to resolved breakpoint 2"
+
+gdb_test "continue" \
+".*Breakpoint.*pendfunc1.*at.*pendshr.c:$bp2_loc.*
+\[$\]1 = 1." \
+"continue to resolved breakpoint 1"
+
+#
+# Disable the other two breakpoints, and continue to the one with
+# the ignore count.  Make sure you hit it the third time, x should
+# be 3 then.
+#
+
+gdb_test "disable 7" "" "Disable other breakpoints"
+gdb_test "disable 5" "" "Disable other breakpoints"
+
+gdb_test "continue" \
+	 ".*Breakpoint.*pendfunc1.*\\\(x=3\\\) at.*pendshr.c:$bp3_loc.*printf.*;" \
+"continue to resolved breakpoint 3"
+
+delete_breakpoints
+
+gdb_breakpoint "main"
+
+#
+# Set non-existent pending breakpoint
+#
+gdb_test_multiple "break imaginary" "set imaginary pending breakpoint" {
+     -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
+	    gdb_test "y" "Breakpoint.*imaginary.*pending." \
+		"set imaginary pending breakpoint"
+     }
+}
+
+#
+# rerun program and make sure that any pending breakpoint remains and no
+# error messages are issued for the missing function
+#
+
+rerun_to_main
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*imaginary.*" \
+"verify pending breakpoint after restart"

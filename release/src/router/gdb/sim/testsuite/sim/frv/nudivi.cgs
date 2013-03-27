@@ -1,0 +1,51 @@
+# frv testcase for nudivi $GRi,$s12,$GRk
+# mach: fr500 fr550 frv
+
+	.include "testutils.inc"
+
+	start
+
+	.global nudivi
+nudivi:
+	set_spr_immed	0,gner0
+	set_spr_immed	0,gner1
+
+	; simple division 12 / 3
+	set_gr_immed   	0x0000000c,gr3
+	nudivi      	gr3,3,gr3
+	test_gr_immed  	0x00000004,gr3
+	test_spr_immed	0,gner0
+	test_spr_immed	0,gner1
+
+	; random example
+	set_gr_limmed  	0xfedc,0xba98,gr3
+	nudivi      	gr3,0x7ff,gr3
+	test_gr_limmed 	0x001f,0xdf93,gr3
+	test_spr_immed	0,gner0
+	test_spr_immed	0,gner1
+
+	; random example
+	set_gr_limmed  	0xffff,0xffff,gr3
+	nudivi      	gr3,-2048,gr3
+	test_gr_immed 	1,gr3
+	test_spr_immed	0,gner0
+	test_spr_immed	0,gner1
+
+	or_spr_immed	0x20,isr	; turn on isr.edem
+	nudivi      	gr1,0,gr32	; divide by zero
+	test_spr_immed	1,gner0
+	test_spr_immed	0,gner1
+
+	and_spr_immed	-33,isr		; turn off isr.edem
+	nudivi      	gr1,0,gr10	; divide by zero
+	test_spr_immed	1,gner0
+	test_spr_immed	0x00000400,gner1
+
+	; simple division 12 / 3 -- should turn off ne flag
+	set_gr_immed   	12,gr1
+	nudivi      	gr1,3,gr10
+	test_gr_immed  	4,gr10
+	test_spr_immed	1,gner0
+	test_spr_immed	0,gner1
+
+	pass

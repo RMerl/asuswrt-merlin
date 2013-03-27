@@ -2271,7 +2271,7 @@ bcm5700_vlan_rx_kill_vid(struct net_device *dev, uint16_t vid)
 #endif
 
 STATIC int
-bcm5700_start_xmit(struct sk_buff *skb, struct net_device *dev)
+_bcm5700_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	PUM_DEVICE_BLOCK pUmDevice = (PUM_DEVICE_BLOCK)dev->priv;
 	PLM_DEVICE_BLOCK pDevice = (PLM_DEVICE_BLOCK) pUmDevice;
@@ -2487,6 +2487,16 @@ bcm5700_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 
 	return 0;
+}
+
+STATIC int
+bcm5700_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	void *n;
+
+	FOREACH_CHAINED_PKT(skb, n) {
+		_bcm5700_start_xmit(skb, dev);
+	}
 }
 
 #ifdef BCM_NAPI_RXPOLL

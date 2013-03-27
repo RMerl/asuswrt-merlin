@@ -1,0 +1,12 @@
+# arm testcase for bvc $soffset8
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global bvc
+bvc:
+	bvc footext
+
+	pass

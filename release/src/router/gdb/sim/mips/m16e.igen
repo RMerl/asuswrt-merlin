@@ -1,0 +1,368 @@
+// -*- C -*-
+
+// Simulator definition for the MIPS16e instructions.
+// Copyright (C) 2005 Free Software Foundation, Inc.
+// Contributed by Nigel Stephens (nigel@mips.com) and 
+//                David Ung (davidu@mips.com) of MIPS Technologies.
+//
+// This file is part of GDB, the GNU debugger.
+// 
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+11101,3.RX,100,10001:RR:16::SEB
+"seb r<TRX>"
+*mips16e:
+{
+  TRACE_ALU_INPUT1 (GPR[TRX]);
+  GPR[TRX] = EXTEND8 (GPR[TRX]);
+  TRACE_ALU_RESULT (GPR[TRX]);
+}
+
+
+11101,3.RX,101,10001:RR:16::SEH
+"seh r<TRX>"
+*mips16e:
+{
+  TRACE_ALU_INPUT1 (GPR[TRX]);
+  GPR[TRX] = EXTEND16 (GPR[TRX]);
+  TRACE_ALU_RESULT (GPR[TRX]);
+}
+
+11101,3.RX,110,10001:RR:16::SEW
+"sew r<TRX>"
+*mips16e:
+{
+  check_u64 (SD_, instruction_0);
+  TRACE_ALU_INPUT1 (GPR[TRX]);
+  GPR[TRX] = EXTEND32 (GPR[TRX]);
+  TRACE_ALU_RESULT (GPR[TRX]);
+}
+
+11101,3.RX,000,10001:RR:16::ZEB
+"zeb r<TRX>"
+*mips16e:
+{
+  TRACE_ALU_INPUT1 (GPR[TRX]);
+  GPR[TRX] =  (unsigned_word)(unsigned8)(GPR[TRX]);
+  TRACE_ALU_RESULT (GPR[TRX]);
+}
+
+11101,3.RX,001,10001:RR:16::ZEH
+"zeh r<TRX>"
+*mips16e:
+{
+  TRACE_ALU_INPUT1 (GPR[TRX]);
+  GPR[TRX] = (unsigned_word)(unsigned16)(GPR[TRX]);
+  TRACE_ALU_RESULT (GPR[TRX]);
+}
+
+11101,3.RX,010,10001:RR:16::ZEW
+"zew r<TRX>"
+*mips16e:
+{
+  check_u64 (SD_, instruction_0);
+  TRACE_ALU_INPUT1 (GPR[TRX]);
+  GPR[TRX] = (unsigned_word)(unsigned32)(GPR[TRX]);
+  TRACE_ALU_RESULT (GPR[TRX]);
+}
+
+
+11101,3.RX,100,00000:RR:16::JRC
+"jrc r<TRX>"
+*mips16e:
+{
+  NIA = GPR[TRX];
+}
+
+
+11101,000,101,00000:RR:16::JRCRA
+"jrc ra"
+*mips16e:
+{
+  NIA = RA;
+}
+
+
+11101,3.RX,110,00000:RR:16::JALRC
+"jalrc r<TRX>"
+*mips16e:
+{
+  RA = NIA;
+  NIA = GPR[TRX];
+}
+
+
+// format routines for save/restore
+:%s::::RAS:int ras
+*mips16e
+{
+  static char buf[10];
+  buf[0] = '\0';
+  if (ras & 4)
+    strcat (buf,"ra,");
+  if (ras & 2)
+    strcat (buf,"s0,");
+  if (ras & 1)
+    strcat (buf,"s1,");
+  return (buf);
+}
+
+:%s::::XSREGS:int xsregs
+*mips16e
+{
+  if (xsregs > 6)
+    return "s2,s3,s4,s5,s6,s7,s8,";
+  if (xsregs > 5)
+    return "s2,s3,s4,s5,s6,s7,";
+  if (xsregs > 4)
+    return "s2,s3,s4,s5,s6,";
+  if (xsregs > 3)
+    return "s2,s3,s4,s5,";
+  if (xsregs > 2)
+    return "s2,s3,s4,";
+  if (xsregs > 1)
+    return "s2,s3,";
+  if (xsregs > 0)
+    return "s2,";
+  return "";
+}
+
+:%s::::AREGS:int aregs
+*mips16e
+{
+  // Fixme: how is the arg/static distinction made by the assembler?
+  static const char * const aregstr[16] = {
+    "",
+    "A3,",
+    "A2,A3,",
+    "A1,A2,A3,",
+    "A0,A1,A2,A3,",
+    "a0,",
+    "a0,A3,",
+    "a0,A2,A3,",
+    "a0,A1,A2,A3,",
+    "a0,a1,",
+    "a0,a1,A3,",
+    "a0,a1,A2,A3,",
+    "a0,a1,a2,",
+    "a0,a1,a2,A3,",
+    "?,"
+  };
+  return aregstr[aregs];
+}
+
+:compute:::int:SFRAME:FS:((FS == 0) ? 128 \: (FS << 3))
+:compute:::int:BFRAME:FSHI,FSLO:(((FSHI << 4) | FSLO) << 3)
+
+:function:::void:do_save:int xsregs, int aregs, int ras0s1, int framesize
+{
+  unsigned_word temp;    
+  int args, astatic;
+
+  temp = GPR[29];
+
+  /* writes are in the same order as the hardware description... */
+  switch (aregs) {
+  case 0: case 1: case 2: case 3: case 11:
+    args = 0;
+    break;
+  case 4: case 5: case 6: case 7:
+    args = 1;
+    break;
+  case 8: case 9: case 10:
+    args = 2;
+    break;
+  case 12: case 13:
+    args = 3;
+    break;
+  case 14:
+    args = 4;
+    break;
+  default:
+    sim_engine_abort (SD, CPU, CIA, "save: aregs=%d causes unpredictable results\n", aregs);
+  }
+  if (args > 0) {
+    do_store (SD_, AccessLength_WORD, temp, 0, GPR[4]); 
+    if (args > 1) {
+      do_store (SD_,AccessLength_WORD, temp, 4 , GPR[5]); 
+      if (args > 2) {
+	do_store (SD_,AccessLength_WORD, temp, 8 , GPR[6]); 
+	if (args > 3) {
+	  do_store (SD_,AccessLength_WORD, temp, 12, GPR[7]);
+	}
+      }
+    }
+  }
+
+  if (ras0s1 & 4)
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[31]); 
+
+  switch (xsregs) {
+  case 7:
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[30]); 
+  case 6:
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[23]); 
+  case 5:
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[22]); 
+  case 4:
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[21]); 
+  case 3:
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[20]); 
+  case 2:
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[19]); 
+  case 1:
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[18]); 
+  }
+
+  if (ras0s1 & 1)
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[17]); 
+  if (ras0s1 & 2)
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[16]); 
+
+  switch (aregs) {
+  case 0: case 4: case 8: case 12: case 14:
+    astatic = 0;
+    break;
+  case 1: case 5: case 9: case 13:
+    astatic = 1;
+    break;
+  case 2: case 6: case 10:
+    astatic = 2;
+    break;
+  case 3: case 7:
+    astatic = 3;
+    break;
+  case 11:
+    astatic = 4;
+    break;
+  default:
+    sim_engine_abort (SD, CPU, CIA, "save: aregs=%d causes unpredictable results\n", aregs);
+  }
+  if (astatic > 0) {
+    do_store (SD_, AccessLength_WORD, temp -= 4, 0, GPR[7]);
+    if (astatic > 1) {
+      do_store (SD_, AccessLength_WORD, temp -= 4, 0, GPR[6]);
+      if (astatic > 2) {
+	do_store (SD_, AccessLength_WORD, temp -= 4, 0, GPR[5]);
+	if (astatic > 3) {
+	  do_store (SD_, AccessLength_WORD, temp -= 4, 0, GPR[4]);
+	}
+      }
+    }
+  }
+
+  GPR[29] -= framesize;
+}
+
+01100,100,1,3.RAS,4.FS:I8:16::SAVE
+"save %s<RAS>,<SFRAME>"
+*mips16e
+{
+  do_save (SD_, 0, 0, RAS, SFRAME);
+}
+
+
+11110,3.XSREGS,4.FSHI,4.AREGS + 01100,100,1,3.RAS,4.FSLO:EXT-I8:16::SAVE
+"save %s<RAS>%s<XSREGS>%s<AREGS><BFRAME>"
+*mips16e
+{
+  do_save (SD_, XSREGS, AREGS, RAS, BFRAME);
+}
+
+
+:function:::void:do_restore:int xsregs, int aregs, int ras0s1, int framesize
+*mips16e
+{
+  unsigned_word temp, temp2;    
+  int astatic;
+
+  temp = GPR[29] + framesize;
+  temp2 = temp;
+
+  /* reads are in the same order as the hardware description... */
+
+  if (ras0s1 & 4)
+    GPR[31] = EXTEND32 (do_load(SD_, AccessLength_WORD, temp -= 4, 0));
+
+  switch (xsregs) {
+  case 7:
+    GPR[30] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+  case 6:
+    GPR[23] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+  case 5:
+    GPR[22] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+  case 4:
+    GPR[21] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+  case 3:
+    GPR[20] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+  case 2:
+    GPR[19] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+  case 1:
+    GPR[18] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+  }
+
+  if (ras0s1 & 1)
+    GPR[17] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+  if (ras0s1 & 2)
+    GPR[16] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+
+  switch (aregs) {
+  case 0: case 4: case 8: case 12: case 14:
+    astatic = 0;
+    break;
+  case 1: case 5: case 9: case 13:
+    astatic = 1;
+    break;
+  case 2: case 6: case 10:
+    astatic = 2;
+    break;
+  case 3: case 7:
+    astatic = 3;
+    break;
+  case 11:
+    astatic = 4;
+    break;
+  default:
+    sim_engine_abort (SD, CPU, CIA, "save: aregs=%d causes unpredictable results\n", aregs);
+  }
+  if (astatic > 0) {
+    GPR[7] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0));
+    if (astatic > 1) {
+      GPR[6] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0));
+      if (astatic > 2) {
+	GPR[5] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0));
+	if (astatic > 3) {
+	  GPR[4] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0));
+	}
+      }
+    }
+  }
+
+  GPR[29] = temp2;
+}
+
+01100,100,0,3.RAS,4.FS:I8:16::RESTORE
+"restore %s<RAS>,<SFRAME>"
+*mips16e
+{ 
+  do_restore (SD_,0,0,RAS,SFRAME);
+}
+
+11110,3.XSREGS,4.FSHI,4.AREGS + 01100,100,0,3.RAS,4.FSLO:EXT-I8:16::RESTORE
+"restore %s<RAS>%s<XSREGS>%s<AREGS><BFRAME>"
+*mips16e
+{
+  do_restore (SD_,XSREGS,AREGS,RAS,BFRAME);
+}

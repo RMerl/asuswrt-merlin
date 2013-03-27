@@ -14,17 +14,16 @@
 #ifdef RTCONFIG_RALINK
 
 // TODO: make it switch model dependent, not product dependent
-#ifdef RTCONFIG_DSL
-#include "rtl8367r.h"
-#else
-#include "rtl8367m.h"
-#endif	
+#include "rtkswitch.h"
 
 #endif
 
 static int gpio_values_loaded = 0;
 
 #define GPIO_ACTIVE_LOW 0x1000
+
+#define GPIO_DIR_IN	0
+#define GPIO_DIR_OUT	1
 
 int btn_rst_gpio = 0x0ff;
 int btn_wps_gpio = 0xff;
@@ -35,6 +34,9 @@ int led_5g_gpio = 0xff;
 int led_2g_gpio = 0xff;
 int led_lan_gpio = 0xff;
 int led_wan_gpio = 0xff;
+#ifdef RTCONFIG_LED_ALL
+int led_all_gpio = 0xff;
+#endif
 int wan_port = 0xff;
 int fan_gpio = 0xff;
 int have_fan_gpio = 0xff;
@@ -46,16 +48,71 @@ int btn_swmode_sw_router = 0xff;
 int btn_swmode_sw_repeater = 0xff;
 int btn_swmode_sw_ap = 0xff;
 #endif
+#ifdef RTCONFIG_WIFI_TOG_BTN
+int btn_wltog_gpio = 0xff;
+#endif
 
 int init_gpio(void)
 {
+	char *btn_list[] = { "btn_rst_gpio", "btn_wps_gpio"
+#ifdef RTCONFIG_WIRELESS_SWITCH
+				, "btn_wifi_gpio"
+#endif
+#ifdef RTCONFIG_SWMODE_SWITCH
+				, "btn_swmode1_gpio", "btn_swmode2_gpio", "btn_swmode3_gpio"
+#endif
+#ifdef RTCONFIG_WIFI_TOG_BTN
+				, "btn_wltog_gpio"
+#endif
+	                   };
+	char *led_list[] = { "led_pwr_gpio", "led_usb_gpio", "led_wps_gpio", "led_lan_gpio", "led_wan_gpio", "led_2g_gpio", "led_5g_gpio"
+#ifdef RTCONFIG_LED_ALL
+				, "led_all_gpio"
+#endif
+	                   };
+	int use_gpio, gpio_pin;
+	int enable, disable;
+	int i;
 
+	/* btn input */
+	for(i = 0; i < ASIZE(btn_list); i++)
+	{
+		use_gpio = nvram_get_int(btn_list[i]);
+		if((gpio_pin = use_gpio & 0xff) == 0xff)
+			continue;
+		gpio_dir(gpio_pin, GPIO_DIR_IN);
+	}
+
+	/* led output */
+	for(i = 0; i < ASIZE(led_list); i++)
+	{
+		use_gpio = nvram_get_int(led_list[i]);
+		if((gpio_pin = use_gpio & 0xff) == 0xff)
+			continue;
+
+		disable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 0: 1;
+		gpio_dir(gpio_pin, GPIO_DIR_OUT);
+		set_gpio(gpio_pin, disable);
+	}
+
+	if((gpio_pin = (use_gpio = nvram_get_int("led_pwr_gpio")) & 0xff) != 0xff)
+	{
+		enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
+		set_gpio(gpio_pin, enable);
+	}
+#ifdef RTCONFIG_LED_ALL
+	if((gpio_pin = (use_gpio = nvram_get_int("led_all_gpio")) & 0xff) != 0xff)
+	{
+		enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
+		set_gpio(gpio_pin, enable);
+	}
+#endif
 	// TODO: system dependent initialization
 	return 0;
 }
 
 // this is shared by every process, so, need to get nvram for first time it called per process
-int get_gpio_values_once(void)
+void get_gpio_values_once(void)
 {
 	//int model;
 	if (gpio_values_loaded) return;
@@ -74,7 +131,9 @@ int get_gpio_values_once(void)
 	led_lan_gpio = nvram_get_int("led_lan_gpio");
 	led_wan_gpio = nvram_get_int("led_wan_gpio");
 	led_usb_gpio = nvram_get_int("led_usb_gpio");
-
+#ifdef RTCONFIG_LED_ALL
+	led_all_gpio = nvram_get_int("led_all_gpio");
+#endif
 #ifdef RTCONFIG_SWMODE_SWITCH
 	btn_swmode_sw_router = nvram_get_int("btn_swmode1_gpio");
 	btn_swmode_sw_repeater = nvram_get_int("btn_swmode2_gpio");
@@ -83,6 +142,9 @@ int get_gpio_values_once(void)
 
 #ifdef RTCONFIG_WIRELESS_SWITCH
 	btn_wifi_sw = nvram_get_int("btn_wifi_gpio"); 
+#endif
+#ifdef RTCONFIG_WIFI_TOG_BTN
+	btn_wltog_gpio = nvram_get_int("btn_wltog_gpio");
 #endif
 }
 
@@ -119,6 +181,11 @@ int button_pressed(int which)
 #ifdef RTCONFIG_WIRELESS_SWITCH
 		case BTN_WIFI_SW:
 			use_gpio = btn_wifi_sw;
+			break;
+#endif
+#ifdef RTCONFIG_WIFI_TOG_BTN
+		case BTN_WIFI_TOG:
+			use_gpio = btn_wltog_gpio;
 			break;
 #endif
 		default:
@@ -219,6 +286,11 @@ int led_control(int which, int mode)
 			}
 			use_gpio = 0xff;
 			break;
+#ifdef RTCONFIG_LED_ALL
+                case LED_ALL:
+                        use_gpio = led_all_gpio;
+                        break;
+#endif
 		default:
 			use_gpio = 0xff;
 			break;
@@ -247,6 +319,9 @@ int led_control(int which, int mode)
 
 int wanport_status(int wan_unit)
 {
+#ifdef RTCONFIG_RALINK
+	return rtkswitch_wanPort_phyStatus();
+#else
 	char word[100], *next;
 	int mask;
 	char wan_ports[16];
@@ -267,7 +342,12 @@ int wanport_status(int wan_unit)
 	if(is_wirelesswan_enabled())
 		return 1;
 #endif
+#ifdef RTCONFIG_W3N
+	if(is_w3n_mode())
+		return 1;
+#endif
 	return get_phy_status(mask);
+#endif
 }
 
 int wanport_speed(void)
@@ -285,13 +365,25 @@ int wanport_speed(void)
 	if(is_wirelesswan_enabled())
 		return 0x01;
 #endif
+#ifdef RTCONFIG_W3N
+	if(is_w3n_mode())
+		return 0x01;
+#endif
 	return get_phy_speed(mask);
 }
 
 int wanport_ctrl(int ctrl)
 {
 #ifdef RTCONFIG_RALINK
-	// TODO? no one use it.
+
+#ifdef RTCONFIG_DSL
+	/* FIXME: Not implemented yet. */
+	return 1;
+#else
+	if(ctrl) rtkswitch_WanPort_linkUp();
+	else rtkswitch_WanPort_linkDown();
+	return 1;
+#endif
 	return 1;
 #else
 	char word[100], *next;
@@ -307,6 +399,10 @@ int wanport_ctrl(int ctrl)
 	if(is_wirelesswan_enabled())
 		return 0;
 #endif
+#ifdef RTCONFIG_W3N
+	if(is_w3n_mode())
+		return 0;
+#endif
 	return set_phy_ctrl(mask, ctrl);
 #endif
 }
@@ -320,7 +416,7 @@ int lanport_status(void)
 	//DSL has no software controlled LAN LED
 	return 0;
 #else
-	return rtl8367m_lanPorts_phyStatus();
+	return rtkswitch_lanPorts_phyStatus();
 #endif	
 	
 #else
@@ -358,15 +454,9 @@ int lanport_ctrl(int ctrl)
 	// no general way for ralink platform, so individual api for each kind of switch are used
 #ifdef RTCONFIG_RALINK
 
-#ifdef RTCONFIG_DSL
-	if(ctrl) rtl8367r_LanPort_linkUp();
-	else rtl8367r_LanPort_linkDown();
+	if(ctrl) rtkswitch_LanPort_linkUp();
+	else rtkswitch_LanPort_linkDown();
 	return 1;
-#else
-	if(ctrl) rtl8367m_LanPort_linkUp();
-	else rtl8367m_LanPort_linkDown();
-	return 1;
-#endif	
 
 #else
 	char word[100], *next;

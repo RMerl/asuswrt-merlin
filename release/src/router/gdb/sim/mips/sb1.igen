@@ -1,0 +1,243 @@
+// -*- C -*-
+
+// Simulator definition for the Broadcom SiByte SB-1 CPU extensions.
+// Copyright (C) 2002 Free Software Foundation, Inc.
+// Contributed by Ed Satterthwaite and Chris Demetriou, of Broadcom
+// Corporation (SiByte).
+//
+// This file is part of GDB, the GNU debugger.
+// 
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+// Helper:
+//
+// Check that the SB-1 extension instruction can currently be used, and
+// signal a ReservedInstruction exception if not.
+//
+
+:function:::void:check_sbx:instruction_word insn
+*sb1:
+{
+  if ((SR & status_SBX) == 0)
+    SignalException(ReservedInstruction, insn);
+}
+
+
+//  MDMX ASE Instructions
+//  ---------------------
+//
+//  The SB-1 implements the format OB subset of MDMX
+//  and has three additions (pavg, pabsdiff, pabsdifc).
+//  In addition, there are a couple of partial-decoding
+//  issues for the read/write accumulator instructions.
+//
+//  This code is structured so that mdmx.igen can be used by
+//  selecting the allowed instructions either via model, or by
+//  using check_mdmx_fmtsel and check_mdmx_fmtop to cause an
+//  exception if the instruction is not allowed.
+
+
+:function:::void:check_mdmx:instruction_word insn
+*sb1:
+{
+  if (!COP_Usable(1))
+    SignalExceptionCoProcessorUnusable(1);
+  if ((SR & status_MX) == 0)
+    SignalExceptionMDMX();
+  check_u64 (SD_, insn);
+}
+
+:function:::int:check_mdmx_fmtsel:instruction_word insn, int fmtsel
+*sb1:
+{
+  switch (fmtsel & 0x03)
+    {
+    case 0x00:     /* ob */
+    case 0x02:
+      return 1;
+    case 0x01:     /* qh */
+    case 0x03:     /* UNPREDICTABLE */
+      SignalException (ReservedInstruction, insn);
+      return 0;
+    }
+  return 0;
+}
+
+:function:::int:check_mdmx_fmtop:instruction_word insn, int fmtop
+*sb1:
+{
+  switch (fmtop & 0x01)
+    {
+    case 0x00:     /* ob */
+      return 1;
+    case 0x01:     /* qh */
+      SignalException (ReservedInstruction, insn);
+      return 0;
+    }
+  return 0;
+}
+
+
+011110,10,2.X!0,1.FMTOP,00000,00000,5.VD,111111:MDMX:64::RACH.sb1.fmt
+"rach.?<X>.%s<FMTOP> v<VD>"
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_mdmx_fmtop (SD_, instruction_0, FMTOP);
+  /* No op.  */
+}
+
+
+011110,00,2.X!0,1.FMTOP,00000,00000,5.VD,111111:MDMX:64::RACL.sb1.fmt
+"racl.?<X>.%s<FMTOP> v<VD>"
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_mdmx_fmtop (SD_, instruction_0, FMTOP);
+  /* No op.  */
+}
+
+
+011110,01,2.X!0,1.FMTOP,00000,00000,5.VD,111111:MDMX:64::RACM.sb1.fmt
+"racm.?<X>.%s<FMTOP> v<VD>"
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_mdmx_fmtop (SD_, instruction_0, FMTOP);
+  /* No op.  */
+}
+
+
+011110,2.X1!0!1!2,2.X2,1.FMTOP,00000,00000,5.VD,111111:MDMX:64::RAC.sb1.fmt
+"rac?<X1>.?<X2> v<VD>"
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_mdmx_fmtop (SD_, instruction_0, FMTOP);
+  /* No op.  */
+}
+
+
+011110,10,2.X!0,1.FMTOP,00000,5.VS,00000,111110:MDMX:64::WACH.sb1.fmt
+"wach.?<X>.%s<FMTOP> v<VS>"
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_mdmx_fmtop (SD_, instruction_0, FMTOP);
+  /* No op.  */
+}
+
+
+011110,00,2.X!0,1.FMTOP,5.VT,5.VS,00000,111110:MDMX:64::WACL.sb1.fmt
+"wacl.?<X>.%s<FMTOP> v<VS>,v<VT>"
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_mdmx_fmtop (SD_, instruction_0, FMTOP);
+  /* No op.  */
+}
+
+
+011110,2.X1!0!2,2.X2,1.FMTOP,5.VT,5.VS,00000,111110:MDMX:64::WAC.sb1.fmt
+"wacl?<X1>.?<X2>.%s<FMTOP> v<VS>,v<VT>"
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_mdmx_fmtop (SD_, instruction_0, FMTOP);
+  /* No op.  */
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,001001:MDMX:64::PABSDIFF.fmt
+"pabsdiff.%s<FMTSEL> v<VD>,v<VS>,v<VT>"
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_sbx (SD_, instruction_0);
+  check_mdmx_fmtsel (SD_, instruction_0, FMTSEL);
+  StoreFPR(VD,fmt_mdmx,MX_AbsDiff(ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,00000,110101:MDMX:64::PABSDIFC.fmt
+"pabsdifc.%<FMTSEL> v<VS>,v<VT>"
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_sbx (SD_, instruction_0);
+  check_mdmx_fmtsel (SD_, instruction_0, FMTSEL);
+  MX_AbsDiffC(ValueFPR(VS,fmt_mdmx),VT,FMTSEL);
+}
+
+
+011110,5.FMTSEL,5.VT,5.VS,5.VD,001000:MDMX:64::PAVG.fmt
+"pavg.%s<FMTSEL> v<VD>,v<VS>,v<VT>"
+*sb1:
+{
+  check_mdmx (SD_, instruction_0);
+  check_sbx (SD_, instruction_0);
+  check_mdmx_fmtsel (SD_, instruction_0, FMTSEL);
+  StoreFPR(VD,fmt_mdmx,MX_Avg(ValueFPR(VS,fmt_mdmx),VT,FMTSEL));
+}
+
+
+//  Paired-Single Extension Instructions
+//  ------------------------------------
+//
+//  The SB-1 implements several .PS format instructions that are
+//  extensions to the MIPS64 architecture.
+
+010001,10,3.FMT=6,5.FT,5.FS,5.FD,000011:COP1:32,f::DIV.PS
+"div.%s<FMT> f<FD>, f<FS>, f<FT>"
+*sb1:
+{
+  int fmt = FMT;
+  check_fpu (SD_);
+  check_sbx (SD_, instruction_0);
+  StoreFPR (FD, fmt, Divide (ValueFPR (FS, fmt), ValueFPR (FT, fmt), fmt));
+}
+
+
+010001,10,3.FMT=6,00000,5.FS,5.FD,010101:COP1:32,f::RECIP.PS
+"recip.%s<FMT> f<FD>, f<FS>"
+*sb1:
+{
+  int fmt = FMT;
+  check_fpu (SD_);
+  check_sbx (SD_, instruction_0);
+  StoreFPR (FD, fmt, Recip (ValueFPR (FS, fmt), fmt));
+}
+
+
+010001,10,3.FMT=6,00000,5.FS,5.FD,010110:COP1:32,f::RSQRT.PS
+"rsqrt.%s<FMT> f<FD>, f<FS>"
+*sb1:
+{
+  int fmt = FMT;
+  check_fpu (SD_);
+  check_sbx (SD_, instruction_0);
+  StoreFPR (FD, fmt, RSquareRoot (ValueFPR (FS, fmt), fmt));
+}
+
+
+010001,10,3.FMT=6,00000,5.FS,5.FD,000100:COP1:32,f::SQRT.PS
+"sqrt.%s<FMT> f<FD>, f<FS>"
+*sb1:
+{
+  int fmt = FMT;
+  check_fpu (SD_);
+  check_sbx (SD_, instruction_0);
+  StoreFPR (FD, fmt,  (SquareRoot (ValueFPR (FS, fmt), fmt)));
+}

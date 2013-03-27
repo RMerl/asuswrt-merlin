@@ -1,0 +1,125 @@
+'\" t
+.\"     Title: neon-config
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date:  3 May 2011
+.\"    Manual: neon API reference
+.\"    Source: neon 0.29.6
+.\"  Language: English
+.\"
+.TH "NEON\-CONFIG" "1" "3 May 2011" "neon 0.29.6" "neon API reference"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+neon-config \- script providing information about installed copy of neon library
+.SH "SYNOPSIS"
+.HP \w'\fBneon\-config\fR\ 'u
+\fBneon\-config\fR [\fB\-\-prefix\fR] [[\fB\-\-cflags\fR] | [\fB\-\-libs\fR] | [\fB\-\-la\-file\fR] | [\fB\-\-support\fR\ \fIfeature\fR] | [\fB\-\-help\fR] | [\fB\-\-version\fR]]
+.SH "DESCRIPTION"
+.PP
+The
+\fBneon\-config\fR
+script provides information about an installed copy of the neon library\&. The
+\fB\-\-cflags\fR
+and
+\fB\-\-libs\fR
+options instruct how to compile and link an application against the library; the
+\fB\-\-version\fR
+and
+\fB\-\-support\fR
+options can help determine whether the library meets the applications requirements\&.
+.SH "OPTIONS"
+.PP
+\fB\-\-cflags\fR
+.RS 4
+Print the flags which should be passed to the C compiler when compiling object files, when the object files use neon header files\&.
+.RE
+.PP
+\fB\-\-libs\fR
+.RS 4
+Print the flags which should be passed to the linker when linking an application which uses the neon library
+.RE
+.PP
+\fB\-\-la\-file\fR
+.RS 4
+Print the location of the libtool library script,
+libneon\&.la, which can be used to link against neon by applications using libtool\&.
+.RE
+.PP
+\fB\-\-version\fR
+.RS 4
+Print the version of the library
+.RE
+.PP
+\fB\-\-prefix\fR \fIdir\fR
+.RS 4
+If
+\fIdir\fR
+is given; relocate output of
+\fB\-\-cflags\fR
+and
+\fB\-\-libs\fR
+as if neon was installed in given prefix directory\&. Otherwise, print the installation prefix of the library\&.
+.RE
+.PP
+\fB\-\-support\fR \fIfeature\fR
+.RS 4
+The script exits with success if
+\fIfeature\fR
+is supported by the library\&.
+.RE
+.PP
+\fB\-\-help\fR
+.RS 4
+Print help message; includes list of known features and whether they are supported or not\&.
+.RE
+.SH "EXAMPLE"
+.PP
+Below is a Makefile fragment which could be used to build an application against an installed neon library, when the
+\fBneon\-config\fR
+script can be found in
+\fB$PATH\fR\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+CFLAGS = `neon\-config \-\-cflags`
+LIBS = `neon\-config \-\-libs`
+OBJECTS = myapp\&.o
+TARGET = myapp
+
+$(TARGET): $(OBJECTS)
+	$(CC) $(LDFLAGS) \-o $(TARGET) $(OBJECTS) $(LIBS)
+
+myapp\&.o: myapp\&.c
+	$(CC) $(CFLAGS) \-c myapp\&.c \-o myapp\&.o
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AUTHOR"
+.PP
+\fBJoe Orton\fR <\&neon@lists.manyfish.co.uk\&>
+.RS 4
+Author.
+.RE
+.SH "COPYRIGHT"
+.br

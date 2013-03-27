@@ -1,0 +1,87 @@
+    <refentry id="refalloc">
+
+      <refmeta>
+	<refentrytitle>ne_malloc</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_malloc">ne_malloc</refname>
+	<refname id="ne_calloc">ne_calloc</refname>
+	<refname id="ne_realloc">ne_realloc</refname>
+	<refname id="ne_strdup">ne_strdup</refname>
+	<refname id="ne_strndup">ne_strndup</refname>
+        <refname id="ne_oom_callback">ne_oom_callback</refname>
+	<refpurpose>memory allocation wrappers</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_alloc.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>void *<function>ne_malloc</function></funcdef>
+	    <paramdef>size_t <parameter>size</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void *<function>ne_calloc</function></funcdef>
+	    <paramdef>size_t <parameter>size</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void *<function>ne_realloc</function></funcdef>
+	    <paramdef>void *<parameter>size</parameter></paramdef>
+	    <paramdef>size_t <parameter>len</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>char *<function>ne_strdup</function></funcdef>
+	    <paramdef>const char *<parameter>s</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>char *<function>ne_strndup</function></funcdef>
+	    <paramdef>const char *<parameter>s</parameter></paramdef>
+	    <paramdef>size_t <parameter>size</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_oom_callback</function></funcdef>
+	    <paramdef>void (*<parameter>callback</parameter>)(void)</paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>The functions <function>ne_malloc</function>,
+<function>ne_calloc</function>, <function>ne_realloc</function>,
+<function>ne_strdup</function> and <function>ne_strdnup</function>
+provide wrappers for the equivalent functions in the standard C
+library.  The wrappers provide the extra guarantee that if the C
+library equivalent returns &null; when no memory is available, an
+optional callback will be called, and the library will then call
+<function>abort</function>().</para>
+
+	<para><function>ne_oom_callback</function> registers a callback
+which will be invoked if an out of memory error is detected.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Notes</title>
+
+	<para>If the operating system uses optimistic memory
+allocation, the C library memory allocation routines will not return
+&null;, so it is not possible to gracefully handle memory allocation
+failures.</para>
+
+      </refsect1>
+
+    </refentry>

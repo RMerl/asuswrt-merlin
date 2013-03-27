@@ -44,6 +44,8 @@ endif
 RM = rm -f
 INSTALL = install
 
+CFLAGS += -I$(TOP)/shared
+
 ifeq ($(RTAC66U), y)
         CFLAGS += -DRTN66U
 endif
@@ -52,7 +54,7 @@ ifeq ($(RTN66U), y)
         CFLAGS += -DRTN66U
 endif
 
-ifeq ($(RTN56U), y)
+ifeq ($(RTN56U)$(RTN65U), y)
         CFLAGS += -DRTN56U
 endif
 

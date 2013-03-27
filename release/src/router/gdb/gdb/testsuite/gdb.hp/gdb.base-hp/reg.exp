@@ -1,0 +1,238 @@
+# This test script is part of GDB, the GNU debugger.
+
+# Copyright 1998, 1999, 2001, 2004,
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# Tests of wide register displays for GDB on HPPA 2.0 machines
+
+# use this to debug:
+#log_user 1
+
+if $tracelevel then {
+	strace $tracelevel
+	}
+
+if { [skip_hp_tests] } then { continue }
+
+set testfile "reg"
+
+if [istarget "hppa64-hp-hpux*"] {
+    verbose "reg.exp is not for PA2.0W."
+    return 0
+}
+set srcfile ${testfile}.s
+set binfile ${objdir}/${subdir}/${testfile}
+
+# To build a pa 2.0 executable
+#
+#     as -o reg reg.s
+# or 
+#     cc -g -o reg reg.s
+#
+# The +DA2.0N flag doesn't seem to be needed.
+#
+# Don't reject if there are warnings, as we expect this warning:
+#
+#    (Warning) At least one PA 2.0 object file (pa2.0_test2.o) was detected.
+#    The linked output may not run on a PA 1.x system.
+#
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested reg.exp
+     return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# test machine--there's no 2.0n architecture, so we have
+# to try to run the app.
+#
+send_gdb "break main\n"
+    gdb_expect {
+        -re "Breakpoint.*$gdb_prompt $" {
+            pass "initial set-up"
+        }
+        -re ".*$gdb_prompt $" {
+            fail "initial set-up"
+        }
+        timeout {
+            fail "initial set-up (timeout)"
+        }
+    }
+
+send_gdb "run\n"
+    gdb_expect {
+        -re ".*Executable file incompatible with hardware.*$gdb_prompt $" {
+            # Not hppa2.0 machine
+            #
+            return 0
+        }
+        -re "Cannot exec.*$gdb_prompt $" {
+            # Not hppa2.0 machine
+            #
+            return 0
+        }
+        -re ".*Starting program:.*$gdb_prompt $" {
+            pass "Ready to start test"
+        }
+        timeout {
+            fail "initial set-up, part 2 (timeout)"
+            return 0
+        }
+    }
+
+# Let the program set known values.  This secretly deletes
+# the breakpoint at main and re-runs to mainend.
+#
+runto mainend
+
+# Look for known values
+#
+# The output format changed between gdb 6.1.1 and gdb HEAD 2004-06-01.
+#
+#   gdb 6.1.1:
+#   (gdb) info reg r1
+#   r1 1
+#
+#   gdb HEAD 2004-06-01:
+#   (gdb) info reg r1
+#   r1             0x1     1
+#
+# For now, I accept both formats.  In the future, you can remove
+# the old gdb 6.1.1 format.
+#
+# -- chastain 2004-06-26
+
+set ws "\[\r\n\t \]+"
+
+proc hp_integer_reg {regname vhex vdec} {
+  global ws
+  set value_611 "$regname${ws}$vhex"
+  set value_new "$regname${ws}0x$vhex${ws}$vdec"
+  gdb_test "info reg $regname" "$value_611|$value_new"
+}
+
+hp_integer_reg "r1"      "1"     "1"
+hp_integer_reg "r4"      "2"     "2"
+hp_integer_reg "r5"      "4"     "4"
+hp_integer_reg "r6"      "8"     "8"
+hp_integer_reg "r7"     "10"    "16"
+hp_integer_reg "r8"     "20"    "32"
+hp_integer_reg "r9"     "40"    "64"
+hp_integer_reg "r10"    "80"   "128"
+hp_integer_reg "r11"   "100"   "256"
+hp_integer_reg "r12"   "200"   "512"
+hp_integer_reg "r13"   "400"  "1024"
+hp_integer_reg "r14"   "800"  "2048"
+hp_integer_reg "r15"  "1000"  "4096"
+hp_integer_reg "r16"  "2000"  "8192"
+
+# Two odd variants that GDB supports are:
+#   "1" means "r1", and
+#   "$1" means "r1"
+
+hp_integer_reg "1" "1" "1"
+hp_integer_reg "4" "2" "2"
+
+set name "info reg \$1"
+gdb_test_multiple "info reg \$1" "$name" {
+    -re "r1${ws}1\r\n$gdb_prompt $" {
+	pass "$name"
+    }
+    -re "r1${ws}0x1${ws}1\r\n$gdb_prompt $" {
+	pass "$name"
+    }
+}
+
+# Verify that GDB responds gracefully to a register ID number that
+# is out of range.
+
+gdb_test "info reg 999" "Invalid register.*999.*"
+
+# Make sure the floating point status and error registers
+# don't show up as floating point numbers!
+
+hp_integer_reg "fpsr" "0" "0"
+hp_integer_reg "fpe1" "0" "0"
+hp_integer_reg "fpe2" "0" "0"
+hp_integer_reg "fpe3" "0" "0"
+hp_integer_reg "fpe4" "0" "0"
+hp_integer_reg "fpe5" "0" "0"
+hp_integer_reg "fpe6" "0" "0"
+hp_integer_reg "fpe7" "0" "0"
+
+# Floating point registers.
+# TODO: these are old format only.
+
+gdb_test "info reg fr4"  ".*fr4.*(double precision).* 1"
+gdb_test "info reg fr5"  ".*fr5.*(double precision).* 2"
+gdb_test "info reg fr6"  ".*fr6.*(double precision).* 2"
+gdb_test "info reg fr7"  ".*fr7.*(double precision).* 4"
+gdb_test "info reg fr8"  ".*fr8.*(double precision).* 8"
+gdb_test "info reg fr9"  ".*fr9.*(double precision).* 32"
+gdb_test "info reg fr10" ".*fr10.*(double precision).* 256"
+
+# An integer register with a 64-bit value.
+
+set name "info reg r19"
+gdb_test_multiple "info reg r19" "$name" {
+    -re "r19${ws}deadbeefbadcadee\r\n$gdb_prompt $" {
+	# old gdb 6.1.1 format, good result
+	pass "$name"
+    }
+    -re "r19${ws}badcadee\r\n$gdb_prompt $" {
+	# old gdb 6.1.1 format, bad result
+	fail "$name (32-bit truncation)"
+    }
+    -re "r19${ws}0xdeadbeefbadcadee${ws}16045690984232431086\r\n$gdb_prompt $" {
+	# new gdb HEAD 2004-06-01 format, good result
+	pass "$name"
+    }
+    -re "r19${ws}0xbadcadee${ws}3135024622\r\n$gdb_prompt $" {
+	# new gdb HEAD 2004-06-01 format, 32 bit truncation
+	fail "$name (32-bit truncation)"
+    }
+}
+
+set name "print /x \$r19"
+gdb_test_multiple "print /x \$r19" "$name" {
+    -re "= 0xdeadbeefbadcadee\r\n$gdb_prompt $" {
+	pass "$name"
+    }
+    -re "= 0xbadcadee\r\n$gdb_prompt $" {
+	# this was a PASS in the last version so keep it PASS for now
+	# -- chastain 2004-06-26
+	pass "$name (32-bit truncation)"
+    }
+}
+
+# Need to add tests of setting wide regs too.  E.g.
+#
+# set $r4 = 0x1234567890123456
+# p/x $r4
+#
+
+# done
+#
+gdb_exit
+
+return 0

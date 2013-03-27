@@ -1,0 +1,18 @@
+# frv parallel testcase for sethi $s16,$GRk and setlo $GRi,$GRj,$GRk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global sethilo
+sethilo:
+	sethi.p		0xdead,gr7
+	setlo		0xbeef,gr7
+	test_gr_immed  	0xdeadbeef,gr7
+
+	setlo.p		0xdead,gr7
+	sethi		0xbeef,gr7
+	test_gr_immed  	0xbeefdead,gr7
+
+	pass

@@ -1,0 +1,14 @@
+# sh testcase for clrs -*- Asm -*-
+# mach: all
+# as: -isa=shcompact
+# ld: -m shelf32
+
+	.include "compact/testutils.inc"
+
+	start
+
+	.global clrs
+clrs:
+	clrs
+	# Somehow ensure that S is set.
+	pass

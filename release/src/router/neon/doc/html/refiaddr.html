@@ -1,0 +1,53 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>ne_iaddr_make</title><link rel="stylesheet" type="text/css" href="../manual.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><link rel="home" href="index.html" title="neon HTTP/WebDAV client library"><link rel="up" href="ref.html" title="neon API reference"><link rel="prev" href="refi18n.html" title="ne_i18n_init"><link rel="next" href="refalloc.html" title="ne_malloc"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">ne_iaddr_make</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="refi18n.html">Prev</a> </td><th width="60%" align="center">neon API reference</th><td width="20%" align="right"> <a accesskey="n" href="refalloc.html">Next</a></td></tr></table><hr></div><div class="refentry" title="ne_iaddr_make"><a name="refiaddr"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ne_iaddr_make, ne_iaddr_cmp, ne_iaddr_print, ne_iaddr_typeof, ne_iaddr_parse, ne_iaddr_raw, ne_iaddr_reverse, ne_iaddr_free — functions to manipulate network addresses</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="funcsynopsis"><pre class="funcsynopsisinfo">#include &lt;ne_socket.h&gt;
+
+typedef enum {
+    ne_iaddr_ipv4 = 0,
+    ne_iaddr_ipv6
+} <em class="type">ne_iaddr_type</em>;</pre><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">ne_inet_addr *<b class="fsfunc">ne_iaddr_make</b>(</code></td><td>ne_iaddr_type <var class="pdparam">type</var>, </td></tr><tr><td> </td><td>const unsigned char *<var class="pdparam">raw</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">int <b class="fsfunc">ne_iaddr_cmp</b>(</code></td><td>const ne_inet_addr *<var class="pdparam">ia1</var>, </td></tr><tr><td> </td><td>const ne_inet_addr *<var class="pdparam">ia2</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">char *<b class="fsfunc">ne_iaddr_print</b>(</code></td><td>const ne_inet_addr *<var class="pdparam">ia</var>, </td></tr><tr><td> </td><td>char *<var class="pdparam">buffer</var>, </td></tr><tr><td> </td><td>size_t <var class="pdparam">bufsiz</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">ne_iaddr_type <b class="fsfunc">ne_iaddr_typeof</b>(</code></td><td>const ne_inet_addr *<var class="pdparam">ia</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">ne_inet_addr *<b class="fsfunc">ne_iaddr_parse</b>(</code></td><td>const char *<var class="pdparam">address</var>, </td></tr><tr><td> </td><td>ne_iaddr_type <var class="pdparam">type</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">unsigned char *<b class="fsfunc">ne_iaddr_raw</b>(</code></td><td>const ne_inet_addr *<var class="pdparam">ia</var>, </td></tr><tr><td> </td><td>unsigned char *<var class="pdparam">buffer</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">int <b class="fsfunc">ne_iaddr_reverse</b>(</code></td><td>const ne_inet_addr *<var class="pdparam">ia</var>, </td></tr><tr><td> </td><td>char *<var class="pdparam">buffer</var>, </td></tr><tr><td> </td><td>size_t <var class="pdparam">buflen</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" class="funcprototype-table"><tr><td><code class="funcdef">void <b class="fsfunc">ne_iaddr_free</b>(</code></td><td>const ne_inet_addr *<var class="pdparam">ia</var><code>)</code>;</td></tr></table><div class="funcprototype-spacer"> </div></div></div><div class="refsect1" title="Description"><a name="id452819"></a><h2>Description</h2><p><code class="function">ne_iaddr_make</code> creates an
+    <em class="type">ne_inet_addr</em> object from a raw binary network
+    address; for instance the four bytes <code class="literal">0x7f 0x00 0x00
+    0x01</code> represent the IPv4 address
+    <code class="literal">127.0.0.1</code>.  The object returned is suitable for
+    passing to <code class="function">ne_sock_connect</code>.  A binary IPv4
+    address contains four bytes; a binary IPv6 address contains
+    sixteen bytes; addresses passed must be in network byte
+    order.</p><p><code class="function">ne_iaddr_cmp</code> compares two network
+    address objects; returning zero only if they are identical.  The
+    objects need not have the same address type; if the addresses are
+    not of the same type, the return value is guaranteed to be
+    non-zero.</p><p><code class="function">ne_iaddr_print</code> prints a human-readable
+    string representation of a network address into a buffer, for
+    instance the string <code class="literal">"127.0.0.1"</code>.</p><p><code class="function">ne_iaddr_typeof</code> returns the type of the
+    given network address object.</p><p><code class="function">ne_iaddr_parse</code> parses a string
+    representation of a network address (such as
+    <code class="literal">"127.0.0.1"</code> and creates a network address
+    object to represent the parsed address.</p><p><code class="function">ne_iaddr_raw</code> writes the raw byte
+    representation of a network address to the provided buffer.  The
+    bytes are written in network byte order; the buffer must be of
+    suitable length for the type of address (4 bytes for an IPv4
+    address, 16 bytes for an IPv6 address).</p><p><code class="function">ne_iaddr_reverse</code> performs a reverse
+    name lookup on the address object, writing the (first) hostname
+    associated with the IP address to the provided buffer.  If the
+    hostname is longer than the buffer it will be silently truncated;
+    on success the string written to the buffer is always
+    <code class="literal">NUL</code>-terminated.</p><p><code class="function">ne_iaddr_free</code> releases the memory
+    associated with a network address object.</p></div><div class="refsect1" title="Return value"><a name="id452931"></a><h2>Return value</h2><p><code class="function">ne_iaddr_make</code> returns <code class="literal">NULL</code> if the
+    address type passed is not supported (for instance on a platform
+    which does not support IPv6).</p><p><code class="function">ne_iaddr_print</code> returns the
+    <code class="parameter">buffer</code> pointer, and never <code class="literal">NULL</code>.</p><p><code class="function">ne_iaddr_parse</code> returns a network
+    address object on success, or <code class="literal">NULL</code> on failure to parse the
+    <code class="parameter">address</code> parameter.</p><p><code class="function">ne_iaddr_reverse</code> returns zero on
+    success or non-zero if no hostname is associated with the
+    address.</p><p><code class="function">ne_iaddr_raw</code> returns the
+    <code class="parameter">buffer</code> parameter, and never <code class="literal">NULL</code>.</p></div><div class="refsect1" title="Examples"><a name="id453012"></a><h2>Examples</h2><p>The following example connects a socket to port 80 at the
+    address <code class="literal">127.0.0.1</code>.</p><pre class="programlisting">unsigned char addr[] = "\0x7f\0x00\0x00\0x01";
+ne_inet_addr *ia;
+
+ia = ne_iaddr_make(ne_iaddr_ipv4, addr);
+if (ia != NULL) {
+    ne_socket *sock = ne_sock_connect(ia, 80);
+    ne_iaddr_free(ia);
+    /* ... */
+} else {
+    /* ... */
+}</pre></div><div class="refsect1" title="See also"><a name="id453035"></a><h2>See also</h2><p><a class="xref" href="refresolve.html#ne_addr_resolve">ne_addr_resolve</a></p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="refi18n.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ref.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="refalloc.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">ne_i18n_init </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> ne_malloc</td></tr></table></div></body></html>

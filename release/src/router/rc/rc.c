@@ -8,6 +8,9 @@
 #include "rc.h"
 #include "interface.h"
 #include <sys/time.h>
+#ifdef RTCONFIG_RALINK
+#include <ralink.h>
+#endif
 
 #ifdef DEBUG_RCTEST
 // used for various testing
@@ -125,8 +128,8 @@ static int rctest_main(int argc, char *argv[])
 //					!nvram_match("wan0_proto", "l2tp") &&
 //					!nvram_match("wan0_proto", "pptp") &&
 //					!(nvram_get_int("fw_pt_l2tp") || nvram_get_int("fw_pt_ipsec") &&
-					(nvram_match("wl0_radio", "0") || nvram_get_int("wl0_mrate_x")) &&
-					(nvram_match("wl1_radio", "0") || nvram_get_int("wl1_mrate_x")) &&
+//					(nvram_match("wl0_radio", "0") || nvram_get_int("wl0_mrate_x")) &&
+//					(nvram_match("wl1_radio", "0") || nvram_get_int("wl1_mrate_x")) &&
 					!is_module_loaded("hw_nat"))
 				{
 #if 0
@@ -137,8 +140,8 @@ static int rctest_main(int argc, char *argv[])
 					sleep(1);
 				}
 #endif
-				del_iQosRules();
 				stop_iQos();
+				del_iQosRules();
 			}
 		}
 #ifdef RTCONFIG_WEBDAV
@@ -152,6 +155,9 @@ static int rctest_main(int argc, char *argv[])
 		}
 		else if (strcmp(argv[1], "gpior") == 0) {
 			_dprintf("%d\n", get_gpio(atoi(argv[2])));
+		}
+		else if (strcmp(argv[1], "gpiod") == 0) {
+			if(argc>=4) gpio_dir(atoi(argv[2]), atoi(argv[3]));
 		}
 		else if (strcmp(argv[1], "init_switch") == 0) {
 			init_switch(on);
@@ -189,17 +195,6 @@ static int hotplug_main(int argc, char *argv[])
 	return 0;
 }
 
-static int rc_main(int argc, char *argv[])
-{
-	if (argc < 2) return 0;
-	if (strcmp(argv[1], "start") == 0) return kill(1, SIGUSR2);
-	if (strcmp(argv[1], "stop") == 0) return kill(1, SIGINT);
-	if (strcmp(argv[1], "restart") == 0) return kill(1, SIGHUP);
-	return 0;
-}
-
-
-
 typedef struct {
 	const char *name;
 	int (*main)(int argc, char *argv[]);
@@ -213,12 +208,12 @@ static const applets_t applets[] = {
 #endif
 	{ "ip-up",			ipup_main				},
 	{ "ip-down",			ipdown_main				},
+	{ "ip-pre-up",			ippreup_main				},
 #ifdef RTCONFIG_IPV6
 	{ "ipv6-up",			ip6up_main				},
 	{ "ipv6-down",			ip6down_main				},
 #endif
-	{ "auth-up",			authup_main				},
-	{ "auth-down",			authdown_main				},
+	{ "auth-fail",			authfail_main				},
 #ifdef RTCONFIG_EAPOL
 	{ "wpa_cli",			wpacli_main			},
 #endif
@@ -258,11 +253,7 @@ static const applets_t applets[] = {
 	{ "reboot",			reboothalt_main			},
 	{ "ntp", 			ntp_main			},
 #ifdef RTCONFIG_RALINK
-#ifdef RTCONFIG_DSL
-	{ "8367r",			config8367r			},
-#else
-	{ "8367m",			config8367m			},
-#endif
+	{ "rtkswitch",			config_rtkswitch		},
 #endif
 	{ "wanduck",                    wanduck_main                    },
 	{ "tcpcheck",                   tcpcheck_main                   },
@@ -275,8 +266,10 @@ static const applets_t applets[] = {
 #ifdef RTCONFIG_DISK_MONITOR
 	{ "disk_monitor",		diskmon_main			},
 #endif
+	{ "disk_remove",		diskremove_main			},
 #endif
-	{ "service",			service_main		},
+	{ "firmware_check",		firmware_check_main		},
+	{ "service",			service_main			},
 	{NULL, NULL}
 };
 
@@ -289,7 +282,10 @@ int main(int argc, char **argv)
 		Make sure std* are valid since several functions attempt to close these
 		handles. If nvram_*() runs first, nvram=0, nvram gets closed. - zzz
 	*/
-	if ((f = open("/dev/null", O_RDWR)) < 3) {
+
+	if ((f = open("/dev/null", O_RDWR)) < 0) {
+	}
+	else if(f < 3) {
 		dup(f);
 		dup(f);
 	}
@@ -310,6 +306,11 @@ int main(int argc, char **argv)
 		--argc;
 		base = argv[0];
 	}
+#endif
+
+#ifdef RTCONFIG_RALINK
+    if(getpid() != 1)
+    {
 #endif
 
 #if defined(DEBUG_NOISY)
@@ -344,7 +345,9 @@ int main(int argc, char **argv)
 		}
 	}
 #endif
-
+#ifdef RTCONFIG_RALINK
+    }
+#endif
 	const applets_t *a;
 	for (a = applets; a->name; ++a) {
 		if (strcmp(base, a->name) == 0) {
@@ -424,6 +427,13 @@ int main(int argc, char **argv)
 
 		return asus_usb_interface(argv[1], argv[2]);
 	}
+	else if (!strcmp(base, "usb_notify")) {
+#if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
+		usb_notify();
+#endif
+
+		return 0;
+	}
 #endif
 	else if(!strcmp(base, "run_app_script")){
 		if(argc != 3){
@@ -444,6 +454,48 @@ int main(int argc, char **argv)
 			printf("ATE_ERROR\n");
                 return 0;
 	}
+#if defined(RTCONFIG_RALINK)
+	else if (!strcmp(base, "FWRITE")) {
+		if (argc == 3)
+			return FWRITE(argv[1], argv[2]);
+		else
+		return 0;
+	}
+	else if (!strcmp(base, "FREAD")) {
+		if (argc == 3)
+		{
+			unsigned int addr;
+			int len;
+			addr = strtoul(argv[1], NULL, 16);
+			if(argv[2][0] == '0' && argv[2][1] == 'x')
+				len  = (int) strtoul(argv[2], NULL, 16);
+			else
+				len  = (int) strtoul(argv[2], NULL, 10);
+
+			if(len > 0)
+				return FREAD(addr, len);
+		}
+		printf("ATE_ERROR\n");
+		return 0;
+	}
+	else if (!strcmp(base, "asuscfe_5g")) {
+		if (argc == 2)
+			return asuscfe(argv[1], WIF_5G);
+		else
+			return EINVAL;
+	}
+	else if (!strcmp(base, "asuscfe_2g")) {
+		if (argc == 2)
+			return asuscfe(argv[1], WIF_2G);
+		else
+			return EINVAL;
+	}
+	else if (!strcmp(base, "stainfo_2g")) {
+		return stainfo(0);
+	}
+	else if (!strcmp(base, "stainfo_5g")) {
+		return stainfo(1);
+	}
 #ifdef RTCONFIG_DSL
 	else if(!strcmp(base, "gen_ralink_config")){
 		if(argc != 3){
@@ -452,6 +504,7 @@ int main(int argc, char **argv)
 		}
 		return gen_ralink_config(atoi(argv[1]), atoi(argv[2]));
 	}
+#endif
 #endif
 	else if(!strcmp(base, "run_telnetd")) {
 		run_telnetd();
@@ -469,10 +522,12 @@ int main(int argc, char **argv)
 		return 0;
 	}
 #endif
-#ifdef RTCONFIG_WIRELESSREPEATER
+#ifdef CONFIG_BCMWL5
 	else if (!strcmp(base, "wlcscan")) {
 		return wlcscan_main();
 	}
+#endif
+#ifdef RTCONFIG_WIRELESSREPEATER
 	else if (!strcmp(base, "wlcconnect")) {
 		return wlcconnect_main();
 	}
@@ -483,25 +538,9 @@ int main(int argc, char **argv)
 		return setup_dnsmq(atoi(argv[1]));
 	}
 #endif
-#ifdef RTCONFIG_BCMWL6
-#ifdef ACS_ONCE
-        else if (!strcmp(base, "acsd_restart_wl")) {
-		restart_wireless_acsd();
-		return 0;
-        }
-#endif
-#endif
 	else if (!strcmp(base, "add_multi_routes")) {
 		return add_multi_routes();
 	}
-#ifndef OVERWRITE_DNS
-	else if (!strcmp(base, "add_ns")) {
-		return add_ns(argv[1]);
-	}
-	else if (!strcmp(base, "del_ns")) {
-		return del_ns(argv[1]);
-	}
-#endif
 	else if (!strcmp(base, "led_ctrl")) {
 		return(led_control(atoi(argv[1]), atoi(argv[2])));
 	}

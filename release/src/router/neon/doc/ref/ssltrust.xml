@@ -1,0 +1,72 @@
+    <refentry id="refsslca">
+
+      <refmeta>
+	<refentrytitle>ne_ssl_trust_cert</refentrytitle>
+	<manvolnum>3</manvolnum>
+      </refmeta>
+
+      <refnamediv>
+	<refname id="ne_ssl_trust_cert">ne_ssl_trust_cert</refname>
+	<refname id="ne_ssl_trust_default_ca">ne_ssl_trust_default_ca</refname>
+	<refpurpose>functions to indicate that certificates are trusted</refpurpose>
+      </refnamediv>
+      
+      <refsynopsisdiv>
+	
+	<funcsynopsis>
+
+	  <funcsynopsisinfo>#include &lt;ne_session.h&gt;</funcsynopsisinfo>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_ssl_trust_cert</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	    <paramdef>const ne_ssl_certificate *<parameter>cert</parameter></paramdef>
+	  </funcprototype>
+
+	  <funcprototype>
+	    <funcdef>void <function>ne_ssl_trust_default_ca</function></funcdef>
+	    <paramdef>ne_session *<parameter>session</parameter></paramdef>
+	  </funcprototype>
+
+	</funcsynopsis>
+	
+      </refsynopsisdiv>
+
+      <refsect1>
+	<title>Description</title>
+
+	<para>To indicate that a given certificate is trusted by the
+user, the certificate object can be passed to
+<function>ne_ssl_trust_cert</function>.  The certificate object is
+duplicated internally and can subsequently be destroyed.</para>
+
+	<para>The SSL library in use by &neon; may include a default
+set of CA certificates; calling the
+<function>ne_ssl_trust_default_ca</function> function will indicate
+that these CAs are trusted by the user.</para>
+
+      </refsect1>
+
+      <refsect1>
+	<title>Examples</title>
+
+	<para>Load the CA certificate stored in <filename>/path/to/cacert.pem</filename>:</para>
+	<programlisting>&egsess;
+ne_ssl_certificate *cert = ne_ssl_cert_read("/path/to/cacert.pem");
+
+if (cert) {
+   ne_ssl_trust_cert(sess, cert);
+   ne_ssl_cert_free(cert);
+} else {
+   printf("Could not load CA cert: %s\n", ne_get_error(sess));
+}</programlisting>
+      </refsect1>
+
+      <refsect1>
+	<title>See also</title>
+
+	<para><xref linkend="ne_ssl_cert_read"/>, <xref
+	linkend="ne_ssl_cert_import"/>, <xref
+	linkend="ne_ssl_cert_free"/></para> </refsect1>
+
+    </refentry>

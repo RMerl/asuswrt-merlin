@@ -1,0 +1,12 @@
+# arm testcase for neg $rd,$rs
+# mach: unfinished
+
+	.include "testutils.inc"
+
+	start
+
+	.global alu_neg
+alu_neg:
+	neg r0,r0
+
+	pass

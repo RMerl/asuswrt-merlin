@@ -1,0 +1,18 @@
+# frv testcase for mnot $FRintj,$FRintk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mnot
+mnot:
+	set_fr_iimmed   0xaaaa,0xaaaa,fr7
+	mnot      	fr7,fr7
+	test_fr_iimmed 	0x55555555,fr7
+
+	set_fr_iimmed   0xdead,0xbeef,fr7
+	mnot      	fr7,fr7
+	test_fr_iimmed 	0x21524110,fr7
+
+	pass

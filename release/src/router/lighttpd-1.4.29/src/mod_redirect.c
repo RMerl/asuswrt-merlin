@@ -264,7 +264,7 @@ static handler_t mod_redirect_uri_handler(server *srv, connection *con, void *p_
 	return HANDLER_GO_ON;
 }
 
-
+#ifndef APP_IPKG
 int mod_redirect_plugin_init(plugin *p);
 int mod_redirect_plugin_init(plugin *p) {
 	p->version     = LIGHTTPD_VERSION_ID;
@@ -279,3 +279,19 @@ int mod_redirect_plugin_init(plugin *p) {
 
 	return 0;
 }
+#else
+int aicloud_mod_redirect_plugin_init(plugin *p);
+int aicloud_mod_redirect_plugin_init(plugin *p) {
+	p->version     = LIGHTTPD_VERSION_ID;
+	p->name        = buffer_init_string("redirect");
+
+	p->init        = mod_redirect_init;
+	p->handle_uri_clean  = mod_redirect_uri_handler;
+	p->set_defaults  = mod_redirect_set_defaults;
+	p->cleanup     = mod_redirect_free;
+
+	p->data        = NULL;
+
+	return 0;
+}
+#endif

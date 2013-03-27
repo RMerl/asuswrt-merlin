@@ -7,6 +7,7 @@ include ../common.mak
 IFLAGS  = -idirafter dummyinc
 #CFLAGS = -g
 CFLAGS	= -O2 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections -W -Wshadow #-pedantic -Werror -Wconversion
+CFLAGS  += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE=1 -D_LARGEFILE64_SOURCE=1 -D_LARGE_FILES=1
 LDFLAGS = -ffunction-sections -fdata-sections -Wl,--gc-sections
 
 #LIBS	=	`./vsf_findlibs.sh`

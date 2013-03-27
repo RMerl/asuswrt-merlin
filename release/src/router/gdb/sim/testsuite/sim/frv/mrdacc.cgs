@@ -1,0 +1,26 @@
+# frv testcase for mrdacc $ACC40i,$FRintk
+# mach: all
+
+	.include "testutils.inc"
+
+	start
+
+	.global mrdacc
+mrdacc:
+	set_accg_immed	0,accg0
+	set_acc_immed	0,acc0
+	set_accg_immed	-1,accg3
+	set_acc_immed	-1,acc3
+	set_accg_immed	0x12,accg2
+	set_acc_immed	0xdeadbeef,acc2
+
+	mrdacc		acc0,fr10
+	test_fr_iimmed	0,fr10
+
+	mrdacc		acc3,fr10
+	test_fr_iimmed	0xffffffff,fr10
+
+	mrdacc		acc2,fr10
+	test_fr_iimmed	0xdeadbeef,fr10
+
+	pass

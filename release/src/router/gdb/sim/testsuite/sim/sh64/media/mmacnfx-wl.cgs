@@ -1,0 +1,14 @@
+# sh testcase for mmacnfx.wl $rm, $rn, $rd -*- Asm -*-
+# mach: all
+# as: -isa=shmedia
+# ld: -m shelf64
+
+	.include "media/testutils.inc"
+
+	start
+
+	.global mmacnfx_wl
+mmacnfx_wl:
+	mmacnfx.wl r0, r0, r0
+
+	pass

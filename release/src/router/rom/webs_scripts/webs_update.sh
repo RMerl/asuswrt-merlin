@@ -8,8 +8,14 @@ nvram set webs_state_update=0 # INITIALIZING
 nvram set webs_state_error=0
 
 # get firmware information
+forsq=`nvram get apps_sq`
 model=`nvram get productid`
-wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update.zip -O /tmp/wlan_update.zip
+if [ "$forsq" == "1" ]; then
+	echo "---- update sq ----" >> /tmp/webs_upgrade.log
+	wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update.zip -O /tmp/wlan_update.zip
+else
+	wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update.zip -O /tmp/wlan_update.zip
+fi	
 
 if [ "$?" != "0" ]; then
 	nvram set webs_state_error=1

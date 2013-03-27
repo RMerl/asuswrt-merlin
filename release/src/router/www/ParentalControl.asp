@@ -415,7 +415,8 @@ function gen_lantowanTable(client){
 
 	$("mainTable").innerHTML = code;
 	$("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="cancel_lantowan('+client+');" value="<#CTL_Cancel#>">';
-	$("ctrlBtn").innerHTML += '<input class="button_gen" type="button" onClick="saveto_lantowan('+client+');" value="<#CTL_ok#>">';
+	$("ctrlBtn").innerHTML += '<input class="button_gen" type="button" onClick="saveto_lantowan('+client+');applyRule();" value="<#CTL_ok#>">';  
+	
 
 	// Viz 2012.07.24$("mainTable").style.display = "none";
 	$("mainTable").style.display = "";
@@ -434,7 +435,6 @@ function regen_lantowan(){
 	MULTIFILTER_LANTOWAN_PORT = "";
 	MULTIFILTER_LANTOWAN_PROTO = "";
 	MULTIFILTER_MACFILTER_DAYTIME = "";
-
 	for(i=0;i<MULTIFILTER_LANTOWAN_DESC_row.length;i++){
 		MULTIFILTER_LANTOWAN_ENABLE += MULTIFILTER_LANTOWAN_ENABLE_row[i];
 		MULTIFILTER_LANTOWAN_DESC += MULTIFILTER_LANTOWAN_DESC_row[i];
@@ -801,7 +801,7 @@ function deleteRow_lantowan(r, client){
 							<li><#ParentalCtrl_Desc3#></li>
 							<li><#ParentalCtrl_Desc4#></li>
 							<li>
-								<a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://www.youtube.com/v/IbsuvSjG0xM">Click to open tutorial video.</a>
+								<a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://www.youtube.com/v/IbsuvSjG0xM"><#Video_Link1#></a>
 								<!--span onclick="location.href='#';document.body.style.overflow='hidden';document.getElementById('ParentalCtrlHelp').style.display='';">Click to open tutorial video.</span-->
 							</li>
 						</ol>		

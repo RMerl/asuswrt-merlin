@@ -32,7 +32,7 @@ function initial(){
 	if(band5g_support == -1)	
 		$("wl_unit_field").style.display = "none";
 
-	if(sw_mode == 2 && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
+	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
 		for(var i=4; i>=2; i--)
 			$("MainTable1").deleteRow(i);
 		$("repeaterModeHint").style.display = "";

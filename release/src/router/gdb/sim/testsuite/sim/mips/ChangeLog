@@ -1,0 +1,87 @@
+2007-08-27  Joel Brobecker  <brobecker@adacore.com>
+
+	* testutils.inc: Change license to GPL version 3.
+	* utils-dsp.inc: Change license to GPL version 3.
+	* utils-fpu.inc: Change license to GPL version 3.
+	* utils-mdmx.inc: Change license to GPL version 3.
+
+2007-02-20  Thiemo Seufer  <ths@mips.com>
+            Chao-Ying Fu  <fu@mips.com>
+	* basic.exp: Run the dsp2 test.
+	* utils-dsp.inc (dspckacc_astio, dspck_tsimm): New macro.
+	* mips32-dsp2.s: New test.
+
+2007-02-17  Thiemo Seufer  <ths@mips.com>
+
+	* basic.exp: Add case for mips*-sde-elf*.
+	(mdmxmodels): Run mdmx tests only on mdmx capable configurations.
+
+2007-02-13  Thiemo Seufer  <ths@mips.com>
+
+	* mips32-dsp.s: Run DSP testcase only for release 2 architecture.
+
+2007-02-13  Thiemo Seufer  <ths@mips.com>
+
+	* mdmx-ob.s: Delete extraneous include.
+
+2006-11-08  Thiemo Seufer  <ths@mips.com>
+
+	* basic.exp: Fix spelling in comment. Use canonical form of target
+	patterns. Run DSP test only for DSP-capable ISAs. Check also mips32r2
+	and mips64r2 if supported by the target.
+
+2006-08-08  Chris Dearman  <chris@mips.com>
+
+	* testutils.inc (setup): __start is also a valid start symbol.
+
+2006-05-15  Chao-ying Fu  <fu@mips.com>
+
+	* mips32-dsp.s: Add some tests for shra_r.ph, shrav_r.ph, shra_r.w,
+	shrav_r.w.
+
+2005-12-14  Chao-ying Fu  <fu@mips.com>
+
+	* basic.exp: Run the dsp test.
+	* utils-dsp.inc: New file.
+	* mips32-dsp.s: New test.
+
+2004-04-11  Chris Demetriou  <cgd@broadcom.com>
+
+	* utils-fpu.inc (enable_fpu, ckm_fp_cc): New macros.
+	(clrset_fp_cc): Fix mask used for upper 7 condition codes.
+	* utils-mdmx.inc: Include utils-fpu.inc.
+	(enable_mdmx): Use enable_fpu.
+
+2004-04-10  Chris Demetriou  <cgd@broadcom.com>
+
+	* utils-fpu.inc: New file.
+	* utils-mdmx.inc: New file.
+	* mdmx-ob.s: New file.
+	* mdmx-ob-sb1.s: New file.
+	* basic.exp: Run new mdmx-ob and mdmx-ob-sb1 tests.
+
+2004-04-10  Chris Demetriou  <cgd@broadcom.com>
+
+	* fpu64-ps-sb1.s: New file.
+	* basic.exp: Recognize mipsisa64sb1 targets, and run fpu64-ps-sb1.s
+	if appropriate.
+
+2004-04-10  Chris Demetriou  <cgd@broadcom.com>
+
+	* fpu64-ps.s: New file.
+	* basic.exp: Run fpu64-ps.s.
+
+2004-03-29  Richard Sandiford  <rsandifo@redhat.com>
+
+	* hilo-hazard-[123].s: New files.
+	* basic.exp (run_hilo_test): New procedure.
+	(models): Only list models that are included in the configuration.
+	(submodels): New variable, set to submodels of the above.
+	(mips64vr-*-elf, mips64vrel-*-elf): New configuration stanza.
+	Run hilo-hazard-[123].s.
+
+2004-01-26  Chris Demetriou  <cgd@broadcom.com>
+
+	* basic.exp: New file.
+	* testutils.inc: New file.
+	* sanity.s: New file.

@@ -1,0 +1,4 @@
+This matches if a specific /proc filename is '0' or '1'.
+.TP
+.BI "--condition " "[!] \fIfilename\fP"
+Match on boolean value stored in /proc/net/ipt_condition/filename file

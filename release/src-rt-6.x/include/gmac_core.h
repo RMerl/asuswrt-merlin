@@ -1,14 +1,14 @@
 /*
  * gmacdefs - Broadcom gmac (Unimac) specific definitions
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
- * $Id: gmac_core.h 241182 2011-02-17 21:50:03Z $
+ * $Id: gmac_core.h 341899 2012-06-29 04:06:38Z $
  */
 
 #ifndef	_gmac_core_h_
@@ -239,7 +239,7 @@ typedef volatile struct _gmacregs {
 #define	CC_TAI			0x00000200
 #define	CC_HD			0x00000400
 #define	CC_HD_SHIFT		10
-#define	CC_SR			0x00000800
+#define CC_SR(corerev)  ((corerev == 4) ? 0x00002000 : 0x00000800)
 #define	CC_ML			0x00008000
 #define	CC_AE			0x00400000
 #define	CC_CFE			0x00800000
@@ -266,5 +266,8 @@ typedef volatile struct _gmacregs {
 
 /* Core specific status flags */
 #define SISF_SW_ATTACHED	0x0800
+
+/* 4707 has 4 GMAC and need to be reset before start access */
+#define MAX_GMAC_CORES_4707	4
 
 #endif	/* _gmac_core_h_ */

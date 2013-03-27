@@ -89,9 +89,6 @@ function applyRule(){
 
 	document.form.sr_rulelist.value = tmp_value;
 
-	if(wl6_support != -1)
-		document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
-
 	showLoading();
 	document.form.submit();
 }

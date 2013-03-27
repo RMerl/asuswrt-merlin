@@ -1,0 +1,95 @@
+# Copyright 2001, 2003, 2007 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+# use this to debug:
+#
+#log_user 1
+
+# step-line.exp -- Expect script to test stepping in files with
+# #line directives.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set testfile step-line
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+remote_exec build "rm -f ${binfile}"
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested step-line.exp
+     return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if ![runto_main] then {
+   fail "Can't run to main"
+   return 0
+}
+
+gdb_test "break f1" ".*Breakpoint 2 at .* file step-line.c.*" "break f1"
+gdb_test "continue" \
+         "Continuing.*Breakpoint 2, f1 \\(i=4\\).*dummy \\(1, i\\);" \
+	 "continue to f1"
+gdb_test "next" \
+         ".*i = f2 \\(i\\);.*" \
+	 "next over dummy 1"
+gdb_test "next" \
+         ".*dummy \\(2, i\\);.*" \
+	 "next to dummy 2"
+gdb_test "next" \
+         ".*i = f2 \\(i\\);.*" \
+	 "next over dummy 2"
+gdb_test "step" \
+         ".*f2 \\(i=4\\).*dummy \\(4, i\\);.*" \
+	 "step into f2"
+gdb_test "next" \
+         ".*j = i;.*" \
+	 "next over dummy 4"
+gdb_test "next" \
+         ".*dummy \\(5, i\\);.*" \
+	 "next to dummy 5"
+gdb_test "next" \
+         ".*dummy \\(6, j\\);.*" \
+	 "next to dummy 6"
+gdb_test "next" \
+         ".*j = SUCC \\(j\\);.*" \
+	 "next over dummy 6"
+gdb_test "next" \
+         ".*dummy \\(7, i\\);.*" \
+	 "next to dummy 7"
+gdb_test "next" \
+         ".*dummy \\(8, j\\);.*" \
+	 "next to dummy 8"
+gdb_test "next" \
+         ".*j = j - i;.*" \
+	 "next over dummy 8"
+gdb_test "next" \
+         ".*dummy \\(9, i\\);.*" \
+	 "next to dummy 9"
+gdb_test "next" \
+         ".*dummy \\(10, j\\);.*" \
+	 "next to dummy 10"
+gdb_test "next" \
+         ".*RETURN \\(j\\);.*" \
+	 "next over dummy 10"
+return 0
