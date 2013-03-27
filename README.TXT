@@ -33,6 +33,7 @@ Set Up Environment (Tested in Fedora 8/9 and Ubuntu 10.04/12.04 LTS amd64)
 		gperf
 		lib32z1-dev
 		libssl-dev
+		libxml2-dev
 
 	b. Fedora
 		sudo yum groupinstall "Development Tools"
