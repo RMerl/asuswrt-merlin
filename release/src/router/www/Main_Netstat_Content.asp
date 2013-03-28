@@ -23,7 +23,11 @@ function onSubmitCtrl(o, s) {
 }
 
 function updateOptions(){
-	document.form.SystemCmd.value = "netstat " + document.form.NetOption.value;
+	if (document.form.NetOption.value == "NAT")
+		document.form.SystemCmd.value = "netstat-nat.sh";
+	else
+		document.form.SystemCmd.value = "netstat " + document.form.NetOption.value;
+	
 	document.form.submit();
 	document.getElementById("cmdBtn").disabled = true;
 	document.getElementById("cmdBtn").style.color = "#666";
@@ -125,6 +129,7 @@ function checkCmdRet(){
 													<option value="-x">UNIX sockets</option>
 													<option value="-l">Display listening server sockets</option>
 													<option value="-r">Display routing table</option>
+													<option value="NAT">NAT Connections</option>
  												</select>
 											</td>										
 										</tr>
