@@ -408,9 +408,9 @@ extern int mtd_unlock_erase_main(int argc, char *argv[]);
 // jffs2.c
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_JFFSV1)
 extern void start_jffs2(void);
-extern void erase_jffs_partition(void);
+//extern void erase_jffs_partition(void);
 #else
-static inline void erase_jffs_partition(void) { }
+//static inline void erase_jffs_partition(void) { }
 #endif
 
 // watchdog.c

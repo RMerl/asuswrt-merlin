@@ -53,7 +53,7 @@ _dprintf("*** jffs2: %d, %d\n", part, size);
 	if (nvram_match("jffs2_format", "1")) {
 		nvram_set("jffs2_format", "0");
 
-		if (!mtd_erase("jffs2")) {
+		if (!mtd_erase(JFFS_NAME)) {
 			error("formatting");
 			return;
 		}
@@ -174,9 +174,11 @@ void stop_jffs2(void)
 #endif
 }
 
+/*
 void erase_jffs_partition(void)
 {
 	_dprintf("Erase MTD partition: %s\n", JFFS_NAME);
 	eval("mtd-erase","-d", JFFS_NAME);
 	_dprintf("Erase MTD partition: %s done.\n", JFFS_NAME);
 }
+*/
