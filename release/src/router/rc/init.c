@@ -799,8 +799,10 @@ restore_defaults(void)
 	}
 #endif
 
+/*
 	if (restore_defaults)
 		nvram_set("jffs2_clean_fs", "1");
+*/
 }
 
 /* Set terminal settings to reasonable defaults */
