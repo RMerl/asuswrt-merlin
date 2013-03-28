@@ -297,7 +297,7 @@ void btn_check(void)
 	{
 		TRACE_PT("button WIFI_TOG pressed\n");
 		if (btn_pressed_toggle_radio == 0){
-			eval("radio","toggle");
+			eval("radio","switch");
 			btn_pressed_toggle_radio = 1;
 			return;
 		}
