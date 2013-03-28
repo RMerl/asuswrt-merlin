@@ -2290,7 +2290,7 @@ wol/stamp-h1:
 	CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
 	$(CONFIGURE) --host=mips --prefix=$(INSTALLDIR)/wol CC=mipsel-uclibc-gcc STRIP=mipsel-uclibc-strip \
 	AR=mipsel-uclibc-ar LD=mipsel-uclibc-ld NM=mipsel-uclibc-nm RANLIB=mipsel-uclibc-ranlib
-	touch wol/stamp-h1
+	@touch $@
 
 wol: wol/stamp-h1
 	@$(SEP)
@@ -2318,7 +2318,7 @@ netstat-nat/stamp-h1:
 	CC=$(CC) CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
 		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections -fPIC" \
 		$(CONFIGURE)
-	touch netstat-nat/stamp-h1
+	@touch $@
 
 netstat-nat: netstat-nat/stamp-h1
 
@@ -2339,7 +2339,7 @@ nfs-utils/stamp-h1:
 	cd nfs-utils && CPPFLAGS="$(EXTRACFLAGS) -Os" knfsd_cv_bsd_signals=no \
 	CC_FOR_BUILD=$(CC) $(CONFIGURE) --enable-nfsv3 --disable-nfsv4 --disable-ipv6 \
 	--disable-uuid --disable-gss --disable-mount --without-tcp-wrappers
-	touch nfs-utils/stamp-h1
+	@touch $@
 
 nfs-utils: nfs-utils/stamp-h1
 	$(MAKE) -C $@
