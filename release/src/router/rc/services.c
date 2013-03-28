@@ -328,12 +328,10 @@ void start_dnsmasq(void)
 		"pid-file=/var/run/dnsmasq.pid\n"
 		"user=nobody\n"
 		"resolv-file=%s\n"		// the real stuff is here
-		"addn-hosts=%s\n"		// Static names
 		"no-poll\n"			// don't poll resolv file
 		"interface=%s\n"		// dns & dhcp only on LAN interface
 		"min-port=%u\n",		// min port used for random src port
 		dmresolv,
-		dmhosts,
 		lan_ifname,
 		nvram_get_int("dns_minport") ? : 4096);
 
@@ -435,13 +433,15 @@ void start_dnsmasq(void)
 
 	/* Static IP MAC binding */
 	if (nvram_match("dhcp_static_x","1")) {
-		fprintf(fp, "read-ethers\n");
+		fprintf(fp, "read-ethers\n"
+			    "addn-hosts=%s\n", dmhosts);
+
 		write_static_leases("/etc/ethers");
 	}
 
 	/* Listen to PPTPD clients */
 	if (nvram_match("pptpd_enable","1"))
-	fprintf(fp,"listen-address=%s,127.0.0.1\n",lan_ipaddr);
+		fprintf(fp,"listen-address=%s,127.0.0.1\n",lan_ipaddr);
 
 	/* Don't log DHCP queries */
 	if (nvram_match("dhcpd_querylog","0"))
