@@ -282,7 +282,7 @@ obj-y += asm1042
 endif
 
 # Merlin addons
-obj-y += wol
+obj-n += wol
 obj-y += netstat-nat
 obj-y += ipset
 
