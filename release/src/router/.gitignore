@@ -17,6 +17,7 @@ mipsel-uclibc
 config.log
 config.status
 kernel_header
+config_rt-*
 
 #
 # asuswrt test
