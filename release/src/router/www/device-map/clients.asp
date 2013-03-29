@@ -270,18 +270,6 @@ function showclient_list(list){
 	parent.show_client_status();
 }
 
-function getOUIFromMAC(mac) {
-	var top = 100;
-	var left = Math.floor(screen.availWidth * .05);
-	var width = 700
-	var height = 400
-	var tab = new Array();
-	
-	tab = mac.split(mac.substr(2,1));
-	var win = window.open("http://standards.ieee.org/cgi-bin/ouisearch?" + tab[0] + '-' + tab[1] + '-' + tab[2], 'OUI_Search', 'top=' + top + ',left=' + left + ',width=' + width + ',height=' + height + ",resizable=yes,scrollbars=yes");
-	win.focus();
-}
-
 function is_blocked_client(client_mac){
 	var macfilter_rulelist_row = macfilter_rulelist_array.split('&#60');
 	var is_blocked = 0;
