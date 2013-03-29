@@ -479,8 +479,12 @@ extern void setup_ftp_conntrack(int port);
 extern void setup_pt_conntrack(void);
 extern int pppstatus(void);
 extern void time_zone_x_mapping(void);
+extern void use_custom_config(char *config, char *target);
+extern void append_custom_config(char *config, FILE *fp);
 
 // ssh.c
+extern void start_sshd(void);
+extern void stop_sshd(void);
 
 // usb.c
 #ifdef RTCONFIG_USB
@@ -559,7 +563,8 @@ extern void start_vpnclient(int clientNum);
 extern void stop_vpnclient(int clientNum);
 extern void start_vpnserver(int serverNum);
 extern void stop_vpnserver(int serverNum);
-extern void start_vpn_eas();
+extern void start_vpn_eas(void);
+extern void stop_vpn_eas(void);
 extern void run_vpn_firewall_scripts();
 extern void write_vpn_dnsmasq_config(FILE*);
 extern int write_vpn_resolv(FILE*);
