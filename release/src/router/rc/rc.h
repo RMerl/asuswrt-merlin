@@ -623,6 +623,9 @@ extern void stop_ipv6(void);
 extern void set_acs_ifnames();
 #endif
 extern int service_main(int argc, char *argv[]);
+void start_cstats(int new);
+void restart_cstats(void);
+void stop_cstats(void);
 
 // lan.c
 extern void set_device_hostname(void);
