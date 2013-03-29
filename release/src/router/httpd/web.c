@@ -421,7 +421,7 @@ ej_nvram_get(int eid, webs_t wp, int argc, char_t **argv)
 static int
 ej_nvram_clean_get(int eid, webs_t wp, int argc, char_t **argv)
 {
-	char *sid, *name, *c;
+	char *name, *c;
 	int ret = 0;
 
 	if (ejArgs(argc, argv, "%s", &name) < 1) {
