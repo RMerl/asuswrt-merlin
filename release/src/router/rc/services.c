@@ -2143,10 +2143,6 @@ chpass(char *user, char *pass)
 int 
 start_telnetd(void)
 {
-//	char *telnetd_argv[] = {"telnetd", NULL};
-	FILE *fp;
-	const char *p;
-
 	if (getpid() != 1) {
 		notify_rc("start_telnetd");
 		return 0;
@@ -4302,8 +4298,7 @@ void start_cstats(int new)
 	}
 }
 
-void
-restart_cstats()
+void restart_cstats(void)
 {
         if (nvram_match("cstats_new", "1"))
         {
@@ -4315,4 +4310,3 @@ restart_cstats()
                 start_cstats(0);
         }
 }
-
