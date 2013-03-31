@@ -50,3 +50,5 @@ cscope.*
 config_
 config_current
 save-config
+config_rt-*
+
