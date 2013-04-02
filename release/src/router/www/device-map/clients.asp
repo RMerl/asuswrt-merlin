@@ -294,6 +294,7 @@ function oui_query(mac) {
 			return overlib(overlib_str_tmp + "<p style='margin-top:5px'>Manufacturer:</p>" + retData[0]);
 		}    
   });
+}
 
 function is_blocked_client(client_mac){
 	var macfilter_rulelist_row = macfilter_rulelist_array.split('&#60');
