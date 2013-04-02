@@ -964,7 +964,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "log_ipaddr", ""},
 	{ "log_port", "514"},
 	{ "log_size", "256"},
-	{ "log_level", "5" },		/* <  LOG_NOTICE */
+	{ "log_level", "7" },		/* <  LOG_DEBUG */
 	{ "console_loglevel", "5"},	/* <  KERN_INFO */
 
 #ifdef RTCONFIG_JFFS2
