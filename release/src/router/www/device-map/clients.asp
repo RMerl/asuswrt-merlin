@@ -70,6 +70,7 @@ p{
 <link rel="stylesheet" type="text/css" href="../form_style.css"> 
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/jquery.xdomainajax.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/tmmenu.js"></script>
 <script type="text/javascript" src="/nameresolv.js"></script>
@@ -180,6 +181,7 @@ function showNextItem(act){
 	_showNextItem(listFlag);
 }
 
+var overlib_str_tmp = "";
 function showclient_list(list){
 	var code = "";
 	networkmap_scanning = 0;
@@ -208,7 +210,7 @@ function showclient_list(list){
 				client_list_col[1] += "...";
 			}
 
-			overlib_str += "<p><#MAC_Address#></p>" + client_list_col[3];
+			overlib_str += "<p><#MAC_Address#>:</p>" + client_list_col[3];
 			if(login_ip_str() == client_list_col[2])
 				overlib_str += "<p><#CTL_localdevice#>:</p>YES";
 			if(client_list_col[5] == 1)
@@ -229,9 +231,9 @@ function showclient_list(list){
 				}
 				else if(j == 1){
 					if(client_list_col[1] != "")
-						code += '<td width="40%"><span class="ClientName" style="cursor:pointer;text-decoration:underline;" onclick="getOUIFromMAC(\'' + client_list_col[3] + '\');" onmouseover="return overlib(\''+ overlib_str +'\');" onmouseout="nd();">'+ client_list_col[1] +'</span></td>';	// Show Device-name
+						code += '<td width="40%" onclick="oui_query(\'' + client_list_col[3] + '\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" class="ClientName" style="cursor:pointer;text-decoration:underline;">'+ client_list_col[1] +'</td>';	// Show Device-name
 					else
-						code += '<td width="40%"><span class="ClientName" style="cursor:pointer;text-decoration:underline;" onclick="getOUIFromMAC(\'' + client_list_col[3] + '\');" onmouseover="return overlib(\''+ overlib_str +'\');" onmouseout="nd();">'+ client_list_col[3] +'</span></td>';	// Show MAC
+						code += '<td width="40%" onclick="oui_query(\'' + client_list_col[3] + '\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" class="ClientName" style="cursor:pointer;text-decoration:underline;">'+ client_list_col[3] +'</td>';	// Show MAC
 				}
 				else if(j == 2){
 					if(client_list_col[4] == "1")			
@@ -242,7 +244,7 @@ function showclient_list(list){
 				else if(j == client_list_col.length-4)
 					code += '';
 				else				
-					code += '<td width="36%"><span class="ClientName" onmouseover="return overlib(\''+ overlib_str +'\');" onmouseout="nd();">'+ client_list_col[j] +'</span></td>';
+					code += '<td width="36%" class="ClientName" onclick="oui_query(\'' + client_list_col[3] + '\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();">'+ client_list_col[j] +'</td>';
 			}
 			
 			if(parent.sw_mode == 1 && ParentalCtrl_support != -1)
@@ -269,6 +271,29 @@ function showclient_list(list){
 	parent.client_list_array = client_list_array;
 	parent.show_client_status();
 }
+
+overlib.isOut = true;
+function oui_query(mac) {
+	var tab = new Array()
+	tab = mac.split(mac.substr(2,1));
+
+  $j.ajax({
+    url: 'http://standards.ieee.org/cgi-bin/ouisearch?'+ tab[0] + '-' + tab[1] + '-' + tab[2],
+		type: 'GET',
+    error: function(xhr) {
+			if(overlib.isOut)
+				return true;
+			else
+				oui_query(mac);
+    },
+    success: function(response) {
+			if(overlib.isOut)
+				return nd();
+			var retData = response.responseText.split("pre")[1].split("(base 16)")[1].split("&lt;/");
+			overlib_str_tmp += "<p><span>.....................................</span></p>";
+			return overlib(overlib_str_tmp + "<p style='margin-top:5px'>Manufacturer:</p>" + retData[0]);
+		}    
+  });
 
 function is_blocked_client(client_mac){
 	var macfilter_rulelist_row = macfilter_rulelist_array.split('&#60');

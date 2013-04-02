@@ -353,24 +353,29 @@ function show_permissions_of_account(account_order, protocol){
 	var poolName;
 	var permissions;
 	
-	for(var i = 0; i < pool_devices().length; ++i){
-		poolName = pool_devices()[i];
-		if(!this.clickedFolderBarCode[poolName])
-			continue;
-		
-		permissions = get_account_permissions_in_pool(accountName, poolName);
-		for(var j = 1; j < permissions.length; ++j){
-			var folderBarCode = get_folderBarCode_in_pool(poolName, permissions[j][0]);
+	try{
+		for(var i = 0; i < pool_devices().length; ++i){
+			poolName = pool_devices()[i];
+			if(!this.clickedFolderBarCode[poolName])
+				continue;
 			
-			if(protocol == "cifs")
-				showPermissionRadio(folderBarCode, permissions[j][1]);
-			else if(protocol == "ftp")
-				showPermissionRadio(folderBarCode, permissions[j][2]);
-			else{
-				alert("Wrong protocol when get permission!");	// system error msg. must not be translate
-				return;
+			permissions = get_account_permissions_in_pool(accountName, poolName);
+			for(var j = 1; j < permissions.length; ++j){
+				var folderBarCode = get_folderBarCode_in_pool(poolName, permissions[j][0]);
+				
+				if(protocol == "cifs")
+					showPermissionRadio(folderBarCode, permissions[j][1]);
+				else if(protocol == "ftp")
+					showPermissionRadio(folderBarCode, permissions[j][2]);
+				else{
+					alert("Wrong protocol when get permission!");	// system error msg. must not be translate
+					return;
+				}
 			}
 		}
+	}
+	catch(err){
+		return true;
 	}
 }
 

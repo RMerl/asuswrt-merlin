@@ -2,7 +2,9 @@
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 1)
 	sw_mode = 4;
-var productid = '<% nvram_get("productid"); %>';
+var productid = '<#Web_Title2#>';
+var based_modelid = '<% nvram_get("productid"); %>';
+var hw_ver = '<% nvram_get("hardware_version"); %>';
 var uptimeStr = "<% uptime(); %>";
 var timezone = uptimeStr.substring(26,31);
 var boottime = parseInt(uptimeStr.substring(32,42));
@@ -52,11 +54,12 @@ var usb_support = rc_support.search("usb");
 var printer_support = rc_support.search("printer"); 
 var appbase_support = rc_support.search("appbase");
 var appnet_support = rc_support.search("appnet");
-var media_support = (rc_support.search("media") == -1) ? false : true;
+var media_support = (rc_support.search(" media") == -1) ? false : true;
 var nomedia_support = (rc_support.search("nomedia") == -1) ? false : true;
 var cloudsync_support = (rc_support.search("cloudsync") == -1) ? false : true; 
 
-if(productid == "DSL-N55U" || productid == "DSL-N55U-B" || productid == "RT-N56U")
+//MODELDEP : DSL-N55U、DSL-N55U-B、RT-N56U
+if(based_modelid == "DSL-N55U" || based_modelid == "DSL-N55U-B" || based_modelid == "RT-N56U")
 	var aicloudipk_support = true;
 else
 	var aicloudipk_support = false;
@@ -82,9 +85,6 @@ var QISWIZARD = "QIS_wizard.htm";
 // Todo: Support repeater mode
 if(isMobile() && sw_mode != 2 && dsl_support == -1)
 	QISWIZARD = "QIS_wizard_m.htm";
-
-var based_modelid = '<% nvram_get("productid"); %>';
-var hw_ver = '<% nvram_get("hardware_version"); %>';
 
 // for detect if the status of the machine is changed. {
 var wanstate = -1;

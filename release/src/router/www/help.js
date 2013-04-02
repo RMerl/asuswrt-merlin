@@ -478,7 +478,7 @@ if (typeof ol_border=='undefined') var ol_border="1";
 if (typeof ol_cellpad=='undefined') var ol_cellpad=6;
 if (typeof ol_offsetx=='undefined') var ol_offsetx=10;
 if (typeof ol_offsety=='undefined') var ol_offsety=10;
-if (typeof ol_text=='undefined') var ol_text="Default Text";
+if (typeof ol_text=='undefined') var ol_text='<#aicloud_for_privateIP3#>';
 if (typeof ol_cap=='undefined') var ol_cap="";
 if (typeof ol_sticky=='undefined') var ol_sticky=0;
 if (typeof ol_background=='undefined') var ol_background="";
@@ -670,6 +670,9 @@ var capExtent;
 // overlib(arg0,...,argN)
 // Loads parameters into global runtime variables.
 function overlib() {
+	if(typeof overlib.isOut != "undefined")
+		overlib.isOut = false;
+
 	if (!olLoaded || isExclusive(overlib.arguments)) return true;
 	if (olCheckMouseCapture) olMouseCapture();
 	if (over) {
@@ -760,6 +763,9 @@ function overlib() {
 
 // Clears popups if appropriate
 function nd(time) {
+	if(typeof overlib.isOut != "undefined")
+		overlib.isOut = true;
+
 	if (olLoaded && !isExclusive()) {
 		hideDelay(time);  // delay popup close if time specified
 

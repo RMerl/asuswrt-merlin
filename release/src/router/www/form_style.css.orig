@@ -1567,8 +1567,8 @@ padding-top:1px;
 	font-weight:bold;
 }
 #overDiv{
-	filter:alpha(opacity=95);
-	opacity:.95;
+	filter:alpha(opacity=90);
+	opacity:.9;
 	z-index: 500;
 }
 #overDiv_table1{

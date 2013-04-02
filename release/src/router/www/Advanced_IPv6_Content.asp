@@ -554,7 +554,6 @@ function applyRule(){
 		if(document.form.ipv6_service.value!="static6" && document.form.ipv6_service.value!="other")	//clean up ipv6_rtr_addr if not static6 or not other
 				document.form.ipv6_rtr_addr.value = "";
 
-		/*if(based_modelid.search("RT-AC56U") >= 0 || based_modelid.search("RT-AC67U") >= 0)*/
 		if(Rawifi_support == -1)
 		{ // MODELDEP: boradcom platform
 			if((document.form.ipv6_service.value == "disabled" && document.form.ipv6_service_orig.value != "disabled") ||

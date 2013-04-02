@@ -327,9 +327,9 @@ function check_NOnly_to_GN(){
 //  Viz add 2012.11.05 restriction for 'N Only' mode  ) end		
 }
 
-// Viz add to remove 5GHz:N-Only option for RT-AC56U 2013.01 & RT-AC67U 2013.02
+// Viz add to remove 5GHz:N-Only option for RT-AC56U 2013.01 & RT-AC68U 2013.03
 function remove_5G_NOnly(obj){	//MODELDEP
-		if((based_modelid.search("RT-AC56U") >= 0 || based_modelid.search("RT-AC67U") >= 0)
+		if((based_modelid.search("RT-AC56U") >= 0 || based_modelid.search("RT-AC68U") >= 0)
 				&& '<% nvram_get("wl_unit"); %>' == '1'){
 				free_options(obj);
 				obj.options[0] = new Option("<#Auto#>", 0);

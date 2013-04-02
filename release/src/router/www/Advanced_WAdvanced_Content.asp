@@ -239,7 +239,7 @@ function control_TimeField(){		//control time of week & weekend field when wirel
 			$('enable_time_weekend_tr').style.display="";	
 		}
 	}
-	else{	// for SW radio switch model, ex. RT-N66U, RT-AC56U, RT-AC67U, etc.
+	else{	// for SW radio switch model, ex. RT-N66U, RT-AC56U, RT-AC68U, etc.
 		if(!document.form.wl_radio[0].checked){
 			$("wl_sched_enable").style.display = "none";
 			$('enable_date_week_tr').style.display="none";

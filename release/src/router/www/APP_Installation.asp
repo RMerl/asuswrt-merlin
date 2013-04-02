@@ -486,7 +486,7 @@ function show_apps(){
 			apps_array[i][6] = "";	
 			
 		// apps_icon
-		htmlcode += '<tr><td class="app_table_radius_left" align="center" style="width:85px">\n';
+		htmlcode += '<tr style="height: 100px;"><td class="app_table_radius_left" align="center" style="width:85px">\n';
 		if(apps_array[i][4] == "yes" && apps_array[i][3] == "yes"){
 			if(apps_array[i][6] != ""){
 				if(apps_array[i][0] == "mediaserver" || apps_array[i][0] == "mediaserver2")
@@ -499,9 +499,9 @@ function show_apps(){
 		}	
 		else{
 			if(apps_array[i][0] == "mediaserver" || apps_array[i][0] == "mediaserver2")
-				htmlcode += '<img style="margin-top:0px;filter:gray" src="/images/New_ui/USBExt/mediaserver.png"></td>\n';			
+				htmlcode += '<img style="margin-top:0px;" src="/images/New_ui/USBExt/mediaserver.png"></td>\n';			
 			else
-				htmlcode += '<img style="margin-top:0px;filter:gray" src="/images/New_ui/USBExt/'+ apps_array[i][0] +'.png"></td>\n';			
+				htmlcode += '<img style="margin-top:0px;" src="/images/New_ui/USBExt/'+ apps_array[i][0] +'.png"></td>\n';			
 		}
 
 		// apps_name

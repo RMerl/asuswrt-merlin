@@ -163,7 +163,7 @@ function initial_dir(){
 }
 
 function initial_dir_status(data){
-	if(data != ""){		
+	if(data != "" && data.length != 2){		
 		get_layer_items("0");
 		eval("var default_dir=" + data);
 	}
