@@ -333,21 +333,21 @@ kernel: $(LINUXDIR)/.config
 
 ifeq ($(RTCONFIG_RALINK),y)
 	@if ! grep -q "CONFIG_EMBEDDED_RAMDISK=y" $(LINUXDIR)/.config ; then \
-	    $(MAKE) -C $(LINUXDIR) vmlinux CC=$(KERNELCC) LD=$(KERNELLD); \
+	    $(MAKE) -C $(LINUXDIR) vmlinux CC=$(KERNELCC) LD=$(KERNELLD) $(PARALLEL_BUILD); \
 	fi
 	if grep -q "CONFIG_MODULES=y" $(LINUXDIR)/.config ; then \
-	    $(MAKE) -C $(LINUXDIR) modules CC=$(KERNELCC) LD=$(KERNELLD); \
+	    $(MAKE) -C $(LINUXDIR) modules CC=$(KERNELCC) LD=$(KERNELLD) $(PARALLEL_BUILD); \
 	fi
 else
 	@if ! grep -q "CONFIG_EMBEDDED_RAMDISK=y" $(LINUXDIR)/.config ; then \
-	    $(MAKE) -C $(LINUXDIR) zImage CC=$(KERNELCC); \
+	    $(MAKE) -C $(LINUXDIR) zImage CC=$(KERNELCC) $(PARALLEL_BUILD); \
 	fi
 	if grep -q "CONFIG_MODULES=y" $(LINUXDIR)/.config ; then \
-	    $(MAKE) -C $(LINUXDIR) modules CC=$(KERNELCC); \
+	    $(MAKE) -C $(LINUXDIR) modules CC=$(KERNELCC) $(PARALLEL_BUILD); \
 	fi
 
 ifeq ($(CONFIG_LINUX26),y)
-	$(MAKE) -C $(LINUXDIR)/arch/mips/brcm-boards/bcm947xx/compressed srctree=$(LINUXDIR)
+	$(MAKE) -C $(LINUXDIR)/arch/mips/brcm-boards/bcm947xx/compressed srctree=$(LINUXDIR) $(PARALLEL_BUILD)
 endif
 endif
 
@@ -359,7 +359,7 @@ lzma-loader-install: lzma-loader
 
 
 kmod: dummy
-	$(MAKE) -C $(LINUXDIR) modules CC=$(KERNELCC)
+	$(MAKE) -C $(LINUXDIR) modules CC=$(KERNELCC) $(PARALLEL_BUILD)
 
 testfind:
 	cd $(TARGETDIR)/lib/modules/* && find -name "*.o" -exec mv -i {} . \; || true
@@ -713,7 +713,7 @@ oldconfig oldconf: koldconf roldconf bboldconf
 #
 
 busybox: dummy
-	@$(MAKE) -C busybox EXTRA_CFLAGS="-fPIC $(EXTRACFLAGS)"
+	@$(MAKE) -C busybox EXTRA_CFLAGS="-fPIC $(EXTRACFLAGS)" $(PARALLEL_BUILD)
 
 # V=1
 
@@ -734,7 +734,7 @@ e2fsprogs/Makefile: e2fsprogs/Makefile.in
 		--disable-debugfs --disable-imager --disable-resizer --disable-uuidd
 
 e2fsprogs: e2fsprogs/Makefile
-	$(MAKE) -C $@
+	$(MAKE) -C $@ $(PARALLEL_BUILD)
 
 e2fsprogs-install:
 	install -D e2fsprogs/lib/libblkid.so.1.0 $(INSTALLDIR)/e2fsprogs/usr/lib/libblkid.so.1.0
@@ -1279,8 +1279,10 @@ ecmh-install: ecmh
 
 p910nd:
 samba:
-#samba3:
-#samba-3.5.8:
+samba3:
+	-@$(MAKE) -C samba3 $(PARALLEL_BUILD)
+samba-3.5.8:
+	-@$(MAKE) -C samba-3.5.8 $(PARALLEL_BUILD)
 
 #samba-3.5.8-install:
 #    install -D samba-3.5.8/source3/bin/libsmbclient.so $(INSTALLDIR)/samba-3.5.8/usr/lib/libsmbclient.so
@@ -1402,7 +1404,7 @@ pppd/stamp-h1:
 
 pppd: pppd/stamp-h1
 	@$(SEP)
-	@$(MAKE) -C pppd MFLAGS='$(if $(RTCONFIG_IPV6),HAVE_INET6=y,) EXTRACFLAGS="$(EXTRACFLAGS)"'
+	@$(MAKE) -C pppd MFLAGS='$(if $(RTCONFIG_IPV6),HAVE_INET6=y,) EXTRACFLAGS="$(EXTRACFLAGS)"' $(PARALLEL_BUILD)
 
 pppd-clean:
 	-@$(MAKE) -C pppd clean
@@ -1647,7 +1649,7 @@ ffmpeg/stamp-h1: zlib
 	touch $@
 
 ffmpeg: ffmpeg/stamp-h1 zlib
-	@$(MAKE) -C ffmpeg all
+	@$(MAKE) -C ffmpeg all $(PARALLEL_BUILD)
 
 ffmpeg-clean:
 	-@$(MAKE) -C ffmpeg clean
@@ -2116,7 +2118,7 @@ lighttpd-1.4.29/stamp-h1:
 	touch $@
 
 lighttpd-1.4.29: shared nvram libdisk samba-3.5.8 pcre-8.12 libxml2 sqlite openssl lighttpd-1.4.29/stamp-h1
-	$(MAKE) -C lighttpd-1.4.29
+	$(MAKE) -C lighttpd-1.4.29 $(PARALLEL_BUILD)
 	$(MAKE) -C lighttpd-1.4.29/src copy-prebuild
 
 lighttpd-1.4.29-install: samba-3.5.8 sqlite libxml2 pcre-8.12 openssl lighttpd-1.4.29
