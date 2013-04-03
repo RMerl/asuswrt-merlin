@@ -221,7 +221,7 @@ cleankernel:
 	cp -p save-config .config || true
 
 kernel:
-	@$(MAKE) -C router kernel
+	@$(MAKE) -C router kernel $(PARALLEL_BUILD)
 	@[ ! -e $(KERNEL_BINARY) ] || ls -l $(KERNEL_BINARY)
 
 distclean: clean cleanimage cleankernel cleantools cleanlibc
