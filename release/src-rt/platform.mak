@@ -3,7 +3,7 @@ export LINUXDIR := $(SRCBASE)/linux/linux-2.6
 EXTRA_CFLAGS := -DLINUX26 -DCONFIG_BCMWL5 -DDEBUG_NOISY -DDEBUG_RCTEST -pipe
 
 #export PARALLEL_BUILD :=
-export PARALLEL_BUILD := -j6
+export PARALLEL_BUILD := -j`grep -c '^processor' /proc/cpuinfo`
 
 export CONFIG_LINUX26=y
 export CONFIG_BCMWL5=y
