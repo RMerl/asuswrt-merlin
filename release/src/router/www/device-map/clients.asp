@@ -273,28 +273,6 @@ function showclient_list(list){
 }
 
 overlib.isOut = true;
-function oui_query(mac) {
-	var tab = new Array()
-	tab = mac.split(mac.substr(2,1));
-
-  $j.ajax({
-    url: 'http://standards.ieee.org/cgi-bin/ouisearch?'+ tab[0] + '-' + tab[1] + '-' + tab[2],
-		type: 'GET',
-    error: function(xhr) {
-			if(overlib.isOut)
-				return true;
-			else
-				oui_query(mac);
-    },
-    success: function(response) {
-			if(overlib.isOut)
-				return nd();
-			var retData = response.responseText.split("pre")[1].split("(base 16)")[1].split("&lt;/");
-			overlib_str_tmp += "<p><span>.....................................</span></p>";
-			return overlib(overlib_str_tmp + "<p style='margin-top:5px'>Manufacturer:</p>" + retData[0]);
-		}    
-  });
-}
 
 function is_blocked_client(client_mac){
 	var macfilter_rulelist_row = macfilter_rulelist_array.split('&#60');

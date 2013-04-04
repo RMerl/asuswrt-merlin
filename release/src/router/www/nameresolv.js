@@ -102,15 +102,26 @@ function populateCache() {
 	return;
 }
 
-function getOUIFromMAC(mac) {
-        var top = 100;
-        var left = Math.floor(screen.availWidth * .05);
-        var width = 700
-        var height = 400
-        var tab = new Array();
+function oui_query(mac) {
+	var tab = new Array()
+	tab = mac.split(mac.substr(2,1));
 
-        tab = mac.split(mac.substr(2,1));
-        var win = window.open("http://standards.ieee.org/cgi-bin/ouisearch?" + tab[0] + '-' + tab[1] + '-' + tab[2], 'OUI_Search', 'top=' + top + ',left=' + left + ',width=' + width + ',height=' + height + ",resizable=yes,scrollbars=yes");
-        win.focus();
+  $j.ajax({
+    url: 'http://standards.ieee.org/cgi-bin/ouisearch?'+ tab[0] + '-' + tab[1] + '-' + tab[2],
+		type: 'GET',
+    error: function(xhr) {
+			if(overlib.isOut)
+				return true;
+			else
+				oui_query(mac);
+    },
+    success: function(response) {
+			if(overlib.isOut)
+				return nd();
+			var retData = response.responseText.split("pre")[1].split("(base 16)")[1].split("&lt;/");
+			overlib_str_tmp += "<p><span>.....................................</span></p>";
+			return overlib(overlib_str_tmp + "<p style='margin-top:5px'>Manufacturer:</p>" + retData[0]);
+		}    
+  });
 }
 
