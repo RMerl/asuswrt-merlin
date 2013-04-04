@@ -11,6 +11,11 @@
 <title>ASUS Wireless Router <#Web_Title#> - System Information</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
+<style>
+p{
+	font-weight: bolder;
+}
+</style>
 
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
@@ -120,7 +125,7 @@ function show_etherstate(){
 			if (line[11] == "00:00:00:00:00:00") {
 				devicename = '<span class="ClientName">&lt;none&gt;</span>';
 			} else {
-				overlib_str = "<p><#MAC_Address#></p>" + line[11];
+				overlib_str = "<p><#MAC_Address#>:</p>" + line[11];
 
 				// Walk down arp cache and retrieve from hostname cache
 				for (var j = 0; j < arplist.length; ++j) {
