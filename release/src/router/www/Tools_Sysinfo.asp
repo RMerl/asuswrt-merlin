@@ -37,6 +37,7 @@ hwacc = "<% nvram_get("ctf_disable"); %>";
 hwacc_force = "<% nvram_get("ctf_disable_force"); %>";
 arplist = [<% get_arp_table(); %>];
 etherstate = "<% sysinfo("ethernet"); %>";
+lanports = "<% nvram_get("lanports"); %>";
 
 var $j = jQuery.noConflict();
 
@@ -109,6 +110,7 @@ function show_etherstate(){
 	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th>Port</th><th>Link State</th><th>Last Device Seen</th></tr>';
 
 	var t = etherstate.split('>');
+	var lanports_arr = lanports.split(' ');
 
 	for (var i = 0; i < t.length; ++i) {
 		var line = t[i].split(/[\s]+/);
@@ -147,7 +149,7 @@ function show_etherstate(){
 			} else if (tmpPort == "8") {
 				break;
 			} else {
-				port = "LAN "+tmpPort;
+				port = "LAN "+lanports_arr[tmpPort - 1];
 			}
 			code += '<tr><td width="15%">'+port+'</td><td width="30%"><span>' + state2 + '</span></td><td width="55%">'+ devicename +'</td></tr>';
 		}
