@@ -1280,9 +1280,9 @@ ecmh-install: ecmh
 p910nd:
 samba:
 samba3:
-	-@$(MAKE) -C samba3 $(PARALLEL_BUILD)
+	@$(MAKE) -C samba3 $(PARALLEL_BUILD)
 samba-3.5.8:
-	-@$(MAKE) -C samba-3.5.8 $(PARALLEL_BUILD)
+	@$(MAKE) -C samba-3.5.8 $(PARALLEL_BUILD)
 
 #samba-3.5.8-install:
 #    install -D samba-3.5.8/source3/bin/libsmbclient.so $(INSTALLDIR)/samba-3.5.8/usr/lib/libsmbclient.so
