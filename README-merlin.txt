@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.354.27 (xx-XXX-2013)
-===================================================
+Asuswrt-Merlin - build 3.0.0.4.354.27 BETA 2 (XX-XXX-2013)
+============================================================
 
 About
 -----
@@ -53,7 +53,7 @@ Disk sharing:
    - NFS sharing (through webui)
 
 Networking:
-   - Act as a Master Browser
+   - Force acting as a Master Browser
    - Act as a WINS server
    - SSHD
    - Allows tweaking TCP/UDP connection tracking timeouts
@@ -88,8 +88,7 @@ integrated/enabled in the official firmware:
 - Turning WPS button into a radio on/off toggle
 - Use shorter share names (folder name only)
 - WakeOnLan web interface (with user-entered preset targets)
-- clickable MACs on the client list for lookup in the
-  OUI database
+- clickable MACs on the client list for lookup in the OUI database
 
 
 Installation
@@ -233,13 +232,13 @@ The monitoring is done per IP, NOT per MAC.
 
 
 
-* Display active connections *
-There is a new tab under System Log called "Connections".
-This page will list the currently tracked network connections.
-You can enable name resolution for IPs on the Tools menu,
-under "Other Settings".  Note that name resolution can 
-slow down the loading of this page, especially if you have 
-a lot of tracked connections (for instance while torrenting).
+* Display active NAT connections *
+On the Network Tools -> Netstat page there is an additional 
+option called "NAT Connections".  This will list the currently 
+tracked network connections.  You can enable name resolution for 
+IPs on the Tools menu,  under "Other Settings".  Note that name 
+resolution can slow down the loading of this page, especially if 
+you have a lot of tracked connections (for instance while torrenting).
 
 
 
@@ -430,20 +429,50 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.354.27
+3.0.0.4.354.27 Beta 2:
+   - CHANGED: Merged with webui pages extract from the Asus released FW, as
+              they were more recent than the GPL ones
+   - CHANGED: Port state on Sysinfo page now uses the new OUI lookup code
+              from Asus
+   - FIXED: Build 354 reduced minimum syslog level to WARNING - bumped back
+            to INFO as in previous versions (resolves DHCP events not being
+            logged)
+   - FIXED: Port numbering on the Sysinfo page for devices that has 
+            them backward (RT-N16)
+   - FIXED: Client list wasn't using the new OUI code from Asus (was missing
+            from the GPL archive)
+
+
+3.0.0.4.354.27 Beta 1
    - NEW: Merged with 3.0.0.4.354.  Notable changes:
-      * New wireless driver
-      * New Network Tools
-      * WOL (Under Network Tools; will replace our former implementation)
-      * HW acceleration support for PPPoE
-      * DHCP Normal/aggressive behaviour.  Similar to the 270.25 implementation,
-        except it can be enabled/disabled
-   - CHANGED: Removed WOL webui - replaced with Asus's own.  You will have
-              to re-add your WOL entries.
+            * New wireless driver
+            * New Network Tools
+            * WOL (Under Network Tools
+            * HW acceleration support for PPPoE
+            * DHCP Normal/aggressive behaviour.  Similar to the 270.25 implementation,
+              except it can be enabled/disabled
+
+          Asus considers build 354 to still be beta, so be advised that there might 
+          still be some issues left (there are known issues related to 3G/4G dongles 
+          for instance).
+
+   - CHANGED: Removed WOL webui - Asus added their own WOL support  on the Network 
+              Tools page.  You will have  to re-add your WOL entries.
+   - CHANGED: Removed System Log -> Connections page, and integrated it into
+              the new Network Tools -> Netstat page from Asus (as NAT Connections)
+   - CHANGED: Removed wol binary, since Asus's WOL page uses ether-wake.
+   - CHANGED: Removed option to control SIP helper on Firewall page (use
+              the new Asus option from WAN - NAT PAssthrough page instead)
+   - CHANGED: WPS button when set as a radio toggle will now behave the same 
+              way as Asus's firmware: pressing it will fully enable/disable both 
+              radios in the webui, rather than just toggle the state of the 
+              enabled radios.  This means the button will override the 
+              webui, and radio states will survive reboots.
    - FIXED: Avoid duplicate shares when using simpler share naming (using
             Asus's code from 354)
    - FIXED: Improved fdisk support for 4KB sector size
    - FIXED: openvpn: Client-specific entries weren't properly parsed
+   - FIXED: dnsmasq warning in syslog if DHCP static leases are disabled
 
 
 3.0.0.4.270.26b
