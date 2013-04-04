@@ -1303,7 +1303,7 @@ vlan-install:
 	$(STRIP) $(INSTALLDIR)/vlan/usr/sbin/vconfig
 
 accel-pptpd: kernel_header pppd
-	@$(MAKE) -C accel-pptpd server KDIR=$(TOP)/kernel_header
+	@$(MAKE) -C accel-pptpd server KDIR=$(TOP)/kernel_header $(PARALLEL_BUILD)
 
 accel-pptpd-clean:
 	-@$(MAKE) -C accel-pptpd clean
@@ -1338,7 +1338,7 @@ rp-pppoe/src/stamp-h1:
 	touch $@
 
 rp-pppoe: pppd rp-pppoe/src/stamp-h1
-	@$(MAKE) -C rp-pppoe/src pppoe-relay rp-pppoe.so
+	@$(MAKE) -C rp-pppoe/src pppoe-relay rp-pppoe.so $(PARALLEL_BUILD)
 
 rp-pppoe-clean:
 	-@$(MAKE) -C rp-pppoe/src clean
@@ -1356,7 +1356,7 @@ rp-l2tp/stamp-h1: kernel_header
 	touch $@
 
 rp-l2tp: pppd rp-l2tp/stamp-h1
-	$(MAKE) -C rp-l2tp
+	$(MAKE) -C rp-l2tp $(PARALLEL_BUILD)
 
 rp-l2tp-clean:
 	-@$(MAKE) -C rp-l2tp distclean
@@ -1388,7 +1388,7 @@ accel-pptp/stamp-h1: kernel_header $(LINUXDIR)/include/linux/version.h
 	touch $@
 
 accel-pptp: pppd accel-pptp/stamp-h1
-	@$(MAKE) -C accel-pptp
+	@$(MAKE) -C accel-pptp $(PARALLEL_BUILD)
 
 accel-pptp-clean:
 	-@$(MAKE) -C accel-pptp clean
@@ -1530,7 +1530,7 @@ iperf-clean:
 
 iproute2:
 	@$(SEP)
-	@$(MAKE) -C $@ KERNEL_INCLUDE=$(LINUXDIR)/include EXTRACFLAGS="$(EXTRACFLAGS) $(if $(RTCONFIG_IPV6),-DUSE_IPV6,-DNO_IPV6)"
+	@$(MAKE) -C $@ KERNEL_INCLUDE=$(LINUXDIR)/include EXTRACFLAGS="$(EXTRACFLAGS) $(if $(RTCONFIG_IPV6),-DUSE_IPV6,-DNO_IPV6)" $(PARALLEL_BUILD)
 	
 iproute2-install: iproute2
 	install -D iproute2/tc/tc $(INSTALLDIR)/iproute2/usr/sbin/tc
@@ -1698,7 +1698,7 @@ flac/stamp-h1: libogg
 	touch $@
 
 flac: flac/stamp-h1 libogg
-	@$(MAKE) -C flac/src/libFLAC all
+	@$(MAKE) -C flac/src/libFLAC all $(PARALLEL_BUILD)
 
 flac-clean:
 	-@$(MAKE) -C flac clean
@@ -1717,7 +1717,7 @@ jpeg/stamp-h1:
 	touch $@
 
 jpeg: jpeg/stamp-h1
-	@$(MAKE) -C jpeg LIBTOOL="" O=o A=a CC=$(CC) AR2="touch" libjpeg.a libjpeg.so
+	@$(MAKE) -C jpeg LIBTOOL="" O=o A=a CC=$(CC) AR2="touch" libjpeg.a libjpeg.so $(PARALLEL_BUILD)
 
 jpeg-clean:
 	-@$(MAKE) -C jpeg clean
@@ -1738,7 +1738,7 @@ libexif/stamp-h1:
 	touch $@
 
 libexif: libexif/stamp-h1
-	@$(MAKE) -C libexif all
+	@$(MAKE) -C libexif all $(PARALLEL_BUILD)
 
 libexif-clean:
 	-@$(MAKE) -C libexif clean
@@ -1758,7 +1758,7 @@ zlib/stamp-h1:
 	touch $@
 
 zlib: zlib/stamp-h1
-	@$(MAKE) -C zlib CC=$(CC) AR="ar rc" RANLIB=$(RANLIB) LD=$(LD) all
+	@$(MAKE) -C zlib CC=$(CC) AR="ar rc" RANLIB=$(RANLIB) LD=$(LD) all $(PARALLEL_BUILD)
 
 zlib-clean:
 	-@$(MAKE) -C zlib clean
@@ -1787,7 +1787,7 @@ libid3tag/stamp-h1: zlib
 	touch $@
 
 libid3tag: libid3tag/stamp-h1 zlib
-	@$(MAKE) -C libid3tag all
+	@$(MAKE) -C libid3tag all $(PARALLEL_BUILD)
 
 libid3tag-clean:
 	-@$(MAKE) -C libid3tag clean
@@ -1813,7 +1813,7 @@ libvorbis/stamp-h1: libogg
 	touch libvorbis/aclocal.m4
 
 libvorbis: libvorbis/stamp-h1
-	@$(MAKE) -C libvorbis/lib all
+	@$(MAKE) -C libvorbis/lib all $(PARALLEL_BUILD)
 
 libvorbis-clean:
 	-@$(MAKE) -C libvorbis clean
@@ -1828,7 +1828,7 @@ endif
 
 minidlna: zlib sqlite ffmpeg libogg flac jpeg libexif libid3tag libvorbis
 	@$(SEP)
-	@$(MAKE) -C minidlna CC=$(CC) $(if $(MEDIA_SERVER_STATIC),STATIC=1,) minidlna
+	@$(MAKE) -C minidlna CC=$(CC) $(if $(MEDIA_SERVER_STATIC),STATIC=1,) minidlna $(PARALLEL_BUILD)
 
 libgdbm/stamp-h1: 
 	cd libgdbm && \
@@ -1857,7 +1857,7 @@ endif
 
 mt-daapd: zlib libid3tag libgdbm
 	@$(SEP)
-	@$(MAKE) -C mt-daapd CC=$(CC) $(if $(MEDIA_SERVER_STATIC),STATIC=1,) all
+	@$(MAKE) -C mt-daapd CC=$(CC) $(if $(MEDIA_SERVER_STATIC),STATIC=1,) all $(PARALLEL_BUILD)
 
 mt-daapd-svn-1696/stamp-h1: zlib libid3tag sqlite
 	cd mt-daapd-svn-1696 && $(CONFIGURE) --prefix=/usr \
@@ -1872,7 +1872,7 @@ mt-daapd-svn-1696/stamp-h1: zlib libid3tag sqlite
 
 mt-daapd-svn-1696: mt-daapd-svn-1696/stamp-h1
 	@$(SEP)
-	@$(MAKE) -C mt-daapd-svn-1696 all
+	@$(MAKE) -C mt-daapd-svn-1696 all $(PARALLEL_BUILD)
 
 mt-daapd-svn-1696-clean:
 	-@$(MAKE) -C mt-daapd-svn-1696 distclean
@@ -1890,7 +1890,7 @@ mt-daapd-svn-1696-install:
 
 mDNSResponder: 
 	@$(SEP)
-	@$(MAKE) -C mDNSResponder CC=$(CC) all
+	@$(MAKE) -C mDNSResponder CC=$(CC) all $(PARALLEL_BUILD)
 
 
 igmpproxy/stamp-h1:
@@ -1979,7 +1979,7 @@ igs-clean:
 
 ebtables: kernel_header dummy
 	$(MAKE) -C ebtables CC=$(CC) LD=$(LD) \
-	CFLAGS="-Os $(EXTRACFLAGS) -Wall -Wunused" \
+	CFLAGS="-Os $(EXTRACFLAGS) -Wall -Wunused" $(PARALLEL_BUILD) \
 	BINDIR="/usr/sbin" LIBDIR="/usr/lib/ebtables" KERNEL_INCLUDES=$(TOP)/kernel_header/include $(if $(RTCONFIG_IPV6),DO_IPV6=1,)
 
 ebtables-install: ebtables
@@ -2003,6 +2003,7 @@ lzo/stamp-h1:
 	touch $@
 
 lzo: lzo/stamp-h1
+	@$(MAKE) -C lzo $(PARALLEL_BUILD)
 
 lzo-clean:
 	-@$(MAKE) -C lzo clean
@@ -2153,6 +2154,7 @@ pcre-8.12/stamp-h1:
 	[ -d pcre-8.12/m4 ] || mkdir pcre-8.12/m4
 
 pcre-8.12: pcre-8.12/stamp-h1
+	@$(MAKE) -C pcre-8.12 $(PARALLEL_BUILD)
 
 pcre-8.12-install: pcre-8.12
 	@$(SEP)
@@ -2170,7 +2172,7 @@ libxml2/stamp-h1:
 	touch $@
 
 libxml2: libxml2/stamp-h1
-	@$(MAKE) -C libxml2 all
+	@$(MAKE) -C libxml2 all $(PARALLEL_BUILD)
 
 libxml2-install: libxml2
 	@$(SEP)
@@ -2223,7 +2225,7 @@ curl-7.21.7/stamp-h1:
 	touch $@
 
 curl-7.21.7: curl-7.21.7/stamp-h1
-	@$(MAKE) -C curl-7.21.7
+	@$(MAKE) -C curl-7.21.7 $(PARALLEL_BUILD)
 
 curl-7.21.7-install: curl-7.21.7
 	@$(SEP)
@@ -2344,7 +2346,7 @@ nfs-utils/stamp-h1:
 	@touch $@
 
 nfs-utils: nfs-utils/stamp-h1
-	$(MAKE) -C $@
+	$(MAKE) -C $@ $(PARALLEL_BUILD)
 
 nfs-utils-clean:
 	-@$(MAKE) -C nfs-utils distclean
@@ -2367,7 +2369,7 @@ portmap-install:
 	$(STRIP) $(INSTALLDIR)/portmap/usr/sbin/portmap
 
 ipset:
-	$(MAKE) -C ipset binaries
+	$(MAKE) -C ipset binaries $(PARALLEL_BUILD)
 
 ipset-install:
 	install -D ipset/ipset $(INSTALLDIR)/ipset/usr/sbin/ipset
