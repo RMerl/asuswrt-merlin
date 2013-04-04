@@ -18,9 +18,10 @@
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/detect.js"></script>
 <script language="JavaScript" type="text/javascript" src="/tmhist.js"></script>
-<script language="JavaScript" type="text/javascript" src="tmmenu.js"></script>
+<script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/nameresolv.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.xdomainajax.js"></script>
 <script>
 
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
@@ -33,6 +34,9 @@ arplist = [<% get_arp_table(); %>];
 etherstate = "<% sysinfo("ethernet"); %>";
 
 var $j = jQuery.noConflict();
+
+overlib_str_tmp = "";
+overlib.isOut = true;
 
 function initial(){
 	show_menu();
@@ -127,9 +131,9 @@ function show_etherstate(){
 				}
 
 				if (hostname != "") {
-					devicename = '<span class="ClientName" onmouseover="return overlib(\''+overlib_str +'\');" onmouseout="nd();">'+ hostname +'</span>';
+					devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ hostname +'</span>';
 				} else {
-					devicename = '<span class="ClientName" onclick="getOUIFromMAC(\'' + line[11] +'\');" style="cursor:pointer; text-decoration:underline;">'+ line[11] +'</span>'; 
+					devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[11] +'</span>'; 
 				}
 			}
 			tmpPort = line[1].replace(":","");
