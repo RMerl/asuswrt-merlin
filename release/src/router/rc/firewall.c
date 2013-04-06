@@ -4212,6 +4212,7 @@ void enable_ip_forward(void)
 void ipt_account(FILE *fp) {
 	struct in_addr ipaddr, netmask, network;
 	char netaddrnetmask[] = "255.255.255.255/255.255.255.255 ";
+	int unit;
 
 	inet_aton(nvram_safe_get("lan_ipaddr"), &ipaddr);
 	inet_aton(nvram_safe_get("lan_netmask"), &netmask);
@@ -4221,6 +4222,12 @@ void ipt_account(FILE *fp) {
 
 	sprintf(netaddrnetmask, "%s/%s", inet_ntoa(network), nvram_safe_get("lan_netmask"));
 
-	//ipv4 only
-	fprintf(fp, "-A FORWARD -m account --aaddr %s --aname lan\n", netaddrnetmask);
+	//ipv4 only - and at least either source or destination must be WAN.
+	//Repeat this for every WAN units we support.
+        for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
+		if (strlen(get_wan_ifname(unit))) {
+			fprintf(fp, "-A FORWARD -i %s -o %s -m account --aaddr %s --aname lan\n", get_wan_ifname(unit), nvram_safe_get("lan_ifname"), netaddrnetmask);
+			fprintf(fp, "-A FORWARD -o %s -i %s -m account --aaddr %s --aname lan\n", get_wan_ifname(unit), nvram_safe_get("lan_ifname"), netaddrnetmask);
+		}
+	}
 }
