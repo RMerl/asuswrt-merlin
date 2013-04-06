@@ -1285,7 +1285,7 @@ ecmh-install: ecmh
 p910nd:
 samba:
 samba3:
-	@$(MAKE) -C samba3 $(PARALLEL_BUILD)
+	@$(MAKE) -C samba3
 samba-3.5.8:
 	@$(MAKE) -C samba-3.5.8 $(PARALLEL_BUILD)
 
@@ -1308,7 +1308,7 @@ vlan-install:
 	$(STRIP) $(INSTALLDIR)/vlan/usr/sbin/vconfig
 
 accel-pptpd: kernel_header pppd
-	@$(MAKE) -C accel-pptpd server KDIR=$(TOP)/kernel_header $(PARALLEL_BUILD)
+	@$(MAKE) -C accel-pptpd server KDIR=$(TOP)/kernel_header
 
 accel-pptpd-clean:
 	-@$(MAKE) -C accel-pptpd clean
@@ -1343,7 +1343,7 @@ rp-pppoe/src/stamp-h1:
 	touch $@
 
 rp-pppoe: pppd rp-pppoe/src/stamp-h1
-	@$(MAKE) -C rp-pppoe/src pppoe-relay rp-pppoe.so $(PARALLEL_BUILD)
+	@$(MAKE) -C rp-pppoe/src pppoe-relay rp-pppoe.so
 
 rp-pppoe-clean:
 	-@$(MAKE) -C rp-pppoe/src clean
@@ -1361,7 +1361,7 @@ rp-l2tp/stamp-h1: kernel_header
 	touch $@
 
 rp-l2tp: pppd rp-l2tp/stamp-h1
-	$(MAKE) -C rp-l2tp $(PARALLEL_BUILD)
+	$(MAKE) -C rp-l2tp
 
 rp-l2tp-clean:
 	-@$(MAKE) -C rp-l2tp distclean
@@ -1393,7 +1393,7 @@ accel-pptp/stamp-h1: kernel_header $(LINUXDIR)/include/linux/version.h
 	touch $@
 
 accel-pptp: pppd accel-pptp/stamp-h1
-	@$(MAKE) -C accel-pptp $(PARALLEL_BUILD)
+	@$(MAKE) -C accel-pptp
 
 accel-pptp-clean:
 	-@$(MAKE) -C accel-pptp clean
@@ -1409,7 +1409,7 @@ pppd/stamp-h1:
 
 pppd: pppd/stamp-h1
 	@$(SEP)
-	@$(MAKE) -C pppd MFLAGS='$(if $(RTCONFIG_IPV6),HAVE_INET6=y,) EXTRACFLAGS="$(EXTRACFLAGS)"' $(PARALLEL_BUILD)
+	@$(MAKE) -C pppd MFLAGS='$(if $(RTCONFIG_IPV6),HAVE_INET6=y,) EXTRACFLAGS="$(EXTRACFLAGS)"'
 
 pppd-clean:
 	-@$(MAKE) -C pppd clean
