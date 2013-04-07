@@ -90,11 +90,13 @@ function doSorter(_flag, _Method){
 	if(aplist.length == 1)
 		return 0;
 
+	// Set field to sort
+	sorter.indexFlag = _flag;
+
 	// doSorter
 	eval("aplist.sort(sorter."+_Method+"_"+sorter.sortingMethod+");");
 
-	// update variables
-	sorter.indexFlag = _flag;
+	// Swap it for next sort
 	sorter.sortingMethod = (sorter.sortingMethod == "increase") ? "decrease" : "increase";
 
 	// show Table
