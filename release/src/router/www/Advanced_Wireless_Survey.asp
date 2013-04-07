@@ -189,12 +189,11 @@ function showSiteTable(){
 
  				// security
 				if(aplist[i][3] == "Open System" && aplist[i][4] == "NONE")
-					htmlCode +=	'<td width="20%">' + aplist[i][3] + '<img src="/images/New_ui/networkmap/unlock.png"></td>';
-				else if(aplist[i][3] == "Unknown")
-					htmlCode +=	'<td width="20%">' + aplist[i][3] + '(WEP)</td>';
+					htmlCode +=	'<td width="27%">' + aplist[i][3] + '<img src="/images/New_ui/networkmap/unlock.png"></td>';
+				else if(aplist[i][4] == "WEP")
+					htmlCode +=	'<td width="27%">WEP</td>';
 				else
-					htmlCode +=	'<td width="20%">' + aplist[i][3] + '</td>';
-
+					htmlCode +=	'<td width="27%">' + aplist[i][3] +' (' + aplist[i][4] + ')</td>';
 				// band
 				if(aplist[i][0] == "2G")
 					htmlCode +=	'<td width="10%" style="text-align:center;">2.4GHz</td>';
@@ -297,7 +296,7 @@ function rescan(){
 					<table width="670px" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey">
 						<th onclick="addBorder(this);doSorter(1, 'str');" style="cursor:pointer;"><#Wireless_name#></th>
 						<th onclick="addBorder(this);doSorter(2, 'num');" width="15%" style="text-align:center;cursor:pointer;"><#WLANConfig11b_Channel_itemname#></th>
-						<th onclick="addBorder(this);doSorter(3, 'str');" width="20%" style="cursor:pointer;"><#QIS_finish_wireless_item2#></th>
+						<th onclick="addBorder(this);doSorter(3, 'str');" width="27%" style="cursor:pointer;"><#QIS_finish_wireless_item2#></th>
 						<th onclick="addBorder(this);doSorter(0, 'str');" width="10%" style="text-align:center;cursor:pointer;">Band</th>
 						<th onclick="addBorder(this);doSorter(5, 'num');" width="10%" id="sigTh" style="border-bottom: 1px solid #FC0;text-align:center;cursor:pointer;"><#Radio#></th>
 					</table>
