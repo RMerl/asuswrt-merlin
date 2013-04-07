@@ -222,12 +222,6 @@ function showSiteTable(){
 
 }
 
-var lastClickTr = "";  //for click event and style change.
-var lastClickTrBg = "";
-var lastClickTrC = "";
-var lastClickTrAlert = "";
-var idx = "1";
-
 
 function rescan(){
 	document.form.rescanButton.disabled = true;
