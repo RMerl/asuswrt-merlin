@@ -34,6 +34,9 @@
   background: url(../images/survey/radio_status.png);
   background-position: -0px -150px; width: 30px; height: 30px;
 }
+p{
+	font-weight: bolder;
+}
 
 </style>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
@@ -42,7 +45,12 @@
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/detect.js"></script>
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
+<script language="JavaScript" type="text/javascript" src="/nameresolv.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.xdomainajax.js"></script>
+
+
+
 <script type="text/JavaScript">
 var aplist = new Array();
 var wlc_state = '<% nvram_get("wlc_state"); %>';
@@ -56,6 +64,9 @@ var issubmit = 0;
 var isrescan = 0;
 if(isrescan == 120)
 	isrescan = 1;
+
+overlib_str_tmp = "";
+overlib.isOut = true;
 
 var iserror = 0;
 var waitingTime = 120;
@@ -175,11 +186,13 @@ function showSiteTable(){
 				else if(aplist[i][1].search("%FFFF") != -1)
 					continue;
 
+				overlib_str = "<p><#MAC_Address#>:</p>" + aplist[i][6];
+
 				// initial
 				htmlCode += '<tr>';
 
 				//ssid
-				htmlCode += '<td id="ssid">' + '<span title="' + aplist[i][6] + '">' + decodeURIComponent(aplist[i][1]) + '</span>';
+				htmlCode += '<td id="ssid" onclick="oui_query(\'' + aplist[i][6] +'\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">' + decodeURIComponent(aplist[i][1]);
 				if(aplist[i][8] != 0 && wlc_state == 2)
 					htmlCode += '<img src="/images/checked_parentctrl.png" width="18px" style="margin-left:10px;"/>';
 				htmlCode +=	'</td>';
