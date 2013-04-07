@@ -138,9 +138,9 @@ function show_etherstate(){
 				}
 
 				if (hostname != "") {
-					devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ hostname +'</span>';
+					devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ hostname +'</span>';
 				} else {
-					devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[11] +'</span>'; 
+					devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[11] +'</span>'; 
 				}
 			}
 			tmpPort = line[1].replace(":","");
