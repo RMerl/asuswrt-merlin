@@ -118,7 +118,7 @@ function initial_dir_status(data){
 		get_layer_items("0");
 		eval("var default_dir=" + data);
 	} else {
-		$("pathPicker").style.display = "none";
+		showhide("pathPicker", 0);
 		disk_flag=1;
 	}
 }
@@ -469,23 +469,23 @@ function set_rstats_location()
 
 function hide_rstats_storage(_value){
 
-        $("rstats_new_tr").style.display = (_value == "1" || _value == "2") ? "" : "none";
-        $("rstats_stime_tr").style.display = (_value == "1" || _value == "2") ? "" : "none";
-        $("rstats_path_tr").style.display = (_value == "1") ? "" : "none";
+	showhide("rstats_new_tr", ((_value == "1") || (_value == "2")));
+	showhide("rstats_stime_tr", ((_value == "1") || (_value == "2")));
+	showhide("rstats_path_tr", (_value == "1"));
 
 }
 
 function hide_cstats_ip(_value){
 
-        $("cstats_inc_tr").style.display = (((_value == "0") && (getRadioValue(document.form.cstats_enable) == 1)) ? "" : "none");
+        showhide("cstats_inc_tr", ((_value == "0") && (getRadioValue(document.form.cstats_enable) == 1)));
 }
 
 function hide_cstats(_value){
 
-        $("cstats_1_tr").style.display = (_value == "1" ? "" : "none");
-        $("cstats_2_tr").style.display = (_value == "1" ? "" : "none");
-        $("cstats_inc_tr").style.display = (((_value == "1") && (getRadioValue(document.form.cstats_all) == 0)) ? "" : "none");
-        $("cstats_exc_tr").style.display = (_value == "1" ? "" : "none");
+        showhide("cstats_1_tr", (_value == "1"));
+        showhide("cstats_2_tr", (_value == "1"));
+        showhide("cstats_inc_tr", ((_value == "1") && (getRadioValue(document.form.cstats_all) == 0)));
+        showhide("cstats_exc_tr", (_value == "1"));
 }
 
 function initConntrackValues(){
@@ -575,7 +575,7 @@ function update_filter(o,v) {
 function validate(){
 
 	if ((document.form.rstats_location.value == "2") && (getRadioValue(document.form.cstats_enable) == "1")) {
-		$('invalid_location').style.display = "";
+		showhide('invalid_location', 1);
 		document.form.rstats_location.focus();
 
 		return false;
@@ -674,7 +674,7 @@ function done_validating(action){
 					<tr>
 						<th>Traffic history location</th>
 			        	<td>
-			       			<select name="rstats_location" class="input_option" onchange="hide_rstats_storage(this.value);">
+						<select name="rstats_location" class="input_option" onchange="hide_rstats_storage(this.value);">
 								<option value="0">RAM (Default)</option>
 								<option value="1">Custom location</option>
 								<option value="2">NVRAM</option>
@@ -702,36 +702,36 @@ function done_validating(action){
 						<button id="pathPicker" onclick="get_disk_tree(); return false;">?</button></td>
 					</tr>
 					<tr id="rstats_new_tr">
-		        		<th>Create or reset data files:<br><i>Enable if using a new location</i></th>
-			        	<td>
-       		       			<input type="radio" name="rstats_new" class="input" value="1" <% nvram_match_x("", "rstats_new", "1", "checked"); %>><#checkbox_Yes#>
-	        		        <input type="radio" name="rstats_new" class="input" value="0" <% nvram_match_x("", "rstats_new", "0", "checked"); %>><#checkbox_No#>
-	       	        	</td>
-        			</tr>
+		        			<th>Create or reset data files:<br><i>Enable if using a new location</i></th>
+						<td>
+       		       					<input type="radio" name="rstats_new" class="input" value="1" <% nvram_match_x("", "rstats_new", "1", "checked"); %>><#checkbox_Yes#>
+	        		        		<input type="radio" name="rstats_new" class="input" value="0" <% nvram_match_x("", "rstats_new", "0", "checked"); %>><#checkbox_No#>
+						</td>
+					</tr>
 					<tr>
-				        <th>Starting day of monthly cycle</th>
-			        	<td><input type="text" maxlength="2" class="input_3_table" name="rstats_offset" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 31)" value="<% nvram_get("rstats_offset"); %>"></td>
-			        </tr>
+				        	<th>Starting day of monthly cycle</th>
+			        		<td><input type="text" maxlength="2" class="input_3_table" name="rstats_offset" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 31)" value="<% nvram_get("rstats_offset"); %>"></td>
+			        	</tr>
 					<tr id="cstats_enable_tr">
-		        		<th>Enable advanced (per IP) monitoring</i></th>
-			        	<td>
-					<input type="radio" name="cstats_enable" class="input" value="1" <% nvram_match_x("", "cstats_enable", "1", "checked"); %> onclick="hide_cstats(this.value);"><#checkbox_Yes#>
-					<input type="radio" name="cstats_enable" class="input" value="0" <% nvram_match_x("", "cstats_enable", "0", "checked"); %> onclick="hide_cstats(this.value);"><#checkbox_No#>
-	       	        	</td>
-        			</tr>
+			        		<th>Enable advanced (per IP) monitoring</i></th>
+				        	<td>
+	       		       				<input type="radio" name="cstats_enable" class="input" value="1" <% nvram_match_x("", "cstats_enable", "1", "checked"); %> onclick="hide_cstats(this.value);"><#checkbox_Yes#>
+							<input type="radio" name="cstats_enable" class="input" value="0" <% nvram_match_x("", "cstats_enable", "0", "checked"); %> onclick="hide_cstats(this.value);"><#checkbox_No#>
+						</td>
+					</tr>
 					<tr id="cstats_1_tr">
-		        		<th>Create or reset advanced data files</th>
-			        	<td>
-					<input type="radio" name="cstats_new" class="input" value="1" <% nvram_match_x("", "cstats_new", "1", "checked"); %>><#checkbox_Yes#>
-					<input type="radio" name="cstats_new" class="input" value="0" <% nvram_match_x("", "cstats_new", "0", "checked"); %>><#checkbox_No#>
-	       	        	</td>
-        			</tr>
+						<th>Create or reset advanced data files</th>
+						<td>
+							<input type="radio" name="cstats_new" class="input" value="1" <% nvram_match_x("", "cstats_new", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="cstats_new" class="input" value="0" <% nvram_match_x("", "cstats_new", "0", "checked"); %>><#checkbox_No#>
+						</td>
+					</tr>
 					<tr id="cstats_2_tr">
-		        		<th>Monitor all IPs by default</th>
-			        	<td>
-					<input type="radio" name="cstats_all" class="input" value="1" <% nvram_match_x("", "cstats_all", "1", "checked"); %> onclick="hide_cstats_ip(this.value);"><#checkbox_Yes#>
-					<input type="radio" name="cstats_all" class="input" value="0" <% nvram_match_x("", "cstats_all", "0", "checked"); %> onclick="hide_cstats_ip(this.value);"><#checkbox_No#>
-	       	        	</td>
+						<th>Monitor all IPs by default</th>
+						<td>
+							<input type="radio" name="cstats_all" class="input" value="1" <% nvram_match_x("", "cstats_all", "1", "checked"); %> onclick="hide_cstats_ip(this.value);"><#checkbox_Yes#>
+							<input type="radio" name="cstats_all" class="input" value="0" <% nvram_match_x("", "cstats_all", "0", "checked"); %> onclick="hide_cstats_ip(this.value);"><#checkbox_No#>
+						</td>
         			</tr>
 					<tr id="cstats_inc_tr">
 						<th>List of IPs to monitor (comma-separated):</th>

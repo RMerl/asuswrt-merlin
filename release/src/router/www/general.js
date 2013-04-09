@@ -2353,7 +2353,7 @@ function wl_auth_mode_change(isload){
 function showhide(element, sh)
 {
 	var status;
-	if (sh == 1){
+	if ((sh == 1) || (sh == true)){
 		status = "";
 	}
 	else{

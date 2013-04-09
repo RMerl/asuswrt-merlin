@@ -49,7 +49,7 @@ function applyRule(){
 function change_page(page){
 
 	for (i=1; i<5; i++) {
-		showhide("page"+i, (page == i ? 1 : 0));
+		showhide("page"+i, (page == i));
 	}
 }
 

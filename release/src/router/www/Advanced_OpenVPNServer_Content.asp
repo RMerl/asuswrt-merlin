@@ -144,20 +144,20 @@ function update_visibility(){
 	ccd = getRadioValue(document.form.vpn_server_ccd);
 	dns = getRadioValue(document.form.vpn_server_x_dns);
 
-	showhide("server_snnm", ((auth == "tls") && (iface == "tun")) ? 1 : 0);
-	showhide("server_plan", ((auth == "tls") && (iface == "tun")) ? 1 : 0);
-	showhide("server_local", ((auth == "secret") && (iface == "tun")) ? 1 : 0);
-	showhide("server_ccd", (auth == "tls") ? 1 : 0);
+	showhide("server_snnm", ((auth == "tls") && (iface == "tun")));
+	showhide("server_plan", ((auth == "tls") && (iface == "tun")));
+	showhide("server_local", ((auth == "secret") && (iface == "tun")));
+	showhide("server_ccd", (auth == "tls"));
 
 	showhide("server_c2c", ccd);
 	showhide("server_ccd_excl", ccd);
 	showhide("vpn_client_table", ccd);
 	showhide("vpn_clientlist_Block", ccd);
 
-	showhide("server_pdns", ((auth == "tls") && (dns == 1)) ? 1 : 0);
-	showhide("server_dhcp",((auth == "tls") && (iface == "tap")) ? 1 : 0);
-	showhide("server_range", (dhcp == 0) ? 1 : 0);
-	showhide("server_custom_crypto_text", (auth == "custom") ? 1 : 0);
+	showhide("server_pdns", ((auth == "tls") && (dns == 1)));
+	showhide("server_dhcp",((auth == "tls") && (iface == "tap")));
+	showhide("server_range", (dhcp == 0));
+	showhide("server_custom_crypto_text", (auth == "custom"));
 }
 
 

@@ -115,32 +115,31 @@ function update_visibility(){
 	userauth = (getRadioValue(document.form.vpn_client_userauth) == 1) && (auth == 'tls') ? 1 : 0;
 	useronly = userauth && getRadioValue(document.form.vpn_client_useronly);
 
-	showhide("client_userauth", ((auth == "tls") ? 1 : 0));
-	showhide("client_hmac", ((auth == "tls") ? 1 : 0));
-	showhide("client_custom_crypto_text",((auth == "custom") ? 1 : 0));
+	showhide("client_userauth", (auth == "tls"));
+	showhide("client_hmac", (auth == "tls"));
+	showhide("client_custom_crypto_text", (auth == "custom"));
 	showhide("client_username", userauth);
 	showhide("client_password", userauth);
 	showhide("client_useronly", userauth);
 
 	showhide("client_ca_warn_text", useronly);
-	showhide("client_bridge", (iface == "tap") ? 1 : 0);
+	showhide("client_bridge", (iface == "tap"));
 
-	showhide("client_bridge_warn_text", (bridge == 0) ? 1 : 0);
-	showhide("client_nat", ((fw != "custom") && (iface == "tun" || bridge == 0)) ? 1 : 0);
-	showhide("client_nat_warn_text", ((fw != "custom") && ((nat == 0) || (auth == "secret" && iface == "tun")))  ? 1 : 0);
+	showhide("client_bridge_warn_text", (bridge == 0));
+	showhide("client_nat", ((fw != "custom") && (iface == "tun" || bridge == 0)));
+	showhide("client_nat_warn_text", ((fw != "custom") && ((nat == 0) || (auth == "secret" && iface == "tun"))));
 
-	showhide("client_local_1", (iface == "tun" && auth == "secret") ? 1 : 0);
-	showhide("client_local_2", (iface == "tap" && (bridge == 0 && auth == "secret")) ? 1 : 0);
+	showhide("client_local_1", (iface == "tun" && auth == "secret"));
+	showhide("client_local_2", (iface == "tap" && (bridge == 0 && auth == "secret")));
 
-	showhide("client_adns", (auth == "tls")? 1 : 0);
-	showhide("client_reneg", (auth == "tls")? 1 : 0);
-	showhide("client_gateway_label", (iface == "tap" && rgw == 1) ? 1 : 0);
-	showhide("vpn_client_gw", (iface == "tap" && rgw == 1) ? 1 : 0);
-	showhide("client_tlsremote", (auth == "tls") ? 1 : 0);
+	showhide("client_adns", (auth == "tls"));
+	showhide("client_reneg", (auth == "tls"));
+	showhide("client_gateway_label", (iface == "tap" && rgw == 1));
+	showhide("vpn_client_gw", (iface == "tap" && rgw == 1));
+	showhide("client_tlsremote", (auth == "tls"));
 
-	showhide("vpn_client_cn", ((auth == "tls") && (tlsremote == 1)) ? 1 : 0);
-	showhide("client_cn_label", ((auth == "tls") && (tlsremote == 1)) ? 1 : 0);
-
+	showhide("vpn_client_cn", ((auth == "tls") && (tlsremote == 1)));
+	showhide("client_cn_label", ((auth == "tls") && (tlsremote == 1)));
 }
 
 function applyRule(){
