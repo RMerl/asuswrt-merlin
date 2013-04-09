@@ -39,6 +39,11 @@ var $j = jQuery.noConflict();
 var _responseLen;
 var noChange = 0;
 function checkCmdRet(){
+	if (document.form.NetOption.value == "NAT")
+		waitLimit = 90;
+	else
+		waitLimit = 10;
+
 	$j.ajax({
 		url: '/cmdRet_check.htm',
 		dataType: 'html',
@@ -60,7 +65,7 @@ function checkCmdRet(){
 			else
 				noChange = 0;
 
-			if(noChange > 10){
+			if(noChange > waitLimit){
 				document.getElementById("loadingIcon").style.display = "none";
 				document.getElementById("cmdBtn").disabled = false;
 				document.getElementById("cmdBtn").style.color = "#FFF";
