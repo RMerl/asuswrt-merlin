@@ -74,11 +74,24 @@ function update_temperatures(){
 
 function hwaccel_state(){
 	if (hwacc == "1") {
-		code = "<span>Disabled</span>";
+		code = "Disabled";
 		if (hwacc_force == "1")
 			code += " <i>(by user)</i>";
-		else
-			code += " <i>(incompatible feature enabled)</i>";
+		else {
+			code += " <i> - incompatible with:<span>  ";	// Two trailing spaces
+			if ('<% nvram_get("cstats_enable"); %>' == '1') code += 'Per IP monitoring, ';
+			if ('<% nvram_get("qos_enable"); %>' == '1') code += 'QoS, ';
+			if ('<% nvram_get("sw_mode"); %>' == '2') code += 'Repeater mode, ';
+			if ('<% nvram_get("url_enable_x"); %>' == '1') code += 'URL filtering, ';
+			if ('<% nvram_get("keyword_enable_x"); %>' == '1') code += 'Keyword filtering, ';
+			if ('<% nvram_get("ipv6_service"); %>' > '0') code += 'IPv6, ';
+
+			// We're disabled but we don't know why
+			if (code.slice(-2) == "  ") code += "&lt;unknown&gt;, ";
+
+			// Trim two trailing chars, either "  " or ", "
+			code = code.slice(0,-2) + "</span></>";
+		}
 	} else if (hwacc == "0") {
 		code = "<span>Enabled</span>";
 	} else {
@@ -138,9 +151,9 @@ function show_etherstate(){
 				}
 
 				if (hostname != "") {
-					devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ hostname +'</span>';
+					devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ hostname +'</span>';
 				} else {
-					devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[11] +'</span>'; 
+					devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[11] +'</span>'; 
 				}
 			}
 			tmpPort = line[1].replace(":","");
