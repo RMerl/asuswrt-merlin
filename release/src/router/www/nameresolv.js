@@ -39,13 +39,9 @@ function _loadXMLDoc(url) {
 }
 
 function state_Change(){
-        
 	if(_xmlhttp.readyState==4){// 4 = "loaded"
-          
 		if(_xmlhttp.status==200){// 200 = OK
-                        
 			parsedhcpLease(_xmlhttp.responseXML);    
-                
 		}else{
 			return false;
 		}
@@ -54,8 +50,7 @@ function state_Change(){
 
 var leasehostname;
 var leasemac;
-function parsedhcpLease(xmldoc)
-{
+function parsedhcpLease(xmldoc){
 	var dhcpleaseXML = xmldoc.getElementsByTagName("dhcplease");
 	leasehostname = dhcpleaseXML[0].getElementsByTagName("hostname");
 	leasemac = dhcpleaseXML[0].getElementsByTagName("mac");
@@ -124,4 +119,3 @@ function oui_query(mac) {
 		}    
   });
 }
-
