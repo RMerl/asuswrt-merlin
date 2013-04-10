@@ -450,7 +450,7 @@ History
    - FIXED: LAN traffic going through the NAT loopback would be counted in the 
             Per IP traffic monitoring.
    - FIXED: IE rendering of the Other Settings page when toggling Per IP monitoring
-   - FIXED: Cannot set webui to HTTPS-only (causes port conflict error) (Asus bug in354)
+   - FIXED: Cannot set webui to HTTPS-only (causes port conflict error) (Asus bug in 354)
    - FIXED: Cannot create/modify folders in AiDisk (Beta 1 bug)
 
 
