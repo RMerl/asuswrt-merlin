@@ -43,6 +43,7 @@ function submit(){
 				&& parent.document.form.current_page.value != "cloud_sync.asp"
 				&& parent.document.form.current_page.value != "cloud_router_sync.asp" ){
 					parent.showLoading();
+				}
 					
 				document.createFolderForm.submit();
 				parent.hidePop("apply");
