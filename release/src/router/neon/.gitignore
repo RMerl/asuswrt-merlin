@@ -1,4 +1,7 @@
 *.lo
 *.la
 src/.libs
+Makefile
+libtool
+neon-config
 
