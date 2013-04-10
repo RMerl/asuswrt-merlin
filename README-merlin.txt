@@ -78,6 +78,7 @@ Web interface:
    - Display the Ethernet port states
    - The various MAC/IP selection pulldowns will also display hostnames
      when possible instead of just NetBIOS names
+   - Wireless site survey
 
 
 A few features that first debuted in Asuswrt-Merlin have since been 
@@ -430,17 +431,27 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.354.27 Beta 2:
+   - NEW: Wireless site survey (on the Wireless tab)
    - CHANGED: Merged with webui pages extract from the Asus released FW, as
               they were more recent than the GPL ones
    - CHANGED: Port state on Sysinfo page now uses the new OUI lookup code
               from Asus
+   - CHANGED: Try to report on Sysinfo what is forcing HW acceleration to
+              be disabled
    - FIXED: Build 354 reduced minimum syslog level to WARNING - bumped back
             to INFO as in previous versions (resolves DHCP events not being
-            logged)
+            logged).  Also ensured we readjusted it if DHCP logging is 
+            enabled, to handle routers that got upgraded with the new
+            loglevel already set. (Beta 1 bug)
    - FIXED: Port numbering on the Sysinfo page for devices that has 
             them backward (RT-N16)
    - FIXED: Client list wasn't using the new OUI code from Asus (was missing
-            from the GPL archive)
+            from the GPL archive) (Beta 1 bug)
+   - FIXED: LAN traffic going through the NAT loopback would be counted in the 
+            Per IP traffic monitoring.
+   - FIXED: IE rendering of the Other Settings page when toggling Per IP monitoring
+   - FIXED: Cannot set webui to HTTPS-only (causes port conflict error) (Asus bug in354)
+   - FIXED: Cannot create/modify folders in AiDisk (Beta 1 bug)
 
 
 3.0.0.4.354.27 Beta 1
