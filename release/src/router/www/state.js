@@ -2312,7 +2312,7 @@ function set_variable(_variable, _val){
 }
 
 function isPortConflict(_val){
-	if(_val == '<% nvram_get("login_port"); %>')
+	if(_val == '<% nvram_get("lan_port"); %>')
 		return Untranslated.portConflictHint + " HTTP LAN port.";
 	else if(_val == '<% nvram_get("dm_http_port"); %>')
 		return Untranslated.portConflictHint + " Download Master.";
