@@ -1449,7 +1449,7 @@ void redirect_setting(void)
 {
 	FILE *nat_fp, *redirect_fp;
 	char tmp_buf[1024];
-	char http_rule[256], dns_rule[256];
+//	char http_rule[256], dns_rule[256];
 	char *lan_ipaddr_t, *lan_netmask_t;
 
 #ifdef RTCONFIG_WIRELESSREPEATER
@@ -1487,13 +1487,15 @@ void redirect_setting(void)
 				":VSERVER - [0:0]\n"
 				":VUPNP - [0:0]\n");
 	}
-
+/*
 	memset(http_rule, 0, sizeof(http_rule));
 	memset(dns_rule, 0, sizeof(dns_rule));
 	sprintf(http_rule, "-A PREROUTING ! -d %s/%s -p tcp --dport 80 -j DNAT --to-destination %s:18017\n", lan_ipaddr_t, lan_netmask_t, lan_ipaddr_t);
-//	sprintf(dns_rule, "-A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s:18018\n", lan_ipaddr_t);
+	sprintf(dns_rule, "-A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s:18018\n", lan_ipaddr_t);
 
-	fprintf(redirect_fp, "%s%s", http_rule/*, dns_rule*/);
+	fprintf(redirect_fp, "%s%s", http_rule, dns_rule);
+*/
+	fprintf(redirect_fp, "-A PREROUTING ! -d %s/%s -p tcp --dport 80 -j DNAT --to-destination %s:18017\n", lan_ipaddr_t, lan_netmask_t, lan_ipaddr_t);
 	fprintf(redirect_fp, "COMMIT\n");
 
 	fclose(redirect_fp);
