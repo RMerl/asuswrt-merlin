@@ -452,6 +452,9 @@ History
    - FIXED: IE rendering of the Other Settings page when toggling Per IP monitoring
    - FIXED: Cannot set webui to HTTPS-only (causes port conflict error) (Asus bug in 354)
    - FIXED: Cannot create/modify folders in AiDisk (Beta 1 bug)
+   - FIXED: Couldn't resolve LAN hostnames if WAN was down (the web redirection would
+            hijack all DNS queries).  Now, we let dnsmasq handle both LAN and redirected 
+            queries.
 
 
 3.0.0.4.354.27 Beta 1
