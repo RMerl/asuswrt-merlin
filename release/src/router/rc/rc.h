@@ -699,7 +699,6 @@ extern void stop_dnsmasq(void);
 #endif
 extern void firmware_check_main(int argc, char *argv[]);
 
-#define RTCONFIG_CROND y
 
 
 
