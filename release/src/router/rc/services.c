@@ -454,6 +454,12 @@ void start_dnsmasq(void)
 	write_vpn_dnsmasq_config(fp);
 #endif
 
+#ifdef WEB_REDIRECT
+	/* Web redirection - all unresolvable will return the router's IP */
+	if(nvram_get_int("nat_state") == NAT_STATE_REDIRECT)
+		fprintf(fp, "address=/#/10.0.0.1\n");
+#endif
+
 	append_custom_config("dnsmasq.conf",fp);
 
 	fclose(fp);
@@ -4116,6 +4122,9 @@ void start_nat_rules(void)
 
 	eval("iptables-restore", NAT_RULES);
 
+	// Remove wildcard resolution
+	restart_dnsmasq();
+
 	run_custom_script("nat-start", NULL);
 	return;
 }
@@ -4134,6 +4143,8 @@ void stop_nat_rules(void)
 
 	eval("iptables-restore", "/tmp/redirect_rules");
 
+	// dnsmasq will handle wildcard resolution
+	restart_dnsmasq();
 	return;
 }
 
