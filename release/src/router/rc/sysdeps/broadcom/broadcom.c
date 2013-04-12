@@ -1525,6 +1525,7 @@ int wlcscan_core(char *ofile, char *wif)
 	wl_scan_params_t *params;
 	int params_size = WL_SCAN_PARAMS_FIXED_SIZE + NUMCHANS * sizeof(uint16);
 	FILE *fp;
+	int scanmode;
 
 	retval = 0;
 
@@ -1532,11 +1533,15 @@ int wlcscan_core(char *ofile, char *wif)
 	if (params == NULL)
 		return retval;
 
+	scanmode = nvram_get_int("wlc_scan_mode");
+	if ((scanmode != DOT11_SCANTYPE_ACTIVE) && (scanmode != DOT11_SCANTYPE_PASSIVE))
+		scanmode = DOT11_SCANTYPE_ACTIVE;
+
 	memset(params, 0, params_size);
 	params->bss_type = DOT11_BSSTYPE_INFRASTRUCTURE;
 	memcpy(&params->bssid, &ether_bcast, ETHER_ADDR_LEN);
 //	params->scan_type = -1;
-	params->scan_type = DOT11_SCANTYPE_ACTIVE;
+	params->scan_type = scanmode;
 //	params->scan_type = DOT11_SCANTYPE_PASSIVE;
 	params->nprobes = -1;
 	params->active_time = -1;

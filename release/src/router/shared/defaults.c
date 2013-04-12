@@ -1513,6 +1513,7 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "wlc_mode", "0"},
 #endif
 	{ "wlc_scan_state", "0"},
+	{ "wlc_scan_mode", "0"},	// 0=active 1=passive
 
 #ifdef RTCONFIG_MEDIA_SERVER
 	{ "dms_state", ""},

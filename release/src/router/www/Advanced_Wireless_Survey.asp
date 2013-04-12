@@ -56,6 +56,8 @@ var aplist = new Array();
 var wlc_scan_state = '<% nvram_get("wlc_scan_state"); %>';
 var _wlc_ssid;
 var _sw_mode;
+var wlc_scan_mode = '<% nvram_get("wlc_scan_mode"); %>';
+
 var $j = jQuery.noConflict();
 
 var issubmit = 0;
@@ -71,6 +73,7 @@ var waitingTime = 120;
 
 function initial(){
 	show_menu();
+	document.form.scanMode.value = wlc_scan_mode;
 	update_site_info();
 }
 
@@ -235,6 +238,7 @@ function showSiteTable(){
 function rescan(){
 	document.form.rescanButton.disabled = true;
 	document.form.rescanButton.className = "button_gen_dis";
+	document.form.wlc_scan_mode.value = document.form.scanMode.value;
 
 	issubmit = 0;
 	isrescan = 120; // stop rescan
@@ -271,7 +275,7 @@ function rescan(){
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="wl0_ssid" value="<% nvram_char_to_ascii("", "wl0_ssid"); %>" disabled>
 <input type="hidden" name="wl1_ssid" value="<% nvram_char_to_ascii("", "wl1_ssid"); %>" disabled>
-
+<input type="hidden" name="wlc_scan_mode" value="<% nvram_get("wlc_scan_mode"); %>">
 
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -291,31 +295,43 @@ function rescan(){
                 <tbody>
                 <tr bgcolor="#4D595D">
                 <td valign="top">
-                <div>&nbsp;</div>
-                <div class="formfonttitle">Wireless - Visible Networks</div>
-                <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-
-				<div style="margin-left:18px;">
-					<table width="670px" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey">
-						<th onclick="addBorder(this);doSorter(1, 'str');" style="cursor:pointer;"><#Wireless_name#></th>
-						<th onclick="addBorder(this);doSorter(2, 'num');" width="15%" style="text-align:center;cursor:pointer;"><#WLANConfig11b_Channel_itemname#></th>
-						<th onclick="addBorder(this);doSorter(3, 'str');" width="27%" style="cursor:pointer;"><#QIS_finish_wireless_item2#></th>
-						<th onclick="addBorder(this);doSorter(0, 'str');" width="10%" style="text-align:center;cursor:pointer;">Band</th>
-						<th onclick="addBorder(this);doSorter(5, 'num');" width="10%" id="sigTh" style="border-bottom: 1px solid #FC0;text-align:center;cursor:pointer;"><#Radio#></th>
-					</table>
-				</div>
-
-				<div style="height:460px;overflow-y:auto;margin-top:0px;" id="wlscan_table_container">
-					<div id="wlscan_table" style="height:460px;margin-left:35px;margin-top:0px;vertical-align:top;"></div>
-				</div>
-
-
-				<div class="apply_gen" valign="top" height="95px">
-					<input disabled type="button" id="rescanButton" value="<#QIS_rescan#>" onclick="rescan();" class="button_gen_dis">
-					<img id="SearchingIcon" style="display:none;" src="/images/InternetScan.gif">
-				</div>
-				</td>
+	                <div>&nbsp;</div>
+			<div class="formfonttitle">Wireless - Visible Networks</div>
+                
+			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+				<tr>
+					<th width="20%">Scan Mode</th>
+					<td>
+						<select id="scanMode" class="input_option" name="scanMode">
+							<option value="0" selected>Active (default)</option>
+							<option value="1">Passive</option>
+						</select>
+					</td>
 				</tr>
+			</table>
+
+			<div class="apply_gen" valign="top">
+				<input disabled type="button" id="rescanButton" value="<#QIS_rescan#>" onclick="rescan();" class="button_gen_dis">
+				<img id="SearchingIcon" style="display:none;" src="/images/InternetScan.gif">
+			</div>
+
+			<div style="margin-left:18px;margin-top:8px;">
+				<table width="670px" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey">
+					<th onclick="addBorder(this);doSorter(1, 'str');" style="cursor:pointer;"><#Wireless_name#></th>
+					<th onclick="addBorder(this);doSorter(2, 'num');" width="15%" style="text-align:center;cursor:pointer;"><#WLANConfig11b_Channel_itemname#></th>
+					<th onclick="addBorder(this);doSorter(3, 'str');" width="27%" style="cursor:pointer;"><#QIS_finish_wireless_item2#></th>
+					<th onclick="addBorder(this);doSorter(0, 'str');" width="10%" style="text-align:center;cursor:pointer;">Band</th>
+					<th onclick="addBorder(this);doSorter(5, 'num');" width="10%" id="sigTh" style="border-bottom: 1px solid #FC0;text-align:center;cursor:pointer;"><#Radio#></th>
+				</table>
+			</div>
+
+			<div style="height:460px;overflow-y:auto;margin-top:0px;" id="wlscan_table_container">
+				<div id="wlscan_table" style="height:460px;margin-left:35px;margin-top:0px;vertical-align:top;"></div>
+			</div>
+
+		</td>
+		</tr>
 	        </tbody>
             </table>
             </form>
