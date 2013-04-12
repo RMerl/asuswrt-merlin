@@ -156,7 +156,8 @@ function update_site_info(){
 				rescan();
 				wlc_scan_state = 0;
 			}
-			showSiteTable();
+			// Switch back to last used order.
+			sorter.sortingMethod = (sorter.sortingMethod == "increase") ? "decrease" : "increase";
 			doSorter(5, 'num');
 		}
 	});
