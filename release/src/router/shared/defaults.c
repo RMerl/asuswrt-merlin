@@ -1510,9 +1510,9 @@ struct nvram_tuple router_state_defaults[] = {
 	// Wireless Client State
 	{ "wlc_state", "0"},
 	{ "wlc_sbstate", "0"},
-	{ "wlc_scan_state", "0"},
 	{ "wlc_mode", "0"},
 #endif
+	{ "wlc_scan_state", "0"},
 
 #ifdef RTCONFIG_MEDIA_SERVER
 	{ "dms_state", ""},
