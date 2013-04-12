@@ -105,6 +105,9 @@ function doSorter(_flag, _Method){
 	// Set field to sort
 	sorter.indexFlag = _flag;
 
+	// Remember data type for this field
+	sorter.lastType = _Method;
+
 	// doSorter
 	eval("aplist.sort(sorter."+_Method+"_"+sorter.sortingMethod+");");
 
@@ -120,6 +123,7 @@ var sorter = {
 	"lastClick" : "", // a HTML object
 	"sortingMethod" : "increase",
 	"indexFlag" : 5, // default sort is by signal
+	"lastType" : "num", // Last data type
 	"num_increase" : function(a, b){
 		return parseInt(a[sorter.indexFlag]) - parseInt(b[sorter.indexFlag]);
 	},
@@ -158,7 +162,7 @@ function update_site_info(){
 			}
 			// Switch back to last used order.
 			sorter.sortingMethod = (sorter.sortingMethod == "increase") ? "decrease" : "increase";
-			doSorter(5, 'num');
+			doSorter(sorter.indexFlag, sorter.lastType);
 		}
 	});
 }
