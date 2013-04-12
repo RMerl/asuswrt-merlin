@@ -53,8 +53,6 @@ p{
 
 <script type="text/JavaScript">
 var aplist = new Array();
-var wlc_state = '<% nvram_get("wlc_state"); %>';
-var wlc_sbstate = '<% nvram_get("wlc_sbstate"); %>';
 var wlc_scan_state = '<% nvram_get("wlc_scan_state"); %>';
 var _wlc_ssid;
 var _sw_mode;
@@ -147,7 +145,7 @@ function update_site_info(){
 				setTimeout("update_site_info();", 1000);
 		},
 		success: function(response){
-			if(wlc_scan_state != 3 || (wlc_state == 0 && issubmit != 0)){
+			if(wlc_scan_state != 3) {
 				setTimeout("update_site_info();", 2000);
 			}
 			if(isrescan == 0){ // rescan onLoading
@@ -193,8 +191,6 @@ function showSiteTable(){
 
 				//ssid
 				htmlCode += '<td id="ssid" onclick="oui_query(\'' + aplist[i][6] +'\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">' + decodeURIComponent(aplist[i][1]);
-				if(aplist[i][8] != 0 && wlc_state == 2)
-					htmlCode += '<img src="/images/checked_parentctrl.png" width="18px" style="margin-left:10px;"/>';
 				htmlCode +=	'</td>';
 
 				// channel
