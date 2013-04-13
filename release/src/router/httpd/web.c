@@ -6984,7 +6984,6 @@ int ej_apps_action(int eid, webs_t wp, int argc, char **argv){
 	return 0;
 }
 
-#ifdef RTCONFIG_MEDIA_SERVER
 // dms_info: ["Scanning"] or [ "" ]
 
 int ej_dms_info(int eid, webs_t wp, int argc, char **argv){
@@ -6992,9 +6991,11 @@ int ej_dms_info(int eid, webs_t wp, int argc, char **argv){
 	char dms_scanfile[64], dms_status[32];
 	FILE *fp;
 
-	dms_dbcwd = nvram_safe_get("dms_dbcwd");
 
 	strcpy(dms_status, "");
+
+#ifdef RTCONFIG_MEDIA_SERVER
+	dms_dbcwd = nvram_safe_get("dms_dbcwd");
 
 	if(strlen(dms_dbcwd)) 
 	{
@@ -7007,12 +7008,12 @@ int ej_dms_info(int eid, webs_t wp, int argc, char **argv){
 			fclose(fp);
 		}
 	}
+#endif
 
 	websWrite(wp, "[\"%s\"]", dms_status);
 
 	return 0;
 }
-#endif
 
 //#ifdef RTCONFIG_CLOUDSYNC
 static char *convert_cloudsync_status(const char *status_code){
@@ -8032,9 +8033,7 @@ struct ej_handler ej_handlers[] = {
 	{ "initial_folder_var_file", ej_initial_folder_var_file},	/* J++ */
 	{ "apps_info", ej_apps_info},
 	{ "apps_action", ej_apps_action},
-#ifdef RTCONFIG_MEDIA_SERVER
 	{ "dms_info", ej_dms_info},
-#endif
 //#ifdef RTCONFIG_CLOUDSYNC
 	{ "cloud_status", ej_cloud_status},
 	{ "UI_cloud_status", ej_UI_cloud_status},
