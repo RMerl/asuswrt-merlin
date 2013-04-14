@@ -378,7 +378,7 @@ function showPermissionRadio(barCode, permission){
 	var PoolBarCode, PoolDevice, PoolStatus;
 	
 	PoolBarCode = getPoolBarcode(barCode);
-	PoolDevice = pool_devices()[getDiskOrder(getDiskBarcode(barCode))+getPoolOrder(getPoolBarcode(barCode))];
+	PoolDevice = pool_devices()[getDiskPoolOrder(getDiskOrder(getDiskBarcode(barCode)))+getPoolOrder(getPoolBarcode(barCode))];
 	PoolStatus = getSelectedStatusOfPool(PoolDevice);
 	
 	if(layer == 3
