@@ -408,7 +408,7 @@ static void upnp_event_recv(struct upnp_event_notify * obj)
 		if(errno != EAGAIN &&
 		   errno != EWOULDBLOCK &&
 		   errno != EINTR) {
-			syslog(LOG_ERR, "%s: recv(): %m", "upnp_event_recv");
+			syslog(LOG_DEBUG, "%s: recv(): %m", "upnp_event_recv");
 			obj->state = EError;
 		}
 		return;
@@ -433,13 +433,13 @@ upnp_event_process_notify(struct upnp_event_notify * obj)
 		/* now connected or failed to connect */
 		len = sizeof(err);
 		if(getsockopt(obj->s, SOL_SOCKET, SO_ERROR, &err, &len) < 0) {
-			syslog(LOG_ERR, "%s: getsockopt: %m", "upnp_event_process_notify");
+			syslog(LOG_DEBUG, "%s: getsockopt: %m", "upnp_event_process_notify");
 			obj->state = EError;
 			break;
 		}
 		if(err != 0) {
 			errno = err;
-			syslog(LOG_WARNING, "%s: connect failed: %m", "upnp_event_process_notify");
+			syslog(LOG_DEBUG, "%s: connect failed: %m", "upnp_event_process_notify");
 			obj->state = EError;
 			break;
 		}
