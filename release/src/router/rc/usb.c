@@ -1648,7 +1648,7 @@ start_samba(void)
 	mkdir_if_none("/etc/samba");
 	
 	unlink("/etc/smb.conf");
-	unlink("/etc/smbpasswd");
+	unlink("/etc/samba/smbpasswd");
 
 	/* write samba configure file*/
 	system("/sbin/write_smb_conf");
