@@ -284,7 +284,19 @@ void start_vpnclient(int clientNum)
 		sprintf(&buffer[0], "vpn_crt_client%d_static", clientNum);
 		if ( !nvram_is_empty(&buffer[0]) )
 			fprintf(fp, "secret static.key\n");
+
 	}
+
+	// All other cryptmodes need a default up/down script set
+	if ( (cryptMode != TLS) && (check_if_file_exist("/jffs/scripts/openvpn-event")) )
+	{
+		sprintf(&buffer[0], "/etc/openvpn/client%d/updown.sh", clientNum);
+		symlink("/jffs/scripts/openvpn-event", &buffer[0]);
+		fprintf(fp, "script-security 2\n");
+		fprintf(fp, "up updown.sh\n");
+		fprintf(fp, "down updown.sh\n");
+	}
+
 	fprintf(fp, "status-version 2\n");
 	fprintf(fp, "status status\n");
 	fprintf(fp, "\n# Custom Configuration\n");
@@ -818,6 +830,16 @@ void start_vpnserver(int serverNum)
 		if ( !nvram_is_empty(&buffer[0]) )
 			fprintf(fp, "secret static.key\n");
 	}
+
+        if (check_if_file_exist("/jffs/scripts/openvpn-event"))
+        {
+                sprintf(&buffer[0], "/etc/openvpn/server%d/updown.sh", serverNum);
+                symlink("/jffs/scripts/openvpn-event", &buffer[0]);
+                fprintf(fp, "script-security 2\n");
+                fprintf(fp, "up updown.sh\n");
+                fprintf(fp, "down updown.sh\n");
+        }
+
 	fprintf(fp, "status-version 2\n");
 	fprintf(fp, "status status\n");
 	fprintf(fp, "\n# Custom Configuration\n");

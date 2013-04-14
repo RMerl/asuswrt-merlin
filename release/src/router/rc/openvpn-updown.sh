@@ -23,5 +23,8 @@ if [ -f $conffile -o -f $resolvfile -o -n "$fileexists" ]; then service updatere
 rmdir $filedir
 rmdir /etc/openvpn
 
+if [ -f /jffs/scripts/openvpn-event ]
+then
+	sh /jffs/scripts/openvpn-event $*
+fi
 exit 0
-
