@@ -250,7 +250,7 @@ much traffic. */
  * OpenSSH), set the path below. If the path isn't defined, sftp will not
  * be enabled */
 #ifndef SFTPSERVER_PATH
-#define SFTPSERVER_PATH "/usr/libexec/sftp-server"
+#define SFTPSERVER_PATH "/opt/libexec/sftp-server"
 #endif
 
 /* This is used by the scp binary when used as a client binary. If you're
