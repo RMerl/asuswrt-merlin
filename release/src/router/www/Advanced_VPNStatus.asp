@@ -183,10 +183,10 @@ function parseStatus(text, block){
 		code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="list_table" oldclass="FormTable_table"><thead><tr><td colspan="' + (clientTableHeaders.length-1) + '">Clients</td></tr></thead><tr>';
 
 // Headers
-		for (i = 0; i < (clientTableHeaders.length - 1); ++i)
+		for (i = 0; i < (clientTableHeaders.length - 2); ++i)
 		{
 			if (i == 0) {
-				code +='<th>' + clientTableHeaders[i] + '<br><span style="color: cyan; background: transparent;">' + clientTableHeaders[clientTableHeaders.length-1] + '</span></th>';
+				code +='<th>' + clientTableHeaders[i] + '<br><span style="color: cyan; background: transparent;">' + clientTableHeaders[clientTableHeaders.length-2] + '</span></th>';
 			} else {
 				code +='<th>' + clientTableHeaders[i] + '</th>';
 			}
@@ -198,10 +198,10 @@ function parseStatus(text, block){
 		for (i = 0; i < clientTableEntries.length; ++i)
 		{
 			code += '<tr>';
-			for (j = 0; j < (clientTableEntries[i].length-1); ++j)
+			for (j = 0; j < (clientTableEntries[i].length-2); ++j)
 			{
 				if (j == 0) {
-					code += '<td style="white-space:nowrap; text-align:left;">' + clientTableEntries[i][j] + '<br><span style="color: cyan; background: transparent;">' + clientTableEntries[i][clientTableEntries[i].length-1] +'</span></td>';
+					code += '<td style="white-space:nowrap; text-align:left;">' + clientTableEntries[i][j] + '<br><span style="color: cyan; background: transparent;">' + clientTableEntries[i][clientTableEntries[i].length-2] +'</span></td>';
 				} else {
 					code += '<td style="vertical-align:top; text-align:left;">' + clientTableEntries[i][j] + '</td>';
 				}
