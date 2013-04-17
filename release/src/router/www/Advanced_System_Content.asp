@@ -1034,6 +1034,12 @@ function change_url(num, flag){
 							<input type="radio" name="sshd_pass" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_pass", "0", "checked"); %>><#checkbox_No#>
 						</td>
 					</tr>
+                                                <th>Enable SSH Brute Force Protection</th>
+                                                <td>
+                                                        <input type="radio" name="sshd_bfp" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_bfp", "1", "checked"); %>><#checkbox_Yes#>
+                                                        <input type="radio" name="sshd_bfp" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_bfp", "0", "checked"); %>><#checkbox_No#>
+                                                </td>
+                                        </tr>
 
 					<tr>
 						<th>SSH Authentication key</th>

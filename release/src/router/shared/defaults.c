@@ -1188,6 +1188,7 @@ struct nvram_tuple router_defaults[] = {
 	{"sshd_authkeys",""},
 	{"sshd_forwarding","0"},
 	{"sshd_wan","0"},
+	{"sshd_bfp","0"},
 #endif
 
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
