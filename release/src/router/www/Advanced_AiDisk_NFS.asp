@@ -71,8 +71,6 @@ var $j = jQuery.noConflict();
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
-var dms_status = <% dms_info(); %>;
-var _dms_dir = '<%nvram_get("dms_dir");%>';
 <% get_AiDisk_status(); %>
 <% disk_pool_mapping_info(); %>
 var PROTOCOL = "cifs";
@@ -613,7 +611,6 @@ function shownfsd_exportlist(){
 <input type="hidden" name="current_page" value="Advanced_AiDisk_NFS.asp">
 <input type="hidden" name="next_page" value="Advanced_AiDisk_NFS.asp">
 <input type="hidden" name="next_host" value="">
-<input type="hidden" name="dms_dir" value="">
 <input type="hidden" name="action_mode" value="">
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="">
