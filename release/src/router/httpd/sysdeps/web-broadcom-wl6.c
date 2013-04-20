@@ -1631,7 +1631,8 @@ wl_control_channel(int unit)
 
 			if (dtoh32(bi->version) != LEGACY_WL_BSS_INFO_VERSION && bi->n_cap)
 				return bi->ctl_ch;
-
+			else
+				return CHSPEC_CHANNEL(bi->chanspec);
 		}
 	}
 
