@@ -4769,7 +4769,7 @@ void wo_iptbackup(char *url, webs_t wp)
 	do_f((char *)ifn, wp);
 }
 
-void ej_iptmon(int eid, webs_t wp, int argc, char **argv) {
+static int ej_iptmon(int eid, webs_t wp, int argc, char **argv) {
 
 	char comma;
 	char sa[256];
@@ -4789,7 +4789,7 @@ void ej_iptmon(int eid, webs_t wp, int argc, char **argv) {
 
 	char wholenetstatsline = 1;
 
-	if ((a = fopen("/proc/net/ipt_account/lan", "r")) == NULL) return;
+	if ((a = fopen("/proc/net/ipt_account/lan", "r")) == NULL) return 0;
 
 	if (!wholenetstatsline)
 		fgets(sa, sizeof(sa), a); // network
@@ -4815,9 +4815,11 @@ void ej_iptmon(int eid, webs_t wp, int argc, char **argv) {
 	}
 	fclose(a);
 	websWrite(wp,"};\n");
+
+	return 0;
 }
 
-void ej_ipt_bandwidth(int eid, webs_t wp, int argc, char **argv)
+static int ej_ipt_bandwidth(int eid, webs_t wp, int argc, char **argv)
 {
 	char *name;
 	int sig;
@@ -4837,9 +4839,10 @@ void ej_ipt_bandwidth(int eid, webs_t wp, int argc, char **argv)
 		do_f(name, wp);
 		unlink(name);
 	}
+	return 0;
 }
 
-void ej_iptraffic(int eid, webs_t wp, int argc, char **argv) {
+static int ej_iptraffic(int eid, webs_t wp, int argc, char **argv) {
 	char comma;
 	char sa[256];
 	FILE *a;
@@ -4860,7 +4863,7 @@ void ej_iptraffic(int eid, webs_t wp, int argc, char **argv) {
 
 	iptraffic_conntrack_init();
 
-	if ((a = fopen("/proc/net/ipt_account/lan", "r")) == NULL) return;
+	if ((a = fopen("/proc/net/ipt_account/lan", "r")) == NULL) return 0;
 
         websWrite(wp, "\n\niptraffic=[");
         comma = ' ';
@@ -4891,6 +4894,8 @@ void ej_iptraffic(int eid, webs_t wp, int argc, char **argv) {
 
 	TREE_FORWARD_APPLY(&tree, _Node, linkage, Node_housekeeping, NULL);
 	TREE_INIT(&tree, Node_compare);
+
+	return 0;
 }
 
 void iptraffic_conntrack_init() {
