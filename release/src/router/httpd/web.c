@@ -103,7 +103,7 @@ extern int ssl_stream_fd;
 extern int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv);
 #ifdef CONFIG_BCMWL5
 extern int ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv);
-
+extern int ej_wl_extent_channel(int eid, webs_t wp, int argc, char_t **argv);
 #endif
 
 #ifndef RTCONFIG_RALINK
@@ -8058,6 +8058,7 @@ struct ej_handler ej_handlers[] = {
 	{ "wl_auth_list", ej_wl_auth_list},
 #ifdef CONFIG_BCMWL5
 	{ "wl_control_channel", ej_wl_control_channel},
+	{ "wl_extent_channel", ej_wl_extent_channel},
 #endif
 #ifdef RTCONFIG_DSL
 	{ "get_isp_list", ej_get_isp_list},

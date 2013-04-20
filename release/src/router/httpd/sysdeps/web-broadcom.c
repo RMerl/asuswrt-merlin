@@ -1119,6 +1119,67 @@ ej_wl_status_2g(int eid, webs_t wp, int argc, char_t **argv)
 }
 
 static int
+wl_extent_channel(int unit)
+{
+	int ret;
+	struct ether_addr bssid;
+	wl_bss_info_t *bi;
+	wl_bss_info_107_t *old_bi;
+	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
+	char *name;
+
+	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+
+	if ((ret = wl_ioctl(name, WLC_GET_BSSID, &bssid, ETHER_ADDR_LEN)) == 0) {
+		/* The adapter is associated. */
+		*(uint32*)buf = htod32(WLC_IOCTL_MAXLEN);
+		if ((ret = wl_ioctl(name, WLC_GET_BSS_INFO, buf, WLC_IOCTL_MAXLEN)) < 0)
+			return 0;
+
+		bi = (wl_bss_info_t*)(buf + 4);
+		if (dtoh32(bi->version) == WL_BSS_INFO_VERSION ||
+		   dtoh32(bi->version) == LEGACY2_WL_BSS_INFO_VERSION ||
+		   dtoh32(bi->version) == LEGACY_WL_BSS_INFO_VERSION)
+		{
+			/* Convert version 107 to 109 */
+			if (dtoh32(bi->version) == LEGACY_WL_BSS_INFO_VERSION) {
+				old_bi = (wl_bss_info_107_t *)bi;
+				bi->chanspec = CH20MHZ_CHSPEC(old_bi->channel);
+				bi->ie_length = old_bi->ie_length;
+				bi->ie_offset = sizeof(wl_bss_info_107_t);
+			}
+			if (dtoh32(bi->version) != LEGACY_WL_BSS_INFO_VERSION && bi->n_cap)
+				return  CHSPEC_CHANNEL(bi->chanspec);
+		}
+	}
+
+	return 0;
+}
+
+int
+ej_wl_extent_channel(int eid, webs_t wp, int argc, char_t **argv)
+{
+	int ret = 0;
+	int channel_24 = 0, channel_50 = 0;
+
+	if (!(channel_24 = wl_extent_channel(0)))
+	{
+		ret = websWrite(wp, "[\"0\"]");
+		return ret;
+	}
+
+	if (!(channel_50 = wl_extent_channel(1)))
+		ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, 0);
+	else
+		ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, channel_50);
+
+	return ret;
+}
+
+
+
+static int
 wl_control_channel(int unit)
 {
 	int ret;
