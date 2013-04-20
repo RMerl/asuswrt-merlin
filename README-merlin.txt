@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.354.27 BETA 2 (XX-XXX-2013)
-============================================================
+Asuswrt-Merlin - build 3.0.0.4.354.28 BETA 1 (19-Apr-2013)
+==========================================================
 
 About
 -----
@@ -153,6 +153,9 @@ certain events occur.  Those scripts must be saved in /jffs/scripts/
   careful with it.  The mount point is passed as an argument to the script.
 - dhcpc-event: Called whenever a DHCP event occurs on the WAN interface.
                The type of event (bound, release, etc...) is passed as an argument.
+- openvpn-event: Called whenever an OpenVPN server gets started/stopped, or an OpenVPN
+                 client connects to a remote server.  Uses the same syntax/parameters
+                 as the "up" and "down" scripts in OpenVPN.
 
 Don't forget to set them as executable:
 
@@ -430,8 +433,17 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.354.27 Beta 2:
+3.0.0.4.354.28 Beta 1:
+   - KNOWN ISSUE: 5 GHz 40 MHz is unreliable with some wireless 
+                  cards (RT-N66U)
+   - KNOWN ISSUE: Sort order is sometimes wrong on the Site Survey page
    - NEW: Wireless site survey (on the Wireless tab)
+   - NEW: openvpn-event user script that gets run when a tunnel goes up/down.
+          Read the OpenVPN documentation on the "up" and "down" events for more
+          on how to use this script, and to use the passed parameters.
+   - NEW: Enabled sftp support in Dropbear (the sftp server must be
+          installed from Entware)
+   - NEW: Option to prevent SSH port hammering (patch submited by dodava)
    - CHANGED: Merged with webui pages extract from the Asus released FW, as
               they were more recent than the GPL ones
    - CHANGED: Port state on Sysinfo page now uses the new OUI lookup code
@@ -442,19 +454,23 @@ History
             to INFO as in previous versions (resolves DHCP events not being
             logged).  Also ensured we readjusted it if DHCP logging is 
             enabled, to handle routers that got upgraded with the new
-            loglevel already set. (Beta 1 bug)
+            loglevel already set.
    - FIXED: Port numbering on the Sysinfo page for devices that has 
-            them backward (RT-N16)
+            them backward (untested) (RT-N16)
    - FIXED: Client list wasn't using the new OUI code from Asus (was missing
-            from the GPL archive) (Beta 1 bug)
+            from the GPL archive)
    - FIXED: LAN traffic going through the NAT loopback would be counted in the 
             Per IP traffic monitoring.
    - FIXED: IE rendering of the Other Settings page when toggling Per IP monitoring
    - FIXED: Cannot set webui to HTTPS-only (causes port conflict error) (Asus bug in 354)
-   - FIXED: Cannot create/modify folders in AiDisk (Beta 1 bug)
+   - FIXED: Cannot create/modify folders in AiDisk
    - FIXED: Couldn't resolve LAN hostnames if WAN was down (the web redirection would
             hijack all DNS queries).  Now, we let dnsmasq handle both LAN and redirected 
             queries.
+  - FIXED: Fixed support for Broadcom Wimax devices
+  - FIXED: smbpasswd wasn't properly updated when deleting a user (Asus bug)
+  - FIXED: Aicloud: handling of disks with multiple partitions on the webui (Asus bug) 
+           (fix submitted by hshang)
 
 
 3.0.0.4.354.27 Beta 1
