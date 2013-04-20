@@ -111,6 +111,16 @@ function gotocooler(){
 	top.location.href = "/Advanced_PerformanceTuning_Content.asp";
 }
 
+function low_channel(a, b)
+{
+        return a < b ? a : b;
+}
+
+function high_channel(a, b)
+{
+        return a > b ? a : b;
+}
+
 <% available_disk_names_and_sizes(); %>
 function overHint(itemNum){
 	var statusmenu = "";
@@ -118,6 +128,9 @@ function overHint(itemNum){
 	var title5 = 0;
 
 	<%radio_status();%>
+
+	var control_chan_arr = <% wl_control_channel(); %>;
+	var extent_chan_arr = <% wl_extent_channel(); %>;
 
 	// wifi hw switch
 	if(itemNum == 8){
@@ -131,16 +144,26 @@ function overHint(itemNum){
 				wifiDesc = "Wi-Fi=Enabled"
 
 		} else {	// Report radio states
-			if ( radio_2 )
-				radiostate = "2.4G: Enabled"
-			else
-				radiostate = "2.4G: Disabled"
+			if ( radio_2 ) {
+				radiostate = "2.4G: ";
+				if ((extent_chan_arr[0] == 0) || (extent_chan_arr[0] == undefined))
+					radiostate += "Channel " + control_chan_arr[0];
+				else
+					radiostate += "Channels "+ low_channel(control_chan_arr[0],extent_chan_arr[0]) + "+" + high_channel(control_chan_arr[0],extent_chan_arr[0])
+                        } else {
+				radiostate = "2.4G: Disabled";
+			}
 
 			if (band5g_support != -1) {
-				if ( radio_5)
-					radiostate += "<br>&nbsp;&nbsp;5G: Enabled"
-				else
+				if ( radio_5) {
+					radiostate += "<br>&nbsp;&nbsp;5G: ";
+					if ((extent_chan_arr[1] == 0) || (extent_chan_arr[1] == undefined))
+						radiostate += "Channel " + control_chan_arr[1]
+					else
+						radiostate += "Channels "+ low_channel(control_chan_arr[1], extent_chan_arr[1]) + "+" + high_channel(control_chan_arr[1],extent_chan_arr[1])
+				} else {
 					radiostate += "<br>&nbsp;&nbsp;5G: Disabled"
+				}
 			}
 			wifiDesc="Wi-Fi:"+radiostate;
 
