@@ -71,8 +71,17 @@ overlib.isOut = true;
 var iserror = 0;
 var waitingTime = 120;
 
+
 function initial(){
 	show_menu();
+
+	<%radio_status();%>
+
+	if (radio_2 == 0)
+		E("radio2warn").style.display = "";
+	if ((band5g_support != -1) && (radio_5 == 0))
+		E("radio5warn").style.display = "";
+
 	document.form.scanMode.value = wlc_scan_mode;
 	update_site_info();
 }
@@ -302,8 +311,10 @@ function rescan(){
                 <td valign="top">
 	                <div>&nbsp;</div>
 			<div class="formfonttitle">Wireless - Visible Networks</div>
-                
 			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+			<span style="display:none; color:#FFCC00; padding-right:20px;" id="radio2warn">2.4 GHz radio is disabled - cannot scan that band!</span>
+			<span style="display:none; color:#FFCC00;" id="radio5warn">5 GHz radio is disabled - cannot scan that band!</span>
+
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 				<tr>
 					<th width="20%">Scan Mode</th>
