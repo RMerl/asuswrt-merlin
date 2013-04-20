@@ -1176,7 +1176,7 @@ ej_vpn_server_get_parameter(int eid, webs_t wp, int argc, char_t **argv)
 	// handle generate cases first
 	(void)copy_index_to_unindex("vpn_server_", unit, -1);
 
-	return (websWrite(wp,""));
+	return (websWrite(wp,"%s",""));
 }
 
 static int
@@ -1188,7 +1188,7 @@ ej_vpn_client_get_parameter(int eid, webs_t wp, int argc, char_t **argv)
         // handle generate cases first
         (void)copy_index_to_unindex("vpn_client_", unit, -1);
 
-        return (websWrite(wp,""));
+        return (websWrite(wp,"%s",""));
 }
 
 
