@@ -447,7 +447,13 @@ void start_dnsmasq(void)
 	if (nvram_match("dhcpd_querylog","0")) {
 		fprintf(fp,"quiet-dhcp\n");
 	} else {
-		if (nvram_get_int("log_level") < 7) nvram_set("log_level", "7");
+		if (nvram_get_int("log_level") < 7) {
+			nvram_set("log_level", "7");
+			if (pids("syslogd")) {
+				stop_syslogd();
+				start_syslogd();
+			}
+		}
 	}
 
 #ifdef RTCONFIG_OPENVPN
