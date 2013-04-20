@@ -175,7 +175,7 @@ function showSiteTable(){
 
 	document.getElementById("SearchingIcon").style.display = "none";
 
-	htmlCode +='<table width="670px" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey" id="aplist_table">';
+	htmlCode +='<table style="width:670px;" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey" id="aplist_table">';
 
 	if(wlc_scan_state != 3){ // on scanning
 		htmlCode +='<tr><td style="text-align:center;font-size:12px; border-collapse: collapse;border:1;" colspan="4"><span style="color:#FFCC00;line-height:25px;"><#APSurvey_action_searching_AP#></span>&nbsp;<img style="margin-top:10px;" src="/images/InternetScan.gif"></td></tr>';
@@ -322,7 +322,7 @@ function rescan(){
 			</div>
 
 			<div style="margin-left:18px;margin-top:8px;">
-				<table width="670px" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey">
+				<table style="width:670px;" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey">
 					<th onclick="addBorder(this);doSorter(1, 'str');" style="cursor:pointer;"><#Wireless_name#></th>
 					<th onclick="addBorder(this);doSorter(2, 'num');" width="15%" style="text-align:center;cursor:pointer;line-height:120%;"><#WLANConfig11b_Channel_itemname#></th>
 					<th onclick="addBorder(this);doSorter(3, 'str');" width="27%" style="cursor:pointer;"><#QIS_finish_wireless_item2#></th>
@@ -331,7 +331,7 @@ function rescan(){
 				</table>
 			</div>
 
-			<div style="height:460px;overflow-y:auto;margin-top:0px;" id="wlscan_table_container">
+			<div style="height:660px;overflow-y:auto;margin-top:0px;" id="wlscan_table_container">
 				<div id="wlscan_table" style="height:460px;margin-left:35px;margin-top:0px;vertical-align:top;"></div>
 			</div>
 
