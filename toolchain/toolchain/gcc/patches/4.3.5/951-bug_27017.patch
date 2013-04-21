@@ -1,3 +1,5 @@
+[4.3 Regression] Debug information for static local class members are not emitted
+
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=27017
 
 --- trunk/gcc/ChangeLog	2008/11/13 20:04:18	141828

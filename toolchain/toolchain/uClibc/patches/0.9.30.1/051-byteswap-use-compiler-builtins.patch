@@ -1,0 +1,119 @@
+[PATCH] byteswap: use compiler builtins if available
+
+From: Peter Collingbourne
+Date: Sat, 13 Nov 2010 01:55:10 +0000
+
+GCC has provided the builtins __builtin_bswap32 and __builtin_bswap64
+since 4.2.  If we have a sufficient GCC version, use the builtins
+instead of our own implementation.
+
+Signed-off-by: Peter Collingbourne <peter@pcc.me.uk>
+
+---
+ include/byteswap.h                        |    2 +
+ libc/sysdeps/linux/common/bits/byteswap.h |   51 +++++++++++++++++++++++-------
+ 2 files changed, 42 insertions(+), 11 deletions(-)
+
+diff --git a/include/byteswap.h b/include/byteswap.h
+index b61d4dd..0ff02e8 100644
+--- a/include/byteswap.h
++++ b/include/byteswap.h
+@@ -19,6 +19,8 @@
+ #ifndef _BYTESWAP_H
+ #define _BYTESWAP_H	1
+ 
++#include <features.h>
++
+ /* Get the machine specific, optimized definitions.  */
+ #include <bits/byteswap.h>
+ 
+diff --git a/libc/sysdeps/linux/common/bits/byteswap.h b/libc/sysdeps/linux/common/bits/byteswap.h
+--- a/libc/sysdeps/linux/common/bits/byteswap.h
++++ b/libc/sysdeps/linux/common/bits/byteswap.h
+@@ -24,14 +24,30 @@
+ #ifndef _BITS_BYTESWAP_H
+ #define _BITS_BYTESWAP_H 1
+ 
++#if __GNUC_PREREQ(4,3)
++# undef __bswap_non_constant_32
++# define __bswap_non_constant_32 __builtin_bswap32
++
++# undef __bswap_non_constant_64
++# define __bswap_non_constant_64 __builtin_bswap64
++#endif
++
+ /* Swap bytes in 16 bit value.  */
+ #define __bswap_constant_16(x) \
+      ((((x) >> 8) & 0xffu) | (((x) & 0xffu) << 8))
+ 
++#ifndef __bswap_non_constant_16
++# define __bswap_non_constant_16(x) __bswap_constant_16(x)
++#endif
+ #ifdef __GNUC__
+ # define __bswap_16(x) \
+     (__extension__							      \
+-     ({ unsigned short int __bsx = (x); __bswap_constant_16 (__bsx); }))
++     ({ unsigned short int __bsv, __bsx = (x);				      \
++	if (__builtin_constant_p (__bsx))				      \
++	  __bsv = __bswap_constant_16 (__bsx);				      \
++	else								      \
++	  __bsv = __bswap_non_constant_16 (__bsx);			      \
++	__bsv; }))
+ #else
+ static __inline unsigned short int
+ __bswap_16 (unsigned short int __bsx)
+@@ -45,10 +61,18 @@ __bswap_16 (unsigned short int __bsx)
+      ((((x) & 0xff000000u) >> 24) | (((x) & 0x00ff0000u) >>  8) |	      \
+       (((x) & 0x0000ff00u) <<  8) | (((x) & 0x000000ffu) << 24))
+ 
++#ifndef __bswap_non_constant_32
++# define __bswap_non_constant_32(x) __bswap_constant_32(x)
++#endif
+ #ifdef __GNUC__
+ # define __bswap_32(x) \
+-  (__extension__							      \
+-   ({ register unsigned int __bsx = (x); __bswap_constant_32 (__bsx); }))
++    (__extension__							      \
++     ({ unsigned int __bsv, __bsx = (x);				      \
++	if (__builtin_constant_p (__bsx))				      \
++	  __bsv = __bswap_constant_32 (__bsx);				      \
++	else								      \
++	  __bsv = __bswap_non_constant_32 (__bsx);			      \
++	__bsv; }))
+ #else
+ static __inline unsigned int
+ __bswap_32 (unsigned int __bsx)
+@@ -69,19 +93,24 @@ __bswap_32 (unsigned int __bsx)
+       | (((x) & 0x000000000000ff00ull) << 40)				      \
+       | (((x) & 0x00000000000000ffull) << 56))
+ 
+-# define __bswap_64(x) \
++# ifndef __bswap_non_constant_64
++#  define __bswap_non_constant_64(x) \
+      (__extension__							      \
+       ({ union { __extension__ unsigned long long int __ll;		      \
+ 		 unsigned int __l[2]; } __w, __r;			      \
++	 __w.__ll = (x);						      \
++	 __r.__l[0] = __bswap_non_constant_32 (__w.__l[1]);		      \
++	 __r.__l[1] = __bswap_non_constant_32 (__w.__l[0]);		      \
++	 __r.__ll; }))
++# endif
++# define __bswap_64(x) \
++     (__extension__							      \
++      ({ __extension__ unsigned long long int __ll;			      \
+          if (__builtin_constant_p (x))					      \
+-	   __r.__ll = __bswap_constant_64 (x);				      \
++	   __ll = __bswap_constant_64 (x);				      \
+ 	 else								      \
+-	   {								      \
+-	     __w.__ll = (x);						      \
+-	     __r.__l[0] = __bswap_32 (__w.__l[1]);			      \
+-	     __r.__l[1] = __bswap_32 (__w.__l[0]);			      \
+-	   }								      \
+-	 __r.__ll; }))
++	   __ll = __bswap_non_constant_64 (x);				      \
++	 __ll; }))
+ #endif
+ 
+ #endif /* _BITS_BYTESWAP_H */
+-- 

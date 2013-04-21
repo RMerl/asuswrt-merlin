@@ -1,0 +1,83 @@
+[4.4/4.5/4.6 Regression] Wrong optimization of recursive function calls
+
+ http://gcc.gnu.org/bugzilla/show_bug.cgi?id=48837
+
+--- gcc-4_4-branch/gcc/ChangeLog	2011/05/10 08:45:50	173610
++++ gcc-4_4-branch/gcc/ChangeLog	2011/05/10 08:47:09	173611
+@@ -1,3 +1,12 @@
++2011-05-10  Jakub Jelinek  <jakub@redhat.com>
++
++	Backported from mainline
++	2011-05-07  Zdenek Dvorak  <ook@ucw.cz>
++
++	PR tree-optimization/48837
++	* tree-tailcall.c (tree_optimize_tail_calls_1): Do not mark tailcalls
++	when accumulator transformation is performed.
++
+ 2011-04-21  Richard Guenther  <rguenther@suse.de>
+ 	Backported from mainline
+ 	2009-12-02  Richard Guenther  <rguenther@suse.de>
+--- gcc-4_4-branch/gcc/testsuite/ChangeLog	2011/05/10 08:45:50	173610
++++ gcc-4_4-branch/gcc/testsuite/ChangeLog	2011/05/10 08:47:09	173611
+@@ -1,3 +1,11 @@
++2011-05-10  Jakub Jelinek  <jakub@redhat.com>
++
++	Backported from mainline
++	2011-05-07  Zdenek Dvorak  <ook@ucw.cz>
++
++	PR tree-optimization/48837
++	* gcc.dg/pr48837.c: New testcase.
++
+ 2011-04-20  Jason Merrill  <jason@redhat.com>
+ 
+ 	* g++.dg/template/operator11.C: New.
+--- /dev/null
++++ gcc-4_4-branch/gcc/testsuite/gcc.dg/pr48837.c	2011/05/10 08:47:09	173611
+@@ -0,0 +1,30 @@
++/* PR tree-optimization/48837 */
++/* { dg-do run } */
++/* { dg-options "-O2" } */
++
++void abort (void);
++
++__attribute__((noinline))
++int baz(void)
++{
++  return 1;
++}
++
++inline const int *bar(const int *a, const int *b)
++{
++ return *a ? a : b;
++}
++
++int foo(int a, int b)
++{
++   return a || b ? baz() : foo(*bar(&a, &b), 1) + foo(1, 0);
++}
++
++int main(void)
++{
++ if (foo(0, 0) != 2)
++   abort();
++
++ return 0;
++}
++
+--- gcc-4_4-branch/gcc/tree-tailcall.c	2011/05/10 08:45:50	173610
++++ gcc-4_4-branch/gcc/tree-tailcall.c	2011/05/10 08:47:09	173611
+@@ -953,6 +953,14 @@
+       set_phi_nodes (first, phi_reverse (phi_nodes (first)));
+     }
+ 
++  if (a_acc || m_acc)
++    {
++      /* When the tail call elimination using accumulators is performed,
++	 statements adding the accumulated value are inserted at all exits.
++	 This turns all other tail calls to non-tail ones.  */
++      opt_tailcalls = false;
++    }
++
+   for (; tailcalls; tailcalls = next)
+     {
+       next = tailcalls->next;

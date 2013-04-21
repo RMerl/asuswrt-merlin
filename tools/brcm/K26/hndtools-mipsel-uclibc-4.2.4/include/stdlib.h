@@ -203,9 +203,11 @@ extern unsigned long int strtoul (__const char *__restrict __nptr,
 __END_NAMESPACE_STD
 
 #ifdef __USE_BSD
+#include <sys/types.h> /* for u_quad_t */
+
 /* Convert a string to a quadword integer.  */
 __extension__
-extern long long int strtoq (__const char *__restrict __nptr,
+extern quad_t strtoq (__const char *__restrict __nptr,
 			     char **__restrict __endptr, int __base)
      __THROW __nonnull ((1)) __wur;
 /* Convert a string to an unsigned quadword integer.  */

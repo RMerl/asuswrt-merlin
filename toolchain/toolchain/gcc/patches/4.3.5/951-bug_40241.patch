@@ -1,3 +1,5 @@
+?: operator incorrectly groups left in cpp
+
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=40241
 
 --- trunk/libcpp/expr.c	2008/05/06 17:06:54	134988

@@ -1,0 +1,124 @@
+From 00c44b9f566f34d1fa3f2889771730b8496b6f95
+From: Peter S. Mazinger
+Date: Tue, 22 Mar 2011 00:02:10 +0000
+Subject: add epoll_pwait()
+
+Update epoll.h from glibc (disabling though epoll_create1).
+
+Signed-off-by: Peter S. Mazinger <ps.m@gmx.net>
+
+---
+ libc/sysdeps/linux/common/epoll.c     |   13 ++++++++++++-
+ libc/sysdeps/linux/common/sys/epoll.h |   18 ++++++++++++++++++
+ libc/sysdeps/linux/x86_64/sys/epoll.h |   20 ++++++++++++++++++++
+ 3 files changed, 50 insertions(+), 1 deletion(-)
+
+diff --git a/libc/sysdeps/linux/common/epoll.c b/libc/sysdeps/linux/common/epoll.c
+--- a/libc/sysdeps/linux/common/epoll.c
++++ b/libc/sysdeps/linux/common/epoll.c
+@@ -1,6 +1,6 @@
+ /* vi: set sw=4 ts=4: */
+ /*
+- * epoll_create() / epoll_ctl() / epoll_wait() for uClibc
++ * epoll_create() / epoll_ctl() / epoll_wait() / epoll_pwait() for uClibc
+  *
+  * Copyright (C) 2000-2006 Erik Andersen <andersen@uclibc.org>
+  *
+@@ -48,3 +48,14 @@
+ 	return -1;
+ }
+ #endif
++
++#ifdef __NR_epoll_pwait
++_syscall5(int, epoll_pwait, int, epfd, struct epoll_event *, events, int, maxevents, int, timeout,
++	  const sigset_t *, ss)
++#else
++int epoll_pwait (int epfd, struct epoll_event *events,	int maxevents, int timeout, const sigset_t *ss)
++{
++	__set_errno(ENOSYS);
++	return -1;
++}
++#endif
+diff --git a/libc/sysdeps/linux/common/sys/epoll.h b/libc/sysdeps/linux/common/sys/epoll.h
+index 44e814b..bf196d2 100644
+--- a/libc/sysdeps/linux/common/sys/epoll.h
++++ b/libc/sysdeps/linux/common/sys/epoll.h
+@@ -22,6 +22,14 @@
+ #include <stdint.h>
+ #include <sys/types.h>
+ 
++/* Get __sigset_t.  */
++#include <bits/sigset.h>
++
++#ifndef __sigset_t_defined
++# define __sigset_t_defined
++typedef __sigset_t sigset_t;
++#endif
++
+ 
+ enum EPOLL_EVENTS
+   {
+@@ -107,6 +133,16 @@ extern int epoll_ctl (int __epfd, int __op, int __fd,
+ extern int epoll_wait (int __epfd, struct epoll_event *__events,
+ 		       int __maxevents, int __timeout);
+ 
++
++/* Same as epoll_wait, but the thread's signal mask is temporarily
++   and atomically replaced with the one provided as parameter.
++
++   This function is a cancellation point and therefore not marked with
++   __THROW.  */
++extern int epoll_pwait (int __epfd, struct epoll_event *__events,
++			int __maxevents, int __timeout,
++			__const __sigset_t *__ss);
++
+ __END_DECLS
+ 
+ #endif /* sys/epoll.h */
+diff --git a/libc/sysdeps/linux/x86_64/sys/epoll.h b/libc/sysdeps/linux/x86_64/sys/epoll.h
+index 02672d3..6b90d54 100644
+--- a/libc/sysdeps/linux/x86_64/sys/epoll.h
++++ b/libc/sysdeps/linux/x86_64/sys/epoll.h
+@@ -22,6 +22,14 @@
+ #include <stdint.h>
+ #include <sys/types.h>
+ 
++/* Get __sigset_t.  */
++#include <bits/sigset.h>
++
++#ifndef __sigset_t_defined
++# define __sigset_t_defined
++typedef __sigset_t sigset_t;
++#endif
++
+ 
+ enum EPOLL_EVENTS
+   {
+@@ -45,6 +65,8 @@ enum EPOLL_EVENTS
+ #define EPOLLERR EPOLLERR
+     EPOLLHUP = 0x010,
+ #define EPOLLHUP EPOLLHUP
++    EPOLLRDHUP = 0x2000,
++#define EPOLLRDHUP EPOLLRDHUP
+     EPOLLONESHOT = (1 << 30),
+ #define EPOLLONESHOT EPOLLONESHOT
+     EPOLLET = (1 << 31)
+@@ -105,6 +133,16 @@ extern int epoll_ctl (int __epfd, int __op, int __fd,
+ extern int epoll_wait (int __epfd, struct epoll_event *__events,
+ 		       int __maxevents, int __timeout);
+ 
++
++/* Same as epoll_wait, but the thread's signal mask is temporarily
++   and atomically replaced with the one provided as parameter.
++
++   This function is a cancellation point and therefore not marked with
++   __THROW.  */
++extern int epoll_pwait (int __epfd, struct epoll_event *__events,
++			int __maxevents, int __timeout,
++			__const __sigset_t *__ss);
++
+ __END_DECLS
+ 
+ #endif /* sys/epoll.h */
+--
+cgit v0.8.2.1

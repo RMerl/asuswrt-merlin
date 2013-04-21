@@ -1,6 +1,8 @@
 Simple workaround to prevent crash of host ldd when it try to find/check
 shared libraries from different architecture.
 
+Fix ldd segfault.
+
 diff -uBp uClibc-0.9.30.1/utils/ldd.c uClibc/utils/ldd.c
 --- uClibc-0.9.30.1/utils/ldd.c	2008-10-29 22:40:21.000000000 +0300
 +++ uClibc/utils/ldd.c	2009-09-06 12:43:18.000000000 +0400
@@ -22,3 +24,12 @@ diff -uBp uClibc-0.9.30.1/utils/ldd.c uClibc/utils/ldd.c
  			if (strcmp(cur->name, tmp1) == 0) {
  				/*printf("find_elf_interpreter is replacing '%s' (already in list)\n", cur->name); */
  				newlib = cur;
+@@ -604,7 +606,7 @@ static struct library *find_elf_interpreter(ElfW(Ehdr) *ehdr)
+ 				}
+ 				newlib->name = NULL;
+ 				newlib->path = NULL;
+-				return NULL;
++				break;
+ 			}
+ 		}
+ 		if (newlib == NULL)

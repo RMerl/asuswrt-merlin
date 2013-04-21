@@ -349,7 +349,7 @@ build: i486-pc-linux-gnu
 target: mipsel-unknown-linux-uclibc
 __EOF__
       cat >> $file << \__EOF__
-configured with: /home/fedork/tomato/toolchain/build_dir/toolchain-mipsel_gcc4.2.4/gcc-4.2.4/configure --prefix=/opt/brcm/hndtools-mipsel-uclibc-4.2.4 --build=i486-linux-gnu --host=i486-linux-gnu --target=mipsel-linux-uclibc --with-gnu-ld --enable-target-optspace --disable-libgomp --disable-libmudflap --disable-multilib --disable-nls --disable-__cxa_atexit --enable-libssp --enable-languages=c,c++ --enable-shared --enable-threads --disable-tls
+configured with: /home/fedork/tomato/toolchain/build_dir/toolchain-mipsel_gcc4.2.4/gcc-4.2.4/configure --prefix=/opt/brcm/hndtools-mipsel-uclibc-4.2.4 --build=i486-linux-gnu --host=i486-linux-gnu --target=mipsel-linux-uclibc --with-gnu-ld --enable-target-optspace --disable-libgomp --disable-libmudflap --disable-multilib --disable-nls --disable-__cxa_atexit --enable-libssp --enable-languages=c,c++ --enable-shared --enable-threads --enable-tls
 __EOF__
       cat >> $file << __EOF__
 >Description:

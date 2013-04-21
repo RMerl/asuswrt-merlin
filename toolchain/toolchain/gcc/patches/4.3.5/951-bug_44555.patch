@@ -1,3 +1,5 @@
+[4.3 Regression] Pointer evalutions, is that expected ?
+
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=44555
 
 --- gcc-4_3-branch/gcc/ChangeLog	2010/08/11 11:56:15	163097

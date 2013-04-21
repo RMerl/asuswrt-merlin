@@ -1,8 +1,8 @@
 # Choose gcc version.
 
 choice
-	prompt "GCC compiler Version" if TOOLCHAINOPTS
-	default GCC_VERSION_4_1_2
+	prompt "GCC compiler Version"
+	default GCC_VERSION_4_3_5
 	help
 	  Select the version of gcc you wish to use.
 
@@ -18,19 +18,22 @@ choice
 	config GCC_VERSION_4_3_5
 		bool "gcc 4.3.5"
 
+	config GCC_VERSION_4_4_6
+		bool "gcc 4.4.6"
+
 endchoice
 
 config EABI_SUPPORT
 	bool
 	depends arm||armeb
-	prompt "Enable EABI support" if TOOLCHAINOPTS
+	prompt "Enable EABI support"
 	default n
 	help
 	  Enable ARM EABI support
 
 config EXTRA_GCC_CONFIG_OPTIONS
 	string
-	prompt "Additional gcc options" if TOOLCHAINOPTS
+	prompt "Additional gcc options"
 	default ""
 	help
 	    Any additional gcc options you may want to include....
@@ -38,29 +41,29 @@ config EXTRA_GCC_CONFIG_OPTIONS
 config SSP_SUPPORT
 	bool
 	depends !GCC_VERSION_3_4_6
-	prompt "Enable Stack-Smashing Protection support" if TOOLCHAINOPTS
+	prompt "Enable Stack-Smashing Protection support"
 	default n
 	help
 	    Enable Stack-Smashing Protection support
 
 config TLS_SUPPORT
 	bool
-	depends !GCC_VERSION_3_4_6 && UCLIBC_VERSION_0_9_32
-	prompt "Enable Thread-local storage (TLS) support" if TOOLCHAINOPTS
+	depends !GCC_VERSION_3_4_6 && !LINUX_2_4 && UCLIBC_VERSION_0_9_32
+	prompt "Enable Thread-local storage (TLS) support"
 	default n
 	help
 	    Enable Thread-local storage support
 
 config INSTALL_LIBSTDCPP
 	bool
-	prompt "Build/install c++ compiler and libstdc++?" if TOOLCHAINOPTS
+	prompt "Build/install c++ compiler and libstdc++?"
 	default y
 	help
 	    Build/install c++ compiler and libstdc++?
 
 config INSTALL_LIBGCJ
 	bool
-	prompt "Build/install java compiler and GNU classpath ?" if TOOLCHAINOPTS
+	prompt "Build/install java compiler and GNU classpath ?"
 	default n
 	help
 	    Build/install java compiler and GNU classpath ?

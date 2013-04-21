@@ -1,3 +1,5 @@
+[4.3/4.4/4.5/4.6 regression] Uses lots of memory when compiling large initialized arrays
+
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=12245
 
 --- trunk/gcc/ChangeLog	2009/02/23 16:39:52	144383

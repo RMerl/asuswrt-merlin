@@ -1,3 +1,5 @@
+readelf: fixes for multiple crashes
+
 http://sourceware.org/bugzilla/show_bug.cgi?id=11889
 
 ===================================================================

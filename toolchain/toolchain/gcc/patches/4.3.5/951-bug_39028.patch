@@ -1,3 +1,5 @@
+[4.3 Regression] C++ front-end rejects "__label__" at the beginning of a block after "for" and "while"
+
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=39028
 
 --- trunk/gcc/cp/ChangeLog	2009/01/30 16:00:47	143796

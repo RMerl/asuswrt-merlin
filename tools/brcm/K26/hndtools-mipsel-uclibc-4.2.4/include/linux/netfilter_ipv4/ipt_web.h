@@ -10,21 +10,17 @@
 #ifndef _IPT_WEB_H
 #define _IPT_WEB_H
 
-#define IPT_WEB_MAXTEXT	512
+#include <linux/netfilter/xt_web.h>
 
-typedef enum {
-	IPT_WEB_HTTP,
-	IPT_WEB_RURI,
-	IPT_WEB_PATH,
-	IPT_WEB_QUERY,
-	IPT_WEB_HOST,
-	IPT_WEB_HORE
-} ipt_web_mode_t;
+#define IPT_WEB_MAXTEXT	XT_WEB_MAXTEXT
 
-struct ipt_web_info {
-	ipt_web_mode_t mode;
-	int invert;
-	char text[IPT_WEB_MAXTEXT];
-};
+#define IPT_WEB_HTTP	XT_WEB_HTTP
+#define IPT_WEB_RURI	XT_WEB_RURI
+#define IPT_WEB_PATH	XT_WEB_PATH
+#define IPT_WEB_QUERY	XT_WEB_QUERY
+#define IPT_WEB_HOST	XT_WEB_HOST
+#define IPT_WEB_HORE	XT_WEB_HORE
+
+#define ipt_web_info xt_web_info
 
 #endif

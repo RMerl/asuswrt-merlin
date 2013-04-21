@@ -1,0 +1,24 @@
+From 587d7092180a5f2053906b87ea2b25b2bf6b34c6
+From: Peter S. Mazinger
+Date: Wed, 02 Mar 2011 21:42:47 +0000
+Subject: make it possible to compile with -std=gnu99/c99 and use extern inlines
+
+When compiled with -std=gnu99/c99 __GNUC_GNU_INLINE__ is not defined
+
+Signed-off-by: Peter S. Mazinger <ps.m@gmx.net>
+---
+diff --git a/include/features.h b/include/features.h
+index 1d47b56..f4d70d7 100644
+--- a/include/features.h
++++ b/include/features.h
+@@ -433,7 +433,7 @@ uClibc was built without large file support enabled.
+ /* Decide whether we can define 'extern inline' functions in headers.  */
+ #if __GNUC_PREREQ (2, 7) && defined __OPTIMIZE__ \
+     && !defined __OPTIMIZE_SIZE__ && !defined __NO_INLINE__ \
+-    && (defined __extern_inline || defined __GNUC_GNU_INLINE__)
++    && (defined __extern_inline || defined __GNUC_GNU_INLINE__ || defined __GNUC_STDC_INLINE__)
+ # define __USE_EXTERN_INLINES	1
+ #endif
+ 
+--
+cgit v0.8.2.1

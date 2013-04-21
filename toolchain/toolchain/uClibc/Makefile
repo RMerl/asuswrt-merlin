@@ -11,32 +11,28 @@ PKG_NAME:=uClibc
 PKG_VERSION:=$(strip $(subst ",, $(CONFIG_UCLIBC_VERSION)))#"))
 PKG_EXTRAVERSION:=$(strip $(subst ",, $(CONFIG_UCLIBC_EXTRA_VERSION)))#"))
 PKG_VERSION_SNAPSHOT:=$(strip $(subst ",, $(CONFIG_UCLIBC_VERSION_SNAPSHOT)))#"))
+
 ifeq ($(PKG_VERSION_SNAPSHOT),y)
 PKG_SOURCE_URL:=http://www.uclibc.org/downloads/snapshots
 else
 PKG_SOURCE_URL:=http://www.uclibc.org/downloads
 endif
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)$(PKG_EXTRAVERSION).tar.bz2
+PKG_CAT:=bzcat
+
 PATCH_DIR:=./patches/$(PKG_VERSION)$(PKG_EXTRAVERSION)
 CONFIG_DIR:=./config/$(PKG_VERSION)$(PKG_EXTRAVERSION)
 
-ifeq ($(PKG_VERSION),0.9.29)
-ifeq ($(PKG_EXTRAVERSION),)
-PKG_MD5SUM:=61dc55f43b17a38a074f347e74095b20
-endif
-endif
+PKG_MD5SUM_0.9.29:=61dc55f43b17a38a074f347e74095b20
+PKG_MD5SUM_0.9.30.1:=1a4b84e5536ad8170563ffa88c34679c
+PKG_MD5SUM_0.9.30.3:=73a4bf4a0fa508b01a7a3143574e3d21
 
-ifeq ($(PKG_VERSION),0.9.30)
-ifeq ($(PKG_EXTRAVERSION),.1)
-PKG_MD5SUM:=1a4b84e5536ad8170563ffa88c34679c
-endif
-endif
-
-PKG_SOURCE:=uClibc-$(PKG_VERSION)$(PKG_EXTRAVERSION).tar.bz2
-PKG_CAT:=bzcat
+PKG_MD5SUM=$(PKG_MD5SUM_$(PKG_VERSION)$(PKG_EXTRAVERSION))
 
 STAGING_DIR_HOST:=$(TOOLCHAIN_DIR)
 BUILD_DIR_HOST:=$(BUILD_DIR_TOOLCHAIN)
-PKG_BUILD_DIR:=$(BUILD_DIR_HOST)/uClibc-$(PKG_VERSION)$(PKG_EXTRAVERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-$(PKG_VERSION)$(PKG_EXTRAVERSION)
 
 include $(INCLUDE_DIR)/host-build.mk
 
@@ -117,12 +113,17 @@ endef
 define Build/Configure
 endef
 
+CPU_CFLAGS = \
+	-funsigned-char -fno-builtin -fno-asm \
+	--std=gnu99 -ffunction-sections -fdata-sections \
+	$(TARGET_CFLAGS)
+
 UCLIBC_MAKE := PATH=$(TARGET_PATH) $(MAKE) -C $(PKG_BUILD_DIR) \
 	$(TARGET_CONFIGURE_OPTS) \
 	DEVEL_PREFIX=/ \
 	RUNTIME_PREFIX=/ \
 	HOSTCC="$(HOSTCC)" \
-	CPU_CFLAGS="$(TARGET_CFLAGS)" \
+	CPU_CFLAGS="$(CPU_CFLAGS)" \
 	LIBGCC="$(subst libgcc.a,libgcc_initial.a,$(shell $(TARGET_CC) -print-libgcc-file-name))" \
 
 define Build/Compile

@@ -25,39 +25,8 @@
 #ifndef _IPT_WEBMON_H
 #define _IPT_WEBMON_H
 
+#include <linux/netfilter/xt_webmon.h>
 
-#define WEBMON_MAX_IPS           256
-#define WEBMON_MAX_IP_RANGES      16
-
-#define WEBMON_EXCLUDE             1
-#define WEBMON_INCLUDE             2
-
-#define WEBMON_MAXDOMAIN           4
-#define WEBMON_MAXSEARCH           8
-
-#define WEBMON_DOMAIN             16
-#define WEBMON_SEARCH             32
-
-
-#define WEBMON_SET              3064
-
-struct ipt_webmon_ip_range
-{
-	uint32_t start;
-	uint32_t end;
-};
-
-struct ipt_webmon_info
-{
-	uint32_t max_domains;
-	uint32_t max_searches;
-	uint32_t exclude_ips[WEBMON_MAX_IPS];
-	struct ipt_webmon_ip_range exclude_ranges[WEBMON_MAX_IP_RANGES];
-	uint32_t num_exclude_ips;
-	uint32_t num_exclude_ranges;
-	unsigned char exclude_type;
-	uint32_t* ref_count;
-
-};
+#define ipt_webmon_info		xt_webmon_info
 
 #endif /*_IPT_WEBMON_H*/

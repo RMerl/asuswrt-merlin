@@ -1,3 +1,5 @@
+[4.3/4.4./4.5 Regression] ICE: SIGSEGV in cp_make_fname_decl (decl.c:3690) on invalid code when using __PRETTY_FUNCTION__
+
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=46538
 
 --- trunk/gcc/cp/ChangeLog	2010/11/20 01:38:43	166973

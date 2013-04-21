@@ -1,0 +1,59 @@
+ICE: SIGSEGV in vect_recog_pow_pattern (gimple.h:2055) with -O -fexceptions -ftree-vectorize
+
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=46663
+
+--- gcc-4_3-branch/gcc/ChangeLog	2010/12/05 08:15:33	167469
++++ gcc-4_3-branch/gcc/ChangeLog	2010/12/05 08:27:42	167470
+@@ -1,3 +1,10 @@
++2010-12-05  Richard Guenther  <rguenther@suse.de>
++	    Ira Rosen  <irar@il.ibm.com>
++
++	PR tree-optimization/46663
++	* tree-vect-patterns.c (vect_recog_pow_pattern): Check that
++	FUNCTION_DECL exists and that it's a builtin.
++
+ 2010-11-29  Eric Botcazou  <ebotcazou@adacore.com>
+ 
+ 	PR rtl-optimization/46337
+--- gcc-4_3-branch/gcc/testsuite/ChangeLog	2010/12/05 08:15:33	167469
++++ gcc-4_3-branch/gcc/testsuite/ChangeLog	2010/12/05 08:27:42	167470
+@@ -1,3 +1,9 @@
++2010-12-02  Richard Guenther  <rguenther@suse.de>
++	    Ira Rosen  <irar@il.ibm.com>
++
++	PR tree-optimization/46663
++	* gcc.dg/vect/pr46663.c: New test.
++
+ 2010-11-18  Jakub Jelinek  <jakub@redhat.com>
+ 
+ 	PR c++/46538
+--- /dev/null
++++ gcc-4_3-branch/gcc/testsuite/gcc.dg/vect/pr46663.c	2010/12/05 08:27:42	167470
+@@ -0,0 +1,14 @@
++/* { dg-do compile } */
++/* { dg-options "-O -ftree-vectorize -fdump-tree-vect-details -fexceptions" } */
++
++typedef __attribute__ ((const)) int (*bart) (void);
++
++int foo (bart bar, int m)
++{
++  int i, j = 0;
++  for (i = 0; i < m; i++)
++    j += bar();
++  return j;
++}
++
++/* { dg-final { cleanup-tree-dump "vect" } } */
+--- gcc-4_3-branch/gcc/tree-vect-patterns.c	2010/12/05 08:15:33	167469
++++ gcc-4_3-branch/gcc/tree-vect-patterns.c	2010/12/05 08:27:42	167470
+@@ -463,6 +463,9 @@
+     return NULL_TREE;
+ 
+   fn = get_callee_fndecl (expr);
++  if (fn == NULL_TREE || DECL_BUILT_IN_CLASS (fn) != BUILT_IN_NORMAL)
++    return NULL;
++
+   switch (DECL_FUNCTION_CODE (fn))
+     {
+     case BUILT_IN_POWIF:
+-- 

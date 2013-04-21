@@ -263,7 +263,11 @@ struct sk_buff {
 
 	unsigned int		len,
 				data_len;
+#ifdef HNDCTF
+	__u16			ctf_mac_len,	/* This field is used by Broadcom CTF driver! */
+#else
 	__u16			mac_len,
+#endif
 				hdr_len;
 	union {
 		__wsum		csum;
@@ -290,6 +294,7 @@ struct sk_buff {
 	sk_buff_data_t		transport_header;
 	sk_buff_data_t		network_header;
 	sk_buff_data_t		mac_header;
+	/* These elements must be at the end, see alloc_skb() for details.  */
 	sk_buff_data_t		tail;
 	sk_buff_data_t		end;
 	unsigned char		*head,
@@ -301,7 +306,10 @@ struct sk_buff {
 	struct nf_conntrack	*nfct;
 	struct sk_buff		*nfct_reasm;
 	/* Cache info */
-	__u32			nfcache;
+	__u16			nfcache;
+#endif
+#ifdef HNDCTF
+	__u16			mac_len;
 #endif
 #ifdef CONFIG_BRIDGE_NETFILTER
 	struct nf_bridge_info	*nf_bridge;

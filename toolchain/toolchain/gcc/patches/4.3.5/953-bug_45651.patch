@@ -1,0 +1,53 @@
+[4.3/4.4/4.5 Regression] ICE in import_export_decl, at cp/decl2.c:2344
+
+ http://gcc.gnu.org/bugzilla/show_bug.cgi?id=45651
+
+--- gcc-4_3-branch/gcc/cp/ChangeLog	2011/03/09 01:28:19	170806
++++ gcc-4_3-branch/gcc/cp/ChangeLog	2011/03/09 02:19:00	170807
+@@ -1,3 +1,9 @@
++2011-03-08  Jason Merrill  <jason@redhat.com>
++
++	PR c++/45651
++	* pt.c (instantiate_decl): Don't clear DECL_INTERFACE_KNOWN on
++	!TREE_PUBLIC decls.
++
+ 2011-02-03  Jonathan Wakely  <jwakely.gcc@gmail.com>
+ 
+ 	PR c++/47589
+--- gcc-4_3-branch/gcc/cp/pt.c	2011/03/09 01:28:19	170806
++++ gcc-4_3-branch/gcc/cp/pt.c	2011/03/09 02:19:00	170807
+@@ -14870,8 +14870,13 @@
+   if (!pattern_defined && expl_inst_class_mem_p
+       && DECL_EXPLICIT_INSTANTIATION (d))
+     {
+-      DECL_NOT_REALLY_EXTERN (d) = 0;
+-      DECL_INTERFACE_KNOWN (d) = 0;
++      /* Leave linkage flags alone on instantiations with anonymous
++	 visibility.  */
++      if (TREE_PUBLIC (d))
++	{
++	  DECL_NOT_REALLY_EXTERN (d) = 0;
++	  DECL_INTERFACE_KNOWN (d) = 0;
++	}
+       SET_DECL_IMPLICIT_INSTANTIATION (d);
+     }
+ 
+--- gcc-4_3-branch/gcc/testsuite/ChangeLog	2011/03/09 01:28:19	170806
++++ gcc-4_3-branch/gcc/testsuite/ChangeLog	2011/03/09 02:19:00	170807
+@@ -1,3 +1,7 @@
++2011-03-08  Jason Merrill  <jason@redhat.com>
++
++	* g++.dg/template/anon5.C: New.
++
+ 2011-02-03  Jonathan Wakely  <jwakely.gcc@gmail.com>
+ 
+ 	PR c++/47589
+--- /dev/null
++++ gcc-4_3-branch/gcc/testsuite/g++.dg/template/anon5.C	2011/03/09 02:19:00	170807
+@@ -0,0 +1,6 @@
++// PR c++/45651
++
++namespace { template <int T> struct A {}; }
++template <int T> struct B { void f(A<T>); };
++template struct B<1>;
++template<int T> void B<T>::f(A<T>) {}

@@ -1,0 +1,46 @@
+[4.3/4.4/4.5/4.6 Regression] ICE in copy_tree_r on array new
+
+ http://gcc.gnu.org/bugzilla/show_bug.cgi?id=40975
+
+--- trunk/gcc/ChangeLog	2011/05/02 21:59:49	173272
++++ trunk/gcc/ChangeLog	2011/05/02 21:59:57	173273
+@@ -1,3 +1,8 @@
++2011-05-02  Jason Merrill  <jason@redhat.com>
++
++	PR c++/40975
++	* tree-inline.c (copy_tree_r): Handle STATEMENT_LIST.
++
+ 2011-04-21  Richard Guenther  <rguenther@suse.de>
+ 	Backported from mainline
+ 	2009-12-02  Richard Guenther  <rguenther@suse.de>
+--- trunk/gcc/tree-inline.c	2011/05/02 21:59:49	173272
++++ trunk/gcc/tree-inline.c	2011/05/02 21:59:57	173273
+@@ -4271,14 +4271,26 @@
+					 CONSTRUCTOR_ELTS (*tp));
+       *tp = new_tree;
+     }
++  else if (code == STATEMENT_LIST)
++    {
++      /* We used to just abort on STATEMENT_LIST, but we can run into them
++         with statement-expressions (c++/40975).  */
++      tree new_list = alloc_stmt_list ();
++      tree_stmt_iterator i = tsi_start (*tp);
++      tree_stmt_iterator j = tsi_last (new_list);
++      for (; !tsi_end_p (i); tsi_next (&i))
++	{
++	  tree stmt = tsi_stmt (i);
++	  tsi_link_after (&j, stmt, TSI_CONTINUE_LINKING);
++	}
++      *tp = new_list;
++    }
+   else if (TREE_CODE_CLASS (code) == tcc_type)
+     *walk_subtrees = 0;
+   else if (TREE_CODE_CLASS (code) == tcc_declaration)
+     *walk_subtrees = 0;
+   else if (TREE_CODE_CLASS (code) == tcc_constant)
+     *walk_subtrees = 0;
+-  else
+-    gcc_assert (code != STATEMENT_LIST);
+   return NULL_TREE;
+ }
+ 
