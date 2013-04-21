@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.354.28 BETA 1 (19-Apr-2013)
+Asuswrt-Merlin - build 3.0.0.4.354.28 BETA 2 (xx-xxx-2013)
 ==========================================================
 
 About
@@ -215,13 +215,19 @@ if you are saving to jffs, to reduce wearing out
 your flash memory.  Make sure not to forget the trailing 
 slash ad the end of the path.
 
-Also, Asuswrt-Merlin can now track your traffic on a 
+Note that the first time you use that option, you must 
+tell the router to create the data file.  Make sure you 
+set "Create or reset data files" to "Yes".
+
+Also, Asuswrt-Merlin can track your traffic on a 
 per device (IP) basis, allowing you to monitor traffic 
 history of individual computers.  To enable this, you 
 must first set a custom location to store your 
-traffic database (see above).  Once done, enable 
-the Advanced Traffic Monitoring option.  This will 
-add three new entries to the Traffic Monitor 
+traffic database (see above).  Once again, you 
+must also tell it to create the new data file, 
+by enabling "Create or reset advanced data files".
+Once done, enable the Advanced Traffic Monitoring option.  
+This will add three new entries to the Traffic Monitor 
 page selector (on the Traffic Monitoring page).
 
 You can optionally specify which IP to monitor, 
@@ -433,6 +439,18 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.354.28 Beta 2:
+   - NEW: Reported channels currently used when mousing over
+          the wifi icon at the top of the webui
+   - CHANGED: Increased list height on Site Survey page
+   - CHANGED: Warn if trying to do a site survey with either
+              radios disabled.
+   - FIXED: Restart syslogd if we had to adjust its log level for
+            DHCP query logging.
+   - FIXED: br0 would change MAC address when starting an OpenVPN server 
+            with a tap interface.
+
+
 3.0.0.4.354.28 Beta 1:
    - KNOWN ISSUE: 5 GHz 40 MHz is unreliable with some wireless 
                   cards (RT-N66U)
