@@ -37,7 +37,6 @@ hwacc = "<% nvram_get("ctf_disable"); %>";
 hwacc_force = "<% nvram_get("ctf_disable_force"); %>";
 arplist = [<% get_arp_table(); %>];
 etherstate = "<% sysinfo("ethernet"); %>";
-lanports = "<% nvram_get("lanports"); %>";
 
 var $j = jQuery.noConflict();
 
@@ -125,7 +124,6 @@ function show_etherstate(){
 	var entry;
 
 	var t = etherstate.split('>');
-	var lanports_arr = lanports.split(' ');
 
 	for (var i = 0; i < t.length; ++i) {
 		var line = t[i].split(/[\s]+/);
@@ -165,7 +163,7 @@ function show_etherstate(){
 				break;
 			} else {
 				if (productid == "RT-N16") tmpPort = 5 - tmpPort;
-				port = "LAN " + lanports_arr[tmpPort - 1];
+				port = "LAN "+tmpPort;
 			}
 			entry = '<tr><td width="15%">'+port+'</td><td width="30%"><span>' + state2 + '</span></td><td width="55%">'+ devicename +'</td></tr>';
 
