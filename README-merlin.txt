@@ -23,11 +23,9 @@ performance, and performance over features.
 Supported Devices
 -----------------
 Supported devices are:
+ * RT-N16
  * RT-N66U and RT-N66R
  * RT-AC66U and RT-AC66R
-
-These devices have experimental support (because I don't own one to test it):
- * RT-N16
 
 
 
@@ -440,6 +438,9 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.354.28 Beta 2:
+   - NEW: RT-N16 is no longer an experimentally supported device.
+          Thanks to Mike from Sapphyre Software for providing
+          me with an RT-N16.
    - NEW: Reported channels currently used when mousing over
           the wifi icon at the top of the webui
    - CHANGED: Increased list height on Site Survey page
@@ -449,6 +450,9 @@ History
             DHCP query logging.
    - FIXED: br0 would change MAC address when starting an OpenVPN server 
             with a tap interface.
+   - FIXED: Port numbering order on Sysinfo page (RT-N16)
+   - FIXED: 5G radio states weren't hidden on sysinfo page if the 
+            router did not support that band (RT-N16)
 
 
 3.0.0.4.354.28 Beta 1:
