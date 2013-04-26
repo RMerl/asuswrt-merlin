@@ -119,7 +119,7 @@ function show_etherstate(){
 	var state, state2;
 	var hostname, devicename, overlib_str, port;
 	var tmpPort;
-	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th>Port</th><th>Link State</th><th>Last Device Seen</th></tr>';
+	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th style="width:15%;">Port</th><th style="width:15%;">VLAN</th><th style="width:25%;">Link State</th><th style="width:45%;">Last Device Seen</th></tr>';
 	var code_ports = "";
 	var entry;
 
@@ -165,7 +165,7 @@ function show_etherstate(){
 				if (productid == "RT-N16") tmpPort = 5 - tmpPort;
 				port = "LAN "+tmpPort;
 			}
-			entry = '<tr><td width="15%">'+port+'</td><td width="30%"><span>' + state2 + '</span></td><td width="55%">'+ devicename +'</td></tr>';
+			entry = '<tr><td>' + port + '</td><td>' + line[7] + '</td><td><span>' + state2 + '</span></td><td>'+ devicename +'</td></tr>';
 
 			if (productid == "RT-N16")
 				code_ports = entry + code_ports;
