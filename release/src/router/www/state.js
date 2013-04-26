@@ -1993,7 +1993,7 @@ function refresh_info_status(xmldoc)
 		<%radio_status();%>
 
 		if (band5g_support == -1)
-			radio_5 = 1;
+			radio_5 = radio_2;
 
 		if (radio_2 && radio_5)
 		{
