@@ -443,6 +443,7 @@ History
           me with an RT-N16.
    - NEW: Reported channels currently used when mousing over
           the wifi icon at the top of the webui
+   - NEW: Sysinfo: Ethernet port state will report each port's VLAN ID.
    - CHANGED: Increased list height on Site Survey page
    - CHANGED: Warn if trying to do a site survey with either
               radios disabled.
@@ -450,9 +451,11 @@ History
             DHCP query logging.
    - FIXED: br0 would change MAC address when starting an OpenVPN server 
             with a tap interface.
-   - FIXED: Port numbering order on Sysinfo page (RT-N16)
-   - FIXED: 5G radio states weren't hidden on sysinfo page if the 
+   - FIXED: Sysinfo: Port numbering order (RT-N16)
+   - FIXED: Sysinfo: 5G radio info weren't hidden if the 
             router did not support that band (RT-N16)
+   - FIXED: Wifi status icon would remain half-lit if 2.4 GHz was
+            disabled on a router without 5 GHz support (RT-N16)
 
 
 3.0.0.4.354.28 Beta 1:
