@@ -45,7 +45,7 @@ overlib.isOut = true;
 
 function initial(){
 	show_menu();
-        if (rc_support.search("5G") == -1) $("wifi5_clients_tr").style.display = "none";
+        if (band5g_support == -1) $("wifi5_clients_tr").style.display = "none";
 	showbootTime();
 	update_temperatures();
 	hwaccel_state();
@@ -61,7 +61,7 @@ function update_temperatures(){
 		},
 		success: function(response){
 			code = "<b>2.4 GHz:</b><span> " + curr_coreTmp_2_raw + "</span>";
-			if (rc_support.search("5G") != -1) {
+			if (band5g_support != -1) {
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
 			}
 			$("temp_td").innerHTML = code;
