@@ -121,6 +121,8 @@ function show_etherstate(){
 	var hostname, devicename, overlib_str, port;
 	var tmpPort;
 	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th>Port</th><th>Link State</th><th>Last Device Seen</th></tr>';
+	var code_ports = "";
+	var entry;
 
 	var t = etherstate.split('>');
 	var lanports_arr = lanports.split(' ');
@@ -162,12 +164,18 @@ function show_etherstate(){
 			} else if (tmpPort == "8") {
 				break;
 			} else {
-				port = "LAN "+lanports_arr[tmpPort - 1];
+				if (productid == "RT-N16") tmpPort = 5 - tmpPort;
+				port = "LAN " + lanports_arr[tmpPort - 1];
 			}
-			code += '<tr><td width="15%">'+port+'</td><td width="30%"><span>' + state2 + '</span></td><td width="55%">'+ devicename +'</td></tr>';
+			entry = '<tr><td width="15%">'+port+'</td><td width="30%"><span>' + state2 + '</span></td><td width="55%">'+ devicename +'</td></tr>';
+
+			if (productid == "RT-N16")
+				code_ports = entry + code_ports;
+			else
+				code_ports += entry;
 		}
 	}
-	code += '</table>';
+	code += code_ports + '</table>';
 	$("etherstate_td").innerHTML = code;
 
 	if (hostnamecache['ready'] == 0) setTimeout(show_etherstate, 500);
