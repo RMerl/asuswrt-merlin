@@ -26,8 +26,8 @@
 #include "dhcpc.h"
 
 #include <netinet/if_ether.h>
-#include <netpacket/packet.h>
 #include <linux/filter.h>
+#include <linux/if_packet.h>
 
 /* "struct client_config_t client_config" is in bb_common_bufsiz1 */
 
@@ -856,12 +856,31 @@ static NOINLINE int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, int fd)
 	int bytes;
 	struct ip_udp_dhcp_packet packet;
 	uint16_t check;
+	unsigned char cmsgbuf[CMSG_LEN(sizeof(struct tpacket_auxdata))];
+	struct iovec iov;
+	struct msghdr msg;
+	struct cmsghdr *cmsg;
 
-	bytes = safe_read(fd, &packet, sizeof(packet));
-	if (bytes < 0) {
-		log1("Packet read error, ignoring");
-		/* NB: possible down interface, etc. Caller should pause. */
-		return bytes; /* returns -1 */
+	/* used to use just safe_read(fd, &packet, sizeof(packet))
+	 * but we need to check for TP_STATUS_CSUMNOTREADY :(
+	 */
+	iov.iov_base = &packet;
+	iov.iov_len = sizeof(packet);
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = cmsgbuf;
+	msg.msg_controllen = sizeof(cmsgbuf);
+	for (;;) {
+		bytes = recvmsg(fd, &msg, 0);
+		if (bytes < 0) {
+			if (errno == EINTR)
+				continue;
+			log1("Packet read error, ignoring");
+			/* NB: possible down interface, etc. Caller should pause. */
+			return bytes; /* returns -1 */
+		}
+		break;
 	}
 
 	if (bytes < (int) (sizeof(packet.ip) + sizeof(packet.udp))) {
@@ -898,6 +917,20 @@ static NOINLINE int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, int fd)
 		return -2;
 	}
 
+	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+		if (cmsg->cmsg_level == SOL_PACKET
+		 && cmsg->cmsg_type == PACKET_AUXDATA
+		) {
+			/* some VMs don't checksum UDP and TCP data
+			 * they send to the same physical machine,
+			 * here we detect this case:
+			 */
+			struct tpacket_auxdata *aux = (void *)CMSG_DATA(cmsg);
+			if (aux->tp_status & TP_STATUS_CSUMNOTREADY)
+				goto skip_udp_sum_check;
+		}
+	}
+
 	/* verify UDP checksum. IP header has to be modified for this */
 	memset(&packet.ip, 0, offsetof(struct iphdr, protocol));
 	/* ip.xx fields which are not memset: protocol, check, saddr, daddr */
@@ -908,6 +941,7 @@ static NOINLINE int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, int fd)
 		log1("Packet with bad UDP checksum received, ignoring");
 		return -2;
 	}
+ skip_udp_sum_check:
 
 	if (packet.data.cookie != htonl(DHCP_MAGIC)) {
 		bb_info_msg("Packet with bad magic, ignoring");
@@ -1003,7 +1037,7 @@ static int udhcp_raw_socket(int ifindex)
 	log1("Opening raw socket on ifindex %d", ifindex); //log2?
 
 	fd = xsocket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_IP));
-	log1("Got raw socket fd %d", fd); //log2?
+	log1("Got raw socket fd"); //log2?
 
 	sock.sll_family = AF_PACKET;
 	sock.sll_protocol = htons(ETH_P_IP);
@@ -1015,7 +1049,14 @@ static int udhcp_raw_socket(int ifindex)
 		/* Ignoring error (kernel may lack support for this) */
 		if (setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog,
 				sizeof(filter_prog)) >= 0)
-			log1("Attached filter to raw socket fd %d", fd); // log?
+			log1("Attached filter to raw socket fd"); // log?
+	}
+
+	if (setsockopt(fd, SOL_PACKET, PACKET_AUXDATA,
+			&const_int_1, sizeof(int)) < 0
+	) {
+		if (errno != ENOPROTOOPT)
+			log1("Can't set PACKET_AUXDATA on raw socket");
 	}
 
 	log1("Created raw socket");
