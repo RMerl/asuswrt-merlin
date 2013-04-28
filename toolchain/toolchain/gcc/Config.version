@@ -4,8 +4,7 @@ config GCC_VERSION
 	default "4.1.2"     if GCC_VERSION_4_1_2
 	default "4.2.4"     if GCC_VERSION_4_2_4
 	default "4.3.5"     if GCC_VERSION_4_3_5
-	default "4.4.6"     if GCC_VERSION_4_4_6
-	default "4.3.5"
+	default "4.1.2"
 
 config GCC_VERSION_4_2
         bool
@@ -14,7 +13,3 @@ config GCC_VERSION_4_2
 config GCC_VERSION_4_3
         bool
         default y       if GCC_VERSION_4_3_5
-
-config GCC_VERSION_4_4
-        bool
-        default y       if GCC_VERSION_4_4_6

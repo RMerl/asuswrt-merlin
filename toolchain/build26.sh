@@ -10,11 +10,6 @@ DESTDIR=/opt/brcm/${TARGETDIR}
 
 make -C ../release/src-rt prepk
 
-cd /opt/brcm
-mkdir -p K26
-rm -rf K26/hndtools-mipsel-uclibc-${GCCVER}
-cd $ROOTDIR
-
 rm -f .config
 ln -sf config.2.6-${GCCVER} .config
 make clean; make dirclean; make V=99

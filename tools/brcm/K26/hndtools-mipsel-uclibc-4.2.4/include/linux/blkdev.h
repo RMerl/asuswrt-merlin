@@ -543,8 +543,6 @@ enum {
 #define blk_sorted_rq(rq)	((rq)->cmd_flags & REQ_SORTED)
 #define blk_barrier_rq(rq)	((rq)->cmd_flags & REQ_HARDBARRIER)
 #define blk_fua_rq(rq)		((rq)->cmd_flags & REQ_FUA)
-/* rq->queuelist of dequeued request must be list_empty() */
-#define blk_queued_rq(rq)	(!list_empty(&(rq)->queuelist))
 
 #define list_entry_rq(ptr)	list_entry((ptr), struct request, queuelist)
 
@@ -702,28 +700,27 @@ static inline void blk_run_address_space(struct address_space *mapping)
 }
 
 /*
- * blk_end_request() and friends.
- * __blk_end_request() and end_request() must be called with
- * the request queue spinlock acquired.
+ * end_request() and friends. Must be called with the request queue spinlock
+ * acquired. All functions called within end_request() _must_be_ atomic.
  *
  * Several drivers define their own end_request and call
- * blk_end_request() for parts of the original function.
- * This prevents code duplication in drivers.
+ * end_that_request_first() and end_that_request_last()
+ * for parts of the original function. This prevents
+ * code duplication in drivers.
  */
-extern int blk_end_request(struct request *rq, int error, int nr_bytes);
-extern int __blk_end_request(struct request *rq, int error, int nr_bytes);
-extern void end_request(struct request *, int);
-extern void end_queued_request(struct request *, int);
-extern void end_dequeued_request(struct request *, int);
+extern int end_that_request_first(struct request *, int, int);
+extern int end_that_request_chunk(struct request *, int, int);
+extern void end_that_request_last(struct request *, int);
+extern void end_request(struct request *req, int uptodate);
 extern void blk_complete_request(struct request *);
 
 /*
- * blk_end_request() takes bytes instead of sectors as a complete size.
- * blk_rq_bytes() returns bytes left to complete in the entire request.
- * blk_rq_cur_bytes() returns bytes left to complete in the current segment.
+ * end_that_request_first/chunk() takes an uptodate argument. we account
+ * any value <= as an io error. 0 means -EIO for compatability reasons,
+ * any other < 0 value is the direct error type. An uptodate value of
+ * 1 indicates successful io completion
  */
-extern unsigned int blk_rq_bytes(struct request *rq);
-extern unsigned int blk_rq_cur_bytes(struct request *rq);
+#define end_io_error(uptodate)	(unlikely((uptodate) <= 0))
 
 static inline void blkdev_dequeue_request(struct request *req)
 {

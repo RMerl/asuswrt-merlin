@@ -28,8 +28,6 @@ Basics
 					criteria.
 
 Miscellaneous:
-* Groff: (groff).			The GNU troff document formatting
-					system.
 * Rluserman: (rluserman).		GNU Readline Library API
 * Tasks: (tasks).			The GNU Task List.
 

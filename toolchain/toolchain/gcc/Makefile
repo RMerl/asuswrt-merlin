@@ -35,9 +35,6 @@ endif
 ifeq ($(PKG_VERSION),4.3.5)
   PKG_MD5SUM:=e588cfde3bf323f82918589b94f14a15
 endif
-ifeq ($(PKG_VERSION),4.4.6)
-  PKG_MD5SUM:=ab525d429ee4425050a554bc9247d6c4
-endif
 
 PATCH_DIR=./patches/$(PKG_VERSION)
 PKG_SOURCE_URL:=ftp://ftp.fu-berlin.de/unix/languages/gcc/releases/gcc-$(PKG_VERSION) \
@@ -83,12 +80,6 @@ ifneq ($(CONFIG_GCC_VERSION_4_3)$(CONFIG_GCC_VERSION_4_4),)
 		--with-gmp=$(TOPDIR)/staging_dir/host \
 		--with-mpfr=$(TOPDIR)/staging_dir/host \
 		--disable-decimal-float
-endif
-
-ifneq ($(CONFIG_GCC_VERSION_4_4),)
-  ifneq ($(CONFIG_mips)$(CONFIG_mipsel),)
-    GCC_CONFIGURE += --with-mips-plt
-  endif
 endif
 
 ifneq ($(CONFIG_SSP_SUPPORT),)

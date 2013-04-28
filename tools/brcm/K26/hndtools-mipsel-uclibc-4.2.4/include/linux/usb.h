@@ -459,7 +459,6 @@ extern int usb_reset_device(struct usb_device *dev);
 extern void usb_queue_reset_device(struct usb_interface *dev);
 
 extern struct usb_device *usb_find_device(u16 vendor_id, u16 product_id);
-extern struct usb_device *usb_find_device_by_name(const char *name);
 
 /* USB autosuspend and autoresume */
 #ifdef CONFIG_USB_SUSPEND

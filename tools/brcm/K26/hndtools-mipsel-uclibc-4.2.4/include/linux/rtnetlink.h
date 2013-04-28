@@ -261,7 +261,7 @@ enum rtattr_type_t
 	RTA_FLOW,
 	RTA_CACHEINFO,
 	RTA_SESSION,
-	RTA_MP_ALGO, /* no longer used */
+	RTA_MP_ALGO,
 	RTA_TABLE,
 	__RTA_MAX
 };

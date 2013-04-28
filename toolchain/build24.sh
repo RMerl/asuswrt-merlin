@@ -16,11 +16,7 @@ make -C ../release/src prepk
 
 #########################################################################
 
-cd /opt/brcm
-mkdir -p K24
-rm -rf K24/hndtools-mipsel-uclibc-${GCCVER2}
 cd $ROOTDIR
-
 rm -f .config
 ln -sf config.2.4-${GCCVER1} .config
 make clean; make dirclean; make V=99

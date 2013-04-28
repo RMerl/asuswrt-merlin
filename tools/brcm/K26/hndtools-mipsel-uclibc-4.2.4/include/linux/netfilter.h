@@ -48,7 +48,7 @@
 #endif
 
 union nf_inet_addr {
-	__u32		all[4];
+	u_int32_t	all[4];
 	__be32		ip;
 	__be32		ip6[4];
 	struct in_addr	in;
@@ -57,15 +57,6 @@ union nf_inet_addr {
 
 #ifdef __KERNEL__
 #ifdef CONFIG_NETFILTER
-
-static inline int nf_inet_addr_cmp(const union nf_inet_addr *a1,
-				   const union nf_inet_addr *a2)
-{
-	return a1->all[0] == a2->all[0] &&
-	       a1->all[1] == a2->all[1] &&
-	       a1->all[2] == a2->all[2] &&
-	       a1->all[3] == a2->all[3];
-}
 
 extern void netfilter_init(void);
 

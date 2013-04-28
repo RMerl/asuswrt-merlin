@@ -1,5 +1,3 @@
-ld generate broken PIE binaries on MIPS
-
 http://sourceware.org/bugzilla/show_bug.cgi?id=10858
 
 ===================================================================
