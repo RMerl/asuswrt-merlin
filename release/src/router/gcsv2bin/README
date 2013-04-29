@@ -1,0 +1,65 @@
+gcsv2bin Readme file
+-------------------------
+
+gcsv2bin is a tool specially written for the iptables/netfilter's geoip
+match purpose. This file won't discuss about the iptables/netfilter's framework.
+www.netfilter.org for details.
+
+gcsv2bin's only task is to convert a comma-seperated-value database containing
+all IPv4 subnets and their associated countries to a  binary format for the iptables'
+geoip shared library.
+
+You can create your own database (perhaps you feel sado) or simply gets the
+latest GeoIP's free database from MaxMind. This product includes GeoIP data
+created by MaxMind, available from http://maxmind.com/
+
+
+FILES
+
+This package should contain these files:
+
+README;              this file.
+gcsv2bin.c;	     the gcsv2bin's source code.
+Makefile;            directive for 'make'.
+COPYING;             copy of the GNU GPL v2 license
+
+If any of them are missing, please contact the authors by precising when
+and where did you get that package.
+
+
+COPYING
+
+This program is subject to the GNU GPL version 2 license.
+Please see the COPYING file for more details about GPL.
+
+
+RELEASE
+
+This package has been released AS-IS on Wednesday, November the 3rd, 2004.
+This package has been updated on Saturday, February the 9th, 2008
+
+
+LINKS
+
+iptables/netfilter's geoip project:
+http://people.netfilter.org/acidfu/patchlets/
+
+iptables/netfilter's geoip howto:
+http://people.netfilter.org/acidfu/geoip/howto/geoip-HOWTO.html
+
+iptables/netfilter's web site:
+http://www.netfilter.org
+
+MaxMind's GeoIP project:
+http://www.maxmind.com
+
+
+AUTHORS
+
+Nicolas Bouliane        acidfu@people.netfilter.org
+Samuel Jean             peejix@people.netfilter.org
+
+
+THANKS
+
+Special thanks to Arthur Ouellet and Charles Michaud

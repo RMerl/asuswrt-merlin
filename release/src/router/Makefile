@@ -285,6 +285,7 @@ endif
 obj-n += wol
 obj-y += netstat-nat
 obj-y += ipset
+obj-y += gcsv2bin
 
 obj-clean := $(foreach obj, $(obj-y) $(obj-n) $(obj-), $(obj)-clean)
 obj-install := $(foreach obj,$(obj-y),$(obj)-install)
@@ -2383,6 +2384,9 @@ ipset-install:
 	$(STRIP) $(INSTALLDIR)/ipset/usr/lib/*.so
 	$(STRIP) $(INSTALLDIR)/ipset/usr/sbin/ipset
 
+gcsv2bin-install:
+	install -D gcsv2bin/gcsv2bin $(INSTALLDIR)/gcsv2bin/usr/bin/gcsv2bin
+	$(STRIP) $(INSTALLDIR)/gcsv2bin/usr/bin/gcsv2bin
 
 #
 # Generic rules
