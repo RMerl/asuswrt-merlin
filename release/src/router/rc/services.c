@@ -2622,7 +2622,7 @@ start_services(void)
 #ifdef RTCONFIG_BCMWL6
 	start_acsd();
 #endif
-	start_upnp();
+//	start_upnp();
 
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 	start_pptpd();
