@@ -1314,7 +1314,7 @@ send_file(struct upnphttp * h, int sendfd, off_t offset, off_t end_offset)
 	char *buf = NULL;
 	int try_sendfile = 1;
 
-	while( offset < end_offset )
+	while( offset <= end_offset )
 	{
 		if( try_sendfile )
 		{
