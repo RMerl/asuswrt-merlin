@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Id: genconfig.sh,v 1.61 2012/10/03 21:07:29 nanard Exp $
+# $Id: genconfig.sh,v 1.62 2013/04/24 17:03:16 nanard Exp $
 # miniupnp daemon
 # http://miniupnp.free.fr or http://miniupnp.tuxfamily.org/
 # (c) 2006-2011 Thomas Bernard
@@ -7,7 +7,9 @@
 # LICENCE file provided within the distribution
 
 RM="rm -f"
-CONFIGFILE="config.h"
+MV="mv"
+CONFIGFILE="config.h.tmp"
+CONFIGFILE_FINAL="config.h"
 CONFIGMACRO="CONFIG_H_INCLUDED"
 
 # version reported in XML descriptions
@@ -374,5 +376,7 @@ echo "/*#define DISABLE_CONFIG_FILE*/" >> ${CONFIGFILE}
 echo "" >> ${CONFIGFILE}
 
 echo "#endif" >> ${CONFIGFILE}
+
+${MV} ${CONFIGFILE} ${CONFIGFILE_FINAL}
 
 exit 0

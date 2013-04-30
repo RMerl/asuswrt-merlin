@@ -1,4 +1,4 @@
-/* $Id: minissdp.c,v 1.48 2013/02/07 12:22:25 nanard Exp $ */
+/* $Id: minissdp.c,v 1.49 2013/04/26 15:17:10 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2013 Thomas Bernard
@@ -369,6 +369,16 @@ SendSSDPAnnounce2(int s, const struct sockaddr * addr,
 		st_is_uuid ? 0 : st_len, st, suffix,
 		host, (unsigned int)port,
 		upnp_bootid, upnp_bootid, upnp_configid);
+	if(l<0)
+	{
+		syslog(LOG_ERR, "SendSSDPAnnounce2(): snprintf failed %m");
+		return;
+	}
+	else if((unsigned)l>=sizeof(buf))
+	{
+		syslog(LOG_WARNING, "SendSSDPAnnounce2(): truncated output");
+		l = sizeof(buf) - 1;
+	}
 	addrlen = (addr->sa_family == AF_INET6)
 	          ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in);
 	n = sendto(s, buf, l, 0,
@@ -446,13 +456,13 @@ SendSSDPNotify(int s, const struct sockaddr * dest,
 		upnp_bootid, upnp_bootid, upnp_configid );
 	if(l<0)
 	{
-		syslog(LOG_ERR, "SendSSDPNotifies() snprintf error");
+		syslog(LOG_ERR, "SendSSDPNotify() snprintf error");
 		return;
 	}
 	else if((unsigned int)l >= sizeof(bufr))
 	{
-		syslog(LOG_WARNING, "SendSSDPNotifies(): truncated output");
-		l = sizeof(bufr);
+		syslog(LOG_WARNING, "SendSSDPNotify(): truncated output");
+		l = sizeof(bufr) - 1;
 	}
 	n = sendto(s, bufr, l, 0, dest,
 #ifdef ENABLE_IPV6
@@ -807,7 +817,7 @@ SendSSDPbyebye(int s, const struct sockaddr * dest,
 	else if((unsigned int)l >= sizeof(bufr))
 	{
 		syslog(LOG_WARNING, "SendSSDPbyebye(): truncated output");
-		l = sizeof(bufr);
+		l = sizeof(bufr) - 1;
 	}
 	n = sendto(s, bufr, l, 0, dest,
 #ifdef ENABLE_IPV6
@@ -934,6 +944,12 @@ SubmitServicesToMiniSSDPD(const char * host, unsigned short port) {
 			snprintf(ver_str, sizeof(ver_str), "%d", known_service_types[i].version);
 		l = snprintf(strbuf, sizeof(strbuf), "%s::%s%s",
 		             uuidvalue, known_service_types[i].s, ver_str);
+		if(l<0) {
+			syslog(LOG_WARNING, "SubmitServicesToMiniSSDPD: snprintf %m");
+			continue;
+		} else if((unsigned)l>=sizeof(strbuf)) {
+			l = sizeof(strbuf) - 1;
+		}
 		CODELENGTH(l, p);
 		memcpy(p, strbuf, l);
 		p += l;
@@ -943,6 +959,12 @@ SubmitServicesToMiniSSDPD(const char * host, unsigned short port) {
 		p += l;
 		l = snprintf(strbuf, sizeof(strbuf), "http://%s:%u" ROOTDESC_PATH,
 		             host, (unsigned int)port);
+		if(l<0) {
+			syslog(LOG_WARNING, "SubmitServicesToMiniSSDPD: snprintf %m");
+			continue;
+		} else if((unsigned)l>=sizeof(strbuf)) {
+			l = sizeof(strbuf) - 1;
+		}
 		CODELENGTH(l, p);
 		memcpy(p, strbuf, l);
 		p += l;

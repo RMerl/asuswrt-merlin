@@ -1,6 +1,6 @@
-/* $Id: natpmp.c,v 1.32 2012/05/27 22:36:03 nanard Exp $ */
+/* $Id: natpmp.c,v 1.33 2013/03/23 10:46:55 nanard Exp $ */
 /* MiniUPnP project
- * (c) 2007-2012 Thomas Bernard
+ * (c) 2007-2013 Thomas Bernard
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
@@ -96,7 +96,7 @@ static void FillPublicAddressResponse(unsigned char * resp, in_addr_t senderaddr
 		if(!ext_if_name || ext_if_name[0]=='\0') {
 			resp[3] = 3;	/* Network Failure (e.g. NAT box itself
 			                 * has not obtained a DHCP lease) */
-		} else if(getifaddr(ext_if_name, tmp, INET_ADDRSTRLEN) < 0) {
+		} else if(getifaddr(ext_if_name, tmp, INET_ADDRSTRLEN, NULL, NULL) < 0) {
 			syslog(LOG_ERR, "Failed to get IP for interface %s", ext_if_name);
 			resp[3] = 3;	/* Network Failure (e.g. NAT box itself
 			                 * has not obtained a DHCP lease) */

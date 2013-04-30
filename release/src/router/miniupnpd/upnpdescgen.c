@@ -1,7 +1,7 @@
-/* $Id: upnpdescgen.c,v 1.71 2012/10/04 22:08:08 nanard Exp $ */
+/* $Id: upnpdescgen.c,v 1.72 2013/03/23 10:46:55 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2013 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -1198,7 +1198,7 @@ genEventVars(int * len, const struct serviceDesc * s, const char * servns)
 					str = strcat_str(str, len, &tmplen, use_ext_ip_addr);
 				else {
 					char ext_ip_addr[INET_ADDRSTRLEN];
-					if(getifaddr(ext_if_name, ext_ip_addr, INET_ADDRSTRLEN) < 0) {
+					if(getifaddr(ext_if_name, ext_ip_addr, INET_ADDRSTRLEN, NULL, NULL) < 0) {
 						str = strcat_str(str, len, &tmplen, "0.0.0.0");
 					} else {
 						str = strcat_str(str, len, &tmplen, ext_ip_addr);

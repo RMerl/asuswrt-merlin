@@ -1,4 +1,4 @@
-/* $Id: upnputils.c,v 1.6 2013/02/06 10:50:04 nanard Exp $ */
+/* $Id: upnputils.c,v 1.7 2013/04/20 09:03:18 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2013 Thomas Bernard
@@ -114,8 +114,13 @@ get_lan_for_peer(const struct sockaddr * peer)
 		else
 		{
 			int index = -1;
-			if(get_src_for_route_to(peer, NULL, NULL, &index) < 0)
-				return NULL;
+			if(peer6->sin6_scope_id > 0)
+				index = (int)peer6->sin6_scope_id;
+			else
+			{
+				if(get_src_for_route_to(peer, NULL, NULL, &index) < 0)
+					return NULL;
+			}
 			syslog(LOG_DEBUG, "%s looking for LAN interface index=%d",
 			       "get_lan_for_peer()", index);
 			for(lan_addr = lan_addrs.lh_first;

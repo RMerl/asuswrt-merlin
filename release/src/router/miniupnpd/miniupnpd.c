@@ -1,4 +1,4 @@
-/* $Id: miniupnpd.c,v 1.173 2013/02/06 10:50:04 nanard Exp $ */
+/* $Id: miniupnpd.c,v 1.174 2013/03/23 10:46:54 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2013 Thomas Bernard
@@ -561,7 +561,8 @@ parselanaddr(struct lan_addr_s * lan_addr, const char * str)
 		/* not starting with a digit : suppose it is an interface name */
 		memcpy(lan_addr->ifname, str, n);
 		lan_addr->ifname[n] = '\0';
-		if(getifaddr(lan_addr->ifname, lan_addr->str, sizeof(lan_addr->str)) < 0)
+		if(getifaddr(lan_addr->ifname, lan_addr->str, sizeof(lan_addr->str),
+		             &lan_addr->addr, &lan_addr->mask) < 0)
 			goto parselan_error;
 	}
 	else
@@ -570,9 +571,9 @@ parselanaddr(struct lan_addr_s * lan_addr, const char * str)
 			goto parselan_error;
 		memcpy(lan_addr->str, str, n);
 		lan_addr->str[n] = '\0';
+		if(!inet_aton(lan_addr->str, &lan_addr->addr))
+			goto parselan_error;
 	}
-	if(!inet_aton(lan_addr->str, &lan_addr->addr))
-		goto parselan_error;
 	if(*p == '/')
 	{
 		const char * q = ++p;
@@ -598,7 +599,7 @@ parselanaddr(struct lan_addr_s * lan_addr, const char * str)
 			lan_addr->mask.s_addr = htonl(nbits ? (0xffffffffu << (32 - nbits)) : 0);
 		}
 	}
-	else
+	else if(lan_addr->mask.s_addr == 0)
 	{
 		/* by default, networks are /24 */
 		lan_addr->mask.s_addr = htonl(0xffffff00u);

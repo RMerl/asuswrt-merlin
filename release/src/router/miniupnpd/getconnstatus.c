@@ -1,7 +1,7 @@
-/* $Id: getconnstatus.c,v 1.5 2012/03/05 20:36:16 nanard Exp $ */
+/* $Id: getconnstatus.c,v 1.6 2013/03/23 10:46:54 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2011 Thomas Bernard
+ * (c) 2011-2013 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -35,7 +35,7 @@ get_wan_connection_status(const char * ifname)
 
 	/* we need a better implementation here.
 	 * I'm afraid it should be device specific */
-	r = getifaddr(ifname, addr, INET_ADDRSTRLEN);
+	r = getifaddr(ifname, addr, INET_ADDRSTRLEN, NULL, NULL);
 	return (r < 0) ? STATUS_DISCONNECTED : STATUS_CONNECTED;
 }
 
