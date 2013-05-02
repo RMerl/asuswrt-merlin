@@ -165,7 +165,7 @@ function show_etherstate(){
 				if (productid == "RT-N16") tmpPort = 5 - tmpPort;
 				port = "LAN "+tmpPort;
 			}
-			entry = '<tr><td>' + port + '</td><td>' + line[7] + '</td><td><span>' + state2 + '</span></td><td>'+ devicename +'</td></tr>';
+			entry = '<tr><td>' + port + '</td><td>' + (line[7] & 0xFFF) + '</td><td><span>' + state2 + '</span></td><td>'+ devicename +'</td></tr>';
 
 			if (productid == "RT-N16")
 				code_ports = entry + code_ports;
