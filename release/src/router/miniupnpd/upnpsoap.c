@@ -1,7 +1,7 @@
-/* $Id: upnpsoap.c,v 1.114 2013/02/06 12:40:25 nanard Exp $ */
+/* $Id: upnpsoap.c,v 1.115 2013/03/23 10:46:56 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2013 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -191,7 +191,7 @@ GetCommonLinkProperties(struct upnphttp * h, const char * action)
 			if(upstream_bitrate == 0) upstream_bitrate = data.baudrate;
 		}
 	}
-	if(getifaddr(ext_if_name, ext_ip_addr, INET_ADDRSTRLEN) < 0) {
+	if(getifaddr(ext_if_name, ext_ip_addr, INET_ADDRSTRLEN, NULL, NULL) < 0) {
 		status = "Down";
 	}
 	bodylen = snprintf(body, sizeof(body), resp,
@@ -269,7 +269,7 @@ GetExternalIPAddress(struct upnphttp * h, const char * action)
 	{
 		strncpy(ext_ip_addr, use_ext_ip_addr, INET_ADDRSTRLEN);
 	}
-	else if(getifaddr(ext_if_name, ext_ip_addr, INET_ADDRSTRLEN) < 0)
+	else if(getifaddr(ext_if_name, ext_ip_addr, INET_ADDRSTRLEN, NULL, NULL) < 0)
 	{
 		syslog(LOG_ERR, "Failed to get ip address for interface %s",
 			ext_if_name);
