@@ -193,6 +193,10 @@ int daemon(int nochdir, int noclose) {
 char *basename(const char *path) {
 
 	char *foo = strrchr(path, '/');
+	if (!foo)
+	{
+		return path;
+	}
 	return ++foo;
 }
 

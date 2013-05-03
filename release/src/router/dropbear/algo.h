@@ -83,9 +83,24 @@ void crypto_init();
 int have_algo(char* algo, size_t algolen, algo_type algos[]);
 void buf_put_algolist(buffer * buf, algo_type localalgos[]);
 
-algo_type * svr_buf_match_algo(buffer* buf, algo_type localalgos[],
-		int *goodguess);
-algo_type * cli_buf_match_algo(buffer* buf, algo_type localalgos[],
-		int *goodguess);
+enum kexguess2_used {
+	KEXGUESS2_LOOK,
+	KEXGUESS2_NO,
+	KEXGUESS2_YES,
+};
+
+#define KEXGUESS2_ALGO_NAME "kexguess2@matt.ucc.asn.au"
+#define KEXGUESS2_ALGO_ID 99
+
+
+algo_type * buf_match_algo(buffer* buf, algo_type localalgos[],
+		enum kexguess2_used *kexguess2, int *goodguess);
+
+#ifdef ENABLE_USER_ALGO_LIST
+int check_user_algos(const char* user_algo_list, algo_type * algos, 
+		const char *algo_desc);
+char * algolist_string(algo_type algos[]);
+#endif
+
 
 #endif /* _ALGO_H_ */

@@ -36,9 +36,8 @@ static void addportandaddress(char* spec);
 
 static void printhelp(const char * progname) {
 
-	fprintf(stderr, "Dropbear sshd v%s\n"
+	fprintf(stderr, "Dropbear server v%s https://matt.ucc.asn.au/dropbear/dropbear.html\n"
 					"Usage: %s [options]\n"
-					"Options are:\n"
 					"-b bannerfile	Display the contents of bannerfile"
 					" before user login\n"
 					"		(default: none)\n"
@@ -63,6 +62,7 @@ static void printhelp(const char * progname) {
 #if defined(ENABLE_SVR_PASSWORD_AUTH) || defined(ENABLE_SVR_PAM_AUTH)
 					"-s		Disable password logins\n"
 					"-g		Disable password logins for root\n"
+					"-B		Allow blank password logins\n"
 #endif
 #ifdef ENABLE_SVR_LOCALTCPFWD
 					"-j		Disable local port forwarding\n"
@@ -115,6 +115,7 @@ void svr_getopts(int argc, char ** argv) {
 	svr_opts.norootlogin = 0;
 	svr_opts.noauthpass = 0;
 	svr_opts.norootpass = 0;
+	svr_opts.allowblankpass = 0;
 	svr_opts.inetdmode = 0;
 	svr_opts.portcount = 0;
 	svr_opts.hostkey = NULL;
@@ -234,6 +235,9 @@ void svr_getopts(int argc, char ** argv) {
 				case 'g':
 					svr_opts.norootpass = 1;
 					break;
+				case 'B':
+					svr_opts.allowblankpass = 1;
+					break;
 #endif
 				case 'h':
 					printhelp(argv[0]);
@@ -324,8 +328,23 @@ static void addportandaddress(char* spec) {
 		/* We don't free it, it becomes part of the runopt state */
 		myspec = m_strdup(spec);
 
-		/* search for ':', that separates address and port */
-		svr_opts.ports[svr_opts.portcount] = strchr(myspec, ':');
+		if (myspec[0] == '[') {
+			myspec++;
+			svr_opts.ports[svr_opts.portcount] = strchr(myspec, ']');
+			if (svr_opts.ports[svr_opts.portcount] == NULL) {
+				/* Unmatched [ -> exit */
+				dropbear_exit("Bad listen address");
+			}
+			svr_opts.ports[svr_opts.portcount][0] = '\0';
+			svr_opts.ports[svr_opts.portcount]++;
+			if (svr_opts.ports[svr_opts.portcount][0] != ':') {
+				/* Missing port -> exit */
+				dropbear_exit("Missing port");
+			}
+		} else {
+			/* search for ':', that separates address and port */
+			svr_opts.ports[svr_opts.portcount] = strrchr(myspec, ':');
+		}
 
 		if (svr_opts.ports[svr_opts.portcount] == NULL) {
 			/* no ':' -> the whole string specifies just a port */

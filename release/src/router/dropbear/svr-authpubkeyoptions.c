@@ -143,7 +143,7 @@ int svr_add_pubkey_options(buffer *options_buf, int line_num, const char* filena
 			ses.authstate.pubkey_options->no_port_forwarding_flag = 1;
 			goto next_option;
 		}
-#ifdef ENABLE_AGENTFWD
+#ifdef ENABLE_SVR_AGENTFWD
 		if (match_option(options_buf, "no-agent-forwarding") == DROPBEAR_SUCCESS) {
 			dropbear_log(LOG_WARNING, "Agent forwarding disabled.");
 			ses.authstate.pubkey_options->no_agent_forwarding_flag = 1;

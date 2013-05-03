@@ -98,8 +98,7 @@ static void cli_dropbear_exit(int exitcode, const char* format, va_list param) {
 	}
 
 	/* Do the cleanup first, since then the terminal will be reset */
-	cli_session_cleanup();
-	common_session_cleanup();
+	session_cleanup();
 
 	_dropbear_log(LOG_INFO, fmtbuf, param);
 

@@ -49,13 +49,12 @@ static void add_netcat(const char *str);
 
 static void printhelp() {
 
-	fprintf(stderr, "Dropbear client v%s\n"
+	fprintf(stderr, "Dropbear SSH client v%s https://matt.ucc.asn.au/dropbear/dropbear.html\n"
 #ifdef ENABLE_CLI_MULTIHOP
 					"Usage: %s [options] [user@]host[/port][,[user@]host/port],...] [command]\n"
 #else
 					"Usage: %s [options] [user@]host[/port] [command]\n"
 #endif
-					"Options are:\n"
 					"-p <remoteport>\n"
 					"-l <username>\n"
 					"-t    Allocate a pty\n"
@@ -63,7 +62,8 @@ static void printhelp() {
 					"-N    Don't run a remote command\n"
 					"-f    Run in background after auth\n"
 					"-y    Always accept remote host key if unknown\n"
-					"-s    Request a subsystem (use for sftp)\n"
+					"-y -y Don't perform any remote host key checking (caution)\n"
+					"-s    Request a subsystem (use by external sftp)\n"
 #ifdef ENABLE_CLI_PUBKEY_AUTH
 					"-i <identityfile>   (multiple allowed)\n"
 #endif
@@ -85,6 +85,10 @@ static void printhelp() {
 #endif				
 #ifdef ENABLE_CLI_PROXYCMD
 					"-J <proxy_program> Use program pipe rather than TCP connection\n"
+#endif
+#ifdef ENABLE_USER_ALGO_LIST
+					"-c <cipher list> Specify preferred ciphers ('-c help' to list options)\n"
+					"-m <MAC list> Specify preferred MACs for packet verification (or '-m help')\n"
 #endif
 #ifdef DEBUG_TRACE
 					"-v    verbose (compiled with DEBUG_TRACE)\n"
@@ -127,6 +131,7 @@ void cli_getopts(int argc, char ** argv) {
 	cli_opts.backgrounded = 0;
 	cli_opts.wantpty = 9; /* 9 means "it hasn't been touched", gets set later */
 	cli_opts.always_accept_key = 0;
+	cli_opts.no_hostkey_check = 0;
 	cli_opts.is_subsystem = 0;
 #ifdef ENABLE_CLI_PUBKEY_AUTH
 	cli_opts.privkeys = list_new();
@@ -140,6 +145,7 @@ void cli_getopts(int argc, char ** argv) {
 #endif
 #ifdef ENABLE_CLI_AGENTFWD
 	cli_opts.agent_fwd = 0;
+	cli_opts.agent_fd = -1;
 	cli_opts.agent_keys_loaded = 0;
 #endif
 #ifdef ENABLE_CLI_PROXYCMD
@@ -147,6 +153,10 @@ void cli_getopts(int argc, char ** argv) {
 #endif
 #ifndef DISABLE_ZLIB
 	opts.enable_compress = 1;
+#endif
+#ifdef ENABLE_USER_ALGO_LIST
+	opts.cipher_list = NULL;
+	opts.mac_list = NULL;
 #endif
 	/* not yet
 	opts.ipv4 = 1;
@@ -205,6 +215,10 @@ void cli_getopts(int argc, char ** argv) {
 
 			switch (argv[i][1]) {
 				case 'y': /* always accept the remote hostkey */
+					if (cli_opts.always_accept_key) {
+						// twice means no checking at all
+						cli_opts.no_hostkey_check = 1;
+					}
 					cli_opts.always_accept_key = 1;
 					break;
 				case 'p': /* remoteport */
@@ -282,6 +296,14 @@ void cli_getopts(int argc, char ** argv) {
 					cli_opts.agent_fwd = 1;
 					break;
 #endif
+#ifdef ENABLE_USER_ALGO_LIST
+				case 'c':
+					next = &opts.cipher_list;
+					break;
+				case 'm':
+					next = &opts.mac_list;
+					break;
+#endif
 #ifdef DEBUG_TRACE
 				case 'v':
 					debug_trace = 1;
@@ -289,8 +311,10 @@ void cli_getopts(int argc, char ** argv) {
 #endif
 				case 'F':
 				case 'e':
+#ifndef ENABLE_USER_ALGO_LIST
 				case 'c':
 				case 'm':
+#endif
 				case 'D':
 #ifndef ENABLE_CLI_REMOTETCPFWD
 				case 'R':
@@ -349,6 +373,10 @@ void cli_getopts(int argc, char ** argv) {
 	}
 
 	/* And now a few sanity checks and setup */
+
+#ifdef ENABLE_USER_ALGO_LIST
+	parse_ciphers_macs();
+#endif
 
 	if (host_arg == NULL) {
 		printhelp();
@@ -439,20 +467,31 @@ multihop_passthrough_args() {
 	int total;
 	unsigned int len = 0;
 	m_list_elem *iter;
-	/* Fill out -i and -W options that make sense for all
+	/* Fill out -i, -y, -W options that make sense for all
 	 * the intermediate processes */
 	for (iter = cli_opts.privkeys->first; iter; iter = iter->next)
 	{
 		sign_key * key = (sign_key*)iter->item;
 		len += 3 + strlen(key->filename);
 	}
-	len += 20; // space for -W <size>, terminator.
+	len += 30; // space for -W <size>, terminator.
 	ret = m_malloc(len);
 	total = 0;
 
+	if (cli_opts.no_hostkey_check)
+	{
+		int written = snprintf(ret+total, len-total, "-y -y ");
+		total += written;
+	}
+	else if (cli_opts.always_accept_key)
+	{
+		int written = snprintf(ret+total, len-total, "-y ");
+		total += written;
+	}
+
 	if (opts.recv_window != DEFAULT_RECV_WINDOW)
 	{
-		int written = snprintf(ret+total, len-total, "-W %d", opts.recv_window);
+		int written = snprintf(ret+total, len-total, "-W %d ", opts.recv_window);
 		total += written;
 	}
 
@@ -460,9 +499,15 @@ multihop_passthrough_args() {
 	{
 		sign_key * key = (sign_key*)iter->item;
 		const size_t size = len - total;
-		int written = snprintf(ret+total, size, "-i %s", key->filename);
+		int written = snprintf(ret+total, size, "-i %s ", key->filename);
 		dropbear_assert((unsigned int)written < size);
 		total += written;
+	}
+
+	/* if args were passed, total will be not zero, and it will have a space at the end, so remove that */
+	if (total > 0) 
+	{
+		total--;
 	}
 
 	return ret;
@@ -565,7 +610,11 @@ static void parse_hostname(const char* orighostarg) {
 		cli_opts.username = m_strdup(cli_opts.own_user);
 	}
 
-	port = strchr(cli_opts.remotehost, '/');
+	port = strchr(cli_opts.remotehost, '%');
+	if (!port)  {
+		// legacy separator
+		port = strchr(cli_opts.remotehost, '/');
+	}
 	if (port) {
 		*port = '\0';
 		cli_opts.remoteport = port+1;

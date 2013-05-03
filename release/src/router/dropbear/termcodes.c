@@ -107,8 +107,14 @@ const struct TermCode termcodes[MAX_TERMCODE+1] = {
 #else
 		{0, 0},
 #endif
-		{0, 0}, /* 42 */
+		/* IUTF8 isn't standardised in rfc4254 but is likely soon.
+		 * Implemented by linux and darwin */
+#ifdef IUTF8
+		{IUTF8, TERMCODE_INPUT},
+#else
 		{0, 0},
+#endif
+		{0, 0}, /* 43 */
 		{0, 0},
 		{0, 0},
 		{0, 0},

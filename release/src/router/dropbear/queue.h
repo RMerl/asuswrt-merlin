@@ -36,7 +36,7 @@ struct Queue {
 
 	struct Link* head;
 	struct Link* tail;
-	unsigned int count; /* safety value */
+	unsigned int count;
 
 };
 

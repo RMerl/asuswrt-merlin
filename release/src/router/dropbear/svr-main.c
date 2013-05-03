@@ -254,6 +254,8 @@ void main_noinetd() {
 				goto out;
 			}
 
+			seedrandom();
+
 			if (pipe(childpipe) < 0) {
 				TRACE(("error creating child pipe"))
 				goto out;
@@ -267,8 +269,11 @@ void main_noinetd() {
 			if (fork_ret < 0) {
 				dropbear_log(LOG_WARNING, "Error forking: %s", strerror(errno));
 				goto out;
+			}
 
-			} else if (fork_ret > 0) {
+			addrandom((void*)&fork_ret, sizeof(fork_ret));
+			
+			if (fork_ret > 0) {
 
 				/* parent */
 				childpipes[conn_idx] = childpipe[0];

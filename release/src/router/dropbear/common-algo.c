@@ -24,6 +24,7 @@
  * SOFTWARE. */
 
 #include "algo.h"
+#include "session.h"
 #include "dbutil.h"
 
 /* This file (algo.c) organises the ciphers which can be used, and is used to
@@ -45,8 +46,8 @@ static int void_start(int cipher, const unsigned char *IV,
 
 /* Mappings for ciphers, parameters are
    {&cipher_desc, keysize, blocksize} */
-/* NOTE: if keysize > 2*SHA1_HASH_SIZE, code such as hashkeys()
-   needs revisiting */
+
+/* Remember to add new ciphers/hashes to regciphers/reghashes too */
 
 #ifdef DROPBEAR_AES256
 static const struct dropbear_cipher dropbear_aes256 = 
@@ -106,6 +107,14 @@ static const struct dropbear_hash dropbear_sha1 =
 static const struct dropbear_hash dropbear_sha1_96 = 
 	{&sha1_desc, 20, 12};
 #endif
+#ifdef DROPBEAR_SHA2_256_HMAC
+static const struct dropbear_hash dropbear_sha2_256 = 
+	{&sha256_desc, 32, 32};
+#endif
+#ifdef DROPBEAR_SHA2_512_HMAC
+static const struct dropbear_hash dropbear_sha2_512 =
+	{&sha512_desc, 64, 64};
+#endif
 #ifdef DROPBEAR_MD5_HMAC
 static const struct dropbear_hash dropbear_md5 = 
 	{&md5_desc, 16, 16};
@@ -152,10 +161,19 @@ algo_type sshciphers[] = {
 #ifdef DROPBEAR_BLOWFISH
 	{"blowfish-cbc", 0, &dropbear_blowfish, 1, &dropbear_mode_cbc},
 #endif
+#ifdef DROPBEAR_NONE_CIPHER
+	{"none", 0, (void*)&dropbear_nocipher, 1, &dropbear_mode_none},
+#endif
 	{NULL, 0, NULL, 0, NULL}
 };
 
 algo_type sshhashes[] = {
+#ifdef DROPBEAR_SHA2_256_HMAC
+	{"hmac-sha2-256", 0, &dropbear_sha2_256, 1, NULL},
+#endif
+#ifdef DROPBEAR_SHA2_512_HMAC
+	{"hmac-sha2-512", 0, &dropbear_sha2_512, 1, NULL},
+#endif
 #ifdef DROPBEAR_SHA1_96_HMAC
 	{"hmac-sha1-96", 0, &dropbear_sha1_96, 1, NULL},
 #endif
@@ -163,7 +181,10 @@ algo_type sshhashes[] = {
 	{"hmac-sha1", 0, &dropbear_sha1, 1, NULL},
 #endif
 #ifdef DROPBEAR_MD5_HMAC
-	{"hmac-md5", 0, &dropbear_md5, 1, NULL},
+	{"hmac-md5", 0, (void*)&dropbear_md5, 1, NULL},
+#endif
+#ifdef DROPBEAR_NONE_INTEGRITY
+	{"none", 0, (void*)&dropbear_nohash, 1, NULL},
 #endif
 	{NULL, 0, NULL, 0, NULL}
 };
@@ -195,6 +216,9 @@ algo_type sshhostkey[] = {
 algo_type sshkex[] = {
 	{"diffie-hellman-group1-sha1", DROPBEAR_KEX_DH_GROUP1, NULL, 1, NULL},
 	{"diffie-hellman-group14-sha1", DROPBEAR_KEX_DH_GROUP14, NULL, 1, NULL},
+#ifdef USE_KEXGUESS2
+	{KEXGUESS2_ALGO_NAME, KEXGUESS2_ALGO_ID, NULL, 1, NULL},
+#endif
 	{NULL, 0, NULL, 0, NULL}
 };
 
@@ -224,6 +248,12 @@ void crypto_init() {
 		&sha1_desc,
 #ifdef DROPBEAR_MD5_HMAC
 		&md5_desc,
+#endif
+#ifdef DROPBEAR_SHA2_256_HMAC
+		&sha256_desc,
+#endif
+#ifdef DROPBEAR_SHA2_512_HMAC
+		&sha512_desc,
 #endif
 		NULL
 	};	
@@ -260,8 +290,6 @@ int have_algo(char* algo, size_t algolen, algo_type algos[]) {
 	return DROPBEAR_FAILURE;
 }
 
-
-
 /* Output a comma separated list of algorithms to a buffer */
 void buf_put_algolist(buffer * buf, algo_type localalgos[]) {
 
@@ -282,3 +310,232 @@ void buf_put_algolist(buffer * buf, algo_type localalgos[]) {
 	buf_putstring(buf, algolist->data, algolist->len);
 	buf_free(algolist);
 }
+
+/* match the first algorithm in the comma-separated list in buf which is
+ * also in localalgos[], or return NULL on failure.
+ * (*goodguess) is set to 1 if the preferred client/server algos match,
+ * 0 otherwise. This is used for checking if the kexalgo/hostkeyalgos are
+ * guessed correctly */
+algo_type * buf_match_algo(buffer* buf, algo_type localalgos[],
+		enum kexguess2_used *kexguess2, int *goodguess)
+{
+
+	unsigned char * algolist = NULL;
+	const unsigned char *remotenames[MAX_PROPOSED_ALGO], *localnames[MAX_PROPOSED_ALGO];
+	unsigned int len;
+	unsigned int remotecount, localcount, clicount, servcount, i, j;
+	algo_type * ret = NULL;
+	const unsigned char **clinames, **servnames;
+
+	if (goodguess) {
+		*goodguess = 0;
+	}
+
+	/* get the comma-separated list from the buffer ie "algo1,algo2,algo3" */
+	algolist = buf_getstring(buf, &len);
+	TRACE(("buf_match_algo: %s", algolist))
+	if (len > MAX_PROPOSED_ALGO*(MAX_NAME_LEN+1)) {
+		goto out;
+	}
+
+	/* remotenames will contain a list of the strings parsed out */
+	/* We will have at least one string (even if it's just "") */
+	remotenames[0] = algolist;
+	remotecount = 1;
+	for (i = 0; i < len; i++) {
+		if (algolist[i] == '\0') {
+			/* someone is trying something strange */
+			goto out;
+		}
+		if (algolist[i] == ',') {
+			algolist[i] = '\0';
+			remotenames[remotecount] = &algolist[i+1];
+			remotecount++;
+		}
+		if (remotecount >= MAX_PROPOSED_ALGO) {
+			break;
+		}
+	}
+	if (kexguess2 && *kexguess2 == KEXGUESS2_LOOK) {
+		for (i = 0; i < remotecount; i++)
+		{
+			if (strcmp(remotenames[i], KEXGUESS2_ALGO_NAME) == 0) {
+				*kexguess2 = KEXGUESS2_YES;
+				break;
+			}
+		}
+		if (*kexguess2 == KEXGUESS2_LOOK) {
+			*kexguess2 = KEXGUESS2_NO;
+		}
+	}
+
+	for (i = 0; localalgos[i].name != NULL; i++) {
+		if (localalgos[i].usable) {
+			localnames[i] = localalgos[i].name;
+		} else {
+			localnames[i] = NULL;
+		}
+	}
+	localcount = i;
+
+	if (IS_DROPBEAR_SERVER) {
+		clinames = remotenames;
+		clicount = remotecount;
+		servnames = localnames;
+		servcount = localcount;
+	} else {
+		clinames = localnames;
+		clicount = localcount;
+		servnames = remotenames;
+		servcount = remotecount;
+	}
+
+	/* iterate and find the first match */
+	for (i = 0; i < clicount; i++) {
+		for (j = 0; j < servcount; j++) {
+			if (!(servnames[j] && clinames[i])) {
+				// unusable algos are NULL
+				continue;
+			}
+			if (strcmp(servnames[j], clinames[i]) == 0) {
+				/* set if it was a good guess */
+				if (goodguess && kexguess2) {
+					if (*kexguess2 == KEXGUESS2_YES) {
+						if (i == 0) {
+							*goodguess = 1;
+						}
+
+					} else {
+						if (i == 0 && j == 0) {
+							*goodguess = 1;
+						}
+					}
+				}
+				/* set the algo to return */
+				if (IS_DROPBEAR_SERVER) {
+					ret = &localalgos[j];
+				} else {
+					ret = &localalgos[i];
+				}
+				goto out;
+			}
+		}
+	}
+
+out:
+	m_free(algolist);
+	return ret;
+}
+
+#ifdef DROPBEAR_NONE_CIPHER
+
+void
+set_algo_usable(algo_type algos[], const char * algo_name, int usable)
+{
+	algo_type *a;
+	for (a = algos; a->name != NULL; a++)
+	{
+		if (strcmp(a->name, algo_name) == 0)
+		{
+			a->usable = usable;
+			return;
+		}
+	}
+}
+
+int
+get_algo_usable(algo_type algos[], const char * algo_name)
+{
+	algo_type *a;
+	for (a = algos; a->name != NULL; a++)
+	{
+		if (strcmp(a->name, algo_name) == 0)
+		{
+			return a->usable;
+		}
+	}
+	return 0;
+}
+
+#endif // DROPBEAR_NONE_CIPHER
+
+#ifdef ENABLE_USER_ALGO_LIST
+
+char *
+algolist_string(algo_type algos[])
+{
+	char *ret_list;
+	buffer *b = buf_new(200);
+	buf_put_algolist(b, algos);
+	buf_setpos(b, b->len);
+	buf_putbyte(b, '\0');
+	buf_setpos(b, 4);
+	ret_list = m_strdup(buf_getptr(b, b->len - b->pos));
+	buf_free(b);
+	return ret_list;
+}
+
+static algo_type*
+check_algo(const char* algo_name, algo_type *algos)
+{
+	algo_type *a;
+	for (a = algos; a->name != NULL; a++)
+	{
+		if (strcmp(a->name, algo_name) == 0)
+		{
+			return a;
+		}
+	}
+
+	return NULL;
+}
+
+static void
+try_add_algo(const char *algo_name, algo_type *algos, 
+		const char *algo_desc, algo_type * new_algos, int *num_ret)
+{
+	algo_type *match_algo = check_algo(algo_name, algos);
+	if (!match_algo)
+	{
+		dropbear_log(LOG_WARNING, "This Dropbear program does not support '%s' %s algorithm", algo_name, algo_desc);
+		return;
+	}
+
+	new_algos[*num_ret] = *match_algo;
+	(*num_ret)++;
+}
+
+/* Checks a user provided comma-separated algorithm list for available
+ * options. Any that are not acceptable are removed in-place. Returns the
+ * number of valid algorithms. */
+int
+check_user_algos(const char* user_algo_list, algo_type * algos, 
+		const char *algo_desc)
+{
+	algo_type new_algos[MAX_PROPOSED_ALGO];
+	/* this has two passes. first we sweep through the given list of
+	 * algorithms and mark them as usable=2 in the algo_type[] array... */
+	int num_ret = 0;
+	char *work_list = m_strdup(user_algo_list);
+	char *last_name = work_list;
+	char *c;
+	for (c = work_list; *c; c++)
+	{
+		if (*c == ',')
+		{
+			*c = '\0';
+			try_add_algo(last_name, algos, algo_desc, new_algos, &num_ret);
+			c++;
+			last_name = c;
+		}
+	}
+	try_add_algo(last_name, algos, algo_desc, new_algos, &num_ret);
+	m_free(work_list);
+
+	new_algos[num_ret].name = NULL;
+
+	/* Copy one more as a blank delimiter */
+	memcpy(algos, new_algos, sizeof(*new_algos) * (num_ret+1));
+	return num_ret;
+}
+#endif // ENABLE_USER_ALGO_LIST

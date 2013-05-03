@@ -40,6 +40,7 @@
 
 /*RCSID("OpenBSD: xmalloc.c,v 1.16 2001/07/23 18:21:46 stevesk Exp ");*/
 
+#define _GNU_SOURCE
 #include "includes.h"
 #include "scpmisc.h"
 

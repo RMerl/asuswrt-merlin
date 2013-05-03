@@ -34,24 +34,31 @@
 #include "runopts.h"
 #include "auth.h"
 
-#ifdef ENABLE_SVR_REMOTETCPFWD
+static void send_msg_request_failure();
+
+static void send_msg_request_failure() {
+	CHECKCLEARTOWRITE();
+	buf_putbyte(ses.writepayload, SSH_MSG_REQUEST_FAILURE);
+	encrypt_packet();
+}
+
+#ifndef ENABLE_SVR_REMOTETCPFWD
+
+/* This is better than SSH_MSG_UNIMPLEMENTED */
+void recv_msg_global_request_remotetcp() {
+		TRACE(("recv_msg_global_request_remotetcp: remote tcp forwarding not compiled in"))
+		send_msg_request_failure();
+}
+
+/* */
+#endif /* !ENABLE_SVR_REMOTETCPFWD */
 
 static void send_msg_request_success();
-static void send_msg_request_failure();
 static int svr_cancelremotetcp();
 static int svr_remotetcpreq();
 static int newtcpdirect(struct Channel * channel);
 
-
-const struct ChanType svr_chan_tcpdirect = {
-	1, /* sepfds */
-	"direct-tcpip",
-	newtcpdirect, /* init */
-	NULL, /* checkclose */
-	NULL, /* reqhandler */
-	NULL /* closehandler */
-};
-
+#ifdef ENABLE_SVR_REMOTETCPFWD
 static const struct ChanType svr_chan_tcpremote = {
 	1, /* sepfds */
 	"forwarded-tcpip",
@@ -117,14 +124,6 @@ static void send_msg_request_success() {
 
 }
 
-static void send_msg_request_failure() {
-
-	CHECKCLEARTOWRITE();
-	buf_putbyte(ses.writepayload, SSH_MSG_REQUEST_FAILURE);
-	encrypt_packet();
-
-}
-
 static int matchtcp(void* typedata1, void* typedata2) {
 
 	const struct TCPListener *info1 = (struct TCPListener*)typedata1;
@@ -173,14 +172,14 @@ out:
 static int svr_remotetcpreq() {
 
 	int ret = DROPBEAR_FAILURE;
-	unsigned char * bindaddr = NULL;
+	unsigned char * request_addr = NULL;
 	unsigned int addrlen;
 	struct TCPListener *tcpinfo = NULL;
 	unsigned int port;
 
 	TRACE(("enter remotetcpreq"))
 
-	bindaddr = buf_getstring(ses.payload, &addrlen);
+	request_addr = buf_getstring(ses.payload, &addrlen);
 	if (addrlen > MAX_IP_LEN) {
 		TRACE(("addr len too long: %d", addrlen))
 		goto out;
@@ -210,12 +209,15 @@ static int svr_remotetcpreq() {
 	tcpinfo->chantype = &svr_chan_tcpremote;
 	tcpinfo->tcp_type = forwarded;
 
-	if (!opts.listen_fwd_all || (strcmp(bindaddr, "localhost") == 0) ) {
+	tcpinfo->request_listenaddr = request_addr;
+	if (!opts.listen_fwd_all || (strcmp(request_addr, "localhost") == 0) ) {
         // NULL means "localhost only"
-		m_free(bindaddr);
-		bindaddr = NULL;
+		tcpinfo->listenaddr = NULL;
 	}
-	tcpinfo->listenaddr = bindaddr;
+	else
+	{
+		tcpinfo->listenaddr = request_addr;
+	}
 
 	ret = listen_tcpfwd(tcpinfo);
 
@@ -223,12 +225,25 @@ out:
 	if (ret == DROPBEAR_FAILURE) {
 		/* we only free it if a listener wasn't created, since the listener
 		 * has to remember it if it's to be cancelled */
-		m_free(bindaddr);
+		m_free(request_addr);
 		m_free(tcpinfo);
 	}
 	TRACE(("leave remotetcpreq"))
 	return ret;
 }
+
+#endif /* ENABLE_SVR_REMOTETCPFWD */
+
+#ifdef ENABLE_SVR_LOCALTCPFWD
+
+const struct ChanType svr_chan_tcpdirect = {
+	1, /* sepfds */
+	"direct-tcpip",
+	newtcpdirect, /* init */
+	NULL, /* checkclose */
+	NULL, /* reqhandler */
+	NULL /* closehandler */
+};
 
 /* Called upon creating a new direct tcp channel (ie we connect out to an
  * address */
@@ -294,4 +309,4 @@ out:
 	return err;
 }
 
-#endif
+#endif /* ENABLE_SVR_LOCALTCPFWD */

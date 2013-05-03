@@ -35,14 +35,12 @@ void startsyslog();
 
 #ifdef __GNUC__
 #define ATTRIB_PRINTF(fmt,args) __attribute__((format(printf, fmt, args))) 
+#define ATTRIB_NORETURN __attribute__((noreturn))
+#define ATTRIB_SENTINEL __attribute__((sentinel))
 #else
 #define ATTRIB_PRINTF(fmt,args)
-#endif
-
-#ifdef __GNUC__
-#define ATTRIB_NORETURN __attribute__((noreturn))
-#else
 #define ATTRIB_NORETURN
+#define ATTRIB_SENTINEL
 #endif
 
 extern void (*_dropbear_exit)(int exitcode, const char* format, va_list param) ATTRIB_NORETURN;
@@ -57,6 +55,7 @@ void fail_assert(const char* expr, const char* file, int line) ATTRIB_NORETURN;
 
 #ifdef DEBUG_TRACE
 void dropbear_trace(const char* format, ...) ATTRIB_PRINTF(1,2);
+void dropbear_trace2(const char* format, ...) ATTRIB_PRINTF(1,2);
 void printhex(const char * label, const unsigned char * buf, int len);
 extern int debug_trace;
 #endif

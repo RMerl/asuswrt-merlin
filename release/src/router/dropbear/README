@@ -1,4 +1,5 @@
 This is Dropbear, a smallish SSH 2 server and client.
+https://matt.ucc.asn.au/dropbear/dropbear.html
 
 INSTALL has compilation instructions.
 
@@ -27,8 +28,7 @@ ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAwVa6M6cGVmUcLl2cFzkxEoJd06Ub4bVDsYrWvXhvUV+Z
 You must make sure that ~/.ssh, and the key file, are only writable by the
 user. Beware of editors that split the key into multiple lines.
 
-NOTE: Dropbear ignores authorized_keys options such as those described in the
-OpenSSH sshd manpage, and will not allow a login for these keys. 
+Dropbear supports some options for authorized_keys entries, see the manpage.
 
 ============================================================================
 

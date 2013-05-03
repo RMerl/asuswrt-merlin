@@ -42,18 +42,27 @@ static void checkhostkey(unsigned char* keyblob, unsigned int keybloblen);
 #define MAX_KNOWNHOSTS_LINE 4500
 
 void send_msg_kexdh_init() {
+	TRACE(("send_msg_kexdh_init()"))	
+	if ((cli_ses.dh_e && cli_ses.dh_x 
+				&& cli_ses.dh_val_algo == ses.newkeys->algo_kex)) {
+		TRACE(("reusing existing dh_e from first_kex_packet_follows"))
+	} else {
+		if (!cli_ses.dh_e || !cli_ses.dh_e) {
+			cli_ses.dh_e = (mp_int*)m_malloc(sizeof(mp_int));
+			cli_ses.dh_x = (mp_int*)m_malloc(sizeof(mp_int));
+			m_mp_init_multi(cli_ses.dh_e, cli_ses.dh_x, NULL);
+		}
 
-	cli_ses.dh_e = (mp_int*)m_malloc(sizeof(mp_int));
-	cli_ses.dh_x = (mp_int*)m_malloc(sizeof(mp_int));
-	m_mp_init_multi(cli_ses.dh_e, cli_ses.dh_x, NULL);
-
-	gen_kexdh_vals(cli_ses.dh_e, cli_ses.dh_x);
+		gen_kexdh_vals(cli_ses.dh_e, cli_ses.dh_x);
+		cli_ses.dh_val_algo = ses.newkeys->algo_kex;
+	}
 
 	CHECKCLEARTOWRITE();
 	buf_putbyte(ses.writepayload, SSH_MSG_KEXDH_INIT);
 	buf_putmpint(ses.writepayload, cli_ses.dh_e);
 	encrypt_packet();
-	ses.requirenext = SSH_MSG_KEXDH_REPLY;
+	ses.requirenext[0] = SSH_MSG_KEXDH_REPLY;
+	ses.requirenext[1] = SSH_MSG_KEXINIT;
 }
 
 /* Handle a diffie-hellman key exchange reply. */
@@ -98,6 +107,7 @@ void recv_msg_kexdh_reply() {
 	mp_clear_multi(cli_ses.dh_e, cli_ses.dh_x, NULL);
 	m_free(cli_ses.dh_e);
 	m_free(cli_ses.dh_x);
+	cli_ses.dh_val_algo = DROPBEAR_KEX_NONE;
 
 	if (buf_verify(ses.payload, hostkey, ses.hash, SHA1_HASH_SIZE) 
 			!= DROPBEAR_SUCCESS) {
@@ -108,7 +118,8 @@ void recv_msg_kexdh_reply() {
 	hostkey = NULL;
 
 	send_msg_newkeys();
-	ses.requirenext = SSH_MSG_NEWKEYS;
+	ses.requirenext[0] = SSH_MSG_NEWKEYS;
+	ses.requirenext[1] = 0;
 	TRACE(("leave recv_msg_kexdh_init"))
 }
 
@@ -217,6 +228,11 @@ static void checkhostkey(unsigned char* keyblob, unsigned int keybloblen) {
 	buffer * line = NULL;
 	int ret;
 
+	if (cli_opts.no_hostkey_check) {
+		fprintf(stderr, "Caution, skipping hostkey check for %s\n", cli_opts.remotehost);
+		return;
+	}
+
 	hostsfile = open_known_hosts_file(&readonly);
 	if (!hostsfile)	{
 		ask_to_confirm(keyblob, keybloblen);
@@ -246,7 +262,6 @@ static void checkhostkey(unsigned char* keyblob, unsigned int keybloblen) {
 		/* Compare hostnames */
 		if (strncmp(cli_opts.remotehost, buf_getptr(line, hostlen),
 					hostlen) != 0) {
-			TRACE(("hosts don't match"))
 			continue;
 		}
 
@@ -309,7 +324,6 @@ static void checkhostkey(unsigned char* keyblob, unsigned int keybloblen) {
 		buf_putbytes(line, algoname, algolen);
 		buf_putbyte(line, ' ');
 		len = line->size - line->pos;
-		TRACE(("keybloblen %d, len %d", keybloblen, len))
 		/* The only failure with base64 is buffer_overflow, but buf_getwriteptr
 		 * will die horribly in the case anyway */
 		base64_encode(keyblob, keybloblen, buf_getwriteptr(line, len), &len);

@@ -80,6 +80,9 @@ much traffic. */
  * to a remote TCP-forwarded connection */
 #define ENABLE_CLI_NETCAT
 
+/* Whether to support "-c" and "-m" flags to choose ciphers/MACs at runtime */
+#define ENABLE_USER_ALGO_LIST
+
 /* Encryption - at least one required.
  * Protocol RFC requires 3DES and recommends AES128 for interoperability.
  * Including multiple keysize variants the same cipher 
@@ -97,12 +100,18 @@ much traffic. */
  * size and is recommended for most cases */
 #define DROPBEAR_ENABLE_CTR_MODE
 
+/* You can compile with no encryption if you want. In some circumstances
+ * this could be safe security-wise, though make sure you know what
+ * you're doing. Anyone can see everything that goes over the wire, so
+ * the only safe auth method is public key. */
+/* #define DROPBEAR_NONE_CIPHER */
+
 /* Message Integrity - at least one required.
  * Protocol RFC requires sha1 and recommends sha1-96.
- * sha1-96 may be of use for slow links, as it has a smaller overhead.
+ * sha1-96 is of use for slow links as it has a smaller overhead.
  *
- * Note: there's no point disabling sha1 to save space, since it's used
- * for the random number generator and public-key cryptography anyway.
+ * There's no reason to disable sha1 or sha1-96 to save space since it's
+ * used for the random number generator and public-key cryptography anyway.
  * Disabling it here will just stop it from being used as the integrity portion
  * of the ssh protocol.
  *
@@ -111,7 +120,14 @@ much traffic. */
  * which are not the standard form. */
 #define DROPBEAR_SHA1_HMAC
 #define DROPBEAR_SHA1_96_HMAC
+/*#define DROPBEAR_SHA2_256_HMAC*/
+/*#define DROPBEAR_SHA2_512_HMAC*/
 #define DROPBEAR_MD5_HMAC
+
+/* You can also disable integrity. Don't bother disabling this if you're
+ * still using a cipher, it's relatively cheap. If you disable this it's dead
+ * simple to run arbitrary commands on the remote host. Beware. */
+/* #define DROPBEAR_NONE_INTEGRITY */
 
 /* Hostkey/public key algorithms - at least one required, these are used
  * for hostkey as well as for verifying signatures with pubkey auth.
@@ -125,13 +141,6 @@ much traffic. */
  * signing operations slightly slower. */
 #define RSA_BLINDING
 
-/* Define DSS_PROTOK to use PuTTY's method of generating the value k for dss,
- * rather than just from the random byte source. Undefining this will save you
- * ~4k in binary size with static uclibc, but your DSS hostkey could be exposed
- * if the random number source isn't good. It happened to Sony. 
- * On systems with a decent random source this isn't required. */
-/* #define DSS_PROTOK */
-
 /* Control the memory/performance/compression tradeoff for zlib.
  * Set windowBits=8 for least memory usage, see your system's
  * zlib.h for full details.
@@ -144,7 +153,7 @@ much traffic. */
 #endif
 
 /* Whether to do reverse DNS lookups. */
-#define DO_HOST_LOOKUP
+//#define DO_HOST_LOOKUP
 
 /* Whether to print the message of the day (MOTD). This doesn't add much code
  * size */
@@ -167,7 +176,7 @@ much traffic. */
 
 #define ENABLE_SVR_PASSWORD_AUTH
 /* PAM requires ./configure --enable-pam */
-/*#define ENABLE_SVR_PAM_AUTH*/
+//#define ENABLE_SVR_PAM_AUTH
 #define ENABLE_SVR_PUBKEY_AUTH
 
 /* Whether to take public key options in 
@@ -175,12 +184,6 @@ much traffic. */
 #ifdef ENABLE_SVR_PUBKEY_AUTH
 #define ENABLE_SVR_PUBKEY_OPTIONS
 #endif
-
-/* Define this to allow logging in to accounts that have no password specified.
- * Public key logins are allowed for blank-password accounts regardless of this
- * setting.  PAM is not affected by this setting, it uses the normal pam.d
- * settings ('nullok' option) */
-/* #define ALLOW_BLANK_PASSWORD */
 
 #define ENABLE_CLI_PASSWORD_AUTH
 #define ENABLE_CLI_PUBKEY_AUTH
@@ -201,20 +204,21 @@ much traffic. */
  * return the password on standard output */
 /*#define ENABLE_CLI_ASKPASS_HELPER*/
 
-/* Random device to use - define either DROPBEAR_RANDOM_DEV or
- * DROPBEAR_PRNGD_SOCKET.
- * DROPBEAR_RANDOM_DEV is recommended on hosts with a good /dev/(u)random,
- * otherwise use run prngd (or egd if you want), specifying the socket. 
- * The device will be queried for a few dozen bytes of seed a couple of times
- * per session (or more for very long-lived sessions). */
+/* Send a real auth request first rather than requesting a list of available methods.
+ * It saves a network round trip at login but prevents immediate login to
+ * accounts with no password, and might be rejected by some strict servers (none
+ * encountered yet) - hence it isn't enabled by default. */
+/* #define CLI_IMMEDIATE_AUTH */
 
-/* We'll use /dev/urandom by default, since /dev/random is too much hassle.
- * If system developers aren't keeping seeds between boots nor getting
- * any entropy from somewhere it's their own fault. */
-#define DROPBEAR_RANDOM_DEV "/dev/urandom"
 
-/* prngd must be manually set up to produce output */
+/* Source for randomness. This must be able to provide hundreds of bytes per SSH
+ * connection without blocking. In addition /dev/random is used for seeding
+ * rsa/dss key generation */
+#define DROPBEAR_URANDOM_DEV "/dev/urandom"
+
+/* Set this to use PRNGD or EGD instead of /dev/urandom or /dev/random */
 /*#define DROPBEAR_PRNGD_SOCKET "/var/run/dropbear-rng"*/
+
 
 /* Specify the number of clients we will allow to be connected but
  * not yet authenticated. After this limit, connections are rejected */
@@ -250,7 +254,7 @@ much traffic. */
  * OpenSSH), set the path below. If the path isn't defined, sftp will not
  * be enabled */
 #ifndef SFTPSERVER_PATH
-#define SFTPSERVER_PATH "/opt/libexec/sftp-server"
+#define SFTPSERVER_PATH "/usr/libexec/sftp-server"
 #endif
 
 /* This is used by the scp binary when used as a client binary. If you're

@@ -156,8 +156,6 @@ static buffer * agent_request(unsigned char type, buffer *data) {
 		goto out;
 	}
 	
-	TRACE(("agent_request readlen is %d", readlen))
-
 	buf_resize(inbuf, readlen);
 	buf_setpos(inbuf, 0);
 	ret = atomicio(read, fd, buf_getwriteptr(inbuf, readlen), readlen);
@@ -167,7 +165,6 @@ static buffer * agent_request(unsigned char type, buffer *data) {
 	}
 	buf_incrwritepos(inbuf, readlen);
 	buf_setpos(inbuf, 0);
-	TRACE(("agent_request success, length %d", readlen))
 
 out:
 	if (payload)

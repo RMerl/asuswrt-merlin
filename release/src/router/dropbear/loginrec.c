@@ -329,8 +329,6 @@ login_write (struct logininfo *li)
 {
 #ifndef HAVE_CYGWIN
 	if ((int)geteuid() != 0) {
-	  dropbear_log(LOG_WARNING,
-			  "Attempt to write login records by non-root user (aborting)");
 	  return 1;
 	}
 #endif

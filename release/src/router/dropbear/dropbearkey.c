@@ -65,7 +65,6 @@ static void justprintpub(const char* filename);
 static void printhelp(char * progname) {
 
 	fprintf(stderr, "Usage: %s -t <type> -f <filename> [-s bits]\n"
-					"Options are:\n"
 					"-t type	Type of key to generate. One of:\n"
 #ifdef DROPBEAR_RSA
 					"		rsa\n"

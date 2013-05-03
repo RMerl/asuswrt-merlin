@@ -26,19 +26,17 @@
 #include "buffer.h"
 #include "dbutil.h"
 #include "bignum.h"
-
-static int donerandinit = 0;
+#include "random.h"
 
 /* this is used to generate unique output from the same hashpool */
 static uint32_t counter = 0;
 /* the max value for the counter, so it won't integer overflow */
 #define MAX_COUNTER 1<<30 
 
-static unsigned char hashpool[SHA1_HASH_SIZE];
+static unsigned char hashpool[SHA1_HASH_SIZE] = {0};
+static int donerandinit = 0;
 
 #define INIT_SEED_SIZE 32 /* 256 bits */
-
-static void readrand(unsigned char* buf, unsigned int buflen);
 
 /* The basic setup is we read some data from /dev/(u)random or prngd and hash it
  * into hashpool. To read data, we hash together current hashpool contents,
@@ -50,120 +48,198 @@ static void readrand(unsigned char* buf, unsigned int buflen);
  *
  */
 
-static void readrand(unsigned char* buf, unsigned int buflen) {
-
+/* Pass len=0 to hash an entire file */
+static int
+process_file(hash_state *hs, const char *filename,
+		unsigned int len, int prngd)
+{
 	static int already_blocked = 0;
 	int readfd;
-	unsigned int readpos;
-	int readlen;
-#ifdef DROPBEAR_PRNGD_SOCKET
-	struct sockaddr_un egdsock;
-	char egdcmd[2];
-#endif
-
-#ifdef DROPBEAR_RANDOM_DEV
-	readfd = open(DROPBEAR_RANDOM_DEV, O_RDONLY);
-	if (readfd < 0) {
-		dropbear_exit("Couldn't open random device");
-	}
-#endif
+	unsigned int readcount;
+	int ret = DROPBEAR_FAILURE;
 
 #ifdef DROPBEAR_PRNGD_SOCKET
-	readfd = connect_unix(DROPBEAR_PRNGD_SOCKET);
-
-	if (readfd < 0) {
-		dropbear_exit("Couldn't open random device");
+	if (prngd)
+	{
+		readfd = connect_unix(filename);
+	}
+	else
+#endif
+	{
+		readfd = open(filename, O_RDONLY);
 	}
 
-	if (buflen > 255)
-		dropbear_exit("Can't request more than 255 bytes from egd");
-	egdcmd[0] = 0x02;	/* blocking read */
-	egdcmd[1] = (unsigned char)buflen;
-	if (write(readfd, egdcmd, 2) < 0)
-		dropbear_exit("Can't send command to egd");
-#endif
+	if (readfd < 0) {
+		goto out;
+	}
 
-	/* read the actual random data */
-	readpos = 0;
-	do {
+	readcount = 0;
+	while (len == 0 || readcount < len)
+	{
+		int readlen, wantread;
+		unsigned char readbuf[2048];
 		if (!already_blocked)
 		{
 			int ret;
-			struct timeval timeout;
+			struct timeval timeout = { .tv_sec = 2, .tv_usec = 0};
 			fd_set read_fds;
-
-			timeout.tv_sec = 2; /* two seconds should be enough */
-			timeout.tv_usec = 0;
 
 			FD_ZERO(&read_fds);
 			FD_SET(readfd, &read_fds);
 			ret = select(readfd + 1, &read_fds, NULL, NULL, &timeout);
 			if (ret == 0)
 			{
-				dropbear_log(LOG_INFO, "Warning: Reading the random source seems to have blocked.\nIf you experience problems, you probably need to find a better entropy source.");
+				dropbear_log(LOG_WARNING, "Warning: Reading the randomness source '%s' seems to have blocked.\nYou may need to find a better entropy source.", filename);
 				already_blocked = 1;
 			}
 		}
-		readlen = read(readfd, &buf[readpos], buflen - readpos);
+
+		if (len == 0)
+		{
+			wantread = sizeof(readbuf);
+		} 
+		else
+		{
+			wantread = MIN(sizeof(readbuf), len-readcount);
+		}
+
+#ifdef DROPBEAR_PRNGD_SOCKET
+		if (prngd)
+		{
+			char egdcmd[2];
+			egdcmd[0] = 0x02;	/* blocking read */
+			egdcmd[1] = (unsigned char)wantread;
+			if (write(readfd, egdcmd, 2) < 0)
+			{
+				dropbear_exit("Can't send command to egd");
+			}
+		}
+#endif
+
+		readlen = read(readfd, readbuf, wantread);
 		if (readlen <= 0) {
 			if (readlen < 0 && errno == EINTR) {
 				continue;
 			}
-			dropbear_exit("Error reading random source");
+			if (readlen == 0 && len == 0)
+			{
+				/* whole file was read as requested */
+				break;
+			}
+			goto out;
 		}
-		readpos += readlen;
-	} while (readpos < buflen);
-
-	close (readfd);
+		sha1_process(hs, readbuf, readlen);
+		readcount += readlen;
+	}
+	ret = DROPBEAR_SUCCESS;
+out:
+	close(readfd);
+	return ret;
 }
 
-/* initialise the prng from /dev/(u)random or prngd */
-void seedrandom() {
-		
-	unsigned char readbuf[INIT_SEED_SIZE];
-
+void addrandom(char * buf, unsigned int len)
+{
 	hash_state hs;
-
-	/* initialise so that things won't warn about
-	 * hashing an undefined buffer */
-	if (!donerandinit) {
-		m_burn(hashpool, sizeof(hashpool));
-	}
-
-	/* get the seed data */
-	readrand(readbuf, sizeof(readbuf));
 
 	/* hash in the new seed data */
 	sha1_init(&hs);
+	/* existing state (zeroes on startup) */
 	sha1_process(&hs, (void*)hashpool, sizeof(hashpool));
-	sha1_process(&hs, (void*)readbuf, sizeof(readbuf));
+
+	/* new */
+	sha1_process(&hs, buf, len);
+	sha1_done(&hs, hashpool);
+}
+
+static void write_urandom()
+{
+#ifndef DROPBEAR_PRNGD_SOCKET
+	/* This is opportunistic, don't worry about failure */
+	unsigned char buf[INIT_SEED_SIZE];
+	FILE *f = fopen(DROPBEAR_URANDOM_DEV, "w");
+	if (!f) {
+		return;
+	}
+	genrandom(buf, sizeof(buf));
+	fwrite(buf, sizeof(buf), 1, f);
+	fclose(f);
+#endif
+}
+
+/* Initialise the prng from /dev/urandom or prngd. This function can
+ * be called multiple times */
+void seedrandom() {
+		
+	hash_state hs;
+
+	pid_t pid;
+	struct timeval tv;
+	clock_t clockval;
+
+	/* hash in the new seed data */
+	sha1_init(&hs);
+	/* existing state */
+	sha1_process(&hs, (void*)hashpool, sizeof(hashpool));
+
+#ifdef DROPBEAR_PRNGD_SOCKET
+	if (process_file(&hs, DROPBEAR_PRNGD_SOCKET, INIT_SEED_SIZE, 1) 
+			!= DROPBEAR_SUCCESS) {
+		dropbear_exit("Failure reading random device %s", 
+				DROPBEAR_PRNGD_SOCKET);
+	}
+#else
+	/* non-blocking random source (probably /dev/urandom) */
+	if (process_file(&hs, DROPBEAR_URANDOM_DEV, INIT_SEED_SIZE, 0) 
+			!= DROPBEAR_SUCCESS) {
+		dropbear_exit("Failure reading random device %s", 
+				DROPBEAR_URANDOM_DEV);
+	}
+#endif
+
+	/* A few other sources to fall back on. 
+	 * Add more here for other platforms */
+#ifdef __linux__
+	/* Seems to be a reasonable source of entropy from timers. Possibly hard
+	 * for even local attackers to reproduce */
+	process_file(&hs, "/proc/timer_list", 0, 0);
+	/* Might help on systems with wireless */
+	process_file(&hs, "/proc/interrupts", 0, 0);
+
+	process_file(&hs, "/proc/loadavg", 0, 0);
+	process_file(&hs, "/proc/sys/kernel/random/entropy_avail", 0, 0);
+
+	/* Mostly network visible but useful in some situations */
+	process_file(&hs, "/proc/net/netstat", 0, 0);
+	process_file(&hs, "/proc/net/dev", 0, 0);
+	process_file(&hs, "/proc/net/tcp", 0, 0);
+	/* Also includes interface lo */
+	process_file(&hs, "/proc/net/rt_cache", 0, 0);
+	process_file(&hs, "/proc/vmstat", 0, 0);
+#endif
+
+	pid = getpid();
+	sha1_process(&hs, (void*)&pid, sizeof(pid));
+
+	// gettimeofday() doesn't completely fill out struct timeval on 
+	// OS X (10.8.3), avoid valgrind warnings by clearing it first
+	memset(&tv, 0x0, sizeof(tv));
+	gettimeofday(&tv, NULL);
+	sha1_process(&hs, (void*)&tv, sizeof(tv));
+
+	clockval = clock();
+	sha1_process(&hs, (void*)&clockval, sizeof(clockval));
+
+	/* When a private key is read by the client or server it will
+	 * be added to the hashpool - see runopts.c */
+
 	sha1_done(&hs, hashpool);
 
 	counter = 0;
 	donerandinit = 1;
-}
 
-/* hash the current random pool with some unique identifiers
- * for this process and point-in-time. this is used to separate
- * the random pools for fork()ed processes. */
-void reseedrandom() {
-
-	pid_t pid;
-	hash_state hs;
-	struct timeval tv;
-
-	if (!donerandinit) {
-		dropbear_exit("seedrandom not done");
-	}
-
-	pid = getpid();
-	gettimeofday(&tv, NULL);
-
-	sha1_init(&hs);
-	sha1_process(&hs, (void*)hashpool, sizeof(hashpool));
-	sha1_process(&hs, (void*)&pid, sizeof(pid));
-	sha1_process(&hs, (void*)&tv, sizeof(tv));
-	sha1_done(&hs, hashpool);
+	/* Feed it all back into /dev/urandom - this might help if Dropbear
+	 * is running from inetd and gets new state each time */
+	write_urandom();
 }
 
 /* return len bytes of pseudo-random data */

@@ -28,13 +28,13 @@ COMMONOBJS=dbutil.o buffer.o \
 		queue.o \
 		atomicio.o compat.o  fake-rfc2553.o 
 
-SVROBJS=svr-kex.o svr-algo.o svr-auth.o sshpty.o \
+SVROBJS=svr-kex.o svr-auth.o sshpty.o \
 		svr-authpasswd.o svr-authpubkey.o svr-authpubkeyoptions.o svr-session.o svr-service.o \
 		svr-chansession.o svr-runopts.o svr-agentfwd.o svr-main.o svr-x11fwd.o\
 		svr-tcpfwd.o svr-authpam.o
 
-CLIOBJS=cli-algo.o cli-main.o cli-auth.o cli-authpasswd.o cli-kex.o \
-		cli-session.o cli-service.o cli-runopts.o cli-chansession.o \
+CLIOBJS=cli-main.o cli-auth.o cli-authpasswd.o cli-kex.o \
+		cli-session.o cli-runopts.o cli-chansession.o \
 		cli-authpubkey.o cli-tcpfwd.o cli-channel.o cli-authinteract.o \
 		cli-agentfwd.o list.o
 

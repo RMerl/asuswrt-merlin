@@ -67,7 +67,7 @@ void recv_msg_userauth_pk_ok();
 void recv_msg_userauth_info_request();
 void cli_get_user();
 void cli_auth_getmethods();
-void cli_auth_try();
+int cli_auth_try();
 void recv_msg_userauth_banner();
 void cli_pubkeyfail();
 void cli_auth_password();

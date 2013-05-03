@@ -118,14 +118,18 @@
 #define LTC_CTR_MODE
 #endif
 
-#if defined(DROPBEAR_DSS) && defined(DSS_PROTOK)
-#define SHA512
-#endif
-
 #define SHA1
 
-#ifdef DROPBEAR_MD5_HMAC
+#ifdef DROPBEAR_MD5
 #define MD5
+#endif
+
+#ifdef DROPBEAR_SHA256
+#define SHA256
+#endif
+
+#ifdef DROPBEAR_SHA512
+#define SHA512
 #endif
 
 #define LTC_HMAC

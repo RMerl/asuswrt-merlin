@@ -15,7 +15,7 @@ dbclient \- lightweight SSH2 client
 .B dbclient
 [
 .I args ]
-.I [user1]@host1[/port1],[user2]@host2[/port2],...
+.I [user1]@host1[%port1],[user2]@host2[%port2],...
 
 .SH DESCRIPTION
 .B dbclient
@@ -24,10 +24,9 @@ environments, while still being functional and secure enough for general use.
 .SH OPTIONS
 .TP
 .B \-p \fIport
-Remote port.
-Connect to port
+Connect to 
 .I port
-on the remote host.
+on the remote host. Alternatively a port can be specified as hostname%port.
 Default is 22.
 .TP
 .B \-i \fIidfile
@@ -61,10 +60,10 @@ Login as
 on the remote host.
 .TP
 .B \-t
-Allocate a pty.
+Allocate a PTY.
 .TP
 .B \-T
-Don't allocate a pty.
+Don't allocate a PTY.
 .TP
 .B \-N
 Don't request a remote shell or run any commands. Any command arguments are ignored.
@@ -80,7 +79,8 @@ by the ssh server.
 .TP
 .B \-y
 Always accept hostkeys if they are unknown. If a hostkey mismatch occurs the
-connection will abort as normal.
+connection will abort as normal. If specified a second time no host key checking
+is performed at all, this is usually undesirable.
 .TP
 .B \-A
 Forward agent connections to the remote host. dbclient will use any
@@ -111,12 +111,22 @@ comparing saved hostkeys.
 "Netcat-alike" mode, where Dropbear will connect to the given host, then create a
 forwarded connection to \fIendhost\fR. This will then be presented as dbclient's
 standard input/output.
+.TP
+.B \-c \fIcipherlist
+Specify a comma separated list of ciphers to enable. Use \fI-c help\fR to list possibilities.
+.TP
+.B \-m \fIMAClist
+Specify a comma separated list of authentication MACs to enable. Use \fI-m help\fR to list possibilities.
+.TP
+.B \-s 
+The specified command will be requested as a subsystem, used for sftp. Dropbear doesn't implement sftp itself but the OpenSSH sftp client can be used eg \fIsftp -S dbclient user@host\fR
 
+.SH MULTI-HOP
 Dropbear will also allow multiple "hops" to be specified, separated by commas. In
 this case a connection will be made to the first host, then a TCP forwarded 
 connection will be made through that to the second host, and so on. Hosts other than
 the final destination will not see anything other than the encrypted SSH stream. 
-A port for a host can be specified with a slash (eg matt@martello/44 ).
+A port for a host can be specified with a hash (eg matt@martello%44 ).
 This syntax can also be used with scp or rsync (specifying dbclient as the 
 ssh/rsh command). A file can be "bounced" through multiple SSH hops, eg
 
@@ -125,6 +135,11 @@ scp -S dbclient matt@martello,root@wrt,canyons:/tmp/dump .
 Note that hostnames are resolved by the prior hop (so "canyons" would be resolved by the host "wrt")
 in the example above, the same way as other -L TCP forwarded hosts are. Host keys are 
 checked locally based on the given hostname.
+
+.SH ESCAPE CHARACTERS
+Typing a newline followed by the  key sequence \fI~.\fR (tilde, dot) will terminate a connection.
+The sequence \fI~^Z\fR (tilde, ctrl-z) will background the connection. This behaviour only
+applies when a PTY is used.
 
 .SH ENVIRONMENT
 .TP
@@ -148,4 +163,4 @@ Gerrit Pape (pape@smarden.org) wrote this manual page.
 .SH SEE ALSO
 dropbear(8), dropbearkey(8)
 .P
-http://matt.ucc.asn.au/dropbear/dropbear.html
+https://matt.ucc.asn.au/dropbear/dropbear.html

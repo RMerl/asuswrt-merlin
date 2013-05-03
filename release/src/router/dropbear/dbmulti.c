@@ -66,7 +66,7 @@ int main(int argc, char ** argv) {
 #endif
 	}
 
-	fprintf(stderr, "Dropbear multi-purpose version %s\n"
+	fprintf(stderr, "Dropbear SSH multi-purpose v%s\n"
 			"Make a symlink pointing at this binary with one of the following names:\n"
 #ifdef DBMULTI_dropbear
 			"'dropbear' - the Dropbear server\n"

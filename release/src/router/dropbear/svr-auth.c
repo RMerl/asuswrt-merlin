@@ -141,15 +141,6 @@ void recv_msg_userauth_request() {
 		dropbear_exit("unknown service in auth");
 	}
 
-	/* user wants to know what methods are supported */
-	if (methodlen == AUTH_METHOD_NONE_LEN &&
-			strncmp(methodname, AUTH_METHOD_NONE,
-				AUTH_METHOD_NONE_LEN) == 0) {
-		TRACE(("recv_msg_userauth_request: 'none' request"))
-		send_msg_userauth_failure(0, 0);
-		goto out;
-	}
-	
 	/* check username is good before continuing */
 	if (checkusername(username, userlen) == DROPBEAR_FAILURE) {
 		/* username is invalid/no shell/etc - send failure */
@@ -158,6 +149,30 @@ void recv_msg_userauth_request() {
 		goto out;
 	}
 
+	/* user wants to know what methods are supported */
+	if (methodlen == AUTH_METHOD_NONE_LEN &&
+			strncmp(methodname, AUTH_METHOD_NONE,
+				AUTH_METHOD_NONE_LEN) == 0) {
+		TRACE(("recv_msg_userauth_request: 'none' request"))
+		if (svr_opts.allowblankpass
+				&& !svr_opts.noauthpass
+				&& !(svr_opts.norootpass && ses.authstate.pw_uid == 0) 
+				&& ses.authstate.pw_passwd[0] == '\0') 
+		{
+			dropbear_log(LOG_NOTICE, 
+					"Auth succeeded with blank password for '%s' from %s",
+					ses.authstate.pw_name,
+					svr_ses.addrstring);
+			send_msg_userauth_success();
+			goto out;
+		}
+		else
+		{
+			send_msg_userauth_failure(0, 0);
+			goto out;
+		}
+	}
+	
 #ifdef ENABLE_SVR_PASSWORD_AUTH
 	if (!svr_opts.noauthpass &&
 			!(svr_opts.norootpass && ses.authstate.pw_uid == 0) ) {
@@ -205,13 +220,13 @@ out:
 }
 
 
-/* Check that the username exists, has a non-empty password, and has a valid
- * shell.
+/* Check that the username exists and isn't disallowed (root), and has a valid shell.
  * returns DROPBEAR_SUCCESS on valid username, DROPBEAR_FAILURE on failure */
 static int checkusername(unsigned char *username, unsigned int userlen) {
 
 	char* listshell = NULL;
 	char* usershell = NULL;
+	int   uid;
 	TRACE(("enter checkusername"))
 	if (userlen > MAX_USERNAME_LEN) {
 		return DROPBEAR_FAILURE;
@@ -236,6 +251,18 @@ static int checkusername(unsigned char *username, unsigned int userlen) {
 		TRACE(("leave checkusername: user '%s' doesn't exist", username))
 		dropbear_log(LOG_WARNING,
 				"Login attempt for nonexistent user from %s",
+				svr_ses.addrstring);
+		send_msg_userauth_failure(0, 1);
+		return DROPBEAR_FAILURE;
+	}
+
+	/* check if we are running as non-root, and login user is different from the server */
+	uid = geteuid();
+	if (uid != 0 && uid != ses.authstate.pw_uid) {
+		TRACE(("running as nonroot, only server uid is allowed"))
+		dropbear_log(LOG_WARNING,
+				"Login attempt with wrong user %s from %s",
+				ses.authstate.pw_name,
 				svr_ses.addrstring);
 		send_msg_userauth_failure(0, 1);
 		return DROPBEAR_FAILURE;

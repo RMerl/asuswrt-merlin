@@ -243,7 +243,7 @@ static int newchansess(struct Channel *channel) {
 	chansess->x11authcookie = NULL;
 #endif
 
-#ifdef ENABLE_AGENTFWD
+#ifdef ENABLE_SVR_AGENTFWD
 	chansess->agentlistener = NULL;
 	chansess->agentfile = NULL;
 	chansess->agentdir = NULL;
@@ -300,7 +300,7 @@ static void closechansess(struct Channel *channel) {
 	x11cleanup(chansess);
 #endif
 
-#ifdef ENABLE_AGENTFWD
+#ifdef ENABLE_SVR_AGENTFWD
 	svr_agentcleanup(chansess);
 #endif
 
@@ -358,7 +358,7 @@ static void chansessionrequest(struct Channel *channel) {
 	} else if (strcmp(type, "x11-req") == 0) {
 		ret = x11req(chansess);
 #endif
-#ifdef ENABLE_AGENTFWD
+#ifdef ENABLE_SVR_AGENTFWD
 	} else if (strcmp(type, "auth-agent-req@openssh.com") == 0) {
 		ret = svr_agentreq(chansess);
 #endif
@@ -658,7 +658,7 @@ static int sessioncommand(struct Channel *channel, struct ChanSess *chansess,
 
 	/* uClinux will vfork(), so there'll be a race as 
 	connection_string is freed below. */
-#ifndef __uClinux__
+#ifndef USE_VFORK
 	chansess->connection_string = make_connection_string();
 #endif
 
@@ -670,7 +670,7 @@ static int sessioncommand(struct Channel *channel, struct ChanSess *chansess,
 		ret = ptycommand(channel, chansess);
 	}
 
-#ifndef __uClinux__	
+#ifndef USE_VFORK
 	m_free(chansess->connection_string);
 #endif
 
@@ -745,7 +745,7 @@ static int ptycommand(struct Channel *channel, struct ChanSess *chansess) {
 		return DROPBEAR_FAILURE;
 	}
 	
-#ifdef __uClinux__
+#ifdef USE_VFORK
 	pid = vfork();
 #else
 	pid = fork();
@@ -863,15 +863,15 @@ static void execchild(void *user_data) {
 	struct ChanSess *chansess = user_data;
 	char *usershell = NULL;
 
-    /* with uClinux we'll have vfork()ed, so don't want to overwrite the
-     * hostkey. can't think of a workaround to clear it */
-#ifndef __uClinux__
+	/* with uClinux we'll have vfork()ed, so don't want to overwrite the
+	 * hostkey. can't think of a workaround to clear it */
+#ifndef USE_VFORK
 	/* wipe the hostkey */
 	sign_key_free(svr_opts.hostkey);
 	svr_opts.hostkey = NULL;
 
 	/* overwrite the prng state */
-	reseedrandom();
+	seedrandom();
 #endif
 
 	/* clear environment */
@@ -945,7 +945,7 @@ static void execchild(void *user_data) {
 	/* set up X11 forwarding if enabled */
 	x11setauth(chansess);
 #endif
-#ifdef ENABLE_AGENTFWD
+#ifdef ENABLE_SVR_AGENTFWD
 	/* set up agent env variable */
 	svr_agentset(chansess);
 #endif

@@ -4,7 +4,7 @@
  *******************************************************************/
 
 #ifndef DROPBEAR_VERSION
-#define DROPBEAR_VERSION "2012.55"
+#define DROPBEAR_VERSION "2013.58"
 #endif
 
 #define LOCAL_IDENT "SSH-2.0-dropbear_" DROPBEAR_VERSION
@@ -22,6 +22,15 @@
 #ifndef AUTH_TIMEOUT
 #define AUTH_TIMEOUT 300 /* we choose 5 minutes */
 #endif
+
+/* A client should try and send an initial key exchange packet guessing
+ * the algorithm that will match - saves a round trip connecting, has little
+ * overhead if the guess was "wrong". */
+#define USE_KEX_FIRST_FOLLOWS
+/* Use protocol extension to allow "first follows" to succeed more frequently.
+ * This is currently Dropbear-specific but will gracefully fallback when connecting
+ * to other implementations. */
+#define USE_KEXGUESS2
 
 /* Minimum key sizes for DSS and RSA */
 #ifndef MIN_DSS_KEYLEN
@@ -54,13 +63,16 @@
 
 #define _PATH_CP "/bin/cp"
 
+#define DROPBEAR_ESCAPE_CHAR '~'
+
 /* success/failure defines */
 #define DROPBEAR_SUCCESS 0
 #define DROPBEAR_FAILURE -1
 
 /* various algorithm identifiers */
-#define DROPBEAR_KEX_DH_GROUP1 0
-#define DROPBEAR_KEX_DH_GROUP14 1
+#define DROPBEAR_KEX_NONE 0
+#define DROPBEAR_KEX_DH_GROUP1 1
+#define DROPBEAR_KEX_DH_GROUP14 2
 
 #define DROPBEAR_SIGNKEY_ANY 0
 #define DROPBEAR_SIGNKEY_RSA 1
@@ -76,21 +88,20 @@
 #define DROPBEAR_SIGNKEY_VERIFY
 #endif
 
-/* SHA1 is 20 bytes == 160 bits */
 #define SHA1_HASH_SIZE 20
-/* SHA512 is 64 bytes == 512 bits */
-#define SHA512_HASH_SIZE 64
-/* MD5 is 16 bytes = 128 bits */
 #define MD5_HASH_SIZE 16
-
-/* largest of MD5 and SHA1 */
-#define MAX_MAC_LEN SHA1_HASH_SIZE
-
 
 #define MAX_KEY_LEN 32 /* 256 bits for aes256 etc */
 #define MAX_IV_LEN 20 /* must be same as max blocksize, 
 						 and >= SHA1_HASH_SIZE */
-#define MAX_MAC_KEY 20
+
+#if defined(DROPBEAR_SHA2_512_HMAC)
+#define MAX_MAC_LEN 64
+#elif defined(DROPBEAR_SHA2_256_HMAC)
+#define MAX_MAC_LEN 32
+#else
+#define MAX_MAC_LEN 20
+#endif
 
 #define MAX_NAME_LEN 64 /* maximum length of a protocol name, isn't
 						   explicitly specified for all protocols (just
@@ -144,6 +155,19 @@
 #define DROPBEAR_TWOFISH
 #endif
 
+#ifdef DROPBEAR_MD5_HMAC
+#define DROPBEAR_MD5
+#endif
+
+#ifdef DROPBEAR_SHA2_256_HMAC
+#define DROPBEAR_SHA256
+#endif
+
+#if (defined(DROPBEAR_DSS) && defined(DSS_PROTOK)) \
+	|| defined(DROPBEAR_SHA2_512_HMAC)
+#define DROPBEAR_SHA512
+#endif
+
 #ifndef ENABLE_X11FWD
 #define DISABLE_X11FWD
 #endif
@@ -160,10 +184,6 @@
 	defined(ENABLE_SVR_REMOTETCPFWD) || defined(ENABLE_SVR_LOCALTCPFWD) || \
 	defined(ENABLE_SVR_AGENTFWD) || defined(ENABLE_X11FWD)
 #define USING_LISTENERS
-#endif
-
-#if defined(ENABLE_SVR_AGENTFWD) || defined(ENABLE_CLI_LOCALTCPFWD)
-#define ENABLE_AGENTFWD
 #endif
 
 #if defined(ENABLE_CLI_NETCAT) && defined(ENABLE_CLI_PROXYCMD)
@@ -184,14 +204,6 @@
 
 #if defined(ENABLE_SVR_PASSWORD_AUTH) && defined(ENABLE_SVR_PAM_AUTH)
 #error "You can't turn on PASSWORD and PAM auth both at once. Fix it in options.h"
-#endif
-
-#if defined(DROPBEAR_RANDOM_DEV) && defined(DROPBEAR_PRNGD_SOCKET)
-#error "You can't turn on DROPBEAR_PRNGD_SOCKET and DROPBEAR_RANDOM_DEV at once"
-#endif
-
-#if !defined(DROPBEAR_RANDOM_DEV) && !defined(DROPBEAR_PRNGD_SOCKET)
-#error "You must choose one of DROPBEAR_PRNGD_SOCKET or DROPBEAR_RANDOM_DEV in options.h"
 #endif
 
 /* We use dropbear_client and dropbear_server as shortcuts to avoid redundant
@@ -216,4 +228,10 @@
 #define IS_DROPBEAR_SERVER 0
 #define IS_DROPBEAR_CLIENT 0
 
-#endif
+#endif /* neither DROPBEAR_SERVER nor DROPBEAR_CLIENT */
+
+#ifndef HAVE_FORK
+#define USE_VFORK
+#endif  /* don't HAVE_FORK */
+
+/* no include guard for this file */

@@ -37,7 +37,9 @@ circbuffer * cbuf_new(unsigned int size) {
 	}
 
 	cbuf = (circbuffer*)m_malloc(sizeof(circbuffer));
-	cbuf->data = (unsigned char*)m_malloc(size);
+	if (size > 0) {
+		cbuf->data = (unsigned char*)m_malloc(size);
+	}
 	cbuf->used = 0;
 	cbuf->readpos = 0;
 	cbuf->writepos = 0;

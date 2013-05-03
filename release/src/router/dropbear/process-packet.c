@@ -45,10 +45,10 @@ void process_packet() {
 	unsigned char type;
 	unsigned int i;
 
-	TRACE(("enter process_packet"))
+	TRACE2(("enter process_packet"))
 
 	type = buf_getbyte(ses.payload);
-	TRACE(("process_packet: packet type = %d", type))
+	TRACE(("process_packet: packet type = %d,  len %d", type, ses.payload->len))
 
 	ses.lastpacket = type;
 
@@ -74,14 +74,15 @@ void process_packet() {
 
 	/* This applies for KEX, where the spec says the next packet MUST be
 	 * NEWKEYS */
-	if (ses.requirenext != 0) {
-		if (ses.requirenext != type) {
-			/* TODO send disconnect? */
-			dropbear_exit("Unexpected packet type %d, expected %d", type,
-					ses.requirenext);
+	if (ses.requirenext[0] != 0) {
+		if (ses.requirenext[0] != type
+				&& (ses.requirenext[1] == 0 || ses.requirenext[1] != type)) {
+			dropbear_exit("Unexpected packet type %d, expected [%d,%d]", type,
+					ses.requirenext[0], ses.requirenext[1]);
 		} else {
 			/* Got what we expected */
-			ses.requirenext = 0;
+			ses.requirenext[0] = 0;
+			ses.requirenext[1] = 0;
 		}
 	}
 
@@ -123,7 +124,7 @@ out:
 	buf_free(ses.payload);
 	ses.payload = NULL;
 
-	TRACE(("leave process_packet"))
+	TRACE2(("leave process_packet"))
 }
 
 

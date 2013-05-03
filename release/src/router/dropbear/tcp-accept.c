@@ -40,6 +40,7 @@ static void cleanup_tcp(struct Listener *listener) {
 
 	m_free(tcpinfo->sendaddr);
 	m_free(tcpinfo->listenaddr);
+	m_free(tcpinfo->request_listenaddr);
 	m_free(tcpinfo);
 }
 
@@ -78,7 +79,7 @@ static void tcp_acceptor(struct Listener *listener, int sock) {
 			dropbear_assert(tcpinfo->tcp_type == forwarded);
 			/* "forwarded-tcpip" */
 			/* address that was connected, port that was connected */
-			addr = tcpinfo->listenaddr;
+			addr = tcpinfo->request_listenaddr;
 			port = tcpinfo->listenport;
 		}
 

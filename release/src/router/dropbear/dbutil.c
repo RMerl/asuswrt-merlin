@@ -138,15 +138,39 @@ void dropbear_log(int priority, const char* format, ...) {
 
 #ifdef DEBUG_TRACE
 void dropbear_trace(const char* format, ...) {
-
 	va_list param;
+	struct timeval tv;
 
 	if (!debug_trace) {
 		return;
 	}
 
+	gettimeofday(&tv, NULL);
+
 	va_start(param, format);
-	fprintf(stderr, "TRACE (%d): ", getpid());
+	fprintf(stderr, "TRACE  (%d) %d.%d: ", getpid(), tv.tv_sec, tv.tv_usec);
+	vfprintf(stderr, format, param);
+	fprintf(stderr, "\n");
+	va_end(param);
+}
+
+void dropbear_trace2(const char* format, ...) {
+	static int trace_env = -1;
+	va_list param;
+	struct timeval tv;
+
+	if (trace_env == -1) {
+		trace_env = getenv("DROPBEAR_TRACE2") ? 1 : 0;
+	}
+
+	if (!(debug_trace && trace_env)) {
+		return;
+	}
+
+	gettimeofday(&tv, NULL);
+
+	va_start(param, format);
+	fprintf(stderr, "TRACE2 (%d) %d.%d: ", getpid(), tv.tv_sec, tv.tv_usec);
 	vfprintf(stderr, format, param);
 	fprintf(stderr, "\n");
 	va_end(param);
@@ -443,7 +467,7 @@ int spawn_command(void(*exec_fn)(void *user_data), void *exec_data,
 		return DROPBEAR_FAILURE;
 	}
 
-#ifdef __uClinux__
+#ifdef USE_VFORK
 	pid = vfork();
 #else
 	pid = fork();
@@ -725,8 +749,6 @@ int buf_getline(buffer * line, FILE * authfile) {
 
 	int c = EOF;
 
-	TRACE(("enter buf_getline"))
-
 	buf_setpos(line, 0);
 	buf_setlen(line, 0);
 
@@ -750,10 +772,8 @@ out:
 
 	/* if we didn't read anything before EOF or error, exit */
 	if (c == EOF && line->pos == 0) {
-		TRACE(("leave buf_getline: failure"))
 		return DROPBEAR_FAILURE;
 	} else {
-		TRACE(("leave buf_getline: success"))
 		buf_setpos(line, 0);
 		return DROPBEAR_SUCCESS;
 	}

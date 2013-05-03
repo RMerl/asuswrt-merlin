@@ -70,7 +70,6 @@ void enqueue(struct Queue* queue, void* item) {
 
 	struct Link* newlink;
 
-	TRACE(("enter enqueue"))
 	newlink = (struct Link*)m_malloc(sizeof(struct Link));
 
 	newlink->item = item;
@@ -85,5 +84,4 @@ void enqueue(struct Queue* queue, void* item) {
 		queue->head = newlink;
 	}
 	queue->count++;
-	TRACE(("leave enqueue"))
 }

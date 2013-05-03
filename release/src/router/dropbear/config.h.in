@@ -1,4 +1,4 @@
-/* config.h.in.  Generated from configure.in by autoheader.  */
+/* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Using AIX */
 #undef AIX
@@ -83,6 +83,9 @@
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the `fork' function. */
+#undef HAVE_FORK
 
 /* Define to 1 if you have the `freeaddrinfo' function. */
 #undef HAVE_FREEADDRINFO
@@ -171,8 +174,8 @@
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
 
-/* Define to 1 if you have the <netinet/in_systm.h> header file. */
-#undef HAVE_NETINET_IN_SYSTM_H
+/* Define to 1 if you have the <netinet/in_systm.h,> header file. */
+#undef HAVE_NETINET_IN_SYSTM_H_
 
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #undef HAVE_NETINET_TCP_H
@@ -255,58 +258,58 @@
 /* Define to 1 if the system has the type `struct sockaddr_storage'. */
 #undef HAVE_STRUCT_SOCKADDR_STORAGE
 
-/* Define to 1 if `ss_family' is member of `struct sockaddr_storage'. */
+/* Define to 1 if `ss_family' is a member of `struct sockaddr_storage'. */
 #undef HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY
 
-/* Define to 1 if `ut_addr' is member of `struct utmpx'. */
+/* Define to 1 if `ut_addr' is a member of `struct utmpx'. */
 #undef HAVE_STRUCT_UTMPX_UT_ADDR
 
-/* Define to 1 if `ut_addr_v6' is member of `struct utmpx'. */
+/* Define to 1 if `ut_addr_v6' is a member of `struct utmpx'. */
 #undef HAVE_STRUCT_UTMPX_UT_ADDR_V6
 
-/* Define to 1 if `ut_host' is member of `struct utmpx'. */
+/* Define to 1 if `ut_host' is a member of `struct utmpx'. */
 #undef HAVE_STRUCT_UTMPX_UT_HOST
 
-/* Define to 1 if `ut_id' is member of `struct utmpx'. */
+/* Define to 1 if `ut_id' is a member of `struct utmpx'. */
 #undef HAVE_STRUCT_UTMPX_UT_ID
 
-/* Define to 1 if `ut_syslen' is member of `struct utmpx'. */
+/* Define to 1 if `ut_syslen' is a member of `struct utmpx'. */
 #undef HAVE_STRUCT_UTMPX_UT_SYSLEN
 
-/* Define to 1 if `ut_time' is member of `struct utmpx'. */
+/* Define to 1 if `ut_time' is a member of `struct utmpx'. */
 #undef HAVE_STRUCT_UTMPX_UT_TIME
 
-/* Define to 1 if `ut_tv' is member of `struct utmpx'. */
+/* Define to 1 if `ut_tv' is a member of `struct utmpx'. */
 #undef HAVE_STRUCT_UTMPX_UT_TV
 
-/* Define to 1 if `ut_type' is member of `struct utmpx'. */
+/* Define to 1 if `ut_type' is a member of `struct utmpx'. */
 #undef HAVE_STRUCT_UTMPX_UT_TYPE
 
-/* Define to 1 if `ut_addr' is member of `struct utmp'. */
+/* Define to 1 if `ut_addr' is a member of `struct utmp'. */
 #undef HAVE_STRUCT_UTMP_UT_ADDR
 
-/* Define to 1 if `ut_addr_v6' is member of `struct utmp'. */
+/* Define to 1 if `ut_addr_v6' is a member of `struct utmp'. */
 #undef HAVE_STRUCT_UTMP_UT_ADDR_V6
 
-/* Define to 1 if `ut_exit' is member of `struct utmp'. */
+/* Define to 1 if `ut_exit' is a member of `struct utmp'. */
 #undef HAVE_STRUCT_UTMP_UT_EXIT
 
-/* Define to 1 if `ut_host' is member of `struct utmp'. */
+/* Define to 1 if `ut_host' is a member of `struct utmp'. */
 #undef HAVE_STRUCT_UTMP_UT_HOST
 
-/* Define to 1 if `ut_id' is member of `struct utmp'. */
+/* Define to 1 if `ut_id' is a member of `struct utmp'. */
 #undef HAVE_STRUCT_UTMP_UT_ID
 
-/* Define to 1 if `ut_pid' is member of `struct utmp'. */
+/* Define to 1 if `ut_pid' is a member of `struct utmp'. */
 #undef HAVE_STRUCT_UTMP_UT_PID
 
-/* Define to 1 if `ut_time' is member of `struct utmp'. */
+/* Define to 1 if `ut_time' is a member of `struct utmp'. */
 #undef HAVE_STRUCT_UTMP_UT_TIME
 
-/* Define to 1 if `ut_tv' is member of `struct utmp'. */
+/* Define to 1 if `ut_tv' is a member of `struct utmp'. */
 #undef HAVE_STRUCT_UTMP_UT_TV
 
-/* Define to 1 if `ut_type' is member of `struct utmp'. */
+/* Define to 1 if `ut_type' is a member of `struct utmp'. */
 #undef HAVE_STRUCT_UTMP_UT_TYPE
 
 /* Define to 1 if you have the <sys/select.h> header file. */
@@ -323,6 +326,9 @@
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <sys/uio.h> header file. */
+#undef HAVE_SYS_UIO_H
 
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
@@ -357,6 +363,9 @@
 /* Define to 1 if the system has the type `u_int16_t'. */
 #undef HAVE_U_INT16_T
 
+/* Define to 1 if you have the `writev' function. */
+#undef HAVE_WRITEV
+
 /* Define to 1 if you have the `_getpty' function. */
 #undef HAVE__GETPTY
 
@@ -371,6 +380,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
@@ -395,6 +407,11 @@
 
 /* Use /dev/ptmx */
 #undef USE_DEV_PTMX
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS

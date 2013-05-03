@@ -1,3 +1,85 @@
+2013.58 - Thursday 18 April 2013
+
+- Fix building with Zlib disabled, thanks to Hans Harder and cuma@freetz
+
+- Use % as a separator for ports, fixes scp in multihop mode, from Hans Harder
+
+- Reject logins for other users when running as non-root, from Hans Harder
+
+- Disable client immediate authentication request by default, it prevents
+  passwordless logins from working
+
+2013.57 - Monday 15 April 2013
+
+- Decreased connection setup time particularly with high latency connections,
+  the number of round trips has been reduced for both client and server. 
+  CPU time hasn't been changed.
+
+- Client will send an initial key exchange guess to save a round trip.
+  Dropbear implements an extension kexguess2@matt.ucc.asn.au to allow the first
+  packet guess to succeed in wider circumstances than the standard behaviour.
+  When communicating with other implementations the standard behaviour is used.
+
+- Client side: when public key or password authentication with
+  $DROPBEAR_PASSWORD is used an initial authentication request will
+  be sent immediately rather than querying the list of available methods.
+  This behaviour is enabled by CLI_IMMEDIATE_AUTH option (on by default),
+  please let the Dropbear author know if it causes any interoperability
+  problems.
+
+- Implement client escape characters ~. (terminate session) and 
+  ~^Z (background session)
+
+- Server will more reliably clean up utmp when connection is closed, reported by
+  Mattias Walström
+
+- Don't crash if /dev/urandom isn't writable (RHEL5), thanks to Scott Case
+
+- Add "-y -y" client option to skip host key checking, thanks to Hans Harder
+
+- scp didn't work properly on systems using vfork(), thanks to Frank Van Uffelen
+
+- Added IUTF8 terminal mode support (Linux and Mac OS). Not standardised yet
+though probably will be soon
+
+- Some verbose DROPBEAR_TRACE output is now hidden unless $DROPBEAR_TRACE2
+  enviroment variable is set
+
+- Fix using asymmetric MAC algorithms (broke in )
+
+- Renamed configure.in to configure.ac to quieten autoconf, from Mike Frysinger
+
+2013.56 - Thursday 21 March 2013
+
+- Allow specifying cipher (-c) and MAC (-m) lists for dbclient
+
+- Allow using 'none' cipher or MAC (off by default, use options.h). Encryption
+  is used during authentication then disabled, similar to OpenSSH HPN mode
+
+- Allow a user in immediately if the account has a blank password and blank
+  passwords are enabled
+
+- Include a few extra sources of entropy from /proc on Linux, hash private keys
+  as well. Dropbear will also write gathered entropy back into /dev/urandom
+
+- Added hmac-sha2-256 and hmac-sha2-512 support (off by default, use options.h)
+
+- Don't sent bad address "localhost" for -R forward connections, 
+  reported by Denis Bider
+
+- Add "-B" runtime option to allow blank passwords
+
+- Allow using IPv6 bracket notation for addresses in server "-p" option, from Ben Jencks
+
+- A few improvements for Android from Reimar Döffinger
+
+- Fix memory leak for TCP forwarded connections to hosts that timed out,
+  reported by Norbert Benczúr. Appears to be a very long-standing bug.
+
+- Fix "make clean" for out of tree builds
+
+- Fix compilation when ENABLE_{SVR,CLI}_AGENTFWD are unset
+
 2012.55 - Wednesday 22 February 2012
 
 - Security: Fix use-after-free bug that could be triggered if command="..."

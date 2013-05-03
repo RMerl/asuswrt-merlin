@@ -61,7 +61,8 @@ struct Channel {
 	int readfd; /* read from insecure side, written to wire */
 	int errfd; /* used like writefd or readfd, depending if it's client or server.
 				  Doesn't exactly belong here, but is cleaner here */
-	circbuffer *writebuf; /* data from the wire, for local consumption */
+	circbuffer *writebuf; /* data from the wire, for local consumption. Can be
+							 initially NULL */
 	circbuffer *extrabuf; /* extended-data for the program - used like writebuf
 					     but for stderr */
 
@@ -82,8 +83,10 @@ struct Channel {
 
 	int flushing;
 
-	const struct ChanType* type;
+	/* Used by client chansession to handle ~ escaping, NULL ignored otherwise */
+	void (*read_mangler)(struct Channel*, unsigned char* bytes, int *len);
 
+	const struct ChanType* type;
 };
 
 struct ChanType {
@@ -102,9 +105,6 @@ void chancleanup();
 void setchannelfds(fd_set *readfd, fd_set *writefd);
 void channelio(fd_set *readfd, fd_set *writefd);
 struct Channel* getchannel();
-struct Channel* newchannel(unsigned int remotechan, 
-		const struct ChanType *type, 
-		unsigned int transwindow, unsigned int transmaxpacket);
 
 void recv_msg_channel_open();
 void recv_msg_channel_request();

@@ -52,9 +52,7 @@ static const packettype svr_packettypes[] = {
 	{SSH_MSG_KEXINIT, recv_msg_kexinit},
 	{SSH_MSG_KEXDH_INIT, recv_msg_kexdh_init}, /* server */
 	{SSH_MSG_NEWKEYS, recv_msg_newkeys},
-#ifdef ENABLE_SVR_REMOTETCPFWD
 	{SSH_MSG_GLOBAL_REQUEST, recv_msg_global_request_remotetcp},
-#endif
 	{SSH_MSG_CHANNEL_REQUEST, recv_msg_channel_request},
 	{SSH_MSG_CHANNEL_OPEN, recv_msg_channel_open},
 	{SSH_MSG_CHANNEL_EOF, recv_msg_channel_eof},
@@ -74,17 +72,23 @@ static const struct ChanType *svr_chantypes[] = {
 	NULL /* Null termination is mandatory. */
 };
 
+static void
+svr_session_cleanup(void)
+{
+	/* free potential public key options */
+	svr_pubkey_options_cleanup();
+}
+
 void svr_session(int sock, int childpipe) {
 	char *host, *port;
 	size_t len;
-    reseedrandom();
 
 	crypto_init();
 	common_session_init(sock, sock);
 
 	/* Initialise server specific parts of the session */
 	svr_ses.childpipe = childpipe;
-#ifdef __uClinux__
+#ifdef USE_VFORK
 	svr_ses.server_pid = getpid();
 #endif
 	svr_authinitialise();
@@ -106,10 +110,10 @@ void svr_session(int sock, int childpipe) {
 
 	/* set up messages etc */
 	ses.remoteclosed = svr_remoteclosed;
+	ses.extra_session_cleanup = svr_session_cleanup;
 
 	/* packet handlers */
 	ses.packettypes = svr_packettypes;
-	ses.buf_match_algo = svr_buf_match_algo;
 
 	ses.isserver = 1;
 
@@ -117,7 +121,7 @@ void svr_session(int sock, int childpipe) {
 	sessinitdone = 1;
 
 	/* exchange identification, version etc */
-	session_identification();
+	send_session_identification();
 
 	/* start off with key exchange */
 	send_msg_kexinit();
@@ -157,19 +161,14 @@ void svr_dropbear_exit(int exitcode, const char* format, va_list param) {
 
 	_dropbear_log(LOG_INFO, fmtbuf, param);
 
-#ifdef __uClinux__
-	/* only the main server process should cleanup - we don't want
+#ifdef USE_VFORK
+	/* For uclinux only the main server process should cleanup - we don't want
 	 * forked children doing that */
 	if (svr_ses.server_pid == getpid())
-#else
-	if (1)
 #endif
 	{
-		/* free potential public key options */
-		svr_pubkey_options_cleanup();
-
 		/* must be after we've done with username etc */
-		common_session_cleanup();
+		session_cleanup();
 	}
 
 	exit(exitcode);

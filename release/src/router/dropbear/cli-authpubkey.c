@@ -123,6 +123,7 @@ void recv_msg_userauth_pk_ok() {
 void cli_buf_put_sign(buffer* buf, sign_key *key, int type, 
 			const unsigned char *data, unsigned int len)
 {
+#ifdef ENABLE_CLI_AGENTFWD
 	if (key->source == SIGNKEY_SOURCE_AGENT) {
 		/* Format the agent signature ourselves, as buf_put_sign would. */
 		buffer *sigblob;
@@ -133,10 +134,11 @@ void cli_buf_put_sign(buffer* buf, sign_key *key, int type,
 				sigblob->len);
 
 		buf_free(sigblob);
-	} else {
+	} else 
+#endif /* ENABLE_CLI_AGENTFWD */
+	{
 		buf_put_sign(buf, key, type, data, len);
 	}
-	
 }
 
 /* TODO: make it take an agent reference to use as well */
@@ -187,11 +189,13 @@ int cli_auth_pubkey() {
 
 	TRACE(("enter cli_auth_pubkey"))
 
+#ifdef ENABLE_CLI_AGENTFWD
 	if (!cli_opts.agent_keys_loaded) {
 		/* get the list of available keys from the agent */
 		cli_load_agent_keys(cli_opts.privkeys);
 		cli_opts.agent_keys_loaded = 1;
 	}
+#endif
 
 	if (cli_opts.privkeys->first) {
 		sign_key * key = (sign_key*)cli_opts.privkeys->first->item;

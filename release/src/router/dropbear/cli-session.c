@@ -41,6 +41,8 @@ static void cli_remoteclosed();
 static void cli_sessionloop();
 static void cli_session_init();
 static void cli_finished();
+static void recv_msg_service_accept(void);
+static void cli_session_cleanup(void);
 
 struct clientsession cli_ses; /* GLOBAL */
 
@@ -99,7 +101,7 @@ void cli_session(int sock_in, int sock_out) {
 	sessinitdone = 1;
 
 	/* Exchange identification */
-	session_identification();
+	send_session_identification();
 
 	send_msg_kexinit();
 
@@ -108,6 +110,12 @@ void cli_session(int sock_in, int sock_out) {
 	/* Not reached */
 
 }
+
+#ifdef USE_KEX_FIRST_FOLLOWS
+static void cli_send_kex_first_guess() {
+	send_msg_kexdh_init();
+}
+#endif
 
 static void cli_session_init() {
 
@@ -133,39 +141,70 @@ static void cli_session_init() {
 	cli_ses.lastprivkey = NULL;
 	cli_ses.lastauthtype = 0;
 
+#ifdef DROPBEAR_NONE_CIPHER
+	cli_ses.cipher_none_after_auth = get_algo_usable(sshciphers, "none");
+	set_algo_usable(sshciphers, "none", 0);
+#else
+	cli_ses.cipher_none_after_auth = 0;
+#endif
+
 	/* For printing "remote host closed" for the user */
 	ses.remoteclosed = cli_remoteclosed;
-	ses.buf_match_algo = cli_buf_match_algo;
+
+	ses.extra_session_cleanup = cli_session_cleanup;
 
 	/* packet handlers */
 	ses.packettypes = cli_packettypes;
 
 	ses.isserver = 0;
+
+#ifdef USE_KEX_FIRST_FOLLOWS
+	ses.send_kex_first_guess = cli_send_kex_first_guess;
+#endif
+
+}
+
+static void send_msg_service_request(char* servicename) {
+
+	TRACE(("enter send_msg_service_request: servicename='%s'", servicename))
+
+	CHECKCLEARTOWRITE();
+
+	buf_putbyte(ses.writepayload, SSH_MSG_SERVICE_REQUEST);
+	buf_putstring(ses.writepayload, servicename, strlen(servicename));
+
+	encrypt_packet();
+	TRACE(("leave send_msg_service_request"))
+}
+
+static void recv_msg_service_accept(void) {
+	// do nothing, if it failed then the server MUST have disconnected
 }
 
 /* This function drives the progress of the session - it initiates KEX,
  * service, userauth and channel requests */
 static void cli_sessionloop() {
 
-	TRACE(("enter cli_sessionloop"))
+	TRACE2(("enter cli_sessionloop"))
 
-	if (ses.lastpacket == SSH_MSG_KEXINIT && cli_ses.kex_state == KEX_NOTHING) {
-		cli_ses.kex_state = KEXINIT_RCVD;
+	if (ses.lastpacket == 0) {
+		TRACE2(("exit cli_sessionloop: no real packets yet"))
+		return;
 	}
 
-	if (cli_ses.kex_state == KEXINIT_RCVD) {
-
+	if (ses.lastpacket == SSH_MSG_KEXINIT && cli_ses.kex_state == KEX_NOTHING) {
 		/* We initiate the KEXDH. If DH wasn't the correct type, the KEXINIT
 		 * negotiation would have failed. */
-		send_msg_kexdh_init();
-		cli_ses.kex_state = KEXDH_INIT_SENT;
+		if (!ses.kexstate.our_first_follows_matches) {
+			send_msg_kexdh_init();
+		}
+		cli_ses.kex_state = KEXDH_INIT_SENT;			
 		TRACE(("leave cli_sessionloop: done with KEXINIT_RCVD"))
 		return;
 	}
 
 	/* A KEX has finished, so we should go back to our KEX_NOTHING state */
-	if (cli_ses.kex_state != KEX_NOTHING && ses.kexstate.recvkexinit == 0
-			&& ses.kexstate.sentkexinit == 0) {
+	if (cli_ses.kex_state != KEX_NOTHING && ses.kexstate.sentnewkeys) {
 		cli_ses.kex_state = KEX_NOTHING;
 	}
 
@@ -175,10 +214,10 @@ static void cli_sessionloop() {
 		return;
 	}
 
-	/* We should exit if we haven't donefirstkex: we shouldn't reach here
-	 * in normal operation */
 	if (ses.kexstate.donefirstkex == 0) {
-		TRACE(("XXX XXX might be bad! leave cli_sessionloop: haven't donefirstkex"))
+		/* We might reach here if we have partial packet reads or have
+		 * received SSG_MSG_IGNORE etc. Just skip it */
+		TRACE2(("donefirstkex false\n"))
 		return;
 	}
 
@@ -188,24 +227,28 @@ static void cli_sessionloop() {
 			/* We've got the transport layer sorted, we now need to request
 			 * userauth */
 			send_msg_service_request(SSH_SERVICE_USERAUTH);
-			cli_ses.state = SERVICE_AUTH_REQ_SENT;
-			TRACE(("leave cli_sessionloop: sent userauth service req"))
-			return;
-
-		/* userauth code */
-		case SERVICE_AUTH_ACCEPT_RCVD:
 			cli_auth_getmethods();
 			cli_ses.state = USERAUTH_REQ_SENT;
 			TRACE(("leave cli_sessionloop: sent userauth methods req"))
 			return;
 			
 		case USERAUTH_FAIL_RCVD:
-			cli_auth_try();
+			if (cli_auth_try() == DROPBEAR_FAILURE) {
+				dropbear_exit("No auth methods could be used.");
+			}
 			cli_ses.state = USERAUTH_REQ_SENT;
 			TRACE(("leave cli_sessionloop: cli_auth_try"))
 			return;
 
 		case USERAUTH_SUCCESS_RCVD:
+
+#ifdef DROPBEAR_NONE_CIPHER
+			if (cli_ses.cipher_none_after_auth)
+			{
+				set_algo_usable(sshciphers, "none", 1);
+				send_msg_kexinit();
+			}
+#endif
 
 			if (cli_opts.backgrounded) {
 				int devnull;
@@ -223,13 +266,6 @@ static void cli_sessionloop() {
 				}
 			}
 			
-#ifdef ENABLE_CLI_LOCALTCPFWD
-			setup_localtcp();
-#endif
-#ifdef ENABLE_CLI_REMOTETCPFWD
-			setup_remotetcp();
-#endif
-
 #ifdef ENABLE_CLI_NETCAT
 			if (cli_opts.netcat_host) {
 				cli_send_netcat_request();
@@ -238,6 +274,14 @@ static void cli_sessionloop() {
 			if (!cli_opts.no_cmd) {
 				cli_send_chansess_request();
 			}
+
+#ifdef ENABLE_CLI_LOCALTCPFWD
+			setup_localtcp();
+#endif
+#ifdef ENABLE_CLI_REMOTETCPFWD
+			setup_remotetcp();
+#endif
+
 			TRACE(("leave cli_sessionloop: running"))
 			cli_ses.state = SESSION_RUNNING;
 			return;
@@ -259,11 +303,11 @@ static void cli_sessionloop() {
 		break;
 	}
 
-	TRACE(("leave cli_sessionloop: fell out"))
+	TRACE2(("leave cli_sessionloop: fell out"))
 
 }
 
-void cli_session_cleanup() {
+static void cli_session_cleanup(void) {
 
 	if (!sessinitdone) {
 		return;
@@ -281,8 +325,7 @@ void cli_session_cleanup() {
 
 static void cli_finished() {
 
-	cli_session_cleanup();
-	common_session_cleanup();
+	session_cleanup();
 	fprintf(stderr, "Connection to %s@%s:%s closed.\n", cli_opts.username,
 			cli_opts.remotehost, cli_opts.remoteport);
 	exit(cli_ses.retval);

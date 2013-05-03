@@ -139,10 +139,10 @@ out:
 /* Clear and free the memory used by a public or private key */
 void rsa_key_free(dropbear_rsa_key *key) {
 
-	TRACE(("enter rsa_key_free"))
+	TRACE2(("enter rsa_key_free"))
 
 	if (key == NULL) {
-		TRACE(("leave rsa_key_free: key == NULL"))
+		TRACE2(("leave rsa_key_free: key == NULL"))
 		return;
 	}
 	if (key->d) {
@@ -166,7 +166,7 @@ void rsa_key_free(dropbear_rsa_key *key) {
 		m_free(key->q);
 	}
 	m_free(key);
-	TRACE(("leave rsa_key_free"))
+	TRACE2(("leave rsa_key_free"))
 }
 
 /* Put the public rsa key into the buffer in the required format:
