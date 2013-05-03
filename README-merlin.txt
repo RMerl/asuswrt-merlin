@@ -441,12 +441,14 @@ History
    - NEW: RT-N16 is no longer an experimentally supported device.
           Thanks to Mike from Sapphyre Software for providing
           me with an RT-N16.
-   - NEW: Reported channels currently used when mousing over
+   - NEW: Report currently used channels when mousing over
           the wifi icon at the top of the webui
    - NEW: Sysinfo: Ethernet port state will report each port's VLAN ID.
    - CHANGED: Increased list height on Site Survey page
    - CHANGED: Warn if trying to do a site survey with either
               radios disabled.
+   - CHANGED: Updated to miniupnpd 1.8.20130426
+   - CHANGED: Updated dropbear to 2013.58
    - FIXED: Restart syslogd if we had to adjust its log level for
             DHCP query logging.
    - FIXED: br0 would change MAC address when starting an OpenVPN server 
