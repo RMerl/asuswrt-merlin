@@ -56,7 +56,6 @@ var aplist = new Array();
 var wlc_scan_state = '<% nvram_get("wlc_scan_state"); %>';
 var _wlc_ssid;
 var _sw_mode;
-var wlc_scan_mode = '<% nvram_get("wlc_scan_mode"); %>';
 
 var $j = jQuery.noConflict();
 
@@ -80,7 +79,6 @@ function initial(){
 	if ((band5g_support != -1) && (radio_5 == 0))
 		E("radio5warn").style.display = "";
 
-	document.form.scanMode.value = wlc_scan_mode;
 	update_site_info();
 	showSiteTable();
 
@@ -252,7 +250,6 @@ function showSiteTable(){
 function rescan(){
 	document.form.rescanButton.disabled = true;
 	document.form.rescanButton.className = "button_gen_dis";
-	document.form.wlc_scan_mode.value = document.form.scanMode.value;
 
 	issubmit = 0;
 	isrescan = 120; // stop rescan
@@ -289,7 +286,6 @@ function rescan(){
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="wl0_ssid" value="<% nvram_char_to_ascii("", "wl0_ssid"); %>" disabled>
 <input type="hidden" name="wl1_ssid" value="<% nvram_char_to_ascii("", "wl1_ssid"); %>" disabled>
-<input type="hidden" name="wlc_scan_mode" value="<% nvram_get("wlc_scan_mode"); %>">
 
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -319,9 +315,9 @@ function rescan(){
 				<tr>
 					<th width="20%">Scan Mode</th>
 					<td>
-						<select id="scanMode" class="input_option" name="scanMode">
-							<option value="0" selected>Active (default)</option>
-							<option value="1">Passive</option>
+						<select name="wlc_scan_mode" class="input_option">
+							<option value="0" <% nvram_match("wlc_scan_mode", "0", "selected"); %>>Active (default)</option>
+							<option value="1" <% nvram_match("wlc_scan_mode", "1", "selected"); %>>Passive</option>
 						</select>
 					</td>
 				</tr>
