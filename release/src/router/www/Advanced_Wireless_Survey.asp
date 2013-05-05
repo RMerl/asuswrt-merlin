@@ -105,7 +105,7 @@ function addBorder(obj){
 	sorter.lastClick = obj;
 }
 
-function doSorter(_flag, _Method){
+function doSorter(_flag, _Method, flip){
 	if(aplist.length == 1)
 		return 0;
 
@@ -115,11 +115,12 @@ function doSorter(_flag, _Method){
 	// Remember data type for this field
 	sorter.lastType = _Method;
 
+	// Flip sort order (unless told not to)
+	if (flip) sorter.sortingMethod = (sorter.sortingMethod == "increase") ? "decrease" : "increase";
+
 	// doSorter
 	eval("aplist.sort(sorter."+_Method+"_"+sorter.sortingMethod+");");
 
-	// Swap it for next sort
-	sorter.sortingMethod = (sorter.sortingMethod == "increase") ? "decrease" : "increase";
 
 	// show Table
 	showSiteTable();
@@ -128,7 +129,7 @@ function doSorter(_flag, _Method){
 // suit for 2 dimention array
 var sorter = {
 	"lastClick" : "", // a HTML object
-	"sortingMethod" : "increase",
+	"sortingMethod" : "decrease",
 	"indexFlag" : 5, // default sort is by signal
 	"lastType" : "num", // Last data type
 	"num_increase" : function(a, b){
@@ -167,9 +168,7 @@ function update_site_info(){
 				rescan();
 				wlc_scan_state = 0;
 			}
-			// Switch back to last used order.
-			sorter.sortingMethod = (sorter.sortingMethod == "increase") ? "decrease" : "increase";
-			doSorter(sorter.indexFlag, sorter.lastType);
+			doSorter(sorter.indexFlag, sorter.lastType, false);
 		}
 	});
 }
@@ -330,11 +329,11 @@ function rescan(){
 
 			<div style="margin-left:18px;margin-top:8px;">
 				<table style="width:670px;" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey">
-					<th onclick="addBorder(this);doSorter(1, 'str');" style="cursor:pointer;"><#Wireless_name#></th>
-					<th onclick="addBorder(this);doSorter(2, 'num');" width="15%" style="text-align:center;cursor:pointer;line-height:120%;"><#WLANConfig11b_Channel_itemname#></th>
-					<th onclick="addBorder(this);doSorter(3, 'str');" width="27%" style="cursor:pointer;"><#QIS_finish_wireless_item2#></th>
-					<th onclick="addBorder(this);doSorter(0, 'str');" width="10%" style="text-align:center;cursor:pointer;line-height:120%;;">Band</th>
-					<th onclick="addBorder(this);doSorter(5, 'num');" width="10%" id="sigTh" style="border-bottom: 1px solid #FC0;text-align:center;cursor:pointer;"><#Radio#></th>
+					<th onclick="addBorder(this);doSorter(1, 'str', true);" style="cursor:pointer;"><#Wireless_name#></th>
+					<th onclick="addBorder(this);doSorter(2, 'num', true);" width="15%" style="text-align:center;cursor:pointer;line-height:120%;"><#WLANConfig11b_Channel_itemname#></th>
+					<th onclick="addBorder(this);doSorter(3, 'str', true);" width="27%" style="cursor:pointer;"><#QIS_finish_wireless_item2#></th>
+					<th onclick="addBorder(this);doSorter(0, 'str', true);" width="10%" style="text-align:center;cursor:pointer;line-height:120%;;">Band</th>
+					<th onclick="addBorder(this);doSorter(5, 'num', true);" width="10%" id="sigTh" style="border-bottom: 1px solid #FC0;text-align:center;cursor:pointer;"><#Radio#></th>
 				</table>
 			</div>
 
