@@ -62,8 +62,6 @@ var $j = jQuery.noConflict();
 
 var issubmit = 0;
 var isrescan = 0;
-if(isrescan == 120)
-	isrescan = 1;
 
 overlib_str_tmp = "";
 overlib.isOut = true;
@@ -84,6 +82,8 @@ function initial(){
 
 	document.form.scanMode.value = wlc_scan_mode;
 	update_site_info();
+	showSiteTable();
+
 }
 
 // sorter [Jerry5_Chang]
@@ -191,7 +191,7 @@ function showSiteTable(){
 	}
 	else{ // show ap list
 
-		if(aplist[0].length == 0){
+		if ((aplist.length) && (aplist[0].length == 0)) {
 			htmlCode +='<tr><td style="text-align:center;font-size:12px; border-collapse: collapse;border:1;" colspan="4"><span style="color:#FFCC00;line-height:25px;"><#APSurvey_action_searching_noresult#></span>&nbsp;<img style="margin-top:10px;" src="/images/InternetScan.gif"></td></tr>';
 		}
 		else{
