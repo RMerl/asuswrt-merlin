@@ -156,6 +156,7 @@ function update_site_info(){
 		url: '/apscan.asp',
 		dataType: 'script',
 		error: function(xhr){
+			iserror++;
 			if(iserror < 2)
 				setTimeout("update_site_info();", 1000);
 		},
