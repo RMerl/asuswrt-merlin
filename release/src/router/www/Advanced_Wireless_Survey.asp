@@ -59,7 +59,6 @@ var _sw_mode;
 
 var $j = jQuery.noConflict();
 
-var issubmit = 0;
 var isrescan = 0;
 
 overlib_str_tmp = "";
@@ -120,7 +119,6 @@ function doSorter(_flag, _Method, flip){
 
 	// doSorter
 	eval("aplist.sort(sorter."+_Method+"_"+sorter.sortingMethod+");");
-
 
 	// show Table
 	showSiteTable();
@@ -251,7 +249,6 @@ function rescan(){
 	document.form.rescanButton.disabled = true;
 	document.form.rescanButton.className = "button_gen_dis";
 
-	issubmit = 0;
 	isrescan = 120; // stop rescan
 	document.getElementById("SearchingIcon").style.display = "";
 	document.form.flag.value = "sitesurvey";
@@ -330,11 +327,11 @@ function rescan(){
 
 			<div style="margin-left:18px;margin-top:8px;">
 				<table style="width:670px;" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey">
-					<th onclick="addBorder(this);doSorter(1, 'str', true);" style="cursor:pointer;"><#Wireless_name#></th>
-					<th onclick="addBorder(this);doSorter(2, 'num', true);" width="15%" style="text-align:center;cursor:pointer;line-height:120%;"><#WLANConfig11b_Channel_itemname#></th>
-					<th onclick="addBorder(this);doSorter(3, 'str', true);" width="27%" style="cursor:pointer;"><#QIS_finish_wireless_item2#></th>
-					<th onclick="addBorder(this);doSorter(0, 'str', true);" width="10%" style="text-align:center;cursor:pointer;line-height:120%;;">Band</th>
-					<th onclick="addBorder(this);doSorter(5, 'num', true);" width="10%" id="sigTh" style="border-bottom: 1px solid #FC0;text-align:center;cursor:pointer;"><#Radio#></th>
+					<th onclick="doSorter(1, 'str', true);addBorder(this);" style="cursor:pointer;"><#Wireless_name#></th>
+					<th onclick="doSorter(2, 'num', true);addBorder(this);" width="15%" style="text-align:center;cursor:pointer;line-height:120%;"><#WLANConfig11b_Channel_itemname#></th>
+					<th onclick="doSorter(3, 'str', true);addBorder(this);" width="27%" style="cursor:pointer;"><#QIS_finish_wireless_item2#></th>
+					<th onclick="doSorter(0, 'str', true);addBorder(this);" width="10%" style="text-align:center;cursor:pointer;line-height:120%;;">Band</th>
+					<th onclick="doSorter(5, 'num', true);addBorder(this);" width="10%" id="sigTh" style="border-bottom: 1px solid #FC0;text-align:center;cursor:pointer;"><#Radio#></th>
 				</table>
 			</div>
 
