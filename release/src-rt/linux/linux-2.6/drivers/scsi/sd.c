@@ -446,7 +446,7 @@ static int sd_init_command(struct scsi_cmnd * SCpnt)
 
 	SCpnt->cmnd[1] = 0;
 	
-	if (block > 0xffffffff) {
+	if (sdp->use_16_for_rw) {
 		SCpnt->cmnd[0] += READ_16 - READ_6;
 		SCpnt->cmnd[1] |= blk_fua_rq(rq) ? 0x8 : 0;
 		SCpnt->cmnd[2] = sizeof(block) > 4 ? (unsigned char) (block >> 56) & 0xff : 0;
@@ -1310,6 +1310,8 @@ got_data:
 				  (unsigned long long)sdkp->capacity,
 				  hard_sector, (unsigned long long)mb);
 	}
+
+	sdp->use_16_for_rw = (sdkp->capacity > 0xffffffff);
 
 	/* Rescale capacity to 512-byte units */
 	if (sector_size == 4096)
