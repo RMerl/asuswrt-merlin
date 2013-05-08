@@ -2886,9 +2886,6 @@ void check_services(void)
 #ifdef LINUX26
 	_check(pids("hotplug2"), "hotplug2", start_hotplug2);
 #endif
-#ifdef RTCONFIG_CROND
-	_check(pids("crond"), "crond", start_cron);
-#endif
 }
 
 #define RC_SERVICE_STOP 0x01
