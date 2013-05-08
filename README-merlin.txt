@@ -458,6 +458,9 @@ History
             router did not support that band (RT-N16)
    - FIXED: Wifi status icon would remain half-lit if 2.4 GHz was
             disabled on a router without 5 GHz support (RT-N16)
+   - FIXED: Various fixes related to site survey display
+   - FIXED: Improved compatibility with USB disks > 2 TB
+            (must use ext2 or ext3).
 
 
 3.0.0.4.354.28 Beta 1:
