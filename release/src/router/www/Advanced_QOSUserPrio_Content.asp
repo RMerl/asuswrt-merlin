@@ -189,15 +189,14 @@ function add_options_value(o, arr, orig){
 		add_option(o, arr, arr, 0);
 }
 
-function switchPage(page){
-		
+function switchPage(page){		
 	if(page == "1")
 		location.href = "/QoS_EZQoS.asp";
-	else if(page == "3")
+	else if(page == "2")
 		location.href = "/Advanced_QOSUserRules_Content.asp";	
-		else
-    			return false;
-			}
+	else
+    	return false;
+}
 
 </script>
 </head>
@@ -250,11 +249,11 @@ function switchPage(page){
 									</td>
 						<td align="right" >	
 						<div style="margin-top:5px;">
-	   					<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
+							<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
 								<!--option><#switchpage#></option-->
 								<option value="1"><#qos_automatic_mode#></option>
-								<option value="2" selected><#qos_user_prio#></option>
-								<option value="3" ><#qos_user_rules#></option>
+								<option value="2"><#qos_user_rules#></option>
+								<option value="3" selected><#qos_user_prio#></option>
 							</select>	    
 						</div>
 						

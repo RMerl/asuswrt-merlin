@@ -400,7 +400,7 @@ function Ctrl_LANIPList(obj){
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
 			<thead>
 			  	<tr>
-					<td colspan="6" id="GWStatic"><#RouterConfig_GWStatic_groupitemdesc#></td>
+					<td colspan="6" id="GWStatic"><#RouterConfig_GWStatic_groupitemdesc#>&nbsp;(<#List_limit#>&nbsp;128)</td>
 			  	</tr>
 			</thead>			
 				<tr>

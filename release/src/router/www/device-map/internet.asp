@@ -175,7 +175,7 @@ function initial(){
 	else
 		var wanlink_type_conv = wanlink_type();
 		
-	if (parent.dsl_support != -1) {
+	if (parent.dsl_support) {
 		if (wanproto == "pppoe") {
 			if (dslproto == "pppoa") wanlink_type_conv = "PPPoA";
 		}
@@ -453,7 +453,7 @@ function goQIS(){
 						$j('#radio_wan_enable').iphoneSwitch('<% nvram_get("wan_enable"); %>', 
 							 function() {
 								document.internetForm.wan_enable.value = "1";
-								if (parent.dsl_support != -1) {
+								if (parent.dsl_support) {
 									document.internetForm.dslx_link_enable.value = "1";
 									document.internetForm.dslx_link_enable.disabled = false;
 								}
@@ -463,7 +463,7 @@ function goQIS(){
 							 },
 							 function() {
 								document.internetForm.wan_enable.value = "0";
-								if (parent.dsl_support != -1) {
+								if (parent.dsl_support) {
 									document.internetForm.dslx_link_enable.value = "0";
 									document.internetForm.dslx_link_enable.disabled = false;
 								}

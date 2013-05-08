@@ -61,10 +61,7 @@ function initial(){
 	}
 
 	$("wl_rate").style.display = "none";
-	if(wifi_hw_sw_support != -1) {
-		$("wl_rf_enable").style.display = "none";	
-	}
-	
+
 	if(band5g_support == -1){	
 		$("wl_unit_field").style.display = "none";
 	}	
@@ -79,7 +76,28 @@ function initial(){
 		}
 	}else{
 		inputCtrl(document.form.wl_noisemitigation, 0);
-	}	
+	}
+
+	if(wifi_hw_sw_support != -1) { //For N55U
+		if(document.form.wl_HW_switch.value == "1"){
+			document.form.wl_radio[0].disabled = true;
+		}
+	}
+	
+	// MODELDEP: for AC56U and AC68U
+	if('<% nvram_get("wl_unit"); %>' == '1' && (based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U")){
+		inputCtrl(document.form.wl_ampdu_mpdu, 1);
+		inputCtrl(document.form.wl_ack_ratio, 1);
+		inputCtrl(document.form.wl_txbf, 1);
+		inputCtrl(document.form.wl_itxbf, 1);
+		document.form.wl_itxbf.disabled = true;
+	}
+	else{
+		inputCtrl(document.form.wl_ampdu_mpdu, 0);
+		inputCtrl(document.form.wl_ack_ratio, 0);
+		inputCtrl(document.form.wl_txbf, 0);
+		inputCtrl(document.form.wl_itxbf, 0);
+	}
 
 	var mcast_rate = '<% nvram_get("wl_mrate_x"); %>';
 	var mcast_unit = '<% nvram_get("wl_unit"); %>';
@@ -128,6 +146,10 @@ function initial(){
 
 function applyRule(){
 	if(validForm()){
+		if(wifi_hw_sw_support != -1) { //For N55U
+			document.form.wl_HW_switch.value = "0";
+			document.form.wl_HW_switch.disabled = false;
+		}
 		showLoading();
 		document.form.submit();
 	}
@@ -225,7 +247,15 @@ function loadDateTime(){
 	document.form.wl_radio_time2_x_endmin.value = getTimeRange(document.form.wl_radio_time2_x.value, 3);
 }
 function control_TimeField(){		//control time of week & weekend field when wireless radio is down , Jieming added 2012/08/22
-	if(wifi_hw_sw_support != -1) {	// for HW radio switch model, ex. DSL-N55U
+	if(!document.form.wl_radio[0].checked){
+		$("wl_sched_enable").style.display = "none";
+		$('enable_date_week_tr').style.display="none";
+		$('enable_time_week_tr').style.display="none";
+		$('enable_date_weekend_tr').style.display="none";
+		$('enable_time_weekend_tr').style.display="none";
+	}
+	else{
+		$("wl_sched_enable").style.display = "";
 		if(!document.form.wl_timesched[0].checked){
 			$('enable_date_week_tr').style.display="none";
 			$('enable_time_week_tr').style.display="none";
@@ -237,30 +267,6 @@ function control_TimeField(){		//control time of week & weekend field when wirel
 			$('enable_time_week_tr').style.display="";
 			$('enable_date_weekend_tr').style.display="";
 			$('enable_time_weekend_tr').style.display="";	
-		}
-	}
-	else{	// for SW radio switch model, ex. RT-N66U, RT-AC56U, RT-AC68U, etc.
-		if(!document.form.wl_radio[0].checked){
-			$("wl_sched_enable").style.display = "none";
-			$('enable_date_week_tr').style.display="none";
-			$('enable_time_week_tr').style.display="none";
-			$('enable_date_weekend_tr').style.display="none";
-			$('enable_time_weekend_tr').style.display="none";
-		}
-		else{
-			$("wl_sched_enable").style.display = "";
-			if(!document.form.wl_timesched[0].checked){
-				$('enable_date_week_tr').style.display="none";
-				$('enable_time_week_tr').style.display="none";
-				$('enable_date_weekend_tr').style.display="none";
-				$('enable_time_weekend_tr').style.display="none";
-			}
-			else{
-				$('enable_date_week_tr').style.display="";
-				$('enable_time_week_tr').style.display="";
-				$('enable_date_weekend_tr').style.display="";
-				$('enable_time_weekend_tr').style.display="";	
-			}
 		}
 	}
 }
@@ -390,7 +396,7 @@ function setFlag_TimeFiled(){
 <input type="hidden" name="wl_amsdu" value="<% nvram_get("wl_amsdu"); %>">
 <input type="hidden" name="wl_TxPower_orig" value="<% nvram_get("wl_TxPower"); %>" disabled>
 <input type="hidden" name="wl0_country_code" value="<% nvram_get("wl0_country_code"); %>" disabled>
-
+<input type="hidden" name="wl_HW_switch" value="<% nvram_get("wl_HW_switch"); %>" disabled>
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>
@@ -664,6 +670,44 @@ function setFlag_TimeFiled(){
 							</select>
 						</td>
 					</tr>
+					
+					<!-- [MODELDEP] for RT-AC68U and RT-AC56U -->
+					<tr>
+						<th>Optimize max number of mpdus in an ampdu</th>
+						<td>
+							<select name="wl_ampdu_mpdu" class="input_option">
+									<option value="0" <% nvram_match("wl_ampdu_mpdu", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+									<option value="1" <% nvram_match("wl_ampdu_mpdu", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
+							</select>
+						</td>
+					</tr>					
+					<tr>
+						<th>Optimize max number of ack to suppress in a row</th>
+						<td>
+							<select name="wl_ack_ratio" class="input_option">
+									<option value="0" <% nvram_match("wl_ack_ratio", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+									<option value="1" <% nvram_match("wl_ack_ratio", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,24);">Explicit beamforming</a></th>
+						<td>
+							<select name="wl_txbf" class="input_option">
+									<option value="0" <% nvram_match("wl_txbf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+									<option value="1" <% nvram_match("wl_txbf", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
+							</select>
+						</td>
+					</tr>					
+					<tr>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,25);">Implicit beamforming</a></th>
+						<td>
+							<select name="wl_itxbf" class="input_option">
+									<option value="0" <% nvram_match("wl_itxbf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+									<option value="1" <% nvram_match("wl_itxbf", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
+							</select>
+						</td>
+					</tr>					
 
 					<!-- RaLink Only : Original at wireless-General page By Viz 2011.08 -->
 					<tr>

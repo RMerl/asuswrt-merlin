@@ -525,7 +525,7 @@ function set_pptpd_broadcast(obj){
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 									  	<thead>
 									  		<tr>
-												<td colspan="3" id="GWStatic"><#Username_Pwd#></td>
+												<td colspan="3" id="GWStatic"><#Username_Pwd#>&nbsp;(<#List_limit#>&nbsp;16)</td>
 									  		</tr>
 									  	</thead>
 									  

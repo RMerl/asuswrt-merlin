@@ -1,3 +1,4 @@
+var productid = '<#Web_Title2#>';
 helpcontent[0] = new Array("",
 							 "<#WLANConfig11b_SSID_itemdesc#>",
 						   "<#WLANConfig11b_x_BlockBCSSID_itemdesc#>",						   
@@ -55,7 +56,10 @@ helpcontent[3] = new Array("",
 						   "<#WLANConfig11n_PremblesType_itemdesc#>",	
 						   "<#WLANConfig11b_x_EnhanInter_itemdesc#>", //21
 						   "<#WLANConfig11b_x_IgmpSnEnable_itemdesc#>",
-						   "<#WLANConfig11b_x_SchedEnable_itemdesc#>");
+						   "<#WLANConfig11b_x_SchedEnable_itemdesc#>",
+							 "In explicit beamforming, both router and client card required the beamforming to get the best performance.It can improved the range and both both uplink and downlink speed.",
+							 "The implicit beamforming can support the legacy client card which does not support beamforming and increase the downlink speed. This feature will be turned on after the driver update.");
+
 helpcontent[4] = new Array("",
 						   "<#LANHostConfig_IPRouters_itemdesc#>",
 						   "<#LANHostConfig_SubnetMask_itemdesc#>",
@@ -236,4 +240,4 @@ helpcontent[24] = new Array("",
 //ADSL
 helpcontent[25] = new Array("",
 							"This field allows you to set the signal-to-noise ratio offset, if your DSL connection cannot be established or not stable, then configure to a negative dB for instance -1 dB and check if the connection becomes more stable, if problem persists then try -2 dB ~ -5 dB(Max. stability). However if your DSL connection is stable, then you could try with 1 dB ~ 5 dB(Max. performance).",			//Stability Adjustment
-							"Selecting [Enable] enables SRA(Seamless Rate Adaptation), this allows modems to make seamless data transfer rate changes to avoid dropping a connection. However if your connection is very stable and noticed DL/UL speed drops then you could disable SRA.");		//SRA(Seamless Rate Adaptation)
+							"Selecting [Enable] enables SRA(Seamless Rate Adaptation), this allows modems to make seamless data transfer rate changes to avoid dropping a connection. However if your connection is very stable and noticed DL/UL speed drops then you could disable SRA.");                //SRA(Seamless Rate Adaptation)

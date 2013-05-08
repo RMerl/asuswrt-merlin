@@ -111,7 +111,7 @@ function wl_chanspec_list_change(){
 
 	/* Reconstruct channel array from new chanspecs */
 	document.form.wl_chanspec.length = chanspecs.length;
-	for (var i in chanspecs) {
+	for (var i in chanspecs){
 		if (chanspecs[i] == 0){
 			document.form.wl_chanspec[i] = new Option("<#Auto#>", chanspecs[i]);
 		}
@@ -123,7 +123,7 @@ function wl_chanspec_list_change(){
 		}
 
 		document.form.wl_chanspec[i].value = chanspecs[i];
-		if (chanspecs[i] == cur) {
+		if (chanspecs[i] == cur && bw_cap == '<% nvram_get("wl_bw"); %>') {
 			document.form.wl_chanspec[i].selected = true;
 			sel = 1;
 		}

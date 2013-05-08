@@ -96,24 +96,28 @@
 background: url(images/New_ui/title_bg.png) 0 0 no-repeat;
 background-size: 100% 100%; 
 
-}
-.invitation_body{
-background: url(images/New_ui/midup_bg.png) 0 0 no-repeat;
-background-size: 100% 100%; 
-height:260px;
 
 filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(
-src='images/New_ui/midup_bg.png',
+src='images/New_ui/title_bg.png',
 sizingMethod='scale');
 
 -ms-filter: "progid:DXImageTransform.Microsoft.AlphaImageLoader(
-src='images/New_ui/midup_bg.png',
+src='images/New_ui/title_bg.png',
 sizingMethod='scale')";
 
 }
+
 .invitation_foot{
 background: url(images/New_ui/bottom_bg.png) 0 0 no-repeat;
 background-size: 100% 100%; 
+
+filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(
+src='images/New_ui/bottom_bg.png',
+sizingMethod='scale');
+
+-ms-filter: "progid:DXImageTransform.Microsoft.AlphaImageLoader(
+src='images/New_ui/bottom_bg.png',
+sizingMethod='scale')";
 
 }
 </style>
@@ -544,7 +548,8 @@ function build_array(obj,layer){
 	var layer3_path ="";
 	if(obj.id.length>6){
 		if(layer ==3){
-			layer3_path = "/" + $(obj.id).innerHTML;
+			//layer3_path = "/" + $(obj.id).innerHTML;
+			layer3_path = "/" + obj.title;
 			while(layer3_path.indexOf("&nbsp;") != -1)
 				layer3_path = layer3_path.replace("&nbsp;"," ");
 				
@@ -559,7 +564,8 @@ function build_array(obj,layer){
 	}
 	if(obj.id.length>4 && obj.id.length<=6){
 		if(layer ==2){
-			layer2_path = "/" + $(obj.id).innerHTML;
+			//layer2_path = "/" + $(obj.id).innerHTML;
+			layer2_path = "/" + obj.title;
 			while(layer2_path.indexOf("&nbsp;") != -1)
 				layer2_path = layer2_path.replace("&nbsp;"," ");
 		}
@@ -579,9 +585,9 @@ function GetFolderItem(selectedObj, haveSubTree){
 		// chose Disk
 		setSelectedDiskOrder(selectedObj.id);
 		path_directory = build_array(selectedObj,layer);
-		$('createFolderBtn').src = "/images/New_ui/advancesetting/FolderAdd.png";
-		$('deleteFolderBtn').src = "/images/New_ui/advancesetting/FolderDel.png";
-		$('modifyFolderBtn').src = "/images/New_ui/advancesetting/FolderMod.png";
+		$('createFolderBtn').className = "createFolderBtn";
+		$('deleteFolderBtn').className = "deleteFolderBtn";
+		$('modifyFolderBtn').className = "modifyFolderBtn";
 		$('createFolderBtn').onclick = function(){};
 		$('deleteFolderBtn').onclick = function(){};
 		$('modifyFolderBtn').onclick = function(){};
@@ -590,9 +596,9 @@ function GetFolderItem(selectedObj, haveSubTree){
 		// chose Partition
 		setSelectedPoolOrder(selectedObj.id);
 		path_directory = build_array(selectedObj,layer);
-		$('createFolderBtn').src = "/images/New_ui/advancesetting/FolderAdd_0.png";
-		$('deleteFolderBtn').src = "/images/New_ui/advancesetting/FolderDel.png";
-		$('modifyFolderBtn').src = "/images/New_ui/advancesetting/FolderMod.png";
+		$('createFolderBtn').className = "createFolderBtn_add";
+		$('deleteFolderBtn').className = "deleteFolderBtn";
+		$('modifyFolderBtn').className = "modifyFolderBtn";
 		$('createFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popCreateFolder.asp');};		
 		$('deleteFolderBtn').onclick = function(){};
 		$('modifyFolderBtn').onclick = function(){};
@@ -603,9 +609,9 @@ function GetFolderItem(selectedObj, haveSubTree){
 		// chose Shared-Folder
 		setSelectedFolderOrder(selectedObj.id);
 		path_directory = build_array(selectedObj,layer);
-		$('createFolderBtn').src = "/images/New_ui/advancesetting/FolderAdd.png";
-		$('deleteFolderBtn').src = "/images/New_ui/advancesetting/FolderDel_0.png";
-		$('modifyFolderBtn').src = "/images/New_ui/advancesetting/FolderMod_0.png";
+		$('createFolderBtn').className = "createFolderBtn";
+		$('deleteFolderBtn').className = "deleteFolderBtn_add";
+		$('modifyFolderBtn').className = "modifyFolderBtn_add";
 		$('createFolderBtn').onclick = function(){};		
 		$('deleteFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popDeleteFolder.asp');};
 		$('modifyFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popModifyFolder.asp');};
@@ -1005,15 +1011,19 @@ hint_string += "<b>Client to server:</b> Client to server refers to the invitee 
 			<div class="machineName" style="width:200px;font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:15px;margin-left:30px;"><#Web_Title2#></div>
 		</td>
 		<td>
-			<div style="width:240px;margin-top:15px;margin-left:125px;">
-				<img id="createFolderBtn" src="/images/New_ui/advancesetting/FolderAdd.png" hspace="1" title="<#AddFolderTitle#>" onclick="">
-				<img id="deleteFolderBtn" src="/images/New_ui/advancesetting/FolderDel.png" hspace="1" title="<#DelFolderTitle#>" onclick="">
-				<img id="modifyFolderBtn" src="/images/New_ui/advancesetting/FolderMod.png" hspace="1" title="<#ModFolderTitle#>" onclick="">
+			<div style="width:240px;margin-top:14px;margin-left:135px;">
+				<table >
+					<tr>
+						<td><div id="createFolderBtn" class="createFolderBtn" title="<#AddFolderTitle#>"></div></td>
+						<td><div id="deleteFolderBtn" class="deleteFolderBtn" title="<#DelFolderTitle#>"></div></td>
+						<td><div id="modifyFolderBtn" class="modifyFolderBtn" title="<#ModFolderTitle#>"></div></td>
+					</tr>
+				</table>
 			</div>
 		</td>
 	</tr></table>
 	<div id="e0" class="folder_tree"></div>
-	<div style="background-image:url(images/Tree/bg_02.png);background-repeat:no-repeat;height:90px;margin-top:6px;">		
+	<div style="background-image:url(images/Tree/bg_02.png);background-repeat:no-repeat;height:90px;margin-top:5px;">		
 		<input class="button_gen" type="button" style="margin-left:27%;margin-top:18px;" onclick="cancel_folderTree();" value="<#CTL_Cancel#>">
 		<input class="button_gen" type="button"  onclick="confirm_folderTree();" value="<#CTL_ok#>">
 	</div>
@@ -1132,7 +1142,7 @@ hint_string += "<b>Client to server:</b> Client to server refers to the invitee 
 							<table width="700px" style="margin-left:25px;">
 								<tr>
 									<td>
-										<img id="guest_image" src="/images/cloudsync/004.png" style="margin:10px 0px 20px -20px;">
+										<img id="guest_image" src="/images/cloudsync/004.png" style="margin:10px 0px 20px 0px;">
 									</td>
 									<td>&nbsp;&nbsp;</td>
 									<td>
@@ -1159,8 +1169,9 @@ hint_string += "<b>Client to server:</b> Client to server refers to the invitee 
 									</tr>
 								</table>
 							</div>	
-							<div class="invitation_body">
-								<table  width="736px" height="200px;" style="text-align:left;margin-left:15px;">
+							<div>
+								<img src="images/New_ui/midup_bg.png" width="751px;">							
+								<table  width="736px" height="200px;" style="text-align:left;margin-left:15px;position:absolute;margin-top:-130px;*margin-left:-740px;*margin-top:0px;">
 									<tr style="height:40px;">
 										<th width="25%">Description</th>
 										<td>
@@ -1227,16 +1238,18 @@ hint_string += "<b>Client to server:</b> Client to server refers to the invitee 
 										</td>
 									</tr>
 								</table>
+								<img src="images/New_ui/middown_bg.png" height="150px" width="751px;" style="*margin-top:-4px;*margin-bottom:-4px;">
 							</div>
 							<div  class="invitation_foot" style="height:20px;"></div>
-							<div style="position:absolute;margin:-165px 0px 0px 500px;"><img src="/images/cloudsync/invite_model.jpg" ></div>
+							<div style="position:absolute;margin:-175px 0px 0px 500px;"><img src="/images/cloudsync/invite_model.jpg" ></div>
 						</div>
-						<div id="aicloud_enable_hint" style="display:none;position:absolute;font-family: Arial, Helvetica, sans-serif;font-size: 18px;font-weight: bold;line-height: 150%;margin-top: 150px;margin-left: 170px;" >
-							<table >
+						<div id="aicloud_enable_hint" style="display:none;position:absolute;font-family: Arial, Helvetica, sans-serif;font-size: 18px;font-weight: bold;line-height: 150%;margin-top: 150px;width:755px;">
+							<table align="center">
 								<tr>
 									<td>
-										<div >You have not started the AiCloud service yet.</div>
-										<a href="cloud_main.asp"><span style="margin-left:155px;font-family:Lucida Console;text-decoration:underline;color:#FC0"><#btn_go#></span></a>
+										<div >You have not started the AiCloud service yet.
+											<a href="cloud_main.asp"><span style="font-family:Lucida Console;text-decoration:underline;color:#FC0"><#btn_go#></span></a>
+										</div>
 									</td>
 								</tr>
 							</table>

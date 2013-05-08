@@ -16,6 +16,8 @@
 <% wanlink(); %>
 var based_modelid = '<% nvram_get("productid"); %>';
 var hw_ver = '<% nvram_get("hardware_version"); %>';
+var usb_flag = '<% nvram_get("ehci_ports"); %>';
+ 
 function QKinternettype_load_body(){
 	parent.document.title = "<#Web_Title#> - Welcome!";
 	parent.set_step("t0");		
@@ -31,22 +33,31 @@ function QKinternettype_load_body(){
 	var check_desc3 = "<#QIS_welcome_feature3#>";	
 	var check_desc4 = "<#QIS_welcome_feature4#>";	
 		
-	if(based_modelid == "RT-N12" || hw_ver.search("RTN12") != -1){	//MODELDEP : RT-N12
+	if(based_modelid == "RT-N12" || based_modelid == "AP-N12" || hw_ver.search("N12") != -1){	//MODELDEP : N12 serious
 			var desc1_split = check_desc1.split("#ZVSPLITVZ#");
 			var desc2_split = check_desc2.split("#ZVSPLITVZ#");
 			var desc3_split = check_desc3.split("#ZVSPLITVZ#");
 			var desc4_split = check_desc4.split("#ZVSPLITVZ#");						
 			
 			if( hw_ver.search("RTN12HP") != -1 	//MODELDEP : RT-N12HP
-					&& check_desc1.split("#ZVSPLITVZ#").length == 2
-					&& check_desc2.split("#ZVSPLITVZ#").length == 2
-					&& check_desc3.split("#ZVSPLITVZ#").length == 2
-					&& check_desc4.split("#ZVSPLITVZ#").length == 2){
+					&& check_desc1.split("#ZVSPLITVZ#").length == 3
+					&& check_desc2.split("#ZVSPLITVZ#").length == 3
+					&& check_desc3.split("#ZVSPLITVZ#").length == 3
+					&& check_desc4.split("#ZVSPLITVZ#").length == 3){
 							document.getElementById("Productdesc_1").innerHTML = desc1_split[1];
 							document.getElementById("Productdesc_2").innerHTML = desc2_split[1];
 							document.getElementById("Productdesc_3").innerHTML = desc3_split[1];
 							document.getElementById("Productdesc_4").innerHTML = desc4_split[1];
-			}else{	// rest of RT-N12
+			}else if( hw_ver.search("APN12HP") != -1 	//MODELDEP : AP-N12HP
+					&& check_desc1.split("#ZVSPLITVZ#").length == 3
+					&& check_desc2.split("#ZVSPLITVZ#").length == 3
+					&& check_desc3.split("#ZVSPLITVZ#").length == 3
+					&& check_desc4.split("#ZVSPLITVZ#").length == 3){
+							document.getElementById("Productdesc_1").innerHTML = desc1_split[2];
+							document.getElementById("Productdesc_2").innerHTML = desc2_split[2];
+							document.getElementById("Productdesc_3").innerHTML = desc3_split[2];
+							document.getElementById("Productdesc_4").innerHTML = desc4_split[2];
+			}else{	// rest of N12 serious
 							document.getElementById("Productdesc_1").innerHTML = desc1_split[0];
 							document.getElementById("Productdesc_2").innerHTML = desc2_split[0];
 							document.getElementById("Productdesc_3").innerHTML = desc3_split[0];
@@ -152,14 +163,20 @@ function startPoll(){
 			setTimeout('$("#unplugImg2_m").fadeIn(500);', 500);	
 		}
 	}
-	else{	
-		if(document.getElementById("unplugImg1").style.display == "none"){
-			$("#unplugImg2").fadeOut(500);
-			setTimeout('$("#unplugImg1").fadeIn(500);', 500);	
+	else{
+		if(usb_flag != ""){
+			if(document.getElementById("unplugImg1").style.display == "none"){
+				$("#unplugImg2").fadeOut(500);
+				setTimeout('$("#unplugImg1").fadeIn(500);', 500);	
+			}
+			else{
+				$("#unplugImg1").fadeOut(500);	
+				setTimeout('$("#unplugImg2").fadeIn(500);', 500);	
+			}
 		}
 		else{
 			$("#unplugImg1").fadeOut(500);	
-			setTimeout('$("#unplugImg2").fadeIn(500);', 500);	
+			setTimeout('$("#unplugImg1").fadeIn(500);', 500);			
 		}
 	}
 
@@ -219,19 +236,18 @@ function submitenter(myfield,e)
 		</td>
 
 		<td width="45%" height="394">
-			<img id="producticon" src="/images/Model_producticon.png">
-			<div id="wan_unplug" style="display:none;text-align:center;">
-				<br>
-				<img style="margin-top:-20px;margin-left:60px;*margin-left:70px;" src="/images/qis/border.png">
-				<span>
-					<div class="QISGeneralFont" style="color:#FC0;font-weight:bolder;margin-top:-330px;text-align:left;">
+			<div id="producticon"><img src="/images/Model_producticon.png"></div>
+			<div id="wan_unplug" style="display:none;text-align:center;margin-top:-30px;*margin-top:25px;">
+				<img src="/images/qis/border.png">
+				<div style="margin-top:-330px">
+					<div class="QISGeneralFont" style="color:#FC0;font-weight:bolder;text-align:left;margin-left:25px;">
 						<#web_redirect_suggestion1#>
 					</div>
 					<br>
-					<img id="unplugImg" style="margin-left:65px;*margin-left:75px;" src="/images/WANunplug.png">
-					<img id="unplugImg1" style="margin-top: -220px;margin-left:65px;*margin-left:75px;" src="/images/WANunplug_eth.png">
-					<img id="unplugImg2" style="margin-top: -220px;margin-top:-195x;margin-left:65px;*margin-left:75px;display:none;" src="/images/WANunplug_usb.png">
-				<span>
+					<div><img id="unplugImg"  src="/images/WANunplug.png"></div>
+					<div><img id="unplugImg1" style="margin-top:-198px;" src="/images/WANunplug_eth.png"></div>
+					<div><img id="unplugImg2" style="margin-top:-198px;display:none;" src="/images/WANunplug_usb.png"></div>
+				<div>
 			</div>
 		</td>
 	</tr>

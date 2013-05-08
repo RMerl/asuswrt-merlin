@@ -80,10 +80,10 @@ function changeScale(_obj_String){
 }
 
 function switchPage(page){
-	if(page == "2")
-		location.href = "/Advanced_QOSUserPrio_Content.asp";
-	else if(page == "3")
+	if(page == "2")	
 		location.href = "/Advanced_QOSUserRules_Content.asp";
+	else if(page == "3")
+		location.href = "/Advanced_QOSUserPrio_Content.asp";
 	else
 		return false;
 }
@@ -226,8 +226,8 @@ function showqos_rulelist(){
 											<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
 												<!--option><#switchpage#></option-->
 												<option value="1" selected><#qos_automatic_mode#></option>
-												<option value="2"><#qos_user_prio#></option>
-												<option value="3"><#qos_user_rules#></option>
+												<option value="2"><#qos_user_rules#></option>
+												<option value="3"><#qos_user_prio#></option>
 											</select>	    
 										</div>
 									</td>	

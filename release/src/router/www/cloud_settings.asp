@@ -43,6 +43,10 @@ function initial(){
 
 	if('<% nvram_get("rrsut"); %>' != '1')
 		$("rrsLink").style.display = "none";
+
+	if(aicloudipk_support){
+		document.form.action_script.value = "restart_setting_webdav";
+	}
 }
 
 function applyRule(){

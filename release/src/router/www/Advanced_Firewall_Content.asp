@@ -509,7 +509,7 @@ function updateDateTime(){
    					<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
 	  					<thead>
 	   					<tr>
-	   						<td colspan="6" id="filter_lwlist"><#FirewallConfig_LWFilterList_groupitemdesc#></td>
+	   						<td colspan="6" id="filter_lwlist"><#FirewallConfig_LWFilterList_groupitemdesc#>&nbsp;(<#List_limit#>&nbsp;128)</td>
 	   					</tr>
 	  					</thead>		  
           					<tr>

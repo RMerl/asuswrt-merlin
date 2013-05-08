@@ -257,7 +257,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
         <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">	
 					  <thead>
 					  <tr>
-						<td colspan="4"><#FirewallConfig_MFList_groupitemname#></td>
+						<td colspan="4"><#FirewallConfig_MFList_groupitemname#>&nbsp;(<#List_limit#>&nbsp;128)</td>
 					  </tr>
 					  </thead>
 

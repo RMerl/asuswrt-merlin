@@ -152,6 +152,7 @@ function initial(){
 		$("upnp_icon").style.height = "500px";
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
+	check_dir_path();
 }
 function initial_dir(){
 	var __layer_order = "0_0";
@@ -373,7 +374,8 @@ function build_array(obj,layer){
 	var layer3_path ="";
 	if(obj.id.length>6){
 		if(layer ==3){
-			layer3_path = "/" + $(obj.id).innerHTML;
+			//layer3_path = "/" + $(obj.id).innerHTML;
+			layer3_path = "/" + obj.title;
 			while(layer3_path.indexOf("&nbsp;") != -1)
 				layer3_path = layer3_path.replace("&nbsp;"," ");
 				
@@ -388,7 +390,8 @@ function build_array(obj,layer){
 	}
 	if(obj.id.length>4 && obj.id.length<=6){
 		if(layer ==2){
-			layer2_path = "/" + $(obj.id).innerHTML;
+			//layer2_path = "/" + $(obj.id).innerHTML;
+			layer2_path = "/" + obj.title;
 			while(layer2_path.indexOf("&nbsp;") != -1)
 				layer2_path = layer2_path.replace("&nbsp;"," ");
 		}
@@ -408,9 +411,10 @@ function GetFolderItem(selectedObj, haveSubTree){
 		// chose Disk
 		setSelectedDiskOrder(selectedObj.id);
 		path_directory = build_array(selectedObj,layer);
-		$('createFolderBtn').src = "/images/New_ui/advancesetting/FolderAdd.png";
-		$('deleteFolderBtn').src = "/images/New_ui/advancesetting/FolderDel.png";
-		$('modifyFolderBtn').src = "/images/New_ui/advancesetting/FolderMod.png";
+		$('createFolderBtn').className = "createFolderBtn";
+		$('deleteFolderBtn').className = "deleteFolderBtn";
+		$('modifyFolderBtn').className = "modifyFolderBtn";
+		
 		$('createFolderBtn').onclick = function(){};
 		$('deleteFolderBtn').onclick = function(){};
 		$('modifyFolderBtn').onclick = function(){};
@@ -419,9 +423,10 @@ function GetFolderItem(selectedObj, haveSubTree){
 		// chose Partition
 		setSelectedPoolOrder(selectedObj.id);
 		path_directory = build_array(selectedObj,layer);
-		$('createFolderBtn').src = "/images/New_ui/advancesetting/FolderAdd_0.png";
-		$('deleteFolderBtn').src = "/images/New_ui/advancesetting/FolderDel.png";
-		$('modifyFolderBtn').src = "/images/New_ui/advancesetting/FolderMod.png";
+		$('createFolderBtn').className = "createFolderBtn_add";
+		$('deleteFolderBtn').className = "deleteFolderBtn";
+		$('modifyFolderBtn').className = "modifyFolderBtn";
+
 		$('createFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popCreateFolder.asp');};		
 		$('deleteFolderBtn').onclick = function(){};
 		$('modifyFolderBtn').onclick = function(){};
@@ -432,9 +437,10 @@ function GetFolderItem(selectedObj, haveSubTree){
 		// chose Shared-Folder
 		setSelectedFolderOrder(selectedObj.id);
 		path_directory = build_array(selectedObj,layer);
-		$('createFolderBtn').src = "/images/New_ui/advancesetting/FolderAdd.png";
-		$('deleteFolderBtn').src = "/images/New_ui/advancesetting/FolderDel_0.png";
-		$('modifyFolderBtn').src = "/images/New_ui/advancesetting/FolderMod_0.png";
+		$('createFolderBtn').className = "createFolderBtn";
+		$('deleteFolderBtn').className = "deleteFolderBtn_add";
+		$('modifyFolderBtn').className = "modifyFolderBtn_add";
+
 		$('createFolderBtn').onclick = function(){};		
 		$('deleteFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popDeleteFolder.asp');};
 		$('modifyFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popModifyFolder.asp');};
@@ -490,6 +496,7 @@ function confirm_folderTree(){
 	$('PATH').value = path_directory ;
 	this.FromObject ="0";
 	$j("#folderTree_panel").fadeOut(300);
+	//check_dir_path();
 }
 
 function cal_panel_block(){
@@ -514,6 +521,12 @@ function cal_panel_block(){
 
 	$("folderTree_panel").style.marginLeft = blockmarginLeft+"px";
 }
+
+function check_dir_path(){
+	var dir_array = $('PATH').value.split("/");
+	if(dir_array[dir_array.length - 1].length > 21)
+		$('PATH').value = "/" + dir_array[1] + "/" + dir_array[2] + "/" + dir_array[dir_array.length - 1].substring(0,18) + "...";
+}
 </script>
 </head>
 
@@ -526,10 +539,14 @@ function cal_panel_block(){
 			<div class="machineName" style="width:200px;font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:15px;margin-left:30px;"><#Web_Title2#></div>
 		</td>
 		<td>
-			<div style="width:240px;margin-top:17px;margin-left:125px;">
-				<img id="createFolderBtn" src="/images/New_ui/advancesetting/FolderAdd.png" hspace="1" title="<#AddFolderTitle#>" onclick="">
-				<img id="deleteFolderBtn" src="/images/New_ui/advancesetting/FolderDel.png" hspace="1" title="<#DelFolderTitle#>" onclick="">
-				<img id="modifyFolderBtn" src="/images/New_ui/advancesetting/FolderMod.png" hspace="1" title="<#ModFolderTitle#>" onclick="">
+			<div style="width:240px;margin-top:14px;margin-left:135px;">
+				<table >
+					<tr>
+						<td><div id="createFolderBtn" class="createFolderBtn" title="<#AddFolderTitle#>"></div></td>
+						<td><div id="deleteFolderBtn" class="deleteFolderBtn" title="<#DelFolderTitle#>"></div></td>
+						<td><div id="modifyFolderBtn" class="modifyFolderBtn" title="<#ModFolderTitle#>"></div></td>
+					</tr>
+				</table>
 			</div>
 		</td></tr></table>
 		<div id="e0" class="folder_tree"></div>

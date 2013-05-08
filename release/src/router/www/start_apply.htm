@@ -10,7 +10,7 @@
 var page_modified = 0;
 var restart_time = 0;
 var rc_support = "<% nvram_get("rc_support"); %>"; 
-var dsl_support = rc_support.search("dsl");
+var dsl_support = (rc_support.search("dsl") == -1) ? false : true;
 
 var current_page = '<% get_parameter("current_page"); %>';
 var next_page = '<% get_parameter("next_page"); %>';
@@ -81,7 +81,7 @@ function initial(){
 			parent.parent.location.href = parent.parent.location.href.split('#')[0];
 	}
 	else if(next_page.indexOf("QIS_") >= 0){
-		if(dsl_support != -1){
+		if(dsl_support){
 			setTimeout("delay_redirect('"+next_page+"');", restart_time*1000);
 		}
 		else {

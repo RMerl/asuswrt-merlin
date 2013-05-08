@@ -260,14 +260,14 @@ function show_partition(){
 		if(apps_dev == partitions_array[i]){
 			curr_pool_name = pool_names()[i];
 			if(all_accessable_size > 1)
-				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="divdisplayctrl(\'none\', \'none\', \'\', \'none\');apps_form(\'install\',\'aicloud\',\''+pool_names()[i]+'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="divdisplayctrl(\'none\', \'none\', \'\', \'none\');apps_form(\'install\',\'aicloud\',\''+partitions_array[i]+'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
 			else
 				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
 			htmlcode += '<div class="app_desc"><b>'+ pool_names()[i] + ' (active)</b></div>';
 		}
 		else{
 			if(all_accessable_size > 1)
-				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="divdisplayctrl(\'none\', \'none\', \'\', \'none\');apps_form(\'switch\',\'aicloud\',\''+pool_names()[i]+'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="divdisplayctrl(\'none\', \'none\', \'\', \'none\');apps_form(\'switch\',\'aicloud\',\''+partitions_array[i]+'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
 			else
 				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
 			htmlcode += '<div class="app_desc"><b>'+ pool_names()[i] + '</b></div>'; 

@@ -1096,7 +1096,7 @@ function change_url(num, flag){
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" id="http_client_table">
 				<thead>
 					<tr>
-						<td colspan="4">Specified IP</td>
+						<td colspan="4">Specified IP&nbsp;(<#List_limit#>&nbsp;4)</td>
 					</tr>
 				</thead>
 			

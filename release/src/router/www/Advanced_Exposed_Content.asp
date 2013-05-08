@@ -38,7 +38,7 @@ function validForm(){
 		}
 		
 		if(document.form.dmz_enable[1].checked){
-			document.form.dmz_ip.value = " ";
+			document.form.dmz_ip.value = "";
 		}
 	}
 	else{

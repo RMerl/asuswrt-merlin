@@ -363,10 +363,9 @@ function conv_to_transf(){
 }
 
 function switchPage(page){
-	
 	if(page == "1")
 		location.href = "/QoS_EZQoS.asp";
-	else if(page == "2")
+	else if(page == "3")
 		location.href = "/Advanced_QOSUserPrio_Content.asp";	
 	else
 		return false;		
@@ -844,11 +843,11 @@ function linkport(obj){
 									</td>
 						<td align="right" >	
 						<div style="margin-top:5px;">
-	   					<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
+							<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
 								<!--option><#switchpage#></option-->
 								<option value="1"><#qos_automatic_mode#></option>
-								<option value="2"><#qos_user_prio#></option>
-								<option value="3" selected><#qos_user_rules#></option>
+								<option value="2" selected><#qos_user_rules#></option>
+								<option value="3"><#qos_user_prio#></option>
 							</select>	    
 						</div>
 						
@@ -871,7 +870,7 @@ function linkport(obj){
 						<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px">
 							<thead>
 							<tr>
-								<td colspan="4" id="TriggerList" style="border-right:none;"><#BM_UserList_title#></td>
+								<td colspan="4" id="TriggerList" style="border-right:none;"><#BM_UserList_title#>&nbsp;(<#List_limit#>&nbsp;128)</td>
 								<td colspan="3" id="TriggerList" style="border-left:none;">
 									<div style="margin-top:0px;display:none" align="right">
 										<select id='qos_default_sel' name='qos_default_sel' class="input_option" onchange="change_wizard(this);"></select>

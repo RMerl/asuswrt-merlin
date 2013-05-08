@@ -432,7 +432,7 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
 			<table id="MainTable2" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable_table">
 			  <thead>
 			  <tr>
-				<td colspan="4"><#WLANConfig11b_RBRList_groupitemdesc#></td>
+				<td colspan="4"><#WLANConfig11b_RBRList_groupitemdesc#>&nbsp;(<#List_limit#>&nbsp;4)</td>
 			  </tr>
 			  </thead>		
 

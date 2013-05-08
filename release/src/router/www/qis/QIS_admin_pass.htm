@@ -46,7 +46,7 @@ function QKinternettype_load_body(){
 		document.form.http_passwd.focus();
 		chkPass("<% nvram_get("http_passwd"); %>", 'http_passwd');
 
-		if (dsl_support != -1) {
+		if (dsl_support) {
 			document.getElementById("prev_btn").style.display = "none";
 			var detect_status = '<% nvram_get("dsltmp_autodet_state"); %>';	
 			if ( (detect_status == "Detecting") || (detect_status == "wait_for_init") ||
@@ -202,7 +202,7 @@ function submitForm(){
 		return false;
 	}
 
-	if(dsl_support != -1) {
+	if(dsl_support) {
 		// if it is dsl, just write to a temp variable
 		document.form.dsltmp_qis_admin_passwd.value = document.form.http_passwd.value;	
 		document.form.action_script.value = "";
@@ -231,7 +231,7 @@ function submitForm(){
 }
 
 function gotoPrev(){
-	if (dsl_support != -1) {
+	if (dsl_support) {
 		location.href = "/qis/QIS_detect.htm";	
 	}
 	else {

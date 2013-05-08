@@ -62,6 +62,12 @@ function validForm(){
 
 		$("new_account").value = trim($("new_account").value);
 
+		if($("account").value.length == 0){
+			showtext($("alert_msg1"), "<#File_Pop_content_alert_desc1#>");
+			$("account").focus();
+			return false;
+		}
+		
 		if($("new_account").value == "root"
 				|| $("new_account").value == "guest"
 				|| $("new_account").value == "anonymous"
@@ -92,7 +98,7 @@ function validForm(){
 	}
 
 	// password
-	/*if($("new_password").value.length <= 0 || $("confirm_password").value.length <= 0){
+	if($("new_password").value.length <= 0 || $("confirm_password").value.length <= 0){
 		showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
 		if($("new_password").value.length <= 0){
 				$("new_password").focus();
@@ -102,7 +108,7 @@ function validForm(){
 				$("confirm_password").select();
 		}
 		return false;
-	}//*/
+	}
 
 	if($("new_password").value != $("confirm_password").value){
 		showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc7#>");

@@ -211,11 +211,13 @@ function applyRule(){
 		if(sw_mode == 2 || sw_mode == 4)
 			document.form.action_wait.value = "5";
 
-		if(document.form.wl_chanspec.value != 0 && document.form.wl_bw.value == 0){
-			if('<% nvram_get("wl_unit"); %>' == 0)
-				document.form.wl_bw.value = 2;
-			else
-				document.form.wl_bw.value = 3;
+		if(!wifilogo_support){
+			if(document.form.wl_chanspec.value != 0 && document.form.wl_bw.value == 0){
+				if('<% nvram_get("wl_unit"); %>' == 0)
+					document.form.wl_bw.value = 2;
+				else
+					document.form.wl_bw.value = 3;
+			}
 		}
 
 		document.form.submit();
@@ -292,6 +294,9 @@ function _change_wl_unit(val){
 }
 
 function checkBW(){
+	if(wifilogo_support)
+		return false;
+
 	if(document.form.wl_chanspec.value != 0 && document.form.wl_bw.value == 0){
 		if('<% nvram_get("wl_unit"); %>' == 0)
 			document.form.wl_bw.selectedIndex = 2;

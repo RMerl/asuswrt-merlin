@@ -191,3 +191,6 @@ ifeq ($(BUILD_NAME), RT-N65U)
 	cd $(INSTALLDIR)/www && ln -sf ../tmp/settings Settings_RT-N65R.CFG && cd $(TOP)/www
 endif
 endif
+ifeq ($(BUILD_NAME), RT-N12)
+	cd $(INSTALLDIR)/www && find . -name "*.dict"|xargs -n 1 -I @ sed -i "s/RT-N12/ZVDYNMODELVZ/g" @
+endif

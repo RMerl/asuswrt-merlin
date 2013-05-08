@@ -21,8 +21,7 @@
 }
 
 .accountName{
-	/*background:url(/images/AiDisk/user_icon0.gif) #F8F8F8; Viz Ban */
-	background:url(/images/New_ui/advancesetting/user_icon0.png);
+	/*background:url(/images/New_ui/advancesetting/user_icon0.png);*/
 	background-repeat:no-repeat;
 	background-position:left;
 	
@@ -175,8 +174,7 @@
 }
 
 .noAccount{
-	/*background:url(/images/AiDisk/user_icon1.gif) #F8F8F8; Viz Ban */
-	background:url(/images/New_ui/advancesetting/user_icon1.png);	
+	/*background:url(/images/New_ui/advancesetting/user_icon1.png);	*/
 	background-repeat:no-repeat;
 	background-position:left;
 	height:25px;

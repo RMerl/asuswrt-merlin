@@ -314,6 +314,7 @@ function show_device(){
 	if(usb_support == -1){
 		usb_path1_index = "";
 		usb_path2_index = "";
+		return true;
 	}
 	else
 		all_disks = foreign_disks().concat(blank_disks());

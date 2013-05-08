@@ -1501,6 +1501,33 @@ padding-top:1px;
 	width:30px;
 	cursor: pointer;
 }
+
+/*Viz add 2013.03 for adsl sync status      start*/
+.linestatusup{
+	background-image:url(/images/New_ui/DSLstatus.png);
+	background-repeat:no-repeat;	
+	background-position:2px 0px;
+	height:29px;
+	width:29px;
+	cursor: pointer;
+}
+.linestatuselse{
+	background-image:url(/images/New_ui/DSL_Act.gif);
+	background-repeat:no-repeat;	
+	background-position:3px 2px;
+	height:29px;
+	width:29px;
+	cursor: pointer;
+}
+.linestatusdown{
+	background-image:url(/images/New_ui/DSLstatus.png);
+	background-repeat:no-repeat;	
+	background-position:2px -50px;
+	height:29px;
+	width:29px;
+	cursor: pointer;
+}
+/*Viz add 2013.03 for adsl sync status      end*/
 .printstatuson{
 	background-image:url(images/New_ui/printstatus.png);
 	background-repeat:no-repeat;	
@@ -1762,4 +1789,210 @@ padding-top:1px;
 	height:339px;
 	overflow:auto;
 	width:455px;
+}
+
+/* 控制user account and folder "add", "delete", "modify的圖形偏移"*/
+.createAccountBtn{
+	background-image:url(images/New_ui/advancesetting/UserAdd_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -62px;
+	height:30px;
+	width:31px;
+}
+.createAccountBtn_hover{
+	background-image:url(images/New_ui/advancesetting/UserAdd_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -31px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+.createAccountBtn_add{
+	background-image:url(images/New_ui/advancesetting/UserAdd_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px 0px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+
+.deleteAccountBtn{
+	background-image:url(images/New_ui/advancesetting/UserDel_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -62px;
+	height:30px;
+	width:31px;
+}
+.deleteAccountBtn_hover{
+	background-image:url(images/New_ui/advancesetting/UserDel_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -31px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+.deleteAccountBtn_add{
+	background-image:url(images/New_ui/advancesetting/UserDel_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px 0px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+
+.modifyAccountBtn{
+	background-image:url(images/New_ui/advancesetting/UserMod_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -62px;
+	height:30px;
+	width:31px;
+}
+.modifyAccountBtn_hover{
+	background-image:url(images/New_ui/advancesetting/UserMod_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -31px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+.modifyAccountBtn_add{
+	background-image:url(images/New_ui/advancesetting/UserMod_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px 0px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+
+.createFolderBtn{
+	background-image:url(images/New_ui/advancesetting/FolderAdd_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -62px;
+	height:30px;
+	width:31px;
+}
+.createFolderBtn_hover{
+	background-image:url(images/New_ui/advancesetting/FolderAdd_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -31px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+
+.createFolderBtn_add{
+	background-image:url(images/New_ui/advancesetting/FolderAdd_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px 0px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+.createFolderBtn_add:hover{
+	background-image:url(images/New_ui/advancesetting/FolderAdd_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -31px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+
+.deleteFolderBtn{
+	background-image:url(images/New_ui/advancesetting/FolderDel_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -62px;
+	height:30px;
+	width:31px;
+}
+.deleteFolderBtn_hover{
+	background-image:url(images/New_ui/advancesetting/FolderDel_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -31px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+.deleteFolderBtn_add{
+	background-image:url(images/New_ui/advancesetting/FolderDel_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px 0px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+.deleteFolderBtn_add:hover{
+	background-image:url(images/New_ui/advancesetting/FolderDel_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -31px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+
+.modifyFolderBtn{
+	background-image:url(images/New_ui/advancesetting/FolderMod_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -62px;
+	height:30px;
+	width:31px;
+}
+.modifyFolderBtn_hover{
+	background-image:url(images/New_ui/advancesetting/FolderMod_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -31px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+.modifyFolderBtn_add{
+	background-image:url(images/New_ui/advancesetting/FolderMod_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px 0px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+.modifyFolderBtn_add:hover{
+	background-image:url(images/New_ui/advancesetting/FolderMod_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -31px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+}
+
+.userIcon{
+	background-image:url(images/New_ui/advancesetting/user_icon_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -62px;
+	padding-left:30px;
+	height:30px;
+	width:31px;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-size:12px;
+	line-height:25px;
+}
+
+.userIcon:hover{
+	background-image:url(images/New_ui/advancesetting/user_icon_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px -31px;
+	padding-left:30px;
+	height:30px;
+	width:31px;
+	cursor: pointer;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-size:12px;
+	line-height:25px;
+}
+.userIcon_click{	
+	background-image:url(images/New_ui/advancesetting/user_icon_ALL.png);
+	background-repeat:no-repeat;	
+	background-position:0px 0px;
+	padding-left:30px;
+	height:30px;
+	width:31px;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-size:12px;
+	line-height:25px;
 }

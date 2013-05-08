@@ -336,7 +336,7 @@ function applyRule(){
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 									  	<thead>
 									  		<tr>
-												<td colspan="3" id="GWStatic">Offline list</td><!--Viz hold on this : &nbsp;&nbsp;(<#List_limit#> 32)-->
+												<td colspan="3" id="GWStatic">Offline list&nbsp;(<#List_limit#>&nbsp;32)</td>
 									  		</tr>
 									  	</thead>
 						

@@ -13,4 +13,7 @@
   <wan>umount=<% nvram_get("usb_path2_removed"); %></wan>
   <wan>ddnsRet=<% nvram_get("ddns_return_code_chk"); %></wan>
   <wan>ddnsUpdate=<% nvram_get("ddns_updated"); %></wan>
+  <wan>wan_line_state=<% nvram_get("dsltmp_adslsyncsts"); %></wan>
+  <wan>wlan0_radio_flag=<% nvram_get("wl0_radio"); %></wan>
+  <wan>wlan1_radio_flag=<% nvram_get("wl1_radio"); %></wan>  
 </devicemap>

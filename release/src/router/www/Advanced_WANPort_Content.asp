@@ -167,7 +167,7 @@ function applyRule(){
 
 function addWANOption(obj, wanscapItem){
 	free_options(obj);
-	if(dsl_support != -1 && obj.name == "wans_second"){
+	if(dsl_support && obj.name == "wans_second"){
 		for(i=0; i<wanscapItem.length; i++){
 			if(wanscapItem[i] == "dsl"){
 				wanscapItem.splice(i,1);
@@ -193,7 +193,7 @@ function changeWANProto(obj){
 					document.form.wans_second.value = "lan";
 					document.form.wans_second.index = 2;					
 				}else if (obj.value == "lan"){
-					if(dsl_support == -1){		//for DSL model, because DSL type can't set to secondary wan
+					if(!dsl_support){		//for DSL model, because DSL type can't set to secondary wan
 						document.form.wans_second.value = "wan";
 						document.form.wans_second.index = 0;
 					}
@@ -210,7 +210,7 @@ function changeWANProto(obj){
 					document.form.wans_primary.value = "lan";
 					document.form.wans_primary.index = 2;
 				}else if (obj.value == "lan"){
-					if(dsl_support == -1){
+					if(!dsl_support){
 						document.form.wans_primary.value = "wan";
 						document.form.wans_primary.index = 0;
 					}
@@ -776,7 +776,7 @@ function del_Row(obj){
 				<!-- ----------Routing Rules Table  ---------------- -->
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;" id="Routing_rules_table">
 			  	<thead>
-			  		<tr><td colspan="4" id="Routing_table">Routing rules</td></tr>
+			  		<tr><td colspan="4" id="Routing_table">Routing rules&nbsp;(<#List_limit#>&nbsp;128)</td></tr>
 			  	</thead>
 			  
 			  	<tr>

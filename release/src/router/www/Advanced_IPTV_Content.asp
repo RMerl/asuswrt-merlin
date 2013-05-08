@@ -35,12 +35,12 @@ var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
 var manual_stb = rc_support.search("manual_stb");
 
 function initial(){
-	if (dsl_support != -1) {
+	if (dsl_support) {
 		document.form.action_script.value = "reboot";		
 		document.form.action_wait.value = "<% get_default_reboot_time(); %>";				
 	}
 	show_menu();
-	if(dsl_support == -1) {	
+	if(!dsl_support) {	
 		ISP_Profile_Selection(original_switch_wantag);
 	}
 	document.form.switch_stb_x.value = original_switch_stb_x;	
@@ -50,7 +50,7 @@ function initial(){
 	if(Rawifi_support == -1)	//rawifi platform without this item, by Viz 2012.01
 		$('enable_eff_multicast_forward').style.display="";		
 
-	if(dsl_support == -1){
+	if(!dsl_support){
 		if(parent.rc_support.search("manual_stb") == -1) 
 			document.form.switch_wantag.remove(8);
 	}
@@ -216,7 +216,7 @@ function ISP_Profile_Selection(isp){
 }
 
 function validForm(){
-	if (dsl_support == -1) {
+	if (!dsl_support) {
         if(document.form.switch_wantag.value == "manual")
         {
                 if(document.form.switch_wan0tagid.value.length > 0)
@@ -283,7 +283,7 @@ function applyRule(){
 		}
 	}
 
-	if(dsl_support == -1) {	
+	if(!dsl_support) {	
 		if( (original_switch_stb_x != document.form.switch_stb_x.value) 
 		||  (original_switch_wantag != document.form.switch_wantag.value)
 		||  (original_switch_wan0tagid != document.form.switch_wan0tagid.value)

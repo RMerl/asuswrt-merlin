@@ -314,7 +314,7 @@ function trigger_validate_duplicate(o, v, l, off){
           <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"  class="FormTable_table">
 	  	  		<thead>
            		<tr>
-            		<td colspan="6" id="autofw_rulelist"><#IPConnection_TriggerList_groupitemdesc#></td>
+            		<td colspan="6" id="autofw_rulelist"><#IPConnection_TriggerList_groupitemdesc#>&nbsp;(<#List_limit#>&nbsp;128)</td>
           		</tr>
 		  			</thead>
 		  

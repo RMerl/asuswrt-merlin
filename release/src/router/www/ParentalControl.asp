@@ -702,7 +702,7 @@ function deleteRow_lantowan(r, client){
 </script>
 </head>
 
-<body onload="initial();" onunload="unload_body();">
+<body onload="initial();" onunload="unload_body();" onselectstart="return false;">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 

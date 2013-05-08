@@ -110,6 +110,10 @@ function gotoguestnetwork(){
 function gotocooler(){
 	top.location.href = "/Advanced_PerformanceTuning_Content.asp";
 }
+// Viz add 2013.04 for dsl sync status
+function gotoDSL_log(){
+	top.location.href = "/Main_AdslStatus_Content.asp";
+}
 
 function low_channel(a, b)
 {
@@ -127,7 +131,21 @@ function overHint(itemNum){
 	var title2 = 0;
 	var title5 = 0;
 
-	<%radio_status();%>
+	// Viz add 2013.04 for dsl sync status
+	if(itemNum == 9){
+		statusmenu = "<div class='StatusHint'>ADSL :</div>";
+		if(wan_line_state == "up")
+			lineDesc = "Link up";
+		else if(wan_line_state == "wait for init")
+			lineDesc = "Wait for init";
+		else if(wan_line_state == "init")
+			lineDesc = "Initializing";
+		else
+			lineDesc = "Link down";
+
+		statusmenu += "<span>" + lineDesc + "</span>";
+
+	}
 
 	var control_chan_arr = <% wl_control_channel(); %>;
 	var extent_chan_arr = <% wl_extent_channel(); %>;
@@ -144,33 +162,31 @@ function overHint(itemNum){
 				wifiDesc = "Wi-Fi=Enabled"
 
 		} else {	// Report radio states
-			if ( radio_2 ) {
-				radiostate = "2.4G: ";
-				if ((extent_chan_arr[0] == 0) || (extent_chan_arr[0] == undefined))
-					radiostate += "Channel " + control_chan_arr[0];
+			if ( wlan0_radio_flag == 1) {
+				wifiDesc = "<b>2.4G:</b> ";
+				if ((extent_chan_arr[0] == 0) || (extent_chan_arr[0] == undefined) || (extent_chan_arr[0] == control_chan_arr[0]))
+					wifiDesc += "Channel " + control_chan_arr[0];
 				else
-					radiostate += "Channels "+ low_channel(control_chan_arr[0],extent_chan_arr[0]) + "+" + high_channel(control_chan_arr[0],extent_chan_arr[0])
+					wifiDesc += "Channels "+ low_channel(control_chan_arr[0],extent_chan_arr[0]) + "+" + high_channel(control_chan_arr[0],extent_chan_arr[0])
                         } else {
-				radiostate = "2.4G: Disabled";
+				wifiDesc = "<b>2.4G:</b> <#btn_Disabled#>";
 			}
 
 			if (band5g_support != -1) {
-				if ( radio_5) {
-					radiostate += "<br>&nbsp;&nbsp;5G: ";
-					if ((extent_chan_arr[1] == 0) || (extent_chan_arr[1] == undefined))
-						radiostate += "Channel " + control_chan_arr[1]
+				if (wlan1_radio_flag == 1) {
+					wifiDesc += "<br><b>&nbsp;&nbsp;5G:</b> ";
+					if ((extent_chan_arr[1] == 0) || (extent_chan_arr[1] == undefined) || (extent_chan_arr[1] == control_chan_arr[1]))
+						wifiDesc += "Channel " + control_chan_arr[1]
 					else
-						radiostate += "Channels "+ low_channel(control_chan_arr[1], extent_chan_arr[1]) + "+" + high_channel(control_chan_arr[1],extent_chan_arr[1])
+						wifiDesc += "Channels "+ low_channel(control_chan_arr[1], extent_chan_arr[1]) + "+" + high_channel(control_chan_arr[1],extent_chan_arr[1])
 				} else {
-					radiostate += "<br>&nbsp;&nbsp;5G: Disabled"
+					wifiDesc += "<br><b>&nbsp;&nbsp;5G:</b> <#btn_Disabled#>"
 				}
 			}
-			wifiDesc="Wi-Fi:"+radiostate;
-
 		}
-		statusmenu += "<span>" + wifiDesc.substring(6, wifiDesc.length) + "</span>";
+		statusmenu += "<span>" + wifiDesc + "</span>";
 	}	
-	
+
 	// cooler
 	if(itemNum == 7){
 		statusmenu = "<div class='StatusHint'>Cooler:</div>";
@@ -349,7 +365,11 @@ function openHint(hint_array_id, hint_show_id, flag){
 	if(hint_array_id == 24){
 		var _caption = "";
 
-		if(hint_show_id == 5){
+		if(hint_show_id == 6){	// Viz add 2013.04 for dsl sync status
+			statusmenu = "<span class='StatusClickHint' onclick='gotoDSL_log();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Go to ADSL Log</span>";
+			_caption = "ADSL Log";
+		}
+		else if(hint_show_id == 5){
 			statusmenu = "<span class='StatusClickHint' onclick='gotocooler();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Go to Performance tuning</span>";
 			_caption = "Perfomance Tuning";
 		}

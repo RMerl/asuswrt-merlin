@@ -123,28 +123,30 @@ function translate_auth(flag){
 		return "unknown Auth";
 }
 
-function gen_gntable_tr(unit, gn_array){	
+function gen_gntable_tr(unit, gn_array, slicesb){	
 	var GN_band = "";
 	var htmlcode = "";
 	if(unit == 0) GN_band = 2;
 	if(unit == 1) GN_band = 5;
 	
-	htmlcode += '<table align="left" style="margin:auto;margin-left:20px;border-collapse:collapse;">';
-	htmlcode += '<tr><th align="left" style="width:200px;">';
+	htmlcode += '<table align="left" style="margin-left:20px;border-collapse:collapse;width:95%;';
+	if(slicesb > 0)
+		htmlcode += 'margin-top:20px;';	
+	htmlcode += '"><tr><th align="left" width="160px">';
 	htmlcode += '<table id="GNW_'+GN_band+'G" class="gninfo_th_table" align="left" style="margin:auto;border-collapse:collapse;">';
-	htmlcode += '<tr><th align="left" style="height:28px;"><#QIS_finish_wireless_item1#></th></tr>';
-	htmlcode += '<tr><th align="left" style="height:28px;"><#WLANConfig11b_AuthenticationMethod_itemname#></th></tr>';
-	htmlcode += '<tr><th align="left" style="height:28px;"><#Network_key#></th></tr>';
-	htmlcode += '<tr><th align="left" style="height:28px;"><#mssid_time_remaining#></th></tr>';
+	htmlcode += '<tr><th align="left" style="height:40px;"><#QIS_finish_wireless_item1#></th></tr>';
+	htmlcode += '<tr><th align="left" style="height:40px;"><#WLANConfig11b_AuthenticationMethod_itemname#></th></tr>';
+	htmlcode += '<tr><th align="left" style="height:40px;"><#Network_key#></th></tr>';
+	htmlcode += '<tr><th align="left" style="height:40px;"><#mssid_time_remaining#></th></tr>';
 	if(sw_mode != "3"){
 			htmlcode += '<tr><th align="left" style="width:20%;height:28px;"><#Access_Intranet#></th></tr>';
 	}
-	htmlcode += '<tr><th align="left" style="height:28px;"></th></tr>';		
+	htmlcode += '<tr><th align="left" style="height:40px;"></th></tr>';		
 	htmlcode += '</table></th>';
 	
 	for(var i=0; i<gn_array.length; i++){			
-			var subunit = i+1;
-			htmlcode += '<td style="padding-right:50px"><table id="GNW_'+GN_band+'G'+i+'" class="gninfo_table" align="center" style="margin:auto;border-collapse:collapse;">';			
+			var subunit = i+1+slicesb*4;
+			htmlcode += '<td><table id="GNW_'+GN_band+'G'+i+'" class="gninfo_table" align="center" style="margin:auto;border-collapse:collapse;">';			
 			if(gn_array[i][0] == "1"){
 					htmlcode += '<tr><td align="center" class="gninfo_table_top"></td></tr>';
 					if(gn_array[i][1].length < 21)
@@ -193,10 +195,13 @@ function gen_gntable_tr(unit, gn_array){
 			}
 			htmlcode += '</table></td>';		
 	}	
-		
+
+	if(slicesb > 0){
+		for(var td=0; td<(4-gn_array.length); td++)
+			htmlcode += '<td style="width:135px"></td>';
+	}			
+
 	htmlcode += '</tr></table>';
-
-
 	return htmlcode;
 }
 
@@ -209,18 +214,37 @@ function _change_wl_unit_status(__unit){
 function gen_gntable(){
 	var htmlcode = ""; 
 	var htmlcode5 = ""; 
-		
+	var gn_array_2g_tmp = gn_array_2g;
+	var gn_array_5g_tmp = gn_array_5g;
+	var band2sb = 0;
+	var band5sb = 0;
+
 	htmlcode += '<table style="margin-left:20px;margin-top:25px;" width="95%" align="center" cellpadding="4" cellspacing="0" class="gninfo_head_table" id="gninfo_table_2g">';
 	htmlcode += '<tr id="2g_title"><td align="left" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><span>2.4GHz</span>';
 	htmlcode += '<span id="2g_radio_hint" style="font-size: 14px;display:none;color:#FC0;margin-left:17px;">* <#GuestNetwork_Radio_Status#>	<a style="font-family:Lucida Console;color:#FC0;text-decoration:underline;cursor:pointer;" onclick="_change_wl_unit_status(0);"><#btn_go#></a></span></td></tr>';
-	htmlcode += gen_gntable_tr(0, gn_array_2g);
+
+	while(gn_array_2g_tmp.length > 4){
+		htmlcode += gen_gntable_tr(0, gn_array_2g_tmp.slice(0, 4), band2sb);
+		band2sb++;
+		gn_array_2g_tmp = gn_array_2g_tmp.slice(4);
+	}
+	htmlcode += gen_gntable_tr(0, gn_array_2g_tmp, band2sb);
+
 	htmlcode += '</table>';
 	$("guest_table2").innerHTML = htmlcode;
 	
 	htmlcode5 += '<table style="margin-left:20px;margin-top:25px;" width="95%" align="center" cellpadding="4" cellspacing="0" class="gninfo_head_table" id="gninfo_table_5g">';
 	htmlcode5 += '<tr id="5g_title"><td align="left" style="color:#5AD; font-size:16px; border-bottom:1px dashed #AAA;"><span>5GHz</span>';
 	htmlcode5 += '<span id="5g_radio_hint" style="font-size: 14px;display:none;color:#FC0;margin-left:17px;">* <#GuestNetwork_Radio_Status#>	<a style="font-family:Lucida Console;color:#FC0;text-decoration:underline;cursor:pointer;" onclick="_change_wl_unit_status(1);"><#btn_go#></a></span></td></tr>';
-	htmlcode5 += gen_gntable_tr(1, gn_array_5g);
+
+	while(gn_array_5g_tmp.length > 4){
+		htmlcode5 += gen_gntable_tr(1, gn_array_5g_tmp.slice(0, 4), band5sb);
+		band5sb++;
+		gn_array_5g_tmp = gn_array_5g_tmp.slice(4);
+	}
+	htmlcode5 += gen_gntable_tr(1, gn_array_5g_tmp, band5sb);
+
+
 	htmlcode5 += '</table>';		
 	$("guest_table5").innerHTML = htmlcode5;
 }

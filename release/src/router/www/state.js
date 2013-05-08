@@ -26,6 +26,7 @@ if((location.hostname.search('<% nvram_get("lan_ipaddr"); %>') == -1) && (locati
 var rc_support = "<% nvram_get("rc_support"); %>";
 var wl_vifnames = "<% nvram_get("wl_vifnames"); %>";
 var dbwww_support = false; 
+var wifilogo_support = (rc_support.search("WIFI_LOGO") == -1) ? false : true; 
 var band2g_support = rc_support.search("2.4G");
 var band5g_support = rc_support.search("5G");
 var live_update_support = rc_support.search("update"); 
@@ -36,7 +37,7 @@ var psta_support = rc_support.search("psta"); // AC66U proxy sta support
 var wl6_support = rc_support.search("wl6"); // BRCM wl6 support
 var Rawifi_support = rc_support.search("rawifi");
 var SwitchCtrl_support = rc_support.search("switchctrl");
-var dsl_support = rc_support.search("dsl");
+var dsl_support = (rc_support.search("dsl") == -1) ? false : true;
 var dualWAN_support = rc_support.search("dualwan");
 var ruisp_support = rc_support.search("ruisp");
 var nfsd_support = rc_support.search("nfsd");
@@ -83,7 +84,7 @@ var optimizeXbox_support = (rc_support.search("optimize_xbox") == -1) ? false : 
 
 var QISWIZARD = "QIS_wizard.htm";
 // Todo: Support repeater mode
-if(isMobile() && sw_mode != 2 && dsl_support == -1)
+if(isMobile() && sw_mode != 2 && !dsl_support)
 	QISWIZARD = "QIS_wizard_m.htm";
 
 // for detect if the status of the machine is changed. {
@@ -97,6 +98,10 @@ var gn_array_5g = <% wl_get_guestnetwork("1"); %>;
 
 <% available_disk_names_and_sizes(); %>
 <% disk_pool_mapping_info(); %>
+
+var wan_line_state = "<% nvram_get("dsltmp_adslsyncsts"); %>";
+var wlan0_radio_flag = "<% nvram_get("wl0_radio"); %>";
+var wlan1_radio_flag = "<% nvram_get("wl1_radio"); %>";
 
 function change_wl_unit_status(_unit){
 	if(sw_mode == 2 || sw_mode == 4) return false;
@@ -166,7 +171,7 @@ function show_banner(L3){// L3 = The third Level of Menu
  	banner_code +='<td valign="center" class="titledown" width="auto">';
 
 	// dsl does not support operation mode
-	if (dsl_support	== -1) {
+	if (!dsl_support) {
 		banner_code +='<span style="font-family:Verdana, Arial, Helvetica, sans-serif;"><#menu5_6_1_title#>:</sapn><span class="title_link" style="text-decoration: none;" id="op_link"><a href="/Advanced_OperationMode_Content.asp" style="color:white"><span id="sw_mode_span" style="text-decoration: underline;"></span></a></span>\n';
 	}
 	banner_code +='<span style="font-family:Verdana, Arial, Helvetica, sans-serif;"><#General_x_FirmwareVersion_itemname#></sapn><a href="/Advanced_FirmwareUpgrade_Content.asp" style="color:white;"><span id="firmver" class="title_link"></span></a> <small>(Merlin build)</small>\n';
@@ -184,8 +189,12 @@ function show_banner(L3){// L3 = The third Level of Menu
 	if(multissid_support != -1)
 		banner_code +='<td width="30"><div id="guestnetwork_status""></div></td>\n';
 
+	//Viz add 2013.04 for dsl sync status
+	if(dsl_support)
+		banner_code +='<td width="30"><div id="adsl_line_status"></div></td>\n';
+
 	if(sw_mode != 3)
-	  banner_code +='<td width="30"><div id="connect_status""></div></td>\n';
+	  banner_code +='<td width="30"><div id="connect_status"></div></td>\n';
 
 	if(usb_support != -1)
 		banner_code +='<td width="30"><div id="usb_status"></div></td>\n';
@@ -260,7 +269,7 @@ function remove_url(){
 		remove_menu_item(10, "Main_TrafficMonitor_realtime.asp");
 	}
 
-	if(dsl_support == -1) {
+	if(!dsl_support) {
 		remove_menu_item(7, "Advanced_ADSL_Content.asp");
 		remove_menu_item(8, "Main_AdslStatus_Content.asp");
 	}
@@ -362,7 +371,7 @@ function remove_url(){
 	
 	if(dualWAN_support == -1){
 		remove_menu_item(2, "Advanced_WANPort_Content.asp");
-		if (dsl_support != -1) {
+		if (dsl_support) {
 			tablink[2][1] = "Advanced_DSL_Content.asp";
 		}
 	}
@@ -649,7 +658,11 @@ function addOnlineHelp(obj, keywordArray){
 		SV : "en",
 		BR : "en",
 		JP : "en",
-		ES : "en"
+		ES : "en",
+		IT : "en",
+		UK : "en",
+		HU : "en",
+		RO : "en"
 	}
 
 	// exception start
@@ -1045,10 +1058,18 @@ function show_top_status(){
 	$("elliptic_ssid_2g").innerHTML = ssid_status_2g;
 	$("elliptic_ssid_5g").innerHTML = ssid_status_5g;	
 
-	showtext($("firmver"), '<% nvram_get("firmver"); %>' + "." + <% nvram_get("buildno"); %>);
-	
+	var swpjverno = '<% nvram_get("swpjverno"); %>';
+	var buildno = '<% nvram_get("buildno"); %>';
+	var firmver = '<% nvram_get("firmver"); %>'
+	if(swpjverno == '')
+		showtext($("firmver"), firmver + "." + buildno);
+	else{
+		var extendno = '<% nvram_get("extendno"); %>';
+		 showtext($("firmver"), swpjverno + '_' + extendno);
+	}
+
 	// no_op_mode
-	if (dsl_support	== -1) {
+	if (!dsl_support) {
 		if(sw_mode == "1")  // Show operation mode in banner, Viz 2011.11
 			$("sw_mode_span").innerHTML = "<#wireless_router#>";
 		else if(sw_mode == "2")
@@ -1121,7 +1142,7 @@ function MicrosoftEventHandler_KeyDown(){
 	return true;
 }
 
-// display selected language in language bar, Jieming added at 2012/06/19
+// display selected language in language bar, Viz modified at 2013/03/22
 function show_selected_language(){
 	switch($("preferred_lang").value){
 		case 'EN':{
@@ -1164,6 +1185,10 @@ function show_selected_language(){
 			$('selected_lang').innerHTML = "Français";
 			break;
 		}
+		case 'HU':{
+			$('selected_lang').innerHTML = "Hungarian";
+			break;
+		}
 		case 'IT':{
 			$('selected_lang').innerHTML = "Italiano";
 			break;
@@ -1182,6 +1207,10 @@ function show_selected_language(){
 		}
 		case 'PL':{
 			$('selected_lang').innerHTML = "Polski";
+			break;
+		}
+		case 'RO':{
+			$('selected_lang').innerHTML = "Romanian";
 			break;
 		}
 		case 'RU':{
@@ -1925,12 +1954,32 @@ function refresh_info_status(xmldoc)
 	usb_path2_removed = wanStatus[12].firstChild.nodeValue;
 	ddns_return_code = wanStatus[13].firstChild.nodeValue.replace("ddnsRet=", "");
 	ddns_updated = wanStatus[14].firstChild.nodeValue.replace("ddnsUpdate=", "");
+	wan_line_state = wanStatus[15].firstChild.nodeValue.replace("wan_line_state=", "");
+	wlan0_radio_flag = wanStatus[16].firstChild.nodeValue.replace("wlan0_radio_flag=", "");
+	wlan1_radio_flag = wanStatus[17].firstChild.nodeValue.replace("wlan1_radio_flag=", "");
 
 	if(location.pathname == "/"+ QISWIZARD)
 		return false;	
 
 	// internet
 	if(sw_mode == 1){
+		//Viz add 2013.04 for dsl sync status
+		if(dsl_support){
+
+				if(wan_line_state == "up"){
+						$("adsl_line_status").className = "linestatusup";
+						$("adsl_line_status").onclick = function(){openHint(24,6);}
+				}else if(wan_line_state == "wait for init"){
+						$("adsl_line_status").className = "linestatuselse";
+				}else if(wan_line_state == "init"){
+						$("adsl_line_status").className = "linestatuselse";
+				}else{
+						$("adsl_line_status").className = "linestatusdown";
+				}
+				$("adsl_line_status").onmouseover = function(){overHint(9);}
+				$("adsl_line_status").onmouseout = function(){nd();}
+		}
+
 		if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
 			$("connect_status").className = "connectstatuson";
 			$("connect_status").onclick = function(){openHint(24,3);}
@@ -1977,14 +2026,14 @@ function refresh_info_status(xmldoc)
 
 	// wifi hw sw status
 	if(wifi_hw_sw_support != -1){
-		if(wifi_hw_switch == "wifi_hw_switch=0"){
+		if(wlan0_radio_flag == "0" && wlan1_radio_flag == "0"){
 			$("wifi_hw_sw_status").className = "wifihwswstatusoff";
 			$("wifi_hw_sw_status").onclick = function(){}
-			}
-			else{
+		}
+		else{
 			$("wifi_hw_sw_status").className = "wifihwswstatuson";
 			$("wifi_hw_sw_status").onclick = function(){}
-				}
+		}
 		$("wifi_hw_sw_status").onmouseover = function(){overHint(8);}
 		$("wifi_hw_sw_status").onmouseout = function(){nd();}
 	}	
