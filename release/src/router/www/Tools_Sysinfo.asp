@@ -281,7 +281,7 @@ function show_etherstate(){
 						<td><% sysinfo("cpu.freq"); %> MHz</td>
 					</tr>
 					<tr>
-                                                <th>CPU Load Average (1/5/15 min)</th>
+                                                <th>CPU Load Average (1, 5, 15 mins)</th>
                                                 <td>
                                                         <% sysinfo("cpu.load.1"); %>,&nbsp;
 							<% sysinfo("cpu.load.5"); %>,&nbsp;
