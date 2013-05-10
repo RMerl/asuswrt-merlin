@@ -530,10 +530,10 @@ void stop_dnsmasq(void)
 
 void restart_dnsmasq(void)
 {
-	if (pids("dnsmasq")) {
+	if (pids("dnsmasq"))
 		stop_dnsmasq();
-		start_dnsmasq();
-	}
+
+	start_dnsmasq();
 }
 
 void clear_resolv(void)
