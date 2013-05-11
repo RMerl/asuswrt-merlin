@@ -332,7 +332,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			stop_logger();
 			stop_wanduck();
 #ifdef RTCONFIG_DNSMASQ
-			stop_dnsmasq();
+			stop_dnsmasq(0);
 #else
 			stop_dns();
 			stop_dhcpd();

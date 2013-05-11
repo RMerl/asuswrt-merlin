@@ -604,7 +604,7 @@ extern int is_create_file_dongle(const char *vid, const char *pid);
 extern void setup_leds();
 extern void write_static_leases(char *file);
 #ifdef RTCONFIG_DNSMASQ
-extern void restart_dnsmasq(void);
+extern void restart_dnsmasq(int force);
 #else
 extern int restart_dns();
 #endif
@@ -695,7 +695,7 @@ extern int start_wpsfix(void);
 extern int stop_wpsfix(void);
 #endif
 #ifdef RTCONFIG_DNSMASQ
-extern void stop_dnsmasq(void);
+extern void stop_dnsmasq(int force);
 #endif
 extern void firmware_check_main(int argc, char *argv[]);
 

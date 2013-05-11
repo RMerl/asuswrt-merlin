@@ -2273,7 +2273,7 @@ lan_up(char *lan_ifname)
 {
 	_dprintf("%s(%s)\n", __FUNCTION__, lan_ifname);
 
-	restart_dnsmasq();
+	restart_dnsmasq(0);
 
 	update_lan_resolvconf();
 

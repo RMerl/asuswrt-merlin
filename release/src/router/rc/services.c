@@ -247,7 +247,7 @@ void create_passwd(void)
         fappend_file("/etc/group", "/jffs/configs/group.add");
 }
 
-void start_dnsmasq(void)
+void start_dnsmasq(int force)
 {
 	FILE *fp;
 	char *lan_ifname;
@@ -257,7 +257,7 @@ void start_dnsmasq(void)
 
 	TRACE_PT("begin\n");
 
-	if (getpid() != 1) {
+	if(!force && getpid() != 1){
 		notify_rc("start_dnsmasq");
 		return;
 	}
@@ -509,11 +509,11 @@ void start_dnsmasq(void)
 	TRACE_PT("end\n");
 }
 
-void stop_dnsmasq(void)
+void stop_dnsmasq(int force)
 {
 	TRACE_PT("begin\n");
 
-	if (getpid() != 1) {
+	if(!force && getpid() != 1){
 		notify_rc("stop_dnsmasq");
 		return;
 	}
@@ -528,12 +528,12 @@ void stop_dnsmasq(void)
 	TRACE_PT("end\n");
 }
 
-void restart_dnsmasq(void)
+void restart_dnsmasq(int force)
 {
 	if (pids("dnsmasq"))
-		stop_dnsmasq();
+		stop_dnsmasq(force);
 
-	start_dnsmasq();
+	start_dnsmasq(force);
 }
 
 void clear_resolv(void)
@@ -2588,7 +2588,9 @@ start_services(void)
 	start_wps();
 	start_wpsaide();
 #ifdef RTCONFIG_DNSMASQ
-	start_dnsmasq();
+	/* Only if not already started by start_lan() */
+	if (!pids("dnsmasq"))
+		start_dnsmasq(0);
 #else
 	start_dhcpd();
 	start_dns();
@@ -2703,7 +2705,7 @@ stop_services(void)
 	stop_httpd();
 	stop_cifs();
 #ifdef RTCONFIG_DNSMASQ
-	stop_dnsmasq();
+	stop_dnsmasq(0);
 #else
 	stop_dns();
 	stop_dhcpd();
@@ -3046,7 +3048,7 @@ again:
 		stop_logger();
 		stop_wanduck();
 #ifdef RTCONFIG_DNSMASQ
-		stop_dnsmasq();
+		stop_dnsmasq(0);
 #else
 		stop_dns();
 		stop_dhcpd();
@@ -3064,7 +3066,7 @@ again:
 			sleep(2); // wait for all httpd event done
 			stop_httpd();
 #ifdef RTCONFIG_DNSMASQ
-			stop_dnsmasq();
+			stop_dnsmasq(0);
 #else
 			stop_dns();
 			stop_dhcpd();
@@ -3091,7 +3093,7 @@ again:
 			start_vlan();
 			start_lan();
 #ifdef RTCONFIG_DNSMASQ
-			start_dnsmasq();
+			start_dnsmasq(0);
 #else
 			start_dns();
 			start_dhcpd();
@@ -3124,7 +3126,7 @@ again:
 			stop_networkmap();
 			stop_httpd();
 #ifdef RTCONFIG_DNSMASQ
-			stop_dnsmasq();
+			stop_dnsmasq(0);
 #else
 			stop_dns();
 			stop_dhcpd();
@@ -3149,7 +3151,7 @@ again:
 			//start_vlan();
 			start_lan();
 #ifdef RTCONFIG_DNSMASQ
-			start_dnsmasq();
+			start_dnsmasq(0);
 #else
 			start_dns();
 			start_dhcpd();
@@ -3197,7 +3199,7 @@ again:
 			stop_networkmap();
 			stop_httpd();
 #ifdef RTCONFIG_DNSMASQ
-			stop_dnsmasq();
+			stop_dnsmasq(0);
 #else
 			stop_dns();
 			stop_dhcpd();
@@ -3225,7 +3227,7 @@ again:
 			//start_vlan();
 			start_lan();
 #ifdef RTCONFIG_DNSMASQ
-			start_dnsmasq();
+			start_dnsmasq(0);
 #else
 			start_dns();
 			start_dhcpd();
@@ -3652,8 +3654,8 @@ again:
 	else if (strcmp(script, "dhcpd") == 0)
 	{
 #ifdef RTCONFIG_DNSMASQ
-		if(action&RC_SERVICE_STOP) stop_dnsmasq();
-		if(action&RC_SERVICE_START) start_dnsmasq();
+		if(action&RC_SERVICE_STOP) stop_dnsmasq(0);
+		if(action&RC_SERVICE_START) start_dnsmasq(0);
 #else
 		if(action&RC_SERVICE_STOP) stop_dhcpd();
 		if(action&RC_SERVICE_START) start_dhcpd();
@@ -3661,8 +3663,8 @@ again:
 	}
 	else if (strcmp(script, "dnsmasq") == 0)
 	{
-		if(action&RC_SERVICE_STOP) stop_dnsmasq();
-		if(action&RC_SERVICE_START) start_dnsmasq();
+		if(action&RC_SERVICE_STOP) stop_dnsmasq(0);
+		if(action&RC_SERVICE_START) start_dnsmasq(0);
 	}
 	else if (strcmp(script, "upnp") == 0)
 	{
@@ -3841,14 +3843,14 @@ again:
 #endif
 			stop_networkmap();
 			stop_httpd();
-			stop_dnsmasq();
+			stop_dnsmasq(0);
 			stop_lan_wlc();
 			stop_lan_port();
 			stop_lan_wlport();
 			start_lan_wlport();
 			start_lan_port(8);
 			start_lan_wlc();
-			start_dnsmasq();
+			start_dnsmasq(0);
 			start_httpd();
 			start_networkmap();
 #ifdef RTCONFIG_USB_PRINTER
@@ -3889,7 +3891,7 @@ again:
 		if(action&RC_SERVICE_STOP) stop_pptpd();
 		if(action&RC_SERVICE_START) {
 			start_pptpd();
-			restart_dnsmasq();
+			restart_dnsmasq(0);
 			start_firewall(wan_primary_ifunit(), 0);
 		}
 	}
@@ -4127,8 +4129,10 @@ void start_nat_rules(void)
 
 	eval("iptables-restore", NAT_RULES);
 
+#ifdef WEB_REDIRECT
 	// Remove wildcard resolution
-	restart_dnsmasq();
+	restart_dnsmasq(1);
+#endif
 
 	run_custom_script("nat-start", NULL);
 	return;
@@ -4148,8 +4152,10 @@ void stop_nat_rules(void)
 
 	eval("iptables-restore", "/tmp/redirect_rules");
 
+#ifdef WEB_REDIRECT
 	// dnsmasq will handle wildcard resolution
-	restart_dnsmasq();
+	restart_dnsmasq(1);
+#endif
 	return;
 }
 
