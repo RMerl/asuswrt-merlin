@@ -787,7 +787,15 @@ void handle_wan_line(int wan_unit, int action){
 
 	// Redirect rules.
 	if(action){
-		stop_nat_rules();
+		memset(prefix_wan, 0, 8);
+		sprintf(prefix_wan, "wan%d_", wan_unit);
+
+		memset(wan_proto, 0, 16);
+		strcpy(wan_proto, nvram_safe_get(strcat_r(prefix_wan, "proto", nvram_name)));
+
+		if((strcmp(wan_proto, "pptp")) && (strcmp(wan_proto, "l2tp"))){
+			stop_nat_rules();
+		}
 	}
 	/*
 	 * When C2C and remove the redirect rules,
