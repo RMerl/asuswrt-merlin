@@ -1756,7 +1756,7 @@ if(conn_changed_state[current_wan_unit] == C2D)
 #ifdef RTCONFIG_DSL /* Paul add 2012/10/18 */
 	led_control(LED_WAN, LED_OFF);
 #endif
-	csprintf("\n# Enable direct rule(C2D)\n");
+	csprintf("\n# Enable direct rule if not tunnelled (C2D)\n");
 }
 else
 	csprintf("\n# Enable direct rule(isFirstUse)\n");
@@ -1797,7 +1797,7 @@ csprintf("\n# wanduck(C2D): Try to prepare the backup line.\n");
 		}
 		else if(conn_changed_state[current_wan_unit] == D2C || conn_changed_state[current_wan_unit] == CONNED){
 			if(rule_setup == 1 && !isFirstUse){
-csprintf("\n# Disable direct rule(D2C)\n");
+csprintf("\n# Disable direct rule if not tunnelled (D2C)\n");
 				rule_setup = 0;
 
 				handle_wan_line(current_wan_unit, rule_setup);
