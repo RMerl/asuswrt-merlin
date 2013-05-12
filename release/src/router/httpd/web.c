@@ -4779,7 +4779,7 @@ static int ej_iptmon(int eid, webs_t wp, int argc, char **argv) {
 
 	char ip[INET6_ADDRSTRLEN];
 
-	unsigned long tx, rx;
+	int64_t tx, rx;
 
 	exclude = nvram_safe_get("cstats_exclude");
 	include = nvram_safe_get("cstats_include");
@@ -4796,9 +4796,8 @@ static int ej_iptmon(int eid, webs_t wp, int argc, char **argv) {
 
 	while (fgets(sa, sizeof(sa), a)) {
 		if(sscanf(sa, 
-			"ip = %s bytes_src = %lu %*u %*u %*u %*u packets_src = %*u %*u %*u %*u %*u bytes_dst = %lu %*u %*u %*u %*u packets_dst = %*u %*u %*u %*u %*u time = %*u",
+			"ip = %s bytes_src = %llu %*u %*u %*u %*u packets_src = %*u %*u %*u %*u %*u bytes_dst = %llu %*u %*u %*u %*u packets_dst = %*u %*u %*u %*u %*u time = %*u",
 			ip, &tx, &rx) != 3 ) continue;
-
 		if (find_word(exclude, ip)) {
 			wholenetstatsline = 0;
 			continue;
@@ -4808,7 +4807,7 @@ static int ej_iptmon(int eid, webs_t wp, int argc, char **argv) {
 //		if ((find_word(include, ip)) || (wholenetstatsline == 1)) {
 //		if ((tx > 0) || (rx > 0) || (wholenetstatsline == 1)) {
 //		if ((tx > 0) || (rx > 0)) {
-			websWrite(wp,"%c'%s':{rx:0x%lx,tx:0x%lx}", comma, ip, rx, tx);
+			websWrite(wp,"%c'%s':{rx:0x%llx,tx:0x%llx}", comma, ip, rx, tx);
 			comma = ',';
 		}
 		wholenetstatsline = 0;
@@ -4850,7 +4849,7 @@ static int ej_iptraffic(int eid, webs_t wp, int argc, char **argv) {
 
 	char *exclude;
 
-	unsigned long tx_bytes, rx_bytes;
+	int64_t tx_bytes, rx_bytes;
 	unsigned long tp_tcp, rp_tcp;
 	unsigned long tp_udp, rp_udp;
 	unsigned long tp_icmp, rp_icmp;
@@ -4871,7 +4870,7 @@ static int ej_iptraffic(int eid, webs_t wp, int argc, char **argv) {
 	fgets(sa, sizeof(sa), a); // network
 	while (fgets(sa, sizeof(sa), a)) {
 		if(sscanf(sa, 
-			"ip = %s bytes_src = %lu %*u %*u %*u %*u packets_src = %*u %lu %lu %lu %*u bytes_dst = %lu %*u %*u %*u %*u packets_dst = %*u %lu %lu %lu %*u time = %*u",
+			"ip = %s bytes_src = %llu %*u %*u %*u %*u packets_src = %*u %lu %lu %lu %*u bytes_dst = %llu %*u %*u %*u %*u packets_dst = %*u %lu %lu %lu %*u time = %*u",
 			ip, &tx_bytes, &tp_tcp, &tp_udp, &tp_icmp, &rx_bytes, &rp_tcp, &rp_udp, &rp_icmp) != 9 ) continue;
 		if (find_word(exclude, ip)) continue ;
 		if ((tx_bytes > 0) || (rx_bytes > 0)){
@@ -4884,7 +4883,7 @@ static int ej_iptraffic(int eid, webs_t wp, int argc, char **argv) {
 				ct_tcp = ptr->tcp_conn;
 				ct_udp = ptr->udp_conn;
 			}
-			websWrite(wp, "%c['%s', %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %u, %u]", 
+			websWrite(wp, "%c['%s', %llu, %llu, %lu, %lu, %lu, %lu, %lu, %lu, %u, %u]", 
 						comma, ip, rx_bytes, tx_bytes, rp_tcp, tp_tcp, rp_udp, tp_udp, rp_icmp, tp_icmp, ct_tcp, ct_udp);
 			comma = ',';
 		}
