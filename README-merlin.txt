@@ -444,23 +444,30 @@ History
    - NEW: Report currently used channels when mousing over
           the wifi icon at the top of the webui
    - NEW: Sysinfo: Ethernet port state will report each port's VLAN ID.
+   - CHANGED: Merged with webui content from 3.0.0.4.364
    - CHANGED: Increased list height on Site Survey page
    - CHANGED: Warn if trying to do a site survey with either
               radios disabled.
    - CHANGED: Updated to miniupnpd 1.8.20130426
-   - CHANGED: Updated dropbear to 2013.58
-   - FIXED: Restart syslogd if we had to adjust its log level for
-            DHCP query logging.
+   - CHANGED: Updated to dropbear 2013.58
+   - FIXED: Syslogd must be restarted if we had to adjust its log 
+            level for DHCP query logging.
    - FIXED: br0 would change MAC address when starting an OpenVPN server 
             with a tap interface.
    - FIXED: Sysinfo: Port numbering order (RT-N16)
-   - FIXED: Sysinfo: 5G radio info weren't hidden if the 
+   - FIXED: Sysinfo: 5G radio infos weren't hidden if the 
             router did not support that band (RT-N16)
    - FIXED: Wifi status icon would remain half-lit if 2.4 GHz was
             disabled on a router without 5 GHz support (RT-N16)
    - FIXED: Various fixes related to site survey display
    - FIXED: Improved compatibility with USB disks > 2 TB
             (must use ext2 or ext3).
+   - FIXED: Unable to clear DMZ IP (fixed in 364 webui content)
+   - FIXED: PPTP/L2TP Internet connection unable to connect at boot 
+            (Beta 1 regression)
+   - FIXED: PPTP/L2TP Internet connection unable to reconnect after going 
+            down (unsure if a Beta 1 regression or a long-standing bug 
+            in Asus's FW).
 
 
 3.0.0.4.354.28 Beta 1:
