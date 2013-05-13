@@ -461,13 +461,15 @@ History
             disabled on a router without 5 GHz support (RT-N16)
    - FIXED: Various fixes related to site survey display
    - FIXED: Improved compatibility with USB disks > 2 TB
-            (must use ext2 or ext3).
-   - FIXED: Unable to clear DMZ IP (fixed in 364 webui content)
+            (must use ext2 or ext3)
+   - FIXED: Unable to clear DMZ IP (fixed in 364 webui files)
    - FIXED: PPTP/L2TP Internet connection unable to connect at boot 
             (Beta 1 regression)
    - FIXED: PPTP/L2TP Internet connection unable to reconnect after going 
             down (unsure if a Beta 1 regression or a long-standing bug 
             in Asus's FW).
+   - FIXED: Per IP traffic monitoring would report random values if there 
+            was a lot of traffic (over 2 GB)
 
 
 3.0.0.4.354.28 Beta 1:
