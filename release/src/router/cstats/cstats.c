@@ -249,7 +249,7 @@ static int load_history_to_tree(const char *fname) {
 
 					ptr->utime = tmp.utime;
 					memcpy(ptr->speed, &tmp.speed, sizeof(unsigned long) * MAX_NSPEED * MAX_COUNTER);
-					memcpy(ptr->last, &tmp.last, sizeof(unsigned long) * MAX_COUNTER);
+					memcpy(ptr->last, &tmp.last, sizeof(uint64_t) * MAX_COUNTER);
 					ptr->tail = tmp.tail;
 //					ptr->sync = tmp.sync;
 					ptr->sync = -1;
@@ -479,7 +479,7 @@ static void save_histjs(void) {
 	}
 }
 
-static void bump(data_t *data, int *tail, int max, uint32_t xnow, unsigned long *counter) {
+static void bump(data_t *data, int *tail, int max, uint32_t xnow, uint64_t *counter) {
 	int t, i;
 
 	t = *tail;
@@ -515,14 +515,14 @@ static void calc(void) {
 	FILE *f;
 	char buf[512];
 	char *ipaddr = NULL;
-	unsigned long counter[MAX_COUNTER];
+	uint64_t counter[MAX_COUNTER];
 	int i, j;
 	time_t now;
 	time_t mon;
 	struct tm *tms;
-	uint32_t c;
-	uint32_t sc;
-	unsigned long diff;
+	uint64_t c;
+	uint64_t sc;
+	uint64_t diff;
 	long tick;
 	int n;
 	char *exclude = NULL;
@@ -540,19 +540,19 @@ static void calc(void) {
 	printf("%s: cstats_include='%s'\n", __FUNCTION__, include);
 
 
-	unsigned long tx;
-	unsigned long rx;
+	uint64_t tx;
+	uint64_t rx;
 	char ip[INET_ADDRSTRLEN];
 
 	if ((f = fopen("/proc/net/ipt_account/lan", "r"))) {
 
 		while (fgets(buf, sizeof(buf), f)) {
 			if(sscanf(buf, 
-				"ip = %s bytes_src = %lu %*u %*u %*u %*u packets_src = %*u %*u %*u %*u %*u bytes_dst = %lu %*u %*u %*u %*u packets_dst = %*u %*u %*u %*u %*u time = %*u",
+				"ip = %s bytes_src = %llu %*u %*u %*u %*u packets_src = %*u %*u %*u %*u %*u bytes_dst = %llu %*u %*u %*u %*u packets_dst = %*u %*u %*u %*u %*u time = %*u",
 //				"ip = %s bytes_src = %Lu %*Lu %*Lu %*Lu %*Lu packets_src = %*Lu %*Lu %*Lu %*Lu %*Lu bytes_dest = %Lu %*Lu %*Lu %*Lu %*Lu packets_dest = %*Lu %*Lu %*Lu %*Lu %*Lu time = %*lu",
 				ip, &rx, &tx) != 3 ) continue;
 #ifdef DEBUG_CSTATS
-			printf("%s: %s tx=%lu rx=%lu\n", __FUNCTION__, ip, tx, rx);
+			printf("%s: %s tx=%llu rx=%llu\n", __FUNCTION__, ip, tx, rx);
 #endif
 
 			if (find_word(exclude, ip)) continue;
@@ -583,13 +583,13 @@ static void calc(void) {
 					ptr->sync = -1;
 #ifdef DEBUG_CSTATS
 					for (i = 0; i < MAX_COUNTER; ++i) {
-						printf("%s: counter[%d]=%lu ptr->last[%d]=%lu\n", __FUNCTION__, i, counter[i], i, ptr->last[i]);
+						printf("%s: counter[%d]=%llu ptr->last[%d]=%llu\n", __FUNCTION__, i, counter[i], i, ptr->last[i]);
 					}
 #endif
 					memcpy(ptr->last, counter, sizeof(ptr->last));
 					memset(counter, 0, sizeof(counter));
 					for (i = 0; i < MAX_COUNTER; ++i) {
-						printf("%s: counter[%d]=%lu ptr->last[%d]=%lu\n", __FUNCTION__, i, counter[i], i, ptr->last[i]);
+						printf("%s: counter[%d]=%llu ptr->last[%d]=%llu\n", __FUNCTION__, i, counter[i], i, ptr->last[i]);
 					}
 				}
 				else {
@@ -609,7 +609,7 @@ static void calc(void) {
 							c = counter[i];
 							sc = ptr->last[i];
 #ifdef DEBUG_CSTATS
-							printf("%s: counter[%d]=%lu ptr->last[%d]=%lu c=%u sc=%u\n", __FUNCTION__, i, counter[i], i, ptr->last[i], c, sc);
+							printf("%s: counter[%d]=%llu ptr->last[%d]=%llu c=%llu sc=%llu\n", __FUNCTION__, i, counter[i], i, ptr->last[i], c, sc);
 #endif
 							if (c < sc) {
 								diff = (0xFFFFFFFF - sc) + c;
@@ -620,7 +620,7 @@ static void calc(void) {
 							}
 							ptr->last[i] = c;
 							counter[i] = diff;
-							printf("%s: counter[%d]=%lu ptr->last[%d]=%lu c=%u sc=%u diff=%lu\n", __FUNCTION__, i, counter[i], i, ptr->last[i], c, sc, diff);
+							printf("%s: counter[%d]=%llu ptr->last[%d]=%llu c=%llu sc=%llu diff=%llu\n", __FUNCTION__, i, counter[i], i, ptr->last[i], c, sc, diff);
 						}
 						printf("%s: ip=%s n=%d ptr->tail=%d\n", __FUNCTION__, ptr->ipaddr, n, ptr->tail);
 						for (j = 0; j < n; ++j) {
