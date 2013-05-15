@@ -249,7 +249,7 @@ static int load_history_to_tree(const char *fname) {
 					ptr->monthlyp = tmp.monthlyp;
 
 					ptr->utime = tmp.utime;
-					memcpy(ptr->speed, &tmp.speed, sizeof(unsigned long) * MAX_NSPEED * MAX_COUNTER);
+					memcpy(ptr->speed, &tmp.speed, sizeof(uint64_t) * MAX_NSPEED * MAX_COUNTER);
 					memcpy(ptr->last, &tmp.last, sizeof(uint64_t) * MAX_COUNTER);
 					ptr->tail = tmp.tail;
 //					ptr->sync = tmp.sync;
@@ -390,7 +390,7 @@ static void load(int new) {
 void Node_print_speedjs(Node *self, void *t) {
 	int j, k, p;
 	uint64_t total, tmax;
-	unsigned long n;
+	uint64_t n;
 	char c;
 
 	node_print_mode_t *info = (node_print_mode_t *)t;
@@ -403,7 +403,7 @@ void Node_print_speedjs(Node *self, void *t) {
 		for (k = 0; k < MAX_NSPEED; ++k) {
 			p = (p + 1) % MAX_NSPEED;
 			n = self->speed[p][j];
-			fprintf(info->stream, "%s%lu", k ? "," : "", n);
+			fprintf(info->stream, "%s%llu", k ? "," : "", n);
 			total += n;
 			if (n > tmax) tmax = n;
 		}

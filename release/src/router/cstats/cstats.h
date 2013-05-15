@@ -86,7 +86,7 @@ typedef struct _Node {
 	int monthlyp;
 
 	long utime;
-	unsigned long speed[MAX_NSPEED][MAX_COUNTER];
+	uint64_t speed[MAX_NSPEED][MAX_COUNTER];
 	uint64_t last[MAX_COUNTER];
 	int tail;
 	char sync;
