@@ -602,6 +602,7 @@ static void calc(void) {
 					n = tick / INTERVAL;
 					if (n < 1) {
 						printf("%s: %s is a little early... %lu < %d\n", __FUNCTION__, ipaddr, tick, INTERVAL);
+						continue;	// Don't update the tree this time
 					} else {
 						ptr->utime += (n * INTERVAL);
 						printf("%s: %s n=%d tick=%lu utime=%lu ptr->utime=%lu\n", __FUNCTION__, ipaddr, n, tick, current_uptime, ptr->utime);
