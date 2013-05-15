@@ -30,6 +30,9 @@
 //#define _dprintf(args...)	do { } while (0)
 //#endif
 
+// Asuswrt does not use this feature
+//#define SPEED_REPORT
+
 #define K 1024
 #define M (1024 * 1024)
 #define G (1024 * 1024 * 1024)
@@ -86,9 +89,11 @@ typedef struct _Node {
 	int monthlyp;
 
 	long utime;
-	uint64_t speed[MAX_NSPEED][MAX_COUNTER];
-	uint64_t last[MAX_COUNTER];
+#ifdef SPEED_SUPPORT
 	int tail;
+	uint64_t speed[MAX_NSPEED][MAX_COUNTER];
+#endif
+	uint64_t last[MAX_COUNTER];
 	char sync;
 
 	TREE_ENTRY(_Node)	linkage;

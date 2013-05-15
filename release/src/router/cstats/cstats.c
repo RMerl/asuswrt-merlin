@@ -249,9 +249,11 @@ static int load_history_to_tree(const char *fname) {
 					ptr->monthlyp = tmp.monthlyp;
 
 					ptr->utime = tmp.utime;
+#ifdef SPEED_SUPPORT
 					memcpy(ptr->speed, &tmp.speed, sizeof(uint64_t) * MAX_NSPEED * MAX_COUNTER);
-					memcpy(ptr->last, &tmp.last, sizeof(uint64_t) * MAX_COUNTER);
 					ptr->tail = tmp.tail;
+#endif
+					memcpy(ptr->last, &tmp.last, sizeof(uint64_t) * MAX_COUNTER);
 //					ptr->sync = tmp.sync;
 					ptr->sync = -1;
 
@@ -387,6 +389,7 @@ static void load(int new) {
 	}
 }
 
+#ifdef SPEED_SUPPORT
 void Node_print_speedjs(Node *self, void *t) {
 	int j, k, p;
 	uint64_t total, tmax;
@@ -434,6 +437,7 @@ static void save_speedjs(long next) {
 
 	rename("/var/tmp/cstats-speed.js", "/var/spool/cstats-speed.js");
 }
+#endif
 
 void Node_print_datajs(Node *self, void *t) {
 	data_t *data;
@@ -627,6 +631,7 @@ static void calc(void) {
 							counter[i] = diff;
 							printf("%s: counter[%d]=%llu ptr->last[%d]=%llu c=%llu sc=%llu diff=%llu\n", __FUNCTION__, i, counter[i], i, ptr->last[i], c, sc, diff);
 						}
+#ifdef SPEED_SUPPORT
 						printf("%s: ip=%s n=%d ptr->tail=%d\n", __FUNCTION__, ptr->ipaddr, n, ptr->tail);
 						for (j = 0; j < n; ++j) {
 							ptr->tail = (ptr->tail + 1) % MAX_NSPEED;
@@ -636,8 +641,10 @@ static void calc(void) {
 							for (i = 0; i < MAX_COUNTER; ++i) {
 								ptr->speed[ptr->tail][i] = counter[i] / n;
 							}
+
 						}
 						printf("%s: ip=%s j=%d n=%d ptr->tail=%d\n", __FUNCTION__, ptr->ipaddr, j, n, ptr->tail);
+#endif
 					}
 				}
 
@@ -769,11 +776,15 @@ int main(int argc, char *argv[]) {
 				save(!nvram_match("cstats_sshut", "1"));
 				exit(0);
 			}
+#ifdef SPEED_SUPPORT
 			if (gotuser == 1) {
 				save_speedjs(z - uptime());
 				gotuser = 0;
 			}
 			else if (gotuser == 2) {
+#else
+			if (gotuser == 2) {
+#endif
 				save_histjs();
 				gotuser = 0;
 			}
