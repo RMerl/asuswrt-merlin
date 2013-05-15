@@ -87,7 +87,7 @@ typedef struct _Node {
 
 	long utime;
 	unsigned long speed[MAX_NSPEED][MAX_COUNTER];
-	unsigned long last[MAX_COUNTER];
+	uint64_t last[MAX_COUNTER];
 	int tail;
 	char sync;
 
