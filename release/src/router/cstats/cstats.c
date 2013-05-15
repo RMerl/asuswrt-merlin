@@ -217,10 +217,11 @@ static int load_history_to_tree(const char *fname) {
 	printf("%s: fname=%s\n", __FUNCTION__, fname);
 	unlink(uncomp_fn);
 
-	n = 0;
+	n = -1;	// Initial value, will be returned if we failed to parse a data file
 	sprintf(s, "gzip -dc %s > %s", fname, uncomp_fn);
 	if (system(s) == 0) {
 		if ((f = fopen(uncomp_fn, "rb")) != NULL) {
+			n = 0;	// Initial counter
 			while (fread(&tmp, sizeof(Node), 1, f) > 0) {
 				if ((find_word(exclude, tmp.ipaddr))) {
 					printf("%s: not loading excluded ip '%s'\n", __FUNCTION__, tmp.ipaddr);
@@ -273,7 +274,10 @@ static int load_history_to_tree(const char *fname) {
 	}
 	unlink(uncomp_fn);
 
-	printf("%s: loaded %d records\n", __FUNCTION__, n);
+	if (n == -1)
+		printf("%s: Failed to parse the data file!\n", __FUNCTION__);
+	else
+		printf("%s: Loaded %d records\n", __FUNCTION__, n);
 
 	return n;
 }
@@ -309,7 +313,7 @@ static void load_new(void) {
 	char hgz[256];
 
 	sprintf(hgz, "%s.gz.new", history_fn);
-	if (load_history(hgz)) save(0);
+	if (load_history(hgz) >= 0) save(0);
 	unlink(hgz);
 }
 
@@ -361,7 +365,7 @@ static void load(int new) {
 				 * In these cases, try the backup files.
 				 */
 //				if (load_history(save_path)) {
-				if (load_history(save_path) || try_hardway(save_path)) {
+				if ((load_history(save_path) >= 0) || (try_hardway(save_path) >= 0)) {
 					f_write_string(source_fn, save_path, 0, 0);
 					break;
 				}
