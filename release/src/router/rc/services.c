@@ -2281,6 +2281,7 @@ restart_rstats()
 	{
 		start_rstats(1);
 		nvram_set("rstats_new", "0");
+		nvram_commit();		// Otherwise it doesn't get written back to mtd
 	}
 	else
 	{
@@ -4329,6 +4330,7 @@ void restart_cstats(void)
         {
                 start_cstats(1);
                 nvram_set("cstats_new", "0");
+		nvram_commit();		// Otherwise it doesn't get written back to mtd
         }
         else
         {
