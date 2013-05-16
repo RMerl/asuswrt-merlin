@@ -468,8 +468,13 @@ History
    - FIXED: PPTP/L2TP Internet connection unable to reconnect after going 
             down (unsure if a Beta 1 regression or a long-standing bug 
             in Asus's FW).
-   - FIXED: Per IP traffic monitoring would report random values if there 
-            was a lot of traffic (over 2 GB)
+   - FIXED: Numerous bugs in the Per IP traffic monitoring causing inaccurate
+            traffic accounting if there was too much traffic, or if update 
+            requests occured in a too short period of time.
+   - FIXED: Asking for traffic monitoring (regular and Per IP) database to be 
+            re-created would re-create it again on next reboot if in the mean time
+            you didn't change any other settings, causing the flag not to be
+            cleared on the mtd partition.
 
 
 3.0.0.4.354.28 Beta 1:
