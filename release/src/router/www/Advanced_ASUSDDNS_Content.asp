@@ -110,17 +110,20 @@ function ddns_load_body(){
 	else if(ddns_return_code.indexOf('200')!=-1){
 		alert("<#LANHostConfig_x_DDNS_alarm_3#>");
 		showhide("wan_ip_hide2", 0);
-		showhide("wan_ip_hide3", 1);		
+		if(ddns_server_x == "WWW.ASUS.COM")
+			showhide("wan_ip_hide3", 1);		
 	}else if(ddns_return_code.indexOf('203')!=-1)
 		alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered#>");
 	else if(ddns_return_code.indexOf('220')!=-1){
 		alert("<#LANHostConfig_x_DDNS_alarm_4#>");
 		showhide("wan_ip_hide2", 0);
-		showhide("wan_ip_hide3", 1);		
+		if(ddns_server_x == "WWW.ASUS.COM")
+			showhide("wan_ip_hide3", 1);		
 	}else if(ddns_return_code == 'register,230'){
 		alert("<#LANHostConfig_x_DDNS_alarm_5#>");
 		showhide("wan_ip_hide2", 0);
-		showhide("wan_ip_hide3", 1);		
+		if(ddns_server_x == "WWW.ASUS.COM")
+			showhide("wan_ip_hide3", 1);		
 	}else if(ddns_return_code.indexOf('233')!=-1)
 		alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered_2#> '"+ddns_old_name+"'.");
 	else if(ddns_return_code.indexOf('296')!=-1)
