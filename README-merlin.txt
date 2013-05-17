@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.354.28 BETA 2 (xx-xxx-2013)
+Asuswrt-Merlin - build 3.0.0.4.354.29 BETA 1 (17-May-2013)
 ==========================================================
 
 About
@@ -437,7 +437,9 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.354.28 Beta 2:
+3.0.0.4.354.29 Beta 1:
+   - KNOWN ISSUE: 5 GHz 40 MHz is unreliable with some wireless
+                  cards (RT-N66U)
    - NEW: RT-N16 is no longer an experimentally supported device.
           Thanks to Mike from Sapphyre Software for providing
           me with an RT-N16.
@@ -464,10 +466,9 @@ History
             (must use ext2 or ext3)
    - FIXED: Unable to clear DMZ IP (fixed in 364 webui files)
    - FIXED: PPTP/L2TP Internet connection unable to connect at boot 
-            (Beta 1 regression)
+            (bug introduced in 358.28)
    - FIXED: PPTP/L2TP Internet connection unable to reconnect after going 
-            down (unsure if a Beta 1 regression or a long-standing bug 
-            in Asus's FW).
+            down (unsure if Asus bug or 358.28 bug)
    - FIXED: Numerous bugs in the Per IP traffic monitoring causing inaccurate
             traffic accounting if there was too much traffic, or if update 
             requests occured in a too short period of time.
