@@ -994,13 +994,10 @@ upnp: nvram shared iptables
 miniupnpd/config.h:
 	cd miniupnpd && ./genconfig.sh --leasefile
 
-miniupnpd: $(IPTABLES_TARGET) miniupnpd/config.h
+miniupnpd: $(IPTABLES_TARGET)
 	@$(SEP)
-	$(MAKE) -C $@ -f Makefile.linux EXTRACFLAGS="$(EXTRACFLAGS)" \
-	IPTABLESPATH=$(TOP)/iptables ARCH=$(PLATFORM) \
-	CFLAGS="-Wall -Os -D_GNU_SOURCE $(EXTRACFLAGS) -I$(TOP)/iptables/include -I$(TOP)/shared" \
-	LDFLAGS="-L$(TOP)/iptables -liptc" \
-	miniupnpd
+	cp -f ./shared/version.h miniupnpd/.
+	$(MAKE) -C miniupnpd -f Makefile.linux
 
 miniupnpd-clean:
 	-@$(MAKE) -C miniupnpd -f Makefile.linux clean
