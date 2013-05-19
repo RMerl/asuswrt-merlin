@@ -659,7 +659,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 			  	<thead>
 			  		<tr>
-						<td colspan="3" id="GWStatic"><#LANHostConfig_ManualDHCPList_groupitemdesc#>&nbsp;(<#List_limit#>&nbsp;128)</td>
+						<td colspan="4" id="GWStatic"><#LANHostConfig_ManualDHCPList_groupitemdesc#>&nbsp;(<#List_limit#>&nbsp;128)</td>
 			  		</tr>
 			  	</thead>
 
