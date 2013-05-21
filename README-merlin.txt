@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.354.29 BETA 1 (17-May-2013)
+Asuswrt-Merlin - build 3.0.0.4.354.29 BETA 2 (xx-xxx-2013)
 ==========================================================
 
 About
@@ -437,6 +437,12 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.354.29 Beta 2:
+   - FIXED: Reapply layout fixes to Guest network and DHCP page (were lost
+            in a recent webui update)
+   - FIXED: JFFS2 could get reformated again at each subsequent reboots.
+
+
 3.0.0.4.354.29 Beta 1:
    - KNOWN ISSUE: 5 GHz 40 MHz is unreliable with some wireless
                   cards (RT-N66U)
