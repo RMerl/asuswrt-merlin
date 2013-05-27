@@ -377,7 +377,7 @@ function corrected_timezone(){
 }
 
 function show_dst_chk(){
-	var tzdst = new RegExp("^[a-z]+[0-9\-\.:]+[a-z]+", "i");
+	var tzdst = new RegExp("^[a-z]+[0-9\-:]+[a-z]+", "i");
 	// match "[std name][offset][dst name]"
 	if(document.form.time_zone_select.value.match(tzdst)){
 		document.getElementById("chkbox_time_zone_dst").style.display="";	

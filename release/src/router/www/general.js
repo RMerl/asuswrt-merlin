@@ -1290,7 +1290,7 @@ function change_common(o, s, v){
 			inputCtrl(document.form.wl_wme_apsd, 1);
 		}
 	}else if (v == "time_zone_select"){
-		var tzdst = new RegExp("^[a-z]+[0-9\-\.:]+[a-z]+", "i");
+		var tzdst = new RegExp("^[a-z]+[0-9\-:]+[a-z]+", "i");
 			// match "[std name][offset][dst name]"
 		if(o.value.match(tzdst)){
 			document.getElementById("chkbox_time_zone_dst").style.display="";	
