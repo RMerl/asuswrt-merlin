@@ -1196,7 +1196,7 @@ long fappend_file(const char *path, const char *fname)
  * [STD][Offset][DST], where
  * [STD] ~ any [a-zA-Z]
  * [DST] ~ any [a-zA-Z] */
-#define CONVERT_TZ_TO_GMT_DST
+#undef CONVERT_TZ_TO_GMT_DST
 #ifdef CONVERT_TZ_TO_GMT_DST
 int gettzoffset(char *tzstr, char *tzstr1, int size1)
 {
