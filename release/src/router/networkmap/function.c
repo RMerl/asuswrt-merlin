@@ -42,6 +42,19 @@ char NetBIOS_name[16]={0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,
 		       0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20}; //for SMB NBSS request
 char SMB_OS[10];
 char SMB_PriDomain[10];
+
+#define member_size_0(type, member) sizeof(((type *)0)->member[0])
+
+void copy_device_name( char* tgt, const char* src )
+{
+	unsigned n = member_size_0( CLIENT_DETAIL_INFO_TABLE, device_name );
+	strncpy( tgt, src, n );
+	tgt[ n-1 ] = '\0';
+}
+
+// kfmfe04 - disable fixstr() for now - newer copy_device_name() may fix issues 
+//           if not, expand copy_device_name() to filter out chars<0x20
+#if 0
 char copy[16];
 
 char *fixstr(const char *buf)
@@ -63,6 +76,7 @@ char *fixstr(const char *buf)
 
         return copy;
 }
+#endif
 
 /***** Http Server detect function *****/
 int SendHttpReq(unsigned char *des_ip)
@@ -213,8 +227,9 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
 	    && (other_addr2.sin_addr.s_addr = other_addr1.sin_addr.s_addr))
             {
 		spinlock_lock(SPINLOCK_Networkmap);
-            	memcpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], nbns_response->device_name1, 16);
-		fixstr(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num]);
+    copy_device_name( p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], nbns_response->device_name1 );
+    //        	memcpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], nbns_response->device_name1, 16);
+		//fixstr(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num]);
 		spinlock_unlock(SPINLOCK_Networkmap);
 	    	memcpy(NetBIOS_name, nbns_response->device_name1, 15);
 		NMP_DEBUG("Device name:%s~%s~\n", nbns_response->device_name1,
@@ -1629,7 +1644,8 @@ Asus_Device_Discovery(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DE
 	        if( recvlen > 0 ) {
 			if(UnpackGetInfo(txPdubuf, &get_info)) {
 				NMP_DEBUG_M("DD: productID= %s\n", get_info.ProductID);
-				memcpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], get_info.ProductID, 16);
+				copy_device_name( p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], get_info.ProductID );
+//				memcpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], get_info.ProductID, 16);
 				p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 3;
 				break;
 			}
@@ -1774,8 +1790,9 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
 		//Copy modelname to device name if exist.
 		if(strcmp("",description.modelname) &&
 		  !strcmp("",p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num])) {
-			strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], description.modelname, 15);
-			p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num][15]='\0';
+			copy_device_name( p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], description.modelname );
+//			strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], description.modelname, 15);
+//			p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num][15]='\0';
 		}
 		spinlock_unlock(SPINLOCK_Networkmap);
 	    }
@@ -1868,7 +1885,8 @@ int FindHostname(P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab)
 				    (strlen(name) > 0) &&
 				    (!strchr(name, '*')) &&	// Ensure it's not a clientid in
 				    (!strchr(name, ':')))	// case device didn't have a hostname
-						strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], name, 15);
+						copy_device_name( p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], name );
+//						strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], name, 15);
 			}
 		}
 		fclose(fp);
@@ -1881,7 +1899,8 @@ int FindHostname(P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab)
 		while ((b = strsep(&nvp, "<")) != NULL) {
 			if ((vstrsep(b, ">", &mac, &ip, &name) == 3) && (strlen(ip) > 0) && (strlen(name) > 0)) {
 				if (!strcmp(ipaddr, ip))
-					strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], name, 15);
+					copy_device_name( p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], name );
+//					strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], name, 15);
 			}
 		}
 		free(nv);
