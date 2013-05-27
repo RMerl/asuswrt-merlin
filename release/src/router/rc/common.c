@@ -1200,7 +1200,7 @@ long fappend_file(const char *path, const char *fname)
 #ifdef CONVERT_TZ_TO_GMT_DST
 int gettzoffset(char *tzstr, char *tzstr1, int size1)
 {
-	char offstr[32];
+	char offstr[128];
 	char *tzptr = tzstr;
 	char *offptr = offstr;
 	int ret = 0;
@@ -1226,7 +1226,7 @@ int gettzoffset(char *tzstr, char *tzstr1, int size1)
 void time_zone_x_mapping(void)
 {
 	FILE *fp;
-	char tmpstr[32];
+	char tmpstr[128];
 	char *ptr;
 
 	/* pre mapping */
@@ -1236,8 +1236,10 @@ void time_zone_x_mapping(void)
 		nvram_set("time_zone", "UCT-9_2");
 
 	snprintf(tmpstr, sizeof(tmpstr), "%s", nvram_safe_get("time_zone"));
+#if 0
 	/* replace . with : */
 	while ((ptr=strchr(tmpstr, '.'))!=NULL) *ptr = ':';
+#endif
 	/* remove *_? */
 	while ((ptr=strchr(tmpstr, '_'))!=NULL) *ptr = 0x0;
 
