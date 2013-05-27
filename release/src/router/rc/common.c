@@ -1229,11 +1229,13 @@ void time_zone_x_mapping(void)
 	char tmpstr[128];
 	char *ptr;
 
+#if 0
 	/* pre mapping */
 	if (nvram_match("time_zone", "KST-9KDT"))
 		nvram_set("time_zone", "UCT-9_1");
 	else if (nvram_match("time_zone", "RFT-9RFTDST"))
 		nvram_set("time_zone", "UCT-9_2");
+#endif
 
 	snprintf(tmpstr, sizeof(tmpstr), "%s", nvram_safe_get("time_zone"));
 #if 0
