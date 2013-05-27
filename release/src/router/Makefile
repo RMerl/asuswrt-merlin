@@ -2190,7 +2190,7 @@ libxml2-clean:
 #add install neon 
 neon/stamp-h1:
 	cd neon && \
-	./configure CC=$(CC) --build=i686-linux --host=mipsel-linux --target=mipsel-linux --enable-shared --disable-static --disable-nls --with-zlib --with-ssl=openssl --with-libs=$(TOP)/openssl:$(TOP)/libxml2 CFLAGS='-I$(TOP)/zlib -I$(TOP)/libxml2/include -I$(TOP)/openssl/include' LDFLAGS='-L$(TOP)/libxml2/.libs -L$(TOP)/openssl -L$(TOP)/zlib' LIBS='-lxml2 -lssl -lcrypto -lz'
+	./configure CC=$(CC) --build=i686-linux --host=mipsel-linux --target=mipsel-linux --enable-shared --disable-static --disable-nls --without-libproxy --with-zlib --with-ssl=openssl --with-libs=$(TOP)/openssl:$(TOP)/libxml2 CFLAGS='-I$(TOP)/zlib -I$(TOP)/libxml2/include -I$(TOP)/openssl/include' LDFLAGS='-L$(TOP)/libxml2/.libs -L$(TOP)/openssl -L$(TOP)/zlib' LIBS='-lxml2 -lssl -lcrypto -lz'
 	cp -f neon/config.h neon/src/config.h
 	touch $@
 
