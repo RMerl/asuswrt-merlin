@@ -35,7 +35,7 @@ var client_list_array = '<% get_client_detail_info(); %>';
 var cstats_busy = 0;
 
 try {
-// <% iptraffic(); %>
+	<% iptraffic(); %>
 }
 catch (ex) {
 	iptraffic = [];

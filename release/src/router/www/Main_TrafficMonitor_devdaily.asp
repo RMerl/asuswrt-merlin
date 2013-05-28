@@ -29,7 +29,7 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 <% backup_nvram("cstats_enable,lan_ipaddr,lan_netmask"); %>;
 
 try {
-//	<% ipt_bandwidth("daily"); %>
+	<% ipt_bandwidth("daily"); %>
 }
 catch (ex) {
 	daily_history = [];
