@@ -880,6 +880,7 @@ void setup_conntrack(void)
 		f_write_string("/sys/module/nf_conntrack/parameters/hashsize", p, 0, 0);
 	}
 	else if (f_read_string("/sys/module/nf_conntrack/parameters/hashsize", buf, sizeof(buf)) > 0) {
+		if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = '\0';
 		if (atoi(buf) > 0) nvram_set("ct_hashsize", buf);
 	}
 #endif
@@ -890,6 +891,7 @@ void setup_conntrack(void)
 		f_write_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_max", p, 0, 0);
 	}
 	else if (f_read_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_max", buf, sizeof(buf)) > 0) {
+		if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = '\0';
 		if (atoi(buf) > 0) nvram_set("ct_max", buf);
 	}
 #if 0
