@@ -6,7 +6,7 @@ function getclients_noMonitor(flag){							// return the number of the client
 	
 	// get wired clients
 	/*for(var i = 0, wired_client_num = 0; i < arls.length; ++i, ++wired_client_num){
-		clients[i] = new Array(5);
+		clients[i] = new Array(9);
 		//clients[i][0] = "<#CTL_unknown#>";	// hostname
 		clients[i][0] = "";	// hostname
 		clients[i][1] = "";	// ip
@@ -20,7 +20,7 @@ function getclients_noMonitor(flag){							// return the number of the client
 	}*/
 	// get wired clients  2008.12 magic  read arp table
 	for(var i = 0, wired_client_num = 0; i < arps.length; ++i, ++wired_client_num){
-		clients[i] = new Array(5);
+		clients[i] = new Array(9);
 		//clients[i][0] = "<#CTL_unknown#>";	// hostname
 		clients[i][0] = "";	// hostname
 		clients[i][1] = arps[i][0];	// ip
@@ -36,7 +36,7 @@ function getclients_noMonitor(flag){							// return the number of the client
 	for(var i = wired_client_num; i < wired_client_num+wireless.length; ++i){
 		var wireless_order = i-wired_client_num;
 		
-		clients[i] = new Array(5);
+		clients[i] = new Array(9);
 		//clients[i][0] = "<#CTL_unknown#>";	// hostname
 		clients[i][0] = "";	// hostname
 		clients[i][1] = "";	// ip
