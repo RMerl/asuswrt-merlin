@@ -42,15 +42,13 @@ char NetBIOS_name[16]={0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,
 		       0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20}; //for SMB NBSS request
 char SMB_OS[10];
 char SMB_PriDomain[10];
-char copy[16];
 
-char *fixstr(const char *buf)
+void fixstr(const char *buf)
 {
         char *p;
         int i;
 
-        memcpy(copy, buf, 16);
-        p = (char *) copy;
+        p = (char *) buf;
 
         for (i = 0; i < 16; i++)
         {
@@ -61,7 +59,7 @@ char *fixstr(const char *buf)
                 p++;
         }
 
-        return copy;
+        return;
 }
 
 /***** Http Server detect function *****/
