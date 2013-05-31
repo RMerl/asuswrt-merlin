@@ -542,6 +542,9 @@ int main(int argc, char **argv)
 		return add_multi_routes();
 	}
 	else if (!strcmp(base, "led_ctrl")) {
+		if (argc != 3)
+			return 0;
+
 		return(led_control(atoi(argv[1]), atoi(argv[2])));
 	}
 	else if (!strcmp(base, "free_caches")) {
