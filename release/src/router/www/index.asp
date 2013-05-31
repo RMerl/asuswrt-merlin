@@ -802,7 +802,7 @@ function show_ddns_fail_hint() {
 		
 		<!--=====Beginning of Network Map=====-->
 		<div id="tabMenu"></div><br>
-		<div id="NM_shift" style="margin-top:-160px;"></div>
+		<div id="NM_shift" style="margin-top:-150px;"></div>
 		<div id="NM_table" class="NM_table" >
 		<div id="NM_table_div">
 			<table id="_NM_table" border="0" cellpadding="0" cellspacing="0" height="720" style="opacity:.95;" >
@@ -880,6 +880,7 @@ function show_ddns_fail_hint() {
 		</div>
 	</div>
 <!--==============Ending of hint content=============-->
+    </td>
   </tr>
 </table>
 <div id="navtxt" class="navtext" style="position:absolute; top:50px; left:-100px; visibility:hidden; font-family:Arial, Verdana"></div>
