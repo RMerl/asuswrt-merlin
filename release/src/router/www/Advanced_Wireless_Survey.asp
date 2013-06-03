@@ -105,20 +105,20 @@ function addBorder(obj){
 }
 
 function doSorter(_flag, _Method, flip){
-	if(aplist.length == 1)
-		return 0;
+	if(aplist.length > 1){
 
-	// Set field to sort
-	sorter.indexFlag = _flag;
+		// Set field to sort
+		sorter.indexFlag = _flag;
 
-	// Remember data type for this field
-	sorter.lastType = _Method;
+		// Remember data type for this field
+		sorter.lastType = _Method;
 
-	// Flip sort order (unless told not to)
-	if (flip) sorter.sortingMethod = (sorter.sortingMethod == "increase") ? "decrease" : "increase";
+		// Flip sort order (unless told not to)
+		if (flip) sorter.sortingMethod = (sorter.sortingMethod == "increase") ? "decrease" : "increase";
 
-	// doSorter
-	eval("aplist.sort(sorter."+_Method+"_"+sorter.sortingMethod+");");
+		// doSorter
+		eval("aplist.sort(sorter."+_Method+"_"+sorter.sortingMethod+");");
+	}
 
 	// show Table
 	showSiteTable();
