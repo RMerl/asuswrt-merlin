@@ -6883,6 +6883,90 @@ int ej_set_account_permission(int eid, webs_t wp, int argc, char **argv){
 	return 0;
 }
 
+#ifdef RTCONFIG_DISK_MONITOR
+int ej_apps_fsck_ret(int eid, webs_t wp, int argc, char **argv){
+	disk_info_t *disk_list, *disk_info;
+	partition_info_t *partition_info;
+	FILE *fp;
+	char file_name0[32], file_name1[32];
+
+	disk_list = read_disk_data();
+	if(disk_list == NULL){
+		websWrite(wp, "[]");
+		return -1;
+	}
+
+	websWrite(wp, "[");
+	for(disk_info = disk_list; disk_info != NULL; disk_info = disk_info->next){
+		for(partition_info = disk_info->partitions; partition_info != NULL; partition_info = partition_info->next){
+			websWrite(wp, "[\"%s\", ", partition_info->device);
+
+			memset(file_name0, 0, 32);
+			sprintf(file_name0, "/tmp/fsck_ret/%s.0", partition_info->device);
+
+			memset(file_name1, 0, 32);
+			sprintf(file_name1, "/tmp/fsck_ret/%s.1", partition_info->device);
+
+			if((fp = fopen(file_name0, "r")) != NULL){
+				fclose(fp);
+
+				websWrite(wp, "\"0\"");
+			}
+			else if((fp = fopen(file_name1, "r")) != NULL){
+				fclose(fp);
+
+				websWrite(wp, "\"1\"");
+			}
+			else
+				websWrite(wp, "\"\"");
+
+			websWrite(wp, "]%s", (partition_info->next)?", ":"");
+		}
+
+		websWrite(wp, "%s", (disk_info->next)?", ":"");
+	}
+	websWrite(wp, "]");
+
+	free_disk_data(&disk_list);
+
+	return 0;
+}
+
+int ej_apps_fsck_log(int eid, webs_t wp, int argc, char **argv){
+	disk_info_t *disk_list, *disk_info;
+	partition_info_t *partition_info;
+	char file_name[32];
+	char *usb_port;
+	int ret;
+
+	if(ejArgs(argc, argv, "%s", &usb_port) < 1)
+		usb_port = "all";
+
+	disk_list = read_disk_data();
+	if(disk_list == NULL){
+		return -1;
+	}
+
+	for(disk_info = disk_list; disk_info != NULL; disk_info = disk_info->next){
+		if(strcmp(usb_port, "all") && strcmp(usb_port, disk_info->port))
+			continue;
+
+		for(partition_info = disk_info->partitions; partition_info != NULL; partition_info = partition_info->next){
+			memset(file_name, 0, 32);
+			sprintf(file_name, "/tmp/fsck_ret/%s.log", partition_info->device);
+			ret = dump_file(wp, file_name);
+
+			if(ret)
+				websWrite(wp, "\n\n");
+		}
+	}
+
+	free_disk_data(&disk_list);
+
+	return 0;
+}
+#endif
+
 // argv[0] = "all" or NULL: show all lists, "asus": only show the list of ASUS, "others": show other lists.
 // apps_info: ["Name", "Version", "New Version", "Installed", "Enabled", "Source", "URL", "Description", "Depends", "Optional Utility", "New Optional Utility", "Help Path", "New File name"].
 int ej_apps_info(int eid, webs_t wp, int argc, char **argv)
