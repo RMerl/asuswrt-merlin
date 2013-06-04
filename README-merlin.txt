@@ -441,6 +441,9 @@ History
    - FIXED: Reapply layout fixes to Guest network and DHCP page (were lost
             in a recent webui update)
    - FIXED: JFFS2 could get reformated again at each subsequent reboots.
+   - FIXED: Devices with a NetBIOS name of 15 chars long would have their
+            name merged with the next device's.
+   - FIXED: Empty Site Survey list if there was only one AP found
 
 
 3.0.0.4.354.29 Beta 1:
