@@ -37,6 +37,7 @@ hwacc = "<% nvram_get("ctf_disable"); %>";
 hwacc_force = "<% nvram_get("ctf_disable_force"); %>";
 arplist = [<% get_arp_table(); %>];
 etherstate = "<% sysinfo("ethernet"); %>";
+odmpid = "<% nvram_get("odmpid");%>";
 
 var $j = jQuery.noConflict();
 
@@ -45,8 +46,14 @@ overlib.isOut = true;
 
 function initial(){
 	show_menu();
-        if (band5g_support == -1) $("wifi5_clients_tr").style.display = "none";
+        
+		if (band5g_support == -1) $("wifi5_clients_tr").style.display = "none";
 	showbootTime();
+	if (odmpid != "")
+		$("model_id").innerHTML = odmpid;
+	else
+		$("model_id").innerHTML = "<% nvram_get("productid"); %>";
+
 	update_temperatures();
 	hwaccel_state();
 	show_etherstate();
@@ -235,7 +242,7 @@ function show_etherstate(){
 					</thead>
 					<tr>
 						<th>Model</th>
-				        	<td><% nvram_get("productid"); %></td>
+				        	<td id="model_id"><% nvram_get("productid"); %></td>
 					</tr>
 					<tr>
 						<th>Firmware Build</th>
