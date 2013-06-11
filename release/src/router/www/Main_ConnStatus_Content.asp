@@ -30,16 +30,16 @@ function initial() {
 }
 
 function get_connections(){
-        $j.ajax({
-                url: '/conn_status.asp',
-                dataType: 'script',
-                error: function(xhr){
-                        get_connections();
-                },
-                success: function(){
-                        $("conn_frame").src = "/conn_status.asp";
-                }
-        });
+	$j.ajax({
+		url: '/conn_status.asp',
+		dataType: 'script',
+		error: function(xhr){
+			get_connections();
+		},
+		success: function(){
+			$("conn_frame").src = "/conn_status.asp";
+		}
+	});
 }
 
 </script>
