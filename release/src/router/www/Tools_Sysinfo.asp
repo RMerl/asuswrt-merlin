@@ -46,9 +46,9 @@ overlib.isOut = true;
 
 function initial(){
 	show_menu();
-        
-		if (band5g_support == -1) $("wifi5_clients_tr").style.display = "none";
+	if (band5g_support == -1) $("wifi5_clients_tr").style.display = "none";
 	showbootTime();
+
 	if (odmpid != "")
 		$("model_id").innerHTML = odmpid;
 	else
@@ -248,10 +248,10 @@ function show_etherstate(){
 						<th>Firmware Build</th>
 						<td><% nvram_get("buildinfo"); %></td>
 					</tr>
-                                        <tr>
-                                                <th>Bootloader (CFE)</th>
-                                                <td><% sysinfo("cfe_version"); %></td>
-                                        </tr>
+					<tr>
+						<th>Bootloader (CFE)</th>
+						<td><% sysinfo("cfe_version"); %></td>
+					</tr>
 					<tr>
 						<th>Driver version</th>
 						<td><% sysinfo("driver_version"); %></td>
@@ -272,7 +272,7 @@ function show_etherstate(){
 				</table>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-                                        <thead>
+					<thead>
 						<tr>
 							<td colspan="2">CPU</td>
 						</tr>
@@ -281,20 +281,19 @@ function show_etherstate(){
 					<tr>
 						<th>CPU Model</th>
 						<td><% sysinfo("cpu.model"); %>	</td>
-	                                </tr>
-
+					</tr>
 					<tr>
 						<th>CPU Frequency</th>
 						<td><% sysinfo("cpu.freq"); %> MHz</td>
 					</tr>
 					<tr>
-                                                <th>CPU Load Average (1, 5, 15 mins)</th>
-                                                <td>
-                                                        <% sysinfo("cpu.load.1"); %>,&nbsp;
+						<th>CPU Load Average (1, 5, 15 mins)</th>
+						<td>
+							<% sysinfo("cpu.load.1"); %>,&nbsp;
 							<% sysinfo("cpu.load.5"); %>,&nbsp;
 							<% sysinfo("cpu.load.15"); %>
-                                                </td>
-                                        </tr>
+						</td>
+					</tr>
 
 				</table>
 
@@ -307,45 +306,46 @@ function show_etherstate(){
  					<tr>
 						<th>Total</th>
 						<td> <% sysinfo("memory.total"); %>&nbsp;MB</td>
-						</tr>
+					</tr>
 
-						<tr>
-							<th>Free</th>
-							<td> <% sysinfo("memory.free"); %>&nbsp;MB</td>
-						</tr>
+					<tr>
+						<th>Free</th>
+						<td> <% sysinfo("memory.free"); %>&nbsp;MB</td>
+					</tr>
 
- 						<tr>
-							<th>Buffers</th>
-							<td> <% sysinfo("memory.buffer"); %>&nbsp;MB</td>
-						</tr>
+ 					<tr>
+						<th>Buffers</th>
+						<td> <% sysinfo("memory.buffer"); %>&nbsp;MB</td>
+					</tr>
 
-                                        	<tr>
-                                                	<th>Swap usage</th>
-                                                	<td><% sysinfo("memory.swap.used"); %> / <% sysinfo("memory.swap.total"); %>&nbsp;MB</td>
+					<tr>
+						<th>Swap usage</th>
+						<td><% sysinfo("memory.swap.used"); %> / <% sysinfo("memory.swap.total"); %>&nbsp;MB</td>
 					</tr>
 				</table>
-                                <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"bordercolor="#6b8fa3"  class="FormTable">
-                                        <thead>
-                                                <tr>
-                                                        <td colspan="2">Internal Storage</td>
-                                                </tr>
-                                        </thead>
-                                        
+
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"bordercolor="#6b8fa3"  class="FormTable">
+					<thead>
+						<tr>
+							<td colspan="2">Internal Storage</td>
+						</tr>
+					</thead>
 					<tr>
 						<th>NVRAM usage</th>
 						<td><% sysinfo("nvram.used"); %>&nbsp;/ <% sysinfo("nvram.total"); %> bytes</td>
 					</tr>
-                                        <tr>
-                                                <th>JFFS</th>
-                                                <td><% sysinfo("jffs.usage"); %></td>
-                                        </tr>
+					<tr>
+						<th>JFFS</th>
+						<td><% sysinfo("jffs.usage"); %></td>
+					</tr>
 				</table>
-                                <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"bordercolor="#6b8fa3"  class="FormTable">
-                                        <thead>
-                                                <tr>
-                                                        <td colspan="2">Network</td>
-                                                </tr>
-                                        </thead>
+
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"bordercolor="#6b8fa3"  class="FormTable">
+					<thead>
+						<tr>
+							<td colspan="2">Network</td>
+						</tr>
+					</thead>
 					<tr>
 						<th>HW acceleration</th>
 						<td id="hwaccel"></td>
@@ -354,12 +354,10 @@ function show_etherstate(){
 						<th>Connections</th>
 						<td><% sysinfo("conn.total"); %>&nbsp;/ <% sysinfo("conn.max"); %>&nbsp;&nbsp;-&nbsp;&nbsp;<% sysinfo("conn.active"); %> active</td>
 					</tr>
-
 					<tr>
 						<th>Ethernet Ports</th>
 						<td id="etherstate_td"><i><span>Querying switch...</span></i></td>
 					</tr>
-					
 					<tr>
 						<th>Wireless clients (2.4 GHz)</th>
 						<td>
@@ -374,17 +372,17 @@ function show_etherstate(){
 							Associated: <span><% sysinfo("conn.wifi.5.assoc"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
 							Authorized: <span><% sysinfo("conn.wifi.5.autho"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
 							Authenticated: <span><% sysinfo("conn.wifi.5.authe"); %></span>
-						</tr>
+						</td>
 					</tr>
 				</table>
-			</td>
-		</tr>
+				</td>
+				</tr>
 
-		<tr class="apply_gen" valign="top" height="95px">
-			<td>
-				<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
-			</td>
-		</tr>
+				<tr class="apply_gen" valign="top" height="95px">
+					<td>
+						<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
+					</td>
+				</tr>
 	        </tbody>
             </table>
             </form>
