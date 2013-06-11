@@ -17,10 +17,62 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/detect.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
+
+function onSubmitCtrl(o, s) {
+	document.form.action_mode.value = s;
+	document.getElementById("loadingIcon").style.display = "";
+	setTimeout("checkCmdRet();", 500);
+}
+
+var $j = jQuery.noConflict();
+var _responseLen;
+var noChange = 0;
+function checkCmdRet(){
+	$j.ajax({
+		url: '/cmdRet_check.htm',
+		dataType: 'html',
+		
+		error: function(xhr){
+			setTimeout("checkCmdRet();", 1000);
+		},
+		success: function(response){
+			if(response.search("XU6J03M6") != -1){
+				document.getElementById("loadingIcon").style.display = "none";
+				document.getElementById("cmdBtn").disabled = false;
+				document.getElementById("cmdBtn").style.color = "#FFF";
+				document.getElementById("textarea").value = response.replace("XU6J03M6", " ");
+				document.form.SystemCmd.value = "";
+				return false;
+			}
+
+			if(_responseLen == response.length)
+				noChange++;
+			else
+				noChange = 0;
+
+			if(noChange > 30){
+				document.getElementById("loadingIcon").style.display = "none";
+				document.getElementById("cmdBtn").disabled = false;
+				document.getElementById("cmdBtn").style.color = "#FFF";
+				setTimeout("checkCmdRet();", 1000);
+			}
+			else{
+				document.getElementById("cmdBtn").disabled = true;
+				document.getElementById("cmdBtn").style.color = "#666";
+				document.getElementById("loadingIcon").style.display = "";
+				setTimeout("checkCmdRet();", 1000);
+			}
+
+			document.getElementById("textarea").value = response;
+			_responseLen = response.length;
+		}
+	});
+}
 </script>
 </head>
 
@@ -31,7 +83,7 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 
-<form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
+<form method="GET" name="form" id="ruleForm" action="/apply.cgi" target="hidden_frame">
 <input type="hidden" name="current_page" value="Tools_RunCmd.asp">
 <input type="hidden" name="next_page" value="Tools_RunCmd.asp">
 <input type="hidden" name="next_host" value="">
@@ -43,7 +95,6 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 <input type="hidden" name="SystemCmd" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
@@ -63,13 +114,29 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
               <tr bgcolor="#4D595D">
                 <td valign="top">
                   <div>&nbsp;</div>
-                  <div class="formfonttitle">Tools - Run Cmd</div>
+                  <div class="formfonttitle">Tools - Run System Command</div>
                   <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-                  <iframe width=100% style="height:600px;"  frameborder=0 scrolling=NO src="Main_AdmStatus_Content.asp" name="run_cmd_frame" id="run_cmd"></iframe>
-                </td>
+				  <div class="formfontdesc">This page allows you to run Linux shell commands.<br>Avoid running any command which never return (such as 'top' or 'ping').</div>
+				    <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+					  <tbody>
+                        <tr>
+                          <td>
+                            <input class="input_option" type="text" maxlength="255" size="60%" name="SystemCmd" value="">
+                            <input class="button_gen" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="submit" value="<#CTL_refresh#>" name="action">
+                            <img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <textarea cols="80" rows="27" wrap="off" readonly="readonly" id="textarea" style="width:99%;font-family:Courier New, Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("syscmd.log","syscmd.sh"); %></textarea>
+                          </td>
+                        </tr>
+                      </tbody>
+				   </table>
+                 </td>
               </tr>
             </table>
-	  </td>
+          </td>
         </tr>
       </table>
      <!--===================================Ending of Main Content===========================================-->
