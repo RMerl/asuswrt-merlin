@@ -59,6 +59,8 @@ typedef u_int8_t u8;
 #define SIOCGETCROBORD		(SIOCDEVPRIVATE + 14)
 #define SIOCSETCROBOWR		(SIOCDEVPRIVATE + 15)
 
+#define ROBO_DEVICE_ID          0x30
+
 typedef struct {
 	struct ifreq ifr;
 	int fd;
@@ -69,8 +71,7 @@ typedef struct {
 static u16 __mdio_access(robo_t *robo, u16 phy_id, u8 reg, u16 val, u16 wr)
 {
 	static int __ioctl_args[2][3] = { {SIOCGETCPHYRD, SIOCGETCPHYRD2, SIOCGMIIREG},
-					  {SIOCSETCPHYWR, SIOCSETCPHYWR2, SIOCSMIIREG} };
-
+	                                  {SIOCSETCPHYWR, SIOCSETCPHYWR2, SIOCSMIIREG} };
 	if (robo->et) {
 		int args[2] = { reg, val };
 		int cmd = 0;
@@ -117,7 +118,7 @@ static inline void mdio_write(robo_t *robo, u16 phy_id, u8 reg, u16 val)
 static int _robo_reg(robo_t *robo, u8 page, u8 reg, u8 op)
 {
 	int i = 3;
-	
+
 	/* set page number */
 	mdio_write(robo, ROBO_PHY_ADDR, REG_MII_PAGE, 
 		(page << 8) | REG_MII_PAGE_ENABLE);
@@ -149,26 +150,78 @@ static int robo_reg(robo_t *robo, u8 page, u8 reg, u8 op)
 static void robo_read(robo_t *robo, u8 page, u8 reg, u16 *val, int count)
 {
 	int i;
-	
+
+#ifdef BCM5301X
+        int args[5];
+        u32 result;
+
+        args[0] = page << 16;;
+        args[0] |= reg & 0xffff;
+
+        robo->ifr.ifr_data = (caddr_t) args;
+
+        for (i = 0; i < count; i++) {
+		if (ioctl(robo->fd, SIOCGETCROBORD, (caddr_t)&robo->ifr) < 0) 
+			val[i] = args[1];
+		args[0] = args[0] + 1;
+	}
+#else	
 	robo_reg(robo, page, reg, REG_MII_ADDR_READ);
 	
 	for (i = 0; i < count; i++)
 		val[i] = mdio_read(robo, ROBO_PHY_ADDR, REG_MII_DATA0 + i);
+#endif
 }
 
 static u16 robo_read16(robo_t *robo, u8 page, u8 reg)
 {
+
+#ifdef BCM5301X
+        int args[5];
+
+        args[0] = page << 16;;
+        args[0] |= reg & 0xffff;
+
+        robo->ifr.ifr_data = (caddr_t) args;
+
+        if (ioctl(robo->fd, SIOCGETCROBORD, (caddr_t)&robo->ifr) < 0)
+                return 0;
+
+        return args[1];
+#else
 	robo_reg(robo, page, reg, REG_MII_ADDR_READ);
 	
 	return mdio_read(robo, ROBO_PHY_ADDR, REG_MII_DATA0);
+#endif
 }
 
 static u32 robo_read32(robo_t *robo, u8 page, u8 reg)
 {
+#if BCM5301X
+        int args[5];
+	u32 result;
+
+        args[0] = page << 16;;
+        args[0] |= reg & 0xffff;
+
+        robo->ifr.ifr_data = (caddr_t) args;
+        if (ioctl(robo->fd, SIOCGETCROBORD, (caddr_t)&robo->ifr) < 0)
+                return 0;
+
+	result = args[1];
+	args[0] = args[0] + 1;
+
+	if (ioctl(robo->fd, SIOCGETCROBORD, (caddr_t)&robo->ifr) < 0)
+                return 0;
+
+//        printf("rd32: 0x%08x - 0x%08x (0x%16x)\n", result, args[1], (result | (args[1] << 16)));
+        return (result | (args[1] << 16));
+#else
 	robo_reg(robo, page, reg, REG_MII_ADDR_READ);
 	
 	return ((u32 )mdio_read(robo, ROBO_PHY_ADDR, REG_MII_DATA0)) |
 		((u32 )mdio_read(robo, ROBO_PHY_ADDR, REG_MII_DATA0 + 1) << 16);
+#endif
 }
 
 static void robo_write(robo_t *robo, u8 page, u8 reg, u16 *val, int count)
@@ -201,6 +254,11 @@ static void robo_write32(robo_t *robo, u8 page, u8 reg, u32 val32)
 /* checks that attached switch is 5325/5352/5354/5356/5357/53115 */
 static int robo_vlan535x(robo_t *robo, u32 phyid)
 {
+
+	/* Northstar device? */
+	if (robo_read32(robo, ROBO_MGMT_PAGE, ROBO_DEVICE_ID) == 0x53011)
+		return 4;
+
 	/* set vlan access id to 15 and read it back */
 	u16 val16 = 15;
 	robo_write16(robo, ROBO_VLAN_PAGE, ROBO_VLAN_TABLE_ACCESS_5350, val16);
@@ -224,6 +282,7 @@ static int robo_vlan535x(robo_t *robo, u32 phyid)
 	if ((phyid & 0xfff0ffff ) == 0x5da00362 ||
 	    (phyid & 0xfff0ffff ) == 0x5e000362)
 		return 3;
+
 	/* 5325/5352/5354*/
 	return 1;
 }
@@ -262,6 +321,21 @@ struct {
 
 void usage()
 {
+#ifdef BCM5301X
+	fprintf(stderr, "Broadcom BCM5325/535x/536x/5311x switch configuration utility\n"
+		"BCM5301x partial support added by Eric Sauvageau\n"
+		"Copyright (C) 2005-2008 Oleg I. Vdovikin (oleg@cs.msu.su)\n"
+		"Copyright (C) 2005 Dmitry 'dimss' Ivanov of \"Telecentrs\" (Riga, Latvia)\n\n"
+		"This program is distributed in the hope that it will be useful,\n"
+		"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+		"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
+		"GNU General Public License for more details.\n\n");
+
+        fprintf(stderr, "Usage: robocfg <op>\n"
+                        "Operations are as below:\n"
+                        "\tshowports -- show only port config\n");
+
+#else
 	fprintf(stderr, "Broadcom BCM5325/535x/536x/5311x switch configuration utility\n"
 		"Copyright (C) 2005-2008 Oleg I. Vdovikin (oleg@cs.msu.su)\n"
 		"Copyright (C) 2005 Dmitry 'dimss' Ivanov of \"Telecentrs\" (Riga, Latvia)\n\n"
@@ -297,6 +371,7 @@ void usage()
 			media[0].name, media[1].name, media[2].name, media[3].name, media[4].name, media[5].name, media[6].name,
 			mdix[0].name, mdix[1].name, mdix[2].name,
 			jumbo[0], jumbo[1]);
+#endif
 }
 
 int
@@ -361,11 +436,12 @@ main(int argc, char *argv[])
 		fprintf(stderr, "No Robo switch in managed mode found\n");
 		exit(1);
 	}
-	
+
 	robo535x = robo_vlan535x(&robo, phyid);
-	/* fprintf(stderr, "phyid %08x id %d\n", phyid, robo535x); */
-	
+	//fprintf(stderr, "phyid %08x id %d\n", phyid, robo535x);
+
 	for (i = 1; i < argc;) {
+#ifndef BCM5301X
 		if (strcasecmp(argv[i], "showmacs") == 0)
 		{
 			/* show MAC table of switch */
@@ -604,11 +680,13 @@ main(int argc, char *argv[])
 		{
 			break;
 		} else
+#endif
 		if (strcasecmp(argv[i], "showports") == 0)
 		{
 			novlan = 1;
 			break;
 		} else
+#ifndef BCM5301X
 		if (strncasecmp(argv[i], "robowr", 6) == 0 && (i + 2) < argc)
 		{
 			long pagereg = strtoul(argv[i + 1], NULL, 0);
@@ -660,7 +738,6 @@ main(int argc, char *argv[])
 			{
 				if (_robo_reg(&robo, i, 0, REG_MII_ADDR_READ))
 					continue;
-
 				printf("Page %02x\n", i);
 
 				for (j = 0; j < 128; j++) {
@@ -670,7 +747,9 @@ main(int argc, char *argv[])
 			}
 
 			i = 2;
-		} else {
+		} else
+#endif
+		{
 			fprintf(stderr, "Invalid option %s\n", argv[i]);
 			usage();
 			exit(1);
@@ -705,14 +784,18 @@ main(int argc, char *argv[])
 		if (robo535x == 4)
 			printf("jumbo: %s ", jumbo[(robo_read32(&robo, ROBO_JUMBO_PAGE, ROBO_JUMBO_CTRL) >> port[i]) & 1]);
 
+#ifndef BCM5301X
 		robo_read(&robo, ROBO_STAT_PAGE, ROBO_LSA_PORT0 + port[i] * 6, mac, 3);
 
 		printf("mac: %02x:%02x:%02x:%02x:%02x:%02x\n",
 			mac[2] >> 8, mac[2] & 255, mac[1] >> 8, mac[1] & 255, mac[0] >> 8, mac[0] & 255);
+#else
+		printf("mac: ??:??:??:??:??:??\n");
+#endif
 	}
 
 	if (novlan) return (0);	// Only show ethernet port states, used by webui
-
+#ifndef BCM5301X
 	val16 = robo_read16(&robo, ROBO_VLAN_PAGE, ROBO_VLAN_CTRL0);
 	
 	printf("VLANs: %s %sabled%s%s\n", 
@@ -779,6 +862,6 @@ main(int argc, char *argv[])
 			}
 		}
 	}
-	
+#endif
 	return (0);
 }
