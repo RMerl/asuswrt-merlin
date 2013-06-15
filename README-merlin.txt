@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.354.29 BETA 2 (xx-xxx-2013)
+Asuswrt-Merlin - build 3.0.0.4.372.30 BETA 1 (xx-xxx-2013)
 ==========================================================
 
 About
@@ -34,8 +34,8 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on the 3.0.0.4.354 source release from Asus
-   - Various bugfixes (like the crash on VPN/NAT Loopback access of LAN devices)
+   - Based on the 3.0.0.4.372 sources from Asus
+   - Various bugfixes all over the place
    - Some components were updated to their latest versions, for improved stability
      and security
    - Persistent JFFS partition
@@ -68,7 +68,6 @@ Web interface:
    - Improved client list, with DHCP hostnames
    - Optionally save traffic stats to disk (USB or JFFS partition)
    - Enhanced traffic monitoring: added monthly, as well as per IP monitoring
-   - Display active/tracked network connections
    - Name field on the DHCP reservation list and Wireless ACL list
    - System info summary page
    - Wireless client IP, hostname, rate and rssi on the Wireless Log page
@@ -88,6 +87,7 @@ integrated/enabled in the official firmware:
 - Use shorter share names (folder name only)
 - WakeOnLan web interface (with user-entered preset targets)
 - clickable MACs on the client list for lookup in the OUI database
+- Display active/tracked network connections
 
 
 Installation
@@ -437,7 +437,10 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.354.29 Beta 2:
+3.0.0.4.372.30 Beta 1:
+   - NEW: Merged with 372 (code from the arm environment), with
+          some fixes to make it build properly on a mipsel router.
+   - CHANGED: Brought back the Connection page under System Logs
    - FIXED: Reapply layout fixes to Guest network and DHCP page (were lost
             in a recent webui update)
    - FIXED: JFFS2 could get reformated again at each subsequent reboots.
