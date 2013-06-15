@@ -1,0 +1,2139 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76"
+hspace="10" align="left" />
+
+<h1 class="head0">Chapter 7. Name Resolution and Browsing</h1>
+
+
+
+
+<p><a name="INDEX-1"/><em class="firstterm">Name
+resolution</em> is critical to Samba's
+operation because names are used to find the servers that share files
+or printers. <em class="firstterm">Browsing</em> takes the task of
+finding servers to a new level of sophistication by allowing a user
+to delve down into a hierarchy of networks, domains, hosts, and
+services offered by each server.</p>
+
+<p>While name resolution and
+<a name="INDEX-2"/>browsing are not
+difficult to configure, some complexity is introduced by the variety
+of available name-resolution systems. Historically, Unix and other
+TCP/IP users have moved from a flat hosts file to the Domain Name
+System, with the Network Information System being another popular
+choice. Meanwhile, Microsoft has moved from a broadcasting system to
+a simple, LAN-only name server called WINS and ultimately to DNS.</p>
+
+<p>The reason for going over that history is that all previous systems
+of name resolution are still in use today! Finding a host is so
+crucial to networking that sites want robust (if limited)
+name-resolution systems to fall back on in case the main system
+fails. Browsing is also complicated by the frequent need to show
+hosts in other subnets. This chapter shows you how to configure your
+network to handle name resolution and browsing any way you want.</p>
+
+<p>Some of the differences between Unix and Microsoft networking
+implementations are the result of fundamental design goals. Unix
+networking was originally designed largely to implement a relatively
+formal group of systems that were assumed to be small in number,
+well-maintained, and highly available, that have static IP addresses,
+and that wouldn't physically move around from place
+to place. Bringing a new server online was a labor-intensive task,
+but it did not have to be performed frequently. In contrast, Windows
+networking was originally developed as a peer-to-peer collection of
+small personal computers on a single subnet, having no centrally or
+hierarchically organized structure.</p>
+
+<p>SMB networking is dynamic. Computers are allowed to leave the network
+at any time, sometimes without warning, and also to join or rejoin
+the network at any time. Furthermore, any user in a Windows network
+can add a new shared resource to the network or remove a resource
+that he had previously added. The change in the
+network's configuration is handled automatically by
+the rest of the network without requiring a system administrator to
+take any action.</p>
+
+
+
+<div class="sect1"><a name="samba2-CHP-7-SECT-1"/>
+
+<h2 class="head1">Name Resolution</h2>
+
+<p>TCP/IP networks identify systems by IP addresses and always associate
+these addresses with more human-readable text names. In
+Microsoft's earliest networking implementations (for
+MS-DOS and Windows for Workgroups), the translation of names to
+network addresses was carried out in a manner that was very simple,
+yet very inefficient. When a system on the network needed an IP
+address corresponding to a name, it broadcasted the name to every
+other system on the network and waited for the system that owned the
+name to respond with its IP address.</p>
+
+<p>The main problem with performing <a name="INDEX-3"/>name resolution using broadcast
+packets is poor performance of the network as a whole, including CPU
+time consumed by each host on the network, which has to accept every
+broadcast packet and decide whether to respond to it. Also, broadcast
+packets usually aren't forwarded by routers,
+limiting name resolution to the local subnet.
+Microsoft's solution was to add WINS (Windows
+Internet Name Service) support to Windows NT so that the computers on
+the network can perform a direct query of the WINS server instead of
+using broadcast packets.</p>
+
+<p>Modern Windows clients use a variety of methods for translating
+hostnames into IP addresses. The exact method varies depending on the
+version of Windows the client is running, how the client is
+configured (i.e., whether DNS server and/or WINS server IP addresses
+are provided), and whether the application software is accessing the
+network through Microsoft's Winsock or TCP/IP API.
+In general, Windows uses some combination of the following
+methods:<a name="INDEX-4"/></p>
+
+<ul><li>
+<p>Looking up the name in its cache of recently resolved names</p>
+</li><li>
+<p>Querying DNS servers</p>
+</li><li>
+<p>Using the DNS <em class="filename">Hosts</em> file</p>
+</li><li>
+<p>Querying WINS servers</p>
+</li><li>
+<p>Using the WINS <em class="filename">LMHOSTS</em> file</p>
+</li><li>
+<p>Performing broadcast name resolution</p>
+</li></ul>
+<p>The first method is pretty much self-explanatory. A hostname is
+checked against a cache of hostnames that have been recently resolved
+to IP addresses. This helps to save time and network bandwidth for
+resolving names that are used frequently.</p>
+
+<p>When a Windows system is configured with the IP address of at least
+one <a name="INDEX-5"/>DNS server, it can use DNS to
+resolve fully qualified domain names, such as those for sites on the
+Internet. The DNS servers can be either Windows NT/2000 or Unix
+systems. You can learn more about DNS and DNS server configuration in
+the O'Reilly book <em class="citetitle">DNS and
+BIND</em>.</p>
+
+<p>In this chapter, we focus mainly on name resolution using WINS, which
+is supported by Samba with the <em class="emphasis">nmbd</em> daemon.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-7-SECT-1.1"/>
+
+<h3 class="head2">WINS Clients and Server Interaction</h3>
+
+<p>There are two types of interaction between a
+<a name="INDEX-6"/>WINS client and a server: the
+client keeps its own NetBIOS name<a name="FNPTR-1"/><a href="#FOOTNOTE-1">[1]</a> registered with the server and
+queries the server to get the IP address corresponding to the NetBIOS
+name of another system.</p>
+
+<p>When a WINS client joins the network, it registers its NetBIOS name
+with the WINS server, which stores it along with the
+client's IP address in the WINS database. This entry
+is marked <em class="firstterm">active</em>. The client is then expected
+to renew the registration of its name periodically (typically, every
+four days) to inform the server that it is still using the name. This
+period is called the <em class="firstterm">time to live</em>, or TTL.
+When the client leaves the network by being shut down gracefully, it
+informs the server, and the server marks the
+client's entry in its database as
+<em class="firstterm">released</em>.</p>
+
+<p>When a client leaves the network without telling the WINS server to
+release its name, the server waits until after it fails to receive
+the expected registration renewal from the client and then marks the
+entry as released.</p>
+
+<p>In either case, the released name is available for use by other
+clients joining the network. It might persist in the released state
+in the WINS database, and if it is not reregistered, the entry will
+eventually be deleted.</p>
+
+<p>More information on WINS can be found in the Microsoft white paper
+<em class="citetitle">Windows Internet Naming Service (WINS) Architecture and
+Capacity Planning</em><a name="INDEX-7"/>. It can be downloaded from the
+Microsoft web site at <a href="http://www.microsoft.com">http://www.microsoft.com</a>.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-7-SECT-1.2"/>
+
+<h3 class="head2">The lmhosts File</h3>
+
+<p>In <a href="ch03.html">Chapter 3</a> we showed you how to configure
+Windows systems to use the
+<em class="filename">LMHOSTS</em><a name="INDEX-8"/>
+file as an alternative to the WINS server for name resolution. Samba
+also can use an <em class="filename">LMHOSTS</em> file, which by default
+is <em class="filename">/usr/local/samba/lib/lmhosts</em>.
+Samba's <em class="filename">lmhosts</em> is the same
+format as the Windows version. A simple <em class="filename">lmhosts</em>
+file might look like this:</p>
+
+<blockquote><pre class="code">172.16.1.1    toltec
+172.16.1.6    maya</pre></blockquote>
+
+<p>The names on the right side of the entries are NetBIOS names, so you
+can assign resource types to them and add additional entries for
+computers:</p>
+
+<blockquote><pre class="code">172.16.1.1    toltec#20
+172.16.1.1    metran#1b
+172.16.1.6    maya#20</pre></blockquote>
+
+<p>Here, we've made <tt class="literal">toltec</tt> the
+primary domain controller of the <tt class="literal">METRAN</tt> domain on
+the second line. This line starts with
+<tt class="literal">toltec</tt>'s IP address, followed by
+the name metran and the resource type &lt;1B&gt;. The other lines are
+entries for <tt class="literal">toltec</tt> and <tt class="literal">maya</tt> as
+standard workstations.</p>
+
+<p>If you wish to place an <em class="emphasis">lmhosts</em> file somewhere
+other than the default location, you will need to notify the
+<em class="emphasis">nmbd</em> process upon startup using the
+<em class="emphasis">-H</em> option, followed by the name of your
+<em class="filename">lmhosts</em> file, as follows:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>nmbd -H /etc/samba/lmhosts -D</b></tt></pre></blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-7-SECT-1.3"/>
+
+<h3 class="head2">Configuring Name Resolution for the Samba Suite</h3>
+
+<p>Various daemons and tools in the Samba suite need to perform
+<a name="INDEX-9"/>name resolution. You can define the
+order in which the programs try each name-resolution method through
+the <tt class="literal">name</tt><a name="INDEX-10"/><a name="INDEX-11"/>
+<tt class="literal">resolve</tt> <tt class="literal">order</tt> parameter, like
+this:</p>
+
+<blockquote><pre class="code">[global]
+    name resolve order = wins lmhosts hosts bcast</pre></blockquote>
+
+<p>The string used to define the parameter can take up to four values:</p>
+
+<dl>
+<dt><b>lmhosts</b></dt>
+<dd>
+<p>Uses the Samba server's local
+<em class="filename">lmhosts</em> file</p>
+</dd>
+
+
+
+<dt><b>hosts</b></dt>
+<dd>
+<p>Uses the standard Unix name-resolution methods, which can be
+<em class="emphasis">/etc/hosts</em>, DNS, NIS, or a combination,
+depending on how the local system is configured</p>
+</dd>
+
+
+
+<dt><b>wins</b></dt>
+<dd>
+<p>Uses the WINS server</p>
+</dd>
+
+
+
+<dt><b>bcast</b></dt>
+<dd>
+<p>Uses the broadcast method</p>
+</dd>
+
+</dl>
+
+<p>The order in which they are specified is the order in which name
+resolution will be attempted. In our example, Samba will attempt to
+use its WINS server first for name resolution, followed by the
+<em class="emphasis">lmhosts</em> file on the local system. Next, the
+<tt class="literal">hosts</tt> value tells it to use Unix name-resolution
+methods. The word <tt class="literal">hosts</tt> can be misleading; it
+covers not only the <em class="filename">/etc/hosts</em> file, but also
+the use of DNS or NIS (as configured on the Unix host). Finally, if
+those three do not work, it will perform a broadcast name resolution.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-7-SECT-1.4"/>
+
+<h3 class="head2">Setting Up Samba as a WINS Server</h3>
+
+<p>You can set up Samba as a <a name="INDEX-12"/>WINS server by setting the
+<tt class="literal">wins</tt><a name="INDEX-13"/> <tt class="literal">support</tt>
+parameter in the configuration file, like this:</p>
+
+<blockquote><pre class="code">[global]
+    wins support = yes</pre></blockquote>
+
+<p>Believe it or not, that's all you need to do! The
+<tt class="literal">wins</tt> <tt class="literal">support</tt> option turns Samba
+into a WINS server. For most installations, Samba's
+default configuration is sufficient.</p>
+<a name="samba2-CHP-7-NOTE-137"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>Remember, Samba cannot communicate with Windows WINS servers. If you
+are using Samba as your WINS server, you must make sure not to allow
+any Windows systems or other Samba servers on your network to be
+configured as WINS servers. If you do, their WINS databases will not
+synchronize, resulting in inconsistent name resolution.</p>
+</blockquote>
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-1.4.1"/>
+
+<h3 class="head3">Configuring a DNS proxy</h3>
+
+<p>A Samba <a name="INDEX-14"/><a name="INDEX-15"/>WINS server can check with the
+system's DNS server if a requested host cannot be
+found in its WINS database. With a typical Linux system, for example,
+you can find the IP address of the DNS server by searching the
+<em class="filename">/etc/resolv.conf</em><a name="INDEX-16"/><a name="INDEX-17"/> file. In it, you might see an entry such
+as the following:</p>
+
+<blockquote><pre class="code">nameserver 127.0.0.1
+nameserver 172.16.1.192</pre></blockquote>
+
+<p>This tells us that the Linux system is configured to use a DNS server
+located at 172.16.1.192. (The 127.0.0.1 is the
+<tt class="literal">localhost</tt> address and is never a valid DNS server
+address.)</p>
+
+<p>Now it is a simple matter of using the
+<tt class="literal">dns</tt><a name="INDEX-18"/> <tt class="literal">proxy</tt> option to tell
+Samba to use the DNS server:</p>
+
+<blockquote><pre class="code">[global]
+    dns proxy = yes</pre></blockquote>
+
+<a name="samba2-CHP-7-NOTE-138"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>Although this allows Windows clients to resolve fully qualified
+Internet domain names through the Samba WINS server, it will work
+only for domain names that fit within the 15-character limitation of
+NetBIOS names. For this reason, we recommend you use <tt class="literal">dns
+proxy</tt> only to act as a supplement to your WINS server,
+rather than as a replacement for a DNS server.</p>
+</blockquote>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-7-SECT-1.5"/>
+
+<h3 class="head2">Setting Up Samba to Use Another WINS Server</h3>
+
+<p>You can configure Samba to use a <a name="INDEX-19"/>WINS server somewhere else on the
+network by simply providing it with the IP address of the WINS
+server. This is done with the global
+<tt class="literal">wins</tt><a name="INDEX-20"/> <tt class="literal">server</tt>
+configuration option, as shown here:</p>
+
+<blockquote><pre class="code">[global]
+    wins server = 172.16.1.1</pre></blockquote>
+
+<p>With this option enabled, Samba will direct all WINS requests to the
+server located at 172.16.1.1. Note that because the request is
+directed at a single machine, we don't have to worry
+about any of the problems inherent in broadcasting. However, Samba
+will not necessarily use the WINS server before other forms of name
+resolution. The order in which Samba attempts various name-resolution
+techniques is given with the <tt class="literal">name</tt>
+<tt class="literal">resolve</tt> <tt class="literal">order</tt> configuration
+option, which we discussed earlier.</p>
+
+<p>The <tt class="literal">wins</tt> <tt class="literal">support</tt> and the
+<tt class="literal">wins</tt> <tt class="literal">server</tt> parameters are
+mutually exclusive; you cannot simultaneously offer Samba as the WINS
+server and use another system as the server! Typically, one Samba
+server is set up as the WINS server using <tt class="literal">wins</tt>
+<tt class="literal">support</tt>, and all other Samba servers are
+configured with the <tt class="literal">wins</tt> <tt class="literal">server</tt>
+parameter pointing to the Samba WINS server.</p>
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-1.5.1"/>
+
+<h3 class="head3">Configuring a WINS proxy</h3>
+
+<p><a name="INDEX-21"/>If you have a Samba server on a
+subnet that doesn't have a WINS server, and the
+Samba server has been configured with a WINS server on another
+subnet, you can tell the Samba server to forward any name-resolution
+requests with the <tt class="literal">wins</tt><a name="INDEX-22"/>
+<tt class="literal">proxy</tt> option:</p>
+
+<blockquote><pre class="code">[global]
+    wins server = 172.16.200.12
+    wins proxy = yes</pre></blockquote>
+
+<p>Use this only in situations where the WINS server resides on another
+subnet. Otherwise, the broadcast will reach the WINS server
+regardless of any proxying.</p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-7-SECT-1.6"/>
+
+<h3 class="head2">Name-Resolution Configuration Options</h3>
+
+<p><a name="INDEX-23"/>Samba's <a name="INDEX-24"/>name-resolution options
+are shown in <a href="ch07.html#samba2-CHP-7-TABLE-1">Table 7-1</a>.</p>
+
+<a name="samba2-CHP-7-TABLE-1"/><h4 class="head4">Table 7-1. Name-resolution options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">wins support</tt></p>
+</td>
+<td>
+<p>boolean</p>
+</td>
+<td>
+<p>If set to <tt class="literal">yes</tt>, allows Samba to act as a WINS server</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">wins server</tt></p>
+</td>
+<td>
+<p>string (IP address or DNS name)</p>
+</td>
+<td>
+<p>Identifies a WINS server for Samba to use for name registration and
+resolution</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">wins proxy</tt></p>
+</td>
+<td>
+<p>boolean</p>
+</td>
+<td>
+<p>Allows Samba to act as a proxy to a WINS server on another subnet</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">wins hook</tt></p>
+</td>
+<td>
+<p>string</p>
+</td>
+<td>
+<p>Command to run when the WINS database changes</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">dns proxy</tt></p>
+</td>
+<td>
+<p>boolean</p>
+</td>
+<td>
+<p>If set to <tt class="literal">yes</tt>, allows a Samba WINS server to
+search DNS if it cannot find a name in WINS</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">name resolve</tt> <tt class="literal">order</tt></p>
+</td>
+<td>
+<p>string</p>
+</td>
+<td>
+<p>The order of methods used to resolve NetBIOS names</p>
+</td>
+<td>
+<p><tt class="literal">lmhosts</tt> <tt class="literal">hosts wins bcast</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">max ttl</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Maximum TTL in seconds for a requested NetBIOS name</p>
+</td>
+<td>
+<p><tt class="literal">259200</tt> ( 3 days)</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">max wins ttl</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Maximum TTL in seconds for NetBIOS names given out by Samba as a WINS
+server</p>
+</td>
+<td>
+<p><tt class="literal">518400</tt> (6 days)</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">min wins ttl</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Minimum TTL in seconds for NetBIOS names given out by Samba as a WINS
+server</p>
+</td>
+<td>
+<p><tt class="literal">21600</tt> (6 hours)</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-1.6.1"/>
+
+<a name="INDEX-25"/><h3 class="head3">wins support</h3>
+
+<p>Samba will provide WINS name service to all machines in the network
+if you set the following in the <tt class="literal">[global]</tt> section
+of the <em class="filename">smb.conf</em> file:</p>
+
+<blockquote><pre class="code">[global]
+    wins support = yes</pre></blockquote>
+
+<p>The default value is <tt class="literal">no</tt>, which is typically used
+to allow a Windows NT/2000 server or another Samba server to be the
+WINS server. If you enable this option, remember that a Samba WINS
+server currently cannot exchange data with other WINS servers, so do
+not allow any other WINS servers on the network. When set to
+<tt class="literal">yes</tt>, this option is mutually exclusive with the
+<tt class="literal">wins</tt> <tt class="literal">server</tt> parameter.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-1.6.2"/>
+
+<a name="INDEX-26"/><h3 class="head3">wins server</h3>
+
+<p>Samba will use an existing WINS server on the network if you specify
+the <tt class="literal">wins</tt> <tt class="literal">server</tt> global option
+in your configuration file. The value of this option is either the IP
+address or DNS name (not NetBIOS name) of the WINS server. For
+example:</p>
+
+<blockquote><pre class="code">[global]
+    wins server = 172.16.220.110</pre></blockquote>
+
+<p>or:</p>
+
+<blockquote><pre class="code">[global]
+    wins server = wins.metran.cx</pre></blockquote>
+
+<p>For this option to work, the <tt class="literal">wins</tt>
+<tt class="literal">support</tt> option must be set to
+<tt class="literal">no</tt> (the default). Otherwise, Samba will report an
+error. You can specify only one WINS server using this option.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-1.6.3"/>
+
+<a name="INDEX-27"/><h3 class="head3">wins proxy</h3>
+
+<p>This option allows Samba to act as a proxy to another WINS server,
+and thus relay name registration and resolution requests from itself
+to the real WINS server, often outside the current subnet. The WINS
+server can be indicated through the <tt class="literal">wins</tt>
+<tt class="literal">server</tt> option. The proxy will then return the WINS
+response back to the client. You can enable this option by specifying
+the following in the <tt class="literal">[global]</tt> section:</p>
+
+<blockquote><pre class="code">[global]
+    wins proxy = yes</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-1.6.4"/>
+
+<a name="INDEX-28"/><h3 class="head3">wins hook</h3>
+
+<p>This option allows you to run a script or other program whenever the
+WINS database is modified. One application might be to set up another
+Samba server to act as a backup for another Samba WINS server. This
+is done by having the <tt class="literal">wins</tt> <tt class="literal">hook</tt>
+script call <em class="emphasis">rsync</em> to synchronize the WINS
+databases (<em class="filename">/usr/local/samba/var/locks/wins.dat</em>)
+on the two systems whenever an entry is added or deleted. The script
+would be specified in the Samba configuration file like this:</p>
+
+<blockquote><pre class="code">[global]
+    wins hook = /usr/local/bin/sync_wins</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-1.6.5"/>
+
+<a name="INDEX-29"/><h3 class="head3">dns proxy</h3>
+
+<p>If you want the DNS to be used if a NetBIOS name
+isn't found in WINS, you can set the following
+option:</p>
+
+<blockquote><pre class="code">[global]
+    dns proxy = yes</pre></blockquote>
+
+<p>This will permit <em class="filename">nmbd</em> to query the
+server's standard DNS. You might wish to deactivate
+this option if you do not have a permanent connection to your DNS
+server. This option should not be used in place of a DNS server on
+your network; it is intended for resolving NetBIOS names rather than
+fully qualified Internet domain names.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-1.6.6"/>
+
+<h3 class="head3">name resolve order</h3>
+
+<p>The global <tt class="literal">name</tt><a name="INDEX-30"/>
+<tt class="literal">resolve</tt> <tt class="literal">order</tt> option specifies
+the order of services that Samba will use in performing name
+resolution. The default order is to use the
+<em class="emphasis">lmhosts</em> file, followed by standard Unix
+name-resolution methods (some combination of
+<em class="filename">/etc/hosts</em>, DNS, and NIS), then to query a WINS
+server, and finally to use broadcasting to determine the address of a
+NetBIOS name. You can override this option by specifying something
+like the following:</p>
+
+<blockquote><pre class="code">[global]
+    name resolve order = lmhosts wins hosts bcast</pre></blockquote>
+
+<p>This causes resolution to use the <em class="emphasis">lmhosts</em> file
+first, followed by a query to a WINS server, the
+<em class="filename">/etc/hosts</em> file, and finally broadcasting. You
+need not use all four options. This option is covered in more detail
+in <a href="ch07.html#samba2-CHP-7-SECT-1.4">Section 7.1.4</a>,
+earlier in this chapter.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-1.6.7"/>
+
+<a name="INDEX-31"/><h3 class="head3">max ttl</h3>
+
+<p>This option is used when Samba is not acting as a WINS server but is
+using another system on the network for its WINS server. It sets the
+maximum T T L for NetBIOS names registered by the Samba server with
+the WINS server. You should never need to alter this value.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-1.6.8"/>
+
+<a name="INDEX-32"/><h3 class="head3">max wins ttl</h3>
+
+<p>This option is used when Samba is providing WINS name service, and it
+sets the maximum T T L for NetBIOS names registered with Samba. You
+should never need to change this value from its default.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-1.6.9"/>
+
+<a name="INDEX-33"/><h3 class="head3">min wins ttl</h3>
+
+<p>This option is used when Samba is providing WINS name service, and it
+sets the minimum T T L for NetBIOS names registered with Samba. You
+should never need to alter this value from its default. <a name="INDEX-34"/> <a name="INDEX-35"/> <a name="INDEX-36"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-7-SECT-2"/>
+
+<h2 class="head1">Browsing</h2>
+
+<p><a name="INDEX-37"/>Browsing
+was developed by Microsoft to help users find shared resources on the
+network. In a networked computing environment where users can add or
+remove shares at any time, it is important to have some automatic
+means of keeping track of the shared resources and allowing users to
+&quot;browse&quot; through them to find the
+ones they wish to use.</p>
+
+<p>Before browsing was added to SMB networking, when anyone added a new
+share, the people with whom they wished to share the data or printer
+would have to be informed of the share's UNC, using
+some relatively low-tech method such as speaking to them in person or
+over the phone, or sending email. Already, this was very inconvenient
+in large organizations. To further complicate matters, the users
+working on client computers had to type in the
+share's UNC to connect to it. The only way to get
+around typing in the share's UNC every time it was
+used was to map a network drive to it, and with a large number of
+shares on the network, this could easily get out of hand.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-7-SECT-2.1"/>
+
+<h3 class="head2">Browsing in a Windows Network</h3>
+
+<p><a name="INDEX-38"/>To keep things simple, we will
+first describe network browsing in a network that contains only
+Windows systems and then show you how to add a Samba server.</p>
+
+<p>The basic way browsing works is that one computer in the network
+takes on the role of the <em class="firstterm">master
+browser</em><a name="INDEX-39"/> (also
+called <em class="firstterm">local master
+browser</em><a name="INDEX-40"/>,<em class="firstterm"> browse
+master</em><a name="INDEX-41"/>, or
+<em class="firstterm">browse server</em><a name="INDEX-42"/>) and
+keeps a list of all the computers on the local subnet that are acting
+as SMB servers. The list of computers is called the <em class="firstterm">browse
+list</em><a name="INDEX-43"/> and includes all Samba servers, Windows
+NT/2000/XP systems, and any Windows 95/98/Me systems that have the
+&quot;File and printer sharing for Microsoft
+Networks&quot; networking component installed. The browse
+list also contains the names of all workgroups and domains. At this
+level, browsing is limited to the local subnet because the browsing
+protocol depends on broadcast packets, which are typically not
+forwarded to other subnets by routers.</p>
+
+<p>A user at any Windows system can view the browse list by opening up
+the Network Neighborhood (or My Network Places), as we showed you in
+<a href="ch01.html">Chapter 1</a>. Or, the <em class="emphasis">net
+view</em><a name="INDEX-44"/> command can be used from a Windows
+command prompt:</p>
+
+<blockquote><pre class="code">C:\&gt;<tt class="userinput"><b>net view</b></tt>
+Server Name            Remark
+
+-------------------------------------------------------------------------------
+\\MAYA                 Windows 98
+\\MIXTEC               Samba 2.2.5
+\\OLMEC                Windows XP Pro on Pentium/ASUS
+\\TOLTEC               Samba 2.2.5
+\\YAQUI                Windows 95 on mixtec/VMware
+\\ZAPOTEC
+The command completed successfully.</pre></blockquote>
+
+<p>Then, <em class="emphasis">net view</em> can be used with a computer name
+as an argument to contact a server directly and list the resources it
+is sharing:</p>
+
+<blockquote><pre class="code">C:\&gt;<tt class="userinput"><b>net view \\maya</b></tt>
+Shared resources at \\maya
+
+Windows 98
+
+Share name   Type         Used as  Comment
+
+-------------------------------------------------------------------------------
+D            Disk
+E            Disk
+HP           Print
+The command completed successfully.</pre></blockquote>
+
+<p>The computers on the network involved in browsing are more than just
+the master browser and its clients. There are also backup browsers,
+which maintain copies of the browse list and respond to client
+requests for it. Backup browsers are therefore able to take over the
+role of master browser seamlessly in case it fails. The master
+browser usually doesn't serve the browse list
+directly to clients. Instead, its job is mainly to keep the master
+copy of the browse list up-to-date, and also periodically update the
+backup browsers. Clients are expected to get their copies of the
+browse list from backup browsers, selecting among them randomly to
+help to distribute the load on the backup browsers more evenly.
+Ideally, the interaction between any client and the master browser is
+limited to the client announcing when it joins or leaves the network
+(if it is a server) and requesting a list of backup browsers.</p>
+
+<p>There can be more than one <a name="INDEX-45"/>backup browser. A workgroup will have a
+backup browser if two or more computers are running Windows 95/98/Me
+or Windows NT Workstation (or another nonserver version of Windows
+NT/2000/XP) on the subnet. For every 32 additional computers, another
+backup browser is added.</p>
+
+<p>In a Windows NT domain, the <a name="INDEX-46"/>primary domain controller is
+always the local master browser, and if it fails, another Windows
+NT/2000 server (if one exists) will take over the role of local
+master browser. Other versions of Windows can function as backup
+browsers, but will never become a master browser if a Windows NT/2000
+server is available.</p>
+
+<p>In addition to acting as the local master browser, the primary domain
+controller also acts as the <em class="firstterm">domain master
+browser</em><a name="INDEX-47"/>, which ties subnets together and allows
+browse lists to be shared between master and backup browsers on
+separate subnets. This is how browsing is extended to function beyond
+the local subnet. Each subnet functions as a separate browsing
+entity, and the domain master browser synchronizes the master
+browsers of each subnet. In a Windows-only network, browsing cannot
+function across subnets unless a Windows NT/2000 PDC exists on the
+network. Samba can act as a domain master browser and can perform
+that task even in a workgroup network, which means that the Windows
+PDC is not required for this task. (It is also possible to use the
+<tt class="literal">remote</tt> <tt class="literal">browse</tt>
+<tt class="literal">sync</tt> parameter to configure a Samba server to
+synchronize its browse list with a Samba server on another subnet. In
+this case, each server must be acting as the local master browser of
+its subnet.)</p>
+
+<p>Unless it is configured never to act as a browser, each computer on
+the subnet is considered a <em class="firstterm">potential browser</em>
+and can be ordered by the browse master to become a backup browser,
+or it can identify itself as a backup browser and accept the role on
+its own.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-7-SECT-2.2"/>
+
+<h3 class="head2">Browser Elections</h3>
+
+<p><a name="INDEX-48"/>When no master browser is running on
+the subnet, potential browsers choose a new master browser among
+themselves in a process called an <em class="firstterm">election</em>. An
+election is started by a computer in the subnet when it discovers
+that no master browser is currently running. If a master browser is
+shut down gracefully, it will broadcast an election request datagram,
+initiating an election by the remaining computers. If the master
+browser fails, the election can be started by a client computer that
+requests a list of backup browsers from the master browser or by a
+backup browser that requests to have its browse list updated from the
+master browser. In each case, the system fails to receive a reply
+from the master browser and initiates the election.</p>
+
+<p>Browser elections are decided in multiple rounds of self-elimination.
+During each round, potential browsers broadcast election request
+datagrams containing their qualifications to notify other potential
+browsers that an election is happening and that if the recipient is
+more qualified, it should also broadcast a bid. When a potential
+browser receives an election request datagram from a more qualified
+opponent, it drops out, disqualifying itself from becoming the master
+browser. Otherwise, it responds with its own election request
+datagram. After a few rounds, only one potential browser is left in
+the election. After an additional four rounds of sending out an
+election request datagram and receiving no response, it becomes the
+master browser and sends a broadcast datagram announcing itself as
+the local master browser for the subnet. It then assigns runners-up
+in the election as backup browsers, as needed.</p>
+
+<p>A potential browser's qualifications include the
+following:</p>
+
+<ul><li>
+<p>Whether it has recently lost an election</p>
+</li><li>
+<p>The version of the election protocol it is running</p>
+</li><li>
+<p>Its election criteria</p>
+</li><li>
+<p>The amount of time the system has been up</p>
+</li><li>
+<p>The computer's NetBIOS name</p>
+</li></ul>
+<p>If the potential browser has lost an election recently, it
+immediately disqualifies itself. The version of the election protocol
+it is running is checked, but so far, all Windows systems (and Samba)
+use the same election protocol, so the check is not very meaningful.
+The election criteria are usually what determine which computer
+becomes the local master browser. There are two parts to the election
+criteria, shown in Tables <a href="ch07.html#samba2-CHP-7-TABLE-2">Table 7-2</a> and <a href="ch07.html#samba2-CHP-7-TABLE-3">Table 7-3</a>.</p>
+
+<a name="samba2-CHP-7-TABLE-2"/><h4 class="head4">Table 7-2. Operating-system values in an election</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Operating system</p>
+</th>
+<th>
+<p>Value</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p>Windows NT/2000 Server, running as PDC</p>
+</td>
+<td>
+<p>32</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows NT/2000/XP, if not the PDC</p>
+</td>
+<td>
+<p>16</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows 95/98/Me</p>
+</td>
+<td>
+<p>1</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows for Workgroups</p>
+</td>
+<td>
+<p>1</p>
+</td>
+</tr>
+
+</table>
+
+<a name="samba2-CHP-7-TABLE-3"/><h4 class="head4">Table 7-3. Computer-role settings in an election</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Role</p>
+</th>
+<th>
+<p>Value</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p>Domain master browser</p>
+</td>
+<td>
+<p>128</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>WINS client</p>
+</td>
+<td>
+<p>32</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Preferred master</p>
+</td>
+<td>
+<p>8</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Running master</p>
+</td>
+<td>
+<p>4</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Recent backup browser</p>
+</td>
+<td>
+<p>2</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Backup browser</p>
+</td>
+<td>
+<p>1</p>
+</td>
+</tr>
+
+</table>
+
+<p>The operating-system type is compared first, and the system with the
+highest value wins. The values have been chosen to cause the primary
+domain controller, if there is one, to become the local master
+browser. Otherwise, a Windows NT/2000/XP system will win over a
+Windows for Workgroups or Windows 95/98/Me system.</p>
+
+<p>When an operating-system type comparison results in a tie, the role
+of the computer is compared. A computer can have more than one of the
+values in <a href="ch07.html#samba2-CHP-7-TABLE-3">Table 7-3</a>, in which case the values are
+added.</p>
+
+<p>A domain master browser has a role value of 128 to weight the
+election so heavily in its favor that it will also become the local
+master browser on its own subnet. Although the primary domain
+controller (which is always the domain master browser) will win the
+election based solely on its operating system value, sometimes there
+is no primary domain controller on the network, and the domain master
+browser would not otherwise be distinguished from other potential
+browsers.</p>
+
+<p>Systems that are using a WINS server for name resolution are weighted
+heavily over ones that use broadcast name resolution with a role
+value of 32.</p>
+
+<p>A <em class="firstterm">preferred master</em> is a computer that has been
+selected and configured manually by a system administrator to be
+favored as the choice master browser. When a preferred master starts
+up, it forces a browser election, even if an existing master browser
+is still active. A preferred master has a role value of 8, and the
+existing master browser gets a value of 4.</p>
+
+<p>A backup browser that has recently been a master browser and still
+has an up-to-date browse list is given a role value of 2, and a
+potential browser that has been running as a backup browser gets a
+value of 1.</p>
+
+<p>If comparing the operating-system type and role results in a tie, the
+computer that has been running the longest wins. In the unlikely
+event that the two have been up for the same amount of time, the
+computer that wins is the one with the NetBIOS name that sorts first
+alphabetically.</p>
+
+<p>You can tell if a machine is a local master browser by using the
+Windows <em class="emphasis">nbtstat</em><a name="INDEX-49"/> command. Place the NetBIOS name of the
+machine you wish to check after the <em class="emphasis">-a</em> option:</p>
+
+<blockquote><pre class="code">C:\&gt;<tt class="userinput"><b>nbtstat -a toltec</b></tt>
+
+Local Area Connection:
+Node IpAddress: [172.16.1.4] Scope Id: []
+
+           NetBIOS Remote Machine Name Table
+
+       Name               Type         Status
+    ---------------------------------------------
+    TOLTEC         &lt;00&gt;  UNIQUE      Registered
+    TOLTEC         &lt;03&gt;  UNIQUE      Registered
+    TOLTEC         &lt;20&gt;  UNIQUE      Registered
+    ..__MSBROWSE__.&lt;01&gt;  GROUP       Registered
+    METRAN         &lt;00&gt;  GROUP       Registered
+    METRAN         &lt;1B&gt;  UNIQUE      Registered
+    METRAN         &lt;1C&gt;  GROUP       Registered
+    METRAN         &lt;1D&gt;  UNIQUE      Registered
+    METRAN         &lt;1E&gt;  GROUP       Registered
+
+    MAC Address = 00-00-00-00-00-00</pre></blockquote>
+
+<p>The resource entry that you're looking for is
+<tt class="literal">.._ _MSBROWSE_ _.&lt;01&gt;</tt><a name="INDEX-50"/>. This indicates
+that the server is currently acting as the local master browser for
+the current subnet. If the machine is a Samba server, you can check
+the Samba <em class="filename">nmbd</em> log file for an entry such as:</p>
+
+<blockquote><pre class="code">nmbd/nmbd_become_lmb.c:become_local_master_stage2(406)
+*****
+Samba name server TOLTEC is now a local master browser for
+workgroup METRAN on subnet 172.16.1.0</pre></blockquote>
+
+<p>Or, you can use the
+<em class="emphasis">nmblookup</em><a name="INDEX-51"/> command with the
+<em class="emphasis">-M</em> option and the workgroup or domain name on
+any Samba server to find the IP address of the local master:</p>
+
+<a name="INDEX-52"/><blockquote><pre class="code">$ <tt class="userinput"><b>nmblookup -M metran</b></tt>
+querying metran on 172.16.1.255
+172.16.1.1 metran&lt;1d&gt;</pre></blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-7-SECT-2.3"/>
+
+<h3 class="head2">Server Announcements</h3>
+
+<p><a name="INDEX-53"/>After
+the master browser election is decided, each server on the network
+announces itself to the network to allow the master and backup
+browsers to build their browse lists. At first, the server
+announcements happen every minute, but the interval is gradually
+stretched out to every 12 minutes. When a server is shut down
+gracefully, it sends an announcement that it is going offline to
+allow the master and backup browsers to remove it from the browse
+list. However, when a server goes offline by crashing or by some
+other failure, the master browser notices its disappearance only
+because it stops receiving server announcements. The master browser
+waits for three of the server's announcement periods
+before deciding that it is offline, which can take up to 36 minutes.
+Because backup browsers have their browse lists updated from the
+master browser once every 15 minutes, it can take up to 51 minutes
+for clients to be informed of a failed server.</p>
+
+<p>For more detailed information on Microsoft's
+browsing protocols, consult the Microsoft documents
+<em class="citetitle">Browsing and Windows 95
+Networking</em><a name="INDEX-54"/> and
+<em class="citetitle">CIFS/E Browser Protocol</em>. You can find these by
+searching for the titles on the Microsoft web site at <a href="http://www.microsoft.com">http://www.microsoft.com</a>.</p>
+
+<p>More information on configuring Samba for browsing can be found in
+<em class="filename">BROWSING.txt</em><a name="INDEX-55"/> and
+<em class="filename">BROWSING-Config.txt</em> in the Samba
+distribution's <em class="filename">docs/textdocs</em>
+directory. <a name="INDEX-56"/></p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-7-SECT-2.4"/>
+
+<h3 class="head2">Configuring Samba for Browsing</h3>
+
+<p><a name="INDEX-57"/><a name="INDEX-58"/><a name="INDEX-59"/>Samba has full support for browsing
+and can participate as a master browser, a backup browser, a domain
+master browser, a potential browser, or just a server that
+doesn't participate in browsing elections. If you
+want to make sure your Samba server never becomes a master or backup
+browser, simply set:</p>
+
+<a name="INDEX-60"/><blockquote><pre class="code">[global]
+    local master = no</pre></blockquote>
+
+<p>Usually, you will want Samba to be available as a local master or at
+least a backup browser. In the simplest case, you
+don't need to do anything because
+Samba's default is to participate in browsing
+elections with its operating system value set to 20, which will beat
+any Windows system less than a Windows NT/2000 primary domain
+controller (see <a href="ch07.html#samba2-CHP-7-TABLE-2">Table 7-2</a>). The operating-system
+value Samba reports for itself in browser elections can be set using
+the <tt class="literal">os</tt><a name="INDEX-61"/> <tt class="literal">level</tt>
+parameter:</p>
+
+<blockquote><pre class="code">[global]
+    os level = 33</pre></blockquote>
+
+<p>The preceding value will allow Samba to beat even a Windows 2000
+Advanced Server acting as a primary domain controller. As we show in
+the following section, though, forcing Samba to win this way is not
+recommended.</p>
+
+<p>If you want to allow a Windows XP Professional system to be the
+master browser, you would need to set Samba lower:</p>
+
+<blockquote><pre class="code">[global]
+    os level = 8</pre></blockquote>
+
+<p>The maximum value for <tt class="literal">os</tt> <tt class="literal">level</tt>
+is 255 because it is handled as an 8-bit unsigned integer. Supposing
+we wanted to make absolutely sure our Samba server will be the local
+master browser at all times, we might say:</p>
+
+<blockquote><pre class="code">[global]
+    local master = yes
+    os level = 255
+    preferred master = yes</pre></blockquote>
+
+<p>The addition of the
+<tt class="literal">preferred</tt><a name="INDEX-62"/>
+<tt class="literal">master</tt> parameter causes Samba to start a browser
+election as soon as it starts up, and the <tt class="literal">os</tt>
+<tt class="literal">level</tt> of 255 allows it to beat any other system on
+the network. This includes other Samba servers, assuming they are
+configured properly! If another server is using a similar
+configuration file (with <tt class="literal">os</tt>
+<tt class="literal">level</tt> <tt class="literal">=</tt> <tt class="literal">255</tt>
+and <tt class="literal">preferred</tt> <tt class="literal">master</tt>
+<tt class="literal">=</tt> <tt class="literal">yes</tt>), the two will fight each
+other for the master browser role, winning elections based on minor
+criteria, such as uptime or their current role. To avoid this, other
+Samba servers should be set with a lower <tt class="literal">os</tt>
+<tt class="literal">level</tt> and not configured to be the preferred
+master.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-7-SECT-2.5"/>
+
+<h3 class="head2">Samba as the Domain Master Browser</h3>
+
+<p><a name="INDEX-63"/>Previously we mentioned that for a Windows
+workgroup or domain to extend into multiple subnets, one system would
+have to take the role of the domain master browser. The domain master
+browser propagates browse lists across each subnet in the workgroup.
+This works because each local master browser periodically
+synchronizes its browse list with the domain master browser. During
+this synchronization, the local master browser passes on the name of
+any server that the domain master browser does not have in its browse
+list, and vice versa. Each local master browser eventually holds the
+browse list for the entire domain.</p>
+
+<p>There is no election to determine which machine assumes the role of
+the domain master browser. Instead, the administrator has to set it
+manually. By Microsoft design, however, the domain master browser and
+the PDC both register a resource type of &lt;1B&gt;, so the
+roles&mdash;and the machines&mdash;are inseparable.</p>
+
+<p>If you have a Windows NT server on the network acting as a PDC, we
+recommend that you do not try to use Samba to become the domain
+master browser. The reverse is true as well: if Samba is taking on
+the responsibilities of a PDC, we recommend making it the domain
+master browser as well. Although it is possible to split the roles
+with Samba, this is not a good idea. Using two different machines to
+serve as the PDC and the domain master browser can cause random
+errors to occur in a Windows workgroup.</p>
+
+<p>Samba can assume the role of a domain master browser for all subnets
+in the workgroup with the following options:</p>
+
+<blockquote><pre class="code">[global]
+    domain master = yes
+    preferred master = yes
+    local master = yes
+    os level = 255</pre></blockquote>
+
+<p>The final three parameters ensure that the server is also the local
+master browser, which is vital for it to work properly as the domain
+master browser. You can verify that a Samba machine is in fact the
+<a name="INDEX-64"/>domain master browser by checking the
+<em class="emphasis">nmbd</em><a name="INDEX-65"/><a name="INDEX-66"/> log file:</p>
+
+<blockquote><pre class="code">nmbd/nmbd_become_dmb.c:become_domain_master_stage2(118)
+*****
+Samba name server TOLTEC is now a domain master browser for
+workgroup METRAN on subnet 172.16.1.0</pre></blockquote>
+
+<p>Or you can use the
+<em class="emphasis">nmblookup</em><a name="INDEX-67"/> command that comes with the Samba
+distribution to query for a unique &lt;1B&gt; resource type in the
+workgroup:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>nmblookup METRAN#1B</b></tt>
+Sending queries to 172.16.1.255
+172.16.1.1 METRAN&lt;1b&gt;</pre></blockquote>
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.5.1"/>
+
+<h3 class="head3">Multiple subnets</h3>
+
+<p><a name="INDEX-68"/>You must
+remember three rules when creating a
+<a name="INDEX-69"/>workgroup/domain
+that spans more than one subnet:</p>
+
+<ul><li>
+<p>You must have either a Windows NT/2000 or Samba server acting as a
+local master browser on each subnet in the workgroup/domain.</p>
+</li><li>
+<p>You must have a Windows NT/2000 Server edition or a Samba server
+acting as a domain master browser somewhere in the workgroup/domain.</p>
+</li><li>
+<p>A WINS server should be on the network, with each system on the
+network configured to use it for name resolution.</p>
+</li></ul>
+<p>Samba has some additional features you can use if you
+don't have or want a domain master browser on your
+network and still need to have <a name="INDEX-70"/>cross-subnet browsing. Consider the
+subnets shown in <a href="ch07.html#samba2-CHP-7-FIG-1">Figure 7-1</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-7-FIG-1"/><a name="INDEX-71"/><a name="INDEX-72"/><img src="figs/sam2_0701.gif"/></div><h4 class="head4">Figure 7-1. Multiple subnets with Samba servers</h4>
+
+<p>First, a Samba server that is a local master browser can use the
+<tt class="literal">remote</tt><a name="INDEX-73"/> <tt class="literal">announce</tt>
+configuration option to make sure that computers in different subnets
+are sent broadcast announcements about the server. This has the
+effect of ensuring that the Samba server appears in the browse lists
+of foreign subnets. To achieve this, however, the directed broadcasts
+must reach the local master browser on the other subnet. Be aware
+that many routers do not allow directed broadcasts by default; you
+might have to change this setting on the router for the directed
+broadcasts to get through to its subnet.</p>
+
+<p>With the <tt class="literal">remote</tt> <tt class="literal">announce</tt>
+option, list the subnets and the workgroup that should receive the
+broadcast. For example, to ensure that machines in the 172.16.2 and
+172.16.3 subnets and the METRAN workgroup are sent broadcast
+information from our Samba server, we could specify the following:</p>
+
+<blockquote><pre class="code">[global]
+    remote announce = 172.16.2.255/METRAN \
+        172.16.3.255/METRAN</pre></blockquote>
+
+<p>Instead of supplying a broadcast address of the remote subnet, you
+are allowed to specify the exact address where broadcasts should be
+sent if the local master browser on the foreign subnet is guaranteed
+to always have the same IP address.</p>
+
+<p>A Samba local master browser can synchronize its browse list directly
+with one or more Samba servers, each acting as a local master browser
+on a different subnet. This is another way to implement browsing
+across subnets. For example, let's assume that Samba
+is configured as a local master browser, and Samba local master
+browsers exist at 172.16.2.130 and 172.16.3.120. We can use the
+<tt class="literal">remote</tt> <tt class="literal">browse</tt>
+<tt class="literal">sync</tt> option to sync directly with the Samba
+servers, as follows:</p>
+
+<blockquote><pre class="code">[global]
+    remote browse sync = 172.16.2.130 172.16.3.120</pre></blockquote>
+
+<p>For this to work, the other Samba machines must also be local master
+browsers. You can also use directed broadcasts with this option if
+you do not know specific IP addresses of local master browsers.</p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-7-SECT-2.6"/>
+
+<h3 class="head2">Making a Share Invisible</h3>
+
+<p><a name="INDEX-74"/><a name="INDEX-75"/><a name="INDEX-76"/>You can keep a share from being in the
+browse list by using the
+<tt class="literal">browsable</tt><a name="INDEX-77"/> option. This Boolean option
+prevents a share from being seen in the Network Neighborhood or My
+Network Places. For example, to prevent the <tt class="literal">[data]</tt>
+share from being visible, we could write:</p>
+
+<blockquote><pre class="code">[data]
+    path = /export/samba/userdata
+    browsable = no</pre></blockquote>
+
+<p>Although you typically don't want to do this to an
+ordinary disk share, the <tt class="literal">browsable</tt> option is
+useful in the event that you need to create a share with contents
+that you do not want others to see, such as a
+<tt class="literal">[netlogon]</tt><a name="INDEX-78"/> share for storing logon scripts
+for Windows domain control (see <a href="ch04.html">Chapter 4</a> for more
+information on logon scripts).</p>
+
+<p>Another example is the
+<tt class="literal">[homes]</tt><a name="INDEX-79"/> share. This share is often marked
+nonbrowsable so that a share named <tt class="literal">[homes]</tt>
+won't appear when its machine's
+resources are browsed. However, if a user <tt class="literal">alice</tt>
+logs on and looks at the machine's shares, an
+<tt class="literal">[alice]</tt> share will appear under the machine.</p>
+
+<p>What if we wanted to make sure
+<tt class="literal">alice</tt>'s share appeared to
+everyone before she logs on? This could be done with the global
+<tt class="literal">auto</tt><a name="INDEX-80"/> <tt class="literal">services</tt>
+option. This option preloads shares into the browse list to ensure
+that they are always visible:</p>
+
+<blockquote><pre class="code">[global]
+    auto services = alice</pre></blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-7-SECT-2.7"/>
+
+<h3 class="head2">Browsing Options</h3>
+
+<p><a href="ch07.html#samba2-CHP-7-TABLE-4">Table 7-4</a> <a name="INDEX-81"/><a name="INDEX-82"/>shows
+options that define how Samba handles browsing tasks.</p>
+
+<a name="samba2-CHP-7-TABLE-4"/><h4 class="head4">Table 7-4. Browsing configuration options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">announce as</tt></p>
+</td>
+<td>
+<p>string</p>
+</td>
+<td>
+<p>Operating system that Samba will announce itself as.</p>
+</td>
+<td>
+<p><tt class="literal">N T Server</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">announce</tt> <tt class="literal">version</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Version of the operating system that Samba will announce itself as.</p>
+</td>
+<td>
+<p><tt class="literal">4.5</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">browsable</tt> <tt class="literal">(browseable)</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>Allows share to be displayed in list of machine resources.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">browse list</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, allows Samba to provide a browse list on
+this server.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">auto services</tt> <tt class="literal">(preload)</tt></p>
+</td>
+<td>
+<p>string (share list)</p>
+</td>
+<td>
+<p>List of shares that will always appear in the browse list.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">default</tt> <tt class="literal">service (default)</tt></p>
+</td>
+<td>
+<p>string (share name)</p>
+</td>
+<td>
+<p>Name of a share (service) that will be provided if the client
+requests a share not listed in <em class="emphasis">smb.conf</em>.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">local master</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, allows Samba to participate in browsing
+elections.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">lm announce</tt></p>
+</td>
+<td>
+<p><tt class="literal">yes</tt>, <tt class="literal">no</tt>, or
+<tt class="literal">auto</tt></p>
+</td>
+<td>
+<p>Enables or disables LAN Manager-style host announcements.</p>
+</td>
+<td>
+<p><tt class="literal">auto</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">lm interval</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Frequency in seconds that LAN Manager announcements will be made if
+activated.</p>
+</td>
+<td>
+<p><tt class="literal">60</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">preferred</tt> <tt class="literal">master (prefered
+master)</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, allows Samba to use the preferred master
+browser bit to attempt to become the local master browser.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">domain master</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, allows Samba to become the domain browser
+master for the workgroup or domain.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">os level</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Operating system level of Samba in an election for local master
+browser.</p>
+</td>
+<td>
+<p><tt class="literal">0</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">remote browse</tt> <tt class="literal">sync</tt></p>
+</td>
+<td>
+<p>string (list of IP addresses)</p>
+</td>
+<td>
+<p>Samba servers to synchronize browse lists with.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">remote</tt> <tt class="literal">announce</tt></p>
+</td>
+<td>
+<p>string (IP address/workgroup pairs)</p>
+</td>
+<td>
+<p>Subnets and workgroups to send directed broadcast packets to,
+allowing Samba to appear in their browse lists.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.7.1"/>
+
+<a name="INDEX-83"/><h3 class="head3">announce as</h3>
+
+<p>This global configuration option specifies the type of operating
+system that Samba announces to other machines on the network. The
+default value for this option is <tt class="literal">N T</tt>
+<tt class="literal">Server</tt>, which causes Samba to masquerade as a
+Windows NT Server operating system. Other possible values are
+<tt class="literal">NT</tt>, <tt class="literal">NT</tt>
+<tt class="literal">Workstation</tt>, <tt class="literal">Win95</tt>, and
+<tt class="literal">W f W</tt> for a Windows for Workgroup operating
+system. You can override the default value with the following:</p>
+
+<blockquote><pre class="code">[global]
+    announce as = Win95</pre></blockquote>
+
+<p>We recommend against changing the default value of this configuration
+option.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.7.2"/>
+
+<a name="INDEX-84"/><h3 class="head3">announce version</h3>
+
+<p>This global option is frequently used with the
+<tt class="literal">announce</tt> <tt class="literal">as</tt> configuration
+option; it specifies the version of the operating system that Samba
+announces to other machines on the network. The default value of this
+option is 4.5, which places Samba above Windows NT Version 4.0, but
+below Windows 2000. You can specify a new value with a global entry
+such as the following:</p>
+
+<blockquote><pre class="code">[global]
+    announce version = 4.3</pre></blockquote>
+
+<p>We recommend against changing the default value of this configuration
+option.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.7.3"/>
+
+<h3 class="head3">browsable</h3>
+
+<p>The <tt class="literal">browsable</tt><a name="INDEX-85"/> option (also spelled
+<tt class="literal">browseable</tt>) indicates whether the share referenced
+should appear in the list of available resources for the system on
+which it resides. This option is always set to <tt class="literal">yes</tt>
+by default. If you wish to prevent the share from being seen in a
+client's browser, you can reset this option to
+<tt class="literal">no</tt>.</p>
+
+<p>Note that this does not prevent someone from accessing the share
+using other means, such as specifying a UNC location (e.g.,
+<tt class="literal">\\server\accounting)</tt> in Windows Explorer. It only
+prevents the share from being listed under the
+system's resources when being browsed.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.7.4"/>
+
+<a name="INDEX-86"/><h3 class="head3">browse list</h3>
+
+<p>You should never need to change this parameter from its default value
+of <tt class="literal">yes</tt>. If your Samba server is acting as a local
+master browser (i.e., it has won the browsing election), you can use
+the global <tt class="literal">browse</tt> <tt class="literal">list</tt> option
+to instruct Samba to provide or withhold its browse list to all
+clients. By default, Samba always provides a browse list. You can
+withhold this information by specifying the following:</p>
+
+<blockquote><pre class="code">[global]
+    browse list = no</pre></blockquote>
+
+<p>If you disable the browse list, clients cannot browse the names of
+other machines, their services, and other domains currently available
+on the network. Note that this won't make any
+particular machine inaccessible; if someone knows a valid machine
+name/address and a share on that machine, he can still connect to it
+explicitly using the Windows <em class="emphasis">net use</em> command or
+by mapping a drive letter to it using Windows Explorer. It simply
+prevents information in the browse list from being retrieved by any
+client that requests it.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.7.5"/>
+
+<h3 class="head3">auto services</h3>
+
+<p>The global <tt class="literal">auto</tt><a name="INDEX-87"/>
+<tt class="literal">services</tt> option, which is also called
+<tt class="literal">preload</tt> <a name="INDEX-88"/>, ensures that the specified
+shares are always visible in the browse list. One common use for this
+option is to advertise specific user or printer shares that are
+created by the <tt class="literal">[homes]</tt> or
+<tt class="literal">[printers]</tt> shares, but are not otherwise
+browsable.</p>
+
+<p>This option works best with disk shares. If you wish to force each of
+your system printers (i.e., those listed in the printer capabilities
+file) to appear in the browse list, we recommend using the
+<tt class="literal">load</tt> <tt class="literal">printers</tt> option instead.</p>
+
+<p>Shares listed with the <tt class="literal">auto</tt>
+<tt class="literal">services</tt> option will not be displayed if the
+<tt class="literal">browse</tt> <tt class="literal">list</tt> option is set to
+<tt class="literal">no</tt>.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.7.6"/>
+
+<h3 class="head3">default service</h3>
+
+<p>The global <tt class="literal">default</tt><a name="INDEX-89"/>
+<tt class="literal">service</tt> option (sometimes called
+<tt class="literal">default</tt>) names a
+&quot;last-ditch&quot; share. The value is
+set to an existing share name without the enclosing brackets. When a
+client requests a nonexistent disk or printer share, Samba will
+attempt to connect the user to the share specified by this option
+instead. The option is specified as follows:</p>
+
+<blockquote><pre class="code">[global]
+    default service = helpshare</pre></blockquote>
+
+<p>When Samba redirects the requested, nonexistent service to the
+service specified by <tt class="literal">default</tt>
+<tt class="literal">service</tt>, the <tt class="literal">%S</tt> option takes on
+the value of the requested service, with any underscores (
+<tt class="literal">_</tt> ) in the requested service replaced by forward slashes
+(<tt class="literal">/</tt>).</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.7.7"/>
+
+<a name="INDEX-90"/><h3 class="head3">local master</h3>
+
+<p>This global option specifies whether Samba will attempt to become the
+local master browser for the subnet when it starts up. If this option
+is set to <tt class="literal">yes</tt>, Samba will participate in
+elections. However, setting this option by itself does not guarantee
+victory. (Other parameters, such as <tt class="literal">preferred</tt>
+<tt class="literal">master</tt> and <tt class="literal">os</tt>
+<tt class="literal">level</tt>, help Samba win browsing elections.) If this
+option is set to <tt class="literal">no</tt>, Samba will lose all browsing
+elections, regardless of which values are specified by the other
+configuration options. The default value is <tt class="literal">yes</tt>.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.7.8"/>
+
+<h3 class="head3">lm announce</h3>
+
+<p>The global <tt class="literal">lm</tt><a name="INDEX-91"/>
+<tt class="literal">announce</tt> option tells Samba's
+<em class="emphasis">nmbd</em> whether to send <a name="INDEX-92"/>LAN Manager host
+announcements on behalf of the server. These host announcements might
+be required by older clients, such as IBM's OS/2
+operating system. This announcement allows the server to be added to
+the browse lists of the client. If activated, Samba will announce
+itself repetitively at the number of seconds specified by the
+<tt class="literal">lm</tt> <tt class="literal">interval</tt> option.</p>
+
+<p>You can specify the option as follows:</p>
+
+<blockquote><pre class="code">[global]
+    lm announce = yes</pre></blockquote>
+
+<p>This configuration option takes the standard Boolean values,
+<tt class="literal">yes</tt> and <tt class="literal">no</tt>, which enable or
+disable LAN Manager announcements, respectively. In addition, a third
+option, <tt class="literal">auto</tt>, causes <em class="emphasis">nmbd</em> to
+listen passively for LAN Manager announcements, but not to send any
+of its own initially. If LAN Manager announcements are detected for
+another machine on the network, <em class="emphasis">nmbd</em> will start
+sending its own LAN Manager announcements to ensure that it is
+visible. The default value is <tt class="literal">auto</tt>. You probably
+won't need to change this value from its default.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.7.9"/>
+
+<a name="INDEX-93"/><h3 class="head3">lm interval</h3>
+
+<p>This option, which is used in conjunction with <tt class="literal">lm</tt>
+<tt class="literal">announce</tt>, indicates the number of seconds
+<em class="emphasis">nmbd</em> will wait before repeatedly broadcasting
+LAN Manager-style announcements. LAN Manager announcements must be
+enabled for this option to work. The default value is 60 seconds. If
+you set this value to 0, Samba will not send any LAN Manager host
+announcements, regardless of the value of the <tt class="literal">lm</tt>
+<tt class="literal">announce</tt> option. You can reset the value of this
+option as follows:</p>
+
+<blockquote><pre class="code">[global]
+    lm interval = 90</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.7.10"/>
+
+<h3 class="head3">preferred master</h3>
+
+<p>The <tt class="literal">preferred</tt><a name="INDEX-94"/>
+<tt class="literal">master</tt> option requests that Samba set the
+preferred master bit when participating in an election. This gives
+the server a higher preferred status in the workgroup than other
+machines at the same operating-system level. If you are configuring
+your Samba machine to become the local master browser, it is wise to
+set the following value:</p>
+
+<blockquote><pre class="code">[global]
+    preferred master = yes</pre></blockquote>
+
+<p>Otherwise, you should leave it set to its default,
+<tt class="literal">no</tt>. If Samba is configured as a preferred master
+browser, it will force an election when it first comes online.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.7.11"/>
+
+<a name="INDEX-95"/><h3 class="head3">domain master</h3>
+
+<p>If Samba is the primary domain controller for your workgroup or NT
+domain, it should also be made the domain master browser. The domain
+master browser is a special machine that has the NetBIOS resource
+type &lt;1B&gt; and is used to propagate browse lists to and from
+each local master browser in individual subnets across the domain. To
+force Samba to become the <a name="INDEX-96"/>domain master browser, set the following in
+the <tt class="literal">[global]</tt> section of the
+<em class="filename">smb.conf</em>:</p>
+
+<blockquote><pre class="code">[global]
+    domain master = yes</pre></blockquote>
+
+<p>If you have a Windows NT server on the network acting as a primary
+domain controller (PDC), we recommend that you do not use Samba to
+become the domain master browser. The reverse is true as well: if
+Samba is taking on the responsibilities of a PDC, we recommend making
+it the domain master browser. Splitting the PDC and the domain master
+browser will cause unpredictable errors to occur on the network.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.7.12"/>
+
+<h3 class="head3">os level</h3>
+
+<p>The global <tt class="literal">os</tt><a name="INDEX-97"/> <tt class="literal">level</tt> option
+defines the operating-system value with which Samba will masquerade
+during a browser election. If you wish to have Samba win an election
+and become the master browser, set the <tt class="literal">os</tt>
+<tt class="literal">level</tt> higher than that of any other system on the
+subnet. The values are shown in <a href="ch07.html#samba2-CHP-7-TABLE-2">Table 7-2</a>. The
+default level is 20, which means that Samba will win elections
+against all versions of Windows, except Windows NT/2000 if it is
+operating as the PDC. If you wish Samba to win all elections, you can
+set its operating system value as follows:</p>
+
+<blockquote><pre class="code">[global]
+    os level = 255</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.7.13"/>
+
+<h3 class="head3">remote browse sync</h3>
+
+<p>The global <tt class="literal">remote</tt><a name="INDEX-98"/>
+<tt class="literal">browse</tt> <tt class="literal">sync</tt> option specifies
+that Samba should synchronize its browse lists with local master
+browsers in other subnets. However, the synchronization can occur
+only with other Samba servers and not with Windows computers. For
+example, if your Samba server were a master browser on the subnet
+172.16.235, and Samba local master browsers existed on other subnets
+located at 172.16.234.92 and 172.16.236.2, you would specify the
+following:</p>
+
+<blockquote><pre class="code">[global]
+    remote browse sync = 172.16.234.92 172.16.236.2</pre></blockquote>
+
+<p>The Samba server would then directly contact the other machines on
+the address list and synchronize browse lists. You can also say:</p>
+
+<blockquote><pre class="code">[global]
+    remote browse sync = 172.16.234.255 172.16.236.255</pre></blockquote>
+
+<p>This forces Samba to broadcast queries to determine the IP addresses
+of the local master browser on each subnet, with which it will then
+synchronize browse lists. This works, however, only if your router
+doesn't block directed broadcast requests ending in
+255.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-7-SECT-2.7.14"/>
+
+<h3 class="head3">remote announce</h3>
+
+<p>Samba servers are capable of providing browse lists to foreign
+subnets with the <tt class="literal">remote</tt><a name="INDEX-99"/>
+<tt class="literal">announce</tt> option. This is typically sent to the
+local master browser of the foreign subnet in question. However, if
+you do not know the address of the local master browser, you can do
+the following:</p>
+
+<blockquote><pre class="code">[global]
+    remote announce = 172.16.234.255/ACCOUNTING \       
+                        172.16.236.255/ACCOUNTING</pre></blockquote>
+
+<p>With this, Samba will broadcast host announcements to all machines on
+subnets 172.16.234 and 172.16.236, which will hopefully reach the
+local master browser of the subnet.</p>
+
+<p>You can also specify exact IP addresses, if they are known, but this
+works only if the systems are guaranteed to maintain the role of
+master browser on their subnets. By appending a workgroup or domain
+name to the IP address, Samba announces that it is in that workgroup
+or domain. If this is left out, the workgroup set by the
+<tt class="literal">workgroup</tt> parameter is used. <a name="INDEX-100"/> <a name="INDEX-101"/><a name="INDEX-102"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+<hr/><h4 class="head4">Footnotes</h4><blockquote><a name="FOOTNOTE-1"/> <p><a href="#FNPTR-1">[1]</a> As we explained in
+<a href="ch01.html">Chapter 1</a>, a system can register under more than
+one NetBIOS name. We use the singular here only to keep our
+explanation simple.</p> </blockquote><hr/><h4 class="head4"><a href="toc.html">TOC</a></h4></body></html>

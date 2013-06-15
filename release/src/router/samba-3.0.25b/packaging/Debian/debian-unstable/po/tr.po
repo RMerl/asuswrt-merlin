@@ -1,0 +1,322 @@
+# Turkish translation of samba.
+# This file is distributed under the same license as the samba package.
+# Mehmet Türker <mturker@innova.com.tr>, 2004. 
+# 
+msgid ""
+msgstr ""
+"Project-Id-Version: samba\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-08-13 17:05-0700\n"
+"PO-Revision-Date: 2004-06-01 09:42+0300\n"
+"Last-Translator: Mehmet Türker <mturker@innova.com.tr>\n"
+"Language-Team: Turkish <debian-l10n-turkish@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: string
+#. Description
+#: ../samba-common.templates:3
+msgid "Character Set for Unix filesystem"
+msgstr "Unix dosya sistemi için karakter seti"
+
+#. Type: string
+#. Description
+#: ../samba-common.templates:3
+msgid ""
+"You currently have a \"character set\" configured in your smb.conf.  In "
+"Samba 3.0, this option is replaced by a new option, \"unix charset\". Please "
+"specify the character set you wish to use for theis new option, which "
+"controls how Samba interprets filenames on the file system."
+msgstr ""
+"Halihazırda smb.conf yapılandırma dosyanızda \"character set\" ayarı mevcut. "
+"Samba 3.0'da bu seçenek yenisiyle: \"unix charset\" ile değiştirildi. Lütfen "
+"Samba'nın sistemdeki dosya isimlerini çevirirken dikkate aldığı bu yeni "
+"seçenekle kullanılmasını istediğiniz karakter setini girin."
+
+#. Type: string
+#. Description
+#: ../samba-common.templates:3
+msgid "If you leave this option blank, your smb.conf will not be changed."
+msgstr "Bu seçeneği boş bırakırsanız, smb.conf dosyanız değiştirilmeyecektir."
+
+#. Type: string
+#. Description
+#: ../samba-common.templates:13
+msgid "Character Set for DOS clients"
+msgstr "DOS istemcileri için karakter seti"
+
+#. Type: string
+#. Description
+#: ../samba-common.templates:13
+msgid ""
+"You currently have a \"client code page\" set in your smb.conf.  In Samba "
+"3.0, this option is replaced by the option \"dos charset\".  Please specify "
+"the character set you wish to use for this new option.  In most cases, the "
+"default chosen for you will be sufficient.  Note that this option is not "
+"needed to support Windows clients, it is only for DOS clients.  If you leave "
+"this option blank, your smb.conf will not be changed."
+msgstr ""
+"Halihazırda smb.conf yapılandırma dosyanızda \"client code page\" ayarı "
+"mevcut.  Samba 3.0'da bu seçenek \"dos charset\" seçeneğiyle değiştirildi.  "
+"Lütfen bu yeni seçenekle beraber kullanmak için bir karakter seti seçin.  "
+"Çoğu durumda öntanımlı olarak seçilmiş bulunan seçenek uygundur.  Aklınızda "
+"bulunsun bu seçenek Windows istemcilerini desteklemek için gerekli değildir, "
+"sadece DOS istemcileri içindir.  Eğer bu seçeneği boş bırakırsanız smb.conf "
+"dosyanız değiştirilmeyecektir."
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:24
+msgid "Modify smb.conf to use WINS settings from DHCP?"
+msgstr ""
+"WINS ayarlarını DHCP'den kullanmak için smb.conf dosyasında değişiklik "
+"yapılsın mı?"
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:24
+msgid ""
+"If your computer gets IP address information from a DHCP server on the "
+"network, the DHCP server may also provide information about WINS servers "
+"(\"NetBIOS name servers\") present on the network.  This requires a change "
+"to your smb.conf file so that DHCP-provided WINS settings will automatically "
+"be read from /etc/samba/dhcp.conf."
+msgstr ""
+"Eğer bilgisayarınız IP adresini ağınızdaki bir DHCP sunucusundan alıyorsa, "
+"DHCP sunucusu ayrıca ağınızda bulunan WINS sunucuları (\"NetBIOS alanadı "
+"sunucuları\") hakkında da bilgi verebilir.  Bu, smb.conf dosyanızda DHCP "
+"tarafından sunulan WINS ayarlarının otomatik olarak /etc/samba/dhcp.conf "
+"dosyasından okunmasını sağlayan bir değişikliği gerektirir."
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:24
+msgid ""
+"You must have the dhcp3-client package installed to take advantage of this "
+"feature."
+msgstr ""
+"Bu özellikten yararlanabilmek için dhcp3-client paketinin kurulmuş olması "
+"gerekir."
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:37
+msgid "Configure smb.conf through debconf?"
+msgstr "\"smb.conf\" dosyası debconf ile yapılandırılsın mı?"
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:37
+msgid ""
+"The rest of the configuration of Samba deals with questions that affect "
+"parameters in /etc/samba/smb.conf, which is the file used to configure the "
+"Samba programs (nmbd and smbd.) Your current smb.conf contains an 'include' "
+"line or an option that spans multiple lines, which could confuse debconf and "
+"require you to edit your smb.conf by hand to get it working again."
+msgstr ""
+"Geri kalan Samba yapılandırması Samba uygulamalarını (nmbd ve smbd) "
+"yapılandırmak için kullanılan /etc/samba/smb.conf dosyasındaki parametreleri "
+"etkileyen sorularla devam edecektir. Mevcut smb.conf dosyası, debconf'u "
+"şaşırtabilecek ve smb.conf dosyanızı elle değiştirilmesi zorunda kılacak bir "
+"'include' satırı veya birden fazla satır boyunca devam eden bir seçenek "
+"içeriyor."
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:37
+msgid ""
+"If you don't use debconf to configure smb.conf, you will have to handle any "
+"configuration changes yourself, and will not be able to take advantage of "
+"periodic configuration enhancements.  Therefore, use of debconf is "
+"recommended if possible."
+msgstr ""
+"Eğer smb.conf'u yapılandırmak için debconf'u kullanmıyorsanız bütün "
+"yapılandırma değişikliklerini kendiniz elle yapmanız gerekir.  Bu durumda "
+"periyodik olarak sunulan yapılandırma iyileştirmelerinden de "
+"yararlanamayacaksınız.  Bu nedenlerle eğer mümkünse debconf kullanımı "
+"tavsiye edilir."
+
+#. Type: string
+#. Description
+#: ../samba-common.templates:52
+msgid "Workgroup/Domain Name?"
+msgstr "Çalışma Grubu/Etki Alanı İsmi?"
+
+#. Type: string
+#. Description
+#: ../samba-common.templates:52
+msgid ""
+"This controls what workgroup your server will appear to be in when queried "
+"by clients. Note that this parameter also controls the Domain name used with "
+"the security=domain setting."
+msgstr ""
+"Bu ayar, sunucunuzun istemciler tarafından sorgulandığında hangi Çalışma "
+"Grubu içerisinde gözükeceğini kontrol eder. Aklınızda bulunsun, bu parametre "
+"ayrıca security=domain ayarı ile beraber kullanılacak Etki Alanını da "
+"kontrol eder."
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:60
+msgid "Use password encryption?"
+msgstr "Parola şifrelenmesi kullanılsın mı?"
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:60
+msgid ""
+"Recent Windows clients communicate with SMB servers using encrypted "
+"passwords. If you want to use clear text passwords you will need to change a "
+"parameter in your Windows registry. It is recommended that you use encrypted "
+"passwords. If you do, make sure you have a valid /etc/samba/smbpasswd file "
+"and that you set passwords in there for each user using the smbpasswd "
+"command."
+msgstr ""
+"Yeni Windows istemcileri SBM sunucularıyla şifrelenmiş parolalar kullanarak "
+"iletişim kurarlar. Eğer düz metin parolaları kullanmak istiyorsanız Windows "
+"registry içinde bir parametreyi değiştirmelisiniz. Eğer bu işlemi "
+"yapmışsanız, geçerli bir /etc/samba/smbpasswd dosyanız olduğundan ve buraya "
+"smbpasswd komutu kullanarak bütün kullanıcılar için parola kaydı "
+"eklendiğinden emin olun."
+
+#. Type: boolean
+#. Description
+#: ../samba.templates:4
+msgid "Create samba password database, /var/lib/samba/passdb.tdb?"
+msgstr "Samba parola veritabanı /var/lib/samba/passwd.tdb yaratılsın mı?"
+
+#. Type: boolean
+#. Description
+#: ../samba.templates:4
+msgid ""
+"To be compatible with the defaults in most versions of Windows, Samba must "
+"be configured to use encrypted passwords.  This requires user passwords to "
+"be stored in a file separate from /etc/passwd. This file can be created "
+"automatically, but the passwords must be added manually (by you or the user) "
+"by running smbpasswd, and you must arrange to keep it up-to-date in the "
+"future.  If you do not create it, you will have to reconfigure samba (and "
+"probably your client machines) to use plaintext passwords. See /usr/share/"
+"doc/samba-doc/htmldocs/ENCRYPTION.html from the samba-doc package for more "
+"details."
+msgstr ""
+"Windows'un çoğu sürümüyle uyumlu olması için, Samba'nın şifreli parolaları "
+"kullanmak üzere yapılandırılması gerekir.  Bu işlem kullanıcı parolalarının /"
+"etc/passwd dosyasından farklı bir yerde saklanmasını gerektirir. Bu dosya "
+"otomatik olarak yaratılabilir, fakat parolaların (siz veya kullanıcı "
+"tarafından) smbpasswd çalıştırılarak elle girilmesi ve gelecekte de güncel "
+"tutulması gerekir.  Eğer bunu yaratmazsanız, düz metin parolalar "
+"kullanabilmek için samba'yı (ve muhtemelen istemci makineleri) yeniden "
+"yapılandırmanız gerekir. Daha ayrıntılı bilgi için samba-doc paketinden "
+"çıkan /usr/share/doc/samba-doc/htmldocs/ENCRYPTION.html'ye başvurun."
+
+#. Type: note
+#. Description
+#: ../samba.templates:17
+msgid "Samba's log files have moved."
+msgstr "Samba'nın günce dosyaları taşındı."
+
+#. Type: note
+#. Description
+#: ../samba.templates:17
+msgid ""
+"Starting with the first packages of Samba 2.2 for Debian the log files for "
+"both Samba daemons (nmbd and smbd) are now stored in /var/log/samba/. The "
+"names of the files are log.nmbd and log.smbd, for nmbd and smbd respectively."
+msgstr ""
+"Samba 2.2'nin ilk paketlerinden itibaren, Samba artalan süreçlerine (nmbd ve "
+"smbd) ait Debian günce dosyaları artık /var/log/samba altında saklanıyor. Bu "
+"dosyaların isimleri nmbd ve smbd için sırasıyla log.nmbd ve log.smbd'dir."
+
+#. Type: note
+#. Description
+#: ../samba.templates:17
+msgid ""
+"The old log files that were in /var/log/ will be moved to the new location "
+"for you."
+msgstr ""
+"/var/log/ içinde bulunan eski günce dosyaları yeni bir konuma taşınacak."
+
+#. Type: note
+#. Description
+#: ../samba.templates:28
+msgid "Running nmbd from inetd is no longer supported"
+msgstr "Nmbd'nin inetd'den çalıştırılması artık desteklenmiyor"
+
+#. Type: note
+#. Description
+#: ../samba.templates:28
+msgid ""
+"Your system was previously configured to start nmbd and smbd from inetd.  As "
+"of version 2.999+3.0.alpha20-4, nmbd will no longer be started from inetd.  "
+"If you have modified your /etc/init.d/samba startup script, you may need to "
+"adjust it by hand now so that nmbd will start."
+msgstr ""
+"Sisteminiz, nmbd ve smbd'yi inetd üzerinden çalıştıracak şekilde "
+"ayarlanmış.  Sürüm 2.999+3.0.alpha20-4'ten sonra artık nmbd inetd'den "
+"çalıştırılmıyor.  Eğer /etc/init.d/samba başlangıç betiğini kendiniz "
+"düzenlediyseniz, nmbd'nin çalışabilmesi için bu dosyayı elle ayarlamak "
+"zorunda kalabilirsiniz."
+
+#. Type: select
+#. Choices
+#: ../samba.templates:36
+msgid "daemons, inetd"
+msgstr "artalan süreçleri, inetd"
+
+#. Type: select
+#. Description
+#: ../samba.templates:38
+msgid "How do you want to run Samba?"
+msgstr "Samba'nın nasıl çalışmasını istersiniz?"
+
+#. Type: select
+#. Description
+#: ../samba.templates:38
+msgid ""
+"The Samba daemon smbd can run as a normal daemon or from inetd. Running as a "
+"daemon is the recommended approach."
+msgstr ""
+"Samba artalan süreci smbd, normal bir artalan süreci olarak veya inetd'den "
+"çalışabilir. Tavsiye edilen yaklaşım artalan süreci olarak çalıştırmaktır."
+
+#. Type: boolean
+#. Description
+#: ../samba.templates:45
+msgid "Move /etc/samba/smbpasswd to /var/lib/samba/passdb.tdb?"
+msgstr "/etc/samba/smbpasswd /var/lib/samba/passwd.tdb'ye taşınsın mı?"
+
+#. Type: boolean
+#. Description
+#: ../samba.templates:45
+msgid ""
+"Samba 3.0 introduces a newer, more complete SAM database interface which "
+"supersedes the /etc/samba/smbpasswd file.  Would you like your existing "
+"smbpasswd file to be migrated to /var/lib/samba/passdb.tdb for you?  If you "
+"plan to use another pdb backend (e.g., LDAP) instead, you should answer 'no' "
+"here."
+msgstr ""
+"Samba 3.0, /etc/samba/smbpasswd'nin yerini alan yeni ve daha eksiksiz bir "
+"SAM veritabanı arayüzü ile birlikte geliyor. Mevcut smbpasswd dosyasının /"
+"var/lib/samba/passdb.tbd dosyasına dönüştürülmesini ister misiniz?  Eğer "
+"başka bir pdb arkayüzü (ör. LDAP) kullanmayı planlıyorsanız, burada 'hayır' "
+"cevabını vermelisiniz."
+
+#. Type: note
+#. Description
+#: ../swat.templates:3
+msgid "Your smb.conf will be re-written!"
+msgstr "Smb.conf dosyanız tekrar yazılacak!"
+
+#. Type: note
+#. Description
+#: ../swat.templates:3
+msgid ""
+"SWAT will rewrite your smb.conf file. It will rearrange the entries and "
+"delete all comments, include= and copy= options. If you have a carefully "
+"crafted smb.conf then back it up or don't use SWAT!"
+msgstr ""
+"SWAT smb.conf dosyanızın üzerine yazacak. Bu işlem kayıtları tekrar "
+"düzenleyecek, bütün yorumları, include= ve copy= seçeneklerini silecek. Eğer "
+"özel olarak tasarladığınız bir smb.conf dosyanız varsa, bunu yedekleyin veya "
+"SWAT kullanmayın!"

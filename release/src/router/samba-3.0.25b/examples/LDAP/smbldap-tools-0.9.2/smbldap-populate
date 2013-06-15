@@ -1,0 +1,557 @@
+#!/usr/bin/perl -w
+
+# Populate a LDAP base for Samba-LDAP usage
+#
+# $Id: smbldap-populate,v 1.27 2005/10/31 15:05:22 jtournier Exp $
+
+#  This code was developped by IDEALX (http://IDEALX.org/) and
+#  contributors (their names can be found in the CONTRIBUTORS file).
+#
+#                 Copyright (C) 2001-2002 IDEALX
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+#  USA.
+
+#  Purpose :
+#       . Create an initial LDAP database suitable for Samba 2.2
+#       . For lazy people, replace ldapadd (with only an ldif parameter)
+
+use strict;
+use FindBin;
+use FindBin qw($RealBin);
+use lib "$RealBin/";
+use smbldap_tools;
+use Getopt::Std;
+use Net::LDAP::LDIF;
+
+use vars qw(%oc);
+
+# objectclass of the suffix
+%oc = (
+       "ou" => "organizationalUnit",
+       "o" => "organization",
+       "dc" => "dcObject",
+      );
+
+
+my %Options;
+
+my $ok = getopts('a:b:e:i:k:l:m:u:g:?', \%Options);
+if ( (!$ok) || ($Options{'?'}) ) {
+  print_banner;
+  print "Usage: $0 [-abeiklug?] [ldif]\n";
+  print "  -u uidNumber	first uidNumber to allocate (default: 1000)\n";
+  print "  -g gidNumber	first uidNumber to allocate (default: 1000)\n";
+  print "  -a user	administrator login name (default: root)\n";
+  print "  -b user	guest login name (default: nobody)\n";
+  print "  -k uidNumber	administrator's uidNumber (default: 0)\n";
+  print "  -l uidNumber	guest's uidNumber (default: 999)\n";
+  print "  -m gidNumber	administrator's gidNumber (default: 0)\n";
+  print "  -e file	export ldif file\n";
+  print "  -i file	import ldif file\n";
+  print "  -?		show this help message\n";
+
+  exit (1);
+}
+
+# sanity checks
+my $domain = $config{sambaDomain};
+if (! defined $domain) {
+  print STDERR "error: domain name not found !\n";
+  print STDERR "possible reasons are:\n";
+  print STDERR ". incorrect 'sambaDomain' parameter in smbldap.conf\n";
+  print STDERR ". incorrect 'samba_conf' definition in smbldap_tools.pm\n";
+  die;
+}
+
+#$config{sambaUnixIdPooldn}="sambaDomainName=$domain,$config{suffix}";
+
+my $firstuidNumber=$Options{'u'};
+if (!defined($firstuidNumber)) {
+  $firstuidNumber=1000;
+}
+
+my $firstgidNumber=$Options{'g'};
+if (!defined($firstgidNumber)) {
+  $firstgidNumber=1000;
+}
+
+my $tmp_ldif_file=$Options{'e'};
+if (!defined($tmp_ldif_file)) {
+  $tmp_ldif_file="/tmp/$$.ldif";
+}
+
+my $adminName = $Options{'a'};
+if (!defined($adminName)) {
+  $adminName = "root";
+}
+
+my $guestName = $Options{'b'};
+if (!defined($guestName)) {
+  $guestName = "nobody";
+}
+
+my $adminUidNumber=$Options{'k'};
+my $adminrid;
+if (!defined($adminUidNumber)) {
+  $adminUidNumber = "0";
+  $adminrid= "500";
+} else {
+  $adminrid=(2*$adminUidNumber+ 1000)
+}
+
+my $guestUidNumber=$Options{'l'};
+if (!defined($guestUidNumber)) {
+  $guestUidNumber = "999";
+}
+
+my $adminGidNumber=$Options{'m'};
+if (!defined($adminGidNumber)) {
+  $adminGidNumber = "0";
+}
+
+my $_ldifName = $Options{'i'};
+
+my $exportFile = $Options{'e'};
+if (!defined($exportFile)) {
+  $exportFile = "base.ldif";
+}
+
+print "Populating LDAP directory for domain $domain ($config{SID})\n";
+if (!defined($_ldifName)) {
+  my $attr;
+  my $val;
+  my $objcl;
+
+  print "(using builtin directory structure)\n\n";
+  if ($config{suffix} =~ m/([^=]+)=([^,]+)/) {
+    $attr = $1;
+    $val = $2;
+    $objcl = $oc{$attr} if (exists $oc{$attr});
+    if (!defined($objcl)) {
+      $objcl = "myhardcodedobjectclass";
+    }
+  } else {
+    die "can't extract first attr and value from suffix $config{suffix}";
+  }
+  #print "$attr=$val\n";
+  my ($type,$ou_users,$ou_groups,$ou_computers,$ou_idmap,$cnsambaUnixIdPool);
+  ($type,$ou_users)=($config{usersdn}=~/(.*)=(.*),$config{suffix}/);
+  ($type,$ou_groups)=($config{groupsdn}=~/(.*)=(.*),$config{suffix}/);
+  ($type,$ou_computers)=($config{computersdn}=~/(.*)=(.*),$config{suffix}/);
+  if (defined $config{idmapdn}) {
+    ($type,$ou_idmap)=($config{idmapdn}=~/(.*)=(.*),$config{suffix}/);
+  }
+  ($type,$cnsambaUnixIdPool)=($config{sambaUnixIdPooldn}=~/(.*)=(.*),$config{suffix}/);
+  my $org;
+  my ($organisation,$ext);
+  if ($config{suffix} =~ m/dc=([^=]+),dc=(.*)$/) {
+    ($organisation,$ext) = ($config{suffix} =~ m/dc=([^=]+),dc=(.*)$/);
+  } elsif ($config{suffix} =~ m/dc=(.*)$/) {
+    $organisation=$1;
+  }
+
+  if ($organisation ne '') {
+    $org = "\nobjectclass: organization\no: $organisation";
+  }
+  #my $FILE="|cat";
+
+  my $entries="dn: $config{suffix}
+objectClass: $objcl$org
+$attr: $val
+
+dn: $config{usersdn}
+objectClass: top
+objectClass: organizationalUnit
+ou: $ou_users
+
+dn: $config{groupsdn}
+objectClass: top
+objectClass: organizationalUnit
+ou: $ou_groups
+
+dn: $config{computersdn}
+objectClass: top
+objectClass: organizationalUnit
+ou: $ou_computers\n";
+
+  if (defined $config{idmapdn}) {
+    $entries.="\ndn: $config{idmapdn}
+objectClass: top
+objectClass: organizationalUnit
+ou: $ou_idmap\n";
+  }
+
+  $entries.="\ndn: uid=$adminName,$config{usersdn}
+cn: $adminName
+sn: $adminName
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: sambaSAMAccount
+objectClass: posixAccount
+objectClass: shadowAccount
+gidNumber: $adminGidNumber
+uid: $adminName
+uidNumber: $adminUidNumber\n";
+  if (defined $config{userHome} and $config{userHome} ne "") {
+    my $userHome=$config{userHome};
+    $userHome=~s/\%U/$adminName/;
+    $entries.="homeDirectory: $userHome\n";
+  } else {
+    $entries.="homeDirectory: /dev/null\n";
+  }
+  $entries.="sambaPwdLastSet: 0
+sambaLogonTime: 0
+sambaLogoffTime: 2147483647
+sambaKickoffTime: 2147483647
+sambaPwdCanChange: 0
+sambaPwdMustChange: 2147483647\n";
+  if (defined $config{userSmbHome} and $config{userSmbHome} ne "") {
+    my $userSmbHome=$config{userSmbHome};
+    $userSmbHome=~s/\%U/$adminName/;
+    $entries.="sambaHomePath: $userSmbHome\n";
+  }
+  if (defined $config{userHomeDrive} and $config{userHomeDrive} ne "") {
+    $entries.="sambaHomeDrive: $config{userHomeDrive}\n";
+  }
+  if (defined $config{userProfile} and $config{userProfile} ne "") {
+    my $userProfile=$config{userProfile};
+    $userProfile=~s/\%U/$adminName/;
+    $entries.="sambaProfilePath: $userProfile\n";
+  }
+  $entries.="sambaPrimaryGroupSID: $config{SID}-512
+sambaLMPassword: XXX
+sambaNTPassword: XXX
+sambaAcctFlags: [U          ]
+sambaSID: $config{SID}-$adminrid
+loginShell: /bin/false
+gecos: Netbios Domain Administrator
+
+dn: uid=$guestName,$config{usersdn}
+cn: $guestName
+sn: $guestName
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: sambaSAMAccount
+objectClass: posixAccount
+objectClass: shadowAccount
+gidNumber: 514
+uid: $guestName
+uidNumber: $guestUidNumber
+homeDirectory: /dev/null
+sambaPwdLastSet: 0
+sambaLogonTime: 0
+sambaLogoffTime: 2147483647
+sambaKickoffTime: 2147483647
+sambaPwdCanChange: 0
+sambaPwdMustChange: 2147483647\n";
+  if (defined $config{userSmbHome} and $config{userSmbHome} ne "") {
+    my $userSmbHome=$config{userSmbHome};
+    $userSmbHome=~s/\%U/$guestName/;
+    $entries.="sambaHomePath: $userSmbHome\n";
+  }
+  if (defined $config{userHomeDrive} and $config{userHomeDrive} ne "") {
+    $entries.="sambaHomeDrive: $config{userHomeDrive}\n";
+  }
+  if (defined $config{userProfile} and $config{userProfile} ne "") {
+    my $userProfile=$config{userProfile};
+    $userProfile=~s/\%U/$guestName/;
+    $entries.="sambaProfilePath: $userProfile\n";
+  }
+  $entries.="sambaPrimaryGroupSID: $config{SID}-514
+sambaLMPassword: NO PASSWORDXXXXXXXXXXXXXXXXXXXXX
+sambaNTPassword: NO PASSWORDXXXXXXXXXXXXXXXXXXXXX
+# account disabled by default
+sambaAcctFlags: [NUD        ]
+sambaSID: $config{SID}-2998
+loginShell: /bin/false
+
+dn: cn=Domain Admins,$config{groupsdn}
+objectClass: top
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+gidNumber: 512
+cn: Domain Admins
+memberUid: $adminName
+description: Netbios Domain Administrators
+sambaSID: $config{SID}-512
+sambaGroupType: 2
+displayName: Domain Admins
+
+dn: cn=Domain Users,$config{groupsdn}
+objectClass: top
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+gidNumber: 513
+cn: Domain Users
+description: Netbios Domain Users
+sambaSID: $config{SID}-513
+sambaGroupType: 2
+displayName: Domain Users
+
+dn: cn=Domain Guests,$config{groupsdn}
+objectClass: top
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+gidNumber: 514
+cn: Domain Guests
+description: Netbios Domain Guests Users
+sambaSID: $config{SID}-514
+sambaGroupType: 2
+displayName: Domain Guests
+
+dn: cn=Domain Computers,$config{groupsdn}
+objectClass: top
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+gidNumber: 515
+cn: Domain Computers
+description: Netbios Domain Computers accounts
+sambaSID: $config{SID}-515
+sambaGroupType: 2
+displayName: Domain Computers
+
+dn: cn=Administrators,$config{groupsdn}
+objectClass: top
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+gidNumber: 544
+cn: Administrators
+description: Netbios Domain Members can fully administer the computer/sambaDomainName
+sambaSID: S-1-5-32-544
+sambaGroupType: 5
+displayName: Administrators
+
+#dn: cn=Users,$config{groupsdn}
+#objectClass: top
+#objectClass: posixGroup
+#objectClass: sambaGroupMapping
+#gidNumber: 545
+#cn: Users
+#description: Netbios Domain Ordinary users
+#sambaSID: S-1-5-32-545
+#sambaGroupType: 5
+#displayName: users
+
+#dn: cn=Guests,$config{groupsdn}
+#objectClass: top
+#objectClass: posixGroup
+#objectClass: sambaGroupMapping
+#gidNumber: 546
+#cn: Guests
+#memberUid: $guestName
+#description: Netbios Domain Users granted guest access to the computer/sambaDomainName
+#sambaSID: S-1-5-32-546
+#sambaGroupType: 5
+#displayName: Guests
+
+#dn: cn=Power Users,$config{groupsdn}
+#objectClass: top
+#objectClass: posixGroup
+#objectClass: sambaGroupMapping
+#gidNumber: 547
+#cn: Power Users
+#description: Netbios Domain Members can share directories and printers
+#sambaSID: S-1-5-32-547
+#sambaGroupType: 5
+#displayName: Power Users
+
+dn: cn=Account Operators,$config{groupsdn}
+objectClass: top
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+gidNumber: 548
+cn: Account Operators
+description: Netbios Domain Users to manipulate users accounts
+sambaSID: S-1-5-32-548
+sambaGroupType: 5
+displayName: Account Operators
+
+#dn: cn=System Operators,$config{groupsdn}
+#objectClass: top
+#objectClass: posixGroup
+#objectClass: sambaGroupMapping
+#gidNumber: 549
+#cn: System Operators
+#description: Netbios Domain System Operators
+#sambaSID: S-1-5-32-549
+#sambaGroupType: 5
+#displayName: System Operators
+
+dn: cn=Print Operators,$config{groupsdn}
+objectClass: top
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+gidNumber: 550
+cn: Print Operators
+description: Netbios Domain Print Operators
+sambaSID: S-1-5-32-550
+sambaGroupType: 5
+displayName: Print Operators
+
+dn: cn=Backup Operators,$config{groupsdn}
+objectClass: top
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+gidNumber: 551
+cn: Backup Operators
+description: Netbios Domain Members can bypass file security to back up files
+sambaSID: S-1-5-32-551
+sambaGroupType: 5
+displayName: Backup Operators
+
+dn: cn=Replicators,$config{groupsdn}
+objectClass: top
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+gidNumber: 552
+cn: Replicators
+description: Netbios Domain Supports file replication in a sambaDomainName
+sambaSID: S-1-5-32-552
+sambaGroupType: 5
+displayName: Replicators
+
+";
+  if ("sambaDomainName=$domain,$config{suffix}" eq $config{sambaUnixIdPooldn}) {
+    $entries.="dn: sambaDomainName=$domain,$config{suffix}
+objectClass: top
+objectClass: sambaDomain
+objectClass: sambaUnixIdPool
+sambaDomainName: $domain
+sambaSID: $config{SID}
+uidNumber: $firstuidNumber
+gidNumber: $firstgidNumber";
+  } else {
+    $entries.="dn: $config{sambaUnixIdPooldn}
+objectClass: inetOrgPerson
+objectClass: sambaUnixIdPool
+uidNumber: $firstuidNumber
+gidNumber: $firstgidNumber
+cn: $cnsambaUnixIdPool
+sn: $cnsambaUnixIdPool";
+  }
+  open (FILE, ">$tmp_ldif_file") || die "Can't open file $tmp_ldif_file: $!\n";
+
+  print FILE <<EOF;
+$entries
+EOF
+  close FILE;
+} else {
+  $tmp_ldif_file=$_ldifName;
+}
+
+if (!defined $Options{'e'}) {
+  my $ldap_master=connect_ldap_master();
+  my $ldif = Net::LDAP::LDIF->new($tmp_ldif_file, "r", onerror => 'undef' );
+  while ( not $ldif->eof() ) {
+    my $entry = $ldif->read_entry();
+    if ( $ldif->error() ) {
+      print "Error msg: ",$ldif->error(),"\n";
+      print "Error lines:\n",$ldif->error_lines(),"\n";
+    } else {
+      my $dn = $entry->dn;
+      # we first check if the entry exist
+      my $mesg = $ldap_master->search (
+				       base => "$dn",
+				       scope => "base",
+				       filter => "objectclass=*"
+				      );
+      $mesg->code;
+      my $nb=$mesg->count;
+      if ($nb == 1 ) {
+	print "entry $dn already exist. ";
+	if ($dn eq $config{sambaUnixIdPooldn}) {
+	  print "Updating it...\n";
+	  my @mods;
+	  foreach my $attr_tmp ($entry->attributes) {
+	    push(@mods,$attr_tmp=>[$entry->get_value("$attr_tmp")]);
+	  }
+	  my $modify = $ldap_master->modify ( "$dn",
+					      'replace' => { @mods },
+					    );
+	  $modify->code && warn "failed to modify entry: ", $modify->error ;
+	} else {
+	  print "\n";
+	}
+      } else {
+	print "adding new entry: $dn\n";
+	my $result=$ldap_master->add($entry);
+	$result->code && warn "failed to add entry: ", $result->error ;
+      }
+    }
+  }
+  $ldap_master->unbind;
+  if (!defined $Options{'i'}) {
+    system "rm -f $tmp_ldif_file";
+  }
+
+  # secure the admin account
+  print "\nPlease provide a password for the domain $adminName: \n";
+  system("$RealBin/smbldap-passwd $adminName");
+
+
+
+} else {
+  print "exported ldif file: $tmp_ldif_file\n";
+}
+exit(0);
+
+
+########################################
+
+=head1 NAME
+
+smbldap-populate - Populate your LDAP database
+
+=head1 SYNOPSIS
+
+smbldap-populate [ldif-file]
+
+=head1 DESCRIPTION
+
+The smbldap-populate command helps to populate an LDAP server by adding the necessary entries : base suffix (doesn't abort if already there), organizational units for users, groups and computers, builtin users : Administrator and guest, builtin groups (though posixAccount only, no SambaTNG support).
+
+-a name
+ Your local administrator login name (default: Administrator)
+
+-b name
+ Your local guest login name (default: nobody)
+
+-e file
+ export an ldif file
+
+-i file
+ import an ldif file (Options -a and -b will be ignored)
+
+=head1 FILES
+
+       /etc/opt/IDEALX/smbldap-tools/smbldap.conf : main configuration
+       /etc/opt/IDEALX/smbldap-tools/smbldap_bind.conf : credentials for binding to the directory
+
+=head1 SEE ALSO
+
+       smb.conf(5)
+
+=cut
+
+#'
+
+
+
+# - The End

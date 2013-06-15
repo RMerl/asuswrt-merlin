@@ -26,7 +26,6 @@
 #include <net/if_arp.h>
 #include <shutils.h>
 #include <sys/signal.h>
-#include <semaphore_mfp.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -161,6 +160,46 @@ getMAC_2G()
 	return 0;
 }
 
+#if defined(RTN14U)
+int
+eeprom_upgrade(const char *path, int is_bk)
+{
+#define FLASH_OFFSET	0x40000
+	FILE *fp=NULL;
+	char buf_org[512], buf_new[512];
+	int ret=0;
+	int len, offset;
+
+	fp=fopen(path, "r");
+	if (!fp) goto quit_out;
+	len=fread(buf_new, 1, 512, fp);
+	if (len!=512) goto quit_out;
+	if (is_bk)
+	{
+		FRead(buf_org, FLASH_OFFSET, 512);
+		offset=OFFSET_BOOT_VER-FLASH_OFFSET;
+		memcpy(buf_new+offset,buf_org+offset,4);
+		offset=OFFSET_COUNTRY_CODE-FLASH_OFFSET;
+		memcpy(buf_new+offset,buf_org+offset,2);
+		offset=OFFSET_MAC_ADDR-FLASH_OFFSET;
+		memcpy(buf_new+offset,buf_org+offset,6);
+		offset=OFFSET_PIN_CODE-FLASH_OFFSET;
+		memcpy(buf_new+offset,buf_org+offset,8);
+		offset=OFFSET_TXBF_PARA-FLASH_OFFSET;
+		memcpy(buf_new+offset,buf_org+offset,33);
+	}
+	FWrite(buf_new, FLASH_OFFSET, 512);
+	ret=1;
+quit_out:
+	if (fp) fclose(fp);
+	if (ret)
+		fprintf(stderr,"success!\n");
+	else
+		fprintf(stderr,"fail!\n");
+	return ret;
+}
+#endif
+
 int
 setMAC_5G(const char *mac)
 {
@@ -235,6 +274,7 @@ isWifiPower2(const char *cc)
 	return 0;
 }
 
+#if !defined(RTN14U)
 //for specific power
 int
 isWifiPower3(const char *cc)
@@ -329,7 +369,7 @@ modify_ralink_power_5g(const char *old_CC, const char *CC, unsigned char *flash_
 		}
 	}
 }
-
+#endif
 
 int
 getCountryCode_2G()
@@ -349,7 +389,9 @@ int
 setCountryCode_2G(const char *cc)
 {
 	char CC[3];
+#if !defined(RTN14U)
 	unsigned char *flash_buf;
+#endif
 
 	if (cc==NULL || !isValidCountryCode(cc))
 		return 0;
@@ -392,6 +434,9 @@ setCountryCode_2G(const char *cc)
 	else if (!strcasecmp(cc, "FR")) ;
 	else if (!strcasecmp(cc, "GB")) ;
 	else if (!strcasecmp(cc, "GE")) ;
+#if defined(RTN14U)
+	else if (!strcasecmp(cc, "EU")) ;
+#endif
 	else if (!strcasecmp(cc, "GR")) ;
 	else if (!strcasecmp(cc, "GT")) ;
 	else if (!strcasecmp(cc, "HK")) ;
@@ -457,26 +502,32 @@ setCountryCode_2G(const char *cc)
 	else if (!strcasecmp(cc, "YE")) ;
 	else if (!strcasecmp(cc, "ZA")) ;
 	else if (!strcasecmp(cc, "ZW")) ;
+#if !defined(RTN14U)
 	//for specific power
 	else if (!strcasecmp(cc, "Z1")) ; //US
 	else if (!strcasecmp(cc, "Z2")) ; //GB
 	else if (!strcasecmp(cc, "Z3")) ; //TW
 	else if (!strcasecmp(cc, "Z4")) ; //CN
+#endif
 	else
 	{
 		return 0;
 	}
 
+#if !defined(RTN14U)
 #define MTD_SIZE_FACTORY 0x10000
 	if((flash_buf = malloc(MTD_SIZE_FACTORY)) == NULL)
 	{
 		return 0;
 	}
 	FRead(flash_buf, OFFSET_MTD_FACTORY, MTD_SIZE_FACTORY);
-
+#endif
 	memset(&CC[0], toupper(cc[0]), 1);
 	memset(&CC[1], toupper(cc[1]), 1);
 	memset(&CC[2], 0, 1);
+#if defined(RTN14U)
+	FWrite(CC, OFFSET_COUNTRY_CODE, 2);
+#else
 
 #if defined(RTN65U) // adjust power for different regulation domain
 	if(get_model() == MODEL_RTN65U)
@@ -491,6 +542,7 @@ setCountryCode_2G(const char *cc)
 	memcpy(flash_buf + (OFFSET_COUNTRY_CODE - OFFSET_MTD_FACTORY), CC, 2);
 	FWrite(flash_buf, OFFSET_MTD_FACTORY, MTD_SIZE_FACTORY);
 	free(flash_buf);
+#endif
 
 	puts(CC);
 	return 1;
@@ -624,7 +676,7 @@ int getMN(void)
 {
 	puts(nvram_safe_get("odmpid"));
 	return 1;
-}
+}	
 #endif
 int
 setPIN(const char *pin)
@@ -675,6 +727,10 @@ getPIN()
 int
 GetPhyStatus(void)
 {
+#if defined(RTN14U)
+	ATE_mt7620_esw_port_status();
+	return 1;
+#else
 	int fd;
 	char buf[32];
 	int porder_56u[5] = {4,3,2,1,0};
@@ -716,6 +772,7 @@ GetPhyStatus(void)
 
 	puts(buf);
 	return 1;
+#endif
 }
 
 int
@@ -729,6 +786,9 @@ setAllLedOn(void)
 	led_control(LED_WAN  , LED_ON);
 	led_control(LED_LAN  , LED_ON);
 	led_control(LED_USB  , LED_ON);
+#if defined(RTN14U)
+	led_control(LED_2G  , LED_ON);
+#endif
 #ifdef RTCONFIG_LED_ALL
 	led_control(LED_ALL  , LED_ON);
 #endif
@@ -748,6 +808,9 @@ setAllLedOff(void)
 	led_control(LED_WAN  , LED_OFF);
 	led_control(LED_LAN  , LED_OFF);
 	led_control(LED_USB  , LED_OFF);
+#if defined(RTN14U)
+	led_control(LED_2G  , LED_OFF);
+#endif
 #ifdef RTCONFIG_LED_ALL
 	led_control(LED_ALL  , LED_OFF);
 #endif
@@ -771,8 +834,13 @@ set40M_Channel_2G(char *channel)
 	if (channel==NULL || !isValidChannel(1, channel))
 		return 0;
 	sprintf(chl_buf,"Channel=%s", channel);
+#if defined(RTN14U)
+	eval("iwpriv", "ra0", "set", chl_buf);
+	eval("iwpriv", "ra0", "set", "HtBw=1");
+#else
 	eval("iwpriv", "rai0", "set", chl_buf);
 	eval("iwpriv", "rai0", "set", "HtBw=1");
+#endif
 	puts("1");
 	return 1;
 }
@@ -791,82 +859,42 @@ set40M_Channel_5G(char *channel)
 }
 
 
-const char *getChannelList2G(int region)
-{
-	switch(region)
-	{
-		case 0: return "1,2,3,4,5,6,7,8,9,10,11";
-		case 1: return "1,2,3,4,5,6,7,8,9,10,11,12,13";
-		case 5: return "1,2,3,4,5,6,7,8,9,10,11,12,13,14";
-	}
-	return "1,2,3,4,5,6,7,8,9,10,11,12,13,14";
-}
-
-int getCountryRegion2G(const char *countryCode);
-
-int Get_ChannelList_2G(void)
+int Get_channel_list(int unit)
 {
 	unsigned char countryCode[3];
-	const char *channelList;
-	int region;
+	char chList[256];
 
+#ifdef RTCONFIG_NEW_REGULATION_DOMAIN
+	char tmp[128], prefix[] = "wlXXXXXXXXXX_", *ifname;
+
+	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+	strcpy(countryCode, nvram_safe_get(strcat_r(prefix, "country_code", tmp)), 2);
+#else
 	memset(countryCode, 0, sizeof(countryCode));
 	FRead(countryCode, OFFSET_COUNTRY_CODE, 2);
-	if (countryCode[0] != 0xff && countryCode[1] != 0xff)	// 0xffff is default
+#endif
+	if(get_channel_list_via_driver(unit, chList, sizeof(chList)) > 0)
 	{
-		region = getCountryRegion2G(countryCode);
-		channelList = getChannelList2G(region);
-		puts(channelList);
+		puts(chList);
+	}
+	else if (countryCode[0] != 0xff && countryCode[1] != 0xff)	// 0xffff is default
+	{
+		if(get_channel_list_via_country(unit, countryCode, chList, sizeof(chList)) > 0)
+		{
+			puts(chList);
+		}
 	}
 	return 1;
 }
 
-const char *getChannelList5G(int region)
+int Get_ChannelList_2G(void)
 {
-	switch(region)
-	{
-#if 0 // Ralink orignal Channel List
-		case  0: return "36,40,44,48,52,56,60,64"                                          ",149,153,157,161,165";
-		case  1: return "36,40,44,48,52,56,60,64,100,104,108,112,116,120,124,128,132,136,140";
-		case  2: return "36,40,44,48,52,56,60,64";
-		case  3: return             "52,56,60,64"                                          ",149,153,157,161";
-		case  4: return                                                                     "149,153,157,161,165";
-		case  5: return                                                                     "149,153,157,161";
-		case  6: return "36,40,44,48";
-		case  7: return "36,40,44,48,52,56,60,64,100,104,108,112,116,120,124,128,132,136,140,149,153,157,161,165";
-		case  8: return             "52,56,60,64";
-		case  9: return "36,40,44,48,52,56,60,64,100,104,108,112,116"          ",132,136,140,149,153,157,161,165";
-		case 10: return "36,40,44,48"                                                      ",149,153,157,161,165";
-		case 11: return "36,40,44,48,52,56,60,64,100,104,108,112,116,120"                  ",149,153,157,161,165";
-#else  // ASUS Channel List
-		case  0: return "36,40,44,48"                                                      ",149,153,157,161,165";
-		case  1: return "36,40,44,48";
-		case  2: return "36,40,44,48";
-		case  3: return             "52,56,60,64"                                          ",149,153,157,161,165";
-		case  4: return                                                                     "149,153,157,161,165";
-		case  5: return                                                                     "149,153,157,161,165";
-		case  7: return "36,40,44,48,52,56,60,64,100,104,108,112,116,120,124,128,132,136,140,149,153,157,161,165";
-		case  9: return "36,40,44,48";
-#endif
-	}
-	return "36,40,44,48,52,56,60,64,100,104,108,112,116,120,124,128,132,136,140,149,153,157,161,165";
+	return Get_channel_list(0);
 }
 
 int Get_ChannelList_5G(void)
 {
-	unsigned char countryCode[3];
-	const char *channelList;
-	int region;
-
-	memset(countryCode, 0, sizeof(countryCode));
-	FRead(countryCode, OFFSET_COUNTRY_CODE, 2);
-	if (countryCode[0] != 0xff && countryCode[1] != 0xff)	// 0xffff is default
-	{
-		region = getCountryRegion5G(countryCode, NULL);
-		channelList = getChannelList5G(region);
-		puts(channelList);
-	}
-	return 1;
+	return Get_channel_list(1);
 }
 
 
@@ -971,8 +999,12 @@ int getCountryRegion5G(const char *countryCode, int *warning)
 			(!strcasecmp(countryCode, "VN")) ||
 			(!strcasecmp(countryCode, "YE")) ||
 			(!strcasecmp(countryCode, "ZW")) ||
+#if !defined(RTN14U)
 			//for specific power
 			(!strcasecmp(countryCode, "Z1")) 
+#else
+			0
+#endif
 	)
 	{
 		return 0;
@@ -1049,8 +1081,12 @@ int getCountryRegion5G(const char *countryCode, int *warning)
 #endif
 			(!strcasecmp(countryCode, "UZ")) ||
 			(!strcasecmp(countryCode, "ZA")) ||
+#if !defined(RTN14U)
 			//for specific power
 			(!strcasecmp(countryCode, "Z2"))
+#else
+			0
+#endif
 	)
 	{
 		return 1;
@@ -1081,9 +1117,12 @@ int getCountryRegion5G(const char *countryCode, int *warning)
 			(!strcasecmp(countryCode, "AR")) ||
 #endif
 			(!strcasecmp(countryCode, "TW")) ||
+#if !defined(RTN14U)
 			//for specific power
 			(!strcasecmp(countryCode, "Z3")) 
-			
+#else
+			0
+#endif
 	)
 	{
 		return 3;
@@ -1108,8 +1147,12 @@ int getCountryRegion5G(const char *countryCode, int *warning)
 			(!strcasecmp(countryCode, "VE"))
 #endif
 						 ||
+#if !defined(RTN14U)
 			//for specific power
 			(!strcasecmp(countryCode, "Z4")) 
+#else
+			0
+#endif
 	)
 	{
 		return 4;
@@ -1794,15 +1837,23 @@ int gen_ralink_config(int band, int is_iNIC)
 	}
 
 	fprintf(fp, "IEEE80211H=0\n");
-	fprintf(fp, "CarrierDetect=%d\n", 0);
-	if (band)
-	fprintf(fp, "ChannelGeography=%d\n", 2);
-//	fprintf(fp, "ITxBfEn=%d\n", 0);
+#ifdef RTCONFIG_AP_CARRIER_DETECTION
+	if (nvram_match(strcat_r(prefix, "country_code", tmp), "JP"))
+	{
+		fprintf(fp, "RDRegion=%s\n", "JAP");
+		fprintf(fp, "CarrierDetect=%d\n", 1);
+	}
+	else
+#endif
+	{
+		fprintf(fp, "RDRegion=\n");
+		fprintf(fp, "CarrierDetect=%d\n", 0);
+	}
+//	if (band)
+//	fprintf(fp, "ChannelGeography=%d\n", 2);
 	fprintf(fp, "PreAntSwitch=\n");
 	fprintf(fp, "PhyRateLimit=%d\n", 0);
 	fprintf(fp, "DebugFlags=%d\n", 0);
-//	fprintf(fp, "ETxBfEnCond=%d\n", 0);
-//	fprintf(fp, "ITxBfTimeout=%d\n", 0);
 	fprintf(fp, "FineAGC=%d\n", 0);
 	if(band)
 		fprintf(fp, "StreamMode=%d\n", 3);	// from RT3883_EVT.TXT for test 5G in factory. But the meaning of value is unknown.
@@ -1812,9 +1863,8 @@ int gen_ralink_config(int band, int is_iNIC)
 	fprintf(fp, "StreamModeMac1=\n");
 	fprintf(fp, "StreamModeMac2=\n");
 	fprintf(fp, "StreamModeMac3=\n");
-	fprintf(fp, "CSPeriod=10\n");
-	fprintf(fp, "RDRegion=\n");
 	fprintf(fp, "StationKeepAlive=%d\n", 0);
+	fprintf(fp, "CSPeriod=10\n");
 	fprintf(fp, "DfsLowerLimit=%d\n", 0);
 	fprintf(fp, "DfsUpperLimit=%d\n", 0);
 	fprintf(fp, "DfsIndoor=%d\n", 0);
@@ -1842,10 +1892,15 @@ int gen_ralink_config(int band, int is_iNIC)
 	fprintf(fp, "BlockCh=\n");
 
 	//GreenAP
-#if defined(RTN65U)
+#if defined(RTN65U) || defined(RTN14U)
 	if(get_model() == MODEL_RTN65U)
 	{
 		fprintf(fp, "GreenAP=%d\n", 1);
+	}
+	else if (get_model() == MODEL_RTN14U)
+	/// MT7620 GreenAP will impact TSSI, force to disable GreenAP here..
+	{
+		fprintf(fp, "GreenAP=%d\n", 0);
 	}
 #else
 	str = nvram_safe_get(strcat_r(prefix, "GreenAP", tmp));
@@ -2521,8 +2576,10 @@ int gen_ralink_config(int band, int is_iNIC)
 			else
 				EXTCHA_MAX = 1;
 		}
+#if !defined(RTN14U)  
 		else
 			HTBW_MAX = 0;
+#endif
 	}
 
 	//HT_EXTCHA
@@ -3574,6 +3631,7 @@ getSiteSurvey(int band)
 	char header[128];
 	struct iwreq wrq;
 	SSA *ssap;
+	int lock;
 
 	memset(data, 0x00, 255);
 	strcpy(data, "SiteSurvey=1"); 
@@ -3581,15 +3639,15 @@ getSiteSurvey(int band)
 	wrq.u.data.pointer = data; 
 	wrq.u.data.flags = 0; 
 
-	spinlock_lock(SPINLOCK_SiteSurvey);
+	lock = file_lock("sitesurvey");
 	if (wl_ioctl(get_wifname(band), RTPRIV_IOCTL_SET, &wrq) < 0)
 	{
-		spinlock_unlock(0);
+		file_unlock(lock);
 
 		dbg("Site Survey fails\n");
 		return 0;
 	}
-	spinlock_unlock(SPINLOCK_SiteSurvey);
+	file_unlock(lock);
 
 	dbg("Please wait");
 	sleep(1);
@@ -5073,12 +5131,7 @@ ate_run_in(void)
 }
 #endif // RTN65U
 
-int Get_channel_list(int unit)
-{
-	puts("ATE_ERROR"); //Need to implement
-	return 0;
-}
-
+#if !defined(RTN14U)	
 int Set_SwitchPort_LEDs(const char *group, const char *action)
 {
 	int groupNo;
@@ -5100,6 +5153,7 @@ int Set_SwitchPort_LEDs(const char *group, const char *action)
 
 	return rtkswitch_ioctl(100, (groupNo << 16) | (actionNo));
 }
+#endif
 
 #define DEV_FLAGS_MAGIC "FL"
 struct device_flags

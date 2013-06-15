@@ -10,12 +10,11 @@
 <title><#Web_Title#> - <#menu5_7_2#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
-
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
-<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<!--script language="JavaScript" type="text/javascript" src="/jquery.js"></script-->
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
@@ -59,10 +58,18 @@ function clearLog(){
 	document.form1.submit();
 	location.href = location.href;
 }
+
+function initial(){
+	show_menu();
+	load_body();
+	showclock();
+	showbootTime();
+	document.getElementById('textarea').scrollTop = 9999999;//make Scroll_y bottom
+}
 </script>
 </head>
 
-<body onload="show_menu();load_body();showclock(); showbootTime();" onunLoad="return unload_body();">
+<body onload="initial();" onunLoad="return unload_body();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 
@@ -127,9 +134,9 @@ function clearLog(){
 												</form>
 											</td>	
 											<td width="20%" align="center">
-												<form method="post" name="form2" action="syslog.cgi">
+												<form method="post" name="form2" action="syslog.txt">
 													<input type="hidden" name="next_host" value="">
-													<input type="submit" onClick="document.form2.next_host.value = location.host; onSubmitCtrl(this, ' Save ')" value="<#CTL_onlysave#>" class="button_gen">
+													<input type="submit" onClick="onSubmitCtrl(this, ' Save ');" value="<#CTL_onlysave#>" class="button_gen">
 												</form>
 											</td>	
 											<td width="40%" align="left" >
@@ -156,13 +163,4 @@ function clearLog(){
 </table>
 <div id="footer"></div>
 </body>
-<script type="text/javascript">
-<!--[if !IE]>-->
-	jQuery.noConflict();
-	(function($){
-		var textArea = document.getElementById('textarea');
-		textArea.scrollTop = textArea.scrollHeight;
-	})(jQuery);
-<!--<![endif]-->
-</script>
 </html>

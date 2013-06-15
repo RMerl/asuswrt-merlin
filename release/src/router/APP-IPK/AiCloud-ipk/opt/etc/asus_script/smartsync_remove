@@ -1,0 +1,9 @@
+#! /bin/sh
+
+APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
+APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
+APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
+
+sleep 4
+
+app_remove.sh smartsync

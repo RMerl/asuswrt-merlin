@@ -13,6 +13,9 @@
 #include "dongles.h"
 
 #include <bcmnvram.h>
+#ifdef RTCONFIG_BCMARM
+#include <bcmgpio.h>
+#endif
 #include <notify_rc.h>
 #include <usb_info.h>
 
@@ -2385,6 +2388,179 @@ int write_gct_conf(){
 #endif // RTCONFIG_USB_MODEM
 
 #ifdef RTCONFIG_USB
+
+#ifdef RTCONFIG_BCMARM
+
+int hotplug_pid = -1;
+FILE *fp = NULL;
+#define hotplug_dbg(fmt, args...) (\
+{ \
+	char err_str[100] = {0}; \
+	char err_str2[100] = {0}; \
+	if (hotplug_pid == -1) hotplug_pid = getpid(); \
+	if (!fp) fp = fopen("/tmp/usb_err", "a+"); \
+	sprintf(err_str, fmt, ##args); \
+	sprintf(err_str2, "PID:%d %s", hotplug_pid, err_str); \
+	fwrite(err_str2, strlen(err_str2), 1,  fp); \
+	fflush(fp); \
+} \
+)
+
+#define LOCK_FILE      "/tmp/hotplug_block_lock"
+
+#define MAX_USB_PORTS			2
+
+int hotplug_usb_power(int port, int boolOn)
+{
+	char name[] = "usbport%d"; /* 1 ~ 99 ports */
+	unsigned long gpiomap;
+	int usb_gpio;
+
+	if (port > MAX_USB_PORTS)
+		return -1;
+
+	sprintf(name, "usbport%d", port);
+	usb_gpio = bcmgpio_getpin(name, BCMGPIO_UNDEFINED);
+	if (usb_gpio ==	BCMGPIO_UNDEFINED)
+		return 0;
+	if (bcmgpio_connect(usb_gpio, BCMGPIO_DIRN_OUT))
+		return 0;
+
+	gpiomap = (1 << usb_gpio);
+	bcmgpio_out(gpiomap, boolOn? gpiomap: 0);
+	bcmgpio_disconnect(usb_gpio);
+	return 1;
+}
+
+/* Return number of usbports enabled */
+int hotplug_usb_init(void)
+{
+	/* Enable VBUS via GPIOs for port1 and port2 */
+	int i, count;
+
+	for (count = 0, i = 1; i <= MAX_USB_PORTS; i++) {
+		if (hotplug_usb_power(i, TRUE) > 0)
+			count++;
+	}
+	return count;
+}
+
+#define PHYSDEVPATH_DEPTH_USB_LPORT	4	/* Depth is from 0 */
+
+static void
+hotplug_usb_power_recover(void)
+{
+	char *physdevpath;
+	char *tok = NULL;
+	int depth = 0, root_hub_num = -1, usb_lport = -1, nv_port = -1;
+
+	if ((physdevpath = getenv("PHYSDEVPATH")) == NULL)
+		return;
+
+	/* Get root_hub and logical port number.
+	 * PHYSDEVPATH in sysfs is /devices/pci/hcd/root_hub/root_hub_num-lport/.....
+	 */
+	tok = strtok(physdevpath, "/");
+
+	while (tok != NULL) {
+		if (PHYSDEVPATH_DEPTH_USB_LPORT == depth) {
+			sscanf(tok, "%d-%d", &root_hub_num, &usb_lport);
+			break;
+		}
+		depth++;
+		tok = strtok(NULL, "/");
+	}
+
+	if (tok && (root_hub_num != -1) && (usb_lport != -1)) {
+		/* Translate logical port to nvram setting port */
+		nv_port = (usb_lport == 1) ? 2 : 1;
+
+		hotplug_usb_power(nv_port, FALSE);
+		sleep(1);
+		hotplug_usb_power(nv_port, TRUE);
+	}
+}
+
+/* Optimize performance */
+#define READ_AHEAD_KB_BUF       1024
+#define READ_AHEAD_CONF "/sys/block/%s/queue/read_ahead_kb"
+
+static void
+optimize_block_device(char *devname)
+{
+	char blkdev[8] = {0};
+	char read_ahead_conf[64] = {0};
+	char cmdbuf[64] = {0};
+	int err;
+
+	memset(blkdev, 0, sizeof(blkdev));
+	strncpy(blkdev, devname, 3);
+	sprintf(read_ahead_conf, READ_AHEAD_CONF, blkdev);
+	sprintf(cmdbuf, "echo %d > %s", READ_AHEAD_KB_BUF, read_ahead_conf);
+	err = system(cmdbuf);
+	hotplug_dbg("err = %d\n", err);
+
+	if (err) {
+		hotplug_dbg("read ahead: unsuccess %d!\n", err);
+	}
+}
+
+int
+hotplug_block(void)
+{
+	char *action = NULL, *minor = NULL;
+	char *major = NULL, *driver = NULL;
+	int retry = 3, lock_fd = -1;
+	struct flock lk_info = {0};
+
+	if (!(action = getenv("ACTION")) ||
+	    !(minor = getenv("MINOR")) ||
+	    !(driver = getenv("PHYSDEVDRIVER")) ||
+	    !(major = getenv("MAJOR")))
+	{
+		return EINVAL;
+	}
+
+	hotplug_dbg("env %s %s!\n", action, driver);
+	if (strncmp(driver, "sd", 2))
+	{
+		return EINVAL;
+	}
+
+	if ((lock_fd = open(LOCK_FILE, O_RDWR|O_CREAT, 0666)) < 0) {
+		hotplug_dbg("Failed opening lock file LOCK_FILE: %s\n", strerror(errno));
+		return -1;
+	}
+
+	while (--retry) {
+		lk_info.l_type = F_WRLCK;
+		lk_info.l_whence = SEEK_SET;
+		lk_info.l_start = 0;
+		lk_info.l_len = 0;
+		if (!fcntl(lock_fd, F_SETLKW, &lk_info)) break;
+	}
+
+	if (!retry) {
+		hotplug_dbg("Failed locking LOCK_FILE: %s\n", strerror(errno));
+		return -1;
+	}
+
+	if (!strcmp(action, "add")) {
+		hotplug_dbg("add block!\n");
+
+	} else if (!strcmp(action, "remove")) {
+		hotplug_dbg("usb power recover!\n");
+		//hotplug_usb_power_recover(); // Mark off this. It will let the modem can't be switched.
+	} else {
+		hotplug_dbg("unsupported action!\n");
+	}
+
+	close(lock_fd);
+	unlink(LOCK_FILE);
+	return 0;
+}
+#endif	/* RTCONFIG_BCMARM */
+
 // 201102. James. Move the Jiahao's code from rc/service_ex.c. {
 int
 check_dev_sb_block_count(const char *dev_sd)
@@ -2767,7 +2943,10 @@ int asus_sd(const char *device_name, const char *action){
 	unsetenv("DEVICENAME");
 	unsetenv("SUBSYSTEM");
 	unsetenv("USBPORT");
-
+#if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
+	/* Optimize performance */
+	optimize_block_device(device_name);
+#endif
 	usb_dbg("(%s): Success!\n", device_name);
 	file_unlock(isLock);
 	return 1;
@@ -2883,7 +3062,7 @@ int asus_sg(const char *device_name, const char *action){
 #ifdef RTCONFIG_USB_MODEM
 	char usb_port[8], usb_node[8], vid[8], pid[8];
 	int isLock;
-	char eject_cmd[32];
+	char switch_file[32];
 	int port_num;
 	char nvram_name[32], nvram_value[32];
 	usb_dbg("(%s): action=%s.\n", device_name, action);
@@ -2941,7 +3120,9 @@ int asus_sg(const char *device_name, const char *action){
 	memset(nvram_value, 0, 32);
 	strcpy(nvram_value, nvram_safe_get(nvram_name));
 	//if(!strcmp(nvram_value, "printer") || !strcmp(nvram_value, "modem")){
-	if(strcmp(nvram_value, "")){
+	memset(switch_file, 0, 32);
+	sprintf(switch_file, "%s.%d", USB_MODESWITCH_CONF, port_num);
+	if(strcmp(nvram_value, "") && check_if_file_exist(switch_file)){
 		usb_dbg("(%s): Already there was a other interface(%s).\n", usb_port, nvram_value);
 		file_unlock(isLock);
 		return 0;
@@ -2988,13 +3169,12 @@ int asus_sg(const char *device_name, const char *action){
 #endif
 	if(!strcmp(vid, "1199"))
 		; // had do usb_modeswitch before.
+	else if(!strcmp(vid, "19d2") && !strcmp(pid, "0167")) // MF821's modem mode.
+		; // do nothing.
 	else if(init_3g_param(vid, pid, port_num)){
-		memset(eject_cmd, 0, 32);
-		sprintf(eject_cmd, "%s.%d", USB_MODESWITCH_CONF, port_num);
-
 		if(strcmp(nvram_safe_get("stop_sg_remove"), "1")){
 			usb_dbg("(%s): Running usb_modeswitch...\n", device_name);
-			xstart("usb_modeswitch", "-c", eject_cmd);
+			xstart("usb_modeswitch", "-c", switch_file);
 		}
 	}
 	else if(port_num != 3 // usb_path3 is worked for the built-in card reader.
@@ -3420,8 +3600,9 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 			wan_unit = WAN_UNIT_SECOND;
 #endif
 
+#if 0
 	// TODO: for the bad CTF. After updating CTF, need to mark these codes.
-	if(nvram_invmatch("ctf_disable_modem", "1")){
+	if(nvram_invmatch("ctf_disable", "1") && nvram_invmatch("ctf_disable_modem", "1")){
 		nvram_set("ctf_disable_modem", "1");
 		nvram_commit();
 		notify_rc_and_wait("reboot");
@@ -3429,6 +3610,7 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 
 		return 0;
 	}
+#endif
 
 #ifndef RTCONFIG_USB_MODEM_PIN
 			// If PIN enable, start_wan() here is too soon to work the modem.
@@ -3829,6 +4011,9 @@ int asus_usb_interface(const char *device_name, const char *action){
 	}
 	else if(isCDCETHInterface(device_name)){
 		usb_dbg("(%s): Runing cdc_ether...\n", device_name);
+	}
+	else if(!strcmp(nvram_safe_get("stop_ui_insmod"), "1")){
+		usb_dbg("(%s): Don't insmod the serial modules.\n", device_name);
 	}
 	else if(isSerialInterface(device_name)){
 		usb_dbg("(%s): Runing USB serial with (0x%s/0x%s)...\n", device_name, vid, pid);

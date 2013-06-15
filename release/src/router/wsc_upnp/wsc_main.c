@@ -118,8 +118,6 @@ int wscSystemStop(void)
 		close(ioctl_sock);
 		ioctl_sock = -1;
 	}
-
-	// Trigger other thread to stop the procedures.
 	stopThread = 1;
 	
 	if (wscK2UMInit)
@@ -397,20 +395,21 @@ int main(int argc, char **argv)
     sigaddset(&sigs_to_catch, SIGINT);
 //YYHuang@Ralink 07/11/06
     sigaddset(&sigs_to_catch, SIGTERM);
-    sigaddset(&sigs_to_catch, SIGALRM);	// Terminate wscd to avoid sometimes wscd would use too much CPU resource.
-    alarm(3*60);
     sigwait(&sigs_to_catch, &sig);
 
     DBGPRINTF(RT_DBG_INFO, "Shutting down on signal %d...\n", sig);
+    wscSystemStop();
 	
 STOP:
 
+	// Trigger other thread to stop the procedures.
+	stopThread = 1;
 #ifdef MULTIPLE_CARD_SUPPORT
 	unlink(pid_file_path);
 #else
 	unlink(DEFAULT_PID_FILE_PATH);
 #endif // MULTIPLE_CARD_SUPPORT //
 
-    wscSystemStop();
+    exit(0);
 }
 

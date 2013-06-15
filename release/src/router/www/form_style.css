@@ -736,8 +736,9 @@ textarea{
 	border:2px outset #999;
 	background-color:#576D73;
 	position:absolute;
-	margin-top:-11px;
-	margin-left:322px;
+	margin-top:24px;
+	margin-left:2px;
+	*margin-left:-145px;
 	text-align:left;
 	width:200px;
 	height:auto;

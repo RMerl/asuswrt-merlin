@@ -1,0 +1,28 @@
+.TH MKSMBPASSWD 8 12-Apr-1998
+.SH NAME
+mksmbpasswd \- formats a /etc/passwd entry for a smbpasswd file
+.SH SYNOPSIS
+mksmbpasswd cat /etc/passwd | /usr/sbin/mksmbpasswd > /etc/samba/smbpasswd
+.SH DESCRIPTION
+.B mksmbpasswd
+should be used only once, the first time Samba is installed. The idea
+is to ease accounts creation by transferring all user accounts from 
+/etc/passwd to /etc/samba/smbpasswd.
+.PP
+Please note that passwords are not transferred automatically from
+/etc/passwd to the new /etc/samba/smbpasswd file. After running
+.B mksmbpasswd
+all accounts are disabled so the system administrator must run
+smbpasswd for each account that needs to be enable.
+.SH FILES
+.TP
+/etc/passwd
+System wide accounts file
+.TP
+/etc/samba/smbpasswd
+Encrypted passwords file for the Samba daemons
+.SH SEE ALSO
+samba(7), nmbd(8), smbd(8)
+.SH AUTHOR
+Eloy A. Paris <peloy@debian.org> (man page based on sendmailconfig's man page
+by Robert Leslie <rob@mars.org>)

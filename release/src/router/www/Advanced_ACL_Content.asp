@@ -26,15 +26,17 @@
  	border:2px outset #EFEFEF;
  	background-color:#CCC;
  	padding:3px 2px 4px 0px;
+	*margin-left:-3px;
+	*margin-top:1px;
 }
 
 .WL_MAC_Block{
 	border:1px outset #999;
 	background-color:#576D73;
 	position:absolute;
-	margin-top:103px;
-	*margin-top:96px;	
-	margin-left:238px;
+	*margin-top:27px;	
+	margin-left:231px;
+	*margin-left:-133px;
 	width:145px;
 	text-align:left;	
 	height:auto;
@@ -80,12 +82,11 @@ var client_mac = login_mac_str();
 var wl_macnum_x = '<% nvram_get("wl_macnum_x"); %>';
 var smac = client_mac.split(":");
 var simply_client_mac = smac[0] + smac[1] + smac[2] + smac[3] + smac[4] + smac[5];
-
 var wl_maclist_x_array = '<% nvram_get("wl_maclist_x"); %>';
 
 function initial(){
+	$('enable_macfilter').innerHTML = Untranslated.enable_macmode;
 	show_menu();
-
 	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
 		for(var i=3; i>=3; i--)
 			$("MainTable1").deleteRow(i);
@@ -98,10 +99,11 @@ function initial(){
 	else
 		show_wl_maclist_x();
 		
-	showWLMACList();	
-		
+	showWLMACList();		
 	if(band5g_support == -1)	
 		$("wl_unit_field").style.display = "none";
+		
+	check_macMode();
 }
 
 function show_wl_maclist_x(){
@@ -126,7 +128,6 @@ function show_wl_maclist_x(){
 	
 	$("wl_maclist_x_Block").innerHTML = code;
 }
-
 
 function deleteRow(r){
   var i=r.parentNode.parentNode.rowIndex;
@@ -164,24 +165,24 @@ function addRow(obj, obj2, upper){
 		obj.select();	
 		return false;	
 	}
-		
+
 		//Viz check same rule
-		for(i=0; i<rule_num; i++){
-			for(j=0; j<item_num-2; j++){	
-				if(obj.value.toLowerCase() == $('wl_maclist_x_table').rows[i].cells[j].innerHTML.toLowerCase()){
-					alert("<#JS_duplicate#>");
-					return false;
-				}	
-			}		
-		}		
+	for(i=0; i<rule_num; i++){
+		for(j=0; j<item_num-1; j++){	
+			if(obj.value.toLowerCase() == $('wl_maclist_x_table').rows[i].cells[j].innerHTML.toLowerCase()){
+				alert("<#JS_duplicate#>");
+				return false;
+			}	
+ 		}		
+	}
 				
-		wl_maclist_x_array += "&#60";
-		wl_maclist_x_array += obj.value;
-		wl_maclist_x_array += "&#62";
-		wl_maclist_x_array += obj2.value;
-		obj.value = "";
-		obj2.value = "";
-		show_wl_maclist_x();
+	wl_maclist_x_array += "&#60";
+	wl_maclist_x_array += obj.value;
+	wl_maclist_x_array += "&#62";
+	wl_maclist_x_array += obj2.value;
+	obj.value = "";
+	obj2.value = "";
+	show_wl_maclist_x();
 }
 
 function applyRule(){
@@ -199,7 +200,12 @@ function applyRule(){
 	}
 	if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<")
 		tmp_value = "";	
-		
+
+	if(document.form.enable_mac[1].checked)	
+		document.form.wl_macmode.value = "disabled";
+	else
+		document.form.wl_macmode.value = document.form.wl_macmode_show.value;
+	
 	if(prevent_lock(tmp_value)){
 		document.form.wl_maclist_x.value = tmp_value;
 		showLoading();
@@ -216,8 +222,8 @@ function prevent_lock(rule_num){
 		alert("<#FirewallConfig_MFList_accept_hint1#>");
 		return false;
 	}
-	else
-		return true;
+
+	return true;
 }
 
 function change_wl_unit(){
@@ -227,7 +233,6 @@ function change_wl_unit(){
 }
 
 function check_macaddr(obj,flag){ //control hint of input mac address
-
 	if(flag == 1){
 		var childsel=document.createElement("div");
 		childsel.setAttribute("id","check_mac");
@@ -271,7 +276,6 @@ function hideClients_Block(){
 	isMenuopen = 0;
 }
 
-
 function showWLMACList(){
 	var code = "";
 	var show_macaddr = "";
@@ -280,20 +284,19 @@ function showWLMACList(){
 	if(wireless_list_array == "[]" || wireless_list_array == null || wireless_list_array == ""){
 			document.getElementById("pull_arrow").style.display = "none";
 	}else{
-			document.getElementById("pull_arrow").style.display = "";
-			for(var i = 0; i < wireless_list_array.length; i++){
-					var client_list_row = wireless_list_array[i];
-					if(client_list_row[0]){
-							show_macaddr = client_list_row[0];
-
-							code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientmac(\''+client_list_row[0]+'\');"><strong>'+client_list_row[0]+'</strong> ';
-							code += ' </div></a>';
-					}else{
-							code += '<div onmouseover="over_var=1;" onmouseout="over_var=0;"><strong>No Wireless Client.</strong>';
-					}
+		document.getElementById("pull_arrow").style.display = "";
+		for(var i = 0; i < wireless_list_array.length; i++){
+			var client_list_row = wireless_list_array[i];
+			if(client_list_row[0]){
+				show_macaddr = client_list_row[0];
+				code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientmac(\''+client_list_row[0]+'\');"><strong>'+client_list_row[0]+'</strong> ';
+				code += ' </div></a>';
+			}else{
+				code += '<div onmouseover="over_var=1;" onmouseout="over_var=0;"><strong>No Wireless Client.</strong>';
 			}
-			code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
-			$("WL_MAC_List_Block").innerHTML = code;
+		}
+		code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
+		$("WL_MAC_List_Block").innerHTML = code;
 	}		
 }
 
@@ -303,6 +306,25 @@ function setClientmac(macaddr){
 	over_var = 0;
 }
 //Viz add 2013.01 pull out WL client mac END
+
+function check_macMode(){
+	if(document.form.wl_macmode.value == "disabled"){
+		$('mac_filter_mode').style.display = "none";
+		document.form.enable_mac[1].checked = true;
+	}
+	else{
+		$('mac_filter_mode').style.display = "";
+		document.form.enable_mac[0].checked = true;
+	}	
+}
+
+function enable_macMode(obj){
+	if(obj.value == 0)
+		$('mac_filter_mode').style.display = "";	
+	else
+		$('mac_filter_mode').style.display = "none";
+}
+
 </script>
 </head>
 
@@ -339,6 +361,7 @@ function setClientmac(macaddr){
 <input type="hidden" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>">
 <input type="hidden" name="wl_maclist_x" value="">		
 <input type="hidden" name="wl_subunit" value="-1">
+<input type="hidden" name="wl_macmode" value="<% nvram_get("wl_macmode"); %>">
 
 <table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 	<tr>
@@ -372,14 +395,19 @@ function setClientmac(macaddr){
 			<tr id="repeaterModeHint" style="display:none;">
 				<td colspan="2" style="color:#FFCC00;height:30px;" align="center"><#page_not_support_mode_hint#></td>
 		  </tr>
-
 			<tr>
+				<th width="30%" id="enable_macfilter"></th>
+				<td>
+					<input type="radio" name="enable_mac" value="0" onchange="enable_macMode(this);"><#checkbox_Yes#>
+					<input type="radio" name="enable_mac" value="1" onchange="enable_macMode(this);"><#checkbox_No#>
+				</td>
+			</tr>
+			<tr id="mac_filter_mode">
 				<th width="30%" >
 					<a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,1);"><#FirewallConfig_MFMethod_itemname#></a>
 				</th>
 				<td>
-					<select name="wl_macmode" class="input_option"  onChange="return change_common(this, 'DeviceSecurity11a', 'wl_macmode')">
-						<option class="content_input_fd" value="disabled" <% nvram_match("wl_macmode", "disable","selected"); %>><#CTL_Disabled#></option>
+					<select name="wl_macmode_show" class="input_option">
 						<option class="content_input_fd" value="allow" <% nvram_match("wl_macmode", "allow","selected"); %>><#FirewallConfig_MFMethod_item1#></option>
 						<option class="content_input_fd" value="deny" <% nvram_match("wl_macmode", "deny","selected"); %>><#FirewallConfig_MFMethod_item2#></option>
 					</select>
@@ -402,10 +430,10 @@ function setClientmac(macaddr){
 					<th width="20%">Add / Delete</th>
           		</tr>
           		<tr>
-           			<div id="WL_MAC_List_Block" class="WL_MAC_Block"></div>
             		<td width="40%">
               			<input type="text" maxlength="17" class="input_macaddr_table" name="wl_maclist_x_0" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
               			<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;display:none;" onclick="pullWLMACList(this);" title="Select the mac address of Wireless Clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
+				<div id="WL_MAC_List_Block" class="WL_MAC_Block"></div>
               		</td>
 			<td width="40%">
 				<input type="text" class="input_15_table" maxlenght="15" onKeypress="return is_alphanum(this,event);" name="wl_macname_x_0">

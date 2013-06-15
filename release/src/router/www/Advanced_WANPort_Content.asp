@@ -74,7 +74,13 @@ function form_show(v){
 		appendLANoption1(document.form.wans_primary);
 	}else if(v == 1){
 		document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];
-		document.form.wans_second.value = wans_dualwan_orig.split(" ")[1];
+		if(wans_dualwan_orig.split(" ")[1] == "none"){
+			document.form.wans_second.value = "usb";
+			document.form.wans_second.index = 1;
+		}	
+		else
+			document.form.wans_second.value = wans_dualwan_orig.split(" ")[1];
+		
 		appendLANoption1(document.form.wans_primary);
 		appendLANoption2(document.form.wans_second);
 		appendModeOption(document.form.wans_mode.value);
@@ -655,6 +661,9 @@ function del_Row(obj){
 															wans_flag = 1;
 															inputCtrl(document.form.wans_second, 1);
 															inputCtrl(document.form.wans_mode, 1);
+																
+
+														
 															form_show(wans_flag);
 															
 															/*

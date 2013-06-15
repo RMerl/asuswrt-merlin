@@ -6,6 +6,6 @@ includedir=${prefix}/include
 Name: neon
 Description: HTTP/WebDAV client library
 Version: 0.29.6
-Libs.private:  -lz -lssl -lcrypto   -L/usr/lib/x86_64-linux-gnu -lxml2
+Libs.private:  -lz -lssl -lcrypto  
 Libs: -L${libdir} -lneon 
 Cflags: -I${includedir}/neon  -D_LARGEFILE64_SOURCE -DNE_LFS

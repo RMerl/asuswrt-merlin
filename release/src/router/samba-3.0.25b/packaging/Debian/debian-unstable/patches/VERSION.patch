@@ -1,0 +1,8 @@
+--- samba-3.0.0rc2/source/VERSION.orig	2003-09-02 21:56:11.000000000 -0400
++++ samba-3.0.0rc2/source/VERSION	2003-09-02 21:56:30.000000000 -0400
+@@ -78,4 +78,4 @@
+ # e.g. SAMBA_VERSION_VENDOR_SUFFIX=vendor_version()    #
+ #  ->  "CVS 3.0.0rc2-VendorVersion"                    #
+ ########################################################
+-SAMBA_VERSION_VENDOR_SUFFIX=
++SAMBA_VERSION_VENDOR_SUFFIX="Debian"

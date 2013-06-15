@@ -1,0 +1,41 @@
+Copyright (C) 1997-1998 Samba-Team
+E-mail:		samba-binaries@samba.org
+
+Subject: Installation Instructions for SuperNewOS X.X
+--------------------------------------------------------
+
+1) cd /
+2) tar xvf [path-to-samba-package]/install.tar
+3) cd /usr/local/samba/lib
+4) vi smb.conf
+
+Now modify smb.conf to reflect your site needs.
+
+5) samba start
+
+To stop samba:
+
+	samba stop
+
+You could install samba to run from the system start-up scripts
+(recommended) by running  ./setup.sh
+
+Start / Stop Samba as follows:-
+
+	samba [start | stop]
+
+
+Subject: New Users Must Read This
+-----------------------------------
+Above ALL else, read the smb.conf man pages _AND_ all text documentation.
+
+To enable SMB encrypted password support do the following:
+
+1) Put /usr/local/samba/bin in your PATH
+2) Edit /usr/local/samba/lib/smb.conf and uncomment the
+	line "encrypt passwd = yes"
+3) Execute: smbpasswd -a "username" "password"
+
+The above will create your /usr/local/samba/private/smbpasswd file
+in which will be the NT and LanMAN hashed passwords.
+

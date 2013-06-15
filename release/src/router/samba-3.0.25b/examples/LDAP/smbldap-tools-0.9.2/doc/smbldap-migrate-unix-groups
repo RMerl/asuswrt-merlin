@@ -1,0 +1,215 @@
+#!/usr/bin/perl -w
+
+# Created by P.Wieleba@iem.pw.edu.pl in 2004
+
+use strict;
+use Getopt::Std;
+use FindBin;
+use FindBin qw($RealBin);
+use lib "$RealBin/";
+use smbldap_tools;
+
+# function declaration
+sub exist_in_tab;
+sub add_to_tab;
+
+# smbldap-migrate-unix-groups (-? or -h for help)
+#
+#
+
+my %Options;
+
+my $ok = getopts('G:nv?ha', \%Options);
+
+if ( (!$ok) || ($Options{'?'}) || ($Options{'h'}) || (!keys(%Options)) ) {
+  print "Usage: $0 [-Gnv?ha]\n";
+  print "  -?|-h      show this help message\n";
+  print "  -G file    import group file\n";
+  print "  -v         displays modified entries to STDOUT\n";
+  print "  -n         do everything execpt updating LDAP\n";
+  print "  -a         adds sambaGroupMapping objectClass\n";
+  exit (1);
+}
+
+my $INFILE = undef;
+
+if ( $Options{'G'} ) {
+  open($INFILE,$Options{'G'}) or
+    die "I cannot open file: " . $Options{'G'} . "\n";
+}
+
+my $ldap_master=connect_ldap_master();
+
+while ( my $line=<$INFILE> ) {
+  chop($line);
+  next if ( $line =~ /^\s*$/ ); # whitespace
+  next if ( $line =~ /^#/ );
+  next if ( $line =~ /^\+/ );
+  my $entry = undef;
+  if ($Options{'G'}) {
+    my($group, $pwd, $gid, $users) = split(/:/,$line);
+    # if user is not in LDAP new entry will be created
+    $entry = get_group_entry($ldap_master,$group);
+    $entry = migrate_group($entry,$group, $pwd, $gid, $users);
+  }
+	
+  if ($entry) {
+    # if used "-a" and sambaGroupMapping doesn't exist.
+    if ( $Options{'a'} and !exist_in_tab([$entry->get_value('objectClass')],'sambaGroupMapping') ) {
+      my @objectClass = $entry->get_value( 'objectClass' );
+      $entry->replace( 'objectclass' => [add_to_tab(\@objectClass,'sambaGroupMapping')] );
+
+      # the below part comes from smbldap-groupadd and
+      # maybe it should be replaced by a new subroutine.
+      my $groupGidNumber = $entry->get_value('gidNumber');
+      # as rid we use 2 * gid + 1001
+      my $group_rid = 2*$groupGidNumber+1001;
+      # let's test if this SID already exist
+      my $group_sid = "$config{SID}-$group_rid";
+      my $test_exist_sid=does_sid_exist($group_sid,$config{groupsdn});
+      if ($test_exist_sid->count == 1) {
+	warn "Group SID already owned by\n";
+                                # there should not exist more than one entry, but ...
+	foreach my $entry ($test_exist_sid->all_entries) {
+	  my $dn= $entry->dn;
+	  chomp($dn);
+	  warn "$dn\n";
+	}
+      } else {
+	$entry->replace( 'sambaSID' => $group_sid );
+	$entry->replace( 'sambaGroupType' => group_type_by_name('domain') );
+      }
+    }
+
+    if ($Options{'v'}) {
+      $entry->dump();
+    }
+    if (!$Options{'n'}) {
+      my $mesg = $entry->update($ldap_master);
+      if ($mesg->is_error()) {
+	print "Error: " . $mesg->error() . "\n";
+      }
+    }
+
+  }
+}
+
+$INFILE and close($INFILE);
+# take down the session
+$ldap_master and $ldap_master->unbind;
+
+# returns updated $entry
+sub migrate_group
+  {
+    my($entry,$group, $pwd, $gid, $users) = @_;
+
+    # posixGroup MUST ( cn $ gidNumber )
+    my @objectClass = $entry->get_value( 'objectClass' );
+    $entry->replace( 'objectClass' => [add_to_tab(\@objectClass,'posixGroup')] );
+
+    $entry->replace( 'cn' => $group );
+    ($pwd)       and $entry->replace( 'userPassword'  => "{crypt}" . $pwd );
+    ($gid ne "") and $entry->replace( 'gidNumber'     => $gid );
+
+    my @users = split(',',$users);
+    # choose only unique users
+    my %unique_users;
+    foreach my $user (@users) {
+      $unique_users{$user} = 1;
+    }
+    @users = keys(%unique_users);
+    ($users) and $entry->replace( 'memberUid' => [ @users ] );
+
+    return $entry;
+  }
+
+# creates a _new_entry_ if group doesn't exist in ldap
+# else return's ldap user entry
+sub get_group_entry
+  {
+    my($ldap_master,$group) = @_;
+	
+    # do not use try read_user_entry()
+    my $mesg = $ldap_master->search( base => $config{groupsdn},
+				     scope => 'one',
+				     filter => "(cn=$group)"
+				   );
+    my $entry;
+    if ( $mesg->count() != 1 ) {
+      $entry = Net::LDAP::Entry->new();
+      $entry->dn("cn=$group,$config{groupsdn}");
+    } else {
+      $entry = $mesg->entry(0); # ????
+    }
+    return $entry;
+  }
+
+# Check if a $text element exists in @table
+# eg. exist_in_tab(\@table,$text);
+sub exist_in_tab
+  {
+    my($ref_tab,$text) = @_;
+    my @tab = @$ref_tab;
+
+    foreach my $elem (@tab) {
+      if ( lc($elem) eq lc($text) ) {
+	return 1;
+      }
+    }
+    return 0;
+  }
+
+# Add $text to tab if it doesn't exist there
+sub add_to_tab
+  {
+    my($ref_tab,$text) = @_;
+    my @tab = @$ref_tab;
+	
+    if ( !exist_in_tab(\@tab,$text) ) {
+      push(@tab,$text);
+    }
+    return @tab;
+  }
+
+
+########################################
+
+=head1 NAME
+
+smbldap-migrate-unix-groups - Migrate unix groups to LDAP
+
+=head1 SYNOPSIS
+
+smbldap-migrate-unix-groups [-G file] [-n] [-v] [-h] [-?] [-a]
+
+=head1 DESCRIPTION
+
+This command processes one file as defined by option and
+creates new or changes existing ldap group entry.
+New attributes are added, and existing are changed.
+None of the existing attributes is deleted.
+
+-G group_file
+       Processes group_file and uptades LDAP. Creates new ldap group
+       entry or just adds posixGroup objectclass and corresponding
+       attributes to the ldap group entry or just uptades their values.
+
+-h     show the help message
+
+-?     the same as -h
+
+-v     displayes modified entries to STDOUT
+
+-n     do everything execpt updating LDAP. It is useful when used
+       with -v switch.
+
+-a     adds sambaGroupMapping objectClass, generates sambaSID
+       and adds sambaGroupType attribute
+
+=cut
+
+#'
+
+# The End
+
+

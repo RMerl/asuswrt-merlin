@@ -1659,56 +1659,48 @@ ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv)
 	return ret;
 }
 
+#define	IW_MAX_FREQUENCIES	32
+
 static int ej_wl_channel_list(int eid, webs_t wp, int argc, char_t **argv, int unit)
 {
 	int i, retval = 0;
-	char buf[4096];
-	wl_channels_in_country_t *cic = (wl_channels_in_country_t *)buf;
+	int channels[MAXCHANNEL+1];
+	wl_uint32_list_t *list = (wl_uint32_list_t *) channels;
 	char tmp[256], prefix[] = "wlXXXXXXXXXX_";
-	char *country_code;
 	char *name;
+	uint ch;
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-	country_code = nvram_safe_get(strcat_r(prefix, "country_code", tmp));
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+	memset(tmp, 0x0, sizeof(tmp));
 
-	cic->buflen = sizeof(buf);
-	strcpy(cic->country_abbrev, country_code);
-	if (!unit)
-		cic->band = WLC_BAND_2G;
-	else
-		cic->band = WLC_BAND_5G;
-	cic->count = 0;
-
-	if (wl_ioctl(name, WLC_GET_CHANNELS_IN_COUNTRY, cic, cic->buflen) != 0)
-		return retval;
-
-	if (cic->count == 0)
-		return retval;
-	else
+	memset(channels, 0, sizeof(channels));
+	list->count = htod32(MAXCHANNEL);
+	if (wl_ioctl(name, WLC_GET_VALID_CHANNELS , channels, sizeof(channels)) < 0)
 	{
-		memset(tmp, 0x0, sizeof(tmp));
-
-		for (i = 0; i < cic->count; i++)
-		{
-#if 0
-			if (!strlen(tmp))
-				sprintf(tmp, "%d", cic->channel[i]);
-			else
-				sprintf(tmp, "%s %d", tmp, cic->channel[i]);
-#else
-			if (i == 0)
-				sprintf(tmp, "[\"%d\",", cic->channel[i]);
-			else if (i == (cic->count - 1))
-				sprintf(tmp,  "%s \"%d\"]", tmp, cic->channel[i]);
-			else
-				sprintf(tmp,  "%s \"%d\",", tmp, cic->channel[i]);
-#endif
-		}
-
-		retval += websWrite(wp, "%s", tmp);
+		dbg("error doing WLC_GET_VALID_CHANNELS\n");
+		sprintf(tmp, "[\"%d\"]", 0);
+		goto ERROR;
 	}
 
+	if (dtoh32(list->count) == 0)
+	{
+		sprintf(tmp, "[\"%d\"]", 0);
+		goto ERROR;
+	}
+
+	for (i = 0; i < dtoh32(list->count) && i < IW_MAX_FREQUENCIES; i++) {
+		ch = dtoh32(list->element[i]);
+
+		if (i == 0)
+			sprintf(tmp, "[\"%d\",", ch);
+		else if (i == (dtoh32(list->count) - 1))
+			sprintf(tmp,  "%s \"%d\"]", tmp, ch);
+		else
+			sprintf(tmp,  "%s \"%d\",", tmp, ch);
+	}
+ERROR:
+	retval += websWrite(wp, "%s", tmp);
 	return retval;
 }
 
@@ -2393,7 +2385,6 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 	int ret, i, k, left, ht_extcha;
 	int retval = 0, ap_count = 0, idx_same = -1, count = 0;
 	unsigned char *bssidp;
-	char *info_b;
 	unsigned char rate;
 	unsigned char bssid[6];
 	char macstr[18];
@@ -2481,8 +2472,6 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 				info->ie_offset = sizeof(wl_bss_info_107_t);
 			}
 
-			info_b = (unsigned char *)info;
-
 			for(i = 0; i < result->count; i++)
 			{
 				if (info->SSID_len > 32/* || info->SSID_len == 0*/)
@@ -2511,7 +2500,7 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 				idx_same = -1;
 				for (k = 0; k < ap_count; k++)	// deal with old version of Broadcom Multiple SSID (share the same BSSID)
 				{
-					if(strcmp(apinfos[k].BSSID, macstr) == 0 && strcmp(apinfos[k].SSID, info->SSID) == 0)
+					if(strcmp(apinfos[k].BSSID, macstr) == 0 && strcmp(apinfos[k].SSID, (char *)info->SSID) == 0)
 					{
 						idx_same = k;
 						break;
@@ -3126,7 +3115,7 @@ wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		for (i = 0; i < ap_count; i++)
 		{
 			memset(ssid_str, 0, sizeof(ssid_str));
-			char_to_ascii(ssid_str, trim_r(ap_list[i].ssid));
+			char_to_ascii(ssid_str, trim_r((char *)ap_list[i].ssid));
 
 			bssidp = (unsigned char *)&ap_list[i].BSSID;
 			sprintf(macstr, "%02X:%02X:%02X:%02X:%02X:%02X",
@@ -3199,6 +3188,8 @@ wl_autho(char *name, struct ether_addr *ea)
 	return 0;
 }
 
+static int psta_auth = 0;
+
 int
 ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -3209,6 +3200,10 @@ ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv)
 	int retval = 0, psta = 0;
 	struct ether_addr bssid;
 	unsigned char bssid_null[6] = {0x0,0x0,0x0,0x0,0x0,0x0};
+	int psta_debug = 0;
+
+	if (nvram_match("psta_debug", "1"))
+                psta_debug = 1;
 
 	unit = nvram_get_int("wlc_band");
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
@@ -3237,13 +3232,13 @@ ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv)
 		goto PSTA_ERR;
 	}
 
-	/* query sta_info for each STA and output one table row each */
+	/* query sta_info for each STA */
 	if (mac_list->count)
 	{
 		if (nvram_match(strcat_r(prefix, "akm", tmp), ""))
 			psta = 1;
 		else
-		for (i = 0; i < mac_list->count; i++) {
+		for (i = 0, psta = 2; i < mac_list->count; i++) {
 			if (wl_autho(name, &mac_list->ea[i]))
 			{
 				psta = 1;
@@ -3254,7 +3249,23 @@ ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv)
 
 	free(mac_list);
 PSTA_ERR:
-	retval += websWrite(wp, "wlc_state=%d", psta);
+	if (psta == 1)
+	{
+		if (psta_debug) dbg("connected\n");
+		psta_auth = 0;
+	}
+	else if (psta == 2)
+	{
+		if (psta_debug) dbg("authorization failed\n");
+		psta_auth = 1;
+	}
+	else
+	{
+		if (psta_debug) dbg("disconnected\n");
+	}
+
+	retval += websWrite(wp, "wlc_state=%d;", psta);
+	retval += websWrite(wp, "wlc_state_auth=%d;", psta_auth);
 
 	return retval;
 }

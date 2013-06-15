@@ -29,17 +29,20 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 <% login_state_hook(); %>
 <% wl_get_parameter(); %>
 
+wl_channel_list_2g = <% channel_list_2g(); %>;
+wl_channel_list_5g = <% channel_list_5g(); %>;
+
 var country = '';
 if('<% nvram_get("wl_unit"); %>' == '1')
-	country = '<% nvram_get("wl1_country_code"); %>';
-else
-	country = '<% nvram_get("wl0_country_code"); %>';
+		country = '<% nvram_get("wl1_country_code"); %>';
+else		
+		country = '<% nvram_get("wl0_country_code"); %>';
 
 function initial(){
 	show_menu();
 	load_body();
 	remove_5G_NOnly(document.form.wl_nmode_x);
-	genBWTable('<% nvram_get("wl_unit"); %>');
+	genBWTable('<% nvram_get("wl_unit"); %>');	
 
 	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
 		_change_wl_unit('<% nvram_get("wl_unit"); %>');
@@ -134,8 +137,13 @@ function genBWTable(_unit){
 		var bwsDesc = new Array("20/40 MHz", "20 MHz", "40 MHz");
 	}
 	else{
-		var bws = new Array(0, 1, 2, 3);
-		var bwsDesc = new Array("20/40/80 MHz", "20 MHz", "40 MHz", "80 MHz");
+		if(document.form.preferred_lang.value == "UK"){    //use unique font-family for JP
+				var bws = new Array(0, 1, 2);
+				var bwsDesc = new Array("<#Auto#>", "20 MHz", "40 MHz");
+		}else{	
+				var bws = new Array(0, 1, 2, 3);
+				var bwsDesc = new Array("20/40/80 MHz", "20 MHz", "40 MHz", "80 MHz");
+		}		
 	}
 
 	document.form.wl_bw.length = bws.length;
@@ -210,15 +218,6 @@ function applyRule(){
 
 		if(sw_mode == 2 || sw_mode == 4)
 			document.form.action_wait.value = "5";
-
-		if(!wifilogo_support){
-			if(document.form.wl_chanspec.value != 0 && document.form.wl_bw.value == 0){
-				if('<% nvram_get("wl_unit"); %>' == 0)
-					document.form.wl_bw.value = 2;
-				else
-					document.form.wl_bw.value = 3;
-			}
-		}
 
 		document.form.submit();
 	}
@@ -297,11 +296,16 @@ function checkBW(){
 	if(wifilogo_support)
 		return false;
 
-	if(document.form.wl_chanspec.value != 0 && document.form.wl_bw.value == 0){
-		if('<% nvram_get("wl_unit"); %>' == 0)
+	if(document.form.wl_chanspec.value != 0 && document.form.wl_bw.value == 0){	//Auto but set specific channel
+		if(document.form.wl_chanspec.value == "165")	// channel 165 only for 20MHz
+			document.form.wl_bw.selectedIndex = 1;
+		else if('<% nvram_get("wl_unit"); %>' == 0 || document.form.preferred_lang.value == "UK")	//2.4GHz or UK for 40MHz
 			document.form.wl_bw.selectedIndex = 2;
-		else
+		else{	//5GHz else for 80MHz
 			document.form.wl_bw.selectedIndex = 3;
+			if (wl_channel_list_5g.getIndexByValue("165") >= 0 ) // rm option 165 if not Auto
+						document.form.wl_chanspec.remove(wl_channel_list_5g.getIndexByValue("165"));			
+		}
 	}
 }
 
@@ -378,7 +382,7 @@ function remove_5G_NOnly(obj){	//MODELDEP
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_wireless">
-<input type="hidden" name="action_wait" value="8">
+<input type="hidden" name="action_wait" value="10">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="wl_country_code" value="<% nvram_get("wl0_country_code"); %>" disabled>
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
@@ -544,7 +548,7 @@ function remove_5G_NOnly(obj){	//MODELDEP
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 6);"><#WLANConfig11b_WPAType_itemname#></a></th>
 					<td>		
-				  		<select name="wl_crypto" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_crypto')">
+				  		<select name="wl_crypto" class="input_option">
 								<option value="aes" <% nvram_match("wl_crypto", "aes", "selected"); %>>AES</option>
 								<option value="tkip+aes" <% nvram_match("wl_crypto", "tkip+aes", "selected"); %>>TKIP+AES</option>
 				  		</select>

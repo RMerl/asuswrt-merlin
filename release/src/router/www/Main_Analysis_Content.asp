@@ -7,7 +7,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title>Network Tools - Network Analysis</title>
+<title><#Network_Tools#> - <#Network_Analysis#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <style>
@@ -15,9 +15,9 @@
 	border:1px outset #999;
 	background-color:#576D73;
 	position:absolute;
-	margin-top:-1px;
-	*margin-top:0px;	
+	*margin-top:26px;	
 	margin-left:2px;
+	*margin-left:-353px;
 	width:346px;
 	text-align:left;	
 	height:auto;
@@ -84,7 +84,7 @@ function updateOptions(){
 function hideCNT(_val){
 	if(_val == "ping"){
 		$("pingCNT_tr").style.display = "";
-		$("cmdDesc").innerHTML = "Send ICMP ECHO_REQUEST packets to network hosts.";
+		$("cmdDesc").innerHTML = "<#NetworkTools_Ping#>";
 	}
 	else if(_val == "traceroute"){
 		$("pingCNT_tr").style.display = "none";
@@ -108,11 +108,15 @@ function checkCmdRet(){
 			setTimeout("checkCmdRet();", 1000);
 		},
 		success: function(response){
+			var retArea = document.getElementById("textarea");
+			var _cmdBtn = document.getElementById("cmdBtn");
+
 			if(response.search("XU6J03M6") != -1){
 				document.getElementById("loadingIcon").style.display = "none";
-				document.getElementById("cmdBtn").disabled = false;
-				document.getElementById("cmdBtn").style.color = "#FFF";
-				document.getElementById("textarea").value = response.replace("XU6J03M6", " ");
+				_cmdBtn.disabled = false;
+				_cmdBtn.style.color = "#FFF";
+				retArea.value = response.replace("XU6J03M6", " ");
+				retArea.scrollTop = retArea.scrollHeight;
 				return false;
 			}
 
@@ -123,18 +127,19 @@ function checkCmdRet(){
 
 			if(noChange > 10){
 				document.getElementById("loadingIcon").style.display = "none";
-				document.getElementById("cmdBtn").disabled = false;
-				document.getElementById("cmdBtn").style.color = "#FFF";
+				_cmdBtn.disabled = false;
+				_cmdBtn.style.color = "#FFF";
 				setTimeout("checkCmdRet();", 1000);
 			}
 			else{
-				document.getElementById("cmdBtn").disabled = true;
-				document.getElementById("cmdBtn").style.color = "#666";
+				_cmdBtn.disabled = true;
+				_cmdBtn.style.color = "#666";
 				document.getElementById("loadingIcon").style.display = "";
 				setTimeout("checkCmdRet();", 1000);
 			}
 
-			document.getElementById("textarea").value = response;
+			retArea.value = response;
+			retArea.scrollTop = retArea.scrollHeight;
 			_responseLen = response.length;
 		}
 	});
@@ -143,7 +148,7 @@ function checkCmdRet(){
 var client_list_array = [["Google ", "www.google.com"], ["Facebook", "www.facebook.com"], ["Youtube", "www.youtube.com"], ["Yahoo", "www.yahoo.com"],
 												 ["Baidu", "www.baidu.com"], ["Wikipedia", "www.wikipedia.org"], ["Windows Live", "www.live.com"], ["QQ", "www.qq.com"],
 												 ["Amazon", "www.amazon.com"], ["Twitter", "www.twitter.com"], ["Taobao", "www.taobao.com"], ["Blogspot", "www.blogspot.com"], 
-												 ["Linkedin", "www.linkdin.com"], ["Sina", "www.sina.com"], ["eBay", "www.ebay.com"], ["MSN", "msn.com"], ["Bing", "www.bing.com"], 
+												 ["Linkedin", "www.linkedin.com"], ["Sina", "www.sina.com"], ["eBay", "www.ebay.com"], ["MSN", "msn.com"], ["Bing", "www.bing.com"], 
 												 ["Яндекс", "www.yandex.ru"], ["WordPress", "www.wordpress.com"], ["ВКонтакте", "www.vk.com"]];
 function showLANIPList(){
 	var code = "";
@@ -214,12 +219,12 @@ function pullLANIPList(obj){
 							<tr>
 								<td bgcolor="#4D595D" colspan="3" valign="top">
 									<div>&nbsp;</div>
-									<div class="formfonttitle">Network Tools - Network Analysis</div>
+									<div class="formfonttitle"><#Network_Tools#> - <#Network_Analysis#></div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-									<div class="formfontdesc" id="cmdDesc">Send ICMP ECHO_REQUEST packets to network hosts</div>
+									<div class="formfontdesc" id="cmdDesc"><#NetworkTools_Ping#></div>
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 										<tr>
-											<th width="20%">Method</th>
+											<th width="20%"><#NetworkTools_Method#></th>
 											<td>
 												<select id="cmdMethod" class="input_option" name="cmdMethod" onchange="hideCNT(this.value);">
 													<option value="ping" selected>Ping</option>
@@ -229,15 +234,15 @@ function pullLANIPList(obj){
 											</td>										
 										</tr>
 										<tr>
-											<th width="20%">Target</th>
+											<th width="20%"><#NetworkTools_target#></th>
 											<td>
 												<input type="text" class="input_32_table" name="destIP" value="" placeholder="ex: www.google.com">
-												<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">						
+												<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">						
 												<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 											</td>										
 										</tr>
 										<tr id="pingCNT_tr">
-											<th width="20%">Count</th>
+											<th width="20%"><#NetworkTools_Count#></th>
 											<td>
 		              			<input type="text" name="pingCNT" class="input_3_table" maxlength="1" value="" onblur="" onKeyPress="is_number(this, event);" placeholder="5">
 											</td>										
@@ -245,8 +250,8 @@ function pullLANIPList(obj){
 									</table>
 
 									<div class="apply_gen">
-										<input class="button_gen" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="Diagnose" name="action">
-										<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
+										<span><input class="button_gen_long" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="Diagnose" name="action"></span>
+										<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 									</div>
 
 									<div style="margin-top:8px" id="logArea">

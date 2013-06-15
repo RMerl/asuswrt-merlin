@@ -31,7 +31,6 @@
 #include "lp_asus.h"
 #include "syslog.h"
 
-#include <bin_sem_asus.h>
 #include <bcmnvram.h>
 #include <netinet/tcp.h>
 
@@ -150,6 +149,7 @@ int main(int argc, char *argv[])
 	int		netfd, fd, clientlen, one = 1;
 	struct sockaddr_in	netaddr, client;
 #endif
+	int lock;
 	int pid = 0;
 	FILE *fp;
 
@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
     {
 	//if (busy) syslog(LOG_NOTICE, "busying %d %d\n", lptstatus.busy, busy);
 
-	bin_sem_wait();						// by Jiahao for U2EC. 20080808.
+	lock = file_lock("printer");				// by Jiahao for U2EC. 20080808.
 	if (lptstatus.busy==FALSE && nvram_invmatch("MFP_busy", "2"))
 	{
 		busy=FALSE;
@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
 
 		nvram_set("u2ec_busyip", "");
 	}
-	bin_sem_post();
+	file_unlock(lock);
 
 #ifdef Raw_Printing_with_ASUS //Lisa
 	FD_SET(netfd, &afds);
@@ -317,16 +317,16 @@ int main(int argc, char *argv[])
 //	else if(FD_ISSET(netfd, &rfds) && busy==FALSE)
 	else if(FD_ISSET(netfd, &rfds))
 	{
-		bin_sem_wait();			// by Jiahao for U2EC. 20080808.
+		lock = file_lock("printer");	// by Jiahao for U2EC. 20080808.
 		if (nvram_match("MFP_busy", "0"))
 		{
-			bin_sem_post();
+			file_unlock(lock);
 			LPRflag = 2;
 			clisockfd = accept(netfd, (struct sockaddr*) &cli_addr, &clilen);
 		}
 		else
 		{
-			bin_sem_post();
+			file_unlock(lock);
 			sleep(2);
 			continue;
 		}
@@ -347,11 +347,11 @@ int main(int argc, char *argv[])
              continue;
         }
 
-	bin_sem_wait();
+	lock = file_lock("printer");
 //	if (busy!=FALSE)	/* 2004/09/10 by Joey, process nack in parent for LPR and Remote Prot */
 	if (nvram_invmatch("MFP_busy", "0"))		// by Jiahao for U2EC. 20080808.
 	{
-		bin_sem_post();
+		file_unlock(lock);
 		//syslog(LOG_NOTICE, "Printing others 1 %d %d\n", LPRflag, clisockfd);
 		if (LPRflag==0) processReq(clisockfd);
 		else if (LPRflag==1) processReq_LPR(clisockfd, 0);
@@ -369,7 +369,7 @@ int main(int argc, char *argv[])
 	else
 		nvram_set("u2ec_busyip", nvram_safe_get("lan_ipaddr_t"));
 
-	bin_sem_post();
+	file_unlock(lock);
 
         if( (childpid = fork() ) < 0)
         {
@@ -1279,7 +1279,7 @@ int open_printer(void)
 	{
 		if ((f=open("dev/lp0",O_RDWR)) < 0)
 		{
-			syslog(LOGOPTS, "Open Parallel port error");
+//			syslog(LOGOPTS, "Open Parallel port error");
 			exit(1);
 		} 
 	}

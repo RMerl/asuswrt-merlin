@@ -1,0 +1,26 @@
+diff -uNr samba-3.0.14a.orig/source/Makefile.in samba-3.0.14a/source/Makefile.in
+--- samba-3.0.14a.orig/source/Makefile.in	2005-06-08 05:53:54.000000000 -0700
++++ samba-3.0.14a/source/Makefile.in	2005-06-08 05:55:21.000000000 -0700
+@@ -1000,9 +1000,9 @@
+ 		$(KRB5LIBS) $(LDAP_LIBS) \
+ 		@SONAMEFLAG@`basename $@`.$(LIBSMBCLIENT_MAJOR)
+ 
+-bin/libsmbclient.a: $(LIBSMBCLIENT_PICOBJS)
++bin/libsmbclient.a: $(LIBSMBCLIENT_OBJS)
+ 	@echo Linking libsmbclient non-shared library $@
+-	@-$(AR) -rc $@ $(LIBSMBCLIENT_PICOBJS)
++	@-$(AR) -rc $@ $(LIBSMBCLIENT_OBJS)
+ 
+ # This is probably wrong for anything other than the GNU linker. 
+ bin/libbigballofmud.@SHLIBEXT@: $(LIBBIGBALLOFMUD_PICOBJS)
+@@ -1251,8 +1251,8 @@
+ 	@echo "Linking shared library $@"
+ 	@$(SHLD) $(LDSHFLAGS) -o $@ $(PAM_SMBPASS_PICOOBJ) -lpam $(DYNEXP) $(LIBS) -lc $(LDAP_LIBS) $(KRB5LIBS)
+ 
+-bin/libmsrpc.a: $(LIBMSRPC_PICOBJ)
+-	@-$(AR) -rc $@ $(LIBMSRPC_PICOBJ) 
++bin/libmsrpc.a: $(LIBMSRPC_OBJ)
++	@-$(AR) -rc $@ $(LIBMSRPC_OBJ) 
+ 
+ bin/tdbbackup@EXEEXT@: $(TDBBACKUP_OBJ) bin/.dummy
+ 	@echo Linking $@

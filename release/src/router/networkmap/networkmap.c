@@ -16,7 +16,6 @@
 //2011.02 Yau add shard memory
 #include <sys/ipc.h>
 #include <sys/shm.h>
-#include <semaphore_mfp.h>
 
 unsigned char my_hwaddr[6];
 unsigned char my_ipaddr[4];
@@ -169,6 +168,7 @@ int main()
         struct timeval tv1, tv2, arp_timeout;
 	int shm_client_detail_info_id;
 	int ip_dup, mac_dup, real_num;
+	int lock;
 
         FILE *fp = fopen("/var/run/networkmap.pid", "w");
         if(fp != NULL){
@@ -180,7 +180,7 @@ int main()
 	#endif
 
 	//Initial client tables
-        spinlock_lock(SPINLOCK_Networkmap);
+	lock = file_lock("networkmap");
 	shm_client_detail_info_id = shmget((key_t)1001, sizeof(CLIENT_DETAIL_INFO_TABLE), 0666|IPC_CREAT);
         if (shm_client_detail_info_id == -1){
     	    fprintf(stderr,"shmget failed\n");
@@ -192,7 +192,7 @@ int main()
 	memset(p_client_detail_info_tab, 0x00, sizeof(CLIENT_DETAIL_INFO_TABLE));
 	p_client_detail_info_tab->ip_mac_num = 0;
 	p_client_detail_info_tab->detail_info_num = 0;
-	spinlock_unlock(SPINLOCK_Networkmap);	
+	file_unlock(lock);
 
 	//Get Router's IP/Mac
 	strcpy(router_ipaddr, nvram_safe_get("lan_ipaddr"));
@@ -235,10 +235,10 @@ int main()
 			NMP_DEBUG("Starting full scan!\n");
 			
                         //reset client tables
-			spinlock_lock(SPINLOCK_Networkmap);
+			lock = file_lock("networkmap");
         		memset(p_client_detail_info_tab, 0x00, sizeof(CLIENT_DETAIL_INFO_TABLE));
         		p_client_detail_info_tab->detail_info_num = 0;
-			spinlock_unlock(SPINLOCK_Networkmap);
+			file_unlock(lock);
 		    }
 		    scan_count++;
 		    scan_ipaddr[3]++;
@@ -309,12 +309,12 @@ int main()
                                     	p_client_detail_info_tab->mac_addr[i][2],p_client_detail_info_tab->mac_addr[i][3],
                                     	p_client_detail_info_tab->mac_addr[i][4],p_client_detail_info_tab->mac_addr[i][5]);
 					*/
-                                	spinlock_lock(SPINLOCK_Networkmap);
+					lock = file_lock("networkmap");
 	                                memcpy(p_client_detail_info_tab->ip_addr[i],
         	                                arp_ptr->source_ipaddr, 4);
                 	                memcpy(p_client_detail_info_tab->mac_addr[i],
                         	                arp_ptr->source_hwaddr, 6);
-					spinlock_unlock(SPINLOCK_Networkmap);
+					file_unlock(lock);
 					real_num = p_client_detail_info_tab->detail_info_num;
 					p_client_detail_info_tab->detail_info_num = i;
 					FindAllApp(my_ipaddr, p_client_detail_info_tab);
@@ -327,13 +327,13 @@ int main()
 			    //i=0, table is empty.
 			    //i=num, no the same ip at table.
 			    if(i==p_client_detail_info_tab->ip_mac_num){
-				spinlock_lock(SPINLOCK_Networkmap);
+				lock = file_lock("networkmap");
 				memcpy(p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->ip_mac_num], 
 					arp_ptr->source_ipaddr, 4);
                                 memcpy(p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->ip_mac_num], 
 					arp_ptr->source_hwaddr, 6);
                                 p_client_detail_info_tab->ip_mac_num++;
-				spinlock_unlock(SPINLOCK_Networkmap);
+				file_unlock(lock);
 
 			    #ifdef DEBUG  //Write client info to file
                 		fp_ip=fopen("/var/client_ip_mac.txt", "a");

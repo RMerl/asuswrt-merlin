@@ -1,0 +1,306 @@
+#!/usr/bin/make -f
+# 
+# Important modifications (introduction of a saved config.cache to
+#	solve build problems) introduced in Samba 2.2.1a-5. These
+#	modification were made by Steve Langasek <vorlon@netexpress.net>.
+#
+#	config.cache *DISABLED* to solve problems caused incorrect settings
+#	--SSS
+#
+#
+
+# Uncomment this to turn on verbose mode. 
+#export DH_VERBOSE=1
+
+# This is the debhelper compatability version to use.
+export DH_COMPAT=4
+
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
+
+# Set the host and build architectures for use with config.cache loading,
+# cross-building, etc.
+DEB_HOST_GNU_TYPE	:= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE	:= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+export DEB_HOST_GNU_TYPE
+export DEB_BUILD_GNU_TYPE
+
+
+# Support the DEB_BUILD_OPTIONS variable
+CFLAGS = -gstabs -Wall
+INSTALL = install
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+  CFLAGS += -O0
+else
+  CFLAGS += -O2
+endif
+
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+  INSTALL += -s
+endif
+
+
+DESTDIR=`pwd`/debian/tmp
+
+patch: patch-stamp
+patch-stamp:
+	dh_testdir
+	if [ ! -f patch-stamp ]; then /bin/sh debian/scripts/patch-source; fi
+	touch patch-stamp
+
+unpatch:
+	dh_testdir
+	if [ -f patch-stamp ]; then /bin/sh debian/scripts/unpatch-source; fi
+	rm -f patch-stamp
+
+configure: patch-stamp configure-stamp
+configure-stamp:
+	dh_testdir
+
+#	if [ -f debian/config.cache ]; then \
+#		cp -f debian/config.cache source/config.cache; \
+#	fi
+
+	[ -f source/Makefile ] || (cd source && CFLAGS="$(CFLAGS)" ./configure \
+		--host=$(DEB_HOST_GNU_TYPE) \
+		--build=$(DEB_BUILD_GNU_TYPE) \
+		--with-fhs \
+		--enable-shared \
+		--enable-static \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--libdir=/etc/samba \
+		--with-privatedir=/etc/samba \
+		--localstatedir=/var \
+		--with-netatalk \
+		--with-smbmount \
+		--with-pam \
+		--with-syslog \
+		--with-utmp \
+		--with-readline \
+		--with-pam_smbpass \
+		--with-libsmbclient \
+		--with-msdfs \
+		--with-automount \
+		--with-acl-support \
+		--with-quotas \
+		--with-ldap \
+		--with-python=python2.2)
+
+	touch configure-stamp
+
+build: patch-stamp configure-stamp build-stamp
+build-stamp:
+	dh_testdir
+
+	$(MAKE) -C source headers
+	$(MAKE) -C source all nsswitch/libnss_wins.so python_ext
+	$(MAKE) -C source client/mount.cifs
+
+	touch build-stamp
+
+clean: unpatch
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+
+	# Clean first the Samba package
+#	-$(MAKE) -C source realclean
+#	-$(MAKE) -C source clean
+	-$(MAKE) -C source python_clean distclean
+
+	# Delete stuff left after a build that is not deleted by 'make clean'
+	rm -f source/bin/wbinfo source/bin/winbindd source/bin/debug2html \
+		source/bin/libsmbclient.a source/include/stamp-h
+
+	dh_clean
+
+install: DH_OPTIONS=
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	mkdir -p $(DESTDIR)/usr/share/man $(DESTDIR)/usr/lib \
+	         $(DESTDIR)/lib/security $(DESTDIR)/sbin $(DESTDIR)/etc/samba \
+	         $(DESTDIR)/usr/lib/cups/backend $(DESTDIR)/usr/share/samba \
+	         $(DESTDIR)/etc/pam.d $(DESTDIR)/etc/dhcp3/dhclient-enter-hooks.d \
+	         $(DESTDIR)/usr/lib/python2.2/site-packages
+
+	# Add here commands to install the package into debian/tmp.
+	$(MAKE) -C source install DESTDIR=$(DESTDIR)
+
+	# libsmbclient files are not installed by the standard
+	#	'make install' - do it manually.
+	$(MAKE) -C source installclientlib DESTDIR=$(DESTDIR)
+	mv $(DESTDIR)/usr/lib/samba/libsmbclient.so $(DESTDIR)/usr/lib/libsmbclient.so.0.1
+	ln -s libsmbclient.so.0.1 $(DESTDIR)/usr/lib/libsmbclient.so.0
+	ln -s libsmbclient.so.0.1 $(DESTDIR)/usr/lib/libsmbclient.so
+	mv $(DESTDIR)/usr/lib/samba/libsmbclient.a $(DESTDIR)/usr/lib/libsmbclient.a
+
+	# Install other stuff not installed by "make install"
+	install -m 0755 debian/mksmbpasswd.awk $(DESTDIR)/usr/sbin/mksmbpasswd
+
+	# Install winbind stuff not installed by 'make install'
+	install -m 0644 source/nsswitch/libnss_winbind.so \
+		$(DESTDIR)/lib/libnss_winbind.so.2
+	install -m 0644 source/bin/pam_winbind.so \
+		$(DESTDIR)/lib/security/
+
+	# Install libnss_wins.so, which is not installed by 'make install' either.
+	install -m 0644 source/nsswitch/libnss_wins.so \
+		$(DESTDIR)/lib/libnss_wins.so.2
+
+	# pam_smbpass.so isn't being installed by 'make install'.
+	#	We'll move it here to $(DESTDIR)/lib/security/ and then
+	#	libpam-smbpass.files will make dh_movefiles move it to the
+	#	right location in the libpam-smbpass package.
+	install -m 0644 source/bin/pam_smbpass.so $(DESTDIR)/lib/security/
+
+	# Create the symlink that will allow us to do "mount -t smbfs ...".
+	#	Create also a symlink that will allow "mount -t smb ..." to
+	#	work too. The symlink is created in $(DESTDIR)/sbin/ but 
+	#	will be moved by dh_movefiles to the smbfs package later on.
+	ln -s /usr/bin/smbmount $(DESTDIR)/sbin/mount.smbfs
+	ln -s /usr/bin/smbmount $(DESTDIR)/sbin/mount.smb
+	ln -s smbmount.8 $(DESTDIR)/usr/share/man/man8/mount.smb.8
+	ln -s smbmount.8 $(DESTDIR)/usr/share/man/man8/mount.smbfs.8
+
+	# Install mount.cifs and its man page
+	install -m 0755 source/client/mount.cifs $(DESTDIR)/sbin/
+	install -m 0644 docs/manpages/mount.cifs.8 $(DESTDIR)/usr/share/man/man8/
+
+	# For CUPS to support printing to samba printers, it's necessary
+	#	to make the following symlink (according to
+	#	Erich Schubert <debian@vitavonni.de> in #109509):
+	ln -s ../../../bin/smbspool $(DESTDIR)/usr/lib/cups/backend/smb
+
+	# Install man pages for files without man pages in the upstream sources
+	install -m 0644 debian/mksmbpasswd.8 $(DESTDIR)/usr/share/man/man8/mksmbpasswd.8
+
+	# Delete unwanted stuff leftover from "make install"
+
+	# The smbwrapper package is not being generated anymore, so we must
+	#	delete the related man pages.
+	rm $(DESTDIR)/usr/share/man/man1/smbsh.1
+
+	# We're not providing findsmb (should we?) so let's remove the man
+	#	pages.
+	find debian/ -name 'findsmb*' -exec rm -f {} \;
+
+	# Install samba-common's conffiles - they'll get moved later to their
+	#	correct place by dh_movefiles.
+	cp debian/smb.conf $(DESTDIR)/etc/samba/
+	install -m755 debian/panic-action $(DESTDIR)/etc/samba/
+	cp debian/gdbcommands $(DESTDIR)/etc/samba/
+	cp debian/samba.pamd $(DESTDIR)/etc/pam.d/samba
+	install -m755 debian/samba-common.dhcp $(DESTDIR)/etc/dhcp3/dhclient-enter-hooks.d/samba
+
+	# Install the Python modules
+	#
+	#cp source/build/lib.*/samba/*.so $(DESTDIR)/usr/lib/python2.2/site-packages/
+	cp source/build/lib.linux-*-2.2/samba/*.so $(DESTDIR)/usr/lib/python2.2/site-packages/
+
+	dh_movefiles
+
+# Build architecture-independent files here.
+# Pass -i to all debhelper commands in this target to reduce clutter.
+binary-indep: DH_OPTIONS=-i
+binary-indep: build install
+	dh_testdir
+	dh_testroot
+	dh_installdebconf
+	dh_installdocs -A debian/README.build
+	# dh_installexamples is not available in Debian Potato...
+	[ -x /usr/bin/dh_installexamples ] && DH_OPTIONS= dh_installexamples -v -psamba-doc examples/*
+#	dh_installmenu
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installinit
+#	dh_installcron
+#	dh_installmanpages
+#	dh_installinfo
+#	dh_undocumented
+	dh_installchangelogs
+	dh_link
+	dh_compress
+	dh_fixperms
+
+	# Get rid of those pesky .cvsignore files to make lintian happy
+	find debian/ -name .cvsignore -exec rm -f {} \;
+
+	dh_installdeb
+#	dh_perl
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+# Build architecture-dependent files here.
+# Pass -a to all debhelper commands in this target to reduce clutter.
+binary-arch: DH_OPTIONS=-a
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installdebconf
+	dh_installdocs -A debian/README.build
+	# dh_installexamples is not available in Debian Potato...
+	[ -x /usr/bin/dh_installexamples ] && DH_OPTIONS= dh_installexamples -v -ppython2.2-samba source/python/examples/*
+#	dh_installmenu
+	# dh_installlogrotate is not available in Debian Potato...
+	if [ -x /usr/bin/dh_installlogrotate ]; then \
+		dh_installlogrotate; \
+	else \
+		mkdir -p debian/samba/etc/logrotate.d; \
+		cp debian/samba.logrotate debian/samba/etc/logrotate.d/samba; \
+		mkdir -p debian/winbind/etc/logrotate.d; \
+		cp debian/winbind.logrotate debian/winbind/etc/logrotate.d/winbind; \
+	fi
+#	dh_installemacsen
+#	dh_installpam
+	DH_OPTIONS= dh_installinit -psamba -- "defaults 20 19"
+	DH_OPTIONS= dh_installinit -pwinbind
+	dh_installcron 
+#	dh_installmanpages
+#	dh_installinfo
+	cp debian/winbind.lintian debian/winbind/usr/share/lintian/overrides/winbind
+#	dh_undocumented
+	dh_installchangelogs -Nlibpam-smbpass
+	DH_OPTIONS= dh_installchangelogs -plibpam-smbpass source/pam_smbpass/CHANGELOG
+	dh_strip
+	dh_link
+	dh_compress
+	dh_fixperms
+
+	# Why this is executable, I have NO idea...
+	chmod a-x debian/libsmbclient-dev/usr/include/libsmbclient.h
+
+	# You may want to make some executables suid here.
+	# The smbmnt and smbumount binaries should be setuid-root. This
+	#	has security implications because these programs haven't had
+	#	a thorough security audit. smbmount _does not_ have to have
+	#	the setuid bit set. In fact, it is a security hole.
+	chmod u+s debian/smbfs/usr/bin/smbmnt
+	chmod u+s debian/smbfs/usr/bin/smbumount
+
+	# Set some reasonable default perms for the samba logdir.
+	chmod 0750 debian/samba/var/log/samba/
+	chown root.adm debian/samba/var/log/samba/
+
+	# Get rid of those pesky .cvsignore files to make lintian happy
+	# (maybe we only need the "find ... -exec rm -f {} ;" we have
+	# in the binary-indep target?) peloy.-
+	find debian/ -name .cvsignore -exec rm -f {} \;
+
+	dh_installdeb
+#	dh_makeshlibs
+#	dh_perl
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

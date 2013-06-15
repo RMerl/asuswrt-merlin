@@ -19,6 +19,7 @@ var $j = jQuery.noConflict();
 <% get_AiDisk_status(); %>
 
 function initial(){
+	selectedFolder = check_folder_length(selectedFolder);
 	showtext($("selected_Folder"), showhtmlspace(showhtmland(selectedFolder)));
 	document.deleteFolderForm.Cancel.focus();
 	get_layer_items_test(parent.document.aidiskForm.layer_order.value.substring(0,5));
@@ -26,7 +27,7 @@ function initial(){
 }
 
 function clickevent(){
-if(navigator.userAgent.search("MSIE") == -1)
+	if(navigator.userAgent.search("MSIE") == -1)
 		window.addEventListener('keydown',keyDownHandler,false);
 	else{	
 		//window.attachEvent('onkeydown',keyDownHandler);
@@ -86,7 +87,27 @@ function get_layer_items_test(layer_order_t){
     		success: function(){
 				delete_flag = treeitems.length;
   			}
-		});
+	});
+}
+function check_folder_length(folder_name){   //Jieming added at 2013/04/16, to divide folder name when length of folder name exceed 44
+	var n;
+	var temp_name = "";
+	var start = 0;
+	var end = 0;
+
+	if(folder_name.length > 44){
+		n = parseInt(folder_name.length/44);
+		for(i=0;i<n;i++){
+			start = 44*i;	
+			end = 44*(i+1);
+			temp_name += folder_name.substring(start, end);
+			temp_name += "<br>";
+		}
+		temp_name += folder_name.substring(end, folder_name.length);
+		folder_name = temp_name;
+	}
+
+	return folder_name;
 }
 </script>
 </head>
@@ -94,24 +115,28 @@ function get_layer_items_test(layer_order_t){
 <form method="post" name="deleteFolderForm" action="delete_sharedfolder.asp" target="hidden_frame">
 <input type="hidden" name="pool" id="pool" value="">
 <input type="hidden" name="folder" id="folder" value="">
-  <table width="100%" class="popTable" border="0" align="center" cellpadding="0" cellspacing="0">
-  <thead>
-    <tr>
-      <td><span style="color:#FFF"><#DelFolderTitle#></span><img src="../images/button-close.gif" onClick="parent.hidePop('OverlayMask');"></td>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td height="70" valign="middle"><#DelFolderAlert#> <span id="selected_Folder" style="color:#333333; "></span></td>
-	</tr>
-
-    <tr>
-      <td height="30" align="right" bgcolor="#E6E6E6">
-	  <input name="Submit" id="Submit" type="button" class="button_gen" value="<#CTL_del#>" onclick="">
-	  <input name="Cancel" id="Cancel" type="button" class="button_gen" value="<#CTL_Cancel#>" onClick="parent.hidePop('OverlayMask');"></td>
-    </tr>
-	</tbody>
-  </table>
-</form>  
+		<table width="100%" class="popTable" border="0" align="center" cellpadding="0" cellspacing="0">
+			<thead>
+			<tr>
+				<td>
+					<span style="color:#FFF"><#DelFolderTitle#></span><img src="../images/button-close.gif" onClick="parent.hidePop('OverlayMask');">
+				</td>
+			</tr>
+			</thead>
+			<tbody>
+			<tr>
+				<td height="70" valign="middle"><#DelFolderAlert#>
+					<span id="selected_Folder" style="color:#333333;"></span>
+				</td>
+			</tr>
+			<tr>
+				<td height="30" align="right" bgcolor="#E6E6E6">
+					<input name="Submit" id="Submit" type="button" class="button_gen" value="<#CTL_del#>" onclick="">
+					<input name="Cancel" id="Cancel" type="button" class="button_gen" value="<#CTL_Cancel#>" onClick="parent.hidePop('OverlayMask');">
+				</td>
+			</tr>
+			</tbody>
+		</table>
+	</form>  
 </body>
 </html>

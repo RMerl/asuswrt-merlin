@@ -357,6 +357,9 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		puts("ATE_ERROR"); //Need to implement for EA-N66U
 		return EINVAL;
 	}
+        else if (!strcmp(command, "Set_AteModeLedOn")) {
+                return setATEModeLedOn();
+        }
 	else if (!strcmp(command, "Set_MacAddr_2G")) {
 		if( !setMAC_2G(value) )
 		{
@@ -475,22 +478,38 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 #endif
 #ifdef CONFIG_BCMWL5
-	else if (!strcmp(command, "Set_TelnetEnabled")) {
-		if( !setTelnetEnable(value) )
+        else if (!strcmp(command, "Set_TelnetEnabled")) {
+                if( !setTelnetEnable(value) )
+                {
+                        puts("ATE_ERROR_INCORRECT_PARAMETER");
+                        return EINVAL;
+                }
+                return 0;
+        }
+        else if (!strcmp(command, "Set_WaitTime")) {
+                if( !setWaitTime(value) )
+                {
+                        puts("ATE_ERROR_INCORRECT_PARAMETER");
+                        return EINVAL;
+                }
+                return 0;
+        }
+        else if (!strcmp(command, "Set_WiFi_2G")) {
+                if( !setWiFi2G(value) )
 		{
-			puts("ATE_ERROR_INCORRECT_PARAMETER");
-			return EINVAL;
-		}
-		return 0;
-	}
-	else if (!strcmp(command, "Set_WaitTime")) {
-		if( !setWaitTime(value) )
-		{
-			puts("ATE_ERROR_INCORRECT_PARAMETER");
-			return EINVAL;
-		}
-		return 0;
-	}
+                        puts("ATE_ERROR_INCORRECT_PARAMETER");
+                        return EINVAL;
+                }
+                return 0;
+        }
+        else if (!strcmp(command, "Set_WiFi_5G")) {
+                if( !setWiFi5G(value) )
+                {
+                        puts("ATE_ERROR_INCORRECT_PARAMETER");
+                        return EINVAL;
+                }
+                return 0;
+        }
 #endif
 #ifdef RTCONFIG_RALINK
 	else if (!strcmp(command, "Set_DevFlags")) {
@@ -502,6 +521,17 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #endif
+        else if (!strcmp(command, "Set_XSetting")) {
+		if(value == NULL || strcmp(value, "1")) {
+                        puts("ATE_ERROR_INCORRECT_PARAMETER");
+                        return EINVAL;
+                }
+		else {
+			nvram_set("x_Setting", "1");
+			puts(nvram_get("x_Setting"));
+		}
+                return 0;
+        }
 	/*** ATE Get functions ***/
 	else if (!strcmp(command, "Get_FWVersion")) {
 		char fwver[12];
@@ -519,6 +549,10 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 	else if (!strcmp(command, "Get_WpsButtonStatus")) {
 		puts(nvram_safe_get("btn_ez"));
+		return 0;
+	}
+	else if (!strcmp(command, "Get_WirelessButtonStatus")) {
+		puts(nvram_safe_get("btn_wifi_toggle"));
 		return 0;
 	}
 	else if (!strcmp(command, "Get_SWMode")) {
@@ -701,6 +735,80 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #endif
+#ifdef RTCONFIG_WIFI_TOG_BTN
+	else if (!strcmp(command, "Get_WifiButtonStatus")) {
+		puts(nvram_safe_get("btn_wifi_toggle"));
+		return 0;
+	}
+#endif
+#ifdef RTCONFIG_TURBO
+	else if (!strcmp(command, "Get_Turbo")) {
+		puts(nvram_safe_get("btn_turbo"));
+		return 0;
+	}
+#endif
+#ifdef RTCONFIG_LED_BTN
+        else if (!strcmp(command, "Get_LedButtonStatus")) {
+                puts(nvram_safe_get("btn_led"));
+                return 0;
+        }
+#endif
+	else if (!strcmp(command, "Get_WiFiStatus_2G")) {
+		if(get_radio(0, 0))
+			puts("1");
+		else
+			puts("0");
+		return 0;
+	}
+	else if (!strcmp(command, "Get_WiFiStatus_5G")) {
+		if(get_radio(1, 0))
+			puts("1");
+		else
+			puts("0");
+		return 0;
+	}
+	else if (!strcmp(command, "Set_WiFiStatus_2G")) {
+		int act = !strcmp(value, "on");
+
+		if(!strcmp(value, "on") && !strcmp(value, "off"))
+			puts("ATE_UNSUPPORT");
+
+		set_radio(act, 0, 0);
+
+		if(get_radio(0, 0)){
+			if(act)
+				puts("success=on");
+			else
+				puts("ATE_ERROR_INCORRECT_PARAMETER");
+		} else{
+			if(!act)
+				puts("success=off");
+			else
+				puts("ATE_ERROR_INCORRECT_PARAMETER");
+		}
+		return 0;
+	}
+	else if (!strcmp(command, "Set_WiFiStatus_5G")) {
+                int act = !strcmp(value, "on");
+
+                if(!strcmp(value, "on") && !strcmp(value, "off"))
+                        puts("ATE_UNSUPPORT");
+
+                set_radio(act, 1, 0);
+
+                if(get_radio(1, 0)){
+                        if(act)
+                                puts("success=on");
+                        else
+                                puts("ATE_ERROR_INCORRECT_PARAMETER");
+                } else{
+                        if(!act)
+                                puts("success=off");
+                        else
+                                puts("ATE_ERROR_INCORRECT_PARAMETER");
+                }	
+		return 0;
+	}
 	else if (!strcmp(command, "Get_ATEVersion")) {
 		puts(nvram_safe_get("Ate_version"));
 		return 0;
@@ -709,14 +817,30 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		puts(nvram_safe_get("x_Setting"));
 		return 0;
 	}
-	else if (!strcmp(command, "Get_TelnetEnabled")) {
-		puts(nvram_safe_get("Ate_telnet"));
-		return 0;
-	}
-	else if (!strcmp(command, "Get_WaitTime")) {
-		puts(nvram_safe_get("wait_time"));
-		return 0;
-	}
+        else if (!strcmp(command, "Get_TelnetEnabled")) {
+	        puts(nvram_safe_get("Ate_telnet"));
+                return 0;
+        }
+        else if (!strcmp(command, "Get_WaitTime")) {
+                puts(nvram_safe_get("wait_time"));
+                return 0;
+        }
+        else if (!strcmp(command, "Get_ExtendNo")) {
+                puts(nvram_safe_get("extendno"));
+                return 0;
+        }
+#ifdef CONFIG_BCMWL5
+        else if (!strcmp(command, "Get_WiFiStatus_2G")) {
+		if(!getWiFiStatus("2G"))
+			puts("ATE_ERROR_INCORRECT_PARAMETER");
+                return 0;
+        }
+        else if (!strcmp(command, "Get_WiFiStatus_5G")) {
+                if(!getWiFiStatus("5G"))
+                        puts("ATE_ERROR_INCORRECT_PARAMETER");
+                return 0;
+        }
+#endif
 #ifdef RTCONFIG_RALINK
 	else if (!strcmp(command, "Get_DevFlags")) {
 		if( Get_Device_Flags() < 0)
@@ -727,6 +851,10 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #endif
+        else if (!strcmp(command, "Get_XSetting")) {
+                puts(nvram_safe_get("x_Setting"));
+                return 0;
+        }
 	else 
 	{
 		puts("ATE_UNSUPPORT");

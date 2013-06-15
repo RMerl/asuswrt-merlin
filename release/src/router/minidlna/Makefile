@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.31.2.1 2012/01/17 22:49:01 jmaggard Exp $
+# $Id: Makefile,v 1.31.2.2 2012/11/05 07:01:21 jmaggard Exp $
 # MiniDLNA project
 # http://sourceforge.net/projects/minidlna/
 # (c) 2008-2009 Justin Maggard
@@ -18,9 +18,6 @@ include ../common.mak
 LDFLAGS = -ffunction-sections -fdata-sections -Wl,--gc-sections
 
 #CFLAGS = -Wall -g -O3 -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 \
-#	 -I/usr/include/ffmpeg \
-#	 -I/usr/include/libavutil -I/usr/include/libavcodec -I/usr/include/libavformat \
-#	 -I/usr/include/ffmpeg/libavutil -I/usr/include/ffmpeg/libavcodec -I/usr/include/ffmpeg/libavformat
 
 CFLAGS = -Wall -g -Os -D_GNU_SOURCE $(EXTRACFLAGS) -D_FILE_OFFSET_BITS=64 \
 	-ffunction-sections -fdata-sections \

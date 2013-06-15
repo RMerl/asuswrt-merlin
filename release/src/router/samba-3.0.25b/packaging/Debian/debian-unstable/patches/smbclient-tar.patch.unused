@@ -1,0 +1,43 @@
+diff -uNr samba-3.0.0beta2.orig/source/client/client.c samba-3.0.0beta2/source/client/client.c
+--- samba-3.0.0beta2.orig/source/client/client.c	2003-07-01 22:36:24.000000000 -0500
++++ samba-3.0.0beta2/source/client/client.c	2003-07-06 15:17:36.000000000 -0500
+@@ -2773,6 +2773,7 @@
+ 	int opt;
+ 	pstring query_host;
+ 	BOOL message = False;
++	char* tar_args = NULL;
+ 	extern char tar_type;
+ 	pstring term_code;
+ 	static const char *new_name_resolve_order = NULL;
+@@ -2816,7 +2817,7 @@
+ 			max_protocol = interpret_protocol(poptGetOptArg(pc), max_protocol);
+ 			break;
+ 		case 'T':
+-			if (!tar_parseargs(argc, argv, poptGetOptArg(pc), optind)) {
++			if (!(tar_args = poptGetOptArg(pc))) {
+ 				poptPrintUsage(pc, stderr, 0);
+ 				exit(1);
+ 			}
+@@ -2917,6 +2917,22 @@
+ 		pstrcpy(cmdline_auth_info.password,poptGetArg(pc));  
+ 	}
+ 
++	/* The tar command may take a number of string options; pass
++	   everything we have left to tar_parseargs(). */
++	if (tar_args) {
++		const char **argv2 = poptGetArgs(pc);
++		int argc2 = 0;
++
++		if (argv2) {
++			while (argv2[argc2]) argc2++;
++		}
++		
++		if (!tar_parseargs(argc2, argv2, tar_args, 0)) {
++			poptPrintUsage(pc, stderr, 0);
++			exit(1);
++		}
++	}
++
+ 	init_names();
+ 
+ 	if(new_name_resolve_order)

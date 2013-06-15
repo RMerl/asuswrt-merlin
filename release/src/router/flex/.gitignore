@@ -1,0 +1,4 @@
+*.o
+*.a
+*.depend
+config.log

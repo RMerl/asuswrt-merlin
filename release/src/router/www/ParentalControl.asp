@@ -53,7 +53,7 @@ var parental2_support = rc_support.search("PARENTAL2");
 
 var MULTIFILTER_ENABLE = '<% nvram_get("MULTIFILTER_ENABLE"); %>'.replace(/&#62/g, ">");
 var MULTIFILTER_MAC = '<% nvram_get("MULTIFILTER_MAC"); %>'.replace(/&#62/g, ">");
-var MULTIFILTER_DEVICENAME = '<% nvram_get("MULTIFILTER_DEVICENAME"); %>'.replace(/&#62/g, ">");
+var MULTIFILTER_DEVICENAME = decodeURIComponent('<% nvram_char_to_ascii("","MULTIFILTER_DEVICENAME"); %>').replace(/&#62/g, ">");
 var MULTIFILTER_MACFILTER_DAYTIME = '<% nvram_get("MULTIFILTER_MACFILTER_DAYTIME"); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<");
 var MULTIFILTER_LANTOWAN_ENABLE = '<% nvram_get("MULTIFILTER_LANTOWAN_ENABLE"); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<");
 var MULTIFILTER_LANTOWAN_DESC = '<% nvram_get("MULTIFILTER_LANTOWAN_DESC"); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<");
@@ -75,11 +75,15 @@ function initial(){
 	show_menu();
 	show_footer();
 
-	if(downsize_support != -1)
+	if(downsize_4m_support)
 		$("guest_image").parentNode.style.display = "none";
 
 	gen_mainTable();
 	showLANIPList();
+	if(<% nvram_get("MULTIFILTER_ALL"); %>)
+		showhide("list_table",1);
+	else
+		showhide("list_table",0);
 }
 
 /*------------ Mouse event of fake LAN IP select menu {-----------------*/
@@ -147,11 +151,11 @@ function gen_mainTable(){
 
 	code +='<tr><td style="border-bottom:2px solid #000;" title="<#WLANConfig11b_WirelessCtrl_button1name#>/<#btn_disable#>"><input type=\"checkbox\" id="newrule_Enable" checked></td>';
 	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="32" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onKeyPress="" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">';
-	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;"></td>';
+	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">';
+	code +='<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div></td>';
 	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" class="input_macaddr_table" name="PC_mac" onKeyPress="return is_hwaddr(this,event)"></td>';
 	code +='<td style="border-bottom:2px solid #000;">--</td>';
 	code +='<td style="border-bottom:2px solid #000;"><input class="url_btn" type="button" onClick="addRow_main(16)" value=""></td></tr>';
-
 	if(MULTIFILTER_DEVICENAME == "" && MULTIFILTER_MAC == "")
 		code +='<tr><td style="color:#FFCC00;" colspan="10"><#IPConnection_VSList_Norule#></td>';
 	else{
@@ -171,7 +175,7 @@ function gen_mainTable(){
 	$("mainTable").style.display = "";
 	$("mainTable").innerHTML = code;
 	$j("#mainTable").fadeIn();
-
+	
 	// Viz 2012.07.24$("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="applyRule(0);" value="<#btn_disable#>"><input class="button_gen" type="button" onClick="applyRule(1);" value="<#CTL_apply#>">';
 	$("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="applyRule(1);" value="<#CTL_apply#>">';
 
@@ -266,10 +270,17 @@ function genChecked(_flag){
 	else
 		return "";
 }
-
+var t = "";
 function showclock(){
-	if(StopTimeCount == 1)
+	if(StopTimeCount == 1){			//Jieming added to continue counting millisecond of system time
+		systime_millsec += 1000;
+		t = setTimeout("showclock()", 1000);
 		return false;
+	}
+	else if(StopTimeCount == 0 && t){  
+		clearTimeout(t);
+		t = "";
+	}
 
 	JS_timeObj.setTime(systime_millsec);
 	systime_millsec += 1000;
@@ -414,6 +425,15 @@ function gen_lantowanTable(client){
  	code +='</tr></table>';
 
 	$("mainTable").innerHTML = code;
+	var code_temp = "";
+	code_temp = '<table style="width:650px;margin-left:-98px;"><tr>';
+	code_temp += '<td style="width:90px;"><div style="width:90px;height:20px;background:#9CB2BA;"></div></td>';
+	code_temp += '<td><div align="left" style="font-family:Arial,sans-serif,Helvetica;font-size:18px;margin-left:5px;">Allow</div></td>';
+	code_temp += '</tr></table>';
+	$('hintBlock').innerHTML = code_temp;
+	$('hintBlock').style.marginTop = "10px";
+	$('hintBlock').style.marginBottom = "-10px";
+	$('hintBlock').style.display = "";
 	$("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="cancel_lantowan('+client+');" value="<#CTL_Cancel#>">';
 	$("ctrlBtn").innerHTML += '<input class="button_gen" type="button" onClick="saveto_lantowan('+client+');applyRule();" value="<#CTL_ok#>">';  
 	
@@ -424,7 +444,7 @@ function gen_lantowanTable(client){
 
 	if(parental2_support != -1)
 		generateCalendar(client);
-
+	
 	StopTimeCount = 0;
 	showclock();
 }
@@ -435,6 +455,7 @@ function regen_lantowan(){
 	MULTIFILTER_LANTOWAN_PORT = "";
 	MULTIFILTER_LANTOWAN_PROTO = "";
 	MULTIFILTER_MACFILTER_DAYTIME = "";
+
 	for(i=0;i<MULTIFILTER_LANTOWAN_DESC_row.length;i++){
 		MULTIFILTER_LANTOWAN_ENABLE += MULTIFILTER_LANTOWAN_ENABLE_row[i];
 		MULTIFILTER_LANTOWAN_DESC += MULTIFILTER_LANTOWAN_DESC_row[i];
@@ -527,6 +548,8 @@ function cancel_lantowan(client){
 	MULTIFILTER_MACFILTER_DAYTIME_row[client] = MULTIFILTER_MACFILTER_DAYTIME_row_tmp[client];
 
 	gen_mainTable();
+	
+	$('hintBlock').style.display = "none";
 }
 
 function addRow_main(upper){
@@ -756,9 +779,25 @@ function deleteRow_lantowan(r, client){
 		</td>				
 		
     <td valign="top">
-	<div id="tabMenu" class="submenuBlock" style="*margin-top:-155px;"></div>
+	<div id="tabMenu" class="submenuBlock" style="*margin-top:-155px;">
+		<table border="0" cellspacing="0" cellpadding="0">
+				<tbody>
+					<tr>
+						<td>
+							<div class="tabclick"><span>Parental Control</span></div>
+						</td>
+						<td>
+							<a href="YandexDNS.asp"><div class="tab" id="tab_YandexDNS"><span>Yandex.DNS</span></div></a>
+						</td>
+					</tr>
+			</tbody>
+		</table>
+	
+	
+	</div>
+	
 		<!--===================================Beginning of Main Content===========================================-->		
-<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
+<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0" >
 	<tr>
 		<td valign="top" >
 		
@@ -776,7 +815,7 @@ function deleteRow_lantowan(r, client){
 				<tr>
 					<td>
 						<img id="guest_image" src="/images/New_ui/parental-control.png">
-						<div align="center" class="left" style="margin-top:25px;margin-left:43px;width:94px; float:left; cursor:pointer;" id="radio_ParentControl_enable"></div>
+						<!--div align="center" class="left" style="margin-top:25px;margin-left:43px;width:94px; float:left; cursor:pointer;" id="radio_ParentControl_enable"></div>
 						<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 						<script type="text/javascript">
 								$j('#radio_ParentControl_enable').iphoneSwitch('<% nvram_get("MULTIFILTER_ALL"); %>',
@@ -790,7 +829,7 @@ function deleteRow_lantowan(r, client){
 													switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 										});
 						</script>			
-						</div>
+						</div-->
 					</td>
 					<td>&nbsp;&nbsp;</td>
 					<td style="font-style: italic;font-size: 14px;">
@@ -812,15 +851,45 @@ function deleteRow_lantowan(r, client){
 
 
 			<!--=====Beginning of Main Content=====-->
-			<table width="95%" border="0" align="center" cellpadding="0" cellspacing="0" style="margin-left:30px;">
+			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+				<tr>
+					<th>Enable Parental Control</th>
+					<td>
+						<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_ParentControl_enable"></div>
+						<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
+							<script type="text/javascript">
+								$j('#radio_ParentControl_enable').iphoneSwitch('<% nvram_get("MULTIFILTER_ALL"); %>',
+									function(){
+											document.form.MULTIFILTER_ALL.value = 1;
+											showhide("list_table",1);	
+									},
+									function(){
+										document.form.MULTIFILTER_ALL.value = 0;
+										showhide("list_table",0);
+										if(document.form.MULTIFILTER_ALL.value == '<% nvram_get("MULTIFILTER_ALL"); %>')
+											return false;
+																					
+											applyRule(1);
+									},
+											{
+											switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
+									});
+							</script>			
+						</div>
+					</td>			
+				</tr>				
+			</table>			
+						
+			<table id="list_table" width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="display:none">
 				<tr>
 					<td valign="top" align="center">
 						<!-- client info -->
-						<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 						<div id="VSList_Block"></div>
 						<!-- Content -->
-						<div id="mainTable"></div>
-						<br/>
+						<div id="mainTable" style="margin-top:10px;"></div>
+						<!--br/-->
+						<div id="hintBlock" style="width:650px;display:none;"></div>
+						<br>
 						<div id="ctrlBtn"></div>
 						<!-- Content -->						
 					</td>	

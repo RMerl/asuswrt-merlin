@@ -1,0 +1,780 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76"
+hspace="10" align="left" />
+
+<h1 class="head0">Appendix F. Running Samba on Mac OS X Server</h1>
+
+
+
+<p><a name="INDEX-1"/>Mac OS X Server is an Apple
+operating-system product based on Mac OS X, with the addition of
+administrative tools and server software. One area in which it
+differs from Mac OS X is in the configuration of Samba-based
+services. In this appendix, we'll tell you how to
+set up SMB file and printer shares, enable client user access, and
+monitor activity. Our specific focus is on Mac OS X Server 10.2.</p>
+
+
+
+<div class="sect1"><a name="samba2-APP-F-SECT-1"/>
+
+<h2 class="head1">Setup Procedures</h2>
+
+<p>The first thing to note is that the procedure described in <a href="ch02.html">Chapter 2</a> using System Preferences to enable Samba does
+not apply to Mac OS X Server. Unlike Mac OS X, the Sharing pane of
+System Preferences does not include an option to turn on Windows File
+Sharing. Instead, there is a set of applications to configure,
+activate, and monitor services: Workgroup Manager, Server Settings,
+Server Status, and Open Directory Assistant, all located in the
+directory <em class="filename">/Applications/Utilities</em>.</p>
+
+<a name="samba2-APP-F-NOTE-163"/><blockquote class="note"><h4 class="objtitle">NOTE</h4>
+<p>In addition to being installed with Mac OS X Server, these and other
+administrative applications are included on a separate installation
+CD-ROM sold with the operating system. They can be used to manage Mac
+OS X Server systems remotely from any Mac OS X machine.</p>
+
+<p>For more information, refer to the <em class="citetitle">Mac OS X Server
+Administrator's
+Guide</em><a name="INDEX-2"/>, included as a PDF
+file in the <em class="filename">/Library/Documentation/MacOSXServer</em>
+directory, and also downloadable from Apple
+Computer's web site at <a href="http://www.apple.com/server/">http://www.apple.com/server/</a>.</p>
+</blockquote>
+
+<p>Briefly, the procedure for setting up SMB file and printer shares is
+as follows:</p>
+
+<ol><li>
+<p>Designate share points in Workgroup Manager for file sharing.</p>
+</li><li>
+<p>Set up print queues in Server Settings for printer sharing, and
+activate Printer Service.</p>
+</li><li>
+<p>Configure and activate Windows Services in Server Settings.</p>
+</li><li>
+<p>Activate Password Server and enable SMB authentication in Open
+Directory Assistant.</p>
+</li><li>
+<p>Enable Password Server authentication for user accounts in Workgroup
+Manager.</p>
+</li><li>
+<p>Monitor file and print services with Server Status.</p>
+</li></ol>
+
+<div class="sect2"><a name="samba2-APP-F-SECT-1.1"/>
+
+<h3 class="head2">Sharing Files</h3>
+
+<p><a name="INDEX-3"/><a name="INDEX-4"/>The
+first step to enable SMB file sharing is to designate one or more
+<em class="firstterm">share points</em>. Share points are folders that
+form the root of shared volumes for any of the protocols supported by
+Mac OS X Server: Apple Filesharing Protocol (AFP), Network Filesystem
+(NFS), File Transfer Protocol (FTP), and SMB.</p>
+
+<p>To designate a share point, launch Workgroup Manager. You will be
+prompted for the local or remote server's hostname
+or IP address, as well as for a username and password; this process
+is required by all the Mac OS X Server administrative applications.
+Once Workgroup Manager is open, click the Sharing button in the
+toolbar. The list on the left, under the Share Points tab, displays
+currently defined share points. To add a new one, click the All tab,
+and navigate to the folder you want to share.</p>
+
+<p>On the right, under the General tab, check the box labeled Share this
+item and its contents, change the ownership and permissions if
+desired, then click the Save button. Next, under the Protocols tab,
+select Windows File Settings from the pop-up menu, and ensure that
+the box labeled Share this item using SMB is checked. At this point,
+you can also decide whether to allow guest access to the share,
+change the name of the share displayed to SMB clients, or set
+permissions for files and folders created by SMB clients. Click the
+Save button when you're finished making changes. See
+<a href="appf.html#samba2-APP-F-FIG-1">Figure F-1</a>.</p>
+
+<div class="figure"><a name="samba2-APP-F-FIG-1"/><img src="figs/sam2_af01.gif"/></div><h4 class="head4">Figure F-1. Workgroup Manager: Share Points and Windows File Settings</h4>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-APP-F-SECT-1.2"/>
+
+<h3 class="head2">Sharing Printers</h3>
+
+<p><a name="INDEX-5"/><a name="INDEX-6"/>Printer shares are set up
+differently. First, launch Server Settings; under the File &amp;
+Print tab, select Print, then Configure Print Service.... Check the
+box labeled Automatically share new queues for Windows printing.
+Next, click the Print icon again and then Show Print Monitor. Make
+sure the printers you want to share are listed. Printers directly
+attached to the server should have queues created automatically, but
+remote printers you wish to reshare must be added by clicking New
+Queue and discovering or specifying the printers. When
+you're finished, click Save, select the Print icon
+one more time, and select Start Print Service. See <a href="appf.html#samba2-APP-F-FIG-2">Figure F-2</a>.</p>
+
+<div class="figure"><a name="samba2-APP-F-FIG-2"/><img src="figs/sam2_af02.gif"/></div><h4 class="head4">Figure F-2. Server Settings: Print Service</h4>
+
+<a name="samba2-APP-F-NOTE-164"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>Server Settings will make local printers available for sharing only
+if they're PostScript compatible. Unfortunately,
+many printers, including consumer-grade USB inkjet printers,
+aren't. If you want to make one of these printers
+available to SMB clients, you can still add the share to
+<em class="filename">/etc/smb.conf</em> yourself with a text editor. See
+&quot;Rolling Your Own&quot; later in this
+chapter for instructions and caveats related to making manual changes
+to <em class="filename">smb.conf</em>.</p>
+</blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-APP-F-SECT-1.3"/>
+
+<h3 class="head2">Configuring and Activating Services</h3>
+
+<p><a name="INDEX-7"/>At this point, neither
+the file shares nor the printer shares are available to SMB clients.
+To activate them, click the Windows icon in Server Settings, and
+click Configure Windows Services.... Under the General tab, you can
+set the server's NetBIOS hostname, the workgroup or
+Windows NT domain in which the server resides, and the description
+that gets displayed in a browse list. You can also specify the code
+page for an alternate character set. Finally, you can enable
+boot-time startup of Samba. See <a href="appf.html#samba2-APP-F-FIG-3">Figure F-3</a>.</p>
+
+<div class="figure"><a name="samba2-APP-F-FIG-3"/><img src="figs/sam2_af03.gif"/></div><h4 class="head4">Figure F-3. Server Settings: Windows Services</h4>
+
+<p>The Windows Services Access tab offers options to enable guest access
+and limit the number of simultaneous client connections; under the
+Logging tab, you can specify the verbosity of your logging. With
+options under the Neighborhood tab, you can configure your machine as
+a WINS client or server or have it provide browser services locally
+or across subnets.</p>
+
+<a name="samba2-APP-F-SIDEBAR-1"/><blockquote><table border="1" cellpadding="6"><tr><td>
+<h4 class="head4">Password Server</h4>
+
+<p><a name="INDEX-8"/><a name="INDEX-9"/>Password Server is a feature
+introduced with Mac OS X Server 10.2. In prior versions of Mac OS X
+Server, Windows authentication was handled with Authentication
+Manager, which stored a user's Windows password in
+the <tt class="literal">tim_password</tt> property of the
+user's NetInfo record. This can still be done in
+Version 10.2, although it's strongly discouraged
+because the encrypted password is visible to other users with access
+to the NetInfo domain and can potentially be decrypted.</p>
+
+<p>If you need to use Authentication Manager, use the following
+procedure to enable it:</p>
+
+<ol><li>
+<p>On every machine hosting a domain that will bind into the NetInfo
+hierarchy, execute the command <tt class="literal">tim -init -auto</tt>
+<em class="replaceable">tag</em> for each domain, where
+<em class="replaceable">tag</em> is the name of the
+domain's database.</p>
+</li>
+<li>
+<p>When prompted, provide a password to be used as the encryption key
+for the domain. This key is used to decrypt the Windows passwords and
+is stored in an encrypted file readable only by root,
+<em class="filename">/var/db/netinfo/.tag.tim</em>.</p>
+</li>
+<li>
+<p>Set <tt class="literal">AUTHSERVER=-YES-</tt> in
+<em class="filename">/etc/hostconfig</em>.</p>
+</li>
+<li>
+<p>Start Authentication Manager by invoking <em class="emphasis">tim</em>.
+This is also executed during the boot sequence by the AuthServer
+startup item.</p>
+</li>
+<li>
+<p>Reset the password of each user requiring SMB client access. In Mac
+OS X Server 10.2 or later, make sure the user is set up for Basic
+authentication, not Password Server authentication.</p>
+</li></ol></td></tr></table></blockquote>
+
+<p>When you've finished configuring Windows Services,
+click the Save button, then click the Windows icon in Server
+Settings, and select Start Windows Services. This starts the Samba
+daemons, enabling access from SMB clients.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-APP-F-SECT-1.4"/>
+
+<h3 class="head2">Activating Password Server</h3>
+
+<p><a name="INDEX-10"/><a name="INDEX-11"/>Now that
+you've set up file and printer shares, you need to
+make sure users can properly authenticate to access them. In Mac OS X
+Server, this is accomplished with the <a name="INDEX-12"/>Open Directory
+Password Server, a service based on the <a name="INDEX-13"/>Simple Authentication and Security
+Layer (SASL) standard and usable with many different authentication
+protocols, including the LAN Manager and Windows NT LAN Manager
+(NTLM) protocols. This section describes how to support SMB client
+authentication, but for more information on what Password Server does
+and how it works, see the Mac OS X Server
+Administrator's Guide.</p>
+
+<p>To enable Password Server or merely check its settings, start the
+Open Directory Assistant. Unless you wish to change any of the
+settings, just click the right arrow button in the lower-right corner
+of the window until you get to the first Security step. At this
+point, activate Password Server by selecting the option marked
+Password and authentication information will be provided to other
+systems. The next step displays the main administrative account, and
+the one after that gives you a choice of authentication protocols to
+enable (see <a href="appf.html#samba2-APP-F-FIG-4">Figure F-4</a>). Make sure that SMB-NT is
+checked, and check SMB-Lan Manager if you have Windows 95/98/Me or
+older clients. The final step saves the Password Server configuration
+and prompts you to reboot.</p>
+
+<div class="figure"><a name="samba2-APP-F-FIG-4"/><img src="figs/sam2_af04.gif"/></div><h4 class="head4">Figure F-4. Password Server authentication protocols</h4>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-APP-F-SECT-1.5"/>
+
+<h3 class="head2">Enabling Password Server</h3>
+
+<p><a name="INDEX-14"/><a name="INDEX-15"/>To enable the
+use of Password Server for a user account, launch Workgroup Manager,
+and click the Accounts button in the toolbar. Under the Users tab on
+the far left (with the silhouette of a single person), select the
+account, and under the Advanced tab on the right, select Password
+Server for the User Password Type (see <a href="appf.html#samba2-APP-F-FIG-5">Figure F-5</a>).
+You are prompted to enter a new user password to be stored in the
+Password Server database. After saving the account configuration, the
+user can authenticate and access shares from an SMB client.</p>
+
+<div class="figure"><a name="samba2-APP-F-FIG-5"/><img src="figs/sam2_af05.gif"/></div><h4 class="head4">Figure F-5. Workgroup Manager: Enabling Password Server authentication</h4>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-APP-F-SECT-1.6"/>
+
+<h3 class="head2">Monitoring Services</h3>
+
+<p><a name="INDEX-16"/>Once you've got
+everything working, you'll want to keep an eye on
+things. The Server Status application gives you views into the
+various services provided by Mac OS X Server. For Windows Services,
+you can see the current state of the service, browse the logs
+(located in the directory
+<em class="filename">/Library/Logs/WindowsServices</em>), display and
+terminate individual connections, and view a graph of connections
+over time (see <a href="appf.html#samba2-APP-F-FIG-6">Figure F-6</a>). Similar information is
+provided for Print Service.</p>
+
+<div class="figure"><a name="samba2-APP-F-FIG-6"/><img src="figs/sam2_af06.gif"/></div><h4 class="head4">Figure F-6. Server Status: Windows Services</h4>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-APP-F-SECT-2"/>
+
+<h2 class="head1">Configuration Details</h2>
+
+<p><a name="INDEX-17"/>Underneath the GUI, a lot of activity
+takes place to offer Windows Services. In the non-Server version of
+Mac OS X, selecting Windows File Sharing sets the
+<tt class="literal">SMBSERVER</tt> parameter in
+<em class="filename">/etc/hostconfig</em> and triggers the Samba startup
+item. In Mac OS X Server, under normal circumstances the Samba
+startup item and the <tt class="literal">SMBSERVER</tt> parameter are never
+used.</p>
+
+<p>Instead, a process named <em class="emphasis">sambadmind</em> generates
+<em class="filename">/etc/smb.conf</em> from the configuration specified
+in Server Settings and Workgroup Manager and handles starting and
+restarting the Samba daemons as necessary. The
+<em class="emphasis">sambadmind</em> process is in turn monitored by
+<em class="emphasis">watchdog</em>, which keeps an eye on certain
+processes and restarts those which fail. The
+<em class="emphasis">watchdog</em> utility is configured in
+<em class="filename">/etc/watchdog.conf</em>, a file similar to a System V
+<em class="filename">inittab</em>, which specifies how the services under
+<em class="emphasis">watchdog</em>'s purview are to be
+treated. For example, the line for <em class="emphasis">sambadmind</em>
+looks like this:</p>
+
+<blockquote><pre class="code">sambadmin:respawn:/usr/sbin/sambadmind -d     # SMB Admin daemon</pre></blockquote>
+
+<p>Using a <em class="emphasis">watchdog</em>-monitored process such as
+<em class="emphasis">sambadmind</em> to start the Samba daemons, instead
+of a one-time execution of a startup item, results in more reliable
+service. In Mac OS X Server, if a Samba daemon dies unexpectedly, it
+is quickly restarted. (Examples of other services monitored by
+<em class="emphasis">watchdog</em> are Password Server, Print Service, and
+the Server Settings daemon that allows remote management.)</p>
+
+<p>There's another wrinkle in Mac OS X Server: the
+Samba configuration settings are not written directly to
+<em class="filename">/etc/smb.conf</em>, as they are in the non-Server
+version of Mac OS X. Instead, they're stored in the
+server's local Open Directory domain,<a name="FNPTR-1"/><a href="#FOOTNOTE-1">[1]</a> from which <em class="emphasis">sambadmind</em> retrieves them
+and regenerates <em class="filename">smb.conf</em>. For example, the Samba
+global parameters are stored in
+<em class="filename">/config/SMBServer</em> (see <a href="appf.html#samba2-APP-F-FIG-7">Figure F-7</a>). Share point information is also kept in Open
+Directory, under <em class="filename">/config/SharePoints</em>, while CUPS
+takes responsibility for printer configuration in
+<em class="filename">/etc/cups/printers.conf</em> (also creating stub
+entries used by Samba in <em class="filename">/etc/printcap</em>).</p>
+
+<div class="figure"><a name="samba2-APP-F-FIG-7"/><img src="figs/sam2_af07.gif"/></div><h4 class="head4">Figure F-7. NetInfo Manager: SMBServer properties</h4>
+
+<p><a href="appf.html#samba2-APP-F-TABLE-1">Table F-1</a> summarizes the association of Windows
+Services settings in the Server Settings application, properties
+stored in Open Directory, and parameters in
+<em class="filename">/etc/smb.conf</em>.</p>
+
+<a name="samba2-APP-F-TABLE-1"/><h4 class="head4">Table F-1. Samba configuration settings in Mac OS X Server</h4><table border="1">
+
+
+
+
+<tr>
+<th>
+<p>Server Settings graphical element in Windows Services</p>
+</th>
+<th>
+<p>Open Directory property in <em class="filename">/config/SMBServer</em></p>
+</th>
+<th>
+<p>Samba global parameter in<em class="filename">/etc/smb.conf</em></p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p>General &rarr; Server Name</p>
+</td>
+<td>
+<p><tt class="literal">netbios_name</tt></p>
+</td>
+<td>
+<p><tt class="literal">netbios name</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>General &rarr; Workgroup</p>
+</td>
+<td>
+<p><tt class="literal">workgroup</tt></p>
+</td>
+<td>
+<p><tt class="literal">workgroup</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>General &rarr; Description</p>
+</td>
+<td>
+<p><tt class="literal">description</tt></p>
+</td>
+<td>
+<p><tt class="literal">server string</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>General &rarr; Code Page</p>
+</td>
+<td>
+<p><tt class="literal">code_page</tt></p>
+</td>
+<td>
+<p><tt class="literal">client code page</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>General &rarr; Start Windows Services on system startup</p>
+</td>
+<td>
+<p><tt class="literal">auto_start</tt></p>
+</td>
+<td>
+<p>N/A</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Access &rarr; Allow Guest Access</p>
+</td>
+<td>
+<p><tt class="literal">guest_access</tt>, <tt class="literal">map_to_guest</tt></p>
+</td>
+<td>
+<p><tt class="literal">map to guest</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">guest_account</tt></p>
+</td>
+<td>
+<p><tt class="literal">guest account</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Access &rarr; Maximum client connections</p>
+</td>
+<td>
+<p><tt class="literal">max_connections</tt></p>
+</td>
+<td>
+<p><tt class="literal">max smbd processes</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Logging &rarr; Detail Level</p>
+</td>
+<td>
+<p><tt class="literal">logging</tt></p>
+</td>
+<td>
+<p><tt class="literal">log level</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Neighborhood &rarr; WINS Registration &rarr;
+Off</p>
+</td>
+<td>
+<p><tt class="literal">WINS_enabled</tt>, <tt class="literal">WINS_register</tt></p>
+</td>
+<td>
+<p><tt class="literal">wins support</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Neighborhood &rarr; WINS Registration &rarr;
+Enable WINS server</p>
+</td>
+<td>
+<p><tt class="literal">WINS_enabled</tt></p>
+</td>
+<td>
+<p><tt class="literal">wins support</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Neighborhood &rarr; WINS Registration &rarr;
+Register with WINS server</p>
+</td>
+<td>
+<p><tt class="literal">WINS_register</tt>, <tt class="literal">WINS_address</tt></p>
+</td>
+<td>
+<p><tt class="literal">wins server</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Neighborhood &rarr; Workgroup/Domain Services
+&rarr; Master Browser</p>
+</td>
+<td>
+<p><tt class="literal">Local_Master</tt></p>
+</td>
+<td>
+<p><tt class="literal">local master</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Neighborhood &rarr; Workgroup/Domain Services
+&rarr; Domain Master Browser</p>
+</td>
+<td>
+<p><tt class="literal">Domain_Master</tt></p>
+</td>
+<td>
+<p><tt class="literal">domain master</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Print &rarr; Start Print Service</p>
+</td>
+<td>
+<p><tt class="literal">printing</tt></p>
+</td>
+<td>
+<p>N/A</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">lprm_command</tt></p>
+</td>
+<td>
+<p><tt class="literal">lprm command</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">lppause_command</tt></p>
+</td>
+<td>
+<p><tt class="literal">lppause command</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">lpresume_command</tt></p>
+</td>
+<td>
+<p><tt class="literal">lpresume command</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">printer_admin</tt></p>
+</td>
+<td>
+<p><tt class="literal">printer admin</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">encryption</tt></p>
+</td>
+<td>
+<p><tt class="literal">encrypt passwords</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">coding_system</tt></p>
+</td>
+<td>
+<p><tt class="literal">coding system</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">log_dir</tt></p>
+</td>
+<td>
+<p>N/A</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">smb_log</tt></p>
+</td>
+<td>
+<p><tt class="literal">log file</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">nmb_log</tt></p>
+</td>
+<td>
+<p>N/A</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">samba_sbindir</tt></p>
+</td>
+<td>
+<p>N/A</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">samba_bindir</tt></p>
+</td>
+<td>
+<p>N/A</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">samba_libdir</tt></p>
+</td>
+<td>
+<p>N/A</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">samba_lockdir</tt></p>
+</td>
+<td>
+<p>N/A</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">samba_vardir</tt></p>
+</td>
+<td>
+<p>N/A</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>N/A</p>
+</td>
+<td>
+<p><tt class="literal">stop_time</tt></p>
+</td>
+<td>
+<p>N/A <a name="INDEX-19"/></p>
+</td>
+</tr>
+
+</table>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-APP-F-SECT-3"/>
+
+<h2 class="head1">Rolling Your Own</h2>
+
+<p><a name="INDEX-20"/>When making manual changes to the Samba
+configuration file, take care to block changes initiated from
+graphical applications by invoking this command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>chflags uchg /etc/smb.conf</b></tt></pre></blockquote>
+
+<p>From that point on, the GUI will be useful only for starting,
+stopping, and monitoring the service&mdash;not for configuring it.</p>
+
+<p>If you install your own version of Samba, you can still manage it
+from Server Settings by changing some of the Open Directory
+properties in <em class="filename">/config/SMBServer</em>.</p>
+
+<p>To do this, open NetInfo Manager and modify the
+<tt class="literal">samba_sbindir</tt> and <tt class="literal">samba_bindir</tt>
+properties to match the location of your Samba installation.
+Optionally, you can modify <tt class="literal">samba_libdir</tt>,
+<tt class="literal">samba_vardir</tt>, and
+<tt class="literal">samba_lockdir</tt>. Assuming a default Samba
+installation, you can also change these at the command line with the
+following commands:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>nicl . -create /config/SMBServer samba_sbindir /usr/local/samba/bin</b></tt>
+# <tt class="userinput"><b>nicl . -create /config/SMBServer samba_bindir /usr/local/samba/bin</b></tt>
+# <tt class="userinput"><b>nicl . -create /config/SMBServer samba_libdir /usr/local/samba/lib</b></tt>
+# <tt class="userinput"><b>nicl . -create /config/SMBServer samba_vardir /usr/local/samba/var</b></tt>
+# <tt class="userinput"><b>nicl . -create /config/SMBServer samba_lockdir /usr/local/samba/var/locks</b></tt></pre></blockquote>
+
+<p>You can check your settings with this command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>nicl . -read /config/SMBServer</b></tt></pre></blockquote>
+
+<p>In Server Settings, select Stop Windows Services, then run this
+command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>killall sambadmind</b></tt></pre></blockquote>
+
+<p>The <em class="emphasis">watchdog</em> utility restarts
+<em class="emphasis">sambadmind</em> within seconds. Finally, go back to
+Server Settings, and select Start Windows Services.</p>
+
+<p>If you don't modify Open Directory properties to
+match your active Samba installation (because you wish to manage your
+configuration another way), be sure never to activate Windows
+Services from the Server Settings application, or
+you'll wind up with two sets of Samba daemons
+running concurrently. <a name="INDEX-21"/></p>
+
+
+</div>
+
+<hr/><h4 class="head4">Footnotes</h4><blockquote><a name="FOOTNOTE-1"/>
+<p><a href="#FNPTR-1">[1]</a> In versions of Mac OS X prior to 10.2, Open Directory domains
+were called NetInfo domains. NetInfo Manager (located in
+<em class="filename">/Applications/Utilities</em>) provides a graphical
+interface to view and modify the contents of Open Directory
+databases. For more information, see the <em class="citetitle">Mac OS X Server
+Administrator's Guide</em>, as well as
+<em class="citetitle">Understanding and Using NetInfo</em>, downloadable
+from the Mac OS X Server resources web page at <a href="http://www.apple.com/server/resources.html">http://www.apple.com/server/resources.html</a>.</p>
+</blockquote>
+
+
+<hr/><h4 class="head4"><a href="toc.html">TOC</a></h4>
+</body></html>

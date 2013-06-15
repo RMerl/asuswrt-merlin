@@ -1,0 +1,37 @@
+# $Source: /opt/cvs/samba/smbldap-tools/CONTRIBUTORS,v $
+#
+## Authors and actives contributors to SMBLDAP-TOOLS
+
+Have contributed directly to this tools, or are always in charge of 
+some aspects of it developments:
+ . Jérôme Tournier <jerome.tournier@IDEALX.com>
+ . Terry Davis <terry@terryd.net>
+ . David Le Corfec <dlc@freesurf.fr>
+ . Olivier Lemaire <olivier.lemaire@IDEALX.com>
+
+Many thanks to contributors for bug report and patches:
+ . Bruce Benda
+	smbldap-passwd: regular users can change their passwords when TLS is forced
+ . Dmitry Grigorovich
+	options in smbldap-passwd
+ . Marc Schoechlin <ms@LF.net>
+	load the perl-modules without setting environment-variables or making symlinks
+ . Alexander Bergolth <leo@strike.wu-wien.ac.at>
+	more Net::LDAP support
+ . Gert-Jan Braas <braas@wyldebeast-wunderliebe.com>
+	bug report for 2.2.3 samba.schema
+ . Jody Haynes <Jody.Haynes@isunnetworks.com>
+	originaly passwd.pl
+ . Brad Langhorst <brad@langhorst.com>
+	package relocatability
+ . Mirko Manea <mami@arena.sci.univr.it>
+	originaly useradd.pl
+ . Alain Richard <alain.richard@equation.fr>
+	bug report and Perl tips
+ . Roland Schulz <mail@r2s2.de> 
+	bug report for smbldap-passwd
+ . Xavier Boschian <Xavier.Boschian@rtlgroup.net>
+	bug report for smbldap-populate
+ . Christophe DUBREUIL <christophe.dubreuil@laposte.net>
+	Net::LDAP support in smbldap_tools.pm
+# - The End

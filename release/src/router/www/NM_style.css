@@ -58,7 +58,10 @@
 
 #iconInternet{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 0%;	width:107px;	height:95px; cursor:pointer;}
 #iconInternet a:link{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 100%;	width:107px;	height:95px; cursor:pointer;}
-
+#iconInternet_primary{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 0%;	width:107px;	height:95px; cursor:pointer; margin-left:12px;}
+#iconInternet_primary a:link{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 100%;	width:107px;	height:95px; cursor:pointer;}
+#iconInternet_secondary{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 0%;	width:107px;	height:95px; cursor:pointer;margin-left:12px;}
+#iconInternet_secondary a:link{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 100%;	width:107px;	height:95px; cursor:pointer;}
 
 #iconRouter{ background:url(images/New_ui/networkmap/map-iconRouter.png) no-repeat 0% 100%;	width:107px;	height:95px; cursor:pointer; margin:0px 0px 0px 0px;}
 
@@ -369,9 +372,9 @@
 	-moz-border-radius: 10px;
 	border-radius: 10px;
 	
-	-moz-box-shadow: 3px 11px 10px #333;
-	-webkit-box-shadow: 3px 11px 10px #333;
-	box-shadow: 3px 11px 10px #333;
+	-moz-box-shadow: 12px 5px 10px #333;
+	-webkit-box-shadow: 12px 5px 10px #333;
+	box-shadow: 12px 5px 10px #333;
 	
 	behavior: url(/PIE.htc);
 	border-radius: 10px 10px 10px 10px;

@@ -57,6 +57,8 @@ var progressBar;
 var timer;
 var diskmon_freq_row = diskmon_freq_time.split('&#62');
 var $j = jQuery.noConflict();
+var stop_flag = 0;
+var scan_done = 0;
 
 function initial(){
 	document.getElementById("t0").className = "tab_NW";
@@ -64,10 +66,9 @@ function initial(){
 
 	load_schedule_value();
 	freq_change();
-	
+
 	check_status(apps_pool_error);
 	check_status2(usb_pool_error);
-
 }
 
 function freq_change(){
@@ -134,7 +135,7 @@ function show_schedule_desc(){
 
 function apply_schedule(){
 	if(progressBar >= 1 && progressBar <= 100 ){
-		alert("Disk scanning now. Please wait for it to complete.");
+		alert("<#diskUtility_scanning#>");
 		return false;
 	}
 	else{
@@ -148,7 +149,7 @@ function apply_schedule(){
 }
 
 function stop_diskmon(){
-	//document.form.diskmon_freq.disabled = true;
+	document.form.diskmon_freq.disabled = false;
 	document.form.diskmon_freq_time.disabled = true;
 	//document.form.diskmon_policy.disabled = true;
 	document.form.diskmon_usbport.disabled = true;
@@ -206,31 +207,30 @@ function gen_part_option(){
 }
 
 function go_scan(){
-	var str = "During scanning process, all disk activities will be stopped, do you want to scan it now";
-		
-	if(!confirm(str)){
+	stop_flag = 0;
+	if(!confirm("<#diskUtility_scan_hint#>")){
 		document.getElementById('scan_status_field').style.display = "";
 		document.getElementById('progressBar').style.display = "none";
 		return false;
 	}
 	scan_manually();
 	document.getElementById('loadingIcon').style.display = "";
+	document.getElementById('btn_scan').style.display = "none";
+	document.getElementById('btn_abort').style.display = "";
+	document.getElementById('progressBar').style.display = "";	
+	document.getElementById('scan_status_field').style.display = "none";	
 }
 function show_loadingBar_field(){
 	document.getElementById('loadingIcon').style.display = "none";
 	showLoadingUpdate();
 	progressBar = 1;
-	document.getElementById('scan_status_field').style.display = "none";
-	document.getElementById('progressBar').style.display = "";		
+	
 	parent.document.getElementById('ring_USBdisk_'+diskOrder).style.display = "";
 	parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/backgroud_move_8P_2.0.gif)";
 	parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 2%';
 }
 
 function showLoadingUpdate(){
-	document.getElementById('btn_scan').style.display = "none";
-	document.getElementById('btn_abort').style.display = "";
-	
 	$j.ajax({
     	url: '/disk_scan.asp',
     	dataType: 'script',
@@ -238,22 +238,24 @@ function showLoadingUpdate(){
     		showLoadingUpdate();
     	},
     	success: function(){
-				document.getElementById("updateProgress").style.width = progressBar+"%";
-				if(scan_status == 1 ){	// To control message of scanning status
+				if(stop_flag == 0)
+					document.getElementById("updateProgress").style.width = progressBar+"%";
+					
+				if( scan_status == 1 && stop_flag == 0){	// To control message of scanning status
 					if(progressBar >= 5)
 						progressBar =5;
 						
-					document.getElementById('scan_message').innerHTML = "Initializing disk scanning...";												
+					document.getElementById('scan_message').innerHTML = "<#diskUtility_initial#>";
 				}	
-				else if(scan_status == 2){
+				else if(scan_status == 2 && stop_flag == 0){
 					if(progressBar <= 5)
 						progressBar = 6;
 					else if (progressBar >= 15)	
 						progressBar = 15;
 				
-					document.getElementById('scan_message').innerHTML = "Unmounting disk...";								
+					document.getElementById('scan_message').innerHTML = "<#diskUtility_umount#>";								
 				}
-				else if(scan_status == 3){
+				else if(scan_status == 3 && stop_flag == 0){
 					if(progressBar <= 15)
 						progressBar = 16;
 					else if (progressBar >= 40)	
@@ -261,21 +263,25 @@ function showLoadingUpdate(){
 						
 					document.getElementById('scan_message').innerHTML = "Disk scanning ...";					
 				}	
-				else if(scan_status == 4){
+				else if(scan_status == 4 && stop_flag == 0){
 					if(progressBar <= 40)
 						progressBar = 41;
 					else if (progressBar >= 90)	
 						progressBar = 90;
 						
-					document.getElementById('scan_message').innerHTML = "Disk Re-Mounting...";					
+					document.getElementById('scan_message').innerHTML = "<#diskUtility_reMount#>";
 				}
-				else if(scan_status == 5){
+				else if(scan_status == 5 && stop_flag == 0){
 					if(progressBar <= 90)
 						progressBar = 91;
 				
-					document.getElementById('scan_message').innerHTML = "Finishing disk scanning...";				
+					document.getElementById('scan_message').innerHTML = "<#diskUtility_finish#>";				
+				}
+				else{
+					document.getElementById('scan_message').innerHTML = "Stop disk scanning force...";	
 				}
 			if(progressBar > 100){
+				scan_done = 1;
 				document.getElementById('btn_scan').style.display = "";
 				document.getElementById('btn_abort').style.display = "none";
 				document.getElementById('scan_status_field').style.display = "";
@@ -288,26 +294,37 @@ function showLoadingUpdate(){
 				document.form.diskmon_part.disabled = false;
 				document.form.diskmon_force_stop.disabled = false;
 				return false;
+			}
+			if(stop_flag == 0){
+				document.getElementById('progress_bar_no').innerHTML = progressBar+"%";
+				progressBar++;
 			}		
-			document.getElementById('progress_bar_no').innerHTML = progressBar+"%";
-			progressBar++;			
-			timer = setTimeout("showLoadingUpdate();", 100);
+			timer = setTimeout("showLoadingUpdate();", 100);		
 		}
 	});
 	
 }
 
 function abort_scan(){
+	var progress_stop = 0;
+	stop_flag = 1;
+	progress_stop = progressBar; // get progress value when press abort
 	clearTimeout(timer);
-	document.getElementById('scan_message').innerHTML = "Disk scan will be stopped soon ...";
-	document.getElementById('progress_bar_no').innerHTML = progressBar + "%";	
+	document.getElementById('scan_message').innerHTML = "<#diskUtility_stop#>";
+	document.getElementById('progress_bar_no').innerHTML = progress_stop + "%";	
+	document.getElementById("updateProgress").style.width = progress_stop +"%";
 	document.getElementById('loadingIcon').style.display = "";
+	document.getElementById('btn_scan').style.display = "";
+	document.getElementById('btn_abort').style.display = "none";
+	document.getElementById('loadingIcon').style.display = "none";	
+	document.getElementById('progressBar').style.display  = "none";
 	stop_diskmon();
-	setTimeout("document.getElementById('loadingIcon').style.display = 'none'", 3000);	
-	setTimeout('document.getElementById(\'btn_scan\').style.display = ""', 3000);
-	setTimeout('document.getElementById(\'btn_abort\').style.display = "none"', 3000);		
-	setTimeout('document.getElementById(\'progressBar\').style.display  = "none"', 3000);			
-	setTimeout('disk_scan_status("")',3000);
+	reset_force_stop();
+	//setTimeout("document.getElementById('loadingIcon').style.display = 'none'", 1000);			
+	//setTimeout('document.getElementById(\'btn_scan\').style.display = ""', 1000);	
+	//setTimeout('document.getElementById(\'btn_abort\').style.display = "none"', 1000);		
+	//setTimeout('document.getElementById(\'progressBar\').style.display  = "none"', 3000);					
+	setTimeout('disk_scan_status("")',1000);
 }
 
 function disk_scan_status(){
@@ -346,11 +363,6 @@ function get_disk_log(){
 function check_status(flag){
 	document.getElementById('scan_status_field').style.display = "";
 	parent.document.getElementById('ring_USBdisk_'+diskOrder).style.display = "";
-	parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
-	parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/USB_2.png)";	
-	parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0% -103px';
-	parent.document.getElementById('iconUSBdisk_'+diskOrder).style.position = "absolute";
-	parent.document.getElementById('iconUSBdisk_'+diskOrder).style.marginTop = "0px";
 	if(navigator.appName.indexOf("Microsoft") >= 0)
 		parent.document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "0px";
 	else	
@@ -376,7 +388,10 @@ function check_status(flag){
 			document.getElementById('problem_found').style.display = "";
 			document.getElementById('crash_found').style.display = "none";
 			document.getElementById('scan_status_image').src = "/images/New_ui/networkmap/blue.png";
-			parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 50%';
+			if(stop_flag == 1 || scan_done == 1){
+				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
+				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 50%';
+			}
 			parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -103px';
 		}
 		else if(ret == 1){	
@@ -384,8 +399,17 @@ function check_status(flag){
 			document.getElementById('problem_found').style.display = "none";
 			document.getElementById('crash_found').style.display = "";
 			document.getElementById('scan_status_image').src = "/images/New_ui/networkmap/red.png";
-			parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 101%';
-			parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0% -201px';
+			if(stop_flag == 1 || scan_done == 1){
+				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
+				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 101%';
+			}
+			parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0% -202px';
+		}
+		else{
+			if(stop_flag == 1){
+				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
+				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 0%';
+			}
 		}
 		get_disk_log();
 	}
@@ -398,7 +422,7 @@ function check_status2(usb_error){
 		document.getElementById('crash_found').style.display = "";
 		document.getElementById('scan_status_image').src = "/images/New_ui/networkmap/red.png";
 		parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 101%';
-		parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0% -201px';
+		parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0% -202px';
 	}
 }
 
@@ -426,6 +450,15 @@ function scan_manually(){
 	document.form.submit();
 }
 
+function reset_force_stop(){
+	document.form.diskmon_freq_time.disabled = false;
+	document.form.diskmon_usbport.disabled = false;
+	document.form.diskmon_part.disabled = false;
+	document.form.diskmon_force_stop.disabled = true;
+	document.form.diskmon_force_stop.value = "0";
+	document.form.submit();
+
+}
 </script>
 </head>
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0" scrolling="no"></iframe>
@@ -447,12 +480,12 @@ function scan_manually(){
 			<table width="100px" border="0" align="left" style="margin-left:5px;" cellpadding="0" cellspacing="0">
 			<td>
 					<div id="t0" class="tabclick_NW" align="center" style="font-weight: bolder;margin-right:2px; width:100px;" onclick="location.href='disk.asp'">
-						<span style="cursor:pointer;font-weight: bolder;">Information</span>
+						<span style="cursor:pointer;font-weight: bolder;"><#diskUtility_information#></span>
 					</div>
 				</td>
 			<td>
 					<div id="t1" class="tab_NW" align="center" style="font-weight: bolder;margin-right:2px; width:100px;" onclick="location.href='disk_utility.asp'">
-						<span style="cursor:pointer;font-weight: bolder;">Disk Utility</span>
+						<span style="cursor:pointer;font-weight: bolder;"><#diskUtility#></span>
 					</div>
 				</td>
 			</table>
@@ -470,13 +503,13 @@ function scan_manually(){
 						<img id="scan_status_image" src="/images/New_ui/networkmap/normal.png">
 					</td>
 					<td id="disk_init_status" >
-						Click "Scan" to check if your hard drive is heathly.
+						<#diskUtility_init_status#>
 					</td>
 					<td id="problem_found" style="display:none;">
-						Disk scan process finished, please check the detail information as below.
+						<#diskUtility_problem_found#>
 					</td>
 					<td id="crash_found" style="display:none;">
-						We have found files cracked in your hard drive, please safely remove it and use a computer to fix it.
+						<#diskUtility_crash_found#>
 					</td>
 				</tr>
 			</table>	
@@ -492,7 +525,7 @@ function scan_manually(){
 			</div>
 		</div>
 		<img style="margin-top:5px;margin-left:9px; *margin-top:-10px; width:283px;" src="/images/New_ui/networkmap/linetwo2.png">
-		<div class="font_style" style="margin-left:10px;margin-bottom:5px;margin-top:10px;">Detail information</div>
+		<div class="font_style" style="margin-left:10px;margin-bottom:5px;margin-top:10px;"><#diskUtility_detailInfo#></div>
 		<div >
 			<table border="0" width="98%" align="center" height="100px;"><tr>
 				<td style="vertical-align:top" height="100px;">
@@ -504,7 +537,7 @@ function scan_manually(){
 			</tr></table>
 		</div>
 		<div style="margin-top:20px;margin-bottom:10px;"align="center">
-			<input id="btn_scan" type="button" class="button_gen" onclick="go_scan();" value="Scan" >
+			<input id="btn_scan" type="button" class="button_gen" onclick="go_scan();" value="<#QIS_rescan#>">
 			<input id="btn_abort" type="button" class="button_gen" onclick="abort_scan();" value="Abort" style="display:none">
 			<img id="loadingIcon" style="display:none;margin-right:10px;" src="/images/InternetScan.gif">
 		</div>
@@ -513,18 +546,18 @@ function scan_manually(){
 
   <tr>
     <td style="background-color:#4D595D;" >
-		<div class="font_style" style="margin-left:12px;margin-top:10px;">Schedule scan setting</div>
+		<div class="font_style" style="margin-left:12px;margin-top:10px;"><#diskUtility_schedule#></div>
 		<img style="margin-top:5px;margin-left:10px; *margin-top:-5px;" src="/images/New_ui/networkmap/linetwo2.png">
 			<div style="margin-left:10px;">
 				<table>
 					<tr class="font_style">
 						<td style="width:100px;">
-							<div style="margin-bottom:5px;" >Frenqucy</div>
+							<div style="margin-bottom:5px;" ><#diskUtility_frenqucy#></div>
 							<select name="diskmon_freq" onchange="freq_change();" class="input_option">
-								<option value="0" <% nvram_match("diskmon_freq", "0", "selected"); %>>Disable</option>
-								<option value="1" <% nvram_match("diskmon_freq", "1", "selected"); %>>Monthly</option>
-								<option value="2" <% nvram_match("diskmon_freq", "2", "selected"); %>>Weekly</option>
-								<option value="3" <% nvram_match("diskmon_freq", "3", "selected"); %>>Daily</option>							
+								<option value="0" <% nvram_match("diskmon_freq", "0", "selected"); %>><#btn_disable#></option>
+								<option value="1" <% nvram_match("diskmon_freq", "1", "selected"); %>><#diskUtility_monthly#></option>
+								<option value="2" <% nvram_match("diskmon_freq", "2", "selected"); %>><#diskUtility_weekly#></option>
+								<option value="3" <% nvram_match("diskmon_freq", "3", "selected"); %>><#diskUtility_daily#></option>							
 							</select>
 						</td>							
 						<td >
@@ -567,7 +600,7 @@ function scan_manually(){
 						</td>
 						<td>
 							<div id="week_field">
-								<div style="margin-bottom:5px">Week</div>
+								<div style="margin-bottom:5px"><#diskUtility_week#></div>
 								<select name="freq_week" class="input_option" onchange="freq_change();">
 									<option value="0">Sun</option>
 									<option value="1">Mon</option>
@@ -581,7 +614,7 @@ function scan_manually(){
 						</td>
 						<td>
 							<div id="time_field">
-								<div style="margin-bottom:5px;">Time</div>
+								<div style="margin-bottom:5px;"><#diskUtility_time#></div>
 								<select name="freq_hour" class="input_option" onchange="freq_change();">
 									<option value="0">0</option>
 									<option value="1">1</option>
@@ -616,14 +649,14 @@ function scan_manually(){
 				<img style="margin-top:5px;margin-left:10px; *margin-top:-10px;" src="/images/New_ui/networkmap/linetwo2.png">
 				<div id="schedule_desc">
 					<div  class="font_style" style="margin-top:5px;margin-left:13px;margin-right:10px;" >
-						You just scheduled to do disk scan at 
+						<#diskUtility_dchedule_hint#> 
 						<span id="schedule_time" style="display:none;font-weight:bolder;"></span>&nbsp
-						on<span id="schedule_week" style="display:none;font-weight:bolder;"></span>
+						on&nbsp<span id="schedule_week" style="display:none;font-weight:bolder;"></span>
 						<span id="schedule_date" style="display:none;font-weight:bolder;"></span>&nbsp
 						<span id="schedule_frequency" style="display:none;font-weight:bolder;"></span>									
 					</div>
 					<div class="font_style" style="margin-top:5px;margin-left:13px;margin-right:10px;">
-						During scanning process, all disk activies be stopped.
+						<#diskUtility_scanDuring#>
 					</div>
 				</div>
 			<div style="margin-top:20px;margin-bottom:10px;" align="center">

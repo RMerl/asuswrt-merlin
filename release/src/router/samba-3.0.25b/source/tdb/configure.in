@@ -1,0 +1,13 @@
+AC_DEFUN([SMB_MODULE_DEFAULT], [echo -n ""])
+AC_DEFUN([SMB_LIBRARY_ENABLE], [echo -n ""])
+AC_DEFUN([SMB_ENABLE], [echo -n ""])
+AC_INIT(include/tdb.h)
+AC_CONFIG_HEADER(include/config.h)
+AC_PROG_CC
+AC_SYS_LARGEFILE
+AC_CHECK_SIZEOF(off_t,cross)
+AC_CHECK_SIZEOF(size_t,cross)
+AC_CHECK_SIZEOF(ssize_t,cross)
+AC_FUNC_MMAP
+sinclude(config.m4)
+AC_OUTPUT(Makefile tdb.pc)

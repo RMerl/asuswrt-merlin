@@ -15,7 +15,10 @@ install:
 	cp ../www $(INSTALLDIR)/. -rf
 	# INSTALL MODEL DEPENDENT files
 	cp ../www/sysdep/$(BUILD_NAME)/www $(INSTALLDIR)/. -rfL || true
-
+ifeq ($(RTN14U),y)   
+	### patch file
+	./model_patch $(INSTALLDIR)/www ../www/sysdep/$(BUILD_NAME)_patch/www || true
+endif
 	rm -rf $(INSTALLDIR)/www/Makefile
 	rm -rf $(INSTALLDIR)/www/sysdep
 	rm -rf $(INSTALLDIR)/www/gendict.pl
@@ -55,6 +58,7 @@ ifeq ($(RTCONFIG_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/appinstall
 endif
 ifeq ($(RTCONFIG_4M_SFP),y)
+	rm -rf $(INSTALLDIR)/www/Main_ConnStatus_Content.asp
 	rm -rf $(INSTALLDIR)/www/svghtc
 	rm -rf $(INSTALLDIR)/www/svg.js
 	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_daily.asp
@@ -100,6 +104,7 @@ ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
 endif
+
 ifneq ($(BUILD_NAME),DSL-N55U)
 ifneq ($(BUILD_NAME),DSL-N55U-B)
 ifneq ($(BUILD_NAME),RT-N56U)
@@ -190,7 +195,27 @@ endif
 ifeq ($(BUILD_NAME), RT-N65U)
 	cd $(INSTALLDIR)/www && ln -sf ../tmp/settings Settings_RT-N65R.CFG && cd $(TOP)/www
 endif
+ifeq ($(BUILD_NAME), RT-N56U)
+	cd $(INSTALLDIR)/www && ln -sf ../tmp/settings Settings_RT-N56R.CFG && cd $(TOP)/www
+endif
 endif
 ifeq ($(BUILD_NAME), RT-N12)
 	cd $(INSTALLDIR)/www && find . -name "*.dict"|xargs -n 1 -I @ sed -i "s/RT-N12/ZVDYNMODELVZ/g" @
+endif
+
+ifneq ($(RTCONFIG_PROXYSTA),y)
+	rm -rf $(INSTALLDIR)/www/qis/QIS_sitesurvey_mb.htm
+ifneq ($(RTCONFIG_WIRELESSREPEATER),y)
+	rm -rf $(INSTALLDIR)/www/images/survey/radio_status.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
+endif
+endif
+
+ifneq ($(RTCONFIG_WIRELESSREPEATER),y)
+	rm -rf $(INSTALLDIR)/www/qis/QIS_sitesurvey.htm
+endif
+
+ifneq ($(RTCONFIG_YANDEXDNS),y)
+	rm -rf $(INSTALLDIR)/www/YandexDNS.asp
+	rm -rf $(INSTALLDIR)/www/images/New_ui/yandex.jpg
 endif

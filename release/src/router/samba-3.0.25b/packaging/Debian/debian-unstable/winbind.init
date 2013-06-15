@@ -1,0 +1,52 @@
+#!/bin/sh
+#
+# Start/stops the winbindd daemon.
+#
+#
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+DAEMON=/usr/sbin/winbindd
+
+# clear conflicting settings from the environment
+unset TMPDIR
+
+# See if the daemon is there
+test -x $DAEMON || exit 0
+
+. /lib/lsb/init-functions
+
+case "$1" in
+	start)
+		log_daemon_msg "Starting the Winbind daemon" "winbind"
+
+		start-stop-daemon --start --quiet --exec $DAEMON
+
+		log_end_msg $?
+		;;
+
+	stop)
+		log_daemon_msg "Stopping the Winbind daemon" "winbind"
+
+		start-stop-daemon --stop --quiet --oknodo --exec $DAEMON
+
+		log_end_msg $?
+		;;
+
+	restart|force-reload)
+		log_daemon_msg "Restarting the Winbind daemon" "winbind"
+
+		start-stop-daemon --stop --quiet --oknodo --exec $DAEMON
+		sleep 2
+		start-stop-daemon --start --quiet --exec $DAEMON
+
+		log_end_msg $?
+		;;
+	*)
+		echo "Usage: /etc/init.d/winbind {start|stop|restart|force-reload}"
+		exit 1
+		;;
+esac
+
+exit 0
+

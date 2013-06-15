@@ -3,6 +3,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 
+<script type="text/javascript" src="/disk_msg.js"></script>
 <script>
 function set_AiDisk_status_error(error_msg){
 	alert(error_msg);

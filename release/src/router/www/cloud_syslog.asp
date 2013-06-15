@@ -87,7 +87,7 @@ function initial(){
 								<div>&nbsp;</div>
 								<div class="formfonttitle">AiCloud - Settings</div>
 								<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-								<div class="formfontdesc" style="font-style: italic;font-size: 14px;">This page shows the detailed AiCloud's activities.</div>
+								<div class="formfontdesc" style="font-style: italic;font-size: 14px;"><#AiCloud_Log_desc#></div>
 
 								<table width="100%" style="border-collapse:collapse;">
 									<tr>

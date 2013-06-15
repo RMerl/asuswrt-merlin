@@ -1,3 +1,5 @@
+include ../../../common.mak
+
 LIBEAP_NAME = libeap
 LIBEAP_CURRENT = 0
 LIBEAP_REVISION = 0
@@ -27,7 +29,10 @@ INCLUDE_INSTALL_DIR=/usr/include/eap_peer
 # Got to use override all across the board, otherwise a 'make
 # CFLAGS=XX' will kill us because the command line's CFLAGS will
 # overwrite Make's and we'll loose all the infrastructure it sets.
-override CFLAGS += -I. -I.. -I../crypto -I../utils -I../common
+override CFLAGS += -I. -I.. -I../crypto -I../utils -I../common 
+ifeq ($(RTCONFIG_BCMARM),y)
+override CFLAGS += -lgcc_s
+endif
 
 # at least for now, need to include config_ssid.h and config_blob.h from
 # wpa_supplicant directory
@@ -142,6 +147,9 @@ OBJS_lib=$(OBJS_both) $(OBJS_peer)
 
 override CFLAGS  += -fPIC -DPIC
 LDFLAGS += -shared
+ifeq ($(RTCONFIG_BCMARM),y)
+LDFLAGS += -lgcc_s
+endif
 
 $(LIBEAP): $(OBJS_lib)
 	$(LDO) $(LDFLAGS) $(OBJS_lib) -Wl,-soname -Wl,$(LIBEAP_SO) -o $(LIBEAP) $(LIBS)

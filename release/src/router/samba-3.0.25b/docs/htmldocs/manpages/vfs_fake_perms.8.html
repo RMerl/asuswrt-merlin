@@ -1,0 +1,17 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>vfs_fake_perms</title><link rel="stylesheet" href="samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.71.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="vfs_fake_perms.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>vfs_fake_perms &#8212; enable read only Roaming Profiles</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">vfs objects = fake_perms</code></p></div></div><div class="refsect1" lang="en"><a name="id291819"></a><h2>DESCRIPTION</h2><p>This VFS module is part of the
+	<a href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p>The <code class="literal">vfs_fake_perms</code> VFS module was created
+	to allow Roaming Profile files and directories to be set (on
+	the Samba server under UNIX) as read only. This module will,
+	if installed on the Profiles share, report to the client that
+	the Profile files and directories are writeable. This satisfies
+	the client even though the files will never be overwritten as
+	the client logs out or shuts down.
+	</p><p>This module is stackable.</p></div><div class="refsect1" lang="en"><a name="id259540"></a><h2>EXAMPLES</h2><pre class="programlisting">
+        <em class="parameter"><code>[Profiles]</code></em>
+	<a class="indexterm" name="id259556"></a>path = /profiles
+	<a class="indexterm" name="id259563"></a>vfs objects = fake_perms
+</pre></div><div class="refsect1" lang="en"><a name="id259573"></a><h2>VERSION</h2><p>This man page is correct for version 3.0.25 of the Samba suite.
+	</p></div><div class="refsect1" lang="en"><a name="id259582"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</p></div></div></body></html>

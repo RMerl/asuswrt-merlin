@@ -18,3 +18,5 @@ BR=Portuguese(Brazil)
 JP=日本語
 IT=Italiano
 UK=Ukrainian
+HU=Hungarian
+RO=Romanian

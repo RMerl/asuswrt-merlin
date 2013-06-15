@@ -1,0 +1,15 @@
+--- samba-3.0.1/source/script/installswat.sh.orig	2004-01-13 13:43:42.000000000 -0500
++++ samba-3.0.1/source/script/installswat.sh	2004-01-13 12:56:49.000000000 -0500
+@@ -114,7 +114,11 @@
+ 
+ # Install Using Samba book (but only if it is there)
+ 
+-if [ "x$BOOKDIR" != "x" -a -f $SRCDIR../docs/htmldocs/using_samba/toc.html ]; then
++# Under Debian we don't actually install the book. The book is part of
++# the samba-doc package, so we just provide a symlink that points to
++# where the book is actually installed. The symlink is created in
++# debian/rules.
++if /bin/false; then
+ 
+     # Create directories
+ 

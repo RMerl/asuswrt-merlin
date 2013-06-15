@@ -1071,6 +1071,10 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		":OUTPUT ACCEPT [0:0]\n"
 		":VSERVER - [0:0]\n"
 		":VUPNP - [0:0]\n");
+#ifdef RTCONFIG_YANDEXDNS
+	fprintf(fp,
+		":YADNS - [0:0]\n");
+#endif
 
 	_dprintf("writting prerouting %s %s %s %s %s %s\n", wan_if, wan_ip, wanx_if, wanx_ip, lan_if, lan_ip);
 
@@ -1085,6 +1089,35 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	/* prerouting physical WAN port connection (DHCP+PPP case) */
 	if (strcmp(wan_if, wanx_if) && inet_addr_(wanx_ip))
 		fprintf(fp, "-A PREROUTING -d %s -j VSERVER\n", wanx_ip);
+
+#ifdef RTCONFIG_YANDEXDNS
+	if (nvram_get_int("yadns_enable_x")) {
+		char *mac, *mode;
+
+		/* Reroute all DNS requests from LAN to Yandex.DNS */
+		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
+		fprintf(fp,
+			"-A PREROUTING -s %s -p udp -m udp --dport 53 -j YADNS\n"
+			"-A PREROUTING -s %s -p tcp -m tcp --dport 53 -j YADNS\n",
+			lan_class, lan_class);
+
+		/* Protection level per client */
+		nv = nvp = strdup(nvram_safe_get("yadns_rulelist"));
+		while (nv && (b = strsep(&nvp, "<")) != NULL) {
+			if (vstrsep(b, ">", &mac, &mode) != 2)
+				continue;
+			if (!*mac || !*mode)
+				continue;
+			fprintf(fp,
+				"-A YADNS -m mac --mac-source %s -j DNAT --to-destination %s\n",
+				mac, yandex_dns(atoi(mode)));
+		}
+		free(nv);
+
+		/* Catch other queries for default level */
+		fprintf(fp, "-A YADNS ! -d %s -j DNAT --to-destination %s\n", lan_ip, lan_ip);
+	}
+#endif
 
 	// need multiple instance for tis?
 	if (nvram_match("misc_http_x", "1"))
@@ -1187,7 +1220,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		switch (get_ipv6_service()) {
 		case IPV6_6IN4:
 			// avoid NATing proto-41 packets when using 6in4 tunnel
-			p = "-p ! 41";
+			p = "! -p 41";
 			break;
 		}
 #endif
@@ -1255,6 +1288,10 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 				":OUTPUT ACCEPT [0:0]\n"
 				":VSERVER - [0:0]\n"
 				":VUPNP - [0:0]\n");
+#ifdef RTCONFIG_YANDEXDNS
+			fprintf(fp,
+				":YADNS - [0:0]\n");
+#endif
 		}
 
 		_dprintf("writting prerouting 2 %s %s %s %s %s %s\n", wan_if, wan_ip, wanx_if, wanx_ip, lan_if, lan_ip);
@@ -1274,6 +1311,35 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 				&& strcmp(wan_if, wanx_if) && inet_addr_(wanx_ip))
 			fprintf(fp, "-A PREROUTING -d %s -j VSERVER\n", wanx_ip);
 	}
+
+#ifdef RTCONFIG_YANDEXDNS
+	if (nvram_get_int("yadns_enable_x")) {
+		char *mac, *mode;
+
+		/* Reroute all DNS requests from LAN to Yandex.DNS */
+		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
+		fprintf(fp,
+			"-A PREROUTING -s %s -p udp -m udp --dport 53 -j YADNS\n"
+			"-A PREROUTING -s %s -p tcp -m tcp --dport 53 -j YADNS\n",
+			lan_class, lan_class);
+
+		/* Protection level per client */
+		nv = nvp = strdup(nvram_safe_get("yadns_rulelist"));
+		while (nv && (b = strsep(&nvp, "<")) != NULL) {
+			if (vstrsep(b, ">", &mac, &mode) != 2)
+				continue;
+			if (!*mac || !*mode)
+				continue;
+			fprintf(fp,
+				"-A YADNS -m mac --mac-source %s -j DNAT --to-destination %s\n",
+				mac, yandex_dns(atoi(mode)));
+		}
+		free(nv);
+
+		/* Catch other queries for default level */
+		fprintf(fp, "-A YADNS ! -d %s -j DNAT --to-destination %s\n", lan_ip, lan_ip);
+	}
+#endif
 
 	// need multiple instance for tis?
 	if (nvram_match("misc_http_x", "1"))
@@ -1391,7 +1457,7 @@ TRACE_PT("writing dmz\n");
 		switch (get_ipv6_service()) {
 		case IPV6_6IN4:
 			// avoid NATing proto-41 packets when using 6in4 tunnel
-			p = "-p ! 41";
+			p = "! -p 41";
 			break;
 		}
 #endif
@@ -1486,6 +1552,10 @@ void redirect_setting(void)
 				":OUTPUT ACCEPT [0:0]\n"
 				":VSERVER - [0:0]\n"
 				":VUPNP - [0:0]\n");
+#ifdef RTCONFIG_YANDEXDNS
+		fprintf(redirect_fp,
+				":YADNS - [0:0]\n");
+#endif
 	}
 /*
 	memset(http_rule, 0, sizeof(http_rule));
@@ -2101,6 +2171,7 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp, "-A INPUT -p tcp -m tcp --dport %d -j %s\n", 3838, logaccept);	// oleg patch
 		}
 
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 		//Add for pptp server
 		if (nvram_match("pptpd_enable", "1")) {
 			fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n", wan_if, 1723, logaccept);
@@ -2108,6 +2179,7 @@ TRACE_PT("writing Parental Control\n");
 			stop_pptpd();
 			start_pptpd();
 		}
+#endif
 
 #ifdef RTCONFIG_IPV6
 		switch (get_ipv6_service()) {
@@ -2997,6 +3069,7 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp, "-A INPUT -p tcp -m tcp --dport %d -j %s\n", 3838, logaccept);	// oleg patch
 		}
 
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 		//Add for pptp server
 		if (nvram_match("pptpd_enable", "1")) {
 			for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
@@ -3011,6 +3084,7 @@ TRACE_PT("writing Parental Control\n");
 
 			fprintf(fp, "-A INPUT -p 47 -j %s\n",logaccept);
 		}
+#endif
 
 #ifdef RTCONFIG_IPV6
 		switch (get_ipv6_service()) {
@@ -3880,6 +3954,79 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 }
 #endif // RTCONFIG_DUALWAN
 
+#ifdef RTCONFIG_BCMARM
+void
+del_samba_rules(void)
+{
+	char ifname[IFNAMSIZ];
+
+	strncpy(ifname, nvram_safe_get("lan_ifname"), IFNAMSIZ);
+
+	/* delete existed rules */
+	eval("iptables", "-t", "raw", "-D", "PREROUTING", "-i", ifname, "-p", "tcp",
+		"--dport", "137:139", "-j", "NOTRACK");
+	eval("iptables", "-t", "raw", "-D", "PREROUTING", "-i", ifname, "-p", "tcp",
+		"--dport", "445", "-j", "NOTRACK");
+	eval("iptables", "-t", "raw", "-D", "PREROUTING", "-i", ifname, "-p", "udp",
+		"--dport", "137:139", "-j", "NOTRACK");
+	eval("iptables", "-t", "raw", "-D", "PREROUTING", "-i", ifname, "-p", "udp",
+		"--dport", "445", "-j", "NOTRACK");
+	eval("iptables", "-t", "raw", "-D", "OUTPUT", "-o", ifname, "-p", "tcp",
+		"--sport", "137:139", "-j", "NOTRACK");
+	eval("iptables", "-t", "raw", "-D", "OUTPUT", "-o", ifname, "-p", "tcp",
+		"--sport", "445", "-j", "NOTRACK");
+	eval("iptables", "-t", "raw", "-D", "OUTPUT", "-o", ifname, "-p", "udp",
+		"--sport", "137:139", "-j", "NOTRACK");
+	eval("iptables", "-t", "raw", "-D", "OUTPUT", "-o", ifname, "-p", "udp",
+		"--sport", "445", "-j", "NOTRACK");
+
+	eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "udp",
+		"--dport", "137:139", "-j", "ACCEPT");
+	eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "udp",
+		"--dport", "445", "-j", "ACCEPT");
+	eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "tcp",
+		"--dport", "137:139", "-j", "ACCEPT");
+	eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "tcp",
+		"--dport", "445", "-j", "ACCEPT");
+}
+
+add_samba_rules(void)
+{
+	char ifname[IFNAMSIZ];
+
+	strncpy(ifname, nvram_safe_get("lan_ifname"), IFNAMSIZ);
+
+        /* Add rules to disable conntrack on SMB ports to reduce CPU loading
+	 * for SAMBA storage application
+	 */
+	eval("iptables", "-t", "raw", "-A", "PREROUTING", "-i", ifname, "-p", "tcp",
+		"--dport", "137:139", "-j", "NOTRACK");
+	eval("iptables", "-t", "raw", "-A", "PREROUTING", "-i", ifname, "-p", "tcp",
+		"--dport", "445", "-j", "NOTRACK");
+	eval("iptables", "-t", "raw", "-A", "PREROUTING", "-i", ifname, "-p", "udp",
+		"--dport", "137:139", "-j", "NOTRACK");
+	eval("iptables", "-t", "raw", "-A", "PREROUTING", "-i", ifname, "-p", "udp",
+		"--dport", "445", "-j", "NOTRACK");
+	eval("iptables", "-t", "raw", "-A", "OUTPUT", "-o", ifname, "-p", "tcp",
+		"--sport", "137:139", "-j", "NOTRACK");
+	eval("iptables", "-t", "raw", "-A", "OUTPUT", "-o", ifname, "-p", "tcp",
+		"--sport", "445", "-j", "NOTRACK");
+	eval("iptables", "-t", "raw", "-A", "OUTPUT", "-o", ifname, "-p", "udp",
+		"--sport", "137:139", "-j", "NOTRACK");
+	eval("iptables", "-t", "raw", "-A", "OUTPUT", "-o", ifname, "-p", "udp",
+		"--sport", "445", "-j", "NOTRACK");
+
+	eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "udp",
+		"--dport", "137:139", "-j", "ACCEPT");
+	eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "udp",
+		"--dport", "445", "-j", "ACCEPT");
+	eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "tcp",
+		"--dport", "137:139", "-j", "ACCEPT");
+	eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "tcp",
+		"--dport", "445", "-j", "ACCEPT");
+}
+#endif
+
 //int start_firewall(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip)
 int start_firewall(int wanunit, int lanunit)
 {
@@ -4172,7 +4319,7 @@ int start_firewall(int wanunit, int lanunit)
 
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 	if(strcmp(nvram_safe_get("apps_dev"), "") != 0)
-		run_app_script("downloadmaster", "firewall-start");
+		run_app_script(NULL, "firewall-start");
 #endif
 
 #ifdef RTCONFIG_IPV6

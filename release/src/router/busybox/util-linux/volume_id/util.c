@@ -213,7 +213,7 @@ void *volume_id_get_buffer(struct volume_id *id, uint64_t off, size_t len)
 	 /* && off <= SB_BUFFER_SIZE - want this paranoid overflow check? */
 	) {
 		if (id->sbbuf == NULL) {
-			id->sbbuf = xmalloc(SB_BUFFER_SIZE);
+			id->sbbuf = malloc(SB_BUFFER_SIZE);
 		}
 		small_off = off;
 		dst = id->sbbuf;
@@ -245,7 +245,7 @@ void *volume_id_get_buffer(struct volume_id *id, uint64_t off, size_t len)
 
 	id->seekbuf_off = off;
 	id->seekbuf_len = len;
-	id->seekbuf = xrealloc(id->seekbuf, len);
+	id->seekbuf = realloc(id->seekbuf, len);
 	small_off = 0;
 	dst = id->seekbuf;
 	dbg("read seekbuf off:0x%llx len:0x%zx",
@@ -255,7 +255,7 @@ void *volume_id_get_buffer(struct volume_id *id, uint64_t off, size_t len)
 		dbg("seek(0x%llx) failed", (unsigned long long) off);
 		goto err;
 	}
-	read_len = full_read(id->fd, dst, len);
+	read_len = read(id->fd, dst, len);
 	if (read_len != len) {
 		dbg("requested 0x%x bytes, got 0x%x bytes",
 				(unsigned) len, (unsigned) read_len);

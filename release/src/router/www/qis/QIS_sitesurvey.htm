@@ -450,13 +450,19 @@ function submitForm(_idx){	//["band","ssid","channel","auth","encrypt","signal",
 					document.form.wlc_auth_mode.value = "shared";
 				}
 			}
-			else if(aplist[_idx][3] == "WPA-PSK"){			
+			else if(aplist[_idx][3] == "WPA-PSK"){	
 				document.form.wlc_auth_mode.value = "psk";
-				document.form.wlc_crypto.value = "tkip";
+				if (aplist[_idx][4] == "AES" || aplist[_idx][4] == "TKIP+AES")
+						document.form.wlc_crypto.value = "aes";
+				else
+						document.form.wlc_crypto.value = "tkip";
 			}
 			else if(aplist[_idx][3] == "WPA2-PSK"){
 				document.form.wlc_auth_mode.value = "psk2";
-				document.form.wlc_crypto.value = "aes";
+				if (aplist[_idx][4] == "TKIP")
+						document.form.wlc_crypto.value = "tkip";
+				else
+						document.form.wlc_crypto.value = "aes";
 			}
 			else if(aplist[_idx][3] == "WPA-Enterprise")
 				document.form.wlc_auth_mode.value = "wpa";
@@ -510,6 +516,22 @@ function rescan(){
 	document.form.target = "hidden_frame";
 	document.form.action_wait.value	= "1";
 	document.form.action_script.value = "restart_wlcscan";
+	document.form.wlc_band.disabled = true;
+	document.form.wlc_ssid_orig.disabled = true;
+	document.form.wlc_wep.disabled = true;
+	document.form.wlc_key.disabled = true;
+	document.form.wlc_wep_key.disabled = true;
+	document.form.wlc_auth_mode.disabled = true;
+	document.form.wlc_crypto.disabled = true;
+	document.form.wlc_wpa_psk.disabled = true;
+	document.form.wlc_nbw_cap.disabled = true;
+	document.form.wlc_ure_ssid.disabled = true;
+	document.form.wlc_ssid.disabled = true;
+	document.form.wlc_psta.disabled = true;
+	document.form.lan_proto.disabled = true;
+	document.form.sw_mode.disabled = true;
+	document.form.wl0_ssid.disabled = true;
+	document.form.wl1_ssid.disabled = true;
 	document.form.submit();
 }
 

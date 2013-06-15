@@ -1,0 +1,287 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 45. LDAP and Transport Layer Security</title><link rel="stylesheet" href="samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.71.0"><link rel="start" href="index.html" title="The Official Samba-3 HOWTO and Reference Guide"><link rel="up" href="Appendix.html" title="Part VI. Reference Section"><link rel="prev" href="speed.html" title="Chapter 44. Samba Performance Tuning"><link rel="next" href="ch46.html" title="Chapter 46. Samba Support"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 45. LDAP and Transport Layer Security</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="speed.html">Prev</a> </td><th width="60%" align="center">Part VI. Reference Section</th><td width="20%" align="right"> <a accesskey="n" href="ch46.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="ch-ldap-tls"></a>Chapter 45. LDAP and Transport Layer Security</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Gavin</span> <span class="surname">Henry</span></h3><div class="affiliation"><span class="orgname">Suretec Systems Limited, UK<br></span><div class="address"><p><code class="email">&lt;<a href="mailto:ghenry@suretecsystems.com">ghenry@suretecsystems.com</a>&gt;</code></p></div></div></div></div><div><p class="pubdate">July 8, 2005</p></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="ch-ldap-tls.html#s1-intro-ldap-tls">Introduction</a></span></dt><dt><span class="sect1"><a href="ch-ldap-tls.html#s1-config-ldap-tls">Configuring</a></span></dt><dd><dl><dt><span class="sect2"><a href="ch-ldap-tls.html#s1-config-ldap-tls-certs">Generating the Certificate Authority</a></span></dt><dt><span class="sect2"><a href="ch-ldap-tls.html#s1-config-ldap-tls-server">Generating the Server Certificate</a></span></dt><dt><span class="sect2"><a href="ch-ldap-tls.html#s1-config-ldap-tls-install">Installing the Certificates</a></span></dt></dl></dd><dt><span class="sect1"><a href="ch-ldap-tls.html#s1-test-ldap-tls">Testing</a></span></dt><dt><span class="sect1"><a href="ch-ldap-tls.html#s1-int-ldap-tls">Troubleshooting</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="s1-intro-ldap-tls"></a>Introduction</h2></div></div></div><p>
+	<a class="indexterm" name="id445630"></a>
+<a class="indexterm" name="id445639"></a>
+	Up until now, we have discussed the straightforward configuration of <span class="trademark">OpenLDAP</span>&#8482;,
+	with some advanced features such as ACLs. This does not however, deal with the fact that the network
+	transmissions are still in plain text. This is where <em class="firstterm">Transport Layer Security (TLS)</em>
+	comes in.
+	</p><p>
+<a class="indexterm" name="id445661"></a>
+	<span class="trademark">OpenLDAP</span>&#8482; clients and servers are capable of using the Transport Layer Security (TLS)
+	framework to provide integrity and confidentiality protections in accordance with <a href="http://rfc.net/rfc2830.html" target="_top">RFC 2830</a>; <span class="emphasis"><em>Lightweight Directory Access Protocol (v3):
+	Extension for Transport Layer Security.</em></span>
+	</p><p>
+<a class="indexterm" name="id445688"></a>
+	TLS uses X.509 certificates. All servers are required to have valid certificates, whereas client certificates
+	are optional. We will only be discussing server certificates.
+	</p><div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Tip</h3><p>
+<a class="indexterm" name="id445701"></a>
+<a class="indexterm" name="id445707"></a>
+<a class="indexterm" name="id445714"></a>
+	The DN of a server certificate must use the CN attribute to name the server, and the CN must carry the
+	server's fully qualified domain name (FQDN). Additional alias names and wildcards may be present in the
+	<code class="option">subjectAltName</code> certificate extension. More details on server certificate names are in <a href="http://rfc.net/rfc2830.html" target="_top">RFC2830</a>.
+	</p></div><p>
+	We will discuss this more in the next sections.
+	</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="s1-config-ldap-tls"></a>Configuring</h2></div></div></div><p>
+	<a class="indexterm" name="id445750"></a>
+	Now on to the good bit.
+	</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="s1-config-ldap-tls-certs"></a>Generating the Certificate Authority</h3></div></div></div><p>
+<a class="indexterm" name="id445773"></a>
+	In order to create the relevant certificates, we need to become our own Certificate Authority (CA).
+	<sup>[<a name="id445783" href="#ftn.id445783">8</a>]</sup> This is necessary, so we can sign the server certificate.
+	</p><p>
+<a class="indexterm" name="id445810"></a>
+	We will be using the <a href="http://www.openssl.org" target="_top">OpenSSL</a> <sup>[<a name="id445822" href="#ftn.id445822">9</a>]</sup> software for this, which is included with every great <span class="trademark">Linux</span>® distribution.
+	</p><p>
+	TLS is used for many types of servers, but the instructions<sup>[<a name="id445838" href="#ftn.id445838">10</a>]</sup> presented here, are tailored for <span class="application">OpenLDAP</span>.
+	</p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+	The <span class="emphasis"><em>Common Name (CN)</em></span>, in the following example, <span class="emphasis"><em>MUST</em></span> be
+	the fully qualified domain name (FQDN) of your ldap server.
+	</p></div><p>
+	First we need to generate the CA:
+</p><pre class="screen">
+<code class="computeroutput">
+<code class="prompt">root# </code> mkdir myCA
+</code>
+</pre><p>
+	Move into that directory:
+</p><pre class="screen">
+<code class="computeroutput">
+<code class="prompt">root# </code> cd myCA
+</code>
+</pre><p>
+	Now generate the CA:<sup>[<a name="id445910" href="#ftn.id445910">11</a>]</sup>
+</p><pre class="screen">
+<code class="computeroutput">
+<code class="prompt">root# </code> /usr/share/ssl/misc/CA.pl -newca
+CA certificate filename (or enter to create)
+  
+Making CA certificate ...
+Generating a 1024 bit RSA private key
+.......................++++++
+.............................++++++
+writing new private key to './demoCA/private/cakey.pem'
+Enter PEM pass phrase:
+Verifying - Enter PEM pass phrase:
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:AU
+State or Province Name (full name) [Some-State]:NSW
+Locality Name (eg, city) []:Sydney
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:Abmas
+Organizational Unit Name (eg, section) []:IT
+Common Name (eg, YOUR name) []:ldap.abmas.biz
+Email Address []:support@abmas.biz
+</code>
+</pre><p>
+	</p><p>
+	There are some things to note here. 
+	</p><div class="orderedlist"><ol type="1"><li><p>
+			You <span class="emphasis"><em>MUST</em></span> remember the password, as we will need
+			it to sign the server certificate..
+			</p></li><li><p>
+			The <span class="emphasis"><em>Common Name (CN)</em></span>, <span class="emphasis"><em>MUST</em></span> be the
+			fully qualified domain name (FQDN) of your ldap server.
+			</p></li></ol></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="s1-config-ldap-tls-server"></a>Generating the Server Certificate</h3></div></div></div><p>
+	Now we need to generate the server certificate:
+</p><pre class="screen">
+<code class="computeroutput">
+<code class="prompt">root# </code> openssl req -new -nodes -keyout newreq.pem -out newreq.pem
+Generating a 1024 bit RSA private key
+.............++++++
+........................................................++++++
+writing new private key to 'newreq.pem'
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:AU
+State or Province Name (full name) [Some-State]:NSW
+Locality Name (eg, city) []:Sydney
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:Abmas
+Organizational Unit Name (eg, section) []:IT
+Common Name (eg, YOUR name) []:ldap.abmas.biz
+Email Address []:support@abmas.biz
+  
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+An optional company name []:
+</code>
+</pre><p>
+	</p><p>
+	Again, there are some things to note here. 
+	</p><div class="orderedlist"><ol type="1"><li><p>
+			You should <span class="emphasis"><em>NOT</em></span> enter a password.
+			</p></li><li><p>
+			The <span class="emphasis"><em>Common Name (CN)</em></span>, <span class="emphasis"><em>MUST</em></span> be
+			the fully qualified domain name (FQDN) of your ldap server.
+			</p></li></ol></div><p>
+	Now we sign the certificate with the new CA:
+</p><pre class="screen">
+<code class="computeroutput">
+<code class="prompt">root# </code> /usr/share/ssl/misc/CA.pl -sign
+Using configuration from /etc/ssl/openssl.cnf
+Enter pass phrase for ./demoCA/private/cakey.pem:
+Check that the request matches the signature
+Signature ok
+Certificate Details:
+Serial Number: 1 (0x1)
+Validity
+	Not Before: Mar  6 18:22:26 2005 EDT
+	Not After : Mar  6 18:22:26 2006 EDT
+Subject:
+	countryName               = AU
+	stateOrProvinceName       = NSW
+	localityName              = Sydney
+	organizationName          = Abmas
+	organizationalUnitName    = IT
+	commonName                = ldap.abmas.biz
+	emailAddress              = support@abmas.biz
+X509v3 extensions:
+	X509v3 Basic Constraints:
+	    CA:FALSE
+	Netscape Comment:
+	    OpenSSL Generated Certificate
+	X509v3 Subject Key Identifier:
+	    F7:84:87:25:C4:E8:46:6D:0F:47:27:91:F0:16:E0:86:6A:EE:A3:CE
+	X509v3 Authority Key Identifier:
+	    keyid:27:44:63:3A:CB:09:DC:B1:FF:32:CC:93:23:A4:F1:B4:D5:F0:7E:CC
+	    DirName:/C=AU/ST=NSW/L=Sydney/O=Abmas/OU=IT/
+						CN=ldap.abmas.biz/emailAddress=support@abmas.biz
+	    serial:00
+
+Certificate is to be certified until Mar  6 18:22:26 2006 EDT (365 days)
+Sign the certificate? [y/n]:y
+
+
+1 out of 1 certificate requests certified, commit? [y/n]y
+Write out database with 1 new entries
+Data Base Updated
+Signed certificate is in newcert.pem
+</code>
+</pre><p>
+	</p><p>
+	That completes the server certificate generation. 
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="s1-config-ldap-tls-install"></a>Installing the Certificates</h3></div></div></div><p>
+	Now we need to copy the certificates to the right configuration directories,
+	rename them at the same time (for convenience), change the ownership and
+	finally the permissions:
+</p><pre class="screen">
+<code class="computeroutput">
+<code class="prompt">root# </code> cp demoCA/cacert.pem /etc/openldap/
+<code class="prompt">root# </code> cp newcert.pem /etc/openldap/servercrt.pem
+<code class="prompt">root# </code> cp newreq.pem /etc/openldap/serverkey.pem
+<code class="prompt">root# </code> chown ldap.ldap /etc/openldap/*.pem
+<code class="prompt">root# </code> chmod 640 /etc/openldap/cacert.pem;
+<code class="prompt">root# </code> chmod 600 /etc/openldap/serverkey.pem
+</code>
+</pre><p>
+	</p><p>
+	Now we just need to add these locations to <code class="filename">slapd.conf</code>,
+	anywhere before the <code class="option">database</code> declaration as shown here:
+</p><pre class="screen">
+<code class="computeroutput">
+TLSCertificateFile /etc/openldap/servercrt.pem
+TLSCertificateKeyFile /etc/openldap/serverkey.pem
+TLSCACertificateFile /etc/openldap/cacert.pem
+</code>
+</pre><p>
+	</p><p>
+	Here is the declaration and <code class="filename">ldap.conf</code>:
+<code class="filename">ldap.conf</code>
+</p><pre class="screen">
+<code class="computeroutput">
+TLS_CACERT /etc/openldap/cacert.pem
+</code>
+</pre><p>
+	</p><p>
+	That's all there is to it. Now on to <a href="ch-ldap-tls.html#s1-test-ldap-tls" title="Testing">the section called &#8220;Testing&#8221;</a>
+	</p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="s1-test-ldap-tls"></a>Testing</h2></div></div></div><p>
+<a class="indexterm" name="id446282"></a>
+This is the easy part. Restart the server:
+</p><pre class="screen">
+<code class="computeroutput">
+<code class="prompt">root# </code> /etc/init.d/ldap restart
+Stopping slapd:                                            [  OK  ]
+Checking configuration files for slapd: config file testing succeeded
+Starting slapd:                                            [  OK  ]
+</code>
+</pre><p>
+	Then, using <code class="literal">ldapsearch</code>, test an anonymous search with the
+	<code class="option">-ZZ</code><sup>[<a name="id446321" href="#ftn.id446321">12</a>]</sup> option:
+</p><pre class="screen">
+<code class="computeroutput">
+<code class="prompt">root# </code> ldapsearch -x -b "dc=ldap,dc=abmas,dc=biz" \
+        -H 'ldap://ldap.abmas.biz:389' -ZZ
+</code>
+</pre><p>
+	Your results should be the same as before you restarted the server, for example:
+</p><pre class="screen">
+<code class="computeroutput">
+<code class="prompt">root# </code> ldapsearch -x -b "dc=ldap,dc=abmas,dc=biz" \
+    -H 'ldap://ldap.abmas.biz:389' -ZZ
+
+# extended LDIF
+#
+# LDAPv3
+# base &lt;&gt; with scope sub
+# filter: (objectclass=*)
+# requesting: ALL
+#
+
+# abmas.biz
+dn: dc=ldap,dc=abmas,dc=biz
+objectClass: dcObject
+objectClass: organization
+o: Abmas
+dc: abmas
+
+# Manager, ldap.abmas.biz
+dn: cn=Manager,dc=ldap,dc=abmas,dc=biz
+objectClass: organizationalRole
+cn: Manager
+
+# ABMAS, abmas.biz
+dn: sambaDomainName=ABMAS,dc=ldap,dc=abmas,dc=biz
+sambaDomainName: ABMAS
+sambaSID: S-1-5-21-238355452-1056757430-1592208922
+sambaAlgorithmicRidBase: 1000
+objectClass: sambaDomain
+sambaNextUserRid: 67109862
+sambaNextGroupRid: 67109863
+</code>
+</pre><p>
+	If you have any problems, please read <a href="ch-ldap-tls.html#s1-int-ldap-tls" title="Troubleshooting">the section called &#8220;Troubleshooting&#8221;</a>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="s1-int-ldap-tls"></a>Troubleshooting</h2></div></div></div><p>
+<a class="indexterm" name="id446402"></a>
+The most common error when configuring TLS, as I have already mentioned numerous times, is that the
+<span class="emphasis"><em>Common Name (CN)</em></span> you entered in <a href="ch-ldap-tls.html#s1-config-ldap-tls-server" title="Generating the Server Certificate">the section called &#8220;Generating the Server Certificate&#8221;</a> is
+<span class="emphasis"><em>NOT</em></span> the Fully Qualified Domain Name (FQDN) of your ldap server.
+</p><p>
+Other errors could be that you have a typo somewhere in your <code class="literal">ldapsearch</code> command, or that
+your have the wrong permissions on the <code class="filename">servercrt.pem</code> and <code class="filename">cacert.pem</code>
+files. They should be set with <code class="literal">chmod 640</code>, as per <a href="ch-ldap-tls.html#s1-config-ldap-tls-install" title="Installing the Certificates">the section called &#8220;Installing the Certificates&#8221;</a>.
+</p><p>
+For anything else, it's best to read through your ldap logfile or join the <span class="application">OpenLDAP</span> mailing list.
+</p></div><div class="footnotes"><br><hr width="100" align="left"><div class="footnote"><p><sup>[<a name="ftn.id445783" href="#id445783">8</a>] </sup>We could however, get our generated server certificate signed by proper CAs, like <a href="http://www.thawte.com/" target="_top">Thawte</a> and <a href="http://www.verisign.com/" target="_top">VeriSign</a>, which
+	you pay for, or the free ones, via <a href="http://www.cacert.org/" target="_top">CAcert</a>
+	</p></div><div class="footnote"><p><sup>[<a name="ftn.id445822" href="#id445822">9</a>] </sup>The downside to
+	making our own CA, is that the certificate is not automatically recognized by clients, like the commercial
+	ones are.</p></div><div class="footnote"><p><sup>[<a name="ftn.id445838" href="#id445838">10</a>] </sup>For information straight from the
+	horse's mouth, please visit <a href="http://www.openssl.org/docs/HOWTO/" target="_top">http://www.openssl.org/docs/HOWTO/</a>; the main OpenSSL
+	site.</p></div><div class="footnote"><p><sup>[<a name="ftn.id445910" href="#id445910">11</a>] </sup>Your <code class="filename">CA.pl</code> or <code class="filename">CA.sh</code> might not be
+	in the same location as mine is, you can find it by using the <code class="literal">locate</code> command, i.e.,
+	<code class="literal">locate CA.pl</code>.  If the command complains about the database being too old, run
+	<code class="literal">updatedb</code> as <span class="emphasis"><em>root</em></span> to update it.</p></div><div class="footnote"><p><sup>[<a name="ftn.id446321" href="#id446321">12</a>] </sup>See <code class="literal">man ldapsearch</code></p></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="speed.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="Appendix.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="ch46.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 44. Samba Performance Tuning </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 46. Samba Support</td></tr></table></div></body></html>

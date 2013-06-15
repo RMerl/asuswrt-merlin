@@ -1,0 +1,161 @@
+#!/bin/perl
+#
+# Hacked by Alan Stebbens <aks@sgi.com> to setuid to the username if 
+# valid on this system.  Written as a secure Perl script.  To enable,
+#
+#	chown root /usr/samba/bin/sambalp
+#	chmod u+s,+x /usr/samba/bin/sambalp
+#
+# If setuidshells is not enabled on your system, you must also do this:
+#
+#	systune -i
+#	nosuidshells = 0
+#	y
+#	quit
+#
+#	reboot
+#
+# This script will still work as a normal user; it will not try
+# to setuid in this case.
+#
+# If the "$PSFIX" variable is set below...
+#
+# Workaround Win95 printer driver/Impressario bug by removing
+# the PS check for available virtual memory.  Note that this
+# bug appears to be in all Win95 print drivers that generate
+# PostScript; but is for certain there with a QMS-PS 810 (the
+# printer type I configure on the Win95-side for printing with
+# Samba).
+#
+# the perl script fixes 3 different bugs. 
+# 1. remove the JCL statements added by some HP printer drivers to the
+# beginning of the postscript output. 
+# 2. Fix a bug in output from word files with long filenames. A non-printing
+# character added to the end of the title comment by word is 
+# removed. 
+# 3. The VM fix described above.
+#
+#
+# Modified for Perl4 compatibility.
+#
+
+$PROG = "sambalp";
+
+$PSFIX = 1;			# set to 0 if you don't want to run
+				# the "psfix" portion
+
+# Untaint the PATH variable
+@PATH = split(' ',<<EOF);
+	/usr/sbin /usr/bsd /sbin /usr/bin /bin /usr/lib /usr/local/bin
+EOF
+$ENV{'PATH'} = join(':',@PATH);
+
+        print "$#ARGV ".scalar(@ARGV)."\n";
+if (scalar(@ARGV) < 2) {
+    print STDERR "usage: $PROG printer file [user] [system]\n";
+    exit;
+}
+
+$printer = $ARGV[0];
+$file    = $ARGV[1];
+$user    = $ARGV[2];
+$system  = $ARGV[3];
+
+$user = "nobody" unless($user);
+$system = `hostname` unless($system);
+
+open(LPSTAT,"/usr/bin/lpstat -t|") || die("Can't get printer list.\n");
+@printers = ();
+while (<LPSTAT>) {
+    next unless /^printer (\w+)/;
+    push(@printers,$1);
+}
+close LPSTAT;
+# Create a hash list
+@printers{@printers} = @printers;
+    
+# Untaint the printer name
+if (defined($prtname = $printers{$printer})) {
+    $printer = $prtname;
+} else {
+    die("Unknown printer: \"$printer\"\n");
+}
+
+if ($> == 0) {		# are we root?
+    # yes -- then perform a taint checks and possibly do a suid check
+
+    # Untaint the file and system names (pretend to filter them)
+    $file   =   $file =~ /^(.*)/ ? $1 : die("Bad file: $file\n");
+    $system = $system =~ /^(.*)/ ? $1 : die("Bad system: $system\n");
+
+    # Get the valid users
+    setpwent;
+    %users = ();
+    while (@pwe = getpwent()) { 
+	$uids{$pwe[0]} = $pwe[2];
+	$users{$pwe[2]} = $pwe[0];
+    }
+    endpwent();
+
+    # Check out the user -- if the user is a real user on this system,
+    # then become that user so that the  printer header page looks right
+    # otherwise, remain as the default user (probably "nobody").
+
+    if (defined($uid = $uids{$user})) {
+
+	# before we change UID, we must ensure that the file is still
+	# readable after the UID change.
+	chown($uid, 9, $file);	# make the file owned by the user
+
+	# Now, go ahead and become the user
+	$name = $users{$uid};
+	$> = $uid;		# become the user
+	$< = $uid;
+    } else {			# do untaint filtering
+	$name = $user =~ /^(\w+)/ ? $1 : die("Bad user: $user\n");
+    }
+} else {			# otherwise, just be me
+    $name = $user;		# whomever that is
+}
+
+$lpcommand = "/usr/bin/lp -c -d$printer -t'$name on $system'";
+
+# This code is from the original "psfix" but it has been completely
+# rewritten for speed.
+
+if ($PSFIX) {			# are we running a "psfix"?
+    open(FILE, $file) 		|| die("Can't read $file: $!\n");
+    open(LP, "|$lpcommand -")	|| die("Can't open pipe to \"lp\": $!\n");
+    select(LP);
+    while (<FILE>) {		# 
+	$_ =~ s/^\004//;		# strip any ctrl-d's
+	if (/^\e%/) {		# get rid of any non-postscript commands
+	    while (<FILE>) { 	# remove text until next %!PS
+		s/^\001M//;	# lenmark driver prefixes Ctrl-A M to %!PS
+		last if /^%!PS/;
+	    }
+	    last if eof(FILE);
+	} elsif (/^%%Title:/) {	# fix bug in long titles from MS Word
+	    s/.\r$/\r/;		# remove trailing character on the title
+	} elsif (/^\/VM\?/) {	# remove VM test
+	    print "/VM? { pop } bind def\r\n";
+	    while (<FILE>) { last if /def\r/; }
+	    next;		# don't print
+	}
+	print;
+    }
+    close FILE;
+    close LP;
+} else {			# we're not running psfix?
+    system("$lpcommand $file");
+}
+
+if ($file =~ m(^/)) {
+	# $file is a fully specified path
+	# Remove the file only if it lives in a directory ending in /tmp.
+	unlink($file) if ($file =~ m(/tmp/[^/]+$));
+} else {
+	# $file is NOT a fully specified path
+	# Remove the file only if current directory ends in /tmp.
+	unlink($file) if (`pwd` =~ m(/tmp$));
+}

@@ -1199,7 +1199,7 @@ BrowseContentDirectory(struct upnphttp * h, const char * action)
 		{
 			ptr = sql_get_text_field(db, "SELECT OBJECT_ID from OBJECTS"
 			                             " where OBJECT_ID in "
-			                             "('"MUSIC_ID"$%s', '"VIDEO_ID"$%s', '"IMAGE_ID"$%s')",
+			                             "('"MUSIC_ID"$%q', '"VIDEO_ID"$%q', '"IMAGE_ID"$%q')",
 			                             ObjectID, ObjectID, ObjectID);
 			if( ptr )
 			{
@@ -1240,7 +1240,7 @@ BrowseContentDirectory(struct upnphttp * h, const char * action)
 		args.requested = 1;
 		sql = sqlite3_mprintf("SELECT %s, " COLUMNS
 		                      "from OBJECTS o left join DETAILS d on (d.ID = o.DETAIL_ID)"
-	        	              " where OBJECT_ID = '%s';",
+	        	              " where OBJECT_ID = '%q';",
 		                      (args.flags & FLAG_ROOT_CONTAINER) ? "0, -1" : "o.OBJECT_ID, o.PARENT_ID",
 		                      ObjectID);
 		ret = sqlite3_exec(db, sql, callback, (void *) &args, &zErrMsg);
@@ -1248,7 +1248,7 @@ BrowseContentDirectory(struct upnphttp * h, const char * action)
 	}
 	else
 	{
-		ret = sql_get_int_field(db, "SELECT count(*) from OBJECTS where PARENT_ID = '%s'", ObjectID);
+		ret = sql_get_int_field(db, "SELECT count(*) from OBJECTS where PARENT_ID = '%q'", ObjectID);
 		totalMatches = (ret > 0) ? ret : 0;
 		ret = 0;
 		if( SortCriteria )
@@ -1289,7 +1289,7 @@ BrowseContentDirectory(struct upnphttp * h, const char * action)
 
 		sql = sqlite3_mprintf( SELECT_COLUMNS
 		                      "from OBJECTS o left join DETAILS d on (d.ID = o.DETAIL_ID)"
-				      " where PARENT_ID = '%s' %s limit %d, %d;",
+				      " where PARENT_ID = '%q' %s limit %d, %d;",
 				      ObjectID, orderBy, StartingIndex, RequestedCount);
 		DPRINTF(E_DEBUG, L_HTTP, "Browse SQL: %s\n", sql);
 		ret = sqlite3_exec(db, sql, callback, (void *) &args, &zErrMsg);
@@ -1305,7 +1305,7 @@ BrowseContentDirectory(struct upnphttp * h, const char * action)
 	/* Does the object even exist? */
 	if( !totalMatches )
 	{
-		ret = sql_get_int_field(db, "SELECT count(*) from OBJECTS where OBJECT_ID = '%s'", ObjectID);
+		ret = sql_get_int_field(db, "SELECT count(*) from OBJECTS where OBJECT_ID = '%q'", ObjectID);
 		if( ret <= 0 )
 		{
 			SoapError(h, 701, "No such object error");
@@ -1397,7 +1397,7 @@ SearchContentDirectory(struct upnphttp * h, const char * action)
 		{
 			ptr = sql_get_text_field(db, "SELECT OBJECT_ID from OBJECTS"
 			                             " where OBJECT_ID in "
-			                             "('"MUSIC_ID"$%s', '"VIDEO_ID"$%s', '"IMAGE_ID"$%s')",
+			                             "('"MUSIC_ID"$%q', '"VIDEO_ID"$%q', '"IMAGE_ID"$%q')",
 			                             ContainerID, ContainerID, ContainerID);
 			if( ptr )
 			{
@@ -1467,10 +1467,10 @@ SearchContentDirectory(struct upnphttp * h, const char * action)
 
 	totalMatches = sql_get_int_field(db, "SELECT (select count(distinct DETAIL_ID)"
 	                                     " from OBJECTS o left join DETAILS d on (o.DETAIL_ID = d.ID)"
-	                                     " where (OBJECT_ID glob '%s$*') and (%s))"
+	                                     " where (OBJECT_ID glob '%q$*') and (%s))"
 	                                     " + "
 	                                     "(select count(*) from OBJECTS o left join DETAILS d on (o.DETAIL_ID = d.ID)"
-	                                     " where (OBJECT_ID = '%s') and (%s))",
+	                                     " where (OBJECT_ID = '%q') and (%s))",
 	                                     ContainerID, SearchCriteria, ContainerID, SearchCriteria);
 	if( totalMatches < 0 )
 	{
@@ -1503,14 +1503,14 @@ SearchContentDirectory(struct upnphttp * h, const char * action)
 
 	sql = sqlite3_mprintf( SELECT_COLUMNS
 	                      "from OBJECTS o left join DETAILS d on (d.ID = o.DETAIL_ID)"
-	                      " where OBJECT_ID glob '%s$*' and (%s) %s "
+	                      " where OBJECT_ID glob '%q$*' and (%s) %s "
 	                      "%z %s"
 	                      " limit %d, %d",
 	                      ContainerID, SearchCriteria, groupBy,
 	                      (*ContainerID == '*') ? NULL :
                               sqlite3_mprintf("UNION ALL " SELECT_COLUMNS
 	                                      "from OBJECTS o left join DETAILS d on (d.ID = o.DETAIL_ID)"
-	                                      " where OBJECT_ID = '%s' and (%s) ", ContainerID, SearchCriteria),
+	                                      " where OBJECT_ID = '%q' and (%s) ", ContainerID, SearchCriteria),
 	                      orderBy, StartingIndex, RequestedCount);
 	DPRINTF(E_DEBUG, L_HTTP, "Search SQL: %s\n", sql);
 	ret = sqlite3_exec(db, sql, callback, (void *) &args, &zErrMsg);
@@ -1624,7 +1624,7 @@ SamsungSetBookmark(struct upnphttp * h, const char * action)
 	{
 		ret = sql_exec(db, "INSERT OR REPLACE into BOOKMARKS"
 		                   " VALUES "
-		                   "((select DETAIL_ID from OBJECTS where OBJECT_ID = '%s'), %s)", ObjectID, PosSecond);
+		                   "((select DETAIL_ID from OBJECTS where OBJECT_ID = '%q'), %q)", ObjectID, PosSecond);
 		if( ret != SQLITE_OK )
 			DPRINTF(E_WARN, L_METADATA, "Error setting bookmark %s on ObjectID='%s'\n", PosSecond, ObjectID);
 		BuildSendAndCloseSoapResp(h, resp, sizeof(resp)-1);

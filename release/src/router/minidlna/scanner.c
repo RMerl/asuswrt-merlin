@@ -138,7 +138,7 @@ insert_containers(const char * name, const char *path, const char * refID, const
 	if( strstr(class, "imageItem") )
 	{
 		char *date = NULL, *cam = NULL;
-		char date_taken[13], camera[64];
+		char date_taken[24], camera[64];
 		static struct virtual_item last_date;
 		static struct virtual_item last_cam;
 		static struct virtual_item last_camdate;
@@ -159,7 +159,7 @@ insert_containers(const char * name, const char *path, const char * refID, const
 		}
 		else
 		{
-			strcpy(date_taken, _("Unknown Date"));
+			snprintf(date_taken, sizeof(date_taken), "%s", _("Unknown Date"));
 		}
 		if( valid_cache && strcmp(last_date.name, date_taken) == 0 )
 		{

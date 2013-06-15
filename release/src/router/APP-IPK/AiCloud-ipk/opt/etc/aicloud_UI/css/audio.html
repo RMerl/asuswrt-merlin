@@ -73,15 +73,15 @@ $(document).ready(function(){
 	
 	var browserVer = navigator.userAgent;
 	
-	if( browserVer.indexOf("Chrome") != -1 ){
+	if( browserVer.indexOf("Chrome") != -1 ||
+	    ( browserVer.indexOf("Safari") != -1 && ( isMacOS() || isWinOS() ) ) ){
 		g_jplayer_solution = "html";
 		g_jplayer_supplied = "mp3";
 	}
-	else if( browserVer.indexOf("MSIE") != -1 || 
-	    browserVer.indexOf("Firefox") != -1 || 
-	    browserVer.indexOf("Opera") != -1 ||
-	    ( browserVer.indexOf("Safari") != -1 && ( isMacOS() || isWinOS() ) ) ){
-		g_jplayer_solution = "flash,html";
+	else if( browserVer.indexOf("MSIE") != -1 ||
+		       browserVer.indexOf("Firefox") != -1 ||
+		       browserVer.indexOf("Opera") != -1 ){	  
+		g_jplayer_solution = "flash";
 		g_jplayer_supplied = "mp3";
 	}
 	
@@ -151,7 +151,6 @@ $(document).ready(function(){
 });
 
 function initJPlayer(){
-	
 	var Playlist = function(instance, playlist, options) {
   	var self = this;
 
@@ -288,10 +287,17 @@ function initJPlayer(){
     },
     swfPath: "/smb/js/jplayer/",
 		supplied: g_jplayer_supplied,
-		solution: g_jplayer_solution,
+		solution: g_jplayer_solution,		
 		wmode: "window",
-		errorAlerts: true,
-		warningAlerts: false
+		errorAlerts: false,
+		warningAlerts: false,
+		error: function(event){
+			var type = event.jPlayer.error.type;
+			if(type=="e_no_solution"){
+				$(".jp-no-solution").html(m.getString("title_install_flash"));
+				$(".jp-no-solution").css("display", "block");				
+			}
+		}
 	});
 }
 
@@ -370,14 +376,20 @@ function doOpenPlayList(){
 							<!--<a href="javascript:;" class="jp-show-audio-list"></a>-->
 							<ul></ul>
             </div>
-            
+            <!--
 						<div class="jp-no-solution" style="display: none; ">
 							<span>Update Required</span>
 						To play the media you will need to either update your browser to a recent version or update your <a href="http://get.adobe.com/flashplayer/" target="_blank">Flash plugin</a>.
 						</div>
-						
+						-->
 					</div>
 				</div>
+				
+				<div class="jp-no-solution" style="display: none; ">
+					<span>Update Required</span>
+					To play the media you will need to either update your browser to a recent version or update your <a href="http://get.adobe.com/flashplayer/" target="_blank">Flash plugin</a>.
+				</div>
+						
 			</div>
     </td>    
   </tr>

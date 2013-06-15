@@ -1,7 +1,7 @@
 #! /bin/sh
 
 is_arm_machine=`uname -m |grep arm`
-zero_tao=
+
 APP_UCLIBC_VERSION=0.9.28
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/opt/bin
@@ -60,6 +60,8 @@ TIME_ZONE_X=`nvram get time_zone_x`
 MISC_HTTPS_PORT=`nvram get misc_httpsport_x`
 HTTP_ENABLE=`nvram get http_enable`
 
+WEBDAV_PROXY=`nvram get webdav_proxy`
+WEBDAV_AIDISK=`nvram get webdav_aidisk`
 
 chmod -R 777 $APPS_INSTALL_PATH/bin/
 
@@ -89,7 +91,7 @@ chmod -R 777 /tmp/lighttpd/www
 #sh /opt/etc/asus_script/dm2_check_general general-check&
 
 dir_control_file=/tmp/webDAV.conf
-if [ ! -f "$dir_control_file" ]; then
+#if [ ! -f "$dir_control_file" ]; then
 	echo "productid="$PRODUCTID>$dir_control_file
 	echo "st_webdav_mode="$ST_WEBDAV_MODE>>$dir_control_file
 	echo "webdav_http_port="$WEBDAV_HTTP_PORT>>$dir_control_file
@@ -127,7 +129,7 @@ if [ ! -f "$dir_control_file" ]; then
 	echo "http_enable="$HTTP_ENABLE>>$dir_control_file
 	echo "time_zone_x="$TIME_ZONE_X>>$dir_control_file
 	echo "misc_httpsport_x="$MISC_HTTPS_PORT>>$dir_control_file
-fi
+#fi
 
 
 case "$1" in
@@ -135,198 +137,237 @@ case "$1" in
     #echo -n "Starting DM: "
 
 		#asuslighttpdnum=`ps | grep "asus_lighttpd" | grep -v "$0" | grep -v "grep" | awk '{printf $5}'`
-	cp -f /opt/etc/samba/openssl.cnf /etc/
-	sh /opt/etc/asus_script/gencert.sh 0x123123
-	#cp -f /opt/etc/samba/server.pem /tmp/lighttpd/
+	if [ $WEBDAV_PROXY == 1 ] || [ $WEBDAV_AIDISK == 1 ]; then
+		cp -rf /opt/etc/asus_script/smartsync_remove /tmp
+		cp -f /opt/etc/samba/openssl.cnf /etc/
+		sh /opt/etc/asus_script/gencert.sh 0x123123
+		#cp -f /opt/etc/samba/server.pem /tmp/lighttpd/
 
-	if [ -z "$APPS_MOUNTED_PATH" ]; then
-		nvram set apps_state_error=2
-		exit 1
-	fi
+		if [ -z "$APPS_MOUNTED_PATH" ]; then
+			nvram set apps_state_error=2
+			exit 1
+		fi
 
-	APP_BIN=$APPS_INSTALL_PATH/bin
-	APP_LIB=$APPS_INSTALL_PATH/lib
-	APP_ETC=$APPS_INSTALL_PATH/etc
+		nvram set webdav_extend_cap=1
+		nvram commit
+		APP_BIN=$APPS_INSTALL_PATH/bin
+		APP_LIB=$APPS_INSTALL_PATH/lib
+		APP_ETC=$APPS_INSTALL_PATH/etc
 
-	APP_LINK_DIR=/tmp/opt
-	APP_LINK_BIN=$APP_LINK_DIR/bin
-	APP_LINK_LIB=$APP_LINK_DIR/lib
+		APP_LINK_DIR=/tmp/opt
+		APP_LINK_BIN=$APP_LINK_DIR/bin
+		APP_LINK_LIB=$APP_LINK_DIR/lib
 
 
-	APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
-	if [ "$APPS_MOUNTED_TYPE" != "vfat" ]; then
-		if [ ! -L "$APP_LINK_DIR" ]; then
+		APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
+		if [ "$APPS_MOUNTED_TYPE" != "vfat" ]; then
+			if [ ! -L "$APP_LINK_DIR" ]; then
                 rm -rf $APP_LINK_DIR
                 ln -sf $APPS_INSTALL_PATH $APP_LINK_DIR
         	fi
 
-		if [ ! -f "$APP_LIB/libpcre.so.1" ] && [ ! -f "$APP_LIB/libpcre.so.1.*" ]; then
-			ln -sf 	$APP_LIB/libpcre.so.0.0.1 $APP_LIB/libpcre.so.1
-		fi
-		if [ ! -f "$APP_LIB/libpcre.so.0" ] && [ ! -f "$APP_LIB/libpcre.so.0.0.1" ]; then
+			if [ ! -f "$APP_LIB/libpcre.so.1" ] && [ ! -f "$APP_LIB/libpcre.so.1.*" ]; then
+				ln -sf 	$APP_LIB/libpcre.so.0.0.1 $APP_LIB/libpcre.so.1
+			fi
+			if [ ! -f "$APP_LIB/libpcre.so.0" ] && [ ! -f "$APP_LIB/libpcre.so.0.0.1" ]; then
 				PCER_VER=`ls $APP_LIB/libpcre.so.1.* |awk '{FS=".so.1.";print $2}'`
 				ln -sf 	$APP_LIB/libpcre.so.1.$PCER_VER $APP_LIB/libpcre.so.0
-		fi
+			fi
 	    	#echo -n "Stopping DM: "
 		
-		#sqlite3
-		ln -sf $APP_LIB/libsqlite3.so.0.8.6 $APP_LIB/libsqlite3.so.0
-		ln -sf $APP_LIB/libsqlite3.so.0.8.6 $APP_LIB/libsqlite3.so
+			#sqlite3
+			ln -sf $APP_LIB/libsqlite3.so.0.8.6 $APP_LIB/libsqlite3.so.0
+			ln -sf $APP_LIB/libsqlite3.so.0.8.6 $APP_LIB/libsqlite3.so
 
-		#libsmbclient
-		ln -sf $APP_LIB/libsmbclient.so.0 $APP_LIB/libsmbclient.so
+			#libsmbclient
+			ln -sf $APP_LIB/libsmbclient.so.0 $APP_LIB/libsmbclient.so
 		
+			# openssl
+			#OPENSSL_VER=`ls $APP_LIB/libcrypto.so.* |awk '{FS="libcrypto.so.";print $2}'`
+			ln -sf $APP_LIB/libcrypto.so.1.0.0 $APP_LINK_LIB/libcrypto.so.1
+			ln -sf $APP_LIB/libcrypto.so.1.0.0 $APP_LINK_LIB/libcrypto.so
+			ln -sf $APP_LIB/libssl.so.1.0.0 $APP_LINK_LIB/libssl.so.1
+			ln -sf $APP_LIB/libssl.so.1.0.0 $APP_LINK_LIB/libssl.so
+
+			killall -9 lighttpd-monitor&
+			killall -9 lighttpd&
+			killall -9 lighttpd-arpping&
+			rm -rf /tmp/lighttpd/lighttpd*
+
+	    	#echo "DM2.0 firewall-start: "
+			iptables -D INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTP_PORT -j ACCEPT
+			iptables -t nat -D VSERVER -p tcp -m tcp --dport $WEBDAV_HTTP_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTP_PORT
+			iptables -D INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTPS_PORT -j ACCEPT
+			iptables -t nat -D VSERVER -p tcp -m tcp --dport $WEBDAV_HTTPS_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTPS_PORT		
+		
+			iptables -I INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTP_PORT -j ACCEPT
+			iptables -t nat -I VSERVER -p tcp -m tcp --dport $WEBDAV_HTTP_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTP_PORT
+			iptables -I INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTPS_PORT -j ACCEPT
+			iptables -t nat -I VSERVER -p tcp -m tcp --dport $WEBDAV_HTTPS_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTPS_PORT
+
+
+			#nvram set dm_http_port=$DM_PORT
+			#nvram commit
+
+			cd  /opt/bin
+		
+			./write_webdav_conf
+			./lighttpd -Df /tmp/lighttpd.conf &
+			sleep 5
+			./lighttpd-arpping -f br0 &
+			./lighttpd-monitor &
+			exit 0
+		fi
+
+		# Others files or directories
+		objs=`ls -a $APPS_INSTALL_PATH |grep -v ^\.__*`
+		for obj in $objs; do
+			if [ "$obj" == "." ] || [ "$obj" == ".." ]; then
+				continue
+			fi
+
+			if [ "$obj" != "bin" ] && [ "$obj" != "lib" ]; then
+			ln -sf $APPS_INSTALL_PATH/$obj $APP_LINK_DIR/$obj 
+			fi
+		done
+
+
+		# BIN
+		objs=`ls -a $APP_BIN`
+		# ncurses
+		ln -sf $APP_BIN/tic $APP_LINK_BIN/captoinfo
+		ln -sf $APP_BIN/tic $APP_LINK_BIN/infotocap
+		ln -sf $APP_BIN/tset $APP_LINK_BIN/reset
+
+		for obj in $objs; do
+			if [ "$obj" == "." ] || [ "$obj" == ".." ]; then
+				continue
+			fi
+
+			ln -sf $APP_BIN/$obj $APP_LINK_BIN/$obj 
+		done
+
+
+		# LIB
+		objs=`ls -a $APP_LIB`
+		# first find the other objs and then do uclibc.
+		for obj in $objs; do
+			if [ "$obj" == "." ] || [ "$obj" == ".." ]; then
+				continue
+			fi
+
+			ln -sf $APP_LIB/$obj $APP_LINK_LIB/$obj 
+		done
+
 		# openssl
 		#OPENSSL_VER=`ls $APP_LIB/libcrypto.so.* |awk '{FS="libcrypto.so.";print $2}'`
 		ln -sf $APP_LIB/libcrypto.so.1.0.0 $APP_LINK_LIB/libcrypto.so.1
 		ln -sf $APP_LIB/libcrypto.so.1.0.0 $APP_LINK_LIB/libcrypto.so
 		ln -sf $APP_LIB/libssl.so.1.0.0 $APP_LINK_LIB/libssl.so.1
 		ln -sf $APP_LIB/libssl.so.1.0.0 $APP_LINK_LIB/libssl.so
+	
+		# libz
+		LIBZ_VER=`ls $APP_LIB/libz.so.* |awk '{FS="libz.so.";print $2}'`
+		ln -sf $APP_LIB/libz.so.$LIBZ_VER $APP_LINK_LIB/libz.so.1
+		ln -sf $APP_LIB/libz.so.$LIBZ_VER $APP_LINK_LIB/libz.so	
+
+		# libxml2
+		LIBXML2_VER=`ls $APP_LIB/libxml2.so.* |awk '{FS="libxml2.so.";print $2}'`
+		ln -sf $APP_LIB/libxml2.so.$LIBXML2_VER $APP_LINK_LIB/libxml2.so.2
+		ln -sf $APP_LIB/libxml2.so.$LIBXML2_VER $APP_LINK_LIB/libxml2.so
+
+		if [ -z "$is_arm_machine" ]; then
+			# libuclibc++
+			LIBCPLUS_VER=`ls $APP_LIB/libuClibc++-* |awk '{FS="-";print $2}' |awk '{FS=".so";print $1}'`
+			ln -sf $APP_LIB/libuClibc++-$LIBCPLUS_VER.so $APP_LINK_LIB/libuClibc++.so.0
+			ln -sf $APP_LIB/libuClibc++-$LIBCPLUS_VER.so $APP_LINK_LIB/libuClibc++.so
+		fi
+
+		# pcre
+		PCRE1_VER=`ls $APP_LIB/libpcre.so.* |awk '{FS="libpcre.so.";print $2}'`
+		ln -sf $APP_LIB/libpcre.so.$PCRE1_VER $APP_LINK_LIB/libpcre.so.1
+		ln -sf $APP_LIB/libpcre.so.$PCRE1_VER $APP_LINK_LIB/libpcre.so.0
+		ln -sf $APP_LIB/libpcre.so.$PCRE1_VER $APP_LINK_LIB/libpcre.so
+		PCRE2_VER=`ls $APP_LIB/libpcrecpp.so.* |awk '{FS="libpcrecpp.so.";print $2}'`
+		ln -sf $APP_LIB/libpcrecpp.so.$PCRE2_VER $APP_LINK_LIB/libpcrecpp.so.1
+		ln -sf $APP_LIB/libpcrecpp.so.$PCRE2_VER $APP_LINK_LIB/libpcrecpp.so.0
+		ln -sf $APP_LIB/libpcrecpp.so.$PCRE2_VER $APP_LINK_LIB/libpcrecpp.so
+		PCRE3_VER=`ls $APP_LIB/libpcreposix.so.* |awk '{FS="libpcreposix.so.";print $2}'`
+		ln -sf $APP_LIB/libpcreposix.so.$PCRE3_VER $APP_LINK_LIB/libpcreposix.so.1
+		ln -sf $APP_LIB/libpcreposix.so.$PCRE3_VER $APP_LINK_LIB/libpcreposix.so.0
+		ln -sf $APP_LIB/libpcreposix.so.$PCRE3_VER $APP_LINK_LIB/libpcreposix.so
+
+		#sqlite3
+		SQLITE_VER=`ls $APP_LIB/libsqlite3.so.* |awk '{FS="libsqlite3.so.";print $2}'`
+		ln -sf $APP_LIB/libsqlite3.so.$SQLITE_VER $APP_LINK_LIB/libsqlite3.so.0
+		ln -sf $APP_LIB/libsqlite3.so.$SQLITE_VER $APP_LINK_LIB/libsqlite3.so
+
+		#libsmbclient
+		ln -sf $APP_LIB/libsmbclient.so.0 $APP_LINK_LIB/libsmbclient.so
 
 		killall -9 lighttpd-monitor&
 		killall -9 lighttpd&
 		killall -9 lighttpd-arpping&
 		rm -rf /tmp/lighttpd/lighttpd*
 
-	    	#echo "DM2.0 firewall-start: "
+		iptables -D INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTP_PORT -j ACCEPT
+		iptables -t nat -D VSERVER -p tcp -m tcp --dport $WEBDAV_HTTP_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTP_PORT
+		iptables -D INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTPS_PORT -j ACCEPT
+		iptables -t nat -D VSERVER -p tcp -m tcp --dport $WEBDAV_HTTPS_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTPS_PORT	
+		#echo "DM2.0 firewall-start: "
 		iptables -I INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTP_PORT -j ACCEPT
 		iptables -t nat -I VSERVER -p tcp -m tcp --dport $WEBDAV_HTTP_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTP_PORT
 		iptables -I INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTPS_PORT -j ACCEPT
 		iptables -t nat -I VSERVER -p tcp -m tcp --dport $WEBDAV_HTTPS_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTPS_PORT
-
-
 		#nvram set dm_http_port=$DM_PORT
 		#nvram commit
-
-		cd  /opt/bin
-		
+		cd  /opt/bin	
 		./write_webdav_conf
 		./lighttpd -Df /tmp/lighttpd.conf &
 		sleep 5
 		./lighttpd-arpping -f br0 &
 		./lighttpd-monitor &
-		exit 0
+    	#echo "DM2.0."
 	fi
-
-	# Others files or directories
-	objs=`ls -a $APPS_INSTALL_PATH |grep -v ^\.__*`
-	for obj in $objs; do
-		if [ "$obj" == "." ] || [ "$obj" == ".." ]; then
-			continue
-		fi
-
-		if [ "$obj" != "bin" ] && [ "$obj" != "lib" ]; then
-			ln -sf $APPS_INSTALL_PATH/$obj $APP_LINK_DIR/$obj 
-		fi
-	done
-
-
-	# BIN
-	objs=`ls -a $APP_BIN`
-	# ncurses
-	ln -sf $APP_BIN/tic $APP_LINK_BIN/captoinfo
-	ln -sf $APP_BIN/tic $APP_LINK_BIN/infotocap
-	ln -sf $APP_BIN/tset $APP_LINK_BIN/reset
-
-	for obj in $objs; do
-		if [ "$obj" == "." ] || [ "$obj" == ".." ]; then
-			continue
-		fi
-
-		ln -sf $APP_BIN/$obj $APP_LINK_BIN/$obj 
-	done
-
-
-	# LIB
-	objs=`ls -a $APP_LIB`
-	# first find the other objs and then do uclibc.
-	for obj in $objs; do
-		if [ "$obj" == "." ] || [ "$obj" == ".." ]; then
-			continue
-		fi
-
-		ln -sf $APP_LIB/$obj $APP_LINK_LIB/$obj 
-	done
-
-	# openssl
-	#OPENSSL_VER=`ls $APP_LIB/libcrypto.so.* |awk '{FS="libcrypto.so.";print $2}'`
-	ln -sf $APP_LIB/libcrypto.so.1.0.0 $APP_LINK_LIB/libcrypto.so.1
-	ln -sf $APP_LIB/libcrypto.so.1.0.0 $APP_LINK_LIB/libcrypto.so
-	ln -sf $APP_LIB/libssl.so.1.0.0 $APP_LINK_LIB/libssl.so.1
-	ln -sf $APP_LIB/libssl.so.1.0.0 $APP_LINK_LIB/libssl.so
-
-	# libxml2
-	LIBXML2_VER=`ls $APP_LIB/libxml2.so.* |awk '{FS="libxml2.so.";print $2}'`
-	ln -sf $APP_LIB/libxml2.so.$LIBXML2_VER $APP_LINK_LIB/libxml2.so.2
-	ln -sf $APP_LIB/libxml2.so.$LIBXML2_VER $APP_LINK_LIB/libxml2.so
-
-	if [ -z "$is_arm_machine" ]; then
-		# libuclibc++
-		LIBCPLUS_VER=`ls $APP_LIB/libuClibc++-* |awk '{FS="-";print $2}' |awk '{FS=".so";print $1}'`
-		ln -sf $APP_LIB/libuClibc++-$LIBCPLUS_VER.so $APP_LINK_LIB/libuClibc++.so.0
-		ln -sf $APP_LIB/libuClibc++-$LIBCPLUS_VER.so $APP_LINK_LIB/libuClibc++.so
-	fi
-
-	# libsigc++
-	LIBSIGC_VER=`ls $APP_LIB/libsigc-2.0.so.* |awk '{FS="libsigc-2.0.so.";print $2}'`
-	ln -sf $APP_LIB/libsigc-2.0.so.$LIBSIGC_VER $APP_LINK_LIB/libsigc-2.0.so.0
-	ln -sf $APP_LIB/libsigc-2.0.so.$LIBSIGC_VER $APP_LINK_LIB/libsigc-2.0.so
-
-	# libpar2
-	LIBPAR_VER=`ls $APP_LIB/libpar2.so.* |awk '{FS="libpar2.so.";print $2}'`
-	ln -sf $APP_LIB/libpar2.so.$LIBPAR_VER $APP_LINK_LIB/libpar2.so.0
-	ln -sf $APP_LIB/libpar2.so.$LIBPAR_VER $APP_LINK_LIB/libpar2.so
-
-	# pcre
-	PCRE1_VER=`ls $APP_LIB/libpcre.so.* |awk '{FS="libpcre.so.";print $2}'`
-	ln -sf $APP_LIB/libpcre.so.$PCRE1_VER $APP_LINK_LIB/libpcre.so.1
-	ln -sf $APP_LIB/libpcre.so.$PCRE1_VER $APP_LINK_LIB/libpcre.so.0
-	ln -sf $APP_LIB/libpcre.so.$PCRE1_VER $APP_LINK_LIB/libpcre.so
-	PCRE2_VER=`ls $APP_LIB/libpcrecpp.so.* |awk '{FS="libpcrecpp.so.";print $2}'`
-	ln -sf $APP_LIB/libpcrecpp.so.$PCRE2_VER $APP_LINK_LIB/libpcrecpp.so.1
-	ln -sf $APP_LIB/libpcrecpp.so.$PCRE2_VER $APP_LINK_LIB/libpcrecpp.so.0
-	ln -sf $APP_LIB/libpcrecpp.so.$PCRE2_VER $APP_LINK_LIB/libpcrecpp.so
-	PCRE3_VER=`ls $APP_LIB/libpcreposix.so.* |awk '{FS="libpcreposix.so.";print $2}'`
-	ln -sf $APP_LIB/libpcreposix.so.$PCRE3_VER $APP_LINK_LIB/libpcreposix.so.1
-	ln -sf $APP_LIB/libpcreposix.so.$PCRE3_VER $APP_LINK_LIB/libpcreposix.so.0
-	ln -sf $APP_LIB/libpcreposix.so.$PCRE3_VER $APP_LINK_LIB/libpcreposix.so
-
-	#sqlite3
-	SQLITE_VER=`ls $APP_LIB/libsqlite3.so.* |awk '{FS="libsqlite3.so.";print $2}'`
-	ln -sf $APP_LIB/libsqlite3.so.$(SQLITE_VER) $APP_LINK_LIB/libsqlite3.so.0
-	ln -sf $APP_LIB/libsqlite3.so.$(SQLITE_VER) $APP_LINK_LIB/libsqlite3.so
-
-	#libsmbclient
-	ln -sf $APP_LIB/libsmbclient.so.0 $APP_LINK_LIB/libsmbclient.so
-
-	killall -9 lighttpd-monitor&
-	killall -9 lighttpd&
-	killall -9 lighttpd-arpping&
-	rm -rf /tmp/lighttpd/lighttpd*
-
-	#echo "DM2.0 firewall-start: "
-	iptables -I INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTP_PORT -j ACCEPT
-	iptables -t nat -I VSERVER -p tcp -m tcp --dport $WEBDAV_HTTP_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTP_PORT
-	iptables -I INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTPS_PORT -j ACCEPT
-	iptables -t nat -I VSERVER -p tcp -m tcp --dport $WEBDAV_HTTPS_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTPS_PORT
-	#nvram set dm_http_port=$DM_PORT
-	#nvram commit
-	cd  /opt/bin	
-	./write_webdav_conf
-	./lighttpd -Df /tmp/lighttpd.conf &
-	sleep 5
-	./lighttpd-arpping -f br0 &
-	./lighttpd-monitor &
-    #echo "DM2.0."
     ;;
   stop)
     #echo -n "Stopping DM: "
+	nvram set webdav_extend_cap=0
+	nvram commit
 	killall -9 lighttpd-monitor&
 	killall -9 lighttpd&
 	killall -9 lighttpd-arpping&
 	rm -rf /tmp/lighttpd/lighttpd*
+	iptables -D INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTP_PORT -j ACCEPT
+	iptables -t nat -D VSERVER -p tcp -m tcp --dport $WEBDAV_HTTP_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTP_PORT
+	iptables -D INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTPS_PORT -j ACCEPT
+	iptables -t nat -D VSERVER -p tcp -m tcp --dport $WEBDAV_HTTPS_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTPS_PORT	
     #echo "DM2.0."
     ;;
+  scan)
+	if [ $WEBDAV_PROXY == 0 ] && [ $WEBDAV_AIDISK == 0 ]; then
+		echo "1+2"
+		nvram set webdav_extend_cap=0
+		nvram commit
+		killall -9 lighttpd-monitor&
+		killall -9 lighttpd&
+		killall -9 lighttpd-arpping&
+		rm -rf /tmp/lighttpd/lighttpd*
+		iptables -D INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTP_PORT -j ACCEPT
+		iptables -t nat -D VSERVER -p tcp -m tcp --dport $WEBDAV_HTTP_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTP_PORT
+		iptables -D INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTPS_PORT -j ACCEPT
+		iptables -t nat -D VSERVER -p tcp -m tcp --dport $WEBDAV_HTTPS_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTPS_PORT
+	else
+		lighttpd=`ps | grep "lighttpd" |grep -v "lighttpd-arpping" |grep -v "lighttpd-monitor"|grep -v "asus_lighttpd"|grep -v "grep" |awk '{printf $5}'`
+		echo $lighttpd
+		if [ "$lighttpd" == "./lighttpd" ]; then
+			echo "2"
+		else
+			echo "3"
+			sh /opt/etc/init.d/S50aicloud start;
+		fi
+	fi
+	;;
   force-reload|restart)
     #echo "Restarting DM: "
     sh /opt/etc/init.d/S50aicloud start
@@ -334,12 +375,22 @@ case "$1" in
 
   firewall-start)
     #echo "DM2.0 firewall-start: "
+	iptables -D INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTP_PORT -j ACCEPT
+	iptables -t nat -D VSERVER -p tcp -m tcp --dport $WEBDAV_HTTP_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTP_PORT
+	iptables -D INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTPS_PORT -j ACCEPT
+	iptables -t nat -D VSERVER -p tcp -m tcp --dport $WEBDAV_HTTPS_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTPS_PORT		
+
 	iptables -I INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTP_PORT -j ACCEPT
 	iptables -t nat -I VSERVER -p tcp -m tcp --dport $WEBDAV_HTTP_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTP_PORT
 	iptables -I INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTPS_PORT -j ACCEPT
 	iptables -t nat -I VSERVER -p tcp -m tcp --dport $WEBDAV_HTTPS_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTPS_PORT
 	;;
   firewall-restart)
+	iptables -D INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTP_PORT -j ACCEPT
+	iptables -t nat -D VSERVER -p tcp -m tcp --dport $WEBDAV_HTTP_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTP_PORT
+	iptables -D INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTPS_PORT -j ACCEPT
+	iptables -t nat -D VSERVER -p tcp -m tcp --dport $WEBDAV_HTTPS_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTPS_PORT	
+	
 	iptables -I INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTP_PORT -j ACCEPT
 	iptables -t nat -I VSERVER -p tcp -m tcp --dport $WEBDAV_HTTP_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTP_PORT
 	iptables -I INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTPS_PORT -j ACCEPT

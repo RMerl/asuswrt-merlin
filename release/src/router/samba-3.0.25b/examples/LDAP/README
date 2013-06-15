@@ -1,0 +1,64 @@
+!==
+!== README File for various LDAP examples
+!==
+!== written by Gerald Carter <jerry@samba.org>
+!==
+
+OpenLDAP 2.x
+------------
+
+A sample schema file (samba.schema) has been included for use
+with OpenLDAP 2.0.x.  The OIDs used in this file are owned by
+the Samba team and generated from its own Enterprise number
+of 7165 (as issued by IANA).
+
+Copy the samba.schema file into your /etc/openldap/schema directory,
+and add an include for it in the /etc/openldap/slapd.conf file.
+Note that samba.schema relies upon the uid and uidNumber attributes
+from the RFC2307 schema (i.e. nis.schema)
+
+If you choose to import /etc/passwd, nis, or nisplus tables 
+into ldap, you can use migration tools provided by PADL Software 
+which are located at 
+
+	http://www.padl.com/tools.html
+
+It is not a requirement that a user's /etc/passwd account
+is stored in LDAP for the samba.schema file to work (although
+the whole point of storing smbpasswd in LDAP is to have a 
+single location for user accounts, right?)
+
+The padl tools will leave you with LDIF files which you can import
+into OpenLDAP.  Before you can import them, you need to include
+nis.schema and cosine.schema in your slapd.conf file.
+
+You must restart the LDAP server for these new included schema files 
+to become active.
+
+SunOne/Netscape DS
+------------------
+
+The schema file has not been updated for the sambaSamAccount
+objectclass.
+
+
+Novell eDirectory
+-----------------
+
+The schema file has not been updated for the sambaSamAccount
+objectclass.
+
+
+smbldap-tools/
+--------------
+
+The smbldap-tools have been removed from the samba svn 
+tree.  The latest version will continue to be included 
+in Samba releases.
+
+The smbldap-tools package can be downloaded individually from 
+http://samba.idealx.org/dist/
+
+!==
+!== end of README
+!==

@@ -1,0 +1,183 @@
+0. Samba Team Notes:
+This package is targeted at the woody release of debian distribution
+running on a 2.4.x kernel.
+This package has been made by Simo Sorce on behalf of the Samba Team.
+Do not use Debian BTS to report bugs, it's not a debian project package.
+Thanks to Eloy Paris and Steve "Vorlon" Langasek for the work they've done
+and continue to do on debian unstable packages. That made me possible to
+build up debian packages for the Team.
+
+
+ATTENTION: This package works correctly only with recent 2.4.x kernels due to
+deep optimizations that samba uses when compiled on such kernels.
+
+
+Original README.Debian foolows.
+-----------------------------------------------------------------------------
+
+Samba for Debian
+----------------
+
+This package was built by Eloy Paris <peloy@debian.org> and Steve Langasek
+<vorlon@debian.org>, current maintainers of the Samba packages for Debian,
+based on previous work from Bruce Perens <Bruce@Pixar.com>, Andrew
+Howell <andrew@it.com.au>, Klee Dienes <klee@debian.org> and Michael
+Meskes <meskes@topsystem.de>, all previous maintainers of the packages
+samba and sambades (merged together for longer than we can remember.)
+
+Contents of this README file:
+
+1. Notes
+2. Upgrading from Samba 2.2
+3. Packages Generated from the Samba Sources
+4. Support for NT Domains
+5. Reporting bugs
+
+
+1. Notes
+--------
+
+- As of Samba 2.0.6-1, the Debian version of Samba is compiled with
+  Pluggable Authentication Modules (PAM) support. PAM support was 
+  discontinued during the libc5 -> libc6 migration process and I never
+  brought it back until 2.0.6-1.
+
+- The smbfs package does not support the 2.0.x Linux kernels anymore.
+  This has been the case since the very first packages of the CVS sources
+  that eventually became Samba 2.2. To use the smbfs package you need to
+  run a 2.2.x kernel or later.
+
+- Starting with the Debian packages for Samba 2.2, the Samba log files (for
+  nmbd and smbd) have been moved to a new location: /var/log/samba/. The
+  files also have new names: log.nmbd and log.smbd. The old files
+  (/var/log/{nmb,smb} were moved to the new location.
+
+
+2. Upgrading from Samba 2.2
+---------------------------
+
+Samba 3.0 provides greatly improved support for modern Windows systems,
+including support for Unicode and LDAP.  In the process, Samba 3.0
+necessarily also breaks backward compatiblity with past releases.  These
+issues are documented herein; if you are aware of other problems related
+to upgrading from Samba 2.2, please let us know at
+<samba@packages.debian.org>.
+
+Samba and LDAP
+--------------
+Starting with Samba 2.999+3.0cvs20020723-1 we are building Samba with
+LDAP support.  However, the LDAP schema for Samba 3.0 differs
+substantially from the schema used by many sites with Samba 2.2 (not
+enabled in the Debian packages).  If upgrading from an LDAP-enabled 2.2,
+you will need to run the convertSambaAccount script found in
+/usr/share/doc/samba-doc/examples/LDAP.  A copy of the schema itself can
+also be found at /usr/share/doc/samba-doc/examples/LDAP/samba.schema.
+
+Character Sets
+--------------
+Samba 3.0 introduces support for negotiating Unicode (UCS-2LE) with
+Windows clients.  Owing to the close similarity between Windows and Unix
+NLS charsets, in the past, many users were able to pass filenames
+containing non-ASCII characters between clients and servers without
+configuring Samba to know what character set was in use.  Now, Samba
+must be able to convert Unix filenames to Unicode before sending to the
+client, so Samba must know what character set the filenames are being
+converted from.  If you will be sharing files with non-ASCII names, and
+the filenames are not encoded with UTF-8, you will need to tell Samba
+which character set to use with the 'unix charset' option.
+
+If you had previously specified 'character set' and 'client code page'
+options under 2.2, these settings should be automatically converted for
+you.
+
+
+3. Packages Generated from the Samba Sources
+--------------------------------------------
+
+Currently, the Samba sources produce the following binary packages:
+
+samba: A LanManager like file and printer server for Unix.
+samba-common: Samba common files used by both the server and the client.
+smbclient: A LanManager like simple client for Unix.
+swat: Samba Web Administration Tool
+samba-doc: Samba documentation.
+smbfs: Mount and umount commands for the smbfs (works with 2.2.x and
+	above kernels, not with 2.0.x kernels.)
+libpam-smbpass: pluggable authentication module for SMB password
+	database.
+libsmbclient: Shared library that allows applications to talk to SMB servers.
+libsmbclient-dev: libsmbclient shared libraries.
+winbind: Service to resolve user and group information from a Windows NT 
+	server.
+python2.2-samba: Python bindings that allow access to various aspects of
+	Samba.
+
+Please note that the package smbwrapper (a shared library that provides
+SMB client services that existed between Samba 2.0.0-1 and Samba-2.0.5a-4
+does not exist any more. The reason is that starting with Samba 2.0.6-1, that
+code does not even compile, and the upstream author (Andrew Tridgell)
+recommended to disable the compilation of smbwrapper until some issues
+with glibc2.1 get cleared out (the problem is with glibc, not with Samba
+itself).
+
+
+4. Support for NT Domains
+-------------------------
+
+Samba 2.2 includes preliminary support for NT domains. A Samba server
+can now be part of a Windows NT domain whose Primary Domain Controller
+is a Windows NT server. This feature is supposed to be stable although I
+haven't tried it myself. Read the documentation in the samba-doc package
+for help on how to do this (hint: "security = domain" in the smb.conf
+file).
+
+Samba 2.2 has also experimental support for Primary Domain
+Controller. This means that a Samba server can act now as a PDC. There
+are no special flags needed to compile Samba with NT domain PDC
+support. Please read the NTDOM PDC FAQ at www.samba.org (Documentation
+section).
+
+Please note that NT domain PDC support is far from complete and is still 
+experimental.
+
+
+5. Reporting Bugs
+-----------------
+
+**** NOTE: This package is distributed by the Samba Team based on Debian
+     packages, please submit bus to https://bugzilla.samba.org instead ****
+
+If you believe you have found a bug please make sure the possible bug
+also exists in the latest version of Samba that is available for the
+unstable Debian distribution. If you are running Debian stable this
+means that you will probably have to build your own packages. And if the
+problem does not exist in the latest version of Samba we have packaged it
+means that you will have to run the version of Samba you built yourself
+since it is not easy to upload new packages to the stable distribution,
+unless they fix critical security problems.
+
+If you can reproduce the problem in the latest version of Samba then
+it is likely to be a real bug. Your best shot is to search the Samba
+mailing lists to see if it is something that has already been reported
+and fixed - if it is a simple fix we can add the patch to our packages
+without waiting for a new Samba release.
+
+If you decide that your problem deserves to be submitted to the Debian
+Bug Tracking System (BTS) we expect you to be responsive if we request
+more information. If we request more information and do not receive
+any in a reasonable time frame expect to see your bug closed without
+explanation - we can't fix bugs we can't reproduce, and most of the
+time we need more information to be able to reproduce them.
+
+When submitting a bug to the Debian BTS please include the version of
+the Debian package you are using as well as the Debian distribution you
+are using. Think _twice_ about the severity you assign to the bug: we
+are _very_ sensitive about bug severities; the fact that it doesn't
+work for you doesn't mean that the severity must be such that it holds
+a major Debian release. In fact, that it doesn't work for you it
+doesn't mean that it doesn't work for others. So again: think _twice_.
+
+
+Eloy A. Paris <peloy@debian.org>
+Steve Langasek <vorlon@debian.org>
+

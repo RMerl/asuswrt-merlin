@@ -19,14 +19,8 @@
 #ifndef _LIBBRIDGE_H
 #define _LIBBRIDGE_H
 
-#include <sys/socket.h>
-#include <linux/if.h>
+#include <net/if.h>
 #include <linux/if_bridge.h>
-
-/* defined in net/if.h but that conflicts with linux/if.h... */
-extern unsigned int if_nametoindex (const char *__ifname);
-extern char *if_indextoname (unsigned int __ifindex, char *__ifname);
-
 
 struct bridge_id
 {

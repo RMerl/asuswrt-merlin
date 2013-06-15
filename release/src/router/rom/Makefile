@@ -1,12 +1,13 @@
 include ../common.mak
 
-DM_VERSION=3.1.0.59
-HTTP_VERSION=3.1.0.65
-
 ifeq ($(RTCONFIG_BCMARM),y)
 	pkg_type=arm
+	DM_VERSION=3.1.0.78
+	HTTP_VERSION=3.1.0.71
 else
 	pkg_type=mipsel
+	DM_VERSION=3.1.0.78
+	HTTP_VERSION=3.1.0.71
 endif
 
 all:
@@ -28,9 +29,14 @@ ifneq ($(RTCONFIG_BCMARM),y)
 
 	-install -m 0644 packages/libuclibc++_*_$(pkg_type).ipk $(INSTALLDIR)/rom
 endif
+	-install -m 0644 packages/readline_*_$(pkg_type).ipk $(INSTALLDIR)/rom
+	-install -m 0644 packages/wxbase_*_$(pkg_type).ipk $(INSTALLDIR)/rom
+	-install -m 0644 packages/expat_*_$(pkg_type).ipk $(INSTALLDIR)/rom
 	install -m 0644 packages/asus_base_apps_$(pkg_type).tgz $(INSTALLDIR)/rom # Don't need if installing from Internet.
 	-install -m 0644 packages/downloadmaster_$(DM_VERSION)_$(pkg_type).ipk $(INSTALLDIR)/rom
-	#-install -m 0644 packages/asuslighttpd_$(HTTP_VERSION)_$(pkg_type).ipk $(INSTALLDIR)/rom
+ifneq ($(HTTP_VERSION),)
+	-install -m 0644 packages/asuslighttpd_$(HTTP_VERSION)_$(pkg_type).ipk $(INSTALLDIR)/rom
+endif
 	-install -m 0644 packages/openssl_*_$(pkg_type).ipk $(INSTALLDIR)/rom
 	-install -m 0644 packages/zlib_*_$(pkg_type).ipk $(INSTALLDIR)/rom
 	-install -m 0644 packages/libcurl_*_$(pkg_type).ipk $(INSTALLDIR)/rom
@@ -47,6 +53,11 @@ endif
 	mkdir -p $(INSTALLDIR)/usr/sbin
 	install -m 0755 apps_scripts/*.sh $(INSTALLDIR)/usr/sbin
 	install -m 0755 webs_scripts/*.sh $(INSTALLDIR)/usr/sbin
+ifeq ($(RTCONFIG_AUTOLIVEUPDATE_NOZIP),y)
+	cp -f webs_scripts/nozip_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
+else
+	cp -f webs_scripts/zip_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
+endif
 
 	# remove comments, compress whitespace
 	sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < rom/etc/services > $(INSTALLDIR)/rom/etc/services
@@ -67,4 +78,19 @@ ifeq ($(RTCONFIG_RALINK_RT3883),y)
 	mkdir -p $(INSTALLDIR)/rom/wlan
 	cp -rf wlan/RT3092_PCIe_LNA_2T2R_ALC_V1_2.bin $(INSTALLDIR)/rom/wlan/
 	cp -rf wlan/RT3662_AP_2T2R_V0_0.bin $(INSTALLDIR)/rom/wlan/
+endif
+
+ifeq ($(RTCONFIG_BCMARM),y)
+	mkdir -p $(INSTALLDIR)/rom/dlna
+ifeq ($(RTAC56U), y)
+	cp -rf dlna/icon_sm.rtac56u.jpg $(INSTALLDIR)/rom/dlna/icon_sm.jpg
+	cp -rf dlna/icon_sm.rtac56u.png $(INSTALLDIR)/rom/dlna/icon_sm.png
+	cp -rf dlna/icon_lrg.rtac56u.jpg $(INSTALLDIR)/rom/dlna/icon_lrg.jpg
+	cp -rf dlna/icon_lrg.rtac56u.png $(INSTALLDIR)/rom/dlna/icon_lrg.png
+else ifeq ($(RTAC68U), y)
+	cp -rf dlna/icon_sm.rtac68u.jpg $(INSTALLDIR)/rom/dlna/icon_sm.jpg
+	cp -rf dlna/icon_sm.rtac68u.png $(INSTALLDIR)/rom/dlna/icon_sm.png
+	cp -rf dlna/icon_lrg.rtac68u.jpg $(INSTALLDIR)/rom/dlna/icon_lrg.jpg
+	cp -rf dlna/icon_lrg.rtac68u.png $(INSTALLDIR)/rom/dlna/icon_lrg.png
+endif
 endif

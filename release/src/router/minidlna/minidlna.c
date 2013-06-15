@@ -859,6 +859,8 @@ init(int argc, char * * argv)
 
 	writepidfile(pidfilename, pid);
 
+	// remove working flag
+	remove_scantag();
 	return 0;
 }
 

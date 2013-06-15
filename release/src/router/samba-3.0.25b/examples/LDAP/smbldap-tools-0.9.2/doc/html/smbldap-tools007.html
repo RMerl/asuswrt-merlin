@@ -1,0 +1,251 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+            "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+<HEAD>
+
+<META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<META name="GENERATOR" content="hevea 1.06">
+<TITLE>
+ Frequently Asked Questions
+</TITLE>
+</HEAD>
+<BODY >
+<A HREF="smbldap-tools006.html"><IMG SRC ="previous_motif.gif" ALT="Précédent"></A>
+<A HREF="index.html"><IMG SRC ="contents_motif.gif" ALT="Remonter"></A>
+<A HREF="smbldap-tools008.html"><IMG SRC ="next_motif.gif" ALT="Suivant"></A>
+<HR>
+
+<H2><A NAME="htoc26">6</A>&nbsp;&nbsp;Frequently Asked Questions</H2><UL>
+<LI><A HREF="smbldap-tools007.html#toc14"> How can i use old released uidNumber and gidNumber ?</A>
+<LI><A HREF="smbldap-tools007.html#toc15"> I always have this error: "Can't locate IO/Socket/SSL.pm"</A>
+<LI><A HREF="smbldap-tools007.html#toc16"> I can't initialize the directory with <TT>smbldap-populate</TT></A>
+<LI><A HREF="smbldap-tools007.html#toc17"> I can't join the domain with the <TT>root</TT> account</A>
+<LI><A HREF="smbldap-tools007.html#toc18"> I have the <TT>sambaSamAccount</TT> but i can't logged in</A>
+<LI><A HREF="smbldap-tools007.html#toc19"> I want to create machine account on the fly, but it does
+ not works or I must do it twice</A>
+<LI><A HREF="smbldap-tools007.html#toc20"> I can't manage the Oracle Internet Database</A>
+<LI><A HREF="smbldap-tools007.html#toc21"> The directive <TT>passwd program = /usr/local/sbin/smbldap-passwd -u %u</TT> is not
+called, or i got a error message when changing the password from windows</A>
+<LI><A HREF="smbldap-tools007.html#toc22"> New computers account can't be set in ou=computers</A>
+<LI><A HREF="smbldap-tools007.html#toc23"> I can join the domain, but i can't log on</A>
+<LI><A HREF="smbldap-tools007.html#toc24"> I can't create a user with <TT>smbldap-useradd</TT></A>
+<LI><A HREF="smbldap-tools007.html#toc25"> smbldap-useradd: Can't call method "get_value" on an undefined value at
+/usr/local/sbin/smbldap-useradd line 154</A>
+<LI><A HREF="smbldap-tools007.html#toc26"> Typical errors on creating a new user or a new group</A>
+</UL>
+
+<A NAME="toc14"></A>
+<H3><A NAME="htoc27">6.1</A>&nbsp;&nbsp;How can i use old released uidNumber and gidNumber ?</H3>
+There are two way to do this :
+<UL><LI>
+modify the <TT>cn=NextFreeUnixId,dc=idealx,dc=org</TT> and
+ change the <TT>uidNumber</TT> and/or <TT>gidNumber</TT> value. This
+ must be done manually. For example, if you want to use all available
+ uidNumber and gidNumber higher then 1500, you need to create a
+ <TT>update-NextFreeUnixId.ldif</TT> file containing :
+<PRE>dn: cn=NextFreeUnixId,dc=idealx,dc=org
+changetype: modify
+uidNumber: 1500
+gidNumber: 1500
+</PRE>
+and then update the directory :
+<PRE>
+ldapmodify -x -D "cn=Manager,dc=idealx,dc=org" -w secret -f update-NextFreeUnixId.ldif
+</PRE><LI>use the <TT>-u</TT> or <TT>-g</TT> option to the script you need to set the value you
+ want to use
+</UL>
+<A NAME="toc15"></A>
+<H3><A NAME="htoc28">6.2</A>&nbsp;&nbsp;I always have this error: "Can't locate IO/Socket/SSL.pm"</H3>
+This happens when you want to use a certificate. In this case, you need to install the
+IO-Socket-SSL Perl module.<BR>
+<BR>
+<A NAME="toc16"></A>
+<H3><A NAME="htoc29">6.3</A>&nbsp;&nbsp;I can't initialize the directory with <TT>smbldap-populate</TT></H3>
+When I want to initialize the directory using the <TT>smbldap-populate</TT>
+script, I get
+<PRE>
+[root@slave sbin]# smbldap-populate.pl
+  Using builtin directory structure
+  adding new entry: dc=IDEALX,dc=COM
+  Can't call method "code" without a package or object reference at
+  /usr/local/sbin/smbldap-populate.pl line 270, &lt;GEN1&gt; line 2.
+</PRE>Answer: check the TLS configuration
+<UL><LI>
+if you don't want to use TLS support, set the <TT>/etc/opt/IDEALX/smbldap-tools/smbldap.conf</TT> file
+with
+<PRE>
+ldapSSL="0"
+</PRE><LI>if you want TLS support, set the <TT>/etc/opt/IDEALX/smbldap-tools/smbldap.conf</TT> file with
+<PRE>
+ldapSSL="1"
+</PRE>and check that the directory server is configured to accept TLS connections.
+</UL>
+<A NAME="toc17"></A>
+<H3><A NAME="htoc30">6.4</A>&nbsp;&nbsp;I can't join the domain with the <TT>root</TT> account</H3>
+<UL><LI>
+check that the root account has the sambaSamAccount objectclass
+<LI>check that the directive <TT>add machine script</TT> is present and configured
+</UL>
+<A NAME="toc18"></A>
+<H3><A NAME="htoc31">6.5</A>&nbsp;&nbsp;I have the <TT>sambaSamAccount</TT> but i can't logged in</H3>
+Check that the <TT>sambaPwdLastSet</TT> attribute is not null (equal to 0)<BR>
+<BR>
+<A NAME="toc19"></A>
+<H3><A NAME="htoc32">6.6</A>&nbsp;&nbsp;I want to create machine account on the fly, but it does
+ not works or I must do it twice</H3>
+<UL><LI>
+The script defined with the <TT>add machine script</TT> must not add
+the <TT>sambaSAMAccount</TT> objectclass of the machine account. The
+script must only add the Posix machine account. Samba will add the <TT>sambaSAMAccount</TT> when
+joining the domain.
+<LI>Check that the <TT>add <B>machine</B> script</TT> is present in samba
+ configuration file.
+</UL>
+<A NAME="toc20"></A>
+<H3><A NAME="htoc33">6.7</A>&nbsp;&nbsp;I can't manage the Oracle Internet Database</H3>
+If you have an error message like :
+<PRE>
+Function Not Implemented at /usr/local/sbin/smbldap_tools.pm line 187.
+Function Not Implemented at /usr/local/sbin/smbldap_tools.pm line 627.
+</PRE>For Oracle Database, all attributes that will be resquested to the directory must be indexed. Add a
+new index for samba attributes and make sure that the following attributes are also indexed :
+ uidNumber, gidNumber, memberUid, homedirectory, description, userPassword ...<BR>
+<BR>
+<A NAME="toc21"></A>
+<H3><A NAME="htoc34">6.8</A>&nbsp;&nbsp;The directive <TT>passwd program = /usr/local/sbin/smbldap-passwd -u %u</TT> is not
+called, or i got a error message when changing the password from windows</H3>
+The directive is called if you also set <TT>unix password sync = Yes</TT>.
+Notes:
+<UL><LI>
+if you use OpenLDAP, none of those two options are needed. You just need <TT>ldap
+passwd sync = Yes</TT>.
+<LI>the script called here must only update the <TT>userPassword</TT> attribute. This is the
+reason of the <TT>-u</TT> option. Samba passwords will be updated by samba itself.
+<LI>the <TT>passwd chat</TT> directive must match what is prompted when using the
+<TT>smbldap-passwd</TT> command
+</UL>
+<A NAME="toc22"></A>
+<H3><A NAME="htoc35">6.9</A>&nbsp;&nbsp;New computers account can't be set in ou=computers</H3><A NAME="sec::bug::ou::computer"></A>
+This is a known samba bug. There's a workarround: look at
+<TT>http://marc.theaimsgroup.com/?l=samba&amp;m=108439612826440&amp;w=2</TT><BR>
+<BR>
+<A NAME="toc23"></A>
+<H3><A NAME="htoc36">6.10</A>&nbsp;&nbsp;I can join the domain, but i can't log on</H3>
+look at section <A HREF="#sec::bug::ou::computer">6.9</A><BR>
+<BR>
+<A NAME="toc24"></A>
+<H3><A NAME="htoc37">6.11</A>&nbsp;&nbsp;I can't create a user with <TT>smbldap-useradd</TT></H3>
+When creating a new user account I get the following error message:
+<PRE>
+/usr/local/sbin/smbldap-useradd.pl: unknown group SID not set for unix group 513
+</PRE>Answer: 
+<UL><LI>
+is nss_ldap correctly configured ?
+<LI>is the default group's users mapped to the 'Domain Users' NT group ?
+<PRE>
+net groupmap add rid=513 unixgroup="Domain Users" ntgroup="Domain Users"
+</PRE></UL>
+<A NAME="toc25"></A>
+<H3><A NAME="htoc38">6.12</A>&nbsp;&nbsp;smbldap-useradd: Can't call method "get_value" on an undefined value at
+/usr/local/sbin/smbldap-useradd line 154</H3>
+<UL><LI>
+does the default group defined in smbldap.conf exist
+ (defaultUserGid="513") ?
+<LI>does the NT "Domain Users" group mapped to a unix
+ group of rid 513 (see option <I>-r</I> of <TT>smbldap-groupadd</TT> and
+ <TT>smbldap-groupmod</TT> to set a rid) ?
+</UL>
+<A NAME="toc26"></A>
+<H3><A NAME="htoc39">6.13</A>&nbsp;&nbsp;Typical errors on creating a new user or a new group</H3><A NAME="faq::error::add::user"></A>
+<UL><LI>
+i've got the following error: 
+<PRE>
+Could not find base dn, to get next uidNumber at /usr/local/sbin//smbldap_tools.pm line 909
+</PRE><OL type=1><LI>
+	you do not have created the object to defined the next uidNumber and gidNumber available.
+	<UL><LI>
+	for version 0.8.7&nbsp;: you can just run the <TT>smbldap-populate</TT> script that will
+		update the sambaDomain entry to store those informations
+	<LI>for version before 0.8.7&nbsp;: 
+	You have updated the smbldap-tools to version 0.8.5 or newer.
+	You have to do this manually. Create an file called <TT>add.ldif</TT> and containing
+<PRE>
+dn: cn=NextFreeUnixId,dc=idealx,dc=org
+objectClass: inetOrgPerson
+objectClass: sambaUnixIdPool
+uidNumber: 1000
+gidNumber: 1000
+cn: NextFreeUnixId
+sn: NextFreeUnixId
+</PRE>	and then add the object with the ldapadd utility:
+<PRE>
+$ ldapadd -x -D "cn=Manager,dc=idealx,dc=org" -w secret -f add.ldif
+</PRE>	Here, 1000 is the first available value for uidNumber and gidNumber (of course, if this value is
+	already used by a user or a group, the first available after 1000 will be used).
+	</UL><BR>
+<BR>
+<LI>The error also appear when there is a need for TLS (ldapTLS=1 in <TT>smbldap.conf</TT>) and
+something is wrong with certificate naming or path settings.
+</OL><BR>
+<BR>
+<LI>i've got the following error:
+<PRE>
+Use of uninitialized value in string at
+/usr/local/sbin//smbldap\_tools.pm line 914.
+Error: No DN specified at /usr/local/sbin//smbldap\_tools.pm line 919
+</PRE>You have not updated the configuration file to defined the object where are sotred the next
+uidNumber and gidNumber available. In our example, you have to add a nex entry in
+<I>/etc/opt/IDEALX/smbldap-tools/smbldap.conf</I> containing :
+<PRE>
+# Where to store next uidNumber and gidNumber available
+sambaUnixIdPooldn="cn=NextFreeUnixId,${suffix}"
+</PRE>btw, a new option is now available too: the domain to append to users. You can add to the
+configuration file the following lines:
+<PRE>
+# Domain appended to the users "mail"-attribute
+# when smbldap-useradd -M is used mailDomain="idealx.com"
+</PRE><BR>
+<BR>
+<LI>i've got the following error:
+<PRE>
+Use of uninitialized value in concatenation (.) or string at /usr/local/sbin/smbldap-useradd line 183.
+Use of uninitialized value in substitution (s///) at /usr/local/sbin/smbldap-useradd line 185.
+Use of uninitialized value in string at /usr/local/sbin/smbldap-useradd line 264.
+failed to add entry: homedirectory: value #0 invalid per syntax at /usr/local/sbin/smbldap-useradd line 280.
+userHomeDirectory=User "jto" already member of the group "513".
+failed to add entry: No such object at /usr/local/sbin/smbldap-useradd line 382.
+</PRE>you have to change the variable name <TT>userHomePrefix</TT> to <TT>userHome</TT> in
+<I>/etc/opt/IDEALX/smbldap-tools/smbldap.conf</I><BR>
+<BR>
+<LI>i've got the following error:
+<PRE>
+failed to add entry: referral missing at /usr/local/sbin/smbldap-useradd line 279, &lt;DATA&gt; line 283.
+</PRE>you have to update the configuration file that defined users, groups and computers dn. Those
+parameters must not be relative to the <TT>suffix</TT> parameter. A typical
+configuration look like this :
+<PRE>
+usersdn="ou=Users,${suffix}"
+computersdn="ou=Computers,${suffix}"
+groupsdn="ou=Groups,${suffix}"
+</PRE><BR>
+<BR>
+<LI>i've got the following error:
+<PRE>
+erreur LDAP: Can't contact master ldap server (IO::Socket::INET: Bad protocol 'tcp')
+at /usr/local/sbin//smbldap_tools.pm line 153.
+</PRE>remove <I>ldap</I> from <I>/etc/nsswitch.conf</I> for <I>services</I> list of possible check. For
+example, if your ldap directory is not configured to give services information, you must have 
+<PRE>
+services    files
+</PRE>and not
+<PRE>
+services:   ldap [NOTFOUND=return] files
+</PRE></UL>
+
+ 
+<HR>
+<A HREF="smbldap-tools006.html"><IMG SRC ="previous_motif.gif" ALT="Précédent"></A>
+<A HREF="index.html"><IMG SRC ="contents_motif.gif" ALT="Remonter"></A>
+<A HREF="smbldap-tools008.html"><IMG SRC ="next_motif.gif" ALT="Suivant"></A>
+</BODY>
+</HTML>

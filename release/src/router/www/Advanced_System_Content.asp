@@ -22,9 +22,9 @@
 	border:1px outset #999;
 	background-color:#576D73;
 	position:absolute;
-	margin-top:106px;
-	*margin-top:96px;	
-	margin-left:127px;
+	*margin-top:27px;	
+	margin-left:121px;
+	*margin-left:-353px;
 	width:345px;
 	text-align:left;	
 	height:auto;
@@ -107,7 +107,7 @@ function initial(){
 		document.getElementById('http_username').style.display = "none";
 	}
 	
-	if(wifi_tog_btn_support != -1 || wifi_hw_sw_support != -1 || sw_mode == 2 || sw_mode == 4){		// wifi_tog_btn && wifi_hw_sw && hide WPS button behavior under repeater mode
+	if(wifi_tog_btn_support != -1 || wifi_hw_sw_support || sw_mode == 2 || sw_mode == 4){		// wifi_tog_btn && wifi_hw_sw && hide WPS button behavior under repeater mode
 			document.form.btn_ez_radiotoggle[0].disabled = true;
 			document.form.btn_ez_radiotoggle[1].disabled = true;
 			document.getElementById('btn_ez_radiotoggle_tr').style.display = "none";
@@ -654,7 +654,7 @@ function hide_https_lanport(_value){
 		var https_lanport_num = "<% nvram_get("https_lanport"); %>";
 		$("https_lanport").style.display = (_value == "0") ? "none" : "";
 		document.form.https_lanport.value = "<% nvram_get("https_lanport"); %>";
-		$("https_access_page").innerHTML = Untranslated.https_access_url;
+		$("https_access_page").innerHTML = "<#https_access_url#> ";
 		$("https_access_page").innerHTML += "<a href=\"https://"+theUrl+":"+https_lanport_num+"\" target=\"_blank\" style=\"color:#FC0;text-decoration: underline; font-family:Lucida Console;\">http<span>s</span>://"+theUrl+"<span>:"+https_lanport_num+"</span></a>";
 		$("https_access_page").style.display = (_value == "0") ? "none" : "";
 	}
@@ -813,7 +813,7 @@ function hideport(flag){
 function change_url(num, flag){
 	if(flag == 'https_lan'){
 		var https_lanport_num_new = num;
-		$("https_access_page").innerHTML = Untranslated.https_access_url;
+		$("https_access_page").innerHTML = "<#https_access_url#> ";
 		$("https_access_page").innerHTML += "<a href=\"https://"+theUrl+":"+https_lanport_num_new+"\" target=\"_blank\" style=\"color:#FC0;text-decoration: underline; font-family:Lucida Console;\">http<span>s</span>://"+theUrl+"<span>:"+https_lanport_num_new+"</span></a>";
 	}else{
 		
@@ -1107,11 +1107,10 @@ function change_url(num, flag){
 
 				<tr>
 					<!-- client info -->
-					<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>					
-					
 					<td width="80%">
 				 		<input type="text" class="input_32_table" maxlength="15" name="http_client_ip_x_0"  onKeyPress="" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">
-            <img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="Select the device name of LAN clients." onmouseover="over_var=1;" onmouseout="over_var=0;">				 		
+						<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="Select the device name of LAN clients." onmouseover="over_var=1;" onmouseout="over_var=0;">				 		
+						<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>	
 				 	</td>
 				 	<td width="20%">	
 				  		<input class="add_btn" type="button" onClick="addRow(document.form.http_client_ip_x_0, 4);" value="">

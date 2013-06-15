@@ -455,7 +455,7 @@ fieldset{
 	border: 2px solid #FFF;
 	font-size: 14px;
 	border: 0px solid #999;
-	background:rgba(255, 255, 255, 0.15) none repeat scroll 0 0 !important;
+	background:rgba(255, 255, 255, 0.25) none repeat scroll 0 0 !important;
 }
 .row_end{
 	position: relative;

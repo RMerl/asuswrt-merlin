@@ -5,6 +5,8 @@
 #
 #
 
+include ../.config
+
 #ifeq ($(strip $(CROSS_COMPILE)),)
 #CROSS_COMPILE := mipsel-linux-
 #CC := $(CROSS_COMPILE)gcc
@@ -45,6 +47,10 @@ endif
 	LDFLAGS += -L$(TOP)/shared -lshared
 	LDFLAGS += -L$(TOP)/nvram -lnvram
 #endif
+
+ifeq ($(RTCONFIG_BCMARM),y)
+LDFLAGS += -lgcc_s
+endif
 
 CFLAGS += -Wall -I.
 CFLAGS += $(DEBFLAGS)

@@ -55,37 +55,30 @@
 
 void update_lan_status(int);
 
-// oleg patch ~
-in_addr_t
-inet_addr_(const char *cp)
+in_addr_t inet_addr_(const char *cp)
 {
-       struct in_addr a;
+	struct in_addr a;
 
-       if (!inet_aton(cp, &a)) {
-	       return INADDR_ANY;
-	}
-       else {
-	       return a.s_addr;
-	}
+	if (!inet_aton(cp, &a))
+		return INADDR_ANY;
+	else
+		return a.s_addr;
 }
-// ~ oleg patch
 
 /* remove space in the end of string */
 char *trim_r(char *str)
 {
 	int i;
 
-	i=strlen(str);
+	if (!str || !*str)
+		return str;
+	
+	i = strlen(str) - 1;
+	while ((i >= 0) && (str[i] == ' ' || str[i] == '\n' || str[i] == '\r'))
+		str[i--] = 0;
 
-	while (i>=1)
-	{
-		if (*(str+i-1) == ' ' || *(str+i-1) == 0x0a || *(str+i-1) == 0x0d) *(str+i-1)=0x0;
-		else break;
-		i--;
-	}
-	return (str);
+	return str;
 }
-
 
 /* convert mac address format from XXXXXXXXXXXX to XX:XX:XX:XX:XX:XX */
 char *conv_mac(char *mac, char *buf)
@@ -328,9 +321,6 @@ void init_switch_mode()
 		nvram_set("wlc_psta", "0");
 #endif
 #endif
-#ifdef RTCONFIG_W3N
-		nvram_set("wlc_w3n", 0);
-#endif
 	}
 #endif	/* RTCONFIG_WIRELESSREPEATER */
 	else if (nvram_match("sw_mode_ex", "3"))		// AP mode
@@ -338,9 +328,6 @@ void init_switch_mode()
 		nvram_set("wan_nat_x", "0");
 		nvram_set("wan_route_x", "IP_Bridged");
 		nvram_set("ure_disable", "1");
-#ifdef RTCONFIG_W3N
-		nvram_set("wlc_w3n", 0);
-#endif
 	}
 	else
 	{
@@ -356,9 +343,6 @@ void init_switch_mode()
 #endif
 #endif
 		nvram_set("ure_disable", "1");
-#ifdef RTCONFIG_W3N
-		nvram_set("wlc_w3n", 0);
-#endif
 	}
 }
 
@@ -368,13 +352,13 @@ void init_switch_mode()
  */
 void wanmessage(char *fmt, ...)
 {
-  va_list args;
-  char buf[512];
+	va_list args;
+	char buf[512];
 
-  va_start(args, fmt);
-  vsnprintf(buf, sizeof(buf), fmt, args);
-  nvram_set("wan_reason_t", buf);
-  va_end(args);
+	va_start(args, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, args);
+	nvram_set("wan_reason_t", buf);
+	va_end(args);
 }
 
 int pppstatus(void)
@@ -402,16 +386,16 @@ int pppstatus(void)
 
 void logmessage(char *logheader, char *fmt, ...)
 {
-  va_list args;
-  char buf[512];
+	va_list args;
+	char buf[512];
 
-  va_start(args, fmt);
+	va_start(args, fmt);
 
-  vsnprintf(buf, sizeof(buf), fmt, args);
-  openlog(logheader, 0, 0);
-  syslog(0, buf);
-  closelog();
-  va_end(args);
+	vsnprintf(buf, sizeof(buf), fmt, args);
+	openlog(logheader, 0, 0);
+	syslog(0, buf);
+	closelog();
+	va_end(args);
 }
 
 void usage_exit(const char *cmd, const char *help)
@@ -534,11 +518,11 @@ static void execute_with_maxwait(char *const argv[], int wtime)
 			if (kill(pid, 0) != 0) break;
 			sleep(1);
 		}
-		_dprintf("%s killdon:   errno: %d    pid %d\n", argv[0], errno, pid);
+		_dprintf("%s killdon: errno: %d pid %d\n", argv[0], errno, pid);
 	}
 }
 
-/* This is a bit ugly.  Why didn't they allow another parameter to filter???? */
+/* This is a bit ugly. Why didn't they allow another parameter to filter???? */
 static char *filter_extension;
 static int endswith_filter(const struct dirent *entry)
 {
@@ -754,7 +738,7 @@ void setup_udp_timeout(int connflag)
 	}
 	else {
 		write_udp_timeout(NULL, 1);
-		write_udp_timeout("stream", 6); 
+		write_udp_timeout("stream", 6);
 	}
 }
 
@@ -884,7 +868,16 @@ void setup_conntrack(void)
 		if (atoi(buf) > 0) nvram_set("ct_hashsize", buf);
 	}
 #endif
-
+#ifdef LINUX26
+	p = nvram_safe_get("ct_max");
+	i = atoi(p);
+	if (i >= 128) {
+		f_write_string("/proc/sys/net/nf_conntrack_max", p, 0, 0);
+	}
+	else if (f_read_string("/proc/sys/net/nf_conntrack_max", buf, sizeof(buf)) > 0) {
+		if (atoi(buf) > 0) nvram_set("ct_max", buf);
+	}
+#else
 	p = nvram_safe_get("ct_max");
 	i = atoi(p);
 	if (i >= 128) {
@@ -894,6 +887,7 @@ void setup_conntrack(void)
 		if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = '\0';
 		if (atoi(buf) > 0) nvram_set("ct_max", buf);
 	}
+#endif
 #if 0
 	if (!nvram_match("nf_rtsp", "0")) {
 		ct_modprobe("rtsp");
@@ -1250,10 +1244,10 @@ void time_zone_x_mapping(void)
 
 	nvram_set("time_zone_x", tmpstr);
 
-#if 0
 	/* special mapping */
 	if (nvram_match("time_zone", "JST"))
 		nvram_set("time_zone_x", "UCT-9");
+#if 0
 	else if (nvram_match("time_zone", "TST-10TDT"))
 		nvram_set("time_zone_x", "UCT-10");
 	else if (nvram_match("time_zone", "CST-9:30CDT"))
@@ -1439,7 +1433,7 @@ void setup_dnsmq(int mode)
 	eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "udp", "--dport", "53", "-j", "DNAT", "--to-destination", strcat_r(nvram_safe_get("lan_ipaddr"), ":18018", tmp));
 
 	if(mode) {
-		eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-d", "10.0.0.1", "--dport", "80", "-j", "DNAT", "--to-destination", strcat_r(nvram_safe_get("lan_ipaddr"), ":80", tmp)); 
+		eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-d", "10.0.0.1", "--dport", "80", "-j", "DNAT", "--to-destination", strcat_r(nvram_safe_get("lan_ipaddr"), ":80", tmp));
 	
 		//sprintf(v, "%x my.%s", inet_addr("10.0.0.1"), get_productid());
 		sprintf(v, "%x %s", inet_addr(nvram_safe_get("lan_ipaddr")), DUT_DOMAIN_NAME);
@@ -1447,7 +1441,7 @@ void setup_dnsmq(int mode)
 	}
 	else {
 		// setup ebtables and iptables
-		eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-d", "10.0.0.1", "--dport", "80", "-j", "DNAT", "--to-destination", strcat_r(nvram_safe_get("lan_ipaddr"), ":18017", tmp)); 
+		eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-d", "10.0.0.1", "--dport", "80", "-j", "DNAT", "--to-destination", strcat_r(nvram_safe_get("lan_ipaddr"), ":18017", tmp));
 	
 		f_write_string("/proc/net/dnsmqctrl", "", 0, 0);
 	}

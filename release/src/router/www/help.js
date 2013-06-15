@@ -1,38 +1,12 @@
 ﻿var Untranslated = {
-	defaultHint : 'For more detail, you can also refer to http://support.asus.com/',
-	diskUtility_scanning : 'Disk scanning now. Please wait for it to complete.',
-	diskUtility_scan_hint : 'During scanning process, all disk activities will be stopped, do you want to scan it now',
-	diskUtility_initial : 'Initializing disk scanning...',
-	diskUtility_umount : 'Unmounting disk...',
-	diskUtility_scan : 'Disk scanning ...',
-	diskUtility_reMount : 'Disk Re-Mounting...',
-	diskUtility_finish : 'Finishing disk scanning...',
-	diskUtility_stop : 'Disk scan will be stopped soon ...',
-	diskUtility_information : 'Information',
-	diskUtility : 'Disk Utility',
-	diskUtility_init_status : 'Click "Scan" to check if your hard drive is heathly.',
-	diskUtility_problem_found : 'Disk scan process finished, please check the detail information as below.',
-	diskUtility_crash_found : 'We have found files cracked in your hard drive, please safely remove it and use a computer to fix it.',
-	diskUtility_detailInfo : 'Detail information',
-	diskUtility_schedule : 'Schedule scan setting',
-	diskUtility_frenqucy : 'Frenqucy',
-	diskUtility_monthly : 'Monthly',
-	diskUtility_weekly : 'Weekly',
-	diskUtility_daily : 'Daily',
-	diskUtility_week : 'Week',
-	diskUtility_time : 'Time',
-	diskUtility_scanDuring : 'During scanning process, all disk activies be stopped.',
-	diskUtility_dchedule_hint : 'You just scheduled to do disk scan at <1:00>  on <1st>  <Monthly>',
-	routerSync_rule_both : 'Two way sync: Two way sync refers to the inviter and invitee will sync up all files in the sync folder they had chosen. All files sync folders will be free to be accessed by both.',
-	routerSync_rule_StoC : 'Server to client: Server to client refers to the invitee could download files in the sync folder from the inviter only, the invitee have no permission to upload files to the inviter.',
-	routerSync_rule_CtoS : 'Client to server: Client to server refers to the invitee could upload files in the sync folder to the inviter only, the invitee have no permission to access files in sync folder of the inviter.',
-	file_downloading : 'Firmware downloading',
-	https_access_url : "Access setting page via ",
-	apps_downloading : 'Apps downloading',
 	fw_size_higher_mem : 'Memory space is NOT enough to upgrade on internet. Please wait for rebooting.',
-	portConflictHint : 'This port had been used for',
-	https_access_url : "Access setting page via ",
-	enable_dmz : "Enable DMZ "
+	enable_macmode : "Enable MAC Filter",
+	WPS_hideSSID_hint : "WPS function will not be available if SSID is hidden",
+	cloud_list_password : "The length of password can't shorter than 8 characters",
+	DM_DisableHint: "You cannot use Download Master because Download Master is disabled!", 
+	the_array_is_end : "end here.",
+	ddns_home_link: "Get started",
+	go_to_wan_setting : "Go to WAN setting" // need to replace string manually in device-map/internet.asp
 };
 var clicked_help_string = "<#Help_init_word1#> <a class=\"hintstyle\" style=\"background-color:#7aa3bd\"><#Help_init_word2#></a> <#Help_init_word3#>";
 
@@ -154,34 +128,25 @@ function overHint(itemNum){
 	if(itemNum == 8){
 		statusmenu = "<div class='StatusHint'>Wi-Fi:</div>";
 
-		if(wifi_hw_sw_support != -1)
-		{
-			if(wifi_hw_switch == "wifi_hw_switch=0")
-				wifiDesc = "Wi-Fi=Disabled"
+		if ( wlan0_radio_flag == 1) {
+			wifiDesc = "<b>2.4G:</b> ";
+			if ((extent_chan_arr[0] == 0) || (extent_chan_arr[0] == undefined) || (extent_chan_arr[0] == control_chan_arr[0]))
+				wifiDesc += "Channel " + control_chan_arr[0];
 			else
-				wifiDesc = "Wi-Fi=Enabled"
+				wifiDesc += "Channels "+ low_channel(control_chan_arr[0],extent_chan_arr[0]) + "+" + high_channel(control_chan_arr[0],extent_chan_arr[0])
+		} else {
+			wifiDesc = "<b>2.4G:</b> <#btn_Disabled#>";
+		}
 
-		} else {	// Report radio states
-			if ( wlan0_radio_flag == 1) {
-				wifiDesc = "<b>2.4G:</b> ";
-				if ((extent_chan_arr[0] == 0) || (extent_chan_arr[0] == undefined) || (extent_chan_arr[0] == control_chan_arr[0]))
-					wifiDesc += "Channel " + control_chan_arr[0];
+		if (band5g_support != -1) {
+			if (wlan1_radio_flag == 1) {
+				wifiDesc += "<br><b>&nbsp;&nbsp;5G:</b> ";
+				if ((extent_chan_arr[1] == 0) || (extent_chan_arr[1] == undefined) || (extent_chan_arr[1] == control_chan_arr[1]))
+					wifiDesc += "Channel " + control_chan_arr[1]
 				else
-					wifiDesc += "Channels "+ low_channel(control_chan_arr[0],extent_chan_arr[0]) + "+" + high_channel(control_chan_arr[0],extent_chan_arr[0])
-                        } else {
-				wifiDesc = "<b>2.4G:</b> <#btn_Disabled#>";
-			}
-
-			if (band5g_support != -1) {
-				if (wlan1_radio_flag == 1) {
-					wifiDesc += "<br><b>&nbsp;&nbsp;5G:</b> ";
-					if ((extent_chan_arr[1] == 0) || (extent_chan_arr[1] == undefined) || (extent_chan_arr[1] == control_chan_arr[1]))
-						wifiDesc += "Channel " + control_chan_arr[1]
-					else
-						wifiDesc += "Channels "+ low_channel(control_chan_arr[1], extent_chan_arr[1]) + "+" + high_channel(control_chan_arr[1],extent_chan_arr[1])
-				} else {
-					wifiDesc += "<br><b>&nbsp;&nbsp;5G:</b> <#btn_Disabled#>"
-				}
+					wifiDesc += "Channels "+ low_channel(control_chan_arr[1], extent_chan_arr[1]) + "+" + high_channel(control_chan_arr[1],extent_chan_arr[1])
+			} else {
+				wifiDesc += "<br><b>&nbsp;&nbsp;5G:</b> <#btn_Disabled#>"
 			}
 		}
 		statusmenu += "<span>" + wifiDesc + "</span>";
@@ -406,7 +371,7 @@ function openHint(hint_array_id, hint_show_id, flag){
 				statusmenu = "<span class='StatusClickHint' onclick='top.location.href=\"http://router.asus.com/QIS_wizard.htm?flag=sitesurvey\";' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#APSurvey_action_search_again_hint2#></span>";
 			}
 			else if(sw_mode == 4){
-				statusmenu = "<span class='StatusClickHint' onclick='top.location.href=\"/QIS_wizard.htm?flag=sitesurvey\";' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#APSurvey_action_search_again_hint2#></span>";
+				statusmenu = "<span class='StatusClickHint' onclick='top.location.href=\"/QIS_wizard.htm?flag=sitesurvey_mb\";' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#APSurvey_action_search_again_hint2#></span>";
 			}
 
 			_caption = "Internet Status";
@@ -458,10 +423,10 @@ function openHint(hint_array_id, hint_show_id, flag){
 	if(hint_array_id == 0 && hint_show_id > 21) // for status icon
 		return overlib(helpcontent[hint_array_id][hint_show_id], FIXX, 270, FIXY, 30);
 	else if(helpcontent == [] || helpcontent == "" || hint_array_id > helpcontent.length)
-		return overlib(Untranslated.defaultHint, HAUTO, VAUTO);
+		return overlib('<#defaultHint#>', HAUTO, VAUTO);
 	else{
 		if(hint_show_id > helpcontent[hint_array_id].length)
-			return overlib(Untranslated.defaultHint, HAUTO, VAUTO);
+			return overlib('<#defaultHint#>', HAUTO, VAUTO);
 		else
 			return overlib(helpcontent[hint_array_id][hint_show_id], HAUTO, VAUTO);
 	}

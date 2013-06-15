@@ -86,7 +86,7 @@ void update_lan_state(int state, int reason)
 			nvram_set(strcat_r(prefix, "dns", tmp), nvram_default_get("lan_ipaddr"));
 		}
 
-		if(nvram_match(strcat_r(prefix, "dnsenable_x", tmp), "0")) {
+		if (!nvram_get_int(strcat_r(prefix, "dnsenable_x", tmp))) {
 			memset(tmp1, 0, sizeof(tmp1));
 
 			ptr = nvram_get(strcat_r(prefix, "dns1_x", tmp));
@@ -199,6 +199,38 @@ static int wlconf(char *ifname, int unit, int subunit)
 	}
 #endif
 
+	if (unit >= 0 && subunit < 0)
+	{
+#ifdef RTCONFIG_OPTIMIZE_XBOX
+		if (nvram_match(strcat_r(prefix, "optimizexbox", tmp), "1"))
+			eval("wl", "-i", ifname, "ldpc_cap", "0");
+		else
+			eval("wl", "-i", ifname, "ldpc_cap", "1");		// driver default setting
+#endif
+#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_BCMARM
+		if (unit == 0)
+		{
+			if (get_model() == MODEL_RTAC68U) {
+				if (nvram_match(strcat_r(prefix, "turbo_qam", tmp), "1"))
+					eval("wl", "-i", ifname, "vht_features", "3");
+				else
+					eval("wl", "-i", ifname, "vht_features", "0");
+			}
+		}
+#endif
+		if (nvram_match(strcat_r(prefix, "ack_ratio", tmp), "1"))
+			eval("wl", "-i", ifname, "ack_ratio", "4");
+		else
+			eval("wl", "-i", ifname, "ack_ratio", "2");	// driver default setting
+
+		if (nvram_match(strcat_r(prefix, "ampdu_mpdu", tmp), "1"))
+			eval("wl", "-i", ifname, "ampdu_mpdu", "64");
+		else
+			eval("wl", "-i", ifname, "ampdu_mpdu", "-1");	// driver default setting
+#endif
+	}
+
 	r = eval("wlconf", ifname, "up");
 	if (r == 0) {
 		if (unit >= 0 && subunit < 0) {
@@ -242,10 +274,6 @@ static int wlconf(char *ifname, int unit, int subunit)
 
 					break;
 			}
-#ifdef RTCONFIG_OPTIMIZE_XBOX
-			if (nvram_match(strcat_r(prefix, "optimizexbox", tmp), "1"))
-				eval("wl",  "-i", ifname, "ldpc_cap", "0");
-#endif
 		}
 
 		if (wl_client(unit, subunit)) {
@@ -557,10 +585,13 @@ void start_wl(void)
 		xstart("radio", "join");
 
 #ifdef RTCONFIG_BCMWL6
-#ifdef RTAC66U
+#if defined(RTAC66U) || defined(BCM4352)
 	if (nvram_match("wl1_radio", "1"))
 	{
 		nvram_set("led_5g", "1");
+#ifdef RTCONFIG_LED_BTN
+		if (nvram_get_int("AllLED"))
+#endif
 		led_control(LED_5G, LED_ON);
 	}
 	else
@@ -568,6 +599,16 @@ void start_wl(void)
 		nvram_set("led_5g", "0");
 		led_control(LED_5G, LED_OFF);
 	}
+#ifdef RTCONFIG_TURBO
+	if ((nvram_match("wl0_radio", "1") || nvram_match("wl1_radio", "1"))
+#ifdef RTCONFIG_LED_BTN
+		&& nvram_get_int("AllLED")
+#endif
+	)
+		led_control(LED_TURBO, LED_ON);
+	else
+		led_control(LED_TURBO, LED_OFF);
+#endif
 #endif
 #endif
 #endif /* CONFIG_BCMWL5 */
@@ -670,7 +711,7 @@ set_wlpara_ra(const char* wif, int band)
 		if ((txpower >= 0) && (txpower <= 100))
 			doSystem("iwpriv %s set TxPower=%d",wif, txpower);
 	}
-
+#if 0
 	if (nvram_match(strcat_r(prefix, "bw", tmp), "2"))
 	{
 		int channel = get_channel(band);
@@ -678,6 +719,7 @@ set_wlpara_ra(const char* wif, int band)
 		if (channel)
 			eval("iwpriv", (char *)wif, "set", "HtBw=1");
 	}
+#endif
 #if 0 //defined (RTCONFIG_WLMODULE_RT3352_INIC_MII)	/* set RT3352 iNIC in kernel driver to avoid loss setting after reset */
 	if(strcmp(wif, "rai0") == 0)
 	{
@@ -773,12 +815,7 @@ void set_intf_ipv6_accept_ra(const char *ifname, int flag)
 		f_write_string(s, "2", 0, 0);
 
 		sprintf(s, "/proc/sys/net/ipv6/conf/%s/forwarding", ifname);
-#if 0
-		if (!strncmp(ifname, "ppp", 3))
-			f_write_string(s, "0", 0, 0);
-		else
-#endif
-			f_write_string(s, "2", 0, 0);
+		f_write_string(s, "2", 0, 0);
 	}
 	else
 	{
@@ -812,14 +849,12 @@ void set_intf_ipv6_dad(const char *ifname, int bridge, int flag)
 	}
 }
 
-void enable_ipv6(const char *ifname, int is_wan6)
+void enable_ipv6(const char *ifname)
 {
 	char s[256];
 
 	if (!ifname) return;
 
-	sprintf(s, "/proc/sys/net/ipv6/conf/%s/autoconf", ifname);
-	f_write_string(s, is_wan6 ? "1" : "0", 0, 0);
 	sprintf(s, "/proc/sys/net/ipv6/conf/%s/disable_ipv6", ifname);
 	f_write_string(s, "0", 0, 0);
 }
@@ -830,8 +865,6 @@ void disable_ipv6(const char *ifname)
 
 	if (!ifname) return;
 
-	sprintf(s, "/proc/sys/net/ipv6/conf/%s/autoconf", ifname);
-	f_write_string(s, "0", 0, 0);
 	sprintf(s, "/proc/sys/net/ipv6/conf/%s/disable_ipv6", ifname);
 	f_write_string(s, "1", 0, 0);
 }
@@ -862,11 +895,13 @@ void config_ipv6(int enable, int incl_wan)
 			if (match) continue;
 ALL:
 			if (enable)
-				enable_ipv6(dirent->d_name, 0);
+				enable_ipv6(dirent->d_name);
 			else
 				disable_ipv6(dirent->d_name);
 
-			if (enable && !with_ipv6_linklocal_addr(dirent->d_name))
+			if (enable && strcmp(dirent->d_name, "all") &&
+				strcmp(dirent->d_name, "default") &&
+				!with_ipv6_linklocal_addr(dirent->d_name))
 				reset_ipv6_linklocal_addr(dirent->d_name, 0);
 		}
 		closedir(dir);
@@ -915,6 +950,7 @@ void start_lan(void)
 	int match;
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 	int i;
+	char domain_mapping[64];
 
 	update_lan_state(LAN_STATE_INITIALIZING, 0);
 
@@ -939,6 +975,8 @@ void start_lan(void)
 
 #ifdef CONFIG_BCMWL5
 	if ((get_model() == MODEL_RTAC66U) ||
+		(get_model() == MODEL_RTAC56U) ||
+		(get_model() == MODEL_RTAC68U) ||
 		(get_model() == MODEL_RTN12HP) ||
 		(get_model() == MODEL_APN12HP) ||
 		(get_model() == MODEL_RTN66U))
@@ -1230,7 +1268,11 @@ void start_lan(void)
 
 		hostname = nvram_safe_get("computer_name");
 
+#if 0 /* defined (SMP) */
+		char *dhcp_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "udhcpc",
+#else
 		char *dhcp_argv[] = { "udhcpc",
+#endif
 					"-i", "br0",
 					"-p", "/var/run/udhcpc_lan.pid",
 					"-s", "/tmp/udhcpc_lan",
@@ -1289,6 +1331,21 @@ void start_lan(void)
 #endif
 
 	free(lan_ifname);
+
+#ifdef RTCONFIG_WIRELESSREPEATER
+	if(get_model() == MODEL_APN12HP &&
+		nvram_get_int("sw_mode") == SW_MODE_AP){
+		// When CONNECTED, need to redirect 10.0.0.1
+		// (from the browser's cache) to DUT's home page.
+		repeater_nat_setting();
+		eval("ebtables", "-t", "broute", "-F");
+		eval("ebtables", "-t", "filter", "-F");
+		eval("ebtables", "-t", "broute", "-I", "BROUTING", "-p", "ipv4", "-d", "00:E0:11:22:33:44", "-j", "redirect", "--redirect-target", "DROP");
+		sprintf(domain_mapping, "%x %s", inet_addr(nvram_safe_get("lan_ipaddr")), DUT_DOMAIN_NAME);
+		f_write_string("/proc/net/dnsmqctrl", domain_mapping, 0, 0);
+		start_nat_rules();
+	}
+#endif
 
 	nvram_set("reload_svc_radio", "1");
 
@@ -1410,9 +1467,12 @@ void stop_lan(void)
 	}
 
 #ifdef RTCONFIG_BCMWL6
-#ifdef RTAC66U
+#if defined(RTAC66U) || defined(BCM4352)
 	nvram_set("led_5g", "0");
 	led_control(LED_5G, LED_OFF);
+#ifdef RTCONFIG_TURBO
+	led_control(LED_TURBO, LED_OFF);
+#endif
 #endif
 #endif
 
@@ -2061,13 +2121,55 @@ static int radio_toggle(int idx, int unit, int subunit, void *param)
 	return *op;
 }
 
+#ifdef RTCONFIG_BCMWL6
+static void led_bh(int sw)
+{
+	switch (get_model()) {
+		case MODEL_RTAC56U:
+			if(sw)
+			{
+				eval("wl", "ledbh", "3", "7");
+				led_control(LED_5G, LED_ON);
+			}
+			else
+			{
+				eval("wl", "ledbh", "3", "0");
+				led_control(LED_5G, LED_OFF);
+			}
+			break;
+		case MODEL_RTAC68U:
+			if(sw)
+			{
+				eval("wl", "ledbh", "10", "7");
+				eval("wl", "-i", "eth2", "ledbh", "10", "7");
+				led_control(LED_5G, LED_ON);
+#ifdef RTCONFIG_TURBO
+				led_control(LED_TURBO, LED_ON);
+#endif
+			}
+			else
+			{
+				eval("wl", "ledbh", "10", "0");
+				eval("wl", "-i", "eth2", "ledbh", "10", "0");
+				led_control(LED_5G, LED_OFF);
+#ifdef RTCONFIG_TURBO
+				led_control(LED_TURBO, LED_OFF);
+#endif
+			}
+			break;
+		default:
+			break;
+	}
+}
+#endif
+
 static int radio_switch(int subunit)
 {
 	char tmp[100], tmp2[100], prefix[] = "wlXXXXXXXXXXXXXX";
 	char *p;
 	int i;		// unit
-	int sw = 0;	// record get_radio status
-	int MAX = 0;	// if MAX = 1: single band,  2: dual band
+	int sw = 1;	// record get_radio status
+	int MAX = 0;	// if MAX = 1: single band, 2: dual band
 
 #ifdef RTCONFIG_WIRELESSREPEATER
 	// repeater mode not support HW radio
@@ -2081,11 +2183,13 @@ static int radio_switch(int subunit)
 		MAX++;
 
 	for(i = 0; i < MAX; i++){
-		sw |= get_radio(i, subunit);
+		sw &= get_radio(i, subunit);
 	}
 
 	sw = !sw;
-
+#ifdef RTCONFIG_BCMWL6
+	//led_bh(sw);
+#endif
 	for(i = 0; i < MAX; i++){
 		// set wlx_radio
 		snprintf(prefix, sizeof(prefix), "wl%d_", i);
@@ -2236,8 +2340,8 @@ update_lan_resolvconf(void)
 	lock = file_lock("resolv");
 
 	if (!(fp = fopen("/tmp/resolv.conf", "w+"))) {
-		file_unlock(lock);
 		perror("/tmp/resolv.conf");
+		file_unlock(lock);
 		return errno;
 	}
 
@@ -2261,8 +2365,6 @@ update_lan_resolvconf(void)
 
 	fclose(fp);
 
-	unlink("/etc/resolv.conf");
-	symlink("/tmp/resolv.conf", "/etc/resolv.conf");
 	file_unlock(lock);
 	return 0;
 }
@@ -2271,6 +2373,7 @@ update_lan_resolvconf(void)
 void
 lan_up(char *lan_ifname)
 {
+	char domain_mapping[64];
 	_dprintf("%s(%s)\n", __FUNCTION__, lan_ifname);
 
 	restart_dnsmasq(0);
@@ -2316,6 +2419,19 @@ lan_up(char *lan_ifname)
 	}
 #endif
 
+#ifdef RTCONFIG_WIRELESSREPEATER
+	if(get_model() == MODEL_APN12HP &&
+		nvram_get_int("sw_mode") == SW_MODE_AP){
+		repeater_nat_setting();
+		eval("ebtables", "-t", "broute", "-F");
+		eval("ebtables", "-t", "filter", "-F");
+		eval("ebtables", "-t", "broute", "-I", "BROUTING", "-p", "ipv4", "-d", "00:E0:11:22:33:44", "-j", "redirect", "--redirect-target", "DROP");
+		sprintf(domain_mapping, "%x %s", inet_addr(nvram_safe_get("lan_ipaddr")), DUT_DOMAIN_NAME);
+		f_write_string("/proc/net/dnsmqctrl", domain_mapping, 0, 0);
+		start_nat_rules();
+	}
+#endif
+
 #ifdef RTCONFIG_USB
 #ifdef RTCONFIG_MEDIA_SERVER
 	if(get_invoke_later()&INVOKELATER_DMS)
@@ -2334,9 +2450,8 @@ lan_down(char *lan_ifname)
 			nvram_safe_get("lan_gateway"),
 			"0.0.0.0");
 
-	/* remove resolv.conf */
-	unlink("/tmp/resolv.conf");
-	unlink("/etc/resolv.conf");
+	/* Clear resolv.conf */
+	f_write("/tmp/resolv.conf", NULL, 0, 0, 0);
 
 	update_lan_state(LAN_STATE_STOPPED, 0);
 }
@@ -2403,9 +2518,12 @@ void stop_lan_wl(void)
 	}
 
 #ifdef RTCONFIG_BCMWL6
-#ifdef RTAC66U
+#if defined(RTAC66U) || defined(BCM4352)
 	nvram_set("led_5g", "0");
 	led_control(LED_5G, LED_OFF);
+#ifdef RTCONFIG_TURBO
+	led_control(LED_TURBO, LED_OFF);
+#endif
 #endif
 #endif
 
@@ -2467,6 +2585,8 @@ void start_lan_wl(void)
 
 #ifdef CONFIG_BCMWL5
 	if ((get_model() == MODEL_RTAC66U) ||
+		(get_model() == MODEL_RTAC56U) ||
+		(get_model() == MODEL_RTAC68U) ||
 		(get_model() == MODEL_RTN12HP) ||
 		(get_model() == MODEL_APN12HP) ||
 		(get_model() == MODEL_RTN66U))
@@ -2722,10 +2842,13 @@ void restart_wl(void)
 		xstart("radio", "join");
 
 #ifdef RTCONFIG_BCMWL6
-#ifdef RTAC66U
+#if defined(RTAC66U) || defined(BCM4352)
 	if (nvram_match("wl1_radio", "1"))
 	{
 		nvram_set("led_5g", "1");
+#ifdef RTCONFIG_LED_BTN
+		if (nvram_get_int("AllLED"))
+#endif
 		led_control(LED_5G, LED_ON);
 	}
 	else
@@ -2733,6 +2856,16 @@ void restart_wl(void)
 		nvram_set("led_5g", "0");
 		led_control(LED_5G, LED_OFF);
 	}
+#ifdef RTCONFIG_TURBO
+	if ((nvram_match("wl0_radio", "1") || nvram_match("wl1_radio", "1"))
+#ifdef RTCONFIG_LED_BTN
+		&& nvram_get_int("AllLED")
+#endif
+	)
+		led_control(LED_TURBO, LED_ON);
+	else
+		led_control(LED_TURBO, LED_OFF);
+#endif
 #endif
 #endif
 #endif /* CONFIG_BCMWL5 */
@@ -2812,7 +2945,10 @@ void lanaccess_wl(void)
 
 void restart_wireless(void)
 {
-	nvram_set("wlready", "0");
+	char domain_mapping[64];
+	int lock = file_lock("wireless");
+
+	nvram_set_int("wlready", 0);
 
 	stop_wps();
 #ifdef CONFIG_BCMWL5
@@ -2872,12 +3008,31 @@ void restart_wireless(void)
 	}
 #endif
 
-	nvram_set("wlready", "1");
+#ifdef RTCONFIG_WIRELESSREPEATER
+	if(get_model() == MODEL_APN12HP &&
+		nvram_get_int("sw_mode") == SW_MODE_AP){
+		repeater_nat_setting();
+		eval("ebtables", "-t", "broute", "-F");
+		eval("ebtables", "-t", "filter", "-F");
+		eval("ebtables", "-t", "broute", "-I", "BROUTING", "-p", "ipv4", "-d", "00:E0:11:22:33:44", "-j", "redirect", "--redirect-target", "DROP");
+		sprintf(domain_mapping, "%x %s", inet_addr(nvram_safe_get("lan_ipaddr")), DUT_DOMAIN_NAME);
+		f_write_string("/proc/net/dnsmqctrl", domain_mapping, 0, 0);
+		start_nat_rules();
+	}
+#endif
+
+	nvram_set_int("wlready", 1);
+
+	file_unlock(lock);
 }
 
 /* for WPS Reset */
 void restart_wireless_wps(void)
 {
+	int lock = file_lock("wireless");
+
+	nvram_set_int("wlready", 0);
+
 	stop_wps();
 #ifdef CONFIG_BCMWL5
 	stop_nas();
@@ -2907,6 +3062,10 @@ void restart_wireless_wps(void)
 
 	restart_wl();
 	lanaccess_wl();
+
+	nvram_set_int("wlready", 1);
+
+	file_unlock(lock);
 }
 
 //FIXME: add sysdep wrapper
@@ -3044,7 +3203,11 @@ void start_lan_wlc(void)
 			unlink("/tmp/udhcpc_lan");
 		}
 
+#if 0 /* defined (SMP) */
+		char *dhcp_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "udhcpc",
+#else
 		char *dhcp_argv[] = { "udhcpc",
+#endif
 					"-i", "br0",
 					"-p", "/var/run/udhcpc_lan.pid",
 					"-s", "/tmp/udhcpc_lan",

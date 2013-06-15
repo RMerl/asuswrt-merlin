@@ -1,0 +1,71 @@
+#!gmake
+#
+prefix = @prefix@
+datarootdir = @datarootdir@
+exec_prefix = @exec_prefix@
+includedir = @includedir@
+libdir = @libdir@
+mandir = @mandir@
+VPATH = @srcdir@:@libreplacedir@
+srcdir = @srcdir@
+builddir = @builddir@
+XSLTPROC = @XSLTPROC@
+INSTALLCMD = @INSTALL@
+CC = @CC@
+CFLAGS = @CFLAGS@ -DHAVE_CONFIG_H= -I. -I@srcdir@ -I@libreplacedir@
+EXTRA_TARGETS = @DOC_TARGET@
+
+.SUFFIXES: .c .o .3 .3.xml .xml .html
+
+LIBOBJ = @TALLOCOBJ@ @LIBREPLACEOBJ@
+
+all: showflags libtalloc.a testsuite $(EXTRA_TARGETS)
+
+showflags:
+	@echo 'talloc will be compiled with flags:'
+	@echo '  CFLAGS = $(CFLAGS)'
+	@echo '  LIBS = $(LIBS)'
+
+testsuite: $(LIBOBJ) testsuite.o
+	$(CC) $(CFLAGS) -o testsuite testsuite.o $(LIBOBJ) $(LIBS)
+
+libtalloc.a: $(LIBOBJ)
+	ar -rv $@ $(LIBOBJ)
+	@-ranlib $@
+
+install: all 
+	${INSTALLCMD} -d ${libdir}
+	${INSTALLCMD} -m 755 libtalloc.a $(libdir)
+	${INSTALLCMD} -d ${includedir}
+	${INSTALLCMD} -m 644 $(srcdir)/talloc.h $(includedir)
+	${INSTALLCMD} -m 644 talloc.pc $(libdir)/pkgconfig
+	if [ -f talloc.3 ];then ${INSTALLCMD} -d ${mandir}/man3; fi
+	if [ -f talloc.3 ];then ${INSTALLCMD} -m 644 talloc.3 $(mandir)/man3; fi
+
+doc: talloc.3 talloc.3.html
+
+.3.xml.3:
+	-test -z "$(XSLTPROC)" || $(XSLTPROC) --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
+
+.xml.html:
+	-test -z "$(XSLTPROC)" || $(XSLTPROC) --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $<
+
+clean:
+	rm -f *~ $(LIBOBJ) libtalloc.a testsuite testsuite.o *.gc?? talloc.3 talloc.3.html
+
+test: testsuite
+	./testsuite
+
+gcov:
+	gcov talloc.c
+
+installcheck: 
+	$(MAKE) test
+
+distclean: clean
+	rm -f *~ */*~
+	rm -f Makefile
+	rm -f config.log config.status config.h config.cache
+
+realdistclean: distclean
+	rm -f configure config.h.in

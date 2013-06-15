@@ -23,11 +23,15 @@ function checkCmdRet(){
 			setTimeout("checkCmdRet();", 1000);
 		},
 		success: function(response){
+			var retArea = document.getElementById("textarea");
+			var _cmdBtn = document.getElementById("cmdBtn");
+
 			if(response.search("XU6J03M6") != -1){
 				document.getElementById("loadingIcon").style.display = "none";
-				document.getElementById("cmdBtn").disabled = false;
-				document.getElementById("cmdBtn").style.color = "#FFF";
-				document.getElementById("textarea").value = response.replace("XU6J03M6", " ");
+				_cmdBtn.disabled = false;
+				_cmdBtn.style.color = "#FFF";
+				retArea.value = response.replace("XU6J03M6", " ");
+				retArea.scrollTop = retArea.scrollHeight;
 				document.form.SystemCmd.value = "";
 				return false;
 			}
@@ -39,18 +43,19 @@ function checkCmdRet(){
 
 			if(noChange > 10){
 				document.getElementById("loadingIcon").style.display = "none";
-				document.getElementById("cmdBtn").disabled = false;
-				document.getElementById("cmdBtn").style.color = "#FFF";
+				_cmdBtn.disabled = false;
+				_cmdBtn.style.color = "#FFF";
 				setTimeout("checkCmdRet();", 1000);
 			}
 			else{
-				document.getElementById("cmdBtn").disabled = true;
-				document.getElementById("cmdBtn").style.color = "#666";
+				_cmdBtn.disabled = true;
+				_cmdBtn.style.color = "#666";
 				document.getElementById("loadingIcon").style.display = "";
 				setTimeout("checkCmdRet();", 1000);
 			}
 
-			document.getElementById("textarea").value = response;
+			retArea.value = response;
+			retArea.scrollTop = retArea.scrollHeight;
 			_responseLen = response.length;
 		}
 	});

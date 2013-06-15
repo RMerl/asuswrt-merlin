@@ -42,7 +42,7 @@ function initial(){
 	insertExtChannelOption();		
 	wl_auth_mode_change(1);
 
-	if(downsize_support != -1)
+	if(downsize_4m_support)
 		$("guest_image").parentNode.style.display = "none";
 
 	mbss_display_ctrl();
@@ -129,7 +129,7 @@ function gen_gntable_tr(unit, gn_array, slicesb){
 	if(unit == 0) GN_band = 2;
 	if(unit == 1) GN_band = 5;
 	
-	htmlcode += '<table align="left" style="margin-left:20px;border-collapse:collapse;width:95%;';
+	htmlcode += '<table align="left" style="margin-left:-10px;border-collapse:collapse;width:720px;';
 	if(slicesb > 0)
 		htmlcode += 'margin-top:20px;';	
 	htmlcode += '"><tr><th align="left" width="160px">';
@@ -152,12 +152,14 @@ function gen_gntable_tr(unit, gn_array, slicesb){
 					if(gn_array[i][1].length < 21)
 							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ gn_array[i][1] +'</td></tr>';
 					else
-							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');"><span onmouseover="return overlib(\''+ gn_array[i][1] +'\', HAUTO);" onmouseout="nd();">'+ gn_array[i][1].substring(0,17) +'...</span></td></tr>';
+							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ gn_array[i][1].substring(0,17) +'...</td></tr>';
 					
 					htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ translate_auth(gn_array[i][2]) +'</td></tr>';
 					
-					if(gn_array[i][2].indexOf("psk") >= 0)
+					if(gn_array[i][2].indexOf("psk") >= 0 && gn_array[i][4].length < 21)
 							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ gn_array[i][4] +'</td></tr>';
+					else if(gn_array[i][2].indexOf("psk") >= 0)
+							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ gn_array[i][4].substring(0,17) +'...</td></tr>';
 					else if(gn_array[i][2] == "open" && gn_array[i][5] == "0")
 							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">None</td></tr>';
 					else{
@@ -222,14 +224,19 @@ function gen_gntable(){
 	htmlcode += '<table style="margin-left:20px;margin-top:25px;" width="95%" align="center" cellpadding="4" cellspacing="0" class="gninfo_head_table" id="gninfo_table_2g">';
 	htmlcode += '<tr id="2g_title"><td align="left" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><span>2.4GHz</span>';
 	htmlcode += '<span id="2g_radio_hint" style="font-size: 14px;display:none;color:#FC0;margin-left:17px;">* <#GuestNetwork_Radio_Status#>	<a style="font-family:Lucida Console;color:#FC0;text-decoration:underline;cursor:pointer;" onclick="_change_wl_unit_status(0);"><#btn_go#></a></span></td></tr>';
-
+	
+	
 	while(gn_array_2g_tmp.length > 4){
+		htmlcode += '<tr><td>';
 		htmlcode += gen_gntable_tr(0, gn_array_2g_tmp.slice(0, 4), band2sb);
 		band2sb++;
 		gn_array_2g_tmp = gn_array_2g_tmp.slice(4);
+		htmlcode += '</td></tr>';
 	}
+	
+	htmlcode += '<tr><td>';
 	htmlcode += gen_gntable_tr(0, gn_array_2g_tmp, band2sb);
-
+	htmlcode += '</td></tr>';
 	htmlcode += '</table>';
 	$("guest_table2").innerHTML = htmlcode;
 	
@@ -238,14 +245,17 @@ function gen_gntable(){
 	htmlcode5 += '<span id="5g_radio_hint" style="font-size: 14px;display:none;color:#FC0;margin-left:17px;">* <#GuestNetwork_Radio_Status#>	<a style="font-family:Lucida Console;color:#FC0;text-decoration:underline;cursor:pointer;" onclick="_change_wl_unit_status(1);"><#btn_go#></a></span></td></tr>';
 
 	while(gn_array_5g_tmp.length > 4){
+		htmlcode5 += '<tr><td >';
 		htmlcode5 += gen_gntable_tr(1, gn_array_5g_tmp.slice(0, 4), band5sb);
 		band5sb++;
 		gn_array_5g_tmp = gn_array_5g_tmp.slice(4);
+		htmlcode5 += '</td></tr>';
 	}
+	
+	htmlcode5 += '<tr><td>';
 	htmlcode5 += gen_gntable_tr(1, gn_array_5g_tmp, band5sb);
-
-
-	htmlcode5 += '</table>';		
+	htmlcode5 += '</td></tr>';
+	htmlcode5 += '</table>';	
 	$("guest_table5").innerHTML = htmlcode5;
 }
 
@@ -277,7 +287,7 @@ function applyRule(){
 		else
 			document.form.wl_expire.value = 0;
 
-		if(Rawifi_support != -1)
+		if(Rawifi_support)
 			document.form.action_wait.value = parseInt(document.form.action_wait.value)+5;			// extend waiting time for RaLink
 		
 		document.form.submit();
@@ -385,7 +395,7 @@ function close_guest_unit(_unit, _subunit){
 	NewInput.name = "wl"+ _unit + "." + _subunit +"_bss_enabled";
 	NewInput.value = "0";
 	document.unitform.appendChild(NewInput);
-	if(Rawifi_support != -1)
+	if(Rawifi_support)
 			document.unitform.action_wait.value = parseInt(document.unitform.action_wait.value)+5;			// extend waiting time for RaLink
 	document.unitform.submit();
 }
@@ -397,7 +407,7 @@ function change_guest_unit(_unit, _subunit){
 	document.form.next_page.value = "Guest_network.asp?flag=1";
 	FormActions("apply.cgi", "change_wl_unit", "", "");
 	document.form.target = "";
-	if(Rawifi_support != -1)
+	if(Rawifi_support)
 			document.form.action_wait.value = parseInt(document.form.action_wait.value)+5;			// extend waiting time for RaLink	
 	document.form.submit();
 }
@@ -410,7 +420,7 @@ function create_guest_unit(_unit, _subunit){
 	document.unitform.appendChild(NewInput);
 	document.unitform.wl_unit.value = _unit;
 	document.unitform.wl_subunit.value = _subunit;
-	if(Rawifi_support != -1)
+	if(Rawifi_support)
 			document.unitform.action_wait.value = parseInt(document.unitform.action_wait.value)+5;			// extend waiting time for RaLink	
 	document.unitform.submit();
 }
@@ -470,7 +480,7 @@ function genBWTable(_unit){
 <input type="hidden" name="wl_subunit" value="<% nvram_get("wl_subunit"); %>">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_wireless">
-<input type="hidden" name="action_wait" value="8">
+<input type="hidden" name="action_wait" value="10">
 </form>
 <form method="post" name="form" action="/start_apply2.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
@@ -482,7 +492,7 @@ function genBWTable(_unit){
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_wireless">
-<input type="hidden" name="action_wait" value="8">
+<input type="hidden" name="action_wait" value="10">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="wl_country_code" value="<% nvram_get("wl0_country_code"); %>" disabled>
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
@@ -546,8 +556,8 @@ function genBWTable(_unit){
 			</div>
 			
 			<!-- info table -->
-			<div id="guest_table2"></div>
-			<div id="guest_table5" style="margin-top:250px;"></div>
+			<div id="guest_table2"></div>			
+			<div id="guest_table5"></div>
 
 			<!-- setting table -->
 			<table width="80%" border="1" align="center" style="margin-top:10px;margin-bottom:20px;" cellpadding="4" cellspacing="0" id="gnset_table" class="FormTable">

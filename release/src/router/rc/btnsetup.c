@@ -1441,7 +1441,11 @@ int OTSPacketHandler(int sockfd)
 int 
 start_ots(void)
 { 
+#if defined (SMP)
+	char *ots_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "ots", NULL};
+#else
 	char *ots_argv[] = {"ots", NULL};
+#endif
 	pid_t pid;
 	
 	_eval(ots_argv, NULL, 0, &pid);

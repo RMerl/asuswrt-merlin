@@ -724,6 +724,22 @@ char *get_lan_netmask()
 	return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 }
 
+#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_PROXYSTA
+int is_psta(int unit)
+{
+	if (unit < 0) return 0;
+
+	if ((nvram_get_int("sw_mode") == SW_MODE_AP) &&
+		(nvram_get_int("wlc_psta") == 1) &&
+		(nvram_get_int("wlc_band") == unit))
+		return 1;
+
+	return 0;
+}
+#endif
+#endif
+
 char *processPacket(int sockfd, char *pdubuf)
 {
     IBOX_COMM_PKT_HDR	*phdr;
@@ -750,7 +766,7 @@ char *processPacket(int sockfd, char *pdubuf)
 //    int i;
     char ftype[8], prinfo[128];	/* get disk type */
     int free_space;
-#ifdef RTCONFIG_WIRELESSREPEATER
+#if defined(RTCONFIG_WIRELESSREPEATER) || defined(RTCONFIG_PROXYSTA)
     char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 #endif
 
@@ -825,7 +841,6 @@ char *processPacket(int sockfd, char *pdubuf)
 					sprintf(ginfo->PrinterInfo, "%s %s", nvram_safe_get("u2ec_mfg"), nvram_safe_get("u2ec_device"));
 			}
 #endif
-		     /* get disk type */
 #ifdef RTCONFIG_WIRELESSREPEATER
 			if (nvram_get_int("sw_mode") == SW_MODE_REPEATER)
 			{
@@ -833,6 +848,16 @@ char *processPacket(int sockfd, char *pdubuf)
 				strncpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)), 32);
 			}
 			else
+#endif
+#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_PROXYSTA
+			if (is_psta(0) || is_psta(1))
+			{
+				snprintf(prefix, sizeof(prefix), "wl%d_", 1 - nvram_get_int("wlc_band"));
+				strncpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)), 32);
+			}
+			else
+#endif
 #endif
 		     strncpy(ssid_g, nvram_safe_get("wl0_ssid"), 32);
 		     strcpy(ginfo->SSID, ssid_g);
@@ -892,6 +917,16 @@ char *processPacket(int sockfd, char *pdubuf)
 				strncpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)), 32);
 			}
 			else
+#endif
+#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_PROXYSTA
+			if (is_psta(0) || is_psta(1))
+			{
+				snprintf(prefix, sizeof(prefix), "wl%d_", 1 - nvram_get_int("wlc_band"));
+				strncpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)), 32);
+			}
+			else
+#endif
 #endif
 		     strncpy(ssid_g, nvram_safe_get("wl0_ssid"), 32);
    		     strcpy(ginfo->SSID, ssid_g);

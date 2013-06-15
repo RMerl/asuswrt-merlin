@@ -419,12 +419,10 @@ body {
 .loadingBarBlock{
 	-webkit-border-radius: 10px;
 	-moz-border-radius: 10px;
-	border-radius: 10px;
 	behavior: url(/PIE.htc);
 	border-radius: 10px 10px 10px 10px;
 	border: 0px;
-	/*margin-top:200px;*/
-	width: 33%;
+	width:450px;
 	font-size:12px;
 	font-family:Verdana, Arial, Helvetica, sans-serif;
 	color:#FFFFFF;
@@ -516,6 +514,7 @@ body {
 	text-decoration: underline;
 	font-family:Lucida Console;
 	font-weight: bolder;
+	white-space: nowrap;
 }
 /*========================== router Tab =================================*/
 .r1{

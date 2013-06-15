@@ -6,11 +6,17 @@
 # To cross-compile
 #    CC = arm-linux-gcc
 
+include ../.config
+
 CFLAGS += -Wall -O
 
 CFLAGS += -DASUS
 CFLAGS += -I$(TOP)/shared -I$(SRCBASE)/include
 LDFLAGS = -L$(TOP)/shared -lshared -L$(TOP)/nvram -lnvram
+ifeq ($(RTCONFIG_BCMARM),y)
+LDFLAGS += -lgcc_s
+endif
+
 INSTALL = install
 
 all: ntpclient

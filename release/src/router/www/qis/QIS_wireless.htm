@@ -16,7 +16,44 @@ var wlc_state = '0';
 var wlc_sbstate = '0';
 var wlc_scan_state = '0';
 var waitingTime = 120;
+var systime = new Date();
 
+var timezones = {
+	"720":"UTC12",
+	"660":"UTC11",
+	"600":"UTC10",
+	"540":"NAST9DST",
+	"480":"PST8DST",
+	"420":"MST7DST_1",
+	"360":"CST6DST_1",
+	"300":"EST5DST",
+	"240":"AST4DST",
+	"210":"NST3.30DST",
+	"180":"EBST3DST_1",
+	"120":"NORO2DST",
+	"60":"EUT1DST",
+	"0":"GMT0DST_1",
+	"-60":"MET-1DST_1",
+	"-120":"UTC-2DST",
+	"-180":"UTC-3_1",
+	"-210":"UTC-3.30DST",
+	"-240":"UTC-4_2",
+	"-270":"UTC-4.30",
+	"-300":"UTC-5",
+	"-330":"UTC-5.30_1",
+	"-345":"UTC-5.45",
+	"-360":"UTC-6_1",
+	"-390":"UTC-6.30",
+	"-420":"UTC-7",
+	"-480":"CCT-8",
+	"-540":"JST",
+	"-570":"CST-9.30DST",
+	"-600":"UTC-10_3",
+	"-660":"UTC-11_2",
+	"-720":"UTC-12",
+	"-780":"UTC-13"
+};
+ 
 function QKWireless_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_wireless_webtitle#>";
 	parent.set_step("t3");
@@ -90,8 +127,7 @@ function QKWireless_load_body(){
 					inputCtrl(document.form.sync_with_2ghz,0);
 					inputCtrl(document.form.wl1_ssid,0);
 					inputCtrl(document.form.wl1_wpa_psk,0);
-			}		
-			
+			}				
 		}else{
 			$("Continued_PrevSetting").style.display = "none";
 			$("radio_Continued_PrevSetting").style.display = "none";
@@ -253,6 +289,11 @@ function submitForm(){
 		document.form.wlc_crypto.value = parent.document.QKform.wlc_crypto.value;
 		document.form.wlc_wpa_psk.value = parent.document.QKform.wlc_wpa_psk.value;
 		document.form.wlc_nbw_cap.value = parent.document.QKform.wlc_nbw_cap.value;
+		document.form.lan_proto.disabled = false;
+		document.form.lan_proto.value = "dhcp";
+		document.form.lan_dnsenable_x.disabled = false;
+		document.form.lan_dnsenable_x.value = "1";
+		
 		
 		if($('RP_parentSetting').checked == false){		// if doesn't use parent AP setting, it will use WPA2 to be default Authentication method
 			if(document.form.wl0_wpa_psk.value.length > 0){
@@ -317,6 +358,14 @@ function submitForm(){
 		document.form.sw_mode.value = parent.document.QKform.sw_mode.value;
 	}
 
+	/* Viz add to set time_zone automatically 2013.05 start */
+	if(timezones[systime.getTimezoneOffset()] != undefined || timezones[systime.getTimezoneOffset()] != ""){
+				document.form.time_zone.disabled = false;
+				document.form.time_zone.value = timezones[systime.getTimezoneOffset()];
+				document.form.action_script.value += ";restart_time";
+	}
+	/* Viz add to set time_zone automatically 2013.05 end */	
+
 	parent.w_Setting_tmp = document.form.w_Setting.value;
 	document.getElementById("loadingIcon").style.display = "";
 	document.form.http_username.value = parent.document.QKform.http_username.value;
@@ -353,6 +402,17 @@ function Sync_2ghz(band){
 	}
 	else
 		document.form.sync_with_2ghz.checked = false;
+}
+
+function Sync_2ghz_m(band){
+	if(band == 2){
+		if(document.form.sync_with_2ghz_m.checked == true){
+			document.form.wl1_ssid_m.value = document.form.wl0_ssid_m.value; 
+			document.form.wl1_wpa_psk_m.value = document.form.wl0_wpa_psk_m.value; 
+		}
+	}
+	else
+		document.form.sync_with_2ghz_m.checked = false;
 }
 
 function gotoIndex_wireless(){
@@ -434,50 +494,6 @@ function submitenter(myfield,e)
 		return true;
 }
 
-var isNotIE = (navigator.userAgent.search("MSIE") == -1); 
-function switchType(obj, _method){
-	if(isNotIE){
-		if(obj.id.indexOf('wl0') >= 0){		// for wl0		
-				document.form.wl0_wpa_psk.type = _method ? "text" : "password";
-		}
-		if(obj.id.indexOf('wl1') >= 0){		// for wl0		
-				document.form.wl1_wpa_psk.type = _method ? "text" : "password";
-		}		
-	}	
-}
-
-function switchType_IE(obj){
-		if(isNotIE) return;		
-		
-		var tmp = "";
-		tmp = obj.value;
-		if(obj.id.indexOf('wl0') >= 0){		// for wl0
-				if(obj.id.indexOf('text') < 0){		//password
-							obj.style.display = "none";
-							document.getElementById('wl0_wpa_psk_text').style.display = "";
-							document.getElementById('wl0_wpa_psk_text').value = tmp;
-							document.getElementById('wl0_wpa_psk_text').focus();
-				}else{													//text					
-							obj.style.display = "none";
-							document.getElementById('wl0_wpa_psk').style.display = "";
-							document.getElementById('wl0_wpa_psk').value = tmp;
-							
-				}
-		}
-		if(obj.id.indexOf('wl1') >= 0){		// for wl1
-				if(obj.id.indexOf('text') < 0){		//password
-							obj.style.display = "none";
-							document.getElementById('wl1_wpa_psk_text').style.display = "";
-							document.getElementById('wl1_wpa_psk_text').value = tmp;
-							document.getElementById('wl1_wpa_psk_text').focus();
-				}else{														//text		
-							obj.style.display = "none";
-							document.getElementById('wl1_wpa_psk').style.display = "";
-							document.getElementById('wl1_wpa_psk').value = tmp;
-				}
-		}
-}
-
 function RP_useParentSetting(){
 	if($('RP_parentSetting').checked == true){
 		if(parent.document.QKform.wlc_band.value == 0){
@@ -555,6 +571,31 @@ function close_guest_unit(_unit, _subunit){
 	NewInput.value = "0";
 	document.form.appendChild(NewInput);
 }
+
+// detect_httpd
+var _err = 0;
+var _success = 0;
+function detect_LANStatus(_flag){
+	$j.ajax({
+		url: '/httpd_check.htm',
+		dataType: 'text',
+		timeout: 3000,
+		error: function(xhr){
+			if(_err == 0){
+				_err++;
+			}
+			_success = 0;
+			setTimeout("detect_LANStatus('"+_flag+"');", 1000);
+		},
+ 		success: function(){
+			_success++;
+			if(_success > 5)
+				 parent.location.href = "/QIS_wizard.htm?flag=finish";
+			else
+				setTimeout("detect_LANStatus('"+_flag+"');", 2000);
+		}
+	});
+}
 </script>
 </head>
 
@@ -573,16 +614,18 @@ function close_guest_unit(_unit, _subunit){
 <input type="hidden" name="action_wait" value="3">
 <input type="hidden" name="action_script" value="restart_wireless">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
+<!-- timezone -->
+<input type="hidden" name="time_zone" value="<% nvram_get("time_zone"); %>" disabled>
 <!-- wireless -->
 <input type="hidden" name="wl0_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_ssid"); %>">
 <input type="hidden" name="wl0_auth_mode_x" id="wl0_auth_mode_x" value="">
 <input type="hidden" name="wl0_crypto" id="wl0_crypto" value="aes">
 <input type="hidden" name="wl0_wep_x" id="wl0_wep_x" value="<% nvram_get("wl0_wep_x"); %>">
-<input type="hidden" name="wl0_key" id="wl0_key" value="">
-<input type="hidden" name="wl0_key1" id="wl0_key1" value="">
-<input type="hidden" name="wl0_key2" id="wl0_key2" value="">
-<input type="hidden" name="wl0_key3" id="wl0_key3" value="">
-<input type="hidden" name="wl0_key4" id="wl0_key4" value="">
+<input type="hidden" name="wl0_key" id="wl0_key" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_key"); %>">
+<input type="hidden" name="wl0_key1" id="wl0_key1" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_key1"); %>">
+<input type="hidden" name="wl0_key2" id="wl0_key2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_key2"); %>">
+<input type="hidden" name="wl0_key3" id="wl0_key3" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_key3"); %>">
+<input type="hidden" name="wl0_key4" id="wl0_key4" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_key4"); %>">
 <input type="hidden" name="wl0_wpa_mode" id="wl0_wpa_mode" value="0">
 
 <input type="hidden" name="wl1_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_ssid"); %>">
@@ -655,12 +698,15 @@ function close_guest_unit(_unit, _subunit){
 				</div>
 				<div class="row_end">
 					<label>Key</label>
-					<input name="wl0_wpa_psk_m" type="password" placeholder="<#QIS_finish_wireless_item3#>" autocapitalization="off" maxlength="64">
+					<input id="wl0_wpa_psk_m" name="wl0_wpa_psk_m" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);" placeholder="<#QIS_finish_wireless_item3#>" autocapitalization="off" maxlength="64">	
+					<input id="wl0_wpa_psk_text_m" name="wl0_wpa_psk_text_m" type="text" onBlur="switchType(this, false);" style="display:none;" placeholder="<#QIS_finish_wireless_item3#>" autocapitalization="off" maxlength="64">	
 				</div>
 	</fieldset>	
 	<br />
 	<div id="band5_mobile">
-		<div class="itemTitle">5 GHz - <#Security#></div>
+		<div class="itemTitle">5 GHz - <#Security#>
+			<span id="syncCheckbox_m"><input type="checkbox" id="sync_with_2ghz_m" name="sync_with_2ghz_m" class="input" onclick="setTimeout('Sync_2ghz_m(2);',0);"><#qis_ssid_desc#></span>
+		</div>
 		<fieldset>
 					<div class="row">
 						<label>SSID</label>
@@ -668,7 +714,8 @@ function close_guest_unit(_unit, _subunit){
 					</div>
 					<div class="row_end">
 						<label>Key</label>
-						<input name="wl1_wpa_psk_m" type="password" placeholder="<#QIS_finish_wireless_item3#>" autocapitalization="off" maxlength="64">
+						<input id="wl1_wpa_psk_m" name="wl1_wpa_psk_m" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);" placeholder="<#QIS_finish_wireless_item3#>" autocapitalization="off" maxlength="64">
+						<input id="wl1_wpa_psk_text_m" name="wl1_wpa_psk_text_m" type="text" onBlur="switchType(this, false);" style="display:none;" placeholder="<#QIS_finish_wireless_item3#>" autocapitalization="off" maxlength="64">	
 					</div>
 		</fieldset>
 	</div>
@@ -706,8 +753,8 @@ function close_guest_unit(_unit, _subunit){
 	<tr id="wl_unit_field_0">
 		<th width="180"><span onmouseout="return nd();" onclick="openHint(0, 23);" style="cursor:help;"><#Network_key#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 		<td class="QISformtd">
-			<input id="wl0_wpa_psk" name="wl0_wpa_psk" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);switchType_IE(this);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>" onkeyup="Sync_2ghz(2);" style="height:25px;" class="input_32_table" maxlength="64">
-			<input id="wl0_wpa_psk_text" name="wl0_wpa_psk_text" type="text" autocapitalization="off" onBlur="switchType_IE(this);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>" onkeyup="Sync_2ghz(2);" style="height:25px;display:none;" class="input_32_table" maxlength="64">
+			<input id="wl0_wpa_psk" name="wl0_wpa_psk" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>" onkeyup="Sync_2ghz(2);" style="height:25px;" class="input_32_table" maxlength="64">
+			<input id="wl0_wpa_psk_text" name="wl0_wpa_psk_text" type="text" autocapitalization="off" onBlur="switchType(this, false);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>" onkeyup="Sync_2ghz(2);" style="height:25px;display:none;" class="input_32_table" maxlength="64">
 		</td>
 	</tr>
 	<tr id="wl_unit_field_1">
@@ -725,8 +772,8 @@ function close_guest_unit(_unit, _subunit){
 	<tr id="wl_unit_field_3">
 		<th width="180"><span onmouseout="return nd();" onclick="openHint(0, 23);" style="cursor:help;"><#Network_key#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 		<td class="QISformtd">
-			<input id="wl1_wpa_psk" name="wl1_wpa_psk" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);switchType_IE(this);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_wpa_psk"); %>" onkeyup="Sync_2ghz(5);" style="height:25px;" class="input_32_table" maxlength="64">
-			<input id="wl1_wpa_psk_text" name="wl1_wpa_psk_text" type="text" autocapitalization="off" onBlur="switchType_IE(this);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_wpa_psk"); %>" onkeyup="Sync_2ghz(5);" style="height:25px;display:none;" class="input_32_table" maxlength="64">
+			<input id="wl1_wpa_psk" name="wl1_wpa_psk" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_wpa_psk"); %>" onkeyup="Sync_2ghz(5);" style="height:25px;" class="input_32_table" maxlength="64">
+			<input id="wl1_wpa_psk_text" name="wl1_wpa_psk_text" type="text" autocapitalization="off" onBlur="switchType(this, false);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_wpa_psk"); %>" onkeyup="Sync_2ghz(5);" style="height:25px;display:none;" class="input_32_table" maxlength="64">
 		</td>
 	</tr>
 </table>

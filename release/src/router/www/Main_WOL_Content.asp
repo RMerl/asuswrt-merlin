@@ -7,7 +7,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title>Network Tools - Wake On LAN</title>
+<title><#Network_Tools#> - <#NetworkTools_WOL#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <style>
@@ -15,9 +15,9 @@
 	border:1px outset #999;
 	background-color:#576D73;
 	position:absolute;
-	margin-top:103px;
-	*margin-top:96px;	
-	margin-left:59px;
+	*margin-top:26px;	
+	margin-left:53px;
+	*margin-left:-189px;
 	width:255px;
 	text-align:left;	
 	height:auto;
@@ -315,16 +315,14 @@ function applyRule(){
 							<tr>
 								<td bgcolor="#4D595D" colspan="3" valign="top">
 									<div>&nbsp;</div>
-									<div class="formfonttitle">Network Tools - Wake On LAN</div>
+									<div class="formfonttitle"><#Network_Tools#> - <#NetworkTools_WOL#></div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 									<div class="formfontdesc">
-										Send a magic packet to wake up sleeping machines.
-										MAC must be a station address (00:11:22:33:44:55) or
-										a hostname with a known 'ethers' entry.
+										<#NetworkTools_WOL_desc#>
 									</div>
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 										<tr>
-											<th width="20%">Target</th>
+											<th width="20%"><#NetworkTools_target#></th>
 											<td>
 												<input type="text" class="input_20_table" maxlength="17" name="destIP" value="" placeholder="ex: <% nvram_get("et0macaddr"); %>" onKeyPress="return is_hwaddr(this,event);">
 												<input class="button_gen" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="Wake" name="action">
@@ -336,7 +334,7 @@ function applyRule(){
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 									  	<thead>
 									  		<tr>
-												<td colspan="3" id="GWStatic">Offline list&nbsp;(<#List_limit#>&nbsp;32)</td>
+												<td colspan="3" id="GWStatic"><#NetworkTools_Offline#>&nbsp;(<#List_limit#>&nbsp;32)</td>
 									  		</tr>
 									  	</thead>
 						
@@ -347,10 +345,11 @@ function applyRule(){
 									  	</tr>			  
 									  	<tr>
 									  			<!-- client info -->
-													<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>									  		
+																					  		
 				            			<td width="40%">
 				            				<input type="text" class="input_20_table" maxlength="15" name="wollist_deviceName" onClick="hideClients_Block();">
-				                		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
+											<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
+											<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>	
 				            			</td>
 				            			<td width="40%">
 				                		<input type="text" class="input_20_table" maxlength="17" name="wollist_macAddr" style="" onKeyPress="return is_hwaddr(this,event)">

@@ -33,7 +33,7 @@ var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
 <% wan_get_parameter(); %>
 var original_dnsenable = parseInt('<% nvram_get("dslx_dnsenable"); %>');
 
-if(dualWAN_support != -1){
+if(dualWAN_support){
 	var wan_type_name = wans_dualwan.split(" ")[<% nvram_get("wan_unit"); %>];
 	wan_type_name = wan_type_name.toUpperCase();
 	switch(wan_type_name){
@@ -336,13 +336,13 @@ function initial(){
 	// WAN port
 	genWANSoption();
 	change_wan_unit();
-	if(dualWAN_support == -1) {
+	if(!dualWAN_support) {
 		$("WANscap").style.display = "none";
 	}
 }
 
 function change_wan_unit(){
-	if(dualWAN_support == -1) return;
+	if(!dualWAN_support) return;
 	if(document.form.wan_unit.options[document.form.wan_unit.selectedIndex].text == "LAN") {
 		document.form.current_page.value = "Advanced_WAN_Content.asp";
 	}
@@ -359,7 +359,7 @@ function change_wan_unit(){
 }
 
 function genWANSoption(){
-	if(dualWAN_support == -1) return;
+	if(!dualWAN_support) return;
 	for(i=0; i<wans_dualwan.split(" ").length; i++)
 		document.form.wan_unit.options[i] = new Option(wans_dualwan.split(" ")[i].toUpperCase(), i);
 	document.form.wan_unit.selectedIndex = '<% nvram_get("wan_unit"); %>';
@@ -603,7 +603,7 @@ function done_validating(action){
 function disable_pvc_summary() {
 	//$("dsl_pvc_summary").style.display = "none";
 	$("DSL_WAN_table").style.display = "none";
-	if(dualWAN_support != -1){
+	if(dualWAN_support){
 		$("WANscap").style.display = "none";
 	}
 }
@@ -611,7 +611,7 @@ function disable_pvc_summary() {
 function enable_pvc_summary() {
 	//$("dsl_pvc_summary").style.display = "";
 	$("DSL_WAN_table").style.display = "";
-	if(dualWAN_support != -1){
+	if(dualWAN_support){
 		$("WANscap").style.display = "";
 	}
 }

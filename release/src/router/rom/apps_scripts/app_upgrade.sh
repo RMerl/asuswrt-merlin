@@ -58,6 +58,8 @@ _check_log_message(){
 		target="terminated"
 	elif [ "$action" == "update-alternatives:" ]; then
 		target=""
+	elif [ -z "$action" ]; then
+		target="Space"
 	else
 		target="error"
 	fi
@@ -106,6 +108,8 @@ _log_ipkg_install(){
 
 		if [ -z "$package_deps_do" ]; then
 			package_deps_do=$dep
+			nvram set apps_depend_action="$dep"
+			nvram set apps_depend_action_target="Installing"
 		else
 			package_deps_do=$package_deps_do,$dep
 		fi
@@ -156,6 +160,7 @@ _download_package(){
 
 	target=$2/$download_file
 	nvram set apps_download_file=$target
+	nvram set apps_download_percent=0
 	wget -c $wget_options $pkg_server/$pkg_file -O $target &
 	wget_pid=`pidof wget`
 	if [ -z "$wget_pid" ] || [ $wget_pid -lt 1 ]; then
@@ -227,8 +232,86 @@ if [ -z "$APPS_DEV" ] || [ -z "$APPS_MOUNTED_PATH" ]; then
 fi
 APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
 
+need_asuslighttpd=0
+need_smartsync=0
+if [ "$1" == "downloadmaster" ] || [ "$1" == "mediaserver" ]; then
+	DM_version1=`app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $1}'`
+	DM_version4=`app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $4}'`
+	MS_version=`app_get_field.sh mediaserver Version 2 |awk '{FS=".";print $4}'`
 
-nvram set apps_state_upgrade=1 # REMOVING
+	if [ "$1" == "downloadmaster" ] && [ "$DM_version1" -gt "2" ] && [ "$DM_version4" -gt "59" ]; then
+		need_asuslighttpd=1
+	elif [ "$1" == "mediaserver" ] && [ "$MS_version" -gt "15" ]; then
+		need_asuslighttpd=1
+	fi
+elif [ "$1" == "aicloud" ] && [ -z "$is_arm_machine" ]; then
+	AC_version=`app_get_field.sh aicloud Version 2 |awk '{FS=".";print $4}'`
+
+	if [ "$AC_version" -gt "4" ]; then
+		need_smartsync=1
+	fi
+fi
+
+
+nvram set apps_state_upgrade=1 # DOWNLOADING
+target_file=
+if [ "$need_asuslighttpd" == "1" ]; then
+	echo "Downloading the dependent package: asuslighttpd..."
+	_download_package asuslighttpd $APPS_INSTALL_PATH/tmp
+	if [ "$?" != "0" ]; then
+		# apps_state_error was already set by _download_package().
+		exit 1
+	fi
+	if [ -z "$target_file" ]; then
+		target_file=$APPS_INSTALL_PATH/tmp/$download_file
+	else
+		target_file=$target_file" $APPS_INSTALL_PATH/tmp/$download_file"
+	fi
+elif [ "$need_smartsync" == "1" ]; then
+	if [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
+		deps=`app_get_field.sh smartsync Depends 2 |sed 's/,/ /g'`
+
+		for dep in $deps; do
+			echo "Downloading the dependent package of smartsync: $dep..."
+			_download_package $dep $APPS_INSTALL_PATH/tmp
+			if [ "$?" != "0" ]; then
+				# apps_state_error was already set by _download_package().
+				exit 1
+			fi
+			if [ -z "$target_file" ]; then
+				target_file=$APPS_INSTALL_PATH/tmp/$download_file
+			else
+				target_file=$target_file" $APPS_INSTALL_PATH/tmp/$download_file"
+			fi
+		done
+	fi
+
+	echo "Downloading the dependent package: smartsync..."
+	_download_package smartsync $APPS_INSTALL_PATH/tmp
+	if [ "$?" != "0" ]; then
+		# apps_state_error was already set by _download_package().
+		exit 1
+	fi
+	if [ -z "$target_file" ]; then
+		target_file=$APPS_INSTALL_PATH/tmp/$download_file
+	else
+		target_file=$target_file" $APPS_INSTALL_PATH/tmp/$download_file"
+	fi
+fi
+
+_download_package $1 $APPS_INSTALL_PATH/tmp
+if [ "$?" != "0" ]; then
+	# apps_state_error was already set by _download_package().
+	exit 1
+fi
+if [ -z "$target_file" ]; then
+	target_file=$APPS_INSTALL_PATH/tmp/$download_file
+else
+	target_file=$target_file" $APPS_INSTALL_PATH/tmp/$download_file"
+fi
+
+
+nvram set apps_state_upgrade=2 # REMOVING
 _check_package $1
 if [ "$?" != "0" ]; then
 	app_remove.sh $1
@@ -238,70 +321,22 @@ if [ "$?" != "0" ]; then
 	fi
 fi
 
-need_asuslighttpd=0
 
-if [ "$1" == "downloadmaster" ] || [ "$1" == "mediaserver" ]; then
-	DM_version1=`app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $1}'`
-	DM_version2=`app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $4}'`
-	MS_version=`app_get_field.sh mediaserver Version 2 |awk '{FS=".";print $4}'`
-
-	if [ "$1" == "downloadmaster" ] && [ "$DM_version1" -gt "2" ] && [ "$DM_version2" -gt "59" ]; then
-		need_asuslighttpd=1
-	elif [ "$1" == "mediaserver" ] && [ "$MS_version" -gt "15" ]; then
-		need_asuslighttpd=1
-	fi
-fi
-
-if [ "$need_asuslighttpd" == "1" ]; then
-	_check_package asuslighttpd
-	if [ "$?" != "0" ]; then
-		app_remove.sh asuslighttpd
-		if [ "$?" != "0" ]; then
-			# apps_state_error was already set by app_remove.sh.
-			exit 1
-		fi
-	fi
-fi
-
-
-nvram set apps_state_upgrade=2 # INSTALLING
-if [ "$need_asuslighttpd" == "1" ]; then
-	_download_package asuslighttpd $APPS_INSTALL_PATH
-	if [ "$?" != "0" ]; then
-		# apps_state_error was already set by _download_package().
-		exit 1
-	fi
-
+nvram set apps_state_upgrade=3 # INSTALLING
+for file in $target_file; do
+	echo "Installing the package: $file..."
 	install_log=$APPS_INSTALL_PATH/ipkg_log.txt
-	ipkg install $APPS_INSTALL_PATH/$download_file 1>$install_log &
+	ipkg install $file 1>$install_log &
 	result=`_log_ipkg_install $1 $install_log`
 	if [ "$result" == "error" ]; then
-		echo "Fail to install the package: $1!"
+		echo "Fail to install the package: $file!"
 		nvram set apps_state_error=7
 		exit 1
 	else
-		rm -rf $APPS_INSTALL_PATH/$download_file
+		rm -rf $file
 		rm -f $install_log
 	fi
-fi
-
-_download_package $1 $APPS_INSTALL_PATH
-if [ "$?" != "0" ]; then
-	# apps_state_error was already set by _download_package().
-	exit 1
-fi
-
-install_log=$APPS_INSTALL_PATH/ipkg_log.txt
-ipkg install $APPS_INSTALL_PATH/$download_file 1>$install_log &
-result=`_log_ipkg_install $1 $install_log`
-if [ "$result" == "error" ]; then
-	echo "Fail to install the package: $1!"
-	nvram set apps_state_error=7
-	exit 1
-else
-	rm -rf $APPS_INSTALL_PATH/$download_file
-	rm -f $install_log
-fi
+done
 
 APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
 if [ "$APPS_MOUNTED_TYPE" == "vfat" ]; then
@@ -318,6 +353,24 @@ if [ "$?" != "0" ]; then
 	exit 1
 fi
 
+if [ "$need_asuslighttpd" == "1" ]; then
+	echo "Enabling the dependent package: asuslighttpd..."
+	app_set_enabled.sh asuslighttpd "yes"
+elif [ "$need_smartsync" == "1" ]; then
+	if [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
+		deps=`app_get_field.sh smartsync Depends 2 |sed 's/,/ /g'`
+
+		for dep in $deps; do
+			echo "Enabling the dependent package of smartsync: $dep..."
+			app_set_enabled.sh $dep "yes"
+		done
+	fi
+
+	echo "Enabling the dependent package: smartsync..."
+	app_set_enabled.sh smartsync "yes"
+fi
+
+echo "Enabling the package: $1..."
 app_set_enabled.sh $1 "yes"
 
 nvram set apps_download_file=
@@ -328,4 +381,4 @@ nvram set apps_depend_action=
 nvram set apps_depend_action_target=
 
 
-nvram set apps_state_upgrade=3 # FINISHED
+nvram set apps_state_upgrade=4 # FINISHED

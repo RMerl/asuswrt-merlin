@@ -35,10 +35,14 @@
 #include <shared.h>
 
 #include "sysdeps.h"
+#include <linux/version.h>
 
 #define DUT_DOMAIN_NAME "router.asus.com"
 #define OLD_DUT_DOMAIN_NAME1 "www.asusnetwork.net"
 #define OLD_DUT_DOMAIN_NAME2 "www.asusrouter.com"
+#if defined (SMP)
+#define DEFAULT_TASKSET_CPU "0"
+#endif
 
 #ifdef RTCONFIG_IPV6
 extern char wan6face[];
@@ -47,10 +51,12 @@ extern char wan6face[];
 /* services.c */
 extern int g_reboot;
 
-#ifdef LINUX30
-#define DAYS_PARAM	" --kerneltz --weekdays "
+#define LINUX_KERNEL_VERSION LINUX_VERSION_CODE
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)
+#define DAYS_PARAM      " --days "
 #else
-#define DAYS_PARAM	" --days "
+#define DAYS_PARAM      " --kerneltz --weekdays "
 #endif
 
 #define LOGNAME get_productid()
@@ -165,6 +171,7 @@ extern int wanport_status(int wan_unit);
 extern void ate_commit_bootlog(char *err_code);
 extern int setAllLedOn(void);
 extern int setAllLedOff(void);
+extern int setATEModeLedOn(void);
 extern int start_wps_method(void);
 extern int stop_wps_method(void);
 extern int is_wps_stopped(void);
@@ -305,7 +312,7 @@ extern void set_default_accept_ra(int flag);
 extern void set_intf_ipv6_accept_ra(const char *ifname, int flag);
 extern void set_intf_ipv6_dad(const char *ifname, int bridge, int flag);
 extern void config_ipv6(int enable, int incl_wan);
-extern void enable_ipv6(const char *ifname, int is_wan6);
+extern void enable_ipv6(const char *ifname);
 extern void disable_ipv6(const char *ifname);
 #endif
 #ifdef RTCONFIG_WIRELESSREPEATER
@@ -382,7 +389,7 @@ extern int start_zcip(char *wan_ifname);
 
 #ifdef RTCONFIG_IPV6
 extern int dhcp6c_state_main(int argc, char **argv);
-extern void start_dhcp6c(void);
+extern int start_dhcp6c(void);
 extern void stop_dhcp6c(void);
 extern int ipv6aide_main(int argc, char *argv[]);
 #endif
@@ -400,10 +407,13 @@ extern int wpacli_main(int argc, char *argv[]);
 #endif
 
 // mtd.c
-extern int mtd_erase(const char *mtdname);
+extern int mtd_erase_old(const char *mtdname);
 extern int mtd_unlock(const char *mtdname);
-extern int mtd_write_main(int argc, char *argv[]);
-extern int mtd_unlock_erase_main(int argc, char *argv[]);
+extern int mtd_write_main_old(int argc, char *argv[]);
+extern int mtd_unlock_erase_main_old(int argc, char *argv[]);
+
+extern int mtd_erase(const char *mtd);
+extern int mtd_write(const char *path, const char *mtd);
 
 // jffs2.c
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_JFFSV1)
@@ -521,8 +531,8 @@ extern void stop_ftpd(void);
 extern void start_ftpd(void);
 #endif
 #ifdef RTCONFIG_CLOUDSYNC
-extern void stop_cloudsync(void);
-extern void start_cloudsync(void);
+extern void stop_cloudsync(int type);
+extern void start_cloudsync(int fromUI);
 #endif
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 extern int stop_app(void);
@@ -603,8 +613,12 @@ extern int is_create_file_dongle(const char *vid, const char *pid);
 //services.c
 extern void setup_leds();
 extern void write_static_leases(char *file);
+#ifdef RTCONFIG_YANDEXDNS
+extern const char *yandex_dns(int mode);
+#endif
 #ifdef RTCONFIG_DNSMASQ
 extern void restart_dnsmasq(int force);
+extern void reload_dnsmasq(void);
 #else
 extern int restart_dns();
 #endif

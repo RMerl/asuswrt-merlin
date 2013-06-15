@@ -1,0 +1,14 @@
+#
+# Makefile for vlp utility
+#
+
+vlp_default: vlp
+
+include ../../source/Makefile
+
+VLP_OBJ1 = $(LIB_OBJ) $(PARAM_OBJ) $(UBIQX_OBJ) 
+
+VLP_OBJS = $(VLP_OBJ1:%=$(srcdir)/%)
+
+vlp: $(VLP_OBJS) vlp.o
+	$(CC) -o $@ vlp.o $(VLP_OBJS) $(LIBS)

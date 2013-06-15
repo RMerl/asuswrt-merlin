@@ -56,7 +56,7 @@
 
 #include <sqlite3.h>
 
-#define MINIDLNA_VERSION "1.0.25"
+#define MINIDLNA_VERSION "1.0.26"
 
 #ifdef NETGEAR
 # define SERVER_NAME "ReadyDLNA"
@@ -203,7 +203,7 @@ extern char modelname[];
 #define MODELNUMBER_MAX_LEN (16)
 extern char modelnumber[];
 
-#define SERIALNUMBER_MAX_LEN (16)
+#define SERIALNUMBER_MAX_LEN (18)
 extern char serialnumber[];
 
 #define PRESENTATIONURL_MAX_LEN (64)

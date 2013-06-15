@@ -1,7 +1,7 @@
 include ../common.mak
 
-CFLAGS = -Os -Wall $(EXTRACFLAGS) -fPIC
-CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -I$(SRCBASE)/shared
+CFLAGS += -Os -Wall -fPIC
+CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include
 
 ifeq ($(RTCONFIG_SHP),y)
 CFLAGS += -DMEDIA_REVIEW
@@ -11,14 +11,34 @@ ifeq ($(RTCONFIG_RALINK),y)
 CFLAGS += -I./sysdeps/ralink -I$(TOP)/wireless_tools/ -DWE_NOLIBM 
 endif
 
+ifeq ($(RTCONFIG_BCMARM),y)
+export CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include
+endif
+
+ifeq ($(RTCONFIG_5301X),y)
+CFLAGS += -DBCM5301X
+endif
+
 ifeq ($(RTAC66U), y)
 CFLAGS += -DRTAC66U
 endif
+
+ifeq ($(RTCONFIG_4352_5G),y)
+CFLAGS += -DBCM4352
+endif
+
+ifeq (2_6_36,$(LINUX_VERSION))
+CFLAGS += -DAUTOFW_PORT_DEPRECATED
+endif
+
+CFLAGS += -DTRAFFIC_MGMT
 
 OBJS = shutils.o linux_timer.o defaults.o model.o rtstate.o boardapi.o
 OBJS += misc.o version.o files.o strings.o process.o 
 OBJS += bin_sem_asus.o semaphore.o pids.o notify_rc.o discover.o
 OBJS += base64.o
+OBJS += nvparse.o
+OBJS += bcmutils.o
 
 ifeq ($(RTCONFIG_RALINK),y)
 OBJS += $(TOP)/wireless_tools/iwlib.o
@@ -41,12 +61,17 @@ OBJS += $(TOP)/busybox/util-linux/volume_id/ntfs.o
 OBJS += $(TOP)/busybox/util-linux/volume_id/linux_swap.o
 endif
 
-vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink $(SRCBASE)/shared/
+ifeq ($(RTCONFIG_BCMARM),y)
+OBJS += ifaddrs.o
+endif
+
+vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink $(SRCBASE)/shared/ $(WLAN_ComponentSrcDirs)
 
 all: libshared.so libshared.a
 
 ifeq ($(CONFIG_BCMWL5),y)
-OBJS += wlif_utils.o UdpLib.o bcmutils.o
+OBJS += wlif_utils.o UdpLib.o
+OBJS += bcmwifi_channels.o
 endif
 
 libshared.so: $(OBJS)
@@ -73,7 +98,7 @@ clean:
 	rm -f *.o *.so *.a .*.depend sysdeps/*.o sysdeps/broadcom/*.o sysdeps/ralink/*.o
 
 %.o: %.c .%.depend
-	@echo " [shared] CC $@"
+	@echo " [shared] CC $@ $(CFLAGS)"
 	@$(CC) $(CFLAGS) -o $@ -c $<
 
 .depend: $(OBJS:%.o=%.c)

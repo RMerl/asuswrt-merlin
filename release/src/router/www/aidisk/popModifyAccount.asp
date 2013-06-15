@@ -15,31 +15,28 @@ var selectedAccount = parent.getSelectedAccount();
 
 function initial(){
 	$("new_account").value = decodeURIComponent(selectedAccount);
-	
-	showtext($("selected_account"), decodeURIComponent(selectedAccount));
-	
+	showtext($("selected_account"), decodeURIComponent(selectedAccount));	
 	clickevent();
 }
 
 function clickevent(){
 	$("Submit").onclick = function(){
-			if(validForm()){
-				$("account").value = decodeURIComponent(selectedAccount);
-				
-				parent.showLoading();
-				document.modifyAccountForm.submit();
-				parent.hidePop("apply");
-			}
-		};
+		if(validForm()){
+			$("account").value = decodeURIComponent(selectedAccount);			
+			parent.showLoading();
+			document.modifyAccountForm.submit();
+			parent.hidePop("apply");
+		}
+	};
 }
 
 function checkDuplicateName(newname, teststr){
 	var existing_string = decodeURIComponent(teststr.join(','));
 	existing_string = "," + existing_string + ",";
 	var newstr = "," + trim(newname) + ","; 
-
 	var re = new RegExp(newstr,"gi")
 	var matchArray =  existing_string.match(re);
+	
 	if (matchArray != null)
 		return true;
 	else
@@ -53,7 +50,6 @@ function validForm(){
 	// new_account name
 	if($("new_account").value.length > 0){
 		var alert_str = validate_account($("new_account"), "noalert");
-
 		if(alert_str != ""){
 			showtext($("alert_msg1"), alert_str);
 			$("new_account").focus();
@@ -61,10 +57,9 @@ function validForm(){
 		}
 
 		$("new_account").value = trim($("new_account").value);
-
-		if($("account").value.length == 0){
+		if($("new_account").value.length == 0){
 			showtext($("alert_msg1"), "<#File_Pop_content_alert_desc1#>");
-			$("account").focus();
+			$("new_account").focus();
 			return false;
 		}
 		
@@ -90,10 +85,10 @@ function validForm(){
 		}
 
 		if(checkDuplicateName($("new_account").value, parent.get_accounts()) &&
-				$("new_account").value != decodeURIComponent(selectedAccount)){
-			showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
-			$("new_account").focus();
-			return false;
+			$("new_account").value != decodeURIComponent(selectedAccount)){			
+				showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
+				$("new_account").focus();
+				return false;
 		}
 	}
 
@@ -101,12 +96,13 @@ function validForm(){
 	if($("new_password").value.length <= 0 || $("confirm_password").value.length <= 0){
 		showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
 		if($("new_password").value.length <= 0){
-				$("new_password").focus();
-				$("new_password").select();
+			$("new_password").focus();
+			$("new_password").select();
 		}else{
-				$("confirm_password").focus();
-				$("confirm_password").select();
+			$("confirm_password").focus();
+			$("confirm_password").select();
 		}
+		
 		return false;
 	}
 
@@ -117,16 +113,16 @@ function validForm(){
 	}
 
 	if(!validate_string(document.modifyAccountForm.new_password)){
-			$("new_password").focus();
-			$("new_password").select();
-			return false;
+		$("new_password").focus();
+		$("new_password").select();
+		return false;
 	}
 
 	if($("new_password").value.length > 16){
-			showtext($("alert_msg2"),"*<#LANHostConfig_x_Password_itemdesc#>");
-			$("password").focus();
-			$("password").select();
-			return false;
+		showtext($("alert_msg2"),"*<#LANHostConfig_x_Password_itemdesc#>");
+		$("password").focus();
+		$("password").select();
+		return false;
 	}
 
 	return true;

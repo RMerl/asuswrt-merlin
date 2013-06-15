@@ -1,0 +1,22 @@
+diff -uNr samba-3.0.11.orig/source/Makefile.in samba-3.0.11/source/Makefile.in
+--- samba-3.0.11.orig/source/Makefile.in	2005-03-23 02:40:40.000000000 -0800
++++ samba-3.0.11/source/Makefile.in	2005-03-23 02:48:59.000000000 -0800
+@@ -631,7 +631,8 @@
+ 	    $(RPC_ECHO_OBJ) $(SMBLDAP_OBJ) $(IDMAP_OBJ) libsmb/spnego.o $(PASSCHANGE_OBJ)
+ 
+ WINBIND_WINS_NSS_OBJ = nsswitch/wins.o $(PARAM_OBJ) \
+-	$(LIBSMB_OBJ) $(LIB_NONSMBD_OBJ) $(NSSWINS_OBJ) $(KRBCLIENT_OBJ)
++	$(LIBSMB_OBJ) $(LIB_NONSMBD_OBJ) $(NSSWINS_OBJ) $(KRBCLIENT_OBJ) \
++	$(SECRETS_OBJ)
+ 
+ WINBIND_WINS_NSS_PICOBJS = $(WINBIND_WINS_NSS_OBJ:.o=.@PICSUFFIX@)
+ 
+@@ -997,7 +998,7 @@
+ 
+ bin/libsmbclient.@SHLIBEXT@: $(LIBSMBCLIENT_PICOBJS)
+ 	@echo Linking libsmbclient shared library $@
+-	@$(SHLD) $(LDSHFLAGS) -o $@ $(LIBSMBCLIENT_PICOBJS) $(LDFLAGS) $(LIBS) \
++	@$(SHLD) $(LDSHFLAGS) -Wl,-z,defs -o $@ $(LIBSMBCLIENT_PICOBJS) $(LDFLAGS) $(LIBS) \
+ 		$(KRB5LIBS) $(LDAP_LIBS) \
+ 		@SONAMEFLAG@`basename $@`.$(LIBSMBCLIENT_MAJOR)
+ 

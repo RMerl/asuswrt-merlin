@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+#
+
+case "$1" in
+	purge)
+		update-inetd --remove '/usr/sbin/swat$'
+		;;
+	remove)
+		;;
+	upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+		;;
+	*)
+		echo "$0: unknown action \"$1\""
+		exit 0
+		;;
+esac
+
+#DEBHELPER#
+
+exit 0
+

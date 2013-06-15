@@ -1,3 +1,5 @@
+include ../common.mak
+
 VPATH = src
 LD= $(CC)
 OS_LAYER = osl-linux.c
@@ -10,6 +12,9 @@ CFLAGS += -I$(TOP)/shared
 CFLAGS += -I$(SRCBASE)/include
 LDFLAGS += -L$(TOP)/shared -lshared
 LDFLAGS += -L$(TOP)/nvram -lnvram
+ifeq ($(RTCONFIG_BCMARM),y)
+LDFLAGS += -lgcc_s
+endif
 
 depend:
 	$(CC) $(CFLAGS) -M $(DCFILES) >.depend
@@ -26,6 +31,7 @@ ifeq ($(RTN66U), y)
 	install -D icon.large.RT-N66U.ico $(INSTALLDIR)/rom/etc/icon.large.ico
 else ifeq ($(RTN56U)$(RTN65U), y)
 	install -D icon.RT-N56U.ico $(INSTALLDIR)/rom/etc/icon.ico
+	install -D icon.large.RT-N56U.ico $(INSTALLDIR)/rom/etc/icon.large.ico
 	install -D icon.large.RT-N56U.ico $(INSTALLDIR)/rom/etc/icon.large.ico
 else ifeq ($(DSLN55U), y)
 	install -D icon.DSL-N55U.ico $(INSTALLDIR)/rom/etc/icon.ico

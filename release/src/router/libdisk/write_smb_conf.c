@@ -217,7 +217,6 @@ int main(int argc, char *argv[])
 	fprintf(fp, "[global]\n");
 	if (nvram_safe_get("st_samba_workgroup"))
 		fprintf(fp, "workgroup = %s\n", nvram_safe_get("st_samba_workgroup"));
-
 #if 0
 	if (nvram_safe_get("computer_name")) {
 		fprintf(fp, "netbios name = %s\n", nvram_safe_get("computer_name"));
@@ -236,7 +235,7 @@ int main(int argc, char *argv[])
 	fprintf(fp, "log file = /var/log.samba\n");
 	fprintf(fp, "log level = 0\n");
 	fprintf(fp, "max log size = 5\n");
-	
+
 	/* share mode */
 	if (!strcmp(nvram_safe_get("st_samba_mode"), "1") || !strcmp(nvram_safe_get("st_samba_mode"), "3")) {
 		fprintf(fp, "security = SHARE\n");
@@ -251,30 +250,36 @@ int main(int argc, char *argv[])
 		usb_dbg("samba mode: no\n");
 		goto confpage;
 	}
-	
+
 	fprintf(fp, "encrypt passwords = yes\n");
 	fprintf(fp, "pam password change = no\n");
 	fprintf(fp, "null passwords = yes\n");		// ASUS add
-	
+
 	fprintf(fp, "force directory mode = 0777\n");
 	fprintf(fp, "force create mode = 0777\n");
-	
+
 	/* max users */
 	if (strcmp(nvram_safe_get("st_max_user"), "") != 0)
 		fprintf(fp, "max connections = %s\n", nvram_safe_get("st_max_user"));
-	
+
+	/* remove socket options due to NIC compatible issue */
+#ifndef RTCONFIG_BCMARM
 	fprintf(fp, "socket options = TCP_NODELAY SO_KEEPALIVE SO_RCVBUF=65536 SO_SNDBUF=65536\n");
+#endif
 	fprintf(fp, "obey pam restrictions = no\n");
 	fprintf(fp, "use spne go = no\n");		// ASUS add
 	fprintf(fp, "client use spnego = no\n");	// ASUS add
-	// fprintf(fp, "client use spnego = yes\n");  // ASUS add
+//	fprintf(fp, "client use spnego = yes\n");  // ASUS add
 	fprintf(fp, "disable spoolss = yes\n");		// ASUS add
 	fprintf(fp, "host msdfs = no\n");		// ASUS add
 	fprintf(fp, "strict allocate = No\n");		// ASUS add
 //	fprintf(fp, "mangling method = hash2\n");	// ASUS add
+#ifndef RTCONFIG_BCMARM
 	fprintf(fp, "bind interfaces only = yes\n");	// ASUS add
 	fprintf(fp, "interfaces = lo br0 %s\n", ( ( (!nvram_match("sw_mode", "3") && !nvram_match("sw_mode", "1")) || (!strcmp(nvram_safe_get("smbd_bind_wan"), "1")) ) ? nvram_safe_get("wan0_ifname") : "") );
-	//	fprintf(fp, "dns proxy = no\n");				// J--
+#else
+	fprintf(fp, "interfaces = br0 %s\n", ( ( (!nvram_match("sw_mode", "3") && !nvram_match("sw_mode", "1")) || (!strcmp(nvram_safe_get("smbd_bind_wan"), "1")) ) ? nvram_safe_get("wan0_ifname") : "") );
+#endif
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
 	fprintf(fp, "use sendfile = no\n");
 #else
@@ -291,23 +296,15 @@ int main(int argc, char *argv[])
 		fprintf(fp, "preferred master = yes\n");
 	}
 
-//	fprintf(fp, "domain master = no\n");				// J++
-//	fprintf(fp, "wins support = no\n");				// J++
-//	fprintf(fp, "printable = no\n");				// J++
-//	fprintf(fp, "browseable = yes\n");				// J++
-//	fprintf(fp, "security mask = 0777\n");				// J++
-//	fprintf(fp, "force security mode = 0\n");			// J++
-//	fprintf(fp, "directory security mask = 0777\n");		// J++
-//	fprintf(fp, "force directory security mode = 0\n");		// J++
-
 	fprintf(fp, "map archive = no\n");
 	fprintf(fp, "map hidden = no\n");
 	fprintf(fp, "map read only = no\n");
 	fprintf(fp, "map system = no\n");
 	fprintf(fp, "store dos attributes = yes\n");
 	fprintf(fp, "dos filemode = yes\n");
-	fprintf(fp, "dos filetimes = yes\n");
-	fprintf(fp, "dos filetime resolution = yes\n");
+	fprintf(fp, "oplocks = yes\n");
+	fprintf(fp, "level2 oplocks = yes\n");
+	fprintf(fp, "kernel oplocks = no\n");
 
 	disks_info = read_disk_data();
 	if (disks_info == NULL) {
@@ -339,6 +336,9 @@ int main(int argc, char *argv[])
 				fprintf(fp, "comment = %s's %s\n", follow_disk->tag, mount_folder);
 				fprintf(fp, "path = %s\n", follow_partition->mount_point);
 				fprintf(fp, "writeable = yes\n");
+
+				fprintf(fp, "dos filetimes = yes\n");
+				fprintf(fp, "fake directory create times = yes\n");
 			}
 		}
 	}
@@ -364,6 +364,9 @@ int main(int argc, char *argv[])
 					fprintf(fp, "comment = %s's %s\n", follow_disk->tag, mount_folder);
 					fprintf(fp, "path = %s\n", follow_partition->mount_point);
 					fprintf(fp, "writeable = yes\n");
+
+					fprintf(fp, "dos filetimes = yes\n");
+					fprintf(fp, "fake directory create times = yes\n");
 				}
 				else{
 					//result = get_all_folder(follow_partition->mount_point, &sh_num, &folder_list);
@@ -391,6 +394,9 @@ int main(int argc, char *argv[])
 								fprintf(fp, "writeable = yes\n");
 							else
 								fprintf(fp, "writeable = no\n");
+
+							fprintf(fp, "dos filetimes = yes\n");
+							fprintf(fp, "fake directory create times = yes\n");
 						}
 					}
 					
@@ -440,7 +446,10 @@ int main(int argc, char *argv[])
 						fprintf(fp, "comment = %s's %s in %s\n", mount_folder, folder_list[n], follow_disk->tag);
 						fprintf(fp, "path = %s/%s\n", follow_partition->mount_point, folder_list[n]);
 					}
-					
+
+					fprintf(fp, "dos filetimes = yes\n");
+					fprintf(fp, "fake directory create times = yes\n");
+
 					fprintf(fp, "valid users = ");
 					first = 1;
 					for (i = 0; i < acc_num; ++i) {
@@ -555,6 +564,9 @@ int main(int argc, char *argv[])
 					}
 					fprintf(fp, "comment = %s's %s in %s\n", mount_folder, folder_list[n], follow_disk->tag);
 					fprintf(fp, "path = %s/%s\n", follow_partition->mount_point, folder_list[n]);
+
+					fprintf(fp, "dos filetimes = yes\n");
+					fprintf(fp, "fake directory create times = yes\n");
 					
 					fprintf(fp, "valid users = ");
 					first = 1;

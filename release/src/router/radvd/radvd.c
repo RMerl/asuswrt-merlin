@@ -761,7 +761,9 @@ check_conffile_perm(const char *username, const char *conf_file)
 int
 check_ip6_forwarding(void)
 {
+#ifdef HAVE_SYS_SYSCTL_H
 	int forw_sysctl[] = { SYSCTL_IP6_FORWARDING };
+#endif
 	int value;
 	size_t size = sizeof(value);
 	FILE *fp = NULL;
@@ -777,18 +779,22 @@ check_ip6_forwarding(void)
 		}
 		fclose(fp);
 	}
-	else
+	else {
 		flog(LOG_DEBUG, "Correct IPv6 forwarding procfs entry not found, "
 	                       "perhaps the procfs is disabled, "
 	                        "or the kernel interface has changed?");
+		value = -1;
+	}
 #endif /* __linux__ */
 
+#ifdef HAVE_SYS_SYSCTL_H
 	if (!fp && sysctl(forw_sysctl, sizeof(forw_sysctl)/sizeof(forw_sysctl[0]),
 	    &value, &size, NULL, 0) < 0) {
 		flog(LOG_DEBUG, "Correct IPv6 forwarding sysctl branch not found, "
 			"perhaps the kernel interface has changed?");
 		return(0);	/* this is of advisory value only */
 	}
+#endif
 
 	if (value != 1 && !warned) {
 		warned = 1;

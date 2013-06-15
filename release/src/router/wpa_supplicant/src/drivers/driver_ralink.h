@@ -21,7 +21,7 @@
 #define SIOCIWFIRSTPRIV								SIOCDEVPRIVATE
 #endif
 
-#define RT_PRIV_IOCTL								(SIOCIWFIRSTPRIV + 0x01)
+#define RT_PRIV_IOCTL								(SIOCIWFIRSTPRIV + 0x0E)  
 #define RTPRIV_IOCTL_SET							(SIOCIWFIRSTPRIV + 0x02)
 
 // IEEE 802.11 OIDs  &  Ralink defined OIDs  ******

@@ -23,6 +23,13 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 
 function initial(){
 	show_menu();
+	if(based_modelid == "RT-AC52U" || based_modelid == "RT-N14U")
+	{
+		inputCtrl(document.form.switch_ctrlrate_unknown_unicast, 0);
+		inputCtrl(document.form.switch_ctrlrate_unknown_multicast, 0);
+		inputCtrl(document.form.switch_ctrlrate_multicast, 0);
+		inputCtrl(document.form.switch_ctrlrate_broadcast, 0);
+	}
 }
 
 function applyRule(){

@@ -1,0 +1,321 @@
+#!/usr/bin/perl -w
+
+# Created by P.Wieleba@iem.pw.edu.pl in 2004
+
+use strict;
+use Getopt::Std;
+use FindBin;
+use FindBin qw($RealBin);
+use lib "$RealBin/";
+use smbldap_tools;
+
+# function declaration
+sub exist_in_tab;
+
+my %Options;
+
+my $ok = getopts('f:r:w:h:o:s:?v', \%Options);
+if ( (!$ok) || ($Options{'?'}) ) {
+  print "Usage: $0 [-frwhosh?] username\n";
+  print "  -?|-h show this help message\n";
+  print "  -f full_name\n";
+  print "  -r room_no\n";
+  print "  -w work_ph\n";
+  print "  -h home_ph\n";
+  print "  -o other\n";
+  print "  -s shell\n";
+  print "  -v show modified user record\n";
+  exit (1);
+}
+
+
+my $user;
+my $pass;
+if ( $< != 0 ) {
+  my $current_user = getpwuid($<);
+  if ($current_user and $ARGV[0] and $current_user ne $ARGV[0] ) {
+    die "Only root can change other users inormation\n";
+  }
+} else {
+  if ( $ARGV[0] ) {
+    $user = $ARGV[0];
+  }
+  $pass = 1;
+}
+
+if (!defined($user)) {
+  $user = getpwuid($<);
+}
+
+my ($dn,$ldap_master);
+# First, connecting to the directory
+if ($< != 0) {
+  # non-root user
+  if (!defined($pass)) {
+    # prompt for password
+    print "UNIX password: ";
+    system "stty -echo" if (-t STDIN);
+    chomp($pass=<STDIN>);
+    system "stty echo" if (-t STDIN);
+    print "\n";
+
+    $config{masterDN}="uid=$user,$config{usersdn}";
+    $config{masterPw}="$pass";
+    $ldap_master=connect_ldap_master();
+    $dn=$config{masterDN};
+    if (!is_user_valid($user, $dn, $pass)) {
+      print "Authentication failure\n";
+      exit (10);
+    }
+  }
+} else {
+  # root user
+  $ldap_master=connect_ldap_master();
+  # test existence of user in LDAP
+  my $dn_line;
+  if (!defined($dn_line = get_user_dn($user))) {
+    print "$0: user $user doesn't exist\n";
+    exit (10);
+  }
+  $dn = get_dn_from_line($dn_line);
+}
+
+my %eng = (
+	   'shell'  => 'User Shell',
+	   'name'   => 'Full Name',
+	   'office' => 'Room Number',
+	   'wphone' => 'Work Phone',
+	   'hphone' => 'Home Phone',
+	   'other' => 'Other'
+	  );
+
+# obtain old values
+my $entry = read_user_entry($user);
+my $gecos = $entry->get_value('gecos');
+my %old;
+( $old{'name'},
+  $old{'office'},
+  $old{'wphone'},
+  $old{'hphone'},
+  $old{'other'}
+) = split(/,/,$gecos);
+$old{'shell'} = $entry->get_value('LoginShell');
+# unbind from LDAP
+$ldap_master->unbind();
+
+foreach my $key (keys %old) {
+  !defined($old{$key}) and $old{$key}="";
+}
+
+# read new values
+my %new;
+if ($Options{'f'}) {
+  $new{'name'} = $Options{'f'};
+}
+if ($Options{'r'}) {
+  $new{'office'} = $Options{'r'};
+}
+if ($Options{'w'}) {
+  $new{'wphone'} = $Options{'w'};
+}
+if ($Options{'h'}) {
+  $new{'hphone'} = $Options{'h'};
+}
+if ($Options{'o'}) {
+  $new{'other'} = $Options{'o'};
+}
+if ($Options{'s'}) {
+  $new{'shell'} = $Options{'s'};
+}
+if ( keys(%Options) < 1 or keys(%Options) == 1 and $Options{'v'} ) {
+  print "Changing the user information for $user\n";
+  print "Enter the new value, or press ENTER for the default\n";
+
+  print " $eng{'shell'} [$old{'shell'}]:";
+  $new{'shell'} = readline(*STDIN);
+  print " $eng{'name'} [$old{'name'}]:";
+  $new{'name'} = readline(*STDIN);
+  print " $eng{'office'} [$old{'office'}]:";
+  $new{'office'} = readline(*STDIN);
+  print " $eng{'wphone'} [$old{'wphone'}]:";
+  $new{'wphone'} = readline(*STDIN);
+  print " $eng{'hphone'} [$old{'hphone'}]:";
+  $new{'hphone'} = readline(*STDIN);
+  print " $eng{'other'} [$old{'other'}]:";
+  $new{'other'} = readline(*STDIN);
+}
+
+
+foreach my $key (keys %old) {
+  if (!$new{$key}) {
+    $new{$key} = $old{$key};
+  }
+}
+
+# simple check of new values
+foreach my $key (keys %new) {
+  chop($new{$key}) if ( $new{$key}=~/\n$/ );
+  if ($new{$key} =~ /^\s+$/ and $key ne 'shell') {
+    $new{$key} = "";
+  } elsif ($new{$key} =~ /^$/) {
+    $new{$key} = $old{$key};
+  } elsif ($key ne 'other' and $new{$key} =~ /.*,.*/) {
+    print "Comma cannot be used with $key.\n";
+    exit(6);
+  }
+  # $new{$key} eq "" 
+}
+
+# [TODO] check if shell really exists
+if ( $new{'shell'} and !($new{'shell'}=~/^\/.+\/.+/)
+     and ($old{'shell'}=~/^\/.+\/.+/)
+   ) {
+  $new{'shell'} = $old{'shell'};
+} elsif ( $new{'shell'} and !($new{'shell'}=~/^\/.+\/.+/)
+          or !$new{'shell'} and !$old{'shell'}
+        ) {
+  $new{'shell'} = '/bin/sh';
+}
+
+if ( !$new{'name'} ) {
+  $new{'name'} = $user;
+}
+
+# prepare gecos field
+$gecos = join(',',
+	      ( $new{'name'},
+		$new{'office'},
+		$new{'wphone'},
+		$new{'hphone'},
+		$new{'other'}
+	      )
+             );
+
+my @tmp = split(/\s+/,$new{'name'});
+my $sn = $tmp[$#tmp];
+pop(@tmp);
+my $givenName = join(' ',@tmp);
+
+$entry->replace( 'gecos' => $gecos );
+$entry->replace( 'cn'    => $new{'name'} );
+
+if ( exist_in_tab( [$entry->get_value('objectClass')],'inetOrgPerson') ) {
+  if ( $sn ) {
+    $entry->replace('sn' => $sn);
+  } else {
+    $entry->replace('sn' => $user);
+  }
+  if ( $givenName ) {
+    $entry->replace('givenName' => $givenName);
+  } else {
+    $entry->get_value('givenName') and $entry->delete('givenName');
+  }
+  if ( $new{'office'} ) {
+    $entry->replace('roomNumber' => $new{'office'});
+  } else {
+    $entry->get_value('roomNumber') and $entry->delete('roomNumber');
+  }
+  if ( $new{'wphone'} ) {
+    $entry->replace('telephoneNumber' => $new{'wphone'});
+  } else {
+    $entry->get_value('telephoneNumber') and $entry->delete('telephoneNumber');
+  }
+  if ( $new{'hphone'} ) {
+    $entry->replace('homePhone' => $new{'hphone'});
+  } else {
+    $entry->get_value('homePhone') and $entry->delete('homePhone');
+  }
+}				#end of inetOrgPerson
+if ( $new{'shell'} ) {
+  $entry->replace('loginShell' => $new{'shell'});
+} else {
+  $entry->get_value('loginShell') and $entry->delete('loginShell');
+}
+
+if ($Options{'v'}) {
+  $entry->dump();
+}
+# bind to LDAP and update entry
+$ldap_master = connect_ldap_master();
+my $mesg = $entry->update($ldap_master);
+if ($mesg->is_error()) {
+  print "Error: " . $mesg->error() . "\n";
+} else {
+  print "LDAP updated\n";
+}
+$ldap_master and $ldap_master->unbind;
+
+# Check if a $text element exists in @table
+# eg. exist_in_tab(\@table,$text);
+sub exist_in_tab
+  {
+    my($ref_tab,$text) = @_;
+    my @tab = @$ref_tab;
+
+    foreach my $elem (@tab) {
+      if ( lc($elem) eq lc($text) ) {
+	return 1;
+      }
+    }
+    return 0;
+  }
+
+########################################
+
+=head1 NAME
+
+smbldap-chfn - change user real name, information and shell
+
+=head1 SYNOPSIS
+
+smbldap-chfn [-f full_name] [-r room_no] [-w work_ph] [-h home_ph]
+[-o other] [-s login_shell] [-?] [-v]
+
+=head1 DESCRIPTION
+
+This command changes user gecos fields and login shell.
+The normal user can change only the fields for his own account,
+the super user may change the fiels for any account.
+
+If none of the options are selected, the command is run
+in an interactive mode for the current user account. User is
+asked for all fields. To accept a default value you should 
+just press <ENTER>, otherwise write text and press <ENTER>.
+
+posixAccount objectClasses has to be present in the modified
+entry. If inetOrgPerson objectClass is also present additional
+attributes will be changed (givenName,sn,roomNumber,telephoneNumber,
+homePhone)
+
+-f full_name
+       affected attributes: 'gecos', 'cn' (and 'givenName', 'sn'
+       if inetOrgPerson is present) 
+
+-r room_number
+       affected attributes: 'gecos' (and 'roomNumber'
+       if inetOrgPerson is present)
+
+-w work_phone
+       affected attributes: 'gecos' (and 'telephoneNumber'
+       if inetOrgPerson is present)
+
+-h home_phone
+       affected attributes: 'gecos' (and 'homePhone'
+       if inetOrgPerson is present)
+
+-o other
+       affected attributes: 'gecos'
+
+-s login_shell
+       affected attributes: 'loginShell'
+
+-?     show the help message
+
+-v     verbose - show modified user entry
+
+=cut
+
+#'
+
+# The End
+

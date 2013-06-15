@@ -81,6 +81,19 @@ uint32_t get_phy_status(uint32_t portmask)
 	strcpy(ifr.ifr_name, "eth0"); // is it always the same?
 	ifr.ifr_data = (caddr_t) vecarg;
 
+#ifdef BCM5301X
+	vecarg[0] = (0x01 << 16) | 0x00;
+	vecarg[1] = 0;
+	if (ioctl(fd, SIOCGETCROBORD, (caddr_t)&ifr) < 0)
+		_dprintf("et ioctl SIOCGETCROBORD failed!\n");
+
+	for (i = 0; i < 5 ; i++) {
+		if ((portmask & (1U << i)) == 0)
+			continue;
+		if (vecarg[1] & (1U << i))
+			mask |= (1U << i);
+	}
+#else
 	for (i = 0; i < 5 && (portmask >> i); i++) {
 		vecarg[0] = (i << 16) | 0x01;
 		vecarg[1] = 0;
@@ -97,9 +110,10 @@ uint32_t get_phy_status(uint32_t portmask)
 		if (vecarg[1] & (1U << 2))
 			mask |= (1U << i);
 	}
+#endif
 	close(fd);
 
-	//_dprintf("get_phy_status %x %x\n", mask, portmask);
+	//_dprintf("# get_phy_status %x %x\n", mask, portmask);
 
 	return mask;
 }
@@ -126,9 +140,10 @@ uint32_t get_phy_speed(uint32_t portmask)
 		vecarg[1] = 0;
 	close(fd);
 
-	/* 53115/53125, 2bit: 0=10 Mbps, 1=100Mbps, 2=1000Mbps */
-	/* 5325E/535x,  1bit: 0=10 Mbps, 1=100Mbps */
+	/* 5301x/53115/53125, 2bit:00=10 Mbps,01=100Mbps,10=1000Mbps */
+	/* 5325E/535x,        1bit: 0=10 Mbps, 1=100Mbps */
 	tmp = get_model();
+#ifndef BCM5301X
 	if (tmp != MODEL_RTN66U && tmp != MODEL_RTAC66U && tmp != MODEL_RTN16 &&
 	    tmp != MODEL_RTN15U)
 	{
@@ -139,7 +154,7 @@ uint32_t get_phy_speed(uint32_t portmask)
 		swapportstatus(tmp);
 		vecarg[1] = tmp;
 	}
-
+#endif
 	//_dprintf("get_phy_speed %x %x\n", vecarg[1], portmask);
 
 	return (vecarg[1] & portmask);
@@ -148,6 +163,7 @@ uint32_t get_phy_speed(uint32_t portmask)
 uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
 {
 	int fd, i, vecarg[2];
+	int model;
 	struct ifreq ifr;
 	uint32_t reg, mask, off;
 
@@ -177,6 +193,7 @@ uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
 	case MODEL_RTN12C1:
 	case MODEL_RTN12D1:
 	case MODEL_RTN12HP:
+	case MODEL_RTN14UHP:
 	case MODEL_RTN10U:
 	case MODEL_RTN10P:
 	case MODEL_RTN10D1:
@@ -184,20 +201,43 @@ uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
 		mask= 0x0608;
 		off = 0x0008;
 		break;
+	/* 5301x */
+	case MODEL_RTAC68U:
+	case MODEL_RTAC56U:
+	case MODEL_RTN16UHP:
+		reg = 0x0;
+		mask= 0x0800;
+		off = 0x0800;	
+		break;
 	default:
 		goto skip;
 	}
 
 	for (i = 0; i < 5 && (portmask >> i); i++) {
+#ifdef BCM5301X
+		vecarg[0] = ((0x10+i) << 16) | 0x0;
+#else
 		vecarg[0] = (i << 16) | reg;
+#endif
 		vecarg[1] = 0;
 		if ((portmask & (1U << i)) == 0)
 			continue;
+#ifdef BCM5301X
+		if (ioctl(fd, SIOCGETCROBORD, (caddr_t)&ifr) < 0)
+#else
 		if (ioctl(fd, SIOCGETCPHYRD2, (caddr_t)&ifr) < 0)
+#endif
 			continue;
+#ifdef BCM5301X
+		if(!vecarg[1])	vecarg[1] = 0x1140;
+#endif
 		vecarg[1] &= ~mask;
 		vecarg[1] |= ctrl ? 0 : off;
+#ifdef BCM5301X
+		ioctl(fd, SIOCSETCROBOWR, (caddr_t)&ifr);
+#else
 		ioctl(fd, SIOCSETCPHYWR2, (caddr_t)&ifr);
+#endif
 	}
 
 skip:
@@ -218,9 +258,9 @@ skip:
 int
 check_crc(char *fname)
 {
-	FILE *fp;
+        FILE *fp;
         int ret = 1;
-	int first_read = 1;
+        int first_read = 1;
         unsigned int len, count;
 
         void *ref;
@@ -230,16 +270,16 @@ check_crc(char *fname)
 
         fp = fopen(fname, "r");
         if (fp == NULL)
-	{
-		_dprintf("check_crc: Open trx fail!!!\n");
+        {
+                _dprintf("Open trx fail!!!\n");
                 return 0;
-	}
+        }
 
         /* Read header */
         ret = fread((unsigned char *) &trx, 1, sizeof(struct trx_header), fp);
         if (ret != sizeof(struct trx_header)) {
                 ret = 0;
-		_dprintf("check_crc: read header error!!!\n");
+                _dprintf("read header error!!!\n");
                 goto done;
         }
 
@@ -259,7 +299,7 @@ check_crc(char *fname)
                 ret = fread((unsigned char *) &buf, 1, count, fp);
                 if (ret != count) {
                         ret = 0;
-			_dprintf("check_crc: read trx content rror!\n");
+                        _dprintf("read error!\n");
                         goto done;
                 }
 
@@ -267,7 +307,7 @@ check_crc(char *fname)
                 crc = hndcrc32((uint8 *) &buf, count, crc);
         }
         /* Verify checksum */
-	//_dprintf("checksum: %u ? %u\n", ltoh32(trx.crc32), crc);
+        //_dprintf("checksum: %u ? %u\n", ltoh32(trx.crc32), crc);
         if (ltoh32(trx.crc32) != crc) {
                 ret = 0;
                 goto done;
@@ -288,7 +328,7 @@ int check_imageheader(char *buf, long *filelen)
 {
 	long aligned;
 
-	if (strncmp(buf, IMAGE_HEADER, sizeof(IMAGE_HEADER) - 1) == 0)
+	if(strncmp(buf, IMAGE_HEADER, sizeof(IMAGE_HEADER) - 1) == 0)
 	{
 		memcpy(&aligned, buf + sizeof(IMAGE_HEADER) - 1, sizeof(aligned));
 		*filelen = aligned;
@@ -316,12 +356,6 @@ int check_imagefile(char *fname)
 	} version;
 	int i, model;
 
-	int ret;
-        void *ref;
-        struct trx_header trx;
-        uint32 crc;
-        static uint32 buf[16*1024];
-
 	fp = fopen(fname, "r");
 	if (fp == NULL)
 		return 0;
@@ -341,10 +375,10 @@ int check_imagefile(char *fname)
 	for (i--; i >= 0 && version.pid[i] == '\x20'; i--)
 		version.pid[i] = '\0';
 
-	if(!check_crc(fname)) {
-		_dprintf("check crc error!!!\n");
-		return 0;
-	}
+        if(!check_crc(fname)) {
+                _dprintf("check crc error!!!\n");
+                return 0;
+        }
 
 	model = get_model();
 
@@ -356,8 +390,8 @@ int check_imagefile(char *fname)
 
 	/* common RT-N12 productid FW image */
 	if ((model == MODEL_RTN12B1 || model == MODEL_RTN12C1 ||
-	     model == MODEL_RTN12D1 || model == MODEL_RTN12HP) &&
-	    strncmp(get_modelid(MODEL_RTN12), version.pid, MAX_PID_LEN) == 0)
+	     model == MODEL_RTN12D1 || model == MODEL_RTN12HP || model == MODEL_APN12HP) &&
+	     strncmp(get_modelid(MODEL_RTN12), version.pid, MAX_PID_LEN) == 0)
 		return 1;
 
 	return 0;
@@ -388,11 +422,14 @@ void set_radio(int on, int unit, int subunit)
 
 	//if (nvram_match(strcat_r(prefix, "radio", tmp), "0")) return;
 
-#ifdef RTAC66U
+#if defined(RTAC66U) || defined(BCM4352)
 	snprintf(tmp, sizeof(tmp), "%sradio", prefix);
 	if(!strcmp(tmp, "wl1_radio")){
 		if(on){
 			nvram_set("led_5g", "1");
+#ifdef RTCONFIG_LED_BTN
+			if (nvram_get_int("AllLED"))
+#endif
 			led_control(LED_5G, LED_ON);
 		}
 		else{

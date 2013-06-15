@@ -18,6 +18,7 @@ var folderlist = get_sharedfolder_in_pool(PoolDevice);
 var selectedFolder = folderlist[parent.getSelectedFolderOrder()];
 
 function initial(){
+	selectedFolder = check_folder_length(selectedFolder);
 	showtext($("selected_Pool"), PoolName);
 	showtext($("selected_Folder"), showhtmlspace(showhtmland(selectedFolder)));
 	document.modifyFolderForm.new_folder.focus();
@@ -105,6 +106,27 @@ function NoSubmit(e){
     if(keynum === 13){        
         return false;
     }
+}
+
+function check_folder_length(folder_name){   //Jieming added at 2013/04/16, to divide folder name when length of folder name exceed 30
+	var n;
+	var temp_name = "";
+	var start = 0;
+	var end = 0;
+
+	if(folder_name.length > 30){
+		n = parseInt(folder_name.length/30);
+		for(i=0;i<n;i++){
+			start = 30*i;				
+			end = 30*(i+1);
+			temp_name += folder_name.substring(start, end);
+			temp_name += "<br>";
+		}
+		temp_name += folder_name.substring(end, folder_name.length);
+		folder_name = temp_name;
+	}
+
+	return folder_name;
 }
 </script>
 </head>

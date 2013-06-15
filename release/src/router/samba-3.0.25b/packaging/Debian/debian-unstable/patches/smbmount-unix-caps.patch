@@ -1,0 +1,14 @@
+diff -uNr samba-3.0.14a.orig/source/client/smbmount.c samba-3.0.14a/source/client/smbmount.c
+--- samba-3.0.14a.orig/source/client/smbmount.c	2005-06-02 06:49:31.000000000 -0700
++++ samba-3.0.14a/source/client/smbmount.c	2005-06-02 06:59:41.000000000 -0700
+@@ -213,6 +213,10 @@
+   		c->capabilities &= ~CAP_STATUS32;
+ 		c->force_dos_errors = True;
+ 	}
++	/* For now, respect requests for uid-flattening mount options
++	   by disabling Unix permissions handling in the kernel driver */
++	if (mount_uid || mount_gid || mount_fmask || mount_dmask)
++		c->capabilities &= ~CAP_UNIX;
+ 
+ 	if (!cli_session_setup(c, username, 
+ 			       password, strlen(password),

@@ -139,15 +139,9 @@ sub fixDyn
 	foreach (@elfs) {
 		if (/^libipt_.+\.so$/) {
 			fixDynDep("iptables", $_);
-			fixDynDep($_, "libxtables.so");
-			fixDynDep($_, "xtables-multi");
 		}
 		elsif (/^libip6t_.+\.so$/) {
-			fixDynDep("iptables", $_);
-			fixDynDep($_, "libxtables.so");
-		}
-		elsif (/^libxt_.+\.so$/) {
-			fixDynDep($_, "libxtables.so");
+			fixDynDep("ip6tables", $_);
 		}
 		elsif (/^CP\d+\.so$/) {
 			fixDynDep("smbd", $_);
@@ -160,14 +154,6 @@ sub fixDyn
 	fixDynDep("pppd", "pptp.so");
 	fixDynDep("pppd", "rp-pppoe.so");
 	fixDynDep("libcrypto.so.1.0.0", "libssl.so.1.0.0");
-
-	fixDynDep("xtables-multi", "libip4tc.so");
-	fixDynDep("xtables-multi", "libip6tc.so");
-	fixDynDep("xtables-multi", "libxtables.so");
-
-	fixDynDep("libxt_RATEEST.so", "libm.so.0");
-	fixDynDep("libxt_statistic.so", "libm.so.0");
-
 ## charles add
 #	    fixDynDep("libsmbclient.so.0", "libpthread.so.0");
 	fixDynDep("mod_smbdav.so", "libshared.so");

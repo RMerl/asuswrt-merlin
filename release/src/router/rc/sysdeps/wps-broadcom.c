@@ -32,7 +32,6 @@
 #include <sys/mount.h>
 #include <sys/vfs.h>
 #include <rc.h>
-#include <semaphore_mfp.h>
 #include <shared.h>
 #include <arpa/inet.h>
 #include <time.h>

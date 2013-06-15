@@ -70,6 +70,11 @@ function QKinternettype_load_body(){
 		document.getElementById("Productdesc_4").innerHTML = check_desc4;
 	}	
 	
+	if(based_modelid == "RT-AC68U"){
+		document.getElementById("Productdesc_remark1").innerHTML = "* <#QIS_welcome_remark1#>";
+		document.getElementById("Productdesc_remark1").style.display = "";
+	}
+	
 	document.getElementById("btn_next_step").focus();
 }
 
@@ -233,6 +238,7 @@ function submitenter(myfield,e)
 					<li style="line-height:25px;" id="Productdesc_4"></li>
 				</ul>	
 			</div>
+			<div id="Productdesc_remark1" style="display:none;"></div> 
 		</td>
 
 		<td width="45%" height="394">

@@ -27,8 +27,6 @@
 #include "disk_initial.h"
 #include "disk_share.h"
 
-#include <semaphore_mfp.h>
-
 #define VERSION 1
 
 #include <bcmnvram.h>

@@ -1,0 +1,61 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+            "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+<HEAD>
+
+<META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<META name="GENERATOR" content="hevea 1.06">
+<TITLE>
+ Samba and the smbldap-tools scripts
+</TITLE>
+</HEAD>
+<BODY >
+<A HREF="smbldap-tools005.html"><IMG SRC ="previous_motif.gif" ALT="Précédent"></A>
+<A HREF="index.html"><IMG SRC ="contents_motif.gif" ALT="Remonter"></A>
+<A HREF="smbldap-tools007.html"><IMG SRC ="next_motif.gif" ALT="Suivant"></A>
+<HR>
+
+<H2><A NAME="htoc23">5</A>&nbsp;&nbsp;Samba and the smbldap-tools scripts</H2><UL>
+<LI><A HREF="smbldap-tools006.html#toc12"> General configuration</A>
+<LI><A HREF="smbldap-tools006.html#toc13"> Migrating an NT4 PDC to Samba3</A>
+</UL>
+
+<A NAME="toc12"></A>
+<H3><A NAME="htoc24">5.1</A>&nbsp;&nbsp;General configuration</H3>
+Samba can be configured to use the <FONT COLOR=purple>smbldap-tools</FONT> scripts. This allows
+administrators to add, delete or modify user and group accounts for <FONT COLOR=purple>Microsoft Windows</FONT>
+operating systems using, for example, User Manager utility under MS-Windows.
+To enable the use of this utility, samba needs to be configured correctly. The
+<TT>smb.conf</TT> configuration file must contain the following directives :
+<PRE>
+ldap delete dn = Yes
+add user script = /usr/local/sbin/smbldap-useradd -m "%u"
+add machine script = /usr/local/sbin/smbldap-useradd -w "%u"
+add group script = /usr/local/sbin/smbldap-groupadd -p "%g"
+add user to group script = /usr/local/sbin/smbldap-groupmod -m "%u" "%g"
+delete user from group script = /usr/local/sbin/smbldap-groupmod -x "%u" "%g"
+set primary group script = /usr/local/sbin/smbldap-usermod -g "%g" "%u"
+</PRE>
+Remark: the two directives <TT>delete user script</TT> et <TT>delete group
+script</TT> can also be used. However, an error message can appear in User Manager
+even if the operations actually succeed.
+If you want to enable this behaviour, you need to add
+<PRE>
+delete user script = /usr/local/sbin/smbldap-userdel "%u"
+delete group script = /usr/local/sbin/smbldap-groupdel "%g"
+</PRE>
+<A NAME="toc13"></A>
+<H3><A NAME="htoc25">5.2</A>&nbsp;&nbsp;Migrating an NT4 PDC to Samba3</H3>
+The account migration procedure becomes really simple when samba is configured to use
+the <FONT COLOR=purple>smbldap-tools</FONT>. Samba configuration (smb.conf file) must contain the
+directive defined above to properly call the script for managing users, groups and computer accounts.
+The migration process is outlined in the chapter 30 of the samba howto
+<TT>http://sambafr.idealx.org/samba/docs/man/Samba-HOWTO-Collection/NT4Migration.html</TT>.
+ <BR>
+<BR>
+<HR>
+<A HREF="smbldap-tools005.html"><IMG SRC ="previous_motif.gif" ALT="Précédent"></A>
+<A HREF="index.html"><IMG SRC ="contents_motif.gif" ALT="Remonter"></A>
+<A HREF="smbldap-tools007.html"><IMG SRC ="next_motif.gif" ALT="Suivant"></A>
+</BODY>
+</HTML>

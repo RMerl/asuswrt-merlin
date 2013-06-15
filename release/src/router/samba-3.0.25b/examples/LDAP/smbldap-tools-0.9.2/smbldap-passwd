@@ -1,0 +1,366 @@
+#!/usr/bin/perl -w
+
+# LDAP to unix password sync script for samba
+# $Id: smbldap-passwd,v 1.19 2005/10/31 15:05:22 jtournier Exp $
+
+#  This code was developped by IDEALX (http://IDEALX.org/) and
+#  contributors (their names can be found in the CONTRIBUTORS file).
+#
+#                 Copyright (C) 2001-2002 IDEALX
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+#  USA.
+
+#  Purpose :
+#       . ldap-unix passwd sync for SAMBA>2.2.2 + LDAP
+#       . may also replace /bin/passwd
+
+# untaint environment
+$ENV{'PATH'}= '/bin:/usr/bin';
+$ENV{'SHELL'}= '/bin/sh';
+delete @ENV{qw(IFS CDPATH ENV BASH_ENV)};
+
+use strict;
+use FindBin;
+use FindBin qw($RealBin);
+use lib "$RealBin/";
+use smbldap_tools;
+
+use Crypt::SmbHash;
+use Digest::MD5 qw(md5);
+use Digest::SHA1 qw(sha1);
+use MIME::Base64 qw(encode_base64);
+
+# function declaration
+sub make_hash;
+sub make_salt;
+
+my $user= undef;
+my $oldpass= undef;
+
+my $arg;
+my $update_samba_passwd= 1;
+my $update_unix_passwd= 1;
+
+foreach $arg (@ARGV) {
+  if ( substr( $arg, 0, 1 ) eq '-' ) {
+    if ( $arg eq '-h' || $arg eq '-?' || $arg eq '--help' ) {
+      print_banner;
+      print "Usage: $0 [options] [username]\n";
+      print "  -h, -?, --help show this help message\n";
+      print "  -s             update only samba password\n";
+      print "  -u             update only UNIX password\n";
+      exit (6);
+    } elsif ($arg eq '-s') {
+      $update_samba_passwd= 1; $update_unix_passwd= 0;
+    } elsif ($arg eq '-u') {
+      $update_samba_passwd= 0; $update_unix_passwd= 1;
+    }
+  } else {
+    if ( $< != 0 ) {
+      die "Only root can specify username\n";
+    }
+    $user= $arg; last;
+  }
+}
+
+if (!defined($user)) {
+  $user = getpwuid($<);		# $user=$ENV{"USER"};
+}
+
+# check if $user variable is not tainted
+# [TODO] create proper user mask
+$user =~ /^([-\@\ \w.]+\$?)$/ and $user = $1 or
+  die "$0: username '$user' is tainted\n";
+
+
+my ($dn,$ldap_master);
+# First, connecting to the directory
+if ($< != 0) {
+  # non-root user
+  if (!defined($oldpass)) {
+    # prompt for password
+    print "Identity validation...\nenter your UNIX password: ";
+    system "/bin/stty -echo" if (-t STDIN);
+    chomp($oldpass=<STDIN>); 
+    system "/bin/stty echo" if (-t STDIN);
+    print "\n";
+
+    $config{masterDN}="uid=$user,$config{usersdn}";
+    $config{masterPw}="$oldpass";
+    $ldap_master=connect_ldap_master();
+    $dn=$config{masterDN};
+    if (!is_user_valid($user, $dn, $oldpass)) {
+      print "Authentication failure\n";
+      exit (10);
+    }
+  }
+} else {
+  # root user
+  $ldap_master=connect_ldap_master();
+  # test existence of user in LDAP
+  my $dn_line;
+  if (!defined($dn_line = get_user_dn($user))) {
+    print "$0: user $user doesn't exist\n";
+    exit (10);
+  }
+  $dn = get_dn_from_line($dn_line);
+}
+
+my $samba = is_samba_user($user);
+
+# Printing verbose message
+if ( $samba and $update_samba_passwd ) {
+  if ( $update_unix_passwd ) {
+    print "Changing UNIX and samba passwords for $user\n";
+  } else {
+    print "Changing samba password for $user\n";
+  }
+} else {
+  if ( $update_unix_passwd ) {
+    print "Changing UNIX password for $user\n";
+  } else {
+    die "Internal error";
+  }
+}
+
+# prompt for new password
+
+my $pass;
+my $pass2;
+
+print "New password: ";
+system "/bin/stty -echo" if (-t STDIN);
+chomp($pass=<STDIN>);
+system "/bin/stty echo" if (-t STDIN);
+print "\n";
+
+print "Retype new password: ";
+system "/bin/stty -echo" if (-t STDIN);
+chomp($pass2=<STDIN>);
+system "/bin/stty echo" if (-t STDIN);
+print "\n";
+
+if ($pass ne $pass2) {
+  print "New passwords don't match!\n";
+  exit (10);
+}
+
+# Prepare '$hash_password' for 'userPassword'
+my $hash_password;
+# Generate password hash
+if ($config{with_slappasswd}) {
+  # checking if password is tainted: nothing is changed!!!!
+  # essential for perl 5.8
+  ($pass =~ /^(.*)$/ and $pass=$1) or
+    die "$0: user password is tainted\n";
+
+  # use slappasswd to generate hash
+  if ( $config{hash_encrypt} eq "CRYPT" && defined($config{crypt_salt_format}) ) {
+    open BUF, "-|" or
+      exec "$config{slappasswd}",
+	"-h","{$config{hash_encrypt}}",
+          "-c","$config{crypt_salt_format}",
+	    "-s","$pass";
+    $hash_password = <BUF>;
+    close BUF;
+  } else {
+    open(BUF, "-|") or
+      exec "$config{slappasswd}",
+	"-h","{$config{hash_encrypt}}",
+          "-s","$pass";
+    $hash_password = <BUF>;
+    close BUF;
+  }
+} else {
+  # use perl libraries to generate hash
+  $hash_password = make_hash($pass,$config{hash_encrypt},$config{crypt_salt_format});
+}
+# check if a hash was generated, otherwise die
+defined($hash_password) or
+  die "I cannot generate the proper hash!\n";
+chomp($hash_password);
+
+# First, connecting to the directory
+if ($< != 0) {
+  # if we are not root, we close the connection to re-open it as a normal user
+  $ldap_master->unbind;
+  $config{masterDN}="uid=$user,$config{usersdn}";
+  $config{masterPw}="$oldpass";
+  $ldap_master=connect_ldap_master();
+}
+
+# only modify smb passwords if smb user
+if ( $samba and $update_samba_passwd ) {
+  if (!$config{with_smbpasswd}) {
+    # generate LanManager and NT clear text passwords
+    my ($sambaLMPassword,$sambaNTPassword) = ntlmgen $pass;
+    # the sambaPwdLastSet must be updating
+    my $date=time;
+    my @mods;
+    push(@mods, 'sambaLMPassword' => $sambaLMPassword);
+    push(@mods, 'sambaNTPassword' => $sambaNTPassword);
+    push(@mods, 'sambaPwdLastSet' => $date);
+    if (defined $config{defaultMaxPasswordAge}) {
+      my $new_sambaPwdMustChange=$date+$config{defaultMaxPasswordAge}*24*60*60;
+      push(@mods, 'sambaPwdMustChange' => $new_sambaPwdMustChange);
+      if ($< ==0) {
+	push(@mods, 'sambaAcctFlags' => '[U]');
+      }
+    }
+    # Let's change nt/lm passwords
+    my $modify = $ldap_master->modify ( "$dn",
+					'replace' => { @mods }
+				      );
+    $modify->code && warn "failed to modify entry: ", $modify->error ;
+
+  } else {
+    if ($< != 0) {
+      my $FILE="|$config{smbpasswd} -s >/dev/null";
+      open (FILE, $FILE) || die "$!\n";
+      print FILE <<EOF;
+$oldpass
+$pass
+$pass
+EOF
+      ;
+      close FILE;
+    } else {
+      open FILE,"|-" or
+	exec "$config{smbpasswd}","$user","-s";
+      local $SIG{PIPE} = sub {die "buffer pipe terminated" };
+      print FILE <<EOF;
+$pass
+$pass
+EOF
+      ;
+      close FILE;
+    }
+  }
+}
+
+# Update 'userPassword' field
+if ( $update_unix_passwd ) {
+  my $modify = $ldap_master->modify ( "$dn",
+				      changes => [
+						  replace => [userPassword => "$hash_password"]
+						 ]
+				    );
+  $modify->code && warn "Unable to change password: ", $modify->error ;
+}
+
+# take down session
+$ldap_master->unbind;
+
+exit 0;
+
+# Generates hash to be one of the following RFC 2307 schemes:
+# CRYPT,  MD5,  SMD5,  SHA, SSHA,  and  CLEARTEXT
+# SSHA is default
+# '%s' is a default crypt_salt_format
+# A substitute for slappasswd tool
+sub make_hash
+  {
+    my $hash_encrypt;
+    my $crypt_salt_format;
+
+    my $clear_pass=$_[0] or return undef;
+    $hash_encrypt='{' . $_[1] . '}' or $hash_encrypt = "{SSHA}";
+    $crypt_salt_format=$_[2] or $crypt_salt_format = '%s';
+
+    my $hash_pass;
+    if ($hash_encrypt eq "{CRYPT}" && defined($crypt_salt_format)) {
+      # Generate CRYPT hash
+      # for unix md5crypt $crypt_salt_format = '$1$%.8s'
+      my $salt = sprintf($crypt_salt_format,make_salt());
+      $hash_pass = "{CRYPT}" . crypt($clear_pass,$salt);
+
+    } elsif ($hash_encrypt eq "{MD5}") {
+      # Generate MD5 hash
+      $hash_pass = "{MD5}" . encode_base64( md5($clear_pass),'' );
+
+    } elsif ($hash_encrypt eq "{SMD5}") {
+      # Generate SMD5 hash (MD5 with salt)
+      my $salt = make_salt(4);
+      $hash_pass = "{SMD5}" . encode_base64( md5($clear_pass . $salt) . $salt,'');
+
+    } elsif ($hash_encrypt eq "{SHA}") {
+      # Generate SHA1 hash
+      $hash_pass = "{SHA}" . encode_base64( sha1($clear_pass),'' );
+
+    } elsif ($hash_encrypt eq "{SSHA}") {
+      # Generate SSHA hash (SHA1 with salt)
+      my $salt = make_salt(4);
+      $hash_pass = "{SSHA}" . encode_base64( sha1($clear_pass . $salt) . $salt,'' );
+
+    } elsif ($hash_encrypt eq "{CLEARTEXT}") {
+      $hash_pass=$clear_pass;
+
+    } else {
+      $hash_pass=undef;
+    }
+    return $hash_pass;
+  }
+
+# Generates salt
+# Similar to Crypt::Salt module from CPAN
+sub make_salt
+  {
+    my $length=32;
+    $length = $_[0] if exists($_[0]);
+  
+    my @tab = ('.', '/', 0..9, 'A'..'Z', 'a'..'z');
+    return join "",@tab[map {rand 64} (1..$length)];
+  }
+
+# - The End
+
+=head1 NAME
+
+smbldap-passwd - change user password
+
+=head1 SYNOPSIS
+
+smbldap-passwd [-?|--help|-s|-u] [name]
+
+=head1 DESCRIPTION
+
+smbldap-passwd changes passwords for user accounts. A normal user may only change the password for their own account, the super user may change the password for any account.
+
+If option -s specified then changed only samba password.
+If options -u specified then changed only UNIX password.
+With no options then changed both - UNIX and samba passwords.
+
+Password Changes
+ The user is first prompted for their old password, if one is present. This password is then tested against the stored password by binding to the server. The user has only one chance to enter the correct passwword. The super user is permitted to bypass this step so that forgotten passwords may be changed.
+ The user is then prompted for a replacement password. As a general guideline, passwords should consist of 6 to 8 characters including one or more from each of following sets:
+
+Lower case alphabetics
+
+Upper case alphabetics
+
+Digits 0 thru 9
+
+Punctuation marks
+
+Password will prompt again and compare the second entry against the first. Both entries are require to match in order for the password to be changed.
+
+=head1 SEE ALSO
+
+       passwd(1)
+
+=cut
+
+#'

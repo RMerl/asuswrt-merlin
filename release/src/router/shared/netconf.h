@@ -164,6 +164,13 @@ typedef struct _netconf_app_t {
 	uint16 to[2];		/* Port(s) to map related destination port to (network order) */
 } netconf_app_t;
 
+/* Match description for Media traffic management */
+typedef struct _netconf_trmgmt_t {
+        NETCONF_FW_COMMON;
+        uint16 prio;             /* Priority */
+        uint16 favored;          /* Flags */
+} netconf_trmgmt_t;
+
 /* Generic doubly linked list processing macros */
 #define netconf_list_init(head) ((head)->next = (head)->prev = (head))
 

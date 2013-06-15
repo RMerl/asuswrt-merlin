@@ -173,8 +173,14 @@ function applyRule(){
 	
 	for(i=0; i<rule_num; i++){
 		tmp_value += "<"		
-		for(j=0; j<item_num-1; j++){																		//<td>			//<pre>
-			tmp_value += $('pptpd_clientlist_table').rows[i].cells[j].childNodes[0].nodeValue;
+		for(j=0; j<item_num-1; j++){
+			
+			if($('pptpd_clientlist_table').rows[i].cells[j].innerHTML.lastIndexOf("...")<0){
+				tmp_value += $('pptpd_clientlist_table').rows[i].cells[j].innerHTML;
+			}else{				
+				tmp_value += $('pptpd_clientlist_table').rows[i].cells[j].title;
+			}					
+			
 			if(j != item_num-2)	
 				tmp_value += ">";
 		}
@@ -293,6 +299,8 @@ function edit_Row(r){
   del_Row(r);	
 }
 
+var overlib_str0 = new Array();	//Viz add 2013.04 for record longer VPN client username/pwd
+var overlib_str1 = new Array();	//Viz add 2013.04 for record longer VPN client username/pwd
 function showpptpd_clientlist(){	
 	var pptpd_clientlist_row = pptpd_clientlist_array.split('<');
 	var code = "";
@@ -300,12 +308,29 @@ function showpptpd_clientlist(){
 	code +='<table width="100%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="pptpd_clientlist_table">';
 	if(pptpd_clientlist_row.length == 1)
 		code +='<tr><td style="color:#FFCC00;" colspan="6"><#IPConnection_VSList_Norule#></td></tr>';
-	else{
+	else{		
 		for(var i = 1; i < pptpd_clientlist_row.length; i++){
+			overlib_str0[i] = "";
+			overlib_str1[i] = "";
 			code +='<tr id="row'+i+'">';
 			var pptpd_clientlist_col = pptpd_clientlist_row[i].split('>');
 				for(var j = 0; j < pptpd_clientlist_col.length; j++){
-					code +='<td width="40%">'+ pptpd_clientlist_col[j] +'</td>';		//IP  width="98"
+						if(j == 0){
+								if(pptpd_clientlist_col[0].length >32){
+										overlib_str0[i] += pptpd_clientlist_col[0];
+										pptpd_clientlist_col[0]=pptpd_clientlist_col[0].substring(0, 30)+"...";
+										code +='<td width="40%" title="'+overlib_str0[i]+'">'+ pptpd_clientlist_col[0] +'</td>';
+								}else
+										code +='<td width="40%">'+ pptpd_clientlist_col[0] +'</td>';
+						}
+						else if(j ==1){
+								if(pptpd_clientlist_col[1].length >32){
+										overlib_str1[i] += pptpd_clientlist_col[1];
+										pptpd_clientlist_col[1]=pptpd_clientlist_col[1].substring(0, 30)+"...";
+										code +='<td width="40%" title="'+overlib_str1[i]+'">'+ pptpd_clientlist_col[1] +'</td>';
+								}else
+										code +='<td width="40%">'+ pptpd_clientlist_col[1] +'</td>';
+						} 
 				}
 				code +='<td width="20%"><!--input class="edit_btn" onclick="edit_Row(this);" value=""/-->';
 				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
@@ -536,10 +561,10 @@ function set_pptpd_broadcast(obj){
 									  	</tr>			  
 									  	<tr>
 						          	<td width="40%">
-						              <input type="text" class="input_25_table" maxlength="32" name="pptpd_clientlist_username" onKeyPress="return is_string(this, event)">
+						              <input type="text" class="input_25_table" maxlength="64" name="pptpd_clientlist_username" onKeyPress="return is_string(this, event)">
 						            </td>
 						            <td width="40%">
-						            	<input type="text" class="input_25_table" maxlength="32" name="pptpd_clientlist_password" onKeyPress="return is_string(this, event)">
+						            	<input type="text" class="input_25_table" maxlength="64" name="pptpd_clientlist_password" onKeyPress="return is_string(this, event)">
 						            </td>
 						            <td width="20%">
 													<div><input type="button" class="add_btn" onClick="addRow_Group(16);" value=""></div>

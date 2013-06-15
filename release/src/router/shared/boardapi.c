@@ -30,46 +30,48 @@ int btn_wps_gpio = 0xff;
 int led_pwr_gpio = 0xff;
 int led_wps_gpio = 0xff;
 int led_usb_gpio = 0xff;
+int led_usb3_gpio = 0xff;
+int led_turbo_gpio = 0xff;
 int led_5g_gpio = 0xff;
 int led_2g_gpio = 0xff;
 int led_lan_gpio = 0xff;
+#ifdef RTCONFIG_LAN4WAN_LED
+int led_lan1_gpio = 0xff;
+int led_lan2_gpio = 0xff;
+int led_lan3_gpio = 0xff;
+int led_lan4_gpio = 0xff;
+#endif  /* LAN4WAN_LED */
 int led_wan_gpio = 0xff;
-#ifdef RTCONFIG_LED_ALL
 int led_all_gpio = 0xff;
-#endif
 int wan_port = 0xff;
 int fan_gpio = 0xff;
 int have_fan_gpio = 0xff;
 #ifdef RTCONFIG_WIRELESS_SWITCH
 int btn_wifi_sw = 0xff; 
 #endif
+#ifdef RTCONFIG_WIFI_TOG_BTN
+int btn_wltog_gpio = 0xff; 
+#endif
+#ifdef RTCONFIG_TURBO
+int btn_turbo_gpio = 0xff;
+#endif
+#ifdef RTCONFIG_LED_BTN
+int btn_led_gpio = 0xff;
+#endif
 #ifdef RTCONFIG_SWMODE_SWITCH
 int btn_swmode_sw_router = 0xff;
 int btn_swmode_sw_repeater = 0xff;
 int btn_swmode_sw_ap = 0xff;
 #endif
-#ifdef RTCONFIG_WIFI_TOG_BTN
-int btn_wltog_gpio = 0xff;
-#endif
 
 int init_gpio(void)
 {
-	char *btn_list[] = { "btn_rst_gpio", "btn_wps_gpio"
-#ifdef RTCONFIG_WIRELESS_SWITCH
-				, "btn_wifi_gpio"
-#endif
-#ifdef RTCONFIG_SWMODE_SWITCH
-				, "btn_swmode1_gpio", "btn_swmode2_gpio", "btn_swmode3_gpio"
-#endif
-#ifdef RTCONFIG_WIFI_TOG_BTN
-				, "btn_wltog_gpio"
-#endif
-	                   };
-	char *led_list[] = { "led_pwr_gpio", "led_usb_gpio", "led_wps_gpio", "led_lan_gpio", "led_wan_gpio", "led_2g_gpio", "led_5g_gpio"
-#ifdef RTCONFIG_LED_ALL
-				, "led_all_gpio"
-#endif
-	                   };
+	char *btn_list[] = { "btn_rst_gpio", "btn_wps_gpio", "fan_gpio", "have_fan_gpio", "btn_wifi_gpio", "btn_wltog_gpio", "btn_turbo_gpio", "btn_led_gpio" };
+	char *led_list[] = { "led_turbo_gpio", "led_all_gpio", "led_pwr_gpio", "led_usb_gpio", "led_wps_gpio", "fan_gpio", "have_fan_gpio", "led_lan_gpio", "led_wan_gpio", "led_usb3_gpio", "led_2g_gpio", "led_5g_gpio" 
+#ifdef RTCONFIG_LAN4WAN_LED
+                                , "led_lan1_gpio", "led_lan2_gpio", "led_lan3_gpio", "led_lan4_gpio"
+#endif  /* LAN4WAN_LED */
+			   };
 	int use_gpio, gpio_pin;
 	int enable, disable;
 	int i;
@@ -89,7 +91,6 @@ int init_gpio(void)
 		use_gpio = nvram_get_int(led_list[i]);
 		if((gpio_pin = use_gpio & 0xff) == 0xff)
 			continue;
-
 		disable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 0: 1;
 		gpio_dir(gpio_pin, GPIO_DIR_OUT);
 		set_gpio(gpio_pin, disable);
@@ -100,13 +101,13 @@ int init_gpio(void)
 		enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
 		set_gpio(gpio_pin, enable);
 	}
-#ifdef RTCONFIG_LED_ALL
+	
 	if((gpio_pin = (use_gpio = nvram_get_int("led_all_gpio")) & 0xff) != 0xff)
 	{
 		enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
 		set_gpio(gpio_pin, enable);
 	}
-#endif
+
 	// TODO: system dependent initialization
 	return 0;
 }
@@ -128,12 +129,20 @@ void get_gpio_values_once(void)
 	led_wps_gpio = nvram_get_int("led_wps_gpio");		
 	led_2g_gpio = nvram_get_int("led_2g_gpio");
 	led_5g_gpio = nvram_get_int("led_5g_gpio");
+#ifdef RTCONFIG_LAN4WAN_LED	
+	led_lan1_gpio = nvram_get_int("led_lan1_gpio");
+	led_lan2_gpio = nvram_get_int("led_lan2_gpio");
+	led_lan3_gpio = nvram_get_int("led_lan3_gpio");
+	led_lan4_gpio = nvram_get_int("led_lan4_gpio");
+#else
 	led_lan_gpio = nvram_get_int("led_lan_gpio");
+#endif	/* LAN4WAN_LED */
 	led_wan_gpio = nvram_get_int("led_wan_gpio");
-	led_usb_gpio = nvram_get_int("led_usb_gpio");
-#ifdef RTCONFIG_LED_ALL
+	led_usb_gpio = nvram_get_int("led_usb_gpio");	
+	led_usb3_gpio = nvram_get_int("led_usb3_gpio");	
 	led_all_gpio = nvram_get_int("led_all_gpio");
-#endif
+	led_turbo_gpio = nvram_get_int("led_turbo_gpio");
+
 #ifdef RTCONFIG_SWMODE_SWITCH
 	btn_swmode_sw_router = nvram_get_int("btn_swmode1_gpio");
 	btn_swmode_sw_repeater = nvram_get_int("btn_swmode2_gpio");
@@ -144,7 +153,13 @@ void get_gpio_values_once(void)
 	btn_wifi_sw = nvram_get_int("btn_wifi_gpio"); 
 #endif
 #ifdef RTCONFIG_WIFI_TOG_BTN
-	btn_wltog_gpio = nvram_get_int("btn_wltog_gpio");
+	btn_wltog_gpio = nvram_get_int("btn_wltog_gpio"); 
+#endif
+#ifdef RTCONFIG_TURBO
+	btn_turbo_gpio = nvram_get_int("btn_turbo_gpio");
+#endif
+#ifdef RTCONFIG_LED_BTN
+	btn_led_gpio = nvram_get_int("btn_led_gpio");
 #endif
 }
 
@@ -188,6 +203,16 @@ int button_pressed(int which)
 			use_gpio = btn_wltog_gpio;
 			break;
 #endif
+#ifdef RTCONFIG_TURBO
+		case BTN_TURBO:
+			use_gpio = btn_turbo_gpio;
+			break;
+#endif
+#ifdef RTCONFIG_LED_BTN
+		case BTN_LED:
+			use_gpio = btn_led_gpio;
+			break;
+#endif
 		default:
 			use_gpio = 0xff;
 			break;
@@ -229,6 +254,9 @@ int led_control(int which, int mode)
 		case LED_USB:
 			use_gpio = led_usb_gpio;
 			break;
+		case LED_USB3:
+			use_gpio = led_usb3_gpio;
+			break;
 		case LED_WPS:	
 			use_gpio = led_wps_gpio;
 			break;
@@ -260,9 +288,24 @@ int led_control(int which, int mode)
                                 use_gpio = led_5g_gpio;
                         }
 			break;
+#ifdef RTCONFIG_LAN4WAN_LED
+		case LED_LAN1:
+			use_gpio = led_lan1_gpio;
+			break;
+		case LED_LAN2:
+			use_gpio = led_lan2_gpio;
+			break;
+		case LED_LAN3:
+			use_gpio = led_lan3_gpio;
+			break;
+		case LED_LAN4:
+			use_gpio = led_lan4_gpio;
+			break;
+#else
 		case LED_LAN:
 			use_gpio = led_lan_gpio;
 			break;
+#endif
 		case LED_WAN:
 			use_gpio = led_wan_gpio;
 			break;
@@ -291,6 +334,9 @@ int led_control(int which, int mode)
                         use_gpio = led_all_gpio;
                         break;
 #endif
+                case LED_TURBO:
+                        use_gpio = led_turbo_gpio;
+                        break;
 		default:
 			use_gpio = 0xff;
 			break;
@@ -342,10 +388,6 @@ int wanport_status(int wan_unit)
 	if(is_wirelesswan_enabled())
 		return 1;
 #endif
-#ifdef RTCONFIG_W3N
-	if(is_w3n_mode())
-		return 1;
-#endif
 	return get_phy_status(mask);
 #endif
 }
@@ -363,10 +405,6 @@ int wanport_speed(void)
 
 #ifdef RTCONFIG_WIRELESSWAN
 	if(is_wirelesswan_enabled())
-		return 0x01;
-#endif
-#ifdef RTCONFIG_W3N
-	if(is_w3n_mode())
 		return 0x01;
 #endif
 	return get_phy_speed(mask);
@@ -397,10 +435,6 @@ int wanport_ctrl(int ctrl)
 #ifdef RTCONFIG_WIRELESSWAN
 	// TODO for enable/disable wireless radio
 	if(is_wirelesswan_enabled())
-		return 0;
-#endif
-#ifdef RTCONFIG_W3N
-	if(is_w3n_mode())
 		return 0;
 #endif
 	return set_phy_ctrl(mask, ctrl);

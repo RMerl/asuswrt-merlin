@@ -55,7 +55,7 @@ function initial(){
 		document.form.fanctrl_period_temp.value = fanctrl_period_temp_orig;
 	}
 
-	if(power_support < 0){
+	if(!power_support){
 		inputHideCtrl(document.form.wl0_TxPower, 0);
 		inputHideCtrl(document.form.wl1_TxPower, 0);
 	}

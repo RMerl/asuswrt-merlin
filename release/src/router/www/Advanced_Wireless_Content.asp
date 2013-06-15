@@ -87,6 +87,11 @@ function initial(){
 
 	if(sw_mode == 2 || sw_mode == 4)
 		document.form.wl_subunit.value = ('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>') ? 1 : -1;	
+	
+	$('WPS_hideSSID_hint').innerHTML = Untranslated.WPS_hideSSID_hint;	
+	if("<% nvram_get("wl_closed"); %>" == 1){
+		$('WPS_hideSSID_hint').style.display = "";	
+	}	
 		
 	automode_hint();	
 }
@@ -379,7 +384,8 @@ function check_NOnly_to_GN(){
 					<td>
 						<input type="radio" value="1" name="wl_closed" class="input" onClick="return change_common_radio(this, 'WLANConfig11b', 'wl_closed', '1')" <% nvram_match("wl_closed", "1", "checked"); %>><#checkbox_Yes#>
 						<input type="radio" value="0" name="wl_closed" class="input" onClick="return change_common_radio(this, 'WLANConfig11b', 'wl_closed', '0')" <% nvram_match("wl_closed", "0", "checked"); %>><#checkbox_No#>
-					</td>
+						<span id="WPS_hideSSID_hint" style="display:none;"></span>	
+					</td>					
 				</tr>
 					  
 			  <tr>
@@ -445,7 +451,7 @@ function check_NOnly_to_GN(){
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 6);"><#WLANConfig11b_WPAType_itemname#></a></th>
 					<td>		
-				  		<select name="wl_crypto" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_crypto')">
+				  		<select name="wl_crypto" class="input_option">
 								<option value="aes" <% nvram_match("wl_crypto", "aes", "selected"); %>>AES</option>
 								<option value="tkip+aes" <% nvram_match("wl_crypto", "tkip+aes", "selected"); %>>TKIP+AES</option>
 				  		</select>

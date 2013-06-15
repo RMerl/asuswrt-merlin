@@ -241,12 +241,12 @@ function DMhint(){
 		<table id="diskTab" width="100px" border="0" align="left" style="margin-left:5px;display:none;" cellpadding="0" cellspacing="0">
   		<td>
 				<div id="t0" class="tabclick_NW" align="center" style="font-weight: bolder;margin-right:2px; width:100px;" onclick="">
-					<span id="span1" style="cursor:pointer;font-weight: bolder;">Information</span>
+					<span id="span1" style="cursor:pointer;font-weight: bolder;"><#diskUtility_information#></span>
 				</div>
 			</td>
   		<td>
 				<div id="t1" class="tab_NW" align="center" style="font-weight: bolder;margin-right:2px; width:100px;" onclick="location.href='disk_utility.asp'">
-					<span id="span1" style="cursor:pointer;font-weight: bolder;">Disk Utility</span>
+					<span id="span1" style="cursor:pointer;font-weight: bolder;"><#diskUtility#></span>
 				</div>
 			</td>
 		</table>

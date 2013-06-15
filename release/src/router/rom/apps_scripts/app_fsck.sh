@@ -6,7 +6,7 @@ ret_dir=/tmp/fsck_ret
 
 # $1: device path, $2: error code.
 _set_fsck_code(){
-	pool_name=`echo "$1" |awk '{FS="/"; print $3}'`
+	pool_name=`echo "$1" |awk '{FS="/"; print $NF}'`
 
 	if [ ! -d "$ret_dir" ]; then
 		rm -rf $ret_dir
@@ -19,7 +19,7 @@ _set_fsck_code(){
 
 # $1: device path.
 _get_fsck_logfile(){
-	pool_name=`echo "$1" |awk '{FS="/"; print $3}'`
+	pool_name=`echo "$1" |awk '{FS="/"; print $NF}'`
 
 	if [ ! -d "$ret_dir" ]; then
 		rm -rf $ret_dir
@@ -59,6 +59,7 @@ else
 	fi
 fi
 
+free_caches -w 0
 set -o pipefail
 _set_fsck_code $2 2
 if [ "$1" == "ntfs" ] || [ "$1" == "ufsd" ]; then
@@ -76,6 +77,7 @@ else
 	eval fsck.$1 -$autocheck_option$autofix_option -v $2 $log_option
 	RET=$?
 fi
+free_caches -w 0 -c 0
 
 if [ "${RET}" != "0" ]; then
 	_set_fsck_code $2 1

@@ -118,6 +118,9 @@ apps_info_t *get_apps_list(char *argv){
 	char *pkg_head, *pkg_tail;
 	char info_name[128];
 	FILE *fp;
+	unsigned long file_size = 0;
+	int pid;
+	char *cmd[] = {"app_update.sh", NULL};
 	char line[128], buf[4096];
 	char *tmp_apps_name;
 	int got_apps;
@@ -128,6 +131,16 @@ apps_info_t *get_apps_list(char *argv){
 		// and information of the non-installed packages from APPS_LIST_ASUS.
 		if((fp = fopen(APPS_LIST_ASUS, "r")) == NULL)
 			return apps_info_list;
+
+		fseek(fp, 0, SEEK_END);
+		file_size = ftell(fp);
+		fseek(fp, 0, SEEK_SET);
+		if(file_size <= 0){
+_dprintf("httpd: get the Zero size of the ASUS APP list.\n");
+			fclose(fp);
+			_eval(cmd, NULL, 0, &pid);
+			return apps_info_list;
+		}
 
 		memset(line, 0, sizeof(line));
 		while(fgets(line, 128, fp) != NULL){
@@ -196,6 +209,16 @@ apps_info_t *get_apps_list(char *argv){
 		// and information of the non-installed packages from APPS_LIST_OLEG.
 		if((fp = fopen(APPS_LIST_OLEG, "r")) == NULL)
 			return apps_info_list;
+
+		fseek(fp, 0, SEEK_END);
+		file_size = ftell(fp);
+		fseek(fp, 0, SEEK_SET);
+		if(file_size <= 0){
+_dprintf("httpd: get the Zero size of the third-party APP list.\n");
+			fclose(fp);
+			_eval(cmd, NULL, 0, &pid);
+			return apps_info_list;
+		}
 
 		memset(line, 0, sizeof(line));
 		while(fgets(line, 128, fp) != NULL){

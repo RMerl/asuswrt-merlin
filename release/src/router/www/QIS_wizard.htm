@@ -27,6 +27,34 @@
 	text-shadow: 1px 1px 0px black;
 	filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);
 }
+.button_gen_scan{
+	font-weight: bolder;
+	text-shadow: 1px 1px 0px black;
+  background: #022;
+  border:0;
+  color: #FFFFFF;
+	height:30px;
+	font-family:Verdana;
+	font-size:12px;
+  padding:0 .70em 0 .70em;  
+ 	width:122px;
+  overflow:visible;
+	cursor:pointer;
+	outline: none; /* for Firefox */
+ 	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+ 	white-space:normal;
+}
+.button_gen_scan:hover{
+	font-weight: bolder;
+	background: #356;
+	height:30px;
+ 	width:122px;
+ 	padding:0 .70em 0 .70em;  
+ 	background-position:0px;
+	cursor:pointer;
+	outline: none; /* for Firefox */
+ 	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+}
 </style>
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
@@ -67,8 +95,10 @@ var exist_firmver = "<% nvram_get("firmver"); %>";
 var Latest_firmver = "";
 var Latest_firm = "";
 var Latest_buildno = "";
+var Latest_extendno = "";
 var current_firm = "";
 var current_buildno = "";
+var current_extendno = "";
 var liveUpdateFinish = false;
 var new_FW = false;
 var retry = 0;
@@ -98,12 +128,17 @@ function detect_firmware(){
 					Latest_firmver = webs_state_info.split("_");
 					Latest_firm = Latest_firmver[0];
 					Latest_buildno = Latest_firmver[1];
+					Latest_extendno = Latest_firmver[2];
 
-					if(Latest_firm.length > 0 && Latest_buildno.length > 0){	//match model FW
+					if(Latest_firm && Latest_buildno && Latest_extendno){	//match model FW
 						current_firm = parseInt(exist_firmver.replace(/[.]/gi,""));
-						current_buildno = <% nvram_get("buildno"); %>;
+      			current_buildno = parseInt("<% nvram_get("buildno"); %>");
+      			current_extendno = "<% nvram_get("extendno"); %>";
 
-						if((current_buildno < Latest_buildno) || ( current_buildno == Latest_buildno && current_firm < Latest_firm)){
+						if((current_buildno < Latest_buildno) || 
+      					(current_firm < Latest_firm && current_buildno == Latest_buildno) ||
+      					(current_extendno != Latest_extendno && current_buildno == Latest_buildno && current_firm == Latest_firm))
+      			{
 							new_FW = true;
 						}
 					}

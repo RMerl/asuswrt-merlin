@@ -1,0 +1,10 @@
+/*
+ * fake "root" for validating the local PMNS subtree
+ */
+
+#include "/var/pcp/pmns/stdpmid"
+
+root { samba }
+
+#include "pmns"
+

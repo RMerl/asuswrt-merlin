@@ -184,7 +184,7 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 	fprintf(fp, "holdoff %d\n", nvram_get_int(strcat_r(prefix, "pppoe_holdoff", tmp)) ? : 10);
 	fprintf(fp, "maxfail %d\n", nvram_get_int(strcat_r(prefix, "pppoe_maxfail", tmp)));
 
-	if (nvram_invmatch(strcat_r(prefix, "dnsenable_x", tmp), "0"))
+	if (nvram_get_int(strcat_r(prefix, "dnsenable_x", tmp)))
 		fprintf(fp, "usepeerdns\n");
 
 	fprintf(fp, "ipcp-accept-remote ipcp-accept-local noipdefault\n");

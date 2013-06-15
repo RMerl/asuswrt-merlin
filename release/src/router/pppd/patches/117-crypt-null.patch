@@ -1,0 +1,63 @@
+From 04c4348108d847e034dd91066cc6843f60d71731 Mon Sep 17 00:00:00 2001
+From: Paul Mackerras <paulus@samba.org>
+Date: Sun, 20 May 2012 14:14:55 +1000
+Subject: [PATCH] pppd: Don't crash if crypt() returns NULL
+
+It is possible for crypt() to return NULL under some circumstances,
+so we need to check the return value before passing it to strcmp().
+If we do get NULL from crypt(), treat it as an authentication failure.
+
+Reported-by: Paul Wouters <pwouters@redhat.com>
+Signed-off-by: Paul Mackerras <paulus@samba.org>
+---
+ pppd/auth.c    |    8 +++++---
+ pppd/session.c |    7 +++++--
+ 2 files changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/pppd/auth.c b/pppd/auth.c
+index fb71944..883b7f5 100644
+--- a/pppd/auth.c
++++ b/pppd/auth.c
+@@ -1442,9 +1442,11 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
+ 	    }
+ 	    if (secret[0] != 0 && !login_secret) {
+ 		/* password given in pap-secrets - must match */
+-		if ((cryptpap || strcmp(passwd, secret) != 0)
+-		    && strcmp(crypt(passwd, secret), secret) != 0)
+-		    ret = UPAP_AUTHNAK;
++		if (cryptpap || strcmp(passwd, secret) != 0) {
++		    char *cbuf = crypt(passwd, secret);
++		    if (!cbuf || strcmp(cbuf, secret) != 0)
++			ret = UPAP_AUTHNAK;
++		}
+ 	    }
+ 	}
+ 	fclose(f);
+diff --git a/pppd/session.c b/pppd/session.c
+index 32901a2..56385dd 100644
+--- a/pppd/session.c
++++ b/pppd/session.c
+@@ -178,6 +178,7 @@ session_start(flags, user, passwd, ttyName, msg)
+     bool try_session = 0;
+ #else /* #ifdef USE_PAM */
+     struct passwd *pw;
++    char *cbuf;
+ #ifdef HAS_SHADOW
+     struct spwd *spwd;
+     struct spwd *getspnam();
+@@ -348,8 +349,10 @@ session_start(flags, user, passwd, ttyName, msg)
+ 	/*
+ 	 * If no passwd, don't let them login if we're authenticating.
+ 	 */
+-        if (pw->pw_passwd == NULL || strlen(pw->pw_passwd) < 2
+-            || strcmp(crypt(passwd, pw->pw_passwd), pw->pw_passwd) != 0)
++        if (pw->pw_passwd == NULL || strlen(pw->pw_passwd) < 2)
++            return SESSION_FAILED;
++	cbuf = crypt(passwd, pw->pw_passwd);
++	if (!cbuf || strcmp(cbuf, pw->pw_passwd) != 0)
+             return SESSION_FAILED;
+     }
+ 
+-- 
+1.7.10
+

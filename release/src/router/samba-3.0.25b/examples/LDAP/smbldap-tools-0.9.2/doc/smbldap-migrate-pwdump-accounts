@@ -1,0 +1,231 @@
+#!/usr/bin/perl -w
+
+# $Id: smbldap-migrate-pwdump-accounts,v 1.1 2005/03/08 09:29:47 jtournier Exp $
+#
+#  This code was developped by IDEALX (http://IDEALX.org/) and
+#  contributors (their names can be found in the CONTRIBUTORS file).
+#
+#                 Copyright (C) 2002 IDEALX
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+#  USA.
+
+# Purpose of smbldap-migrate-accounts : add NT sam entries from pwdump 
+#                                       to ldap
+
+use strict;
+use Getopt::Std;
+use FindBin;
+use FindBin qw($RealBin);
+use lib "$RealBin/";
+use smbldap_tools;
+
+# smbldap-migrate (-? or -h for help)
+#
+# Read pwdump entries on stdin, and add them to the ldap server.
+# Output uncreated/unmodified entries (see parameters -C -U)
+# in pwdump format to stdout.
+# Errors, debug and stats are output to stderr.
+
+sub modify_account
+  {
+    my ($login, $basedn, $lmpwd, $ntpwd, $gecos, $homedir) = @_;
+    # bind to a directory with dn and password
+    my $ldap_master=connect_ldap_master();
+    my $modify = $ldap_master->modify ("uid=$login,$basedn",
+				       changes => [
+						   replace => [sambaLMPassword => "$lmpwd"],
+						   replace => [sambaNTPassword => "$ntpwd"],
+						   replace => [gecos => "$gecos"],
+						   replace => [sambaHomePath => "$homedir"]
+						  ]
+				      );
+    $modify->code && die "failed to modify entry: ", $modify->error ;
+    # take down the session
+    $ldap_master->unbind;
+  }
+
+#####################
+
+
+my %Options;
+
+my $ok = getopts('awA:CUW:?h', \%Options);
+
+if ( (!$ok) || ($Options{'?'}) || ($Options{'h'}) ) {
+  print "Usage: $0 [-awAWCU?]\n";
+  print "  -a         process only people, ignore computers\n";
+  print "  -w         process only computers, ignore persons\n";
+  print "  -A <opts>  option string passed verbatim to smbldap-useradd for persons\n";
+  print "  -W <opts>  option string passed verbatim to smbldap-useradd for computers\n";
+  print "  -C         if entry not found, don't create it and log it to stdout (default: create it)\n";
+  print "  -U         if entry found, don't update it and log it to stdout (default: update it)\n";
+  print "  -?|-h      show this help message\n";
+  exit (1);
+}
+
+my %processed = ( 'user' => 0, 'machine' => 0);
+my %created = ( 'user' => 0, 'machine' => 0);
+my %updated = ( 'user' => 0, 'machine' => 0);
+my %logged = ( 'user' => 0, 'machine' => 0);
+my %errors = ( 'user' => 0, 'machine' => 0);
+my %existing = ( 'user' => 0, 'machine' => 0);
+my $specialskipped = 0;
+
+while (<>) {
+  my ($login, $rid, $lmpwd, $ntpwd, $gecos, $homedir, $b) = split(/:/, $_);
+  my $usertype;
+  my $userbasedn;
+
+  my $entry_type = 'user';
+
+  if ($login =~ m/.*\$$/ ) {	# computer
+    $processed{'machine'}++;
+    $entry_type = 'machine';
+    if (defined($Options{'a'})) {
+      print STDERR "ignoring $login\n";
+      next;
+    }
+ 
+    $usertype = "-w $Options{'W'}";
+    $userbasedn = $config{computersdn};
+  } else {			# people
+    $processed{'user'}++;
+    if (defined($Options{'w'})) {
+      print STDERR "ignoring $login\n";
+      next;
+    }
+    if ($rid < 1000) {
+      $specialskipped++;
+      print STDERR "$login seems to be a special Win account (rid=$rid), skipping\n";
+      next;
+    }
+
+    $usertype = "-a $Options{'A'}";
+    $userbasedn = $config{usersdn};
+  }
+
+  # normalize homedir
+  # uncomment to replace configured share with share from pwdump
+  #  if ($homedir eq "") {
+  $homedir = $config{userSmbHome};
+  #  }
+
+  # normalize gecos
+  if (!($gecos eq "")) {
+    $gecos =~ tr/ÁÀÂÄáàâäÇçÉÈÊËÆéèêëæÍÌÏÎíìîÏÑñÓÒÔÖóòôöÚÙÜÛúùüûÝýÿ/AAAAaaaaCcEEEEEeeeeeIIIIiiiiNnOOOOooooUUUUuuuuYyy/;
+  } else {
+    $gecos = $config{userGecos};
+  }
+
+  my $user_exists = is_samba_user($login);
+ 
+  if (!$user_exists) {
+    if (!defined($Options{'C'})) {
+      # uid doesn't exist and we want to create it
+      my $addcmd = "/usr/local/sbin/smbldap-useradd $usertype $login > /dev/null";
+      print STDERR "$addcmd\n";
+      my $r = system "$addcmd";
+      if ($r != 0) {
+        print STDERR "error adding $login, skipping\n";
+        next;
+      }
+      # lem modif... a retirer si pb
+      if ($entry_type eq "user") {
+      	modify_account($login, $userbasedn, $lmpwd, $ntpwd, $gecos, $homedir);
+      }
+
+      $created{$entry_type}++;
+    } else {			# uid doesn't exist and no create => log
+      print "$_";
+      $logged{$entry_type}++;
+    }
+  } else {			# account exists
+    $existing{$entry_type}++;
+    if (!defined($Options{'U'})) { # exists and modify 
+      modify_account($login, $userbasedn, $lmpwd, $ntpwd, $gecos, $homedir);
+      $updated{$entry_type}++;
+    } else {			# exists and log
+      print "$_";
+      $logged{$entry_type}++;
+    }
+  }
+}
+
+my $sum;
+
+$sum = $processed{'user'} + $processed{'machine'};
+print STDERR "processed: all=$sum user=$processed{'user'} machine=$processed{'machine'}\n";
+
+$sum = $existing{'user'} + $existing{'machine'};
+print STDERR "existing: all=$sum user=$existing{'user'} machine=$existing{'machine'}\n";
+
+$sum = $created{'user'} + $created{'machine'};
+print STDERR "created: all=$sum user=$created{'user'} machine=$created{'machine'}\n";
+
+$sum = $updated{'user'} + $updated{'machine'};
+print STDERR "updated: all=$sum user=$updated{'user'} machine=$updated{'machine'}\n";
+
+$sum = $logged{'user'} + $logged{'machine'};
+print STDERR "logged: all=$sum user=$logged{'user'} machine=$logged{'machine'}\n";
+
+print STDERR "special users skipped: $specialskipped\n";
+
+
+########################################
+
+=head1 NAME
+
+smbldap-migrate - Migrate NT accounts to LDAP
+
+=head1 SYNOPSIS
+
+       smbldap-migrate [-a] [-w] [-A opts] [-W opts] [-C] [-U] [-?]
+
+=head1 DESCRIPTION
+
+       This command reads from stdin account entries as created by pwdump,
+       a tool to dump an user database on NT.
+       Depending of the options, some account entries may be output on
+       stdout. All errors and informations are sent to stderr.
+
+       -a     process only people, ignore computers
+
+       -w     process only computers, ignore persons
+
+       -A opts
+              a string containing arguments to pass verbatim to
+              smbldap-useradd when adding users, eg "-m -x".
+              You don't have to specify -a in this string.
+
+       -W opts
+              a string containing arguments to pass verbatim to
+              smbldap-useradd when adding computers, eg "-m -x".
+              You don't have to specify -w in this string.
+
+       -C     if NT account not found in LDAP, don't create it and log it to stdout
+              (default: create it)
+
+       -U     if NT account found in LDAP, don't update it and log it to stdout
+              (default: update it)
+
+       -?     show the help message
+
+=cut
+
+#'
+
+# The End
+

@@ -177,7 +177,7 @@ var rs_usedcapa="0";
 
 var curRule = -1;
 var enable_cloudsync = '<% nvram_get("enable_cloudsync"); %>';
-var cloud_sync = '<% nvram_show_chinese_char("cloud_sync"); %>';
+var cloud_sync =decodeURIComponent('<% nvram_char_to_ascii("","cloud_sync"); %>');
 /* type>user>password>url>rule>dir>enable */
 var cloud_synclist_array = cloud_sync.replace(/>/g, "&#62").replace(/</g, "&#60"); 
 var cloud_synclist_all = new Array(); 
@@ -188,7 +188,6 @@ var disk_flag=0;
 var FromObject = "0";
 var lastClickedObj = 0;
 var _layer_order = "";
-var isNotIE = (navigator.userAgent.search("MSIE") == -1); 
 var PROTOCOL = "cifs";
 window.onresize = cal_panel_block;
 
@@ -609,6 +608,11 @@ function validform(){
 		return false;
 	}
 
+	if(document.form.cloud_password.value.length < 8){
+		alert(Untranslated.cloud_list_password);
+		return false;
+	}
+	
 	if(document.form.cloud_dir.value.split("/").length < 4 || document.form.cloud_dir.value == ''){
 		alert("<#ALERT_OF_ERROR_Input10#>");
 		return false;
@@ -992,29 +996,6 @@ function confirm_folderTree(){
 	$j("#folderTree_panel").fadeOut(300);
 }
 
-function switchType(obj, _method){
-	if(isNotIE){	
-		document.form.cloud_password.type = _method ? "text" : "password";	
-	}	
-}
-
-function switchType_IE(obj){
-	if(isNotIE) return;		
-	
-	var tmp = "";
-	tmp = obj.value;
-	if(obj.id.indexOf('text') < 0){		//password
-		obj.style.display = "none";
-		document.getElementById('cloud_password_text').style.display = "";
-		document.getElementById('cloud_password_text').value = tmp;
-		document.getElementById('cloud_password_text').focus();
-	}else{								//text					
-		obj.style.display = "none";
-		document.getElementById('cloud_password').style.display = "";
-		document.getElementById('cloud_password').value = tmp;						
-	}
-}
-
 function cal_panel_block(){
 	var blockmarginLeft;
 	if (window.innerWidth)
@@ -1238,8 +1219,8 @@ function cal_panel_block(){
 								<#PPPConnection_Password_itemname#>
 							</th>			
 							<td>
-								<input id="cloud_password" name="cloud_password" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);switchType_IE(this);" maxlength="32" class="input_32_table" style="height: 23px;" value="">
-							  <input id="cloud_password_text" name="cloud_password_text" type="text" autocapitalization="off" onBlur="switchType_IE(this);" maxlength="32" class="input_32_table" style="height:25px; display:none;" value="">
+								<input id="cloud_password" name="cloud_password" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" maxlength="25" class="input_32_table" style="height: 23px;" value="">
+								<input id="cloud_password_text" name="cloud_password_text" type="text" autocapitalization="off" onBlur="switchType(this, false);" maxlength="25" class="input_32_table" style="height:25px; display:none;" value="">
 							</td>
 						  </tr>						  				
 					  				

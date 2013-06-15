@@ -8,6 +8,18 @@ APPS_DEV=`nvram get apps_dev`
 APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
 APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
 
+# $1: package name.
+# return value. 1: have package. 0: no package.
+_check_package(){
+	package_ready=`ipkg list_installed | grep "$1 "`
+
+	if [ -z "$package_ready" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 
 nvram set apps_state_remove=0 # INITIALIZING
 nvram set apps_state_error=0
@@ -23,17 +35,76 @@ if [ -z "$APPS_MOUNTED_PATH" ]; then
 	exit 1
 fi
 
-pkg_control_file=$APPS_PATH/lib/ipkg/info/$1.control
-if [ ! -f "$pkg_control_file" ]; then
+_check_package $1
+if [ "$?" == "0" ]; then
 	echo "The \"$1\" is not installed yet!"
 	nvram set apps_state_remove=2 # FINISHED
 	exit 0
 fi
 
+need_asuslighttpd=0
+need_smartsync=0
+if [ "$1" == "downloadmaster" ] || [ "$1" == "mediaserver" ]; then
+	DM_version1=`app_get_field.sh downloadmaster Version 1 |awk '{FS=".";print $1}'`
+	DM_version4=`app_get_field.sh downloadmaster Version 1 |awk '{FS=".";print $4}'`
+	MS_version=`app_get_field.sh mediaserver Version 1 |awk '{FS=".";print $4}'`
+
+	if [ "$1" == "downloadmaster" ] && [ "$DM_version1" -gt "2" ] && [ "$DM_version4" -gt "59" ]; then
+		need_asuslighttpd=1
+	elif [ "$1" == "mediaserver" ] && [ "$MS_version" -gt "15" ]; then
+		need_asuslighttpd=1
+	fi
+elif [ "$1" == "aicloud" ] && [ -z "$is_arm_machine" ]; then
+	AC_version=`app_get_field.sh aicloud Version 1 |awk '{FS=".";print $4}'`
+
+	if [ "$AC_version" -gt "4" ]; then
+		need_smartsync=1
+	fi
+fi
+
 
 nvram set apps_state_remove=1 # REMOVING
-app_set_enabled.sh $1 no
+if [ "$need_asuslighttpd" == "1" ]; then
+	_check_package asuslighttpd
+	if [ "$?" != "0" ]; then
+		echo "Removing the dependent package: asuslighttpd..."
+		app_set_enabled.sh asuslighttpd no
+		ipkg remove asuslighttpd
+		if [ "$?" != "0" ]; then
+			nvram set apps_state_error=9
+			exit 1
+		fi
+	fi
+elif [ "$need_smartsync" == "1" ]; then
+	_check_package smartsync
+	if [ "$?" != "0" ]; then
+		echo "Removing the dependent package: smartsync..."
+		app_set_enabled.sh smartsync no
+		ipkg remove smartsync
+		if [ "$?" != "0" ]; then
+			nvram set apps_state_error=9
+			exit 1
+		fi
+	fi
 
+	deps=`app_get_field.sh smartsync Depends 2 |sed 's/,/ /g'`
+
+	for dep in $deps; do
+		_check_package $dep
+		if [ "$?" != "0" ]; then
+			echo "Removing the dependent package of smartsync: $dep..."
+			app_set_enabled.sh $dep no
+			ipkg remove $dep
+			if [ "$?" != "0" ]; then
+				nvram set apps_state_error=9
+				exit 1
+			fi
+		fi
+	done
+fi
+
+echo "Removing the package: $1..."
+app_set_enabled.sh $1 no
 ipkg remove $1
 if [ "$?" != "0" ]; then
 	nvram set apps_state_error=9

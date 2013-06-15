@@ -155,6 +155,9 @@ function initial(){
 		parent.showLoading(restart_time);
 		setTimeout("parent.parent.location.href='"+next_page+"';", (restart_time+2)*1000);
 	}
+	else if(getflag == "liveUpdate"){
+		setTimeout("parent.detect_firmware();", 5000);
+	}	
 	else if(action_script == "start_diskscan"){
 		parent.show_loadingBar_field();
 	}

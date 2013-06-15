@@ -5164,9 +5164,18 @@ show_message("asus_reg_domain retval= %d\n", retval);
         // check for a change in the IP
         if(strcmp(ipstr, ipbuf) == 0)
         {
-          dprintf((stderr, "cache IP doesn't need updating\n"));
-	  show_message("cache IP doesn't need updating\n");
-          need_update = 0;
+	  if(nvram_match("ddns_server_x", "WWW.ASUS.COM")) { 
+	    if(strcmp(nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_hostname_old")) == 0) {
+              dprintf((stderr, "IP & hostname don't change, no need updating\n"));
+              show_message("IP & hostname don't change, no need updating\n");
+              need_update = 0;
+	    }
+	  }
+	  else {
+            dprintf((stderr, "cache IP doesn't need updating\n"));
+	    show_message("cache IP doesn't need updating\n");
+            need_update = 0;
+	  }
         }
 
         // check the date

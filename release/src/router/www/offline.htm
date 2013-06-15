@@ -18,9 +18,9 @@
 	<script>
 			function initial(){
 				var based_modelid = "<% nvram_get("productid"); %>";
-				document.getElementById('desc1').innerHTML = "A change has been made, causing disconnection to setting page.<br>";
-				document.getElementById('desc1').innerHTML += "You may made the change in changing IP address, changing port number or disconnecting Wi-Fi to "+based_modelid+".<br>";
-				document.getElementById('desc1').innerHTML += "Please re-connect Wi-Fi and use modified IP address and port number to access setting page of "+based_modelid+".";
+				document.getElementById('desc1').innerHTML = "<#Offline_desc1#><br>";
+				document.getElementById('desc1').innerHTML += "<#Offline_desc2#><br>";
+				document.getElementById('desc1').innerHTML += "<#Offline_desc3#>";
 			}	
 		
  	</script>

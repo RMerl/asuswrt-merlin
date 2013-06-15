@@ -22,10 +22,11 @@
 	border:1px outset #999;
 	background-color:#576D73;
 	position:absolute;
-	margin-top:103px;
-	*margin-top:96px;	
-	margin-left:15px;
+	*margin-top:27px;	
+	margin-left:10px;
+	*margin-left:-263px;
 	width:255px;
+	*width:270px;
 	text-align:left;	
 	height:auto;
 	overflow-y:auto;
@@ -643,16 +644,16 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable" style="margin-top:8px;" >
 		  	<thead>
 		  		<tr>
-						<td colspan="2"><#LANHostConfig_ManualDHCPEnable_itemname#></td>
+					<td colspan="3"><#LANHostConfig_ManualDHCPEnable_itemname#></td>
 		  		</tr>
 		  	</thead>
 
 		  	<tr>
      			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,9);"><#LANHostConfig_ManualDHCPEnable_itemname#></a></th>
-					<td>
-          	<input type="radio" value="1" name="dhcp_static_x"  onclick="return change_common_radio(this, 'LANHostConfig', 'dhcp_static_x', '1')" <% nvram_match("dhcp_static_x", "1", "checked"); %> /><#checkbox_Yes#>
-      		  <input type="radio" value="0" name="dhcp_static_x"  onclick="return change_common_radio(this, 'LANHostConfig', 'dhcp_static_x', '0')" <% nvram_match("dhcp_static_x", "0", "checked"); %> /><#checkbox_No#>
-      		</td>
+				<td colspan="2" style="text-align:left;">
+					<input type="radio" value="1" name="dhcp_static_x"  onclick="return change_common_radio(this, 'LANHostConfig', 'dhcp_static_x', '1')" <% nvram_match("dhcp_static_x", "1", "checked"); %> /><#checkbox_Yes#>
+					<input type="radio" value="0" name="dhcp_static_x"  onclick="return change_common_radio(this, 'LANHostConfig', 'dhcp_static_x', '0')" <% nvram_match("dhcp_static_x", "0", "checked"); %> /><#checkbox_No#>
+				</td>
 			  </tr>
 			</table>
 
@@ -670,9 +671,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
         		<th>Add / Delete</th>
 			  	</tr>			  
 			  	<tr>
-			  			<!-- client info -->
-							<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
-			  		
+			  			<!-- client info -->	  		
             			<td width="27%">
                 		<input type="text" class="input_20_table" maxlength="17" name="dhcp_staticmac_x_0" style="margin-left:-12px;width:170px;" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
                 		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
@@ -682,6 +681,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
             			</td>
             			<td width="27%">
 					<input type="text" class="input_15_table" maxlenght="15" onkeypress="return is_alphanum(this,event);" name="dhcp_staticname_x_0">
+					<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>	
 				</td>
 				<td width="19%">
 										<div> 

@@ -74,13 +74,13 @@ function applyRule(){
 
 function isPortConflict_webdav(_val){
 	if(_val == '<% nvram_get("login_port"); %>')
-		return Untranslated.portConflictHint + " HTTP LAN port.";
+		return "<#portConflictHint#> HTTP LAN port.";
 	else if(_val == '<% nvram_get("dm_http_port"); %>')
-		return Untranslated.portConflictHint + " Download Master.";
+		return "<#portConflictHint#> Download Master.";
 	else if(_val == '<% nvram_get("misc_httpsport_x"); %>')
-		return Untranslated.portConflictHint + " [<#FirewallConfig_x_WanWebPort_itemname#>(HTTPS)].";
+		return "<#portConflictHint#> [<#FirewallConfig_x_WanWebPort_itemname#>(HTTPS)].";
 	else if(_val == '<% nvram_get("misc_httpport_x"); %>')
-		return Untranslated.portConflictHint + " [<#FirewallConfig_x_WanWebPort_itemname#>(HTTP)].";
+		return "<#portConflictHint#> [<#FirewallConfig_x_WanWebPort_itemname#>(HTTP)].";
 	else
 		return false;
 }
@@ -151,10 +151,10 @@ function unlockAcc(){
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 
 								  <div class="formfontdesc" style="font-style: italic;font-size: 14px;">
-										Password protection mechanism
-										The password protection mechanism allows AiCloud to prevent account from Brute-Force Attack.
-										You can define allowable account/password login retry attempts.
-										For example, 3 times / 2mins refers to user could only 3 chances to try the account and password in 2 minutes, once exceed,  the AiCloud account will be locked, and administrator need to enter this page to unlock it.
+										<#AiCloud_PWD_Mechanism#><br>
+										<#AiCloud_PWD_note1#><br>
+										<#AiCloud_PWD_note2#><br>
+										<#AiCloud_PWD_note3#><br>
 									</div>
 
 									<table width="100%" style="border-collapse:collapse;">
@@ -162,7 +162,7 @@ function unlockAcc(){
 									  <tr bgcolor="#444f53">
 									    <td colspan="5" class="cloud_main_radius">
 												<div style="padding:30px;font-size:18px;word-break:break-all;border-style:dashed;border-radius:10px;border-width:1px;border-color:#999;">
-													<div>Enable password protection mechanism.</div>
+													<div><#AiCloud_PWD_enable#></div>
 
 													<div align="center" class="left" style="margin-top:-26px;margin-left:320px;width:94px; float:left; cursor:pointer;" id="radio_enable_webdav_lock"></div>
 													<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
@@ -185,18 +185,18 @@ function unlockAcc(){
 													</script>			
 													</div>
 
-													<input type="text" name="webdav_lock_times" class="input_3_table" maxlength="2" onblur="validate_number_range(this, 1, 10);" value="<% nvram_get("webdav_lock_times"); %>"> times in 
-													<input type="text" name="webdav_lock_interval" class="input_3_table" maxlength="2" onblur="validate_number_range(this, 1, 60);" value="<% nvram_get("webdav_lock_interval"); %>"> minutes the AiCloud account will be locked.
+													<input type="text" name="webdav_lock_times" class="input_3_table" maxlength="2" onblur="validate_number_range(this, 1, 10);" value="<% nvram_get("webdav_lock_times"); %>"> <#AiCloud_lock_time#>
+													<input type="text" name="webdav_lock_interval" class="input_3_table" maxlength="2" onblur="validate_number_range(this, 1, 60);" value="<% nvram_get("webdav_lock_interval"); %>"> <#AiCloud_lock_interval#>
 							            <br/>
 							            <br/>
 													<!--div class="apply_gen" style="background-color:#444F53;">
 														<input style="margin-left:10px;" class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>
 							            </div-->
 													<div>
-														<div style="margin-top:10px;">Account Status:</div>
+														<div style="margin-top:10px;"><#AiCloud_account_status#></div>
 														<img style="margin-top:-30px;margin-left:150px" id="accIcon" width="40px" src="/images/cloudsync/account_icon.png">
 														<div style="margin-top:-30px;margin-left:200px;font-size:16px;font-weight:bolder;"><% nvram_get("http_username"); %></div>
-														<input id="unlockBtn" style="margin-top:-28px;margin-left:260px;display:none;" class="button_gen_short" onclick="unlockAcc();" type="button" value="Unlock"/>
+														<input id="unlockBtn" style="margin-top:-28px;margin-left:260px;display:none;" class="button_gen" onclick="unlockAcc();" type="button" value="<#AiCloud_account_unlock#>"/>
 													</div>
 												</div>
 											</td>
@@ -210,10 +210,10 @@ function unlockAcc(){
 									  <tr bgcolor="#444f53">
 									    <td colspan="5" class="cloud_main_radius">
 												<div style="padding:30px;font-size:18px;word-break:break-all;border-style:dashed;border-radius:10px;border-width:1px;border-color:#999;">
-													AiCloud web access port: <input type="text" name="webdav_https_port" class="input_6_table" maxlength="5" onKeyPress="return is_number(this,event);" value="<% nvram_get("webdav_https_port"); %>">
+													<#AiCloud_webport#> <input type="text" name="webdav_https_port" class="input_6_table" maxlength="5" onKeyPress="return is_number(this,event);" value="<% nvram_get("webdav_https_port"); %>">
 													<br>
 													<br>
-													AiCloud content streaming port: <input type="text" name="webdav_http_port" class="input_6_table" maxlength="5" onKeyPress="return is_number(this,event);" value="<% nvram_get("webdav_http_port"); %>">
+													<#AiCloud_streamport#> <input type="text" name="webdav_http_port" class="input_6_table" maxlength="5" onKeyPress="return is_number(this,event);" value="<% nvram_get("webdav_http_port"); %>">
 												</div>
 											</td>
 									  </tr>

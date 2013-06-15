@@ -1,0 +1,59 @@
+#
+# Test misc file operations
+#
+
+# Initialisation
+
+load_lib env-single.exp
+load_lib smbclient.exp
+
+set timeout 10
+
+# Spawn a connection
+
+if {![spawn_smbclient //$server/$share -U $user]} {
+    perror "error spawning smbclient"
+    return -1
+}
+
+# Do wildcard rename test
+
+foreach { op } {"!touch /tmp/test.out\r" "lcd /tmp\r" "rm test.out\r" \
+	"put test.out\r"} {
+
+    set action "doing $op"
+    set output [do_smbclient $op $action]
+
+    if {[regexp "ERR" $output]} {
+  	perror $action
+	puts $output
+  	return -1;
+    }
+}
+
+file delete "/tmp/test.out"
+
+# Perform rename
+
+set output [do_smbclient "rename *.out *.dat\r" "wildcard rename"]
+
+if {[regexp "ERR" $output]} {
+    perror "wildcard rename didn't work"
+    return -1
+}
+
+# Check it worked
+
+set testname "wildcard match"
+set output [do_smbclient "dir\r" "wildcard rename check"]
+
+if {[regexp "test.dat" $output]} {
+    pass $testname
+} else {
+    fail $testname
+}
+
+# Clean up
+
+set op "rm test.dat\r"
+do_smbclient $op "doing $op"

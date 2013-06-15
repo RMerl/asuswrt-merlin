@@ -65,6 +65,10 @@ function initial(){
 	}
 
 	loadXML();
+	$('WPS_hideSSID_hint').innerHTML = "<#FW_note#> " + Untranslated.WPS_hideSSID_hint;
+	if("<% nvram_get("wl_closed"); %>" == 1){
+		$('WPS_hideSSID_hint').style.display = "";	
+	}	
 }
 
 function SwitchBand(){
@@ -303,7 +307,7 @@ function show_wsc_status(wps_infos){
 	if(wps_infos[0].firstChild.nodeValue == "Idle" || wps_infos[0].firstChild.nodeValue == "Configured"){
 		show_method = 1;
 	}
-	else if(Rawifi_support != -1){ //ralink solutions
+	else if(Rawifi_support){ //ralink solutions
 		var wpsState = wps_infos[0].firstChild.nodeValue;
 		if(wpsState.search("Received M") != -1 || wpsState.search("Send M") != -1 || wpsState == "Success")
 			show_method = 1;
@@ -392,6 +396,7 @@ function changemethod(wpsmethod){
 		  <div class="formfonttitle"><#menu5_1#> - <#menu5_1_2#></div>
 		  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		  <div class="formfontdesc"><#WLANConfig11b_display6_sectiondesc#></div>
+		  <div id="WPS_hideSSID_hint" class="formfontdesc" style="display:none;color:#FFCC00;"></div>		  
 
 		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"  class="FormTable">
 			<tr>
@@ -409,11 +414,11 @@ function changemethod(wpsmethod){
 							$j('#radio_wps_enable').iphoneSwitch('<% nvram_get("wps_enable"); %>', 
 								 function() {
 									document.form.wps_enable.value = "1";
-									enableWPS(1);
+									enableWPS();
 								 },
 								 function() {
 									document.form.wps_enable.value = "0";
-									enableWPS(0);
+									enableWPS();
 								 },
 								 {
 									switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
@@ -437,7 +442,7 @@ function changemethod(wpsmethod){
 			<tr id="wps_state_tr">
 				<th><#PPPConnection_x_WANLink_itemname#></th>
 				<td width="300">
-					<span id="wps_state_td"></span>
+					<span id="wps_state_td" style="margin-left:5px;"></span>
 					<img id="wps_pin_hint" style="display:none;" src="images/InternetScan.gif" />
 				</td>
 			</tr>
@@ -445,8 +450,16 @@ function changemethod(wpsmethod){
 			<tr>
 				<th>Configured</th>
 				<td>
-					<span class="devicepin" style="color:#FFF;" id="wps_config_td"></span>&nbsp;&nbsp;
-					<input class="button_gen" type="button" onClick="resetWPS();" id="Reset_OOB" name="Reset_OOB" value="<#CTL_Reset_OOB#>" style="padding:0 0.3em 0 0.3em;" >
+					<div style="margin-left:-10px">
+						<table ><tr>
+							<td style="border:0px;" >
+								<div class="devicepin" style="color:#FFF;" id="wps_config_td"></div>
+							</td>
+							<td style="border:0px">
+								<input class="button_gen" type="button" onClick="resetWPS();" id="Reset_OOB" name="Reset_OOB" value="<#CTL_Reset_OOB#>" style="padding:0 0.3em 0 0.3em;" >
+							</td>
+						</tr></table>
+					</div>
 				</td>
 			</tr>
 			

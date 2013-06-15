@@ -1,12 +1,13 @@
 include ../common.mak
 
-CFLAGS = -Wall -Os $(EXTRACFLAGS)
+CFLAGS += -Wall -Os
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -idirafter$(LINUXDIR)/include
 CFLAGS += -I$(TOP)/openssl/include
 CFLAGS += -ffunction-sections -fdata-sections
 CFLAGS += -DDLM -DASUS_DDNS -DASUS_EXT -DBTN_SETUP -DWEB_REDIRECT -DRTCONFIG_CROND
 
 CFLAGS += -DDEBUG_RCTEST
+#CFLAGS += -DSMP
 
 ifeq ($(RTCONFIG_WPS),y)
 CFLAGS += -I$(SRCBASE)/wps/brcm_apps/include
@@ -17,6 +18,20 @@ CFLAGS += -I$(TOP)/shared/sysdeps/ralink -I$(TOP)/wireless_tools
 endif
 
 LDFLAGS = -L$(TOP)/nvram -lnvram -L$(TOP)/shared -lshared -lcrypt -L$(TOP)/libbcmcrypto -lbcmcrypto
+
+ifeq ($(RTCONFIG_BCMARM),y)
+CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include -DHAVE_TYPE_FLOAT
+LDFLAGS += -L$(TOP)/libbcm -lbcm
+LDFLAGS += -lgcc_s
+endif
+
+ifeq ($(RTCONFIG_5301X),y)
+CFLAGS += -DBCM5301X
+endif
+
+ifeq ($(RTCONFIG_4352_5G),y)
+CFLAGS += -DBCM4352
+endif
 
 ifeq ($(RTCONFIG_USB),y)
 CFLAGS += -I$(TOP)/libdisk
@@ -31,11 +46,21 @@ ifeq ($(RTN65U), y)
 CFLAGS += -DRTN65U
 endif
 
+ifeq ($(RTCONFIG_ODMPID),y)
+CFLAG += RTCONFIG_ODMPID
+endif
+
 #CFLAGS += -DRC_BUILDTIME=$(shell date -d "now" +"%s")
 
 ifneq ($(findstring NET_CLS_POLICE=, $(shell cat $(LINUXDIR)/.config)),)
 else
+ifneq ($(findstring IMQ=, $(shell cat $(LINUXDIR)/.config)),)
 export CFLAGS += -DCLS_ACT
+endif
+endif
+
+ifneq ($(findstring DEVTMPFS=, $(shell cat $(LINUXDIR)/.config)),)
+export CFLAGS += -DDEVTMPFS
 endif
 
 LDFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
@@ -50,6 +75,7 @@ OBJS += watchdog.o ntp.o btnsetup.o qos.o udhcpc.o ate.o #cpu.o
 ifeq ($(RTCONFIG_FANCTRL),y)
 OBJS += phy_tempsense.o
 endif
+OBJS += bcmutils.o
 
 ifeq ($(RTCONFIG_RALINK),y)
 OBJS += init-ralink.o wps-ralink.o ralink.o wpsfix.o
@@ -131,7 +157,7 @@ ifeq ($(RTCONFIG_SHP),y)
 export CFLAGS += -DMEDIA_REVIEW
 endif
 
-vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink
+vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink $(SRCBASE)/shared
 
 all: rc
 
@@ -148,6 +174,7 @@ install: all
 	@$(STRIP) $(INSTALLDIR)/sbin/rc
 	@chmod 0500 $(INSTALLDIR)/sbin/rc
 
+	@cd $(INSTALLDIR)/sbin && ln -sf rc preinit
 	@cd $(INSTALLDIR)/sbin && ln -sf rc init
 	@cd $(INSTALLDIR)/sbin && ln -sf rc console
 	@cd $(INSTALLDIR)/sbin && ln -sf rc hotplug
@@ -157,10 +184,13 @@ install: all
 	@cd $(INSTALLDIR)/sbin && ln -sf rc led_ctrl
 	@cd $(INSTALLDIR)/sbin && ln -sf rc reboot
 	@cd $(INSTALLDIR)/sbin && ln -sf rc halt
-#	@cd $(INSTALLDIR)/sbin && ln -sf rc gpio
-
+	@cd $(INSTALLDIR)/sbin && ln -sf rc gpio
+ifneq ($(RTCONFIG_BCMARM),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-write
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-erase
+endif
+	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-write2
+	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-erase2
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-unlock
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ots
 	@cd $(INSTALLDIR)/sbin && ln -sf rc watchdog
@@ -219,6 +249,9 @@ ifeq ($(RTCONFIG_USB),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_usb_interface
 	@cd $(INSTALLDIR)/sbin && ln -sf rc usb_notify
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ejusb
+#ifeq ($(RTCONFIG_USBEJECT),y)
+#	@cd $(INSTALLDIR)/sbin && ln -sf rc restart_usb
+#endif
 ifeq ($(RTCONFIG_DISK_MONITOR),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc disk_monitor
 endif
@@ -226,6 +259,7 @@ endif
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_app_script 
 	@cd $(INSTALLDIR)/sbin && ln -sf rc restart_wireless
+	@cd $(INSTALLDIR)/sbin && ln -sf rc nvram_erase
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ATE
 ifeq ($(RTCONFIG_RALINK),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc FWRITE

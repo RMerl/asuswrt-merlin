@@ -1,0 +1,28 @@
+#
+# @(#) Test domain groups resolve using getgrnam()
+#
+
+load_lib "util-defs.exp"
+load_lib "compile.exp"
+
+# Compile getgrnam.c
+
+simple_compile "getgrnam"
+
+# Test domain groups
+
+set group_list [split [util_start "bin/wbinfo" "-g"] "\n"]
+
+verbose $group_list
+
+foreach {group} $group_list {
+    set output [util_start "$srcdir/$subdir/getgrnam" "\"$group\"" ""]
+
+    verbose $output
+
+    if {[regexp "PASS:" $output]} {
+        pass "getgrnam $group"
+    } else {
+        fail "getgrnam $group"
+    }
+}

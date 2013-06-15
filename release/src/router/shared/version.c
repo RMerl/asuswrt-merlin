@@ -6,3 +6,4 @@ const char *rt_serialno = RT_SERIALNO;
 const char *rt_extendno = RT_EXTENDNO;
 const char *rt_buildname = RT_BUILD_NAME;
 const char *rt_buildinfo = RT_BUILD_INFO;
+const char *rt_swpjverno = RT_SWPJVERNO;

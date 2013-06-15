@@ -1,0 +1,4534 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76"
+hspace="10" align="left" />
+
+<h1 class="head0">Appendix C. Summary of Samba Daemons and Commands</h1>
+
+
+<p>This appendix is a reference listing of command-line options and
+other information to help you use the programs that come with the
+Samba distribution.</p>
+
+
+
+<div class="sect1"><a name="samba2-APP-C-SECT-1"/>
+
+<h2 class="head1">Samba Daemons</h2>
+
+<p>The following sections provide information about the command-line
+parameters for <em class="emphasis">smbd</em>, <em class="emphasis">nmbd</em>,
+and <em class="emphasis">winbindd</em>.</p>
+
+</div>
+
+
+<a name="INDEX-1"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>smbd</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>The <em class="emphasis">smbd</em> program provides
+Samba's file and printer services, using one TCP/IP
+stream and one daemon per client. It is controlled from
+<em class="filename">/usr/local/samba/lib/smb.conf</em>, the default
+configuration file, which can be overridden by command-line options.</p><p>The configuration file is automatically reevaluated every minute. If
+it has changed, most new options are immediately effective. You can
+force Samba to reload the configuration file immediately by sending a
+SIGHUP signal to <em class="emphasis">smbd</em>. Reloading the
+configuration file does not affect any clients that are already
+connected. To escape this condition, a client would need to
+disconnect and reconnect, or the server itself would have to be
+restarted, forcing all clients to reconnect.</p>
+<div class="sect1"><a name="appc-5-fm2xml"/>
+
+<h4 class="refsect1">Other Signals</h4>
+<p>To shut down an <em class="emphasis">smbd</em> process, send it the
+termination signal SIGTERM (15), which allows it to die gracefully,
+instead of a SIGKILL (9). With Samba versions prior to 2.2, the
+debugging level could be raised or lowered using SIGUSR1 or SIGUSR2.
+This is no longer supported. Use <em class="emphasis">smbcontrol</em>
+instead.</p>
+
+</div>
+
+<div class="sect1"><a name="appc-6-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">smbd <em class="replaceable">[options]</em></pre></blockquote>
+
+
+</div>
+
+<div class="sect1"><a name="appc-7-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-a</tt></b></dt>
+<dd>
+<p>Causes each new connection to the Samba server to append all logging
+messages to the log file. This option is the opposite of
+<tt class="literal">-o</tt> and is the default.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-D</tt></b></dt>
+<dd>
+<p>Runs the <em class="emphasis">smbd</em> program as a daemon. This is the
+recommended way to use <em class="emphasis">smbd</em>. It is also the
+default action when <em class="emphasis">smbd</em> is run from an
+interactive command line. In addition, <em class="emphasis">smbd</em> can
+be run from <em class="emphasis">inetd</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-d</tt> <em class="replaceable">debug_level</em></b></dt>
+<dd>
+<p>Sets the debug (sometimes called logging) level. The level can range
+from 0 to 10. Specifying the value on the command line overrides the
+value specified in the <em class="filename">smb.conf</em> file. Debug
+level 0 logs only the most important messages; level 1 is normal;
+levels 3 and above are primarily for debugging and slow
+<em class="emphasis">smbd</em> considerably.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-h</tt> </b></dt>
+<dd>
+<p>Prints usage information for the <em class="emphasis">smbd</em> command.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-i</tt></b></dt>
+<dd>
+<p>Runs <em class="emphasis">smbd</em> interactively, rather than as a
+daemon. This option is used to override the default daemon mode when
+<em class="emphasis">smbd</em> is run from the command line.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-l</tt> <em class="replaceable">log_ directory</em></b></dt>
+<dd>
+<p>Sends the log messages to somewhere other than the location compiled
+into the executable or specified in the <em class="filename">smb.conf</em>
+file. The default is often
+<em class="filename">/usr/local/samba/var/</em>,
+<em class="filename">/usr/samba/var/</em>, or
+<em class="filename">/var/log/</em>. The log file is placed in the
+specified directory and named <em class="filename">log.smbd</em>. If the
+directory does not exist, Samba's compiled-in
+default will be used.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-O</tt> <em class="replaceable">socket_options</em></b></dt>
+<dd>
+<p>Sets the TCP/IP socket options, using the same parameters as the
+<tt class="literal">socket options</tt> configuration option. Often used
+for performance tuning and testing.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-o</tt></b></dt>
+<dd>
+<p>Causes log files to be overwritten when opened (the opposite of
+<tt class="literal">-a</tt>). Using this option saves you from hunting for
+the right log entries if you are performing a series of tests and
+inspecting the log file each time.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-p</tt> <em class="replaceable">port_number</em></b></dt>
+<dd>
+<p>Sets the TCP/IP port number from which the server will accept
+requests. All Microsoft clients send to the default port of 139,
+except for Windows 2000/XP, which can use port 445 for SMB
+networking, without the NetBIOS protocol layer.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-P</tt></b></dt>
+<dd>
+<p>Causes <em class="emphasis">smbd</em> to run in
+&quot;passive&quot; mode, in which it just
+listens, and does not transmit any network traffic. This is useful
+only for debugging by developers.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-s</tt> <em class="replaceable">configuration_ file</em></b></dt>
+<dd>
+<p>Specifies the location of the Samba configuration file. Although the
+file defaults to <em class="filename">/usr/local/samba/lib/smb.conf</em>,
+you can override it on the command line. Typically used for
+debugging.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-v</tt></b></dt>
+<dd>
+<p>Prints the current version of Samba.</p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-2"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>nmbd</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>The <em class="emphasis">nmbd</em> program is Samba's
+NetBIOS name service and browsing daemon. It replies to NetBIOS over
+TCP/IP (also called NetBT or NBT) name-service requests broadcast
+from SMB clients, and optionally to Microsoft's
+Windows Internet Name Service (WINS) requests. Both are versions of
+the name-to-address lookup required by SMB clients. The broadcast
+version uses UDP broadcast on the local subnet only, while WINS uses
+TCP, which can be routed. If running as a WINS server,
+<em class="emphasis">nmbd</em> keeps a current name and address database
+in the file <em class="filename">/usr/local/samba/var/locks/wins.dat</em>.</p><p>An active <em class="emphasis">nmbd</em> daemon also responds to browsing
+protocol requests used by the Windows Network Neighborhood. This
+protocol provides a dynamic directory of servers, as well as the
+disks and printers that the servers are providing. As with WINS, this
+was initially done by making UDP broadcasts on the local subnet. With
+the addition of the local master browser to the network architecture,
+it is done by making TCP connections to a server. If
+<em class="emphasis">nmbd</em> is acting as a local master browser, it
+stores the browsing database in the file
+<em class="filename">/usr/local/samba/var/locks/browse.dat</em>.</p><p>Some clients (especially older ones) cannot use the WINS protocol. To
+support these clients, <em class="emphasis">nmbd</em> can act as a WINS
+proxy, accepting broadcast requests from the non-WINS clients,
+contacting a WINS server on their behalf, and returning the WINS
+server's response to them.</p>
+<div class="sect1"><a name="appc-9-fm2xml"/>
+
+<h4 class="refsect1">Signals</h4>
+<p>Like <em class="emphasis">smbd</em>, the <em class="emphasis">nmbd</em> program
+responds to several Unix signals. Sending <em class="emphasis">nmbd</em> a
+SIGHUP signal causes it to dump the names it knows about to the
+<em class="filename">/usr/local/samba/var/locks/namelist.debug</em> file.
+To shut down an <em class="emphasis">nmbd</em> process and allow it to die
+gracefully, send it a SIGTERM (15) signal, rather than a SIGKILL (9).
+With Samba versions prior to 2.2, the debugging level could be raised
+or lowered using SIGUSR1 or SIGUSR2. This is no longer supported. Use
+<em class="emphasis">smbcontrol</em> instead.</p>
+
+</div>
+
+<div class="sect1"><a name="appc-10-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">nmbd <em class="replaceable">[options]</em></pre></blockquote>
+
+
+</div>
+
+<div class="sect1"><a name="appc-11-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-a</tt></b></dt>
+<dd>
+<p>Causes each new connection to the Samba server to append all logging
+messages to the log file. This option is the opposite of
+<tt class="literal">-o</tt> and is the default.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-d</tt> <em class="replaceable">debug_level</em></b></dt>
+<dd>
+<p>Sets the debug (sometimes called logging) level. The level can range
+from 0 to 10. Specifying the value on the command line overrides the
+value specified in the <em class="filename">smb.conf</em> file. Debug
+level 0 logs only the most important messages; level 1 is normal;
+levels 3 and above are primarily for debugging and slow
+<em class="emphasis">nmbd</em> considerably.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-D</tt></b></dt>
+<dd>
+<p>Instructs the <em class="emphasis">nmbd</em> program to run as a daemon.
+This is the recommended way to use <em class="emphasis">nmbd</em> and is
+the default when <em class="emphasis">nmbd</em> is run from an interactive
+shell. In addition, <em class="emphasis">nmbd</em> can be run from
+<em class="emphasis">inetd</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-h</tt> </b></dt>
+<dd>
+<p>Prints usage information for the <em class="emphasis">nmbd</em> command.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-H</tt> <em class="replaceable">lmhosts_  file</em></b></dt>
+<dd>
+<p>Specifies the location of the <em class="emphasis">lmhosts</em> file for
+name resolution. This file is used only to resolve names for the
+local server, and not to answer queries from remote systems. The
+compiled-in default is commonly
+<em class="filename">/usr/local/samba/lib/lmhosts</em>,
+<em class="filename">/usr/samba/lib/lmhosts</em>, or
+<em class="filename">/etc/lmhosts</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-i</tt></b></dt>
+<dd>
+<p>Runs <em class="emphasis">nmbd</em> interactively, rather than as a
+daemon. This option is used to override the default daemon mode when
+<em class="emphasis">nmbd</em> is run from the command line.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-l</tt> <em class="replaceable">log_ file</em></b></dt>
+<dd>
+<p>Sends the log messages to somewhere other than the location compiled
+into the executable or specified in the <em class="filename">smb.conf</em>
+file. The default is often
+<em class="filename">/usr/local/samba/var/log.nmbd</em>,
+<em class="emphasis">/usr/samba/var/log.nmbd</em>, or <em class="emphasis">/var/log
+/log.nmbd</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-n</tt> <em class="replaceable">NetBIOS_name</em></b></dt>
+<dd>
+<p>Allows you to override the NetBIOS name by which the daemon
+advertises itself. Specifying this option on the command line
+overrides the <tt class="literal">netbios name</tt> option in the Samba
+configuration file.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-O</tt> <em class="replaceable">socket_options</em></b></dt>
+<dd>
+<p>Sets the TCP/IP socket options, using the same parameters as the
+<tt class="literal">socket options</tt> configuration option. Often used
+for performance tuning and testing.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-o</tt></b></dt>
+<dd>
+<p>Causes log files to be overwritten when opened (the opposite of
+<tt class="literal">-a</tt>). This option saves you from hunting for the
+right log entries if you are performing a series of tests and
+inspecting the log file each time.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-p</tt> <em class="replaceable">port_number</em></b></dt>
+<dd>
+<p>Sets the UDP port number from which the server accepts requests.
+Currently, all Microsoft clients use only the default port, 137.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-s</tt> <em class="replaceable">configuration_ file</em></b></dt>
+<dd>
+<p>Specifies the location of the Samba configuration file. Although the
+file defaults to <em class="filename">/usr/local/samba/lib/smb.conf</em>,
+you can override it here on the command line. Typically used for
+debugging.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-v</tt></b></dt>
+<dd>
+<p>Prints the current version of Samba.</p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-3"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>winbindd</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>The <em class="emphasis">winbindd</em> daemon is part of the winbind
+service and is used to allow Unix systems to obtain user and group
+information from a Windows NT/2000 server. Winbind maps Windows
+relative IDs (RIDs) to Unix UIDs and GIDs and allows accounts stored
+on the Windows server to be used for Unix authentication. Its purpose
+is to ease integration of Microsoft and Unix networks when a
+preexisting Windows domain controller is set up to handle user and
+computer accounts.</p><p>The daemon is accessed by users via the name service switch and PAM.
+The name service switch calls a library
+(<em class="filename">/lib/libnss_winbind.so</em>), which calls the
+daemon, which in turn calls the Windows NT/2000 server using
+Microsoft RPC. The PAM module for winbind can call the daemon
+similarly, allowing users whose accounts are stored on the Windows
+server to log in to the Unix system and run an interactive shell,
+FTP, or any other program that authenticates users through PAM.</p><p>The winbind subsystem is currently available only for the Linux
+operating system and a few other systems that use shared libraries,
+nsswitch and PAM.</p>
+<div class="sect1"><a name="appc-13-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">winbindd <em class="replaceable">[options]</em></pre></blockquote>
+
+
+</div>
+
+<div class="sect1"><a name="appc-14-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-d</tt> <em class="replaceable">debuglevel</em></b></dt>
+<dd>
+<p>Sets the debug (sometimes called logging) level. The level can range
+from 0 to 10. Specifying the value on the command line overrides the
+value specified in the <em class="filename">smb.conf</em> file. Debug
+level 0 logs only the most important messages; level 1 is normal;
+levels 3 and above are primarily for debugging.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-i</tt></b></dt>
+<dd>
+<p>Runs <em class="emphasis">winbindd</em> interactively. This option is used
+to override the default, which is for winbindd to detach and run as a
+daemon.</p>
+</dd>
+
+</dl>
+
+</div>
+</div>
+
+
+
+
+
+<div class="sect1"><a name="samba2-APP-C-SECT-2"/>
+
+<h2 class="head1">Samba Distribution Programs</h2>
+
+<p>This section lists the command-line options and subcommands provided
+by each nondaemon program in the Samba distribution.</p>
+
+</div>
+
+
+
+<a name="INDEX-4"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>findsmb</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>This Perl script reports information about systems on the subnet that
+respond to SMB name-query requests. The report includes the IP
+address, NetBIOS name, workgroup/domain, and operating system of each
+system.</p>
+<div class="sect1"><a name="appc-17-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">findsmb <em class="replaceable">[subnet_broadcast_address]</em></pre></blockquote>
+<p>If a different subnet's broadcast address is
+provided, it will find SMB servers on that subnet. If no subnet
+broadcast address is supplied, <em class="emphasis">findsmb</em> will look
+on the local subnet.</p>
+
+<p>The output from <em class="emphasis">findsmb</em> looks like this:</p>
+<blockquote><pre class="code">$ <tt class="userinput"><b>findsmb</b></tt>
+                                *=DMB
+                                +=LMB
+IP ADDR         NETBIOS NAME     WORKGROUP/OS/VERSION
+---------------------------------------------------------------------
+172.16.1.1      TOLTEC         *[METRAN] [Unix] [Samba 2.2.6]
+172.16.1.3      MIXTEC         +[METRAN] [Unix] [Samba 2.2.6]
+172.16.1.4      ZAPOTEC         [METRAN] [Windows 5.0] [Windows 2000 LAN Manager]
+172.16.1.5      HUASTEC         [       METRAN        ]
+172.16.1.6      MAYA            [       METRAN        ]
+172.16.1.7      OLMEC           [METRAN] [Windows 5.1] [Windows 2000 LAN Manager]
+172.16.1.10     UTE             [       METRAN        ]
+172.16.1.13     DINE            [METRAN] [Windows NT 4.0] [NT LAN Manager 4.0]</pre></blockquote>
+<p>The system with an asterisk (<tt class="literal">*</tt>) in front of its
+workgroup name is the domain master browser for the workgroup/domain,
+and the system with a plus sign (+) preceding its workgroup name is
+the local master browser.</p>
+
+<p>The <em class="emphasis">findsmb</em> command was introduced during the
+development of Samba 2.2 and is installed by default in Samba
+Versions 2.2.5 and later.</p>
+
+</div>
+</div>
+
+<a name="INDEX-5"/><a name="INDEX-6"/><a name="INDEX-7"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>make_smbcodepage</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>This program is part of the
+<a name="INDEX-6"/>internationalization features of
+Samba 2.2 and is obsolete in Samba 3.0, which supports
+<a name="INDEX-7"/>Unicode
+automatically. The <em class="emphasis">make_smbcodepage</em> program
+compiles a binary codepage file from a text-format codepage
+definition. It can also perform the reverse operation, decompiling a
+binary codepage file into a text version. Examples of text-format
+codepage files can be found in the Samba distribution in the
+<em class="filename">source/codepages</em> directory. After Samba has been
+installed, examples of binary codepages can be found in the directory
+<em class="filename">/usr/local/samba/lib/codepages</em>.</p>
+<div class="sect1"><a name="appc-19-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">make_smbcodepage <em class="replaceable">c|d codepage_number input_file output_file</em></pre></blockquote>
+<p>For the first argument, use <tt class="literal">c</tt> to compile a
+codepage and <tt class="literal">d</tt> to decompile a codepage file. The
+<em class="replaceable">codepage_number</em> argument is the number of
+the codepage being processed (e.g., 850). The
+<em class="replaceable">input_file</em> and
+<em class="replaceable">output_file</em> are the text- and
+binary-format codepages, with the types dependent on the operation
+(compiling or decompiling) that is being performed.</p>
+
+</div>
+</div>
+
+<a name="INDEX-8"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>make_unicodemap</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>This program is part of the internationalization features of Samba
+2.2 and is obsolete in Samba 3.0, which supports Unicode
+automatically. The <em class="emphasis">make_unicodemap</em> command
+compiles binary Unicode maps from text files, so Samba can display
+non-ASCII characters in file and directory names via the Unicode
+international alphabets. Examples of input mapping files can be found
+in the directory <em class="filename">source/codepages</em> in the Samba
+source distribution.</p>
+<div class="sect1"><a name="appc-21-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">make_unicodemap <em class="replaceable">codepage_number inputfile outputfile</em></pre></blockquote>
+<p>The input file is an ASCII map; the output file is a binary file
+loadable by Samba. The codepage is the number of the DOS codepage
+(e.g., 850) for the map.</p>
+
+</div>
+</div>
+
+<a name="INDEX-9"/><a name="INDEX-10"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>net</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>The <em class="emphasis">net</em> command, new to Samba 3.0, is a program
+with a syntax similar to the MS-DOS/Windows command of the same name.
+It is used for performing various administrative functions related to
+Windows networking, which can be executed either locally or on a
+remote system.</p>
+<div class="sect1"><a name="appc-23-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">net <em class="replaceable">[method] function [misc_options] [target_options]</em></pre></blockquote>
+<p>The <em class="replaceable">function</em> argument is made up of one or
+more space-separated words. In Windows terminology, it is sometimes
+referred to as a function with options. Here we list every function
+in its complete form, including multiple words.</p>
+
+<p>By default, the action is performed on the local system. The
+<em class="replaceable">target_options</em> argument can be used to
+specify a remote system (either by hostname or IP address), a domain,
+or a workgroup.</p>
+
+<p>Depending on the function, the <em class="replaceable">method</em>
+argument can be optional, required, or disallowed. It specifies one
+of three methods for performing the operation specified by the rest
+of the command. It can be <tt class="literal">ads</tt> (Active Directory),
+<tt class="literal">rpc</tt> (Microsoft's DCE/RPC), or
+<tt class="literal">rap</tt> (Microsoft's original SMB
+remote procedure call). To determine which methods (if any) can be
+used with a function, the <tt class="literal">net help ads</tt>,
+<tt class="literal">net help rap</tt>, and <tt class="literal">net help rpc</tt>
+commands can be used to list the functions for each method.</p>
+
+</div>
+
+<div class="sect1"><a name="appc-24-fm2xml"/>
+
+<h4 class="refsect1">Miscellaneous options</h4>
+
+<dl>
+<dt><b><tt class="literal">-d</tt> <em class="replaceable">level</em></b></dt>
+<dt><b><tt class="literal">--debug=l</tt><em class="replaceable">evel</em></b></dt>
+<dd>
+<p>Sets the debug (sometimes called logging) level. The level can range
+from 0 to 10.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-l</tt></b></dt>
+<dt><b><tt class="literal">--long</tt></b></dt>
+<dd>
+<p><tt class="literal">S</tt>pecifies the long listing mode. This is provided
+for functions that print informational listings.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-n</tt> <em class="replaceable">name</em></b></dt>
+<dt><b><tt class="literal">--myname</tt><em class="emphasis">=</em><em class="replaceable">name</em></b></dt>
+<dd>
+<p>Specifies the NetBIOS name for the client.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-p</tt> <em class="replaceable">port</em></b></dt>
+<dt><b><tt class="literal">--port</tt><em class="emphasis">=</em><em class="replaceable">port</em></b></dt>
+<dd>
+<p>Specifies the port number to use.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-s</tt> <em class="replaceable">filename</em></b></dt>
+<dt><b><tt class="literal">--conf</tt><em class="emphasis">=</em><em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Specifies the name of the Samba configuration file, overriding the
+compiled-in default.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-U</tt> <em class="replaceable">username[</em><tt class="literal">%</tt><em class="replaceable">password]</em></b></dt>
+<dt><b><tt class="literal">--user</tt><em class="emphasis">=</em><em class="replaceable">username[</em><tt class="literal">%</tt><em class="replaceable">password]</em></b></dt>
+<dd>
+<p>Specifies the username and, optionally, the password to use for
+functions that require authentication.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-W</tt> <em class="replaceable">name</em></b></dt>
+<dt><b><tt class="literal">--myworkgroup</tt>=<em class="replaceable">name</em></b></dt>
+<dd>
+<p>Specifies the name of the client's workgroup,
+overriding the definition of the <tt class="literal">workgroup</tt>
+parameter in the Samba configuration file.</p>
+</dd>
+
+</dl>
+
+
+</div>
+
+<div class="sect1"><a name="appc-25-fm2xml"/>
+
+<h4 class="refsect1">Target options</h4>
+
+<dl>
+<dt><b><tt class="literal">-S</tt> <em class="replaceable">hostname</em></b></dt>
+<dd>
+<p>Specifies the remote system using a hostname or NetBIOS name.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-I</tt> <em class="replaceable">ip_address</em></b></dt>
+<dd>
+<p>Specifies the remote system using its IP address.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-w</tt> <em class="replaceable">workgroup</em></b></dt>
+<dd>
+<p>Specifies the name of the target domain or workgroup.</p>
+</dd>
+
+</dl>
+
+
+</div>
+
+<div class="sect1"><a name="appc-26-fm2xml"/>
+
+<h4 class="refsect1">Functions</h4>
+
+<dl>
+<dt><b><tt class="literal">abortshutdown</tt></b></dt>
+<dd>
+<p>See the <tt class="literal">rpc</tt> <tt class="literal">abortshutdown</tt>
+function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">ads</tt> <tt class="literal">info</tt></b></dt>
+<dd>
+<p>Prints information about the Active Directory server. The method
+(<tt class="literal">ads</tt>) must be specified to differentiate this
+function from the <tt class="literal">rpc info</tt> function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">ads</tt> <tt class="literal">join</tt> <em class="replaceable">OU</em></b></dt>
+<dd>
+<p>Joins the local system to the Active Directory realm (organizational
+unit) specified by OU. The method (<tt class="literal">ads</tt>) must be
+specified to differentiate this function from the <tt class="literal">rpc
+join</tt> function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">ads</tt> <tt class="literal">leave</tt></b></dt>
+<dd>
+<p>Removes the local system from the Active Directory realm.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">ads password</tt> <em class="replaceable">username</em><tt class="literal">@</tt><em class="replaceable">REALM</em> <tt class="literal">-U</tt><em class="replaceable">admin_username</em><tt class="literal">@</tt><em class="replaceable">REALM</em><tt class="literal">%admin_</tt><em class="replaceable">password</em></b></dt>
+<dd>
+<p>Changes the Active Directory password for the user specified by
+<em class="replaceable">username</em><tt class="literal">@</tt><em class="replaceable">REALM</em>.
+The administrative account authentication information is specified
+with the <tt class="literal">-U</tt> option. The Active Directory realm
+must be supplied in all uppercase.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">ads printer info</tt> <em class="replaceable">[printer] [server]</em></b></dt>
+<dd>
+<p>Prints information on the specified printer on the specified server.
+The <em class="replaceable">printer</em> argument defaults to an
+asterisk (<tt class="literal">*</tt>), meaning all printers, and the
+<em class="replaceable">server</em> argument defaults to
+<tt class="literal">localhost</tt>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">ads printer publish</tt> <em class="replaceable">printer_name</em></b></dt>
+<dd>
+<p>Publishes the specified printer in Active Directory.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">ads printer remove</tt> <em class="replaceable">printer_name</em></b></dt>
+<dd>
+<p>Removes the specified printer from Active Directory.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">ads search</tt> <em class="replaceable">expr attrib</em></b></dt>
+<dd>
+<p>Performs a raw Active Directory search, using the standard LDAP
+search expression and attributes specified by the
+<em class="replaceable">expr</em> and <em class="replaceable">attrib</em>
+arguments, respectively.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">ads status</tt></b></dt>
+<dd>
+<p>Prints details about the Active Directory computer account of the
+system.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">change localhost pass</tt></b></dt>
+<dd>
+<p>Changes the Active Directory password for the local
+system's computer trust account.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">domain</tt></b></dt>
+<dd>
+<p>Lists the domains or workgroups on the network.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">file</tt></b></dt>
+<dd>
+<p>Lists open files on the server.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">file close</tt> <em class="replaceable">file_id</em></b></dt>
+<dd>
+<p>Closes the specified file.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">file info</tt> <em class="replaceable">file_id</em></b></dt>
+<dd>
+<p>Prints information about the specified file, which must be open.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">file user</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Lists all files opened on the server by the user specified by
+<em class="replaceable">username</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">group add</tt> <em class="replaceable">group_name</em></b></dt>
+<dd>
+<p>Adds the specified group. This function accepts the miscellaneous
+option <tt class="literal">-C</tt> <em class="replaceable">comment</em>
+(which can also be specified as <tt class="literal">-
+-comment=</tt><em class="replaceable">string</em>) to set the
+descriptive comment for the group.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">group delete</tt> <em class="replaceable">group_name</em></b></dt>
+<dd>
+<p>Deletes the specified group.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">groupmember add</tt> <em class="replaceable">group_name username</em></b></dt>
+<dd>
+<p>Adds the user specified by <em class="replaceable">username</em> to the
+group specified by <em class="replaceable">group_name</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">groupmember delete</tt> <em class="replaceable">group_name username</em></b></dt>
+<dd>
+<p>Deletes the user specified by <em class="replaceable">username</em>
+from the group specified by <em class="replaceable">group_name</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">groupmember list</tt> <em class="replaceable">group_name</em></b></dt>
+<dd>
+<p>Lists the users who are members of the specified group.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">help</tt></b></dt>
+<dd>
+<p>Prints a help message for the <em class="emphasis">net</em> command.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">help</tt> <em class="replaceable">method</em></b></dt>
+<dd>
+<p>Prints a help message for <em class="replaceable">method</em>, which
+can be <tt class="literal">ads</tt>, <tt class="literal">rap</tt>, or
+<tt class="literal">rpc</tt>. This lists the functions that can use the
+method, along with a brief description.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">help</tt> <em class="replaceable">function</em></b></dt>
+<dd>
+<p>Prints a help message for the specified function, which can be more
+than one word.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">info</tt></b></dt>
+<dd>
+<p>Must be preceded by a method. See the <tt class="literal">ads</tt>
+<tt class="literal">info</tt> and <tt class="literal">rpc</tt>
+<tt class="literal">info</tt> functions.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">join</tt></b></dt>
+<dd>
+<p>Joins the computer to a Windows NT domain or Active Directory realm.
+If the method argument is not specified, a check is made to determine
+if Active Directory is in use, and if so, <tt class="literal">ads join</tt>
+is performed. Otherwise, <tt class="literal">rpc join</tt> is run. See also
+the <tt class="literal">ads join</tt> and <tt class="literal">rpc join</tt>
+functions.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">leave</tt></b></dt>
+<dd>
+<p>Must be preceded by a method. See the <tt class="literal">ads</tt>
+<tt class="literal">leave</tt> function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">lookup dc</tt> <em class="replaceable">[domain]</em></b></dt>
+<dd>
+<p>Prints the IP address of the specified domain's
+domain controllers. The domain defaults to the value of the
+<tt class="literal">workgroup</tt> parameter in the Samba configuration
+file.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">lookup host</tt> <em class="replaceable">hostname [type]</em></b></dt>
+<dd>
+<p>Prints the IP address of the specified host.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">lookup kdc</tt> <em class="replaceable">[realm]</em></b></dt>
+<dd>
+<p>Prints the IP address of the specified realm's
+Kerberos domain controller. If <em class="replaceable">realm</em> is
+not specified, it defaults to the value of the
+<tt class="literal">realm</tt> parameter in the Samba configuration file.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">lookup ldap</tt> <em class="replaceable">[domain]</em></b></dt>
+<dd>
+<p>Prints the IP address of the specified domain's LDAP
+server. If <em class="replaceable">domain</em> is not specified, it
+defaults to the value of the <tt class="literal">workgroup</tt> parameter
+in the Samba configuration file.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">lookup master</tt> <em class="replaceable">[domain]</em></b></dt>
+<dd>
+<p>Prints the IP address of the master browser of the specified domain
+or workgroup. If <em class="replaceable">domain</em> is not specified,
+it defaults to the value of the <tt class="literal">workgroup</tt>
+parameter in the Samba configuration file.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">password</tt> <em class="replaceable">username old_password new_password</em></b></dt>
+<dd>
+<p>Changes the password for the user specified by the
+<em class="replaceable">username</em> argument. The
+user's old and new passwords are provided in plain
+text as part of the command. Be careful regarding security issues.
+See also the <tt class="literal">ads password</tt> function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">printer info</tt></b></dt>
+<dd>
+<p>See the <tt class="literal">ads printer info</tt> function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">printer publish</tt></b></dt>
+<dd>
+<p>See the <tt class="literal">ads printer publish</tt> function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">printer remove</tt></b></dt>
+<dd>
+<p>See the <tt class="literal">ads printer remove</tt> function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">printq</tt></b></dt>
+<dd>
+<p>Prints information (including the job IDs) about printer queues on
+the server.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">printq delete</tt> <em class="replaceable">queue_name</em></b></dt>
+<dd>
+<p>Deletes the specified printer queue. The
+<tt class="literal">-j</tt>
+<em class="replaceable">job_id</em> (which can also be
+specified as
+<tt class="literal">--jobid</tt><em class="emphasis">=</em><em class="replaceable">job_id</em>
+) option may be used to specify the job ID of the queue.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">rpc abortshutdown</tt></b></dt>
+<dd>
+<p>Aborts the shutdown of a remote server.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">rpc info</tt></b></dt>
+<dd>
+<p>Prints information about the server's domain. The
+method (<tt class="literal">rpc</tt>) must be specified to differentiate
+this function from the <tt class="literal">ads</tt> <tt class="literal">info</tt>
+function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">rpc join</tt> </b></dt>
+<dd>
+<p>Joins a computer to a Windows NT domain. If the <tt class="literal">-U</tt>
+<em class="replaceable">username</em><tt class="literal">%</tt><em class="replaceable">password</em>
+option is included, the specified username and password will be used
+as the administrative account required for authenticating with the
+PDC. If the <tt class="literal">-U</tt> option is not included, this
+function can be used only to join the computer to the domain after
+the computer account has been created using the Server Manager. The
+method (<tt class="literal">rpc</tt>) must be specified to differentiate
+this function from the <tt class="literal">ads</tt> <tt class="literal">join</tt>
+function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">rpc shutdown</tt></b></dt>
+<dd>
+<p>Shuts down a server. This function accepts the <tt class="literal">-r</tt>,
+<tt class="literal">-f</tt>, <tt class="literal">-t</tt>, and
+<tt class="literal">-c</tt> miscellaneous options. The
+<tt class="literal">-r</tt> option (which can also be specified as
+<tt class="literal">--reboot</tt>) requests that the system reboot after
+shutting down. The <tt class="literal">-f</tt> option (which can also be
+specified as <tt class="literal">--force</tt>) forces a shutdown. The
+<tt class="literal">-t</tt> <em class="replaceable">timeout</em> option
+(which can also be specified as <tt class="literal">-
+-timeout=</tt><em class="replaceable">number</em>) specifies the
+number of seconds to wait before shutting down, and the
+<tt class="literal">-c</tt> <em class="replaceable">comment</em> option
+(which can also be specified as <tt class="literal">-
+-comment=</tt><em class="replaceable">string</em>) can be used to
+specify a message to the client user. On Windows, the comment appears
+in the Message area in the System Shutdown dialog box.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">rpc trustdom add</tt> <em class="replaceable">domain_name</em></b></dt>
+<dd>
+<p>Adds an account for the trust relationship with the specified Windows
+NT domain.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">rpc trustdom establish</tt> <em class="replaceable">domain_name</em></b></dt>
+<dd>
+<p>Establishes a trust relationship with the specified Windows NT domain.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">rpc trustdom revoke</tt> <em class="replaceable">domain_name</em></b></dt>
+<dd>
+<p>Revokes the trust relationship with the specified Windows NT domain.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">search</tt></b></dt>
+<dd>
+<p>See the <tt class="literal">ads search</tt> function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">server</tt></b></dt>
+<dd>
+<p>Lists servers in the domain or workgroup, which defaults to the value
+of the <tt class="literal">workgroup</tt> parameter in the Samba
+configuration file.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">session</tt></b></dt>
+<dd>
+<p>Lists clients with open sessions to the server.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">session delete NetBIOS_</tt><em class="replaceable">name</em></b></dt>
+<dd>
+<p>Closes the session to the server from the specified client. A synonym
+is <tt class="literal">session</tt> <tt class="literal">close</tt>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">session close</tt></b></dt>
+<dd>
+<p>A synonym for <tt class="literal">session delete</tt>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">share</tt></b></dt>
+<dd>
+<p>Lists the shares offered by the server. When a Windows 95/98/Me
+server is the target system, it might be necessary to specify the
+method as <tt class="literal">rap</tt> for this to work properly.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">share add</tt> <em class="replaceable">share_name</em><tt class="literal">=</tt><em class="replaceable">server_path</em></b></dt>
+<dd>
+<p>Adds a share on the target server. The name of the share and the
+folder to be shared are specified by the
+<em class="replaceable">share_name</em><tt class="literal">=</tt><em class="replaceable">server_path</em>
+argument, with <em class="replaceable">server_path</em> the Windows
+directory name, with spaces and other special characters (if any)
+quoted and with the backslashes escaped (e.g.,
+&quot;<tt class="literal">data=C:\\Documents</tt> <tt class="literal">and</tt>
+<tt class="literal">Settings\\jay\\Desktop\\data</tt>&quot;). The
+<tt class="literal">-C</tt> <em class="replaceable">comment</em> option
+(which can also be specified as <tt class="literal">-
+-comment=</tt><em class="replaceable">string</em>) can be used to
+define a description for the share. The <tt class="literal">-M</tt>
+<em class="replaceable">number</em> option (which can also be specified
+as <tt class="literal">--maxusers=</tt><em class="replaceable">number</em>)
+can be used to set the maximum number of users that can connect to
+the share. The method (<tt class="literal">rap</tt> or
+<tt class="literal">rpc</tt>) might need to be specified for this function
+to work. The regular folder icon cannot change into a
+&quot;shared folder&quot; icon in Windows
+Explorer until the display is refreshed.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">share delete</tt> <em class="replaceable">share_name</em></b></dt>
+<dd>
+<p>Deletes a share from the target server. The
+<em class="replaceable">share_name</em> argument is simply the name of
+the share on the target server, not a UNC. The method
+(<tt class="literal">rap</tt> or <tt class="literal">rpc</tt>) might need to be
+specified for this function to work. The &quot;shared
+folder&quot; icon in Windows Explorer cannot change back
+to the regular folder icon until the display is refreshed.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">shutdown</tt></b></dt>
+<dd>
+<p>See the <tt class="literal">rpc shutdown</tt> function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">status</tt></b></dt>
+<dd>
+<p>See the <tt class="literal">ads status</tt> function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">time</tt></b></dt>
+<dd>
+<p>Displays the system time&mdash;in Unix <em class="emphasis">date</em>
+command format&mdash;on the target system.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">time set</tt></b></dt>
+<dd>
+<p>Sets the local system's hardware clock using the
+time obtained from the operating system.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">time system</tt></b></dt>
+<dd>
+<p>Sets the time on the local system using the time obtained from the
+remote system.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">time zone</tt></b></dt>
+<dd>
+<p>Prints the time zone (in hours from GMT) in use on the system.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">trustdom add</tt></b></dt>
+<dd>
+<p>See the <tt class="literal">rpc trustdom add</tt> function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">trustdom establish</tt></b></dt>
+<dd>
+<p>See the <tt class="literal">rpc trustdom establish</tt> function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">trustdom revoke</tt></b></dt>
+<dd>
+<p>See the <tt class="literal">rpc trustdom revoke</tt> function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">user</tt></b></dt>
+<dd>
+<p>Lists user accounts. The method can be specified as
+<tt class="literal">ads</tt>, <tt class="literal">rap</tt>, or
+<tt class="literal">rpc</tt>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">user add</tt> <em class="replaceable">username [password]</em></b></dt>
+<dd>
+<p>Adds a user account for the user specified by
+<em class="replaceable">username</em>. The <tt class="literal">-c</tt>
+<em class="replaceable">comment</em> option (which can also be
+specified as <tt class="literal">-
+-comment=</tt><em class="replaceable">string</em>) can be used to
+set a comment for the account. The <tt class="literal">-F</tt>
+<em class="replaceable">user_flags</em> option can be used to set flags
+(specified in numeric format) for the account. The method can be
+specified as <tt class="literal">ads</tt>, <tt class="literal">rap</tt>, or
+<tt class="literal">rpc</tt>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">user delete</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Deletes the specified user's account. The method can
+be specified as <tt class="literal">ads</tt>, <tt class="literal">rap</tt>, or
+<tt class="literal">rpc</tt>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">user info</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Lists the domain groups to which the specified user belongs. The
+method can be specified as <tt class="literal">ads</tt>,
+<tt class="literal">rap</tt>, or <tt class="literal">rpc</tt>. <a name="INDEX-10"/></p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-11"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>nmblookup</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>The <em class="emphasis">nmblookup</em> program is a client program that
+allows command-line access to NetBIOS name service for resolving
+NetBIOS computer names into IP addresses. The program works by
+broadcasting its queries on the local subnet until a machine with the
+specified name responds. You can think of it as a Windows analog of
+<em class="emphasis">nslookup</em> or <em class="emphasis">dig</em>. This is
+useful for looking up regular computer names, as well as
+special-purpose names, such as _ _MSBROWSE_ _ . If you wish to query
+for a particular type of NetBIOS name, add the NetBIOS type to the
+end of the name, using the format
+<em class="replaceable">netbios_name</em><tt class="literal">#&lt;</tt><em class="replaceable">dd</em><tt class="literal">&gt;</tt>.</p>
+<div class="sect1"><a name="appc-28-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">nmblookup <em class="replaceable">[options] netbios_name</em></pre></blockquote>
+
+
+</div>
+
+<div class="sect1"><a name="appc-29-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-A</tt></b></dt>
+<dd>
+<p>Interprets <em class="replaceable">netbios_name</em> as an IP address
+and does a node status query on it.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-B</tt> <em class="replaceable">broadcast_address</em></b></dt>
+<dd>
+<p>Sends the query to the given broadcast address. The default is to
+send the query to the broadcast address of the primary network
+interface.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-d</tt> <em class="replaceable">debug_level</em></b></dt>
+<dd>
+<p>Sets the debug (sometimes called logging) level. The level can range
+from 0 to 10. Debug level 0 logs only the most important messages.
+Level 1 is normal; levels 3 and above are primarily used by
+developers for debugging the <em class="emphasis">nmblookup</em> program
+itself and slow the program considerably.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-f</tt></b></dt>
+<dd>
+<p>Prints the flags in the packet headers.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-h</tt></b></dt>
+<dd>
+<p>Prints command-line usage information for the program.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-i</tt> <em class="replaceable">scope</em></b></dt>
+<dd>
+<p>Sets a NetBIOS scope identifier. NetBIOS scope is a rarely used
+precursor to workgroups.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-M</tt></b></dt>
+<dd>
+<p>Searches for a local master browser by looking up
+<em class="replaceable">netbios_name</em><tt class="literal">&lt;1d&gt;</tt>.
+If <em class="replaceable">netbios_name</em> is specified as a dash
+(<tt class="literal">-</tt>), a lookup is done on the special name _
+_MSBROWSE_ _ .</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-R</tt></b></dt>
+<dd>
+<p>Sets the &quot;recursion desired&quot; bit in
+the packet. This causes the system that responds to try a WINS lookup
+and return the address and any other information the WINS server has
+saved.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-r</tt></b></dt>
+<dd>
+<p>Uses the <tt class="literal">root</tt> port of 137. This option exists as a
+bug workaround for Windows 95. This option might require the user to
+be superuser.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-S</tt></b></dt>
+<dd>
+<p>Performs a node status query once the name query has returned an IP
+address. This returns all the resource types that the system knows
+about, including their numeric attributes. For example:</p>
+
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>nmblookup -S toltec</b></tt>
+querying toltec on 172.16.1.255
+172.16.1.1 toltec&lt;00&gt;
+Looking up status of 172.16.1.1
+    TOLTEC          &lt;00&gt; -         M &lt;ACTIVE&gt;
+    TOLTEC          &lt;03&gt; -         M &lt;ACTIVE&gt;
+    TOLTEC          &lt;20&gt; -         M &lt;ACTIVE&gt;
+    ..__MSBROWSE__. &lt;01&gt; - &lt;GROUP&gt; M &lt;ACTIVE&gt;
+    METRAN          &lt;00&gt; - &lt;GROUP&gt; M &lt;ACTIVE&gt;
+    METRAN          &lt;1b&gt; -         M &lt;ACTIVE&gt;
+    METRAN          &lt;1c&gt; - &lt;GROUP&gt; M &lt;ACTIVE&gt;
+    METRAN          &lt;1d&gt; -         M &lt;ACTIVE&gt;
+    METRAN          &lt;1e&gt; - &lt;GROUP&gt; M &lt;ACTIVE&gt;</pre></blockquote>
+</dd>
+
+
+<dt><b><tt class="literal">-s</tt> <em class="replaceable">configuration_ file</em></b></dt>
+<dd>
+<p>Specifies the location of the Samba configuration file. Although the
+file defaults to <em class="filename">/usr/local/samba/lib/smb.conf</em>,
+you can override it here on the command line. Normally used for
+debugging.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-T</tt></b></dt>
+<dd>
+<p>Translates IP addresses into resolved names.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-U</tt> <em class="replaceable">unicast_address</em></b></dt>
+<dd>
+<p>Performs a unicast query to the specified address. Used with
+<tt class="literal">-R</tt> to query WINS servers.</p>
+</dd>
+
+</dl>
+
+
+<p>Note that <em class="emphasis">nmblookup</em> has no option for setting
+the workgroup. You can get around this by putting
+<tt class="literal">workgroup</tt> <tt class="literal">=</tt>
+<em class="replaceable">workgroup_name</em> in a file and passing it to
+<em class="emphasis">nmblookup</em> with the
+<tt class="literal">-s</tt> option.</p>
+
+</div>
+</div>
+
+<a name="INDEX-12"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>pdbedit</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>This program, new to Samba 3.0, can be used to manage accounts that
+are held in a SAM database. The implementation of the database can be
+any of the types supported by Samba, including the
+<em class="filename">smbpasswd</em> file, LDAP, NIS+ and the
+<em class="filename">tdb</em> database library. The user must be the
+superuser to use this tool.</p>
+<div class="sect1"><a name="appc-31-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">pdbedit <em class="replaceable">[options]</em></pre></blockquote>
+
+
+</div>
+
+<div class="sect1"><a name="appc-32-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-a</tt></b></dt>
+<dd>
+<p>Adds the user specified by the <tt class="literal">-u</tt> option to the
+SAM database. The command issues a prompt for the
+user's password.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-d</tt> <em class="replaceable">drive_letter</em></b></dt>
+<dd>
+<p>Sets the Windows drive letter to which to map the
+user's home directory. The drive letter should be
+specified as a letter followed by a colon&mdash;e.g.,
+<tt class="literal">H</tt>:.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-D</tt> <em class="replaceable">debug_level</em></b></dt>
+<dd>
+<p>Sets the debug (sometimes called logging) level. The level can range
+from 0 to 10. Debug level 0 logs only the most important messages.
+Level 1 is normal, and levels 3 and above are primarily for
+debugging.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-e</tt> <em class="replaceable">pwdb_backend</em></b></dt>
+<dd>
+<p>Exports the user account database to another format, written to the
+specified location. Used for migrating from one type of account
+database to another. The <em class="replaceable">pwdb_backend</em>
+argument is specified in the format of a database type, followed by a
+colon, then the location of the database. For example, to export the
+existing account database to an <em class="filename">smbpasswd</em>
+database in the file
+<em class="filename">/usr/local/samba/private/smbpw</em>,
+<em class="replaceable">pwdb_backend</em> would be specified as
+<tt class="literal">smbpasswd:/usr/local/samba/private/smbpw</tt>. The
+allowable database types are <tt class="literal">smbpasswd</tt>,
+<tt class="literal">smbpasswd nua</tt>, <tt class="literal">tdbsam</tt>,
+<tt class="literal">tdbsam nua</tt>, <tt class="literal">ldapsam</tt>,
+<tt class="literal">ldapsam_nua</tt>, and <tt class="literal">plugin</tt>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-f</tt> <em class="replaceable">full_name</em></b></dt>
+<dd>
+<p>Sets the full name of the user specified with the
+<tt class="literal">-u</tt> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-h</tt> <em class="replaceable">unc</em></b></dt>
+<dd>
+<p>Sets the home directory path (as a UNC) for the user specified with
+the <tt class="literal">-u</tt> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-i</tt> <em class="replaceable">pwdb_backend</em></b></dt>
+<dd>
+<p>Specifies a password database backend from which to retrieve account
+information, overriding the one specified by the <tt class="literal">passdb
+backend</tt> parameter in the Samba configuration file. This,
+along with the <tt class="literal">-e</tt> option, is useful for migrating
+user accounts from one type of account database to another. See the
+<tt class="literal">-e</tt> option regarding how to specify the
+<em class="replaceable">pwdb_backend</em> argument.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-l</tt></b></dt>
+<dd>
+<p>Lists the user accounts in the database. See also the
+<tt class="literal">-v</tt> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-m</tt></b></dt>
+<dd>
+<p>Indicates that the account is a computer account rather than a user
+account. Used only with the <tt class="literal">-a</tt> option when
+creating the account. In this case, the <tt class="literal">-u</tt> option
+specifies the computer name rather than a username.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-p</tt> <em class="replaceable">unc</em></b></dt>
+<dd>
+<p>Sets the directory in which the user's profile is
+kept. The directory is specified as a UNC.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-s</tt> <em class="replaceable">unc</em></b></dt>
+<dd>
+<p>Specifies the UNC of the user's logon script.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-u</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Specifies the username of the account to add (with the
+<tt class="literal">-a</tt> option), delete (with the <tt class="literal">-x</tt>
+option), or modify.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-v</tt></b></dt>
+<dd>
+<p>Selects verbose mode when listing accounts with the
+<tt class="literal">-l</tt> option. The account fields will be printed.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-w</tt></b></dt>
+<dd>
+<p>Selects the <tt class="literal">smbpasswd</tt> listing mode, for use with
+the <tt class="literal">-l</tt> option, which prints information in the
+same format as it would appear in an <em class="filename">smbpasswd</em>
+file.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-x</tt></b></dt>
+<dd>
+<p>Deletes the user (specified with the <tt class="literal">-u</tt> option)
+from the account database.</p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-13"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>rpcclient</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>This is a program for issuing administrative commands that are
+implemented using Microsoft RPCs. It provides access to the RPCs that
+Windows administrative GUIs use for system management. The
+<em class="emphasis">rpcclient</em> command is mainly for use by advanced
+users who understand the RPCs. More information on these can be found
+in Microsoft's Platform Software Development Kit
+(SDK), available for download from the Microsoft web site at
+<a href="http://www.microsoft.com">http://www.microsoft.com</a>.</p><p>You can run a single <em class="emphasis">rpcclient</em> command by using
+the <tt class="literal">-c command string</tt> option, or interactively
+with <em class="emphasis">rpcclient</em> prompting for commands.</p>
+<div class="sect1"><a name="appc-34-fm2xml"/>
+
+<h4 class="refsect1">Command Synopsis</h4>
+
+<p>rpcclient <em class="replaceable">server [options]</em></p>
+
+
+</div>
+
+<div class="sect1"><a name="appc-35-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-A</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Specifies a file from which to read the authentication values used in
+the connection. The format of the file is as follows:</p>
+
+<blockquote><pre class="code">username = <em class="replaceable">value</em>
+password = <em class="replaceable">value</em>
+domain   = <em class="replaceable">value</em></pre></blockquote>
+
+<p>This option is used to avoid password prompts or to have the password
+appear in plain text inside scripts. The permissions on the file
+should be very restrictive (0600, for example) to prevent access from
+unwanted users.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-c</tt> <em class="replaceable">command_string</em></b></dt>
+<dd>
+<p>Executes a sequence of semicolon-separated commands. Commands are
+listed in the following section.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-d</tt> <em class="replaceable">debuglevel</em></b></dt>
+<dd>
+<p>Sets the debug (sometimes called logging) level. The level can range
+from 0 to 10. Specifying the value on the command line overrides the
+value specified in the <em class="filename">smb.conf</em> file. Debug
+level 0 logs only the most important messages; level 1 is normal;
+levels 3 and above are primarily for debugging and slow the program
+considerably.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-h</tt></b></dt>
+<dd>
+<p>Prints a summary of options.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-l</tt> <em class="replaceable">logbasename</em></b></dt>
+<dd>
+<p>Sets the filename for log/debug files. The extension
+<em class="filename">.client</em> is appended to the filename.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-N</tt></b></dt>
+<dd>
+<p>Does not prompt for a password. This is used when Samba is configured
+for share-mode security and a service with no password is being
+accessed.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-s</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Specifies the location of the Samba configuration file, which by
+default is usually
+<em class="filename">/usr/local/samba/lib/smb.conf</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-U</tt> <em class="replaceable">username[</em><tt class="literal">%</tt><em class="replaceable">password]</em></b></dt>
+<dd>
+<p>Sets the SMB username or username and password to use. Be careful
+when specifying the password with
+<tt class="literal">%</tt><em class="replaceable">password</em>; this is a
+major security risk. If
+<tt class="literal">%</tt><em class="replaceable">password</em> is not
+specified, the user will be prompted for the password, which will not
+be echoed. Normally the user is set from the USER or LOGNAME
+environment variable. The <tt class="literal">-U</tt> option by itself
+means to use the guest account. See also <tt class="literal">-A</tt>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-W</tt> <em class="replaceable">domain</em></b></dt>
+<dd>
+<p>Sets the domain, overriding the <tt class="literal">workgroup</tt>
+parameter in the Samba configuration file. If the domain is the
+server's NetBIOS name, it causes the client to log
+on using the server's local SAM database rather than
+the SAM of the domain.</p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-14"/><a name="INDEX-15"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>rpcclient commands</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>Aside from a few miscellaneous commands, the
+<em class="emphasis">rpclient</em> commands fall into three groups:
+LSARPC, SAMR, and SPOOLSS. The function names mentioned in some of
+the commands are those documented in the Microsoft Platform SDK.</p>
+<div class="sect1"><a name="appc-37-fm2xml"/>
+
+<h4 class="refsect1">General commands</h4>
+
+<dl>
+<dt><b><tt class="literal">debuglevel</tt> <em class="replaceable">level</em></b></dt>
+<dd>
+<p>Sets the debugging level to <em class="replaceable">level</em>. With no
+argument, the current debugging level is printed.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">help</tt></b></dt>
+<dd>
+<p>Prints help on the commands.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">quit</tt></b></dt>
+<dd>
+<p>Exits <em class="emphasis">rpcclient</em>. A synonym is
+<tt class="literal">exit</tt>.</p>
+</dd>
+
+</dl>
+
+
+</div>
+
+<div class="sect1"><a name="appc-38-fm2xml"/>
+
+<h4 class="refsect1">Local Security Authority Remote Procedure Calls (LSARPC) commands</h4>
+
+<dl>
+<dt><b><tt class="literal">enumprivs</tt></b></dt>
+<dd>
+<p>Lists the types of privileges known to this domain.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">enumtrust</tt></b></dt>
+<dd>
+<p>Lists the domains trusted by this domain.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">getdispname</tt> <em class="replaceable">priv_name</em></b></dt>
+<dd>
+<p>Prints information on the privilege named
+<em class="replaceable">priv_name</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">lookupsids</tt> <em class="replaceable">name</em></b></dt>
+<dd>
+<p>Finds a name that corresponds to a security identifier (SID).</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">lookupnames</tt> <em class="replaceable">sid</em></b></dt>
+<dd>
+<p>Finds the SID for one or more names.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">lsaquery</tt></b></dt>
+<dd>
+<p>Queries the LSA object.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">lsaenumsid</tt></b></dt>
+<dd>
+<p>Lists SIDs for the local LSA.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">lsaquerysecobj</tt></b></dt>
+<dd>
+<p>Prints information on security objects for the LSA.</p>
+</dd>
+
+</dl>
+
+
+</div>
+
+<div class="sect1"><a name="appc-39-fm2xml"/>
+
+<h4 class="refsect1">Security Access Manager RPC (SAMR) commands</h4>
+
+<dl>
+<dt><b><tt class="literal">createdomuser</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Adds a new user in the domain.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">deletedomuser</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Removes a user from the domain.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">enumalsgroups</tt> <em class="replaceable">type</em></b></dt>
+<dd>
+<p>Lists alias groups in the domain, along with their group RIDs. The
+<em class="replaceable">type</em> argument can be either
+<tt class="literal">builtin</tt>, to list Windows built-in groups such as
+<tt class="literal">Administrators</tt> and <tt class="literal">Power</tt>
+<tt class="literal">Users</tt>, or <tt class="literal">domain</tt>, to list
+groups in the domain. See also the
+<em class="emphasis">queryuseraliases</em> command.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">enumdomgroups</tt></b></dt>
+<dd>
+<p>Lists the groups in the domain, along with their group RIDs.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">queryaliasmem</tt> <em class="replaceable">user_rid</em></b></dt>
+<dd>
+<p>Prints information regarding alias membership. See also the
+<em class="emphasis">queryuseraliases</em> command.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">querydispinfo</tt></b></dt>
+<dd>
+<p>Prints out the account database. The information printed includes the
+RID, username, and full name of each user. The RID is printed in
+hexadecimal notation and can be used in this form for commands that
+take a RID as an argument.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">querydominfo</tt></b></dt>
+<dd>
+<p>Prints information regarding the domain. This includes the name of
+the domain, as well as the number of users, groups, and aliases.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">querygroup</tt> <em class="replaceable">group_rid</em></b></dt>
+<dd>
+<p>Given a group RID, prints the group name, description, number of
+members, and group description.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">queryuser</tt> <em class="replaceable">user_rid</em></b></dt>
+<dd>
+<p>Given a user RID, prints the corresponding username, full name, and
+other information pertaining to the user.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">queryuseraliases</tt> <em class="replaceable">type</em> <em class="replaceable">user_rid</em></b></dt>
+<dd>
+<p>Prints aliases for the user. The <em class="replaceable">type</em>
+argument can be either <tt class="literal">builtin</tt> or
+<tt class="literal">domain</tt>. Aliases are used with the Windows
+messaging service and act like usernames, but they can be attached to
+a computer rather than a user. This allows messages intended for a
+user to be sent to a computer on which the user is either not logged
+on, or logged on under another username.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">queryusergroups</tt> <em class="replaceable">user_rid</em></b></dt>
+<dd>
+<p>Prints information on each group inhabited by the user.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">querygroupmem</tt> <em class="replaceable">group_rid</em></b></dt>
+<dd>
+<p>Prints the RID and attributes for each member of the group.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">samlookupnames</tt> <em class="replaceable">type username</em></b></dt>
+<dd>
+<p>Looks up the <em class="replaceable">username</em> in the SAM database
+and prints its associated RID. The <em class="replaceable">type</em>
+argument can be either <tt class="literal">builtin</tt>, to look up
+built-in Windows usernames, or <tt class="literal">domain</tt>, to look up
+names in the domain.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">samlookuprids</tt> <em class="replaceable">type rid</em></b></dt>
+<dd>
+<p>Looks up <em class="replaceable">rid</em> in the SAM database and
+prints its associated group or username. The
+<em class="replaceable">type</em> argument can be either
+<tt class="literal">builtin</tt>, to look up built-in Windows usernames, or
+<tt class="literal">domain</tt>, to look up names in the domain. The RID
+argument can be given in either 0xDDD hexadecimal notation or
+decimal.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">samquerysecobj</tt></b></dt>
+<dd>
+<p>Prints information on security objects (such as ACLs) in the SAM
+database.</p>
+</dd>
+
+</dl>
+
+
+</div>
+
+<div class="sect1"><a name="appc-40-fm2xml"/>
+
+<h4 class="refsect1">Windows NT/2000/XP Printing Services (SPOOLSS) commands</h4>
+
+<dl>
+<dt><b><tt class="literal">adddriver</tt> <em class="replaceable">arch config_file</em> </b></dt>
+<dd>
+<p>Adds a printer driver to the server. The driver files must already
+exist in the directory returned by <em class="emphasis">getdriverdir</em>.
+The <em class="replaceable">arch</em> argument can be one of
+<tt class="literal">Windows 4.0</tt> for Windows 95/98/Me, or
+<tt class="literal">Windows NT x86</tt>, <tt class="literal">Windows NT
+PowerPC</tt>, <tt class="literal">Windows Alpha_AXP</tt>, and
+<tt class="literal">Windows NT R4000</tt>. Others might be introduced in
+the future.</p>
+
+
+<p>The <em class="replaceable">config_file</em> should contain:</p>
+
+<blockquote><pre class="code">Long Printer Name:\
+Driver File Name:\
+Data File Name:\
+Config File Name:\
+Help File Name:\
+NULL:\
+Default Data Type:\</pre></blockquote>
+
+<p>followed by a comma-separated list of files. Any empty fields should
+contain the string <tt class="literal">NULL</tt>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">addprinter</tt> <em class="replaceable">printername sharename drivername port</em> </b></dt>
+<dd>
+<p>Adds a printer on the remote server as
+<em class="replaceable">sharename</em>. The printer driver must already
+be installed on the server with <em class="emphasis">adddriver</em>, and
+the port must be a valid port name returned by
+<em class="emphasis">enumports</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">deldriver</tt> <em class="replaceable">drivername</em></b></dt>
+<dd>
+<p>Deletes a printer driver (for all architectures) from the
+server's list of printer drivers.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">enumports</tt> <em class="replaceable">[level]</em></b></dt>
+<dd>
+<p>Prints information regarding the printer ports on the server. The
+<em class="replaceable">level</em> argument can be <tt class="literal">1</tt>
+or <tt class="literal">2</tt>. Level 1 is the default and prints out only
+the Port Name. Information level 2 is the Port Name, Monitor Name,
+Description, and Port Type.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">enumdrivers</tt> <em class="replaceable">[level]</em> </b></dt>
+<dd>
+<p>Lists all the printer drivers on the system. The
+<em class="replaceable">level</em> argument specifies the information
+level. Level 1 is the default and prints the Driver Name(s). Level 2
+prints the Version, Driver Name, Architecture, Driver Path, Data
+File, and Config File. Level 3 prints the contents of Level 2, plus
+the Help File, one or more Dependent Files, Monitor Name, and Default
+Data Type.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">enumprinters</tt> <em class="replaceable">[level]</em></b></dt>
+<dd>
+<p>Lists all installed printers, regardless of whether they are shared.
+The <em class="replaceable">level</em> argument specifies the
+information level. Level 1 is the default, and prints Flags, Name,
+Description, and Comment. Level 2 prints the Server Name, Printer
+Name, Share Name, Port Name, Driver Name, Comment, Location,
+Separator File, Print Processor, Data Type, Parameters, Attributes,
+Priority, Default Priority, Start Time, Until Time, Status, Current
+Jobs, Average PPM (pages per minute), and a Security Descriptor.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">getdriver</tt> <em class="replaceable">[level] printername</em></b></dt>
+<dd>
+<p>Prints the printer driver information for the given printer. The
+<em class="replaceable">level</em> argument specifies the information
+level.</p>
+
+
+<p>Level 1 is the default, and prints the Driver Name. Level 2 prints
+the Version, Driver Name, Architecture, Driver Path, Data File, and
+Config File. Level 3 prints the contents of level 2, plus the Help
+File, one or more Dependent Files, Monitor Name, and Default Data
+Type.</p>
+</dd>
+
+
+<dt><b><tt class="literal">getdriverdir</tt> <em class="replaceable">arch</em></b></dt>
+<dd>
+<p>Retrieves the share name and directory for storing printer driver
+files for a given architecture. Possible values for
+<em class="replaceable">arch</em> are &quot;<tt class="literal">Windows</tt>
+<tt class="literal">4.0</tt>&quot; for Windows 95/98/Me,
+&quot;<tt class="literal">Windows</tt> <tt class="literal">NT</tt>
+<tt class="literal">x86</tt>&quot; for Windows NT on Intel,
+&quot;<tt class="literal">Windows</tt> <tt class="literal">NT</tt>
+<tt class="literal">PowerPC</tt>&quot; for Windows NT on PowerPC,
+&quot;<tt class="literal">Windows</tt> <tt class="literal">Alpha</tt>
+<tt class="literal">AXP</tt>&quot; for Windows NT on Alpha, and
+&quot;<tt class="literal">Windows</tt> <tt class="literal">NT</tt>
+<tt class="literal">R4000</tt>&quot; for Windows NT on MIPS. Include the quote
+marks in the command.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">getprinter</tt> <em class="replaceable">printername</em></b></dt>
+<dd>
+<p>Prints the current printer information. The
+<em class="replaceable">level</em> argument specifies the information
+level.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">openprinter</tt> <em class="replaceable">printername</em></b></dt>
+<dd>
+<p>Attempts to open and close a specified printer and reports whether it
+was successful.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">setdriver</tt> <em class="replaceable">printername drivername</em></b></dt>
+<dd>
+<p>Unconditionally updates the printer driver used by an installed
+printer. Both the printer and printer driver must already be
+correctly installed on the print server.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">setprinter</tt> <em class="replaceable">printername comment</em></b></dt>
+<dd>
+<p>Assigns a comment string to a printer.<a name="INDEX-15"/></p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-16"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>smbcacls</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>This program provides a way of modifying Windows NT ACLs on files and
+directories shared by the Samba server.</p>
+<div class="sect1"><a name="appc-42-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">smbcacls //<em class="replaceable">server</em>/<em class="replaceable">share filename</em> <em class="replaceable">[options]</em></pre></blockquote>
+
+
+</div>
+
+<div class="sect1"><a name="appc-43-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-A</tt> <em class="replaceable">acls</em></b></dt>
+<dd>
+<p>Adds one or more ACLs to the file or directory. Any ACLs already
+existing for the file or directory are unchanged.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-M</tt> <em class="replaceable">acls</em></b></dt>
+<dd>
+<p>Modifies the <em class="replaceable">mask</em> of the ACLs specified.
+Refer to the following section, &quot;Specifying
+ACLs,&quot; for details.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-D</tt> <em class="replaceable">acls</em></b></dt>
+<dd>
+<p>Deletes the specified ACLs.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-S</tt> <em class="replaceable">acls</em></b></dt>
+<dd>
+<p>Sets the specified ACLs, deleting any ACLs previously set on the file
+or directory. The ACLs must contain at least a revision, type, owner,
+and group.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-U</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Sets the username used to connect to the specified service. The user
+is prompted for a password unless the argument is specified as
+<em class="replaceable">username</em><tt class="literal">%</tt><em class="replaceable">password</em>.
+(Specifying the password on the command line is a security risk.) If
+<tt class="literal">-U</tt>
+<em class="replaceable">domain</em><tt class="literal">\\</tt><em class="replaceable">username</em>
+is specified, the specified domain or workgroup will be used in place
+of the one specified in the <em class="filename">smb.conf</em> file.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-C</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Changes the owner of the file or directory. This is a shortcut for
+<tt class="literal">-M</tt>
+<tt class="literal">OWNER</tt>:<em class="replaceable">username</em>. The
+<em class="replaceable">username</em> argument can be given as a
+username or a SID in the form
+<tt class="literal">S-1-</tt><em class="replaceable">N-N-D-D-D-R</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-G</tt> <em class="replaceable">groupname</em></b></dt>
+<dd>
+<p>Changes the group of the file or directory. This is a shortcut for
+<tt class="literal">-M</tt>
+<tt class="literal">GROUP</tt>:<em class="replaceable">groupname</em>. The
+<em class="replaceable">groupname</em> argument can be given as a group
+name or a SID in the form
+<tt class="literal">S-1-</tt><em class="replaceable">N-N-D-D-D-R</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-n</tt></b></dt>
+<dd>
+<p>Causes all ACL information to be displayed in numeric format rather
+than in readable strings.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-h</tt></b></dt>
+<dd>
+<p>Prints a help message.</p>
+</dd>
+
+</dl>
+
+
+</div>
+
+<div class="sect1"><a name="appc-44-fm2xml"/>
+
+<h4 class="refsect1">Specifying ACLs</h4>
+<p>In the previous options, the same format is always used when
+specifying ACLs. An ACL is made up of one or more Access Control
+Entries (ACEs), separated by either commas or escaped newlines. An
+ACE can be one of the following:</p>
+
+<blockquote class="simplelist">
+
+<p><tt class="literal">REVISION</tt>:<em class="replaceable">revision_number</em></p>
+
+
+
+
+<p><tt class="literal">OWNER</tt>:<em class="replaceable">username_or_SID</em></p>
+
+
+
+
+<p><tt class="literal">GROUP</tt>:<em class="replaceable">group_name_or_SID</em></p>
+
+
+
+
+<p><tt class="literal">ACL</tt>:<em class="replaceable">name_or_SID</em>:<em class="replaceable">type</em>/<em class="replaceable">flags</em>/<em class="replaceable">mask</em></p>
+
+</blockquote>
+
+
+<p>The <em class="replaceable">revision_number</em> should always be 1.
+The <tt class="literal">OWNER</tt> and <tt class="literal">GROUP</tt> entries can
+be used to set the owner and group for the file or directory. The
+names can be the textual ones or SIDs in the form
+<tt class="literal">S-1-</tt><em class="replaceable">N</em><tt class="literal">-</tt><em class="replaceable">N</em><tt class="literal">-</tt><em class="replaceable">D</em><tt class="literal">-</tt><em class="replaceable">D-D-R</em>.</p>
+
+<p>The <tt class="literal">ACL</tt> entry specifies what access rights to
+apply to the file or directory. The
+<em class="replaceable">name_or_SID</em> field specifies to which user
+or group the permissions apply and can be supplied either as a
+textual name or a SID. An ACE can be used to either allow or deny
+access. The <em class="replaceable">type</em> field is set to
+<tt class="literal">1</tt> to specify a permission to be allowed or
+<tt class="literal">0</tt> for specifying a permission to deny. The
+<em class="replaceable">mask</em> field is the name of the permission
+and is one of the following:</p>
+
+<dl>
+<dt><b><tt class="literal">R</tt></b></dt>
+<dd>
+<p>Read access.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">W</tt></b></dt>
+<dd>
+<p>Write access.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">X</tt></b></dt>
+<dd>
+<p>Execute permission.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">D</tt></b></dt>
+<dd>
+<p>Permission to delete.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">P</tt></b></dt>
+<dd>
+<p>Change permissions on the object.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">O</tt></b></dt>
+<dd>
+<p>Take ownership.</p>
+</dd>
+
+</dl>
+
+
+<p>The following combined permissions can also be specified:</p>
+
+<dl>
+<dt><b><tt class="literal">READ</tt></b></dt>
+<dd>
+<p>Equivalent to RX permissions</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">CHANGE</tt></b></dt>
+<dd>
+<p>Equivalent to RWXD permissions</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">FULL</tt></b></dt>
+<dd>
+<p>Equivalent to RWXDPO permissions</p>
+</dd>
+
+</dl>
+
+
+<p>The <em class="replaceable">flags</em> field is for specifying how
+objects in directories are to inherit their default permissions from
+their parent directory. For files, <em class="replaceable">flags</em>
+is normally set to <tt class="literal">0</tt>. For directories,
+<em class="replaceable">flags</em> is usually set to either
+<tt class="literal">9</tt> or <tt class="literal">2</tt>.</p>
+
+</div>
+</div>
+
+<a name="INDEX-17"/><a name="INDEX-18"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>smbclient</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>The <em class="emphasis">smbclient</em> program is the
+&quot;Swiss army knife&quot; of the Samba
+suite. Initially developed as a testing tool, it has become a command
+shell capable of acting as a general-purpose Unix client, with a
+command set very similar to that of <em class="emphasis">ftp</em>. It
+offers the following set of functions:</p><ul><li>
+<p>Interactive file transfer, similar to <em class="emphasis">ftp</em></p>
+</li>
+<li>
+<p>Interactive printing to shared SMB printers</p>
+</li>
+<li>
+<p>Interactive tar format archiving</p>
+</li>
+<li>
+<p>Sending messages on the SMB network</p>
+</li>
+<li>
+<p>Batch mode tar format archiving</p>
+</li>
+<li>
+<p>&quot;What services do you have?&quot;
+querying</p>
+</li>
+<li>
+<p>Debugging</p>
+</li></ul>
+<div class="sect1"><a name="appc-45-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">smbclient //<em class="replaceable">server</em>/<em class="replaceable">share</em> <em class="replaceable">[ password] [options]</em></pre></blockquote>
+<p>It is possible to run <em class="emphasis">smbclient</em>
+noninteractively, for use in scripts, by specifying the
+<tt class="literal">-c</tt> option along with a list of commands to
+execute. Otherwise, <em class="emphasis">smbclient</em> runs in
+interactive mode, prompting for commands such as this:</p>
+
+<blockquote><pre class="code">smb:\&gt;</pre></blockquote>
+<p>The backslash in the prompt is replaced by the current directory
+within the share as you change your working directory with
+<em class="emphasis">smbclient</em>'s
+<em class="emphasis">cd</em> command.</p>
+
+</div>
+
+<div class="sect1"><a name="appc-46-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-A</tt> <em class="replaceable">authfile</em></b></dt>
+<dd>
+<p>Specifies a file from which to read the username and password used
+for the connection. The format of the file is as follows:</p>
+
+
+<blockquote><pre class="code">username = <em class="replaceable">value</em>
+password = <em class="replaceable">value</em>
+domain   = <em class="replaceable">value</em></pre></blockquote>
+
+<p>This is to avoid having the password prompted for or have it appear
+in plain text in scripts. The permissions on the file should be very
+restrictive (0600, for example) to prevent access by unwanted users.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-b</tt> <em class="replaceable">buffer_size</em></b></dt>
+<dd>
+<p>Sets the size of the buffer used when transferring files. It defaults
+to 65520 bytes and can be changed as a tuning measure. Generally it
+should be quite large or set to match the size of the buffer on the
+remote system. It can be set smaller to work around Windows bugs:
+some Windows 98 systems work best with a buffer size of 1200.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-B</tt> <em class="replaceable">IP_addr</em></b></dt>
+<dd>
+<p>Sets the broadcast address.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-c</tt> <em class="replaceable">command_string</em> </b></dt>
+<dd>
+<p>Passes a command string to the <em class="emphasis">smbclient</em> command
+interpreter. The argument consists of a semicolon-separated list of
+commands to be executed.</p>
+</dd>
+
+
+
+<dt><b><em class="emphasis">-d</em> <em class="replaceable">debug_level</em></b></dt>
+<dd>
+<p>Sets the debug (logging) level, from 0 to 10, with A for all.
+Overrides the value in <em class="filename">smb.conf</em>. Debug level 0
+logs only the most important messages; level 1 is normal; debug
+levels 3 and above are for debugging and slow
+<em class="emphasis">smbclient</em> considerably.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-D</tt> <em class="replaceable">init_dir</em></b></dt>
+<dd>
+<p>Upon starting up, causes <em class="emphasis">smbclient</em> to change its
+working directory to <em class="replaceable">init_dir</em> on the
+remote host.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-E</tt></b></dt>
+<dd>
+<p>Sends output from commands to <em class="emphasis">stderr</em> instead of
+<em class="emphasis">stdout</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-h</tt></b></dt>
+<dd>
+<p>Prints the command-line help information (usage) for
+<em class="emphasis">smbclient</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-I</tt> <em class="replaceable">IP_address</em></b></dt>
+<dd>
+<p>Sets the IP address of the server to which the client connects.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-i</tt> <em class="replaceable">scope</em></b></dt>
+<dd>
+<p>Sets a NetBIOS scope identifier.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-l</tt> <em class="replaceable">log_ file</em></b></dt>
+<dd>
+<p>Sends the log messages to <em class="replaceable">log_file</em> rather
+than to the log file specified in the Samba configuration file or the
+compiled-in default.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-L</tt> <em class="replaceable">server</em></b></dt>
+<dd>
+<p>Lists services (shares) offered by the server. This can be used as a
+quick way to test an SMB server to see if it is working. If there is
+a name-service problem, use the <tt class="literal">-I</tt> option to
+specify the server.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-M</tt> <em class="replaceable">NetBIOS_name</em></b></dt>
+<dd>
+<p>Allows you to send messages using the Windows messaging protocol.
+Once a connection is established, you can type your message, pressing
+Ctrl-D to end. The <tt class="literal">-U</tt> and <tt class="literal">-I</tt>
+options can be used to control the
+&quot;From&quot; and
+&quot;To&quot; parts of the message.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-N</tt></b></dt>
+<dd>
+<p>Suppresses the password prompt. Useful when using share mode security
+and accessing a service that has no password.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-n</tt> <em class="replaceable">NetBIOS_name</em></b></dt>
+<dd>
+<p>Allows you to override the NetBIOS name by which
+<em class="emphasis">smbclient</em> will advertise itself.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-O</tt> <em class="replaceable">socket_options</em></b></dt>
+<dd>
+<p>Sets the TCP/IP socket options using the same parameters as the
+<tt class="literal">socket options</tt> configuration option. Often used
+for performance tuning and testing.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-p</tt> <em class="replaceable">port_number</em></b></dt>
+<dd>
+<p>Sets the port number with which <em class="emphasis">smbclient</em> will
+connect.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-R</tt> <em class="replaceable">resolve_order</em></b></dt>
+<dd>
+<p>Sets the resolve order of the name servers. This option is similar to
+the <tt class="literal">resolve</tt> <tt class="literal">order</tt> configuration
+option and can take any of the four parameters
+<tt class="literal">lmhosts</tt>, <tt class="literal">host</tt>,
+<tt class="literal">wins</tt>, and <tt class="literal">bcast</tt>, in any order.
+If more than one is specified, the argument is specified as a
+space-separated list. This option can be used to test name service by
+specifying only the name service to be tested.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-s</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Specifies the location of the Samba configuration file. Used for
+debugging.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-t</tt> <em class="replaceable">terminal_code</em></b></dt>
+<dd>
+<p>Sets the terminal code for Asian languages.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-T</tt> <em class="replaceable">command_string tarfile</em></b></dt>
+<dd>
+<p>Runs the tar archiver, which is <em class="emphasis">gtar</em> compatible.
+The tar file that is written to or read from is specified by
+<em class="replaceable">tarfile</em>. The two main commands are
+<tt class="literal">c</tt> (create) and <tt class="literal">x</tt> (extract),
+which can be followed by any of these:</p>
+
+<dl>
+<dt><b><tt class="literal">a</tt></b></dt>
+<dd>
+<p>Resets the archive attribute on files after they have been saved. See
+also the <tt class="literal">g</tt> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">b</tt> <em class="replaceable">size</em></b></dt>
+<dd>
+<p>Sets the block size for writing the tar file, in 512-byte units.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">g</tt></b></dt>
+<dd>
+<p>Backs up only files that have their archive bit set. See also the
+<tt class="literal">a</tt> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">I</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Includes files and directories. This is the default, so specifying
+this is redundant. To perform pattern matching, see also the
+<tt class="literal">r</tt> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">N</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Backs up only those files newer than <em class="replaceable">file</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">q</tt></b></dt>
+<dd>
+<p>Suppresses diagnostics.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">r</tt></b></dt>
+<dd>
+<p>Performs regular expression matching, which can be used along with
+the <tt class="literal">I</tt> or <tt class="literal">E</tt> option to include or
+exclude files.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">X</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Excludes files and directories.</p>
+</dd>
+
+</dl>
+</dd>
+
+
+
+<dt><b><tt class="literal">-U</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Sets the username and, optionally, the password used for
+authentication when connecting to the share.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-W</tt> <em class="replaceable">workgroup</em></b></dt>
+<dd>
+<p>Specifies the workgroup/domain in which
+<em class="emphasis">smbclient</em> will claim to be a member.</p>
+</dd>
+
+</dl>
+
+
+</div>
+
+<div class="sect1"><a name="appc-47-fm2xml"/>
+
+<h4 class="refsect1">smbclient commands</h4>
+
+<dl>
+<dt><b><tt class="literal">help</tt> <em class="replaceable">[smbclient_command]</em></b></dt>
+<dd>
+<p>With no command specified, prints a list of available commands. If a
+command is specified as an argument, a brief help message will be
+printed for it.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">!</tt> <em class="replaceable">[shell_command]</em></b></dt>
+<dd>
+<p>Shell escape. With no command specified, runs a Unix shell. If a
+command is specified, runs the command in a Unix shell.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">altname</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Causes <em class="emphasis">smbclient</em> to request from the server and
+then print the old-style, 8.3-format filename for the specified file.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">cancel</tt> <em class="replaceable">print_jobid [...]</em></b></dt>
+<dd>
+<p>Causes <em class="emphasis">smbclient</em> to request the server to cancel
+one or more print jobs, as specified by the numeric job IDs provided
+as arguments. See also the <em class="emphasis">queue</em> command, which
+prints job IDs.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">chmod</tt> <em class="replaceable">filename octal_mode</em></b></dt>
+<dd>
+<p>Requests that the server change the Unix file permissions on
+<em class="replaceable">filename</em> to
+<em class="replaceable">octal_mode</em>, specified in octal numeric
+format. Works only if the server supports Unix CIFS extensions.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">chown</tt> <em class="replaceable">filename UID GID</em></b></dt>
+<dd>
+<p>Requests that the server change the owner and group of the file
+specified by <em class="replaceable">filename</em> to those provided as
+decimal numeric arguments <em class="replaceable">UID</em> and
+<em class="replaceable">GID</em>. Works only if the server supports
+Unix CIFS extensions.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">cd</tt> <em class="replaceable">[directory]</em></b></dt>
+<dd>
+<p>With no argument, prints the current working directory on the remote
+system. If a directory name is supplied as an argument, changes the
+working directory on the remote system to that specified.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">del</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Requests that the server delete one or more files, as specified by
+the argument, from the current working directory. The argument can be
+a filename globbing pattern using the * and ? characters.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">dir</tt> [<em class="replaceable">filename]</em></b></dt>
+<dd>
+<p>With no arguments, prints a list of files and directories in the
+working directory on the server. If an argument is provided, only
+files and directories whose names match the argument will be listed.
+The argument can be a filename globbing pattern using the * and ?
+characters.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">exit</tt></b></dt>
+<dd>
+<p>Quits the <em class="emphasis">smbclient</em> program after terminating
+the SMB connection to the server.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">get</tt> <em class="replaceable">remote_file [local_file]</em></b></dt>
+<dd>
+<p>Copies the file specified by <em class="replaceable">remote_file</em>
+from the server to the local system. If no
+<em class="replaceable">local_file</em> argument is specified,
+<em class="emphasis">smbclient</em> will name the local file the same as
+it is named on the server. If <em class="replaceable">local_file</em>
+is specified, it will be used as the name of the local copy. See also
+the <em class="emphasis">lowercase</em> command.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">help</tt> <em class="replaceable">[command]</em></b></dt>
+<dd>
+<p>A synonym for the <em class="emphasis">?</em> command.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">lcd</tt> <em class="replaceable">[directory]</em></b></dt>
+<dd>
+<p>If no argument is provided, prints the name of
+<em class="emphasis">smbclient</em>'s working directory
+on the local system. If a directory name is provided as an argument,
+changes <em class="emphasis">smbclient</em>'s working
+directory to the directory specified.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">link</tt> <em class="replaceable">link_name filename</em></b></dt>
+<dd>
+<p>Requests that the server create a hard link to
+<em class="replaceable">filename</em> and name it
+<em class="replaceable">link_name</em>. This command works only if the
+server supports Unix CIFS extensions.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">lowercase</tt></b></dt>
+<dd>
+<p>Toggles the boolean lowercasing setting. When this setting is on,
+names of files copied from the server with the
+<em class="emphasis">get</em> and <em class="emphasis">mget</em> commands will
+be changed to all lowercase. This is mainly used for accessing
+servers that report filenames in all uppercase only.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">ls</tt> <em class="replaceable">[filename]</em></b></dt>
+<dd>
+<p>A synonym for <em class="emphasis">dir</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">mask</tt> <em class="replaceable">[globbing_pattern]</em></b></dt>
+<dd>
+<p>Sets the filename globbing pattern for use with the
+<em class="emphasis">mget</em> and <em class="emphasis">mput</em> commands when
+recursion is turned on. (When recursion is off, the setting has no
+effect.) Both <em class="emphasis">mget</em> and <em class="emphasis">mput</em>
+accept a globbing pattern as arguments; however, those patterns apply
+only to the current directory. This command specifies the pattern
+used for all subdirectories that are recursively traversed. The
+pattern stays in effect until it is changed with another
+<em class="emphasis">mask</em> command. To return the setting to its
+original default, specify a
+<em class="replaceable">globbing_pattern</em> of an asterisk
+(<tt class="literal">*</tt>), which matches all files. See also the
+<em class="emphasis">mget</em>, <em class="emphasis">mput</em>, and
+<em class="emphasis">recurse</em> commands.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">mdir</tt> <em class="replaceable">directory</em></b></dt>
+<dd>
+<p>A synonym for the <em class="emphasis">mkdir</em> command.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">mget</tt> <em class="replaceable">pattern</em></b></dt>
+<dd>
+<p>When recursion is turned off, copies files matching the file-globbing
+pattern, as specified by the argument, from the current working
+directory on the server to the local system. When recursion is on,
+the <em class="replaceable">pattern</em> argument is used to match
+directories in the current working directory, and the pattern
+specified by the <em class="emphasis">mask</em> command is used for
+matching files within each directory and all subdirectories. See also
+the <em class="emphasis">lowercase</em>, <em class="emphasis">mask</em>, and
+<em class="emphasis">recurse</em> commands.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">print</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Prints the specified file. This requires that
+<em class="emphasis">smbclient</em> be connected to a print share. See
+also the <em class="emphasis">printmode</em> command.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">printmode</tt> <em class="replaceable">mode</em></b></dt>
+<dd>
+<p>Sets the mode that is used by the <em class="emphasis">print</em> command.
+The mode can be either <tt class="literal">text</tt>, for printing text
+files such as the ASCII files commonly found on Unix, or
+<tt class="literal">graphics</tt>, for printing binary files.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">prompt</tt></b></dt>
+<dd>
+<p>Toggles the prompting mode. When prompting is on (the default), the
+<em class="emphasis">mget</em> and <em class="emphasis">mput</em> commands will
+interactively prompt the user for permission to transfer each file.
+The user can answer either <tt class="literal">y</tt> (yes) or
+<tt class="literal">n</tt> (no), followed by a newline, to this prompt.
+When prompting is off, all the files will be transferred with no
+prompts issued.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">put</tt> <em class="replaceable">local_file [remote_file]</em></b></dt>
+<dd>
+<p>Copies the file specified by <em class="replaceable">local_file</em>
+from the local to the remote system. If no
+<em class="replaceable">remote_file</em> argument is specified,
+<em class="emphasis">smbclient</em> will name the remote file the same as
+it is named on the local system. If
+<em class="replaceable">remote_file</em> is specified, it will be used
+as the name of the remote copy. See also the
+<em class="emphasis">lowercase</em> command.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">queue</tt></b></dt>
+<dd>
+<p>Prints information on the print queue on the server. This requires
+that <em class="emphasis">smbclient</em> is connected to a print share.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">quit</tt></b></dt>
+<dd>
+<p>A synonym for <em class="emphasis">exit</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">rd</tt> <em class="replaceable">directory</em></b></dt>
+<dd>
+<p>A synonym for <em class="emphasis">rmdir</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">recurse</tt></b></dt>
+<dd>
+<p>Toggles the recursion mode, which affects the
+<em class="emphasis">mget</em> and <em class="emphasis">mput</em> commands.
+When recursion is off (the default), the <em class="emphasis">mget</em>
+and <em class="emphasis">mput</em> commands will copy only files from the
+current working directory that match the file-globbing pattern
+specified as an argument to the command, and the pattern set by the
+<em class="emphasis">mask</em> command is ignored. When recursion is
+turned on, the <em class="emphasis">mget</em> and
+<em class="emphasis">mput</em> commands recursively traverse any
+directories that match the pattern specified as the argument to the
+command, and the pattern set by the <em class="emphasis">mask</em> command
+is used to match files in those directories.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">rm</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>A synonym for <em class="emphasis">del</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">rmdir</tt> <em class="replaceable">directory</em></b></dt>
+<dd>
+<p>Requests that the server remove the specified directory.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">setmode</tt> <em class="replaceable">filename attributes</em></b></dt>
+<dd>
+<p>Requests that the server assign the specified MS-DOS file attributes
+on the specified file. The <em class="replaceable">attributes</em>
+argument has the format of a leading plus sign (<tt class="literal">+</tt>)
+or minus sign (<tt class="literal">-</tt>) either to set or to unset the
+attribute(s), respectively, followed by one or more of the characters
+<tt class="literal">r</tt> (read), <tt class="literal">s</tt> (system),
+<tt class="literal">h</tt> (hidden), or <tt class="literal">a</tt> (archive).</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">symlink</tt> <em class="replaceable">link_name filename</em></b></dt>
+<dd>
+<p>Requests that the server create a symbolic link named
+<em class="replaceable">link_name</em> to
+<em class="replaceable">filename</em>. This command works only if the
+server supports Unix CIFS extensions. The server will not create a
+link that refers to a file not in the share to which
+<em class="emphasis">smbclient</em> is connected.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">tar</tt> <em class="replaceable">cmd_str</em></b></dt>
+<dd>
+<p>Performs an archiving operation using the tar format. This is the
+interactive form of the <tt class="literal">-T</tt> command-line operation,
+and the <em class="replaceable">cmd_str</em> argument is specified in
+the same manner. See also the <em class="emphasis">tarmode</em> command.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">blocksize</tt> <em class="replaceable">size</em></b></dt>
+<dd>
+<p>Sets the block size, in units of 512 bytes, for files written by the
+<em class="emphasis">tar</em> command.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">tarmode</tt> <em class="replaceable">mode ...</em></b></dt>
+<dd>
+<p>Specifies how the <em class="emphasis">tar</em> command performs its
+archiving, including how it handles the archive attribute on files.
+Multiple <em class="replaceable">mode</em> arguments can be provided,
+chosen from the following:</p>
+
+<dl>
+<dt><b><tt class="literal">full</tt></b></dt>
+<dd>
+<p>All files will be included, regardless of whether their
+<tt class="literal">archive</tt> attribute is set. This is the default.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">inc</tt></b></dt>
+<dd>
+<p>Only files that have the <tt class="literal">archive</tt> attribute set
+will be included in the backup.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">reset</tt></b></dt>
+<dd>
+<p>The <tt class="literal">archive</tt> attribute will be unset by
+<em class="emphasis">tar</em> after the file is included in the archive.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">noreset</tt></b></dt>
+<dd>
+<p>The <tt class="literal">archive</tt> attribute will be left unchanged. This
+is the default.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">system</tt></b></dt>
+<dd>
+<p>Files with the <tt class="literal">system</tt> attribute set will be
+included in the archive. This is the default.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">nosystem</tt></b></dt>
+<dd>
+<p>Files with the <tt class="literal">system</tt> attribute set will not be
+included in the archive.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">hidden</tt></b></dt>
+<dd>
+<p>Files with the <tt class="literal">hidden</tt> attribute set will be
+included in the archive. This is the default.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">nohidden</tt></b></dt>
+<dd>
+<p>Files with the <tt class="literal">hidden</tt> attribute set will not be
+included in the archive.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">verbose</tt></b></dt>
+<dd>
+<p>As files are included in the archive (when creating the archive) or
+are read from the archive (when extracting it), the name of each file
+will be printed. This is the default.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">noverbose</tt></b></dt>
+<dd>
+<p>This turns verbose mode off, causing <em class="emphasis">tar</em> to
+perform its work quietly.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">quiet</tt></b></dt>
+<dd>
+<p>An antonym for the <tt class="literal">verbose</tt> mode. When quiet is on,
+verbose is off, and vice versa.<a name="INDEX-18"/></p>
+</dd>
+
+</dl>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-19"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>smbcontrol</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>The <em class="emphasis">smbcontrol</em> command sends control messages to
+running <em class="emphasis">smbd</em> or <em class="emphasis">nmbd</em>
+processes.</p>
+<div class="sect1"><a name="appc-49-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">smbcontrol -i<em class="replaceable"> [options]</em></pre></blockquote>
+<p>or:</p>
+
+<blockquote><pre class="code">smbcontrol <em class="replaceable">[options] process message-type [parameters]</em></pre></blockquote>
+
+
+</div>
+
+<div class="sect1"><a name="appc-50-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-i</tt></b></dt>
+<dd>
+<p>Runs <em class="emphasis">smbcontrol</em> interactively, executing
+commands until a blank line or &quot;q&quot;
+is read. The user must have superuser privileges.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-s</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Specifies the location of the Samba configuration file.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-d</tt> <em class="replaceable">debuglevel</em></b></dt>
+<dd>
+<p>Sets the debugging level for logging. The debug level can be set from
+to 10.</p>
+</dd>
+
+</dl>
+
+
+<p>Whether <em class="emphasis">smbcontrol</em> commands are issued in
+interactive mode or from the command line, the commands are in the
+same format. Each command has up to three parts:</p>
+
+<dl>
+<dt><b><em class="replaceable">process</em></b></dt>
+<dd>
+<p>Specifies the process or group of processes to which to send the
+message. If <em class="replaceable">process</em> is
+<tt class="literal">smbd</tt>, all <em class="emphasis">smbd</em> processes will
+receive the message. If <em class="replaceable">process</em> is
+<tt class="literal">nmbd</tt>, only the main <em class="emphasis">nmbd</em>
+process (identified by Samba's
+<em class="filename">nmbd.pid</em> file) receives the message. If
+<em class="replaceable">process</em> is the numeric PID of a running
+process on the system, that process will receive the message.</p>
+</dd>
+
+
+
+<dt><b><em class="replaceable">message-type</em></b></dt>
+<dd>
+<p>Specifies the type of message that is sent. For more information, see
+<a href="appc.html#appc-51-fm2xml">smbcontrol message
+types</a> that follows.</p>
+</dd>
+
+
+
+<dt><b><em class="replaceable">parameters</em></b></dt>
+<dd>
+<p>Specifies additional parameters required by some messages.</p>
+</dd>
+
+</dl>
+
+
+</div>
+
+<div class="sect1"><a name="appc-51-fm2xml"/>
+
+<h4 class="refsect1">smbcontrol message types</h4>
+
+<dl>
+<dt><b><tt class="literal">close-share</tt> <em class="replaceable">share_name</em></b></dt>
+<dd>
+<p>Closes the connection to a share or shares. If
+<em class="replaceable">share_name</em> is specified as an asterisk
+(<tt class="literal">*</tt>), connections to all shares will be closed. To
+close a single connection, <em class="replaceable">share_name</em> is
+given as the name of a share, as specified in the Samba configuration
+file, not including the enclosing brackets. Warning: no message is
+printed if there is an error in specifying
+<em class="replaceable">share_name</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">debug</tt> <em class="replaceable">num</em></b></dt>
+<dd>
+<p>Sets the debugging level. The <em class="replaceable">num</em>
+parameter specifies the level, which can be from 0 to 10.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">debuglevel</tt></b></dt>
+<dd>
+<p>Prints the current debugging level.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">force-election</tt></b></dt>
+<dd>
+<p>Can be used only with <em class="emphasis">nmbd</em>, telling it to force
+a master browser election.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">ping</tt> <em class="replaceable">number</em></b></dt>
+<dd>
+<p>Sends <em class="emphasis">number</em> of pings and reports when they
+receive a reply or timeout. Used for connectivity testing.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">profile</tt> <em class="replaceable">mode</em></b></dt>
+<dd>
+<p>Controls profiling statistics collection. If
+<em class="replaceable">mode</em> is <tt class="literal">on</tt>, profile
+statistics will be collected. If <em class="replaceable">mode</em> is
+<tt class="literal">off</tt>, collection of statistics is turned off. If
+<em class="replaceable">mode</em> is specified as
+<tt class="literal">count</tt>, only counting statistics are collected (and
+not timing statistics). If <em class="replaceable">mode</em> is
+<tt class="literal">flush</tt>, the data set is cleared (initialized).</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">profilelevel</tt></b></dt>
+<dd>
+<p>Prints the current profiling level.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">printer-notify</tt> <em class="replaceable">printer_name</em></b></dt>
+<dd>
+<p>Sends a printer notify message to Windows NT/2000/XP for the
+specified printer. This message can be sent only to
+<em class="emphasis">smbd</em>. Warning: no message is printed if the
+<em class="replaceable">printer_name</em> parameter is specified
+incorrectly.</p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-20"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>smbgroupedit</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>This command, new to Samba 3.0, sets up mappings between Unix groups
+and Windows NT/2000/XP groups and also allows a Unix group to become
+a domain group. This command must be run by the superuser.</p>
+<div class="sect1"><a name="appc-53-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">smbgroupedit <em class="replaceable">[options]</em></pre></blockquote>
+
+
+</div>
+
+<div class="sect1"><a name="appc-54-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-a</tt> <em class="replaceable">Unix_group_name</em></b></dt>
+<dd>
+<p>Adds a mapping for the specified Unix group. The
+<tt class="literal">-n</tt> option is used along with this option to
+specify the Windows NT group to which the Unix group is mapped.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-c</tt> <em class="replaceable">SID</em></b></dt>
+<dd>
+<p>Changes a mapping between a Windows NT group and a Unix group. The
+Windows NT group is specified as a SID with this option, and the Unix
+group is specified with the <tt class="literal">-u</tt> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-d</tt> <em class="replaceable">description</em></b></dt>
+<dd>
+<p>Specifies a comment for the mapping, which will be stored along with
+it.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-l</tt></b></dt>
+<dd>
+<p>When used with the <tt class="literal">-v</tt> option, prints a long
+listing. This is the default. The information printed includes the
+name of the Windows NT group, its SID, its corresponding Unix group
+(if a mapping has been defined), the group type, the comment, and the
+privileges of the group.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-n</tt> <em class="replaceable">Windows_group_name</em></b></dt>
+<dd>
+<p>Specifies the name of the Windows NT group. Used with the
+<tt class="literal">-a</tt> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-p</tt> <em class="replaceable">privilege</em></b></dt>
+<dd>
+<p>Used along with the <tt class="literal">-a</tt> option to specify a Windows
+NT privilege to be given to the Unix group.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-s</tt></b></dt>
+<dd>
+<p>When used with the <tt class="literal">-v</tt> option, prints a short
+listing. The information printed includes just the name of the
+Windows NT group, its SID, and, if a mapping has been defined, its
+corresponding Unix group. This option is useful for determining the
+SID of a group, for use with the <tt class="literal">-c</tt> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-t</tt> <em class="replaceable">TYPE</em></b></dt>
+<dd>
+<p>Assigns a Windows group type to the group.
+<em class="replaceable">TYPE</em> is a single character, and is one of
+<tt class="literal">b</tt> (built-in), <tt class="literal">d</tt> (domain), or
+<tt class="literal">l</tt> (local).</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-u</tt> <em class="replaceable">Unix_group_name</em></b></dt>
+<dd>
+<p>Specifies the name of the Unix group to map to the Windows NT group.
+Used with the <tt class="literal">-c</tt> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-v</tt></b></dt>
+<dd>
+<p>Prints a list of groups in the Windows NT domain in which the Samba
+server is operating. See also the <tt class="literal">-l</tt> and
+<tt class="literal">-s</tt> options.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-x</tt> <em class="replaceable">Unix_group_name</em></b></dt>
+<dd>
+<p>Deletes the mapping for the Unix group specified.</p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-21"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>smbmnt</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>This is a low-level helper program for mounting smbfs filesystems. It
+used by <em class="emphasis">smbmount</em> to do the privileged part of
+the mount operation on behalf of an ordinary user. Generally, users
+should not run this command directly.</p>
+<div class="sect1"><a name="appc-56-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">smbmnt mnt_point <em class="replaceable">[options]</em></pre></blockquote>
+
+
+</div>
+
+<div class="sect1"><a name="appc-57-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-r</tt></b></dt>
+<dd>
+<p>Mounts the filesystem as read-only.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-u</tt> <em class="replaceable">uid</em> </b></dt>
+<dd>
+<p>Specifies the UID to use for the owner of the files.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-g</tt> <em class="replaceable">gid</em></b></dt>
+<dd>
+<p>Specifies the GID to use for the group of the files.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-f</tt> <em class="replaceable">mask</em></b></dt>
+<dd>
+<p>Specifies the octal file mask.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-d</tt> <em class="replaceable">mask</em></b></dt>
+<dd>
+<p>Specifies the octal directory mask.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-o</tt> <em class="replaceable">options</em></b></dt>
+<dd>
+<p>Specifies the list of options that are passed to the smbfs module.</p>
+</dd>
+
+</dl>
+
+
+<p>To allow users to mount SMB shares without help from an
+administrator, set the &quot;set user
+ID&quot; permission on the <em class="emphasis">smbmnt</em>
+executable. However, note that this can raise security issues.</p>
+
+</div>
+</div>
+
+<a name="INDEX-22"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>smbmount</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>This program mounts an smbfs filesystem on a mount point in the Unix
+filesystem. It is typically called as <em class="emphasis">mount.smb</em>
+from <em class="emphasis">mount</em>, although it can also be run directly
+by users. After mounting the smbfs filesystem,
+<em class="emphasis">smbmount</em> continues to run as a daemon as long as
+the filesystem is mounted. It logs events in the file
+<em class="filename">log.smbmount</em> in the same directory as the other
+Samba log files (which is commonly
+<em class="filename">/usr/local/samba/var</em> by default). The logging
+level is controlled by the <tt class="literal">debug level</tt> parameter
+in the Samba configuration file.</p>
+<div class="sect1"><a name="appc-59-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">smbmount <em class="replaceable">service mount_point [-o options]</em></pre></blockquote>
+<p>The service argument specifies the SMB share to mount, given as a
+UNC. The <em class="replaceable">mount_point</em> argument specifies a
+directory to use as the mount point. The options to
+<em class="emphasis">smbmount</em> are specified as a comma-separated list
+of
+<em class="replaceable">key</em><tt class="literal">=</tt><em class="replaceable">value</em>
+pairs. The documented options are as follows. Others can be passed if
+the kernel supports them.</p>
+
+</div>
+
+<div class="sect1"><a name="appc-60-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">username=</tt><em class="replaceable">name</em></b></dt>
+<dd>
+<p>Specifies the username to connect as. If this is not provided, the
+environment variable USER will be tried. The name can be specified as
+<em class="replaceable">username</em><tt class="literal">%</tt><em class="replaceable">password</em>,
+<em class="replaceable">user</em><tt class="literal">/</tt><em class="replaceable">workgroup</em>,
+or
+<em class="replaceable">user</em><tt class="literal">/</tt><em class="replaceable">workgroup</em><tt class="literal">%</tt><em class="replaceable">password</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">password=</tt><em class="replaceable">string</em></b></dt>
+<dd>
+<p>Specifies the SMB password. If no password is provided using this
+option, the <em class="emphasis">username</em> option, or the
+<em class="emphasis">credentials</em> option, the environment variable
+PASSWD is used. If that also does not exist,
+<em class="emphasis">smbmount</em> will prompt interactively for a
+password.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">credentials=</tt><em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Specifies a file that contains a username and password in the
+following format:</p>
+
+
+<blockquote><pre class="code">username = <em class="replaceable">value</em>
+password = <em class="replaceable">value</em></pre></blockquote>
+</dd>
+
+
+<dt><b><tt class="literal">uid=</tt><em class="replaceable">number</em></b></dt>
+<dd>
+<p>Sets the Unix user ID to be used as the owner of all files in the
+mounted filesystem. It can be specified as a username or numeric UID.
+Defaults to the UID of the user running
+<em class="emphasis">smbmount</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">gid=</tt><em class="replaceable">number</em></b></dt>
+<dd>
+<p>Sets the Unix group ID to be used as the group for all files in the
+mounted filesystem. It can be specified as a group name or a numeric
+GID. Defaults to the GID of the user running
+<em class="emphasis">smbmount</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">port=</tt><em class="replaceable">number</em></b></dt>
+<dd>
+<p>Sets the TCP port number. This is 139, which is required by most
+Windows versions.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">fmask=</tt><em class="replaceable">octal_mask</em> </b></dt>
+<dd>
+<p>Sets the Unix permissions of all files in the mounted filesystem.
+Defaults to the user's current umask.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">dmask=</tt><em class="replaceable">octal_mask</em></b></dt>
+<dd>
+<p>Sets the Unix permissions of all directories in the mounted
+filesystem. Defaults to the current umask.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">debug=</tt><em class="replaceable">number</em></b></dt>
+<dd>
+<p>Sets the debugging level.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">ip=</tt><em class="replaceable">host</em></b></dt>
+<dd>
+<p>Sets the destination hostname or IP address.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">netbiosname=</tt><em class="replaceable">name</em></b></dt>
+<dd>
+<p>Sets the computer name to connect as. This defaults to the hostname
+of the local system.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">workgroup=</tt><em class="replaceable">name</em></b></dt>
+<dd>
+<p>Sets the workgroup or domain.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">sockopt=</tt><em class="replaceable">opts</em></b></dt>
+<dd>
+<p>Sets TCP socket options.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">scope=</tt><em class="replaceable">num</em></b></dt>
+<dd>
+<p>Sets the NetBIOS scope.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">guest</tt></b></dt>
+<dd>
+<p>Don't expect or prompt for a password.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">ro</tt></b></dt>
+<dd>
+<p>Mounts the share read-only.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">rw</tt></b></dt>
+<dd>
+<p>Mounts the share read-write.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">iocharset=</tt><em class="replaceable">charset</em></b></dt>
+<dd>
+<p>Sets the charset used by the Linux machine for codepage-to-charset
+translation. See also the <em class="emphasis">codepage</em> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">codepage=</tt><em class="replaceable">page</em></b></dt>
+<dd>
+<p>Sets the DOS code page. See also the <em class="emphasis">iocharset</em>
+option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">ttl=</tt><em class="replaceable">milliseconds</em></b></dt>
+<dd>
+<p>Sets the time to live, in milliseconds, for entries in the directory
+cache. A higher value gives better performance on large directories
+and/or slower connections. The default is 1000ms. Try 10000ms (10
+seconds) as a starting value if directory operations are visibly
+slow.</p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-23"/><a name="INDEX-24"/><a name="INDEX-25"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>smbpasswd</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>The <em class="emphasis">smbpasswd</em> program provides the general
+function of managing <a name="INDEX-24"/><a name="INDEX-25"/>encrypted
+passwords. How it works depends on whether it is run by the superuser
+or an ordinary user.</p><p>For the superuser, <em class="emphasis">smbpasswd</em> can be used to
+maintain Samba's <em class="filename">smbpasswd</em>
+file. It can add or delete users, change their passwords, and modify
+other attributes pertaining to the user that are held in the
+<em class="filename">smbpasswd</em> file.</p><p>When run by ordinary users, <em class="emphasis">smbpasswd</em> can be
+used only to change their encrypted passwords. In this mode of
+operation, <em class="emphasis">smbpasswd</em> acts as a client to the
+<em class="emphasis">smbd</em> daemon. The program will fail if
+<em class="emphasis">smbd</em> is not operating, if the <tt class="literal">hosts
+allow</tt> or <tt class="literal">hosts deny</tt> parameters in the
+Samba configuration file do not permit connections from localhost (IP
+address 127.0.0.1), or if the <tt class="literal">encrypted passwords</tt>
+option is set to <tt class="literal">no</tt>. It is also possible for
+<em class="emphasis">smbpasswd</em> to change a user's
+password when it is maintained on a remote system, including a
+Windows NT domain controller.</p>
+<div class="sect1"><a name="appc-62-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+<p>When run by the superuser:</p>
+
+<blockquote><pre class="code">smbpasswd <em class="replaceable">[options] [username] [password]</em></pre></blockquote>
+<p>In this case, the username of the user whose
+<em class="emphasis">smbpasswd</em> entry is to be modified is provided as
+the second argument.</p>
+
+<p>Otherwise:</p>
+
+<blockquote><pre class="code">smbpasswd <em class="replaceable">[options] [password]</em></pre></blockquote>
+
+
+</div>
+
+<div class="sect1"><a name="appc-63-fm2xml"/>
+
+<h4 class="refsect1">Superuser-only options</h4>
+
+<dl>
+<dt><b><tt class="literal">-a</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Adds a user to the encrypted password file. The user must already
+exist in the system password file (<em class="filename">/etc/passwd</em>
+). If the user already exists in the <em class="filename">smbpasswd</em>
+file, the <tt class="literal">-a</tt> option changes the existing password.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-d</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Disables a user in the encrypted password file. The
+user's entry in the file will remain, but will be
+marked with a flag disabling the user from authenticating.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-e</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Enables a disabled user in the encrypted password file. This
+overrides the effect of the <tt class="literal">-d</tt> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-j</tt> <em class="replaceable">domain</em></b></dt>
+<dd>
+<p>Joins the Samba server to a Windows NT domain as a domain member
+server. The <em class="replaceable">domain</em> argument is the NetBIOS
+name of the Windows NT domain that is being joined. See also the
+<tt class="literal">-r</tt> and <tt class="literal">-U</tt> options.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-m</tt></b></dt>
+<dd>
+<p>Indicates that the account is a computer account in a Windows NT
+domain rather than a domain user account.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-n</tt></b></dt>
+<dd>
+<p>Sets the user's password to a null password. For the
+user to authenticate, the parameter <tt class="literal">null</tt>
+<tt class="literal">passwords</tt> <tt class="literal">=</tt>
+<tt class="literal">yes</tt> must exist in the <tt class="literal">[global]</tt>
+section of the Samba configuration file.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-R</tt> <em class="replaceable">resolve_order_list</em></b></dt>
+<dd>
+<p>Sets the resolve order of the name servers. This option is similar to
+the <tt class="literal">resolve</tt> <tt class="literal">order</tt> configuration
+option and can take any of the four parameters
+<tt class="literal">lmhosts</tt>, <tt class="literal">host</tt>,
+<tt class="literal">wins</tt>, and <tt class="literal">bcast</tt>, in any order.
+If more than one is specified, the argument is specified as a
+space-separated list.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-w</tt> <em class="replaceable">password</em></b></dt>
+<dd>
+<p>For use when Samba has been compiled with the
+<tt class="literal">--with-ldapsam</tt> configure option. Specifies the
+password that goes with the value of the <tt class="literal">ldap admin
+dn</tt> Samba configuration file parameter.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-x</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Deletes the user from the <em class="filename">smbpasswd</em> file. This
+is a one-way operation, and all information associated with the entry
+is lost. To disable the account without deleting the
+user's entry in the file, see the
+<tt class="literal">-d</tt> option.</p>
+</dd>
+
+</dl>
+
+
+</div>
+
+<div class="sect1"><a name="appc-64-fm2xml"/>
+
+<h4 class="refsect1">Other options</h4>
+
+<dl>
+<dt><b><tt class="literal">-c</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Specifies the Samba configuration file, overriding the compiled-in
+default.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-D</tt> <em class="replaceable">debug_level</em></b></dt>
+<dd>
+<p>Sets the debug (also called logging) level. The level can range from
+to 10. Debug level 0 logs only the most important messages; level 1
+is normal; levels 3 and above are primarily for debugging and slow
+the program considerably.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-h</tt></b></dt>
+<dd>
+<p>Prints command-line usage information.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-L</tt></b></dt>
+<dd>
+<p>Causes <em class="emphasis">smbpasswd</em> to run in local mode, in which
+ordinary users are allowed to use the superuser-only options. This
+requires that the <em class="filename">smbpasswd</em> file be made
+readable and writable by the user. This is for testing purposes.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-r</tt> <em class="replaceable">NetBIOS_name</em></b></dt>
+<dd>
+<p>Specifies on which machine the password should change. If changing a
+Windows NT domain password, the remote system specified by
+<em class="replaceable">NetBIOS_name</em> must be the PDC for the
+domain. The user's username on the local system is
+used by default. See also the <tt class="literal">-U</tt> option for use
+when the user's Samba username is different from the
+local username.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-R</tt> <em class="replaceable">resolve_order</em></b></dt>
+<dd>
+<p>Sets the resolve order of the name servers. This option is similar to
+the resolve order configuration option and can take any of the four
+parameters <tt class="literal">lmhosts</tt>, <tt class="literal">host</tt>,
+<tt class="literal">wins</tt>, and <tt class="literal">bcast</tt>, in any order.
+If more than one is specified, the argument is specified as a
+space-separated list.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-s</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Causes <em class="emphasis">smbpasswd</em> not to prompt for passwords
+from <em class="filename">/dev/tty</em>, but instead to read the old and
+new passwords from the standard input. This is useful when calling
+<em class="emphasis">smbpasswd</em> from a script.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-S</tt></b></dt>
+<dd>
+<p>Queries the domain controller of the domain, as specified by the
+<tt class="literal">workgroup</tt> parameter in the Samba configuration
+file, and retrieves the domain's SID. This will then
+be used as the SID for the local system. A specific PDC can be
+selected by combining this option with the <tt class="literal">-r</tt>
+option, and its domain's SID will be used. This
+option is for migrating domain accounts from a Windows NT primary
+domain controller to a Samba PDC.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-U</tt> <em class="replaceable">username[</em><tt class="literal">%</tt><em class="replaceable">password]</em></b></dt>
+<dd>
+<p>Changes the password for <em class="replaceable">username</em> on the
+remote system. This is to handle instances in which the remote
+username and local username are different. This option requires that
+<tt class="literal">-r</tt> also be used. Often used with
+<tt class="literal">-j</tt> to provide the username of the administrative
+user on the primary domain controller for adding computer accounts.</p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-26"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>smbsh</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>The <em class="emphasis">smbsh</em> program allows SMB shares to be
+accessed from a Unix system. When <em class="emphasis">smbsh</em> is run,
+an extra directory tree called <em class="filename">/smb </em>becomes
+available to dynamically linked shell commands. The first level of
+directories under <em class="filename">/smb</em> represent available
+workgroups, the next level of subdirectories represent the SMB
+servers in each workgroup, and the third level of subdirectories
+represent the disk and printer shares of each server.</p><p>Samba must be compiled with the <tt class="literal">--with-smbwrappers</tt>
+option to enable <em class="emphasis">smbsh</em>.</p>
+<div class="sect1"><a name="appc-66-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><em class="emphasis">-d</em> <em class="replaceable">debug_level</em></b></dt>
+<dd>
+<p>Sets the debug (sometimes called logging) level. The level can range
+from 0, the default, to 10. Debug level 0 logs only the most
+important messages; level 1 is normal; levels 3 and above are
+primarily for debugging and slow <em class="emphasis">smbsh</em>
+considerably.</p>
+</dd>
+
+
+
+<dt><b><em class="emphasis">-l</em> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Sets the name of the logging file. By default, messages are sent to
+<em class="emphasis">stderr</em>.</p>
+</dd>
+
+
+
+<dt><b><em class="emphasis">-L</em> <em class="replaceable">directory</em></b></dt>
+<dd>
+<p>Specifies the location of
+<em class="emphasis">smbsh</em>'s shared libraries,
+overriding the compiled-in default.</p>
+</dd>
+
+
+
+<dt><b><em class="emphasis">-P</em> <em class="replaceable">prefix</em></b></dt>
+<dd>
+<p>Sets the name of the <tt class="literal">root</tt> directory to use for the
+SMB filesystem. The default is <em class="filename">/smb</em>.</p>
+</dd>
+
+
+
+<dt><b><em class="emphasis">-R</em> <em class="replaceable">resolve_order</em></b></dt>
+<dd>
+<p>Sets the resolve order of the name servers. This option is similar to
+the <tt class="literal">resolve</tt> <tt class="literal">order</tt> configuration
+option and can take any of the four parameters
+<tt class="literal">lmhosts</tt>, <tt class="literal">host</tt>,
+<tt class="literal">wins</tt>, and <tt class="literal">bcast</tt>, in any order.
+If more than one is specified, the argument is specified as a
+space-separated list.</p>
+</dd>
+
+
+
+<dt><b><em class="emphasis">-U</em> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Provides the username, and optionally the password, for
+authenticating the connection to the SMB server. The password can be
+supplied using the
+<em class="replaceable">username</em><tt class="literal">%</tt><em class="replaceable">password</em>
+format. If either or both the username and password are not provided,
+<em class="emphasis">smbsh</em> will prompt interactively for them.</p>
+</dd>
+
+
+
+<dt><b><em class="emphasis">-W</em> <em class="replaceable">workgroup</em></b></dt>
+<dd>
+<p>Specifies the NetBIOS workgroup or domain to which the client will
+connect. This overrides the workgroup parameter in the Samba
+configuration file and is sometimes necessary to connect to some
+servers.</p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-27"/><a name="INDEX-28"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>smbspool</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>The <em class="emphasis">smbspool</em> program provides a
+<a name="INDEX-28"/>CUPS-compatible
+interface to Samba printing by providing a way to send a print job to
+an SMB printer using the command-line format specified by CUPS
+printers. Although <em class="emphasis">smbspool</em> is designed to work
+best with CUPS printers, it can be used to send print jobs to
+non-CUPS Samba printers as well.</p>
+<div class="sect1"><a name="appc-68-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">smbspool <em class="replaceable">job user title copies options filename</em></pre></blockquote>
+<p>The arguments for <em class="emphasis">smbspool</em>, as shown here, are
+those used in the CUPS printing system. However, some of the
+arguments are currently ignored because they don't
+correspond to the Samba printing system. These arguments must be
+supplied in the command and can be filled in with
+&quot;dummy&quot; values.</p>
+
+<p>The <em class="replaceable">job</em> argument refers to the job number
+and is currently ignored. The <em class="replaceable">user</em>
+argument is the name of the user who submitted the print job and is
+also ignored. The <em class="replaceable">title</em> argument is the
+name of the print job and must be supplied. It is used as the name of
+the remote print file. The <em class="replaceable">copies</em> argument
+is the number of copies that will be printed. This number is used
+only if the (optional) <em class="filename">filename</em> argument is
+supplied. Otherwise, only one copy is printed. The
+<em class="replaceable">options</em> argument, for specifying printing
+options, is ignored. The <em class="replaceable">filename</em> argument
+is used for specifying the name of the file to be printed. If it is
+not provided, the standard input will be used.</p>
+
+<p>The printer that the job is to be sent to is specified in the
+DEVICE_URI environment variable. The format for the printer name is a
+device Universal Resource Indicator, which can be in any of the
+following formats:</p>
+
+<blockquote class="simplelist">
+
+<p><em class="emphasis">smb://server/printer</em></p>
+
+
+
+
+<p><em class="emphasis">smb://workgroup/server/printer</em></p>
+
+
+
+
+<p><em class="emphasis">smb://username:password@server/printer</em></p>
+
+
+
+
+<p><em class="emphasis">smb://username:password@workgroup/server/printer</em></p>
+
+</blockquote>
+
+
+</div>
+</div>
+
+<a name="INDEX-29"/><a name="INDEX-30"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>smbstatus</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>This program lists the current connections on a Samba server.</p>
+<div class="sect1"><a name="appc-70-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-b</tt></b></dt>
+<dd>
+<p>Causes <em class="emphasis">smbstatus</em> to produce brief output. This
+includes the version of Samba and auditing information about the
+users that are connected to the server.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-d</tt></b></dt>
+<dd>
+<p>Gives verbose output, which includes a list of services, a list of
+locked files, and memory usage statistics. This is the default.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-L</tt></b></dt>
+<dd>
+<p>Prints only the list of current file locks.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-p</tt></b></dt>
+<dd>
+<p>Prints only a list of <em class="emphasis">smbd</em> process IDs.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-P</tt></b></dt>
+<dd>
+<p>Prints only the contents of the profiling memory area. Requires that
+Samba has been compiled with the profiling option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-S</tt></b></dt>
+<dd>
+<p>Prints only a list of shares and their connections.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-s</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Specifies the Samba configuration file to use when processing this
+command.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-u</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Limits the report to the activity of a single user.</p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-31"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>smbtar</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>The <em class="emphasis">smbtar</em> program is a shell-script wrapper
+around <em class="emphasis">smbclient</em> for doing tar-format archiving
+operations. It is functionally very similar to the Unix
+<em class="emphasis">tar</em> program.</p>
+<div class="sect1"><a name="appc-72-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">smbtar <em class="replaceable">[options]</em></pre></blockquote>
+
+
+</div>
+
+<div class="sect1"><a name="appc-73-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-a</tt></b></dt>
+<dd>
+<p>Resets (clears) the archive attribute on files after they are backed
+up. The default is to leave the archive attribute unchanged.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-b</tt> <em class="replaceable">blocksize</em></b></dt>
+<dd>
+<p>Sets block size, in units of 512 bytes, for reading or writing the
+archive file. Defaults to 20, which results in a block size of 10240
+bytes.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-d</tt> <em class="replaceable">directory</em></b></dt>
+<dd>
+<p>Changes the working directory on the remote system to
+<em class="replaceable">directory</em> before starting the restore or
+backup operation.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-i</tt></b></dt>
+<dd>
+<p>Specifies incremental mode; files are backed up only if they have the
+DOS archive attribute set. The archive attribute is reset (cleared)
+after each file is read.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-l</tt> <em class="replaceable">log_level</em></b></dt>
+<dd>
+<p>Sets the logging level. This corresponds to the <tt class="literal">-d</tt>
+option of <em class="emphasis">smbclient</em> and other Samba programs.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-N</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Backs up only files newer than <em class="filename">filename</em>. For
+incremental backups.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-p</tt> <em class="replaceable">password</em></b></dt>
+<dd>
+<p>Specifies the password to use to access a share. An alternative to
+using the
+<em class="replaceable">username</em><tt class="literal">%</tt><em class="replaceable">password</em>
+format with the <tt class="literal">-u</tt> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-r</tt></b></dt>
+<dd>
+<p>Restores files to the share from the tar file.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-s</tt> <em class="replaceable">server</em></b></dt>
+<dd>
+<p>Specifies the SMB server. See also the <tt class="literal">-x</tt> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-t</tt> <em class="replaceable">filename</em></b></dt>
+<dd>
+<p>Specifies the file or Unix device to use as the archiving medium. The
+default is <em class="filename">tar.out</em> or the value of the TAPE
+environment variable, if it has been set.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-u</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Specifies the user account to use when connecting to the share. You
+can specify the password as well, in the format
+<em class="replaceable">username</em><tt class="literal">%</tt><em class="replaceable">password</em>.
+The username defaults to the user's Unix username.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-v</tt></b></dt>
+<dd>
+<p>Operates in verbose mode, printing error messages and additional
+information that can be used in debugging and monitoring. Backup and
+restore operations will list each file as it is processed.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-x</tt> <em class="replaceable">share</em></b></dt>
+<dd>
+<p>States the name of the share on the server to which to connect. The
+default is <tt class="literal">backup</tt>. See also the
+<tt class="literal">-s</tt> option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-X</tt> <em class="replaceable">file_list</em></b></dt>
+<dd>
+<p>Tells <em class="emphasis">smbtar</em> to exclude the specified files from
+the backup or restore operation.</p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-32"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>smbumount</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>The <em class="emphasis">smbumount</em> command exists to allow an
+ordinary (nonsuperuser) user to unmount a smbfs filesystem, which the
+user had previously mounted using <em class="emphasis">smbmount</em>.</p>
+<div class="sect1"><a name="appc-75-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">smbumount <em class="replaceable">mount_point</em></pre></blockquote>
+<p>For ordinary users to issue the command,
+<em class="emphasis">smbumount</em> must be made suid
+<tt class="literal">root</tt>.</p>
+
+</div>
+</div>
+
+<a name="INDEX-33"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>testparm</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>The <em class="emphasis">testparm</em> program checks a Samba
+configuration file for obvious errors.</p>
+<div class="sect1"><a name="appc-77-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">testparm <em class="replaceable">[options] [filename] [hostname IP_addr]</em></pre></blockquote>
+<p>If the configuration file is not provided using the
+<em class="filename">filename</em> argument, then it defaults to
+<em class="filename">/usr/local/samba/lib/smb.conf</em>. If the hostname
+and an IP address of a system are included, an extra check is made to
+ensure that the system is allowed to connect to each service defined
+in the configuration file. This is done by comparing the hostname and
+IP address to the definitions of the <tt class="literal">hosts allow</tt>
+and <tt class="literal">hosts deny</tt> parameters.</p>
+
+</div>
+
+<div class="sect1"><a name="appc-78-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-h</tt></b></dt>
+<dd>
+<p>Prints usage information for the program.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-L</tt> <em class="replaceable">server_name</em></b></dt>
+<dd>
+<p>Sets the <tt class="literal">%L</tt> configuration variable to the
+specified server name.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-s</tt></b></dt>
+<dd>
+<p>Disables the default behavior of prompting for the Enter key to be
+pressed before printing the list of configuration options for the
+server.</p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+<a name="INDEX-34"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>testprns</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>This is a very simple program that checks to see if a specified
+printer name exists in the system printer capabilities (printcap)
+file.</p>
+<div class="sect1"><a name="appc-80-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">testprns <em class="replaceable">printername [printcapname]</em></pre></blockquote>
+<p>If <em class="replaceable">printcapname</em> isn't
+specified, Samba attempts to use the one specified in the Samba
+configuration file with the <tt class="literal">printcap name</tt>
+parameter. If none is specified there, Samba will try
+<em class="filename">/etc/printcap</em>.</p>
+
+</div>
+</div>
+
+<a name="INDEX-35"/><div class="refentry"><table width="515" border="0" cellpadding="5"><tr><td align="left"><font size="+1"><b><i>wbinfo</i></b></font></td><td align="right"><i></i></td></tr></table><hr width="515" size="3" noshade="true" align="left" color="black"/><table width="515" border="0" cellpadding="5"><tr><td align="left"/><td align="right"/></tr></table><p>This program retrieves and prints information from the
+<em class="emphasis">winbindd</em> daemon, which must be running for
+<em class="emphasis">wbinfo</em> to function.</p>
+<div class="sect1"><a name="appc-82-fm2xml"/>
+
+<h4 class="refsect1">Command synopsis</h4>
+
+<blockquote><pre class="code">wbinfo <em class="replaceable">[options]</em></pre></blockquote>
+
+
+</div>
+
+<div class="sect1"><a name="appc-83-fm2xml"/>
+
+<h4 class="refsect1">Options</h4>
+
+<dl>
+<dt><b><tt class="literal">-u</tt> </b></dt>
+<dd>
+<p>Prints all usernames that have been mapped from the Windows NT domain
+to Unix users. Users in all trusted domains are also listed.</p>
+</dd>
+
+
+
+<dt><b> <tt class="literal">-</tt><em class="emphasis">g</em> </b></dt>
+<dd>
+<p>Prints all group names that have been mapped from the Windows NT
+domain to Unix groups. Groups in all trusted domains are also
+reported.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-h</tt> <em class="replaceable">NetBIOS_name</em></b></dt>
+<dd>
+<p>Queries the WINS server and prints the IP address of the specified
+system.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-n</tt> <em class="replaceable">name</em> </b></dt>
+<dd>
+<p>Prints the SID corresponding to the name specified. The argument can
+be specified as <em class="replaceable">DOMAIN/name</em> (or by using a
+character other than the slash, as defined by the winbind separator
+character) to specify both the domain and the name. If the domain and
+separator are omitted, the value of the <tt class="literal">workgroup</tt>
+parameter in the Samba configuration file is used as the name of the
+domain.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-s</tt> <em class="replaceable">SID</em> </b></dt>
+<dd>
+<p>Prints the name mapped to a SID, which is specified in the format
+<tt class="literal">S-1-</tt><em class="replaceable">N-N-D-D-D-R</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-U</tt> <em class="replaceable">UID</em></b></dt>
+<dd>
+<p>Prints the SID mapped to a Unix UID, if one exists in the current
+domain.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-G</tt> <em class="replaceable">gid</em></b></dt>
+<dd>
+<p>Prints the SID mapped to a Unix group ID, if one exists in the
+current domain.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-S</tt> <em class="replaceable">SID</em></b></dt>
+<dd>
+<p>Prints the Unix UID that winbind has mapped to the specified SID, if
+one exists.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-Y</tt> <em class="replaceable">SID</em></b></dt>
+<dd>
+<p>Prints the Unix group ID that winbind has mapped to the specified
+SID, if one exists.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-t</tt></b></dt>
+<dd>
+<p>Tests to see that the workstation trust account for the Samba server
+is valid.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-m</tt> </b></dt>
+<dd>
+<p>Prints a list of Windows NT domains trusted by the Windows server.
+This does not include the PDC's domain.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-r</tt> <em class="replaceable">username</em></b></dt>
+<dd>
+<p>Prints the list of Unix group IDs to which the user belongs. This
+works only if the user's account is maintained on a
+domain controller.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-a</tt> <em class="replaceable">username</em><tt class="literal">%</tt><em class="replaceable">password</em></b></dt>
+<dd>
+<p>Checks to see if a user can authenticate through
+<em class="emphasis">winbindd</em> using the specified username and
+password.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">-A</tt> <em class="replaceable">username</em><tt class="literal">%</tt><em class="replaceable">password</em></b></dt>
+<dd>
+<p>Saves the username and password used by <em class="emphasis">winbindd</em>
+to the domain controller. For use when operating in a Windows 2000
+domain.</p>
+</dd>
+
+</dl>
+
+
+</div>
+</div>
+
+
+<hr/><h4 class="head4"><a href="toc.html">TOC</a></h4>
+
+</body></html>

@@ -15,7 +15,7 @@ helpcontent[0] = new Array("",
 						   "<#WLANConfig11b_WEPKey_itemtype2#>",
 						   "<#WLANConfig11b_ChannelBW_itemdesc#><br/><#WLANConfig11b_Wireless_Speed_itemname_3#>",
 						   "<#WLANConfig11b_EChannel_itemdesc#>",
-							 "",
+							 "Set the capability for transmission power. The maximum value is 100 %.",
 							 "<#WLANConfig11b_TxPower_help#>",
 							 "WEP-64bits: <#WLANConfig11b_WEPKey_itemtype1#><br/>WEP-128bits: <#WLANConfig11b_WEPKey_itemtype2#>",
 							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
@@ -57,8 +57,11 @@ helpcontent[3] = new Array("",
 						   "<#WLANConfig11b_x_EnhanInter_itemdesc#>", //21
 						   "<#WLANConfig11b_x_IgmpSnEnable_itemdesc#>",
 						   "<#WLANConfig11b_x_SchedEnable_itemdesc#>",
-							 "In explicit beamforming, both router and client card required the beamforming to get the best performance.It can improved the range and both both uplink and downlink speed.",
-							 "The implicit beamforming can support the legacy client card which does not support beamforming and increase the downlink speed. This feature will be turned on after the driver update.");
+							 "The adapter and router both support beamforming and are able to communicate estimates of the channel and steering direction to each other in order to improve downlink and uplink speed.",
+							 "For legacy wireless network adapters not supporting beamforming, the router will estimate the channel and determine steering in order to improve downlink speed.",
+							 "Optimize max number of mpdus in an ampdu.",
+							 "Optimize max number of ack to suppress in a row.",
+							 "256-QAM (MCS 8/9) support.");
 
 helpcontent[4] = new Array("",
 						   "<#LANHostConfig_IPRouters_itemdesc#>",
@@ -239,5 +242,5 @@ helpcontent[24] = new Array("",
 							"<#qis_wireless_help2#>");										//0,23
 //ADSL
 helpcontent[25] = new Array("",
-							"This field allows you to set the signal-to-noise ratio offset, if your DSL connection cannot be established or not stable, then configure to a negative dB for instance -1 dB and check if the connection becomes more stable, if problem persists then try -2 dB ~ -5 dB(Max. stability). However if your DSL connection is stable, then you could try with 1 dB ~ 5 dB(Max. performance).",			//Stability Adjustment
-							"Selecting [Enable] enables SRA(Seamless Rate Adaptation), this allows modems to make seamless data transfer rate changes to avoid dropping a connection. However if your connection is very stable and noticed DL/UL speed drops then you could disable SRA.");                //SRA(Seamless Rate Adaptation)
+							"<#DSL_Stab_Adjustment#>",			//Stability Adjustment
+							"<#DSL_SRA_itemdesc#>");		//SRA(Seamless Rate Adaptation)

@@ -32,7 +32,7 @@ extern const char *rt_serialno;
 extern const char *rt_extendno;
 extern const char *rt_buildname;
 extern const char *rt_buildinfo;
-
+extern const char *rt_swpjverno;
 
 #ifdef DEBUG_NOISY
 #define _dprintf		cprintf
@@ -171,11 +171,6 @@ extern void add_remove_usbhost(char *host, int add);
 typedef int (*host_exec)(char *dev_name, int host_num, char *dsc_name, char *pt_name, uint flags);
 extern int exec_for_host(int host, int obsolete, uint flags, host_exec func);
 extern int is_no_partition(const char *discname);
-extern int file_lock(char *tag);
-extern void file_unlock(int lockfd);
-#else
-#define file_lock(args...) (-1)
-#define file_unlock(args...) do { } while(0)
 #endif //RTCONFIG_USB
 
 // id.c
@@ -193,13 +188,17 @@ enum {
 	MODEL_RTN12C1,
 	MODEL_RTN12D1,
 	MODEL_RTN12HP,
+	MODEL_APN12,
 	MODEL_APN12HP,
 	MODEL_RTN16,
+	MODEL_RTN16UHP,
 	MODEL_RTN15U,
 	MODEL_RTN53,
 	MODEL_RTN66U,
 	MODEL_RTAC66U,
+	MODEL_RTAC68U,
 	MODEL_RTAC56U,
+	MODEL_RTN14UHP,
 	MODEL_RTN10U,
 	MODEL_RTN10P,
 	MODEL_RTN10D1,
@@ -261,6 +260,9 @@ extern int ppid(int pid);
 
 // files.c
 extern int check_if_dir_empty(const char *dirpath);
+extern int file_lock(char *tag);
+extern void file_unlock(int lockfd);
+
 
 #define FW_CREATE	0
 #define FW_APPEND	1
@@ -289,6 +291,7 @@ extern int f_wait_notexists(const char *name, int max);
 #define BTN_SWMODE_SW_AP		7
 #define BTN_WIFI_TOG			8
 #define BTN_TURBO			9
+#define BTN_LED				0xA
 
 #define LED_POWER			0
 #define LED_USB				1
@@ -303,6 +306,13 @@ extern int f_wait_notexists(const char *name, int max);
 #define LED_2G				7
 #define LED_5G				8
 #define LED_USB3			9
+#ifdef RTCONFIG_LAN4WAN_LED
+#define LED_LAN1        10
+#define LED_LAN2        11
+#define LED_LAN3        12
+#define LED_LAN4        13
+#endif
+#define LED_TURBO			0x0A
 #define LED_SWITCH			20
 
 #define	LED_OFF				0

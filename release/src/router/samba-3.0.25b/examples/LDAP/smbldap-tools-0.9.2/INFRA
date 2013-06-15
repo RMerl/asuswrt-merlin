@@ -1,0 +1,93 @@
+# $Source: /opt/cvs/samba/smbldap-tools/INFRA,v $
+#
+## Some notes about the architecture
+
+
+Global Architecture for smbdlap-tools
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+smbldap-tools help you manage users and groups for Unix and Samba,
+using LDAP. They may be used in any context, and are kept relatively
+simplier enought to let you customize them to you needs.
+
+They need the following objectClasses to work:
+ . sambaAccount: from samba.schema for Samba 2.2 branch
+ . posixAccount and posixGroup : from nis.schema
+ . organizationalUnit and dcObject: from core.schema
+
+They will probably use in a near future some additional objectClasses
+to support : 
+ . mail features (sendmail/postfix/qmail/courier).
+ . conform to RFC2307 best practices (and so some maps too like merging
+   Netbios computers (sambaAccounts) with ipHosts
+
+For ease of visualization of the LDAP objects by human standards, we
+used a DIT like this one :
+ . dc=IDEALX,dc=org : the company/organization suffix
+	. ou=Users : to store users accounts
+	. ou=Computers : to store computers accounts
+	. ou=Groups : to store system groups
+Of course, you're free to use a different naming scheme and DIT (see
+smbldap_conf.pm).
+
+
+Built in groups initial population 
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+smbldap-populate.pl populate the LDAP directory with some built in groups 
+using gidNumber according to Well Know RID of Windows NT4 Srv. In fact, As
+far a Samba 2.2.x is concerned, only the 'Domain Admins' (gidNumber 512) have 
+real inpact on the Samba and Windows population. To activate this group as 
+the Domain Administrators Group, use the following smb.conf directive (see 
+man smb.conf for more):
+
+	domain admin group = " @"Domain Admins" "
+
+However, to make pdb_ldap accept bind without being uid=0, a quick and
+dirty patch must be applied to 2.2.4 (see samba-2.2.4-ldapbindnotuid0.patch).
+This patch is Q&D because the check is there because Samba store admin 
+credentials to establish the LDAP connection. The uid == 0 check was to 
+ensure that a normal user could not get write access to the LDAP backend.
+A more logical situation should be done for 2.2.5 by checking if the user
+is a member of the domain admin group (reported to Jerremy and Gerald 
+2002-05-28).
+
+Other built in groups are really cosmetic ones with Samba 2.2.x. We did not
+removed them because one of these days, we whish to use Samba 3.0 where 
+Windows Group Support should be operational.
+
+Why these specific gidNumbers ?
+It's about unix/windows mapping of numerical ids with Samba. Ids below 1024 
+are NT special ids. In fact, 512 is the RID (Windows uid/gid) for the 
+"Domain Administrators" NT group. The magic number is found in Samba sources 
+and possibly other Samba/Windows documentations.
+
+The goal is to have a set of Unix users who are Domain Administrators and can 
+modify Samba datas (eg. LDAP content), with commandline tools or within 
+Windows via Samba.
+
+Say you want to add a NT4 ws to an NT domain (controlled by a samba/ldap  
+server). You give the domain administrator's login and password in the 
+appropriate ws settings, then the ws contacts the samba server, which checks 
+the credentials and use them as unix user to run the smbldap-tools (if I 
+remember). Giving 512 as a RID to a LDAP entry marks it as a domain admin   
+for Samba (thus Windows). Using nss_ldap, you also have an account with
+gid 512.
+
+
+Known BUGS and WORKAROUND used
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The 2.2.2 has at least a bug : rid/primaryGroupID are read as hex in LDAP,
+but written as decimal. Fixed in CVS by reading as decimal. By default
+smbldap-useradd.pl writes decimal to LDAP. Use -x to support the odd
+behaviour.
+
+The samba-2.2.4-ldapbindnotuid0.patch is not a perfect solution however
+as the check is there because Samba store admin credentials to establish the 
+LDAP connection. The uid == 0 check was to ensure that a normal user could 
+not get write access to the LDAP backend. A more logical situation should be 
+done for 2.2.5 by checking if the user is a member of the domain admin group 
+(reported to Jerremy and Gerald 2002-05-28).
+
+# - The End

@@ -1,0 +1,26 @@
+#!/bin/sh -e
+#
+#
+
+if [ "$1" = purge ]; then
+
+	# Remove Samba's state files, both volatile and non-volatile
+	rm -Rf /var/run/samba/ /var/cache/samba/ /var/lib/samba
+
+	# Remove log files
+	rm -Rf /var/log/samba/
+
+	# Remove init.d configuration file
+	echo  Removing configuration file /etc/default/samba...  >&2
+	rm -f /etc/default/samba
+
+	# Remove NetBIOS entries from /etc/inetd.conf
+	update-inetd --remove netbios-ssn
+
+else
+	# Not purging, do not remove NetBIOS entries from /etc/inetd.conf
+	update-inetd --disable netbios-ssn
+
+fi
+
+#DEBHELPER#

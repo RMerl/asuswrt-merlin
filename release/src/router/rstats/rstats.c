@@ -108,7 +108,7 @@ typedef struct {
 	unsigned long speed[MAX_NSPEED][MAX_COUNTER];
 	unsigned long last[MAX_COUNTER];
 	int tail;
-	char sync;
+	int sync;
 } speed_t;
 
 history_t history;
@@ -648,191 +648,6 @@ static void bump(data_t *data, int *tail, int max, uint32_t xnow, unsigned long 
 	}
 }
 
-#if 0
-static void calc(void)
-{
-	FILE *f;
-	char buf[256];
-	char *ifname;
-	char ifname_desc[12], ifname_desc2[12];
-	char *p;
-	unsigned long counter[MAX_COUNTER];
-	unsigned long rx2, tx2;
-	speed_t *sp;
-	int i, j;
-	time_t now;
-	time_t mon;
-	struct tm *tms;
-	uint32_t c;
-	uint32_t sc;
-	unsigned long diff;
-	long tick;
-	int n;
-	char *exclude;
-	char traffic[64];
-
-	now = time(0);
-	exclude = nvram_safe_get("rstats_exclude");
-
-	if ((f = fopen("/proc/net/dev", "r")) == NULL) return;
-	fgets(buf, sizeof(buf), f);	// header
-	fgets(buf, sizeof(buf), f);	// "
-	while (fgets(buf, sizeof(buf), f)) {
-		if ((p = strchr(buf, ':')) == NULL) continue;
-		*p = 0;
-		if ((ifname = strrchr(buf, ' ')) == NULL) ifname = buf;
-			else ++ifname;
-		if ((strcmp(ifname, "lo") == 0) || (find_word(exclude, ifname))) continue;
-
-		// <rx bytes, packets, errors, dropped, fifo errors, frame errors, compressed, multicast><tx ...>
-		if (sscanf(p + 1, "%lu%*u%*u%*u%*u%*u%*u%*u%lu", &counter[0], &counter[1]) != 2) continue;
-
-		if(!netdev_calc(ifname, ifname_desc, &counter[0], &counter[1], ifname_desc2, &rx2, &tx2))
-			continue;
-
-loopagain:
-		sp = speed;
-
-		for (i = speed_count; i > 0; --i) {
-			if (strcmp(sp->ifname, ifname_desc) == 0) break;
-			++sp;
-		}
-
-		if (i == 0) {
-			if (speed_count >= MAX_SPEED_IF) continue;
-
-			//_dprintf("%s: add %s as #%d\n", __FUNCTION__, ifname_desc, speed_count);
-
-			i = speed_count++;
-			sp = &speed[i];
-			memset(sp, 0, sizeof(*sp));
-			strcpy(sp->ifname, ifname_desc);
-			sp->sync = 1;
-			sp->utime = current_uptime;
-		}
-		if (sp->sync) {
-			_dprintf("%s: sync %s\n", __FUNCTION__, ifname_desc);
-			sp->sync = -1;
-
-			memcpy(sp->last, counter, sizeof(sp->last));
-			memset(counter, 0, sizeof(counter));
-		}
-		else {
-			sp->sync = -1;
-
-			tick = current_uptime - sp->utime;
-			n = tick / INTERVAL;
-			if (n < 1) {
-				_dprintf("%s: %s is a little early... %d < %d\n", __FUNCTION__, ifname_desc, tick, INTERVAL);
-				goto loopjudge;
-			}
-
-			sp->utime += (n * INTERVAL);
-			//_dprintf("%s: %s n=%d tick=%d\n", __FUNCTION__, ifname, n, tick);
-
-			for (i = 0; i < MAX_COUNTER; ++i) {
-				c = counter[i];
-				sc = sp->last[i];
-				if (c < sc) {
-					diff = (0xFFFFFFFF - sc) + c;
-					if (diff > MAX_ROLLOVER) diff = 0;
-				}
-				else {
-					 diff = c - sc;
-				}
-				sp->last[i] = c;
-				counter[i] = diff;
-			}
-
-			for (j = 0; j < n; ++j) {
-				sp->tail = (sp->tail + 1) % MAX_NSPEED;
-				for (i = 0; i < MAX_COUNTER; ++i) {
-					sp->speed[sp->tail][i] = counter[i] / n;
-				}
-			}
-		}
-
-		// todo: split, delay
-
-		if (now > Y2K && strcmp(ifname_desc, "INTERNET")==0) {	
-			/* Skip this if the time&date is not set yet */
-			/* Skip non-INTERNET interface only 	     */
-			tms = localtime(&now);
-			bump(history.daily, &history.dailyp, MAX_NDAILY,
-				(tms->tm_year << 16) | ((uint32_t)tms->tm_mon << 8) | tms->tm_mday, counter);
-			n = nvram_get_int("rstats_offset");
-			if ((n < 1) || (n > 31)) n = 1;
-			mon = now + ((1 - n) * (60 * 60 * 24));
-			tms = localtime(&mon);
-			bump(history.monthly, &history.monthlyp, MAX_NMONTHLY,
-				(tms->tm_year << 16) | ((uint32_t)tms->tm_mon << 8), counter);
-
-printf("history.monthlyp= %d\n", history.monthlyp);
-printf("%d, %d, %d : %ld %lld %lld\n ",
-&history.monthly[history.monthlyp].xtime, &history.monthly[history.monthlyp].counter[0],
-&history.monthly[history.monthlyp].counter[1],
-history.monthly[history.monthlyp].xtime, history.monthly[history.monthlyp].counter[0],
-history.monthly[history.monthlyp].counter[1]);
-printf("*** Rx= %lld, Tx= %lld\n",history.monthly[history.monthlyp].counter[0],history.monthly[history.monthlyp].counter[1]);
-
-#ifdef RTCONFIG_TRAFFIC_METER
-                        today_rx = last_day_rx + (history.daily[history.dailyp].counter[0]/K);
-                        today_tx = last_day_tx + (history.daily[history.dailyp].counter[1]/K);
-			memset(traffic, 0, 64);
-			sprintf(traffic, "%lu", today_rx);
-                        nvram_set("TM_day_rx", traffic);
-			memset(traffic, 0, 64);
-			sprintf(traffic, "%lu", today_tx);
-                        nvram_set("TM_day_tx", traffic);
-                        month_rx = last_month_rx + (history.monthly[history.monthlyp].counter[0]/K);
-                        month_tx = last_month_tx + (history.monthly[history.monthlyp].counter[1]/K);
-                        memset(traffic, 0, 64);
-                        sprintf(traffic, "%lu", month_rx);
-                        nvram_set("TM_month_rx", traffic);
-                        memset(traffic, 0, 64);
-                        sprintf(traffic, "%lu", month_tx);
-                        nvram_set("TM_month_tx", traffic);
-//printf("MONTH: Rx= %lu = %lu + %lld\n",month_rx,last_month_rx,(history.monthly[history.monthlyp].counter[0]/K));
-#endif
-		}
-
-loopjudge:
-		if(strlen(ifname_desc2)) {
-			strcpy(ifname_desc, ifname_desc2);
-			counter[0] = rx2;
-			counter[1] = tx2;
-			strcpy(ifname_desc2, "");
-			goto loopagain;
-		}
-	}
-	fclose(f);
-
-	// cleanup stale entries
-	for (i = 0; i < speed_count; ++i) {
-		sp = &speed[i];
-		if (sp->sync == -1) {
-			sp->sync = 0;
-			continue;
-		}
-		if (((current_uptime - sp->utime) > (10 * SMIN)) || (find_word(exclude, sp->ifname))) {
-			_dprintf("%s: #%d removing. > time limit or excluded\n", __FUNCTION__, i);
-			--speed_count;
-			memcpy(sp, sp + 1, (speed_count - i) * sizeof(speed[0]));
-		}
-		else {
-			_dprintf("%s: %s not found setting sync=1\n", __FUNCTION__, sp->ifname, i);
-			sp->sync = 1;
-		}
-	}
-
-	// todo: total > user
-	if (current_uptime >= save_utime) {
-		save(0);
-		save_utime = current_uptime + get_stime();
-		_dprintf("%s: uptime = %dm, save_utime = %dm\n", __FUNCTION__, current_uptime / 60, save_utime / 60);
-	}
-}
-#else
 static void calc(void)
 {
 	FILE *f;
@@ -1001,7 +816,7 @@ loopjudge:
 			memcpy(sp, sp + 1, (speed_count - i) * sizeof(speed[0]));
 		}
 		else {
-			_dprintf("%s: %s not found setting sync=1\n", __FUNCTION__, sp->ifname, i);
+			_dprintf("%s: %s not found setting sync=1\n", __FUNCTION__, sp->ifname);
 			sp->sync = 1;
 		}
 	}
@@ -1013,7 +828,6 @@ loopjudge:
 		_dprintf("%s: uptime = %dm, save_utime = %dm\n", __FUNCTION__, current_uptime / 60, save_utime / 60);
 	}
 }
-#endif
 
 static void sig_handler(int sig)
 {

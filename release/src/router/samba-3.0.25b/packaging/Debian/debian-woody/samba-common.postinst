@@ -1,0 +1,139 @@
+#!/bin/sh
+#
+#
+
+set -e
+
+# Do debconf stuff here
+. /usr/share/debconf/confmodule
+
+# We need a default smb.conf file. If one doesn't exist we put in place
+#	one that has some basic defaults.
+if [ ! -e /etc/samba/smb.conf ]; then
+	cp -a /usr/share/samba/smb.conf /etc/samba/
+fi
+
+# Static tempfile location, dpkg-style
+TMPFILE=/etc/samba/smb.conf.dpkg-tmp
+
+# ------------------------- Debconf questions start ---------------------
+
+# Is the user configuring with debconf, or he/she prefers swat/manual
+#	config?
+db_get samba-common/do_debconf || true
+if [ "${RET}" = "true" ]; then
+	# Get workgroup name
+	db_get samba-common/workgroup || true
+	WORKGROUP="${RET}"
+
+	# Oh my GOD, this is ugly.  Why would anyone put these
+	# characters in a workgroup name?  Why, Lord, why???
+	WORKGROUP=`echo $WORKGROUP | \
+	           sed -e's/\\\\/\\\\\\\\/g
+	                  s#/#\\\\/#g
+	                  s/&/\\\&/g
+	                  s/\\\$/\\\\\\\$/g'`
+
+	sed -e "s/^\([[:space:]]*\)\[global\]/\1\[global\]/i
+		/^[[:space:]]*\[global\]/,/^[[:space:]]*\[/ \
+			s/^\([[:space:]]*\)workgroup[[:space:]]*=.*/\1workgroup = ${WORKGROUP}/i" \
+		< /etc/samba/smb.conf >${TMPFILE}
+	mv -f ${TMPFILE} /etc/samba/smb.conf
+
+	# Encrypt passwords?
+	db_get samba-common/encrypt_passwords || true
+	ENCRYPT_PASSWORDS="${RET}"
+
+	sed -e "s/^\([[:space:]]*\)\[global\]/\1\[global\]/i
+		/^[[:space:]]*\[global\]/,/^[[:space:]]*\[/ \
+		        s/^\([[:space:]]*\)encrypt passwords[[:space:]]*=.*/\1encrypt passwords = ${ENCRYPT_PASSWORDS}/i" \
+		< /etc/samba/smb.conf >${TMPFILE}
+	mv -f ${TMPFILE} /etc/samba/smb.conf
+
+	# Install DHCP support
+	db_get samba-common/dhcp && DHCPVAL="$RET"
+	db_fget samba-common/dhcp applied || true
+	if [ "$DHCPVAL" = true ] && [ "$RET" != true ] && \
+	   ! grep -q dhcp.conf /etc/samba/smb.conf
+	then
+		sed -e "s/^\([[:space:]]*\)\[global\]/\1\[global\]/i
+			/^[[:space:]]*\[global\]/,/^[[:space:]]*\[/ {
+				/wins server[[:space:]]*=/a \\
+\\
+# If we receive WINS server info from DHCP, override the options above. \\
+   include = /etc/samba/dhcp.conf
+}" < /etc/samba/smb.conf > ${TMPFILE}
+		mv -f ${TMPFILE} /etc/samba/smb.conf
+	elif [ "$RET" != true ] && grep -q dhcp.conf /etc/samba/smb.conf
+	then
+		:
+		# FIXME: here we /delete/ the lines?
+	fi
+	# Once we get here, the config has been applied, whatever
+	# it is.
+	if [ "$RET" != true ]; then
+		db_fset samba-common/dhcp applied true
+	fi
+
+	# Update charset settings?
+	if ! grep -q "^[[:space:]]*unix charset[[:space:]]*=" /etc/samba/smb.conf
+	then
+		db_get samba-common/character_set || true
+		UNIXCHARSET="${RET}"
+		if [ -n "$UNIXCHARSET" ]
+		then
+			sed -e "s/^\([[:space:]]*\)\[global\]/\1\[global\]/i
+				s/^\([[:space:]]*\)character set/\1character set/i
+				/^[[:space:]]*\[global\]/,/^[[:space:]]*\[/ {
+					/^[[:space:]]*character set[[:space:]]*=/c \\
+   unix charset = $UNIXCHARSET
+				}" < /etc/samba/smb.conf > ${TMPFILE}
+			mv -f ${TMPFILE} /etc/samba/smb.conf
+		fi
+	fi
+
+	if grep -qi "^[[:space:]]*passdb backend[[:space:]]*=.*unixsam" /etc/samba/smb.conf
+	then
+		sed -e 's/^\([[:space:]]*\)passdb backend/\1passdb backend/i
+			/^[[:space:]]*passdb backend/ {
+				s/unixsam/guest/i
+			}' < /etc/samba/smb.conf > ${TMPFILE}
+		mv -f ${TMPFILE} /etc/samba/smb.conf
+	fi
+
+	if ! grep -q "^[[:space:]]*dos charset[[:space:]]*=" /etc/samba/smb.conf
+	then
+		db_get samba-common/codepage || true
+		DOSCHARSET="${RET}"
+		if [ -n "$DOSCHARSET" ]
+		then
+			sed -e "s/^\([[:space:]]*\)\[global\]/\1\[global\]/i
+				s/^\([[:space:]]*\)client code page/\1client code page/i
+				/^[[:space:]]*\[global\]/,/^[[:space:]]*\[/ {
+					/^[[:space:]]*client code page[[:space:]]*=/c \\
+   dos charset = $DOSCHARSET
+}" < /etc/samba/smb.conf > ${TMPFILE}
+			mv -f ${TMPFILE} /etc/samba/smb.conf
+		fi
+	fi
+
+	if dpkg --compare-versions "$2" lt 2.999+3.0.alpha20-4 \
+	   && ! grep -q "^[[:space:]]*panic action[[:space:]]*=" /etc/samba/smb.conf
+	then
+		sed -e "s/^\([[:space:]]*\)\[global\]/\1\[global\]/i
+			/^[[:space:]]*\[global\]/a \\
+\\
+# Do something sensible when Samba crashes: mail the admin a backtrace\\
+   panic action = /usr/share/samba/panic-action %d" < /etc/samba/smb.conf > ${TMPFILE}
+		mv -f ${TMPFILE} /etc/samba/smb.conf
+	fi
+
+fi
+
+chmod a+r /etc/samba/smb.conf
+
+# ------------------------- Debconf questions end ---------------------
+
+db_stop
+
+#DEBHELPER#

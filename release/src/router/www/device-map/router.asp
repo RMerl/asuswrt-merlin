@@ -69,7 +69,7 @@ function initial(){
 		*/
 	}
 
-	if($("t1").className == "tabclick_NW" && 	parent.Rawifi_support != -1)	//no exist Rawifi
+	if($("t1").className == "tabclick_NW" && 	parent.Rawifi_support)	//no exist Rawifi
 		$("wl_txbf_tr").style.display = "";		//Viz Add 2011.12 for RT-N56U Ralink 			
 
 	document.form.wl_ssid.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl_ssid"); %>');
@@ -355,7 +355,7 @@ function change_key_des(){
 
 function show_key(){
 	if(document.form.wl_asuskey1_text)
-			switchType_IE(document.form.wl_asuskey1_text);
+			switchType(document.form.wl_asuskey1_text,true);
 
 	var wep_type = document.form.wl_wep_x.value;
 	var keyindex = document.form.wl_key.value;
@@ -485,46 +485,6 @@ function nmode_limitation2(){ //Lock add 2009.11.05 for TKIP limitation in n mod
 	}
 }
 
-var isNotIE = (navigator.userAgent.search("MSIE") == -1); 
-function switchType(_method){
-	if(isNotIE){
-		document.form.wl_asuskey1.type = _method ? "text" : "password";
-		document.form.wl_wpa_psk.type = _method ? "text" : "password";
-	}
-}
-
-function switchType_IE(obj){
-		if(isNotIE) return;		
-		
-		var tmp = "";
-		tmp = obj.value;
-		if(obj.id.indexOf('text') < 0){		//password
-					if(obj.id.indexOf('psk') >= 0){							
-							obj.style.display = "none";
-							document.getElementById('wl_wpa_psk_text').style.display = "";
-							document.getElementById('wl_wpa_psk_text').value = tmp;
-							document.getElementById('wl_wpa_psk_text').focus();
-					}
-					if(obj.id.indexOf('asuskey') >= 0){
-							obj.style.display = "none";
-							document.getElementById('wl_asuskey1_text').style.display = "";
-							document.getElementById('wl_asuskey1_text').value = tmp;						
-							document.getElementById('wl_asuskey1_text').focus();
-					}	
-		}else{														//text					
-					if(obj.id.indexOf('psk') >= 0){
-							obj.style.display = "none";
-							document.getElementById('wl_wpa_psk').style.display = "";
-							document.getElementById('wl_wpa_psk').value = tmp;
-					}
-					if(obj.id.indexOf('asuskey') >= 0){
-							obj.style.display = "none";
-							document.getElementById('wl_asuskey1').style.display = "";
-							document.getElementById('wl_asuskey1').value = tmp;						
-					}					
-		}
-}
-
 function clean_input(obj){
 	if(obj.value == "<#wireless_psk_fillin#>")
 			obj.value = "";
@@ -534,7 +494,7 @@ function change_authmode(o, s, v){
 	change = 1;
 	pageChanged = 1;	
 	if(document.form.wl_wpa_psk_text)
-			switchType_IE(document.form.wl_wpa_psk_text);
+			switchType(document.form.wl_wpa_psk_text,true);
 	
 	if(v == "wl_auth_mode_x"){ /* Handle AuthenticationMethod Change */
 		wl_auth_mode_change(0);
@@ -570,6 +530,10 @@ function gotoSiteSurvey(){
 		parent.location.href = '/QIS_wizard.htm?flag=sitesurvey&band='+'<% nvram_get("wl_unit"); %>';
 	else
 		parent.location.href = '/QIS_wizard.htm?flag=sitesurvey_mb';
+}
+
+function manualSetup(){
+	return 0;	
 }
 </script>
 </head>
@@ -633,7 +597,8 @@ function gotoSiteSurvey(){
 		    <td height="50" style="padding:10px 15px 0px 15px;">
 		    	<p class="formfonttitle_nwm" style="float:left;"><#APSurvey_action_search_again_hint2#></p>
 					<br />
-		    	<input type="button" class="button_gen" onclick="gotoSiteSurvey();" value="<#btn_go#>" style="float:right;">
+			  	<input type="button" class="button_gen" onclick="gotoSiteSurvey();" value="<#QIS_rescan#>" style="float:right;">
+			  	<!--input type="button" class="button_gen" onclick="manualSetup();" value="<#Manual_Setting_btn#>" style="float:right;"-->
      			<img style="margin-top:5px; *margin-top:-10px; visibility:hidden;" src="/images/New_ui/networkmap/linetwo2.png">
 		    </td>
 		  </tr>
@@ -693,8 +658,8 @@ function gotoSiteSurvey(){
 	    			<p class="formfonttitle_nwm" ><#WLANConfig11b_WEPKey_itemname#>
 						</p>
 						<span id="sta_asuskey1_span">
-							<input id="wl_asuskey1" name="wl_asuskey1" style="width:260px;*margin-top:-7px;" type="password" autocapitalization="off" onBlur="switchType(false);" onFocus="switchType(true);switchType_IE(this);show_wepkey_help();" onKeyUp="return change_wlkey(this, 'WLANConfig11b');" value="" maxlength="27" class="input_25_table">
-							<input id="wl_asuskey1_text" name="wl_asuskey1_text" style="width:260px;*margin-top:-7px;display:none;" type="text" autocapitalization="off"  onClick="clean_input(this);" onBlur="switchType_IE(this);parent.showHelpofDrSurf(0, 7);" value="" maxlength="27" class="input_25_table"/>
+							<input id="wl_asuskey1" name="wl_asuskey1" style="width:260px;*margin-top:-7px;" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);show_wepkey_help();" onKeyUp="return change_wlkey(this, 'WLANConfig11b');" value="" maxlength="27" class="input_25_table">
+							<input id="wl_asuskey1_text" name="wl_asuskey1_text" style="width:260px;*margin-top:-7px;display:none;" type="text" autocapitalization="off"  onClick="clean_input(this);" onBlur="switchType(this,true);parent.showHelpofDrSurf(0, 7);" value="" maxlength="27" class="input_25_table"/>
 						</span>
       			<img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
     			</td>
@@ -715,8 +680,8 @@ function gotoSiteSurvey(){
       			<p class="formfonttitle_nwm" ><#WPA-PSKKey#>
 						</p>	
       			<span id="sta_wpa_psk_span">
-							<input id="wl_wpa_psk" name="wl_wpa_psk" style="width:260px;*margin-top:-7px;" type="password" autocapitalization="off" onBlur="switchType(false);" onFocus="switchType(true);switchType_IE(this);parent.showHelpofDrSurf(0, 7);" value="" maxlength="64" class="input_25_table"/>
-							<input id="wl_wpa_psk_text" name="wl_wpa_psk_text" style="width:260px;*margin-top:-7px;display:none;" type="text" autocapitalization="off" onClick="clean_input(this);" onBlur="switchType_IE(this);parent.showHelpofDrSurf(0, 7);" value="" maxlength="64" class="input_25_table"/>
+							<input id="wl_wpa_psk" name="wl_wpa_psk" style="width:260px;*margin-top:-7px;" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);parent.showHelpofDrSurf(0, 7);" value="" maxlength="64" class="input_25_table"/>
+							<input id="wl_wpa_psk_text" name="wl_wpa_psk_text" style="width:260px;*margin-top:-7px;display:none;" type="text" autocapitalization="off" onClick="clean_input(this);" onBlur="switchType(this, true);parent.showHelpofDrSurf(0, 7);" value="" maxlength="64" class="input_25_table"/>
 						</span>
       			<img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
     			</td>

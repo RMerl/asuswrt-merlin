@@ -1,0 +1,9 @@
+etc/samba
+usr/bin
+usr/sbin
+usr/lib/samba
+var/log/samba
+var/lib/samba/printers/W32X86
+var/lib/samba/printers/WIN40
+var/run/samba
+var/cache/samba

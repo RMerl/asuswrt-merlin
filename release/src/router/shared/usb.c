@@ -32,50 +32,33 @@
 /* Serialize using fcntl() calls 
  */
 
-int file_lock(char *tag)
+int check_magic(char *buf, char *magic)
 {
-	char fn[64];
-	struct flock lock;
-	int lockfd = -1;
-	pid_t lockpid;
-
-	sprintf(fn, "/var/lock/%s.lock", tag);
-	if ((lockfd = open(fn, O_CREAT | O_RDWR, 0666)) < 0)
-		goto lock_error;
-
-	pid_t pid = getpid();
-	if (read(lockfd, &lockpid, sizeof(pid_t))) {
-		// check if we already hold a lock
-		if (pid == lockpid) {
-			// don't close the file here as that will release all locks
-			return -1;
-		}
+	if (strncmp(magic, "ext3_chk", 8) == 0) 
+	{
+		if (!((uint32_t)(buf) & 4))
+			return 0;
+		if ((uint32_t)(buf+4) >= 0x40)
+			return 0;
+		if((uint32_t)(buf+8) >=8)
+			return 0;
+		return 1;
 	}
+ 
+	if (strncmp(magic, "ext4_chk", 8) == 0) 
+	{
+		if (!((uint32_t)(buf) & 4))
+			return 0;
+		if ((uint32_t)(buf+4) > 0x3F)
+			return 1;
+		if ((uint32_t)(buf+4) >= 0x40)
+			return 0;
+		if((uint32_t)(buf+8) <= 7)
+			return 0;
+		return 1;
+	} 
 
-	memset(&lock, 0, sizeof(lock));
-	lock.l_type = F_WRLCK;
-	lock.l_pid = pid;
-
-	if (fcntl(lockfd, F_SETLKW, &lock) < 0) {
-		close(lockfd);
-		goto lock_error;
-	}
-
-	lseek(lockfd, 0, SEEK_SET);
-	write(lockfd, &pid, sizeof(pid_t));
-	return lockfd;
-lock_error:
-	// No proper error processing
-	syslog(LOG_DEBUG, "Error %d locking %s, proceeding anyway", errno, fn);
-	return -1;
-}
-
-void file_unlock(int lockfd)
-{
-	if (lockfd >= 0) {
-		ftruncate(lockfd, 0);
-		close(lockfd);
-	}
+	return 0;
 }
 
 char *detect_fs_type(char *device)
@@ -110,11 +93,15 @@ char *detect_fs_type(char *device)
 	{
 		return "swap";
 	}
-	/* detect ext2/3 */
+	/* detect ext2/3/4 */
 	else if (buf[0x438] == 0x53 && buf[0x439] == 0xEF)
 	{
-		return ((buf[0x460] & 0x0008 /* JOURNAL_DEV */) != 0 ||
-			(buf[0x45c] & 0x0004 /* HAS_JOURNAL */) != 0) ? "ext3" : "ext2";
+		if(check_magic(&buf[0x45c], "ext3_chk"))
+			return "ext3";
+		else if(check_magic(&buf[0x45c], "ext4_chk"))
+			return "ext4";
+		else
+			return "ext2";
 	}
 	/* detect ntfs */
 	else if (buf[510] == 0x55 && buf[511] == 0xAA && /* signature */
@@ -532,6 +519,11 @@ ret:
 void *xmalloc(size_t siz)
 {
 	return (malloc(siz));
+}
+
+static void *xrealloc(void *old, size_t size)
+{
+	return realloc(old, size);
 }
 
 ssize_t full_read(int fd, void *buf, size_t len)

@@ -92,7 +92,7 @@ STRIP= -s
 CFLAGS:= \
 	-I${top_builddir} -I. \
 	-I${SRC}/include -I${SRC}/common -I$(TOP)/shared -I$(SRCBASE)/include \
-	 -g -W -Wall  -Wno-unused  -g -O2 -g -W -Wall  -Wno-unused  -DHAVE_CONFIG_H -DWINDOW_1 -DTEST_WRITE -DNODEBUG -DLPR_with_ASUS ${GLOBAL_OPTIONS} #-DUSBONLY #-DRETURNOK
+	 -g -W -Wall  -Wno-unused  -g -O2 -g -W -Wall  -Wno-unused  -DHAVE_CONFIG_H -DWINDOW_1 -DTEST_WRITE -DNODEBUG -DLPR_with_ASUS ${GLOBAL_OPTIONS} #-DRETURNOK -DUSBONLY
 
 USER_OBJS := 
 LDFLAGS   := -L$(TOP)/shared -lshared -L$(TOP)/nvram -lnvram

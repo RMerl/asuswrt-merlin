@@ -1,0 +1,335 @@
+# $Source: /opt/cvs/samba/smbldap-tools/ChangeLog,v $
+# $id: $
+#
+## ChangeLog for SMBLDAP-TOOLS
+
+
+
+
+2005-01-03: new tag (v0-9-2 for rpm version 0.9.2)
+2005-10-31
+	. Option 'P' to set password was not possible in smbldap-useradd when usernames contained
+	  space character
+	. smbldap-populate and smbldap_tools.pm: classes hierarchical is specified completly to avoid
+	  problem with others directories then OpenLDAP.
+	. smbldap-useradd: users are not added to to group if the group is their primary one
+	. smbldap-useradd and smbldap_tools: new function is_nonldap_unix_user to allow adding non
+	  ldap users to group. This is typically used to add users from a trusted domains (winbind)
+	. when adding trusted account (smbldap-useraddd -i) '$' caracter is added to the name if
+	  not present
+	. if with_smbpasswd="1", we let samba adding the sambaPrimaryGroupSID entry
+	. smbldap-passwd: new option -s and -u to only update samba password or unix password
+	. smbldap-passwd: regular users can change their passwords when TLS is forced
+	. parsing smb.conf is correct if parameters are defined in several lines (using \ caracter)
+	. automatic creation of the OU of a new user if it does not exist (smbldap-useradd -o ou=xxx)
+	  The new OU must me relative to the $config{usersdn} parameter
+2005-07-12
+	. sambaPrimaryGroupSID for samba users is set to DOMAIN_SID-513, whatever is
+	  the defaultUserGid parameter value defined in smbldap.conf
+2005-06-07
+	. sambaBadPasswordCount is set to 0 when using smbldap-passwd
+	. update for respect with RFC 2256:
+	  sn <-> nom (option S)
+	  givenName <-> prenom (option N)
+	  cn <-> person's full name
+	. UTF8 support for givenName (option N) and sn (option S)
+2005-05-26: new tag (v0-9-1 for rpm version 0.9.1)
+	. bugs correction and updates in configure.pl
+2005-05-17: new tag (v0-9-0 for rpm version 0.9.0)
+2005-05-16
+	. update release version 0.9.0 for synchronisation with examples of the "Samba3 by examples"
+	  book of John H Terpstra.
+	. default configuration files for the smbldap-tools can be place in
+	  /etc/opt/IDEALX/smbldap-tools or /etc/smbldap-tools/
+	. default configuration file for samba can be /etc/samba/smb.conf or
+	  /usr/local/samba/lib/smb.conf
+	. new parameter userHomeDirectoryMode in smbldap.conf to set the default directory mode used
+	  for user's homeDirectory
+	. enhancements and fixes in configure.pl
+2005-04-27
+	. error in group type documentation in smbldap-groupadd
+2005-04-17
+	. warnings was displayed when samba configuraton file (smb.conf) had single quotes in
+	  parameters definition (thanks to Tom Burkart <samba@aussec.com>)
+	. 'idmapdn' is now also optional in smbldap.conf (if needed and defined in smb.conf)
+2005-04-03: new tag (v0-8-8 for rpm version 0.8.8)
+2005-03-09
+	. Four more options are now optional in smbldap.conf. Default values are:
+	  > slaveLDAP="127.0.0.1"
+	  > slavePort="389"
+	  > masterLDAP="127.0.0.1"
+	  > masterPort="389"
+	  > ldapTLS="0"
+	. the following suffix can be used with the smbldap-tools:
+	  > suffix="dc=dpt,dc=idealx,dc=org", suffix="dc=idealx,dc=org" or suffix="dc=idealx"
+	. update to smbldap-populate:
+	    . administrator account is now called 'root'
+	    . default uidNumber for root is set to 0
+	    . default rid for root is set to 500
+	    . default gidNumber for administrator is set to 0
+	  uidNumber and gidNumber can be changed with option -k and -m
+2005-03-08
+	. Four parameters in smbldap.conf are now optional:
+	  'suffix', 'usersdn', 'computersdn' and 'groupsdn'
+	  If those parameters are not set, they are respectivly taken from the following
+	  parameters in smb.conf :
+	  'ldap suffix', 'ldap user suffix', 'ldap machine suffix' and 'ldap group suffix'
+	. renaming two files:
+	  $ mv smbldap-migrate-accounts smbldap-migrate-pwdump-accounts 
+	  $ mv smbldap-migrate-groups smbldap-migrate-pwdump-groups
+2005-02-26
+	. New option '-t time' to smbldap-useradd: wait <time> seconds before exiting script when
+	  adding computer's account. This is useful when Master/PDC and Slaves/BDCs are connected
+	  through the internet (replication is not real time).
+	  The Samba smb.conf configuration file should then look like this :
+	  > add machine script = /opt/IDEALX/sbin/smbldap-useradd -t 30 -w "%u"
+	  This options can only be used with the -w to add computers's account.
+	  bug report: https://bugzilla.samba.org/show_bug.cgi?id=2384
+	. three parameters are now optional in smbldap.conf
+	  . 'sambaUnixIdPooldn': If not defined, next uidNumber and gidNumber available for new
+	    users and groups are stored in sambaDomainName object
+	  . 'SID': If not defined, parameter is taking from "net getlocalsid" return
+	  . 'sambaDomain': If not defined, parameter is taking from smb.conf configuration file
+	. add 'sambaDomain' parameter in smbldap.conf. If not defined 'workgroup' parameter in
+	  smb.conf is used
+2005-02-13: new tag (v0-8-7 for rpm version 0.8.7)
+	. update smbldap-populate: check previously if entries exist. If the sambaDomain entry
+	  already exist when using smbldap-populate, we just modify it to add the sambaUnixIdPool
+	  objectclass which store the first uidNumber and gidNumber available.
+	. update connection procedure to the directory in smbldap-passwd
+	. new script smbldap-userinfo from Pawel Wieleba to allow people update their own
+	  informations like telephoneNumber, name and some others (need proper ACL in ldap
+	  configuration)
+	. new migration scripts from Pawel Wieleba smbldap-migrate-unix-accounts and
+	  smbldap-migrate-unix-groups to help migrating users and groups defined in /etc/passwd (and/or
+	  /etc/shadow) and /etc/group.
+2005-01-29
+	. bug in smbldap-populate: the -b option (guest login name) was broken
+	. new option '-k' and '-l' to smbldap-populate to defined the uidNumber of administrator and
+	  guest accounts
+	. group "Account Operators" is now created with smbldap-populate
+	. Administrator account does not need anymore uidNumber=0 (using 998)
+	. update in smbldap-populate and smbldap.conf:
+	  . next uidNumber and gidNumber available for new users and new groups are now
+	    stored in the sambaDomainName object. This allow the sambaUnixIdPooldn to not
+	    been viewed as a real user under IMC (http://www.idealx.org/prj/imc/)
+	    sambaUnixIdPooldn in configuration file smbldap.conf must look like
+	    > sambaUnixIdPooldn="sambaDomainName=MYDOMAIN,${suffix}"
+	  . the sambaDomainName is determine by 
+	    - the sambaUnixIdPooldn parameter of smbldap.conf, or
+	    - the workgroup parameter of smb.conf if sambaUnixIdPooldn is not a sambaDomainName
+	      object
+	. patch to smbldap-useradd: $modify->code was executed even if no modification was required,
+	  this can cause error mesage with some ldap directory.
+	. small typo corrections
+2005-16-01: new tag (v0-8-6 for rpm version 0.8.6)
+2005-06-01:
+	. new location /opt/IDEALX and /etc/opt/IDEALX/ (instead of /usr/local and /etc)
+	  to conform to FHS/LSB
+	. update typo correction in documentation
+	. patch to smbldap-passwd from Pawel Wieleba <wielebap@volt.iem.pw.edu.pl>:
+	   see www.iem.pw.edu.pl/~wielebap/ldap/smbldap-tools/smbldap-tools_doc.pdf
+	  . use of slappasswd was insecure as external program. Now slappasswd is run in
+	    a child process and shell is not used
+	  . it is now possible to not use slappasswd but perl module only
+	  . new parameter 'with_slappasswd' in smbldap.conf to allow not use 'slappasswd'
+	    but perl module only
+	. new option '-r' to smbldap-usermod for renaming a user. Exemple:
+	  $ smbldap-usermod -d /home/new_user -r new_user old_user
+2004-10-28: new tag (v0-8-5-3 for rpm version 0.8.5-3)
+2004-10-07:
+	. smbldap-useradd: set sambaPwdLastSet to the current date, and sambaPwdMustChange
+	  to 2147483647 for trust account to work
+	. patch from Quentin Delance <quentin.delance@insalien.org>:
+	  added test to not being able to remove primary group of a user
+2004-08-29: new tag (v0-8-5-2 for rpm version 0.8.5-2)
+	. small corrections
+	. computer's account have the 'gecos' attribute set to 'computer': computers may not
+	  join the domain if this attribute is not defined (thanks to "Dominik 'Rathann' Mierzejewski")
+2004-06-25:
+	. patch to smbldap_tools.pm: the 'search' to sambaUnixIdPool objectclass is done
+	  directly to the object defined in the configuration file (sambaUnixIdPooldn="...").
+	  This allow to have more then one object having the sambaUnixIdPool objectclass.
+	. patch smbldap-useradd. The -P and -T options had no effect if the -a was not used.
+	. update configure.pl
+2004-06-21:
+	. new '-o' option in smbldap-useradd to set the organizatinal unit where the account
+	  will be created. It is relative of the user suffix dn ($usersdn) defined in the
+	  configuration file
+2004-06-17: new tag (v0-8-5-1 for rpm version 0.8.5-1)
+	. update documentation
+2004-05-25:
+	. patch to smbldap-populate:
+	  fix sambaSID and sambaGroupType error for builtin groups
+	. new entry in /etc/smbldap-tools/smbldap.conf for idmap ou:
+	  > idmapdn="ou=Idmap,${suffix}"
+2004-05-10:
+	. patch from Ross Becker <ross@rbecker.org> :
+	  new option in smbldap.conf to set the salt format if CRYPT hash is used.
+	. add a check to see if STDIN is connected to tty by using if (-t STDIN) ...
+	  This allow the unsecure use of "echo -e 'password\npassword' | smbldap-passwd jto"
+2004-04-30:
+	. patch for smbldap-useradd and smbldap-groupadd: next uidNumber and gidNumber available
+	  are now stored in cn=NextFreeUnixId
+	  WARNING:
+	  . when upgrading, you need to create the new object manually (see INSTALL file)
+	  . this object's name is defined in /etc/smbldap-tools/smbldap.conf
+	    you can defined another name as desired, for example:
+	    > sambaUnixIdPooldn="cn=NextFreeUnixId,${suffix}"
+2004-04-07:
+	. patch from Emmanuel Lacour <elacour@home-dn.net> :
+	  no more use of mkntpwd, use of Crypt::SmbHash perl module instead
+2004-04-04:
+	. patchs from Alexander Bergolth <leo@strike.wu-wien.ac.at> :
+	  . variable substitution to the config-file parser.
+	    This new feature allows configurations like that
+	      > suffix="dc=idealx,dc=com"
+	      > usersdn="ou=Users,${suffix}"
+	    Username substitution is done via %U:
+	      > userHome="/home/%U"
+            ==> smbldap.conf file can now use the samba %U definition
+	  . change in smbldap-userdel refuses deleting a home directory that doesn't contain
+	    the username, more precisely that doesn't look like /^\/.+\/(.*)$user/
+	    This avoids deleting-disasters when the homeDirectory attribute is
+	    erroneous set to a wrong value like "/" or "/home".
+	  . adds mail-forwarding and mail-alias capabilities (for use by MTAs like sendmail or
+            postfix). Two new options "-M" and "-T" allow specifying mail-aliases and mail-forward
+	    addresses in smbldap-useradd and smbldap-usermod. If those options are used, the
+	    objectclass "inetLocalMailRecipient" is used
+	  . patch to allows adding new mail-aliases (-M), mail-forward addresses (-T) or
+	    supplementary groups (-G) without overwriting the existing ones using a syntax like
+		smbldap-usermod -G +wheel testuser
+	    Removing only the specified attributes without deleting all of them works the same way
+	    using a syntax like
+		smbldap-usermod -G -wheel testuser
+	  . patch that fixes a small problem when using userHomeDrive without the ":" symbol
+	. test if a user is unique in get_homedir function. Replace the regular expression that check
+          the homeDirectory attribute's value with the exact query response.
+2004-03-05:
+	. add the displayName attribut when using 'smbldap-groupadd -a'
+	. update smbldap-populate (set the username for the guest account and the
+	  administrative account in sambaProfilePath instead of $adminName and $guestName)
+2004-03-01:
+	. update smbldap-populate to allow setting userHomeDrive="" in configuration file
+2004-02-22:
+	. it is now possible to delete the following entries with smbldap-usermod :
+	  sambaHomePath (option -C), sambaHomeDrive (option -D)
+	  sambaLogonScript (option -E) and sambaProfilePath (option -F)
+	  ex: smbldap-usermod -C "" user
+	. update documentation
+2004-02-07: new tag v0-8-4
+	. include documentation in smbldap-tools.spec file
+2004-01-22:
+	. config.pl: usersdn, groupsdn and computersdn was not updated
+	. config.pl: empty value can be set with the "." caracter
+2004-01-19:
+	. certificates for TLS support can now be declared in the smbldap.conf
+	  configuration file. 4 new options: verify, cafile, clientcert and clientkey
+2004-01-17:
+	. remove OpenLDAP requirement in smbldap-tools spec file as the LDAP server
+	  can be on another computer
+2004-01-14:
+	. patch to smbldap-populate to not take into account attributes that has a null
+	  definition in smbldap.conf (sambaProfilePath and sambaHomePath)
+2004-01-10:
+	. shadowAccount objectclass added for users account (needed for users on Solaris
+	  system to authenticate)
+	. configuration is now split in two files
+	  > smbldap.conf : globals parameters
+	  > smbldap_bind.conf: connection parameters to the directory
+	. patch in smbldap-password that allow users to use this script to change their
+	  own passwords
+2003-12-29:
+	. new script configure.pl to help setting up the smbldap_conf.pl file
+	. bug: smbldap_conf.pm now allow to set _userSmbHome and _userProfile to a null string
+	  to disable homedirectory and roaming profiles
+2003-12-19:
+	. new option '-i' to smbldap-useradd to create a trust account (domain membership)
+	. rename all scripts: remove the '.pl' 
+2003-12-11:
+	. new option '-i' to smbldap-populate to import an ldif file
+	. new option '-e' to smbldap-populate to export an ldif file
+2003-11-18: new tag v0-8-2
+	. new option '-a' to smbldap-usermod.pl that allow adding the sambaSAMAccount
+	  objectclass to an existing posixAccount
+2003-11-07:
+	. patch that allow adding user to a group when the group is in a higher level depth
+          then ou=Groups (for example, ou=grp1,ou=Groups,...)
+        . check the unicity of a group when adding/removing a user to this group
+2003-10-28:
+	. new option '-p' in smbldap-groupadd.pl to 'print' the gidNumber
+	  of the group to STDOUT. This is needed by samba (see the man page)
+2003-10-19:
+	. new function does_sid_exist that check if samaSID sttribute is already
+          defined for another use or another group
+2003-10-13:
+	. smbldap-populate.pl now also add the group mapping
+2003-10-01: new tag v0-8-1
+        . one can now comment the two directives '$_userSmbHome' and '$_userProfile'
+          if you want to use the smb.conf directives instead ('logon home' and
+	  'logon path' respectively), or if you want to desable roaming profiles
+	. Patch from Alexander Bergolth <leo@strike.wu-wien.ac.at>: the sambaPrimaryGroupSID
+	  of a user is now set to the sambaSID of his primary group
+2003-09-29:
+	. added new option '$_defaultMaxPasswordAge' in smbldap_conf.pm to specifie
+	  how long a password is valid
+	. The '-B' option was not always valid: to force a user to change his password:
+	  . the attribut sambaPwdLastSet must be != 0
+	  . the attribut sambaAcctFlags must not match the 'X' flag
+	. logon script is set (for every one) to the default '_userScript' value if it is defined 
+	. Patch from Alexander Bergolth <leo@strike.wu-wien.ac.at>:
+	  gid-sid group mapping to smbldap-groupadd.pl and smbldap-groupmod.pl
+2003-09-19: Patch from Marc Schoechlin <ms@LF.net>
+	. load the perl-modules without setting environment-variables or making symlinks
+2003-09-18: Patch from Alexander Bergolth <leo@strike.wu-wien.ac.at>
+	. options "-u", "-g", "-s" and "-c" are now functionnal
+	. the existence of samba account was made on sambaAccount and
+	  not sambaSAMAccount as it should be for samba3
+	. new function read_user_entry to smbldap_tools.pm that returns
+	  a Net::LDAP:Entry object of the user
+	. Use this object to get the dn and user attributes instead of
+	  producing an ldif and searching for attributes within that ldif
+2003-09-15:
+	. change machine account creation to not add the sambaSAMAccount objectclass.
+	  It is now added directly by samba when joigning the domain
+	. new option in smbldap-usermod.pl: '-e' to set an expire date
+	. Start_tls support activated when ldapSSL is set to 1
+	. Net::LDAP support more scripts
+	. bugs correction
+2003-09-02:
+	. sambaPwdLastSet is updated when smbldap-passwd.pl is used
+	. add a function is_group_member to test the existence of a
+	  user in a particular group
+	. add a function is_unix_user to test if a particular user exist
+	. Net::LDAP support more scripts
+2003-08-15:
+	. Samba3.0 support
+2003-08-01:
+	. Final version for samba 2.2.8a (cvs tag SAMBA-2-2-8a-FINAL)
+	. OpenLDAP 2.1 support (only one structural objectclass allowed)
+2002-07-24: top and account objectclasses replaced with inetorgperson
+2002-06-03: notes to webmin.idealx.org (idxldapaccounts)
+2002-06-01: release 0.7. tested with 2.2.4
+2002-05-31: fixed smbldap-populate compliance to smbldap_conf 
+            cleaned up smbldap_conf to be more readable 
+            some more documentation
+            bugfixes on smbldap-passwd and smbldap-populate
+2002-05-16: modified default mode on homes: now 700
+2002-05-13: fixed spec (relocation and reqs)
+2002-03-02: fixed 2.2.3 sambaAccount bug with smbldap-useradd.pl
+              (rid is now mandatory in the sambaAccount objectClass)
+2002-02-14: just modified default populate for Administrator
+2002-02-05: release 0.6. enable/disable user in usermod
+2002-02-04: release 0.5. added smbldap-migrate-groups to migrate NT groups
+            from a net group dump. added samba parameters to smbldap-useradd
+            and smbldap-usermod.
+2002-01-12: added smbldap-migrate-accounts to migrate users/machines
+            accounts from a PWDUMP dump
+2001-12-13: added smbldap-populate to create the initial base
+2001-12-13: initial release 0.1
+2001-12-12: fixed the SPEC file for RedHat
+2001-12-03: cleaned the code and use strict;
+2001-11-20: initial needs (for testing purpose on Samba-2.2.2 an Samba-TNG)
+
+
+# - The End

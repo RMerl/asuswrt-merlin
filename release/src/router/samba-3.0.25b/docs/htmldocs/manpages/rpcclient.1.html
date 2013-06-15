@@ -1,0 +1,206 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>rpcclient</title><link rel="stylesheet" href="samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.71.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="rpcclient.1"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>rpcclient &#8212; tool for executing client side 
+	MS-RPC functions</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">rpcclient</code> [-A authfile] [-c &lt;command string&gt;] [-d debuglevel] [-h] [-l logdir] [-N] [-s &lt;smb config file&gt;] [-U username[%password]] [-W workgroup] [-N] [-I destinationIP] {server}</p></div></div><div class="refsect1" lang="en"><a name="id259598"></a><h2>DESCRIPTION</h2><p>This tool is part of the <a href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p><code class="literal">rpcclient</code> is a utility initially developed
+	to test MS-RPC functionality in Samba itself.  It has undergone 
+	several stages of development and stability.  Many system administrators
+	have now written scripts around it to manage Windows NT clients from 
+	their UNIX workstation. </p></div><div class="refsect1" lang="en"><a name="id259376"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">server</span></dt><dd><p>NetBIOS name of Server to which to connect. 
+		The server can be  any SMB/CIFS server.  The name is 
+		resolved using the <a class="indexterm" name="id259394"></a>name resolve order line from <a href="smb.conf.5.html"><span class="citerefentry"><span class="refentrytitle">smb.conf</span>(5)</span></a>.</p></dd><dt><span class="term">-c|--command='command string'</span></dt><dd><p>execute semicolon separated commands (listed 
+		below)) </p></dd><dt><span class="term">-I IP-address</span></dt><dd><p><em class="replaceable"><code>IP address</code></em> is the address of the server to connect to. 
+		It should be specified in standard "a.b.c.d" notation. </p><p>Normally the client would attempt to locate a named 
+		SMB/CIFS server by looking it up via the NetBIOS name resolution 
+		mechanism described above in the <em class="parameter"><code>name resolve order</code></em> 
+		parameter above. Using this parameter will force the client
+		to assume that the server is on the machine with the specified IP 
+		address and the NetBIOS name component of the resource being 
+		connected to will be ignored. </p><p>There is no default for this parameter. If not supplied, 
+		it will be determined automatically by the client as described 
+		above. </p></dd><dt><span class="term">-V</span></dt><dd><p>Prints the program version number.
+</p></dd><dt><span class="term">-s &lt;configuration file&gt;</span></dt><dd><p>The file specified contains the 
+configuration details required by the server.  The 
+information in this file includes server-specific
+information such as what printcap file to use, as well 
+as descriptions of all the services that the server is 
+to provide. See <code class="filename">smb.conf</code> for more information.
+The default configuration file name is determined at 
+compile time.</p></dd><dt><span class="term">-d|--debuglevel=level</span></dt><dd><p><em class="replaceable"><code>level</code></em> is an integer 
+from 0 to 10.  The default value if this parameter is 
+not specified is zero.</p><p>The higher this value, the more detail will be 
+logged to the log files about the activities of the 
+server. At level 0, only critical errors and serious 
+warnings will be logged. Level 1 is a reasonable level for
+day-to-day running - it generates a small amount of 
+information about operations carried out.</p><p>Levels above 1 will generate considerable 
+amounts of log data, and should only be used when 
+investigating a problem. Levels above 3 are designed for 
+use only by developers and generate HUGE amounts of log
+data, most of which is extremely cryptic.</p><p>Note that specifying this parameter here will 
+override the <a class="indexterm" name="id260427"></a> parameter
+in the <code class="filename">smb.conf</code> file.</p></dd><dt><span class="term">-l|--logfile=logdirectory</span></dt><dd><p>Base directory name for log/debug files. The extension
+<code class="constant">".progname"</code> will be appended (e.g. log.smbclient, 
+log.smbd, etc...). The log file is never removed by the client.
+</p></dd><dt><span class="term">-N</span></dt><dd><p>If specified, this parameter suppresses the normal
+password prompt from the client to the user. This is useful when
+accessing a service that does not require a password. </p><p>Unless a password is specified on the command line or
+this parameter is specified, the client will request a
+password.</p><p>If a password is specified on the command line and this
+option is also defined the password on the command line will
+be silently ingnored and no password will be used.</p></dd><dt><span class="term">-k</span></dt><dd><p>
+Try to authenticate with kerberos. Only useful in
+an Active Directory environment.
+</p></dd><dt><span class="term">-A|--authentication-file=filename</span></dt><dd><p>This option allows
+you to specify a file from which to read the username and
+password used in the connection.  The format of the file is
+</p><pre class="programlisting">
+username = &lt;value&gt;
+password = &lt;value&gt;
+domain   = &lt;value&gt;
+</pre><p>Make certain that the permissions on the file restrict 
+access from unwanted users. </p></dd><dt><span class="term">-U|--user=username[%password]</span></dt><dd><p>Sets the SMB username or username and password. </p><p>If %password is not specified, the user will be prompted. The
+client will first check the <code class="envar">USER</code> environment variable, then the
+<code class="envar">LOGNAME</code> variable and if either exists, the
+string is uppercased. If these environmental variables are not
+found, the username <code class="constant">GUEST</code> is used. </p><p>A third option is to use a credentials file which
+contains the plaintext of the username and password.  This
+option is mainly provided for scripts where the admin does not
+wish to pass the credentials on the command line or via environment
+variables. If this method is used, make certain that the permissions
+on the file restrict access from unwanted users.  See the
+<em class="parameter"><code>-A</code></em> for more details. </p><p>Be cautious about including passwords in scripts. Also, on
+many systems the command line of a running process may be seen
+via the <code class="literal">ps</code> command.  To be safe always allow
+<code class="literal">rpcclient</code> to prompt for a password and type
+it in directly. </p></dd><dt><span class="term">-n &lt;primary NetBIOS name&gt;</span></dt><dd><p>This option allows you to override
+the NetBIOS name that Samba uses for itself. This is identical
+to setting the <a class="indexterm" name="id300444"></a> parameter in the <code class="filename">smb.conf</code> file. 
+However, a command
+line setting will take precedence over settings in
+<code class="filename">smb.conf</code>.</p></dd><dt><span class="term">-i &lt;scope&gt;</span></dt><dd><p>This specifies a NetBIOS scope that
+<code class="literal">nmblookup</code> will use to communicate with when
+generating NetBIOS names. For details on the use of NetBIOS
+scopes, see rfc1001.txt and rfc1002.txt. NetBIOS scopes are
+<span class="emphasis"><em>very</em></span> rarely used, only set this parameter
+if you are the system administrator in charge of all the
+NetBIOS systems you communicate with.</p></dd><dt><span class="term">-W|--workgroup=domain</span></dt><dd><p>Set the SMB domain of the username.   This
+overrides the default domain which is the domain defined in
+smb.conf.  If the domain specified is the same as the servers 
+NetBIOS name, it causes the client to log on using the servers local 
+SAM (as opposed to the Domain SAM). </p></dd><dt><span class="term">-O socket options</span></dt><dd><p>TCP socket options to set on the client
+socket. See the socket options parameter in
+the <code class="filename">smb.conf</code> manual page for the list of valid
+options. </p></dd><dt><span class="term">-h|--help</span></dt><dd><p>Print a summary of command line options.
+</p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id300529"></a><h2>COMMANDS</h2><div class="refsect2" lang="en"><a name="id300535"></a><h3>LSARPC</h3><div class="variablelist"><dl><dt><span class="term">lsaquery</span></dt><dd><p>Query info policy</p></dd><dt><span class="term">lookupsids</span></dt><dd><p>Resolve a list 
+		of SIDs to usernames.
+		</p></dd><dt><span class="term">lookupnames</span></dt><dd><p>Resolve a list 
+		of usernames to SIDs.
+		</p></dd><dt><span class="term">enumtrusts</span></dt><dd><p>Enumerate trusted domains</p></dd><dt><span class="term">enumprivs</span></dt><dd><p>Enumerate privileges</p></dd><dt><span class="term">getdispname</span></dt><dd><p>Get the privilege name</p></dd><dt><span class="term">lsaenumsid</span></dt><dd><p>Enumerate the LSA SIDS</p></dd><dt><span class="term">lsaenumprivsaccount</span></dt><dd><p>Enumerate the privileges of an SID</p></dd><dt><span class="term">lsaenumacctrights</span></dt><dd><p>Enumerate the rights of an SID</p></dd><dt><span class="term">lsaenumacctwithright</span></dt><dd><p>Enumerate accounts with a right</p></dd><dt><span class="term">lsaaddacctrights</span></dt><dd><p>Add rights to an account</p></dd><dt><span class="term">lsaremoveacctrights</span></dt><dd><p>Remove rights from an account</p></dd><dt><span class="term">lsalookupprivvalue</span></dt><dd><p>Get a privilege value given its name</p></dd><dt><span class="term">lsaquerysecobj</span></dt><dd><p>Query LSA security object</p></dd></dl></div></div><div class="refsect2" lang="en"><a name="id300659"></a><h3>LSARPC-DS</h3><div class="variablelist"><dl><dt><span class="term">dsroledominfo</span></dt><dd><p>Get Primary Domain Information</p></dd></dl></div><p> </p><p><span class="emphasis"><em>DFS</em></span></p><div class="variablelist"><dl><dt><span class="term">dfsexist</span></dt><dd><p>Query DFS support</p></dd><dt><span class="term">dfsadd</span></dt><dd><p>Add a DFS share</p></dd><dt><span class="term">dfsremove</span></dt><dd><p>Remove a DFS share</p></dd><dt><span class="term">dfsgetinfo</span></dt><dd><p>Query DFS share info</p></dd><dt><span class="term">dfsenum</span></dt><dd><p>Enumerate dfs shares</p></dd></dl></div></div><div class="refsect2" lang="en"><a name="id300728"></a><h3>REG</h3><div class="variablelist"><dl><dt><span class="term">shutdown</span></dt><dd><p>Remote Shutdown</p></dd><dt><span class="term">abortshutdown</span></dt><dd><p>Abort Shutdown</p></dd></dl></div></div><div class="refsect2" lang="en"><a name="id300753"></a><h3>SRVSVC</h3><div class="variablelist"><dl><dt><span class="term">srvinfo</span></dt><dd><p>Server query info</p></dd><dt><span class="term">netshareenum</span></dt><dd><p>Enumerate shares</p></dd><dt><span class="term">netfileenum</span></dt><dd><p>Enumerate open files</p></dd><dt><span class="term">netremotetod</span></dt><dd><p>Fetch remote time of day</p></dd></dl></div></div><div class="refsect2" lang="en"><a name="id300795"></a><h3>SAMR</h3><div class="variablelist"><dl><dt><span class="term">queryuser</span></dt><dd><p>Query user info</p></dd><dt><span class="term">querygroup</span></dt><dd><p>Query group info</p></dd><dt><span class="term">queryusergroups</span></dt><dd><p>Query user groups</p></dd><dt><span class="term">querygroupmem</span></dt><dd><p>Query group membership</p></dd><dt><span class="term">queryaliasmem</span></dt><dd><p>Query alias membership</p></dd><dt><span class="term">querydispinfo</span></dt><dd><p>Query display info</p></dd><dt><span class="term">querydominfo</span></dt><dd><p>Query domain info</p></dd><dt><span class="term">enumdomusers</span></dt><dd><p>Enumerate domain users</p></dd><dt><span class="term">enumdomgroups</span></dt><dd><p>Enumerate domain groups</p></dd><dt><span class="term">enumalsgroups</span></dt><dd><p>Enumerate alias groups</p></dd><dt><span class="term">createdomuser</span></dt><dd><p>Create domain user</p></dd><dt><span class="term">samlookupnames</span></dt><dd><p>Look up names</p></dd><dt><span class="term">samlookuprids</span></dt><dd><p>Look up names</p></dd><dt><span class="term">deletedomuser</span></dt><dd><p>Delete domain user</p></dd><dt><span class="term">samquerysecobj</span></dt><dd><p>Query SAMR security object</p></dd><dt><span class="term">getdompwinfo</span></dt><dd><p>Retrieve domain password info</p></dd><dt><span class="term">lookupdomain</span></dt><dd><p>Look up domain</p></dd></dl></div></div><div class="refsect2" lang="en"><a name="id300941"></a><h3>SPOOLSS</h3><div class="variablelist"><dl><dt><span class="term">adddriver &lt;arch&gt; &lt;config&gt; [&lt;version&gt;]</span></dt><dd><p>
+		Execute an AddPrinterDriver() RPC to install the printer driver 
+		information on the server.  Note that the driver files should 
+		already exist in the directory returned by  
+		<code class="literal">getdriverdir</code>.  Possible values for 
+		<em class="parameter"><code>arch</code></em> are the same as those for 
+		the <code class="literal">getdriverdir</code> command.
+		The <em class="parameter"><code>config</code></em> parameter is defined as 
+		follows: </p><pre class="programlisting">
+Long Printer Name:\
+Driver File Name:\
+Data File Name:\
+Config File Name:\
+Help File Name:\
+Language Monitor Name:\
+Default Data Type:\
+Comma Separated list of Files
+</pre><p>Any empty fields should be enter as the string "NULL". </p><p>Samba does not need to support the concept of Print Monitors
+		since these only apply to local printers whose driver can make
+		use of a bi-directional link for communication.  This field should 
+		be "NULL".   On a remote NT print server, the Print Monitor for a 
+		driver must already be installed prior to adding the driver or 
+		else the RPC will fail. </p><p>The <em class="parameter"><code>version</code></em> parameter lets you
+		specify the printer driver version number.  If omitted, the
+		default driver version for the specified architecture will
+		be used.  This option can be used to upload Windows 2000
+		(version 3) printer drivers.</p></dd><dt><span class="term">addprinter &lt;printername&gt; 
+		&lt;sharename&gt; &lt;drivername&gt; &lt;port&gt;</span></dt><dd><p>
+		Add a printer on the remote server.  This printer 
+ 		will be automatically shared.  Be aware that the printer driver 
+		must already be installed on the server (see <code class="literal">adddriver</code>) 
+		and the <em class="parameter"><code>port</code></em>must be a valid port name (see
+		<code class="literal">enumports</code>.</p></dd><dt><span class="term">deldriver</span></dt><dd><p>Delete the 
+		specified printer driver for all architectures.  This
+		does not delete the actual driver files from the server,
+		only the entry from the server's list of drivers.
+		</p></dd><dt><span class="term">deldriverex &lt;driver&gt; [architecture] [version]
+		</span></dt><dd><p>Delete the specified printer driver including driver files. 
+		You can limit this action to a specific architecture and a specific version. 
+		If no architecure is given, all driver files of that driver will be deleted. 
+		</p></dd><dt><span class="term">enumdata</span></dt><dd><p>Enumerate all 
+		printer setting data stored on the server. On Windows NT  clients, 
+		these values are stored  in the registry, while Samba servers 
+		store them in the printers TDB.  This command corresponds
+		to the MS Platform SDK GetPrinterData() function (* This
+		command is currently unimplemented).</p></dd><dt><span class="term">enumdataex</span></dt><dd><p>Enumerate printer data for a key</p></dd><dt><span class="term">enumjobs &lt;printer&gt;</span></dt><dd><p>List the jobs and status of a given printer. 
+		This command corresponds to the MS Platform SDK EnumJobs() 
+		function</p></dd><dt><span class="term">enumkey</span></dt><dd><p>Enumerate
+		printer keys</p></dd><dt><span class="term">enumports [level]</span></dt><dd><p>
+		Executes an EnumPorts() call using the specified 
+		info level. Currently only info levels 1 and 2 are supported. 
+		</p></dd><dt><span class="term">enumdrivers [level]</span></dt><dd><p>
+		Execute an EnumPrinterDrivers() call.  This lists the various installed 
+		printer drivers for all architectures.  Refer to the MS Platform SDK 
+		documentation for more details of the various flags and calling 
+		options. Currently supported info levels are 1, 2, and 3.</p></dd><dt><span class="term">enumprinters [level]</span></dt><dd><p>Execute an EnumPrinters() call.  This lists the various installed 
+		and share printers.  Refer to the MS Platform SDK documentation for 
+		more details of the various flags and calling options. Currently
+		supported info levels are 1, 2 and 5.</p></dd><dt><span class="term">getdata &lt;printername&gt; &lt;valuename;&gt;</span></dt><dd><p>Retrieve the data for a given printer setting.  See 
+		the  <code class="literal">enumdata</code> command for more information.  
+		This command corresponds to the GetPrinterData() MS Platform 
+		SDK function. </p></dd><dt><span class="term">getdataex</span></dt><dd><p>Get
+		printer driver data with
+		keyname</p></dd><dt><span class="term">getdriver &lt;printername&gt;</span></dt><dd><p>
+		Retrieve the printer driver information (such as driver file, 
+		config file, dependent files, etc...) for 
+		the given printer. This command corresponds to the GetPrinterDriver()
+		MS Platform  SDK function. Currently info level 1, 2, and 3 are supported.
+		</p></dd><dt><span class="term">getdriverdir &lt;arch&gt;</span></dt><dd><p>
+		Execute a GetPrinterDriverDirectory()
+		RPC to retrieve the SMB share name and subdirectory for 
+		storing printer driver files for a given architecture.  Possible 
+		values for <em class="parameter"><code>arch</code></em> are "Windows 4.0" 
+		(for Windows 95/98), "Windows NT x86", "Windows NT PowerPC", "Windows
+		Alpha_AXP", and "Windows NT R4000". </p></dd><dt><span class="term">getprinter &lt;printername&gt;</span></dt><dd><p>Retrieve the current printer information.  This command 
+		corresponds to the GetPrinter() MS Platform SDK function. 
+		</p></dd><dt><span class="term">getprintprocdir</span></dt><dd><p>Get
+		print processor
+		directory</p></dd><dt><span class="term">openprinter &lt;printername&gt;</span></dt><dd><p>Execute an OpenPrinterEx() and ClosePrinter() RPC 
+		against a given printer. </p></dd><dt><span class="term">setdriver &lt;printername&gt;
+		&lt;drivername&gt;</span></dt><dd><p>Execute a SetPrinter() command to update the printer driver
+		associated with an installed printer.  The printer driver must
+		already be correctly installed on the print server.  </p><p>See also the <code class="literal">enumprinters</code> and 
+		<code class="literal">enumdrivers</code> commands for obtaining a list of
+		of installed printers and drivers.</p></dd><dt><span class="term">addform</span></dt><dd><p>Add form</p></dd><dt><span class="term">setform</span></dt><dd><p>Set form</p></dd><dt><span class="term">getform</span></dt><dd><p>Get form</p></dd><dt><span class="term">deleteform</span></dt><dd><p>Delete form</p></dd><dt><span class="term">enumforms</span></dt><dd><p>Enumerate form</p></dd><dt><span class="term">setprinter</span></dt><dd><p>Set printer comment</p></dd><dt><span class="term">setprinterdata</span></dt><dd><p>Set REG_SZ printer data</p></dd><dt><span class="term">setprintername &lt;printername&gt;
+		&lt;newprintername&gt;</span></dt><dd><p>Set printer name</p></dd><dt><span class="term">rffpcnex</span></dt><dd><p>Rffpcnex test</p></dd></dl></div></div><div class="refsect2" lang="en"><a name="id301320"></a><h3>NETLOGON</h3><div class="variablelist"><dl><dt><span class="term">logonctrl2</span></dt><dd><p>Logon Control 2</p></dd><dt><span class="term">logonctrl</span></dt><dd><p>Logon Control</p></dd><dt><span class="term">samsync</span></dt><dd><p>Sam Synchronisation</p></dd><dt><span class="term">samdeltas</span></dt><dd><p>Query Sam Deltas</p></dd><dt><span class="term">samlogon</span></dt><dd><p>Sam Logon</p></dd></dl></div></div><div class="refsect2" lang="en"><a name="id301380"></a><h3>GENERAL COMMANDS</h3><div class="variablelist"><dl><dt><span class="term">debuglevel</span></dt><dd><p>Set the current
+		debug level used to log information.</p></dd><dt><span class="term">help (?)</span></dt><dd><p>Print a listing of all 
+		known commands or extended help  on a particular command. 
+		</p></dd><dt><span class="term">quit (exit)</span></dt><dd><p>Exit <code class="literal">rpcclient
+		</code>.</p></dd></dl></div></div></div><div class="refsect1" lang="en"><a name="id301422"></a><h2>BUGS</h2><p><code class="literal">rpcclient</code> is designed as a developer testing tool 
+	and may not be robust in certain areas (such as command line parsing).  
+	It has been known to  generate a core dump upon failures when invalid 
+	parameters where passed to the interpreter. </p><p>From Luke Leighton's original rpcclient man page:</p><p><span class="emphasis"><em>WARNING!</em></span> The MSRPC over SMB code has 
+	been developed from examining  Network traces. No documentation is 
+	available from the original creators  (Microsoft) on how MSRPC over 
+	SMB works, or how the individual MSRPC services  work. Microsoft's 
+	implementation of these services has been demonstrated  (and reported) 
+	to be... a bit flaky in places. </p><p>The development of Samba's implementation is also a bit rough, 
+	and as more of the services are understood, it can even result in 
+	versions of <a href="smbd.8.html"><span class="citerefentry"><span class="refentrytitle">smbd</span>(8)</span></a> and <a href="rpcclient.1.html"><span class="citerefentry"><span class="refentrytitle">rpcclient</span>(1)</span></a> that are incompatible for some commands or  services. Additionally, 
+	the developers are sending reports to Microsoft,  and problems found 
+	or reported to Microsoft are fixed in Service Packs,  which may 
+	result in incompatibilities.</p></div><div class="refsect1" lang="en"><a name="id301473"></a><h2>VERSION</h2><p>This man page is correct for version 3.0 of the Samba 
+	suite.</p></div><div class="refsect1" lang="en"><a name="id301484"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</p><p>The original rpcclient man page was written by Matthew 
+	Geddes, Luke Kenneth Casson Leighton, and rewritten by Gerald Carter.  
+	The conversion to DocBook for Samba 2.2 was done by Gerald 
+	Carter. The conversion to DocBook XML 4.2 for Samba 3.0 was
+	done by Alexander Bokovoy.</p></div></div></body></html>

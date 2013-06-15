@@ -7,6 +7,7 @@
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
 
+<script type="text/javascript" src="/disk_msg.js"></script>
 <script type="text/javascript">
 var account = '<% get_parameter("account"); %>';
 var permission = '<% get_parameter("permission"); %>';

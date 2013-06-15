@@ -1,7 +1,11 @@
 #ifndef __FLASH_MTD_H
 #define __FLASH_MTD_H
 
+#if defined(RTN14U)
+#define NUM_INFO 7
+#else
 #define NUM_INFO 6
+#endif
 #define MAX_READ_CNT 0x10000
 
 struct mtd_info {

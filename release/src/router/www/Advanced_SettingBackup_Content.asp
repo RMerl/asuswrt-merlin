@@ -80,7 +80,7 @@ function detect_httpd(){
 	$j.ajax({
     		url: '/httpd_check.htm',
     		dataType: 'script',
-				timeout: 1000,
+				timeout: 1500,
     		error: function(xhr){
     				dead++;
     				if(dead < 6){
@@ -88,7 +88,7 @@ function detect_httpd(){
     				}else{
     						$('loading_block1').style.display = "none";
     						$('loading_block2').style.display = "none";
-    						$('loading_block2').style.display = "";
+    						$('loading_block3').style.display = "";
     						$('loading_block3').innerHTML = "<div><#LANConfig_ChangedLANIP#></div>";
     				}
     		},
@@ -111,7 +111,7 @@ function detect_httpd(){
 	<tr>
 		<td height="80">
 		<div id="loading_block1" class="Bar_container">
-			<span id="proceeding_img_text"></span>
+			<div id="proceeding_img_text"></div>
 			<div id="proceeding_img"></div>
 		</div>
 		<div id="loading_block2" style="margin:5px auto; width:85%;"></div>
@@ -192,8 +192,10 @@ function detect_httpd(){
           <tr>
             <th align="right"><a class="hintstyle" href="javascript:void(0);" onclick="openHint(19,3)"><#Setting_upload_itemname#></a></th>
             <td>
-							<input type="button" class="button_gen" onclick="uploadSetting();" value="<#CTL_upload#>"/>
-              <input type="file" name="file" class="input" style="color:#FFCC00;"/>
+				<div style="margin-left:-10px;"><table><tr>
+					<td style="border:0px"><input type="button" class="button_gen" onclick="uploadSetting();" value="<#CTL_upload#>"/></td>
+					<td style="border:0px"><input type="file" name="file" class="input" style="color:#FFCC00;"/></td>
+				</tr></table></div>
             </td>
           </tr>
         </table>

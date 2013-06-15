@@ -1,0 +1,729 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 14. Identity Mapping (IDMAP)</title><link rel="stylesheet" href="samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.71.0"><link rel="start" href="index.html" title="The Official Samba-3 HOWTO and Reference Guide"><link rel="up" href="optional.html" title="Part III. Advanced Configuration"><link rel="prev" href="NetCommand.html" title="Chapter 13. Remote and Local Management: The Net Command"><link rel="next" href="rights.html" title="Chapter 15. User Rights and Privileges"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 14. Identity Mapping (IDMAP)</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="NetCommand.html">Prev</a> </td><th width="60%" align="center">Part III. Advanced Configuration</th><td width="20%" align="right"> <a accesskey="n" href="rights.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="idmapper"></a>Chapter 14. Identity Mapping (IDMAP)</h2></div><div><div class="author"><h3 class="author"><span class="firstname">John</span> <span class="othername">H.</span> <span class="surname">Terpstra</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a href="mailto:jht@samba.org">jht@samba.org</a>&gt;</code></p></div></div></div></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="idmapper.html#id367289">Samba Server Deployment Types and IDMAP</a></span></dt><dd><dl><dt><span class="sect2"><a href="idmapper.html#id367312">Standalone Samba Server</a></span></dt><dt><span class="sect2"><a href="idmapper.html#id367370">Domain Member Server or Domain Member Client</a></span></dt><dt><span class="sect2"><a href="idmapper.html#id368265">Primary Domain Controller</a></span></dt><dt><span class="sect2"><a href="idmapper.html#id368484">Backup Domain Controller</a></span></dt></dl></dd><dt><span class="sect1"><a href="idmapper.html#id368550">Examples of IDMAP Backend Usage</a></span></dt><dd><dl><dt><span class="sect2"><a href="idmapper.html#id368610">Default Winbind TDB</a></span></dt><dt><span class="sect2"><a href="idmapper.html#id369321">IDMAP_RID with Winbind</a></span></dt><dt><span class="sect2"><a href="idmapper.html#id369895">IDMAP Storage in LDAP Using Winbind</a></span></dt><dt><span class="sect2"><a href="idmapper.html#id370456">IDMAP and NSS Using LDAP from ADS with RFC2307bis Schema Extension</a></span></dt></dl></dd></dl></div><p>
+<a class="indexterm" name="id367035"></a>
+<a class="indexterm" name="id367042"></a>
+<a class="indexterm" name="id367049"></a>
+<a class="indexterm" name="id367056"></a>
+<a class="indexterm" name="id367065"></a>
+<a class="indexterm" name="id367071"></a>
+<a class="indexterm" name="id367078"></a>
+The Microsoft Windows operating system has a number of features that impose specific challenges
+to interoperability with the operating systems on which Samba is implemented. This chapter deals
+explicitly with the mechanisms Samba-3 (version 3.0.8 and later) uses to overcome one of the
+key challenges in the integration of Samba servers into an MS Windows networking environment.
+This chapter deals with identity mapping (IDMAP) of Windows security identifiers (SIDs)
+to UNIX UIDs and GIDs.
+</p><p>
+To ensure sufficient coverage, each possible Samba deployment type is discussed.
+This is followed by an overview of how the IDMAP facility may be implemented.
+</p><p>
+<a class="indexterm" name="id367097"></a>
+<a class="indexterm" name="id367103"></a>
+<a class="indexterm" name="id367110"></a>
+<a class="indexterm" name="id367117"></a>
+The IDMAP facility is of concern where more than one Samba server (or Samba network client)
+is installed in a domain. Where there is a single Samba server, do not be too concerned regarding
+the IDMAP infrastructure  the default behavior of Samba is nearly always sufficient.
+Where mulitple Samba servers are used it is often necessary to move data off one server and onto
+another, and that is where the fun begins!
+</p><p>
+<a class="indexterm" name="id367134"></a>
+<a class="indexterm" name="id367140"></a>
+<a class="indexterm" name="id367146"></a>
+<a class="indexterm" name="id367153"></a>
+<a class="indexterm" name="id367160"></a>
+<a class="indexterm" name="id367166"></a>
+<a class="indexterm" name="id367173"></a>
+<a class="indexterm" name="id367180"></a>
+Where user and group account information is stored in an LDAP directory every server can have the same
+consistent UID and GID for users and groups. This is achieved using NSS and the nss_ldap tool. Samba
+can be configured to use only local accounts, in which case the scope of the IDMAP problem is somewhat
+reduced. This works reasonably well if the servers belong to a single domain, and interdomain trusts
+are not needed. On the other hand, if the Samba servers are NT4 domain members, or ADS  domain members,
+or if there is a need to keep the security name-space separate (i.e., the user
+<code class="literal">DOMINICUS\FJones</code> must not be given access to the account resources of the user 
+<code class="literal">FRANCISCUS\FJones</code><sup>[<a name="id367203" href="#ftn.id367203">4</a>]</sup> free from inadvertent cross-over, close attention should be given
+to the way that the IDMAP facility is configured.
+</p><p>
+<a class="indexterm" name="id367229"></a>
+<a class="indexterm" name="id367236"></a>
+<a class="indexterm" name="id367242"></a>
+<a class="indexterm" name="id367249"></a>
+<a class="indexterm" name="id367256"></a>
+<a class="indexterm" name="id367262"></a>
+The use of IDMAP is important where the Samba server will be accessed by workstations or servers from
+more than one domain, in which case it is important to run winbind so it can handle the resolution (ID mapping)
+of foreign SIDs to local UNIX UIDs and GIDs.
+</p><p>
+<a class="indexterm" name="id367274"></a>
+The use of the IDMAP facility requires the execution of the <code class="literal">winbindd</code> upon Samba startup.
+</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id367289"></a>Samba Server Deployment Types and IDMAP</h2></div></div></div><p>
+<a class="indexterm" name="id367297"></a>
+There are four basic server deployment types, as documented in <a href="ServerType.html" title="Chapter 3. Server Types and Security Modes">the chapter
+on Server Types and Security Modes</a>.
+</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id367312"></a>Standalone Samba Server</h3></div></div></div><p>
+	<a class="indexterm" name="id367320"></a>
+	<a class="indexterm" name="id367327"></a>
+	<a class="indexterm" name="id367334"></a>
+	A standalone Samba server is an implementation that is not a member of a Windows NT4 domain,
+	a Windows 200X Active Directory domain, or a Samba domain.
+	</p><p>
+	<a class="indexterm" name="id367345"></a>
+	<a class="indexterm" name="id367352"></a>
+	<a class="indexterm" name="id367359"></a>
+	By definition, this means that users and groups will be created and controlled locally, and
+	the identity of a network user must match a local UNIX/Linux user login. The IDMAP facility
+	is therefore of little to no interest, winbind will not be necessary, and the IDMAP facility
+	will not be relevant or of interest.
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id367370"></a>Domain Member Server or Domain Member Client</h3></div></div></div><p>
+	<a class="indexterm" name="id367378"></a>
+	<a class="indexterm" name="id367385"></a>
+	<a class="indexterm" name="id367391"></a>
+	<a class="indexterm" name="id367398"></a>
+	<a class="indexterm" name="id367404"></a>
+	Samba-3 can act as a Windows NT4 PDC or BDC, thereby providing domain control protocols that
+	are compatible with Windows NT4. Samba-3 file and print sharing protocols are compatible with
+	all versions of MS Windows products. Windows NT4, as with MS Active Directory,
+	extensively makes use of Windows SIDs.
+	</p><p>
+	<a class="indexterm" name="id367417"></a>
+	<a class="indexterm" name="id367424"></a>
+	<a class="indexterm" name="id367430"></a>
+	Samba-3 domain member servers and clients must interact correctly with MS Windows SIDs. Incoming
+	Windows SIDs must be translated to local UNIX UIDs and GIDs. Outgoing information from the Samba
+	server must provide to MS Windows clients and servers appropriate SIDs.
+	</p><p>
+	<a class="indexterm" name="id367443"></a>
+	<a class="indexterm" name="id367449"></a>
+	A Samba member of a Windows networking domain (NT4-style or ADS) can be configured to handle 
+	identity mapping in a variety of ways. The mechanism it uses depends on whether or not
+	the <code class="literal">winbindd</code> daemon is used and how the winbind functionality is configured.
+	The configuration options are briefly described here:
+	</p><div class="variablelist"><dl><dt><span class="term">Winbind is not used; users and groups are local: </span></dt><dd><p>
+				<a class="indexterm" name="id367477"></a>
+				<a class="indexterm" name="id367484"></a>
+				<a class="indexterm" name="id367490"></a>
+				<a class="indexterm" name="id367497"></a>
+				<a class="indexterm" name="id367504"></a>
+				<a class="indexterm" name="id367511"></a>
+				<a class="indexterm" name="id367518"></a>
+				<a class="indexterm" name="id367524"></a>
+				<a class="indexterm" name="id367531"></a>
+				<a class="indexterm" name="id367538"></a>
+				<a class="indexterm" name="id367545"></a>
+				Where <code class="literal">winbindd</code> is not used Samba (<code class="literal">smbd</code>)
+				uses the underlying UNIX/Linux mechanisms to resolve the identity of incoming
+				network traffic. This is done using the LoginID (account name) in the
+				session setup request and passing it to the getpwnam() system function call.
+				This call is implemented using the name service switch (NSS) mechanism on
+				modern UNIX/Linux systems. By saying "users and groups are local,"
+				we are implying that they are stored only on the local system, in the
+				<code class="filename">/etc/passwd</code> and <code class="filename">/etc/group</code> respectively.
+				</p><p>
+				<a class="indexterm" name="id367583"></a>
+				<a class="indexterm" name="id367589"></a>
+				For example, when the user <code class="literal">BERYLIUM\WambatW</code> tries to open a
+				connection to a Samba server the incoming SessionSetupAndX request will make a 
+				system call to look up the user <code class="literal">WambatW</code> in the
+				<code class="filename">/etc/passwd</code> file.
+				</p><p>
+				<a class="indexterm" name="id367619"></a>
+				<a class="indexterm" name="id367626"></a>
+				<a class="indexterm" name="id367632"></a>
+				<a class="indexterm" name="id367639"></a>
+				<a class="indexterm" name="id367646"></a>
+				<a class="indexterm" name="id367652"></a>
+				<a class="indexterm" name="id367659"></a>
+				<a class="indexterm" name="id367666"></a>
+				This configuration may be used with standalone Samba servers, domain member
+				servers (NT4 or ADS), and for a PDC that uses either an smbpasswd
+				or a tdbsam-based Samba passdb backend.
+				</p></dd><dt><span class="term">Winbind is not used; users and groups resolved via NSS: </span></dt><dd><p>
+				<a class="indexterm" name="id367687"></a>
+				<a class="indexterm" name="id367693"></a>
+				<a class="indexterm" name="id367700"></a>
+				<a class="indexterm" name="id367707"></a>
+				<a class="indexterm" name="id367714"></a>
+				<a class="indexterm" name="id367720"></a>
+				In this situation user and group accounts are treated as if they are local
+				accounts. The only way in which this differs from having local accounts is
+				that the accounts are stored in a repository that can be shared. In practice
+				this means that they will reside in either an NIS-type database or else in LDAP.
+				</p><p>
+				<a class="indexterm" name="id367733"></a>
+				<a class="indexterm" name="id367740"></a>
+				<a class="indexterm" name="id367747"></a>
+				<a class="indexterm" name="id367753"></a>
+				<a class="indexterm" name="id367760"></a>
+				<a class="indexterm" name="id367766"></a>
+				<a class="indexterm" name="id367773"></a>
+				This configuration may be used with standalone Samba servers, domain member
+				servers (NT4 or ADS), and for a PDC that uses either an smbpasswd
+				or a tdbsam-based Samba passdb backend.
+				</p></dd><dt><span class="term">Winbind/NSS with the default local IDMAP table: </span></dt><dd><p>
+				<a class="indexterm" name="id367794"></a>
+				<a class="indexterm" name="id367801"></a>
+				<a class="indexterm" name="id367808"></a>
+				<a class="indexterm" name="id367814"></a>
+				There are many sites that require only a simple Samba server or a single Samba
+				server that is a member of a Windows NT4 domain or an ADS domain. A typical example
+				is an appliance like file server on which no local accounts are configured and
+				winbind is used to obtain account credentials from the domain controllers for the
+				domain. The domain control can be provided by Samba-3, MS Windows NT4, or MS Windows
+				Active Directory.
+				</p><p>
+				<a class="indexterm" name="id367828"></a>
+				<a class="indexterm" name="id367835"></a>
+				<a class="indexterm" name="id367842"></a>
+				<a class="indexterm" name="id367849"></a>
+				<a class="indexterm" name="id367856"></a>
+				Winbind is a great convenience in this situation. All that is needed is a range of
+				UID numbers and GID numbers that can be defined in the <code class="filename">smb.conf</code> file. The
+				<code class="filename">/etc/nsswitch.conf</code> file is configured to use <code class="literal">winbind</code>,
+				which does all the difficult work of mapping incoming SIDs to appropriate UIDs and GIDs.
+				The SIDs are allocated a UID/GID in the order in which winbind receives them.
+				</p><p>
+				<a class="indexterm" name="id367886"></a>
+				<a class="indexterm" name="id367893"></a>
+				<a class="indexterm" name="id367899"></a>
+				<a class="indexterm" name="id367906"></a>
+				This configuration is not convenient or practical in sites that have more than one
+				Samba server and that require the same UID or GID for the same user or group across
+				all servers. One of the hazards of this method is that in the event that the winbind
+				IDMAP file becomes corrupted or lost, the repaired or rebuilt IDMAP file may allocate
+				UIDs and GIDs to different users and groups from what was there previously with the
+				result that MS Windows files that are stored on the Samba server may now not belong to
+				the rightful owners.
+				</p></dd><dt><span class="term">Winbind/NSS uses RID based IDMAP: </span></dt><dd><p>
+				<a class="indexterm" name="id367930"></a>
+				<a class="indexterm" name="id367936"></a>
+				<a class="indexterm" name="id367943"></a>
+				<a class="indexterm" name="id367950"></a>
+				The IDMAP_RID facility is new to Samba version 3.0.8. It was added to make life easier
+				for a number of sites that are committed to use of MS ADS, that do not apply
+				an ADS schema extension, and that do not have an installed an LDAP directory server just for
+				the purpose of maintaining an IDMAP table. If you have a single ADS domain (not a forest of
+				domains, and not multiple domain trees) and you want a simple cookie-cutter solution to the
+				IDMAP table problem, then IDMAP_RID is an obvious choice.
+				</p><p>
+				<a class="indexterm" name="id367969"></a>
+				<a class="indexterm" name="id367975"></a>
+				<a class="indexterm" name="id367982"></a>
+				<a class="indexterm" name="id367989"></a>
+				<a class="indexterm" name="id367996"></a>
+				<a class="indexterm" name="id368002"></a>
+				<a class="indexterm" name="id368009"></a>
+				<a class="indexterm" name="id368015"></a>
+				This facility requires the allocation of the <em class="parameter"><code>idmap uid</code></em> and the
+				<em class="parameter"><code>idmap gid</code></em> ranges, and within the <em class="parameter"><code>idmap uid</code></em>
+				it is possible to allocate a subset of this range for automatic mapping of the relative
+				identifier (RID) portion of the SID directly to the base of the UID plus the RID value.
+				For example, if the <em class="parameter"><code>idmap uid</code></em> range is <code class="constant">1000-100000000</code>
+				and the <em class="parameter"><code>idmap backend = idmap_rid:DOMAIN_NAME=1000-50000000</code></em>, and
+				a SID is encountered that has the value <code class="constant">S-1-5-21-34567898-12529001-32973135-1234</code>,
+				the resulting UID will be <code class="constant">1000 + 1234 = 2234</code>.
+				</p></dd><dt><span class="term">Winbind with an NSS/LDAP backend-based IDMAP facility: </span></dt><dd><p>
+				<a class="indexterm" name="id368079"></a>
+				<a class="indexterm" name="id368086"></a>
+				<a class="indexterm" name="id368092"></a>
+				<a class="indexterm" name="id368099"></a>
+				<a class="indexterm" name="id368106"></a>
+				<a class="indexterm" name="id368112"></a>
+				<a class="indexterm" name="id368119"></a>
+				<a class="indexterm" name="id368126"></a>
+				In this configuration <code class="literal">winbind</code> resolved SIDs to UIDs and GIDs from
+				the <em class="parameter"><code>idmap uid</code></em> and <em class="parameter"><code>idmap gid</code></em> ranges specified
+				in the <code class="filename">smb.conf</code> file, but instead of using a local winbind IDMAP table, it is stored
+				in an LDAP directory so that all domain member machines (clients and servers) can share
+				a common IDMAP table.
+				</p><p>
+				<a class="indexterm" name="id368162"></a>
+				<a class="indexterm" name="id368169"></a>
+				<a class="indexterm" name="id368176"></a>
+				It is important that all LDAP IDMAP clients use only the master LDAP server because the
+				<em class="parameter"><code>idmap backend</code></em> facility in the <code class="filename">smb.conf</code> file does not correctly
+				handle LDAP redirects.
+				</p></dd><dt><span class="term">Winbind with NSS to resolve UNIX/Linux user and group IDs: </span></dt><dd><p>
+				The use of LDAP as the passdb backend is a smart solution for PDC, BDC, and
+				domain member servers. It is a neat method for assuring that UIDs, GIDs, and the matching
+				SIDs are consistent across all servers.
+				</p><p>
+				<a class="indexterm" name="id368213"></a>
+				<a class="indexterm" name="id368220"></a>
+				The use of the LDAP-based passdb backend requires use of the PADL nss_ldap utility or
+				an equivalent. In this situation winbind is used to handle foreign SIDs, that is, SIDs from
+				standalone Windows clients (i.e., not a member of our domain) as well as SIDs from 
+				another domain. The foreign UID/GID is mapped from allocated ranges (idmap uid and idmap gid)
+				in precisely the same manner as when using winbind with a local IDMAP table.
+				</p><p>
+				<a class="indexterm" name="id368234"></a>
+				<a class="indexterm" name="id368241"></a>
+				<a class="indexterm" name="id368248"></a>
+				The nss_ldap tool set can be used to access UIDs and GIDs via LDAP as well as via Active
+				Directory. In order to use Active Directory, it is necessary to modify the ADS schema by
+				installing either the AD4UNIX schema extension or using the Microsoft Services for UNIX
+				version 3.5 or later to extend the ADS schema so it maintains UNIX account credentials.
+				Where the ADS schema is extended, a Microsoft Management Console (MMC) snap-in is also
+				installed to permit the UNIX credentials to be set and managed from the ADS User and Computer
+				Management tool. Each account must be separately UNIX-enabled before the UID and GID data can
+				be used by Samba.
+				</p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id368265"></a>Primary Domain Controller</h3></div></div></div><p>
+	<a class="indexterm" name="id368273"></a>
+	<a class="indexterm" name="id368280"></a>
+	<a class="indexterm" name="id368287"></a>
+	<a class="indexterm" name="id368293"></a>
+	Microsoft Windows domain security systems generate the user and group SID as part
+	of the process of creation of an account. Windows does not have a concept of the UNIX UID or a GID; rather,
+	it has its own type of security descriptor. When Samba is used as a domain controller, it provides a method
+	of producing a unique SID for each user and group. Samba generates a machine and a domain SID to which it
+	adds an RID that is calculated algorithmically from a base value that can be specified
+	in the <code class="filename">smb.conf</code> file, plus twice (2x) the UID or GID. This method is called &#8220;<span class="quote">algorithmic mapping</span>&#8221;.
+	</p><p>
+	<a class="indexterm" name="id368317"></a>
+	For example, if a user has a UID of 4321, and the algorithmic RID base has a value of 1000, the RID will
+	be <code class="literal">1000 + (2 x 4321) = 9642</code>. Thus, if the domain SID is
+	<code class="literal">S-1-5-21-89238497-92787123-12341112</code>, the resulting SID is
+	<code class="literal">S-1-5-21-89238497-92787123-12341112-9642</code>.
+	</p><p>
+	<a class="indexterm" name="id368347"></a>
+	<a class="indexterm" name="id368354"></a>
+	<a class="indexterm" name="id368360"></a>
+	<a class="indexterm" name="id368367"></a>
+	The foregoing type of SID is produced by Samba as an automatic function and is either produced on the fly
+	(as is the case when using a <em class="parameter"><code>passdb backend = [tdbsam | smbpasswd]</code></em>), or may be stored
+	as a permanent part of an account in an LDAP-based ldapsam.
+	</p><p>
+	<a class="indexterm" name="id368385"></a>
+	<a class="indexterm" name="id368392"></a>
+	<a class="indexterm" name="id368398"></a>
+	<a class="indexterm" name="id368405"></a>
+	<a class="indexterm" name="id368412"></a>
+	<a class="indexterm" name="id368419"></a>
+	<a class="indexterm" name="id368425"></a>
+	<a class="indexterm" name="id368432"></a>
+	<a class="indexterm" name="id368439"></a>
+	ADS uses a directory schema that can be extended to accommodate additional
+	account attributes such as UIDs and GIDs. The installation of Microsoft Service for UNIX 3.5 will expand
+	the normal ADS schema to include UNIX account attributes. These must of course be managed separately
+	through a snap-in module to the normal ADS account management MMC interface.
+	</p><p>
+	<a class="indexterm" name="id368452"></a>
+	<a class="indexterm" name="id368458"></a>
+	<a class="indexterm" name="id368465"></a>
+	<a class="indexterm" name="id368472"></a>
+	Security identifiers used within a domain must be managed to avoid conflict and to preserve itegrity.
+	In an NT4 domain context, the PDC manages the distribution of all security credentials to the backup
+	domain controllers (BDCs). At this time the only passdb backend for a Samba domain controller that is suitable
+	for such information is an LDAP backend.
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id368484"></a>Backup Domain Controller</h3></div></div></div><p>
+	<a class="indexterm" name="id368492"></a>
+	<a class="indexterm" name="id368498"></a>
+	<a class="indexterm" name="id368505"></a>
+	<a class="indexterm" name="id368512"></a>
+	<a class="indexterm" name="id368518"></a>
+	<a class="indexterm" name="id368525"></a>
+	<a class="indexterm" name="id368532"></a>
+	BDCs have read-only access to security credentials that are stored in LDAP.
+	Changes in user or group account information are passed by the BDC to the PDC. Only the PDC can write
+	changes to the directory.
+	</p><p>
+	IDMAP information can be written directly to the LDAP server so long as all domain controllers
+	have access to the master (writable) LDAP server. Samba-3 at this time does not handle LDAP redirects
+	in the IDMAP backend. This means that it is is unsafe to use a slave (replicate) LDAP server with
+	the IDMAP facility.
+	</p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id368550"></a>Examples of IDMAP Backend Usage</h2></div></div></div><p>
+<a class="indexterm" name="id368558"></a>
+<a class="indexterm" name="id368567"></a>
+<a class="indexterm" name="id368576"></a>
+<a class="indexterm" name="id368582"></a>
+<a class="indexterm" name="id368589"></a>
+Anyone who wishes to use <code class="literal">winbind</code> will find the following example configurations helpful.
+Remember that in the majority of cases <code class="literal">winbind</code> is of primary interest for use with
+domain member servers (DMSs) and domain member clients (DMCs).
+</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id368610"></a>Default Winbind TDB</h3></div></div></div><p>
+	Two common configurations are used:
+	</p><div class="itemizedlist"><ul type="disc"><li><p>
+		Networks that have an NT4 PDC (with or without BDCs) or a Samba PDC (with or without BDCs).
+		</p></li><li><p>
+		Networks that use MS Windows 200x ADS.
+		</p></li></ul></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id368633"></a>NT4-Style Domains (Includes Samba Domains)</h4></div></div></div><p>
+	<a href="idmapper.html#idmapnt4dms" title="Example 14.1. NT4 Domain Member Server smb.conf">NT4 Domain Member Server smb.con</a> is a simple example of an NT4 DMS
+	<code class="filename">smb.conf</code> file that shows only the global section.
+	</p><div class="example"><a name="idmapnt4dms"></a><p class="title"><b>Example 14.1. NT4 Domain Member Server smb.conf</b></p><div class="example-contents"><table class="simplelist" border="0" summary="Simple list"><tr><td># Global parameters</td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[global]</code></em></td></tr><tr><td><a class="indexterm" name="id368684"></a><em class="parameter"><code>workgroup = MEGANET2</code></em></td></tr><tr><td><a class="indexterm" name="id368696"></a><em class="parameter"><code>security = DOMAIN</code></em></td></tr><tr><td><a class="indexterm" name="id368709"></a><em class="parameter"><code>idmap uid = 10000-20000</code></em></td></tr><tr><td><a class="indexterm" name="id368721"></a><em class="parameter"><code>idmap gid = 10000-20000</code></em></td></tr><tr><td><a class="indexterm" name="id368734"></a><em class="parameter"><code>template primary group = "Domain Users"</code></em></td></tr><tr><td><a class="indexterm" name="id368747"></a><em class="parameter"><code>template shell = /bin/bash</code></em></td></tr></table></div></div><br class="example-break"><p>
+	<a class="indexterm" name="id368762"></a>
+	<a class="indexterm" name="id368769"></a>
+	The use of <code class="literal">winbind</code> requires configuration of NSS. Edit the <code class="filename">/etc/nsswitch.conf</code>
+	so it includes the following entries:
+</p><pre class="screen">
+...
+passwd: files winbind
+shadow: files winbind
+group:  files winbind
+...
+hosts:  files [dns] wins
+...
+</pre><p>
+	The use of DNS in the hosts entry should be made only if DNS is used on site.
+	</p><p>
+	The creation of the DMS requires the following steps:
+	</p><div class="procedure"><ol type="1"><li><p>
+		Create or install an <code class="filename">smb.conf</code> file with the above configuration.
+		</p></li><li><p>
+		Execute:
+</p><pre class="screen">
+<code class="prompt">root# </code> net rpc join -UAdministrator%password
+Joined domain MEGANET2.
+</pre><p>
+	<a class="indexterm" name="id368834"></a>
+	The success of the join can be confirmed with the following command:
+</p><pre class="screen">
+<code class="prompt">root# </code> net rpc testjoin
+Join to 'MIDEARTH' is OK
+</pre><p>
+		A failed join would report an error message like the following:
+		<a class="indexterm" name="id368854"></a>
+</p><pre class="screen">
+<code class="prompt">root# </code> net rpc testjoin
+[2004/11/05 16:34:12, 0] utils/net_rpc_join.c:net_rpc_join_ok(66)
+Join to domain 'MEGANET2' is not valid
+</pre><p>
+		</p></li><li><p>
+		<a class="indexterm" name="id368880"></a>
+		<a class="indexterm" name="id368886"></a>
+		<a class="indexterm" name="id368893"></a>
+		Start the <code class="literal">nmbd, winbind,</code> and <code class="literal">smbd</code> daemons in the order shown.
+		</p></li></ol></div></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id368916"></a>ADS Domains</h4></div></div></div><p>
+	<a class="indexterm" name="id368923"></a>
+	<a class="indexterm" name="id368930"></a>
+	The procedure for joining an ADS domain is similar to the NT4 domain join, except the <code class="filename">smb.conf</code> file
+	will have the contents shown in <a href="idmapper.html#idmapadsdms" title="Example 14.2. ADS Domain Member Server smb.conf">ADS Domain Member Server smb.conf</a>
+	</p><div class="example"><a name="idmapadsdms"></a><p class="title"><b>Example 14.2. ADS Domain Member Server smb.conf</b></p><div class="example-contents"><table class="simplelist" border="0" summary="Simple list"><tr><td># Global parameters</td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[global]</code></em></td></tr><tr><td><a class="indexterm" name="id368980"></a><em class="parameter"><code>workgroup = BUTTERNET</code></em></td></tr><tr><td><a class="indexterm" name="id368992"></a><em class="parameter"><code>netbios name = GARGOYLE</code></em></td></tr><tr><td><a class="indexterm" name="id369005"></a><em class="parameter"><code>realm = BUTTERNET.BIZ</code></em></td></tr><tr><td><a class="indexterm" name="id369017"></a><em class="parameter"><code>security = ADS</code></em></td></tr><tr><td><a class="indexterm" name="id369030"></a><em class="parameter"><code>template shell = /bin/bash</code></em></td></tr><tr><td><a class="indexterm" name="id369042"></a><em class="parameter"><code>idmap uid = 500-10000000</code></em></td></tr><tr><td><a class="indexterm" name="id369055"></a><em class="parameter"><code>idmap gid = 500-10000000</code></em></td></tr><tr><td><a class="indexterm" name="id369068"></a><em class="parameter"><code>winbind use default domain = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id369080"></a><em class="parameter"><code>winbind nested groups = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id369093"></a><em class="parameter"><code>printer admin = "BUTTERNET\Domain Admins"</code></em></td></tr></table></div></div><br class="example-break"><p>
+	<a class="indexterm" name="id369109"></a>
+	<a class="indexterm" name="id369116"></a>
+	<a class="indexterm" name="id369123"></a>
+	<a class="indexterm" name="id369130"></a>
+	<a class="indexterm" name="id369136"></a>
+	<a class="indexterm" name="id369143"></a>
+	<a class="indexterm" name="id369150"></a>
+	ADS DMS operation requires use of kerberos (KRB). For this to work, the <code class="filename">krb5.conf</code>
+	must be configured. The exact requirements depends on which version of MIT or Heimdal Kerberos is being
+	used. It is sound advice to use only the latest version, which at this time are MIT Kerberos version
+	1.3.5 and Heimdal 0.61.
+	</p><p>
+	The creation of the DMS requires the following steps:
+	</p><div class="procedure"><ol type="1"><li><p>
+		Create or install an <code class="filename">smb.conf</code> file with the above configuration.
+		</p></li><li><p>
+		Edit the <code class="filename">/etc/nsswitch.conf</code> file as shown above.
+		</p></li><li><p>
+		Execute:
+		<a class="indexterm" name="id369204"></a>
+</p><pre class="screen">
+<code class="prompt">root# </code> net ads join -UAdministrator%password
+Joined domain BUTTERNET.
+</pre><p>
+	The success or failure of the join can be confirmed with the following command:
+</p><pre class="screen">
+<code class="prompt">root# </code> net ads testjoin
+Using short domain name -- BUTTERNET
+Joined 'GARGOYLE' to realm 'BUTTERNET.BIZ'
+</pre><p>
+	</p><p>
+	An invalid or failed join can be detected by executing:
+</p><pre class="screen">
+<code class="prompt">root# </code> net ads testjoin
+GARGOYLE$@'s password:
+[2004/11/05 16:53:03, 0] utils/net_ads.c:ads_startup(186)
+  ads_connect: No results returned
+Join to domain is not valid
+</pre><p>
+		<a class="indexterm" name="id369256"></a>
+		<a class="indexterm" name="id369263"></a>
+		<a class="indexterm" name="id369270"></a>
+		<a class="indexterm" name="id369277"></a>
+		The specific error message may differ from the above because it depends on the type of failure that
+		may have occurred. Increase the <em class="parameter"><code>log level</code></em> to 10, repeat the test,
+		and then examine the log files produced to identify the nature of the failure.
+		</p></li><li><p>
+		Start the <code class="literal">nmbd</code>, <code class="literal">winbind</code>, and <code class="literal">smbd</code> daemons in the order shown.
+		</p></li></ol></div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id369321"></a>IDMAP_RID with Winbind</h3></div></div></div><p>
+	<a class="indexterm" name="id369328"></a>
+	<a class="indexterm" name="id369335"></a>
+	<a class="indexterm" name="id369342"></a>
+	<a class="indexterm" name="id369348"></a>
+	The <code class="literal">idmap_rid</code> facility is a new tool that, unlike native winbind, creates a
+	predictable mapping of MS Windows SIDs to UNIX UIDs and GIDs. The key benefit of this method
+	of implementing the Samba IDMAP facility is that it eliminates the need to store the IDMAP data
+	in a central place. The downside is that it can be used only within a single ADS domain and
+	is not compatible with trusted domain implementations.
+	</p><p>
+	<a class="indexterm" name="id369368"></a>
+	<a class="indexterm" name="id369374"></a>
+	<a class="indexterm" name="id369381"></a>
+	<a class="indexterm" name="id369388"></a>
+	This alternate method of SID to UID/GID  mapping can be achieved using the idmap_rid
+        plug-in. This plug-in uses the RID of the user SID to derive the UID and GID by adding the
+        RID to a base value specified. This utility requires that the parameter
+        &#8220;<span class="quote">allow trusted domains = No</span>&#8221; be specified, as it is not compatible
+        with multiple domain environments. The <em class="parameter"><code>idmap uid</code></em> and 
+	<em class="parameter"><code>idmap gid</code></em> ranges must be specified.
+	</p><p>
+	<a class="indexterm" name="id369417"></a>
+	<a class="indexterm" name="id369424"></a>
+	The idmap_rid facility can be used both for NT4/Samba-style domains and Active Directory.
+	To use this with an NT4 domain, do not include the <em class="parameter"><code>realm</code></em> parameter; additionally, the
+	method used to join the domain uses the <code class="constant">net rpc join</code> process.
+	</p><p>
+	An example <code class="filename">smb.conf</code> file for and ADS domain environment is shown in <a href="idmapper.html#idmapadsridDMS" title="Example 14.3. ADS Domain Member smb.conf using idmap_rid">ADS
+	Domain Member smb.conf using idmap_rid</a>.
+	</p><div class="example"><a name="idmapadsridDMS"></a><p class="title"><b>Example 14.3. ADS Domain Member smb.conf using idmap_rid</b></p><div class="example-contents"><table class="simplelist" border="0" summary="Simple list"><tr><td># Global parameters</td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[global]</code></em></td></tr><tr><td><a class="indexterm" name="id369488"></a><em class="parameter"><code>workgroup = KPAK</code></em></td></tr><tr><td><a class="indexterm" name="id369500"></a><em class="parameter"><code>netbios name = BIGJOE</code></em></td></tr><tr><td><a class="indexterm" name="id369513"></a><em class="parameter"><code>realm = CORP.KPAK.COM</code></em></td></tr><tr><td><a class="indexterm" name="id369525"></a><em class="parameter"><code>server string = Office Server</code></em></td></tr><tr><td><a class="indexterm" name="id369538"></a><em class="parameter"><code>security = ADS</code></em></td></tr><tr><td><a class="indexterm" name="id369550"></a><em class="parameter"><code>allow trusted domains = No</code></em></td></tr><tr><td><a class="indexterm" name="id369563"></a><em class="parameter"><code>idmap backend = idmap_rid:KPAK=500-100000000</code></em></td></tr><tr><td><a class="indexterm" name="id369576"></a><em class="parameter"><code>idmap uid = 500-100000000</code></em></td></tr><tr><td><a class="indexterm" name="id369589"></a><em class="parameter"><code>idmap gid = 500-100000000</code></em></td></tr><tr><td><a class="indexterm" name="id369601"></a><em class="parameter"><code>template shell = /bin/bash</code></em></td></tr><tr><td><a class="indexterm" name="id369614"></a><em class="parameter"><code>winbind use default domain = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id369627"></a><em class="parameter"><code>winbind enum users = No</code></em></td></tr><tr><td><a class="indexterm" name="id369639"></a><em class="parameter"><code>winbind enum groups = No</code></em></td></tr><tr><td><a class="indexterm" name="id369652"></a><em class="parameter"><code>winbind nested groups = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id369665"></a><em class="parameter"><code>printer admin = "Domain Admins"</code></em></td></tr></table></div></div><br class="example-break"><p>
+	<a class="indexterm" name="id369680"></a>
+	<a class="indexterm" name="id369687"></a>
+	<a class="indexterm" name="id369694"></a>
+	<a class="indexterm" name="id369701"></a>
+	In a large domain with many users it is imperative to disable enumeration of users and groups.
+	For example, at a site that has 22,000 users in Active Directory the winbind-based user and
+	group resolution is unavailable for nearly 12 minutes following first startup of 
+	<code class="literal">winbind</code>. Disabling enumeration resulted in instantaneous response.
+	The disabling of user and group enumeration means that it will not be possible to list users
+	or groups using the <code class="literal">getent passwd</code> and <code class="literal">getent group</code>
+	commands. It will be possible to perform the lookup for individual users, as shown in the following procedure.
+	</p><p>
+	<a class="indexterm" name="id369733"></a>
+	<a class="indexterm" name="id369740"></a>
+	The use of this tool requires configuration of NSS as per the native use of winbind. Edit the
+	<code class="filename">/etc/nsswitch.conf</code> so it has the following parameters:
+</p><pre class="screen">
+...
+passwd: files winbind
+shadow: files winbind
+group:  files winbind
+...
+hosts:  files wins
+...
+</pre><p>
+	</p><p>
+	The following procedure can use the idmap_rid facility:
+	</p><div class="procedure"><ol type="1"><li><p>
+		Create or install an <code class="filename">smb.conf</code> file with the above configuration.
+		</p></li><li><p>
+		Edit the <code class="filename">/etc/nsswitch.conf</code> file as shown above.
+		</p></li><li><p>
+		Execute:
+</p><pre class="screen">
+<code class="prompt">root# </code> net ads join -UAdministrator%password
+Using short domain name -- KPAK
+Joined 'BIGJOE' to realm 'CORP.KPAK.COM'
+</pre><p>
+		</p><p>
+		<a class="indexterm" name="id369814"></a>
+		An invalid or failed join can be detected by executing:
+</p><pre class="screen">
+<code class="prompt">root# </code> net ads testjoin
+BIGJOE$@'s password:
+[2004/11/05 16:53:03, 0] utils/net_ads.c:ads_startup(186)
+  ads_connect: No results returned
+Join to domain is not valid
+</pre><p>
+		The specific error message may differ from the above because it depends on the type of failure that
+		may have occurred. Increase the <em class="parameter"><code>log level</code></em> to 10, repeat the test,
+		and then examine the log files produced to identify the nature of the failure.
+		</p></li><li><p>
+		Start the <code class="literal">nmbd</code>, <code class="literal">winbind</code>, and <code class="literal">smbd</code> daemons in the order shown.
+		</p></li><li><p>
+		Validate the operation of this configuration by executing:
+		<a class="indexterm" name="id369875"></a>
+</p><pre class="screen">
+<code class="prompt">root# </code> getent passwd administrator
+administrator:x:1000:1013:Administrator:/home/BE/administrator:/bin/bash
+</pre><p>
+		</p></li></ol></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id369895"></a>IDMAP Storage in LDAP Using Winbind</h3></div></div></div><p>
+	<a class="indexterm" name="id369903"></a>
+	<a class="indexterm" name="id369910"></a>
+	The storage of IDMAP information in LDAP can be used with both NT4/Samba-3-style domains and
+	ADS domains. OpenLDAP is a commonly used LDAP server for this purpose, although any
+	standards-complying LDAP server can be used. It is therefore possible to deploy this IDMAP
+	configuration using the Sun iPlanet LDAP server, Novell eDirectory, Microsoft ADS plus ADAM,
+	and so on.
+	</p><p>
+	An example is for an ADS domain is shown in <a href="idmapper.html#idmapldapDMS" title="Example 14.4. ADS Domain Member Server using LDAP">ADS Domain Member Server using
+	LDAP</a>.
+	</p><div class="example"><a name="idmapldapDMS"></a><p class="title"><b>Example 14.4. ADS Domain Member Server using LDAP</b></p><div class="example-contents"><table class="simplelist" border="0" summary="Simple list"><tr><td># Global parameters</td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[global]</code></em></td></tr><tr><td><a class="indexterm" name="id369959"></a><em class="parameter"><code>workgroup = SNOWSHOW</code></em></td></tr><tr><td><a class="indexterm" name="id369972"></a><em class="parameter"><code>netbios name = GOODELF</code></em></td></tr><tr><td><a class="indexterm" name="id369984"></a><em class="parameter"><code>realm = SNOWSHOW.COM</code></em></td></tr><tr><td><a class="indexterm" name="id369997"></a><em class="parameter"><code>server string = Samba Server</code></em></td></tr><tr><td><a class="indexterm" name="id370009"></a><em class="parameter"><code>security = ADS</code></em></td></tr><tr><td><a class="indexterm" name="id370022"></a><em class="parameter"><code>log level = 1 ads:10 auth:10 sam:10 rpc:10</code></em></td></tr><tr><td><a class="indexterm" name="id370035"></a><em class="parameter"><code>ldap admin dn = cn=Manager,dc=SNOWSHOW,dc=COM</code></em></td></tr><tr><td><a class="indexterm" name="id370047"></a><em class="parameter"><code>ldap idmap suffix = ou=Idmap</code></em></td></tr><tr><td><a class="indexterm" name="id370060"></a><em class="parameter"><code>ldap suffix = dc=SNOWSHOW,dc=COM</code></em></td></tr><tr><td><a class="indexterm" name="id370073"></a><em class="parameter"><code>idmap backend = ldap:ldap://ldap.snowshow.com</code></em></td></tr><tr><td><a class="indexterm" name="id370086"></a><em class="parameter"><code>idmap uid = 150000-550000</code></em></td></tr><tr><td><a class="indexterm" name="id370098"></a><em class="parameter"><code>idmap gid = 150000-550000</code></em></td></tr><tr><td><a class="indexterm" name="id370111"></a><em class="parameter"><code>template shell = /bin/bash</code></em></td></tr><tr><td><a class="indexterm" name="id370124"></a><em class="parameter"><code>winbind use default domain = Yes</code></em></td></tr></table></div></div><br class="example-break"><p>
+	<a class="indexterm" name="id370140"></a>
+	In the case of an NT4 or Samba-3-style domain the <em class="parameter"><code>realm</code></em> is not used, and the
+	command used to join the domain is <code class="literal">net rpc join</code>. The above example also demonstrates
+	advanced error-reporting techniques that are documented in <a href="bugreport.html#dbglvl" title="Debug Levels">Reporting Bugs</a>.
+	</p><p>
+	<a class="indexterm" name="id370171"></a>
+	<a class="indexterm" name="id370178"></a>
+	<a class="indexterm" name="id370185"></a>
+	Where MIT kerberos is installed (version 1.3.4 or later), edit the <code class="filename">/etc/krb5.conf</code> 
+	file so it has the following contents:
+</p><pre class="screen">
+[logging]
+ default = FILE:/var/log/krb5libs.log
+ kdc = FILE:/var/log/krb5kdc.log
+ admin_server = FILE:/var/log/kadmind.log
+
+[libdefaults]
+ default_realm = SNOWSHOW.COM
+ dns_lookup_realm = false
+ dns_lookup_kdc = true
+
+[appdefaults]
+ pam = {
+   debug = false
+   ticket_lifetime = 36000
+   renew_lifetime = 36000
+   forwardable = true
+   krb4_convert = false
+ }
+</pre><p>
+	</p><p>
+	Where Heimdal kerberos is installed, edit the <code class="filename">/etc/krb5.conf</code>
+        file so it is either empty (i.e., no contents) or it has the following contents:
+</p><pre class="screen">
+[libdefaults]
+        default_realm = SNOWSHOW.COM
+        clockskew = 300
+
+[realms]
+        SNOWSHOW.COM = {
+                kdc = ADSDC.SHOWSHOW.COM
+        }
+        
+[domain_realm]
+        .snowshow.com = SNOWSHOW.COM
+</pre><p>
+	</p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+	Samba cannot use the Heimdal libraries if there is no <code class="filename">/etc/krb5.conf</code> file.
+	So long as there is an empty file, the Heimdal kerberos libraries will be usable. There is no
+	need to specify any settings because Samba, using the Heimdal libraries, can figure this out automatically.
+	</p></div><p>
+	Edit the NSS control file <code class="filename">/etc/nsswitch.conf</code> so it has the following entries:
+</p><pre class="screen">
+...
+passwd: files ldap
+shadow: files ldap
+group:  files ldap
+...
+hosts:  files wins
+...
+</pre><p>
+	</p><p>
+	<a class="indexterm" name="id370257"></a>
+	<a class="indexterm" name="id370264"></a>
+	You will need the <a href="http://www.padl.com" target="_top">PADL</a> <code class="literal">nss_ldap</code> 
+	tool set for this solution. Configure the <code class="filename">/etc/ldap.conf</code> file so it has 
+	the information needed. The following is an example of a working file:
+</p><pre class="screen">
+host    192.168.2.1
+base    dc=snowshow,dc=com
+binddn  cn=Manager,dc=snowshow,dc=com
+bindpw  not24get
+
+pam_password exop
+
+nss_base_passwd ou=People,dc=snowshow,dc=com?one
+nss_base_shadow ou=People,dc=snowshow,dc=com?one
+nss_base_group  ou=Groups,dc=snowshow,dc=com?one
+ssl     no
+</pre><p>
+	</p><p>
+	The following procedure may be followed to effect a working configuration:
+	</p><div class="procedure"><ol type="1"><li><p>
+		Configure the <code class="filename">smb.conf</code> file as shown above.
+		</p></li><li><p>
+		Create the <code class="filename">/etc/krb5.conf</code> file as shown above.
+		</p></li><li><p>
+		Configure the <code class="filename">/etc/nsswitch.conf</code> file as shown above.
+		</p></li><li><p>
+		Download, build, and install the PADL nss_ldap tool set. Configure the 
+		<code class="filename">/etc/ldap.conf</code> file as shown above.
+		</p></li><li><p>
+		Configure an LDAP server and initialize the directory with the top-level entries needed by IDMAP,
+		shown in the following LDIF file:
+</p><pre class="screen">
+dn: dc=snowshow,dc=com
+objectClass: dcObject
+objectClass: organization
+dc: snowshow
+o: The Greatest Snow Show in Singapore.
+description: Posix and Samba LDAP Identity Database
+
+dn: cn=Manager,dc=snowshow,dc=com
+objectClass: organizationalRole
+cn: Manager
+description: Directory Manager
+
+dn: ou=Idmap,dc=snowshow,dc=com
+objectClass: organizationalUnit
+ou: idmap
+</pre><p>
+		</p></li><li><p>
+		Execute the command to join the Samba DMS to the ADS domain as shown here:
+</p><pre class="screen">
+<code class="prompt">root# </code> net ads testjoin
+Using short domain name -- SNOWSHOW
+Joined 'GOODELF' to realm 'SNOWSHOW.COM'
+</pre><p>
+		</p></li><li><p>
+		Store the LDAP server access password in the Samba <code class="filename">secrets.tdb</code> file as follows:
+</p><pre class="screen">
+<code class="prompt">root# </code> smbpasswd -w not24get
+</pre><p>
+		</p></li><li><p>
+		Start the <code class="literal">nmbd</code>, <code class="literal">winbind</code>, and <code class="literal">smbd</code> daemons in the order shown.
+		</p></li></ol></div><p>
+	<a class="indexterm" name="id370445"></a>
+	Follow the diagnositic procedures shown earlier in this chapter to identify success or failure of the join.
+	In many cases a failure is indicated by a silent return to the command prompt with no indication of the
+	reason for failure.
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id370456"></a>IDMAP and NSS Using LDAP from ADS with RFC2307bis Schema Extension</h3></div></div></div><p>
+	<a class="indexterm" name="id370464"></a>
+	<a class="indexterm" name="id370471"></a>
+	The use of this method is messy. The information provided in the following is for guidance only
+	and is very definitely not complete. This method does work; it is used in a number of large sites
+	and has an acceptable level of performance.
+	</p><p>
+	An example <code class="filename">smb.conf</code> file is shown in <a href="idmapper.html#idmaprfc2307" title="Example 14.5. ADS Domain Member Server using RFC2307bis Schema Extension Date via NSS">ADS Domain Member Server using
+RFC2307bis Schema Extension Date via NSS</a>.
+	</p><div class="example"><a name="idmaprfc2307"></a><p class="title"><b>Example 14.5. ADS Domain Member Server using RFC2307bis Schema Extension Date via NSS</b></p><div class="example-contents"><table class="simplelist" border="0" summary="Simple list"><tr><td># Global parameters</td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[global]</code></em></td></tr><tr><td><a class="indexterm" name="id370527"></a><em class="parameter"><code>workgroup = BOBBY</code></em></td></tr><tr><td><a class="indexterm" name="id370539"></a><em class="parameter"><code>realm = BOBBY.COM</code></em></td></tr><tr><td><a class="indexterm" name="id370552"></a><em class="parameter"><code>security = ADS</code></em></td></tr><tr><td><a class="indexterm" name="id370564"></a><em class="parameter"><code>idmap uid = 150000-550000</code></em></td></tr><tr><td><a class="indexterm" name="id370577"></a><em class="parameter"><code>idmap gid = 150000-550000</code></em></td></tr><tr><td><a class="indexterm" name="id370590"></a><em class="parameter"><code>template shell = /bin/bash</code></em></td></tr><tr><td><a class="indexterm" name="id370602"></a><em class="parameter"><code>winbind cache time = 5</code></em></td></tr><tr><td><a class="indexterm" name="id370615"></a><em class="parameter"><code>winbind use default domain = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id370628"></a><em class="parameter"><code>winbind trusted domains only = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id370640"></a><em class="parameter"><code>winbind nested groups = Yes</code></em></td></tr></table></div></div><br class="example-break"><p>
+	<a class="indexterm" name="id370656"></a>
+	The DMS must be joined to the domain using the usual procedure. Additionally, it is necessary
+	to build and install the PADL nss_ldap tool set. Be sure to build this tool set with the
+	following:
+</p><pre class="screen">
+./configure --enable-rfc2307bis --enable-schema-mapping
+make install
+</pre><p> 
+	</p><p>
+	<a class="indexterm" name="id370674"></a>
+	The following <code class="filename">/etc/nsswitch.conf</code> file contents are required:
+</p><pre class="screen">
+...
+passwd: files ldap
+shadow: files ldap
+group:  files ldap
+...
+hosts:  files wins
+...
+</pre><p>
+	</p><p>
+	<a class="indexterm" name="id370697"></a>
+	<a class="indexterm" name="id370704"></a>
+	The <code class="filename">/etc/ldap.conf</code> file must be configured also. Refer to the PADL documentation
+	and source code for nss_ldap to specific instructions.
+	</p><p>
+	The next step involves preparation of the ADS schema. This is briefly discussed in the remaining
+	part of this chapter.
+	</p><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id370723"></a>IDMAP, Active Directory, and MS Services for UNIX 3.5</h4></div></div></div><p>
+		<a class="indexterm" name="id370731"></a>
+		The Microsoft Windows Service for UNIX (SFU) version 3.5 is available for free 
+		<a href="http://www.microsoft.com/windows/sfu/" target="_top">download</a>
+		from the Microsoft Web site. You will need to download this tool and install it following
+		Microsoft instructions.
+		</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id370748"></a>IDMAP, Active Directory and AD4UNIX</h4></div></div></div><p>
+		Instructions for obtaining and installing the AD4UNIX tool set can be found from the
+		<a href="http://www.geekcomix.com/cgi-bin/classnotes/wiki.pl?LDAP01/An_Alternative_Approach" target="_top">
+		Geekcomix</a> Web site.
+		</p></div></div></div><div class="footnotes"><br><hr width="100" align="left"><div class="footnote"><code class="literal"><sup>[<a name="ftn.id367203" href="#id367203">4</a>] </sup>DOMINICUS\FJones</code><code class="literal">FRANCISCUS\FJones</code><code class="literal">FJones</code></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="NetCommand.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="optional.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="rights.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 13. Remote and Local Management: The Net Command </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 15. User Rights and Privileges</td></tr></table></div></body></html>

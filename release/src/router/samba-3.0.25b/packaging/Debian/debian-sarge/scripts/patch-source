@@ -1,0 +1,28 @@
+#!/bin/sh -e
+#
+#
+
+for patch in debian/patches/*.patch; do
+	echo '->'`basename $patch`:
+	patch -p1 --ignore-whitespace < $patch
+done
+
+# This code is currently not used because it creates a long version
+# number string. For now we're sticking to <upstream version>-Debian,
+# as in 3.0.0rc2-Debian. peloy@debian.org.-
+
+# ---- Begin unused code ----
+# Get Debian version number from 1st line of the Debian changelog
+#DEBIAN_VERSION=`sed -n -e '1s/^.*(\(.*\)).*$/\1/p' debian/changelog`
+
+# Insert Debian version number in source/VERSION, which will then be
+# used to create source/include/version.h.
+#TMPFILE=source/VERSION.debian
+#sed -e "s/^\(SAMBA_VERSION_VENDOR_SUFFIX=\).*$/\1\"Debian-${DEBIAN_VERSION}\"/"  source/VERSION > ${TMPFILE}
+#mv -f ${TMPFILE} source/VERSION
+# ---- End unused code ----
+
+# Regenerate configure only if it is older than configure.in
+[ source/configure -ot source/configure.in ] && (cd source && sh ./autogen.sh)
+
+exit 0

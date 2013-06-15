@@ -9,8 +9,13 @@
 </head>
 <body>
 <script>	
-	parent.showLoadingBar(65);
-	setTimeout("parent.detect_httpd();", 65000);
+	if(parent.based_modelid == "RT-N65U"){
+			parent.showLoadingBar(92);
+			setTimeout("parent.detect_httpd();", 92000);
+	}else{
+			parent.showLoadingBar(62);
+			setTimeout("parent.detect_httpd();", 62000);		
+	}	
 </script>
 </body>
 </html>

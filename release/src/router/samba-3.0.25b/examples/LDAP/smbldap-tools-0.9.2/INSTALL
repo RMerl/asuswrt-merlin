@@ -1,0 +1,118 @@
+# $Source: /opt/cvs/samba/smbldap-tools/INSTALL,v $
+#
+## How To Install SMBLDAP-TOOLS
+
+DEPENDANCIES :
+-=-=-=-=-=-=-=
+. scripts now use the Crypt::SmbHash perl module
+
+INSTALLATION from the tar.gz archive
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+. Copy all those scripts in /usr/local/sbin/
+. Modify smbldap.conf and smbldap_bind.conf to match your configuration, and copy
+  them in /etc/smbldap-tools/
+. set proper permissions on those files:
+  $ chmod 644 /etc/smbldap-tools/smbldap.conf
+  $ chmod 600 /etc/smbldap-tools/smbldap_bind.conf
+. update the 2 first declaration of /usr/local/sbin/smbldap_tools.pm to define the
+  PATH to the configuration file, for example
+  > my $smbldap_conf="/etc/smbldap-tools/smbldap.conf";
+  > my $smbldap_bind_conf="/etc/smbldap-tools/smbldap_bind.conf";
+. if upgrading, add these lines in smbldap.conf configuration file:
+  > # Allows not tu use slappasswd (if with_slappasswd == 0 in smbldap_conf.pm)
+  > # but prefer Crypt:: libraries
+  > with_slappasswd="0"
+  > slappasswd="/usr/sbin/slappasswd"
+  If 'with_slappasswd' is set to 0, password will be hashed with appropriate perl module
+  (to not use anymore external programm)
+. initialize the ldap directory
+  $ smbldap-populate
+. If not already done : "smbpasswd -w secret" to set up
+  the ldap admin password in secrets.tdb
+
+INSTALLATION from RedHat RPM:
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+. install the package
+  $ rpm -Uvh smbldap-tools-0.8.6-1.noarch.rpm
+. Modify /etc/opt/IDEALX/smbldap-tools/smbldap.conf and /etc/opt/IDEALX/smbldap-tools/smbldap_bind.conf
+  to match you configuration.
+. initialize the ldap directory
+  $ smbldap-populate
+. If not already done : "smbpasswd -w secret" to set up
+  the ldap admin password in secrets.tdb
+
+UPGRADE TO RELEASE 0.8.8 :
+-=-=-=-=-=-=-=-=-=-=-=-=-=
+you need to add the new parameter userHomeDirectoryMode in smbldap.conf. For example :
+=> # Default mode used for user homeDirectory
+=> userHomeDirectoryMode="700"
+
+UPGRADE TO RELEASE 0.8.7 :
+-=-=-=-=-=-=-=-=-=-=-=-=-=
+. configuration files are now stored in /etc/opt/IDEALX/smbldap-tools/
+. Next uidNumber and gidNumber available are _not_ stored anymore in cn=NextFreeUnixId
+  by default, but you can still continue to use your entry.
+  They are now store in the sambaDomain entry.
+. If your sambaDomain entry already exist, you can securely execute the smbldap-populate script to
+  update it and add the uidNumber and gidNumber attribut.
+  
+
+UPGRADE TO RELEASE 0.8.5 :
+-=-=-=-=-=-=-=-=-=-=-=-=-=
+. Change the variable name userHomePrefix to userHome in /etc/smbldap-tools/smbldap.conf
+. Next uidNumber and gidNumber available are now stored in cn=NextFreeUnixId
+  When upgrading, you need to create this object manually. You can use for example
+  an add.ldif life containing the following lines:
+  > dn: cn=NextFreeUnixId,dc=idealx,dc=org
+  > objectClass: inetOrgPerson
+  > objectClass: sambaUnixIdPool
+  > uidNumber: 1000
+  > gidNumber: 1000
+  > cn: NextFreeUnixId
+  > sn: NextFreeUnixId
+  and then add the object with the ldapadd utility:
+  $ ldapadd -x -D "cn=Manager,dc=idealx,dc=org" -w secret -f add.ldif
+  note: . $firstuidNumber and $firstgidNumber are the first uidNumber and gidNumber
+          available (previously called UID_START and GID_START in the configuration file)
+        . here, 1000 is the first available value for uidNumber and gidNumber (of course, if
+          this value is already used by a user or a group, the first available after 1000 will
+          be used).
+. Next, you have to update the configuration file to defined the object where are sotred
+  the next uidNumber and gidNumber available. In our example, you have to add a new entry in
+  /etc/smbldap-tools/smbldap.conf containing :
+  > # Where to store next uidNumber and gidNumber available
+  > sambaUnixIdPooldn="cn=NextFreeUnixId,${suffix}"
+. Update, if necessary, the configuration file that defined users, groups and computers dn.
+  Those parameters must not be relative to the suffix parameter. A typical configuration look
+  like this :
+  > usersdn="ou=Users,${suffix}"
+  > computersdn="ou=Computers,${suffix}"
+  > groupsdn="ou=Groups,${suffix}"
+. the "Domain Computers" gidNumber should be set to 515 (see wellknown rid). Check if
+  you need to update the smbldap-tools configuration file /etc/smbldap-tools/smbldap.conf :
+  > defaultComputerGid="515"
+. the new version adds mail-forwarding and mail-alias capabilities to
+  the user's ldap-records. Those new attributes may be used for mail
+  delievry by MTAs like sendmail or postfix. Two new options "-M" and "-T"
+  allow specifying mail-aliases and mail-forward addresses in
+  smbldap-useradd and smbldap-usermod. If those options are used, the
+  objectclass "inetLocalMailRecipient" is used.
+  This objectclass is part of the misc.schema schema given with the OpenLDAP package
+  You then have to update the configuration file to set the domain name to append to mail.
+  For example, you can add a new entry in /etc/smbldap-tools/smbldap.conf containing :
+  > # Domain appended to the users "mail"-attribute
+  > # when smbldap-useradd -M is used
+  > mailDomain="idealx.com"
+
+UPGRADE TO RELEASE 0.8.4 :
+-=-=-=-=-=-=-=-=-=-=-=-=-=
+. configuration is now set in two different files:
+  - /etc/smbldap-tools/smbldap.conf for global parameters
+  - /etc/smbldap-tools/smbldap_bind.conf for connection parameters
+. scripts does not have any more the .pl extension. The call of the
+  scripts in the smb.conf file must then be updated.
+
+
+
+
+# - The End

@@ -967,7 +967,7 @@ function change_wireless_bridge(m, a, r, mflag)
 	if (m == "0"){
 		inputRCtrl2(document.form.wl_wdsapply_x, 1);
 		inputRCtrl1(document.form.wl_wdsapply_x, 0);
-	}else if (m == "1" && Rawifi_support != -1){	 // N66U-spec
+	}else if (m == "1" && Rawifi_support){	 // N66U-spec
 		inputRCtrl2(document.form.wl_wdsapply_x, 0);
 		inputRCtrl1(document.form.wl_wdsapply_x, 0);
 		if (document.form.wl_channel_orig.value == "0" && document.form.wl_channel.options[0].selected == 1){
@@ -1285,7 +1285,7 @@ function change_common(o, s, v){
 			}else		
 				inputCtrl(document.form.wl_wme_no_ack, 1);
 					
-			if(Rawifi_support == -1)
+			if(!Rawifi_support)
 				inputCtrl(document.form.wl_wmf_bss_enable, 1);
 			inputCtrl(document.form.wl_wme_apsd, 1);
 		}
@@ -1341,6 +1341,7 @@ function change_ddns_setting(v){
 				document.form.ddns_wildcard_x[0].disabled= 1;
 				document.form.ddns_wildcard_x[1].disabled= 1;
 				showhide("link", 0);
+				showhide("linkToHome", 0);	
 				showhide("wildcard_field",0);
 		}else{
 				document.form.ddns_hostname_x.parentNode.style.display = "";
@@ -1350,7 +1351,15 @@ function change_ddns_setting(v){
 				var disable_wild = (v == "WWW.TUNNELBROKER.NET") ? 1 : 0;
 				document.form.ddns_wildcard_x[0].disabled= disable_wild;
 				document.form.ddns_wildcard_x[1].disabled= disable_wild;
-				(v == "WWW.ZONEEDIT.COM") ? showhide("link", 0) : showhide("link", 1); // Jieming added at 2013/03/06, remove free trail of zoneedit
+				if(v == "WWW.ZONEEDIT.COM"){			 // Jieming added at 2013/03/06, remove free trail of zoneedit and add a link to direct to zoneedit 
+					showhide("link", 0);
+					showhide("linkToHome", 1);
+				}
+				else{
+					showhide("link", 1);
+					showhide("linkToHome", 0);				
+				}
+				
 				showhide("wildcard_field",!disable_wild);
 		}
 }
@@ -1428,8 +1437,13 @@ function change_common_radio(o, s, v, r){
 			inputCtrl(document.form.wan_dns2_x, 1);
 		}
 	}
-	else if (v=="fw_enable_x"){
+	else if(v=="fw_enable_x"){
 		change_firewall(r);
+	}else if(v=="wl_closed"){
+			if(r==1)
+					showhide("WPS_hideSSID_hint",1);
+			else
+					showhide("WPS_hideSSID_hint",0);
 	}
 	
 	return true;
@@ -1589,7 +1603,7 @@ function openLink(s){
 		else if (document.form.ddns_server_x.value == 'WWW.TZO.COM')
 			tourl = "https://controlpanel.tzo.com/cgi-bin/tzopanel.exe";
 		else if (document.form.ddns_server_x.value == 'WWW.ZONEEDIT.COM')
-			tourl = "http://www.zoneedit.com/signUp.html";
+			tourl = "http://www.zoneedit.com/";
 		else if (document.form.ddns_server_x.value == 'WWW.DNSOMATIC.COM')
 			tourl = "http://dnsomatic.com/create/";
 		else if (document.form.ddns_server_x.value == 'WWW.TUNNELBROKER.NET')
@@ -1780,8 +1794,12 @@ function insertExtChannelOption_5g(){
     free_options(document.form.wl_channel);
 		if(wl_channel_list_5g != ""){	//With wireless channel 5g hook
 				wl_channel_list_5g = eval('<% channel_list_5g(); %>');
-				if(document.form.wl_bw.value != "0" && wl_channel_list_5g[wl_channel_list_5g.length-1] == "165"){
-						wl_channel_list_5g.splice(wl_channel_list_5g.length-1,1);
+				if(document.form.wl_bw.value != "0")
+				{ //cut channels >= 165 when bw != 20MHz
+					var i;
+					for(i=0; i < wl_channel_list_5g.length; i++)
+						if(wl_channel_list_5g[i] == "165")
+							wl_channel_list_5g.splice(i);
 				}
 				if(wl_channel_list_5g[0] != "<#Auto#>")
 						wl_channel_list_5g.splice(0,0,"0");

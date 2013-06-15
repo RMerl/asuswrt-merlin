@@ -1,3 +1,5 @@
+include ../common.mak
+
 ALL=gctwimax
 
 all: $(ALL)
@@ -19,6 +21,9 @@ FLAGS += -I$(TOP)/wpa_supplicant-0.7.3/src
 FLAGS += -I$(TOP)/libusb10
 FLAGS += -I$(TOP)/openssl/include
 FLAGS += -I$(TOP)/zlib
+ifeq ($(RTCONFIG_BCMARM),y)
+FLAGS += -lgcc_s
+endif
 #FLAGS += -I/usr/include/dbus-1.0
 #FLAGS += -I/usr/lib/dbus-1.0/include
  
@@ -33,6 +38,9 @@ LDFLAGS += -L$(TOP)/wpa_supplicant-0.7.3/src/eap_peer -leap
 LDFLAGS += -L$(TOP)/libusb10/libusb/.libs -lusb-1.0
 LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl
 LDFLAGS += -L$(TOP)/zlib -lz
+ifeq ($(RTCONFIG_BCMARM),y)
+LDFLAGS += -lgcc_s
+endif
 #LDFLAGS += -ldbus-1
 
 

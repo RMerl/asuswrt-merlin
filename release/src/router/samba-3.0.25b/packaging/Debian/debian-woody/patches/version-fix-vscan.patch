@@ -1,0 +1,37 @@
+Author: Lars Mueller <lmuelle at SuSE dot de>
+Subject: Non integer SAMBA_VERSION_RELEASE breaks samba-vscan build
+Bugzilla: bugzilla.Samba.org #2618
+
+--- samba-3.0.20b/source/script/mkversion.sh
++++ samba-3.0.20b/source/script/mkversion.sh	2005-10-22 12:56:30
+@@ -17,6 +17,7 @@
+ SAMBA_VERSION_MAJOR=`sed -n 's/^SAMBA_VERSION_MAJOR=//p' $SOURCE_DIR$VERSION_FILE`
+ SAMBA_VERSION_MINOR=`sed -n 's/^SAMBA_VERSION_MINOR=//p' $SOURCE_DIR$VERSION_FILE`
+ SAMBA_VERSION_RELEASE=`sed -n 's/^SAMBA_VERSION_RELEASE=//p' $SOURCE_DIR$VERSION_FILE`
++SAMBA_VERSION_RELEASE_SUFFIX=`sed -n 's/^SAMBA_VERSION_RELEASE_SUFFIX=//p' $SOURCE_DIR$VERSION_FILE`
+ 
+ SAMBA_VERSION_PRE_RELEASE=`sed -n 's/^SAMBA_VERSION_PRE_RELEASE=//p' $SOURCE_DIR$VERSION_FILE`
+ 
+@@ -31,9 +32,10 @@
+ echo "#define SAMBA_VERSION_MAJOR ${SAMBA_VERSION_MAJOR}" >> $OUTPUT_FILE
+ echo "#define SAMBA_VERSION_MINOR ${SAMBA_VERSION_MINOR}" >> $OUTPUT_FILE
+ echo "#define SAMBA_VERSION_RELEASE ${SAMBA_VERSION_RELEASE}" >> $OUTPUT_FILE
++echo "#define SAMBA_VERSION_RELEASE_SUFFIX ${SAMBA_VERSION_RELEASE_SUFFIX}" >> $OUTPUT_FILE
+ 
+ 
+-SAMBA_VERSION_STRING="${SAMBA_VERSION_MAJOR}.${SAMBA_VERSION_MINOR}.${SAMBA_VERSION_RELEASE}"
++SAMBA_VERSION_STRING="${SAMBA_VERSION_MAJOR}.${SAMBA_VERSION_MINOR}.${SAMBA_VERSION_RELEASE}${SAMBA_VERSION_RELEASE_SUFFIX}"
+ 
+ 
+ if test -n "${SAMBA_VERSION_PRE_RELEASE}";then
+--- samba-3.0.20b/source/VERSION
++++ samba-3.0.20b/source/VERSION	2005-10-22 12:56:30
+@@ -19,7 +19,8 @@
+ ########################################################
+ SAMBA_VERSION_MAJOR=3
+ SAMBA_VERSION_MINOR=0
+ SAMBA_VERSION_RELEASE=20
++SAMBA_VERSION_RELEASE_SUFFIX=b
+ 
+ ########################################################
+ # For 'pre' releases the version will be               #

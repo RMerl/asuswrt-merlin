@@ -32,29 +32,6 @@ void add_rc_support(char *feature)
 		nvram_set("rc_support", feature);
 }
 
-#ifdef RTCONFIG_W3N
-int is_w3n_unit(int unit)
-{
-        char prefix[] = "wanXXXXXXXXXX_", tmp[100];
-
-        snprintf(prefix, sizeof(prefix), "wan%d_", 0);
-
-        if ((nvram_get_int("sw_mode") == SW_MODE_ROUTER) &&
-                nvram_match(strcat_r(prefix, "proto", tmp), "pppoe") &&
-                nvram_match(strcat_r(prefix, "vpndhcp", tmp), "0") &&
-                (nvram_get_int("wlc_w3n") == 1) &&
-                (nvram_get_int("wlc_band") == unit))
-                return 1;
-
-        return 0;
-}
-
-int is_w3n_mode()
-{
-	return is_w3n_unit(1);
-}
-#endif
-
 int get_wan_state(int unit)
 {
 	char tmp[100], prefix[]="wanXXXXXX_";

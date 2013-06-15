@@ -18,6 +18,67 @@ body{
 	width:100%;
 	height:100%;
 }
+
+.movie_overview{
+	padding:10px;
+}
+td {
+	font-family: Verdana,Arial,sans-serif;
+	color: #fff;
+	font-size: 13px;
+}
+td.img_primary{
+	padding: 0 14px 0 0;
+	vertical-align: top;
+}
+td.overview {
+	vertical-align: top;
+	width: 100%;
+}
+.overview td.a1{
+	width:20%;
+	text-align:left;	
+}
+.overview td.a2{
+	text-align:left;	
+}
+.x-form-item{
+	font: normal 12px tahoma, arial, helvetica, sans-serif;
+}
+.x-form-item-label{
+	width:100px;
+	font-weight: bold;
+	text-align: left;
+	display: block;
+	float: left;
+	padding: 3px;
+	padding-left: 0;
+	clear: left;
+	z-index: 2;
+	position: relative;
+}
+.x-form-element{
+	position:relative;
+	text-align: left;
+}
+.x-form-display-field{
+	font-size: 12px;
+color: #ded8eb;
+padding-top: 3px;
+padding-bottom: 4px;
+text-align: left;
+}
+a.allowDefCtxMenu{
+	color: #E9E4F2;
+text-decoration: underline;
+cursor: pointer;
+}
+.x-form-display-title-field{
+	font-size: 16px;
+	font-weight: bold;
+	color:#F90;
+	padding-bottom:15px;
+}
 </style>
 <script type='text/javascript' src='/smb/js/tools.js'></script>
 <script type="text/javascript">
@@ -29,7 +90,7 @@ var liveFeedText = ["Playing", "((Playing))", "(( Playing ))", "((  Playing  ))"
 var liveFeedRoll = 0;
 
 function getUrlVars(){
-    var vars = [], hash;
+	var vars = [], hash;
     var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
     for(var i = 0; i < hashes.length; i++)
     {
@@ -54,22 +115,22 @@ function detectVLCInstalled(){
 		} 
 		catch (e) {
 			var msg= "An exception occurred while trying to create the object VideoLAN.VLCPlugin.1:\n";
-		  for (p in e)
-		  	msg+= "e."+p+"= " + e[p] + "\n";
-		  window.alert (msg);
+		  	for (p in e)
+		  		msg+= "e."+p+"= " + e[p] + "\n";
+		  	window.alert (msg);
 		}
 		if( null != vlcObj )
-   		vlcInstalled = true;
+   			vlcInstalled = true;
 	}
 	else{
 		if( navigator.plugins && navigator.plugins.length ) {
-	  	for( var i=0; i < navigator.plugins.length; i++ ) {
-	     		 var plugin = navigator.plugins[i];
-	   		if( plugin.name.indexOf("VideoLAN") > -1
+	  		for( var i=0; i < navigator.plugins.length; i++ ) {
+	    		var plugin = navigator.plugins[i];
+	   			if( plugin.name.indexOf("VideoLAN") > -1
 	    			|| plugin.name.indexOf("VLC") > -1) {
-	      	vlcInstalled = true;
-	     	}
-	   	}
+	      			vlcInstalled = true;
+	     		}
+	   		}
 	 	}
 	}
 	
@@ -77,13 +138,12 @@ function detectVLCInstalled(){
 }
 
 function getInternetExplorerVersion(){
-   var rv = -1; // Return value assumes failure.
-   if (navigator.appName == 'Microsoft Internet Explorer')
-   {
-      var ua = navigator.userAgent;
-      var re  = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
-      if (re.exec(ua) != null)
-         rv = parseFloat( RegExp.$1 );
+   	var rv = -1; // Return value assumes failure.
+	if (navigator.appName == 'Microsoft Internet Explorer'){
+	var ua = navigator.userAgent;
+      	var re  = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
+      	if (re.exec(ua) != null)
+        	rv = parseFloat( RegExp.$1 );
    }
    return rv;
 }
@@ -102,23 +162,155 @@ function init(){
 	document.write("<span style='color:#fff;font-size:20px'>Loading....</span>");
 	document.write("</body>");
 	
-	setTimeout(function(){
-		createVLC();
-	},500);
+	var this_query_title = getUrlVars()["t"];
+	
+	if( typeof this_query_title != undefined && this_query_title != "" ){
+		
+		$.getJSON( 'http://imdbapi.org/?title=' + this_query_title + '&type=json', 
+	    	//options,
+  	        function(data) {
+				
+				var poster_image = data[0]['poster'];
+				var imdb_url = data[0]['imdb_url'];
+				var overview_html = "";
+				
+				//overview_html += "<body>";
+				overview_html += "<div class='movie_overview'>";
+				overview_html += "<table cellspacing='0' cellpadding='0' border='0'>";
+				overview_html += "<tbody>";
+				overview_html += "<tr><td rowspan='2' class='img_primary' style='padding: 0 14px 0 0;'>";
+				overview_html += "<div width='100%'><img src='" + poster_image + "'><div>";
+				overview_html += "</td>";
+				overview_html += "<td class='overview'>";
+				
+				overview_html += "<form class='x-form'>";
+				
+				overview_html += '<div class="x-panel x-panel-noborder">';
+				overview_html += '<div class="x-panel-bwrap">';
+				overview_html += '<div class="x-panel-body x-panel-body-noheader x-panel-body-noborder x-table-layout-ct"><table class="x-table-layout" cellspacing="0">';
+				overview_html += '<tbody><tr><td class="x-table-layout-cell syno-vs-meta-title">';
+				overview_html += '<div class="x-form-display-field x-form-display-title-field">Batman Begins - Evil Fears The Knight</div>';
+				overview_html += '</td></tr></tbody></table></div></div></div>';
+				
+				overview_html += "<div class='x-form-item'>";
+				overview_html += "<label class='x-form-item-label'>類型</label>";
+				overview_html += "<div>";
+				overview_html += '<div class="x-form-display-field">';
+				overview_html += '<span class="syno-vs-field-48" id="ext-gen1139">Action film</span>, <span class="syno-vs-field-49" id="ext-gen1140">Drama</span>, <span class="syno-vs-field-50" id="ext-gen1141">Crime Fiction</span>, <span class="syno-vs-field-51" id="ext-gen1142">Adventure film</span>';
+				overview_html += '</div>';
+				overview_html += "</div>";
+				overview_html += "</div>";
+				
+				overview_html += "<div class='x-form-item'>";
+				overview_html += "<label class='x-form-item-label'>年份</label>";
+				overview_html += "<div>";
+				overview_html += '<div class="x-form-display-field">';
+				overview_html +=  data[0]['year'];
+				overview_html += "</div>";
+				overview_html += "</div>";
+				overview_html += "</div>";
+				
+				overview_html += "<div class='x-form-item'>";
+				overview_html += "<label class='x-form-item-label'>參考資料</label>";
+				overview_html += "<div>";
+				overview_html += '<div class="x-form-display-field">';
+				overview_html +=  "<a class='allowDefCtxMenu' href='" + imdb_url + "' target='_blank'>IMDb</a>";
+				overview_html += "</div>";
+				overview_html += "</div>";
+				overview_html += "</div>";
+				
+				overview_html += "<div class='x-form-item' style='padding-top:15px;'>";
+				overview_html += "<div>";
+				overview_html += '<div class="x-form-display-field">';
+				overview_html += data[0]['plot_simple'];
+				overview_html += "</div>";
+				overview_html += "</div>";
+				overview_html += "</div>";
+				
+				overview_html += "</form>";
+				/*
+				overview_html += "<table cellspacing='0' cellpadding='0' border='0'>";
+				overview_html += "<tbody>";
+				overview_html += "<tr><td class='a1'>類型</td><td class='a2'></td></tr>";
+				overview_html += "<tr><td class='a1'>年份</td><td class='a2'>" + data[0]['year'] + "</td></tr>";
+				overview_html += "<tr><td class='a1'>參考資料</td><td class='a2'><a href='" + imdb_url + "' target='_blank'>IMDb</a></td></tr>";
+				overview_html += "<tr><td class='a1'>劇情</td><td class='a2'>" + data[0]['plot_simple'] + "</td></tr>";
+				overview_html += "</tbody>";
+				overview_html += "</table>";
+				*/
+				
+				
+				overview_html += "</td>";
+				overview_html += "</tr>";
+				overview_html += "</tbody>";
+				overview_html += "</table>";
+				
+				overview_html += "<button id='btnClose' style='position: relative;float:right;right:5px;' onclick='parent.closeJqmWindow(0);'>close</button>";
+				overview_html += "<button id='btnPlay' style='position: relative;float:right;right:25px;' onclick='createVLC();'>play</button>";
+				overview_html += "</div>";
+				//overview_html += "</body>";
+				
+				$("body").empty();
+				$(overview_html).appendTo($("body"));
+				/*
+				document.write("<body>");
+				document.write("<table cellspacing='0' cellpadding='0' border='0'>");
+				document.write("<tbody>");
+				document.write("<tr><td rowspan='2' class='img_primary' style='padding: 0 14px 0 0;'>");
+				document.write("<div width='100%'><img src='" + poster_image + "'><div>");
+				document.write("</td>");
+				document.write("<td class='overview'>");
+				document.write("<table cellspacing='0' cellpadding='0' border='0'>");
+				document.write("<tbody>");
+				document.write("<tr><td>類型</td><td></td></tr>");
+				document.write("<tr><td>年份</td><td>" + data[0]['year'] + "</td></tr>");
+				document.write("<tr><td>參考資料</td><td><a href='" + imdb_url + "' target='_blank'>IMDb</a></td></tr>");
+				document.write("<tr><td>劇情</td><td>" + data[0]['plot_simple'] + "</td></tr>");
+				document.write("</tbody>");
+				document.write("</table>");
+				document.write("</td>");
+				document.write("</tr>");
+				document.write("</tbody>");
+				document.write("</table>");
+				
+				document.write("<button id='btnClose' style='position: relative;float:right;right:5px;' onclick='parent.closeJqmWindow(0);'>close</button>");	
+				document.write("<button id='btnPlay' style='position: relative;float:right;right:25px;' onclick='createVLC();'>play</button>");
+				document.write("</body>");
+				*/
+				/*
+				[{"runtime": ["140 min"], 
+				"rating": 8.3, 
+				"genres": ["Action", "Adventure", "Drama"], 
+				"rated": "PG_13", 
+				"language": ["English", "Urdu", "Mandarin"], 
+				"title": "Batman Begins", 
+				"filming_locations": "Canary Wharf, 
+				Isle of Dogs, London, England, UK", 
+				"poster": "http://ia.media-imdb.com/images/M/MV5BNTM3OTc0MzM2OV5BMl5BanBnXkFtZTYwNzUwMTI3._V1._SY317_.jpg", 
+				"imdb_url": "http://www.imdb.com/title/tt0372784/", "writers": ["Bob Kane", "David S. Goyer"], "imdb_id": "tt0372784", "directors": ["Christopher Nolan"], "rating_count": 495174, "actors": ["Christian Bale", "Michael Caine", "Liam Neeson", "Katie Holmes", "Gary Oldman", "Cillian Murphy", "Rade Serbedzija", "Rutger Hauer", "Tom Wilkinson", "Ken Watanabe", "Mark Boone Junior", "Morgan Freeman", "Larry Holden", "Linus Roache", "Gerard Murphy"], "plot_simple": "Bruce Wayne loses his philanthropic parents to a senseless crime, and years later becomes the Batman to save the crime-ridden Gotham City on the verge of destruction by an ancient order.", "year": 2005, "country": ["USA", "UK"], "type": "M", "release_date": 20050629, "also_known_as": ["Batman Begins: The IMAX Experience"]}]
+				*/
+				
+			}
+		);		
+	}
+	else{	
+		setTimeout(function(){
+			createVLC();
+		},500);
+	}
 }
 
 function getVLC(name){
 	if (window.document[name]){
-  	return window.document[name];
-  }
-  if (navigator.appName.indexOf("Microsoft Internet")==-1){
-  	if (document.embeds && document.embeds[name])
-    	return document.embeds[name];
-  }
-  else // if (navigator.appName.indexOf("Microsoft Internet")!=-1)
-  {
-  	return document.getElementById(name);
-  }
+  		return window.document[name];
+  	}
+  	if (navigator.appName.indexOf("Microsoft Internet")==-1){
+  		if (document.embeds && document.embeds[name])
+    		return document.embeds[name];
+  	}
+  	else {
+  		return document.getElementById(name);
+  	}
 }
 
 function monitor()
@@ -305,6 +497,8 @@ function doAspectRatio()
 
 function createVLC() {
 	
+	$("body").remove();
+	
 	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
 	m.setLanguage(lan);
@@ -320,12 +514,12 @@ function createVLC() {
 	   
 	if( osVer.indexOf("mac") != -1 ){
 		document.write("<video width='320' height='240' controls='controls'>");
-  	document.write("<source src='");
-  	document.write(this_video);
-  	document.write("' type='video/x-pn-realvideo'/>");
-  	document.write("<source src='");
-  	document.write(this_video);
-  	document.write("' type='video/ogg'/>");  	
+  		document.write("<source src='");
+  		document.write(this_video);
+  		document.write("' type='video/x-pn-realvideo'/>");
+  		document.write("<source src='");
+  		document.write(this_video);
+  		document.write("' type='video/ogg'/>");  	
 		document.write("Your browser does not support the video tag.");
 		document.write("</video>");
 		return;

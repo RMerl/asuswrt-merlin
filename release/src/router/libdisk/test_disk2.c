@@ -34,6 +34,15 @@
 
 #include "disk_initial.h"
 
+#define disk_dbg(fmt, args...) do{ \
+		FILE *fp = fopen("/dev/console", "a+"); \
+		if(fp){ \
+			fprintf(fp, "[test_disk_dbg: %s] ", __FUNCTION__); \
+			fprintf(fp, fmt, ## args); \
+			fclose(fp); \
+		} \
+	}while(0)
+
 #define SYS_BLOCK "/sys/block"
 
 #define USB_EHCI_PORT_1 get_usb_ehci_port(0)
@@ -1049,6 +1058,66 @@ extern int get_mount_path(const char *const pool, char *mount_path, int mount_le
 	return read_mount_data(pool, mount_path, mount_len, type, 64, right, PATH_MAX);
 }
 
+//#ifdef RTCONFIG_BCMARM
+#if 0
+extern int get_mount_size(const char *mount_point, u64 *total_kilobytes, u64 *used_kilobytes){
+	char *mount_info, *partition_info;
+	char *follow_info, line[PATH_MAX];
+	char target[PATH_MAX], *ptr;
+	char device[8];
+	u64 total_size;
+disk_dbg("ARM: get_mount_size!\n");
+
+	if(mount_point == NULL || total_kilobytes == NULL || used_kilobytes == NULL)
+		return 0;
+
+	*total_kilobytes = 0;
+	*used_kilobytes = 0;
+
+	mount_info = read_whole_file(MOUNT_FILE);
+	if(mount_info == NULL)
+		return 0;
+	follow_info = mount_info;
+
+	memset(target, 0, PATH_MAX);
+	sprintf(target, " %s ", mount_point);
+	memset(device, 0, 8);
+	while(get_line_from_buffer(follow_info, line, PATH_MAX) != NULL){
+		follow_info += strlen(line);
+
+		if((ptr = strstr(line, target)) != NULL){
+			*ptr = '\0';
+			strncpy(device, line+5, 8);
+			break;
+		}
+	}
+	free(mount_info);
+
+	if(strlen(device) <= 0)
+		return 0;
+
+	partition_info = read_whole_file(PARTITION_FILE);
+	if(partition_info == NULL)
+		return 0;
+	follow_info = partition_info;
+
+	memset(target, 0, PATH_MAX);
+	while(get_line_from_buffer(follow_info, line, PATH_MAX) != NULL){
+		follow_info += strlen(line);
+
+		if(sscanf(line, "%*u %*u %llu %[^\n ]", &total_size, target) == 2){
+			if(strcmp(device, target))
+				continue;
+
+			*total_kilobytes = total_size;
+			break;
+		}
+	}
+	free(partition_info);
+
+	return 1;
+}
+#else
 extern int get_mount_size(const char *mount_point, u64 *total_kilobytes, u64 *used_kilobytes){
 	u64 total_size, free_size, used_size;
 	struct statfs fsbuf;
@@ -1071,6 +1140,7 @@ extern int get_mount_size(const char *mount_point, u64 *total_kilobytes, u64 *us
 
 	return 1;
 }
+#endif
 
 extern char *get_disk_name(const char *string, char *buf, const int buf_size){
 	int len;

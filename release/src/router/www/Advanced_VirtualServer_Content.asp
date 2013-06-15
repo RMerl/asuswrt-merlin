@@ -639,7 +639,8 @@ function changeBgColor(obj, num){
 				</td>
 				<td width="21%">
 					<input type="text" maxlength="15" class="input_15_table" name="vts_ipaddr_x_0" align="left" onkeypress="return is_ipaddr(this, event)" style="float:left;"/ autocomplete="off" onblur="if(!over_var){hideClients_Block();}" onClick="hideClients_Block();">
-					<img id="pull_arrow" height="14px;" src="images/arrow-down.gif" align="right" onclick="pullLANIPList(this);" title="Select the IP of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">			
+					<img id="pull_arrow" height="14px;" src="images/arrow-down.gif" align="right" onclick="pullLANIPList(this);" title="Select the IP of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
+					<div id="ClientList_Block" class="ClientList_Block"></div>
 				</td>
 				<td width="10%">
 					<input type="text" maxlength="5"  class="input_6_table" name="vts_lport_x_0" onKeyPress="return is_number(this,event);"/>
@@ -657,8 +658,7 @@ function changeBgColor(obj, num){
 				</td>
 				</tr>
 				</table>		
-
-				<div id="ClientList_Block" class="ClientList_Block"></div>
+				
 				<div id="vts_rulelist_Block"></div>
 				
 				<div class="apply_gen">

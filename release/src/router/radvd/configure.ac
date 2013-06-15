@@ -151,6 +151,7 @@ AC_CHECK_HEADERS( \
 	net/if_types.h \
 	sys/param.h \
 	sys/sockio.h \
+	sys/sysctl.h \
 	sys/time.h \
 	time.h \
 )

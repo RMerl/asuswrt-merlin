@@ -1,0 +1,15 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>vfs_netatalk</title><link rel="stylesheet" href="samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.71.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="vfs_netatalk.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>vfs_netatalk &#8212; hide .AppleDouble files from CIFS clients</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">vfs objects = netatalk</code></p></div></div><div class="refsect1" lang="en"><a name="id291819"></a><h2>DESCRIPTION</h2><p>This VFS module is part of the
+	<a href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p>The <code class="literal">vfs_netatalk</code> VFS module dynamically
+	hides .AppleDouble files, preventing spurious errors on some
+	CIFS clients. .AppleDouble files may be created by historic
+	implementations of AFP (Apple Filing Protocol) on servers. </p><p>This module is stackable.</p></div><div class="refsect1" lang="en"><a name="id259323"></a><h2>EXAMPLES</h2><p>Hide .AppleDouble files on the [data] share:</p><pre class="programlisting">
+        <em class="parameter"><code>[data]</code></em>
+	<a class="indexterm" name="id259556"></a>vfs objects = netatalk
+</pre></div><div class="refsect1" lang="en"><a name="id259565"></a><h2>CAVEATS</h2><p>This module is largely historic and unlikely to be of use
+	in modern networks since current Apple systems are able to mount CIFS
+	shares natively.
+	</p></div><div class="refsect1" lang="en"><a name="id259577"></a><h2>VERSION</h2><p>This man page is correct for version 3.0.25 of the Samba suite.
+	</p></div><div class="refsect1" lang="en"><a name="id259586"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</p></div></div></body></html>

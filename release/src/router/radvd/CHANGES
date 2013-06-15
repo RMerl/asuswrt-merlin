@@ -1,3 +1,9 @@
+2013/03/14	Fix for systems without sysctl.h from vapier
+		Updating to version 1.9.3
+		release 1.9.3
+
+2013/03/04	radvdump MTU and route fix by Jean-Jacques
+
 2012/11/20	Replaced pekkas@netcore.fi with reubenhwk@gmail.com
 		Normalized dates in CHANGES to YYYY/MM/DD
 		release 1.9.2

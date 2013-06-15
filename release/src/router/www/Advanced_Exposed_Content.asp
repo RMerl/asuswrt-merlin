@@ -135,7 +135,7 @@ function dmz_on_off(flag){
 
 	<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
          <tr>
-            <th>Enable DMZ</th>
+            <th><#enable_dmz#></th>
             <td>
 				<input type="radio" name="dmz_enable" class="input" value="1" onclick="dmz_on_off(1)" ><#checkbox_Yes#>
 				<input type="radio" name="dmz_enable" class="input" value="0" onclick="dmz_on_off(0)" ><#checkbox_No#>

@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: nvparse.h 346848 2012-07-24 17:59:58Z $
+ * $Id: nvparse.h 374496 2012-12-13 08:59:12Z $
  */
 
 #ifndef _nvparse_h_
@@ -27,7 +27,11 @@
 #define MAX_NVPARSE 256
 #endif
 
-/* 
+/* Maximum  number of Traffic Management rules */
+#define MAX_NUM_TRF_MGMT_RULES 10
+
+#if !defined(AUTOFW_PORT_DEPRECATED)
+/*
  * Automatic (application specific) port forwards are described by a
  * netconf_app_t structure. A specific outbound connection triggers
  * the expectation of one or more inbound connections which may be
@@ -37,6 +41,7 @@ extern bool valid_autofw_port(const netconf_app_t *app);
 extern bool get_autofw_port(int which, netconf_app_t *app);
 extern bool set_autofw_port(int which, const netconf_app_t *app);
 extern bool del_autofw_port(int which);
+#endif /* !AUTOFW_PORT_DEPRECATED */
 
 /*
  * Persistent (static) port forwards are described by a netconf_nat_t
@@ -70,6 +75,13 @@ extern bool set_filter_url(int which, const netconf_urlfilter_t *start,
                               const netconf_urlfilter_t *end);
 extern bool del_filter_url(int which);
 #endif /* __CONFIG_URLFILTER__ */
+
+#ifdef  TRAFFIC_MGMT
+extern bool valid_trf_mgmt_port(const netconf_trmgmt_t *trmgmt);
+extern bool set_trf_mgmt_port(char *prefix, int which, const netconf_trmgmt_t *trmgmt);
+extern bool get_trf_mgmt_port(char *prefix, int which, netconf_trmgmt_t *trmgmt);
+extern bool del_trf_mgmt_port(char *prefix, int which);
+#endif /* TRAFFIC_MGMT */
 
 /*
 * WPA/WDS per link configuration. Parameters after 'auth' are

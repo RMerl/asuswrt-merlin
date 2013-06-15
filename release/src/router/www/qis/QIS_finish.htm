@@ -90,33 +90,34 @@ function detect_httpd(){
 			if(dead < 50)
 				setTimeout("detect_httpd();", 1000);
 			else{
-				progressBar = 100;
 				document.getElementById('progress_bar_no').innerHTML = "100%";
 				document.getElementById("updateProgress").style.width = "100%";
 				document.getElementById("newFWgradedFail").style.display = "";
 			}
 		},
 		success: function(){
-			if(webs_state_error == "1" || webs_state_error == "3"){
-				progressBar = 100;
+			if(webs_state_error == "1"){
 				document.getElementById('progress_bar_no').innerHTML = "100%";
 				document.getElementById("updateProgress").style.width = "100%";
-				document.getElementById("liveUpdateResult").innerHTML = "<#FIRM_fail_desc#>";
+				document.getElementById("liveUpdateResult").innerHTML = "<#connect_failed#>";
 				document.getElementById("newFWgraded").style.display = "";
 				return false;
 			}else if(webs_state_error == "2"){
-				progressBar = 100;
 				document.getElementById('progress_bar_no').innerHTML = "100%";
 				document.getElementById("updateProgress").style.width = "100%";
-				document.getElementById("liveUpdateResult").innerHTML = "Memory space is NOT enough to upgrade on internet. Please wait for rebooting.";
+				document.getElementById("liveUpdateResult").innerHTML = "Memory space is NOT enough to upgrade on internet. Please wait for rebooting.<br><#FW_desc1#>";
 				document.getElementById("newFWgraded").style.display = "";
 				return false;				
+			}else if(webs_state_error == "3"){
+				document.getElementById('progress_bar_no').innerHTML = "100%";
+				document.getElementById("updateProgress").style.width = "100%";
+				document.getElementById("liveUpdateResult").innerHTML = "<#FIRM_fail_desc#><br><#FW_desc1#>";
+				document.getElementById("newFWgraded").style.display = "";
 			}
 
-			if(webs_state_upgrade == ""){
-				progressBar = 100;
-				document.getElementById("updateProgress").style.width = "100%";
-				document.getElementById('progress_bar_no').innerHTML = progressBar+"%";
+			if(webs_state_upgrade == ""){	//after reboot
+				document.getElementById('progress_bar_no').innerHTML = "100%";
+				document.getElementById("updateProgress").style.width = "100%";				
 				document.getElementById("newFWgraded").style.display = "";		
 			}
 			else{
@@ -468,7 +469,7 @@ function QKfinish_load_body(){
 			document.getElementById("mainDiv_finish").style.display = "none";
 			document.getElementById("liveUpdate_div").style.display = "";
 			document.getElementById("liveUpdateTitle").style.display = "none";
-			$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno; 
+			$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno + "_" + parent.current_extendno;
 			$("#latestFW")[0].innerHTML = "" 
 			for(var i=0; i<parent.Latest_firm.length; i++){
 				$("#latestFW")[0].innerHTML += parent.Latest_firm.charAt(i);
@@ -478,13 +479,15 @@ function QKfinish_load_body(){
 					$("#latestFW")[0].innerHTML += ".";
 			}
 			$("#latestFW")[0].innerHTML += parent.Latest_buildno;
+			$("#latestFW")[0].innerHTML += "_";
+			$("#latestFW")[0].innerHTML += parent.Latest_extendno;
 		}
 	}
 	else{
 		if(parent.new_FW){
 			document.getElementById("QISmain").style.display = "none";
 			document.getElementById("liveUpdate_div").style.display = "";
-			$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno; 
+			$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno + "_" + parent.current_extendno; 
 			$("#latestFW")[0].innerHTML = "" 
 			for(var i=0; i<parent.Latest_firm.length; i++){
 				$("#latestFW")[0].innerHTML += parent.Latest_firm.charAt(i);
@@ -494,6 +497,8 @@ function QKfinish_load_body(){
 					$("#latestFW")[0].innerHTML += ".";
 			}
 			$("#latestFW")[0].innerHTML += parent.Latest_buildno;
+			$("#latestFW")[0].innerHTML += "_";
+			$("#latestFW")[0].innerHTML += parent.Latest_extendno;
 		}
 	
 		parent.set_step("t3");
@@ -508,7 +513,7 @@ function gotoASUS(){
 
 function goto_tutorial(){
 	// remove QIS_tutorial
-	/*if(parent.downsize_support == -1)
+	/*if(!parent.downsize_4m_support)
 		location.href = "QIS_tutorial.htm";
 	else*/
 		parent.location.href = "/index.asp";
@@ -763,7 +768,11 @@ function showclock(){
 		</div>
 	</fieldset>
 	<br />
-
+	
+	<fieldset>
+		<div class="row_end"><a class="iuiA" onclick="parent.location.href='/index.asp';"><#CTL_AdvSetting#></a></div>
+	</fieldset>
+	<br />
 	<fieldset>
 		<div class="row_end"><a class="iuiA" onclick="parent.location.href='/Logout.asp';"><#t1Logout#></a></div>
 	</fieldset>

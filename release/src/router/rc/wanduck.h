@@ -50,8 +50,12 @@
 #define PING_RESULT_FILE "/tmp/ping_success"
 #define RX_THRESHOLD 40
 
-
+/* Paul modify 2013/4/2, DSL takes some time to sync up */
+#ifdef RTCONFIG_DSL
+	#define MAX_WAIT_TIME 120
+#else
 #define MAX_WAIT_TIME 60
+#endif
 #define MAX_DISCONN_COUNT MAX_WAIT_TIME/SCAN_INTERVAL
 
 int max_wait_time = MAX_WAIT_TIME;

@@ -98,13 +98,13 @@ function initial(){
 		}		
 		
   	if(_apps_action == '' && 
-			(apps_state_upgrade == 3 || apps_state_upgrade == "") && 
+			(apps_state_upgrade == 4 || apps_state_upgrade == "") && 
 			(apps_state_enable == 2 || apps_state_enable == "") &&
 			(apps_state_update == 2 || apps_state_update == "") && 
 			(apps_state_remove == 2 || apps_state_remove == "") &&
 			(apps_state_switch == 5 || apps_state_switch == "") && 
 			(apps_state_autorun == 4 || apps_state_autorun == "") && 
-			(apps_state_install == 4 || apps_state_install == "") &&
+			(apps_state_install == 5 || apps_state_install == "") &&
 			is_cloud_installed){	//setup install is done
 					$('cloudsetup_movie').style.display = "none";
 					divdisplayctrl("none", "none", "none", "");
@@ -383,23 +383,25 @@ function check_appstate(){
 		return false;
 	}
 
-	if((apps_state_upgrade == 3 || apps_state_upgrade == "") 
+	if((apps_state_upgrade == 4 || apps_state_upgrade == "") 
 			&& (apps_state_enable == 2 || apps_state_enable == "") 
 			&& (apps_state_update == 2 || apps_state_update == "") 
 			&& (apps_state_remove == 2 || apps_state_remove == "") 
 			&& (apps_state_switch == 5 || apps_state_switch == "") 
 			&& (apps_state_autorun == 4 || apps_state_autorun == "") 
-			&& (apps_state_install == 4 || apps_state_install == "")){
+			&& (apps_state_install == 5 || apps_state_install == "")){
 		$('cloudsetup_movie').style.display = "none";	
 		//divdisplayctrl("none", "none", "none", "");
 		return true;
 	}
 
 	var errorcode;
+	var proceed = 0.6;
+
 	divdisplayctrl("none", "none", "", "none");
 	$('cloudsetup_movie').style.display = "";
 
-	if(apps_state_upgrade != 3 && apps_state_upgrade != ""){ // upgrade error handler
+	if(apps_state_upgrade != 4 && apps_state_upgrade != ""){ // upgrade error handler
 		errorcode = "apps_state_upgrade = " + apps_state_upgrade;
 		if(apps_state_error == 1)
 			$("apps_state_desc").innerHTML = "<#usb_inputerror#>";
@@ -417,10 +419,8 @@ function check_appstate(){
 			$("apps_state_desc").innerHTML = "<#usb_failed_dev_responding#>";
 		else if(apps_state_upgrade == 0)
 			$("apps_state_desc").innerHTML = "<#usb_initializing#>";
-		else if(apps_state_upgrade == 1)
-			$("apps_state_desc").innerHTML = "<#usb_uninstalling#>";
-		else if(apps_state_upgrade == 2){
-			if(apps_download_percent > 0 && apps_download_percent < 100){
+		else if(apps_state_upgrade == 1){
+			if(apps_download_percent > 0 && apps_download_percent <= 100){
 				$("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>" + apps_download_percent + "</b> <span style='font-size: 16px;'>%</span>";
 				apps_download_percent_done = 0;
 			}
@@ -429,26 +429,33 @@ function check_appstate(){
 					installPercent = 99;
 				$("loadingicon").style.display = "none";
 				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
-				installPercent = installPercent + 1.5;
+				installPercent = installPercent + proceed;//*/
 			}
-			else if(apps_download_percent == ""){
+			else{
 				$("apps_state_desc").innerHTML = "<#usb_initializing#>...";
 				apps_download_percent_done++;
 			}
-			else if(apps_download_percent == 100){
-				$("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>99</b> <span style='font-size: 16px;'>%</span>";
-				apps_download_percent_done++;
+		}
+		else if(apps_state_upgrade == 2)
+			$("apps_state_desc").innerHTML = "<#usb_uninstalling#>";
+		else{
+			if(apps_depend_action_target != "terminated" && apps_depend_action_target != "error"){
+				if(apps_depend_action_target == "")
+					$("apps_state_desc").innerHTML = "<b>[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> </b>";
+				else
+					$("apps_state_desc").innerHTML = "<b>[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> </b>"
+							+"<br> <span style='font-size: 16px;'> <#Excute_processing#>："+apps_depend_do+"</span>"
+							+"<br> <span style='font-size: 16px;'>"+apps_depend_action+"  "+apps_depend_action_target+"</span>"
+							;
 			}
 			else{
 				if(installPercent > 99)
 					installPercent = 99;
 				$("loadingicon").style.display = "none";
 				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
-				installPercent = installPercent + 1.5;
+				installPercent = installPercent + proceed;
 			}
 		}
-		else
-			$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>";
 	}
 	else if(apps_state_enable != 2 && apps_state_enable != ""){
 		errorcode = "apps_state_enable = " + apps_state_enable;
@@ -506,7 +513,7 @@ function check_appstate(){
 		else
 			$("apps_state_desc").innerHTML = "<#Auto_Install_processing#>";
 	}
-	else if(apps_state_install != 4 && apps_state_error > 0){ // install error handler
+	else if(apps_state_install != 5 && apps_state_error > 0){ // install error handler
 		if(apps_state_error == 1)
 			$("apps_state_desc").innerHTML = "<#usb_inputerror#>";
 		else if(apps_state_error == 2)
@@ -528,7 +535,7 @@ function check_appstate(){
 
 		isinstall = 0;
 	}
-	else if(apps_state_install != 4 && apps_state_install != ""){
+	else if(apps_state_install != 5 && apps_state_install != ""){
 		isinstall = 1;
 		errorcode = "_apps_state_install = " + apps_state_install;
 
@@ -538,8 +545,8 @@ function check_appstate(){
 			$("apps_state_desc").innerHTML = "<#USB_Application_disk_checking#>";
 		else if(apps_state_install == 2)
 			$("apps_state_desc").innerHTML = "<#USB_Application_Swap_creating#>";
-		else{
-			if(apps_download_percent > 0 && apps_download_percent < 100){
+		else if(apps_state_install == 3){
+			if(apps_download_percent > 0 && apps_download_percent <= 100){
 				$("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>" + apps_download_percent + "</b> <span style='font-size: 16px;'>%</span>";
 				apps_download_percent_done = 0;
 			}
@@ -548,22 +555,29 @@ function check_appstate(){
 					installPercent = 99;
 				$("loadingicon").style.display = "none";
 				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
-				installPercent = installPercent + 1.5;
+				installPercent = installPercent + proceed;//*/
 			}
-			else if(apps_download_percent == ""){
+			else{
 				$("apps_state_desc").innerHTML = "<#usb_initializing#>...";
 				apps_download_percent_done++;
 			}
-			else if(apps_download_percent == 100){
-				$("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>99</b> <span style='font-size: 16px;'>%</span>";
-				apps_download_percent_done++;
+		}
+		else{
+			if(apps_depend_action_target != "terminated" && apps_depend_action_target != "error"){
+				if(apps_depend_action_target == "")
+					$("apps_state_desc").innerHTML = "<b>[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> </b>";
+				else
+					$("apps_state_desc").innerHTML = "<b>[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> </b>"
+							+"<br> <span style='font-size: 16px;'> <#Excute_processing#>："+apps_depend_do+"</span>"
+							+"<br> <span style='font-size: 16px;'>"+apps_depend_action+"  "+apps_depend_action_target+"</span>"
+							;
 			}
 			else{
 				if(installPercent > 99)
 					installPercent = 99;
 				$("loadingicon").style.display = "none";
 				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
-				installPercent = installPercent + 1.5;
+				installPercent = installPercent + proceed;
 			}
 		}
 	}

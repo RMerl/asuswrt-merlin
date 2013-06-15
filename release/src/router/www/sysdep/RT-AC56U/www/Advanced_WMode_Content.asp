@@ -69,12 +69,6 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 <% login_state_hook(); %>
 <% wl_get_parameter(); %>
 
-var country = '';
-if('<% nvram_get("wl_unit"); %>' == '1')
-	country = '<% nvram_get("wl1_country_code"); %>';
-else
-	country = '<% nvram_get("wl0_country_code"); %>';
-
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var wl_wdslist_array = '<% nvram_get("wl_wdslist"); %>';
 var wds_aplist = "";

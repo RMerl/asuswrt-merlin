@@ -69,7 +69,10 @@ function showdr_advise(setting){
 	}
 	else{
 		parent.parent.$('drword').innerHTML = "<#DrSurf_sweet_advise1#><br/><br/>";
-		setTimeout("parent.parent.detectLANstatus('"+next_page+"', '"+getflag+"');", restart_time*1000);
+		if(typeof parent.detect_LANStatus == 'function')
+			setTimeout("parent.detect_LANStatus('finish');", restart_time*1000);
+		else
+			setTimeout("parent.parent.detectLANstatus('"+next_page+"', '"+getflag+"');", restart_time*1000);
 	}
 }
 
@@ -96,6 +99,7 @@ function initial(){
 		parent.setTimeout("update_site_info();", 1000);
 	}
 	else if(getflag == "sitesurvey_mb"){
+		parent.parent.$('proceeding_img_text').style.display = "";
 		parent.setTimeout("update_site_info();", 1000);
 	}
 	else if(getflag == "upgrading"){
@@ -112,9 +116,12 @@ function initial(){
 		parent.errCount = 0;
 		parent.parent.$("LoadingBar").style.visibility = "visible";
 		parent.parent.showLoadingBar(parent.waitingTime);
+		setTimeout("parent.getRetVal();",60000);
+/*
 		parent.parent.$('drword').innerHTML = "<#LANConfig_ChangedLANIP#>";
-		setTimeout("parent.parent.hideLoading();	",50000);
-		setTimeout("parent.parent.dr_advise();",50000);		
+		setTimeout("parent.parent.hideLoading();",50000);
+		setTimeout("parent.parent.dr_advise();",50000);
+*/
 	}
 	else if(page_modified == 1){
 		if(parent.parent.isWLclient()){

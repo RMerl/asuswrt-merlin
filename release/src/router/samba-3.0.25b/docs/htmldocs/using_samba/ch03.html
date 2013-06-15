@@ -1,0 +1,2086 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76"
+hspace="10" align="left" />
+
+<h1 class="head0">Chapter 3. Configuring Windows Clients</h1>
+
+
+<p><a name="INDEX-1"/><a name="INDEX-2"/>Configuring Windows to use
+your new Samba server is really quite simple. SMB is
+Microsoft's native language for resource sharing on
+a local area network, so much of the installation and setup on the
+Windows client side have been taken care of already.</p>
+
+
+<div class="sect1"><a name="samba2-CHP-3-SECT-1"/>
+
+<h2 class="head1">Windows Networking Concepts</h2>
+
+<p><a name="INDEX-3"/><a name="INDEX-4"/>Windows is different from Unix in
+many ways, including how it supports networking. Before we get into
+the hands-on task of clicking our way through the dialog boxes to
+configure each version of Windows, we need to provide you with a
+common foundation of networking technologies and concepts that apply
+to the entire family of Windows operating systems.</p>
+
+<p>For each Windows version, these are the main issues we will be
+dealing with:</p>
+
+<ul><li>
+<p>Making sure required networking components are installed and bound to
+the network adapter</p>
+</li><li>
+<p>Configuring networking with a valid IP address, netmask and gateway,
+and WINS and DNS name servers</p>
+</li><li>
+<p>Assigning workgroup and computer names</p>
+</li><li>
+<p>Setting the username(s) and password(s)</p>
+</li></ul>
+<p>In addition, some minor issues involving communication and
+coordination between Windows and Unix are different among Windows
+versions.</p>
+
+<p>One can go crazy thinking about the ways in which Unix is different
+from Windows, or the ways in which members of the Windows family are
+different from each other in underlying technology, behavior, or
+appearance. For now let's just focus on their
+similarities and see if we can find some common ground.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-1.1"/>
+
+<h3 class="head2">Components</h3>
+
+<p><a name="INDEX-5"/><a name="INDEX-6"/>Unix
+systems historically have been monolithic in nature, requiring
+recompilation or relinking to create a kernel with a customized
+feature set. However, modern versions have the ability to load or
+unload device drivers or various other operating-system features as
+modules while the system is running, without even needing to reboot.</p>
+
+<p>Windows allows for configuration by installing or uninstalling
+<em class="firstterm">components</em>. As far as networking goes,
+components can be one of three things:<a name="FNPTR-1"/><a href="#FOOTNOTE-1">[1]</a></p>
+
+<ul><li>
+<p>Protocols</p>
+</li><li>
+<p>Clients</p>
+</li><li>
+<p>Services</p>
+</li></ul>
+<p>Since Samba works using the TCP/IP protocol, of course
+we'll want to have that installed. In some cases, we
+also will want to find protocols to <em class="emphasis">uninstall</em>.
+For example, if Netware protocol (IPX/SPX) is not required on the
+network, it might as well be removed.</p>
+
+<p><a name="INDEX-7"/><a name="INDEX-8"/>NetBEUI protocol should be removed if
+possible. Having NetBEUI running at the same time as NetBIOS over
+TCP/IP causes the system to look for services under two different
+protocols, only one of which is likely to be in use. When Windows is
+configured with one or more unused protocols, 30-second delays will
+result when Windows tries to communicate with the unused protocol.
+Eventually, it times out and tries another one, until it finds one
+that works. This fruitless searching results in terrible performance.</p>
+
+<p>The other two items in the list, client and service components, are
+pretty much what you'd expect. Client components
+perform tasks related to connecting with network servers, and service
+components are for making the local system into a server of resources
+on the network. In <a href="ch01.html">Chapter 1</a> we told you that SMB
+systems can act as both clients and servers, offering resources on
+the network at the same time they request resources. In accordance
+with that, it is possible to install a component for SMB client
+services and, separately, a service component that allows file and
+printer shares on the local system to be accessible from other
+systems on the network.</p>
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-1.1.1"/>
+
+<h3 class="head3">Bindings</h3>
+
+<p><a name="INDEX-9"/><a name="INDEX-10"/><a name="INDEX-11"/>Once
+a networking component is installed, it must be
+<em class="firstterm">bound</em> to a hardware interface, or
+<em class="firstterm">adapter</em>, to be used on the network. At first
+this might seem like an odd complication; however, it is a conceptual
+model that allows the associations between hardware and software to
+be clearly displayed and easily modified through a graphical
+interface.</p>
+
+<p>We will want to make sure that your Windows client has both TCP/IP
+and the client component for SMB networking installed and also that
+it is bound to the network adapter that connects to our Samba
+network, which in most cases will be an Ethernet adapter.</p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-1.2"/>
+
+<h3 class="head2">IP Address</h3>
+
+<p>Just like any Unix system (or any other system that is using TCP/IP),
+your Windows systems will need an <a name="INDEX-12"/>IP address. If you are using
+<a name="INDEX-13"/>DHCP
+on your network, you can configure Windows to obtain its IP address
+automatically by using a DHCP server. Otherwise, you will need to
+assign a static IP address manually along with a netmask.<a name="FNPTR-2"/><a href="#FOOTNOTE-2">[2]</a></p>
+
+<p>If you are on a private network where you have the authority to
+assign your own IP addresses, you can select from addresses in one of
+three ranges:<a name="FNPTR-3"/><a href="#FOOTNOTE-3">[3]</a></p>
+
+<ul><li>
+<p>10.0.0.1 through 10.255.255.254</p>
+</li><li>
+<p>172.16.0.1 through 172.31.255.254</p>
+</li><li>
+<p>192.168.0.1 through 192.168.255.254</p>
+</li></ul>
+<p>These address ranges are reserved for private networks not directly
+connected to the Internet. For more information on using these
+private network addresses, see RFC 1918.</p>
+
+<p>If you're not maintaining your own separate network,
+see your system administrator for some available addresses on your
+network, as well as for the proper netmask to use.</p>
+
+<p>You should also be prepared to enter the IP address of the default
+gateway for the network. In some networks, the default gateway is the
+system or router that connects the LAN to the Internet. In other
+cases, the default gateway connects a subnet into a larger
+departmental or enterprise network.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-1.3"/>
+
+<h3 class="head2">Name Resolution</h3>
+
+<p><a name="INDEX-14"/><a name="INDEX-15"/>Name resolution is the function of
+translating human-friendly hostnames, such as
+<em class="emphasis">hopi</em>, or fully qualified domain names (FQDNs),
+such as <tt class="literal">mixtec.metran.cx</tt>, into IP addresses, such
+as 172.16.1.11 or 172.16.1.7.</p>
+
+<p>Unix systems can perform name resolution using an
+<em class="filename">/etc/hosts</em><a name="INDEX-16"/><a name="INDEX-17"/> file at the minimum, and more commonly can
+also incorporate services such as
+<a name="INDEX-18"/>DNS (Domain Name System)
+and <a name="INDEX-19"/>NIS (Network Information Service).
+Thus, name resolution is not necessarily performed by one isolated
+part of the operating system or one daemon, but is a system that can
+have a number of dispersed parts (although the
+<a name="INDEX-20"/>name
+service switch, with its
+<em class="filename">/etc/nsswitch.conf</em><a name="INDEX-21"/><a name="INDEX-22"/> configuration file, helps to tie them
+together).</p>
+
+<p>Although the specific implementation is different, name resolution in
+Windows is also performed by querying a number of resources, some of
+which are similar (or even identical) to their Unix counterparts.</p>
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-1.3.1"/>
+
+<h3 class="head3">Broadcast name resolution</h3>
+
+<p>On the other hand, there is one way in which Windows is not at all
+similar to Unix. If a Windows workstation is set up with no WINS name
+server, it will use the broadcast method of
+<a name="INDEX-23"/><a name="INDEX-24"/>name resolution, as described in <a href="ch01.html">Chapter 1</a>,<a name="FNPTR-4"/><a href="#FOOTNOTE-4">[4]</a> probably resulting in a
+very busy network. And even if you provide name servers for your
+Windows system to use, it might still resort to broadcast name
+resolution if it is unsuccessful at querying the name servers. For
+this reason, we recommend that you provide multiple reliable name
+servers for your Windows computers on the network.</p>
+
+<p>If that weren't enough to get you interested in
+setting up WINS and DNS servers, broadcast name resolution is usually
+limited to working on the local subnet because routers are usually
+configured not to forward broadcast packets to other networks.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-1.3.2"/>
+
+<h3 class="head3">WINS</h3>
+
+<p>We've already told you about WINS in <a href="ch01.html">Chapter 1</a>, and we don't have much more
+to say about it here. WINS can translate simple NetBIOS computer
+names such as <em class="emphasis">huastec</em> or
+<em class="emphasis">navajo</em> into IP addresses, as required on an SMB
+network. Of course, the interesting thing here is that Samba can act
+as a WINS server if you include the line:</p>
+
+<blockquote><pre class="code">wins support = yes</pre></blockquote>
+
+<p>in your Samba server's
+<em class="filename">smb.conf</em><a name="INDEX-25"/><a name="INDEX-26"/> file.
+This can be a good thing, to be sure, and we highly recommend it. Not
+only will you have a reliable WINS server to reduce the number of
+broadcast packets, but you won't need to run Windows
+NT/2000/XP to get it.</p>
+<a name="samba2-CHP-3-NOTE-91"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>One caveat about using Samba as a <a name="INDEX-27"/><a name="INDEX-28"/>WINS server is that Samba (up to Version
+2.2, at least) cannot synchronize with other WINS servers. So if you
+specify a Samba server as your Windows system's WINS
+server, you must be careful not to specify any additional (i.e.,
+secondary) WINS servers. If you do, you are likely to run into
+problems because the servers will not be able to synchronize their
+databases with each other. In Samba's defense, if
+you are using a Samba WINS server (running on a typically reliable
+Unix host), you will probably have little need for a secondary WINS
+server anyway.</p>
+</blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-1.3.3"/>
+
+<h3 class="head3">LMHOSTS</h3>
+
+<p>All Windows versions support a backup method of name resolution, in
+the form of a file called
+<em class="filename">LMHOSTS</em><a name="INDEX-29"/> <em class="emphasis"><a name="FNPTR-5"/><a href="#FOOTNOTE-5">[5]</a></em>
+that contains a lookup table of computer names and IP addresses. This
+exists for &quot;historical purposes,&quot;
+and is a rather awkward method of name resolution because it requires
+the administrator (i.e., you!) to keep copies of
+<em class="filename">LMHOSTS</em> up to date on every single Windows
+system on the network. To be fully effective,
+<em class="filename">LMHOSTS</em> would have to be updated every time a
+new system were added to (or removed from) the network. Of course,
+there might be ways to automate that process, but a better option
+would be simply to run a WINS name server that is intentionally
+designed to solve that specific problem.</p>
+
+<p>There are perhaps a couple of reasons why you might want to bother
+with <em class="filename">LMHOSTS</em> files. In rare situations, there
+might be no WINS server on the network. Or maybe a WINS server
+exists, but it's unreliable. In both cases, if the
+Windows system has a valid <em class="filename">LMHOSTS</em> file, it can
+help to avoid your network bogging down from those dreaded broadcast
+name queries.</p>
+
+<p>The format of the <em class="filename">LMHOSTS</em> file is simple and
+similar to the <em class="filename">/etc/hosts</em> file with which you
+might be familiar from running Unix systems. Here are the contents of
+a sample <em class="filename">LMHOSTS</em> file:</p>
+
+<blockquote><pre class="code">172.16.1.1      toltec
+172.16.1.2      aztec
+172.16.1.3      mixtec
+172.16.1.4      zapotec
+172.16.1.5      huastec
+172.16.1.6      maya
+172.16.1.7      olmec
+172.16.1.8      chichimec
+172.16.1.11     hopi
+172.16.1.12     zuni
+172.16.1.13     dine
+172.16.1.14     pima
+172.16.1.15     apache
+172.16.1.21     inca
+172.16.1.22     qero</pre></blockquote>
+
+<p>As you can see, the format is like that of
+<em class="filename">/etc/hosts</em>, except that instead of an FQDN
+(e.g., <tt class="literal">toltec.metran.cx</tt>), only a NetBIOS computer
+name (<tt class="literal">toltec</tt>) is given. One way to create an
+<em class="filename">LMHOSTS</em> file for your Windows systems is to copy
+a <em class="filename">/etc/hosts</em> file and edit out the parts you
+don't need. This will work great if your network
+doesn't have a DNS (or NIS) name server and the Unix
+system is dependent on <em class="filename">/etc/hosts</em> for its own
+name service. But if your Unix system is querying a DNS server (which
+is the most frequent case on anything larger than the very smallest
+networks), you would be better advised to look in the DNS
+server's configuration files for your source of
+computer names and IP addresses.</p>
+
+<p>If you do not have administrative access to your
+network's DNS server, you might be able to use tools
+such as <em class="emphasis">nslookup</em><a name="INDEX-30"/>,
+<em class="emphasis">nmap</em><a name="INDEX-31"/>, and
+<em class="emphasis">dig</em><a name="INDEX-32"/> to query the server and obtain the
+information you need.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-1.3.4"/>
+
+<h3 class="head3">DNS</h3>
+
+<p>The <a name="INDEX-33"/><a name="INDEX-34"/>DNS
+is responsible for translating human-readable, Internet-style
+hostnames such as <tt class="literal">pima.metran.cx</tt> or
+<tt class="literal">sales.oreilly.com</tt> into IP addresses.</p>
+
+<p>On your first reading of this section, you might be wondering what a
+section on DNS is doing in a book about NetBIOS and SMB networking.
+Remember, we told you that Windows can use more than WINS (NetBIOS
+Name Service) in its strategy for performing name resolution. Because
+DNS is also able to supply IP addresses for simple hostnames (which
+are usually the same as NetBIOS computer names), it can be helpful to
+configure Windows to know about a DNS server on your network. This is
+slightly more important for newer Windows versions than older ones,
+and more so for Windows NT/2000/XP than for Windows 95/98/Me, because
+nowadays Microsoft is focusing more on TCP/IP as the standard
+protocol and DNS as the primary name service.</p>
+
+<p>To find the address of your DNS server, look at the file
+<em class="emphasis">/etc/resolv.conf</em><a name="INDEX-35"/><a name="INDEX-36"/> on your Samba server or any other Unix
+system on the local network that is using DNS. It looks like the
+following:</p>
+
+<blockquote><pre class="code">#resolv.conf 
+domain metran.cx
+nameserver 127.0.0.1 
+nameserver 172.16.1.53</pre></blockquote>
+
+<p>In this example, the first name server in the list is 127.0.0.1,
+which indicates that the Samba server is also a DNS server for this
+LAN.<a name="FNPTR-6"/><a href="#FOOTNOTE-6">[6]</a> In that case, you would use its network IP
+address (not <a name="INDEX-37"/><a name="INDEX-38"/>127.0.0.1, its localhost address)
+for your DNS server when configuring Windows. Otherwise, use the
+other addresses you find in the lines beginning with
+<tt class="literal">nameserver</tt>. Try to select ones on your own
+network. Any name servers listed in
+<em class="emphasis">/etc/resolv.conf</em> should work, but
+you'll get better performance by using a server
+nearby.</p>
+
+<p>All versions of Windows can be configured to know of multiple domain
+name servers, and you might wish to take advantage of this for
+increased reliability. If the first domain name server does not
+respond, Windows can try others in its list.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-1.3.5"/>
+
+<h3 class="head3"><em class="filename">HOSTS</em></h3>
+
+<p>Similar to how the <em class="filename">LMHOSTS</em> file can be added to
+supplement WINS, the
+<em class="filename">HOSTS</em><a name="INDEX-39"/> file on a Windows system can be optionally
+added to supplement DNS name resolution. Most of our comments
+regarding <em class="filename">LMHOSTS</em> also apply here.</p>
+
+<p>This time the format of the file is not just similar to that of
+<em class="filename">/etc/hosts</em> found on Unix&mdash;the format is
+<em class="emphasis">exactly</em> the same. You can simply copy
+<em class="filename">/etc/hosts</em> from your Samba server or other Unix
+system to the proper directory on your Windows system.</p>
+
+<p>On Windows 95/98/Me, the <em class="filename">HOSTS</em> file goes in the
+Windows installation directory, which is usually
+<em class="filename">C:\Windows</em>. Note that a file called
+<em class="filename">hosts.sam</em><a name="INDEX-40"/> is already there, which is a sample
+<em class="filename">HOSTS</em> file provided by Microsoft.</p>
+
+<p>On Windows NT/2000/XP, the <em class="filename">HOSTS</em> file goes in
+the <em class="filename">\system32\drivers\etc</em> directory under the
+Windows installation directory, which is usually
+<em class="filename">C:\WINNT</em>.</p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-1.4"/>
+
+<h3 class="head2">Passwords</h3>
+
+<p><a name="INDEX-41"/><a name="INDEX-42"/><a name="INDEX-43"/>Unix systems use
+username and password pairs to authenticate users either on a local
+system or in an NIS domain. Windows NT/2000/XP are very similar; a
+user supplies his username and password to log on to the local system
+or to a Windows domain.</p>
+
+<p>When the SMB network is set up as a workgroup, things are different.
+There is no domain to log on to, although shares on the network can
+be password-protected. In this case, one password is associated with
+each password-protected share, rather than with individual users.</p>
+
+<p>Samba's default user-level
+<a name="INDEX-44"/>authentication in a workgroup is
+different from that of Windows. To access shares on the Samba host,
+users are required to supply a valid username and password for an
+account on the Samba host. This will be discussed in more detail in
+<a href="ch09.html">Chapter 9</a>.</p>
+
+<p><a name="INDEX-45"/>An unfortunate
+complication arises with passwords. In the first release of Windows
+95 and in Windows NT 4.0 with Service Pack 2 (SP2) or less, as well
+as in all previous versions of Windows, passwords are allowed to be
+sent over the network in plain text. But in Windows 95 with the
+network redirector update,<a name="FNPTR-7"/><a href="#FOOTNOTE-7">[7]</a></p>
+
+<p>Windows NT 4.0 SP3 or later, and all subsequent releases of Windows,
+a registry setting must be <a name="INDEX-46"/><a name="INDEX-47"/><a name="INDEX-48"/>modified to enable plain-text
+passwords. These more modern versions of Windows prefer to send
+encrypted passwords, and if you are working with one of them (and
+don't want to have to modify the registry), you must
+have the line:</p>
+
+<blockquote><pre class="code">encrypt passwords = yes</pre></blockquote>
+
+<p>in the <tt class="literal">[global]</tt> section of your
+<em class="filename">smb.conf</em><a name="INDEX-49"/><a name="INDEX-50"/> file. In addition, you must run the
+command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbpasswd -a <em class="replaceable">username</em></b></tt></pre></blockquote>
+
+<p>for each user on the Samba host to add their passwords to
+Samba's collection of encrypted passwords. We showed
+you how to do this in <a href="ch02.html">Chapter 2</a>.</p>
+
+<p>If your first attempt to access a Samba share results in a dialog box
+asking for a password for
+<tt class="literal">IPC$</tt><a name="INDEX-51"/><a name="INDEX-52"/>, as shown in <a href="ch03.html#samba2-CHP-3-FIG-1">Figure 3-1</a>, it is probably because you neglected either
+or both of these two steps, and the Samba server did not recognize
+the encrypted password that the Windows system sent to it. Another
+possible dialog box that might come up is the one shown in <a href="ch03.html#samba2-CHP-3-FIG-2">Figure 3-2</a>, which was presented by a Windows 2000 client.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-1"/><img src="figs/sam2_0301.gif"/></div><h4 class="head4">Figure 3-1. Windows 98 asking for IPC$ password</h4>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-2"/><img src="figs/sam2_0302.gif"/></div><h4 class="head4">Figure 3-2. Windows 2000 logon error dialog</h4>
+
+<p>The rest of this chapter is divided into four sections. The first
+section covers setting up Windows 95/98/Me computers, and the rest of
+the sections cover Windows NT 4.0, Windows 2000, and Windows XP
+individually. Each section roughly parallels the order in which
+we've introduced networking concepts in this
+section. You need to read only the section that applies to the
+Windows version with which you are working, and once you have
+finished reading it, you can continue at the beginning of the next
+chapter where we will start covering more advanced Samba features and
+networking issues.</p>
+
+<a name="samba2-CHP-3-NOTE-92"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>Keep in mind that we are continuing our example from <a href="ch02.html">Chapter 2</a>, in which we are setting up a very simple
+prototype network using a workgroup that has very lax security. After
+you have the basics working, we recommend you continue with later
+chapters to learn how to implement both better security and a Samba
+domain. <a name="INDEX-53"/></p>
+</blockquote>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-3-SECT-2"/>
+
+<h2 class="head1">Setting Up Windows 95/98/Me Computers</h2>
+
+<p>The <a name="INDEX-54"/>Windows 95/98/Me operating systems are very
+similar to each other, and as far as this chapter is concerned, it is
+possible to treat them with a common set of directions.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-2.1"/>
+
+<h3 class="head2">Setting Up the Network</h3>
+
+<p>Samba uses TCP/IP to communicate with clients on the network, so you
+will need to make sure there is support for TCP/IP on each Windows
+client. Unlike Unix operating systems, Windows does not necessarily
+have support for TCP/IP installed. However, when Windows is installed
+on a computer with a network card or a network card is added to a
+system already running Windows, TCP/IP support is installed by
+default, along with the Client for Microsoft Networks, which supports
+SMB file and printer sharing.</p>
+
+<p>To make sure both services are installed on your Windows system,
+double-click the Network icon in the Control Panel to open the
+Network dialog box, as shown in <a href="ch03.html#samba2-CHP-3-FIG-3">Figure 3-3</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-3"/><img src="figs/sam2_0303.gif"/></div><h4 class="head4">Figure 3-3. The Windows 95/98/Me Network dialog</h4>
+
+<p>You should see at least the Client for Microsoft Networks component
+installed on the system, and hopefully a networking device
+(preferably an Ethernet card) bound to the TCP/IP protocol. If there
+is only one networking hardware device, you'll see
+the TCP/IP protocol listed below the device to which it is bound, as
+shown in <a href="ch03.html#samba2-CHP-3-FIG-1">Figure 3-1</a>.</p>
+
+<p>You might also see &quot;File and printer sharing for
+Microsoft Networks,&quot; which is used to make the
+system into a server. In addition, you might see NetBEUI or Novell
+Networking. Definitely remove NetBEUI unless you are sure you need
+it, and if you don't have any Novell servers on your
+network, you can remove Novell (IPX/SPX) as well. To remove a
+service, simply click its name and then click the Remove button.</p>
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-2.1.1"/>
+
+<h3 class="head3">Adding TCP/IP</h3>
+
+<p><a name="INDEX-55"/><a name="INDEX-56"/>If
+you don't see TCP/IP listed, you'll
+need to install the protocol.</p>
+
+<p>You can add the protocol by inserting the Windows distribution CD-ROM
+in your CD-ROM drive and clicking the Add button below the component
+window. Indicate that you wish to add a protocol by selecting
+Protocol and clicking &quot;Add...&quot; on
+the following dialog box, which should look similar to <a href="ch03.html#samba2-CHP-3-FIG-4">Figure 3-4</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-4"/><img src="figs/sam2_0304.gif"/></div><h4 class="head4">Figure 3-4. Selecting a component type</h4>
+
+<p>After that, select manufacturer Microsoft, then protocol TCP/IP, as
+shown in <a href="ch03.html#samba2-CHP-3-FIG-3">Figure 3-3</a>, then click OK. After doing so,
+you will be returned to the network dialog. Click OK to close the
+dialog box, and Windows will install the necessary components from
+the CD-ROM and request that the system be rebooted. Go ahead and
+reboot the system, and you're set.</p>
+
+<p>If Client for Microsoft Networks is not in the list, you can add it
+similarly. The only significant difference is that you are adding a
+client instead of a protocol, so make sure to select
+&quot;Client&quot; rather than
+&quot;Protocol&quot; when asked.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-2.1.2"/>
+
+<h3 class="head3">Configuring TCP/IP</h3>
+
+<p><a name="INDEX-57"/><a name="INDEX-58"/>If you have more than one networking
+device (for example, both an Ethernet card and a modem for dial-up
+networking), the protocol to hardware bindings will be indicated by
+arrows, as shown in <a href="ch03.html#samba2-CHP-3-FIG-5">Figure 3-5</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-5"/><img src="figs/sam2_0305.gif"/></div><h4 class="head4">Figure 3-5. Selecting a protocol to install</h4>
+
+<p>Select the TCP/IP protocol linked to the networking device that will
+be accessing the Samba network. If you have only one networking
+device, simply click the TCP/IP item. Now click the Properties button
+to open the TCP/IP Properties dialog. You should see something
+similar to <a href="ch03.html#samba2-CHP-3-FIG-6">Figure 3-6</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-6"/><img src="figs/sam2_0306.gif"/></div><h4 class="head4">Figure 3-6. Selecting the correct TCP/IP protocol</h4>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-2.1.3"/>
+
+<h3 class="head3">IP Address tab</h3>
+
+<p><a name="INDEX-59"/><a name="INDEX-60"/>The
+IP Address tab is shown in <a href="ch03.html#samba2-CHP-3-FIG-7">Figure 3-7</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-7"/><img src="figs/sam2_0307.gif"/></div><h4 class="head4">Figure 3-7. The IP Address tab</h4>
+
+<p>If you use DHCP on your network to provide IP addresses automatically
+to Windows systems, select the &quot;Obtain an IP address
+automatically&quot; radio button. Otherwise, click the
+&quot;Specify an IP address&quot; radio
+button and enter the client's address and subnet
+mask in the space provided. You or your network manager should have
+selected an address for the client on the same subnet (LAN) as the
+Samba server.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-2.1.4"/>
+
+<h3 class="head3">WINS Configuration tab</h3>
+
+<p><a name="INDEX-61"/><a name="INDEX-62"/>If you've
+enabled WINS on Samba or are choosing to make use of another WINS
+server on your network, you must tell Windows the
+server's address. After selecting the WINS
+Configuration tab, you will see the dialog box shown in <a href="ch03.html#samba2-CHP-3-FIG-8">Figure 3-8</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-8"/><img src="figs/sam2_0308.gif"/></div><h4 class="head4">Figure 3-8. The WINS Configuration tab</h4>
+
+<p>This is for Windows 98/Me; Windows 95 is just a little different,
+having separate spaces for the primary and backup WINS server IP
+addresses.</p>
+
+<p>Select the &quot;Enable WINS Resolution&quot;
+radio button, and enter the WINS server's address in
+the space provided, then click the Add button. Do not enter anything
+in the Scope ID field.</p>
+<a name="samba2-CHP-3-NOTE-93"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>A bug in Windows 95/98 sometimes causes the IP address of the WINS
+server to disappear after the OK button is clicked. This happens only
+when only a primary WINS server has been specified. The workaround is
+to fill in the fields for both primary and secondary WINS servers,
+using the same IP address for each.</p>
+</blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-2.1.5"/>
+
+<h3 class="head3">DNS Configuration tab</h3>
+
+<p><a name="INDEX-63"/><a name="INDEX-64"/>Unless you are using DHCP, you
+will need to provide the IP address of one or more DNS servers. Click
+the DNS tab, then click the &quot;Enable
+DNS&quot; radio button, and type the IP address of one or
+more DNS servers into the appropriate field, shown in <a href="ch03.html#samba2-CHP-3-FIG-9">Figure 3-9</a>, to add the server's address
+to the top DNS Server Search Order field.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-9"/><img src="figs/sam2_0309.gif"/></div><h4 class="head4">Figure 3-9. The DNS Configuration tab</h4>
+
+<p>Also, provide the hostname (which is the same as the NetBIOS computer
+name) of the Windows 95/98/Me computer and your Internet domain. (You
+will need to enter the computer name again later, along with the
+workgroup. Make sure to enter the same name each time.) You can
+safely ignore the Domain Suffix Search Order field for anything
+related to Samba.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-2.1.6"/>
+
+<h3 class="head3">LMHOSTS file</h3>
+
+<p><a name="INDEX-65"/><a name="INDEX-66"/>If
+you want to install an <em class="filename">LMHOSTS</em> file, it must be
+placed in your Windows installation directory (usually
+<em class="filename">C:\Windows</em>). In the same directory, Microsoft
+has provided a sample <em class="filename">LMHOSTS</em> file named
+<em class="filename">lmhosts.sam</em>, which you might want to look at for
+further information on the file's format.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-2.1.7"/>
+
+<h3 class="head3">NetBIOS tab</h3>
+
+<p><a name="INDEX-67"/><a name="INDEX-68"/>This tab
+appears in Windows 98/Me, but not in Windows 95. All you need to do
+here is make sure the checkbox is checked, enabling NetBIOS over
+TCP/IP. If TCP/IP is your only protocol installed (as we recommended
+earlier), the selection will be grayed out, with the box checked so
+that you couldn't uncheck it even if you wanted to.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-2.1.8"/>
+
+<h3 class="head3">Bindings tab</h3>
+
+<p><a name="INDEX-69"/><a name="INDEX-70"/>The
+final tab to look at is Bindings, as shown in <a href="ch03.html#samba2-CHP-3-FIG-10">Figure 3-10</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-10"/><img src="figs/sam2_0310.gif"/></div><h4 class="head4">Figure 3-10. The Bindings tab</h4>
+
+<p>You should have a check beside Client for Microsoft Networks,
+indicating that it's using TCP/IP. If you have
+&quot;File and printer sharing for Microsoft
+Networks&quot; in the dialog, it should also be checked,
+as shown in <a href="ch03.html#samba2-CHP-3-FIG-10">Figure 3-10</a>.</p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-2.2"/>
+
+<h3 class="head2">Setting the Computer Name and Workgroup</h3>
+
+<p><a name="INDEX-71"/><a name="INDEX-72"/><a name="INDEX-73"/><a name="INDEX-74"/>Finally, click the OK button in the
+TCP/IP configuration dialog, and you'll be taken
+back to the Network Configuration dialog. Then select the
+Identification tab, which will take you to the dialog box shown in
+<a href="ch03.html#samba2-CHP-3-FIG-11">Figure 3-11</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-11"/><img src="figs/sam2_0311.gif"/></div><h4 class="head4">Figure 3-11. The Identification tab</h4>
+
+<p>This is where you set your system's NetBIOS name
+(which Microsoft likes to call &quot;computer
+name&quot;). Usually, it is best to make this the same as
+your DNS hostname, if you are going to have one for this system. For
+example, if the system's DNS name is
+<tt class="literal">huastec.metran.cx</tt>, give the computer a NetBIOS
+name of <tt class="literal">huastec</tt> on this tab.</p>
+
+<p>You also set your workgroup name here. In our case,
+it's METRAN, but if you used a different one in
+<a href="ch02.html">Chapter 2</a>, when creating the Samba configuration
+file, use that instead. Just don't call it WORKGROUP
+(the default workgroup name) or you'll be in the
+same workgroup as every misconfigured Windows computer on the planet!</p>
+
+<p>You can also enter a comment string for this computer. See if you can
+come up with some way of describing it that will remind you of what
+and where it is when you see the comment in a list displayed on
+another computer. Everyone on the network will be able to see your
+comment, so be careful not to include any information that might be
+useful to crackers.</p>
+
+<p>Finally, click the OK button and follow whatever instructions Windows
+provides. (You might have to insert your Windows distribution CD-ROM
+and/or reboot.)</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-2.3"/>
+
+<h3 class="head2">Username and Password</h3>
+
+<p><a name="INDEX-75"/><a name="INDEX-76"/><a name="INDEX-77"/>You have probably already given
+Windows a username and password by now. However, to authenticate with
+the Samba server, your Windows username and password must match with
+a valid account on the Samba server.</p>
+
+<p>It is simple to add a new user and password to a Windows 95/98/Me
+system. Just reboot or log out, and when you are prompted for a
+username and password, enter your Unix username and password. (If you
+are using encrypted passwords, you must run
+<em class="emphasis">smbpasswd</em> on the Unix host to enter them into
+Samba's password database, if you have not already
+done so.) You can use this method to add as many users as you want,
+so as to allow more than one user to use the Windows system to gain
+access to the Samba shares.</p>
+
+<p>If you mistakenly entered the wrong password or your Unix password
+changes, you can change your password on the Windows system by going
+to the Control Panel and double-clicking the Passwords icon. This
+will bring up the Passwords Properties dialog. Click the Change
+Passwords tab, and you will see the dialog shown in <a href="ch03.html#samba2-CHP-3-FIG-12">Figure 3-12</a>. Now click the &quot;Change
+Windows Password...&quot; button, which will bring up the
+Change Windows Password dialog box, shown in <a href="ch03.html#samba2-CHP-3-FIG-13">Figure 3-13</a>. As indicated by the text entry fields in the
+dialog, enter your old password, and then the new password, and again
+to confirm it. Click the OK button and then the Close button on the
+Password Properties dialog box. Reboot or log out, and use your new
+password when you log in again.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-12"/><img src="figs/sam2_0312.gif"/></div><h4 class="head4">Figure 3-12. The Password Properties dialog</h4>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-13"/><img src="figs/sam2_0313.gif"/></div><h4 class="head4">Figure 3-13. The Change Windows Password dialog</h4>
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-2.3.1"/>
+
+<h3 class="head3">Logging in for the first time</h3>
+
+<p>If you don't have a Change Passwords tab in the
+Passwords Properties window, it is because networking is not fully
+set up yet. Assuming you've followed all the
+directions given so far, you just need to reboot; when the system
+comes up, it will ask you to log in with a username and a password.</p>
+
+<p>Now for the big moment. Your Samba server is running, and you have
+set up your Windows 95/98/Me client to communicate with it.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-2.3.2"/>
+
+<h3 class="head3">Accessing the Samba Server from Windows 95/98</h3>
+
+<p><a name="INDEX-78"/><a name="INDEX-79"/>Double-click the Network Neighborhood
+icon on the desktop. You should see your Samba server listed as a
+member of the workgroup, as shown in <a href="ch03.html#samba2-CHP-3-FIG-14">Figure 3-14</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-14"/><img src="figs/sam2_0314.gif"/></div><h4 class="head4">Figure 3-14. Windows 95/98 Network Neighborhood</h4>
+
+<p>Double-clicking the server name will show the resources that the
+server is offering to the network, as shown in <a href="ch03.html#samba2-CHP-3-FIG-15">Figure 3-15</a> (in this case, the <em class="emphasis">test</em>
+directory).</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-15"/><img src="figs/sam2_0315.gif"/></div><h4 class="head4">Figure 3-15. The test shared folder on the Toltec server</h4>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-2.3.3"/>
+
+<h3 class="head3">Accessing the Samba Server from Windows Me</h3>
+
+<p>Double-click the My Network Places icon on the desktop. You should
+see the test shared directory as shown in <a href="ch03.html#samba2-CHP-3-FIG-16">Figure 3-16</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-16"/><img src="figs/sam2_0316.gif"/></div><h4 class="head4">Figure 3-16. My Network Places on Windows Me</h4>
+
+<p>Double-click the Entire Network icon, and you should see an icon for
+your workgroup, as shown in <a href="ch03.html#samba2-CHP-3-FIG-17">Figure 3-17</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-17"/><img src="figs/sam2_0317.gif"/></div><h4 class="head4">Figure 3-17. Entire Network window, showing the Metran workgroup</h4>
+
+<p>Double-clicking the workgroup icon will bring up a window showing
+every computer in the workgroup, which should include your Samba
+server, as shown in <a href="ch03.html#samba2-CHP-3-FIG-18">Figure 3-18</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-18"/><img src="figs/sam2_0318.gif"/></div><h4 class="head4">Figure 3-18. Computers in Metran workgroup</h4>
+
+<p>Double-click the Samba server's icon, and you will
+get a window showing its shared resources (in this case, the test
+directory) as shown in <a href="ch03.html#samba2-CHP-3-FIG-19">Figure 3-19</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-19"/><img src="figs/sam2_0319.gif"/></div><h4 class="head4">Figure 3-19. View of shares on the Toltec server</h4>
+
+<p>If you don't see the server listed, it might be that
+browsing is not working correctly or maybe the server is just taking
+a few minutes to show up in the browse list. In either case, you can
+click the Start button, then select
+&quot;Run...&quot;. This will give you a
+dialog box into which you can type the name of your server and the
+share name <em class="emphasis">test</em> in the Windows UNC format
+<em class="filename">\\</em><em class="replaceable">server</em><em class="filename">\test</em>,
+as we did in <a href="ch01.html">Chapter 1</a>. This should open a window
+on the desktop showing the contents of the folder. If this does not
+work, there is likely a problem with name resolution, and you can try
+using the server's IP address instead of its
+computer name, like this:</p>
+
+<blockquote><pre class="code">\\172.16.1.1\test</pre></blockquote>
+
+<p>If things still aren't right, go directly to <a href="ch12.html#samba2-CHP-12-SECT-2">Section 12.2</a> to troubleshoot what is wrong
+with the network.</p>
+
+<p>If it works, congratulations! Try copying files to and from the
+server using the Windows drag-and-drop functionality. You might be
+pleasantly surprised how seamlessly everything works. <a name="INDEX-80"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-3-SECT-3"/>
+
+<h2 class="head1">Setting Up Windows NT 4.0 Computers</h2>
+
+<p>Configuring <a name="INDEX-81"/>Windows NT
+is a little different than configuring Windows 95/98/Me. To use Samba
+with Windows NT, you will need both the Workstation service and the
+TCP/IP protocol. Both come standard with NT, but
+we'll work through installing and configuring them
+to make sure they are configured correctly.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-3.1"/>
+
+<h3 class="head2">Basic Configuration</h3>
+
+<p><a name="INDEX-82"/>This section presents the steps
+to follow for TCP/IP-related configuration on Windows NT to get it to
+cooperate with Samba. If you need more details on Windows NT network
+administration, refer to Craig <a name="INDEX-83"/>Hunt and Robert Bruce
+<a name="INDEX-84"/>Thompson's
+<em class="citetitle">Windows NT TCP/IP Network Administration
+</em>(O'Reilly), an excellent guide.</p>
+
+<p>You should perform the following steps as the
+<tt class="literal">Administrator</tt> or another user in the
+<tt class="literal">Administrators</tt> group.</p>
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-3.1.1"/>
+
+<h3 class="head3">Installing the TCP/IP protocol</h3>
+
+<p><a name="INDEX-85"/><a name="INDEX-86"/>From
+the Control Panel, double-click the Network icon, click the Protocols
+tab in the Network dialog box, and look to see if you have the TCP/IP
+protocol installed, as shown in <a href="ch03.html#samba2-CHP-3-FIG-20">Figure 3-20</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-20"/><img src="figs/sam2_0320.gif"/></div><h4 class="head4">Figure 3-20. The Protocols tab</h4>
+
+<p>If the protocol is not installed, you need to add it. Click the Add
+button, which will display the Select Network Protocol dialog box
+shown in <a href="ch03.html#samba2-CHP-3-FIG-21">Figure 3-21</a>. You should immediately see the
+TCP/IP protocol as one of the last protocols listed.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-21"/><img src="figs/sam2_0321.gif"/></div><h4 class="head4">Figure 3-21. Select Network Protocol dialog box</h4>
+
+<p>Select TCP/IP as the protocol and confirm it. If
+possible, install only the TCP/IP protocol. If you see anything other
+than TCP/IP listed in the Protocols tab and it is not a protocol that
+you need, you can remove it. If you try to remove a protocol and get
+an error message saying that the protocol is being used by another
+service, you need to click the Services tab and remove that service
+before you can remove the protocol. For example, to remove the NWLink
+IPX/SPX Compatible Transport protocol, you would need to remove the
+Client Service for Netware first.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-3.1.2"/>
+
+<h3 class="head3">Installing the Workstation service</h3>
+
+<p><a name="INDEX-87"/><a name="INDEX-88"/>After installing TCP/IP, click the
+Services tab in the Network dialog, and check that you have a
+Workstation service, as shown at the end of the list in <a href="ch03.html#samba2-CHP-3-FIG-22">Figure 3-22</a>.<a name="FNPTR-8"/><a href="#FOOTNOTE-8">[8]</a></p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-22"/><img src="figs/sam2_0322.gif"/></div><h4 class="head4">Figure 3-22. Network Services tab</h4>
+
+<p>This service is actually the Microsoft Networking Client, which
+allows the computer to access SMB services. The Workstation service
+is mandatory. The service is installed by default on both Windows NT
+Workstation 4.0 and NT Server 4.0. If it's not
+there, you can install it much like TCP/IP. In this case you need to
+click the Add button and then select Workstation Service, as shown in
+<a href="ch03.html#samba2-CHP-3-FIG-23">Figure 3-23</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-23"/><img src="figs/sam2_0323.gif"/></div><h4 class="head4">Figure 3-23. Select Network Service dialog box</h4>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-3.1.3"/>
+
+<h3 class="head3">Configuring TCP/IP</h3>
+
+<p><a name="INDEX-89"/><a name="INDEX-90"/>After you've installed
+the Workstation service, return to the Protocols tab and select the
+TCP/IP Protocol entry in the window. Then click the Properties button
+below the window. The Microsoft TCP/IP Protocol dialog will be
+displayed. There are five tabs in the dialog, and you will need to
+work with four of them:</p>
+
+<ul><li>
+<p>IP Address</p>
+</li><li>
+<p>WINS Address</p>
+</li><li>
+<p>DNS</p>
+</li><li>
+<p>Bindings</p>
+</li></ul>
+
+<div class="sect4"><a name="samba2-CHP-3-SECT-3.1.1.1"/>
+
+<h4 class="head4">IP Address tab</h4>
+
+<p><a name="INDEX-91"/><a name="INDEX-92"/>The IP
+Address tab is shown in <a href="ch03.html#samba2-CHP-3-FIG-24">Figure 3-24</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-24"/><img src="figs/sam2_0324.gif"/></div><h4 class="head4">Figure 3-24. Microsoft TCP/IP Properties dialog for Windows NT</h4>
+
+<p>Select the &quot;Specify an IP address&quot;
+radio button, and enter the computer's IP address
+and netmask in the space provided for the proper adapter (Ethernet
+card). You or your network manager should have selected an address
+for the client on the same subnet (LAN) as the Samba server. For
+example, if the server's address is 172.16.1.1 and
+its network mask is 255.255.255.0, you might use the address
+172.16.1.13 (if it is available) for the NT workstation, along with
+the same netmask. If you use DHCP on your network, select the
+&quot;Obtain an IP Address from a DHCP
+server&quot; button instead.</p>
+
+<p>The gateway field refers to a system typically known as a
+<em class="emphasis">router</em>. If you have routers connecting multiple
+networks, you should enter the IP address of the one on your subnet.
+In our example, the gateway happens to be the same system as the
+Samba server, but they do not by any means have to be the same.</p>
+
+
+</div>
+
+
+
+<div class="sect4"><a name="samba2-CHP-3-SECT-3.1.1.2"/>
+
+<h4 class="head4">WINS Address tab</h4>
+
+<p><a name="INDEX-93"/><a name="INDEX-94"/>Click the
+WINS Address tab, shown in <a href="ch03.html#samba2-CHP-3-FIG-25">Figure 3-25</a>, and you can
+begin to enter information about name servers. Enter the address of
+your WINS server in the space labeled Primary WINS Server. If your
+Samba server is providing WINS service (in other words, you have the
+line <tt class="literal">wins</tt> <tt class="literal">support</tt>
+<tt class="literal">=</tt> <tt class="literal">yes</tt> in the
+<em class="emphasis">smb.conf</em> file of your Samba server), provide the
+Samba server's IP address here. Otherwise, provide
+the address of another WINS server on your network.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-25"/><img src="figs/sam2_0325.gif"/></div><h4 class="head4">Figure 3-25. The WINS Address tab</h4>
+
+<p>You probably noticed that there is a field here for the network
+adapter. This field must specify the Ethernet adapter on which
+you're running TCP/IP so that WINS will provide name
+service on the correct network. For example, if you have both a LAN
+and a dial-up adapter, make sure you have the LAN's
+network card specified here.</p>
+
+<p>The checkboxes in the lower half of the dialog are for enabling two
+other methods of name resolution that Windows can incorporate into
+its name service. Samba doesn't require either of
+them, but you might want to enable them to increase the reliability
+or functionality of name service for your client. See <a href="ch07.html">Chapter 7</a> for further information on name resolution
+issues.</p>
+
+<p>If you'd like to use a DNS server, select the Enable
+DNS for Windows Resolution checkbox. In addition, you will need to do
+some configuration to allow the Windows system to find the DNS
+server, unless you're using DHCP.</p>
+
+
+</div>
+
+
+
+<div class="sect4"><a name="samba2-CHP-3-SECT-3.1.1.3"/>
+
+<h4 class="head4">DNS tab</h4>
+
+<p><a name="INDEX-95"/><a name="INDEX-96"/>Click
+the tab for DNS, as shown in <a href="ch03.html#samba2-CHP-3-FIG-26">Figure 3-26</a>. Enter the
+IP addresses for one or more DNS servers in the space provided. Also,
+enter the hostname (which should be the same as the NetBIOS computer
+name). You will enter this again later in another control panel, so
+make sure they match. Finally, enter the DNS domain on which this
+system resides. For example, if your workstation has a domain name
+such as <em class="emphasis">metran.cx</em>, enter it here. You can safely
+ignore the other options.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-26"/><img src="figs/sam2_0326.gif"/></div><h4 class="head4">Figure 3-26. The DNS tab</h4>
+
+
+</div>
+
+
+
+<div class="sect4"><a name="samba2-CHP-3-SECT-3.1.1.4"/>
+
+<h4 class="head4">The LMHOSTS file</h4>
+
+<p>If you want to install an
+<em class="filename">LMHOSTS</em><a name="INDEX-97"/><a name="INDEX-98"/> file, it
+must be placed in the directory
+<em class="filename">\system32\drivers\etc</em> under your Windows
+installation directory (usually <em class="filename">C:\WINNT</em>). The
+easy way to make sure it gets to the proper location is to use the
+Import LMHOSTS button on the WINS Address tab. (But if you want to do
+it over the network, you will have to do that after file sharing is
+configured!) Remember to click the Enable LMHOSTS Lookup checkbox on
+the WINS Address tab to enable this functionality.</p>
+
+<p>When you are satisfied with your settings for IP Address, WINS
+Address, and DNS, click OK to return to the Network dialog box.</p>
+
+
+</div>
+
+
+
+<div class="sect4"><a name="samba2-CHP-3-SECT-3.1.1.5"/>
+
+<h4 class="head4">Bindings</h4>
+
+<p><a name="INDEX-99"/><a name="INDEX-100"/>Now click the
+Bindings tab, and check the bindings of network hardware, services,
+and protocols. Set the &quot;Show Bindings
+for&quot; field to &quot;all
+services,&quot; and click all the + buttons in the tree.
+You should see a display similar to <a href="ch03.html#samba2-CHP-3-FIG-27">Figure 3-27</a>,
+which shows that the NetBIOS, Server, and Workstation interface
+services are connected to the WINS client running TCP/IP protocol,
+and that the WINS client is bound to the Ethernet adapter of the
+local area network.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-27"/><img src="figs/sam2_0327.gif"/></div><h4 class="head4">Figure 3-27. The Bindings tab</h4>
+
+<p>You can safely leave the default values for the remainder of the tabs
+in the Network dialog box. Click the OK button to complete the
+configuration. Once the proper files are loaded (if any), you might
+need to reboot for your changes to take effect.</p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-3.2"/>
+
+<h3 class="head2">Computer Name and Workgroup</h3>
+
+<p><a name="INDEX-101"/><a name="INDEX-102"/><a name="INDEX-103"/><a name="INDEX-104"/>The next
+thing you need to do is to give the system a NetBIOS computer name.
+From the Control Panel, double-click the Network icon to open the
+Network dialog box. The first tab in this dialog box should be the
+Identification tab, as illustrated in <a href="ch03.html#samba2-CHP-3-FIG-28">Figure 3-28</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-28"/><img src="figs/sam2_0328.gif"/></div><h4 class="head4">Figure 3-28. The Identification tab</h4>
+
+<p>Here, you need to identify your computer with a name and change the
+default workgroup to the one you specified in the
+<em class="emphasis">smb.conf</em> file of your Samba server. Click the
+Change button below the two text fields. This will open an
+Identification Changes dialog box, where you can set the workgroup
+and the computer name, as shown in <a href="ch03.html#samba2-CHP-3-FIG-29">Figure 3-29</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-29"/><img src="figs/sam2_0329.gif"/></div><h4 class="head4">Figure 3-29. The Identification Changes dialog</h4>
+<a name="samba2-CHP-3-NOTE-94"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>You entered the computer name earlier as a DNS hostname while
+configuring TCP/IP, so be sure that the two names match. The name you
+set here is the NetBIOS name. You're allowed to make
+it different from the TCP/IP hostname, but doing so is usually not a
+good idea. Don't worry that Windows NT forces the
+computer name and the workgroup to be all capital letters;
+it's smart enough to figure out what you mean when
+it connects to the network.</p>
+</blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-3.3"/>
+
+<h3 class="head2">Adding a User</h3>
+
+<p><a name="INDEX-105"/><a name="INDEX-106"/>In all
+the previous steps, you were logged into your Windows NT system as
+<tt class="literal">Administrator</tt> or another user in the
+<tt class="literal">Administrators</tt> group. To access resources on the
+Samba server, you will need to have a username and password that the
+Samba server recognizes as valid. Generally, the best way to do this
+is to add a user to your NT system, with the same username and
+password as a user on the Samba host system.</p>
+
+<a name="samba2-CHP-3-NOTE-95"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>The directions in this section assume that your network is set up as
+a workgroup. If you have already set up your network as a domain, as
+we describe in <a href="ch04.html">Chapter 4</a>, you do not need to
+follow the instructions here for adding a local user on the Windows
+NT client system. Simply log on to the domain from the client using a
+username and password in Samba's
+<em class="filename">smbpasswd</em> account database, and continue with
+the next section, <a href="ch03.html#samba2-CHP-3-SECT-3.4">Section 3.3.4</a>.</p>
+</blockquote>
+
+<p>To add a new user, open the Start menu, navigate through the Programs
+submenu to Administrative Tools (Common), and select User Manager for
+Domains. Click the User menu and select the first item, Add User...,
+shown in <a href="ch03.html#samba2-CHP-3-FIG-30">Figure 3-30</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-30"/><img src="figs/sam2_0330.gif"/></div><h4 class="head4">Figure 3-30. User Manager for Domains window</h4>
+
+<p>This brings up the New User dialog box shown in <a href="ch03.html#samba2-CHP-3-FIG-31">Figure 3-31</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-31"/><img src="figs/sam2_0331.gif"/></div><h4 class="head4">Figure 3-31. The New User dialog</h4>
+
+<p>Fill it out as shown, using the username and password that were added
+in the previous chapter, and make sure that only the checkbox labeled
+Password Never Expires is checked. (This is not the default!) Click
+the Add button to add the user, and then click the Close button. You
+should now see your new account added to the list in the User Manager
+dialog box.</p>
+
+<p>Now open the Start menu, select Shut Down, and select the
+&quot;Close all programs and log on as a different
+user?&quot; radio button. Click the Yes button, then log
+in as the user you just added.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-3.4"/>
+
+<h3 class="head2">Connecting to the Samba Server</h3>
+
+<p>Now for the big moment. Your <a name="INDEX-107"/><a name="INDEX-108"/>Samba
+server is running, and you have set up your NT client to communicate
+with it. Double-click the Network Neighborhood icon on the desktop,
+and you should see your Samba server listed as a member of the
+workgroup, as shown in <a href="ch03.html#samba2-CHP-3-FIG-32">Figure 3-32</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-32"/><img src="figs/sam2_0332.gif"/></div><h4 class="head4">Figure 3-32. The Windows NT Network Neighborhood</h4>
+
+<p>Double-clicking the server name will show the resources that the
+server is offering to the network, as shown in <a href="ch03.html#samba2-CHP-3-FIG-33">Figure 3-33</a>. In this case, the <em class="filename">test</em>
+directory and the default printer are offered to the Windows NT
+workstation.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-33"/><img src="figs/sam2_0333.gif"/></div><h4 class="head4">Figure 3-33. Shares offered by the Toltec server</h4>
+
+<p>If you don't see the server listed,
+don't panic. Select Run... from the Start menu. A
+dialog box appears that allows you to type the name of your server
+and its share directory in Windows format. For example, you would
+enter
+<em class="filename">\\</em>toltec<em class="filename">\</em><tt class="literal">test</tt>,
+as shown in <a href="ch03.html#samba2-CHP-3-FIG-34">Figure 3-34</a>, and use your
+server's hostname instead of
+&quot;toltec&quot;.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-34"/><img src="figs/sam2_0334.gif"/></div><h4 class="head4">Figure 3-34. Opening a shared directory, using the server's NetBIOS name in the UNC</h4>
+
+<p>This will work even if browsing services are not set up right, which
+is a common problem. You can also work around a name-service problem
+by entering the server's IP Address (such as
+172.16.1.1 in our example) instead of the Samba
+server's hostname, as shown in <a href="ch03.html#samba2-CHP-3-FIG-35">Figure 3-35</a>. Go back and check your configuration, and if
+things still aren't right, go to <a href="ch12.html#samba2-CHP-12-SECT-2">Section 12.2</a> to troubleshoot what is wrong with the
+network.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-35"/><img src="figs/sam2_0335.gif"/></div><h4 class="head4">Figure 3-35. Opening a shared directory, using the server's IP address in the UNC</h4>
+
+<p>If it works, congratulations! Try copying files to and from the
+server by dragging their icons to and from the folder on the Samba
+share. You might be pleasantly surprised how seamlessly everything
+works. <a name="INDEX-109"/></p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-3-SECT-4"/>
+
+<h2 class="head1">Setting Up Windows 2000 Computers</h2>
+
+<p><a name="INDEX-110"/>Although
+Windows 2000 is based on NT technology and is similar to Windows NT
+in many respects, configuring it for use with Samba is quite
+different.</p>
+
+<p>You should perform the following steps as the
+<tt class="literal">Administrator</tt> or another user in the
+<tt class="literal">Administrators</tt> group.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-4.1"/>
+
+<h3 class="head2">Networking Components</h3>
+
+<p><a name="INDEX-111"/><a name="INDEX-112"/>Go to the Control Panel and
+double-click the Network and Dial-up Connections icon. You should see
+at least one Local Area Connection icon. If there is more than one,
+identify the one that corresponds to the network adapter that is
+connected to your Samba network. Right-click the Local Area
+Connection icon, and click the Properties button. (Or double-click
+the Local Area Connection icon, and then click the Properties button
+in the dialog box that comes up.) You should now be looking at the
+Local Area Connection Properties dialog box, as shown in <a href="ch03.html#samba2-CHP-3-FIG-36">Figure 3-36</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-36"/><img src="figs/sam2_0336.gif"/></div><h4 class="head4">Figure 3-36. Windows 2000 Local Area Connection Properties dialog</h4>
+
+<p>First of all, you might want to click the Configure button under the
+field for the network adapter, to make sure you see the message
+&quot;This device is working properly&quot;
+in the Device status window. If there is a problem, make sure to
+correct it before continuing. You should also see the message
+&quot;Use this device (enable)&quot; in the
+Device usage field of the dialog box. Make sure to set it this way if
+it is not already. Click OK or Cancel to get back to the Local Area
+Connection Properties dialog box.</p>
+
+<p>You should see at least the following two components:</p>
+
+<ul><li>
+<p>Client for Microsoft Networks</p>
+</li><li>
+<p>Internet Protocol (TCP/IP)</p>
+</li></ul>
+<p>If you do not see either Client for Microsoft Networks or Internet
+Protocol (TCP/IP) in your list, you will need to add them. For
+either, the method is to click the Install... button, click the type
+of component (Client or Protocol), and then click the Add... button.
+Next, click the component you want to add, and click the OK button.
+You should see the component added to the list with the others.</p>
+
+<p>Some components should be removed if you see them in the list:</p>
+
+<ul><li>
+<p>NetBEUI Protocol</p>
+</li><li>
+<p>NWLink NetBIOS</p>
+</li><li>
+<p>NWLink IPX/SPX/NetBIOS Compatible Transport Protocol</p>
+</li><li>
+<p>Client Service for Netware</p>
+</li></ul>
+<p>If you see anything other than TCP/IP listed as a protocol, and it is
+not a protocol that you need, you can remove it. Uninstall NetBEUI,
+unless you are sure you need it, and the other three if you do not
+need to support Netware. If you try to remove a protocol and get an
+error message saying that the protocol is being used by another
+service, you need to remove that service before you can remove the
+protocol. For example, to remove the NWLink IPX/SPX Compatible
+Transport Protocol, you would need to remove the Client Service for
+Netware first.</p>
+
+<p>To remove a component, click the component in the list, click the
+Uninstall button, and then click Yes in the dialog box that pops up.
+In some cases, Windows might need to reboot to put the change into
+effect.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-4.2"/>
+
+<h3 class="head2">Bindings</h3>
+
+<p><a name="INDEX-113"/><a name="INDEX-114"/>Next to each
+client, service, or protocol listed in the window in the Local Area
+Connections Properties dialog box, you will see a checkbox. Make sure
+the checkbox is checked for both Client for Microsoft Networks and
+Internet Protocol (TCP/IP). The check marks indicate the networking
+components are bound to the network adapter shown at the top of the
+dialog box.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-4.3"/>
+
+<h3 class="head2">Configuring TCP/IP</h3>
+
+<p><a name="INDEX-115"/><a name="INDEX-116"/>Now click Internet Protocol (TCP/IP),
+and then click Properties to open the Internet Protocol (TCP/IP)
+Properties dialog box, shown in <a href="ch03.html#samba2-CHP-3-FIG-37">Figure 3-37</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-37"/><img src="figs/sam2_0337.gif"/></div><h4 class="head4">Figure 3-37. Internet Protocol (TCP/IP) Properties dialog</h4>
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-4.3.1"/>
+
+<h3 class="head3">IP address</h3>
+
+<p><a name="INDEX-117"/><a name="INDEX-118"/>If
+you are using DHCP on your network to assign IP addresses
+dynamically, select the &quot;Obtain IP address
+automatically&quot; radio button. Otherwise, select the
+&quot;Use the following address:&quot; radio
+button, and fill in the computer's IP address and
+netmask in the spaces provided. You or your network manager should
+have selected an address for the client on the same subnet (LAN) as
+the Samba server. For example, if the server's
+address is 172.16.1.1 and its network mask is 255.255.255.0, you
+might use the address 172.16.1.14, if it is available, along with the
+same netmask. You can also fill in the IP address of the default
+gateway.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-4.3.2"/>
+
+<h3 class="head3">DNS server</h3>
+
+<p><a name="INDEX-119"/><a name="INDEX-120"/>In
+the lower part of the dialog box, click the &quot;Use the
+following DNS server addresses:&quot; radio button, and
+fill in the IP address of your DNS server.</p>
+
+<p>Now click the Advanced... button to bring up the Advanced TCP/IP
+Settings dialog box, and then click the WINS tab.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-4.3.3"/>
+
+<h3 class="head3">WINS server</h3>
+
+<p><a name="INDEX-121"/><a name="INDEX-122"/>Enter the
+address of your WINS server in the space labeled
+&quot;WINS addresses, in order of use:&quot;.
+If your Samba server is providing WINS service (in other words, you
+have the line <tt class="literal">wins</tt> <tt class="literal">service</tt>
+<tt class="literal">=</tt> <tt class="literal">yes</tt> in the
+<em class="emphasis">smb.conf</em> file of your Samba server), provide the
+Samba server's IP address here. Otherwise, provide
+the address of another WINS server on your network.</p>
+
+<p>Near the bottom of the dialog box, select the radio button labeled
+&quot;Enable NetBIOS over TCP/IP&quot;. <a href="ch03.html#samba2-CHP-3-FIG-38">Figure 3-38</a> shows what your Advanced TCP/IP Settings
+dialog box should look like at this point.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-38"/><img src="figs/sam2_0338.gif"/></div><h4 class="head4">Figure 3-38. Advanced TCP/IP Settings dialog, showing WINS tab</h4>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-4.3.4"/>
+
+<h3 class="head3">The LMHOSTS file</h3>
+
+<p>If you want to install an
+<em class="filename">LMHOSTS</em><a name="INDEX-123"/><a name="INDEX-124"/> file,
+it must be placed in the <em class="filename">\system32\drivers\etc</em>
+directory under your Windows installation directory (usually
+<em class="filename">C:\WINNT</em> ). The easy way to make sure it gets to
+the proper location is to use the Import LMHOSTS... button on the
+WINS Address tab. (But if you want to do it over the network, you
+will have to do that after file sharing is configured!) Remember to
+click the Enable LMHOSTS Lookup checkbox on the WINS Address tab to
+enable this functionality.</p>
+
+<p>When you are satisfied with your settings for IP Address, WINS
+Address, and DNS, click the OK buttons in each open dialog box to
+complete the configuration. Windows might need to load some files
+from the Windows 2000 distribution CD-ROM, and you might need to
+reboot for your changes to take effect.</p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-4.4"/>
+
+<h3 class="head2">Computer and Workgroup Names</h3>
+
+<p><a name="INDEX-125"/><a name="INDEX-126"/><a name="INDEX-127"/><a name="INDEX-128"/>From
+the Control Panel, double-click the System icon to open the System
+Properties dialog box. Click the Network Identification tab, and your
+System Properties dialog box will look similar to <a href="ch03.html#samba2-CHP-3-FIG-39">Figure 3-39</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-39"/><img src="figs/sam2_0339.gif"/></div><h4 class="head4">Figure 3-39. System Properties dialog, showing Network Identification tab</h4>
+
+<p>To give your system computer a name and a workgroup, click the
+Properties button, which will bring up the Identification Changes
+dialog box, as in <a href="ch03.html#samba2-CHP-3-FIG-40">Figure 3-40</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-40"/><img src="figs/sam2_0340.gif"/></div><h4 class="head4">Figure 3-40. Identification Changes dialog</h4>
+
+<p>You need to identify your computer with a name and change the
+workgroup to the one you specified in the
+<em class="emphasis">smb.conf</em> file of your Samba server.
+Don't worry that Windows forces the computer name
+and the workgroup to be all capital letters; it's
+smart enough to figure out what you mean when it connects to the
+network.</p>
+
+<p>Click the More... button to bring up the DNS Suffix and NetBIOS
+Computer Name dialog box, shown in <a href="ch03.html#samba2-CHP-3-FIG-41">Figure 3-41</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-41"/><img src="figs/sam2_0341.gif"/></div><h4 class="head4">Figure 3-41. DNS Suffix and NetBIOS Computer Name dialog</h4>
+
+<p>Enter the DNS domain name of this computer in the text field labeled
+Primary DNS Suffix for this computer:, and then click OK. You should
+now see the FQDN of this system underneath the label
+&quot;Full computer name:&quot;. Click the OK
+button and then reboot when requested to put your configuration
+changes into effect. Once again, log in using your administrative
+account.</p>
+<a name="samba2-CHP-3-NOTE-96"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>There have been reports of authentication problems with Samba when a
+username on a Windows 2000 system is the same as its computer name.</p>
+</blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-4.5"/>
+
+<h3 class="head2">Adding a Samba-Enabled User</h3>
+
+<p><a name="INDEX-129"/><a name="INDEX-130"/>So far,
+you have been logged into your Windows 2000 system as a user in the
+<tt class="literal">Administrators</tt> group. To access resources on the
+Samba server, you will need a username and password that the Samba
+server recognizes as valid. If your administrative account has such a
+username and password, you can use it, but you might want to access
+your system and the network from a nonadministrative user account
+instead.</p>
+<a name="samba2-CHP-3-NOTE-97"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>The directions in this section assume that your network is set up as
+a workgroup. If you have already set up your network as a domain, as
+we describe in <a href="ch04.html">Chapter 4</a>, you do not need to
+follow the instructions here for adding a local user on the Windows
+2000 client system. Simply log on to the domain from the client using
+a username and password in Samba's
+<em class="filename">smbpasswd</em> account database, and continue with
+the next section, <a href="ch03.html#samba2-CHP-3-SECT-4.6">Section 3.4.6</a>.</p>
+</blockquote>
+
+<p>To add a new user, open the Control Panel, and double-click the Users
+and Passwords icon to open the Users and Passwords dialog box, shown
+in <a href="ch03.html#samba2-CHP-3-FIG-42">Figure 3-42</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-42"/><img src="figs/sam2_0342.gif"/></div><h4 class="head4">Figure 3-42. Users and Passwords dialog</h4>
+
+<p>The first thing to do is make sure the checkbox labeled
+&quot;Users must enter a user name and password to use
+this computer.&quot; is checked. Next, click the Add...
+button to bring up the first dialog box of the User Wizard, shown in
+<a href="ch03.html#samba2-CHP-3-FIG-43">Figure 3-43</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-43"/><img src="figs/sam2_0343.gif"/></div><h4 class="head4">Figure 3-43. Adding a new user</h4>
+
+<p>Fill out the fields, using the username of a valid user account on
+the Samba host, and then click the Next &gt; button to enter and
+confirm the user's password. This password must be
+the same as the user's password on the Samba host.
+If you are using encrypted passwords, make sure this username and
+password are the same as what you used when you ran the
+<em class="emphasis">smbpasswd</em> program. Click the Next &gt; button,
+which brings up the final dialog box, shown in <a href="ch03.html#samba2-CHP-3-FIG-44">Figure 3-44</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-44"/><img src="figs/sam2_0344.gif"/></div><h4 class="head4">Figure 3-44. Specifying a group for the new user</h4>
+
+<p>Pick a group for the user (the default Standard User should do), and
+click the Finish button. You should now see your new account added to
+the list in the Users and Passwords dialog box. Click the OK button
+to complete the process.</p>
+
+<p>Now return to the Users and Passwords control panel window, click the
+Advanced tab, then click on the Advanced button. Click the Users
+folder in the left side of the Local Users and Groups window that
+appears, and then double-click the account you just added in the
+right side of the window. In the Properties window that opens, click
+the checkbox labeled Password never expires. You are done! Click the
+OK buttons in all the dialog boxes, and close all open windows.</p>
+
+<p>Open the Start menu, select Shut Down, and select Log off
+<em class="emphasis">username</em> from the drop-down menu. Click the OK
+button, then log on with the username and password you just added.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-4.6"/>
+
+<h3 class="head2">Connecting to the Samba Server</h3>
+
+<p>Now for the big moment. Your Samba server is running, and you have
+set up your <a name="INDEX-131"/><a name="INDEX-132"/>Windows 2000 client to communicate with
+it. Double-click the My Network Places icon on the desktop, and then
+double-click the Computers Near Me icon to browse the workgroup. You
+should see your Samba server listed as a member of the workgroup, as
+shown in <a href="ch03.html#samba2-CHP-3-FIG-45">Figure 3-45</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-45"/><img src="figs/sam2_0345.gif"/></div><h4 class="head4">Figure 3-45. The Computers Near Me window, showing computers in the workgroup</h4>
+
+<p>Double-clicking the server name will show the resources that the
+server is offering to the network, as shown in <a href="ch03.html#samba2-CHP-3-FIG-46">Figure 3-46</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-46"/><img src="figs/sam2_0346.gif"/></div><h4 class="head4">Figure 3-46. Shares offered by the Toltec server</h4>
+
+<p>In this case, the <em class="filename">test</em> directory and the default
+printer are offered to the Windows 2000 workstation. If you
+don't see the server listed, don't
+panic. Select Run from the Start menu. A dialog box appears that
+allows you to type the name of your server and its share directory in
+Windows format. For example, you would enter
+<em class="filename">\\toltec\</em><tt class="literal">test</tt>, as shown in
+<a href="ch03.html#samba2-CHP-3-FIG-47">Figure 3-47</a>, and use your server's
+hostname instead of &quot;toltec&quot;.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-47"/><img src="figs/sam2_0347.gif"/></div><h4 class="head4">Figure 3-47. Opening a shared directory, using the server's NetBIOS name in the UNC</h4>
+
+<p>This will work even if browsing services are not set up right, which
+is a common problem. You can also work around a name-service problem
+by entering the server's IP address (such as
+172.16.1.1 in our example) instead of the Samba
+server's hostname, as shown in <a href="ch03.html#samba2-CHP-3-FIG-48">Figure 3-48</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-48"/><img src="figs/sam2_0348.gif"/></div><h4 class="head4">Figure 3-48. Opening a shared directory, using the server's IP address in the UNC</h4>
+
+<p>If things still aren't right, go directly to <a href="ch12.html#samba2-CHP-12-SECT-2">Section 12.2</a> to troubleshoot what is wrong
+with the network.</p>
+
+<p>If it works, congratulations! Try copying files to and from the
+server. You will be pleasantly surprised how seamlessly everything
+works. Now that you've finished setting up the Samba
+server and its clients, you can proceed to the next chapter.
+<a name="INDEX-133"/></p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-3-SECT-5"/>
+
+<h2 class="head1">Setting Up Windows XP Computers</h2>
+
+<p>Although <a name="INDEX-134"/>Windows XP
+is very similar to Windows 2000, it has a very different user
+interface, and there are a number of subtle differences. For example,
+getting to the Control Panel is different than in any previous
+version of Windows&mdash;one must click the Control Panel item from
+the Start menu (there is no Settings item in the Start menu in XP).
+By default, XP will display the Control Panel in Category View mode.
+If you see this, click the Switch to Classic View item in the
+upper-left corner of the window. All of our directions are for using
+the Control Panel in Classic View mode.</p>
+
+<p>You should perform the following steps as the
+<tt class="literal">Administrator</tt> or another user in the
+Administrators group.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-5.1"/>
+
+<h3 class="head2">Networking Components</h3>
+
+<p><a name="INDEX-135"/><a name="INDEX-136"/>Go to the Control Panel and
+double-click the Network and Dial-up Connections icon. You should see
+at least one Local Area Connection icon. If there is more than one,
+identify the one that corresponds to the network adapter that is
+connected to your Samba network. Right-click the Local Area
+Connection icon and click the Properties button. (Or double-click the
+Local Area Connection icon and then click the Properties button in
+the dialog box that comes up.) You should now be looking at the Local
+Area Connection Properties dialog box, as shown in <a href="ch03.html#samba2-CHP-3-FIG-49">Figure 3-49</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-49"/><img src="figs/sam2_0349.gif"/></div><h4 class="head4">Figure 3-49. The Local Area Connection Properties dialog</h4>
+
+<p>First of all, you might want to click the Configure button under the
+field for the network adapter to make sure you see the message
+&quot;This device is working properly&quot;
+in the Device status window. If there is a problem, make sure to
+correct it before continuing. You should also see the message
+&quot;Use this device (enable)&quot; in the
+Device usage field of the dialog box. Make sure to set it this way if
+it is not already. Click OK or Cancel to close this dialog box, then
+reopen the Local Area Connection Properties dialog box.</p>
+
+<p>You should see at least the following two components:</p>
+
+<ul><li>
+<p>Client for Microsoft Networks</p>
+</li><li>
+<p>Internet Protocol (TCP/IP)</p>
+</li></ul>
+<p>If you do not see either Client for Microsoft Networks or Internet
+Protocol (TCP/IP) in your list, you will need to add them. For
+either, the method is to click the Install... button, click the type
+of component (Client or Protocol), and then click the Add... button.
+Next, click the component you want to add, and click the OK button.
+You should see the component added to the list with the others.</p>
+
+<p>If you see anything other than TCP/IP listed as a protocol, and it is
+not a protocol that you need, you can remove it. If NetBEUI appears
+in the list, uninstall it if you possibly can. Also uninstall any
+Netware-related components if you do not need to support Netware. If
+you try to remove a protocol and get an error message saying that the
+protocol is being used by another service, you need to remove that
+service before you can remove the protocol. For example, to remove
+the NWLink IPX/SPX Compatible Transport Protocol, you would need to
+remove the Client Service for Netware first.</p>
+
+<p>To remove a component, click the component in the list, click the
+Uninstall button, and then click Yes in the dialog box that pops up.
+In some cases, Windows might need to reboot to put the change into
+effect.</p>
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-5.1.1"/>
+
+<h3 class="head3">Bindings</h3>
+
+<p><a name="INDEX-137"/><a name="INDEX-138"/>Next to each client, service, or protocol
+listed in the window in the Local Area Connections Properties dialog
+box, you will see a checkbox. Make sure the checkbox is checked for
+both Client for Microsoft Networks and Internet Protocol (TCP/IP).
+The check marks indicate that the networking components are bound to
+the network adapter shown at the top of the dialog box.</p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-5.2"/>
+
+<h3 class="head2">Configuring TCP/IP</h3>
+
+<p><a name="INDEX-139"/><a name="INDEX-140"/>Now click Internet Protocol
+(TCP/IP) and then click Properties to open the Internet Protocol
+(TCP/IP) Properties dialog box, shown in <a href="ch03.html#samba2-CHP-3-FIG-50">Figure 3-50</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-50"/><img src="figs/sam2_0350.gif"/></div><h4 class="head4">Figure 3-50. The Internet Protocol (TCP/IP) Properties dialog</h4>
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-5.2.1"/>
+
+<h3 class="head3">IP address</h3>
+
+<p><a name="INDEX-141"/><a name="INDEX-142"/>If
+you are using DHCP on your network to assign IP addresses
+dynamically, select the &quot;Obtain IP address
+automatically&quot; radio button. Otherwise, select the
+&quot;Use the following address:&quot; radio
+button, and fill in the computer's IP address and
+netmask in the spaces provided. You or your network manager should
+have selected an address for the client on the same subnet (LAN) as
+the Samba server. For example, if the server's
+address is 172.16.1.1 and its network mask is 255.255.255.0, you
+might use the address 172.16.1.12 (if it is available) along with the
+same netmask. You can also fill in the IP address of the default
+gateway.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-5.2.2"/>
+
+<h3 class="head3">DNS server</h3>
+
+<p><a name="INDEX-143"/><a name="INDEX-144"/>In the lower part of the dialog box, click
+the &quot;Use the following DNS server
+addresses:&quot; radio button, and fill in the IP address
+of your DNS server.</p>
+
+<p>Now click the Advanced... button to bring up the Advanced TCP/IP
+Settings dialog box, and then click the WINS tab.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-5.2.3"/>
+
+<h3 class="head3">WINS server</h3>
+
+<p><a name="INDEX-145"/><a name="INDEX-146"/>Enter
+the address of your WINS server in the space labeled
+&quot;WINS addresses, in order of use:&quot;.
+If your Samba server is providing WINS service (in other words, you
+have the line <tt class="literal">wins</tt> <tt class="literal">support</tt>
+<tt class="literal">=</tt> <tt class="literal">yes</tt> in the
+<em class="emphasis">smb.conf</em> file of your Samba server), provide the
+Samba server's IP address here. Otherwise, provide
+the address of another WINS server on your network.</p>
+
+<p>Near the bottom of the dialog box, select the radio button labeled
+Enable NetBIOS over TCP/IP. <a href="ch03.html#samba2-CHP-3-FIG-51">Figure 3-51</a> shows what
+your Advanced TCP/IP Settings dialog box should look like at this
+point.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-51"/><img src="figs/sam2_0351.gif"/></div><h4 class="head4">Figure 3-51. The Advanced TCP/IP Settings dialog, showing the WINS tab</h4>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-3-SECT-5.2.4"/>
+
+<h3 class="head3">The LMHOSTS file</h3>
+
+<p>If you want to install an
+<em class="filename">LMHOSTS</em><a name="INDEX-147"/><a name="INDEX-148"/> file, it
+must be placed in the <em class="filename">\system32\drivers\etc</em>
+directory under your Windows installation directory (usually
+<em class="filename">C:\WINNT</em> ). The easy way to make sure it gets to
+the proper location is to use the Import LMHOSTS... button on the
+WINS Address tab. (But if you want to do it over the network, you
+will have to do that after file sharing is configured!) Remember to
+click the Enable LMHOSTS Lookup checkbox on the WINS Address tab to
+enable this functionality.</p>
+
+<p>When you are satisfied with your settings for IP Address, WINS
+Address, and DNS, click the OK buttons in each open dialog box (and
+the Close button in the Local Area Connection Properties dialog box)
+to complete the configuration. Windows might need to load some files
+from the Windows XP distribution CD-ROM, and you might need to reboot
+for your changes to take effect.</p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-5.3"/>
+
+<h3 class="head2">Computer and Workgroup Names</h3>
+
+<p><a name="INDEX-149"/><a name="INDEX-150"/><a name="INDEX-151"/><a name="INDEX-152"/>From the
+Control Panel, double-click the System icon to open the System
+Properties dialog box. Click the Computer Name tab, and your System
+Properties dialog box will look similar to <a href="ch03.html#samba2-CHP-3-FIG-52">Figure 3-52</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-52"/><img src="figs/sam2_0352.gif"/></div><h4 class="head4">Figure 3-52. The System Properties dialog, showing the Computer Name tab</h4>
+
+<p>To give your system computer a name and a workgroup, click the
+Change... button, which will bring up the Computer Name Changes
+dialog box, as in <a href="ch03.html#samba2-CHP-3-FIG-53">Figure 3-53</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-53"/><img src="figs/sam2_0353.gif"/></div><h4 class="head4">Figure 3-53. The Computer Name Changes dialog</h4>
+
+<p>You need to identify your computer with a name and change the
+workgroup to the one you specified in the
+<em class="emphasis">smb.conf</em> file of your Samba server.
+Don't worry that Windows forces the workgroup to be
+all capital letters; it's smart enough to figure out
+what you mean when it connects to the network.</p>
+
+<p>Click the More... button to bring up the DNS Suffix and NetBIOS
+Computer Name dialog box, shown in <a href="ch03.html#samba2-CHP-3-FIG-54">Figure 3-54</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-54"/><img src="figs/sam2_0354.gif"/></div><h4 class="head4">Figure 3-54. The DNS Suffix and NetBIOS Computer Name dialog</h4>
+
+<p>Enter the DNS domain name of this computer in the text field labeled
+Primary DNS Suffix for this computer:, and then click OK. You should
+now see the FQDN of this system underneath the label Full computer
+name: in the Computer Name Changes dialog box. Click the OK button
+and then reboot when requested to put your configuration changes into
+effect. Once again, log in using your administrative account.</p>
+<a name="samba2-CHP-3-NOTE-98"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>There have been reports of authentication problems with Samba when a
+username on a Windows XP system is the same as its computer name.</p>
+</blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-5.4"/>
+
+<h3 class="head2">Adding a Samba-Enabled User</h3>
+
+<p><a name="INDEX-153"/><a name="INDEX-154"/>So far,
+you have been logged into your Windows XP system as a user in the
+Administrators group. To access resources on the Samba server, you
+will need to have a username and password that the Samba server
+recognizes as valid. If your administrative account has such a
+username and password, you can use it, but you might want to access
+your system and the network from a nonadministrative user account
+instead.</p>
+
+<a name="samba2-CHP-3-NOTE-99"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>The directions in this section assume that your network is set up as
+a workgroup. If you have already set up your network as a domain, as
+we describe in <a href="ch04.html">Chapter 4</a>, you do not need to
+follow the instructions here for adding a local user on the Windows
+XP client system. Simply log on to the domain from the client using a
+username and password in Samba's
+<em class="filename">smbpasswd</em> account database, and continue with
+the next section, <a href="ch03.html#samba2-CHP-3-SECT-5.5">Section 3.5.5</a>.</p>
+</blockquote>
+
+<p>To add a new user, open the Control Panel, and double-click the Users
+Accounts icon to open the User Accounts window, shown in <a href="ch03.html#samba2-CHP-3-FIG-55">Figure 3-55</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-55"/><img src="figs/sam2_0355.gif"/></div><h4 class="head4">Figure 3-55. The User Accounts window</h4>
+
+<p>Click the Create a new account task, which will bring up the window
+shown in <a href="ch03.html#samba2-CHP-3-FIG-56">Figure 3-56</a>. Enter the username, then click
+the Next &gt; button.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-56"/><img src="figs/sam2_0356.gif"/></div><h4 class="head4">Figure 3-56. Entering the username</h4>
+
+<p>Click the radio button labeled
+&quot;Limited&quot;, as shown in <a href="ch03.html#samba2-CHP-3-FIG-57">Figure 3-57</a>.</p>
+
+<p>Click the Create Account button, and you will see the username you
+added next to a picture at the bottom of the User Accounts window. We
+still need to assign a password to the account. Click the account to
+bring up the &quot;What do you want to change about
+<em class="emphasis">username</em>'s
+account?&quot; window, and then click Create a password.
+Enter the password, and enter it again to confirm it.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-57"/><img src="figs/sam2_0357.gif"/></div><h4 class="head4">Figure 3-57. Setting the account type</h4>
+
+<p>This password must be the same as the user's
+password on the Samba host. If you are using encrypted passwords,
+make sure this username and password are the same as what you used
+when you ran the <em class="emphasis">smbpasswd</em> program. Click the
+Create Password button, and you're done adding the
+account.</p>
+
+<p>Now open the Start menu and click the Log Off button. In the Log Off
+Windows dialog box that pops up, again click the Log Off button. When
+Windows displays the login screen, click the user you just added, and
+type in the password to log in.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-3-SECT-5.5"/>
+
+<h3 class="head2">Connecting to the Samba Server</h3>
+
+<p><a name="INDEX-155"/><a name="INDEX-156"/>Now for
+the big moment. Your Samba server is running, and you have set up
+your Windows XP client to communicate with it. In the Start menu,
+select My Computer<a name="FNPTR-9"/><a href="#FOOTNOTE-9">[9]</a> to open the My Computer window. Click My
+Network Places, in the Other Places box in the left part of the
+window. You should see a folder icon for the
+<em class="filename">test</em> directory, as shown in <a href="ch03.html#samba2-CHP-3-FIG-58">Figure 3-58</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-58"/><img src="figs/sam2_0358.gif"/></div><h4 class="head4">Figure 3-58. The My Network Places window</h4>
+
+<p>Now click View workgroup computers in the Network Tasks box at the
+left of the window. You should see your Samba server listed as a
+member of the workgroup. Double-click its icon, and you will see a
+window that looks like <a href="ch03.html#samba2-CHP-3-FIG-59">Figure 3-59</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-59"/><img src="figs/sam2_0359.gif"/></div><h4 class="head4">Figure 3-59. Shares offered by the Toltec server</h4>
+
+<p>If you don't see the server listed in the workgroup,
+don't panic. Select Run... from the Start menu. A
+dialog box appears that allows you to type the name of your server
+and its share directory in Windows format. For example, you would
+enter <em class="filename">\\toltec\</em><tt class="literal">test</tt>, as shown
+in <a href="ch03.html#samba2-CHP-3-FIG-60">Figure 3-60</a>, and use your
+server's hostname instead of
+&quot;toltec&quot;.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-60"/><img src="figs/sam2_0360.gif"/></div><h4 class="head4">Figure 3-60. Opening a shared directory, using the server's NetBIOS name in the UNC</h4>
+
+<p>This will work even if browsing services are not set up right, which
+is a common problem. You can also work around a name-service problem
+by entering the server's IP Address (such as
+172.16.1.1 in our example) instead of the Samba
+server's hostname, as shown in <a href="ch03.html#samba2-CHP-3-FIG-61">Figure 3-61</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-3-FIG-61"/><img src="figs/sam2_0361.gif"/></div><h4 class="head4">Figure 3-61. Opening a shared directory, using the server's IP address in the UNC</h4>
+
+<p>If things still aren't right, go directly to <a href="ch12.html#samba2-CHP-12-SECT-2">Section 12.2</a> to troubleshoot what is wrong
+with the network.</p>
+
+<p>If it works, congratulations! Try copying files to and from the
+server by dragging their icons to and from the Samba
+server's <em class="filename">test</em> folder. You might
+be pleasantly surprised how seamlessly everything works. <a name="INDEX-157"/> <a name="INDEX-158"/></p>
+
+
+</div>
+
+
+</div>
+
+<hr/><h4 class="head4">Footnotes</h4><blockquote><a name="FOOTNOTE-1"/> <p><a href="#FNPTR-1">[1]</a> We are
+intentionally omitting device drivers because they are
+hardware-specific, and we assume you are getting installation
+directions from the manufacturer.</p> <a name="FOOTNOTE-2"/>
+<p><a href="#FNPTR-2">[2]</a> Make sure to use the same netmask as all other systems on the
+network. You can find the netmask in use by checking with Unix or
+Windows systems that have already been configured.</p> <a name="FOOTNOTE-3"/> <p><a href="#FNPTR-3">[3]</a> Keep in mind that IP addresses ending
+in .0 are reserved for network addresses and that ones ending in .255
+are for broadcast addresses. These should never be assigned to any
+system on the network.</p> <a name="FOOTNOTE-4"/> <p><a href="#FNPTR-4">[4]</a> To be more explicit about
+this, the system will identify itself to the network as a b-node
+rather than an h-node.</p> <a name="FOOTNOTE-5"/> <p><a href="#FNPTR-5">[5]</a> We put the
+names of the <em class="filename">LMHOSTS</em> and
+<em class="filename">HOSTS</em> files in uppercase for additional
+clarity&mdash;to remind you that we are referring to the files on
+Windows rather than on Unix, and because that's the
+way we see them in other books on Windows. The case of the letters in
+the two names actually does not matter.</p> <a name="FOOTNOTE-6"/> <p><a href="#FNPTR-6">[6]</a> The address 127.0.0.1 is known as the
+<em class="emphasis">localhost</em> address and always refers to itself.
+For example, if you type <tt class="literal">ping</tt>
+<tt class="literal">127.0.0.1</tt> on a Unix server, you should always get
+a response, because you're pinging the host
+itself.</p> <a name="FOOTNOTE-7"/> <p><a href="#FNPTR-7">[7]</a> This update is supplied in
+various update packages issued by Microsoft.</p> <a name="FOOTNOTE-8"/> <p><a href="#FNPTR-8">[8]</a> Notice how in Windows NT,
+some clients are called &quot;services&quot;!
+In these directions, we will conform to Microsoft's
+terminology.</p> <a name="FOOTNOTE-9"/> <p><a href="#FNPTR-9">[9]</a> If there is a My Network Places
+item in the Start menu at this point, you can save yourself a little
+time and just click that. If you don't see it,
+don't worry; it will appear automatically
+later.</p> </blockquote>
+
+<hr/><h4 class="head4"><a href="toc.html">TOC</a></h4>
+</body></html>

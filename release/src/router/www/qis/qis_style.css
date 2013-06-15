@@ -192,6 +192,7 @@ legend {
 }
 
 .description_down{
+	font-size:16px;
 	margin-left:10px;
 	padding-left:5px;
 	font-weight:bold;
@@ -321,6 +322,7 @@ legend {
 }
 
 .QISGeneralFont{
+	font-size: 12px;
 	font-family:Segoe UI, Arial, sans-serif;
 	margin-left:70px;
 	*margin-left:90px;
@@ -361,7 +363,7 @@ legend {
 }
 .test_css{
 	padding-left:10px;
-	font-size:13px;
+	font-size:16px;
 	font-weight:bolder;
 	color:#FFFFFF;
 }

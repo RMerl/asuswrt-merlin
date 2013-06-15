@@ -149,8 +149,7 @@ static const cookie_io_functions_t mssl = {
 
 static FILE *_ssl_fopen(int sd, int client)
 {
-	unsigned char buf[1024];
-	int r=0;
+	int r = 0;
 	int err;
 	mssl_cookie_t *kuki;
 	FILE *f;
@@ -213,7 +212,7 @@ static FILE *_ssl_fopen(int sd, int client)
 	return f;
 
 ERROR:
-	fprintf(stderr,"[ssl_fopen] ERROR!\n", r); // tmp test
+	fprintf(stderr,"[ssl_fopen] ERROR!\n"); // tmp test
 	mssl_close(kuki);
 	return NULL;
 }
@@ -234,7 +233,6 @@ int mssl_init(char *cert, char *priv)
 {
 	_dprintf("%s()\n", __FUNCTION__);
 
-	int r;
 	int server = (cert != NULL);
 	//fprintf(stderr,"[ssl_init] server=%d\n", server); // tmp test
 

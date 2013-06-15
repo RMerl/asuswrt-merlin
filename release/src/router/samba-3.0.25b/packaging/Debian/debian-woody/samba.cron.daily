@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# cron script to save a backup copy of /etc/samba/smbpasswd in /var/backups.
+#
+# Written by Eloy A. Paris <peloy@debian.org> for the Debian project.
+#
+
+BAK=/var/backups
+
+umask 022
+if cd $BAK; then
+	# Make sure /etc/samba/smbpasswd exists
+	if [ -f /etc/samba/smbpasswd ]; then
+		cmp -s smbpasswd.bak /etc/samba/smbpasswd || cp -p /etc/samba/smbpasswd smbpasswd.bak
+	fi
+fi

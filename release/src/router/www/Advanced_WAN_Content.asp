@@ -39,7 +39,7 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
 var nowWAN = '<% get_parameter("flag"); %>';
 
-if(dualWAN_support != -1){
+if(dualWAN_support){
 	var wan_type_name = wans_dualwan.split(" ")[<% nvram_get("wan_unit"); %>].toUpperCase();
 	switch(wan_type_name){
 		case "DSL":
@@ -62,7 +62,7 @@ var original_dnsenable = parseInt('<% nvram_get("wan_dnsenable_x"); %>');
 var wan_unit_flag = '<% nvram_get("wan_unit"); %>';
 
 function initial(){
-	if(dualWAN_support == -1){
+	if(!dualWAN_support){
 		if(wan_unit_flag == 1){	
 			document.wanUnit_form.wan_unit.value = 0;
 			document.wanUnit_form.target = "";
@@ -102,7 +102,7 @@ function genWANSoption(){
 		document.form.wan_unit.options[i] = new Option(wans_dualwan.split(" ")[i].toUpperCase(), i);
 	document.form.wan_unit.selectedIndex = '<% nvram_get("wan_unit"); %>';
 
-	if(wans_dualwan.search(" ") < 0 || wans_dualwan.split(" ")[1] == 'none' || dualWAN_support == -1)
+	if(wans_dualwan.search(" ") < 0 || wans_dualwan.split(" ")[1] == 'none' || !dualWAN_support)
 		$("WANscap").style.display = "none";
 }
 

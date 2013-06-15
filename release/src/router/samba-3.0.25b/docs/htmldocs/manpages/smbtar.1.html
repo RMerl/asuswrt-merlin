@@ -1,0 +1,39 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>smbtar</title><link rel="stylesheet" href="samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.71.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="smbtar.1"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>smbtar &#8212; shell script for backing up SMB/CIFS shares 
+	directly to UNIX tape drives</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">smbtar</code> [-r] [-i] [-a] [-v] {-s server} [-p password] [-x services] [-X] [-N filename] [-b blocksize] [-d directory] [-l loglevel] [-u user] [-t tape] {filenames}</p></div></div><div class="refsect1" lang="en"><a name="id259370"></a><h2>DESCRIPTION</h2><p>This tool is part of the <a href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p><code class="literal">smbtar</code> is a very small shell script on top 
+	of <a href="smbclient.1.html"><span class="citerefentry"><span class="refentrytitle">smbclient</span>(1)</span></a> which dumps SMB shares directly to tape.</p></div><div class="refsect1" lang="en"><a name="id259404"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">-s server</span></dt><dd><p>The SMB/CIFS server that the share resides 
+		upon.</p></dd><dt><span class="term">-x service</span></dt><dd><p>The share name on the server to connect to. 
+		The default is "backup".</p></dd><dt><span class="term">-X</span></dt><dd><p>Exclude mode. Exclude filenames... from tar 
+		create or restore. </p></dd><dt><span class="term">-d directory</span></dt><dd><p>Change to initial <em class="parameter"><code>directory
+		</code></em> before restoring / backing up files. </p></dd><dt><span class="term">-v</span></dt><dd><p>Verbose mode.</p></dd><dt><span class="term">-p password</span></dt><dd><p>The password to use to access a share. 
+		Default: none </p></dd><dt><span class="term">-u user</span></dt><dd><p>The user id to connect as. Default: 
+		UNIX login name. </p></dd><dt><span class="term">-a</span></dt><dd><p>Reset DOS archive bit mode to 
+		indicate file has been archived. </p></dd><dt><span class="term">-t tape</span></dt><dd><p>Tape device. May be regular file or tape 
+		device. Default: <em class="parameter"><code>$TAPE</code></em> environmental 
+		variable; if not set, a file called <code class="filename">tar.out
+		</code>. </p></dd><dt><span class="term">-b blocksize</span></dt><dd><p>Blocking factor. Defaults to 20. See
+		<code class="literal">tar(1)</code> for a fuller explanation. </p></dd><dt><span class="term">-N filename</span></dt><dd><p>Backup only files newer than filename. Could 
+		be used (for example) on a log file to implement incremental
+		backups. </p></dd><dt><span class="term">-i</span></dt><dd><p>Incremental mode; tar files are only backed 
+		up if they have the archive bit set. The archive bit is reset 
+		after each file is read. </p></dd><dt><span class="term">-r</span></dt><dd><p>Restore. Files are restored to the share 
+		from the tar file. </p></dd><dt><span class="term">-l log level</span></dt><dd><p>Log (debug) level. Corresponds to the 
+		<em class="parameter"><code>-d</code></em> flag of <a href="smbclient.1.html"><span class="citerefentry"><span class="refentrytitle">smbclient</span>(1)</span></a>.</p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id260167"></a><h2>ENVIRONMENT VARIABLES</h2><p>The <em class="parameter"><code>$TAPE</code></em> variable specifies the 
+	default tape device to write to. May be overridden
+	with the -t option. </p></div><div class="refsect1" lang="en"><a name="id260184"></a><h2>BUGS</h2><p>The <code class="literal">smbtar</code> script has different 
+	options from ordinary tar and from smbclient's tar command. </p></div><div class="refsect1" lang="en"><a name="id260200"></a><h2>CAVEATS</h2><p>Sites that are more careful about security may not like 
+	the way the script handles PC passwords. Backup and restore work 
+	on entire shares; should work on file lists. smbtar works best
+	with GNU tar and may not work well with other versions. </p></div><div class="refsect1" lang="en"><a name="id260212"></a><h2>DIAGNOSTICS</h2><p>See the <span class="emphasis"><em>DIAGNOSTICS</em></span> section for the <a href="smbclient.1.html"><span class="citerefentry"><span class="refentrytitle">smbclient</span>(1)</span></a> command.</p></div><div class="refsect1" lang="en"><a name="id300456"></a><h2>VERSION</h2><p>This man page is correct for version 3.0 of 
+	the Samba suite.</p></div><div class="refsect1" lang="en"><a name="id300466"></a><h2>SEE ALSO</h2><p><a href="smbd.8.html"><span class="citerefentry"><span class="refentrytitle">smbd</span>(8)</span></a>, <a href="smbclient.1.html"><span class="citerefentry"><span class="refentrytitle">smbclient</span>(1)</span></a>, <a href="smb.conf.5.html"><span class="citerefentry"><span class="refentrytitle">smb.conf</span>(5)</span></a>.</p></div><div class="refsect1" lang="en"><a name="id300499"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</p><p><a href="mailto:poultenr@logica.co.uk" target="_top">Ricky Poulten</a>  
+	wrote the tar extension and this man page. The <code class="literal">smbtar</code> 
+	script was heavily rewritten and improved by <a href="mailto:Martin.Kraemer@mch.sni.de" target="_top">Martin Kraemer</a>. Many 
+	thanks to everyone who suggested extensions, improvements, bug 
+	fixes, etc. The man page sources were converted to YODL format (another 
+	excellent piece of Open Source software, available at <a href="ftp://ftp.icce.rug.nl/pub/unix/" target="_top">
+	ftp://ftp.icce.rug.nl/pub/unix/</a>) and updated for the Samba 2.0 
+	release by Jeremy Allison.  The conversion to DocBook for 
+	Samba 2.2 was done by Gerald Carter. The conversion to DocBook XML 4.2 for
+	Samba 3.0 was done by Alexander Bokovoy.</p></div></div></body></html>

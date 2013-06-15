@@ -17,7 +17,6 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <signal.h>
-#include <semaphore_mfp.h>
 #include "endianness.h"
 #include <iboxcom.h>
 #include "../shared/shutils.h"
@@ -148,6 +147,7 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
     char *other_ptr;
     NBNS_RESPONSE *nbns_response;
     struct timeval timeout={1, 500};
+    int lock;
 
     memset(NetBIOS_name, 0x20, 16);
 
@@ -210,10 +210,10 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
 	    if(((nbns_response->flags[0]>>4) == 8) && (nbns_response->number_of_names > 0)
 	    && (other_addr2.sin_addr.s_addr = other_addr1.sin_addr.s_addr))
             {
-		spinlock_lock(SPINLOCK_Networkmap);
+		lock = file_lock("networkmap");
             	memcpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], nbns_response->device_name1, 16);
 		fixstr(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num]);
-		spinlock_unlock(SPINLOCK_Networkmap);
+		file_unlock(lock);
 	    	memcpy(NetBIOS_name, nbns_response->device_name1, 15);
 		NMP_DEBUG("Device name:%s~%s~\n", nbns_response->device_name1,
 		p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num]);
@@ -1663,6 +1663,7 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
     	sprintf(ipaddr, "%d.%d.%d.%d",(int)*(dest_ip),(int)*(dest_ip+1),(int)*(dest_ip+2),(int)*(dest_ip+3));
 	NMP_DEBUG("Find device: %s\n", ipaddr);
 #endif
+	int lock;
 
 	//NBSS Called and Calling Name
         UCHAR des_hostname[16] = {
@@ -1683,7 +1684,7 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
 
         //http service detect
         ret = SendHttpReq(dest_ip);
-	spinlock_lock(SPINLOCK_Networkmap);
+	lock = file_lock("networkmap");
 	if(ret) {
 		NMP_DEBUG("Found HTTP\n");
 		p_client_detail_info_tab->http[p_client_detail_info_tab->detail_info_num] = 1;
@@ -1692,21 +1693,21 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
 		NMP_DEBUG("HTTP Not Found\n");
 		p_client_detail_info_tab->http[p_client_detail_info_tab->detail_info_num] = 0;
 	}
-	spinlock_unlock(SPINLOCK_Networkmap);
+	file_unlock(lock);
 	if(scan_count==0) //leave when click refresh
 		return 0;
 
         //printer server detect
         ret = lpd515(dest_ip);
 	if(!ret) {
-		spinlock_lock(SPINLOCK_Networkmap);
+		lock = file_lock("networkmap");
                 NMP_DEBUG("LPR Printer Server found!\n");
                 p_client_detail_info_tab->printer[p_client_detail_info_tab->detail_info_num] = 1;
-		spinlock_unlock(SPINLOCK_Networkmap);
+		file_unlock(lock);
         }
         else {
 		ret = raw9100(dest_ip);
-		spinlock_lock(SPINLOCK_Networkmap);
+		lock = file_lock("networkmap");
 		if(!ret) {
                 	NMP_DEBUG("RAW Printer Server found!\n");
                 	p_client_detail_info_tab->printer[p_client_detail_info_tab->detail_info_num] = 2;
@@ -1715,14 +1716,14 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
                 	NMP_DEBUG("Printer Server not found!\n");
                 	p_client_detail_info_tab->printer[p_client_detail_info_tab->detail_info_num] = 0;
         	}
-		spinlock_unlock(SPINLOCK_Networkmap);
+		file_unlock(lock);
 	}
         if(scan_count==0) //leave when click refresh
                 return 0;
 
         //iTune Server detect
         ret = send_mdns_packet_ipv4(src_ip, dest_ip);
-	spinlock_lock(SPINLOCK_Networkmap);
+	lock = file_lock("networkmap");
 	if(ret) {
 		NMP_DEBUG("Found iTune Server!\n");
                 p_client_detail_info_tab->itune[p_client_detail_info_tab->detail_info_num] = 1;
@@ -1731,14 +1732,14 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
                 NMP_DEBUG("No iTune Server!\n");
                 p_client_detail_info_tab->itune[p_client_detail_info_tab->detail_info_num] = 0;
         }
-	spinlock_unlock(SPINLOCK_Networkmap);
+	file_unlock(lock);
         if(scan_count==0) //leave when click refresh
                 return 0;
 
 	if(p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num]==0) {
             if( ctrlpt(dest_ip) )//UPNP detect
             {
-		spinlock_lock(SPINLOCK_Networkmap);
+		lock = file_lock("networkmap");
 		NMP_DEBUG("Find UPnP device: description= %s, modelname= %s\n",description.description, description.modelname);
 	        //parse description
 	        toLowerCase(description.description);
@@ -1775,7 +1776,7 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
 			strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], description.modelname, 15);
 			p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num][15]='\0';
 		}
-		spinlock_unlock(SPINLOCK_Networkmap);
+		file_unlock(lock);
 	    }
 	    else 
 		NMP_DEBUG("UPnP no response!\n");
@@ -1812,7 +1813,7 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
 	        bzero(SMB_PriDomain, 10);
 		sleep(1);
 
-		spinlock_lock(SPINLOCK_Networkmap);
+		lock = file_lock("networkmap");
 		if(!SendSMBReq(dest_ip, &my_dvinfo))
         	{
 			if( strstr(SMB_OS, "Windows")!=NULL )
@@ -1836,7 +1837,7 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
                 	p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 6;
                         NMP_DEBUG("Find: Nothing!\n");
                 }
-		spinlock_unlock(SPINLOCK_Networkmap);
+		file_unlock(lock);
 	}
 
 	return 1;

@@ -1,0 +1,11 @@
+--- pppd.orig/pppd/auth.c	2011-03-10 11:33:41.000000000 +0000
++++ pppd/pppd/auth.c	2011-08-17 11:15:17.017696000 +0000
+@@ -821,7 +821,7 @@ network_phase(unit)
+     /*
+      * If the peer had to authenticate, run the auth-up script now.
+      */
+-    if (go->neg_chap || go->neg_upap || go->neg_eap) {
++    if (go->neg_chap || go->neg_upap || go->neg_eap || auth_done[unit]) {
+ 	notify(auth_up_notifier, 0);
+ 	auth_state = s_up;
+ 	if (auth_script_state == s_down && auth_script_pid == 0) {

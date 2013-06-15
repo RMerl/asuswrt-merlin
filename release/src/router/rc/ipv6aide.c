@@ -54,11 +54,19 @@ static void ipv6aide_check(int sig)
 	if (get_ipv6_service() != IPV6_NATIVE_DHCP)
 		goto END;
 
-	memset(tmp, 0, sizeof(tmp));
-	q = tmp;
+	p = nvram_safe_get("ipv6_gw_addr");
+	if (strlen(p))
+	{
+		eval("route", "-A", "inet6", "add", "2000::/3", "gw", p, "dev", (char*)get_wan6face());
+		goto END;
+	}
+
 	r = strdup(ipv6_gateway_address());
 	if (!r)
 		return;
+
+	memset(tmp, 0, sizeof(tmp));
+	q = tmp;
 	p = strtok_r(r, " ", &q);
 
 	if (!p || !strlen(p) || !strlen(q))

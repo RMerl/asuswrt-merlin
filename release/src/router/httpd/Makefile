@@ -4,9 +4,14 @@ CFLAGS = -Os -Wall $(EXTRACFLAGS)
 CFLAGS += -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared -I$(TOP)/zlib
 CFLAGS += -DASUS_DDNS -DTRANSLATE_ON_FLY -DFLASH_EMULATOR -DLinux -DWSC 
 
+
 ifeq ($(RTCONFIG_RALINK),y)
 CFLAGS += -DRalink_WPS
 CFLAGS += -I$(TOP)/shared/sysdeps/ralink -I$(TOP)/wireless_tools
+endif
+
+ifeq ($(RTN14U),y)
+export CFLAGS += -DRTN14U 
 endif
 
 ifeq ($(RTCONFIG_HTTPS),y)
@@ -42,6 +47,11 @@ OBJS += web-dsl-upg.o
 endif
 
 LIBS = -L$(TOP)/nvram -lnvram -L$(TOP)/shared -lshared
+
+ifeq ($(RTCONFIG_BCMARM),y)
+CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include
+LIBS += -lgcc_s
+endif
 
 ifeq ($(RTCONFIG_USB),y)
 LIBS += -L$(TOP)/libdisk -ldisk

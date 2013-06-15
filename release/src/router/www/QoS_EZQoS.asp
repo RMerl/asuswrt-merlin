@@ -49,7 +49,7 @@ var overlib_str = new Array();	//Viz add 2011.06 for record longer portrange val
 function initial(){
 	show_menu();
 
-	if(downsize_support != -1)
+	if(downsize_4m_support)
 		$("guest_image").parentNode.style.display = "none";
 
 	if(document.form.qos_enable.value==1){

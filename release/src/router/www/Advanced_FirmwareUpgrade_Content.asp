@@ -27,7 +27,6 @@
 	font-size:11px; color:#000000; 
 	line-height:21px;
 	width: 83%;
-	text-align: center;
 }
 #proceeding_img{
  	height:21px;
@@ -65,6 +64,7 @@ function initial(){
 }
 
 var exist_firmver="<% nvram_get("firmver"); %>";
+var dead = 0;
 function detect_firmware(){
 
 	$j.ajax({
@@ -72,35 +72,41 @@ function detect_firmware(){
     		dataType: 'script',
 
     		error: function(xhr){
+						dead++;
+						if(dead < 30)
     				setTimeout("detect_firmware();", 1000);
+						else{
+      					$('update_scan').style.display="none";
+      					$('update_states').innerHTML="<#connect_failed#>";
+						}
     		},
 
     		success: function(){
       			if(webs_state_update==0){
-      					//$('update_scan').style.display="none";
       					setTimeout("detect_firmware();", 1000);
-      			}else{
-      					if(webs_state_error==1 && webs_state_info==""){
+      			}else{	// got wlan_update.zip
+      					if(webs_state_error==1){
       								$('update_scan').style.display="none";
       								$('update_states').innerHTML="<#connect_failed#>";
       								return;
-      					}else if(webs_state_error==1 && webs_state_info != ""){
-      								$('update_scan').style.display="none";
-      								$('update_states').innerHTML="<#FIRM_fail_desc#>";
-      								return;
-      					}else{
+      					}
+      					else{
 
 	      					var Latest_firmver = webs_state_info.split("_");
 	      					var Latest_firm = Latest_firmver[0];
 	      					var Latest_buildno = Latest_firmver[1];
-
-	      					if(Latest_firm.length > 0 && Latest_buildno.length > 0){	//match model FW
+	      					var Latest_extendno = Latest_firmver[2];
+	      					
+	      					if(Latest_firm && Latest_buildno && Latest_extendno ){	//match model FW
       								current_firm = parseInt(exist_firmver.replace(/[.]/gi,""));
-      								current_buildno = <% nvram_get("buildno"); %>;
+      								current_buildno = parseInt("<% nvram_get("buildno"); %>");
+      								current_extendno = "<% nvram_get("extendno"); %>";
       								if((current_buildno < Latest_buildno) || 
-      									 (current_buildno == Latest_buildno && current_firm < Latest_firm))
+      									 (current_firm < Latest_firm && current_buildno == Latest_buildno) ||
+      									 (current_extendno != Latest_extendno && current_buildno == Latest_buildno && current_firm == Latest_firm))
       								{
       										$('update_scan').style.display="none";
+      										$('update_states').style.display="none";
       										if(confirm("<#exist_new#>")){
       												document.start_update.action_mode.value="apply";
       												document.start_update.action_script.value="start_webs_upgrade";
@@ -132,7 +138,7 @@ function detect_update(){
 	//setCookie("after_check", 1, 365);
   document.start_update.action_mode.value="apply";
   document.start_update.action_script.value="start_webs_update";
-  document.start_update.action_wait.value="60";
+  //document.start_update.action_wait.value="60";
   $('update_states').innerHTML="<#check_proceeding#>";
   $('update_scan').style.display="";
 	document.start_update.submit();
@@ -211,32 +217,42 @@ function isDownloading(){
     		dataType: 'script',
 				timeout: 1500,
     		error: function(xhr){
-					// start reboot.
-					if(rebooting > 20){
-						$("hiddenMask").style.visibility = "hidden";
-						showLoadingBar(180);
+					
+					rebooting++;
+					if(rebooting < 30){
+							setTimeout("isDownloading();", 1000);
 					}
-					else
-						rebooting++
+					else{							
+							$("drword").innerHTML = "<#connect_failed#>";
+							return false;
+					}
+						
     		},
     		success: function(){
-					rebooting = 0;
-					if(webs_state_error == 1 || webs_state_error == 3){
-						$("drword").innerHTML = "<#FIRM_fail_desc#>";
-						return false;
+					if(webs_state_upgrade == 0){				
+    				setTimeout("isDownloading();", 1000);
 					}
-					else if(webs_state_error == 2){
-						$("drword").innerHTML = Untranslated.fw_size_higher_mem;
-						return false;						
-					}
-					else if(webs_state_upgrade != 0 && webs_state_error == 0){
-						$("hiddenMask").style.visibility = "hidden";
-						showLoadingBar(270);
-						setTimeout("detect_httpd();", 272000);
-						return false;
-					}
-					else{
-    				setTimeout("isDownloading();", 2000);
+					else{ 	// webs_upgrade.sh is done
+						
+						if(webs_state_error == 1){
+								$("drword").innerHTML = "<#connect_failed#>";
+								return false;
+						}
+						else if(webs_state_error == 2){
+								$("drword").innerHTML = "Memory space is NOT enough to upgrade on internet. Please wait for rebooting.<br><#FW_desc1#>"; //Untranslated.fw_size_higher_mem
+								return false;						
+						}
+						else if(webs_state_error == 3){
+								$("drword").innerHTML = "<#FIRM_fail_desc#><br><#FW_desc1#>";
+								return false;												
+						}
+						else{		// start upgrading
+								$("hiddenMask").style.visibility = "hidden";
+								showLoadingBar(270);
+								setTimeout("detect_httpd();", 272000);
+								return false;
+						}
+						
 					}
   			}
   		});
@@ -245,8 +261,27 @@ function isDownloading(){
 function startDownloading(){
 	disableCheckChangedStatus();			
 	dr_advise();
-	$("drword").innerHTML = "&nbsp;&nbsp;&nbsp;"+Untranslated.file_downloading+"...";
+	$("drword").innerHTML = "&nbsp;&nbsp;&nbsp;<#fw_downloading#>...";
 	isDownloading();
+}
+
+function check_zip(obj){
+	var reg = new RegExp("^.*.(zip|ZIP|rar|RAR|7z|7Z)$", "gi");
+	if(reg.test(obj.value)){
+			alert("Please decompress the compressed file first.");
+			obj.focus();
+			obj.select();
+			return false;
+	}
+	else
+			return true;		
+}
+
+function submitForm(){
+	if(!check_zip(document.form.file))
+			return;
+	else
+		onSubmitCtrlOnly(document.form.upload, 'Upload1');	
 }
 </script>
 </head>
@@ -317,6 +352,16 @@ function startDownloading(){
 		  <div>&nbsp;</div>
 		  <div class="formfonttitle"><#menu5_6_adv#> - <#menu5_6_3#></div>
 		  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+		  <div class="formfontdesc"><strong>
+		  	<#FW_note#></strong>
+				<ol>
+				<li id="jffs_warning" style="display:none;"><span>WARNING: you have JFFS enabled.  Make sure you have a backup of its content, as upgrading your firmware MIGHT overwrite it!</span></li>
+					<li><#FW_n0#></li>
+					<li><#FW_n1#></li>
+					<li><#FW_n2#></li>
+				</ol>
+			</div>
+		  <br>
 		  <div class="formfontdesc">Visit <a style="text-decoration: underline;" href="http://www.lostrealm.ca/asuswrt-merlin/" target="_blank">http://www.lostrealm.ca/asuswrt-merlin/<a> for the latest version.<br>
 		  For support related to the original firmware, visit <a style="text-decoration: underline;" href="http://support.asus.com/" target="_blank">http://support.asus.com</a></div>
 
@@ -342,7 +387,7 @@ function startDownloading(){
 <!--###HTML_PREP_END###-->
 			<tr>
 				<th><#FW_item2#></th>
-				<td><input type="text" name="firmver_table" class="input_15_table" value="<% nvram_get("firmver"); %>.<% nvram_get("buildno"); %>" readonly="1"><!--/td-->
+				<td><input type="text" name="firmver_table" class="input_20_table" value="<% nvram_get("firmver"); %>.<% nvram_get("buildno"); %>_<% nvram_get("extendno"); %>" readonly="1"><!--/td-->
 <!--
 						<input type="button" id="update" name="update" class="button_gen" onclick="detect_update();" value="<#liveupdate#>" />
 						<div id="check_states">
@@ -357,17 +402,7 @@ function startDownloading(){
 				<td><input type="file" name="file" class="input" style="color:#FFCC00;*color:#000;width: 300px;"></td>
 			</tr>
 			<tr align="center">
-			  <td colspan="2"><input type="button" name="button" class="button_gen" onclick="onSubmitCtrlOnly(this, 'Upload1');" value="<#CTL_upload#>" /></td>
-			</tr>
-			<tr>
-				<td colspan="2">
-				<strong><#FW_note#></strong>
-				<ol>
-					<li id="jffs_warning" style="display:none;"><span>WARNING: you have JFFS enabled.  Make sure you have a backup of its content, as upgrading your firmware MIGHT overwrite it!</span></li>
-					<li><#FW_n1#></li>
-					<li><#FW_n2#></li>
-				</ol>
-				</td>
+			  <td colspan="2"><input type="button" name="upload" class="button_gen" onclick="submitForm()" value="<#CTL_upload#>" /></td>
 			</tr>
 		</table>
 			  </td>
@@ -393,6 +428,7 @@ function startDownloading(){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="current_page" value="Advanced_FirmwareUpgrade_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_FirmwareUpgrade_Content.asp">
+<input type="hidden" name="flag" value="liveUpdate">
 <input type="hidden" name="action_mode" value="">
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="">

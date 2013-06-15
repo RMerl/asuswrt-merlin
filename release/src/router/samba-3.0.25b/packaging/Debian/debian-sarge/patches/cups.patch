@@ -1,0 +1,14 @@
+--- samba-3.0.10.orig/source/include/includes.h
++++ samba-3.0.10/source/include/includes.h
+@@ -940,10 +940,7 @@
+ #endif
+ 
+ #ifndef DEFAULT_PRINTING
+-#ifdef HAVE_CUPS
+-#define DEFAULT_PRINTING PRINT_CUPS
+-#define PRINTCAP_NAME "cups"
+-#elif defined(SYSV)
++#if defined(SYSV)
+ #define DEFAULT_PRINTING PRINT_SYSV
+ #define PRINTCAP_NAME "lpstat"
+ #else

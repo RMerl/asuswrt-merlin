@@ -1,0 +1,28 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>idmap_nss</title><link rel="stylesheet" href="samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.71.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="idmap_nss.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>idmap_nss &#8212; Samba's idmap_nss Backend for Winbind</p></div><div class="refsynopsisdiv"><h2>DESCRIPTION</h2><p>The idmap_nss plugin provides a means to map Unix users and groups
+	to Windows accounts and obseletes the "winbind trusted domains only"
+	smb.conf option.  This provides a simple means of ensuring that the SID
+	for a Unix user named jsmith is reported as the one assigned to 
+	DOMAIN\jsmith which is necessary for reporting ACLs on files and printers
+	stored on a Samba member server.
+	</p></div><div class="refsect1" lang="en"><a name="id291819"></a><h2>EXAMPLES</h2><p>
+	This example shows how to use idmap_nss to check the local accounts for its
+	own domain while using allocation to create new mappings for trusted domains
+	</p><pre class="programlisting">
+	[global]
+	    idmap domains = SAMBA TRUSTEDDOMAINS
+
+	    idmap config SAMBA:backend  = nss
+	    idmap config SAMBA:readonly = yes
+
+	    idmap config TRUSTEDDOMAINS:default = yes
+	    idmap config TRUSTEDDOMAINS:backend = tdb
+	    idmap config TRUSTEDDOMAINS:range   = 10000 - 50000
+
+	    idmap alloc backend      = tdb
+	    idmap alloc config:range = 10000 - 50000
+	</pre></div><div class="refsect1" lang="en"><a name="id259310"></a><h2>AUTHOR</h2><p>
+	The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.
+	</p></div></div></body></html>

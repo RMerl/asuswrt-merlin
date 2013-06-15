@@ -1,0 +1,322 @@
+# Vietnamese translation for samba.
+# Copyright © 2005 Free Software Foundation, Inc.
+# Clytie Siddall <clytie@riverland.net.au>, 2005.
+# 
+msgid ""
+msgstr ""
+"Project-Id-Version: samba 3.0.14a-6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-08-13 17:05-0700\n"
+"PO-Revision-Date: 2005-07-12 16:17+0930\n"
+"Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
+"Language-Team: Vietnamese <gnomevi-list@lists.sourceforge.net>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"X-Generator: LocFactoryEditor 1.2.2\n"
+
+#. Type: string
+#. Description
+#: ../samba-common.templates:3
+msgid "Character Set for Unix filesystem"
+msgstr "Bộ ký tự cho hệ thống tập tin Unix"
+
+#. Type: string
+#. Description
+#: ../samba-common.templates:3
+msgid ""
+"You currently have a \"character set\" configured in your smb.conf.  In "
+"Samba 3.0, this option is replaced by a new option, \"unix charset\". Please "
+"specify the character set you wish to use for theis new option, which "
+"controls how Samba interprets filenames on the file system."
+msgstr ""
+"Hiện thời bạn có cấu hình một «character set» (bộ ký tự) trong tập tin «smb."
+"conf». Trong Samba phiên bản 3.0, tùy chọn này được thay thế bằng một tùy "
+"chọn mới, «unix charset» (bộ ký tự Unix: 'charset' là viết tắt cho "
+"'character set'). Bạn hãy ghi rõ bộ ký tự nào bạn muốn sử dụng cho tùy chọn "
+"mới này, mà điều khiển cách Samba giải thích tên tập tin trong hệ thống tập "
+"tin này."
+
+#. Type: string
+#. Description
+#: ../samba-common.templates:3
+msgid "If you leave this option blank, your smb.conf will not be changed."
+msgstr ""
+"Nếu bạn bỏ rỗng tùy chọn này thì sẽ không sửa đổi tập tin «smb.conf» của bạn."
+
+#. Type: string
+#. Description
+#: ../samba-common.templates:13
+msgid "Character Set for DOS clients"
+msgstr "Bộ ký tự cho trình khách DOS"
+
+#. Type: string
+#. Description
+#: ../samba-common.templates:13
+msgid ""
+"You currently have a \"client code page\" set in your smb.conf.  In Samba "
+"3.0, this option is replaced by the option \"dos charset\".  Please specify "
+"the character set you wish to use for this new option.  In most cases, the "
+"default chosen for you will be sufficient.  Note that this option is not "
+"needed to support Windows clients, it is only for DOS clients.  If you leave "
+"this option blank, your smb.conf will not be changed."
+msgstr ""
+"Hiện thời bạn có lập một «client code page» (trang mã khách) trong tập tin "
+"«smb.conf». Trong Samba phiên bản 3.0, tùy chọn này được thay thế bằng tùy "
+"chọn «dos charset» (bộ ký tự DOS). Bạn hãy ghi rõ bộ ký tự nào bạn muốn sử "
+"dụng cho tùy chọn mới này. Trong phần lớn trường hợp, giá trị mặc định là "
+"đúng. Hãy ghi chú rằng không cần thiết tùy chọn này để hỗ trợ trình khách "
+"Windows: chỉ trình khách DOS cần thiết nó. Nếu bạn bỏ rỗng tùy chọn này thì "
+"sẽ không sửa đổi tập tin «smb.conf» của bạn."
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:24
+msgid "Modify smb.conf to use WINS settings from DHCP?"
+msgstr "Sửa đổi «smb.conf» để dùng thiết lập WINS từ DHCP không?"
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:24
+msgid ""
+"If your computer gets IP address information from a DHCP server on the "
+"network, the DHCP server may also provide information about WINS servers "
+"(\"NetBIOS name servers\") present on the network.  This requires a change "
+"to your smb.conf file so that DHCP-provided WINS settings will automatically "
+"be read from /etc/samba/dhcp.conf."
+msgstr ""
+"Nếu máy tính bạn gọi thông tin địa chỉ IP từ một trình phục vụ DHCP trên "
+"mạng, trình phục vụ DHCP có lẽ cũng có khả năng cung cấp thông tin về trình "
+"phục vụ WINS («NetBIOS name servers») có trên mạng. Dịch vụ này cần thiết "
+"bạn thay đổi tập tin «smb.conf» mình để cho phép thiết lập WINS do DHCP cung "
+"cấp sẽ tự động được đọc từ tập tin «/etc/samba/dhcp.conf»."
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:24
+msgid ""
+"You must have the dhcp3-client package installed to take advantage of this "
+"feature."
+msgstr "Để nhớ dịp tính năng này, bạn cần phải cài đặt gói tin «dhcp3-client»."
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:37
+msgid "Configure smb.conf through debconf?"
+msgstr "Cấu hình «smb.conf» bằng debconf không?"
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:37
+msgid ""
+"The rest of the configuration of Samba deals with questions that affect "
+"parameters in /etc/samba/smb.conf, which is the file used to configure the "
+"Samba programs (nmbd and smbd.) Your current smb.conf contains an 'include' "
+"line or an option that spans multiple lines, which could confuse debconf and "
+"require you to edit your smb.conf by hand to get it working again."
+msgstr ""
+"Những phần còn lại của cấu hình Samba đề cập câu hỏi về tham số trong tập "
+"tin «/etc/samba/smb.conf», tập tin được dùng để cấu hình chương trình Samba "
+"(nmbd và smbd). Tập tin «smb.conf» hiện thời của bạn chứa một dòng "
+"«include» (gồm) hay một tùy chọn theo nhiều dòng, mà có thể gây ra lỗi trong "
+"trình debconf nên bạn sẽ phải tự sửa đổi tập tin «smb.conf» mình để hoạt hóa "
+"lại nó."
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:37
+msgid ""
+"If you don't use debconf to configure smb.conf, you will have to handle any "
+"configuration changes yourself, and will not be able to take advantage of "
+"periodic configuration enhancements.  Therefore, use of debconf is "
+"recommended if possible."
+msgstr ""
+"Nếu bạn không sử dụng debconf để cấu hình tập tin «smb.conf», bạn sẽ phải tự "
+"quản lý sự thay đổi cấu hình nào, và sẽ không thể nhớ dịp cấu hình tăng "
+"cường định kỳ. Vì vậy, khuyến khích bạn sử dụng debconf nếu có thể."
+
+#. Type: string
+#. Description
+#: ../samba-common.templates:52
+msgid "Workgroup/Domain Name?"
+msgstr "Tên nhóm làm việc hay tên miền?"
+
+#. Type: string
+#. Description
+#: ../samba-common.templates:52
+msgid ""
+"This controls what workgroup your server will appear to be in when queried "
+"by clients. Note that this parameter also controls the Domain name used with "
+"the security=domain setting."
+msgstr ""
+"Tùy chọn này điều khiển nhóm làm việc (workgroup) nào hình như trình phục vụ "
+"bạn có trong, khi trình khách yêu cầu. Hãy ghi chú rằng tham số này cũng "
+"điều khiển tên miền được dùng với thiết lập «security=domain» (bảo mật = "
+"miền)."
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:60
+msgid "Use password encryption?"
+msgstr "Mật mã hóa mật khẩu không?"
+
+#. Type: boolean
+#. Description
+#: ../samba-common.templates:60
+msgid ""
+"Recent Windows clients communicate with SMB servers using encrypted "
+"passwords. If you want to use clear text passwords you will need to change a "
+"parameter in your Windows registry. It is recommended that you use encrypted "
+"passwords. If you do, make sure you have a valid /etc/samba/smbpasswd file "
+"and that you set passwords in there for each user using the smbpasswd "
+"command."
+msgstr ""
+"Trình khách Windows mới hơn có liên lạc với trình phục vụ SMB dùng mật khẩu "
+"mật mã. Nếu bạn có muốn sử dụng mật khẩu «chữ rõ» (chữ thô, không có mật mã) "
+"thì bạn sẽ cần phải thay đổi một tham số trong sổ đăng ký (registry) Windows "
+"mình. Khuyến khích bạn sử dụng mật khẩu mật mã. Nếu bạn làm như thế, hãy "
+"kiểm tra xem có một tập tin «/etc/samba/smbpasswd» hợp lệ, và bạn đã lập mật "
+"khẩu trong nó cho mỗi người dùng có dùng lệnh «smbpasswd»."
+
+#. Type: boolean
+#. Description
+#: ../samba.templates:4
+msgid "Create samba password database, /var/lib/samba/passdb.tdb?"
+msgstr "Tạo cơ sở dữ liệu mật khẩu samba «/var/lib/samba/passdb.tdb» không?"
+
+#. Type: boolean
+#. Description
+#: ../samba.templates:4
+msgid ""
+"To be compatible with the defaults in most versions of Windows, Samba must "
+"be configured to use encrypted passwords.  This requires user passwords to "
+"be stored in a file separate from /etc/passwd. This file can be created "
+"automatically, but the passwords must be added manually (by you or the user) "
+"by running smbpasswd, and you must arrange to keep it up-to-date in the "
+"future.  If you do not create it, you will have to reconfigure samba (and "
+"probably your client machines) to use plaintext passwords. See /usr/share/"
+"doc/samba-doc/htmldocs/ENCRYPTION.html from the samba-doc package for more "
+"details."
+msgstr ""
+"Để tương thích với những giá trị mặc định trong phần lớn phiên bản Windows, "
+"trình Samba phải có cấu hình dùng mật khẩu mật mã. Làm như thế cần thiết các "
+"mật khẩu người dùng được lưu vào một tập tin khác với «/etc/passwd». Có thể "
+"tự động tạo tập tin riêng này, nhưng mà phải tự thêm mật khẩu (bạn hay người "
+"dùng thêm) bằng cách chạy lệnh «smbpasswd», và bạn phải định bảo quản nó cập "
+"nhật. Nếu bạn không tạo tập tin này thì bạn sẽ phải cấu hình lại trình samba "
+"(rất có thể cùng với các máy khách) để dùng mật khẩu chữ thô. Hãy xem tập "
+"tin «/usr/share/doc/samba-doc/htmldocs/ENCRYPTION.html» từ gói tin «samba-"
+"doc» để tìm chi tiết."
+
+#. Type: note
+#. Description
+#: ../samba.templates:17
+msgid "Samba's log files have moved."
+msgstr "Tập tin bản ghi Samba đã di chuyển rồi."
+
+#. Type: note
+#. Description
+#: ../samba.templates:17
+msgid ""
+"Starting with the first packages of Samba 2.2 for Debian the log files for "
+"both Samba daemons (nmbd and smbd) are now stored in /var/log/samba/. The "
+"names of the files are log.nmbd and log.smbd, for nmbd and smbd respectively."
+msgstr ""
+"Từ gói tin thứ nhất của Samba phiên bản 2.2 cho Debian, những tập tin bản "
+"ghi cho cả hai trình nền Samba (nmbd và smbd) được lưu vào «/var/log/"
+"samba/». Tên của tập tin này là «log.nmbd» và «log.smbd» cho trình nmdb và "
+"trình smbd riêng từng cái."
+
+#. Type: note
+#. Description
+#: ../samba.templates:17
+msgid ""
+"The old log files that were in /var/log/ will be moved to the new location "
+"for you."
+msgstr ""
+"Các tập tin bản ghi cũ đã trong «/var/log/» sẽ được di chuyển sang vị trí "
+"mới cho bạn dùng."
+
+#. Type: note
+#. Description
+#: ../samba.templates:28
+msgid "Running nmbd from inetd is no longer supported"
+msgstr "Không còn hỗ trợ lại chạy trình nmbd từ inetd."
+
+#. Type: note
+#. Description
+#: ../samba.templates:28
+msgid ""
+"Your system was previously configured to start nmbd and smbd from inetd.  As "
+"of version 2.999+3.0.alpha20-4, nmbd will no longer be started from inetd.  "
+"If you have modified your /etc/init.d/samba startup script, you may need to "
+"adjust it by hand now so that nmbd will start."
+msgstr ""
+"Trước này, hệ thống bạn được cấu hình để khởi chạy trình nền nmbd và smbd từ "
+"inetd. Từ phiên bản 2.999+3.0.alpha20-4, nmbd sẽ không còn được khởi chạy "
+"lại từ inetd. Nếu bạn đã sửa đổi tập lệnh khởi chạy «/etc/init.d/samba» thì "
+"có lẽ bạn muốn tự điều chỉnh nó, để khởi chạy nmbd trong trường hợp mới này."
+
+#. Type: select
+#. Choices
+#: ../samba.templates:36
+msgid "daemons, inetd"
+msgstr "trình nền, inetd"
+
+#. Type: select
+#. Description
+#: ../samba.templates:38
+msgid "How do you want to run Samba?"
+msgstr "Bạn có muốn chạy Samba như thế nào?"
+
+#. Type: select
+#. Description
+#: ../samba.templates:38
+msgid ""
+"The Samba daemon smbd can run as a normal daemon or from inetd. Running as a "
+"daemon is the recommended approach."
+msgstr ""
+"Trình nền (dæmon) Samba smbd có thể chạy với tư cách trình nền bình thường, "
+"hoặc từ inetd. Khuyên bạn chạy nó là trình nền."
+
+#. Type: boolean
+#. Description
+#: ../samba.templates:45
+msgid "Move /etc/samba/smbpasswd to /var/lib/samba/passdb.tdb?"
+msgstr ""
+"Di chuyển «/etc/samba/smbpasswd» sang «/var/lib/samba/passdb.tdb» không?"
+
+#. Type: boolean
+#. Description
+#: ../samba.templates:45
+msgid ""
+"Samba 3.0 introduces a newer, more complete SAM database interface which "
+"supersedes the /etc/samba/smbpasswd file.  Would you like your existing "
+"smbpasswd file to be migrated to /var/lib/samba/passdb.tdb for you?  If you "
+"plan to use another pdb backend (e.g., LDAP) instead, you should answer 'no' "
+"here."
+msgstr ""
+"Samba phiên bản 3.0 giới thiệu một giao diện cơ sở dữ liệu SAM mới hơn, hoàn "
+"thành hơn mà thay thế tập tin «/etc/samba/smbpasswd». Bạn có muốn trình này "
+"di chuyển tập tin «smbpasswd» đã có sang «/var/lib/samba/passdb.tdb» không? "
+"Nếu bạn định sử dụng hậu phương «pdb» khác (v.d. LDAP) thì bạn nên trả lời "
+"Không (no) tại đây."
+
+#. Type: note
+#. Description
+#: ../swat.templates:3
+msgid "Your smb.conf will be re-written!"
+msgstr "• Sẽ ghi lại tập tin «smb.conf» của bạn. •"
+
+#. Type: note
+#. Description
+#: ../swat.templates:3
+msgid ""
+"SWAT will rewrite your smb.conf file. It will rearrange the entries and "
+"delete all comments, include= and copy= options. If you have a carefully "
+"crafted smb.conf then back it up or don't use SWAT!"
+msgstr ""
+"SWAT sẽ ghi lại tập tin «smb.conf» của bạn. Nó sẽ sắp xếp lại các mục nhập, "
+"và xóa bỏ mọi chú thích và tùy chon «include=» và «copy=». Nếu bạn không "
+"muốn mất tập tin «smb.conf» mình thì hãy lưu trữ nó, hoặc không sử dụng SWAT."

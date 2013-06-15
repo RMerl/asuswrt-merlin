@@ -1,4 +1,5 @@
 #!/bin/sh
+# $1: only update the list name.
 
 
 apps_ipkg_old=`nvram get apps_ipkg_old`
@@ -45,6 +46,10 @@ while [ $i -lt $row_num ]; do
 	i=$(($i+1))
 	list_name=`sed -n $i'p' $TEMP_FILE |awk '{print $1}'`
 	server_name=`sed -n $i'p' $TEMP_FILE |awk '{print $2}'`
+
+	if [ -n "$1" ] && [ "$1" != "$list_name" ]; then
+		continue;
+	fi
 
 	if [ "$list_name" == "optware.asus" ]; then
 		if [ -z "$is_arm_machine" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then

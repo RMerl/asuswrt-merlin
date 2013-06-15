@@ -31,6 +31,7 @@ function init(){
 		show_banner(1);
 		show_footer();
 		ddns_load_body();	
+		$('linkToHome').innerHTML = Untranslated.ddns_home_link;  // remove this line when translated string is done
 }
 
 function valid_wan_ip() {
@@ -368,6 +369,7 @@ function cleandef(){
 					<option value="WWW.NO-IP.COM" <% nvram_match("ddns_server_x", "WWW.NO-IP.COM","selected"); %>>WWW.NO-IP.COM</option>
                   		</select>
 				<a id="link" href="javascript:openLink('x_DDNSServer')" style=" margin-left:5px; text-decoration: underline;"><#LANHostConfig_x_DDNSServer_linkname#></a>
+				<a id="linkToHome" href="javascript:openLink('x_DDNSServer')" style=" margin-left:5px; text-decoration: underline;"></a>
 				</td>
 			</tr>
 			<tr id="ddns_hostname_tr">

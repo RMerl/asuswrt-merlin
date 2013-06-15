@@ -26,6 +26,9 @@ endif
 
 CFLAGS  += 	-I$(SRCBASE)/include -I$(TOP)/shared -I$(TOP)/libdisk
 LDFLAGS  +=	-L$(TOP)/nvram -lnvram -L$(TOP)/shared -lshared -L$(TOP)/libdisk -ldisk
+ifeq ($(RTCONFIG_BCMARM),y)
+LDFLAGS += -lgcc_s
+endif
 
 OBJS	=	main.o utility.o prelogin.o ftpcmdio.o postlogin.o privsock.o \
 		tunables.o ftpdataio.o secbuf.o ls.o \

@@ -10,9 +10,9 @@
 	border:1px outset #999;
 	background-color:#576D73;
 	position:absolute;
-	margin-top:0px;
-	*margin-top:0px;	
+	*margin-top:26px;	
 	margin-left:2px;
+	*margin-left:-189px;
 	width:181px;
 	text-align:left;	
 	height:auto;
@@ -542,7 +542,6 @@ function showLANIPList(isp_order){
 }
 
 function pullLANIPList(obj){
-	
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
 		$("ClientList_Block_PC").style.display = 'block';		
@@ -656,7 +655,7 @@ function submitenter(myfield,e)
 			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,3);"><#HSDPAConfig_private_apn_itemname#></a></th>
       <td>
       	<input id="modem_apn" name="modem_apn" class="input_20_table" type="text" value=""/>
-     		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="display:none;position:absolute;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
+     		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="display:none;position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
 				<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 			</td>
 		</tr>

@@ -1,0 +1,77 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 14. Tracing samba system calls</title><link rel="stylesheet" href="samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.71.0"><link rel="start" href="index.html" title="SAMBA Developers Guide"><link rel="up" href="pt04.html" title="Part IV. Debugging and tracing"><link rel="prev" href="pt04.html" title="Part IV. Debugging and tracing"><link rel="next" href="devprinting.html" title="Chapter 15. Samba Printing Internals"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 14. Tracing samba system calls</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="pt04.html">Prev</a> </td><th width="60%" align="center">Part IV. Debugging and tracing</th><td width="20%" align="right"> <a accesskey="n" href="devprinting.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="tracing"></a>Chapter 14. Tracing samba system calls</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Andrew</span> <span class="surname">Tridgell</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span></div></div></div></div></div><p>
+This file describes how to do a system call trace on Samba to work out
+what its doing wrong. This is not for the faint of heart, but if you
+are reading this then you are probably desperate.
+</p><p>
+Actually its not as bad as the the above makes it sound, just don't
+expect the output to be very pretty :-)
+</p><p>
+Ok, down to business. One of the big advantages of unix systems is
+that they nearly all come with a system trace utility that allows you
+to monitor all system calls that a program is making. This is
+extremely using for debugging and also helps when trying to work out
+why something is slower than you expect. You can use system tracing
+without any special compilation options. 
+</p><p>
+The system trace utility is called different things on different
+systems. On Linux systems its called strace. Under SunOS 4 its called
+trace. Under SVR4 style systems (including solaris) its called
+truss. Under many BSD systems its called ktrace. 
+</p><p>
+The first thing you should do is read the man page for your native
+system call tracer. In the discussion below I'll assume its called
+strace as strace is the only portable system tracer (its available for
+free for many unix types) and its also got some of the nicest
+features.
+</p><p>
+Next, try using strace on some simple commands. For example, <code class="literal">strace
+ls</code> or <code class="literal">strace echo hello</code>.
+</p><p> 
+You'll notice that it produces a LOT of output. It is showing you the
+arguments to every system call that the program makes and the
+result. Very little happens in a program without a system call so you
+get lots of output. You'll also find that it produces a lot of
+"preamble" stuff showing the loading of shared libraries etc. Ignore
+this (unless its going wrong!)
+</p><p>
+For example, the only line that really matters in the <code class="literal">strace echo
+hello</code> output is:
+</p><pre class="programlisting">
+write(1, "hello\n", 6)                  = 6
+</pre><p>all the rest is just setting up to run the program.</p><p>
+Ok, now you're familiar with strace. To use it on Samba you need to
+strace the running smbd daemon. The way I tend ot use it is to first
+login from my Windows PC to the Samba server, then use smbstatus to
+find which process ID that client is attached to, then as root I do
+<code class="literal">strace -p PID</code> to attach to that process. I normally redirect the
+stderr output from this command to a file for later perusal. For
+example, if I'm using a csh style shell:
+</p><p><code class="literal">strace -f -p 3872 &gt;&amp; strace.out</code></p><p>or with a sh style shell:</p><p><code class="literal">strace -f -p 3872 &gt; strace.out 2&gt;&amp;1</code></p><p>
+Note the "-f" option. This is only available on some systems, and
+allows you to trace not just the current process, but any children it
+forks. This is great for finding printing problems caused by the
+"print command" being wrong.
+</p><p>
+Once you are attached you then can do whatever it is on the client
+that is causing problems and you will capture all the system calls
+that smbd makes. 
+</p><p>
+So how do you interpret the results? Generally I search through the
+output for strings that I know will appear when the problem
+happens. For example, if I am having touble with permissions on a file
+I would search for that files name in the strace output and look at
+the surrounding lines. Another trick is to match up file descriptor
+numbers and "follow" what happens to an open file until it is closed.
+</p><p>
+Beyond this you will have to use your initiative. To give you an idea
+of what you are looking for here is a piece of strace output that
+shows that <code class="filename">/dev/null</code> is not world writeable, which
+causes printing to fail with Samba:
+</p><pre class="programlisting">
+[pid 28268] open("/dev/null", O_RDWR)   = -1 EACCES (Permission denied)
+[pid 28268] open("/dev/null", O_WRONLY) = -1 EACCES (Permission denied)
+</pre><p>
+The process is trying to first open <code class="filename">/dev/null</code> read-write 
+then read-only. Both fail. This means <code class="filename">/dev/null</code> has 
+incorrect permissions.
+</p></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="pt04.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="pt04.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="devprinting.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Part IV. Debugging and tracing </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 15. Samba Printing Internals</td></tr></table></div></body></html>

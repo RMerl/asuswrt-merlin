@@ -79,7 +79,7 @@ var $j = jQuery.noConflict();
 <% login_state_hook(); %>
 
 var DEVICE_TYPE = ["", "<#Device_type_01_PC#>", "<#Device_type_02_RT#>", "<#Device_type_03_AP#>", "<#Device_type_04_NS#>", "<#Device_type_05_IC#>", "<#Device_type_06_OD#>", "Printer", "TV Game Console"];
-var client_list_array;
+var client_list_array = '<% get_client_detail_info(); %>';
 var client_list_row;
 var networkmap_scanning;
 var macfilter_rulelist_array = '<% nvram_get("macfilter_rulelist"); %>';
@@ -115,8 +115,17 @@ function gotoMACFilter(){
 }
 
 function initial(){
+	if(client_list_array != ""){
+		client_list_row = client_list_array.split('<');
+		showclient_list(0);
+	}
+	else{
+		var HTMLCode = '<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table" id="client_list_table">';
+		HTMLCode += '<tr><td style="color:#FFCC00;font-size:12px; border-collapse: collapse;border:1;" colspan="4"><span style="line-height:25px;"><#Device_Searching#></span>&nbsp;<img style="margin-top:10px;" src="/images/InternetScan.gif"></td></tr>';
+		HTMLCode += '</table>';
+		$("client_list_Block").innerHTML = HTMLCode;
+	}
 	setTimeout("update_clients();", 1000);
-	
 	if((macfilter_enable != 0 || ParentalCtrl_support != -1) && sw_mode == 1)
 			$("macFilterHint").style.display = "";
 }
@@ -387,9 +396,6 @@ function networkmap_update(){
   		<tr>
     			<td style="padding:3px 3px 5px 5px;">
 						<div id="client_list_Block">
-							<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table" id="client_list_table">
-								<tr><td style="color:#FFCC00;font-size:12px; border-collapse: collapse;border:1;" colspan="4"><span style="line-height:25px;"><#Device_Searching#></span>&nbsp;<img style="margin-top:10px;" src="/images/InternetScan.gif"></td></tr>
-							</table>
 						</div>
     			</td>
   		</tr>

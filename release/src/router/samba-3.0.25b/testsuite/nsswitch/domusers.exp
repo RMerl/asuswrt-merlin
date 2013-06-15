@@ -1,0 +1,38 @@
+#
+# @(#) Test that all users are members of the Domain Users group.
+#
+# Note that this isn't necessarily true all the time but you have to
+# explicitly move people out of that group so it should be OK for te
+#
+
+load_lib util-defs.exp
+load_lib $srcdir/lib/nsswitch-config.exp
+
+# Get list of users and stick usernames in a hash
+
+set user_list [util_start "getent" "passwd" ""]
+
+foreach { user } [split $user_list "\n"] {
+    set user_elts [split $user ":"]
+    set users([lindex $user_elts 0]) 1
+}
+
+# Get list of groups
+
+set group_list [util_start "getent" "group" ""]
+
+foreach { group } [split $group_list "\n"] {
+    set group_elts [split $group ":"]
+
+    # Look for domain users group
+
+    if { ![regexp "Domain Users" [lindex $group_elts 0]] } {
+        continue
+    }
+
+    # Check each member of group was found in getent passwd
+
+    foreach { mem } [split [lindex $group_elts 3] ","] {
+        set mems($mem) 1
+    }
+}

@@ -66,37 +66,47 @@ function initial(){
 		$("wl_unit_field").style.display = "none";
 	}	
 
-	if(Rawifi_support == -1){ // BRCM == without rawifi
+	if(!Rawifi_support){ // BRCM == without rawifi
 		$("wl_igs_select").style.display = "none";
 		$("DLSCapable").style.display = "none";	
 		$("PktAggregate").style.display = "none";
 		$("enable_wl_multicast_forward").style.display = "";
-		if('<% nvram_get("wl_unit"); %>' == '1' || based_modelid == "RT-AC66U"){	//MODELDEP: RT-AC66U remove this
+		
+		if('<% nvram_get("wl_unit"); %>' == '1' || based_modelid == "RT-AC66U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC56U" || based_modelid == "RT-N66U"){	// MODELDEP: RT-AC*U and RT-N66U
 			inputCtrl(document.form.wl_noisemitigation, 0);
 		}
-	}else{
+	}
+	else{
 		inputCtrl(document.form.wl_noisemitigation, 0);
 	}
 
-	if(wifi_hw_sw_support != -1) { //For N55U
+	if(wifi_hw_sw_support){ //For N55U
 		if(document.form.wl_HW_switch.value == "1"){
 			document.form.wl_radio[0].disabled = true;
 		}
 	}
 	
-	// MODELDEP: for AC56U and AC68U
-	if('<% nvram_get("wl_unit"); %>' == '1' && (based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U")){
+	// MODELDEP: for AC ser
+	inputCtrl(document.form.wl_ampdu_mpdu, 0);
+	inputCtrl(document.form.wl_ack_ratio, 0);
+	inputCtrl(document.form.wl_turbo_qam, 0);
+	inputCtrl(document.form.wl_txbf, 0);
+	inputCtrl(document.form.wl_itxbf, 0);
+	inputCtrl(document.form.usb_usb3, 0);
+
+	if((based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC66U")){
 		inputCtrl(document.form.wl_ampdu_mpdu, 1);
 		inputCtrl(document.form.wl_ack_ratio, 1);
-		inputCtrl(document.form.wl_txbf, 1);
-		inputCtrl(document.form.wl_itxbf, 1);
-		document.form.wl_itxbf.disabled = true;
-	}
-	else{
-		inputCtrl(document.form.wl_ampdu_mpdu, 0);
-		inputCtrl(document.form.wl_ack_ratio, 0);
-		inputCtrl(document.form.wl_txbf, 0);
-		inputCtrl(document.form.wl_itxbf, 0);
+
+		if('<% nvram_get("wl_unit"); %>' == '1'){ // 5GHz
+			inputCtrl(document.form.wl_txbf, 1);
+		}
+		else{ // 2.4GHz
+			if(based_modelid == "RT-AC68U"){
+				inputCtrl(document.form.wl_turbo_qam, 1);
+				inputCtrl(document.form.usb_usb3, 1);
+			}
+		}
 	}
 
 	var mcast_rate = '<% nvram_get("wl_mrate_x"); %>';
@@ -105,7 +115,7 @@ function initial(){
 	for (var i = 0; i < mcast_rates.length; i++) {
 		if (mcast_unit == '1' && mcast_rates[i][2]) // 5Ghz && CCK
 			continue;
-		if (Rawifi_support == -1 && mcast_rates[i][3]) // BCM && HTMIX
+		if (!Rawifi_support && mcast_rates[i][3]) // BCM && HTMIX
 			continue;
 		add_option(document.form.wl_mrate_x,
 			mcast_rates[i][0], mcast_rates[i][1],
@@ -131,25 +141,40 @@ function initial(){
 		
 	loadDateTime();
 	
-	if(power_support < 0)
+	if(!power_support){
 		inputHideCtrl(document.form.wl_TxPower, 0);
+		inputHideCtrl(document.form.wl_TxPower_ra, 0);
+		
+	}else if(!Rawifi_support){
+		inputHideCtrl(document.form.wl_TxPower_ra, 0);
+		if(document.form.wl0_country_code.value == "EU" && document.form.wl_unit.value == 0){
+				$("maxTxPower").innerHTML = "100";
+		}		
+		
+	}else
+		inputHideCtrl(document.form.wl_TxPower, 0);		
 
 	setFlag_TimeFiled();	
 	check_Timefield_checkbox();
-	control_TimeField();
-	
-
-	if(document.form.wl0_country_code.value == "EU" && document.form.wl_unit.value == 0){
-		$("maxTxPower").innerHTML = "100";
-	}
+	control_TimeField();		
 }
 
 function applyRule(){
 	if(validForm()){
-		if(wifi_hw_sw_support != -1) { //For N55U
+		if(wifi_hw_sw_support) { //For N55U
 			document.form.wl_HW_switch.value = "0";
 			document.form.wl_HW_switch.disabled = false;
 		}
+		
+		if(power_support && Rawifi_support){
+			document.form.wl_TxPower.disabled = false;
+			document.form.wl_TxPower.value = document.form.wl_TxPower_ra.value;
+		}		
+
+		if(document.form.usb_usb3.value != '<% nvram_get("usb_usb3"); %>'){
+			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+		}
+
 		showLoading();
 		document.form.submit();
 	}
@@ -187,7 +212,7 @@ function validForm(){
 				return false;
 	}*/
 		
-	if(power_support != -1){		
+	if(power_support && !Rawifi_support){
 		// CE@2.4GHz
 		if(document.form.wl0_country_code.value == "EU" && document.form.wl_unit.value == 0){
 			if(document.form.wl_TxPower.value > 100 && errFlag < 2){
@@ -214,7 +239,15 @@ function validForm(){
 		else if(based_modelid == "RT-AC66U" || based_modelid == "RT-N66U"){
 			FormActions("start_apply.htm", "apply", "set_wltxpower;restart_wireless", "15");
 		}
-  }		
+		
+  }else if(power_support && Rawifi_support){
+		if(!validate_range(document.form.wl_TxPower_ra, 1, 100)){
+			document.form.wl_TxPower_ra.value = 100;
+			document.form.wl_TxPower_ra.focus();
+			document.form.wl_TxPower_ra.select();
+			return false;
+		}  	
+  }
 	
 	updateDateTime();	
 	return true;
@@ -670,10 +703,20 @@ function setFlag_TimeFiled(){
 							</select>
 						</td>
 					</tr>
+
+					<tr> <!-- MODELDEP: RT-AC68U Only  -->
+						<th>Reduce USB 3.0 interference</th>
+						<td>
+							<select name="usb_usb3" class="input_option">
+								<option value="1" <% nvram_match("usb_usb3", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+								<option value="0" <% nvram_match("usb_usb3", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+							</select>
+						</td>
+					</tr>
 					
 					<!-- [MODELDEP] for RT-AC68U and RT-AC56U -->
 					<tr>
-						<th>Optimize max number of mpdus in an ampdu</th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,26);">Optimize AMPDU aggregation</a></th>
 						<td>
 							<select name="wl_ampdu_mpdu" class="input_option">
 									<option value="0" <% nvram_match("wl_ampdu_mpdu", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -682,7 +725,7 @@ function setFlag_TimeFiled(){
 						</td>
 					</tr>					
 					<tr>
-						<th>Optimize max number of ack to suppress in a row</th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,27);">Optimize ack suppression</a></th>
 						<td>
 							<select name="wl_ack_ratio" class="input_option">
 									<option value="0" <% nvram_match("wl_ack_ratio", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -690,6 +733,17 @@ function setFlag_TimeFiled(){
 							</select>
 						</td>
 					</tr>
+					<tr>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,28);">Turbo QAM</a></th>
+						<td>
+							<select name="wl_turbo_qam" class="input_option">
+									<option value="0" <% nvram_match("wl_turbo_qam", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+									<option value="1" <% nvram_match("wl_turbo_qam", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
+							</select>
+						</td>
+					</tr>
+					<!-- [MODELDEP] end -->
+
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,24);">Explicit beamforming</a></th>
 						<td>
@@ -702,21 +756,29 @@ function setFlag_TimeFiled(){
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,25);">Implicit beamforming</a></th>
 						<td>
-							<select name="wl_itxbf" class="input_option">
+							<select name="wl_itxbf" class="input_option" disabled>
 									<option value="0" <% nvram_match("wl_itxbf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
 									<option value="1" <% nvram_match("wl_itxbf", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
 							</select>
 						</td>
 					</tr>					
 
-					<!-- RaLink Only : Original at wireless-General page By Viz 2011.08 -->
+					<!-- BRCM Only : By Viz 2013.05 -->
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 17);"><#WLANConfig11b_TxPower_itemname#></a></th>
 						<td>
 		  				<input type="text" maxlength="3" name="wl_TxPower" class="input_3_table" value="<% nvram_get("wl_TxPower"); %>" onKeyPress="return is_number(this, event);"> mW
-							<br><span style="">Set the capability for transmission power. The maximum value is <span id="maxTxPower">200</span>mW and the real transmission power  will be dynamically adjusted to meet regional regulations</span>
+							<br><span>Set the capability for transmission power. The maximum value is <span id="maxTxPower">200</span>mW and the real transmission power will be dynamically adjusted to meet regional regulations.</span>
 						</td>
 					</tr>
+					
+					<!-- RaLink Only : By Viz 2013.05 -->
+					<tr>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 16);"><#WLANConfig11b_TxPower_itemname#></a></th>
+						<td>
+		  				<input type="text" maxlength="3" name="wl_TxPower_ra" class="input_3_table" value="<% nvram_get("wl_TxPower"); %>" onKeyPress="return is_number(this, event);"> %
+						</td>
+					</tr>					
 
 				</table>
 					

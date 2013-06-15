@@ -1,0 +1,65 @@
+diff -uNr samba-3.0.0beta1.orig/source/client/smbmount.c samba-3.0.0beta1/source/client/smbmount.c
+--- samba-3.0.0beta1.orig/source/client/smbmount.c	2003-06-07 12:57:32.000000000 -0500
++++ samba-3.0.0beta1/source/client/smbmount.c	2003-06-30 20:12:22.000000000 -0500
+@@ -765,7 +765,7 @@
+ 					*lp = 0;
+ 					pstrcpy(password,lp+1);
+ 					got_pass = True;
+-					memset(strchr_m(opteq+1,'%')+1,'X',strlen(password));
++					memset(strchr_m(opteq+1,'%')+1,'\0',strlen(password));
+ 				}
+ 				if ((lp=strchr_m(username,'/'))) {
+ 					*lp = 0;
+@@ -775,7 +775,7 @@
+ 				  !strcmp(opts, "password")) {
+ 				pstrcpy(password,opteq+1);
+ 				got_pass = True;
+-				memset(opteq+1,'X',strlen(password));
++				memset(opteq+1,'\0',strlen(password));
+ 			} else if(!strcmp(opts, "credentials")) {
+ 				pstrcpy(credentials,opteq+1);
+ 			} else if(!strcmp(opts, "netbiosname")) {
+@@ -889,7 +901,7 @@
+ 			*p = 0;
+ 			pstrcpy(password,p+1);
+ 			got_pass = True;
+-			memset(strchr_m(getenv("USER"),'%')+1,'X',strlen(password));
++			memset(strchr_m(getenv("USER"),'%')+1,'\0',strlen(password));
+ 		}
+ 		strupper_m(username);
+ 	}
+diff -uNr samba-3.0.0beta1.orig/source/script/installbin.sh samba-3.0.0beta1/source/script/installbin.sh
+--- samba-3.0.0beta1.orig/source/script/installbin.sh	2002-04-22 13:16:20.000000000 -0500
++++ samba-3.0.0beta1/source/script/installbin.sh	2003-06-30 20:12:22.000000000 -0500
+@@ -22,12 +22,14 @@
+  chmod $INSTALLPERMS $BINDIR/$p2
+ 
+  # this is a special case, mount needs this in a specific location
+- if [ $p2 = smbmount ]; then
+-   if [ ! -d $DESTDIR/sbin ]; then
+-      mkdir $DESTDIR/sbin
+-   fi
+-   ln -sf $BINDIR/$p2 $DESTDIR/sbin/mount.smbfs
+- fi
++# Commented out for the Debian Samba package. We take care of this
++#	important symlink in debian/rules. (peloy@debian.org)
++# if [ $p2 = smbmount ]; then
++#   if [ ! -d $DESTDIR/sbin ]; then
++#      mkdir $DESTDIR/sbin
++#   fi
++#   ln -sf $BINDIR/$p2 $DESTDIR/sbin/mount.smbfs
++# fi
+ done
+ 
+ 
+diff -uNr samba-3.0.0beta1.orig/source/web/diagnose.c samba-3.0.0beta1/source/web/diagnose.c
+--- samba-3.0.0beta1.orig/source/web/diagnose.c	2003-06-07 12:57:41.000000000 -0500
++++ samba-3.0.0beta1/source/web/diagnose.c	2003-06-30 20:12:22.000000000 -0500
+@@ -70,6 +70,7 @@
+ 	static struct cli_state cli;
+ 	extern struct in_addr loopback_ip;
+ 
++	loopback_ip.s_addr = htonl((127 << 24) + 1);
+ 	if (!cli_initialise(&cli))
+ 		return False;
+ 

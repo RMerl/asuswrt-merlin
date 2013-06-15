@@ -148,6 +148,7 @@ enum {
 	APPS_INSTALL_INITIALIZING=0,
 	APPS_INSTALL_CHECKING_PARTITION,
 	APPS_INSTALL_CHECKING_SWAP,
+	APPS_INSTALL_DOWNLOADING,
 	APPS_INSTALL_INSTALLING,
 	APPS_INSTALL_FINISHED
 };
@@ -188,6 +189,7 @@ enum {
 
 enum {
 	APPS_UPGRADE_INITIALIZING=0,
+	APPS_UPGRADE_DOWNLOADING,
 	APPS_UPGRADE_REMOVING,
 	APPS_UPGRADE_INSTALLING,
 	APPS_UPGRADE_FINISHED
@@ -263,10 +265,6 @@ enum {
 // todo: multiple wan
 
 int wan_primary_ifunit(void);
-#ifdef RTCONFIG_W3N
-extern int is_w3n_unit(int unit);
-extern int is_w3n_mode();
-#endif
 extern int get_wan_state(int unit);
 extern int get_wan_unit(char *ifname);
 extern char *get_wan_ifname(int unit);

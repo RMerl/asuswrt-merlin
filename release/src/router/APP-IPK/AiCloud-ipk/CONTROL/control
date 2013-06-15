@@ -2,12 +2,12 @@ Package: aicloud
 Architecture: mipsel
 Priority: optional
 Section: net
-Version: 1.0.0.3
+Version: 1.0.0.9
 Maintainer: ASUS
-Source: http://127.0.0.1/
-URL: http://192.168.1.1:8082
+Source: http://nw-dlcdnet.asus.com/asusware/mipsel/stable
+URL: https://192.168.1.1:443
 Description: webdav server
-Depends: pcre,sqlite,libxml2
+Depends: uclibc-opt,pcre,sqlite,libxml2,openssl,libuclibc++,smartsync
 Suggests: 
 Conflicts: 
 Enabled: yes

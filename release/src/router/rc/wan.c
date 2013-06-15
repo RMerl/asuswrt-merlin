@@ -765,12 +765,12 @@ void update_wan_state(char *prefix, int state, int reason)
 		nvram_unset(strcat_r(prefix, "routes_rfc", tmp));
 
 		strcpy(tmp1, "");
-		if (nvram_match(strcat_r(prefix, "dnsenable_x", tmp), "0")) {
+		if (!nvram_get_int(strcat_r(prefix, "dnsenable_x", tmp))) {
 			ptr = nvram_safe_get(strcat_r(prefix, "dns1_x", tmp));
-			if (ptr && *ptr && strcmp(ptr, "0.0.0.0"))
+			if (*ptr && strcmp(ptr, "0.0.0.0"))
 				sprintf(tmp1, "%s", ptr);
 			ptr = nvram_safe_get(strcat_r(prefix, "dns2_x", tmp));
-			if (ptr && *ptr && strcmp(ptr, "0.0.0.0"))
+			if (*ptr && strcmp(ptr, "0.0.0.0"))
 				sprintf(tmp1 + strlen(tmp1), "%s%s", strlen(tmp1) ? " " : "", ptr);
 		}
 		nvram_set(strcat_r(prefix, "dns", tmp), tmp1);
@@ -1352,7 +1352,7 @@ TRACE_PT("3g end.\n");
 #endif
 			}
 			else
-				enable_ipv6(wan_ifname, (get_ipv6_service() == IPV6_NATIVE));
+				enable_ipv6(wan_ifname);
 		}
 #endif
 		ether_atoe(nvram_safe_get(strcat_r(prefix, "hwaddr", tmp)), eabuf);
@@ -1748,10 +1748,11 @@ int update_resolvconf(void)
 	lock = file_lock("resolv");
 
 	if (!(fp = fopen("/tmp/resolv.conf", "w+"))) {
-		file_unlock(lock);
 		perror("/tmp/resolv.conf");
+		file_unlock(lock);
 		return errno;
 	}
+
 #if 0
 #ifdef RTCONFIG_IPV6
 	/* Handle IPv6 DNS before IPv4 ones */
@@ -1778,14 +1779,14 @@ int update_resolvconf(void)
 			char *wan_dns, *wan_xdns;
 	
 		/* TODO: Skip unused wans
-			if (wan disabled or inactive)
+			if (wan disabled or inactive and it's not ppp with active man)
 				continue */
 
 			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 			wan_dns = nvram_safe_get(strcat_r(prefix, "dns", tmp));
 			wan_xdns = nvram_safe_get(strcat_r(prefix, "xdns", tmp));
 
-			if (strlen(wan_dns) <= 0 && strlen(wan_xdns) <= 0)
+			if (!*wan_dns && !*wan_xdns)
 				continue;
 
 			foreach(word, (*wan_dns ? wan_dns : wan_xdns), next)
@@ -1799,40 +1800,10 @@ int update_resolvconf(void)
 	file_unlock(lock);
 
 #ifdef RTCONFIG_DNSMASQ
-	/* notify dnsmasq */
-	kill_pidfile_s("/var/run/dnsmasq.pid", SIGHUP);
+	reload_dnsmasq();
 #else
 	restart_dns();
 #endif
-
-	return 0;
-}
-
-int
-dump_ns()
-{
-	FILE *fp;
-	char line[100];
-	int i = 0;
-
-	if (!(fp = fopen("/tmp/resolv.conf", "r+"))) {
-		perror("/tmp/resolv.conf");
-		return errno;
-	}
-
-	fseek(fp, 0, SEEK_SET);
-	while (fgets(line, sizeof(line), fp)) {
-		char *token = strtok(line, " \t\n");
-
-		if (!token || strcmp(token, "nameserver") != 0)
-			continue;
-		if (!(token = strtok(NULL, " \t\n")))
-			continue;
-		dbG("current name server: %s\n", token);
-		i++;
-	}
-	fclose(fp);
-	if (!i) dbG("current name server: %s\n", "NULL");
 
 	return 0;
 }
@@ -1869,6 +1840,8 @@ void wan6_up(const char *wan_ifname)
 		break;
 	case IPV6_NATIVE_DHCP:
 		eval("ip", "-6", "route", "add", "::/0", "dev", (char *)wan_ifname);
+		if (nvram_match("ipv6_ifdev", "ppp") && strlen(nvram_safe_get("ipv6_ll_remote")))
+			eval("route", "-A", "inet6", "add", "2000::/3", "gw", nvram_safe_get("ipv6_ll_remote"), "dev", (char*)wan_ifname);
 		stop_dhcp6c();
 		start_dhcp6c();
 		break;
@@ -2038,7 +2011,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 			route_add(wan_ifname, 2, "0.0.0.0", gateway, "0.0.0.0");
 
 			/* ... and to dns servers as well for demand ppp to work */
-			if (nvram_match(strcat_r(prefix, "dnsenable_x", tmp),"1")) {
+			if (nvram_get_int(strcat_r(prefix, "dnsenable_x", tmp))) {
 				foreach(word, nvram_safe_get(strcat_r(prefix_x, "dns", tmp)), next) {
 					if ((inet_addr(word) != inet_addr(gateway)) &&
 					    (inet_addr(word) & mask) != (addr & mask))
@@ -2104,6 +2077,30 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 		     (get_ipv6_service() != IPV6_NATIVE_DHCP))) {
 			wan6_up(get_wan6face());
 		}
+	}
+#endif
+
+#if defined(RTN65U)
+	switch (wan_unit) {
+	case WAN_UNIT_FIRST:
+		if (wan_unit == wan_primary_ifunit()) {
+			_dprintf("%s: reload hardware NAT driver!\n", __func__);
+			reinit_hwnat();
+		}
+		break;
+	case WAN_UNIT_SECOND:
+		if (is_module_loaded("hw_nat")) {
+			char primary[] = "wan1_primaryXXXXXX";
+
+			sprintf(primary, "wan%d_primary", WAN_UNIT_SECOND);
+			if (nvram_match(primary, "1")) {
+				_dprintf("%s: remove hardware NAT driver!\n", __func__);
+				modprobe_r("hw_nat");
+			}
+		}
+		break;
+	default:
+		_dprintf("%s(%s,%d) unknown wan_unit\n", __func__, wan_ifname, wan_unit);
 	}
 #endif
 
@@ -2194,8 +2191,7 @@ wan_down(char *wan_ifname)
 
 	/* Update resolv.conf
 	 * Leave as is if no dns servers left for demand to work */
-	if (nvram_match(strcat_r(prefix, "dnsenable_x", tmp), "1") &&
-	    *nvram_safe_get(strcat_r(prefix, "xdns", tmp)))
+	if (*nvram_safe_get(strcat_r(prefix, "xdns", tmp)))
 		nvram_unset(strcat_r(prefix, "dns", tmp));
 	update_resolvconf();
 
@@ -2457,13 +2453,6 @@ start_wan(void)
 #endif
 //	symlink("/dev/null", "/tmp/ppp/connect-errors");
 
-#ifdef RTCONFIG_DNSMASQ
-	/* Create resolv.conf
-	 * dnsmasq should be already running */
-	unlink("/etc/resolv.conf");
-	f_write_string("/etc/resolv.conf", "nameserver 127.0.0.1\n", 0, 0666);
-#endif
-
 #ifdef RTCONFIG_RALINK
 	reinit_hwnat();
 #endif
@@ -2481,6 +2470,11 @@ start_wan(void)
 	if(is_usb_modem_ready() == 1)
 		start_wan_if(WAN_UNIT_SECOND);
 #endif
+#endif
+
+#if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
+	system("echo 0 > /proc/sys/net/bridge/bridge-nf-call-iptables");
+	system("echo 0 > /proc/sys/net/bridge/bridge-nf-call-ip6tables");
 #endif
 
 	/* Report stats */
@@ -2612,7 +2606,6 @@ autodet_main(int argc, char *argv[])
 	nvram_set_int("autodet_state", AUTODET_STATE_INITIALIZING);	
 	nvram_set_int("autodet_auxstate", AUTODET_STATE_INITIALIZING);
 
-	
 	// it shouldnot happen, because it is only called in default mode
 	if (!nvram_match(strcat_r(prefix, "proto", tmp), "dhcp")) {
 		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_NODHCP);
@@ -2639,7 +2632,7 @@ autodet_main(int argc, char *argv[])
 	}
 
  	status = discover_all();
-	
+
 	// check for pppoe status only, 
 	if (get_wan_state(unit)==WAN_STATE_CONNECTED) {
 		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_OK);
@@ -2660,34 +2653,42 @@ autodet_main(int argc, char *argv[])
 	strcpy(hwaddr_x, nvram_safe_get(strcat_r(prefix, "hwaddr_x", tmp)));
 	//nvram_set(strcat_r(prefix, "hwaddr_x", tmp), "");
 
-	i=0;
+	char *ptr = nvram_safe_get("autodet_waitsec");
+	int waitsec = 0;
 
-	while(i<mac_num) {
+	if(ptr == NULL || strlen(ptr) <= 0)
+		waitsec = 5;
+	else
+		waitsec = atoi(ptr);
+
+	i = 0;
+	while(i < mac_num && get_wan_state(unit) != WAN_STATE_CONNECTED){
 		_dprintf("try clone %s\n", mac_clone[i]);
-		
+
 		nvram_set(strcat_r(prefix, "hwaddr_x", tmp), mac_clone[i]);
 		notify_rc_and_wait("restart_wan");
-		sleep(5);
-		if(get_wan_state(unit)==WAN_STATE_CONNECTED)
-			break;
-		i++;
+		_dprintf("%s: wait a IP during %d seconds...\n", __FUNCTION__, waitsec);
+		int count = 0;
+		while(count < waitsec && get_wan_state(unit) != WAN_STATE_CONNECTED){
+			sleep(1);
+
+			++count;
+		}
+		++i;
 	}
 
-	// restore hwaddr_x
-	nvram_set(strcat_r(prefix, "hwaddr_x", tmp), hwaddr_x);
-
-	if(i==mac_num) {
+	if(i == mac_num){
 		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_FAIL);
+		// restore hwaddr_x
+		nvram_set(strcat_r(prefix, "hwaddr_x", tmp), hwaddr_x);
 	}
-	else if(i==mac_num-1) { // OK in original mac
+	else if(i == mac_num-1){ // OK in original mac
 		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_OK);
 	}
-	else // OK in cloned mac
-	{
+	else{ // OK in cloned mac
 		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_OK);
-		nvram_set(strcat_r(prefix, "hwaddr_x", tmp), mac_clone[i]);
-		nvram_commit();
 	}
+	nvram_commit();
 
 	return 0;
 }

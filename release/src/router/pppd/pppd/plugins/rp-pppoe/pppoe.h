@@ -4,7 +4,7 @@
 *
 * Declaration of various PPPoE constants
 *
-* Copyright (C) 2000-2012 Roaring Penguin Software Inc.
+* Copyright (C) 2000 Roaring Penguin Software Inc.
 *
 * This program may be distributed according to the terms of the GNU
 * General Public License, version 2 or (at your option) any later version.
@@ -180,7 +180,6 @@ extern void dropPrivs(void);
 #define TAG_AC_COOKIE          0x0104
 #define TAG_VENDOR_SPECIFIC    0x0105
 #define TAG_RELAY_SESSION_ID   0x0110
-#define TAG_PPP_MAX_PAYLOAD    0x0120
 #define TAG_SERVICE_NAME_ERROR 0x0201
 #define TAG_AC_SYSTEM_ERROR    0x0202
 #define TAG_GENERIC_ERROR      0x0203
@@ -219,10 +218,6 @@ extern void dropPrivs(void);
 #define IPV4ALEN     4
 #define SMALLBUF   256
 
-/* Allow for 1500-byte PPPoE data which makes the
-   Ethernet packet size bigger by 8 bytes */
-#define ETH_JUMBO_LEN (ETH_DATA_LEN+8)
-
 /* A PPPoE Packet, including Ethernet headers */
 typedef struct PPPoEPacketStruct {
     struct ethhdr ethHdr;	/* Ethernet header */
@@ -236,26 +231,21 @@ typedef struct PPPoEPacketStruct {
     unsigned int code:8;	/* PPPoE code */
     unsigned int session:16;	/* PPPoE session */
     unsigned int length:16;	/* Payload length */
-    unsigned char payload[ETH_JUMBO_LEN]; /* A bit of room to spare */
+    unsigned char payload[ETH_DATA_LEN]; /* A bit of room to spare */
 } PPPoEPacket;
 
 /* Header size of a PPPoE packet */
 #define PPPOE_OVERHEAD 6  /* type, code, session, length */
 #define HDR_SIZE (sizeof(struct ethhdr) + PPPOE_OVERHEAD)
-#define MAX_PPPOE_PAYLOAD (ETH_JUMBO_LEN - PPPOE_OVERHEAD)
-#define PPP_OVERHEAD 2
-#define MAX_PPPOE_MTU (MAX_PPPOE_PAYLOAD - PPP_OVERHEAD)
-#define TOTAL_OVERHEAD (PPPOE_OVERHEAD + PPP_OVERHEAD)
-
-/* Normal PPPoE MTU without jumbo frames */
-#define ETH_PPPOE_MTU (ETH_DATA_LEN - TOTAL_OVERHEAD)
+#define MAX_PPPOE_PAYLOAD (ETH_DATA_LEN - PPPOE_OVERHEAD)
+#define MAX_PPPOE_MTU (MAX_PPPOE_PAYLOAD - 2)
 
 /* PPPoE Tag */
 
 typedef struct PPPoETagStruct {
     unsigned int type:16;	/* tag type */
     unsigned int length:16;	/* Length of payload */
-    unsigned char payload[ETH_JUMBO_LEN]; /* A LOT of room to spare */
+    unsigned char payload[ETH_DATA_LEN]; /* A LOT of room to spare */
 } PPPoETag;
 /* Header size of a PPPoE tag */
 #define TAG_HDR_SIZE 4
@@ -280,11 +270,6 @@ typedef struct PPPoEConnectionStruct {
     int sessionSocket;		/* Raw socket for session frames */
     unsigned char myEth[ETH_ALEN]; /* My MAC address */
     unsigned char peerEth[ETH_ALEN]; /* Peer's MAC address */
-#ifdef PLUGIN
-    unsigned char req_peer_mac[ETH_ALEN]; /* required peer MAC address */
-    unsigned char req_peer;     /* require mac addr to match req_peer_mac */
-#endif
-
     UINT16_t session;		/* Session ID */
     char *ifName;		/* Interface name */
     char *serviceName;		/* Desired service name, if any */
@@ -301,11 +286,6 @@ typedef struct PPPoEConnectionStruct {
     PPPoETag relayId;		/* Ditto */
     int PADSHadError;           /* If PADS had an error tag */
     int discoveryTimeout;       /* Timeout for discovery packets */
-#ifdef PLUGIN
-    int seenMaxPayload;
-    int mtu;
-    int mru;
-#endif
 } PPPoEConnection;
 
 /* Structure used to determine acceptable PADO or PADS packet */
@@ -315,12 +295,11 @@ struct PacketCriteria {
     int serviceNameOK;
     int seenACName;
     int seenServiceName;
-    int gotError;
 };
 
 /* Function Prototypes */
 UINT16_t etherType(PPPoEPacket *packet);
-int openInterface(char const *ifname, UINT16_t type, unsigned char *hwaddr, UINT16_t *mtu);
+int openInterface(char const *ifname, UINT16_t type, unsigned char *hwaddr);
 int sendPacket(PPPoEConnection *conn, int sock, PPPoEPacket *pkt, int size);
 int receivePacket(int sock, PPPoEPacket *pkt, int *size);
 void fatalSys(char const *str);

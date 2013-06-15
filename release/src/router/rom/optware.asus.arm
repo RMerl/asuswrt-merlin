@@ -1,0 +1,342 @@
+Package: DM2_Utility
+Version: 2.0.4.0
+Depends: 
+OptionalUtility: 2.1.0.0+
+Section: net
+Architecture: arm
+Maintainer: ASUS
+Size: 
+Filename: DM2_2040.zip
+Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
+Description: Download tools
+URL: 
+
+
+Package: asuslighttpd
+Version: 3.1.0.71
+Depends: pcre, zlib, libstdc++, openssl, spawn-fcgi
+OptionalUtility: 1.0.0.2
+Section: net
+Architecture: arm
+Maintainer: ASUS
+Size: 143149
+Filename: asuslighttpd_3.1.0.71_arm.ipk
+Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
+Description: 
+URL: 
+
+
+Package: downloadmaster
+Version: 3.1.0.78
+Depends: openssl, zlib, libcurl, libevent, ncurses, libxml2, libstdc++, libsigc++, libpar2, pcre, spawn-fcgi, readline, asuslighttpd, wxbase
+OptionalUtility: 1.0.0.2+
+Section: net
+Architecture: arm
+Maintainer: ASUS
+Size: 3086062
+Filename: downloadmaster_3.1.0.78_arm.ipk
+Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
+Description: Download tools
+URL: http://www.asusnetwork.net:8081/downloadmaster/index.asp
+
+
+Package: e2fslibs
+Version: 1.41.12-1
+Section: lib
+Architecture: arm
+Maintainer: Inge Arnesen <inge.arnesen@gmail.com>
+MD5Sum: 760d05308d2c5cefcf2df50df88928c1
+Size: 149085
+Filename: e2fslibs_1.41.12-1_arm.ipk
+Source: http://downloads.sourceforge.net/sourceforge/e2fsprogs/e2fsprogs-1.41.12.tar.gz
+Description: Ext2 Filesystem Libraries
+
+
+Package: e2fsprogs
+Version: 1.41.12-1
+Depends: e2fslibs
+Section: utils
+Architecture: arm
+Maintainer: Inge Arnesen <inge.arnesen@gmail.com>
+MD5Sum: 5192143ad3911a1f91fa36d5ec99a108
+Size: 319859
+Filename: e2fsprogs_1.41.12-1_arm.ipk
+Source: http://downloads.sourceforge.net/sourceforge/e2fsprogs/e2fsprogs-1.41.12.tar.gz
+Description: Ext2 Filesystem Utilities
+
+
+Package: expat
+Version: 2.0.1-1
+Section: libraries
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: 31f119e4c25f65091c4af78821543db4
+Size: 58986
+Filename: expat_2.0.1-1_arm.ipk
+Source: http://downloads.sourceforge.net/sourceforge/expat/expat-2.0.1.tar.gz
+Description: XML Parser library
+
+
+Package: ffmpeg
+Version: 0.svn20080409-3
+Section: tool
+Architecture: arm
+Maintainer: Keith Garry Boyce <nslu2-linux@yahoogroups.com>
+MD5Sum: f3f84777703899e6bb31c35462a83b19
+Size: 2159492
+Filename: ffmpeg_0.svn20080409-3_arm.ipk
+Source: /ffmpeg-0.svn20080409.tar.bz2
+Description: FFmpeg is an audio/video conversion tool.
+
+
+Package: flac
+Version: 1.2.1-1
+Depends: libogg
+Section: compression
+Architecture: arm
+Maintainer: Josh Coalson <jcoalson@users.sourceforge.net>
+MD5Sum: 88678d8df9227e65100da6cb6a66fa3e
+Size: 1100511
+Filename: flac_1.2.1-1_arm.ipk
+Source: http://downloads.sourceforge.net/sourceforge/flac/flac-1.2.1.tar.gz
+Description: FLAC is a free lossless audio codec.  This package contains the codec libraries and the command-line tools flac and metaflac.
+
+
+Package: gdbm
+Version: 1.8.3-4
+Section: libs
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: 1966ee31d1c61b0e1f8e450d2b1d7e16
+Size: 15198
+Filename: gdbm_1.8.3-4_arm.ipk
+Source: ftp://ftp.gnu.org/gnu/gdbm/gdbm-1.8.3.tar.gz
+Description: GNU dbm is a set of database routines that use extensible hashing. It works similar to the standard UNIX dbm routines.
+
+
+Package: libcurl
+Version: 7.24.0-1
+Depends: openssl, zlib
+Section: libs
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: 7962b40dbea8b0bc036b19f47adfe3c3
+Size: 336097
+Filename: libcurl_7.24.0-1_arm.ipk
+Source: http://curl.haxx.se/download/curl-7.24.0.tar.gz
+Description: Curl is a command line tool for transferring files with URL syntax, supporting FTP, FTPS, HTTP, HTTPS, GOPHER, TELNET, DICT, FILE and LDAP. Curl supports HTTPS certificates, HTTP POST, HTTP PUT, FTP uploading, kerberos, HTTP form based upload, proxies, cookies, user+password authentication, file transfer resume, http proxy tunneling and a busload of other useful tricks.
+
+
+Package: libevent
+Version: 2.0.20-1
+Section: libs
+Architecture: arm
+Maintainer: Jean-Fabrice <jeanfabrice@users.sourceforge.net>
+MD5Sum: 61df6746c79ada4908824747d80efc0f
+Size: 320196
+Filename: libevent_2.0.20-1_arm.ipk
+Source: https://github.com/downloads/libevent/libevent/libevent-2.0.20-stable.tar.gz
+Description: libevent to implement an event loop
+
+
+Package: libexif
+Version: 0.6.19-1
+Section: lib
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: ed4ede563ee3c68add9a410d61eac1cb
+Size: 82248
+Filename: libexif_0.6.19-1_arm.ipk
+Source: http://downloads.sourceforge.net/sourceforge/libexif/libexif-0.6.19.tar.bz2
+Description: Library to parse EXIF info in JPEG file and read/write the data from those tags.
+
+
+Package: libid3tag
+Version: 0.15.1b-1
+Depends: zlib
+Section: libs
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: a1c1fc222bffcdfe914937f19be68a86
+Size: 31544
+Filename: libid3tag_0.15.1b-1_arm.ipk
+Source: http://downloads.sourceforge.net/sourceforge/mad/libid3tag-0.15.1b.tar.gz
+Description: The library used for ID3 tag reading
+
+
+Package: libjpeg
+Version: 6b-3
+Section: net
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: 462a4a5be777b580a91ec94c7c84ecbd
+Size: 134861
+Filename: libjpeg_6b-3_arm.ipk
+Source: http://www.ijg.org/files/jpegsrc.v6b.tar.gz
+Description: collection of jpeg tools
+
+
+Package: libogg
+Version: 1.2.1-1
+Section: lib
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: 880c9166de9e8806b60cfe4b59d73826
+Size: 79346
+Filename: libogg_1.2.1-1_arm.ipk
+Source: http://downloads.xiph.org/releases/ogg/libogg-1.2.1.tar.gz
+Description: Ogg is a multimedia container format.
+
+
+Package: libpar2
+Version: 0.2-5
+Depends: libsigc++
+Section: libs
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: 968050eb0845f52b4f57102042bdf17a
+Size: 164442
+Filename: libpar2_0.2-5_arm.ipk
+Source: http://downloads.sourceforge.net/sourceforge/parchive/libpar2-0.2.tar.gz
+Description: A library for performing common tasks related to PAR recovery sets
+
+
+Package: libsigc++
+Version: 2.2.3-1
+Depends: libstdc++
+Section: libs
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: 597e7adbf4d42de78e20df2fa041e51c
+Size: 7066
+Filename: libsigc++_2.2.3-1_arm.ipk
+Source: http://ftp.gnome.org/pub/GNOME/sources/libsigc++/2.2/libsigc++-2.2.3.tar.gz
+Description: libsigc++ implements a typesafe callback system for standard C++.
+
+
+Package: libvorbis
+Version: 1.3.2-1
+Depends: libogg
+Section: lib
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: 64d650f0b6a72592322e342f587129e7
+Size: 408492
+Filename: libvorbis_1.3.2-1_arm.ipk
+Source: http://downloads.xiph.org/releases/vorbis/libvorbis-1.3.2.tar.gz
+Description: Ogg Vorbis compressed audio format.
+
+
+Package: libxml2
+Version: 2.7.8-1
+Depends: zlib (>=1.2.5)
+Section: libs
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: 933e86d0a26361b953af4160bbb02d21
+Size: 1458342
+Filename: libxml2_2.7.8-1_arm.ipk
+Source: ftp://xmlsoft.org/libxml2/libxml2-2.7.8.tar.gz
+Description: Libxml2 is the XML C parser and toolkit developed for the Gnome project.
+
+
+Package: ncurses
+Version: 5.7-3
+Section: net
+Architecture: arm
+Maintainer: Christopher Blunck <christopher.blunck@gmail.com>
+MD5Sum: e42e8560f5b04b4348541759350ca25b
+Size: 539265
+Filename: ncurses_5.7-3_arm.ipk
+Source: ftp://invisible-island.net/ncurses/ncurses-5.7.tar.gz
+Description: NCurses libraries
+
+
+Package: openssl
+Version: 0.9.8v-2
+Section: libs
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: f88f6ee6554ec0737adef4d3afc197a3
+Size: 849628
+Filename: openssl_0.9.8v-2_arm.ipk
+Source: http://www.openssl.org/source/openssl-0.9.8v.tar.gz
+Description: Openssl provides the ssl implementation in libraries libcrypto and libssl, and is needed by many other applications and libraries.
+
+
+Package: pcre
+Version: 8.31-1
+Depends: libstdc++
+Section: util
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: 732c40bbc2f6b5fca61b3fe165048b69
+Size: 244420
+Filename: pcre_8.31-1_arm.ipk
+Source: ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.31.tar.bz2
+Description: Perl-compatible regular expression library
+
+
+Package: spawn-fcgi
+Version: 1.6.3-1
+Section: utils
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: be7ef4b4ab7c93d964aa5f6b641d3154
+Size: 8389
+Filename: spawn-fcgi_1.6.3-1_arm.ipk
+Source: http://www.lighttpd.net/download/spawn-fcgi-1.6.3.tar.bz2
+Description: spawn-fcgi is used to spawn fastcgi applications
+
+
+Package: readline
+Version: 6.1-2
+Depends: ncurses
+Section: misc
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: 5fc51e8633d14a4049059b43b58c0aec
+Size: 228823
+Filename: readline_6.1-2_arm.ipk
+Source: http://ftp.gnu.org/pub/gnu/readline/readline-6.1.tar.gz
+Description: The GNU Readline library provides a set of functions for use by applications that allow users to edit command lines as they are typed in
+
+
+Package: sqlite
+Version: 3.7.14.1-1
+Depends: readline, ncurses
+Section: misc
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: 8043eadb4fa98b729cdb3f37b2b63549
+Size: 435698
+Filename: sqlite_3.7.14.1-1_arm.ipk
+Source: http://www.sqlite.org/sqlite-autoconf-3071401.tar.gz
+Description: SQLite is a small C library that implements a self-contained, embeddable, zero-configuration SQL database engine.
+
+
+Package: wxbase
+Version: 2.8.12-1
+Depends: libstdc++, expat, zlib
+Section: libs
+Architecture: arm
+Maintainer: Gorion <mail4tmp@gmail.com>
+MD5Sum: b49b3806edb33ada8e1c5ccefd3f7332
+Size: 1156389
+Filename: wxbase_2.8.12-1_arm.ipk
+Source: http://downloads.sourceforge.net/sourceforge/wxwindows/wxWidgets-2.8.12.tar.bz2
+Description: wxbase is a basic (non-windows) part of wxWidget toolkit
+
+
+Package: zlib
+Version: 1.2.5-1
+Section: libs
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+MD5Sum: dd22adefbe1af19b574c85f2d9c50600
+Size: 79227
+Filename: zlib_1.2.5-1_arm.ipk
+Source: http://downloads.sourceforge.net/sourceforge/libpng/zlib-1.2.5.tar.bz2
+Description: zlib is a library implementing the 'deflate' compression system.
+
+

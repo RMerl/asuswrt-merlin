@@ -29,8 +29,8 @@ OBJS	= ecmh.o linklist.o common.o interfaces.o groups.o grpint.o subscr.o
 WARNS	= -W -Wall -pedantic -Wshadow -Wpointer-arith -Wcast-align -Wwrite-strings -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Winline -Wbad-function-cast -fshort-enums -fstrict-aliasing -fno-common -Wpacked -Wpadded
 EXTRA   = -g
 #EXTRA	= -O3
-CFLAGS	= $(WARNS) $(EXTRA) -D_GNU_SOURCE -D'ECMH_VERSION="$(ECMH_VERSION)"' $(ECMH_OPTIONS)
-LDFLAGS	= $(ECMH_LDFREEBSD)
+CFLAGS	= $(WARNS) $(EXTRA) -D_GNU_SOURCE -D'ECMH_VERSION="$(ECMH_VERSION)"' $(ECMH_OPTIONS) $(EXTRACFLAGS) -L$(TOP)/nvram -lnvram -L$(TOP)/shared -lshared 
+LDFLAGS	= $(ECMH_LDFREEBSD) $(EXTRALDFLAGS)
 CC	:= @echo "[Compiling] $$@"; $(CC)
 
 all:	$(BINS)

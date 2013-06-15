@@ -138,6 +138,63 @@ static char *mschap2_peer_challenge = NULL;
 #include <net/ppp-comp.h>
 #endif
 
+/* For CHAPMS2 response cache */
+struct chapms2_cache_entry {
+	int id;
+	unsigned char challenge[16];
+	unsigned char response[MS_CHAP2_RESPONSE_LEN];
+	unsigned char auth_response[MS_AUTH_RESPONSE_LENGTH+1];
+};
+
+#define CHAPMS2_MAX_CACHE_SIZE 10
+static struct chapms2_cache_entry
+	chapms2_cache[CHAPMS2_MAX_CACHE_SIZE];
+static int chapms2_cache_next = 0;
+static int chapms2_cache_size = 0;
+
+static struct chapms2_cache_entry *
+chapms2_cache_add(int id, const unsigned char *challenge,
+		  const unsigned char *response,
+		  const unsigned char *auth_response)
+{
+	struct chapms2_cache_entry *entry;
+
+	entry = &chapms2_cache[chapms2_cache_next];
+	entry->id = id;
+	memcpy(entry->challenge, challenge, 16);
+	memcpy(entry->response, response, MS_CHAP2_RESPONSE_LEN);
+	memcpy(entry->auth_response, auth_response, MS_AUTH_RESPONSE_LENGTH);
+
+	chapms2_cache_next++;
+	if (chapms2_cache_size < chapms2_cache_next)
+		chapms2_cache_size = chapms2_cache_next;
+	chapms2_cache_next %= CHAPMS2_MAX_CACHE_SIZE;
+
+	return entry;
+}
+
+static struct chapms2_cache_entry *
+chapms2_cache_find(int id, const unsigned char *challenge,
+		   const unsigned char *auth_response)
+{
+	struct chapms2_cache_entry *entry;
+	int i;
+
+	for (i = 0; i < chapms2_cache_size; i++) {
+		entry = &chapms2_cache[i];
+		if ((id == entry->id) &&
+		    (!challenge
+		     || memcmp(challenge, entry->challenge, 16) == 0) &&
+		    (!auth_response
+		     || memcmp(auth_response, entry->auth_response,
+		               MS_AUTH_RESPONSE_LENGTH) == 0)) {
+			return entry;
+		}
+	}
+
+	return NULL;  /* not found */
+}
+
 /*
  * Command-line options.
  */
@@ -325,8 +382,17 @@ chapms2_make_response(unsigned char *response, int id, char *our_name,
 		      unsigned char *challenge, char *secret, int secret_len,
 		      unsigned char *private)
 {
+	struct chapms2_cache_entry *entry;
+
 	challenge++;	/* skip length, should be 16 */
 	*response++ = MS_CHAP2_RESPONSE_LEN;
+
+	/* Find response by id & challenge in cache */
+	if ((entry = chapms2_cache_find(id, challenge, NULL))) {
+		memcpy(response, entry->response, MS_CHAP2_RESPONSE_LEN);
+		return;
+	}
+
 	ChapMS2(challenge,
 #ifdef DEBUGMPPEKEY
 		mschap2_peer_challenge,
@@ -335,10 +401,14 @@ chapms2_make_response(unsigned char *response, int id, char *our_name,
 #endif
 		our_name, secret, secret_len, response, private,
 		MS_CHAP2_AUTHENTICATEE);
+
+	/* Add challenge & responses to cache */
+	chapms2_cache_add(id, challenge, response, private);
 }
 
 static int
-chapms2_check_success(unsigned char *msg, int len, unsigned char *private)
+chapms2_check_success(int id, unsigned char *msg, int len,
+		      unsigned char *private)
 {
 	if ((len < MS_AUTH_RESPONSE_LENGTH + 2) ||
 	    strncmp((char *)msg, "S=", 2) != 0) {
@@ -349,7 +419,8 @@ chapms2_check_success(unsigned char *msg, int len, unsigned char *private)
 	msg += 2;
 	len -= 2;
 	if (len < MS_AUTH_RESPONSE_LENGTH
-	    || memcmp(msg, private, MS_AUTH_RESPONSE_LENGTH)) {
+	    /* Find response by id & response in cache */
+	    || !chapms2_cache_find(id, NULL, msg)) {
 		/* Authenticator Response did not match expected. */
 		error("MS-CHAPv2 mutual authentication failed.");
 		return 0;

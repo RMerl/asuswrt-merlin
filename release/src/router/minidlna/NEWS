@@ -1,3 +1,10 @@
+1.0.26 - Released 04-April-2013
+--------------------------------
+- Fix compiling with ffmpeg 1.0.
+- Fix a couple potential scanner crash bugs.
+- Fix inotify parsing of new video symlinks.
+- Validate or escape user input to prevent SQL injection.
+
 1.0.25 - Released 13-July-2012
 --------------------------------
 - Fix a couple crash bugs on malformed WAV files.

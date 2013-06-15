@@ -188,6 +188,9 @@ static int hotplug_main(int argc, char *argv[])
 #ifdef LINUX26
 		else if (strcmp(argv[1], "block") == 0) {
 			hotplug_usb();
+#ifdef RTCONFIG_BCMARM
+			//hotplug_block();
+#endif
 		}
 #endif
 #endif
@@ -201,6 +204,7 @@ typedef struct {
 } applets_t;
 
 static const applets_t applets[] = {
+	{ "preinit",                    init_main                               },
 	{ "init",			init_main				},
 	{ "console",			console_main			},
 #ifdef DEBUG_RCTEST
@@ -218,9 +222,9 @@ static const applets_t applets[] = {
 	{ "wpa_cli",			wpacli_main			},
 #endif
 	{ "hotplug",			hotplug_main			},
-	{ "mtd-write",			mtd_write_main			},
-	{ "mtd-erase",			mtd_unlock_erase_main		},
-	{ "mtd-unlock",			mtd_unlock_erase_main		},
+	{ "mtd-write",			mtd_write_main_old			},
+	{ "mtd-erase",			mtd_unlock_erase_main_old		},
+	{ "mtd-unlock",			mtd_unlock_erase_main_old		},
 	{ "watchdog",			watchdog_main			},
 #ifdef RTCONFIG_RALINK
 	{ "wpsfix",			wpsfix_main			},
@@ -268,7 +272,7 @@ static const applets_t applets[] = {
 #endif
 	{ "disk_remove",		diskremove_main			},
 #endif
-	{ "firmware_check",		firmware_check_main		},
+	{ "firmware_check",             firmware_check_main             },
 	{ "service",			service_main			},
 	{NULL, NULL}
 };
@@ -362,6 +366,10 @@ int main(int argc, char **argv)
 		restart_wireless();
 		return 0;
 	}
+	else if(!strcmp(base, "nvram_erase")){
+		erase_nvram();
+		return 0;
+	}
 #ifdef RTCONFIG_USB
 	else if(!strcmp(base, "get_apps_name")){
 		if(argc != 2){
@@ -427,13 +435,21 @@ int main(int argc, char **argv)
 
 		return asus_usb_interface(argv[1], argv[2]);
 	}
-	else if (!strcmp(base, "usb_notify")) {
+        else if (!strcmp(base, "usb_notify")) {
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 		usb_notify();
 #endif
 
 		return 0;
 	}
+#if 0
+#ifdef RTCONFIG_USBEJECT
+	else if (!strcmp(base, "restart_usb")) {
+		restart_usb();
+		return 0;
+	}
+#endif
+#endif
 #endif
 	else if(!strcmp(base, "run_app_script")){
 		if(argc != 3){
@@ -547,6 +563,30 @@ int main(int argc, char **argv)
 
 		return(led_control(atoi(argv[1]), atoi(argv[2])));
 	}
+        /* mtd-erase2 [device] */
+        else if (!strcmp(base, "mtd-erase2")) {
+                if (argv[1] && ((!strcmp(argv[1], "boot")) ||
+                        (!strcmp(argv[1], "linux")) ||
+                        (!strcmp(argv[1], "linux2")) ||
+                        (!strcmp(argv[1], "rootfs")) ||
+                        (!strcmp(argv[1], "rootfs2")) ||
+                        (!strcmp(argv[1], "nvram")))) {
+
+                        return mtd_erase(argv[1]);
+                } else {
+                        fprintf(stderr, "usage: mtd-erase2 [device]\n");
+                        return EINVAL;
+                }
+        }
+        /* mtd-write2 [path] [device] */
+        else if (!strcmp(base, "mtd-write2")) {
+                if (argc >= 3)
+                        return mtd_write(argv[1], argv[2]);
+                else {
+                        fprintf(stderr, "usage: mtd-write2 [path] [device]\n");
+                        return EINVAL;
+                }
+        }
 	else if (!strcmp(base, "free_caches")) {
 		int c;
 		unsigned int test_num;
@@ -574,7 +614,7 @@ int main(int argc, char **argv)
 						break;
 					case 'w': // set the waited time for cleaning.
 						test_num = strtol(optarg, NULL, 10);
-        		if(test_num <= 0 || test_num == LONG_MIN || test_num == LONG_MAX){
+        		if(test_num < 0 || test_num == LONG_MIN || test_num == LONG_MAX){
         			_dprintf("ERROR: unknown value %s...\n", optarg);
 							return 0;
 						}

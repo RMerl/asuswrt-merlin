@@ -13,9 +13,16 @@
 
 #vpath %.c $(TOP)/shared
 
+include ../.config
 CFLAGS  += -I. -I$(TOP)/shared  -I$(SRCBASE)/include -Wall
+ifeq ($(RTCONFIG_BCMWL6),y)
+CFLAGS  += -I$(SRCBASE)/shared/bcmwifi/include
+endif
 CFLAGS  += -Dlinux -DNO_PARALLEL -DPRNINFO
 LDFLAGS = -L$(TOP)/shared -lshared -L$(TOP)/nvram -lnvram 
+ifeq ($(RTCONFIG_BCMARM),y)
+LDFLAGS += -lgcc_s
+endif
 
 all: infosvr
 

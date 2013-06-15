@@ -1,0 +1,35 @@
+Virtual line printer test program (vlp)
+=======================================
+
+This can be useful for testing/debugging Samba print code.  It gives you a 
+virtual full-function printer.
+
+Setup
+
+1) Configure and build Samba.  
+	For this to work, you need to add:
+		-DDEVELOPER
+	to your CFLAGS, and add:
+		--srcdir=<wherever your source is>
+	when running configure.  Generally 	
+		./configure --srcdir=`pwd` <other configure options>
+	should work. 
+
+2) Build and install vlp.
+	# cd testsuite/printing
+	# make -f Makefile.vlp vlp
+	# su
+	# cp vlp /usr/local/samba/bin
+
+3) Set up Samba to use vlp.
+	In your smb.conf file under [global], add the following option:
+		printing = vlp
+	and then add any number of print shares, without needing to make them 
+	really exist.  
+
+		[testprinter]
+			printable = yes
+
+	is all you need for the most basic virtual printer.
+	
+	

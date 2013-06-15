@@ -1,0 +1,41 @@
+#
+# @(#) Test multiple threads can enumerate users correctly
+#
+
+load_lib util-defs.exp
+load_lib "$srcdir/lib/nsswitch-config.exp"
+
+# Compile getpwent_r.c
+
+set output [target_compile "$srcdir/$subdir/getpwent_r.c" \
+        "$srcdir/$subdir/getpwent_r" executable {additional_flags="-g"}]
+
+if {$output != ""} {
+    perror "compile getpwent_r"
+    puts $output
+    fail ""
+}
+
+# Clean up output from previous tests
+
+set pid [pid]
+file delete [glob -nocomplain "/tmp/getpwent_r-$pid.out-*"]
+
+# Run test proggy
+
+set output [util_start "$srcdir/$subdir/getpwent_r" "$pid" ""]
+if {![regexp "^PASS:" $output]} {
+    perror "run getpwent_r"
+    puts $output
+    return -1
+}
+
+# Sort and compare output
+
+set output [util_start "$srcdir/$subdir/getent_r.sh" "getpwent $pid" ""]
+if {$output == ""} {
+    pass "getpwent_r"
+} else {
+    fail "getpwent_r"
+    puts $output
+}

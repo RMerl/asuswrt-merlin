@@ -16,9 +16,6 @@
 #include <sys/ioctl.h>
 #include <bcmutils.h>
 #include <wlutils.h>
-#ifdef CONFIG_BCMWL5
-#include <semaphore_mfp.h>
-#endif
 
 //	ref: http://wiki.openwrt.org/OpenWrtDocs/nas
 
@@ -48,9 +45,16 @@ int wds_enable(void)
 void
 start_nas(void)
 {
+#if 0 /* defined (SMP) */
+	int ret;
+#endif
 	stop_nas();
 
+#if 0 /* defined (SMP) */
+	ret = eval("taskset", "-c", DEFAULT_TASKSET_CPU, "nas");
+#else
 	system("nas&");
+#endif
 }
 
 void
@@ -110,11 +114,13 @@ void notify_nas(const char *ifname)
 
 #define APSCAN_INFO "/tmp/apscan_info.txt"
 
+static int lock = -1;
+
 static void wlcscan_safeleave(int signo) {
 	signal(SIGTERM, SIG_IGN);
 	
 	nvram_set_int("wlc_scan_state", WLCSCAN_STATE_STOPPED);
-	spinlock_unlock(SPINLOCK_SiteSurvey);
+	file_unlock(lock);
 	exit(0);
 }
 
@@ -131,12 +137,12 @@ int wlcscan_main(void)
 	signal(SIGTERM, wlcscan_safeleave);
 
 	/* clean APSCAN_INFO */
-	spinlock_lock(SPINLOCK_SiteSurvey);
+	lock = file_lock("sitesurvey");
 	if ((fp = fopen(APSCAN_INFO, "w")) != NULL){
 		fclose(fp);
 	}
-	spinlock_unlock(SPINLOCK_SiteSurvey);
-	
+	file_unlock(lock);
+
 	nvram_set_int("wlc_scan_state", WLCSCAN_STATE_INITIALIZING);
 	/* Starting scanning */
 	i = 0;

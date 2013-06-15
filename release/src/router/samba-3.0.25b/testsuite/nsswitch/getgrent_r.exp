@@ -1,0 +1,41 @@
+#
+# @(#) Test multiple threads can enumerate groups correctly
+#
+
+load_lib util-defs.exp
+load_lib "$srcdir/lib/nsswitch-config.exp"
+
+# Compile getgrent_r.c
+
+set output [target_compile "$srcdir/$subdir/getgrent_r.c" \
+        "$srcdir/$subdir/getgrent_r" executable {additional_flags="-g"}]
+
+if {$output != ""} {
+    perror "compile getgrent_r"
+    puts $output
+    return
+}
+
+# Clean up output from previous tests
+
+set pid [pid]
+file delete [glob -nocomplain "/tmp/getgrent_r-$pid.out-*"]
+
+# Run test proggy
+
+set output [util_start "$srcdir/$subdir/getgrent_r" "$pid" ""]
+if {![regexp "^PASS:" $output]} {
+    perror "run getgrent_r"
+    puts $output
+    return -1
+}
+
+# Sort and compare output
+
+set output [util_start "$srcdir/$subdir/getent_r.sh" "getgrent $pid" ""]
+if {$output == ""} {
+    pass "getgrent_r"
+} else {
+    fail "getgrent_r"
+    puts $output
+}

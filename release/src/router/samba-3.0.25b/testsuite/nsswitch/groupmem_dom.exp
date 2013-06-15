@@ -1,0 +1,33 @@
+#
+# @(#) Test whether members of domain groups all have domain names
+#
+
+load_lib util-defs.exp
+
+set group_list [split [util_start "getent group" ""] "\n"]
+set failed 0
+
+foreach { group } $group_list {
+    set group_entry [split $group ":"]
+
+    set group_name [lindex $group_entry 0]
+    set group_members [split [lindex $group_entry 3] ","]
+
+    if { [regexp {^[^/]+/} $group_name] } {
+	
+	verbose "group $group_name has members $group_members"
+
+	foreach { user } $group_members {
+	    if { ![regexp {^[^/]+/} $user] } {
+		fail "group $group has non-domain user $user"
+		set failed 1
+	    }
+	}
+    } else {
+	verbose "ignoring non-domain group $group_name"
+    }
+}
+
+if { !$failed } {
+    pass "domain groups contain only domain members"
+}

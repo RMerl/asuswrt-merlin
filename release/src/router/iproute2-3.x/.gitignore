@@ -1,0 +1,32 @@
+static-syms.h
+Config
+*.o
+*.a
+*.so
+*~
+\#*#
+
+# cscope
+cscope.*
+ncscope.*
+TAGS
+
+# git files that we don't want to ignore even it they are dot-files
+!.gitignore
+!.mailmap
+
+# for patch generation
+*.diff
+*.patch
+*.orig
+*.rej
+
+# for quilt
+.pc
+patches
+series
+
+# for gdb
+.gdbinit
+.gdb_history
+*.gdb

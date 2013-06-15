@@ -120,21 +120,18 @@ ipup_main(int argc, char **argv)
 	if ((value = getenv("IPREMOTE")))
 		nvram_set(strcat_r(prefix, "gateway", tmp), value);
 
-#ifdef RTCONFIG_DSL
-	/* Paul add 2013/1/23, only for Auto DNS and 3G/4G */
-	if (!nvram_match(strcat_r(prefix, "dnsenable_x", tmp), "0")) {
-#endif
-		strcpy(buf, "");
-		if ((value = getenv("DNS1")))
-			sprintf(buf, "%s", value);
-		if ((value = getenv("DNS2")))
-			sprintf(buf + strlen(buf), "%s%s", strlen(buf) ? " " : "", value);
+	strcpy(buf, "");
+	if ((value = getenv("DNS1")))
+		sprintf(buf, "%s", value);
+	if ((value = getenv("DNS2")))
+		sprintf(buf + strlen(buf), "%s%s", strlen(buf) ? " " : "", value);
 
-		/* set PPP DNS, no DNS/usepeerdns forces update_resolvconf use xdns value */
-		nvram_set(strcat_r(prefix, "dns", tmp), buf);
-#ifdef RTCONFIG_DSL
-	}
-#endif
+	/* empty DNS means they either were not requested or peer refused to send them.
+	 * lift up underlying xdns value instead, keeping "dns" filled */
+	if (strlen(buf) == 0)
+		sprintf(buf, "%s", nvram_safe_get(strcat_r(prefix, "xdns", tmp)));
+
+	nvram_set(strcat_r(prefix, "dns", tmp), buf);
 
 	wan_up(wan_ifname);
 
@@ -163,7 +160,7 @@ ipdown_main(int argc, char **argv)
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
 #ifdef RTCONFIG_IPV6
-        wait_ppp_count = -2;
+	wait_ppp_count = -2;
 #endif
 
 	wan_down(wan_ifname);
@@ -214,9 +211,12 @@ ippreup_main(int argc, char **argv)
 int ip6up_main(int argc, char **argv)
 {
 	char *wan_ifname = safe_getenv("IFNAME");
+	char *llremote = safe_getenv("LLREMOTE");
 
 	if (!wan_ifname || strlen(wan_ifname) <= 0)
 		return 0;
+
+	nvram_set("ipv6_ll_remote", llremote);
 
         switch (get_ipv6_service()) {
                 case IPV6_NATIVE:

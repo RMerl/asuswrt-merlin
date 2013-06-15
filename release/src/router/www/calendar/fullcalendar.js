@@ -856,6 +856,8 @@ function EventManager(options, _sources) {
 	t.removeEvents = removeEvents;
 	t.clientEvents = clientEvents;
 	t.normalizeEvent = normalizeEvent;
+	t.checkEvents_day = checkEvents_day;
+	t.checkEvents_time = checkEvents_time;
 	
 	
 	// imports
@@ -1105,7 +1107,68 @@ function EventManager(options, _sources) {
 				filter = function(e) {
 					return e._id == id;
 				};
+				
 			}
+
+			cache = $.grep(cache, filter, true);
+			// remove events from array sources
+			for (var i=0; i<sources.length; i++) {
+				if ($.isArray(sources[i].events)) {
+					sources[i].events = $.grep(sources[i].events, filter, true);
+				}
+			}
+		}
+		
+		reportEvents(cache);
+	}
+	
+	/*Jieming added, to check seletcing all day */
+	function checkEvents_day(filter) {
+		if (!filter) { // remove all, 
+			cache = [];
+			// clear all array sources
+			for (var i=0; i<sources.length; i++) {
+				if ($.isArray(sources[i].events)) {
+					sources[i].events = [];
+				}
+			}
+		}else{
+			if (!$.isFunction(filter)) { // an event day
+				var day = filter + '';
+				filter = function(e) {
+					return e._start.getDay() == day;
+				};				
+			}
+
+			cache = $.grep(cache, filter, true);
+			// remove events from array sources
+			for (var i=0; i<sources.length; i++) {
+				if ($.isArray(sources[i].events)) {
+					sources[i].events = $.grep(sources[i].events, filter, true);
+				}
+			}
+		}	
+		reportEvents(cache);
+	}
+	
+	/*Jieming added, to check seletcing whole time section */
+	function checkEvents_time(filter) {
+		if (!filter) { // remove all
+			cache = [];
+			// clear all array sources
+			for (var i=0; i<sources.length; i++) {
+				if ($.isArray(sources[i].events)) {
+					sources[i].events = [];
+				}
+			}
+		}else{
+			if (!$.isFunction(filter)) { // an event time section
+				var time = filter + '';
+				filter = function(e) {
+					return e._start.getHours() == time;
+				};		
+			}
+
 			cache = $.grep(cache, filter, true);
 			// remove events from array sources
 			for (var i=0; i<sources.length; i++) {
@@ -1116,7 +1179,6 @@ function EventManager(options, _sources) {
 		}
 		reportEvents(cache);
 	}
-	
 	
 	function clientEvents(filter) {
 		if ($.isFunction(filter)) {
@@ -1130,8 +1192,6 @@ function EventManager(options, _sources) {
 		}
 		return cache; // else, return all
 	}
-	
-	
 	
 	/* Loading State
 	-----------------------------------------------------------------------------*/
@@ -1575,7 +1635,7 @@ var dateFormatters = {
 		var temp_hour = (d.getHours()+1);
 		if(temp_hour < 10)
 			temp_hour = "0" + temp_hour 
-			return "~" + temp_hour},
+			return "~ " + temp_hour},
 	u	: function(d)	{ return formatDate(d, "yyyy-MM-dd'T'HH:mm:ss'Z'") },
 	S	: function(d)	{
 		var date = d.getDate();
@@ -2101,7 +2161,7 @@ setDefaults({
 
 function BasicView(element, calendar, viewName) {
 	var t = this;
-	
+
 	
 	// exports
 	t.renderBasic = renderBasic;
@@ -2266,7 +2326,7 @@ function BasicView(element, calendar, viewName) {
 		markFirstLast(head.add(head.find('tr'))); // marks first+last tr/th's
 		markFirstLast(bodyRows); // marks first+last td's
 		bodyRows.eq(0).addClass('fc-first'); // fc-last is done in updateCells
-		
+
 		dayBind(bodyCells);
 		
 		daySegmentContainer =
@@ -2974,7 +3034,7 @@ function AgendaView(element, calendar, viewName) {
 		var maxd;
 		var minutes;
 		var slotNormal = opt('slotMinutes') % 15 == 0;
-		
+
 		s =
 			"<table style='width:100%' class='fc-agenda-days fc-border-separate' cellspacing='0'>" +
 			"<thead>" +
@@ -2982,7 +3042,7 @@ function AgendaView(element, calendar, viewName) {
 			"<th class='fc-agenda-axis " + headerClass + "'>&nbsp;</th>";
 		for (i=0; i<colCnt; i++) {
 			s +=
-				"<th class='fc- fc-col" + i + ' ' + headerClass + "'/>"; // fc- needed for setDayID
+				"<th class='fc- fc-col" + i + ' ' + headerClass + "'>"; // fc- needed for setDayID
 		}
 		s +=
 			"<th class='fc-agenda-gutter " + headerClass + "'>&nbsp;</th>" +
@@ -2990,10 +3050,10 @@ function AgendaView(element, calendar, viewName) {
 			"</thead>" +
 			"<tbody>" +
 			"<tr>" +
-			"<th class='fc-agenda-axis " + headerClass + "'>&nbsp;</th>";
+			"<th class='fc-agenda-axis " + headerClass + "' >&nbsp;</th>";
 		for (i=0; i<colCnt; i++) {
 			s +=
-				"<td class='fc- fc-col" + i + ' ' + contentClass + "'>" + // fc- needed for setDayID
+				"<td class='fc- fc-col" + i + ' ' + contentClass + "' >" + // fc- needed for setDayID
 				"<div>" +
 				"<div class='fc-day-content'>" +
 				"<div style='position:relative'>&nbsp;</div>" +
@@ -3014,17 +3074,20 @@ function AgendaView(element, calendar, viewName) {
 		dayBodyCellInners = dayBodyCells.find('div.fc-day-content div');
 		dayBodyFirstCell = dayBodyCells.eq(0);
 		dayBodyFirstCellStretcher = dayBodyFirstCell.find('> div');
+		$(dayHeadCells).click(function(){select_all_day(this.innerHTML);}); //Jieming added, funciton used for selecting all day 
+		$(dayHeadCells).css('cursor','pointer'); //Jieming added, set CSS effect for field of Day 
+		$(dayHeadCells).hover(function(){$(this).css('background','#5E747C');},function(){$(this).css('background','url(images/general_th.gif)');});
 		
 		markFirstLast(dayHead.add(dayHead.find('tr')));
 		markFirstLast(dayBody.add(dayBody.find('tr')));
-		
+
 		axisFirstCells = dayHead.find('th:first');
 		gutterCells = dayTable.find('.fc-agenda-gutter');
 		
 		slotLayer =
 			$("<div style='position:absolute;z-index:2;left:0;width:100%'/>")
 				.appendTo(element);
-				
+	
 		if (opt('allDaySlot')) {
 		
 			daySegmentContainer =
@@ -3101,7 +3164,11 @@ function AgendaView(element, calendar, viewName) {
 		slotTable = $(s).appendTo(slotContent);
 		slotTableFirstInner = slotTable.find('div:first');
 		slotBind(slotTable.find('td'));
-		
+	
+		$(slotTable.find('th')).click(function (){select_all_time_section(this.innerHTML);}); //Jieming added, funciton used for selecting specified time 
+		$(slotTable.find('th')).css('cursor','pointer'); //Jieming added, set CSS effect for field of  time
+		$(slotTable.find('th')).hover(function(){$(this).css('background','#5E747C');},function(){$(this).css('background','url(images/general_th.gif)');});		
+	
 		axisFirstCells = axisFirstCells.add(slotTable.find('th:first'));
 	}
 	
@@ -3258,7 +3325,8 @@ function AgendaView(element, calendar, viewName) {
 	-----------------------------------------------------*/
 	
 
-	function renderDayOverlay(startDate, endDate, refreshCoordinateGrid) { // endDate is exclusive
+	function renderDayOverlay(startDate, endDate, refreshCoordinateGrid) {
+		// endDate is exclusive
 		if (refreshCoordinateGrid) {
 			coordinateGrid.build();
 		}
@@ -3392,6 +3460,115 @@ function AgendaView(element, calendar, viewName) {
 		return addDays(cloneDate(t.visStart), col*dis+dit);
 	}
 	
+	function select_all_day(day_temp){  // Jieming added, for selecting all day 
+		var array_temp = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+		var day_flag ;
+		
+		for(i=0;i<7;i++){
+			if(array_temp[i] == day_temp){		
+				day_flag = i;	
+
+			}
+		}
+		
+	/*	for(j=0;j<24;j++){
+			var d1 = cellDate_allday(day_flag,j);
+			var d2 = cellDate_allday(day_flag,j);
+
+			dates = [
+				d1,
+				addMinutes(cloneDate(d1), opt('slotMinutes')),
+				d2,
+				addMinutes(cloneDate(d2), opt('slotMinutes'))
+			].sort(cmp);
+			renderSlotSelection(dates[0], dates[3]);
+			reportSelection(dates[0], dates[3], false);
+		}*/
+		
+		for(i=0;i<24;i++){
+			if(array_occupied[day_flag][i] == 0)
+				break;
+
+			if(i == 23){
+				var j = 0;
+				while(j < 24){
+					array_occupied[day_flag][j] = 0;
+					j++;
+				}
+				
+				$j("#calendar").fullCalendar("checkEvents_day", day_flag.toString());
+				return true;
+			}			
+		}
+		
+		var d1 = cellDate_allday(day_flag,0);
+		var d2 = cellDate_allday(day_flag,23);
+			dates = [
+				d1,
+				addMinutes(cloneDate(d1), opt('slotMinutes')),
+				d2,
+				addMinutes(cloneDate(d2), opt('slotMinutes'))
+			].sort(cmp);
+			renderSlotSelection(dates[0], dates[3]);
+			reportSelection(dates[0], dates[3], false);
+	}
+	
+	function select_all_time_section(time_flag){	//Jieming added, for selecting whole time section
+		var time_section;
+		var i;
+	
+		if(time_flag.substring(0,2) <10){
+			time_section = time_flag.substring(1,2);
+		}
+		else{
+			time_section = time_flag.substring(0,2);
+		}
+
+		for(i=0;i<7;i++){
+			if(array_occupied[i][time_section] == 0)
+				break;
+
+			if(i == 6){
+				var j = 0;
+				while(j < 7){
+					array_occupied[j][time_section] = 0;
+					j++;
+				}
+				
+				$j("#calendar").fullCalendar("checkEvents_time", time_section);
+				return true;
+			}			
+		}
+		
+		for(i=0;i<7;i++){
+			if(array_occupied[i][time_section] == 1)
+				continue;
+			
+			var d1 = cellDate_allday(i,time_section);
+			var d2 = cellDate_allday(i,time_section);
+
+			dates = [
+				d1,
+				addMinutes(cloneDate(d1), opt('slotMinutes')),
+				d2,
+				addMinutes(cloneDate(d2), opt('slotMinutes'))
+			].sort(cmp);
+			renderSlotSelection(dates[0], dates[3]);
+			reportSelection(dates[0], dates[3], false);
+		}	
+	}
+	
+	function cellDate_allday(col,row) {
+		var d = colDate(col);
+		var slotIndex = row;
+		if (opt('allDaySlot')) {
+			slotIndex--;
+		}
+		if (slotIndex >= 0) {
+			addMinutes(d, minMinute + slotIndex * opt('slotMinutes'));
+		}
+		return d;
+	}
 	
 	function cellIsAllDay(cell) {
 		return opt('allDaySlot') && !cell.row;
@@ -3406,7 +3583,8 @@ function AgendaView(element, calendar, viewName) {
 	
 	
 	// get the Y coordinate of the given time on the given day (both Date objects)
-	function timePosition(day, time) { // both date objects. day holds 00:00 of current day
+	function timePosition(day, time) {
+	// both date objects. day holds 00:00 of current day
 		day = cloneDate(day, true);
 		if (time < addMinutes(cloneDate(day), minMinute)) {
 			return 0;
@@ -3538,7 +3716,7 @@ function AgendaView(element, calendar, viewName) {
 		if (ev.which == 1 && opt('selectable')) { // ev.which==1 means left mouse button
 			unselect(ev);
 			var dates;
-// Jerry5: hover listener on creat events
+// Jerry5: hover listener on create events
 			hoverListener.start(function(cell, origCell) { 
 				clearSelection();
 // Jerry5: cross column {
@@ -3612,7 +3790,6 @@ function AgendaView(element, calendar, viewName) {
 function AgendaEventRenderer() {
 	var t = this;
 	
-	
 	// exports
 	t.renderEvents = renderEvents;
 	t.compileDaySegs = compileDaySegs; // for DayEventRenderer
@@ -3659,12 +3836,166 @@ function AgendaEventRenderer() {
 	var formatDates = calendar.formatDates;
 	
 	
-	
 	/* Rendering
 	----------------------------------------------------------------------------*/
 	
 
 	function renderEvents(events, modifiedEventId) {
+		var event_count = events.length;
+		var start_day = 0;
+		var end_day = 0;
+		var start_hour = 0;
+		var end_hour = 0;
+
+		var event_temp_1 = new Object();
+		var index_temp = 0;
+		var start_temp = 0;
+		var end_temp = 0;
+		var start_cross_day;
+		var end_cross_day;
+		var start_month = 0;
+		var end_month = 0;
+
+		for(i=0;i<event_count;i++){
+			start_day = events[i].start.getDay();
+			end_day = events[i].end.getDay();
+			start_hour = events[i].start.getHours();
+			end_hour = events[i].end.getHours();
+			start_month = events[i].start.getMonth();
+			end_month = events[i].end.getMonth();
+			start_temp = start_hour;
+			end_temp = start_hour + 1;
+			duration_day =0;
+			duration = 0;
+			end_date_temp = events[i].end.getDate(); 
+			start_date_temp = events[i].start.getDate(); 
+			start_sec = events[i].start.getTime();
+
+			if((end_day == 0) && (end_date_temp > start_date_temp))
+				end_day = 7;
+			
+			if(end_day - start_day ==0){
+				duration = end_hour - start_hour;
+			}	
+			else{
+				duration_day = end_day - start_day;
+				duration = (24- start_hour) + (duration_day - 1)*24 + parseInt(end_hour);
+			
+			}
+			
+			if(duration > 1){
+				start_cross_day = events[i].start.getDate();
+				end_cross_day = events[i].start.getDate();
+				start_month = events[i].start.getMonth();
+				end_month = events[i].end.getMonth();
+				
+				for(j=0;j<duration;j++){
+					event_temp_1 = $.extend({},events[i]);
+
+					event_temp_1.start = new Date(events[i].start);
+					event_temp_1._start = new Date(events[i]._start);				
+					event_temp_1.end = new Date(events[i].end);
+					event_temp_1._end = new Date(events[i]._end);	
+					
+					index_temp = Math.round(Math.random()*10000);
+
+					event_temp_1.id = index_temp;
+					event_temp_1._id = index_temp;
+				
+					/*if(end_day - start_day ==0){
+						event_temp_1.start.setHours(start_temp);
+						event_temp_1._start.setHours(start_temp);
+						event_temp_1.end.setHours(end_temp);
+						event_temp_1._end.setHours(end_temp);
+						//start_temp++;
+						//end_temp++;				
+					}
+					else{
+						if(start_month != end_month){  // cross month
+							end_month = start_month;
+							event_temp_1.start.setMonth(start_month);
+							event_temp_1._start.setMonth(start_month);
+							event_temp_1.end.setMonth(end_month);	
+							event_temp_1._end.setMonth(end_month);							
+						}	
+						
+						if(end_temp == 0){
+							end_cross_day++;		
+						}
+												
+
+						event_temp_1.start.setHours(start_temp);
+						event_temp_1._start.setHours(start_temp);
+						event_temp_1.start.setDate(start_cross_day);
+						event_temp_1._start.setDate(start_cross_day);
+						event_temp_1.end.setDate(end_cross_day);
+						event_temp_1._end.setDate(end_cross_day);
+						event_temp_1.end.setHours(end_temp);
+						event_temp_1._end.setHours(end_temp);
+						/*start_temp++;
+						end_temp++;
+						if(start_temp == 24)
+							start_temp = 0;
+							
+						if(end_temp == 24)
+							end_temp = 0;
+							
+						if(start_temp ==0)
+							start_cross_day++;*/						
+						
+					//}
+					event_temp_1.start.setTime(start_sec);
+					event_temp_1._start.setTime(start_sec);
+					event_temp_1.end.setTime(start_sec + 3600000);
+					event_temp_1._end.setTime(start_sec + 3600000);
+					start_sec += 3600000;
+
+					if(array_occupied[start_day][start_temp] == 1){   // To avoid selecting time slot repeatedly
+						start_temp++;
+						end_temp++;
+						if(start_temp == 24)
+							start_temp = 0;
+							
+						if(end_temp == 24)
+							end_temp = 0;
+							
+						if(start_temp ==0)
+							start_cross_day++;
+						
+						continue;
+					}
+					else{
+						events.push(event_temp_1);
+						array_occupied[start_day][start_temp] = 1;
+						start_temp++;
+						end_temp++;
+						if(start_temp == 24)
+							start_temp = 0;
+							
+						if(end_temp == 24)
+							end_temp = 0;
+							
+						if(start_temp ==0)
+							start_cross_day++;
+					}
+				
+					//db(event_temp_1);
+			
+					events.push(event_temp_1);
+					
+				}
+				events.splice(i,1);
+			}else{ 
+				if(array_occupied[start_day][start_temp] == 1){   // To avoid selecting time slot repeatedly
+						continue;
+					}
+				else{
+						array_occupied[start_day][start_temp] = 1;						
+				}
+			}	
+
+		}
+	
 		reportEvents(events);
 		var i, len=events.length,
 			dayEvents=[],
@@ -3682,7 +4013,6 @@ function AgendaEventRenderer() {
 		}
 		renderSlotSegs(compileSlotSegs(slotEvents), modifiedEventId);
 	}
-	
 	
 	function clearEvents() {
 		reportEventClear();
@@ -3719,7 +4049,8 @@ function AgendaEventRenderer() {
 			j, level,
 			k, seg,
 			segs=[];
-		for (i=0; i<colCnt; i++) {
+
+		for (i=0; i<colCnt; i++) {		
 			col = stackSegs(sliceSegs(events, visEventEnds, d, addMinutes(cloneDate(d), maxMinute-minMinute)));
 			countForwardSegs(col);
 			for (j=0; j<col.length; j++) {
@@ -3735,7 +4066,7 @@ function AgendaEventRenderer() {
 		}
 		return segs;
 	}
-	
+
 	
 	function slotEventEnd(event) {
 		if (event.end) {
@@ -3749,7 +4080,7 @@ function AgendaEventRenderer() {
 	// renders events in the 'time slots' at the bottom
 // Jerry5: genTable	
 	function renderSlotSegs(segs, modifiedEventId) {
-
+	
 		var i, segCnt=segs.length, seg,
 			event,
 			classes,
@@ -3771,7 +4102,8 @@ function AgendaEventRenderer() {
 			slotSegmentContainer = getSlotSegmentContainer(),
 			rtl, dis, dit,
 			colCnt = getColCnt();
-			
+	
+
 		if (rtl = opt('isRTL')) {
 			dis = -1;
 			dit = colCnt - 1;
@@ -3779,7 +4111,7 @@ function AgendaEventRenderer() {
 			dis = 1;
 			dit = 0;
 		}
-			
+
 		// calculate position/dimensions, create html
 		for (i=0; i<segCnt; i++) {
 			seg = segs[i];
@@ -3809,6 +4141,7 @@ function AgendaEventRenderer() {
 				(availWidth / (levelI + forward + 1) * levelI) // indentation
 				* dis + (rtl ? availWidth - outerWidth : 0);   // rtl*/
 // }
+
 			seg.top = top;
 			seg.left = left;
 			seg.outerWidth = outerWidth;
@@ -3817,11 +4150,11 @@ function AgendaEventRenderer() {
 		}
 		slotSegmentContainer[0].innerHTML = html; // faster than html()
 		eventElements = slotSegmentContainer.children();
-		
 		// retrieve elements, run through eventRender callback, bind event handlers
 		for (i=0; i<segCnt; i++) {
 			seg = segs[i];
 			event = seg.event;
+
 			eventElement = $(eventElements[i]); // faster than eq()
 			triggerRes = trigger('eventRender', event, event, eventElement);
 			if (triggerRes === false) {
@@ -3855,12 +4188,12 @@ function AgendaEventRenderer() {
 			if (eventElement = seg.element) {
 				val = vsideCache[key = seg.key = cssKey(eventElement[0])];
 				seg.vsides = val === undefined ? (vsideCache[key] = vsides(eventElement, true)) : val;
-				val = hsideCache[key];
+				/*val = hsideCache[key];
 				seg.hsides = val === undefined ? (hsideCache[key] = hsides(eventElement, true)) : val;
 				contentElement = eventElement.find('div.fc-event-content');
 				if (contentElement.length) {
 					seg.contentTop = contentElement[0].offsetTop;
-				}
+				}*/
 			}
 		}
 		// set all positions/dimensions at once
@@ -3869,7 +4202,7 @@ function AgendaEventRenderer() {
 			if(eventElement = seg.element){
 				//eventElement[0].style.width = Math.max(20, seg.outerWidth - seg.hsides + 5) + 'px';
 // Jerry5: set seg width, the default value is 87px.
-				eventElement[0].style.width = '87px'; 
+				eventElement[0].style.width = '93px'; 
 				//eventElement.draggable('option', 'revert', true);
 				height = Math.max(0, seg.outerHeight - seg.vsides);
 				eventElement[0].style.height = height + 'px';
@@ -3895,8 +4228,9 @@ function AgendaEventRenderer() {
 		var skinCss = getSkinCss(event, opt);
 		var skinCssAttr = (skinCss ? " style='" + skinCss + "'" : '');
 		var classes = ['fc-event', 'fc-event-skin', 'fc-event-vert'];
+
 		if (isEventDraggable(event)) {
-			classes.push('fc-event-draggable');
+			classes.push('fc-event-draggable');	
 		}
 		if (seg.isStart) {
 			classes.push('fc-corner-top');
@@ -3915,13 +4249,13 @@ function AgendaEventRenderer() {
 		}
 		html +=
 			" class='" + classes.join(' ') + "'" +
-			" style='position:absolute;z-index:8;top:" + seg.top + "px;left:" + seg.left + "px;" + skinCss + "'>" +
+			" id='"+event.id+"' onclick='$j(\"#calendar\").fullCalendar(\"removeEvents\", this.id);removeArrayFlag(this);' style='position:absolute;z-index:8;top:" + seg.top + "px;left:" + seg.left + "px;" + skinCss + "'>" +
 			"<div class='fc-event-inner fc-event-skin'" + skinCssAttr + ">" +
 			"<div class='fc-event-head fc-event-skin'" + skinCssAttr + ">" +
 			
 			"<div class='fc-event-time'>" +
-			"<img id='closeIcon"+event.id+"' src='/images/button-close.png' width='18px' height='18px' hspace='1' style='margin-left:0px;cursor:pointer;' title='Delete' onclick='$j(\"#calendar\").fullCalendar(\"removeEvents\","+event.id+");\'" +
-			"onmouseover='this.src=\"/images/button-close2.png\"' onmouseout='this.src=\"/images/button-close.png\"'>" +
+			//"<img id='closeIcon"+event.id+"' src='/images/button-close.png' width='18px' height='18px' hspace='1' style='margin-left:0px;cursor:pointer;' title='Delete' onclick='$j(\"#calendar\").fullCalendar(\"removeEvents\","+event.id+");\'" +
+			//"onmouseover='this.src=\"/images/button-close2.png\"' onmouseout='this.src=\"/images/button-close.png\"'>" +
 			"<span class='fc-event-time-text'>" +
 			htmlEscape(formatDates(event.start, event.end, opt('timeFormat'))) +
 			"</span>" +
@@ -3934,14 +4268,14 @@ function AgendaEventRenderer() {
 			"<div class='fc-event-title' style='display:none;width:80%;color:#FFF;'>" +
 			htmlEscape(event.title) +
 			"</div>" +
-			"<div><img src='/images/checked_parentctrl.png' hspace='1' style='margin-top:5px;margin-left:16px;'></div>" +
+			//"<div><img src='/images/checked_parentctrl.png' hspace='1' style='margin-top:5px;margin-left:16px;'></div>" +
 			"</div>" +
 			"<div class='fc-event-bg'" +
 			//"onmouseover='document.getElementById(\"closeIcon"+event.id+"\").style.visibility=\"visible\"'" +
 			"></div></div>"; // close inner
 		if (seg.isEnd && isEventResizable(event)) {
 			html +=
-				"<div class='ui-resizable-handle ui-resizable-s'>=</div>";
+				"<div class='ui-resizable-handle ui-resizable-s'></div>";
 		}
 		html +=
 			"</" + (url ? "a" : "div") + ">";
@@ -4091,6 +4425,7 @@ function AgendaEventRenderer() {
 		eventElement.draggable({
 			zIndex: 9,
 			scroll: false,
+			disabled:true,
 			grid: [colWidth, slotHeight],
 			axis: colCnt==1 ? 'y' : false,
 			opacity: opt('dragOpacity'),
@@ -4155,7 +4490,7 @@ function AgendaEventRenderer() {
 			var newEnd;
 			if (event.end) {
 				newEnd = addMinutes(cloneDate(event.end), minuteDelta);
-			}
+			}			
 			timeElement.text(formatDates(newStart, newEnd, opt('timeFormat')));
 		}
 		function resetElement() {
@@ -4178,6 +4513,7 @@ function AgendaEventRenderer() {
 		var slotDelta, prevSlotDelta;
 		var slotHeight = getSlotHeight();
 		eventElement.resizable({
+			disabled:true,
 			handles: {
 				s: 'div.ui-resizable-s'
 			},
@@ -4557,7 +4893,7 @@ function DayEventRenderer() {
 		daySegHandlers(segs, segmentContainer, modifiedEventId);
 		daySegCalcHSides(segs);
 		daySegSetWidths(segs);
-		daySegCalcHeights(segs);
+		daySegCalchttps://www.facebook.com/?ref=logoHeights(segs);
 		rowDivs = getRowDivs();
 		// set row heights, calculate event tops (in relation to row top)
 		for (rowI=0; rowI<rowCnt; rowI++) {
@@ -5225,6 +5561,8 @@ function HorizontalPositionCache(getElement) {
 
 })(jQuery);
 
+var array_occupied = new Array();
+
 	function generateCalendar(client){
 		var _date = new Date();
 		var d = _date.getDate() - _date.getDay(); // the date of this sunday
@@ -5233,15 +5571,22 @@ function HorizontalPositionCache(getElement) {
 		var _index = 0;
 		var _jData = "jData = [";
 		var MULTIFILTER_MACFILTER_DAYTIME_col = MULTIFILTER_MACFILTER_DAYTIME_row[client].split('<');
-
+		
+		for(i=0;i<7;i++){     // initial array_array_occupied
+			array_occupied[i] = new Array(24);
+			for(j=0;j<24;j++){
+				array_occupied[i][j] = 0;
+			}	
+		}
+		
 		if(MULTIFILTER_MACFILTER_DAYTIME_col != ""){
 			for(var i = 0; i < MULTIFILTER_MACFILTER_DAYTIME_col.length; i=i+2){
-				var test_startday = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(0,1));
+				/*var test_startday = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(0,1));
 				var test_endday = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(1,2));
 				var test_starttime = MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(2,4);
 				var test_endtime = MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(4,6);
 				_index = Math.round(Math.random()*10000);
-	
+
 				_jData += "{" +
 					"id: "+_index+"," +
 					"title: '"+MULTIFILTER_MACFILTER_DAYTIME_col[i]+"'," +
@@ -5250,12 +5595,66 @@ function HorizontalPositionCache(getElement) {
 					"allDay: false" +
 				"}";
 				if(i != MULTIFILTER_MACFILTER_DAYTIME_col.length-2)
-					_jData += ",";
+					_jData += ",";*/
+					
+				/*Jieming added to divide time slot*/
+				var test_startday = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(0,1));
+				var test_endday = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(1,2));
+				var test_starttime = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(2,4));
+				var test_endtime = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(4,6));
+				var duration_day = 0;
+				var duration = 0;
+				
+				if(test_endday - test_startday == 0 && MULTIFILTER_MACFILTER_DAYTIME_col[i+1] != "000000"){					
+					duration_day = 1;
+					duration = test_endtime- test_starttime;
+				}	
+				else{
+					if(test_endday == 0)    //for cross Saturday to Sunday
+						test_endday = 7;
+						
+					duration_day = test_endday - test_startday;
+					duration = (24- test_starttime) + (duration_day - 1)*24 + parseInt(test_endtime);
+				}
+				
+				var start_day_temp = test_startday;
+				var end_day_temp = test_startday;
+				var start_time_temp = test_starttime;
+				var end_time_temp = test_starttime + 1;
+				
+				for(j=0;j<duration;j++){
+					_index = Math.round(Math.random()*10000);
+					if(end_time_temp == 24){
+						end_time_temp = "00";
+						end_day_temp += 1;
+					}
+					
+					if(start_time_temp == 24){
+						start_time_temp = "00";
+						start_day_temp += 1;
+					}
+					
+					array_occupied[start_day_temp][start_time_temp] = 1;  // set array form value of NVRAM
+					
+					_jData += "{" +
+						"id: "+_index+"," +
+						"title: '"+MULTIFILTER_MACFILTER_DAYTIME_col[j]+"'," +
+						"start: '"+ new Date(y, m, d+start_day_temp, start_time_temp, 0) +"',"+
+						"end: '"+ new Date(y, m, d+end_day_temp, end_time_temp, 0) +"',"+
+						"allDay: false" +
+					"}";
+					//if(i != MULTIFILTER_MACFILTER_DAYTIME_col.length-2)
+						_jData += ",";		
+
+					start_time_temp++;
+					end_time_temp++;
+
+				}
 			}
 		}
 		_jData += "];";
 		eval(_jData);
-
+		
 		var calendar = $j('#calendar').fullCalendar({
 			header: {
 				left: 'prev,next today',
@@ -5291,12 +5690,20 @@ function SaveTmpData(_data){
 	var d = _date.getDate() - _date.getDay(); // the date of this sunday
 	var calEnd;
 	var calStart;
+	var array_temp = new Array();
+	for(i=0;i<7;i++){
+		array_temp[i] = new Array(24);
+		for(j=0;j<24;j++){
+			array_temp[i][j] = 0;
+		}	
+	}
+	
 	var elapsed_seconds = (((_date.getHours()*60) + _date.getMinutes())*60 + _date.getSeconds() )*1000; // calculate 
 	//calStart = _date.getTime() - _date.getDay()*86400000 - _date.getTime()%86400000 + _date.getTimezoneOffset()*60000;
 	//calEnd = _date.getTime() + (7-_date.getDay())*86400000 - _date.getTime()%86400000 + _date.getTimezoneOffset()*60000;
 	calStart = _date.getTime() - _date.getDay()*86400000 - elapsed_seconds ;
 	calEnd = _date.getTime() + (7-_date.getDay())*86400000 - elapsed_seconds ;
-
+	
 	var MULTIFILTER_MACFILTER_DAYTIME_row_title = "";
 	var MULTIFILTER_MACFILTER_DAYTIME_row_time = "";
 	MULTIFILTER_MACFILTER_DAYTIME_row[_client] = "";
@@ -5308,30 +5715,60 @@ function SaveTmpData(_data){
 		if(i > 0 && _data[i].event.id == _data[i-1].event.id)
 			continue;
 		else{
-			if(i != 0)
+			/*if(i != 0)
 				MULTIFILTER_MACFILTER_DAYTIME_row_title += "<"	
 				
 			MULTIFILTER_MACFILTER_DAYTIME_row_title += _data[i].event.title;
-			MULTIFILTER_MACFILTER_DAYTIME_row_title += "<"
-			if(_data[i].event.start.getTime() < calStart){				
+			MULTIFILTER_MACFILTER_DAYTIME_row_title += "<"*/
+
+			/*if(_data[i].event.start.getTime() < calStart){
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += "0";
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.end.getDay();
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += "00";
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += convHour(_data[i].event.end.getHours());			
 			}
-			else if(_data[i].event.end.getTime() >= calEnd){		
+			else if(_data[i].event.end.getTime() >= calEnd){			
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.start.getDay();
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += "6";
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += convHour(_data[i].event.start.getHours());			
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += "24";
 			}
-			else{
-				MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.start.getDay();
-				if(convHour(_data[i].event.end.getHours()) == "00"){
-					if(_data[i].event.end.getDay() != 0)
-						MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.end.getDay()-1;
-					else
-						MULTIFILTER_MACFILTER_DAYTIME_row_time += 6;
+			else{*/
+				var day_temp = _data[i].event.start.getDay();
+				var hours_temp = _data[i].event.start.getHours();			
+				if(_data[i].event.start.getDay() == _data[i].event.end.getDay()){
+					var duration = _data[i].event.end.getHours() - _data[i].event.start.getHours();
+					while(duration >0){
+						array_temp[day_temp][hours_temp] = 1;				
+						hours_temp++;
+						duration--;
+					}
+				}
+				else{
+					var duration_day = 0;
+					if(_data[i].event.end.getDay() - _data[i].event.start.getDay() < 0)
+						duration_day = 7 - _data[i].event.start.getDay();
+					else	
+						duration_day = _data[i].event.end.getDay() - _data[i].event.start.getDay();
+											
+					var duration = (24- _data[i].event.start.getHours()) + (duration_day - 1)*24 +  _data[i].event.end.getHours();	
+					while(duration >0){
+						array_temp[day_temp][hours_temp] = 1;
+						hours_temp++;
+						if(hours_temp == 24){
+							hours_temp =0;
+							day_temp++;
+							if(day_temp == 7)
+								day_temp = 0;
+						}
+						duration--;
+					}			
+				}
+				
+				//MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.start.getDay();
+
+				/*if(convHour(_data[i].event.end.getHours()) == "00"){					
+					MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.end.getDay()-1;
 				}	
 				else
 					MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.end.getDay();
@@ -5340,16 +5777,68 @@ function SaveTmpData(_data){
 				if(convHour(_data[i].event.end.getHours()) == "00")
 					MULTIFILTER_MACFILTER_DAYTIME_row_time += "24";	
 				else
-					MULTIFILTER_MACFILTER_DAYTIME_row_time += convHour(_data[i].event.end.getHours());
-			}
+					MULTIFILTER_MACFILTER_DAYTIME_row_time += convHour(_data[i].event.end.getHours());*/
+			//}
 		}
-		if(MULTIFILTER_MACFILTER_DAYTIME_row[_client].search(MULTIFILTER_MACFILTER_DAYTIME_row_time) > 0)
+		/*if(MULTIFILTER_MACFILTER_DAYTIME_row[_client].search(MULTIFILTER_MACFILTER_DAYTIME_row_time) > 0)
 			continue;
 		else{
 			MULTIFILTER_MACFILTER_DAYTIME_row[_client] += MULTIFILTER_MACFILTER_DAYTIME_row_title;
 			MULTIFILTER_MACFILTER_DAYTIME_row[_client] += MULTIFILTER_MACFILTER_DAYTIME_row_time;
-		}
+		}*/
 	}
+
+	var flag = 0;
+	var offset = 0;
+	var start_hours = "0";
+	var end_hours = "0";
+	var start_date = "0";
+	var end_date = "0";
+	for(i=0;i<7;i++){
+		for(j=0;j<24;j++){
+			if(MULTIFILTER_MACFILTER_DAYTIME_row[_client] != 0)
+				MULTIFILTER_MACFILTER_DAYTIME_row_title += "<";
+			
+			if(array_temp[i][j] == 1){
+				if(flag == 0){	
+					start_date = i;
+					if(j<10)
+						start_hours = "0"+j;
+					else
+						start_hours = j;
+											
+					flag = 1;
+				}
+				
+				if(i==6 && j == 23){			
+					if(MULTIFILTER_MACFILTER_DAYTIME_row[_client].length  != 0)
+						MULTIFILTER_MACFILTER_DAYTIME_row[_client] += "<";
+					
+					MULTIFILTER_MACFILTER_DAYTIME_row[_client] += "NoTitle" + "<";
+					MULTIFILTER_MACFILTER_DAYTIME_row[_client] += start_date.toString() + "0" + start_hours + "00";						
+				}
+			}
+			else{
+				if(flag == 1){
+					end_date = i;
+					if(j<10)
+						end_hours = "0"+j;
+					else
+						end_hours = j;
+					
+					flag = 0;
+					if(MULTIFILTER_MACFILTER_DAYTIME_row[_client].length  != 0)
+						MULTIFILTER_MACFILTER_DAYTIME_row[_client] += "<";
+					
+					//MULTIFILTER_MACFILTER_DAYTIME_row[_client] += _data[i].event.title + "<";
+					MULTIFILTER_MACFILTER_DAYTIME_row[_client] += "NoTitle" + "<";
+					MULTIFILTER_MACFILTER_DAYTIME_row[_client] += start_date.toString() + end_date.toString() + start_hours + end_hours;
+				}
+			}
+		}
+			
+	}
+	//db(MULTIFILTER_MACFILTER_DAYTIME_row[_client]);
 }
 
 function convHour(_num){
@@ -5358,3 +5847,142 @@ function convHour(_num){
 	else
 		return _num;
 }
+
+function removeArrayFlag(obj){
+	var x_index;
+	var y_index;
+
+	switch(obj.style.left){
+		case '67px':{ 
+			x_index = 0;
+			break;
+		}
+		case '164px':{ 
+			x_index = 1;
+			break;
+		}
+		case '261px':{ 
+			x_index = 2;
+			break;
+		}
+		case '358px':{ 
+			x_index = 3;
+			break;
+		}
+		case '455px':{ 
+			x_index = 4;
+			break;
+		}
+		case '552px':{ 
+			x_index = 5;
+			break;
+		}
+		case '649px':{ 
+			x_index = 6;
+			break;
+		}
+	}
+	
+	switch(obj.style.top){
+		case '0px':{ 
+			y_index = 0;
+			break;
+		}
+		case '23px':{ 
+			y_index = 1;
+			break;
+		}
+		case '47px':{ 
+			y_index = 2;
+			break;
+		}
+		case '71px':{ 
+			y_index = 3;
+			break;
+		}
+		case '95px':{ 
+			y_index = 4;
+			break;
+		}
+		case '119px':{ 
+			y_index = 5;
+			break;
+		}
+		case '143px':{ 
+			y_index = 6;
+			break;
+		}
+		case '167px':{ 
+			y_index = 7;
+			break;
+		}
+		case '191px':{ 
+			y_index = 8;
+			break;
+		}
+		case '215px':{ 
+			y_index = 9;
+			break;
+		}
+		case '239px':{ 
+			y_index = 10;
+			break;
+		}
+		case '263px':{ 
+			y_index = 11;
+			break;
+		}
+		case '287px':{ 
+			y_index = 12;
+			break;
+		}
+		case '311px':{ 
+			y_index = 13;
+			break;
+		}
+		case '335px':{ 
+			y_index = 14;
+			break;
+		}
+		case '359px':{ 
+			y_index = 15;
+			break;
+		}
+		case '383px':{ 
+			y_index = 16;
+			break;
+		}
+		case '407px':{ 
+			y_index = 17;
+			break;
+		}
+		case '431px':{ 
+			y_index = 18;
+			break;
+		}
+		case '455px':{ 
+			y_index = 19;
+			break;
+		}
+		case '479px':{ 
+			y_index = 20;
+			break;
+		}
+		case '503px':{ 
+			y_index = 21;
+			break;
+		}
+		case '527px':{ 
+			y_index = 22;
+			break;
+		}
+		case '551px':{ 
+			y_index = 23;
+			break;
+		}
+	}
+
+	array_occupied[x_index][y_index] = 0;
+}
+
+

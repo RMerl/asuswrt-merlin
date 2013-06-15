@@ -233,6 +233,43 @@ const char *ipv6_router_address(struct in6_addr *in6addr)
 	return addr6;
 }
 
+// trim useless 0 from IPv6 address
+const char *ipv6_address(const char *ipaddr6)
+{
+	struct in6_addr addr;
+	static char addr6[INET6_ADDRSTRLEN];
+
+	addr6[0] = '\0';
+
+	if (inet_pton(AF_INET6, ipaddr6, &addr) > 0)
+		inet_ntop(AF_INET6, &addr, addr6, sizeof(addr6));
+
+	return addr6;
+}
+
+// extract prefix from configured IPv6 address
+const char *ipv6_prefix(struct in6_addr *in6addr)
+{
+	static char prefix[INET6_ADDRSTRLEN + 1];
+	struct in6_addr addr;
+	int i, r;
+
+	prefix[0] = '\0';
+
+	if (inet_pton(AF_INET6, nvram_safe_get("ipv6_rtr_addr"), &addr) > 0) {
+		r = nvram_get_int("ipv6_prefix_length") ? : 64;
+		for (r = 128 - r, i = 15; r > 0; r -= 8) {
+			if (r >= 8)
+				addr.s6_addr[i--] = 0;
+			else
+				addr.s6_addr[i--] &= (0xff << r);
+		}
+		inet_ntop(AF_INET6, &addr, prefix, sizeof(prefix));
+	}
+
+	return prefix;
+}
+
 void reset_ipv6_linklocal_addr(const char *ifname, int flush)
 {
 	int sockfd;
@@ -364,7 +401,7 @@ char* INET6_rresolve(struct sockaddr_in6 *sin6, int numeric)
 
 	if (sin6->sin6_family != AF_INET6) {
 		fprintf(stderr, "rresolve: unsupported address family %d!",
-				  sin6->sin6_family);
+			sin6->sin6_family);
 		errno = EAFNOSUPPORT;
 		return NULL;
 	}
@@ -454,11 +491,11 @@ const char *ipv6_gateway_address()
 		r = 0;
 		do {
 			inet_pton(AF_INET6, addr6x + r,
-					  (struct sockaddr *) &snaddr6.sin6_addr);
+				  (struct sockaddr *) &snaddr6.sin6_addr);
 			snaddr6.sin6_family = AF_INET6;
 			naddr6 = INET6_rresolve((struct sockaddr_in6 *) &snaddr6,
-						   0x0fff /* Apparently, upstream never resolves. */
-						   );
+						0x0fff /* Apparently, upstream never resolves. */
+						);
 			inet_pton(AF_INET6, naddr6, &addr);
 
 			if (!r) {			/* 1st pass */
@@ -968,9 +1005,12 @@ uint32_t crc_calc(uint32_t crc, const char *buf, int len)
 void bcmvlan_models(int model, char *vlan)
 {
 	switch (model) {
+	case MODEL_RTAC68U:
+	case MODEL_RTAC56U:
 	case MODEL_RTAC66U:
 	case MODEL_RTN66U:
 	case MODEL_RTN16:
+	case MODEL_RTN16UHP:
 	case MODEL_RTN15U:
 		strcpy(vlan, "vlan1");
 		break;
@@ -980,6 +1020,7 @@ void bcmvlan_models(int model, char *vlan)
 	case MODEL_RTN12C1:
 	case MODEL_RTN12D1:
 	case MODEL_RTN12HP:
+	case MODEL_RTN14UHP:
 	case MODEL_RTN10U:
 	case MODEL_RTN10P:
 	case MODEL_RTN10D1:
@@ -1083,14 +1124,14 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 		// special handle for non-tag wan of broadcom solution
 		// pretend vlanX is must called after ethX
 		if(nvram_match("switch_wantag", "none")) { //Don't calc if select IPTV
-		   if(strlen(modelvlan) && strcmp(ifname, modelvlan)==0) {
-			backup_rx -= *rx;
-			backup_tx -= *tx;
+			if(strlen(modelvlan) && strcmp(ifname, modelvlan)==0) {
+				backup_rx -= *rx;
+				backup_tx -= *tx;
 
-			*rx2 = backup_rx;
-			*tx2 = backup_tx;				
-			strcpy(ifname_desc2, "INTERNET");
-		    }
+				*rx2 = backup_rx;
+				*tx2 = backup_tx;				
+				strcpy(ifname_desc2, "INTERNET");
+			}
 		}//End of switch_wantag
 		return 1;
 	}
@@ -1145,19 +1186,23 @@ int is_private_subnet(const char *ip)
 		return 0;
 }
 
-// clean_mode: 0~3, clean_time: 1~(LONG_MAX-1), threshold(KB): 0: always act, >0: act when lower than.
+// clean_mode: 0~3, clean_time: 0~(LONG_MAX-1), threshold(KB): 0: always act, >0: act when lower than.
 int free_caches(const char *clean_mode, const int clean_time, const unsigned int threshold){
 	int test_num;
 	FILE *fp;
 	char memdata[256] = {0};
 	unsigned int memfree = 0;
 
+#ifdef RTCONFIG_BCMARM
+	return 0;
+#endif
+
 	/* Paul add 2012/7/17, skip free caches for DSL model. */
 	#ifdef RTCONFIG_DSL
 		return 0;
 	#endif
 
-	if(!clean_mode || clean_time <= 0)
+	if(!clean_mode || clean_time < 0)
 		return -1;
 
 _dprintf("clean_mode(%s) clean_time(%d) threshold(%u)\n", clean_mode, clean_time, threshold);
@@ -1177,8 +1222,11 @@ _dprintf("%s: memfree=%u.\n", __FUNCTION__, memfree);
 				}
 			}
 			fclose(fp);
-
+#ifdef RTN14U
+			if((memfree*1024) > threshold){	//Byte
+#else			
 			if(memfree > threshold){
+#endif
 _dprintf("%s: memfree > threshold.\n", __FUNCTION__);
 				return 0;
 			}
@@ -1190,10 +1238,12 @@ _dprintf("%s: Start syncing...\n", __FUNCTION__);
 
 _dprintf("%s: Start cleaning...\n", __FUNCTION__);
 	f_write_string("/proc/sys/vm/drop_caches", clean_mode, 0, 0);
+	if(clean_time > 0){
 _dprintf("%s: waiting %d second...\n", __FUNCTION__, clean_time);
-	sleep(clean_time);
+		sleep(clean_time);
 _dprintf("%s: Finish.\n", __FUNCTION__);
-	f_write_string("/proc/sys/vm/drop_caches", FREE_MEM_NONE, 0, 0);
+		f_write_string("/proc/sys/vm/drop_caches", FREE_MEM_NONE, 0, 0);
+	}
 
 	return 0;
 }

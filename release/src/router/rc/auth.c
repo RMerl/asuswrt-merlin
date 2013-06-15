@@ -54,6 +54,8 @@ start_wpa_supplicant(int unit, int restart)
 	switch (get_model()) {
 	case MODEL_RTN66U:
 	case MODEL_RTAC66U:
+	case MODEL_RTAC68U:
+	case MODEL_RTAC56U:
 	case MODEL_RTN16:
 	case MODEL_RTN15U:
 		break;

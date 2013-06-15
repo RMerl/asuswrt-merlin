@@ -1,0 +1,10 @@
+/var/log/samba/log.winbindd {
+	weekly
+	missingok
+	rotate 7
+	postrotate
+	[ -f /var/run/samba/winbindd.pid ] && kill -HUP `cat /var/run/samba/winbindd.pid`
+	endscript
+	compress
+	notifempty
+}

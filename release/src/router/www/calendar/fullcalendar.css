@@ -273,7 +273,7 @@ html .fc,
 	
 a.fc-event,
 .fc-event-draggable {
-	cursor: move;
+	/*cursor: move;*/
 	}
 	
 a.fc-event {
@@ -286,12 +286,12 @@ a.fc-event {
 	
 .fc-event-skin {
 	border-color: #000;     /* default BORDER color */
-	background-color: #EC6; /* default BACKGROUND color */
-	background: url(/images/general_th.gif) repeat;
+	/*background-color: #EC6; /* default BACKGROUND color */
+	/*background: url(/images/general_th.gif) repeat;*/
 	color: #FFF;            /* default TEXT color */
-	-webkit-border-radius: 7px;
+	/*-webkit-border-radius: 7px;
 	-moz-border-radius: 7px;
-	border-radius: 7px;
+	border-radius: 7px;*/
 	}
 	
 .fc-event-inner {
@@ -446,6 +446,7 @@ table.fc-border-separate {
 .fc-border-separate tr.fc-last th,
 .fc-border-separate tr.fc-last td {
 	border-bottom-width: 1px;
+	border-right-width: 1px;
 	}
 	
 .fc-border-separate tbody tr.fc-first td,
@@ -510,10 +511,10 @@ table.fc-border-separate {
 	}
 	
 .fc-agenda .fc-agenda-axis {
-	width: 50px;
+	width: 55px;
 	padding: 0 4px;
 	vertical-align: middle;
-	text-align: right;
+	text-align: center;
 	white-space: nowrap;
 	font-weight: normal;
 	}
@@ -599,7 +600,7 @@ table.fc-border-separate {
 ------------------------------------------------------------------------*/
 
 .fc-event-vert {
-	border-width: 0 1px;
+	/*border-width: 0 1px;*/
 	}
 	
 .fc-event-vert .fc-event-head,
@@ -622,12 +623,14 @@ table.fc-border-separate {
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background: #fff;
-	opacity: .5;
+	/*background: #fff;*/
+	background: #9CB2BA;
+	/*opacity: .5;*/
 	filter: alpha(opacity=50);
-	-webkit-border-radius: 7px;
+	/*-webkit-border-radius: 7px;
 	-moz-border-radius: 7px;
-	border-radius: 7px;
+	border-radius: 7px;*/
+	cursor: pointer;
 	}
 	
 .fc .ui-draggable-dragging .fc-event-bg, /* TODO: something nicer like .fc-opacity */
@@ -646,10 +649,9 @@ table.fc-border-separate {
 	font-size: 11px  !important;
 	font-family: monospace;
 	text-align: center;
-	cursor: s-resize;
+	cursor: pointer;
 	}
 	
 .fc-agenda .ui-resizable-resizing { /* TODO: better selector */
 	_overflow: hidden;
 	}
-	

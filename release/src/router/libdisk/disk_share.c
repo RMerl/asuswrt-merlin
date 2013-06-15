@@ -31,8 +31,6 @@
 #include "disk_initial.h"
 #include "disk_share.h"
 
-#include <semaphore_mfp.h>
-
 extern void set_file_integrity(const char *const file_name){
 	unsigned long file_size;
 	char test_file[PATH_MAX], test_file_name[PATH_MAX];
@@ -1055,6 +1053,7 @@ extern int add_account(const char *const account, const char *const password){
 	int len;
 	char nvram_value[PATH_MAX], *ptr;
 	char ascii_user[64], ascii_passwd[64];
+	int lock;
 
 	if(account == NULL || strlen(account) <= 0){
 		usb_dbg("No input, \"account\".\n");
@@ -1101,9 +1100,9 @@ extern int add_account(const char *const account, const char *const password){
 		nvram_set("acc_num", "1");
 	}
 
-	spinlock_lock(SPINLOCK_NVRAMCommit);
+	lock = file_lock("nvramcommit");
 	nvram_commit();
-	spinlock_unlock(SPINLOCK_NVRAMCommit);
+	file_unlock(lock);
 
 	disk_list = read_disk_data();
 	if(disk_list == NULL){
@@ -1135,6 +1134,7 @@ extern int del_account(const char *const account){
 	char *tmp_ascii_user, *tmp_ascii_passwd, char_user[64];
 	DIR *opened_dir;
 	struct dirent *dp;
+	int lock;
 
 	if(account == NULL || strlen(account) <= 0){
 		usb_dbg("No input, \"account\".\n");
@@ -1196,9 +1196,9 @@ extern int del_account(const char *const account){
 #endif
 	}
 
-	spinlock_lock(SPINLOCK_NVRAMCommit);
+	lock = file_lock("nvramcommit");
 	nvram_commit();
-	spinlock_unlock(SPINLOCK_NVRAMCommit);
+	file_unlock(lock);
 
 	disk_list = read_disk_data();
 	if(disk_list == NULL){
@@ -1269,6 +1269,7 @@ extern int mod_account(const char *const account, const char *const new_account,
 	char *tmp_ascii_user, *tmp_ascii_passwd, char_user[64];
 	unsigned long file_size;
 	char file1[PATH_MAX], file2[PATH_MAX];
+	int lock;
 
 	if(account == NULL || strlen(account) <= 0){
 		usb_dbg("No input, \"account\".\n");
@@ -1344,9 +1345,9 @@ extern int mod_account(const char *const account, const char *const new_account,
 		free(nv);
 	nvram_set("acc_list", nvram_value);
 
-	spinlock_lock(SPINLOCK_NVRAMCommit);
+	lock = file_lock("nvramcommit");
 	nvram_commit();
-	spinlock_unlock(SPINLOCK_NVRAMCommit);
+	file_unlock(lock);
 
 	if(new_account == NULL || strlen(new_account) <= 0 || !strcmp(new_account, account))
 		return 0;

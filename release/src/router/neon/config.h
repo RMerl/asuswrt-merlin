@@ -125,13 +125,13 @@
 /* #undef HAVE_LIBPROXY */
 
 /* Define if you have libxml */
-#define HAVE_LIBXML 1
+#define HAVE_LIBXML	1
 
 /* Define to 1 if you have the <libxml/parser.h> header file. */
-#define HAVE_LIBXML_PARSER_H 1
+#define HAVE_LIBXML_PARSER_H	1
 
 /* Define to 1 if you have the <libxml/xmlversion.h> header file. */
-#define HAVE_LIBXML_XMLVERSION_H 1
+#define HAVE_LIBXML_XMLVERSION_H	1
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1

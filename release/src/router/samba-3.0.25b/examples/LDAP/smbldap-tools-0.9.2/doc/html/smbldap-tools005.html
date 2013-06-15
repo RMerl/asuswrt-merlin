@@ -1,0 +1,560 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+            "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+<HEAD>
+
+<META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<META name="GENERATOR" content="hevea 1.06">
+<TITLE>
+ Using the scripts
+</TITLE>
+</HEAD>
+<BODY >
+<A HREF="smbldap-tools004.html"><IMG SRC ="previous_motif.gif" ALT="Précédent"></A>
+<A HREF="index.html"><IMG SRC ="contents_motif.gif" ALT="Remonter"></A>
+<A HREF="smbldap-tools006.html"><IMG SRC ="next_motif.gif" ALT="Suivant"></A>
+<HR>
+
+<H2><A NAME="htoc13">4</A>&nbsp;&nbsp;Using the scripts</H2><UL>
+<LI><A HREF="smbldap-tools005.html#toc8"> Initial directory's population</A>
+<LI><A HREF="smbldap-tools005.html#toc9"> User management</A>
+<LI><A HREF="smbldap-tools005.html#toc10"> Group management</A>
+<LI><A HREF="smbldap-tools005.html#toc11"> Adding a interdomain trust account</A>
+</UL>
+
+<A NAME="toc8"></A>
+<H3><A NAME="htoc14">4.1</A>&nbsp;&nbsp;Initial directory's population</H3>
+You can initialize the LDAP directory using the
+<TT>smbldap-populate</TT> script. To do that, the account defined in
+the <TT>/etc/opt/IDEALX/smbldap-tools/smbldap_bind.conf</TT> to access the
+master directory <B>must</B> must be the manager account defined in the
+directory configuration. On RedHat system, this file is
+<TT>/etc/openldap/slapd.conf</TT> and the account is defined with
+<PRE>
+  rootdn          "cn=Manager,dc=idealx,dc=com"
+  rootpw          secret
+</PRE>The <TT>smbldap_bind.conf</TT> file must then be configured so that
+the parameters to connect to the master LDAP server match the previous ones:
+<PRE>
+  masterDN="cn=Manager,dc=idealx,dc=com"
+  masterPw="secret"
+</PRE>
+Available options for this script are summarized in the table <A HREF="#table::populate">1</A>:
+<BLOCKQUOTE><DIV ALIGN=center><HR WIDTH="80%" SIZE=2></DIV>
+ <A NAME="code_epsilon_var"></A>
+ <DIV ALIGN=center>
+ <TABLE BORDER=1 CELLSPACING=0 CELLPADDING=1>
+<TR><TD ALIGN=left NOWRAP>option</TD>
+<TD ALIGN=left NOWRAP>definition</TD>
+<TD ALIGN=left NOWRAP>default value</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>-u <I>uidNumber</I></TD>
+<TD ALIGN=left NOWRAP>first uidNumber to allocate</TD>
+<TD ALIGN=left NOWRAP>1000</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>-g <I>gidNumber</I></TD>
+<TD ALIGN=left NOWRAP>first uidNumber to allocate</TD>
+<TD ALIGN=left NOWRAP>1000</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>-a <I>user</I></TD>
+<TD ALIGN=left NOWRAP>administrator login name</TD>
+<TD ALIGN=left NOWRAP>Administrator</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>-b <I>user</I></TD>
+<TD ALIGN=left NOWRAP>guest login name</TD>
+<TD ALIGN=left NOWRAP>nobody</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>-e <I>file</I></TD>
+<TD ALIGN=left NOWRAP>export a init file</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>-i <I>file</I></TD>
+<TD ALIGN=left NOWRAP>import a init file</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+</TR></TABLE>
+ </DIV>
+ <BR>
+<DIV ALIGN=center>Table 1: Options available for the <TT>smbldap-populate</TT> script</DIV><BR>
+
+ <A NAME="table::populate"></A>
+<DIV ALIGN=center><HR WIDTH="80%" SIZE=2></DIV></BLOCKQUOTE>
+In the more general case, to set up your directory, simply use the
+following command:
+<PRE>
+[root@etoile root]# smbldap-populate 
+Using builtin directory structure
+adding new entry: dc=idealx,dc=com
+adding new entry: ou=Users,dc=idealx,dc=com
+adding new entry: ou=Groups,dc=idealx,dc=com
+adding new entry: ou=Computers,dc=idealx,dc=com
+adding new entry: ou=Idmap,dc=idealx,dc=org
+adding new entry: cn=NextFreeUnixId,dc=idealx,dc=org
+adding new entry: uid=Administrator,ou=Users,dc=idealx,dc=com
+adding new entry: uid=nobody,ou=Users,dc=idealx,dc=com
+adding new entry: cn=Domain Admins,ou=Groups,dc=idealx,dc=com
+adding new entry: cn=Domain Users,ou=Groups,dc=idealx,dc=com
+adding new entry: cn=Domain Guests,ou=Groups,dc=idealx,dc=com
+adding new entry: cn=Print Operators,ou=Groups,dc=idealx,dc=com
+adding new entry: cn=Backup Operators,ou=Groups,dc=idealx,dc=com
+adding new entry: cn=Replicator,ou=Groups,dc=idealx,dc=com
+adding new entry: cn=Domain Computers,ou=Groups,dc=idealx,dc=com
+</PRE>
+After this step, if you don't want to use the <TT>cn=Manager,dc=idealx,dc=com</TT>
+account anymore, you can create a dedicated account for Samba and the
+smbldap-tools. See section <A HREF="smbldap-tools009.html#change::manager">8.2</A> for more details.<BR>
+<BR>
+The <TT>cn=NextFreeUnixId,dc=idealx,dc=org</TT> entry is only used to
+defined the next uidNumber and gidNumber available for creating new
+users and groups. The default values for those numbers are 1000. You
+can change it with the <TT>-u</TT> and <TT>-g</TT> option. For
+example, if you want the first available value for uidNumber and
+gidNumber to be set to 1500, you can use the following command :
+<PRE>
+smbldap-populate -u 1550 -g 1500
+</PRE>
+<A NAME="toc9"></A>
+<H3><A NAME="htoc15">4.2</A>&nbsp;&nbsp;User management</H3>
+
+<H4><A NAME="htoc16">4.2.1</A>&nbsp;&nbsp;Adding a user</H4><A NAME="add::user"></A>
+To add a user, use the <TT>smbldap-useradd</TT> script. Available
+options are summarized in the table <A HREF="#table::add::user">2</A>. If applicable,
+default values are mentionned in the third column. Any string beginning with a
+$ symbol refers to a parameter defined in the
+<TT>/etc/opt/IDEALX/smbldap-tools/smbldap.conf</TT> configuration file.
+<BLOCKQUOTE><DIV ALIGN=center><HR WIDTH="80%" SIZE=2></DIV>
+ <DIV ALIGN=center>
+ <TABLE BORDER=1 CELLSPACING=0 CELLPADDING=1>
+<TR><TD VALIGN=top ALIGN=left>option</TD>
+<TD VALIGN=top ALIGN=left>definition</TD>
+<TD VALIGN=top ALIGN=left>example</TD>
+<TD VALIGN=top ALIGN=left>default value</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-a</TD>
+<TD VALIGN=top ALIGN=left>create a Windows account. Otherwise, only a Posix account
+ is created</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-w</TD>
+<TD VALIGN=top ALIGN=left>create a Windows Workstation account</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-i</TD>
+<TD VALIGN=top ALIGN=left>create an interdomain trust account. See section
+ <A HREF="#trust::account">4.4</A> for more details</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-u</TD>
+<TD VALIGN=top ALIGN=left>set a uid value</TD>
+<TD VALIGN=top ALIGN=left>-u 1003</TD>
+<TD VALIGN=top ALIGN=left>first uid available</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-g</TD>
+<TD VALIGN=top ALIGN=left>set a gid value</TD>
+<TD VALIGN=top ALIGN=left>-g 1003</TD>
+<TD VALIGN=top ALIGN=left>first gid available</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-G</TD>
+<TD VALIGN=top ALIGN=left>add the new account to one or several supplementary
+ groups (comma-separated)</TD>
+<TD VALIGN=top ALIGN=left>-G 512,550</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-d</TD>
+<TD VALIGN=top ALIGN=left>set the home directory</TD>
+<TD VALIGN=top ALIGN=left>-d /var/user</TD>
+<TD VALIGN=top ALIGN=left>$userHomePrefix/user</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-s</TD>
+<TD VALIGN=top ALIGN=left>set the login shell</TD>
+<TD VALIGN=top ALIGN=left>-s /bin/ksh</TD>
+<TD VALIGN=top ALIGN=left>$userLoginShell</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-c</TD>
+<TD VALIGN=top ALIGN=left>set the user gecos</TD>
+<TD VALIGN=top ALIGN=left>-c "admin user"</TD>
+<TD VALIGN=top ALIGN=left>$userGecos</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-m</TD>
+<TD VALIGN=top ALIGN=left>creates user's home directory and copies /etc/skel
+ into it</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-k</TD>
+<TD VALIGN=top ALIGN=left>set the skeleton dir (with -m)</TD>
+<TD VALIGN=top ALIGN=left>-k /etc/skel2</TD>
+<TD VALIGN=top ALIGN=left>$skeletonDir</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-P</TD>
+<TD VALIGN=top ALIGN=left>ends by invoking smbldap-passwd to set the user's
+ password</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-A</TD>
+<TD VALIGN=top ALIGN=left>user can change password ? 0 if no, 1 if yes</TD>
+<TD VALIGN=top ALIGN=left>-A 1</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-B</TD>
+<TD VALIGN=top ALIGN=left>user must change password at first session ? 0 if no, 1
+ if yes</TD>
+<TD VALIGN=top ALIGN=left>-B 1</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-C</TD>
+<TD VALIGN=top ALIGN=left>set the samba home share</TD>
+<TD VALIGN=top ALIGN=left>-C \\PDC\homes</TD>
+<TD VALIGN=top ALIGN=left>$userSmbHome</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-D</TD>
+<TD VALIGN=top ALIGN=left>set a letter associated with the home share</TD>
+<TD VALIGN=top ALIGN=left>-D H:</TD>
+<TD VALIGN=top ALIGN=left>$userHomeDrive</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-E</TD>
+<TD VALIGN=top ALIGN=left>set DOS script to execute on login</TD>
+<TD VALIGN=top ALIGN=left>-E common.bat</TD>
+<TD VALIGN=top ALIGN=left>$userScript</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-F</TD>
+<TD VALIGN=top ALIGN=left>set the profile directory</TD>
+<TD VALIGN=top ALIGN=left>-F \\PDC\profiles\user</TD>
+<TD VALIGN=top ALIGN=left>$userProfile</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-H</TD>
+<TD VALIGN=top ALIGN=left>set the samba account control bits
+ like'[NDHTUMWSLKI]'</TD>
+<TD VALIGN=top ALIGN=left>-H [X]</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-N</TD>
+<TD VALIGN=top ALIGN=left>set the canonical name of the user</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-S</TD>
+<TD VALIGN=top ALIGN=left>set the surname of the user</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-M</TD>
+<TD VALIGN=top ALIGN=left>local mailAddress (comma seperated)</TD>
+<TD VALIGN=top ALIGN=left>-M testuser,aliasuser</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-T</TD>
+<TD VALIGN=top ALIGN=left>forward mail address (comma seperated)</TD>
+<TD VALIGN=top ALIGN=left>-T
+ testuser@domain.org</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR></TABLE>
+ </DIV>
+ <BR>
+<DIV ALIGN=center>Table 2: Options available to the <TT>smbldap-useradd</TT> script</DIV><BR>
+
+ <A NAME="table::add::user"></A>
+<DIV ALIGN=center><HR WIDTH="80%" SIZE=2></DIV></BLOCKQUOTE>
+
+For example, if you want to add a user named <I>user_admin</I> and who : 
+<UL><LI>
+is a windows user
+<LI>must belong to the group of gid=512 ('Domain Admins' group)
+<LI>has a home directory
+<LI>does not have a login shell
+<LI>has a homeDirectory set to /dev/null
+<LI>does not have a roaming profile
+<LI>and for whom we want to set a first login password
+</UL>
+you must invoke:
+<PRE>
+smbldap-useradd -a -G 512 -m -s /bin/false -d /dev/null -F "" -P user_admin
+</PRE>
+
+<H4><A NAME="htoc17">4.2.2</A>&nbsp;&nbsp;Removing a user</H4>
+To remove a user account, use the <TT>smbldap-userdel</TT> script.
+Available options are
+<BLOCKQUOTE><DIV ALIGN=center><HR WIDTH="80%" SIZE=2></DIV>
+ <DIV ALIGN=center>
+ <TABLE BORDER=1 CELLSPACING=0 CELLPADDING=1>
+<TR><TD ALIGN=left NOWRAP>option</TD>
+<TD ALIGN=left NOWRAP>definition</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>-r</TD>
+<TD ALIGN=left NOWRAP>remove home directory</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>-R</TD>
+<TD ALIGN=left NOWRAP>remove home directory interactively</TD>
+</TR></TABLE>
+ </DIV>
+ <BR>
+<DIV ALIGN=center>Table 3: Option available to the <TT>smbldap-userdel</TT> script</DIV><BR>
+
+ <A NAME="table::del::user"></A>
+<DIV ALIGN=center><HR WIDTH="80%" SIZE=2></DIV></BLOCKQUOTE>
+For example, if you want to remove the <I>user1</I> account
+from the LDAP directory, and if you also want to delete his home
+directory, use the following command :
+<PRE>
+smbldap-userdel -r user1
+</PRE>
+Note: '-r' is dangerous as it may delete precious and unbackuped data,
+please be careful.<BR>
+<BR>
+
+<H4><A NAME="htoc18">4.2.3</A>&nbsp;&nbsp;Modifying a user</H4><A NAME="modify::user"></A>
+To modify a user account, use the <TT>smbldap-usermod</TT> script.
+Availables options are listed in the table <A HREF="#table::modify::user">4</A>.
+<BLOCKQUOTE><DIV ALIGN=center><HR WIDTH="80%" SIZE=2></DIV>
+ <DIV ALIGN=center>
+ <TABLE BORDER=1 CELLSPACING=0 CELLPADDING=1>
+<TR><TD VALIGN=top ALIGN=left>option</TD>
+<TD VALIGN=top ALIGN=left>definition</TD>
+<TD VALIGN=top ALIGN=left>example</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-c</TD>
+<TD VALIGN=top ALIGN=left>set the user gecos</TD>
+<TD VALIGN=top ALIGN=left>-c "admin user"</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-d</TD>
+<TD VALIGN=top ALIGN=left>set the home directory</TD>
+<TD VALIGN=top ALIGN=left>-d /var/user</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-u</TD>
+<TD VALIGN=top ALIGN=left>set a uid value</TD>
+<TD VALIGN=top ALIGN=left>-u 1003</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-g</TD>
+<TD VALIGN=top ALIGN=left>set a gid value</TD>
+<TD VALIGN=top ALIGN=left>-g 1003</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-G</TD>
+<TD VALIGN=top ALIGN=left>add the new account to one or several supplementary
+ groups (comma-separated)</TD>
+<TD VALIGN=top ALIGN=left>-G 512,550</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>	</TD>
+<TD VALIGN=top ALIGN=left>			</TD>
+<TD VALIGN=top ALIGN=left>-G -512,550</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>	</TD>
+<TD VALIGN=top ALIGN=left>			</TD>
+<TD VALIGN=top ALIGN=left>-G +512,550</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-s</TD>
+<TD VALIGN=top ALIGN=left>set the login shell</TD>
+<TD VALIGN=top ALIGN=left>-s /bin/ksh</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-N</TD>
+<TD VALIGN=top ALIGN=left>set the canonical name of the user</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-S</TD>
+<TD VALIGN=top ALIGN=left>set the surname of the user</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-P</TD>
+<TD VALIGN=top ALIGN=left>ends by invoking smbldap-passwd to set the user's password</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-a</TD>
+<TD VALIGN=top ALIGN=left>add sambaSAMAccount objectclass</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-e</TD>
+<TD VALIGN=top ALIGN=left>set an expiration date for the password (format: YYYY-MM-DD HH:MM:SS)</TD>
+<TD VALIGN=top ALIGN=left>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-A</TD>
+<TD VALIGN=top ALIGN=left>user can change password ? 0 if no, 1 if yes</TD>
+<TD VALIGN=top ALIGN=left>-A 1</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-B</TD>
+<TD VALIGN=top ALIGN=left>user must change password at first session ? 0 if no, 1
+ if yes</TD>
+<TD VALIGN=top ALIGN=left>-B 1</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-C</TD>
+<TD VALIGN=top ALIGN=left>set the samba home share</TD>
+<TD VALIGN=top ALIGN=left>-C \\PDC\homes</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>	</TD>
+<TD VALIGN=top ALIGN=left>	</TD>
+<TD VALIGN=top ALIGN=left>-C ""</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-D</TD>
+<TD VALIGN=top ALIGN=left>set a letter associated with the home share</TD>
+<TD VALIGN=top ALIGN=left>-D H:</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>	</TD>
+<TD VALIGN=top ALIGN=left>	</TD>
+<TD VALIGN=top ALIGN=left>-D ""</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-E</TD>
+<TD VALIGN=top ALIGN=left>set DOS script to execute on login</TD>
+<TD VALIGN=top ALIGN=left>-E common.bat</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>	</TD>
+<TD VALIGN=top ALIGN=left>	</TD>
+<TD VALIGN=top ALIGN=left>-E ""</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-F</TD>
+<TD VALIGN=top ALIGN=left>set the profile directory</TD>
+<TD VALIGN=top ALIGN=left>-F \\PDC\profiles\user</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>	</TD>
+<TD VALIGN=top ALIGN=left>	</TD>
+<TD VALIGN=top ALIGN=left>-F ""</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-H</TD>
+<TD VALIGN=top ALIGN=left>set the samba account control bits like'[NDHTUMWSLKI]'</TD>
+<TD VALIGN=top ALIGN=left>-H [X]</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-I</TD>
+<TD VALIGN=top ALIGN=left>disable a user account</TD>
+<TD VALIGN=top ALIGN=left>-I 1</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-J</TD>
+<TD VALIGN=top ALIGN=left>enable a user</TD>
+<TD VALIGN=top ALIGN=left>-J 1</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-M</TD>
+<TD VALIGN=top ALIGN=left>local mailAddress (comma seperated)</TD>
+<TD VALIGN=top ALIGN=left>-M testuser,aliasuser</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-T</TD>
+<TD VALIGN=top ALIGN=left>forward mail address (comma seperated)</TD>
+<TD VALIGN=top ALIGN=left>-T 
+ testuser@domain.org</TD>
+</TR></TABLE>
+ </DIV>
+ <BR>
+<DIV ALIGN=center>Table 4: Options available to the <TT>smbldap-usermod</TT> script</DIV><BR>
+
+ <A NAME="table::modify::user"></A>
+<DIV ALIGN=center><HR WIDTH="80%" SIZE=2></DIV></BLOCKQUOTE>
+You can also use the <TT>smbldap-userinfo</TT> script to update user's information. This script can
+also be used by users themselves to update their own informations listed in the tables
+<A HREF="#table::modify::self::user">5</A> (adequats ACL must be set in the directory server). Available
+options are&nbsp;:
+<BLOCKQUOTE><DIV ALIGN=center><HR WIDTH="80%" SIZE=2></DIV>
+ <DIV ALIGN=center>
+ <TABLE BORDER=1 CELLSPACING=0 CELLPADDING=1>
+<TR><TD VALIGN=top ALIGN=left>option</TD>
+<TD VALIGN=top ALIGN=left>definition</TD>
+<TD VALIGN=top ALIGN=left>example</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-f</TD>
+<TD VALIGN=top ALIGN=left>set the full name's user</TD>
+<TD VALIGN=top ALIGN=left>-f MyName</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-r</TD>
+<TD VALIGN=top ALIGN=left>set the room number</TD>
+<TD VALIGN=top ALIGN=left>-r 99</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-w</TD>
+<TD VALIGN=top ALIGN=left>set the work phone number</TD>
+<TD VALIGN=top ALIGN=left>-w 111111111</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-h</TD>
+<TD VALIGN=top ALIGN=left>set the home phone number</TD>
+<TD VALIGN=top ALIGN=left>-h 222222222</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-o</TD>
+<TD VALIGN=top ALIGN=left>set other information (in gecos definition)</TD>
+<TD VALIGN=top ALIGN=left>-o "second stage"</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left>-s</TD>
+<TD VALIGN=top ALIGN=left>set the default bash</TD>
+<TD VALIGN=top ALIGN=left>-s /bin/ksh</TD>
+</TR></TABLE>
+ </DIV>
+ <BR>
+<DIV ALIGN=center>Table 5: Options available to the <TT>smbldap-userinfo</TT> script</DIV><BR>
+
+ <A NAME="table::modify::self::user"></A>
+<DIV ALIGN=center><HR WIDTH="80%" SIZE=2></DIV></BLOCKQUOTE>
+<A NAME="toc10"></A>
+<H3><A NAME="htoc19">4.3</A>&nbsp;&nbsp;Group management</H3>
+
+<H4><A NAME="htoc20">4.3.1</A>&nbsp;&nbsp;Adding a group</H4>
+To add a new group in the LDAP directory, use the <TT>smbldap-groupadd</TT>
+script. Available options are listed in the table
+<A HREF="#table::add::group">6</A>.
+<BLOCKQUOTE><DIV ALIGN=center><HR WIDTH="80%" SIZE=2></DIV>
+ <DIV ALIGN=center>
+ <TABLE BORDER=1 CELLSPACING=0 CELLPADDING=1>
+<TR><TD VALIGN=top ALIGN=left NOWRAP>option</TD>
+<TD VALIGN=top ALIGN=left>definition</TD>
+<TD VALIGN=top ALIGN=left NOWRAP>example</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left NOWRAP>-a</TD>
+<TD VALIGN=top ALIGN=left>add automatic group mapping entry</TD>
+<TD VALIGN=top ALIGN=left NOWRAP>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left NOWRAP>-g <TT>gid</TT></TD>
+<TD VALIGN=top ALIGN=left>set the <I>gidNumer</I> for this group to
+ <I>gid</I></TD>
+<TD VALIGN=top ALIGN=left NOWRAP><TT>-g 1002</TT></TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left NOWRAP>-o</TD>
+<TD VALIGN=top ALIGN=left>gidNumber is not unique</TD>
+<TD VALIGN=top ALIGN=left NOWRAP>&nbsp;</TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left NOWRAP>-r <TT>group-rid</TT></TD>
+<TD VALIGN=top ALIGN=left>set the rid of the group to
+ <I>group-rid</I></TD>
+<TD VALIGN=top ALIGN=left NOWRAP><TT>-r 1002</TT></TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left NOWRAP>-s <TT>group-sid</TT></TD>
+<TD VALIGN=top ALIGN=left>set the sid of the group to
+ <I>group-sid</I></TD>
+<TD VALIGN=top ALIGN=left NOWRAP><TT><FONT SIZE=1>-s
+ S-1-5-21-3703471949-3718591838-2324585696-1002</FONT></TT></TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left NOWRAP>-t <TT>group-type</TT></TD>
+<TD VALIGN=top ALIGN=left>set the <I>sambaGroupType</I> to
+ <I>group-type</I></TD>
+<TD VALIGN=top ALIGN=left NOWRAP><TT>-t 2</TT></TD>
+</TR>
+<TR><TD VALIGN=top ALIGN=left NOWRAP>-p</TD>
+<TD VALIGN=top ALIGN=left>print the gidNumber to stdout</TD>
+<TD VALIGN=top ALIGN=left NOWRAP>&nbsp;</TD>
+</TR></TABLE>
+ </DIV>
+ <BR>
+<DIV ALIGN=center>Table 6: Options available for the <TT>smbldap-groupadd</TT> script</DIV><BR>
+
+ <A NAME="table::add::group"></A>
+<DIV ALIGN=center><HR WIDTH="80%" SIZE=2></DIV></BLOCKQUOTE>
+
+<H4><A NAME="htoc21">4.3.2</A>&nbsp;&nbsp;Removing a group</H4>
+To remove the group named <TT>group1</TT>, just use the following
+command :
+<PRE>
+smbldap-userdel group1
+</PRE>
+<A NAME="toc11"></A>
+<H3><A NAME="htoc22">4.4</A>&nbsp;&nbsp;Adding a interdomain trust account</H3><A NAME="trust::account"></A>
+To add an interdomain trust account to the primary controller <I>trust-pdc</I>, use the <TT>-i</TT> option of
+<TT>smbldap-useradd</TT> as follows :
+<PRE>
+[root@etoile root]# smbldap-useradd -i trust-pdc
+New password : *******
+Retype new password : *******
+</PRE>
+The script will terminate asking for a password for this trust
+account. The account will be created in the directory branch where
+all computer accounts are stored (<TT>ou=Computers</TT> by
+default). The only two particularities of this account are that you are
+setting a password for this account, and the flags of this account are
+<TT>[I          ]</TT>.
+ <HR>
+<A HREF="smbldap-tools004.html"><IMG SRC ="previous_motif.gif" ALT="Précédent"></A>
+<A HREF="index.html"><IMG SRC ="contents_motif.gif" ALT="Remonter"></A>
+<A HREF="smbldap-tools006.html"><IMG SRC ="next_motif.gif" ALT="Suivant"></A>
+</BODY>
+</HTML>

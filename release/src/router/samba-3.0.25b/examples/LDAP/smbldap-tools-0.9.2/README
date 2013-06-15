@@ -1,0 +1,87 @@
+# $Source: /opt/cvs/samba/smbldap-tools/README,v $
+#
+
+Latest version may be found at http://samba.idealx.org/
+
+
+What those tools are for?
+=-=-=-=-=-=-=-=-=-=-=-=-=
+
+A collection of scripts, «over» user{add,del,mod} and group{add,del,mod}
+system tools to manipulate users and groups stored in LDAP directory,
+for DEN system like SAMBA-LDAP and pam/nss_ldap systems.
+
+Additionnaly, some scripts are designed to ease your migration from
+a Windows NT 4.0 PDC Server to a Samba-LDAP PDC Server (Killer?;-):
+smbldap-populate, smbldap-migrate-groups, smbldap-migrate-accounts.
+
+They are currently used with Samba 2.2.4, therefore you may (will) have
+to make some fixes for Samba TNG and Samba 3.0. Hint: contribs welcome :)
+
+In the future, some other function may come (like backup and restore,
+Novell migration tools, samba system activity report, dealing with
+mail functions, compliance to RFC2307...): consult TODO.
+
+
+What do SMBLDAP-TOOLS provide?
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Those tools provide the following functions :
+ . populate LDAP database with a basic LDIF
+ . add a user or group
+ . delete a user or group
+ . modify all users or groups data (all attributes types stored in
+   posixAccount and sambaAccount object class)
+Taking care of :
+ . staying compatible with all standard system tools options
+   (user/group{add,del,mod})
+ . be extensible for future developments
+   (manipulation of shadow account options, for example)
+ . error management, in the way system tools do
+Constraints :
+ . usage of PERL (portability)
+ . all options must be placed in an external configuration file
+ . english localization
+
+The current release uses the "mkntpwd" program, in mkntpwd.tar.gz
+in the current directory. It comes from
+http://www.demog.berkeley.edu/~aperrin/tips/src/mkntpwd.tar.gz
+It allows to not use smbpasswd (if $with_smbpasswd == 0 in smbldap_conf.pm)
+
+What do SMBLDAP-TOOLS deliver?
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+Contents :
+ . scripts (see FILES)
+ . user documentation in pod format, included in the sources
+   (or just use the -? option)
+
+These tools aim at delivering the same functionality as the corresponding
+system tools. However they may not be all implemented yet.
+Current limitations :
+ . no shadow support
+ . cannot change uid with usermod
+ . no UTF-8 support (thus ASCII-7 only)
+
+
+How to generate documentation?
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Just issue the following command:
+ perldoc name_of_script.pl (ex: perldoc smbldap-useradd.pl)
+
+Where can I find the latest release of those scripts?
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Just fire any web browser to http://samba.IDEALX.org/
+and/or contact samba@IDEALX.org
+
+Additionnaly, you will find an useful Webmin module
+at http://webmin.IDEALX.org/ if interested in a graphical 
+user interface to manager user and groups accounts via Webmin
+for your Samba+LDAP PDC.
+
+Let us know if these tools helped you, or if we should enhance
+them with some functions you want them to support.
+
+Sincerly,
+	LEM
+
+# - The End

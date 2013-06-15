@@ -44,18 +44,20 @@ void start_jffs2(void)
 	int part;
 	const char *p;
 	struct statfs sf;
+	int model = 0;
 
 	if (!wait_action_idle(10)) return;
 
 	if (!mtd_getinfo("jffs2", &part, &size)) return;
 
+	model = get_model();
 _dprintf("*** jffs2: %d, %d\n", part, size);
 	if (nvram_match("jffs2_format", "1")) {
 		nvram_set("jffs2_format", "0");
-		nvram_commit_x();
-		if (!mtd_erase(JFFS_NAME)) {
-			error("formatting");
-			return;
+
+		if( (model==MODEL_RTAC56U || model==MODEL_RTAC68U) ^ (!mtd_erase(JFFS_NAME)) ){
+                        error("formatting");
+                        return;
 		}
 
 		format = 1;
@@ -74,10 +76,29 @@ _dprintf("*** jffs2: %d, %d\n", part, size);
 		}
 	}
 
-	if ((statfs("/jffs", &sf) == 0) && (sf.f_type != 0x71736873 /* squashfs */)) {
-		// already mounted
-		notice_set("jffs", format ? "Formatted" : "Loaded");
-		return;
+	if (statfs("/jffs", &sf) == 0) { 
+		switch(model) {
+			case MODEL_RTAC56U: 
+			case MODEL_RTAC68U: 
+			case MODEL_RTN65U: 
+			{
+				if (sf.f_type != 0x73717368 /* squashfs */) {
+					// already mounted
+					notice_set("jffs", format ? "Formatted" : "Loaded");
+					return;
+				}
+				break;
+			}
+			default:
+			{
+	                        if (sf.f_type != 0x71736873 /* squashfs */) {
+        	                        // already mounted
+                	                notice_set("jffs", format ? "Formatted" : "Loaded");
+                        	        return;
+				}
+				break;
+			}
+		}
 	}
 	if (nvram_get_int("jffs2_clean_fs")) {
 		if (!mtd_unlock("jffs2")) {
@@ -90,10 +111,10 @@ _dprintf("*** jffs2: %d, %d\n", part, size);
 
 	if (mount(s, "/jffs", JFFS_NAME, MS_NOATIME, "") != 0) {
 _dprintf("*** jffs2 mount error\n");
-		if (!mtd_erase(JFFS_NAME)) {
-			error("formatting");
-			return;
-		}
+                if( (get_model()==MODEL_RTAC56U || get_model()==MODEL_RTAC68U) ^ (!mtd_erase(JFFS_NAME)) ){
+                        error("formatting");
+                        return;
+                }
 
 		format = 1;
 		if (mount(s, "/jffs", JFFS_NAME, MS_NOATIME, "") != 0) {
@@ -125,6 +146,7 @@ _dprintf("*** jffs2 mount error\n");
 		_dprintf("Clean /jffs/*\n");
 		system("rm -fr /jffs/*");
 		nvram_unset("jffs2_clean_fs");
+		nvram_commit_x();
 	}
 
 	notice_set("jffs", format ? "Formatted" : "Loaded");

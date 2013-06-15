@@ -40,11 +40,21 @@
 #include <ra3052.h>
 #endif
 
+#if defined(RTN14U)
+#ifdef HWNAT_FIX
+#include <sys/shm.h>
+#include <sys/ipc.h>
+int shm_client_info_id;
+void *shared_client_info=(void *) 0;
+int *hwnat_rst_unlock=0;
+#endif
+#endif 
+
 void init_devs(void)
 {
 #define MKNOD(name,mode,dev)	if(mknod(name,mode,dev)) perror("## mknod " name)
 
-#if defined(LINUX30)
+#if defined(LINUX30) && !defined(RTN14U)
 	/* Below device node are used by proprietary driver.
 	 * Thus, we cannot use GPL-only symbol to create/remove device node dynamically.
 	 */
@@ -57,10 +67,16 @@ void init_devs(void)
 	MKNOD("/dev/nvram", S_IFCHR | 0x666, makedev(228, 0));
 #else
 	MKNOD("/dev/video0", S_IFCHR | 0x666, makedev(81, 0));
+#if !defined(RTN14U)
 	MKNOD("/dev/rtkswitch", S_IFCHR | 0x666, makedev(206, 0));
+#endif
 	MKNOD("/dev/spiS0", S_IFCHR | 0x666, makedev(217, 0));
 	MKNOD("/dev/i2cM0", S_IFCHR | 0x666, makedev(218, 0));
+#if defined(RTN14U)
+	MKNOD("/dev/rdm0", S_IFCHR | 0x666, makedev(253, 0));
+#else
 	MKNOD("/dev/rdm0", S_IFCHR | 0x666, makedev(254, 0));
+#endif
 	MKNOD("/dev/flash0", S_IFCHR | 0x666, makedev(200, 0));
 	MKNOD("/dev/swnat0", S_IFCHR | 0x666, makedev(210, 0));
 	MKNOD("/dev/hwnat0", S_IFCHR | 0x666, makedev(220, 0));
@@ -129,6 +145,24 @@ void generate_switch_para(void)
 
 static void init_switch_ralink(void)
 {
+#if defined(RTN14U)
+#ifdef HWNAT_FIX
+	shm_client_info_id = shmget((key_t)1001, sizeof(int), 0666|IPC_CREAT);
+	if (shm_client_info_id == -1){
+ 		 _dprintf("hwnat rst:shmget failed1\n");
+	         goto err;
+	}
+
+        shared_client_info = shmat(shm_client_info_id,(void *) 0,0);
+	if (shared_client_info == (void *)-1){
+	   	 _dprintf("hwnat rst:shmat failed2\n");
+	         goto err;
+	}	    
+	hwnat_rst_unlock= (int *)shared_client_info;
+	*hwnat_rst_unlock=0;
+err:
+#endif	
+#endif	
 	generate_switch_para();
 
 	// TODO: replace to nvram controlled procedure later
@@ -142,6 +176,9 @@ static void init_switch_ralink(void)
 		else
 			eval("ifconfig", nvram_safe_get("wan0_ifname"), "hw", "ether", nvram_safe_get("et0macaddr"));
 	}
+#if defined(RTN14U)
+	system("rtkswitch 8 0"); //Barton add
+#endif
 	config_switch();
 #endif
 
@@ -158,6 +195,7 @@ static void init_switch_ralink(void)
 	}
 #endif
 //	reinit_hwnat();
+
 }
 
 void init_switch()
@@ -471,7 +509,7 @@ void config_switch()
 		if (controlrate_broadcast)
 		{
 			sprintf(parm_buf, "%d", controlrate_broadcast);
-			eval("rtkswitch", "24", parm_buf);
+			eval("rtkswitch", "25", parm_buf);
 		}
 	}
 	else if (is_apmode_enabled())
@@ -563,6 +601,7 @@ void init_syspara(void)
 	nvram_set("buildno", rt_serialno);
 	nvram_set("extendno", rt_extendno);
 	nvram_set("buildinfo", rt_buildinfo);
+	nvram_set("swpjverno", rt_swpjverno);
 
 	/* /dev/mtd/2, RF parameters, starts from 0x40000 */
 	dst = buffer;
@@ -584,6 +623,7 @@ void init_syspara(void)
 			ether_etoa(buffer, macaddr);
 	}
 
+#if !defined(RTN14U) // single band
 	if (FRead(dst, OFFSET_MAC_ADDR_2G, bytes)<0)
 	{
 		_dprintf("READ MAC address 2G: Out of scope\n");
@@ -593,16 +633,25 @@ void init_syspara(void)
 		if (buffer[0]!=0xff)
 			ether_etoa(buffer, macaddr2);
 	}
+#endif
 
+#if defined(RTN14U) // single band
+	if (!ralink_mssid_mac_validate(macaddr))
+#else
 	if (!ralink_mssid_mac_validate(macaddr) || !ralink_mssid_mac_validate(macaddr2))
+#endif
 		nvram_set("wl_mssid", "0");
 	else
 		nvram_set("wl_mssid", "1");
 
+#if defined(RTN14U) // single band
+	nvram_set("et0macaddr", macaddr);
+	nvram_set("et1macaddr", macaddr);
+#else
 	//TODO: separate for different chipset solution
 	nvram_set("et0macaddr", macaddr);
 	nvram_set("et1macaddr", macaddr2);
-	
+#endif
 
 	if (FRead(dst, OFFSET_MAC_GMAC0, bytes)<0)
 		dbg("READ MAC address GMAC0: Out of scope\n");
@@ -791,7 +840,7 @@ void init_syspara(void)
 		char modelname[16];
 		FRead(modelname, OFFSET_ODMPID, sizeof(modelname));
 		modelname[sizeof(modelname)-1] = '\0';
-		if(modelname[0] != 0 && (unsigned char)(modelname[0]) != 0xff && is_valid_hostname(modelname))
+		if(modelname[0] != 0 && (unsigned char)(modelname[0]) != 0xff && is_valid_hostname(modelname) && strcmp(modelname, "ASUS"))
 		{
 			nvram_set("odmpid", modelname);
 		}
@@ -824,6 +873,30 @@ int is_module_loaded(const char *module)
 	return 0;
 }
 
+
+
+#if defined(RTN14U)
+#ifdef HWNAT_FIX
+void hwnat_workaround(void)
+{   
+	int t;
+
+	//_dprintf("--fix--\n");
+	if(t=is_module_loaded("hw_nat")) modprobe_r("hw_nat");
+	 
+	usleep(100000);
+	system("reg s 0xb0000000");
+	system("reg w 0x34 0x80000000");
+	usleep(200000);
+	system("reg w 0x34 0x0");
+	usleep(200000);
+	
+	if(t)  modprobe("hw_nat");
+}
+#endif
+#endif	
+
+
 // only ralink solution can reload it dynamically
 void reinit_hwnat()
 {
@@ -834,6 +907,12 @@ void reinit_hwnat()
 	// in restart_wireless for wlx_mrate_x
 	
 	if (nvram_get_int("hwnat")) {
+#if defined(RTN14U)	
+#ifdef HWNAT_FIX
+		   if(*hwnat_rst_unlock)
+			hwnat_workaround();
+#endif 
+#endif		   
 		if (is_nat_enabled() && !nvram_get_int("qos_enable") /*&&*/
 			/* TODO: consider RTCONFIG_DUALWAN case */
 //			!nvram_match("wan0_proto", "l2tp") &&

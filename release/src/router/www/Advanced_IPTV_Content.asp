@@ -47,7 +47,7 @@ function initial(){
 
 	disable_udpxy();
 	
-	if(Rawifi_support == -1)	//rawifi platform without this item, by Viz 2012.01
+	if(!Rawifi_support)	//rawifi platform without this item, by Viz 2012.01
 		$('enable_eff_multicast_forward').style.display="";		
 
 	if(!dsl_support){
@@ -250,7 +250,7 @@ function validForm(){
 
 function applyRule(){
 	// dualwan LAN port should not equal to IPTV port
-	if (dualWAN_support != -1) {
+	if (dualWAN_support) {
 		var tmp_pri_if = wans_dualwan_orig.split(" ")[0].toUpperCase();
 		var tmp_sec_if = wans_dualwan_orig.split(" ")[1].toUpperCase();	
 		if (tmp_pri_if != 'LAN' || tmp_sec_if != 'LAN') {

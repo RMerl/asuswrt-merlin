@@ -189,6 +189,10 @@ struct language_table language_tables[] = {
 	{"it-it", "IT"},
 	{"it-ch", "IT"},
 	{"uk", "UK"},
+	{"hu-hu", "HU"},
+	{"hu", "HU"},
+	{"ro-ro", "RO"},
+	{"ro", "RO"},
 	{NULL, NULL}
 };
 
@@ -240,6 +244,13 @@ void http_login(unsigned int ip, char *url);
 void http_login_timeout(unsigned int ip);
 void http_logout(unsigned int ip);
 int http_login_check(void);
+
+#if defined(RTN14U)
+#if defined(HWNAT_FIX)
+int hit=0;
+#endif
+#endif
+
 #if 0
 static int check_if_inviteCode(const char *dirpath){
 	return 1;
@@ -402,7 +413,7 @@ send_headers( int status, char* title, char* extra_header, char* mime_type )
     {
     time_t now;
     char timebuf[100];
-
+ 
     (void) fprintf( conn_fp, "%s %d %s\r\n", PROTOCOL, status, title );
     (void) fprintf( conn_fp, "Server: %s\r\n", SERVER_NAME );
     now = time( (time_t*) 0 );
@@ -412,6 +423,7 @@ send_headers( int status, char* title, char* extra_header, char* mime_type )
 	(void) fprintf( conn_fp, "%s\r\n", extra_header );
     if ( mime_type != (char*) 0 )
 	(void) fprintf( conn_fp, "Content-Type: %s\r\n", mime_type );
+
     (void) fprintf( conn_fp, "Connection: close\r\n" );
     (void) fprintf( conn_fp, "\r\n" );
     }
@@ -841,6 +853,16 @@ handle_request(void)
 	for (handler = &mime_handlers[0]; handler->pattern; handler++) {
 		if (match(handler->pattern, url))
 		{
+#if defined(RTN14U)	   
+#if defined(HWNAT_FIX)
+		   	if(!strcmp(handler->pattern, "**.asp*")
+			   && (strcmp(url,"ajax_status.asp")!=0))
+			     hit=1;
+			else
+			     hit=0;
+			//_dprintf("handler->pattern=%s, url=%s\n",handler->pattern,url);
+#endif		   
+#endif			
 			if (handler->auth) {
 				if(skip_auth) {
 
@@ -897,7 +919,7 @@ handle_request(void)
 #endif
 			}
 			
-			if(!strstr(file, ".cgi") && !check_if_file_exist(file)){
+			if(!strstr(file, ".cgi") && !strstr(file, "syslog.txt") && !(strstr(file,".cgi")) && !check_if_file_exist(file)){
 				send_error( 404, "Not Found", (char*) 0, "File not found." );
 				return;
 			}
@@ -1032,7 +1054,7 @@ int http_login_check(void)
 
 	if (login_ip == 0 && !login_port)
 		return 1;
-	else if (login_ip == login_ip_tmp && login_port == http_port)
+	else if (login_ip == login_ip_tmp && (login_port == http_port || !login_port))
 		return 2;
 	
 	return 3;
@@ -1099,6 +1121,41 @@ int is_firsttime(void)
 		return 1;
 }
 
+/* str_replace
+* @param {char*} source
+* @param {char*} find
+* @param {char*} rep
+* */
+char *config_model_name(char *source, char *find,  char *rep){
+   int find_L=strlen(find);
+   int rep_L=strlen(rep);
+   int length=strlen(source)+1;
+   int gap=0;
+
+   char *result = (char*)malloc(sizeof(char) * length);
+   strcpy(result, source);
+
+   char *former=source;
+   char *location= strstr(former, find);
+
+	/* stop searching when there is no finding string */
+   while(location!=NULL){
+       gap+=(location - former);
+       result[gap]='\0';
+
+       length+=(rep_L-find_L);
+       result = (char*)realloc(result, length * sizeof(char));
+       strcat(result, rep);
+       gap+=rep_L;
+
+       former=location+find_L;
+       strcat(result, former);
+
+       location= strstr(former, find);
+   }
+   return result;
+}
+
 #ifdef TRANSLATE_ON_FLY
 #ifdef RTCONFIG_AUTODICT
 int
@@ -1118,6 +1175,10 @@ load_dictionary (char *lang, pkw_t pkw)
 #ifndef RELOAD_DICT
 	static char loaded_dict[12] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
 #endif  // RELOAD_DICT
+#if RTCONFIG_DYN_DICT_NAME
+	char *dyn_dict_buf;
+	char *dyn_dict_buf_new;
+#endif
 
 //printf ("lang=%s\n", lang);
 
@@ -1167,6 +1228,23 @@ load_dictionary (char *lang, pkw_t pkw)
 	dict_size -= 3;
 	printf ("dict_size %d\n", dict_size);
 
+#if RTCONFIG_DYN_DICT_NAME
+	dyn_dict_buf = malloc(dict_size);
+	fseek (dfp, 0L, SEEK_SET);
+	// skip BOM
+	fread (dummy_buf, 1, 3, dfp);
+	// read to dict string buffer
+	memset(dyn_dict_buf, 0, dict_size);
+	fread (dyn_dict_buf, 1, dict_size, dfp);
+	dyn_dict_buf_new = config_model_name(dyn_dict_buf, "ZVDYNMODELVZ", nvram_safe_get("productid"));
+
+	free(dyn_dict_buf);
+
+	dict_size = sizeof(char) * strlen(dyn_dict_buf_new);
+	pkw->buf = q = malloc (dict_size);
+	strcpy(pkw->buf, dyn_dict_buf_new);
+	free(dyn_dict_buf_new);
+#else
 	pkw->buf = q = malloc (dict_size);
 
 	fseek (dfp, 0L, SEEK_SET);
@@ -1174,8 +1252,8 @@ load_dictionary (char *lang, pkw_t pkw)
 	fread (dummy_buf, 1, 3, dfp);
 	// read to dict string buffer
 	memset(pkw->buf, 0, dict_size);
-	fread (pkw->buf, 1, dict_size, dfp);	
-	
+	fread (pkw->buf, 1, dict_size, dfp);
+#endif
 	// calc how many dict item , dict_item
 	remain_dict = dict_size;
 	tmp_ptr = pkw->buf;
@@ -1623,6 +1701,7 @@ int main(int argc, char **argv)
 				/* Skip the rest of */
 				if (--count == 0)
 					next = NULL;
+
 			}
 
 			/* Close timed out and/or still alive */
@@ -1633,6 +1712,13 @@ int main(int argc, char **argv)
 
 			free(item);
 		}
+
+#if defined(RTN14U)
+#if defined(HWNAT_FIX)		
+	if(hit==1)	   
+       		 notify_rc("start_hwnat");
+#endif
+#endif	
 	}
 
 	shutdown(listen_fd, 2);

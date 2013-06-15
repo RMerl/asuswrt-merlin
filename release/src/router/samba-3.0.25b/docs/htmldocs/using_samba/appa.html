@@ -1,0 +1,362 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76" 
+hspace="10" align="left" />
+<h1 class="head0">Appendix A. Example Configuration Files</h1>
+
+
+<p>Earlier in this book, we provided information on how to set
+parameters inside the Samba configuration file, but rarely have we
+shown an example of a complete file that can actually be used to run
+a server. In this appendix, we provide examples of complete
+configuration files for running Samba in the various modes
+we've discussed. Using one of these examples, you
+can run Samba as a workgroup authentication server, workgroup server,
+primary domain controller, or domain member server.</p>
+
+<p>We have kept the examples simple so that they have the most universal
+application. They can be used as starting templates, which you can
+easily modify to fit your own needs, to get a Samba server up and
+running with minimal delay. The comments inside the files indicate
+what needs to be changed, and how, to work on a particular system on
+your network.</p>
+
+
+
+<div class="sect1"><a name="samba2-APP-A-SECT-1"/>
+
+<h2 class="head1">Samba in a Workgroup</h2>
+
+<p>If your network is configured as a workgroup, adding a Samba server
+is pretty simple. Samba even lets you add features, such as
+user-level security and WINS, that would normally require an
+expensive Windows NT/2000 Server.</p>
+
+
+<div class="sect2"><a name="samba2-APP-A-SECT-1.1"/>
+
+<h3 class="head2">Authentication and WINS Server</h3>
+
+<p>In a workgroup environment, Samba can be set up with share-level
+security and without offering WINS name service. This works and is
+simple, but we generally recommend that user-level security be
+enabled to allow Windows 95/98/Me systems to make use of it. Also, it
+only takes a single parameter to enable Samba as a WINS server,
+resulting in far better network efficiency.
+<a name="INDEX-1"/><a name="INDEX-2"/><a name="INDEX-3"/>Here is the configuration file
+that does it:</p>
+
+<blockquote><pre class="code">[global]
+    # replace &quot;toltec&quot; with your system's hostname
+
+    netbios name = toltec
+
+    # replace &quot;METRAN&quot; with the name of your workgroup
+
+    workgroup = METRAN
+
+    security = user
+    encrypt passwords = yes
+
+    # Run a WINS server
+
+    wins support = yes
+
+    # The following three lines ensure that the Samba
+    # server will maintain the role of master browser.
+    # Make sure no other Samba server has its OS level
+    # set higher than it is here.
+
+    local master = yes
+    preferred master = yes
+    os level = 65
+
+# Make home directories on the server available to users.
+
+[homes]
+    comment = %u's Home Directory
+    browsable = no
+    read only = no
+    map archive = yes
+
+# This is a shared directory, accessible by all
+# users. Use your own share name and path.
+
+[d]
+    path = /d
+    create mask = 0700
+    read only = no</pre></blockquote>
+
+<p>Generally, you will use a configuration file similar to this one when
+<a name="INDEX-4"/><a name="INDEX-5"/>adding your first Samba server to the
+workgroup.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-APP-A-SECT-1.2"/>
+
+<h3 class="head2">Workgroup Server</h3>
+
+<p><a name="INDEX-6"/><a name="INDEX-7"/>Things are a
+little different if another system&mdash;either a Samba server or
+Windows NT/2000 server&mdash;is already handling WINS and/or
+authentication. In this case, Samba is configured to use that server
+for WINS. Here is a configuration file that does this:</p>
+
+<blockquote><pre class="code">[global]
+    # replace &quot;mixtec&quot; with your system's hostname
+
+    netbios name = mixtec
+
+    # replace &quot;METRAN&quot; with your workgroup name
+
+    workgroup = METRAN
+
+    security = user
+    encrypt passwords = yes
+
+    # Replace &quot;172.16.1.1&quot; with the IP address
+    # of your WINS server. If there is none,
+    # omit this line.
+
+    wins server = 172.16.1.1
+
+    # The OS level is set to 17 to allow
+    # this system to win over all Windows
+    # versions, but not the Samba server 
+    # that uses the configuration file
+    # in the previous section.
+
+    os level = 17
+
+[homes]
+    comment = %u's Home Directory
+    browsable = no
+    read only = no
+
+# This is a shared directory, accessible by all
+# users. Use your own share name and path.
+
+[d]
+    path = /d
+    create mask = 0700
+    read only = no</pre></blockquote>
+
+<p>Once you have a server in your workgroup handling authentication and
+WINS, this is the configuration file to use when adding additional
+Samba servers to the workgroup.</p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-APP-A-SECT-2"/>
+
+<h2 class="head1">Samba in a Windows NT Domain</h2>
+
+<p>When operating in a Windows NT domain, Samba can act either as a
+primary domain controller or as a domain member server.</p>
+
+
+<div class="sect2"><a name="samba2-APP-A-SECT-2.1"/>
+
+<h3 class="head2">Primary Domain Controller</h3>
+
+<p><a name="INDEX-8"/><a name="INDEX-9"/>Setting up Samba as a primary domain
+controller is more complicated than the other configurations.
+However, the extra difficulty is offset by having a more secure
+network and additional features such as logon scripts and roaming
+profiles. In the following configuration file, we also include
+support for a Microsoft Dfs share:</p>
+
+<blockquote><pre class="code">[global]
+    # Replace &quot;toltec&quot; with the hostname of your system.
+
+    netbios name = toltec
+
+    # Replace &quot;METRAN&quot; with the name of your Windows NT domain.
+
+    workgroup = METRAN
+
+    # Run a WINS server
+
+    wins support = yes
+    
+    # Always act as the local master browser
+    # and domain master browser.  Do not allow
+    # any other system to take over these roles!
+
+    domain master = yes
+    local master = yes
+    preferred master = yes
+    os level = 255
+
+    # Perform domain authentication.
+
+    security = user
+    encrypt passwords = yes
+    domain logons = yes
+    
+    # The location of user profiles for Windows NT/2000/XP.
+
+    logon path = \\%L\profiles\%u\%m
+
+    # Users' Windows home directories and storage of Win95/98/Me roaming profiles.
+
+    logon drive = G:
+    logon home = \\toltec\%u\.win_profile\%m
+
+    # The following line is optional because
+    # Samba always offers NetBIOS time service.
+    # This causes it to also be advertised:
+
+    time server = yes
+
+    # The logon script used for all users,
+    # Relative to [netlogon] share directory.
+
+    logon script = logon.bat
+
+    # The group identifying administrative users.
+    # If you have domain users in the Domain Admins
+    # group, use them here instead of &quot;jay&quot;.
+
+    domain admin group = root jay
+
+    # For adding machine accounts automatically.
+    # This example works on Linux. For other host
+    # operating systems, you might need a different
+    # command.
+
+    add user script = /usr/sbin/useradd -d /dev/null -g 100 -s /bin/false -M %u
+
+    # Provide Microsoft Dfs support.
+
+    host msdfs = yes
+
+# The netlogon share is required for
+# functioning as the primary domain controller.
+# Make sure the directory used for the path exists.
+
+[netlogon]
+    path = /usr/local/samba/lib/netlogon
+    writable = no
+    browsable = no
+
+# The profiles share is for storing
+# Windows NT/2000/XP roaming profiles.
+# Use your own path, and make sure
+# the directory exists.
+
+[profiles]
+    path = /home/samba-ntprof
+    writable = yes
+    create mask = 0600
+    directory mask = 0700
+    browsable = no
+
+[homes]
+    comment = Home Directory
+    browsable = no
+    read only = no
+    map archive = yes
+
+# The Dfs share.
+# Use your own path, making
+# sure the directory exists.
+
+[dfs]
+    comment = Dfs share
+    path = /usr/local/samba/dfs
+    msdfs root = yes
+
+# A shared directory, accessible by all domain users.
+# Use your own share name and path.
+
+[d]
+    comment = %u's Home Directory
+    path = /d
+    create mask = 0700
+    read only = no</pre></blockquote>
+
+<p>See <a href="ch04.html">Chapter 4</a> for more information on configuring
+Samba as a primary domain controller, and see <a href="ch08.html">Chapter 8</a> for more information about setting up a
+Microsoft Dfs share. <a name="INDEX-10"/><a name="INDEX-11"/></p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-APP-A-SECT-2.2"/>
+
+<h3 class="head2">Domain Member Server</h3>
+
+<p><a name="INDEX-12"/><a name="INDEX-13"/>In a domain that
+already has either a Samba PDC or Windows NT/2000 Server PDC,
+additional Samba servers can be added as domain member servers using
+the following configuration file:</p>
+
+<blockquote><pre class="code">[global]
+    # Replace &quot;mixtec&quot; with the system's hostname.
+
+    netbios name = mixtec
+
+    # Replace &quot;METRAN&quot; with the name of your domain.
+
+    workgroup = METRAN
+
+    # Replace &quot;172.16.1.1&quot; with the
+    # IP address of your WINS server.
+
+    wins server = 172.16.1.1
+
+    os level = 33
+    
+    security = domain
+    encrypt passwords = yes
+    password server = *
+
+# Home directories.
+
+[homes]
+    comment = %u's Home Directory
+    browsable = no
+    read only = no
+    map archive = yes
+
+# This is an example printers
+# share, which works for Linux.
+
+[printers]
+    printable = yes
+    printing = BSD
+    print command = /usr/bin/lpr -P%p %s
+    path = /var/tmp
+    min print space = 2000
+
+# A shared directory, accessible by all domain users.
+# Use your own share name and path.
+
+[d]
+    path = /d
+    create mask = 0755
+    read only = no</pre></blockquote>
+
+<p>See <a href="ch10.html">Chapter 10</a> for more information on sharing
+printers with Samba.</p>
+
+
+</div>
+
+
+</div>
+
+<hr/><h4 class="head4"><a href="toc.html">TOC</a></h4>
+</body></html>

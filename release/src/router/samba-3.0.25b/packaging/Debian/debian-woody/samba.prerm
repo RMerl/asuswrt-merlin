@@ -1,0 +1,10 @@
+#!/bin/sh -e
+
+if [ "$1" = upgrade -a -n "$2" ] && dpkg --compare-versions "$2" lt 2.99 \
+   && [ -e /var/lib/samba/passdb.tdb -a ! -e /etc/samba/smbpasswd ]
+then
+	pdbedit -i tdbsam -e smbpasswd
+	rm -f /var/lib/samba/passdb.tdb
+fi
+
+#DEBHELPER#

@@ -1,0 +1,8 @@
+This is the configuration I use at home. I have 2 client PCs, one
+running Win95, one running alternately WfWg and NTAS3.5. My server is
+a 486dx2-66 Linux box.
+
+Note that I use the %a and %m macros to load smb.conf extensions
+particular to machines and architectures. This gives me a lot of
+flexibility in how I handle each of the machines.
+

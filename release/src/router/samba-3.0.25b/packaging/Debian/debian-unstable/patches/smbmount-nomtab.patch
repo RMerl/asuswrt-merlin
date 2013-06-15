@@ -1,0 +1,160 @@
+diff -uNr samba-3.0alpha22.orig/source/client/smbmnt.c samba-3.0alpha22/source/client/smbmnt.c
+--- samba-3.0alpha22.orig/source/client/smbmnt.c	2003-03-15 12:11:39.000000000 -0600
++++ samba-3.0alpha22/source/client/smbmnt.c	2003-03-15 12:11:49.000000000 -0600
+@@ -28,6 +28,7 @@
+ static uid_t mount_uid;
+ static gid_t mount_gid;
+ static int mount_ro;
++static int no_mtab;
+ static unsigned mount_fmask;
+ static unsigned mount_dmask;
+ static int user_mount;
+@@ -40,6 +41,7 @@
+         printf("Usage: smbmnt mount-point [options]\n");
+ 	printf("Version %s\n\n",VERSION);
+         printf("-s share       share name on server\n"
++               "-n             don't update /etc/mtab\n"
+                "-r             mount read-only\n"
+                "-u uid         mount as uid\n"
+                "-g gid         mount as gid\n"
+@@ -54,7 +56,7 @@
+ {
+         int opt;
+ 
+-        while ((opt = getopt (argc, argv, "s:u:g:rf:d:o:")) != EOF)
++        while ((opt = getopt (argc, argv, "s:u:g:nrf:d:o:")) != EOF)
+ 	{
+                 switch (opt)
+ 		{
+@@ -71,6 +73,9 @@
+ 				mount_gid = strtol(optarg, NULL, 0);
+ 			}
+                         break;
++		case 'n':
++			no_mtab = 1;
++			break;
+                 case 'r':
+                         mount_ro = 1;
+                         break;
+@@ -274,36 +279,38 @@
+ 		return -1;
+ 	}
+ 	
+-        if ((fd = open(MOUNTED"~", O_RDWR|O_CREAT|O_EXCL, 0600)) == -1)
+-        {
+-                fprintf(stderr, "Can't get "MOUNTED"~ lock file");
+-                return 1;
+-        }
+-        close(fd);
++	if (!no_mtab) {
++		if ((fd = open(MOUNTED"~", O_RDWR|O_CREAT|O_EXCL, 0600)) == -1)
++		{
++			fprintf(stderr, "Can't get "MOUNTED"~ lock file");
++			return 1;
++		}
++		close(fd);
+ 	
+-        if ((mtab = setmntent(MOUNTED, "a+")) == NULL)
+-        {
+-                fprintf(stderr, "Can't open " MOUNTED);
+-                return 1;
+-        }
++		if ((mtab = setmntent(MOUNTED, "a+")) == NULL)
++		{
++			fprintf(stderr, "Can't open " MOUNTED);
++			return 1;
++		}
+ 
+-        if (addmntent(mtab, &ment) == 1)
+-        {
+-                fprintf(stderr, "Can't write mount entry");
+-                return 1;
+-        }
+-        if (fchmod(fileno(mtab), 0644) == -1)
+-        {
+-                fprintf(stderr, "Can't set perms on "MOUNTED);
+-                return 1;
+-        }
+-        endmntent(mtab);
++		if (addmntent(mtab, &ment) == 1)
++		{
++			fprintf(stderr, "Can't write mount entry");
++			return 1;
++		}
++		if (fchmod(fileno(mtab), 0644) == -1)
++		{
++			fprintf(stderr, "Can't set perms on "MOUNTED);
++			return 1;
++		}
++		endmntent(mtab);
+ 
+-        if (unlink(MOUNTED"~") == -1)
+-        {
+-                fprintf(stderr, "Can't remove "MOUNTED"~");
+-                return 1;
+-        }
++		if (unlink(MOUNTED"~") == -1)
++		{
++			fprintf(stderr, "Can't remove "MOUNTED"~");
++			return 1;
++		}
++	}
+ 
+ 	return 0;
+ }	
+diff -uNr samba-3.0alpha22.orig/source/client/smbmount.c samba-3.0alpha22/source/client/smbmount.c
+--- samba-3.0alpha22.orig/source/client/smbmount.c	2003-03-15 12:04:29.000000000 -0600
++++ samba-3.0alpha22/source/client/smbmount.c	2003-03-15 12:15:10.000000000 -0600
+@@ -48,6 +48,7 @@
+ static int mount_ro;
+ static unsigned mount_fmask;
+ static unsigned mount_dmask;
++static BOOL no_mtab = False;
+ static BOOL use_kerberos;
+ /* TODO: Add code to detect smbfs version in kernel */
+ static BOOL status32_smbfs = False;
+@@ -273,6 +274,9 @@
+                 return;
+         }
+ 
++	if (no_mtab)
++		return;
++
+         if ((fd = open(MOUNTED"~", O_RDWR|O_CREAT|O_EXCL, 0600)) == -1) {
+                 DEBUG(0,("%d: Can't get "MOUNTED"~ lock file", sys_getpid()));
+                 return;
+@@ -467,6 +471,9 @@
+ 	args[i++] = "-s";
+ 	args[i++] = svc2;
+ 
++	if (no_mtab) {
++		args[i++] = "-n";
++	}
+ 	if (mount_ro) {
+ 		args[i++] = "-r";
+ 	}
+@@ -662,7 +669,7 @@
+ ****************************************************************************/
+ static void usage(void)
+ {
+-	printf("Usage: mount.smbfs service mountpoint [-o options,...]\n");
++	printf("Usage: mount.smbfs service mountpoint [-n] [-o options,...]\n");
+ 
+ 	printf("Version %s\n\n",VERSION);
+ 
+@@ -740,8 +747,13 @@
+ 	argc -= 2;
+ 	argv += 2;
+ 
+-	opt = getopt(argc, argv, "o:");
+-	if(opt != 'o') {
++	opt = getopt(argc, argv, "no:");
++	if (opt == 'n') {
++		DEBUG(3,("No mtab!\n"));
++		no_mtab = True;
++		opt = getopt(argc, argv, "o:");
++	}
++	if (opt != 'o') {
+ 		return;
+ 	}
+ 

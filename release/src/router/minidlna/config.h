@@ -9,6 +9,10 @@
 #define OS_VERSION		"Linux/2.6.22.19"
 #define OS_URL			"http://www.asus.com/"
 
+#define HAVE_AVUTIL_H
+#define HAVE_AVCODEC_H
+#define HAVE_AVFORMAT_H
+
 /* full path of the file database */
 #define DEFAULT_DB_PATH		"/tmp/minidlna"
 

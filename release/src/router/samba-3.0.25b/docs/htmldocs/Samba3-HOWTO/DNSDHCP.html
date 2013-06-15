@@ -1,0 +1,263 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 47. DNS and DHCP Configuration Guide</title><link rel="stylesheet" href="samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.71.0"><link rel="start" href="index.html" title="The Official Samba-3 HOWTO and Reference Guide"><link rel="up" href="Appendix.html" title="Part VI. Reference Section"><link rel="prev" href="ch46.html" title="Chapter 46. Samba Support"><link rel="next" href="gpl.html" title="Appendix A. GNU General Public License"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 47. DNS and DHCP Configuration Guide</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch46.html">Prev</a> </td><th width="60%" align="center">Part VI. Reference Section</th><td width="20%" align="right"> <a accesskey="n" href="gpl.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="DNSDHCP"></a>Chapter 47. DNS and DHCP Configuration Guide</h2></div><div><div class="author"><h3 class="author"><span class="firstname">John</span> <span class="othername">H.</span> <span class="surname">Terpstra</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a href="mailto:jht@samba.org">jht@samba.org</a>&gt;</code></p></div></div></div></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="DNSDHCP.html#id446930">Features and Benefits</a></span></dt><dt><span class="sect1"><a href="DNSDHCP.html#id447090">Example Configuration</a></span></dt><dd><dl><dt><span class="sect2"><a href="DNSDHCP.html#id447166">Dynamic DNS</a></span></dt><dt><span class="sect2"><a href="DNSDHCP.html#DHCP">DHCP Server</a></span></dt></dl></dd></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id446930"></a>Features and Benefits</h2></div></div></div><p>
+<a class="indexterm" name="id446938"></a>
+<a class="indexterm" name="id446947"></a>
+There are few subjects in the UNIX world that might raise as much contention as
+Domain Name System (DNS) and Dynamic Host Configuration Protocol (DHCP).
+Not all opinions held for or against particular implementations of DNS and DHCP
+are valid.
+</p><p>
+We live in a modern age where many information technology users demand mobility
+and freedom. Microsoft Windows users in particular expect to be able to plug their
+notebook computer into a network port and have things &#8220;<span class="quote">just work.</span>&#8221;
+</p><p>
+<a class="indexterm" name="id446970"></a>
+UNIX administrators have a point. Many of the normative practices in the Microsoft
+Windows world at best border on bad practice from a security perspective.
+Microsoft Windows networking protocols allow workstations to arbitrarily register
+themselves on a network. Windows 2000 Active Directory registers entries in the DNS namespace
+that are equally perplexing to UNIX administrators. Welcome to the new world!
+</p><p>
+<a class="indexterm" name="id446983"></a>
+<a class="indexterm" name="id446992"></a>
+<a class="indexterm" name="id447001"></a>
+The purpose of this chapter is to demonstrate the configuration of the Internet
+Software Consortium (ISC) DNS and DHCP servers to provide dynamic services that are
+compatible with their equivalents in the Microsoft Windows 2000 Server products.
+</p><p>
+This chapter provides no more than a working example of configuration files for both DNS and DHCP servers. The
+examples used match configuration examples used elsewhere in this document.
+</p><p>
+<a class="indexterm" name="id447021"></a>
+<a class="indexterm" name="id447027"></a>
+<a class="indexterm" name="id447034"></a>
+This chapter explicitly does not provide a tutorial, nor does it pretend to be a reference guide on DNS and
+DHCP, as this is well beyond the scope and intent of this document as a whole. Anyone who wants more detailed
+reference materials on DNS or DHCP should visit the ISC Web site at <a href="http://www.isc.org" target="_top"> http://www.isc.org</a>.  Those wanting a written text might also be interested
+in the O'Reilly publications on DNS, see the <a href="http://www.oreilly.com/catalog/dns/index.htm" target="_top">O'Reilly</a> web site, and the <a href="http://www.bind9.net/books-dhcp" target="_top">BIND9.NET</a> web site for details.
+The books are:
+</p><div class="orderedlist"><ol type="1"><li><p>DNS and BIND, By Cricket Liu, Paul Albitz, ISBN: 1-56592-010-4</p></li><li><p>DNS &amp; Bind Cookbook, By Cricket Liu, ISBN: 0-596-00410-9</p></li><li><p>The DHCP Handbook (2nd Edition), By: Ralph Droms, Ted Lemon, ISBN 0-672-32327-3</p></li></ol></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id447090"></a>Example Configuration</h2></div></div></div><p>
+<a class="indexterm" name="id447098"></a>
+<a class="indexterm" name="id447104"></a>
+The DNS is to the Internet what water is to life. Nearly all information resources (host names) are resolved
+to their Internet protocol (IP) addresses through DNS.  Windows networking tried hard to avoid the
+complexities of DNS, but alas, DNS won.  <a class="indexterm" name="id447113"></a> The alternative to
+DNS, the Windows Internet Name Service (WINS)  an artifact of NetBIOS networking over the TCP/IP
+protocols  has demonstrated scalability problems as well as a flat, nonhierarchical namespace that
+became unmanageable as the size and complexity of information technology networks grew.
+</p><p>
+<a class="indexterm" name="id447132"></a>
+<a class="indexterm" name="id447138"></a>
+WINS is a Microsoft implementation of the RFC1001/1002 NetBIOS Name Service (NBNS).
+It allows NetBIOS clients (like Microsoft Windows machines) to register an arbitrary
+machine name that the administrator or user has chosen together with the IP
+address that the machine has been given. Through the use of WINS, network client machines
+could resolve machine names to their IP address.
+</p><p>
+The demand for an alternative to the limitations of NetBIOS networking finally drove
+Microsoft to use DNS and Active Directory. Microsoft's new implementation attempts
+to use DNS in a manner similar to the way that WINS is used for NetBIOS networking.
+Both WINS and Microsoft DNS rely on dynamic name registration.
+</p><p>
+Microsoft Windows clients can perform dynamic name registration to the DNS server
+on startup. Alternatively, where DHCP is used to assign workstation IP addresses,
+it is possible to register hostnames and their IP address by the DHCP server as
+soon as a client acknowledges an IP address lease. Finally, Microsoft DNS can resolve
+hostnames via Microsoft WINS.
+</p><p>
+The following configurations demonstrate a simple, insecure dynamic DNS server and
+a simple DHCP server that matches the DNS configuration.
+</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id447166"></a>Dynamic DNS</h3></div></div></div><p>
+	<a class="indexterm" name="id447174"></a>
+	The example DNS configuration is for a private network in the IP address
+	space for network 192.168.1.0/24. The private class network address space
+	is set forth in RFC1918.
+	</p><p>
+	<a class="indexterm" name="id447187"></a>
+	It is assumed that this network will be situated behind a secure firewall.
+	The files that follow work with ISC BIND version 9. BIND is the Berkeley
+	Internet Name Daemon.
+	</p><p>
+	The master configuration file <code class="filename">/etc/named.conf</code>
+	determines the location of all further configuration files used.
+	The location and name of this file is specified in the startup script
+	that is part of the operating system.
+</p><pre class="programlisting">
+# Quenya.Org configuration file
+
+acl mynet {
+	192.168.1.0/24;
+	127.0.0.1;
+};
+
+options {
+
+	directory "/var/named";
+	listen-on-v6 { any; };
+	notify no;
+	forward first;
+	forwarders {
+		192.168.1.1;
+		};
+	auth-nxdomain yes;
+	multiple-cnames yes;
+	listen-on {
+		mynet;
+		};
+};
+
+# The following three zone definitions do not need any modification.
+# The first one defines localhost while the second defines the
+# reverse lookup for localhost. The last zone "." is the
+# definition of the root name servers.
+
+zone "localhost" in {
+	type master;
+	file "localhost.zone";
+};
+
+zone "0.0.127.in-addr.arpa" in {
+	type master;
+	file "127.0.0.zone";
+};
+
+zone "." in {
+	type hint;
+	file "root.hint";
+};
+
+# You can insert further zone records for your own domains below.
+
+zone "quenya.org" {
+	type master;
+	file "/var/named/quenya.org.hosts";
+	allow-query {
+		mynet;
+		};
+	allow-transfer {
+		mynet;
+		};
+	allow-update {
+		mynet;
+		};
+	};
+
+zone "1.168.192.in-addr.arpa" {
+	type master;
+	file "/var/named/192.168.1.0.rev";
+	allow-query {
+		mynet;
+	};
+	allow-transfer {
+		mynet;
+	};
+	allow-update {
+		mynet;
+	};
+};
+</pre><p>
+	</p><p>
+	The following files are all located in the directory <code class="filename">/var/named</code>.
+	This is the <code class="filename">/var/named/localhost.zone</code> file:
+</p><pre class="programlisting">
+$TTL 1W
+@               IN SOA  @   root (
+				42              ; serial (d. adams)
+				2D              ; refresh
+				4H              ; retry
+				6W              ; expiry
+				1W )            ; minimum
+
+		IN NS           @
+		IN A            127.0.0.1
+	</pre><p>
+	</p><p>
+	The <code class="filename">/var/named/127.0.0.zone</code> file:
+</p><pre class="programlisting">
+$TTL 1W
+@               IN SOA          localhost.  root.localhost. (
+				42              ; serial (d. adams)
+				2D              ; refresh
+				4H              ; retry
+				6W              ; expiry
+				1W )            ; minimum
+
+				IN NS           localhost.
+1               IN PTR          localhost.
+</pre><p>
+	</p><p>
+		The <code class="filename">/var/named/quenya.org.host</code> file:
+</p><pre class="programlisting">
+$ORIGIN .
+$TTL 38400      ; 10 hours 40 minutes
+quenya.org      IN SOA  marvel.quenya.org. root.quenya.org. (
+				2003021832 ; serial
+				10800      ; refresh (3 hours)
+				3600       ; retry (1 hour)
+				604800     ; expire (1 week)
+				38400      ; minimum (10 hours 40 minutes)
+				)
+			NS      marvel.quenya.org.
+			MX      10 mail.quenya.org.
+$ORIGIN quenya.org.
+frodo                   A       192.168.1.1
+marvel                  A       192.168.1.2
+;
+mail                    CNAME   marvel
+www                     CNAME   marvel
+</pre><p>
+</p><p>
+	The <code class="filename">/var/named/192.168.1.0.rev</code> file:
+</p><pre class="programlisting">
+$ORIGIN .
+$TTL 38400      ; 10 hours 40 minutes
+1.168.192.in-addr.arpa  IN SOA  marvel.quenya.org. root.quenya.org. (
+				2003021824 ; serial
+				10800      ; refresh (3 hours)
+				3600       ; retry (1 hour)
+				604800     ; expire (1 week)
+				38400      ; minimum (10 hours 40 minutes)
+				)
+			NS      marvel.quenya.org.
+$ORIGIN 1.168.192.in-addr.arpa.
+1                       PTR     frodo.quenya.org.
+2                       PTR     marvel.quenya.org.
+</pre><p>
+	</p><p>
+<a class="indexterm" name="id447305"></a>
+<a class="indexterm" name="id447312"></a>
+	The configuration files shown here were copied from a fully working system. All dynamically registered
+	entries have been removed. In addition to these files, BIND version 9 will
+	create for each of the dynamic registration files a file that has a 
+	<code class="filename">.jnl</code> extension. Do not edit or tamper with the configuration
+	files or with the <code class="filename">.jnl</code> files that are created.
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="DHCP"></a>DHCP Server</h3></div></div></div><p>
+	The following file is used with the ISC DHCP Server version 3.
+	The file is located in <code class="filename">/etc/dhcpd.conf</code>:
+	</p><p>
+	</p><pre class="programlisting">
+ddns-updates on;
+ddns-domainname "quenya.org";
+option ntp-servers 192.168.1.2;
+ddns-update-style ad-hoc;
+allow unknown-clients;
+default-lease-time 86400;
+max-lease-time 172800;
+
+option domain-name "quenya.org";
+option domain-name-servers 192.168.1.2;
+option netbios-name-servers 192.168.1.2;
+option netbios-dd-server 192.168.1.2;
+option netbios-node-type 8;
+
+subnet 192.168.1.0 netmask 255.255.255.0 {
+	range dynamic-bootp 192.168.1.60 192.168.1.254;
+	option subnet-mask 255.255.255.0;
+	option routers 192.168.1.2;
+	allow unknown-clients;
+}
+</pre><p>
+	</p><p>
+	In this example, IP addresses between 192.168.1.1 and 192.168.1.59 are
+	reserved for fixed-address (commonly called <code class="constant">hard-wired</code>) IP addresses. The
+	addresses between 192.168.1.60 and 192.168.1.254 are allocated for dynamic use.
+	</p></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch46.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="Appendix.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="gpl.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 46. Samba Support </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Appendix A. GNU General Public License</td></tr></table></div></body></html>

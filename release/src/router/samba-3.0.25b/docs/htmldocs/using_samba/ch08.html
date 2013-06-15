@@ -1,0 +1,3744 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76"
+hspace="10" align="left" />
+
+<h1 class="head0">Chapter 8. Advanced Disk Shares</h1>
+
+
+<p>This chapter continues our discussion of configuring Samba from <a href="ch06.html">Chapter 6</a>. We will cover some more advanced issues
+regarding the integration of Unix and Windows filesystems, including
+hidden files, Unix links, file permissions, name mangling, case
+sensitivity of filenames, file locking, opportunistic locking
+(oplocks), connection scripts, supporting Microsoft Dfs (Distributed
+filesystem) shares, and using NIS home directories.</p>
+
+
+<div class="sect1"><a name="samba2-CHP-8-SECT-1"/>
+
+<h2 class="head1">Filesystem Differences</h2>
+
+<p>One of the biggest issues for which Samba has to correct is the
+difference between Unix and Microsoft filesystems. This includes
+items such as handling symbolic links, hidden files, and dot files.
+In addition, file permissions can also be a headache if not properly
+accounted for.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-1.1"/>
+
+<h3 class="head2">Hiding and Vetoing Files</h3>
+
+<p><a name="INDEX-1"/><a name="INDEX-2"/>Sometimes you need to ensure that a user
+cannot see or access a file at all. Other times, you
+don't want to keep users from accessing a
+file&mdash;you just want to hide it when they view the contents of
+the directory. On Windows systems, an attribute of files allows them
+to be hidden from a folder listing. With Unix, the traditional way of
+hiding files in a directory is to use a <a name="INDEX-3"/><a name="INDEX-4"/>dot (.) as the first character in the
+filename. This prevents items such as configuration files from being
+seen when performing an ordinary <em class="emphasis">ls</em> command.
+Keeping a user from accessing a file at all, however, involves
+working with permissions on files and directories.</p>
+
+<p>The first option we should discuss is the Boolean
+<tt class="literal">hide</tt><a name="INDEX-5"/><a name="INDEX-6"/> <tt class="literal">dot</tt>
+<tt class="literal">files</tt>. When it is set to <tt class="literal">yes</tt>,
+Samba reports files beginning with a period (.) as having their
+hidden attribute set. If the user has chosen to show all hidden files
+while browsing (e.g., using the Folder Options menu item under the
+View menu in Windows 98), he will still be able to see the files,
+although his icons will appear
+&quot;ghosted,&quot; or slightly grayed-out.
+If the client is configured not to show hidden files, the files will
+not appear at all.</p>
+
+<p>Instead of simply hiding files beginning with a dot, you can also
+specify a string pattern to Samba for files to hide, using the
+<tt class="literal">hide</tt><a name="INDEX-7"/> <tt class="literal">files</tt>
+option. For example, let's assume you specified the
+following in our example <tt class="literal">[data]</tt> share:</p>
+
+<blockquote><pre class="code">[data]
+    hide files = /*.java/*README*/</pre></blockquote>
+
+<p>Each entry for this option must begin, end, or be separated from
+another with a slash ( / ) character, even if only one pattern is
+listed. This convention allows spaces to appear in filenames. The
+slashes have nothing to do with Unix directories; they are instead
+acting as delimiters for the <tt class="literal">hide</tt>
+<tt class="literal">files</tt> values.</p>
+
+<p>If you want to prevent users from seeing files completely, you can
+instead use the <tt class="literal">veto</tt><a name="INDEX-8"/> <tt class="literal">files</tt>
+option. This option, which takes the same syntax as the
+<tt class="literal">hide</tt> <tt class="literal">files</tt> option, specifies a
+list of files that should never be seen by the user. For example,
+let's change the <tt class="literal">[data]</tt> share to
+the following:</p>
+
+<blockquote><pre class="code">[data]
+    veto files = /*.java/*README*/</pre></blockquote>
+
+<p>The syntax of this option is identical to the <tt class="literal">hide</tt>
+<tt class="literal">files</tt> configuration option: each entry must begin,
+end, or be separated from another with a slash (<tt class="literal">/</tt>)
+character, even if only one pattern is listed. If you do so, files
+that match the pattern, such as <em class="filename">hello.java</em> and
+<em class="filename">README.txt,</em> will simply disappear from the
+directory, and the user cannot access them through SMB.</p>
+
+<p><a name="INDEX-9"/>We need to address
+one other question. What happens if the user tries to delete a
+directory that contains vetoed files? This is where the
+<tt class="literal">delete</tt><a name="INDEX-10"/> <tt class="literal">veto</tt>
+<tt class="literal">files</tt> option comes in. If this Boolean option is
+set to <tt class="literal">yes</tt>, the user can delete both the regular
+files and the vetoed files in the directory, and the directory itself
+is removed. If the option is set to <tt class="literal">no</tt>, the user
+cannot delete the vetoed files, and consequently the directory is not
+deleted either. From the user's perspective, the
+directory appears empty, but cannot be removed.</p>
+
+<p>The <tt class="literal">dont</tt><a name="INDEX-11"/> <tt class="literal">descend</tt>
+directive specifies a list of directories whose contents Samba should
+not make visible. Note that we say <em class="emphasis">contents</em>, not
+the directory itself. Users can enter a directory marked as such, but
+they are prohibited from descending the directory tree any
+farther&mdash;they always see an empty folder. For example,
+let's use this option with a more basic form of the
+share that we defined earlier in the chapter:</p>
+
+<blockquote><pre class="code">[data]
+    dont descend = config defaults</pre></blockquote>
+
+<p>In addition, let's assume that the
+<em class="filename">/home/samba/data</em> directory has the following
+contents:</p>
+
+<blockquote><pre class="code">drwxr-xr-x   6 tom      users     1024 Jun 13 09:24 .
+drwxr-xr-x   8 root     root      1024 Jun 10 17:53 ..
+-rw-r--r--   2 tom      users     1024 Jun  9 11:43 README
+drwxr-xr-x   3 tom      users     1024 Jun 13 09:28 config
+drwxr-xr-x   3 tom      users     1024 Jun 13 09:28 defaults
+drwxr-xr-x   3 tom      users     1024 Jun 13 09:28 market</pre></blockquote>
+
+<p>If the user then connects to the share, she would see the directories
+in the share. However, the contents of the
+<em class="filename">/config</em> and <em class="filename">/defaults</em>
+directories would appear empty to her, even if other folders or files
+existed in them. In addition, users cannot write any data to the
+folder (which prevents them from creating a file or folder with the
+same name as one that is already there but invisible). If a user
+attempts to do so, she will receive an &quot;Access
+Denied&quot; message. The <tt class="literal">dont</tt>
+<tt class="literal">descend</tt> option is an administrative
+option&mdash;not a security option&mdash;and is not a substitute for
+good file permissions. <a name="INDEX-12"/><a name="INDEX-13"/></p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-1.2"/>
+
+<h3 class="head2">Links</h3>
+
+<p><a name="INDEX-14"/>When a client
+tries to open a symbolic link on a Samba server share, Samba attempts
+to follow the link to find the real file and let the client open it,
+as if the user were on a Unix machine. If you don't
+want to allow this, set the <tt class="literal">follow</tt>
+<tt class="literal">symlinks</tt> option like this:</p>
+
+<blockquote><pre class="code">[data]
+    follow symlinks = no</pre></blockquote>
+
+<p>You can test this by setting up and trying to access a symbolic link.
+Create a directory on the Unix server inside the share, acting as the
+user under which you will log in to Samba. Enter the following
+commands:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>echo &quot;This is a test&quot; &gt;hello.txt</b></tt>
+$ <tt class="userinput"><b>ln -s hello.txt hello-link.txt</b></tt></pre></blockquote>
+
+<p>This results in the text file <em class="filename">hello.txt</em> and a
+symbolic link to it called <em class="filename">hello-link.txt</em>.
+Normally, if you double-click either one, you will receive a file
+that has the text &quot;This is a test&quot;
+inside of it. However, with the <tt class="literal">follow</tt>
+<tt class="literal">symlinks</tt><a name="INDEX-15"/> option set to
+<tt class="literal">no</tt>, you will receive an error dialog if you
+double-click <em class="filename">hello-link.txt</em>.</p>
+
+<p>The <tt class="literal">wide</tt><a name="INDEX-16"/> <tt class="literal">links</tt>
+option, if set to <tt class="literal">no</tt>, prevents the client user
+from following symbolic links that point outside the shared directory
+tree. For example, let's assume that we modified the
+<tt class="literal">[data]</tt> share as follows:</p>
+
+<blockquote><pre class="code">[data]
+    follow symlinks = yes
+    wide links = no</pre></blockquote>
+
+<p>As long as the <tt class="literal">follow</tt><a name="INDEX-17"/>
+<tt class="literal">symlinks</tt> option is disabled, Samba will refuse to
+follow any symbolic links outside the current share tree. If we
+create a file outside the share (for example, in
+someone's home directory) and then create a link to
+it in the share as follows:</p>
+
+<blockquote><pre class="code">ln -s ~tom/datafile ./datafile</pre></blockquote>
+
+<p>the client cannot open the file in Tom's home
+directory.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-1.3"/>
+
+<h3 class="head2">Filesystem Options</h3>
+
+<p><a href="ch08.html#samba2-CHP-8-TABLE-1">Table 8-1</a> <a name="INDEX-18"/><a name="INDEX-19"/>shows a breakdown of the options we
+discussed earlier. We recommend the defaults for most, except those
+listed in the following descriptions.</p>
+
+<a name="samba2-CHP-8-TABLE-1"/><h4 class="head4">Table 8-1. Filesystem configuration options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">dont descend</tt></p>
+</td>
+<td>
+<p>string (list of directories)</p>
+</td>
+<td>
+<p>Indicates a list of directories whose contents Samba should make
+invisible to clients.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">follow</tt> <tt class="literal">symlinks</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If set to <tt class="literal">no</tt>, will not honor symbolic links.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">getwd cache</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If set to <tt class="literal">yes</tt>, will use a cache for
+<tt class="literal">getwd( )</tt> calls.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">wide links</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If set to <tt class="literal">yes</tt>, will follow symbolic links outside
+the share.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">hide dot files</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If set to <tt class="literal">yes</tt>, treats Unix hidden files as hidden
+files in Windows.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">hide files</tt></p>
+</td>
+<td>
+<p>string (list of files)</p>
+</td>
+<td>
+<p>List of file patterns to treat as hidden.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">veto files</tt></p>
+</td>
+<td>
+<p>string (list of files)</p>
+</td>
+<td>
+<p>List of file patterns to never show.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">delete veto</tt> <tt class="literal">files</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If set to <tt class="literal">yes</tt>, will delete files matched by
+<tt class="literal">veto files</tt> when the directory they reside in is
+deleted.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-1.3.1"/>
+
+<h3 class="head3">dont descend</h3>
+
+<p>The <tt class="literal">dont</tt><a name="INDEX-20"/> <tt class="literal">descend</tt>
+option can be used to specify various directories that should appear
+empty to the client. Note that the directory itself will still
+appear. However, Samba will not show any of the contents of the
+directory to the client user. This is not a good option to use as a
+security feature; it is really meant only as a convenience to keep
+users from casually browsing into directories that might have
+sensitive files. See our example earlier in this section.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-1.3.2"/>
+
+<a name="INDEX-21"/><h3 class="head3">follow symlinks</h3>
+
+<p>This option controls whether Samba will follow a symbolic link in the
+Unix operating system to the target or if it should return an error
+to the client user. If the option is set to <tt class="literal">yes</tt>,
+the target of the link will be interpreted as the file. If set to
+<tt class="literal">no</tt>, an error will be generated if the symbolic
+link is accessed.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-1.3.3"/>
+
+<a name="INDEX-22"/><h3 class="head3">getwd cache</h3>
+
+<p>This global option specifies whether Samba should use a local cache
+for the Unix <em class="emphasis">getwd( )</em> ( get current working
+directory) system call. You can override the default value of
+<tt class="literal">yes</tt> as follows:</p>
+
+<blockquote><pre class="code">[global]
+    getwd cache = no</pre></blockquote>
+
+<p>Setting this option to <tt class="literal">no</tt> can significantly
+increase the time it takes to resolve the working directory,
+especially if the <tt class="literal">wide</tt> <tt class="literal">links</tt>
+option is set to <tt class="literal">no</tt>. You should normally not need
+to alter this option.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-1.3.4"/>
+
+<a name="INDEX-23"/><h3 class="head3">wide links</h3>
+
+<p>This option specifies whether the client user can follow symbolic
+links that point outside the shared directory tree. This includes any
+files or directories at the other end of the link, as long as the
+permissions are correct for the user. The default value for this
+option is <tt class="literal">yes</tt>. Note that this option will not be
+honored if the <tt class="literal">follow</tt> <tt class="literal">symlinks</tt>
+options is set to <tt class="literal">no</tt>. Setting this option to
+<tt class="literal">no</tt> slows <em class="emphasis">smbd</em> considerably
+because it will have to check each link it encounters.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-1.3.5"/>
+
+<h3 class="head3">hide dot files</h3>
+
+<p>The <tt class="literal">hide</tt><a name="INDEX-24"/><a name="INDEX-25"/> <tt class="literal">dot</tt>
+<tt class="literal">files</tt> option hides any files on the server that
+begin with a dot (.) character to mimic the functionality behind
+several shell commands that are present on Unix systems. Like
+<tt class="literal">hide</tt> <tt class="literal">files</tt>, those files that
+begin with a dot have the DOS hidden attribute set, which
+doesn't guarantee that a client cannot view them.
+The default value for this option is <tt class="literal">yes</tt>.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-1.3.6"/>
+
+<h3 class="head3">hide files</h3>
+
+<p>The <tt class="literal">hide</tt><a name="INDEX-26"/> <tt class="literal">files</tt> option
+provides one or more directory or filename patterns to Samba. Any
+file matching this pattern will be treated as a hidden file from the
+perspective of the client. Note that this simply means that the DOS
+hidden attribute is set, which might or might not mean that the user
+can actually see it while browsing.</p>
+
+<p>Each entry in the list must begin, end, or be separated from another
+entry with a slash (<tt class="literal">/</tt>) character, even if only one
+pattern is listed. This allows spaces to appear in the list.
+Asterisks can be used as a wildcard to represent zero or more
+characters. Questions marks can be used to represent exactly one
+character. For example:</p>
+
+<blockquote><pre class="code">hide files = /.jav*/README.???/</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-1.3.7"/>
+
+<a name="INDEX-27"/><h3 class="head3">veto files</h3>
+
+<p>More stringent than the hidden files state is the state provided by
+the <tt class="literal">veto</tt> <tt class="literal">files</tt> configuration
+option. Samba won't even admit these files exist.
+You cannot list or open them from the client. This should not be used
+as a means of implementing security. It is actually a mechanism to
+keep PC programs from deleting special files, such as ones used to
+store the resource fork of a Macintosh file on a Unix filesystem. If
+both Windows and Macs are sharing the same files, this can prevent
+ill-advised power users from removing files the Mac users need.</p>
+
+<p>The syntax of this option is identical to that of the
+<tt class="literal">hide</tt> <tt class="literal">files</tt> configuration
+option: each entry must begin, end, or be separated from another with
+a slash ( / ) character, even if only one pattern is listed.
+Asterisks can be used as a wildcard to represent zero or more
+characters. Question marks can be used to represent exactly one
+character. For example:</p>
+
+<blockquote><pre class="code">veto files = /*config/*default?/</pre></blockquote>
+
+<p>This option is primarily administrative and is not a substitute for
+good file permissions.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-1.3.8"/>
+
+<a name="INDEX-28"/><h3 class="head3">delete veto files</h3>
+
+<p>This option tells Samba to delete vetoed files when a user attempts
+to delete the directory in which they reside. The default value is
+<tt class="literal">no</tt>. This means that if a user tries to delete a
+directory that contains a vetoed file, the file (and the directory)
+will not be deleted. Instead, the directory remains and appears empty
+from the perspective of the user. If set to <tt class="literal">yes</tt>,
+the directory and the vetoed files will be deleted. <a name="INDEX-29"/><a name="INDEX-30"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-8-SECT-2"/>
+
+<h2 class="head1">File Permissions and Attributes on MS-DOS and Unix</h2>
+
+<p><a name="INDEX-31"/><a name="INDEX-32"/><a name="INDEX-33"/>Originally, DOS was not intended to be a
+multiuser, networked operating system. Unix, on the other hand, was
+designed for multiple users from the start. Consequently, Samba must
+not only be aware of, but also provide special solutions for,
+inconsistencies and gaps in coverage between the two filesystems. One
+of the biggest gaps is how Unix and DOS handle permissions on files.</p>
+
+<p>Let's take a look at how Unix assigns permissions.
+All Unix files have read, write, and execute bits for three
+classifications of users: owner, group, and world. These permissions
+can be seen at the extreme lefthand side when an <em class="emphasis">ls
+-al</em> command is issued in a Unix directory. For example:</p>
+
+<blockquote><pre class="code">-rwxr--r--   1 tom     users   2014 Apr 13 14:11 access.conf</pre></blockquote>
+
+<p>Windows, on the other hand, has four principal bits that it uses with
+any file: read-only, system, hidden, and archive. You can view these
+bits by right-clicking the file and choosing the Properties menu
+item. You should see a dialog similar to <a href="ch08.html#samba2-CHP-8-FIG-1">Figure 8-1</a>.<a name="FNPTR-1"/><a href="#FOOTNOTE-1">[1]</a></p>
+
+<div class="figure"><a name="samba2-CHP-8-FIG-1"/><img src="figs/sam2_0801.gif"/></div><h4 class="head4">Figure 8-1. DOS and Windows file properties</h4>
+
+<p>The definition of each bit follows:</p>
+
+<dl>
+<dt><b>Read-only</b></dt>
+<dd>
+<p>The file's contents can be read by a user but cannot
+be written to.</p>
+</dd>
+
+
+
+<dt><b>System</b></dt>
+<dd>
+<p>This file has a specific purpose required by the operating system.</p>
+</dd>
+
+
+
+<dt><b>Hidden</b></dt>
+<dd>
+<p>This file has been marked to be invisible to the user, unless the
+operating system is explicitly set to show it.</p>
+</dd>
+
+
+
+<dt><b>Archive</b></dt>
+<dd>
+<p>This file has been touched since the last DOS backup was performed on
+it.</p>
+</dd>
+
+</dl>
+
+<p>Note that there is no bit to specify that a file is executable. DOS
+and Windows NT filesystems identify executable files by giving them
+the extensions <em class="filename">.exe</em>, <em class="filename">.com</em>,
+<em class="filename">.cmd</em>, or <em class="filename">.bat</em>.</p>
+
+<p>Consequently, there is no use for any of the three Unix executable
+bits that are present on a file in a Samba disk share. DOS files,
+however, have their own attributes that need to be preserved when
+they are stored in a Unix environment: the archive, system, and
+hidden bits. Samba can preserve these bits by reusing the executable
+permission bits of the file on the Unix side&mdash;if it is
+instructed to do so. Mapping these bits, however, has an unfortunate
+side effect: if a Windows user stores a file in a Samba share, and
+you view it on Unix with the <em class="emphasis">ls -al</em> command,
+some of the executable bits won't mean what
+you'd expect them to.</p>
+
+<p>Three Samba options decide whether the bits are mapped:
+<tt class="literal">map</tt><a name="INDEX-34"/> <tt class="literal">archive</tt>,
+<tt class="literal">map</tt><a name="INDEX-35"/> <tt class="literal">system</tt> , and
+<tt class="literal">map</tt><a name="INDEX-36"/> <tt class="literal">hidden</tt>. These options
+map the archive, system, and hidden attributes to the owner, group,
+and world execute bits of the file, respectively. You can add these
+options to the <tt class="literal">[data]</tt> share, setting each of their
+values as follows:</p>
+
+<blockquote><pre class="code">[data]
+    map archive = yes
+    map system = yes
+    map hidden = yes</pre></blockquote>
+
+<p>After that, try creating a file in the share under Unix&mdash;such as
+<em class="emphasis">hello.java</em>&mdash;and change the permissions of
+the file to 755. With these Samba options set, you should be able to
+check the permissions on the Windows side and see that each of the
+three values has been checked in the Properties dialog box. What
+about the read-only attribute? By default, Samba sets this whenever a
+file does not have the Unix owner write permission bit set. In other
+words, you can set this bit by changing the permissions of the file
+to 555.</p>
+
+<p>The default value of the <tt class="literal">map</tt>
+<tt class="literal">archive</tt> option is <tt class="literal">yes</tt>, while
+the other two options have a default value of <tt class="literal">no</tt>.
+This is because many programs do not work properly if the archive bit
+is not stored correctly for DOS and Windows files. The system and
+hidden attributes, however, are not critical for a
+program's operation and are left to the discretion
+of the administrator.</p>
+
+<p><a href="ch08.html#samba2-CHP-8-FIG-2">Figure 8-2</a> summarizes the <a name="INDEX-37"/><a name="INDEX-38"/>Unix permission bits and
+illustrates how Samba maps those bits to DOS attributes. Note that
+the group read/write and world read/write bits do not directly
+translate to a DOS attribute, but they still retain their original
+Unix definitions on the Samba server.</p>
+
+<div class="figure"><a name="samba2-CHP-8-FIG-2"/><img src="figs/sam2_0802.gif"/></div><h4 class="head4">Figure 8-2. How Samba and Unix view the permissions of a file</h4>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-2.1"/>
+
+<h3 class="head2">Creation Masks</h3>
+
+<p><a name="INDEX-39"/>File and directory creation masks are
+similar to <a name="INDEX-40"/>umasks you
+have probably encountered while working with Unix systems. They are
+used to help define the permissions that will be assigned to a file
+or directory at the time it is created. Samba's
+masks work differently in that the bits that can be set are set in
+the creation mask, while in Unix umasks, the bits
+<em class="emphasis">cannot</em> be set are set in the umask. We think you
+will find Samba's method to be much more intuitive.
+Once in a while you might need to convert between a Unix umask and
+the equivalent Samba mask. It is simple: one is just the bitwise
+complement of the other. For example, an octal umask of 0022 has the
+same effect as a Samba mask of 0755.</p>
+
+<p>Unix umasks are set on a user-by-user basis, usually while executing
+the GUI's or command-line shell's
+startup scripts. When users connect to a Samba share from a network
+client, these scripts are not executed, so Samba supplies the ability
+to set the creation masks for files and directories. By default, this
+is done on a share-by-share basis, although you can use the
+<tt class="literal">include</tt> parameter in the Samba configuration file
+(as explained in <a href="ch06.html">Chapter 6</a>) to assign masks on a
+user-by-user basis, thus matching conventional Unix behavior.</p>
+
+<p>To show how Samba's create masks work, suppose we
+have a Windows Me user connecting to his Unix home directory through
+Samba, and Samba is configured with <tt class="literal">create</tt>
+<tt class="literal">mask</tt> <tt class="literal">=</tt> <tt class="literal">777</tt>
+in the <tt class="literal">[homes]</tt> share. With this value,
+<tt class="literal">create</tt> <tt class="literal">mask</tt> will not affect the
+bits that are set on new files. If the user creates a file with
+Wordpad, it will appear in the Unix filesystem like this:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>ls -l file.doc</b></tt>
+-rwxrw-rw-    1 jay      jay             0 Sep 21 11:02 file.doc</pre></blockquote>
+
+<p>Wordpad created the file with read/write permissions (i.e., the
+MS-DOS read-only attribute was not set), so Samba mapped the MS-DOS
+attributes to Unix read/write permissions for user, group, and other.
+The <a name="INDEX-41"/><a name="INDEX-42"/>execute bit is set for the owner
+because by default, the <tt class="literal">map</tt>
+<tt class="literal">archive</tt> parameter is set to
+<tt class="literal">yes</tt>. The other execute bits are not set because
+<tt class="literal">map</tt> <tt class="literal">system</tt> and
+<tt class="literal">map</tt> <tt class="literal">hidden</tt> are set to
+<tt class="literal">no</tt> by default. You can customize this behavior as
+you see fit, and unless you do backups from MS-DOS or Windows
+systems, you might want to specify <tt class="literal">map</tt>
+<tt class="literal">archive</tt> <tt class="literal">=</tt> <tt class="literal">no</tt>
+to avoid Windows files from appearing as executables on the Unix
+system.</p>
+
+<p>Now suppose we set
+<tt class="literal">create</tt><a name="INDEX-43"/> <tt class="literal">mask</tt> to have
+an effect. For example:</p>
+
+<blockquote><pre class="code">[homes]
+    create mask = 664</pre></blockquote>
+
+<p>This is equivalent to a Unix umask of 113. If the user creates the
+Wordpad document as before, it will show up as:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>ls -l file.doc</b></tt>
+-rw-rw-r--    1 jay      jay             0 Sep 22 16:38 file.doc</pre></blockquote>
+
+<p>Comparing this to the previous example, notice that not only has the
+write permission for other disappeared as we expected, but so has the
+execute permission for owner. This happened because the value of
+<tt class="literal">create</tt> <tt class="literal">mask</tt> logically ANDs the
+owner's permissions with a 6, which has masked off
+the execute bit. The lesson here is that if you want to enable any of
+<tt class="literal">map</tt> <tt class="literal">archive</tt>,
+<tt class="literal">map</tt> <tt class="literal">system</tt>, or
+<tt class="literal">map</tt> <tt class="literal">hidden</tt>, you must be careful
+not to mask off the corresponding execute bit with your
+<tt class="literal">create</tt> <tt class="literal">mask</tt>.</p>
+
+<p>The <tt class="literal">directory</tt><a name="INDEX-44"/> <tt class="literal">mask</tt>
+option works similarly, masking permissions for newly created
+directories. The following example will allow the permissions of a
+newly created directory to be, at most, 755:</p>
+
+<blockquote><pre class="code">[data]
+    directory mask = 755</pre></blockquote>
+
+<p>Also, you can force various bits with the <tt class="literal">force</tt>
+<tt class="literal">create</tt> <tt class="literal">mode</tt> and
+<tt class="literal">force</tt> <tt class="literal">directory</tt>
+<tt class="literal">mode</tt> options. These options will perform a logical
+OR against the file and directory creation masks, ensuring that those
+bits that are specified will always be set. You would typically set
+these options globally to ensure that group and world read/write
+permissions have been set appropriately for new files or directories
+in each share.</p>
+
+<p>In the same spirit, if you wish to set explicitly the Unix user and
+group attributes of a file created on the Windows side, you can use
+the <tt class="literal">force</tt><a name="INDEX-45"/> <tt class="literal">user</tt> and
+<tt class="literal">force</tt><a name="INDEX-46"/> <tt class="literal">group</tt>
+options. For example:</p>
+
+<blockquote><pre class="code">[data]
+    create mask = 744
+    directory mask = 755
+    force user = joe
+    force group = accounting</pre></blockquote>
+
+<p>These options assign the same Unix username and group to every client
+that connects to the share. However, this occurs
+<em class="emphasis">after</em> the client authenticates; it does not
+allow free access to a share. These options are frequently used for
+their side effects of assigning a specific user and group to each new
+file or directory that is created in a share. Use these options with
+discretion.</p>
+
+<p>Finally, one of the capabilities of Unix that DOS lacks is the
+ability to delete a read-only file from a writable directory. In
+Unix, if a directory is writable, a read-only file in that directory
+can still be removed. This could permit you to delete files in any of
+your directories, even if the file was left by someone else.</p>
+
+<p>DOS filesystems are not designed for multiple users, and so its
+designers decided that read-only means &quot;protected
+against accidental change, including deletion,&quot;
+rather than &quot;protected against some other user on a
+single-user machine.&quot; So the designers of DOS
+prohibited removal of a read-only file. Even today, Windows
+filesystems exhibit the same behavior.</p>
+
+<p>Normally, this is harmless. Windows programs don't
+try to remove read-only files because they know it's
+a bad idea. However, a number of source-code control
+programs&mdash;which were first written for Unix&mdash;run on Windows
+and require the ability to delete read-only files. Samba permits this
+behavior with the <tt class="literal">delete</tt><a name="INDEX-47"/>
+<tt class="literal">readonly</tt> option. To enable this functionality, set
+the option to <tt class="literal">yes</tt>:</p>
+
+<a name="INDEX-48"/><blockquote><pre class="code">[data]
+    delete readonly = yes</pre></blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-2.2"/>
+
+<h3 class="head2">File and Directory Permission Options</h3>
+
+<p><a name="INDEX-49"/><a name="INDEX-50"/><a name="INDEX-51"/>The
+options for file and directory permissions are summarized in <a href="ch08.html#samba2-CHP-8-TABLE-2">Table 8-2</a>; each option is then described in detail.</p>
+
+<a name="samba2-CHP-8-TABLE-2"/><h4 class="head4">Table 8-2. File and directory permission options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">create mask</tt> <tt class="literal">(create mode)</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Maximum permissions for files created by Samba.</p>
+</td>
+<td>
+<p><tt class="literal">0744</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">directory mask</tt> <tt class="literal">(directory mode)</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Maximum permissions for directories created by Samba.</p>
+</td>
+<td>
+<p><tt class="literal">0744</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">force create mode</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Forces the specified permissions (bitwise <tt class="literal">or</tt>) for
+directories created by Samba.</p>
+</td>
+<td>
+<p><tt class="literal">0000</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">force directory</tt> <tt class="literal">mode</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Forces the specified permissions (bitwise <tt class="literal">or</tt>) for
+directories created by Samba.</p>
+</td>
+<td>
+<p><tt class="literal">0000</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">force group</tt> <tt class="literal">(group)</tt></p>
+</td>
+<td>
+<p>string ( group name)</p>
+</td>
+<td>
+<p>Effective group for a user accessing this share.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">force user</tt></p>
+</td>
+<td>
+<p>string (username)</p>
+</td>
+<td>
+<p>Effective username for a user accessing this share.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">delete readonly</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>Allows a user to delete a read-only file from a writable directory.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">map archive</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>Preserve DOS archive attribute in user execute bit (0100).</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">map system</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>Preserve DOS system attribute in group execute bit (0010).</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">map hidden</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>Preserve DOS hidden attribute in world execute bit (0001).</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">inherit permissions</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, permissions on new files and directories
+are inherited from parent directory.</p>
+</td>
+<td>
+<p>no</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-2.2.1"/>
+
+<a name="INDEX-52"/><h3 class="head3">create mask</h3>
+
+<p>The argument for this option is an octal number indicating which
+permission flags can be set at file creation by a client in a share.
+The default is 0744, which means that the Unix owner can at most
+read, write, and optionally execute her own files, while members of
+the user's group and others can only read or execute
+them. If you need to change it for nonexecutable files, we recommend
+0644, or <tt class="literal">rw-r--r--</tt>. Keep in mind that the execute
+bits can be used by the server to map certain DOS file attributes, as
+described earlier. If you're altering the create
+mask, those bits have to be part of the create mask as well.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-2.2.2"/>
+
+<a name="INDEX-53"/><h3 class="head3">directory mask</h3>
+
+<p>The argument for this option is an octal number indicating which
+permission flags can be set at directory creation by a client in a
+share. The default is 0744, which allows everyone on the Unix side
+to, at most, read and traverse the directories, but allows only you
+to modify them. We recommend the mask 0750, removing access by
+&quot;the world.&quot;</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-2.2.3"/>
+
+<a name="INDEX-54"/><h3 class="head3">force create mode</h3>
+
+<p>This option sets the permission bits that Samba will set when a file
+permission change is made. It's often used to force
+group permissions, as mentioned previously. It can also be used to
+preset any of the DOS attributes we mentioned: archive (0100), system
+(0010), or hidden (0001).</p>
+
+<a name="samba2-CHP-8-NOTE-139"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p><a name="INDEX-55"/>When saving
+documents, many Windows applications rename their datafiles with a
+<em class="filename">.bak</em> extension and create new ones. When the
+files are in a Samba share, this changes their ownership and
+permissions so that members of the same Unix group
+can't edit them. Setting <tt class="literal">force</tt>
+<tt class="literal">create mode = 0660</tt> will keep the new file editable
+by members of the group.</p>
+</blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-2.2.4"/>
+
+<a name="INDEX-56"/><h3 class="head3">force directory mode</h3>
+
+<p>This option sets the permission bits that Samba will set when a
+directory permission change is made or a directory is created.
+It's often used to force group permissions, as
+mentioned previously. This option defaults to 0000 and can be used
+just like the <tt class="literal">force</tt> <tt class="literal">create</tt>
+<tt class="literal">mode</tt> to add group or other permissions if needed.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-2.2.5"/>
+
+<a name="INDEX-57"/><h3 class="head3">force group</h3>
+
+<p>This option, sometimes called <tt class="literal">group</tt>, assigns a
+static group ID that will be used on all connections to a share after
+the client has successfully authenticated. This assigns a specific
+group to each new file or directory created from an SMB client.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-2.2.6"/>
+
+<h3 class="head3">force user</h3>
+
+<p>The <tt class="literal">force</tt><a name="INDEX-58"/> <tt class="literal">user</tt> option
+assigns a static user ID that will be used on all connections to a
+share after the client has successfully authenticated. This assigns a
+specific user to each new file or directory created from an SMB
+client.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-2.2.7"/>
+
+<a name="INDEX-59"/><h3 class="head3">delete readonly</h3>
+
+<p>This option allows a user to delete a directory containing a
+read-only file. By default, DOS and Windows will not allow such an
+operation. You probably will want to leave this option turned off
+unless a program (for example, an RCS program) needs this capability;
+many Windows users would be appalled to find that
+they'd accidentally deleted a file that they had set
+as read-only.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-2.2.8"/>
+
+<a name="INDEX-60"/><h3 class="head3">map archive</h3>
+
+<p>The DOS archive bit is used to flag a file that has been changed
+since it was last archived (e.g., backed up with the DOS archive
+program). Setting the Samba option <tt class="literal">map</tt>
+<tt class="literal">archive</tt> <tt class="literal">=</tt>
+<tt class="literal">yes</tt> maps the DOS archive flag to the Unix
+execute-by-owner (0100) bit. It's best to leave this
+option on if your Windows users are doing their own backups or are
+using programs that require the archive bit. Unix lacks the notion of
+an archive bit entirely. Backup programs typically keep a file that
+lists what files were backed up on what date, so comparing
+file-modification dates serves the same purpose.</p>
+
+<p>Setting this option to <tt class="literal">yes</tt> causes an occasional
+surprise on Unix when a user notices that a datafile is marked as
+executable, but rarely causes harm. If a user tries to run it, he
+will normally get a string of error messages as the shell tries to
+execute the first few lines as commands. The reverse is also
+possible; an executable Unix program looks like it
+hasn't been backed up recently on Windows. But
+again, this is rare and usually harmless.</p>
+
+<p>For map archive to work properly, the execute bit for owner must not
+be masked off with the <tt class="literal">create</tt>
+<tt class="literal">mask</tt> parameter.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-2.2.9"/>
+
+<a name="INDEX-61"/><h3 class="head3">map system</h3>
+
+<p>The DOS system attribute indicates files that are required by the
+operating system and should not be deleted, renamed, or moved without
+special effort. Set this option only if you need to store Windows
+system files on the Unix fileserver. Executable Unix programs will
+appear to be nonremovable, special Windows files when viewed from
+Windows clients. This might prove mildly inconvenient if you want to
+move or remove one. For most sites, however, this is fairly harmless.</p>
+
+<p>For map archive to work properly, the execute bit for group must not
+be masked off with the <tt class="literal">create</tt>
+<tt class="literal">mask</tt> parameter.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-2.2.10"/>
+
+<a name="INDEX-62"/><h3 class="head3">map hidden</h3>
+
+<p>DOS uses the hidden attribute to indicate that a file should not
+ordinarily be visible in directory listings. Unix
+doesn't have such a facility; it's
+up to individual programs (notably, the shell) to decide what to
+display and what not to display. Normally, you won't
+have any DOS files that need to be hidden, so the best thing to do is
+to leave this option turned off.</p>
+
+<p>Setting this option to <tt class="literal">yes</tt> causes the server to
+map the hidden flag onto the executable-by-others bit (0001). This
+feature can produce a rather startling effect. Any Unix program that
+is executable by world seems to vanish when you look for it from a
+Windows client. If this option is not set, however, and a Windows
+user attempts to mark a file hidden on a Samba share, it will not
+work&mdash;Samba has no place to store the hidden attribute!</p>
+
+<p>For map archive to work properly, the execute bit for other must not
+be masked off with the <tt class="literal">create</tt>
+<tt class="literal">mask</tt> parameter.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-2.2.11"/>
+
+<h3 class="head3">inherit permissions</h3>
+
+<p>When the <tt class="literal">inherit</tt><a name="INDEX-63"/>
+<tt class="literal">permissions</tt> option is set to
+<tt class="literal">yes</tt>, the <tt class="literal">create</tt>
+<tt class="literal">mask</tt>, <tt class="literal">directory</tt>
+<tt class="literal">mask</tt>, <tt class="literal">force</tt>
+<tt class="literal">create</tt> <tt class="literal">mode</tt>, and
+<tt class="literal">force</tt> <tt class="literal">directory</tt>
+<tt class="literal">mode</tt> are ignored. The normal behavior of setting
+the permissions on newly created files is overridden such that the
+new files and directories take on permissions from their parent
+directory. New directories will have exactly the same permissions as
+the parent, and new files will inherit the read and write bits from
+the parent directory, while the execute bits are determined as usual
+by the values of the <tt class="literal">map</tt>
+<tt class="literal">archive</tt>, <tt class="literal">map</tt>
+<tt class="literal">hidden</tt>, and <tt class="literal">map</tt>
+<tt class="literal">system</tt> parameters.</p>
+
+<p>By default, this option is set to <tt class="literal">no</tt>. <a name="INDEX-64"/><a name="INDEX-65"/><a name="INDEX-66"/> <a name="INDEX-67"/><a name="INDEX-68"/><a name="INDEX-69"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-8-SECT-3"/>
+
+<h2 class="head1">Windows NT/2000/XP ACLs</h2>
+
+<p><a name="INDEX-70"/><a name="INDEX-71"/><a name="INDEX-72"/><a name="INDEX-73"/>Unix and Windows
+have different <a name="INDEX-74"/>security models, and Windows NT/2000/XP
+has a security model that is different from Windows 95/98/Me. One
+area in which this is readily apparent is file protections. On Unix
+systems, the method used has traditionally been the 9-bit
+&quot;user, group, other&quot; system, in
+which read, write, and execute bits can be set separately for the
+owner of the file, the groups to which the owner belongs, and
+everyone else, respectively.</p>
+
+<p><a name="INDEX-75"/>Windows 95/98/Me has a file-protection
+system that is essentially no protection at all. This family of
+operating systems was developed from MS-DOS, which was implemented as
+a non-networked, single-user system. Multiuser security simply was
+never added. One apparent exception to this is user-level security
+for shared files, which we will discuss in <a href="ch09.html">Chapter 9</a>. Here, separate access permissions can be
+assigned to individual network client users or groups. However,
+user-level security on Windows 95/98/Me systems requires a Windows
+NT/2000 or Samba server to perform the actual authentication.</p>
+
+<p>On <a name="INDEX-76"/><a name="INDEX-77"/><a name="INDEX-78"/>Windows NT/2000/XP,
+user-level security is an extension of the native file security
+model, which involves access control lists (ACLs). This system is
+somewhat more extensive than the Unix security model, allowing the
+access rights on individual files to be set separately for any number
+of individual users and/or any number of arbitrary groups of users.
+<a href="ch08.html#samba2-CHP-8-FIG-3">Figure 8-3</a>, <a href="ch08.html#samba2-CHP-8-FIG-4">Figure 8-4</a>,
+and <a href="ch08.html#samba2-CHP-8-FIG-5">Figure 8-5</a> show the dialog boxes on a Windows
+2000 system in which the ACL is set for a file. By right-clicking a
+file's icon and selecting Properties, then selecting
+the Security tab, we get to the dialog box shown in <a href="ch08.html#samba2-CHP-8-FIG-3">Figure 8-3</a>. Here, we can set the basic permissions for a
+file, which are similar to Unix permissions, although not identical.</p>
+
+<div class="figure"><a name="samba2-CHP-8-FIG-3"/><img src="figs/sam2_0803.gif"/></div><h4 class="head4">Figure 8-3. The Security tab of the file Properties dialog</h4>
+
+<p>By clicking the Advanced tab, we can bring up the dialog box shown in
+<a href="ch08.html#samba2-CHP-8-FIG-4">Figure 8-4</a>, which shows the list of
+<a name="INDEX-79"/>access control entries (ACEs) in the ACL.
+In this dialog, ACEs can be added to or deleted from the ACL, or an
+existing ACE can be viewed and modified. Each ACE either allows or
+denies a set of permissions for a specific user or group.</p>
+
+<div class="figure"><a name="samba2-CHP-8-FIG-4"/><img src="figs/sam2_0804.gif"/></div><h4 class="head4">Figure 8-4. The Permissions tab of the Access Control Settings dialog</h4>
+
+<div class="figure"><a name="samba2-CHP-8-FIG-5"/><img src="figs/sam2_0805.gif"/></div><h4 class="head4">Figure 8-5. Permission Entry dialog, showing the settings of an ACE</h4>
+
+<p><a href="ch08.html#samba2-CHP-8-FIG-5">Figure 8-5</a> shows the dialog box for adding an ACE.
+As you can see, there are more options for permissions in an ACL than
+with the permission bits on typical Unix systems. You can learn more
+about these settings in <em class="citetitle">Essential Windows NT System
+Administration</em>, published by O'Reilly.</p>
+
+<p>In a networked environment where a Samba server is serving files to
+Windows NT/2000/XP clients, Samba has to map Unix permissions for
+files and directories to Windows NT/2000/XP access control lists.
+When a Windows NT/2000/XP client accesses a shared file or directory
+on a Samba server, Samba translates the object's
+ownership, group, and permissions into an ACL and returns them to the
+client.</p>
+
+<p><a href="ch08.html#samba2-CHP-8-FIG-6">Figure 8-6</a> shows the Properties dialog box for the
+file <em class="filename">shopping_list.doc</em> that resides on the Samba
+server.</p>
+
+<div class="figure"><a name="samba2-CHP-8-FIG-6"/><img src="figs/sam2_0806.gif"/></div><h4 class="head4">Figure 8-6. The Properties dialog for a file on the Samba server</h4>
+
+<p>From Unix, this file appears as:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>ls -l shopping_list.doc</b></tt>
+-rw-------    1 adilia   users          49 Mar 29 11:58 shopping_list.doc</pre></blockquote>
+
+<p>Notice that because the file has read permissions for the owner, the
+Read-only checkbox will show as cleared, even though the user on the
+Windows client (who is not <tt class="literal">adilia</tt> in this example)
+does not have read access permissions. The checkboxes here show only
+DOS attributes. By clicking the Security tab, we can start to examine
+the ACLs, as shown in <a href="ch08.html#samba2-CHP-8-FIG-7">Figure 8-7</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-8-FIG-7"/><img src="figs/sam2_0807.gif"/></div><h4 class="head4">Figure 8-7. The Security tab of the Properties dialog for a file on the Samba server</h4>
+
+<p>The owner of the file (<tt class="literal">adilia</tt>) is shown as one
+entry, while the group (<tt class="literal">users</tt>) and other
+permissions are presented as the groups called
+<tt class="literal">users</tt> and <tt class="literal">Everyone</tt>. Clicking
+one of the items in the upper windows causes the simplified view of
+the permissions in that item to appear in the bottom window. Here,
+the read/write permissions for <tt class="literal">adilia</tt> appear in a
+manner that makes the security model of Unix and Windows seem
+similar. However, clicking the Advanced . . . button brings up the
+additional dialog box shown in <a href="ch08.html#samba2-CHP-8-FIG-8">Figure 8-8</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-8-FIG-8"/><img src="figs/sam2_0808.gif"/></div><h4 class="head4">Figure 8-8. The Access Control Settings dialog for a file on the Samba server</h4>
+
+<p>In this dialog box, we see the actual ACL of the file. The ACEs for
+<tt class="literal">users</tt> and <tt class="literal">Everyone</tt> are listed
+with Take Ownership in the Permission column. This is a trick used by
+Samba for ACLs that have no permissions on the Unix side. On Windows,
+an ACL with nothing set results in no ACL at all, so Samba sets the
+Take Ownership permission to make sure that all the ACLs
+corresponding to the Unix &quot;user, group,
+other&quot; permissions will show up on Windows. The Take
+Ownership permission has no corresponding Unix attribute, so the
+setting on Windows does not affect the actual file on the Unix system
+in any way. Although Windows client users might be misled into
+thinking they can take ownership of the file (that is, change the
+ownership of the file to themselves), an actual attempt to do so will
+fail.</p>
+
+<p>The Permissions column for the <tt class="literal">adilia</tt> ACL is
+listed as Special because Samba reports permissions for the file that
+do not correspond to settings for which Windows has a more
+descriptive name. Clicking the entry and then clicking the View/Edit
+. . . button brings up the dialog box shown in <a href="ch08.html#samba2-CHP-8-FIG-9">Figure 8-9</a>, in which the details of the ACL permissions
+can be viewed and perhaps modified.</p>
+
+<div class="figure"><a name="samba2-CHP-8-FIG-9"/><img src="figs/sam2_0809.gif"/></div><h4 class="head4">Figure 8-9. Permission Entry dialog for a file served by Samba</h4>
+
+<p>We say &quot;perhaps&quot; here because
+checking or unchecking boxes in this dialog box might not result in
+settings that Samba is able to map back into the Unix security model.
+When a user attempts to modify a setting (either permissions or
+ownership) that she does not have authority to change, or does not
+correspond to a valid setting on the Unix system, Samba will respond
+with an error dialog or by quietly ignoring the unmappable settings.</p>
+
+<p>The ACLs for a directory are slightly different. <a href="ch08.html#samba2-CHP-8-FIG-10">Figure 8-10</a> shows the ACL view after clicking the Advanced
+button.</p>
+
+<div class="figure"><a name="samba2-CHP-8-FIG-10"/><img src="figs/sam2_0810.gif"/></div><h4 class="head4">Figure 8-10. The Access Control Settings dialog for a directory on the Samba server</h4>
+
+<p>Here, there are two ACLs each for <tt class="literal">users</tt> and
+<tt class="literal">Everyone</tt>. One ACL specifies the permissions for
+the directory itself, and the other specifies permissions for the
+directory's contents. When changing settings in the
+View/Edit... dialog, there is an extra drop-down menu to apply the
+settings either to just the directory or to some combination of the
+directory and the files and directories it contains. If settings are
+applied to more than just the directory, Samba will match the
+behavior of a Windows server and change the permissions on the
+contents of the directory, as specified in the dialog.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-3.1"/>
+
+<h3 class="head2">Unix ACLs</h3>
+
+<p><a name="INDEX-80"/><a name="INDEX-81"/>In
+most cases, users of Windows clients will find the Unix security
+model to be sufficient. However, in some cases, people might want the
+Samba server to support the full Windows ACL security model. Even if
+they don't need the fine-grained control over file
+and directory permissions, they might find Samba's
+translation between ACLs and Unix permissions to be a source of
+confusion or frustration.</p>
+
+<p>When the underlying Unix host operating system supports
+<a name="INDEX-82"/><a name="INDEX-83"/>POSIX.1e ACLs, Samba provides much better
+support of Windows NT/2000/XP ACLs. Versions of Unix that offer the
+necessary support include the following:</p>
+
+<ul><li>
+<p>Solaris 2.6 and later</p>
+</li><li>
+<p>SGI Irix</p>
+</li><li>
+<p>Linux, with Andreas Gr&uuml;nbacher's kernel
+patch from <a href="http://acl.bestbits.at">http://acl.bestbits.at</a>
+that adds ACL support to the Linux ext2 and ext3 filesystems</p>
+</li><li>
+<p>Linux, with the XFS filesystem</p>
+</li><li>
+<p>AIX</p>
+</li><li>
+<p>FreeBSD 5.0 and later</p>
+</li><li>
+<p>HP/UX 11.0 and later, with the JFS 3.3 filesystem layout Version 4</p>
+</li></ul>
+<p>If you are fortunate enough to have a Unix host operating system with
+ACL support already provided, all you need to do is recompile Samba
+using the <tt class="literal">--with-acl-support</tt> configure option, as
+we described in <a href="ch02.html">Chapter 2</a>. If you are running
+Linux and need to patch your kernel, things are much more
+complicated. We suggest you refer to the documentation that comes
+with the patch for details on using it.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-3.2"/>
+
+<h3 class="head2">Configuration Options for ACLs</h3>
+
+<p><a href="ch08.html#samba2-CHP-8-TABLE-3">Table 8-3</a> <a name="INDEX-84"/><a name="INDEX-85"/>shows the Samba configuration options
+for working with Windows NT/2000/XP access control lists.</p>
+
+<a name="samba2-CHP-8-TABLE-3"/><h4 class="head4">Table 8-3. ACL configuration options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">nt acl support</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, allows users on Windows NT/2000/XP clients
+to modify ACL settings</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">security mask</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Bitmask that allows or denies permission settings on files</p>
+</td>
+<td>
+<p><tt class="literal">0777</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">force security</tt> <tt class="literal">mode</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Bits that are always set when modifying file permissions</p>
+</td>
+<td>
+<p><tt class="literal">0000</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">directory</tt> <tt class="literal">security mask</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Bitmask that allows or denies permission settings on directories</p>
+</td>
+<td>
+<p><tt class="literal">0777</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">force directory</tt> <tt class="literal">security mode</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Bits that are always set when modifying directory permissions</p>
+</td>
+<td>
+<p><tt class="literal">0000</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-3.2.1"/>
+
+<a name="INDEX-86"/><h3 class="head3">nt acl support</h3>
+
+<p>This parameter defaults to <tt class="literal">yes</tt>, which allows users
+on Windows NT/2000/XP clients to modify ACL settings for files on the
+Samba server. When set to <tt class="literal">no</tt>, files show up as
+owned by <tt class="literal">Everyone</tt>, with permissions appearing as
+&quot;Full Control&quot;. However,
+<em class="emphasis">actual</em> ownership and permissions are enforced as
+whatever they are set to on the Samba server, and the user on the
+Windows client cannot view or modify them with the dialog boxes used
+for managing ACLs.</p>
+
+<p>When enabled, support for Windows NT/2000/XP ACLs is limited to
+whatever ownerships and permissions can map into valid users and
+permissions on the Samba server. If the server supports ACLs (either
+&quot;out of the box&quot; or with an
+additional patch to enhance the filesystem), Samba's
+ACL support more closely matches that of a Windows NT/2000/XP server.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-3.2.2"/>
+
+<h3 class="head3">security mask</h3>
+
+<p>Using the <tt class="literal">security</tt><a name="INDEX-87"/>
+<tt class="literal">mask</tt> option, it is possible to define which file
+permissions users can modify from Windows NT/2000/XP clients. This is
+for files only and not directories, which are handled with the
+<tt class="literal">directory</tt><a name="INDEX-88"/>
+<tt class="literal">security</tt> <tt class="literal">mask</tt> option. The
+parameter is assigned a numeric value that is a Unix-style
+permissions mask. For bits in the mask that are set, the client can
+modify the corresponding bits in the files'
+permissions. If the bit is zero, the client cannot modify that
+permission. For example, if <tt class="literal">security</tt>
+<tt class="literal">mask</tt> is set as:</p>
+
+<blockquote><pre class="code">[data]
+    security mask = 0777</pre></blockquote>
+
+<p>the client can modify all the user/group/other permissions for the
+files in the share. This is the default. A value of
+<tt class="literal">0</tt> would deny clients from changing any of the
+permissions, and setting <tt class="literal">security</tt>
+<tt class="literal">mask</tt> as:</p>
+
+<blockquote><pre class="code">[data]
+    security mask = 0666</pre></blockquote>
+
+<p>would allow client users to modify the read and write permissions,
+but not the execute permissions.</p>
+
+<p>Do not count on <tt class="literal">security</tt> <tt class="literal">mask</tt>
+for complete control because if the user can access the files on the
+Samba server through any other means (for example, by logging
+directly into the Unix host), he can modify the permissions using
+that method.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-3.2.3"/>
+
+<h3 class="head3">force security mode</h3>
+
+<p>The <tt class="literal">force</tt><a name="INDEX-89"/>
+<tt class="literal">security</tt> <tt class="literal">mode</tt> option can be
+used to define a set of permissions that are always set whenever the
+user on a Windows NT/2000/XP client modifies a
+file's permissions. (See the
+<tt class="literal">force</tt> <tt class="literal">directory</tt>
+<tt class="literal">security</tt> <tt class="literal">mode</tt> option for
+handling directories.)</p>
+
+<p>Be careful to understand this properly. The mask given as the
+parameter's value is not necessarily equal to the
+resulting permissions on the file. The permissions that the client
+user attempts to modify are logically OR'd with the
+<tt class="literal">force</tt> <tt class="literal">security</tt>
+<tt class="literal">mode</tt> <tt class="literal">mask</tt> option, and any bits
+that are turned on will cause the file's
+corresponding permissions to be set. As an example, suppose
+<tt class="literal">force</tt> <tt class="literal">security</tt>
+<tt class="literal">mode</tt> is set in a share thusly:</p>
+
+<blockquote><pre class="code">[data]
+    force security mode = 0440</pre></blockquote>
+
+<p>(This sets the read bit for owner and group, but not other.) If a
+user on a Windows NT/2000/XP client modifies an ACL on a file in the
+<tt class="literal">[data]</tt> share and attempts to remove all read
+permissions, the read permission for other
+(<tt class="literal">Everyone</tt>) will be removed, but the read
+permission for the owner and group will remain. Note that this
+parameter cannot force a permission bit to be turned off.</p>
+
+<p>As with the <tt class="literal">security</tt> <tt class="literal">mask</tt>
+option, if a user can access the files in the share through any means
+other than Samba, she can easily work around Samba's
+enforcement of this parameter.</p>
+
+<p>The default value of <tt class="literal">force</tt>
+<tt class="literal">security</tt> <tt class="literal">mode</tt> is
+<tt class="literal">0000</tt>, which allows users to remove any permission
+from files.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-3.2.4"/>
+
+<a name="INDEX-90"/><h3 class="head3">directory security mask</h3>
+
+<p>This option works exactly the same as the <tt class="literal">security</tt>
+<tt class="literal">mask</tt> option, except that it operates on
+directories rather than files. As with <tt class="literal">security</tt>
+<tt class="literal">mask</tt>, it has a default value of
+<tt class="literal">0777</tt>, which allows Windows NT/2000/XP client users
+to modify all Unix permissions on directories in the share.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-3.2.5"/>
+
+<a name="INDEX-91"/><h3 class="head3">force directory security mode</h3>
+
+<p>This option works exactly the same as the <tt class="literal">force</tt>
+<tt class="literal">security</tt> <tt class="literal">mode</tt> option, except
+that it operates on directories rather than files. It also has a
+default value of <tt class="literal">0000</tt>, which allows Windows
+NT/2000/XP client users to remove any permissions from directories in
+the share. <a name="INDEX-92"/><a name="INDEX-93"/><a name="INDEX-94"/><a name="INDEX-95"/> <a name="INDEX-96"/><a name="INDEX-97"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-8-SECT-4"/>
+
+<h2 class="head1">Name Mangling and Case</h2>
+
+<p><a name="INDEX-98"/><a name="INDEX-99"/><a name="INDEX-100"/><a name="INDEX-101"/>Back
+in the days of DOS and Windows 3.1, every filename was limited to
+eight uppercase characters, followed by a dot, and three more
+uppercase characters. This was known as the <em class="firstterm">8.3
+format</em> and was a huge nuisance. Windows 95/98/Me, Windows
+NT/2000/XP, and Unix have since relaxed this problem by allowing
+longer, sometimes case-sensitive, filenames. <a href="ch08.html#samba2-CHP-8-TABLE-4">Table 8-4</a> shows the current naming state of several
+popular operating systems.</p>
+
+<a name="samba2-CHP-8-TABLE-4"/><h4 class="head4">Table 8-4. Operating system filename limitations</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Operating system</p>
+</th>
+<th>
+<p>File-naming rules</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p>DOS 6.22 or below</p>
+</td>
+<td>
+<p>Eight characters followed by a dot followed by a three-letter
+extension (8.3 format); case-insensitive</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows 3.1 for Workgroups</p>
+</td>
+<td>
+<p>Eight characters followed by a dot followed by a three-letter
+extension (8.3 format); case-insensitive</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows 95/98/Me</p>
+</td>
+<td>
+<p>255 characters; case-insensitive but case-preserving</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows NT/2000/XP</p>
+</td>
+<td>
+<p>255 characters; case-insensitive but case-preserving</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Unix</p>
+</td>
+<td>
+<p>255 characters; case-sensitive</p>
+</td>
+</tr>
+
+</table>
+
+<p>Samba still has to remain backward-compatible with network clients
+that store files in just the 8.3 format, such as Windows for
+Workgroups. If a user creates a file on a share called
+<em class="emphasis">antidisestablishmentarianism.txt</em>, a Windows for
+Workgroups client cannot tell it apart from another file in the same
+directory called <em class="emphasis">antidisease.txt</em>. Like Windows
+95/98/Me and Windows NT/2000/XP, Samba has to employ a special method
+for translating a long filename to an 8.3 filename in such a way that
+similar filenames will not cause collisions. This is called
+<em class="firstterm">name mangling</em>, and Samba deals with this in a
+manner that is similar, but not identical to, Windows 95 and its
+successors.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-4.1"/>
+
+<h3 class="head2">The Samba Mangling Operation</h3>
+
+<p><a name="INDEX-102"/>Here is how Samba mangles a long
+filename into an 8.3 filename:</p>
+
+<ul><li>
+<p>If the original filename does not begin with a dot, the first five
+characters before the dot (if there is one) are converted to
+uppercase. These characters are used as the first five characters of
+the 8.3 mangled filename.</p>
+</li><li>
+<p>If the original filename begins with a dot, the dot is removed and
+then the previous step is performed on what is left.</p>
+</li><li>
+<p>These characters are immediately followed by a special mangling
+character: by default, a tilde (~), although Samba allows you to
+change this character.</p>
+</li><li>
+<p>The base of the long filename before the last period is hashed into a
+two-character code; parts of the name after the last dot can be used
+if necessary. This two-character code is appended to the filename
+after the mangling character.</p>
+</li><li>
+<p>The first three characters after the last dot (if there is one) of
+the original filename are converted to uppercase and appended onto
+the mangled name as the extension. If the original filename began
+with a dot, three underscores ( <tt class="literal">_ _ _</tt> ) are used
+as the extension instead.</p>
+</li></ul>
+<p>Here are some examples:</p>
+
+<blockquote><pre class="code">virtuosity.dat                       VIRTU~F1.DAT
+.htaccess                            HTACC~U0._ _ _
+hello.java                           HELLO~1F.JAV
+team.config.txt                      TEAMC~04.TXT
+antidisestablishmentarianism.txt     ANTID~E3.TXT
+antidisease.txt                      ANTID~9K.TXT</pre></blockquote>
+
+<p>Using these rules will allow Windows for Workgroups to differentiate
+the two files on behalf of the poor individual who is forced to see
+the network through the eyes of that operating system. Note that the
+same long filename should always hash to the same mangled name with
+Samba; this doesn't always happen with Windows. The
+downside of this approach is that there can still be collisions;
+however, the chances are greatly reduced.</p>
+
+<p>You generally want to use the mangling configuration options with
+only the oldest clients. We recommend doing this without disrupting
+other clients by adding an <tt class="literal">include</tt> directive to
+the <em class="filename">smb.conf</em> file:</p>
+
+<blockquote><pre class="code">[global]
+    include = /usr/local/samba/lib/smb.conf.%a</pre></blockquote>
+
+<p>This resolves to <em class="filename">smb.conf.WfWg</em> when a Windows
+for Workgroups client attaches. Now you can create a file
+<em class="filename">/usr/local/samba/lib/smb.conf.WfWg</em>, which might
+contain these options:</p>
+
+<blockquote><pre class="code">[global]
+    case sensitive = no
+    default case = upper
+    preserve case = no
+    short preserve case = no
+    mangle case = yes
+    mangled names= yes</pre></blockquote>
+
+<p>If you are not using Windows for Workgroups, you probably do not need
+to change any of these options from their defaults.</p>
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-4.1.1"/>
+
+<h3 class="head3">Representing and resolving filenames with Samba</h3>
+
+<p><a name="INDEX-103"/>Another item that we should
+point out is that there is a difference between how an operating
+system <em class="emphasis">represents</em> a file and how it
+<em class="emphasis">resolves</em> it. For example, you have likely run
+across a file on a Windows system called
+<em class="filename">README.TXT</em>. The file can be represented by the
+operating system entirely in uppercase letters. However, if you open
+an MS-DOS command prompt and enter the command:</p>
+
+<blockquote><pre class="code">C:\&gt; <tt class="userinput"><b>notepad readme.txt</b></tt></pre></blockquote>
+
+<p>the all-caps file is loaded into the editing program, even though you
+typed the name in lowercase letters.</p>
+
+<p>This is because the Windows 95/98/Me and Windows NT/2000/XP families
+of operating systems resolve filenames in a case-insensitive manner,
+even though the files are represented in a case-sensitive manner.
+Unix-based operating systems, on the other hand, always resolve files
+in a case-sensitive manner; if you try to edit
+<em class="filename">README.TXT</em> with the command:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>vi readme.txt</b></tt></pre></blockquote>
+
+<p>you will likely be editing the empty buffer of a new file.</p>
+
+<p><a name="INDEX-104"/>Here is how Samba handles case: if the
+<tt class="literal">preserve</tt><a name="INDEX-105"/> <tt class="literal">case</tt> is set
+to <tt class="literal">yes</tt>, Samba will always use the case provided by
+the operating system for representing (not resolving) filenames. If
+it is set to <tt class="literal">no</tt>, it will use the case specified by
+the <tt class="literal">default</tt><a name="INDEX-106"/> <tt class="literal">case</tt> option.
+The same is true for
+<tt class="literal">short</tt><a name="INDEX-107"/>
+<tt class="literal">preserve</tt> <tt class="literal">case</tt>. If this option
+is set to <tt class="literal">yes</tt>, Samba will use the default case of
+the operating system for representing 8.3 filenames; otherwise, it
+will use the case specified by the <tt class="literal">default</tt>
+<tt class="literal">case</tt> option. Finally, Samba will always resolve
+filenames in its shares based on the value of the
+<tt class="literal">case</tt> <tt class="literal">sensitive</tt> option.</p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-4.2"/>
+
+<h3 class="head2">Mangling Options</h3>
+
+<p><a name="INDEX-108"/><a name="INDEX-109"/>Samba
+allows more refined instructions on how it should perform name
+mangling, including those controlling the case sensitivity, the
+character inserted to form a mangled name, and the ability to map
+filenames manually from one format to another. These options are
+shown in <a href="ch08.html#samba2-CHP-8-TABLE-5">Table 8-5</a>.</p>
+
+<a name="samba2-CHP-8-TABLE-5"/><h4 class="head4">Table 8-5. Name-mangling options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">case sensitive</tt></p>
+
+<p><tt class="literal">(casesignames)</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, treats filenames as case-sensitive
+(Windows doesn't).</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">default case</tt></p>
+</td>
+<td>
+<p>string (<tt class="literal">upper</tt> or <tt class="literal">lower</tt>)</p>
+</td>
+<td>
+<p>Case to assume as default (used only when preserve case is
+<tt class="literal">no</tt>).</p>
+</td>
+<td>
+<p>Lower</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">preserve case</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, keep the case the client supplied (i.e.,
+do not convert to <tt class="literal">default</tt>
+<tt class="literal">case</tt>).</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">short preserve case</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, preserve case of 8.3-format names that the
+client provides.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">mangled names</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>Mangles long names into 8.3 DOS format.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">mangle case</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>Mangle a name if it is mixed case.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">mangling char</tt></p>
+</td>
+<td>
+<p>string (single character)</p>
+</td>
+<td>
+<p>Gives mangling character.</p>
+</td>
+<td>
+<p><tt class="literal">~</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">mangled stack</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Number of mangled names to keep on the local mangling stack.</p>
+</td>
+<td>
+<p><tt class="literal">50</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">mangled map</tt></p>
+</td>
+<td>
+<p>string (list of patterns)</p>
+</td>
+<td>
+<p>Allows mapping of filenames from one format into another.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-4.2.1"/>
+
+<a name="INDEX-110"/><h3 class="head3">case sensitive</h3>
+
+<p>This share-level option, which has the obtuse synonym
+<tt class="literal">casesignames</tt>, specifies whether Samba should
+preserve case when resolving filenames in a specific share. The
+default value for this option is <tt class="literal">no</tt>, which is how
+Windows handles file resolution. If clients are using an operating
+system that takes advantage of case-sensitive filenames, you can set
+this configuration option to <tt class="literal">yes</tt> as shown here:</p>
+
+<blockquote><pre class="code">[accounting]
+    case sensitive = yes</pre></blockquote>
+
+<p>Otherwise, we recommend that you leave this option set to its default.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-4.2.2"/>
+
+<h3 class="head3">default case</h3>
+
+<p>The <tt class="literal">default</tt><a name="INDEX-111"/> <tt class="literal">case</tt> option
+is used with <tt class="literal">preserve</tt> <tt class="literal">case</tt>.
+This specifies the default case (upper or lower) Samba uses to create
+a file on one of its shares on behalf of a client. The default case
+is <tt class="literal">lower</tt>, which means that newly created files
+will have lowercase names. If you need to, you can override this
+global option by specifying the following:</p>
+
+<blockquote><pre class="code">[global]
+    default case = upper</pre></blockquote>
+
+<p>If you specify this value, the names of newly created files are
+translated into uppercase and cannot be overridden in a program. We
+recommend that you use the default value unless you are dealing with
+a Windows for Workgroups or other 8.3 client, in which case it should
+be <tt class="literal">upper</tt>.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-4.2.3"/>
+
+<a name="INDEX-112"/><h3 class="head3">preserve case</h3>
+
+<p>This option specifies whether a file created by Samba on behalf of
+the client is created with the case provided by the client operating
+system or the case specified by the earlier
+<tt class="literal">default</tt> <tt class="literal">case</tt> configuration
+option. The default value is <tt class="literal">yes</tt>, which uses the
+case provided by the client operating system. If it is set to
+<tt class="literal">no</tt>, the value of the <tt class="literal">default</tt>
+<tt class="literal">case</tt> option (upper or lower) is used.</p>
+
+<p>Note that this option does not handle 8.3 file requests sent from the
+client&mdash;see the upcoming <tt class="literal">short</tt>
+<tt class="literal">preserve</tt> <tt class="literal">case</tt> option. You might
+want to set this option to <tt class="literal">yes</tt>, for example, if
+applications that create files on the Samba server demand the file be
+all uppercase. If instead you want Samba to mimic the behavior of a
+Windows NT filesystem, you can leave this option set to its default,
+<tt class="literal">yes</tt>.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-4.2.4"/>
+
+<a name="INDEX-113"/><h3 class="head3">short preserve case</h3>
+
+<p>This option specifies whether an 8.3 filename created by Samba on
+behalf of the client is created with the default case of the client
+operating system or the case specified by the
+<tt class="literal">default</tt> <tt class="literal">case</tt> configuration
+option. The default value is <tt class="literal">yes</tt>, which uses the
+case provided by the client operating system. You can let Samba
+choose the case through the <tt class="literal">default</tt>
+<tt class="literal">case</tt> option by setting it as follows:</p>
+
+<blockquote><pre class="code">[global]
+    short preserve case = no</pre></blockquote>
+
+<p>If you want to force Samba to mimic the behavior of a Windows NT
+filesystem, you can leave this option set to its default,
+<tt class="literal">yes</tt>.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-4.2.5"/>
+
+<a name="INDEX-114"/><h3 class="head3">mangled names</h3>
+
+<p>This share-level option specifies whether Samba will mangle filenames
+for 8.3 clients. If the option is set to <tt class="literal">no</tt>, Samba
+will not mangle the names, and (depending on the client) they will
+either be invisible or appear truncated to those using 8.3 operating
+systems. The default value is <tt class="literal">yes</tt>. You can
+override it per share as follows:</p>
+
+<blockquote><pre class="code">[data]
+    mangled names = no</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-4.2.6"/>
+
+<a name="INDEX-115"/><h3 class="head3">mangle case</h3>
+
+<p>This option tells Samba whether it should mangle filenames that are
+not composed entirely of the case specified using the
+<tt class="literal">default</tt> <tt class="literal">case</tt> configuration
+option. The default for this option is <tt class="literal">no</tt>. If you
+set it to <tt class="literal">yes</tt>, you should be sure that all clients
+can handle the mangled filenames that result. You can override it per
+share as follows:</p>
+
+<blockquote><pre class="code">[data]
+    mangle case = yes</pre></blockquote>
+
+<p>We recommend that you leave this option alone unless you have a
+well-justified need to change it.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-4.2.7"/>
+
+<a name="INDEX-116"/><h3 class="head3">mangling char</h3>
+
+<p>This share-level option specifies the mangling character used when
+Samba mangles filenames into the 8.3 format. The default character
+used is a tilde (~). You can reset it to whatever character you wish.
+For instance:</p>
+
+<blockquote><pre class="code">[data]
+    mangling char = #</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-4.2.8"/>
+
+<a name="INDEX-117"/><h3 class="head3">mangled stack</h3>
+
+<p>Samba maintains a local stack of recently mangled 8.3 filenames; this
+stack can be used to reverse-map mangled filenames back to their
+original state. This is often needed by applications that create and
+save a file, close it, and need to modify it later. The default
+number of long filename/mangled filename pairs stored on this stack
+is 50. However, if you want to cut down on the amount of processor
+time used to mangle filenames, you can increase the size of the stack
+to whatever you wish, at the expense of memory and slightly slower
+file access:</p>
+
+<blockquote><pre class="code">[global]
+    mangled stack = 100</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-4.2.9"/>
+
+<a name="INDEX-118"/><h3 class="head3">mangled map</h3>
+
+<p>If the default behavior of name mangling is not sufficient, you can
+give Samba further instructions on how to behave using the
+<tt class="literal">mangled</tt> <tt class="literal">map</tt> option. This option
+allows you to specify mapping patterns that can be used in place of
+name mangling performed by Samba. For example:</p>
+
+<blockquote><pre class="code">[data]
+    mangled map =(*.database *.db) (*.class *.cls)</pre></blockquote>
+
+<p>Here, Samba is instructed to search each encountered file for
+characters that match the first pattern specified in the parenthesis
+and convert them to the modified second pattern in the parenthesis
+for display on an 8.3 client. This is useful in the event that name
+mangling converts the filename incorrectly or converts it to a format
+that the client cannot understand readily. Patterns are separated by
+whitespaces. <a name="INDEX-119"/><a name="INDEX-120"/> <a name="INDEX-121"/><a name="INDEX-122"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-8-SECT-5"/>
+
+<h2 class="head1">Locks and Oplocks</h2>
+
+<p><a name="INDEX-123"/><a name="INDEX-124"/><a name="INDEX-125"/><a name="INDEX-126"/>Concurrent
+writes to a single file are not desirable in any operating system. To
+prevent this, most operating systems use <em class="firstterm">locks</em>
+to guarantee that only one process can write to a file at a time.
+Operating systems traditionally lock entire files, although newer
+ones allow a range of bytes within a file to be locked. If another
+process attempts to write to a file (or section of one) that is
+already locked, it receives an error from the operating system and
+will have to wait until the lock is released.</p>
+
+<p>Samba supports the standard DOS and NT filesystem (deny-mode) locking
+requests&mdash;which allow only one process to write to an entire
+file on a server at a given time&mdash;as well as byte-range locking.
+In addition, Samba supports a locking mechanism known in the Windows
+NT world as <em class="firstterm">opportunistic locking,
+</em><a name="INDEX-127"/>or<em class="firstterm">
+</em><em class="emphasis">oplock</em> for short.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-5.1"/>
+
+<h3 class="head2">Opportunistic Locking</h3>
+
+<p>Opportunistic locking allows a client to notify the Samba server that
+it will not only be the exclusive writer of a file, but will also
+cache its changes to that file locally to speed up access by reducing
+network activity. This can result in a large performance
+gain&mdash;typically 30%&mdash;while at the same time reserving
+network bandwidth for other purposes.</p>
+
+<p>Because exclusive access can be obtained using regular file locks,
+the value of opportunistic locks is not so much to lock the file as
+it is to cache it. In fact, a better name for opportunistic locking
+might be <em class="firstterm">opportunistic caching</em>.</p>
+
+<p>When Samba knows that a file in one of its shares has been oplocked
+by a client, it marks its version as having an opportunistic lock and
+waits for the client to complete work on the file, at which point it
+expects the client to send its changes back to the Samba server for
+synchronization with the copy on the server.</p>
+
+<p>If a second client requests access to that file before the first
+client has finished working on it, Samba sends an oplock break
+request to the first client. This tells the client to stop caching
+its changes and return the current state of the file to the server so
+that the interrupting client can use it as it sees fit. An
+opportunistic lock, however, is not a replacement for a standard
+deny-mode lock. It is not unheard of for the interrupting process to
+be granted an oplock break only to discover that the original process
+also has a deny-mode lock on a file as well. <a href="ch08.html#samba2-CHP-8-FIG-11">Figure 8-11</a> illustrates this <a name="INDEX-128"/>opportunistic locking process.</p>
+
+<div class="figure"><a name="samba2-CHP-8-FIG-11"/><img src="figs/sam2_0811.gif"/></div><h4 class="head4">Figure 8-11. Opportunistic locking</h4>
+
+<p>In most cases, the extra performance resulting from the use of
+oplocks is highly desirable. However, allowing the client to cache
+data can be a big risk if either the client or network hardware are
+unreliable. Suppose a client opens a file for writing, creating an
+oplock on it. When another client also tries to open the file, an
+oplock break request is sent to the first client. If this request
+goes unfulfilled for any reason and the second client starts writing
+to the file, the file can be easily corrupted as a result of the two
+processes writing to it concurrently. Unfortunately, this scenario is
+very real. Uncoordinated behavior such as this has been observed many
+times among Windows clients in SMB networks (with files served by
+Windows NT/2000 or Samba). Typically, the affected files are database
+files, which multiple clients open concurrently for writing.</p>
+
+<p>A more concrete example of <a name="INDEX-129"/>oplock failure occurs when database
+files are very large. If a client is allowed to oplock this kind of
+file, there can be a huge delay while the client copies the entire
+file from the server to cache it, even though it might need to update
+only one record. The situation goes from bad to worse when another
+client tries to open the oplocked file. The first client might need
+to write the entire file back to the server before the second
+client's file open request can succeed. This results
+in another huge delay (for both clients), which in practice often
+results in a failed open due to a timeout on the second client,
+perhaps along with a message warning of possible database corruption!</p>
+
+<p>If you are having problems of this variety, you can turn off oplocks
+for the affected files by using the
+<tt class="literal">veto</tt><a name="INDEX-130"/> <tt class="literal">oplock</tt>
+<tt class="literal">files</tt> parameter:</p>
+
+<blockquote><pre class="code">[dbdata]
+    veto oplock files = /*.dbm/</pre></blockquote>
+
+<p>Use the value of the parameter (a list of filename-matching patterns
+separated by slash characters) to match all the files in the share
+that might be a source of trouble. The syntax of this parameter is
+similar to that of the <tt class="literal">veto</tt>
+<tt class="literal">files</tt> parameter.</p>
+
+<p>If you want to be really careful and can live with reduced
+performance, you can turn off oplocks altogether, preventing the
+oplock break problem from ever occurring:</p>
+
+<blockquote><pre class="code">[global]
+    oplocks = no</pre></blockquote>
+
+<p>This disables oplocks for all files in all shares served by the Samba
+server. If you wish to disable oplocks in just a specific share, you
+can specify the <tt class="literal">oplocks</tt> <tt class="literal">=</tt>
+<tt class="literal">no</tt> parameter in just that share:</p>
+
+<blockquote><pre class="code">[database]
+    oplocks = no</pre></blockquote>
+
+<p>This example allows other shares, which might have less sensitive
+data, to attain better performance, while trading performance for
+better data integrity for files in the <tt class="literal">[database]</tt>
+share.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-5.2"/>
+
+<h3 class="head2">Unix and Oplocks</h3>
+
+<p><a name="INDEX-131"/>Most of the time, oplocks help Windows
+client systems cooperate to avoid overwriting each
+other's changes. Unix systems also have file-locking
+mechanisms to allow Unix processes to cooperate with each other. But
+if a file stored on a Samba system is accessed by both a Windows
+network client and a local Unix process&mdash;without an additional
+coordination between the two systems&mdash;the Unix process could
+easily ride roughshod over an oplock.</p>
+
+<p>Some Unix systems have enhanced kernels that understand the Windows
+oplocks maintained by Samba. Currently the support exists only in SGI
+Irix and Linux.</p>
+
+<p>If you leave oplocks enabled and your Unix system does not support
+kernel oplocks, you could end up with corrupted data when somebody
+runs a Unix process that reads or writes a file that Windows users
+also access. This is another case where the
+<tt class="literal">veto</tt><a name="INDEX-132"/> <tt class="literal">oplock</tt>
+<tt class="literal">files</tt> parameter can be used, assuming you can
+anticipate which Samba files are used by both Windows users and Unix
+users. For example, suppose the <tt class="literal">[usrfiles]</tt> share
+contains some ASCII text files with the <em class="filename">.txt</em>
+filename extension and OpenOffice word processor documents with the
+<em class="filename">.doc</em> filename extension, which Unix and Windows
+users both modify. We can use <tt class="literal">veto</tt>
+<tt class="literal">oplock</tt> <tt class="literal">files</tt> like this:</p>
+
+<blockquote><pre class="code">[usrfiles]
+    veto oplock files = /*.txt/*.doc/</pre></blockquote>
+
+<p>This will suppress the use of oplocks on <em class="filename">.txt</em>
+and <em class="filename">.doc</em> files, which will suppress client
+caching, while allowing the Windows and Unix programs to use regular
+file locking to prevent concurrent writes to the same file.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-5.3"/>
+
+<h3 class="head2">Locks and Oplocks Configuration Options</h3>
+
+<p><a name="INDEX-133"/><a name="INDEX-134"/>Samba's options for
+locks and oplocks are given in <a href="ch08.html#samba2-CHP-8-TABLE-6">Table 8-6</a>.</p>
+
+<a name="samba2-CHP-8-TABLE-6"/><h4 class="head4">Table 8-6. Locks and oplocks configuration options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">locking</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, turns on byte-range locks.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">strict</tt> <tt class="literal">locking</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, denies access to an entire file if a
+byte-range lock exists in it.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">posix locking</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, maps oplocks to POSIX locks on the local
+system.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">oplocks</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, turns on local caching of files on the
+client for this share.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">kernel</tt> <tt class="literal">oplocks</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, indicates that the kernel supports oplocks.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">level2 oplocks</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, allows oplocks to downgrade to read-only.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">fake oplocks</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, tells client the lock was obtained, but
+doesn't actually lock it.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">blocking</tt> <tt class="literal">locks</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>Allows lock requestor to wait for the lock to be granted.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">veto oplock</tt> <tt class="literal">files</tt></p>
+</td>
+<td>
+<p>string (list of filenames)</p>
+</td>
+<td>
+<p>Does not oplock specified files.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">lock</tt> <tt class="literal">directory</tt></p>
+</td>
+<td>
+<p>string (fully qualified pathname)</p>
+</td>
+<td>
+<p>Sets the location where various Samba files, including locks, are
+stored.</p>
+</td>
+<td>
+<p>As specified in Samba makefile</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-5.3.1"/>
+
+<h3 class="head3">locking</h3>
+
+<p>The <tt class="literal">locking</tt><a name="INDEX-135"/> option can be used to tell
+Samba to engage or disengage server-side byte-range locks on behalf
+of the client. Samba implements byte-range locks on the server side
+with normal Unix advisory locks and consequently prevents other
+properly behaved Unix processes from overwriting a locked byte range.</p>
+
+<p>This option can be specified per share as follows:</p>
+
+<blockquote><pre class="code">[accounting]
+    locking = yes</pre></blockquote>
+
+<p>If the <tt class="literal">locking</tt> option is set to
+<tt class="literal">yes</tt>, the requestor is delayed until the holder of
+either type of lock releases it (or crashes). If, however, the option
+is set to <tt class="literal">no</tt>, no byte-range locks are kept for the
+files, although requests to lock and unlock files will appear to
+succeed. The option is set to <tt class="literal">yes</tt> by default;
+however, you can turn this option off if you have read-only media.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-5.3.2"/>
+
+<a name="INDEX-136"/><h3 class="head3">strict locking</h3>
+
+<p>This option checks every file access for a byte-range lock on the
+range of bytes being accessed. This is typically not needed if a
+client adheres to all the locking mechanisms in place. This option is
+set to <tt class="literal">no</tt> by default; however, you can reset it
+per share as follows:</p>
+
+<blockquote><pre class="code">[accounting]
+    strict locking = yes</pre></blockquote>
+
+<p>If this option is set to <tt class="literal">yes</tt>, mandatory locks are
+enforced on any file with byte-range locks.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-5.3.3"/>
+
+<a name="INDEX-137"/><h3 class="head3">posix locking</h3>
+
+<p>On systems that support POSIX locking, Samba automatically maps
+oplocks to POSIX locks. This behavior can be disabled by setting
+<tt class="literal">posix</tt> <tt class="literal">locking</tt>
+<tt class="literal">=</tt> <tt class="literal">no</tt>. You should never need to
+change the default behavior, which is <tt class="literal">posix</tt>
+<tt class="literal">locking</tt> <tt class="literal">=</tt>
+<tt class="literal">yes</tt>.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-5.3.4"/>
+
+<a name="INDEX-138"/><h3 class="head3">oplocks</h3>
+
+<p>This option enables or disables support for oplocks on the client.
+The option is enabled by default. However, you can disable it with
+the following command:</p>
+
+<blockquote><pre class="code">[data]
+    oplocks = no</pre></blockquote>
+
+<p>If you are in an extremely unstable network environment or have many
+clients that cannot take advantage of opportunistic locking, it might
+be better to shut this Samba feature off. If the host operating
+system does not support kernel oplocks, oplocks should be disabled if
+users are accessing the same files from both Unix applications (such
+as <em class="emphasis">vi</em>) and SMB clients.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-5.3.5"/>
+
+<a name="INDEX-139"/><h3 class="head3">kernel oplocks</h3>
+
+<p>If a Unix application on the Samba host system (that is not part of
+the Samba suite) tries to open a file for writing that Samba has
+oplocked to a Windows client, it is likely to succeed (depending on
+the operating system), and both Samba and the client are never aware
+of it.</p>
+
+<p>Some versions of Unix have support for oplocks in the kernel that can
+work along with Samba's oplocks. In this case, the
+Unix process trying to open the file is suspended while Samba directs
+the client to write its copy back. After that has happened, the
+operating system allows the open to complete. At the time of this
+writing, this feature is supported only by SGI Irix and Linux.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-5.3.6"/>
+
+<a name="INDEX-140"/><h3 class="head3">level2 oplocks</h3>
+
+<p>Windows NT/2000/XP clients can downgrade their read-write oplocks to
+read-only oplocks when another client opens the same file. This can
+result in significant improvements in performance on files that are
+written infrequently or not at all&mdash;especially
+executables&mdash;because all clients can then maintain a read-ahead
+cache for the file. By default, <tt class="literal">level2</tt>
+<tt class="literal">oplocks</tt> is set to <tt class="literal">yes</tt>, and you
+probably won't need to change it.</p>
+
+<p>Currently, Samba cannot support level 2 oplocks along with kernel
+oplocks and automatically disables level 2 oplocks when kernel
+oplocks are in use. (This might change in future releases as improved
+support for oplocks is added by the Samba developers.) If you are
+running Samba on a host system that supports kernel oplocks, you must
+set <tt class="literal">kernel</tt> <tt class="literal">oplocks</tt>
+<tt class="literal">=</tt> <tt class="literal">no</tt> to enable support for
+level 2 oplocks.</p>
+
+<p>Disabling oplocks with <tt class="literal">oplocks</tt>
+<tt class="literal">=</tt> <tt class="literal">no</tt> also disables level 2
+oplocks.</p>
+
+<p>Samba can automatically detect its Unix host's
+support of kernel oplocks and will set the value of
+<tt class="literal">kernel</tt> <tt class="literal">oplocks</tt> automatically.
+You should never need to set this option in your Samba configuration
+file.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-5.3.7"/>
+
+<a name="INDEX-141"/><h3 class="head3">fake oplocks</h3>
+
+<p>When this option is set to <tt class="literal">yes</tt>, Samba pretends to
+allow oplocks rather than actually supporting them. If this option is
+enabled on a read-only share (such as a shared CD-ROM drive), all
+clients are told that the files are available for opportunistic
+locking and never warned of simultaneous access. As a result, Windows
+clients cache more of the file's data and obtain
+much better performance.</p>
+
+<p>This option was added to Samba before opportunistic-locking support
+was available, and it is now generally considered better to use real
+oplocks. Do not ever enable <tt class="literal">fake</tt>
+<tt class="literal">oplocks</tt> on a read/write share.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-5.3.8"/>
+
+<h3 class="head3">blocking locks</h3>
+
+<p>Samba also supports <em class="firstterm">blocking locks</em>, a minor
+variant of range locks. Here, if the range of bytes is not available,
+the client specifies an amount of time that it's
+willing to wait. The server then caches the lock request,
+periodically checking to see if the file is available. If it is, it
+notifies the client; however, if time expires, Samba will tell the
+client that the request has failed. This strategy prevents the client
+from continually polling to see if the lock is available.</p>
+
+<p>You can disable this option per share as follows:</p>
+
+<blockquote><pre class="code">[accounting]
+    blocking locks = no</pre></blockquote>
+
+<p>When set to <tt class="literal">yes</tt>, blocking locks are enforced on
+the file. If this option is set to <tt class="literal">no</tt>, Samba
+behaves as if normal locking mechanisms are in place on the file. The
+default is <tt class="literal">yes</tt>.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-5.3.9"/>
+
+<a name="INDEX-142"/><h3 class="head3">veto oplock files</h3>
+
+<p>You can provide a list of filenames that are never granted
+opportunistic locks with the <tt class="literal">veto</tt>
+<tt class="literal">oplock</tt> <tt class="literal">files</tt> option. This
+option can be set either globally or on a per-share basis. For
+example:</p>
+
+<blockquote><pre class="code">veto oplock files = /*.bat/*.htm/</pre></blockquote>
+
+<p>The value of this option is a series of patterns. Each pattern entry
+must begin, end, or be separated from another with a slash ( / )
+character, even if only one pattern is listed. Asterisks can be used
+as a wildcard to represent zero or more characters. Questions marks
+can be used to represent exactly one character.</p>
+
+<p>We recommend that you disable oplocks on any files that are meant to
+be updated by Unix or are intended for simultaneous sharing by
+several processes.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-5.3.10"/>
+
+<a name="INDEX-143"/><h3 class="head3">lock directory</h3>
+
+<p>This option (sometimes called <tt class="literal">lock</tt>
+<tt class="literal">dir</tt>) specifies the location of a directory where
+Samba will store SMB deny-mode lock files. Samba stores other files
+in this directory as well, such as browse lists and its shared memory
+file. If WINS is enabled, the WINS database is written to this
+directory as well. The default for this option is specified in the
+Samba makefile; it is typically
+<em class="filename">/usr/local/samba/var/locks</em>. You can override
+this location as follows:</p>
+
+<blockquote><pre class="code">[global]
+    lock directory = /usr/local/samba/locks</pre></blockquote>
+
+<p>You typically would not need to override this option, unless you want
+to move the lock files to a more standard location, such as
+<em class="filename">/var/spool/locks</em>. <a name="INDEX-144"/> <a name="INDEX-145"/><a name="INDEX-146"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-8-SECT-6"/>
+
+<h2 class="head1">Connection Scripts</h2>
+
+<p><a name="INDEX-147"/><a name="INDEX-148"/><a name="INDEX-149"/>Samba supports a mechanism called
+<em class="firstterm">connection scripts</em>, by which commands can be
+executed on the server as clients connect to a share or later
+disconnect from it. By using configuration file variables along with
+some custom programming, you can create connection scripts that
+perform a wide range of functions. As a simple example, here is a
+&quot;quick and dirty&quot; way to monitor
+connections to shares on the Samba server in real time. First, the
+value of the <tt class="literal">preexec</tt><a name="INDEX-150"/> parameter is set as
+follows:</p>
+
+<blockquote><pre class="code">[global]
+    preexec = /bin/echo %u at %m connected to //%L/%S on %T &gt;&gt;/tmp/smblog</pre></blockquote>
+
+<p>This causes information about the user and the connection to be
+written to the file <em class="filename">/tmp/smblog</em> whenever any
+client connects to any share. To watch clients connect, run the
+following command:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>tail -f /tmp/smblog</b></tt>
+jay at maya connected to //toltec/data on 2002/11/21 21:21:15
+david at apache connected to //toltec/techs on 2002/11/21 21:21:57
+sally at seminole connected to //toltec/payroll on 2002/11/21 21:22:16
+martha at dine connected to //toltec/profiles on 2002/11/21 21:23:38
+martha at dine connected to //toltec/netlogon on 2002/11/21 21:23:39
+martha at dine connected to //toltec/martha on 2002/11/21 21:23:40
+aaron at huastec connected to //toltec/netlogon on 2002/11/21 21:24:19
+aaron at huastec connected to //toltec/aaron on 2002/11/21 21:24:20</pre></blockquote>
+
+<p>With the <em class="emphasis">-f</em> option, the
+<em class="emphasis">tail</em> command monitors
+<em class="filename">/tmp/smblog</em> and prints additional output as new
+data is appended to the file. Every time a new connection is made, an
+additional line is printed, showing the output of the
+<tt class="literal">preexec</tt> command. Notice the lines resulting from
+connections by user <tt class="literal">martha</tt> and
+<tt class="literal">aaron</tt>. User <tt class="literal">martha</tt> logged on to
+the domain from a Windows NT client, which accessed the
+<tt class="literal">[profiles]</tt> share to download her profile, then the
+<tt class="literal">[netlogon]</tt> share to read the logon script, and
+then her home directory (because her logon script contains a
+<tt class="literal">net</tt> <tt class="literal">use</tt> <tt class="literal">H</tt>:
+<tt class="literal">/home</tt> command) to connect her home directory to
+drive letter H. The connections from <tt class="literal">aaron</tt> are
+similar, except that he connected from a Windows 98 system, which
+does not use the <tt class="literal">[profiles]</tt> share. (See <a href="ch04.html">Chapter 4</a> for more information about domain logons.)</p>
+
+<p>A more advanced use of
+<a name="INDEX-151"/><a name="INDEX-152"/>connection scripts is to monitor the
+contents of users' home directories and/or other
+shared directories and perform checks ensuring that local
+administrative policies are followed. Checked items might include the
+following:</p>
+
+<ul><li>
+<p>Disk usage, on a per-share, per-directory, or per-file basis</p>
+</li><li>
+<p>Types of files stored on the server</p>
+</li><li>
+<p>Whether filenames follow naming guidelines</p>
+</li><li>
+<p>Whether viruses have copied themselves to the Samba server</p>
+</li></ul>
+<p>To handle this kind of task, a shell script or other program would be
+written to perform the checks and take appropriate actions, such as
+removing offending files. The <tt class="literal">root</tt>
+<tt class="literal">preexec</tt> parameter would be used to run the command
+as the root user, using configuration file variables to pass
+arguments. For example:</p>
+
+<blockquote><pre class="code">[homes]
+    root preexec = admin_checks %S
+    root preexec close = yes</pre></blockquote>
+
+<p>In this example, a specially written administrative checking program
+(<em class="emphasis">admin_checks</em>) is used to monitor
+users' home directories on the Samba server. The
+<tt class="literal">%S</tt> variable is used to pass the name of the home
+directory to the script. The
+<tt class="literal">root</tt><a name="INDEX-153"/> <tt class="literal">preexec</tt>
+<tt class="literal">close</tt> parameter has been set to
+<tt class="literal">yes</tt> so that if <em class="emphasis">admin_checks</em>
+detects a serious violation of local policy, it can exit with a
+nonzero status, and the client is prevented from connecting.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-6.1"/>
+
+<h3 class="head2">Connection Script Options</h3>
+
+<p><a href="ch08.html#samba2-CHP-8-TABLE-7">Table 8-7</a> introduces some of the configuration
+options provided for setting up users.</p>
+
+<a name="samba2-CHP-8-TABLE-7"/><h4 class="head4">Table 8-7. Connection script options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">root preexec</tt></p>
+</td>
+<td>
+<p>string (Unix command)</p>
+</td>
+<td>
+<p>Sets a Unix command to run as <tt class="literal">root</tt>, before
+connecting to the share.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">root preexec close</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If set to <tt class="literal">yes</tt>, nonzero exit status of
+<tt class="literal">root preexec</tt> command will disconnect.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">preexec</tt> <tt class="literal">(exec)</tt></p>
+</td>
+<td>
+<p>string (Unix command)</p>
+</td>
+<td>
+<p>Sets a Unix command to run as the user before connecting to the share.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">preexec close</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If set to <tt class="literal">yes</tt>, nonzero exit status of
+<tt class="literal">preexec</tt> command will disconnect.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">postexec</tt></p>
+</td>
+<td>
+<p>string (Unix command)</p>
+</td>
+<td>
+<p>Sets a Unix command to run as the user after disconnecting from the
+share.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">root</tt> <tt class="literal">postexec</tt></p>
+</td>
+<td>
+<p>string (Unix command)</p>
+</td>
+<td>
+<p>Sets a Unix command to run as <tt class="literal">root</tt> after
+disconnecting from the share.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-6.1.1"/>
+
+<a name="INDEX-156"/><h3 class="head3">root preexec</h3>
+
+<p>This option specifies as its value a Unix command to be run
+<em class="emphasis">as the root user</em> before any connection to a
+share is completed. You should use this option specifically for
+performing actions that require root privilege.</p>
+
+<p>To ensure security, users should never be able to modify the target
+of the <tt class="literal">root</tt> <tt class="literal">preexec</tt> command. In
+addition, unless you explicitly redirect it, any information the
+command sends to standard output will be discarded. If you intend to
+use any <tt class="literal">preexec</tt> or <tt class="literal">postexec</tt>
+script, you should ensure that it will run correctly before having
+Samba invoke it.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-6.1.2"/>
+
+<a name="INDEX-157"/><h3 class="head3">root preexec close</h3>
+
+<p>Sometimes you might want the share to disconnect if the
+<tt class="literal">root</tt> <tt class="literal">preexec</tt> script fails,
+giving the client an error rather than allowing it to connect. For
+example, if you are using <tt class="literal">root</tt>
+<tt class="literal">preexec</tt> to mount a CD-ROM or filesystem, it would
+make no sense to connect the client to it in the event that the mount
+fails. If you specify <tt class="literal">root</tt>
+<tt class="literal">preexec</tt> <tt class="literal">close</tt>
+<tt class="literal">=</tt> <tt class="literal">yes</tt>, the share will fail to
+connect if the <tt class="literal">root</tt> <tt class="literal">preexec</tt>
+script returns a nonzero exit status.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-6.1.3"/>
+
+<a name="INDEX-158"/><h3 class="head3">preexec</h3>
+
+<p>Sometimes just called <tt class="literal">exec</tt>, this option defines an
+ordinary unprivileged command run by Samba as the user specified by
+the variable <tt class="literal">%u</tt>. For example, a common use of this
+option is to perform logging, such as the following:</p>
+
+<blockquote><pre class="code">[homes]
+    preexec = echo &quot;%u connected from %m (%I)\&quot; &gt;&gt;/tmp/.log</pre></blockquote>
+
+<p>You must redirect the standard output of the command if you want to
+use it. Otherwise, it is discarded. This warning also applies to the
+command's standard error output. If you intend to
+use a <tt class="literal">preexec</tt> script, you should ensure that it
+will run correctly before having Samba invoke it.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-6.1.4"/>
+
+<a name="INDEX-159"/><h3 class="head3">preexec close</h3>
+
+<p>This is similar to <tt class="literal">root</tt> <tt class="literal">preexec</tt>
+<tt class="literal">close</tt>, except that it goes with the
+<tt class="literal">preexec</tt> option. By setting
+<tt class="literal">preexec</tt> <tt class="literal">close</tt>
+<tt class="literal">=</tt> <tt class="literal">yes</tt>, a
+<tt class="literal">preexec</tt> script that returns nonzero will cause the
+share to disconnect immediately.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-6.1.5"/>
+
+<a name="INDEX-160"/><h3 class="head3">postexec</h3>
+
+<p>Once the user disconnects from the share, the command specified with
+<tt class="literal">postexec</tt> is run as the user on the Samba server to
+do any necessary cleanup. This option is essentially the same as the
+<tt class="literal">preexec</tt> option. Again, remember that the command
+is run as the user represented by <tt class="literal">%u</tt>, and any
+information sent to standard output will be ignored.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-6.1.6"/>
+
+<a name="INDEX-161"/><h3 class="head3">root postexec</h3>
+
+<p>Following the <tt class="literal">postexec</tt> option, the
+<tt class="literal">root</tt> <tt class="literal">postexec</tt> command is run,
+if one has been specified. Again, this option specifies as its value
+a Unix command to be run <em class="emphasis">as the root user</em> before
+disconnecting from a share. You should use this option specifically
+for performing actions that require root privilege. <a name="INDEX-162"/> <a name="INDEX-163"/><a name="INDEX-164"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-8-SECT-7"/>
+
+<h2 class="head1">Microsoft Distributed Filesystems</h2>
+
+<p><a name="INDEX-165"/>In a
+large network where many shared folders are spread out over a large
+number of servers, it can be difficult for users to locate the
+resources they are trying to find. Browsing through Network
+Neighborhood or My Network Places can become an ordeal rather than a
+time-saving convenience. To mitigate this problem, Microsoft added an
+extension to file sharing called <em class="firstterm">Distributed
+filesystem</em><a name="INDEX-166"/><a name="INDEX-167"/> (Dfs). Using Dfs, it
+is possible to organize file shares on the network so that they
+appear to users as organized in a single directory tree on a single
+server, regardless of which servers on the network actually contain
+the resources. Instead of having to browse the entire network, users
+can go to the Dfs share and locate their data much more easily.</p>
+
+<p>Dfs can also help administrators because it provides a level of
+indirection between the name of a shared folder and its actual
+location. The Dfs share contains references to resources on the
+network, and when a resource is accessed, the Dfs server hands the
+client off to the actual server of the resource. When moving
+resources to another computer, the reference to the resource in the
+Dfs share can be redirected to the new location in one step, with the
+change being entirely seamless for users.</p>
+
+<p>To a limited extent, Dfs also can help improve performance for
+read-only shares because it provides <a name="INDEX-168"/>load balancing. It is possible
+to set up a Dfs reference to point to identical shares on two or more
+servers. The Dfs server then divides requests between the servers,
+dividing the client load among them. However, this works well only
+for static, read-only data because no provision is included in Dfs
+for synchronization among the servers when changes are made on any of
+them.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-7.1"/>
+
+<h3 class="head2">Windows Dfs Clients</h3>
+
+<p><a name="INDEX-169"/>Modern versions of Windows come with
+client-side support for Dfs, and no extra configuration is required.
+Support is more limited for older versions, however. Windows for
+Workgroups cannot function as a Dfs client at all. Windows NT 4.0
+must be upgraded to at least Service Pack 3 to act as a Dfs client,
+and the Dfs Client must be installed. Later service packs (such as
+Service Pack 6) include the Dfs Client. Windows 95 must also have the
+Dfs Client software installed to act as a Dfs client. Without the Dfs
+Client software, double-clicking a remote folder in a Dfs share will
+show an empty folder, and no error message will appear.</p>
+
+<a name="samba2-CHP-8-NOTE-140"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>To use the Dfs Client for Windows 95 or Windows NT, you must first
+download and install it. See the web page <a href="http://microsoft.com/ntserver/nts/downloads/winfeatures/NTSDistrFile/default.asp">http://microsoft.com/ntserver/nts/downloads/winfeatures/NTSDistrFile/default.asp</a>
+for a link to download the installation program and instructions on
+how to install the Dfs Client.</p>
+</blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-7.2"/>
+
+<h3 class="head2">Configuring Samba for Dfs</h3>
+
+<p><a name="INDEX-170"/>To act as a Dfs server, Samba 2.2 must
+be compiled with the <tt class="literal">--with-msdfs</tt> configure
+option. (See <a href="ch02.html">Chapter 2</a> for instructions on
+configuring and compiling Samba.) Samba 3.0 includes Dfs support by
+default and does not need to be compiled with the
+<tt class="literal">--with-msdfs</tt> configure option.</p>
+
+<p>Once a Dfs-enabled Samba server is running, there are just two steps
+to serving a Dfs share. First we will set up a Dfs root directory on
+the server, and then we will modify the <em class="filename">smb.conf</em>
+configuration file to enable the share.</p>
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-7.2.1"/>
+
+<h3 class="head3">Setting up the Dfs root</h3>
+
+<p>First we need to create a directory to act as the Dfs root:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>mkdir /usr/local/samba/dfs</b></tt></pre></blockquote>
+
+<p>This can be any directory, but it is important that it be owned by
+root and given the proper permissions:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>chown root:root /usr/local/samba/dfs</b></tt>
+# <tt class="userinput"><b>chmod 755 /usr/local/samba/dfs</b></tt></pre></blockquote>
+
+<p>The Dfs directory tree can have subdirectories and files, just like
+any other shared directory. These will function just as they would in
+any other share, allowing clients to access the directories and files
+on the Samba server. The whole idea of Dfs, though, is to gather
+together shares on other servers by making references to them in the
+Dfs tree. The way this is implemented with Samba involves a clever
+use of symbolic links, which can be in the Dfs root directory or any
+subdirectory in the Dfs tree.</p>
+
+<p>You are probably familiar with using symbolic links to create
+references to files that exist on the same system, and perhaps
+crossing a local filesystem boundary (which ordinary Unix links
+cannot do). But maybe you didn't know that symbolic
+links have a more general functionality. Although we
+can't display its contents directly, as we could
+with a text or binary file, a symbolic link
+&quot;contains&quot; an ASCII text string
+naming what the link points to. For example, take a look at the
+listing for these symbolic links:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>ls -l wrdlnk alnk</b></tt>
+lrwxrwxrwx    1 jay      jay            15 Mar 14 06:50 wrdlnk -&gt; /usr/dict/words
+lrwxrwxrwx    1 jay      jay             9 Mar 14 06:53 alnk -&gt; dreamtime</pre></blockquote>
+
+<p>As you can infer from the size of the <em class="filename">wrdlnk</em>
+link (15 bytes), the string <tt class="literal">/usr/dict/words</tt> is
+encoded into it. The size of <em class="filename">alnk</em> (9 bytes) is
+smaller, corresponding to the shorter name of
+<em class="filename">dreamtime</em>.</p>
+
+<p>Now let's create a link in our Dfs root for an SMB
+share:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>cd /usr/local/samba/dfs</b></tt>
+# <tt class="userinput"><b>ln -s 'msdfs:maya\e' maya-e</b></tt>
+# <tt class="userinput"><b>ls -l maya-e</b></tt>
+lrwxrwxrwx    1 root     root           12 Mar 13 17:34 maya-e -&gt; msdfs:maya\e</pre></blockquote>
+
+<p>This link might appear as a
+&quot;broken&quot; link in a directory
+listing because it points to something that isn't a
+file on the local system. For example, the <em class="emphasis">file</em>
+command will report:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>file maya-e</b></tt>
+maya-e: broken symbolic link to msdfs:maya\e</pre></blockquote>
+
+<p>However, <em class="filename">maya-e</em> is a valid reference to the
+<em class="filename">\\maya\e</em> share when used with
+Samba's Dfs support. When Samba encounters this
+file, it sees the leading <tt class="literal">msdfs</tt>: and interprets
+the rest as the name of a remote share. The client is then redirected
+to the remote share.</p>
+
+<p>When creating links in the Dfs root directory, simply follow the same
+format, which in general is
+<tt class="literal">msdfs</tt>:<em class="replaceable">server</em>\<em class="replaceable">share</em>.
+Note that this is similar to a UNC appended onto the
+<tt class="literal">msdfs</tt>: string, except that in this case, the two
+backslashes preceding the server's name are omitted.</p>
+
+<a name="samba2-CHP-8-NOTE-141"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>The names for the symbolic links in Dfs shares must be in all
+lowercase.</p>
+</blockquote>
+
+<p>In addition to regular network shares, you can use symbolic links of
+this type to reference Dfs shares on other Dfs servers. However,
+referencing printer shares does not work. Dfs is for sharing files
+only. <a name="INDEX-171"/></p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-7.2.2"/>
+
+<h3 class="head3">Load balancing</h3>
+
+<p><a name="INDEX-172"/>To
+set up a load-balancing Dfs share, create the symbolic link like
+this:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>ln -s 'msdfs:toltec\data,msdfs:mixtec\data' lb-data</b></tt></pre></blockquote>
+
+<p>That is, simply use a list of shares separated by commas as the
+reference. Remember, it is up to you to make sure the shared folders
+remain identical. Set up permissions on the servers to make the
+shares read-only to users.</p>
+
+<p>The last thing we need to do is to modify the
+<em class="filename">smb.conf</em> file to define the Dfs root share and
+add Dfs support. The Dfs root is added as a share definition:</p>
+
+<a name="INDEX-173"/><blockquote><pre class="code">[dfs]
+    path = /usr/local/samba/dfs
+    msdfs root = yes</pre></blockquote>
+
+<p>You can use any name you like for the share. The path is set to the
+Dfs root directory we just set up, and the parameter
+<tt class="literal">msdfs</tt> <tt class="literal">root</tt> <tt class="literal">=</tt>
+<tt class="literal">yes</tt> tells Samba that this share is a Dfs root.</p>
+
+<p>To enable support for Dfs in the server, we need to add one line to
+the <tt class="literal">[global]</tt> section:</p>
+
+<a name="INDEX-174"/><blockquote><pre class="code">[global]
+    host msdfs = yes</pre></blockquote>
+
+<p>Restart the Samba daemons&mdash;or just wait a minute for them to
+reread the configuration file&mdash;and you will see the new share
+from Windows clients. If you have trouble accessing any of the remote
+shares in the Dfs share, recheck your symbolic links to make sure
+they were created correctly. <a name="INDEX-175"/></p>
+
+<a name="samba2-CHP-8-NOTE-142"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>If you previously had a share by the same name as your Dfs share, you
+might need to reboot Windows clients before they can access the share
+as a Dfs share.</p>
+</blockquote>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-8-SECT-8"/>
+
+<h2 class="head1">Working with NIS</h2>
+
+<p>In networks where NIS and NFS are in use, it is common for
+users' home directories to be mounted over the
+network by NFS. If a Samba server being used to authenticate user
+logons is running on a system with NFS-mounted home directories
+shared with a <tt class="literal">[homes]</tt> share, the additional
+overhead can result in poor performance&mdash;about 30% of normal
+Samba speed.</p>
+
+<p>Samba has the ability to work with <a name="INDEX-176"/>NIS and NIS+ to find the
+server on which the home directories actually reside so that they can
+be shared directly from that server. For this to work, the server
+that holds the home directories must also have Samba running, with a
+<tt class="literal">[homes]</tt> share of its own.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-8-SECT-8.1"/>
+
+<h3 class="head2">NIS Configuration Options</h3>
+
+<p><a href="ch08.html#samba2-CHP-8-TABLE-8">Table 8-8</a> introduces the
+<a name="INDEX-177"/><a name="INDEX-178"/>NIS configuration options specifically
+for setting up users.</p>
+
+<a name="samba2-CHP-8-TABLE-8"/><h4 class="head4">Table 8-8. NIS options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">nis homedir</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, uses NIS instead of
+<em class="filename">/etc/passwd</em> to look up the path of a
+user's home directory.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">homedir map</tt></p>
+</td>
+<td>
+<p>string (NIS map name)</p>
+</td>
+<td>
+<p>Sets the NIS map to use to look up a user's home
+directory.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-8-SECT-8.1.1"/>
+
+<h3 class="head3">nis homedir, homedir map</h3>
+
+<p>The <tt class="literal">nis</tt><a name="INDEX-179"/> <tt class="literal">homedir</tt> and
+<tt class="literal">homedir</tt><a name="INDEX-180"/> <tt class="literal">map</tt> options
+are for Samba servers on network sites where Unix home directories
+are provided using NFS, the automounter, and NIS.</p>
+
+<p>The <tt class="literal">nis</tt> <tt class="literal">homedir</tt> option
+indicates that the home-directory server for the user needs to be
+looked up in NIS. The <tt class="literal">homedir</tt>
+<tt class="literal">map</tt> option tells Samba in which NIS map to look
+for the server that has the user's home directory.
+The server needs to be a Samba server so that the client can do an
+SMB connect to it, and the other Samba servers need to have NIS
+installed so that they can do the lookup.</p>
+
+<p>For example, if user <tt class="literal">joe</tt> asks for a share called
+<tt class="literal">[joe]</tt>, and the <tt class="literal">nis</tt>
+<tt class="literal">homedir</tt> option is set to <tt class="literal">yes</tt>,
+Samba will look in the file specified by <tt class="literal">homedir</tt>
+<tt class="literal">map</tt> for a home directory for
+<tt class="literal">joe</tt>. If it finds one, Samba will return the
+associated system name to the client. The client will then try to
+connect to that machine and get the share from there. Enabling NIS
+lookups looks like the following:</p>
+
+<blockquote><pre class="code">[globals]
+    nis homedir = yes
+    homedir map = amd.map</pre></blockquote>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+<hr/><h4 class="head4">Footnotes</h4><blockquote><a name="FOOTNOTE-1"/> <p><a href="#FNPTR-1">[1]</a> The system checkbox will
+probably be grayed for your file. Don't worry about
+that&mdash;you should still be able to see when the box is checked
+and when it isn't.</p> </blockquote><hr/><h4 class="head4"><a href="toc.html">TOC</a></h4></body></html>

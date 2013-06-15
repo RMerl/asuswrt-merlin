@@ -161,6 +161,47 @@ echo "#define OS_VERSION		\"$OS_NAME/$OS_VERSION\"" >> ${CONFIGFILE}
 echo "#define OS_URL			\"${OS_URL}\"" >> ${CONFIGFILE}
 echo "" >> ${CONFIGFILE}
 
+if [ -e "/usr/include/libavutil/avutil.h" ]; then
+	echo "#define HAVE_LIBAVUTIL_AVUTIL_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/ffmpeg/avutil.h" ]; then
+	echo "#define HAVE_FFMPEG_AVUTIL_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/ffmpeg/libavutil/avutil.h" ]; then
+	echo "#define HAVE_FFMPEG_LIBAVUTIL_AVUTIL_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/libav/libavutil/avutil.h" ]; then
+	echo "#define HAVE_LIBAV_LIBAVUTIL_AVUTIL_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/libav/avutil.h" ]; then
+	echo "#define HAVE_LIBAV_AVUTIL_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/avutil.h" ]; then
+	echo "#define HAVE_AVUTIL_H 1" >> ${CONFIGFILE}
+fi
+if [ -e "/usr/include/libavformat/avformat.h" ]; then
+	echo "#define HAVE_LIBAVFORMAT_AVFORMAT_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/ffmpeg/avformat.h" ]; then
+	echo "#define HAVE_FFMPEG_AVFORMAT_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/ffmpeg/libavformat/avformat.h" ]; then
+	echo "#define HAVE_FFMPEG_LIBAVFORMAT_AVFORMAT_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/libav/libavformat/avformat.h" ]; then
+	echo "#define HAVE_LIBAV_LIBAVFORMAT_AVFORMAT_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/libav/avformat.h" ]; then
+	echo "#define HAVE_LIBAV_AVFORMAT_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/avformat.h" ]; then
+	echo "#define HAVE_AVFORMAT_H 1" >> ${CONFIGFILE}
+fi
+if [ -e "/usr/include/libavcodec/avcodec.h" ]; then
+	echo "#define HAVE_LIBAVCODEC_AVCODEC_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/ffmpeg/avcodec.h" ]; then
+	echo "#define HAVE_FFMPEG_AVCODEC_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/ffmpeg/libavcodec/avcodec.h" ]; then
+	echo "#define HAVE_FFMPEG_LIBAVCODEC_AVCODEC_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/libav/libavcodec/avcodec" ]; then
+	echo "#define HAVE_LIBAV_LIBAVCODEC_AVCODEC_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/libav/avcodec.h" ]; then
+	echo "#define HAVE_LIBAV_AVCODEC_H 1" >> ${CONFIGFILE}
+elif [ -e "/usr/include/avcodec.h" ]; then
+	echo "#define HAVE_AVCODEC_H 1" >> ${CONFIGFILE}
+fi
+echo >> ${CONFIGFILE}
+
 echo "/* full path of the file database */" >> ${CONFIGFILE}
 echo "#define DEFAULT_DB_PATH		\"${DB_PATH}\"" >> ${CONFIGFILE}
 echo "" >> ${CONFIGFILE}

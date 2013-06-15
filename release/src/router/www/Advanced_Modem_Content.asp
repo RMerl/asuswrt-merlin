@@ -17,9 +17,9 @@
 	border:1px outset #999;
 	background-color:#576D73;
 	position:absolute;
-	margin-top:0px;
-	*margin-top:0px;	
+	*margin-top:26px;	
 	margin-left:2px;
+	*margin-left:-189px;
 	width:181px;
 	text-align:left;	
 	height:auto;
@@ -85,7 +85,7 @@ var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
 <% wan_get_parameter(); %>
 
 var $j = jQuery.noConflict();
-if(dualWAN_support != -1){
+if(dualWAN_support){
 	var wan_type_name = wans_dualwan.split(" ")[<% nvram_get("wan_unit"); %>];
 	wan_type_name = wan_type_name.toUpperCase();
 	switch(wan_type_name){
@@ -107,7 +107,7 @@ function genWANSoption(){
 		document.form.wan_unit.options[i] = new Option(wans_dualwan.split(" ")[i].toUpperCase(), i);
 	document.form.wan_unit.selectedIndex = '<% nvram_get("wan_unit"); %>';
 
-	if(wans_dualwan.search(" ") < 0 || wans_dualwan.split(" ")[1] == 'none' || dualWAN_support == -1)
+	if(wans_dualwan.search(" ") < 0 || wans_dualwan.split(" ")[1] == 'none' || !dualWAN_support)
 		$("WANscap").style.display = "none";
 }
 /* end of DualWAN */ 
@@ -119,7 +119,7 @@ function initial(){
 	gen_country_list();
 	reloadProfile();
 
-	if(dualWAN_support == -1){		
+	if(!dualWAN_support){		
 		$("option5").innerHTML = '<table><tbody><tr><td><div id="index_img5"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
 		$("option5").className = "m5_r";
 	}
@@ -654,7 +654,7 @@ function check_dongle_status(){
 						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,3);"><#HSDPAConfig_private_apn_itemname#></a></th>
             <td>
             	<input id="modem_apn" name="modem_apn" class="input_20_table" type="text" value=""/>
-           		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="display:none;position:absolute;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
+           		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
 							<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 						</td>
 					</tr>

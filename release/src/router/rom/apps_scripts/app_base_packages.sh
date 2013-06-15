@@ -4,6 +4,7 @@
 
 apps_ipkg_old=`nvram get apps_ipkg_old`
 is_arm_machine=`uname -m |grep arm`
+productid=`nvram get productid`
 
 autorun_file=.asusrouter
 nonautorun_file=$autorun_file.disabled
@@ -21,6 +22,8 @@ link_internet=`nvram get link_internet`
 
 if [ -n "$is_arm_machine" ]; then
 	pkg_type="arm"
+elif [ -n "$productid" ] && [ "$productid" == "VSL-N66U" ]; then
+	pkg_type="mipsbig"
 else
 	pkg_type="mipsel"
 	if [ -z "$apps_from_internet" ]; then

@@ -107,7 +107,7 @@ function validForm(){
         return false;
     }
 		
-    var workgroup_check = new RegExp('^[a-zA-Z0-9_]([-a-zA-Z0-9_.]*[a-zA-Z0-9_]|)$','gi');
+    var workgroup_check = new RegExp('^[a-zA-Z0-9_]([-a-zA-Z0-9_. ]*[a-zA-Z0-9_]|)$','gi');
     if(!workgroup_check.test(document.form.st_samba_workgroup.value)){
         alert("<#JS_validchar#>");                
         document.form.st_samba_workgroup.focus();

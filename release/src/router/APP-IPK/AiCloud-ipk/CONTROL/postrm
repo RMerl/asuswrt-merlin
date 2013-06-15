@@ -18,3 +18,4 @@ rm -rf /tmp/lighttpd.conf
 rm -rf /tmp/webDAV.conf
 rm -rf /tmp/lighttpd
 
+sh /tmp/smartsync_remove&

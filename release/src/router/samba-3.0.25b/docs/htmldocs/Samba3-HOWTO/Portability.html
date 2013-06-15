@@ -1,0 +1,137 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 42. Portability</title><link rel="stylesheet" href="samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.71.0"><link rel="start" href="index.html" title="The Official Samba-3 HOWTO and Reference Guide"><link rel="up" href="Appendix.html" title="Part VI. Reference Section"><link rel="prev" href="compiling.html" title="Chapter 41. How to Compile Samba"><link rel="next" href="Other-Clients.html" title="Chapter 43. Samba and Other CIFS Clients"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 42. Portability</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="compiling.html">Prev</a> </td><th width="60%" align="center">Part VI. Reference Section</th><td width="20%" align="right"> <a accesskey="n" href="Other-Clients.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="Portability"></a>Chapter 42. Portability</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Jelmer</span> <span class="othername">R.</span> <span class="surname">Vernooij</span></h3><div class="affiliation"><span class="orgname">The Samba Team<br></span><div class="address"><p><code class="email">&lt;<a href="mailto:jelmer@samba.org">jelmer@samba.org</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">John</span> <span class="othername">H.</span> <span class="surname">Terpstra</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a href="mailto:jht@samba.org">jht@samba.org</a>&gt;</code></p></div></div></div></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="Portability.html#id443629">HPUX</a></span></dt><dt><span class="sect1"><a href="Portability.html#id443724">SCO UNIX</a></span></dt><dt><span class="sect1"><a href="Portability.html#id443756">DNIX</a></span></dt><dt><span class="sect1"><a href="Portability.html#id443885">Red Hat Linux</a></span></dt><dt><span class="sect1"><a href="Portability.html#id443924">AIX: Sequential Read Ahead</a></span></dt><dt><span class="sect1"><a href="Portability.html#id443944">Solaris</a></span></dt><dd><dl><dt><span class="sect2"><a href="Portability.html#id443949">Locking Improvements</a></span></dt><dt><span class="sect2"><a href="Portability.html#winbind-solaris9">Winbind on Solaris 9</a></span></dt></dl></dd></dl></div><p>
+<a class="indexterm" name="id443613"></a>
+<a class="indexterm" name="id443619"></a>
+Samba works on a wide range of platforms, but the interface all the 
+platforms provide is not always compatible. This chapter contains 
+platform-specific information about compiling and using Samba.</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id443629"></a>HPUX</h2></div></div></div><p>
+<a class="indexterm" name="id443637"></a>
+<a class="indexterm" name="id443644"></a>
+Hewlett-Packard's implementation of supplementary groups is nonstandard (for
+historical reasons). There are two group files, <code class="filename">/etc/group</code> and
+<code class="filename">/etc/logingroup</code>; the system maps UIDs to numbers using the former, but
+initgroups() reads the latter. Most system admins who know the ropes
+symlink <code class="filename">/etc/group</code> to <code class="filename">/etc/logingroup</code>
+(hard-link does not work for reasons too obtuse to go into here). initgroups() will complain if one of the
+groups you're in, in <code class="filename">/etc/logingroup</code>, has what it considers to be an invalid
+ID, which means outside the range <code class="constant">[0..UID_MAX]</code>, where <code class="constant">UID_MAX</code> is
+60000 currently on HP-UX. This precludes -2 and 65534, the usual <code class="constant">nobody</code>
+GIDs.
+</p><p>
+If you encounter this problem, make sure the programs that are failing 
+to initgroups() are run as users, not in any groups with GIDs outside the 
+allowed range.
+</p><p>
+This is documented in the HP manual pages under setgroups(2) and passwd(4).
+</p><p>
+<a class="indexterm" name="id443707"></a>
+<a class="indexterm" name="id443714"></a>
+On HP-UX you must use gcc or the HP ANSI compiler. The free compiler
+that comes with HP-UX is not ANSI compliant and cannot compile Samba.
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id443724"></a>SCO UNIX</h2></div></div></div><p> 
+If you run an old version of SCO UNIX, you may need to get important 
+TCP/IP patches for Samba to work correctly. Without the patch, you may 
+encounter corrupt data transfers using Samba.
+</p><p>
+The patch you need is UOD385 Connection Drivers SLS. It is available from
+SCO <a href="ftp://ftp.sco.com/" target="_top">ftp.sco.com</a>, directory SLS,
+files uod385a.Z and uod385a.ltr.Z).
+</p><p>
+The information provided here refers to an old version of SCO UNIX. If you require
+binaries for more recent SCO UNIX products, please contact SCO to obtain packages that are
+ready to install. You should also verify with SCO that your platform is up to date for the
+binary packages you will install. This is important if you wish to avoid data corruption
+problems with your installation. To build Samba for SCO UNIX products  may
+require significant patching of Samba source code. It is much easier to obtain binary
+packages directly from SCO.
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id443756"></a>DNIX</h2></div></div></div><p>
+DNIX has a problem with seteuid() and setegid(). These routines are
+needed for Samba to work correctly, but they were left out of the DNIX
+C library for some reason.
+</p><p>
+For this reason Samba by default defines the macro NO_EID in the DNIX
+section of includes.h. This works around the problem in a limited way,
+but it is far from ideal, and some things still will not work right.
+</p><p> 
+To fix the problem properly, you need to assemble the following two
+functions and then either add them to your C library or link them into
+Samba. Put the following in the file <code class="filename">setegid.s</code>:
+</p><pre class="programlisting">
+        .globl  _setegid
+_setegid:
+        moveq   #47,d0
+        movl    #100,a0
+        moveq   #1,d1
+        movl    4(sp),a1
+        trap    #9
+        bccs    1$
+        jmp     cerror
+1$:
+        clrl    d0
+        rts
+</pre><p>
+Put this in the file <code class="filename">seteuid.s</code>:
+</p><pre class="programlisting">
+        .globl  _seteuid
+_seteuid:
+        moveq   #47,d0
+        movl    #100,a0
+        moveq   #0,d1
+        movl    4(sp),a1
+        trap    #9
+        bccs    1$
+        jmp     cerror
+1$:
+        clrl    d0
+        rts
+</pre><p>
+After creating the files, you then assemble them using
+</p><pre class="screen">
+<code class="prompt">$ </code><strong class="userinput"><code>as seteuid.s</code></strong>
+<code class="prompt">$ </code><strong class="userinput"><code>as setegid.s</code></strong>
+</pre><p>
+which should produce the files <code class="filename">seteuid.o</code> and 
+<code class="filename">setegid.o</code>.
+</p><p>
+Next you need to add these to the LIBSM line in the DNIX section of
+the Samba Makefile. Your LIBSM line will look something like this:
+</p><pre class="programlisting">
+LIBSM = setegid.o seteuid.o -ln
+</pre><p> 
+You should then remove the line:
+</p><pre class="programlisting">
+#define NO_EID
+</pre><p>from the DNIX section of <code class="filename">includes.h</code>.</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id443885"></a>Red Hat Linux</h2></div></div></div><p>
+By default during installation, some versions of Red Hat Linux add an
+entry to <code class="filename">/etc/hosts</code> as follows:
+</p><pre class="programlisting">
+127.0.0.1 loopback "hostname"."domainname"
+</pre><p>
+</p><p>
+<a class="indexterm" name="id443909"></a>
+This causes Samba to loop back onto the loopback interface.
+The result is that Samba fails to communicate correctly with
+the world and therefore may fail to correctly negotiate who
+is the master browse list holder and who is the master browser.
+</p><p>
+Corrective action: Delete the entry after the word "loopback"
+in the line starting 127.0.0.1.
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id443924"></a>AIX: Sequential Read Ahead</h2></div></div></div><p>
+Disabling sequential read ahead using <strong class="userinput"><code>vmtune -r 0</code></strong> improves 
+Samba performance significantly.
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id443944"></a>Solaris</h2></div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id443949"></a>Locking Improvements</h3></div></div></div><p>Some people have been experiencing problems with F_SETLKW64/fcntl 
+when running Samba on Solaris. The built-in file-locking mechanism was
+not scalable. Performance would degrade to the point where processes would
+get into loops of trying to lock a file. It would try a lock, then fail,
+then try again. The lock attempt was failing before the grant was
+occurring. The visible manifestation of this was a handful of
+processes stealing all of the CPU, and when they were trussed, they would
+be stuck in F_SETLKW64 loops.
+</p><p>
+Please check with Sun support for current patches needed to fix this bug.
+The patch revision for 2.6 is 105181-34, for 8 is 108528-19, and for 9 is 112233-04.
+After the installation of these patches, it is recommended to reconfigure
+and rebuild Samba.
+</p><p>Thanks to Joe Meslovich for reporting this.</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="winbind-solaris9"></a>Winbind on Solaris 9</h3></div></div></div><p>
+Nsswitch on Solaris 9 refuses to use the Winbind NSS module. This behavior
+is fixed by Sun in patch <a href="http://sunsolve.sun.com/search/advsearch.do?collection=PATCH&amp;type=collections&amp;max=50&amp;language=en&amp;queryKey5=112960;rev=14&amp;toDocument=yes" target="_top">112960-14</a>.
+</p></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="compiling.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="Appendix.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="Other-Clients.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 41. How to Compile Samba </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 43. Samba and Other CIFS Clients</td></tr></table></div></body></html>

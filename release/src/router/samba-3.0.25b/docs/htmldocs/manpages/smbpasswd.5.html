@@ -1,0 +1,91 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>smbpasswd</title><link rel="stylesheet" href="samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.71.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="smbpasswd.5"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>smbpasswd &#8212; The Samba encrypted password file</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><p><code class="filename">smbpasswd</code></p></div><div class="refsect1" lang="en"><a name="id291815"></a><h2>DESCRIPTION</h2><p>This tool is part of the <a href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p>smbpasswd is the Samba encrypted password file. It contains 
+	the username, Unix user id and the SMB hashed passwords of the 
+	user, as well as account flag information and the time the 
+	password was last changed. This file format has been evolving with 
+	Samba and has had several different formats in the past. </p></div><div class="refsect1" lang="en"><a name="id259311"></a><h2>FILE FORMAT</h2><p>The format of the smbpasswd file used by Samba 2.2 
+	is very similar to the familiar Unix <code class="filename">passwd(5)</code> 
+	file. It is an ASCII file containing one line for each user. Each field 
+	ithin each line is separated from the next by a colon. Any entry 
+	beginning with '#' is ignored. The smbpasswd file contains the 
+	following information for each user: </p><div class="variablelist"><dl><dt><span class="term">name</span></dt><dd><p> This is the user name. It must be a name that 
+		already exists in the standard UNIX passwd file. </p></dd><dt><span class="term">uid</span></dt><dd><p>This is the UNIX uid. It must match the uid
+		field for the same user entry in the standard UNIX passwd file. 
+		If this does not match then Samba will refuse to recognize 
+		this smbpasswd file entry as being valid for a user. 
+		</p></dd><dt><span class="term">Lanman Password Hash</span></dt><dd><p>This is the LANMAN hash of the user's password, 
+		encoded as 32 hex digits.  The LANMAN hash is created by DES 
+		encrypting a well known string with the user's password as the 
+		DES key. This is the same password used by Windows 95/98 machines. 
+		Note that this password hash is regarded as weak as it is
+		vulnerable to dictionary attacks and if two users choose the 
+		same password this entry will be identical (i.e. the password 
+		is not "salted" as the UNIX password is). If the user has a 
+		null password this field will contain the characters "NO PASSWORD" 
+		as the start of the hex string. If the hex string is equal to 
+		32 'X' characters then the user's account is marked as 
+		<code class="constant">disabled</code> and the user will not be able to 
+		log onto the Samba server. </p><p><span class="emphasis"><em>WARNING !!</em></span> Note that, due to 
+		the challenge-response nature of the SMB/CIFS authentication
+		protocol, anyone with a knowledge of this password hash will 
+		be able to impersonate the user on the network. For this
+		reason these hashes are known as <span class="emphasis"><em>plain text 
+		equivalents</em></span> and must <span class="emphasis"><em>NOT</em></span> be made 
+		available to anyone but the root user. To protect these passwords 
+		the smbpasswd file is placed in a directory with read and 
+		traverse access only to the root user and the smbpasswd file 
+		itself must be set to be read/write only by root, with no
+		other access. </p></dd><dt><span class="term">NT Password Hash</span></dt><dd><p>This is the Windows NT hash of the user's 
+		password, encoded as 32 hex digits.  The Windows NT hash is 
+		created by taking the user's password as represented in 
+		16-bit, little-endian UNICODE and then applying the MD4 
+		(internet rfc1321) hashing algorithm to it. </p><p>This password hash is considered more secure than
+		the LANMAN Password Hash as it preserves the case of the 
+		password and uses a much higher quality hashing algorithm. 
+		However, it is still the case that if two users choose the same 
+		password this entry will be identical (i.e. the password is 
+		not "salted" as the UNIX password is). </p><p><span class="emphasis"><em>WARNING !!</em></span>. Note that, due to 
+		the challenge-response nature of the SMB/CIFS authentication
+		protocol, anyone with a knowledge of this password hash will 
+		be able to impersonate the user on the network. For this
+		reason these hashes are known as <span class="emphasis"><em>plain text 
+		equivalents</em></span> and must <span class="emphasis"><em>NOT</em></span> be made 
+		available to anyone but the root user. To protect these passwords 
+		the smbpasswd file is placed in a directory with read and 
+		traverse access only to the root user and the smbpasswd file 
+		itself must be set to be read/write only by root, with no
+		other access. </p></dd><dt><span class="term">Account Flags</span></dt><dd><p>This section contains flags that describe 
+		the attributes of the users account.  This field is bracketed by 
+		'[' and ']' characters and is always 13 characters in length 
+		(including the '[' and ']' characters).
+		The contents of this field may be any of the following characters:
+		</p><div class="itemizedlist"><ul type="disc"><li><p><span class="emphasis"><em>U</em></span> - This means 
+			this is a "User" account, i.e. an ordinary user.</p></li><li><p><span class="emphasis"><em>N</em></span> - This means the
+			account has no password (the passwords in the fields LANMAN 
+			Password Hash and NT Password Hash are ignored). Note that this 
+			will only allow users to log on with no password if the <em class="parameter"><code>
+			null passwords</code></em> parameter is set in the 
+			<a href="smb.conf.5.html"><span class="citerefentry"><span class="refentrytitle">smb.conf</span>(5)</span></a> config file. </p></li><li><p><span class="emphasis"><em>D</em></span> - This means the account 
+			is disabled and no SMB/CIFS logins  will be allowed for this user. </p></li><li><p><span class="emphasis"><em>X</em></span> - This means the password 
+			does not expire. </p></li><li><p><span class="emphasis"><em>W</em></span> - This means this account 
+			is a "Workstation Trust" account. This kind of account is used 
+			in the Samba PDC code stream to allow Windows NT Workstations 
+			and Servers to join a Domain hosted by a Samba PDC. </p></li></ul></div><p>Other flags may be added as the code is extended in future.
+		The rest of this field space is filled in with spaces. For further
+		information regarding the flags that are supported please refer to the
+		man page for the <code class="literal">pdbedit</code> command.</p></dd><dt><span class="term">Last Change Time</span></dt><dd><p>This field consists of the time the account was 
+		last modified. It consists of the characters 'LCT-' (standing for 
+		"Last Change Time") followed by a numeric encoding of the UNIX time 
+		in seconds since the epoch (1970) that the last change was made. 
+		</p></dd></dl></div><p>All other colon separated fields are ignored at this time.</p></div><div class="refsect1" lang="en"><a name="id260410"></a><h2>VERSION</h2><p>This man page is correct for version 3.0 of 
+	the Samba suite.</p></div><div class="refsect1" lang="en"><a name="id260421"></a><h2>SEE ALSO</h2><p><a href="smbpasswd.8.html"><span class="citerefentry"><span class="refentrytitle">smbpasswd</span>(8)</span></a>, <a href="Samba.7.html"><span class="citerefentry"><span class="refentrytitle">Samba</span>(7)</span></a>, and
+	the Internet RFC1321 for details on the MD4 algorithm.
+	</p></div><div class="refsect1" lang="en"><a name="id260088"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</p><p>The original Samba man pages were written by Karl Auer. 
+	The man page sources were converted to YODL format (another 
+	excellent piece of Open Source software, available at <a href="ftp://ftp.icce.rug.nl/pub/unix/" target="_top">
+	ftp://ftp.icce.rug.nl/pub/unix/</a>) and updated for the Samba 2.0 
+	release by Jeremy Allison.  The conversion to DocBook for 
+	Samba 2.2 was done by Gerald Carter. The conversion to DocBook XML 4.2
+	for Samba 3.0 was done by Alexander Bokovoy.</p></div></div></body></html>

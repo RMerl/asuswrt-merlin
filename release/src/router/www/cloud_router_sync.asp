@@ -120,6 +120,12 @@ src='images/New_ui/bottom_bg.png',
 sizingMethod='scale')";
 
 }
+
+#mailto{
+position:absolute;
+margin-left:375px;
+*margin-left:-75px
+}
 </style>
 <script>
 var $j = jQuery.noConflict();
@@ -994,9 +1000,9 @@ function check_aicloud(){
 	}
 }
 var hint_string = "";
-hint_string += "<b>Two way sync:</b> Two way sync refers to the inviter and invitee will sync up all files in the sync folder they had chosen. All files sync folders will be free to be accessed by both.<br>";
-hint_string += "<b>Server to client:</b> Server to client refers to the invitee could download files in the sync folder from the inviter only, the invitee have no permission to upload files to the inviter.<br>";
-hint_string += "<b>Client to server:</b> Client to server refers to the invitee could upload files in the sync folder to the inviter only, the invitee have no permission to access files in sync folder of the inviter.";
+hint_string += "<#routerSync_rule_both#><br>";
+hint_string += "<#routerSync_rule_StoC#><br>";
+hint_string += "<#routerSync_rule_CtoS#>";
 </script>
 </head>
 
@@ -1037,11 +1043,11 @@ hint_string += "<b>Client to server:</b> Client to server refers to the invitee 
 	<table><tr><td>
 		<div class="machineName" style="width:200px;font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:20px;margin-left:30px;">Invitation</div>
 	</td></tr></table>
-	<div style="overflow:auto;margin-top:0px;height:350px;">
-		<table style="padding:20px;margin-left:10px;word-break:break-all;" >
+	<div style="overflow:auto;margin-top:0px;height:311px;padding:20px;">
+		<table style="margin-left:10px;word-break:break-all;word-wrap:break-word;">
 			<tr >
-				<td >
-					<div  >Hi, lets share our files with smart sync!</div>				
+				<td>
+					<div>Hi, lets share our files with smart sync!</div>				
 				</td>
 			</tr>
 			<tr>
@@ -1069,7 +1075,7 @@ hint_string += "<b>Client to server:</b> Client to server refers to the invitee 
 				</td>
 			</tr>
 			<tr>
-				<td align="right"><div id="mailto" style="position:absolute;margin-top:0px;margin-left:375px;"></div></td>
+				<td align="right"><div id="mailto"></div></td>
 			</tr>
 		</table>
 	</div>

@@ -1,0 +1,2123 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76"
+hspace="10" align="left" />
+
+<h1 class="head0">Chapter 11. Additional Samba Information</h1>
+
+
+<p>This chapter wraps up our coverage of the
+<em class="filename">smb.conf</em> configuration file with some
+miscellaneous options that can perform a variety of tasks. We talk
+briefly about options for time synchronization, internationalization,
+messages, and common Windows bugs. For the most part, you will use
+these options only in isolated circumstances.</p>
+
+
+
+<div class="sect1"><a name="samba2-CHP-11-SECT-1"/>
+
+<h2 class="head1">Time Synchronization</h2>
+
+<p>In a network of computers, the systems on the network must agree on
+the current time and also on what time files have been modified. One
+example of the importance of synchronization is the
+<a name="INDEX-1"/>roaming profiles we covered in
+<a href="ch04.html">Chapter 4</a>. It is vital for all clients accessing a
+roaming profile to agree on what time it is and which client last
+modified the user's profile.</p>
+
+<p><a name="INDEX-2"/>Time synchronization can also be
+very important to programmers. A useful group of settings consists of
+the following options:</p>
+
+<blockquote><pre class="code">[global]
+    time server = yes
+    dos filetimes = yes
+    fake directory create times = yes
+    dos filetime resolution = yes
+    delete readonly = yes</pre></blockquote>
+
+<p>If you set these options, Samba shares will provide compatibility of
+file-modification times that Visual C++, <em class="emphasis">nmake</em>,
+and other Microsoft programming tools require. Otherwise, PC
+<em class="emphasis">make</em> programs might think that all the files in
+a directory need to be recompiled every time. Obviously, this is not
+the behavior you want.</p>
+
+<p>In <a href="ch04.html">Chapter 4</a>, we showed you how to create a logon
+script that used the <em class="emphasis">net
+time</em><a name="INDEX-3"/> command to synchronize
+clients' clocks automatically when they log on to
+the domain. If your network is configured as a workgroup rather than
+a domain, you can still make use of <em class="emphasis">net time</em> by
+placing the command:</p>
+
+<blockquote><pre class="code">net time \\<em class="replaceable">sambaserver</em> /set /yes</pre></blockquote>
+
+<p>in a startup script on each client that is run when the system boots.
+Samba always provides time service&mdash;regardless of whether it is
+running as a primary domain controller&mdash;or the
+<tt class="literal">time</tt> <tt class="literal">service</tt> configuration file
+parameter is set.</p>
+
+<p>Assuming that domain users log on to the domain at least once per day
+and workgroup clients reboot frequently, the <em class="emphasis">net
+time</em> command can keep client systems'
+clocks fairly well synchronized. However, sometimes domain users stay
+logged on for longer periods, and workgroup clients can run for days
+between reboots. In the meantime, the systems'
+hardware clocks can wander enough to become a problem. It might be
+possible to work around this, depending on the version of Windows the
+client system is running. On Windows 98/Me, you can use the Task
+Scheduler to run the <em class="emphasis">net time</em> command at regular
+intervals. Likewise, on Windows 2000/XP you can use the MS-DOS
+<em class="emphasis">at</em> command. However, a better way to deal with
+this issue is to use Network Time Protocol, which we will discuss
+shortly.</p>
+
+<p>Proper time synchronization is also important when operating in an
+Active Directory domain because Active Directory uses
+<a name="INDEX-4"/>Kerberos authentication.
+When a Kerberos domain controller creates an authentication ticket
+for a client, the time is encoded into the challenge-and-response
+exchanges between the client and domain controller. If the
+client's clock disagrees with the
+server's clock, authentication can fail.</p>
+
+<p>To provide proper time synchronization in <a name="INDEX-5"/>Active Directory domains, Microsoft has
+adopted <a name="INDEX-6"/>Network Time Protocol (NTP), using the
+name Windows Time Service for its implementation. For further
+information, the Microsoft white paper entitled <em class="citetitle">The
+Windows Time Service</em> can be downloaded from <a href="http://www.microsoft.com">http://www.microsoft.com</a>.</p>
+
+<p>The nice thing about this is that NTP is the standard method for
+synchronizing Unix hosts on a network, so you can synchronize all
+your Unix systems (including the Samba server) and Windows systems
+with the following method:</p>
+
+<ol><li>
+<p>Run NTP on the Unix systems in your network. For more information on
+using NTP, refer to <a href="http://www.ntp.org">http://www.ntp.org</a>.</p>
+</li><li>
+<p>Use one of the Unix systems (such as the Samba host system) as an NTP
+server to serve Windows 2000/XP clients.</p>
+</li><li>
+<p>For other Windows clients, you might have to download an update from
+Microsoft to add <a name="INDEX-7"/><a name="INDEX-8"/>Windows Time Service client support or
+use a third-party application such as the free
+<a name="INDEX-9"/>analogX Atomic TimeSync (<a href="http://www.analogx.com">http://www.analogx.com</a>). Or you can use the
+<em class="emphasis">net time</em> command to update the
+client's clock periodically, as discussed
+previously.</p>
+</li></ol>
+
+<div class="sect2"><a name="samba2-CHP-11-SECT-1.1"/>
+
+<h3 class="head2">Time-Synchronization Options</h3>
+
+<p>To support roaming profiles, programmers accessing your Samba server,
+and other time-sensitive functions on your network,
+you'll want to be aware of the options listed in
+<a href="ch11.html#samba2-CHP-11-TABLE-1">Table 11-1</a>.</p>
+
+<a name="samba2-CHP-11-TABLE-1"/><h4 class="head4">Table 11-1. Time-synchronization options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">time server</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, announces <em class="emphasis">nmbd</em> as an
+SMB time service to Windows clients</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">time offset</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Adds a specified number of minutes to the reported time</p>
+</td>
+<td>
+<p><tt class="literal">0</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">dos filetimes</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>Allows non-owners of a file to change its time if they can write to it</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">dos filetime</tt></p>
+
+<p><tt class="literal">resolution</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>Causes file times to be rounded to the next even second</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">fake directory</tt> <tt class="literal">create times</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>Sets directory times to avoid an MS <em class="emphasis">nmake</em> bug</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-1.1.1"/>
+
+<a name="INDEX-12"/><h3 class="head3">time server</h3>
+
+<p>Samba always operates as an SMB time server, matching the behavior of
+Windows systems. However, Samba's default is not to
+advertise itself as a time server to the network. When this option is
+set to <tt class="literal">yes</tt>, Samba advertises itself as an SMB time
+server:</p>
+
+<blockquote><pre class="code">[global]
+    time service = yes</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-1.1.2"/>
+
+<a name="INDEX-13"/><h3 class="head3">time offset</h3>
+
+<p>To deal with clients that don't properly process
+daylight savings time, Samba provides the <tt class="literal">time</tt>
+<tt class="literal">offset</tt> option. If set, it adds the specified
+number of minutes to the current time. This is handy if
+you're in Newfoundland and Windows
+doesn't know about the 30-minute time difference
+there:</p>
+
+<blockquote><pre class="code">[global]
+    time offset = 30</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-1.1.3"/>
+
+<a name="INDEX-14"/><h3 class="head3">dos filetimes</h3>
+
+<p>Traditionally, only the root user and the owner of a file can change
+its last-modified date on a Unix system. The share-level
+<tt class="literal">dos</tt> <tt class="literal">filetimes</tt> option allows the
+Samba server to mimic the characteristics of a DOS or Windows system:
+any user can change the last-modified date on a file in that share if
+she has write permission to it. To do this, Samba uses its root
+privileges to modify the timestamp on the file.</p>
+
+<p>By default, this option is disabled. Setting this option to
+<tt class="literal">yes</tt> is often necessary to allow PC
+<em class="emphasis">make</em> programs to work properly. Without it, they
+cannot change the last-modified date themselves. This often results
+in the program thinking <em class="emphasis">all</em> files need
+recompiling when they really don't.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-1.1.4"/>
+
+<h3 class="head3">dos filetime resolution</h3>
+
+<p>The <tt class="literal">dos</tt><a name="INDEX-15"/>
+<tt class="literal">filetime</tt> <tt class="literal">resolution</tt> parameter
+is a share-level option. If set to <tt class="literal">yes</tt>, Samba
+rounds file times to the closest 2-second boundary. This option
+exists primarily to satisfy a quirk in Windows that prevents Visual
+C++ from correctly recognizing that a file has not changed. You can
+enable it as follows:</p>
+
+<blockquote><pre class="code">[data]
+    dos filetime resolution = yes</pre></blockquote>
+
+<p>We recommend using this option only if you are using Microsoft Visual
+C++ on a Samba share that supports opportunistic locking.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-1.1.5"/>
+
+<h3 class="head3">fake directory create times</h3>
+
+<p>The <tt class="literal">fake</tt><a name="INDEX-16"/>
+<tt class="literal">directory</tt> <tt class="literal">create</tt>
+<tt class="literal">times</tt> option exists to keep PC
+<em class="emphasis">make</em> programs sane. VFAT and NTFS filesystems
+record the creation date of a specific directory, while Unix does
+not. Without this option, Samba takes the earliest recorded date it
+has for the directory (often the last-modified date of a file) and
+returns it to the client. If this is not sufficient, set the
+following option under a share definition:</p>
+
+<blockquote><pre class="code">[data]
+    fake directory create times = yes</pre></blockquote>
+
+<p>If set, Samba will adjust the directory create time it reports to the
+hardcoded value January 1, 1980. This is primarily used to convince
+the Visual C++ <em class="emphasis">nmake</em> program that any object
+files in its build directories are indeed younger than the creation
+date of the directory itself and need to be recompiled. <a name="INDEX-17"/> <a name="INDEX-18"/><a name="INDEX-19"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-11-SECT-2"/>
+
+<h2 class="head1">Magic Scripts</h2>
+
+<p><em class="firstterm">Magic scripts</em> are a method of running programs
+on Unix and redirecting the output back to the SMB client. These are
+essentially an experimental hack. However, some users and their
+programs still rely on these two options for their programs to
+function correctly. Magic scripts are not widely trusted, and their
+use is highly discouraged by the Samba Team.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-11-SECT-2.1"/>
+
+<h3 class="head2">Magic Script Options</h3>
+
+<p><a href="ch11.html#samba2-CHP-11-TABLE-2">Table 11-2</a> lists the options that deal with
+<a name="INDEX-20"/>magic scripts
+on the Samba server.</p>
+
+<a name="samba2-CHP-11-TABLE-2"/><h4 class="head4">Table 11-2. Magic script options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">magic</tt> <tt class="literal">script</tt></p>
+</td>
+<td>
+<p>string (filename)</p>
+</td>
+<td>
+<p>File to be executed by Samba, as the logged-on user, when closed</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">magic</tt> <tt class="literal">output</tt></p>
+</td>
+<td>
+<p>string (filename)</p>
+</td>
+<td>
+<p>File to log output from the magic file</p>
+</td>
+<td>
+<p><em class="emphasis">scriptname.out</em></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-2.1.1"/>
+
+<h3 class="head3">magic script</h3>
+
+<p>If the <tt class="literal">magic</tt><a name="INDEX-21"/>
+<tt class="literal">script</tt> option is set to a filename and the client
+creates a file by that name in that share, Samba will run the file as
+soon as the user has opened and closed it. For example,
+let's assume that the following option was created
+in the share <tt class="literal">[accounting]</tt>:</p>
+
+<blockquote><pre class="code">[accounting]
+    magic script = tally.sh</pre></blockquote>
+
+<p>Samba continually monitors the files in that share. If one by the
+name of <em class="emphasis">tally.sh</em> is closed (after being opened)
+by a user, Samba will execute the contents of that file locally. The
+file will be passed to the shell to execute; it must therefore be a
+legal Unix shell script. This means that it must have newline
+characters as line endings instead of Windows CRLFs. In addition, you
+need to use the <tt class="literal">#!</tt> directive at the beginning of
+the file to indicate under which shell or interpreter the script
+should run, unless the script is for the default shell on your
+system.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-2.1.2"/>
+
+<a name="INDEX-22"/><h3 class="head3">magic output</h3>
+
+<p>This option specifies an output file to which the script specified by
+the <tt class="literal">magic</tt> <tt class="literal">script</tt> option will
+send output. You must specify a filename in a writable directory:</p>
+
+<blockquote><pre class="code">[accounting]
+    magic script = tally.sh
+    magic output = /var/log/magicoutput</pre></blockquote>
+
+<p>If this option is omitted, the default output file is the name of the
+script (as stated in the <tt class="literal">magic</tt>
+<tt class="literal">script</tt> option) with the extension
+<em class="emphasis">.out</em> appended onto it.</p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-11-SECT-3"/>
+
+<h2 class="head1">Internationalization</h2>
+
+<p><a name="INDEX-23"/><a name="INDEX-24"/>Starting
+with Samba 3.0, Samba supports Unicode &quot;on the
+wire,&quot; requiring no additional effort on your part
+to support filenames and other text containing characters in
+international character sets.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-11-SECT-3.1"/>
+
+<h3 class="head2">Internationalization Options</h3>
+
+<p>Samba 2.2.x has a limited ability to speak foreign tongues: if you
+need to support filenames containing characters that
+aren't in standard ASCII, some options that can help
+you are shown in <a href="ch11.html#samba2-CHP-11-TABLE-3">Table 11-3</a>.</p>
+
+<a name="samba2-CHP-11-TABLE-3"/><h4 class="head4">Table 11-3. Internationalization options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">client code</tt> <tt class="literal">page</tt></p>
+</td>
+<td>
+<p>Described in this section</p>
+</td>
+<td>
+<p>Sets a code page to expect from clients</p>
+</td>
+<td>
+<p>850</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">character set</tt></p>
+</td>
+<td>
+<p>Described in this section</p>
+</td>
+<td>
+<p>Translates code pages into alternate Unix character sets</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">coding system</tt></p>
+</td>
+<td>
+<p>Described in this section</p>
+</td>
+<td>
+<p>Translates code page 932 into an Asian character set</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">valid chars</tt></p>
+</td>
+<td>
+<p>string (set of characters)</p>
+</td>
+<td>
+<p>Adds individual characters to a code page</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-3.1.1"/>
+
+<h3 class="head3">client code page</h3>
+
+<p>The character sets on Windows platforms hark back to the original
+concept of a <em class="emphasis">code page</em><a name="INDEX-25"/>. These code pages are used by DOS and
+Windows clients to determine rules for mapping lowercase letters to
+uppercase letters. Samba can be instructed to use a variety of code
+pages through the use of the global
+<tt class="literal">client</tt><a name="INDEX-26"/> <tt class="literal">code</tt>
+<tt class="literal">page</tt> option to match the corresponding code page
+in use on the client. This option loads a code page definition file
+and can take the values specified in <a href="ch11.html#samba2-CHP-11-TABLE-4">Table 11-4</a>.</p>
+
+<a name="samba2-CHP-11-TABLE-4"/><h4 class="head4">Table 11-4. Valid code pages with Samba 2.0</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Code page</p>
+</th>
+<th>
+<p>Definition</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">437</tt></p>
+</td>
+<td>
+<p>MS-DOS Latin (United States)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">737</tt></p>
+</td>
+<td>
+<p>Windows 95 Greek</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">850</tt></p>
+</td>
+<td>
+<p>MS-DOS Latin 1 (Western European)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">852</tt></p>
+</td>
+<td>
+<p>MS-DOS Latin 2 (Eastern European)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">861</tt></p>
+</td>
+<td>
+<p>MS-DOS Icelandic</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">866</tt></p>
+</td>
+<td>
+<p>MS-DOS Cyrillic (Russian)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">932</tt></p>
+</td>
+<td>
+<p>MS-DOS Japanese Shift-JIS</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">936</tt></p>
+</td>
+<td>
+<p>MS-DOS Simplified Chinese</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">949</tt></p>
+</td>
+<td>
+<p>MS-DOS Korean Hangul</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">950</tt></p>
+</td>
+<td>
+<p>MS-DOS Traditional Chinese</p>
+</td>
+</tr>
+
+</table>
+
+<p>You can set the client code page as follows:</p>
+
+<blockquote><pre class="code">[global]
+    client code page = 852</pre></blockquote>
+
+<p>The default value of this option is 850, for MS-DOS Latin 1. You can
+use the <em class="emphasis">make_smbcodepage</em> tool that comes with
+Samba (by default in <em class="filename">/usr/local/samba/bin</em> ) to
+create your own SMB code pages, in the event that those listed
+earlier are not sufficient.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-3.1.2"/>
+
+<h3 class="head3">character set</h3>
+
+<p>The global <tt class="literal">character</tt><a name="INDEX-27"/>
+<tt class="literal">set</tt> option can be used to convert filenames
+offered through a DOS code page (see the previous section, <a href="ch11.html#samba2-CHP-11-SECT-3.1.1">Section 11.3.1.1</a>) to equivalents that can be
+represented by Unix character sets other than those in the United
+States. For example, if you want to convert the Western European
+MS-DOS character set on the client to a Western European Unix
+character set on the server, you can use the following in your
+configuration file:</p>
+
+<blockquote><pre class="code">[global]
+    client code page = 850
+    character set = ISO8859-1</pre></blockquote>
+
+<p>Note that you must include a <tt class="literal">client</tt>
+<tt class="literal">code</tt> <tt class="literal">page</tt> option to specify the
+character set from which you are converting. The valid character sets
+(and their matching code pages) that Samba accepts are listed in
+<a href="ch11.html#samba2-CHP-11-TABLE-5">Table 11-5</a>.</p>
+
+<a name="samba2-CHP-11-TABLE-5"/><h4 class="head4">Table 11-5. Valid character sets</h4><table border="1">
+
+
+
+
+<tr>
+<th>
+<p>Character set</p>
+</th>
+<th>
+<p>Matching code page</p>
+</th>
+<th>
+<p>Definition</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">ISO8859-1</tt></p>
+</td>
+<td>
+<p><tt class="literal">850</tt></p>
+</td>
+<td>
+<p>Western European Unix</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">ISO8859-2</tt></p>
+</td>
+<td>
+<p><tt class="literal">852</tt></p>
+</td>
+<td>
+<p>Eastern European Unix</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">ISO8859-5</tt></p>
+</td>
+<td>
+<p><tt class="literal">866</tt></p>
+</td>
+<td>
+<p>Russian Cyrillic Unix</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">ISO8859-7</tt></p>
+</td>
+<td>
+<p>737</p>
+</td>
+<td>
+<p>Greek Unix</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">KOI8-R</tt></p>
+</td>
+<td>
+<p><tt class="literal">866</tt></p>
+</td>
+<td>
+<p>Alternate Russian Cyrillic Unix</p>
+</td>
+</tr>
+
+</table>
+
+<p>Normally, the <tt class="literal">character</tt> <tt class="literal">set</tt>
+option is disabled completely.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-3.1.3"/>
+
+<h3 class="head3">coding system</h3>
+
+<p>The <tt class="literal">coding</tt><a name="INDEX-28"/> <tt class="literal">system</tt>
+option is similar to the <tt class="literal">character</tt>
+<tt class="literal">set</tt> option. However, its purpose is to determine
+how to convert a Japanese Shift JIS code page into an appropriate
+Unix character set. To use this option, the <tt class="literal">client</tt>
+<tt class="literal">code</tt> <tt class="literal">page</tt> option described
+previously must be set to page <tt class="literal">932</tt>. The valid
+coding systems that Samba accepts are listed in <a href="ch11.html#samba2-CHP-11-TABLE-6">Table 11-6</a>.</p>
+
+<a name="samba2-CHP-11-TABLE-6"/><h4 class="head4">Table 11-6. Valid coding-system parameters</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Character set</p>
+</th>
+<th>
+<p>Definition</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">SJIS</tt></p>
+</td>
+<td>
+<p>Standard Shift JIS</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">JIS8</tt></p>
+</td>
+<td>
+<p>Eight-bit JIS codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">J8BB</tt></p>
+</td>
+<td>
+<p>Eight-bit JIS codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">J8BH</tt></p>
+</td>
+<td>
+<p>Eight-bit JIS codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">J8@B</tt></p>
+</td>
+<td>
+<p>Eight-bit JIS codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">J8@J</tt></p>
+</td>
+<td>
+<p>Eight-bit JIS codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">J8@H</tt></p>
+</td>
+<td>
+<p>Eight-bit JIS codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">JIS7</tt></p>
+</td>
+<td>
+<p>Seven-bit JIS codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">J7BB</tt></p>
+</td>
+<td>
+<p>Seven-bit JIS codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">J7BH</tt></p>
+</td>
+<td>
+<p>Seven-bit JIS codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">J7@B</tt></p>
+</td>
+<td>
+<p>Seven-bit JIS codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">J7@J</tt></p>
+</td>
+<td>
+<p>Seven-bit JIS codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">J7@H</tt></p>
+</td>
+<td>
+<p>Seven-bit JIS codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">JUNET</tt></p>
+</td>
+<td>
+<p>JUNET codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">JUBB</tt></p>
+</td>
+<td>
+<p>JUNET codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">JUBH</tt></p>
+</td>
+<td>
+<p>JUNET codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">JU@B</tt></p>
+</td>
+<td>
+<p>JUNET codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">JU@J</tt></p>
+</td>
+<td>
+<p>JUNET codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">JU@H</tt></p>
+</td>
+<td>
+<p>JUNET codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">EUC</tt></p>
+</td>
+<td>
+<p>EUC codes</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">HEX</tt></p>
+</td>
+<td>
+<p>Three-byte hexadecimal code</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">CAP</tt></p>
+</td>
+<td>
+<p>Three-byte hexadecimal code (Columbia AppleTalk Program)</p>
+</td>
+</tr>
+
+</table>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-3.1.4"/>
+
+<h3 class="head3">valid chars</h3>
+
+<p>The <tt class="literal">valid</tt><a name="INDEX-29"/> <tt class="literal">chars</tt> option
+can be used to add individual characters to a code page. You can use
+this option as follows:</p>
+
+<blockquote><pre class="code">valid chars = &Icirc;
+valid chars = 0450:0420 0x0A20:0x0A00
+valid chars = A:a</pre></blockquote>
+
+<p>Each character in the list specified should be separated by spaces.
+If there is a colon between two characters or a numerical equivalent,
+the data to the left of the colon is considered an uppercase
+character, while the data to the right is considered the lowercase
+character. You can represent characters both by literals (if you can
+type them) and by octal, hexadecimal, or decimal Unicode equivalents.</p>
+
+<p>If you use this option, it must be listed after the
+<tt class="literal">client</tt> <tt class="literal">code</tt>
+<tt class="literal">page</tt> to which you wish to add the character.
+<a name="INDEX-30"/><a name="INDEX-31"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-11-SECT-4"/>
+
+<h2 class="head1">Windows Messenger Service</h2>
+
+<p>One of the odd features of SMB protocol is its ability to send text
+messages between computers. Although both the name and functionality
+are similar to that of Windows Messenger, the two are not the same.
+<a name="INDEX-32"/><a name="INDEX-33"/><a name="INDEX-34"/>Windows Messenger (also called MSN
+Messenger) is an Internet-oriented instant messenging service, while
+Windows Messenger Service is an older and simpler LAN-oriented
+service. Using the Windows Messenger Service, messages can be
+addressed to users, individual computers, or entire workgroups on the
+network.</p>
+
+<p>The <a name="INDEX-35"/>WinPopup
+tool (<em class="filename">Winpopup.exe</em>), shown in <a href="ch11.html#samba2-CHP-11-FIG-1">Figure 11-1</a>, can be used on Windows 95/98/Me to send or
+receive messages. WinPopup is a handy tool for sending messages.
+However, to receive messages, it must already be running when the
+message is sent from the remote system.</p>
+
+<div class="figure"><a name="samba2-CHP-11-FIG-1"/><img src="figs/sam2_1101.gif"/></div><h4 class="head4">Figure 11-1. Sending a message from a Windows 95/98/Me system (left); receiving a message (right)</h4>
+
+<p>On Windows NT/2000/XP, the messenger service lets you receive
+messages without having an application already running; messages will
+automatically appear in a small dialog box on the screen when
+received, as shown in <a href="ch11.html#samba2-CHP-11-FIG-2">Figure 11-2</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-11-FIG-2"/><img src="figs/sam2_1102.gif"/></div><h4 class="head4">Figure 11-2. Receiving a message on a Windows 2000 system</h4>
+
+<p>To send messages, it is necessary to use the <em class="emphasis">net
+send</em> command from a command-prompt window, like this:</p>
+
+<blockquote><pre class="code">C:\&gt; <tt class="userinput"><b>net send maya &quot;Who's There?&quot;</b></tt>
+The message was successfully sent to MAYA.</pre></blockquote>
+
+
+<div class="sect2"><a name="samba2-CHP-11-SECT-4.1"/>
+
+<h3 class="head2">Windows Messenger Service Configuration Option</h3>
+
+<p>Samba has a single option to handle Windows Messenger Service,
+<tt class="literal">message</tt> <tt class="literal">command</tt>, as shown in
+<a href="ch11.html#samba2-CHP-11-TABLE-7">Table 11-7</a>.</p>
+
+<a name="samba2-CHP-11-TABLE-7"/><h4 class="head4">Table 11-7. Windows Messenger Service configuration option</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameter</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">message</tt> <tt class="literal">command</tt></p>
+</td>
+<td>
+<p>string (shell command)</p>
+</td>
+<td>
+<p>Sets a command to run on Unix when a WinPopup message is received</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-4.1.1"/>
+
+<h3 class="head3">message command</h3>
+
+<p>Samba's
+<tt class="literal">message</tt><a name="INDEX-36"/> <tt class="literal">command</tt>
+option defines the command that will run on the server when a Windows
+Messenger Service message arrives. The command will be executed as
+the <tt class="literal">guest</tt> <tt class="literal">account</tt> user. What to
+do with messages is questionable because most Samba hosts run as
+unattended servers. One solution is to mail the messages to root like
+this:</p>
+
+<blockquote><pre class="code">[global]
+    message command = /bin/mail -s &quot;SMB Message From %f on %m&quot; root &lt;%s; rm %s</pre></blockquote>
+
+<p>Note the use of variables here. The <tt class="literal">%s</tt> variable
+will be replaced by the name of the file in which the message
+resides. This file should be deleted when the command is finished
+with it; otherwise, a buildup of message files will collect on the
+Samba server. In addition, the command must either exit quickly or
+fork its own process (using an <tt class="literal">&amp;</tt> after the
+command); otherwise, the client might suspend and wait for
+notification that the command was sent successfully before
+continuing.</p>
+
+<p>In addition to the standard variables, <a href="ch11.html#samba2-CHP-11-TABLE-8">Table 11-8</a>
+shows the three unique variables that you can use in a
+<tt class="literal">message</tt> <tt class="literal">command</tt>.</p>
+
+<a name="samba2-CHP-11-TABLE-8"/><h4 class="head4">Table 11-8. message command variables</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Variable</p>
+</th>
+<th>
+<p>Definition</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">%s</tt></p>
+</td>
+<td>
+<p>The name of the file in which the message resides</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%f</tt></p>
+</td>
+<td>
+<p>The name of the system that sent the message</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%t</tt></p>
+</td>
+<td>
+<p>The name of the system that is the destination of the message
+<a name="INDEX-37"/><a name="INDEX-38"/><a name="INDEX-39"/></p>
+</td>
+</tr>
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-11-SECT-5"/>
+
+<h2 class="head1">Miscellaneous Options</h2>
+
+<p>Many Samba options are available to deal with operating system issues
+on either Unix or Windows. In particular, some of these options are
+used for setting limits for clients' use of
+resources on the Unix server. The options shown in <a href="ch11.html#samba2-CHP-11-TABLE-9">Table 11-9</a> deal with some of these issues.</p>
+
+<a name="samba2-CHP-11-TABLE-9"/><h4 class="head4">Table 11-9. Miscellaneous options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">deadtime</tt></p>
+</td>
+<td>
+<p>numeric (minutes)</p>
+</td>
+<td>
+<p>Number of minutes of inactivity before a connection should be
+terminated.</p>
+</td>
+<td>
+<p><tt class="literal">0</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">dfree command</tt></p>
+</td>
+<td>
+<p>string (command)</p>
+</td>
+<td>
+<p>Used to specify a command that returns free disk space in a format
+recognized by Samba.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">fstype</tt></p>
+</td>
+<td>
+<p><tt class="literal">NTFS</tt>, <tt class="literal">FAT</tt>, or
+<tt class="literal">Samba</tt></p>
+</td>
+<td>
+<p>Filesystem type reported by the server to the client.</p>
+</td>
+<td>
+<p><tt class="literal">NTFS</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">keepalive</tt></p>
+</td>
+<td>
+<p>numeric (seconds)</p>
+</td>
+<td>
+<p>Number of seconds between checks for an inoperative client.</p>
+</td>
+<td>
+<p><tt class="literal">300</tt> (none)</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">max disk size</tt></p>
+</td>
+<td>
+<p>numeric (MB)</p>
+</td>
+<td>
+<p>Largest disk size to return to a client, some of which have limits.
+Does not affect actual operations on the disk.</p>
+</td>
+<td>
+<p><tt class="literal">0</tt> (infinity)</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">max mux</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Maximum number of simultaneous SMB operations that clients can make.</p>
+</td>
+<td>
+<p><tt class="literal">50</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">max open files</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Limits number of open files to be below Unix limits.</p>
+</td>
+<td>
+<p><tt class="literal">10000</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">max xmit</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Specifies the maximum packet size that Samba will send.</p>
+</td>
+<td>
+<p><tt class="literal">65535</tt> or <tt class="literal">16644</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">nt pipe support</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>Turns off an NT/2000/XP support feature; for benchmarking or in case
+of an error.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">nt smb support</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>Turns off an NT/2000/XP support feature; for benchmarking or in case
+of an error.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">ole locking</tt> <tt class="literal">compatibility</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>Remaps out-of-range lock requests used on Windows to fit in allowable
+range on Unix. Turning it off causes Unix lock errors.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">panic action</tt></p>
+</td>
+<td>
+<p>string</p>
+</td>
+<td>
+<p>Command to run if Samba server fails; for debugging.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">set directory</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, allows VMS clients to issue
+<tt class="literal">set</tt> <tt class="literal">dir</tt> commands.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">status</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, allows Samba to monitor status for
+<tt class="literal">smbstatus</tt> command.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">strict sync</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">no</tt>, ignores Windows application requests to
+perform a sync-to-disk.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">sync always</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, forces all client writes to be committed
+to disk before returning from the call.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">strip dot</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, strips trailing dots from Unix filenames.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">change notify timeout</tt></p>
+</td>
+<td>
+<p>numeric (seconds)</p>
+</td>
+<td>
+<p>Interval between checks when a client asks to wait for a change in a
+specified directory.</p>
+</td>
+<td>
+<p><tt class="literal">60</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">stat cache</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, Samba will cache recent name mappings.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">stat cache size</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Number of entries in the stat cache.</p>
+</td>
+<td>
+<p><tt class="literal">50</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect2"><a name="samba2-CHP-11-SECT-5.1"/>
+
+<a name="INDEX-40"/><h3 class="head2">deadtime</h3>
+
+<p>This global option sets the number of minutes that Samba will wait
+for an inactive client before closing its session with the Samba
+server. A client is considered inactive when it has no open files and
+no data is being sent from it. The default value for this option is
+0, which means that Samba never closes any connection, regardless of
+how long they have been inactive. This can lead to unnecessary
+consumption of the server's resources by inactive
+clients. We recommend that you override the default as follows:</p>
+
+<blockquote><pre class="code">[global]
+    deadtime = 10</pre></blockquote>
+
+<p>This tells Samba to terminate any inactive client sessions after 10
+minutes. For most networks, setting this option as such will not
+inconvenience users because reconnections from the client are
+generally performed transparently to the user. See also the
+<tt class="literal">keepalive</tt> parameter.</p>
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.1"/>
+
+<a name="INDEX-41"/><h3 class="head3">dfree command</h3>
+
+<p>This global option is used on systems that incorrectly determine the
+free space left on the disk. So far, the only confirmed system that
+needs this option set is Ultrix. There is no default value for this
+option, which means that Samba already knows how to compute the free
+disk space on its own and the results are considered reliable. You
+can override it as follows:</p>
+
+<blockquote><pre class="code">[global]
+    dfree command = /usr/local/bin/dfree</pre></blockquote>
+
+<p>This option should point to a script that returns the total disk
+space in a block and the number of available blocks. The Samba
+documentation recommends the following as a usable script:</p>
+
+<blockquote><pre class="code">#!/bin/sh
+df $1 | tail -1 | awk '{print $2&quot; &quot;$4}'</pre></blockquote>
+
+<p>On System V machines, the following will work:</p>
+
+<blockquote><pre class="code">#!/bin/sh
+/usr/bin/df $1 | tail -1 | awk '{print $3&quot; &quot;$5}'</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.2"/>
+
+<a name="INDEX-42"/><h3 class="head3">fstype</h3>
+
+<p>This share-level option sets the type of filesystem that Samba
+reports when queried by the client. Three strings can be used as a
+value to this configuration option, as listed in <a href="ch11.html#samba2-CHP-11-TABLE-10">Table 11-10</a>.</p>
+
+<a name="samba2-CHP-11-TABLE-10"/><h4 class="head4">Table 11-10. Filesystem types</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Value</p>
+</th>
+<th>
+<p>Definition</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p>NTFS</p>
+</td>
+<td>
+<p>Microsoft Windows NT filesystem</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>FAT</p>
+</td>
+<td>
+<p>DOS FAT filesystem</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Samba</p>
+</td>
+<td>
+<p>Samba filesystem</p>
+</td>
+</tr>
+
+</table>
+
+<p>The default value for this option is <tt class="literal">NTFS</tt>, which
+represents a Windows NT filesystem. There probably
+isn't a need to specify any other type of
+filesystem. However, if you need to, you can override the default
+value per share as follows:</p>
+
+<blockquote><pre class="code">[data]
+    fstype = FAT</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.3"/>
+
+<a name="INDEX-43"/><h3 class="head3">keepalive</h3>
+
+<p>This global option specifies the number of seconds that Samba waits
+between sending NetBIOS <em class="emphasis">keepalive packets</em>. These
+packets are used to ping a client to detect whether it is still alive
+and on the network. The default value for this option is
+<tt class="literal">300</tt> (5 minutes), which you can override as
+follows:</p>
+
+<blockquote><pre class="code">[global]
+    keepalive = 600</pre></blockquote>
+
+<p>The value of <tt class="literal">600</tt> (10 minutes) is good for networks
+populated by reliable clients. If your network contains relatively
+unreliable clients, you might prefer to set
+<tt class="literal">keepalive</tt> to a lower value, such as
+<tt class="literal">30</tt>. If <tt class="literal">keepalive</tt> is set to 0,
+no NetBIOS keepalive packets will be sent. See also the
+<tt class="literal">deadtime</tt> parameter.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.4"/>
+
+<a name="INDEX-44"/><h3 class="head3">max disk size</h3>
+
+<p>This global option specifies an illusory limit, in megabytes, for
+each share that Samba is offering. It only affects how much disk
+space Samba reports the share as having and does not prevent more
+disk space from actually being available for use. You would typically
+set this option to prevent clients with older operating
+systems&mdash;or running buggy applications&mdash;from being confused
+by large disk spaces. For example, some older Windows applications
+become confused when they encounter a share larger than 1 gigabyte.
+To work around this problem, <tt class="literal">max</tt>
+<tt class="literal">disk</tt> <tt class="literal">size</tt> can be set as
+follows:</p>
+
+<blockquote><pre class="code">[global]
+    max disk size = 1000</pre></blockquote>
+
+<p>The default value for this option is <tt class="literal">0</tt>, which
+means there is no upper limit.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.5"/>
+
+<a name="INDEX-45"/><h3 class="head3">max mux</h3>
+
+<p>This global option specifies the maximum number of concurrent SMB
+operations Samba allows. The default value for this option is
+<tt class="literal">50</tt>. You can override it as follows:</p>
+
+<blockquote><pre class="code">[global]
+    max mux = 100</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.6"/>
+
+<a name="INDEX-46"/><h3 class="head3">max open files</h3>
+
+<p>This global option specifies the maximum number of open files that
+Samba should allow at any given time for all processes. This value
+must be equal to or less than the amount allowed by the operating
+system, which varies from system to system. The default value for
+this option is <tt class="literal">10000</tt>. You can override it as
+follows:</p>
+
+<blockquote><pre class="code">[global]
+    max open files = 8000</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.7"/>
+
+<a name="INDEX-47"/><h3 class="head3">max xmit</h3>
+
+<p>This global option sets the maximum size of packets that Samba
+exchanges with a client. In rare cases, setting a smaller maximum
+packet size can increase performance, especially with Windows for
+Workgroups. In Samba versions up to 2.2.5, the default value for this
+option is <tt class="literal">65535</tt>. In 2.2.7 and later versions, the
+default was changed to <tt class="literal">16644</tt> to match the behavior
+of Windows 2000 and improve support for Windows NT 4.0. You can
+override the default as follows:</p>
+
+<blockquote><pre class="code">[global]
+    max xmit = 4096</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.8"/>
+
+<a name="INDEX-48"/><h3 class="head3">nt pipe support</h3>
+
+<p>This global option is used by developers to allow or disallow Windows
+NT/2000/XP clients the ability to make connections to
+<a name="INDEX-49"/>NT-specific SMB IPC$ pipes. As a user, you
+should never need to override the default:</p>
+
+<blockquote><pre class="code">[global]
+    nt pipe support = yes</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.9"/>
+
+<a name="INDEX-50"/><h3 class="head3">nt smb support</h3>
+
+<p>This global option is used by developers to negotiate NT-specific SMB
+options with Windows NT/2000/XP clients. The Samba Team has
+discovered that slightly better performance comes from setting this
+value to <tt class="literal">no</tt>. However, as a user, you should
+probably not override the default:</p>
+
+<blockquote><pre class="code">[global]
+    nt smb support = yes</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.10"/>
+
+<a name="INDEX-51"/><h3 class="head3">ole locking compatibility</h3>
+
+<p>This global option turns off Samba's internal
+byte-range locking manipulation in files, which gives compatibility
+with Object Linking and Embedding (OLE) applications that use high
+byte-range locks as a method of interprocess communication. The
+default value for this option is <tt class="literal">yes</tt>. If you trust
+your Unix locking mechanisms, you can override it as follows:</p>
+
+<blockquote><pre class="code">[global]
+    ole locking compatibility = no</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.11"/>
+
+<a name="INDEX-52"/><h3 class="head3">panic action</h3>
+
+<p>This global option specifies a command to execute in the event that
+Samba encounters a fatal error when loading or running. There is no
+default value for this option. You can specify an action as follows:</p>
+
+<blockquote><pre class="code">[global]
+    panic action = /bin/csh -c
+          'xedit &lt;&lt;: &quot;Samba has shutdown unexpectedly&quot;;:'</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.12"/>
+
+<a name="INDEX-53"/><h3 class="head3">set directory</h3>
+
+<p>This Boolean share-level option allows <a name="INDEX-54"/>Digital Pathworks clients to
+use the <em class="emphasis">setdir</em> command to change directories on
+the server. If you are not using the Digital Pathworks client, you
+should not need to alter this option. The default value for this
+option is <tt class="literal">no</tt>. You can override it per share as
+follows:</p>
+
+<blockquote><pre class="code">[data]
+    set directory = yes</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.13"/>
+
+<a name="INDEX-55"/><h3 class="head3">status</h3>
+
+<p>This global option indicates whether Samba should log all active
+connections to a status file. This file is used only by the
+<em class="emphasis">smbstatus</em> command. If you have no intentions of
+using this command, you can set this option to <tt class="literal">no</tt>,
+which can result in a small increase of speed on the server. The
+default value for this option is <tt class="literal">yes</tt>. You can
+override it as follows:</p>
+
+<blockquote><pre class="code">[global]
+    status = no</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.14"/>
+
+<a name="INDEX-56"/><h3 class="head3">strict sync</h3>
+
+<p>This share-level option determines whether Samba honors all requests
+to perform a disk sync when requested to do so by a client. Many
+Windows clients request a disk sync when they are really just trying
+to flush data to their own open files. In this case, a disk sync is
+generally unnecessary on Unix due to its high reliability, and it
+mostly has the effect of substantially reducing the performance of
+the Samba host system. The default value for this option is
+<tt class="literal">no</tt>, which allows the superfluous disk sync
+requests to be ignored. You can override the default as follows:</p>
+
+<blockquote><pre class="code">[data]
+    strict sync = yes</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.15"/>
+
+<a name="INDEX-57"/><h3 class="head3">sync always</h3>
+
+<p>This share-level option decides whether every write to disk should be
+followed by a disk synchronization before the write call returns
+control to the client. Even if the value of this option is
+<tt class="literal">no</tt>, clients can request a disk synchronization;
+see the earlier <tt class="literal">strict</tt> <tt class="literal">sync</tt>
+option. The default value for this option is <tt class="literal">no</tt>.
+You can override it per share as follows:</p>
+
+<blockquote><pre class="code">[data]
+    sync always = yes</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.16"/>
+
+<a name="INDEX-58"/><h3 class="head3">strip dot</h3>
+
+<p>This global option determines whether to remove the trailing dot from
+Unix filenames that are formatted with a dot at the end. The default
+value for this option is <tt class="literal">no</tt>. You can override it
+per share as follows:</p>
+
+<blockquote><pre class="code">[global]
+    strip dot = yes</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.17"/>
+
+<h3 class="head3">change notify timeout</h3>
+
+<p>The <tt class="literal">change</tt><a name="INDEX-59"/>
+<tt class="literal">notify</tt> <tt class="literal">timeout</tt> global option
+emulates a Windows NT/2000 SMB feature called <em class="firstterm">change
+notification</em><a name="INDEX-60"/>. This allows a client to request
+that a Windows NT/2000 server periodically monitor a specific
+directory on a share for any changes. If changes occur, the server
+will notify the client.</p>
+
+<p>Samba performs this function for its clients at an interval that
+defaults to 1 minute (60 seconds). Performing these checks too often
+can slow down the server considerably; however, you can use this
+option to specify an alternate time that Samba should wait between
+performing checks:</p>
+
+<blockquote><pre class="code">[global]
+    change notify timeout = 30</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.18"/>
+
+<h3 class="head3">stat cache</h3>
+
+<p>The <tt class="literal">stat</tt><a name="INDEX-61"/> <tt class="literal">cache</tt> global
+option turns on caching of recent case-insensitive name mappings. The
+default is <tt class="literal">yes</tt>. The Samba Team recommends that you
+never change this parameter.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-11-SECT-5.1.19"/>
+
+<h3 class="head3">stat cache size</h3>
+
+<p>The <tt class="literal">stat</tt><a name="INDEX-62"/> <tt class="literal">cache</tt>
+<tt class="literal">size</tt> global option sets the number of cache
+entries to be used for the <tt class="literal">stat</tt>
+<tt class="literal">cache</tt> option. The default here is
+<tt class="literal">50</tt>. Again, the Samba Team recommends that you
+never change this parameter.</p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+<hr/><h4 class="head4"><a href="toc.html">TOC</a></h4></body></html>

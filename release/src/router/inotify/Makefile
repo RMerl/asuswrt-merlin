@@ -3,7 +3,6 @@
 # Makefile
 #
 #***********************************************************************
-CC = mipsel-linux-gcc
 
 #CFLAGS = -g -rdynamic -DMYDEBUG -DDEBUG
 LIBS = -lpthread

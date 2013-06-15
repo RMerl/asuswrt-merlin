@@ -1,0 +1,57 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>libsmbclient</title><link rel="stylesheet" href="samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.71.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="libsmbclient.7"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>libsmbclient &#8212; An extension library for browsers and that can be used as a generic browsing API.</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">Browser URL:</code><p>
+        smb://[[[domain:]user[:password@]]server[/share[/path[/file]]]] [?options]
+    </p></p></div></div><div class="refsect1" lang="en"><a name="id259294"></a><h2>DESCRIPTION</h2><p>
+	This tool is part of the <a href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.
+	</p><p>
+	<code class="literal">libsmbclient</code> is a library toolset that permits applications to manipulate CIFS/SMB network
+	resources using many of the standards POSIX functions available for manipulating local UNIX/Linux files. It
+	permits much more than just browsing, files can be opened and read or written, permissions changed, file times
+	modified, attributes and ACL's can be manipulated, and so on. Of course, its functionality includes all the
+	capabilities commonly called browsing.
+	</p><p>
+	<code class="literal">libsmbclient</code> can not be used directly from the command line, instead it provides an
+	extension of the capabilities of tools such as file managers and browsers.  This man page describes the
+	configuration options for this tool so that the user may obtain greatest utility of use.
+	</p></div><div class="refsect1" lang="en"><a name="id259550"></a><h2>OPTIONS</h2><p>
+	What the URLs mean:
+	</p><div class="variablelist"><dl><dt><span class="term">smb://</span></dt><dd><p>
+			Shows all workgroups or domains that are visible in the network. The behavior matches
+			that of the Microsoft Windows Explorer.
+			</p><p>
+			The method of locating the list of workgroups (domains also) varies depending on the setting of
+			the context variable <code class="literal">(context-&gt;options.browse_max_lmb_count)</code>. It is the
+			responsibility of the application that calls this library to set this to a sensible value.  This
+			is a compile-time option. This value determines the maximum number of local master browsers to
+			query for the list of workgroups.  In order to ensure that the list is complete for those present
+			on the network, all master browsers must be querried. If there are a large number of workgroups
+			on the network, the time spent querying will be significant. For small networks (just a few
+			workgroups), it is suggested to set this value to 0, instructing libsmbclient to query all local
+			master browsers. In an environment that has many workgroups a more reasonable setting may be around 3.
+			</p></dd><dt><span class="term">smb://name/</span></dt><dd><p>
+			This command causes libsmbclient to perform a name look-up. If the NAME&lt;1D&gt; or
+			NAME&lt;1B&gt; exists (workgroup name), libsmbclient will list all servers in the
+			workgroup (or domain). Otherwise, a name look-up for the NAME&lt;20&gt; (machine name)
+			will be performed, and the list of shared resources on the server will be displayed.
+			</p></dd></dl></div><p>
+	When libsmbclient is invoked by an application it searches for a directory called
+	<code class="filename">.smb</code> in the $HOME directory that is specified in the users shell
+	environment. It then searches for a file called <code class="filename">smb.conf</code> which,
+	if present, will fully over-ride the system <code class="filename">/etc/samba/smb.conf</code> file. If
+	instead libsmbclient finds a file called <code class="filename">~/.smb/smb.conf.append</code>,
+	it will read the system <code class="filename">/etc/samba/smb.conf</code> and then append the
+	contents of the <code class="filename">~/.smb/smb.conf.append</code> to it.
+	</p><p>
+	<code class="literal">libsmbclient</code> will check the users shell environment for the <code class="literal">USER</code>
+	parameter and will use its value when if the <code class="literal">user</code> parameter was not included
+	in the URL.
+	</p></div><div class="refsect1" lang="en"><a name="id259420"></a><h2>PROGRAMMERS GUIDE</h2><p>
+	Watch this space for future updates.
+	</p></div><div class="refsect1" lang="en"><a name="id259429"></a><h2>VERSION</h2><p>
+	This man page is correct for version 3.0 of the Samba suite.
+	</p></div><div class="refsect1" lang="en"><a name="id260355"></a><h2>AUTHOR</h2><p>
+	The original Samba software and related utilities were created by Andrew Tridgell.
+	Samba is now developed by the Samba Team as an Open Source project similar to the way
+	the Linux kernel is developed.
+	</p><p>
+	The libsmbclient manpage page was written by John H Terpstra.
+	</p></div></div></body></html>

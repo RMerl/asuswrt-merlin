@@ -1,0 +1,41 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>vfstest</title><link rel="stylesheet" href="samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.71.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="vfstest.1"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>vfstest &#8212; tool for testing samba VFS modules </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">vfstest</code> [-d debuglevel] [-c command] [-l logdir] [-h]</p></div></div><div class="refsect1" lang="en"><a name="id259321"></a><h2>DESCRIPTION</h2><p>This tool is part of the <a href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p><code class="literal">vfstest</code> is a small command line
+	utility that has the ability to test dso samba VFS modules. It gives the
+	user the ability to call the various VFS functions manually and
+	supports cascaded VFS modules.
+	</p></div><div class="refsect1" lang="en"><a name="id259564"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">-c|--command=command</span></dt><dd><p>Execute the specified (colon-separated) commands.
+		See below for the commands that are available.
+		</p></dd><dt><span class="term">-h|--help</span></dt><dd><p>Print a summary of command line options.
+</p></dd><dt><span class="term">-l|--logfile=logbasename</span></dt><dd><p>File name for log/debug files. The extension
+		<code class="constant">'.client'</code> will be appended. The log file is never removed
+		by the client.
+		</p></dd><dt><span class="term">-V</span></dt><dd><p>Prints the program version number.
+</p></dd><dt><span class="term">-s &lt;configuration file&gt;</span></dt><dd><p>The file specified contains the 
+configuration details required by the server.  The 
+information in this file includes server-specific
+information such as what printcap file to use, as well 
+as descriptions of all the services that the server is 
+to provide. See <code class="filename">smb.conf</code> for more information.
+The default configuration file name is determined at 
+compile time.</p></dd><dt><span class="term">-d|--debuglevel=level</span></dt><dd><p><em class="replaceable"><code>level</code></em> is an integer 
+from 0 to 10.  The default value if this parameter is 
+not specified is zero.</p><p>The higher this value, the more detail will be 
+logged to the log files about the activities of the 
+server. At level 0, only critical errors and serious 
+warnings will be logged. Level 1 is a reasonable level for
+day-to-day running - it generates a small amount of 
+information about operations carried out.</p><p>Levels above 1 will generate considerable 
+amounts of log data, and should only be used when 
+investigating a problem. Levels above 3 are designed for 
+use only by developers and generate HUGE amounts of log
+data, most of which is extremely cryptic.</p><p>Note that specifying this parameter here will 
+override the <a class="indexterm" name="id259419"></a> parameter
+in the <code class="filename">smb.conf</code> file.</p></dd><dt><span class="term">-l|--logfile=logdirectory</span></dt><dd><p>Base directory name for log/debug files. The extension
+<code class="constant">".progname"</code> will be appended (e.g. log.smbclient, 
+log.smbd, etc...). The log file is never removed by the client.
+</p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id260367"></a><h2>COMMANDS</h2><p><span class="emphasis"><em>VFS COMMANDS</em></span></p><div class="itemizedlist"><ul type="disc"><li><p><code class="literal">load &lt;module.so&gt;</code> - Load specified VFS module </p></li><li><p><code class="literal">populate &lt;char&gt; &lt;size&gt;</code> - Populate a data buffer with the specified data
+		</p></li><li><p><code class="literal">showdata [&lt;offset&gt; &lt;len&gt;]</code> - Show data currently in data buffer
+		</p></li><li><p><code class="literal">connect</code> - VFS connect()</p></li><li><p><code class="literal">disconnect</code> - VFS disconnect()</p></li><li><p><code class="literal">disk_free</code> - VFS disk_free()</p></li><li><p><code class="literal">opendir</code> - VFS opendir()</p></li><li><p><code class="literal">readdir</code> - VFS readdir()</p></li><li><p><code class="literal">mkdir</code> - VFS mkdir()</p></li><li><p><code class="literal">rmdir</code> - VFS rmdir()</p></li><li><p><code class="literal">closedir</code> - VFS closedir()</p></li><li><p><code class="literal">open</code> - VFS open()</p></li><li><p><code class="literal">close</code> - VFS close()</p></li><li><p><code class="literal">read</code> - VFS read()</p></li><li><p><code class="literal">write</code> - VFS write()</p></li><li><p><code class="literal">lseek</code> - VFS lseek()</p></li><li><p><code class="literal">rename</code> - VFS rename()</p></li><li><p><code class="literal">fsync</code> - VFS fsync()</p></li><li><p><code class="literal">stat</code> - VFS stat()</p></li><li><p><code class="literal">fstat</code> - VFS fstat()</p></li><li><p><code class="literal">lstat</code> - VFS lstat()</p></li><li><p><code class="literal">unlink</code> - VFS unlink()</p></li><li><p><code class="literal">chmod</code> - VFS chmod()</p></li><li><p><code class="literal">fchmod</code> - VFS fchmod()</p></li><li><p><code class="literal">chown</code> - VFS chown()</p></li><li><p><code class="literal">fchown</code> - VFS fchown()</p></li><li><p><code class="literal">chdir</code> - VFS chdir()</p></li><li><p><code class="literal">getwd</code> - VFS getwd()</p></li><li><p><code class="literal">utime</code> - VFS utime()</p></li><li><p><code class="literal">ftruncate</code> - VFS ftruncate()</p></li><li><p><code class="literal">lock</code> - VFS lock()</p></li><li><p><code class="literal">symlink</code> - VFS symlink()</p></li><li><p><code class="literal">readlink</code> - VFS readlink()</p></li><li><p><code class="literal">link</code> - VFS link()</p></li><li><p><code class="literal">mknod</code> - VFS mknod()</p></li><li><p><code class="literal">realpath</code> - VFS realpath()</p></li></ul></div><p><span class="emphasis"><em>GENERAL COMMANDS</em></span></p><div class="itemizedlist"><ul type="disc"><li><p><code class="literal">conf &lt;smb.conf&gt;</code> - Load a different configuration file</p></li><li><p><code class="literal">help [&lt;command&gt;]</code> - Get list of commands or info about specified command</p></li><li><p><code class="literal">debuglevel &lt;level&gt;</code> - Set debug level</p></li><li><p><code class="literal">freemem</code> - Free memory currently in use</p></li><li><p><code class="literal">exit</code> - Exit vfstest</p></li></ul></div></div><div class="refsect1" lang="en"><a name="id300629"></a><h2>VERSION</h2><p>This man page is correct for version 3.0 of the Samba
+	suite.</p></div><div class="refsect1" lang="en"><a name="id300639"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</p><p>The vfstest man page was written by Jelmer Vernooij.</p></div></div></body></html>

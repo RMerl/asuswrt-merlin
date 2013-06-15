@@ -17,6 +17,7 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/detect.js"></script>
+<script language="JavaScript" type="text/JavaScript" src="/jquery.js"></script>
 <script>
 
 <% login_state_hook(); %>
@@ -28,12 +29,17 @@ var ipv6_proto_orig = '<% nvram_get("ipv6_service"); %>';
 var ipv6_tun6rd_dhcp = '<% nvram_get("ipv6_6rd_dhcp"); %>';
 var ipv6_dnsenable = '<% nvram_get("ipv6_dnsenable"); %>'; 
 var wan0_ipaddr = '<% nvram_get("wan0_ipaddr"); %>'; 
+var machine_name = '<% get_machine_name(); %>';
+var machine_arm = (machine_name.search("arm") == -1) ? false : true;
+
+var $j = jQuery.noConflict();
+
 
 
 function initial(){
 	show_menu();	
 	showInputfield(ipv6_proto_orig);
-	addOnlineHelp($("faq"), ["ASUSWRT", "IPv6"]);
+	addOnlineHelp($("faq"), ["ASUSWRT", "IPv6"]);	
 }
 
 function showInputfield(v){
@@ -278,18 +284,18 @@ function showInputfield(v){
 				document.form.ipv6_gateway.value="";
 		}
 		$("ipv6_lan_setting").style.display="";
-		$("ipv6_prefix_r").style.display="none";
+		$("ipv6_prefix_r").style.display="";
 		$("ipv6_prefix_length_r").style.display="none";
 		
-		inputCtrl(document.form.ipv6_prefix, 1);
+		inputCtrl(document.form.ipv6_prefix, 0);
 		inputCtrl(document.form.ipv6_prefix_length, 1);
 		inputCtrl(document.form.ipv6_rtr_addr, 1);
 		if(v != ipv6_proto_orig){
-				document.form.ipv6_prefix.value = "";
+				$("ipv6_prefix_span").innerHTML = "";
 				document.form.ipv6_prefix_length.value = "";
 				document.form.ipv6_rtr_addr.value = "";
 		}else{
-				document.form.ipv6_prefix.value = "<% nvram_get("ipv6_prefix"); %>";
+				$("ipv6_prefix_span").innerHTML = "<% nvram_get("ipv6_prefix"); %>";
 				document.form.ipv6_prefix_length.value = "<% nvram_get("ipv6_prefix_length"); %>";
 				document.form.ipv6_rtr_addr.value = "<% nvram_get("ipv6_rtr_addr"); %>";
 		}
@@ -335,6 +341,13 @@ function showInputfield(v){
 		inputCtrl(document.form.ipv6_dns3, 0);
 		
 	}		
+	
+	if(v != ipv6_proto_orig){
+			update_info(0);
+	}else{
+			update_info(1);
+	}
+	
 }
 
 //Viz add 2011.11 for Input Control{
@@ -462,8 +475,8 @@ function validForm(){
 							}					
 				}
 		
-				if(!ipv6_valid(document.form.ipv6_prefix) || 
-						!validate_range(document.form.ipv6_prefix_length, 3, 64) ||
+				//!ipv6_valid(document.form.ipv6_prefix) || Viz rm 2013.05
+				if(	!validate_range(document.form.ipv6_prefix_length, 3, 64) ||
 						!ipv6_valid(document.form.ipv6_rtr_addr)){
 						return false;
 				}
@@ -549,13 +562,13 @@ function applyRule(){
 				document.form.ipv6_ifdev.value = "eth";
 		}else{
 				document.form.ipv6_ifdev.value = document.form.ipv6_ifdev_select.value;
-		}
+		}			
 				
 		if(document.form.ipv6_service.value!="static6" && document.form.ipv6_service.value!="other")	//clean up ipv6_rtr_addr if not static6 or not other
 				document.form.ipv6_rtr_addr.value = "";
 
-		if(Rawifi_support == -1)
-		{ // MODELDEP: boradcom platform
+		if(machine_arm)
+		{ // MODELDEP: Machine ARM structure
 			if((document.form.ipv6_service.value == "disabled" && document.form.ipv6_service_orig.value != "disabled") ||
 				 (document.form.ipv6_service.value != "disabled" && document.form.ipv6_service_orig.value == "disabled"))
     		FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
@@ -566,6 +579,42 @@ function applyRule(){
 		document.form.submit();
 	}
 }
+
+/*------------ get IPv6 info Start -----------------*/
+function update_info(flag){
+	if(flag == 0)
+			return false;
+			
+		$j.ajax({
+				url: '/update_IPv6state.asp',
+				dataType: 'script',
+				timeout: 1500,
+				error: function(xhr){
+						setTimeout("update_info();", 1500);
+				},
+				success: function(response){
+						showInfo();
+				}
+		});
+	
+}	
+
+function showInfo(){
+		if(document.form.ipv6_service.value == ipv6_proto_orig){
+			if($("ipv6_prefix_r").style.display == ""){
+					$("ipv6_prefix_span").innerHTML = state_ipv6_prefix;
+			}
+			if($("ipv6_prefix_length_r").style.display == ""){
+					$("ipv6_prefix_length_span").innerHTML = state_ipv6_prefix_length;
+			}
+			if($("ipv6_ipaddr_r").style.display == ""){
+					$("ipv6_ipaddr_span").innerHTML = state_ipv6_rtr_addr;
+			}
+			setTimeout("update_info();", 1500);
+		}		
+}
+/*------------- get IPv6 info end ----------------------------*/
+
 </script>
 </head>
 
@@ -783,18 +832,18 @@ function applyRule(){
 						  	<input type="text" maxlength="39" class="input_32_table" name="ipv6_prefix" value="<% nvram_get("ipv6_prefix"); %>">
 						</td>
 					</tr>
-					<tr>
-						<th><#Prefix_lan_Length#></th>
-						<td>
-								<input type="text" maxlength="2" class="input_3_table" name="ipv6_prefix_length" value="<% nvram_get("ipv6_prefix_length"); %>">
-		     		</td>
-		     	</tr>
 					<tr id="ipv6_prefix_r">
 						<th><#IPv6_lan_Prefix#></th>
 		     		<td>
 						  <div id="ipv6_prefix_span" name="ipv6_prefix_span" style="color:#FFFFFF;margin-left:8px;"></div>
 						</td>
 					</tr>
+					<tr>
+						<th><#Prefix_lan_Length#></th>
+						<td>
+								<input type="text" maxlength="2" class="input_3_table" name="ipv6_prefix_length" value="<% nvram_get("ipv6_prefix_length"); %>">
+		     		</td>
+		     	</tr>
 					<tr id="ipv6_prefix_length_r">
 						<th><#Prefix_lan_Length#></th>
 						<td>

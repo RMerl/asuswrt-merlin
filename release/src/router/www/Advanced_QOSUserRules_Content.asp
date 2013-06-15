@@ -28,9 +28,9 @@
 	border:1px outset #999;
 	background-color:#576D73;
 	position:absolute;
-	margin-top:-10px;
-	margin-left:151px;
-	*margin-left:152px;
+	margin-top:25px;
+	margin-left:3px;
+	*margin-left:-125px;
 	width:255px;
 	*width:259px;
 	text-align:left;
@@ -759,7 +759,6 @@ function showLANIPList(){
 }
 
 function pullLANIPList(obj){
-	
 	if(isMenuopen_mac == 0){		
 		obj.src = "/images/arrow-top.gif"
 		$("ClientList_Block_PC").style.display = 'block';		
@@ -897,7 +896,7 @@ function linkport(obj){
 								<td width="19%">
 									<input type="text" maxlength="17" class="input_15_table" name="qos_ip_x_0" style="width:100px;float:left">
 									<img id="pull_arrow_mac" class="pull_arrow"height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." >
-									
+									<div id="ClientList_Block_PC" class="ClientList_Block_PC" ></div>
 								</td>
 								
 								
@@ -933,7 +932,6 @@ function linkport(obj){
 								</td>
 							</tr>
 							</table>
-							<div id="ClientList_Block_PC" class="ClientList_Block_PC" ></div>
 							<div id="qos_rulelist_Block"></div>
 							</td>							
 						</tr>

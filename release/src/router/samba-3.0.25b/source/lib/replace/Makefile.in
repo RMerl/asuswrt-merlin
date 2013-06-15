@@ -1,0 +1,60 @@
+#!gmake
+#
+CC = @CC@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+includedir = @includedir@
+libdir = @libdir@
+VPATH = @libreplacedir@
+srcdir = @srcdir@
+builddir = @builddir@
+INSTALL = @INSTALL@
+
+.PHONY: test
+
+CFLAGS=-I. -I@libreplacedir@ @CFLAGS@
+
+OBJS = @LIBREPLACEOBJ@
+
+all: showflags libreplace.a testsuite
+
+showflags:
+	@echo 'libreplace will be compiled with flags:'
+	@echo '  CC     = $(CC)'
+	@echo '  CFLAGS = $(CFLAGS)'
+	@echo '  LIBS   = $(LIBS)'
+
+install: all
+	mkdir -p $(libdir)
+	$(INSTALL) libreplace.a $(libdir)
+
+libreplace.a: $(OBJS)
+	ar -rcsv $@ $(OBJS)
+
+test: all
+	./testsuite
+
+installcheck: install test
+
+TEST_OBJS = test/testsuite.o test/os2_delete.o test/strptime.o
+
+testsuite: libreplace.a $(TEST_OBJS)
+	$(CC) -o testsuite $(TEST_OBJS) -L. -lreplace
+
+.c.o:
+	@echo Compiling $*.c
+	@mkdir -p `dirname $@`
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f *.o test/*.o *.a testsuite
+	rm -f testfile.dat
+
+distclean: clean
+	rm -f *~ */*~
+	rm -f config.log config.status config.h config.cache
+	rm -f Makefile
+
+realdistclean: distclean
+	rm -f configure config.h.in
