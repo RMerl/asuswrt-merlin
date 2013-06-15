@@ -59,6 +59,10 @@ void start_vpnclient(int clientNum)
 	long int nvl;
 	int pid;
 	int userauth, useronly;
+#ifdef RTCONFIG_BCMARM
+        int cpu_num = sysconf(_SC_NPROCESSORS_CONF);
+        int taskset_ret = -1;
+#endif
 
 	sprintf(&buffer[0], "start_vpnclient%d", clientNum);
 	if (getpid() != 1) {
@@ -373,6 +377,12 @@ void start_vpnclient(int clientNum)
 	vpnlog(VPN_LOG_EXTRA,"Done writing certs/keys");
 
 	// Start the VPN client
+#ifdef RTCONFIG_BCMARM
+        if (cpu_num > 1)
+		sprintf(&buffer[0], "taskset -c %d /etc/openvpn/vpnclient%d --cd /etc/openvpn/client%d --config config.ovpn", (clientNum == 2 ? 1 : 0), clientNum, clientNum);
+
+        if (taskset_ret != 0)
+#endif
 	sprintf(&buffer[0], "/etc/openvpn/vpnclient%d --cd /etc/openvpn/client%d --config config.ovpn", clientNum, clientNum);
 	vpnlog(VPN_LOG_INFO,"Starting OpenVPN: %s",&buffer[0]);
 	for (argv[argc=0] = strtok(&buffer[0], " "); argv[argc] != NULL; argv[++argc] = strtok(NULL, " "));
@@ -534,6 +544,10 @@ void start_vpnserver(int serverNum)
 	int nvi, ip[4], nm[4];
 	long int nvl;
 	int pid;
+#ifdef RTCONFIG_BCMARM
+        int cpu_num = sysconf(_SC_NPROCESSORS_CONF);
+        int taskset_ret = -1;
+#endif
 
 	sprintf(&buffer[0], "start_vpnserver%d", serverNum);
 	if (getpid() != 1) {
@@ -911,6 +925,15 @@ void start_vpnserver(int serverNum)
 		}
 	}
 	vpnlog(VPN_LOG_EXTRA,"Done writing certs/keys");
+
+//eval("taskset", "-c", "1", "smbd", "-D", "-s", "/etc/smb.conf");
+
+#ifdef RTCONFIG_BCMARM
+        if (cpu_num > 1)
+		sprintf(&buffer[0], "taskset -c %d /etc/openvpn/vpnserver%d --cd /etc/openvpn/server%d --config config.ovpn", (serverNum == 2 ? 1 : 0), serverNum, serverNum);
+
+        if (taskset_ret != 0)
+#endif
 
 	sprintf(&buffer[0], "/etc/openvpn/vpnserver%d --cd /etc/openvpn/server%d --config config.ovpn", serverNum, serverNum);
 	vpnlog(VPN_LOG_INFO,"Starting OpenVPN: %s",&buffer[0]);
