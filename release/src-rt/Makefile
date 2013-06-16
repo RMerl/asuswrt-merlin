@@ -307,6 +307,12 @@ define RouterOptions
 		sed -i "/RTCONFIG_BCMWL6/d" $(1); \
 		echo "RTCONFIG_BCMWL6=y" >>$(1); \
 	fi; \
+        if [ "$(BCMWL6A)" = "y" ]; then \
+                sed -i "/RTCONFIG_BCMWL6A/d" $(1); \
+                echo "RTCONFIG_BCMWL6A=y" >>$(1); \
+	else \
+		echo "# RTCONFIG_BCMWL6A is not set" >>$(1); \
+        fi; \
 	if [ "$(WIRELESSWAN)" = "y" ]; then \
 		sed -i "/RTCONFIG_WIRELESSWAN/d" $(1); \
 		echo "RTCONFIG_WIRELESSWAN=y" >>$(1); \
