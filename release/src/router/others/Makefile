@@ -38,6 +38,8 @@ ifeq ($(RTCONFIG_OPENVPN),y)
 endif
 
 # Entware setup script
+ifeq ($(RTCONFIG_BCMARM),n)
 	install -m 0700 entware-setup.sh $(INSTALLDIR)/usr/sbin
+endif
 
 clean:
