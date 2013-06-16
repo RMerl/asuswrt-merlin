@@ -304,7 +304,9 @@ void start_usb(void)
 				/* insert ext3 first so that lazy mount tries ext3 before ext2 */
 				modprobe("jbd");
 				modprobe("ext3");
+#if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
 				modprobe("ext4");
+#endif
 				modprobe("ext2");
 			}
 
@@ -419,7 +421,9 @@ void stop_usb(void)
 		modprobe_r("ext2");
 		modprobe_r("ext3");
 		modprobe_r("jbd");
+#if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
 		modprobe_r("ext4");
+#endif
 		modprobe_r("jbd2");
 #ifdef LINUX26
 		modprobe_r("mbcache");
@@ -488,7 +492,9 @@ void stop_usb2(void)
 	modprobe_r("ext2");
 	modprobe_r("ext3");
 	modprobe_r("jbd");
+#if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
 	modprobe_r("ext4");
+#endif
 	modprobe_r("jbd2");
 #ifdef LINUX26
 	modprobe_r("mbcache");
