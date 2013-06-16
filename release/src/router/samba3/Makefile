@@ -54,7 +54,7 @@ apps: .conf
 	samba_cv_HAVE_DEVICE_MAJOR_FN=yes \
 	samba_cv_HAVE_DEVICE_MINOR_FN=yes \
 	samba_cv_HAVE_IFACE_AIX=no \
-	samba_cv_HAVE_KERNEL_CHANGE_NOTIFY=no \
+	samba_cv_HAVE_KERNEL_CHANGE_NOTIFY=yes \
 	samba_cv_HAVE_KERNEL_SHARE_MODES=yes \
 	samba_cv_HAVE_MAKEDEV=yes \
 	samba_cv_HAVE_TRUNCATED_SALT=no \
