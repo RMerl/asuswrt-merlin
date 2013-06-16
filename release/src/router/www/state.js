@@ -78,7 +78,7 @@ var wimax_support = rc_support.search("wimax");
 var downsize_4m_support = (rc_support.search("sfp4m") == -1) ? false : true;
 var downsize_8m_support = (rc_support.search("sfp8m") == -1) ? false : true;
 var hwmodeSwitch_support = (rc_support.search("swmode_switch") == -1) ? false : true;
-var diskUtility_support = (rc_support.search("diskutility") == -1) ? false : true;
+var diskUtility_support = (rc_support.search("diskutility") == -1 || '<% nvram_get("diskut"); %>' != '1') ? false : true;
 var networkTool_support = true;
 var optimizeXbox_support = (rc_support.search("optimize_xbox") == -1) ? false : true;
 
