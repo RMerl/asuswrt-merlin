@@ -4223,7 +4223,7 @@ start_wlcscan(void)
 
 	killall("wlcscan", SIGTERM);
 
-	return _eval(wlcscan_argv, NULL, 0, &pid);
+	_eval(wlcscan_argv, NULL, 0, &pid);
 }
 
 void 
@@ -4256,7 +4256,7 @@ start_wlcconnect(void)
 
 	killall("wlcconnect", SIGTERM);
 
-	return _eval(wlcconnect_argv, NULL, 0, &pid);
+	_eval(wlcconnect_argv, NULL, 0, &pid);
 }
 
 void 
@@ -4285,8 +4285,6 @@ start_autodet(void)
 	killall_tk("autodet");
 
 	_eval(autodet_argv, NULL, 0, &pid);
-
-	return;
 }
 
 void 
@@ -4385,7 +4383,6 @@ void start_nat_rules(void)
 #endif
 
 	run_custom_script("nat-start", NULL);
-	return;
 }
 
 void stop_nat_rules(void)
@@ -4406,7 +4403,6 @@ void stop_nat_rules(void)
 	// dnsmasq will handle wildcard resolution
 	restart_dnsmasq(1);
 #endif
-	return;
 }
 
 #ifdef RTCONFIG_BCMWL6
