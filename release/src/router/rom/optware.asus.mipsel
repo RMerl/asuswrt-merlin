@@ -1,43 +1,43 @@
 Package: DM2_Utility
-Version: 2.0.3.3
+Version: 2.0.4.0
 Depends: 
 OptionalUtility: 2.1.0.0+
 Section: net
 Architecture: mipsel
 Maintainer: ASUS
 Size: 
-Filename: DM2_2033.zip
+Filename: DM2_2040.zip
 Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
 Description: Download tools
 URL: 
 
 
 Package: asuslighttpd
-Version: 1.0.0.1
+Version: 3.1.0.71
 Depends: pcre, zlib, libstdc++, openssl, spawn-fcgi
 OptionalUtility: 1.0.0.2
 Section: net
 Architecture: mipsel
 Maintainer: ASUS
-Size: 142114
-Filename: asuslighttpd_1.0.0.1_mipsel.ipk
+Size: 149348
+Filename: asuslighttpd_3.1.0.71_mipsel.ipk
 Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
 Description: 
 URL: 
 
 
 Package: downloadmaster
-Version: 3.1.0.59
-Depends: uclibc-opt, openssl, zlib, libcurl, libevent, ncurses, libxml2, libuclibc++, libsigc++, libpar2, pcre, spawn-fcgi
+Version: 3.1.0.78
+Depends: uclibc-opt, openssl, zlib, libcurl, libevent, ncurses, libxml2, libuclibc++, libsigc++, libpar2, pcre, spawn-fcgi, readline, asuslighttpd, wxbase
 OptionalUtility: 1.0.0.2+
 Section: net
 Architecture: mipsel
 Maintainer: ASUS
-Size: 4281083
-Filename: downloadmaster_3.1.0.59_mipsel.ipk
+Size: 3554679
+Filename: downloadmaster_3.1.0.78_mipsel.ipk
 Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
 Description: Download tools
-URL: http://www.asusnetwork.net:8081/
+URL: http://www.asusnetwork.net:8081/downloadmaster/index.asp
 
 
 Package: mediaserver
