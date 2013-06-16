@@ -57,6 +57,7 @@ char *usb_dev_file = "/proc/bus/usb/devices";
 #define OP_UMOUNT		2
 #define OP_SETNVRAM		3
 
+void force_stop_dms(void);
 char *find_sddev_by_mountpoint(char *mountpoint);
 
 /* Adjust bdflush parameters.

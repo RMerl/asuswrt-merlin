@@ -17,6 +17,8 @@
 #include <bcmutils.h>
 #include <wlutils.h>
 
+void stop_nas(void);
+
 //	ref: http://wiki.openwrt.org/OpenWrtDocs/nas
 
 //	#define DEBUG_TIMING

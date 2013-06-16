@@ -61,6 +61,14 @@ static const struct itimerval zombie_tv = { {0,0}, {307, 0} };
 static const char dmhosts[] = "/etc/hosts.dnsmasq";
 static const char dmresolv[] = "/tmp/resolv.conf";
 
+#ifdef RTCONFIG_CROND
+void stop_cron(void);
+void start_cron(void);
+#endif
+void start_wlcscan(void);
+void stop_wlcscan(void);
+
+
 #ifdef BCMDBG
 #include <assert.h>
 #else
