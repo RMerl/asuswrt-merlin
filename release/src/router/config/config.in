@@ -107,7 +107,7 @@ config RTCONFIG_BCMWL6
 
 config RTCONFIG_BCMWL6A
 	bool "BCM WL 6.30.143"
-	default y
+	default n
 
 config RTCONFIG_WIRELESSWAN
 	bool "Wireless WAN Function"
