@@ -50,9 +50,15 @@ aes-ia64.s: asm/aes-ia64.S
 
 aes-586.s:	asm/aes-586.pl ../perlasm/x86asm.pl
 	$(PERL) asm/aes-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+vpaes-x86.s:   asm/vpaes-x86.pl ../perlasm/x86asm.pl
+	$(PERL) asm/vpaes-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 
 aes-x86_64.s: asm/aes-x86_64.pl
 	$(PERL) asm/aes-x86_64.pl $(PERLASM_SCHEME) > $@
+vpaes-x86_64.s:        asm/vpaes-x86_64.pl
+	$(PERL) asm/vpaes-x86_64.pl $(PERLASM_SCHEME) > $@
+bsaes-x86_64.s:        asm/bsaes-x86_64.pl
+	$(PERL) asm/bsaes-x86_64.pl $(PERLASM_SCHEME) > $@
 
 aes-sparcv9.s: asm/aes-sparcv9.pl
 	$(PERL) asm/aes-sparcv9.pl $(CFLAGS) > $@
@@ -60,11 +66,15 @@ aes-sparcv9.s: asm/aes-sparcv9.pl
 aes-ppc.s:	asm/aes-ppc.pl
 	$(PERL) asm/aes-ppc.pl $(PERLASM_SCHEME) $@
 
+aes-parisc.s:  asm/aes-parisc.pl
+	$(PERL) asm/aes-parisc.pl $(PERLASM_SCHEME) $@
+
 aes-mips.S:	asm/aes-mips.pl
 	$(PERL) asm/aes-mips.pl $(PERLASM_SCHEME) $@
 
 # GNU make "catch all"
 aes-%.S:	asm/aes-%.pl;	$(PERL) $< $(PERLASM_SCHEME) > $@
+aes-armv4.o:	aes-armv4.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
