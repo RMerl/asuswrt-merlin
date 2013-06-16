@@ -135,6 +135,7 @@ float:left;
 overflow: hidden;
 width:300px;
 height:100%;
+position: absolute;
 }
 
 #main_left_region.hidehostview{
@@ -154,7 +155,6 @@ margin:0;
 padding:0;
 width:100%;
 height:320px;
-float:left;
 overflow-y: auto;
 overflow-x: hidden;
 padding-left:60px;
@@ -248,11 +248,12 @@ top:0px;
 #main_right_region {
 margin:0;
 padding:0;
-float:left;
 overflow: hidden;
 width:75%;
 height:100%;
 min-width:810px;
+position: absolute;
+left:300px;
 }
 /*--------------------------------------*/
 
@@ -481,6 +482,21 @@ cursor:pointer;
 background-position: -720px -235px;
 }
 
+#fileview .imgfilelistDiv {
+background-position: -800px -175px;
+cursor:pointer;
+}
+
+#fileview .audiofilelistDiv {
+background-position: -880px -175px;
+cursor:pointer;
+}
+
+#fileview .videofilelistDiv {
+background-position: -960px -175px;
+cursor:pointer;
+}
+
 .reg .ssettingDiv.sicon {
 background-position: -256px -5px;
 width:20px;
@@ -488,6 +504,20 @@ height:20px;
 float:right;
 padding:0px;
 cursor:pointer;
+}
+
+#fileview .nextDiv {
+float: left;
+width: 100%;
+height: 25px;
+text-align: center;
+background-color: #fff;
+cursor:pointer;
+}
+
+#fileview .nextDiv:hover {
+color:#fff;
+background-color:#0C5FB4;
 }
 
 #fileview .albumDiv {
@@ -826,7 +856,7 @@ font-size:14px;
 }
 /*--------------------------------------*/
 
-/* ¾ãÅé³]¸m*/ 
+/* ï¿½ï¿½ï¿½ï¿½]ï¿½m*/ 
 .navigation {
 margin:0; 
 padding:0;
@@ -867,7 +897,7 @@ _margin:0 2px 0 0;
 width:150px;
 }
  
-/* ³]¸m¿ï³æ°Ï¶ô*/
+/* ï¿½]ï¿½mï¿½ï¿½ï¿½Ï¶ï¿½*/
 .navigation li dl { 
 margin: 0;
 padding: 0;
@@ -887,7 +917,7 @@ background-position: -640px -134px;
 background-position: -800px -134px;
 }
 
-/* ³]¸m¥D¿ï³ædt */
+/* ï¿½]ï¿½mï¿½Dï¿½ï¿½ï¿½dt */
 .navigation li dt {
 background-position: -400px -134px;
 padding-top: 8px;
@@ -906,7 +936,7 @@ color:#fff;
 text-decoration:none;
 }
  
-/* ³]¸m¤l¿ï³ædd */
+/* ï¿½]ï¿½mï¿½lï¿½ï¿½ï¿½dd */
 .navigation li dd {
 margin: 0;
 color: white;
@@ -933,10 +963,10 @@ text-decoration:none;
 padding:4px 5px 4px 20px;
 }
  
-/*ÁôÂÃ¤l¿ï³æ*/
+/*ï¿½ï¿½ï¿½Ã¤lï¿½ï¿½ï¿½*/
 .navigation li dd { display:none;}
  
-/* ·Æ¹«·Æ¤JÅã¥Ü¤l¿ï³æ */
+/* ï¿½Æ¹ï¿½ï¿½Æ¤Jï¿½ï¿½Ü¤lï¿½ï¿½ï¿½ */
 .navigation li:hover dd, .navigation li a:hover dd { display:block;}
  
 /*ie6 hack*/
@@ -997,5 +1027,21 @@ width: 21px;
 }
 .a-inline-block{
 display: inline-block;
+}
+/*--------------------------------------*/
+#boxSearch {
+position: relative;
+float: right;
+right: 5px;
+}
+
+#boxSearch input {
+font-size: 13px;
+width: 120px;
+background: #E6E6E6 url('search.gif') no-repeat 3px 3px;
+padding: 3px 3px 3px 22px;
+margin-top: 8px;
+background-color: #fff;
+border: 1px solid #ddd;
 }
 /*--------------------------------------*/

@@ -3427,6 +3427,14 @@ propmatch_cleanup:
 		char* ddns_host_name = nvram_get_ddns_host_name();
 		char* disk_path = "/mnt/";
 		char* wan_ip = nvram_get_wan_ip();
+
+		//- Get aicloud version
+		#ifdef APP_IPKG
+		char* aicloud_version_file = "/opt/lib/ipkg/info/aicloud.control";
+		#else
+		char* aicloud_version_file = "/usr/css/control";
+		#endif
+		char aicloud_version[10]="\0";
 #else
 		char router_mac[20]="\0";
 		get_mac_address("eth0", &router_mac); 
@@ -3448,7 +3456,25 @@ propmatch_cleanup:
 		char* ddns_host_name = "";
 		char* disk_path = "/mnt/";
 		char* wan_ip = "192.168.1.10";
+
+		//- Get aicloud version
+		char* aicloud_version_file = "/usr/css/control";
+		char aicloud_version[10]="\0";
 #endif
+
+		//- Parser version file
+
+		FILE* fp2;
+		char line[128];
+		if((fp2 = fopen(aicloud_version_file, "r")) != NULL){
+			memset(line, 0, sizeof(line));
+			while(fgets(line, 128, fp2) != NULL){
+				if(strncmp(line, "Version:", 8)==0){
+					strncpy(aicloud_version, line + 9, strlen(line)-8);
+				}
+			}
+			fclose(fp2);
+		}
 
 		con->http_status = 200;
 		
@@ -3469,6 +3495,9 @@ propmatch_cleanup:
 		buffer_append_string(b,".");
 		buffer_append_string(b,build_no);
 		buffer_append_string_len(b,CONST_STR_LEN("</version>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<aicloud_version>"));
+		buffer_append_string(b,aicloud_version);
+		buffer_append_string_len(b,CONST_STR_LEN("</aicloud_version>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<modalname>"));
 		buffer_append_string(b,modal_name);
 		buffer_append_string_len(b,CONST_STR_LEN("</modalname>"));

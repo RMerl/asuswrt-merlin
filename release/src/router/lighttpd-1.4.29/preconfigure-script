@@ -10,24 +10,26 @@ sqlite_lib=$sqlite_dir/.libs
 user=`echo $HOME`								### /home/XXXXX
 echo $cur_dir
 
+PCRE_VER=8.31
+
 ####	Set compiler variable ####
-#export CFLAGS="-I$cur_dir/../pcre-8.12 -I$uclib_inc -I$cur_dir/../sqlite -I$router_dir/../include -I$router_dir/nvram -DHAVE_OPENSSL_SSL_H=1 -DHAVE_LIBSSL=1"
-export CFLAGS="-I$cur_dir/../pcre-8.12 -I$uclib_inc -I$cur_dir/../sqlite -I$router_dir/../include -I$router_dir/nvram -I$router_dir/shared -I$router_dir/libdisk -DHAVE_OPENSSL_SSL_H=1 -DHAVE_LIBSSL=1 -DEMBEDDED_EANBLE=1"
-export LIBS="-L$uclib -L$router_dir/shared -lshared -L$router_dir/nvram -lnvram -L$router_dir/libdisk -ldisk"
+#export CFLAGS="-I$cur_dir/../pcre-$PCRE_VER -I$uclib_inc -I$cur_dir/../sqlite -I$router_dir/../include -I$router_dir/nvram -DHAVE_OPENSSL_SSL_H=1 -DHAVE_LIBSSL=1"
+export CFLAGS="-I$cur_dir/../pcre-$PCRE_VER -I$uclib_inc -I$cur_dir/../sqlite -I$router_dir/../include -I$router_dir/nvram -I$router_dir/shared -I$router_dir/libdisk -DHAVE_OPENSSL_SSL_H=1 -DHAVE_LIBSSL=1 -DEMBEDDED_EANBLE=1"
+export LIBS="-L$uclib -L$router_dir/shared -lshared -L$router_dir/nvram -lnvram -L$router_dir/libdisk -ldisk -lpthread"
 #export LIBS="-lshared"
-export LDFLAGS="-L$uclib -ldl -L$cur_dir/../pcre-8.12/.libs -lpcre -L$cur_dir/../libxml2/.libs -lxml2 -L$router_dir/openssl"
+export LDFLAGS="-L$uclib -ldl -L$cur_dir/../pcre-$PCRE_VER/.libs -lpcre -L$cur_dir/../libxml2/.libs -lxml2 -L$router_dir/openssl"
 export XML_CFLAGS="-I$cur_dir/../libxml2/include"
 export XML_LIBS="-L$cur_dir/../libxml2/.libs -lxml2"
 export SQLITE_CFLAGS="-I$cur_dir/../sqlite"
 export SQLITE_LIBS="-L$cur_dir/../sqlite/.libs -lsqlite3"
-export PCRE_LIB="-L$cur_dir/../pcre-8.12/.libs -lpcre"
-export PCRECONFIG="$cur_dir/../pcre-8.12/pcre-config"
+export PCRE_LIB="-L$cur_dir/../pcre-$PCRE_VER/.libs -lpcre"
+export PCRECONFIG="$cur_dir/../pcre-$PCRE_VER/pcre-config"
 export SSL_LIB="-L$router_dir/openssl -lcrypto -lssl"
 #export SSL_LIB="-L$router_dir/openssl -lcrypto -lssl -L$router_dir/shared -lshared -L$router_dir/nvram -lnvram"
 #export SSL_LIB="-L$router_dir/shared -lshared"
 #export SHARED_LIBS="-L$router_dir/shared -lshared"
 $CONFIGURE --prefix=$cur_dir/_inst \
---with-pcre PCRECONFIG="$cur_dir/../pcre-8.12/pcre-config" \
+--with-pcre PCRECONFIG="$cur_dir/../pcre-$PCRE_VER/pcre-config" \
 --with-smbdav-props \
 --with-openssl=$router_dir/openssl \
 --with-openssl-includes=$router_dir/openssl/include/openssl \

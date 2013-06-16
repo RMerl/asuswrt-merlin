@@ -405,7 +405,7 @@ global.davlib = new function() {
     };
 
     this.DavClient.prototype.PROPFIND = function(path, auth, handler, 
-                                                 context, depth) {
+                                                 context, depth, mtype) {
         /* perform a PROPFIND request
 
             read the metadata of a resource (optionally including its children)
@@ -413,7 +413,7 @@ global.davlib = new function() {
             'depth' - control recursion depth, default 0 (only returning the
                     properties for the resource itself)
         */  
-           
+        
         var request = this._getRequest('PROPFIND', path, handler, context);
         depth = depth || 0;
         
@@ -423,6 +423,7 @@ global.davlib = new function() {
        	}
         
         request.setRequestHeader('Depth', depth);
+		request.setRequestHeader('Mtype', mtype);
         request.setRequestHeader('Content-type', 'text/xml; charset=UTF-8');
         // XXX maybe we want to change this to allow getting selected props
                 
@@ -556,11 +557,60 @@ global.davlib = new function() {
 			request.send('');
 		};
 		
-    // XXX not sure about the order of the args here
-    this.DavClient.prototype.PROPPATCH = function(path, handler, context, 
+		this.DavClient.prototype.PROPFINDMEDIALIST = function(path, handler, context, media_type, start, end, keyword, orderby, orderrule) {
+			/* perform a PROPFINDMEDIALIST request
+			*/
+			
+			var request = this._getRequest('PROPFINDMEDIALIST', path, handler, context);
+			request.setRequestHeader('Content-type', 'text/xml; charset=UTF-8');
+			
+			if(media_type){
+				request.setRequestHeader("MediaType", media_type);
+			};
+			
+			if(start) {
+				request.setRequestHeader("Start", start);
+			};
+												  
+			if (end) {
+				request.setRequestHeader("End", end);
+			};
+			
+			if (keyword) {
+				request.setRequestHeader("Keyword", keyword);
+			};
+			
+			if (orderby) {
+				request.setRequestHeader("Orderby", orderby);
+			};
+			
+			if (orderrule) {
+				request.setRequestHeader("Orderrule", orderrule);
+			};
+			/*
+			var xml = '<?xml version="1.0" encoding="UTF-8" ?>' +
+                  '<D:propfind xmlns:D="DAV:">' +
+                  '<D:allprop />' +
+                  '</D:propfind>';
+			*/
+			var xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>' +
+					  '<D:propfind xmlns:D="DAV:">' +
+					  '<D:prop>' +
+ 					  '<D:getlastmodified/>' +
+					  '<D:getcontentlength/>' +
+					  '<D:getcontenttype/>' +
+					  '<D:getmatadata/>' +						
+					  '</D:prop>' +
+					  '</D:propfind>';
+									  
+			request.send(xml);
+		};
+			
+    	// XXX not sure about the order of the args here
+    	this.DavClient.prototype.PROPPATCH = function(path, handler, context, 
                                                   setprops, delprops,
                                                   locktoken) {
-        /* perform a PROPPATCH request
+        	/* perform a PROPPATCH request
 
             set the metadata of a (single) resource
 
@@ -568,15 +618,15 @@ global.davlib = new function() {
                     variables to set
             'delprops' - a mapping {<namespace>: [<key>]} of variables
                     to delete
-        */
-        var request = this._getRequest('PROPPATCH', path, handler, context);
-        request.setRequestHeader('Content-type', 'text/xml; charset=UTF-8');
-        if (locktoken) {
-            request.setRequestHeader('If', '<' + locktoken + '>');
-        };
-        var xml = this._getProppatchXml(setprops, delprops);
-        request.send(xml);
-    };
+        	*/
+			var request = this._getRequest('PROPPATCH', path, handler, context);
+			request.setRequestHeader('Content-type', 'text/xml; charset=UTF-8');
+			if (locktoken) {
+				request.setRequestHeader('If', '<' + locktoken + '>');
+			};
+			var xml = this._getProppatchXml(setprops, delprops);
+			request.send(xml);
+		};
 
     this.DavClient.prototype.LOCK = function(path, owner, handler, context, 
                                              scope, type, depth, timeout,

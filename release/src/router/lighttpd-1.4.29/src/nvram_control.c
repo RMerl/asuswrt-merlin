@@ -78,7 +78,9 @@ char *nvram_get(char *name)
 #if 1
     if(strcmp(name,"webdav_aidisk")==0 ||strcmp(name,"webdav_proxy")==0||strcmp(name,"webdav_smb_pc")==0
        ||strcmp(name,"share_link")==0||strcmp(name,"webdav_acc_lock")==0
-       ||strcmp(name,"webdav_last_login_info")==0)
+       ||strcmp(name,"webdav_last_login_info")==0||strcmp(name,"enable_webdav_lock")==0
+       ||strcmp(name,"http_passwd")==0||strcmp(name,"webdav_lock_times")==0||strcmp(name,"webdav_lock_interval")==0
+       ||strcmp(name,"ddns_hostname_x")==0||strcmp(name,"ddns_enable_x")==0||strcmp(name,"ddns_server_x")==0)
     {
         char tmp_name[256]="/opt/etc/asus_script/aicloud_nvram_check.sh";
         //char tmp_name[256]="/tmp/aicloud_nvram_check.sh";
@@ -125,7 +127,9 @@ char *nvram_safe_get(char *name)
 #if 1
     if(strcmp(name,"webdav_aidisk")==0 ||strcmp(name,"webdav_proxy")==0||strcmp(name,"webdav_smb_pc")==0
        ||strcmp(name,"share_link")==0||strcmp(name,"webdav_acc_lock")==0
-       ||strcmp(name,"webdav_last_login_info")==0)
+       ||strcmp(name,"webdav_last_login_info")==0||strcmp(name,"enable_webdav_lock")==0
+       ||strcmp(name,"http_passwd")==0||strcmp(name,"webdav_lock_times")==0||strcmp(name,"webdav_lock_interval")==0
+       ||strcmp(name,"ddns_hostname_x")==0||strcmp(name,"ddns_enable_x")==0||strcmp(name,"ddns_server_x")==0)
     {
         char tmp_name[256]="/opt/etc/asus_script/aicloud_nvram_check.sh";
         //char tmp_name[256]="/tmp/aicloud_nvram_check.sh";

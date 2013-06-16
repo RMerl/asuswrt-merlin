@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1, user-scalable=no" />
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <link rel="apple-touch-icon" href="/smb/css/appicon.png">
 <link rel="apple-touch-startup-image" href="/smb/css/startup.png">
 <title>AiCloud</title>
@@ -97,8 +98,9 @@ $("document").ready(function() {
 	}
 	
 	var browserVer = navigator.userAgent.toLowerCase();
+	
 	if( browserVer.indexOf("msie") != -1 && 
-			getInternetExplorerVersion() <= 7 ){
+		getInternetExplorerVersion() <= 7 ){
 		
 		$("table#table_login").remove();
 		
@@ -189,8 +191,7 @@ function adjustUI(){
 
 function getInternetExplorerVersion(){
    var rv = -1; // Return value assumes failure.
-   if (navigator.appName == 'Microsoft Internet Explorer')
-   {
+   if (navigator.appName == 'Microsoft Internet Explorer'){
       var ua = navigator.userAgent;
       var re  = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
       if (re.exec(ua) != null)
