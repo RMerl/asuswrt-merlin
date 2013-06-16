@@ -711,7 +711,7 @@ extern int stop_wpsfix(void);
 #ifdef RTCONFIG_DNSMASQ
 extern void stop_dnsmasq(int force);
 #endif
-extern void firmware_check_main(int argc, char *argv[]);
+extern int firmware_check_main(int argc, char *argv[]);
 
 
 

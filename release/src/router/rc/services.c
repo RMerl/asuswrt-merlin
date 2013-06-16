@@ -4486,12 +4486,12 @@ stop_acsd(void)
 }
 #endif
 
-void
+int
 firmware_check_main(int argc, char *argv[])
 {
 	int ret = 0;
 	if(argc!=2) 
-		return;
+		return 0;
 	
 	_dprintf("FW: %s\n", argv[1]);
 
@@ -4503,7 +4503,7 @@ firmware_check_main(int argc, char *argv[])
 		_dprintf("FW Fail\n");
 		nvram_set("firmware_check", "0");
 	}
-	return;
+	return 0;
 }
 
 int service_main(int argc, char *argv[])
