@@ -58,6 +58,8 @@ void write_upnp_filter(FILE *fp, char *wan_if);
 void redirect_setting();
 #endif
 
+void ipt_account(FILE *fp);
+
 struct datetime{
 	char start[6];		// start time
 	char stop[6];		// stop time
@@ -3990,6 +3992,7 @@ del_samba_rules(void)
 		"--dport", "445", "-j", "ACCEPT");
 }
 
+void
 add_samba_rules(void)
 {
 	char ifname[IFNAMSIZ];
