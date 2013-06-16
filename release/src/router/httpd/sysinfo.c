@@ -46,7 +46,7 @@
 #include <wlutils.h>
 #include <sys/sysinfo.h>
 #include <sys/statvfs.h>
-
+#include <linux/version.h>
 
 #ifdef RTCONFIG_USB
 #include <disk_io_tools.h>
@@ -92,9 +92,27 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			char *buffer = read_whole_file("/proc/cpuinfo");
 
 			if (buffer) {
-				tmp = strstr(buffer, "system type");
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,36)
+				int count = 0;
+				char model[64];
+
+				tmp = strstr(buffer, "Processor");
 				if (tmp)
-					sscanf(tmp, "system type  :  %[^\n]", result);
+					sscanf(tmp, "Processor  :  %[^\n]", model);
+
+				while ( (tmp = strstr(tmp,"processor")) != NULL ) {
+					tmp++;
+					count++;
+				}
+				if (count > 1)
+					sprintf(result, "%s&nbsp;&nbsp;-&nbsp;&nbsp;(Cores: %d)", model, count);
+				else
+					strcpy(result, model);
+#else
+                                tmp = strstr(buffer, "system type");
+                                if (tmp)
+                                        sscanf(tmp, "system type  :  %[^\n]", result);
+#endif
 				free(buffer);
 			}
 
