@@ -2376,7 +2376,7 @@ static void sysinit(void)
 	MOUNT("sysfs", "/sys", "sysfs", MS_MGC_VAL, NULL);
 	MKDIR("/dev/shm", 0777);
 	MKDIR("/dev/pts", 0777);
-	mount("devpts", "/dev/pts", "devpts", MS_MGC_VAL, NULL);
+	MOUNT("devpts", "/dev/pts", "devpts", MS_MGC_VAL, NULL);
 #endif
 
 	init_devs(); // for system dependent part
