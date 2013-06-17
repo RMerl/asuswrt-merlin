@@ -126,7 +126,12 @@ function show_etherstate(){
 	var state, state2;
 	var hostname, devicename, overlib_str, port;
 	var tmpPort;
-	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th style="width:15%;">Port</th><th style="width:15%;">VLAN</th><th style="width:25%;">Link State</th><th style="width:45%;">Last Device Seen</th></tr>';
+	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th style="width:15%;">Port</th><th style="width:15%;">VLAN</th><th style="width:25%;">Link State</th>';
+	if (productid != "RT-AC56U")
+		code += '<th style="width:45%;">Last Device Seen</th></tr>';
+	else
+		code += '</tr>'
+
 	var code_ports = "";
 	var entry;
 
@@ -142,37 +147,48 @@ function show_etherstate(){
 				state2 = state.replace("HD"," Half Duplex");
 			}
 
-			hostname = "";
+			if (productid != "RT-AC56U") {
+				hostname = "";
 
-			if (line[11] == "00:00:00:00:00:00") {
-				devicename = '<span class="ClientName">&lt;none&gt;</span>';
-			} else {
-				overlib_str = "<p><#MAC_Address#>:</p>" + line[11];
-
-				// Walk down arp cache and retrieve from hostname cache
-				for (var j = 0; j < arplist.length; ++j) {
-					if (arplist[j][3] == line[11].toUpperCase()) {
-						hostname = hostnamecache[arplist[j][0]];
-						break;
-					}
-				}
-
-				if (hostname != "") {
-					devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ hostname +'</span>';
+				if (line[11] == "00:00:00:00:00:00") {
+					devicename = '<span class="ClientName">&lt;none&gt;</span>';
 				} else {
-					devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[11] +'</span>'; 
+					overlib_str = "<p><#MAC_Address#>:</p>" + line[11];
+
+					// Walk down arp cache and retrieve from hostname cache
+					for (var j = 0; j < arplist.length; ++j) {
+						if (arplist[j][3] == line[11].toUpperCase()) {
+							hostname = hostnamecache[arplist[j][0]];
+							break;
+						}
+					}
+
+					if (hostname != "") {
+						devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ hostname +'</span>';
+					} else {
+						devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[11] +'</span>'; 
+					}
 				}
 			}
 			tmpPort = line[1].replace(":","");
+
+			if (tmpPort == "8") {		// CPU Port
+				break;
+			} else if (productid == "RT-AC56U") {
+				tmpPort++;		// Port starts at 0
+				if (tmpPort == "5") tmpPort = 0;	// Last port is WAN
+			}                                                                                                                                                         
 			if (tmpPort == "0") {
 				port = "WAN";
-			} else if (tmpPort == "8") {
-				break;
 			} else {
 				if (productid == "RT-N16") tmpPort = 5 - tmpPort;
 				port = "LAN "+tmpPort;
 			}
-			entry = '<tr><td>' + port + '</td><td>' + (line[7] & 0xFFF) + '</td><td><span>' + state2 + '</span></td><td>'+ devicename +'</td></tr>';
+			entry = '<tr><td>' + port + '</td><td>' + (line[7] & 0xFFF) + '</td><td><span>' + state2 + '</span></td>';
+			if (productid != "RT-AC56U")
+				entry += '<td>'+ devicename +'</td></tr>';
+			else
+				entry += '</tr>';
 
 			if (productid == "RT-N16")
 				code_ports = entry + code_ports;
