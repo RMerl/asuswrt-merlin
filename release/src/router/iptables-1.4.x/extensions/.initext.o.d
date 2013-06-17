@@ -1,1 +1,0 @@
-initext.o: initext.c
