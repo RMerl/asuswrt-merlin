@@ -205,3 +205,6 @@ util/gen-tarball
 util/subst
 util/subst.conf
 Meta
+*.so.*
+*.so
+
