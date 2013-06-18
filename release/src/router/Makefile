@@ -925,10 +925,17 @@ busybox-config:
 	$(MAKE) -C busybox menuconfig
 
 e2fsprogs/Makefile: e2fsprogs/Makefile.in
+ifeq ($(RTCONFIG_BCMARM),y)
+	cd e2fsprogs && CFLAGS="-Os $(EXTRACFLAGS)" \
+	$(CONFIGURE) --prefix=/usr --sysconfdir=/etc --enable-elf-shlibs ac_cv_lib_pthread_sem_init=no \
+		--disable-tls --disable-rpath --disable-nls \
+		--disable-debugfs --disable-imager --disable-resizer --disable-defrag --disable-uuidd
+else
 	cd e2fsprogs && CFLAGS="-Os $(EXTRACFLAGS)" \
 	$(CONFIGURE) --prefix=/usr --sysconfdir=/etc --enable-elf-shlibs \
-		--disable-rpath --disable-nls \
-		--disable-debugfs --disable-imager --disable-resizer --disable-uuidd --disable-defrag
+		--disable-tls --disable-rpath --disable-nls \
+		--disable-debugfs --disable-imager --disable-resizer --disable-defrag --disable-uuidd
+endif
 
 e2fsprogs: e2fsprogs/Makefile
 	$(MAKE) -C $@ $(PARALLEL_BUILD)
