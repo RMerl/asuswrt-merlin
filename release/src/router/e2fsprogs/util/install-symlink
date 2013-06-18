@@ -1,0 +1,89 @@
+#!/bin/sh
+#
+# install-symlink source destination destdir
+#
+
+SYMLINKS=symlinks
+LN_S="ln -s"
+RM="/bin/rm"
+FORCE_RELATIVE=NO
+FORCE_ABSOLUTE=NO
+
+while echo $1 | grep -q -- ^- ;
+do
+	case $1 in
+		--relative)
+			FORCE_RELATIVE=YES
+			;;
+		--absolute)
+			FORCE_ABSOLUTE=YES
+			;;
+		--debian)
+			FORCE_ABSOLUTE=NO
+			FORCE_RELATIVE=NO
+			;;
+		--symlinks=*)
+			SYMLINKS=$(echo $1 | sed -e 's/--symlinks=//')
+			;;
+		*)
+			echo "Unknown option $1"
+			exit 1
+			;;
+	esac					     
+	shift;
+done
+
+
+FIX_SYMLINK="$SYMLINKS -c"
+
+SRC="$1"
+DEST="$2"
+DESTDIR="$3"
+
+if ! echo $SRC | grep -q ^/ ; then
+	echo $SRC: Source pathname must be absolute
+	exit 1
+fi
+
+if ! echo $DEST | grep -q ^/ ; then
+	echo $DEST: Destination pathname must be absolute
+	exit 1
+fi
+
+if ! test -e "$DESTDIR$SRC" ; then
+	echo $DESTDIR$SRC: file or directory does not exist
+	exit 1
+fi
+
+$RM -f "$DESTDIR$DEST"
+
+if test "$LN_S" != "ln -s" ; then
+	$LN_S "$DESTDIR$SRC" "$DESTDIR$DEST"
+	exit 0
+fi
+
+if test $(dirname "$SRC") = $(dirname "$DEST") ; then
+	$LN_S "$(basename "$SRC")" "$DESTDIR$DEST"
+	exit 0
+fi
+
+TOP_SRC=$(echo $SRC | awk -F/ '{print $2}')
+TOP_DEST=$(echo $DEST | awk -F/ '{print $2}')
+
+if test $FORCE_RELATIVE = YES ; then
+	TOP_SRC=FORCE
+	TOP_DEST=FORCE
+fi
+
+if test $FORCE_ABSOLUTE = YES ; then
+	TOP_SRC=FORCE
+	TOP_DEST=FORCE_ABSOLUTE
+fi
+
+if test $TOP_SRC != $TOP_DEST ; then
+	$LN_S "$SRC" "$DESTDIR$DEST"
+else
+	$LN_S "$DESTDIR$SRC" "$DESTDIR$DEST"
+	$FIX_SYMLINK "$DESTDIR$DEST"
+fi
+

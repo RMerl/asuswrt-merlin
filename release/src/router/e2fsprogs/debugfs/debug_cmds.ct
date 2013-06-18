@@ -13,6 +13,9 @@ request do_open_filesys, "Open a filesystem",
 request do_close_filesys, "Close the filesystem",
 	close_filesys, close;
 
+request do_freefrag, "Report free space fragmentation",
+	freefrag, e2freefrag;
+
 request do_features, "Set/print superblock features",
 	feature, features;
 
@@ -45,6 +48,12 @@ request do_stat, "Show inode information ",
 
 request do_dump_extents, "Dump extents information ",
 	dump_extents, extents, ex;
+
+request do_blocks, "Dump blocks used by an inode ",
+	blocks;
+
+request do_filefrag, "Report fragmentation information for an inode",
+	filefrag;
 
 request do_link, "Create directory link",
 	link, ln;
@@ -148,17 +157,38 @@ request do_dirsearch, "Search a directory for a particular filename",
 request do_bmap, "Calculate the logical->physical block mapping for an inode",
 	bmap;
 
+request do_punch, "Punch (or truncate) blocks from an inode by deallocating them",
+	punch, truncate;
+
+request do_symlink, "Create a symbolic link",
+	symlink;
+
 request do_imap, "Calculate the location of an inode",
 	imap;
 
 request	do_dump_unused, "Dump unused blocks",
 	dump_unused;
 
-request do_set_current_time, "Set current time to use when setting filesystme fields",
+request do_set_current_time, "Set current time to use when setting filesystem fields",
 	set_current_time;
 
 request do_supported_features, "Print features supported by this version of e2fsprogs",
 	supported_features;
+
+request do_dump_mmp, "Dump MMP information",
+	dump_mmp;
+
+request do_set_mmp_value, "Set MMP value",
+	set_mmp_value, smmp;
+
+request do_extent_open, "Open inode for extent manipulation",
+	extent_open, eo;
+
+request do_zap_block, "Zap block: fill with 0, pattern, flip bits etc.",
+	zap_block, zap;
+
+request do_block_dump, "Dump contents of a block",
+	block_dump, bd;
 
 end;
 

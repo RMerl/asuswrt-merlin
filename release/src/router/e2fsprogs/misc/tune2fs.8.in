@@ -77,6 +77,10 @@ tune2fs \- adjust tunable filesystem parameters on ext2/ext3/ext4 filesystems
 .RI [^] feature [,...]
 ]
 [
+.B \-Q
+.I quota-options
+]
+[
 .B \-T
 .I time-last-checked
 ]
@@ -99,8 +103,8 @@ program.
 .PP
 The
 .I device
-specifer can either be a filename (i.e., /dev/sda1), or a LABEL or UUID
-specifer: "\fBLABEL=\fIvolume-name\fR" or "\fBUUID=\fIuuid\fR".  (i.e.,
+specifier can either be a filename (i.e., /dev/sda1), or a LABEL or UUID
+specifier: "\fBLABEL=\fIvolume-name\fR" or "\fBUUID=\fIuuid\fR".  (i.e.,
 LABEL=home or UUID=e40486c6-84d5-4f2f-b99c-032281799c9d).
 .SH OPTIONS
 .TP
@@ -166,6 +170,21 @@ Set extended options for the filesystem.  Extended options are comma
 separated, and may take an argument using the equals ('=') sign.
 The following extended options are supported:
 .RS 1.2i
+.TP
+.B clear_mmp
+Reset the MMP block (if any) back to the clean state.  Use only if
+absolutely certain the device is not currently mounted or being
+fscked, or major filesystem corruption can result.  Needs '-f'.
+.TP
+.BI mmp_update_interval= interval
+Adjust the initial MMP update interval to
+.I interval
+seconds.  Specifying an
+.I interval
+of 0 means to use the default interval.  The specified interval must
+be less than 300 seconds.  Requires that the
+.B mmp
+feature be enabled.
 .TP
 .BI stride= stride-size
 Configure the filesystem for a RAID array with
@@ -413,8 +432,8 @@ The following mount options can be set or cleared using
 Enable debugging code for this filesystem.
 .TP
 .B bsdgroups
-Emulate BSD behaviour when creating new files: they will take the group-id
-of the directory in which they were created.  The standard System V behaviour
+Emulate BSD behavior when creating new files: they will take the group-id
+of the directory in which they were created.  The standard System V behavior
 is the default, where newly created files take on the fsgid of the current
 process, unless the directory has the setgid bit set, in which case it takes 
 the gid from the parent directory, and also gets the setgid bit set if it is 
@@ -462,7 +481,7 @@ currently only supported by the ext4 file system driver in 2.6.35+
 kernels.)
 .TP
 .B discard
-The file system will be mouinted with the discard mount option.  This will
+The file system will be mounted with the discard mount option.  This will
 cause the file system driver to attempt to use the trim/discard feature
 of some storage devices (such as SSD's and thin-provisioned drives
 available in some enterprise storage arrays) to inform the storage
@@ -491,6 +510,9 @@ The following filesystem features can be set or cleared using
 .B dir_index
 Use hashed b-trees to speed up lookups in large directories.
 .TP
+.B dir_nlink
+Allow more than 65000 subdirectories per directory.
+.TP
 .B filetype
 Store file type information in directory entries.
 .TP
@@ -499,7 +521,7 @@ Allow bitmaps and inode tables for a block group to be placed
 anywhere on the storage media.  \fBTune2fs\fR will not reorganize
 the location of the inode tables and allocation bitmaps, as
 .BR mke2fs (8)
-will do when it creates a freshly formated file system with
+will do when it creates a freshly formatted file system with
 .B flex_bg
 enabled.
 .TP
@@ -518,6 +540,11 @@ Reserve space so the block group descriptor table may grow in the
 future.
 .B Tune2fs 
 only supports clearing this filesystem feature.
+.TP
+.B mmp
+Enable or disable multiple mount protection (MMP) feature.  MMP helps to
+protect the filesystem from being multiply mounted and is useful in
+shared storage environments.
 .TP
 .B sparse_super
 Limit the number of backup superblocks to save space on large filesystems.
@@ -555,8 +582,23 @@ and
 .BR flex_bg
 features are only supported by the ext4 filesystem.
 .TP
+.BI \-p " mmp_check_interval"
+Set the desired MMP check interval in seconds. It is 5 seconds by default.
+.TP
 .BI \-r " reserved-blocks-count"
 Set the number of reserved filesystem blocks.
+.TP
+.BI \-Q " quota-options"
+Sets 'quota' feature on the superblock and works on the quota files for the
+given quota type. Quota options could be one or more of the following:
+.RS 1.2i
+.TP
+.BR [^]usrquota
+Sets/clears user quota inode in the superblock.
+.TP
+.BR [^]grpquota
+Sets/clears group quota inode in the superblock.
+.RE
 .TP
 .BI \-T " time-last-checked"
 Set the time the filesystem was last checked using

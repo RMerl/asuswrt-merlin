@@ -36,7 +36,7 @@ ELF_SO_VERSION = 1
 ELF_IMAGE = libblkid
 ELF_MYDIR = blkid
 ELF_INSTALL_DIR = $(root_libdir)
-ELF_OTHER_LIBS = -L../.. -luuid
+ELF_OTHER_LIBS = -luuid
 
 BSDLIB_VERSION = 2.0
 BSDLIB_IMAGE = libblkid
@@ -195,15 +195,28 @@ $(OBJS): subdirs $(HFILES_IN)
 # Makefile dependencies follow.  This must be the last section in
 # the Makefile.in file
 #
-cache.o: $(srcdir)/cache.c $(srcdir)/list.h
-dev.o: $(srcdir)/dev.c $(srcdir)/list.h
-devname.o: $(srcdir)/devname.c $(srcdir)/list.h
-devno.o: $(srcdir)/devno.c $(srcdir)/list.h
-getsize.o: $(srcdir)/getsize.c $(srcdir)/list.h
-llseek.o: $(srcdir)/llseek.c $(srcdir)/list.h
-probe.o: $(srcdir)/probe.c $(srcdir)/list.h $(srcdir)/probe.h
-read.o: $(srcdir)/read.c $(srcdir)/list.h
-resolve.o: $(srcdir)/resolve.c $(srcdir)/list.h
-save.o: $(srcdir)/save.c $(srcdir)/list.h
-tag.o: $(srcdir)/tag.c $(srcdir)/list.h
-version.o: $(srcdir)/version.c $(top_srcdir)/version.h
+cache.o: $(srcdir)/cache.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/blkidP.h $(srcdir)/list.h
+dev.o: $(srcdir)/dev.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/blkidP.h $(srcdir)/list.h
+devname.o: $(srcdir)/devname.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/blkidP.h $(srcdir)/list.h
+devno.o: $(srcdir)/devno.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/blkidP.h $(srcdir)/list.h
+getsize.o: $(srcdir)/getsize.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/blkidP.h $(srcdir)/list.h
+llseek.o: $(srcdir)/llseek.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/blkidP.h $(srcdir)/list.h
+probe.o: $(srcdir)/probe.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/blkidP.h $(srcdir)/list.h \
+ $(srcdir)/probe.h
+read.o: $(srcdir)/read.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/blkidP.h $(srcdir)/list.h
+resolve.o: $(srcdir)/resolve.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/blkidP.h $(srcdir)/list.h
+save.o: $(srcdir)/save.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/blkidP.h $(srcdir)/list.h
+tag.o: $(srcdir)/tag.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/blkidP.h $(srcdir)/list.h
+version.o: $(srcdir)/version.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/version.h

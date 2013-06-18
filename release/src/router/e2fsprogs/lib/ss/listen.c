@@ -16,6 +16,7 @@
  * express or implied warranty.
  */
 
+#include "config.h"
 #include "ss_internal.h"
 #include <stdio.h>
 #include <setjmp.h>

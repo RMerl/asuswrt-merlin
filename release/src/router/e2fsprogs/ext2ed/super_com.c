@@ -14,6 +14,7 @@ Copyright (C) 1995 Gadi Oxman
 
 */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,9 +30,9 @@ void type_ext2_super_block___show (char *command_line)
 
 	show (command_line);
 
-	if (super->s_blocks_count != 0) {
-		wmove (show_pad,2,40);wprintw (show_pad,"%2.2f%%",100*(float) super->s_r_blocks_count/ (float) super->s_blocks_count);
-		wmove (show_pad,3,40);wprintw (show_pad,"%2.2f%%",100*(float) super->s_free_blocks_count/ (float) super->s_blocks_count);
+	if (ext2fs_blocks_count(super) != 0) {
+		wmove (show_pad,2,40);wprintw (show_pad,"%2.2f%%",100*(float) ext2fs_r_blocks_count(super)/ (float) ext2fs_blocks_count(super));
+		wmove (show_pad,3,40);wprintw (show_pad,"%2.2f%%",100*(float) ext2fs_free_blocks_count(super)/ (float) ext2fs_blocks_count(super));
 	}
 
 	if (super->s_inodes_count != 0) {

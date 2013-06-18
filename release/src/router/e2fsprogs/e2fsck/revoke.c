@@ -58,6 +58,7 @@
  */
 
 #ifndef __KERNEL__
+#include "config.h"
 #include "jfs_user.h"
 #else
 #include <linux/sched.h>

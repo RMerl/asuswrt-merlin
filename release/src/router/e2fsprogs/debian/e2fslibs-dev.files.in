@@ -1,0 +1,9 @@
+usr/lib/*/libext2fs*.so
+usr/lib/*/libext2fs*.a
+usr/lib/*/libe2p*.so
+usr/lib/*/libe2p*.a
+usr/include/ext2fs
+usr/include/e2p
+usr/share/info/libext2fs.info*
+usr/lib/*/pkgconfig/e2p.pc
+usr/lib/*/pkgconfig/ext2fs.pc

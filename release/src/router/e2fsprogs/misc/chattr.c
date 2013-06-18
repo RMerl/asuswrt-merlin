@@ -20,6 +20,7 @@
 
 #define _LARGEFILE64_SOURCE
 
+#include "config.h"
 #include <sys/types.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -82,7 +83,7 @@ static unsigned long sf;
 static void usage(void)
 {
 	fprintf(stderr,
-		_("Usage: %s [-RVf] [-+=AacDdeijsSu] [-v version] files...\n"),
+		_("Usage: %s [-RVf] [-+=AaCcDdeijsSu] [-v version] files...\n"),
 		program_name);
 	exit(1);
 }
@@ -106,6 +107,7 @@ static const struct flags_char flags_array[] = {
 	{ EXT2_UNRM_FL, 'u' },
 	{ EXT2_NOTAIL_FL, 't' },
 	{ EXT2_TOPDIR_FL, 'T' },
+	{ FS_NOCOW_FL, 'C' },
 	{ 0, 0 }
 };
 
@@ -300,6 +302,7 @@ int main (int argc, char ** argv)
 	setlocale(LC_CTYPE, "");
 	bindtextdomain(NLS_CAT_NAME, LOCALEDIR);
 	textdomain(NLS_CAT_NAME);
+	set_com_err_gettext(gettext);
 #endif
 	if (argc && *argv)
 		program_name = *argv;

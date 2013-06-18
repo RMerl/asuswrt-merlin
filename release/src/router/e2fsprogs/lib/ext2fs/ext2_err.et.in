@@ -120,7 +120,7 @@ ec	EXT2_ET_SHORT_READ,
 	"Attempt to read block from filesystem resulted in short read"
 
 ec	EXT2_ET_SHORT_WRITE,
-	"Attempt to write block from filesystem resulted in short write"
+	"Attempt to write block to filesystem resulted in short write"
 
 ec	EXT2_ET_DIR_NO_SPACE,
 	"No free space in the directory"
@@ -294,7 +294,7 @@ ec	EXT2_ET_RESIZE_INODE_CORRUPT,
 	"Resize inode is corrupt"
 
 ec	EXT2_ET_SET_BMAP_NO_IND,
-	"Missing indirect block not present"
+	"Tried to set block bmap with missing indirect block"
 
 ec	EXT2_ET_TDB_SUCCESS,
 	"TDB: Success"
@@ -335,14 +335,14 @@ ec	EXT2_ET_RO_BLOCK_ITERATE,
 ec	EXT2_ET_MAGIC_EXTENT_PATH,
 	"Wrong magic number for ext4 extent saved path"
 
-ec	EXT2_ET_MAGIC_RESERVED_10,
-	"Wrong magic number --- RESERVED_10"
+ec	EXT2_ET_MAGIC_GENERIC_BITMAP64,
+	"Wrong magic number for 64-bit generic bitmap"
 
-ec	EXT2_ET_MAGIC_RESERVED_11,
-	"Wrong magic number --- RESERVED_11"
+ec	EXT2_ET_MAGIC_BLOCK_BITMAP64,
+	"Wrong magic number for 64-bit block bitmap"
 
-ec	EXT2_ET_MAGIC_RESERVED_12,
-	"Wrong magic number --- RESERVED_12"
+ec	EXT2_ET_MAGIC_INODE_BITMAP64,
+	"Wrong magic number for 64-bit inode bitmap"
 
 ec	EXT2_ET_MAGIC_RESERVED_13,
 	"Wrong magic number --- RESERVED_13"
@@ -418,5 +418,62 @@ ec	EXT2_ET_IO_CHANNEL_NO_SUPPORT_64,
 
 ec	EXT2_NO_MTAB_FILE,
 	"Can't check if filesystem is mounted due to missing mtab file"
+
+ec	EXT2_ET_CANT_USE_LEGACY_BITMAPS,
+	"Filesystem too large to use legacy bitmaps"
+
+ec	EXT2_ET_MMP_MAGIC_INVALID,
+	"MMP: invalid magic number"
+
+ec	EXT2_ET_MMP_FAILED,
+	"MMP: device currently active"
+
+ec	EXT2_ET_MMP_FSCK_ON,
+	"MMP: fsck being run"
+
+ec	EXT2_ET_MMP_BAD_BLOCK,
+	"MMP: block number beyond filesystem range"
+
+ec	EXT2_ET_MMP_UNKNOWN_SEQ,
+	"MMP: undergoing an unknown operation"
+
+ec	EXT2_ET_MMP_CHANGE_ABORT,
+	"MMP: filesystem still in use"
+
+ec	EXT2_ET_MMP_OPEN_DIRECT,
+	"MMP: open with O_DIRECT failed"
+
+ec	EXT2_ET_BAD_DESC_SIZE,
+	"Block group descriptor size incorrect"
+
+ec	EXT2_ET_INODE_CSUM_INVALID,
+	"Inode checksum does not match inode"
+
+ec	EXT2_ET_INODE_BITMAP_CSUM_INVALID,
+	"Inode bitmap checksum does not match bitmap"
+
+ec	EXT2_ET_EXTENT_CSUM_INVALID,
+	"Extent block checksum does not match extent block"
+
+ec	EXT2_ET_DIR_NO_SPACE_FOR_CSUM,
+	"Directory block does not have space for checksum"
+
+ec	EXT2_ET_DIR_CSUM_INVALID,
+	"Directory block checksum does not match directory block"
+
+ec	EXT2_ET_EXT_ATTR_CSUM_INVALID,
+	"Extended attribute block checksum does not match block"
+
+ec	EXT2_ET_SB_CSUM_INVALID,
+	"Superblock checksum does not match superblock"
+
+ec	EXT2_ET_UNKNOWN_CSUM,
+	"Unknown checksum algorithm"
+
+ec	EXT2_ET_MMP_CSUM_INVALID,
+	"MMP block checksum does not match MMP block"
+
+ec	EXT2_ET_FILE_EXISTS,
+	"Ext2 file already exists"
 
 	end

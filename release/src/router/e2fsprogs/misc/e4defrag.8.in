@@ -1,0 +1,80 @@
+.TH E4DEFRAG 8 "May 2009" "e4defrag version 2.0"
+.SH NAME
+e4defrag \- online defragmenter for ext4 filesystem
+.SH SYNOPSIS
+.B e4defrag
+[
+.B \-c
+]
+[
+.B \-v
+]
+.I target
+\&...
+.SH DESCRIPTION
+.B e4defrag
+reduces fragmentation of extent based file. The file targeted by
+.B e4defrag
+is created on ext4 filesystem made with "-O extent" option (see
+.BR mke2fs (8)).
+The targeted file gets more contiguous blocks and improves the file access
+speed.
+.PP
+.I target
+is a regular file, a directory, or a device that is mounted as ext4 filesystem.
+If
+.I target
+is a directory,
+.B e4defrag
+reduces fragmentation of all files in it. If
+.I target
+is a device,
+.B e4defrag
+gets the mount point of it and reduces fragmentation of all files in this mount
+point.
+.SH OPTIONS
+.TP
+.B \-c
+Get a current fragmentation count and an ideal fragmentation count, and
+calculate fragmentation score based on them. By seeing this score, we can
+determine whether we should execute
+.B e4defrag
+to
+.IR target .
+When used with
+.B \-v
+option, the current fragmentation count and the ideal fragmentation count are
+printed for each file.
+.IP
+Also this option outputs the average data size in one extent. If you see it,
+you'll find the file has ideal extents or not. Note that the maximum extent
+size is 131072KB in ext4 filesystem (if block size is 4KB).
+.IP
+If this option is specified,
+.I target
+is never defragmented.
+.TP
+.B \-v
+Print error messages and the fragmentation count before and after defrag for
+each file.
+.SH NOTES
+.B e4defrag
+does not support swap file, files in lost+found directory, and files allocated
+in indirect blocks. When
+.I target
+is a device or a mount point,
+.B e4defrag
+doesn't defragment files in mount point of other device.
+.PP
+Non-privileged users can execute
+.B e4defrag
+to their own file, but the score is not printed if
+.B \-c
+option is specified. Therefore, it is desirable to be executed by root user.
+.SH AUTHOR
+Written by Akira Fujita <a-fujita@rs.jp.nec.com> and Takashi Sato
+<t-sato@yk.jp.nec.com>.
+.SH SEE ALSO
+.BR mke2fs (8),
+.BR mount (8).
+

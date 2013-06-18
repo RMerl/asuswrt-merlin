@@ -26,6 +26,7 @@
 #define EXT2FS_ATTR(x)
 #endif
 
+#include "config.h"
 #include <stdlib.h>
 #include <stddef.h>
 #include <assert.h>

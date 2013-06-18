@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -31,9 +32,9 @@ void ext2fs_swap_super(struct ext2_super_block * sb)
 	sb->s_free_inodes_count = ext2fs_swab32(sb->s_free_inodes_count);
 	sb->s_first_data_block = ext2fs_swab32(sb->s_first_data_block);
 	sb->s_log_block_size = ext2fs_swab32(sb->s_log_block_size);
-	sb->s_log_frag_size = ext2fs_swab32(sb->s_log_frag_size);
+	sb->s_log_cluster_size = ext2fs_swab32(sb->s_log_cluster_size);
 	sb->s_blocks_per_group = ext2fs_swab32(sb->s_blocks_per_group);
-	sb->s_frags_per_group = ext2fs_swab32(sb->s_frags_per_group);
+	sb->s_clusters_per_group = ext2fs_swab32(sb->s_clusters_per_group);
 	sb->s_inodes_per_group = ext2fs_swab32(sb->s_inodes_per_group);
 	sb->s_mtime = ext2fs_swab32(sb->s_mtime);
 	sb->s_wtime = ext2fs_swab32(sb->s_wtime);
@@ -70,32 +71,39 @@ void ext2fs_swap_super(struct ext2_super_block * sb)
 	sb->s_min_extra_isize = ext2fs_swab16(sb->s_min_extra_isize);
 	sb->s_want_extra_isize = ext2fs_swab16(sb->s_want_extra_isize);
 	sb->s_flags = ext2fs_swab32(sb->s_flags);
+	sb->s_mmp_update_interval = ext2fs_swab16(sb->s_mmp_update_interval);
+	sb->s_mmp_block = ext2fs_swab64(sb->s_mmp_block);
 	sb->s_kbytes_written = ext2fs_swab64(sb->s_kbytes_written);
 	sb->s_snapshot_inum = ext2fs_swab32(sb->s_snapshot_inum);
 	sb->s_snapshot_id = ext2fs_swab32(sb->s_snapshot_id);
 	sb->s_snapshot_r_blocks_count =
 		ext2fs_swab64(sb->s_snapshot_r_blocks_count);
 	sb->s_snapshot_list = ext2fs_swab32(sb->s_snapshot_list);
+	sb->s_usr_quota_inum = ext2fs_swab32(sb->s_usr_quota_inum);
+	sb->s_grp_quota_inum = ext2fs_swab32(sb->s_grp_quota_inum);
+	sb->s_overhead_blocks = ext2fs_swab32(sb->s_overhead_blocks);
+	sb->s_checksum = ext2fs_swab32(sb->s_checksum);
 
 	for (i=0; i < 4; i++)
 		sb->s_hash_seed[i] = ext2fs_swab32(sb->s_hash_seed[i]);
 
 	/* if journal backup is for a valid extent-based journal... */
-	if (!ext2fs_extent_header_verify(sb->s_jnl_blocks,
-					 sizeof(sb->s_jnl_blocks))) {
-		/* ... swap only the journal i_size */
-		sb->s_jnl_blocks[16] = ext2fs_swab32(sb->s_jnl_blocks[16]);
-		/* and the extent data is not swapped on read */
-		return;
+	if (ext2fs_extent_header_verify(sb->s_jnl_blocks,
+					sizeof(sb->s_jnl_blocks)) == 0) {
+		/* ... swap only the journal i_size and i_size_high,
+		 * and the extent data is not swapped on read */
+		i = 15;
+	} else {
+		/* direct/indirect journal: swap it all */
+		i = 0;
 	}
-
-	/* direct/indirect journal: swap it all */
-	for (i=0; i < 17; i++)
+	for (; i < 17; i++)
 		sb->s_jnl_blocks[i] = ext2fs_swab32(sb->s_jnl_blocks[i]);
 }
 
-void ext2fs_swap_group_desc(struct ext2_group_desc *gdp)
+void ext2fs_swap_group_desc2(ext2_filsys fs, struct ext2_group_desc *gdp)
 {
+	/* Do the 32-bit parts first */
 	gdp->bg_block_bitmap = ext2fs_swab32(gdp->bg_block_bitmap);
 	gdp->bg_inode_bitmap = ext2fs_swab32(gdp->bg_inode_bitmap);
 	gdp->bg_inode_table = ext2fs_swab32(gdp->bg_inode_table);
@@ -103,9 +111,42 @@ void ext2fs_swap_group_desc(struct ext2_group_desc *gdp)
 	gdp->bg_free_inodes_count = ext2fs_swab16(gdp->bg_free_inodes_count);
 	gdp->bg_used_dirs_count = ext2fs_swab16(gdp->bg_used_dirs_count);
 	gdp->bg_flags = ext2fs_swab16(gdp->bg_flags);
+	gdp->bg_exclude_bitmap_lo = ext2fs_swab32(gdp->bg_exclude_bitmap_lo);
+	gdp->bg_block_bitmap_csum_lo =
+		ext2fs_swab16(gdp->bg_block_bitmap_csum_lo);
+	gdp->bg_inode_bitmap_csum_lo =
+		ext2fs_swab16(gdp->bg_inode_bitmap_csum_lo);
 	gdp->bg_itable_unused = ext2fs_swab16(gdp->bg_itable_unused);
 	gdp->bg_checksum = ext2fs_swab16(gdp->bg_checksum);
+	/* If we're 32-bit, we're done */
+	if (fs && (!fs->super->s_desc_size ||
+		   (fs->super->s_desc_size < EXT2_MIN_DESC_SIZE_64BIT)))
+		return;
+
+	/* Swap the 64-bit parts */
+	struct ext4_group_desc *gdp4 = (struct ext4_group_desc *) gdp;
+	gdp4->bg_block_bitmap_hi = ext2fs_swab32(gdp4->bg_block_bitmap_hi);
+	gdp4->bg_inode_bitmap_hi = ext2fs_swab32(gdp4->bg_inode_bitmap_hi);
+	gdp4->bg_inode_table_hi = ext2fs_swab32(gdp4->bg_inode_table_hi);
+	gdp4->bg_free_blocks_count_hi =
+		ext2fs_swab16(gdp4->bg_free_blocks_count_hi);
+	gdp4->bg_free_inodes_count_hi =
+		ext2fs_swab16(gdp4->bg_free_inodes_count_hi);
+	gdp4->bg_used_dirs_count_hi =
+		ext2fs_swab16(gdp4->bg_used_dirs_count_hi);
+	gdp4->bg_itable_unused_hi = ext2fs_swab16(gdp4->bg_itable_unused_hi);
+	gdp4->bg_exclude_bitmap_hi = ext2fs_swab16(gdp4->bg_exclude_bitmap_hi);
+	gdp4->bg_block_bitmap_csum_hi =
+		ext2fs_swab16(gdp4->bg_block_bitmap_csum_hi);
+	gdp4->bg_inode_bitmap_csum_hi =
+		ext2fs_swab16(gdp4->bg_inode_bitmap_csum_hi);
 }
+
+void ext2fs_swap_group_desc(struct ext2_group_desc *gdp)
+{
+	ext2fs_swap_group_desc2(0, gdp);
+}
+
 
 void ext2fs_swap_ext_attr_header(struct ext2_ext_attr_header *to_header,
 				 struct ext2_ext_attr_header *from_header)
@@ -218,8 +259,8 @@ void ext2fs_swap_inode_full(ext2_filsys fs, struct ext2_inode_large *t,
 		  ext2fs_swab16 (f->osd2.linux2.l_i_uid_high);
 		t->osd2.linux2.l_i_gid_high =
 		  ext2fs_swab16 (f->osd2.linux2.l_i_gid_high);
-		t->osd2.linux2.l_i_reserved2 =
-			ext2fs_swab32(f->osd2.linux2.l_i_reserved2);
+		t->osd2.linux2.l_i_checksum_lo =
+			ext2fs_swab16(f->osd2.linux2.l_i_checksum_lo);
 		break;
 	case EXT2_OS_HURD:
 		t->osd1.hurd1.h_i_translator =
@@ -253,6 +294,21 @@ void ext2fs_swap_inode_full(ext2_filsys fs, struct ext2_inode_large *t,
 		return;
 	}
 
+	if (extra_isize >= 4)
+		t->i_checksum_hi = ext2fs_swab16(f->i_checksum_hi);
+	if (extra_isize >= 8)
+		t->i_ctime_extra = ext2fs_swab32(f->i_ctime_extra);
+	if (extra_isize >= 12)
+		t->i_mtime_extra = ext2fs_swab32(f->i_mtime_extra);
+	if (extra_isize >= 16)
+		t->i_atime_extra = ext2fs_swab32(f->i_atime_extra);
+	if (extra_isize >= 20)
+		t->i_crtime = ext2fs_swab32(f->i_crtime);
+	if (extra_isize >= 24)
+		t->i_crtime_extra = ext2fs_swab32(f->i_crtime_extra);
+	if (extra_isize >= 28)
+		t->i_version_hi = ext2fs_swab32(f->i_version_hi);
+
 	i = sizeof(struct ext2_inode) + extra_isize + sizeof(__u32);
 	if (bufsize < (int) i)
 		return; /* no space for EA magic */
@@ -284,6 +340,14 @@ void ext2fs_swap_inode(ext2_filsys fs, struct ext2_inode *t,
 	ext2fs_swap_inode_full(fs, (struct ext2_inode_large *) t,
 				(struct ext2_inode_large *) f, hostorder,
 				sizeof(struct ext2_inode));
+}
+
+void ext2fs_swap_mmp(struct mmp_struct *mmp)
+{
+	mmp->mmp_magic = ext2fs_swab32(mmp->mmp_magic);
+	mmp->mmp_seq = ext2fs_swab32(mmp->mmp_seq);
+	mmp->mmp_time = ext2fs_swab64(mmp->mmp_time);
+	mmp->mmp_check_interval = ext2fs_swab16(mmp->mmp_check_interval);
 }
 
 #endif

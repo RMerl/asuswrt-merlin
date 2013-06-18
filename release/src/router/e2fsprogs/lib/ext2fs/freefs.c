@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -52,6 +53,11 @@ void ext2fs_free(ext2_filsys fs)
 
 	if (fs->icache)
 		ext2fs_free_inode_cache(fs->icache);
+
+	if (fs->mmp_buf)
+		ext2fs_free_mem(&fs->mmp_buf);
+	if (fs->mmp_cmp)
+		ext2fs_free_mem(&fs->mmp_cmp);
 
 	fs->magic = 0;
 

@@ -90,6 +90,7 @@ void ss_unimplemented(int argc, const char * const *argv,
 void ss_set_prompt(int sci_idx, char *new_prompt);
 char *ss_get_prompt(int sci_idx);
 void ss_get_readline(int sci_idx);
+char *ss_safe_getenv(const char *arg);
 
 extern ss_request_table ss_std_requests;
 #endif /* _ss_h */

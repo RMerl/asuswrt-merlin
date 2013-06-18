@@ -7,6 +7,7 @@
 
 #undef DIRINFO_DEBUG
 
+#include "config.h"
 #include "e2fsck.h"
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -62,7 +63,15 @@ static void setup_tdb(e2fsck_t ctx, ext2_ino_t num_dirs)
 	uuid_unparse(ctx->fs->super->s_uuid, uuid);
 	sprintf(db->tdb_fn, "%s/%s-dirinfo-XXXXXX", tdb_dir, uuid);
 	fd = mkstemp(db->tdb_fn);
-	db->tdb = tdb_open(db->tdb_fn, 0, TDB_CLEAR_IF_FIRST,
+	if (fd < 0) {
+		db->tdb = NULL;
+		return;
+	}
+
+	if (num_dirs < 99991)
+		num_dirs = 99991; /* largest 5 digit prime */
+
+	db->tdb = tdb_open(db->tdb_fn, num_dirs, TDB_NOLOCK | TDB_NOSYNC,
 			   O_RDWR | O_CREAT | O_TRUNC, 0600);
 	close(fd);
 }
@@ -318,7 +327,6 @@ extern struct dir_info_iter *e2fsck_dir_info_iter_begin(e2fsck_t ctx)
 
 	iter = e2fsck_allocate_memory(ctx, sizeof(struct dir_info_iter),
 				      "dir_info iterator");
-	memset(iter, 0, sizeof(iter));
 
 	if (db->tdb)
 		iter->tdb_iter = tdb_firstkey(db->tdb);

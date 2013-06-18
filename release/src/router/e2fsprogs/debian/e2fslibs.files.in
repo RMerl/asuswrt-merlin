@@ -1,0 +1,2 @@
+lib/*/libext2fs*.so.*
+lib/*/libe2p*.so.*

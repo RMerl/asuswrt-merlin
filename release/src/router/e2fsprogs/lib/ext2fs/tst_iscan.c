@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #if HAVE_UNISTD_H
@@ -35,7 +36,7 @@ badblocks_list	test_badblocks;
 int first_no_comma = 1;
 int failed = 0;
 
-static void test_read_blk(unsigned long block, int count, errcode_t err)
+static void iscan_test_read_blk64(unsigned long long block, int count, errcode_t err)
 {
 	int	i;
 
@@ -45,18 +46,23 @@ static void test_read_blk(unsigned long block, int count, errcode_t err)
 		printf(", ");
 
 	if (count > 1)
-		printf("%lu-%lu", block, block+count-1);
+		printf("%llu-%llu", block, block+count-1);
 	else
-		printf("%lu", block);
+		printf("%llu", block);
 
 	for (i=0; i < count; i++, block++) {
-		if (ext2fs_test_block_bitmap(touched_map, block)) {
-			printf("\nDuplicate block?!? --- %lu\n", block);
+		if (ext2fs_test_block_bitmap2(touched_map, block)) {
+			printf("\nDuplicate block?!? --- %llu\n", block);
 			failed++;
 			first_no_comma = 1;
 		}
-		ext2fs_mark_block_bitmap(touched_map, block);
+		ext2fs_mark_block_bitmap2(touched_map, block);
 	}
+}
+
+static void iscan_test_read_blk(unsigned long block, int count, errcode_t err)
+{
+	iscan_test_read_blk64(block, count, err);
 }
 
 /*
@@ -71,12 +77,13 @@ static void setup(void)
 	initialize_ext2_error_table();
 
 	memset(&param, 0, sizeof(param));
-	param.s_blocks_count = 12000;
+	ext2fs_blocks_count_set(&param, 12000);
 
 
-	test_io_cb_read_blk = test_read_blk;
+	test_io_cb_read_blk = iscan_test_read_blk;
+	test_io_cb_read_blk64 = iscan_test_read_blk64;
 
-	retval = ext2fs_initialize("test fs", 0, &param,
+	retval = ext2fs_initialize("test fs", EXT2_FLAG_64BITS, &param,
 				   test_io_manager, &test_fs);
 	if (retval) {
 		com_err("setup", retval,
@@ -123,7 +130,7 @@ static void setup(void)
 				"while adding test vector %d", i);
 			exit(1);
 		}
-		ext2fs_mark_block_bitmap(bad_block_map, test_vec[i]);
+		ext2fs_mark_block_bitmap2(bad_block_map, test_vec[i]);
 	}
 	test_fs->badblocks = test_badblocks;
 }
@@ -152,7 +159,7 @@ static void iterate(void)
 	while (ino) {
 		retval = ext2fs_get_next_inode(scan, &ino, &inode);
 		if (retval == EXT2_ET_BAD_BLOCK_IN_INODE_TABLE) {
-			ext2fs_mark_inode_bitmap(bad_inode_map, ino);
+			ext2fs_mark_inode_bitmap2(bad_inode_map, ino);
 			continue;
 		}
 		if (retval) {
@@ -171,30 +178,30 @@ static void iterate(void)
 static void check_map(void)
 {
 	int	i, j, first=1;
-	unsigned long	blk;
+	blk64_t	blk;
 
 	for (i=0; test_vec[i]; i++) {
-		if (ext2fs_test_block_bitmap(touched_map, test_vec[i])) {
+		if (ext2fs_test_block_bitmap2(touched_map, test_vec[i])) {
 			printf("Bad block was touched --- %u\n", test_vec[i]);
 			failed++;
 			first_no_comma = 1;
 		}
-		ext2fs_mark_block_bitmap(touched_map, test_vec[i]);
+		ext2fs_mark_block_bitmap2(touched_map, test_vec[i]);
 	}
 	for (i = 0; i < test_fs->group_desc_count; i++) {
-		for (j=0, blk = test_fs->group_desc[i].bg_inode_table;
+		for (j=0, blk = ext2fs_inode_table_loc(test_fs, i);
 		     j < test_fs->inode_blocks_per_group;
 		     j++, blk++) {
-			if (!ext2fs_test_block_bitmap(touched_map, blk) &&
-			    !ext2fs_test_block_bitmap(bad_block_map, blk)) {
-				printf("Missing block --- %lu\n", blk);
+			if (!ext2fs_test_block_bitmap2(touched_map, blk) &&
+			    !ext2fs_test_block_bitmap2(bad_block_map, blk)) {
+				printf("Missing block --- %llu\n", blk);
 				failed++;
 			}
 		}
 	}
 	printf("Bad inodes: ");
 	for (i=1; i <= test_fs->super->s_inodes_count; i++) {
-		if (ext2fs_test_inode_bitmap(bad_inode_map, i)) {
+		if (ext2fs_test_inode_bitmap2(bad_inode_map, i)) {
 			if (first)
 				first = 0;
 			else

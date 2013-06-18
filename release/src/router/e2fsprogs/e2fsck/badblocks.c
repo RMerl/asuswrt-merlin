@@ -5,6 +5,7 @@
  * redistributed under the terms of the GNU Public License.
  */
 
+#include "config.h"
 #include <time.h>
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -72,10 +73,10 @@ void read_bad_blocks_file(e2fsck_t ctx, const char *bad_blocks_file,
 			goto fatal;
 		}
 	} else {
-		sprintf(buf, "badblocks -b %d -X %s%s%s %d", fs->blocksize,
+		sprintf(buf, "badblocks -b %d -X %s%s%s %llu", fs->blocksize,
 			(ctx->options & E2F_OPT_PREEN) ? "" : "-s ",
 			(ctx->options & E2F_OPT_WRITECHECK) ? "-n " : "",
-			fs->device_name, fs->super->s_blocks_count-1);
+			fs->device_name, ext2fs_blocks_count(fs->super)-1);
 		f = popen(buf, "r");
 		if (!f) {
 			com_err("read_bad_blocks_file", errno,
@@ -125,7 +126,7 @@ static int check_bb_inode_blocks(ext2_filsys fs,
 	/*
 	 * If the block number is outrageous, clear it and ignore it.
 	 */
-	if (*block_nr >= fs->super->s_blocks_count ||
+	if (*block_nr >= ext2fs_blocks_count(fs->super) ||
 	    *block_nr < fs->super->s_first_data_block) {
 		printf(_("Warning: illegal block %u found in bad block inode.  "
 			 "Cleared.\n"), *block_nr);

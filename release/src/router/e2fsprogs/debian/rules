@@ -7,8 +7,10 @@
 # The `binary' target must be run as root, as it needs to install files with
 # specific ownerships.
 
+-include debian/rules.custom
+
 # be paranoid
-export LC_ALL=C
+export LC_ALL ?= C
 
 # Allow distro-specific behaviour
 DISTRO :=$(shell sed -ne '/DISTRIB_ID/s/.*=//p' /etc/lsb-release 2>/dev/null || echo Debian)
@@ -19,98 +21,108 @@ endif
 
 # These are used for cross-compiling and for saving the configure script
 # from having to guess our platform (since we know it already)
-DEB_HOST_ARCH   ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
-DEB_BUILD_ARCH   ?= $(shell dpkg-architecture -qDEB_BUILD_ARCH)
-DEB_HOST_OS   ?= $(shell dpkg-architecture -qDEB_HOST_OS)
-DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+DEB_HOST_ARCH		?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+DEB_BUILD_ARCH		?= $(shell dpkg-architecture -qDEB_BUILD_ARCH)
+DEB_HOST_OS		?= $(shell dpkg-architecture -qDEB_HOST_OS)
+DEB_HOST_GNU_TYPE	?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE	?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+DEB_HOST_MULTIARCH	?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH 2>/dev/null)
 
 # find the version for the main package, from changelog file
 MAIN_VERSION = $(shell head -n 1 debian/changelog | cut '-d ' -f 2 | sed 's/[()]//g')
 # find versions for libraries going into their own packages, from their Makefile.in's,
 # and sonames for all libs
-COMERR_VERSION = $(shell grep ELF_VERSION lib/et/Makefile.in | cut '-d ' -f3)
-COMERR_SOVERSION = $(shell grep ELF_SO_VERSION lib/et/Makefile.in | cut '-d ' -f3)
-SS_VERSION = $(shell grep ELF_VERSION lib/ss/Makefile.in | cut '-d ' -f3)
-SS_SOVERSION = $(shell grep ELF_SO_VERSION lib/ss/Makefile.in | cut '-d ' -f3)
+COMERR_VERSION ?= $(shell grep ELF_VERSION lib/et/Makefile.in | cut '-d ' -f3)
+COMERR_SOVERSION ?= $(shell grep ELF_SO_VERSION lib/et/Makefile.in | cut '-d ' -f3)
+SS_VERSION ?= $(shell grep ELF_VERSION lib/ss/Makefile.in | cut '-d ' -f3)
+SS_SOVERSION ?= $(shell grep ELF_SO_VERSION lib/ss/Makefile.in | cut '-d ' -f3)
 
 ifneq ($(UTIL_LINUX_NG),yes)
-UUID_VERSION = $(shell grep ELF_VERSION lib/uuid/Makefile.in | cut '-d ' -f3)
-UUID_SOVERSION = $(shell grep ELF_SO_VERSION lib/uuid/Makefile.in | cut '-d ' -f3)
+UUID_VERSION ?= $(shell grep ELF_VERSION lib/uuid/Makefile.in | cut '-d ' -f3)
+UUID_SOVERSION ?= $(shell grep ELF_SO_VERSION lib/uuid/Makefile.in | cut '-d ' -f3)
 
-BLKID_VERSION = $(shell grep ELF_VERSION lib/blkid/Makefile.in | cut '-d ' -f3)
-BLKID_SOVERSION = $(shell grep ELF_SO_VERSION lib/blkid/Makefile.in | cut '-d ' -f3)
+BLKID_VERSION ?= $(shell grep ELF_VERSION lib/blkid/Makefile.in | cut '-d ' -f3)
+BLKID_SOVERSION ?= $(shell grep ELF_SO_VERSION lib/blkid/Makefile.in | cut '-d ' -f3)
 endif
 
-EXT2FS_SOVERSION = $(shell grep ELF_SO_VERSION lib/ext2fs/Makefile.in | cut '-d ' -f3)
-E2P_SOVERSION = $(shell grep ELF_SO_VERSION lib/e2p/Makefile.in | cut '-d ' -f3)
+EXT2FS_SOVERSION ?= $(shell grep ELF_SO_VERSION lib/ext2fs/Makefile.in | cut '-d ' -f3)
+E2P_SOVERSION ?= $(shell grep ELF_SO_VERSION lib/e2p/Makefile.in | cut '-d ' -f3)
 
-package=e2fsprogs
+package		?= e2fsprogs
 
-topdir=$(shell pwd)
-debdir=${topdir}/debian
-tmpdir=${debdir}/tmp
-udebdir=${debdir}/e2fsprogs-udeb
+topdir		?= $(shell pwd)
+debdir		?= ${topdir}/debian
+tmpdir		?= ${debdir}/tmp
+udebdir		?= ${debdir}/e2fsprogs-udeb
 ifneq ($(UTIL_LINUX_NG),yes)
-blkidudebdir=${debdir}/libblkid1-udeb
-uuidudebdir=${debdir}/libuuid1-udeb
+blkidudebdir	?= ${debdir}/libblkid1-udeb
+uuidudebdir	?= ${debdir}/libuuid1-udeb
 endif
-libcomerrdir=${debdir}/libcomerr${COMERR_SOVERSION}
-comerrdevdir=${debdir}/comerr-dev
-libcomerrdbgdir=${debdir}/libcomerr2-dbg
-libssdir=${debdir}/libss${SS_SOVERSION}
-ssdevdir=${debdir}/ss-dev
-libssdbgdir=${debdir}/libss2-dbg
+libcomerrdir	?= ${debdir}/libcomerr${COMERR_SOVERSION}
+comerrdevdir	?= ${debdir}/comerr-dev
+libcomerrdbgdir	?= ${debdir}/libcomerr2-dbg
+libssdir	?= ${debdir}/libss${SS_SOVERSION}
+ssdevdir	?= ${debdir}/ss-dev
+libssdbgdir	?= ${debdir}/libss2-dbg
 ifneq ($(UTIL_LINUX_NG),yes)
-libblkiddir=${debdir}/libblkid${BLKID_SOVERSION}
-libblkiddevdir=${debdir}/libblkid-dev
-libblkiddbgdir=${debdir}/libblkid1-dbg
-libuuiddir=${debdir}/libuuid${UUID_SOVERSION}
-uuiddevdir=${debdir}/uuid-dev
-libuuiddbgdir=${debdir}/libuuid1-dbg
-uuidruntimedir=${debdir}/uuid-runtime
-uuidruntimedbgdir=${debdir}/uuid-runtime-dbg
+libblkiddir	?= ${debdir}/libblkid${BLKID_SOVERSION}
+libblkiddevdir	?= ${debdir}/libblkid-dev
+libblkiddbgdir	?= ${debdir}/libblkid1-dbg
+libuuiddir	?= ${debdir}/libuuid${UUID_SOVERSION}
+uuiddevdir	?= ${debdir}/uuid-dev
+libuuiddbgdir	?= ${debdir}/libuuid1-dbg
+uuidruntimedir	?= ${debdir}/uuid-runtime
+uuidruntimedbgdir ?= ${debdir}/uuid-runtime-dbg
 endif
-libext2dir=${debdir}/e2fslibs
-libext2devdir=${debdir}/e2fslibs-dev
-libext2dbgdir=${debdir}/e2fslibs-dbg
-maindir=${debdir}/e2fsprogs
-e2fsckstaticdir=${debdir}/e2fsck-static
-debugdir=${debdir}/e2fsprogs-dbg
-stdbuilddir=${debdir}/BUILD-STD
-bfbuilddir=${debdir}/BUILD-BF
-staticbuilddir=${debdir}/BUILD-STATIC
-mipsbuilddir=${debdir}/BUILD-MIPS
-mipsbuilddir64=${debdir}/BUILD-MIPS-64
-# docdir=${maindir}/usr/share/doc/${package}
-MANDIR=/usr/share/man
-mandir=${tmpdir}${MANDIR}
+libext2dir	?= ${debdir}/e2fslibs
+libext2devdir	?= ${debdir}/e2fslibs-dev
+libext2dbgdir	?= ${debdir}/e2fslibs-dbg
+maindir		?= ${debdir}/e2fsprogs
+e2fsckstaticdir	?= ${debdir}/e2fsck-static
+debugdir	?= ${debdir}/e2fsprogs-dbg
+stdbuilddir	?= ${debdir}/BUILD-STD
+staticbuilddir	?= ${debdir}/BUILD-STATIC
+mipsbuilddir	?= ${debdir}/BUILD-MIPS
+mipsbuilddir64	?= ${debdir}/BUILD-MIPS-64
+# docdir	?= ${maindir}/usr/share/doc/${package}
+MANDIR		?= /usr/share/man
+mandir		?= ${tmpdir}${MANDIR}
 
-UDEB_NAME = $(package)-udeb_$(MAIN_VERSION)_$(DEB_HOST_ARCH).udeb
-UDEB_PRIORITY = $(shell grep '^Package: e2fsprogs-udeb' debian/control.in -A 10 | grep ^Priority: | cut -d ' ' -f 2)
+UDEB_NAME 	?= $(package)-udeb_$(MAIN_VERSION)_$(DEB_HOST_ARCH).udeb
+UDEB_PRIORITY	?= $(shell grep '^Package: e2fsprogs-udeb' debian/control.in -A 10 | grep ^Priority: | cut -d ' ' -f 2)
 
 ifneq ($(UTIL_LINUX_NG),yes)
-BLKID_UDEB_NAME = libblkid1-udeb_$(MAIN_VERSION)_$(DEB_HOST_ARCH).udeb
-BLKID_UDEB_PRIORITY = $(shell grep '^Package: libblkid1-udeb' debian/control.in -A 10 | grep ^Priority: | cut -d ' ' -f 2)
+BLKID_UDEB_NAME ?= libblkid1-udeb_$(MAIN_VERSION)_$(DEB_HOST_ARCH).udeb
+BLKID_UDEB_PRIORITY ?= $(shell grep '^Package: libblkid1-udeb' debian/control.in -A 10 | grep ^Priority: | cut -d ' ' -f 2)
 
-UUID_UDEB_NAME = libuuid1-udeb_$(MAIN_VERSION)_$(DEB_HOST_ARCH).udeb
-UUID_UDEB_PRIORITY = $(shell grep '^Package: libuuid1-udeb' debian/control.in -A 10 | grep ^Priority: | cut -d ' ' -f 2)
+UUID_UDEB_NAME ?= libuuid1-udeb_$(MAIN_VERSION)_$(DEB_HOST_ARCH).udeb
+UUID_UDEB_PRIORITY ?= $(shell grep '^Package: libuuid1-udeb' debian/control.in -A 10 | grep ^Priority: | cut -d ' ' -f 2)
 endif
 
-STAMPSDIR=debian/stampdir
-CFGSTDSTAMP=${STAMPSDIR}/configure-std-stamp
-CFGBFSTAMP=${STAMPSDIR}/configure-bf-stamp
-CFGSTATICSTAMP=${STAMPSDIR}/configure-static-stamp
-BUILDSTDSTAMP=${STAMPSDIR}/build-std-stamp
-BUILDBFSTAMP=${STAMPSDIR}/build-bf-stamp
-BUILDSTATICSTAMP=${STAMPSDIR}/build-static-stamp
+STAMPSDIR	?= debian/stampdir
+CFGSTDSTAMP	?= ${STAMPSDIR}/configure-std-stamp
+CFGBFSTAMP	?= ${STAMPSDIR}/configure-bf-stamp
+CFGSTATICSTAMP	?= ${STAMPSDIR}/configure-static-stamp
+BUILDSTDSTAMP	?= ${STAMPSDIR}/build-std-stamp
+BUILDBFSTAMP	?= ${STAMPSDIR}/build-bf-stamp
+BUILDSTATICSTAMP ?=${STAMPSDIR}/build-static-stamp
 
-INSTALL = install
-INSTALL_PROGRAM = $(INSTALL) -p -o root -g root -m 0755
+INSTALL ?= install
+INSTALL_PROGRAM ?= $(INSTALL) -p -o root -g root -m 0755
 
 #ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 #INSTALL_PROGRAM += -s
 #endif
+
+DEFAULT_CFLAGS ?= -g -O2
+DEFAULT_LDFLAGS ?= -Wl,-Bsymbolic-functions
+
+CFLAGS ?= $(shell if dpkg-buildflags > /dev/null 2>&1 ; then \
+	dpkg-buildflags --get CFLAGS; else echo $(DEFAULT_CFLAGS) ; fi)
+LDFLAGS ?= $(shell if dpkg-buildflags > /dev/null 2>&1 ; then \
+	dpkg-buildflags --get LDFLAGS; else echo $(DEFAULT_LDFLAGS) ; fi)
+CPPFLAGS ?= $(shell if dpkg-buildflags > /dev/null 2>&1 ; then \
+	dpkg-buildflags --get CPPFLAGS; fi)
 
 ifeq (${DEB_HOST_ARCH},alpha)
 CFLAGS += -DHAVE_NETINET_IN_H
@@ -118,17 +130,30 @@ else
 CFLAGS += -D__NO_STRING_INLINES
 endif
 
-ifeq (${DEB_HOST_ARCH_OS},linux)
+ifneq (${DEB_HOST_ARCH_OS},linux)
+SKIP_STATIC = yes
+endif
+
+ifeq ($(SKIP_STATIC),yes)
+BUILD_STATIC =
+E2FSCK_STATIC = ${stdbuilddir}/e2fsck/e2fsck.static
+else
 BUILD_STATIC = build-static
 E2FSCK_STATIC = ${staticbuilddir}/e2fsck/e2fsck.static
+endif
+
+ifeq ($(SKIP_BF),yes)
+BUILD_BF =
+bfbuilddir	?= ${stdbuilddir}
 else
-E2FSCK_STATIC = ${stdbuilddir}/e2fsck/e2fsck.static
+BUILD_BF = build-bf
+bfbuilddir	?= ${debdir}/BUILD-BF
 endif
 
 BF_CFLAGS = -Os -fomit-frame-pointer
 
-COMMON_CONF_FLAGS =  \
-                --enable-elf-shlibs --infodir=/usr/share/info
+COMMON_CONF_FLAGS = --disable-e2initrd-helper --enable-elf-shlibs \
+	--enable-quota --infodir=/usr/share/info
 ifeq ($(UTIL_LINUX_NG),yes)
 COMMON_CONF_FLAGS += --disable-fsck --disable-libblkid \
 			--disable-libuuid --disable-uuidd
@@ -136,23 +161,31 @@ else
 COMMON_CONF_FLAGS += --enable-fsck
 endif
 
-STD_CONF_FLAGS = --enable-compression
+ifneq ($(strip $(DEB_HOST_MULTIARCH)),)
+MULTIARCH_CONF ?= --with-multiarch=$(DEB_HOST_MULTIARCH)
+# This doesn't work yet because gdb and lintian don't expect and/or
+# don't work with /usr/lib/<triplet>/debug
+#USRLIB = /usr/lib/$(DEB_HOST_MULTIARCH)
+USRLIB ?= /usr/lib
+else
+USRLIB ?= /usr/lib
+endif
 
-BF_CONF_FLAGS = --disable-nls --disable-imager --disable-testio-debug \
-	--disable-uuidd --disable-tls \
-	--disable-debugfs  --disable-e2initrd-helper
+STD_CONF_FLAGS ?= --enable-symlink-install $(MULTIARCH_CONF)
 
-STATIC_CONF_FLAGS = --disable-nls --disable-imager \
-	--disable-uuidd --disable-tls \
-	--disable-e2initrd-helper
+BF_CONF_FLAGS ?= --disable-nls --disable-imager --disable-testio-debug \
+	--disable-uuidd --disable-tls --disable-debugfs
 
-MIPS_NOPIC_CONF_FLAGS = --disable-nls --disable-imager \
+STATIC_CONF_FLAGS ?= --disable-nls --disable-imager \
+	--disable-uuidd --disable-tls
+
+MIPS_NOPIC_CONF_FLAGS ?= --disable-nls --disable-imager \
 	--disable-uuidd --disable-tls \
         --disable-resizer # --disable-debugfs
 
 # we can't use those flags at configure time
-MIPS_CFLAGS= -G 0 -fno-pic -mno-abicalls
-MIPS_CFLAGS_64= -mabi=64 -G 0 -fno-pic -mno-abicalls
+MIPS_CFLAGS ?= -G 0 -fno-pic -mno-abicalls
+MIPS_CFLAGS_64 ?= -mabi=64 -G 0 -fno-pic -mno-abicalls
 
 ifeq ($(DEB_BUILD_ARCH),$(DEB_HOST_ARCH))
 ifneq (,$(findstring $(DEB_BUILD_ARCH),mips mipsel))
@@ -167,13 +200,44 @@ else
 M4_ARGS+=-UUTIL_LINUX_NG
 endif
 
+ifneq ($(strip $(DEB_HOST_MULTIARCH)),)
+M4_ARGS+=-DDO_MULTIARCH
+else
+M4_ARGS+=-UDO_MULTIARCH
+endif
+
+ifneq ($(SKIP_DIETLIBC),)
+M4_ARGS+=-UDIETLIBC
+WITH_DIET_LIBC = 
+else
+M4_ARGS+=-DDIETLIBC
+WITH_DIET_LIBC = --with-diet-libc 
+endif
+
+ifneq ($(BUILD_E2FSCK_STATIC),no)
+M4_ARGS+=-DE2FSCK_STATIC
+else
+M4_ARGS+=-UE2FSCK_STATIC
+endif
+
+FILES_FIXUP= libcomerr2.files comerr-dev.files libss2.files ss-dev.files \
+	libuuid1.files uuid-dev.files libblkid1.files libblkid-dev.files \
+	e2fslibs.files e2fslibs-dev.files
+
 debian-files: debian/control debian/e2fsprogs.shlibs.local
+ifeq ($(strip $(DEB_HOST_MULTIARCH)),)
+	for i in $(FILES_FIXUP); do \
+		sed -e 's;lib/\*/;lib/;' debian/$$i.in > debian/$$i; \
+	done
+else
+	for i in $(FILES_FIXUP); do cp debian/$$i.in debian/$$i; done
+endif
 
 mrproper: clean
 	rm debian/control debian/e2fsprogs.shlibs.local
 
 debian/control: debian/control.in debian/rules
-	m4 $(M4_ARGS) < debian/control.in > $@
+	m4 $(M4_ARGS) < debian/control.in | grep -v ^REMOVE_ME$$ > $@
 
 debian/e2fsprogs.shlibs.local: debian/e2fsprogs.shlibs.local.in
 	m4 $(M4_ARGS) < debian/e2fsprogs.shlibs.local.in > $@
@@ -187,22 +251,24 @@ ${CFGSTDSTAMP}:
 	mkdir -p ${stdbuilddir}
 ifeq ($(DEB_BUILD_ARCH),$(DEB_HOST_ARCH))
 	cd ${stdbuilddir} && AWK=/usr/bin/awk \
-		${topdir}/configure ${COMMON_CONF_FLAGS} ${STD_CONF_FLAGS} \
-		CFLAGS="${CFLAGS}"
+		${topdir}/configure ${COMMON_CONF_FLAGS} ${STD_CONF_FLAGS} ${EXTRA_CONF_FLAGS} \
+		CFLAGS="${CFLAGS}" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)"
 else
 	cd ${stdbuilddir} && AWK=/usr/bin/awk CC="${DEB_HOST_GNU_TYPE}-gcc" \
-		${topdir}/configure ${COMMON_CONF_FLAGS} ${STD_CONF_FLAGS} \
+		${topdir}/configure ${COMMON_CONF_FLAGS} ${STD_CONF_FLAGS} ${EXTRA_CONF_FLAGS} \
 		--build=$(DEB_BUILD_GNU_TYPE) --host=$(DEB_HOST_GNU_TYPE) \
-		CFLAGS="${CFLAGS}"
+		CFLAGS="${CFLAGS}" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)"
 endif
 
   # specially-built MIPS libs
 ifneq ($(ismips),)
 	mkdir -p ${mipsbuilddir} ${mipsbuilddir64}
 	cd ${mipsbuilddir} && AWK=/usr/bin/awk \
-		${topdir}/configure ${MIPS_NOPIC_CONF_FLAGS} CFLAGS="${CFLAGS}"
+		${topdir}/configure ${MIPS_NOPIC_CONF_FLAGS} \
+		CFLAGS="${CFLAGS}" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)"
 	cd ${mipsbuilddir64} && AWK=/usr/bin/awk \
-		${topdir}/configure ${MIPS_NOPIC_CONF_FLAGS} CFLAGS="${CFLAGS}"
+		${topdir}/configure ${MIPS_NOPIC_CONF_FLAGS} \
+		CFLAGS="${CFLAGS}" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)"
 endif
 
 	mkdir -p ${STAMPSDIR}
@@ -215,13 +281,13 @@ ${CFGBFSTAMP}:
 	mkdir -p ${bfbuilddir}
 ifeq ($(DEB_BUILD_ARCH),$(DEB_HOST_ARCH))
 	cd ${bfbuilddir} && AWK=/usr/bin/awk \
-		${topdir}/configure ${COMMON_CONF_FLAGS} ${BF_CONF_FLAGS} \
-		CFLAGS="${CFLAGS} ${BF_CFLAGS}"
+		${topdir}/configure ${COMMON_CONF_FLAGS} ${BF_CONF_FLAGS} ${EXTRA_CONF_FLAGS} \
+		CFLAGS="${CFLAGS} ${BF_CFLAGS}" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)"
 else
 	cd ${bfbuilddir} && AWK=/usr/bin/awk CC="${DEB_HOST_GNU_TYPE}-gcc" \
-		${topdir}/configure ${COMMON_CONF_FLAGS} ${BF_CONF_FLAGS} \
+		${topdir}/configure ${COMMON_CONF_FLAGS} ${BF_CONF_FLAGS} ${EXTRA_CONF_FLAGS} \
 		--build=$(DEB_BUILD_GNU_TYPE) --host=$(DEB_HOST_GNU_TYPE) \
-		CFLAGS="${CFLAGS}"
+		CFLAGS="${CFLAGS}" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)"
 endif
 	mkdir -p ${STAMPSDIR}
 	touch ${CFGBFSTAMP}
@@ -234,41 +300,48 @@ ${CFGSTATICSTAMP}:
 ifeq ($(DEB_BUILD_ARCH),$(DEB_HOST_ARCH))
 	if type diet > /dev/null  2>&1 ; then \
 		cd ${staticbuilddir} && AWK=/usr/bin/awk \
-		${topdir}/configure ${STATIC_CONF_FLAGS} \
-		--with-diet-libc CFLAGS="${CFLAGS}"; \
+		${topdir}/configure ${STATIC_CONF_FLAGS} ${EXTRA_CONF_FLAGS} \
+		${WITH_DIET_LIBC} CFLAGS="${CFLAGS}" \
+		CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)"; \
 	else \
 		cd ${staticbuilddir} && AWK=/usr/bin/awk \
-			${topdir}/configure ${STATIC_CONF_FLAGS} \
-			CFLAGS="${CFLAGS}"; \
+			${topdir}/configure ${STATIC_CONF_FLAGS} ${EXTRA_CONF_FLAGS} \
+			CFLAGS="${CFLAGS}" CPPFLAGS="$(CPPFLAGS)" \
+			LDFLAGS="$(LDFLAGS)"; \
 	fi
 else
 	cd ${staticbuilddir} && AWK=/usr/bin/awk CC="${DEB_HOST_GNU_TYPE}-gcc" \
-		${topdir}/configure ${COMMON_CONF_FLAGS} ${STATIC_CONF_FLAGS} \
+		${topdir}/configure ${COMMON_CONF_FLAGS} ${STATIC_CONF_FLAGS} ${EXTRA_CONF_FLAGS} \
 		--build=$(DEB_BUILD_GNU_TYPE) --host=$(DEB_HOST_GNU_TYPE) \
-		CFLAGS="${CFLAGS}"
+		CFLAGS="${CFLAGS}" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)"
 endif
 	mkdir -p ${STAMPSDIR}
 	touch ${CFGSTATICSTAMP}
 
-build: build-std build-bf $(BUILD_STATIC)
+build-arch: build
+build-indep: build
+build: build-std $(BUILD_BF) $(BUILD_STATIC)
 
 build-std: ${BUILDSTDSTAMP}
 ${BUILDSTDSTAMP}: ${CFGSTDSTAMP}
 	dh_testdir
-	$(MAKE) -C ${stdbuilddir} all
-	$(MAKE) -C ${stdbuilddir}/e2fsck e2fsck.static
+	$(MAKE) -C ${stdbuilddir} V=1 all
+ifneq ($(BUILD_E2FSCK_STATIC),no)
+	$(MAKE) -C ${stdbuilddir}/e2fsck V=1 e2fsck.static
+endif
+	$(MAKE) -C ${stdbuilddir}/po V=1 update-gmo
 
-	( cd ${stdbuilddir}/doc && $(MAKE) libext2fs_abt.html )
-	( cd ${stdbuilddir}/lib/et && $(MAKE) com_err.info com_err_abt.html )
+	( cd ${stdbuilddir}/doc && $(MAKE) V=1 libext2fs_abt.html )
+	( cd ${stdbuilddir}/lib/et && $(MAKE) V=1 com_err.info com_err_abt.html )
 
   # specially-built MIPS libs
 ifneq ($(ismips),)
-	$(MAKE) -C ${mipsbuilddir}/util
-	$(MAKE) -C ${mipsbuilddir} \
+	$(MAKE) -C ${mipsbuilddir}/util V=1
+	$(MAKE) -C ${mipsbuilddir} V=1 \
 		CFLAGS="${CFLAGS} ${MIPS_CFLAGS}" \
 		LIB_SUBDIRS="lib/et lib/ext2fs" libs
-	$(MAKE) -C ${mipsbuilddir64}/util
-	$(MAKE) -C ${mipsbuilddir64} \
+	$(MAKE) -C ${mipsbuilddir64}/util V=1
+	$(MAKE) -C ${mipsbuilddir64} V=1 \
 		CFLAGS="${CFLAGS} ${MIPS_CFLAGS_64}" \
 		LIB_SUBDIRS="lib/et lib/ext2fs" libs
 endif
@@ -278,24 +351,27 @@ endif
 build-bf: ${BUILDBFSTAMP}
 ${BUILDBFSTAMP}: ${CFGBFSTAMP}
 	dh_testdir
-	$(MAKE) -C ${bfbuilddir} libs
-	$(MAKE) -C ${bfbuilddir}/e2fsck all
-	$(MAKE) -C ${bfbuilddir}/misc all
+	$(MAKE) -C ${bfbuilddir} V=1 libs
+	$(MAKE) -C ${bfbuilddir}/e2fsck V=1 all
+	$(MAKE) -C ${bfbuilddir}/misc V=1 all
+	$(MAKE) -C ${bfbuilddir}/resize V=1 all
 	touch ${BUILDBFSTAMP}
 
 build-static: ${BUILDSTATICSTAMP}
 ${BUILDSTATICSTAMP}: ${CFGSTATICSTAMP}
 	dh_testdir
-	$(MAKE) -C ${staticbuilddir} libs
-	$(MAKE) -C ${staticbuilddir}/e2fsck all e2fsck.static
+	$(MAKE) -C ${staticbuilddir} V=1 libs
+ifneq ($(BUILD_E2FSCK_STATIC),no)
+	$(MAKE) -C ${staticbuilddir}/e2fsck V=1 all e2fsck.static
+endif
 	touch ${BUILDSTATICSTAMP}
 
 clean:
 	dh_testdir
 	rm -rf ${STAMPSDIR}
-	[ ! -f ${stdbuilddir}/Makefile ] || $(MAKE) -C ${stdbuilddir} distclean
-	[ ! -f ${bfbuilddir}/Makefile ] || $(MAKE) -C ${bfbuilddir} distclean
-	[ ! -f ${staticbuilddir}/Makefile ] || $(MAKE) -C ${staticbuilddir} distclean
+	[ ! -f ${stdbuilddir}/Makefile ] || $(MAKE) -C ${stdbuilddir} V=1 distclean
+	[ ! -f ${bfbuilddir}/Makefile ] || $(MAKE) -C ${bfbuilddir} V=1 distclean
+	[ ! -f ${staticbuilddir}/Makefile ] || $(MAKE) -C ${staticbuilddir} V=1 distclean
 	rm -rf ${stdbuilddir} ${bfbuilddir} ${staticbuilddir} ${mipsbuilddir} ${mipsbuilddir64}
 	rm -f debian/*.substvars
 	dh_clean
@@ -317,16 +393,24 @@ install-std: build
 	dh_installdirs
 
 	mkdir -p ${tmpdir}/sbin
-	$(MAKE) -C ${stdbuilddir} install DESTDIR=${tmpdir} \
+	$(MAKE) -C ${stdbuilddir} V=1 install DESTDIR=${tmpdir} \
 		INSTALL_PROGRAM="${INSTALL_PROGRAM}" LDCONFIG=true
   # static libs and .h files
-	$(MAKE) -C ${stdbuilddir} install-libs DESTDIR=${tmpdir} LDCONFIG=true
+	$(MAKE) -C ${stdbuilddir} V=1 install-libs DESTDIR=${tmpdir} LDCONFIG=true
 
+ifneq ($(BUILD_E2FSCK_STATIC),no)
   # statically-linked fsck
 	${INSTALL_PROGRAM} $(E2FSCK_STATIC) ${tmpdir}/sbin
 	cp ${mandir}/man8/e2fsck.8 ${mandir}/man8/e2fsck.static.8
+endif
 
-	ln -s et/com_err.h ${tmpdir}/usr/include
+  # remove static quota library for now
+	rm ${tmpdir}/usr/include/quota/mkquota.h
+	find ${tmpdir} -name quota.pc -o -name libquota.a | xargs rm
+
+ifeq ($(DEB_BUILD_GNU_SYSTEM), gnu) 
+	${INSTALL} -m 0644 misc/mke2fs-hurd.conf ${tmpdir}/etc/mke2fs.conf
+endif
 
 	dh_movefiles
 	test -z "`find ${tmpdir} -type f`"
@@ -344,13 +428,13 @@ install-udeb: build
 	dh_testdir
 	dh_testroot
 
-	$(MAKE) -C ${bfbuilddir} install-shlibs-libs-recursive DESTDIR=${udebdir} \
+	$(MAKE) -C ${bfbuilddir} V=1 install-shlibs-libs-recursive DESTDIR=${udebdir} \
 		INSTALL_PROGRAM="${INSTALL_PROGRAM}" LDCONFIG=true
-	$(MAKE) -C ${bfbuilddir}/e2fsck install DESTDIR=${udebdir} \
+	$(MAKE) -C ${bfbuilddir}/e2fsck V=1 install DESTDIR=${udebdir} \
 		INSTALL_PROGRAM="${INSTALL_PROGRAM}" LDCONFIG=true
-	$(MAKE) -C ${bfbuilddir}/misc install DESTDIR=${udebdir} \
+	$(MAKE) -C ${bfbuilddir}/misc V=1 install DESTDIR=${udebdir} \
 		INSTALL_PROGRAM="${INSTALL_PROGRAM}" LDCONFIG=true
-	$(MAKE) -C ${bfbuilddir}/resize install DESTDIR=${udebdir} \
+	$(MAKE) -C ${bfbuilddir}/resize V=1 install DESTDIR=${udebdir} \
 		INSTALL_PROGRAM="${INSTALL_PROGRAM}" LDCONFIG=true
 
 	rm -rf ${udebdir}/usr
@@ -358,10 +442,10 @@ install-udeb: build
 		-a ! -name mke2fs -a ! -name tune2fs \
 		-a ! -name resize2fs -a ! -name badblocks -print | xargs rm
 
-	(cd ${udebdir}/sbin; ln -s e2fsck fsck.ext2 ; \
-		ln -s e2fsck fsck.ext3 ; ln -s e2fsck fsck.ext4 ; \
-		ln -s mke2fs mkfs.ext2 ; ln -s mke2fs mkfs.ext3 ; \
-		ln -s mke2fs mkfs.ext4)
+	(cd ${udebdir}/sbin; ln -sf e2fsck fsck.ext2 ; \
+		ln -sf e2fsck fsck.ext3 ; ln -sf e2fsck fsck.ext4 ; \
+		ln -sf mke2fs mkfs.ext2 ; ln -sf mke2fs mkfs.ext3 ; \
+		ln -sf mke2fs mkfs.ext4)
 
 ifneq ($(UTIL_LINUX_NG),yes)
 	mkdir -p ${blkidudebdir}/lib
@@ -382,7 +466,9 @@ binary-arch: install install-udeb
   # lintian overrides
 	for i in $$(cd debian && echo *.lintian-overrides); do \
 		pkg=$${i%.lintian-overrides} ;\
-		$(INSTALL) -m 0644 -D -p debian/$$i ${debdir}/$${pkg}/usr/share/lintian/overrides/$${pkg} ;\
+		if test "$${pkg}" != source ; then \
+			$(INSTALL) -m 0644 -D -p debian/$$i ${debdir}/$${pkg}/usr/share/lintian/overrides/$${pkg} ;\
+		fi ;\
 	done
 
   # symlinks to prepare dh_installdocs run
@@ -447,9 +533,12 @@ endif
 	DH_OPTIONS= dh_installchangelogs -pe2fsprogs \
 		-plibcomerr${COMERR_SOVERSION} \
 		-plibss${SS_SOVERSION} \
-		-pe2fslibs -pe2fsck-static \
+		-pe2fslibs \
 		-pe2fsprogs-dbg -pe2fslibs-dbg \
 		-plibcomerr2-dbg -plibss2-dbg
+ifneq ($(BUILD_E2FSCK_STATIC),no)
+	DH_OPTIONS= dh_installchangelogs -pe2fsck-static
+endif
 ifneq ($(UTIL_LINUX_NG),yes)
 	DH_OPTIONS= dh_installchangelogs -plibuuid${UUID_SOVERSION} \
 		-puuid-dev -puuid-runtime -puuid-runtime-dbg -plibuuid1-dbg \
@@ -470,39 +559,44 @@ ifneq ($(UTIL_LINUX_NG),yes)
 	rm -rf ${uuidudebdir}/usr
 endif
 
-	mkdir -p ${debugdir}/usr/lib
-	mv ${maindir}/usr/lib/debug ${debugdir}/usr/lib
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+	mkdir -p ${debugdir}/$(USRLIB)
+	mv ${maindir}/usr/lib/debug ${debugdir}/$(USRLIB)
 	rm -rf ${maindir}/usr/lib/debug
+
+ifneq ($(BUILD_E2FSCK_STATIC),no)
 	mv ${e2fsckstaticdir}/usr/lib/debug/sbin/* \
-		${debugdir}/usr/lib/debug
+		${debugdir}/$(USRLIB)/debug
 	rm -rf ${e2fsckstaticdir}/usr/lib
+endif
 
 ifneq ($(UTIL_LINUX_NG),yes)
-	mkdir -p ${uuidruntimedbgdir}/usr/lib
-	mv ${uuidruntimedir}/usr/lib/debug ${uuidruntimedbgdir}/usr/lib
+	mkdir -p ${uuidruntimedbgdir}/$(USRLIB)
+	mv ${uuidruntimedir}/usr/lib/debug ${uuidruntimedbgdir}/$(USRLIB)
 	rmdir ${uuidruntimedir}/usr/lib
 endif
 
-	mkdir -p ${libext2dbgdir}/usr/lib
-	mv ${libext2dir}/usr/lib/debug ${libext2dbgdir}/usr/lib
+	mkdir -p ${libext2dbgdir}/$(USRLIB)
+	mv ${libext2dir}/usr/lib/debug ${libext2dbgdir}/$(USRLIB)
 	rmdir ${libext2dir}/usr/lib
 
-	mkdir -p ${libcomerrdbgdir}/usr/lib
-	mv ${libcomerrdir}/usr/lib/debug ${libcomerrdbgdir}/usr/lib
+	mkdir -p ${libcomerrdbgdir}/$(USRLIB)
+	mv ${libcomerrdir}/usr/lib/debug ${libcomerrdbgdir}/$(USRLIB)
 	rmdir ${libcomerrdir}/usr/lib
 
-	mkdir -p ${libssdbgdir}/usr/lib
-	mv ${libssdir}/usr/lib/debug ${libssdbgdir}/usr/lib
+	mkdir -p ${libssdbgdir}/$(USRLIB)
+	mv ${libssdir}/usr/lib/debug ${libssdbgdir}/$(USRLIB)
 	rmdir ${libssdir}/usr/lib
 
 ifneq ($(UTIL_LINUX_NG),yes)
-	mkdir -p ${libuuiddbgdir}/usr/lib
-	mv ${libuuiddir}/usr/lib/debug ${libuuiddbgdir}/usr/lib
+	mkdir -p ${libuuiddbgdir}/$(USRLIB)
+	mv ${libuuiddir}/usr/lib/debug ${libuuiddbgdir}/$(USRLIB)
 	rmdir ${libuuiddir}/usr/lib
 
-	mkdir -p ${libblkiddbgdir}/usr/lib
-	mv ${libblkiddir}/usr/lib/debug ${libblkiddbgdir}/usr/lib
+	mkdir -p ${libblkiddbgdir}/$(USRLIB)
+	mv ${libblkiddir}/usr/lib/debug ${libblkiddbgdir}/$(USRLIB)
 	rmdir ${libblkiddir}/usr/lib
+endif
 endif
 
 	# dpkg symbol handling
@@ -521,16 +615,15 @@ endif
 	done
 endif
 
-	$(INSTALL) -p -m 0644 debian/e2fsprogs.copyright \
-		${debugdir}/usr/share/doc/e2fsprogs-dbg/copyright
+	for i in e2fsprogs e2fsprogs-dbg e2fslibs e2fslibs-dbg; do \
+	   $(INSTALL) -p -m 0644 debian/copyright \
+		${debdir}/$$i/usr/share/doc/$$i/copyright; \
+	done
 
 ifneq ($(UTIL_LINUX_NG),yes)
 	$(INSTALL) -p -m 0644 debian/uuid-runtime.copyright \
 		${uuidruntimedbgdir}/usr/share/doc/uuid-runtime-dbg/copyright
 endif
-
-	$(INSTALL) -p -m 0644 debian/e2fslibs.copyright \
-		${libext2dbgdir}/usr/share/doc/e2fslibs-dbg/copyright
 
 	$(INSTALL) -p -m 0644 debian/libcomerr2.copyright \
 		${libcomerrdbgdir}/usr/share/doc/libcomerr2-dbg/copyright
@@ -549,7 +642,7 @@ endif
 	dh_compress
 
 	dh_makeshlibs -Ne2fsprogs-udeb -Nlibblkid1-udeb -Nlibuuid1-udeb
-	dh_makeshlibs -plibcomerr${COMERR_SOVERSION} \
+	dh_makeshlibs --add-udeb=e2fsprogs-udeb -plibcomerr${COMERR_SOVERSION} \
 		-V 'libcomerr2 (>= 1.33-3)'
 ifneq ($(UTIL_LINUX_NG),yes)
 	dh_makeshlibs -plibblkid${BLKID_SOVERSION} -V 'libblkid1 (>= 1.39-1)'
@@ -596,4 +689,10 @@ endif
 
 binary: binary-indep binary-arch
 
-.PHONY: binary binary-arch binary-indep clean checkroot mrproper debian-files
+.PHONY: binary binary-arch binary-indep clean checkroot mrproper \
+	debug_flags debian-files
+
+debug_flags:
+	@echo CFLAGS is $(CFLAGS)
+	@echo LDFLAGS is $(LDFLAGS)
+	@echo CPPFLAGS is $(CPPFLAGS)

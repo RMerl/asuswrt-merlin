@@ -10,6 +10,7 @@
  */
 
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #if HAVE_UNISTD_H
@@ -25,7 +26,7 @@
 #endif
 
 #include "ext2_fs.h"
-#include "ext2fs.h"
+#include "ext2fsP.h"
 
 struct ext2fs_struct_generic_bitmap {
 	errcode_t	magic;
@@ -37,6 +38,16 @@ struct ext2fs_struct_generic_bitmap {
 	errcode_t	base_error_code;
 	__u32		reserved[7];
 };
+
+#define EXT2FS_IS_32_BITMAP(bmap) \
+	(((bmap)->magic == EXT2_ET_MAGIC_GENERIC_BITMAP) || \
+	 ((bmap)->magic == EXT2_ET_MAGIC_BLOCK_BITMAP) || \
+	 ((bmap)->magic == EXT2_ET_MAGIC_INODE_BITMAP))
+
+#define EXT2FS_IS_64_BITMAP(bmap) \
+	(((bmap)->magic == EXT2_ET_MAGIC_GENERIC_BITMAP64) || \
+	 ((bmap)->magic == EXT2_ET_MAGIC_BLOCK_BITMAP64) || \
+	 ((bmap)->magic == EXT2_ET_MAGIC_INODE_BITMAP64))
 
 /*
  * Used by previously inlined function, so we have to export this and
@@ -160,6 +171,18 @@ void ext2fs_free_generic_bitmap(ext2fs_inode_bitmap bitmap)
 int ext2fs_test_generic_bitmap(ext2fs_generic_bitmap bitmap,
 					blk_t bitno)
 {
+	if (!EXT2FS_IS_32_BITMAP(bitmap)) {
+		if (EXT2FS_IS_64_BITMAP(bitmap)) {
+			ext2fs_warn_bitmap32(bitmap, __func__);
+			return ext2fs_test_generic_bmap(bitmap, bitno);
+		}
+#ifndef OMIT_COM_ERR
+		com_err(0, EXT2_ET_MAGIC_GENERIC_BITMAP,
+			"test_bitmap(%lu)", (unsigned long) bitno);
+#endif
+		return 0;
+	}
+
 	if ((bitno < bitmap->start) || (bitno > bitmap->end)) {
 		ext2fs_warn_bitmap2(bitmap, EXT2FS_TEST_ERROR, bitno);
 		return 0;
@@ -170,6 +193,18 @@ int ext2fs_test_generic_bitmap(ext2fs_generic_bitmap bitmap,
 int ext2fs_mark_generic_bitmap(ext2fs_generic_bitmap bitmap,
 					 __u32 bitno)
 {
+	if (!EXT2FS_IS_32_BITMAP(bitmap)) {
+		if (EXT2FS_IS_64_BITMAP(bitmap)) {
+			ext2fs_warn_bitmap32(bitmap, __func__);
+			return ext2fs_mark_generic_bmap(bitmap, bitno);
+		}
+#ifndef OMIT_COM_ERR
+		com_err(0, EXT2_ET_MAGIC_GENERIC_BITMAP,
+			"mark_bitmap(%lu)", (unsigned long) bitno);
+#endif
+		return 0;
+	}
+
 	if ((bitno < bitmap->start) || (bitno > bitmap->end)) {
 		ext2fs_warn_bitmap2(bitmap, EXT2FS_MARK_ERROR, bitno);
 		return 0;
@@ -180,6 +215,18 @@ int ext2fs_mark_generic_bitmap(ext2fs_generic_bitmap bitmap,
 int ext2fs_unmark_generic_bitmap(ext2fs_generic_bitmap bitmap,
 					   blk_t bitno)
 {
+	if (!EXT2FS_IS_32_BITMAP(bitmap)) {
+		if (EXT2FS_IS_64_BITMAP(bitmap)) {
+			ext2fs_warn_bitmap32(bitmap, __func__);
+			return ext2fs_unmark_generic_bmap(bitmap, bitno);
+		}
+#ifndef OMIT_COM_ERR
+		com_err(0, EXT2_ET_MAGIC_GENERIC_BITMAP,
+			"mark_bitmap(%lu)", (unsigned long) bitno);
+#endif
+		return 0;
+	}
+
 	if ((bitno < bitmap->start) || (bitno > bitmap->end)) {
 		ext2fs_warn_bitmap2(bitmap, EXT2FS_UNMARK_ERROR, bitno);
 		return 0;
@@ -189,18 +236,51 @@ int ext2fs_unmark_generic_bitmap(ext2fs_generic_bitmap bitmap,
 
 __u32 ext2fs_get_generic_bitmap_start(ext2fs_generic_bitmap bitmap)
 {
+	if (!EXT2FS_IS_32_BITMAP(bitmap)) {
+		if (EXT2FS_IS_64_BITMAP(bitmap)) {
+			ext2fs_warn_bitmap32(bitmap, __func__);
+			return ext2fs_get_generic_bmap_start(bitmap);
+		}
+#ifndef OMIT_COM_ERR
+		com_err(0, EXT2_ET_MAGIC_GENERIC_BITMAP,
+			"get_bitmap_start");
+#endif
+		return 0;
+	}
+
 	return bitmap->start;
 }
 
 __u32 ext2fs_get_generic_bitmap_end(ext2fs_generic_bitmap bitmap)
 {
+	if (!EXT2FS_IS_32_BITMAP(bitmap)) {
+		if (EXT2FS_IS_64_BITMAP(bitmap)) {
+			ext2fs_warn_bitmap32(bitmap, __func__);
+			return ext2fs_get_generic_bmap_end(bitmap);
+		}
+#ifndef OMIT_COM_ERR
+		com_err(0, EXT2_ET_MAGIC_GENERIC_BITMAP,
+			"get_bitmap_end");
+#endif
+		return 0;
+	}
 	return bitmap->end;
 }
 
 void ext2fs_clear_generic_bitmap(ext2fs_generic_bitmap bitmap)
 {
-	if (check_magic(bitmap))
+	if (!EXT2FS_IS_32_BITMAP(bitmap)) {
+		if (EXT2FS_IS_64_BITMAP(bitmap)) {
+			ext2fs_warn_bitmap32(bitmap, __func__);
+			ext2fs_clear_generic_bmap(bitmap);
+			return;
+		}
+#ifndef OMIT_COM_ERR
+		com_err(0, EXT2_ET_MAGIC_GENERIC_BITMAP,
+			"clear_generic_bitmap");
+#endif
 		return;
+	}
 
 	memset(bitmap->bitmap, 0,
 	       (size_t) (((bitmap->real_end - bitmap->start) / 8) + 1));
@@ -333,7 +413,7 @@ errcode_t ext2fs_set_generic_bitmap_range(ext2fs_generic_bitmap bmap,
  * Compare @mem to zero buffer by 256 bytes.
  * Return 1 if @mem is zeroed memory, otherwise return 0.
  */
-static int mem_is_zero(const char *mem, size_t len)
+int ext2fs_mem_is_zero(const char *mem, size_t len)
 {
 	static const char zero_buf[256];
 
@@ -421,8 +501,32 @@ static int ext2fs_test_clear_generic_bitmap_range(ext2fs_generic_bitmap bitmap,
 	}
 
 	/* Check whether all bytes are 0 */
-	return mem_is_zero(ADDR + start_byte, len_byte);
+	return ext2fs_mem_is_zero(ADDR + start_byte, len_byte);
 }
+
+errcode_t ext2fs_find_first_zero_generic_bitmap(ext2fs_generic_bitmap bitmap,
+						__u32 start, __u32 end,
+						__u32 *out)
+{
+	blk_t b;
+
+	if (start < bitmap->start || end > bitmap->end || start > end) {
+		ext2fs_warn_bitmap2(bitmap, EXT2FS_TEST_ERROR, start);
+		return EINVAL;
+	}
+
+	while (start <= end) {
+		b = ext2fs_test_bit(start - bitmap->start, bitmap->bitmap);
+		if (!b) {
+			*out = start;
+			return 0;
+		}
+		start++;
+	}
+
+	return ENOENT;
+}
+
 
 int ext2fs_test_block_bitmap_range(ext2fs_block_bitmap bitmap,
 				   blk_t block, int num)
@@ -478,3 +582,4 @@ void ext2fs_unmark_block_bitmap_range(ext2fs_block_bitmap bitmap,
 		ext2fs_fast_clear_bit(block + i - bitmap->start,
 				      bitmap->bitmap);
 }
+

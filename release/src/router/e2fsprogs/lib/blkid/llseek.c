@@ -12,6 +12,7 @@
 #define _LARGEFILE_SOURCE
 #define _LARGEFILE64_SOURCE
 
+#include "config.h"
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif

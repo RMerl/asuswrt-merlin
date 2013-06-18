@@ -44,13 +44,14 @@
  */
 #define EXT2_BAD_INO		 1	/* Bad blocks inode */
 #define EXT2_ROOT_INO		 2	/* Root inode */
-#define EXT2_ACL_IDX_INO	 3	/* ACL inode */
-#define EXT2_ACL_DATA_INO	 4	/* ACL inode */
+#define EXT4_USR_QUOTA_INO	 3	/* User quota inode */
+#define EXT4_GRP_QUOTA_INO	 4	/* Group quota inode */
 #define EXT2_BOOT_LOADER_INO	 5	/* Boot loader inode */
 #define EXT2_UNDEL_DIR_INO	 6	/* Undelete directory inode */
 #define EXT2_RESIZE_INO		 7	/* Reserved group descriptors inode */
 #define EXT2_JOURNAL_INO	 8	/* Journal inode */
 #define EXT2_EXCLUDE_INO	 9	/* The "exclude" inode, for snapshots */
+#define EXT4_REPLICA_INO	10	/* Used by non-upstream feature */
 
 /* First non-reserved inode for old ext2 filesystems */
 #define EXT2_GOOD_OLD_FIRST_INO	11
@@ -98,18 +99,27 @@
 #define EXT2_ADDR_PER_BLOCK(s)	(EXT2_BLOCK_SIZE(s) / sizeof(__u32))
 
 /*
- * Macro-instructions used to manage fragments
+ * Macro-instructions used to manage allocation clusters
  */
-#define EXT2_MIN_FRAG_SIZE		EXT2_MIN_BLOCK_SIZE
-#define EXT2_MAX_FRAG_SIZE		EXT2_MAX_BLOCK_SIZE
-#define EXT2_MIN_FRAG_LOG_SIZE		EXT2_MIN_BLOCK_LOG_SIZE
-#ifdef __KERNEL__
-# define EXT2_FRAG_SIZE(s)		(EXT2_SB(s)->s_frag_size)
-# define EXT2_FRAGS_PER_BLOCK(s)	(EXT2_SB(s)->s_frags_per_block)
-#else
-# define EXT2_FRAG_SIZE(s)		(EXT2_MIN_FRAG_SIZE << (s)->s_log_frag_size)
-# define EXT2_FRAGS_PER_BLOCK(s)	(EXT2_BLOCK_SIZE(s) / EXT2_FRAG_SIZE(s))
-#endif
+#define EXT2_MIN_CLUSTER_LOG_SIZE	EXT2_MIN_BLOCK_LOG_SIZE
+#define EXT2_MAX_CLUSTER_LOG_SIZE	29	/* 512MB  */
+#define EXT2_MIN_CLUSTER_SIZE		EXT2_MIN_BLOCK_SIZE
+#define EXT2_MAX_CLUSTER_SIZE		(1 << EXT2_MAX_CLUSTER_LOG_SIZE)
+#define EXT2_CLUSTER_SIZE(s)		(EXT2_MIN_BLOCK_SIZE << \
+						(s)->s_log_cluster_size)
+#define EXT2_CLUSTER_SIZE_BITS(s)	((s)->s_log_cluster_size + 10)
+
+/*
+ * Macro-instructions used to manage fragments
+ *
+ * Note: for backwards compatibility only, for the dump program.
+ * Ext2/3/4 will never support fragments....
+ */
+#define EXT2_MIN_FRAG_SIZE              EXT2_MIN_BLOCK_SIZE
+#define EXT2_MAX_FRAG_SIZE              EXT2_MAX_BLOCK_SIZE
+#define EXT2_MIN_FRAG_LOG_SIZE          EXT2_MIN_BLOCK_LOG_SIZE
+#define EXT2_FRAG_SIZE(s)		EXT2_BLOCK_SIZE(s)
+#define EXT2_FRAGS_PER_BLOCK(s)		1
 
 /*
  * ACL structures
@@ -145,11 +155,16 @@ struct ext2_group_desc
 	__u16	bg_free_inodes_count;	/* Free inodes count */
 	__u16	bg_used_dirs_count;	/* Directories count */
 	__u16	bg_flags;
-	__u32	bg_reserved[2];
+	__u32	bg_exclude_bitmap_lo;	/* Exclude bitmap for snapshots */
+	__u16	bg_block_bitmap_csum_lo;/* crc32c(s_uuid+grp_num+bitmap) LSB */
+	__u16	bg_inode_bitmap_csum_lo;/* crc32c(s_uuid+grp_num+bitmap) LSB */
 	__u16	bg_itable_unused;	/* Unused inodes count */
 	__u16	bg_checksum;		/* crc16(s_uuid+grouo_num+group_desc)*/
 };
 
+/*
+ * Structure of a blocks group descriptor
+ */
 struct ext4_group_desc
 {
 	__u32	bg_block_bitmap;	/* Blocks bitmap block */
@@ -158,18 +173,23 @@ struct ext4_group_desc
 	__u16	bg_free_blocks_count;	/* Free blocks count */
 	__u16	bg_free_inodes_count;	/* Free inodes count */
 	__u16	bg_used_dirs_count;	/* Directories count */
-	__u16	bg_flags;
-	__u32	bg_reserved[2];
+	__u16	bg_flags;		/* EXT4_BG_flags (INODE_UNINIT, etc) */
+	__u32	bg_exclude_bitmap_lo;	/* Exclude bitmap for snapshots */
+	__u16	bg_block_bitmap_csum_lo;/* crc32c(s_uuid+grp_num+bitmap) LSB */
+	__u16	bg_inode_bitmap_csum_lo;/* crc32c(s_uuid+grp_num+bitmap) LSB */
 	__u16	bg_itable_unused;	/* Unused inodes count */
-	__u16	bg_checksum;		/* crc16(s_uuid+grouo_num+group_desc)*/
+	__u16	bg_checksum;		/* crc16(sb_uuid+group+desc) */
 	__u32	bg_block_bitmap_hi;	/* Blocks bitmap block MSB */
 	__u32	bg_inode_bitmap_hi;	/* Inodes bitmap block MSB */
 	__u32	bg_inode_table_hi;	/* Inodes table block MSB */
 	__u16	bg_free_blocks_count_hi;/* Free blocks count MSB */
 	__u16	bg_free_inodes_count_hi;/* Free inodes count MSB */
 	__u16	bg_used_dirs_count_hi;	/* Directories count MSB */
-	__u16   bg_pad;
-	__u32	bg_reserved2[3];
+	__u16	bg_itable_unused_hi;	/* Unused inodes count MSB */
+	__u32	bg_exclude_bitmap_hi;	/* Exclude bitmap block MSB */
+	__u16	bg_block_bitmap_csum_hi;/* crc32c(s_uuid+grp_num+bitmap) MSB */
+	__u16	bg_inode_bitmap_csum_hi;/* crc32c(s_uuid+grp_num+bitmap) MSB */
+	__u32	bg_reserved;
 };
 
 #define EXT2_BG_INODE_UNINIT	0x0001 /* Inode table/bitmap not initialized */
@@ -228,10 +248,15 @@ struct ext2_dx_countlimit {
 
 #define EXT2_BLOCKS_PER_GROUP(s)	(EXT2_SB(s)->s_blocks_per_group)
 #define EXT2_INODES_PER_GROUP(s)	(EXT2_SB(s)->s_inodes_per_group)
+#define EXT2_CLUSTERS_PER_GROUP(s)	(EXT2_SB(s)->s_clusters_per_group)
 #define EXT2_INODES_PER_BLOCK(s)	(EXT2_BLOCK_SIZE(s)/EXT2_INODE_SIZE(s))
 /* limits imposed by 16-bit value gd_free_{blocks,inode}_count */
-#define EXT2_MAX_BLOCKS_PER_GROUP(s)	((1 << 16) - 8)
-#define EXT2_MAX_INODES_PER_GROUP(s)	((1 << 16) - EXT2_INODES_PER_BLOCK(s))
+#define EXT2_MAX_BLOCKS_PER_GROUP(s)	((((unsigned) 1 << 16) - 8) *	\
+					 (EXT2_CLUSTER_SIZE(s) / \
+					  EXT2_BLOCK_SIZE(s)))
+#define EXT2_MAX_CLUSTERS_PER_GROUP(s)	(((unsigned) 1 << 16) - 8)
+#define EXT2_MAX_INODES_PER_GROUP(s)	(((unsigned) 1 << 16) - \
+					 EXT2_INODES_PER_BLOCK(s))
 #ifdef __KERNEL__
 #define EXT2_DESC_PER_BLOCK(s)		(EXT2_SB(s)->s_desc_per_block)
 #define EXT2_DESC_PER_BLOCK_BITS(s)	(EXT2_SB(s)->s_desc_per_block_bits)
@@ -275,7 +300,8 @@ struct ext2_dx_countlimit {
 #define EXT4_HUGE_FILE_FL               0x00040000 /* Set to each huge file */
 #define EXT4_EXTENTS_FL 		0x00080000 /* Inode uses extents */
 #define EXT4_EA_INODE_FL	        0x00200000 /* Inode used for large EA */
-#define EXT4_EOFBLOCKS_FL		0x00400000 /* Blocks allocated beyond EOF */
+/* EXT4_EOFBLOCKS_FL 0x00400000 was here */
+#define FS_NOCOW_FL			0x00800000 /* Do not cow file */
 #define EXT4_SNAPFILE_FL		0x01000000  /* Inode is a snapshot */
 #define EXT4_SNAPFILE_DELETED_FL	0x04000000  /* Snapshot is being deleted */
 #define EXT4_SNAPFILE_SHRUNK_FL		0x08000000  /* Snapshot shrink has completed */
@@ -322,6 +348,7 @@ struct ext4_new_group_input {
 #define EXT2_IOC_GROUP_EXTEND		_IOW('f', 7, unsigned long)
 #define EXT2_IOC_GROUP_ADD		_IOW('f', 8,struct ext2_new_group_input)
 #define EXT4_IOC_GROUP_ADD		_IOW('f', 8,struct ext4_new_group_input)
+#define EXT4_IOC_RESIZE_FS		_IOW('f', 16, __u64)
 
 /*
  * Structure of an inode on the disk
@@ -349,7 +376,7 @@ struct ext2_inode {
 	__u32	i_block[EXT2_N_BLOCKS];/* Pointers to blocks */
 	__u32	i_generation;	/* File version (for NFS) */
 	__u32	i_file_acl;	/* File ACL */
-	__u32	i_dir_acl;	/* Directory ACL */
+	__u32	i_size_high;	/* Formerly i_dir_acl, directory ACL */
 	__u32	i_faddr;	/* Fragment address */
 	union {
 		struct {
@@ -357,7 +384,8 @@ struct ext2_inode {
 			__u16	l_i_file_acl_high;
 			__u16	l_i_uid_high;	/* these 2 fields    */
 			__u16	l_i_gid_high;	/* were reserved2[0] */
-			__u32	l_i_reserved2;
+			__u16	l_i_checksum_lo; /* crc32c(uuid+inum+inode) */
+			__u16	l_i_reserved;
 		} linux2;
 		struct {
 			__u8	h_i_frag;	/* Fragment number */
@@ -396,7 +424,7 @@ struct ext2_inode_large {
 	__u32	i_block[EXT2_N_BLOCKS];/* Pointers to blocks */
 	__u32	i_generation;	/* File version (for NFS) */
 	__u32	i_file_acl;	/* File ACL */
-	__u32	i_dir_acl;	/* Directory ACL */
+	__u32	i_size_high;	/* Formerly i_dir_acl, directory ACL */
 	__u32	i_faddr;	/* Fragment address */
 	union {
 		struct {
@@ -404,7 +432,8 @@ struct ext2_inode_large {
 			__u16	l_i_file_acl_high;
 			__u16	l_i_uid_high;	/* these 2 fields    */
 			__u16	l_i_gid_high;	/* were reserved2[0] */
-			__u32	l_i_reserved2;
+			__u16	l_i_checksum_lo; /* crc32c(uuid+inum+inode) */
+			__u16	l_i_reserved;
 		} linux2;
 		struct {
 			__u8	h_i_frag;	/* Fragment number */
@@ -416,7 +445,7 @@ struct ext2_inode_large {
 		} hurd2;
 	} osd2;				/* OS dependent 2 */
 	__u16	i_extra_isize;
-	__u16	i_pad1;
+	__u16	i_checksum_hi;	/* crc32c(uuid+inum+inode) */
 	__u32	i_ctime_extra;	/* extra Change time (nsec << 2 | epoch) */
 	__u32	i_mtime_extra;	/* extra Modification time (nsec << 2 | epoch) */
 	__u32	i_atime_extra;	/* extra Access time (nsec << 2 | epoch) */
@@ -425,7 +454,7 @@ struct ext2_inode_large {
 	__u32	i_version_hi;	/* high 32 bits for 64-bit version */
 };
 
-#define i_size_high	i_dir_acl
+#define i_dir_acl	i_size_high
 
 #if defined(__KERNEL__) || defined(__linux__)
 #define i_reserved1	osd1.linux1.l_i_reserved1
@@ -435,7 +464,6 @@ struct ext2_inode_large {
 #define i_gid_low	i_gid
 #define i_uid_high	osd2.linux2.l_i_uid_high
 #define i_gid_high	osd2.linux2.l_i_gid_high
-#define i_reserved2	osd2.linux2.l_i_reserved2
 #else
 #if defined(__GNU__)
 
@@ -518,9 +546,9 @@ struct ext2_super_block {
 	__u32	s_free_inodes_count;	/* Free inodes count */
 	__u32	s_first_data_block;	/* First Data Block */
 	__u32	s_log_block_size;	/* Block size */
-	__s32	s_log_frag_size;	/* Fragment size */
+	__u32	s_log_cluster_size;	/* Allocation cluster size */
 	__u32	s_blocks_per_group;	/* # Blocks per group */
-	__u32	s_frags_per_group;	/* # Fragments per group */
+	__u32	s_clusters_per_group;	/* # Fragments per group */
 	__u32	s_inodes_per_group;	/* # Inodes per group */
 	__u32	s_mtime;		/* Mount time */
 	__u32	s_wtime;		/* Write time */
@@ -588,7 +616,7 @@ struct ext2_super_block {
 	__u16	s_want_extra_isize; 	/* New inodes should reserve # bytes */
 	__u32	s_flags;		/* Miscellaneous flags */
 	__u16   s_raid_stride;		/* RAID stride */
-	__u16   s_mmp_interval;         /* # seconds to wait in MMP checking */
+	__u16   s_mmp_update_interval;  /* # seconds to wait in MMP checking */
 	__u64   s_mmp_block;            /* Block for multi-mount protection */
 	__u32   s_raid_stripe_width;    /* blocks on all data disks (N*stride)*/
 	__u8	s_log_groups_per_flex;	/* FLEX_BG group size */
@@ -614,7 +642,11 @@ struct ext2_super_block {
 	__u8	s_last_error_func[32];	/* function where the error happened */
 #define EXT4_S_ERR_END ext4_offsetof(struct ext2_super_block, s_mount_opts)
 	__u8	s_mount_opts[64];
-	__u32   s_reserved[112];        /* Padding to the end of the block */
+	__u32	s_usr_quota_inum;	/* inode number of user quota file */
+	__u32	s_grp_quota_inum;	/* inode number of group quota file */
+	__u32	s_overhead_blocks;	/* overhead blocks/clusters in fs */
+	__u32   s_reserved[108];        /* Padding to the end of the block */
+	__u32	s_checksum;		/* crc32c(superblock) */
 };
 
 #define EXT4_S_ERR_LEN (EXT4_S_ERR_END - EXT4_S_ERR_START)
@@ -662,7 +694,9 @@ struct ext2_super_block {
 #define EXT2_FEATURE_COMPAT_RESIZE_INODE	0x0010
 #define EXT2_FEATURE_COMPAT_DIR_INDEX		0x0020
 #define EXT2_FEATURE_COMPAT_LAZY_BG		0x0040
-#define EXT2_FEATURE_COMPAT_EXCLUDE_INODE	0x0080
+/* #define EXT2_FEATURE_COMPAT_EXCLUDE_INODE	0x0080 not used, legacy */
+#define EXT2_FEATURE_COMPAT_EXCLUDE_BITMAP	0x0100
+
 
 #define EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER	0x0001
 #define EXT2_FEATURE_RO_COMPAT_LARGE_FILE	0x0002
@@ -672,6 +706,10 @@ struct ext2_super_block {
 #define EXT4_FEATURE_RO_COMPAT_DIR_NLINK	0x0020
 #define EXT4_FEATURE_RO_COMPAT_EXTRA_ISIZE	0x0040
 #define EXT4_FEATURE_RO_COMPAT_HAS_SNAPSHOT	0x0080
+#define EXT4_FEATURE_RO_COMPAT_QUOTA		0x0100
+#define EXT4_FEATURE_RO_COMPAT_BIGALLOC		0x0200
+#define EXT4_FEATURE_RO_COMPAT_METADATA_CSUM	0x0400
+#define EXT4_FEATURE_RO_COMPAT_REPLICA		0x0800
 
 #define EXT2_FEATURE_INCOMPAT_COMPRESSION	0x0001
 #define EXT2_FEATURE_INCOMPAT_FILETYPE		0x0002
@@ -684,10 +722,13 @@ struct ext2_super_block {
 #define EXT4_FEATURE_INCOMPAT_FLEX_BG		0x0200
 #define EXT4_FEATURE_INCOMPAT_EA_INODE		0x0400
 #define EXT4_FEATURE_INCOMPAT_DIRDATA		0x1000
-
+/* 0x2000 was EXT4_FEATURE_INCOMPAT_BG_USE_META_CSUM but this was never used */
+#define EXT4_FEATURE_INCOMPAT_LARGEDIR		0x4000 /* >2GB or 3-lvl htree */
+#define EXT4_FEATURE_INCOMPAT_INLINEDATA	0x8000 /* data in inode */
 
 #define EXT2_FEATURE_COMPAT_SUPP	0
-#define EXT2_FEATURE_INCOMPAT_SUPP	(EXT2_FEATURE_INCOMPAT_FILETYPE)
+#define EXT2_FEATURE_INCOMPAT_SUPP    (EXT2_FEATURE_INCOMPAT_FILETYPE| \
+				       EXT4_FEATURE_INCOMPAT_MMP)
 #define EXT2_FEATURE_RO_COMPAT_SUPP	(EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER| \
 					 EXT2_FEATURE_RO_COMPAT_LARGE_FILE| \
 					 EXT4_FEATURE_RO_COMPAT_DIR_NLINK| \
@@ -768,28 +809,52 @@ struct ext2_dir_entry_2 {
 					 ~EXT2_DIR_ROUND)
 
 /*
- * This structure will be used for multiple mount protection. It will be
- * written into the block number saved in the s_mmp_block field in the
- * superblock.
+ * This structure is used for multiple mount protection. It is written
+ * into the block number saved in the s_mmp_block field in the superblock.
+ * Programs that check MMP should assume that if SEQ_FSCK (or any unknown
+ * code above SEQ_MAX) is present then it is NOT safe to use the filesystem,
+ * regardless of how old the timestamp is.
+ *
+ * The timestamp in the MMP structure will be updated by e2fsck at some
+ * arbitary intervals (start of passes, after every few groups of inodes
+ * in pass1 and pass1b).  There is no guarantee that e2fsck is updating
+ * the MMP block in a timely manner, and the updates it does are purely
+ * for the convenience of the sysadmin and not for automatic validation.
+ *
+ * Note: Only the mmp_seq value is used to determine whether the MMP block
+ *	is being updated.  The mmp_time, mmp_nodename, and mmp_bdevname
+ *	fields are only for informational purposes for the administrator,
+ *	due to clock skew between nodes and hostname HA service takeover.
  */
-#define	EXT2_MMP_MAGIC    0x004D4D50 /* ASCII for MMP */
-#define	EXT2_MMP_CLEAN    0xFF4D4D50 /* Value of mmp_seq for clean unmount */
-#define	EXT2_MMP_FSCK_ON  0xE24D4D50 /* Value of mmp_seq when being fscked */
+#define EXT4_MMP_MAGIC     0x004D4D50U /* ASCII for MMP */
+#define EXT4_MMP_SEQ_CLEAN 0xFF4D4D50U /* mmp_seq value for clean unmount */
+#define EXT4_MMP_SEQ_FSCK  0xE24D4D50U /* mmp_seq value when being fscked */
+#define EXT4_MMP_SEQ_MAX   0xE24D4D4FU /* maximum valid mmp_seq value */
 
 struct mmp_struct {
-	__u32	mmp_magic;
-	__u32	mmp_seq;
-	__u64	mmp_time;
-	char	mmp_nodename[64];
-	char	mmp_bdevname[32];
-	__u16	mmp_interval;
+	__u32	mmp_magic;		/* Magic number for MMP */
+	__u32	mmp_seq;		/* Sequence no. updated periodically */
+	__u64	mmp_time;		/* Time last updated */
+	char	mmp_nodename[64];	/* Node which last updated MMP block */
+	char	mmp_bdevname[32];	/* Bdev which last updated MMP block */
+	__u16	mmp_check_interval;	/* Changed mmp_check_interval */
 	__u16	mmp_pad1;
-	__u32	mmp_pad2;
+	__u32	mmp_pad2[227];
 };
 
 /*
- * Interval in number of seconds to update the MMP sequence number.
+ * Default interval for MMP update in seconds.
  */
-#define EXT2_MMP_DEF_INTERVAL	5
+#define EXT4_MMP_UPDATE_INTERVAL	5
+
+/*
+ * Maximum interval for MMP update in seconds.
+ */
+#define EXT4_MMP_MAX_UPDATE_INTERVAL	300
+
+/*
+ * Minimum interval for MMP checking in seconds.
+ */
+#define EXT4_MMP_MIN_CHECK_INTERVAL     5
 
 #endif	/* _LINUX_EXT2_FS_H */

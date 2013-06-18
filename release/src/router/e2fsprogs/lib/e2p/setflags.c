@@ -16,6 +16,7 @@
  * 93/10/30	- Creation
  */
 
+#include "config.h"
 #if HAVE_ERRNO_H
 #include <errno.h>
 #endif
@@ -38,7 +39,6 @@
 
 int setflags (int fd, unsigned long flags)
 {
-	struct stat buf;
 #if HAVE_CHFLAGS
 	unsigned long bsd_flags = 0;
 
@@ -56,8 +56,9 @@ int setflags (int fd, unsigned long flags)
 #endif
 
 	return fchflags (fd, bsd_flags);
-#else
+#else /* ! HAVE_CHFLAGS */
 #if HAVE_EXT2_IOCTLS
+	struct stat buf;
 	int	f;
 
 	if (!fstat(fd, &buf) &&
@@ -66,9 +67,11 @@ int setflags (int fd, unsigned long flags)
 		return -1;
 	}
 	f = (int) flags;
-	return ioctl (fd, EXT2_IOC_SETFLAGS, &f);
-#endif /* HAVE_EXT2_IOCTLS */
-#endif
+
+	return ioctl(fd, EXT2_IOC_SETFLAGS, &f);
+#else
 	errno = EOPNOTSUPP;
 	return -1;
+#endif /* HAVE_EXT2_IOCTLS */
+#endif /* HAVE_CHFLAGS */
 }

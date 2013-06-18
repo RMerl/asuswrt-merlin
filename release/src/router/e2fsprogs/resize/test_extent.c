@@ -12,6 +12,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include "resize2fs.h"
 
 void do_test(FILE *in, FILE *out);
@@ -20,8 +21,8 @@ void do_test(FILE *in, FILE *out)
 {
 	char		buf[128];
 	char		*cp, *cmd, *arg1, *arg2;
-	__u32		num1, num2;
-	int		size;
+	__u64		num1, num2;
+	__u64		size;
 	errcode_t	retval;
 	ext2_extent	extent = 0;
 	const char	*no_table = "# No extent table\n";
@@ -87,7 +88,7 @@ void do_test(FILE *in, FILE *out)
 				goto handle_error;
 		} else if (!strcmp(cmd, "lookup")) {
 			num2 = ext2fs_extent_translate(extent, num1);
-			fprintf(out, "# Answer: %u%s\n", num2,
+			fprintf(out, "# Answer: %llu%s\n", num2,
 				num2 ? "" : " (not found)");
 		} else if (!strcmp(cmd, "dump")) {
 			ext2fs_extent_dump(extent, out);
@@ -102,7 +103,7 @@ void do_test(FILE *in, FILE *out)
 					goto handle_error;
 				if (!size)
 					break;
-				fprintf(out, "# %u -> %u (%d)\n",
+				fprintf(out, "# %llu -> %llu (%llu)\n",
 					num1, num2, size);
 			}
 		} else

@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,6 +41,8 @@ static struct feature feature_list[] = {
 			"resize_inode" },
 	{	E2P_FEATURE_COMPAT, EXT2_FEATURE_COMPAT_LAZY_BG,
 			"lazy_bg" },
+	{	E2P_FEATURE_COMPAT, EXT2_FEATURE_COMPAT_EXCLUDE_BITMAP,
+			"snapshot_bitmap" },
 
 	{	E2P_FEATURE_RO_INCOMPAT, EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER,
 			"sparse_super" },
@@ -55,6 +58,14 @@ static struct feature feature_list[] = {
 			"dir_nlink" },
 	{	E2P_FEATURE_RO_INCOMPAT, EXT4_FEATURE_RO_COMPAT_EXTRA_ISIZE,
 			"extra_isize" },
+	{	E2P_FEATURE_RO_INCOMPAT, EXT4_FEATURE_RO_COMPAT_QUOTA,
+			"quota" },
+	{	E2P_FEATURE_RO_INCOMPAT, EXT4_FEATURE_RO_COMPAT_BIGALLOC,
+			"bigalloc"},
+	{	E2P_FEATURE_RO_INCOMPAT, EXT4_FEATURE_RO_COMPAT_METADATA_CSUM,
+			"metadata_csum"},
+	{	E2P_FEATURE_RO_INCOMPAT, EXT4_FEATURE_RO_COMPAT_REPLICA,
+			"replica" },
 
 	{	E2P_FEATURE_INCOMPAT, EXT2_FEATURE_INCOMPAT_COMPRESSION,
 			"compression" },
@@ -72,8 +83,18 @@ static struct feature feature_list[] = {
 			"meta_bg" },
 	{	E2P_FEATURE_INCOMPAT, EXT4_FEATURE_INCOMPAT_64BIT,
 			"64bit" },
+	{       E2P_FEATURE_INCOMPAT, EXT4_FEATURE_INCOMPAT_MMP,
+			"mmp" },
 	{       E2P_FEATURE_INCOMPAT, EXT4_FEATURE_INCOMPAT_FLEX_BG,
-                        "flex_bg"},
+			"flex_bg"},
+	{       E2P_FEATURE_INCOMPAT, EXT4_FEATURE_INCOMPAT_EA_INODE,
+			"ea_inode"},
+	{       E2P_FEATURE_INCOMPAT, EXT4_FEATURE_INCOMPAT_DIRDATA,
+			"dirdata"},
+	{       E2P_FEATURE_INCOMPAT, EXT4_FEATURE_INCOMPAT_LARGEDIR,
+			"large_dir"},
+	{       E2P_FEATURE_INCOMPAT, EXT4_FEATURE_INCOMPAT_INLINEDATA,
+			"inline_data"},
 	{	0, 0, 0 },
 };
 
@@ -83,6 +104,8 @@ static struct feature jrnl_feature_list[] = {
 
        {       E2P_FEATURE_INCOMPAT, JFS_FEATURE_INCOMPAT_REVOKE,
                        "journal_incompat_revoke" },
+       {       E2P_FEATURE_INCOMPAT, JFS_FEATURE_INCOMPAT_64BIT,
+                       "journal_64bit" },
        {       E2P_FEATURE_INCOMPAT, JFS_FEATURE_INCOMPAT_ASYNC_COMMIT,
                        "journal_async_commit" },
        {       0, 0, 0 },
@@ -299,6 +322,7 @@ int e2p_edit_feature2(const char *str, __u32 *compat_array, __u32 *ok_array,
 		case '-':
 		case '^':
 			neg++;
+			/* fallthrough */
 		case '+':
 			cp++;
 			break;

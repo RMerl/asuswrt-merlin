@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -40,23 +41,73 @@
 
 extern e2fsck_t e2fsck_global_ctx;   /* Try your very best not to use this! */
 
+#include <stdarg.h>
+#include <time.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
 void fatal_error(e2fsck_t ctx, const char *msg)
 {
+	ext2_filsys fs = ctx->fs;
+	int exit_value = FSCK_ERROR;
+
 	if (msg)
 		fprintf (stderr, "e2fsck: %s\n", msg);
-	if (ctx->fs && ctx->fs->io) {
+	if (!fs)
+		goto out;
+	if (fs->io) {
+		ext2fs_mmp_stop(ctx->fs);
 		if (ctx->fs->io->magic == EXT2_ET_MAGIC_IO_CHANNEL)
 			io_channel_flush(ctx->fs->io);
 		else
-			fprintf(stderr, "e2fsck: io manager magic bad!\n");
+			log_err(ctx, "e2fsck: io manager magic bad!\n");
 	}
+	if (ext2fs_test_changed(fs)) {
+		exit_value |= FSCK_NONDESTRUCT;
+		log_out(ctx, _("\n%s: ***** FILE SYSTEM WAS MODIFIED *****\n"),
+			ctx->device_name);
+		if (ctx->mount_flags & EXT2_MF_ISROOT)
+			exit_value |= FSCK_REBOOT;
+	}
+	if (!ext2fs_test_valid(fs)) {
+		log_out(ctx, _("\n%s: ********** WARNING: Filesystem still has "
+			       "errors **********\n\n"), ctx->device_name);
+		exit_value |= FSCK_UNCORRECTED;
+		exit_value &= ~FSCK_NONDESTRUCT;
+	}
+out:
 	ctx->flags |= E2F_FLAG_ABORT;
 	if (ctx->flags & E2F_FLAG_SETJMP_OK)
 		longjmp(ctx->abort_loc, 1);
-	exit(FSCK_ERROR);
+	exit(exit_value);
+}
+
+void log_out(e2fsck_t ctx, const char *fmt, ...)
+{
+	va_list pvar;
+
+	va_start(pvar, fmt);
+	vprintf(fmt, pvar);
+	va_end(pvar);
+	if (ctx->logf) {
+		va_start(pvar, fmt);
+		vfprintf(ctx->logf, fmt, pvar);
+		va_end(pvar);
+	}
+}
+
+void log_err(e2fsck_t ctx, const char *fmt, ...)
+{
+	va_list pvar;
+
+	va_start(pvar, fmt);
+	vfprintf(stderr, fmt, pvar);
+	va_end(pvar);
+	if (ctx->logf) {
+		va_start(pvar, fmt);
+		vfprintf(ctx->logf, fmt, pvar);
+		va_end(pvar);
+	}
 }
 
 void *e2fsck_allocate_memory(e2fsck_t ctx, unsigned int size,
@@ -70,7 +121,8 @@ void *e2fsck_allocate_memory(e2fsck_t ctx, unsigned int size,
 #endif
 	ret = malloc(size);
 	if (!ret) {
-		sprintf(buf, "Can't allocate %s\n", description);
+		sprintf(buf, "Can't allocate %u bytes for %s\n",
+			size, description);
 		fatal_error(ctx, buf);
 	}
 	memset(ret, 0, size);
@@ -131,7 +183,7 @@ static int read_a_char(void)
 }
 #endif
 
-int ask_yn(const char * string, int def)
+int ask_yn(e2fsck_t ctx, const char * string, int def)
 {
 	int		c;
 	const char	*defstr;
@@ -155,7 +207,7 @@ int ask_yn(const char * string, int def)
 		defstr = _(_("<n>"));
 	else
 		defstr = _(" (y/n)");
-	printf("%s%s? ", string, defstr);
+	log_out(ctx, "%s%s? ", string, defstr);
 	while (1) {
 		fflush (stdout);
 		if ((c = read_a_char()) == EOF)
@@ -164,12 +216,11 @@ int ask_yn(const char * string, int def)
 #ifdef HAVE_TERMIOS_H
 			tcsetattr (0, TCSANOW, &termios);
 #endif
-			if (e2fsck_global_ctx &&
-			    e2fsck_global_ctx->flags & E2F_FLAG_SETJMP_OK) {
-				puts("\n");
+			if (ctx->flags & E2F_FLAG_SETJMP_OK) {
+				log_out(ctx, "\n");
 				longjmp(e2fsck_global_ctx->abort_loc, 1);
 			}
-			puts(_("cancelled!\n"));
+			log_out(ctx, _("cancelled!\n"));
 			return 0;
 		}
 		if (strchr(short_yes, (char) c)) {
@@ -180,13 +231,13 @@ int ask_yn(const char * string, int def)
 			def = 0;
 			break;
 		}
-		else if ((c == ' ' || c == '\n') && (def != -1))
+		else if ((c == 27 || c == ' ' || c == '\n') && (def != -1))
 			break;
 	}
 	if (def)
-		puts(_("yes\n"));
+		log_out(ctx, _("yes\n"));
 	else
-		puts (_("no\n"));
+		log_out(ctx, _("no\n"));
 #ifdef HAVE_TERMIOS_H
 	tcsetattr (0, TCSANOW, &termios);
 #endif
@@ -196,18 +247,18 @@ int ask_yn(const char * string, int def)
 int ask (e2fsck_t ctx, const char * string, int def)
 {
 	if (ctx->options & E2F_OPT_NO) {
-		printf (_("%s? no\n\n"), string);
+		log_out(ctx, _("%s? no\n\n"), string);
 		return 0;
 	}
 	if (ctx->options & E2F_OPT_YES) {
-		printf (_("%s? yes\n\n"), string);
+		log_out(ctx, _("%s? yes\n\n"), string);
 		return 1;
 	}
 	if (ctx->options & E2F_OPT_PREEN) {
-		printf ("%s? %s\n\n", string, def ? _("yes") : _("no"));
+		log_out(ctx, "%s? %s\n\n", string, def ? _("yes") : _("no"));
 		return def;
 	}
-	return ask_yn(string, def);
+	return ask_yn(ctx, string, def);
 }
 
 void e2fsck_read_bitmaps(e2fsck_t ctx)
@@ -215,6 +266,7 @@ void e2fsck_read_bitmaps(e2fsck_t ctx)
 	ext2_filsys fs = ctx->fs;
 	errcode_t	retval;
 	const char	*old_op;
+	unsigned int	save_type;
 
 	if (ctx->invalid_bitmaps) {
 		com_err(ctx->program_name, 0,
@@ -224,7 +276,10 @@ void e2fsck_read_bitmaps(e2fsck_t ctx)
 	}
 
 	old_op = ehandler_operation(_("reading inode and block bitmaps"));
+	e2fsck_set_bitmap_type(fs, EXT2FS_BMAP64_RBTREE, "fs_bitmaps",
+			       &save_type);
 	retval = ext2fs_read_bitmaps(fs);
+	fs->default_bitmap_type = save_type;
 	ehandler_operation(old_op);
 	if (retval) {
 		com_err(ctx->program_name, retval,
@@ -257,7 +312,7 @@ void preenhalt(e2fsck_t ctx)
 
 	if (!(ctx->options & E2F_OPT_PREEN))
 		return;
-	fprintf(stderr, _("\n\n%s: UNEXPECTED INCONSISTENCY; "
+	log_err(ctx, _("\n\n%s: UNEXPECTED INCONSISTENCY; "
 		"RUN fsck MANUALLY.\n\t(i.e., without -a or -p options)\n"),
 	       ctx->device_name);
 	ctx->flags |= E2F_FLAG_EXITING;
@@ -332,30 +387,30 @@ void print_resource_track(e2fsck_t ctx, const char *desc,
 	gettimeofday(&time_end, 0);
 
 	if (desc)
-		printf("%s: ", desc);
+		log_out(ctx, "%s: ", desc);
 
 #ifdef HAVE_MALLINFO
 #define kbytes(x)	(((unsigned long)(x) + 1023) / 1024)
 
 	malloc_info = mallinfo();
-	printf(_("Memory used: %luk/%luk (%luk/%luk), "),
-	       kbytes(malloc_info.arena), kbytes(malloc_info.hblkhd),
-	       kbytes(malloc_info.uordblks), kbytes(malloc_info.fordblks));
+	log_out(ctx, _("Memory used: %luk/%luk (%luk/%luk), "),
+		kbytes(malloc_info.arena), kbytes(malloc_info.hblkhd),
+		kbytes(malloc_info.uordblks), kbytes(malloc_info.fordblks));
 #else
-	printf(_("Memory used: %lu, "),
-	       (unsigned long) (((char *) sbrk(0)) - 
-				((char *) track->brk_start)));
+	log_out(ctx, _("Memory used: %lu, "),
+		(unsigned long) (((char *) sbrk(0)) -
+				 ((char *) track->brk_start)));
 #endif
 #ifdef HAVE_GETRUSAGE
 	getrusage(RUSAGE_SELF, &r);
 
-	printf(_("time: %5.2f/%5.2f/%5.2f\n"),
-	       timeval_subtract(&time_end, &track->time_start),
-	       timeval_subtract(&r.ru_utime, &track->user_start),
-	       timeval_subtract(&r.ru_stime, &track->system_start));
+	log_out(ctx, _("time: %5.2f/%5.2f/%5.2f\n"),
+		timeval_subtract(&time_end, &track->time_start),
+		timeval_subtract(&r.ru_utime, &track->user_start),
+		timeval_subtract(&r.ru_stime, &track->system_start));
 #else
-	printf(_("elapsed time: %6.3f\n"),
-	       timeval_subtract(&time_end, &track->time_start));
+	log_out(ctx, _("elapsed time: %6.3f\n"),
+		timeval_subtract(&time_end, &track->time_start));
 #endif
 #define mbytes(x)	(((x) + 1048575) / 1048576)
 	if (channel && channel->manager && channel->manager->get_stats) {
@@ -364,7 +419,7 @@ void print_resource_track(e2fsck_t ctx, const char *desc,
 		unsigned long long bytes_written = 0;
 
 		if (desc)
-			printf("%s: ", desc);
+			log_out(ctx, "%s: ", desc);
 
 		channel->manager->get_stats(channel, &delta);
 		if (delta) {
@@ -372,10 +427,11 @@ void print_resource_track(e2fsck_t ctx, const char *desc,
 			bytes_written = delta->bytes_written -
 				track->bytes_written;
 		}
-		printf("I/O read: %lluMB, write: %lluMB, rate: %.2fMB/s\n",
-		       mbytes(bytes_read), mbytes(bytes_written),
-		       (double)mbytes(bytes_read + bytes_written) /
-		       timeval_subtract(&time_end, &track->time_start));
+		log_out(ctx, "I/O read: %lluMB, write: %lluMB, "
+			"rate: %.2fMB/s\n",
+			mbytes(bytes_read), mbytes(bytes_written),
+			(double)mbytes(bytes_read + bytes_written) /
+			timeval_subtract(&time_end, &track->time_start));
 	}
 }
 #endif /* RESOURCE_TRACK */
@@ -492,7 +548,7 @@ blk_t get_backup_sb(e2fsck_t ctx, ext2_filsys fs, const char *name,
 		if (blocksize == 1024)
 			superblock++;
 		io_channel_set_blksize(io, blocksize);
-		if (io_channel_read_blk(io, superblock,
+		if (io_channel_read_blk64(io, superblock,
 					-SUPERBLOCK_SIZE, buf))
 			continue;
 #ifdef WORDS_BIGENDIAN
@@ -561,7 +617,7 @@ int ext2_file_type(unsigned int mode)
 errcode_t e2fsck_zero_blocks(ext2_filsys fs, blk_t blk, int num,
 			     blk_t *ret_blk, int *ret_count)
 {
-	int		j, count, next_update, next_update_incr;
+	int		j, count;
 	static char	*buf;
 	errcode_t	retval;
 
@@ -584,15 +640,11 @@ errcode_t e2fsck_zero_blocks(ext2_filsys fs, blk_t blk, int num,
 		memset(buf, 0, fs->blocksize * STRIDE_LENGTH);
 	}
 	/* OK, do the write loop */
-	next_update = 0;
-	next_update_incr = num / 100;
-	if (next_update_incr < 1)
-		next_update_incr = 1;
 	for (j = 0; j < num; j += STRIDE_LENGTH, blk += STRIDE_LENGTH) {
 		count = num - j;
 		if (count > STRIDE_LENGTH)
 			count = STRIDE_LENGTH;
-		retval = io_channel_write_blk(fs->io, blk, count, buf);
+		retval = io_channel_write_blk64(fs->io, blk, count, buf);
 		if (retval) {
 			if (ret_count)
 				*ret_count = count;
@@ -708,4 +760,86 @@ int write_all(int fd, char *buf, size_t count)
 		c += ret;
 	}
 	return c;
+}
+
+void dump_mmp_msg(struct mmp_struct *mmp, const char *msg)
+{
+
+	if (msg)
+		printf("MMP check failed: %s\n", msg);
+	if (mmp) {
+		time_t t = mmp->mmp_time;
+
+		printf("MMP error info: last update: %s node: %s device: %s\n",
+		       ctime(&t), mmp->mmp_nodename, mmp->mmp_bdevname);
+	}
+}
+
+errcode_t e2fsck_mmp_update(ext2_filsys fs)
+{
+	errcode_t retval;
+
+	retval = ext2fs_mmp_update(fs);
+	if (retval == EXT2_ET_MMP_CHANGE_ABORT)
+		dump_mmp_msg(fs->mmp_cmp,
+			     _("UNEXPECTED INCONSISTENCY: the filesystem is "
+			       "being modified while fsck is running.\n"));
+
+	return retval;
+}
+
+void e2fsck_set_bitmap_type(ext2_filsys fs, unsigned int default_type,
+			    const char *profile_name, unsigned int *old_type)
+{
+	unsigned type;
+
+	if (old_type)
+		*old_type = fs->default_bitmap_type;
+	profile_get_uint(e2fsck_global_ctx->profile, "bitmaps",
+			 profile_name, 0, default_type, &type);
+	profile_get_uint(e2fsck_global_ctx->profile, "bitmaps",
+			 "all", 0, type, &type);
+	fs->default_bitmap_type = type ? type : default_type;
+}
+
+errcode_t e2fsck_allocate_inode_bitmap(ext2_filsys fs, const char *descr,
+				       int deftype,
+				       const char *name,
+				       ext2fs_inode_bitmap *ret)
+{
+	errcode_t	retval;
+	unsigned int	save_type;
+
+	e2fsck_set_bitmap_type(fs, deftype, name, &save_type);
+	retval = ext2fs_allocate_inode_bitmap(fs, descr, ret);
+	fs->default_bitmap_type = save_type;
+	return retval;
+}
+
+errcode_t e2fsck_allocate_block_bitmap(ext2_filsys fs, const char *descr,
+				       int deftype,
+				       const char *name,
+				       ext2fs_block_bitmap *ret)
+{
+	errcode_t	retval;
+	unsigned int	save_type;
+
+	e2fsck_set_bitmap_type(fs, deftype, name, &save_type);
+	retval = ext2fs_allocate_block_bitmap(fs, descr, ret);
+	fs->default_bitmap_type = save_type;
+	return retval;
+}
+
+errcode_t e2fsck_allocate_subcluster_bitmap(ext2_filsys fs, const char *descr,
+					    int deftype,
+					    const char *name,
+					    ext2fs_block_bitmap *ret)
+{
+	errcode_t	retval;
+	unsigned int	save_type;
+
+	e2fsck_set_bitmap_type(fs, deftype, name, &save_type);
+	retval = ext2fs_allocate_subcluster_bitmap(fs, descr, ret);
+	fs->default_bitmap_type = save_type;
+	return retval;
 }

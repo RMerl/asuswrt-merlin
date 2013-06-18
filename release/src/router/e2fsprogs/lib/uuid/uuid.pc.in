@@ -7,5 +7,5 @@ Name: uuid
 Description: Universally unique id library
 Version: @E2FSPROGS_VERSION@
 Requires: 
-Cflags: -I${includedir}/uuid
+Cflags: -I${includedir}/uuid -I${includedir}
 Libs: -L${libdir} -luuid

@@ -13,6 +13,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -248,7 +249,7 @@ static int linux_version_code()
 {
 #ifdef __linux__
 	struct utsname	ut;
-	static		version_code = -1;
+	static int	version_code = -1;
 	int		major, minor, rev;
 	char		*endptr;
 	const char 	*cp;
@@ -1162,7 +1163,8 @@ static int probe_hfs(struct blkid_probe *probe __BLKID_ATTR((unused)),
 			 struct blkid_magic *id __BLKID_ATTR((unused)),
 			 unsigned char *buf)
 {
-	struct hfs_mdb *hfs = (struct hfs_mdb *) buf;
+	struct hfs_mdb *hfs = (struct hfs_mdb *)buf;
+	unsigned long long *uuid_ptr;
 	char	uuid_str[17];
 	__u64	uuid;
 
@@ -1170,12 +1172,13 @@ static int probe_hfs(struct blkid_probe *probe __BLKID_ATTR((unused)),
 	    (memcmp(hfs->embed_sig, "HX", 2) == 0))
 		return 1;	/* Not hfs, but an embedded HFS+ */
 
-	uuid = blkid_le64(*((unsigned long long *) hfs->finder_info.id));
+	uuid_ptr = (unsigned long long *)hfs->finder_info.id;
+	uuid = blkid_le64(*uuid_ptr);
 	if (uuid) {
 		sprintf(uuid_str, "%016llX", uuid);
 		blkid_set_tag(probe->dev, "UUID", uuid_str, 0);
 	}
-	blkid_set_tag(probe->dev, "LABEL", hfs->label, hfs->label_len);
+	blkid_set_tag(probe->dev, "LABEL", (char *)hfs->label, hfs->label_len);
 	return 0;
 }
 
@@ -1204,9 +1207,10 @@ static int probe_hfsplus(struct blkid_probe *probe,
 	unsigned int leaf_node_size;
 	unsigned int leaf_block;
 	unsigned int label_len;
-	int ext;
+	unsigned long long *uuid_ptr;
 	__u64 leaf_off, uuid;
 	char	uuid_str[17], label[512];
+	int ext;
 
 	/* Check for a HFS+ volume embedded in a HFS volume */
 	if (memcmp(sbd->signature, "BD", 2) == 0) {
@@ -1234,7 +1238,8 @@ static int probe_hfsplus(struct blkid_probe *probe,
 	    (memcmp(hfsplus->signature, "HX", 2) != 0))
 		return 1;
 
-	uuid = blkid_le64(*((unsigned long long *) hfsplus->finder_info.id));
+	uuid_ptr = (unsigned long long *)hfsplus->finder_info.id;
+	uuid = blkid_le64(*uuid_ptr);
 	if (uuid) {
 		sprintf(uuid_str, "%016llX", uuid);
 		blkid_set_tag(probe->dev, "UUID", uuid_str, 0);
@@ -1296,7 +1301,8 @@ static int probe_hfsplus(struct blkid_probe *probe,
 		return 0;
 
 	label_len = blkid_be16(key->unicode_len) * 2;
-	unicode_16be_to_utf8(label, sizeof(label), key->unicode, label_len);
+	unicode_16be_to_utf8((unsigned char *)label, sizeof(label),
+			     key->unicode, label_len);
 	blkid_set_tag(probe->dev, "LABEL", label, 0);
 	return 0;
 }

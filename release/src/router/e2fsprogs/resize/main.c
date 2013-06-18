@@ -15,6 +15,7 @@
 #define _LARGEFILE_SOURCE
 #define _LARGEFILE64_SOURCE
 
+#include "config.h"
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #else
@@ -101,7 +102,7 @@ static void determine_fs_stride(ext2_filsys fs)
 {
 	unsigned int	group;
 	unsigned long long sum;
-	unsigned int	has_sb, prev_has_sb, num;
+	unsigned int	has_sb, prev_has_sb = 0, num;
 	int		i_stride, b_stride;
 
 	if (fs->stride)
@@ -111,11 +112,11 @@ static void determine_fs_stride(ext2_filsys fs)
 		has_sb = ext2fs_bg_has_super(fs, group);
 		if (group == 0 || has_sb != prev_has_sb)
 			goto next;
-		b_stride = fs->group_desc[group].bg_block_bitmap -
-			fs->group_desc[group-1].bg_block_bitmap -
+		b_stride = ext2fs_block_bitmap_loc(fs, group) -
+			ext2fs_block_bitmap_loc(fs, group - 1) -
 			fs->super->s_blocks_per_group;
-		i_stride = fs->group_desc[group].bg_inode_bitmap -
-			fs->group_desc[group-1].bg_inode_bitmap -
+		i_stride = ext2fs_inode_bitmap_loc(fs, group) -
+			ext2fs_inode_bitmap_loc(fs, group - 1) -
 			fs->super->s_blocks_per_group;
 		if (b_stride != i_stride ||
 		    b_stride < 0)
@@ -146,6 +147,18 @@ static void determine_fs_stride(ext2_filsys fs)
 #endif
 }
 
+static bigalloc_check(ext2_filsys fs, int force)
+{
+	if (!force && EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
+				EXT4_FEATURE_RO_COMPAT_BIGALLOC)) {
+		fprintf(stderr, _("\nResizing bigalloc file systems has "
+				  "not been fully tested.  Proceed\n"
+				  "at your own risk!  Use the force option "
+				  "if you want to go ahead anyway.\n\n"));
+		exit(1);
+	}
+}
+
 int main (int argc, char ** argv)
 {
 	errcode_t	retval;
@@ -158,17 +171,13 @@ int main (int argc, char ** argv)
 	int		force_min_size = 0;
 	int		print_min_size = 0;
 	int		fd, ret;
-	blk_t		new_size = 0;
+	blk64_t		new_size = 0;
 	blk64_t		max_size = 0;
-	blk_t		min_size = 0;
+	blk64_t		min_size = 0;
 	io_manager	io_ptr;
 	char		*new_size_str = 0;
 	int		use_stride = -1;
-#ifdef HAVE_FSTAT64
-	struct stat64	st_buf;
-#else
-	struct stat	st_buf;
-#endif
+	ext2fs_struct_stat st_buf;
 	__s64		new_file_size;
 	unsigned int	sys_page_size = 4096;
 	long		sysval;
@@ -180,6 +189,7 @@ int main (int argc, char ** argv)
 	setlocale(LC_CTYPE, "");
 	bindtextdomain(NLS_CAT_NAME, LOCALEDIR);
 	textdomain(NLS_CAT_NAME);
+	set_com_err_gettext(gettext);
 #endif
 
 	add_error_table(&et_ext2_error_table);
@@ -256,22 +266,14 @@ int main (int argc, char ** argv)
 		len = 2 * len;
 	}
 
-#ifdef HAVE_OPEN64
-	fd = open64(device_name, O_RDWR);
-#else
-	fd = open(device_name, O_RDWR);
-#endif
+	fd = ext2fs_open_file(device_name, O_RDWR, 0);
 	if (fd < 0) {
 		com_err("open", errno, _("while opening %s"),
 			device_name);
 		exit(1);
 	}
 
-#ifdef HAVE_FSTAT64
-	ret = fstat64(fd, &st_buf);
-#else
-	ret = fstat(fd, &st_buf);
-#endif
+	ret = ext2fs_fstat(fd, &st_buf);
 	if (ret < 0) {
 		com_err("open", errno,
 			_("while getting stat information for %s"),
@@ -304,6 +306,9 @@ int main (int argc, char ** argv)
 
 	if (!(mount_flags & EXT2_MF_MOUNTED))
 		io_flags = EXT2_FLAG_RW | EXT2_FLAG_EXCLUSIVE;
+
+	io_flags |= EXT2_FLAG_64BITS;
+
 	retval = ext2fs_open2(device_name, io_options, io_flags,
 			      0, 0, io_ptr, &fs);
 	if (retval) {
@@ -323,25 +328,6 @@ int main (int argc, char ** argv)
 		exit(1);
 	}
 
-	/*
-	 * XXXX   The combination of flex_bg and !resize_inode causes
-	 * major problems for resize2fs, since when the group descriptors
-	 * grow in size this can potentially require multiple inode
-	 * tables to be moved aside to make room, and resize2fs chokes
-	 * rather badly in this scenario.  It's a rare combination,
-	 * except when a filesystem is expanded more than a certain
-	 * size, so for now, we'll just prohibit that combination.
-	 * This is something we should fix eventually, though.
-	 */
-	if ((fs->super->s_feature_incompat & EXT4_FEATURE_INCOMPAT_FLEX_BG) &&
-	    !(fs->super->s_feature_compat & EXT2_FEATURE_COMPAT_RESIZE_INODE)) {
-		com_err(program_name, 0, _("%s: The combination of flex_bg "
-					   "and\n\t!resize_inode features "
-					   "is not supported by resize2fs.\n"),
-			device_name);
-		exit(1);
-	}
-
 	min_size = calculate_minimum_resize_size(fs);
 
 	if (print_min_size) {
@@ -352,7 +338,7 @@ int main (int argc, char ** argv)
 				device_name);
 			exit(1);
 		}
-		printf(_("Estimated minimum size of the filesystem: %u\n"),
+		printf(_("Estimated minimum size of the filesystem: %llu\n"),
 		       min_size);
 		exit(0);
 	}
@@ -375,7 +361,7 @@ int main (int argc, char ** argv)
 	 * exceed the partition size.
 	 */
 	retval = ext2fs_get_device_size2(device_name, fs->blocksize,
-					&max_size);
+					 &max_size);
 	if (retval) {
 		com_err(program_name, retval,
 			_("while trying to determine filesystem size"));
@@ -384,31 +370,35 @@ int main (int argc, char ** argv)
 	if (force_min_size)
 		new_size = min_size;
 	else if (new_size_str) {
-		new_size = parse_num_blocks(new_size_str,
-					    fs->super->s_log_block_size);
+		new_size = parse_num_blocks2(new_size_str,
+					     fs->super->s_log_block_size);
 		if (new_size == 0) {
 			com_err(program_name, 0,
 				_("Invalid new size: %s\n"), new_size_str);
 			exit(1);
 		}
 	} else {
-		/* Take down devices exactly 16T to 2^32-1 blocks */
-		if (max_size == (1ULL << 32))
-			max_size--;
-		else if (max_size > (1ULL << 32)) {
-			com_err(program_name, 0, _("New size too large to be "
-				"expressed in 32 bits\n"));
-			exit(1);
-		}
 		new_size = max_size;
 		/* Round down to an even multiple of a pagesize */
 		if (sys_page_size > fs->blocksize)
 			new_size &= ~((sys_page_size / fs->blocksize)-1);
 	}
+	if (!EXT2_HAS_INCOMPAT_FEATURE(fs->super,
+				       EXT4_FEATURE_INCOMPAT_64BIT)) {
+		/* Take 16T down to 2^32-1 blocks */
+		if (new_size == (1ULL << 32))
+			new_size--;
+		else if (new_size > (1ULL << 32)) {
+			com_err(program_name, 0,
+				_("New size too large to be "
+				  "expressed in 32 bits\n"));
+			exit(1);
+		}
+	}
 
 	if (!force && new_size < min_size) {
 		com_err(program_name, 0,
-			_("New size smaller than minimum (%u)\n"), min_size);
+			_("New size smaller than minimum (%llu)\n"), min_size);
 		exit(1);
 	}
 	if (use_stride >= 0) {
@@ -440,16 +430,17 @@ int main (int argc, char ** argv)
 	if (!force && (new_size > max_size)) {
 		fprintf(stderr, _("The containing partition (or device)"
 			" is only %llu (%dk) blocks.\nYou requested a new size"
-			" of %u blocks.\n\n"), max_size,
+			" of %llu blocks.\n\n"), max_size,
 			fs->blocksize / 1024, new_size);
 		exit(1);
 	}
-	if (new_size == fs->super->s_blocks_count) {
-		fprintf(stderr, _("The filesystem is already %u blocks "
+	if (new_size == ext2fs_blocks_count(fs->super)) {
+		fprintf(stderr, _("The filesystem is already %llu blocks "
 			"long.  Nothing to do!\n\n"), new_size);
 		exit(0);
 	}
 	if (mount_flags & EXT2_MF_MOUNTED) {
+		bigalloc_check(fs, force);
 		retval = online_resize_fs(fs, mtpt, &new_size, flags);
 	} else {
 		if (!force && ((fs->super->s_lastcheck < fs->super->s_mtime) ||
@@ -460,8 +451,9 @@ int main (int argc, char ** argv)
 				device_name);
 			exit(1);
 		}
+		bigalloc_check(fs, force);
 		printf(_("Resizing the filesystem on "
-			 "%s to %u (%dk) blocks.\n"),
+			 "%s to %llu (%dk) blocks.\n"),
 		       device_name, new_size, fs->blocksize / 1024);
 		retval = resize_fs(fs, &new_size, flags,
 				   ((flags & RESIZE_PERCENT_COMPLETE) ?
@@ -478,7 +470,7 @@ int main (int argc, char ** argv)
 		ext2fs_close(fs);
 		exit(1);
 	}
-	printf(_("The filesystem on %s is now %u blocks long.\n\n"),
+	printf(_("The filesystem on %s is now %llu blocks long.\n\n"),
 	       device_name, new_size);
 
 	if ((st_buf.st_size > new_file_size) &&

@@ -12,6 +12,7 @@
  * blocks and get rid of them.
  */
 
+#include "config.h"
 #include "e2fsck.h"
 #include "problem.h"
 
@@ -25,8 +26,8 @@ struct empty_dir_info_struct {
 	char *block_buf;
 	ext2_ino_t ino;
 	struct ext2_inode inode;
-	blk_t	logblk;
-	blk_t	freed_blocks;
+	blk64_t	logblk;
+	blk64_t	freed_blocks;
 };
 
 typedef struct empty_dir_info_struct *empty_dir_info;
@@ -34,7 +35,7 @@ typedef struct empty_dir_info_struct *empty_dir_info;
 extern empty_dir_info init_empty_dir(e2fsck_t ctx);
 extern void free_empty_dirblock(empty_dir_info edi);
 extern void add_empty_dirblock(empty_dir_info edi,
-			       struct ext2_db_entry *db);
+			       struct ext2_db_entry2 *db);
 extern void process_empty_dirblock(e2fsck_t ctx, empty_dir_info edi);
 
 
@@ -86,7 +87,7 @@ void free_empty_dirblock(empty_dir_info edi)
 }
 
 void add_empty_dirblock(empty_dir_info edi,
-			struct ext2_db_entry *db)
+			struct ext2_db_entry2 *db)
 {
 	if (!edi || !db)
 		return;
@@ -97,13 +98,13 @@ void add_empty_dirblock(empty_dir_info edi,
 	printf(_("Empty directory block %u (#%d) in inode %u\n"),
 	       db->blk, db->blockcnt, db->ino);
 
-	ext2fs_mark_block_bitmap(edi->empty_dir_blocks, db->blk);
+	ext2fs_mark_block_bitmap2(edi->empty_dir_blocks, db->blk);
 	if (ext2fs_test_inode_bitmap(edi->dir_map, db->ino))
 		return;
 	ext2fs_mark_inode_bitmap(edi->dir_map, db->ino);
 
-	ext2fs_add_dir_block(edi->empty_dblist, db->ino,
-			     db->blk, db->blockcnt);
+	ext2fs_add_dir_block2(edi->empty_dblist, db->ino,
+			      db->blk, db->blockcnt);
 }
 
 /*
@@ -116,26 +117,26 @@ void add_empty_dirblock(empty_dir_info edi,
  *
  * Also question --- how to free the indirect blocks.
  */
-int empty_pass1(ext2_filsys fs, blk_t *block_nr, e2_blkcnt_t blockcnt,
-		blk_t ref_block, int ref_offset, void *priv_data)
+int empty_pass1(ext2_filsys fs, blk64_t *block_nr, e2_blkcnt_t blockcnt,
+		blk64_t ref_block, int ref_offset, void *priv_data)
 {
 	empty_dir_info edi = (empty_dir_info) priv_data;
-	blk_t	block, new_block;
+	blk64_t	block, new_block;
 	errcode_t	retval;
 
 	if (blockcnt < 0)
 		return 0;
 	block = *block_nr;
 	do {
-		retval = ext2fs_bmap(fs, edi->ino, &edi->inode,
-				     edi->block_buf, 0, edi->logblk,
-				     &new_block);
+		retval = ext2fs_bmap2(fs, edi->ino, &edi->inode,
+				      edi->block_buf, 0, edi->logblk, 0,
+				      &new_block);
 		if (retval)
 			return DIRENT_ABORT;   /* XXX what to do? */
 		if (new_block == 0)
 			break;
 		edi->logblk++;
-	} while (ext2fs_test_block_bitmap(edi->empty_dir_blocks, new_block));
+	} while (ext2fs_test_block_bitmap2(edi->empty_dir_blocks, new_block));
 
 	if (new_block == block)
 		return 0;
@@ -146,7 +147,7 @@ int empty_pass1(ext2_filsys fs, blk_t *block_nr, e2_blkcnt_t blockcnt,
 }
 
 static int fix_directory(ext2_filsys fs,
-			 struct ext2_db_entry *db,
+			 struct ext2_db_entry2 *db,
 			 void *priv_data)
 {
 	errcode_t	retval;
@@ -161,7 +162,7 @@ static int fix_directory(ext2_filsys fs,
 	if (retval)
 		return 0;
 
-	retval = ext2fs_block_iterate2(fs, db->ino, 0, edi->block_buf,
+	retval = ext2fs_block_iterate3(fs, db->ino, 0, edi->block_buf,
 				       empty_pass1, edi);
 	if (retval)
 		return 0;
@@ -184,8 +185,8 @@ void process_empty_dirblock(e2fsck_t ctx, empty_dir_info edi)
 	edi->block_buf = malloc(ctx->fs->blocksize * 3);
 
 	if (edi->block_buf) {
-		(void) ext2fs_dblist_iterate(edi->empty_dblist,
-					     fix_directory, &edi);
+		(void) ext2fs_dblist_iterate2(edi->empty_dblist,
+					      fix_directory, &edi);
 	}
 	free(edi->block_buf);
 	free_empty_dirblock(edi);

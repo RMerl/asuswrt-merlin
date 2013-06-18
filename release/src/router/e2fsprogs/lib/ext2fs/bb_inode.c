@@ -13,6 +13,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #if HAVE_UNISTD_H
@@ -65,8 +66,7 @@ errcode_t ext2fs_update_bb_inode(ext2_filsys fs, ext2_badblocks_list bb_list)
 	if (!fs->block_map)
 		return EXT2_ET_NO_BLOCK_BITMAP;
 
-	rec.bad_block_count = 0;
-	rec.ind_blocks_size = rec.ind_blocks_ptr = 0;
+	memset(&rec, 0, sizeof(rec));
 	rec.max_ind_blocks = 10;
 	retval = ext2fs_get_array(rec.max_ind_blocks, sizeof(blk_t),
 				&rec.ind_blocks);
@@ -166,7 +166,7 @@ static int clear_bad_block_proc(ext2_filsys fs, blk_t *block_nr,
 	/*
 	 * If the block number is outrageous, clear it and ignore it.
 	 */
-	if (*block_nr >= fs->super->s_blocks_count ||
+	if (*block_nr >= ext2fs_blocks_count(fs->super) ||
 	    *block_nr < fs->super->s_first_data_block) {
 		*block_nr = 0;
 		return BLOCK_CHANGED;
@@ -191,7 +191,7 @@ static int clear_bad_block_proc(ext2_filsys fs, blk_t *block_nr,
 	/*
 	 * Mark the block as unused, and update accounting information
 	 */
-	ext2fs_block_alloc_stats(fs, *block_nr, -1);
+	ext2fs_block_alloc_stats2(fs, *block_nr, -1);
 
 	*block_nr = 0;
 	return BLOCK_CHANGED;
@@ -235,7 +235,7 @@ static int set_bad_block_proc(ext2_filsys fs, blk_t *block_nr,
 	retry:
 		if (rec->ind_blocks_ptr < rec->ind_blocks_size) {
 			blk = rec->ind_blocks[rec->ind_blocks_ptr++];
-			if (ext2fs_test_block_bitmap(fs->block_map, blk))
+			if (ext2fs_test_block_bitmap2(fs->block_map, blk))
 				goto retry;
 		} else {
 			retval = ext2fs_new_block(fs, 0, 0, &blk);
@@ -244,7 +244,7 @@ static int set_bad_block_proc(ext2_filsys fs, blk_t *block_nr,
 				return BLOCK_ABORT;
 			}
 		}
-		retval = io_channel_write_blk(fs->io, blk, 1, rec->block_buf);
+		retval = io_channel_write_blk64(fs->io, blk, 1, rec->block_buf);
 		if (retval) {
 			rec->err = retval;
 			return BLOCK_ABORT;
@@ -254,7 +254,7 @@ static int set_bad_block_proc(ext2_filsys fs, blk_t *block_nr,
 	/*
 	 * Update block counts
 	 */
-	ext2fs_block_alloc_stats(fs, blk, +1);
+	ext2fs_block_alloc_stats2(fs, blk, +1);
 
 	*block_nr = blk;
 	return BLOCK_CHANGED;

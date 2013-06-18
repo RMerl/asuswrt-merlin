@@ -10,6 +10,7 @@
  * this software for any purpose.  It is provided "as is" without
  * express or implied warranty.
  */
+#include "config.h"
 #include "ss_internal.h"
 #include <signal.h>
 #include <setjmp.h>

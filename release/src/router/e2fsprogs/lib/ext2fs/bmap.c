@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #if HAVE_UNISTD_H
@@ -94,7 +95,7 @@ static _BMAP_INLINE_ errcode_t block_dind_bmap(ext2_filsys fs, int flags,
 					       int *blocks_alloc,
 					       blk_t nr, blk_t *ret_blk)
 {
-	blk_t		b;
+	blk_t		b = 0;
 	errcode_t	retval;
 	blk_t		addr_per_block;
 
@@ -114,7 +115,7 @@ static _BMAP_INLINE_ errcode_t block_tind_bmap(ext2_filsys fs, int flags,
 					       int *blocks_alloc,
 					       blk_t nr, blk_t *ret_blk)
 {
-	blk_t		b;
+	blk_t		b = 0;
 	errcode_t	retval;
 	blk_t		addr_per_block;
 
@@ -128,6 +129,106 @@ static _BMAP_INLINE_ errcode_t block_tind_bmap(ext2_filsys fs, int flags,
 				nr % addr_per_block, ret_blk);
 	return retval;
 }
+
+static errcode_t extent_bmap(ext2_filsys fs, ext2_ino_t ino,
+			     struct ext2_inode *inode,
+			     ext2_extent_handle_t handle,
+			     char *block_buf, int bmap_flags, blk64_t block,
+			     int *ret_flags, int *blocks_alloc,
+			     blk64_t *phys_blk);
+
+static errcode_t implied_cluster_alloc(ext2_filsys fs, ext2_ino_t ino,
+				       struct ext2_inode *inode,
+				       ext2_extent_handle_t handle,
+				       blk64_t block, blk64_t *phys_blk)
+{
+	blk64_t	base_block, pblock = 0;
+	int i;
+
+	if (!EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
+					EXT4_FEATURE_RO_COMPAT_BIGALLOC))
+		return 0;
+
+	base_block = block & ~EXT2FS_CLUSTER_MASK(fs);
+	for (i = 0; i < EXT2FS_CLUSTER_RATIO(fs); i++) {
+		if (block == base_block)
+			return 0;
+		extent_bmap(fs, ino, inode, handle, 0, 0,
+			    base_block + i, 0, 0, &pblock);
+		if (pblock)
+			break;
+	}
+	if (pblock == 0)
+		return 0;
+	*phys_blk = pblock - i + (block - base_block);
+	return 0;
+}
+
+static errcode_t extent_bmap(ext2_filsys fs, ext2_ino_t ino,
+			     struct ext2_inode *inode,
+			     ext2_extent_handle_t handle,
+			     char *block_buf, int bmap_flags, blk64_t block,
+			     int *ret_flags, int *blocks_alloc,
+			     blk64_t *phys_blk)
+{
+	struct ext2fs_extent	extent;
+	unsigned int		offset;
+	errcode_t		retval = 0;
+	blk64_t			blk64 = 0;
+	int			alloc = 0;
+
+	if (bmap_flags & BMAP_SET) {
+		retval = ext2fs_extent_set_bmap(handle, block,
+						*phys_blk, 0);
+		return retval;
+	}
+	retval = ext2fs_extent_goto(handle, block);
+	if (retval) {
+		/* If the extent is not found, return phys_blk = 0 */
+		if (retval == EXT2_ET_EXTENT_NOT_FOUND)
+			goto got_block;
+		return retval;
+	}
+	retval = ext2fs_extent_get(handle, EXT2_EXTENT_CURRENT, &extent);
+	if (retval)
+		return retval;
+	offset = block - extent.e_lblk;
+	if (block >= extent.e_lblk && (offset <= extent.e_len)) {
+		*phys_blk = extent.e_pblk + offset;
+		if (ret_flags && extent.e_flags & EXT2_EXTENT_FLAGS_UNINIT)
+			*ret_flags |= BMAP_RET_UNINIT;
+	}
+got_block:
+	if ((*phys_blk == 0) && (bmap_flags & BMAP_ALLOC)) {
+		implied_cluster_alloc(fs, ino, inode, handle, block, &blk64);
+		if (blk64)
+			goto set_extent;
+		retval = extent_bmap(fs, ino, inode, handle, block_buf,
+				     0, block-1, 0, blocks_alloc, &blk64);
+		if (retval)
+			blk64 = 0;
+		retval = ext2fs_alloc_block2(fs, blk64, block_buf,
+					     &blk64);
+		if (retval)
+			return retval;
+		blk64 &= ~EXT2FS_CLUSTER_MASK(fs);
+		blk64 += EXT2FS_CLUSTER_MASK(fs) & block;
+		alloc++;
+	set_extent:
+		retval = ext2fs_extent_set_bmap(handle, block,
+						blk64, 0);
+		if (retval)
+			return retval;
+		/* Update inode after setting extent */
+		retval = ext2fs_read_inode(fs, ino, inode);
+		if (retval)
+			return retval;
+		*blocks_alloc += alloc;
+		*phys_blk = blk64;
+	}
+	return 0;
+}
+
 
 errcode_t ext2fs_bmap2(ext2_filsys fs, ext2_ino_t ino, struct ext2_inode *inode,
 		       char *block_buf, int bmap_flags, blk64_t block,
@@ -156,59 +257,21 @@ errcode_t ext2fs_bmap2(ext2_filsys fs, ext2_ino_t ino, struct ext2_inode *inode,
 	}
 	addr_per_block = (blk_t) fs->blocksize >> 2;
 
-	if (inode->i_flags & EXT4_EXTENTS_FL) {
-		struct ext2fs_extent	extent;
-		unsigned int		offset;
-
-		retval = ext2fs_extent_open2(fs, ino, inode, &handle);
-		if (retval)
-			goto done;
-		if (bmap_flags & BMAP_SET) {
-			retval = ext2fs_extent_set_bmap(handle, block,
-							*phys_blk, 0);
-			goto done;
-		}
-		retval = ext2fs_extent_goto(handle, block);
-		if (retval) {
-			/* If the extent is not found, return phys_blk = 0 */
-			if (retval == EXT2_ET_EXTENT_NOT_FOUND)
-				goto got_block;
-			goto done;
-		}
-		retval = ext2fs_extent_get(handle, EXT2_EXTENT_CURRENT, &extent);
-		if (retval)
-			goto done;
-		offset = block - extent.e_lblk;
-		if (block >= extent.e_lblk && (offset <= extent.e_len)) {
-			*phys_blk = extent.e_pblk + offset;
-			if (ret_flags && extent.e_flags & EXT2_EXTENT_FLAGS_UNINIT)
-				*ret_flags |= BMAP_RET_UNINIT;
-		}
-	got_block:
-		if ((*phys_blk == 0) && (bmap_flags & BMAP_ALLOC)) {
-			retval = ext2fs_alloc_block(fs, b, block_buf, &b);
-			if (retval)
-				goto done;
-			retval = ext2fs_extent_set_bmap(handle, block,
-							(blk64_t) b, 0);
-			if (retval)
-				goto done;
-			/* Update inode after setting extent */
-			retval = ext2fs_read_inode(fs, ino, inode);
-			if (retval)
-				return retval;
-			blocks_alloc++;
-			*phys_blk = b;
-		}
-		retval = 0;
-		goto done;
-	}
-
 	if (!block_buf) {
 		retval = ext2fs_get_array(2, fs->blocksize, &buf);
 		if (retval)
 			return retval;
 		block_buf = buf;
+	}
+
+	if (inode->i_flags & EXT4_EXTENTS_FL) {
+		retval = ext2fs_extent_open2(fs, ino, inode, &handle);
+		if (retval)
+			goto done;
+		retval = extent_bmap(fs, ino, inode, handle, block_buf,
+				     bmap_flags, block, ret_flags,
+				     &blocks_alloc, phys_blk);
+		goto done;
 	}
 
 	if (block < EXT2_NDIR_BLOCKS) {

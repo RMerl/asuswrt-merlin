@@ -14,6 +14,7 @@ Copyright (C) 1995 Gadi Oxman
 
 */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -370,13 +371,6 @@ void add_user_command (struct struct_commands *ptr,char *name,char *description,
 	ptr->callback [num]=callback;
 }
 
-static unsigned int div_ceil(unsigned int a, unsigned int b)
-{
-	if (!a)
-		return 0;
-	return ((a - 1) / b) + 1;
-}
-
 int set_file_system_info (void)
 
 {
@@ -422,13 +416,13 @@ int set_file_system_info (void)
 			file_system_info.first_group_desc_offset=2*EXT2_MIN_BLOCK_SIZE;
 		else
 			file_system_info.first_group_desc_offset=file_system_info.block_size;
-		file_system_info.groups_count = div_ceil(sb->s_blocks_count,
+		file_system_info.groups_count = ext2fs_div64_ceil(ext2fs_blocks_count(sb),
 						 sb->s_blocks_per_group);
 
 		file_system_info.inodes_per_block=file_system_info.block_size/sizeof (struct ext2_inode);
 		file_system_info.blocks_per_group=sb->s_inodes_per_group/file_system_info.inodes_per_block;
 		file_system_info.no_blocks_in_group=sb->s_blocks_per_group;
-		file_system_info.file_system_size=(sb->s_blocks_count-1)*file_system_info.block_size;
+		file_system_info.file_system_size=(ext2fs_blocks_count(sb)-1)*file_system_info.block_size;
 	}
 
 	else {
@@ -494,7 +488,7 @@ int process_configuration_file (void)
 	char option [80],value [80];
 	FILE *fp;
 
-	strcpy (buffer, ETC_DIR);
+	strcpy (buffer, ROOT_SYSCONFDIR);
 	strcat (buffer,"/ext2ed.conf");
 
 	if ((fp=fopen (buffer,"rt"))==NULL) {

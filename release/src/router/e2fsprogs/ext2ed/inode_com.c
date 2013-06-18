@@ -12,6 +12,7 @@ Copyright (C) 1995 Gadi Oxman
 
 */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -222,11 +223,11 @@ void type_ext2_inode___show (char *command_line)
 			case EXT2_ROOT_INO:
 				wprintw (show_win,"Root inode - ");
 				break;
-			case EXT2_ACL_IDX_INO:
-				wprintw (show_win,"ACL index inode - ");
+			case EXT4_USR_QUOTA_INO:
+				wprintw (show_win,"User quota inode - ");
 				break;
-			case EXT2_ACL_DATA_INO:
-				wprintw (show_win,"ACL data inode - ");
+			case EXT4_GRP_QUOTA_INO:
+				wprintw (show_win,"Group quota inode - ");
 				break;
 			case EXT2_BOOT_LOADER_INO:
 				wprintw (show_win,"Boot loader inode - ");

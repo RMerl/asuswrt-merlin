@@ -16,8 +16,7 @@ MANPAGES=	ext2ed.8
 
 DOC_DIR		=	$datadir/doc/ext2ed
 
-XTRA_CFLAGS	=	$(FLAGS) -DETC_DIR=\"$(root_sysconfdir)\" 
-LIBS		=	-lncurses
+LIBS		=	-lncurses $(LIBEXT2FS)
 
 SRCS=	$(srcdir)/main.c $(srcdir)/init.c $(srcdir)/general_com.c       \
 	$(srcdir)/inode_com.c $(srcdir)/dir_com.c $(srcdir)/super_com.c \

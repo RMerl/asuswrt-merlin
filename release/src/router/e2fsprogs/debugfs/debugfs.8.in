@@ -157,11 +157,20 @@ This is a list of the commands which
 .B debugfs
 supports.
 .TP
+.I blocks filespace
+Print the blocks used by the inode
+.I filespec
+to stdout.
+.TP
 .I bmap filespec logical_block
 Print the physical block number corresponding to the logical block number
 .I logical_block
 in the inode
 .IR filespec .
+.TP
+.I block_dump [-f out_file] block_num
+Dump the contents of a block, optionally to
+.IR out_file .
 .TP
 .I cat filespec
 Dump the contents of the inode 
@@ -187,6 +196,12 @@ master superblock.
 Clear the contents of the inode 
 .IR file .
 .TP
+.I dirsearch filespec filename
+Search the directory
+.I filespec
+for
+.IR filename .
+.TP
 .I dump [-p] filespec out_file
 Dump the contents of the inode 
 .I filespec
@@ -198,6 +213,19 @@ option is given set the owner, group and permissions information on
 .I out_file 
 to match 
 .IR filespec .
+.TP
+.I dump_mmp
+Display the multiple-mount protection (mmp) field values.
+.TP
+.I dx_hash [-h hash_alg] [-s hash_seed] filename
+Calculate the directory hash of
+.IR filename .
+The hash algorithm specified with
+.I -h
+may be "legacy" "half_md4" or "tea".
+The hash seed specified with
+.I -s
+must be in UUID format.
 .TP
 .I dump_extents [-n] [-l] filespec
 Dump the the extent tree of the inode
@@ -214,7 +242,7 @@ to only display the leaf nodes in the extent tree.
 .IP
 (Please note that the length and range of blocks for the last extent in
 an interior node is an estimate by the extents library functions, and is
-not stored in file esystem data structures.   Hence, the values displayed
+not stored in filesystem data structures.   Hence, the values displayed
 may not necessarily by accurate and does not indicate a problem or 
 corruption in the file system.)
 .TP
@@ -226,6 +254,27 @@ Expand the directory
 Set or clear various filesystem features in the superblock.  After setting
 or clearing any filesystem features that were requested, print the current
 state of the filesystem feature set.
+.TP
+.I filefrag [-dvr] filespec
+Print the number of contiguous extents in
+.IR filespec .
+If
+.I filespec
+is a directory and the
+.I -d
+option is not specified,
+.I filefrag
+will print the number of contiguous extents for each file in
+the directory.  The
+.I -v
+option will cause
+.I filefrag
+print a tabular listing of the contiguous extents in the
+file.  The
+.I -r
+option will cause
+.I filefrag
+to do a recursive listing of the directory.
 .TP
 .I find_free_block [count [goal]]
 Find the first 
@@ -256,13 +305,31 @@ blocks starting at block number
 .I block
 will be marked as not allocated.
 .TP
-.I freei filespec
+.I freefrag [-c chunk_kb ]
+Report free space fragmentation on the currently open file system.
+If the
+.I \-c
+option is specified then the filefrag command will print how many free
+chunks of size
+.I chunk_kb
+can be found in the file system.  The chunk size must be a power of two
+and be larger than the file system block size.
+.TP
+.I freei filespec [num]
 Free the inode specified by 
 .IR filespec .
+If
+.I num
+is specified, also clear num-1 inodes after the specified inode.
 .TP
 .I help
 Print a list of commands understood by 
 .BR debugfs .
+.TP
+.I htree_dump filespec
+Dump the hash-indexed directory
+.IR filespec ,
+showing its tree structure.
 .TP
 .I icheck block ...
 Print a listing of the inodes which use the one or more blocks specified
@@ -367,9 +434,12 @@ and
 .I minor
 device numbers must be specified.
 .TP
-.I ncheck inode_num ...
+.I ncheck [-c] inode_num ...
 Take the requested list of inode numbers, and print a listing of pathnames
-to those inodes.
+to those inodes.  The
+.I -c
+flag will enable checking the file type information in the directory
+entry to make sure it matches the inode's type.
 .TP
 .I open [-w] [-e] [-f] [-i] [-c] [-D] [-b blocksize] [-s superblock] device
 Open a filesystem for editing.  The 
@@ -382,6 +452,21 @@ flag causes the filesystem to be opened in exclusive mode.  The
 .IR -b ", " -c ", " -i ", " -s ", " -w ", and " -D
 options behave the same as the command-line options to 
 .BR debugfs .
+.TP
+.I punch filespec start_blk [end_blk]
+Delete the blocks in the inode ranging from
+.I start_blk
+to
+.IR end_blk .
+If
+.I end_blk
+is omitted then this command will function as a truncate command; that
+is, all of the blocks starting at
+.I start_blk
+through to the end of the file will be deallocated.
+.TP
+.I symlink filespec target
+Make a symbolic link.
 .TP
 .I pwd
 Print the current working directory.
@@ -431,10 +516,12 @@ so that the block group descriptor field
 has value
 .I value.
 .TP
-.I seti filespec
+.I seti filespec [num]
 Mark inode 
 .I filespec
-as in use in the inode bitmap.
+as in use in the inode bitmap.  If
+.I num
+is specified, also set num-1 inodes after the specified inode.
 .TP
 .I set_inode_field filespec field value
 Modify the inode specified by 
@@ -446,6 +533,16 @@ has value
 The list of valid inode fields which can be set via this command 
 can be displayed by using the command:
 .B set_inode_field -l
+.TP
+.I set_mmp_value field value
+Modify the multiple-mount protection (mmp) data so that the
+mmp field
+.I field
+has value
+.I value.
+The list of valid mmp fields which can be set via this command
+can be displayed by using the command:
+.B set_mmp_value -l
 .TP
 .I set_super_value field value
 Set the superblock field
@@ -514,6 +611,14 @@ Create a file in the filesystem named
 and copy the contents of
 .I source_file
 into the destination file.
+.TP
+.I zap_block [-f file] [-o offset] [-l length] [-p pattern] block_num
+Zero, or pattern-fill, portions of a block within a file or
+within the filesystem.
+.TP
+.I zap_block [-f file] [-b bit] block_num
+Bit-flip portions of a block within a file or
+within the filesystem.
 .SH ENVIRONMENT VARIABLES
 .TP
 .B DEBUGFS_PAGER, PAGER

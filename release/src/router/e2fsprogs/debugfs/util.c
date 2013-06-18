@@ -8,6 +8,7 @@
 
 #define _XOPEN_SOURCE 600 /* needed for strptime */
 
+#include "config.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -25,6 +26,7 @@ extern char *optarg;
 extern int optreset;		/* defined by BSD, but not others */
 #endif
 
+#include "ss/ss.h"
 #include "debugfs.h"
 
 /*
@@ -78,14 +80,14 @@ static const char *find_pager(char *buf)
 FILE *open_pager(void)
 {
 	FILE *outfile = 0;
-	const char *pager = getenv("DEBUGFS_PAGER");
+	const char *pager = ss_safe_getenv("DEBUGFS_PAGER");
 	char buf[80];
 
 	signal(SIGPIPE, SIG_IGN);
 	if (!isatty(1))
 		return stdout;
 	if (!pager)
-		pager = getenv("PAGER");
+		pager = ss_safe_getenv("PAGER");
 	if (!pager)
 		pager = find_pager(buf);
 	if (!pager ||
@@ -196,7 +198,7 @@ char *time_to_string(__u32 cl)
 
 	if (do_gmt == -1) {
 		/* The diet libc doesn't respect the TZ environemnt variable */
-		tz = getenv("TZ");
+		tz = ss_safe_getenv("TZ");
 		if (!tz)
 			tz = "";
 		do_gmt = !strcmp(tz, "GMT");
@@ -217,6 +219,13 @@ extern time_t string_to_time(const char *arg)
 
 	if (strcmp(arg, "now") == 0) {
 		return time(0);
+	}
+	if (arg[0] == '@') {
+		/* interpret it as an integer */
+		ret = strtoul(arg+1, &tmp, 0);
+		if (*tmp)
+			return ((time_t) -1);
+		return ret;
 	}
 	memset(&ts, 0, sizeof(ts));
 #ifdef HAVE_STRPTIME
@@ -267,15 +276,39 @@ unsigned long parse_ulong(const char *str, const char *cmd,
 }
 
 /*
+ * This function will convert a string to an unsigned long long, printing
+ * an error message if it fails, and returning success or failure in err.
+ */
+unsigned long long parse_ulonglong(const char *str, const char *cmd,
+				   const char *descr, int *err)
+{
+	char			*tmp;
+	unsigned long long	ret;
+
+	ret = strtoull(str, &tmp, 0);
+	if (*tmp == 0) {
+		if (err)
+			*err = 0;
+		return ret;
+	}
+	com_err(cmd, 0, "Bad %s - %s", descr, str);
+	if (err)
+		*err = 1;
+	else
+		exit(1);
+	return 0;
+}
+
+/*
  * This function will convert a string to a block number.  It returns
  * 0 on success, 1 on failure.
  */
-int strtoblk(const char *cmd, const char *str, blk_t *ret)
+int strtoblk(const char *cmd, const char *str, blk64_t *ret)
 {
-	blk_t	blk;
+	blk64_t	blk;
 	int	err;
 
-	blk = parse_ulong(str, cmd, "block number", &err);
+	blk = parse_ulonglong(str, cmd, "block number", &err);
 	*ret = blk;
 	if (err)
 		com_err(cmd, 0, "Invalid block number: %s", str);
@@ -328,7 +361,7 @@ int common_inode_args_process(int argc, char *argv[],
  * This is a helper function used by do_freeb, do_setb, and do_testb
  */
 int common_block_args_process(int argc, char *argv[],
-			      blk_t *block, blk_t *count)
+			      blk64_t *block, blk64_t *count)
 {
 	int	err;
 
@@ -377,6 +410,22 @@ int debugfs_read_inode(ext2_ino_t ino, struct ext2_inode * inode,
 	return 0;
 }
 
+int debugfs_write_inode_full(ext2_ino_t ino,
+			     struct ext2_inode *inode,
+			     const char *cmd,
+			     int bufsize)
+{
+	int retval;
+
+	retval = ext2fs_write_inode_full(current_fs, ino,
+					 inode, bufsize);
+	if (retval) {
+		com_err(cmd, retval, "while writing inode %u", ino);
+		return 1;
+	}
+	return 0;
+}
+
 int debugfs_write_inode(ext2_ino_t ino, struct ext2_inode * inode,
 			const char *cmd)
 {
@@ -400,5 +449,34 @@ int debugfs_write_new_inode(ext2_ino_t ino, struct ext2_inode * inode,
 		com_err(cmd, retval, "while creating inode %u", ino);
 		return 1;
 	}
+	return 0;
+}
+
+/*
+ * Given a mode, return the ext2 file type
+ */
+int ext2_file_type(unsigned int mode)
+{
+	if (LINUX_S_ISREG(mode))
+		return EXT2_FT_REG_FILE;
+
+	if (LINUX_S_ISDIR(mode))
+		return EXT2_FT_DIR;
+
+	if (LINUX_S_ISCHR(mode))
+		return EXT2_FT_CHRDEV;
+
+	if (LINUX_S_ISBLK(mode))
+		return EXT2_FT_BLKDEV;
+
+	if (LINUX_S_ISLNK(mode))
+		return EXT2_FT_SYMLINK;
+
+	if (LINUX_S_ISFIFO(mode))
+		return EXT2_FT_FIFO;
+
+	if (LINUX_S_ISSOCK(mode))
+		return EXT2_FT_SOCK;
+
 	return 0;
 }

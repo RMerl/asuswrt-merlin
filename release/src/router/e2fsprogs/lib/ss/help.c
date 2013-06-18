@@ -11,6 +11,7 @@
  * express or implied warranty.
  */
 
+#include "config.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif

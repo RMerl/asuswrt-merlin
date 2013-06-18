@@ -7,5 +7,5 @@ Name: ext2fs
 Description: Ext2fs library
 Version: @E2FSPROGS_VERSION@
 Requires.private: com_err
-Cflags: -I${includedir}/ext2fs
+Cflags: -I${includedir}/ext2fs -I${includedir}
 Libs: -L${libdir} -lext2fs

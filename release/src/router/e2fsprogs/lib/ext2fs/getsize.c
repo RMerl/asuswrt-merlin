@@ -15,6 +15,7 @@
 #define _LARGEFILE_SOURCE
 #define _LARGEFILE64_SOURCE
 
+#include "config.h"
 #include <stdio.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -139,31 +140,13 @@ static int valid_offset (int fd, ext2_loff_t offset)
  * Returns the number of blocks in a partition
  */
 errcode_t ext2fs_get_device_size2(const char *file, int blocksize,
-				 blk64_t *retblocks)
+				  blk64_t *retblocks)
 {
 	int	fd, rc = 0;
-	int valid_blkgetsize64 = 1;
-#ifdef __linux__
-	struct 		utsname ut;
-#endif
 	unsigned long long size64;
-	unsigned long	size;
 	ext2_loff_t high, low;
-#ifdef FDGETPRM
-	struct floppy_struct this_floppy;
-#endif
-#ifdef HAVE_SYS_DISKLABEL_H
-	int part;
-	struct disklabel lab;
-	struct partition *pp;
-	char ch;
-#endif /* HAVE_SYS_DISKLABEL_H */
 
-#ifdef HAVE_OPEN64
-	fd = open64(file, O_RDONLY);
-#else
-	fd = open(file, O_RDONLY);
-#endif
+	fd = ext2fs_open_file(file, O_RDONLY, 0);
 	if (fd < 0)
 		return errno;
 
@@ -175,73 +158,89 @@ errcode_t ext2fs_get_device_size2(const char *file, int blocksize,
 #endif
 
 #ifdef BLKGETSIZE64
+	{
+		int valid_blkgetsize64 = 1;
 #ifdef __linux__
-	if ((uname(&ut) == 0) &&
-	    ((ut.release[0] == '2') && (ut.release[1] == '.') &&
-	     (ut.release[2] < '6') && (ut.release[3] == '.')))
-		valid_blkgetsize64 = 0;
+		struct utsname ut;
+
+		if ((uname(&ut) == 0) &&
+		    ((ut.release[0] == '2') && (ut.release[1] == '.') &&
+		     (ut.release[2] < '6') && (ut.release[3] == '.')))
+			valid_blkgetsize64 = 0;
 #endif
-	if (valid_blkgetsize64 &&
-	    ioctl(fd, BLKGETSIZE64, &size64) >= 0) {
-		*retblocks = size64 / blocksize;
-		goto out;
+		if (valid_blkgetsize64 &&
+		    ioctl(fd, BLKGETSIZE64, &size64) >= 0) {
+			*retblocks = size64 / blocksize;
+			goto out;
+		}
 	}
-#endif
+#endif /* BLKGETSIZE64 */
 
 #ifdef BLKGETSIZE
-	if (ioctl(fd, BLKGETSIZE, &size) >= 0) {
-		*retblocks = size / (blocksize / 512);
-		goto out;
+	{
+		unsigned long	size;
+
+		if (ioctl(fd, BLKGETSIZE, &size) >= 0) {
+			*retblocks = size / (blocksize / 512);
+			goto out;
+		}
 	}
 #endif
 
 #ifdef FDGETPRM
-	if (ioctl(fd, FDGETPRM, &this_floppy) >= 0) {
-		*retblocks = this_floppy.size / (blocksize / 512);
-		goto out;
+	{
+		struct floppy_struct this_floppy;
+
+		if (ioctl(fd, FDGETPRM, &this_floppy) >= 0) {
+			*retblocks = this_floppy.size / (blocksize / 512);
+			goto out;
+		}
 	}
 #endif
 
 #ifdef HAVE_SYS_DISKLABEL_H
-#if defined(DIOCGMEDIASIZE)
 	{
-	    off_t ms;
-	    u_int bs;
-	    if (ioctl(fd, DIOCGMEDIASIZE, &ms) >= 0) {
-		*retblocks = ms / blocksize;
-		goto out;
-	    }
-	}
-#elif defined(DIOCGDINFO)
-	/* old disklabel interface */
-	part = strlen(file) - 1;
-	if (part >= 0) {
-		ch = file[part];
-		if (isdigit(ch))
-			part = 0;
-		else if (ch >= 'a' && ch <= 'h')
-			part = ch - 'a';
-		else
-			part = -1;
-	}
-	if (part >= 0 && (ioctl(fd, DIOCGDINFO, (char *)&lab) >= 0)) {
-		pp = &lab.d_partitions[part];
-		if (pp->p_size) {
-			*retblocks = pp->p_size / (blocksize / 512);
-			goto out;
+		int part;
+		struct disklabel lab;
+		struct partition *pp;
+		char ch;
+
+#if defined(DIOCGMEDIASIZE)
+		{
+			off_t ms;
+			u_int bs;
+			if (ioctl(fd, DIOCGMEDIASIZE, &ms) >= 0) {
+				*retblocks = ms / blocksize;
+				goto out;
+			}
 		}
-	}
+#elif defined(DIOCGDINFO)
+		/* old disklabel interface */
+		part = strlen(file) - 1;
+		if (part >= 0) {
+			ch = file[part];
+			if (isdigit(ch))
+				part = 0;
+			else if (ch >= 'a' && ch <= 'h')
+				part = ch - 'a';
+			else
+				part = -1;
+		}
+		if (part >= 0 && (ioctl(fd, DIOCGDINFO, (char *)&lab) >= 0)) {
+			pp = &lab.d_partitions[part];
+			if (pp->p_size) {
+				*retblocks = pp->p_size / (blocksize / 512);
+				goto out;
+			}
+		}
 #endif /* defined(DIOCG*) */
+	}
 #endif /* HAVE_SYS_DISKLABEL_H */
 
 	{
-#ifdef HAVE_FSTAT64
-		struct stat64   st;
-		if (fstat64(fd, &st) == 0)
-#else
-		struct stat	st;
-		if (fstat(fd, &st) == 0)
-#endif
+		ext2fs_struct_stat st;
+
+		if (ext2fs_fstat(fd, &st) == 0)
 			if (S_ISREG(st.st_mode)) {
 				*retblocks = st.st_size / blocksize;
 				goto out;
@@ -254,10 +253,9 @@ errcode_t ext2fs_get_device_size2(const char *file, int blocksize,
 	 * find the size of the partition.
 	 */
 	low = 0;
-	for (high = 1024; valid_offset (fd, high); high *= 2)
+	for (high = 1024; valid_offset(fd, high); high *= 2)
 		low = high;
-	while (low < high - 1)
-	{
+	while (low < high - 1) {
 		const ext2_loff_t mid = (low + high) / 2;
 
 		if (valid_offset (fd, mid))
@@ -265,7 +263,7 @@ errcode_t ext2fs_get_device_size2(const char *file, int blocksize,
 		else
 			high = mid;
 	}
-	valid_offset (fd, 0);
+	valid_offset(fd, 0);
 	size64 = low + 1;
 	*retblocks = size64 / blocksize;
 out:

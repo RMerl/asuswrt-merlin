@@ -1,0 +1,27 @@
+#!/bin/sh
+
+FS=/bigscratch/testfs
+FEATURE="-O 64bit"
+
+RESIZE2FS=/tmp/resize2fs.static
+MKE2FS=mke2fs
+DUMPE2FS=dumpe2fs
+E2FSCK=e2fsck
+
+/bin/rm -f $FS ; touch $FS
+truncate -s 8T $FS
+$MKE2FS -F -t ext4 $FEATURE $FS
+$E2FSCK -FY $FS
+$DUMPE2FS $FS > /tmp/d1
+
+truncate -s 20T $FS
+time $RESIZE2FS -d 31 -p $FS > /tmp/r1
+$DUMPE2FS $FS > /tmp/d2
+$E2FSCK -fy $FS
+$DUMPE2FS $FS > /tmp/d3
+
+truncate -s 21T $FS
+time $RESIZE2FS -d 31 -p $FS > /tmp/r2
+$DUMPE2FS $FS > /tmp/d4
+$E2FSCK -fy $FS
+$DUMPE2FS $FS > /tmp/d5

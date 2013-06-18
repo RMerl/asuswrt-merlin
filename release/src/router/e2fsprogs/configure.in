@@ -1,6 +1,8 @@
 AC_INIT(version.h)
-AC_PREREQ(2.50)
+AC_PREREQ(2.54)
 AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_HEADERS([lib/config.h])
+AH_BOTTOM([#include "dirpaths.h"])
 MCONFIG=./MCONFIG
 AC_SUBST_FILE(MCONFIG)
 BINARY_TYPE=bin
@@ -68,7 +70,7 @@ dnl
 DLOPEN_LIB=''
 AC_CHECK_LIB(dl, dlopen, 
 [DLOPEN_LIB=-ldl
-AC_DEFINE(HAVE_DLOPEN)])
+AC_DEFINE(HAVE_DLOPEN, 1, [Define to 1 if dlopen/libdl exists])])
 AC_SUBST(DLOPEN_LIB)
 dnl
 dnl Use diet libc
@@ -93,17 +95,11 @@ AC_HELP_STRING([--with-ldopts],[no longer supported, use LDFLAGS= instead]),
 AC_MSG_ERROR([--with-ldopts no longer supported; use LDFLAGS= instead]))
 dnl
 AC_PROG_CC
-AC_PROG_CPP
-dnl
-dnl On systems without linux header files, we add an extra include directory
-dnl that holds enough to fake it (hopefully).  Note that the $(top_srcdir) here
-dnl is quoted so that it gets expanded by make, not by configure.
-dnl
-AC_CHECK_HEADER(linux/fs.h, [linux_headers=yes], [linux_headers=no])
-if test "$linux_headers" != yes; then
-  LINUX_INCLUDE='-I$(top_builddir)/include'
+if test "$GCC" = yes; then
+   RDYNAMIC="-rdynamic"
+   AC_SUBST(RDYNAMIC)
 fi
-AC_SUBST(LINUX_INCLUDE)
+AC_PROG_CPP
 dnl
 dnl Alpha computers use fast and imprecise floating point code that may
 dnl miss exceptions by default. Force sane options if we're using GCC.
@@ -168,9 +164,42 @@ else
 fi
 ,
 LINK_INSTALL_FLAGS=-f
-AC_MSG_RESULT([Disabling symlinks for install])
+AC_MSG_RESULT([Disabling symlinks for install by default])
 )
 AC_SUBST(LINK_INSTALL_FLAGS)
+dnl
+dnl handle --enable-relative-symlinks
+dnl
+relative_symlink_defined=
+AC_ARG_ENABLE([relative-symlinks],
+[  --enable-relative-symlinks use relative symlinks when installing],
+if test "$enableval" = "no"
+then
+	SYMLINK_RELATIVE=
+	relative_symlink_defined=yes
+	AC_MSG_RESULT([Disabling relative symlinks for install])
+else
+	SYMLINK_RELATIVE=--relative
+	relative_symlink_defined=yes
+	AC_MSG_RESULT([Enabling relative symlinks for install])
+fi)
+AC_ARG_ENABLE([symlink-relative-symlinks],,
+if test "$enableval" = "no"
+then
+	SYMLINK_RELATIVE=yes
+	AC_MSG_RESULT([Disabling relative symlinks for install])
+else
+	SYMLINK_RELATIVE=--relative
+	AC_MSG_RESULT([Enabling relative symlinks for install])
+fi
+,
+if test -z "$relative_symlink_defined"
+then
+	SYMLINK_RELATIVE=
+AC_MSG_RESULT([Disabling relative symlinks for install by default])
+fi
+)
+AC_SUBST(SYMLINK_RELATIVE)
 dnl
 dnl handle --enable-symlink-build
 dnl
@@ -186,7 +215,7 @@ else
 fi
 ,
 LINK_BUILD_FLAGS=
-AC_MSG_RESULT([Disabling symlinks for build])
+AC_MSG_RESULT([Disabling symlinks for build by default])
 )
 AC_SUBST(LINK_BUILD_FLAGS)
 dnl
@@ -198,18 +227,22 @@ if test "$enableval" = "no"
 then
 	AC_MSG_RESULT([Disabling verbose make commands])
 	E=@echo
+	ES=echo
 	Q=@
 else
 	AC_MSG_RESULT([Enabling verbose make commands])
 	E=@\\#
+	ES=\\#
 	Q= 
 fi
 ,
 AC_MSG_RESULT([Disabling verbose make commands])
 E=@echo
+ES=echo
 Q=@
 )
 AC_SUBST(E)
+AC_SUBST(ES)
 AC_SUBST(Q)
 dnl
 dnl handle --enable-compression
@@ -220,7 +253,8 @@ if test "$enableval" = "no"
 then
 	AC_MSG_RESULT([Disabling compression support])
 else
-	AC_DEFINE(ENABLE_COMPRESSION)
+	AC_DEFINE(ENABLE_COMPRESSION, 1,
+		[Define to 1 if ext2 compression enabled])
 	AC_MSG_RESULT([Enabling compression support])
 	AC_MSG_WARN([Compression support is experimental])
 fi
@@ -230,6 +264,7 @@ AC_MSG_RESULT([Disabling compression support by default])
 dnl
 dnl handle --enable-htree
 dnl
+AH_TEMPLATE([ENABLE_HTREE], [Define to 1 if ext3/4 htree support enabled])
 AC_ARG_ENABLE([htree],
 [  --enable-htree      	  enable EXPERIMENTAL htree directory support],
 if test "$enableval" = "no"
@@ -238,12 +273,12 @@ then
 	AC_MSG_RESULT([Disabling htree directory support])
 else
 	HTREE_CMT=
-	AC_DEFINE(ENABLE_HTREE)
+	AC_DEFINE(ENABLE_HTREE, 1)
 	AC_MSG_RESULT([Enabling htree directory support])
 fi
 ,
 HTREE_CMT=
-AC_DEFINE(ENABLE_HTREE)
+AC_DEFINE(ENABLE_HTREE, 1)
 AC_MSG_RESULT([Enabling htree directory support by default])
 )
 AC_SUBST(HTREE_CMT)
@@ -377,7 +412,8 @@ if test "$enableval" = "no"
 then
 	AC_MSG_RESULT([Disabling journal debugging])
 else
-	AC_DEFINE(CONFIG_JBD_DEBUG)
+	AC_DEFINE(CONFIG_JBD_DEBUG, 1,
+		[Define to 1 if debugging ext3/4 journal code])
 	AC_MSG_RESULT([Enabling journal debugging])
 fi
 ,
@@ -392,7 +428,8 @@ if test "$enableval" = "no"
 then
 	AC_MSG_RESULT([Disabling blkid debugging])
 else
-	AC_DEFINE(CONFIG_BLKID_DEBUG)
+	AC_DEFINE(CONFIG_BLKID_DEBUG, 1,
+		[Define to 1 if debugging the blkid library])
 	AC_MSG_RESULT([Enabling blkid debugging])
 fi
 ,
@@ -403,18 +440,20 @@ dnl handle --enable-testio-debug
 dnl
 AC_ARG_ENABLE([testio-debug],
 [  --disable-testio-debug  disable the use of the test I/O manager for debugging],
+AH_TEMPLATE([CONFIG_TESTIO_DEBUG],
+	[Define to 1 if the testio I/O manager should be enabled])
 if test "$enableval" = "no"
 then
 	AC_MSG_RESULT([Disabling testio debugging])
 	TEST_IO_CMT="#"
 else
 	TEST_IO_CMT=
-	AC_DEFINE(CONFIG_TESTIO_DEBUG)
+	AC_DEFINE(CONFIG_TESTIO_DEBUG, 1)
 	AC_MSG_RESULT([Enabling testio debugging])
 fi
 ,
 AC_MSG_RESULT([Enabling testio debugging by default])
-AC_DEFINE(CONFIG_TESTIO_DEBUG)
+AC_DEFINE(CONFIG_TESTIO_DEBUG, 1)
 TEST_IO_CMT=
 )
 AC_SUBST(TEST_IO_CMT)
@@ -480,6 +519,7 @@ DEPSTATIC_LIBBLKID=
 PROFILED_LIBBLKID=
 DEPPROFILED_LIBBLKID=
 BLKID_CMT=
+AH_TEMPLATE([CONFIG_BUILD_FINDFS], [Define to 1 to compile findfs])
 AC_ARG_ENABLE([libblkid],
 [  --disable-libblkid	  do not build private blkid library],
 if test "$enableval" = "no"
@@ -502,7 +542,7 @@ else
 	DEPSTATIC_LIBBLKID=$STATIC_LIBBLKID
 	PROFILED_LIBBLKID='$(LIB)/libblkid'$PROFILED_LIB_EXT
 	DEPPROFILED_LIBBLKID=$PROFILED_LIBBLKID
-	AC_DEFINE(CONFIG_BUILD_FINDFS)
+	AC_DEFINE(CONFIG_BUILD_FINDFS, 1)
 	AC_MSG_RESULT([Enabling private blkid library])
 fi
 ,
@@ -512,7 +552,7 @@ STATIC_LIBBLKID='$(LIB)/libblkid'$STATIC_LIB_EXT
 DEPSTATIC_LIBBLKID=$STATIC_LIBBLKID
 PROFILED_LIBBLKID='$(LIB)/libblkid'$PROFILED_LIB_EXT
 DEPPROFILED_LIBBLKID=$PROFILED_LIBBLKID
-AC_DEFINE(CONFIG_BUILD_FINDFS)
+AC_DEFINE(CONFIG_BUILD_FINDFS, 1)
 AC_MSG_RESULT([Enabling private blkid library by default])
 )
 AC_SUBST(LIBBLKID)
@@ -522,6 +562,39 @@ AC_SUBST(DEPSTATIC_LIBBLKID)
 AC_SUBST(PROFILED_LIBBLKID)
 AC_SUBST(DEPPROFILED_LIBBLKID)
 AC_SUBST(BLKID_CMT)
+dnl
+dnl handle --enable-quota
+dnl
+PKG_PROG_PKG_CONFIG
+AH_TEMPLATE([CONFIG_QUOTA], [Define to 1 to enable quota support])
+AC_ARG_ENABLE([quota],
+[  --enable-quota	  enable quota support],
+if test "$enableval" = "no"
+then
+	AC_MSG_RESULT([Disabling quota support])
+else
+	AC_DEFINE(CONFIG_QUOTA, 1)
+	AC_MSG_RESULT([Enabling quota support])
+fi
+,
+AC_MSG_RESULT([Disabling quota support by default])
+)
+dnl
+dnl Define stuff expected for quota library
+dnl
+LIBQUOTA='$(LIB)/libquota'$LIB_EXT
+DEPLIBQUOTA=$LIBQUOTA
+STATIC_LIBQUOTA='$(LIB)/libquota'$STATIC_LIB_EXT
+DEPSTATIC_LIBQUOTA=$STATIC_LIBQUOTA
+PROFILED_LIBQUOTA='$(LIB)/libquota'$PROFILED_LIB_EXT
+DEPPROFILED_LIBQUOTA=$PROFILED_LIBQUOTA
+AC_SUBST(LIBQUOTA)
+AC_SUBST(DEPLIBQUOTA)
+AC_SUBST(STATIC_LIBQUOTA)
+AC_SUBST(DEPSTATIC_LIBQUOTA)
+AC_SUBST(PROFILED_LIBQUOTA)
+AC_SUBST(DEPPROFILED_LIBQUOTA)
+AC_SUBST(QUOTA_CMT)
 dnl
 dnl handle --enable-debugfs
 dnl
@@ -576,6 +649,24 @@ AC_MSG_RESULT([Enabling e2resize support by default])
 RESIZER_CMT=
 )
 AC_SUBST(RESIZER_CMT)
+dnl
+dnl handle --enable-defrag
+dnl
+AC_ARG_ENABLE([defrag],
+[  --disable-defrag   	  disable support of e4defrag program],
+if test "$enableval" = "no"
+then
+	AC_MSG_RESULT([Disabling e4defrag support])
+	DEFRAG_CMT="#"
+else
+	DEFRAG_CMT=
+	AC_MSG_RESULT([Enabling e4defrag support])
+fi
+,
+AC_MSG_RESULT([Enabling e4defrag support by default])
+DEFRAG_CMT=
+)
+AC_SUBST(DEFRAG_CMT)
 dnl
 dnl See whether to install the `fsck' wrapper program (that calls e2fsck)
 dnl
@@ -651,6 +742,7 @@ fi
 dnl
 dnl
 dnl
+AH_TEMPLATE([USE_UUIDD], [Define to 1 to build uuidd])
 AC_ARG_ENABLE([uuidd],
 [  --disable-uuidd         disable building the uuid daemon],
 [if test "$enableval" = "no"
@@ -658,12 +750,12 @@ then
 	AC_MSG_RESULT([Not building uuidd])
 	UUIDD_CMT="#"
 else
-	AC_DEFINE(USE_UUIDD)
+	AC_DEFINE(USE_UUIDD, 1)
 	UUIDD_CMT=""
 	AC_MSG_RESULT([Building uuidd])
 fi]
 ,
-AC_DEFINE(USE_UUIDD)
+AC_DEFINE(USE_UUIDD, 1)
 UUIDD_CMT=""
 AC_MSG_RESULT([Building uuidd by default])
 )
@@ -680,8 +772,8 @@ GETTEXT_PACKAGE=e2fsprogs
 PACKAGE=e2fsprogs
 VERSION="$E2FSPROGS_VERSION"
 VERSION=0.14.1
-AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
-AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
+AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [package name for gettext])
+AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [version for gettext])
 AC_SUBST(GETTEXT_PACKAGE)
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
@@ -729,7 +821,48 @@ if test $cross_compiling = no; then
 else
   AC_CHECK_PROGS(BUILD_CC, gcc cc)
 fi
-AC_CHECK_HEADERS(dirent.h errno.h getopt.h malloc.h mntent.h paths.h semaphore.h setjmp.h signal.h stdarg.h stdint.h stdlib.h termios.h termio.h unistd.h utime.h linux/fd.h linux/major.h net/if_dl.h netinet/in.h sys/disklabel.h sys/file.h sys/ioctl.h sys/mkdev.h sys/mman.h sys/prctl.h sys/queue.h sys/resource.h sys/select.h sys/socket.h sys/sockio.h sys/stat.h sys/syscall.h sys/sysmacros.h sys/time.h sys/types.h sys/un.h sys/wait.h)
+AC_CHECK_HEADERS(m4_flatten([
+	dirent.h
+	errno.h
+	execinfo.h
+	getopt.h
+	malloc.h
+	mntent.h
+	paths.h
+	semaphore.h
+	setjmp.h
+	signal.h
+	stdarg.h
+	stdint.h
+	stdlib.h
+	termios.h
+	termio.h
+	unistd.h
+	utime.h
+	linux/falloc.h
+	linux/fd.h
+	linux/major.h
+	net/if_dl.h
+	netinet/in.h
+	sys/disklabel.h
+	sys/file.h
+	sys/ioctl.h
+	sys/mkdev.h
+	sys/mman.h
+	sys/prctl.h
+	sys/queue.h
+	sys/resource.h
+	sys/select.h
+	sys/socket.h
+	sys/sockio.h
+	sys/stat.h
+	sys/syscall.h
+	sys/sysmacros.h
+	sys/time.h
+	sys/types.h
+	sys/un.h
+	sys/wait.h
+]))
 AC_CHECK_HEADERS(sys/disk.h sys/mount.h,,,
 [[
 #if HAVE_SYS_QUEUE_H
@@ -748,16 +881,19 @@ AC_CHECK_HEADERS(net/if.h,,,
 AC_FUNC_VPRINTF
 dnl Check to see if dirent has member d_reclen. On cygwin those d_reclen
 dnl is not decleared.
-AC_CHECK_MEMBER(struct dirent.d_reclen,[AC_DEFINE(HAVE_RECLEN_DIRENT)],,
+AC_CHECK_MEMBER(struct dirent.d_reclen,[AC_DEFINE(HAVE_RECLEN_DIRENT, 1,
+		       [Define to 1 if dirent has d_reclen])],,
 		[#include <dirent.h>])
-dnl Check to see if ssize_t was decleared
-AC_CHECK_TYPE(ssize_t,[AC_DEFINE(HAVE_TYPE_SSIZE_T)],,
+dnl Check to see if ssize_t was declared
+AC_CHECK_TYPE(ssize_t,[AC_DEFINE(HAVE_TYPE_SSIZE_T, 1,
+		[Define to 1 if ssize_t declared])],,
 	      [#include <sys/types.h>])
 dnl
 dnl Check to see if llseek() is declared in unistd.h.  On some libc's 
 dnl it is, and on others it isn't..... Thank you glibc developers....
 dnl
-AC_CHECK_DECL(llseek,[AC_DEFINE(HAVE_LLSEEK_PROTOTYPE)],,
+AC_CHECK_DECL(llseek,[AC_DEFINE(HAVE_LLSEEK_PROTOTYPE, 1,
+			[Define to 1 if llseek declared in unistd.h])],,
 	      [#include <unistd.h>])
 dnl
 dnl Check to see if lseek64() is declared in unistd.h.  Glibc's header files
@@ -768,7 +904,8 @@ dnl
 dnl Warning!  Use of --enable-gcc-wall may throw off this test.
 dnl
 dnl
-AC_CHECK_DECL(lseek64,[AC_DEFINE(HAVE_LSEEK64_PROTOTYPE)],,
+AC_CHECK_DECL(lseek64,[AC_DEFINE(HAVE_LSEEK64_PROTOTYPE, 1,
+			[Define to 1 if lseek64 declared in unistd.h])],,
 		[#define _LARGEFILE_SOURCE
 		 #define _LARGEFILE64_SOURCE
 		 #include <unistd.h>])
@@ -835,14 +972,16 @@ if test "$e2fsprogs_cv_struct_st_flags" = yes; then
 		[e2fsprogs_cv_struct_st_flags_immut=no]))
   AC_MSG_RESULT($e2fsprogs_cv_struct_st_flags_immut)
   if test "$e2fsprogs_cv_struct_st_flags_immut" = yes; then
-	  AC_DEFINE(HAVE_STAT_FLAGS)
+	  AC_DEFINE(HAVE_STAT_FLAGS, 1,
+		[Define to 1 if struct stat has st_flags])
   fi
 fi
 dnl
 dnl Check for the presence of SA_LEN
 dnl
 AC_CHECK_MEMBER(struct sockaddr.sa_len,
-		AC_DEFINE_UNQUOTED(HAVE_SA_LEN,1,[Define if struct sockaddr contains sa_len]),,
+		AC_DEFINE_UNQUOTED(HAVE_SA_LEN,1,
+			[Define to 1 if if struct sockaddr contains sa_len]),,
 	[#include <sys/types.h>
 	 #include <sys/socket.h>])
 dnl
@@ -853,7 +992,51 @@ if test -n "$BLKID_CMT"; then
   AC_SEARCH_LIBS([blkid_probe_all], [blkid])
 fi
 dnl
-AC_CHECK_FUNCS(chflags getrusage llseek lseek64 open64 fstat64 ftruncate64 getmntinfo strtoull strcasecmp srandom jrand48 fchown mallinfo fdatasync strnlen strptime strdup sysconf pathconf posix_memalign memalign valloc __secure_getenv prctl mmap utime setresuid setresgid usleep nanosleep getdtablesize getrlimit blkid_probe_get_topology mbstowcs)
+AC_CHECK_FUNCS(m4_flatten([
+	__secure_getenv
+	backtrace
+	blkid_probe_get_topology
+	chflags
+	fallocate
+	fallocate64
+	fchown
+	fdatasync
+	fstat64
+	ftruncate64
+	getdtablesize
+	getmntinfo
+	getpwuid_r
+	getrlimit
+	getrusage
+	jrand48
+	llseek
+	lseek64
+	mallinfo
+	mbstowcs
+	memalign
+	mmap
+	msync
+	nanosleep
+	open64
+	pathconf
+	posix_fadvise
+	posix_memalign
+	prctl
+	setmntent
+	setresgid
+	setresuid
+	srandom
+	strcasecmp
+	strdup
+	strnlen
+	strptime
+	strtoull
+	sync_file_range
+	sysconf
+	usleep
+	utime
+	valloc
+]))
 dnl
 dnl Check to see if -lsocket is required (solaris) to make something
 dnl that uses socket() to compile; this is needed for the UUID library
@@ -870,21 +1053,22 @@ AC_CACHE_VAL(ac_cv_have_optreset,
   ac_cv_have_optreset=yes, ac_cv_have_optreset=no)])dnl
 AC_MSG_RESULT($ac_cv_have_optreset)
 if test $ac_cv_have_optreset = yes; then
-  AC_DEFINE(HAVE_OPTRESET)
+  AC_DEFINE(HAVE_OPTRESET, 1, [Define to 1 if optreset for getopt is present])
 fi
 dnl
 dnl Test for sem_init, and which library it might require:
 dnl
+AH_TEMPLATE([HAVE_SEM_INIT], [Define to 1 if sem_init() exists])
 SEM_INIT_LIB=''
 AC_CHECK_FUNC(sem_init, ,
   AC_CHECK_LIB(pthread, sem_init,
-  	AC_DEFINE(HAVE_SEM_INIT)
+  	AC_DEFINE(HAVE_SEM_INIT, 1)
   	SEM_INIT_LIB=-lpthread,
   AC_CHECK_LIB(rt, sem_init,
-  	AC_DEFINE(HAVE_SEM_INIT)
+  	AC_DEFINE(HAVE_SEM_INIT, 1)
   	SEM_INIT_LIB=-lrt,
   AC_CHECK_LIB(posix4, sem_init,
-  	AC_DEFINE(HAVE_SEM_INIT)
+  	AC_DEFINE(HAVE_SEM_INIT, 1)
   	SEM_INIT_LIB=-lposix4))))dnl
 AC_SUBST(SEM_INIT_LIB)
 dnl
@@ -903,7 +1087,7 @@ dnl We use the EXT2 ioctls only under Linux
 dnl
 case "$host_os" in
 linux*)
-	AC_DEFINE(HAVE_EXT2_IOCTLS)
+	AC_DEFINE(HAVE_EXT2_IOCTLS, 1, [Define to 1 if Ext2 ioctls present])
 	;;
 esac
 dnl
@@ -988,9 +1172,19 @@ AC_SUBST(root_sbindir)
 AC_SUBST(root_libdir)
 AC_SUBST(root_sysconfdir)
 dnl
-dnl See if -static works.
+dnl Allow specification of the multiarch arch
 dnl
-AC_MSG_CHECKING([whether linker accepts -static])
+AC_ARG_WITH([multiarch],
+[  --with-multiarch=ARCH specify the multiarch triplet],
+libdir=$libdir/$withval
+root_libdir=$root_libdir/$withval
+)dnl
+dnl
+dnl See if -static works.  This could fail if the linker does not
+dnl support -static, or if required external libraries are not available
+dnl in static form.
+dnl
+AC_MSG_CHECKING([whether we can link with -static])
 AC_CACHE_VAL(ac_cv_e2fsprogs_use_static,
 [SAVE_LDFLAGS=$LDFLAGS; LDFLAGS="$LDFLAGS -static"
 AC_TRY_LINK([#include <stdio.h>],[fflush(stdout);],
@@ -1022,7 +1216,8 @@ dnl
 case "$host_os" in
 darwin*)
 	AC_MSG_RESULT([Using Apple Darwin / GNU libintl workaround])
-	AC_DEFINE(_INTL_REDIRECT_MACROS)
+	AC_DEFINE(_INTL_REDIRECT_MACROS, 1,
+		[Define to 1 if Apple Darwin libintl workaround is needed])
 	;;
 esac
 dnl
@@ -1043,17 +1238,20 @@ fi
 AC_SUBST(DO_TEST_SUITE)
 dnl
 dnl Only include the intl include files if we're building with them
-dnl 
-INTL_FLAGS=
-if test "$USE_INCLUDED_LIBINTL" = "yes" ; then
-	INTL_FLAGS='-I$(top_builddir)/intl -I$(top_srcdir)/intl'
+dnl
+INCLUDES='-I. -I$(top_builddir)/lib -I$(top_srcdir)/lib'
+if test -n "$CPPFLAGS" ; then
+	INCLUDES="$INCLUDES $CPPFLAGS"
 fi
-AC_SUBST(INTL_FLAGS)
+if test "$USE_INCLUDED_LIBINTL" = "yes" ; then
+	INCLUDES=$INCLUDES' -I$(top_builddir)/intl -I$(top_srcdir)/intl'
+fi
+AC_SUBST(INCLUDES)
 dnl
 dnl Build CFLAGS
 dnl
 if test $cross_compiling = no; then
-   BUILD_CFLAGS="$CFLAGS"
+   BUILD_CFLAGS="$CFLAGS $CPPFLAGS"
    BUILD_LDFLAGS="$LDFLAGS"
 else
    BUILD_CFLAGS=
@@ -1070,11 +1268,11 @@ test -d include || mkdir include
 test -d include/linux || mkdir include/linux
 test -d include/asm || mkdir include/asm
 for i in MCONFIG Makefile e2fsprogs.spec \
-	util/Makefile util/subst.conf util/gen-tarball \
+	util/Makefile util/subst.conf util/gen-tarball util/install-symlink \
 	lib/et/Makefile lib/ss/Makefile lib/e2p/Makefile \
 	lib/ext2fs/Makefile lib/ext2fs/ext2_types.h \
 	lib/uuid/Makefile lib/uuid/uuid_types.h \
-	lib/blkid/Makefile lib/blkid/blkid_types.h \
+	lib/blkid/Makefile lib/blkid/blkid_types.h lib/quota/Makefile \
 	lib/ss/ss.pc lib/uuid/uuid.pc lib/et/com_err.pc \
 	lib/e2p/e2p.pc lib/blkid/blkid.pc lib/ext2fs/ext2fs.pc \
 	misc/Makefile ext2ed/Makefile e2fsck/Makefile \

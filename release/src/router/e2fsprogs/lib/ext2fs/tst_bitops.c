@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #if HAVE_UNISTD_H
@@ -168,6 +169,126 @@ int main(int argc, char **argv)
 		exit(1);
 
 	printf("ext2fs_fast_set_bit big_test successful\n");
+
+	/* Repeat foregoing tests for 64-bit bitops */
+
+	/* Test test_bit */
+	for (i=0,j=0; i < size; i++) {
+		if (ext2fs_test_bit64(i, bitarray)) {
+			if (bits_list[j] == i) {
+				j++;
+			} else {
+				printf("64-bit: Bit %d set, not expected\n",
+				       i);
+				exit(1);
+			}
+		} else {
+			if (bits_list[j] == i) {
+				printf("64-bit: "
+				       "Expected bit %d to be clear.\n", i);
+				exit(1);
+			}
+		}
+	}
+	printf("64-bit: ext2fs_test_bit appears to be correct\n");
+
+	/* Test ext2fs_set_bit */
+	memset(testarray, 0, sizeof(testarray));
+	for (i=0; bits_list[i] > 0; i++) {
+		ext2fs_set_bit64(bits_list[i], testarray);
+	}
+	if (memcmp(testarray, bitarray, sizeof(testarray)) == 0) {
+		printf("64-bit: ext2fs_set_bit test succeeded.\n");
+	} else {
+		printf("64-bit: ext2fs_set_bit test failed.\n");
+		for (i=0; i < sizeof(testarray); i++) {
+			printf("%02x ", testarray[i]);
+		}
+		printf("\n");
+		exit(1);
+	}
+	for (i=0; bits_list[i] > 0; i++) {
+		ext2fs_clear_bit64(bits_list[i], testarray);
+	}
+	for (i=0; i < sizeof(testarray); i++) {
+		if (testarray[i]) {
+			printf("64-bit: ext2fs_clear_bit failed, "
+			       "testarray[%d] is %d\n", i, testarray[i]);
+			exit(1);
+		}
+	}
+	printf("64-bit: ext2fs_clear_bit test succeed.\n");
+
+	/* Do bigarray test */
+	bigarray = malloc(1 << 29);
+	if (!bigarray) {
+		fprintf(stderr, "Failed to allocate scratch memory!\n");
+		exit(1);
+	}
+
+        bigarray[BIG_TEST_BIT >> 3] = 0;
+
+	ext2fs_set_bit64(BIG_TEST_BIT, bigarray);
+	printf("64-bit: big bit number (%u) test: %d, expected %d\n",
+	       BIG_TEST_BIT, bigarray[BIG_TEST_BIT >> 3],
+	       (1 << (BIG_TEST_BIT & 7)));
+	if (bigarray[BIG_TEST_BIT >> 3] != (1 << (BIG_TEST_BIT & 7)))
+		exit(1);
+
+	ext2fs_clear_bit64(BIG_TEST_BIT, bigarray);
+
+	printf("64-bit: big bit number (%u) test: %d, expected 0\n",
+	       BIG_TEST_BIT,
+	       bigarray[BIG_TEST_BIT >> 3]);
+	if (bigarray[BIG_TEST_BIT >> 3] != 0)
+		exit(1);
+
+	printf("64-bit: ext2fs_set_bit big_test successful\n");
+
+	/* Now test ext2fs_fast_set_bit */
+	memset(testarray, 0, sizeof(testarray));
+	for (i=0; bits_list[i] > 0; i++) {
+		ext2fs_fast_set_bit64(bits_list[i], testarray);
+	}
+	if (memcmp(testarray, bitarray, sizeof(testarray)) == 0) {
+		printf("64-bit: ext2fs_fast_set_bit test succeeded.\n");
+	} else {
+		printf("64-bit: ext2fs_fast_set_bit test failed.\n");
+		for (i=0; i < sizeof(testarray); i++) {
+			printf("%02x ", testarray[i]);
+		}
+		printf("\n");
+		exit(1);
+	}
+	for (i=0; bits_list[i] > 0; i++) {
+		ext2fs_clear_bit64(bits_list[i], testarray);
+	}
+	for (i=0; i < sizeof(testarray); i++) {
+		if (testarray[i]) {
+			printf("64-bit: ext2fs_clear_bit failed, "
+			       "testarray[%d] is %d\n", i, testarray[i]);
+			exit(1);
+		}
+	}
+	printf("64-bit: ext2fs_clear_bit test succeed.\n");
+
+        bigarray[BIG_TEST_BIT >> 3] = 0;
+
+	ext2fs_fast_set_bit64(BIG_TEST_BIT, bigarray);
+	printf("64-bit: big bit number (%u) test: %d, expected %d\n",
+	       BIG_TEST_BIT, bigarray[BIG_TEST_BIT >> 3],
+	       (1 << (BIG_TEST_BIT & 7)));
+	if (bigarray[BIG_TEST_BIT >> 3] != (1 << (BIG_TEST_BIT & 7)))
+		exit(1);
+
+	ext2fs_fast_clear_bit64(BIG_TEST_BIT, bigarray);
+
+	printf("64-bit: big bit number (%u) test: %d, expected 0\n",
+	       BIG_TEST_BIT, bigarray[BIG_TEST_BIT >> 3]);
+	if (bigarray[BIG_TEST_BIT >> 3] != 0)
+		exit(1);
+
+	printf("64-bit: ext2fs_fast_set_bit big_test successful\n");
 
 	exit(0);
 }

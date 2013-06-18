@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -34,7 +35,7 @@
 #include "ext2_fs.h"
 #include "ext2fs.h"
 
-#ifdef HAVE_MNTENT_H
+#ifdef HAVE_SETMNTENT
 /*
  * Helper function which checks a file in /etc/mtab format to see if a
  * filesystem is mounted.  Returns an error if the file doesn't exist
@@ -230,7 +231,7 @@ static errcode_t check_getmntinfo(const char *file, int *mount_flags,
 	return 0;
 }
 #endif /* HAVE_GETMNTINFO */
-#endif /* HAVE_MNTENT_H */
+#endif /* HAVE_SETMNTENT */
 
 /*
  * Check to see if we're dealing with the swap device.
@@ -301,15 +302,13 @@ leave:
 errcode_t ext2fs_check_mount_point(const char *device, int *mount_flags,
 				  char *mtpt, int mtlen)
 {
-	struct stat	st_buf;
 	errcode_t	retval = 0;
-	int		fd;
 
 	if (is_swap_device(device)) {
 		*mount_flags = EXT2_MF_MOUNTED | EXT2_MF_SWAP;
 		strncpy(mtpt, "<swap>", mtlen);
 	} else {
-#ifdef HAVE_MNTENT_H
+#ifdef HAVE_SETMNTENT
 		retval = check_mntent(device, mount_flags, mtpt, mtlen);
 #else
 #ifdef HAVE_GETMNTINFO
@@ -320,21 +319,24 @@ errcode_t ext2fs_check_mount_point(const char *device, int *mount_flags,
 #endif
 		*mount_flags = 0;
 #endif /* HAVE_GETMNTINFO */
-#endif /* HAVE_MNTENT_H */
+#endif /* HAVE_SETMNTENT */
 	}
 	if (retval)
 		return retval;
 
 #ifdef __linux__ /* This only works on Linux 2.6+ systems */
-	if ((stat(device, &st_buf) != 0) ||
-	    !S_ISBLK(st_buf.st_mode))
-		return 0;
-	fd = open(device, O_RDONLY | O_EXCL);
-	if (fd < 0) {
-		if (errno == EBUSY)
-			*mount_flags |= EXT2_MF_BUSY;
-	} else
-		close(fd);
+	{
+		struct stat st_buf;
+
+		if (stat(device, &st_buf) == 0 && S_ISBLK(st_buf.st_mode)) {
+			int fd = open(device, O_RDONLY | O_EXCL);
+
+			if (fd >= 0)
+				close(fd);
+			else if (errno == EBUSY)
+				*mount_flags |= EXT2_MF_BUSY;
+		}
+	}
 #endif
 
 	return 0;

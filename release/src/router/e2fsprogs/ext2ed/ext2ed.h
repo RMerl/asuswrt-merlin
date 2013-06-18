@@ -28,10 +28,6 @@ Copyright (C) 1995 Gadi Oxman
 
 */
 
-#ifndef ETC_DIR
-#define ETC_DIR	"/etc"		/* Where to find the config file */
-#endif
-
 #define DEBUG						/* Activate self-sanity checks */
 
 #include <ext2fs/ext2_fs.h>				/* Main kernel ext2 include file */

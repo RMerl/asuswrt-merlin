@@ -5,7 +5,7 @@ badblocks \- search a device for bad blocks
 .SH SYNOPSIS
 .B badblocks
 [
-.B \-svwnf
+.B \-svwnfBX
 ]
 [
 .B \-b
@@ -184,7 +184,8 @@ are specified then all blocks will be tested with one pattern
 before proceeding to the next pattern.
 .TP
 .B \-v
-Verbose mode.
+Verbose mode.  Will write the number of read errors, write errors and data-
+corruptions to stderr.
 .TP
 .B \-w
 Use write-mode test. With this option,
@@ -194,6 +195,9 @@ every block of the device, reading every block and comparing the contents.
 This option may not be combined with the 
 .B \-n 
 option, as they are mutually exclusive.
+.TP
+.B \-B
+Use buffered I/O and do not use Direct I/O, even if it is available.
 .TP
 .B \-X
 Internal flag only to be used by

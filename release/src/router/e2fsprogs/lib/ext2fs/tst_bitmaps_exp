@@ -1,0 +1,211 @@
+tst_bitmaps 1.0.  Type '?' for a list of commands.
+
+tst_bitmaps: setb 12
+Setting block 12, was clear before
+tst_bitmaps: setb 12
+Setting block 12, was set before
+tst_bitmaps: clearb 12
+Clearing block 12, was set before
+tst_bitmaps: clearb 12
+Clearing block 12, was clear before
+tst_bitmaps: setb 12
+Setting block 12, was clear before
+tst_bitmaps: setb 14
+Setting block 14, was clear before
+tst_bitmaps: setb 16
+Setting block 16, was clear before
+tst_bitmaps: testb 13
+Block 13 is clear
+tst_bitmaps: testb 15
+Block 15 is clear
+tst_bitmaps: testb 12
+Block 12 is set
+tst_bitmaps: testb 14
+Block 14 is set
+tst_bitmaps: setb 13
+Setting block 13, was clear before
+tst_bitmaps: setb 15
+Setting block 15, was clear before
+tst_bitmaps: testb 12
+Block 12 is set
+tst_bitmaps: testb 11
+Block 11 is clear
+tst_bitmaps: testb 15
+Block 15 is set
+tst_bitmaps: testb 16
+Block 16 is set
+tst_bitmaps: dump_bb
+block bitmap: 00f80000000000000000000000000000
+bits set: 5
+tst_bitmaps: ffzb 11 16
+First unmarked block is 11
+tst_bitmaps: ffzb 12 16
+ext2fs_find_first_zero_block_bitmap2() returned No such file or directory
+tst_bitmaps: ffzb 12 20
+First unmarked block is 17
+tst_bitmaps: clearb 13
+Clearing block 13, was set before
+tst_bitmaps: ffzb 12 20
+First unmarked block is 13
+tst_bitmaps: setb 13
+Setting block 13, was clear before
+tst_bitmaps: clearb 12 7
+Clearing blocks 12 to 18
+tst_bitmaps: testb 12 7
+Blocks 12 to 18 are all clear.
+tst_bitmaps: setb 15
+Setting block 15, was clear before
+tst_bitmaps: testb 12 7
+Blocks 12 to 18 are NOT all clear.
+tst_bitmaps: clearb 15
+Clearing block 15, was set before
+tst_bitmaps: testb 12 7
+Blocks 12 to 18 are all clear.
+tst_bitmaps: setb 12 7
+Marking blocks 12 to 18
+tst_bitmaps: dump_bb
+block bitmap: 00f80300000000000000000000000000
+bits set: 7
+tst_bitmaps: seti 2
+Setting inode 2, was clear before
+tst_bitmaps: seti 5
+Setting inode 5, was clear before
+tst_bitmaps: seti 4
+Setting inode 4, was clear before
+tst_bitmaps: seti 3
+Setting inode 3, was clear before
+tst_bitmaps: seti 4
+Setting inode 4, was set before
+tst_bitmaps: seti 5
+Setting inode 5, was set before
+tst_bitmaps: testi 6
+Inode 6 is clear
+tst_bitmaps: testi 1
+Inode 1 is clear
+tst_bitmaps: dump_ib
+inode bitmap: 1e000000
+bits set: 4
+tst_bitmaps: ffzi 1 6
+First unmarked inode is 1
+tst_bitmaps: ffzi 2 5
+ext2fs_find_first_zero_inode_bitmap2() returned No such file or directory
+tst_bitmaps: ffzi 2 6
+First unmarked inode is 6
+tst_bitmaps: cleari 4
+Clearing inode 4, was set before
+tst_bitmaps: ffzi 2 6
+First unmarked inode is 4
+tst_bitmaps: zeroi
+Clearing inode bitmap.
+tst_bitmaps: testi 5
+Inode 5 is clear
+tst_bitmaps: seti 5
+Setting inode 5, was clear before
+tst_bitmaps: seti 5
+Setting inode 5, was set before
+tst_bitmaps: cleari 5
+Clearing inode 5, was set before
+tst_bitmaps: cleari 5
+Clearing inode 5, was clear before
+tst_bitmaps: testi 17
+Inode 17 is clear
+tst_bitmaps: testi 6
+Inode 6 is clear
+tst_bitmaps: testi 4
+Inode 4 is clear
+tst_bitmaps: clearb 7 12
+Clearing blocks 7 to 18
+tst_bitmaps: dump_bb
+block bitmap: 00000000000000000000000000000000
+bits set: 0
+tst_bitmaps: setb 1
+Setting block 1, was clear before
+tst_bitmaps: dump_bb
+block bitmap: 01000000000000000000000000000000
+bits set: 1
+tst_bitmaps: setb 2
+Setting block 2, was clear before
+tst_bitmaps: dump_bb
+block bitmap: 03000000000000000000000000000000
+bits set: 2
+tst_bitmaps: setb 3
+Setting block 3, was clear before
+tst_bitmaps: dump_bb
+block bitmap: 07000000000000000000000000000000
+bits set: 3
+tst_bitmaps: setb 4
+Setting block 4, was clear before
+tst_bitmaps: dump_bb
+block bitmap: 0f000000000000000000000000000000
+bits set: 4
+tst_bitmaps: setb 5
+Setting block 5, was clear before
+tst_bitmaps: dump_bb
+block bitmap: 1f000000000000000000000000000000
+bits set: 5
+tst_bitmaps: setb 6
+Setting block 6, was clear before
+tst_bitmaps: dump_bb
+block bitmap: 3f000000000000000000000000000000
+bits set: 6
+tst_bitmaps: setb 7
+Setting block 7, was clear before
+tst_bitmaps: dump_bb
+block bitmap: 7f000000000000000000000000000000
+bits set: 7
+tst_bitmaps: setb 8
+Setting block 8, was clear before
+tst_bitmaps: dump_bb
+block bitmap: ff000000000000000000000000000000
+bits set: 8
+tst_bitmaps: setb 10
+Setting block 10, was clear before
+tst_bitmaps: setb 12
+Setting block 12, was clear before
+tst_bitmaps: setb 14
+Setting block 14, was clear before
+tst_bitmaps: setb 17
+Setting block 17, was clear before
+tst_bitmaps: setb 19
+Setting block 19, was clear before
+tst_bitmaps: setb 24
+Setting block 24, was clear before
+tst_bitmaps: setb 26
+Setting block 26, was clear before
+tst_bitmaps: setb 27
+Setting block 27, was clear before
+tst_bitmaps: setb 30
+Setting block 30, was clear before
+tst_bitmaps: setb 31
+Setting block 31, was clear before
+tst_bitmaps: setb 32
+Setting block 32, was clear before
+tst_bitmaps: setb 35
+Setting block 35, was clear before
+tst_bitmaps: setb 39
+Setting block 39, was clear before
+tst_bitmaps: setb 40
+Setting block 40, was clear before
+tst_bitmaps: setb 44
+Setting block 44, was clear before
+tst_bitmaps: setb 46
+Setting block 46, was clear before
+tst_bitmaps: setb 47
+Setting block 47, was clear before
+tst_bitmaps: setb 49
+Setting block 49, was clear before
+tst_bitmaps: setb 51
+Setting block 51, was clear before
+tst_bitmaps: setb 52
+Setting block 52, was clear before
+tst_bitmaps: clearb 2
+Clearing block 2, was set before
+tst_bitmaps: clearb 3
+Clearing block 3, was set before
+tst_bitmaps: clearb 7
+Clearing block 7, was set before
+tst_bitmaps: dump_bb
+block bitmap: b92a85e6c4680d000000000000000000
+bits set: 25
+tst_bitmaps: quit
+tst_bitmaps: 

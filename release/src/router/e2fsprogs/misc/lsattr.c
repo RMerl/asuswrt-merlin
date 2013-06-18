@@ -19,6 +19,7 @@
 
 #define _LARGEFILE64_SOURCE
 
+#include "config.h"
 #include <sys/types.h>
 #include <dirent.h>
 #ifdef HAVE_ERRNO_H
@@ -166,6 +167,7 @@ int main (int argc, char ** argv)
 	setlocale(LC_CTYPE, "");
 	bindtextdomain(NLS_CAT_NAME, LOCALEDIR);
 	textdomain(NLS_CAT_NAME);
+	set_com_err_gettext(gettext);
 #endif
 	if (argc && *argv)
 		program_name = *argv;

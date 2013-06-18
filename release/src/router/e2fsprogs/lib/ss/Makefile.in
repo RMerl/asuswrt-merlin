@@ -20,7 +20,7 @@ ELF_SO_VERSION = 2
 ELF_IMAGE = libss
 ELF_MYDIR = ss
 ELF_INSTALL_DIR = $(root_libdir)
-ELF_OTHER_LIBS = -L../.. -lcom_err $(DLOPEN_LIB)
+ELF_OTHER_LIBS = -lcom_err $(DLOPEN_LIB)
 
 BSDLIB_VERSION = 1.0
 BSDLIB_IMAGE = libss
@@ -30,11 +30,6 @@ BSDLIB_INSTALL_DIR = $(root_libdir)
 TAGS=etags
 COMPILE_ET=../et/compile_et --build-tree
 MK_CMDS=_SS_DIR_OVERRIDE=. ./mk_cmds
-
-# -I.. is so that ss/ss_err.h works
-# -I$(srcdir)/.. is so that ss/ss.h works
-# -I$(srcdir)/../et is so com_err.h works
-XTRA_CFLAGS= -I$(srcdir)/../et
 
 .c.o:
 	$(E) "	CC $<"
@@ -196,31 +191,42 @@ $(OBJS): subdirs
 # Makefile dependencies follow.  This must be the last section in
 # the Makefile.in file
 #
-invocation.o: $(srcdir)/invocation.c $(srcdir)/ss_internal.h $(srcdir)/ss.h \
+invocation.o: $(srcdir)/invocation.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/ss_internal.h $(srcdir)/ss.h \
  $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h
-help.o: $(srcdir)/help.c $(srcdir)/ss_internal.h $(srcdir)/ss.h \
+help.o: $(srcdir)/help.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/ss_internal.h $(srcdir)/ss.h \
  $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h
-execute_cmd.o: $(srcdir)/execute_cmd.c $(srcdir)/ss_internal.h $(srcdir)/ss.h \
+execute_cmd.o: $(srcdir)/execute_cmd.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/ss_internal.h $(srcdir)/ss.h \
  $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h
-listen.o: $(srcdir)/listen.c $(srcdir)/ss_internal.h $(srcdir)/ss.h \
+listen.o: $(srcdir)/listen.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/ss_internal.h $(srcdir)/ss.h \
  $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h
-parse.o: $(srcdir)/parse.c $(srcdir)/ss_internal.h $(srcdir)/ss.h \
+parse.o: $(srcdir)/parse.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/ss_internal.h $(srcdir)/ss.h \
  $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h
-error.o: $(srcdir)/error.c $(top_srcdir)/lib/et/com_err.h \
- $(srcdir)/ss_internal.h $(srcdir)/ss.h $(top_builddir)/lib/ss/ss_err.h \
- $(top_srcdir)/lib/et/com_err.h
-prompt.o: $(srcdir)/prompt.c $(srcdir)/ss_internal.h $(srcdir)/ss.h \
+error.o: $(srcdir)/error.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/lib/et/com_err.h \
+ $(srcdir)/ss_internal.h $(srcdir)/ss.h $(top_builddir)/lib/ss/ss_err.h
+prompt.o: $(srcdir)/prompt.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/ss_internal.h $(srcdir)/ss.h \
  $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h
-request_tbl.o: $(srcdir)/request_tbl.c $(srcdir)/ss_internal.h $(srcdir)/ss.h \
+request_tbl.o: $(srcdir)/request_tbl.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/ss_internal.h $(srcdir)/ss.h \
  $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h
-list_rqs.o: $(srcdir)/list_rqs.c $(srcdir)/ss_internal.h $(srcdir)/ss.h \
+list_rqs.o: $(srcdir)/list_rqs.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/ss_internal.h $(srcdir)/ss.h \
  $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h
-pager.o: $(srcdir)/pager.c $(srcdir)/ss_internal.h $(srcdir)/ss.h \
+pager.o: $(srcdir)/pager.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/ss_internal.h $(srcdir)/ss.h \
  $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h
-requests.o: $(srcdir)/requests.c $(srcdir)/ss_internal.h $(srcdir)/ss.h \
+requests.o: $(srcdir)/requests.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/ss_internal.h $(srcdir)/ss.h \
  $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h
-data.o: $(srcdir)/data.c $(srcdir)/ss_internal.h $(srcdir)/ss.h \
+data.o: $(srcdir)/data.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/ss_internal.h $(srcdir)/ss.h \
  $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h
-get_readline.o: $(srcdir)/get_readline.c $(srcdir)/ss_internal.h \
- $(srcdir)/ss.h $(top_builddir)/lib/ss/ss_err.h \
- $(top_srcdir)/lib/et/com_err.h
+get_readline.o: $(srcdir)/get_readline.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/ss_internal.h $(srcdir)/ss.h \
+ $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h

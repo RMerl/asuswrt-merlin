@@ -9,6 +9,7 @@
  * License.
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -157,7 +158,7 @@ void do_logdump(int argc, char **argv)
 				    / sizeof(struct ext2_inode));
 
 		inode_block_to_dump =
-			current_fs->group_desc[inode_group].bg_inode_table +
+			ext2fs_inode_table_loc(current_fs, inode_group) +
 			(group_offset / inodes_per_block);
 		inode_offset_to_dump = ((group_offset % inodes_per_block)
 					* sizeof(struct ext2_inode));
@@ -182,7 +183,7 @@ void do_logdump(int argc, char **argv)
 		group_to_dump = ((block_to_dump -
 				  es->s_first_data_block)
 				 / es->s_blocks_per_group);
-		bitmap_to_dump = current_fs->group_desc[group_to_dump].bg_block_bitmap;
+		bitmap_to_dump = ext2fs_block_bitmap_loc(current_fs, group_to_dump);
 	}
 
 	if (!journal_fn && check_fs_open(argv[0]))
@@ -209,6 +210,7 @@ void do_logdump(int argc, char **argv)
 			memset(&journal_inode, 0, sizeof(struct ext2_inode));
 			memcpy(&journal_inode.i_block[0], es->s_jnl_blocks,
 			       EXT2_N_BLOCKS*4);
+			journal_inode.i_size_high = es->s_jnl_blocks[15];
 			journal_inode.i_size = es->s_jnl_blocks[16];
 			journal_inode.i_links_count = 1;
 			journal_inode.i_mode = LINUX_S_IFREG | 0600;
@@ -368,7 +370,7 @@ static void dump_journal(char *cmdname, FILE *out_file,
 			fprintf(out_file, "\tuuid=%s\n", jsb_buffer);
 			fprintf(out_file, "\tblocksize=%d\n", blocksize);
 			fprintf(out_file, "\tjournal data size %lu\n",
-				(unsigned long) sb->s_blocks_count);
+				(unsigned long) ext2fs_blocks_count(sb));
 		}
 	}
 

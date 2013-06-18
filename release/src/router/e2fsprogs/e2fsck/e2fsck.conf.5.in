@@ -112,16 +112,28 @@ boolean value of false.  This setting defaults to true.
 .I broken_system_clock
 The
 .BR e2fsck (8)
-program has some hueristics that assume that the system clock is
+program has some heuristics that assume that the system clock is
 correct.  In addition, many system programs make similar assumptions.
 For example, the UUID library depends on time not going backwards in
 order for it to be able to make its guarantees about issuing universally
 unique ID's.  Systems with broken system clocks, are well, broken.
 However, broken system clocks, particularly in embedded systems, do
-exist.  E2fsck will attempt to use hueristics to determine if the time
-can no tbe trusted; and to skip time-based checks if this is true.  If
+exist.  E2fsck will attempt to use heuristics to determine if the time
+can not be trusted; and to skip time-based checks if this is true.  If
 this boolean is set to true, then e2fsck will always assume that the
 system clock can not be trusted.
+.TP
+.I buggy_init_scripts
+This boolean relation is an alias for
+.I accept_time_fudge
+for backwards compatibility; it used to
+be that the behavior defined by
+.I accept_time_fudge
+above defaulted to false, and
+.I buggy_init_scripts
+would enable superblock time field to be wrong by up to 24 hours.  When
+we changed the default, we also renamed this boolean relation to
+.IR accept_time_fudge.
 .TP
 .I clear_test_fs_flag
 This boolean relation controls whether or not 
@@ -145,6 +157,72 @@ be added to the directory without splitting leaf nodes, so that
 the average fill ratio of directories can be maintained at a
 higher, more efficient level.  This relation defaults to 20
 percent.
+.TP
+.I log_dir
+If the
+.I log_filename
+relation contains a relative pathname, then the log file will be placed
+in the directory named by the
+.I log_dir
+relation.
+.TP
+.I log_dir_fallback
+This relation contains an alternate directory that will be used if the
+directory specified by
+.I log_dir
+is not available or is not writeable.
+.TP
+.I log_dir_wait
+If this boolean relation is true, them if the directories specified by
+.I log_dir
+or
+.I log_dir_fallback
+are not available or are not yet writeable, e2fsck will save the output
+in a memory buffer, and a child process will periodically test to see if
+the log directory has become available after the boot sequence has
+mounted the requiste filesytem for reading/writing.  This implements the
+functionality provided by
+.BR logsave (8)
+for e2fsck log files.
+.TP
+.I log_filename
+This relation specifies the file name where a copy of e2fsck's output
+will be written.   If certain problem reports are suppressed using the
+.I max_count_problems
+relation, (or on a per-problem basis using the
+.I max_count
+relation), the full set of problem reports will be written to the log
+file.  The filename may contain various percent-expressions (%D, %T, %N,
+etc.) which will be expanded so that the file name for the log file can
+include things like date, time, device name, and other run-time
+parameters.  See the
+.B LOGGING
+section for more details.
+.TP
+.I max_count_problems
+This relation specifies the maximum number of problem reports of a
+particular type will be printed to stdout before further problem reports
+of that type are squelched.  This can be useful if the console is slow
+(i.e., connected to a serial port) and so a large amount of output could
+end up delaying the boot process for a long time (potentially hours).
+.TP
+.I report_features
+If this boolean relation is true, e2fsck will print the file system
+features as part of its verbose reporting (i.e., if the
+.B -v
+option is specified)
+.TP
+.I report_time
+If this boolean relation is true, e2fsck will run as if the options
+.B -tt
+are always specified.  This will cause e2fsck to print timing statistics
+on a pass by pass basis for full file system checks.
+.TP
+.I report_verbose
+If this boolean relation is true, e2fsck will run as if the option
+.B -v
+is always specified.  This will cause e2fsck to print some additional
+information at the end of each full file system check.
 .SH THE [problems] STANZA
 Each tag in the
 .I [problems] 
@@ -170,6 +248,11 @@ This boolean relation overrides the default behavior controlling
 whether this filesystem problem should be automatically fixed when
 .B e2fsck
 is running in preen mode.
+.TP
+.I max_count
+This integer relation overrides the 
+.I max_count_problems
+parameter (set in the options section) for this particular problem.
 .TP
 .I no_ok
 This boolean relation overrides the default behavior determining
@@ -229,6 +312,76 @@ defaults to true.
 This relation controls whether or not the scratch file directory is used
 instead of an in-memory data structure when tracking inode counts.  It
 defaults to true.
+.SH LOGGING
+E2fsck has the facility to save the information from an e2fsck run in a
+directory so that a system administrator can review its output at their
+leisure.  This allows information captured during the automatic e2fsck
+preen run, as well as a manually started e2fsck run, to be saved for
+posterity.  This facility is controlled by the
+.IR log_filename ,
+.IR log_dir ,
+.IR log_dir_fallback ,
+and
+.I log_dir_wait
+relations in the
+.I [options]
+stanza.
+.PP
+The filename in
+.I log_filename
+may contain the following percent-expressions that will be expanded as
+follows.
+.TP
+.B %d
+The current day of the month
+.TP
+.B %D
+The current date; this is a equivalent of
+.B %Y%m%d
+.TP
+.B %h
+The hostname of the system.
+.TP
+.B %H
+The current hour in 24-hour format (00..23)
+.TP
+.B %m
+The current month as a two-digit number (01..12)
+.TP
+.B %M
+The current minute (00..59)
+.TP
+.B %N
+The name of the block device containing the file system, with any
+directory pathname stripped off.
+.TP
+.B %p
+The pid of the e2fsck process
+.TP
+.B %s
+The current time expressed as the number of seconds since 1970-01-01
+00:00:00 UTC
+.TP
+.B %S
+The current second (00..59)
+.TP
+.B %T
+The current time; this is equivalent of
+.B %H%M%S
+.TP
+.B %u
+The name of the user running e2fsck.
+.TP
+.B %U
+This percent expression does not expand to anything, but it signals that
+any following date or time expressions should be expressed in UTC time
+instead of the local timzeone.
+.TP
+.B %y
+The last two digits of the current year (00..99)
+.TP
+.B %Y
+The current year (i.e., 2012).
 .SH EXAMPLES
 The following recipe will prevent e2fsck from aborting during the boot
 process when a filesystem contains orphaned files.  (Of course, this is
@@ -247,6 +400,29 @@ things out may be dangerous.)
 			description = "@u @i %i.  "
 .br
 		}
+.P
+The following recipe will cause an e2fsck logfile to be written to the
+directory /var/log/e2fsck, with a filename that contains the device
+name, the hostname of the system, the date, and time: e.g.,
+"e2fsck-sda3.server.INFO.20120314-112142".  If the directory containing
+/var/log is located on the root file system
+which is initially mounted read-only, then the output will be saved in
+memory and written out once the root file system has been remounted
+read/write.   To avoid too much detail from being written to the serial
+console (which could potentially slow down the boot sequence), only print
+no more than 16 instances of each type of file system corruption.
+.P
+.br
+	[options]
+.br
+		max_count_problems = 16
+.br
+		log_dir = /var/log/e2fsck
+.br
+		log_filename = e2fsck-%N.%h.INFO.%D-%T
+.br
+		log_dir_wait = true
+.P
 .SH FILES
 .TP
 .I /etc/e2fsck.conf

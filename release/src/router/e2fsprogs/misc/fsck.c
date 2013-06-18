@@ -27,9 +27,9 @@
 
 #define _XOPEN_SOURCE 600 /* for inclusion of sa_handler in Solaris */
 
+#include "config.h"
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/signal.h>
 #include <sys/stat.h>
 #include <limits.h>
 #include <stdio.h>
@@ -365,7 +365,8 @@ static void load_fs_info(const char *filename)
 	fclose(f);
 
 	if (old_fstab && filesys_info) {
-		fputs(_("\007\007\007"
+		fputs("\007\007\007", stderr);
+		fputs(_(
 		"WARNING: Your /etc/fstab does not contain the fsck passno\n"
 		"	field.  I will kludge around things for you, but you\n"
 		"	should fix your /etc/fstab file as soon as you can.\n\n"), stderr);
@@ -1179,8 +1180,8 @@ static void PRS(int argc, char *argv[])
 					if (progress_fd < 0)
 						progress_fd = 0;
 					else {
+						++i;
 						goto next_arg;
-						i++;
 					}
 				}
 				break;

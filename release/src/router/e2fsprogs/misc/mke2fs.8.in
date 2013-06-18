@@ -18,6 +18,9 @@ mke2fs \- create an ext2/ext3/ext4 filesystem
 .I block-size
 ]
 [
+.B \-D
+]
+[
 .B \-f
 .I fragment-size
 ]
@@ -184,6 +187,19 @@ Check the device for bad blocks before creating the file system.  If
 this option is specified twice, then a slower read-write
 test is used instead of a fast read-only test.
 .TP
+.B \-C " cluster-size"
+Specify the size of cluster in bytes for filesystems using the bigalloc
+feature.  Valid cluster-size values are from 2048 to 256M bytes per
+cluster.  By default (if bigalloc is enabled and no cluster size is
+otherwise specified using this option), the cluster size will be 16
+times the block size.
+.TP
+.B \-D
+Use direct I/O when writing to the disk.  This avoids mke2fs dirtying a
+lot of buffer cache memory, which may impact other applications running
+on a busy server.  This option will cause mke2fs to run much more
+slowly, however, so there is a tradeoff to using direct I/O.
+.TP
 .BI \-E " extended-options"
 Set extended options for the filesystem.  Extended options are comma
 separated, and may take an argument using the equals ('=') sign.  The
@@ -198,6 +214,16 @@ option is still accepted for backwards compatibility.   The
 following extended options are supported:
 .RS 1.2i
 .TP
+.BI mmp_update_interval= interval
+Adjust the initial MMP update interval to
+.I interval
+seconds.  Specifying an
+.I interval
+of 0 means to use the default interval.  The specified interval must
+be less than 300 seconds.  Requires that the
+.B mmp
+feature be enabled.
+.TP
 .BI stride= stride-size
 Configure the filesystem for a RAID array with
 .I stride-size
@@ -209,7 +235,7 @@ This mostly affects placement of filesystem metadata like bitmaps at
 time to avoid placing them on a single disk, which can hurt performance.
 It may also be used by the block allocator.
 .TP
-.BI stripe-width= stripe-width
+.BI stripe_width= stripe-width
 Configure the filesystem for a RAID array with
 .I stripe-width
 filesystem blocks per stripe. This is typically stride-size * N, where
@@ -232,7 +258,15 @@ This speeds up filesystem
 initialization noticeably, but it requires the kernel to finish
 initializing the filesystem in the background when the filesystem is
 first mounted.  If the option value is omitted, it defaults to 1 to
-enable lazy inode table initialization.
+enable lazy inode table zeroing.
+.TP
+.B lazy_journal_init\fR[\fB= \fI<0 to disable, 1 to enable>\fR]
+If enabled, the journal inode will not be fully zeroed out by
+.BR mke2fs .
+This speeds up filesystem initialization noticeably, but carries some
+small risk if the system crashes before the journal has been overwritten
+entirely one time.  If the option value is omitted, it defaults to 1 to
+enable lazy journal inode zeroing.
 .TP
 .B test_fs
 Set a flag in the filesystem superblock indicating that it may be
@@ -247,7 +281,14 @@ zeroed. This significantly speeds up filesystem initialization. This is set
 as default.
 .TP
 .BI nodiscard
-Do not attempt to discard blocks at mkfs time. This is the default.
+Do not attempt to discard blocks at mkfs time.
+.TP
+.BI quotatype
+Specify which quota type ('usr' or 'grp') is to be initialized. This
+option has any effect only if
+.B quota
+feature is set. Without this extended option, the default behavior is to
+initialize both user and group quotas.
 .RE
 .TP
 .BI \-f " fragment-size"
@@ -275,6 +316,10 @@ RAID parameter as part of the
 option rather than manipulating the number of blocks per group.)
 This option is generally used by developers who
 are developing test cases.
+.IP
+If the bigalloc feature is enabled, the
+.B \-g
+option will specify the number of clusters in a block group.
 .TP
 .BI \-G " number-of-groups"
 Specify the number of block groups that will be packed together to
@@ -337,7 +382,8 @@ Create an internal journal (i.e., stored inside the filesystem) of size
 megabytes.
 The size of the journal must be at least 1024 filesystem blocks
 (i.e., 1MB if using 1k blocks, 4MB if using 4k blocks, etc.)
-and may be no more than 102,400 filesystem blocks.
+and may be no more than 10,240,000 filesystem blocks or half the total
+file system size (whichever is smaller)
 @JDEV@.TP
 @JDEV@.BI device= external-journal
 @JDEV@Attach the filesystem to the journal block device located on
@@ -481,14 +527,30 @@ prefix the feature name with a  caret ('^') character.  The
 pseudo-filesystem feature "none" will clear all filesystem features.
 .RS 1.2i
 .TP
+.B bigalloc
+This feature enables clustered allocation, so that the unit of
+allocation is a power of two number of blocks.  That is, each bit in the
+what had traditionally been known as the block allocation bitmap now
+indicates whether a cluster is in use or not, where a cluster is by
+default composed of 16 blocks.  This feature can decrease the time
+spent on doing block allocation and brings smaller fragmentation, especially
+for large files.  The size can be specified using the
+.B \-C option.
+.IP
+.B Warning:
+The bigalloc feature is still under development, and may not be fully
+supported with your kernel or may have various bugs.  Please see the web
+page http://ext4.wiki.kernel.org/index.php/Bigalloc for details.
+.TP
 .B dir_index
 Use hashed b-trees to speed up lookups in large directories.
 .TP
-.B extent
+.B extents
 Instead of using the indirect block scheme for storing the location of
 data blocks in an inode, use extents instead.  This is a much more
 efficient encoding which speeds up filesystem access, especially for
-large files.
+large files.  (Note: both extent and extents are accepted for
+historical/backwards compatibility reasons.)
 .TP
 .B filetype
 Store file type information in directory entries.
@@ -519,6 +581,11 @@ option).
 .B large_file
 Filesystem can contain files that are greater than 2GB.  (Modern kernels
 set this feature automatically when a file > 2GB is created.)
+.TP
+.B quota
+Create quota inodes (inode# 3 for userquota and inode# 4 for group quota) and
+set them in the superblock.  With this feature, the quotas will be enabled
+automatically when the filesystem is mounted.
 .TP
 .B resize_inode
 Reserve space so the block group descriptor table may grow in the future.
@@ -595,7 +662,7 @@ option is used to explicitly add or remove filesystem options that
 should be set in the newly created filesystem, the
 resulting filesystem may not be supported by the requested
 .IR fs-type .
-(e.g., "\fBmke2fs \-t ext3 \-O extents /dev/sdXX\fR" will create a
+(e.g., "\fBmke2fs \-t ext3 \-O extent /dev/sdXX\fR" will create a
 filesystem that is not supported by the ext3 implementation as found in
 the Linux kernel; and "\fBmke2fs \-t ext3 \-O ^has_journal /dev/hdXX\fR"
 will create a filesystem that does not have a journal and hence will not
@@ -620,8 +687,17 @@ will use the filesystem type
 If the filesystem size is greater than 3 but less than or equal to
 512 megabytes,
 .BR mke2fs (8)
-will use the filesystem
+will use the filesystem type
 .IR small .
+If the filesystem size is greater than or equal to 4 terabytes but less than
+16 terabytes,
+.BR mke2fs (8)
+will use the filesystem type
+.IR big .
+If the filesystem size is greater than or equal to 16 terabytes,
+.BR mke2fs (8)
+will use the filesystem type
+.IR huge .
 Otherwise,
 .BR mke2fs (8)
 will use the default filesystem type
@@ -637,6 +713,29 @@ Verbose execution.
 Print the version number of
 .B mke2fs
 and exit.
+.SH ENVIRONMENT
+.TP
+.BI MKE2FS_SYNC
+If set to non-zero integer value, its value is used to determine how often
+.BR sync (2)
+is called during inode table initialization.
+.TP
+.BI MKE2FS_CONFIG
+Determines the location of the configuration file (see
+.BR mke2fs.conf (5)).
+.TP
+.BI MKE2FS_FIRST_META_BG
+If set to non-zero integer value, its value is used to determine first meta
+block group. This is mostly for debugging purposes.
+.TP
+.BI MKE2FS_DEVICE_SECTSIZE
+If set to non-zero integer value, its value is used to determine physical
+sector size of the
+.IR device .
+.TP
+.BI MKE2FS_SKIP_CHECK_MSG
+If set, do not show the message of filesystem automatic check caused by
+mount count or check interval.
 .SH AUTHOR
 This version of
 .B mke2fs

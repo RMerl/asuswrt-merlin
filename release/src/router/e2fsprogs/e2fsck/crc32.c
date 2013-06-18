@@ -31,6 +31,7 @@
  * Version 2.  See the file COPYING for more details.
  */
 
+#include "config.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>

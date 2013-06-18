@@ -11,6 +11,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -217,11 +218,13 @@ errcode_t ext2fs_dirhash(int version, const char *name, int len,
 	switch (version) {
 	case EXT2_HASH_LEGACY_UNSIGNED:
 		unsigned_flag++;
+		/* fallthrough */
 	case EXT2_HASH_LEGACY:
 		hash = dx_hack_hash(name, len, unsigned_flag);
 		break;
 	case EXT2_HASH_HALF_MD4_UNSIGNED:
 		unsigned_flag++;
+		/* fallthrough */
 	case EXT2_HASH_HALF_MD4:
 		p = name;
 		while (len > 0) {
@@ -235,6 +238,7 @@ errcode_t ext2fs_dirhash(int version, const char *name, int len,
 		break;
 	case EXT2_HASH_TEA_UNSIGNED:
 		unsigned_flag++;
+		/* fallthrough */
 	case EXT2_HASH_TEA:
 		p = name;
 		while (len > 0) {

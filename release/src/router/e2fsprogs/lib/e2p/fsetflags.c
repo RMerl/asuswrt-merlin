@@ -19,6 +19,7 @@
 #define _LARGEFILE_SOURCE
 #define _LARGEFILE64_SOURCE
 
+#include "config.h"
 #if HAVE_ERRNO_H
 #include <errno.h>
 #endif
@@ -51,7 +52,6 @@
 
 int fsetflags (const char * name, unsigned long flags)
 {
-	struct stat buf;
 #if HAVE_CHFLAGS && !(APPLE_DARWIN && HAVE_EXT2_IOCTLS)
 	unsigned long bsd_flags = 0;
 
@@ -69,9 +69,10 @@ int fsetflags (const char * name, unsigned long flags)
 #endif
 
 	return chflags (name, bsd_flags);
-#else
+#else /* !HAVE_CHFLAGS || (APPLE_DARWIN && HAVE_EXT2_IOCTLS) */
 #if HAVE_EXT2_IOCTLS
 	int fd, r, f, save_errno = 0;
+	struct stat buf;
 
 	if (!lstat(name, &buf) &&
 	    !S_ISREG(buf.st_mode) && !S_ISDIR(buf.st_mode)) {
@@ -88,14 +89,15 @@ int fsetflags (const char * name, unsigned long flags)
 	close (fd);
 	if (save_errno)
 		errno = save_errno;
-#else
-   f = (int) flags;
-   return syscall(SYS_fsctl, name, EXT2_IOC_SETFLAGS, &f, 0);
-#endif
+#else /* APPLE_DARWIN */
+	f = (int) flags;
+	return syscall(SYS_fsctl, name, EXT2_IOC_SETFLAGS, &f, 0);
+#endif /* !APPLE_DARWIN */
 	return r;
+
+notsupp:
 #endif /* HAVE_EXT2_IOCTLS */
 #endif
-notsupp:
 	errno = EOPNOTSUPP;
 	return -1;
 }

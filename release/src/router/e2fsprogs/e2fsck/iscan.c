@@ -3,6 +3,7 @@
  * anything else)
  */
 
+#include "config.h"
 #include <string.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -14,9 +15,6 @@
 #include <unistd.h>
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
-#endif
-#ifdef HAVE_MNTENT_H
-#include <mntent.h>
 #endif
 #include <sys/ioctl.h>
 #ifdef HAVE_MALLOC_H

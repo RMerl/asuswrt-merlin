@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #if HAVE_UNISTD_H
@@ -33,11 +34,12 @@
 errcode_t ext2fs_mkdir(ext2_filsys fs, ext2_ino_t parent, ext2_ino_t inum,
 		       const char *name)
 {
+	ext2_extent_handle_t	handle;
 	errcode_t		retval;
 	struct ext2_inode	parent_inode, inode;
 	ext2_ino_t		ino = inum;
 	ext2_ino_t		scratch_ino;
-	blk_t			blk;
+	blk64_t			blk;
 	char			*block = 0;
 
 	EXT2_CHECK_MAGIC(fs, EXT2_ET_MAGIC_EXT2FS_FILSYS);
@@ -55,7 +57,7 @@ errcode_t ext2fs_mkdir(ext2_filsys fs, ext2_ino_t parent, ext2_ino_t inum,
 	/*
 	 * Allocate a data block for the directory
 	 */
-	retval = ext2fs_new_block(fs, 0, 0, &blk);
+	retval = ext2fs_new_block2(fs, 0, 0, &blk);
 	if (retval)
 		goto cleanup;
 
@@ -83,7 +85,10 @@ errcode_t ext2fs_mkdir(ext2_filsys fs, ext2_ino_t parent, ext2_ino_t inum,
 	inode.i_mode = LINUX_S_IFDIR | (0777 & ~fs->umask);
 	inode.i_uid = inode.i_gid = 0;
 	ext2fs_iblk_set(fs, &inode, 1);
-	inode.i_block[0] = blk;
+	if (fs->super->s_feature_incompat & EXT3_FEATURE_INCOMPAT_EXTENTS)
+		inode.i_flags |= EXT4_EXTENTS_FL;
+	else
+		inode.i_block[0] = blk;
 	inode.i_links_count = 2;
 	inode.i_size = fs->blocksize;
 
@@ -96,6 +101,16 @@ errcode_t ext2fs_mkdir(ext2_filsys fs, ext2_ino_t parent, ext2_ino_t inum,
 	retval = ext2fs_write_new_inode(fs, ino, &inode);
 	if (retval)
 		goto cleanup;
+
+	if (fs->super->s_feature_incompat & EXT3_FEATURE_INCOMPAT_EXTENTS) {
+		retval = ext2fs_extent_open2(fs, ino, &inode, &handle);
+		if (retval)
+			goto cleanup;
+		retval = ext2fs_extent_set_bmap(handle, 0, blk, 0);
+		ext2fs_extent_free(handle);
+		if (retval)
+			goto cleanup;
+	}
 
 	/*
 	 * Link the directory into the filesystem hierarchy
@@ -128,7 +143,7 @@ errcode_t ext2fs_mkdir(ext2_filsys fs, ext2_ino_t parent, ext2_ino_t inum,
 	/*
 	 * Update accounting....
 	 */
-	ext2fs_block_alloc_stats(fs, blk, +1);
+	ext2fs_block_alloc_stats2(fs, blk, +1);
 	ext2fs_inode_alloc_stats2(fs, ino, +1, 1);
 
 cleanup:

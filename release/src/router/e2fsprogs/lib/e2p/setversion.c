@@ -16,6 +16,7 @@
  * 93/10/30	- Creation
  */
 
+#include "config.h"
 #if HAVE_ERRNO_H
 #include <errno.h>
 #endif

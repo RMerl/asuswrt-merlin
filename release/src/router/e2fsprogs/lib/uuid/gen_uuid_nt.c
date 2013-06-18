@@ -5,6 +5,7 @@
  */
 
 
+#include "config.h"
 #include "uuidP.h"
 
 #pragma warning(push,4)

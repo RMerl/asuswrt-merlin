@@ -38,6 +38,8 @@
  */
 #define _SVID_SOURCE
 
+#include "config.h"
+
 #ifdef _WIN32
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
@@ -174,8 +176,7 @@ static void get_random_bytes(void *buf, int nbytes)
 {
 	int i, n = nbytes, fd = get_random_fd();
 	int lose_counter = 0;
-	unsigned char *cp = (unsigned char *) buf;
-	unsigned short tmp_seed[3];
+	unsigned char *cp = buf;
 
 	if (fd >= 0) {
 		while (n > 0) {
@@ -198,12 +199,16 @@ static void get_random_bytes(void *buf, int nbytes)
 	for (cp = buf, i = 0; i < nbytes; i++)
 		*cp++ ^= (rand() >> 7) & 0xFF;
 #ifdef DO_JRAND_MIX
-	memcpy(tmp_seed, jrand_seed, sizeof(tmp_seed));
-	jrand_seed[2] = jrand_seed[2] ^ syscall(__NR_gettid);
-	for (cp = buf, i = 0; i < nbytes; i++)
-		*cp++ ^= (jrand48(tmp_seed) >> 7) & 0xFF;
-	memcpy(jrand_seed, tmp_seed,
-	       sizeof(jrand_seed)-sizeof(unsigned short));
+	{
+		unsigned short tmp_seed[3];
+
+		memcpy(tmp_seed, jrand_seed, sizeof(tmp_seed));
+		jrand_seed[2] = jrand_seed[2] ^ syscall(__NR_gettid);
+		for (cp = buf, i = 0; i < nbytes; i++)
+			*cp++ ^= (jrand48(tmp_seed) >> 7) & 0xFF;
+		memcpy(jrand_seed, tmp_seed,
+		       sizeof(jrand_seed) - sizeof(unsigned short));
+	}
 #endif
 
 	return;

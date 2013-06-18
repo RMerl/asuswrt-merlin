@@ -7,6 +7,6 @@ Name: ss
 Description: Subsystem command parsing library
 Version: @E2FSPROGS_VERSION@
 Requires.private: com_err
-Cflags: -I${includedir}/ss
+Cflags: -I${includedir}/ss -I${includedir}
 Libs: -L${libdir} -lss
 Libs.private: @DLOPEN_LIB@

@@ -7,6 +7,7 @@
  *
  */
 
+#include "config.h"
 #include <sys/types.h>
 #include <fcntl.h>
 #ifdef HAVE_SYS_IOCTL_H
@@ -34,6 +35,7 @@ int main(int argc, char **argv)
 	setlocale(LC_CTYPE, "");
 	bindtextdomain(NLS_CAT_NAME, LOCALEDIR);
 	textdomain(NLS_CAT_NAME);
+	set_com_err_gettext(gettext);
 #endif
 	if (argc == 1) {
 		fprintf(stderr, _("Usage:  %s device...\n\nPrints out the "

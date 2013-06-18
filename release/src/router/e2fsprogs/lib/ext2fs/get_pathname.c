@@ -21,6 +21,7 @@
  *
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #if HAVE_UNISTD_H
@@ -73,7 +74,7 @@ static errcode_t ext2fs_get_pathname_int(ext2_filsys fs, ext2_ino_t dir,
 					 char *buf, char **name)
 {
 	struct get_pathname_struct gp;
-	char	*parent_name, *ret;
+	char	*parent_name = 0, *ret;
 	errcode_t	retval;
 
 	if (dir == ino) {
@@ -98,7 +99,19 @@ static errcode_t ext2fs_get_pathname_int(ext2_filsys fs, ext2_ino_t dir,
 	gp.errcode = 0;
 
 	retval = ext2fs_dir_iterate(fs, dir, 0, buf, get_pathname_proc, &gp);
-	if (retval)
+	if (retval == EXT2_ET_NO_DIRECTORY) {
+		char tmp[32];
+
+		if (ino)
+			snprintf(tmp, sizeof(tmp), "<%u>/<%u>", dir, ino);
+		else
+			snprintf(tmp, sizeof(tmp), "<%u>", dir);
+		retval = ext2fs_get_mem(strlen(tmp)+1, name);
+		if (retval)
+			goto cleanup;
+		strcpy(*name, tmp);
+		return 0;
+	} else if (retval)
 		goto cleanup;
 	if (gp.errcode) {
 		retval = gp.errcode;
@@ -131,12 +144,11 @@ static errcode_t ext2fs_get_pathname_int(ext2_filsys fs, ext2_ino_t dir,
 	else
 		strcat(ret, "???");
 	*name = ret;
-	ext2fs_free_mem(&parent_name);
 	retval = 0;
 
 cleanup:
-	if (gp.name)
-		ext2fs_free_mem(&gp.name);
+	ext2fs_free_mem(&parent_name);
+	ext2fs_free_mem(&gp.name);
 	return retval;
 }
 

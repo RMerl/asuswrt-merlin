@@ -10,6 +10,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #if HAVE_UNISTD_H
@@ -36,14 +37,14 @@ struct process_block_struct {
 	int			flags;
 };
 
-static int process_block(ext2_filsys fs, blk_t	*block_nr,
-			 e2_blkcnt_t blockcnt, blk_t ref_block,
+static int process_block(ext2_filsys fs, blk64_t *block_nr,
+			 e2_blkcnt_t blockcnt, blk64_t ref_block,
 			 int ref_offset, void *priv_data)
 {
 	struct process_block_struct *pb;
 	errcode_t	retval;
 	int		ret;
-	blk_t		block, orig;
+	blk64_t		block, orig;
 
 	pb = (struct process_block_struct *) priv_data;
 	block = orig = *block_nr;
@@ -52,37 +53,39 @@ static int process_block(ext2_filsys fs, blk_t	*block_nr,
 	/*
 	 * Let's see if this is one which we need to relocate
 	 */
-	if (ext2fs_test_block_bitmap(pb->reserve, block)) {
+	if (ext2fs_test_block_bitmap2(pb->reserve, block)) {
 		do {
-			if (++block >= fs->super->s_blocks_count)
+			if (++block >= ext2fs_blocks_count(fs->super))
 				block = fs->super->s_first_data_block;
 			if (block == orig) {
 				pb->error = EXT2_ET_BLOCK_ALLOC_FAIL;
 				return BLOCK_ABORT;
 			}
-		} while (ext2fs_test_block_bitmap(pb->reserve, block) ||
-			 ext2fs_test_block_bitmap(pb->alloc_map, block));
+		} while (ext2fs_test_block_bitmap2(pb->reserve, block) ||
+			 ext2fs_test_block_bitmap2(pb->alloc_map, block));
 
-		retval = io_channel_read_blk(fs->io, orig, 1, pb->buf);
+		retval = io_channel_read_blk64(fs->io, orig, 1, pb->buf);
 		if (retval) {
 			pb->error = retval;
 			return BLOCK_ABORT;
 		}
-		retval = io_channel_write_blk(fs->io, block, 1, pb->buf);
+		retval = io_channel_write_blk64(fs->io, block, 1, pb->buf);
 		if (retval) {
 			pb->error = retval;
 			return BLOCK_ABORT;
 		}
 		*block_nr = block;
-		ext2fs_mark_block_bitmap(pb->alloc_map, block);
+		ext2fs_mark_block_bitmap2(pb->alloc_map, block);
 		ret = BLOCK_CHANGED;
 		if (pb->flags & EXT2_BMOVE_DEBUG)
-			printf("ino=%ld, blockcnt=%lld, %u->%u\n", pb->ino,
-			       blockcnt, orig, block);
+			printf("ino=%u, blockcnt=%lld, %llu->%llu\n",
+			       (unsigned) pb->ino, blockcnt, 
+			       (unsigned long long) orig,
+			       (unsigned long long) block);
 	}
 	if (pb->add_dir) {
-		retval = ext2fs_add_dir_block(fs->dblist, pb->ino,
-					      block, (int) blockcnt);
+		retval = ext2fs_add_dir_block2(fs->dblist, pb->ino,
+					       block, blockcnt);
 		if (retval) {
 			pb->error = retval;
 			ret |= BLOCK_ABORT;
@@ -138,7 +141,7 @@ errcode_t ext2fs_move_blocks(ext2_filsys fs,
 
 	while (ino) {
 		if ((inode.i_links_count == 0) ||
-		    !ext2fs_inode_has_valid_blocks(&inode))
+		    !ext2fs_inode_has_valid_blocks2(fs, &inode))
 			goto next;
 
 		pb.ino = ino;
@@ -147,8 +150,8 @@ errcode_t ext2fs_move_blocks(ext2_filsys fs,
 		pb.add_dir = (LINUX_S_ISDIR(inode.i_mode) &&
 			      flags & EXT2_BMOVE_GET_DBLIST);
 
-		retval = ext2fs_block_iterate2(fs, ino, 0, block_buf,
-					      process_block, &pb);
+		retval = ext2fs_block_iterate3(fs, ino, 0, block_buf,
+					       process_block, &pb);
 		if (retval)
 			return retval;
 		if (pb.error)

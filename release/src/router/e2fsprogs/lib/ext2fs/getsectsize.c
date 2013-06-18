@@ -13,6 +13,7 @@
 #define _LARGEFILE_SOURCE
 #define _LARGEFILE64_SOURCE
 
+#include "config.h"
 #include <stdio.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -45,11 +46,7 @@ errcode_t ext2fs_get_device_sectsize(const char *file, int *sectsize)
 {
 	int	fd;
 
-#ifdef HAVE_OPEN64
-	fd = open64(file, O_RDONLY);
-#else
-	fd = open(file, O_RDONLY);
-#endif
+	fd = ext2fs_open_file(file, O_RDONLY, 0);
 	if (fd < 0)
 		return errno;
 
@@ -65,17 +62,39 @@ errcode_t ext2fs_get_device_sectsize(const char *file, int *sectsize)
 }
 
 /*
+ * Return desired alignment for direct I/O
+ */
+int ext2fs_get_dio_alignment(int fd)
+{
+	int align = 0;
+
+#ifdef BLKSSZGET
+	if (ioctl(fd, BLKSSZGET, &align) < 0)
+		align = 0;
+#endif
+
+#ifdef _SC_PAGESIZE
+	if (align <= 0)
+		align = sysconf(_SC_PAGESIZE);
+#endif
+#ifdef HAVE_GETPAGESIZE
+	if (align <= 0)
+		align = getpagesize();
+#endif
+	if (align <= 0)
+		align = 4096;
+
+	return align;
+}
+
+/*
  * Returns the physical sector size of a device
  */
 errcode_t ext2fs_get_device_phys_sectsize(const char *file, int *sectsize)
 {
 	int	fd;
 
-#ifdef HAVE_OPEN64
-	fd = open64(file, O_RDONLY);
-#else
-	fd = open(file, O_RDONLY);
-#endif
+	fd = ext2fs_open_file(file, O_RDONLY, 0);
 	if (fd < 0)
 		return errno;
 

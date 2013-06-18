@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #if HAVE_UNISTD_H
@@ -22,6 +23,9 @@
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#ifdef HAVE_ERRNO_H
+#include <errno.h>
+#endif
 
 #include "ext2_fs.h"
 
@@ -29,11 +33,12 @@
 #include "ext2fs.h"
 #include "e2image.h"
 
-blk_t ext2fs_descriptor_block_loc(ext2_filsys fs, blk_t group_block, dgrp_t i)
+blk64_t ext2fs_descriptor_block_loc2(ext2_filsys fs, blk64_t group_block,
+				     dgrp_t i)
 {
 	int	bg;
 	int	has_super = 0;
-	int	ret_blk;
+	blk64_t	ret_blk;
 
 	if (!(fs->super->s_feature_incompat & EXT2_FEATURE_INCOMPAT_META_BG) ||
 	    (i < fs->super->s_first_meta_bg))
@@ -42,7 +47,7 @@ blk_t ext2fs_descriptor_block_loc(ext2_filsys fs, blk_t group_block, dgrp_t i)
 	bg = EXT2_DESC_PER_BLOCK(fs->super) * i;
 	if (ext2fs_bg_has_super(fs, bg))
 		has_super = 1;
-	ret_blk = ext2fs_group_first_block(fs, bg) + has_super;
+	ret_blk = ext2fs_group_first_block2(fs, bg) + has_super;
 	/*
 	 * If group_block is not the normal value, we're trying to use
 	 * the backup group descriptors and superblock --- so use the
@@ -53,9 +58,14 @@ blk_t ext2fs_descriptor_block_loc(ext2_filsys fs, blk_t group_block, dgrp_t i)
 	 */
 	if (group_block != fs->super->s_first_data_block &&
 	    ((ret_blk + fs->super->s_blocks_per_group) <
-	     fs->super->s_blocks_count))
+	     ext2fs_blocks_count(fs->super)))
 		ret_blk += fs->super->s_blocks_per_group;
 	return ret_blk;
+}
+
+blk_t ext2fs_descriptor_block_loc(ext2_filsys fs, blk_t group_block, dgrp_t i)
+{
+	return ext2fs_descriptor_block_loc2(fs, group_block, i);
 }
 
 errcode_t ext2fs_open(const char *name, int flags, int superblock,
@@ -76,6 +86,9 @@ errcode_t ext2fs_open(const char *name, int flags, int superblock,
  * 	EXT2_FLAG_FORCE - Open the filesystem even if some of the
  *				features aren't supported.
  *	EXT2_FLAG_JOURNAL_DEV_OK - Open an ext3 journal device
+ *	EXT2_FLAG_SKIP_MMP - Open without multi-mount protection check.
+ *	EXT2_FLAG_64BITS - Allow 64-bit bitfields (needed for large
+ *				filesystems)
  */
 errcode_t ext2fs_open2(const char *name, const char *io_options,
 		       int flags, int superblock,
@@ -86,10 +99,11 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
 	errcode_t	retval;
 	unsigned long	i, first_meta_bg;
 	__u32		features;
-	int		groups_per_block, blocks_per_group, io_flags;
-	blk_t		group_block, blk;
+	unsigned int	blocks_per_group, io_flags;
+	blk64_t		group_block, blk;
 	char		*dest, *cp;
 #ifdef WORDS_BIGENDIAN
+	unsigned int	groups_per_block;
 	struct ext2_group_desc *gdp;
 	int		j;
 #endif
@@ -131,7 +145,7 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
 		goto cleanup;
 	fs->image_io = fs->io;
 	fs->io->app_data = fs;
-	retval = ext2fs_get_memalign(SUPERBLOCK_SIZE, 512, &fs->super);
+	retval = io_channel_alloc_buf(fs->io, -SUPERBLOCK_SIZE, &fs->super);
 	if (retval)
 		goto cleanup;
 	if (flags & EXT2_FLAG_IMAGE_FILE) {
@@ -208,7 +222,7 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
 		features = fs->super->s_feature_incompat;
 #ifdef EXT2_LIB_SOFTSUPP_INCOMPAT
 		if (flags & EXT2_FLAG_SOFTSUPP_FEATURES)
-			features &= !EXT2_LIB_SOFTSUPP_INCOMPAT;
+			features &= ~EXT2_LIB_SOFTSUPP_INCOMPAT;
 #endif
 		if (features & ~EXT2_LIB_FEATURE_INCOMPAT_SUPP) {
 			retval = EXT2_ET_UNSUPP_FEATURE;
@@ -218,7 +232,7 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
 		features = fs->super->s_feature_ro_compat;
 #ifdef EXT2_LIB_SOFTSUPP_RO_COMPAT
 		if (flags & EXT2_FLAG_SOFTSUPP_FEATURES)
-			features &= !EXT2_LIB_SOFTSUPP_RO_COMPAT;
+			features &= ~EXT2_LIB_SOFTSUPP_RO_COMPAT;
 #endif
 		if ((flags & EXT2_FLAG_RW) &&
 		    (features & ~EXT2_LIB_FEATURE_RO_COMPAT_SUPP)) {
@@ -239,12 +253,24 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
 		retval = EXT2_ET_CORRUPT_SUPERBLOCK;
 		goto cleanup;
 	}
-	fs->blocksize = EXT2_BLOCK_SIZE(fs->super);
+	if (!EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
+					EXT4_FEATURE_RO_COMPAT_BIGALLOC) &&
+	    (fs->super->s_log_block_size != fs->super->s_log_cluster_size)) {
+		retval = EXT2_ET_CORRUPT_SUPERBLOCK;
+		goto cleanup;
+	}
+	fs->fragsize = fs->blocksize = EXT2_BLOCK_SIZE(fs->super);
 	if (EXT2_INODE_SIZE(fs->super) < EXT2_GOOD_OLD_INODE_SIZE) {
 		retval = EXT2_ET_CORRUPT_SUPERBLOCK;
 		goto cleanup;
 	}
-	fs->fragsize = EXT2_FRAG_SIZE(fs->super);
+	fs->cluster_ratio_bits = fs->super->s_log_cluster_size -
+		fs->super->s_log_block_size;
+	if (EXT2_BLOCKS_PER_GROUP(fs->super) !=
+	    EXT2_CLUSTERS_PER_GROUP(fs->super) << fs->cluster_ratio_bits) {
+		retval = EXT2_ET_CORRUPT_SUPERBLOCK;
+		goto cleanup;
+	}
 	fs->inode_blocks_per_group = ((EXT2_INODES_PER_GROUP(fs->super) *
 				       EXT2_INODE_SIZE(fs->super) +
 				       EXT2_BLOCK_SIZE(fs->super) - 1) /
@@ -284,18 +310,18 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
 	    blocks_per_group > EXT2_MAX_BLOCKS_PER_GROUP(fs->super) ||
 	    fs->inode_blocks_per_group > EXT2_MAX_INODES_PER_GROUP(fs->super) ||
            EXT2_DESC_PER_BLOCK(fs->super) == 0 ||
-           fs->super->s_first_data_block >= fs->super->s_blocks_count) {
+           fs->super->s_first_data_block >= ext2fs_blocks_count(fs->super)) {
 		retval = EXT2_ET_CORRUPT_SUPERBLOCK;
 		goto cleanup;
 	}
-	fs->group_desc_count = ext2fs_div_ceil(fs->super->s_blocks_count -
-					       fs->super->s_first_data_block,
-					       blocks_per_group);
-       if (fs->group_desc_count * EXT2_INODES_PER_GROUP(fs->super) !=
-           fs->super->s_inodes_count) {
-               retval = EXT2_ET_CORRUPT_SUPERBLOCK;
+	fs->group_desc_count = ext2fs_div64_ceil(ext2fs_blocks_count(fs->super) -
+						 fs->super->s_first_data_block,
+						 blocks_per_group);
+	if (fs->group_desc_count * EXT2_INODES_PER_GROUP(fs->super) !=
+	    fs->super->s_inodes_count) {
+		retval = EXT2_ET_CORRUPT_SUPERBLOCK;
 		goto cleanup;
-       }
+	}
 	fs->desc_blocks = ext2fs_div_ceil(fs->group_desc_count,
 					  EXT2_DESC_PER_BLOCK(fs->super));
 	retval = ext2fs_get_array(fs->desc_blocks, fs->blocksize,
@@ -304,8 +330,12 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
 		goto cleanup;
 	if (!group_block)
 		group_block = fs->super->s_first_data_block;
+	if (group_block == 0 && fs->blocksize == 1024)
+		group_block = 1; /* Deal with 1024 blocksize && bigalloc */
 	dest = (char *) fs->group_desc;
+#ifdef WORDS_BIGENDIAN
 	groups_per_block = EXT2_DESC_PER_BLOCK(fs->super);
+#endif
 	if (fs->super->s_feature_incompat & EXT2_FEATURE_INCOMPAT_META_BG)
 		first_meta_bg = fs->super->s_first_meta_bg;
 	else
@@ -317,20 +347,24 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
 			goto cleanup;
 #ifdef WORDS_BIGENDIAN
 		gdp = (struct ext2_group_desc *) dest;
-		for (j=0; j < groups_per_block*first_meta_bg; j++)
-			ext2fs_swap_group_desc(gdp++);
+		for (j=0; j < groups_per_block*first_meta_bg; j++) {
+			gdp = ext2fs_group_desc(fs, fs->group_desc, j);
+			ext2fs_swap_group_desc2(fs, gdp);
+		}
 #endif
 		dest += fs->blocksize*first_meta_bg;
 	}
 	for (i=first_meta_bg ; i < fs->desc_blocks; i++) {
-		blk = ext2fs_descriptor_block_loc(fs, group_block, i);
-		retval = io_channel_read_blk(fs->io, blk, 1, dest);
+		blk = ext2fs_descriptor_block_loc2(fs, group_block, i);
+		retval = io_channel_read_blk64(fs->io, blk, 1, dest);
 		if (retval)
 			goto cleanup;
 #ifdef WORDS_BIGENDIAN
-		gdp = (struct ext2_group_desc *) dest;
-		for (j=0; j < groups_per_block; j++)
-			ext2fs_swap_group_desc(gdp++);
+		for (j=0; j < groups_per_block; j++) {
+			gdp = ext2fs_group_desc(fs, fs->group_desc,
+						i * groups_per_block + j);
+			ext2fs_swap_group_desc2(fs, gdp);
+		}
 #endif
 		dest += fs->blocksize;
 	}
@@ -343,18 +377,34 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
 	 */
 	if (superblock > 1 && EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
 					EXT4_FEATURE_RO_COMPAT_GDT_CSUM)) {
-		struct ext2_group_desc *gd;
-		for (i = 0, gd = fs->group_desc; i < fs->group_desc_count;
-		     i++, gd++) {
-			gd->bg_flags &= ~EXT2_BG_BLOCK_UNINIT;
-			gd->bg_flags &= ~EXT2_BG_INODE_UNINIT;
-			gd->bg_itable_unused = 0;
+		dgrp_t group;
+
+		for (group = 0; group < fs->group_desc_count; group++) {
+			ext2fs_bg_flags_clear(fs, group, EXT2_BG_BLOCK_UNINIT);
+			ext2fs_bg_flags_clear(fs, group, EXT2_BG_INODE_UNINIT);
+			ext2fs_bg_itable_unused_set(fs, group, 0);
+			/* The checksum will be reset later, but fix it here
+			 * anyway to avoid printing a lot of spurious errors. */
+			ext2fs_group_desc_csum_set(fs, group);
 		}
-		ext2fs_mark_super_dirty(fs);
+		if (fs->flags & EXT2_FLAG_RW)
+			ext2fs_mark_super_dirty(fs);
+	}
+
+	if ((fs->super->s_feature_incompat & EXT4_FEATURE_INCOMPAT_MMP) &&
+	    !(flags & EXT2_FLAG_SKIP_MMP) &&
+	    (flags & (EXT2_FLAG_RW | EXT2_FLAG_EXCLUSIVE))) {
+		retval = ext2fs_mmp_start(fs);
+		if (retval) {
+			fs->flags |= EXT2_FLAG_SKIP_MMP; /* just do cleanup */
+			ext2fs_mmp_stop(fs);
+			goto cleanup;
+		}
 	}
 
 	fs->flags &= ~EXT2_FLAG_NOFREE_ON_ERROR;
 	*ret_fs = fs;
+
 	return 0;
 cleanup:
 	if (flags & EXT2_FLAG_NOFREE_ON_ERROR)

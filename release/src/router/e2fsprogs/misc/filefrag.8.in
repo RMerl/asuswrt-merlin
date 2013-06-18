@@ -5,7 +5,10 @@ filefrag \- report on file fragmentation
 .SH SYNOPSIS
 .B filefrag
 [
-.B \-Bbsvx
+.BI \-b blocksize
+]
+[
+.B \-BeksvxX
 ]
 [
 .I files...
@@ -27,8 +30,21 @@ If FIEMAP is not supported then filefrag will fall back to using FIBMAP.
 Force the use of the older FIBMAP ioctl instead of the FIEMAP ioctl for
 testing purposes.
 .TP
-.B \-b
-Use 1024 byte blocksize for the output.
+.BI \-b blocksize
+Use
+.I blocksize
+in bytes for output instead of the filesystem blocksize.
+For compatibility with earlier versions of
+.BR filefrag ,
+if
+.I blocksize
+is unspecified it defaults to 1024 bytes.
+.TP
+.B \-e
+Print output in extent format, even for block-mapped files.
+.TP
+.BI \-k
+Use 1024\-byte blocksize for output (identical to '\-b 1024').
 .TP
 .B \-s
 Sync the file before requesting the mapping.
@@ -38,6 +54,9 @@ Be verbose when checking for file fragmentation.
 .TP
 .B \-x
 Display mapping of extended attributes.
+.TP
+.B \-X
+Display extent block numbers in hexadecimal format.
 .SH AUTHOR
 .B filefrag
 was written by Theodore Ts'o <tytso@mit.edu>.

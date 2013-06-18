@@ -43,6 +43,8 @@ extern void (*set_com_err_hook (void (*) (const char *, long,
 extern void (*reset_com_err_hook (void)) (const char *, long,
 					  const char *, va_list);
 extern int init_error_table(const char * const *msgs, long base, int count);
+extern char *(*set_com_err_gettext (char *(*) (const char *)))
+	(const char *);
 
 extern errcode_t add_error_table(const struct error_table * et);
 extern errcode_t remove_error_table(const struct error_table * et);

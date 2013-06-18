@@ -5,6 +5,7 @@
  * under the terms of the GNU Public License.
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -60,8 +61,7 @@ static int list_dir_proc(ext2_ino_t dir EXT2FS_ATTR((unused)),
 	int			thislen;
 	struct list_dir_struct *ls = (struct list_dir_struct *) private;
 
-	thislen = ((dirent->name_len & 0xFF) < EXT2_NAME_LEN) ?
-		(dirent->name_len & 0xFF) : EXT2_NAME_LEN;
+	thislen = dirent->name_len & 0xFF;
 	strncpy(name, dirent->name, thislen);
 	name[thislen] = '\0';
 	ino = dirent->inode;
@@ -74,15 +74,18 @@ static int list_dir_proc(ext2_ino_t dir EXT2FS_ATTR((unused)),
 		lbr = rbr = ' ';
 	}
 	if (ls->options & PARSE_OPT) {
-		if (ino && debugfs_read_inode(ino, &inode, name)) return 0;
+		if (ino) {
+			if (debugfs_read_inode(ino, &inode, name))
+				return 0;
+		} else
+			memset(&inode, 0, sizeof(struct ext2_inode));
 		fprintf(ls->f,"/%u/%06o/%d/%d/%s/",ino,inode.i_mode,inode.i_uid, inode.i_gid,name);
 		if (LINUX_S_ISDIR(inode.i_mode))
 			fprintf(ls->f, "/");
 		else
-			fprintf(ls->f, "%lld/", inode.i_size | ((__u64)inode.i_size_high << 32));
+			fprintf(ls->f, "%lld/", EXT2_I_SIZE(&inode));
 		fprintf(ls->f, "\n");
-	}
-	else if (ls->options & LONG_OPT) {
+	} else if (ls->options & LONG_OPT) {
 		if (ino) {
 			if (debugfs_read_inode(ino, &inode, name))
 				return 0;
@@ -102,8 +105,7 @@ static int list_dir_proc(ext2_ino_t dir EXT2FS_ATTR((unused)),
 		if (LINUX_S_ISDIR(inode.i_mode))
 			fprintf(ls->f, "%5d", inode.i_size);
 		else
-			fprintf(ls->f, "%5llu", inode.i_size |
-				((unsigned long long) inode.i_size_high << 32));
+			fprintf(ls->f, "%5llu", EXT2_I_SIZE(&inode));
 		fprintf (ls->f, " %s %s\n", datestr, name);
 	} else {
 		sprintf(tmp, "%c%u%c (%d) %s   ", lbr, dirent->inode, rbr,

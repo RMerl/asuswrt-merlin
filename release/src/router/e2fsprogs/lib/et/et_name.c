@@ -11,6 +11,7 @@
  * express or implied warranty.
  */
 
+#include "config.h"
 #include "com_err.h"
 #include "error_table.h"
 #include "internal.h"

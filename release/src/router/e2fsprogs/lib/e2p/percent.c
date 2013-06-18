@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include "e2p.h"
 
 #include <stdlib.h>

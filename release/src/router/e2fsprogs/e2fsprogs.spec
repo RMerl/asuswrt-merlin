@@ -5,7 +5,7 @@
 
 Summary: Utilities for managing ext2/ext3/ext4 filesystems
 Name: e2fsprogs
-Version: 1.41.14
+Version: 1.42.7
 Release: 0
 License: GPLv2
 Group: System Environment/Base
@@ -212,6 +212,7 @@ exit 0
 %{_includedir}/blkid
 %{_includedir}/e2p
 %{_includedir}/et
+%{_includedir}/com_err.h
 %{_includedir}/ext2fs
 %{_includedir}/ss
 %{_includedir}/uuid

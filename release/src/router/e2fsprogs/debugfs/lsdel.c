@@ -6,6 +6,7 @@
  * the GNU Public License.
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -48,9 +49,9 @@ static int deleted_info_compare(const void *a, const void *b)
 }
 
 static int lsdel_proc(ext2_filsys fs,
-		      blk_t	*block_nr,
+		      blk64_t	*block_nr,
 		      e2_blkcnt_t blockcnt EXT2FS_ATTR((unused)),
-		      blk_t ref_block EXT2FS_ATTR((unused)),
+		      blk64_t ref_block EXT2FS_ATTR((unused)),
 		      int ref_offset EXT2FS_ATTR((unused)),
 		      void *private)
 {
@@ -59,12 +60,12 @@ static int lsdel_proc(ext2_filsys fs,
 	lsd->num_blocks++;
 
 	if (*block_nr < fs->super->s_first_data_block ||
-	    *block_nr >= fs->super->s_blocks_count) {
+	    *block_nr >= ext2fs_blocks_count(fs->super)) {
 		lsd->bad_blocks++;
 		return BLOCK_ABORT;
 	}
 
-	if (!ext2fs_test_block_bitmap(fs->block_map,*block_nr))
+	if (!ext2fs_test_block_bitmap2(fs->block_map,*block_nr))
 		lsd->free_blocks++;
 
 	return 0;
@@ -140,7 +141,7 @@ void do_lsdel(int argc, char **argv)
 		lsd.free_blocks = 0;
 		lsd.bad_blocks = 0;
 
-		retval = ext2fs_block_iterate2(current_fs, ino,
+		retval = ext2fs_block_iterate3(current_fs, ino,
 					       BLOCK_FLAG_READ_ONLY, block_buf,
 					       lsdel_proc, &lsd);
 		if (retval) {
@@ -164,10 +165,7 @@ void do_lsdel(int argc, char **argv)
 			delarray[num_delarray].ino = ino;
 			delarray[num_delarray].mode = inode.i_mode;
 			delarray[num_delarray].uid = inode_uid(inode);
-			delarray[num_delarray].size = inode.i_size;
-			if (!LINUX_S_ISDIR(inode.i_mode))
-				delarray[num_delarray].size |=
-					((__u64) inode.i_size_high << 32);
+			delarray[num_delarray].size = EXT2_I_SIZE(&inode);
 			delarray[num_delarray].dtime = inode.i_dtime;
 			delarray[num_delarray].num_blocks = lsd.num_blocks;
 			delarray[num_delarray].free_blocks = lsd.free_blocks;

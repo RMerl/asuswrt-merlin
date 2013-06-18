@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -19,7 +20,7 @@
 #include "ext2_fs.h"
 #include "ext2fsP.h"
 
-static int db_dir_proc(ext2_filsys fs, struct ext2_db_entry *db_info,
+static int db_dir_proc(ext2_filsys fs, struct ext2_db_entry2 *db_info,
 		       void *priv_data);
 
 errcode_t ext2fs_dblist_dir_iterate(ext2_dblist dblist,
@@ -52,7 +53,7 @@ errcode_t ext2fs_dblist_dir_iterate(ext2_dblist dblist,
 	ctx.priv_data = priv_data;
 	ctx.errcode = 0;
 
-	retval = ext2fs_dblist_iterate(dblist, db_dir_proc, &ctx);
+	retval = ext2fs_dblist_iterate2(dblist, db_dir_proc, &ctx);
 
 	if (!block_buf)
 		ext2fs_free_mem(&ctx.buf);
@@ -61,7 +62,7 @@ errcode_t ext2fs_dblist_dir_iterate(ext2_dblist dblist,
 	return ctx.errcode;
 }
 
-static int db_dir_proc(ext2_filsys fs, struct ext2_db_entry *db_info,
+static int db_dir_proc(ext2_filsys fs, struct ext2_db_entry2 *db_info,
 		       void *priv_data)
 {
 	struct dir_context	*ctx;

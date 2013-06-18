@@ -76,9 +76,24 @@ typedef struct ext2_sim_progress *ext2_sim_progmeter;
 #define RESIZE_DEBUG_BMOVE		0x0002
 #define RESIZE_DEBUG_INODEMAP		0x0004
 #define RESIZE_DEBUG_ITABLEMOVE		0x0008
+#define RESIZE_DEBUG_RTRACK		0x0010
 
 #define RESIZE_PERCENT_COMPLETE		0x0100
 #define RESIZE_VERBOSE			0x0200
+
+/*
+ * This structure is used for keeping track of how much resources have
+ * been used for a particular resize2fs pass.
+ */
+struct resource_track {
+	const char *desc;
+	struct timeval time_start;
+	struct timeval user_start;
+	struct timeval system_start;
+	void	*brk_start;
+	unsigned long long bytes_read;
+	unsigned long long bytes_written;
+};
 
 /*
  * The core state structure for the ext2 resizer
@@ -92,14 +107,14 @@ struct ext2_resize_struct {
 	ext2fs_block_bitmap move_blocks;
 	ext2_extent	bmap;
 	ext2_extent	imap;
-	int		needed_blocks;
+	blk64_t		needed_blocks;
 	int		flags;
 	char		*itable_buf;
 
 	/*
 	 * For the block allocator
 	 */
-	blk_t		new_blk;
+	blk64_t		new_blk;
 	int		alloc_state;
 
 	/*
@@ -122,31 +137,38 @@ struct ext2_resize_struct {
 
 
 /* prototypes */
-extern errcode_t resize_fs(ext2_filsys fs, blk_t *new_size, int flags,
+extern errcode_t resize_fs(ext2_filsys fs, blk64_t *new_size, int flags,
 			   errcode_t	(*progress)(ext2_resize_t rfs,
 					    int pass, unsigned long cur,
 					    unsigned long max));
 
 extern errcode_t adjust_fs_info(ext2_filsys fs, ext2_filsys old_fs,
 				ext2fs_block_bitmap reserve_blocks,
-				blk_t new_size);
-extern blk_t calculate_minimum_resize_size(ext2_filsys fs);
+				blk64_t new_size);
+extern blk64_t calculate_minimum_resize_size(ext2_filsys fs);
 
 
 /* extent.c */
 extern errcode_t ext2fs_create_extent_table(ext2_extent *ret_extent,
-					    int size);
+					    __u64 size);
 extern void ext2fs_free_extent_table(ext2_extent extent);
 extern errcode_t ext2fs_add_extent_entry(ext2_extent extent,
-					 __u32 old_loc, __u32 new_loc);
-extern __u32 ext2fs_extent_translate(ext2_extent extent, __u32 old_loc);
+					 __u64 old_loc, __u64 new_loc);
+extern __u64 ext2fs_extent_translate(ext2_extent extent, __u64 old_loc);
 extern void ext2fs_extent_dump(ext2_extent extent, FILE *out);
-extern errcode_t ext2fs_iterate_extent(ext2_extent extent, __u32 *old_loc,
-				       __u32 *new_loc, int *size);
+extern errcode_t ext2fs_iterate_extent(ext2_extent extent, __u64 *old_loc,
+				       __u64 *new_loc, __u64 *size);
 
 /* online.c */
 extern errcode_t online_resize_fs(ext2_filsys fs, const char *mtpt,
-				  blk_t *new_size, int flags);
+				  blk64_t *new_size, int flags);
+
+/* resource_track.c */
+extern void init_resource_track(struct resource_track *track, const char *desc,
+				io_channel channel);
+extern void print_resource_track(ext2_resize_t rfs,
+				 struct resource_track *track,
+				 io_channel channel);
 
 /* sim_progress.c */
 extern errcode_t ext2fs_progress_init(ext2_sim_progmeter *ret_prog,

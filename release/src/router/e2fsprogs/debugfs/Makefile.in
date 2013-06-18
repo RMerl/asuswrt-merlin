@@ -17,17 +17,29 @@ MANPAGES=	debugfs.8
 MK_CMDS=	_SS_DIR_OVERRIDE=../lib/ss ../lib/ss/mk_cmds
 
 DEBUG_OBJS= debug_cmds.o debugfs.o util.o ncheck.o icheck.o ls.o \
-	lsdel.o dump.o set_fields.o logdump.o htree.o unused.o
+	lsdel.o dump.o set_fields.o logdump.o htree.o unused.o e2freefrag.o \
+	filefrag.o extent_cmds.o extent_inode.o zap.o
+
+RO_DEBUG_OBJS= ro_debug_cmds.o ro_debugfs.o util.o ncheck.o icheck.o ls.o \
+	lsdel.o logdump.o htree.o e2freefrag.o filefrag.o extent_cmds.o \
+	extent_inode.o
 
 SRCS= debug_cmds.c $(srcdir)/debugfs.c $(srcdir)/util.c $(srcdir)/ls.c \
 	$(srcdir)/ncheck.c $(srcdir)/icheck.c $(srcdir)/lsdel.c \
 	$(srcdir)/dump.c $(srcdir)/set_fields.c ${srcdir}/logdump.c \
-	$(srcdir)/htree.c $(srcdir)/unused.c
+	$(srcdir)/htree.c $(srcdir)/unused.c ${srcdir}/../misc/e2freefrag.c \
+	$(srcdir)/filefrag.c $(srcdir)/extent_inode.c $(srcdir)/zap.c
 
 LIBS= $(LIBEXT2FS) $(LIBE2P) $(LIBSS) $(LIBCOM_ERR) $(LIBBLKID) \
 	$(LIBUUID)
 DEPLIBS= $(LIBEXT2FS) $(LIBE2P) $(DEPLIBSS) $(DEPLIBCOM_ERR) \
 	$(DEPLIBBLKID) $(DEPLIBUUID)
+
+STATIC_LIBS= $(STATIC_LIBEXT2FS) $(STATIC_LIBSS) $(STATIC_LIBCOM_ERR) \
+	$(STATIC_LIBBLKID) $(STATIC_LIBUUID) $(STATIC_LIBE2P)
+STATIC_DEPLIBS= $(STATIC_LIBEXT2FS) $(DEPSTATIC_LIBSS) \
+		$(DEPSTATIC_LIBCOM_ERR) $(DEPSTATIC_LIBUUID) \
+		$(DEPSTATIC_LIBE2P)
 
 .c.o:
 	$(E) "	CC $<"
@@ -39,9 +51,34 @@ debugfs: $(DEBUG_OBJS) $(DEPLIBS)
 	$(E) "	LD $@"
 	$(Q) $(CC) $(ALL_LDFLAGS) -o debugfs $(DEBUG_OBJS) $(LIBS)
 
+debugfs.static: $(DEBUG_OBJS) $(STATIC_DEPLIBS)
+	$(E) "	LD $@"
+	$(Q) $(CC) $(LDFLAGS_STATIC) -o debugfs.static $(DEBUG_OBJS) \
+		$(STATIC_LIBS) $(READLINE_LIB)
+
+rdebugfs: $(RO_DEBUG_OBJS) $(DEPLIBS)
+	$(E) "	LD $@"
+	$(Q) $(CC) $(ALL_LDFLAGS) -o rdebugfs $(RO_DEBUG_OBJS) $(LIBS)
+
 debug_cmds.c debug_cmds.h: debug_cmds.ct
 	$(E) "	MK_CMDS $@"
 	$(Q) $(MK_CMDS) $(srcdir)/debug_cmds.ct
+
+extent_cmds.c extent_cmds.h: extent_cmds.ct
+	$(E) "	MK_CMDS $@"
+	$(Q) $(MK_CMDS) $(srcdir)/extent_cmds.ct
+
+ro_debug_cmds.c ro_debug_cmds.h: ro_debug_cmds.ct
+	$(E) "	MK_CMDS $@"
+	$(Q) $(MK_CMDS) $(srcdir)/ro_debug_cmds.ct
+
+ro_debugfs.o: debugfs.c
+	$(E) "	CC $@"
+	$(Q) $(CC) -c $(ALL_CFLAGS) $< -DREAD_ONLY -o $@
+
+e2freefrag.o: $(srcdir)/../misc/e2freefrag.c
+	$(E) "	CC $@"
+	$(Q) $(CC) -c $(ALL_CFLAGS) -I$(srcdir) $< -DDEBUGFS -o $@
 
 debugfs.8: $(DEP_SUBSTITUTE) $(srcdir)/debugfs.8.in
 	$(E) "	SUBST $@"
@@ -80,7 +117,8 @@ uninstall:
 	done
 
 clean:
-	$(RM) -f debugfs debugfs.8 \#* *.s *.o *.a *~ debug_cmds.c core
+	$(RM) -f $(PROGS) debugfs.8 \#* *.s *.o *.a *~ debug_cmds.c \
+		extent_cmds.c ro_debug_cmds.c core rdebugfs debugfs.static
 
 mostlyclean: clean
 distclean: clean

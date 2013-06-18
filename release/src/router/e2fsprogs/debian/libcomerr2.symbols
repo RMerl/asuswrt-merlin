@@ -17,4 +17,5 @@ libcom_err.so.2 libcomerr2 #MINVER#
  initialize_error_table_r@Base 1.34
  remove_error_table@Base 1.34
  reset_com_err_hook@Base 1.01
+ set_com_err_gettext@Base 1.41.99
  set_com_err_hook@Base 1.01

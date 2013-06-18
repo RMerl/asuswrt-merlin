@@ -17,7 +17,7 @@ SRCS = $(srcdir)/subst.c
 	$(E) "	CC $<"
 	$(Q) $(BUILD_CC) -c $(BUILD_CFLAGS) $< -o $@
 
-PROGS=		subst
+PROGS=		subst symlinks
 
 all:: $(PROGS) gen-tarball
 
@@ -28,6 +28,10 @@ subst: subst.o
 copy_sparse: copy_sparse.o
 	$(E) "	LD $@"
 	$(Q) $(BUILD_CC) $(BUILD_LDFLAGS) -o copy_sparse copy_sparse.o
+
+symlinks: symlinks.o
+	$(E) "	LD $@"
+	$(Q) $(BUILD_CC) $(BUILD_LDFLAGS) -o symlinks symlinks.o
 
 gen-tarball: $(srcdir)/gen-tarball.in $(top_builddir)/config.status
 	$(E) "	CONFIG.STATUS $@"

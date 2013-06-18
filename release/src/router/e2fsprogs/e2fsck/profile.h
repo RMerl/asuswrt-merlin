@@ -78,6 +78,11 @@ long profile_get_uint
 		const char *subsubname, unsigned int def_val,
 		unsigned int *ret_int);
 
+long profile_get_double
+	(profile_t profile, const char *name, const char *subname,
+		const char *subsubname, double def_val,
+		double *ret_float);
+
 long profile_get_boolean
 	(profile_t profile, const char *name, const char *subname,
 			const char *subsubname, int def_val,

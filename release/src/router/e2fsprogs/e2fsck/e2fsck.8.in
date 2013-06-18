@@ -193,6 +193,20 @@ or repairs.
 .BI fragcheck
 During pass 1, print a detailed report of any discontiguous blocks for
 files in the filesystem.
+.TP
+.BI discard
+Attempt to discard free blocks and unused inode blocks after the full
+filesystem check (discarding blocks is useful on solid state devices and sparse
+/ thin-provisioned storage). Note that discard is done in pass 5 AFTER the
+filesystem has been fully checked and only if it does not contain recognizable
+errors. However there might be cases where
+.B e2fsck
+does not fully recognize a problem and hence in this case this
+option may prevent you from further manual data recovery.
+.TP
+.BI nodiscard
+Do not attempt to discard free blocks and unused inode blocks. This option is
+exactly the opposite of discard option. This is set as default.
 .RE
 .TP
 .B \-f

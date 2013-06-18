@@ -1,15 +1,19 @@
+define(MULTIARCH_HEADERS,ifdef(`DO_MULTIARCH',
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends},REMOVE_ME))dnl
+define(UTIL_LINUX_NG_DEFINES,
+ifdef(`UTIL_LINUX_NG', ``libblkid-dev (>= 2.16), uuid-dev (>= 2.16),''))dnl
+define(DIETLIBC_DEFINES,
+ifdef(`DIETLIBC', ``dietlibc-dev (>> 0.30) [alpha amd64 arm hppa i386 ia64 powerpc ppc64 s390 sparc],''))dnl
 Source: e2fsprogs
 Section: admin
 Priority: required
 Maintainer: Theodore Y. Ts'o <tytso@mit.edu>
-ifdef(`UTIL_LINUX_NG',
-``Build-Depends: texi2html (>= 1.76), gettext, texinfo, dc, pkg-config, dietlibc-dev (>> 0.30) [alpha amd64 arm hppa i386 ia64 powerpc ppc64 s390 sparc], debhelper (>= 7.0), m4, libblkid-dev (>= 2.16), uuid-dev (>= 2.16)
-'',
-``Build-Depends: texi2html (>= 1.76), gettext, texinfo, dc, pkg-config, dietlibc-dev (>> 0.30) [alpha amd64 arm hppa i386 ia64 powerpc ppc64 s390 sparc], debhelper (>= 7.0), m4
-'')dnl
-Standards-Version: 3.8.4
+Build-Depends: texi2html (>= 1.76), gettext, texinfo, pkg-config, DIETLIBC_DEFINES gcc-multilib [mips mipsel], debhelper (>= 7.0), UTIL_LINUX_NG_DEFINES m4
+Standards-Version: 3.9.3
 Homepage: http://e2fsprogs.sourceforge.net
 
+ifdef(`E2FSCK_STATIC',``
 Package: e2fsck-static
 Priority: optional
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -24,6 +28,7 @@ Description: statically-linked version of the ext2/ext3/ext4 filesystem checker
  .
  You may want to install a statically-linked shell as well, to be able
  to run this program if something like your C library gets corrupted.
+'')dnl
 
 Package: libcomerr2
 Section: libs
@@ -31,6 +36,7 @@ Provides: libcomerr-kth-compat
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Replaces: e2fsprogs (<< 1.34-1)
 Architecture: any
+MULTIARCH_HEADERS
 Description: common error description library
  libcomerr is an attempt to present a common error-handling mechanism to
  manipulate the most common form of error code in a fashion that does not
@@ -55,10 +61,11 @@ Section: libs
 Depends: libcomerr2, ${shlibs:Depends}, ${misc:Depends}
 Replaces: e2fsprogs (<< 1.34-1)
 Architecture: any
+MULTIARCH_HEADERS
 Description: command-line interface parsing library
- This package includes a tool that parses a command table to generate
- a simple command-line interface parser, the include files needed to
- compile and use it, and the static libs.
+ libss provides a simple command-line interface parser which will
+ accept input from the user, parse the command into an argv argument
+ vector, and then dispatch it to a handler function.
  . 
  It was originally inspired by the Multics SubSystem library.
 
@@ -82,6 +89,7 @@ Depends: passwd, ${shlibs:Depends}, ${misc:Depends}
 Recommends: uuid-runtime
 Replaces: e2fsprogs (<< 1.34-1)
 Architecture: any
+MULTIARCH_HEADERS
 Description: Universally Unique ID library
  The libuuid library generates and parses 128-bit universally unique
  ids (UUIDs).  A UUID is an identifier that is unique across both
@@ -200,6 +208,7 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Replaces: e2fsprogs (<< 1.34-1)
 Provides: libext2fs2, libe2p2
 Architecture: any
+MULTIARCH_HEADERS
 Description: ext2/ext3/ext4 file system libraries
  The ext2, ext3 and ext4 file systems are successors of the original ext
  ("extended") file system. They are the main file system types used for
@@ -233,6 +242,7 @@ ifdef(`UTIL_LINUX_NG',
 '',
 ``Pre-Depends: ${shlibs:Depends}, ${misc:Depends}
 '')dnl
+Multi-Arch: foreign
 Suggests: gpart, parted, e2fsck-static
 Conflicts: dump (<< 0.4b4-4), quota (<< 1.55-8.1), initscripts (<< 2.85-4), sysvinit (<< 2.85-4)
 Replaces: hurd (<= 20040301-1), libblkid1 (<< 1.38+1.39-WIP-2005.12.10-2), libuuid1 (<< 1.38+1.39-WIP-2005.12.10-2)

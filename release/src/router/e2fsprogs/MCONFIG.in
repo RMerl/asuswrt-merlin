@@ -35,30 +35,32 @@ datadir = @datadir@
 @ifGNUmake@ V =
 @ifGNUmake@ ifeq ($(strip $(V)),)
 @ifGNUmake@ #  E = @echo
+@ifGNUmake@ #  ES = echo
 @ifGNUmake@ #  Q = @
 @ifGNUmake@    E = @E@
+@ifGNUmake@    ES = @ES@
 @ifGNUmake@    Q = @Q@
 @ifGNUmake@ else
 @ifGNUmake@    E = @\#
+@ifGNUmake@    ES = \#
 @ifGNUmake@    Q =
 @ifGNUmake@ endif
 
 @ifNotGNUmake@ E = @E@
+@ifNotGNUmake@ ES = @ES@
 @ifNotGNUmake@ Q = @Q@
 
 CC = @CC@
 BUILD_CC = @BUILD_CC@
-DEFS = -DLOCALEDIR=\"$(localedir)\" -DROOT_SYSCONFDIR=\"$(root_sysconfdir)\" @DEFS@
 CFLAGS = @CFLAGS@
-CPPFLAGS =  -I$(top_builddir)/lib -I$(top_srcdir)/lib @CPPFLAGS@
-INTL_FLAGS = @INTL_FLAGS@
-ALL_CFLAGS = $(CPPFLAGS) $(DEFS) $(USE_WFLAGS) $(CFLAGS) $(XTRA_CFLAGS) \
-	$(INTL_FLAGS) $(LINUX_INCLUDE) 
+CPPFLAGS = @INCLUDES@
+ALL_CFLAGS = $(CPPFLAGS) $(CFLAGS)
 LDFLAGS = @LDFLAGS@
 ALL_LDFLAGS = $(LDFLAGS) @LDFLAG_DYNAMIC@
 LDFLAGS_STATIC = $(LDFLAGS) @LDFLAG_STATIC@
 BUILD_CFLAGS = @BUILD_CFLAGS@
 BUILD_LDFLAGS = @BUILD_LDFLAGS@
+RDYNAMIC = @RDYNAMIC@
 LINK_BUILD_FLAGS = @LINK_BUILD_FLAGS@
 LINK_INSTALL_FLAGS = @LINK_INSTALL_FLAGS@
 RM = @RM@
@@ -91,11 +93,13 @@ LIBCOM_ERR = $(LIB)/libcom_err@LIB_EXT@ @PRIVATE_LIBS_CMT@ @SEM_INIT_LIB@
 LIBE2P = $(LIB)/libe2p@LIB_EXT@
 LIBEXT2FS = $(LIB)/libext2fs@LIB_EXT@
 LIBUUID = @LIBUUID@ @SOCKET_LIB@
+LIBQUOTA = @STATIC_LIBQUOTA@
 LIBBLKID = @LIBBLKID@ @PRIVATE_LIBS_CMT@ $(LIBUUID)
 LIBINTL = @LIBINTL@
 DEPLIBSS = $(LIB)/libss@LIB_EXT@
 DEPLIBCOM_ERR = $(LIB)/libcom_err@LIB_EXT@
 DEPLIBUUID = @DEPLIBUUID@
+DEPLIBQUOTA = @DEPSTATIC_LIBQUOTA@
 DEPLIBBLKID = @DEPLIBBLKID@ @PRIVATE_LIBS_CMT@ $(DEPLIBUUID)
 
 STATIC_LIBSS = $(LIB)/libss@STATIC_LIB_EXT@ @DLOPEN_LIB@
@@ -103,10 +107,12 @@ STATIC_LIBCOM_ERR = $(LIB)/libcom_err@STATIC_LIB_EXT@ @SEM_INIT_LIB@
 STATIC_LIBE2P = $(LIB)/libe2p@STATIC_LIB_EXT@
 STATIC_LIBEXT2FS = $(LIB)/libext2fs@STATIC_LIB_EXT@
 STATIC_LIBUUID = @STATIC_LIBUUID@ @SOCKET_LIB@
+STATIC_LIBQUOTA = @STATIC_LIBQUOTA@
 STATIC_LIBBLKID = @STATIC_LIBBLKID@ $(STATIC_LIBUUID)
 DEPSTATIC_LIBSS = $(LIB)/libss@STATIC_LIB_EXT@
 DEPSTATIC_LIBCOM_ERR = $(LIB)/libcom_err@STATIC_LIB_EXT@
 DEPSTATIC_LIBUUID = @DEPSTATIC_LIBUUID@
+DEPSTATIC_LIBQUOTA = @DEPSTATIC_LIBQUOTA@
 DEPSTATIC_LIBBLKID = @DEPSTATIC_LIBBLKID@ $(DEPSTATIC_LIBUUID)
 
 PROFILED_LIBSS = $(LIB)/libss@PROFILED_LIB_EXT@ @DLOPEN_LIB@
@@ -114,15 +120,13 @@ PROFILED_LIBCOM_ERR = $(LIB)/libcom_err@PROFILED_LIB_EXT@ @SEM_INIT_LIB@
 PROFILED_LIBE2P = $(LIB)/libe2p@PROFILED_LIB_EXT@
 PROFILED_LIBEXT2FS = $(LIB)/libext2fs@PROFILED_LIB_EXT@
 PROFILED_LIBUUID = @PROFILED_LIBUUID@ @SOCKET_LIB@
+PROFILED_LIBQUOTA = @PROFILED_LIBQUOTA@
 PROFILED_LIBBLKID = @PROFILED_LIBBLKID@ $(PROFILED_LIBUUID)
 DEPPROFILED_LIBSS = $(LIB)/libss@PROFILED_LIB_EXT@
 DEPPROFILED_LIBCOM_ERR = $(LIB)/libcom_err@PROFILED_LIB_EXT@
 DEPPROFILED_LIBUUID = @PROFILED_LIBUUID@
+DEPPROFILED_LIBQUOTA = @PROFILED_LIBQUOTA@
 DEPPROFILED_LIBBLKID = @PROFILED_LIBBLKID@ $(DEPPROFILED_LIBUUID)
-
-# An include directive pointing to a directory holding enough linux-like
-# include files to satisfy some programs here
-LINUX_INCLUDE=@LINUX_INCLUDE@
 
 #
 # A fast substitution command for fixing up man pages, shell scripts, etc.
@@ -134,6 +138,23 @@ DEP_SUBSTITUTE= $(top_builddir)/util/subst $(SUBST_CONF)
 
 $(top_builddir)/util/subst:
 	cd $(top_builddir)/util ; $(MAKE) subst
+
+#
+# Script for installing symlinks (for shared libraries)
+#
+$(top_builddir)/util/install-symlink: $(top_srcdir)/util/install-symlink.in \
+			      $(top_builddir)/config.status
+	cd $(top_builddir); CONFIG_FILES=util/install-symlink ./config.status
+	chmod +x $(top_builddir)/util/install-symlink
+
+$(top_builddir)/util/symlinks:
+	cd $(top_builddir)/util ; $(MAKE) symlinks
+
+INSTALL_SYMLINK = /bin/sh $(top_builddir)/util/install-symlink \
+			@SYMLINK_RELATIVE@ \
+			--symlinks=$(top_builddir)/util/symlinks
+DEP_INSTALL_SYMLINK = $(top_builddir)/util/install-symlink \
+			$(top_builddir)/util/symlinks
 
 #
 # Warning flags
@@ -152,7 +173,7 @@ WFLAGS=		-std=c99 -D_XOPEN_SOURCE=600 -D_GNU_SOURCE \
 			-UENABLE_NLS
 
 gcc-wall-new:
-	(make USE_WFLAGS="$(WFLAGS)" > /dev/null) 2>&1 | sed -f $(top_srcdir)/util/gcc-wall-cleanup 
+	(make CFLAGS="@CFLAGS@ $(WFLAGS)" > /dev/null) 2>&1 | sed -f $(top_srcdir)/util/gcc-wall-cleanup 
 
 gcc-wall:
 	make clean > /dev/null
@@ -190,6 +211,14 @@ $(top_builddir)/config.status: $(top_srcdir)/configure
 $(top_builddir)/MCONFIG: $(top_srcdir)/MCONFIG.in $(top_builddir)/config.status
 	cd $(top_builddir); CONFIG_FILES=MCONFIG ./config.status
 
+$(top_builddir)/lib/config.h: $(top_srcdir)/lib/config.h.in \
+			      $(top_builddir)/config.status
+	cd $(top_builddir); CONFIG_FILES=lib/config.h ./config.status
+
+$(top_builddir)/lib/dirpaths.h: $(DEP_SUBSTITUTE) $(top_srcdir)/lib/dirpaths.h.in
+	$(E) "	SUBST $@"
+	$(Q) $(SUBSTITUTE) $(top_srcdir)/lib/dirpaths.h.in $@
+
 $(top_builddir)/lib/substitute_sh: $(top_srcdir)/lib/substitute_sh.in \
 		$(top_builddir)/config.status
 	cd $(top_builddir); CONFIG_FILES=lib/substitute_sh ./config.status
@@ -203,7 +232,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/MCONFIG \
 	cd $(top_builddir); CONFIG_FILES=$(my_dir)/Makefile ./config.status
 
 @MAINTAINER_CMT@$(top_srcdir)/configure: $(top_srcdir)/configure.in
-@MAINTAINER_CMT@	cd $(top_srcdir) && autoconf
+@MAINTAINER_CMT@	cd $(top_srcdir) && autoheader && autoconf
 
 #
 # Make depend magic...

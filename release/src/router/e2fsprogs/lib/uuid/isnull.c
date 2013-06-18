@@ -32,6 +32,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include "uuidP.h"
 
 /* Returns 1 if the uuid is the NULL uuid */

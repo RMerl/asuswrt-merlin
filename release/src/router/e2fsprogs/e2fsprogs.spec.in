@@ -212,6 +212,7 @@ exit 0
 %{_includedir}/blkid
 %{_includedir}/e2p
 %{_includedir}/et
+%{_includedir}/com_err.h
 %{_includedir}/ext2fs
 %{_includedir}/ss
 %{_includedir}/uuid

@@ -32,6 +32,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include "uuidP.h"
 
 void uuid_copy(uuid_t dst, const uuid_t src)

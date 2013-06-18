@@ -11,6 +11,7 @@
  * express or implied warranty.
  */
 
+#include "config.h"
 #ifdef HAS_STDLIB_H
 #include <stdlib.h>
 #endif

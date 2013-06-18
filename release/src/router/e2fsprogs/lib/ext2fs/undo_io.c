@@ -14,6 +14,7 @@
 #define _LARGEFILE_SOURCE
 #define _LARGEFILE64_SOURCE
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #if HAVE_UNISTD_H
@@ -73,6 +74,10 @@ struct undo_private_data {
 static errcode_t undo_open(const char *name, int flags, io_channel *channel);
 static errcode_t undo_close(io_channel channel);
 static errcode_t undo_set_blksize(io_channel channel, int blksize);
+static errcode_t undo_read_blk64(io_channel channel, unsigned long long block,
+				 int count, void *data);
+static errcode_t undo_write_blk64(io_channel channel, unsigned long long block,
+				  int count, const void *data);
 static errcode_t undo_read_blk(io_channel channel, unsigned long block,
 			       int count, void *data);
 static errcode_t undo_write_blk(io_channel channel, unsigned long block,
@@ -82,6 +87,7 @@ static errcode_t undo_write_byte(io_channel channel, unsigned long offset,
 				int size, const void *data);
 static errcode_t undo_set_option(io_channel channel, const char *option,
 				 const char *arg);
+static errcode_t undo_get_stats(io_channel channel, io_stats *stats);
 
 static struct struct_io_manager struct_undo_manager = {
 	EXT2_ET_MAGIC_IO_MANAGER,
@@ -93,7 +99,10 @@ static struct struct_io_manager struct_undo_manager = {
 	undo_write_blk,
 	undo_flush,
 	undo_write_byte,
-	undo_set_option
+	undo_set_option,
+	undo_get_stats,
+	undo_read_blk64,
+	undo_write_blk64,
 };
 
 io_manager undo_io_manager = &struct_undo_manager;
@@ -140,7 +149,7 @@ static errcode_t write_file_system_identity(io_channel undo_channel,
 	block_size = channel->block_size;
 
 	io_channel_set_blksize(channel, SUPERBLOCK_OFFSET);
-	retval = io_channel_read_blk(channel, 1, -SUPERBLOCK_SIZE, &super);
+	retval = io_channel_read_blk64(channel, 1, -SUPERBLOCK_SIZE, &super);
 	if (retval)
 		goto err_out;
 
@@ -190,17 +199,17 @@ static errcode_t write_block_size(TDB_CONTEXT *tdb, int block_size)
 }
 
 static errcode_t undo_write_tdb(io_channel channel,
-				unsigned long block, int count)
+				unsigned long long block, int count)
 
 {
 	int size, sz;
-	unsigned long block_num, backing_blk_num;
+	unsigned long long block_num, backing_blk_num;
 	errcode_t retval = 0;
 	ext2_loff_t offset;
 	struct undo_private_data *data;
 	TDB_DATA tdb_key, tdb_data;
 	unsigned char *read_ptr;
-	unsigned long end_block;
+	unsigned long long end_block;
 
 	data = (struct undo_private_data *) channel->private_data;
 
@@ -266,7 +275,7 @@ static errcode_t undo_write_tdb(io_channel channel,
 			sz = count / channel->block_size;
 		else
 			sz = -count;
-		retval = io_channel_read_blk(data->real, backing_blk_num,
+		retval = io_channel_read_blk64(data->real, backing_blk_num,
 					     sz, read_ptr);
 		if (retval) {
 			if (retval != EXT2_ET_SHORT_READ) {
@@ -285,7 +294,7 @@ static errcode_t undo_write_tdb(io_channel channel,
 		tdb_data.dptr = read_ptr +
 				((offset - data->offset) % channel->block_size);
 #ifdef DEBUG
-		printf("Printing with key %ld data %x and size %d\n",
+		printf("Printing with key %lld data %x and size %d\n",
 		       block_num,
 		       tdb_data.dptr,
 		       tdb_data.dsize);
@@ -349,7 +358,7 @@ static errcode_t undo_open(const char *name, int flags, io_channel *channel)
 		return EXT2_ET_BAD_DEVICE_NAME;
 	retval = ext2fs_get_mem(sizeof(struct struct_io_channel), &io);
 	if (retval)
-		return retval;
+		goto cleanup;
 	memset(io, 0, sizeof(struct struct_io_channel));
 	io->magic = EXT2_ET_MAGIC_IO_CHANNEL;
 	retval = ext2fs_get_mem(sizeof(struct undo_private_data), &data);
@@ -392,13 +401,14 @@ static errcode_t undo_open(const char *name, int flags, io_channel *channel)
 	 * setup err handler for read so that we know
 	 * when the backing manager fails do short read
 	 */
-	undo_err_handler_init(data->real);
+	if (data->real)
+		undo_err_handler_init(data->real);
 
 	*channel = io;
 	return 0;
 
 cleanup:
-	if (data->real)
+	if (data && data->real)
 		io_channel_close(data->real);
 	if (data)
 		ext2fs_free_mem(&data);
@@ -455,7 +465,7 @@ static errcode_t undo_set_blksize(io_channel channel, int blksize)
 	return retval;
 }
 
-static errcode_t undo_read_blk(io_channel channel, unsigned long block,
+static errcode_t undo_read_blk64(io_channel channel, unsigned long long block,
 			       int count, void *buf)
 {
 	errcode_t	retval = 0;
@@ -466,12 +476,18 @@ static errcode_t undo_read_blk(io_channel channel, unsigned long block,
 	EXT2_CHECK_MAGIC(data, EXT2_ET_MAGIC_UNIX_IO_CHANNEL);
 
 	if (data->real)
-		retval = io_channel_read_blk(data->real, block, count, buf);
+		retval = io_channel_read_blk64(data->real, block, count, buf);
 
 	return retval;
 }
 
-static errcode_t undo_write_blk(io_channel channel, unsigned long block,
+static errcode_t undo_read_blk(io_channel channel, unsigned long block,
+			       int count, void *buf)
+{
+	return undo_read_blk64(channel, block, count, buf);
+}
+
+static errcode_t undo_write_blk64(io_channel channel, unsigned long long block,
 				int count, const void *buf)
 {
 	struct undo_private_data *data;
@@ -487,9 +503,15 @@ static errcode_t undo_write_blk(io_channel channel, unsigned long block,
 	if (retval)
 		 return retval;
 	if (data->real)
-		retval = io_channel_write_blk(data->real, block, count, buf);
+		retval = io_channel_write_blk64(data->real, block, count, buf);
 
 	return retval;
+}
+
+static errcode_t undo_write_blk(io_channel channel, unsigned long block,
+				int count, const void *buf)
+{
+	return undo_write_blk64(channel, block, count, buf);
 }
 
 static errcode_t undo_write_byte(io_channel channel, unsigned long offset,
@@ -582,5 +604,20 @@ static errcode_t undo_set_option(io_channel channel, const char *option,
 			return EXT2_ET_INVALID_ARGUMENT;
 		data->offset = tmp;
 	}
+	return retval;
+}
+
+static errcode_t undo_get_stats(io_channel channel, io_stats *stats)
+{
+	errcode_t	retval = 0;
+	struct undo_private_data *data;
+
+	EXT2_CHECK_MAGIC(channel, EXT2_ET_MAGIC_IO_CHANNEL);
+	data = (struct undo_private_data *) channel->private_data;
+	EXT2_CHECK_MAGIC(data, EXT2_ET_MAGIC_UNIX_IO_CHANNEL);
+
+	if (data->real)
+		retval = (data->real->manager->get_stats)(data->real, stats);
+
 	return retval;
 }

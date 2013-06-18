@@ -76,7 +76,7 @@ uuid.h: $(srcdir)/uuid.h.in
 $(top_builddir)/lib/uuid/uuid_types.h: $(srcdir)/uuid_types.h.in $(top_builddir)/config.status
 	cd $(top_builddir); CONFIG_FILES=$(my_dir)/uuid_types.h ./config.status
 
-tst_uuid.o: $(srcdir)/tst_uuid.c
+tst_uuid.o: $(srcdir)/tst_uuid.c uuid.h
 	$(E) "	CC $@"
 	$(Q) $(CC) $(ALL_CFLAGS) -c $(srcdir)/tst_uuid.c -o tst_uuid.o
 
@@ -86,8 +86,8 @@ tst_uuid: tst_uuid.o $(DEPSTATIC_LIBUUID)
 
 uuid_time: $(srcdir)/uuid_time.c $(DEPLIBUUID)
 	$(E) "	LD $@"
-	$(Q) $(CC) $(ALL_CFLAGS) -DDEBUG -o uuid_time $(srcdir)/uuid_time.c \
-		$(LIBUUID)
+	$(Q) $(CC) $(ALL_CFLAGS) $(LDFLAGS) -DDEBUG -o uuid_time \
+		$(srcdir)/uuid_time.c $(LIBUUID)
 
 uuid.3: $(DEP_SUBSTITUTE) $(srcdir)/uuid.3.in
 	$(E) "	SUBST $@"
@@ -192,13 +192,23 @@ $(OBJS): subdirs uuid.h
 # Makefile dependencies follow.  This must be the last section in
 # the Makefile.in file
 #
-clear.o: $(srcdir)/clear.c $(srcdir)/uuidP.h
-compare.o: $(srcdir)/compare.c $(srcdir)/uuidP.h
-copy.o: $(srcdir)/copy.c $(srcdir)/uuidP.h
-gen_uuid.o: $(srcdir)/gen_uuid.c $(srcdir)/uuidP.h $(srcdir)/uuidd.h
-isnull.o: $(srcdir)/isnull.c $(srcdir)/uuidP.h
-pack.o: $(srcdir)/pack.c $(srcdir)/uuidP.h
-parse.o: $(srcdir)/parse.c $(srcdir)/uuidP.h
-unpack.o: $(srcdir)/unpack.c $(srcdir)/uuidP.h
-unparse.o: $(srcdir)/unparse.c $(srcdir)/uuidP.h
-uuid_time.o: $(srcdir)/uuid_time.c $(srcdir)/uuidP.h
+clear.o: $(srcdir)/clear.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/uuidP.h
+compare.o: $(srcdir)/compare.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/uuidP.h
+copy.o: $(srcdir)/copy.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/uuidP.h
+gen_uuid.o: $(srcdir)/gen_uuid.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/uuidP.h $(srcdir)/uuidd.h
+isnull.o: $(srcdir)/isnull.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/uuidP.h
+pack.o: $(srcdir)/pack.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/uuidP.h
+parse.o: $(srcdir)/parse.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/uuidP.h
+unpack.o: $(srcdir)/unpack.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/uuidP.h
+unparse.o: $(srcdir)/unparse.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/uuidP.h
+uuid_time.o: $(srcdir)/uuid_time.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/uuidP.h

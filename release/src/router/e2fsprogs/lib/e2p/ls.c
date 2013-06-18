@@ -13,6 +13,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -166,6 +167,26 @@ static void print_super_flags(struct ext2_super_block * s, FILE *f)
 		fputs("(none)\n", f);
 }
 
+static __u64 e2p_blocks_count(struct ext2_super_block *super)
+{
+	return super->s_blocks_count |
+		(super->s_feature_incompat & EXT4_FEATURE_INCOMPAT_64BIT ?
+		(__u64) super->s_blocks_count_hi << 32 : 0);
+}
+
+static __u64 e2p_r_blocks_count(struct ext2_super_block *super)
+{
+	return super->s_r_blocks_count |
+		(super->s_feature_incompat & EXT4_FEATURE_INCOMPAT_64BIT ?
+		(__u64) super->s_r_blocks_count_hi << 32 : 0);
+}
+
+static __u64 e2p_free_blocks_count(struct ext2_super_block *super)
+{
+	return super->s_free_blocks_count |
+		(super->s_feature_incompat & EXT4_FEATURE_INCOMPAT_64BIT ?
+		(__u64) super->s_free_blocks_hi << 32 : 0);
+}
 
 #ifndef EXT2_INODE_SIZE
 #define EXT2_INODE_SIZE(s) sizeof(struct ext2_inode)
@@ -223,18 +244,31 @@ void list_super2(struct ext2_super_block * sb, FILE *f)
 	fprintf(f, "Filesystem OS type:       %s\n", str);
 	free(str);
 	fprintf(f, "Inode count:              %u\n", sb->s_inodes_count);
-	fprintf(f, "Block count:              %u\n", sb->s_blocks_count);
-	fprintf(f, "Reserved block count:     %u\n", sb->s_r_blocks_count);
-	fprintf(f, "Free blocks:              %u\n", sb->s_free_blocks_count);
+	fprintf(f, "Block count:              %llu\n", e2p_blocks_count(sb));
+	fprintf(f, "Reserved block count:     %llu\n", e2p_r_blocks_count(sb));
+	if (sb->s_overhead_blocks)
+		fprintf(f, "Overhead blocks:          %u\n",
+			sb->s_overhead_blocks);
+	fprintf(f, "Free blocks:              %llu\n", e2p_free_blocks_count(sb));
 	fprintf(f, "Free inodes:              %u\n", sb->s_free_inodes_count);
 	fprintf(f, "First block:              %u\n", sb->s_first_data_block);
 	fprintf(f, "Block size:               %u\n", EXT2_BLOCK_SIZE(sb));
-	fprintf(f, "Fragment size:            %u\n", EXT2_FRAG_SIZE(sb));
+	if (sb->s_feature_ro_compat & EXT4_FEATURE_RO_COMPAT_BIGALLOC)
+		fprintf(f, "Cluster size:             %u\n",
+			EXT2_CLUSTER_SIZE(sb));
+	else
+		fprintf(f, "Fragment size:            %u\n",
+			EXT2_CLUSTER_SIZE(sb));
 	if (sb->s_reserved_gdt_blocks)
 		fprintf(f, "Reserved GDT blocks:      %u\n",
 			sb->s_reserved_gdt_blocks);
 	fprintf(f, "Blocks per group:         %u\n", sb->s_blocks_per_group);
-	fprintf(f, "Fragments per group:      %u\n", sb->s_frags_per_group);
+	if (sb->s_feature_ro_compat & EXT4_FEATURE_RO_COMPAT_BIGALLOC)
+		fprintf(f, "Clusters per group:       %u\n",
+			sb->s_clusters_per_group);
+	else
+		fprintf(f, "Fragments per group:      %u\n",
+			sb->s_clusters_per_group);
 	fprintf(f, "Inodes per group:         %u\n", sb->s_inodes_per_group);
 	fprintf(f, "Inode blocks per group:   %u\n", inode_blocks_per_group);
 	if (sb->s_raid_stride)
@@ -350,7 +384,7 @@ void list_super2(struct ext2_super_block * sb, FILE *f)
 		tm = sb->s_first_error_time;
 		fprintf(f, "First error time:         %s", ctime(&tm));
 		memset(buf, 0, sizeof(buf));
-		strncpy(buf, sb->s_first_error_func,
+		strncpy(buf, (char *)sb->s_first_error_func,
 			sizeof(sb->s_first_error_func));
 		fprintf(f, "First error function:     %s\n", buf);
 		fprintf(f, "First error line #:       %u\n",
@@ -364,7 +398,7 @@ void list_super2(struct ext2_super_block * sb, FILE *f)
 		tm = sb->s_last_error_time;
 		fprintf(f, "Last error time:          %s", ctime(&tm));
 		memset(buf, 0, sizeof(buf));
-		strncpy(buf, sb->s_last_error_func,
+		strncpy(buf, (char *)sb->s_last_error_func,
 			sizeof(sb->s_last_error_func));
 		fprintf(f, "Last error function:      %s\n", buf);
 		fprintf(f, "Last error line #:        %u\n",
@@ -374,6 +408,22 @@ void list_super2(struct ext2_super_block * sb, FILE *f)
 		fprintf(f, "Last error block #:       %llu\n",
 			sb->s_last_error_block);
 	}
+	if (sb->s_feature_incompat & EXT4_FEATURE_INCOMPAT_MMP) {
+		fprintf(f, "MMP block number:         %llu\n",
+			(long long)sb->s_mmp_block);
+		fprintf(f, "MMP update interval:      %u\n",
+			sb->s_mmp_update_interval);
+	}
+	if (sb->s_usr_quota_inum)
+		fprintf(f, "User quota inode:         %u\n",
+			sb->s_usr_quota_inum);
+	if (sb->s_grp_quota_inum)
+		fprintf(f, "Group quota inode:        %u\n",
+			sb->s_grp_quota_inum);
+
+	if (sb->s_feature_ro_compat & EXT4_FEATURE_RO_COMPAT_METADATA_CSUM)
+		fprintf(f, "Checksum:                 0x%08x\n",
+			sb->s_checksum);
 }
 
 void list_super (struct ext2_super_block * s)

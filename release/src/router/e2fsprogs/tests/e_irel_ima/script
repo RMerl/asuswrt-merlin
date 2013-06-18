@@ -1,2 +1,0 @@
-rm -f $test_name.ok $test_name.failed
-echo "skipped"

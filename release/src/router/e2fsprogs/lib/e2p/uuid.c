@@ -7,6 +7,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #include <ext2fs/ext2_types.h>

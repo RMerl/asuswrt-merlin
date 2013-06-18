@@ -1,0 +1,614 @@
+/* lib/config.h.in.  Generated from configure.in by autoheader.  */
+
+/* Define if building universal (internal helper macro) */
+#undef AC_APPLE_UNIVERSAL_BUILD
+
+/* Define to 1 if debugging the blkid library */
+#undef CONFIG_BLKID_DEBUG
+
+/* Define to 1 to compile findfs */
+#undef CONFIG_BUILD_FINDFS
+
+/* Define to 1 if debugging ext3/4 journal code */
+#undef CONFIG_JBD_DEBUG
+
+/* Define to 1 to enable quota support */
+#undef CONFIG_QUOTA
+
+/* Define to 1 if the testio I/O manager should be enabled */
+#undef CONFIG_TESTIO_DEBUG
+
+/* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
+   systems. This function is required for `alloca.c' support on those systems.
+   */
+#undef CRAY_STACKSEG_END
+
+/* Define to 1 if using `alloca.c'. */
+#undef C_ALLOCA
+
+/* Define to 1 if ext2 compression enabled */
+#undef ENABLE_COMPRESSION
+
+/* Define to 1 if ext3/4 htree support enabled */
+#undef ENABLE_HTREE
+
+/* Define to 1 if translation of program messages to the user's native
+   language is requested. */
+#undef ENABLE_NLS
+
+/* Define to 1 if you have `alloca', as a function or macro. */
+#undef HAVE_ALLOCA
+
+/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
+   */
+#undef HAVE_ALLOCA_H
+
+/* Define to 1 if you have the <argz.h> header file. */
+#undef HAVE_ARGZ_H
+
+/* Define to 1 if you have the `asprintf' function. */
+#undef HAVE_ASPRINTF
+
+/* Define to 1 if you have the `backtrace' function. */
+#undef HAVE_BACKTRACE
+
+/* Define to 1 if you have the `blkid_probe_get_topology' function. */
+#undef HAVE_BLKID_PROBE_GET_TOPOLOGY
+
+/* Define to 1 if you have the `chflags' function. */
+#undef HAVE_CHFLAGS
+
+/* Define if the GNU dcgettext() function is already present or preinstalled.
+   */
+#undef HAVE_DCGETTEXT
+
+/* Define to 1 if you have the declaration of `feof_unlocked', and to 0 if you
+   don't. */
+#undef HAVE_DECL_FEOF_UNLOCKED
+
+/* Define to 1 if you have the declaration of `fgets_unlocked', and to 0 if
+   you don't. */
+#undef HAVE_DECL_FGETS_UNLOCKED
+
+/* Define to 1 if you have the declaration of `getc_unlocked', and to 0 if you
+   don't. */
+#undef HAVE_DECL_GETC_UNLOCKED
+
+/* Define to 1 if you have the declaration of `_snprintf', and to 0 if you
+   don't. */
+#undef HAVE_DECL__SNPRINTF
+
+/* Define to 1 if you have the declaration of `_snwprintf', and to 0 if you
+   don't. */
+#undef HAVE_DECL__SNWPRINTF
+
+/* Define to 1 if you have the <dirent.h> header file. */
+#undef HAVE_DIRENT_H
+
+/* Define to 1 if dlopen/libdl exists */
+#undef HAVE_DLOPEN
+
+/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
+#undef HAVE_DOPRNT
+
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
+/* Define to 1 if you have the <execinfo.h> header file. */
+#undef HAVE_EXECINFO_H
+
+/* Define to 1 if Ext2 ioctls present */
+#undef HAVE_EXT2_IOCTLS
+
+/* Define to 1 if you have the `fallocate' function. */
+#undef HAVE_FALLOCATE
+
+/* Define to 1 if you have the `fallocate64' function. */
+#undef HAVE_FALLOCATE64
+
+/* Define to 1 if you have the `fchown' function. */
+#undef HAVE_FCHOWN
+
+/* Define to 1 if you have the `fdatasync' function. */
+#undef HAVE_FDATASYNC
+
+/* Define to 1 if you have the `fstat64' function. */
+#undef HAVE_FSTAT64
+
+/* Define to 1 if you have the `ftruncate64' function. */
+#undef HAVE_FTRUNCATE64
+
+/* Define to 1 if you have the `fwprintf' function. */
+#undef HAVE_FWPRINTF
+
+/* Define to 1 if you have the `getcwd' function. */
+#undef HAVE_GETCWD
+
+/* Define to 1 if you have the `getdtablesize' function. */
+#undef HAVE_GETDTABLESIZE
+
+/* Define to 1 if you have the `getegid' function. */
+#undef HAVE_GETEGID
+
+/* Define to 1 if you have the `geteuid' function. */
+#undef HAVE_GETEUID
+
+/* Define to 1 if you have the `getgid' function. */
+#undef HAVE_GETGID
+
+/* Define to 1 if you have the `getmntinfo' function. */
+#undef HAVE_GETMNTINFO
+
+/* Define to 1 if you have the <getopt.h> header file. */
+#undef HAVE_GETOPT_H
+
+/* Define to 1 if you have the `getpagesize' function. */
+#undef HAVE_GETPAGESIZE
+
+/* Define to 1 if you have the `getpwuid_r' function. */
+#undef HAVE_GETPWUID_R
+
+/* Define to 1 if you have the `getrlimit' function. */
+#undef HAVE_GETRLIMIT
+
+/* Define to 1 if you have the `getrusage' function. */
+#undef HAVE_GETRUSAGE
+
+/* Define if the GNU gettext() function is already present or preinstalled. */
+#undef HAVE_GETTEXT
+
+/* Define to 1 if you have the `getuid' function. */
+#undef HAVE_GETUID
+
+/* Define if you have the iconv() function. */
+#undef HAVE_ICONV
+
+/* Define if you have the 'intmax_t' type in <stdint.h> or <inttypes.h>. */
+#undef HAVE_INTMAX_T
+
+/* Define to 1 if the system has the type `intptr_t'. */
+#undef HAVE_INTPTR_T
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define if <inttypes.h> exists, doesn't clash with <sys/types.h>, and
+   declares uintmax_t. */
+#undef HAVE_INTTYPES_H_WITH_UINTMAX
+
+/* Define to 1 if you have the `jrand48' function. */
+#undef HAVE_JRAND48
+
+/* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
+#undef HAVE_LANGINFO_CODESET
+
+/* Define if your <locale.h> file defines LC_MESSAGES. */
+#undef HAVE_LC_MESSAGES
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define to 1 if you have the <linux/falloc.h> header file. */
+#undef HAVE_LINUX_FALLOC_H
+
+/* Define to 1 if you have the <linux/fd.h> header file. */
+#undef HAVE_LINUX_FD_H
+
+/* Define to 1 if you have the <linux/major.h> header file. */
+#undef HAVE_LINUX_MAJOR_H
+
+/* Define to 1 if you have the `llseek' function. */
+#undef HAVE_LLSEEK
+
+/* Define to 1 if llseek declared in unistd.h */
+#undef HAVE_LLSEEK_PROTOTYPE
+
+/* Define to 1 if you have the <locale.h> header file. */
+#undef HAVE_LOCALE_H
+
+/* Define if you have the 'long double' type. */
+#undef HAVE_LONG_DOUBLE
+
+/* Define if you have the 'long long' type. */
+#undef HAVE_LONG_LONG
+
+/* Define to 1 if you have the `lseek64' function. */
+#undef HAVE_LSEEK64
+
+/* Define to 1 if lseek64 declared in unistd.h */
+#undef HAVE_LSEEK64_PROTOTYPE
+
+/* Define to 1 if you have the `mallinfo' function. */
+#undef HAVE_MALLINFO
+
+/* Define to 1 if you have the <malloc.h> header file. */
+#undef HAVE_MALLOC_H
+
+/* Define to 1 if you have the `mbstowcs' function. */
+#undef HAVE_MBSTOWCS
+
+/* Define to 1 if you have the `memalign' function. */
+#undef HAVE_MEMALIGN
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `mempcpy' function. */
+#undef HAVE_MEMPCPY
+
+/* Define to 1 if you have the `mmap' function. */
+#undef HAVE_MMAP
+
+/* Define to 1 if you have the <mntent.h> header file. */
+#undef HAVE_MNTENT_H
+
+/* Define to 1 if you have the `msync' function. */
+#undef HAVE_MSYNC
+
+/* Define to 1 if you have the `munmap' function. */
+#undef HAVE_MUNMAP
+
+/* Define to 1 if you have the `nanosleep' function. */
+#undef HAVE_NANOSLEEP
+
+/* Define to 1 if you have the <netinet/in.h> header file. */
+#undef HAVE_NETINET_IN_H
+
+/* Define to 1 if you have the <net/if_dl.h> header file. */
+#undef HAVE_NET_IF_DL_H
+
+/* Define to 1 if you have the <net/if.h> header file. */
+#undef HAVE_NET_IF_H
+
+/* Define to 1 if you have the <nl_types.h> header file. */
+#undef HAVE_NL_TYPES_H
+
+/* Define to 1 if you have the `open64' function. */
+#undef HAVE_OPEN64
+
+/* Define to 1 if optreset for getopt is present */
+#undef HAVE_OPTRESET
+
+/* Define to 1 if you have the `pathconf' function. */
+#undef HAVE_PATHCONF
+
+/* Define to 1 if you have the <paths.h> header file. */
+#undef HAVE_PATHS_H
+
+/* Define to 1 if you have the `posix_fadvise' function. */
+#undef HAVE_POSIX_FADVISE
+
+/* Define to 1 if you have the `posix_memalign' function. */
+#undef HAVE_POSIX_MEMALIGN
+
+/* Define if your printf() function supports format strings with positions. */
+#undef HAVE_POSIX_PRINTF
+
+/* Define to 1 if you have the `prctl' function. */
+#undef HAVE_PRCTL
+
+/* Define to 1 if you have the `putenv' function. */
+#undef HAVE_PUTENV
+
+/* Define to 1 if dirent has d_reclen */
+#undef HAVE_RECLEN_DIRENT
+
+/* Define to 1 if if struct sockaddr contains sa_len */
+#undef HAVE_SA_LEN
+
+/* Define to 1 if you have the <semaphore.h> header file. */
+#undef HAVE_SEMAPHORE_H
+
+/* Define to 1 if sem_init() exists */
+#undef HAVE_SEM_INIT
+
+/* Define to 1 if you have the `setenv' function. */
+#undef HAVE_SETENV
+
+/* Define to 1 if you have the <setjmp.h> header file. */
+#undef HAVE_SETJMP_H
+
+/* Define to 1 if you have the `setlocale' function. */
+#undef HAVE_SETLOCALE
+
+/* Define to 1 if you have the `setmntent' function. */
+#undef HAVE_SETMNTENT
+
+/* Define to 1 if you have the `setresgid' function. */
+#undef HAVE_SETRESGID
+
+/* Define to 1 if you have the `setresuid' function. */
+#undef HAVE_SETRESUID
+
+/* Define to 1 if you have the <signal.h> header file. */
+#undef HAVE_SIGNAL_H
+
+/* Define to 1 if you have the `snprintf' function. */
+#undef HAVE_SNPRINTF
+
+/* Define to 1 if you have the `srandom' function. */
+#undef HAVE_SRANDOM
+
+/* Define to 1 if struct stat has st_flags */
+#undef HAVE_STAT_FLAGS
+
+/* Define to 1 if you have the <stdarg.h> header file. */
+#undef HAVE_STDARG_H
+
+/* Define to 1 if you have the <stddef.h> header file. */
+#undef HAVE_STDDEF_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define if <stdint.h> exists, doesn't clash with <sys/types.h>, and declares
+   uintmax_t. */
+#undef HAVE_STDINT_H_WITH_UINTMAX
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `stpcpy' function. */
+#undef HAVE_STPCPY
+
+/* Define to 1 if you have the `strcasecmp' function. */
+#undef HAVE_STRCASECMP
+
+/* Define to 1 if you have the `strdup' function. */
+#undef HAVE_STRDUP
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strnlen' function. */
+#undef HAVE_STRNLEN
+
+/* Define to 1 if you have the `strptime' function. */
+#undef HAVE_STRPTIME
+
+/* Define to 1 if you have the `strtoul' function. */
+#undef HAVE_STRTOUL
+
+/* Define to 1 if you have the `strtoull' function. */
+#undef HAVE_STRTOULL
+
+/* Define to 1 if you have the `sync_file_range' function. */
+#undef HAVE_SYNC_FILE_RANGE
+
+/* Define to 1 if you have the `sysconf' function. */
+#undef HAVE_SYSCONF
+
+/* Define to 1 if you have the <sys/disklabel.h> header file. */
+#undef HAVE_SYS_DISKLABEL_H
+
+/* Define to 1 if you have the <sys/disk.h> header file. */
+#undef HAVE_SYS_DISK_H
+
+/* Define to 1 if you have the <sys/file.h> header file. */
+#undef HAVE_SYS_FILE_H
+
+/* Define to 1 if you have the <sys/ioctl.h> header file. */
+#undef HAVE_SYS_IOCTL_H
+
+/* Define to 1 if you have the <sys/mkdev.h> header file. */
+#undef HAVE_SYS_MKDEV_H
+
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#undef HAVE_SYS_MMAN_H
+
+/* Define to 1 if you have the <sys/mount.h> header file. */
+#undef HAVE_SYS_MOUNT_H
+
+/* Define to 1 if you have the <sys/param.h> header file. */
+#undef HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/prctl.h> header file. */
+#undef HAVE_SYS_PRCTL_H
+
+/* Define to 1 if you have the <sys/queue.h> header file. */
+#undef HAVE_SYS_QUEUE_H
+
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#undef HAVE_SYS_RESOURCE_H
+
+/* Define to 1 if you have the <sys/select.h> header file. */
+#undef HAVE_SYS_SELECT_H
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/sockio.h> header file. */
+#undef HAVE_SYS_SOCKIO_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/syscall.h> header file. */
+#undef HAVE_SYS_SYSCALL_H
+
+/* Define to 1 if you have the <sys/sysmacros.h> header file. */
+#undef HAVE_SYS_SYSMACROS_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <sys/un.h> header file. */
+#undef HAVE_SYS_UN_H
+
+/* Define to 1 if you have the <sys/wait.h> header file. */
+#undef HAVE_SYS_WAIT_H
+
+/* Define to 1 if you have the <termios.h> header file. */
+#undef HAVE_TERMIOS_H
+
+/* Define to 1 if you have the <termio.h> header file. */
+#undef HAVE_TERMIO_H
+
+/* Define to 1 if you have the `tsearch' function. */
+#undef HAVE_TSEARCH
+
+/* Define to 1 if ssize_t declared */
+#undef HAVE_TYPE_SSIZE_T
+
+/* Define if you have the 'uintmax_t' type in <stdint.h> or <inttypes.h>. */
+#undef HAVE_UINTMAX_T
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define if you have the 'unsigned long long' type. */
+#undef HAVE_UNSIGNED_LONG_LONG
+
+/* Define to 1 if you have the `usleep' function. */
+#undef HAVE_USLEEP
+
+/* Define to 1 if you have the `utime' function. */
+#undef HAVE_UTIME
+
+/* Define to 1 if you have the <utime.h> header file. */
+#undef HAVE_UTIME_H
+
+/* Define to 1 if you have the `valloc' function. */
+#undef HAVE_VALLOC
+
+/* Define to 1 if you have the `vprintf' function. */
+#undef HAVE_VPRINTF
+
+/* Define if you have the 'wchar_t' type. */
+#undef HAVE_WCHAR_T
+
+/* Define to 1 if you have the `wcslen' function. */
+#undef HAVE_WCSLEN
+
+/* Define if you have the 'wint_t' type. */
+#undef HAVE_WINT_T
+
+/* Define to 1 if you have the `__argz_count' function. */
+#undef HAVE___ARGZ_COUNT
+
+/* Define to 1 if you have the `__argz_next' function. */
+#undef HAVE___ARGZ_NEXT
+
+/* Define to 1 if you have the `__argz_stringify' function. */
+#undef HAVE___ARGZ_STRINGIFY
+
+/* Define to 1 if you have the `__fsetlocking' function. */
+#undef HAVE___FSETLOCKING
+
+/* Define to 1 if you have the `__secure_getenv' function. */
+#undef HAVE___SECURE_GETENV
+
+/* Define as const if the declaration of iconv() needs const. */
+#undef ICONV_CONST
+
+/* Define if integer division by zero raises signal SIGFPE. */
+#undef INTDIV0_RAISES_SIGFPE
+
+/* package name for gettext */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define if <inttypes.h> exists and defines unusable PRI* macros. */
+#undef PRI_MACROS_BROKEN
+
+/* The size of `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* The size of `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* The size of `long long', as computed by sizeof. */
+#undef SIZEOF_LONG_LONG
+
+/* The size of `short', as computed by sizeof. */
+#undef SIZEOF_SHORT
+
+/* Define as the maximum value of type 'size_t', if the system doesn't define
+   it. */
+#undef SIZE_MAX
+
+/* If using the C implementation of alloca, define if you know the
+   direction of stack growth for your system; otherwise it will be
+   automatically deduced at runtime.
+	STACK_DIRECTION > 0 => grows toward higher addresses
+	STACK_DIRECTION < 0 => grows toward lower addresses
+	STACK_DIRECTION = 0 => direction of growth unknown */
+#undef STACK_DIRECTION
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* If the compiler supports a TLS storage class define it to that here */
+#undef TLS
+
+/* Define to 1 to build uuidd */
+#undef USE_UUIDD
+
+/* version for gettext */
+#undef VERSION
+
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+#  undef WORDS_BIGENDIAN
+# endif
+#endif
+
+/* Define to 1 if Apple Darwin libintl workaround is needed */
+#undef _INTL_REDIRECT_MACROS
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
+
+/* Define to `long int' if <sys/types.h> does not define. */
+#undef off_t
+
+/* Define as the type of the result of subtracting two pointers, if the system
+   doesn't define it. */
+#undef ptrdiff_t
+
+/* Define to empty if the C compiler doesn't support this keyword. */
+#undef signed
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t
+
+/* Define to unsigned long or unsigned long long if <stdint.h> and
+   <inttypes.h> don't define. */
+#undef uintmax_t
+
+#include "dirpaths.h"

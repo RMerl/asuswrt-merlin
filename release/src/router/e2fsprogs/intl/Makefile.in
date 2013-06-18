@@ -73,7 +73,7 @@ DEFS = -DLOCALEDIR=\"$(localedir)\" -DLOCALE_ALIAS_PATH=\"$(aliaspath)\" \
 -DENABLE_RELOCATABLE=1 -DIN_LIBRARY -DINSTALLDIR=\"$(libdir)\" -DNO_XMALLOC \
 -Dset_relocation_prefix=libintl_set_relocation_prefix \
 -Drelocate=libintl_relocate \
--DDEPENDS_ON_LIBICONV=1 @DEFS@
+-DDEPENDS_ON_LIBICONV=1 -DHAVE_CONFIG_H
 CPPFLAGS = @CPPFLAGS@
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
@@ -252,7 +252,7 @@ ref-del.sed: $(srcdir)/ref-del.sin
 	$(Q) sed -e '/^#/d' -e 's/@''PACKAGE''@/@PACKAGE@/g' $(srcdir)/ref-del.sin > t-ref-del.sed
 	$(Q) mv t-ref-del.sed ref-del.sed
 
-INCLUDES = -I. -I$(srcdir) -I..
+INCLUDES = -I. -I$(srcdir) -I.. -I$(top_builddir)/lib
 
 libgnuintl.h: $(srcdir)/libgnuintl.h.in
 	$(E) "	SED libgnuintl.h "

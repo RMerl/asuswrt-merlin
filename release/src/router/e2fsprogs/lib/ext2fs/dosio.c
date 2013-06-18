@@ -11,6 +11,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <bios.h>
 #include <string.h>

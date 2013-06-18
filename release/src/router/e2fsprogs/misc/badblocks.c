@@ -29,12 +29,15 @@
  * 			 list.  (Work done by David Beattie)
  */
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE /* for O_DIRECT */
+#endif
 
 #ifndef O_LARGEFILE
 #define O_LARGEFILE 0
 #endif
 
+#include "config.h"
 #include <errno.h>
 #include <fcntl.h>
 #ifdef HAVE_GETOPT_H
@@ -63,20 +66,20 @@ extern int optind;
 #include "nls-enable.h"
 
 const char * program_name = "badblocks";
-const char * done_string = N_("done                                \n");
+const char * done_string = N_("done                                                 \n");
 
-static int v_flag = 0;			/* verbose */
-static int w_flag = 0;			/* do r/w test: 0=no, 1=yes,
+static int v_flag;			/* verbose */
+static int w_flag;			/* do r/w test: 0=no, 1=yes,
 					 * 2=non-destructive */
-static int s_flag = 0;			/* show progress of test */
-static int force = 0;			/* force check of mounted device */
-static int t_flag = 0;			/* number of test patterns */
-static int t_max = 0;			/* allocated test patterns */
-static unsigned int *t_patts = NULL;	/* test patterns */
-static int current_O_DIRECT = 0;	/* Current status of O_DIRECT flag */
-static int exclusive_ok = 0;
-static unsigned int max_bb = 0;		/* Abort test if more than this number of bad blocks has been encountered */
-static unsigned int d_flag = 0;		/* delay factor between reads */
+static int s_flag;			/* show progress of test */
+static int force;			/* force check of mounted device */
+static int t_flag;			/* number of test patterns */
+static int t_max;			/* allocated test patterns */
+static unsigned int *t_patts;		/* test patterns */
+static int use_buffered_io;
+static int exclusive_ok;
+static unsigned int max_bb;		/* Abort test if more than this number of bad blocks has been encountered */
+static unsigned int d_flag;		/* delay factor between reads */
 static struct timeval time_start;
 
 #define T_INC 32
@@ -104,10 +107,15 @@ static void exclusive_usage(void)
 
 static blk_t currently_testing = 0;
 static blk_t num_blocks = 0;
+static blk_t num_read_errors = 0;
+static blk_t num_write_errors = 0;
+static blk_t num_corruption_errors = 0;
 static ext2_badblocks_list bb_list = NULL;
 static FILE *out;
 static blk_t next_bad = 0;
 static ext2_badblocks_iterate bb_iter = NULL;
+
+enum error_types { READ_ERROR, WRITE_ERROR, CORRUPTION_ERROR };
 
 static void *allocate_buffer(size_t size)
 {
@@ -136,7 +144,7 @@ static void *allocate_buffer(size_t size)
  * This routine reports a new bad block.  If the bad block has already
  * been seen before, then it returns 0; otherwise it returns 1.
  */
-static int bb_output (blk_t bad)
+static int bb_output (blk_t bad, enum error_types error_type)
 {
 	errcode_t errcode;
 
@@ -158,6 +166,14 @@ static int bb_output (blk_t bad)
 	   position.  This should not cause next_bad to change. */
 	if (bb_iter && bad < next_bad)
 		ext2fs_badblocks_list_iterate (bb_iter, &next_bad);
+
+	if (error_type == READ_ERROR) {
+	  num_read_errors++;
+	} else if (error_type == WRITE_ERROR) {
+	  num_write_errors++;
+	} else if (error_type == CORRUPTION_ERROR) {
+	  num_corruption_errors++;
+	}
 	return 1;
 }
 
@@ -199,10 +215,14 @@ static void print_status(void)
 
 	gettimeofday(&time_end, 0);
 	len = snprintf(line_buf, sizeof(line_buf), 
-		       _("%6.2f%% done, %s elapsed"),
+		       _("%6.2f%% done, %s elapsed. "
+		         "(%d/%d/%d errors)"),
 		       calc_percent((unsigned long) currently_testing,
 				    (unsigned long) num_blocks), 
-		       time_diff_format(&time_end, &time_start, diff_buf));
+		       time_diff_format(&time_end, &time_start, diff_buf),
+		       num_read_errors,
+		       num_write_errors,
+		       num_corruption_errors);
 #ifdef HAVE_MBSTOWCS
 	len = mbstowcs(NULL, line_buf, sizeof(line_buf));
 #endif
@@ -257,16 +277,22 @@ static void uncapture_terminate(void)
 	signal (SIGUSR2, SIG_DFL);
 }
 
+/* Linux requires that O_DIRECT I/Os be 512-byte sector aligned */
+
+#define O_DIRECT_SIZE 512
+
 static void set_o_direct(int dev, unsigned char *buffer, size_t size,
-			 blk_t current_block)
+			 ext2_loff_t offset)
 {
 #ifdef O_DIRECT
+	static int current_O_DIRECT;	/* Current status of O_DIRECT flag */
 	int new_flag = O_DIRECT;
 	int flag;
 
-	if ((((unsigned long) buffer & (sys_page_size - 1)) != 0) ||
+	if ((use_buffered_io != 0) ||
+	    (((unsigned long) buffer & (sys_page_size - 1)) != 0) ||
 	    ((size & (sys_page_size - 1)) != 0) ||
-	    ((current_block & ((sys_page_size >> 9)-1)) != 0))
+	    ((offset & (O_DIRECT_SIZE - 1)) != 0))
 		new_flag = 0;
 
 	if (new_flag != current_O_DIRECT) {
@@ -331,7 +357,11 @@ static int do_read (int dev, unsigned char * buffer, int try, int block_size,
 #define NANOSEC (1000000000L)
 #define MILISEC (1000L)
 
-	set_o_direct(dev, buffer, try * block_size, current_block);
+#if 0
+	printf("do_read: block %d, try %d\n", current_block, try);
+#endif
+	set_o_direct(dev, buffer, try * block_size,
+		     ((ext2_loff_t) current_block) * block_size);
 
 	if (v_flag > 1)
 		print_status();
@@ -400,7 +430,11 @@ static int do_write(int dev, unsigned char * buffer, int try, int block_size,
 {
 	long got;
 
-	set_o_direct(dev, buffer, try * block_size, current_block);
+#if 0
+	printf("do_write: block %lu, try %d\n", current_block, try);
+#endif
+	set_o_direct(dev, buffer, try * block_size,
+		     ((ext2_loff_t) current_block) * block_size);
 
 	if (v_flag > 1)
 		print_status();
@@ -426,6 +460,10 @@ static void flush_bufs(void)
 {
 	errcode_t	retval;
 
+#ifdef O_DIRECT
+	if (!use_buffered_io)
+		return;
+#endif
 	retval = ext2fs_sync_device(host_dev, 1);
 	if (retval)
 		com_err(program_name, retval, _("during ext2fs_sync_device"));
@@ -440,6 +478,7 @@ static unsigned int test_ro (int dev, blk_t last_block,
 	int got;
 	unsigned int bb_count = 0;
 	errcode_t errcode;
+	blk_t recover_block = ~0;
 
 	/* set up abend handler */
 	capture_terminate(NULL);
@@ -478,11 +517,10 @@ static unsigned int test_ro (int dev, blk_t last_block,
 	try = blocks_at_once;
 	currently_testing = first_block;
 	num_blocks = last_block - 1;
-	if (!t_flag && (s_flag || v_flag)) {
+	if (!t_flag && (s_flag || v_flag))
 		fputs(_("Checking for bad blocks (read-only test): "), stderr);
-		if (v_flag <= 1)
-			alarm_intr(SIGALRM);
-	}
+	if (s_flag && v_flag <= 1)
+		alarm_intr(SIGALRM);
 	while (currently_testing < last_block)
 	{
 		if (max_bb && bb_count >= max_bb) {
@@ -512,23 +550,20 @@ static unsigned int test_ro (int dev, blk_t last_block,
 				if (memcmp (blkbuf+i*block_size,
 					    blkbuf+blocks_at_once*block_size,
 					    block_size))
-					bb_count += bb_output(currently_testing + i);
+					bb_count += bb_output(currently_testing + i, CORRUPTION_ERROR);
 		}
+		if (got == 0 && try == 1)
+			bb_count += bb_output(currently_testing++, READ_ERROR);
 		currently_testing += got;
-		if (got == try) {
-			try = blocks_at_once;
-			/* recover page-aligned offset for O_DIRECT */
-			if ( (blocks_at_once >= sys_page_size >> 9)
-			     && (currently_testing % (sys_page_size >> 9)!= 0))
-				try -= (sys_page_size >> 9)
-					- (currently_testing
-					   % (sys_page_size >> 9));
-			continue;
-		}
-		else
+		if (got != try) {
 			try = 1;
-		if (got == 0) {
-			bb_count += bb_output(currently_testing++);
+			if (recover_block == ~0)
+				recover_block = currently_testing - got +
+					blocks_at_once;
+			continue;
+		} else if (currently_testing == recover_block) {
+			try = blocks_at_once;
+			recover_block = ~0;
 		}
 	}
 	num_blocks = 0;
@@ -555,6 +590,7 @@ static unsigned int test_rw (int dev, blk_t last_block,
 	const unsigned int *pattern;
 	int i, try, got, nr_pattern, pat_idx;
 	unsigned int bb_count = 0;
+	blk_t recover_block = ~0;
 
 	/* set up abend handler */
 	capture_terminate(NULL);
@@ -606,21 +642,18 @@ static unsigned int test_rw (int dev, blk_t last_block,
 			if (v_flag > 1)
 				print_status();
 
+			if (got == 0 && try == 1)
+				bb_count += bb_output(currently_testing++, WRITE_ERROR);
 			currently_testing += got;
-			if (got == try) {
-				try = blocks_at_once;
-				/* recover page-aligned offset for O_DIRECT */
-				if ( (blocks_at_once >= sys_page_size >> 9)
-				     && (currently_testing %
-					 (sys_page_size >> 9)!= 0))
-					try -= (sys_page_size >> 9)
-						- (currently_testing
-						   % (sys_page_size >> 9));
-				continue;
-			} else
+			if (got != try) {
 				try = 1;
-			if (got == 0) {
-				bb_count += bb_output(currently_testing++);
+				if (recover_block == ~0)
+					recover_block = currently_testing -
+						got + blocks_at_once;
+				continue;
+			} else if (currently_testing == recover_block) {
+				try = blocks_at_once;
+				recover_block = ~0;
 			}
 		}
 
@@ -648,25 +681,25 @@ static unsigned int test_rw (int dev, blk_t last_block,
 				try = last_block - currently_testing;
 			got = do_read (dev, read_buffer, try, block_size,
 				       currently_testing);
-			if (got == 0) {
-				bb_count += bb_output(currently_testing++);
+			if (got == 0 && try == 1)
+				bb_count += bb_output(currently_testing++, READ_ERROR);
+			currently_testing += got;
+			if (got != try) {
+				try = 1;
+				if (recover_block == ~0)
+					recover_block = currently_testing -
+						got + blocks_at_once;
 				continue;
+			} else if (currently_testing == recover_block) {
+				try = blocks_at_once;
+				recover_block = ~0;
 			}
 			for (i=0; i < got; i++) {
 				if (memcmp(read_buffer + i * block_size,
 					   buffer + i * block_size,
 					   block_size))
-					bb_count += bb_output(currently_testing+i);
+					bb_count += bb_output(currently_testing+i, CORRUPTION_ERROR);
 			}
-			currently_testing += got;
-			/* recover page-aligned offset for O_DIRECT */
-			if ( (blocks_at_once >= sys_page_size >> 9)
-			     && (currently_testing % (sys_page_size >> 9)!= 0))
-				try = blocks_at_once - (sys_page_size >> 9)
-					- (currently_testing
-					   % (sys_page_size >> 9));
-			else
-				try = blocks_at_once;
 			if (v_flag > 1)
 				print_status();
 		}
@@ -706,6 +739,8 @@ static unsigned int test_nd (int dev, blk_t last_block,
 	errcode_t errcode;
 	unsigned long buf_used;
 	static unsigned int bb_count;
+	int granularity = blocks_at_once;
+	blk_t recover_block = ~0;
 
 	bb_count = 0;
 	errcode = ext2fs_badblocks_list_iterate_begin(bb_list,&bb_iter);
@@ -788,7 +823,7 @@ static unsigned int test_nd (int dev, blk_t last_block,
 				}
 				break;
 			}
-			got = try = blocks_at_once - buf_used;
+			got = try = granularity - buf_used;
 			if (next_bad) {
 				if (currently_testing == next_bad) {
 					/* fprintf (out, "%lu\n", nextbad); */
@@ -804,8 +839,15 @@ static unsigned int test_nd (int dev, blk_t last_block,
 			got = do_read (dev, save_ptr, try, block_size,
 				       currently_testing);
 			if (got == 0) {
+				if (recover_block == ~0)
+					recover_block = currently_testing +
+						blocks_at_once;
+				if (granularity != 1) {
+					granularity = 1;
+					continue;
+				}
 				/* First block must have been bad. */
-				bb_count += bb_output(currently_testing++);
+				bb_count += bb_output(currently_testing++, READ_ERROR);
 				goto check_for_more;
 			}
 
@@ -830,8 +872,13 @@ static unsigned int test_nd (int dev, blk_t last_block,
 			save_ptr += got * block_size;
 			test_ptr += got * block_size;
 			currently_testing += got;
-			if (got != try)
-				bb_count += bb_output(currently_testing++);
+			if (got != try) {
+				try = 1;
+				if (recover_block == ~0)
+					recover_block = currently_testing -
+						got + blocks_at_once;
+				continue;
+			}
 
 		check_for_more:
 			/*
@@ -839,9 +886,14 @@ static unsigned int test_nd (int dev, blk_t last_block,
 			 * around, and we're not done yet testing the disk, go
 			 * back and get some more blocks.
 			 */
-			if ((buf_used != blocks_at_once) &&
+			if ((buf_used != granularity) &&
 			    (currently_testing < last_block))
 				continue;
+
+			if (currently_testing >= recover_block) {
+				granularity = blocks_at_once;
+				recover_block = ~0;
+			}
 
 			flush_bufs();
 			save_currently_testing = currently_testing;
@@ -879,9 +931,9 @@ static unsigned int test_nd (int dev, blk_t last_block,
 				for (i = 0; i < got; ++i)
 					if (memcmp (test_ptr+i*block_size,
 						    read_ptr+i*block_size, block_size))
-						bb_count += bb_output(currently_testing + i);
+						bb_count += bb_output(currently_testing + i, CORRUPTION_ERROR);
 				if (got < try) {
-					bb_count += bb_output(currently_testing + got);
+					bb_count += bb_output(currently_testing + got, READ_ERROR);
 					got++;
 				}
 
@@ -984,7 +1036,7 @@ int main (int argc, char ** argv)
 	FILE * in = NULL;
 	int block_size = 1024;
 	unsigned int blocks_at_once = 64;
-	blk_t last_block, first_block;
+	blk64_t last_block, first_block;
 	int num_passes = 0;
 	int passes_clean = 0;
 	int dev;
@@ -1003,6 +1055,7 @@ int main (int argc, char ** argv)
 	setlocale(LC_CTYPE, "");
 	bindtextdomain(NLS_CAT_NAME, LOCALEDIR);
 	textdomain(NLS_CAT_NAME);
+	set_com_err_gettext(gettext);
 #endif
 	srandom((unsigned int)time(NULL));  /* simple randomness is enough */
 	test_func = test_ro;
@@ -1021,7 +1074,7 @@ int main (int argc, char ** argv)
 
 	if (argc && *argv)
 		program_name = *argv;
-	while ((c = getopt (argc, argv, "b:d:e:fi:o:svwnc:p:h:t:X")) != EOF) {
+	while ((c = getopt (argc, argv, "b:d:e:fi:o:svwnc:p:h:t:BX")) != EOF) {
 		switch (c) {
 		case 'b':
 			block_size = parse_uint(optarg, "block size");
@@ -1094,6 +1147,9 @@ int main (int argc, char ** argv)
 				t_patts[t_flag++] = pattern;
 			}
 			break;
+		case 'B':
+			use_buffered_io = 1;
+			break;
 		case 'X':
 			exclusive_ok++;
 			break;
@@ -1119,7 +1175,7 @@ int main (int argc, char ** argv)
 		usage();
 	device_name = argv[optind++];
 	if (optind > argc - 1) {
-		errcode = ext2fs_get_device_size(device_name,
+		errcode = ext2fs_get_device_size2(device_name,
 						 block_size,
 						 &last_block);
 		if (errcode == EXT2_ET_UNIMPLEMENTED) {
@@ -1239,8 +1295,8 @@ int main (int argc, char ** argv)
 
 		if (v_flag)
 			fprintf(stderr,
-				_("Pass completed, %u bad blocks found.\n"),
-				bb_count);
+				_("Pass completed, %u bad blocks found. (%d/%d/%d errors)\n"),
+				bb_count, num_read_errors, num_write_errors, num_corruption_errors);
 
 	} while (passes_clean < num_passes);
 
@@ -1250,4 +1306,3 @@ int main (int argc, char ** argv)
 	free(t_patts);
 	return 0;
 }
-

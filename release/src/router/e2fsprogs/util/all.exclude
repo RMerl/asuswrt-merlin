@@ -5,6 +5,7 @@
 patches
 README.subset
 build
+build.profiled
 build.static
 rpm.log
 TODO

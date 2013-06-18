@@ -48,6 +48,7 @@
  *
  */
 
+#include "config.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -276,6 +277,7 @@ static errcode_t get_dirlist(const char *dirname, char***ret_array)
 			new_array = realloc(array, sizeof(char *) * (max+1));
 			if (!new_array) {
 				retval = ENOMEM;
+				free(fn);
 				goto errout;
 			}
 			array = new_array;
@@ -290,6 +292,8 @@ static errcode_t get_dirlist(const char *dirname, char***ret_array)
 	closedir(dir);
 	return 0;
 errout:
+	if (array)
+		array[num] = 0;
 	closedir(dir);
 	free_list(array);
 	return retval;
@@ -345,8 +349,8 @@ profile_init(const char **files, profile_t *ret_profile)
 	     * If all the files were not found, return the appropriate error.
 	     */
 	    if (!profile->first_file) {
-		profile_release(profile);
-		return ENOENT;
+		retval = ENOENT;
+		goto errout;
 	    }
 	}
 
@@ -1593,6 +1597,43 @@ profile_get_uint(profile_t profile, const char *name, const char *subname,
 	    return PROF_BAD_INTEGER;
 
 	*ret_int = ret_long;
+	return 0;
+}
+
+errcode_t
+profile_get_double(profile_t profile, const char *name, const char *subname,
+		   const char *subsubname, double def_val, double *ret_double)
+{
+	const char	*value;
+	errcode_t	  retval;
+	char        *end_value;
+	double      double_val;
+
+	*ret_double = def_val;
+	if (profile == 0)
+		return 0;
+
+	retval = profile_get_value(profile, name, subname, subsubname, &value);
+	if (retval == PROF_NO_SECTION || retval == PROF_NO_RELATION) {
+		*ret_double = def_val;
+		return 0;
+	} else if (retval)
+		return retval;
+
+	if (value[0] == 0)
+		/* Empty string is no good.  */
+		return PROF_BAD_INTEGER;
+	errno = 0;
+	double_val = strtod(value, &end_value);
+
+	/* Overflow or underflow.  */
+	if (errno != 0)
+		return PROF_BAD_INTEGER;
+	/* Garbage in string.  */
+	if (end_value != value + strlen(value))
+		return PROF_BAD_INTEGER;
+
+	*ret_double = double_val;
 	return 0;
 }
 

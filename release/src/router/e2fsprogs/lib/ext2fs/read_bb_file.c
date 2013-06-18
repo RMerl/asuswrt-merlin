@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #if HAVE_UNISTD_H
@@ -59,7 +60,7 @@ errcode_t ext2fs_read_bb_FILE2(ext2_filsys fs, FILE *f,
 			continue;
 		if (fs &&
 		    ((blockno < fs->super->s_first_data_block) ||
-		    (blockno >= fs->super->s_blocks_count))) {
+		     (blockno >= ext2fs_blocks_count(fs->super)))) {
 			if (invalid)
 				(invalid)(fs, blockno, buf, priv_data);
 			continue;

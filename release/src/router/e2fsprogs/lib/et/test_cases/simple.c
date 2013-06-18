@@ -5,29 +5,31 @@
 
 #include <stdlib.h>
 
+#define N_(a) a
+
 static const char * const text[] = {
-				"Can't read ticket file",
-				"Can't find ticket or TGT",
-				"TGT expired",
-				"Can't decode authenticator",
-				"Ticket expired",
-				"Repeated request",
-				"The ticket isn't for us",
-				"Request is inconsistent",
-				"Delta-T too big",
-				"Incorrect net address",
-				"Protocol version mismatch",
-				"Invalid message type",
-				"Message stream modified",
-				"Message out of order",
-				"Unauthorized request",
-				"Current password is null",
-				"Incorrect current password",
-				"Protocol error",
-				"Error returned by KDC",
-				"Null ticket returned by KDC",
-				"Retry count exceeded",
-				"Can't send request",
+	N_(			"Can't read ticket file"),
+	N_(			"Can't find ticket or TGT"),
+	N_(			"TGT expired"),
+	N_(			"Can't decode authenticator"),
+	N_(			"Ticket expired"),
+	N_(			"Repeated request"),
+	N_(			"The ticket isn't for us"),
+	N_(			"Request is inconsistent"),
+	N_(			"Delta-T too big"),
+	N_(			"Incorrect net address"),
+	N_(			"Protocol version mismatch"),
+	N_(			"Invalid message type"),
+	N_(			"Message stream modified"),
+	N_(			"Message out of order"),
+	N_(			"Unauthorized request"),
+	N_(			"Current password is null"),
+	N_(			"Incorrect current password"),
+	N_(			"Protocol error"),
+	N_(			"Error returned by KDC"),
+	N_(			"Null ticket returned by KDC"),
+	N_(			"Retry count exceeded"),
+	N_(			"Can't send request"),
     0
 };
 

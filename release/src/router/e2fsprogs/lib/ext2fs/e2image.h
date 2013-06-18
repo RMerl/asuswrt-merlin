@@ -12,6 +12,14 @@
  * %End-Header%
  */
 
+/* Image types */
+#define E2IMAGE_RAW	1
+#define E2IMAGE_QCOW2	2
+
+/* Image flags */
+#define E2IMAGE_INSTALL_FLAG	1
+#define E2IMAGE_SCRAMBLE_FLAG	2
+#define E2IMAGE_IS_QCOW2_FLAG	3
 
 struct ext2_image_hdr {
 	__u32	magic_number;	/* This must be EXT2_ET_MAGIC_E2IMAGE */
@@ -36,16 +44,3 @@ struct ext2_image_hdr {
 	__u32	offset_blockmap; /* Byte offset of the inode bitmaps */
 	__u32	offset_reserved[8];
 };
-
-
-
-
-
-
-
-
-
-
-
-
-

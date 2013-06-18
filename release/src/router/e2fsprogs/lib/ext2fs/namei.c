@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #if HAVE_UNISTD_H
@@ -19,6 +20,7 @@
 
 #include "ext2_fs.h"
 #include "ext2fs.h"
+#include "ext2fsP.h"
 
 static errcode_t open_namei(ext2_filsys fs, ext2_ino_t root, ext2_ino_t base,
 			    const char *pathname, size_t pathlen, int follow,
@@ -44,9 +46,10 @@ static errcode_t follow_link(ext2_filsys fs, ext2_ino_t root, ext2_ino_t dir,
 		*res_inode = inode;
 		return 0;
 	}
-	if (link_count++ > 5) {
+	if (link_count++ >= EXT2FS_MAX_NESTED_LINKS)
 		return EXT2_ET_SYMLINK_LOOP;
-	}
+
+	/* FIXME-64: Actually, this is FIXME EXTENTS */
 	if (ext2fs_inode_data_blocks(fs,&ei)) {
 		retval = ext2fs_get_mem(fs->blocksize, &buffer);
 		if (retval)

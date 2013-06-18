@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -20,123 +21,123 @@
 
 struct sb_struct sb;
 
-int verbose = 0;
-
+#ifndef offsetof
 #define offsetof(type, member)  __builtin_offsetof (type, member)
-#define check_field(x) cur_offset = do_field(#x, sizeof(sb.x),		\
-					      offsetof(struct sb_struct, x), \
-					      cur_offset)
+#endif
 
-static int do_field(const char *field, size_t size, int offset, int cur_offset)
+#define check_field(x, s) cur_offset = do_field(#x, s, sizeof(sb.x),	       \
+						offsetof(struct sb_struct, x), \
+						cur_offset)
+
+static int do_field(const char *field, unsigned size, unsigned cur_size,
+		    unsigned offset, unsigned cur_offset)
 {
-	if (offset != cur_offset) {
-		printf("Warning!  Unexpected offset at %s\n", field);
+	if (size != cur_size) {
+		printf("error: %s size %u should be %u\n",
+		       field, cur_size, size);
 		exit(1);
 	}
-	printf("%8d %-30s %3u\n", offset, field, (unsigned) size);
+	if (offset != cur_offset) {
+		printf("error: %s offset %u should be %u\n",
+		       field, cur_offset, offset);
+		exit(1);
+	}
+	printf("%8d %-30s %3u\n", offset, field, size);
 	return offset + size;
 }
 
-void check_superblock_fields()
+int main(int argc, char **argv)
 {
 #if (__GNUC__ >= 4)
 	int cur_offset = 0;
 
 	printf("%8s %-30s %3s\n", "offset", "field", "size");
-	check_field(s_inodes_count);
-	check_field(s_blocks_count);
-	check_field(s_r_blocks_count);
-	check_field(s_free_blocks_count);
-	check_field(s_free_inodes_count);
-	check_field(s_first_data_block);
-	check_field(s_log_block_size);
-	check_field(s_log_frag_size);
-	check_field(s_blocks_per_group);
-	check_field(s_frags_per_group);
-	check_field(s_inodes_per_group);
-	check_field(s_mtime);
-	check_field(s_wtime);
-	check_field(s_mnt_count);
-	check_field(s_max_mnt_count);
-	check_field(s_magic);
-	check_field(s_state);
-	check_field(s_errors);
-	check_field(s_minor_rev_level);
-	check_field(s_lastcheck);
-	check_field(s_checkinterval);
-	check_field(s_creator_os);
-	check_field(s_rev_level);
-	check_field(s_def_resuid);
-	check_field(s_def_resgid);
-	check_field(s_first_ino);
-	check_field(s_inode_size);
-	check_field(s_block_group_nr);
-	check_field(s_feature_compat);
-	check_field(s_feature_incompat);
-	check_field(s_feature_ro_compat);
-	check_field(s_uuid);
-	check_field(s_volume_name);
-	check_field(s_last_mounted);
-	check_field(s_algorithm_usage_bitmap);
-	check_field(s_prealloc_blocks);
-	check_field(s_prealloc_dir_blocks);
-	check_field(s_reserved_gdt_blocks);
-	check_field(s_journal_uuid);
-	check_field(s_journal_inum);
-	check_field(s_journal_dev);
-	check_field(s_last_orphan);
-	check_field(s_hash_seed);
-	check_field(s_def_hash_version);
-	check_field(s_jnl_backup_type);
-	check_field(s_desc_size);
-	check_field(s_default_mount_opts);
-	check_field(s_first_meta_bg);
-	check_field(s_mkfs_time);
-	check_field(s_jnl_blocks);
-	check_field(s_blocks_count_hi);
-	check_field(s_r_blocks_count_hi);
-	check_field(s_free_blocks_hi);
-	check_field(s_min_extra_isize);
-	check_field(s_want_extra_isize);
-	check_field(s_flags);
-	check_field(s_raid_stride);
-	check_field(s_mmp_interval);
-	check_field(s_mmp_block);
-	check_field(s_raid_stripe_width);
-	check_field(s_log_groups_per_flex);
-	check_field(s_reserved_char_pad);
-	check_field(s_reserved_pad);
-	check_field(s_kbytes_written);
-	check_field(s_snapshot_inum);
-	check_field(s_snapshot_id);
-	check_field(s_snapshot_r_blocks_count);
-	check_field(s_snapshot_list);
-	check_field(s_error_count);
-	check_field(s_first_error_time);
-	check_field(s_first_error_ino);
-	check_field(s_first_error_block);
-	check_field(s_first_error_func);
-	check_field(s_first_error_line);
-	check_field(s_last_error_time);
-	check_field(s_last_error_ino);
-	check_field(s_last_error_line);
-	check_field(s_last_error_block);
-	check_field(s_last_error_func);
-	check_field(s_mount_opts);
-	check_field(s_reserved);
-	printf("Ending offset is %d\n\n", cur_offset);
+	check_field(s_inodes_count, 4);
+	check_field(s_blocks_count, 4);
+	check_field(s_r_blocks_count, 4);
+	check_field(s_free_blocks_count, 4);
+	check_field(s_free_inodes_count, 4);
+	check_field(s_first_data_block, 4);
+	check_field(s_log_block_size, 4);
+	check_field(s_log_cluster_size, 4);
+	check_field(s_blocks_per_group, 4);
+	check_field(s_clusters_per_group, 4);
+	check_field(s_inodes_per_group, 4);
+	check_field(s_mtime, 4);
+	check_field(s_wtime, 4);
+	check_field(s_mnt_count, 2);
+	check_field(s_max_mnt_count, 2);
+	check_field(s_magic, 2);
+	check_field(s_state, 2);
+	check_field(s_errors, 2);
+	check_field(s_minor_rev_level, 2);
+	check_field(s_lastcheck, 4);
+	check_field(s_checkinterval, 4);
+	check_field(s_creator_os, 4);
+	check_field(s_rev_level, 4);
+	check_field(s_def_resuid, 2);
+	check_field(s_def_resgid, 2);
+	check_field(s_first_ino, 4);
+	check_field(s_inode_size, 2);
+	check_field(s_block_group_nr, 2);
+	check_field(s_feature_compat, 4);
+	check_field(s_feature_incompat, 4);
+	check_field(s_feature_ro_compat, 4);
+	check_field(s_uuid, 16);
+	check_field(s_volume_name, 16);
+	check_field(s_last_mounted, 64);
+	check_field(s_algorithm_usage_bitmap, 4);
+	check_field(s_prealloc_blocks, 1);
+	check_field(s_prealloc_dir_blocks, 1);
+	check_field(s_reserved_gdt_blocks, 2);
+	check_field(s_journal_uuid, 16);
+	check_field(s_journal_inum, 4);
+	check_field(s_journal_dev, 4);
+	check_field(s_last_orphan, 4);
+	check_field(s_hash_seed, 4 * 4);
+	check_field(s_def_hash_version, 1);
+	check_field(s_jnl_backup_type, 1);
+	check_field(s_desc_size, 2);
+	check_field(s_default_mount_opts, 4);
+	check_field(s_first_meta_bg, 4);
+	check_field(s_mkfs_time, 4);
+	check_field(s_jnl_blocks, 17 * 4);
+	check_field(s_blocks_count_hi, 4);
+	check_field(s_r_blocks_count_hi, 4);
+	check_field(s_free_blocks_hi, 4);
+	check_field(s_min_extra_isize, 2);
+	check_field(s_want_extra_isize, 2);
+	check_field(s_flags, 4);
+	check_field(s_raid_stride, 2);
+	check_field(s_mmp_update_interval, 2);
+	check_field(s_mmp_block, 8);
+	check_field(s_raid_stripe_width, 4);
+	check_field(s_log_groups_per_flex, 1);
+	check_field(s_reserved_char_pad, 1);
+	check_field(s_reserved_pad, 2);
+	check_field(s_kbytes_written, 8);
+	check_field(s_snapshot_inum, 4);
+	check_field(s_snapshot_id, 4);
+	check_field(s_snapshot_r_blocks_count, 8);
+	check_field(s_snapshot_list, 4);
+	check_field(s_error_count, 4);
+	check_field(s_first_error_time, 4);
+	check_field(s_first_error_ino, 4);
+	check_field(s_first_error_block, 8);
+	check_field(s_first_error_func, 32);
+	check_field(s_first_error_line, 4);
+	check_field(s_last_error_time, 4);
+	check_field(s_last_error_ino, 4);
+	check_field(s_last_error_line, 4);
+	check_field(s_last_error_block, 8);
+	check_field(s_last_error_func, 32);
+	check_field(s_mount_opts, 64);
+	check_field(s_usr_quota_inum, 4);
+	check_field(s_grp_quota_inum, 4);
+	check_field(s_overhead_blocks, 4);
+	check_field(s_reserved, 108 * 4);
+	check_field(s_checksum, 4);
+	do_field("Superblock end", 0, 0, cur_offset, 1024);
 #endif
-}
-
-
-int main(int argc, char **argv)
-{
-	int s = sizeof(struct sb_struct);
-
-	check_superblock_fields();
-	printf("Size of struct %s is %d\n", sb_struct_name, s);
-	if (s != 1024) {
-		exit(1);
-	}
-	exit(0);
+	return 0;
 }

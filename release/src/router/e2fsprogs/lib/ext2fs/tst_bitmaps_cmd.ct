@@ -1,0 +1,45 @@
+command_table tst_bitmaps_cmds;
+
+request setup_cmd, "Setup file system",
+	setup;
+
+request close_cmd, "Close file system",
+	close;
+
+request dump_inode_bitmap_cmd, "Dump the inode bitmap",
+	dump_inode_bitmap, dump_ib;
+
+request dump_block_bitmap_cmd, "Dump the block bitmap",
+	dump_block_bitmap, dump_bb;
+
+request do_setb, "Set block",
+	set_block, setb;
+
+request do_clearb, "Clear block",
+	clear_block, clearb;
+
+request do_testb, "Test block",
+	test_block, testb;
+
+request do_ffzb, "Find first zero block",
+	find_first_zero_block, ffzb;
+
+request do_zerob, "Clear block bitmap",
+	clear_block_bitmap, zerob;
+
+request do_seti, "Set inode",
+	set_inode, seti;
+
+request do_cleari, "Clear inode",
+	clear_inode, cleari;
+
+request do_testi, "Test inode",
+	test_inode, testi;
+
+request do_ffzi, "Find first zero inode",
+	find_first_zero_inode, ffzi;
+
+request do_zeroi, "Clear inode bitmap",
+	clear_inode_bitmap, zeroi;
+
+end;

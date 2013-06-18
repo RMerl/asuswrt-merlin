@@ -1,6 +1,0 @@
-if test "$HTREE"x = yx ; then
-. $cmd_dir/run_e2fsck
-else
-	rm -f $test_name.ok $test_name.failed
-	echo "skipped"
-fi

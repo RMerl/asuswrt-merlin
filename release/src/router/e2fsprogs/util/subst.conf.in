@@ -12,6 +12,7 @@ SIZEOF_SHORT		@SIZEOF_SHORT@
 datarootdir		@datarootdir@
 datadir			@datadir@
 root_sysconfdir		@root_sysconfdir@
+$datarootdir		@datarootdir@
 $root_prefix		@root_prefix@
 $prefix			@prefix@
 # Enable the documentation for the journal device mke2fs, tune2fs, and

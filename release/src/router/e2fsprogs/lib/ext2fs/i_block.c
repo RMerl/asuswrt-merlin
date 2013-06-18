@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -38,6 +39,7 @@ errcode_t ext2fs_iblk_add_blocks(ext2_filsys fs, struct ext2_inode *inode,
 	      EXT4_FEATURE_RO_COMPAT_HUGE_FILE) ||
 	    !(inode->i_flags & EXT4_HUGE_FILE_FL))
 	    num_blocks *= fs->blocksize / 512;
+	num_blocks *= EXT2FS_CLUSTER_RATIO(fs);
 
 	b += num_blocks;
 
@@ -61,6 +63,7 @@ errcode_t ext2fs_iblk_sub_blocks(ext2_filsys fs, struct ext2_inode *inode,
 	      EXT4_FEATURE_RO_COMPAT_HUGE_FILE) ||
 	    !(inode->i_flags & EXT4_HUGE_FILE_FL))
 	    num_blocks *= fs->blocksize / 512;
+	num_blocks *= EXT2FS_CLUSTER_RATIO(fs);
 
 	if (num_blocks > b)
 		return EOVERFLOW;
@@ -79,6 +82,7 @@ errcode_t ext2fs_iblk_set(ext2_filsys fs, struct ext2_inode *inode, blk64_t b)
 	      EXT4_FEATURE_RO_COMPAT_HUGE_FILE) ||
 	    !(inode->i_flags & EXT4_HUGE_FILE_FL))
 		b *= fs->blocksize / 512;
+	b *= EXT2FS_CLUSTER_RATIO(fs);
 
 	inode->i_blocks = b & 0xFFFFFFFF;
 	if (fs->super->s_feature_ro_compat & EXT4_FEATURE_RO_COMPAT_HUGE_FILE)

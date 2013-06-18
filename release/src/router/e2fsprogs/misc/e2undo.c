@@ -10,6 +10,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_GETOPT_H
@@ -29,12 +30,11 @@ unsigned char blksize_key[] = "filesystem BLKSIZE";
 
 char *prg_name;
 
-static void usage(char *prg_name)
+static void usage(void)
 {
 	fprintf(stderr,
 		_("Usage: %s <transaction file> <filesystem>\n"), prg_name);
 	exit(1);
-
 }
 
 static int check_filesystem(TDB_CONTEXT *tdb, io_channel channel)
@@ -46,7 +46,7 @@ static int check_filesystem(TDB_CONTEXT *tdb, io_channel channel)
 	struct ext2_super_block super;
 
 	io_channel_set_blksize(channel, SUPERBLOCK_OFFSET);
-	retval = io_channel_read_blk(channel, 1, -SUPERBLOCK_SIZE, &super);
+	retval = io_channel_read_blk64(channel, 1, -SUPERBLOCK_SIZE, &super);
 	if (retval) {
 		com_err(prg_name,
 			retval, _("Failed to read the file system data \n"));
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 	io_channel channel;
 	errcode_t retval;
 	int  mount_flags;
-	unsigned long  blk_num;
+	blk64_t  blk_num;
 	char *device_name, *tdb_file;
 	io_manager manager = unix_io_manager;
 
@@ -135,6 +135,7 @@ int main(int argc, char *argv[])
 	setlocale(LC_CTYPE, "");
 	bindtextdomain(NLS_CAT_NAME, LOCALEDIR);
 	textdomain(NLS_CAT_NAME);
+	set_com_err_gettext(gettext);
 #endif
 	add_error_table(&et_ext2_error_table);
 
@@ -145,12 +146,12 @@ int main(int argc, char *argv[])
 				force = 1;
 				break;
 			default:
-				usage(prg_name);
+				usage();
 		}
 	}
 
-	if (argc != optind+2)
-		usage(prg_name);
+	if (argc != optind + 2)
+		usage();
 
 	tdb_file = argv[optind];
 	device_name = argv[optind+1];
@@ -205,10 +206,10 @@ int main(int argc, char *argv[])
 				_("Failed tdb_fetch %s\n"), tdb_errorstr(tdb));
 			exit(1);
 		}
-		blk_num = *(unsigned long *)key.dptr;
-		printf(_("Replayed transaction of size %zd at location %ld\n"),
+		blk_num = *(blk64_t *)key.dptr;
+		printf(_("Replayed transaction of size %zd at location %llu\n"),
 							data.dsize, blk_num);
-		retval = io_channel_write_blk(channel, blk_num,
+		retval = io_channel_write_blk64(channel, blk_num,
 						-data.dsize, data.dptr);
 		if (retval == -1) {
 			com_err(prg_name, retval,

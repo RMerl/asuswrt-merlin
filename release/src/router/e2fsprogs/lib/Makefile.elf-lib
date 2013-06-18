@@ -24,7 +24,8 @@ image:		$(ELF_LIB)
 
 $(ELF_LIB): $(OBJS)
 	$(E) "	GEN_ELF_SOLIB $(ELF_LIB)"
-	$(Q) (cd elfshared; $(CC) --shared -o $(ELF_LIB) $(LDFLAGS) \
+	$(Q) (cd elfshared; $(CC) --shared -o $(ELF_LIB) \
+		-L$(top_builddir)/../lib $(LDFLAGS) \
 		-Wl,-soname,$(ELF_SONAME) $(OBJS) $(ELF_OTHER_LIBS))
 	$(Q) $(MV) elfshared/$(ELF_LIB) .
 	$(Q) $(RM) -f ../$(ELF_LIB) ../$(ELF_IMAGE).so ../$(ELF_SONAME)
@@ -40,18 +41,15 @@ installdirs-elf-lib::
 
 installdirs:: installdirs-elf-lib
 
-install-shlibs install:: $(ELF_LIB) installdirs-elf-lib
+install-shlibs install:: $(ELF_LIB) installdirs-elf-lib $(DEP_INSTALL_SYMLINK)
 	$(E) "	INSTALL-ELF-LIB $(ELF_INSTALL_DIR)/$(ELF_LIB)"
 	$(Q) $(INSTALL_PROGRAM) $(ELF_LIB) $(DESTDIR)$(ELF_INSTALL_DIR)/$(ELF_LIB)
 	$(E) "	SYMLINK $(ELF_INSTALL_DIR)/$(ELF_SONAME)"
-	$(Q) $(LN_S) -f $(ELF_LIB) $(DESTDIR)$(ELF_INSTALL_DIR)/$(ELF_SONAME)
+	$(Q) $(INSTALL_SYMLINK) $(ELF_INSTALL_DIR)/$(ELF_LIB) \
+		$(ELF_INSTALL_DIR)/$(ELF_SONAME) $(DESTDIR)
 	$(E) "	SYMLINK $(libdir)/$(ELF_IMAGE).so"
-	$(Q) if test "$(ELF_INSTALL_DIR)" = "$(libdir)"; then \
-		$(LN_S) -f $(ELF_SONAME) $(DESTDIR)$(libdir)/$(ELF_IMAGE).so ; \
-	else \
-		$(LN_S) -f $(ELF_INSTALL_DIR)/$(ELF_SONAME) \
-			$(DESTDIR)$(libdir)/$(ELF_IMAGE).so; \
-	fi			
+	$(Q) $(INSTALL_SYMLINK) $(ELF_INSTALL_DIR)/$(ELF_SONAME) \
+		$(libdir)/$(ELF_IMAGE).so $(DESTDIR)
 	$(E) "	LDCONFIG"
 	$(Q) -$(LDCONFIG)
 

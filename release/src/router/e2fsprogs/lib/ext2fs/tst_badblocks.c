@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #if HAVE_UNISTD_H
@@ -227,7 +228,7 @@ int file_test_invalid(badblocks_list bb)
 	fs->super = malloc(SUPERBLOCK_SIZE);
 	memset(fs->super, 0, SUPERBLOCK_SIZE);
 	fs->super->s_first_data_block = 1;
-	fs->super->s_blocks_count = 100;
+	ext2fs_blocks_count_set(fs->super, 100);
 
 	f = tmpfile();
 	if (!f) {

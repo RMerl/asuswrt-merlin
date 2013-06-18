@@ -59,13 +59,18 @@ apply: "\en" (for the newline character),
 "\et" (for the tab character), "\eb" (for the backspace character), 
 and "\e\e" (for the backslash character).
 .P
+Some relations expect a boolean value.  The parser is quite liberal on
+recognizing ``yes'', '`y'', ``true'', ``t'', ``1'', ``on'', etc. as a
+boolean true value, and ``no'', ``n'', ``false'', ``nil'', ``0'',
+``off'' as a boolean false value.
+.P
 The following stanzas are used in the 
 .I mke2fs.conf
 file.  They will be described in more detail in future sections of this
 document.
 .TP 
 .I [defaults]
-Contains relations which define the default parameters 
+Contains relations which define the default parameters
 used by
 .BR mke2fs (8).
 In general, these defaults may be overridden by a definition in the
@@ -107,8 +112,19 @@ command-line option
 to 
 .BR mke2fs (8).
 .TP
+.I enable_periodic_fsck
+This boolean relation specifies whether periodic filesystem checks should be
+enforced at boot time.  If set to true, checks will be forced every
+180 days, or after a random number of mounts.  These values may
+be changed later via the
+.B -i
+and
+.B -c
+command-line options to
+.BR tune2fs (8).
+.TP
 .I force_undo
-This relation, if set to a boolean value of true, forces
+This boolean relation, if set to a value of true, forces
 .B mke2fs
 to always try to create an undo file, even if the undo file might be
 huge and it might extend the time to create the filesystem image
@@ -156,6 +172,13 @@ This relation specifies the default inode size if the user does not
 specify one on the command line, and the filesystem-type
 specific section of the configuration file does not specify a default
 inode size.
+.TP
+.I reserved_ratio
+This relation specifies the default percentage of filesystem blocks
+reserved for the super-user, if the user does not
+specify one on the command line, and the filesystem-type
+specific section of the configuration file does not specify a default
+reserved ratio. This value can be a floating point number.
 .TP
 .I undo_dir
 This relation specifies the directory where the undo file should be
@@ -303,12 +326,27 @@ relations.  It may be overridden by the
 command-line option to
 .BR mke2fs (8).
 .TP
+.I auto_64-bit_support
+This relation is a boolean which specifies whether
+.BR mke2fs (8)
+should automatically add the 64bit feature if the number of blocks for
+the file system requires this feature to be enabled.  The resize_inode
+feature is also automatically disabled since it doesn't support 64-bit
+block numbers.
+.TP
+.I default_mntopts
+This relation specifies the set of mount options which should be enabled
+by default.  These may be changed at a later time with the
+.B -o
+command-line option to
+.BR tune2fs (8).
+.TP
 .I blocksize
 This relation specifies the default blocksize if the user does not
 specify a blocksize on the command line.
 .TP
 .I lazy_itable_init
-This relation is a boolean which specifies whether the inode table should 
+This boolean relation specifies whether the inode table should 
 be lazily initialized.  It only has meaning if the uninit_bg feature is
 enabled.  If lazy_itable_init is true and the uninit_bg feature is
 enabled,  the inode table will
@@ -327,6 +365,11 @@ specify one on the command line.
 This relation specifies the default inode size if the user does not
 specify one on the command line.
 .TP
+.I reserved_ratio
+This relation specifies the default percentage of filesystem blocks
+reserved for the super-user, if the user does not specify one on the command
+line.
+.TP
 .I hash_alg
 This relation specifies the default hash algorithm used for the
 new filesystems with hashed b-tree directories.  Valid algorithms
@@ -337,11 +380,12 @@ and
 .IR tea .
 .TP
 .I flex_bg_size
-This relation specifies the number of block goups that will be packed
+This relation specifies the number of block groups that will be packed
 together to create one large virtual block group on an ext4 filesystem.
 This improves meta-data locality and performance on meta-data heavy
-workloads.  The number of goups must be a power of 2 and may only be
+workloads.  The number of groups must be a power of 2 and may only be
 specified if the flex_bg filesystem feature is enabled.
+.TP
 .I options
 This relation specifies additional extended options which should be
 treated by
@@ -354,9 +398,30 @@ by
 on a per-filesystem type basis.
 .TP
 .I discard
-This relation is a boolean which specifies whether the
+This boolean relation specifies whether the
 .BR mke2fs (8)
 should attempt to discard device prior to filesystem creation.
+.TP
+.I cluster_size
+This relation specifies the default cluster size if the bigalloc file
+system feature is enabled.  It can be overridden via the
+.B \-C
+command line option to
+.BR mke2fs (8)
+.SH THE [devices] STANZA
+Each tag in the
+.I [devices] 
+stanza names device name so that per-device defaults can be specified.
+.TP
+.I fs_type
+This relation specifies the default parameter for the
+.B \-t
+option, if this option isn't specified on the command line.
+.TP
+.I usage_types
+This relation specifies the default parameter for the
+.B \-T
+option, if this option isn't specified on the command line.
 .SH FILES
 .TP
 .I /etc/mke2fs.conf

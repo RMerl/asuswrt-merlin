@@ -31,7 +31,7 @@ main(int argc, char **argv)
 #ifdef __U8_TYPEDEF
 	if (sizeof(__U8_TYPEDEF) != 1) {
 		printf("Sizeof(__U8__TYPEDEF) is %d should be 1\n", 
-		       sizeof(__U8_TYPEDEF));
+		       (int) sizeof(__U8_TYPEDEF));
 		exit(1);
 	}
 #else
@@ -40,7 +40,7 @@ main(int argc, char **argv)
 #ifdef __S8_TYPEDEF
 	if (sizeof(__S8_TYPEDEF) != 1) {
 		printf("Sizeof(_S8__TYPEDEF) is %d should be 1\n", 
-		       sizeof(__S8_TYPEDEF));
+		       (int) sizeof(__S8_TYPEDEF));
 		exit(1);
 	}
 #else
@@ -49,7 +49,7 @@ main(int argc, char **argv)
 #ifdef __U16_TYPEDEF
 	if (sizeof(__U16_TYPEDEF) != 2) {
 		printf("Sizeof(__U16__TYPEDEF) is %d should be 2\n", 
-		       sizeof(__U16_TYPEDEF));
+		       (int) sizeof(__U16_TYPEDEF));
 		exit(1);
 	}
 #else
@@ -58,7 +58,7 @@ main(int argc, char **argv)
 #ifdef __S16_TYPEDEF
 	if (sizeof(__S16_TYPEDEF) != 2) {
 		printf("Sizeof(__S16__TYPEDEF) is %d should be 2\n", 
-		       sizeof(__S16_TYPEDEF));
+		       (int) sizeof(__S16_TYPEDEF));
 		exit(1);
 	}
 #else
@@ -68,7 +68,7 @@ main(int argc, char **argv)
 #ifdef __U32_TYPEDEF
 	if (sizeof(__U32_TYPEDEF) != 4) {
 		printf("Sizeof(__U32__TYPEDEF) is %d should be 4\n", 
-		       sizeof(__U32_TYPEDEF));
+		       (int) sizeof(__U32_TYPEDEF));
 		exit(1);
 	}
 #else
@@ -77,7 +77,7 @@ main(int argc, char **argv)
 #ifdef __S32_TYPEDEF
 	if (sizeof(__S32_TYPEDEF) != 4) {
 		printf("Sizeof(__S32__TYPEDEF) is %d should be 4\n", 
-		       sizeof(__S32_TYPEDEF));
+		       (int) sizeof(__S32_TYPEDEF));
 		exit(1);
 	}
 #else
@@ -87,7 +87,7 @@ main(int argc, char **argv)
 #ifdef __U64_TYPEDEF
 	if (sizeof(__U64_TYPEDEF) != 8) {
 		printf("Sizeof(__U64__TYPEDEF) is %d should be 8\n", 
-		       sizeof(__U64_TYPEDEF));
+		       (int) sizeof(__U64_TYPEDEF));
 		exit(1);
 	}
 #else
@@ -96,7 +96,7 @@ main(int argc, char **argv)
 #ifdef __S64_TYPEDEF
 	if (sizeof(__S64_TYPEDEF) != 8) {
 		printf("Sizeof(__S64__TYPEDEF) is %d should be 8\n", 
-		       sizeof(__S64_TYPEDEF));
+		       (int) sizeof(__S64_TYPEDEF));
 		exit(1);
 	}
 #else

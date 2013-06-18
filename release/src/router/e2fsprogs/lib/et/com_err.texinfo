@@ -14,7 +14,7 @@
 @c Software Foundation, and is under different copyright restrictions
 @c from the rest of this package.)
 
-@setfilename com_err
+@setfilename com_err.info
 @settitle A Common Error Description Library for UNIX
 
 @ifinfo
@@ -24,14 +24,10 @@
 @end direntry
 @end ifinfo
 
-@iftex
-@tolerance 10000
+@c smallbook
 
-@c Mutate section headers...
-@begingroup
-  @catcode#=6
-  @gdef@secheading#1#2#3{@secheadingi {#3@enspace #1}}
-@endgroup
+@iftex
+@finalout
 @end iftex
 
 @ifinfo
@@ -61,6 +57,7 @@ notice identical to this one except for the removal of this paragraph
 (this paragraph not being relevant to the printed manual).
 
 @end ignore
+@end ifinfo
 
 @setchapternewpage odd
 
@@ -114,7 +111,7 @@ from the remainder of this package.
 
 @end titlepage
 
-
+@ifinfo
 @node Top, Why com_err?, (dir), (dir)
 
 @top A Common Error Description Library for UNIX
@@ -133,12 +130,11 @@ This manual documents the com_err library.
 * Acknowledgements::            
 @end menu
 
+@page
 @end ifinfo
 
-@page
-
 @node Why com_err?, Error codes, Top, Top
-@section Why com_err?
+@chapter Why com_err?
 
 In building application software packages, a programmer often has to
 deal with a number of libraries, each of which can use a different
@@ -174,7 +170,7 @@ of the form @samp{unknown code foo 32}, where @samp{foo} would be the name
 of the table.
 
 @node Error codes, Error table source file, Why com_err?, Top
-@section Error codes
+@chapter Error codes
 
 Error codes themselves are 32 bit (signed) integers, of which the high
 order 24 bits are an identifier of which error table the error code is
@@ -203,7 +199,7 @@ much other software that assumes an ANSI-C environment base) without
 significant effort.
 
 @node Error table source file, The error-table compiler, Error codes, Top
-@section Error table source file
+@chapter Error table source file
 
 The error table source file begins with the declaration of the table name,
 as
@@ -241,7 +237,7 @@ error table might be:
 @end example
 
 @node The error-table compiler, Run-time support routines, Error table source file, Top
-@section The error-table compiler
+@chapter The error-table compiler
 
 The error table compiler is named @code{compile_et}.  It takes one
 argument, the pathname of a file (ending in @samp{.et}, e.g.,
@@ -255,7 +251,7 @@ codes defined; the object module generated from the C code may be linked in
 to a program which wishes to use the printed forms of the error codes.
 
 @node Run-time support routines, Coding Conventions, The error-table compiler, Top
-@section Run-time support routines
+@chapter Run-time support routines
 
 Any source file which uses the routines supplied with or produced by the
 com_err package should include the header file @file{<com_err.h>}.  It
@@ -306,9 +302,7 @@ left to circumstances which render @code{com_err} (below) unusable.
 
 @end deftypefun
 
-@deftypefun
-void com_err (const char *@var{whoami}, long @var{error_code},
-              const char *@var{format}, ...);             
+@deftypefun void com_err (const char *@var{whoami}, long @var{error_code}, const char *@var{format}, ...);             
 
 This routine provides an alternate way to print error messages to
 standard error; it allows the error message to be passed in as a
@@ -321,8 +315,7 @@ printed.  @var{format} may not be omitted.
 
 @end deftypefun
 
-@deftypefun
-void com_err_va (const char *@var{whoami}, long @var{error_code}, const char *@var{format}, va_list @var{args});
+@deftypefun void com_err_va (const char *@var{whoami}, long @var{error_code}, const char *@var{format}, va_list @var{args});
 
 This routine provides an interface, equivalent to @code{com_err} above,
 which may be used by higher-level variadic functions (functions which
@@ -330,7 +323,7 @@ accept variable numbers of arguments).
 
 @end deftypefun
 
-@deftypefun void (*set_com_err_hook (void (*@var{proc}) (const char *@var{whoami}, long @var{error_code}, va_list @var{args}))) (const char *@var{whoami}, long @var{error_code}, va_list @var{args});
+@deftypefun void *set_com_err_hook (void (*@var{proc}) (const char *@var{whoami}, long @var{error_code}, va_list @var{args}) (const char *@var{whoami}, long @var{error_code}, va_list @var{args}));
 
 @deftypefunx void reset_com_err_hook ();
 
@@ -390,7 +383,7 @@ the ANSI C library).
 @end deftypefun
 
 @node Coding Conventions, Building and Installation, Run-time support routines, Top
-@section Coding Conventions
+@chapter Coding Conventions
 
 The following conventions are just some general stylistic conventions
 to follow when writing robust libraries and programs.  Conventions
@@ -501,7 +494,7 @@ error:
 @end example
 
 @node Building and Installation, Bug Reports, Coding Conventions, Top
-@section Building and Installation
+@chapter Building and Installation
 
 The distribution of this package will probably be done as a compressed
 ``tar''-format file available via anonymous FTP from SIPB.MIT.EDU.
@@ -514,7 +507,7 @@ installed for use; @samp{com_err.3} and @samp{compile_et.1} can also be
 installed as manual pages.
 
 @node Bug Reports, Acknowledgements, Building and Installation, Top
-@section Bug Reports
+@chapter Bug Reports
 
 The principal author of this library is: Ken
 Raeburn, @t{raeburn@@MIT.EDU}.  
@@ -524,7 +517,7 @@ Ts'o, and so bugs and comments should be sent to @t{tytso@@thunk.org}.
 
 
 @node Acknowledgements,  , Bug Reports, Top
-@section Acknowledgements
+@chapter Acknowledgements
 
 I would like to thank: Bill Sommerfeld, for his help with some of this
 documentation, and catching some of the bugs the first time around;

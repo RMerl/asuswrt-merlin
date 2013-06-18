@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <errno.h>
 
 #include "e2fsck.h"
@@ -186,6 +187,9 @@ void e2fsck_free_context(e2fsck_t ctx)
 	if (ctx->device_name)
 		ext2fs_free_mem(&ctx->device_name);
 
+	if (ctx->log_fn)
+		free(ctx->log_fn);
+
 	ext2fs_free_mem(&ctx);
 }
 
@@ -217,6 +221,8 @@ int e2fsck_run(e2fsck_t ctx)
 	for (i=0; (e2fsck_pass = e2fsck_passes[i]); i++) {
 		if (ctx->flags & E2F_FLAG_RUN_RETURN)
 			break;
+		if (e2fsck_mmp_update(ctx->fs))
+			fatal_error(ctx, 0);
 		e2fsck_pass(ctx);
 		if (ctx->progress)
 			(void) (ctx->progress)(ctx, 0, 0, 0);

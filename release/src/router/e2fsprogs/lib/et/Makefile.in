@@ -59,12 +59,34 @@ compile_et: $(DEP_SUBSTITUTE) $(srcdir)/compile_et.sh.in
 	$(Q) $(SUBSTITUTE) $(srcdir)/compile_et.sh.in compile_et
 	$(Q) $(CHMOD) +x compile_et
 
+DVI=texi2dvi
+DVIPS=dvips -o "$@"
+INFO=@MAKEINFO@
+HTML=texi2html -split_chapter
+PS2PDF=ps2pdf
+
 com_err.ps : com_err.dvi
 com_err.dvi: com_err.texinfo
 
+com_err.info: $(srcdir)/com_err.texinfo
+	$(E) "	MAKEINFO $@"
+	-$(Q) $(INFO) $(srcdir)/com_err.texinfo
+
+com_err.dvi: $(srcdir)/com_err.texinfo
+	$(E) "	TEXI2DVI $@"
+	-$(Q) $(DVI) $(srcdir)/com_err.texinfo
+
+com_err.ps: com_err.dvi
+	$(E) "	DVIPS $@"
+	-$(Q) $(DVIPS) com_err.dvi
+
+com_err.pdf: com_err.ps
+	$(E) "	PS2PDF $@"
+	-$(Q) $(PS2PDF) com_err.ps
+
 com_err_abt.html: $(srcdir)/com_err.texinfo
 	$(E) "	TEXI2HTML $@"
-	-$(Q) texi2html -split_chapter $(srcdir)/com_err.texinfo
+	-$(Q) $(HTML) $(srcdir)/com_err.texinfo
 	-$(Q) if test -d com_err ; then \
 		mv com_err/* . ; rmdir com_err ; \
 		fi
@@ -96,6 +118,8 @@ install:: compile_et libcom_err.a $(HFILES) installdirs com_err.pc
 		echo "	INSTALL_DATA $(includedir)/et/$$i"; \
 		$(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(includedir)/et/$$i; \
 	done
+	$(Q) (cd $(DESTDIR)$(includedir) ;\
+		$(LN) $(LINK_INSTALL_FLAGS) et/com_err.h . )
 	$(Q) for i in $(SHARE_FILES); do \
 		echo "	INSTALL_DATA $(datadir)/et/$$i"; \
 		$(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(datadir)/et/$$i; \
@@ -131,7 +155,9 @@ check:: compile_et
 clean::
 	$(RM) -f compile_et libcom_err.a libcom_err_p.a com_err.info
 	$(RM) -f $(OBJS) profiled/*
-	$(RM) -f *~ \#* *.bak *.otl *.aux *.toc *.PS *.dvi *.ps TAGS *.ln *.html
+	$(RM) -f *~ \#* *.bak *.otl *.aux *.toc *.PS *.dvi *.ps TAGS *.ln \
+		*.html *.cp *.fn *.fns *.ky *.log *.pc *.pg *.toc *.tp *.vr \
+		*.pdf
 	$(RM) -f ../libcom_err.a ../libcom_err_p.a
 
 mostlyclean:: clean
@@ -146,12 +172,16 @@ $(OBJS): subdirs
 # Makefile dependencies follow.  This must be the last section in
 # the Makefile.in file
 #
-error_message.o: $(srcdir)/error_message.c $(srcdir)/com_err.h \
- $(srcdir)/error_table.h $(srcdir)/internal.h
-et_name.o: $(srcdir)/et_name.c $(srcdir)/com_err.h $(srcdir)/error_table.h \
+error_message.o: $(srcdir)/error_message.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/com_err.h $(srcdir)/error_table.h \
  $(srcdir)/internal.h
-init_et.o: $(srcdir)/init_et.c $(srcdir)/com_err.h $(srcdir)/error_table.h
-com_err.o: $(srcdir)/com_err.c $(srcdir)/com_err.h $(srcdir)/error_table.h \
+et_name.o: $(srcdir)/et_name.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/com_err.h $(srcdir)/error_table.h \
  $(srcdir)/internal.h
-com_right.o: $(srcdir)/com_right.c $(srcdir)/com_err.h \
- $(srcdir)/error_table.h
+init_et.o: $(srcdir)/init_et.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/com_err.h $(srcdir)/error_table.h
+com_err.o: $(srcdir)/com_err.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/com_err.h $(srcdir)/error_table.h \
+ $(srcdir)/internal.h
+com_right.o: $(srcdir)/com_right.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/com_err.h $(srcdir)/error_table.h

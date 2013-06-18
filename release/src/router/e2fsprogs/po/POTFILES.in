@@ -38,9 +38,12 @@ misc/mklost+found.c
 misc/partinfo.c
 misc/tune2fs.c
 misc/util.c
+misc/uuidd.c
 misc/uuidgen.c
 resize/extent.c
 resize/main.c
 resize/online.c
 resize/resize2fs.c
 resize/sim_progress.c
+lib/ext2fs/ext2_err.c
+e2fsck/prof_err.c

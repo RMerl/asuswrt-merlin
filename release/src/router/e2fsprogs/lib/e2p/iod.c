@@ -16,6 +16,7 @@
  * 93/10/30	- Creation
  */
 
+#include "config.h"
 #include "e2p.h"
 #if HAVE_UNISTD_H
 #include <unistd.h>

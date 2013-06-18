@@ -9,6 +9,7 @@
  * %End-Header%
  */
 
+#include "config.h"
 #include <stdio.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -46,31 +47,35 @@ int ext2fs_bg_has_super(ext2_filsys fs, int group_block)
 }
 
 /*
- * This function returns the location of the superblock, block group
- * descriptors for a given block group.  It currently returns the
- * number of free blocks assuming that inode table and allocation
- * bitmaps will be in the group.  This is not necessarily the case
- * when the flex_bg feature is enabled, so callers should take care!
- * It was only really intended for use by mke2fs, and even there it's
- * not that useful.  In the future, when we redo this function for
- * 64-bit block numbers, we should probably return the number of
- * blocks used by the super block and group descriptors instead.
+ * ext2fs_super_and_bgd_loc2()
+ * @fs:			ext2 fs pointer
+ * @group		given block group
+ * @ret_super_blk:	if !NULL, returns super block location
+ * @ret_old_desc_blk:	if !NULL, returns location of the old block
+ *			group descriptor
+ * @ret_new_desc_blk:	if !NULL, returns location of meta_bg block
+ *			group descriptor
+ * @ret_used_blks:	if !NULL, returns number of blocks used by
+ *			super block and group_descriptors.
  *
- * See also the comment for ext2fs_reserve_super_and_bgd()
+ * Returns errcode_t of 0
  */
-int ext2fs_super_and_bgd_loc(ext2_filsys fs,
-			     dgrp_t group,
-			     blk_t *ret_super_blk,
-			     blk_t *ret_old_desc_blk,
-			     blk_t *ret_new_desc_blk,
-			     int *ret_meta_bg)
+errcode_t ext2fs_super_and_bgd_loc2(ext2_filsys fs,
+					   dgrp_t group,
+					   blk64_t *ret_super_blk,
+					   blk64_t *ret_old_desc_blk,
+					   blk64_t *ret_new_desc_blk,
+					   blk_t *ret_used_blks)
 {
-	blk_t	group_block, super_blk = 0, old_desc_blk = 0, new_desc_blk = 0;
+	blk64_t	group_block, super_blk = 0, old_desc_blk = 0, new_desc_blk = 0;
 	unsigned int meta_bg, meta_bg_size;
-	blk_t	numblocks, old_desc_blocks;
+	blk_t	numblocks = 0;
+	blk64_t old_desc_blocks;
 	int	has_super;
 
-	group_block = ext2fs_group_first_block(fs, group);
+	group_block = ext2fs_group_first_block2(fs, group);
+	if (group_block == 0 && fs->blocksize == 1024)
+		group_block = 1; /* Deal with 1024 blocksize && bigalloc */
 
 	if (fs->super->s_feature_incompat & EXT2_FEATURE_INCOMPAT_META_BG)
 		old_desc_blocks = fs->super->s_first_meta_bg;
@@ -78,20 +83,11 @@ int ext2fs_super_and_bgd_loc(ext2_filsys fs,
 		old_desc_blocks =
 			fs->desc_blocks + fs->super->s_reserved_gdt_blocks;
 
-	if (group == fs->group_desc_count-1) {
-		numblocks = (fs->super->s_blocks_count -
-			     fs->super->s_first_data_block) %
-			fs->super->s_blocks_per_group;
-		if (!numblocks)
-			numblocks = fs->super->s_blocks_per_group;
-	} else
-		numblocks = fs->super->s_blocks_per_group;
-
 	has_super = ext2fs_bg_has_super(fs, group);
 
 	if (has_super) {
 		super_blk = group_block;
-		numblocks--;
+		numblocks++;
 	}
 	meta_bg_size = EXT2_DESC_PER_BLOCK(fs->super);
 	meta_bg = group / meta_bg_size;
@@ -100,7 +96,7 @@ int ext2fs_super_and_bgd_loc(ext2_filsys fs,
 	    (meta_bg < fs->super->s_first_meta_bg)) {
 		if (has_super) {
 			old_desc_blk = group_block + 1;
-			numblocks -= old_desc_blocks;
+			numblocks += old_desc_blocks;
 		}
 	} else {
 		if (((group % meta_bg_size) == 0) ||
@@ -109,11 +105,9 @@ int ext2fs_super_and_bgd_loc(ext2_filsys fs,
 			if (has_super)
 				has_super = 1;
 			new_desc_blk = group_block + has_super;
-			numblocks--;
+			numblocks++;
 		}
 	}
-
-	numblocks -= 2 + fs->inode_blocks_per_group;
 
 	if (ret_super_blk)
 		*ret_super_blk = super_blk;
@@ -121,11 +115,61 @@ int ext2fs_super_and_bgd_loc(ext2_filsys fs,
 		*ret_old_desc_blk = old_desc_blk;
 	if (ret_new_desc_blk)
 		*ret_new_desc_blk = new_desc_blk;
-	if (ret_meta_bg)
-		*ret_meta_bg = meta_bg;
-	return (numblocks);
+	if (ret_used_blks)
+		*ret_used_blks = numblocks;
+
+	return 0;
 }
 
+/*
+ * This function returns the location of the superblock, block group
+ * descriptors for a given block group.  It currently returns the
+ * number of free blocks assuming that inode table and allocation
+ * bitmaps will be in the group.  This is not necessarily the case
+ * when the flex_bg feature is enabled, so callers should take care!
+ * It was only really intended for use by mke2fs, and even there it's
+ * not that useful.
+ *
+ * The ext2fs_super_and_bgd_loc2() function is 64-bit block number
+ * capable and returns the number of blocks used by super block and
+ * group descriptors.
+ */
+int ext2fs_super_and_bgd_loc(ext2_filsys fs,
+			     dgrp_t group,
+			     blk_t *ret_super_blk,
+			     blk_t *ret_old_desc_blk,
+			     blk_t *ret_new_desc_blk,
+			     int *ret_meta_bg)
+{
+	blk64_t ret_super_blk2;
+	blk64_t ret_old_desc_blk2;
+	blk64_t ret_new_desc_blk2;
+	blk_t ret_used_blks;
+	blk_t numblocks;
+	unsigned int meta_bg_size;
+
+	ext2fs_super_and_bgd_loc2(fs, group, &ret_super_blk2,
+					&ret_old_desc_blk2,
+					&ret_new_desc_blk2,
+					&ret_used_blks);
+
+	numblocks = ext2fs_group_blocks_count(fs, group);
+
+	if (ret_super_blk)
+		*ret_super_blk = (blk_t)ret_super_blk2;
+	if (ret_old_desc_blk)
+		*ret_old_desc_blk = (blk_t)ret_old_desc_blk2;
+	if (ret_new_desc_blk)
+		*ret_new_desc_blk = (blk_t)ret_new_desc_blk2;
+	if (ret_meta_bg) {
+		meta_bg_size = EXT2_DESC_PER_BLOCK(fs->super);
+		*ret_meta_bg = group / meta_bg_size;
+	}
+
+	numblocks -= 2 + fs->inode_blocks_per_group + ret_used_blks;
+
+	return numblocks;
+}
 
 /*
  * This function forces out the primary superblock.  We need to only
@@ -147,7 +191,7 @@ static errcode_t write_primary_superblock(ext2_filsys fs,
 	if (!fs->io->manager->write_byte || !fs->orig_super) {
 	fallback:
 		io_channel_set_blksize(fs->io, SUPERBLOCK_OFFSET);
-		retval = io_channel_write_blk(fs->io, 1, -SUPERBLOCK_SIZE,
+		retval = io_channel_write_blk64(fs->io, 1, -SUPERBLOCK_SIZE,
 					      super);
 		io_channel_set_blksize(fs->io, fs->blocksize);
 		return retval;
@@ -212,12 +256,16 @@ static errcode_t write_backup_super(ext2_filsys fs, dgrp_t group,
 	fs->super->s_block_group_nr = sgrp;
 #endif
 
-	return io_channel_write_blk(fs->io, group_block, -SUPERBLOCK_SIZE,
+	return io_channel_write_blk64(fs->io, group_block, -SUPERBLOCK_SIZE,
 				    super_shadow);
 }
 
-
 errcode_t ext2fs_flush(ext2_filsys fs)
+{
+	return ext2fs_flush2(fs, 0);
+}
+
+errcode_t ext2fs_flush2(ext2_filsys fs, int flags)
 {
 	dgrp_t		i;
 	errcode_t	retval;
@@ -226,11 +274,12 @@ errcode_t ext2fs_flush(ext2_filsys fs)
 	struct ext2_super_block *super_shadow = 0;
 	struct ext2_group_desc *group_shadow = 0;
 #ifdef WORDS_BIGENDIAN
-	struct ext2_group_desc *s, *t;
+	struct ext2_group_desc *gdp;
 	dgrp_t		j;
 #endif
 	char	*group_ptr;
 	int	old_desc_blocks;
+	struct ext2fs_numeric_progress_struct progress;
 
 	EXT2_CHECK_MAGIC(fs, EXT2_ET_MAGIC_EXT2FS_FILSYS);
 
@@ -248,18 +297,17 @@ errcode_t ext2fs_flush(ext2_filsys fs)
 				  &group_shadow);
 	if (retval)
 		goto errout;
-	memset(group_shadow, 0, (size_t) fs->blocksize *
+	memcpy(group_shadow, fs->group_desc, (size_t) fs->blocksize *
 	       fs->desc_blocks);
 
 	/* swap the group descriptors */
-	for (j=0, s=fs->group_desc, t=group_shadow;
-	     j < fs->group_desc_count; j++, t++, s++) {
-		*t = *s;
-		ext2fs_swap_group_desc(t);
+	for (j=0; j < fs->group_desc_count; j++) {
+		gdp = ext2fs_group_desc(fs, group_shadow, j);
+		ext2fs_swap_group_desc2(fs, gdp);
 	}
 #else
 	super_shadow = fs->super;
-	group_shadow = fs->group_desc;
+	group_shadow = ext2fs_group_desc(fs, fs->group_desc, 0);
 #endif
 
 	/*
@@ -292,12 +340,16 @@ errcode_t ext2fs_flush(ext2_filsys fs)
 	else
 		old_desc_blocks = fs->desc_blocks;
 
-	for (i = 0; i < fs->group_desc_count; i++) {
-		blk_t	super_blk, old_desc_blk, new_desc_blk;
-		int	meta_bg;
+	ext2fs_numeric_progress_init(fs, &progress, NULL,
+				     fs->group_desc_count);
 
-		ext2fs_super_and_bgd_loc(fs, i, &super_blk, &old_desc_blk,
-					 &new_desc_blk, &meta_bg);
+
+	for (i = 0; i < fs->group_desc_count; i++) {
+		blk64_t	super_blk, old_desc_blk, new_desc_blk;
+
+		ext2fs_numeric_progress_update(fs, &progress, i);
+		ext2fs_super_and_bgd_loc2(fs, i, &super_blk, &old_desc_blk,
+					 &new_desc_blk, 0);
 
 		if (!(fs->flags & EXT2_FLAG_MASTER_SB_ONLY) &&i && super_blk) {
 			retval = write_backup_super(fs, i, super_blk,
@@ -309,18 +361,22 @@ errcode_t ext2fs_flush(ext2_filsys fs)
 			continue;
 		if ((old_desc_blk) &&
 		    (!(fs->flags & EXT2_FLAG_MASTER_SB_ONLY) || (i == 0))) {
-			retval = io_channel_write_blk(fs->io,
+			retval = io_channel_write_blk64(fs->io,
 			      old_desc_blk, old_desc_blocks, group_ptr);
 			if (retval)
 				goto errout;
 		}
 		if (new_desc_blk) {
-			retval = io_channel_write_blk(fs->io, new_desc_blk,
+			int meta_bg = i / EXT2_DESC_PER_BLOCK(fs->super);
+
+			retval = io_channel_write_blk64(fs->io, new_desc_blk,
 				1, group_ptr + (meta_bg*fs->blocksize));
 			if (retval)
 				goto errout;
 		}
 	}
+
+	ext2fs_numeric_progress_close(fs, &progress, NULL);
 
 	/*
 	 * If the write_bitmaps() function is present, call it to
@@ -351,14 +407,16 @@ write_primary_superblock_only:
 	ext2fs_swap_super(super_shadow);
 #endif
 
-	retval = io_channel_flush(fs->io);
+	if (!(flags & EXT2_FLAG_FLUSH_NO_SYNC))
+		retval = io_channel_flush(fs->io);
 	retval = write_primary_superblock(fs, super_shadow);
 	if (retval)
 		goto errout;
 
 	fs->flags &= ~EXT2_FLAG_DIRTY;
 
-	retval = io_channel_flush(fs->io);
+	if (!(flags & EXT2_FLAG_FLUSH_NO_SYNC))
+		retval = io_channel_flush(fs->io);
 errout:
 	fs->super->s_state = fs_state;
 #ifdef WORDS_BIGENDIAN
@@ -371,6 +429,11 @@ errout:
 }
 
 errcode_t ext2fs_close(ext2_filsys fs)
+{
+	return ext2fs_close2(fs, 0);
+}
+
+errcode_t ext2fs_close2(ext2_filsys fs, int flags)
 {
 	errcode_t	retval;
 	int		meta_blks;
@@ -396,10 +459,15 @@ errcode_t ext2fs_close(ext2_filsys fs)
 			fs->flags |= EXT2_FLAG_SUPER_ONLY | EXT2_FLAG_DIRTY;
 	}
 	if (fs->flags & EXT2_FLAG_DIRTY) {
-		retval = ext2fs_flush(fs);
+		retval = ext2fs_flush2(fs, flags);
 		if (retval)
 			return retval;
 	}
+
+	retval = ext2fs_mmp_stop(fs);
+	if (retval)
+		return retval;
+
 	ext2fs_free(fs);
 	return 0;
 }

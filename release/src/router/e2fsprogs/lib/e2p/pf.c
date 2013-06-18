@@ -16,6 +16,7 @@
  * 93/10/30	- Creation
  */
 
+#include "config.h"
 #include <stdio.h>
 
 #include "e2p.h"
@@ -48,6 +49,7 @@ static struct flags_name flags_array[] = {
 	{ EXT2_TOPDIR_FL, "T", "Top_of_Directory_Hierarchies" },
 	{ EXT4_EXTENTS_FL, "e", "Extents" },
 	{ EXT4_HUGE_FILE_FL, "h", "Huge_file" },
+	{ FS_NOCOW_FL, "C", "No_COW" },
 	{ 0, NULL, NULL }
 };
 
