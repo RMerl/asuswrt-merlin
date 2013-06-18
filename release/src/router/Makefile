@@ -928,7 +928,7 @@ e2fsprogs/Makefile: e2fsprogs/Makefile.in
 	cd e2fsprogs && CFLAGS="-Os $(EXTRACFLAGS)" \
 	$(CONFIGURE) --prefix=/usr --sysconfdir=/etc --enable-elf-shlibs \
 		--disable-rpath --disable-nls \
-		--disable-debugfs --disable-imager --disable-resizer --disable-uuidd
+		--disable-debugfs --disable-imager --disable-resizer --disable-uuidd --disable-defrag
 
 e2fsprogs: e2fsprogs/Makefile
 	$(MAKE) -C $@ $(PARALLEL_BUILD)
