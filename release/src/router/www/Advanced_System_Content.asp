@@ -431,6 +431,8 @@ var timezones = [
 	["MAT2",	"(GMT-02:00) <#TZ24#>"],
 	["AZOT1AZOST,M3.5.0/00:00,M10.5.0/01:00",	"(GMT-01:00) <#TZ25#>"],
 	["CVT1",	"(GMT-01:00) <#TZ26#>"],
+	["WET0WEST,M3.5.0/01:00,M10.5.0/02:00",	"(GMT) <#TZ26_2#>"],
+	["GMT0IST,M3.5.0/01:00,M10.5.0/02:00",	"(GMT) <#TZ26_3#>"],
 	["GMT0BST,M3.5.0/01:00,M10.5.0/02:00",	"(GMT) <#TZ27#>"],
 	["WET0WEST,M4.5.0/02:00,M9.5.0/03:00",	"(GMT) <#TZ28#>"],	/* can't express complete DST rule as TZ env variable */
 	["GMT0",	"(GMT) <#TZ28_2#>"],
