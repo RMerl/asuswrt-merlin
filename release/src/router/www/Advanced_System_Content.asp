@@ -436,6 +436,7 @@ var timezones = [
 	["GMT0BST,M3.5.0/01:00,M10.5.0/02:00",	"(GMT) <#TZ27#>"],
 	["WET0WEST,M4.5.0/02:00,M9.5.0/03:00",	"(GMT) <#TZ28#>"],	/* can't express complete DST rule as TZ env variable */
 	["GMT0",	"(GMT) <#TZ28_2#>"],
+	["UTC0",	"(GMT) <#TZ28_3#>"],
 	/*["GMT0DST_3",	"(GMT) <#TZ85#>"],	use adj_dst to desc*/
 	["CET-1CEST,M3.5.0/02:00,M10.5.0/03:00_1",	"(GMT+01:00) <#TZ29#>"],
 	["CET-1CEST,M3.5.0/02:00,M10.5.0/03:00_2",	"(GMT+01:00) <#TZ30#>"],
