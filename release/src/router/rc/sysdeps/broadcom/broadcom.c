@@ -909,6 +909,9 @@ setAllLedOn(void)
 		{
 #ifdef RTCONFIG_LED_ALL
 			led_control(LED_ALL, LED_ON);
+#else
+			led_control(LED_WAN, LED_OFF);
+			led_control(LED_LAN, LED_OFF);
 #endif
 			led_control(LED_USB, LED_ON);
 			led_control(LED_USB3, LED_ON);
