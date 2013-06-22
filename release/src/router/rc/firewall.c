@@ -2482,7 +2482,6 @@ TRACE_PT("writing Parental Control\n");
 #endif
 						}
 					}
-					free(lanwan_buf);
 				}
 				free(nv);
 			}
@@ -2503,7 +2502,6 @@ TRACE_PT("writing Parental Control\n");
 #endif
 				}
 			}
-			free(lanwan_buf);
 		}	
 
 		// Default
@@ -3397,7 +3395,6 @@ TRACE_PT("writing Parental Control\n");
 								fprintf(fp, "-A %s %s -i %s -o %s %s -j %s\n", chain, g, lan_if, wan_if, setting, ftype);
 							}
 						}
-						free(lanwan_buf);
 					}
 
 #ifdef RTCONFIG_IPV6
@@ -3411,7 +3408,6 @@ TRACE_PT("writing Parental Control\n");
 							fprintf(fp_ipv6, "-A %s %s -i %s -o %s %s -j %s\n", chain, g, lan_if, wan6face, setting, ftype);
 						}
 					}
-					free(lanwan_buf);
 #endif
 				}
 				free(nv);
@@ -3438,7 +3434,6 @@ TRACE_PT("writing Parental Control\n");
 						fprintf(fp, "-A %s %s -i %s -o %s -p icmp --icmp-type %s -j %s\n", chain, g, lan_if, wan_if, ptr, ftype);
 					}
 				}
-				free(lanwan_buf);
 
 			}
 
@@ -3453,7 +3448,6 @@ TRACE_PT("writing Parental Control\n");
 					fprintf(fp_ipv6, "-A %s %s -i %s -o %s -p icmp --icmp-type %s -j %s\n", chain, g, lan_if, wan6face, ptr, ftype);
 				}
 			}
-			free(lanwan_buf);
 #endif
 		}	
 
