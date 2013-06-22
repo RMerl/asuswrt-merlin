@@ -43,6 +43,28 @@ function applyRule(){
 
 	if (document.form.action_script.value != "") document.form.action_wait.value = "10";
 
+	document.form.vpn_crt_server1_static.value.replace(/\r/g,"");
+	document.form.vpn_crt_server1_ca.value.replace(/\r/g,"");
+	document.form.vpn_crt_server1_key.value.replace(/\r/g,"");
+	document.form.vpn_crt_server1_crt.value.replace(/\r/g,"");
+	document.form.vpn_crt_server1_dh.value.replace(/\r/g,"");
+
+	document.form.vpn_crt_server2_static.value.replace(/\r/g,"");
+	document.form.vpn_crt_server2_ca.value.replace(/\r/g,"");
+	document.form.vpn_crt_server2_key.value.replace(/\r/g,"");
+	document.form.vpn_crt_server2_crt.value.replace(/\r/g,"");
+	document.form.vpn_crt_server2_dh.value.replace(/\r/g,"");
+
+	document.form.vpn_crt_client1_static.value.replace(/\r/g,"");
+	document.form.vpn_crt_client1_ca.value.replace(/\r/g,"");
+	document.form.vpn_crt_client1_crt.value.replace(/\r/g,"");
+	document.form.vpn_crt_client1_key.value.replace(/\r/g,"");
+
+	document.form.vpn_crt_client2_static.value.replace(/\r/g,"");
+	document.form.vpn_crt_client2_ca.value.replace(/\r/g,"");
+	document.form.vpn_crt_client2_crt.value.replace(/\r/g,"");
+	document.form.vpn_crt_client2_key.value.replace(/\r/g,"");
+
 	document.form.submit();
 }
 

@@ -205,6 +205,9 @@ function applyRule(){
 					document.form.flag.value = "https://" + location.hostname + ":" + document.form.https_lanport.value;
 			}
 		}
+
+		document.form.sshd_authkeys.value.replace(/\r/g,"");
+
 		showLoading();
 		document.form.submit();
 	}
