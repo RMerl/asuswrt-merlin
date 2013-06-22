@@ -1047,7 +1047,7 @@ function change_url(num, flag){
 					<tr>
 						<th>SSH Authentication key</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="sshd_authkeys" cols="55" maxlength="4096"><% nvram_clean_get("sshd_authkeys"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="sshd_authkeys" cols="55" maxlength="2999"><% nvram_clean_get("sshd_authkeys"); %></textarea>
 							<span id="ssh_alert_msg"></span>
 						</td>
 				</tr>
