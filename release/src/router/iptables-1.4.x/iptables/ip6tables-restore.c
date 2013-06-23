@@ -36,6 +36,7 @@ static const struct option options[] = {
 	{.name = "help",     .has_arg = false, .val = 'h'},
 	{.name = "noflush",  .has_arg = false, .val = 'n'},
 	{.name = "modprobe", .has_arg = true,  .val = 'M'},
+	{.name = "table",    .has_arg = true,  .val = 'T'},
 	{NULL},
 };
 
@@ -121,6 +122,7 @@ int ip6tables_restore_main(int argc, char *argv[])
 	char curtable[IP6T_TABLE_MAXNAMELEN + 1];
 	FILE *in;
 	int in_table = 0, testing = 0;
+	const char *tablename = NULL;
 
 	line = 0;
 
@@ -137,7 +139,7 @@ int ip6tables_restore_main(int argc, char *argv[])
 	init_extensions6();
 #endif
 
-	while ((c = getopt_long(argc, argv, "bcvthnM:", options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "bcvthnM:T:", options, NULL)) != -1) {
 		switch (c) {
 			case 'b':
 				binary = 1;
@@ -160,6 +162,9 @@ int ip6tables_restore_main(int argc, char *argv[])
 				break;
 			case 'M':
 				xtables_modprobe_program = optarg;
+				break;
+			case 'T':
+				tablename = optarg;
 				break;
 		}
 	}
@@ -216,6 +221,8 @@ int ip6tables_restore_main(int argc, char *argv[])
 			strncpy(curtable, table, IP6T_TABLE_MAXNAMELEN);
 			curtable[IP6T_TABLE_MAXNAMELEN] = '\0';
 
+			if (tablename != NULL && strcmp(tablename, table) != 0)
+				continue;
 			if (handle)
 				ip6tc_free(handle);
 
@@ -442,6 +449,8 @@ int ip6tables_restore_main(int argc, char *argv[])
 			free_argv();
 			fflush(stdout);
 		}
+		if (tablename != NULL && strcmp(tablename, curtable) != 0)
+			continue;
 		if (!ret) {
 			fprintf(stderr, "%s: line %u failed\n",
 					ip6tables_globals.program_name,

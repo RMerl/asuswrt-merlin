@@ -39,7 +39,6 @@
 #include <iptables.h>
 #include <xtables.h>
 #include <fcntl.h>
-#include <sys/utsname.h>
 #include "xshared.h"
 
 #ifndef TRUE
@@ -186,8 +185,6 @@ static const int inverse_for_options[NUMBER_OF_OPT] =
 #define opts iptables_globals.opts
 #define prog_name iptables_globals.program_name
 #define prog_vers iptables_globals.program_version
-
-int kernel_version;
 
 /* Primitive headers... */
 /* defined in netinet/in.h */
@@ -1279,21 +1276,6 @@ static void clear_rule_matches(struct xtables_rule_match **matches)
 	}
 
 	*matches = NULL;
-}
-
-void
-get_kernel_version(void) {
-	static struct utsname uts;
-	int x = 0, y = 0, z = 0;
-
-	if (uname(&uts) == -1) {
-		fprintf(stderr, "Unable to retrieve kernel version.\n");
-		xtables_free_opts(1);
-		exit(1);
-	}
-
-	sscanf(uts.release, "%d.%d.%d", &x, &y, &z);
-	kernel_version = LINUX_VERSION(x, y, z);
 }
 
 static void command_jump(struct iptables_command_state *cs)

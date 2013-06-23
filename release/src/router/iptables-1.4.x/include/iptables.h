@@ -18,14 +18,6 @@ extern int for_each_chain4(int (*fn)(const ipt_chainlabel, int, struct iptc_hand
 extern void print_rule4(const struct ipt_entry *e,
 		struct iptc_handle *handle, const char *chain, int counters);
 
-/* kernel revision handling */
-extern int kernel_version;
-extern void get_kernel_version(void);
-#define LINUX_VERSION(x,y,z)	(0x10000*(x) + 0x100*(y) + z)
-#define LINUX_VERSION_MAJOR(x)	(((x)>>16) & 0xFF)
-#define LINUX_VERSION_MINOR(x)	(((x)>> 8) & 0xFF)
-#define LINUX_VERSION_PATCH(x)	( (x)      & 0xFF)
-
 extern struct xtables_globals iptables_globals;
 
 #endif /*_IPTABLES_USER_H*/

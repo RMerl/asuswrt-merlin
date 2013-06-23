@@ -37,9 +37,14 @@ static void connbytes_parse(struct xt_option_call *cb)
 	switch (cb->entry->id) {
 	case O_CONNBYTES:
 		sinfo->count.from = cb->val.u64_range[0];
-		sinfo->count.to   = cb->val.u64_range[0];
+		sinfo->count.to   = UINT64_MAX;
 		if (cb->nvals == 2)
 			sinfo->count.to = cb->val.u64_range[1];
+
+		if (sinfo->count.to < sinfo->count.from)
+			xtables_error(PARAMETER_PROBLEM, "%llu should be less than %llu",
+					(unsigned long long)sinfo->count.from,
+					(unsigned long long)sinfo->count.to);
 		if (cb->invert) {
 			i = sinfo->count.from;
 			sinfo->count.from = sinfo->count.to;
@@ -107,19 +112,29 @@ static void print_direction(const struct xt_connbytes_info *sinfo)
 	}
 }
 
+static void print_from_to(const struct xt_connbytes_info *sinfo, const char *prefix)
+{
+	unsigned long long from, to;
+
+	if (sinfo->count.from > sinfo->count.to) {
+		fputs(" !", stdout);
+		from = sinfo->count.to;
+		to = sinfo->count.from;
+	} else {
+		to = sinfo->count.to;
+		from = sinfo->count.from;
+	}
+	printf(" %sconnbytes %llu", prefix, from);
+	if (to && to < UINT64_MAX)
+		printf(":%llu", to);
+}
+
 static void
 connbytes_print(const void *ip, const struct xt_entry_match *match, int numeric)
 {
 	const struct xt_connbytes_info *sinfo = (const void *)match->data;
 
-	if (sinfo->count.from > sinfo->count.to) 
-		printf(" connbytes ! %llu:%llu",
-			(unsigned long long)sinfo->count.to,
-			(unsigned long long)sinfo->count.from);
-	else
-		printf(" connbytes %llu:%llu",
-			(unsigned long long)sinfo->count.from,
-			(unsigned long long)sinfo->count.to);
+	print_from_to(sinfo, "");
 
 	fputs(" connbytes mode", stdout);
 	print_mode(sinfo);
@@ -132,14 +147,7 @@ static void connbytes_save(const void *ip, const struct xt_entry_match *match)
 {
 	const struct xt_connbytes_info *sinfo = (const void *)match->data;
 
-	if (sinfo->count.from > sinfo->count.to) 
-		printf(" ! --connbytes %llu:%llu",
-			(unsigned long long)sinfo->count.to,
-			(unsigned long long)sinfo->count.from);
-	else
-		printf(" --connbytes %llu:%llu",
-			(unsigned long long)sinfo->count.from,
-			(unsigned long long)sinfo->count.to);
+	print_from_to(sinfo, "--");
 
 	fputs(" --connbytes-mode", stdout);
 	print_mode(sinfo);

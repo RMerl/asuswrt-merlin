@@ -3,7 +3,7 @@
 AM_CFLAGS        = ${regular_CFLAGS}
 AM_CPPFLAGS      = ${regular_CPPFLAGS} -I${top_builddir}/include -I${top_srcdir}/include ${kinclude_CPPFLAGS}
 
-pkgconfig_DATA      = libiptc.pc
+pkgconfig_DATA      = libiptc.pc libip4tc.pc libip6tc.pc
 
 lib_LTLIBRARIES     = libip4tc.la libip6tc.la libiptc.la
 libiptc_la_SOURCES  =

@@ -178,6 +178,8 @@
 -A ntarg
 -A ntarg -j NFQUEUE --queue-balance 8:99
 -A ntarg
+-A ntarg -j NFQUEUE --queue-num 0 --queue-bypass
+-A ntarg
 -A ntarg -j RATEEST --rateest-name RE1 --rateest-interval 250.0ms --rateest-ewmalog 500.0ms
 -A ntarg
 -A ntarg -j RATEEST --rateest-name RE2 --rateest-interval 250.0ms --rateest-ewmalog 500.0ms

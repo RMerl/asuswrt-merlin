@@ -1180,7 +1180,7 @@ iptables-1.4.x-install:
 		ln -sf libip6tc.so libip6tc.so.0.0.0 && \
 		ln -sf libiptc.so  libiptc.so.0 && \
 		ln -sf libiptc.so  libiptc.so.0.0.0
-	install -D iptables-1.4.x/iptables/.libs/lib*.so $(INSTALLDIR)/iptables-1.4.x/usr/lib/
+	install -D iptables-1.4.x/libxtables/.libs/lib*.so $(INSTALLDIR)/iptables-1.4.x/usr/lib/
 	cd $(INSTALLDIR)/iptables-1.4.x/usr/lib && \
 		ln -sf libxtables.so libxtables.so.7 && \
 		ln -sf libxtables.so libxtables.so.7.0.0

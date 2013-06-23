@@ -174,19 +174,21 @@ static void DNAT_parse(struct xt_option_call *cb)
 					   "DNAT: Multiple --to-destination not supported");
 		}
 		*cb->target = parse_to(cb->arg, portok, info);
-		/* WTF do we need this for?? */
-		if (cb->xflags & F_RANDOM)
-			info->mr.range[0].flags |= IP_NAT_RANGE_PROTO_RANDOM;
 		cb->xflags |= F_X_TO_DEST;
-		break;
-	case O_RANDOM:
-		if (cb->xflags & F_TO_DEST)
-			info->mr.range[0].flags |= IP_NAT_RANGE_PROTO_RANDOM;
 		break;
 	case O_PERSISTENT:
 		info->mr.range[0].flags |= IP_NAT_RANGE_PERSISTENT;
 		break;
 	}
+}
+
+static void DNAT_fcheck(struct xt_fcheck_call *cb)
+{
+	static const unsigned int f = F_TO_DEST | F_RANDOM;
+	struct nf_nat_multi_range *mr = cb->data;
+
+	if ((cb->xflags & f) == f)
+		mr->range[0].flags |= IP_NAT_RANGE_PROTO_RANDOM;
 }
 
 static void print_range(const struct nf_nat_range *r)
@@ -248,6 +250,7 @@ static struct xtables_target dnat_tg_reg = {
 	.userspacesize	= XT_ALIGN(sizeof(struct nf_nat_multi_range)),
 	.help		= DNAT_help,
 	.x6_parse	= DNAT_parse,
+	.x6_fcheck	= DNAT_fcheck,
 	.print		= DNAT_print,
 	.save		= DNAT_save,
 	.x6_options	= DNAT_opts,

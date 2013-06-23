@@ -5,8 +5,6 @@ libdir=@libdir@
 includedir=@includedir@
 
 Name:		libiptc
-Description:	iptables ruleset ADT and kernel interface
+Description:	iptables v4/v6 ruleset ADT and kernel interface
 Version:	@PACKAGE_VERSION@
-Libs:		-L${libdir} -liptc
-Libs.private:	-lip4tc -lip6tc
-Cflags:		-I${includedir}
+Requires:	libip4tc libip6tc
