@@ -129,20 +129,13 @@ static const struct xt_option_entry conntrack2_mt_opts[] = {
 	 .flags = XTOPT_INVERT},
 	{.name = "ctexpire", .id = O_CTEXPIRE, .type = XTTYPE_UINT32RC,
 	 .flags = XTOPT_INVERT},
-	/*
-	 * Rev 1 and 2 only store one port, and we would normally use
-	 * %XTTYPE_PORT (rather than %XTTYPE_PORTRC) for that. The resulting
-	 * error message - in case a user passed a range nevertheless -
-	 * "port 22:23 resolved to nothing" is not quite as useful as using
-	 * %XTTYPE_PORTC and libxt_conntrack's own range test.
-	 */
-	{.name = "ctorigsrcport", .id = O_CTORIGSRCPORT, .type = XTTYPE_PORTRC,
+	{.name = "ctorigsrcport", .id = O_CTORIGSRCPORT, .type = XTTYPE_PORT,
 	 .flags = XTOPT_INVERT | XTOPT_NBO},
-	{.name = "ctorigdstport", .id = O_CTORIGDSTPORT, .type = XTTYPE_PORTRC,
+	{.name = "ctorigdstport", .id = O_CTORIGDSTPORT, .type = XTTYPE_PORT,
 	 .flags = XTOPT_INVERT | XTOPT_NBO},
-	{.name = "ctreplsrcport", .id = O_CTREPLSRCPORT, .type = XTTYPE_PORTRC,
+	{.name = "ctreplsrcport", .id = O_CTREPLSRCPORT, .type = XTTYPE_PORT,
 	 .flags = XTOPT_INVERT | XTOPT_NBO},
-	{.name = "ctrepldstport", .id = O_CTREPLDSTPORT, .type = XTTYPE_PORTRC,
+	{.name = "ctrepldstport", .id = O_CTREPLDSTPORT, .type = XTTYPE_PORT,
 	 .flags = XTOPT_INVERT | XTOPT_NBO},
 	{.name = "ctdir", .id = O_CTDIR, .type = XTTYPE_STRING},
 	XTOPT_TABLEEND,
