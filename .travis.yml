@@ -1,0 +1,12 @@
+language: cpp
+install:
+  - sudo apt-get install aptitude
+  - sudo aptitude -y install $(< apt-requirements.txt)
+script: make -C $ASUSWRT_TRAVIS_PATH $ASUSWRT_TRAVIS_TARGET
+env:
+  global:
+    - PATH=$PATH:$TRAVIS_BUILD_DIR/tools/brcm/hndtools-mipsel-linux/bin:$TRAVIS_BUILD_DIR/hndtools-mipsel-uclibc/bin
+  matrix:
+    - ASUSWRT_TRAVIS_TARGET=rt-n16 $ASUSWRT_TRAVIS_PATH=$TRAVIS_BUILD_DIR/release/src-rt
+    - ASUSWRT_TRAVIS_TARGET=rt-n56u $ASUSWRT_TRAVIS_PATH=$TRAVIS_BUILD_DIR/release/src-ra
+    - ASUSWRT_TRAVIS_TARGET=rt-n65u $ASUSWRT_TRAVIS_PATH=$TRAVIS_BUILD_DIR/release/src-ra-3.0
