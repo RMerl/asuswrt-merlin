@@ -24,3 +24,5 @@ gperf
 lib32z1-dev
 libssl-dev
 libxml2-dev
+lib32z1-dev
+
