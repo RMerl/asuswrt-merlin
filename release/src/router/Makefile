@@ -305,7 +305,6 @@ obj-$(RTCONFIG_MEDIA_SERVER) += mt-daapd
 #obj-$(RTCONFIG_MEDIA_SERVER) += mt-daapd-svn-1696
 obj-$(RTCONFIG_MEDIA_SERVER) += mDNSResponder
 
-
 MEDIA_SERVER_STATIC=y
 
 #	obj-y += upnp
@@ -938,7 +937,11 @@ else
 endif
 
 e2fsprogs: e2fsprogs/Makefile
-	$(MAKE) -C $@ $(PARALLEL_BUILD)
+	$(MAKE) -C $@
+
+e2fsprogs-clean:
+	-@$(MAKE) -C e2fsprogs clean
+	@rm -f e2fsprogs/Makefile
 
 e2fsprogs-install:
 	install -D e2fsprogs/lib/libblkid.so.1.0 $(INSTALLDIR)/e2fsprogs/usr/lib/libblkid.so.1.0
@@ -959,14 +962,10 @@ e2fsprogs-install:
 	$(STRIP) $(INSTALLDIR)/e2fsprogs/usr/sbin/*
 	ln -sf e2fsck $(INSTALLDIR)/e2fsprogs/usr/sbin/fsck.ext2
 	ln -sf e2fsck $(INSTALLDIR)/e2fsprogs/usr/sbin/fsck.ext3
-ifeq ($(RTCONFIG_BCMARM),y)
 	ln -sf e2fsck $(INSTALLDIR)/e2fsprogs/usr/sbin/fsck.ext4
-endif
 	ln -sf mke2fs $(INSTALLDIR)/e2fsprogs/usr/sbin/mkfs.ext2
 	ln -sf mke2fs $(INSTALLDIR)/e2fsprogs/usr/sbin/mkfs.ext3
-ifeq ($(RTCONFIG_BCMARM),y)
 	ln -sf mke2fs $(INSTALLDIR)/e2fsprogs/usr/sbin/mkfs.ext4
-endif
 	install -D -m 0644 e2fsprogs/e2fsck/e2fsck.conf $(INSTALLDIR)/rom/rom/etc/e2fsck.conf
 
 httpd: shared nvram libdisk $(if $(RTCONFIG_HTTPS),mssl)
