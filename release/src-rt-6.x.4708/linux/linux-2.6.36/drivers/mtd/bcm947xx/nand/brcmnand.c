@@ -754,8 +754,13 @@ brcmnand_dummy_func(struct mtd_info * mtd)
 struct mtd_partition brcmnand_parts[] = {
 	{
 		.name = "brcmnand",
-		.size = 0,
+		.size = (64 * 0x100000UL),
 		.offset = 0
+	},
+	{
+		.name = "jffs2",
+		.size = (32 * 0x100000UL),
+		.offset = (64 * 0x100000UL),
 	},
 	{
 		.name = 0,
