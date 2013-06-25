@@ -11,5 +11,3 @@ examples/testd
 libdaemon/libdaemon.la
 .libs
 autom4te.cache
-aclocal.m4
-configure
