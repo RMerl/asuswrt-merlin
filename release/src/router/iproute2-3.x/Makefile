@@ -38,7 +38,7 @@ LIBNETLINK=../lib/libnetlink.a ../lib/libutil.a
 LDLIBS += $(LIBNETLINK)
 
 IPTABLES_INCLUDE = $(IPTABLES_DIR)/include
-IPTABLES_LIBS = $(IPTABLES_DIR)/iptables/.libs
+IPTABLES_LIBS = $(IPTABLES_DIR)/libxtables/.libs
 export IPTL = -L$(IPTABLES_LIBS)
 export CFLAGS += -I$(IPTABLES_INCLUDE)
 
