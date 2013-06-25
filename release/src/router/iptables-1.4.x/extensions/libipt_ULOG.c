@@ -37,9 +37,9 @@ static const struct xt_option_entry ULOG_opts[] = {
 	{.name = "ulog-prefix", .id = O_ULOG_PREFIX, .type = XTTYPE_STRING,
 	 .flags = XTOPT_PUT, XTOPT_POINTER(struct ipt_ulog_info, prefix),
 	 .min = 1},
-	{.name = "ulog-cprange", .id = O_ULOG_CPRANGE, .type = XTTYPE_UINT64,
+	{.name = "ulog-cprange", .id = O_ULOG_CPRANGE, .type = XTTYPE_UINT64},
+	{.name = "ulog-qthreshold", .id = O_ULOG_QTHR, .type = XTTYPE_UINT64,
 	 .min = 1, .max = ULOG_MAX_QLEN},
-	{.name = "ulog-qthreshold", .id = O_ULOG_QTHR, .type = XTTYPE_UINT64},
 	XTOPT_TABLEEND,
 };
 

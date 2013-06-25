@@ -21,7 +21,7 @@
 .SH NAME
 iptables-restore \(em Restore IP Tables
 .SH SYNOPSIS
-\fBiptables\-restore\fP [\fB\-c\fP] [\fB\-n\fP]
+\fBiptables\-restore\fP [\fB\-c\fP] [\fB\-n\fP] [\fB\-T\fP \fIname\fP]
 .SH DESCRIPTION
 .PP
 .B iptables-restore
@@ -35,6 +35,9 @@ restore the values of all packet and byte counters
 don't flush the previous contents of the table. If not specified, 
 .B iptables-restore
 flushes (deletes) all previous contents of the respective IP Table.
+.TP
+\fB\-T\fP, \fB\-\-table\fP \fIname\fP
+Restore only the named table even if the input stream contains other ones.
 .SH BUGS
 None known as of iptables-1.2.1 release
 .SH AUTHOR

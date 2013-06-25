@@ -87,7 +87,7 @@ CONNSECMARK_save(const void *ip, const struct xt_entry_target *target)
 	const struct xt_connsecmark_target_info *info =
 		(struct xt_connsecmark_target_info*)target->data;
 
-	printf("--");
+	printf(" --");
 	print_connsecmark(info);
 }
 

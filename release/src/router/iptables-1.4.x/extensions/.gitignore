@@ -1,0 +1,9 @@
+.*.d
+.*.dd
+*.oo
+
+/GNUmakefile
+/initext.c
+/initext?.c
+/matches?.man
+/targets?.man

@@ -23,3 +23,8 @@ Possible event types are: \fBnew\fP.
 \fB\-\-zone\fP \fIid\fP
 Assign this packet to zone \fIid\fP and only have lookups done in that zone.
 By default, packets have zone 0.
+.TP
+\fB\-\-timeout\fP \fIname\fP
+Use the timeout policy identified by \fIname\fP for the connection. This is
+provides more flexible timeout policy definition than global timeout values
+available at /proc/sys/net/netfilter/nf_conntrack_*_timeout_*.

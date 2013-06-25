@@ -2,6 +2,7 @@
 #define _LIBXT_SET_H
 
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -22,6 +23,12 @@ get_version(unsigned *version)
 	if (sockfd < 0)
 		xtables_error(OTHER_PROBLEM,
 			      "Can't open socket to ipset.\n");
+
+	if (fcntl(sockfd, F_SETFD, FD_CLOEXEC) == -1) {
+		xtables_error(OTHER_PROBLEM,
+			      "Could not set close on exec: %s\n",
+			      strerror(errno));
+	}
 
 	req_version.op = IP_SET_OP_VERSION;
 	res = getsockopt(sockfd, SOL_IP, SO_IP_SET, &req_version, &size);

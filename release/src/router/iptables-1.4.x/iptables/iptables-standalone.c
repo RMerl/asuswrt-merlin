@@ -43,7 +43,7 @@ iptables_main(int argc, char *argv[])
 {
 	int ret;
 	char *table = "filter";
-	struct iptc_handle *handle = NULL;
+	struct xtc_handle *handle = NULL;
 
 	iptables_globals.program_name = "iptables";
 	ret = xtables_init_all(&iptables_globals, NFPROTO_IPV4);

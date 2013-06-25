@@ -42,7 +42,7 @@ ip6tables_main(int argc, char *argv[])
 {
 	int ret;
 	char *table = "filter";
-	struct ip6tc_handle *handle = NULL;
+	struct xtc_handle *handle = NULL;
 
 	ip6tables_globals.program_name = "ip6tables";
 	ret = xtables_init_all(&ip6tables_globals, NFPROTO_IPV6);

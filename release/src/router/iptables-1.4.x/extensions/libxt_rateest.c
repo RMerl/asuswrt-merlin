@@ -348,8 +348,8 @@ rateest_print(const void *ip, const struct xt_entry_match *match, int numeric)
 		if (info->flags & XT_RATEEST_MATCH_DELTA)
 			rateest_print_rate(info->bps1, numeric);
 		if (info->flags & XT_RATEEST_MATCH_ABS) {
-			rateest_print_mode(info, "");
 			rateest_print_rate(info->bps2, numeric);
+			rateest_print_mode(info, "");
 		}
 	}
 	if (info->flags & XT_RATEEST_MATCH_PPS) {
@@ -366,8 +366,6 @@ rateest_print(const void *ip, const struct xt_entry_match *match, int numeric)
 		rateest_print_mode(info, "");
 
 		printf(" %s", info->name2);
-		if (info->flags & XT_RATEEST_MATCH_DELTA)
-			printf(" delta");
 
 		if (info->flags & XT_RATEEST_MATCH_BPS) {
 			printf(" bps");
@@ -382,33 +380,48 @@ rateest_print(const void *ip, const struct xt_entry_match *match, int numeric)
 	}
 }
 
+static void __rateest_save_rate(const struct xt_rateest_match_info *info,
+                                const char *name, uint32_t r1, uint32_t r2,
+                                int numeric)
+{
+	if (info->flags & XT_RATEEST_MATCH_DELTA) {
+		printf(" --rateest-%s1", name);
+		rateest_print_rate(r1, numeric);
+		rateest_print_mode(info, "--rateest-");
+		printf(" --rateest-%s2", name);
+	} else {
+		rateest_print_mode(info, "--rateest-");
+		printf(" --rateest-%s", name);
+	}
+
+	if (info->flags & (XT_RATEEST_MATCH_ABS|XT_RATEEST_MATCH_DELTA))
+		rateest_print_rate(r2, numeric);
+}
+
+static void rateest_save_rates(const struct xt_rateest_match_info *info)
+{
+	if (info->flags & XT_RATEEST_MATCH_BPS)
+		__rateest_save_rate(info, "bps", info->bps1, info->bps2, 0);
+	if (info->flags & XT_RATEEST_MATCH_PPS)
+		__rateest_save_rate(info, "pps", info->pps1, info->pps2, 1);
+}
+
+
 static void
 rateest_save(const void *ip, const struct xt_entry_match *match)
 {
 	const struct xt_rateest_match_info *info = (const void *)match->data;
 
+	if (info->flags & XT_RATEEST_MATCH_DELTA)
+		printf(" --rateest-delta");
+
 	if (info->flags & XT_RATEEST_MATCH_REL) {
 		printf(" --rateest1 %s", info->name1);
-		if (info->flags & XT_RATEEST_MATCH_BPS)
-			printf(" --rateest-bps");
-		if (info->flags & XT_RATEEST_MATCH_PPS)
-			printf(" --rateest-pps");
-		rateest_print_mode(info, " --rateest-");
+		rateest_save_rates(info);
 		printf(" --rateest2 %s", info->name2);
-	} else {
+	} else { /* XT_RATEEST_MATCH_ABS */
 		printf(" --rateest %s", info->name1);
-		if (info->flags & XT_RATEEST_MATCH_BPS) {
-			printf(" --rateest-bps1");
-			rateest_print_rate(info->bps1, 0);
-			printf(" --rateest-bps2");
-			rateest_print_rate(info->bps2, 0);
-			rateest_print_mode(info, "--rateest-");
-		}
-		if (info->flags & XT_RATEEST_MATCH_PPS) {
-			printf(" --rateest-pps");
-			rateest_print_mode(info, "--rateest-");
-			printf(" %u", info->pps2);
-		}
+		rateest_save_rates(info);
 	}
 }
 

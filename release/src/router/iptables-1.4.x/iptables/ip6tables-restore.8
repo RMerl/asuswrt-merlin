@@ -32,8 +32,10 @@ I/O redirection provided by your shell to read from a file
 restore the values of all packet and byte counters
 .TP
 \fB\-n\fR, \fB\-\-noflush\fR 
-.TP
 don't flush the previous contents of the table. If not specified, 
+.TP
+\fB\-T\fP, \fB\-\-table\fP \fIname\fP
+Restore only the named table even if the input stream contains other ones.
 .B ip6tables-restore
 flushes (deletes) all previous contents of the respective IPv6 Table.
 .SH BUGS

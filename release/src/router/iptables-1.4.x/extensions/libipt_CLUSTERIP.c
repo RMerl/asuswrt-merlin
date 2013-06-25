@@ -144,7 +144,7 @@ static void CLUSTERIP_print(const void *ip,
 	const struct ipt_clusterip_tgt_info *cipinfo =
 		(const struct ipt_clusterip_tgt_info *)target->data;
 	
-	if (!cipinfo->flags & CLUSTERIP_FLAG_NEW) {
+	if (!(cipinfo->flags & CLUSTERIP_FLAG_NEW)) {
 		printf(" CLUSTERIP");
 		return;
 	}
@@ -164,7 +164,7 @@ static void CLUSTERIP_save(const void *ip, const struct xt_entry_target *target)
 
 	/* if this is not a new entry, we don't need to save target
 	 * parameters */
-	if (!cipinfo->flags & CLUSTERIP_FLAG_NEW)
+	if (!(cipinfo->flags & CLUSTERIP_FLAG_NEW))
 		return;
 
 	printf(" --new --hashmode %s --clustermac %s --total-nodes %d --local-node %d --hash-init %u",

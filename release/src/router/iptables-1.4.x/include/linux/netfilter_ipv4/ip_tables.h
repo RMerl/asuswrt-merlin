@@ -27,6 +27,41 @@
 #define ipt_target xt_target
 #define ipt_table xt_table
 #define ipt_get_revision xt_get_revision
+#define ipt_entry_match xt_entry_match
+#define ipt_entry_target xt_entry_target
+#define ipt_standard_target xt_standard_target
+#define ipt_error_target xt_error_target
+#define ipt_counters xt_counters
+#define IPT_CONTINUE XT_CONTINUE
+#define IPT_RETURN XT_RETURN
+
+/* This group is older than old (iptables < v1.4.0-rc1~89) */
+#include <linux/netfilter/xt_tcpudp.h>
+#define ipt_udp xt_udp
+#define ipt_tcp xt_tcp
+#define IPT_TCP_INV_SRCPT	XT_TCP_INV_SRCPT
+#define IPT_TCP_INV_DSTPT	XT_TCP_INV_DSTPT
+#define IPT_TCP_INV_FLAGS	XT_TCP_INV_FLAGS
+#define IPT_TCP_INV_OPTION	XT_TCP_INV_OPTION
+#define IPT_TCP_INV_MASK	XT_TCP_INV_MASK
+#define IPT_UDP_INV_SRCPT	XT_UDP_INV_SRCPT
+#define IPT_UDP_INV_DSTPT	XT_UDP_INV_DSTPT
+#define IPT_UDP_INV_MASK	XT_UDP_INV_MASK
+
+/* The argument to IPT_SO_ADD_COUNTERS. */
+#define ipt_counters_info xt_counters_info
+/* Standard return verdict, or do jump. */
+#define IPT_STANDARD_TARGET XT_STANDARD_TARGET
+/* Error verdict. */
+#define IPT_ERROR_TARGET XT_ERROR_TARGET
+
+/* fn returns 0 to continue iteration */
+#define IPT_MATCH_ITERATE(e, fn, args...) \
+	XT_MATCH_ITERATE(struct ipt_entry, e, fn, ## args)
+
+/* fn returns 0 to continue iteration */
+#define IPT_ENTRY_ITERATE(entries, size, fn, args...) \
+	XT_ENTRY_ITERATE(struct ipt_entry, entries, size, fn, ## args)
 
 /* Yes, Virginia, you have to zero the padding. */
 struct ipt_ip {
@@ -45,12 +80,6 @@ struct ipt_ip {
 	/* Inverse flags */
 	u_int8_t invflags;
 };
-
-#define ipt_entry_match xt_entry_match
-#define ipt_entry_target xt_entry_target
-#define ipt_standard_target xt_standard_target
-
-#define ipt_counters xt_counters
 
 /* Values for "flag" field in struct ipt_ip (general ip structure). */
 #define IPT_F_FRAG		0x01	/* Set if rule is a fragment rule */
@@ -111,23 +140,6 @@ struct ipt_entry {
 #define IPT_SO_GET_REVISION_TARGET	(IPT_BASE_CTL + 3)
 #define IPT_SO_GET_MAX			IPT_SO_GET_REVISION_TARGET
 
-#define IPT_CONTINUE XT_CONTINUE
-#define IPT_RETURN XT_RETURN
-
-#include <linux/netfilter/xt_tcpudp.h>
-#define ipt_udp xt_udp
-#define ipt_tcp xt_tcp
-
-#define IPT_TCP_INV_SRCPT	XT_TCP_INV_SRCPT
-#define IPT_TCP_INV_DSTPT	XT_TCP_INV_DSTPT
-#define IPT_TCP_INV_FLAGS	XT_TCP_INV_FLAGS
-#define IPT_TCP_INV_OPTION	XT_TCP_INV_OPTION
-#define IPT_TCP_INV_MASK	XT_TCP_INV_MASK
-
-#define IPT_UDP_INV_SRCPT	XT_UDP_INV_SRCPT
-#define IPT_UDP_INV_DSTPT	XT_UDP_INV_DSTPT
-#define IPT_UDP_INV_MASK	XT_UDP_INV_MASK
-
 /* ICMP matching stuff */
 struct ipt_icmp {
 	u_int8_t type;				/* type to match */
@@ -141,7 +153,7 @@ struct ipt_icmp {
 /* The argument to IPT_SO_GET_INFO */
 struct ipt_getinfo {
 	/* Which table: caller fills this in. */
-	char name[IPT_TABLE_MAXNAMELEN];
+	char name[XT_TABLE_MAXNAMELEN];
 
 	/* Kernel fills these in. */
 	/* Which hook entry points are valid: bitmask */
@@ -163,7 +175,7 @@ struct ipt_getinfo {
 /* The argument to IPT_SO_SET_REPLACE. */
 struct ipt_replace {
 	/* Which table. */
-	char name[IPT_TABLE_MAXNAMELEN];
+	char name[XT_TABLE_MAXNAMELEN];
 
 	/* Which hook entry points are valid: bitmask.  You can't
            change this. */
@@ -191,13 +203,10 @@ struct ipt_replace {
 	struct ipt_entry entries[0];
 };
 
-/* The argument to IPT_SO_ADD_COUNTERS. */
-#define ipt_counters_info xt_counters_info
-
 /* The argument to IPT_SO_GET_ENTRIES. */
 struct ipt_get_entries {
 	/* Which table: user fills this in. */
-	char name[IPT_TABLE_MAXNAMELEN];
+	char name[XT_TABLE_MAXNAMELEN];
 
 	/* User fills this in: total entry size. */
 	unsigned int size;
@@ -206,25 +215,12 @@ struct ipt_get_entries {
 	struct ipt_entry entrytable[0];
 };
 
-/* Standard return verdict, or do jump. */
-#define IPT_STANDARD_TARGET XT_STANDARD_TARGET
-/* Error verdict. */
-#define IPT_ERROR_TARGET XT_ERROR_TARGET
-
 /* Helper functions */
-static __inline__ struct ipt_entry_target *
+static __inline__ struct xt_entry_target *
 ipt_get_target(struct ipt_entry *e)
 {
 	return (void *)e + e->target_offset;
 }
-
-/* fn returns 0 to continue iteration */
-#define IPT_MATCH_ITERATE(e, fn, args...) \
-	XT_MATCH_ITERATE(struct ipt_entry, e, fn, ## args)
-
-/* fn returns 0 to continue iteration */
-#define IPT_ENTRY_ITERATE(entries, size, fn, args...) \
-	XT_ENTRY_ITERATE(struct ipt_entry, entries, size, fn, ## args)
 
 /*
  *	Main firewall chains definitions and global var's definitions.

@@ -1,0 +1,30 @@
+The nfacct match provides the extended accounting infrastructure for iptables.
+You have to use this match together with the standalone user-space utility
+.B nfacct(8)
+.PP
+The only option available for this match is the following:
+.TP
+\fB\-\-nfacct\-name\fP \fIname\fP
+This allows you to specify the existing object name that will be use for
+accounting the traffic that this rule-set is matching.
+.PP
+To use this extension, you have to create an accounting object:
+.IP
+nfacct add http\-traffic
+.PP
+Then, you have to attach it to the accounting object via iptables:
+.IP
+iptables \-I INPUT \-p tcp \-\-sport 80 \-m nfacct \-\-nfacct\-name http\-traffic
+.IP
+iptables \-I OUTPUT \-p tcp \-\-dport 80 \-m nfacct \-\-nfacct\-name http\-traffic
+.PP
+Then, you can check for the amount of traffic that the rules match:
+.IP
+nfacct get http\-traffic
+.IP
+{ pkts = 00000000000000000156, bytes = 00000000000000151786 } = http-traffic;
+.PP
+You can obtain
+.B nfacct(8)
+from http://www.netfilter.org or, alternatively, from the git.netfilter.org
+repository.

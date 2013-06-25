@@ -3,9 +3,6 @@
 
 #include <linux/types.h>
 
-#ifdef __KERNEL__
-#include <linux/if.h>
-#endif
 
 #define XT_PHYSDEV_OP_IN		0x01
 #define XT_PHYSDEV_OP_OUT		0x02

@@ -139,7 +139,7 @@ int command_default(struct iptables_command_state *cs,
 
 		cs->proto_used = 1;
 
-		size = XT_ALIGN(sizeof(struct ip6t_entry_match)) + m->size;
+		size = XT_ALIGN(sizeof(struct xt_entry_match)) + m->size;
 
 		m->m = xtables_calloc(1, size);
 		m->m->u.match_size = size;

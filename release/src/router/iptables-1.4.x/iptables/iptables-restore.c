@@ -56,9 +56,9 @@ static void print_usage(const char *name, const char *version)
 	exit(1);
 }
 
-static struct iptc_handle *create_handle(const char *tablename)
+static struct xtc_handle *create_handle(const char *tablename)
 {
-	struct iptc_handle *handle;
+	struct xtc_handle *handle;
 
 	handle = iptc_init(tablename);
 
@@ -76,7 +76,7 @@ static struct iptc_handle *create_handle(const char *tablename)
 	return handle;
 }
 
-static int parse_counters(char *string, struct ipt_counters *ctr)
+static int parse_counters(char *string, struct xt_counters *ctr)
 {
 	unsigned long long pcnt, bcnt;
 	int ret;
@@ -97,7 +97,7 @@ static int add_argv(char *what) {
 	DEBUGP("add_argv: %s\n", what);
 	if (what && newargc + 1 < ARRAY_SIZE(newargv)) {
 		newargv[newargc] = strdup(what);
-		newargc++;
+		newargv[++newargc] = NULL;
 		return 1;
 	} else {
 		xtables_error(PARAMETER_PROBLEM,
@@ -116,13 +116,14 @@ static void free_argv(void) {
 int
 iptables_restore_main(int argc, char *argv[])
 {
-	struct iptc_handle *handle = NULL;
+	struct xtc_handle *handle = NULL;
 	char buffer[10240];
 	int c;
-	char curtable[IPT_TABLE_MAXNAMELEN + 1];
+	char curtable[XT_TABLE_MAXNAMELEN + 1];
 	FILE *in;
 	int in_table = 0, testing = 0;
 	const char *tablename = NULL;
+	const struct xtc_ops *ops = &iptc_ops;
 
 	line = 0;
 
@@ -197,8 +198,8 @@ iptables_restore_main(int argc, char *argv[])
 		} else if ((strcmp(buffer, "COMMIT\n") == 0) && (in_table)) {
 			if (!testing) {
 				DEBUGP("Calling commit\n");
-				ret = iptc_commit(handle);
-				iptc_free(handle);
+				ret = ops->commit(handle);
+				ops->free(handle);
 				handle = NULL;
 			} else {
 				DEBUGP("Not calling commit, testing\n");
@@ -214,16 +215,16 @@ iptables_restore_main(int argc, char *argv[])
 			if (!table) {
 				xtables_error(PARAMETER_PROBLEM,
 					"%s: line %u table name invalid\n",
-					prog_name, line);
+					xt_params->program_name, line);
 				exit(1);
 			}
-			strncpy(curtable, table, IPT_TABLE_MAXNAMELEN);
-			curtable[IPT_TABLE_MAXNAMELEN] = '\0';
+			strncpy(curtable, table, XT_TABLE_MAXNAMELEN);
+			curtable[XT_TABLE_MAXNAMELEN] = '\0';
 
 			if (tablename && (strcmp(tablename, table) != 0))
 				continue;
 			if (handle)
-				iptc_free(handle);
+				ops->free(handle);
 
 			handle = create_handle(table);
 			if (noflush == 0) {
@@ -250,7 +251,7 @@ iptables_restore_main(int argc, char *argv[])
 			if (!chain) {
 				xtables_error(PARAMETER_PROBLEM,
 					   "%s: line %u chain name invalid\n",
-					   prog_name, line);
+					   xt_params->program_name, line);
 				exit(1);
 			}
 
@@ -260,17 +261,17 @@ iptables_restore_main(int argc, char *argv[])
 					   "(%u chars max)",
 					   chain, XT_EXTENSION_MAXNAMELEN - 1);
 
-			if (iptc_builtin(chain, handle) <= 0) {
-				if (noflush && iptc_is_chain(chain, handle)) {
+			if (ops->builtin(chain, handle) <= 0) {
+				if (noflush && ops->is_chain(chain, handle)) {
 					DEBUGP("Flushing existing user defined chain '%s'\n", chain);
-					if (!iptc_flush_entries(chain, handle))
+					if (!ops->flush_entries(chain, handle))
 						xtables_error(PARAMETER_PROBLEM,
 							   "error flushing chain "
 							   "'%s':%s\n", chain,
 							   strerror(errno));
 				} else {
 					DEBUGP("Creating new chain '%s'\n", chain);
-					if (!iptc_create_chain(chain, handle))
+					if (!ops->create_chain(chain, handle))
 						xtables_error(PARAMETER_PROBLEM,
 							   "error creating chain "
 							   "'%s':%s\n", chain,
@@ -283,12 +284,12 @@ iptables_restore_main(int argc, char *argv[])
 			if (!policy) {
 				xtables_error(PARAMETER_PROBLEM,
 					   "%s: line %u policy invalid\n",
-					   prog_name, line);
+					   xt_params->program_name, line);
 				exit(1);
 			}
 
 			if (strcmp(policy, "-") != 0) {
-				struct ipt_counters count;
+				struct xt_counters count;
 
 				if (counters) {
 					char *ctrs;
@@ -300,20 +301,19 @@ iptables_restore_main(int argc, char *argv[])
 							   "for chain '%s'\n", chain);
 
 				} else {
-					memset(&count, 0,
-					       sizeof(struct ipt_counters));
+					memset(&count, 0, sizeof(count));
 				}
 
 				DEBUGP("Setting policy of chain %s to %s\n",
 					chain, policy);
 
-				if (!iptc_set_policy(chain, policy, &count,
+				if (!ops->set_policy(chain, policy, &count,
 						     handle))
 					xtables_error(OTHER_PROBLEM,
 						"Can't set policy `%s'"
 						" on `%s' line %u: %s\n",
 						policy, chain, line,
-						iptc_strerror(errno));
+						ops->strerror(errno));
 			}
 
 			ret = 1;
@@ -450,13 +450,13 @@ iptables_restore_main(int argc, char *argv[])
 			continue;
 		if (!ret) {
 			fprintf(stderr, "%s: line %u failed\n",
-					prog_name, line);
+					xt_params->program_name, line);
 			exit(1);
 		}
 	}
 	if (in_table) {
 		fprintf(stderr, "%s: COMMIT expected at line %u\n",
-				prog_name, line + 1);
+				xt_params->program_name, line + 1);
 		exit(1);
 	}
 

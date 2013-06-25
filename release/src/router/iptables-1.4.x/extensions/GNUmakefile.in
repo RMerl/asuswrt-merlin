@@ -1,28 +1,29 @@
 # -*- Makefile -*-
 
-top_builddir := @top_builddir@
-builddir     := @builddir@
-top_srcdir  := @top_srcdir@
-srcdir      := @srcdir@
-ksourcedir  := @ksourcedir@
-prefix      := @prefix@
-exec_prefix := @exec_prefix@
-libdir      := @libdir@
-libexecdir  := @libexecdir@
-xtlibdir    := @xtlibdir@
+top_builddir = @top_builddir@
+builddir     = @builddir@
+top_srcdir   = @top_srcdir@
+srcdir       = @srcdir@
+ksourcedir   = @ksourcedir@
+prefix       = @prefix@
+exec_prefix  = @exec_prefix@
+libdir       = @libdir@
+libexecdir   = @libexecdir@
+xtlibdir     = @xtlibdir@
 
-CC             := @CC@
-CCLD           := ${CC}
-CFLAGS         := @CFLAGS@
-CPPFLAGS       := @CPPFLAGS@
-LDFLAGS        := @LDFLAGS@
-regular_CFLAGS := @regular_CFLAGS@
-regular_CPPFLAGS := @regular_CPPFLAGS@
-kinclude_CPPFLAGS := @kinclude_CPPFLAGS@
+CC                 = @CC@
+CCLD               = ${CC}
+CFLAGS             = @CFLAGS@
+CPPFLAGS           = @CPPFLAGS@
+LDFLAGS            = @LDFLAGS@
+regular_CFLAGS     = @regular_CFLAGS@
+regular_CPPFLAGS   = @regular_CPPFLAGS@
+kinclude_CPPFLAGS  = @kinclude_CPPFLAGS@
 
-AM_CFLAGS      := ${regular_CFLAGS}
+AM_CFLAGS       = ${regular_CFLAGS}
 AM_CPPFLAGS     = ${regular_CPPFLAGS} -I${top_builddir}/include -I${top_builddir} -I${top_srcdir}/include ${kinclude_CPPFLAGS}
 AM_DEPFLAGS     = -Wp,-MMD,$(@D)/.$(@F).d,-MT,$@
+AM_LDFLAGS      = @noundef_LDFLAGS@
 
 ifeq (${V},)
 AM_LIBTOOL_SILENT = --silent
@@ -37,9 +38,9 @@ endif
 #
 #	Wildcard module list
 #
-pfx_build_mod := $(patsubst ${srcdir}/libxt_%.c,%,$(wildcard ${srcdir}/libxt_*.c))
-@ENABLE_IPV4_TRUE@ pf4_build_mod := $(patsubst ${srcdir}/libipt_%.c,%,$(wildcard ${srcdir}/libipt_*.c))
-@ENABLE_IPV6_TRUE@ pf6_build_mod := $(patsubst ${srcdir}/libip6t_%.c,%,$(wildcard ${srcdir}/libip6t_*.c))
+pfx_build_mod := $(patsubst ${srcdir}/libxt_%.c,%,$(sort $(wildcard ${srcdir}/libxt_*.c)))
+@ENABLE_IPV4_TRUE@ pf4_build_mod := $(patsubst ${srcdir}/libipt_%.c,%,$(sort $(wildcard ${srcdir}/libipt_*.c)))
+@ENABLE_IPV6_TRUE@ pf6_build_mod := $(patsubst ${srcdir}/libip6t_%.c,%,$(sort $(wildcard ${srcdir}/libip6t_*.c)))
 pfx_build_mod := $(filter-out @blacklist_modules@,${pfx_build_mod})
 pf4_build_mod := $(filter-out @blacklist_modules@,${pf4_build_mod})
 pf6_build_mod := $(filter-out @blacklist_modules@,${pf6_build_mod})
@@ -90,10 +91,14 @@ init%.o: init%.c
 #	Shared libraries
 #
 lib%.so: lib%.oo
-	${AM_VERBOSE_CCLD} ${CCLD} ${AM_LDFLAGS} -shared ${LDFLAGS} -o $@ $<;
+	${AM_VERBOSE_CCLD} ${CCLD} ${AM_LDFLAGS} -shared ${LDFLAGS} -o $@ $< -L../libxtables/.libs -lxtables ${$*_LIBADD};
 
 lib%.oo: ${srcdir}/lib%.c
 	${AM_VERBOSE_CC} ${CC} ${AM_CPPFLAGS} ${AM_DEPFLAGS} ${AM_CFLAGS} -D_INIT=lib$*_init -DPIC -fPIC ${CFLAGS} -o $@ -c $<;
+
+# Need the LIBADDs in iptables/Makefile.am too for libxtables_la_LIBADD
+xt_RATEEST_LIBADD   = -lm
+xt_statistic_LIBADD = -lm
 
 
 #
@@ -185,11 +190,11 @@ initext6.c: .initext6.dd
 #
 #	Manual pages
 #
-ex_matches = $(sort $(shell echo $(1) | LC_ALL=POSIX grep -Eo '\b[[:lower:][:digit:]_]+\b'))
-ex_targets = $(sort $(shell echo $(1) | LC_ALL=POSIX grep -Eo '\b[[:upper:][:digit:]_]+\b'))
+ex_matches = $(shell echo ${1} | LC_ALL=POSIX grep -Eo '\b[[:lower:][:digit:]_]+\b')
+ex_targets = $(shell echo ${1} | LC_ALL=POSIX grep -Eo '\b[[:upper:][:digit:]_]+\b')
 man_run    = \
 	${AM_VERBOSE_GEN} \
-	for ext in $(1); do \
+	for ext in $(sort ${1}); do \
 		f="${srcdir}/libxt_$$ext.man"; \
 		cf="${srcdir}/libxt_$$ext.c"; \
 		if [ -f "$$f" ] && grep -Eq "$(3)|NFPROTO_UNSPEC" "$$cf"; then \

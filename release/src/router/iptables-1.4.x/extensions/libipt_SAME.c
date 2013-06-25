@@ -9,7 +9,8 @@ enum {
 	O_TO_ADDR = 0,
 	O_NODST,
 	O_RANDOM,
-	F_RANDOM = 1 << O_RANDOM,
+	F_TO_ADDR = 1 << O_TO_ADDR,
+	F_RANDOM  = 1 << O_RANDOM,
 };
 
 static void SAME_help(void)
@@ -73,7 +74,6 @@ static void parse_to(const char *orig_arg, struct nf_nat_range *range)
 static void SAME_parse(struct xt_option_call *cb)
 {
 	struct ipt_same_info *mr = cb->data;
-	unsigned int count;
 
 	xtables_option_parse(cb);
 	switch (cb->entry->id) {
@@ -84,20 +84,23 @@ static void SAME_parse(struct xt_option_call *cb)
 				   "is %i ranges.\n",
 				   IPT_SAME_MAX_RANGE);
 		parse_to(cb->arg, &mr->range[mr->rangesize]);
-		/* WTF do we need this for? */
-		if (cb->xflags & F_RANDOM)
-			mr->range[mr->rangesize].flags 
-				|= IP_NAT_RANGE_PROTO_RANDOM;
 		mr->rangesize++;
 		break;
 	case O_NODST:
 		mr->info |= IPT_SAME_NODST;
 		break;
-	case O_RANDOM:
-		for (count=0; count < mr->rangesize; count++)
-			mr->range[count].flags |= IP_NAT_RANGE_PROTO_RANDOM;
-		break;
 	}
+}
+
+static void SAME_fcheck(struct xt_fcheck_call *cb)
+{
+	static const unsigned int f = F_TO_ADDR | F_RANDOM;
+	struct ipt_same_info *mr = cb->data;
+	unsigned int count;
+
+	if ((cb->xflags & f) == f)
+		for (count = 0; count < mr->rangesize; ++count)
+			mr->range[count].flags |= IP_NAT_RANGE_PROTO_RANDOM;
 }
 
 static void SAME_print(const void *ip, const struct xt_entry_target *target,
@@ -166,6 +169,7 @@ static struct xtables_target same_tg_reg = {
 	.userspacesize	= XT_ALIGN(sizeof(struct ipt_same_info)),
 	.help		= SAME_help,
 	.x6_parse	= SAME_parse,
+	.x6_fcheck	= SAME_fcheck,
 	.print		= SAME_print,
 	.save		= SAME_save,
 	.x6_options	= SAME_opts,

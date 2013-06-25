@@ -41,7 +41,7 @@ static void realm_init(struct xt_entry_match *m)
 
 static void realm_parse(struct xt_option_call *cb)
 {
-	struct ipt_realm_info *realminfo = cb->data;
+	struct xt_realm_info *realminfo = cb->data;
 	int id;
 	char *end;
 
@@ -87,7 +87,7 @@ print_realm(unsigned long id, unsigned long mask, int numeric)
 static void realm_print(const void *ip, const struct xt_entry_match *match,
                         int numeric)
 {
-	const struct ipt_realm_info *ri = (const void *)match->data;
+	const struct xt_realm_info *ri = (const void *)match->data;
 
 	if (ri->invert)
 		printf(" !");
@@ -98,7 +98,7 @@ static void realm_print(const void *ip, const struct xt_entry_match *match,
 
 static void realm_save(const void *ip, const struct xt_entry_match *match)
 {
-	const struct ipt_realm_info *ri = (const void *)match->data;
+	const struct xt_realm_info *ri = (const void *)match->data;
 
 	if (ri->invert)
 		printf(" !");
@@ -111,8 +111,8 @@ static struct xtables_match realm_mt_reg = {
 	.name		= "realm",
 	.version	= XTABLES_VERSION,
 	.family		= NFPROTO_IPV4,
-	.size		= XT_ALIGN(sizeof(struct ipt_realm_info)),
-	.userspacesize	= XT_ALIGN(sizeof(struct ipt_realm_info)),
+	.size		= XT_ALIGN(sizeof(struct xt_realm_info)),
+	.userspacesize	= XT_ALIGN(sizeof(struct xt_realm_info)),
 	.help		= realm_help,
 	.init		= realm_init,
 	.print		= realm_print,

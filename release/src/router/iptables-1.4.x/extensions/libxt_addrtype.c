@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <xtables.h>
-#include <linux/netfilter_ipv4/ipt_addrtype.h>
+#include <linux/netfilter/xt_addrtype.h>
 
 enum {
 	O_SRC_TYPE = 0,
@@ -98,7 +98,7 @@ static void parse_types(const char *arg, uint16_t *mask)
 	
 static void addrtype_parse_v0(struct xt_option_call *cb)
 {
-	struct ipt_addrtype_info *info = cb->data;
+	struct xt_addrtype_info *info = cb->data;
 
 	xtables_option_parse(cb);
 	switch (cb->entry->id) {
@@ -117,25 +117,25 @@ static void addrtype_parse_v0(struct xt_option_call *cb)
 
 static void addrtype_parse_v1(struct xt_option_call *cb)
 {
-	struct ipt_addrtype_info_v1 *info = cb->data;
+	struct xt_addrtype_info_v1 *info = cb->data;
 
 	xtables_option_parse(cb);
 	switch (cb->entry->id) {
 	case O_SRC_TYPE:
 		parse_types(cb->arg, &info->source);
 		if (cb->invert)
-			info->flags |= IPT_ADDRTYPE_INVERT_SOURCE;
+			info->flags |= XT_ADDRTYPE_INVERT_SOURCE;
 		break;
 	case O_DST_TYPE:
 		parse_types(cb->arg, &info->dest);
 		if (cb->invert)
-			info->flags |= IPT_ADDRTYPE_INVERT_DEST;
+			info->flags |= XT_ADDRTYPE_INVERT_DEST;
 		break;
 	case O_LIMIT_IFACE_IN:
-		info->flags |= IPT_ADDRTYPE_LIMIT_IFACE_IN;
+		info->flags |= XT_ADDRTYPE_LIMIT_IFACE_IN;
 		break;
 	case O_LIMIT_IFACE_OUT:
-		info->flags |= IPT_ADDRTYPE_LIMIT_IFACE_OUT;
+		info->flags |= XT_ADDRTYPE_LIMIT_IFACE_OUT;
 		break;
 	}
 }
@@ -162,8 +162,7 @@ static void print_types(uint16_t mask)
 static void addrtype_print_v0(const void *ip, const struct xt_entry_match *match,
                               int numeric)
 {
-	const struct ipt_addrtype_info *info = 
-		(struct ipt_addrtype_info *) match->data;
+	const struct xt_addrtype_info *info = (const void *)match->data;
 
 	printf(" ADDRTYPE match");
 	if (info->source) {
@@ -183,34 +182,30 @@ static void addrtype_print_v0(const void *ip, const struct xt_entry_match *match
 static void addrtype_print_v1(const void *ip, const struct xt_entry_match *match,
                               int numeric)
 {
-	const struct ipt_addrtype_info_v1 *info = 
-		(struct ipt_addrtype_info_v1 *) match->data;
+	const struct xt_addrtype_info_v1 *info = (const void *)match->data;
 
 	printf(" ADDRTYPE match");
 	if (info->source) {
 		printf(" src-type ");
-		if (info->flags & IPT_ADDRTYPE_INVERT_SOURCE)
+		if (info->flags & XT_ADDRTYPE_INVERT_SOURCE)
 			printf("!");
 		print_types(info->source);
 	}
 	if (info->dest) {
 		printf(" dst-type ");
-		if (info->flags & IPT_ADDRTYPE_INVERT_DEST)
+		if (info->flags & XT_ADDRTYPE_INVERT_DEST)
 			printf("!");
 		print_types(info->dest);
 	}
-	if (info->flags & IPT_ADDRTYPE_LIMIT_IFACE_IN) {
+	if (info->flags & XT_ADDRTYPE_LIMIT_IFACE_IN)
 		printf(" limit-in");
-	}
-	if (info->flags & IPT_ADDRTYPE_LIMIT_IFACE_OUT) {
+	if (info->flags & XT_ADDRTYPE_LIMIT_IFACE_OUT)
 		printf(" limit-out");
-	}
 }
 
 static void addrtype_save_v0(const void *ip, const struct xt_entry_match *match)
 {
-	const struct ipt_addrtype_info *info =
-		(struct ipt_addrtype_info *) match->data;
+	const struct xt_addrtype_info *info = (const void *)match->data;
 
 	if (info->source) {
 		if (info->invert_source)
@@ -228,27 +223,24 @@ static void addrtype_save_v0(const void *ip, const struct xt_entry_match *match)
 
 static void addrtype_save_v1(const void *ip, const struct xt_entry_match *match)
 {
-	const struct ipt_addrtype_info_v1 *info =
-		(struct ipt_addrtype_info_v1 *) match->data;
+	const struct xt_addrtype_info_v1 *info = (const void *)match->data;
 
 	if (info->source) {
-		if (info->flags & IPT_ADDRTYPE_INVERT_SOURCE)
+		if (info->flags & XT_ADDRTYPE_INVERT_SOURCE)
 			printf(" !");
 		printf(" --src-type ");
 		print_types(info->source);
 	}
 	if (info->dest) {
-		if (info->flags & IPT_ADDRTYPE_INVERT_DEST)
+		if (info->flags & XT_ADDRTYPE_INVERT_DEST)
 			printf(" !");
 		printf(" --dst-type ");
 		print_types(info->dest);
 	}
-	if (info->flags & IPT_ADDRTYPE_LIMIT_IFACE_IN) {
+	if (info->flags & XT_ADDRTYPE_LIMIT_IFACE_IN)
 		printf(" --limit-iface-in");
-	}
-	if (info->flags & IPT_ADDRTYPE_LIMIT_IFACE_OUT) {
+	if (info->flags & XT_ADDRTYPE_LIMIT_IFACE_OUT)
 		printf(" --limit-iface-out");
-	}
 }
 
 static const struct xt_option_entry addrtype_opts_v0[] = {
@@ -276,8 +268,8 @@ static struct xtables_match addrtype_mt_reg[] = {
 		.name          = "addrtype",
 		.version       = XTABLES_VERSION,
 		.family        = NFPROTO_IPV4,
-		.size          = XT_ALIGN(sizeof(struct ipt_addrtype_info)),
-		.userspacesize = XT_ALIGN(sizeof(struct ipt_addrtype_info)),
+		.size          = XT_ALIGN(sizeof(struct xt_addrtype_info)),
+		.userspacesize = XT_ALIGN(sizeof(struct xt_addrtype_info)),
 		.help          = addrtype_help_v0,
 		.print         = addrtype_print_v0,
 		.save          = addrtype_save_v0,
@@ -289,9 +281,9 @@ static struct xtables_match addrtype_mt_reg[] = {
 		.name          = "addrtype",
 		.revision      = 1,
 		.version       = XTABLES_VERSION,
-		.family        = NFPROTO_IPV4,
-		.size          = XT_ALIGN(sizeof(struct ipt_addrtype_info_v1)),
-		.userspacesize = XT_ALIGN(sizeof(struct ipt_addrtype_info_v1)),
+		.family        = NFPROTO_UNSPEC,
+		.size          = XT_ALIGN(sizeof(struct xt_addrtype_info_v1)),
+		.userspacesize = XT_ALIGN(sizeof(struct xt_addrtype_info_v1)),
 		.help          = addrtype_help_v1,
 		.print         = addrtype_print_v1,
 		.save          = addrtype_save_v1,

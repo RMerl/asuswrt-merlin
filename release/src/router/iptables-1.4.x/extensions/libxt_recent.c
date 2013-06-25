@@ -10,6 +10,7 @@ enum {
 	O_UPDATE,
 	O_REMOVE,
 	O_SECONDS,
+	O_REAP,
 	O_HITCOUNT,
 	O_RTTL,
 	O_NAME,
@@ -19,6 +20,7 @@ enum {
 	F_RCHECK = 1 << O_RCHECK,
 	F_UPDATE = 1 << O_UPDATE,
 	F_REMOVE = 1 << O_REMOVE,
+	F_SECONDS = 1 << O_SECONDS,
 	F_ANY_OP = F_SET | F_RCHECK | F_UPDATE | F_REMOVE,
 };
 
@@ -33,7 +35,9 @@ static const struct xt_option_entry recent_opts[] = {
 	{.name = "remove", .id = O_REMOVE, .type = XTTYPE_NONE,
 	 .excl = F_ANY_OP, .flags = XTOPT_INVERT},
 	{.name = "seconds", .id = O_SECONDS, .type = XTTYPE_UINT32,
-	 .flags = XTOPT_PUT, XTOPT_POINTER(s, seconds)},
+	 .flags = XTOPT_PUT, XTOPT_POINTER(s, seconds), .min = 1},
+	{.name = "reap", .id = O_REAP, .type = XTTYPE_NONE,
+	 .also = F_SECONDS },
 	{.name = "hitcount", .id = O_HITCOUNT, .type = XTTYPE_UINT32,
 	 .flags = XTOPT_PUT, XTOPT_POINTER(s, hit_count)},
 	{.name = "rttl", .id = O_RTTL, .type = XTTYPE_NONE,
@@ -57,6 +61,8 @@ static void recent_help(void)
 "    --seconds seconds           For check and update commands above.\n"
 "                                Specifies that the match will only occur if source address last seen within\n"
 "                                the last 'seconds' seconds.\n"
+"    --reap                      Purge entries older then 'seconds'.\n"
+"                                Can only be used in conjunction with the seconds option.\n"
 "    --hitcount hits             For check and update commands above.\n"
 "                                Specifies that the match will only occur if source address seen hits times.\n"
 "                                May be used in conjunction with the seconds option.\n"
@@ -117,11 +123,16 @@ static void recent_parse(struct xt_option_call *cb)
 	case O_RDEST:
 		info->side = XT_RECENT_DEST;
 		break;
+	case O_REAP:
+		info->check_set |= XT_RECENT_REAP;
+		break;
 	}
 }
 
 static void recent_check(struct xt_fcheck_call *cb)
 {
+	struct xt_recent_mtinfo *info = cb->data;
+
 	if (!(cb->xflags & F_ANY_OP))
 		xtables_error(PARAMETER_PROBLEM,
 			"recent: you must specify one of `--set', `--rcheck' "
@@ -146,6 +157,8 @@ static void recent_print(const void *ip, const struct xt_entry_match *match,
 	if (info->check_set & XT_RECENT_REMOVE)
 		printf(" REMOVE");
 	if(info->seconds) printf(" seconds: %d", info->seconds);
+	if (info->check_set & XT_RECENT_REAP)
+		printf(" reap");
 	if(info->hit_count) printf(" hit_count: %d", info->hit_count);
 	if (info->check_set & XT_RECENT_TTL)
 		printf(" TTL-Match");
@@ -172,6 +185,8 @@ static void recent_save(const void *ip, const struct xt_entry_match *match)
 	if (info->check_set & XT_RECENT_REMOVE)
 		printf(" --remove");
 	if(info->seconds) printf(" --seconds %d", info->seconds);
+	if (info->check_set & XT_RECENT_REAP)
+		printf(" --reap");
 	if(info->hit_count) printf(" --hitcount %d", info->hit_count);
 	if (info->check_set & XT_RECENT_TTL)
 		printf(" --rttl");

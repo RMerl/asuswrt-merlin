@@ -174,19 +174,21 @@ static void SNAT_parse(struct xt_option_call *cb)
 					   "SNAT: Multiple --to-source not supported");
 		}
 		*cb->target = parse_to(cb->arg, portok, info);
-		/* WTF do we need this for?? */
-		if (cb->xflags & F_RANDOM)
-			info->mr.range[0].flags |= IP_NAT_RANGE_PROTO_RANDOM;
 		cb->xflags |= F_X_TO_SRC;
-		break;
-	case O_RANDOM:
-		if (cb->xflags & F_TO_SRC)
-			info->mr.range[0].flags |= IP_NAT_RANGE_PROTO_RANDOM;
 		break;
 	case O_PERSISTENT:
 		info->mr.range[0].flags |= IP_NAT_RANGE_PERSISTENT;
 		break;
 	}
+}
+
+static void SNAT_fcheck(struct xt_fcheck_call *cb)
+{
+	static const unsigned int f = F_TO_SRC | F_RANDOM;
+	struct nf_nat_multi_range *mr = cb->data;
+
+	if ((cb->xflags & f) == f)
+		mr->range[0].flags |= IP_NAT_RANGE_PROTO_RANDOM;
 }
 
 static void print_range(const struct nf_nat_range *r)
@@ -248,6 +250,7 @@ static struct xtables_target snat_tg_reg = {
 	.userspacesize	= XT_ALIGN(sizeof(struct nf_nat_multi_range)),
 	.help		= SNAT_help,
 	.x6_parse	= SNAT_parse,
+	.x6_fcheck	= SNAT_fcheck,
 	.print		= SNAT_print,
 	.save		= SNAT_save,
 	.x6_options	= SNAT_opts,

@@ -35,29 +35,26 @@ typedef unsigned int socklen_t;
 #define HOOK_LOCAL_OUT		NF_IP6_LOCAL_OUT
 #define HOOK_POST_ROUTING	NF_IP6_POST_ROUTING
 
-#define STRUCT_ENTRY_TARGET	struct ip6t_entry_target
+#define STRUCT_ENTRY_TARGET	struct xt_entry_target
 #define STRUCT_ENTRY		struct ip6t_entry
-#define STRUCT_ENTRY_MATCH	struct ip6t_entry_match
+#define STRUCT_ENTRY_MATCH	struct xt_entry_match
 #define STRUCT_GETINFO		struct ip6t_getinfo
 #define STRUCT_GET_ENTRIES	struct ip6t_get_entries
-#define STRUCT_COUNTERS		struct ip6t_counters
-#define STRUCT_COUNTERS_INFO	struct ip6t_counters_info
-#define STRUCT_STANDARD_TARGET	struct ip6t_standard_target
+#define STRUCT_COUNTERS		struct xt_counters
+#define STRUCT_COUNTERS_INFO	struct xt_counters_info
+#define STRUCT_STANDARD_TARGET	struct xt_standard_target
 #define STRUCT_REPLACE		struct ip6t_replace
 
-#define STRUCT_TC_HANDLE	struct ip6tc_handle
-#define xtc_handle		ip6tc_handle
-
 #define ENTRY_ITERATE		IP6T_ENTRY_ITERATE
-#define TABLE_MAXNAMELEN	IP6T_TABLE_MAXNAMELEN
-#define FUNCTION_MAXNAMELEN	IP6T_FUNCTION_MAXNAMELEN
+#define TABLE_MAXNAMELEN	XT_TABLE_MAXNAMELEN
+#define FUNCTION_MAXNAMELEN	XT_FUNCTION_MAXNAMELEN
 
 #define GET_TARGET		ip6t_get_target
 
-#define ERROR_TARGET		IP6T_ERROR_TARGET
+#define ERROR_TARGET		XT_ERROR_TARGET
 #define NUMHOOKS		NF_IP6_NUMHOOKS
 
-#define IPT_CHAINLABEL		ip6t_chainlabel
+#define IPT_CHAINLABEL		xt_chainlabel
 
 #define TC_DUMP_ENTRIES		dump_entries6
 #define TC_IS_CHAIN		ip6tc_is_chain
@@ -91,6 +88,7 @@ typedef unsigned int socklen_t;
 #define TC_STRERROR		ip6tc_strerror
 #define TC_NUM_RULES		ip6tc_num_rules
 #define TC_GET_RULE		ip6tc_get_rule
+#define TC_OPS			ip6tc_ops
 
 #define TC_AF			AF_INET6
 #define TC_IPPROTO		IPPROTO_IPV6
@@ -101,14 +99,14 @@ typedef unsigned int socklen_t;
 #define SO_GET_ENTRIES		IP6T_SO_GET_ENTRIES
 #define SO_GET_VERSION		IP6T_SO_GET_VERSION
 
-#define STANDARD_TARGET		IP6T_STANDARD_TARGET
+#define STANDARD_TARGET		XT_STANDARD_TARGET
 #define LABEL_RETURN		IP6TC_LABEL_RETURN
 #define LABEL_ACCEPT		IP6TC_LABEL_ACCEPT
 #define LABEL_DROP		IP6TC_LABEL_DROP
 #define LABEL_QUEUE		IP6TC_LABEL_QUEUE
 
 #define ALIGN			XT_ALIGN
-#define RETURN			IP6T_RETURN
+#define RETURN			XT_RETURN
 
 #include "libiptc.c"
 
@@ -131,12 +129,12 @@ ipv6_prefix_length(const struct in6_addr *a)
 }
 
 static int
-dump_entry(struct ip6t_entry *e, struct ip6tc_handle *const handle)
+dump_entry(struct ip6t_entry *e, struct xtc_handle *const handle)
 {
 	size_t i;
 	char buf[40];
 	int len;
-	struct ip6t_entry_target *t;
+	struct xt_entry_target *t;
 	
 	printf("Entry %u (%lu):\n", iptcb_entry2index(handle, e),
 	       iptcb_entry2offset(handle, e));
@@ -185,18 +183,18 @@ dump_entry(struct ip6t_entry *e, struct ip6tc_handle *const handle)
 
 	t = ip6t_get_target(e);
 	printf("Target name: `%s' [%u]\n", t->u.user.name, t->u.target_size);
-	if (strcmp(t->u.user.name, IP6T_STANDARD_TARGET) == 0) {
+	if (strcmp(t->u.user.name, XT_STANDARD_TARGET) == 0) {
 		const unsigned char *data = t->data;
 		int pos = *(const int *)data;
 		if (pos < 0)
 			printf("verdict=%s\n",
 			       pos == -NF_ACCEPT-1 ? "NF_ACCEPT"
 			       : pos == -NF_DROP-1 ? "NF_DROP"
-			       : pos == IP6T_RETURN ? "RETURN"
+			       : pos == XT_RETURN ? "RETURN"
 			       : "UNKNOWN");
 		else
 			printf("verdict=%u\n", pos);
-	} else if (strcmp(t->u.user.name, IP6T_ERROR_TARGET) == 0)
+	} else if (strcmp(t->u.user.name, XT_ERROR_TARGET) == 0)
 		printf("error=`%s'\n", t->data);
 
 	printf("\n");
@@ -241,7 +239,7 @@ is_same(const STRUCT_ENTRY *a, const STRUCT_ENTRY *b,
 	mptr = matchmask + sizeof(STRUCT_ENTRY);
 	if (IP6T_MATCH_ITERATE(a, match_different, a->elems, b->elems, &mptr))
 		return NULL;
-	mptr += XT_ALIGN(sizeof(struct ip6t_entry_target));
+	mptr += XT_ALIGN(sizeof(struct xt_entry_target));
 
 	return mptr;
 }

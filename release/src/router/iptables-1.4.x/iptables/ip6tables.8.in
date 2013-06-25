@@ -250,7 +250,11 @@ But IPv6 extension headers except \fBesp\fP are not allowed.
 \fBesp\fP and \fBipv6\-nonext\fP
 can be used with Kernel version 2.6.11 or later.
 A "!" argument before the protocol inverts the
-test.  The number zero is equivalent to \fBall\fP. "\fBall\fP"
+test.  The number zero is equivalent to \fBall\fP, which means that you cannot
+test the protocol field for the value 0 directly. To match on a HBH header,
+even if it were the last, you cannot use \fB\-p 0\fP, but always need
+\fB\-m hbh\fP.
+"\fBall\fP"
 will match with all protocols and is taken as default when this
 option is omitted.
 .TP
@@ -357,15 +361,19 @@ corresponding to that rule's position in the chain.
 When adding or inserting rules into a chain, use \fIcommand\fP
 to load any necessary modules (targets, match extensions, etc).
 .SH MATCH EXTENSIONS
-ip6tables can use extended packet matching modules.  These are loaded
-in two ways: implicitly, when \fB\-p\fP or \fB\-\-protocol\fP
-is specified, or with the \fB\-m\fP or \fB\-\-match\fP
+.PP
+ip6tables can use extended packet matching modules
+with the \fB\-m\fP or \fB\-\-match\fP
 options, followed by the matching module name; after these, various
 extra command line options become available, depending on the specific
 module.  You can specify multiple extended match modules in one line,
 and you can use the \fB\-h\fP or \fB\-\-help\fP
 options after the module has been specified to receive help specific
 to that module.
+.PP
+If the \fB\-p\fP or \fB\-\-protocol\fP was specified and if and only if an
+unknown option is encountered, ip6tables will try load a match module of the
+same name as the protocol, to try making the option available.
 .\" @MATCH@
 .SH TARGET EXTENSIONS
 ip6tables can use extended target modules: the following are included

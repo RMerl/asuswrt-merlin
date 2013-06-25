@@ -152,7 +152,7 @@ static void NFQUEUE_save_v2(const void *ip, const struct xt_entry_target *target
 	NFQUEUE_save_v1(ip, target);
 
 	if (info->bypass)
-		printf("--queue-bypass ");
+		printf(" --queue-bypass");
 }
 
 static void NFQUEUE_init_v1(struct xt_entry_target *t)
