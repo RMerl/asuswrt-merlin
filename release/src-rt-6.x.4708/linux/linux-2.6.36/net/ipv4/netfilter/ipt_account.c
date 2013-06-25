@@ -627,7 +627,7 @@ checkentry(
       up(&ipt_account_mutex);
 #endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35)
-      return -EINVAL;
+      return 0;
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
       return true;
 #else
