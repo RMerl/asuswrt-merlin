@@ -8,3 +8,4 @@ config.status
 pptpctrl
 pptpd
 config.h
+autom4te.cache

@@ -1,0 +1,10 @@
+*.o
+*.a
+.deps
+config.h
+config.log
+config.status
+Makefile
+autom4te.cache
+include/iperf-int.h
+src/iperf

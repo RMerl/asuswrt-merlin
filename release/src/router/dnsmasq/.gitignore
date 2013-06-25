@@ -1,4 +1,7 @@
-*.o
 src/dnsmasq
 src/.configured
-
+src/*.o
+src/*.mo
+src/dnsmasq.pot
+contrib/wrt/dhcp_lease_time
+contrib/wrt/dhcp_release

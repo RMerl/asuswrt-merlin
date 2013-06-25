@@ -1,11 +1,14 @@
+*.d
+*.dd
+*.oo
 *.a
 *.la
 *.lo
 *.so
 *.o
-.deps/
+.deps
 .dirstamp
-.libs/
+.libs
 Makefile
 Makefile.in
 
@@ -13,9 +16,12 @@ Makefile.in
 /include/iptables/internal.h
 
 /aclocal.m4
-/autom4te.cache/
-/build-aux/
-/config.*
+/autom4te*.cache
+/config.guess
+/config.h*
+/config.log
+/config.status
+/config.sub
 /configure
 /libtool
 /stamp-h1
