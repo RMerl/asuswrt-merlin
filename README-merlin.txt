@@ -27,6 +27,8 @@ Supported devices are:
  * RT-N66U and RT-N66R
  * RT-AC66U and RT-AC66R
 
+Experimental support for:
+ * RT-AC56U
 
 
 Features
@@ -440,13 +442,21 @@ History
 3.0.0.4.372.30 Beta 1:
    - NEW: Merged with 372 (code from the arm environment), with
           some fixes to make it build properly on a mipsel router.
+   - NEW: RT-AC56U support (still beta).
+   - CHANGED: Updated iptables-1.4.x to 1.4.14 (RT-AC56U)
    - CHANGED: Brought back the Connection page under System Logs
+   - CHANGED: Updated e2fsprogs to 1.42.7.  Amongst other things
+              this new version is more memory-efficient on large
+              filesystems.
    - FIXED: Reapply layout fixes to Guest network and DHCP page (were lost
             in a recent webui update)
    - FIXED: JFFS2 could get reformated again at each subsequent reboots.
    - FIXED: Devices with a NetBIOS name of 15 chars long would have their
             name merged with the next device's.
    - FIXED: Empty Site Survey list if there was only one AP found
+   - FIXED: Saved settings might fail to restore if they contained 
+            OpenVPN or SSHD keys with CRLF line endings.
+   - FIXED: Numerous bugs in ipt_account for Kernel 2.6.36 (RT-AC56U)
 
 
 3.0.0.4.354.29 Beta 1:
