@@ -1,0 +1,218 @@
+#
+# Library configuration
+#
+
+config BINARY_PRINTF
+	def_bool n
+
+menu "Library routines"
+
+config RAID6_PQ
+	tristate
+
+config BITREVERSE
+	tristate
+
+config RATIONAL
+	boolean
+
+config GENERIC_FIND_FIRST_BIT
+	bool
+
+config GENERIC_FIND_NEXT_BIT
+	bool
+
+config GENERIC_FIND_LAST_BIT
+	bool
+	default y
+
+config CRC_CCITT
+	tristate "CRC-CCITT functions"
+	help
+	  This option is provided for the case where no in-kernel-tree
+	  modules require CRC-CCITT functions, but a module built outside
+	  the kernel tree does. Such modules that use library CRC-CCITT
+	  functions require M here.
+
+config CRC16
+	tristate "CRC16 functions"
+	help
+	  This option is provided for the case where no in-kernel-tree
+	  modules require CRC16 functions, but a module built outside
+	  the kernel tree does. Such modules that use library CRC16
+	  functions require M here.
+
+config CRC_T10DIF
+	tristate "CRC calculation for the T10 Data Integrity Field"
+	help
+	  This option is only needed if a module that's not in the
+	  kernel tree needs to calculate CRC checks for use with the
+	  SCSI data integrity subsystem.
+
+config CRC_ITU_T
+	tristate "CRC ITU-T V.41 functions"
+	help
+	  This option is provided for the case where no in-kernel-tree
+	  modules require CRC ITU-T V.41 functions, but a module built outside
+	  the kernel tree does. Such modules that use library CRC ITU-T V.41
+	  functions require M here.
+
+config CRC32
+	tristate "CRC32 functions"
+	default y
+	select BITREVERSE
+	help
+	  This option is provided for the case where no in-kernel-tree
+	  modules require CRC32 functions, but a module built outside the
+	  kernel tree does. Such modules that use library CRC32 functions
+	  require M here.
+
+config CRC7
+	tristate "CRC7 functions"
+	help
+	  This option is provided for the case where no in-kernel-tree
+	  modules require CRC7 functions, but a module built outside
+	  the kernel tree does. Such modules that use library CRC7
+	  functions require M here.
+
+config LIBCRC32C
+	tristate "CRC32c (Castagnoli, et al) Cyclic Redundancy-Check"
+	select CRYPTO
+	select CRYPTO_CRC32C
+	help
+	  This option is provided for the case where no in-kernel-tree
+	  modules require CRC32c functions, but a module built outside the
+	  kernel tree does. Such modules that use library CRC32c functions
+	  require M here.  See Castagnoli93.
+	  Module will be libcrc32c.
+
+config AUDIT_GENERIC
+	bool
+	depends on AUDIT && !AUDIT_ARCH
+	default y
+
+#
+# compression support is select'ed if needed
+#
+config ZLIB_INFLATE
+	tristate
+
+config ZLIB_DEFLATE
+	tristate
+
+config LZO_COMPRESS
+	tristate
+
+config LZO_DECOMPRESS
+	tristate
+
+source "lib/xz/Kconfig"
+#
+# These all provide a common interface (hence the apparent duplication with
+# ZLIB_INFLATE; DECOMPRESS_GZIP is just a wrapper.)
+#
+config DECOMPRESS_GZIP
+	select ZLIB_INFLATE
+	tristate
+
+config DECOMPRESS_BZIP2
+	tristate
+
+config DECOMPRESS_LZMA
+	tristate
+
+config DECOMPRESS_XZ
+	select XZ_DEC
+	tristate
+
+config DECOMPRESS_LZO
+	select LZO_DECOMPRESS
+	tristate
+
+#
+# Generic allocator support is selected if needed
+#
+config GENERIC_ALLOCATOR
+	boolean
+
+#
+# reed solomon support is select'ed if needed
+#
+config REED_SOLOMON
+	tristate
+	
+config REED_SOLOMON_ENC8
+	boolean
+
+config REED_SOLOMON_DEC8
+	boolean
+
+config REED_SOLOMON_ENC16
+	boolean
+
+config REED_SOLOMON_DEC16
+	boolean
+
+#
+# Textsearch support is select'ed if needed
+#
+config TEXTSEARCH
+	boolean
+
+config TEXTSEARCH_KMP
+	tristate
+
+config TEXTSEARCH_BM
+	tristate
+
+config TEXTSEARCH_FSM
+	tristate
+
+config BTREE
+	boolean
+
+config HAS_IOMEM
+	boolean
+	depends on !NO_IOMEM
+	default y
+
+config HAS_IOPORT
+	boolean
+	depends on HAS_IOMEM && !NO_IOPORT
+	default y
+
+config HAS_DMA
+	boolean
+	depends on !NO_DMA
+	default y
+
+config CHECK_SIGNATURE
+	bool
+
+config CPUMASK_OFFSTACK
+	bool "Force CPU masks off stack" if DEBUG_PER_CPU_MAPS
+	help
+	  Use dynamic allocation for cpumask_var_t, instead of putting
+	  them on the stack.  This is a bit more expensive, but avoids
+	  stack overflow.
+
+config DISABLE_OBSOLETE_CPUMASK_FUNCTIONS
+       bool "Disable obsolete cpumask functions" if DEBUG_PER_CPU_MAPS
+       depends on EXPERIMENTAL && BROKEN
+
+#
+# Netlink attribute parsing support is select'ed if needed
+#
+config NLATTR
+	bool
+
+#
+# Generic 64-bit atomic support is selected if needed
+#
+config GENERIC_ATOMIC64
+       bool
+
+config LRU_CACHE
+	tristate
+
+endmenu

@@ -1,0 +1,10 @@
+menu "Broadcom Flash Devices Support"
+
+if MTD
+
+source "drivers/mtd/bcm947xx/devices/Kconfig"
+
+source "drivers/mtd/bcm947xx/nand/Kconfig"
+
+endif # MTD
+endmenu

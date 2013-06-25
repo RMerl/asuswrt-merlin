@@ -1,0 +1,86 @@
+menu "DCCP CCIDs Configuration (EXPERIMENTAL)"
+	depends on EXPERIMENTAL
+
+config IP_DCCP_CCID2_DEBUG
+	bool "CCID-2 debugging messages"
+	---help---
+	  Enable CCID-2 specific debugging messages.
+
+	  The debugging output can additionally be toggled by setting the
+	  ccid2_debug parameter to 0 or 1.
+
+	  If in doubt, say N.
+
+config IP_DCCP_CCID3
+	bool "CCID-3 (TCP-Friendly) (EXPERIMENTAL)"
+	def_bool y if (IP_DCCP = y || IP_DCCP = m)
+	---help---
+	  CCID-3 denotes TCP-Friendly Rate Control (TFRC), an equation-based
+	  rate-controlled congestion control mechanism.  TFRC is designed to
+	  be reasonably fair when competing for bandwidth with TCP-like flows,
+	  where a flow is "reasonably fair" if its sending rate is generally
+	  within a factor of two of the sending rate of a TCP flow under the
+	  same conditions.  However, TFRC has a much lower variation of
+	  throughput over time compared with TCP, which makes CCID-3 more
+	  suitable than CCID-2 for applications such streaming media where a
+	  relatively smooth sending rate is of importance.
+
+	  CCID-3 is further described in RFC 4342,
+	  http://www.ietf.org/rfc/rfc4342.txt
+
+	  The TFRC congestion control algorithms were initially described in
+	  RFC 5348.
+
+	  This text was extracted from RFC 4340 (sec. 10.2),
+	  http://www.ietf.org/rfc/rfc4340.txt
+
+	  If in doubt, say N.
+
+config IP_DCCP_CCID3_DEBUG
+	bool "CCID-3 debugging messages"
+	depends on IP_DCCP_CCID3
+	---help---
+	  Enable CCID-3 specific debugging messages.
+
+	  The debugging output can additionally be toggled by setting the
+	  ccid3_debug parameter to 0 or 1.
+
+	  If in doubt, say N.
+
+config IP_DCCP_CCID3_RTO
+	  int "Use higher bound for nofeedback timer"
+	  default 100
+	  depends on IP_DCCP_CCID3 && EXPERIMENTAL
+	  ---help---
+	    Use higher lower bound for nofeedback timer expiration.
+
+	    The TFRC nofeedback timer normally expires after the maximum of 4
+	    RTTs and twice the current send interval (RFC 3448, 4.3). On LANs
+	    with a small RTT this can mean a high processing load and reduced
+	    performance, since then the nofeedback timer is triggered very
+	    frequently.
+
+	    This option enables to set a higher lower bound for the nofeedback
+	    value. Values in units of milliseconds can be set here.
+
+	    A value of 0 disables this feature by enforcing the value specified
+	    in RFC 3448. The following values have been suggested as bounds for
+	    experimental use:
+		* 16-20ms to match the typical multimedia inter-frame interval
+		* 100ms as a reasonable compromise [default]
+		* 1000ms corresponds to the lower TCP RTO bound (RFC 2988, 2.4)
+
+	    The default of 100ms is a compromise between a large value for
+	    efficient DCCP implementations, and a small value to avoid disrupting
+	    the network in times of congestion.
+
+	    The purpose of the nofeedback timer is to slow DCCP down when there
+	    is serious network congestion: experimenting with larger values should
+	    therefore not be performed on WANs.
+
+config IP_DCCP_TFRC_LIB
+	def_bool y if IP_DCCP_CCID3
+
+config IP_DCCP_TFRC_DEBUG
+	def_bool y if IP_DCCP_CCID3_DEBUG
+endmenu

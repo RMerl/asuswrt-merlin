@@ -1,0 +1,92 @@
+menu "RealView platform type"
+	depends on ARCH_REALVIEW
+
+config MACH_REALVIEW_EB
+	bool "Support RealView/EB platform"
+	select ARM_GIC
+	help
+	  Include support for the ARM(R) RealView Emulation Baseboard platform.
+
+config REALVIEW_EB_A9MP
+	bool "Support Multicore Cortex-A9"
+	depends on MACH_REALVIEW_EB
+	select CPU_V7
+	help
+	  Enable support for the Cortex-A9MPCore tile on the Realview platform.
+
+config REALVIEW_EB_ARM11MP
+	bool "Support ARM11MPCore tile"
+	depends on MACH_REALVIEW_EB
+	select CPU_V6
+	select ARCH_HAS_BARRIERS if SMP
+	help
+	  Enable support for the ARM11MPCore tile on the Realview platform.
+
+config REALVIEW_EB_ARM11MP_REVB
+	bool "Support ARM11MPCore RevB tile"
+	depends on REALVIEW_EB_ARM11MP
+	help
+	  Enable support for the ARM11MPCore RevB tile on the Realview
+	  platform. Since there are device address differences, a
+	  kernel built with this option enabled is not compatible with
+	  other revisions of the ARM11MPCore tile.
+
+config MACH_REALVIEW_PB11MP
+	bool "Support RealView/PB11MPCore platform"
+	select CPU_V6
+	select ARM_GIC
+	select HAVE_PATA_PLATFORM
+	select ARCH_HAS_BARRIERS if SMP
+	help
+	  Include support for the ARM(R) RealView MPCore Platform Baseboard.
+	  PB11MPCore is a platform with an on-board ARM11MPCore and has
+	  support for PCI-E and Compact Flash.
+
+config MACH_REALVIEW_PB1176
+	bool "Support RealView/PB1176 platform"
+	select CPU_V6
+	select ARM_GIC
+	help
+	  Include support for the ARM(R) RealView ARM1176 Platform Baseboard.
+
+config REALVIEW_PB1176_SECURE_FLASH
+	bool "Allow access to the secure flash memory block"
+	depends on MACH_REALVIEW_PB1176
+	default n
+	help
+	  Select this option if Linux will only run in secure mode on the
+	  RealView PB1176 platform and access to the secure flash memory
+	  block (64MB @ 0x3c000000) is required.
+
+config MACH_REALVIEW_PBA8
+	bool "Support RealView/PB-A8 platform"
+	select CPU_V7
+	select ARM_GIC
+	select HAVE_PATA_PLATFORM
+	help
+	  Include support for the ARM(R) RealView Cortex-A8 Platform Baseboard.
+	  PB-A8 is a platform with an on-board Cortex-A8 and has support for
+	  PCI-E and Compact Flash.
+
+config MACH_REALVIEW_PBX
+	bool "Support RealView/PBX platform"
+	select ARM_GIC
+	select HAVE_PATA_PLATFORM
+	select ARCH_SPARSEMEM_ENABLE if CPU_V7 && !REALVIEW_HIGH_PHYS_OFFSET
+	select ZONE_DMA if SPARSEMEM
+	help
+	  Include support for the ARM(R) RealView PBX platform.
+
+config REALVIEW_HIGH_PHYS_OFFSET
+	bool "High physical base address for the RealView platform"
+	depends on MMU && !MACH_REALVIEW_PB1176
+	default y
+	help
+	  RealView boards other than PB1176 have the RAM available at
+	  0x70000000, 256MB of which being mirrored at 0x00000000. If
+	  the board supports 512MB of RAM, this option allows the
+	  memory to be accessed contiguously at the high physical
+	  offset. On the PBX board, disabling this option allows 1GB of
+	  RAM to be used with SPARSEMEM.
+
+endmenu

@@ -1,0 +1,21 @@
+#
+# Broadcom boards
+#
+# platform-$(CONFIG_BCM947XX)	+= brcm-boards/bcm947xx/
+cflags-$(CONFIG_BCM947XX)	+=					\
+		-I$(srctree)/arch/mips/include/asm/mach-bcm947xx	\
+		-I$(srctree)/../../include -DBCMDRIVER -DHNDCTF
+load-$(CONFIG_BCM947XX)		:= 0xffffffff80001000
+
+
+core-$(CONFIG_BCM947XX) += arch/mips/brcm-boards/bcm947xx/
+
+zImage: vmlinux
+
+# sources under "generic" don't even compile
+# core-$(CONFIG_BCM947XX) += arch/mips/brcm-boards/generic/
+# cflags-$(CONFIG_MIPS_BRCM)	+=					\
+# 		-I$(srctree)/arch/mips/include/asm/mach-bcm947xx	\
+# 		-I$(srctree)/../../include -DBCMDRIVER
+# platform-$(CONFIG_MIPS_BRCM)	+= brcm-boards/
+# load-$(CONFIG_MIPS_BRCM)		:= 0xffffffff80001000

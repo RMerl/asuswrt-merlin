@@ -1,0 +1,61 @@
+# Broadcom platforms selection
+
+config PLAT_MPCORE
+	bool "ARM A9 MPCORE architecture support"
+	select CPU_V7
+	select ARM_GIC
+	select HAVE_ARM_TWD
+	select HAVE_ARM_SCU
+	select EARLY_PRINTK
+	select GENERIC_CLOCKEVENTS_BUILD
+	select GENERIC_CLOCKEVENTS
+	select LOCAL_TIMERS
+	help
+	  Support for ARM A9 MPCORE subsystem
+
+config CACHE_L310
+	bool "PL310 Level-2 Cache Controller"
+        select OUTER_CACHE
+        select OUTER_CACHE_SYNC
+
+config PLAT_IPROC
+	bool "Broadcom iProc common SoC platform"
+	depends on PLAT_MPCORE
+
+config PLAT_IHOST
+	bool "Broadcom iHost common SoC peripherals"
+	depends on PLAT_IPROC
+
+config PLAT_BCM5301X
+	bool "Broadcom BCM5301X SoC support"
+	select FPE_FASTFPE
+	select COMMON_CLKDEV
+	select CACHE_L310 
+	select PCI
+	select PCI_DOMAINS if PCI
+	select ARCH_SPARSEMEM_ENABLE
+	select ZONE_DMA if SPARSEMEM
+	depends on PLAT_MPCORE
+	depends on PLAT_IPROC
+	depends on PLAT_IHOST
+
+config ARCH_HAS_HEAD_FIXUP
+	bool "Machine needs fixup after the boot monitor"
+	help
+	Inserts a platform-specific assembly fix-up function
+	after boot rom monitor to work around a non-compliant
+	boot monitor or certain hardware issues that are not taken
+	care of by the boot monitor.
+
+config PLAT_NAND_JFFS2
+	bool "BCM5301X NAND Flash driver for JFFS file system"
+	depends on PLAT_BCM5301X
+	depends on JFFS2_FS
+	depends on MTD_NAND
+	depends on MTD
+	depends on !MTD_BRCMNAND
+        depends on !MTD_NFLASH
+	help
+	Support for JFFS2 on NAND Flash memory connected to the SoC
+	NAND controller.
+

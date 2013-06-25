@@ -1,0 +1,83 @@
+config PPC_PSERIES
+	depends on PPC64 && PPC_BOOK3S
+	bool "IBM pSeries & new (POWER5-based) iSeries"
+	select MPIC
+	select PCI_MSI
+	select XICS
+	select PPC_I8259
+	select PPC_RTAS
+	select PPC_RTAS_DAEMON
+	select RTAS_ERROR_LOGGING
+	select PPC_UDBG_16550
+	select PPC_NATIVE
+	select PPC_PCI_CHOICE if EMBEDDED
+	default y
+
+config PPC_SPLPAR
+	depends on PPC_PSERIES
+	bool "Support for shared-processor logical partitions"
+	default n
+	help
+	  Enabling this option will make the kernel run more efficiently
+	  on logically-partitioned pSeries systems which use shared
+	  processors, that is, which share physical processors between
+	  two or more partitions.
+
+config EEH
+	bool "PCI Extended Error Handling (EEH)" if EMBEDDED
+	depends on PPC_PSERIES && PCI
+	default y if !EMBEDDED
+
+config PSERIES_MSI
+       bool
+       depends on PCI_MSI && EEH
+       default y
+
+config SCANLOG
+	tristate "Scanlog dump interface"
+	depends on RTAS_PROC && PPC_PSERIES
+
+config LPARCFG
+	bool "LPAR Configuration Data"
+	depends on PPC_PSERIES || PPC_ISERIES
+	help
+	Provide system capacity information via human readable
+	<key word>=<value> pairs through a /proc/ppc64/lparcfg interface.
+
+config PPC_PSERIES_DEBUG
+	depends on PPC_PSERIES && PPC_EARLY_DEBUG
+	bool "Enable extra debug logging in platforms/pseries"
+	default y
+
+config PPC_SMLPAR
+	bool "Support for shared-memory logical partitions"
+	depends on PPC_PSERIES
+	select LPARCFG
+	default n
+	help
+	  Select this option to enable shared memory partition support.
+	  With this option a system running in an LPAR can be given more
+	  memory than physically available and will allow firmware to
+	  balance memory across many LPARs.
+
+config CMM
+	tristate "Collaborative memory management"
+	depends on PPC_SMLPAR
+	default y
+	help
+	  Select this option, if you want to enable the kernel interface
+	  to reduce the memory size of the system. This is accomplished
+	  by allocating pages of memory and put them "on hold". This only
+	  makes sense for a system running in an LPAR where the unused pages
+	  will be reused for other LPARs. The interface allows firmware to
+	  balance memory across many LPARs.
+
+config DTL
+	bool "Dispatch Trace Log"
+	depends on PPC_SPLPAR && DEBUG_FS
+	help
+	  SPLPAR machines can log hypervisor preempt & dispatch events to a
+	  kernel buffer. Saying Y here will enable logging these events,
+	  which are accessible through a debugfs file.
+
+	  Say N if you are unsure.
