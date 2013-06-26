@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+
+bld.SAMBA_MODULE('service_cldap',
+	source='cldap_server.c',
+	subsystem='service',
+	init_function='server_service_cldapd_init',
+	internal_module=False,
+	deps='CLDAPD process_model netif'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('CLDAPD',
+	source='netlogon.c rootdse.c',
+	autoproto='proto.h',
+	deps='LIBCLI_CLDAP ldbsamba'
+	)
+

@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="Portability">
+<chapterinfo>
+	&author.jelmer;
+	&author.jht;
+	<!-- Some other people as well, but there were no author names in the text files this file is based on-->
+</chapterinfo>
+
+<title>Portability</title>
+
+<para>
+<indexterm><primary>platforms</primary></indexterm>
+<indexterm><primary>compatible</primary></indexterm>
+Samba works on a wide range of platforms, but the interface all the 
+platforms provide is not always compatible. This chapter contains 
+platform-specific information about compiling and using Samba.</para>
+
+<sect1>
+<title>HPUX</title>
+
+<para>
+<indexterm><primary>/etc/logingroup</primary></indexterm>
+<indexterm><primary>/etc/group</primary></indexterm>
+Hewlett-Packard's implementation of supplementary groups is nonstandard (for
+historical reasons). There are two group files, <filename>/etc/group</filename> and
+<filename>/etc/logingroup</filename>; the system maps UIDs to numbers using the former, but
+initgroups() reads the latter. Most system admins who know the ropes
+symlink <filename>/etc/group</filename> to <filename>/etc/logingroup</filename>
+(hard-link does not work for reasons too obtuse to go into here). initgroups() will complain if one of the
+groups you're in, in <filename>/etc/logingroup</filename>, has what it considers to be an invalid
+ID, which means outside the range <constant>[0..UID_MAX]</constant>, where <constant>UID_MAX</constant> is
+60000 currently on HP-UX. This precludes -2 and 65534, the usual <constant>nobody</constant>
+GIDs.
+</para>
+
+<para>
+If you encounter this problem, make sure the programs that are failing 
+to initgroups() are run as users, not in any groups with GIDs outside the 
+allowed range.
+</para>
+
+<para>
+This is documented in the HP manual pages under setgroups(2) and passwd(4).
+</para>
+
+<para>
+<indexterm><primary>gcc</primary></indexterm>
+<indexterm><primary>ANSI compiler</primary></indexterm>
+On HP-UX you must use gcc or the HP ANSI compiler. The free compiler
+that comes with HP-UX is not ANSI compliant and cannot compile Samba.
+</para>
+
+</sect1>
+
+<sect1>
+<title>SCO UNIX</title>
+
+<para> 
+If you run an old version of SCO UNIX, you may need to get important 
+TCP/IP patches for Samba to work correctly. Without the patch, you may 
+encounter corrupt data transfers using Samba.
+</para>
+
+<para>
+The patch you need is UOD385 Connection Drivers SLS. It is available from
+SCO <ulink noescape="1" url="ftp://ftp.sco.com/">ftp.sco.com</ulink>, directory SLS,
+files uod385a.Z and uod385a.ltr.Z).
+</para>
+
+<para>
+The information provided here refers to an old version of SCO UNIX. If you require
+binaries for more recent SCO UNIX products, please contact SCO to obtain packages that are
+ready to install. You should also verify with SCO that your platform is up to date for the
+binary packages you will install. This is important if you wish to avoid data corruption
+problems with your installation. To build Samba for SCO UNIX products  may
+require significant patching of Samba source code. It is much easier to obtain binary
+packages directly from SCO.
+</para>
+
+</sect1>
+
+<sect1>
+<title>DNIX</title>
+
+<para>
+DNIX has a problem with seteuid() and setegid(). These routines are
+needed for Samba to work correctly, but they were left out of the DNIX
+C library for some reason.
+</para>
+
+<para>
+For this reason Samba by default defines the macro NO_EID in the DNIX
+section of includes.h. This works around the problem in a limited way,
+but it is far from ideal, and some things still will not work right.
+</para>
+
+<para> 
+To fix the problem properly, you need to assemble the following two
+functions and then either add them to your C library or link them into
+Samba. Put the following in the file <filename>setegid.s</filename>:
+</para>
+
+<para><programlisting>
+        .globl  _setegid
+_setegid:
+        moveq   #47,d0
+        movl    #100,a0
+        moveq   #1,d1
+        movl    4(sp),a1
+        trap    #9
+        bccs    1$
+        jmp     cerror
+1$:
+        clrl    d0
+        rts
+</programlisting></para>
+
+<para>
+Put this in the file <filename>seteuid.s</filename>:
+</para>
+
+<para><programlisting>
+        .globl  _seteuid
+_seteuid:
+        moveq   #47,d0
+        movl    #100,a0
+        moveq   #0,d1
+        movl    4(sp),a1
+        trap    #9
+        bccs    1$
+        jmp     cerror
+1$:
+        clrl    d0
+        rts
+</programlisting></para>
+
+<para>
+After creating the files, you then assemble them using
+</para>
+
+<screen>
+&prompt;<userinput>as seteuid.s</userinput>
+&prompt;<userinput>as setegid.s</userinput>
+</screen>
+
+<para>
+which should produce the files <filename>seteuid.o</filename> and
+<filename>setegid.o</filename>.
+</para>
+
+<para>
+Next you need to add these to the LIBSM line in the DNIX section of
+the Samba Makefile. Your LIBSM line will look something like this:
+</para>
+
+<para><programlisting>
+LIBSM = setegid.o seteuid.o -ln
+</programlisting></para>
+
+<para>
+You should then remove the line:
+</para>
+
+<para><programlisting>
+#define NO_EID
+</programlisting></para>
+
+<para>from the DNIX section of <filename>includes.h</filename>.</para>
+
+</sect1>
+
+<sect1>
+<title>Red Hat Linux</title>
+
+<para>
+By default during installation, some versions of Red Hat Linux add an
+entry to <filename>/etc/hosts</filename> as follows:
+<programlisting>
+127.0.0.1 loopback "hostname"."domainname"
+</programlisting>
+</para>
+
+<para>
+<indexterm><primary>loopback interface</primary></indexterm>
+This causes Samba to loop back onto the loopback interface.
+The result is that Samba fails to communicate correctly with
+the world and therefore may fail to correctly negotiate who
+is the master browse list holder and who is the master browser.
+</para>
+
+<para>
+Corrective action: Delete the entry after the word "loopback"
+in the line starting 127.0.0.1.
+</para>
+</sect1>
+
+<sect1>
+<title>AIX: Sequential Read Ahead</title>
+<!-- From an email by William Jojo <jojowil@hvcc.edu> -->
+<para>
+Disabling sequential read ahead can improve Samba performance significantly
+when there is a relatively high level of multiprogramming (many smbd processes
+or mixed with another workload), not an abundance of physical memory or slower
+disk technology. These can cause AIX to have a higher WAIT values. Disabling
+sequential read-ahead can also have an adverse affect on other workloads in the
+system so you will need to evaluate other applications for impact.
+</para>
+
+<para>
+It is recommended to use the defaults provided by IBM, but if you experience a
+high amount of wait time, try disabling read-ahead with the following commands:
+</para>
+
+<para>
+For AIX 5.1 and earlier: <userinput>vmtune -r 0</userinput>
+</para>
+
+<para>
+For AIX 5.2 and later jfs filesystems: <userinput>ioo -o minpgahead=0</userinput>
+</para>
+
+<para>
+For AIX 5.2 and later jfs2 filesystems: <userinput>ioo -o j2_minPageReadAhead=0</userinput>
+</para>
+
+<para>
+If you have a mix of jfs and jfs2 filesystems on the same host, simply use both
+ioo commands.
+</para>
+</sect1>
+
+<sect1>
+<title>Solaris</title>
+
+<sect2>
+<title>Locking Improvements</title>
+
+<para>Some people have been experiencing problems with F_SETLKW64/fcntl 
+when running Samba on Solaris. The built-in file-locking mechanism was
+not scalable. Performance would degrade to the point where processes would
+get into loops of trying to lock a file. It would try a lock, then fail,
+then try again. The lock attempt was failing before the grant was
+occurring. The visible manifestation of this was a handful of
+processes stealing all of the CPU, and when they were trussed, they would
+be stuck in F_SETLKW64 loops.
+</para>
+
+<para>
+Please check with Sun support for current patches needed to fix this bug.
+The patch revision for 2.6 is 105181-34, for 8 is 108528-19, and for 9 is 112233-04.
+After the installation of these patches, it is recommended to reconfigure
+and rebuild Samba.
+</para>
+
+<para>Thanks to Joe Meslovich for reporting this.</para>
+
+</sect2>
+
+<sect2 id="winbind-solaris9">
+<title>Winbind on Solaris 9</title>
+<para>
+Nsswitch on Solaris 9 refuses to use the Winbind NSS module. This behavior
+is fixed by Sun in patch <ulink
+url="http://sunsolve.sun.com/search/advsearch.do?collection=PATCH&amp;type=collections&amp;max=50&amp;language=en&amp;queryKey5=112960;rev=14&amp;toDocument=yes">112960-14</ulink>.
+</para>
+</sect2>
+</sect1>
+
+</chapter>

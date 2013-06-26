@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="smbspool.8">
+
+<refmeta>
+	<refentrytitle>smbspool</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>smbspool</refname>
+	<refpurpose>send a print file to an SMB printer</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>smbspool</command>
+		<arg choice="req">job</arg> 
+		<arg choice="req">user</arg> 
+		<arg choice="req">title</arg> 
+		<arg choice="req">copies</arg> 
+		<arg choice="req">options</arg> 
+		<arg choice="opt">filename</arg> 
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>smbspool is a very small print spooling program that 
+	sends a print file to an SMB printer. The command-line arguments 
+	are position-dependent for compatibility with the Common UNIX 
+	Printing System, but you can use smbspool with any printing system 
+	or from a program or script.</para>
+
+	<para><emphasis>DEVICE URI</emphasis></para>
+
+	<para>smbspool specifies the destination using a Uniform Resource 
+	Identifier ("URI") with a method of "smb". This string can take 
+	a number of forms:</para>
+
+	<itemizedlist>
+		<listitem><para>smb://server[:port]/printer</para></listitem>
+		<listitem><para>smb://workgroup/server[:port]/printer</para></listitem>
+		<listitem><para>smb://username:password@server[:port]/printer</para></listitem>
+		<listitem><para>smb://username:password@workgroup/server[:port]/printer</para></listitem>
+	</itemizedlist>
+
+	<para>smbspool tries to get the URI from the environment variable
+	<envar>DEVICE_URI</envar>. If <envar>DEVICE_URI</envar> is not present, 
+	smbspool will use argv[0] if that starts with <quote>smb://</quote> 
+	or argv[1] if that is not the case.</para>
+
+	<para>Programs using the <command>exec(2)</command> functions can 
+	pass the URI in argv[0], while shell scripts must set the 
+	<envar>DEVICE_URI</envar> environment variable prior to
+	running smbspool.</para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<itemizedlist>
+		<listitem><para>The job argument (argv[1]) contains the 
+		job ID number and is presently not used by smbspool.
+		</para></listitem>
+
+		<listitem><para>The user argument (argv[2]) contains the 
+		print user's name and is presently not used by smbspool.
+		</para></listitem>
+
+		<listitem><para>The title argument (argv[3]) contains the 
+		job title string and is passed as the remote file name 
+		when sending the print job.</para></listitem>
+
+		<listitem><para>The copies argument (argv[4]) contains 
+		the number of copies to be printed of the named file. If 
+		no filename is provided then this argument is not used by 
+		smbspool.</para></listitem>
+
+		<listitem><para>The options argument (argv[5]) contains 
+		the print options in a single string and is currently 
+		not used by smbspool.</para></listitem>
+
+		<listitem><para>The filename argument (argv[6]) contains the 
+		name of the file to print. If this argument is not specified 
+		then the print file is read from the standard input.</para>
+		</listitem>
+	</itemizedlist>
+</refsect1>
+
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+	<para><citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> and <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para><command>smbspool</command> was written by Michael Sweet 
+	at Easy Software Products.</para>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+	
+	<para>The original Samba man pages were written by Karl Auer. 
+	The man page sources were converted to YODL format (another 
+	excellent piece of Open Source software, available at <ulink url="ftp://ftp.icce.rug.nl/pub/unix/">
+	ftp://ftp.icce.rug.nl/pub/unix/</ulink>) and updated for the Samba 2.0 
+	release by Jeremy Allison.  The conversion to DocBook for 
+	Samba 2.2 was done by Gerald Carter. The conversion to DocBook XML 4.2
+	for Samba 3.0 was done by Alexander Bokovoy.</para>
+</refsect1>
+
+</refentry>

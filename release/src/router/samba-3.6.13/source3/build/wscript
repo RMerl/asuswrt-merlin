@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+
+import string, Utils, Options
+from dynconfig import *
+
+def set_options(opt):
+    # get all the basic GNU options from the gnu_dirs tool
+    opt.tool_options('gnu_dirs')
+    for option in dir_options.keys():
+        default = dir_options[option][0]
+        help    = dir_options[option][1]
+        varname = get_varname(option)
+        opt.add_option('--%s' % option,
+                       help=(help + ' [%s]' % default),
+                       action="store", dest=varname, default=default)
+
+
+cflags_vars = [ 'CONFIGFILE' ]
+
+def configure(conf):
+    # get all the basic GNU options from the gnu_dirs tool
+    conf.check_tool('gnu_dirs')
+    for option in dir_options.keys():
+        varname = get_varname(option)
+        value = getattr(Options.options, varname, None)
+        value = Utils.subst_vars(value, conf.env)
+        conf.ASSERT(value is not None, "Missing configure option %s" % varname)
+        conf.ASSERT(varname not in conf.env, "Variable %s already defined" % varname)
+        conf.env[varname] = value
+
+    for f in dyn_cflags.keys():
+        # substitute twice, as we could have substitutions containing variables
+        v = Utils.subst_vars(dyn_cflags[f], conf.env)
+        v = Utils.subst_vars(v, conf.env)
+        conf.ASSERT(v != '', "Empty dynconfig value for %s" % f)
+        conf.ASSERT(v.find('${') == -1, "Unsubstituted variable in %s : %s : %s" % (f, dyn_cflags[f], v))
+        if f not in conf.env:
+            conf.env[f] = v
+        if f in cflags_vars:
+            conf.DEFINE(f, v, quote=True)
+
+def build(bld):
+    cflags = dynconfig_cflags(bld)
+    bld.SAMBA3_SUBSYSTEM('DYNCONFIG',
+                        '../dynconfig.c',
+                        deps='replace talloc tdb popt',
+                        cflags=cflags)
+
+
+def dynconfig_cflags(bld):
+    '''work out the extra CFLAGS for dynconfig.c'''
+    cflags = []
+    for f in dyn_cflags.keys():
+        # substitute twice, as we could have substitutions containing variables
+        v = Utils.subst_vars(dyn_cflags[f], bld.env)
+        v = Utils.subst_vars(v, bld.env)
+        bld.ASSERT(v != '', "Empty dynconfig value for %s" % f)
+        bld.ASSERT(v.find('${') == -1, "Unsubstituted variable in %s : %s : %s" % (f, dyn_cflags[f], v))
+        cflags.append('-D%s="%s"' % (f, v))
+    return cflags

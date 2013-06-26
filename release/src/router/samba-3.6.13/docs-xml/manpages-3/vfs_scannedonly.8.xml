@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="vfs_scannedonly.8">
+
+<refmeta>
+	<refentrytitle>vfs_scannedonly</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>vfs_scannedonly</refname>
+	<refpurpose>Ensures that only files that have been scanned for viruses are
+	visible and accessible to the end user.</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>vfs objects = scannedonly</command>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This VFS module is part of the
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> suite.</para>
+
+	<para>The <command>vfs_scannedonly</command> VFS module ensures that
+	only files that have been scanned for viruses are visible and accessible
+	to the end user. If non-scanned files are found an anti-virus scanning
+	daemon is notified. The anti-virus scanning daemon is not part of the
+	Samba suite.
+	</para>
+
+	<para>Scannedonly comes in two parts: a samba vfs module and (one or
+	more) daemons. The daemon scans files. If a certain file is clean,
+	a second file is created with prefix <filename>.scanned:</filename>.
+	The Samba module simply looks if such a <filename>.scanned:</filename>
+	file exists, and is newer than the pertinent file. If this is the case,
+	the file is shown to the user. If this is not the case, the file is not
+	returned in a directory listing (configurable), and cannot be opened
+	(configurable). The Samba vfs module will notify the daemon to scan
+	this file.
+	</para>
+
+	<para>So what happens for the user in the default configuration. The
+	first time a directory is listed, it shows files as 'file is being
+	scanned for viruses, but after the first time all files are shown.
+	There is a utility scannedonly_prescan that can help you to prescan
+	all directories. When new files are written the daemon is notified
+	immediately after the file is complete.
+	</para>
+
+	<para>If a virus is found by the daemon, a file with a warning message
+	is created in the directory of the user, a warning is sent to the logs,
+	and the file is renamed to have prefix <filename>.virus:</filename>.
+	Files with the <filename>.virus:</filename> prefix are never shown to
+	the user and all access is denied.
+	</para>
+
+	<para>This module is stackable.</para>
+
+</refsect1>
+
+<refsect1>
+	<title>CONFIGURATION</title>
+
+	<para><command>vfs_scannedonly</command> relies on a anti-virus scanning
+	daemon that listens on the scannedonly socket (unix domain socket or UDP
+	socket).
+	</para>
+</refsect1>
+
+<refsect1>
+        <title>OPTIONS</title>
+
+        <variablelist>
+		<varlistentry>
+		<term>scannedonly:domain_socket = True </term>
+		<listitem>
+		<para>Whether to use a unix domain socket or not (false reverts
+		to use udp)
+		</para>
+		</listitem>
+	</varlistentry>
+
+	<varlistentry>
+		<term>scannedonly:socketname = /var/lib/scannedonly/scan</term>
+		<listitem>
+		<para>The location of the unix domain socket to connect to</para>
+		</listitem>
+	</varlistentry>
+
+	<varlistentry>
+		<term>scannedonly:portnum = 2020</term>
+		<listitem>
+		<para>The udp port number to connect to
+		</para>
+		</listitem>
+	</varlistentry>
+	<varlistentry><term>scannedonly:scanhost = localhost</term>
+		<listitem>
+		<para>
+		When using UDP the host that runs the scanning daemon (this host
+		needs access to the files!)
+		</para>
+		</listitem>
+	</varlistentry>
+	<varlistentry><term>scannedonly:show_special_files = True</term>
+		<listitem>
+		<para>
+		Whether sockets, devices and fifo's (all not scanned for
+		viruses) should be visible to the user
+		</para>
+		</listitem>
+	</varlistentry>
+	<varlistentry><term>scannedonly:rm_hidden_files_on_rmdir = True</term>
+		<listitem>
+		<para>
+		Whether files that are not visible (<filename>.scanned:</filename>
+		files, <filename>.failed:</filename> files and <filename>.virus:
+		</filename> files) should be deleted if the user tries to remove
+		the directory. If false, the user will get the "directory is not
+		empty" error.
+		</para>
+		</listitem>
+	</varlistentry>
+	<varlistentry><term>scannedonly:hide_nonscanned_files = True</term>
+		<listitem>
+		<para>
+		If false, all non-scanned files are visible in directory listings.
+		If such files are found in a directory listing the scanning daemon
+		is notified that scanning is required. Access to non-scanned files
+		is still denied (see scannedonly:allow_nonscanned_files).
+		</para>
+		</listitem>
+	</varlistentry>
+	<varlistentry><term>scannedonly:scanning_message = is being scanned for
+	viruses</term>
+		<listitem>
+		<para>
+		If non-scanned files are hidden
+		(if scannedonly:hide_nonscanned_files = True), a fake 0 byte file
+		is shown. The filename is the original filename with the message
+		as suffix.
+		</para>
+		</listitem>
+	</varlistentry>
+	<varlistentry><term>scannedonly:recheck_time_open = 50</term>
+		<listitem>
+		<para>
+		If a non-scanned file is opened, the vfs module will wait
+		recheck_tries_open times for recheck_time_open milliseconds for
+		the scanning daemon to create a <filename>.scanned:</filename>
+		file. For small files that are scanned by the daemon within the
+		time (tries * time) the behavior will be just like on-access
+		scanning.
+		</para>
+		</listitem>
+	</varlistentry>
+	<varlistentry><term>scannedonly:recheck_tries_open = 100</term>
+		<listitem>
+		<para>
+		See recheck_time_open.
+		</para>
+		</listitem>
+	</varlistentry>
+	<varlistentry><term>scannedonly:recheck_time_readdir = 50</term>
+		<listitem>
+		<para>
+		If a non-scanned file is in a directory listing the vfs module
+		notifies the daemon (once for all files that need scanning in
+		that directory), and waits recheck_tries_readdir times for
+		recheck_time_readdir milliseconds. Only used when
+		hide_nonscanned_files is false.
+		</para>
+		</listitem>
+	</varlistentry>
+	<varlistentry><term>scannedonly:recheck_tries_readdir = 20</term>
+		<listitem>
+		<para>
+		See recheck_time_readdir.
+		</para>
+		</listitem>
+	</varlistentry>
+	<varlistentry><term>scannedonly:allow_nonscanned_files = False</term>
+		<listitem>
+		<para>
+		Allow access to non-scanned files. The daemon is notified,
+		however, and special files such as <filename>.scanned:</filename>
+		files. <filename>.virus:</filename> files and
+		<filename>.failed:</filename> files are not listed.
+		</para>
+		</listitem>
+	</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>Enable anti-virus scanning:</para>
+<programlisting>
+        <smbconfsection name="[homes]"/>
+	<smbconfoption name="vfs objects">scannedonly</smbconfoption>
+	<smbconfoption name="scannedonly:hide_nonscanned_files">False</smbconfoption>
+</programlisting>
+
+</refsect1>
+
+<refsect1>
+	<title>CAVEATS</title>
+
+	<para>This is not true on-access scanning. However, it is very fast
+	for files that have been scanned already.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.6.0 of the Samba suite.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>The original Samba software and related utilities
+	were created by Andrew Tridgell. Scannedonly was
+	developed for Samba by Olivier Sessink. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</para>
+
+</refsect1>
+
+</refentry>

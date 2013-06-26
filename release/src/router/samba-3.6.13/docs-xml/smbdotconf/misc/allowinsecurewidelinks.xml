@@ -1,0 +1,37 @@
+<samba:parameter name="allow insecure wide links"
+		context="G"
+		type="boolean"
+		xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	In normal operation the option <smbconfoption name="wide links"/>
+	which allows the server to follow symlinks outside of a share path
+	is automatically disabled when <smbconfoption name="unix extensions"/>
+	are enabled on a Samba server. This is done for security purposes
+	to prevent UNIX clients creating symlinks to areas of the server
+	file system that the administrator does not wish to export.
+	</para>
+	<para>
+	Setting <smbconfoption name="allow insecure wide links"/> to
+	true disables the link between these two parameters, removing
+	this protection and allowing a site to configure
+	the server to follow symlinks (by setting <smbconfoption name="wide links"/>
+	to "true") even when <smbconfoption name="unix extensions"/>
+	is turned on.
+	</para>
+	<para>
+	If is not recommended to enable this option unless you
+	fully understand the implications of allowing the server to
+	follow symbolic links created by UNIX clients. For most
+	normal Samba configurations this would be considered a security
+	hole and setting this parameter is not recommended.
+	</para>
+	<para>
+	This option was added at the request of sites who had
+	deliberately set Samba up in this way and needed to continue
+	supporting this functionality without having to patch the
+	Samba code.
+	</para>
+</description>
+<value type="default">no</value>
+</samba:parameter>

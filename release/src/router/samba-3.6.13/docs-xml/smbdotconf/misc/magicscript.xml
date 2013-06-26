@@ -1,0 +1,30 @@
+<samba:parameter name="magic script"
+		 context="S"
+		 type="string"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter specifies the name of a file which, 
+	if opened, will be executed by the server when the file is closed. 
+	This allows a UNIX script to be sent to the Samba host and 
+	executed on behalf of the connected user.</para>
+
+	<para>Scripts executed in this way will be deleted upon 
+	completion assuming that the user has the appropriate level 
+	of privilege and the file permissions allow the deletion.</para>
+
+	<para>If the script generates output, output will be sent to 
+	the file specified by the <smbconfoption name="magic output"/>
+	parameter (see above).</para>
+
+	<para>Note that some shells are unable to interpret scripts 
+	containing CR/LF instead of CR as 
+	the end-of-line marker. Magic scripts must be executable 
+	<emphasis>as is</emphasis> on the host, which for some hosts and 
+	some shells will require filtering at the DOS end.</para>
+
+	<para>Magic scripts are <emphasis>EXPERIMENTAL</emphasis> and 
+		should <emphasis>NOT</emphasis> be relied upon.</para>
+</description>
+<value type="default"></value>
+<value type="example">user.csh</value>
+</samba:parameter>

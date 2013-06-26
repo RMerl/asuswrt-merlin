@@ -1,0 +1,30 @@
+<samba:parameter name="acl check permissions"
+                 context="S"
+		 type="boolean"
+                 advanced="1" wizard="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This boolean parameter controls what <citerefentry><refentrytitle>smbd</refentrytitle> 
+    <manvolnum>8</manvolnum></citerefentry>does on receiving a protocol request of "open for delete"
+    from a Windows client. If a Windows client doesn't have permissions to delete a file then they
+    expect this to be denied at open time. POSIX systems normally only detect restrictions on delete by
+    actually attempting to delete the file or directory. As Windows clients can (and do) "back out" a
+    delete request by unsetting the "delete on close" bit Samba cannot delete the file immediately
+    on "open for delete" request as we cannot restore such a deleted file. With this parameter set to
+    true (the default) then smbd checks the file system permissions directly on "open for delete" and denies the
+    request without actually deleting the file if the file system permissions would seem to deny it.
+    This is not perfect, as it's possible a user could have deleted a file without Samba being able to
+    check the permissions correctly, but it is close enough to Windows semantics for mostly correct
+    behaviour. Samba will correctly check POSIX ACL semantics in this case.
+    </para>
+    <para>If this parameter is set to "false" Samba doesn't check permissions on "open for delete"
+    and allows the open. If the user doesn't have permission to delete the file this will only be
+    discovered at close time, which is too late for the Windows user tools to display an error message
+    to the user. The symptom of this is files that appear to have been deleted "magically" re-appearing
+    on a Windows explorer refresh. This is an extremely advanced protocol option which should not
+    need to be changed. This parameter was introduced in its final form in 3.0.21, an earlier version
+    with slightly different semantics was introduced in 3.0.20. That older version is not documented here.
+    </para>
+</description>
+<value type="default">True</value>
+</samba:parameter>

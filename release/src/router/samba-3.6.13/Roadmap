@@ -1,0 +1,29 @@
+Copyright (C) 1997-2008 Samba-Team
+
+The Samba-Team are committed to an aggressive program to deliver quality
+controlled software to a well defined roadmap.
+
+Please also look at the Samba3 and Samba4 pages of wiki.samba.org for more
+information.
+
+The following development objectives for future releases
+are in progress:
+----------------------------------------------------------------------------
+Samba-3.0.x		This release turned into maintenance mode since we
+			released 3.2.
+
+Samba-3.4.x		This is the current stable Samba 3 release intended
+			for all Samba production server.
+
+Samba-4			Danger Will Robinson, a big code clean up with major
+			system redesign. More will be announced as this work
+			starts to take shape.
+
+
+Note that it is a given that the Samba-Team will continue to track
+Windows (NT/200x) update releases, ensuring that Samba will work
+well with whatever "Beta" releases Redmond throws our way :-).
+
+You may also note that the release numbers get fuzzier the
+further into the future the objectives get. This is intentional
+as we cannot commit to exact timeframes.

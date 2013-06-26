@@ -1,0 +1,157 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>ntlm_auth</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" title="ntlm_auth"><a name="ntlm-auth.1"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ntlm_auth &#8212; tool to allow external access to Winbind's NTLM authentication function</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">ntlm_auth</code> [-d debuglevel] [-l logdir] [-s &lt;smb config file&gt;]</p></div></div><div class="refsect1" title="DESCRIPTION"><a name="id266363"></a><h2>DESCRIPTION</h2><p>This tool is part of the <a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p><code class="literal">ntlm_auth</code> is a helper utility that authenticates 
+	users using NT/LM authentication. It returns 0 if the users is authenticated
+	successfully and 1 if access was denied. ntlm_auth uses winbind to access 
+	the user and authentication data for a domain.  This utility 
+	is only intended to be used by other programs (currently
+	<a class="ulink" href="http://www.squid-cache.org/" target="_top">Squid</a>
+	and <a class="ulink" href="http://download.samba.org/ftp/unpacked/lorikeet/trunk/mod_ntlm_winbind/" target="_top">mod_ntlm_winbind</a>)
+	</p></div><div class="refsect1" title="OPERATIONAL REQUIREMENTS"><a name="id266859"></a><h2>OPERATIONAL REQUIREMENTS</h2><p>
+    The <a class="citerefentry" href="winbindd.8.html"><span class="citerefentry"><span class="refentrytitle">winbindd</span>(8)</span></a> daemon must be operational
+    for many of these commands to function.</p><p>Some of these commands also require access to the directory 
+    <code class="filename">winbindd_privileged</code> in
+    <code class="filename">$LOCKDIR</code>.  This should be done either by running
+    this command as root or providing group access
+    to the <code class="filename">winbindd_privileged</code> directory.  For
+    security reasons, this directory should not be world-accessable. </p></div><div class="refsect1" title="OPTIONS"><a name="id266899"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">--helper-protocol=PROTO</span></dt><dd><p>
+	Operate as a stdio-based helper.  Valid helper protocols are:
+        </p><div class="variablelist"><dl><dt><span class="term">squid-2.4-basic</span></dt><dd><p>
+                Server-side helper for use with Squid 2.4's basic (plaintext)
+		authentication.  </p></dd><dt><span class="term">squid-2.5-basic</span></dt><dd><p>
+                Server-side helper for use with Squid 2.5's basic (plaintext)
+		authentication. </p></dd><dt><span class="term">squid-2.5-ntlmssp</span></dt><dd><p>
+                Server-side helper for use with Squid 2.5's NTLMSSP 
+		authentication. </p><p>Requires access to the directory 
+                <code class="filename">winbindd_privileged</code> in
+		<code class="filename">$LOCKDIR</code>.  The protocol used is
+		described here: <a class="ulink" href="http://devel.squid-cache.org/ntlm/squid_helper_protocol.html" target="_top">http://devel.squid-cache.org/ntlm/squid_helper_protocol.html</a>.
+		This protocol has been extended to allow the
+		NTLMSSP Negotiate packet to be included as an argument
+		to the <code class="literal">YR</code> command. (Thus avoiding
+		loss of information in the protocol exchange).
+                </p></dd><dt><span class="term">ntlmssp-client-1</span></dt><dd><p>
+                Client-side helper for use with arbitrary external
+		programs that may wish to use Samba's NTLMSSP 
+		authentication knowledge. </p><p>This helper is a client, and as such may be run by any
+		user.  The protocol used is
+		effectively the reverse of the previous protocol.  A
+		<code class="literal">YR</code> command (without any arguments)
+		starts the authentication exchange.
+                </p></dd><dt><span class="term">gss-spnego</span></dt><dd><p>
+                Server-side helper that implements GSS-SPNEGO.  This
+		uses a protocol that is almost the same as
+		<code class="literal">squid-2.5-ntlmssp</code>, but has some
+		subtle differences that are undocumented outside the
+		source at this stage.
+                </p><p>Requires access to the directory 
+                <code class="filename">winbindd_privileged</code> in
+		<code class="filename">$LOCKDIR</code>.   
+               </p></dd><dt><span class="term">gss-spnego-client</span></dt><dd><p>
+                Client-side helper that implements GSS-SPNEGO.  This
+		also uses a protocol similar to the above helpers, but
+		is currently undocumented.
+                </p></dd><dt><span class="term">ntlm-server-1</span></dt><dd><p>
+                Server-side helper protocol, intended for use by a
+		RADIUS server or the 'winbind' plugin for pppd, for
+		the provision of MSCHAP and MSCHAPv2 authentication.  
+                </p><p>This protocol consists of lines in the form:
+                <code class="literal">Parameter: value</code> and <code class="literal">Parameter::
+                Base64-encode value</code>.  The presence of a single
+                period <code class="literal">.</code> indicates that one side has
+                finished supplying data to the other.  (Which in turn
+                could cause the helper to authenticate the
+                user). </p><p>Currently implemented parameters from the
+		external program to the helper are:</p><div class="variablelist"><div class="warning" title="Warning" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Warning</h3>Implementers should take care to base64 encode
+		any data (such as usernames/passwords) that may contain malicous user data, such as
+		a newline.  They may also need to decode strings from
+		the helper, which likewise may have been base64 encoded.</div><dl><dt><span class="term">Username</span></dt><dd><p>The username, expected to be in
+                Samba's <a class="link" href="smb.conf.5.html#UNIXCHARSET" target="_top">unix charset</a>.
+                </p><div class="example"><a name="id265920"></a><p class="title"><b>Example 1. </b></p><div class="example-contents">Username: bob</div></div><p><br class="example-break"></p><div class="example"><a name="id265925"></a><p class="title"><b>Example 2. </b></p><div class="example-contents">Username:: Ym9i</div></div><p><br class="example-break"></p></dd><dt><span class="term">NT-Domain</span></dt><dd><p>The user's domain, expected to be in
+                Samba's <a class="link" href="smb.conf.5.html#UNIXCHARSET" target="_top">unix charset</a>.
+                </p><div class="example"><a name="id265952"></a><p class="title"><b>Example 3. </b></p><div class="example-contents">NT-Domain: WORKGROUP</div></div><p><br class="example-break"></p><div class="example"><a name="id265957"></a><p class="title"><b>Example 4. </b></p><div class="example-contents">NT-Domain:: V09SS0dST1VQ</div></div><p><br class="example-break"></p></dd><dt><span class="term">Full-Username</span></dt><dd><p>The fully qualified username, expected to be in
+                Samba's <a class="link" href="smb.conf.5.html#UNIXCHARSET" target="_top">unix charset</a> and qualified with the
+                <a class="link" href="smb.conf.5.html#WINBINDSEPARATOR" target="_top">winbind separator</a>.
+                </p><div class="example"><a name="id307150"></a><p class="title"><b>Example 5. </b></p><div class="example-contents">Full-Username: WORKGROUP\bob</div></div><p><br class="example-break"></p><div class="example"><a name="id307154"></a><p class="title"><b>Example 6. </b></p><div class="example-contents">Full-Username:: V09SS0dST1VQYm9i</div></div><p><br class="example-break"></p></dd><dt><span class="term">LANMAN-Challenge</span></dt><dd><p>The 8 byte <code class="literal">LANMAN Challenge</code> value,
+                generated randomly by the server, or (in cases such as
+                MSCHAPv2) generated in some way by both the server and
+                the client.
+                </p><div class="example"><a name="id307176"></a><p class="title"><b>Example 7. </b></p><div class="example-contents">LANMAN-Challenge: 0102030405060708</div></div><p><br class="example-break"></p></dd><dt><span class="term">LANMAN-Response</span></dt><dd><p>The 24 byte <code class="literal">LANMAN Response</code> value,
+                calculated from the user's password and the supplied
+                <code class="literal">LANMAN Challenge</code>.  Typically, this
+                is provided over the network by a client wishing to authenticate.
+                </p><div class="example"><a name="id307203"></a><p class="title"><b>Example 8. </b></p><div class="example-contents">LANMAN-Response: 0102030405060708090A0B0C0D0E0F101112131415161718</div></div><p><br class="example-break"></p></dd><dt><span class="term">NT-Response</span></dt><dd><p>The &gt;= 24 byte <code class="literal">NT Response</code>
+                calculated from the user's password and the supplied
+                <code class="literal">LANMAN Challenge</code>.  Typically, this is 
+                provided over the network by a client wishing to authenticate.
+                 </p><div class="example"><a name="id307231"></a><p class="title"><b>Example 9. </b></p><div class="example-contents">NT-Response: 0102030405060708090A0B0C0D0E0F101112131415161718</div></div><p><br class="example-break"></p></dd><dt><span class="term">Password</span></dt><dd><p>The user's password.  This would be
+                provided by a network client, if the helper is being
+                used in a legacy situation that exposes plaintext
+                passwords in this way.
+                 </p><div class="example"><a name="id307248"></a><p class="title"><b>Example 10. </b></p><div class="example-contents">Password: samba2</div></div><p><br class="example-break"></p><div class="example"><a name="id307252"></a><p class="title"><b>Example 11. </b></p><div class="example-contents">Password:: c2FtYmEy</div></div><p><br class="example-break"></p></dd><dt><span class="term">Request-User-Session-Key</span></dt><dd><p>Upon successful authenticaiton, return
+                the user session key associated with the login.
+                 </p><div class="example"><a name="id307269"></a><p class="title"><b>Example 12. </b></p><div class="example-contents">Request-User-Session-Key: Yes</div></div><p><br class="example-break"></p></dd><dt><span class="term">Request-LanMan-Session-Key</span></dt><dd><p>Upon successful authenticaiton, return
+                the LANMAN session key associated with the login.
+                 </p><div class="example"><a name="id307285"></a><p class="title"><b>Example 13. </b></p><div class="example-contents">Request-LanMan-Session-Key: Yes</div></div><p><br class="example-break"></p></dd></dl></div></dd></dl></div></dd><dt><span class="term">--username=USERNAME</span></dt><dd><p>
+	Specify username of user to authenticate
+	</p></dd><dt><span class="term">--domain=DOMAIN</span></dt><dd><p>
+	Specify domain of user to authenticate
+	</p></dd><dt><span class="term">--workstation=WORKSTATION</span></dt><dd><p>
+	Specify the workstation the user authenticated from
+	</p></dd><dt><span class="term">--challenge=STRING</span></dt><dd><p>NTLM challenge (in HEXADECIMAL)</p></dd><dt><span class="term">--lm-response=RESPONSE</span></dt><dd><p>LM Response to the challenge (in HEXADECIMAL)</p></dd><dt><span class="term">--nt-response=RESPONSE</span></dt><dd><p>NT or NTLMv2 Response to the challenge (in HEXADECIMAL)</p></dd><dt><span class="term">--password=PASSWORD</span></dt><dd><p>User's plaintext password</p><p>If 
+	not specified on the command line, this is prompted for when
+	required.  </p><p>For the NTLMSSP based server roles, this parameter
+	  specifies the expected password, allowing testing without
+	  winbindd operational.</p></dd><dt><span class="term">--request-lm-key</span></dt><dd><p>Retrieve LM session key</p></dd><dt><span class="term">--request-nt-key</span></dt><dd><p>Request NT key</p></dd><dt><span class="term">--diagnostics</span></dt><dd><p>Perform Diagnostics on the authentication
+	chain.  Uses the password from <code class="literal">--password</code>
+	or prompts for one.</p></dd><dt><span class="term">--require-membership-of={SID|Name}</span></dt><dd><p>Require that a user be a member of specified 
+	    group (either name or SID) for authentication to succeed.</p></dd><dt><span class="term">-d|--debuglevel=level</span></dt><dd><p><em class="replaceable"><code>level</code></em> is an integer 
+from 0 to 10. The default value if this parameter is 
+not specified is 0.</p><p>The higher this value, the more detail will be 
+logged to the log files about the activities of the 
+server. At level 0, only critical errors and serious 
+warnings will be logged. Level 1 is a reasonable level for
+day-to-day running - it generates a small amount of 
+information about operations carried out.</p><p>Levels above 1 will generate considerable 
+amounts of log data, and should only be used when 
+investigating a problem. Levels above 3 are designed for 
+use only by developers and generate HUGE amounts of log
+data, most of which is extremely cryptic.</p><p>Note that specifying this parameter here will 
+override the <a class="link" href="smb.conf.5.html#" target="_top"></a> parameter
+in the <code class="filename">smb.conf</code> file.</p></dd><dt><span class="term">-V|--version</span></dt><dd><p>Prints the program version number.
+</p></dd><dt><span class="term">-s|--configfile &lt;configuration file&gt;</span></dt><dd><p>The file specified contains the 
+configuration details required by the server.  The 
+information in this file includes server-specific
+information such as what printcap file to use, as well 
+as descriptions of all the services that the server is 
+to provide. See <code class="filename">smb.conf</code> for more information.
+The default configuration file name is determined at 
+compile time.</p></dd><dt><span class="term">-l|--log-basename=logdirectory</span></dt><dd><p>Base directory name for log/debug files. The extension
+<code class="constant">".progname"</code> will be appended (e.g. log.smbclient, 
+log.smbd, etc...). The log file is never removed by the client.
+</p></dd><dt><span class="term">-h|--help</span></dt><dd><p>Print a summary of command line options.
+</p></dd></dl></div></div><div class="refsect1" title="EXAMPLE SETUP"><a name="id307539"></a><h2>EXAMPLE SETUP</h2><p>To setup ntlm_auth for use by squid 2.5, with both basic and
+	NTLMSSP authentication, the following
+	should be placed in the <code class="filename">squid.conf</code> file.
+</p><pre class="programlisting">
+auth_param ntlm program ntlm_auth --helper-protocol=squid-2.5-ntlmssp
+auth_param basic program ntlm_auth --helper-protocol=squid-2.5-basic
+auth_param basic children 5
+auth_param basic realm Squid proxy-caching web server
+auth_param basic credentialsttl 2 hours
+</pre><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>This example assumes that ntlm_auth has been installed into your
+      path, and that the group permissions on
+      <code class="filename">winbindd_privileged</code> are as described above.</p></div><p>To setup ntlm_auth for use by squid 2.5 with group limitation in addition to the above
+	example, the following should be added to the <code class="filename">squid.conf</code> file.
+</p><pre class="programlisting">
+auth_param ntlm program ntlm_auth --helper-protocol=squid-2.5-ntlmssp --require-membership-of='WORKGROUP\Domain Users'
+auth_param basic program ntlm_auth --helper-protocol=squid-2.5-basic --require-membership-of='WORKGROUP\Domain Users'
+</pre></div><div class="refsect1" title="TROUBLESHOOTING"><a name="id307587"></a><h2>TROUBLESHOOTING</h2><p>If you're experiencing problems with authenticating Internet Explorer running
+	under MS Windows 9X or Millennium Edition against ntlm_auth's NTLMSSP authentication
+	helper (--helper-protocol=squid-2.5-ntlmssp), then please read 
+	<a class="ulink" href="http://support.microsoft.com/support/kb/articles/Q239/8/69.ASP" target="_top">
+	the Microsoft Knowledge Base article #239869 and follow instructions described there</a>.
+	</p></div><div class="refsect1" title="VERSION"><a name="id307606"></a><h2>VERSION</h2><p>This man page is correct for version 3 of the Samba 
+	suite.</p></div><div class="refsect1" title="AUTHOR"><a name="id307616"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</p><p>The ntlm_auth manpage was written by Jelmer Vernooij and
+	Andrew Bartlett.</p></div></div></body></html>

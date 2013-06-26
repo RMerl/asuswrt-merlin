@@ -1,0 +1,70 @@
+#!gmake
+#
+CC = @CC@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+includedir = @includedir@
+libdir = @libdir@
+VPATH = @libreplacedir@
+srcdir = @srcdir@
+builddir = @builddir@
+sharedbuilddir = @sharedbuilddir@
+INSTALLCMD = @INSTALL@
+LIBS = @LIBS@
+
+.PHONY: test all showflags install installcheck clean distclean realdistclean
+
+CFLAGS=-I. @CFLAGS@
+LDFLAGS=@LDFLAGS@
+
+OBJS = @LIBREPLACEOBJ@
+
+all: showflags libreplace.a testsuite
+
+showflags:
+	@echo 'libreplace will be compiled with flags:'
+	@echo '  CC     = $(CC)'
+	@echo '  CFLAGS = $(CFLAGS)'
+	@echo '  LDFLAGS= $(LDFLAGS)'
+	@echo '  LIBS   = $(LIBS)'
+
+install: all
+	${INSTALLCMD} -d $(libdir)
+	${INSTALLCMD} -m 644 libreplace.a $(libdir)
+
+shared-build: all
+	${INSTALLCMD} -d $(sharedbuilddir)/include
+	${INSTALLCMD} -m 644 replace.h $(sharedbuilddir)/include
+	${INSTALLCMD} -d $(sharedbuilddir)/lib
+	${INSTALLCMD} -m 644 libreplace.a $(sharedbuilddir)/lib
+
+libreplace.a: $(OBJS)
+	ar -rcsv $@ $(OBJS)
+
+test: all
+	./testsuite
+
+installcheck: install test
+
+TEST_OBJS = test/main.o test/testsuite.o test/os2_delete.o test/strptime.o test/getifaddrs.o
+
+testsuite: libreplace.a $(TEST_OBJS)
+	$(CC) -o testsuite $(TEST_OBJS) -L. -lreplace $(LDFLAGS) $(LIBS)
+
+.c.o:
+	@echo Compiling $*.c
+	@mkdir -p `dirname $@`
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f *.o test/*.o *.a testsuite
+	rm -f testfile.dat
+
+distclean: clean
+	rm -f *~ */*~
+	rm -f config.log config.status config.h config.cache
+	rm -f Makefile
+
+realdistclean: distclean
+	rm -f configure config.h.in

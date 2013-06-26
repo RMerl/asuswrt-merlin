@@ -1,0 +1,72 @@
+#include "idl_types.h"
+
+import "wkssvc.idl", "security.idl", "misc.idl";
+
+/*
+  libnetjoin interface definition
+*/
+
+[
+	pointer_default(unique),
+	helper("ads.h")
+]
+interface libnetjoin
+{
+	typedef bitmap wkssvc_joinflags wkssvc_joinflags;
+	typedef enum netr_SchannelType netr_SchannelType;
+
+	[nopush,nopull,noopnum] WERROR libnet_JoinCtx(
+		[in] string dc_name,
+		[in] string machine_name,
+		[in,ref] string *domain_name,
+		[in] string account_ou,
+		[in] string admin_account,
+		[in,noprint] string admin_password,
+		[in] string machine_password,
+		[in] wkssvc_joinflags join_flags,
+		[in] string os_version,
+		[in] string os_name,
+		[in] boolean8 create_upn,
+		[in] string upn,
+		[in] boolean8 modify_config,
+		[in,unique] ads_struct *ads,
+		[in] boolean8 debug,
+		[in] boolean8 use_kerberos,
+		[in] netr_SchannelType secure_channel_type,
+		[in,noprint] messaging_context *msg_ctx,
+		[out] string account_name,
+		[out] string netbios_domain_name,
+		[out] string dns_domain_name,
+		[out] string forest_name,
+		[out] string dn,
+		[out] dom_sid *domain_sid,
+		[out] boolean8 modified_config,
+		[out] string error_string,
+		[out] boolean8 domain_is_ad
+		);
+
+	[nopush,nopull,noopnum] WERROR libnet_UnjoinCtx(
+		[in] string dc_name,
+		[in] string machine_name,
+		[in] string domain_name,
+		[in] string account_ou,
+		[in] string admin_account,
+		[in,noprint] string admin_password,
+		[in] string machine_password,
+		[in] wkssvc_joinflags unjoin_flags,
+		[in] boolean8 delete_machine_account,
+		[in] boolean8 modify_config,
+		[in] dom_sid *domain_sid,
+		[in,unique] ads_struct *ads,
+		[in] boolean8 debug,
+		[in] boolean8 use_kerberos,
+		[in,noprint] messaging_context *msg_ctx,
+		[out] string netbios_domain_name,
+		[out] string dns_domain_name,
+		[out] string forest_name,
+		[out] boolean8 modified_config,
+		[out] string error_string,
+		[out] boolean8 disabled_machine_account,
+		[out] boolean8 deleted_machine_account
+		);
+}

@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+bld.SAMBA_LIBRARY('wbclient',
+	source='wbc_guid.c wbc_idmap.c wbclient.c wbc_pam.c wbc_pwd.c wbc_sid.c wbc_util.c',
+	deps='winbind-client',
+	public_headers='wbclient.h',
+	vnum='0'
+	)

@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+
+bld.RECURSE('ldap')
+bld.RECURSE('wbclient')
+
+bld.SAMBA_LIBRARY('errors',
+                  source='../../libcli/util/doserr.c util/errormap.c util/nterr.c',
+                  public_headers='../../libcli/util/error.h ../../libcli/util/ntstatus.h ../../libcli/util/doserr.h ../../libcli/util/werror.h',
+                  header_path='core',
+                  deps='talloc',
+                  private_library=True
+                  )
+
+
+bld.SAMBA_SUBSYSTEM('LIBSAMBA_TSOCKET',
+	source='../../libcli/util/tstream.c',
+	public_deps='LIBTSOCKET UTIL_TEVENT'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('LIBCLI_LSA',
+	source='util/clilsa.c',
+	autoproto='util/clilsa.h',
+	public_deps='RPC_NDR_LSA',
+	deps='security'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('LIBCLI_COMPOSITE',
+	source='composite/composite.c',
+	autoproto='composite/proto.h',
+	public_deps='events'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('LIBCLI_SMB_COMPOSITE',
+	source='smb_composite/loadfile.c smb_composite/savefile.c smb_composite/connect.c smb_composite/sesssetup.c smb_composite/fetchfile.c smb_composite/appendacl.c smb_composite/fsinfo.c smb_composite/smb2.c',
+	autoproto='smb_composite/proto.h',
+	deps='LIBCLI_SMB2',
+	public_deps='LIBCLI_COMPOSITE credentials gensec LIBCLI_RESOLVE'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('LIBCLI_DGRAM',
+	source='dgram/dgramsocket.c dgram/mailslot.c dgram/netlogon.c dgram/browse.c',
+	public_deps='cli-nbt ndr LIBCLI_RESOLVE LIBCLI_NETLOGON LIBCLI_RESOLVE'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('LIBCLI_WREPL',
+	source='wrepl/winsrepl.c',
+	autoproto='wrepl/winsrepl_proto.h',
+	public_deps='NDR_WINSREPL samba_socket events LIBPACKET LIBSAMBA_TSOCKET'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('LIBCLI_RESOLVE',
+	source='resolve/resolve.c',
+	autoproto='resolve/proto.h',
+	deps='roken',
+	public_deps='NDR_NBT LIBTSOCKET'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('LP_RESOLVE',
+	source='resolve/bcast.c resolve/nbtlist.c resolve/wins.c resolve/dns_ex.c resolve/file.c resolve/host.c resolve/resolve_lp.c',
+	autoproto='resolve/lp_proto.h',
+	deps='cli-nbt samba-hostconfig netif'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('LIBCLI_FINDDCS',
+	source='finddcs_nbt.c finddcs_cldap.c',
+	autoproto='finddcs_proto.h',
+	public_deps='cli-nbt MESSAGING RPC_NDR_IRPC LIBCLI_CLDAP'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('LIBCLI_SMB',
+	source='clireadwrite.c cliconnect.c clifile.c clilist.c clitrans2.c climessage.c clideltree.c',
+	autoproto='libcli_proto.h',
+	public_deps='LIBCLI_RAW errors LIBCLI_AUTH LIBCLI_SMB_COMPOSITE cli-nbt security LIBCLI_RESOLVE LIBCLI_DGRAM LIBCLI_SMB2 LIBCLI_FINDDCS samba_socket'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('LIBCLI_RAW',
+	source='raw/rawfile.c raw/smb_signing.c raw/clisocket.c raw/clitransport.c raw/clisession.c raw/clitree.c raw/clierror.c raw/rawrequest.c raw/rawreadwrite.c raw/rawsearch.c raw/rawsetfileinfo.c raw/raweas.c raw/rawtrans.c raw/clioplock.c raw/rawnegotiate.c raw/rawfsinfo.c raw/rawfileinfo.c raw/rawnotify.c raw/rawioctl.c raw/rawacl.c raw/rawdate.c raw/rawlpq.c raw/rawshadow.c',
+	autoproto='raw/raw_proto.h',
+	public_deps='samba_socket LIBPACKET LIBCRYPTO',
+	deps='LIBCLI_COMPOSITE LIBCLI_RESOLVE security ndr samba-util errors CHARSET talloc LIBCLI_SMB_COMPOSITE tevent NDR_NBT_BUF LIBCLI_SMB_COMMON'
+	)
+
+bld.RECURSE('smb2')
+bld.RECURSE('rap')

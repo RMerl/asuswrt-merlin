@@ -1,0 +1,20 @@
+use ExtUtils::MakeMaker;
+WriteMakefile(
+    'INSTALL_BASE' => '@prefix@',
+    'NAME'	=> 'Subunit',
+    'VERSION' => '@SUBUNIT_VERSION@',
+    'test' => { 'TESTS' => 'tests/*.pl' },
+    'PMLIBDIRS' => [ 'lib' ],
+    'EXE_FILES' => [ '@abs_srcdir@/subunit-diff' ],
+);
+sub MY::postamble {
+<<'EOT';
+check: # test
+
+uninstall_distcheck:
+	rm -fr $(DESTINSTALLARCHLIB)
+
+VPATH = @srcdir@
+.PHONY: uninstall_distcheck
+EOT
+}

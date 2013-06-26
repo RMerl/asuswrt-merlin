@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+bld.SAMBA_MODULE('service_smb',
+	source='service_smb.c',
+	autoproto='service_smb_proto.h',
+	subsystem='service',
+	init_function='server_service_smb_init',
+	deps='SMB_SERVER netif shares samba-hostconfig',
+	internal_module=False,
+	)
+
+
+bld.SAMBA_MODULE('service_samba3_smb',
+	source='smb_samba3.c',
+	subsystem='service',
+	init_function='server_service_samba3_smb_init',
+	deps='talloc',
+	internal_module=False,
+	)
+
+
+bld.SAMBA_SUBSYSTEM('SMB_SERVER',
+	source='handle.c tcon.c session.c blob.c management.c smb_server.c',
+	autoproto='smb_server_proto.h',
+	public_deps='share LIBPACKET SMB_PROTOCOL SMB2_PROTOCOL'
+	)
+
+bld.RECURSE('smb')
+bld.RECURSE('smb2')

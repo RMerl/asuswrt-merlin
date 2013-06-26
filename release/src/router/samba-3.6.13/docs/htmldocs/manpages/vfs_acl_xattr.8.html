@@ -1,0 +1,25 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>vfs_acl_xattr</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" title="vfs_acl_xattr"><a name="vfs_acl_xattr.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>vfs_acl_xattr &#8212; Save NTFS-ACLs in Extended Attributes (EAs)</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">vfs objects = acl_xattr</code></p></div></div><div class="refsect1" title="DESCRIPTION"><a name="id266339"></a><h2>DESCRIPTION</h2><p>This VFS module is part of the
+	<a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p>The <code class="literal">vfs_acl_xattr</code> VFS module stores
+	NTFS Access Control Lists (ACLs) in Extended Attributes (EAs).
+	This enables the full mapping of Windows ACLs on Samba
+	servers.
+	</p><p>The ACLs are stored in the Extended Attribute
+	<em class="parameter"><code>security.NTACL</code></em> of a file or directory.
+	This Attribute is <span class="emphasis"><em>not</em></span> listed by
+	<code class="literal">getfattr -d <code class="filename">filename</code></code>.
+	To show the current value, the name of the EA must be specified
+	(e.g. <code class="literal">getfattr -n security.NTACL <code class="filename">filename</code>
+	</code>).
+	</p><p>This module is stackable.</p></div><div class="refsect1" title="OPTIONS"><a name="id266863"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">acl_xattr:ignore system acls = [yes|no]</span></dt><dd><p>
+		When set to <span class="emphasis"><em>yes</em></span>, a best effort mapping
+		from/to the POSIX ACL layer will <span class="emphasis"><em>not</em></span> be
+		done by this module. The default is <span class="emphasis"><em>no</em></span>,
+		which means that Samba keeps setting and evaluating both the
+		system ACLs and the NT ACLs. This is better if you need your
+		system ACLs be set for local or NFS file access, too. If you only
+		access the data via Samba you might set this to yes to achieve
+		better NT ACL compatibility.
+		</p></dd></dl></div></div><div class="refsect1" title="AUTHOR"><a name="id265697"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</p></div></div></body></html>

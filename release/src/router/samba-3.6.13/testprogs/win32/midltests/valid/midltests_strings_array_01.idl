@@ -1,0 +1,44 @@
+#ifndef MIDLTESTS_C_CODE
+
+[
+  uuid("225b9fcb-eb3d-497b-8b0b-591f049a2507"),
+  pointer_default(unique)
+]
+interface midltests
+{
+	struct strings {
+		long count;
+		[size_is(count),string] char *val[];
+	};
+
+	long midltests_fn(
+		[in,out,ref] struct strings *s
+	);
+}
+
+#elif MIDLTESTS_C_CODE
+
+static void midltests(void)
+{
+	const char *s1 = "foo";
+	const char *s2 = "bar";
+	char *a[] = { "foo", "bar2", NULL };
+	char buffer[1024];
+	struct strings *s = buffer;
+
+	s->count = 3;
+	s->val[0] = "foo";
+	s->val[1] = "bar2";
+	s->val[2] = NULL;
+
+	cli_midltests_fn(s);
+}
+
+long srv_midltests_fn(struct strings *a)
+{
+	printf("srv_midltests_fn: Start\n");
+	printf("srv_midltests_fn: End\n");
+	return 0x65757254;
+}
+
+#endif

@@ -1,0 +1,21 @@
+PARTITIONS UPGRADE
+==================
+
+Notes on using Samba4 after the partitions code upgrade on 21 Oct 2009
+
+The data previously stored in Samba4 partitions is no longer
+accessible, as we have changed the filenames.  
+
+To access your Samba4 tree again, backup your Samba4 prefix, and
+re-run provision with the same settings as in the past. 
+
+This will create new databases in your PREFIX/private directory, like
+DC=SAMBA,DC=EXAMPLE,DC=COM.ldb.  
+
+Restore your users.ldb to the DC=SAMBA,DC=EXAMPLE,DC=COM.ldb,
+configuration.ldb to CN=CONFIGURATION,DC=SAMBA,DC=EXAMPLE,DC=COM.ldb
+and schema.ldb to
+CN=SCHEMA,CN=CONFIGURATION,DC=SAMBA,DC=EXAMPLE,DC=COM.ldb
+
+Also remember to restore your secrets.ldb.
+

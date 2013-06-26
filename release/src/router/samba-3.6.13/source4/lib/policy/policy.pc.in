@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: policy
+Description: Active Directory Group Policy library
+Requires: talloc
+Requires.private: ldb
+Version: @PACKAGE_VERSION@
+Libs: @LIB_RPATH@ -L${libdir} -lpolicy
+Cflags: -I${includedir}  -DHAVE_IMMEDIATE_STRUCTURES=1

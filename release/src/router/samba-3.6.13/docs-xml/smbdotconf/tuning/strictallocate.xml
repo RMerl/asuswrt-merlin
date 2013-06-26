@@ -1,0 +1,40 @@
+<samba:parameter name="strict allocate"
+                 context="S"
+				 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This is a boolean that controls the handling of
+    disk space allocation in the server. When this is set to <constant>yes</constant>
+    the server will change from UNIX behaviour of not committing real
+    disk storage blocks when a file is extended to the Windows behaviour
+    of actually forcing the disk system to allocate real storage blocks
+    when a file is created or extended to be a given size. In UNIX
+    terminology this means that Samba will stop creating sparse files.</para>
+
+    <para>This option is really desgined for file systems that support
+    fast allocation of large numbers of blocks such as extent-based file systems.
+    On file systems that don't support extents (most notably ext3) this can
+    make Samba slower. When you work with large files over >100MB on file
+    systems without extents you may even run into problems with clients
+    running into timeouts.</para>
+
+    <para>When you have an extent based filesystem it's likely that we can make
+    use of unwritten extents which allows Samba to allocate even large amounts
+    of space very fast and you will not see any timeout problems caused by
+    strict allocate. With strict allocate in use you will also get much better
+    out of quota messages in case you use quotas. Another advantage of
+    activating this setting is that it will help to reduce file
+    fragmentation.</para>
+
+    <para>To give you an idea on which filesystems this setting might currently
+    be a good option for you: XFS, ext4, btrfs, ocfs2 on Linux and JFS2 on
+    AIX support unwritten extents. On Filesystems that do not support it,
+    preallocation is probably an expensive operation where you will see reduced
+    performance and risk to let clients run into timeouts when creating large
+    files. Examples are ext3, ZFS, HFS+ and most others, so be aware if you
+    activate this setting on those filesystems.</para>
+
+</description>
+
+<value type="default">no</value>
+</samba:parameter>

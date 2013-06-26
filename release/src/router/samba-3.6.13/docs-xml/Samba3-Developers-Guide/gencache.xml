@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="gencache">
+<chapterinfo>
+	<author>
+		<firstname>Rafal</firstname><surname>Szczesniak</surname>
+	</author>
+	<pubdate>April 2003</pubdate>
+</chapterinfo>
+
+<title>General cache mechanism and API</title>
+
+<sect1>
+<title>Abstract</title>
+<para>
+General cache (gencache) was designed to combine various kinds of caching
+mechanisms into one, defined by a simple API. This way, anyone can use it
+to create their own caching layer on top of gencache. An example of
+such approach is the netbios name cache.
+</para>
+</sect1>
+
+<sect1>
+<title>The mechanism</title>
+<para>
+Gencache utilises <emphasise>tdb</emphasise> database, like many other
+parts of Samba. As its origins are in Berkeley DB implementation, it
+uses key/value pairs stored in binary file. The values gencache
+operates on are string-based, however. This makes very easy to use it
+in command line environment eg. to quickly take a look at what's in
+the cache or set some value.
+</para>
+
+<para>
+All the data is stored in <filename>gencache.tdb</filename>
+file. Records put there are in key/value format as mentioned below,
+but as it's a cache, the timeout plays also important role and has a
+special place in the key/value pair, as well as API.
+</para>
+</sect1>
+
+
+<sect1>
+<title>The data structure</title>
+<para>
+The record stored in <filename>gencache.tdb</filename> file consists
+of the key, the value and the expiration timeout. While the first part
+is stored completely independent from the others, the last two are
+kept together. The form the record has is:
+</para>
+
+<para><programlisting>
+key:     &lt;string&gt;
+value:   &lt;12-digit timeout&gt;/&lt;string&gt;
+</programlisting></para>
+
+<para>The timeout part is the ASCII representation of
+<emphasis>time_t</emphasis> value of the time when the cache entry
+expires. Obviously the API, the programmer is provided with, hides this detail,
+so that you don't have to care about checking it. Simply watch
+carefully the return status of the function.
+</para>
+</sect1>
+
+<sect1>
+<title>The API</title>
+
+<para><programlisting>
+BOOL gencache_init()
+</programlisting></para>
+
+<para>This is used to initialise to whole caching mechanism. It means
+opening the file or creating it if non-existing. If it's already been
+opened earlier, then the routine just does nothing and returns
+<constant>true</constant>. If something goes wrong, say the user
+doesn't have necessary rights, the function returns
+<constant>false</constant>.</para>
+
+<para><programlisting>
+BOOL gencache_shutdown()
+</programlisting></para>
+
+<para>This is the proper way to close the cache file. It simply
+returns <constant>true</constant> after successful closing file and
+<constant>false</constant> upon a failure.</para>
+
+<para><programlisting>
+BOOL gencache_set(const char* keystr, const char* value, time_t timeout)
+</programlisting></para>
+
+<para>This is one of the most basic functions. What it allows you to
+do is to set some particular cache entry. If the entry haven't
+existed yet, the function will act just as it was "gencache_add"
+function. If it's already been in the cache, the entry will be set to
+the new value. In either case, the cache entry will be set with given
+key, value and timeout. Thus it is comfortable way to just set the
+entry and not care about the details.</para>
+
+<para><programlisting>
+BOOL gencache_set_only(const char* keystr, const char* value, time_t timeout)
+</programlisting></para>
+
+<para><programlisting>
+BOOL gencache_del(const char* keystr)
+</programlisting></para>
+
+<para><programlisting>
+BOOL gencache_get(const char* keystr, char** valstr, time_t* timeout)
+</programlisting></para>
+
+<para><programlisting>
+void gencache_iterate(void (*fn)(const char* key, const char *value, time_t timeout, void* dptr),
+                      void* data, const char* keystr_pattern)
+
+</programlisting></para>
+
+</sect1>
+
+</chapter>

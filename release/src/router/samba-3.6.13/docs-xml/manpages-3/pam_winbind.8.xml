@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="pam_winbind.8">
+
+<refmeta>
+	<refentrytitle>pam_winbind</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">8</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>pam_winbind</refname>
+	<refpurpose>PAM module for Winbind</refpurpose>
+</refnamediv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>
+	pam_winbind is a PAM module that can authenticate users against the local domain by talking to the Winbind daemon.
+	</para>
+
+</refsect1>
+
+<refsect1>
+	<title>SYNOPSIS</title>
+
+	<para>
+		Edit the PAM system config /etc/pam.d/service and modify it as the following example shows:
+		<programlisting>
+			    ...
+			    auth      required        pam_env.so
+			    auth      sufficient      pam_unix2.so
+			+++ auth      required        pam_winbind.so  use_first_pass
+			    account   requisite       pam_unix2.so
+			+++ account   required        pam_winbind.so  use_first_pass
+			+++ password  sufficient      pam_winbind.so
+			    password  requisite       pam_pwcheck.so  cracklib
+			    password  required        pam_unix2.so    use_authtok
+			    session   required        pam_unix2.so
+			+++ session   required        pam_winbind.so
+			    ...
+		</programlisting>
+
+		Make sure that pam_winbind is one of the first modules in the session part. It may retrieve
+		kerberos tickets which are needed by other modules.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+	<para>
+	
+		pam_winbind supports several options which can either be set in
+		the PAM configuration files or in the pam_winbind configuration
+		file situated at
+		<filename>/etc/security/pam_winbind.conf</filename>. Options
+		from the PAM configuration file take precedence to those from
+		the configuration file. See
+		<citerefentry><refentrytitle>pam_winbind.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+		for further details.
+
+		<variablelist>
+
+		<varlistentry>
+		<term>debug</term>
+		<listitem><para>Gives debugging output to syslog.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>debug_state</term>
+		<listitem><para>Gives detailed PAM state debugging output to syslog.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>require_membership_of=[SID or NAME]</term>
+		<listitem><para>
+		If this option is set, pam_winbind will only succeed if the user is a member of the given SID or NAME. A SID
+		can be either a group-SID, an alias-SID or even an user-SID. It is also possible to give a NAME instead of the
+		SID. That name must have the form: <parameter>MYDOMAIN\\mygroup</parameter> or
+		<parameter>MYDOMAIN\\myuser</parameter>.  pam_winbind will, in that case, lookup the SID internally. Note that
+		NAME may not contain any spaces. It is thus recommended to only use SIDs. You can verify the list of SIDs a
+		user is a member of with <command>wbinfo --user-sids=SID</command>.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>use_first_pass</term>
+		<listitem><para>
+		By default, pam_winbind tries to get the authentication token from a previous module. If no token is available
+		it asks the user for the old password. With this option, pam_winbind aborts with an error if no authentication
+		token from a previous module is available.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>try_first_pass</term>
+		<listitem><para>
+				Same as the use_first_pass option (previous item), except that if the primary password is not
+				valid, PAM will prompt for a password.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>use_authtok</term>
+		<listitem><para>
+		Set the new password to the one provided by the previously stacked password module. If this option is not set 
+		pam_winbind will ask the user for the new password.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>krb5_auth</term>
+		<listitem><para>
+
+		pam_winbind can authenticate using Kerberos when winbindd is
+		talking to an Active Directory domain controller. Kerberos
+		authentication must be enabled with this parameter. When
+		Kerberos authentication can not succeed (e.g. due to clock
+		skew), winbindd will fallback to samlogon authentication over
+		MSRPC. When this parameter is used in conjunction with
+		<parameter>winbind refresh tickets</parameter>, winbind will
+		keep your Ticket Granting Ticket (TGT) uptodate by refreshing
+		it whenever necessary.
+
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>krb5_ccache_type=[type]</term>
+		<listitem><para>
+		
+		When pam_winbind is configured to try kerberos authentication
+		by enabling the <parameter>krb5_auth</parameter> option, it can
+		store the retrieved Ticket Granting Ticket (TGT) in a
+		credential cache. The type of credential cache can be set with
+		this option. Currently the only supported value is:
+		<parameter>FILE</parameter>. In that case a credential cache in
+		the form of /tmp/krb5cc_UID will be created, where UID is
+		replaced with the numeric user id.  Leave empty to just do
+		kerberos authentication without having a ticket cache after the
+		logon has succeeded.
+
+		</para></listitem>
+		</varlistentry>
+	
+		<varlistentry>
+		<term>cached_login</term>
+		<listitem><para>
+		Winbind allows to logon using cached credentials when <parameter>winbind offline logon</parameter> is enabled. To use this feature from the PAM module this option must be set.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>silent</term>
+		<listitem><para>
+		Do not emit any messages.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>mkhomedir</term>
+		<listitem><para>
+		Create homedirectory for a user on-the-fly, option is valid in
+		PAM session block.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>warn_pwd_expire</term>
+		<listitem><para>
+		Defines number of days before pam_winbind starts to warn about passwords that are
+		going to expire. Defaults to 14 days.
+		</para></listitem>
+		</varlistentry>
+
+		</variablelist>
+
+	</para>
+
+</refsect1>
+
+<refsect1>
+	<title>PAM DATA EXPORTS</title>
+
+	<para>This section describes the data exported in the PAM stack which could be used in other PAM modules.</para>
+
+	<varlistentry>
+		<term>PAM_WINBIND_HOMEDIR</term>
+		<listitem>
+			<para>
+				This is the Windows Home Directory set in the profile tab in the user settings
+				on the Active Directory Server. This could be a local path or a directory on a
+				share mapped to a drive.
+			</para>
+		</listitem>
+	</varlistentry>
+	<varlistentry>
+		<term>PAM_WINBIND_LOGONSCRIPT</term>
+		<listitem>
+			<para>
+				The path to the logon script which should be executed if a user logs in. This is
+				normally a relative path to the script stored on the server.
+			</para>
+		</listitem>
+	</varlistentry>
+	<varlistentry>
+		<term>PAM_WINBIND_LOGONSERVER</term>
+		<listitem>
+			<para>
+				This exports the Active Directory server we are authenticating against. This can be
+				used as a variable later.
+			</para>
+		</listitem>
+	</varlistentry>
+	<varlistentry>
+		<term>PAM_WINBIND_PROFILEPATH</term>
+		<listitem>
+			<para>
+				This is the profile path set in the profile tab in the user settings. Normally
+				the home directory is synced with this directory on a share.
+			</para>
+		</listitem>
+	</varlistentry>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+	<para><citerefentry>
+	<refentrytitle>pam_winbind.conf</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry>, <citerefentry>
+	<refentrytitle>wbinfo</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry>, <citerefentry>
+	<refentrytitle>winbindd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>, <citerefentry>
+	<refentrytitle>smb.conf</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3 of Samba.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>
+	The original Samba software and related utilities were created by Andrew Tridgell. Samba is now developed by
+	the Samba Team as an Open Source project similar to the way the Linux kernel is developed.
+	</para>
+	
+	<para>This manpage was written by Jelmer Vernooij and Guenther Deschner.</para>
+
+</refsect1>
+
+</refentry>

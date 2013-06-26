@@ -1,0 +1,137 @@
+Wait for setup of server threads
+
+Test NDR32
+
+ndr32: disable NDR64
+
+ndr32:in => out: ptype[request] flen[29] plen[5] ahint[5]
+
+[000] 00 00 00 00 63                                    ....c 
+
+srv_midltests_fn: Start
+srv_midltests_fn: End
+
+ndr32:out => in: ptype[response] flen[29] plen[5] ahint[5]
+
+[000] 00 00 00 00 63                                    ....c 
+
+ndr32:in => out: ptype[request] flen[30] plen[6] ahint[6]
+
+[000] 01 00 01 00 FF 63                                 .....c 
+
+srv_midltests_fn: Start
+srv_midltests_fn: End
+
+ndr32:out => in: ptype[response] flen[30] plen[6] ahint[6]
+
+[000] 01 00 01 00 FF 63                                 .....c 
+
+ndr32:in => out: ptype[request] flen[31] plen[7] ahint[7]
+
+[000] 02 00 02 00 FF FF 63                              ......c 
+
+srv_midltests_fn: Start
+srv_midltests_fn: End
+
+ndr32:out => in: ptype[response] flen[31] plen[7] ahint[7]
+
+[000] 02 00 02 00 FF FF 63                              ......c 
+
+ndr32:in => out: ptype[request] flen[33] plen[9] ahint[9]
+
+[000] 04 00 04 00 FF FF FF FF  63                       ........ c
+
+srv_midltests_fn: Start
+srv_midltests_fn: End
+
+ndr32:out => in: ptype[response] flen[33] plen[9] ahint[9]
+
+[000] 04 00 04 00 FF FF FF FF  63                       ........ c
+
+ndr32:in => out: ptype[request] flen[41] plen[17] ahint[17]
+
+[000] 08 00 08 00 00 00 00 00  FF FF FF FF FF FF FF FF  ........ ........
+[010] 63                                                c 
+
+srv_midltests_fn: Start
+srv_midltests_fn: End
+
+ndr32:out => in: ptype[response] flen[41] plen[17] ahint[17]
+
+[000] 08 00 08 00 00 00 00 00  FF FF FF FF FF FF FF FF  ........ ........
+[010] 63                                                c 
+
+NDRTcpThread[ndr32] stop
+
+Test NDR64
+
+ndr64: got NDR64
+
+ndr64:in => out: ptype[request] flen[41] plen[17] ahint[17]
+
+[000] 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ........ ........
+[010] 63                                                c 
+
+srv_midltests_fn: Start
+srv_midltests_fn: End
+
+ndr64:out => in: ptype[response] flen[41] plen[17] ahint[17]
+
+[000] 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ........ ........
+[010] 63                                                c 
+
+ndr64:in => out: ptype[request] flen[42] plen[18] ahint[18]
+
+[000] 01 00 00 00 00 00 00 00  01 00 00 00 00 00 00 00  ........ ........
+[010] FF 63                                             .c 
+
+srv_midltests_fn: Start
+srv_midltests_fn: End
+
+ndr64:out => in: ptype[response] flen[42] plen[18] ahint[18]
+
+[000] 01 00 00 00 00 00 00 00  01 00 00 00 00 00 00 00  ........ ........
+[010] FF 63                                             .c 
+
+ndr64:in => out: ptype[request] flen[43] plen[19] ahint[19]
+
+[000] 02 00 00 00 00 00 00 00  02 00 00 00 00 00 00 00  ........ ........
+[010] FF FF 63                                          ..c 
+
+srv_midltests_fn: Start
+srv_midltests_fn: End
+
+ndr64:out => in: ptype[response] flen[43] plen[19] ahint[19]
+
+[000] 02 00 00 00 00 00 00 00  02 00 00 00 00 00 00 00  ........ ........
+[010] FF FF 63                                          ..c 
+
+ndr64:in => out: ptype[request] flen[45] plen[21] ahint[21]
+
+[000] 04 00 00 00 00 00 00 00  04 00 00 00 00 00 00 00  ........ ........
+[010] FF FF FF FF 63                                    ....c 
+
+srv_midltests_fn: Start
+srv_midltests_fn: End
+
+ndr64:out => in: ptype[response] flen[45] plen[21] ahint[21]
+
+[000] 04 00 00 00 00 00 00 00  04 00 00 00 00 00 00 00  ........ ........
+[010] FF FF FF FF 63                                    ....c 
+
+ndr64:in => out: ptype[request] flen[49] plen[25] ahint[25]
+
+[000] 08 00 00 00 00 00 00 00  08 00 00 00 00 00 00 00  ........ ........
+[010] FF FF FF FF FF FF FF FF  63                       ........ c
+
+srv_midltests_fn: Start
+srv_midltests_fn: End
+
+ndr64:out => in: ptype[response] flen[49] plen[25] ahint[25]
+
+[000] 08 00 00 00 00 00 00 00  08 00 00 00 00 00 00 00  ........ ........
+[010] FF FF FF FF FF FF FF FF  63                       ........ c
+
+NDRTcpThread[ndr64] stop
+
+Test OK

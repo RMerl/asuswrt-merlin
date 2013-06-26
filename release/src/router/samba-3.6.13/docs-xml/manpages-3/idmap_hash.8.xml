@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="idmap_hash.8">
+
+<refmeta>
+	<refentrytitle>idmap_hash</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>idmap_hash</refname>
+	<refpurpose>Samba's idmap_hash Backend for Winbind</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<title>DESCRIPTION</title>
+	<para>The idmap_hash plugin implements a hashing algorithm used to map
+	  SIDs for domain users and groups to 31-bit uids and gids, respectively.
+	  This plugin also implements the nss_info API and can be used
+	  to support a local name mapping files if enabled via the
+	  &quot;winbind normalize names&quot; and &quot;winbind nss info&quot;
+	  parameters in smb.conf.
+	</para>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>IDMAP OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>name_map</term>
+		<listitem><para>
+		    Specifies the absolute path to the name mapping
+		    file used by the nss_info API.  Entries in the file
+		    are of the form &quot;<replaceable>unix name</replaceable>
+		    = <replaceable>qualified domain name</replaceable>&quot;.
+		    Mapping of both user and group names is supported.
+		</para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+	<para>The following example utilizes the idmap_hash plugin for
+	  the idmap and nss_info information.
+	</para>
+
+	<programlisting>
+	[global]
+	idmap config * : backend = hash
+	idmap config * : range = 1000-4000000000
+
+	winbind nss info = hash
+	winbind normalize names = yes
+	idmap_hash:name_map = /etc/samba/name_map.cfg
+	</programlisting>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>
+	The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.
+	</para>
+</refsect1>
+
+</refentry>

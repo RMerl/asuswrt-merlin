@@ -1,0 +1,9 @@
+#!/usr/bin/env python
+
+bld.SAMBA_MODULE('ECHO',
+        source='echo_server.c',
+        subsystem='service',
+        init_function='server_service_echo_init',
+        deps='samba-hostconfig LIBTSOCKET LIBSAMBA_TSOCKET',
+        local_include=False
+        )

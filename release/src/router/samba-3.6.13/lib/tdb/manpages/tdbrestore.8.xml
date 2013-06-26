@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<refentry id="tdbrestore.8">
+
+<refmeta>
+	<refentrytitle>tdbrestore</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>tdbrestore</refname>
+	<refpurpose>tool for creating a TDB file out of a tdbdump output</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>tdbrestore</command>
+		<arg choice="req">tdbfilename</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry> suite.</para>
+
+	<para><command>tdbrestore</command> is a very simple utility that 'restores' the
+		contents of dump file into TDB (Trivial DataBase) file. The dump file is obtained from the tdbdump
+		command.
+	</para>
+
+	<para>This tool wait on the standard input for the content of the dump and will write the tdb in the tdbfilename
+  parameter.
+	</para>
+	<para>This tool can be used for unpacking the content of tdb as backup mean.
+	</para>
+</refsect1>
+
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>
+	The original Samba software and related utilities were created by Andrew Tridgell.
+	Samba is now developed by the Samba Team as an Open Source project similar to the way
+	the Linux kernel is developed.
+
+        This tool was initially written by Volker Lendecke based on an
+        idea by Simon McVittie.
+	</para>
+
+	<para>The tdbrestore man page was written by Matthieu Patou.</para>
+</refsect1>
+
+</refentry>

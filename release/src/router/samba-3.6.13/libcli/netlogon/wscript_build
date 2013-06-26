@@ -1,0 +1,11 @@
+#!/usr/bin/env python
+
+bld.SAMBA_SUBSYSTEM('LIBCLI_NDR_NETLOGON',
+	source='ndr_netlogon.c',
+	public_deps='ndr NDR_SECURITY'
+	)
+
+bld.SAMBA_SUBSYSTEM('LIBCLI_NETLOGON',
+	source='netlogon.c',
+	public_deps='samba-util LIBCLI_NDR_NETLOGON'
+	)

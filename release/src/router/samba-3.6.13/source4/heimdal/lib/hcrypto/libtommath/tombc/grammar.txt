@@ -1,0 +1,35 @@
+program       := program statement | statement | empty
+statement     := { statement }                                                                              | 
+                 identifier = numexpression;                                                                | 
+                 identifier[numexpression] = numexpression;                                                 |
+                 function(expressionlist);                                                                  | 
+                 for (identifer = numexpression; numexpression; identifier = numexpression) { statement }   |
+                 while (numexpression) { statement }                                                        | 
+                 if (numexpresion) { statement } elif                                                       | 
+                 break;                                                                                     | 
+                 continue;                                                                                  
+                 
+elif          := else statement | empty
+function      := abs | countbits | exptmod | jacobi | print | isprime | nextprime | issquare | readinteger | exit
+expressionlist := expressionlist, expression | expression
+
+// LR(1) !!!?
+expression    := string | numexpression
+numexpression := cmpexpr && cmpexpr | cmpexpr \|\| cmpexpr | cmpexpr
+cmpexpr       := boolexpr  < boolexpr | boolexpr  > boolexpr | boolexpr == boolexpr | 
+                 boolexpr <= boolexpr | boolexpr >= boolexpr | boolexpr
+boolexpr      := shiftexpr & shiftexpr | shiftexpr ^ shiftexpr | shiftexpr \| shiftexpr | shiftexpr
+shiftexpr     := addsubexpr << addsubexpr | addsubexpr >> addsubexpr | addsubexpr
+addsubexpr    := mulexpr + mulexpr | mulexpr - mulexpr | mulexpr
+mulexpr       := expr * expr       | expr / expr | expr % expr | expr
+expr          := -nexpr | nexpr 
+nexpr         := integer | identifier | ( numexpression ) | identifier[numexpression] 
+
+identifier    := identifer digits | identifier alpha | alpha
+alpha         := a ... z | A ... Z
+integer       := hexnumber | digits 
+hexnumber     := 0xhexdigits
+hexdigits     := hexdigits hexdigit | hexdigit
+hexdigit      := 0 ... 9 | a ... f | A ... F
+digits        := digits digit | digit 
+digit         := 0 ... 9

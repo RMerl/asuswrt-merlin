@@ -1,0 +1,9 @@
+[
+	uuid("1d55b526-c137-46c5-ab79-638f2a68e869"),
+	version(1.0),
+   	pointer_default(unique),
+	helpstring("Remote IDL debugger")
+] interface dbgidl 
+{
+	void dummy_dbgidl();
+}

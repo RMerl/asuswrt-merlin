@@ -1,0 +1,6 @@
+This branch contains sources for both Samba 3 and Samba 4. The Samba 3
+source/ folder is now called source3, the samba4 source/ folder is called
+source4.
+
+The aim is to move shared code to a common location
+and hopefully combine Samba3 and Samba 4 step by step.

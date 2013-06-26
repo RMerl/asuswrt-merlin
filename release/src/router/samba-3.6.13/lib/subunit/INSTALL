@@ -1,0 +1,32 @@
+To install subunit
+------------------
+
+Bootstrap::
+  autoreconf -vi
+Configure::
+  ./configure
+Install::
+  make install
+
+Dependencies
+------------
+
+* Python for the filters
+* 'testtools' (On Debian and Ubuntu systems the 'python-testtools' package,
+  the testtools package on pypi, or https://launchpad.net/testtools) for
+  the extended test API which permits attachments. Version 0.9.8 or newer is 
+  required. Of particular note, http://testtools.python-hosting.com/ is not
+  the testtools you want.
+* A C compiler for the C bindings
+* Perl for the Perl tools (including subunit-diff)
+* Check to run the subunit test suite.
+* python-gtk2 if you wish to use subunit2gtk
+* python-junitxml if you wish to use subunit2junitxml
+* pkg-config for configure detection of supporting libraries.
+
+Binary packages
+---------------
+
+A number of distributions now include subunit, you can try via your package
+manager. The authors maintain a personal package archive on Launchpad::
+  https://launchpad.net/~testing-cabal/+archive/archive

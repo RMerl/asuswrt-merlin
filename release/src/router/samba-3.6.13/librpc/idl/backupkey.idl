@@ -1,0 +1,120 @@
+#include "idl_types.h"
+
+import "misc.idl", "security.idl";
+[
+  uuid("3dde7c30-165d-11d1-ab8f-00805f14db40"),
+  version(1.0),
+  endpoint("ncacn_np:[\\pipe\\protected_storage]","ncacn_np:[\\pipe\\ntsvcs]" ,"ncacn_ip_tcp:"),
+  helpstring("Remote Backup Key Storage"),
+  helper("../librpc/ndr/ndr_backupkey.h"),
+  pointer_default(unique)
+]
+interface backupkey
+{
+	const string BACKUPKEY_RESTORE_GUID		= "47270C64-2FC7-499B-AC5B-0E37CDCE899A";
+	const string BACKUPKEY_RETRIEVE_BACKUP_KEY_GUID	= "018FF48A-EABA-40C6-8F6D-72370240E967";
+
+	const string BACKUPKEY_RESTORE_GUID_WIN2K	= "7FE94D50-178E-11D1-AB8F-00805F14DB40";
+	const string BACKUPKEY_BACKUP_GUID		= "7F752B10-178E-11D1-AB8F-00805F14DB40";
+
+	/*
+	 * The magic values are really what they are there is no name it's just remarkable values
+	 * that are here to check that what is transmited or decoded is really what the client or
+	 * the server expect.
+	 */
+	[public] typedef struct {
+		[value(0x00000002)] uint32 header1;
+		[value(0x00000494)] uint32 header2;
+		uint32 certificate_len;
+		[value(0x00000207)] uint32 magic1;
+		[value(0x0000A400)] uint32 magic2;
+		[value(0x32415352)] uint32 magic3;
+		[value(0x00000800)] uint32 magic4;
+		[subcontext(0),subcontext_size(4),flag(NDR_REMAINING)] DATA_BLOB public_exponent;
+
+		[subcontext(0),subcontext_size(256),flag(NDR_REMAINING)] DATA_BLOB modulus;
+		[subcontext(0),subcontext_size(128),flag(NDR_REMAINING)] DATA_BLOB prime1;
+		[subcontext(0),subcontext_size(128),flag(NDR_REMAINING)] DATA_BLOB prime2;
+		[subcontext(0),subcontext_size(128),flag(NDR_REMAINING)] DATA_BLOB exponent1;
+		[subcontext(0),subcontext_size(128),flag(NDR_REMAINING)] DATA_BLOB exponent2;
+		[subcontext(0),subcontext_size(128),flag(NDR_REMAINING)] DATA_BLOB coefficient;
+		[subcontext(0),subcontext_size(256),flag(NDR_REMAINING)] DATA_BLOB private_exponent;
+		[subcontext(0),subcontext_size(certificate_len),flag(NDR_REMAINING)] DATA_BLOB cert;
+	} bkrp_exported_RSA_key_pair;
+
+	[public] typedef struct {
+		[value(0x00000001)] uint32 magic;
+		uint8 key[256];
+	} bkrp_dc_serverwrap_key;
+
+	[public,gensize] typedef struct {
+		uint32 version;
+		uint32 encrypted_secret_len;
+		uint32 access_check_len;
+		GUID guid;
+		uint8  encrypted_secret[encrypted_secret_len];
+		uint8  access_check[access_check_len];
+	} bkrp_client_side_wrapped;
+
+	[public] typedef struct {
+		[value(0x00000000)] uint32 magic;
+		[subcontext(0),flag(NDR_REMAINING)] DATA_BLOB secret;
+	} bkrp_client_side_unwrapped;
+
+	[public] typedef struct {
+		uint32 secret_len;
+		[value(0x00000020)] uint32 magic;
+		uint8 secret[secret_len];
+		uint8 payload_key[32];
+	} bkrp_encrypted_secret_v2;
+
+	[public] typedef struct {
+		uint32 secret_len;
+		[value(0x00000030)] uint32 magic1;
+		[value(0x00006610)] uint32 magic2;
+		[value(0x0000800e)] uint32 magic3;
+		uint8 secret[secret_len];
+		uint8 payload_key[48];
+	} bkrp_encrypted_secret_v3;
+
+	/* Due to alignement constraint we can generate the structure only via pidl*/
+	[public, nopush, nopull] typedef struct {
+		[value(0x00000001)] uint32 magic;
+		uint32 nonce_len;
+		uint8 nonce[nonce_len];
+		dom_sid sid;
+		uint8 hash[20];
+	} bkrp_access_check_v2;
+
+	/* Due to alignement constraint we can generate the structure only via pidl*/
+	[public,nopush,nopull] typedef struct {
+		[value(0x00000001)] uint32 magic;
+		uint32 nonce_len;
+		uint8 nonce[nonce_len];
+		dom_sid sid;
+		uint8 hash[64];
+	} bkrp_access_check_v3;
+
+	typedef enum {
+		BACKUPKEY_INVALID_GUID_INTEGER = 0xFFFF,
+		BACKUPKEY_RESTORE_GUID_INTEGER = 0x0000,
+		BACKUPKEY_RETRIEVE_BACKUP_KEY_GUID_INTEGER = 0x0001
+	} bkrp_guid_to_integer;
+
+	[public] typedef [nodiscriminant] union {
+		[case(BACKUPKEY_RESTORE_GUID_INTEGER)] bkrp_client_side_wrapped restore_req;
+		[case(BACKUPKEY_RETRIEVE_BACKUP_KEY_GUID_INTEGER)] bkrp_client_side_wrapped cert_req;
+	} bkrp_data_in_blob;
+
+	/******************/
+	/* Function: 0x00 */
+
+	[public, noprint] WERROR bkrp_BackupKey (
+		[in,ref]  GUID *guidActionAgent,
+		[in,ref]  [size_is(data_in_len)] uint8 *data_in,
+		[in]      uint32 data_in_len,
+		[out,ref] [size_is(,*data_out_len)] uint8 **data_out,
+		[out,ref] uint32 *data_out_len,
+		[in]      uint32 param
+	);
+}

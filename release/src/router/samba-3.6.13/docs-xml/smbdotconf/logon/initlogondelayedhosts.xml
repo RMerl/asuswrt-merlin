@@ -1,0 +1,21 @@
+<samba:parameter name="init logon delayed hosts"
+                 context="G"
+		 type="list"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This parameter takes a list of host names, addresses or networks for
+	which the initial samlogon reply should be delayed (so other DCs get
+	preferred by XP workstations if there are any).
+	</para>
+
+	<para>
+	The length of the delay can be specified with the
+	<smbconfoption name="init logon delay"/> parameter.
+	</para>
+</description>
+
+<value type="default"></value>
+<value type="example">150.203.5. myhost.mynet.de</value>
+</samba:parameter>

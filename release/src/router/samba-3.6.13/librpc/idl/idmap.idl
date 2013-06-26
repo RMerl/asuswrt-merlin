@@ -1,0 +1,34 @@
+#include "idl_types.h"
+
+import "security.idl";
+
+[
+  pointer_default(unique)
+]
+interface idmap
+{
+	typedef [public] enum {
+		ID_TYPE_NOT_SPECIFIED,
+		ID_TYPE_UID,
+		ID_TYPE_GID,
+		ID_TYPE_BOTH
+	} id_type;
+
+	typedef [public] struct {
+		uint32 id;
+		id_type type;
+	} unixid;
+
+	typedef[public]  enum {
+		ID_UNKNOWN,
+		ID_MAPPED,
+		ID_UNMAPPED,
+		ID_EXPIRED
+	} id_mapping;
+
+	typedef [public] struct {
+		dom_sid *sid;
+		unixid xid;
+		id_mapping status;
+	} id_map;
+}

@@ -1,0 +1,1 @@
+preexec = /bin/sh PREFIX/lib/preexec

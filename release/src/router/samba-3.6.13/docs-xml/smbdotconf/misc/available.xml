@@ -1,0 +1,14 @@
+<samba:parameter name="available"
+	         context="S"
+		 basic="1" advanced="1" print="1"
+		 type="boolean"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter lets you &quot;turn off&quot; a service. If 
+	<parameter moreinfo="none">available = no</parameter>, then <emphasis>ALL</emphasis> 
+	attempts to connect to the service will fail. Such failures are 
+	logged.</para>
+
+</description>
+<value type="default">yes</value>
+</samba:parameter>

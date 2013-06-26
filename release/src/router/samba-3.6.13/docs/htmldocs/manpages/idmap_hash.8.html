@@ -1,0 +1,28 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>idmap_hash</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" title="idmap_hash"><a name="idmap_hash.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>idmap_hash &#8212; Samba's idmap_hash Backend for Winbind</p></div><div class="refsynopsisdiv" title="DESCRIPTION"><h2>DESCRIPTION</h2><p>The idmap_hash plugin implements a hashing algorithm used to map
+	  SIDs for domain users and groups to 31-bit uids and gids, respectively.
+	  This plugin also implements the nss_info API and can be used
+	  to support a local name mapping files if enabled via the
+	  "winbind normalize names" and "winbind nss info"
+	  parameters in smb.conf.
+	</p></div><div class="refsect1" title="IDMAP OPTIONS"><a name="id266339"></a><h2>IDMAP OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">name_map</span></dt><dd><p>
+		    Specifies the absolute path to the name mapping
+		    file used by the nss_info API.  Entries in the file
+		    are of the form "<em class="replaceable"><code>unix name</code></em>
+		    = <em class="replaceable"><code>qualified domain name</code></em>".
+		    Mapping of both user and group names is supported.
+		</p></dd></dl></div></div><div class="refsect1" title="EXAMPLES"><a name="id266824"></a><h2>EXAMPLES</h2><p>The following example utilizes the idmap_hash plugin for
+	  the idmap and nss_info information.
+	</p><pre class="programlisting">
+	[global]
+	idmap config * : backend = hash
+	idmap config * : range = 1000-4000000000
+
+	winbind nss info = hash
+	winbind normalize names = yes
+	idmap_hash:name_map = /etc/samba/name_map.cfg
+	</pre></div><div class="refsect1" title="AUTHOR"><a name="id266842"></a><h2>AUTHOR</h2><p>
+	The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.
+	</p></div></div></body></html>

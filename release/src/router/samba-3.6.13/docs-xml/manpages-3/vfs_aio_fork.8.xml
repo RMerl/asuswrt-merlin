@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="vfs_aio_fork.8">
+
+<refmeta>
+	<refentrytitle>vfs_aio_fork</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>vfs_aio_fork</refname>
+	<refpurpose>implement async I/O in Samba vfs</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>vfs objects = aio_fork</command>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This VFS module is part of the
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The <command>aio_fork</command> VFS module enables async
+	I/O for Samba on platforms where the system level Posix AIO
+	interface is insufficient. Posix AIO can suffer from severe
+	limitations.  For example, on some Linux versions the
+	real-time signals that it uses are broken under heavy load.
+	Other systems only allow AIO when special kernel modules are
+	loaded or only allow a certain system-wide amount of async
+	requests being scheduled. Systems based on glibc (most Linux
+	systems) only allow a single outstanding request per file
+	descriptor.  </para>
+
+	<para>To work around all these limitations, the aio_fork module
+	was written. It uses forked helper processes instead of the
+	internal Posix AIO interface to create asynchronousity for
+	read and write calls. It has no parameters, it will create
+	helper processes when async requests come in as needed. Idle
+	helper processes will be removed every 30 seconds.
+	</para>
+
+	<para>This module is stackable.</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>Straight forward use:</para>
+
+<programlisting>
+        <smbconfsection name="[cooldata]"/>
+	<smbconfoption name="path">/data/ice</smbconfoption>
+	<smbconfoption name="vfs objects">aio_fork</smbconfoption>
+</programlisting>
+
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.6.0 of the Samba suite.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</para>
+
+</refsect1>
+
+</refentry>

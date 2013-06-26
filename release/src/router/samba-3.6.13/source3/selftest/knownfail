@@ -1,0 +1,20 @@
+samba3.blackbox.failure # this is designed to fail, for testing our test infrastructure
+.*printer.*print_test_extended # fails on some hosts due to timing issues ?
+.*printer.*print_test # fails on some hosts due to timing issues ?
+samba3.posix_s3.rap.printing # fails sometimes on sn-devel
+samba3.posix_s3.rpc.spoolss.*printserver.enum_printers_old # fails on some hosts due to timing issues ?
+samba3.posix_s3.rpc.spoolss.printer.*addprinterex.print_test # another intermittent failure
+samba3.posix_s3.rpc.spoolss.printer.*addprinter.driver_info_winreg # knownfail or flapping?
+samba3.posix_s3.rpc.spoolss.printer.*addprinterex.driver_info_winreg # knownfail or flapping?
+samba3.posix_s3.smb2.lock.*.rw-exclusive # another intermittent failure
+samba3.posix_s3.smb2.compound.*interim2 # wrong return code (STATUS_CANCELLED)
+samba3.posix_s3.smb2.oplock.*batch12
+samba3.posix_s3.smb2.oplock.*batch20
+samba3.posix_s3.smb2.oplock.*stream1
+.*driver.add_driver_timestamps # we only can store dates, not timestamps
+samba3.raw.mux.* #This test is flaky on the async lock time
+samba3.smbtorture_s3.*OPLOCK4 # fails sometimes on sn-devel
+samba3.posix_s3.nbt.dgram.*netlogon2
+samba3.*rap.sam.*.useradd # Not provided by Samba 3
+samba3.*rap.sam.*.userdelete # Not provided by Samba 3
+samba3.*rap.basic.*.netsessiongetinfo # Not provided by Samba 3

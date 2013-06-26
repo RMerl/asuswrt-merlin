@@ -1,0 +1,11 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>vfs_dirsort</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" title="vfs_dirsort"><a name="vfs_dirsort.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>vfs_dirsort &#8212; Sort directory contents</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">vfs objects = dirsort</code></p></div></div><div class="refsect1" title="DESCRIPTION"><a name="id266340"></a><h2>DESCRIPTION</h2><p>This VFS module is part of the
+	<a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p>The <code class="literal">vfs_dirsort</code> module sorts directory
+	entries alphabetically before sending them to the client.</p><p>Please be aware that adding this module might have negative
+	performance implications for large directories.</p></div><div class="refsect1" title="EXAMPLES"><a name="id266827"></a><h2>EXAMPLES</h2><p>Sort directories for all shares:</p><pre class="programlisting">
+        <em class="parameter"><code>[global]</code></em>
+	<a class="link" href="smb.conf.5.html#VFSOBJECTS" target="_top">vfs objects = dirsort</a>
+</pre></div><div class="refsect1" title="VERSION"><a name="id266858"></a><h2>VERSION</h2><p>This man page is correct for version 3.3 of the Samba suite.
+	</p></div><div class="refsect1" title="AUTHOR"><a name="id266868"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</p></div></div></body></html>

@@ -1,0 +1,38 @@
+#! /bin/sh
+
+#
+# winbindd control
+#
+
+IS_ON=/etc/chkconfig
+KILLALL=/sbin/killall
+
+WINBINDD=/usr/samba/bin/winbindd
+
+if test ! -x $IS_ON ; then
+    IS_ON=true
+fi
+
+if $IS_ON verbose ; then
+    ECHO=echo
+else		# For a quiet startup and shutdown
+    ECHO=:
+fi
+
+case $1 in
+'start')
+	if $IS_ON winbind && test -x $WINBINDD; then
+	    $KILLALL -15 winbindd
+	    $ECHO "winbindd:\c"
+	    $WINBINDD ; $ECHO " winbindd."
+	fi
+	;;
+'stop')
+	$ECHO "Stopping winbindd."
+	$KILLALL -15 winbindd
+	exit 0
+	;;
+*)
+	echo "usage: /etc/init.d/winbind {start|stop}"
+	;;
+esac

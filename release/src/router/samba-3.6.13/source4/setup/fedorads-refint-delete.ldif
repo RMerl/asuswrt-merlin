@@ -1,0 +1,20 @@
+dn: cn=referential integrity postoperation,cn=plugins,cn=config
+changetype: modify
+delete: nsslapd-pluginArg3
+-
+
+dn: cn=referential integrity postoperation,cn=plugins,cn=config
+changetype: modify
+delete: nsslapd-pluginArg4
+-
+
+dn: cn=referential integrity postoperation,cn=plugins,cn=config
+changetype: modify
+delete: nsslapd-pluginArg5
+-
+
+dn: cn=referential integrity postoperation,cn=plugins,cn=config
+changetype: modify
+delete: nsslapd-pluginArg6
+-
+

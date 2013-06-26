@@ -1,0 +1,109 @@
+#!/usr/bin/env python
+
+APPNAME = 'tevent'
+VERSION = '0.9.11'
+
+blddir = 'bin'
+
+import sys, os
+
+# find the buildtools directory
+srcdir = '.'
+while not os.path.exists(srcdir+'/buildtools') and len(srcdir.split('/')) < 5:
+    srcdir = '../' + srcdir
+sys.path.insert(0, srcdir + '/buildtools/wafsamba')
+
+import wafsamba, samba_dist, Options, Logs
+
+samba_dist.DIST_DIRS('lib/tevent:. lib/replace:lib/replace lib/talloc:lib/talloc buildtools:buildtools')
+
+def set_options(opt):
+    opt.BUILTIN_DEFAULT('replace')
+    opt.PRIVATE_EXTENSION_DEFAULT('tevent', noextension='tevent')
+    opt.RECURSE('lib/replace')
+    opt.RECURSE('lib/talloc')
+    if opt.IN_LAUNCH_DIR():
+        opt.add_option('--disable-python',
+                       help=("disable the pytevent module"),
+                       action="store_true", dest='disable_python', default=False)
+
+
+def configure(conf):
+    conf.RECURSE('lib/replace')
+    conf.RECURSE('lib/talloc')
+
+    conf.env.standalone_tevent = conf.IN_LAUNCH_DIR()
+
+    if not conf.env.standalone_tevent:
+        if conf.CHECK_BUNDLED_SYSTEM('tevent', minversion=VERSION,
+                                     onlyif='talloc', implied_deps='replace talloc'):
+            conf.define('USING_SYSTEM_TEVENT', 1)
+
+    if conf.CHECK_FUNCS('epoll_create', headers='sys/epoll.h'):
+        conf.DEFINE('HAVE_EPOLL', 1)
+
+    conf.env.disable_python = getattr(Options.options, 'disable_python', False)
+
+    if not conf.env.disable_python:
+        # also disable if we don't have the python libs installed
+        conf.check_tool('python')
+        conf.check_python_version((2,4,2))
+        conf.SAMBA_CHECK_PYTHON_HEADERS(mandatory=False)
+        if not conf.env.HAVE_PYTHON_H:
+            Logs.warn('Disabling pytevent as python devel libs not found')
+            conf.env.disable_python = True
+
+    conf.SAMBA_CONFIG_H()
+
+def build(bld):
+    bld.RECURSE('lib/replace')
+    bld.RECURSE('lib/talloc')
+
+    SRC = '''tevent.c tevent_debug.c tevent_fd.c tevent_immediate.c
+             tevent_queue.c tevent_req.c tevent_select.c
+	     tevent_poll.c
+             tevent_signal.c tevent_standard.c tevent_timed.c tevent_util.c tevent_wakeup.c'''
+
+    if bld.CONFIG_SET('HAVE_EPOLL'):
+        SRC += ' tevent_epoll.c'
+
+    if bld.env.standalone_tevent:
+        bld.env.PKGCONFIGDIR = '${LIBDIR}/pkgconfig'
+        bld.PKG_CONFIG_FILES('tevent.pc', vnum=VERSION)
+        private_library = False
+    else:
+        private_library = True
+
+    if not bld.CONFIG_SET('USING_SYSTEM_TEVENT'):
+        bld.SAMBA_LIBRARY('tevent',
+                          SRC,
+                          deps='replace talloc',
+                          enabled= not bld.CONFIG_SET('USING_SYSTEM_TEVENT'),
+                          includes='.',
+                          abi_directory='ABI',
+                          abi_match='tevent_* _tevent_*',
+                          vnum=VERSION,
+                          public_headers='tevent.h',
+                          public_headers_install=not private_library,
+                          private_library=private_library)
+
+    bld.SAMBA_PYTHON('pytevent',
+                     'pytevent.c',
+                     deps='tevent',
+                     enabled=True,
+                     realname='_tevent.so')
+
+
+def test(ctx):
+    '''test tevent'''
+    print("The tevent testsuite is part of smbtorture in samba4")
+
+
+def dist():
+    '''makes a tarball for distribution'''
+    samba_dist.dist()
+
+def reconfigure(ctx):
+    '''reconfigure if config scripts have changed'''
+    import samba_utils
+    samba_utils.reconfigure(ctx)

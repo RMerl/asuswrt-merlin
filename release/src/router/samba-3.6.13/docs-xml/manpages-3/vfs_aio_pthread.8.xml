@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="vfs_aio_pthread.8">
+
+<refmeta>
+	<refentrytitle>vfs_aio_pthread</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>vfs_aio_pthread</refname>
+	<refpurpose>implement async I/O in Samba vfs using a pthread pool</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>vfs objects = aio_pthread</command>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This VFS module is part of the
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The <command>aio_pthread</command> VFS module enables asynchronous
+	I/O for Samba on platforms which have the pthreads API available,
+	without using the Posix AIO interface. Posix AIO can suffer from severe
+	limitations.  For example, on some Linux versions the
+	real-time signals that it uses are broken under heavy load.
+	Other systems only allow AIO when special kernel modules are
+	loaded or only allow a certain system-wide amount of async
+	requests being scheduled. Systems based on glibc (most Linux
+	systems) only allow a single outstanding request per file
+	descriptor which essentially makes Posix AIO useless on systems
+	using the glibc implementation.</para>
+
+	<para>To work around all these limitations, the aio_pthread module
+	was written. It uses a pthread pool instead of the
+	internal Posix AIO interface to allow read and write calls
+	to be process asynchronously. A pthread pool is created
+	which expands dynamically by creating new threads as work is
+	given to it to a maximum of 100 threads per smbd process.
+	To change this limit see the "aio num threads" parameter
+	below. New threads are not created if idle threads are
+	available when a new read or write request is received,
+	the new work is given to an existing idle thread. Threads
+	terminate themselves if idle for one second.
+	</para>
+
+	<para>
+	Note that the smb.conf parameters <command>aio read size</command>
+	and <command>aio write size</command> must also be set appropriately
+	for this module to be active.
+	</para>
+
+	<para>This module MUST be listed last in any module stack as
+	the Samba VFS pread/pwrite interface is not thread-safe. This
+	module makes direct pread and pwrite system calls and does
+	NOT call the Samba VFS pread and pwrite interfaces.</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>Straight forward use:</para>
+
+<programlisting>
+        <smbconfsection name="[cooldata]"/>
+	<smbconfoption name="path">/data/ice</smbconfoption>
+	<smbconfoption name="aio read size">1024</smbconfoption>
+	<smbconfoption name="aio write size">1024</smbconfoption>
+	<smbconfoption name="vfs objects">aio_pthread</smbconfoption>
+</programlisting>
+
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+
+		<varlistentry>
+		<term>aio_pthread:aio num threads = INTEGER</term>
+		<listitem>
+		<para>Limit the maximum number of threads per smbd that
+		will be created in the thread pool to service IO requests.
+		</para>
+		<para>By default this is set to 100.</para>
+		</listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.6.3 of the Samba suite.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</para>
+
+</refsect1>
+
+</refentry>

@@ -1,0 +1,72 @@
+#!/usr/bin/env python
+# Filter a subunit stream
+# Copyright (C) Jelmer Vernooij <jelmer@samba.org>
+# Published under the GNU GPL, v3 or later
+
+import optparse
+import os
+import sys
+import signal
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../lib/subunit/python"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../lib/testtools"))
+
+import subunithelper
+
+parser = optparse.OptionParser("filter-subunit [options] < instream > outstream")
+parser.add_option("--expected-failures", type="string", 
+	help="File containing list of regexes matching tests to consider known "
+	     "failures")
+parser.add_option("--strip-passed-output", action="store_true", 
+    help="Whether to strip output from tests that passed")
+parser.add_option("--fail-immediately", action="store_true", 
+    help="Whether to stop on the first error", default=False)
+parser.add_option("--prefix", type="string",
+	help="Add prefix to all test names")
+parser.add_option("--fail-on-empty", default=False,
+	action="store_true", help="Fail if there was no subunit output")
+parser.add_option("--list", default=False,
+	action="store_true", help="Operate in list mode")
+opts, args = parser.parse_args()
+
+if opts.list:
+	prefix = opts.prefix
+	if not prefix:
+		prefix = ""
+	for l in sys.stdin:
+		sys.stdout.write("%s%s\n" % (prefix, l.rstrip()))
+	sys.exit(0)
+
+if opts.expected_failures:
+	expected_failures = subunithelper.read_test_regexes(opts.expected_failures)
+else:
+	expected_failures = {}
+
+statistics = {
+	'TESTS_UNEXPECTED_OK': 0,
+	'TESTS_EXPECTED_OK': 0,
+	'TESTS_UNEXPECTED_FAIL': 0,
+	'TESTS_EXPECTED_FAIL': 0,
+	'TESTS_ERROR': 0,
+	'TESTS_SKIP': 0,
+}
+
+def handle_sigint(sig, stack):
+	sys.exit(0)
+signal.signal(signal.SIGINT, handle_sigint)
+
+out = subunithelper.SubunitOps(sys.stdout)
+msg_ops = subunithelper.FilterOps(out, opts.prefix, expected_failures,
+				  opts.strip_passed_output,
+				  fail_immediately=opts.fail_immediately)
+
+try:
+	ret = subunithelper.parse_results(msg_ops, statistics, sys.stdin)
+except subunithelper.ImmediateFail:
+	sys.stdout.flush()
+	sys.exit(1)
+
+if opts.fail_on_empty and not msg_ops.seen_output:
+	sys.exit(1)
+else:
+	sys.exit(ret)

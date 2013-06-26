@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="24.681999cm"
+   height="42.34cm"
+   viewBox="0.268 0.758 24.95 43.098"
+   id="svg2">
+  <defs
+     id="defs139" />
+  <text
+     x="1"
+     y="1.3"
+     id="text4"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">something-fileformat</text>
+  <polygon
+     points="3.163,1.9 3.163,2.825 2.7,2.825 3.625,3.75 4.55,2.825 4.088,2.825 4.088,1.9 3.163,1.9 "
+     id="polygon6"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="3.163,1.9 3.163,2.825 2.7,2.825 3.625,3.75 4.55,2.825 4.088,2.825 4.088,1.9 3.163,1.9 "
+     id="polygon8"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="3.163,1.9 3.163,2.825 2.7,2.825 3.625,3.75 4.55,2.825 4.088,2.825 4.088,1.9 3.163,1.9 "
+     id="polygon10"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <text
+     x="1.7"
+     y="4.8000002"
+     id="text12"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">somethingtops</text>
+  <text
+     x="1.4"
+     y="8.3000002"
+     id="text14"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">application/postscript</text>
+  <polygon
+     points="3.262,5.4 3.262,6.325 2.8,6.325 3.725,7.25 4.65,6.325 4.188,6.325 4.188,5.4 3.262,5.4 "
+     id="polygon16"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="3.262,5.4 3.262,6.325 2.8,6.325 3.725,7.25 4.65,6.325 4.188,6.325 4.188,5.4 3.262,5.4 "
+     id="polygon18"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="3.262,5.4 3.262,6.325 2.8,6.325 3.725,7.25 4.65,6.325 4.188,6.325 4.188,5.4 3.262,5.4 "
+     id="polygon20"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <text
+     x="2.8"
+     y="11.5"
+     id="text22"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">pstops</text>
+  <polygon
+     points="3.262,8.7 3.262,9.625 2.8,9.625 3.725,10.55 4.65,9.625 4.188,9.625 4.188,8.7 3.262,8.7 "
+     id="polygon24"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="3.262,8.7 3.262,9.625 2.8,9.625 3.725,10.55 4.65,9.625 4.188,9.625 4.188,8.7 3.262,8.7 "
+     id="polygon26"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="3.262,8.7 3.262,9.625 2.8,9.625 3.725,10.55 4.65,9.625 4.188,9.625 4.188,8.7 3.262,8.7 "
+     id="polygon28"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <polygon
+     points="3.362,12.1 3.362,13.025 2.9,13.025 3.825,13.95 4.75,13.025 4.287,13.025 4.287,12.1 3.362,12.1 "
+     id="polygon30"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="3.362,12.1 3.362,13.025 2.9,13.025 3.825,13.95 4.75,13.025 4.287,13.025 4.287,12.1 3.362,12.1 "
+     id="polygon32"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="3.362,12.1 3.362,13.025 2.9,13.025 3.825,13.95 4.75,13.025 4.287,13.025 4.287,12.1 3.362,12.1 "
+     id="polygon34"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <text
+     x="0.30000001"
+     y="15"
+     id="text36"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">application/vnd.cups-postscript</text>
+  <polygon
+     points="10.5,14.275 12,14.275 12,13.8 13.5,14.75 12,15.7 12,15.225 10.5,15.225 10.5,14.275 "
+     id="polygon38"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="10.5,14.275 12,14.275 12,13.8 13.5,14.75 12,15.7 12,15.225 10.5,15.225 10.5,14.275 "
+     id="polygon40"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="10.5,14.275 12,14.275 12,13.8 13.5,14.75 12,15.7 12,15.225 10.5,15.225 10.5,14.275 "
+     id="polygon42"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <text
+     x="14.2"
+     y="14.9"
+     id="text44"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">cupsomatic</text>
+  <rect
+     width="10.5"
+     height="3.8"
+     x="14.4"
+     y="10"
+     id="rect46"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="10.5"
+     height="3.8"
+     x="14.4"
+     y="10"
+     id="rect48"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="14.9"
+     y="11"
+     id="text50"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">(constructs complicated</text>
+  <text
+     x="14.9"
+     y="11.8"
+     id="text52"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">Ghostscript commandline</text>
+  <text
+     x="14.9"
+     y="12.6"
+     id="text54"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">to let the file be processed by a</text>
+  <text
+     x="14.9"
+     y="13.4"
+     id="text56"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">&quot;-sDEVICE-s.th.&quot; call...)</text>
+  <polygon
+     points="3.462,15.7 3.462,16.625 3,16.625 3.925,17.55 4.85,16.625 4.388,16.625 4.388,15.7 3.462,15.7 "
+     id="polygon58"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="3.462,15.7 3.462,16.625 3,16.625 3.925,17.55 4.85,16.625 4.388,16.625 4.388,15.7 3.462,15.7 "
+     id="polygon60"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="3.462,15.7 3.462,16.625 3,16.625 3.925,17.55 4.85,16.625 4.388,16.625 4.388,15.7 3.462,15.7 "
+     id="polygon62"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <text
+     x="2.6159999"
+     y="18.299999"
+     id="text64"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">pstoraster</text>
+  <text
+     x="0.26800001"
+     y="19.1"
+     id="text66"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">(= &quot;postscript interpreter&quot;)</text>
+  <polygon
+     points="3.562,19.4 3.562,20.325 3.1,20.325 4.025,21.25 4.95,20.325 4.487,20.325 4.487,19.4 3.562,19.4 "
+     id="polygon68"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="3.562,19.4 3.562,20.325 3.1,20.325 4.025,21.25 4.95,20.325 4.487,20.325 4.487,19.4 3.562,19.4 "
+     id="polygon70"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="3.562,19.4 3.562,20.325 3.1,20.325 4.025,21.25 4.95,20.325 4.487,20.325 4.487,19.4 3.562,19.4 "
+     id="polygon72"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <text
+     x="0.80000001"
+     y="22.299999"
+     id="text74"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">application/vnd.cups-raster</text>
+  <polygon
+     points="3.663,23 3.663,23.925 3.2,23.925 4.125,24.85 5.05,23.925 4.588,23.925 4.588,23 3.663,23 "
+     id="polygon76"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="3.663,23 3.663,23.925 3.2,23.925 4.125,24.85 5.05,23.925 4.588,23.925 4.588,23 3.663,23 "
+     id="polygon78"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="3.663,23 3.663,23.925 3.2,23.925 4.125,24.85 5.05,23.925 4.588,23.925 4.588,23 3.663,23 "
+     id="polygon80"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <text
+     x="1.7"
+     y="25.5"
+     id="text82"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">rastertosomething</text>
+  <text
+     x="1.7"
+     y="26.299999"
+     id="text84"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">(= &quot;raster driver&quot;)</text>
+  <polygon
+     points="16.915,16.1 16.915,17.129 16.4,17.129 17.429,18.159 18.459,17.129 17.944,17.129 17.944,16.1 16.915,16.1 "
+     id="polygon86"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="16.915,16.1 16.915,17.129 16.4,17.129 17.429,18.159 18.459,17.129 17.944,17.129 17.944,16.1 16.915,16.1 "
+     id="polygon88"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="16.915,16.1 16.915,17.129 16.4,17.129 17.429,18.159 18.459,17.129 17.944,17.129 17.944,16.1 16.915,16.1 "
+     id="polygon90"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <polygon
+     points="3.762,26.8 3.762,27.725 3.3,27.725 4.225,28.65 5.15,27.725 4.688,27.725 4.688,26.8 3.762,26.8 "
+     id="polygon92"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="3.762,26.8 3.762,27.725 3.3,27.725 4.225,28.65 5.15,27.725 4.688,27.725 4.688,26.8 3.762,26.8 "
+     id="polygon94"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="3.762,26.8 3.762,27.725 3.3,27.725 4.225,28.65 5.15,27.725 4.688,27.725 4.688,26.8 3.762,26.8 "
+     id="polygon96"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <text
+     x="1"
+     y="29.6"
+     id="text98"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">something device specific</text>
+  <polygon
+     points="3.762,30.3 3.762,31.225 3.3,31.225 4.225,32.15 5.15,31.225 4.688,31.225 4.688,30.3 3.762,30.3 "
+     id="polygon100"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="3.762,30.3 3.762,31.225 3.3,31.225 4.225,32.15 5.15,31.225 4.688,31.225 4.688,30.3 3.762,30.3 "
+     id="polygon102"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="3.762,30.3 3.762,31.225 3.3,31.225 4.225,32.15 5.15,31.225 4.688,31.225 4.688,30.3 3.762,30.3 "
+     id="polygon104"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <text
+     x="3.2"
+     y="33.299999"
+     id="text106"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">backend</text>
+  <polygon
+     points="11.65,32.413 10.625,32.413 10.625,31.9 9.6,32.925 10.625,33.95 10.625,33.438 11.65,33.438 11.65,32.413 "
+     id="polygon108"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="11.65,32.413 10.625,32.413 10.625,31.9 9.6,32.925 10.625,33.95 10.625,33.438 11.65,33.438 11.65,32.413 "
+     id="polygon110"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="11.65,32.413 10.625,32.413 10.625,31.9 9.6,32.925 10.625,33.95 10.625,33.438 11.65,33.438 11.65,32.413 "
+     id="polygon112"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <rect
+     width="7.5"
+     height="14.3"
+     x="14.6"
+     y="19.4"
+     id="rect114"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="7.5"
+     height="14.3"
+     x="14.6"
+     y="19.4"
+     id="rect116"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="15.28"
+     y="26.6"
+     id="text118"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">Ghostscript at work....</text>
+  <text
+     x="1.2"
+     y="35.5"
+     id="text120"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">Note, that cupsomatic &quot;kidnaps&quot; the printfile after the</text>
+  <text
+     x="1.2"
+     y="36.299999"
+     id="text122"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">application/vnd.cups-postscript stage and deviates it gh</text>
+  <text
+     x="1.2"
+     y="37.099998"
+     id="text124"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">the CUPS-external, systemwide Ghostscript installation, bypassing the</text>
+  <text
+     x="1.2"
+     y="37.900002"
+     id="text126"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">&quot;pstoraster&quot; filter (therefore also bypassing the CUPS-raster-drivers</text>
+  <text
+     x="1.2"
+     y="38.700001"
+     id="text128"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">&quot;rastertosomething&quot;, and hands the rasterized file directly to the CUPS</text>
+  <text
+     x="1.2"
+     y="39.5"
+     id="text130"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">backend...</text>
+  <text
+     x="1.2"
+     y="41.099998"
+     id="text132"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">cupsomatic is not made by the CUPS developers. It is an independent</text>
+  <text
+     x="1.2"
+     y="41.900002"
+     id="text134"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">contribution to printing development, made by people from</text>
+  <text
+     x="1.2"
+     y="42.700001"
+     id="text136"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">Linuxprinting.org. (see also http://www.cups.org/cups-help.html)</text>
+</svg>

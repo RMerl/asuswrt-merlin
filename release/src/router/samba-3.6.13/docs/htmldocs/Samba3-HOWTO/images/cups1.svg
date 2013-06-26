@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="27.950001cm"
+   height="23.34cm"
+   viewBox="0.8 0.857 28.75 24.198"
+   id="svg2">
+  <defs
+     id="defs117" />
+  <text
+     x="0.80000001"
+     y="1.4"
+     id="text4"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">CUPS in and of itself has this (general) filter chain (italic letters</text>
+  <text
+     x="0.80000001"
+     y="2.2"
+     id="text6"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">are file-formats or MIME types, other are filters (this is</text>
+  <text
+     x="0.80000001"
+     y="3"
+     id="text8"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">true for pre-1.1.15 of pre-4.3 versions of CUPS and ESP PrintPro):</text>
+  <text
+     x="2.0999999"
+     y="4.9000001"
+     id="text10"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">something-fileformat</text>
+  <polygon
+     points="4.625,5.6 4.625,6.45 4.2,6.45 5.05,7.3 5.9,6.45 5.475,6.45 5.475,5.6 4.625,5.6 "
+     id="polygon12"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="4.625,5.6 4.625,6.45 4.2,6.45 5.05,7.3 5.9,6.45 5.475,6.45 5.475,5.6 4.625,5.6 "
+     id="polygon14"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="4.625,5.6 4.625,6.45 4.2,6.45 5.05,7.3 5.9,6.45 5.475,6.45 5.475,5.6 4.625,5.6 "
+     id="polygon16"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <text
+     x="2.0999999"
+     y="11.9"
+     id="text18"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">application/postscript</text>
+  <polygon
+     points="4.725,12.6 4.725,13.45 4.3,13.45 5.15,14.3 6,13.45 5.575,13.45 5.575,12.6 4.725,12.6 "
+     id="polygon20"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="4.725,12.6 4.725,13.45 4.3,13.45 5.15,14.3 6,13.45 5.575,13.45 5.575,12.6 4.725,12.6 "
+     id="polygon22"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="4.725,12.6 4.725,13.45 4.3,13.45 5.15,14.3 6,13.45 5.575,13.45 5.575,12.6 4.725,12.6 "
+     id="polygon24"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <polygon
+     points="4.625,9 4.625,9.85 4.2,9.85 5.05,10.7 5.9,9.85 5.475,9.85 5.475,9 4.625,9 "
+     id="polygon26"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="4.625,9 4.625,9.85 4.2,9.85 5.05,10.7 5.9,9.85 5.475,9.85 5.475,9 4.625,9 "
+     id="polygon28"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="4.625,9 4.625,9.85 4.2,9.85 5.05,10.7 5.9,9.85 5.475,9.85 5.475,9 4.625,9 "
+     id="polygon30"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <text
+     x="2.8"
+     y="8.3000002"
+     id="text32"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">somethingtops</text>
+  <text
+     x="4.0999999"
+     y="15.3"
+     id="text34"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">pstops</text>
+  <polygon
+     points="4.725,15.8 4.725,16.65 4.3,16.65 5.15,17.5 6,16.65 5.575,16.65 5.575,15.8 4.725,15.8 "
+     id="polygon36"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="4.725,15.8 4.725,16.65 4.3,16.65 5.15,17.5 6,16.65 5.575,16.65 5.575,15.8 4.725,15.8 "
+     id="polygon38"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="4.725,15.8 4.725,16.65 4.3,16.65 5.15,17.5 6,16.65 5.575,16.65 5.575,15.8 4.725,15.8 "
+     id="polygon40"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <text
+     x="1.2"
+     y="18.4"
+     id="text42"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">application/vnd.cups-postscript</text>
+  <text
+     x="14.8"
+     y="18.4"
+     id="text44"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">pstoraster</text>
+  <text
+     x="13.4"
+     y="14.8"
+     id="text46"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">application/vnd.cups-raster</text>
+  <text
+     x="14.2"
+     y="11.2"
+     id="text48"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">rastertosomething</text>
+  <text
+     x="13.3"
+     y="7.6999998"
+     id="text50"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">something-device-specific</text>
+  <text
+     x="25.6"
+     y="7.6999998"
+     id="text52"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">backend</text>
+  <polygon
+     points="11.2,17.625 12.5,17.625 12.5,17.2 13.8,18.05 12.5,18.9 12.5,18.475 11.2,18.475 11.2,17.625 "
+     id="polygon54"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="11.2,17.625 12.5,17.625 12.5,17.2 13.8,18.05 12.5,18.9 12.5,18.475 11.2,18.475 11.2,17.625 "
+     id="polygon56"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="11.2,17.625 12.5,17.625 12.5,17.2 13.8,18.05 12.5,18.9 12.5,18.475 11.2,18.475 11.2,17.625 "
+     id="polygon58"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <polygon
+     points="16.35,17.5 16.35,16.35 15.9,16.35 16.8,15.2 17.7,16.35 17.25,16.35 17.25,17.5 16.35,17.5 "
+     id="polygon60"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="16.35,17.5 16.35,16.35 15.9,16.35 16.8,15.2 17.7,16.35 17.25,16.35 17.25,17.5 16.35,17.5 "
+     id="polygon62"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="16.35,17.5 16.35,16.35 15.9,16.35 16.8,15.2 17.7,16.35 17.25,16.35 17.25,17.5 16.35,17.5 "
+     id="polygon64"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <polygon
+     points="16.35,14 16.35,12.85 15.9,12.85 16.8,11.7 17.7,12.85 17.25,12.85 17.25,14 16.35,14 "
+     id="polygon66"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="16.35,14 16.35,12.85 15.9,12.85 16.8,11.7 17.7,12.85 17.25,12.85 17.25,14 16.35,14 "
+     id="polygon68"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="16.35,14 16.35,12.85 15.9,12.85 16.8,11.7 17.7,12.85 17.25,12.85 17.25,14 16.35,14 "
+     id="polygon70"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <polygon
+     points="16.35,10.3 16.35,9.15 15.9,9.15 16.8,8 17.7,9.15 17.25,9.15 17.25,10.3 16.35,10.3 "
+     id="polygon72"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="16.35,10.3 16.35,9.15 15.9,9.15 16.8,8 17.7,9.15 17.25,9.15 17.25,10.3 16.35,10.3 "
+     id="polygon74"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="16.35,10.3 16.35,9.15 15.9,9.15 16.8,8 17.7,9.15 17.25,9.15 17.25,10.3 16.35,10.3 "
+     id="polygon76"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <polygon
+     points="21.9,7.025 23.2,7.025 23.2,6.6 24.5,7.45 23.2,8.3 23.2,7.875 21.9,7.875 21.9,7.025 "
+     id="polygon78"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="21.9,7.025 23.2,7.025 23.2,6.6 24.5,7.45 23.2,8.3 23.2,7.875 21.9,7.875 21.9,7.025 "
+     id="polygon80"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="21.9,7.025 23.2,7.025 23.2,6.6 24.5,7.45 23.2,8.3 23.2,7.875 21.9,7.875 21.9,7.025 "
+     id="polygon82"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <rect
+     width="8.1000004"
+     height="2.7"
+     x="20.200001"
+     y="10"
+     id="rect84"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="8.1000004"
+     height="2.7"
+     x="20.200001"
+     y="10"
+     id="rect86"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="20.5"
+     y="10.7"
+     id="text88"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">e.g. Gimp-Print filters</text>
+  <text
+     x="20.5"
+     y="11.5"
+     id="text90"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">may be plugged in here</text>
+  <text
+     x="20.5"
+     y="12.3"
+     id="text92"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">(= &quot;raster driver&quot;)</text>
+  <text
+     x="1.5"
+     y="20.700001"
+     id="text94"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">ESP PrintPro has some enhanced &quot;rastertosomething&quot; filters as compared to</text>
+  <text
+     x="1.5"
+     y="21.5"
+     id="text96"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">CUPS, and also a somewhat improved &quot;pstoraster&quot; filter.</text>
+  <text
+     x="1.6"
+     y="23"
+     id="text98"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">NOTE: Gimp-Print and some other 3rd-Party-Filters (like TurboPrint) to</text>
+  <text
+     x="1.6"
+     y="23.799999"
+     id="text100"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">CUPS and ESP PrintPro plug-in where rastertosomething is noted.</text>
+  <rect
+     width="10.1"
+     height="4.4000001"
+     x="18.6"
+     y="15.5"
+     id="rect102"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="10.1"
+     height="4.4000001"
+     x="18.6"
+     y="15.5"
+     id="rect104"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="19"
+     y="16.4"
+     id="text106"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">as shipped with CUPS,</text>
+  <text
+     x="19"
+     y="17.200001"
+     id="text108"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">independent from any</text>
+  <text
+     x="19"
+     y="18"
+     id="text110"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">GhostScript installation on the</text>
+  <text
+     x="19"
+     y="18.799999"
+     id="text112"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">system</text>
+  <text
+     x="19"
+     y="19.6"
+     id="text114"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">(= &quot;postscript interpreter&quot;)</text>
+</svg>

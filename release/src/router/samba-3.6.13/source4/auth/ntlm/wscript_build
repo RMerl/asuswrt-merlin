@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+
+bld.SAMBA_MODULE('auth4_sam_module',
+	source='auth_sam.c',
+	subsystem='auth4',
+	init_function='auth_sam_init',
+	deps='samdb auth4_sam NTLMSSP_COMMON samba-hostconfig'
+	)
+
+
+bld.SAMBA_MODULE('auth4_anonymous',
+	source='auth_anonymous.c',
+	subsystem='auth4',
+	init_function='auth_anonymous_init',
+	deps='talloc'
+	)
+
+
+bld.SAMBA_MODULE('auth4_server',
+	source='auth_server.c',
+	subsystem='auth4',
+	init_function='auth_server_init',
+	deps='samba-util LIBCLI_SMB CREDENTIALS_NTLM'
+	)
+
+
+bld.SAMBA_MODULE('auth4_winbind',
+	source='auth_winbind.c',
+	subsystem='auth4',
+	init_function='auth_winbind_init',
+	deps='RPC_NDR_WINBIND MESSAGING wbclient'
+	)
+
+
+bld.SAMBA_MODULE('auth4_developer',
+	source='auth_developer.c',
+	subsystem='auth4',
+	init_function='auth_developer_init',
+	deps='talloc'
+	)
+
+
+bld.SAMBA_MODULE('auth4_unix',
+	source='auth_unix.c',
+	subsystem='auth4',
+	init_function='auth_unix_init',
+	deps='pam PAM_ERRORS LIBTSOCKET'
+	)
+
+
+bld.SAMBA_LIBRARY('auth4',
+	source='auth.c auth_util.c auth_simple.c',
+	autoproto='auth_proto.h',
+	deps='samba-util security samdb credentials UTIL_TEVENT',
+	private_library=True
+	)
+
+bld.SAMBA_MODULE('service_auth',
+	source='auth_server_service.c',
+	subsystem='service',
+	init_function='server_service_auth_init',
+	deps='auth4',
+	internal_module=True
+	)
+

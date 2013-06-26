@@ -1,0 +1,23 @@
+<samba:parameter name="wtmp directory"
+                 context="G"
+				 type="string"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This parameter is only available if Samba has been configured and compiled with the option <command moreinfo="none">
+	--with-utmp</command>. It specifies a directory pathname that is used to store the wtmp or wtmpx files (depending on 
+	the UNIX system) that record user connections to a Samba server. The difference with the utmp directory is the fact 
+	that user info is kept after a user has logged out.
+	</para>
+		
+	<para>
+	By default this is not set, meaning the system will use whatever utmp file the 	native system is set to use (usually 
+	<filename moreinfo="none">/var/run/wtmp</filename> on Linux).
+	</para>
+</description>
+
+<related>utmp</related>
+<value type="default"/>
+<value type="example">/var/log/wtmp</value>
+</samba:parameter>

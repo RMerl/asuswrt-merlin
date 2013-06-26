@@ -1,0 +1,24 @@
+<samba:parameter name="winbind expand groups"
+                 context="G"
+		 type="integer"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This option controls the maximum depth that winbindd
+              will traverse when flattening nested group memberships
+	      of Windows domain groups.  This is different from the
+	      <smbconfoption name="winbind nested groups"/> option
+              which implements the Windows NT4 model of local group 
+	      nesting.  The &quot;winbind expand groups&quot;
+              parameter specifically applies to the membership of 
+	      domain groups.</para>
+
+	 <para>Be aware that a high value for this parameter can
+	 result in system slowdown as the main parent winbindd daemon
+	 must perform the group unrolling and will be unable to answer
+	 incoming NSS or authentication requests during this time.</para>
+  
+</description>
+
+<value type="default">1</value>
+</samba:parameter>

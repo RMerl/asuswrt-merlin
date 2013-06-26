@@ -1,0 +1,181 @@
+#include "idl_types.h"
+import "lsa.idl", "netlogon.idl", "misc.idl", "security.idl", "idmap.idl";
+
+[
+    uuid("bf09192c-ed60-4928-9dff-d0d7bcb03ed8"),
+    endpoint("ncalrpc:"),
+    pointer_default(unique),
+    version(1.0),
+    helpstring("winbind parent-child protocol"),
+    no_srv_register
+]
+interface wbint
+{
+    void wbint_Ping(
+	[in] uint32 in_data,
+	[out] uint32 *out_data
+	);
+
+    NTSTATUS wbint_LookupSid(
+	[in] dom_sid *sid,
+	[out] lsa_SidType *type,
+	[out,string,charset(UTF8)] char **domain,
+	[out,string,charset(UTF8)] char **name
+	);
+
+    NTSTATUS wbint_LookupSids(
+	[in] lsa_SidArray *sids,
+	[out,ref] lsa_RefDomainList *domains,
+	[out,ref] lsa_TransNameArray *names
+	);
+
+    NTSTATUS wbint_LookupName(
+	[in,string,charset(UTF8)] char *domain,
+	[in,string,charset(UTF8)] char *name,
+	[in] uint32 flags,
+	[out] lsa_SidType *type,
+	[out] dom_sid *sid
+	);
+
+    NTSTATUS wbint_Sid2Uid(
+	[in,unique,string,charset(UTF8)] char *dom_name,
+	[in] dom_sid *sid,
+	[out] hyper *uid
+	);
+
+    NTSTATUS wbint_Sid2Gid(
+	[in,unique,string,charset(UTF8)] char *dom_name,
+	[in] dom_sid *sid,
+	[out] hyper *gid
+	);
+
+    typedef struct {
+	id_type type;
+	uint32 domain_index;
+	uint32 rid;
+	hyper unix_id;
+    } wbint_TransID;
+
+    typedef struct {
+	uint32 num_ids;
+	[size_is(num_ids)] wbint_TransID ids[];
+    } wbint_TransIDArray;
+
+    NTSTATUS wbint_Sids2UnixIDs(
+	[in] lsa_RefDomainList *domains,
+	[in,out] wbint_TransIDArray *ids
+	);
+
+    NTSTATUS wbint_Uid2Sid(
+	[in,unique,string,charset(UTF8)] char *dom_name,
+	[in] hyper uid,
+	[out] dom_sid *sid
+	);
+
+    NTSTATUS wbint_Gid2Sid(
+	[in,unique,string,charset(UTF8)] char *dom_name,
+	[in] hyper gid,
+	[out] dom_sid *sid
+	);
+
+    NTSTATUS wbint_AllocateUid(
+	[out] hyper *uid
+	);
+
+    NTSTATUS wbint_AllocateGid(
+	[out] hyper *gid
+	);
+
+    typedef [public] struct {
+	[string,charset(UTF8)] char *acct_name;
+	[string,charset(UTF8)] char *full_name;
+	[string,charset(UTF8)] char *homedir;
+	[string,charset(UTF8)] char *shell;
+	hyper primary_gid;
+	dom_sid user_sid;
+	dom_sid group_sid;
+    } wbint_userinfo;
+
+    NTSTATUS wbint_QueryUser(
+	[in] dom_sid *sid,
+	[out] wbint_userinfo *info
+	);
+
+    typedef [public] struct {
+	uint32 num_sids;
+	[size_is(num_sids)] dom_sid sids[];
+    } wbint_SidArray;
+
+    typedef [public] struct {
+	uint32 num_rids;
+	[size_is(num_rids)] uint32 rids[];
+    } wbint_RidArray;
+
+    NTSTATUS wbint_LookupUserAliases(
+	[in] wbint_SidArray *sids,
+	[out] wbint_RidArray *rids
+	);
+
+    NTSTATUS wbint_LookupUserGroups(
+	[in] dom_sid *sid,
+	[out] wbint_SidArray *sids
+	);
+
+    NTSTATUS wbint_QuerySequenceNumber(
+	[out] uint32 *sequence
+	);
+
+    typedef [public] struct {
+	dom_sid sid;
+	lsa_SidType type;
+	[string,charset(UTF8)] char *name;
+    } wbint_Principal;
+
+    typedef [public] struct {
+	int num_principals;
+	[size_is(num_principals)] wbint_Principal principals[];
+    } wbint_Principals;
+
+    NTSTATUS wbint_LookupGroupMembers(
+	[in] dom_sid *sid,
+	[in] lsa_SidType type,
+	[out] wbint_Principals *members
+	);
+
+    typedef [public] struct {
+	uint32 num_userinfos;
+	[size_is(num_userinfos)] wbint_userinfo userinfos[];
+    } wbint_userinfos;
+
+    NTSTATUS wbint_QueryUserList(
+	[out] wbint_userinfos *users
+	);
+
+    NTSTATUS wbint_QueryGroupList(
+	[out] wbint_Principals *groups
+	);
+
+    NTSTATUS wbint_DsGetDcName(
+	[in,string,charset(UTF8)]		char *domain_name,
+	[in,unique]				GUID *domain_guid,
+	[in,string,unique,charset(UTF8)]	char *site_name,
+	[in]					uint32 flags,
+	[out] 					netr_DsRGetDCNameInfo **dc_info
+	);
+
+    NTSTATUS wbint_LookupRids(
+	[in] dom_sid *domain_sid,
+	[in] wbint_RidArray *rids,
+	[out,string,charset(UTF8)] char **domain_name,
+	[out] wbint_Principals *names
+	);
+
+    NTSTATUS wbint_CheckMachineAccount(
+	);
+
+    NTSTATUS wbint_ChangeMachineAccount(
+	);
+
+    NTSTATUS wbint_PingDc(
+	);
+}

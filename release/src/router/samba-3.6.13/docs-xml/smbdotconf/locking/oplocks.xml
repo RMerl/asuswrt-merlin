@@ -1,0 +1,29 @@
+<samba:parameter name="oplocks"
+                 context="S"
+				 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This boolean option tells <command moreinfo="none">smbd</command> whether to 
+	issue oplocks (opportunistic locks) to file open requests on this 
+	share. The oplock code can dramatically (approx. 30% or more) improve 
+	the speed of access to files on Samba servers. It allows the clients 
+	to aggressively cache files locally and you may want to disable this 
+	option for unreliable network environments (it is turned on by 
+	default in Windows NT Servers).
+	</para>
+
+	<para>
+	Oplocks may be selectively turned off on certain files with a share. See 
+	the <smbconfoption name="veto oplock files"/> parameter. On some systems 
+	oplocks are recognized by the underlying operating system. This 
+	allows data synchronization between all access to oplocked files, 
+	whether it be via Samba or NFS or a local UNIX process. See the 
+	<smbconfoption name="kernel oplocks"/> parameter for details.
+	</para>
+</description>
+
+<related>kernel oplocks</related>
+<related>level2 oplocks</related>
+<value type="default">yes</value>
+</samba:parameter>

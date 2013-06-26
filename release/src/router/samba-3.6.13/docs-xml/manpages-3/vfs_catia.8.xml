@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="vfs_catia.8">
+
+<refmeta>
+	<refentrytitle>vfs_catia</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>vfs_catia</refname>
+	<refpurpose>translate illegal characters in Catia filenames</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>vfs objects = catia</command>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This VFS module is part of the
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The Catia CAD package commonly creates filenames that
+	use characters that are illegal in CIFS filenames. The
+	<command>vfs_catia</command> VFS module implements a character
+	mapping so that these files can be shared with CIFS clients.
+	</para>
+
+	<para>This module is stackable.</para>
+
+	<para>Up to samba version 3.4.x a fixed character mapping was used.
+	The invalid windows characters  \ / : * ? " &lt; &gt; | and the blank
+	character were mapped in a hardcoded way.
+	</para>
+
+	<para>Starting with samba-3.5.0 a more flexible mapping was introduced.
+	The new parameter "catia:mappings" now specifies the mapping on a char by char
+	basis using the notation: unix hex char 0x.. : windows hex char 0x..
+	Multiple character mappings are separated by a comma.
+	</para>
+
+
+</refsect1>
+
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>Samba versions up to 3.4.x:</para>
+	<para>Map Catia filenames on the [CAD] share:</para>
+
+<programlisting>
+        <smbconfsection name="[CAD]"/>
+	<smbconfoption name="path">/data/cad</smbconfoption>
+	<smbconfoption name="vfs objects">catia</smbconfoption>
+</programlisting>
+
+	<para>Samba versions 3.5.0 and later:</para>
+	<para>Map Catia filenames on the [CAD] share:</para>
+
+<programlisting>
+        <smbconfsection name="[CAD]"/>
+	<smbconfoption name="path">/data/cad</smbconfoption>
+	<smbconfoption name="vfs objects">catia</smbconfoption>
+	<smbconfoption name="catia:mappings">0x22:0xa8</smbconfoption>
+</programlisting>
+
+        <para>To get the full formerly fixed mappings:</para>
+<programlisting>
+        <smbconfsection name="[CAD]"/>
+	<smbconfoption name="path">/data/cad</smbconfoption>
+	<smbconfoption name="vfs objects">catia</smbconfoption>
+	<smbconfoption name="catia:mappings">0x22:0xa8,0x2a:0xa4,0x2f:0xf8,0x3a:0xf7,0x3c:0xab,0x3e:0xbb,0x3f:0xbf,0x5c:0xff,0x7c:0xa6,0x20:0xb1</smbconfoption>
+</programlisting>
+
+        <para>Unix filename to be translated (Note that the path delimiter "/" is not used here):
+	</para>
+	<para>a\a:a*a?a"a&lt;a&gt;a|a a</para>
+
+	<para>Resulting windows filename:</para>
+
+	<para>a&#x00ff;a&#x00f7;a&#x00a4;a&#x00bf;a&#x00a8;a&#x00ab;a&#x00bb;a&#x00a6;a&#x00b1;a
+	</para>
+
+        <para>Note that the character mapping must work in BOTH directions
+	(unix -&gt; windows and windows -&gt; unix) to get unique and existing file names!
+	</para>
+
+	<para>A NOT working example:</para>
+
+<programlisting>
+        <smbconfsection name="[CAD]"/>
+	<smbconfoption name="path">/data/cad</smbconfoption>
+	<smbconfoption name="vfs objects">catia</smbconfoption>
+	<smbconfoption name="catia:mappings">0x3a:0x5f</smbconfoption>
+</programlisting>
+
+         <para>Here the colon ":" is mapped to the underscore "_".</para>
+	 <para>Assuming a unix filename "a:should_work", which is well translated
+	 to windows as "a_should_work".</para>
+	 <para>BUT the reverse mapping from windows "a_should_work" to unix
+	 will result in "a:should:work" - something like "file not found"
+	 will be returned.
+	 </para>
+
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for all versions up to 4.0.3 of the Samba suite.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</para>
+	<para>New version written by Guenter Kukkukk kukks@samba.org</para>
+
+</refsect1>
+
+</refentry>

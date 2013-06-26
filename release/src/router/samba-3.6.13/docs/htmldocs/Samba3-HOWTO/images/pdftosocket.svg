@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="18.200001cm"
+   height="1.484cm"
+   viewBox="5.85 2.808 24.05 4.292"
+   id="svg2">
+  <defs
+     id="defs35" />
+  <rect
+     width="4.0999999"
+     height="1"
+     x="5.9000001"
+     y="3"
+     id="rect4"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="4.0999999"
+     height="1"
+     x="5.9000001"
+     y="3"
+     id="rect6"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="6.8039999"
+     y="3.8"
+     id="text8"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">pdftops</text>
+  <rect
+     width="4.0999999"
+     height="1"
+     x="12.8"
+     y="3"
+     id="rect10"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="4.0999999"
+     height="1"
+     x="12.8"
+     y="3"
+     id="rect12"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="13.835"
+     y="3.8"
+     id="text14"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">pstops</text>
+  <rect
+     width="4.0999999"
+     height="1"
+     x="19.9"
+     y="3"
+     id="rect16"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="4.0999999"
+     height="1"
+     x="19.9"
+     y="3"
+     id="rect18"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="20.959"
+     y="3.8"
+     id="text20"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">socket</text>
+  <polygon
+     points="10.5,3.225 11.5,3.225 11.5,2.9 12.5,3.55 11.5,4.2 11.5,3.875 10.5,3.875 10.5,3.225 "
+     id="polygon22"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="10.5,3.225 11.5,3.225 11.5,2.9 12.5,3.55 11.5,4.2 11.5,3.875 10.5,3.875 10.5,3.225 "
+     id="polygon24"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="10.5,3.225 11.5,3.225 11.5,2.9 12.5,3.55 11.5,4.2 11.5,3.875 10.5,3.875 10.5,3.225 "
+     id="polygon26"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <polygon
+     points="17.4,3.225 18.4,3.225 18.4,2.9 19.4,3.55 18.4,4.2 18.4,3.875 17.4,3.875 17.4,3.225 "
+     id="polygon28"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="17.4,3.225 18.4,3.225 18.4,2.9 19.4,3.55 18.4,4.2 18.4,3.875 17.4,3.875 17.4,3.225 "
+     id="polygon30"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="17.4,3.225 18.4,3.225 18.4,2.9 19.4,3.55 18.4,4.2 18.4,3.875 17.4,3.875 17.4,3.225 "
+     id="polygon32"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+</svg>

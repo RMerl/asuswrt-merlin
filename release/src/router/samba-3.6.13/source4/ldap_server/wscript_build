@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+
+
+bld.SAMBA_MODULE('service_ldap',
+	source='ldap_server.c ldap_backend.c ldap_bind.c ldap_extended.c',
+	autoproto='proto.h',
+	subsystem='service',
+	init_function='server_service_ldap_init',
+	deps='credentials cli-ldap samdb process_model gensec samba-hostconfig samba_server_gensec',
+	internal_module=False,
+	)
+

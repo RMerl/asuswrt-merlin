@@ -1,0 +1,8 @@
+This is a set of waf 'tools' to help make building the Samba
+components easier, by having common functions in one place. This gives
+us a more consistent build, and ensures that our project rules are
+obeyed
+
+
+TODO:
+	see http://wiki.samba.org/index.php/Waf

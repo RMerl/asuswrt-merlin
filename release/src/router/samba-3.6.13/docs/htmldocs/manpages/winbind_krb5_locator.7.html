@@ -1,0 +1,43 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>winbind_krb5_locator</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" title="winbind_krb5_locator"><a name="winbind_krb5_locator.7"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>winbind_krb5_locator &#8212; A plugin for MIT and Heimdal Kerberos for detecting KDCs using Windows semantics.</p></div><div class="refsect1" title="DESCRIPTION"><a name="id298151"></a><h2>DESCRIPTION</h2><p>
+	This plugin is part of the <a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.
+	</p><p>
+		<code class="literal">winbind_krb5_locator</code> is a plugin that permits MIT and
+		Heimdal Kerberos libraries to detect Kerberos Servers (for the KDC and
+		kpasswd service) using the same semantics that other tools of the Samba
+		suite use. This include site-aware DNS service record lookups and caching
+		of closest dc.
+		The plugin uses the public locator API provided by most modern Kerberos
+		implementations.
+	</p></div><div class="refsect1" title="PREREQUISITES"><a name="id266356"></a><h2>PREREQUISITES</h2><p>
+		MIT Kerberos (at least version 1.5) or Heimdal Kerberos (at least version
+		1.0) is required.
+	</p><p>
+		The plugin queries the <a class="citerefentry" href="winbindd.8.html"><span class="citerefentry"><span class="refentrytitle">winbindd</span>(8)</span></a> daemon which needs to be configured
+		and started separately.
+	</p><p>
+		The <code class="literal">winbind_krb5_locator.so</code> file needs to be manually
+		copied to the plugin directory of the system Kerberos library.
+
+		For MIT Kerberos this is often:
+			<code class="filename">/usr/lib/krb5/plugins/libkrb5/</code>.
+		For Heimdal Kerberos this is often:
+			<code class="filename">/usr/lib/plugin/krb5/</code>.
+
+		Please check your local Kerberos installation for the correct
+		paths. No modification in <code class="filename">/etc/krb5.conf</code>
+		is required to enable the use of this plugin.
+	</p><p>
+		After copying the locator plugin to the appropriate plugin
+		directory it should immediately be available for use.
+		Users should be able to kinit into their kerberized Windows
+		environment without any modification or servers
+		being put manually into <code class="filename">/etc/krb5.conf</code>.
+	</p></div><div class="refsect1" title="VERSION"><a name="id266874"></a><h2>VERSION</h2><p>
+	This man page is correct for version 3 of the Samba suite.
+	</p></div><div class="refsect1" title="AUTHOR"><a name="id266884"></a><h2>AUTHOR</h2><p>
+		The original Samba software and related utilities were created by Andrew
+		Tridgell. Samba is now developed by the Samba Team as an Open Source
+		project similar to the way the Linux kernel is developed.
+	</p><p>
+		The winbind_krb5_locator manpage was written by Guenther Deschner.
+	</p></div></div></body></html>

@@ -1,0 +1,51 @@
+#!/bin/sh
+#
+# Copyright (C) Michael Adam 2010
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, see <http://www.gnu.org/licenses/>.
+#
+
+_exit() {
+	echo $@
+	popd
+	exit 1
+}
+
+DIRNAME=$(dirname $0)
+DOCS_XML_DIR=${DIRNAME}/../docs-xml
+DOCS_DIR=${DIRNAME}/../docs
+
+pushd ${DOCS_XML_DIR} || exit 1
+
+git clean -xdf || _exit "Error running git clean."
+
+autoconf || _exit "Error running autoconf."
+
+./configure || _exit "Error running configure."
+
+export XML_CATALOG_FILES="file:///etc/xml/catalog file://$(pwd)/build/catalog.xml"
+
+make manpages3 || _exit "Error running make manpages3"
+
+popd
+
+test -e ${DOCS_DIR}/manpages && rm -rf ${DOCS_DIR}/manpages
+mkdir -p ${DOCS_DIR}/manpages
+
+rsync -Ca ${DOCS_XML_DIR}/output/manpages-3/ ${DOCS_DIR}/manpages
+
+echo "Success"
+exit
+
+# END

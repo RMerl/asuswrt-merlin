@@ -1,0 +1,2693 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="secure">
+  <title>Secure Office Networking</title>
+
+	<para>
+	Congratulations, your Samba networking skills are developing nicely. You started out
+	with three simple networks in <link linkend="simple"/>, and then in <link linkend="small"/>
+	you designed and built a network that provides a high degree of flexibility, integrity,
+	and dependability. It was enough for the basic needs each was designed to fulfill. In
+	this chapter you address a more complex set of needs. The solution you explore 
+	introduces you to basic features that are specific to Samba-3.
+	</para>
+
+	<para>
+	You should note that a working and secure solution could be implemented using Samba-2.2.x. 
+	In the exercises presented here, you are gradually using more Samba-3-specific features,
+	so caution is advised for anyone who tries to use Samba-2.2.x with the guidance here given. 
+	To avoid confusion, this book is all about Samba-3. Let's get the exercises in this 
+	chapter underway.
+	</para>
+
+<sect1>
+	<title>Introduction</title>
+
+	<para>
+	You have made Mr. Meany a very happy man. Recently he paid you a fat bonus for work 
+	well done. It is one year since the last network upgrade. You have been quite busy. 
+	Two months ago Mr. Meany gave approval to hire Christine Roberson, who has taken over 
+	general network management. Soon she will provide primary user support. You have
+	demonstrated that you can delegate responsibility and can plan and execute according
+	to that plan. Above all, you have shown Mr. Meany that you are a responsible person.
+	Today is a big day. Mr. Meany called you to his office at 9 a.m. for news you never 
+	expected: You are going to take charge of business operations. Mr. Meany 
+	is retiring and has entrusted the business to your capable hands. 
+	</para>
+
+	<para>
+	Mr. Meany may be retiring from this company, but not from work. He is taking the
+	opportunity to develop Abmas Accounting into a larger and more substantial company.
+	He says that it took him many years to learn that there is no future in just running
+	a business. He now realizes there is great personal satisfaction in the creation of
+	career opportunities for people in the local community. He wants to do more for others,
+	as he is doing for you. Today he spent a lot of time talking about his grand plan
+	for growth, which you will deal with in the chapters ahead.
+	</para>
+
+	<para>
+	Over the past year, the growth projections were exceeded. The network has grown to
+	meet the needs of 130 users. Along with growth, the demand for improved services
+	and better functionality has also developed. You are about to make an interim
+	improvement and then hand over all Help desk and network maintenance to Christine.
+	Christine has professional certifications in Microsoft Windows as well as in Linux;
+	she is a hard worker and quite likable. Christine does not want to manage the department
+	(although she manages well). She gains job satisfaction when left to sort things out.
+	Occasionally she wants to work with you on a challenging problem. When you told her
+	about your move, she almost resigned, although she was reassured that a new manager would
+	be hired to run Information Technology, and she would be responsible only for operations.
+	</para>
+
+	<sect2>
+		<title>Assignment Tasks</title>
+
+		<para>
+		You promised the staff Internet services including Web browsing, electronic mail, virus
+		protection, and a company Web site.  Christine is eager to help turn the vision into 
+		reality. Let's see how close you can get to the promises made.
+		</para>
+
+		<para>
+		The network you are about to deliver will service 130 users today. Within a year,
+		Abmas will aquire another company. Mr. Meany claims that within 2 years there will be
+		well over 500 users on the network. You have bought into the big picture, so prepare 
+		for growth.  You have purchased a new server and will implement a new network infrastructure. 
+		</para>
+
+		<para>
+		You have decided to not recycle old network components. The only items that will be
+		carried forward are notebook computers. You offered staff new notebooks, but not 
+		one person wanted the disruption for what was perceived as a marginal update. 
+		You decided to give everyone, even the notebook user, a new desktop computer.
+		</para>
+
+		<para>
+		You procured a DSL Internet connection that provides 1.5 Mb/sec (bidirectional)
+		and a 10 Mb/sec ethernet port. You registered the domain
+		<constant>abmas.us</constant>, and the Internet Service Provider (ISP) is supplying
+		secondary DNS. Information furnished by your ISP is shown in <link linkend="chap4netid"/>.
+		</para>
+
+		<para>
+		It is of paramount priority that under no circumstances will Samba offer
+		service access from an Internet connection. You are paying an ISP to
+		give, as part of its value-added services, full firewall protection for your
+		connection to the outside world. The only services allowed in from
+		the Internet side are the following destination ports: <constant>http/https (ports 
+		80 and 443), email (port 25), DNS (port 53)</constant>. All Internet traffic
+		will be allowed out after network address translation (NAT). No internal IP addresses
+		are permitted through the NAT filter because complete privacy of internal network
+		operations must be assured.
+		</para>
+
+		<table id="chap4netid">
+			<title>Abmas.US ISP Information</title>
+			<tgroup cols="2">
+				<colspec align="left"/>
+				<colspec align="center"/>
+				<thead>
+					<row>
+						<entry>Parameter</entry>
+						<entry>Value</entry>
+					</row>
+				</thead>
+				<tbody>
+					<row>
+						<entry>Server IP Address</entry>
+						<entry>123.45.67.66</entry>
+					</row>
+					<row>
+						<entry>DSL Device IP Address</entry>
+						<entry>123.45.67.65</entry>
+					</row>
+					<row>
+						<entry>Network Address</entry>
+						<entry>123.45.67.64/30</entry>
+					</row>
+					<row>
+						<entry>Gateway Address</entry>
+						<entry>123.45.54.65</entry>
+					</row>
+					<row>
+						<entry>Primary DNS Server</entry>
+						<entry>123.45.54.65</entry>
+					</row>
+					<row>
+						<entry>Secondary DNS Server</entry>
+						<entry>123.45.54.32</entry>
+					</row>
+					<row>
+						<entry>Forwarding DNS Server</entry>
+						<entry>123.45.12.23</entry>
+					</row>
+				</tbody>
+			</tgroup>
+		</table>
+
+		<figure id="ch04net">
+			<title>Abmas Network Topology &smbmdash; 130 Users</title>
+			<imagefile scale="65">chap4-net</imagefile>
+		</figure>
+
+		<para>
+		Christine recommended that desktop systems should be installed from a single cloned
+		master system that has a minimum of locally installed software and loads all software
+		off a central application server. The benefit of having the central application server
+		is that it allows single-point maintenance of all business applications, a more
+		efficient way to manage software.  She further recommended installation of antivirus 
+		software on workstations as well as on the Samba server. Christine knows the dangers
+		of potential virus infection and insists on a comprehensive approach to detective
+		as well as corrective action to protect network operations.
+		</para>
+
+		<para>
+		A significant concern is the problem of managing company growth. Recently, a number 
+		of users had to share a PC while waiting for new machines to arrive. This presented 
+		some problems with desktop computers and software installation into the new users' 
+		desktop profiles.
+		</para>
+		
+	</sect2>
+</sect1>
+
+<sect1>
+	<title>Dissection and Discussion</title>
+
+	<para>
+	Many of the conclusions you draw here are obvious. Some requirements are not very clear
+	or may simply be your means of drawing the most out of Samba-3. Much can be done more simply
+	than you will demonstrate here, but keep in mind that the network must scale to at least 500
+	users. This means that some functionality will be overdesigned for the current 130-user
+	environment.
+	</para>
+
+	<sect2>
+		<title>Technical Issues</title>
+
+		<para>
+		In this exercise we use a 24-bit subnet mask for the two local networks. This,
+		of course, limits our network to a maximum of 253 usable IP addresses. The network
+		address range chosen is one assigned by RFC1918 for private networks.
+		When the number of users on the network begins to approach the limit of usable
+		addresses, it is a good idea to switch to a network address specified in RFC1918
+		in the 172.16.0.0/16 range. This is done in subsequent chapters.
+		</para>
+
+		<para>
+		<indexterm><primary>tdbsam</primary></indexterm>
+		<indexterm><primary>smbpasswd</primary></indexterm>
+		The high growth rates projected are a good reason to use the <constant>tdbsam</constant>
+		passdb backend. The use of <constant>smbpasswd</constant> for the backend may result in
+		performance problems. The <constant>tdbsam</constant> passdb backend offers features that
+		are not available with the older, flat ASCII-based <constant>smbpasswd</constant> database.
+		</para>
+
+		<para>
+		<indexterm><primary>risk</primary></indexterm>
+		The proposed network design uses a single server to act as an Internet services host for
+		electronic mail, Web serving, remote administrative access via SSH, 
+		Samba-based file and print services. This design is often chosen by sites that feel 	
+		they cannot afford or justify the cost or overhead of having separate servers. It must 
+		be realized that if security of this type of server should ever be violated (compromised), 
+		the whole network and all data is at risk. Many sites continue to choose this type 
+		of solution; therefore, this chapter provides detailed coverage of key implementation 
+		aspects.
+		</para>
+
+		<para>
+		Samba will be configured to specifically not operate on the Ethernet interface that is
+		directly connected to the Internet.
+		</para>
+
+		<para>
+		<indexterm><primary>iptables</primary></indexterm>
+		<indexterm><primary>NAT</primary></indexterm>
+		<indexterm><primary>Network Address Translation</primary><see>NAT</see></indexterm>
+		<indexterm><primary>firewall</primary></indexterm>
+		You know that your ISP is providing full firewall services, but you cannot rely on that.
+		Always assume that human error will occur, so be prepared by using Linux firewall facilities
+		based on <command>iptables</command> to effect NAT. Block all
+		incoming traffic except to permitted well-known ports. You must also allow incoming packets
+		to establish outgoing connections. You will permit all internal outgoing requests.
+		</para>
+
+		<para>
+		The configuration of Web serving, Web proxy services, electronic mail, and the details of
+		generic antivirus handling are beyond the scope of this book and therefore are not
+		covered except insofar as this affects Samba-3.
+		</para>
+
+		<para>
+		<indexterm><primary>login</primary></indexterm>
+		Notebook computers are configured to use a network login when in the office and a
+		local account to log in while away from the office. Users store all work done in
+		transit (away from the office) by using a local share for work files. Standard procedures
+		dictate that on completion of the work that necessitates mobile file access, all
+		work files are moved back to secure storage on the office server. Staff is instructed
+		to not carry on any company notebook computer any files that are not absolutely required.
+		This is a preventative measure to protect client information as well as private business
+		records.
+		</para>
+
+		<para>
+		<indexterm><primary>application server</primary></indexterm>
+		All applications are served from the central server from a share called <constant>apps</constant>.
+		Microsoft Office XP Professional and OpenOffice 1.1.0 will be installed using a network 
+		(or administrative) installation. Accounting and financial management software can also
+		be run only from the central application server. Notebook users are provided with
+		locally installed applications on a need-to-have basis only.
+		</para>
+
+		<para>
+		<indexterm><primary>roaming profiles</primary></indexterm>
+		The introduction of roaming profiles support means that users can move between
+		desktop computer systems without constraint while retaining full access to their data.
+		The desktop travels with them as they move.
+		</para>
+
+		<para>
+		<indexterm><primary>DNS</primary></indexterm>
+		The DNS server implementation must now address both internal and external
+		needs. You forward DNS lookups to your ISP-provided server as well as the 
+		<constant>abmas.us</constant> external secondary DNS server.
+		</para>
+
+		<para>
+		<indexterm><primary>dynamic DNS</primary></indexterm>
+		<indexterm><primary>DDNS</primary><see>dynamic DNS</see></indexterm>
+		<indexterm><primary>DHCP server</primary></indexterm>
+		Compared with the DHCP server configuration in <link linkend="small"/>, <link linkend="dhcp01"/>, the 
+		configuration used in this example has to deal with the presence of an Internet connection.
+		The scope set for it ensures that no DHCP services will be offered on the external
+		connection. All printers are configured as DHCP clients so that the DHCP server assigns
+		the printer a fixed IP address by way of the Ethernet interface (MAC) address. One additional
+		feature of this DHCP server configuration file is the inclusion of parameters to allow dynamic
+		DNS (DDNS) operation.
+		</para>
+
+		<para>
+		This is the first implementation that depends on a correctly functioning DNS server.
+		Comprehensive steps are included to provide for a fully functioning DNS server that also
+		is enabled for DDNS operation. This means that DHCP clients can be autoregistered
+		with the DNS server.
+		</para>
+
+		<para>
+		You are taking the opportunity to manually set the netbios name of the Samba server to
+		a name other than what will be automatically resolved. You are doing this to ensure that
+		the machine has the same NetBIOS name on both network segments.
+		</para>
+
+		<para>
+		As in the previous network configuration, printing in this network configuration uses
+		direct raw printing (i.e., no smart printing and no print driver autodownload to Windows
+		clients). Printer drivers are installed on the Windows client manually. This is not
+		a problem because Christine is to install and configure one single workstation and
+		then clone that configuration, using Norton Ghost, to all workstations. Each machine is
+		identical, so this should pose no problem.
+		</para>
+
+		<sect3>
+		<title>Hardware Requirements</title>
+
+		<para>
+		<indexterm><primary>memory requirements</primary></indexterm>
+		This server runs a considerable number of services. From similarly configured Linux
+		installations, the approximate calculated memory requirements are as shown in
+		<link linkend="ch4memoryest"/>.
+
+<example id="ch4memoryest">
+<title>Estimation of Memory Requirements</title>
+<screen>
+Application  Memory per User    130 Users      500 Users
+   Name        (MBytes)       Total MBytes   Total MBytes
+-----------  ---------------  ------------   ------------
+DHCP              2.5               3              3
+DNS              16.0              16             16
+Samba (nmbd)     16.0              16             16
+Samba (winbind)  16.0              16             16
+Samba (smbd)      4.0             520           2000
+Apache           10.0 (20 User)   200            200
+CUPS              3.5              16             32
+Basic OS        256.0             256            256
+                              -------------- --------------
+    Total:                       1043 MBytes    2539 MBytes
+                              -------------- --------------
+</screen>
+</example>
+		You should add a safety margin of at least 50% to these estimates. The minimum 
+		system memory recommended for initial startup 1 GB, but to permit the system
+		to scale to 500 users, it makes sense to provision the machine with 4 GB memory.
+		An initial configuration with only 1 GB memory would lead to early performance complaints
+		as the system load builds up. Given the low cost of memory, it does not make sense to
+		compromise in this area.
+		</para>
+
+		<para>
+		<indexterm><primary>bandwidth calculations</primary></indexterm>
+		Aggregate input/output loads should be considered for sizing network configuration as 
+		well as disk subsystems. For network bandwidth calculations, one would typically use an
+		estimate of 0.1 MB/sec per user. This suggests that 100-Base-T (approx. 10 MB/sec)
+		would deliver below acceptable capacity for the initial user load. It is therefore a good
+		idea to begin with 1 Gb Ethernet cards for the two internal networks, each attached
+		to a 1 Gb Ethernet switch that provides connectivity to an expandable array of 100-Base-T
+		switched ports.
+		</para>
+
+		<para>
+		<indexterm><primary>network segments</primary></indexterm>
+		<indexterm><primary>RAID</primary></indexterm>
+		Considering the choice of 1 Gb Ethernet interfaces for the two local network segments,
+		the aggregate network I/O capacity will be 2100 Mb/sec (about 230 MB/sec), an I/O
+		demand that would require a fast disk storage I/O capability. Peak disk throughput is 
+		limited by the disk subsystem chosen. It is desirable to provide the maximum 
+		I/O bandwidth affordable. If a low-cost solution must be chosen, 
+		3Ware IDE RAID Controllers are a good choice. These controllers can be fitted into a 
+		64-bit, 66 MHz PCI-X slot. They appear to the operating system as a high-speed SCSI 
+		controller that can operate at the peak of the PCI-X bandwidth (approximately 450 MB/sec).
+		Alternative SCSI-based hardware RAID controllers should also be considered. Alternately,
+		it makes sense to purchase well-known, branded hardware that has appropriate performance
+		specifications. As a minimum, one should attempt to provide a disk subsystem that can
+		deliver I/O rates of at least 100 MB/sec. 
+		</para>
+
+		<para>
+		Disk storage requirements may be calculated as shown in <link linkend="ch4diskest"/>.
+
+<example id="ch4diskest">
+<title>Estimation of Disk Storage Requirements</title>
+<screen>
+Corporate Data: 100 MBytes/user per year
+Email Storage:  500 MBytes/user per year
+Applications:   5000 MBytes
+Safety Buffer:  At least 50%
+
+Given 500 Users and 2 years:
+-----------------------------
+        Corporate Data:  2 x 100 x 500 = 100000 MBytes = 100 GBytes
+        Email Storage:   2 x 500 x 500 = 500000 MBytes = 500 GBytes
+        Applications:                      5000 MBytes =   5 GBytes
+                                       ----------------------------
+                             Total:                      605 GBytes
+             Add 50% buffer                              303 GBytes
+                       Recommended Storage:              908 GBytes
+</screen>
+</example>
+		<indexterm><primary>storage capacity</primary></indexterm>
+		The preferred storage capacity should be approximately 1 Terabyte. Use of RAID level 5
+		with two hot spare drives would require an 8-drive by 200 GB capacity per drive array.
+		</para>
+
+		</sect3>
+
+	</sect2>
+
+
+	<sect2>
+		<title>Political Issues</title>
+
+		<para>
+		Your industry is coming under increasing accountability pressures. Increased paranoia
+		is necessary so you can demonstrate that you have acted with due diligence. You must
+		not trust your Internet connection.
+		</para>
+
+		<para>
+		Apart from permitting more efficient management of business applications through use of
+		an application server, your primary reason for the decision to implement this is that it
+		gives you greater control over software licensing.
+		</para>
+
+		<para>
+		<indexterm><primary>Outlook Express</primary></indexterm>
+		You are well aware that the current configuration results in some performance issues
+		as the size of the desktop profile grows. Given that users use Microsoft Outlook
+		Express, you know that the storage implications of the <constant>.PST</constant> file
+		is something that needs to be addressed later.
+		</para>
+
+	</sect2>
+
+</sect1>
+
+<sect1>
+	<title>Implementation</title>
+
+	<para>
+	<link linkend="ch04net"/> demonstrates the overall design of the network that you will implement.
+	</para>
+
+	<para>
+	The information presented here assumes that you are already familiar with many basic steps.
+	As this stands, the details provided already extend well beyond just the necessities of
+	Samba configuration. This decision is deliberate to ensure that key determinants
+	of a successful installation are not overlooked. This is the last case that documents
+	the finite minutiae of DHCP and DNS server configuration. Beyond the information provided
+	here, there are many other good reference books on these subjects.
+	</para>
+
+	<para>
+	The &smb.conf; file has the following noteworthy features:
+	</para>
+
+	<itemizedlist>
+		<listitem><para>
+		The NetBIOS name of the Samba server is set to <constant>DIAMOND</constant>.
+		</para></listitem>
+
+		<listitem><para>
+		The Domain name is set to <constant>PROMISES</constant>.
+		</para></listitem>
+
+		<listitem><para>
+		<indexterm><primary>broadcast messages</primary></indexterm>
+		<indexterm><primary>interfaces</primary></indexterm>
+		<indexterm><primary>bind interfaces only</primary></indexterm>
+		Ethernet interface <constant>eth0</constant> is attached to the Internet connection
+		and is externally exposed. This interface is explicitly not available for Samba to use.
+		Samba listens on this interface for broadcast messages but does not broadcast any
+		information on <constant>eth0</constant>, nor does it accept any connections from it.
+		This is achieved by way of the <parameter>interfaces</parameter> parameter and the
+		<parameter>bind interfaces only</parameter> entry.
+		</para></listitem>
+
+		<listitem><para>
+		<indexterm><primary>passdb backend</primary></indexterm>
+		<indexterm><primary>tdbsam</primary></indexterm>
+		<indexterm><primary>binary database</primary></indexterm>
+		The <parameter>passdb backend</parameter> parameter specifies the creation and use
+		of the <constant>tdbsam</constant> password backend. This is a binary database that
+		has excellent scalability for a large number of user account entries.
+		</para></listitem>
+
+		<listitem><para>
+		<indexterm><primary>WINS serving</primary></indexterm>
+		<indexterm><primary>wins support</primary></indexterm>
+		<indexterm><primary>name resolve order</primary></indexterm>
+		WINS serving is enabled by the <smbconfoption name="wins support">Yes</smbconfoption>,
+		and name resolution is set to use it by means of the
+		<smbconfoption name="name resolve order">wins bcast hosts</smbconfoption> entry.
+		</para></listitem>
+
+		<listitem><para>
+		<indexterm><primary>time server</primary></indexterm>
+		The Samba server is configured for use by Windows clients as a time server.
+		</para></listitem>
+
+		<listitem><para>
+		<indexterm><primary>CUPS</primary></indexterm>
+		<indexterm><primary>printing</primary></indexterm>
+		<indexterm><primary>printcap name</primary></indexterm>
+		Samba is configured to directly interface with CUPS via the direct internal interface
+		that is provided by CUPS libraries. This is achieved with the 
+		<smbconfoption name="printing">CUPS</smbconfoption> as well as the
+		<smbconfoption name="printcap name">CUPS</smbconfoption> entries.
+		</para></listitem>
+
+		<listitem><para>
+		<indexterm><primary>user management</primary></indexterm>
+		<indexterm><primary>group management</primary></indexterm>
+		<indexterm><primary>SRVTOOLS.EXE</primary></indexterm>
+		External interface scripts are provided to enable Samba to interface smoothly to
+		essential operating system functions for user and group management. This is important
+		to enable workstations to join the Domain and is also important so that you can use
+		the Windows NT4 Domain User Manager as well as the Domain Server Manager. These tools
+		are provided as part of the <filename>SRVTOOLS.EXE</filename> toolkit that can be 
+		downloaded from the Microsoft FTP
+		<ulink url="ftp://ftp.microsoft.com/Softlib/MSLFILES/SRVTOOLS.EXE">site</ulink>.
+		</para></listitem>
+
+		<listitem><para>
+		<indexterm><primary>User Mode</primary></indexterm>
+		The &smb.conf; file specifies that the Samba server will operate in (default) <parameter>
+		security = user</parameter> mode<footnote><para>See <emphasis>TOSHARG2</emphasis>, Chapter 3.
+		This is necessary so that Samba can act as a Domain Controller (PDC); see
+		<emphasis>TOSHARG2</emphasis>, Chapter 4, for additional information.</para></footnote>
+		(User Mode).
+		</para></listitem>
+
+		<listitem><para>
+		<indexterm><primary>logon services</primary></indexterm>
+		<indexterm><primary>logon script</primary></indexterm>
+		Domain logon services as well as a Domain logon script are specified. The logon script
+		will be used to add robustness to the overall network configuration.
+		</para></listitem>
+
+		<listitem><para>
+		<indexterm><primary>roaming profiles</primary></indexterm>
+		<indexterm><primary>logon path</primary></indexterm>
+		<indexterm><primary>profile share</primary></indexterm>
+		Roaming profiles are enabled through the specification of the parameter,
+		<smbconfoption name="logon path">\\%L\profiles\%U</smbconfoption>. The value of this parameter translates the
+		<constant>%L</constant> to the name by which the Samba server is called by the client (for this
+		configuration, it translates to the name <constant>DIAMOND</constant>), and the <constant>%U</constant>
+		will translate to the name of the user within the context of the connection made to the profile share.
+		It is the administrator's responsibility to ensure there is a directory in the root of the
+		profile share for each user. This directory must be owned by the user also. An exception to this
+		requirement is when a profile is created for group use.
+		</para></listitem>
+
+		<listitem><para>
+		<indexterm><primary>virus</primary></indexterm>
+		<indexterm><primary>opportunistic locking</primary></indexterm>
+		Precautionary veto is effected for particular Windows file names that have been targeted by 
+		virus-related activity. Additionally, Microsoft Office files are vetoed from opportunistic locking
+		controls. This should help to prevent lock contention-related file access problems.
+		</para></listitem>
+
+		<listitem><para>
+		Every user has a private home directory on the UNIX/Linux host. This is mapped to
+		a network drive that is the same for all users.
+		</para></listitem>
+
+	</itemizedlist>
+
+	<para>
+	The configuration of the server is the most complex so far. The following steps are used:
+	</para>
+
+	<orderedlist numeration="arabic">
+		<listitem><para>
+		Basic System Configuration
+		</para></listitem>
+
+		<listitem><para>
+		Samba Configuration
+		</para></listitem>
+
+		<listitem><para>
+		DHCP and DNS Server Configuration
+		</para></listitem>
+
+		<listitem><para>
+		Printer Configuration
+		</para></listitem>
+
+		<listitem><para>
+		Process Start-up Configuration
+		</para></listitem>
+
+		<listitem><para>
+		Validation
+		</para></listitem>
+
+		<listitem><para>
+		Application Share Configuration
+		</para></listitem>
+
+		<listitem><para>
+		Windows Client Configuration
+		</para></listitem>
+	</orderedlist>
+
+	<para>
+	The following sections cover each step in logical and defined detail.
+	</para>
+
+	<sect2 id="ch4bsc">
+	<title>Basic System Configuration</title>
+
+	<para>
+	<indexterm><primary>SUSE Enterprise Linux Server</primary></indexterm>
+	The preparation in this section assumes that your SUSE Enterprise Linux Server 8.0 system has been
+	freshly installed. It prepares basic files so that the system is ready for comprehensive
+	operation in line with the network diagram shown in <link linkend="ch04net"/>.
+	</para>
+
+	<procedure>
+	<title>Server Configuration Steps</title>
+
+		<step><para>
+		<indexterm><primary>hostname</primary></indexterm>
+		Using the UNIX/Linux system tools, name the server <constant>server.abmas.us</constant>.
+		Verify that your hostname is correctly set by running:
+<screen>
+&rootprompt; uname -n
+server
+</screen>
+		An alternate method to verify the hostname is:
+<screen>
+&rootprompt; hostname -f
+server.abmas.us
+</screen>
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>/etc/hosts</primary></indexterm>
+		<indexterm><primary>localhost</primary></indexterm>
+		Edit your <filename>/etc/hosts</filename> file to include the primary names and addresses
+		of all network interfaces that are on the host server. This is necessary so that during
+		startup the system can resolve all its own names to the IP address prior to
+		startup of the DNS server. An example of entries that should be in the 
+		<filename>/etc/hosts</filename> file is:
+<screen>
+127.0.0.1       localhost
+192.168.1.1     sleeth1.abmas.biz sleeth1 diamond
+192.168.2.1     sleeth2.abmas.biz sleeth2
+123.45.67.66    server.abmas.us server
+</screen>
+		You should check the startup order of your system. If the CUPS print server is started before
+		the DNS server (<command>named</command>), you should also include an entry for the printers
+		in the <filename>/etc/hosts</filename> file, as follows:
+<screen>
+192.168.1.20    qmsa.abmas.biz qmsa
+192.168.1.30    hplj6a.abmas.biz hplj6a
+192.168.2.20    qmsf.abmas.biz qmsf
+192.168.2.30    hplj6f.abmas.biz hplj6f
+</screen>
+		<indexterm><primary>named</primary></indexterm>
+		<indexterm><primary>cupsd</primary></indexterm>
+		<indexterm><primary>daemon</primary></indexterm>
+		The printer entries are not necessary if <command>named</command> is started prior to
+		startup of <command>cupsd</command>, the CUPS daemon.
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>/etc/rc.d/boot.local</primary></indexterm>
+		<indexterm><primary>IP forwarding</primary></indexterm>
+		<indexterm><primary>/proc/sys/net/ipv4/ip_forward</primary></indexterm>
+		The host server is acting as a router between the two internal network segments as well
+		as for all Internet access. This necessitates that IP forwarding be enabled. This can be
+		achieved by adding to the <filename>/etc/rc.d/boot.local</filename> an entry as follows:
+<screen>
+echo 1 > /proc/sys/net/ipv4/ip_forward
+</screen>
+		To ensure that your kernel is capable of IP forwarding during configuration, you may 
+		wish to execute that command manually also. This setting permits the Linux system to 
+		act as a router.<footnote><para>You may want to do the echo command last and include 
+				"0" in the init scripts, since it opens up your network for a short time.</para></footnote>
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>firewall</primary></indexterm>
+		<indexterm><primary>abmas-netfw.sh</primary></indexterm>
+		Installation of a basic firewall and NAT facility is necessary.
+		The following script can be installed in the <filename>/usr/local/sbin</filename>
+		directory. It is executed from the <filename>/etc/rc.d/boot.local</filename> startup
+		script. In your case, this script is called <filename>abmas-netfw.sh</filename>. The
+		script contents are shown in <link linkend="ch4natfw"/>.
+
+<example id="ch4natfw">
+<title>NAT Firewall Configuration Script</title>
+<screen>
+#!/bin/sh
+echo -e "\n\nLoading NAT firewall.\n"
+IPTABLES=/usr/sbin/iptables
+EXTIF="eth0"
+INTIFA="eth1"
+INTIFB="eth2"
+
+/sbin/depmod -a
+/sbin/modprobe ip_tables
+/sbin/modprobe ip_conntrack
+/sbin/modprobe ip_conntrack_ftp
+/sbin/modprobe iptable_nat
+/sbin/modprobe ip_nat_ftp
+$IPTABLES -P INPUT DROP
+$IPTABLES -F INPUT
+$IPTABLES -P OUTPUT ACCEPT
+$IPTABLES -F OUTPUT
+$IPTABLES -P FORWARD DROP
+$IPTABLES -F FORWARD
+
+$IPTABLES -A INPUT -i lo -j ACCEPT
+$IPTABLES -A INPUT -i $INTIFA -j ACCEPT
+$IPTABLES -A INPUT -i $INTIFB -j ACCEPT
+$IPTABLES -A INPUT -i $EXTIF -m state --state ESTABLISHED,RELATED -j ACCEPT
+# Enable incoming traffic for: SSH, SMTP, DNS(tcp), HTTP, HTTPS
+for i in 22 25 53 80 443
+do
+        $IPTABLES -A INPUT -i $EXTIF -p tcp --dport $i  -j ACCEPT
+done
+# Allow DNS(udp)
+$IPTABLES -A INPUT -i $EXTIF -p udp -dport 53  -j ACCEPT
+echo "Allow all connections OUT and only existing and specified ones IN"
+$IPTABLES -A FORWARD -i $EXTIF -o $INTIFA -m state \
+                                  --state ESTABLISHED,RELATED -j ACCEPT
+$IPTABLES -A FORWARD -i $EXTIF -o $INTIFB -m state \
+                                  --state ESTABLISHED,RELATED -j ACCEPT
+$IPTABLES -A FORWARD -i $INTIFA -o $EXTIF -j ACCEPT
+$IPTABLES -A FORWARD -i $INTIFB -o $EXTIF -j ACCEPT
+$IPTABLES -A FORWARD -j LOG
+echo "   Enabling SNAT (MASQUERADE) functionality on $EXTIF"
+$IPTABLES -t nat -A POSTROUTING -o $EXTIF -j MASQUERADE
+echo "1" > /proc/sys/net/ipv4/ip_forward
+echo -e "\nNAT firewall done.\n"
+</screen>
+</example>
+		</para></step>
+
+		<step><para>
+		Execute the following to make the script executable:
+<screen>
+&rootprompt; chmod 755 /usr/local/sbin/abmas-natfw.sh
+</screen>
+		You must now edit <filename>/etc/rc.d/boot.local</filename> to add an entry
+		that runs your <command>abmas-natfw.sh</command> script. The following
+		entry works for you:
+<screen>
+#! /bin/sh
+#
+# Copyright (c) 2002 SUSE Linux AG Nuernberg, Germany. 
+# All rights reserved.
+#
+# Author: Werner Fink, 1996
+#         Burchard Steinbild, 1996
+#
+# /etc/init.d/boot.local
+#
+# script with local commands to be executed from init on system startup
+#
+# Here you should add things that should happen directly after booting
+# before we're going to the first run level.
+#
+/usr/local/sbin/abmas-natfw.sh
+</screen>
+		</para></step>
+	</procedure>
+
+	<para>
+	<indexterm><primary>/etc/hosts</primary></indexterm>
+	The server is now ready for Samba configuration. During the validation step, you remove
+	the entry for the Samba server <constant>diamond</constant> from the <filename>/etc/hosts</filename>
+	file. This is done after you are satisfied that DNS-based name resolution is functioning correctly.
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>Samba Configuration</title>
+
+	<para>
+	When you have completed this section, the Samba server is ready for testing and validation;
+	however, testing and validation have to wait until DHCP, DNS, and printing (CUPS) services have 
+	been configured.
+	</para>
+
+	<procedure>
+	<title>Samba Configuration Steps</title>
+
+		<step><para>
+		Install the Samba-3 binary RPM from the Samba-Team FTP site. Assuming that the binary
+		RPM file is called <filename>samba-3.0.20-1.i386.rpm</filename>, one way to install this
+		file is as follows:
+<screen>
+&rootprompt; rpm -Uvh samba-3.0.20-1.i386.rpm
+</screen>
+		This operation must be performed while logged in as the <command>root</command> user.
+		Successful operation is clearly indicated. If this installation should fail for any reason,
+		refer to the operating system manufacturer's documentation for guidance.
+		</para></step>
+
+		<step><para>
+		Install the &smb.conf; file shown in <link linkend="promisnet"/>, <link linkend="promisnetsvca"/>,
+		and <link linkend="promisnetsvcb"/>. Concatenate (join) all three files to make a single &smb.conf;
+		file. The final, fully qualified path for this file should be <filename>/etc/samba/smb.conf</filename>.
+
+<example id="promisnet">
+<title>130 User Network with <emphasis>tdbsam</emphasis> &smbmdash; [globals] Section</title>
+<smbconfblock>
+<smbconfcomment>Global parameters</smbconfcomment>
+<smbconfsection name="[global]"/>
+<smbconfoption name="workgroup">PROMISES</smbconfoption>
+<smbconfoption name="netbios name">DIAMOND</smbconfoption>
+<smbconfoption name="interfaces">eth1, eth2, lo</smbconfoption>
+<smbconfoption name="bind interfaces only">Yes</smbconfoption>
+<smbconfoption name="passdb backend">tdbsam</smbconfoption>
+<smbconfoption name="pam password change">Yes</smbconfoption>
+<smbconfoption name="passwd program">/usr/bin/passwd %u</smbconfoption>
+<smbconfoption name="passwd chat">*New*Password* %n\n *Re-enter*new*password*%n\n *Password*changed*</smbconfoption>
+<smbconfoption name="username map">/etc/samba/smbusers</smbconfoption>
+<smbconfoption name="unix password sync">Yes</smbconfoption>
+<smbconfoption name="log level">1</smbconfoption>
+<smbconfoption name="syslog">0</smbconfoption>
+<smbconfoption name="log file">/var/log/samba/%m</smbconfoption>
+<smbconfoption name="max log size">50</smbconfoption>
+<smbconfoption name="smb ports">139</smbconfoption>
+<smbconfoption name="name resolve order">wins bcast hosts</smbconfoption>
+<smbconfoption name="time server">Yes</smbconfoption>
+<smbconfoption name="printcap name">CUPS</smbconfoption>
+<smbconfoption name="show add printer wizard">No</smbconfoption>
+<smbconfoption name="add user script">/usr/sbin/useradd -m '%u'</smbconfoption>
+<smbconfoption name="delete user script">/usr/sbin/userdel -r '%u'</smbconfoption>
+<smbconfoption name="add group script">/usr/sbin/groupadd '%g'</smbconfoption>
+<smbconfoption name="delete group script">/usr/sbin/groupdel '%g'</smbconfoption>
+<smbconfoption name="add user to group script">/usr/sbin/usermod -G '%g' '%u'</smbconfoption>
+<smbconfoption name="add machine script">/usr/sbin/useradd -s /bin/false -d /tmp '%u'</smbconfoption>
+<smbconfoption name="shutdown script">/var/lib/samba/scripts/shutdown.sh</smbconfoption>
+<smbconfoption name="abort shutdown script">/sbin/shutdown -c</smbconfoption>
+<smbconfoption name="logon script">scripts\logon.bat</smbconfoption>
+<smbconfoption name="logon path">\\%L\profiles\%U</smbconfoption>
+<smbconfoption name="logon drive">X:</smbconfoption>
+<smbconfoption name="logon home">\\%L\%U</smbconfoption>
+<smbconfoption name="domain logons">Yes</smbconfoption>
+<smbconfoption name="preferred master">Yes</smbconfoption>
+<smbconfoption name="wins support">Yes</smbconfoption>
+<smbconfoption name="utmp">Yes</smbconfoption>
+<smbconfoption name="map acl inherit">Yes</smbconfoption>
+<smbconfoption name="printing">cups</smbconfoption>
+<smbconfoption name="cups options">Raw</smbconfoption>
+<smbconfoption name="veto files">/*.eml/*.nws/*.{*}/</smbconfoption>
+<smbconfoption name="veto oplock files">/*.doc/*.xls/*.mdb/</smbconfoption>
+</smbconfblock>
+</example>
+
+<example id="promisnetsvca">
+<title>130 User Network with <emphasis>tdbsam</emphasis> &smbmdash; Services Section Part A</title>
+<smbconfblock>
+<smbconfsection name="[homes]"/>
+<smbconfoption name="comment">Home Directories</smbconfoption>
+<smbconfoption name="valid users">%S</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+<smbconfoption name="browseable">No</smbconfoption>
+
+<smbconfsection name="[printers]"/>
+<smbconfoption name="comment">SMB Print Spool</smbconfoption>
+<smbconfoption name="path">/var/spool/samba</smbconfoption>
+<smbconfoption name="guest ok">Yes</smbconfoption>
+<smbconfoption name="printable">Yes</smbconfoption>
+<smbconfoption name="use client driver">Yes</smbconfoption>
+<smbconfoption name="default devmode">Yes</smbconfoption>
+<smbconfoption name="browseable">No</smbconfoption>
+
+<smbconfsection name="[netlogon]"/>
+<smbconfoption name="comment">Network Logon Service</smbconfoption>
+<smbconfoption name="path">/var/lib/samba/netlogon</smbconfoption>
+<smbconfoption name="guest ok">Yes</smbconfoption>
+<smbconfoption name="locking">No</smbconfoption>
+
+<smbconfsection name="[profiles]"/>
+<smbconfoption name="comment">Profile Share</smbconfoption>
+<smbconfoption name="path">/var/lib/samba/profiles</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+<smbconfoption name="profile acls">Yes</smbconfoption>
+
+<smbconfsection name="[accounts]"/>
+<smbconfoption name="comment">Accounting Files</smbconfoption>
+<smbconfoption name="path">/data/accounts</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+</smbconfblock>
+</example>
+
+<example id="promisnetsvcb">
+<title>130 User Network with <emphasis>tdbsam</emphasis> &smbmdash; Services Section Part B</title>
+<smbconfblock>
+<smbconfsection name="[service]"/>
+<smbconfoption name="comment">Financial Services Files</smbconfoption>
+<smbconfoption name="path">/data/service</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+
+<smbconfsection name="[pidata]"/>
+<smbconfoption name="comment">Property Insurance Files</smbconfoption>
+<smbconfoption name="path">/data/pidata</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+
+<smbconfsection name="[apps]"/>
+<smbconfoption name="comment">Application Files</smbconfoption>
+<smbconfoption name="path">/apps</smbconfoption>
+<smbconfoption name="read only">Yes</smbconfoption>
+<smbconfoption name="admin users">bjordan</smbconfoption>
+</smbconfblock>
+</example>
+		</para></step>
+
+		<step><para>
+	      <indexterm><primary>administrator</primary></indexterm><indexterm>
+		<primary>smbpasswd</primary>
+	      </indexterm>
+		Add the <constant>root</constant> user to the password backend as follows:
+<screen>
+&rootprompt; smbpasswd -a root
+New SMB password: XXXXXXXX
+Retype new SMB password: XXXXXXXX
+&rootprompt;
+</screen>
+		The <constant>root</constant> account is the UNIX equivalent of the Windows Domain Administrator.
+		This account is essential in the regular maintenance of your Samba server. It must never be
+		deleted. If for any reason the account is deleted, you may not be able to recreate this account
+		without considerable trouble.
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>username map</primary></indexterm>
+                Create the username map file to permit the <constant>root</constant> account to be called
+                <constant>Administrator</constant> from the Windows network environment. To do this, create
+                the file <filename>/etc/samba/smbusers</filename> with the following contents:
+<screen>
+####
+# User mapping file
+####
+# File Format
+# -----------
+# Unix_ID = Windows_ID
+#
+# Examples:
+# root = Administrator
+# janes = "Jane Smith"
+# jimbo = Jim Bones
+#
+# Note: If the name contains a space it must be double quoted.
+#       In the example above the name 'jimbo' will be mapped to Windows
+#       user names 'Jim' and 'Bones' because the space was not quoted.
+#######################################################################
+root = Administrator
+####
+# End of File
+####
+</screen>
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>initGrps.sh</primary></indexterm>
+		<indexterm><primary>net</primary><secondary>groupmap</secondary><tertiary>add</tertiary></indexterm>
+		<indexterm><primary>net</primary><secondary>groupmap</secondary><tertiary>modify</tertiary></indexterm>
+		<indexterm><primary>net</primary><secondary>groupmap</secondary><tertiary>list</tertiary></indexterm>
+                Create and map Windows Domain Groups to UNIX groups. A sample script is provided in <link linkend="small"/>,
+                <link linkend="initGrps"/>. Create a file containing this script. We called ours
+                <filename>/etc/samba/initGrps.sh</filename>. Set this file so it can be executed,
+                and then execute the script. Sample output should be as follows:
+
+<example id="ch4initGrps">
+<title>Script to Map Windows NT Groups to UNIX Groups</title>
+<indexterm><primary>initGrps.sh</primary></indexterm>
+<screen>
+#!/bin/bash
+#
+# initGrps.sh
+#
+
+# Create UNIX groups
+groupadd acctsdep
+groupadd finsrvcs
+
+# Map Windows Domain Groups to UNIX groups
+net groupmap add ntgroup="Domain Admins"  unixgroup=root type=d
+net groupmap add ntgroup="Domain Users"   unixgroup=users type=d
+net groupmap add ntgroup="Domain Guests"  unixgroup=nobody type=d
+
+# Add Functional Domain Groups
+net groupmap add ntgroup="Accounts Dept"  unixgroup=acctsdep type=d
+net groupmap add ntgroup="Financial Services" unixgroup=finsrvcs type=d
+net groupmap add ntgroup="Insurance Group"     unixgroup=piops type=d
+
+# Map Windows NT machine local groups to local UNIX groups
+# Mapping of local groups is not necessary and not functional
+# for this installation.
+</screen>
+</example>
+
+<screen>
+&rootprompt; chmod 755 initGrps.sh
+&rootprompt; /etc/samba # ./initGrps.sh
+Updated mapping entry for Domain Admins
+Updated mapping entry for Domain Users
+Updated mapping entry for Domain Guests
+No rid or sid specified, choosing algorithmic mapping
+Successfully added group Accounts Dept to the mapping db
+No rid or sid specified, choosing algorithmic mapping
+Successfully added group Domain Guests to the mapping db
+
+&rootprompt; /etc/samba # net groupmap list | sort
+Account Operators (S-1-5-32-548) -> -1
+Accounts Dept (S-1-5-21-179504-2437109-488451-2003) -> acctsdep
+Administrators (S-1-5-32-544) -> -1
+Backup Operators (S-1-5-32-551) -> -1
+Domain Admins (S-1-5-21-179504-2437109-488451-512) -> root
+Domain Guests (S-1-5-21-179504-2437109-488451-514) -> nobody
+Domain Users (S-1-5-21-179504-2437109-488451-513) -> users
+Financial Services (S-1-5-21-179504-2437109-488451-2005) -> finsrvcs
+Guests (S-1-5-32-546) -> -1
+Power Users (S-1-5-32-547) -> -1
+Print Operators (S-1-5-32-550) -> -1
+Replicators (S-1-5-32-552) -> -1
+System Operators (S-1-5-32-549) -> -1
+Users (S-1-5-32-545) -> -1
+</screen>
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>useradd</primary></indexterm>
+		<indexterm><primary>adduser</primary></indexterm>
+		<indexterm><primary>passwd</primary></indexterm>
+		<indexterm><primary>smbpasswd</primary></indexterm>
+		<indexterm><primary>/etc/passwd</primary></indexterm>
+		<indexterm><primary>password</primary><secondary>backend</secondary></indexterm>
+		<indexterm><primary>user</primary><secondary>management</secondary></indexterm>
+		There is one preparatory step without which you will not have a working Samba 
+		network environment. You must add an account for each network user. 
+                For each user who needs to be given a Windows Domain account, make an entry in the
+                <filename>/etc/passwd</filename> file as well as in the Samba password backend.
+                Use the system tool of your choice to create the UNIX system account, and use the Samba
+                <command>smbpasswd</command> to create a Domain user account.
+                There are a number of tools for user management under UNIX, such as
+                <command>useradd</command>, and <command>adduser</command>, as well as a plethora of custom
+                tools. You also want to create a home directory for each user.
+		You can do this by executing the following steps for each user:
+<screen>
+&rootprompt; useradd -m <parameter>username</parameter>
+&rootprompt; passwd <parameter>username</parameter>
+Changing password for <parameter>username</parameter>.
+New password: XXXXXXXX
+Re-enter new password: XXXXXXXX
+Password changed
+&rootprompt; smbpasswd -a <parameter>username</parameter>
+New SMB password: XXXXXXXX
+Retype new SMB password: XXXXXXXX
+Added user <parameter>username</parameter>.
+</screen>
+		You do of course use a valid user login ID in place of <parameter>username</parameter>.
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>file system</primary><secondary>access control</secondary></indexterm>
+		<indexterm><primary>file system</primary><secondary>permissions</secondary></indexterm>
+		<indexterm><primary>group membership</primary></indexterm>
+                Using the preferred tool for your UNIX system, add each user to the UNIX groups created
+                previously as necessary. File system access control will be based on UNIX group membership.
+                </para></step>
+
+                <step><para>
+                Create the directory mount point for the disk subsystem that can be mounted to provide
+                data storage for company files. In this case the mount point is indicated in the &smb.conf;
+                file is <filename>/data</filename>. Format the file system as required, and mount the formatted
+                file system partition using appropriate system tools.
+                </para></step>
+
+                <step><para>
+		<indexterm><primary>file system</primary><secondary>permissions</secondary></indexterm>
+                Create the top-level file storage directories for data and applications as follows:
+<screen>
+&rootprompt; mkdir -p /data/{accounts,finsrvcs}
+&rootprompt; mkdir -p /apps
+&rootprompt; chown -R root:root /data
+&rootprompt; chown -R root:root /apps
+&rootprompt; chown -R bjordan:acctsdep /data/accounts
+&rootprompt; chown -R bjordan:finsrvcs /data/finsrvcs
+&rootprompt; chmod -R ug+rwxs,o-rwx /data
+&rootprompt; chmod -R ug+rwx,o+rx-w /apps
+</screen>
+                Each department is responsible for creating its own directory structure within the departmental
+                share. The directory root of the <command>accounts</command> share is <filename>/data/accounts</filename>.
+                The directory root of the <command>finsvcs</command> share is <filename>/data/finsvcs</filename>.
+		The <filename>/apps</filename> directory is the root of the <constant>apps</constant> share
+		that provides the application server infrastructure.
+		</para></step>
+
+		<step><para>
+		The &smb.conf; file specifies an infrastructure to support roaming profiles and network
+		logon services. You can now create the file system infrastructure to provide the
+		locations on disk that these services require. Adequate planning is essential,
+		since desktop profiles can grow to be quite large. For planning purposes, a minimum of
+		200 MB of storage should be allowed per user for profile storage. The following
+		commands create the directory infrastructure needed:
+<screen>
+&rootprompt; mkdir -p /var/spool/samba 
+&rootprompt; mkdir -p /var/lib/samba/{netlogon/scripts,profiles}
+&rootprompt; chown -R root:root /var/spool/samba
+&rootprompt; chown -R root:root /var/lib/samba
+&rootprompt; chmod a+rwxt /var/spool/samba
+&rootprompt; chmod 2775 /var/lib/samba/profiles
+&rootprompt; chgrp users /var/lib/samba/profiles
+</screen>
+		For each user account that is created on the system, the following commands should be
+		executed:
+<screen>
+&rootprompt; mkdir /var/lib/samba/profiles/'username'
+&rootprompt; chown 'username':users /var/lib/samba/profiles/'username'
+&rootprompt; chmod ug+wrx,o+rx,-w /var/lib/samba/profiles/'username'
+</screen>
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>logon scrip</primary></indexterm>
+		<indexterm><primary>unix2dos</primary></indexterm>
+		<indexterm><primary>dos2unix</primary></indexterm>
+		Create a logon script. It is important that each line is correctly terminated with
+		a carriage return and line-feed combination (i.e., DOS encoding). The following procedure
+		works if the right tools (<constant>unix2dos</constant> and <constant>dos2unix</constant>) are installed.
+		First, create a file called <filename>/var/lib/samba/netlogon/scripts/logon.bat.unix</filename>
+		with the following contents:
+<screen>
+net time \\diamond /set /yes
+net use h: /home
+net use p: \\diamond\apps
+</screen>
+		Convert the UNIX file to a DOS file using the <command>unix2dos</command> as shown here:
+<screen>
+&rootprompt; unix2dos &lt; /var/lib/samba/netlogon/scripts/logon.bat.unix \
+	&gt; /var/lib/samba/netlogon/scripts/logon.bat
+</screen>
+		</para></step>
+	</procedure>
+
+	</sect2>
+
+	<sect2 id="ch4dhcpdns">
+	<title>Configuration of DHCP and DNS Servers</title>
+
+	<para>
+	DHCP services are a basic component of the entire network client installation. DNS operation is
+	foundational to Internet access as well as to trouble-free operation of local networking. When
+	you have completed this section, the server should be ready for solid duty operation.
+	</para>
+
+	<procedure>
+	<title>DHCP and DNS Server Configuration Steps</title>
+
+		<step><para>
+		<indexterm><primary>/etc/dhcpd.conf</primary></indexterm>
+		Create a file called <filename>/etc/dhcpd.conf</filename> with the contents as
+		shown in <link linkend="prom-dhcp"/>.
+
+<example id="prom-dhcp">
+<title>DHCP Server Configuration File &smbmdash; <filename>/etc/dhcpd.conf</filename></title>
+<screen>
+# Abmas Accounting Inc.
+default-lease-time 86400;
+max-lease-time 172800;
+default-lease-time 86400;
+option ntp-servers 192.168.1.1;
+option domain-name "abmas.biz";
+option domain-name-servers 192.168.1.1, 192.168.2.1;
+option netbios-name-servers 192.168.1.1, 192.168.2.1;
+option netbios-node-type 8;       ### Node type = Hybrid ###
+ddns-updates on;                  ### Dynamic DNS enabled ###
+ddns-update-style interim;
+
+subnet 192.168.1.0 netmask 255.255.255.0 {
+        range dynamic-bootp 192.168.1.128 192.168.1.254;
+        option subnet-mask 255.255.255.0;
+        option routers 192.168.1.1;
+        allow unknown-clients;
+        host qmsa {
+                hardware ethernet 08:00:46:7a:35:e4;
+                fixed-address 192.168.1.20;
+                }
+        host hplj6a {
+                hardware ethernet 00:03:47:cb:81:e0;
+                fixed-address 192.168.1.30;
+                }
+        }
+subnet 192.168.2.0 netmask 255.255.255.0 {
+        range dynamic-bootp 192.168.2.128 192.168.2.254;
+        option subnet-mask 255.255.255.0;
+        option routers 192.168.2.1;
+        allow unknown-clients;
+        host qmsf {
+                hardware ethernet 01:04:31:db:e1:c0;
+                fixed-address 192.168.1.20;
+        	}
+        host hplj6f {
+                hardware ethernet 00:03:47:cf:83:e2;
+                fixed-address 192.168.2.30;
+                }
+	}
+subnet 127.0.0.0 netmask 255.0.0.0 {
+        }
+subnet 123.45.67.64 netmask 255.255.255.252 {
+        }
+</screen>
+</example>
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>/etc/named.conf</primary></indexterm>
+		Create a file called <filename>/etc/named.conf</filename> that has the combined contents
+		of the <link linkend="ch4namedcfg"/>, <link linkend="ch4namedvarfwd"/>, and
+		<link linkend="ch4namedvarrev"/> files that are concatenated (merged) in this
+		specific order.
+		</para></step>
+
+		<step><para>
+		Create the files shown in their respective directories as shown in <link linkend="namedrscfiles">DNS
+		(named) Resource Files</link>.
+
+			<table id="namedrscfiles">
+				<title>DNS (named) Resource Files</title>
+				<tgroup cols="2">
+					<colspec align="left"/>
+					<colspec align="left"/>
+					<thead>
+						<row>
+							<entry>Reference</entry>
+							<entry>File Location</entry>
+						</row>
+					</thead>
+					<tbody>
+						<row>
+							<entry><link linkend="loopback"/></entry>
+							<entry>/var/lib/named/localhost.zone</entry>
+						</row>
+						<row>
+							<entry><link linkend="dnsloopy"/></entry>
+							<entry>/var/lib/named/127.0.0.zone</entry>
+						</row>
+						<row>
+							<entry><link linkend="roothint"/></entry>
+							<entry>/var/lib/named/root.hint</entry>
+						</row>
+						<row>
+							<entry><link linkend="abmasbiz"/></entry>
+							<entry>/var/lib/named/master/abmas.biz.hosts</entry>
+						</row>
+						<row>
+							<entry><link linkend="abmasus"/></entry>
+							<entry>/var/lib/named/abmas.us.hosts</entry>
+						</row>
+						<row>
+							<entry><link linkend="eth1zone"/></entry>
+							<entry>/var/lib/named/192.168.1.0.rev</entry>
+						</row>
+						<row>
+							<entry><link linkend="eth2zone"/></entry>
+							<entry>/var/lib/named/192.168.2.0.rev</entry>
+						</row>
+					</tbody>
+				</tgroup>
+			</table>
+
+<example id="ch4namedcfg">
+<title>DNS Master Configuration File &smbmdash; <filename>/etc/named.conf</filename> Master Section</title>
+<indexterm><primary>/etc/named.conf</primary></indexterm>
+<screen>
+###
+# Abmas Biz DNS Control File
+###
+# Date: November 15, 2003
+###
+options {
+	directory "/var/lib/named";
+	forwarders {
+		123.45.12.23;
+		};
+	forward first;
+	listen-on {
+		mynet;
+		};
+	auth-nxdomain yes;
+	multiple-cnames yes;
+	notify no;
+};
+
+zone "." in {
+	type hint;
+	file "root.hint";
+};
+
+zone "localhost" in {
+	type master;
+	file "localhost.zone";
+};
+
+zone "0.0.127.in-addr.arpa" in {
+	type master;
+	file "127.0.0.zone";
+};
+
+acl mynet {
+	192.168.1.0/24;
+	192.168.2.0/24;
+	127.0.0.1;
+};
+
+acl seconddns {
+	123.45.54.32;
+};
+
+</screen>
+</example>
+
+<example id="ch4namedvarfwd">
+<title>DNS Master Configuration File &smbmdash; <filename>/etc/named.conf</filename> Forward Lookup Definition Section</title>
+<screen>
+zone "abmas.biz" {
+	type master;
+	file "/var/lib/named/master/abmas.biz.hosts";
+	allow-query {
+		mynet;
+	};
+	allow-transfer {
+		mynet;
+	};
+	allow-update {
+		mynet;
+	};
+};
+
+zone "abmas.us" {
+	type master;
+	file "/var/lib/named/master/abmas.us.hosts";
+	allow-query {
+		any;
+	};
+	allow-transfer {
+		seconddns;
+	};
+};
+</screen>
+</example>
+
+<example id="ch4namedvarrev">
+<title>DNS Master Configuration File &smbmdash; <filename>/etc/named.conf</filename> Reverse Lookup Definition Section</title>
+<screen>
+zone "1.168.192.in-addr.arpa" {
+	type master;
+	file "/var/lib/named/master/192.168.1.0.rev";
+	allow-query {
+		mynet;
+	};
+	allow-transfer {
+		mynet;
+	};
+	allow-update {
+		mynet;
+	};
+};
+
+zone "2.168.192.in-addr.arpa" {
+	type master;
+	file "/var/lib/named/master/192.168.2.0.rev";
+	allow-query {
+		mynet;
+	};
+	allow-transfer {
+		mynet;
+	};
+	allow-update {
+		mynet;
+	};
+};
+</screen>
+</example>
+
+<example id="eth1zone">
+<title>DNS 192.168.1 Reverse Zone File</title>
+<screen>
+$ORIGIN .
+$TTL 38400	; 10 hours 40 minutes
+1.168.192.in-addr.arpa	IN SOA	sleeth.abmas.biz. root.abmas.biz. (
+				2003021825 ; serial
+				10800      ; refresh (3 hours)
+				3600       ; retry (1 hour)
+				604800     ; expire (1 week)
+				38400      ; minimum (10 hours 40 minutes)
+				)
+			NS	sleeth1.abmas.biz.
+$ORIGIN 1.168.192.in-addr.arpa.
+1			PTR	sleeth1.abmas.biz.
+20			PTR	qmsa.abmas.biz.
+30			PTR	hplj6a.abmas.biz.
+</screen>
+</example>
+
+<example id="eth2zone">
+<title>DNS 192.168.2 Reverse Zone File</title>
+<screen>
+$ORIGIN .
+$TTL 38400	; 10 hours 40 minutes
+2.168.192.in-addr.arpa	IN SOA	sleeth.abmas.biz. root.abmas.biz. (
+				2003021825 ; serial
+				10800      ; refresh (3 hours)
+				3600       ; retry (1 hour)
+				604800     ; expire (1 week)
+				38400      ; minimum (10 hours 40 minutes)
+				)
+			NS	sleeth2.abmas.biz.
+$ORIGIN 2.168.192.in-addr.arpa.
+1			PTR	sleeth2.abmas.biz.
+20			PTR	qmsf.abmas.biz.
+30			PTR	hplj6f.abmas.biz.
+</screen>
+</example>
+
+<example id="abmasbiz">
+<title>DNS Abmas.biz Forward Zone File</title>
+<screen>
+$ORIGIN .
+$TTL 38400      ; 10 hours 40 minutes
+abmas.biz       IN SOA  sleeth1.abmas.biz. root.abmas.biz. (
+                                2003021833 ; serial
+                                10800      ; refresh (3 hours)
+                                3600       ; retry (1 hour)
+                                604800     ; expire (1 week)
+                                38400      ; minimum (10 hours 40 minutes)
+                                )
+                        NS      dns.abmas.biz.
+                        MX      10 mail.abmas.biz.
+$ORIGIN abmas.biz.
+sleeth1                 A       192.168.1.1
+sleeth2                 A       192.168.2.1
+qmsa                    A       192.168.1.20
+hplj6a                  A       192.168.1.30
+qmsf                    A       192.168.2.20
+hplj6f                  A       192.168.2.30
+dns                     CNAME   sleeth1
+diamond                 CNAME   sleeth1
+mail                    CNAME   sleeth1
+</screen>
+</example>
+
+<example id="abmasus">
+<title>DNS Abmas.us Forward Zone File</title>
+<screen>
+$ORIGIN .
+$TTL 38400      ; 10 hours 40 minutes
+abmas.us        IN SOA  server.abmas.us. root.abmas.us. (
+                                2003021833 ; serial
+                                10800      ; refresh (3 hours)
+                                3600       ; retry (1 hour)
+                                604800     ; expire (1 week)
+                                38400      ; minimum (10 hours 40 minutes)
+                                )
+                        NS      dns.abmas.us.
+                        NS      dns2.abmas.us.
+                        MX      10 mail.abmas.us.
+$ORIGIN abmas.us.
+server                  A       123.45.67.66
+dns2                    A       123.45.54.32
+gw                      A       123.45.67.65
+www                     CNAME   server
+mail                    CNAME   server
+dns                     CNAME   server
+</screen>
+</example>
+
+		</para></step>
+
+		<step><para>
+	      <indexterm><primary>/etc/resolv.conf</primary></indexterm><indexterm>
+		<primary>name resolution</primary>
+	      </indexterm>
+		All DNS name resolution should be handled locally. To ensure that the server is configured
+		correctly to handle this, edit <filename>/etc/resolv.conf</filename> to have the following
+		content:
+<screen>
+search abmas.us abmas.biz
+nameserver 127.0.0.1
+nameserver 123.45.54.23
+</screen>
+	      <indexterm>
+		<primary>DNS server</primary>
+	      </indexterm>
+		This instructs the name resolver function (when configured correctly) to ask the DNS server
+		that is running locally to resolve names to addresses. In the event that the local name server
+		is not available, ask the name server provided by the ISP. The latter, of course, does not resolve
+		purely local names to IP addresses.
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>/etc/nsswitch.conf</primary></indexterm>
+		The final step is to edit the <filename>/etc/nsswitch.conf</filename> file.
+		This file controls the operation of the various resolver libraries that are part of the Linux
+		Glibc libraries. Edit this file so that it contains the following entries:
+<screen>
+hosts:      files dns wins
+</screen>
+		</para></step>
+	</procedure>
+
+	<para>
+	The basic DHCP and DNS services are now ready for validation testing. Before you can proceed,
+	there are a few more steps along the road. First, configure the print spooling and print
+	processing system.  Then you can configure the server so that all services
+	start automatically on reboot. You must also manually start all services prior to validation testing.
+	</para>
+
+	</sect2>
+
+	<sect2 id="ch4ptrcfg">
+	<title>Printer Configuration</title>
+
+	<para>
+	Network administrators who are new to CUPS based-printing typically experience some difficulty mastering
+	its powerful features. The steps outlined in this section are designed to navigate around the distractions
+	of learning CUPS. Instead of implementing smart features and capabilities, our approach is to use it as a
+	transparent print queue that performs no filtering, and only minimal handling of each print job that is
+	submitted to it. In other words, our configuration turns CUPS into a raw-mode print queue. This means that
+	the correct printer driver must be installed on all clients.
+	</para>
+
+	<procedure>
+	<title>Printer Configuration Steps</title>
+
+		<step><para>
+		Configure each printer to be a DHCP client, carefully following the manufacturer's guidelines.
+		</para></step>
+
+                <step><para>
+                Follow the instructions in the printer manufacturer's manuals to permit printing to port 9100.
+		Use any other port the manufacturer specifies for direct-mode raw printing, and adjust the
+		port as necessary in the following example commands.
+                This allows the CUPS spooler to print using raw mode protocols.
+                <indexterm><primary>CUPS</primary></indexterm>
+                <indexterm><primary>raw printing</primary></indexterm>
+                </para></step>
+
+                <step><para>
+	      <indexterm><primary>CUPS</primary><secondary>queue</secondary></indexterm><indexterm>
+		<primary>lpadmin</primary>
+	      </indexterm>
+                Configure the CUPS Print Queues as follows:
+<screen>
+&rootprompt; lpadmin -p qmsa -v socket://qmsa.abmas.biz:9100 -E
+&rootprompt; lpadmin -p hplj6a -v socket://hplj6a.abmas.biz:9100 -E
+&rootprompt; lpadmin -p qmsf -v socket://qmsf.abmas.biz:9100 -E
+&rootprompt; lpadmin -p hplj6f -v socket://hplj6f.abmas.biz:9100 -E
+</screen>
+                <indexterm><primary>print filter</primary></indexterm>
+                This creates the necessary print queues with no assigned print filter.
+                </para></step>
+
+	  <step><para><indexterm>
+		<primary>enable</primary>
+	      </indexterm>
+		Print queues may not be enabled at creation. Use <command>lpc stat</command> to check
+		the status of the print queues and, if necessary, make certain that the queues you have 
+		just created are enabled by executing the following:
+<screen>
+&rootprompt; /usr/bin/enable qmsa
+&rootprompt; /usr/bin/enable hplj6a
+&rootprompt; /usr/bin/enable qmsf
+&rootprompt; /usr/bin/enable hplj6f
+</screen>
+		</para></step>
+
+	  <step><para><indexterm>
+		<primary>accept</primary>
+	      </indexterm>
+		Even though your print queues may be enabled, it is still possible that they
+		are not accepting print jobs. A print queue services incoming printing
+		requests only when configured to do so. Ensure that your print queues are
+		set to accept incoming jobs by executing the following commands:
+<screen>
+&rootprompt; /usr/sbin/accept qmsa
+&rootprompt; /usr/sbin/accept hplj6a
+&rootprompt; /usr/sbin/accept qmsf
+&rootprompt; /usr/sbin/accept hplj6f
+</screen>
+		</para></step>
+
+                <step><para>
+                <indexterm><primary>mime type</primary></indexterm>
+                <indexterm><primary>/etc/mime.convs</primary></indexterm>
+                <indexterm><primary>application/octet-stream</primary></indexterm>
+                Edit the file <filename>/etc/cups/mime.convs</filename> to uncomment the line:
+<screen>
+application/octet-stream     application/vnd.cups-raw      0     -
+</screen>
+                </para></step>
+
+                <step><para>
+                <indexterm><primary>/etc/mime.types</primary></indexterm>
+                Edit the file <filename>/etc/cups/mime.types</filename> to uncomment the line:
+<screen>
+application/octet-stream
+</screen>
+                </para></step>
+
+		<step><para>
+		Printing drivers are installed on each network client workstation.
+		</para></step>
+	</procedure>
+
+	<para>
+	Note: If the parameter <parameter>cups options = Raw</parameter> is specified in the &smb.conf; file,
+	the last two steps can be omitted with CUPS version 1.1.18, or later.
+	</para>
+
+	<para>
+	The UNIX system print queues have been configured and are ready for validation testing.
+	</para>
+
+	</sect2>
+
+	<sect2 id="procstart">
+	<title>Process Startup Configuration</title>
+
+	<para>
+	<indexterm><primary>chkconfig</primary></indexterm>
+	There are two essential steps to process startup configuration. First, the process
+	must be configured so that it automatically restarts each time the server
+	is rebooted. This step involves use of the <command>chkconfig</command> tool that
+	creates the appropriate symbolic links from the master daemon control file that is
+	located in the <filename>/etc/rc.d</filename> directory, to the <filename>/etc/rc'x'.d</filename>
+	directories. Links are created so that when the system run level is changed, the
+	necessary start or kill script is run.
+	</para>
+
+	<para>
+	<indexterm><primary>/etc/xinetd.d</primary></indexterm>
+	<indexterm><primary>inetd</primary></indexterm>
+	<indexterm><primary>xinetd</primary></indexterm>
+	<indexterm><primary>chkconfig</primary></indexterm>
+	<indexterm><primary>super daemon</primary></indexterm>
+	In the event that a service is not run as a daemon, but via the internetworking
+	super daemon (<command>inetd</command> or <command>xinetd</command>), then the <command>chkconfig</command>
+	tool makes the necessary entries in the <filename>/etc/xinetd.d</filename> directory
+	and sends a hang-up (HUP) signal to the the super daemon, thus forcing it to
+	re-read its control files.
+	</para>
+
+	<para>
+	Last, each service must be started to permit system validation to proceed.
+	</para>
+
+	<procedure>
+                <step><para>
+                Use the standard system tool to configure each service to restart
+                automatically at every system reboot. For example,
+                <indexterm><primary>chkconfig</primary></indexterm>
+<screen>
+&rootprompt; chkconfig dhpcd on
+&rootprompt; chkconfig named on
+&rootprompt; chkconfig cups on
+&rootprompt; chkconfig smb on
+</screen>
+		</para></step>
+
+		<step><para>
+                <indexterm><primary>starting dhcpd</primary></indexterm>
+                <indexterm><primary>starting samba</primary></indexterm>
+                <indexterm><primary>starting CUPS</primary></indexterm>
+		Now start each service to permit the system to be validated.
+		Execute each of the following in the sequence shown:
+
+<screen>
+&rootprompt; /etc/rc.d/init.d/dhcpd restart
+&rootprompt; /etc/rc.d/init.d/named restart
+&rootprompt; /etc/rc.d/init.d/cups restart
+&rootprompt; /etc/rc.d/init.d/smb restart
+</screen>
+                </para></step>
+	</procedure>
+
+	</sect2>
+
+	<sect2 id="ch4valid">
+	<title>Validation</title>
+
+	<para>
+	<indexterm><primary>validation</primary></indexterm>
+	Complex networking problems are most often caused by simple things that are poorly or incorrectly
+	configured. The validation process adopted here should be followed carefully; it is the result of the
+	experience gained from years of making and correcting the most common mistakes. Shortcuts often lead to basic errors. You should
+	refrain from taking shortcuts, from making basic assumptions, and from not exercising due process
+	and diligence in network validation. By thoroughly testing and validating every step in the process
+	of network installation and configuration, you can save yourself from sleepless nights and restless
+	days. A well debugged network is a foundation for happy network users and network administrators. 
+	Later in this book you learn how to make users happier. For now, it is enough to learn to 
+	validate. Let's get on with it.
+	</para>
+
+		<procedure>
+		<title>Server Validation Steps</title>
+
+			<step><para>
+			<indexterm><primary>/etc/nsswitch.conf</primary></indexterm>
+			One of the most important facets of Samba configuration is to ensure that
+			name resolution functions correctly. You can check name resolution
+			with a few simple tests. The most basic name resolution is provided from the
+			<filename>/etc/hosts</filename> file. To test its operation, make a
+			temporary edit to the <filename>/etc/nsswitch.conf</filename> file. Using
+			your favorite editor, change the entry for <constant>hosts</constant> to read:
+<screen>
+hosts:     files
+</screen>
+			When you have saved this file, execute the following command:
+<screen>
+&rootprompt; ping diamond
+PING sleeth1.abmas.biz (192.168.1.1) 56(84) bytes of data.
+64 bytes from sleeth1 (192.168.1.1): icmp_seq=1 ttl=64 time=0.131 ms
+64 bytes from sleeth1 (192.168.1.1): icmp_seq=2 ttl=64 time=0.179 ms
+64 bytes from sleeth1 (192.168.1.1): icmp_seq=3 ttl=64 time=0.192 ms
+64 bytes from sleeth1 (192.168.1.1): icmp_seq=4 ttl=64 time=0.191 ms
+
+--- sleeth1.abmas.biz ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3016ms
+rtt min/avg/max/mdev = 0.131/0.173/0.192/0.026 ms
+</screen>
+			This proves that name resolution via the <filename>/etc/hosts</filename> file
+			is working.
+			</para></step>
+
+			<step><para>
+			<indexterm><primary>/etc/nsswitch.conf</primary></indexterm>
+			So far, your installation is going particularly well. In this step we validate
+			DNS server and name resolution operation. Using your favorite UNIX system editor,
+			change the <filename>/etc/nsswitch.conf</filename> file so that the
+			<constant>hosts</constant> entry reads:
+<screen>
+hosts:        dns
+</screen>
+			</para></step>
+
+			<step><para>
+			<indexterm><primary>named</primary></indexterm>
+			Before you test DNS operation, it is a good idea to verify that the DNS server
+			is running by executing the following:
+<screen>
+&rootprompt; ps ax | grep named
+  437 ?        S      0:00 /sbin/syslogd -a /var/lib/named/dev/log
+  524 ?        S      0:00 /usr/sbin/named -t /var/lib/named -u named
+  525 ?        S      0:00 /usr/sbin/named -t /var/lib/named -u named
+  526 ?        S      0:00 /usr/sbin/named -t /var/lib/named -u named
+  529 ?        S      0:00 /usr/sbin/named -t /var/lib/named -u named
+  540 ?        S      0:00 /usr/sbin/named -t /var/lib/named -u named
+ 2552 pts/2    S      0:00 grep named
+</screen>
+			This means that we are ready to check DNS operation. Do so by executing:
+			<indexterm><primary>ping</primary></indexterm>
+<screen>
+&rootprompt; ping diamond
+PING sleeth1.abmas.biz (192.168.1.1) 56(84) bytes of data.
+64 bytes from sleeth1 (192.168.1.1): icmp_seq=1 ttl=64 time=0.156 ms
+64 bytes from sleeth1 (192.168.1.1): icmp_seq=2 ttl=64 time=0.183 ms
+
+--- sleeth1.abmas.biz ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 999ms
+rtt min/avg/max/mdev = 0.156/0.169/0.183/0.018 ms
+</screen>
+			You should take a few more steps to validate DNS server operation, as follows:
+<screen>
+&rootprompt; host -f diamond.abmas.biz
+sleeth1.abmas.biz has address 192.168.1.1
+</screen>
+			<indexterm><primary>/etc/hosts</primary></indexterm>
+			You may now remove the entry called <constant>diamond</constant> from the
+			<filename>/etc/hosts</filename> file. It does not hurt to leave it there,
+			but its removal reduces the number of administrative steps for this name.
+			</para></step>
+
+			<step><para>
+			<indexterm><primary>/etc/nsswitch.conf</primary></indexterm>
+			WINS is a great way to resolve NetBIOS names to their IP address. You can test
+			the operation of WINS by starting <command>nmbd</command> (manually or by way
+			of the Samba startup method shown in <link linkend="procstart"/>). You must edit
+			the <filename>/etc/nsswitch.conf</filename> file so that the <constant>hosts</constant>
+			entry is as follows:
+<screen>
+hosts:        wins
+</screen>
+			The next step is to make certain that Samba is running using <command>ps ax | grep mbd</command>.
+			The <command>nmbd</command> daemon will provide the WINS name resolution service when the
+			&smb.conf; file <smbconfsection name="global"/> parameter <smbconfoption name="wins
+			support">Yes</smbconfoption> has been specified.  Having validated that Samba is operational,
+			excute the following:
+<screen>
+&rootprompt; ping diamond
+PING diamond (192.168.1.1) 56(84) bytes of data.
+64 bytes from 192.168.1.1: icmp_seq=1 ttl=64 time=0.094 ms
+64 bytes from 192.168.1.1: icmp_seq=2 ttl=64 time=0.479 ms
+</screen>
+			<indexterm><primary>ping</primary></indexterm>
+			Now that you can relax with the knowledge that all three major forms of name
+			resolution to IP address resolution are working, edit the <filename>/etc/nsswitch.conf</filename>
+			again. This time you add all three forms of name resolution to this file.
+			Your edited entry for <constant>hosts</constant> should now look like this:
+<screen>
+hosts:       files dns wins
+</screen>
+			The system is looking good. Let's move on.
+			</para></step>
+
+			<step><para>
+			It would give you peace of mind to know that the DHCP server is running
+			and available for service. You can validate DHCP services by running:
+
+<screen>
+&rootprompt; ps ax | grep dhcp
+ 2618 ?        S      0:00 /usr/sbin/dhcpd ...
+ 8180 pts/2    S      0:00 grep dhcp
+</screen>
+			This shows that the server is running. The proof of whether or not it is working
+			comes when you try to add the first DHCP client to the network.
+			</para></step>
+
+			<step><para>
+			<indexterm><primary>testparm</primary></indexterm>
+			This is a good point at which to start validating Samba operation. You are 
+			content that name resolution is working for basic TCP/IP needs. Let's move on.
+			If your &smb.conf; file has bogus options or parameters, this may cause Samba
+			to refuse to start. The first step should always be to validate the contents
+			of this file by running:
+<screen>
+&rootprompt; testparm -s
+Load smb config files from smb.conf
+Processing section "[homes]"
+Processing section "[printers]"
+Processing section "[netlogon]"
+Processing section "[profiles]"
+Processing section "[accounts]"
+Processing section "[service]"
+Processing section "[apps]"
+Loaded services file OK.
+# Global parameters
+[global]
+    workgroup = PROMISES
+    netbios name = DIAMOND
+    interfaces = eth1, eth2, lo
+    bind interfaces only = Yes
+    passdb backend = tdbsam
+    pam password change = Yes
+    passwd program = /usr/bin/passwd '%u'
+    passwd chat = *New*Password* %n\n \
+             *Re-enter*new*password* %n\n *Password*changed*
+    username map = /etc/samba/smbusers
+    unix password sync = Yes
+    log level = 1
+    syslog = 0
+    log file = /var/log/samba/%m
+    max log size = 50
+    smb ports = 139
+    name resolve order = wins bcast hosts
+    time server = Yes
+    printcap name = CUPS
+    show add printer wizard = No
+    add user script = /usr/sbin/useradd -m '%u'
+    delete user script = /usr/sbin/userdel -r '%u'
+    add group script = /usr/sbin/groupadd '%g'
+    delete group script = /usr/sbin/groupdel '%g'
+    add user to group script = /usr/sbin/usermod -G '%g' '%u'
+    add machine script = /usr/sbin/useradd \
+                              -s /bin/false -d /dev/null '%u'
+    shutdown script = /var/lib/samba/scripts/shutdown.sh
+    abort shutdown script = /sbin/shutdown -c
+    logon script = scripts\logon.bat
+    logon path = \\%L\profiles\%U
+    logon drive = X:
+    logon home = \\%L\%U
+    domain logons = Yes
+    preferred master = Yes
+    wins support = Yes
+    utmp = Yes
+    winbind use default domain = Yes
+    map acl inherit = Yes
+    cups options = Raw
+    veto files = /*.eml/*.nws/*.{*}/
+    veto oplock files = /*.doc/*.xls/*.mdb/
+
+[homes]
+    comment = Home Directories
+    valid users = %S
+    read only = No
+    browseable = No
+...
+### Remainder cut to save space ###
+</screen>
+			Clear away all errors before proceeding.
+			</para></step>
+
+			<step><para>
+			<indexterm><primary>check samba daemons</primary></indexterm>
+			<indexterm><primary>smbd</primary></indexterm>
+			<indexterm><primary>nmbd</primary></indexterm>
+			<indexterm><primary>winbindd</primary></indexterm>
+			Check that the Samba server is running:
+<screen>
+&rootprompt; ps ax | grep mbd
+14244 ?        S      0:00 /usr/sbin/nmbd -D
+14245 ?        S      0:00 /usr/sbin/nmbd -D
+14290 ?        S      0:00 /usr/sbin/smbd -D
+
+$rootprompt; ps ax | grep winbind
+14293 ?        S     0:00 /usr/sbin/winbindd -D
+14295 ?        S     0:00 /usr/sbin/winbindd -D
+</screen>
+			The <command>winbindd</command> daemon is running in split mode (normal), so there are also
+			two instances<footnote><para>For more information regarding winbindd, see <emphasis>TOSHARG2</emphasis>, 
+			Chapter 23, Section 23.3. The single instance of <command>smbd</command> is normal. One additional
+			<command>smbd</command> slave process is spawned for each SMB/CIFS client 
+			connection.</para></footnote> of it.
+			</para></step>
+	
+			<step><para>
+			<indexterm><primary>anonymous
+		  connection</primary></indexterm>
+	      <indexterm>
+		<primary>smbclient</primary>
+	      </indexterm>
+			Check that an anonymous connection can be made to the Samba server:
+<screen>
+&rootprompt; smbclient -L localhost -U%
+
+        Sharename      Type      Comment
+        ---------      ----      -------
+        IPC$           IPC       IPC Service (Samba 3.0.20)
+        netlogon       Disk      Network Logon Service
+        profiles       Disk      Profile Share
+        accounts       Disk      Accounting Files
+        service        Disk      Financial Services Files
+        apps           Disk      Application Files
+        ADMIN$         IPC       IPC Service (Samba 3.0.20)
+        hplj6a         Printer   hplj6a
+        hplj6f         Printer   hplj6f
+        qmsa           Printer   qmsa
+        qmsf           Printer   qmsf
+
+        Server               Comment
+        ---------            -------
+        DIAMOND              Samba 3.0.20
+
+        Workgroup            Master
+        ---------            -------
+        PROMISES             DIAMOND
+</screen>
+			This demonstrates that an anonymous listing of shares can be obtained. This is the equivalent
+			of browsing the server from a Windows client to obtain a list of shares on the server.
+			The <constant>-U%</constant> argument means to send a <constant>NULL</constant> username and
+			a <constant>NULL</constant> password.
+			</para></step>
+
+			<step><para>
+			<indexterm><primary>dhcp client validation</primary></indexterm>
+			<indexterm><primary>printer validation</primary></indexterm>
+			<indexterm><primary>arp</primary></indexterm>
+			Verify that each printer has the IP address assigned in the DHCP server configuration file.
+			The easiest way to do this is to ping the printer name. Immediately after the ping response
+			has been received, execute <command>arp -a</command> to find the MAC address of the printer
+			that has responded. Now you can compare the IP address and the MAC address of the printer
+			with the configuration information in the <filename>/etc/dhcpd.conf</filename> file. They
+			should, of course, match. For example,
+<screen>
+&rootprompt; ping hplj6
+PING hplj6a (192.168.1.30) 56(84) bytes of data.
+64 bytes from hplj6a (192.168.1.30): icmp_seq=1 ttl=64 time=0.113 ms
+
+&rootprompt; arp -a
+hplj6a (192.168.1.30) at 00:03:47:CB:81:E0 [ether] on eth0
+</screen>
+	      <indexterm>
+		<primary>/etc/dhcpd.conf</primary>
+	      </indexterm>
+			The MAC address <constant>00:03:47:CB:81:E0</constant> matches that specified for the
+			IP address from which the printer has responded and with the entry for it in the
+			<filename>/etc/dhcpd.conf</filename> file. Repeat this for each printer configured.
+			</para></step>
+	
+			<step><para>
+			<indexterm><primary>authenticated connection</primary></indexterm>
+			Make an authenticated connection to the server using the <command>smbclient</command> tool:
+<screen>
+&rootprompt; smbclient //diamond/accounts -U gholmes
+Password: XXXXXXX
+smb: \> dir
+  .                          D        0  Thu Nov 27 15:07:09 2003
+  ..                         D        0  Sat Nov 15 17:40:50 2003
+  zakadmin.exe                   161424  Thu Nov 27 15:06:52 2003
+  zak.exe                       6066384  Thu Nov 27 15:06:52 2003
+  dhcpd.conf                       1256  Thu Nov 27 15:06:52 2003
+  smb.conf                         2131  Thu Nov 27 15:06:52 2003
+  initGrps.sh                A     1089  Thu Nov 27 15:06:52 2003
+  POLICY.EXE                      86542  Thu Nov 27 15:06:52 2003
+
+                55974 blocks of size 65536. 33968 blocks available
+smb: \> q
+</screen>
+			</para></step>
+
+			<step><para>
+			<indexterm><primary>nmap</primary></indexterm>
+			Your new server is connected to an Internet-accessible connection. Before you start
+			your firewall, you should run a port scanner against your system. You should repeat that
+			after the firewall has been started. This helps you understand to what extent the
+			server may be vulnerable to external attack. One way you can do this is by using an
+			external service, such as the <ulink url="http://www.dslreports.com/scan">DSL Reports</ulink> 
+			tools. Alternately, if you can gain root-level access to a remote
+			UNIX/Linux system that has the <command>nmap</command> tool, you can run the following:
+<screen>
+&rootprompt; nmap -v -sT server.abmas.us
+
+Starting nmap V. 3.00 ( www.insecure.org/nmap/ )
+Host server.abmas.us (123.45.67.66) appears to be up ... good.
+Initiating Connect() Scan against server.abmas.us (123.45.67.66)
+Adding open port 6000/tcp
+Adding open port 873/tcp
+Adding open port 445/tcp
+Adding open port 10000/tcp
+Adding open port 901/tcp
+Adding open port 631/tcp
+Adding open port 25/tcp
+Adding open port 111/tcp
+Adding open port 32770/tcp
+Adding open port 3128/tcp
+Adding open port 53/tcp
+Adding open port 80/tcp
+Adding open port 443/tcp
+Adding open port 139/tcp
+Adding open port 22/tcp
+The Connect() Scan took 0 seconds to scan 1601 ports.
+Interesting ports on server.abmas.us (123.45.67.66):
+(The 1587 ports scanned but not shown below are in state: closed)
+Port       State       Service
+22/tcp     open        ssh
+25/tcp     open        smtp
+53/tcp     open        domain
+80/tcp     open        http
+111/tcp    open        sunrpc
+139/tcp    open        netbios-ssn
+443/tcp    open        https
+445/tcp    open        microsoft-ds
+631/tcp    open        ipp
+873/tcp    open        rsync
+901/tcp    open        samba-swat
+3128/tcp   open        squid-http
+6000/tcp   open        X11
+10000/tcp  open        snet-sensor-mgmt
+32770/tcp  open        sometimes-rpc3
+
+Nmap run completed -- 1 IP address (1 host up) scanned in 1 second
+</screen>
+			The above scan was run before the external interface was locked down with the NAT-firewall
+			script you created above. The following results are obtained after the firewall rules
+			have been put into place:
+<screen>
+&rootprompt; nmap -v -sT server.abmas.us
+
+Starting nmap V. 3.00 ( www.insecure.org/nmap/ )
+Host server.abmas.us (123.45.67.66) appears to be up ... good.
+Initiating Connect() Scan against server.abmas.us (123.45.67.66)
+Adding open port 53/tcp
+Adding open port 22/tcp
+The Connect() Scan took 168 seconds to scan 1601 ports.
+Interesting ports on server.abmas.us (123.45.67.66):
+(The 1593 ports scanned but not shown below are in state: filtered)
+Port       State       Service
+22/tcp     open        ssh
+25/tcp     closed      smtp
+53/tcp     open        domain
+80/tcp     closed      http
+443/tcp    closed      https
+
+Nmap run completed -- 1 IP address (1 host up) scanned in 168 seconds
+</screen>
+			</para></step>
+	
+		</procedure>
+
+	</sect2>
+
+	<sect2 id="ch4appscfg">
+	<title>Application Share Configuration</title>
+
+	<para>
+	<indexterm><primary>application server</primary></indexterm>
+	<indexterm><primary>administrative installation</primary></indexterm>
+	The use of an application server is a key mechanism by which desktop administration overheads
+	can be reduced. Check the application manual for your software to identify how best to
+	create an administrative installation.
+	</para>
+
+	<para>
+	Some Windows software will only run locally on the desktop computer. Such software
+	is typically not suited for administrative installation. Administratively installed software
+	permits one or more of the following installation choices:
+	</para>
+
+	<itemizedlist>
+		<listitem><para>
+		Install software fully onto a workstation, storing data files on the same workstation.
+		</para></listitem>
+
+		<listitem><para>
+		Install software fully onto a workstation with central network data file storage.
+		</para></listitem>
+
+		<listitem><para>
+		Install software to run off a central application server with data files stored
+		on the local workstation. This is often called a minimum installation, or a
+		network client installation.
+		</para></listitem>
+
+		<listitem><para>
+		Install software to run off a central application server with data files stored
+		on a central network share. This type of installation often prevents storage
+		of work files on the local workstation.
+		</para></listitem>
+	</itemizedlist>
+
+	<para>
+	<indexterm><primary></primary></indexterm>
+	A common application deployed in this environment is an office suite.
+	Enterprise editions of Microsoft Office XP Professional can be administratively installed
+	by launching the installation from a command shell. The command that achieves this is
+	<command>setup /a</command>. It results in a set of prompts through which various
+	installation choices can be made. Refer to the Microsoft Office Resource SDK and Resource
+	Kit for more information regarding this mode of installation of MS Office XP Professional.
+	The full administrative installation of MS Office XP Professional requires approximately
+	650 MB of disk space.
+	</para>
+
+	<para>
+	When the MS Office XP Professional product has been installed to the administrative network
+	share, the product can be installed onto a workstation by executing the normal setup program.
+	The installation process now provides a choice to either perform a minimum installation
+	or a full local installation. A full local installation takes over 100 MB of disk space.
+	A network workstation (minimum) installation requires typically 10 MB to 15 MB of
+	local disk space. In the latter case, when the applications are used, they load over the network.
+	</para>
+
+	<para>
+	<indexterm><primary>Service Packs</primary></indexterm>
+	<indexterm><primary>Microsoft Office</primary></indexterm>
+	Microsoft Office Service Packs can be unpacked to update an administrative share. This makes
+	it possible to update MS Office XP Professional for all users from a single installation
+	of the service pack and generally circumvents the need to run updates on each network
+	Windows client.
+	</para>	
+
+	<para>
+	The default location for MS Office XP Professional data files can be set through registry
+	editing or by way of configuration options inside each Office XP Professional application.
+	</para>
+
+	<para>
+	<indexterm><primary>OpenOffice</primary></indexterm>
+	OpenOffice.Org OpenOffice Version 1.1.0 can be installed locally. It can also
+	be installed to run off a network share. The latter is a most desirable solution for office-bound 
+	network users and for administrative staff alike. It permits quick and easy updates
+	to be rolled out to all users with a minimum of disruption and with maximum flexibility.
+	</para>
+
+	<para>
+	The process for installation of administrative shared OpenOffice involves download of the
+	distribution ZIP file, followed by extraction of the ZIP file into a temporary disk area.
+	When fully extracted using the unzipping tool of your choosing, change into the Windows
+	installation files directory then execute <command>setup -net</command>. You are
+	prompted on screen for the target installation location. This is the administrative
+	share point. The full administrative OpenOffice share takes approximately 150 MB of disk
+	space.
+	</para>
+
+		<sect3>
+		<title>Comments Regarding Software Terms of Use</title>
+			<para>
+			Many single-user products can be installed into an administrative share, but
+			personal versions of products such as Microsoft Office XP Professional do not permit this. 
+			Many people do not like terms of use typical with commercial products, so a few comments
+			regarding software licensing seem important.
+			</para>
+
+			<para>
+			Please do not use an administrative installation of proprietary and commercially licensed 
+			software products to violate the copyright holders' property. All software is licensed,
+			particularly software that is licensed for use free of charge. All software is the property
+			of the copyright holder unless the author and/or copyright holder has explicitly disavowed
+			ownership and has placed the software into the public domain.
+			</para>
+
+			<para>
+			Software that is under the GNU General Public License, like proprietary software, is 
+			licensed in a way that restricts use. For example, if you modify GPL software and then
+			distribute the binary version of your modifications, you must offer to provide the source
+			code as well. This restriction is designed to maintain the momentum
+			of the diffusion of technology and to protect against the withholding of innovations.
+			</para>
+
+			<para>
+			Commercial and proprietary software generally restrict use to those who have paid the
+			license fees and who comply with the licensee's terms of use. Software that is released
+			under the GNU General Public License is restricted to particular terms and conditions
+			also. Whatever the licensing terms may be, if you do not approve of the terms of use,
+			please do not use the software.
+			</para>
+
+			<para>
+			<indexterm><primary>GPL</primary></indexterm>
+			Samba is provided under the terms of the GNU GPL Version 2, a copy of which is provided
+			with the source code.
+			</para>
+		</sect3>
+
+	</sect2>
+
+	<sect2 id="ch4wincfg">
+	<title>Windows Client Configuration</title>
+
+	<para>
+	Christine needs to roll out 130 new desktop systems. There is no doubt that she also needs
+	to reinstall many of the notebook computers that will be recycled for use with the new network 
+	configuration. The smartest way to handle the challenge of the roll-out program is to build
+	a staged system for each type of target machine, and then use an image replication tool such as Norton
+	Ghost (enterprise edition) to replicate the staged machine to its target desktops. The same can
+	be done with notebook computers as long as they are identical or sufficiently similar.
+	</para>
+
+	<procedure id="sbewinclntprep">
+	<title>Windows Client Configuration Procedure</title>
+
+		<step><para>
+		<indexterm><primary>WINS</primary></indexterm>
+		<indexterm><primary>DHCP</primary></indexterm>
+		Install MS Windows XP Professional. During installation, configure the client to use DHCP for 
+		TCP/IP protocol configuration. DHCP configures all Windows clients to use the WINS Server
+		address that has been defined for the local subnet.
+		</para></step>
+
+		<step><para>
+		Join the Windows Domain <constant>PROMISES</constant>. Use the Domain Administrator
+		username <constant>root</constant> and the SMB password you assigned to this account.
+		A detailed step-by-step procedure for joining a Windows 200x/XP Professional client to
+		a Windows Domain is given in <link linkend="appendix"/>, <link linkend="domjoin"/>. 
+		Reboot the machine as prompted and then log on using the Domain Administrator account
+		(<constant>root</constant>).
+		</para></step>
+
+		<step><para>
+		Verify <constant>DIAMOND</constant> is visible in <guimenu>My Network Places</guimenu>, 
+		that it is possible to connect to it and see the shares <guimenuitem>accounts</guimenuitem>,
+		<guimenuitem>apps</guimenuitem>, and <guimenuitem>finsvcs</guimenuitem>, and that it is
+		possible to open each share to reveal its contents.
+		</para></step>
+
+		<step><para>
+		Create a drive mapping to the <constant>apps</constant> share on the server <constant>DIAMOND</constant>.
+		</para></step>
+
+		<step><para>
+		Perform an administrative installation of each application to be used. Select the options
+		that you wish to use. Of course, you can choose to run applications over the network, correct?
+		</para></step>
+
+		<step><para>
+		Now install all applications to be installed locally. Typical tools include Adobe Acrobat,
+		NTP-based time synchronization software, drivers for specific local devices such as fingerprint
+		scanners, and the like. Probably the most significant application for local installation
+		is antivirus software.
+		</para></step>
+
+		<step><para>
+		Now install all four printers onto the staging system. The printers you install
+		include the accounting department HP LaserJet 6 and Minolta QMS Magicolor printers. You will
+		also configure identical printers that are located in the financial services department.
+		Install printers on each machine following the steps shown in the Windows client printer
+		preparation procedure below.
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>defragmentation</primary></indexterm>
+		When you are satisfied that the staging systems are complete, use the appropriate procedure to
+		remove the client from the domain. Reboot the system and then log on as the local administrator
+		and clean out all temporary files stored on the system. Before shutting down, use the disk
+		defragmentation tool so that the file system is in optimal condition before replication.
+		</para></step>
+
+		<step><para>
+		Boot the workstation using the Norton (Symantec) Ghosting diskette (or CD-ROM) and image the
+		machine to a network share on the server.
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>Windows security identifier</primary><see>SID</see></indexterm>
+		<indexterm><primary>SID</primary></indexterm>
+		You may now replicate the image to the target machines using the appropriate Norton Ghost 
+		procedure. Make sure to use the procedure that ensures each machine has a unique
+		Windows security identifier (SID). When the installation of the disk image has completed, boot the PC. 
+		</para></step>
+
+		<step><para>
+		Log on to the machine as the local Administrator (the only option), and join the machine to
+		the Domain, following the procedure set out in <link linkend="appendix"/>, <link linkend="domjoin"/>. The system is now 
+		ready for the user to log on, provided you have created a network logon account for that 
+		user, of course.
+		</para></step>
+
+		<step><para>
+		Instruct all users to log on to the workstation using their assigned username and password.
+		</para></step>
+	</procedure>
+
+	<procedure id="sbewinclntptrprep">
+	<title>Windows Client Printer Preparation Procedure</title>
+
+		<step><para>
+		Click <menuchoice>
+			<guimenu>Start</guimenu>
+			<guimenuitem>Settings</guimenuitem>
+			<guimenuitem>Printers</guimenuitem>
+			<guiicon>Add Printer</guiicon>
+			<guibutton>Next</guibutton>
+			</menuchoice>. Do not click <guimenuitem>Network printer</guimenuitem>.
+			Ensure that <guimenuitem>Local printer</guimenuitem> is selected.
+		</para></step>
+
+		<step><para>
+		Click <guibutton>Next</guibutton>. In the
+		<guimenuitem>Manufacturer:</guimenuitem> panel, select <constant>HP</constant>.
+		In the <guimenuitem>Printers:</guimenuitem> panel, select the printer called
+		<constant>HP LaserJet 6</constant>. Click <guibutton>Next</guibutton>.
+		</para></step>
+
+		<step><para>
+		In the <guimenuitem>Available ports:</guimenuitem> panel, select
+		<constant>FILE:</constant>. Accept the default printer name by clicking
+		<guibutton>Next</guibutton>. When asked, <quote>Would you like to print a
+		test page?,</quote> click <guimenuitem>No</guimenuitem>. Click
+		<guibutton>Finish</guibutton>.
+		</para></step>
+
+		<step><para>
+		You may be prompted for the name of a file to print to. If so, close the
+		dialog panel. Right-click <menuchoice>
+			<guiicon>HP LaserJet 6</guiicon>
+			<guimenuitem>Properties</guimenuitem>
+			<guisubmenu>Details (Tab)</guisubmenu>
+			<guimenuitem>Add Port</guimenuitem>
+			</menuchoice>.
+		</para></step>
+
+		<step><para>
+		In the <guimenuitem>Network</guimenuitem> panel, enter the name of
+		the print queue on the Samba server as follows: <constant>\\DIAMOND\hplj6a</constant>.
+		Click <menuchoice> 
+			<guibutton>OK</guibutton>
+			<guibutton>OK</guibutton>
+			</menuchoice> to complete the installation.
+		</para></step>
+
+		<step><para>
+		Repeat the printer installation steps above for both HP LaserJet 6 printers
+		as well as for both QMS Magicolor laser printers.
+		</para></step>
+	</procedure>
+
+	</sect2>
+
+	<sect2>
+	<title>Key Points Learned</title>
+
+		<para>
+		How do you feel? You have built a capable network, a truly ambitious project.
+		Future network updates can be handled by
+		your staff. You must be a satisfied manager. Let's review the achievements.
+		</para>
+
+		<itemizedlist>
+			<listitem><para>
+			A simple firewall has been configured to protect the server in the event that
+			the ISP firewall service should fail.
+			</para></listitem>
+
+			<listitem><para>
+			The Samba configuration uses measures to ensure that only local network users
+			can connect to SMB/CIFS services.
+			</para></listitem>
+
+			<listitem><para>
+			Samba uses the new <constant>tdbsam</constant> passdb backend facility.
+			Considerable complexity was added to Samba functionality.
+			</para></listitem>
+
+			<listitem><para>
+			A DHCP server was configured to implement dynamic DNS (DDNS) updates to the DNS
+			server.
+			</para></listitem>
+
+			<listitem><para>
+			The DNS server was configured to permit DDNS only for local network clients. This
+			server also provides primary DNS services for the company Internet presence.
+			</para></listitem>
+
+			<listitem><para>
+			You introduced an application server as well as the concept of cloning a Windows
+			client in order to effect improved standardization of desktops and to reduce
+			the costs of network management.
+			</para></listitem>
+		</itemizedlist>
+
+	</sect2>
+
+</sect1>
+
+<sect1>
+	<title>Questions and Answers</title>
+
+	<para>
+	</para>
+
+	<qandaset defaultlable="missed01" type="number">
+	<qandaentry>
+	<question>
+
+		<para>
+		What is the maximum number of account entries that the <parameter>tdbsam</parameter>
+		passdb backend can handle?
+		</para>
+
+	</question>
+	<answer>
+
+		<para>
+		The tdb data structure and support system can handle more entries than the number of
+		accounts that are possible on most UNIX systems. A practical limit would come into
+		play long before a performance boundary would be anticipated. That practical limit
+		is controlled by the nature of Windows networking. There are few Windows file and
+		print servers that can handle more than a few hundred concurrent client connections.
+		The key limiting factors that predicate offloading of services to additional servers
+		are memory capacity, the number of CPUs, network bandwidth, and disk I/O limitations.
+		All of these are readily exhausted by just a few hundred concurrent active users.
+		Such bottlenecks can best be removed by segmentation of the network (distributing
+		network load across multiple networks).
+		</para>
+
+		<para>
+		As the network grows, it becomes necessary to provide additional authentication
+		servers (domain controllers).  The tdbsam is limited to a single machine and cannot
+		be reliably replicated.  This means that practical limits on network design dictate
+		the point at which a distributed passdb backend is required; at this time, there is
+		no real alternative other than ldapsam (LDAP).
+		</para>
+
+		<para>
+		The guideline provided in <emphasis>TOSHARG2</emphasis>, Chapter 10, Section 10.1.2,
+		is to limit the number of accounts in the tdbsam backend to 250. This is the point
+		at which most networks tend to want backup domain controllers (BDCs). Samba-3 does
+		not provide a mechanism for replicating tdbsam data so it can be used by a BDC. The
+		limitation of 250 users per tdbsam is predicated only on the need for replication,
+		not on the limits<footnote><para>Bench tests have shown that tdbsam is a very
+		effective database technology.  There is surprisingly little performance loss even
+		with over 4000 users.</para></footnote> of the tdbsam backend itself. 
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+		<para>
+		Would Samba operate any better if the OS level is set to a value higher than 35?
+		</para>
+
+	</question>
+	<answer>
+
+		<para>
+		No. MS Windows workstations and servers do not use a value higher than 33. Setting this to a value
+		of 35 already assures Samba of precedence over MS Windows products in browser elections. There is
+		no gain to be had from setting this higher.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+		<para>
+		Why in this example have you provided UNIX group to Windows Group mappings for only Domain Groups?
+		</para>
+
+	</question>
+	<answer>
+
+		<para>
+		At this time, Samba has the capacity to use only Domain Groups mappings. It is possible that at
+		a later date Samba may make use of Windows Local Groups, as well as of the Active Directory special
+		Groups. Proper operation requires Domain Groups to be mapped to valid UNIX groups.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+		<para>
+		Why has a path been specified in the <parameter>IPC$</parameter> share?
+		</para>
+
+	</question>
+	<answer>
+
+		<para>
+		This is done so that in the event that a software bug may permit a client connection to the IPC$ share to
+		obtain access to the file system, it does so at a location that presents least risk. Under normal operation
+		this type of paranoid step should not be necessary. The use of this parameter should not be necessary. 
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+		<para>
+		Why does the &smb.conf; file in this exercise include an entry for <smbconfoption name="smb ports"/>?
+		</para>
+
+	</question>
+	<answer>
+
+		<para>
+		The default order by which Samba-3 attempts to communicate with MS Windows clients is via port 445 (the TCP port
+		used by Windows clients when NetBIOS-less SMB over TCP/IP is in use). TCP port 139 is the primary port used for NetBIOS
+		over TCP/IP. In this configuration Windows network operations are predicated around NetBIOS over TCP/IP. By
+		specifying the use of only port 139, the intent is to reduce unsuccessful service connection attempts.
+		The result of this is improved network performance. Where Samba-3 is installed as an Active Directory Domain
+		member, the default behavior is highly beneficial and should not be changed.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+		<para>
+		What is the difference between a print queue and a printer?
+		</para>
+
+	</question>
+	<answer>
+
+		<para>
+		A printer is a physical device that is connected either directly to the network or to a computer 
+		via a serial, parallel, or USB connection so that print jobs can be submitted to it to create a 
+		hard copy printout. Network-attached printers that use TCP/IP-based printing generally accept a 
+		single print data stream and block all secondary attempts to dispatch jobs concurrently to the 
+		same device. If many clients were to concurrently print directly via TCP/IP to the same printer, 
+		it would result in a huge amount of network traffic through continually failing connection attempts.
+		</para>
+
+		<para>
+		A print server (like CUPS or LPR/LPD) accepts multiple concurrent input streams or
+		print requests. When the data stream has been fully received, the input stream is closed,
+		and the job is then submitted to a sequential print queue where the job is stored until
+		the printer is ready to receive the job.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+		<para>
+		Can all MS Windows application software be installed onto an application server share?
+		</para>
+
+	</question>
+	<answer>
+
+		<para>
+		Much older Windows software is not compatible with installation to and execution from
+		an application server. Enterprise versions of Microsoft Office XP Professional can
+		be installed to an application server. Retail consumer versions of Microsoft Office XP
+		Professional do not permit installation to an application server share and can be installed
+		and used only to/from a local workstation hard disk.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+		<para>
+		Why use dynamic DNS (DDNS)?
+		</para>
+
+	</question>
+	<answer>
+
+		<para>
+		When DDNS records are updated directly from the DHCP server, it is possible for
+		network clients that are not NetBIOS-enabled, and thus cannot use WINS, to locate
+		Windows clients via DNS.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+		<para>
+		Why would you use WINS as well as DNS-based name resolution?
+		</para>
+
+	</question>
+	<answer>
+
+		<para>
+		WINS is to NetBIOS names as DNS is to fully qualified domain names (FQDN). The FQDN is
+		a name like <quote>myhost.mydomain.tld</quote> where <parameter>tld</parameter>
+		means <constant>top-level domain</constant>. A FQDN is a longhand but easy-to-remember
+		expression that may be up to 1024 characters in length and that represents an IP address. 
+		A NetBIOS name is always 16 characters long. The 16<superscript>th</superscript> character
+		is a name type indicator. A specific name type is registered<footnote><para>
+		See <emphasis>TOSHARG2</emphasis>, Chapter 9, for more information.</para></footnote> for each 
+		type of service that is provided by the Windows server or client and that may be registered
+		where a WINS server is in use.
+		</para>
+
+		<para>
+		WINS is a mechanism by which a client may locate the IP Address that corresponds to a
+		NetBIOS name. The WINS server may be queried to obtain the IP Address for a NetBIOS name 
+		that includes a particular registered NetBIOS name type. DNS does not provide a mechanism
+		that permits handling of the NetBIOS name type information.
+		</para>
+
+		<para>
+		DNS provides a mechanism by which TCP/IP clients may locate the IP address of a particular 
+		hostname or service name that has been registered in the DNS database for a particular domain. 
+		A DNS server has limited scope of control and is said to be authoritative for the zone over
+		which it has control.
+		</para>
+
+		<para>
+		Windows 200x Active Directory requires the registration in the DNS zone for the domain it 
+		controls of service locator<footnote><para>See TOSHARG2, Chapter 9, Section 9.3.3.</para></footnote> records 
+		that Windows clients and servers will use to locate Kerberos and LDAP services. ADS also 
+		requires the registration of special records that are called global catalog (GC) entries 
+		and site entries by which domain controllers and other essential ADS servers may be located. 
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+		<para>
+		What are the major benefits of using an application server?
+		</para>
+
+	</question>
+	<answer>
+
+		<para>
+		The use of an application server can significantly reduce application update maintenance.
+		By providing a centralized application share, software updates need be applied to only
+		one location for all major applications used. This results in faster update roll-outs and
+		significantly better application usage control.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	</qandaset>
+
+</sect1>
+
+</chapter>

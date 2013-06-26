@@ -1,0 +1,6 @@
+This directory contains libutil (until we can think of a better name)
+
+The idea is that this library contains simple but useful data structures 
+and support functions that are generally useful; not just for Samba but for 
+other projects as well. Functions here should not depend on any external 
+libraries, just on libc (perhaps partially provided by libreplace).

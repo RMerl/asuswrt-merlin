@@ -1,0 +1,20 @@
+#
+# A list of default domain/local users/groups.  Unfortunately this is tied
+# to the English language version of Windows NT.
+#
+
+global domain
+
+# Domain users and groups
+
+set domain_users [list "$domain/Administrator" "$domain/Guest"]
+
+set domain_groups [list "$domain/Domain Admins" "$domain/Domain Guests" \
+        "$domain/Domain Users"]
+
+# Local groups
+
+set local_groups [list "BUILTIN/Replicator" "BUILTIN/Server Operators" \
+        "BUILTIN/Account Operators" "BUILTIN/Backup Operators" \
+        "BUILTIN/Print Operators" "BUILTIN/Guests" "BUILTIN/Users" \
+        "BUILTIN/Administrators"]

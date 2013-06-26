@@ -1,0 +1,24 @@
+samba3.smbtorture_s3.*.randomipc
+samba3.smbtorture_s3.*.negnowait
+samba3.smbtorture_s3.*.nbench
+samba3.smbtorture_s3.*.errmapextract
+samba3.smbtorture_s3.*.trans2scan
+samba3.smbtorture_s3.*.nttransscan
+samba3.smbtorture_s3.*.deny1
+samba3.smbtorture_s3.*.deny2
+samba3.smbtorture_s3.*.openattr
+samba3.smbtorture_s3.*.casetable
+samba3.smbtorture_s3.*.eatest
+samba3.smbtorture_s3.*.mangle
+samba3.smbtorture_s3.*.utable
+samba3.smbtorture_s3.*.pipe_number
+samba3.smbtorture_s3.*.CHAIN1
+samba3.smbtorture_s3.*.DIR1 #loops on 64 bit linux with ext4
+samba3.*base.charset
+samba3.*raw.acls
+samba3.*raw.composite
+samba3.*raw.context
+samba3.*raw.ioctl
+samba3.*raw.qfileinfo
+samba3.*raw.qfsinfo
+samba3.*raw.sfileinfo.base

@@ -1,0 +1,16 @@
+dn: cn=config
+objectClass: olcGlobal
+cn: config
+${OLC_SERVER_ID_CONF}
+
+dn: olcDatabase={0}config,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: {0}config
+olcRootDN: cn=config
+olcRootPW: ${OLC_PW}
+${OLC_SYNCREPL_CONF}olcMirrorMode: TRUE
+
+dn: olcOverlay=syncprov,olcDatabase={0}config,cn=config
+objectClass: olcSyncProvConfig
+olcOverlay: syncprov
+ 

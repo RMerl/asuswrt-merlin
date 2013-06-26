@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="lmhosts.5">
+
+<refmeta>
+	<refentrytitle>lmhosts</refentrytitle>
+	<manvolnum>5</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">File Formats and Conventions</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>lmhosts</refname>
+	<refpurpose>The Samba NetBIOS hosts file</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<para><filename>lmhosts</filename> is the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> NetBIOS name to IP address mapping file.</para> 
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+	
+	<para>This file is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para><filename>lmhosts</filename> is the <emphasis>Samba
+	</emphasis> NetBIOS name to IP address mapping file.  It 
+	is very similar to the <filename>/etc/hosts</filename> file 
+	format, except that the hostname component must correspond 
+	to the NetBIOS naming format.</para>
+</refsect1>
+
+<refsect1>
+	<title>FILE FORMAT</title>
+	<para>It is an ASCII file containing one line for NetBIOS name. 
+	The two fields on each line are separated from each other by 
+	white space. Any entry beginning with '#' is ignored. Each line 
+	in the lmhosts file contains the following information:</para>
+
+	<itemizedlist>
+		<listitem><para>IP Address - in dotted decimal format.</para>
+		</listitem>
+
+		<listitem><para>NetBIOS Name - This name format is a 
+		maximum fifteen character host name, with an optional 
+		trailing '#' character followed by the NetBIOS name type 
+		as two hexadecimal digits.</para>
+
+		<para>If the trailing '#' is omitted then the given IP 
+		address will be returned for all names that match the given 
+		name, whatever the NetBIOS name type in the lookup.</para>
+		</listitem>
+	</itemizedlist>
+
+	<para>An example follows:
+<programlisting>
+#
+# Sample Samba lmhosts file.
+#
+192.9.200.1	TESTPC
+192.9.200.20	NTSERVER#20
+192.9.200.21	SAMBASERVER
+</programlisting>
+	</para>
+	
+	<para>Contains three IP to NetBIOS name mappings. The first 
+	and third will be returned for any queries for the names "TESTPC" 
+	and "SAMBASERVER" respectively, whatever the type component of 
+	the NetBIOS name requested.</para>
+
+	<para>The second mapping will be returned only when the "0x20" name 
+	type for a name "NTSERVER" is queried. Any other name type will not 
+	be resolved.</para>
+
+	<para>The default location of the <filename>lmhosts</filename> file 
+	is in the same directory as the <citerefentry><refentrytitle>smb.conf</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry> file.</para>
+	
+</refsect1>
+
+<refsect1>
+	<title>FILES</title>
+
+	<para>lmhosts is loaded from the configuration directory. This is 
+		usually <filename>/etc/samba</filename> or <filename>/usr/local/samba/lib</filename>.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+	<para><citerefentry>
+	<refentrytitle>smbclient</refentrytitle><manvolnum>1</manvolnum>
+	</citerefentry>, <citerefentry><refentrytitle>smb.conf</refentrytitle><manvolnum>5</manvolnum>
+	</citerefentry>, and <citerefentry><refentrytitle>smbpasswd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+	
+	<para>The original Samba man pages were written by Karl Auer. 
+	The man page sources were converted to YODL format (another 
+	excellent piece of Open Source software, available at
+	<ulink url="ftp://ftp.icce.rug.nl/pub/unix/">
+	ftp://ftp.icce.rug.nl/pub/unix/</ulink>) and updated for the Samba 2.0 
+	release by Jeremy Allison.  The conversion to DocBook for 
+	Samba 2.2 was done by Gerald Carter. The conversion to DocBook
+	XML 4.2 was done by Alexander Bokovoy.</para>
+</refsect1>
+
+</refentry>

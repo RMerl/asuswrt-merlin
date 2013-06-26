@@ -1,0 +1,22 @@
+<samba:parameter name="csc policy"
+                 context="S"
+				 type="enum"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This stands for <emphasis>client-side caching policy</emphasis>, and specifies how clients capable of offline
+	caching will cache the files in the share. The valid values are: manual, documents, programs, disable.
+	</para>
+
+	<para>
+	These values correspond to those used on Windows servers.
+	</para>
+
+	<para>
+	For example, shares containing roaming profiles can have offline caching disabled using 
+	<smbconfoption name="csc policy">disable</smbconfoption>.
+	</para>
+</description>
+<value type="default">manual</value>
+<value type="example">programs</value>
+</samba:parameter>

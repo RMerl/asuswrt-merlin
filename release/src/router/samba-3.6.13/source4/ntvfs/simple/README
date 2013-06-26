@@ -1,0 +1,10 @@
+This module (ntvfs 'simple') provides a very, very simple posix backend.
+
+WARNING: All file access is done as user 'root'!!!
+	 Only use this module for testing, with only test data!!! 
+
+For activating this module use:
+
+[testshare]
+	path = /tmp/testshare
+	nfvfs handler = simple

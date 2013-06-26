@@ -1,0 +1,11 @@
+Copyright(C) Samba-Team 1993-2001
+
+This directory contains example config files and related material for
+Samba. 
+
+At a minimum please refer to the smb.conf.default file for current
+information regarding global and share parameter settings.
+
+Send additions to: samba@samba.org
+
+

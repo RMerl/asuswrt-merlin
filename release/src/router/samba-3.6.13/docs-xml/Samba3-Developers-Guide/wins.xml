@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="wins">
+<chapterinfo>
+	<author>
+		<firstname>Gerald</firstname><surname>Carter</surname>
+	</author>
+	<pubdate>October 2002</pubdate>
+</chapterinfo>
+
+
+<title>Samba WINS Internals</title>
+
+
+<sect1>
+<title>WINS Failover</title>
+
+
+<para>
+The current Samba codebase possesses the capability to use groups of WINS
+servers that share a common namespace for NetBIOS name registration and 
+resolution.  The formal parameter syntax is
+</para>
+
+<para><programlisting>
+	WINS_SERVER_PARAM 	= SERVER [ SEPARATOR SERVER_LIST ]
+	WINS_SERVER_PARAM 	= &quot;wins server&quot;
+	SERVER 			= ADDR[:TAG]
+	ADDR 			= ip_addr | fqdn
+	TAG 			= string
+	SEPARATOR		= comma | \s+
+	SERVER_LIST		= SERVER [ SEPARATOR SERVER_LIST ]
+</programlisting></para>
+
+<para>
+A simple example of a valid wins server setting is
+</para>
+
+<para><programlisting>
+[global]
+	wins server = 192.168.1.2 192.168.1.3
+</programlisting></para>
+
+<para>
+In the event that no TAG is defined in for a SERVER in the list, smbd assigns a default
+TAG of &quot;*&quot;.  A TAG is used to group servers of a shared NetBIOS namespace together.  Upon
+startup, nmbd will attempt to register the netbios name value with one server in each
+tagged group.
+</para>
+
+<para>
+An example using tags to group WINS servers together is show here.  Note that the use of
+interface names in the tags is only by convention and is not a technical requirement.
+</para>
+
+
+<para><programlisting>
+[global]
+	wins server = 192.168.1.2:eth0 192.168.1.3:eth0 192.168.2.2:eth1
+</programlisting></para>
+
+<para>
+Using this configuration, nmbd would attempt to register the server's NetBIOS name 
+with one WINS server in each group.  Because the &quot;eth0&quot; group has two servers, the 
+second server would only be used when a registration (or resolution) request to 
+the first server in that group timed out.
+</para>
+
+<para>
+NetBIOS name resolution follows a similar pattern as name registration.  When resolving 
+a NetBIOS name via WINS, smbd and other Samba programs will attempt to query a single WINS 
+server in a tagged group until either a positive response is obtained at least once or 
+until a server from every tagged group has responded negatively to the name query request.
+If a timeout occurs when querying a specific WINS server, that server is marked as down to 
+prevent further timeouts and the next server in the WINS group is contacted.  Once marked as 
+dead, Samba will not attempt to contact that server for name registration/resolution queries 
+for a period of 10 minutes.
+</para>
+
+</sect1>
+</chapter>

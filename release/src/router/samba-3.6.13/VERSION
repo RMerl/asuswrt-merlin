@@ -1,0 +1,117 @@
+########################################################
+# SAMBA Version                                        #
+#                                                      #
+# Samba versions are as follows                        #
+# 3.0.x                New production series           #
+# 3.0.x{tp,pre,rc}y    Preview/Testing & RC            #
+# 3.0.x[a-z]           Patch releases                  #
+# 3.0.x[a-z]-VENDOR-z  Vendor patch releases           #
+#                                                      #
+# script/mkversion.sh                                  #
+# will use this file to create                         #
+# include/version.h                                    #
+#                                                      #
+########################################################
+
+########################################################
+# This are the main SAMBA version numbers              #
+#                                                      #
+# <MAJOR>.<MINOR>.<RELEASE>                            #
+#                                                      #
+# e.g. SAMBA_VERSION_MAJOR=3                           #
+#      SAMBA_VERSION_MINOR=0                           #
+#      SAMBA_VERSION_RELEASE=0                         #
+#  ->  "3.0.0"                                         #
+########################################################
+SAMBA_VERSION_MAJOR=4
+SAMBA_VERSION_MINOR=0
+SAMBA_VERSION_RELEASE=0
+
+########################################################
+# If a official release has a serious bug              #
+# a security release will have 'a' sufffix             #
+#                                                      #
+# so SAMBA's version will be                           #
+# <MAJOR>.<MINOR>.<RELEASE><REVISION>                  #
+#                                                      #
+# e.g. SAMBA_VERSION_REVISION=a                        #
+#  ->  "2.2.8a"                                        #
+########################################################
+SAMBA_VERSION_REVISION=
+
+########################################################
+# For 'tp' releases the version will be                #
+#                                                      #
+# <MAJOR>.<MINOR>.<RELEASE>tp<TP_RELEASE>              #
+#                                                      #
+# e.g. SAMBA_VERSION_TP_RELEASE=1                      #
+#  ->  "4.0.0tp1"                                      #
+########################################################
+SAMBA_VERSION_TP_RELEASE=
+
+########################################################
+# For 'alpha' releases the version will be             #
+#                                                      #
+# <MAJOR>.<MINOR>.<RELEASE>alpha<TP_RELEASE>           #
+#                                                      #
+# e.g. SAMBA_VERSION_ALPHA_RELEASE=1                   #
+#  ->  "4.0.0alpha1"                                   #
+########################################################
+SAMBA_VERSION_ALPHA_RELEASE=15
+
+########################################################
+# For 'pre' releases the version will be               #
+#                                                      #
+# <MAJOR>.<MINOR>.<RELEASE>pre<PRE_RELEASE>            #
+#                                                      #
+# e.g. SAMBA_VERSION_PRE_RELEASE=1                     #
+#  ->  "2.2.9pre1"                                     #
+########################################################
+SAMBA_VERSION_PRE_RELEASE=
+
+########################################################
+# For 'rc' releases the version will be                #
+#                                                      #
+# <MAJOR>.<MINOR>.<RELEASE>rc<RC_RELEASE>              #
+#                                                      #
+# e.g. SAMBA_VERSION_RC_RELEASE=1                      #
+#  ->  "3.0.0rc1"                                      #
+########################################################
+SAMBA_VERSION_RC_RELEASE=
+
+########################################################
+# To mark SVN snapshots this should be set to 'yes'    #
+# in the development BRANCH, and set to 'no' only in   #
+# the SAMBA_X_X_RELEASE BRANCH                         #
+#                                                      #
+# <MAJOR>.<MINOR>.<RELEASE>[...]-SVN-build-xxx         #
+#                                                      #
+# e.g. SAMBA_VERSION_IS_SVN_SNAPSHOT=yes               #
+#  ->  "3.0.0-SVN-build-199"                           #
+########################################################
+SAMBA_VERSION_IS_GIT_SNAPSHOT=yes
+
+########################################################
+# This is for specifying a release nickname            #
+#                                                      #
+# e.g. SAMBA_VERSION_RELEASE_NICKNAME=Nicky Nickname   #
+#      smbd --version will then give:                  #
+#  ->  "4.0.0-tp1-VendorVersion (Nicky Nickname)"      #
+########################################################
+SAMBA_VERSION_RELEASE_NICKNAME=
+
+########################################################
+# This can be set by vendors if they want...           #
+# This can be a string constant or a function which    #
+# returns a string (const char *)                      #
+#                                                      #
+# <MAJOR>.<MINOR>.<RELEASE>[...]-<VENDOR_SUFFIX>       #
+#                                                      #
+# Note the '-' is automaticaly added                   #
+#                                                      #
+# e.g. SAMBA_VERSION_VENDOR_SUFFIX=VendorVersion       #
+#  ->  "3.0.0rc2-VendorVersion"                        #
+#                                                      #
+########################################################
+SAMBA_VERSION_VENDOR_SUFFIX=
+SAMBA_VERSION_VENDOR_PATCH=

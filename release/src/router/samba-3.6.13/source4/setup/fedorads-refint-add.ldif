@@ -1,0 +1,6 @@
+dn: cn=referential integrity postoperation,cn=plugins,cn=config
+changetype: modify
+add: nsslapd-pluginArg${ARG_NUMBER}
+nsslapd-pluginArg${ARG_NUMBER}: ${LINK_ATTR}
+-
+

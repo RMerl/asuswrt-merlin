@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+bld.SAMBA_SUBSYSTEM('LIBWBCLIENT_OLD',
+	source='wbclient.c',
+	public_deps='errors events',
+	deps='NDR_WINBIND MESSAGING RPC_NDR_WINBIND'
+	)
+

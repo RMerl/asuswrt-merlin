@@ -1,0 +1,57 @@
+# Accounts for selfjoin (joins DC to itself)
+
+# Object under "Domain Controllers"
+dn: CN=${NETBIOSNAME},OU=Domain Controllers,${DOMAINDN}
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+objectClass: computer
+accountExpires: 9223372036854775807
+dNSHostName: ${DNSNAME}
+# "MSDFSR-ComputerReferenceBL" doesn't exist since we still miss DFSR support
+# "isCritcalSystemObject" is now filled in by the samldb LDB module
+localPolicyFlags: 0
+operatingSystem: Samba
+operatingSystemVersion: ${SAMBA_VERSION_STRING}
+sAMAccountName: ${NETBIOSNAME}$
+# The "servicePrincipalName" updates are now handled by the "samba_spnupdate"
+# script
+userAccountControl: 532480
+clearTextPassword:: ${MACHINEPASS_B64}
+objectSid: ${DOMAINSID}-${DCRID}
+
+# Here are missing the objects for the NTFRS subscription since we don't
+# support this technique yet.
+
+# Objects under "Configuration/Sites/<Default sitename>/Servers"
+
+dn: ${SERVERDN}
+objectClass: top
+objectClass: server
+systemFlags: 1375731712
+dNSHostName: ${DNSNAME}
+serverReference: CN=${NETBIOSNAME},OU=Domain Controllers,${DOMAINDN}
+
+dn: CN=NTDS Settings,${SERVERDN}
+objectClass: top
+objectClass: applicationSettings
+objectClass: nTDSDSA
+dMDLocation: ${SCHEMADN}
+hasMasterNCs: ${CONFIGDN}
+hasMasterNCs: ${SCHEMADN}
+hasMasterNCs: ${DOMAINDN}
+invocationId: ${INVOCATIONID}
+msDS-Behavior-Version: ${DOMAIN_CONTROLLER_FUNCTIONALITY}
+msDS-HasDomainNCs: ${DOMAINDN}
+# "msDS-HasInstantiatedNCs"s for DNS don't exist since we don't support AD DNS
+msDS-HasInstantiatedNCs: B:8:0000000D:${CONFIGDN}
+msDS-HasInstantiatedNCs: B:8:0000000D:${SCHEMADN}
+msDS-HasInstantiatedNCs: B:8:00000005:${DOMAINDN}
+# "msDS-hasMasterNCs"s for DNS don't exist since we don't support AD DNS
+msDS-hasMasterNCs: ${CONFIGDN}
+msDS-hasMasterNCs: ${SCHEMADN}
+msDS-hasMasterNCs: ${DOMAINDN}
+options: 1
+systemFlags: 33554432
+${NTDSGUID}

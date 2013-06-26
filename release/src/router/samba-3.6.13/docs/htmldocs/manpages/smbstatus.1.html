@@ -1,0 +1,41 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>smbstatus</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" title="smbstatus"><a name="smbstatus.1"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>smbstatus &#8212; report on current Samba connections</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">smbstatus</code> [-P] [-b] [-d &lt;debug level&gt;] [-v] [-L] [-B] [-p] [-S] [-s &lt;configuration file&gt;] [-u &lt;username&gt;]</p></div></div><div class="refsect1" title="DESCRIPTION"><a name="id266874"></a><h2>DESCRIPTION</h2><p>This tool is part of the <a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p><code class="literal">smbstatus</code> is a very simple program to 
+	list the current Samba connections.</p></div><div class="refsect1" title="OPTIONS"><a name="id265697"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">-P|--profile</span></dt><dd><p>If samba has been compiled with the 
+		profiling option, print only the contents of the profiling 
+		shared memory area.</p></dd><dt><span class="term">-b|--brief</span></dt><dd><p>gives brief output.</p></dd><dt><span class="term">-d|--debuglevel=level</span></dt><dd><p><em class="replaceable"><code>level</code></em> is an integer 
+from 0 to 10. The default value if this parameter is 
+not specified is 0.</p><p>The higher this value, the more detail will be 
+logged to the log files about the activities of the 
+server. At level 0, only critical errors and serious 
+warnings will be logged. Level 1 is a reasonable level for
+day-to-day running - it generates a small amount of 
+information about operations carried out.</p><p>Levels above 1 will generate considerable 
+amounts of log data, and should only be used when 
+investigating a problem. Levels above 3 are designed for 
+use only by developers and generate HUGE amounts of log
+data, most of which is extremely cryptic.</p><p>Note that specifying this parameter here will 
+override the <a class="link" href="smb.conf.5.html#" target="_top"></a> parameter
+in the <code class="filename">smb.conf</code> file.</p></dd><dt><span class="term">-V|--version</span></dt><dd><p>Prints the program version number.
+</p></dd><dt><span class="term">-s|--configfile &lt;configuration file&gt;</span></dt><dd><p>The file specified contains the 
+configuration details required by the server.  The 
+information in this file includes server-specific
+information such as what printcap file to use, as well 
+as descriptions of all the services that the server is 
+to provide. See <code class="filename">smb.conf</code> for more information.
+The default configuration file name is determined at 
+compile time.</p></dd><dt><span class="term">-l|--log-basename=logdirectory</span></dt><dd><p>Base directory name for log/debug files. The extension
+<code class="constant">".progname"</code> will be appended (e.g. log.smbclient, 
+log.smbd, etc...). The log file is never removed by the client.
+</p></dd><dt><span class="term">-v|--verbose</span></dt><dd><p>gives verbose output.</p></dd><dt><span class="term">-L|--locks</span></dt><dd><p>causes smbstatus to only list locks.</p></dd><dt><span class="term">-B|--byterange</span></dt><dd><p>causes smbstatus to include byte range locks.
+		</p></dd><dt><span class="term">-p|--processes</span></dt><dd><p>print a list of <a class="citerefentry" href="smbd.8.html"><span class="citerefentry"><span class="refentrytitle">smbd</span>(8)</span></a> processes and exit. 
+		Useful for scripting.</p></dd><dt><span class="term">-S|--shares</span></dt><dd><p>causes smbstatus to only list shares.</p></dd><dt><span class="term">-h|--help</span></dt><dd><p>Print a summary of command line options.
+</p></dd><dt><span class="term">-u|--user=&lt;username&gt;</span></dt><dd><p>selects information relevant to <em class="parameter"><code>username</code></em> only.</p></dd></dl></div></div><div class="refsect1" title="VERSION"><a name="id307075"></a><h2>VERSION</h2><p>This man page is correct for version 3 of 
+	the Samba suite.</p></div><div class="refsect1" title="SEE ALSO"><a name="id307085"></a><h2>SEE ALSO</h2><p><a class="citerefentry" href="smbd.8.html"><span class="citerefentry"><span class="refentrytitle">smbd</span>(8)</span></a> and <a class="citerefentry" href="smb.conf.5.html"><span class="citerefentry"><span class="refentrytitle">smb.conf</span>(5)</span></a>.</p></div><div class="refsect1" title="AUTHOR"><a name="id307108"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</p><p>The original Samba man pages were written by Karl Auer. 
+	The man page sources were converted to YODL format (another 
+	excellent piece of Open Source software, available at <a class="ulink" href="ftp://ftp.icce.rug.nl/pub/unix/" target="_top">
+	ftp://ftp.icce.rug.nl/pub/unix/</a>) and updated for the Samba 2.0 
+	release by Jeremy Allison.  The conversion to DocBook for 
+	Samba 2.2 was done by Gerald Carter. The conversion to DocBook XML 4.2
+	for Samba 3.0 was done by Alexander Bokovoy.</p></div></div></body></html>

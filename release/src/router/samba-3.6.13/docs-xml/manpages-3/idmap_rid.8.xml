@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="idmap_rid.8">
+
+<refmeta>
+	<refentrytitle>idmap_rid</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>idmap_rid</refname>
+	<refpurpose>Samba's idmap_rid Backend for Winbind</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<title>DESCRIPTION</title>
+	<para>The idmap_rid backend provides a way to use an algorithmic
+	mapping scheme to map UIDs/GIDs and SIDs. No database is required
+	in this case as the mapping is deterministic.</para>
+
+	<para>
+	Note that the idmap_rid module has changed considerably since Samba
+	versions 3.0. and 3.2.
+	Currently, there should to be an explicit idmap configuration for each
+	domain that should use the idmap_rid backend, using disjoint ranges.
+	One usually needs to define a writeable default idmap range, using
+	a backent like <parameter>tdb</parameter> or <parameter>ldap</parameter>
+	that can create unix ids, in order to be able to map the BUILTIN sids
+	and other domains, and also in order to be able to create group mappings.
+	See the example below.
+	</para>
+
+	<para>
+	Note that the old syntax
+	<parameter>idmap backend = rid:"DOM1=range DOM2=range2 ..."</parameter>
+	is not supported any more since Samba version 3.0.25.
+	</para>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>IDMAP OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>range = low - high</term>
+		<listitem><para>
+			Defines the available matching uid and gid range for which the
+			backend is authoritative. Note that the range acts as a filter.
+			If algorithmically determined UID or GID fall outside the
+			range, they are ignored and the corresponding map is discarded.
+			It is intended as a way to avoid accidental UID/GID overlaps
+			between local and remotely defined IDs.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>base_rid = INTEGER</term>
+		<listitem><para>
+			Defines the base integer used to build SIDs out of a UID or a GID,
+			and to rebase the UID or GID to be obtained from a SID.
+			This means SIDs with a RID less than the base rid are filtered.
+			The default is not to restrict the allowed rids at all,
+			i.e. a base_rid value of 0.
+			A good value for the base_rid can be 1000, since user
+			RIDs by default start at 1000 (512 hexadecimal).
+		</para>
+		<para>
+			Use of this parameter is deprecated.
+		</para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>THE MAPPING FORMULAS</title>
+	<para>
+		The Unix ID for a RID is calculated this way:
+		<programlisting>
+			ID = RID - BASE_RID + LOW_RANGE_ID.
+		</programlisting>
+	</para>
+	<para>
+		Correspondingly, the formula for calculating the RID for a
+		given Unix ID is this:
+		<programlisting>
+			RID = ID + BASE_RID - LOW_RANGE_ID.
+		</programlisting>
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+	<para>
+		This example shows how to configure two domains with idmap_rid,
+		the principal domain and a trusted domain, leaving the default
+		id mapping scheme at tdb. The example also demonstrates the use
+		of the base_rid parameter for the trusted domain.
+	</para>
+
+	<programlisting>
+	[global]
+	security = domain
+	workgroup = MAIN
+
+	idmap config * : backend        = tdb
+	idmap config * : range          = 1000000-1999999
+
+	idmap config MAIN : backend     = rid
+	idmap config MAIN : range       = 10000 - 49999
+
+	idmap config TRUSTED : backend  = rid
+	idmap config TRUSTED : range    = 50000 - 99999
+	idmap config TRUSTED : base_rid = 1000
+	</programlisting>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>
+	The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.
+	</para>
+</refsect1>
+
+</refentry>

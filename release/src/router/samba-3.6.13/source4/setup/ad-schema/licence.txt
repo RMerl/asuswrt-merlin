@@ -1,0 +1,7 @@
+NOTE:
+
+The licence on these schema files is not GPL, or a standard Open
+Source licence.  Be careful to redistribute these files as part of
+Samba or 'your implementation', but not alone.
+
+See each file for it's licence from Microsoft.

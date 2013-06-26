@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+
+
+bld.SAMBA_SUBSYSTEM('WEB_WSGI',
+		source='wsgi.c',
+		pyext=True,
+		deps='talloc LIBTSOCKET',
+		)
+
+
+bld.SAMBA_MODULE('service_web',
+		source='web_server.c',
+		subsystem='service',
+		init_function='server_service_web_init',
+		deps='LIBTLS process_model LIBPYTHON WEB_WSGI',
+		pyembed=True,
+		internal_module=False,
+		)

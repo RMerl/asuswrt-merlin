@@ -1,0 +1,18 @@
+<samba:parameter name="ldap suffix"
+                 context="G"
+		 type="string"
+		 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>Specifies the base for all ldap suffixes and for storing the sambaDomain object.</para>
+
+	<para>
+	The ldap suffix will be appended to the values specified for the <smbconfoption name="ldap user suffix"/>,
+	 <smbconfoption name="ldap group suffix"/>, <smbconfoption name="ldap machine suffix"/>, and the
+	 <smbconfoption name="ldap idmap suffix"/>. Each of these should be given only a DN relative to the
+	 <smbconfoption name ="ldap suffix"/>.
+	</para>
+</description>
+<value type="default"></value>
+<value type="example">dc=samba,dc=org</value>
+</samba:parameter>

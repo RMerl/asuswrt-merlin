@@ -1,0 +1,20 @@
+#!/bin/sh
+
+ENV="$1"
+
+shift 1
+
+if test -z "$TMPDIR"; then
+	TMPDIR="/tmp"
+fi
+
+TMPFILE=$TMPDIR/gdb_run.$$
+cat << EOF  > $TMPFILE
+run
+bt
+EOF
+
+trap "/bin/rm -f $TMPFILE" EXIT
+CMD="gdb -x $TMPFILE --args $@"
+echo $CMD
+eval $ENV "$CMD"

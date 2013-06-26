@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<refentry id="ntlm-auth.1">
+
+<refmeta>
+	<refentrytitle>ntlm_auth</refentrytitle>
+	<manvolnum>1</manvolnum>
+</refmeta>
+
+
+<refnamediv>
+	<refname>ntlm_auth</refname>
+	<refpurpose>tool to allow external access to Winbind's NTLM authentication function</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>ntlm_auth</command>
+		<arg choice="opt">-d debuglevel</arg>
+		<arg choice="opt">-l logdir</arg>
+		<arg choice="opt">-s &lt;smb config file&gt;</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para><command>ntlm_auth</command> is a helper utility that authenticates 
+	users using NT/LM authentication. It returns 0 if the users is authenticated
+	successfully and 1 if access was denied. ntlm_auth uses winbind to access 
+	the user and authentication data for a domain.  This utility 
+	is only indended to be used by other programs (currently squid).
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>OPERATIONAL REQUIREMENTS</title>
+
+    <para>
+    The <citerefentry><refentrytitle>winbindd</refentrytitle>
+    <manvolnum>8</manvolnum></citerefentry> daemon must be operational
+    for many of these commands to function.</para>
+
+    <para>Some of these commands also require access to the directory 
+    <filename>winbindd_privileged</filename> in
+    <filename>$LOCKDIR</filename>.  This should be done either by running
+    this command as root or providing group access
+    to the <filename>winbindd_privileged</filename> directory.  For
+    security reasons, this directory should not be world-accessable. </para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+	<varlistentry>
+	<term>--helper-protocol=PROTO</term>
+	<listitem><para>
+	Operate as a stdio-based helper.  Valid helper protocols are:
+        </para> 
+        <variablelist>
+	      <varlistentry>
+		<term>squid-2.4-basic</term>
+		<listitem><para>
+                Server-side helper for use with Squid 2.4's basic (plaintext)
+		authentication.  </para>
+                </listitem>
+		</varlistentry>
+	      <varlistentry>
+		<term>squid-2.5-basic</term>
+		<listitem><para>
+                Server-side helper for use with Squid 2.5's basic (plaintext)
+		authentication. </para>
+                </listitem>
+		</varlistentry>
+	      <varlistentry>
+		<term>squid-2.5-ntlmssp</term>
+		<listitem><para>
+                Server-side helper for use with Squid 2.5's NTLMSSP 
+		authentication. </para>
+		  <para>Requires access to the directory 
+                <filename>winbindd_privileged</filename> in
+		<filename>$LOCKDIR</filename>.  The protocol used is
+		described here: <ulink
+		url="http://devel.squid-cache.org/ntlm/squid_helper_protocol.html">http://devel.squid-cache.org/ntlm/squid_helper_protocol.html</ulink>
+                </para>
+                </listitem>
+	      </varlistentry>
+	      <varlistentry>
+		<term>ntlmssp-client-1</term>
+		<listitem><para>
+                Cleint-side helper for use with arbitary external
+		programs that may wish to use Samba's NTLMSSP 
+		authentication knowlege. </para>
+		  <para>This helper is a client, and as such may be run by any
+		user.  The protocol used is
+		effectivly the reverse of the previous protocol.
+                </para>
+                </listitem>
+	      </varlistentry>
+
+	      <varlistentry>
+		<term>gss-spnego</term>
+		<listitem><para>
+                Server-side helper that implements GSS-SPNEGO.  This
+		uses a protocol that is almost the same as
+		<command>squid-2.5-ntlmssp</command>, but has some
+		subtle differences that are undocumented outside the
+		source at this stage.
+                </para>
+		  <para>Requires access to the directory 
+                <filename>winbindd_privileged</filename> in
+		<filename>$LOCKDIR</filename>.   
+               </para>
+                </listitem>
+		</varlistentry>
+                 
+	        <varlistentry>
+				<term>gss-spnego-client</term>
+		<listitem><para>
+                Client-side helper that implements GSS-SPNEGO.  This
+		also uses a protocol similar to the above helpers, but
+		is currently undocumented.
+                </para>
+                </listitem>
+		</varlistentry>
+	</variablelist>
+	</listitem>
+      </varlistentry>
+      
+      <varlistentry>
+	<term>--username=USERNAME</term>
+	<listitem><para>
+	Specify username of user to authenticate
+	</para></listitem>
+	
+      </varlistentry>
+      
+      <varlistentry>
+	<term>--domain=DOMAIN</term>
+	<listitem><para>
+	Specify domain of user to authenticate
+	</para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>--workstation=WORKSTATION</term>
+	<listitem><para>
+	Specify the workstation the user authenticated from
+	</para></listitem>
+      </varlistentry>
+
+	<varlistentry>
+	<term>--challenge=STRING</term>
+	<listitem><para>NTLM challenge (in HEXADECIMAL)</para>
+	</listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>--lm-response=RESPONSE</term>
+	<listitem><para>LM Response to the challenge (in HEXADECIMAL)</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>--nt-response=RESPONSE</term>
+	<listitem><para>NT or NTLMv2 Response to the challenge (in HEXADECIMAL)</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>--password=PASSWORD</term>
+	<listitem><para>User's plaintext password</para><para>If 
+	not specified on the command line, this is prompted for when
+	required.  </para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>--request-lm-key</term>
+	<listitem><para>Retreive LM session key</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>--request-nt-key</term>
+	<listitem><para>Request NT key</para></listitem>
+	</varlistentry>
+
+      <varlistentry>
+	<term>--diagnostics</term>
+	<listitem><para>Perform Diagnostics on the authentication
+	chain.  Uses the password from <command>--password</command>
+	or prompts for one.</para>
+        </listitem>
+        </varlistentry>
+	
+	<varlistentry>
+	    <term>--require-membership-of={SID|Name}</term>
+	    <listitem><para>Require that a user be a member of specified 
+	    group (either name or SID) for authentication to succeed.</para>
+	    </listitem>
+	</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLE SETUP</title>
+
+        <para>To setup ntlm_auth for use by squid 2.5, with both basic and
+	NTLMSSP authentication, the following
+	should be placed in the <filename>squid.conf</filename> file.
+<programlisting>
+auth_param ntlm program ntlm_auth --helper-protocol=squid-2.5-ntlmssp
+auth_param basic program ntlm_auth --helper-protocol=squid-2.5-basic
+auth_param basic children 5
+auth_param basic realm Squid proxy-caching web server
+auth_param basic credentialsttl 2 hours
+</programlisting></para>
+
+<note><para>This example assumes that ntlm_auth has been installed into your
+      path, and that the group permissions on
+      <filename>winbindd_privileged</filename> are as described above.</para></note>
+
+	<para>To setup ntlm_auth for use by squid 2.5 with group limitation in addition to the above
+	example, the following should be added to the <filename>squid.conf</filename> file.
+<programlisting>
+auth_param ntlm program ntlm_auth --helper-protocol=squid-2.5-ntlmssp --require-membership-of='WORKGROUP\Domain Users'
+auth_param basic program ntlm_auth --helper-protocol=squid-2.5-basic --require-membership-of='WORKGROUP\Domain Users'
+</programlisting></para>
+	
+</refsect1>
+
+<refsect1>
+	<title>TROUBLESHOOTING</title>
+	
+	<para>If you're experiencing problems with authenticating Internet Explorer running
+	under MS Windows 9X or Millenium Edition against ntlm_auth's NTLMSSP authentication
+	helper (--helper-protocol=squid-2.5-ntlmssp), then please read 
+	<ulink url="http://support.microsoft.com/support/kb/articles/Q239/8/69.ASP">
+	the Microsoft Knowledge Base article #239869 and follow instructions described there</ulink>.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.0 of the Samba 
+	suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+	
+	<para>The ntlm_auth manpage was written by Jelmer Vernooij and
+	Andrew Bartlett.</para>
+</refsect1>
+
+</refentry>

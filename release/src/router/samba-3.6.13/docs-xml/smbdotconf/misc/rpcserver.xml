@@ -1,0 +1,46 @@
+<samba:parameter name="rpc_server"
+                 context="G"
+		 type="string"
+		 advanced="1" print="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	Defines what kind of rpc server to use for a named pipe.
+	The rpc_server prefix must be followed by the pipe name, and a value.
+	</para>
+
+	<para>
+	Three possible values are currently supported:
+		<command moreinfo="none">embedded</command>
+		<command moreinfo="none">daemon</command>
+		<command moreinfo="none">external</command>
+	</para>
+
+	<para>
+	The classic method is to run every pipe as an internal function
+	<emphasis>embedded</emphasis> in smbd.
+	</para>
+
+	<para>
+	An alternative method is to fork a <emphasis>daemon</emphasis>
+	early on at smbd startup time. This is supported only for selected
+	pipes.
+	</para>
+
+	<para>
+	Choosing the <emphasis>external</emphasis> option allows to run a
+	completely independent (3rd party) server capable of interfacing
+	with samba via the MS-RPC interface over named pipes.
+	</para>
+
+	<para>
+	Currently only the spoolss pipe can be configured in
+	<emphasis>daemon</emphasis> mode like this:
+	<programlisting>
+	rpc_server:spoolss = daemon
+	</programlisting>
+	</para>
+</description>
+
+<value type="default">none</value>
+</samba:parameter>

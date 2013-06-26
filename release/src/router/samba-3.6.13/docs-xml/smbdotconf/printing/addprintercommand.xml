@@ -1,0 +1,64 @@
+<samba:parameter name="addprinter command"
+                 context="G"
+				 type="string"
+		 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>With the introduction of MS-RPC based printing
+    support for Windows NT/2000 clients in Samba 2.2, The MS Add
+    Printer Wizard (APW) icon is now also available in the 
+    &quot;Printers...&quot; folder displayed a share listing.  The APW
+    allows for printers to be add remotely to a Samba or Windows 
+    NT/2000 print server.</para>
+		
+    <para>For a Samba host this means that the printer must be 
+    physically added to the underlying printing system.
+    The <parameter moreinfo="none">addprinter command</parameter>
+    defines a script to be run which
+    will perform the necessary operations for adding the printer
+    to the print system and to add the appropriate service definition 
+    to the  <filename moreinfo="none">smb.conf</filename> file in order that it can be 
+    shared by <citerefentry><refentrytitle>smbd</refentrytitle>
+    <manvolnum>8</manvolnum></citerefentry>.</para>
+		
+    <para>The <parameter moreinfo="none">addprinter command</parameter> is
+    automatically invoked with the following parameter (in 
+    order):</para>
+		
+    <itemizedlist>
+	<listitem><para><parameter moreinfo="none">printer name</parameter></para></listitem>
+	<listitem><para><parameter moreinfo="none">share name</parameter></para></listitem>
+	<listitem><para><parameter moreinfo="none">port name</parameter></para></listitem>
+	<listitem><para><parameter moreinfo="none">driver name</parameter></para></listitem>
+	<listitem><para><parameter moreinfo="none">location</parameter></para></listitem>
+	<listitem><para><parameter moreinfo="none">Windows 9x driver location</parameter></para></listitem>
+    </itemizedlist>
+		
+    <para>All parameters are filled in from the PRINTER_INFO_2 structure sent 
+    by the Windows NT/2000 client with one exception.  The &quot;Windows 9x
+    driver location&quot; parameter is included for backwards compatibility
+    only.  The remaining fields in the structure are generated from answers
+    to the APW questions.</para>
+
+    <para>Once the <parameter moreinfo="none">addprinter command</parameter> has 
+    been executed, <command moreinfo="none">smbd</command> will reparse the <filename moreinfo="none">
+    smb.conf</filename> to determine if the share defined by the APW
+    exists.  If the sharename is still invalid, then <command moreinfo="none">smbd
+    </command> will return an ACCESS_DENIED error to the client.</para>
+
+    <para>
+    The <parameter moreinfo="none">addprinter command</parameter> program
+    can output a single line of text,
+    which Samba will set as the port the new printer is connected to. 
+    If this line isn't output, Samba won't reload its printer shares.
+    </para>
+		
+</description>
+
+<related>deleteprinter command</related>
+<related>printing</related>
+<related>show add printer wizard</related>
+
+<value type="default"></value>
+<value type="example">/usr/bin/addprinter</value>
+</samba:parameter>

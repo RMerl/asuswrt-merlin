@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+
+bld.SAMBA_BINARY('ntlm_auth',
+	source='ntlm_auth.c',
+	manpages='man/ntlm_auth.1',
+	deps='''samba-hostconfig samba-util popt POPT_SAMBA POPT_CREDENTIALS gensec LIBCLI_RESOLVE
+        auth4 NTLMSSP_COMMON MESSAGING events service''',
+	pyembed=True
+	)
+
+
+bld.SAMBA_BINARY('oLschema2ldif',
+	source='oLschema2ldif.c',
+	manpages='man/oLschema2ldif.1',
+	deps='ldb-cmdline samdb POPT_SAMBA'
+	)
+

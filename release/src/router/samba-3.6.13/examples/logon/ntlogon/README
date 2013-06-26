@@ -1,0 +1,160 @@
+ntlogon.py v0.8b Copyright 2002 by Timothy (rhacer) Grant 
+This programme is released under the terms of the GNU Public License
+This programme has NO WARRANTY of any kind, use at your own risk.
+
+===================
+CHANGES SINCE v0.7b
+===================
+included patch that made machine name %m a macro substitution value.
+Thanks to:   Nick Lopez  <kimo_sabe@atdot.org>
+
+==================
+CHANGES SINCE v0.6
+==================
+PLEASE NOT THAT I AM CONSIDERING THIS A BETA UNTIL I GET SOME FEEDBACK
+FROM USERS ON WHETHER THE MACRO FEATURE WORKS FOR THEM.
+
+added the ability to define substitution macros: see the useage section
+
+removed the large docstring from the file and moved the information to
+the USEAGE section of this file
+
+cleaned up the code and made more flexible
+
+improved the code comments
+
+==================
+CHANGES SINCE v0.5
+==================
+added a -v --version switch
+
+added a --pause switch which will put a pause statement between each 
+non-blank line of the script.
+
+===============
+A PERSONAL NOTE
+===============
+When I originally posted v0.5 on Freshmeat, I really expected *some*
+feedback. To date this little script has been downloaded over 700 times, but
+absolutely nobody has sent me an e-mail to tell me if it is useful, or if
+it is absolutely the stupidest waste of bandwidth they have ever seen.
+I'd really love to know if even one person other than me and the other techs
+here at Avalon have found it useful.
+
+Thanks.
+   rhacer (rhacer@craigelachie.org)
+
+September 27, 2000
+Thanks to those that did respond to my plea! I'd still love to hear from 
+any other users!
+
+============
+INTRODUCTION
+============
+As my experience with Linux and Samba increased, I had no trouble whipping up
+a custom Perl, Python or Bash script to create Samba Logon Scripts, but I
+noticed that I changed things from place to place, and that my users had *no*
+chance of ever figuring out how to modify those scripts themselves.
+
+In an attempt to create a company wide standard that both my co-workers and my
+customers could *easily* modify I hit upon the scheme I used here.
+
+I settled on an INI file feel, because most who have experience with Win boxes
+have some concept of INI files.
+
+============
+INSTALLATION
+============
+The distribution archive contains three files:
+
+README			This file
+ntlogon.py		The actual Python script (place in /usr/local/samba/bin)
+ntlogon.conf	A sample configuration file (place in /etc)
+
+This script was created using Python v1.5.2, and I believe it uses only
+standard libraries.
+
+Your smb.conf file needs to contain a netlogon section similar to the 
+following (These settings *are not* normal on a RH box. These settings
+are all based on the excellent book that I learned Samba from: Samba
+Integrating Unix and Windows by John D. Blair. It is somewhat out of 
+date now, but that's the history of the strange file locations):
+
+[netlogon]
+        path = /usr/local/samba/netlogon
+        writeable = no
+        guest ok = no
+        root preexec = /usr/local/samba/bin/ntlogon --user=%U  --os=%m
+        root postexec = rm /usr/local/samba/netlogon/%U.bat
+
+======
+USEAGE
+======
+PLEASE SEE NTLOGON.CONF FOR A DETAILED CONFIGURATION EXAMPLE
+
+This programme will build a Windows NT logon script for users connecting
+to a Samba server. Samba macros that are curently understood:
+
+   %U user name
+   %G group name
+   %a machine architecture
+   %m machine netbios name
+
+This programme reads a configuration that looks strikingly similar to both
+the Samba configuration file, and a DOS "boot menu" AUTOEXEC.BAT file.
+
+The default file name is /etc/ntlogon.conf (though I really think it ought
+to be called ntlogon.batch!) You may change the filename by using the -f
+or --templatefile startup option.
+
+The default netlogon directory is /usr/local/samba/netlogon though this
+can be changed with the -d or --dir startup option.
+                                              
+The default batch file name generated is username.bat if no username is
+specified the default value is logon.bat (e.g., if --user=fred is specified
+on the command line then the logon script generated will be stored in 
+fred.bat)
+
+Use the --debug option to print the logon script to screen instead of the 
+output file
+
+Use the --pause option to place a pause statement between each line of the
+script to assist in debugging a logon script.
+ 
+The file is divided into sections that have headers in square brackets
+
+[Global]
+[User-username]
+[Group-groupname]
+[OS-osname]
+
+The file may also contain user defined substitution macros. They are
+defined by placing the macro name on the left side of an equal sign,
+and the substitution text on the right side of the equal sign. They
+are also case sensitive:
+
+MAINDRIVE = G:
+USERDRIVE = U:
+SERVERNAME = myservername
+
+They are referenced by prepending a "%" sign to the variable name:
+
+NET USE %MAINDRIVE \\\\servername\\mainshare /YES
+NET USE %USERDRIVE \\\\%SERVERNAME\\usershare /YES
+
+==============
+SPECIAL THANKS
+==============
+Nick Lopez <kimo_sabe@atdot.org> for the net bios name patch.
+	  
+===================
+CONTACT INFORMATION
+===================
+Author	: Timothy (rhacer) Grant
+
+I can be reached at tjg@craigelachie.org
+ntlogon website www.craigelachie.org/rhacer/ntlogon
+
+Please feel free to contact me with any suggestions, improvements, bugs you
+might find.
+

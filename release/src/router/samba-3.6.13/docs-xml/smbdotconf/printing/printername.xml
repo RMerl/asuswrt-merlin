@@ -1,0 +1,26 @@
+<samba:parameter name="printer name"
+                 context="S"
+		 print="1"
+		 type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+ <synonym>printer</synonym>
+<description>
+    <para>
+	This parameter specifies the name of the printer to which print jobs spooled through a printable service
+	will be sent.
+	</para>
+
+    <para>
+	If specified in the [global] section, the printer name given will be used for any printable service that
+	does not have its own printer name specified.
+	</para>
+
+	<para>
+	The default value of the <smbconfoption name="printer name"/> may be <literal>lp</literal> on many
+	systems.
+	</para>
+</description>
+
+<value type="default">none</value>
+<value type="example">laserwriter</value>
+</samba:parameter>

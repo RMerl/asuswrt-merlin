@@ -1,0 +1,760 @@
+Copyright Andrew Bartlett <abartlet@samba.org> 2005-2009
+Copyright Donald T. Davis <don@mit.edu>  
+
+Released under the GPLv3
+
+Important context for porting to MIT
+------------------------------------
+
+This document should be read in conjuction with the Samba4 source code.  
+DAL and KDC requirements are expressed (as an implementation against Heimdal's 
+HDB abstraction layer) in Samba4's source4/kdc/hdb-samba4.c in particular.
+hbd-samba4.c is the biggest piece of samba-to-krb glue layer, so the main
+part of the port to MIT is to replace hdb-samba4 with a similar glue layer
+that's designed for MIT's code.
+
+PAC requirements are implemeneted in source4/kdc/pac-glue.c
+
+The plugins (both of the above are Heimdal plugins) for the above are loaded 
+in source4/kdc/kdc.c
+
+For GSSAPI requirements, see auth/gensec/gensec_gssapi.c (the consumer of 
+GSSAPI in Samba4)
+
+For Kerberos requirements, see auth/kerberos/krb5_init_context.c .
+
+Samba has its own credentials system, wrapping GSS creds, just as GSS 
+creds wrap around krb5 creds.  For the interaction between Samba4 credentials
+system and GSSAPI and Kerberos see auth/credentials/credentials_krb5.c .
+
+AllowedWorkstationNames and Krb5
+--------------------------------
+
+Microsoft uses the clientAddresses *multiple value* field in the krb5
+protocol (particularly the AS_REQ) to communicate the client's netbios 
+name (legacy undotted name, <14 chars)
+
+This is (my guess) to support the userWorkstations field (in user's AD record).
+The idea is to support client-address restrictions, as was standard in NT:
+The AD authentication server I imagine checks the netbios address against 
+this userWorkstations value (BTW, the NetLogon server does this, too).
+
+The checking of this field implies a little of the next question:
+
+Is a DAL the layer we need?
+---------------------------
+
+Looking at what we need to pass around, I don't think
+the DAL is even the right layer; what we really want 
+is to create an account-authorization abstraction layer 
+(e.g., is this account permitted to login to this computer,
+at this time?).  
+Here is how we ended up doing this in Heimdal:
+  * We created a separate plugin, with this API:
+      typedef struct hdb_entry_ex {
+         void *ctx;
+         hdb_entry entry;
+         void (*free_entry)(krb5_context, struct hdb_entry_ex *);
+      } hdb_entry_ex;
+
+  * The void *ctx is a "private pointer," provided by the 'get' method's
+    hdb_entry_ex retval.  The APIs below use the void *ctx so as to find 
+    additional information about the user, not contained in the hdb_entry 
+    structure.  Both the provider and the APIs below understand how to cast 
+    the private void *ctx pointer. 
+
+       typedef krb5_error_code
+            (*krb5plugin_windc_pac_generate)(void *, krb5_context,
+				             struct hdb_entry_ex *, krb5_pac*);
+       typedef krb5_error_code
+            (*krb5plugin_windc_pac_verify)(void *, krb5_context,
+			                   const krb5_principal,
+			                   struct hdb_entry_ex *,
+			                   struct hdb_entry_ex *,
+			                   krb5_pac *);
+       typedef krb5_error_code
+            (*krb5plugin_windc_client_access)(void *, 
+                                              krb5_context, 
+                                              struct hdb_entry_ex *, 
+                                              KDC_REQ *, krb5_data *);
+                                              
+  * (The krb5_data* here is critical, so that samba's KDC can return 
+    the right NTSTATUS code in the 'error string' returned to the client.
+    Otherwise, the windows client won't get the right error message to 
+    the user (such as 'password expired' etc).  The pure Kerberos error 
+    is not enough)
+
+       typedef struct krb5plugin_windc_ftable {
+            int			minor_version;
+            krb5_error_code	(*init)(krb5_context, void **);
+            void		(*fini)(void *);
+            rb5plugin_windc_pac_generate	pac_generate;
+            krb5plugin_windc_pac_verify		pac_verify;
+            krb5plugin_windc_client_access	client_access;
+       } krb5plugin_windc_ftable;
+      This API has some heimdal-specific stuff, that'll have to change when we port the plugin to MIT krb.
+   * 1st callback (pac_generate) creates an initial PAC from the user's AD record.
+   * 2nd callback (pac_verify) check that a PAC is correctly signed, add additional groups (for cross-realm tickets) and re-sign with the key of the target kerberos service's account
+   * 3rd callback (client_access) perform additional access checks, such as allowedWorkstations and account expiry.
+   * for example, to register this plugin, use the kdc's standard 
+     plugin-system at Samba4's initialisation:
+        /* first, setup the table of callback pointers */
+      	/* Registar WinDC hooks */
+	ret = krb5_plugin_register(krb5_context, 
+				   PLUGIN_TYPE_DATA, "windc",
+				   &windc_plugin_table);
+	/* once registered, the KDC will invoke the callbacks */
+	/* while preparing each new ticket (TGT or app-tkt)   */
+   * an alternate way to register the plugin is with a config-file that names
+     a DSO (Dynamically Shared Object).
+
+ 
+This plugin helps bridge an important gap:  The user's AD record is much 
+richer than the Heimdal HDB format allows, so we do AD-specific access 
+control checks in an AD-specific layer (ie, the plugin), not in the 
+DB-agnostic KDC server.
+
+In Novell's pure DAL approach, the DAL only read in the principalName as 
+the key, so it had trouble performing access-control decisions on things 
+other than the name (like the addresses).
+
+There is another, currently unhandled challenge in this area - the need to handle
+bad password counts (and good password notification), so that a single policy can
+be applied against all means of checking a password (NTLM, Kerberos, LDAP Simple 
+bind etc)
+
+The Original work by Novell in creating a DAL did not seem to provide a way to 
+update the PW counts information.  Nevertheless, we know that this is very much
+required (and may have been addressed in Simo's subsequent IPA-KDC design), 
+because in Samba3+eDirectory, great lengths are taken to update this information. 
+
+GSSAPI layer requirements
+-------------------------
+
+Welcome to the wonderful world of canonicalisation
+
+The MIT Krb5 libs (including GSSAPI) do not support kinit returning a different
+realm to what the client asked for, even just in case differences.
+
+Heimdal has the same problem, and this too applies to the krb5 layer, not
+just gssapi.
+
+there's two kinds of name-canonicalization that can occur:
+   * lower-to-upper case conversion, because Windows domain names are
+     usually in upper case;
+   * an unrecognizable subsitution of names, such as might happen when 
+     a user requests a ticket for a NetBIOS domain name, but gets back
+     a ticket for the corresponging FQDN.
+
+As developers, we should test if the AD KDC's name-canonicalisation 
+can be turned off with the KDCOption flags in the AS-REQ or TGS-REQ;  
+Windows clients always send the Canonicalize flags as KDCOption values.
+
+Old Clients (samba3 and HPUX clients) use 'selfmade' gssapi/krb5 tokens
+for use in the CIFS session setup.  these hand-crafted ASN.1 packets don't
+follow rfc1964 perfectly, so server-side krblib code has to be flexible 
+enough to accept these bent tokens.  
+It turns out that Windows' GSSAPI server-side code is sloppy about checking
+some GSSAPI tokens' checksums.  During initial work to implement an AD client,
+it was easier to make an acceptable solution (to Windows servers) than to 
+correctly implement the GSSAPI specification, particularly on top of the 
+(inflexible) MIT Kerberos API.  It did not seem possible to write a correct, 
+seperate GSSAPI implementation on top of MIT Kerberos's public krb5lib API, 
+and at the time, the effort did not need to extend beyond what Windows would 
+require.  
+
+The upshot is that old Samba3 clients send GSSAPI tokens bearing incorrect
+checksums, which AD's Krb5lib cheerfully accepts (but accepts the good checksums,
+too).  Similarly, Samba4's heimdal krb5lib accepts these incorrect checksums.  
+Accordingly, if MIT's krb5lib wants to interoperate with the old Samba3 clients, 
+then MIT's library will have to do the same.
+
+Because these old clients use krb5_mk_req()
+the app-servers get a chksum field depending on the encryption type, but that's 
+wrong for GSSAPI (see rfc 1964 section 1.1.1). The Checksum type 8003 should 
+be used in the Authenticator of the AP-REQ! That (correct use of the 8003 type) 
+would allows the channel bindings, the GCC_C_* req_flags and optional delegation
+tickets to be passed from the client to the server.  However windows doesn't 
+seem to care whether the checksum is of the wrong type, and for CIFS SessionSetups, 
+it seems that the req_flags are just set to 0.
+This deviant checksum can't work for LDAP connections with sign or seal, or 
+for any DCERPC connection, because those connections do not require the 
+negotiation of GSS-Wrap paraemters (signing or sealing of whole payloads).  
+Note:  CIFS has an independent SMB signing mechanism, using the Kerberos key.
+
+see heimdal/lib/gssapi/krb5/accept_sec_context.c, lines 390-450 or so.
+
+This bug-compatibility is likely to be controversial in the kerberos community, 
+but a similar need for bug-compatibility arose around MIT's & Heimdal's both 
+failing to support TGS_SUBKEYs correctly, and there are numerous other cases.
+see https://lists.anl.gov/pipermail/ietf-krb-wg/2009-May/007630.html
+
+So MIT's krb5lib needs to also support old clients!
+
+Principal Names, long and short names
+-------------------------------------
+
+As far as servicePrincipalNames are concerned, these are not
+canonicalised by AD's KDC, except as regards the realm in the reply.
+That is, the client gets back the principal it asked for, with 
+the realm portion 'fixed' to uppercase, long form.  
+Heimdal doesn't canonicalize names, but Samba4 does some canonicalization:
+For hostnames and usernames, Samba4 canonicalizes the requested name only 
+for the LDAP principal-lookup, but then Samba4 returns the retrieved LDAP 
+record with the request's original, uncanonicalized hostname replacing the 
+canonicalized name that actually was retrieved.
+AB says that for usernames, Samba4 used to return the canonicalized username, 
+as retrieved from LDAP.  The reason for the different treatment was that 
+the user needs to present his own canonicalized username to servers, for
+ACL-matching.  For hostnames this isn't necessary.
+So, for bug-compatibility, we may need to optionally disable any
+namne-canonicalization that MIT's KDC does.
+
+The short name of the realm seems to be accepted for at least AS_REQ
+operations, but the AD KDC always performs realm-canonicalisation, 
+which converts the short realm-name to the canonical long form.  
+So, this causes pain for current krb client libraries. 
+
+The canonicalisation of names matters not only for the KDC, but also
+for code that has to deal with keytabs.
+With credential-caches, when canonicalization leads to cache-misses,
+the client just asks for new credentials for the variant server-name.
+This could happen, for example, if the user asks to access the server
+twice, using different variants of the server-name.
+
+We also need to handle type 10 names (NT-ENTERPRISE), which are a full
+principal name in the principal field, unrelated to the realm.
+The principal field contains both principal & realm names, while the 
+realm field contains a realm name, too, possibly different.
+For example, an NT-ENTERPRISE principal name might look like:
+joeblow@microsoft.com@NTDEV.MICROSOFT.COM ,
+<--principal field-->|<----realm name--->|
+
+Where joe@microsoft.com is the leading portion, and NTDEV.MICROSOFT.COM is 
+the realm.  This is used for the 'email address-like login-name' feature of AD.
+
+HOST/ Aliases
+-------------
+
+There is another post somewhere (ref lost for the moment) that details
+where in active directory the list of stored aliases for HOST/ is.
+This list is read & parsed by the AD KDC, so as to allow any of these
+aliased ticket-requests to use the HOST/ key.
+
+Samba4 currently has set:
+sPNMappings: host=ldap,dns,cifs,http  (but dns's presence is a bug, somehow)
+
+AD actually has ~50 entries:
+
+sPNMappings: host=alerter,appmgmt,cisvc,clipsrv,browser,dhcp,dnscache,replicat
+ or,eventlog,eventsystem,policyagent,oakley,dmserver,dns,mcsvc,fax,msiserver,i
+ as,messenger,netlogon,netman,netdde,netddedsm,nmagent,plugplay,protectedstora
+ ge,rasman,rpclocator,rpc,rpcss,remoteaccess,rsvp,samss,scardsvr,scesrv,seclog
+ on,scm,dcom,cifs,spooler,snmp,schedule,tapisrv,trksvr,trkwks,ups,time,wins,ww
+ w,http,w3svc,iisadmin,msdtc
+ 
+Domain members that expect the longer list will break in damb4, as of 6/09.
+AB says he'll try to fix this right away.
+
+For example, this is how HTTP/, and CIFS/ can use HOST/ without
+any explicit entry in the servicePrincipalName attribute
+
+
+For example, the application-server might have (on its AD record):
+servicePrincipalName: HOST/my.computer@MY.REALM
+
+but the client asks for a ticket to cifs/my.computer@MY.REALM
+AD looks in LDAP for both name-variants
+AD then transposes cifs -> host after performing the lookup in the 
+directory (for the original name), then looks for host/my.computer@MY.REALM
+
+for hostnames & usernames, alternate names appear as extra values in 
+the multivalued "principal name" attributes:
+ - For hostnames, the other names (other than it's short name, implied 
+   from the CN), is stored in the servicePrincipalName
+ - For usernames, the other names are stored in the userPrincipalName 
+   attribute, and can be full e-mail address like names, such as 
+   joe@microsoft.com (see above).
+   
+Jean-Baptiste.Marchand@hsc.fr reminds me:
+> This is the SPNMappings attribute in Active Directory:
+> http://msdn.microsoft.com/library/en-us/adschema/adschema/a_spnmappings.asp
+
+We implement this in hdb-ldb.
+
+Implicit names for Win2000 Accounts
+-----------------------------------
+AD's records for servers are keyed by CN or by servicePrincipalName,
+but for win2k boxes, these records don't include servicePrincipalName, 
+so, the CN attribute is used instead.
+Despite not having a servicePrincipalName on accounts created 
+by computers running win2000, it appears we are expected 
+to have an implicit mapping from host/computer.full.name and
+host/computer to the computer's entry in the AD LDAP database 
+(ie, be able to obtain tickets for that host name in the KDC).
+
+Returned Salt for PreAuthentication
+-----------------------------------
+
+When the KDC replies for pre-authentication, it returns the Salt,
+which may be in the form of a principalName that is in no way
+connected with the current names.  (ie, even if the userPrincipalName
+and samAccountName are renamed, the old salt is returned).
+
+This is the kerberos standard salt, kept in the 'Key'.  The
+AD generation rules are found in a Mail from Luke Howard dated
+10 Nov 2004.  The MIT glue layer doesn't really need to care about
+these salt-handling details;  the samba4 code & the LDAP backend 
+will conspire to make sure that MIT's KDC gets correct salts.
+
+
+From: Luke Howard <lukeh@padl.com>
+Organization: PADL Software Pty Ltd
+To: lukeh@padl.com
+Date: Wed, 10 Nov 2004 13:31:21 +1100
+Cc: huaraz@moeller.plus.com, samba-technical@lists.samba.org
+Subject: Re: Samba-3.0.7-1.3E Active Directory Issues
+-------
+
+Did some more testing, it appears the behaviour has another
+explanation. It appears that the standard Kerberos password salt
+algorithm is applied in Windows 2003, just that the source principal
+name is different.
+
+Here is what I've been able to deduce from creating a bunch of
+different accounts:  
+[SAM name in this mail means the AD attribute samAccountName .
+ E.g., jbob for a user and jbcomputer$ for a computer.]
+
+[UPN is the AD userPrincipalName attribute.  For example, jbob@mydomain.com]
+
+Type of account		        Principal for Salting
+========================================================================
+Computer Account                host/<SAM-Name-Without-$>.realm@REALM
+User Account Without UPN        <SAM-Name>@REALM
+User Account With UPN           <LHS-Of-UPN>@REALM
+
+Note that if the computer account's SAM account name does not include
+the trailing '$', then the entire SAM account name is used as input to
+the salting principal. Setting a UPN for a computer account has no
+effect.
+
+It seems to me odd that the RHS of the UPN is not used in the salting
+principal. For example, a user with UPN foo@mydomain.com in the realm
+MYREALM.COM would have a salt of MYREALM.COMfoo. Perhaps this is to
+allow a user's UPN suffix to be changed without changing the salt. And
+perhaps using the UPN for salting signifies a move away SAM names and
+their associated constraints.
+
+For more information on how UPNs relate to the Kerberos protocol,
+see:
+
+http://www.ietf.org/proceedings/01dec/I-D/draft-ietf-krb-wg-kerberos-referrals-02.txt
+
+-- Luke
+
+
+
+Heimdal oddities
+----------------
+
+Heimdal is built such that it should be able to serve multiple realms
+at the same time.  This isn't relevant for Samba's use, but it shows
+up in a lot of generalisations throughout the code.
+
+Samba4's code originally tried internally to make it possible to use
+Heimdal's multi-realms-per-KDC ability, but this was ill-conceived,
+and AB has recently (6/09) ripped the last of that multi-realms
+stuff out of samba4.  AB says that in AD, it's not really possible
+to make this work;  several AD components structurally assume that
+there's one realm per KDC.  However, we do use this to support
+canonicalization of realm-names:  case variations, plus long-vs-short
+variants of realm-names.
+
+Other odd things:
+ - Heimdal supports multiple passwords on a client account:  Samba4
+   seems to call hdb_next_enctype2key() in the pre-authentication 
+   routines to allow multiple passwords per account in krb5.  
+   (I think this was intended to allow multiple salts).
+   AD doesn't support this, so the MIT port shouldn't bother with 
+   this.
+
+State Machine safety when using Kerberos and GSSAPI libraries
+-------------------------------------------------------------
+
+Samba's client-side & app-server-side libraries are built on a giant 
+state machine, and as such have very different
+requirements to those traditionally expressed for kerberos and GSSAPI
+libraries. 
+
+Samba requires all of the libraries it uses to be state machine safe in
+their use of internal data.  This does not mean thread safe, and an
+application could be thread safe, but not state machine safe (if it
+instead used thread-local variables).
+
+So, what does it mean for a library to be state machine safe?  This is
+mostly a question of context, and how the library manages whatever
+internal state machines it has.  If the library uses a context
+variable, passed in by the caller, which contains all the information
+about the current state of the library, then it is safe.  An example
+of this state is the sequence number and session keys for an ongoing
+encrypted session).
+
+The other issue affecting state machines is 'blocking' (waiting for a
+read on a network socket).  Samba's non-blocking I/O doesn't like
+waiting for libkrb5 to go away for awhile to talk to the KDC.
+
+Samba4 provides a hook 'send_to_kdc', that allows Samba4 to take over the 
+IO handling, and run other events in the meantime.  This uses a 
+'nested event context' (which presents the challenges that the kerberos 
+library might be called again, while still in the send_to_kdc hook).
+
+Heimdal has this 'state machine safety' in parts, and we have modified
+the lorikeet branch to improve this behviour, when using a new,
+non-standard API to tunnelling a ccache (containing a set of tickets)
+through the gssapi, by temporarily casting the ccache pointer to a 
+gss credential pointer.  
+This new API is Heimdal's samba4-requested gss_krb5_import_cred() fcn;
+this will have to be rewritten or ported in the MIT port.
+
+This replaces an older scheme using the KRB5_CCACHE
+environment variable to get the same job done.  This tunnelling trick 
+enables a command-line app-client to run kinit tacitly, before running 
+GSSAPI for service-authentication.  This tunnelling trick avoids the 
+more usual approach of keeping the ccache pointer in a global variable.
+
+No longer true;  the krb5_context global is gone now:
+[Heimdal uses a per-context variable for the 'krb5_auth_context', which
+controls the ongoing encrypted connection, but does use global
+variables for the ubiquitous krb5_context parameter.] 
+
+The modification that has added most to 'state machine safety' of
+GSSAPI is the addition of the gss_krb5_acquire_creds() function.  This
+allows the caller to specify a keytab and ccache, for use by the
+GSSAPI code.  Therefore there is no need to use global variables to
+communicate this information about keytab & ccache. 
+
+At a more theoritical level (simply counting static and global
+variables) Heimdal is not state machine safe for the GSSAPI layer.
+(Heimdal is now (6/09) much more nearly free of globals.)
+The Krb5 layer alone is much closer, as far as I can tell, blocking
+excepted. .
+
+
+As an alternate to fixing MIT Kerberos for better safety in this area, 
+a new design might be implemented in Samba, where blocking read/write 
+is made to the KDC in another (fork()ed) child process, and the results 
+passed back to the parent process for use in other non-blocking operations. 
+
+To deal with blocking, we could have a fork()ed child per context,
+using the 'GSSAPI export context' function to transfer
+the GSSAPI state back into the main code for the wrap()/unwrap() part
+of the operation.  This will still hit issues of static storage (one
+gss_krb5_context per process, and multiple GSSAPI encrypted sessions
+at a time) but these may not matter in practice.
+
+This approach has long been controversial in the Samba team. 
+An alternate way would be to be implement E_AGAIN in libkrb5:  similar
+to the way to way read() works with incomplete operations.  to do this
+in libkrb5 would be difficult, but valuable.
+
+In the short-term, we deal with blocking by taking over the network
+send() and recv() functions, therefore making them 'semi-async'.  This
+doens't apply to DNS yet.These thread-safety context-variables will
+probably present porting problems, during the MIT port.  This will
+probably be most of the work in the port to MIT.
+
+
+
+GSSAPI and Kerberos extensions
+------------------------------
+
+This is a general list of the other extensions we have made to / need from
+the kerberos libraries
+
+ - DCE_STYLE : Microsoft's hard-coded 3-msg Challenge/Response handshake
+   emulates DCE's preference for C/R.  Microsoft calls this DCE_STYLE.
+   MIT already has this nowadays (6/09).
+
+ - gsskrb5_get_initiator_subkey() (return the exact key that Samba3
+   has always asked for.  gsskrb5_get_subkey() might do what we need
+   anyway).  This is necessary, because in some spots, Microsoft uses
+   raw Kerberos keys, outside the Kerberos protocls, and not using Kerberos 
+   wrappings etc.  Ie, as a direct input to MD5 and ARCFOUR, without using 
+   the make_priv() or make_safe() calls.
+
+ - gsskrb5_acquire_creds() (takes keytab and/or ccache as input
+   parameters, see keytab and state machine discussion in prev section)
+
+Not needed anymore, because MIT's code now handles PACs fully:
+ - gss_krb5_copy_service_keyblock() (get the key used to actually
+   encrypt the ticket to the server, because the same key is used for
+   the PAC validation).
+ - gsskrb5_extract_authtime_from_sec_context (get authtime from
+   kerberos ticket)
+ - gsskrb5_extract_authz_data_from_sec_context (get authdata from
+   ticket, ie the PAC.  Must unwrap the data if in an AD-IFRELEVENT)]
+The new function to handle the PAC fully
+ - gsskrb5_extract_authz_data_from_sec_context()
+
+Samba still needs this one:
+ - gsskrb5_wrap_size (find out how big the wrapped packet will be,
+   given input length).
+
+Keytab requirements
+-------------------
+
+Because windows machine account handling is very different to the
+traditional 'MIT' keytab operation.
+This starts when we look at the basics of the secrets handling:
+
+Samba file-servers can have many server-name simultaneously (kindof
+like web servers' software virtual hosting), but since these servers
+are running in AD, these names are free to be set up to all share
+the same secret key.  In AD, host-sharing server names almost always 
+share a secret key like this.  In samba3, this key-sharing was optional, so
+some samba3 hosts' keytabs did hold multiple keys.  samba4 abandons this
+traditional "old MIT" style of keytab, and only supports one key per keytab,
+and multiple server-names can use that keytab key in common.
+Heimdal offered "in-memory keytabs" for servers that use passwords. 
+These server-side passwords were held in a Samba LDB database called secrets.ldb,
+and the heimdal library would be supplied the password from the ldb file and 
+would construct an in-memory keytab struct containing the password, 
+just as if the library had read an MIT-style keytab file.
+Unfortunately, only later, at recv_auth() time, would the heimdal library
+convert the PW into a salted-&-hashed AES key, by hashing 10,000 times with
+SHA-1.  So, nowadays, this password-based in-memory keytab is seen as too
+slow, and is falling into disuse.
+
+Traditional 'MIT' behaviour is to use a keytab, containing salted key
+data, extracted from the KDC.  (In this modal, there is no 'service
+password', instead the keys are often simply application of random
+bytes).  Heimdal also implements this behaviour.
+
+The windows modal is very different - instead of sharing a keytab with
+each member server, a random utf-16 pseudo-textual password is stored 
+for the whole machine.  
+The password is set with non-kerberos mechanisms (particularly SAMR, 
+a DCE-RPC service) and when interacting on a kerberos basis, the
+password is salted by the member server (ie, an AD server-host).  
+(That is, no salt information appears to be conveyed from the AD KDC 
+to the member server.  ie, the member server must use the rule's 
+described in Luke's mail above).
+
+pre-win7 AD and samba3/4 both use SAMR, an older protocol, to jumpstart
+the member server's PW-sharing with AD (the "windows domain-join process").  
+This PW-sharing transfers only the PW's utf-16 text, without any salting 
+or hashing, so that non-krb security mechanisms can use the same utf-16
+text PW.  for windows 7, this domain-joining uses LDAP for PW-setting.
+
+In dealing with this model, we use both the traditional file
+keytab and in-MEMORY keytabs.  
+
+When dealing with a windows KDC, the behaviour regarding case
+sensitivity and canonacolisation must be accomidated.  This means that
+an incoming request to a member server may have a wide variety of
+service principal names.  These include:
+
+machine$@REALM (samba clients)
+HOST/foo.bar@realm (win2k clients)
+HOST/foo@realm (win2k clients, using netbios)
+cifs/foo.bar@realm (winxp clients)
+cifs/foo@realm (winxp clients, using netbios)
+
+as well as all case variations on the above.  
+
+Heimdal's GSSAPI expects to get a principal-name & a keytab, possibly containing
+multiple principals' different keys.  However, AD has a different problem to
+solve, which is that the client may know the member-server by a non-canonicalized
+principal name, yet AD knows the keytab contains exactly one key, indexed by
+the canonical name.  So, GSSAPI is unprepared to canonicalize the server-name
+that the cliet requested, and is also overprepared to do an unnecessary search
+through the keytab by principal-name.  So samba's server-side GSSAPI calls game 
+the GSSAPI, by supplying the server's known canonical name, and the one-key keytab.
+this doesn't really affect the port to mit-krb.
+
+Because the number of U/L case combinations got 'too hard' to put into a keytab in the
+traditional way (with the client to specify the name), we either
+pre-compute the keys into a traditional keytab or make an in-MEMORY
+keytab at run time.  In both cases we specifiy the principal name to
+GSSAPI, which avoids the need to store duplicate principals.
+
+We use a 'private' keytab in our private dir, referenced from the
+secrets.ldb by default.
+
+Extra Heimdal functions used
+----------------------------
+these fcns didn't exist in the MIT code, years ago, when samba started.
+AB will try to build a final list of these fcns.
+
+(an attempt to list some of the Heimdal-specific functions I know we use)
+
+krb5_free_keyblock_contents()
+
+also a raft of prinicpal manipulation functions:
+
+Prncipal Manipulation
+---------------------
+
+Samba makes extensive use of the principal manipulation functions in
+Heimdal, including the known structure behind krb_principal and
+krb5_realm (a char *).  for example,
+krb5_parse_name_flags(smb_krb5_context->krb5_context, name, 
+                      KRB5_PRINCIPAL_PARSE_MUST_REALM, &principal);
+krb5_princ_realm(smb_krb5_context->krb5_context, principal);
+krb5_unparse_name_flags(smb_krb5_context->krb5_context, principal, 
+                        KRB5_PRINCIPAL_UNPARSE_NO_REALM, &new_princ);
+These are needed for juggling the AD variant-structures for server names.
+
+Authz data extraction
+---------------------
+
+We use krb5_ticket_get_authorization_data_type(), and expect it to
+return the correct authz data, even if wrapped in an AD-IFRELEVENT container.
+
+KDC/hdb Extensions
+--------------
+
+We have modified Heimdal's 'hdb' interface to specify the 'class' of
+Principal being requested.  This allows us to correctly behave with
+the different 'classes' of Principal name.  This is necessary because
+of the AD structure, which uses very different record-structures 
+for user-principals, trust principals & server-principals.
+
+We currently define 3 classes:
+ - client (kinit)
+ - server (tgt)
+ - krbtgt (kinit, tgt) the kdc's own ldap record
+
+I also now specify the kerberos principal as an explict parameter to LDB_fetch(), 
+not an in/out value on the struct hdb_entry parameter itself.
+
+Private Data pointer (and windc hooks) (see above):
+ In addition, I have added a new interface hdb_fetch_ex(), which
+ returns a structure including a private data-pointer, which may be used 
+ by the windc plugin inferface functions.  The windc plugin provides 
+ the hook for the PAC, as well as a function for the main access control routines.
+
+ A new windc plugin function should be added to increment the bad password counter
+ on failure.
+
+libkdc (doesn't matter for IPA; Samba invokes the Heimdal kdc as a library call,
+but this is just a convenience, and the MIT port can do otherwise w/o trouble.)
+------
+
+Samba4 needs to be built as a single binary (design requirement), and
+this should include the KDC.  Samba also (and perhaps more
+importantly) needs to control the configuration environment of the
+KDC.  
+
+The interface we have defined for libkdc allow for packet injection
+into the post-socket layer, with a defined krb5_context and
+kdb5_kdc_configuration structure.  These effectively redirect the
+kerberos warnings, logging and database calls as we require.
+
+Using our socket lib (para 3 does matter for the send_to_kdc() plugin).  
+See also the discussion about state machine safety above)
+--------------------
+
+An important detail in the use of libkdc is that we use samba4's own socket
+lib.  This allows the KDC code to be as portable as the rest of samba
+(this cuts both ways), but far more importantly it ensures a
+consistancy in the handling of requests, binding to sockets etc.
+
+To handle TCP, we use of our socket layer in much the same way as
+we deal with TCP for CIFS.  Tridge created a generic packet handling
+layer for this.
+
+For the client, samba4 likewise must take over the socket functions, 
+so that our single thread smbd will not lock up talking to itself.  
+(We allow processing while waiting for packets in our socket routines).
+send_to_kdc() presents to its caller the samba-style socket interface,
+but the MIT port will reimplement send_to_kdc(), and this routine will
+use internally the same socket library that MIT-krb uses.
+
+Kerberos logging support  (this will require porting attention)
+------------------------
+
+Samba4 now (optionally in the main code, required for the KDC) uses the
+krb5_log_facility from Heimdal.  This allows us to redirect the
+warnings and status from the KDC (and client/server kerberos code) to
+Samba's DEBUG() system.
+
+Similarly important is the Heimdal-specific krb5_get_error_string()
+function, which does a lot to reduce the 'administrator pain' level,
+by providing specific, english text-string error messages instead of
+just error code translations.  (this isn't necessarty for the port,
+but it's more useful than MIT's default err-handling;  make sure 
+this works for MIT-krb)
+
+
+Short name rules
+----------------
+
+Samba is highly likely to be misconfigured, in many weird and
+interesting ways.  As such, we have a patch for Heimdal that avoids
+DNS lookups on names without a . in them.  This should avoid some
+delay and root server load.   (this may need to be ported to MIT.)
+
+PAC Correctness
+---------------
+
+We now put the PAC into the TGT, not just the service ticket.  
+
+Forwarded tickets
+-----------------
+
+We extract forwarded tickets from the GSSAPI layer, and put
+them into the memory-based credentials cache.  
+We can then use them for proxy work.
+
+
+Kerberos TODO
+=============
+
+(Feel free to contribute to any of these tasks, or ask
+abartlet@samba.org about them).
+
+Lockout Control  (still undone in samba4 on heimdal)
+--------------
+
+We need to get (either if PADL publishes their patch, or write our
+own) access control hooks in the Heimdal KDC.  We need to lockout
+accounts (eg, after 10 failed PW-attemps), and perform other controls.
+This is standard AD behavior, that samba4 needs to get right, whether
+heimdal or MIT-krb is doing the ticket work.
+
+Gssmonger
+---------
+
+Microsoft has released a krb-specific testsuite called gssmonger, 
+which tests interop.  We should compile it against lorikeet-heimdal, 
+MIT and see if we can build a 'Samba4' server for it.
+GSSMonger wasn't intended to be Windows-specific.
+
+Kpasswd server (kpasswd server is now finished, but not testsuite)
+--------------
+
+I have a partial kpasswd server which needs finishing, and a we need a
+client testsuite written, either via the krb5 API or directly against
+GENSEC and the ASN.1 routines.
+Samba4 likes to test failure-modes, not just successful behavior.
+
+Currently it only works for Heimdal, not MIT clients.  This may be due
+to call ordering constraints.
+
+
+Correct TCP support
+-------------------
+
+Samba4 socket-library's current TCP support does not send back 'too large' 
+error messages if the high bit is set.  This is needed for a proposed extension
+mechanism (SSL-armored kinit, by Leif Johansson <leifj@it.su.se>), 
+but is likewise unsupported in both current Heimdal and MIT.
+
+=========================================================================
+AB says MIT's 1.7 announcement about AD support covers Luke Howard's 
+changes.  It all should be easy for IPA to exploit/use during the port
+of Samba4 to MIT.
+AB says Likewise software will likely give us their freeware NTLM/MIT-krb
+implementation.

@@ -1,0 +1,18 @@
+<samba:parameter name="debug hires timestamp"
+                 context="G"
+                 developer="1"
+				 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>
+    Sometimes the timestamps in the log messages are needed with a resolution of higher that seconds, this 
+    boolean parameter adds microsecond resolution to the timestamp  message header when turned on.
+    </para>
+
+    <para>
+    Note that the parameter <smbconfoption name="debug timestamp"/> must be on for this to have an effect.
+    </para>
+
+</description>
+<value type="default">yes</value>
+</samba:parameter>

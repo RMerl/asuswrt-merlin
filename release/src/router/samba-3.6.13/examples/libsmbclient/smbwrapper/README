@@ -1,0 +1,40 @@
+To create "smbsh" on Linux, just type "make".
+
+If you execute "smbsh" in *this* directory (so that it can find the required
+shared library), you'll find yourself in a new shell.  You can then issue
+commands referencing the "/smb" pseudo-filesystem:
+
+  ls /smb
+  ls /smb/WORKGROUP_OR_DOMAIN
+  ls /smb/SERVER
+  ls /smb/SERVER/SHARE
+  ls /smb/SERVER/SHARE/PATH
+
+Note that WORKGROUP_OR_DOMAIN is *not* used other than at that level.  This is
+consistent with the smb:// URI definition.
+
+Usage:
+  smbsh [-L <path to find smbwrapper.so>]
+        [-p <library to load before smbwrapper.so>]
+        [-a <library to load after smbwrapper.so>]
+        [-d <debug value for libsmbclient>]
+        [-n]                                    (do not ask for username/password)
+        [-W <workgroup>]
+        [-U <username%password]
+        [command]
+
+So to list the contents of \\MYDESK\C$ where a username (adventure) and password
+(xyzzy) are required, and with smbwrapper.so installed in /usr/share/samba, you
+could try:
+
+  smbsh -L /usr/share/samba -U adventure%xyzzy ls '/smb/MYDESK/C$'
+
+(It's a good idea to get in the habit of surrounding windows paths in single
+quotes, since they often contain spaces and other characters that'll give you
+headaches when not escaped.)
+
+This smbsh seems to work quite well on Linux 2.4 and 2.6.  The biggest problem it
+has is in tracking your current working directory.  I haven't had the time to
+track that down and fix it.
+
+Derrell Lipman

@@ -1,0 +1,18 @@
+<samba:parameter name="domain logons"
+                 context="G"
+				 type="boolean"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	If set to <constant>yes</constant>, the Samba server will
+	provide the netlogon service for Windows 9X network logons for the
+	<smbconfoption name="workgroup"/> it is in.
+	This will also cause the Samba server to act as a domain
+	controller for NT4 style domain services. For more details on
+	setting up this feature see the Domain Control chapter of the
+	Samba HOWTO Collection.
+	</para>
+</description>
+<value type="default">no</value>
+</samba:parameter>

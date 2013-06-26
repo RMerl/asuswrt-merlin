@@ -1,0 +1,15 @@
+<samba:parameter name="ldap idmap suffix"
+                 context="G"
+		 advanced="1" developer="1"
+		 type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This parameters specifies the suffix that is used when storing idmap mappings. If this parameter 
+	is unset, the value of <smbconfoption name="ldap suffix"/> will be used instead.  The suffix 
+	string is pre-pended to the <smbconfoption name="ldap suffix"/> string so use a partial DN.
+	</para>
+</description>
+<value type="default"></value>
+<value type="example">ou=Idmap</value>
+</samba:parameter>

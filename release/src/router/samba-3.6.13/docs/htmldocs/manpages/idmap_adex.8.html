@@ -1,0 +1,43 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>idmap_adex</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" title="idmap_adex"><a name="idmap_adex.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>idmap_adex &#8212; Samba's idmap_adex Backend for Winbind</p></div><div class="refsynopsisdiv" title="DESCRIPTION"><h2>DESCRIPTION</h2><p>
+	  The idmap_adex plugin provides a way for Winbind to read
+	  id mappings from an AD server that uses RFC2307 schema
+	  extensions. This module implements both the idmap and nss_info
+	  APIs and supports domain trustes as well as two-way cross
+	  forest trusts.  It is a read-only plugin requiring that the
+	  administrator provide mappings in advance by adding the
+	  POSIX attribute information to the users and groups objects
+	  in AD.  The most common means of doing this is using "Identity
+	  Services for Unix" support on Windows 2003 R2 and later.
+	</p><p>
+	  Note that you must add the uidNumber, gidNumber, and uid
+	  attributes to the partial attribute set of the forest global
+	  catalog servers.  This can be done using the Active Directory Schema
+	  Management MMC plugin (schmmgmt.dll).
+	</p></div><div class="refsynopsisdiv" title="NSS_INFO"><h2>NSS_INFO</h2><p>
+	  The nss_info plugin supports reading the unixHomeDirectory,
+	  gidNumber, loginShell, and uidNumber attributes from the user
+	  object and the gidNumber attribute from the group object to
+	  fill in information required by the libc getpwnam() and
+	  getgrnam() family of functions.  Group membership is filled in
+	  according to the Windows group membership and not the
+	  msSFU30PosixMember attribute.
+	</p><p>
+	  Username aliases are implement by setting the uid attribute
+	  on the user object.  While group name aliases are implemented
+	  by reading the displayname attribute from the group object.
+	</p></div><div class="refsect1" title="EXAMPLES"><a name="id266365"></a><h2>EXAMPLES</h2><p>
+	  The following example shows how to retrieve idmappings and NSS data
+	  from our principal and trusted AD domains.
+	</p><pre class="programlisting">
+	[global]
+	idmap config * : backend = adex
+	idmap config * : range = 1000-4000000000
+
+	winbind nss info = adex
+	winbind normalize names = yes
+	</pre></div><div class="refsect1" title="AUTHOR"><a name="id266838"></a><h2>AUTHOR</h2><p>
+	The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.
+	</p></div></div></body></html>

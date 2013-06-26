@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+
+conf.CHECK_HEADERS('linux/inotify.h asm/unistd.h sys/inotify.h', add_headers=False)
+
+conf.CHECK_FUNCS('inotify_init')
+
+conf.CHECK_VARIABLE('__NR_inotify_init')
+conf.CHECK_DECLS('F_SETLEASE', headers='linux/fcntl.h', reverse=True)
+conf.CHECK_DECLS('SA_SIGINFO', headers='signal.h', reverse=True)
+
+conf.CHECK_DECLS('__NR_inotify_init', reverse=True, headers='asm/unistd.h')
+
+if (conf.CONFIG_SET('HAVE___NR_INOTIFY_INIT') and
+    (conf.CONFIG_SET('HAVE_LINUX_INOTIFY_H') or
+     conf.CONFIG_SET('HAVE_SYS_INOTIFY_H'))):
+    conf.DEFINE('HAVE_LINUX_INOTIFY', 1)

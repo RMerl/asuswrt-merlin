@@ -1,0 +1,57 @@
+dn: CN={${POLICYGUID}},CN=Policies,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+objectClass: groupPolicyContainer
+displayName: Default Domain Policy
+gPCFunctionalityVersion: 2
+gPCFileSysPath: \\${DNSDOMAIN}\sysvol\${DNSDOMAIN}\Policies\{${POLICYGUID}}
+versionNumber: 0
+flags: 0
+gPCMachineExtensionNames: [{35378EAC-683F-11D2-A89A-00C04FBBCFA2}{53D6AB1B-248
+ 8-11D1-A28C-00C04FB94F17}][{827D319E-6EAC-11D2-A4EA-00C04F79F83A}{803E14A0-B4
+ FB-11D0-A0D0-00A0C90F574B}][{B1BE8D72-6EAC-11D2-A4EA-00C04F79F83A}{53D6AB1B-2
+ 488-11D1-A28C-00C04FB94F17}]
+gPCUserExtensionNames: [{3060E8D0-7020-11D2-842D-00C04FA372D4}{3060E8CE-7020-1
+ 1D2-842D-00C04FA372D4}][{35378EAC-683F-11D2-A89A-00C04FBBCFA2}{0F6B957E-509E-
+ 11D1-A7CC-0000F87571E3}]
+isCriticalSystemObject: TRUE
+systemFlags: -1946157056
+
+dn: CN=User,CN={${POLICYGUID}},CN=Policies,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+isCriticalSystemObject: TRUE
+systemFlags: -1946157056
+
+dn: CN=Machine,CN={${POLICYGUID}},CN=Policies,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+isCriticalSystemObject: TRUE
+systemFlags: -1946157056
+
+dn: CN={${POLICYGUID_DC}},CN=Policies,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+objectClass: groupPolicyContainer
+displayName: Default Domain Controllers Policy
+gPCFunctionalityVersion: 2
+gPCFileSysPath: \\${DNSDOMAIN}\sysvol\${DNSDOMAIN}\Policies\{${POLICYGUID_DC}}
+versionNumber: 0
+flags: 0
+gPCMachineExtensionNames: [{827D319E-6EAC-11D2-A4EA-00C04F79F83A}{803E14A0-B4
+ FB-11D0-A0D0-00A0C90F574B}]
+isCriticalSystemObject: TRUE
+systemFlags: -1946157056
+
+dn: CN=User,CN={${POLICYGUID_DC}},CN=Policies,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+isCriticalSystemObject: TRUE
+systemFlags: -1946157056
+
+dn: CN=Machine,CN={${POLICYGUID_DC}},CN=Policies,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+isCriticalSystemObject: TRUE
+systemFlags: -1946157056
+

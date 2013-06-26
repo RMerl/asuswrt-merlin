@@ -1,0 +1,369 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 35. Updating and Upgrading Samba</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><link rel="home" href="index.html" title="The Official Samba 3.5.x HOWTO and Reference Guide"><link rel="up" href="migration.html" title="Part IV. Migration and Updating"><link rel="prev" href="migration.html" title="Part IV. Migration and Updating"><link rel="next" href="NT4Migration.html" title="Chapter 36. Migration from NT4 PDC to Samba-3 PDC"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 35. Updating and Upgrading Samba</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="migration.html">Prev</a> </td><th width="60%" align="center">Part IV. Migration and Updating</th><td width="20%" align="right"> <a accesskey="n" href="NT4Migration.html">Next</a></td></tr></table><hr></div><div class="chapter" title="Chapter 35. Updating and Upgrading Samba"><div class="titlepage"><div><div><h2 class="title"><a name="upgrading-to-3.0"></a>Chapter 35. Updating and Upgrading Samba</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Jelmer</span> <span class="othername">R.</span> <span class="surname">Vernooij</span></h3><div class="affiliation"><span class="orgname">The Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jelmer@samba.org">jelmer@samba.org</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">John</span> <span class="othername">H.</span> <span class="surname">Terpstra</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jht@samba.org">jht@samba.org</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">Gerald</span> <span class="othername">(Jerry)</span> <span class="surname">Carter</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jerry@samba.org">jerry@samba.org</a>&gt;</code></p></div></div></div></div><div><p class="pubdate">August 16, 2007</p></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="upgrading-to-3.0.html#id438461">Key Update Requirements</a></span></dt><dd><dl><dt><span class="sect2"><a href="upgrading-to-3.0.html#id438485">Upgrading from Samba-3.0.x to Samba-3.2.0</a></span></dt><dt><span class="sect2"><a href="upgrading-to-3.0.html#oldupdatenotes">Upgrading from Samba-2.x to Samba-3.0.25</a></span></dt><dt><span class="sect2"><a href="upgrading-to-3.0.html#id438531">Quick Migration Guide</a></span></dt></dl></dd><dt><span class="sect1"><a href="upgrading-to-3.0.html#id438669">New Features in Samba-3.x Series</a></span></dt><dd><dl><dt><span class="sect2"><a href="upgrading-to-3.0.html#id438678">New Features in Samba-3.2.x Series</a></span></dt><dt><span class="sect2"><a href="upgrading-to-3.0.html#id438918">New Features in Samba-3.0.x</a></span></dt><dt><span class="sect2"><a href="upgrading-to-3.0.html#id440069">New Functionality</a></span></dt></dl></dd></dl></div><p>
+This chapter provides a detailed record of changes made during the 3.x series releases. At this time this
+series consists of the 3.0.x series that is under the GNU GPL version 2 license, and the Samba 3.2.x series
+that is being released under the terms of the GNU GPL version 3 license.
+</p><div class="sect1" title="Key Update Requirements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id438461"></a>Key Update Requirements</h2></div></div></div><p>
+Samba is a fluid product in which there may be significant changes between releases. Some of these changes are
+brought about as a result of changes in the protocols that are used by Microsoft Windows network clients as a
+result of security or functionality updates through official Microsoft patches and updates. Samba must track
+such changes, particularly where they affect the internal operation of Samba itself.
+</p><p>
+Please refer to any notes below that make explicit mention of the version of Samba you are using. In general,
+all changes that apply to a new release will apply to follow-on releases also. For example, changes to Samba
+3.0.23 affect all releases up to an including 3.0.25 and later.  Samba 3.2.x was originaly cut from Samba
+3.0.25 before 3.2.0-specific changes were applied. Unless a 3.0.x series feature is specifically revoked, the
+behavior of the 3.2.x series can be expected to follow the earlier pattern.
+</p><div class="sect2" title="Upgrading from Samba-3.0.x to Samba-3.2.0"><div class="titlepage"><div><div><h3 class="title"><a name="id438485"></a>Upgrading from Samba-3.0.x to Samba-3.2.0</h3></div></div></div><p>
+</p></div><div class="sect2" title="Upgrading from Samba-2.x to Samba-3.0.25"><div class="titlepage"><div><div><h3 class="title"><a name="oldupdatenotes"></a>Upgrading from Samba-2.x to Samba-3.0.25</h3></div></div></div><p>
+<a class="indexterm" name="id438507"></a>
+<a class="indexterm" name="id438513"></a>
+<a class="indexterm" name="id438520"></a>
+This chapter deals exclusively with the differences between Samba-3.0.25 and Samba-2.2.8a.
+It points out where configuration parameters have changed, and provides a simple guide for
+the move from 2.2.x to 3.0.25.
+</p></div><div class="sect2" title="Quick Migration Guide"><div class="titlepage"><div><div><h3 class="title"><a name="id438531"></a>Quick Migration Guide</h3></div></div></div><p>
+Samba-3.0.25 default behavior should be approximately the same as Samba-2.2.x.
+The default behavior when the new parameter <a class="link" href="smb.conf.5.html#PASSDBBACKEND" target="_top">passdb backend</a>
+is not defined in the <code class="filename">smb.conf</code> file provides the same default behavior as Samba-2.2.x
+with <a class="link" href="smb.conf.5.html#ENCRYPTPASSWORDS" target="_top">encrypt passwords = Yes</a> and
+will use the <code class="filename">smbpasswd</code> database.
+</p><p>
+<a class="indexterm" name="id438577"></a>
+<a class="indexterm" name="id438584"></a>
+So why say that <span class="emphasis"><em>behavior should be approximately the same as Samba-2.2.x</em></span>? Because
+Samba-3.0.25 can negotiate new protocols, such as support for native Unicode, that may result in
+differing protocol code paths being taken. The new behavior under such circumstances is not
+exactly the same as the old one. The good news is that the domain and machine SIDs will be
+preserved across the upgrade.
+</p><p>
+<a class="indexterm" name="id438601"></a>
+<a class="indexterm" name="id438608"></a>
+<a class="indexterm" name="id438615"></a>
+<a class="indexterm" name="id438621"></a>
+If the Samba-2.2.x system is using an LDAP backend, and there is no time to update the LDAP
+database, then make sure that <a class="link" href="smb.conf.5.html#PASSDBBACKEND" target="_top">passdb backend = ldapsam_compat</a>
+is specified in the <code class="filename">smb.conf</code> file. For the rest, behavior should remain more or less the same.
+At a later date, when there is time to implement a new Samba-3-compatible LDAP backend, it is possible
+to migrate the old LDAP database to the new one through use of the <code class="literal">pdbedit</code>.
+See <a class="link" href="passdb.html#pdbeditthing" title="The pdbedit Tool">The <span class="emphasis"><em>pdbedit</em></span> Command</a>.
+</p></div></div><div class="sect1" title="New Features in Samba-3.x Series"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id438669"></a>New Features in Samba-3.x Series</h2></div></div></div><p>
+</p><div class="sect2" title="New Features in Samba-3.2.x Series"><div class="titlepage"><div><div><h3 class="title"><a name="id438678"></a>New Features in Samba-3.2.x Series</h3></div></div></div><p>Samba is now distributed under the version 3
+of the new GNU General Public License. 
+</p><p>
+The major new features are:
+</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>
+<a class="indexterm" name="id438702"></a>
+<a class="indexterm" name="id438709"></a>
+	Removal of the 1024 byte limit on pathnames and 256 byte limit on
+	filename components to honor the MAX_PATH setting from the host OS.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438722"></a>
+<a class="indexterm" name="id438728"></a>
+	Introduction of a registry based configuration system.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438740"></a>
+	Experimental support for file serving clusters.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438752"></a>
+	Support for IPv6 in the server, and client tools and libraries.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438763"></a>
+	Support for storing alternate data streams in xattrs.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438775"></a>
+	Encrypted SMB transport in client tools and libraries, and server.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438787"></a>
+	Support for Vista clients authenticating via Kerberos.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438799"></a>
+<a class="indexterm" name="id438805"></a>
+	Full support for Windows 2003 cross-forest, transitive trusts
+	and one-way domain trusts.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438817"></a>
+	Support for userPrincipalName logons via pam_winbind and NSS lookups.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438829"></a>
+<a class="indexterm" name="id438836"></a>
+<a class="indexterm" name="id438843"></a>
+	Support for Active Directory LDAP Signing policy.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438854"></a>
+<a class="indexterm" name="id438861"></a>
+	New LGPL Winbind client library (libwbclient.so).
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438873"></a>
+<a class="indexterm" name="id438879"></a>
+	Support for establishing interdomain trust relationships with Windows 2008.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438891"></a>
+	New client and server support for remotely joining and unjoining Domains.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438904"></a>
+        Support for joining into Windows 2008 domains.
+        </p></li></ol></div><p>
+Plus lots of other improvements!
+</p></div><div class="sect2" title="New Features in Samba-3.0.x"><div class="titlepage"><div><div><h3 class="title"><a name="id438918"></a>New Features in Samba-3.0.x</h3></div></div></div><p>
+The major new features are:
+</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>
+<a class="indexterm" name="id438939"></a>
+<a class="indexterm" name="id438946"></a>
+	Active Directory support. This release is able to join an ADS realm
+	as a member server and authenticate users using LDAP/Kerberos.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438958"></a>
+<a class="indexterm" name="id438965"></a>
+	Unicode support. Samba will now negotiate Unicode on the wire, and
+	internally there is a much better infrastructure for multibyte
+	and Unicode character sets.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438978"></a>
+	New authentication system. The internal authentication system has
+	been almost completely rewritten. Most of the changes are internal,
+	but the new authoring system is also very configurable.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id438990"></a>
+	New filename mangling system. The filename mangling system has been
+	completely rewritten. An internal database now stores mangling maps
+	persistently.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id439003"></a>
+	New <span class="quote">&#8220;<span class="quote">net</span>&#8221;</span> command. A new <span class="quote">&#8220;<span class="quote">net</span>&#8221;</span> command has been added. It is
+	somewhat similar to the <span class="quote">&#8220;<span class="quote">net</span>&#8221;</span> command in Windows. Eventually, we
+	plan to replace a bunch of other utilities (such as smbpasswd)
+	with subcommands in <span class="quote">&#8220;<span class="quote">net</span>&#8221;</span>.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id439029"></a>
+	Samba now negotiates NT-style status32 codes on the wire. This
+	considerably improves error handling.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id439041"></a>
+	Better Windows 200x/XP printing support, including publishing
+	printer attributes in Active Directory.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id439054"></a>
+<a class="indexterm" name="id439060"></a>
+<a class="indexterm" name="id439067"></a>
+	New loadable RPC modules for passdb backends and character sets.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id439079"></a>
+	New default dual-daemon winbindd support for better performance.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id439091"></a>
+<a class="indexterm" name="id439097"></a>
+<a class="indexterm" name="id439104"></a>
+	Support for migrating from a Windows NT 4.0 domain to a Samba
+	domain and maintaining user, group, and domain SIDs.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id439116"></a>
+<a class="indexterm" name="id439123"></a>
+	Support for establishing trust relationships with Windows NT 4.0
+	domain controllers.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id439135"></a>
+<a class="indexterm" name="id439142"></a>
+<a class="indexterm" name="id439148"></a>
+	Initial support for a distributed Winbind architecture using
+	an LDAP directory for storing SID to UID/GID mappings.
+	</p></li><li class="listitem"><p>
+	Major updates to the Samba documentation tree.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id439166"></a>
+<a class="indexterm" name="id439172"></a>
+	Full support for client and server SMB signing to ensure
+	compatibility with default Windows 2003 security settings.
+	</p></li></ol></div><p>
+Plus lots of other improvements!
+</p><div class="sect3" title="Configuration Parameter Changes"><div class="titlepage"><div><div><h4 class="title"><a name="id439186"></a>Configuration Parameter Changes</h4></div></div></div><p>
+This section contains a brief listing of changes to <code class="filename">smb.conf</code> options since the Samba-2.2.x series up to and
+including Samba-3.0.25.
+</p><p>
+Please refer to the smb.conf(5) man page for complete descriptions of new or modified
+parameters.
+</p><p>
+Whenever a Samba update or upgrade is performed it is highly recommended to read the file called
+<span class="emphasis"><em>WHATSNEW.txt</em></span> that is part of the Samba distribution tarball. This file may also
+be obtain on-line from the Samba <a class="ulink" href="http://www.samba.org/samba/" target="_top">web site</a>, in
+the right column, under Current Stable Release, by clicking on <span class="emphasis"><em>Release Notes</em></span>.
+</p></div><div class="sect3" title="Removed Parameters"><div class="titlepage"><div><div><h4 class="title"><a name="id439226"></a>Removed Parameters</h4></div></div></div><a class="indexterm" name="id439231"></a><p>
+In alphabetical order, these are the parameters eliminated from Samba-2.2.x through 3.0.25.
+</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>admin log</p></li><li class="listitem"><p>alternate permissions</p></li><li class="listitem"><p>character set</p></li><li class="listitem"><p>client codepage</p></li><li class="listitem"><p>code page directory</p></li><li class="listitem"><p>coding system</p></li><li class="listitem"><p>domain admin group</p></li><li class="listitem"><p>domain guest group</p></li><li class="listitem"><p>enable rid algorithm</p></li><li class="listitem"><p>enable svcctl</p></li><li class="listitem"><p>force unknown acl user</p></li><li class="listitem"><p>hosts equiv</p></li><li class="listitem"><p>ldap filter</p></li><li class="listitem"><p>min password length</p></li><li class="listitem"><p>nt smb support</p></li><li class="listitem"><p>post script</p></li><li class="listitem"><p>printer admin</p></li><li class="listitem"><p>printer driver</p></li><li class="listitem"><p>printer driver file</p></li><li class="listitem"><p>printer driver location</p></li><li class="listitem"><p>read size</p></li><li class="listitem"><p>source environment</p></li><li class="listitem"><p>status </p></li><li class="listitem"><p>strip dot </p></li><li class="listitem"><p>total print jobs</p></li><li class="listitem"><p>unicode</p></li><li class="listitem"><p>use rhosts</p></li><li class="listitem"><p>valid chars</p></li><li class="listitem"><p>vfs options</p></li><li class="listitem"><p>winbind enable local accounts</p></li><li class="listitem"><p>winbind max idle children</p></li><li class="listitem"><p>wins partners</p></li></ul></div></div><div class="sect3" title="New Parameters"><div class="titlepage"><div><div><h4 class="title"><a name="id439392"></a>New Parameters</h4></div></div></div><p>The following new parameters have been released up to and including Samba 3.0.25 (grouped by function:)</p><p>Remote Management</p><a class="indexterm" name="id439405"></a><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>abort shutdown script</p></li><li class="listitem"><p>shutdown script</p></li></ul></div><p>User and Group Account Management</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>add group script</p></li><li class="listitem"><p>add machine script</p></li><li class="listitem"><p>add user to group script</p></li><li class="listitem"><p>algorithmic rid base</p></li><li class="listitem"><p>delete group script</p></li><li class="listitem"><p>delete user from group script</p></li><li class="listitem"><p>passdb backend</p></li><li class="listitem"><p>rename user script</p></li><li class="listitem"><p>set primary group script</p></li><li class="listitem"><p>username map script</p></li></ul></div><p>Authentication</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>auth methods</p></li><li class="listitem"><p>ldap password sync</p></li><li class="listitem"><p>passdb expand explicit</p></li><li class="listitem"><p>realm</p></li></ul></div><p>Protocol Options</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>add port command</p></li><li class="listitem"><p>afs token lifetime</p></li><li class="listitem"><p>client lanman auth</p></li><li class="listitem"><p>client NTLMv2 auth</p></li><li class="listitem"><p>client schannel</p></li><li class="listitem"><p>client signing</p></li><li class="listitem"><p>client use spnego</p></li><li class="listitem"><p>defer sharing violations</p></li><li class="listitem"><p>disable netbios</p></li><li class="listitem"><p>dmapi support</p></li><li class="listitem"><p>enable privileges</p></li><li class="listitem"><p>use kerberos keytab</p></li><li class="listitem"><p>log nt token command</p></li><li class="listitem"><p>ntlm auth</p></li><li class="listitem"><p>paranoid server security </p></li><li class="listitem"><p>sendfile</p></li><li class="listitem"><p>server schannel</p></li><li class="listitem"><p>server signing</p></li><li class="listitem"><p>smb ports</p></li><li class="listitem"><p>svcctl list</p></li><li class="listitem"><p>use spnego</p></li></ul></div><p>File Service</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>allocation roundup size</p></li><li class="listitem"><p>acl check permissions</p></li><li class="listitem"><p>acl group control</p></li><li class="listitem"><p>acl map full control</p></li><li class="listitem"><p>aio read size</p></li><li class="listitem"><p>aio write size</p></li><li class="listitem"><p>dfree cache time</p></li><li class="listitem"><p>dfree command</p></li><li class="listitem"><p>ea support</p></li><li class="listitem"><p>enable asu support</p></li><li class="listitem"><p>fam change notify</p></li><li class="listitem"><p>force unknown acl user</p></li><li class="listitem"><p>get quota command</p></li><li class="listitem"><p>hide special files</p></li><li class="listitem"><p>hide unwriteable files</p></li><li class="listitem"><p>inherit owner</p></li><li class="listitem"><p>hostname lookups</p></li><li class="listitem"><p>kernel change notify</p></li><li class="listitem"><p>mangle prefix</p></li><li class="listitem"><p>map acl inherit</p></li><li class="listitem"><p>map read only</p></li><li class="listitem"><p>max stat cache size</p></li><li class="listitem"><p>msdfs proxy</p></li><li class="listitem"><p>open files database hash size</p></li><li class="listitem"><p>set quota command</p></li><li class="listitem"><p>store dos attributes</p></li><li class="listitem"><p>use sendfile</p></li><li class="listitem"><p>usershare allow guests</p></li><li class="listitem"><p>usershare max shares</p></li><li class="listitem"><p>usershare owner only</p></li><li class="listitem"><p>usershare path</p></li><li class="listitem"><p>usershare prefix allow list</p></li><li class="listitem"><p>usershare prefix deny list</p></li><li class="listitem"><p>usershare template share</p></li><li class="listitem"><p>vfs objects</p></li></ul></div><p>Printing</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>cups options</p></li><li class="listitem"><p>cups server</p></li><li class="listitem"><p>force printername</p></li><li class="listitem"><p>iprint server</p></li><li class="listitem"><p>max reported print jobs</p></li><li class="listitem"><p>printcap cache time</p></li></ul></div><p>Unicode and Character Sets</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>display charset</p></li><li class="listitem"><p>dos charset</p></li><li class="listitem"><p>UNIX charset</p></li></ul></div><p>SID to UID/GID Mappings</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>idmap backend</p></li><li class="listitem"><p>idmap gid</p></li><li class="listitem"><p>idmap uid</p></li><li class="listitem"><p>username map script</p></li><li class="listitem"><p>winbind nss info</p></li><li class="listitem"><p>winbind offline logon</p></li><li class="listitem"><p>winbind refresh tickets</p></li><li class="listitem"><p>winbind trusted domains only</p></li><li class="listitem"><p>template primary group</p></li></ul></div><p>LDAP</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>ldap delete dn</p></li><li class="listitem"><p>ldap group suffix</p></li><li class="listitem"><p>ldap idmap suffix</p></li><li class="listitem"><p>ldap machine suffix</p></li><li class="listitem"><p>ldap passwd sync</p></li><li class="listitem"><p>ldap replication sleep</p></li><li class="listitem"><p>ldap timeout</p></li><li class="listitem"><p>ldap user suffix</p></li></ul></div><p>General Configuration</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>eventlog list</p></li><li class="listitem"><p>preload modules</p></li><li class="listitem"><p>reset on zero vc</p></li><li class="listitem"><p>privatedir</p></li></ul></div></div><div class="sect3" title="Modified Parameters (Changes in Behavior)"><div class="titlepage"><div><div><h4 class="title"><a name="id439940"></a>Modified Parameters (Changes in Behavior)</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>acl group control (new default is No, deprecated parameter)</p></li><li class="listitem"><p>change notify timeout (scope changed)</p></li><li class="listitem"><p>dos filemode (disabled by default)</p></li><li class="listitem"><p>dos filetimes (enabled by default)</p></li><li class="listitem"><p>enable asu support (disabled by default)</p></li><li class="listitem"><p>enable privileges (enabled by default)</p></li><li class="listitem"><p>encrypt passwords (enabled by default) </p></li><li class="listitem"><p>host msdfs (enabled by default)</p></li><li class="listitem"><p>mangling method (set to hash2 by default) </p></li><li class="listitem"><p>map to guest</p></li><li class="listitem"><p>only user (deprecated)</p></li><li class="listitem"><p>passwd chat</p></li><li class="listitem"><p>passwd program</p></li><li class="listitem"><p>password server</p></li><li class="listitem"><p>restrict anonymous (integer value)</p></li><li class="listitem"><p>security (new ads value)</p></li><li class="listitem"><p>strict locking (auto by default)</p></li><li class="listitem"><p>winbind cache time (increased to 5 minutes)</p></li><li class="listitem"><p>winbind enum groups (disabled by default)</p></li><li class="listitem"><p>winbind enum users (disabled by default)</p></li><li class="listitem"><p>winbind nested groups (enabled by default)</p></li><li class="listitem"><p>winbind uid (deprecated in favor of idmap uid)</p></li><li class="listitem"><p>winbind gid (deprecated in favor of idmap gid)</p></li><li class="listitem"><p>winbindd nss info</p></li><li class="listitem"><p>write cache (deprecated)</p></li></ul></div></div></div><div class="sect2" title="New Functionality"><div class="titlepage"><div><div><h3 class="title"><a name="id440069"></a>New Functionality</h3></div></div></div><p>
+<a class="indexterm" name="id440076"></a>
+	The major changes in behavior since that Samba-2.2.x series are documented in this section.
+	Please refer to the <code class="filename">WHATSNEW.txt</code> file that ships with every release of
+	Samba to obtain detailed information regarding the changes that have been made during the
+	life of the current Samba release.
+	</p><div class="sect3" title="TDB Data Files"><div class="titlepage"><div><div><h4 class="title"><a name="id440092"></a>TDB Data Files</h4></div></div></div><a class="indexterm" name="id440098"></a><p>
+	Refer to <a class="link" href="install.html" title="Chapter 1. How to Install and Test SAMBA">Installation, Chapter 1</a>, <a class="link" href="install.html#tdbdocs" title="TDB Database File Information">Chapter 1</a>
+	for information pertaining to the Samba-3 data files, their location and the information that must be
+	preserved across server migrations, updates and upgrades.
+	</p><p>
+<a class="indexterm" name="id440126"></a>
+	Please remember to back up your existing ${lock directory}/*tdb before upgrading to Samba-3. If necessary,
+	Samba will upgrade databases as they are opened. Downgrading from Samba-3 to 2.2, or reversion to an earlier
+	version of Samba-3 from a later release, is an unsupported path.
+	</p><p>
+<a class="indexterm" name="id440138"></a>
+	The old Samba-2.2.x tdb files are described in <a class="link" href="upgrading-to-3.0.html#oldtdbfiledesc" title="Table 35.1. Samba-2.2.x TDB File Descriptions">the next table</a>.
+	</p><div class="table"><a name="oldtdbfiledesc"></a><p class="title"><b>Table 35.1. Samba-2.2.x TDB File Descriptions</b></p><div class="table-contents"><table summary="Samba-2.2.x TDB File Descriptions" border="1"><colgroup><col align="left"><col align="justify"><col align="left"></colgroup><thead><tr><th align="left">Name</th><th align="justify">Description</th><th align="center">Backup?</th></tr></thead><tbody><tr><td align="left">account_policy</td><td align="justify">User policy settings</td><td align="left">yes</td></tr><tr><td align="left">brlock</td><td align="justify">Byte-range file locking information.</td><td align="left">no</td></tr><tr><td align="left">connections</td><td align="justify"><p>Client connection information</p></td><td align="left">no</td></tr><tr><td align="left">locking</td><td align="justify">Temporary file locking data.</td><td align="left">no</td></tr><tr><td align="left">messages</td><td align="justify"><p>Temporary storage of messages being processed by smbd.</p></td><td align="left">no</td></tr><tr><td align="left">ntdrivers</td><td align="justify"><p>Stores per-printer driver information.</p></td><td align="left">yes</td></tr><tr><td align="left">ntforms</td><td align="justify"><p>Stores per-printer forms information.</p></td><td align="left">yes</td></tr><tr><td align="left">ntprinters</td><td align="justify"><p>Stores the per-printer devmode configuration settings.</p></td><td align="left">yes</td></tr><tr><td align="left">printing/*.tdb</td><td align="justify"><p>Cached output from lpq command created on a per-print-service basis.</p></td><td align="left">no</td></tr><tr><td align="left">registry</td><td align="justify"><p>Read-only Samba registry skeleton that provides support for
+				exporting various database tables via the winreg RPCs.</p></td><td align="left">no</td></tr><tr><td align="left">sessionid</td><td align="justify"><p>Temporary cache for miscellaneous session information.</p></td><td align="left">no</td></tr><tr><td align="left">share_info</td><td align="justify">Share ACL settings.</td><td align="left">yes</td></tr><tr><td align="left">unexpected</td><td align="justify"><p>Packets received for which no process was listening.</p></td><td align="left">no</td></tr><tr><td align="left">winbindd_cache</td><td align="justify"><p>Cache of identity information received from an NT4 or an ADS domain.</p></td><td align="left">yes</td></tr><tr><td align="left">winbindd_idmap</td><td align="justify"><p>New ID map table from SIDS to UNIX UIDs/GIDs.</p></td><td align="left">yes</td></tr></tbody></table></div></div><br class="table-break"></div><div class="sect3" title="Changes in Behavior"><div class="titlepage"><div><div><h4 class="title"><a name="id440430"></a>Changes in Behavior</h4></div></div></div><p>
+	The following issues are known changes in behavior between Samba-2.2 and
+	Samba-3 that may affect certain installations of Samba.
+	</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>
+<a class="indexterm" name="id440450"></a>
+<a class="indexterm" name="id440456"></a>
+<a class="indexterm" name="id440463"></a>
+		When operating as a member of a Windows domain, Samba-2.2 would map any users authenticated by the remote DC
+		to the <span class="quote">&#8220;<span class="quote">guest account</span>&#8221;</span> if a UID could not be obtained via the getpwnam() call. Samba-3 rejects
+		the connection with the error message <span class="quote">&#8220;<span class="quote">NT_STATUS_LOGON_FAILURE.</span>&#8221;</span> There is no current workaround
+		to re-establish the Samba-2.2 behavior.
+		</p></li><li class="listitem"><p>
+<a class="indexterm" name="id440484"></a>
+<a class="indexterm" name="id440491"></a>
+		When adding machines to a Samba-2.2 controlled domain, the
+		<span class="quote">&#8220;<span class="quote">add user script</span>&#8221;</span> was used to create the UNIX identity of the
+		machine trust account. Samba-3 introduces a new <span class="quote">&#8220;<span class="quote">add machine
+		script</span>&#8221;</span> that must be specified for this purpose. Samba-3 will
+		not fall back to using the <span class="quote">&#8220;<span class="quote">add user script</span>&#8221;</span> in the absence of
+		an <span class="quote">&#8220;<span class="quote">add machine script</span>&#8221;</span>.
+		</p></li></ol></div></div><div class="sect3" title="Passdb Backends and Authentication"><div class="titlepage"><div><div><h4 class="title"><a name="id440518"></a>Passdb Backends and Authentication</h4></div></div></div><p>
+	There have been a few new changes that Samba administrators should be
+	aware of when moving to Samba-3.
+	</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>
+<a class="indexterm" name="id440538"></a>
+		Encrypted passwords have been enabled by default in order to
+		interoperate better with out-of-the-box Windows client
+		installations. This does mean that either (a) a Samba account
+		must be created for each user, or (b) <span class="quote">&#8220;<span class="quote">encrypt passwords = no</span>&#8221;</span>
+		must be explicitly defined in <code class="filename">smb.conf</code>.
+		</p></li><li class="listitem"><p>
+<a class="indexterm" name="id440561"></a>
+<a class="indexterm" name="id440568"></a>
+<a class="indexterm" name="id440574"></a>
+		Inclusion of new <a class="link" href="smb.conf.5.html#SECURITY" target="_top">security = ads</a> option for integration
+		with an Active Directory domain using the native Windows Kerberos 5 and LDAP protocols.
+		</p></li></ol></div><p>
+<a class="indexterm" name="id440598"></a>
+	Samba-3 also includes the possibility of setting up chains of authentication methods (<a class="link" href="smb.conf.5.html#AUTHMETHODS" target="_top">auth methods</a>) and account storage backends (<a class="link" href="smb.conf.5.html#PASSDBBACKEND" target="_top">passdb backend</a>).  Please refer to
+	the <code class="filename">smb.conf</code> man page and <a class="link" href="passdb.html" title="Chapter 11. Account Information Databases">Account Information Databases</a>, for
+	details. While both parameters assume sane default values, it is likely that you will need to understand what
+	the values actually mean in order to ensure Samba operates correctly.
+	</p><p>
+<a class="indexterm" name="id440645"></a>
+<a class="indexterm" name="id440652"></a>
+<a class="indexterm" name="id440658"></a>
+	Certain functions of the <code class="literal">smbpasswd</code> tool have been split between the
+	new <code class="literal">smbpasswd</code> utility, the <code class="literal">net</code> tool, and the new <code class="literal">pdbedit</code>
+	utility. See the respective man pages for details.
+	</p></div><div class="sect3" title="LDAP"><div class="titlepage"><div><div><h4 class="title"><a name="id440692"></a>LDAP</h4></div></div></div><p>
+	This section outlines the new features effecting Samba/LDAP integration.
+	</p><div class="sect4" title="New Schema"><div class="titlepage"><div><div><h5 class="title"><a name="id440701"></a>New Schema</h5></div></div></div><p>
+<a class="indexterm" name="id440709"></a>
+<a class="indexterm" name="id440715"></a>
+<a class="indexterm" name="id440722"></a>
+<a class="indexterm" name="id440729"></a>
+		A new object class (sambaSamAccount) has been introduced to replace
+		the old sambaAccount. This change aids in the renaming of attributes
+		to prevent clashes with attributes from other vendors. There is a
+		conversion script (examples/LDAP/convertSambaAccount) to modify an LDIF
+		file to the new schema.
+		</p><p>
+		Example:
+<a class="indexterm" name="id440742"></a>
+		</p><pre class="screen">
+		<code class="prompt">$ </code>ldapsearch .... -LLL -b "ou=people,dc=..." &gt; old.ldif
+		<code class="prompt">$ </code>convertSambaAccount --sid &lt;DOM SID&gt; --input old.ldif --output new.ldif
+		</pre><p>
+<a class="indexterm" name="id440772"></a>
+		The &lt;DOM SID&gt; can be obtained by running
+</p><pre class="screen">
+<code class="prompt">$ </code><strong class="userinput"><code>net getlocalsid &lt;DOMAINNAME&gt;</code></strong>
+</pre><p>
+<a class="indexterm" name="id440798"></a>
+		on the Samba PDC as root.
+		</p><p>
+		Under Samba-2.x the domain SID can be obtained by executing:
+<a class="indexterm" name="id440808"></a>
+</p><pre class="screen">
+<code class="prompt">$ </code><strong class="userinput"><code>smbpasswd -S &lt;DOMAINNAME&gt;</code></strong>
+</pre><p>
+		</p><p>
+<a class="indexterm" name="id440834"></a>
+<a class="indexterm" name="id440841"></a>
+<a class="indexterm" name="id440848"></a>
+<a class="indexterm" name="id440855"></a>
+		The old <code class="literal">sambaAccount</code> schema may still be used by specifying the
+		<em class="parameter"><code>ldapsam_compat</code></em> passdb backend. However, the sambaAccount and
+		associated attributes have been moved to the historical section of
+		the schema file and must be uncommented before use if needed.
+		The Samba-2.2 object class declaration for a <code class="literal">sambaAccount</code> has not changed
+		in the Samba-3 <code class="filename">samba.schema</code> file.
+		</p><p>
+		Other new object classes and their uses include:
+		</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>
+<a class="indexterm" name="id440898"></a>
+<a class="indexterm" name="id440905"></a>
+<a class="indexterm" name="id440912"></a>
+<a class="indexterm" name="id440918"></a>
+<a class="indexterm" name="id440925"></a>
+<a class="indexterm" name="id440932"></a>
+			<code class="literal">sambaDomain</code>  domain information used to allocate RIDs
+			for users and groups as necessary. The attributes are added
+			in <span class="quote">&#8220;<span class="quote">ldap suffix</span>&#8221;</span> directory entry automatically if
+			an idmap UID/GID range has been set and the <span class="quote">&#8220;<span class="quote">ldapsam</span>&#8221;</span>
+			passdb backend has been selected.
+			</p></li><li class="listitem"><p>
+<a class="indexterm" name="id440961"></a>
+<a class="indexterm" name="id440967"></a>
+<a class="indexterm" name="id440974"></a>
+			sambaGroupMapping  an object representing the
+			relationship between a posixGroup and a Windows
+			group/SID. These entries are stored in the <span class="quote">&#8220;<span class="quote">ldap
+			group suffix</span>&#8221;</span> and managed by the <span class="quote">&#8220;<span class="quote">net groupmap</span>&#8221;</span> command.
+			</p></li><li class="listitem"><p>
+<a class="indexterm" name="id440997"></a>
+<a class="indexterm" name="id441003"></a>
+<a class="indexterm" name="id441010"></a>
+<a class="indexterm" name="id441017"></a>
+			<code class="literal">sambaUNIXIdPool</code>  created in the <span class="quote">&#8220;<span class="quote">ldap idmap suffix</span>&#8221;</span> entry
+			automatically and contains the next available <span class="quote">&#8220;<span class="quote">idmap UID</span>&#8221;</span> and
+			<span class="quote">&#8220;<span class="quote">idmap GID</span>&#8221;</span>.
+			</p></li><li class="listitem"><p>
+<a class="indexterm" name="id441049"></a>
+<a class="indexterm" name="id441054"></a>
+			<code class="literal">sambaIdmapEntry</code>  object storing a mapping between a
+			SID and a UNIX UID/GID. These objects are created by the
+			idmap_ldap module as needed.
+			</p></li></ul></div></div><div class="sect4" title="New Suffix for Searching"><div class="titlepage"><div><div><h5 class="title"><a name="id441075"></a>New Suffix for Searching</h5></div></div></div><p>
+<a class="indexterm" name="id441083"></a>
+<a class="indexterm" name="id441088"></a>
+<a class="indexterm" name="id441095"></a>
+<a class="indexterm" name="id441102"></a>
+<a class="indexterm" name="id441109"></a>
+<a class="indexterm" name="id441116"></a>
+<a class="indexterm" name="id441122"></a>
+		The following new <code class="filename">smb.conf</code> parameters have been added to aid in directing
+		certain LDAP queries when <em class="parameter"><code>passdb backend = ldapsam://...</code></em> has been
+		specified.
+		</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>ldap suffix          used to search for user and computer accounts.</p></li><li class="listitem"><p>ldap user suffix     used to store user accounts.</p></li><li class="listitem"><p>ldap machine suffix  used to store machine trust accounts.</p></li><li class="listitem"><p>ldap group suffix    location of posixGroup/sambaGroupMapping entries.</p></li><li class="listitem"><p>ldap idmap suffix    location of sambaIdmapEntry objects.</p></li></ul></div><p>
+<a class="indexterm" name="id441187"></a>
+<a class="indexterm" name="id441192"></a>
+		If an <em class="parameter"><code>ldap suffix</code></em> is defined, it will be appended to all of the
+		remaining subsuffix parameters. In this case, the order of the suffix
+		listings in <code class="filename">smb.conf</code> is important. Always place the <em class="parameter"><code>ldap suffix</code></em> first
+		in the list.
+		</p><p>
+		Due to a limitation in Samba's <code class="filename">smb.conf</code> parsing, you should not surround
+		the domain names with quotation marks.
+		</p></div><div class="sect4" title="IdMap LDAP Support"><div class="titlepage"><div><div><h5 class="title"><a name="id441231"></a>IdMap LDAP Support</h5></div></div></div><p>
+<a class="indexterm" name="id441239"></a>
+		Samba-3 supports an LDAP backend for the idmap subsystem. The
+		following options inform Samba that the idmap table should be
+		stored on the directory server <span class="emphasis"><em>onterose</em></span> in the ou=Idmap,dc=quenya,dc=org partition.
+		</p><table border="0" summary="Simple list" class="simplelist"><tr><td> </td></tr><tr><td><em class="parameter"><code>[global]</code></em></td></tr><tr><td>...</td></tr><tr><td><a class="indexterm" name="id441270"></a><em class="parameter"><code>idmap backend = ldap:ldap://onterose/</code></em></td></tr><tr><td><a class="indexterm" name="id441281"></a><em class="parameter"><code>ldap idmap suffix = ou=Idmap</code></em></td></tr><tr><td><a class="indexterm" name="id441293"></a><em class="parameter"><code>idmap uid = 40000-50000</code></em></td></tr><tr><td><a class="indexterm" name="id441304"></a><em class="parameter"><code>idmap gid = 40000-50000</code></em></td></tr></table><p>
+<a class="indexterm" name="id441318"></a>
+		This configuration allows Winbind installations on multiple servers to
+		share a UID/GID number space, thus avoiding the interoperability problems
+		with NFS that were present in Samba-2.2.
+		</p></div></div></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="migration.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="migration.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="NT4Migration.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Part IV. Migration and Updating </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 36. Migration from NT4 PDC to Samba-3 PDC</td></tr></table></div></body></html>

@@ -1,0 +1,115 @@
+#!/bin/bash
+# Debian mount.smbfs compatibility wrapper
+# Copyright 2007, Steve Langasek <vorlon at debian.org>
+# Licensed under the GNU General Public License, version 2.  See the
+# file /usr/share/common-licenses/GPL or <http://www.gnu.org/copyleft/gpl.txt>.
+
+# This script accepts all documented mount options for mount.smbfs,
+# passing through those that are also recognized by mount.cifs,
+# converting those that are not recognized but map to available cifs
+# options, and warning about the use of options for which no equivalent
+# exists.
+
+# known bugs: quoted spaces in arguments are not passed intact
+
+set -e
+
+# reverse the order of username and password in a "username" parameter,
+# taking care to leave any "%password" bit intact
+
+reverse_username_workgroup() {
+	local workgroup password username
+
+	username="$1"
+	case "$username" in
+	*%*)	password="${username#*%}"
+		username="${username%%%*}"
+		;;
+	*) ;;
+	esac
+	case "$username" in
+	*/*)	workgroup="${username#*/}"
+		username="${username%%/*}"
+		;;
+	*) ;;
+	esac
+	if [ -n "$workgroup" ]; then
+		username="$workgroup\\$username"
+	fi
+	if [ -n "$password" ]; then
+		username="$username%$password"
+	fi
+	echo "$username"
+}
+
+
+# parse out the mount options that have been specified using -o, and if
+# necessary, convert them for use by mount.cifs
+
+parse_mount_options () {
+	local OLD_IFS IFS options option username
+	OLD_IFS="$IFS"
+	IFS=","
+	options=""
+	workgroup=""
+	password=""
+
+	for option in $@; do
+		case "$option" in
+		sockopt=* | scope=* | codepage=* | ttl=* | debug=*)
+			echo "Warning: ignoring deprecated smbfs option '$option'" >&2
+			;;
+
+		krb)
+			options="$options${options:+,}sec=krb5"
+			;;
+
+		guest)
+			echo "Warning: mapping 'guest' to 'guest,sec=none'" >&2
+			options="$options${options:+,}guest,sec=none"
+			;;
+
+		# username and workgroup are reversed in username= arguments,
+		# so need to be parsed out
+		username=*/*)
+			IFS="$OLD_IFS"
+			username="${option#username=}"
+			username="$(reverse_username_workgroup "$username")"
+			IFS=","
+			options="$options${options:+,}username=$username"
+			;;
+
+		*)
+			options="$options${options:+,}$option"
+			;;
+		esac
+	done
+	IFS="$OLD_IFS"
+	echo $options
+}
+
+args=()
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+	-o*)
+		arg=${1#-o}
+		shift
+		if [ -z "$arg" ]; then
+			arg=$1
+			shift
+		fi
+		arg="$(parse_mount_options "$arg")"
+		if [ -n "$arg" ]; then
+			args=("${args[@]}" "-o" "$arg")
+		fi
+		;;
+	*)
+		args=("${args[@]}" "$1")
+		shift
+		;;
+	esac
+done
+
+USER="$(reverse_username_workgroup "$USER")"
+
+exec /sbin/mount.cifs "${args[@]}"

@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+bld.SAMBA_SUBSYSTEM('SMB2_PROTOCOL',
+	source='receive.c negprot.c sesssetup.c tcon.c fileio.c fileinfo.c find.c keepalive.c',
+	autoproto='smb2_proto.h',
+	public_deps='ntvfs LIBPACKET LIBCLI_SMB2 samba_server_gensec NDR_DFSBLOBS'
+	)
+

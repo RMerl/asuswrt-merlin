@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="wbinfo.1">
+
+<refmeta>
+	<refentrytitle>wbinfo</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">User Commands</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>wbinfo</refname>
+	<refpurpose>Query information from winbind daemon</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>wbinfo</command>
+		<arg choice="opt">-a user%password</arg>
+		<arg choice="opt">--all-domains</arg>
+		<arg choice="opt">--allocate-gid</arg>
+		<arg choice="opt">--allocate-uid</arg>
+		<arg choice="opt">-c</arg>
+		<arg choide="opt">--ccache-save</arg>
+		<arg choide="opt">--change-user-password</arg>
+		<arg choice="opt">-D domain</arg>
+		<arg choice="opt">--domain domain</arg>
+		<arg choide="opt">--dsgetdcname domain</arg>
+		<arg choice="opt">-g</arg>
+		<arg choice="opt">--getdcname domain</arg>
+		<arg choice="opt">--get-auth-user</arg>
+		<arg choice="opt">-G gid</arg>
+		<arg choide="opt">--gid-info</arg>
+		<arg choide="opt">--group-info</arg>
+		<arg choice="opt">--help|-?</arg>
+		<arg choice="opt">-i user</arg>
+		<arg choice="opt">-I ip</arg>
+		<arg choice="opt">-K user%password</arg>
+		<arg choide="opt">--lanman</arg>
+		<arg choice="opt">-m</arg>
+		<arg choice="opt">-n name</arg>
+		<arg choice="opt">-N netbios-name</arg>
+		<arg choide="opt">--ntlmv2</arg>
+		<arg choide="opt">--online-status</arg>
+		<arg choice="opt">--own-domain</arg>
+		<arg choice="opt">-p</arg>
+		<arg choice="opt">-P|--ping-dc</arg>
+		<arg choice="opt">-r user</arg>
+		<arg choide="opt">-R|--lookup-rids</arg>
+		<arg choice="opt">-s sid</arg>
+		<arg choice="opt">--separator</arg>
+		<arg choice="opt">--set-auth-user user%password</arg>
+		<arg choice="opt">-S sid</arg>
+		<arg choide="opt">--sid-aliases</arg>
+		<arg choide="opt">--sid-to-fullname</arg>
+		<arg choice="opt">-t</arg>
+		<arg choice="opt">-u</arg>
+		<arg choice="opt">--uid-info uid</arg>
+		<arg choide="opt">--usage</arg>
+		<arg choice="opt">--user-domgroups sid</arg>
+		<arg choice="opt">--user-sids sid</arg>
+		<arg choice="opt">-U uid</arg>
+		<arg choice="opt">-V</arg>
+		<arg choice="opt">--verbose</arg>
+		<arg choice="opt">-Y sid</arg>
+
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The <command>wbinfo</command> program queries and returns information
+	created and used by the <citerefentry><refentrytitle>winbindd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> daemon. </para>
+
+	<para>The <citerefentry><refentrytitle>winbindd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> daemon must be configured
+	and running for the <command>wbinfo</command> program to be able
+	to return information.</para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>-a|--authenticate <replaceable>username%password</replaceable></term>
+		<listitem><para>Attempt to authenticate a user via <citerefentry>
+		<refentrytitle>winbindd</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+                This checks both authentication methods and reports its results.
+		</para><note><para>Do not be tempted to use this
+		functionality for authentication in third-party
+		applications.  Instead use <citerefentry><refentrytitle>ntlm_auth</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry>.</para></note></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--allocate-gid</term>
+		<listitem><para>Get a new GID out of idmap
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--allocate-uid</term>
+		<listitem><para>Get a new UID out of idmap
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--all-domains</term>
+		<listitem><para>List all domains (trusted and
+		own domain).
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-c|--change-secret</term>
+		<listitem><para>Change the trust account password. May be used
+		in conjunction with <option>domain</option> in order to change
+		interdomain trust account passwords.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--ccache-save <replaceable>username%password</replaceable></term>
+		<listitem><para>Store user and password for ccache.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--change-user-password <replaceable>username</replaceable></term>
+		<listitem><para>Change the password of a user. The old and new password will be prompted.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--domain <replaceable>name</replaceable></term>
+		<listitem><para>This parameter sets the domain on which any specified
+		operations will performed.  If special domain name '.' is used to represent
+		the current domain to which <citerefentry><refentrytitle>winbindd</refentrytitle>
+		<manvolnum>8</manvolnum></citerefentry> belongs.  Currently only the
+		<option>-u</option>, and <option>-g</option> options honor this parameter.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-D|--domain-info <replaceable>domain</replaceable></term>
+		<listitem><para>Show most of the info we have about the
+		specified domain.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--dsgetdcname <replaceable>domain</replaceable></term>
+		<listitem><para>Find a DC for a domain.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--gid-info <replaceable>gid</replaceable></term>
+		<listitem><para>Get group info from gid.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--group-info <replaceable>user</replaceable></term>
+		<listitem><para>Get group info for user.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-g|--domain-groups</term>
+		<listitem><para>This option will list all groups available
+		in the Windows NT domain for which the <citerefentry><refentrytitle>samba</refentrytitle>
+		<manvolnum>7</manvolnum></citerefentry> daemon is operating in. Groups in all trusted domains
+		will also be listed.  Note that this operation does not assign
+		group ids to any groups that have not already been
+		seen by <citerefentry><refentrytitle>winbindd</refentrytitle>
+		<manvolnum>8</manvolnum></citerefentry>. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--get-auth-user</term>
+		<listitem><para>Print username and password used by <citerefentry>
+                <refentrytitle>winbindd</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+		during session setup to a domain controller. Username
+		and password can be set using <option>--set-auth-user</option>.
+		Only available for root.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--getdcname <replaceable>domain</replaceable></term>
+		<listitem><para>Get the DC name for the specified domain.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-G|--gid-to-sid <replaceable>gid</replaceable></term>
+		<listitem><para>Try to convert a UNIX group id to a Windows
+		NT SID.  If the gid specified does not refer to one within
+		the idmap gid range then the operation will fail. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-?</term>
+		<listitem><para>Print brief help overview.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-i|--user-info <replaceable>user</replaceable></term>
+		<listitem><para>Get user info.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-I|--WINS-by-ip <replaceable>ip</replaceable></term>
+		<listitem><para>The <parameter>-I</parameter> option
+		queries <citerefentry><refentrytitle>winbindd</refentrytitle>
+		<manvolnum>8</manvolnum></citerefentry> to send a node status
+		request to get the NetBIOS name associated with the IP address
+		specified by the <parameter>ip</parameter> parameter.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-K|--krb5auth <replaceable>username%password</replaceable></term>
+		<listitem><para>Attempt to authenticate a user via Kerberos.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--lanman</term>
+		<listitem><para>Use lanman cryptography for user authentication.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-m|--trusted-domains</term>
+		<listitem><para>Produce a list of domains trusted by the
+		Windows NT server <citerefentry><refentrytitle>winbindd</refentrytitle>
+		<manvolnum>8</manvolnum></citerefentry> contacts
+		when resolving names.  This list does not include the Windows
+		NT domain the server is a Primary Domain Controller for.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-n|--name-to-sid <replaceable>name</replaceable></term>
+		<listitem><para>The <parameter>-n</parameter> option
+		queries <citerefentry><refentrytitle>winbindd</refentrytitle>
+		<manvolnum>8</manvolnum></citerefentry> for the SID
+		associated with the name specified. Domain names can be specified
+		before the user name by using the winbind separator character.
+		For example CWDOM1/Administrator refers to the Administrator
+		user in the domain CWDOM1.  If no domain is specified then the
+		domain used is the one specified in the <citerefentry><refentrytitle>smb.conf</refentrytitle>
+		<manvolnum>5</manvolnum></citerefentry>	<parameter>workgroup
+		</parameter> parameter. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-N|--WINS-by-name <replaceable>name</replaceable></term>
+		<listitem><para>The <parameter>-N</parameter> option
+		queries <citerefentry><refentrytitle>winbindd</refentrytitle>
+		<manvolnum>8</manvolnum></citerefentry> to query the WINS
+		server for the IP address associated with the NetBIOS name
+		specified by the <parameter>name</parameter> parameter.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--ntlmv2</term>
+		<listitem><para>Use NTLMv2 cryptography for user authentication.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--online-status <replaceable>domain</replaceable></term>
+		<listitem><para>Show whether domains are marked as online or
+				offline. An optional domain argument limits the
+				output to the online status of a given domain.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--own-domain</term>
+		<listitem><para>List own domain.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-p|--ping</term>
+		<listitem><para>Check whether <citerefentry><refentrytitle>winbindd</refentrytitle>
+		<manvolnum>8</manvolnum></citerefentry> is still alive.
+		Prints out either 'succeeded' or 'failed'.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-P|--ping-dc</term>
+		<listitem><para>Issue a no-effect command to our DC. This
+		    checks if our secure channel connection to our domain
+		    controller is still alive. It has much less impact than
+		    wbinfo -t.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-r|--user-groups <replaceable>username</replaceable></term>
+		<listitem><para>Try to obtain the list of UNIX group ids
+		to which the user belongs.  This only works for users
+		defined on a Domain Controller.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-R|--lookup-rids <replaceable>rid1, rid2, rid3...</replaceable></term>
+		<listitem><para>Converts RIDs to names. Uses a comma separated
+				list of rids.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-s|--sid-to-name <replaceable>sid</replaceable></term>
+		<listitem><para>Use <parameter>-s</parameter> to resolve
+		a SID to a name.  This is the inverse of the <parameter>-n
+		</parameter> option above.  SIDs must be specified as ASCII strings
+		in the traditional Microsoft format. For example,
+		S-1-5-21-1455342024-3071081365-2475485837-500. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--separator</term>
+		<listitem><para>Get the active winbind separator.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--set-auth-user <replaceable>username%password</replaceable></term>
+		<listitem><para>Store username and password used by <citerefentry>
+                <refentrytitle>winbindd</refentrytitle><manvolnum>8</manvolnum>
+                </citerefentry>	during session setup to a domain controller.  This enables
+		winbindd to operate in a Windows 2000 domain with Restrict
+		Anonymous turned on (a.k.a. Permissions compatible with
+		Windows 2000 servers only).
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-S|--sid-to-uid <replaceable>sid</replaceable></term>
+		<listitem><para>Convert a SID to a UNIX user id.  If the SID
+		does not correspond to a UNIX user mapped by <citerefentry>
+		<refentrytitle>winbindd</refentrytitle><manvolnum>8</manvolnum>
+		</citerefentry> then the operation will fail. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--sid-aliases <replaceable>sid</replaceable></term>
+		<listitem><para>Get SID aliases for a given SID.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--sid-to-fullname <replaceable>sid</replaceable></term>
+		<listitem><para>Converts a SID to a full username
+				(DOMAIN\username).
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-t|--check-secret</term>
+		<listitem><para>Verify that the workstation trust account
+		created when the Samba server is added to the Windows NT
+		domain is working. May be used in conjunction with
+		<option>domain</option> in order to verify interdomain
+		trust accounts.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-u|--domain-users</term>
+		<listitem><para>This option will list all users available
+		in the Windows NT domain for which the <citerefentry><refentrytitle>winbindd</refentrytitle>
+		<manvolnum>8</manvolnum></citerefentry> daemon is operating in. Users in all trusted domains
+		will also be listed.  Note that this operation does not assign
+		user ids to any users that have not already been seen by <citerefentry>
+		<refentrytitle>winbindd</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+		.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--uid-info <replaceable>uid</replaceable></term>
+		<listitem><para>Get user info for the user connected to
+		user id UID.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--usage</term>
+		<listitem><para>Print brief help overview.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--user-domgroups <replaceable>sid</replaceable></term>
+		<listitem><para>Get user domain groups.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--user-sids <replaceable>sid</replaceable></term>
+		<listitem><para>Get user group SIDs for user.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-U|--uid-to-sid <replaceable>uid</replaceable></term>
+		<listitem><para>Try to convert a UNIX user id to a Windows NT
+		SID.  If the uid specified does not refer to one within
+		the idmap range then the operation will fail. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>--verbose</term>
+		<listitem><para>
+		Print additional information about the query results.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-Y|--sid-to-gid <replaceable>sid</replaceable></term>
+		<listitem><para>Convert a SID to a UNIX group id.  If the SID
+		does not correspond to a UNIX group mapped by <citerefentry>
+		<refentrytitle>winbindd</refentrytitle><manvolnum>8</manvolnum></citerefentry> then
+		the operation will fail. </para></listitem>
+		</varlistentry>
+
+		&stdarg.version;
+		&stdarg.help;
+
+	</variablelist>
+</refsect1>
+
+
+<refsect1>
+	<title>EXIT STATUS</title>
+
+	<para>The wbinfo program returns 0 if the operation
+	succeeded, or 1 if the operation failed.  If the <citerefentry>
+	<refentrytitle>winbindd</refentrytitle><manvolnum>8</manvolnum>
+	</citerefentry> daemon is not working <command>wbinfo</command> will always return
+	failure. </para>
+</refsect1>
+
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3 of
+	the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+	<para><citerefentry><refentrytitle>winbindd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> and <citerefentry><refentrytitle>ntlm_auth</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</para>
+
+	<para><command>wbinfo</command> and <command>winbindd</command>
+	were written by Tim Potter.</para>
+
+	<para>The conversion to DocBook for Samba 2.2 was done
+	by Gerald Carter. The conversion to DocBook XML 4.2 for Samba
+	3.0 was done by Alexander Bokovoy.</para>
+</refsect1>
+
+</refentry>

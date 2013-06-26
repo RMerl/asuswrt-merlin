@@ -1,0 +1,55 @@
+<samba:parameter name="interfaces"
+                 context="G"
+				 type="list"
+                 basic="1" advanced="1" wizard="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+        <para>This option allows you to override the default 
+	network interfaces list that Samba will use for browsing, name 
+	registration and other NetBIOS over TCP/IP (NBT) traffic. By default Samba will query
+	the kernel for the list of all active interfaces and use any 
+	interfaces except 127.0.0.1 that are broadcast capable.</para>
+
+	<para>The option takes a list of interface strings. Each string 
+	can be in any of the following forms:</para>
+
+	<itemizedlist>
+		<listitem><para>a network interface name (such as eth0). 
+		This may include shell-like wildcards so eth* will match 
+		any interface starting with the substring &quot;eth&quot;</para></listitem>
+			
+		<listitem><para>an IP address. In this case the netmask is 
+		determined from the list of interfaces obtained from the 
+		kernel</para></listitem>
+			
+		<listitem><para>an IP/mask pair. </para></listitem>
+			
+		<listitem><para>a broadcast/mask pair.</para></listitem>
+	</itemizedlist>
+
+	<para>The &quot;mask&quot; parameters can either be a bit length (such 
+	as 24 for a C class network) or a full netmask in dotted 
+	decimal form.</para>
+
+	<para>The &quot;IP&quot; parameters above can either be a full dotted 
+	decimal IP address or a hostname which will be looked up via 
+	the OS's normal hostname resolution mechanisms.</para>
+
+	<para>
+	By default Samba enables all active interfaces that are broadcast capable
+	except the loopback adaptor (IP address 127.0.0.1).
+	</para>
+	
+	<para>
+	The example below configures three network interfaces corresponding 
+	to the eth0 device and IP addresses 192.168.2.10 and 192.168.3.10. 
+	The netmasks of the latter two interfaces would be set to 255.255.255.0.
+	</para>
+
+</description>
+<related>bind interfaces only</related>
+
+<value type="example">eth0 192.168.2.10/24 192.168.3.10/255.255.255.0</value>
+
+<value type="default"/>
+</samba:parameter>

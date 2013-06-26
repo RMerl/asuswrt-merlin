@@ -1,0 +1,579 @@
+Only in ntp-samba: autom4te.cache
+Only in ntp-samba: config.h
+Only in ntp-samba: config.log
+Only in ntp-samba: config.status
+Only in ntp-samba/ElectricFence: .deps
+Only in ntp-samba/ElectricFence: Makefile
+Only in ntp-samba: .gcc-warning
+Only in ntp-samba/include/isc: Makefile
+Only in ntp-samba/include: Makefile
+diff -ur ntp-dev-4.2.5p125/include/ntp_config.h ntp-samba/include/ntp_config.h
+--- ntp-dev-4.2.5p125/include/ntp_config.h	2008-07-17 07:20:58.000000000 +1000
++++ ntp-samba/include/ntp_config.h	2008-08-28 21:59:06.000000000 +1000
+@@ -92,6 +92,7 @@
+     int requested_key;
+     int revoke;
+     queue *trusted_key_list;
++    char *ntp_signd_socket;
+ };
+ 
+ struct filegen_node {
+diff -ur ntp-dev-4.2.5p125/include/ntpd.h ntp-samba/include/ntpd.h
+--- ntp-dev-4.2.5p125/include/ntpd.h	2008-05-18 21:11:28.000000000 +1000
++++ ntp-samba/include/ntpd.h	2008-08-28 21:59:06.000000000 +1000
+@@ -259,6 +259,8 @@
+ extern int	config_priority;
+ #endif
+ 
++extern char const *ntp_signd_socket;
++
+ /* ntp_control.c */
+ extern int	num_ctl_traps;
+ extern keyid_t	ctl_auth_keyid;		/* keyid used for authenticating write requests */
+@@ -471,3 +473,15 @@
+ extern struct refclock *refclock_conf[]; /* refclock configuration table */
+ extern u_char	num_refclock_conf;
+ #endif
++
++/* ntp_signd.c */
++#ifdef HAVE_NTP_SIGND
++extern void 
++send_via_ntp_signd(
++	struct recvbuf *rbufp,	/* receive packet pointer */
++	int	xmode,
++	keyid_t	xkeyid, 
++	int flags,
++	struct pkt  *xpkt
++	);
++#endif
+diff -ur ntp-dev-4.2.5p125/include/ntp.h ntp-samba/include/ntp.h
+--- ntp-dev-4.2.5p125/include/ntp.h	2008-08-10 22:37:56.000000000 +1000
++++ ntp-samba/include/ntp.h	2008-08-28 21:59:06.000000000 +1000
+@@ -447,6 +447,7 @@
+ #ifdef	OPENSSL
+ #define FLAG_ASSOC	0x4000	/* autokey request */
+ #endif /* OPENSSL */
++#define FLAG_ADKEY      0x00010000      /* Authenticated (or wants reply to be authenticated) using AD authentication */
+ 
+ /*
+  * Definitions for the clear() routine.  We use memset() to clear
+Only in ntp-samba/include: ntp.h.orig
+Only in ntp-samba: libtool
+Only in ntp-samba: Makefile
+diff -ur ntp-dev-4.2.5p125/ntpd/Makefile.am ntp-samba/ntpd/Makefile.am
+--- ntp-dev-4.2.5p125/ntpd/Makefile.am	2008-05-18 21:11:29.000000000 +1000
++++ ntp-samba/ntpd/Makefile.am	2008-08-28 21:59:06.000000000 +1000
+@@ -65,7 +65,7 @@
+ 	ntp_crypto.c ntp_filegen.c \
+ 	ntp_intres.c ntp_loopfilter.c ntp_monitor.c ntp_peer.c \
+ 	ntp_proto.c ntp_refclock.c ntp_request.c \
+-	ntp_restrict.c ntp_timer.c ntp_util.c \
++	ntp_restrict.c ntp_timer.c ntp_util.c ntp_signd.c \
+ 	ppsapi_timepps.h \
+ 	refclock_acts.c refclock_arbiter.c refclock_arc.c refclock_as2201.c \
+ 	refclock_atom.c refclock_bancomm.c refclock_chronolog.c \
+diff -ur ntp-dev-4.2.5p125/ntpd/ntp_config.c ntp-samba/ntpd/ntp_config.c
+--- ntp-dev-4.2.5p125/ntpd/ntp_config.c	2008-08-10 22:37:54.000000000 +1000
++++ ntp-samba/ntpd/ntp_config.c	2008-08-28 22:03:52.000000000 +1000
+@@ -148,6 +148,7 @@
+ #endif
+ 
+ const char *config_file;
++const char *ntp_signd_socket;
+ #ifdef HAVE_NETINFO
+ struct netinfo_config_state *config_netinfo = NULL;
+ int check_netinfo = 1;
+@@ -276,6 +277,11 @@
+ 	my_config.auth.crypto_cmd_list = NULL;
+ 	my_config.auth.keys = NULL;
+ 	my_config.auth.keysdir = NULL;
++#ifdef NTP_SIGND_PATH
++	my_config.auth.ntp_signd_socket = NTP_SIGND_PATH;
++#else
++	my_config.auth.ntp_signd_socket = NULL;
++#endif
+ 	my_config.auth.requested_key = 0;
+ 	my_config.auth.revoke = 0;
+ 	my_config.auth.trusted_key_list = NULL;
+@@ -795,6 +801,7 @@
+ 	{ "crypto",		T_Crypto,          NO_ARG },
+ 	{ "keys",		T_Keys,            SINGLE_ARG },
+ 	{ "keysdir",		T_Keysdir,         SINGLE_ARG },
++	{ "ntpsigndsocket",     T_NtpSignDsocket,  SINGLE_ARG },
+ 	{ "requestkey",		T_Requestkey,      NO_ARG },
+ 	{ "revoke",		T_Revoke,          NO_ARG },
+ 	{ "trustedkey",		T_Trustedkey,      NO_ARG },
+@@ -1000,6 +1007,10 @@
+ 	if (my_config.auth.keysdir)
+ 		keysdir = my_config.auth.keysdir;
+ 
++	/* ntp_signd_socket Command */
++	if (my_config.auth.ntp_signd_socket)
++		ntp_signd_socket = my_config.auth.ntp_signd_socket;
++
+ #ifdef OPENSSL
+ 	if (cryptosw) {
+ 		crypto_setup();
+Only in ntp-samba/ntpd: ntp_config.c~
+Only in ntp-samba/ntpd: ntp_config.c.orig
+diff -ur ntp-dev-4.2.5p125/ntpd/ntp_parser.y ntp-samba/ntpd/ntp_parser.y
+--- ntp-dev-4.2.5p125/ntpd/ntp_parser.y	2008-07-17 07:21:06.000000000 +1000
++++ ntp-samba/ntpd/ntp_parser.y	2008-08-28 21:59:06.000000000 +1000
+@@ -155,6 +155,7 @@
+ %token		T_Novolley
+ %token		T_Ntp
+ %token		T_Ntpport
++%token		T_NtpSignDsocket
+ %token		T_Orphan
+ %token		T_Panic
+ %token		T_Peer
+@@ -432,6 +433,8 @@
+                     { my_config.auth.requested_key = $2;  }
+ 	|	T_Trustedkey integer_list
+                     { my_config.auth.trusted_key_list = $2;  }
++	|	T_NtpSignDsocket T_String
++                    { my_config.auth.ntp_signd_socket = $2;  }
+ 	;
+ 
+ crypto_command_line
+diff -ur ntp-dev-4.2.5p125/ntpd/ntp_proto.c ntp-samba/ntpd/ntp_proto.c
+--- ntp-dev-4.2.5p125/ntpd/ntp_proto.c	2008-07-17 07:21:02.000000000 +1000
++++ ntp-samba/ntpd/ntp_proto.c	2008-08-28 21:59:06.000000000 +1000
+@@ -128,7 +128,7 @@
+ static	void	clock_combine	(struct peer **, int);
+ static	void	peer_xmit	(struct peer *);
+ static	void	fast_xmit	(struct recvbuf *, int, keyid_t,
+-				    char *);
++				 char *, int);
+ static	void	clock_update	(struct peer *);
+ static	int	default_get_precision (void);
+ static	int	peer_unfit	(struct peer *);
+@@ -311,6 +311,7 @@
+ 	int	authlen;		/* offset of MAC field */
+ 	int	is_authentic = 0;	/* cryptosum ok */
+ 	int	retcode = AM_NOMATCH;	/* match code */
++	int     flags = 0;              /* flags with details about the authentication */
+ 	keyid_t	skeyid = 0;		/* key IDs */
+ 	u_int32	opcode = 0;		/* extension field opcode */
+ 	struct sockaddr_storage *dstadr_sin; /* active runway */
+@@ -324,6 +325,8 @@
+ 	keyid_t	pkeyid = 0, tkeyid = 0;	/* key IDs */
+ #endif /* OPENSSL */
+ 
++	static unsigned char zero_key[16];
++
+ 	/*
+ 	 * Monitor the packet and get restrictions. Note that the packet
+ 	 * length for control and private mode packets must be checked
+@@ -480,9 +483,9 @@
+ 			return;			/* rate exceeded */
+ 
+ 		if (hismode == MODE_CLIENT)
+-			fast_xmit(rbufp, MODE_SERVER, skeyid, "RATE");
++			fast_xmit(rbufp, MODE_SERVER, skeyid, "RATE", 0);
+ 		else
+-			fast_xmit(rbufp, MODE_ACTIVE, skeyid, "RATE");
++			fast_xmit(rbufp, MODE_ACTIVE, skeyid, "RATE", 0);
+ 		return;				/* rate exceeded */
+ 	}
+ 
+@@ -535,6 +538,7 @@
+ 	 * is zero, acceptable outcomes of y are NONE and OK. If x is
+ 	 * one, the only acceptable outcome of y is OK.
+ 	 */
++
+ 	if (has_mac == 0) {
+ 		is_authentic = AUTH_NONE; /* not required */
+ #ifdef DEBUG
+@@ -555,6 +559,25 @@
+ 			    stoa(&rbufp->recv_srcadr), hismode, skeyid,
+ 			    authlen + has_mac, is_authentic);
+ #endif
++
++		/* If the signature is 20 bytes long, the last 16 of
++		 * which are zero, then this is a Microsoft client
++		 * wanting AD-style authentication of the server's
++		 * reply.  
++		 *
++		 * This is described in Microsoft's WSPP docs, in MS-SNTP:
++		 * http://msdn.microsoft.com/en-us/library/cc212930.aspx
++		 */
++	} else if (has_mac == MAX_MAC_LEN
++		   && (retcode == AM_FXMIT || retcode == AM_NEWPASS)
++		   && (memcmp(zero_key, (char *)pkt + authlen + 4, MAX_MAC_LEN - 4) == 0)) {
++		
++		/* Don't try to verify the zeros, just set a
++		 * flag and otherwise pretend we never saw the signature */
++		is_authentic = AUTH_NONE;
++		
++		flags = FLAG_ADKEY;
++
+ 	} else {
+ #ifdef OPENSSL
+ 		/*
+@@ -696,9 +719,9 @@
+ 			if (AUTH(restrict_mask & RES_DONTTRUST,
+ 			   is_authentic)) {
+ 				fast_xmit(rbufp, MODE_SERVER, skeyid,
+-				    NULL);
++					  NULL, flags);
+ 			} else if (is_authentic == AUTH_ERROR) {
+-				fast_xmit(rbufp, MODE_SERVER, 0, NULL);
++				fast_xmit(rbufp, MODE_SERVER, 0, NULL, 0);
+ 				sys_badauth++;
+ 			} else {
+ 				sys_restricted++;
+@@ -733,7 +756,7 @@
+ 		 * crypto-NAK, as that would not be useful.
+ 		 */
+ 		if (AUTH(restrict_mask & RES_DONTTRUST, is_authentic))
+-			fast_xmit(rbufp, MODE_SERVER, skeyid, NULL);
++			fast_xmit(rbufp, MODE_SERVER, skeyid, NULL, 0);
+ 		return;				/* hooray */
+ 
+ 	/*
+@@ -888,7 +911,7 @@
+ 		    is_authentic)) {
+ #ifdef OPENSSL
+ 			if (crypto_flags && skeyid > NTP_MAXKEY)
+-				fast_xmit(rbufp, MODE_ACTIVE, 0, NULL);
++				fast_xmit(rbufp, MODE_ACTIVE, 0, NULL, 0);
+ #endif /* OPENSSL */
+ 			sys_restricted++;
+ 			return;			/* access denied */
+@@ -904,7 +927,7 @@
+ 			 * This is for drat broken Windows clients. See
+ 			 * Microsoft KB 875424 for preferred workaround.
+ 			 */
+-			fast_xmit(rbufp, MODE_PASSIVE, skeyid, NULL);
++			fast_xmit(rbufp, MODE_PASSIVE, skeyid, NULL, flags);
+ #else /* WINTIME */
+ 			sys_restricted++;
+ #endif /* WINTIME */
+@@ -938,6 +961,7 @@
+ 		}
+ 		break;
+ 
++
+ 	/*
+ 	 * Process regular packet. Nothing special.
+ 	 */
+@@ -1090,7 +1114,7 @@
+ 		peer->flash |= TEST5;		/* bad auth */
+ 		peer->badauth++;
+ 		if (hismode == MODE_ACTIVE || hismode == MODE_PASSIVE)
+-			fast_xmit(rbufp, MODE_ACTIVE, 0, NULL);
++			fast_xmit(rbufp, MODE_ACTIVE, 0, NULL, 0);
+ 		if (peer->flags & FLAG_PREEMPT) {
+ 			unpeer(peer);
+ 			return;
+@@ -3159,7 +3183,8 @@
+ 	struct recvbuf *rbufp,	/* receive packet pointer */
+ 	int	xmode,		/* receive mode */
+ 	keyid_t	xkeyid,		/* transmit key ID */
+-	char	*mask		/* kiss code */
++	char	*mask,		/* kiss code */
++	int     flags           /* Flags to indicate signing behaviour */
+ 	)
+ {
+ 	struct pkt xpkt;	/* transmit packet structure */
+@@ -3220,6 +3245,19 @@
+ 		HTONL_FP(&rbufp->recv_time, &xpkt.rec);
+ 	}
+ 
++	if (flags & FLAG_ADKEY) {
++#ifdef HAVE_NTP_SIGND
++		get_systime(&xmt_tx);
++		if (mask == NULL) {
++			HTONL_FP(&xmt_tx, &xpkt.xmt);
++		}
++		send_via_ntp_signd(rbufp, xmode, xkeyid, flags, &xpkt);
++#endif
++		/* If we don't have the support, drop the packet on the floor.  
++		   An all zero sig is compleatly bogus anyway */
++		return;
++	}
++
+ 	/*
+ 	 * If the received packet contains a MAC, the transmitted packet
+ 	 * is authenticated and contains a MAC. If not, the transmitted
+@@ -3252,7 +3290,7 @@
+ 	 * source-destination-key ID combination.
+ 	 */
+ #ifdef OPENSSL
+-	if (xkeyid > NTP_MAXKEY) {
++	if (!(flags & FLAG_ADKEY) && (xkeyid > NTP_MAXKEY)) {
+ 		keyid_t cookie;
+ 
+ 		/*
+@@ -3284,8 +3322,10 @@
+ 	if (mask == NULL) {
+ 		HTONL_FP(&xmt_tx, &xpkt.xmt);
+ 	}
++
+ 	authlen = authencrypt(xkeyid, (u_int32 *)&xpkt, sendlen);
+ 	sendlen += authlen;
++
+ #ifdef OPENSSL
+ 	if (xkeyid > NTP_MAXKEY)
+ 		authtrust(xkeyid, 0);
+Only in ntp-samba/ntpd: ntp_signd.c
+Only in ntp-dev-4.2.5p125/ntpdc: nl.pl
+Only in ntp-samba/scripts: calc_tickadj
+Only in ntp-samba/scripts: checktime
+Only in ntp-samba/scripts: freq_adj
+Only in ntp-samba/scripts: html2man
+Only in ntp-samba/scripts: Makefile
+Only in ntp-samba/scripts: mkver
+Only in ntp-samba/scripts: ntpsweep
+Only in ntp-samba/scripts: ntptrace
+Only in ntp-samba/scripts: ntpver
+Only in ntp-samba/scripts: ntp-wait
+Only in ntp-samba/scripts: plot_summary
+Only in ntp-samba/scripts: summary
+Only in ntp-samba: stamp-h1
+--- /dev/null	2008-08-25 07:28:22.036002925 +1000
++++ ntp-samba/ntpd/ntp_signd.c	2008-08-28 21:59:06.000000000 +1000
+@@ -0,0 +1,242 @@
++/* Copyright 2008, Red Hat, Inc.
++   Copyright 2008, Andrew Tridgell.
++   Licenced under the same terms as NTP itself. 
++ */
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#ifdef HAVE_NTP_SIGND
++
++#include "ntpd.h"
++#include "ntp_io.h"
++#include "ntp_stdlib.h"
++#include "ntp_unixtime.h"
++#include "ntp_control.h"
++#include "ntp_string.h"
++
++#include <stdio.h>
++#include <stddef.h>
++#ifdef HAVE_LIBSCF_H
++#include <libscf.h>
++#include <unistd.h>
++#endif /* HAVE_LIBSCF_H */
++
++#include <sys/un.h>
++
++/* socket routines by tridge - from junkcode.samba.org */
++
++/*
++  connect to a unix domain socket
++*/
++static int 
++ux_socket_connect(const char *name)
++{
++	int fd;
++        struct sockaddr_un addr;
++	if (!name) {
++		return -1;
++	}
++
++        memset(&addr, 0, sizeof(addr));
++        addr.sun_family = AF_UNIX;
++        strncpy(addr.sun_path, name, sizeof(addr.sun_path));
++
++	fd = socket(AF_UNIX, SOCK_STREAM, 0);
++	if (fd == -1) {
++		return -1;
++	}
++	
++	if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
++		close(fd);
++		return -1;
++	}
++
++	return fd;
++}
++
++
++/*
++  keep writing until its all sent
++*/
++static int 
++write_all(int fd, const void *buf, size_t len)
++{
++	size_t total = 0;
++	while (len) {
++		int n = write(fd, buf, len);
++		if (n <= 0) return total;
++		buf = n + (char *)buf;
++		len -= n;
++		total += n;
++	}
++	return total;
++}
++
++/*
++  keep reading until its all read
++*/
++static int 
++read_all(int fd, void *buf, size_t len)
++{
++	size_t total = 0;
++	while (len) {
++		int n = read(fd, buf, len);
++		if (n <= 0) return total;
++		buf = n + (char *)buf;
++		len -= n;
++		total += n;
++	}
++	return total;
++}
++
++/*
++  send a packet in length prefix format
++*/
++static int 
++send_packet(int fd, const char *buf, uint32_t len)
++{
++	uint32_t net_len = htonl(len);
++	if (write_all(fd, &net_len, sizeof(net_len)) != sizeof(net_len)) return -1;
++	if (write_all(fd, buf, len) != len) return -1;	
++	return 0;
++}
++
++/*
++  receive a packet in length prefix format
++*/
++static int 
++recv_packet(int fd, char **buf, uint32_t *len)
++{
++	if (read_all(fd, len, sizeof(*len)) != sizeof(*len)) return -1;
++	*len = ntohl(*len);
++	(*buf) = malloc(*len);
++	if (!*buf) {
++		return -1;
++	}
++	if (read_all(fd, *buf, *len) != *len) {
++		free(*buf);
++		return -1;
++	}
++	return 0;
++}
++
++void 
++send_via_ntp_signd(
++	struct recvbuf *rbufp,	/* receive packet pointer */
++	int	xmode,
++	keyid_t	xkeyid, 
++	int flags,
++	struct pkt  *xpkt
++	)
++{
++	
++	/* We are here because it was detected that the client
++	 * sent an all-zero signature, and we therefore know
++	 * it's windows trying to talk to an AD server
++	 *
++	 * Because we don't want to dive into Samba's secrets
++	 * database just to find the long-term kerberos key
++	 * that is re-used as the NTP key, we instead hand the
++	 * packet over to Samba to sign, and return to us.
++	 *
++	 * The signing method Samba will use is described by
++	 * Microsoft in MS-SNTP, found here:
++	 * http://msdn.microsoft.com/en-us/library/cc212930.aspx
++	 */
++	
++	int fd, sendlen;
++	struct samba_key_in {
++		uint32_t version;
++		uint32_t op;
++		uint32_t packet_id;
++		uint32_t key_id_le;
++		struct pkt pkt;
++	} samba_pkt;
++	
++	struct samba_key_out {
++		uint32_t version;
++		uint32_t op;
++		uint32_t packet_id;
++		struct pkt pkt;
++	} samba_reply;
++	
++	char full_socket[256];
++
++	char *reply = NULL;
++	uint32_t reply_len;
++	
++	memset(&samba_pkt, 0, sizeof(samba_pkt));
++	samba_pkt.op = 0; /* Sign message */
++	/* This will be echoed into the reply - a different
++	 * impelementation might want multiple packets
++	 * awaiting signing */
++
++	samba_pkt.packet_id = 1;
++
++	/* Swap the byte order back - it's actually little
++	 * endian on the wire, but it was read above as
++	 * network byte order */
++	samba_pkt.key_id_le = htonl(xkeyid);
++	samba_pkt.pkt = *xpkt;
++
++	snprintf(full_socket, sizeof(full_socket), "%s/socket", ntp_signd_socket);
++
++	fd = ux_socket_connect(full_socket);
++	/* Only continue with this if we can talk to Samba */
++	if (fd != -1) {
++		/* Send old packet to Samba, expect response */
++		/* Packet to Samba is quite simple: 
++		   All values BIG endian except key ID as noted
++		   [packet size as BE] - 4 bytes
++		   [protocol version (0)] - 4 bytes
++		   [packet ID] - 4 bytes
++		   [operation (sign message=0)] - 4 bytes
++		   [key id] - LITTLE endian (as on wire) - 4 bytes
++		   [message to sign] - as marshalled, without signature
++		*/
++			
++		if (send_packet(fd, (char *)&samba_pkt, offsetof(struct samba_key_in, pkt) + LEN_PKT_NOMAC) != 0) {
++			/* Huh?  could not talk to Samba... */
++			close(fd);
++			return;
++		}
++			
++		if (recv_packet(fd, &reply, &reply_len) != 0) {
++			if (reply) {
++				free(reply);
++			}
++			close(fd);
++			return;
++		}
++		/* Return packet is also simple: 
++		   [packet size] - network byte order - 4 bytes
++		   [protocol version (0)] network byte order - - 4 bytes
++		   [operation (signed success=3, failure=4)] network byte order - - 4 byte
++		   (optional) [signed message] - as provided before, with signature appended
++		*/
++			
++		if (reply_len <= sizeof(samba_reply)) {
++			memcpy(&samba_reply, reply, reply_len);
++			if (ntohl(samba_reply.op) == 3 && reply_len >  offsetof(struct samba_key_out, pkt)) {
++				sendlen = reply_len - offsetof(struct samba_key_out, pkt);
++				xpkt = &samba_reply.pkt;
++				sendpkt(&rbufp->recv_srcadr, rbufp->dstadr, 0, xpkt, sendlen);
++#ifdef DEBUG
++				if (debug)
++					printf(
++						"transmit ntp_signd packet: at %ld %s->%s mode %d keyid %08x len %d\n",
++						current_time, ntoa(&rbufp->dstadr->sin),
++						ntoa(&rbufp->recv_srcadr), xmode, xkeyid, sendlen);
++#endif
++			}
++		}
++		
++		if (reply) {
++			free(reply);
++		}
++		close(fd);
++		
++	}
++}
++#endif

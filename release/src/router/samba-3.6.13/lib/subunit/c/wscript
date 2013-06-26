@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+
+import Options
+
+def configure(conf):
+	if conf.CHECK_BUNDLED_SYSTEM('subunit', checkfunctions='subunit_test_start', headers='subunit/child.h'):
+		conf.define('USING_SYSTEM_SUBUNIT', 1)
+
+def build(bld):
+	if bld.CONFIG_SET('USING_SYSTEM_SUBUNIT'):
+		return
+
+	bld.SAMBA_LIBRARY('subunit',
+			  source='lib/child.c',
+			  private_library=True,
+			  includes='include')

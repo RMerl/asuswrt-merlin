@@ -1,0 +1,7 @@
+#!/usr/bin/env python
+
+bld.SAMBA_BINARY('ndrdump',
+	source='ndrdump.c',
+	manpages='ndrdump.1',
+	deps='samba-hostconfig samba-util popt POPT_SAMBA ndr-table errors'
+	)

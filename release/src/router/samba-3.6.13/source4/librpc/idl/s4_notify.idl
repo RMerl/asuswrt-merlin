@@ -1,0 +1,58 @@
+#include "idl_types.h"
+
+/*
+   IDL structures for notify change code
+
+   this defines the structures used in the notify database code, and
+   the change notify buffers
+*/
+
+import "server_id4.idl";
+
+[
+  pointer_default(unique)
+]
+interface notify
+{
+
+	/* structure used in the notify database */
+	typedef [public] struct {
+		server_id server;
+		uint32 filter; /* filter to apply in this directory */
+		uint32 subdir_filter; /* filter to apply in child directories */
+		utf8string path;
+		uint32 path_len; /* saves some computation on search */
+		pointer private_data;
+	} notify_entry;
+
+	/*
+	  to allow for efficient search for matching entries, we
+	  divide them by the directory depth, with a separate array
+	  per depth. The entries within each depth are sorted by path,
+	  allowing for a bisection search.
+
+	  The max_mask and max_mask_subdir at each depth is the
+	  bitwise or of the filters and subdir filters for all entries
+	  at that depth. This allows a depth to be quickly skipped if
+	  no entries will match the target filter
+	*/
+	typedef struct {
+		uint32 max_mask;
+		uint32 max_mask_subdir;
+		uint32 num_entries;
+		notify_entry entries[num_entries];
+	} notify_depth;
+
+	typedef [public] struct {
+		uint32 num_depths;
+		notify_depth depth[num_depths];
+	} notify_array;
+
+	/* structure sent between servers in notify messages */
+	typedef [public] struct {
+		uint32 action;
+		utf8string path;
+		pointer private_data;
+	} notify_event;
+
+}

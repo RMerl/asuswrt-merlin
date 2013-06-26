@@ -1,0 +1,9 @@
+###############################
+# Schema Naming Context
+###############################
+dn: ${SCHEMADN}
+objectClass: top
+objectClass: dMD
+msDS-NcType: 0
+nTSecurityDescriptor:: ${DESCRIPTOR}
+instanceType: 13

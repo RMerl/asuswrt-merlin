@@ -1,0 +1,53 @@
+CC		= @CC@
+CFLAGS		= @CFLAGS@
+CPPFLAGS	= @CPPFLAGS@
+LDFLAGS		= @LDFLAGS@
+LDSHFLAGS	= @LDSHFLAGS@
+INSTALLCMD	= @INSTALL@
+SAMBA_SOURCE	= @SAMBA_SOURCE@
+SHLIBEXT	= @SHLIBEXT@
+OBJEXT		= @OBJEXT@ 
+FLAGS		=  $(CFLAGS) $(CPPFLAGS) -fPIC \
+		-Iinclude -I$(SAMBA_SOURCE)/include \
+		-I$(SAMBA_SOURCE)/../popt  \
+		-I$(SAMBA_SOURCE)/../lib/replace  \
+		-I$(SAMBA_SOURCE)/../lib/talloc  \
+		-I$(SAMBA_SOURCE)/../lib/tevent  \
+		-I$(SAMBA_SOURCE)/../lib/tdb/include  \
+		-I$(SAMBA_SOURCE)/librpc \
+		-I$(SAMBA_SOURCE)/../librpc \
+		-I$(SAMBA_SOURCE)/../ \
+		-I$(SAMBA_SOURCE) -I.
+
+
+prefix		= @prefix@
+libdir		= @libdir@
+
+VFS_LIBDIR	= $(libdir)/vfs
+
+# Auto target
+default: $(patsubst %.c,%.$(SHLIBEXT),$(wildcard *.c))
+
+# Pattern rules
+
+%.$(SHLIBEXT): %.$(OBJEXT)
+	@echo "Linking $@"
+	@$(CC) $(LDSHFLAGS) $(LDFLAGS) -o $@ $<
+
+%.$(OBJEXT): %.c
+	@echo "Compiling $<"
+	@$(CC) $(FLAGS) -c $< -D$*_init=init_samba_module
+
+
+install: default
+	$(INSTALLCMD) -d $(VFS_LIBDIR)
+	$(INSTALLCMD) -m 755 *.$(SHLIBEXT) $(VFS_LIBDIR)
+
+# Misc targets
+clean:
+	rm -rf .libs
+	rm -f core *~ *% *.bak *.o *.$(SHLIBEXT)
+
+distclean: clean
+	rm -f config.status config.cache Makefile
+

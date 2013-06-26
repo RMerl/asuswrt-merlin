@@ -1,0 +1,28 @@
+Last update: John H Terpstra - June 27, 2005
+
+Subject: This directory will contain debugging tools and tips.
+
+Notes: Identification and confirmation of some bugs can be difficult.
+       When such bugs are encountered it is necessary to provide as
+       sufficient detailed debugging information to assist the developer
+       both by providing incontrivertable proof of the problem, but also
+       precise information regarding the values of variables being processed
+       at the time the problem strikes.
+
+       This directory is the ideal place to locate useful hints, tips and
+       methods that will help Samba users to provide the information that
+       developers need.
+
+============================ Solaris Method A ==============================
+File:	 		solaris-oops.sh
+Contributor: 	David Collier-Brown
+Date: 			June 27, 2005
+Method and Use:
+To the global stanza of smb.conf add:
+	panic action = /usr/local/bin/solaris-oops.sh %d
+
+When the panic action is initiated a voluntary core dump file will be placed 
+in /var/tmp. Use this method with "log level = 10" and an smbd binary that
+has been built with the '-g' option.
+============================================================================
+

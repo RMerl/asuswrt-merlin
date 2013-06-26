@@ -1,0 +1,22 @@
+<samba:parameter name="cache directory"
+                 context="G"
+                 advanced="1" developer="1"
+		 type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>Usually, most of the TDB files are stored in the <parameter
+	moreinfo="none">lock directory</parameter>. Since Samba 3.4.0, it is
+	possible to differentiate between TDB files with persistent data and
+	TDB files with non-persistent data using the
+	<parameter moreinfo="none">state directory</parameter> and the
+	<parameter moreinfo="none">cache directory</parameter> options.
+	</para>
+
+	<para> This option specifies the directory where TDB files containing
+	non-persistent data will be stored.
+	</para>
+</description>
+
+<value type="default">${prefix}/var/locks</value>
+<value type="example">/var/run/samba/locks/cache</value>
+</samba:parameter>

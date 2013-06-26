@@ -1,0 +1,46 @@
+#include "idl_types.h"
+
+/*
+   IDL structures for opendb code
+
+   this defines the structures used in the opendb database code, in 
+   ntvfs/common/opendb.c
+*/
+
+import "server_id4.idl";
+
+[
+  pointer_default(unique)
+]
+interface opendb
+{
+	typedef struct {
+		server_id server;
+		uint32 stream_id;
+		uint32 share_access;
+		uint32 access_mask;
+		pointer file_handle;
+		pointer fd;
+		/* we need a per-entry delete on close, as well as a per-file
+		   one, to cope with strange semantics on open */
+		boolean8 delete_on_close;
+		boolean8 allow_level_II_oplock;
+		uint32 oplock_level;
+	} opendb_entry;
+
+	typedef struct {
+		server_id server;
+		pointer notify_ptr;
+	} opendb_pending;
+
+	typedef [public] struct {
+		boolean8 delete_on_close;
+		NTTIME open_write_time;
+		NTTIME changed_write_time;
+		utf8string path;
+		uint32 num_entries;
+		opendb_entry entries[num_entries];
+		uint32 num_pending;
+		opendb_pending pending[num_pending];
+	} opendb_file;
+}

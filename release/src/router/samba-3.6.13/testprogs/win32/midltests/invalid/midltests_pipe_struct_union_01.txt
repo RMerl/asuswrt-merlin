@@ -1,0 +1,17 @@
+
+Microsoft (R) Program Maintenance Utility Version 10.00.30319.01
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+	midl /target NT60 /prefix client cli_ /prefix server srv_ /prefix switch swi_ /acf midltests.acf midltests.idl
+Microsoft (R) 32b/64b MIDL Compiler Version 7.00.0555 
+Copyright (c) Microsoft Corporation. All rights reserved.
+64 bit Processing .\midltests.idl
+midltests.idl
+64 bit Processing .\midltests.acf
+midltests.acf
+.\midltests.idl(34) : error MIDL2028 : feature not implemented : pipes can't contain unions [ Type 'pipe_structtype' ( Parameter 'outp' ) ]
+.\midltests.idl(34) : error MIDL2028 : feature not implemented : pipes can't contain unions [ Type 'pipe_structtype' ( Parameter 'inp' ) ]
+NMAKE : fatal error U1077: '"C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\x64\midl.EXE"' : return code '0x8a6'
+Stop.
+NMAKE : fatal error U1077: 'call' : return code '0x2'
+Stop.

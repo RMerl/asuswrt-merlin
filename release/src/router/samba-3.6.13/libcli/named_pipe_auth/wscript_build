@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+
+bld.SAMBA_SUBSYSTEM('NAMED_PIPE_AUTH_TSTREAM',
+	source='npa_tstream.c',
+	public_deps='NDR_NAMED_PIPE_AUTH tevent LIBTSOCKET'
+	)
+

@@ -1,0 +1,128 @@
+#include "idl_types.h"
+
+import "misc.idl";
+
+[
+  uuid("d049b186-814f-11d1-9a3c-00c04fc9b232"),
+  version(1.1),
+  endpoint("ncacn_ip_tcp:", "ncalrpc:"),
+  helpstring("File Replication API"),
+  pointer_default(unique)
+]
+interface frsapi
+{
+	/****************/
+	/* Function 0x00 */
+	[todo] void FRSAPI_VERIFY_PROMOTION();
+
+	/****************/
+	/* Function 0x01 */
+	[todo] void FRSAPI_PROMOTION_STATUS();
+
+	/****************/
+	/* Function 0x02 */
+	[todo] void FRSAPI_START_DEMOTION();
+
+	/****************/
+	/* Function 0x03 */
+	[todo] void FRSAPI_COMMIT_DEMOTION();
+
+	/****************/
+	/* Function 0x04 */
+
+	/* The DsPollingLongInterval and DsPollingShortInterval attributes
+	   represent registry attributes below HKLM\System\CCS\Services\NtFrs */
+
+	WERROR frsapi_SetDsPollingIntervalW(
+		[in] uint32 CurrentInterval,
+		[in] uint32 DsPollingLongInterval,
+		[in] uint32 DsPollingShortInterval
+	);
+
+	/****************/
+	/* Function 0x05 */
+	WERROR frsapi_GetDsPollingIntervalW(
+		[out] uint32 *CurrentInterval,
+		[out] uint32 *DsPollingLongInterval,
+		[out] uint32 *DsPollingShortInterval
+	);
+
+	/****************/
+	/* Function 0x06 */
+	[todo] void FRSAPI_VERIFY_PROMOTION_W();
+
+	/****************/
+	/* Function 0x07 */
+	typedef [v1_enum] enum {
+		FRSAPI_INFO_VERSION	= 0,
+		FRSAPI_INFO_SETS	= 1,
+		FRSAPI_INFO_DS		= 2,
+		FRSAPI_INFO_MEMORY	= 3,
+		FRSAPI_INFO_IDTABLE	= 4,
+		FRSAPI_INFO_OUTLOG	= 5,
+		FRSAPI_INFO_INLOG	= 6,
+		FRSAPI_INFO_THREADS	= 7,
+		FRSAPI_INFO_STAGE	= 8,
+		FRSAPI_INFO_CONFIGTABLE	= 9
+	} frsapi_InfoEnum;
+
+	typedef struct {
+		uint32 length;
+		GUID guid;
+		uint32 length2;
+		uint32 unknown1;
+		frsapi_InfoEnum level;
+		uint32 query_counter;
+		uint32 unknown2;
+		uint32 offset;
+		uint32 blob_len;
+		/* [size_is(length-offset)] uint8 *data; */
+		[subcontext_size(length-offset),subcontext(0),flag(NDR_REMAINING)] DATA_BLOB blob;
+	} frsapi_Info;
+
+	WERROR frsapi_InfoW(
+		[in] [range(0,0x10000)] uint32 length,
+		/* [in,out] [size_is(length)] [unique] uint8 *data */
+		[in,out,unique] frsapi_Info *info
+
+	);
+
+	/****************/
+	/* Function 0x08 */
+	typedef [v1_enum] enum {
+		FRSAPI_REPLICA_SET_TYPE_0	= 0x00000000,
+		FRSAPI_REPLICA_SET_TYPE_DOMAIN	= 0x00000002,
+		FRSAPI_REPLICA_SET_TYPE_DFS	= 0x00000003
+	} frsapi_ReplicaSetType;
+
+	WERROR frsapi_IsPathReplicated(
+		[in,unique] [string,charset(UTF16)] uint16 *path,
+		[in] frsapi_ReplicaSetType replica_set_type,
+		[out] uint32 *replicated,
+		[out] uint32 *primary,
+		[out] uint32 *root,
+		[out] GUID *replica_set_guid
+	);
+
+	/****************/
+	/* Function 0x09 */
+	typedef [v1_enum] enum {
+		FRSAPI_WRITER_COMMAND_FREEZE	= 0x00000001,
+		FRSAPI_WRITER_COMMAND_THAW	= 0x00000002
+	} frsapi_WriterCommandsValues;
+
+	WERROR frsapi_WriterCommand(
+		[in] frsapi_WriterCommandsValues command
+	);
+
+	/****************/
+	/* Function 0x0a */
+	/* not supported before w2k3 sp2 */
+	WERROR frsapi_ForceReplication(
+		[in,unique] GUID *replica_set_guid,
+		[in,unique] GUID *connection_guid,
+		[in,unique] [charset(UTF16),string] uint16 *replica_set_name,
+		[in,unique] [charset(UTF16),string] uint16 *partner_dns_name
+	);
+
+}

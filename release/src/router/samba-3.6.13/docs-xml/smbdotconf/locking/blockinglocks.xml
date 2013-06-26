@@ -1,0 +1,24 @@
+<samba:parameter name="blocking locks"
+                 context="S"
+				 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter controls the behavior 
+	of <citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> when given a request by a client 
+	to obtain a byte range lock on a region of an open file, and the 
+	request has a time limit associated with it.</para>
+		
+	<para>If this parameter is set and the lock range requested 
+	cannot be immediately satisfied, samba will internally 
+	queue the lock request, and periodically attempt to obtain 
+	the lock until the timeout period expires.</para>
+
+	<para>If this parameter is set to <constant>no</constant>, then 
+	samba will behave as previous versions of Samba would and 
+	will fail the lock request immediately if the lock range 
+	cannot be obtained.</para>
+
+</description>
+<value type="default">yes</value>
+</samba:parameter>

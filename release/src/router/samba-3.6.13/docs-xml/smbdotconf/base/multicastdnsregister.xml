@@ -1,0 +1,15 @@
+<samba:parameter name="multicast dns register"
+				type="boolean"
+                 context="G"
+                 advanced="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+        <para>If compiled with proper support for it, Samba will
+        announce itself with multicast DNS services like for example
+        provided by the Avahi daemon.</para>
+
+	<para>This parameter allows disabling Samba to register
+	itself.</para>
+</description>
+<value type="default">yes</value>
+</samba:parameter>

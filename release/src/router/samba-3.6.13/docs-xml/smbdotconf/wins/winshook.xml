@@ -1,0 +1,58 @@
+<samba:parameter name="wins hook"
+                 context="G"
+				 type="string"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>When Samba is running as a WINS server this 
+	allows you to call an external program for all changes to the 
+	WINS database. The primary use for this option is to allow the 
+	dynamic update of external name resolution databases such as 
+	dynamic DNS.</para>
+
+	<para>The wins hook parameter specifies the name of a script 
+	or executable that will be called as follows:</para>
+
+	<para><command moreinfo="none">wins_hook operation name nametype ttl IP_list</command></para>
+
+	<itemizedlist>
+		<listitem>
+			<para>The first argument is the operation and is
+			one  of &quot;add&quot;, &quot;delete&quot;, or
+			&quot;refresh&quot;. In most cases the operation
+			can  be ignored as the rest of the parameters
+			provide sufficient  information. Note that
+			&quot;refresh&quot; may sometimes be called when
+			the  name has not previously been added, in that
+			case it should be treated  as an add.</para>
+		</listitem>
+
+		<listitem>
+			<para>The second argument is the NetBIOS name. If the 
+			name is not a legal name then the wins hook is not called. 
+			Legal names contain only  letters, digits, hyphens, underscores 
+			and periods.</para>
+		</listitem>
+
+		<listitem>
+			<para>The third argument is the NetBIOS name 
+			type as a 2 digit hexadecimal number. </para>
+		</listitem>
+
+		<listitem>
+			<para>The fourth argument is the TTL (time to live) 
+			for the name in seconds.</para>
+		</listitem>
+			
+		<listitem>
+			<para>The fifth and subsequent arguments are the IP 
+			addresses currently registered for that name. If this list is 
+			empty then the name should be deleted.</para>
+		</listitem>
+	</itemizedlist>
+
+	<para>An example script that calls the BIND dynamic DNS update 
+	program <command moreinfo="none">nsupdate</command> is provided in the examples 
+	directory of the Samba source code. </para>
+</description>
+</samba:parameter>

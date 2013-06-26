@@ -1,0 +1,22 @@
+###############################
+# Domain Naming Context
+###############################
+dn: ${DOMAINDN}
+changetype: modify
+-
+replace: rIDManagerReference
+rIDManagerReference: CN=RID Manager$,CN=System,${DOMAINDN}
+-
+add: wellKnownObjects
+wellKnownObjects: B:32:6227f0af1fc2410d8e3bb10615bb5b0f:CN=NTDS Quotas,${DOMAINDN}
+wellKnownObjects: B:32:f4be92a4c777485e878e9421d53087db:CN=Microsoft,CN=Program Data,${DOMAINDN}
+wellKnownObjects: B:32:09460c08ae1e4a4ea0f64aee7daa1e5a:CN=Program Data,${DOMAINDN}
+wellKnownObjects: B:32:22b70c67d56e4efb91e9300fca3dc1aa:CN=ForeignSecurityPrincipals,${DOMAINDN}
+wellKnownObjects: B:32:18e2ea80684f11d2b9aa00c04f79f805:CN=Deleted Objects,${DOMAINDN}
+wellKnownObjects: B:32:2fbac1870ade11d297c400c04fd8d5cd:CN=Infrastructure,${DOMAINDN}
+wellKnownObjects: B:32:ab8153b7768811d1aded00c04fd8d5cd:CN=LostAndFound,${DOMAINDN}
+wellKnownObjects: B:32:ab1d30f3768811d1aded00c04fd8d5cd:CN=System,${DOMAINDN}
+wellKnownObjects: B:32:a361b2ffffd211d1aa4b00c04fd7d83a:OU=Domain Controllers,${DOMAINDN}
+wellKnownObjects: B:32:aa312825768811d1aded00c04fd8d5cd:CN=Computers,${DOMAINDN}
+wellKnownObjects: B:32:a9d1ca15768811d1aded00c04fd8d5cd:CN=Users,${DOMAINDN}
+-

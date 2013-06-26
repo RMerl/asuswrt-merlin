@@ -1,0 +1,21 @@
+#!/bin/sh
+
+PREVPATH=`dirname $0`
+
+if [ -f $PREVPATH/../../buildtools/bin/waf ]; then
+	WAF=../../buildtools/bin/waf
+elif [ -f $PREVPATH/buildtools/bin/waf ]; then
+	WAF=./buildtools/bin/waf
+else
+	echo "replace: Unable to find waf"
+	exit 1
+fi
+
+# using JOBS=1 gives maximum compatibility with
+# systems like AIX which have broken threading in python
+JOBS=1
+export JOBS
+
+cd . || exit 1
+$WAF configure "$@" || exit 1
+cd $PREVPATH

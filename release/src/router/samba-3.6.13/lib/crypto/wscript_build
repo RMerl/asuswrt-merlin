@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+
+bld.SAMBA_SUBSYSTEM('LIBCRYPTO',
+	source='crc32.c md5.c hmacmd5.c md4.c arcfour.c sha256.c hmacsha256.c aes.c rijndael-alg-fst.c',
+	deps='talloc'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('TORTURE_LIBCRYPTO',
+	source='md4test.c md5test.c hmacmd5test.c',
+	autoproto='test_proto.h',
+	deps='LIBCRYPTO'
+	)
+

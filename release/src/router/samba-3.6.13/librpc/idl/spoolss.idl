@@ -1,0 +1,3206 @@
+#include "idl_types.h"
+
+/*
+  spoolss interface definitions
+*/
+import "misc.idl", "security.idl", "winreg.idl";
+
+
+cpp_quote("#define spoolss_security_descriptor security_descriptor")
+
+[ uuid("12345678-1234-abcd-ef00-0123456789ab"),
+  version(1.0),
+  endpoint("ncacn_np:[\\pipe\\spoolss]"),
+  pointer_default(unique),
+  helpstring("Spooler SubSystem"),
+  helper("../librpc/ndr/ndr_spoolss_buf.h")
+] interface spoolss
+{
+	typedef [v1_enum] enum winreg_Type winreg_Type;
+	typedef [gensize,noprint] struct {
+		uint16 year;
+		uint16 month;
+		uint16 day_of_week;
+		uint16 day;
+		uint16 hour;
+		uint16 minute;
+		uint16 second;
+		uint16 millisecond;
+	} spoolss_Time;
+
+	typedef struct {
+		[value(ndr_size_spoolss_Time(time, ndr->flags))] uint32 size;
+		[unique] spoolss_Time *time;
+	} spoolss_TimeCtr;
+
+	typedef enum {
+		PROCESSOR_ARCHITECTURE_INTEL		= 0x0000,
+		PROCESSOR_ARCHITECTURE_IA64		= 0x0006,
+		PROCESSOR_ARCHITECTURE_AMD64		= 0x0009
+	} spoolss_ProcessorArchitecture;
+
+	typedef [v1_enum] enum {
+		PROCESSOR_INTEL_386			= 0x00000182,
+		PROCESSOR_INTEL_486			= 0x000001E6,
+		PROCESSOR_INTEL_PENTIUM			= 0x0000024A,
+		PROCESSOR_INTEL_IA64			= 0x00000898,
+		PROCESSOR_AMD_X8664			= 0x000022A0
+	} spoolss_ProcessorType;
+
+	typedef [v1_enum] enum {
+		/* Windows 95, Windows 98, Windows Me, Windows NT4 */
+		SPOOLSS_MAJOR_VERSION_NT4_95_98_ME	= 0x00000004,
+		/* Windows 2000, Windows 2003, Windows XP */
+		SPOOLSS_MAJOR_VERSION_2000_2003_XP	= 0x00000005,
+		/* Windows Vista, Windows 2008 */
+		SPOOLSS_MAJOR_VERSION_2008_VISTA	= 0x00000006
+	} spoolss_MajorVersion;
+
+	typedef [v1_enum] enum {
+		/* Windows 2008, Windows Vista, Windows 2000, Windows NT4, Windows 95 */
+		SPOOLSS_MINOR_VERSION_0			= 0x00000000,
+		/* Windows XP */
+		SPOOLSS_MINOR_VERSION_XP		= 0x00000001,
+		/* Windows 2003, Windows XP x64 */
+		SPOOLSS_MINOR_VERSION_2003_XP64		= 0x00000002,
+		/* Windows 98 */
+		SPOOLSS_MINOR_VERSION_98		= 0x0000000a,
+		/* Windows Me */
+		SPOOLSS_MINOR_VERSION_ME		= 0x0000005a
+	} spoolss_MinorVersion;
+
+	const int PRINTER_STATUS_OK		= 0x00000000;
+
+	typedef [public] bitmap {
+		PRINTER_STATUS_PAUSED		= 0x00000001,
+		PRINTER_STATUS_ERROR		= 0x00000002,
+		PRINTER_STATUS_PENDING_DELETION	= 0x00000004,
+		PRINTER_STATUS_PAPER_JAM	= 0x00000008,
+		PRINTER_STATUS_PAPER_OUT	= 0x00000010,
+		PRINTER_STATUS_MANUAL_FEED	= 0x00000020,
+		PRINTER_STATUS_PAPER_PROBLEM	= 0x00000040,
+		PRINTER_STATUS_OFFLINE		= 0x00000080,
+		PRINTER_STATUS_IO_ACTIVE	= 0x00000100,
+		PRINTER_STATUS_BUSY		= 0x00000200,
+		PRINTER_STATUS_PRINTING		= 0x00000400,
+		PRINTER_STATUS_OUTPUT_BIN_FULL	= 0x00000800,
+		PRINTER_STATUS_NOT_AVAILABLE	= 0x00001000,
+		PRINTER_STATUS_WAITING		= 0x00002000,
+		PRINTER_STATUS_PROCESSING	= 0x00004000,
+		PRINTER_STATUS_INITIALIZING	= 0x00008000,
+		PRINTER_STATUS_WARMING_UP	= 0x00010000,
+		PRINTER_STATUS_TONER_LOW	= 0x00020000,
+		PRINTER_STATUS_NO_TONER		= 0x00040000,
+		PRINTER_STATUS_PAGE_PUNT	= 0x00080000,
+		PRINTER_STATUS_USER_INTERVENTION= 0x00100000,
+		PRINTER_STATUS_OUT_OF_MEMORY	= 0x00200000,
+		PRINTER_STATUS_DOOR_OPEN	= 0x00400000,
+		PRINTER_STATUS_SERVER_UNKNOWN	= 0x00800000,
+		PRINTER_STATUS_POWER_SAVE	= 0x01000000
+	} spoolss_PrinterStatus;
+
+	/* JOB status codes. */
+
+	const int JOB_STATUS_QUEUED = 0x0000;
+
+	typedef [bitmap32bit] bitmap {
+		JOB_STATUS_PAUSED		= 0x00000001,
+		JOB_STATUS_ERROR		= 0x00000002,
+		JOB_STATUS_DELETING		= 0x00000004,
+		JOB_STATUS_SPOOLING		= 0x00000008,
+		JOB_STATUS_PRINTING		= 0x00000010,
+		JOB_STATUS_OFFLINE		= 0x00000020,
+		JOB_STATUS_PAPEROUT		= 0x00000040,
+		JOB_STATUS_PRINTED		= 0x00000080,
+		JOB_STATUS_DELETED		= 0x00000100,
+		JOB_STATUS_BLOCKED_DEVQ		= 0x00000200,
+		JOB_STATUS_USER_INTERVENTION	= 0x00000400,
+		JOB_STATUS_RESTART		= 0x00000800,
+		JOB_STATUS_COMPLETE		= 0x00001000
+	} spoolss_JobStatus;
+
+	typedef [v1_enum] enum {
+		SPOOLSS_DEBUGGING_BUILD		= 0x00000000,
+		SPOOLSS_RELEASE_BUILD		= 0x00000001
+	} spoolss_Build;
+
+	typedef [public,gensize] struct {
+		[relative] nstring *printername;
+		[relative] nstring *servername;
+		uint32 cjobs;
+		uint32 total_jobs;
+		uint32 total_bytes;
+		spoolss_Time time;
+		uint32 global_counter;
+		uint32 total_pages;
+		uint32 version;
+		spoolss_Build free_build;
+		uint32 spooling;
+		uint32 max_spooling;
+		uint32 session_counter;
+		uint32 num_error_out_of_paper;
+		uint32 num_error_not_ready;
+		spoolss_JobStatus job_error;
+		uint32 number_of_processors;
+		spoolss_ProcessorType processor_type;
+		uint32 high_part_total_bytes;
+		uint32 change_id;
+		WERROR last_error;
+		spoolss_PrinterStatus status;
+		uint32 enumerate_network_printers;
+		uint32 c_setprinter;
+		spoolss_ProcessorArchitecture processor_architecture;
+		uint16 processor_level;
+		uint32 ref_ic;
+		uint32 reserved2;
+		uint32 reserved3;
+	} spoolss_PrinterInfo0;
+
+	/* Device Mode Extra Data */
+
+	typedef [v1_enum] enum {
+		SPOOLSS_DM_SIGNATURE_UNIDRVEXTRA	= 0x554e4944, /* 0x44494e55 */
+		SPOOLSS_DM_SIGNATURE_JTEXP		= 0x4a544d53, /* 0x534d544a */
+		SPOOLSS_DM_SIGNATURE_PSEXTRA		= 0x50524956 /* 0x56495250 */
+	} spoolss_DM_Signature;
+
+	typedef [v1_enum] enum {
+		SPOOLSS_DM_LAYOUT_NUP_DISABLED		= 0x00000000,
+		SPOOLSS_DM_LAYOUT_NUP_2			= 0x00000001,
+		SPOOLSS_DM_LAYOUT_NUP_4			= 0x00000002,
+		SPOOLSS_DM_LAYOUT_NUP_6			= 0x00000003,
+		SPOOLSS_DM_LAYOUT_NUP_9			= 0x00000004,
+		SPOOLSS_DM_LAYOUT_NUP_16		= 0x00000005,
+		SPOOLSS_DM_LAYOUT_BOOKLET		= 0x00000006
+	} spoolss_DM_Layout;
+
+	typedef [v1_enum] enum {
+		SPOOLSS_DM_NUP_DIRECTION_L2R_T2B	= 0x00000001,
+		SPOOLSS_DM_NUP_DIRECTION_T2B_L2R	= 0x00000002,
+		SPOOLSS_DM_NUP_DIRECTION_R2L_T2B	= 0x00000004,
+		SPOOLSS_DM_NUP_DIRECTION_T2B_R2L	= 0x00000008
+	} spoolss_DM_NupDirection;
+
+	typedef [v1_enum] enum {
+		SPOOLSS_DM_NUP_BORDER_PRINT		= 0x00000000,
+		SPOOLSS_DM_NUP_BORDER_NONE		= 0x00000001
+	} spoolss_DM_NupBorderFlags;
+
+	typedef [v1_enum] enum {
+		SPOOLSS_DM_BOOKLET_LEFT_FLIP		= 0x00000000,
+		SPOOLSS_DM_BOOKLET_RIGHT_FLIP		= 0x00000001
+	} spoolss_DM_BookletFlags;
+
+	/* Device Mode Extra Data: PostScript */
+
+	/* NT 3.51 */
+
+	typedef [bitmap32bit] bitmap {
+		SPOOLSS_DM_PS_FLAGS_DRV_ERROR_HANDLER	= 0x00000002,
+		SPOOLSS_DM_PS_FLAGS_PRINT_MIRROR	= 0x00000004,
+		SPOOLSS_DM_PS_FLAGS_PRINT_NEGATIVE	= 0x00000010,
+		SPOOLSS_DM_PS_FLAGS_COMPRESS_BITMAP	= 0x00000040,
+		SPOOLSS_DM_PS_FLAGS_ROTATE_180		= 0x00000200,
+		SPOOLSS_DM_PS_FLAGS_GDI_METAFILE_SPOOL	= 0x00002000
+	} spoolss_DMPS_Flags;
+
+	typedef struct {
+		[value(SPOOLSS_DM_SIGNATURE_PSEXTRA)] spoolss_DM_Signature dwSignature;
+		spoolss_DMPS_Flags dwFlags;
+		uint32 wchEPSFile[12];
+		[value(24)] uint16 caSize;
+		uint16 caFlags;
+		uint16 caIlluminantIndex;
+		uint16 caRedGamma;
+		uint16 caGreenGamma;
+		uint16 caBlueGamma;
+		uint16 caReferenceBlack;
+		uint16 caReferenceWhite;
+		uint16 caContrast;
+		uint16 caBrightness;
+		uint16 caColorfulness;
+		uint16 caRedGreenTint;
+	} spoolss_PSDRVEXTRA351;
+
+	/* NT 4.0 */
+
+	typedef struct {
+		[value(SPOOLSS_DM_SIGNATURE_PSEXTRA)] spoolss_DM_Signature dwSignature;
+		spoolss_DMPS_Flags dwFlags;
+		uint32 wchEPSFile[12];
+		[value(24)] uint16 caSize;
+		uint16 caFlags;
+		uint16 caIlluminantIndex;
+		uint16 caRedGamma;
+		uint16 caGreenGamma;
+		uint16 caBlueGamma;
+		uint16 caReferenceBlack;
+		uint16 caReferenceWhite;
+		uint16 caContrast;
+		uint16 caBrightness;
+		uint16 caColorfulness;
+		uint16 caRedGreenTint;
+		uint16 wChecksum;
+		uint16 wOptions;
+		uint32 aubOptions[8];
+	} spoolss_PSDRVEXTRA400;
+
+	/* 2000 & XP */
+
+	typedef [v1_enum] enum {
+		SPOOLSS_DM_PS_OPTIMIZE_SPEED		= 0x00000000,
+		SPOOLSS_DM_PS_OPTIMIZE_PORTABILITY	= 0x00000001,
+		SPOOLSS_DM_PS_OPTIMIZE_EPS		= 0x00000002,
+		SPOOLSS_DM_PS_OPTIMIZE_ARCHIVAL		= 0x00000003
+	} spoolss_DMPS_Dialect;
+
+	typedef [v1_enum] enum {
+		SPOOLSS_DM_PS_TTDLFMT_DEFAULT		= 0x00000000,
+		SPOOLSS_DM_PS_TTDLFMT_TYPE_1		= 0x00000001,
+		SPOOLSS_DM_PS_TTDLFMT_TYPE_3		= 0x00000002,
+		SPOOLSS_DM_PS_TTDLFMT_TYPE_42		= 0x00000003
+	} spoolss_DMPS_TTDLFmt;
+
+	typedef [v1_enum] enum {
+		SPOOLSS_DM_PS_PSLEVEL_1	= 0x00000001,
+		SPOOLSS_DM_PS_PSLEVEL_2	= 0x00000002,
+		SPOOLSS_DM_PS_PSLEVEL_3	= 0x00000003
+	} spoolss_DMPS_PSLevel;
+
+	typedef enum {
+		SPOOLSS_DM_PS_FEED_DIRECTION_LONG_EDGE_FIRST		= 0x0000,
+		SPOOLSS_DM_PS_FEED_DIRECTION_SHORT_EDGE_FIRST		= 0x0001,
+		SPOOLSS_DM_PS_FEED_DIRECTION_LONG_EDGE_FIRST_UPSIDEDOWN	= 0x0002,
+		SPOOLSS_DM_PS_FEED_DIRECTION_SHORT_EDGE_FIRST_UPSIDEDOWN= 0x0003
+	} spoolss_DMPS_FeedDirection;
+
+	typedef struct {
+		[value(SPOOLSS_DM_SIGNATURE_PSEXTRA)] spoolss_DM_Signature dwSignature;
+		spoolss_DMPS_Flags dwFlags;
+		uint32 wchEPSFile[12];
+		[value(24)] uint16 caSize;
+		uint16 caFlags;
+		uint16 caIlluminantIndex;
+		uint16 caRedGamma;
+		uint16 caGreenGamma;
+		uint16 caBlueGamma;
+		uint16 caReferenceBlack;
+		uint16 caReferenceWhite;
+		uint16 caContrast;
+		uint16 caBrightness;
+		uint16 caColorfulness;
+		uint16 caRedGreenTint;
+		uint16 wReserved1;
+		uint16 wSize;
+		uint32 fxScrFreq;
+		uint32 fxScrAngle;
+		spoolss_DMPS_Dialect iDialect;
+		spoolss_DMPS_TTDLFmt iTTDLFmt;
+		boolean32 bReversePrint;
+		spoolss_DM_Layout iLayout;
+		spoolss_DMPS_PSLevel iPSLevel;
+		uint32 dwReserved2;
+		uint16 wOEMExtra;
+		[value(0x0010)] uint16 wVer;
+		uint32 dwX;
+		uint32 dwY;
+		uint32 dwWidthOffset;
+		uint32 dwHeightOffset;
+		spoolss_DMPS_FeedDirection wFeedDirection;
+		uint16 wCutSheet;
+		uint32 dwReserved3[4];
+		uint32 dwChecksum32;
+		uint32 dwOptions;
+		uint32 aOptions[128];
+	} spoolss_PSDRVEXTRA500;
+
+	/* Vista, 2008, 7 */
+
+	typedef struct {
+		[value(SPOOLSS_DM_SIGNATURE_PSEXTRA)] spoolss_DM_Signature dwSignature;
+		spoolss_DMPS_Flags dwFlags;
+		uint32 wchEPSFile[12];
+		[value(24)] uint16 caSize;
+		uint16 caFlags;
+		uint16 caIlluminantIndex;
+		uint16 caRedGamma;
+		uint16 caGreenGamma;
+		uint16 caBlueGamma;
+		uint16 caReferenceBlack;
+		uint16 caReferenceWhite;
+		uint16 caContrast;
+		uint16 caBrightness;
+		uint16 caColorfulness;
+		uint16 caRedGreenTint;
+		uint16 wCoreJTExpSize;
+		[value(ndr_size_spoolss_PSDRVEXTRA(r, ndr->flags) + wCoreJTExpSize)] uint16 wCoreFullSize;
+		uint32 fxScrFreq;
+		uint32 fxScrAngle;
+		spoolss_DMPS_Dialect iDialect;
+		spoolss_DMPS_TTDLFmt iTTDLFmt;
+		boolean32 bReversePrint;
+		spoolss_DM_Layout iLayout;
+		spoolss_DMPS_PSLevel iPSLevel;
+		uint32 dwReserved2;
+		uint16 wOEMExtra;
+		[value(0x0010)] uint16 wVer;
+		uint32 dwX;
+		uint32 dwY;
+		uint32 dwWidthOffset;
+		uint32 dwHeightOffset;
+		spoolss_DMPS_FeedDirection wFeedDirection;
+		uint16 wCutSheet;
+		uint32 dwReserved3[4];
+		uint32 dwChecksum32;
+		uint32 dwOptions;
+		uint32 aOptions[128];
+		spoolss_DM_NupDirection dwNupDirection;
+		spoolss_DM_NupBorderFlags dwNupBorderFlags;
+		spoolss_DM_BookletFlags dwBookletFlags;
+		uint32 dwPadding;
+	} spoolss_PSDRVEXTRA;
+
+	/* Device Mode Extra Data: UniDriver */
+
+	/* NT 3.5, NT 4.0 */
+
+	typedef struct {
+		uint16 wReserved[56];
+	} spoolss_UNIDRVEXTRA3_4;
+
+	/* 2000, XP */
+
+	typedef [v1_enum] enum {
+		SPOOLSS_DM_UNI_QUALITY_BEST		= 0x00000000,
+		SPOOLSS_DM_UNI_QUALITY_MEDIUM		= 0x00000001,
+		SPOOLSS_DM_UNI_QUALITY_DRAFT		= 0x00000002
+	} spoolss_DMUNI_Quality;
+
+	typedef [bitmap32bit] bitmap {
+		SPOOLSS_DM_UNI_FLAGS_PRINT_TEXT_AS_GRAPHICS	= 0x00000002,
+		SPOOLSS_DM_UNI_FLAGS_AVOID_EMFSPOOL		= 0x00000010,
+		SPOOLSS_DM_UNI_FLAGS_CUSTOM_HALFTONING		= 0x00000080
+	} spoolss_DMUNI_Flags;
+
+	typedef struct {
+		[value(SPOOLSS_DM_SIGNATURE_UNIDRVEXTRA)] spoolss_DM_Signature dwSignature;
+		[value(0x0022)] uint16 wVer;
+		uint16 sPadding;
+		uint16 wSize;
+		uint16 wOEMExtra;
+		uint32 dwChecksum32;
+		spoolss_DMUNI_Flags dwFlags;
+		boolean32 bReversePrint;
+		spoolss_DM_Layout iLayout;
+		spoolss_DMUNI_Quality iQuality;
+		uint16 wReserved[6];
+		uint32 dwOptions;
+		uint32 aOptions[128];
+	} spoolss_UNIDRVEXTRA500;
+
+	/* Vista, 2008, 7 */
+
+	typedef [public,gensize] struct {
+		[value(SPOOLSS_DM_SIGNATURE_UNIDRVEXTRA)] spoolss_DM_Signature dwSignature;
+		[value(0x0022)] uint16 wVer;
+		uint16 wCoreJTExpSize;
+		[value(ndr_size_spoolss_UNIDRVEXTRA(r, ndr->flags) + wCoreJTExpSize)] uint16 wCoreFullSize;
+		uint16 wOEMExtra;
+		uint32 dwChecksum32;
+		spoolss_DMUNI_Flags dwFlags;
+		boolean32 bReversePrint;
+		spoolss_DM_Layout iLayout;
+		spoolss_DMUNI_Quality iQuality;
+		uint16 wReserved[6];
+		uint32 dwOptions;
+		uint32 aOptions[128];
+		spoolss_DM_NupDirection dwNupDirection;
+		spoolss_DM_NupBorderFlags dwNupBorderFlags;
+		spoolss_DM_BookletFlags dwBookletFlags;
+	} spoolss_UNIDRVEXTRA;
+
+	/* Device Mode Extra Data: JTEXP */
+
+	typedef struct {
+		uint32 dwSize;
+		[value(SPOOLSS_DM_SIGNATURE_JTEXP)] spoolss_DM_Signature dwSignature;
+		[value(0)] uint32 dwVersion;
+		[value(16)] uint32 wJTHdrSize;
+		uint32 wCoreMFOSize;
+		[string,charset(UTF16)] uint16 *ModelName;
+		nstring_array FeatureOptionPairs;
+	} spoolss_JTEXP;
+
+	/* Device Mode Extra Data: OEM_DMEXTRA */
+
+	typedef struct {
+		uint32 dwSize;
+		spoolss_DM_Signature dwSignature;
+		uint32 dwVersion;
+		[flag(NDR_REMAINING)] DATA_BLOB Data;
+	} spoolss_OEM_DMEXTRA;
+
+	typedef [nodiscriminant] union {
+		[case(0x0350)] spoolss_PSDRVEXTRA351	psdrvextra351;
+		[case(0x0400)] spoolss_PSDRVEXTRA400	psdrvextra400;
+		[case(0x0501)] spoolss_PSDRVEXTRA500	psdrvextra500;
+		[case(0x0600)] spoolss_PSDRVEXTRA	psdrvextra;
+		[default] [flag(NDR_REMAINING)] DATA_BLOB psblob;
+	} spoolss_DeviceModeExtraDataPostScript;
+
+	typedef [nodiscriminant] union {
+		[case(0x0301)] spoolss_UNIDRVEXTRA3_4	unidrvextra3_4;
+		[case(0x0500)] spoolss_UNIDRVEXTRA500	unidrvextra500;
+		[case(0x0600)] spoolss_UNIDRVEXTRA	unidrvextra;
+		[default] [flag(NDR_REMAINING)] DATA_BLOB uniblob;
+	} spoolss_DeviceModeExtraDataUniDriver;
+
+	typedef [bitmap32bit] bitmap {
+		DEVMODE_ORIENTATION		= 0x00000001,
+		DEVMODE_PAPERSIZE		= 0x00000002,
+		DEVMODE_PAPERLENGTH		= 0x00000004,
+		DEVMODE_PAPERWIDTH		= 0x00000008,
+		DEVMODE_SCALE			= 0x00000010,
+		DEVMODE_POSITION		= 0x00000020,
+		DEVMODE_NUP			= 0x00000040,
+		DEVMODE_COPIES			= 0x00000100,
+		DEVMODE_DEFAULTSOURCE		= 0x00000200,
+		DEVMODE_PRINTQUALITY		= 0x00000400,
+		DEVMODE_COLOR			= 0x00000800,
+		DEVMODE_DUPLEX			= 0x00001000,
+		DEVMODE_YRESOLUTION		= 0x00002000,
+		DEVMODE_TTOPTION		= 0x00004000,
+		DEVMODE_COLLATE			= 0x00008000,
+		DEVMODE_FORMNAME		= 0x00010000,
+		DEVMODE_LOGPIXELS		= 0x00020000,
+		DEVMODE_BITSPERPEL		= 0x00040000,
+		DEVMODE_PELSWIDTH		= 0x00080000,
+		DEVMODE_PELSHEIGHT		= 0x00100000,
+		DEVMODE_DISPLAYFLAGS		= 0x00200000,
+		DEVMODE_DISPLAYFREQUENCY	= 0x00400000,
+		DEVMODE_ICMMETHOD		= 0x00800000,
+		DEVMODE_ICMINTENT		= 0x01000000,
+		DEVMODE_MEDIATYPE		= 0x02000000,
+		DEVMODE_DITHERTYPE		= 0x04000000,
+		DEVMODE_PANNINGWIDTH		= 0x08000000,
+		DEVMODE_PANNINGHEIGHT		= 0x10000000
+	} spoolss_DeviceModeFields;
+
+	typedef [enum16bit] enum {
+		DMSPEC_NT3		= 0x320,
+		DMSPEC_WIN95_98_ME	= 0x400,
+		DMSPEC_NT4_AND_ABOVE	= 0x401
+	} spoolss_DeviceModeSpecVersion;
+
+	typedef [enum16bit] enum {
+		DMORIENT_PORTRAIT	= 0x0001,
+		DMORIENT_LANDSCAPE	= 0x0002
+	} spoolss_DeviceModeOrientation;
+
+	typedef [enum16bit] enum {
+		DMPAPER_LETTER			= 0x0001, /* Letter, 8 1/2 x 11 inches */
+		DMPAPER_LETTERSMALL		= 0x0002, /* Letter Small, 8 1/2 x 11 inches */
+		DMPAPER_TABLOID			= 0x0003, /* Tabloid, 11 x 17 inches */
+		DMPAPER_LEDGER			= 0x0004, /* Ledger, 17 x 11 inches */
+		DMPAPER_LEGAL			= 0x0005, /* Legal, 8 1/2 x 14 inches */
+		DMPAPER_STATEMENT		= 0x0006, /* Statement, 5 1/2 x 8 1/2 inches */
+		DMPAPER_EXECUTIVE		= 0x0007, /* Executive, 7 1/4 x 10 1/2 inches */
+		DMPAPER_A3			= 0x0008, /* A3 sheet, 297 x 420 millimeters */
+		DMPAPER_A4			= 0x0009, /* A4 sheet, 210 x 297 millimeters */
+		DMPAPER_A4SMALL			= 0x000A, /* A4 small sheet, 210 x 297 millimeters */
+		DMPAPER_A5			= 0x000B, /* A5 sheet, 148 x 210 millimeters */
+		DMPAPER_B4			= 0x000C, /* B4 sheet, 250 x 354 millimeters */
+		DMPAPER_B5			= 0x000D, /* B5 sheet, 182 x 257-millimeter paper */
+		DMPAPER_FOLIO			= 0x000E, /* Folio, 8 1/2 x 13-inch paper */
+		DMPAPER_QUARTO			= 0x000F, /* Quarto, 215 x 275 millimeter paper */
+		DMPAPER_10X14			= 0x0010, /* 10 x 14-inch sheet */
+		DMPAPER_11X17			= 0x0011, /* 11 x 17-inch sheet */
+		DMPAPER_NOTE			= 0x0012, /* Note, 8 1/2 x 11-inches */
+		DMPAPER_ENV_9			= 0x0013, /* #9 Envelope, 3 7/8 x 8 7/8 inches */
+		DMPAPER_ENV_10			= 0x0014, /* #10 Envelope, 4 1/8 x 9 1/2 inches */
+		DMPAPER_ENV_11			= 0x0015, /* #11 Envelope, 4 1/2 x 10 3/8 inches */
+		DMPAPER_ENV_12			= 0x0016, /* #12 Envelope, 4 3/4 x 11 inches */
+		DMPAPER_ENV_14			= 0x0017, /* #14 Envelope, 5 x 11 1/2 inches */
+		DMPAPER_CSHEET			= 0x0018, /* C Sheet, 17 x 22 inches */
+		DMPAPER_DSHEET			= 0x0019, /* D Sheet, 22 x 34 inches */
+		DMPAPER_ESHEET			= 0x001A, /* E Sheet, 34 x 44 inches */
+		DMPAPER_ENV_DL			= 0x001B, /* DL Envelope, 110 x 220 millimeters */
+		DMPAPER_ENV_C5			= 0x001C, /* C5 Envelope, 162 x 229 millimeters */
+		DMPAPER_ENV_C3			= 0x001D, /* C3 Envelope, 324 x 458 millimeters */
+		DMPAPER_ENV_C4			= 0x001E, /* C4 Envelope, 229 x 324 millimeters */
+		DMPAPER_ENV_C6			= 0x001F, /* C6 Envelope, 114 x 162 millimeters */
+		DMPAPER_ENV_C65			= 0x0020, /* C65 Envelope, 114 x 229 millimeters */
+		DMPAPER_ENV_B4			= 0x0021, /* B4 Envelope, 250 x 353 millimeters */
+		DMPAPER_ENV_B5			= 0x0022, /* B5 Envelope, 176 x 250 millimeters */
+		DMPAPER_ENV_B6			= 0x0023, /* B6 Envelope, 176 x 125 millimeters */
+		DMPAPER_ENV_ITALY		= 0x0024, /* Italy Envelope, 110 x 230 millimeters */
+		DMPAPER_ENV_MONARCH		= 0x0025, /* Monarch Envelope, 3 7/8 x 7 1/2 inches */
+		DMPAPER_ENV_PERSONAL		= 0x0026, /* 6 3/4 Envelope, 3 5/8 x 6 1/2 inches */
+		DMPAPER_FANFOLD_US		= 0x0027, /* US Std Fanfold, 14 7/8 x 11 inches */
+		DMPAPER_FANFOLD_STD_GERMAN	= 0x0028, /* German Std Fanfold, 8 1/2 x 12 inches */
+		DMPAPER_FANFOLD_LGL_GERMAN	= 0x0029, /* German Legal Fanfold, 8 x 13 inches */
+		DMPAPER_DBL_JAPANESE_POSTCARD	= 0x0045, /* Double Japanese Postcard, 200 x 148 millimeters */
+		DMPAPER_A6			= 0x0046, /* A6 sheet, 105 x 148 millimeters */
+		DMPAPER_JENV_KAKU2		= 0x0047, /* Japanese Envelope Kaku #2 */
+		DMPAPER_JENV_KAKU3		= 0x0048, /* Japanese Envelope Kaku #3 */
+		DMPAPER_JENV_CHOU3		= 0x0049, /* Japanese Envelope Chou #3 */
+		DMPAPER_JENV_CHOU4		= 0x004A, /* Japanese Envelope Chou #4 */
+		DMPAPER_LETTER_ROTATED		= 0x004B, /* Letter Rotated, 11 by 8 1/2 inches */
+		DMPAPER_A3_ROTATED		= 0x004C, /* A3 rotated sheet, 420 x 297 millimeters */
+		DMPAPER_A4_ROTATED		= 0x004D, /* A4 rotated sheet, 297 x 210 millimeters */
+		DMPAPER_A5_ROTATED		= 0x004E, /* A5 rotated sheet, 210 x 148 millimeters */
+		DMPAPER_B4_JIS_ROTATED		= 0x004F, /* B4 (JIS) rotated sheet, 364 x 257 millimeters */
+		DMPAPER_B5_JIS_ROTATED		= 0x0050, /* B5 (JIS) rotated sheet, 257 x 182 millimeters */
+		DMPAPER_JAPANESE_POSTCARD_ROTATED = 0x0051, /* Japanese Postcard Rotated, 148 x 100 millimeters */
+		DMPAPER_DBL_JAPANESE_POSTCARD_ROTATED = 0x0052, /* Double Japanese Postcard Rotated, 148 x 200 millimeters */
+		DMPAPER_A6_ROTATED		= 0x0053, /* A6 rotated sheet, 148 x 105 millimeters */
+		DMPAPER_JENV_KAKU2_ROTATED	= 0x0054, /* Japanese Envelope Kaku #2 Rotated */
+		DMPAPER_JENV_KAKU3_ROTATED	= 0x0055, /* Japanese Envelope Kaku #3 Rotated */
+		DMPAPER_JENV_CHOU3_ROTATED	= 0x0056, /* Japanese Envelope Chou #3 Rotated */
+		DMPAPER_JENV_CHOU4_ROTATED	= 0x0057, /* Japanese Envelope Chou #4 Rotated */
+		DMPAPER_B6_JIS			= 0x0058, /* B6 (JIS) sheet, 128 x 182 millimeters */
+		DMPAPER_B6_JIS_ROTATED		= 0x0059, /* B6 (JIS) rotated sheet, 182 x 128 millimeters */
+		DMPAPER_12X11			= 0x005A, /* 12 x 11-inch sheet */
+		DMPAPER_JENV_YOU4		= 0x005B, /* Japanese Envelope You #4 */
+		DMPAPER_JENV_YOU4_ROTATED	= 0x005C, /* Japanese Envelope You #4 */
+		DMPAPER_P16K			= 0x005D, /* PRC 16K, 146 x 215 millimeters */
+		DMPAPER_P32K			= 0x005E, /* PRC 32K, 97 x 151 millimeters */
+		DMPAPER_P32KBIG			= 0x005F, /* PRC 32K(Big) 97 x 151 millimeters */
+		DMPAPER_PENV_1			= 0x0060, /* PRC Envelope #1, 102 by 165 millimeters */
+		DMPAPER_PENV_2			= 0x0061, /* PRC Envelope #2, 102 x 176 millimeters */
+		DMPAPER_PENV_3			= 0x0062, /* PRC Envelope #3, 125 x 176 millimeters */
+		DMPAPER_PENV_4			= 0x0063, /* PRC Envelope #4, 110 x 208 millimeters */
+		DMPAPER_PENV_5			= 0x0064, /* PRC Envelope #5, 110 x 220 millimeters */
+		DMPAPER_PENV_6			= 0x0065, /* PRC Envelope #6, 120 x 230 millimeters */
+		DMPAPER_PENV_7			= 0x0066, /* PRC Envelope #7, 160 x 230 millimeters */
+		DMPAPER_PENV_8			= 0x0067, /* PRC Envelope #8, 120 x 309 millimeters */
+		DMPAPER_PENV_9			= 0x0068, /* PRC Envelope #9, 229 x 324 millimeters */
+		DMPAPER_PENV_10			= 0x0069, /* PRC Envelope #10, 324 x 458 millimeters */
+		DMPAPER_P16K_ROTATED		= 0x006A, /* PRC 16K Rotated, 215 x 146 millimeters */
+		DMPAPER_P32K_ROTATED		= 0x006B, /* PRC 32K Rotated, 151 x 97 millimeters */
+		DMPAPER_P32KBIG_ROTATED		= 0x006C, /* PRC 32K(Big) Rotated, 151 x 97 millimeters */
+		DMPAPER_PENV_1_ROTATED		= 0x006D, /* PRC Envelope #1 Rotated, 165 x 102 millimeters */
+		DMPAPER_PENV_2_ROTATED		= 0x006E, /* PRC Envelope #2 Rotated, 176 x 102 millimeters */
+		DMPAPER_PENV_3_ROTATED		= 0x006F, /* PRC Envelope #3 Rotated, 176 x 125 millimeters */
+		DMPAPER_PENV_4_ROTATED		= 0x0070, /* PRC Envelope #4 Rotated, 208 x 110 millimeters */
+		DMPAPER_PENV_5_ROTATED		= 0x0071, /* PRC Envelope #5 Rotated, 220 x 110 millimeters */
+		DMPAPER_PENV_6_ROTATED		= 0x0072, /* PRC Envelope #6 Rotated, 230 x 120 millimeters */
+		DMPAPER_PENV_7_ROTATED		= 0x0073, /* PRC Envelope #7 Rotated, 230 x 160 millimeters */
+		DMPAPER_PENV_8_ROTATED		= 0x0074, /* PRC Envelope #8 Rotated, 309 x 120 millimeters */
+		DMPAPER_PENV_9_ROTATED		= 0x0075, /* PRC Envelope #9 Rotated, 324 x 229 millimeters */
+		DMPAPER_PENV_10_ROTATED		= 0x0076 /* PRC Envelope #10 Rotated, 458 x 324 millimeters */
+	} spoolss_DeviceModePaperSize;
+
+	typedef [enum16bit] enum {
+		DMBIN_UPPER		= 0x0001,
+		DMBIN_LOWER		= 0x0002,
+		DMBIN_MIDDLE		= 0x0003,
+		DMBIN_MANUAL		= 0x0004,
+		DMBIN_ENVELOPE		= 0x0005,
+		DMBIN_ENVMANUAL		= 0x0006,
+		DMBIN_AUTO		= 0x0007,
+		DMBIN_TRACTOR		= 0x0008,
+		DMBIN_SMALLFMT		= 0x0009,
+		DMBIN_LARGEFMT		= 0x000a,
+		DMBIN_LARGECAPACITY	= 0x000b,
+		DMBIN_CASSETTE		= 0x000e,
+		DMBIN_FORMSOURCE	= 0x000f
+	} spoolss_DeviceModeDefaultSource;
+
+	typedef [enum16bit] enum {
+		DMRES_HIGH		= 0xfffc,
+		DMRES_MEDIUM		= 0xfffd,
+		DMRES_LOW		= 0xfffe,
+		DMRES_DRAFT		= 0xffff
+	} spoolss_DeviceModePrintQuality;
+
+	typedef [enum16bit] enum {
+		DMRES_MONOCHROME	 = 0x0001,
+		DMRES_COLOR		 = 0x0002
+	} spoolss_DeviceModeColor;
+
+	typedef [enum16bit] enum {
+		DMDUP_SIMPLEX		= 0x0001,
+		DMDUP_VERTICAL		= 0x0002,
+		DMDUP_HORIZONTAL	= 0x0003
+	} spoolss_DeviceModeDuplex;
+
+	typedef [enum16bit] enum {
+		DMTT_BITMAP		= 0x0001,
+		DMTT_DOWNLOAD		= 0x0002,
+		DMTT_SUBDEV		= 0x0003,
+		DMTT_DOWNLOAD_OUTLINE	= 0x0004
+	} spoolss_DeviceModeTTOption;
+
+	typedef [enum16bit] enum {
+		DMCOLLATE_FALSE		= 0x0000,
+		DMCOLLATE_TRUE		= 0x0001
+	} spoolss_DeviceModeCollate;
+
+	typedef [v1_enum] enum {
+		DMNUP_SYSTEM		= 0x00000001,
+		DMNUP_ONEUP		= 0x00000002
+	} spoolss_DeviceModeNUp;
+
+	typedef [v1_enum] enum {
+		DMICMMETHOD_NONE	= 0x00000001,
+		DMICMMETHOD_SYSTEM	= 0x00000002,
+		DMICMMETHOD_DRIVER	= 0x00000003,
+		DMICMMETHOD_DEVICE	= 0x00000004
+	} spoolss_DeviceModeICMMethod;
+
+	typedef [v1_enum] enum {
+		DMICM_SATURATE		= 0x00000001,
+		DMICM_CONTRAST		= 0x00000002,
+		DMICM_COLORIMETRIC	= 0x00000003,
+		DMICM_ABS_COLORIMETRIC	= 0x00000004
+	} spoolss_DeviceModeICMIntent;
+
+	typedef [v1_enum] enum {
+		DMMEDIA_STANDARD	= 0x00000001,
+		DMMEDIA_TRANSPARENCY	= 0x00000002,
+		DMMEDIA_GLOSSY		= 0x00000003
+	} spoolss_DeviceModeMediaType;
+
+	typedef [v1_enum] enum {
+		DMDITHER_NONE		= 0x00000001,
+		DMDITHER_COARSE		= 0x00000002,
+		DMDITHER_FINE		= 0x00000003,
+		DMDITHER_LINEART	= 0x00000004,
+		DMDITHER_ERRORDIFFUSION	= 0x00000005,
+		DMDITHER_RESERVED6	= 0x00000006,
+		DMDITHER_RESERVED7	= 0x00000007,
+		DMDITHER_RESERVED8	= 0x00000008,
+		DMDITHER_RESERVED9	= 0x00000009,
+		DMDITHER_GRAYSCALE	= 0x0000000A
+	} spoolss_DeviceModeDitherType;
+
+	const int MAXDEVICENAME	= 32;
+
+	typedef [public,gensize] struct {
+		[charset(UTF16),to_null] uint16 devicename[MAXDEVICENAME];
+		spoolss_DeviceModeSpecVersion specversion;
+		uint16 driverversion;
+		uint16 size;
+		[value(r->driverextra_data.length)] uint16 __driverextra_length;
+		spoolss_DeviceModeFields fields;
+		spoolss_DeviceModeOrientation orientation;
+		spoolss_DeviceModePaperSize papersize;
+		uint16 paperlength;
+		uint16 paperwidth;
+		uint16 scale;
+		uint16 copies;
+		spoolss_DeviceModeDefaultSource defaultsource;
+		spoolss_DeviceModePrintQuality printquality;
+		spoolss_DeviceModeColor color;
+		spoolss_DeviceModeDuplex duplex;
+		uint16 yresolution;
+		spoolss_DeviceModeTTOption ttoption;
+		spoolss_DeviceModeCollate collate;
+		[charset(UTF16),to_null] uint16 formname[MAXDEVICENAME];
+		uint16 logpixels; /* reserved */
+		uint32 bitsperpel; /* reserved */
+		uint32 pelswidth; /* reserved */
+		uint32 pelsheight; /* reserved */
+		spoolss_DeviceModeNUp displayflags;
+		uint32 displayfrequency; /* reserved */
+		spoolss_DeviceModeICMMethod icmmethod;
+		spoolss_DeviceModeICMIntent icmintent;
+		spoolss_DeviceModeMediaType mediatype;
+		spoolss_DeviceModeDitherType dithertype;
+		uint32 reserved1;
+		uint32 reserved2;
+		uint32 panningwidth; /* reserved */
+		uint32 panningheight; /* reserved */
+		[subcontext_size(__driverextra_length),subcontext(0),flag(NDR_REMAINING)] DATA_BLOB driverextra_data;
+	} spoolss_DeviceMode;
+
+	typedef [public] bitmap {
+		PRINTER_ENUM_DEFAULT     = 0x00000001,
+		PRINTER_ENUM_LOCAL       = 0x00000002,
+		PRINTER_ENUM_CONNECTIONS = 0x00000004,
+		PRINTER_ENUM_FAVORITE    = 0x00000004,
+		PRINTER_ENUM_NAME        = 0x00000008,
+		PRINTER_ENUM_REMOTE      = 0x00000010,
+		PRINTER_ENUM_SHARED      = 0x00000020,
+		PRINTER_ENUM_NETWORK     = 0x00000040,
+		PRINTER_ENUM_EXPAND      = 0x00004000,
+		PRINTER_ENUM_CONTAINER   = 0x00008000,
+		PRINTER_ENUM_ICON1       = 0x00010000,
+		PRINTER_ENUM_ICON2       = 0x00020000,
+		PRINTER_ENUM_ICON3       = 0x00040000,
+		PRINTER_ENUM_ICON4       = 0x00080000,
+		PRINTER_ENUM_ICON5       = 0x00100000,
+		PRINTER_ENUM_ICON6       = 0x00200000,
+		PRINTER_ENUM_ICON7       = 0x00400000,
+		PRINTER_ENUM_ICON8       = 0x00800000,
+		PRINTER_ENUM_HIDE        = 0x01000000
+	} spoolss_EnumPrinterFlags;
+
+	const int PRINTER_ENUM_ICONMASK = (PRINTER_ENUM_ICON1 |
+					   PRINTER_ENUM_ICON2 |
+					   PRINTER_ENUM_ICON3 |
+					   PRINTER_ENUM_ICON4 |
+					   PRINTER_ENUM_ICON5 |
+					   PRINTER_ENUM_ICON6 |
+					   PRINTER_ENUM_ICON7 |
+					   PRINTER_ENUM_ICON8); /* 0x00ff0000 */
+
+	typedef [public] bitmap {
+		PRINTER_ATTRIBUTE_QUEUED		= 0x00000001,
+		PRINTER_ATTRIBUTE_DIRECT		= 0x00000002,
+		PRINTER_ATTRIBUTE_DEFAULT		= 0x00000004,
+		PRINTER_ATTRIBUTE_SHARED		= 0x00000008,
+		PRINTER_ATTRIBUTE_NETWORK		= 0x00000010,
+		PRINTER_ATTRIBUTE_HIDDEN		= 0x00000020,
+		PRINTER_ATTRIBUTE_LOCAL			= 0x00000040,
+		PRINTER_ATTRIBUTE_ENABLE_DEVQ		= 0x00000080,
+		PRINTER_ATTRIBUTE_KEEPPRINTEDJOBS	= 0x00000100,
+		PRINTER_ATTRIBUTE_DO_COMPLETE_FIRST	= 0x00000200,
+		PRINTER_ATTRIBUTE_WORK_OFFLINE		= 0x00000400,
+		PRINTER_ATTRIBUTE_ENABLE_BIDI		= 0x00000800,
+		PRINTER_ATTRIBUTE_RAW_ONLY		= 0x00001000,
+		PRINTER_ATTRIBUTE_PUBLISHED		= 0x00002000,
+		PRINTER_ATTRIBUTE_FAX			= 0x00004000,
+		PRINTER_ATTRIBUTE_TS			= 0x00008000
+	} spoolss_PrinterAttributes;
+
+	typedef [public,gensize] struct {
+		spoolss_EnumPrinterFlags flags;
+		[relative] nstring *description;
+		[relative] nstring *name;
+		[relative] nstring *comment;
+	} spoolss_PrinterInfo1;
+
+	typedef [public,gensize,nopush] struct {
+		[relative] nstring *servername;
+		[relative] nstring *printername;
+		[relative] nstring *sharename;
+		[relative] nstring *portname;
+		[relative] nstring *drivername;
+		[relative] nstring *comment;
+		[relative] nstring *location;
+		[relative,subcontext(0),flag(NDR_ALIGN4)] spoolss_DeviceMode *devmode;
+		[relative] nstring *sepfile;
+		[relative] nstring *printprocessor;
+		[relative] nstring *datatype;
+		[relative] nstring *parameters;
+		[relative,subcontext(0),flag(NDR_ALIGN4)] spoolss_security_descriptor *secdesc;
+		spoolss_PrinterAttributes attributes;
+		[range(0,99)] uint32 priority;
+		uint32 defaultpriority;
+		uint32 starttime;
+		uint32 untiltime;
+		spoolss_PrinterStatus status;
+		uint32 cjobs;
+		uint32 averageppm;
+	} spoolss_PrinterInfo2;
+
+	typedef [public,gensize] struct {
+		[relative,subcontext(0),flag(NDR_ALIGN4)] spoolss_security_descriptor *secdesc;
+	} spoolss_PrinterInfo3;
+
+	typedef [public,gensize] struct {
+		[relative] nstring *printername;
+		[relative] nstring *servername;
+		spoolss_PrinterAttributes attributes;
+	} spoolss_PrinterInfo4;
+
+	typedef [public,gensize] struct {
+		[relative] nstring *printername;
+		[relative] nstring *portname;
+		spoolss_PrinterAttributes attributes;
+		uint32 device_not_selected_timeout;
+		uint32 transmission_retry_timeout;
+	} spoolss_PrinterInfo5;
+
+	typedef [public,gensize] struct {
+		spoolss_PrinterStatus status;
+	} spoolss_PrinterInfo6;
+
+	typedef bitmap {
+		DSPRINT_PUBLISH		= 0x00000001,
+		DSPRINT_UPDATE		= 0x00000002,
+		DSPRINT_UNPUBLISH	= 0x00000004,
+		DSPRINT_REPUBLISH	= 0x00000008,
+		DSPRINT_PENDING		= 0x80000000
+	} spoolss_DsPrintAction;
+
+	typedef [public,gensize] struct {
+		[relative] nstring *guid; /* text form of printer guid */
+		spoolss_DsPrintAction action;
+	} spoolss_PrinterInfo7;
+
+	typedef struct {
+		[relative,subcontext(0),flag(NDR_ALIGN4)] spoolss_DeviceMode *devmode;
+	} spoolss_DeviceModeInfo;
+
+	typedef [nodiscriminant,relative_base,public,gensize,flag(NDR_RELATIVE_REVERSE)] union {
+		[case(0)] spoolss_PrinterInfo0 info0;
+		[case(1)] spoolss_PrinterInfo1 info1;
+		[case(2)] spoolss_PrinterInfo2 info2;
+		[case(3)] spoolss_PrinterInfo3 info3;
+		[case(4)] spoolss_PrinterInfo4 info4;
+		[case(5)] spoolss_PrinterInfo5 info5;
+		[case(6)] spoolss_PrinterInfo6 info6;
+		[case(7)] spoolss_PrinterInfo7 info7;
+		[case(8)] spoolss_DeviceModeInfo info8;
+		[case(9)] spoolss_DeviceModeInfo info9;
+		[default];
+	} spoolss_PrinterInfo;
+
+	/******************/
+	/* Function: 0x00 */
+	/* we are using this as internal parsing code */
+	[public,noopnum,noprint] WERROR _spoolss_EnumPrinters(
+		[in] spoolss_EnumPrinterFlags flags,
+		[in,unique] [string,charset(UTF16)] uint16 *server,
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		[out,unique] DATA_BLOB *info,
+		[out,ref] uint32 *needed,
+		[out,ref] uint32 *count
+	);
+	[public,noopnum,noprint] void __spoolss_EnumPrinters(
+		[in] uint32 level,
+		[in] uint32 count,
+		[out,switch_is(level)] spoolss_PrinterInfo info[count]
+	);
+	[nopull,nopush] WERROR spoolss_EnumPrinters(
+		[in] spoolss_EnumPrinterFlags flags,
+		[in,unique] [string,charset(UTF16)] uint16 *server,
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		/* what we have here is a subcontext containing an array of no discriminant unions
+		 * and the array has no size in front
+		 */
+		[out,ref] uint32 *count,
+		[out,ref,switch_is(level),size_is(,*count)] spoolss_PrinterInfo **info,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x01 */
+	typedef struct {
+		[value(_ndr_size_spoolss_DeviceMode(devmode, ndr->flags))] uint32 _ndr_size;
+		[subcontext(4),subcontext_size(_ndr_size)] spoolss_DeviceMode *devmode;
+	} spoolss_DevmodeContainer;
+
+	[public] WERROR spoolss_OpenPrinter(
+		[in,unique] [string,charset(UTF16)] uint16 *printername,
+		[in,unique] [string,charset(UTF16)] uint16 *datatype,
+		[in] spoolss_DevmodeContainer devmode_ctr,
+		[in] spoolss_AccessRights access_mask,
+		[out,ref] policy_handle *handle
+	);
+
+	/******************/
+	/* Function: 0x02 */
+
+	typedef [public,gensize] struct {
+		uint32 job_id;
+		[relative] nstring *printer_name;
+		[relative] nstring *server_name;
+		[relative] nstring *user_name;
+		[relative] nstring *document_name;
+		[relative] nstring *data_type;
+		[relative] nstring *text_status;
+		spoolss_JobStatus status;
+		[range(0,99)] uint32 priority;
+		uint32 position;
+		uint32 total_pages;
+		uint32 pages_printed;
+		spoolss_Time submitted;
+	} spoolss_JobInfo1;
+
+	typedef [public,gensize] struct {
+		uint32 job_id;
+		[relative] nstring *printer_name;
+		[relative] nstring *server_name;
+		[relative] nstring *user_name;
+		[relative] nstring *document_name;
+		[relative] nstring *notify_name;
+		[relative] nstring *data_type;
+		[relative] nstring *print_processor;
+		[relative] nstring *parameters;
+		[relative] nstring *driver_name;
+		[relative,subcontext(0),flag(NDR_ALIGN4)] spoolss_DeviceMode *devmode;
+		[relative] nstring *text_status;
+		[relative,subcontext(0),flag(NDR_ALIGN4)] spoolss_security_descriptor *secdesc;
+		spoolss_JobStatus status;
+		[range(0,99)] uint32 priority;
+		uint32 position;
+		uint32 start_time;
+		uint32 until_time;
+		uint32 total_pages;
+		uint32 size;
+		spoolss_Time submitted;
+		uint32 time;
+		uint32 pages_printed;
+	} spoolss_JobInfo2;
+
+	typedef [public,gensize] struct {
+		uint32 job_id;
+		uint32 next_job_id;
+		uint32 reserved;
+	} spoolss_JobInfo3;
+
+	typedef [public,gensize] struct {
+		uint32 job_id;
+		[relative] nstring *printer_name;
+		[relative] nstring *server_name;
+		[relative] nstring *user_name;
+		[relative] nstring *document_name;
+		[relative] nstring *notify_name;
+		[relative] nstring *data_type;
+		[relative] nstring *print_processor;
+		[relative] nstring *parameters;
+		[relative] nstring *driver_name;
+		[relative,subcontext(0),flag(NDR_ALIGN4)] spoolss_DeviceMode *devmode;
+		[relative] nstring *text_status;
+		[relative,subcontext(0),flag(NDR_ALIGN4)] spoolss_security_descriptor *secdesc;
+		spoolss_JobStatus status;
+		[range(0,99)] uint32 priority;
+		uint32 position;
+		uint32 start_time;
+		uint32 until_time;
+		uint32 total_pages;
+		uint32 size;
+		spoolss_Time submitted;
+		uint32 time;
+		uint32 pages_printed;
+		uint32 size_high;
+	} spoolss_JobInfo4;
+
+	typedef [nodiscriminant,relative_base,public,gensize,flag(NDR_RELATIVE_REVERSE)] union {
+		[case(1)] spoolss_JobInfo1 info1;
+		[case(2)] spoolss_JobInfo2 info2;
+		[case(3)] spoolss_JobInfo3 info3;
+		[case(4)] spoolss_JobInfo4 info4;
+		[default];
+	} spoolss_JobInfo;
+
+	typedef struct {
+		uint32 job_id;
+		[string,charset(UTF16)] uint16 *printer_name;
+		[string,charset(UTF16)] uint16 *server_name;
+		[string,charset(UTF16)] uint16 *user_name;
+		[string,charset(UTF16)] uint16 *document_name;
+		[string,charset(UTF16)] uint16 *data_type;
+		[string,charset(UTF16)] uint16 *text_status;
+		spoolss_JobStatus status;
+		[range(0,99)] uint32 priority;
+		uint32 position;
+		uint32 total_pages;
+		uint32 pages_printed;
+		spoolss_Time submitted;
+	} spoolss_SetJobInfo1;
+
+	typedef struct {
+		uint32 job_id;
+		[string,charset(UTF16)] uint16 *printer_name;
+		[string,charset(UTF16)] uint16 *server_name;
+		[string,charset(UTF16)] uint16 *user_name;
+		[string,charset(UTF16)] uint16 *document_name;
+		[string,charset(UTF16)] uint16 *notify_name;
+		[string,charset(UTF16)] uint16 *data_type;
+		[string,charset(UTF16)] uint16 *print_processor;
+		[string,charset(UTF16)] uint16 *parameters;
+		[string,charset(UTF16)] uint16 *driver_name;
+		uint32 _devmode_ptr; /* pointer to truncated devicemode */
+		[string,charset(UTF16)] uint16 *text_status;
+		uint32 _secdesc_ptr;
+		spoolss_JobStatus status;
+		[range(0,99)] uint32 priority;
+		uint32 position;
+		uint32 start_time;
+		uint32 until_time;
+		uint32 total_pages;
+		uint32 size;
+		spoolss_Time submitted;
+		uint32 time;
+		uint32 pages_printed;
+	} spoolss_SetJobInfo2;
+
+	typedef struct {
+		uint32 job_id;
+		[string,charset(UTF16)] uint16 *printer_name;
+		[string,charset(UTF16)] uint16 *server_name;
+		[string,charset(UTF16)] uint16 *user_name;
+		[string,charset(UTF16)] uint16 *document_name;
+		[string,charset(UTF16)] uint16 *notify_name;
+		[string,charset(UTF16)] uint16 *data_type;
+		[string,charset(UTF16)] uint16 *print_processor;
+		[string,charset(UTF16)] uint16 *parameters;
+		[string,charset(UTF16)] uint16 *driver_name;
+		uint32 _devmode_ptr; /* pointer to truncated devicemode */
+		[string,charset(UTF16)] uint16 *text_status;
+		uint32 _secdesc_ptr;
+		spoolss_JobStatus status;
+		[range(0,99)] uint32 priority;
+		uint32 position;
+		uint32 start_time;
+		uint32 until_time;
+		uint32 total_pages;
+		uint32 size;
+		spoolss_Time submitted;
+		uint32 time;
+		uint32 pages_printed;
+		uint32 size_high;
+	} spoolss_SetJobInfo4;
+
+	typedef [public] union {
+		[case(1)] spoolss_SetJobInfo1 *info1;
+		[case(2)] spoolss_SetJobInfo2 *info2;
+		[case(3)] spoolss_JobInfo3    *info3;
+		[case(4)] spoolss_SetJobInfo4 *info4;
+		[default];
+	} spoolss_SetJobInfo;
+
+	typedef struct {
+		uint32 level;
+		[switch_is(level)] spoolss_SetJobInfo info;
+	} spoolss_JobInfoContainer;
+
+	typedef [v1_enum] enum {
+		SPOOLSS_JOB_CONTROL_PAUSE		= 1,
+		SPOOLSS_JOB_CONTROL_RESUME		= 2,
+		SPOOLSS_JOB_CONTROL_CANCEL		= 3,
+		SPOOLSS_JOB_CONTROL_RESTART		= 4,
+		SPOOLSS_JOB_CONTROL_DELETE		= 5,
+		SPOOLSS_JOB_CONTROL_SEND_TO_PRINTER	= 6,
+		SPOOLSS_JOB_CONTROL_LAST_PAGE_EJECTED	= 7,
+		SPOOLSS_JOB_CONTROL_RETAIN		= 8,
+		SPOOLSS_JOB_CONTROL_RELEASE		= 9
+	} spoolss_JobControl;
+
+	WERROR spoolss_SetJob(
+		[in,ref] policy_handle *handle,
+		[in] uint32 job_id,
+		[in,unique] spoolss_JobInfoContainer *ctr,
+		[in] spoolss_JobControl command
+	);
+
+	/******************/
+	/* Function: 0x03 */
+	WERROR spoolss_GetJob(
+		[in,ref] policy_handle *handle,
+		[in] 	 uint32 job_id,
+		[in] 	 uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] 	 uint32 offered,
+		[out,unique,subcontext(4),subcontext_size(offered),switch_is(level)] spoolss_JobInfo *info,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x04 */
+	[public,noopnum,noprint] WERROR _spoolss_EnumJobs(
+		[in,ref] policy_handle *handle,
+		[in] 	 uint32 firstjob,
+		[in] 	 uint32 numjobs,
+		[in] 	 uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] 	 uint32 offered,
+		[out,unique] DATA_BLOB *info,
+		[out,ref] uint32 *needed,
+		[out,ref] uint32 *count
+	);
+	[public,noopnum,noprint] void __spoolss_EnumJobs(
+		[in] uint32 level,
+		[in] uint32 count,
+		[out,switch_is(level)] spoolss_JobInfo info[count]
+	);
+	[nopull,nopush] WERROR spoolss_EnumJobs(
+		[in,ref] policy_handle *handle,
+		[in]	 uint32 firstjob,
+		[in]	 uint32 numjobs,
+		[in]	 uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] 	 uint32 offered,
+		[out,ref] uint32 *count,
+		[out,ref,switch_is(level),size_is(,*count)] spoolss_JobInfo **info,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x05 */
+	WERROR spoolss_AddPrinter(
+		[in,unique] [string,charset(UTF16)] uint16 *server,
+		[in,ref] spoolss_SetPrinterInfoCtr *info_ctr,
+		[in,ref] spoolss_DevmodeContainer *devmode_ctr,
+		[in,ref] sec_desc_buf *secdesc_ctr,
+		[out,ref] policy_handle *handle
+	);
+
+	/******************/
+	/* Function: 0x06 */
+	WERROR spoolss_DeletePrinter(
+		[in] policy_handle *handle
+	);
+
+	/******************/
+	/* Function: 0x07 */
+	typedef [v1_enum] enum {
+		SPOOLSS_PRINTER_CONTROL_UNPAUSE    = 0,
+		SPOOLSS_PRINTER_CONTROL_PAUSE      = 1,
+		SPOOLSS_PRINTER_CONTROL_RESUME     = 2,
+		SPOOLSS_PRINTER_CONTROL_PURGE      = 3,
+		SPOOLSS_PRINTER_CONTROL_SET_STATUS = 4
+	} spoolss_PrinterControl;
+
+	typedef struct {
+		[string,charset(UTF16)] uint16 *servername;
+		[string,charset(UTF16)] uint16 *printername;
+		uint32 cjobs;
+		uint32 total_jobs;
+		uint32 total_bytes;
+		spoolss_Time time;
+		uint32 global_counter;
+		uint32 total_pages;
+		uint32 version;
+		spoolss_Build free_build;
+		uint32 spooling;
+		uint32 max_spooling;
+		uint32 session_counter;
+		uint32 num_error_out_of_paper;
+		uint32 num_error_not_ready;
+		spoolss_JobStatus job_error;
+		uint32 number_of_processors;
+		spoolss_ProcessorType processor_type;
+		uint32 high_part_total_bytes;
+		uint32 change_id;
+		WERROR last_error;
+		spoolss_PrinterStatus status;
+		uint32 enumerate_network_printers;
+		uint32 c_setprinter;
+		spoolss_ProcessorArchitecture processor_architecture;
+		uint16 processor_level;
+		uint32 ref_ic;
+		uint32 reserved2;
+		uint32 reserved3;
+	} spoolss_SetPrinterInfo0;
+
+	typedef struct {
+		spoolss_PrinterAttributes flags;
+		[string,charset(UTF16)] uint16 *description;
+		[string,charset(UTF16)] uint16 *name;
+		[string,charset(UTF16)] uint16 *comment;
+	} spoolss_SetPrinterInfo1;
+
+	typedef struct {
+		[string,charset(UTF16)] uint16 *servername;
+		[string,charset(UTF16)] uint16 *printername;
+		[string,charset(UTF16)] uint16 *sharename;
+		[string,charset(UTF16)] uint16 *portname;
+		[string,charset(UTF16)] uint16 *drivername;
+		[string,charset(UTF16)] uint16 *comment;
+		[string,charset(UTF16)] uint16 *location;
+		uint32 devmode_ptr;
+		[string,charset(UTF16)] uint16 *sepfile;
+		[string,charset(UTF16)] uint16 *printprocessor;
+		[string,charset(UTF16)] uint16 *datatype;
+		[string,charset(UTF16)] uint16 *parameters;
+		uint32 secdesc_ptr;
+		spoolss_PrinterAttributes attributes;
+		[range(0,99)] uint32 priority;
+		uint32 defaultpriority;
+		uint32 starttime;
+		uint32 untiltime;
+		spoolss_PrinterStatus status;
+		uint32 cjobs;
+		uint32 averageppm;
+	} spoolss_SetPrinterInfo2;
+
+	typedef struct {
+		uint32 sec_desc_ptr;
+	} spoolss_SetPrinterInfo3;
+
+	typedef struct {
+		[string,charset(UTF16)] uint16 *printername;
+		[string,charset(UTF16)] uint16 *servername;
+		spoolss_PrinterAttributes attributes;
+	} spoolss_SetPrinterInfo4;
+
+	typedef struct {
+		[string,charset(UTF16)] uint16 *printername;
+		[string,charset(UTF16)] uint16 *portname;
+		spoolss_PrinterAttributes attributes;
+		uint32 device_not_selected_timeout;
+		uint32 transmission_retry_timeout;
+	} spoolss_SetPrinterInfo5;
+
+	typedef struct {
+		spoolss_PrinterStatus status;
+	} spoolss_SetPrinterInfo6;
+
+	typedef struct {
+		[string,charset(UTF16)] uint16 *guid; /* text form of printer guid */
+		spoolss_DsPrintAction action;
+	} spoolss_SetPrinterInfo7;
+
+	typedef struct {
+		uint32 devmode_ptr;
+	} spoolss_SetPrinterInfo8;
+
+	typedef struct {
+		uint32 devmode_ptr;
+	} spoolss_SetPrinterInfo9;
+
+	typedef [switch_type(uint32)] union {
+		[case(0)] spoolss_SetPrinterInfo0 *info0;
+		[case(1)] spoolss_SetPrinterInfo1 *info1;
+		[case(2)] spoolss_SetPrinterInfo2 *info2;
+		[case(3)] spoolss_SetPrinterInfo3 *info3;
+		[case(4)] spoolss_SetPrinterInfo4 *info4;
+		[case(5)] spoolss_SetPrinterInfo5 *info5;
+		[case(6)] spoolss_SetPrinterInfo6 *info6;
+		[case(7)] spoolss_SetPrinterInfo7 *info7;
+		[case(8)] spoolss_SetPrinterInfo8 *info8;
+		[case(9)] spoolss_SetPrinterInfo9 *info9;
+		[default];
+	} spoolss_SetPrinterInfo;
+
+	typedef struct {
+		uint32 level;
+		[switch_is(level)] spoolss_SetPrinterInfo info;
+	} spoolss_SetPrinterInfoCtr;
+
+	WERROR spoolss_SetPrinter(
+		[in,ref] policy_handle *handle,
+		[in,ref] spoolss_SetPrinterInfoCtr *info_ctr,
+		[in,ref] spoolss_DevmodeContainer *devmode_ctr,
+		[in,ref] sec_desc_buf *secdesc_ctr,
+		[in] spoolss_PrinterControl command
+	);
+
+	/******************/
+	/* Function: 0x08 */
+	[public] WERROR spoolss_GetPrinter(
+		[in,ref] policy_handle *handle,
+		[in] 	 uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] 	 uint32 offered,
+		[out,unique,subcontext(4),subcontext_size(offered),switch_is(level)] spoolss_PrinterInfo *info,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x09 */
+
+	typedef [public] struct {
+		[value((ndr_size_spoolss_StringArray(r, ndr->flags)-4)/2)] uint32 _ndr_size;
+		/*[subcontext(0),subcontext_size(_ndr_size*2)]*/ nstring_array string;
+	} spoolss_StringArray;
+
+	typedef struct {
+		[string,charset(UTF16)] uint16 *driver_name;
+	} spoolss_AddDriverInfo1;
+
+	typedef [v1_enum,public] enum {
+		SPOOLSS_DRIVER_VERSION_9X	= 0,
+		SPOOLSS_DRIVER_VERSION_NT35	= 1,
+		SPOOLSS_DRIVER_VERSION_NT4	= 2,
+		SPOOLSS_DRIVER_VERSION_200X	= 3,
+		SPOOLSS_DRIVER_VERSION_2012	= 4
+	} spoolss_DriverOSVersion;
+
+	typedef struct {
+		spoolss_DriverOSVersion version;
+		[string,charset(UTF16)] uint16 *driver_name;
+		[string,charset(UTF16)] uint16 *architecture;
+		[string,charset(UTF16)] uint16 *driver_path;
+		[string,charset(UTF16)] uint16 *data_file;
+		[string,charset(UTF16)] uint16 *config_file;
+	} spoolss_AddDriverInfo2;
+
+	typedef struct {
+		spoolss_DriverOSVersion version;
+		[string,charset(UTF16)] uint16 *driver_name;
+		[string,charset(UTF16)] uint16 *architecture;
+		[string,charset(UTF16)] uint16 *driver_path;
+		[string,charset(UTF16)] uint16 *data_file;
+		[string,charset(UTF16)] uint16 *config_file;
+		[string,charset(UTF16)] uint16 *help_file;
+		[string,charset(UTF16)] uint16 *monitor_name;
+		[string,charset(UTF16)] uint16 *default_datatype;
+		[value(((ndr_size_spoolss_StringArray(dependent_files, ndr->flags)-4)/2))] uint32 _ndr_size_dependent_files;
+		spoolss_StringArray *dependent_files;
+	} spoolss_AddDriverInfo3;
+
+	typedef struct {
+		spoolss_DriverOSVersion version;
+		[string,charset(UTF16)] uint16 *driver_name;
+		[string,charset(UTF16)] uint16 *architecture;
+		[string,charset(UTF16)] uint16 *driver_path;
+		[string,charset(UTF16)] uint16 *data_file;
+		[string,charset(UTF16)] uint16 *config_file;
+		[string,charset(UTF16)] uint16 *help_file;
+		[string,charset(UTF16)] uint16 *monitor_name;
+		[string,charset(UTF16)] uint16 *default_datatype;
+		[value(((ndr_size_spoolss_StringArray(dependent_files, ndr->flags)-4)/2))] uint32 _ndr_size_dependent_files;
+		spoolss_StringArray *dependent_files;
+		[value(((ndr_size_spoolss_StringArray(previous_names, ndr->flags)-4)/2))] uint32 _ndr_size_previous_names;
+		spoolss_StringArray *previous_names;
+	} spoolss_AddDriverInfo4;
+
+	typedef [bitmap32bit] bitmap {
+		PRINTER_DRIVER_PACKAGE_AWARE = 0x00000002
+	} spoolss_DriverAttributes;
+
+	typedef struct {
+		spoolss_DriverOSVersion version;
+		[string,charset(UTF16)] uint16 *driver_name;
+		[string,charset(UTF16)] uint16 *architecture;
+		[string,charset(UTF16)] uint16 *driver_path;
+		[string,charset(UTF16)] uint16 *data_file;
+		[string,charset(UTF16)] uint16 *config_file;
+		spoolss_DriverAttributes driver_attributes;
+		uint32 config_version;
+		uint32 driver_version;
+	} spoolss_AddDriverInfo5;
+
+	typedef struct {
+		spoolss_DriverOSVersion version;
+		[string,charset(UTF16)] uint16 *driver_name;
+		[string,charset(UTF16)] uint16 *architecture;
+		[string,charset(UTF16)] uint16 *driver_path;
+		[string,charset(UTF16)] uint16 *data_file;
+		[string,charset(UTF16)] uint16 *config_file;
+		[string,charset(UTF16)] uint16 *help_file;
+		[string,charset(UTF16)] uint16 *monitor_name;
+		[string,charset(UTF16)] uint16 *default_datatype;
+		[value(((ndr_size_spoolss_StringArray(dependent_files, ndr->flags)-4)/2))] uint32 _ndr_size_dependent_files;
+		spoolss_StringArray *dependent_files;
+		[value(((ndr_size_spoolss_StringArray(previous_names, ndr->flags)-4)/2))] uint32 _ndr_size_previous_names;
+		spoolss_StringArray *previous_names;
+		NTTIME driver_date;
+		hyper driver_version;
+		[string,charset(UTF16)] uint16 *manufacturer_name;
+		[string,charset(UTF16)] uint16 *manufacturer_url;
+		[string,charset(UTF16)] uint16 *hardware_id;
+		[string,charset(UTF16)] uint16 *provider;
+	} spoolss_AddDriverInfo6;
+
+	typedef struct {
+		spoolss_DriverOSVersion version;
+		[string,charset(UTF16)] uint16 *driver_name;
+		[string,charset(UTF16)] uint16 *architecture;
+		[string,charset(UTF16)] uint16 *driver_path;
+		[string,charset(UTF16)] uint16 *data_file;
+		[string,charset(UTF16)] uint16 *config_file;
+		[string,charset(UTF16)] uint16 *help_file;
+		[string,charset(UTF16)] uint16 *monitor_name;
+		[string,charset(UTF16)] uint16 *default_datatype;
+		[value(((ndr_size_spoolss_StringArray(dependent_files, ndr->flags)-4)/2))] uint32 _ndr_size_dependent_files;
+		spoolss_StringArray *dependent_files;
+		[value(((ndr_size_spoolss_StringArray(previous_names, ndr->flags)-4)/2))] uint32 _ndr_size_previous_names;
+		spoolss_StringArray *previous_names;
+		NTTIME driver_date;
+		hyper driver_version;
+		[string,charset(UTF16)] uint16 *manufacturer_name;
+		[string,charset(UTF16)] uint16 *manufacturer_url;
+		[string,charset(UTF16)] uint16 *hardware_id;
+		[string,charset(UTF16)] uint16 *provider;
+		[string,charset(UTF16)] uint16 *print_processor;
+		[string,charset(UTF16)] uint16 *vendor_setup;
+		[value(((ndr_size_spoolss_StringArray(color_profiles, ndr->flags)-4)/2))] uint32 _ndr_size_color_profiles;
+		spoolss_StringArray *color_profiles;
+		[string,charset(UTF16)] uint16 *inf_path;
+		uint32 printer_driver_attributes;
+		[value(((ndr_size_spoolss_StringArray(core_driver_dependencies, ndr->flags)-4)/2))] uint32 _ndr_size_core_driver_dependencies;
+		spoolss_StringArray *core_driver_dependencies;
+		NTTIME min_inbox_driver_ver_date;
+		hyper min_inbox_driver_ver_version;
+	} spoolss_AddDriverInfo8;
+
+	typedef [switch_type(uint32)] union {
+		[case(1)] spoolss_AddDriverInfo1 *info1;
+		[case(2)] spoolss_AddDriverInfo2 *info2;
+		[case(3)] spoolss_AddDriverInfo3 *info3;
+		[case(4)] spoolss_AddDriverInfo4 *info4;
+		[case(6)] spoolss_AddDriverInfo6 *info6;
+		[case(8)] spoolss_AddDriverInfo8 *info8;
+	} spoolss_AddDriverInfo;
+
+	typedef struct {
+		uint32 level;
+		[switch_is(level)] spoolss_AddDriverInfo info;
+	} spoolss_AddDriverInfoCtr;
+
+	WERROR spoolss_AddPrinterDriver(
+		[in,unique] [string,charset(UTF16)] uint16 *servername,
+		[in,ref] spoolss_AddDriverInfoCtr *info_ctr
+	);
+
+	typedef [public,gensize] struct {
+		[relative] nstring *driver_name;
+	} spoolss_DriverInfo1;
+
+	typedef [public,gensize] struct {
+		spoolss_DriverOSVersion version;
+		[relative] nstring *driver_name;
+		[relative] nstring *architecture;
+		[relative] nstring *driver_path;
+		[relative] nstring *data_file;
+		[relative] nstring *config_file;
+	} spoolss_DriverInfo2;
+
+	typedef [public,gensize] struct {
+		spoolss_DriverOSVersion version;
+		[relative] nstring *driver_name;
+		[relative] nstring *architecture;
+		[relative] nstring *driver_path;
+		[relative] nstring *data_file;
+		[relative] nstring *config_file;
+		[relative] nstring *help_file;
+		[relative] nstring_array *dependent_files;
+		[relative] nstring *monitor_name;
+		[relative] nstring *default_datatype;
+	} spoolss_DriverInfo3;
+
+	typedef [public,gensize] struct {
+		spoolss_DriverOSVersion version;
+		[relative] nstring *driver_name;
+		[relative] nstring *architecture;
+		[relative] nstring *driver_path;
+		[relative] nstring *data_file;
+		[relative] nstring *config_file;
+		[relative] nstring *help_file;
+		[relative] nstring_array *dependent_files;
+		[relative] nstring *monitor_name;
+		[relative] nstring *default_datatype;
+		[relative] nstring_array *previous_names;
+	} spoolss_DriverInfo4;
+
+	typedef [public,gensize] struct {
+		spoolss_DriverOSVersion version;
+		[relative] nstring *driver_name;
+		[relative] nstring *architecture;
+		[relative] nstring *driver_path;
+		[relative] nstring *data_file;
+		[relative] nstring *config_file;
+		spoolss_DriverAttributes driver_attributes;
+		uint32 config_version;
+		uint32 driver_version;
+	} spoolss_DriverInfo5;
+
+	typedef [public,gensize] struct {
+		spoolss_DriverOSVersion version;
+		[relative] nstring *driver_name;
+		[relative] nstring *architecture;
+		[relative] nstring *driver_path;
+		[relative] nstring *data_file;
+		[relative] nstring *config_file;
+		[relative] nstring *help_file;
+		[relative] nstring_array *dependent_files;
+		[relative] nstring *monitor_name;
+		[relative] nstring *default_datatype;
+		[relative] nstring_array *previous_names;
+		NTTIME driver_date;
+		hyper driver_version;
+		[relative] nstring *manufacturer_name;
+		[relative] nstring *manufacturer_url;
+		[relative] nstring *hardware_id;
+		[relative] nstring *provider;
+	} spoolss_DriverInfo6;
+
+	typedef [public,gensize] struct {
+		uint32 size;
+		spoolss_DriverOSVersion version;
+		[relative] nstring *driver_name;
+		[relative] nstring *inf_name;
+		[relative] nstring *install_source_root;
+	} spoolss_DriverInfo7;
+
+	typedef [public,gensize] struct {
+		spoolss_DriverOSVersion version;
+		[relative] nstring *driver_name;
+		[relative] nstring *architecture;
+		[relative] nstring *driver_path;
+		[relative] nstring *data_file;
+		[relative] nstring *config_file;
+		[relative] nstring *help_file;
+		[relative] nstring_array *dependent_files;
+		[relative] nstring *monitor_name;
+		[relative] nstring *default_datatype;
+		[relative] nstring_array *previous_names;
+		NTTIME driver_date;
+		hyper driver_version;
+		[relative] nstring *manufacturer_name;
+		[relative] nstring *manufacturer_url;
+		[relative] nstring *hardware_id;
+		[relative] nstring *provider;
+		[relative] nstring *print_processor;
+		[relative] nstring *vendor_setup;
+		[relative] nstring_array *color_profiles;
+		[relative] nstring *inf_path;
+		uint32 printer_driver_attributes;
+		[relative] nstring_array *core_driver_dependencies;
+		NTTIME min_inbox_driver_ver_date;
+		hyper min_inbox_driver_ver_version;
+	} spoolss_DriverInfo8;
+
+	typedef [v1_enum] enum {
+		SPOOLSS_DRIVER_FILE_TYPE_RENDERING	= 0x00000000,
+		SPOOLSS_DRIVER_FILE_TYPE_CONFIGURATION	= 0x00000001,
+		SPOOLSS_DRIVER_FILE_TYPE_DATA		= 0x00000002,
+		SPOOLSS_DRIVER_FILE_TYPE_HELP		= 0x00000003,
+		SPOOLSS_DRIVER_FILE_TYPE_OTHER		= 0x00000004
+	} spoolss_DriverFileType;
+
+	typedef [public] struct {
+		[relative] nstring *file_name;
+		spoolss_DriverFileType file_type;
+		uint32 file_version;
+	} spoolss_DriverFileInfo;
+
+	typedef [public,gensize,nopush,nopull] struct {
+		spoolss_DriverOSVersion version;
+		[relative] nstring *driver_name;
+		[relative] nstring *architecture;
+		[relative,size_is(file_count),flag(NDR_ALIGN4)] spoolss_DriverFileInfo *file_info;
+		uint32 file_count;
+		[relative] nstring *monitor_name;
+		[relative] nstring *default_datatype;
+		[relative] nstring_array *previous_names;
+		NTTIME driver_date;
+		hyper driver_version;
+		[relative] nstring *manufacturer_name;
+		[relative] nstring *manufacturer_url;
+		[relative] nstring *hardware_id;
+		[relative] nstring *provider;
+	} spoolss_DriverInfo101;
+
+	typedef [nodiscriminant,relative_base,public,gensize,flag(NDR_RELATIVE_REVERSE)] union {
+		[case(1)] spoolss_DriverInfo1 info1;
+		[case(2)] spoolss_DriverInfo2 info2;
+		[case(3)] spoolss_DriverInfo3 info3;
+		[case(4)] spoolss_DriverInfo4 info4;
+		[case(5)] spoolss_DriverInfo5 info5;
+		[case(6)] spoolss_DriverInfo6 info6;
+		[case(7)] spoolss_DriverInfo7 info7;
+		[case(8)] spoolss_DriverInfo8 info8;
+		[case(101)] spoolss_DriverInfo101 info101;
+		[default];
+	} spoolss_DriverInfo;
+
+	/******************/
+	/* Function: 0x0a */
+	[public,noopnum,noprint] WERROR _spoolss_EnumPrinterDrivers(
+		[in,unique] [string,charset(UTF16)] uint16 *server,
+		[in,unique] [string,charset(UTF16)] uint16 *environment,
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		[out,unique] DATA_BLOB *info,
+		[out,ref] uint32 *needed,
+		[out,ref] uint32 *count
+	);
+	[public,noopnum,noprint] void __spoolss_EnumPrinterDrivers(
+		[in] uint32 level,
+		[in] uint32 count,
+		[out,switch_is(level)] spoolss_DriverInfo info[count]
+	);
+	[nopull,nopush] WERROR spoolss_EnumPrinterDrivers(
+		[in,unique] [string,charset(UTF16)] uint16 *server,
+		[in,unique] [string,charset(UTF16)] uint16 *environment,
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		[out,ref] uint32 *count,
+		[out,ref,switch_is(level),size_is(,*count)] spoolss_DriverInfo **info,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x0b */
+	WERROR spoolss_GetPrinterDriver(
+		[in,ref] policy_handle *handle,
+		[in,unique] [string,charset(UTF16)] uint16 *architecture,
+		[in] 	 uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] 	 uint32 offered,
+		[out,unique,subcontext(4),subcontext_size(offered),switch_is(level)] spoolss_DriverInfo *info,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x0c */
+	typedef [public,gensize] struct {
+		nstring directory_name;
+	} spoolss_DriverDirectoryInfo1;
+
+	/* NOTE: it's seems that w2k3 completly ignores the level
+	         in its server code
+	 */
+	typedef [nodiscriminant,relative_base,public,gensize,flag(NDR_RELATIVE_REVERSE)] union {
+		[case(1)] spoolss_DriverDirectoryInfo1 info1;
+		[default] spoolss_DriverDirectoryInfo1 info1;
+	} spoolss_DriverDirectoryInfo;
+
+	[public] WERROR spoolss_GetPrinterDriverDirectory(
+		[in,unique] [string,charset(UTF16)] uint16 *server,
+		[in,unique] [string,charset(UTF16)] uint16 *environment,
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		[out,unique,subcontext(4),subcontext_size(offered),switch_is(level)] spoolss_DriverDirectoryInfo *info,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x0d */
+	WERROR spoolss_DeletePrinterDriver(
+		[in,unique] [string,charset(UTF16)] uint16 *server,
+		[in] [string,charset(UTF16)] uint16 architecture[],
+		[in] [string,charset(UTF16)] uint16 driver[]
+	);
+
+	/******************/
+	/* Function: 0x0e */
+	WERROR spoolss_AddPrintProcessor(
+		[in,unique] [string,charset(UTF16)] uint16 *server,
+		[in] [string,charset(UTF16)] uint16 architecture[],
+		[in] [string,charset(UTF16)] uint16 path_name[],
+		[in] [string,charset(UTF16)] uint16 print_processor_name[]
+	);
+
+	/******************/
+	/* Function: 0x0f */
+	typedef [public,gensize] struct {
+		[relative] nstring *print_processor_name;
+	} spoolss_PrintProcessorInfo1;
+
+	typedef [nodiscriminant,relative_base,public,flag(NDR_RELATIVE_REVERSE)] union {
+		[case(1)] spoolss_PrintProcessorInfo1 info1;
+		[default];
+	} spoolss_PrintProcessorInfo;
+
+	[public,noopnum,noprint] WERROR _spoolss_EnumPrintProcessors(
+		[in,unique] [string,charset(UTF16)] uint16 *servername,
+		[in,unique] [string,charset(UTF16)] uint16 *environment,
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		[out,unique] DATA_BLOB *info,
+		[out,ref] uint32 *needed,
+		[out,ref] uint32 *count
+	);
+	[public,noopnum,noprint] void __spoolss_EnumPrintProcessors(
+		[in] uint32 level,
+		[in] uint32 count,
+		[out,switch_is(level)] spoolss_PrintProcessorInfo info[count]
+	);
+	[nopull,nopush] WERROR spoolss_EnumPrintProcessors(
+		[in,unique] [string,charset(UTF16)] uint16 *servername,
+		[in,unique] [string,charset(UTF16)] uint16 *environment,
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		[out,ref] uint32 *count,
+		[out,ref,switch_is(level),size_is(,*count)] spoolss_PrintProcessorInfo **info,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x10 */
+	typedef [public,gensize] struct {
+		nstring directory_name;
+	} spoolss_PrintProcessorDirectoryInfo1;
+
+	typedef [nodiscriminant,relative_base,public,gensize,flag(NDR_RELATIVE_REVERSE)] union {
+		[case(1)] spoolss_PrintProcessorDirectoryInfo1 info1;
+		[default] spoolss_PrintProcessorDirectoryInfo1 info1;
+	} spoolss_PrintProcessorDirectoryInfo;
+
+	WERROR spoolss_GetPrintProcessorDirectory(
+		[in,unique] [string,charset(UTF16)] uint16 *server,
+		[in,unique] [string,charset(UTF16)] uint16 *environment,
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		[out,unique,subcontext(4),subcontext_size(offered),switch_is(level)] spoolss_PrintProcessorDirectoryInfo *info,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x11 */
+	typedef struct {
+		[string,charset(UTF16)] uint16 *document_name;
+		[string,charset(UTF16)] uint16 *output_file;
+		[string,charset(UTF16)] uint16 *datatype;
+	} spoolss_DocumentInfo1;
+
+	typedef [switch_type(uint32)] union {
+		[case(1)] spoolss_DocumentInfo1 *info1;
+		[case(2)]; /* TODO */
+		[case(3)]; /* TODO */
+		[default];
+	} spoolss_DocumentInfo;
+
+	WERROR spoolss_StartDocPrinter(
+		[in,ref] policy_handle *handle,
+		[in] uint32 level,
+		[in,switch_is(level)] spoolss_DocumentInfo info,
+		[out,ref] uint32 *job_id
+	);
+
+	/******************/
+	/* Function: 0x12 */
+	WERROR spoolss_StartPagePrinter(
+		[in,ref] policy_handle *handle
+	);
+
+	/******************/
+	/* Function: 0x13 */
+	WERROR spoolss_WritePrinter(
+		[in,ref] policy_handle *handle,
+		[in] DATA_BLOB data,
+		[in,value(r->in.data.length)] uint32 _data_size,
+		[out,ref] uint32 *num_written
+	);
+
+	/******************/
+	/* Function: 0x14 */
+	WERROR spoolss_EndPagePrinter(
+		[in,ref] policy_handle *handle
+	);
+
+	/******************/
+	/* Function: 0x15 */
+	WERROR spoolss_AbortPrinter(
+		[in,ref] policy_handle *handle
+	);
+
+	/******************/
+	/* Function: 0x16 */
+	WERROR spoolss_ReadPrinter(
+		[in,ref] policy_handle *handle,
+		[out,ref] [size_is(data_size)] uint8 *data,
+		[in] uint32 data_size,
+		[out,ref] uint32 *_data_size
+	);
+
+	/******************/
+	/* Function: 0x17 */
+	WERROR spoolss_EndDocPrinter(
+		[in,ref] policy_handle *handle
+	);
+
+	/******************/
+	/* Function: 0x18 */
+	WERROR spoolss_AddJob(
+		[in,ref] policy_handle *handle,
+		[in] uint32 level,
+		[in,out,unique] [size_is(offered)] uint8 *buffer,
+		[in] uint32 offered,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x19 */
+	WERROR spoolss_ScheduleJob(
+		[in,ref] policy_handle *handle,
+		[in] uint32 jobid
+	);
+
+	/******************/
+	/* Function: 0x1a */
+
+	const string SPL_ARCH_WIN40		= "WIN40";
+	const string SPL_ARCH_W32X86		= "W32X86";
+	const string SPL_ARCH_W32MIPS		= "W32MIPS";
+	const string SPL_ARCH_W32ALPHA		= "W32ALPHA";
+	const string SPL_ARCH_W32PPC		= "W32PPC";
+	const string SPL_ARCH_IA64		= "IA64";
+	const string SPL_ARCH_X64		= "x64";
+
+	const string SPOOLSS_ARCHITECTURE_ALL			= "All";
+	const string SPOOLSS_ARCHITECTURE_ALL_CLUSTER		= "AllCluster";
+	const string SPOOLSS_ARCHITECTURE_NT_X86		= "Windows NT x86";
+	const string SPOOLSS_ARCHITECTURE_IA_64			= "Windows IA64";
+	const string SPOOLSS_ARCHITECTURE_x64			= "Windows x64";
+	const string SPOOLSS_ARCHITECTURE_4_0			= "Windows 4.0";
+	const string SPOOLSS_DEFAULT_SERVER_PATH		= "C:\\WINDOWS\\system32\\spool";
+
+	typedef [public,gensize] struct {
+		[value(ndr_size_spoolss_OSVersion(r,ndr->flags))] uint32 _ndr_size;
+		uint32 major;
+		uint32 minor;
+		uint32 build;
+		[value(2)] uint32 platform_id;
+		[subcontext(0),subcontext_size(256)] nstring extra_string;
+	} spoolss_OSVersion;
+
+	typedef [public,gensize] struct {
+		[value(ndr_size_spoolss_OSVersionEx(r,ndr->flags))] uint32 _ndr_size;
+		uint32 major;
+		uint32 minor;
+		uint32 build;
+		[value(2)] uint32 platform_id;
+		[subcontext(0),subcontext_size(256)] nstring extra_string;
+		uint16 service_pack_major;
+		uint16 service_pack_minor;
+		uint16 suite_mask;
+		uint8 product_type;
+		uint8 reserved;
+	} spoolss_OSVersionEx;
+
+	typedef [nodiscriminant,public] union {
+		[case(REG_NONE)];
+		[case(REG_SZ)] nstring string;
+		[case(REG_BINARY),flag(NDR_REMAINING)] DATA_BLOB binary;
+		[case(REG_DWORD)] uint32 value;
+		[case(REG_MULTI_SZ)] nstring_array string_array;
+		[default,flag(NDR_REMAINING)] DATA_BLOB data;
+	} spoolss_PrinterData;
+
+	/* predefined registry key names for printer data */
+
+	const string SPOOL_PRINTERDATA_KEY		= "PrinterDriverData";
+	const string SPOOL_DSSPOOLER_KEY		= "DsSpooler";
+	const string SPOOL_DSDRIVER_KEY			= "DsDriver";
+	const string SPOOL_DSUSER_KEY			= "DsUser";
+	const string SPOOL_PNPDATA_KEY			= "PnPData";
+	const string SPOOL_OID_KEY			= "OID";
+
+	/* predefined value names for printer data */
+
+	const string SPOOL_REG_ASSETNUMBER		= "assetNumber";
+	const string SPOOL_REG_BYTESPERMINUTE		= "bytesPerMinute";
+	const string SPOOL_REG_DEFAULTPRIORITY		= "defaultPriority";
+	const string SPOOL_REG_DESCRIPTION		= "description";
+	const string SPOOL_REG_DRIVERNAME		= "driverName";
+	const string SPOOL_REG_DRIVERVERSION		= "driverVersion";
+	const string SPOOL_REG_FLAGS			= "flags";
+	const string SPOOL_REG_LOCATION			= "location";
+	const string SPOOL_REG_OPERATINGSYSTEM		= "operatingSystem";
+	const string SPOOL_REG_OPERATINGSYSTEMHOTFIX	= "operatingSystemHotfix";
+	const string SPOOL_REG_OPERATINGSYSTEMSERVICEPACK = "operatingSystemServicePack";
+	const string SPOOL_REG_OPERATINGSYSTEMVERSION	= "operatingSystemVersion";
+	const string SPOOL_REG_PORTNAME			= "portName";
+	const string SPOOL_REG_PRINTATTRIBUTES		= "printAttributes";
+	const string SPOOL_REG_PRINTBINNAMES		= "printBinNames";
+	const string SPOOL_REG_PRINTCOLLATE		= "printCollate";
+	const string SPOOL_REG_PRINTCOLOR		= "printColor";
+	const string SPOOL_REG_PRINTDUPLEXSUPPORTED	= "printDuplexSupported";
+	const string SPOOL_REG_PRINTENDTIME		= "printEndTime";
+	const string SPOOL_REG_PRINTERNAME		= "printerName";
+	const string SPOOL_REG_PRINTFORMNAME		= "printFormName";
+	const string SPOOL_REG_PRINTKEEPPRINTEDJOBS	= "printKeepPrintedJobs";
+	const string SPOOL_REG_PRINTLANGUAGE		= "printLanguage";
+	const string SPOOL_REG_PRINTMACADDRESS		= "printMACAddress";
+	const string SPOOL_REG_PRINTMAXCOPIES		= "printMaxCopies";
+	const string SPOOL_REG_PRINTMAXRESOLUTIONSUPPORTED = "printMaxResolutionSupported";
+	const string SPOOL_REG_PRINTMAXXEXTENT		= "printMaxXExtent";
+	const string SPOOL_REG_PRINTMAXYEXTENT		= "printMaxYExtent";
+	const string SPOOL_REG_PRINTMEDIAREADY		= "printMediaReady";
+	const string SPOOL_REG_PRINTMEDIASUPPORTED	= "printMediaSupported";
+	const string SPOOL_REG_PRINTMEMORY		= "printMemory";
+	const string SPOOL_REG_PRINTMINXEXTENT		= "printMinXExtent";
+	const string SPOOL_REG_PRINTMINYEXTENT		= "printMinYExtent";
+	const string SPOOL_REG_PRINTNETWORKADDRESS	= "printNetworkAddress";
+	const string SPOOL_REG_PRINTNOTIFY		= "printNotify";
+	const string SPOOL_REG_PRINTNUMBERUP		= "printNumberUp";
+	const string SPOOL_REG_PRINTORIENTATIONSSUPPORTED = "printOrientationsSupported";
+	const string SPOOL_REG_PRINTOWNER		= "printOwner";
+	const string SPOOL_REG_PRINTPAGESPERMINUTE	= "printPagesPerMinute";
+	const string SPOOL_REG_PRINTRATE		= "printRate";
+	const string SPOOL_REG_PRINTRATEUNIT		= "printRateUnit";
+	const string SPOOL_REG_PRINTSEPARATORFILE	= "printSeparatorFile";
+	const string SPOOL_REG_PRINTSHARENAME		= "printShareName";
+	const string SPOOL_REG_PRINTSPOOLING		= "printSpooling";
+	const string SPOOL_REGVAL_PRINTWHILESPOOLING	= "PrintWhileSpooling";
+	const string SPOOL_REGVAL_PRINTAFTERSPOOLED	= "PrintAfterSpooled";
+	const string SPOOL_REGVAL_PRINTDIRECT		= "PrintDirect";
+	const string SPOOL_REG_PRINTSTAPLINGSUPPORTED	= "printStaplingSupported";
+	const string SPOOL_REG_PRINTSTARTTIME		= "printStartTime";
+	const string SPOOL_REG_PRINTSTATUS		= "printStatus";
+	const string SPOOL_REG_PRIORITY			= "priority";
+	const string SPOOL_REG_SERVERNAME		= "serverName";
+	const string SPOOL_REG_SHORTSERVERNAME		= "shortServerName";
+	const string SPOOL_REG_UNCNAME			= "uNCName";
+	const string SPOOL_REG_URL			= "url";
+	const string SPOOL_REG_VERSIONNUMBER		= "versionNumber";
+
+	[public] WERROR spoolss_GetPrinterData(
+		[in,ref] policy_handle *handle,
+		[in] 	 [string,charset(UTF16)] uint16 value_name[],
+		[out,ref] winreg_Type *type,
+		[out,ref,size_is(offered)] uint8 *data,
+		[in] 	 uint32 offered,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x1b */
+	WERROR spoolss_SetPrinterData(
+		[in,ref] policy_handle *handle,
+		[in] [string,charset(UTF16)] uint16 value_name[],
+		[in] winreg_Type type,
+		[in,ref] [size_is(offered)] uint8 *data,
+		[in] uint32 offered
+	);
+
+	/******************/
+	/* Function: 0x1c */
+	[todo] WERROR spoolss_WaitForPrinterChange(
+	);
+
+	/******************/
+	/* Function: 0x1d */
+	[public] WERROR spoolss_ClosePrinter(
+		[in,out,ref]     policy_handle *handle
+	);
+
+	/******************/
+	/* Function: 0x1e */
+	typedef [v1_enum] enum {
+		SPOOLSS_FORM_USER	= 0,
+		SPOOLSS_FORM_BUILTIN	= 1,
+		SPOOLSS_FORM_PRINTER	= 2
+	} spoolss_FormFlags;
+
+	typedef struct {
+		uint32 width;
+		uint32 height;
+	} spoolss_FormSize;
+
+	typedef struct {
+		uint32 left;
+		uint32 top;
+		uint32 right;
+		uint32 bottom;
+	} spoolss_FormArea;
+
+	typedef [public,gensize] struct {
+		spoolss_FormFlags flags;
+		[relative] nstring *form_name;
+		spoolss_FormSize size;
+		spoolss_FormArea area;
+	} spoolss_FormInfo1;
+
+	typedef [bitmap32bit] bitmap {
+		SPOOLSS_FORM_STRING_TYPE_NONE		= 0x00000001,
+		SPOOLSS_FORM_STRING_TYPE_MUI_DLL	= 0x00000002,
+		SPOOLSS_FORM_STRING_TYPE_LANG_PAIR	= 0x00000004
+	} spoolss_FormStringType;
+
+	typedef [public,gensize] struct {
+		spoolss_FormFlags flags;
+		[relative] nstring *form_name;
+		spoolss_FormSize size;
+		spoolss_FormArea area;
+		[relative] astring *keyword;
+		spoolss_FormStringType string_type;
+		[relative] nstring *mui_dll;
+		uint32 ressource_id;
+		[relative] nstring *display_name;
+		uint16 lang_id;
+		uint16 unused;
+	} spoolss_FormInfo2;
+
+	typedef [nodiscriminant,relative_base,public,gensize,flag(NDR_RELATIVE_REVERSE)] union {
+		[case(1)] spoolss_FormInfo1 info1;
+		[case(2)] spoolss_FormInfo2 info2;
+		[default];
+	} spoolss_FormInfo;
+
+	typedef struct {
+		spoolss_FormFlags flags;
+		[string,charset(UTF16)] uint16 *form_name;
+		spoolss_FormSize size;
+		spoolss_FormArea area;
+	} spoolss_AddFormInfo1;
+
+	typedef struct {
+		spoolss_FormFlags flags;
+		[string,charset(UTF16)] uint16 *form_name;
+		spoolss_FormSize size;
+		spoolss_FormArea area;
+		[string,charset(DOS)] uint8 *keyword;
+		spoolss_FormStringType string_type;
+		[string,charset(UTF16)] uint16 *mui_dll;
+		uint32 ressource_id;
+		[string,charset(UTF16)] uint16 *display_name;
+		uint32 lang_id;
+	} spoolss_AddFormInfo2;
+
+	typedef [switch_type(uint32)] union {
+		[case(1)] spoolss_AddFormInfo1 *info1;
+		[case(2)] spoolss_AddFormInfo2 *info2;
+	} spoolss_AddFormInfo;
+
+	WERROR spoolss_AddForm(
+		[in,ref] policy_handle *handle,
+		[in] uint32 level,
+		[in,switch_is(level)] spoolss_AddFormInfo info
+	);
+
+	/******************/
+	/* Function: 0x1f */
+	WERROR spoolss_DeleteForm(
+		[in,ref] policy_handle *handle,
+		[in] [string,charset(UTF16)] uint16 form_name[]
+	);
+
+	/******************/
+	/* Function: 0x20 */
+	WERROR spoolss_GetForm(
+		[in,ref] policy_handle *handle,
+		[in] [string,charset(UTF16)] uint16 form_name[],
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		[out,unique,subcontext(4),subcontext_size(offered),switch_is(level)] spoolss_FormInfo *info,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x21 */
+	WERROR spoolss_SetForm(
+		[in,ref] policy_handle *handle,
+		[in] [string,charset(UTF16)] uint16 form_name[],
+		[in] uint32 level,
+		[in,switch_is(level)] spoolss_AddFormInfo info
+	);
+
+	/******************/
+	/* Function: 0x22 */
+	[public,noopnum,noprint] WERROR _spoolss_EnumForms(
+		[in,ref] policy_handle *handle,
+		[in] 	 uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] 	 uint32 offered,
+		[out,unique] DATA_BLOB *info,
+		[out,ref] uint32 *needed,
+		[out,ref] uint32 *count
+	);
+	[public,noopnum,noprint] void __spoolss_EnumForms(
+		[in] uint32 level,
+		[in] uint32 count,
+		[out,switch_is(level)] spoolss_FormInfo info[count]
+	);
+	[nopull,nopush] WERROR spoolss_EnumForms(
+		[in,ref] policy_handle *handle,
+		[in] 	 uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] 	 uint32 offered,
+		[out,ref] uint32 *count,
+		[out,ref,switch_is(level),size_is(,*count)] spoolss_FormInfo **info,
+		[out,ref] uint32 *needed
+	);
+
+	/*
+	 * Special strings for the OpenPrinter() call.  See the MSDN DDK
+	 * docs on the XcvDataPort() for more details.
+	 */
+
+	const string SPL_LOCAL_PORT		= "Local Port";
+	const string SPL_TCPIP_PORT		= "Standard TCP/IP Port";
+	const string SPL_XCV_MONITOR_LOCALMON   = ",XcvMonitor Local Port";
+	const string SPL_XCV_MONITOR_TCPMON	= ",XcvMonitor Standard TCP/IP Port";
+
+	typedef [public,gensize] struct {
+		[relative] nstring *port_name;
+	} spoolss_PortInfo1;
+
+	typedef bitmap {
+		SPOOLSS_PORT_TYPE_WRITE		= 0x00000001,
+		SPOOLSS_PORT_TYPE_READ		= 0x00000002,
+		SPOOLSS_PORT_TYPE_REDIRECTED	= 0x00000004,
+		SPOOLSS_PORT_TYPE_NET_ATTACHED  = 0x00000008
+	} spoolss_PortType;
+
+	typedef [public,gensize] struct {
+		[relative] nstring *port_name;
+		[relative] nstring *monitor_name;
+		[relative] nstring *description;
+		spoolss_PortType port_type;
+		uint32 reserved;
+	} spoolss_PortInfo2;
+
+	typedef [v1_enum] enum {
+		PORT_STATUS_CLEAR		= 0x00000000,
+		PORT_STATUS_OFFLINE		= 0x00000001,
+		PORT_STATUS_PAPER_JAM		= 0x00000002,
+		PORT_STATUS_PAPER_OUT		= 0x00000003,
+		PORT_STATUS_OUTPUT_BIN_FULL	= 0x00000004,
+		PORT_STATUS_PAPER_PROBLEM	= 0x00000005,
+		PORT_STATUS_NO_TONER		= 0x00000006,
+		PORT_STATUS_DOOR_OPEN		= 0x00000007,
+		PORT_STATUS_USER_INTERVENTION	= 0x00000008,
+		PORT_STATUS_OUT_OF_MEMORY	= 0x00000009,
+		PORT_STATUS_TONER_LOW		= 0x0000000A,
+		PORT_STATUS_WARMING_UP		= 0x0000000B,
+		PORT_STATUS_POWER_SAVE		= 0x0000000C
+	} spoolss_PortStatus;
+
+	typedef [v1_enum] enum {
+		PORT_STATUS_TYPE_ERROR		= 0x00000001,
+		PORT_STATUS_TYPE_WARNING	= 0x00000002,
+		PORT_STATUS_TYPE_INFO		= 0x00000003
+	} spoolss_PortSeverity;
+
+	typedef [public,gensize] struct {
+		spoolss_PortStatus status;
+		[relative] nstring *status_string;
+		spoolss_PortSeverity severity;
+	} spoolss_PortInfo3;
+
+	typedef [public,gensize] struct {
+		[relative] nstring *port_name;
+		DATA_BLOB monitor_data; /* relative ?? */
+	} spoolss_PortInfoFF;
+
+	typedef [nodiscriminant,relative_base,public,flag(NDR_RELATIVE_REVERSE)] union {
+		[case(1)] spoolss_PortInfo1 info1;
+		[case(2)] spoolss_PortInfo2 info2;
+		[case(3)] spoolss_PortInfo3 info3;
+		[case(0xff)] spoolss_PortInfoFF infoFF;
+		[default];
+	} spoolss_PortInfo;
+
+	/******************/
+	/* Function: 0x23 */
+	[public,noopnum,noprint] WERROR _spoolss_EnumPorts(
+		[in,unique] [string,charset(UTF16)] uint16 *servername,
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		[out,unique] DATA_BLOB *info,
+		[out,ref] uint32 *needed,
+		[out,ref] uint32 *count
+	);
+	[public,noopnum,noprint] void __spoolss_EnumPorts(
+		[in] uint32 level,
+		[in] uint32 count,
+		[out,switch_is(level)] spoolss_PortInfo info[count]
+	);
+	[nopull,nopush] WERROR spoolss_EnumPorts(
+		[in,unique] [string,charset(UTF16)] uint16 *servername,
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		[out,ref] uint32 *count,
+		[out,ref,switch_is(level),size_is(,*count)] spoolss_PortInfo **info,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x24 */
+	typedef [public,gensize] struct {
+		[relative] nstring *monitor_name;
+	} spoolss_MonitorInfo1;
+
+	typedef [public,gensize] struct {
+		[relative] nstring *monitor_name;
+		[relative] nstring *environment;
+		[relative] nstring *dll_name;
+	} spoolss_MonitorInfo2;
+
+	typedef [nodiscriminant,relative_base,public,flag(NDR_RELATIVE_REVERSE)] union {
+		[case(1)] spoolss_MonitorInfo1 info1;
+		[case(2)] spoolss_MonitorInfo2 info2;
+		[default];
+	} spoolss_MonitorInfo;
+
+	[public,noopnum,noprint] WERROR _spoolss_EnumMonitors(
+		[in,unique] [string,charset(UTF16)] uint16 *servername,
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		[out,unique] DATA_BLOB *info,
+		[out,ref] uint32 *needed,
+		[out,ref] uint32 *count
+	);
+	[public,noopnum,noprint] void __spoolss_EnumMonitors(
+		[in] uint32 level,
+		[in] uint32 count,
+		[out,switch_is(level)] spoolss_MonitorInfo info[count]
+	);
+	[nopull,nopush] WERROR spoolss_EnumMonitors(
+		[in,unique] [string,charset(UTF16)] uint16 *servername,
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		[out,ref] uint32 *count,
+		[out,ref,switch_is(level),size_is(,*count)] spoolss_MonitorInfo **info,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x25 */
+
+	typedef [public,gensize] struct {
+		[string,charset(UTF16)] uint16 *port_name;
+	} spoolss_SetPortInfo1;
+
+	typedef [public,gensize] struct {
+		[string,charset(UTF16)] uint16 *port_name;
+		[string,charset(UTF16)] uint16 *monitor_name;
+		[string,charset(UTF16)] uint16 *description;
+		spoolss_PortType port_type;
+		uint32 reserved;
+	} spoolss_SetPortInfo2;
+
+	typedef [public,gensize] struct {
+		spoolss_PortStatus status;
+		[string,charset(UTF16)] uint16 *status_string;
+		spoolss_PortSeverity severity;
+	} spoolss_SetPortInfo3;
+
+	typedef [public,gensize] struct {
+		[string,charset(UTF16)] uint16 *port_name;
+		DATA_BLOB monitor_data; /* relative ?? */
+	} spoolss_SetPortInfoFF;
+
+	typedef [switch_type(uint32)] union {
+		[case(1)] spoolss_SetPortInfo1 *info1;
+		[case(2)] spoolss_SetPortInfo2 *info2;
+		[case(3)] spoolss_SetPortInfo3 *info3;
+		[case(0xff)] spoolss_SetPortInfoFF *infoFF;
+	} spoolss_SetPortInfo;
+
+	typedef struct {
+		uint32 level;
+		[switch_is(level)] spoolss_SetPrinterInfo info;
+	} spoolss_SetPortInfoContainer;
+
+	WERROR spoolss_AddPort(
+	       [in,unique] [string,charset(UTF16)] uint16 *server_name,
+	       [in] uint32 unknown,
+	       [in] [string,charset(UTF16)] uint16 monitor_name[]
+	);
+
+	/******************/
+	/* Function: 0x26 */
+	[todo] WERROR spoolss_ConfigurePort(
+	);
+
+	/******************/
+	/* Function: 0x27 */
+	WERROR spoolss_DeletePort(
+	       [in,unique] [string,charset(UTF16)] uint16 *server_name,
+	       [in] uint32 ptr,
+	       [in,ref] [string,charset(UTF16)] uint16 *port_name
+	);
+
+	/******************/
+	/* Function: 0x28 */
+	WERROR spoolss_CreatePrinterIC(
+		[in,ref] policy_handle *handle,
+		[out,ref] policy_handle *gdi_handle,
+		[in,ref] spoolss_DevmodeContainer *devmode_ctr
+	);
+
+	/******************/
+	/* Function: 0x29 */
+	[todo] WERROR spoolss_PlayGDIScriptOnPrinterIC(
+	);
+
+	/******************/
+	/* Function: 0x2a */
+	WERROR spoolss_DeletePrinterIC(
+		[in,out,ref] policy_handle *gdi_handle
+	);
+
+	/******************/
+	/* Function: 0x2b */
+	[todo] WERROR spoolss_AddPrinterConnection(
+	);
+
+	/******************/
+	/* Function: 0x2c */
+	[todo] WERROR spoolss_DeletePrinterConnection(
+	);
+
+	/******************/
+	/* Function: 0x2d */
+	[todo] WERROR spoolss_PrinterMessageBox(
+		/* Marked as obsolete in MSDN.  "Not necessary and has
+		   no effect". */
+	);
+
+	/******************/
+	/* Function: 0x2e */
+	[todo] WERROR spoolss_AddMonitor(
+	);
+
+	/******************/
+	/* Function: 0x2f */
+	[todo] WERROR spoolss_DeleteMonitor(
+	);
+
+	/******************/
+	/* Function: 0x30 */
+	[todo] WERROR spoolss_DeletePrintProcessor(
+	);
+
+	/******************/
+	/* Function: 0x31 */
+	[todo] WERROR spoolss_AddPrintProvidor(
+	);
+
+	/******************/
+	/* Function: 0x32 */
+	[todo] WERROR spoolss_DeletePrintProvidor(
+	);
+
+	/******************/
+	/* Function: 0x33 */
+
+	typedef [public,gensize] struct {
+		[relative] nstring *name_array;
+	} spoolss_PrintProcDataTypesInfo1;
+
+	typedef [nodiscriminant,relative_base,public,flag(NDR_RELATIVE_REVERSE)] union {
+		[case(1)] spoolss_PrintProcDataTypesInfo1 info1;
+		[default];
+	} spoolss_PrintProcDataTypesInfo;
+
+	[public,noopnum,noprint] WERROR _spoolss_EnumPrintProcDataTypes(
+		[in,unique] [string,charset(UTF16)] uint16 *servername,
+		[in,unique] [string,charset(UTF16)] uint16 *print_processor_name,
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		[out,unique] DATA_BLOB *info,
+		[out,ref] uint32 *needed,
+		[out,ref] uint32 *count
+	);
+	[public,noopnum,noprint] void __spoolss_EnumPrintProcDataTypes(
+		[in] uint32 level,
+		[in] uint32 count,
+		[out,switch_is(level)] spoolss_PrintProcDataTypesInfo info[count]
+	);
+	[nopull,nopush] WERROR spoolss_EnumPrintProcDataTypes(
+		[in,unique] [string,charset(UTF16)] uint16 *servername,
+		[in,unique] [string,charset(UTF16)] uint16 *print_processor_name,
+		[in] uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] uint32 offered,
+		[out,ref] uint32 *count,
+		[out,ref,switch_is(level),size_is(,*count)] spoolss_PrintProcDataTypesInfo **info,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x34 */
+	WERROR spoolss_ResetPrinter(
+		[in,ref] policy_handle *handle,
+		[in,unique] [string,charset(UTF16)] uint16 *data_type,
+		[in,ref] spoolss_DevmodeContainer *devmode_ctr
+	);
+
+	/******************/
+	/* Function: 0x35 */
+	[public] WERROR spoolss_GetPrinterDriver2(
+		[in,ref] policy_handle *handle,
+		[in,unique] [string,charset(UTF16)] uint16 *architecture,
+		[in] 	 uint32 level,
+		[in,unique] DATA_BLOB *buffer,
+		[in] 	 uint32 offered,
+		[in] 	 uint32 client_major_version,
+		[in] 	 uint32 client_minor_version,
+		[out,unique,subcontext(4),subcontext_size(offered),switch_is(level)] spoolss_DriverInfo *info,
+		[out,ref] uint32 *needed,
+		[out,ref] uint32 *server_major_version,
+		[out,ref] uint32 *server_minor_version
+	);
+
+	/******************/
+	/* Function: 0x36 */
+	[todo] WERROR spoolss_FindFirstPrinterChangeNotification(
+	);
+
+	/******************/
+	/* Function: 0x37 */
+	[todo] WERROR spoolss_FindNextPrinterChangeNotification(
+	);
+
+	/******************/
+	/* Function: 0x38 */
+	[public] WERROR spoolss_FindClosePrinterNotify(
+		[in,ref] policy_handle *handle
+	);
+
+	/******************/
+	/* Function: 0x39 */
+	[todo] WERROR spoolss_RouterFindFirstPrinterChangeNotificationOld(
+	);
+
+	/******************/
+	/* Function: 0x3a */
+	[public] WERROR spoolss_ReplyOpenPrinter(
+		[in,string,charset(UTF16)] uint16 server_name[],
+		[in] uint32 printer_local,
+		[in] winreg_Type type,
+		[in,range(0,512)] uint32 bufsize,
+		[in,unique,size_is(bufsize)] uint8 *buffer,
+		[out,ref] policy_handle *handle
+	);
+
+	/******************/
+	/* Function: 0x3b */
+
+	typedef [bitmap32bit] bitmap {
+		PRINTER_CHANGE_ADD_PRINTER			= 0x00000001,
+		PRINTER_CHANGE_SET_PRINTER			= 0x00000002,
+		PRINTER_CHANGE_DELETE_PRINTER			= 0x00000004,
+		PRINTER_CHANGE_FAILED_CONNECTION_PRINTER	= 0x00000008,
+		PRINTER_CHANGE_ADD_JOB				= 0x00000100,
+		PRINTER_CHANGE_SET_JOB				= 0x00000200,
+		PRINTER_CHANGE_DELETE_JOB			= 0x00000400,
+		PRINTER_CHANGE_WRITE_JOB			= 0x00000800,
+		PRINTER_CHANGE_ADD_FORM				= 0x00010000,
+		PRINTER_CHANGE_SET_FORM				= 0x00020000,
+		PRINTER_CHANGE_DELETE_FORM			= 0x00040000,
+		PRINTER_CHANGE_ADD_PORT				= 0x00100000,
+		PRINTER_CHANGE_CONFIGURE_PORT			= 0x00200000,
+		PRINTER_CHANGE_DELETE_PORT			= 0x00400000,
+		PRINTER_CHANGE_ADD_PRINT_PROCESSOR		= 0x01000000,
+		PRINTER_CHANGE_DELETE_PRINT_PROCESSOR		= 0x04000000,
+		PRINTER_CHANGE_SERVER				= 0x08000000,
+		PRINTER_CHANGE_ADD_PRINTER_DRIVER		= 0x10000000,
+		PRINTER_CHANGE_SET_PRINTER_DRIVER		= 0x20000000,
+		PRINTER_CHANGE_DELETE_PRINTER_DRIVER		= 0x40000000,
+		PRINTER_CHANGE_TIMEOUT				= 0x80000000
+	} spoolss_PrinterChangeFlags;
+
+	const int PRINTER_CHANGE_PRINTER			= 0x000000FF;
+
+	const int PRINTER_CHANGE_JOB				= 0x0000FF00;
+
+	const int PRINTER_CHANGE_FORM				= (PRINTER_CHANGE_ADD_FORM |
+								   PRINTER_CHANGE_SET_FORM |
+								   PRINTER_CHANGE_DELETE_FORM); /* 0x00070000 */
+
+	const int PRINTER_CHANGE_PORT				= (PRINTER_CHANGE_ADD_PORT |
+								   PRINTER_CHANGE_CONFIGURE_PORT |
+								   PRINTER_CHANGE_DELETE_PORT); /* 0x00700000 */
+
+	const int PRINTER_CHANGE_PRINT_PROCESSOR		= 0x07000000;
+
+	const int PRINTER_CHANGE_PRINTER_DRIVER			= (PRINTER_CHANGE_ADD_PRINTER_DRIVER |
+								   PRINTER_CHANGE_SET_PRINTER_DRIVER |
+								   PRINTER_CHANGE_DELETE_PRINTER_DRIVER); /* 0x70000000 */
+
+	const int PRINTER_CHANGE_ALL				= (PRINTER_CHANGE_PRINTER |
+								   PRINTER_CHANGE_JOB |
+								   PRINTER_CHANGE_FORM |
+								   PRINTER_CHANGE_PORT |
+								   PRINTER_CHANGE_PRINT_PROCESSOR |
+								   PRINTER_CHANGE_PRINTER_DRIVER); /* 0x7777FFFF */
+	WERROR spoolss_RouterReplyPrinter(
+		[in,ref] policy_handle *handle,
+		[in] spoolss_PrinterChangeFlags flags,
+		[in,range(0,512)] uint32 bufsize,
+		[in,unique,size_is(bufsize)] uint8 *buffer
+	);
+
+	/******************/
+	/* Function: 0x3c */
+	[public] WERROR spoolss_ReplyClosePrinter(
+		[in,out,ref] policy_handle *handle
+	);
+
+	/******************/
+	/* Function: 0x3d */
+
+	typedef struct {
+		uint32 monitor_data_size;
+		[size_is(monitor_data_size),unique] uint8 *monitor_data;
+	} spoolss_PortVarContainer;
+
+	WERROR spoolss_AddPortEx(
+		[in,unique] [string,charset(UTF16)] uint16 *servername,
+		[in,ref] spoolss_SetPortInfoContainer *port_ctr,
+		[in,ref] spoolss_PortVarContainer *port_var_ctr,
+		[in,unique] [string,charset(UTF16)] uint16 *monitor_name
+	);
+
+	/******************/
+	/* Function: 0x3e */
+	[todo] WERROR spoolss_RouterFindFirstPrinterChangeNotification(
+	);
+
+	/******************/
+	/* Function: 0x3f */
+	[todo] WERROR spoolss_SpoolerInit(
+	);
+
+	/******************/
+	/* Function: 0x40 */
+	[todo] WERROR spoolss_ResetPrinterEx(
+	);
+
+	typedef [enum16bit,public] enum {
+		JOB_NOTIFY_FIELD_PRINTER_NAME			= 0x00,
+		JOB_NOTIFY_FIELD_MACHINE_NAME			= 0x01,
+		JOB_NOTIFY_FIELD_PORT_NAME			= 0x02,
+		JOB_NOTIFY_FIELD_USER_NAME			= 0x03,
+		JOB_NOTIFY_FIELD_NOTIFY_NAME			= 0x04,
+		JOB_NOTIFY_FIELD_DATATYPE			= 0x05,
+		JOB_NOTIFY_FIELD_PRINT_PROCESSOR		= 0x06,
+		JOB_NOTIFY_FIELD_PARAMETERS			= 0x07,
+		JOB_NOTIFY_FIELD_DRIVER_NAME			= 0x08,
+		JOB_NOTIFY_FIELD_DEVMODE			= 0x09,
+		JOB_NOTIFY_FIELD_STATUS				= 0x0a,
+		JOB_NOTIFY_FIELD_STATUS_STRING			= 0x0b,
+		JOB_NOTIFY_FIELD_SECURITY_DESCRIPTOR		= 0x0c,
+		JOB_NOTIFY_FIELD_DOCUMENT			= 0x0d,
+		JOB_NOTIFY_FIELD_PRIORITY			= 0x0e,
+		JOB_NOTIFY_FIELD_POSITION			= 0x0f,
+		JOB_NOTIFY_FIELD_SUBMITTED			= 0x10,
+		JOB_NOTIFY_FIELD_START_TIME			= 0x11,
+		JOB_NOTIFY_FIELD_UNTIL_TIME			= 0x12,
+		JOB_NOTIFY_FIELD_TIME				= 0x13,
+		JOB_NOTIFY_FIELD_TOTAL_PAGES			= 0x14,
+		JOB_NOTIFY_FIELD_PAGES_PRINTED			= 0x15,
+		JOB_NOTIFY_FIELD_TOTAL_BYTES			= 0x16,
+		JOB_NOTIFY_FIELD_BYTES_PRINTED			= 0x17
+	} spoolss_JobNotifyField;
+
+	typedef [enum16bit,public] enum {
+		PRINTER_NOTIFY_FIELD_SERVER_NAME		= 0x00,
+		PRINTER_NOTIFY_FIELD_PRINTER_NAME		= 0x01,
+		PRINTER_NOTIFY_FIELD_SHARE_NAME			= 0x02,
+		PRINTER_NOTIFY_FIELD_PORT_NAME			= 0x03,
+		PRINTER_NOTIFY_FIELD_DRIVER_NAME		= 0x04,
+		PRINTER_NOTIFY_FIELD_COMMENT			= 0x05,
+		PRINTER_NOTIFY_FIELD_LOCATION			= 0x06,
+		PRINTER_NOTIFY_FIELD_DEVMODE			= 0x07,
+		PRINTER_NOTIFY_FIELD_SEPFILE			= 0x08,
+		PRINTER_NOTIFY_FIELD_PRINT_PROCESSOR		= 0x09,
+		PRINTER_NOTIFY_FIELD_PARAMETERS			= 0x0a,
+		PRINTER_NOTIFY_FIELD_DATATYPE			= 0x0b,
+		PRINTER_NOTIFY_FIELD_SECURITY_DESCRIPTOR	= 0x0c,
+		PRINTER_NOTIFY_FIELD_ATTRIBUTES			= 0x0d,
+		PRINTER_NOTIFY_FIELD_PRIORITY			= 0x0e,
+		PRINTER_NOTIFY_FIELD_DEFAULT_PRIORITY		= 0x0f,
+		PRINTER_NOTIFY_FIELD_START_TIME			= 0x10,
+		PRINTER_NOTIFY_FIELD_UNTIL_TIME			= 0x11,
+		PRINTER_NOTIFY_FIELD_STATUS			= 0x12,
+		PRINTER_NOTIFY_FIELD_STATUS_STRING		= 0x13,
+		PRINTER_NOTIFY_FIELD_CJOBS			= 0x14,
+		PRINTER_NOTIFY_FIELD_AVERAGE_PPM		= 0x15,
+		PRINTER_NOTIFY_FIELD_TOTAL_PAGES		= 0x16,
+		PRINTER_NOTIFY_FIELD_PAGES_PRINTED		= 0x17,
+		PRINTER_NOTIFY_FIELD_TOTAL_BYTES		= 0x18,
+		PRINTER_NOTIFY_FIELD_BYTES_PRINTED		= 0x19,
+		PRINTER_NOTIFY_FIELD_OBJECT_GUID		= 0x1a,
+		PRINTER_NOTIFY_FIELD_FRIENDLY_NAME		= 0x1b
+	} spoolss_PrintNotifyField;
+
+	typedef [enum16bit] enum {
+		PRINTER_NOTIFY_TYPE	= 0x00,
+		JOB_NOTIFY_TYPE		= 0x01
+	} spoolss_NotifyType;
+
+	typedef [nodiscriminant,noprint] union {
+		[case(PRINTER_NOTIFY_TYPE)] uint16 field;
+		[case(JOB_NOTIFY_TYPE)] uint16 field;
+		[default] uint16 field;
+	} spoolss_Field;
+
+	/******************/
+	/* Function: 0x41 */
+	typedef struct {
+		spoolss_NotifyType type;
+		uint16 u1;
+		uint32 u2;
+		uint32 u3;
+		uint32 count;
+		[size_is(count),switch_is(type)] spoolss_Field *fields;
+	} spoolss_NotifyOptionType;
+
+	typedef [bitmap32bit] bitmap {
+		PRINTER_NOTIFY_OPTIONS_REFRESH	= 0x00000001
+	} spoolssNotifyOptionFlags;
+
+	typedef struct {
+		[value(2)] uint32 version;
+		spoolssNotifyOptionFlags flags;
+		uint32 count;
+		[size_is(count)] spoolss_NotifyOptionType *types;
+	} spoolss_NotifyOption;
+
+	[public] WERROR spoolss_RemoteFindFirstPrinterChangeNotifyEx(
+		[in,ref] policy_handle *handle,
+		[in] spoolss_PrinterChangeFlags flags,
+		[in] uint32 options,
+		[in,unique] [string,charset(UTF16)] uint16 *local_machine,
+		[in] uint32 printer_local,
+		[in,unique] spoolss_NotifyOption *notify_options
+	);
+
+	/******************/
+	/* Function: 0x42 */
+
+	typedef struct {
+		uint32 size;
+		[size_is(size/2),unique,charset(UTF16)] uint16 *string;
+	} spoolss_NotifyString;
+
+	typedef [v1_enum] enum {
+		NOTIFY_TABLE_DWORD		= 0x0001,
+		NOTIFY_TABLE_STRING		= 0x0002,
+		NOTIFY_TABLE_DEVMODE		= 0x0003,
+		NOTIFY_TABLE_TIME		= 0x0004,
+		NOTIFY_TABLE_SECURITYDESCRIPTOR = 0x0005
+	} spoolss_NotifyTable;
+
+	typedef [switch_type(uint32)] union {
+		[case(1)] uint32 integer[2];
+		[case(2)] spoolss_NotifyString string;
+		[case(3)] spoolss_DevmodeContainer devmode;
+		[case(4)] spoolss_TimeCtr time;
+		[case(5)] sec_desc_buf sd;
+	} spoolss_NotifyData;
+
+	typedef struct {
+		spoolss_NotifyType type;
+		[switch_is(type)] spoolss_Field field;
+		spoolss_NotifyTable variable_type;
+		uint32 job_id;
+		[switch_is(variable_type)] spoolss_NotifyData data;
+	} spoolss_Notify;
+
+	typedef struct {
+		[value(2)] uint32 version;
+		uint32 flags;
+		uint32 count;
+		[size_is(count)] spoolss_Notify notifies[];
+	} spoolss_NotifyInfo;
+
+	typedef [switch_type(uint32)] union {
+		[case(0)] spoolss_NotifyInfo *info0;
+	} spoolss_ReplyPrinterInfo;
+
+	typedef [bitmap32bit] bitmap {
+		PRINTER_NOTIFY_INFO_DISCARDED		= 0x00000001,
+		PRINTER_NOTIFY_INFO_DISCARDNOTED	= 0x00010000,
+		PRINTER_NOTIFY_INFO_COLOR_MISMATCH	= 0x00080000
+	} spoolss_PrinterNotifyFlags;
+
+	WERROR spoolss_RouterReplyPrinterEx(
+		[in,ref] policy_handle *handle,
+		[in] uint32 color,
+		[in] spoolss_PrinterChangeFlags flags,
+		[out,ref] spoolss_PrinterNotifyFlags *reply_result,
+		[in] uint32 reply_type,
+		[in,switch_is(reply_type)] spoolss_ReplyPrinterInfo info
+	);
+
+	/******************/
+	/* Function: 0x43 */
+	[public] WERROR spoolss_RouterRefreshPrinterChangeNotify(
+		[in,ref] policy_handle *handle,
+		[in] uint32 change_low,
+		[in,unique] spoolss_NotifyOption *options,
+		[out,ref] spoolss_NotifyInfo **info
+	);
+
+	/******************/
+	/* Function: 0x44 */
+	[todo] WERROR spoolss_44(
+	);
+
+	typedef struct {
+		uint32 size;
+		[string,charset(UTF16)] uint16 *client;
+		[string,charset(UTF16)] uint16 *user;
+		uint32 build;
+		spoolss_MajorVersion major;
+		spoolss_MinorVersion minor;
+		spoolss_ProcessorArchitecture processor;
+	} spoolss_UserLevel1;
+
+	typedef struct {
+		uint32 not_used;
+	} spoolss_UserLevel2;
+
+	typedef struct {
+		uint32 size;
+		uint32 flags;
+		uint32 size2;
+		[string,charset(UTF16)] uint16 *client;
+		[string,charset(UTF16)] uint16 *user;
+		uint32 build;
+		spoolss_MajorVersion major;
+		spoolss_MinorVersion minor;
+		spoolss_ProcessorArchitecture processor;
+		udlong reserved;
+	} spoolss_UserLevel3;
+
+	typedef [switch_type(uint32)] union {
+		[case(1)]  spoolss_UserLevel1 *level1;
+		[case(2)]  spoolss_UserLevel2 *level2;
+		[case(3)]  spoolss_UserLevel3 *level3;
+	} spoolss_UserLevel;
+
+	typedef struct {
+		uint32 level;
+		[switch_is(level)] spoolss_UserLevel user_info;
+	} spoolss_UserLevelCtr;
+
+	typedef bitmap {
+		SERVER_ACCESS_ADMINISTER	= 0x00000001,
+		SERVER_ACCESS_ENUMERATE		= 0x00000002,
+		PRINTER_ACCESS_ADMINISTER	= 0x00000004,
+		PRINTER_ACCESS_USE		= 0x00000008,
+		JOB_ACCESS_ADMINISTER		= 0x00000010,
+		JOB_ACCESS_READ			= 0x00000020
+	} spoolss_AccessRights;
+
+	/* Access rights for print servers */
+	const int SERVER_ALL_ACCESS	= SEC_STD_REQUIRED |
+					  SERVER_ACCESS_ADMINISTER |
+					  SERVER_ACCESS_ENUMERATE;
+
+	const int SERVER_READ		= SEC_STD_READ_CONTROL |
+					  SERVER_ACCESS_ENUMERATE;
+
+	const int SERVER_WRITE		= STANDARD_RIGHTS_WRITE_ACCESS |
+					  SERVER_ACCESS_ADMINISTER |
+					  SERVER_ACCESS_ENUMERATE;
+
+	const int SERVER_EXECUTE	= SEC_STD_READ_CONTROL |
+					  SERVER_ACCESS_ENUMERATE;
+
+	/* Access rights for printers */
+	const int PRINTER_ALL_ACCESS	= SEC_STD_REQUIRED |
+					  PRINTER_ACCESS_ADMINISTER |
+					  PRINTER_ACCESS_USE;
+
+	const int PRINTER_READ		= SEC_STD_READ_CONTROL |
+					  PRINTER_ACCESS_USE;
+
+	const int PRINTER_WRITE		= STANDARD_RIGHTS_WRITE_ACCESS |
+					  PRINTER_ACCESS_USE;
+
+	const int PRINTER_EXECUTE	= SEC_STD_READ_CONTROL |
+					  PRINTER_ACCESS_USE;
+
+	/* Access rights for jobs */
+	const int JOB_ALL_ACCESS	= SEC_STD_REQUIRED |
+					  JOB_ACCESS_ADMINISTER;
+
+	const int JOB_READ		= SEC_STD_READ_CONTROL |
+					  JOB_ACCESS_ADMINISTER;
+
+	const int JOB_WRITE		= STANDARD_RIGHTS_WRITE_ACCESS |
+					  JOB_ACCESS_ADMINISTER;
+
+	const int JOB_EXECUTE		= SEC_STD_READ_CONTROL |
+					  JOB_ACCESS_ADMINISTER;
+
+	/* ACE masks for various print permissions */
+	const int PRINTER_ACE_FULL_CONTROL = SEC_GENERIC_ALL |
+						PRINTER_ALL_ACCESS;
+
+	const int PRINTER_ACE_MANAGE_DOCUMENTS = SEC_GENERIC_ALL |
+						READ_CONTROL_ACCESS;
+
+	const int PRINTER_ACE_PRINT	= GENERIC_EXECUTE_ACCESS |
+					  READ_CONTROL_ACCESS |
+					  PRINTER_ACCESS_USE;
+
+	/******************/
+	/* Function: 0x45 */
+	[public] WERROR spoolss_OpenPrinterEx(
+		[in,unique]           [string,charset(UTF16)] uint16 *printername,
+		[in,unique]           [string,charset(UTF16)] uint16 *datatype,
+		[in]	              spoolss_DevmodeContainer devmode_ctr,
+		[in]	              spoolss_AccessRights access_mask,
+		[in]	              uint32 level,
+		[in,switch_is(level)] spoolss_UserLevel userlevel,
+		[out,ref]	      policy_handle *handle
+	);
+
+	/******************/
+	/* Function: 0x46 */
+	WERROR spoolss_AddPrinterEx(
+		[in,unique] [string,charset(UTF16)] uint16 *server,
+		[in,ref] spoolss_SetPrinterInfoCtr *info_ctr,
+		[in,ref] spoolss_DevmodeContainer *devmode_ctr,
+		[in,ref] sec_desc_buf *secdesc_ctr,
+		[in,ref] spoolss_UserLevelCtr *userlevel_ctr,
+		[out,ref] policy_handle *handle
+	);
+
+	/******************/
+	/* Function: 0x47 */
+	WERROR spoolss_SetPort(
+		[in,unique] [string,charset(UTF16)] uint16 *servername,
+		[in,unique] [string,charset(UTF16)] uint16 *port_name,
+		[in,ref] spoolss_SetPortInfoContainer *port_ctr
+	);
+
+	/******************/
+	/* Function: 0x48 */
+	WERROR spoolss_EnumPrinterData(
+		[in,ref] policy_handle *handle,
+		[in]	 uint32 enum_index,
+		[out,size_is(value_offered/2),charset(UTF16)] uint16 value_name[],
+		[in]     uint32 value_offered,
+		[out,ref] uint32 *value_needed,
+		[out,ref] winreg_Type *type,
+		[out,ref,size_is(data_offered),flag(LIBNDR_PRINT_ARRAY_HEX)] uint8 *data,
+		[in]	 uint32 data_offered,
+		[out,ref] uint32 *data_needed
+	);
+
+	/******************/
+	/* Function: 0x49 */
+	WERROR spoolss_DeletePrinterData(
+		[in,ref] policy_handle *handle,
+		[in] [string,charset(UTF16)] uint16 value_name[]
+	);
+
+	/******************/
+	/* Function: 0x4a */
+	[todo] WERROR spoolss_4a(
+	);
+
+	/******************/
+	/* Function: 0x4b */
+	[todo] WERROR spoolss_4b(
+	);
+
+	/******************/
+	/* Function: 0x4c */
+	[todo] WERROR spoolss_4c(
+	);
+
+	/******************/
+	/* Function: 0x4d */
+	WERROR spoolss_SetPrinterDataEx(
+		[in,ref] policy_handle *handle,
+		[in] [string,charset(UTF16)] uint16 key_name[],
+		[in] [string,charset(UTF16)] uint16 value_name[],
+		[in] winreg_Type type,
+		[in,ref] [size_is(offered)] uint8 *data,
+		[in] uint32 offered
+	);
+
+	/******************/
+	/* Function: 0x4e */
+	WERROR spoolss_GetPrinterDataEx(
+		[in,ref] policy_handle *handle,
+		[in] 	 [string,charset(UTF16)] uint16 key_name[],
+		[in] 	 [string,charset(UTF16)] uint16 value_name[],
+		[out,ref] winreg_Type *type,
+		[out,ref,size_is(offered)] uint8 *data,
+		[in] 	 uint32 offered,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x4f */
+
+	typedef [relative_base,public,gensize] struct {
+		[relative] nstring *value_name;
+		[value(2*strlen_m_term(value_name))] uint32 value_name_len;
+		winreg_Type type;
+		[relative,subcontext(0),subcontext_size(data_length),flag(NDR_REMAINING|ndr_spoolss_PrinterEnumValues_align(r->type))] DATA_BLOB *data;
+		[value(data ? data->length : 0)] uint32 data_length;
+	} spoolss_PrinterEnumValues;
+
+	[public,noopnum,noprint] WERROR _spoolss_EnumPrinterDataEx(
+		[in,ref] policy_handle *handle,
+		[in] 	 [string,charset(UTF16)] uint16 key_name[],
+		[out] DATA_BLOB info,
+		[in] uint32 offered,
+		[out,ref] uint32 *needed,
+		[out,ref] uint32 *count
+	);
+	[public,noopnum,noprint] void __spoolss_EnumPrinterDataEx(
+		[in] uint32 count,
+		[out] spoolss_PrinterEnumValues info[count]
+	);
+	[nopull,nopush] WERROR spoolss_EnumPrinterDataEx(
+		[in,ref] policy_handle *handle,
+		[in] 	 [string,charset(UTF16)] uint16 key_name[],
+		[in] uint32 offered,
+		[out,ref] uint32 *count,
+		[out,ref,size_is(,*count)] spoolss_PrinterEnumValues **info,
+		[out,ref] uint32 *needed
+	);
+
+	typedef [nodiscriminant] union {
+		[case(0)];
+		[case(1)];
+		[default] nstring_array string_array;
+	} spoolss_KeyNames;
+
+	/******************/
+	/* Function: 0x50 */
+	[public] WERROR spoolss_EnumPrinterKey(
+		[in, ref] policy_handle *handle,
+		[in] [string,charset(UTF16)] uint16 key_name[],
+		[out,ref] uint32 *_ndr_size,
+		[out,ref,subcontext(0),subcontext_size(*_ndr_size*2),switch_is(*_ndr_size)] spoolss_KeyNames *key_buffer,
+		[in] uint32 offered,
+		[out,ref] uint32 *needed
+	);
+
+	/******************/
+	/* Function: 0x51 */
+	WERROR spoolss_DeletePrinterDataEx(
+		[in,ref] policy_handle *handle,
+		[in] [string,charset(UTF16)] uint16 key_name[],
+		[in] [string,charset(UTF16)] uint16 value_name[]
+	);
+
+	/******************/
+	/* Function: 0x52 */
+	WERROR spoolss_DeletePrinterKey(
+		[in,ref] policy_handle *handle,
+		[in] [string,charset(UTF16)] uint16 key_name[]
+	);
+
+	/******************/
+	/* Function: 0x53 */
+	[todo] WERROR spoolss_53(
+	);
+
+	/******************/
+	/* Function: 0x54 */
+	typedef [public,bitmap32bit] bitmap {
+		DPD_DELETE_UNUSED_FILES		= 0x00000001,
+		DPD_DELETE_SPECIFIC_VERSION	= 0x00000002,
+		DPD_DELETE_ALL_FILES		= 0x00000004
+	} spoolss_DeleteDriverFlags;
+
+	WERROR spoolss_DeletePrinterDriverEx(
+		[in,unique] [string,charset(UTF16)] uint16 *server,
+		[in] [string,charset(UTF16)] uint16 architecture[],
+		[in] [string,charset(UTF16)] uint16 driver[],
+		[in] spoolss_DeleteDriverFlags delete_flags,
+		[in] uint32 version
+	);
+
+	/******************/
+	/* Function: 0x55 */
+	WERROR spoolss_AddPerMachineConnection(
+		[in,unique] [string,charset(UTF16)] uint16 *server,
+		[in,ref] [string,charset(UTF16)] uint16 *printername,
+		[in,ref] [string,charset(UTF16)] uint16 *printserver,
+		[in,ref] [string,charset(UTF16)] uint16 *provider
+	);
+
+	/******************/
+	/* Function: 0x56 */
+	WERROR spoolss_DeletePerMachineConnection(
+		[in,unique] [string,charset(UTF16)] uint16 *server,
+		[in,ref] [string,charset(UTF16)] uint16 *printername
+	);
+
+	/******************/
+	/* Function: 0x57 */
+	[todo] WERROR spoolss_EnumPerMachineConnections(
+	);
+
+	/******************/
+	/* Function: 0x58 */
+
+	typedef [v1_enum] enum {
+		PROTOCOL_RAWTCP_TYPE	= 1,
+		PROTOCOL_LPR_TYPE	= 2
+	} spoolss_PortProtocol;
+
+	typedef [public] struct {
+		[charset(UTF16)] uint16 portname[64];
+		[value(0x00000001)] uint32 version;
+		spoolss_PortProtocol protocol;
+		[value(sizeof(r))] uint32 size;
+		uint32 reserved;
+		[charset(UTF16)] uint16 hostaddress[49];
+		[charset(UTF16)] uint16 snmpcommunity[33];
+		uint32 dblspool;
+		[charset(UTF16)] uint16 queue[33];
+		[charset(UTF16)] uint16 ip_address[16]; /* s3 had 17 */
+		[charset(UTF16)] uint16 hardware_address[13];
+		[charset(UTF16)] uint16 device_type[257];
+		uint32 port_number;
+		boolean32 snmp_enabled;
+		uint32 snmp_dev_index;
+	} spoolss_PortData1;
+
+	typedef [public] struct {
+		[charset(UTF16)] uint16 portname[64];
+		[value(0x00000002)] uint32 version;
+		spoolss_PortProtocol protocol;
+		[value(sizeof(r))] uint32 size;
+		uint32 reserved;
+		[charset(UTF16)] uint16 hostaddress[128];
+		[charset(UTF16)] uint16 snmpcommunity[33];
+		uint32 dblspool;
+		[charset(UTF16)] uint16 queue[33];
+		[charset(UTF16)] uint16 device_type[257];
+		uint32 port_number;
+		boolean32 snmp_enabled;
+		uint32 snmp_dev_index;
+		uint32 port_monitor_mib_index;
+	} spoolss_PortData2;
+
+	typedef [public] struct {
+		nstring dll_name;
+	} spoolss_MonitorUi;
+
+	WERROR spoolss_XcvData(
+		[in,ref] policy_handle *handle,
+		[in] [string,charset(UTF16)] uint16 function_name[],
+		[in] DATA_BLOB in_data,
+		[in,value(r->in.in_data.length)] uint32 _in_data_length,
+		[out,ref] [size_is(out_data_size)] uint8 *out_data,
+		[in] uint32 out_data_size,
+		[out,ref] uint32 *needed,
+		[in,out,ref] uint32 *status_code
+	);
+
+	/******************/
+	/* Function: 0x59 */
+
+	typedef [bitmap32bit] bitmap {
+		APD_STRICT_UPGRADE		= 0x00000001,
+		APD_STRICT_DOWNGRADE		= 0x00000002,
+		APD_COPY_ALL_FILES		= 0x00000004,
+		APD_COPY_NEW_FILES		= 0x00000008,
+		APD_COPY_FROM_DIRECTORY		= 0x00000010,
+		APD_DONT_COPY_FILES_TO_CLUSTER	= 0x00001000,
+		APD_COPY_TO_ALL_SPOOLERS	= 0x00002000,
+		APD_RETURN_BLOCKING_STATUS_CODE = 0x00010000
+	} spoolss_AddPrinterDriverExFlags;
+
+	[public] WERROR spoolss_AddPrinterDriverEx(
+		[in,unique] [string,charset(UTF16)] uint16 *servername,
+		[in,ref] spoolss_AddDriverInfoCtr *info_ctr,
+		[in] spoolss_AddPrinterDriverExFlags flags
+	);
+
+	/******************/
+	/* Function: 0x5a */
+	[todo] WERROR spoolss_5a(
+	);
+
+	/******************/
+	/* Function: 0x5b */
+	[todo] WERROR spoolss_5b(
+	);
+
+	/******************/
+	/* Function: 0x5c */
+	[todo] WERROR spoolss_5c(
+	);
+
+	/******************/
+	/* Function: 0x5d */
+	[todo] WERROR spoolss_5d(
+	);
+
+	/******************/
+	/* Function: 0x5e */
+	[todo] WERROR spoolss_5e(
+	);
+
+	/******************/
+	/* Function: 0x5f */
+	[todo] WERROR spoolss_5f(
+	);
+
+	/******************/
+	/* Function: 0x60 */
+	[todo] WERROR spoolss_60(
+	);
+
+	/******************/
+	/* Function: 0x61 */
+	[todo] WERROR spoolss_61(
+	);
+
+	/******************/
+	/* Function: 0x62 */
+	[todo] WERROR spoolss_62(
+	);
+
+	/******************/
+	/* Function: 0x63 */
+	[todo] WERROR spoolss_63(
+	);
+
+	/******************/
+	/* Function: 0x64 */
+	[todo] WERROR spoolss_64(
+	);
+
+	/******************/
+	/* Function: 0x65 */
+	[todo] WERROR spoolss_65(
+	);
+
+	/******************/
+	/* Function: 0x66 */
+	typedef struct {
+		GUID core_driver_guid;
+		NTTIME driver_date;
+		hyper driver_version;
+		[charset(UTF8)] uint8 formname[520];
+	} spoolss_CorePrinterDriver;
+
+	WERROR spoolss_GetCorePrinterDrivers(
+		[in,unique] [string,charset(UTF16)] uint16 *servername,
+		[in,ref] [string,charset(UTF16)] uint16 *architecture,
+		[in] uint32 core_driver_size,
+		[in,size_is(core_driver_size)] [charset(UTF16)] uint16 *core_driver_dependencies,
+		[in] uint32 core_printer_driver_count,
+		[out,size_is(core_printer_driver_count)] spoolss_CorePrinterDriver *core_printer_drivers
+	);
+
+	/******************/
+	/* Function: 0x67 */
+	[todo] WERROR spoolss_67(
+	);
+
+	/******************/
+	/* Function: 0x68 */
+	WERROR spoolss_GetPrinterDriverPackagePath(
+		[in,unique] [string,charset(UTF16)] uint16 *servername,
+		[in,ref] [string,charset(UTF16)] uint16 *architecture,
+		[in,unique] [string,charset(UTF16)] uint16 *language,
+		[in,ref] [string,charset(UTF16)] uint16 *package_id,
+		[in,out,unique,size_is(driver_package_cab_size)] [charset(UTF16)] uint16 *driver_package_cab,
+		[in] uint32 driver_package_cab_size,
+		[out,ref] uint32 *required
+		);
+
+	/******************/
+	/* Function: 0x69 */
+	[todo] WERROR spoolss_69(
+	);
+
+	/******************/
+	/* Function: 0x6a */
+	[todo] WERROR spoolss_6a(
+	);
+
+	/******************/
+	/* Function: 0x6b */
+	[todo] WERROR spoolss_6b(
+	);
+
+	/******************/
+	/* Function: 0x6c */
+	[todo] WERROR spoolss_6c(
+	);
+
+	/******************/
+	/* Function: 0x6d */
+	[todo] WERROR spoolss_6d(
+	);
+}

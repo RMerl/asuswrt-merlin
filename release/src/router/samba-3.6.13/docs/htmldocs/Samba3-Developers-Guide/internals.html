@@ -1,0 +1,206 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 5. Samba Internals</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><link rel="home" href="index.html" title="SAMBA Developers Guide"><link rel="up" href="pt02.html" title="Part II. Samba Basics"><link rel="prev" href="debug.html" title="Chapter 4. The samba DEBUG system"><link rel="next" href="CodingSuggestions.html" title="Chapter 6. Coding Suggestions"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 5. Samba Internals</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="debug.html">Prev</a> </td><th width="60%" align="center">Part II. Samba Basics</th><td width="20%" align="right"> <a accesskey="n" href="CodingSuggestions.html">Next</a></td></tr></table><hr></div><div class="chapter" title="Chapter 5. Samba Internals"><div class="titlepage"><div><div><h2 class="title"><a name="internals"></a>Chapter 5. Samba Internals</h2></div><div><div class="author"><h3 class="author"><span class="firstname">David</span> <span class="surname">Chappell</span></h3><div class="affiliation"><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:David.Chappell@mail.trincoll.edu">David.Chappell@mail.trincoll.edu</a>&gt;</code></p></div></div></div></div><div><p class="pubdate">8 May 1996</p></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="internals.html#id329348">Character Handling</a></span></dt><dt><span class="sect1"><a href="internals.html#id329365">The new functions</a></span></dt><dt><span class="sect1"><a href="internals.html#id329469">Macros in byteorder.h</a></span></dt><dd><dl><dt><span class="sect2"><a href="internals.html#id329478">CVAL(buf,pos)</a></span></dt><dt><span class="sect2"><a href="internals.html#id329489">PVAL(buf,pos)</a></span></dt><dt><span class="sect2"><a href="internals.html#id329499">SCVAL(buf,pos,val)</a></span></dt><dt><span class="sect2"><a href="internals.html#id329509">SVAL(buf,pos)</a></span></dt><dt><span class="sect2"><a href="internals.html#id329521">IVAL(buf,pos)</a></span></dt><dt><span class="sect2"><a href="internals.html#id329531">SVALS(buf,pos)</a></span></dt><dt><span class="sect2"><a href="internals.html#id329542">IVALS(buf,pos)</a></span></dt><dt><span class="sect2"><a href="internals.html#id329552">SSVAL(buf,pos,val)</a></span></dt><dt><span class="sect2"><a href="internals.html#id329563">SIVAL(buf,pos,val)</a></span></dt><dt><span class="sect2"><a href="internals.html#id329573">SSVALS(buf,pos,val)</a></span></dt><dt><span class="sect2"><a href="internals.html#id329584">SIVALS(buf,pos,val)</a></span></dt><dt><span class="sect2"><a href="internals.html#id329594">RSVAL(buf,pos)</a></span></dt><dt><span class="sect2"><a href="internals.html#id329605">RIVAL(buf,pos)</a></span></dt><dt><span class="sect2"><a href="internals.html#id329615">RSSVAL(buf,pos,val)</a></span></dt><dt><span class="sect2"><a href="internals.html#id329626">RSIVAL(buf,pos,val)</a></span></dt></dl></dd><dt><span class="sect1"><a href="internals.html#id329638">LAN Manager Samba API</a></span></dt><dd><dl><dt><span class="sect2"><a href="internals.html#id329662">Parameters</a></span></dt><dt><span class="sect2"><a href="internals.html#id329768">Return value</a></span></dt></dl></dd><dt><span class="sect1"><a href="internals.html#id329825">Code character table</a></span></dt></dl></div><div class="sect1" title="Character Handling"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id329348"></a>Character Handling</h2></div></div></div><p>
+This section describes character set handling in Samba, as implemented in
+Samba 3.0 and above
+</p><p>
+In the past Samba had very ad-hoc character set handling. Scattered
+throughout the code were numerous calls which converted particular
+strings to/from DOS codepages. The problem is that there was no way of
+telling if a particular char* is in dos codepage or unix
+codepage. This led to a nightmare of code that tried to cope with
+particular cases without handlingt the general case.
+</p></div><div class="sect1" title="The new functions"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id329365"></a>The new functions</h2></div></div></div><p>
+The new system works like this:
+</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>
+	all char* strings inside Samba are "unix" strings. These are
+	multi-byte strings that are in the charset defined by the "unix
+	charset" option in smb.conf. 
+</p></li><li class="listitem"><p>
+	there is no single fixed character set for unix strings, but any
+	character set that is used does need the following properties:
+	</p><div class="orderedlist"><ol class="orderedlist" type="a"><li class="listitem"><p>
+		must not contain NULLs except for termination
+	</p></li><li class="listitem"><p>
+		must be 7-bit compatible with C strings, so that a constant
+		string or character in C will be byte-for-byte identical to the
+		equivalent string in the chosen character set. 
+	</p></li><li class="listitem"><p>
+		when you uppercase or lowercase a string it does not become
+		longer than the original string
+	</p></li><li class="listitem"><p>
+		must be able to correctly hold all characters that your client
+		will throw at it
+	</p></li></ol></div><p>
+	For example, UTF-8 is fine, and most multi-byte asian character sets
+	are fine, but UCS2 could not be used for unix strings as they
+	contain nulls.
+	</p></li><li class="listitem"><p>
+	when you need to put a string into a buffer that will be sent on the
+	wire, or you need a string in a character set format that is
+	compatible with the clients character set then you need to use a
+	pull_ or push_ function. The pull_ functions pull a string from a
+	wire buffer into a (multi-byte) unix string. The push_ functions
+	push a string out to a wire buffer. 
+</p></li><li class="listitem"><p>
+	the two main pull_ and push_ functions you need to understand are
+	pull_string and push_string. These functions take a base pointer
+	that should point at the start of the SMB packet that the string is
+	in. The functions will check the flags field in this packet to
+	automatically determine if the packet is marked as a unicode packet,
+	and they will choose whether to use unicode for this string based on
+	that flag. You may also force this decision using the STR_UNICODE or
+	STR_ASCII flags. For use in smbd/ and libsmb/ there are wrapper
+	functions clistr_ and srvstr_ that call the pull_/push_ functions
+	with the appropriate first argument.
+	</p><p>
+	You may also call the pull_ascii/pull_ucs2 or push_ascii/push_ucs2
+	functions if you know that a particular string is ascii or
+	unicode. There are also a number of other convenience functions in
+	charcnv.c that call the pull_/push_ functions with particularly
+	common arguments, such as pull_ascii_pstring()
+	</p></li><li class="listitem"><p>
+	The biggest thing to remember is that internal (unix) strings in Samba
+	may now contain multi-byte characters. This means you cannot assume
+	that characters are always 1 byte long. Often this means that you will
+	have to convert strings to ucs2 and back again in order to do some
+	(seemingly) simple task. For examples of how to do this see functions
+	like strchr_m(). I know this is very slow, and we will eventually
+	speed it up but right now we want this stuff correct not fast.
+</p></li><li class="listitem"><p>
+	all lp_ functions now return unix strings. The magic "DOS" flag on
+	parameters is gone.
+</p></li><li class="listitem"><p>
+	all vfs functions take unix strings. Don't convert when passing to them
+</p></li></ol></div></div><div class="sect1" title="Macros in byteorder.h"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id329469"></a>Macros in byteorder.h</h2></div></div></div><p>
+This section describes the macros defined in byteorder.h.  These macros 
+are used extensively in the Samba code.
+</p><div class="sect2" title="CVAL(buf,pos)"><div class="titlepage"><div><div><h3 class="title"><a name="id329478"></a>CVAL(buf,pos)</h3></div></div></div><p>
+returns the byte at offset pos within buffer buf as an unsigned character.
+</p></div><div class="sect2" title="PVAL(buf,pos)"><div class="titlepage"><div><div><h3 class="title"><a name="id329489"></a>PVAL(buf,pos)</h3></div></div></div><p>returns the value of CVAL(buf,pos) cast to type unsigned integer.</p></div><div class="sect2" title="SCVAL(buf,pos,val)"><div class="titlepage"><div><div><h3 class="title"><a name="id329499"></a>SCVAL(buf,pos,val)</h3></div></div></div><p>sets the byte at offset pos within buffer buf to value val.</p></div><div class="sect2" title="SVAL(buf,pos)"><div class="titlepage"><div><div><h3 class="title"><a name="id329509"></a>SVAL(buf,pos)</h3></div></div></div><p>
+	returns the value of the unsigned short (16 bit) little-endian integer at 
+	offset pos within buffer buf.  An integer of this type is sometimes
+	refered to as "USHORT".
+</p></div><div class="sect2" title="IVAL(buf,pos)"><div class="titlepage"><div><div><h3 class="title"><a name="id329521"></a>IVAL(buf,pos)</h3></div></div></div><p>returns the value of the unsigned 32 bit little-endian integer at offset 
+pos within buffer buf.</p></div><div class="sect2" title="SVALS(buf,pos)"><div class="titlepage"><div><div><h3 class="title"><a name="id329531"></a>SVALS(buf,pos)</h3></div></div></div><p>returns the value of the signed short (16 bit) little-endian integer at 
+offset pos within buffer buf.</p></div><div class="sect2" title="IVALS(buf,pos)"><div class="titlepage"><div><div><h3 class="title"><a name="id329542"></a>IVALS(buf,pos)</h3></div></div></div><p>returns the value of the signed 32 bit little-endian integer at offset pos
+within buffer buf.</p></div><div class="sect2" title="SSVAL(buf,pos,val)"><div class="titlepage"><div><div><h3 class="title"><a name="id329552"></a>SSVAL(buf,pos,val)</h3></div></div></div><p>sets the unsigned short (16 bit) little-endian integer at offset pos within 
+buffer buf to value val.</p></div><div class="sect2" title="SIVAL(buf,pos,val)"><div class="titlepage"><div><div><h3 class="title"><a name="id329563"></a>SIVAL(buf,pos,val)</h3></div></div></div><p>sets the unsigned 32 bit little-endian integer at offset pos within buffer 
+buf to the value val.</p></div><div class="sect2" title="SSVALS(buf,pos,val)"><div class="titlepage"><div><div><h3 class="title"><a name="id329573"></a>SSVALS(buf,pos,val)</h3></div></div></div><p>sets the short (16 bit) signed little-endian integer at offset pos within 
+buffer buf to the value val.</p></div><div class="sect2" title="SIVALS(buf,pos,val)"><div class="titlepage"><div><div><h3 class="title"><a name="id329584"></a>SIVALS(buf,pos,val)</h3></div></div></div><p>sets the signed 32 bit little-endian integer at offset pos withing buffer
+buf to the value val.</p></div><div class="sect2" title="RSVAL(buf,pos)"><div class="titlepage"><div><div><h3 class="title"><a name="id329594"></a>RSVAL(buf,pos)</h3></div></div></div><p>returns the value of the unsigned short (16 bit) big-endian integer at 
+offset pos within buffer buf.</p></div><div class="sect2" title="RIVAL(buf,pos)"><div class="titlepage"><div><div><h3 class="title"><a name="id329605"></a>RIVAL(buf,pos)</h3></div></div></div><p>returns the value of the unsigned 32 bit big-endian integer at offset 
+pos within buffer buf.</p></div><div class="sect2" title="RSSVAL(buf,pos,val)"><div class="titlepage"><div><div><h3 class="title"><a name="id329615"></a>RSSVAL(buf,pos,val)</h3></div></div></div><p>sets the value of the unsigned short (16 bit) big-endian integer at 
+offset pos within buffer buf to value val.
+refered to as "USHORT".</p></div><div class="sect2" title="RSIVAL(buf,pos,val)"><div class="titlepage"><div><div><h3 class="title"><a name="id329626"></a>RSIVAL(buf,pos,val)</h3></div></div></div><p>sets the value of the unsigned 32 bit big-endian integer at offset 
+pos within buffer buf to value val.</p></div></div><div class="sect1" title="LAN Manager Samba API"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id329638"></a>LAN Manager Samba API</h2></div></div></div><p>
+This section describes the functions need to make a LAN Manager RPC call.
+This information had been obtained by examining the Samba code and the LAN
+Manager 2.0 API documentation.  It should not be considered entirely
+reliable.
+</p><p>
+</p><pre class="programlisting">
+call_api(int prcnt, int drcnt, int mprcnt, int mdrcnt, 
+	char *param, char *data, char **rparam, char **rdata);
+</pre><p>
+</p><p>
+This function is defined in client.c.  It uses an SMB transaction to call a
+remote api.
+</p><div class="sect2" title="Parameters"><div class="titlepage"><div><div><h3 class="title"><a name="id329662"></a>Parameters</h3></div></div></div><p>The parameters are as follows:</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>
+	prcnt: the number of bytes of parameters begin sent.
+</p></li><li class="listitem"><p>
+	drcnt:   the number of bytes of data begin sent.
+</p></li><li class="listitem"><p>
+	mprcnt:  the maximum number of bytes of parameters which should be returned
+</p></li><li class="listitem"><p>
+	mdrcnt:  the maximum number of bytes of data which should be returned
+</p></li><li class="listitem"><p>
+	param:   a pointer to the parameters to be sent.
+</p></li><li class="listitem"><p>
+	data:    a pointer to the data to be sent.
+</p></li><li class="listitem"><p>
+	rparam:  a pointer to a pointer which will be set to point to the returned
+	parameters.  The caller of call_api() must deallocate this memory.
+</p></li><li class="listitem"><p>
+	rdata:   a pointer to a pointer which will be set to point to the returned 
+	data.  The caller of call_api() must deallocate this memory.
+</p></li></ol></div><p>
+These are the parameters which you ought to send, in the order of their
+appearance in the parameter block:
+</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>
+An unsigned 16 bit integer API number.  You should set this value with
+SSVAL().  I do not know where these numbers are described.
+</p></li><li class="listitem"><p>
+An ASCIIZ string describing the parameters to the API function as defined
+in the LAN Manager documentation.  The first parameter, which is the server
+name, is ommited.  This string is based uppon the API function as described
+in the manual, not the data which is actually passed.
+</p></li><li class="listitem"><p>
+An ASCIIZ string describing the data structure which ought to be returned.
+</p></li><li class="listitem"><p>
+Any parameters which appear in the function call, as defined in the LAN
+Manager API documentation, after the "Server" and up to and including the
+"uLevel" parameters.
+</p></li><li class="listitem"><p>
+An unsigned 16 bit integer which gives the size in bytes of the buffer we
+will use to receive the returned array of data structures.  Presumably this
+should be the same as mdrcnt.  This value should be set with SSVAL().
+</p></li><li class="listitem"><p>
+An ASCIIZ string describing substructures which should be returned.  If no 
+substructures apply, this string is of zero length.
+</p></li></ol></div><p>
+The code in client.c always calls call_api() with no data.  It is unclear
+when a non-zero length data buffer would be sent.
+</p></div><div class="sect2" title="Return value"><div class="titlepage"><div><div><h3 class="title"><a name="id329768"></a>Return value</h3></div></div></div><p>
+The returned parameters (pointed to by rparam), in their order of appearance
+are:</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>
+An unsigned 16 bit integer which contains the API function's return code. 
+This value should be read with SVAL().
+</p></li><li class="listitem"><p>
+An adjustment which tells the amount by which pointers in the returned
+data should be adjusted.  This value should be read with SVAL().  Basically, 
+the address of the start of the returned data buffer should have the returned
+pointer value added to it and then have this value subtracted from it in
+order to obtain the currect offset into the returned data buffer.
+</p></li><li class="listitem"><p>
+A count of the number of elements in the array of structures returned. 
+It is also possible that this may sometimes be the number of bytes returned.
+</p></li></ol></div><p>
+When call_api() returns, rparam points to the returned parameters.  The
+first if these is the result code.  It will be zero if the API call
+suceeded.  This value by be read with "SVAL(rparam,0)".
+</p><p>
+The second parameter may be read as "SVAL(rparam,2)".  It is a 16 bit offset
+which indicates what the base address of the returned data buffer was when
+it was built on the server.  It should be used to correct pointer before
+use.
+</p><p>
+The returned data buffer contains the array of returned data structures. 
+Note that all pointers must be adjusted before use.  The function
+fix_char_ptr() in client.c can be used for this purpose.
+</p><p>
+The third parameter (which may be read as "SVAL(rparam,4)") has something to
+do with indicating the amount of data returned or possibly the amount of
+data which can be returned if enough buffer space is allowed.
+</p></div></div><div class="sect1" title="Code character table"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id329825"></a>Code character table</h2></div></div></div><p>
+Certain data structures are described by means of ASCIIz strings containing
+code characters.  These are the code characters:
+</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>
+W	a type byte little-endian unsigned integer
+</p></li><li class="listitem"><p>
+N	a count of substructures which follow
+</p></li><li class="listitem"><p>
+D	a four byte little-endian unsigned integer
+</p></li><li class="listitem"><p>
+B	a byte (with optional count expressed as trailing ASCII digits)
+</p></li><li class="listitem"><p>
+z	a four byte offset to a NULL terminated string
+</p></li><li class="listitem"><p>
+l	a four byte offset to non-string user data
+</p></li><li class="listitem"><p>
+b	an offset to data (with count expressed as trailing ASCII digits)
+</p></li><li class="listitem"><p>
+r	pointer to returned data buffer???
+</p></li><li class="listitem"><p>
+L	length in bytes of returned data buffer???
+</p></li><li class="listitem"><p>
+h	number of bytes of information available???
+</p></li></ol></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="debug.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="pt02.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="CodingSuggestions.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 4. The samba DEBUG system </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 6. Coding Suggestions</td></tr></table></div></body></html>

@@ -1,0 +1,44 @@
+This directory contains sample files for using Samba on an IRIX
+system.  These were taken from a system running IRIX 6.2.  The
+client machines were running Win95 and connected via the Ethernet
+using TCP/IP and DNS.  Consult the Samba documentation for tips
+on configuring Samba "properly"; this smb.conf file is very simple.
+Consult the Microsoft help/documentation to understand how to
+configure the networking support on the PC clients (Win95, WfW,
+etc.).
+
+This distribution is configured so that various Samba configuration,
+binary, and log files are placed in the /usr/samba file hierarchy.
+Man pages are placed in the /usr/share/catman/u_man hierarchy.
+
+The version number of the distribution is a 10 digit number that
+is created from the samba version number. Each section of the samba 
+version number forms 2 digits of the version number (with leading 
+zeros if necessary). The alpha versions add 00 and 2 digits for
+the alpha number. The first release adds 0100. Patch releases add
+2 digits for the patch level plus 1 and 00.
+
+samba version 1.9.18alpha9  would become  0109180009
+samba version 1.9.18        would become  0109180100
+samba version 1.9.18p9      would become  0109181000
+
+You can enable all printers on your system to be used by samba
+by running the script /usr/samba/mkprintcap.sh
+
+This distribution automatically configures samba to run as deamons
+by the script /etc/init.d/samba and the file /etc/config/samba 
+(used by chkconfig). If you would prefer to have samba started by 
+inetd you can run the script /usr/samba/inetd.sh. 
+
+To create a Samba distribution you must have the Documenter's WorkBench
+package installed to format the manual pages. In addition you need
+to have the Software Packager software (inst_dev) installed to
+generate the inst images, and Perl to generate the spec and idb files.
+
+From /usr/samba/packaging/SGI directory run the mkrelease.sh script.
+There is one optional argument which is the major release number of the
+OS version (4, 5, or 6) you desire.  If no number is specified it defaults
+to 6.  This script uses Perl to generate the Makefile with the proper 
+defines and the packaging files samba.spec and samba.idb.  The binary 
+package files will be placed in ./bins
+

@@ -1,0 +1,19 @@
+<samba:parameter name="idmap gid"
+                 context="G"
+		 type="string"
+                 advanced="1" developer="1" hide="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+		<synonym>winbind gid</synonym>
+<description>
+	<para>
+	The idmap gid parameter specifies the range of group ids
+	for the default idmap configuration. It is now deprecated
+	in favour of <smbconfoption name="idmap config * : range"/>.
+	</para>
+
+	<para>See the <smbconfoption name="idmap config"/> option.</para>
+</description>
+
+<value type="default"></value>
+<value type="example">10000-20000</value>
+</samba:parameter>

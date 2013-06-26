@@ -1,0 +1,1544 @@
+<chapter label="1" id="ch01-48078">
+<title>Learning the Samba</title>
+
+
+
+
+<para>
+<indexterm id="ch01-idx-951466-0" class="startofrange"><primary>Samba</primary></indexterm>If you are a typical system administrator, then you know what it means to be <emphasis>swamped</emphasis> with work. Your daily routine is filled with endless hardware incompatibility issues, system outages, data backup problems, and a steady stream of angry users. So adding another program to the mix of tools that you have to maintain may sound a bit perplexing. However, if you're determined to reduce the complexity of your work environment, as well as the workload of keeping it running smoothly, Samba may be the tool you've been waiting for.</para>
+
+
+<para>A case in point: one of the authors of this book used to look after 70 Unix developers sharing 5 Unix servers. His neighbor administered 20 Windows 3.1 users and 5 OS/2 and Windows NT servers. To put it mildly, the Windows 3.1 administrator was swamped. When he finally left&mdash;and the domain controller melted&mdash;Samba was brought to the rescue. Our author quickly replaced the Windows NT and   OS/2 servers with Samba running on a Unix server, and eventually bought PCs for most of the company developers. However, he did the latter without hiring a new PC administrator; the administrator now manages one centralized Unix application instead of fifty distributed PCs.</para>
+
+
+<para>If you know you're facing a problem with your network and you're sure there is a better way, we encourage you to start reading this book. Or, if you've heard about Samba and you want to see what it can do for you, this is also the place to start. We'll get you started on the path to understanding Samba and its potential. Before long, you can provide Unix services to all your Windows machines&mdash;all without spending tons of extra time or money. Sound enticing? Great, then let's get started.</para>
+
+
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="1.1" id="ch01-28119">
+<title>What is Samba?</title>
+
+
+<para>Samba is a suite of Unix applications that speak the <indexterm id="ch01-idx-951468-0"><primary>Server Message Block</primary><see>SMB</see></indexterm>
+<indexterm id="ch01-idx-951468-1"><primary>SMB (Server Message Block)</primary></indexterm>SMB (Server Message Block) protocol. Many operating systems, including Windows and OS/2, use SMB to perform client-server networking. By supporting this protocol, Samba allows Unix servers to get in on the action, communicating with the same networking protocol as Microsoft Windows products. Thus, a Samba-enabled Unix machine can masquerade as a server on your Microsoft network and offer the following services:</para>
+
+
+<itemizedlist>
+<listitem><para>
+<indexterm id="ch01-idx-951506-0"><primary>services</primary><secondary>performed by Samba</secondary></indexterm>Share one or more filesystems</para></listitem>
+<listitem><para>Share printers installed on both the server and its clients</para></listitem>
+<listitem><para>Assist clients with Network Neighborhood browsing</para></listitem>
+<listitem><para>Authenticate clients logging onto a Windows domain</para></listitem>
+<listitem><para>Provide or assist with WINS name server resolution</para></listitem>
+</itemizedlist>
+
+<para>Samba is the brainchild of <indexterm id="ch01-idx-951508-0"><primary>Tridgell, Andrew</primary></indexterm>Andrew Tridgell, who currently heads the Samba development team from his home of Canberra, Australia. The project was born in 1991 when Andrew created a fileserver program for his local network that supported an odd DEC protocol from Digital Pathworks. Although he didn't know it at the time, that protocol later turned out to be SMB. A few years later, he expanded upon his custom-made SMB server and began distributing it as a product on the Internet under the name SMB Server. However, Andrew couldn't keep that name&mdash;it already belonged to another company's product&mdash;so he tried the following Unix renaming approach:</para>
+
+<programlisting>grep -i 's.*m.*b' /usr/dict/words<indexterm id="ch01-idx-951514-0"><primary>Samba</primary><secondary>origin of name</secondary></indexterm></programlisting>
+
+
+<para>And the response was:</para>
+
+
+<programlisting>salmonberry samba sawtimber scramble</programlisting>
+
+
+<para>Thus, the name "Samba" was born.<footnote label="1" id="ch01-pgfId-946532">
+
+
+<para>Which is a good thing, because our marketing people highly doubt you would have picked up a book called "Using Salmonberry"!</para>
+
+
+</footnote></para>
+
+
+<para>Today, the Samba suite revolves around a pair of <indexterm id="ch01-idx-951515-0"><primary>Unix</primary><secondary>daemons</secondary></indexterm>
+<indexterm id="ch01-idx-951515-1"><primary>daemons</primary><secondary>Unix</secondary></indexterm>Unix daemons that provide <indexterm id="ch01-idx-951518-0"><primary>shared resources</primary><see>shares</see></indexterm>shared resources&mdash;or <firstterm>shares</firstterm>&mdash;to SMB clients on the network. (Shares are sometimes called <indexterm id="ch01-idx-951527-0"><primary>services</primary><seealso>shares</seealso></indexterm>s<firstterm>ervices</firstterm> as well.) These daemons are:</para>
+
+
+<variablelist>
+<varlistentry><term>smbd</term>
+<listitem><para>
+<indexterm id="ch01-idx-951528-0"><primary>smbd daemon</primary></indexterm>A daemon that allows file and printer sharing on an SMB network and provides authentication and authorization for SMB clients.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>nmbd</term>
+<listitem><para>
+<indexterm id="ch01-idx-951529-0"><primary>nmbd daemon</primary></indexterm>A daemon that looks after the <indexterm id="ch01-idx-951530-0"><primary>WINS (Windows Internet Name Service)</primary></indexterm>Windows Internet Name Service (WINS), and assists with browsing.</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<para>Samba is currently maintained and extended by a group of volunteers under the active supervision of Andrew Tridgell. Like the Linux operating system, Samba is considered <firstterm>Open Source software </firstterm>
+<indexterm id="ch01-idx-951531-0"><primary>Open Source Software (OSS)</primary></indexterm>
+<indexterm id="ch01-idx-951531-1"><primary>OSS (Open Source Software)</primary></indexterm>(OSS) by its authors, and is distributed under the <indexterm id="ch01-idx-951532-0"><primary>GNU General Public License (GPL)</primary></indexterm>GNU General Public License (GPL). Since its inception, development of Samba has been sponsored in part by the <indexterm id="ch01-idx-951533-0"><primary>Australian National University</primary></indexterm>Australian National University, where Andrew Tridgell earned his Ph.D.<footnote label="2" id="ch01-pgfId-946542">
+
+
+<para>At the time of this printing, Andrew had completed his Ph.D. work and had joined San Francisco-based LinuxCare.</para>
+
+
+</footnote> In addition, some development has been sponsored by independent vendors such as <indexterm id="ch01-idx-951534-0"><primary>Whistle</primary></indexterm>Whistle and <indexterm id="ch01-idx-951535-0"><primary>SGI</primary></indexterm>SGI. It is a true testament to Samba that both commercial and non-commercial entities are prepared to spend money to support an Open Source effort.</para>
+
+
+<para>
+<indexterm id="ch01-idx-951536-0"><primary>Microsoft</primary></indexterm>Microsoft has also contributed materially by putting forward its definition of SMB and the Internet-savvy <indexterm id="ch01-idx-951537-0"><primary>CIFS (Common Internet File System)</primary></indexterm>
+<indexterm id="ch01-idx-951537-1"><primary>CIFS (Common Internet File System)</primary><seealso>SMB/CIFS protocol</seealso></indexterm>Common Internet File System (CIFS), as a public <indexterm id="ch01-idx-951538-0"><primary>Request for Comments (RFC)</primary></indexterm>
+<indexterm id="ch01-idx-951538-1"><primary>RFC (Request for Comments)</primary></indexterm>Request for Comments (RFC), a standards document. The CIFS protocol is Microsoft's renaming of future versions of the SMB protocol that will be used in Windows products&mdash;the two terms can be used interchangeably in this book. Hence, you will often see the protocol written as "<indexterm id="ch01-idx-951539-0"><primary>SMB/CIFS protocol</primary></indexterm>SMB/CIFS."</para>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="1.2" id="ch01-SECT-2">
+<title>What Can Samba Do For Me?</title>
+
+
+<para>As explained earlier, Samba can help Windows and Unix machines coexist in the same network. However, there are some specific reasons why you might want to set up a Samba server on your network:</para>
+
+
+<itemizedlist>
+<listitem><para>
+<indexterm id="ch01-idx-951583-0"><primary>Samba</primary><secondary>reasons for using</secondary></indexterm>You don't want to pay for&mdash;or can't afford&mdash;a full-fledged Windows NT server, yet you still need the functionality that one provides.</para></listitem>
+<listitem><para>You want to provide a common area for data or user directories in order to transition from a Windows server to a Unix one, or vice versa.</para></listitem>
+<listitem><para>You want to be able to share printers across both Windows and Unix workstations.</para></listitem>
+<listitem><para>You want to be able to access NT files from a Unix server.</para></listitem>
+</itemizedlist>
+
+<para>Let's take a quick tour of Samba in action. Assume that we have the following basic network configuration: a Samba-enabled Unix machine, to which we will assign the name <literal>hydra</literal>, and a pair of Windows clients, to which we will assign the names <literal>phoenix</literal> and <literal>chimaera</literal>, all connected via a local area network (LAN). Let's also assume that <literal>hydra</literal> also has a local inkjet printer connected to it, <literal>lp</literal>, and a disk share named <literal>network</literal>&mdash;both of which it can offer to the other two machines. A graphic of this network is shown in <link linkend="ch01-45964">Figure 1.1</link>.</para>
+
+
+<figure label="1.1" id="ch01-45964">
+<title>A simple network setup with a Samba server</title>
+
+<graphic width="502" depth="209" fileref="figs/sam.0101.gif"></graphic>
+</figure>
+
+<para>In this network, each of the computers listed share the same <firstterm>workgroup</firstterm>
+<indexterm id="ch01-idx-951584-0"><primary>workgroups</primary></indexterm>. A workgroup is simply a group nametag that identifies an arbitrary collection of computers and their resources on an <indexterm id="ch01-idx-951585-0"><primary>SMB (Server Message Block)</primary><secondary>networks</secondary></indexterm>SMB network. There can be several workgroups on the network at any time, but for our basic network example, we'll have only one: the SIMPLE workgroup.</para>
+
+
+<sect2 role="" label="1.2.1" id="ch01-SECT-2.1">
+<title>Sharing a Disk Service</title>
+
+
+<para>
+<indexterm id="ch01-idx-951617-0" class="startofrange"><primary>disk shares</primary></indexterm>If <indexterm id="ch01-idx-951876-0"><primary>sharing</primary><secondary>disks</secondary><see>disk shares</see></indexterm>
+<indexterm id="ch01-idx-951876-1"><primary>sharing</primary><secondary>printers</secondary><see>print shares</see></indexterm>everything is properly configured, we should be able to see the Samba server, <literal>hydra</literal>, through the Network Neighborhood of the <literal>phoenix</literal> Windows desktop. In fact, <link linkend="ch01-60493">Figure 1.2</link> shows the Network Neighborhood of the <literal>phoenix</literal> computer, including <literal>hydra</literal> and each of the computers that reside in the SIMPLE workgroup. Note the Entire Network icon at the top of the list. As we just mentioned, there can be more than one workgroup on an SMB network at any given time. If a user clicks on the <indexterm id="ch01-idx-951586-0"><primary>Entire Network icon</primary></indexterm>Entire Network icon, he or she will see a list of all the workgroups that currently exist on the network.</para>
+
+
+<figure label="1.2" id="ch01-60493">
+<title>The Network Neighborhood directory</title>
+
+<graphic width="502" depth="174" fileref="figs/sam.0102.gif"></graphic>
+</figure>
+
+<para>We can take a closer look at the <literal>hydra</literal> server by double-clicking on its icon. This contacts <literal>hydra</literal> itself and requests a list of its <firstterm>shares</firstterm>&mdash;the file and printer resources&mdash;that the machine provides. In this case, there is a printer entitled <literal>lp</literal> and a disk share entitled <literal>network</literal> on the server, as shown in <link linkend="ch01-76011">Figure 1.3</link>. Note that the Windows display shows hostnames in mixed case (Hydra). <indexterm id="ch01-idx-951589-0"><primary>case sensitivity</primary><secondary>hostnames and</secondary></indexterm>Case is irrelevant in <indexterm id="ch01-idx-951588-0"><primary>hostnames</primary><secondary>case sensitivity and</secondary></indexterm>hostnames, so you may see hydra, Hydra, and HYDRA in various displays or command output, but they all refer to a single system. Thanks to Samba, Windows 98 sees the Unix server as a valid SMB server, and can access the <literal>network</literal> folder as if it were just another system folder.</para>
+
+
+<figure label="1.3" id="ch01-76011">
+<title>Shares available on the hydra sever as viewed from phoenix</title>
+
+<graphic width="502" depth="148" fileref="figs/sam.0103.gif"></graphic>
+</figure>
+
+<para>One popular feature of Windows 95/98/NT is that you can map a letter-drive to a known network directory using the <indexterm id="ch01-idx-951590-0"><primary>Map Network Drive option</primary></indexterm>
+<indexterm id="ch01-idx-951590-1"><primary>Windows Explorer, Map Network Drive option</primary></indexterm>
+<indexterm id="ch01-idx-951590-2"><primary>network drives, mapping</primary></indexterm>
+<indexterm id="ch01-idx-951590-3"><primary>mapping</primary><secondary>network drives</secondary></indexterm>Map Network Drive option in the Windows Explorer.<footnote label="3" id="ch01-pgfId-941061">
+
+
+<para>You can also right-click on the shared resource in the <indexterm id="ch01-idx-951603-0"><primary>Network Neighborhood window</primary><secondary> mapping network drives via</secondary></indexterm>Network Neighborhood, and then select the Map Network Drive menu item.</para>
+
+
+</footnote> Once you do so, your applications can access the folder across the network with a standard <indexterm id="ch01-idx-951592-0"><primary>drive letters, mapping</primary></indexterm>drive letter. Hence, you can store data on it, install and run programs from it, and even password-protect it against unwanted visitors. See <link linkend="ch01-55465">Figure 1.4</link> for an example of mapping a letter-drive to a network directory.</para>
+
+
+<figure label="1.4" id="ch01-55465">
+<title>Mapping a network drive to a Windows letter-drive</title>
+
+<graphic width="502" depth="336" fileref="figs/sam.0104.gif"></graphic>
+</figure>
+
+<para>Take a look at the Path: entry in the dialog box of <link linkend="ch01-55465">Figure 1.4</link>. An equivalent way to represent a directory on a network machine is by using two <indexterm id="ch01-idx-951593-0"><primary>backslashes, two (\\) in directories</primary></indexterm>
+<indexterm id="ch01-idx-951593-1"><primary>\\ (backslashes, two) in directories</primary></indexterm>backslashes, followed by the name of the networked machine, another backslash, and the networked directory of the machine, as shown below:</para>
+
+
+<programlisting><emphasis>\\</emphasis><replaceable>network-machine</replaceable><emphasis>\</emphasis><replaceable>directory</replaceable></programlisting>
+
+
+<para>This is known as the <firstterm>UNC</firstterm>
+<indexterm id="ch01-idx-951594-0"><primary>UNC (Universal Naming Convention)</primary></indexterm>
+<indexterm id="ch01-idx-951594-1"><primary>Universal Naming Convention (UNC)</primary></indexterm> (Universal Naming Convention) in the Windows world. For example, the dialog box in <link linkend="ch01-55465">Figure 1.4</link> represents the network directory on the <literal>hydra</literal> server as:</para>
+
+
+<programlisting>\\HYDRA\<replaceable>network</replaceable></programlisting>
+
+
+<para>If this looks somewhat familiar to you, you're probably thinking of <firstterm>uniform resource locators</firstterm>
+<indexterm id="ch01-idx-951607-0"><primary>uniform resource locators (URLs)</primary></indexterm>
+<indexterm id="ch01-idx-951607-1"><primary>URLs (uniform resource locators)</primary></indexterm> (URLs), which are addresses that web browsers such as Netscape Navigator and Internet Explorer use to resolve machines across the Internet. Be sure not to confuse the two: web browsers typically use <indexterm id="ch01-idx-951608-0"><primary>forward slashes in web browser addresses</primary></indexterm>forward slashes instead of back slashes, and they precede the initial slashes with the <indexterm id="ch01-idx-951611-0"><primary>data transfer protocol</primary></indexterm>data transfer protocol (i.e., <indexterm id="ch01-idx-951612-0"><primary>FTP (File Transfer Protocol)</primary></indexterm>ftp, <indexterm id="ch01-idx-951613-0"><primary>http</primary></indexterm>http) and a <indexterm id="ch01-idx-951610-0"><primary>colon (:) in web browser addresses</primary></indexterm>
+<indexterm id="ch01-idx-951610-1"><primary>: (colon)</primary></indexterm>colon (:). In reality, URLs and UNCs are two completely separate things.</para>
+
+
+<para>Once the network drive is set up, Windows and its programs will behave as if the networked directory was a fixed disk. If you have any applications that support <indexterm id="ch01-idx-952014-0"><primary>multi-user functionality, legal agreements&nbsp;and</primary></indexterm>
+<indexterm id="ch01-idx-952014-1"><primary>legal agreements covering multi-user functionality</primary></indexterm>multiuser functionality on a network, you can install those programs on the network drive.<footnote label="4" id="ch01-pgfId-952017">
+
+
+<para>Be warned that many end-user license agreements forbid installing a program on a network such that multiple clients can access it. Check the legal agreements that accompany the product to be absolutely sure.</para>
+
+
+</footnote> <link linkend="ch01-32686">Figure 1.5</link> shows the resulting network drive as it would appear with other storage devices in the Windows 98 client. Note the pipeline attachment in the icon for the G: drive; this indicates that it is a network drive instead of a fixed drive.</para>
+
+
+<figure label="1.5" id="ch01-32686">
+<title>The Network directory mapped to the client letter-drive G</title>
+
+<graphic width="502" depth="224" fileref="figs/sam.0105.gif"></graphic>
+</figure>
+
+<para>From our Windows NT Workstation machine, <literal>chimaera</literal>, Samba looks almost identical to Windows 98. <link linkend="ch01-29255">Figure 1.6</link> shows the same view of the <literal>hydra</literal> server from the Windows NT 4.0 Network Neighborhood. Setting up the network drive using the Map Network Drive option in Windows NT Workstation 4.0 would have identical results as well.</para>
+
+
+<figure label="1.6" id="ch01-29255">
+<indexterm id="ch01-idx-951618-0" class="endofrange" startref="ch01-idx-951617-0"/><title>Shares available on hydra (viewed from chimaera) </title>
+
+<graphic width="502" depth="141" fileref="figs/sam.0106.gif"></graphic>
+</figure>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="1.2.2" id="ch01-SECT-2.2">
+<title>Sharing a Printer</title>
+
+
+<para>
+<indexterm id="ch01-idx-951620-0" class="startofrange"><primary>print shares</primary></indexterm>
+<indexterm id="ch01-idx-951620-1"><primary>printers</primary><secondary>sharing</secondary><see>print shares</see></indexterm>You probably noticed that the printer <literal>lp</literal> appeared under the available shares for <literal>hydra</literal> in <link linkend="ch01-76011">Figure 1.3</link>. This indicates that the Unix server has a printer that can be shared by the various SMB clients in the workgroup. Data sent to the printer from any of the clients will be spooled on the Unix server and printed in the order it is received.</para>
+
+
+<para>
+<indexterm id="ch01-idx-951636-0"><primary>print shares</primary><secondary>setting up on Windows client</secondary></indexterm>Setting up a Samba-enabled printer on the Windows side is even easier than setting up a disk share. By double-clicking on the printer and identifying the manufacturer and model, you can install a driver for this printer on the Windows client. Windows can then properly format any information sent to the network printer and access it as if it were a local printer (we show you how to do this later in the chapter). <link linkend="ch01-46265">Figure 1.7</link> shows the resulting network printer in the Printers window of Windows 98. Again, note the pipeline attachment below the printer, which identifies it as being on a network.</para>
+
+
+<figure label="1.7" id="ch01-46265">
+<title>A network printer available on hydra (viewed from chimaera)</title>
+
+<graphic width="502" depth="223" fileref="figs/sam.0107.gif"></graphic>
+</figure>
+
+<sect3 role="" label="1.2.2.1" id="ch01-SECT-2.2.1">
+<title>Seeing things from the Unix side</title>
+
+
+<para>As mentioned earlier, Samba appears in Unix as a set of <indexterm id="ch01-idx-951638-0"><primary>daemons</primary><secondary>viewing</secondary></indexterm>
+<indexterm id="ch01-idx-951638-1"><primary>viewing daemons</primary></indexterm>
+<indexterm id="ch01-idx-951638-2"><primary>messages</primary><secondary sortas="daemons, reading">from daemons, reading</secondary></indexterm>
+<indexterm id="ch01-idx-951638-3"><primary>daemons</primary><secondary>messages generated by, reading</secondary></indexterm>daemon programs. You can view them with the Unix <literal>ps</literal> and <literal>netstat</literal> commands, you can read any messages they generate through custom debug files or the Unix <literal>syslog</literal> (depending on how Samba is set up), and you can configure it from a single Samba properties file: <emphasis>smb.conf</emphasis>
+<indexterm id="ch01-idx-951639-0"><primary>smb.conf (Samba configuration) file</primary></indexterm>. In addition, if you want to get an idea of what each of the <indexterm id="ch01-idx-951640-0"><primary>daemons</primary><secondary>status report</secondary></indexterm>
+<indexterm id="ch01-idx-951640-1"><primary>status report on Samba</primary></indexterm>daemons are doing, Samba has a program called <emphasis>smbstatus</emphasis>
+<indexterm id="ch01-idx-951641-0"><primary>smbstatus program</primary></indexterm> that will lay it all on the line. Here is how it works:</para>
+
+
+<programlisting># <emphasis role="bold">smbstatus</emphasis>
+Samba version 2.0.4
+Service      uid      gid      pid     machine
+----------------------------------------------
+network      davecb   davecb   7470   phoenix  (192.168.220.101) Sun May 16
+network      davecb   davecb   7589   chimaera (192.168.220.102) Sun May 16
+
+Locked files:
+Pid    DenyMode   R/W        Oplock          Name
+--------------------------------------------------
+7589   DENY_NONE  RDONLY     EXCLUSIVE+BATCH /home/samba/quicken/inet/common/system/help.bmp   Sun May 16 21:23:40 1999
+7470   DENY_WRITE RDONLY     NONE            /home/samba/word/office/findfast.exe
+Sun May 16 20:51:08 1999
+7589   DENY_WRITE RDONLY     EXCLUSIVE+BATCH /home/samba/quicken/lfbmp70n.dll   Sun May 16 21:23:39 1999
+7589   DENY_WRITE RDWR       EXCLUSIVE+BATCH /home/samba/quicken/inet/qdata/runtime.dat   Sun May 16 21:23:41 1999
+7470   DENY_WRITE RDONLY     EXCLUSIVE+BATCH /home/samba/word/office/osa.exe
+Sun May 16 20:51:09 1999
+7589   DENY_WRITE RDONLY     NONE            /home/samba/quicken/qversion.dll   Sun May 16 21:20:33 1999
+7470   DENY_WRITE RDONLY     NONE                             /home/samba/quicken/qversion.dll   Sun May 16 20:51:11 1999
+
+Share mode memory usage (bytes):
+   1043432(99%) free + 4312(0%) used + 832(0%) overhead = 1048576(100%) total</programlisting>
+
+
+<para>The Samba status from this output provides three sets of data, each divided into separate sections. The first section tells which systems have <indexterm id="ch01-idx-951646-0"><primary>connected systems, status of</primary></indexterm>connected to the Samba server, identifying each client by its machine name (<literal>phoenix</literal> and <literal>chimaera</literal>) and IP address. The second section reports the name and status of the <indexterm id="ch01-idx-951647-0"><primary>files</primary><secondary sortas="use, status of">in use, status of</secondary></indexterm>files that are currently in use on a share on the server, including the read/write status and any <indexterm id="ch01-idx-951648-0"><primary>locks/locking files</primary></indexterm>locks on the files. Finally, Samba reports the amount of <indexterm id="ch01-idx-951649-0"><primary>memory, status of</primary></indexterm>memory it has currently allocated to the shares that it administers, including the amount actively used by the shares plus additional overhead. (Note that this is not the same as the total amount of memory that the <emphasis>smbd</emphasis> or <emphasis>nmbd</emphasis> processes are using.)</para>
+
+
+<para>Don't worry if you don't understand these statistics; they will become easier to understand as you move through the<indexterm id="ch01-idx-951621-0" class="endofrange" startref="ch01-idx-951620-0"/> book.<indexterm id="ch01-idx-951467-0" class="endofrange" startref="ch01-idx-951466-0"/></para>
+</sect3>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="1.3" id="ch01-88536">
+<title>Getting Familiar with a SMB/CIFS Network</title>
+
+
+<para>
+<indexterm id="ch01-idx-951651-0" class="startofrange"><primary>SMB/CIFS protocol</primary><secondary>network and</secondary></indexterm>Now that you have had a brief tour of Samba, let's take some time to get familiar with Samba's adopted environment: an SMB/CIFS network. Networking with SMB is significantly different from working with a Unix <indexterm id="ch01-idx-951650-0"><primary>TCP/IP networking protocol</primary></indexterm>TCP/IP network, because there are several new concepts to learn and a lot of information to cover. First, we will discuss the basic concepts behind an SMB network, followed by some Microsoft implementations of it, and finally we will show you where a Samba server can and cannot fit into the picture.</para>
+
+
+<sect2 role="" label="1.3.1" id="ch01-SECT-3.1">
+<title>Understanding NetBIOS</title>
+
+
+<para>To begin, let's step back in time. In 1984, IBM authored a simple <indexterm id="ch01-idx-951659-0"><primary>API (application programming interface)</primary></indexterm>application programming interface (API) for networking its computers called the <firstterm>Network Basic Input/Output System </firstterm>
+<indexterm id="ch01-idx-951660-0"><primary>NetBIOS (Network Basic Input/Output System)</primary></indexterm>
+<indexterm id="ch01-idx-951660-1"><primary>Network Basic Input/Output System</primary><see>NetBIOS</see></indexterm>(NetBIOS). The NetBIOS API provided a rudimentary design for an application to connect and share data with other computers.</para>
+
+
+<para>It's helpful to think of the NetBIOS API as networking extensions to the standard BIOS API calls. With BIOS, each low-level call is confined to the hardware of the local machine and doesn't need any help traveling to its destination. NetBIOS, however, originally had to exchange instructions with computers across IBM PC or Token Ring networks. It therefore required a low-level transport protocol to carry its requests from one computer to the next.</para>
+
+
+<para>In late 1985, IBM released one such protocol, which it merged with the NetBIOS API to become the <firstterm>NetBIOS Extended User Interface</firstterm>
+<indexterm id="ch01-idx-951661-0"><primary>NetBIOS (Network Basic Input/Output System)</primary><secondary>Extended User Interface</secondary><see>NetBEUI</see></indexterm>
+<indexterm id="ch01-idx-951661-1"><primary>NetBEUI (NetBIOS Extended User Interface)</primary></indexterm> (<emphasis>NetBEUI</emphasis>). NetBEUI was designed for small local area networks (LANs), and it let each machine claim a name (up to 15 characters) that wasn't already in use on the network. By a "small LAN," we mean fewer than 255 nodes on the network&mdash;which was considered a practical restriction in 1985!</para>
+
+
+<para>The NetBEUI protocol was very popular with networking applications, including those running under Windows for Workgroups. Later, implementations of NetBIOS over Novell's IPX networking protocols also emerged, which competed with NetBEUI. However, the networking protocols of choice for the burgeoning Internet community were TCP/IP and UDP/IP, and implementing the NetBIOS APIs over those protocols soon became a necessity.</para>
+
+
+<para>Recall that <indexterm id="ch01-idx-951666-0"><primary>TCP/IP networking protocol</primary><secondary>compared with NetBIOS</secondary></indexterm>TCP/IP uses numbers to represent computer addresses, such as 192.168.220.100, while <indexterm id="ch01-idx-951667-0"><primary>NetBIOS (Network Basic Input/Output System)</primary><secondary>compared with TCP/IP</secondary></indexterm>
+<indexterm id="ch01-idx-951667-1"><primary>NetBIOS (Network Basic Input/Output System)</primary><secondary>name</secondary><see>NetBIOS name</see></indexterm>NetBIOS uses only names. This was a major issue when trying to mesh the two protocols together. In 1987, the Internet Engineering Task Force (IETF) published a series of standardization documents, titled RFC 1001 and 1002, that outlined how NetBIOS would work over a TCP/UDP network. This set of documents still governs each of the implementations that exist today, including those provided by Microsoft with their Windows operating systems as well as the Samba suite.</para>
+
+
+<para>Since then, the standard this document governs has become known as <firstterm>NetBIOS over TCP/IP</firstterm>
+<indexterm id="ch01-idx-951668-0"><primary>NetBIOS (Network Basic Input/Output System)</primary><secondary sortas="TCP/IP">over TCP/IP</secondary></indexterm>
+<indexterm id="ch01-idx-951668-1"><primary>TCP/IP networking protocol</primary><secondary>NetBIOS over</secondary></indexterm>
+<indexterm id="ch01-idx-951668-2"><primary>NBT standard</primary></indexterm>, or NBT for short. The NBT standard (RFC 1001/1002) currently outlines a trio of services on a network:</para>
+
+
+<itemizedlist>
+<listitem><para>A name service</para></listitem>
+<listitem><para>Two communication services:</para>
+
+<itemizedlist>
+<listitem><para>Datagrams</para></listitem>
+<listitem><para>Sessions</para></listitem>
+</itemizedlist></listitem>
+</itemizedlist>
+
+<para>The <indexterm id="ch01-idx-951671-0"><primary>name services</primary></indexterm>name service solves the name-to-address problem mentioned earlier; it allows each computer to declare a specific name on the network that can be translated to a machine-readable IP address, much like today's DNS on the Internet. The <indexterm id="ch01-idx-951672-0"><primary>datagram service</primary></indexterm>
+<indexterm id="ch01-idx-951672-1"><primary>session service</primary></indexterm>datagram and session services are both secondary communication protocols used to transmit data back and forth from NetBIOS machines across the network.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="1.3.2" id="ch01-SECT-3.2">
+<title>Getting a Name</title>
+
+
+<para>
+<indexterm id="ch01-idx-951674-0" class="startofrange"><primary>naming</primary><secondary>machines on NetBIOS network</secondary></indexterm>
+<indexterm id="ch01-idx-951674-1" class="startofrange"><primary>NetBIOS (Network Basic Input/Output System)</primary><secondary>network, naming machines on</secondary></indexterm>For a human being, getting a name is easy. However, for a machine on a NetBIOS network, it can be a little more complicated. Let's look at a few of the issues.</para>
+
+
+<para>In the NetBIOS world, when each machine comes online, it wants to claim a name for itself; this is called <firstterm>name registration</firstterm>
+<indexterm id="ch01-idx-951675-0"><primary>name registration</primary></indexterm>. However, no two machines in the same workgroup should be able to claim the same name; this would cause endless confusion for any machine that wanted to communicate with either machine. There are two different approaches to ensuring that this doesn't happen:</para>
+
+
+<itemizedlist>
+<listitem><para>Use a <firstterm>NetBIOS Name Server</firstterm>
+<indexterm id="ch01-idx-951677-0"><primary>NetBIOS (Network Basic Input/Output System)</primary><secondary>name server (NBNS)</secondary></indexterm>
+<indexterm id="ch01-idx-951677-1"><primary>NBNS</primary><see>NetBIOS, name server</see></indexterm> (NBNS) to keep track of which hosts have registered a NetBIOS name.</para></listitem>
+<listitem><para>Allow each machine on the network to defend its name in the event that another machine attempts to use it.</para></listitem>
+</itemizedlist>
+
+<para><link linkend="ch01-86658">Figure 1.8</link> illustrates a (failed) name registration, with and without a NetBIOS Name Server.</para>
+
+
+<figure label="1.8" id="ch01-86658">
+<title>NBNS versus non-NBNS name registration</title>
+
+<graphic width="502" depth="391" fileref="figs/sam.0108.gif"></graphic>
+</figure>
+
+<para>In addition, there must be a way to resolve a NetBIOS name to a specific IP address as mentioned earlier; this is known as <firstterm>name resolution</firstterm>
+<indexterm id="ch01-idx-951679-0"><primary>name resolution</primary></indexterm>. There are two different approaches with NBT here as well:</para>
+
+
+<itemizedlist>
+<listitem><para>Have each machine report back its IP address when it "hears" a broadcast request for its NetBIOS name.</para></listitem>
+<listitem><para>Use the NBNS to help resolve NetBIOS names to IP addresses.</para></listitem>
+</itemizedlist>
+
+<para><link linkend="ch01-72484">Figure 1.9</link> illustrates the two types of name resolution.</para>
+
+
+<figure label="1.9" id="ch01-72484">
+<title>NBNS versus non-NBNS name resolution</title>
+
+<graphic width="502" depth="391" fileref="figs/sam.0109.gif"></graphic>
+</figure>
+
+<para>As you might expect, having an NBNS on your network can help out tremendously. To see exactly why, let's look at the non-NBNS method.</para>
+
+
+<para>Here, when a client machine boots, it will broadcast a message declaring that it wishes to register a specified NetBIOS name as its own. If nobody objects to the use of the name after multiple registration attempts, it keeps the name. On the other hand, if another machine on the local <indexterm id="ch01-idx-951896-0"><primary>subnets</primary></indexterm>subnet is currently using the requested name, it will send a message back to the requesting client that the name is already taken. This is known as <firstterm>defending</firstterm>
+<indexterm id="ch01-idx-951687-0"><primary>defending hostnames</primary></indexterm> the hostname. This type of system comes in handy when one client has unexpectedly dropped off the network&mdash;another can take its name unchallenged&mdash;but it does incur an inordinate amount of traffic on the network for something as simple as name registration.</para>
+
+
+<para>With an NBNS, the same thing occurs, except that the communication is confined to the requesting machine and the NBNS server. No broadcasting occurs when the machine wishes to register the name; the registration message is simply sent directly from the client to NBNS server and the NBNS server replies whether or not the name is already taken. This is known as <firstterm>point-to-point communication</firstterm>
+<indexterm id="ch01-idx-951688-0"><primary>point-to-point communication</primary></indexterm>, and is often beneficial on networks with more than one subnet. This is because routers are often preconfigured to block incoming packets that are broadcast to all machines in the subnet.</para>
+
+
+<para>The same principles apply to name resolution. Without an NBNS, NetBIOS name resolution would also be done with a broadcast mechanism. All request packets would be sent to each computer in the network, with the hope that one machine that might be affected will respond directly back to the machine that asked. At this point, it's clear that using an NBNS server and point-to-point communication for this purpose is far less taxing on the network than flooding the network with broadcasts for every name resolution request.<indexterm id="ch01-idx-951682-0" class="endofrange" startref="ch01-idx-951674-0"/>
+<indexterm id="ch01-idx-951682-1" class="endofrange" startref="ch01-idx-951674-1"/></para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="1.3.3" id="ch01-SECT-3.3">
+<title>Node Types</title>
+
+
+<para>
+<indexterm id="ch01-idx-951690-0"><primary>node types</primary></indexterm>How can you tell what strategy each client on your network will use when performing name registration and resolution? Each machine on an NBT network earns one of the following designations, depending on how it handles name registration and resolution: <indexterm id="ch01-idx-951691-0"><primary>b-node</primary></indexterm>
+<indexterm id="ch01-idx-951691-1"><primary>p-node</primary></indexterm>
+<indexterm id="ch01-idx-951691-2"><primary>m-node</primary></indexterm>
+<indexterm id="ch01-idx-951691-3"><primary>h-node</primary></indexterm>b-node, p-node, m-node, and h-node. The behaviors of each type of node are summarized in <link linkend="ch01-91681">Table 1.1</link>.</para>
+
+
+<table label="1.1" id="ch01-91681">
+<title>NetBIOS Node Types </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Role</para></entry>
+
+<entry colname="col2"><para>Value</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>b-node</para></entry>
+
+<entry colname="col2"><para>Uses<indexterm id="ch01-idx-951692-0"><primary>broadcast registration</primary></indexterm>
+<indexterm id="ch01-idx-951692-1"><primary>broadcast resolution</primary></indexterm> broadcast registration and resolution only.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>p-node</para></entry>
+
+<entry colname="col2"><para>Uses <indexterm id="ch01-idx-951693-0"><primary>point-to-point registration/resolution</primary></indexterm>point-to-point registration and resolution only.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>m-node</para></entry>
+
+<entry colname="col2"><para>Uses broadcast for registration. If successful, it notifies the NBNS server of the result. Uses broadcast for resolution; uses NBNS server if broadcast is unsuccessful.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>h-node (hybrid)</para></entry>
+
+<entry colname="col2"><para>Uses NBNS server for registration and resolution; uses broadcast if the NBNS server is unresponsive or inoperative.</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>In the case of Windows clients, you will usually find them listed as <firstterm>h-nodes</firstterm> or <firstterm>hybrid nodes</firstterm>. Incidentally, h-nodes were invented later by Microsoft, as a more  fault-tolerant route, and do not appear in RFC 1001/1002.</para>
+
+
+<para>You can find out the node type of any Windows machine by typing the command <literal>ipconfig</literal> <literal>/all</literal> and searching for the line that says <literal>Node Type</literal>.</para>
+
+
+<programlisting><emphasis role="bold">C:\&gt;ipconfig /all</emphasis>
+Windows 98 IP Configuration
+...
+  Node Type .  .  .  .  .  .  .  .  .  .  : Hybrid
+...</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="1.3.4" id="ch01-SECT-3.4">
+<title>What's in a Name?</title>
+
+
+<para>The <indexterm id="ch01-idx-951695-0" class="startofrange"><primary>NetBIOS name</primary></indexterm>names NetBIOS uses are quite different from the DNS hostnames you might be familiar with. First, NetBIOS names exist in a <indexterm id="ch01-idx-951696-0"><primary>flat namespaces</primary></indexterm>flat namespace. In other words, there are no qualifiers such as <emphasis>ora.com</emphasis> or <emphasis>samba.org</emphasis> to section off hostnames; there is only a single unique name to represent each computer. Second, NetBIOS names are allowed to be only 15 characters, may not begin with an asterisk (*), and can consist only of standard alphanumeric characters (a-z, A-Z, 0-9) and the following:</para>
+
+
+<programlisting>! @ # $ % ^ &amp; ( ) - ' { } . ~</programlisting>
+
+
+<para>Although you are allowed to use a period (.) in a NetBIOS name, we recommend against it because those names are not guaranteed to work in future versions of NetBIOS over TCP/IP.</para>
+
+
+<para>It's not a coincidence that all valid <indexterm id="ch01-idx-952041-0"><primary>DNS (Domain Name System)</primary><secondary>names</secondary><tertiary>NetBIOS names and</tertiary></indexterm>DNS names are also valid NetBIOS names. In fact, the DNS name for a Samba server is often reused as its NetBIOS name. For example, if you had a machine <literal>phoenix.ora.com </literal>, its NetBIOS name would likely be PHOENIX (followed by 8 blanks).</para>
+
+
+<sect3 role="" label="1.3.4.1" id="ch01-SECT-3.4.1">
+<title>Resource names and types</title>
+
+
+<para>With NetBIOS, a machine not only advertises its presence, but also tells others what types of services it offers. For example, <literal>phoenix</literal> can indicate that it's not just a workstation, but is also a file server and can receive WinPopup messages. This is done by adding a 16th byte to the end of the machine (<indexterm id="ch01-idx-951698-0"><primary>resource names</primary></indexterm>resource) name, called the <indexterm id="ch01-idx-951704-0"><primary>resource types</primary></indexterm><firstterm>resource type</firstterm>, and registering the name more than once. See <link linkend="ch01-74707">Figure 1.10</link>.</para>
+
+
+<figure label="1.10" id="ch01-74707">
+<title>The structure of NetBIOS names</title>
+
+<graphic width="502" depth="153" fileref="figs/sam.0110.gif"></graphic>
+</figure>
+
+<para>The one-byte resource type indicates a unique service the named machine provides. In this book, you will often see the resource type shown in <indexterm id="ch01-idx-951708-0"><primary>angled brackets (&lt;&gt;)</primary></indexterm>angled brackets (<indexterm id="ch01-idx-951709-0"><primary>&lt;\&gt; (angled brackets)</primary></indexterm>&lt;&gt;) after the NetBIOS name, such as:</para>
+
+
+<programlisting>PHOENIX&lt;00&gt;</programlisting>
+
+
+<para>You can see which names are registered for a particular NBT machine using the Windows command-line <indexterm id="ch01-idx-951710-0"><primary>NBTSTAT utility</primary></indexterm>NBTSTAT utility. Because these services are unique (i.e., there cannot be more than one registered), you will see them listed as type UNIQUE in the output. For example, the following partial output describes the <literal>hydra</literal> server:</para>
+
+
+<programlisting><emphasis role="bold">D:\&gt;NBTSTAT -a hydra</emphasis>
+
+       NetBIOS Remote Machine Name Table
+   Name               Type         Status
+---------------------------------------------
+HYDRA          &lt;00&gt;  UNIQUE      Registered
+HYDRA          &lt;03&gt;  UNIQUE      Registered
+HYDRA          &lt;20&gt;  UNIQUE      Registered
+...</programlisting>
+
+
+<para>This says the server has registered the NetBIOS name <literal>hydra</literal> as a <indexterm id="ch01-idx-951711-0"><primary>machine name, types</primary></indexterm>
+<indexterm id="ch01-idx-951711-1"><primary>naming</primary><secondary>machine name, types</secondary></indexterm>machine (workstation) name, a recipient of WinPopup messages, and a file server. Some possible attributes a name can have are listed in <link linkend="ch01-11471">Table 1.2</link>.</para>
+
+
+<table label="1.2" id="ch01-11471">
+<title>NetBIOS Unique Resource Types </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>
+<indexterm id="ch01-idx-951723-0"><primary>NetBIOS (Network Basic Input/Output System)</primary><secondary>Unique Resource Types</secondary></indexterm>Named Resource</para></entry>
+
+<entry colname="col2"><para>
+<indexterm id="ch01-idx-951735-0"><primary>Hexidecimal byte value</primary><secondary>for NetBIOS unique resource types</secondary></indexterm>Hexidecimal Byte Value</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>Standard Workstation Service</para></entry>
+
+<entry colname="col2"><para>00</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Messenger Service (WinPopup)</para></entry>
+
+<entry colname="col2"><para>03</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>RAS Server Service</para></entry>
+
+<entry colname="col2"><para>06</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Domain Master Browser Service (associated with primary domain controller)</para></entry>
+
+<entry colname="col2"><para>1B</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Master Browser name</para></entry>
+
+<entry colname="col2"><para>1D</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>NetDDE Service</para></entry>
+
+<entry colname="col2"><para>1F</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Fileserver (including printer server)</para></entry>
+
+<entry colname="col2"><para>20</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>RAS Client Service</para></entry>
+
+<entry colname="col2"><para>21</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Network Monitor Agent</para></entry>
+
+<entry colname="col2"><para>BE</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Network Monitor Utility</para></entry>
+
+<entry colname="col2"><para>BF</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>Note that because <indexterm id="ch01-idx-951737-0"><primary>DNS (Domain Name System)</primary><secondary>names</secondary><tertiary> resource types and</tertiary></indexterm>DNS names don't have resource types, the designers intentionally made hexidecimal value 20 (an ASCII space) default to the type for a file server.</para>
+</sect3>
+
+
+
+<sect3 role="" label="1.3.4.2" id="ch01-SECT-3.4.2">
+<title>Group names and types</title>
+
+
+<para>
+<indexterm id="ch01-idx-951786-0"><primary>groups</primary><secondary>names of</secondary></indexterm>
+<indexterm id="ch01-idx-951786-1"><primary>groups</primary><secondary>types of</secondary></indexterm>SMB also uses the concept of groups, with which machines can register themselves. Earlier, we mentioned that the machines in our example belonged to a <firstterm>workgroup</firstterm>, which is a partition of machines on the same network. For example, a business might very easily have an ACCOUNTING and a SALES workgroup, each with different servers and printers. In the Windows world, a workgroup and an SMB group are the same thing.</para>
+
+
+<para>Continuing our NBTSTAT example, the <literal>hydra</literal> Samba server is also a member of the SIMPLE workgroup (the GROUP attribute hex 00), and will stand for election as a browse master (GROUP attribute 1E). Here is the remainder of the NBTSTAT utility output:</para>
+
+
+<programlisting>       NetBIOS Remote Machine Name Table, continued
+   Name               Type         Status
+---------------------------------------------
+SIMPLE           &lt;00&gt;  GROUP       Registered
+SIMPLE           &lt;1E&gt;  GROUP       Registered
+.._ _MSBROWSE_ _.&lt;01&gt;  GROUP       Registered</programlisting>
+
+
+<para>The possible group attributes a machine can have are illustrated in <link linkend="ch01-52395">Table 1.3</link>. More information is available in <indexterm id="ch01-idx-951787-0"><primary>resources for further information</primary><secondary>group attributes</secondary></indexterm><citetitle>Windows NT in a Nutshell</citetitle> by Eric Pearce, also published by O'Reilly.</para>
+
+
+<table label="1.3" id="ch01-52395">
+<title>NetBIOS Group Resource Types </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Named Resource</para></entry>
+
+<entry colname="col2"><para>
+<indexterm id="ch01-idx-951781-0"><primary>Hexidecimal byte value</primary><secondary>for NetBIOS group resource types</secondary></indexterm>Hexidecimal Byte Value</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>Standard Workstation group</para></entry>
+
+<entry colname="col2"><para>00</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Logon Server</para></entry>
+
+<entry colname="col2"><para>1C</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Master Browser name</para></entry>
+
+<entry colname="col2"><para>1D</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Normal Group name (used in browser elections)</para></entry>
+
+<entry colname="col2"><para>1E</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Internet Group name (administrative)</para></entry>
+
+<entry colname="col2"><para>20</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>&lt;01&gt;&lt;02&gt;_ _MSBROWSE_ _&lt;02&gt;</literal></para></entry>
+
+<entry colname="col2"><para>01</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>The final entry, <literal>_ _ MSBROWSE _ _  </literal>, is used to announce a group to other master browsers. The nonprinting characters in the name show up as dots in a NBTSTAT printout. Don't worry if you don't understand all of the resource or group types. Some of them you will not need with Samba, and others you will pick up as you move through the rest of the chapter. The important thing to remember here is the logistics of the naming mechanism.<indexterm id="ch01-idx-951790-0" class="endofrange" startref="ch01-idx-951695-0"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="1.3.5" id="ch01-SECT-3.5">
+<title>Datagrams and Sessions</title>
+
+
+<para><firstterm></firstterm>
+<indexterm id="ch01-idx-951800-0" class="startofrange"><primary>session service</primary></indexterm>
+<indexterm id="ch01-idx-951800-1" class="startofrange"><primary>datagram service</primary></indexterm>At this point, let's digress to introduce another responsibility of NBT: to provide connection services between two NetBIOS machines. There are actually two services offered by NetBIOS over TCP/IP: the <firstterm>session service</firstterm> and the <firstterm>datagram service</firstterm>. Understanding how these two services work is not essential to using Samba, but it does give you an idea of how NBT works and how to troubleshoot Samba when it doesn't work.</para>
+
+
+<para>The datagram service has no stable connection between one machine and another. Packets of data are simply sent or broadcast from one machine to another, without regard for the order that they arrive at the destination, or even if they arrive at all. The use of datagrams is not as network intensive as sessions, although they can bog down a network if used unwisely (remember broadcast name resolution earlier?) Datagrams, therefore, are used for quickly sending simple blocks of data to one or more machines. The datagram service communicates using the simple primitives shown in <link linkend="ch01-29352">Table 1.4</link>.</para>
+
+
+<table label="1.4" id="ch01-29352">
+<title>Datagram Primitives </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Primitive</para></entry>
+
+<entry colname="col2"><para>Description</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>Send Datagram</para></entry>
+
+<entry colname="col2"><para>Send datagram packet to machine or groups of machines.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Send Broadcast Datagram</para></entry>
+
+<entry colname="col2"><para>Broadcast datagram to any machine waiting with a Receive Broadcast Datagram.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Receive Datagram</para></entry>
+
+<entry colname="col2"><para>Receive a datagram from a machine.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Receive Broadcast Datagram</para></entry>
+
+<entry colname="col2"><para>Wait for a broadcast datagram.</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>The session service is more complex. Sessions are a communication method that, in theory, offers the ability to detect problematic or inoperable connections between two NetBIOS applications. It helps to think of an NBT session in terms of a telephone call.<footnote label="5" id="ch01-pgfId-946249">
+
+
+<para>As you can see in RFC 1001, the telephone analogy was strongly evident in the creation of the NBT service.</para>
+
+
+</footnote> A full-duplex connection is opened between a caller machine and a called machine, and it must remain open throughout the duration of their conversation. Each side knows who the caller and the called machine is, and can communicate with the simple primitives shown in <link linkend="ch01-75575">Table 1.5</link>.</para>
+
+
+<table label="1.5" id="ch01-75575">
+<title>Session Primitives </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Primitive</para></entry>
+
+<entry colname="col2"><para>Description</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>Call</para></entry>
+
+<entry colname="col2"><para>Initiate a session with a machine listening under a specified name.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Listen</para></entry>
+
+<entry colname="col2"><para>Wait for a call from a known caller or any caller.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Hang-up</para></entry>
+
+<entry colname="col2"><para>Exit a call.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Send</para></entry>
+
+<entry colname="col2"><para>Send data to the other machine.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Receive</para></entry>
+
+<entry colname="col2"><para>Receive data from the other machine.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Session Status</para></entry>
+
+<entry colname="col2"><para>Get information on requested sessions.</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>Sessions are the backbone of resource sharing on an NBT network. They are typically used for establishing stable connections from client machines to disk or printer shares on a server. The client "calls" the server and starts trading information such as which files it wishes to open, which data it wishes to exchange, etc. These calls can last a long time&mdash;hours, even days&mdash;and all of this occurs within the context of a single connection. If there is an error, the session software (TCP) will retransmit until the data is received properly, unlike the "punt-and-pray" approach of the datagram service (UDP).</para>
+
+
+<para>In truth, while sessions are supposed to be able to handle problematic communications, they often don't. As you've probably already discovered when using Windows networks, this is a serious detriment to using NBT sessions. If the connection is interrupted for some reason, session information that is open between the two computers can easily become invalidated. If that happens, the only way to regain the session information is for the same two computers to call each other again and start over.</para>
+
+
+<para>If you want more information on each of these services, we recommend you look at RFC 1001. However, there are two important things to remember here:</para>
+
+
+<itemizedlist>
+<listitem><para>Sessions always occur between <emphasis>two</emphasis> NetBIOS machines&mdash;no more and no less. If a session service is interrupted, the client is supposed to store sufficient state information for it to re-establish the connection. However, in practice, this is rarely the case.</para></listitem>
+<listitem><para>Datagrams can be broadcast to multiple machines, but they are unreliable. In other words, there is no way for the source to know that the datagrams it sent have indeed arrived at their<firstterm></firstterm>
+<indexterm id="ch01-idx-951807-0" class="endofrange" startref="ch01-idx-951800-0"/>
+<indexterm id="ch01-idx-951807-1" class="endofrange" startref="ch01-idx-951800-1"/> destinations.<indexterm id="ch01-idx-951654-0" class="endofrange" startref="ch01-idx-951651-0"/></para></listitem>
+</itemizedlist>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="1.4" id="ch01-43359">
+<title>Microsoft Implementations</title>
+
+
+<para>
+<indexterm id="ch01-idx-951821-0" class="startofrange"><primary>implementations, Microsoft</primary></indexterm>
+<indexterm id="ch01-idx-951821-1" class="startofrange"><primary>Microsoft</primary><secondary>implementations</secondary></indexterm>With that amount of background, we can now talk about some of Microsoft's implementations of the preceding concepts in the CIFS/SMB networking world. And, as you might expect, there are some complex extensions to introduce as well.</para>
+
+
+<sect2 role="" label="1.4.1" id="ch01-SECT-4.1">
+<title>Windows Domains</title>
+
+
+<para>
+<indexterm id="ch01-idx-951815-0" class="startofrange"><primary>domains</primary></indexterm>Recall that a workgroup is a collection of SMB computers that all reside on a subnet and subscribe to the same SMB group. A <firstterm>Windows domain</firstterm> goes a step further. It is a workgroup of SMB machines that has one addition: a server acting as a <firstterm>domain controller</firstterm>. You must have a domain controller in order to have a Windows domain.<footnote label="6" id="ch01-pgfId-947021">
+
+
+<para>Windows domains are called <indexterm id="ch01-idx-953044-0"><primary>domains</primary><secondary>Windows</secondary></indexterm>
+<indexterm id="ch01-idx-953044-1"><primary>Windows NT</primary><secondary>domains</secondary></indexterm>"Windows NT domains" by Microsoft because they assume that Windows NT machines will take the role of the domain controller. However, because Samba can perform this function as well, we'll simply call them "Windows domains" to avoid confusion.</para>
+
+
+</footnote> Otherwise, it is only a workgroup. See <link linkend="ch01-96972">Figure 1.11</link>.</para>
+
+
+<figure label="1.11" id="ch01-96972">
+<title>A simple Windows domain</title>
+
+<graphic width="502" depth="209" fileref="figs/sam.0111.gif"></graphic>
+</figure>
+
+<para>
+<indexterm id="ch01-idx-951829-0" class="startofrange"><primary>domain controllers</primary><secondary sortas="Windows 95/98">for Windows 95/98</secondary></indexterm>
+<indexterm id="ch01-idx-951829-1" class="startofrange"><primary>Windows 95/98</primary><secondary>domain controllers for</secondary></indexterm>There are currently two separate protocols used by a domain controller (logon server): one for communicating with Windows 95/98 machines and one for communicating with Windows NT machines. While Samba currently implements the domain controller protocol for Windows 95/98 (which allows it to act as a domain controller for Windows 9<emphasis>x</emphasis> machines), it still does not fully support the protocol for Windows NT computers. However, the Samba team promises that support for the Windows NT domain controller protocol is forthcoming in Samba 2.1.</para>
+
+
+<tip id="ch01-NOTE-0" role="ora">
+<para>Why all the difficulty? The protocol that Windows domain controllers use to communicate with their clients and other domain controllers is proprietary and has not been released by Microsoft. This has forced the Samba development team to reverse-engineer the domain controller protocol to see which codes perform specific tasks.</para>
+
+</tip>
+
+<sect3 role="" label="1.4.1.1" id="ch01-SECT-4.1.1">
+<title>Domain controllers</title>
+
+
+<para>The domain controller is the nerve center of a Windows domain, much like an NIS server is the nerve center of the Unix network information service. Domain controllers have a variety of responsibilities. One responsibility that you need to be concerned with is <firstterm>authentication</firstterm>
+<indexterm id="ch01-idx-951839-0"><primary>authentication</primary></indexterm>. Authentication is the process of granting or denying a user access to a shared resource on another network machine, typically through the use of a password.</para>
+
+
+<para>Each domain controller uses a <firstterm>security account manager</firstterm>
+<indexterm id="ch01-idx-951840-0"><primary>security account manager (SAM)</primary></indexterm>
+<indexterm id="ch01-idx-951840-1"><primary>SAM (security account manager)</primary></indexterm> (SAM) to maintain a list of username-password combinations. The domain controller then forms a central repository of passwords that are tied to usernames (one password per user), which is more efficient than each client machine maintaining hundreds of passwords for every network resource available.</para>
+
+
+<para>On a Windows domain, when a non-authenticated client requests access to a server's shares, the server will turn around and ask the domain controller whether that user is authenticated. If it is, the server will establish a session connection with the access rights it has for that service and user. If not, the connection is denied. Once a user is authenticated by the domain controller, a special authenticated token will be returned to the client so that the user will not need to relogin to other resources on that domain. At this point, the user is considered "logged in" to the domain itself. See <link linkend="ch01-49344">Figure 1.12</link>.</para>
+
+
+<figure label="1.12" id="ch01-49344">
+<title>Using a domain controller for authentication</title>
+
+<graphic width="502" depth="242" fileref="figs/sam.0112.gif"></graphic>
+</figure>
+</sect3>
+
+
+
+<sect3 role="" label="1.4.1.2" id="ch01-SECT-4.1.2">
+<title>Primary and backup domain controllers</title>
+
+
+<para>
+<indexterm id="ch01-idx-951842-0"><primary>domain controllers</primary></indexterm>
+<indexterm id="ch01-idx-951842-1"><primary>backup domain controllers (BDCs)</primary></indexterm>
+<indexterm id="ch01-idx-951842-2"><primary>PDC (primary domain controller)</primary></indexterm>
+<indexterm id="ch01-idx-951842-3"><primary>BDCs (backup domain controllers)</primary></indexterm>
+<indexterm id="ch01-idx-951842-4"><primary>primary domain controller</primary><see>PDC</see></indexterm>Redundancy is a key idea behind a Windows domain. The domain controller that is currently active on a domain is called the <firstterm>primary domain controller</firstterm> (PDC). There can be one or more <firstterm>backup domain controllers</firstterm> (BDCs) in the domain as well, which will take over in the event that the primary domain controller fails or becomes inaccessible. BDCs frequently synchronize their SAM data with the primary domain controller so that, if the need arises, any one of them can perform DC services transparently without impacting its clients. Note that BDCs, however, have only read-only copies of the SAM; they can update their data only by synchronizing with a PDC. A server in a Windows domain can use the SAM of any primary or backup domain controller to authenticate a user who attempts to access its resources and logon to the domain.</para>
+
+
+<para>Note that in many aspects, the behaviors of a <indexterm id="ch01-idx-951844-0"><primary>workgroups</primary><secondary>Windows</secondary><tertiary>behaviors vs. Windows domain</tertiary></indexterm>
+<indexterm id="ch01-idx-951844-1"><primary>domains</primary><secondary>behavior vs. Windows workgroups</secondary></indexterm>Windows workgroup and a Windows domain overlap. This is not accidental since the concept of Windows domains did not evolve until Windows NT 3.5 was introduced, and Windows domains were forced to remain <indexterm id="ch01-idx-951873-0"><primary>backwards compatibility</primary><secondary>Windows domains and</secondary></indexterm>backwards compatible with the workgroups present in Windows for Workgroups 3.1. The key thing to remember here is that a Windows domain is simply a Windows workgroup with one or more domain controllers added.</para>
+
+
+<para>Samba can function as a primary domain controller for Windows 95/98 machines without any problems. However, <indexterm id="ch01-idx-951845-0"><primary>Samba</primary><secondary>version 2.0</secondary></indexterm>
+<indexterm id="ch01-idx-951845-1"><primary>Samba</primary><secondary>version 2.1</secondary></indexterm>Samba 2.0 can act as a primary domain controller only for authentication purposes; it currently cannot assume any other PDC responsibilities. (By the time you read this, Samba 2.1 may be available so you can use Samba as a PDC for NT clients.) Also, because of the closed protocol used by Microsoft to synchronize SAM data, Samba currently cannot serve as a backup domain<indexterm id="ch01-idx-951832-0" class="endofrange" startref="ch01-idx-951829-0"/>
+<indexterm id="ch01-idx-951832-1" class="endofrange" startref="ch01-idx-951829-1"/> controller.<indexterm id="ch01-idx-951820-0" class="endofrange" startref="ch01-idx-951815-0"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="1.4.2" id="ch01-SECT-4.2">
+<title>Browsing</title>
+
+
+<para>
+<indexterm id="ch01-idx-951846-0" class="startofrange"><primary>browsing</primary></indexterm>Browsing is a high-level answer to the user question: "What machines are out there on the Windows network?" Note that there is no connection with a World Wide Web browser, apart from the general idea of "discovering what's there." And, like the Web, what's out there can change without warning.</para>
+
+
+<para>Before browsing, users had to know the name of the specific computer they wanted to connect to on the network, and then manually enter a UNC such as the following into an application or file manager to access resources:</para>
+
+
+<programlisting>\\HYDRA\network\</programlisting>
+
+
+<para>With browsing, however, you can examine the contents of a machine using a standard point-and-click GUI&mdash;in this case, the<indexterm id="ch01-idx-951848-0"><primary>Network Neighborhood window</primary></indexterm> Network Neighborhood window in a Windows client.</para>
+
+
+<sect3 role="" label="1.4.2.1" id="ch01-SECT-4.2.1">
+<title>Levels of browsing</title>
+
+
+<para>As we hinted at the beginning of the chapter, there are actually two types of browsing that you will encounter in an SMB/CIFS network:</para>
+
+
+<itemizedlist>
+<listitem><para>Browsing a list of machines (with shared resources)</para></listitem>
+<listitem><para>Browsing the shared resources of a specific machine</para></listitem>
+</itemizedlist>
+
+<para>
+<indexterm id="ch01-idx-951851-0"><primary>browsing</primary><secondary>machines, list of</secondary></indexterm>Let's look at the first one. On each Windows workgroup (or domain) subnet, one computer has the responsibility of maintaining a list of the machines that are currently accessible through the network. This computer is called the <firstterm>local master browser</firstterm>
+<indexterm id="ch01-idx-951850-0"><primary>local master browser</primary></indexterm>
+<indexterm id="ch01-idx-951850-1"><primary>browse lists</primary></indexterm>, and the list that it maintains is called the <firstterm>browse list</firstterm>. Machines on a subnet use the browse list in order to cut down on the amount of network traffic generated while browsing. Instead of each computer dynamically polling to determine a list of the currently available machines, the computer can simply query the local master browser to obtain a complete, up-to-date list.</para>
+
+
+<para>
+<indexterm id="ch01-idx-951852-0" class="startofrange"><primary>browsing</primary><secondary>resources of a specific machine</secondary></indexterm>To browse the actual resources on a machine, a user must connect to the specific machine; this information cannot be obtained from the browse list. Browsing the list of resources on a machine can be done by clicking on the machine's icon when it is presented in the Network Neighborhood in Windows 95/98 or NT. As you saw at the opening of the chapter, the machine will respond with a list of shared resources that can be accessed if that user is successfully authenticated.</para>
+
+
+<para>Each of the servers on a Windows workgroup is required to announce its presence to the local master browser after it has registered a NetBIOS name, and (theoretically) announce that it is leaving the workgroup when it is shut down. It is the local master browser's responsibility to record what the servers have announced. Note that the local master browser is not necessarily the same machine as a NetBIOS name server (NBNS), which we discussed earlier.</para>
+
+
+<warning id="ch01-NOTE-1" role="ora">
+<para>The <indexterm id="ch01-idx-952154-0"><primary>Network Neighborhood window</primary></indexterm>Windows Network Neighborhood can behave oddly: until you select a particular machine to browse, the Network Neighborhood window may contain data that is not up-to-date. That means that the Network Neighborhood window can be showing machines that have crashed, or can be missing machines that haven't been noticed yet. Put succinctly, once you've selected a server and connected to it, you can be a lot more confident that the shares and printers really exist on the network.</para>
+
+</warning>
+
+<para>Unlike the roles you've seen earlier, almost any Windows machine (NT Server, NT Workstation, 98, 95, or Windows 3.1 for Workgroups) can act as a local master browser. As with the domain controller, the local master browser can have one or more <firstterm>backup browsers</firstterm>
+<indexterm id="ch01-idx-952161-0"><primary>backup browsers</primary><secondary>local master browser</secondary></indexterm> on the local subnet that will take over in the event that the local master browser fails or becomes inaccessible. To ensure fluid operation, the local backup browsers will frequently synchronize their browse list with the local master browser. Let's update our Windows domain diagram to include both a local master and local backup browser. The result is shown in <link linkend="ch01-77521">Figure 1.13</link>.</para>
+
+
+<figure label="1.13" id="ch01-77521">
+<title>A Windows domain with a local master and local backup browser</title>
+
+<graphic width="502" depth="209" fileref="figs/sam.0113.gif"></graphic>
+</figure>
+
+<para>Here is how to calculate the minimum number of <indexterm id="ch01-idx-951868-0"><primary>backup browsers</primary><secondary>maximum number per workgroup</secondary></indexterm>backup browsers that will be allocated on a workgroup:</para>
+
+
+<itemizedlist>
+<listitem><para>If there are between 1 and 32 Windows NT workstations on the network, or between 1 and 16 Windows 95/98 machines on the network, the local master browser allocates one backup browser in addition to the local master browser.</para></listitem>
+<listitem><para>If the number of Windows NT workstations falls between 33 and 64, or the number of Windows 95/98 workstations falls between 17 and 32, the local master browser allocates two backup browsers.</para></listitem>
+<listitem><para>For each group of 32 NT workstations or 16 Windows 95/98 machines beyond this, the local master browser allocates another backup browser.</para></listitem>
+</itemizedlist>
+
+<para>There is currently no upper limit on the number of <indexterm id="ch01-idx-951869-0"><primary>backup browsers</primary><secondary sortas="local master browser">per local master browser</secondary></indexterm>
+<indexterm id="ch01-idx-951869-1"><primary>master browsers</primary><see>local master browser; DMB; preferred master browser</see></indexterm>backup browsers that can be allocated by the local master browser.<indexterm id="ch01-idx-951855-0" class="endofrange" startref="ch01-idx-951852-0"/></para>
+</sect3>
+
+
+
+<sect3 role="" label="1.4.2.2" id="ch01-SECT-4.2.2">
+<title>Browsing elections</title>
+
+
+<para>Browsing is a critical aspect of any Windows workgroup. However, not everything runs perfectly on any network. For example, let's say that the Windows NT Server on the desk of a small company's CEO is the local master browser&mdash;that is, until he switches it off while plugging in his massage chair. At this point the Windows NT Workstation in the spare parts department might agree to take over the job. However, that computer is currently running a large, poorly written program that has brought its processor to its knees. The moral: browsing has to be very tolerant of servers coming and going. Because nearly every Windows machine can serve as a browser, there has to be a way of deciding at any time who will take on the job. This decision-making process is called an <firstterm>election</firstterm>
+<indexterm id="ch01-idx-951870-0"><primary>elections</primary></indexterm>
+<indexterm id="ch01-idx-951870-1"><primary>browsing</primary><secondary>elections</secondary></indexterm>.</para>
+
+
+<para>An election algorithm is built into nearly all Windows operating systems such that they can each agree who is going to be a local master browser and who will be local backup browsers. An election can be forced at any time. For example, let's assume that the CEO has finished his massage and reboots his server. As the server comes online, it will announce its presence and an election will take place to see if the PC in the spare parts department should still be the master browser.</para>
+
+
+<para>When an election is performed, each machine broadcasts via datagrams information about itself. This information includes the following:</para>
+
+
+<itemizedlist>
+<listitem><para>The version of the election protocol used</para></listitem>
+<listitem><para>The operating system on the machine</para></listitem>
+<listitem><para>The amount of time the client has been on the network</para></listitem>
+<listitem><para>The hostname of the client</para></listitem>
+</itemizedlist>
+
+<para>These values determine which operating system has seniority and will fulfill the role of the local master browser. (<link linkend="SAMBA-CH-6">Chapter 6</link>, describes the election process in more detail.) The architecture developed to achieve this is not elegant and has built-in security problems. While a browsing domain can be integrated with domain security, the election algorithm does not take into consideration which computers become browsers. Thus it is possible for any machine running a browser service to register itself as participating in the browsing election, and (after winning) being able to change the browse list. Nevertheless, browsing is a key feature of Windows networking and <indexterm id="ch01-idx-951871-0"><primary>backwards compatibility</primary><secondary>elections and</secondary></indexterm>backwards compatibility requirements will ensure that it is in use for years to come.<indexterm id="ch01-idx-951847-0" class="endofrange" startref="ch01-idx-951846-0"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="1.4.3" id="ch01-SECT-4.3">
+<title>Can a Windows Workgroup Span Multiple Subnets?</title>
+
+
+<para>
+<indexterm id="ch01-idx-951886-0"><primary>workgroups</primary><secondary>Windows</secondary><tertiary>spanning multiple subnets</tertiary></indexterm>
+<indexterm id="ch01-idx-951886-1"><primary>subnets</primary><secondary>multiple spanned by Windows workgroups</secondary></indexterm>
+<indexterm id="ch01-idx-951886-2"><primary>Windows workgroups</primary><see>workgroups, Windows</see></indexterm>Yes, but most people who have done it have had their share of headaches. Spanning multiple subnets was not part of the initial design of Windows NT 3.5 or Windows for Workgroups. As a result, a Windows domain that spans two or more subnets is, in reality, the "gluing" together of two or more workgroups that share an identical name. The good news is that you can still use a primary domain controller to control authentication across each of the subnets. The bad news is that things are not as simple with browsing.</para>
+
+
+<para>As mentioned previously, each subnet must have its own local master browser. When a Windows domain spans multiple subnets, a system administrator will have to assign one of the machines as the <firstterm>domain master browser</firstterm>. The domain master browser will keep a browse list for the entire Windows domain. This browse list is created by periodically synchronizing the browse lists of each of the local master browsers with the browse list of the domain master browser. After the synchronization, the local master browser and the domain master browser should contain identical entries. See <link linkend="ch01-52572">Figure 1.14</link> for an illustration.</para>
+
+
+<figure label="1.14" id="ch01-52572">
+<title>A workgroup that spans more than one subnet</title>
+
+<graphic width="502" depth="438" fileref="figs/sam.0114.gif"></graphic>
+</figure>
+
+<para>Sound good? Well, it's not quite nirvana for the following reasons:</para>
+
+
+<itemizedlist>
+<listitem><para>If it exists, a primary domain controller always plays the role of the domain master browser. By Microsoft design, the two always share the NetBIOS <indexterm id="ch01-idx-951898-0"><primary>resource types</primary><secondary sortas="primary domain controller vs. domain master browser">for primary domain controller vs. domain master browser</secondary></indexterm>
+<indexterm id="ch01-idx-951898-1"><primary>DMB (domain master browser)</primary><secondary>resource type</secondary></indexterm>resource type &lt;1B&gt;, and (unfortunately) cannot be separated.</para></listitem>
+<listitem><para>Windows 95/98 machines cannot become <emphasis>or</emphasis> <emphasis>even contact</emphasis> a domain master browser. The Samba group feels that this is a marketing decision from Microsoft that forces customers to have at least one Windows NT workstation (or Samba server) on each <indexterm id="ch01-idx-951900-0"><primary>subnets</primary><secondary>Windows NT workstations and</secondary></indexterm>subnet of a multi-subnet workgroup.</para></listitem>
+</itemizedlist>
+
+<para>Each subnet's local master browser continues to maintain the browse list for its subnet, for which it becomes authoritative. So if a computer wants to see a list of servers within its own subnet, the local master browser of that subnet will be queried. If a computer wants to see a list of servers outside the subnet, it can still go only as far as the local master browser. This works because, at appointed intervals, the authoritative browse list of a subnet's local master browser is synchronized with the domain master browser, which is synchronized with the local master browser of the other subnets in the domain. This is called <firstterm>browse list propagation</firstterm>
+<indexterm id="ch01-idx-951902-0"><primary>browse lists</primary><secondary>propagation</secondary></indexterm>
+<indexterm id="ch01-idx-951902-1"><primary>propagation, browse list</primary></indexterm>.</para>
+
+
+<para>Samba can act as a domain master browser on a Windows domain if required. In addition, it can also act as a local master browser for a Windows subnet, synchronizing its browse list with the domain master browser.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="1.4.4" id="ch01-SECT-4.4">
+<title>The Windows Internet Name Service (WINS)</title>
+
+
+<para>The <indexterm id="ch01-idx-951904-0"><primary>Windows Internet Name Service (see&nbsp;WINS)</primary></indexterm>
+<indexterm id="ch01-idx-951904-1"><primary>WINS (Windows Internet Name Service)</primary></indexterm>Windows Internet Name Service (WINS) is Microsoft's implementation of a <indexterm id="ch01-idx-951906-0"><primary>NetBIOS (Network Basic Input/Output System)</primary><secondary>name server (NBNS)</secondary></indexterm>NetBIOS name server (NBNS). As such, WINS inherits much of NetBIOS's characteristics. First, WINS is <indexterm id="ch01-idx-951907-0"><primary>flat namespaces</primary></indexterm>flat; you can only have machines named <literal>fred</literal> or workgroups like CANADA or USA. In addition, WINS is dynamic: when a client first comes online, it is required to report its hostname, its address, and its workgroup to the local WINS server. This WINS server will retain the information so long as the client periodically refreshes its WINS registration, which indicates that it's still connected to the network. Note that <indexterm id="ch01-idx-951908-0"><primary>WINS (Windows Internet Name Service)</primary><secondary>servers</secondary></indexterm>WINS servers are not domain or workgroup specific; they can appear anywhere and serve anyone.</para>
+
+
+<para>Multiple WINS servers can be set to synchronize with each other after a specified amount of time. This allows entries for machines that come online and offline on the network to propagate from one WINS server to another. While in theory this seems efficient, it can quickly become cumbersome if there are several WINS servers covering a network. Because WINS services can cross multiple subnets (you'll either hardcode the address of a WINS server in each of your clients or obtain it via DHCP), it is often more efficient to have each Windows client, no matter how many Windows domains there are, point themselves to the same WINS server. That way, there will only be one authoritative WINS server with the correct information, instead of several WINS servers continually struggling to synchronize themselves with the most recent changes.</para>
+
+
+<para>The currently active WINS server is known as the <firstterm>primary WINS server</firstterm>
+<indexterm id="ch01-idx-951910-0"><primary>primary WINS server</primary></indexterm>
+<indexterm id="ch01-idx-951910-1"><primary>WINS (Windows Internet Name Service)</primary><secondary>WINS server</secondary><tertiary>primary/secondary</tertiary></indexterm>
+<indexterm id="ch01-idx-951910-2"><primary>secondary WINS server</primary></indexterm>. You can also install a secondary WINS server, which will take over in the event that the primary WINS server fails or becomes inaccessible. Note that there is no <indexterm id="ch01-idx-951912-0"><primary>elections</primary><secondary>WINS servers and</secondary></indexterm>election to determine which machine becomes a primary or backup WINS server&mdash;the choice of WINS servers is static and must be predetermined by the <indexterm id="ch01-idx-951913-0"><primary>system administrator, WINS server and</primary></indexterm>system administrator. Both the primary and any backup WINS servers will synchronize their address databases on a periodic basis.</para>
+
+
+<para>In the Windows family of operating systems, only an NT Workstation or an NT server can serve as a <firstterm></firstterm>
+<indexterm id="ch01-idx-951916-0"><primary>WINS (Windows Internet Name Service)</primary><secondary>Windows operating systems and</secondary></indexterm>WINS server. Samba can also function as a primary WINS server, but not a secondary WINS server.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="1.4.5" id="ch01-12452">
+<title>What Can Samba Do?</title>
+
+
+<para>
+<indexterm id="ch01-idx-951921-0"><primary>Samba</primary><secondary>roles in Windows domains/workgroups</secondary></indexterm>
+<indexterm id="ch01-idx-951921-1"><primary>domains</primary><secondary>roles in assumed by Samba</secondary></indexterm>
+<indexterm id="ch01-idx-951921-2"><primary>workgroups</primary><secondary>roles in assumed by Samba</secondary></indexterm>Whew! Bet you never thought Microsoft networks would be that complex, did you? Now, let's wrap up by showing where Samba can help out. <link linkend="ch01-14021">Table 1.6</link> summarizes which roles Samba can and cannot play in a Windows NT Domain or Windows workgroup. As you can see, because many of the NT domain protocols are proprietary and have not been documented by Microsoft, Samba cannot properly synchronize its data with a Microsoft server and cannot act as a backup in most roles. However, with version 2.0.<emphasis>x</emphasis>, Samba does have limited support for the primary domain controller's authentication protocols and is gaining more functionality every day.</para>
+
+
+<table label="1.6" id="ch01-14021">
+<title>Samba Roles (as of 2.0.4b) </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Role</para></entry>
+
+<entry colname="col2"><para>Can Perform?</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>File Server</para></entry>
+
+<entry colname="col2"><para>Yes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Printer Server</para></entry>
+
+<entry colname="col2"><para>Yes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Primary Domain Controller</para></entry>
+
+<entry colname="col2"><para>Yes (Samba 2.1 or higher recommended)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Backup Domain Controller</para></entry>
+
+<entry colname="col2"><para>No</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Windows 95/98 Authentication</para></entry>
+
+<entry colname="col2"><para>Yes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Local Master Browser</para></entry>
+
+<entry colname="col2"><para>Yes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Local Backup Browser</para></entry>
+
+<entry colname="col2"><para>No</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Domain Master Browser</para></entry>
+
+<entry colname="col2"><para>Yes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Primary WINS Server</para></entry>
+
+<entry colname="col2"><para>Yes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Secondary WINS Server</para></entry>
+
+<entry colname="col2"><para>No<indexterm id="ch01-idx-951824-0" class="endofrange" startref="ch01-idx-951821-0"/>
+<indexterm id="ch01-idx-951824-1" class="endofrange" startref="ch01-idx-951821-1"/></para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="1.5" id="ch01-32691">
+<title>An Overview of the Samba Distribution</title>
+
+
+<para>As mentioned earlier, Samba actually contains several programs that serve different but related purposes. Let's introduce each of them briefly, and show how they work together. The majority of the programs that come with the Samba distribution center on its two daemons. Let's take a refined look at the responsibilities of each daemon:</para>
+
+
+<variablelist>
+<varlistentry><term><emphasis>smbd</emphasis></term>
+<listitem><para>The <emphasis>smbd</emphasis> daemon is responsible for managing the shared resources between the Samba server machine and its clients. It provides file, print, and browser services to <acronym>SMB</acronym> clients across one or more networks. <emphasis>smdb</emphasis> handles all notifications between the Samba server and the network clients. In addition, it is responsible for user authentication, resource locking, and data sharing through the <acronym>SMB</acronym> protocol.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><emphasis>nmbd</emphasis></term>
+<listitem><para>The <emphasis>nmbd</emphasis> daemon is a simple nameserver that mimics the WINS and NetBIOS name server functionality, as you might expect to encounter with the LAN Manager package. This daemon listens for nameserver requests and provides the appropriate information when called upon. It also provides browse lists for the Network Neighborhood and participates in browsing elections.</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<para>The Samba distribution also comes with a small set of Unix command-line tools:</para>
+
+
+<variablelist>
+<varlistentry><term>smbclient</term>
+<listitem><para>An FTP-like Unix client that can be used to connect to Samba shares</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>smbtar</term>
+<listitem><para>A program for backing up data in shares, similar to the Unix <filename>tar</filename> command</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>nmblookup</term>
+<listitem><para>A program that provides NetBIOS over TCP/IP name lookups</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>smbpasswd</term>
+<listitem><para>A program that allows an administrator to change the encrypted passwords used by Samba</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>smbstatus</term>
+<listitem><para>A program for reporting the current network connections to the shares on a Samba server</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>testparm</term>
+<listitem><para>A simple program to validate the Samba configuration file</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>testprns</term>
+<listitem><para>A program that tests whether various printers are recognized by the <filename>smbd</filename> daemon</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<para>Each significant release of Samba goes through a significant exposure test before it's announced. In addition, it is quickly updated afterward if problems or unwanted side-effects are found. The latest stable distribution as of this writing is Samba 2.0.5, the long-awaited production version of Samba 2.0. This book focuses on the functionality supported in Samba 2.0, as opposed to the older 1.9.<emphasis>x</emphasis> versions of Samba, which are now obsolete.</para>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="1.6" id="ch01-SECT-6">
+<title>How Can I Get Samba?</title>
+
+
+<para>
+<indexterm id="ch01-idx-951923-0"><primary>Samba</primary><secondary>distribution</secondary></indexterm>Samba is available in both binary and source format from a set of <indexterm id="ch01-idx-951925-0"><primary>mirror sites for Samba distribution</primary></indexterm>mirror sites across the Internet. The primary home site for Samba is located at <indexterm id="ch01-idx-951924-0"><primary>URLs (uniform resource locators)</primary><secondary>Samba</secondary></indexterm>
+<indexterm id="ch01-idx-951924-1"><primary>URLs (uniform resource locators)</primary><secondary>distribution</secondary></indexterm><systemitem role="url">http://www.samba.org/</systemitem>.</para>
+
+
+<para>However, if you don't want to wait for packets to arrive all the way from Australia, mirror sites for Samba can be found at any of several locations on the Internet. A list of mirrors is given at the primary Samba home page.</para>
+
+
+<!-- CD-ROM REFERENCE COMMENTED OUT FOR SAFARI VERSION OF THIS TITLE.
+
+<para>In addition, a <indexterm id="ch01-idx-951926-0"><primary>CD-ROM with this book</primary><secondary>Samba distribution</secondary></indexterm>CD-ROM distribution is available in the back of this book. We strongly encourage you to start with the CD-ROM if this is your first time using Samba. We've included source and binaries up to <indexterm id="ch01-idx-951927-0"><primary>Samba</primary><secondary>version 2.0.5</secondary></indexterm>Samba 2.0.5 with this book. In addition, several of the <indexterm id="ch01-idx-951928-0"><primary>CD-ROM with this book</primary><secondary>testing tools</secondary></indexterm>
+<indexterm id="ch01-idx-951928-1"><primary>testing</primary><secondary>tools for (CD-ROM with this book)</secondary></indexterm>testing tools that we refer to through the book are conveniently packaged on the CD-ROM.</para>
+
+-->
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="1.7" id="ch01-40528">
+<title>What's New in Samba 2.0?</title>
+
+
+<para>
+<indexterm id="ch01-idx-951929-0"><primary>Samba</primary><secondary> version 2.0</secondary></indexterm>
+<indexterm id="ch01-idx-951929-1"><primary>software distribution</primary><see>Samba, distribution</see></indexterm>Samba 2.0 was an eagerly-awaited package. The big additions to Samba 2.0 are more concrete support for NT Domains and the new Samba Web Administration Tool (SWAT), a browser-based utility for configuring Samba. However, there are dozens of other improvements that were introduced in the summer and fall of 1998.</para>
+
+
+<sect2 role="" label="1.7.1" id="ch01-SECT-7.1">
+<title>NT Domains</title>
+
+
+<para>Samba's support for <indexterm id="ch01-idx-951930-0"><primary>domains</primary><secondary>Windows</secondary><tertiary>support for</tertiary></indexterm>
+<indexterm id="ch01-idx-951930-1"><primary>Windows NT</primary><secondary>domains</secondary></indexterm>NT Domains (starting with version 2.0.<emphasis>x</emphasis>) produced a big improvement: it allows SMB servers to use its authentication mechanisms, which is essential for future NT compatibility, and to support <firstterm>NT domain logons</firstterm>
+<indexterm id="ch01-idx-951931-0"><primary>domains</primary><secondary>Windows</secondary></indexterm>
+<indexterm id="ch01-idx-951931-1"><primary>domain logons</primary></indexterm>
+<indexterm id="ch01-idx-951931-2"><primary>domain logons</primary></indexterm>
+<indexterm id="ch01-idx-951931-3"><primary>logons</primary><see>domain logons</see></indexterm>. Domain logons allow a user to log in to a Windows NT domain and use all the computers in the domain without logging into them individually. Previous to version 2.0.0, Samba supported Windows 95/98 logon services, but not NT domain logons. Although domain logons support is not complete is Samba 2.0, it is partially implemented.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="1.7.2" id="ch01-SECT-7.2">
+<title>Ease of Administration</title>
+
+
+<para>
+<indexterm id="ch01-idx-951933-0"><primary>SWAT tool</primary></indexterm>SWAT, the <indexterm id="ch01-idx-951934-0"><primary>Samba Web Administration Tool</primary><see>SWAT tool</see></indexterm>Samba Web Administration Tool, makes it easy to set up a server and change its configuration, without giving up the simple text-based configuration file. SWAT provides a graphical interface to the resources that Samba shares with its clients. In addition, SWAT saves considerable experimentation and memory work in setting up or changing configurations across the network. You can even create an initial setup with SWAT and then modify the file later by hand, or vice versa. Samba will not complain.</para>
+
+
+<para>On the <indexterm id="ch01-idx-951935-0"><primary>compiling Samba</primary><secondary>in version 2.0</secondary></indexterm>compilation side, <indexterm id="ch01-idx-951936-0"><primary>GNU autoconf</primary></indexterm>GNU <filename>autoconf</filename> is now used to make the task of initial compilation and setup easier so you can get to SWAT quicker.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="1.7.3" id="ch01-SECT-7.3">
+<title>Performance</title>
+
+
+<para>There are major performance and scalability increases in Samba: the code has been reorganized and <emphasis>nmbd</emphasis>
+<indexterm id="ch01-idx-951937-0"><primary>nmbd daemon</primary></indexterm> (the Samba name service daemon) heavily rewritten:</para>
+
+
+<itemizedlist>
+<listitem><para>Name/browsing service now supports approximately 35,000 simultaneous clients.</para></listitem>
+<listitem><para>File and print services support 500 concurrent users from a single medium-sized server without noticeable performance degradation.</para></listitem>
+<listitem><para>
+<indexterm id="ch01-idx-951938-0"><primary>performance</primary></indexterm>Linux/Samba on identical hardware now consistently performs better than NT Server. And best of all, Samba is improving.</para></listitem>
+<listitem><para>Improved <indexterm id="ch01-idx-951939-0"><primary>opportunistic locking</primary></indexterm>
+<indexterm id="ch01-idx-951939-1"><primary>locks/locking files</primary><secondary>opportunistic locking</secondary></indexterm>
+<indexterm id="ch01-idx-951939-2"><primary>locks/locking files</primary><secondary>opportunistic locking</secondary><seealso>oplocks</seealso></indexterm>"opportunistic" locking allows client machines to cache entire files locally, greatly improving speed without running the risk of accidentally overwriting the cached files.</para></listitem>
+</itemizedlist>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="1.7.4" id="ch01-SECT-7.4">
+<title>More Features</title>
+
+
+<para>There are several additional features in Samba 2.0. You can now have multiple Samba <indexterm id="ch01-idx-951942-0"><primary>aliases</primary><secondary>multiple</secondary></indexterm>aliases on the same machine, each pretending to be a different server, a feature similar to <indexterm id="ch01-idx-951943-0"><primary>virtual hosts</primary></indexterm>virtual hosts in modern web servers. This allows a host to serve multiple departments and groups, or provide disk shares with normal username/password security while also providing printers to everyone without any security. Printing has been changed to make it easier for <indexterm id="ch01-idx-951944-0"><primary>Unix</primary><secondary>System V</secondary><tertiary>printing and</tertiary></indexterm>Unix System V owners: Samba can now find the available printers automatically, just as it does with Berkeley-style printing. In addition, Samba now has the capability to use <indexterm id="ch01-idx-951945-0"><primary>multiple code pages</primary></indexterm>
+<indexterm id="ch01-idx-951945-1"><primary>code pages</primary><secondary>multiple</secondary></indexterm>
+<indexterm id="ch01-idx-951945-2"><primary>non-European languages</primary></indexterm>
+<indexterm id="ch01-idx-951945-3"><primary>languages, non-European</primary></indexterm>multiple code pages, so it can be used with non-European languages, and to use the <indexterm id="ch01-idx-951946-0"><primary>SSL (Secure Sockets Layer) protocol</primary></indexterm>Secure Sockets Layer protocol (SSL) to encrypt all the data it sends across the Internet, instead of just passwords.<footnote label="7" id="ch01-pgfId-938280">
+
+
+<para>If you reside in the United States, there are some federal rules and regulations dealing with strong cryptography. We'll talk about his later when we set up Samba and SSL in <link linkend="SAMBA-AP-A">Appendix A</link>.</para>
+
+
+</footnote></para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="1.7.5" id="ch01-SECT-7.5">
+<title>Compatibility Improvements</title>
+
+
+<para>At the same time as it's becoming more capable, Samba is also becoming more <indexterm id="ch01-idx-951947-0"><primary>Samba</primary><secondary>compatibility with Windows NT</secondary></indexterm>
+<indexterm id="ch01-idx-951947-1"><primary>compatibility, Samba with Windows NT</primary></indexterm>compatible with Windows NT. Samba has always supported Microsoft-style password encryption. It now provides tools and options for changing over to <indexterm id="ch01-idx-951948-0"><primary>Microsoft</primary><secondary>encryption</secondary></indexterm>
+<indexterm id="ch01-idx-951948-1"><primary>Samba</primary><secondary>Microsoft encryption and</secondary></indexterm>Microsoft encryption, and for keeping the Unix and Microsoft password files synchronized while doing so. Finally, a Samba master browser can be instructed to hunt down and synchronize itself with other SMB servers on different LANs, allowing <indexterm id="ch01-idx-951950-0"><primary>SMB (Server Message Block)</primary><secondary>seamless operation across networks</secondary></indexterm>SMB to work seamlessly across multiple networks. Samba uses a different method of accomplishing this from the Microsoft method, which is undocumented.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="1.7.6" id="ch01-SECT-7.6">
+<title>Smbwrapper</title>
+
+
+<para>Finally, there is an entirely new version of the Unix client called <firstterm>smbwrapper</firstterm>
+<indexterm id="ch01-idx-951955-0"><primary>smbwrapper client</primary></indexterm>. Instead of a kernel module that allows Linux to act as a Samba client, there is now a command-line entry to load the library that provides a complete SMB filesystem on some brands of Unix. Once loaded, the command <literal>ls</literal> <literal>/smb</literal> will list all the machines in your workgroup, and <literal>cd</literal> <literal>/smb/</literal><replaceable>server_name</replaceable><literal>/</literal><replaceable>share_name</replaceable> will take you to a particular <indexterm id="ch01-idx-951956-0"><primary>shares</primary></indexterm>
+<indexterm id="ch01-idx-951956-1"><primary>shared directory/resources</primary><see>shares</see></indexterm>share (shared directory), similar to the <indexterm id="ch01-idx-951957-0"><primary>Network File System (NFS)</primary></indexterm>
+<indexterm id="ch01-idx-951957-1"><primary>NFS (Network File System)</primary></indexterm>Network File System (NFS). As of this writing, <emphasis>smbwrapper</emphasis> currently runs on Linux, Solaris, SunOS 4, IRIX, and OSF/1, and is expected to run on several more operating systems in the near future.</para>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="1.8" id="ch01-99818">
+<title>And That's Not All...</title>
+
+
+<para>Samba is a wonderful tool with potential for even the smallest SMB/CIFS network. This chapter presented you with a thorough introduction to what Samba is, and more importantly, how it fits into a Windows network. The next series of chapters will help you set up Samba on both the Unix server side, where its two daemons reside, as well as configure the Windows 95, 98, and NT clients to work with Samba. Before long, the aches and pains of your heterogeneous network may seem like a thing of the past. Welcome to the wonderful world of Samba!</para>
+</sect1>
+</chapter>

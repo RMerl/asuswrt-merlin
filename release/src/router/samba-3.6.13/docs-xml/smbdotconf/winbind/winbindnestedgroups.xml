@@ -1,0 +1,17 @@
+<samba:parameter name="winbind nested groups"
+                 context="G"
+				 type="boolean"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>If set to yes, this parameter activates the support for nested
+                 groups. Nested groups are also called local groups or
+                 aliases. They work like their counterparts in Windows: Nested
+                 groups are defined locally on any machine (they are shared
+                 between DC's through their SAM) and can contain users and
+                 global groups from any trusted SAM. To be able to use nested
+                 groups, you need to run nss_winbind.</para>
+</description>
+
+<value type="default">yes</value>
+</samba:parameter>

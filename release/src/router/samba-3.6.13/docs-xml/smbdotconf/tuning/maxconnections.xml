@@ -1,0 +1,17 @@
+<samba:parameter name="max connections"
+                 context="S"
+				 type="integer"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This option allows the number of simultaneous connections to a service to be limited.
+    If <parameter moreinfo="none">max connections</parameter> is greater than 0 then connections
+    will be refused if this number of connections to the service are already open. A value 
+    of zero mean an unlimited number of connections may be made.</para>
+
+    <para>Record lock files are used to implement this feature. The lock files will be stored in 
+    the directory specified by the <smbconfoption name="lock directory"/> option.</para>
+</description>
+
+<value type="default">0</value>
+<value type="example">10</value>
+</samba:parameter>

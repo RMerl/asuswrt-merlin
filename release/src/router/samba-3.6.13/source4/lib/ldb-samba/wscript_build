@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+
+# LDBSAMBA gets included in the ldb build when we are building ldb_ildap 
+# as a built-in module and this delutes the symbols in the ldb library with 
+# the symbols of all of ldb_ildap's dependencies. 
+
+bld.SAMBA_LIBRARY('ldbsamba',
+                  source='ldif_handlers.c',
+                  autoproto='ldif_handlers_proto.h',
+                  public_deps='ldb',
+                  deps='security ndr NDR_DRSBLOBS NDR_DNSP ldbwrap samdb-common SAMDB_SCHEMA tdb pyldb-util',
+                  private_library=True
+                  )
+
+bld.SAMBA_SUBSYSTEM('ldbwrap',
+                    source='ldb_wrap.c',
+                    public_headers='ldb_wrap.h',
+                    deps='ldb samba-util ldbsamba samba-hostconfig'
+                    )
+
+
+bld.SAMBA_PYTHON('python_samba__ldb', 'pyldb.c',
+                 deps='ldbsamba pyparam_util ldbwrap',
+                 realname='samba/_ldb.so')
+
+bld.SAMBA_MODULE('ldbsamba_extensions',
+                 source='samba_extensions.c',
+                 init_function='ldb_samba_extensions_init',
+                 module_init_name='ldb_init_module',
+                 subsystem='ldb',
+                 deps='ldb ldbsamba POPT_SAMBA POPT_CREDENTIALS cmdline-credentials gensec',
+                 internal_module=False)
+
+
+# the s4-internal ldap backend
+bld.SAMBA_MODULE('ldb_ildap',
+                 source='ldb_ildap.c',
+                 init_function='ldb_ildap_init',
+                 module_init_name='ldb_init_module',
+                 deps='talloc cli-ldap credentials auth_system_session',
+                 internal_module=False,
+                 subsystem='ldb')

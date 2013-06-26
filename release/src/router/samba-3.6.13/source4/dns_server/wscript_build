@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+
+bld.SAMBA_MODULE('service_dns',
+        source='dns_server.c dns_query.c dns_update.c dns_utils.c',
+        subsystem='service',
+        init_function='server_service_dns_init',
+        deps='samba-hostconfig LIBTSOCKET LIBSAMBA_TSOCKET ldbsamba',
+        local_include=False,
+        internal_module=False,
+        )
+
+# a bind9 dlz module giving access to the Samba DNS SAM
+bld.SAMBA_LIBRARY('dlz_bind9',
+                  source='dlz_bind9.c',
+                  private_library=True,
+                  link_name='modules/bind9/dlz_bind9.so',
+                  deps='samba-hostconfig ldbsamba samba-util popt')

@@ -1,0 +1,16 @@
+<samba:parameter name="short preserve case"
+                 context="S"
+				 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This boolean parameter controls if new files which conform to 8.3 syntax, that is all in upper case and of
+	suitable length, are created upper case, or if they are forced to be the <smbconfoption name="default case"/>.
+	This  option can be use with <smbconfoption name="preserve case">yes</smbconfoption> to permit long filenames
+	to retain their case, while short names are lowered.
+	</para>
+		
+	<para>See the section on <link linkend="NAMEMANGLINGSECT">NAME MANGLING</link>.</para>
+</description>
+<value type="default">yes</value>
+</samba:parameter>

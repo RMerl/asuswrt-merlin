@@ -1,0 +1,5 @@
+#
+# Sample printcap file
+# Alias names are separated by |, any name with spaces is taken as a comment
+#
+lp4js|lp12|LaserJet on the third floor by the coffee machine

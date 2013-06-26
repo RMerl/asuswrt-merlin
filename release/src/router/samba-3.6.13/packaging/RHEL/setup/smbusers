@@ -1,0 +1,3 @@
+# Unix_name = SMB_name1 SMB_name2 ...
+root = administrator admin
+nobody = guest pcguest smbguest

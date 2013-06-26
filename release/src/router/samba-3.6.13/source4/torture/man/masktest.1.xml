@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<refentry id="masktest.1">
+
+<refmeta>
+	<refentrytitle>masktest</refentrytitle>
+	<manvolnum>1</manvolnum>
+</refmeta>
+
+
+<refnamediv>
+	<refname>masktest</refname>
+	<refpurpose>Find differences in wildcard matching between 
+	Samba's implementation and that of a remote server.</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>masktest</command>
+		<arg choice="req">//server/share</arg>
+		<arg choice="opt">-U user%pass</arg>
+		<arg choice="opt">-d debuglevel</arg>
+		<arg choice="opt">-W workgroup</arg>
+		<arg choice="opt">-n numloops</arg>
+		<arg choice="opt">-s seed</arg>
+		<arg choice="opt">-a</arg>
+		<arg choice="opt">-E</arg>
+		<arg choice="opt">-M max protocol</arg>
+		<arg choice="opt">-f filechars</arg>
+		<arg choice="opt">-m maskchars</arg>
+		<arg choice="opt">-v</arg>
+	</cmdsynopsis>
+	
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para><application>masktest</application> is a utility for 
+		detecting differences in behaviour between Samba's 
+		own implementation and that of a remote server.
+		It will run generate random filenames/masks and 
+		check if these match the same files they do on the remote file as 
+		they do on the local server. It will display any differences it finds.
+	</para>
+
+	<para>
+		This utility is used by the Samba team to find differences in 
+		behaviour between Samba and Windows servers. 
+	</para>
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+			<term>-U user%pass</term>
+			<listitem><para>
+					Specify the user and password to use when logging on 
+					on the shares. This parameter can be specified twice 
+					(once for the first server, once for the second).
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>-s seed</term>
+			<listitem><para>
+					Seed the random number generator with the specified value.
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>-n numops</term>
+			<listitem><para>Set the number of operations to perform.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>-a</term>
+			<listitem><para>Print the operations that are performed. </para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+			<term>-M max_protocol</term>
+			<listitem><para>
+					Maximum protocol to use.
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>-f</term>
+			<listitem><para>Specify characters that can be used 
+					when generating file names. Default: abcdefghijklm.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>-E</term>
+			<listitem><para>Abort when difference in behaviour is found.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>-m maskchars</term>
+			<listitem><para>Specify characters used for wildcards.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>-v</term>
+			<listitem><para>Be verbose</para></listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 4.0 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+
+	<para>Samba</para>
+
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>This utility is part of the <ulink url="http://www.samba.org/">Samba</ulink> suite, which is developed by the global <ulink url="http://www.samba.org/samba/team/">Samba Team</ulink>.</para>
+
+	<para>masktest was written by Andrew Tridgell.</para>
+
+	<para>This manpage was written by Jelmer Vernooij.</para>
+	
+</refsect1>
+
+</refentry>

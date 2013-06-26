@@ -1,0 +1,65 @@
+<samba:parameter name="username"
+	context="S"
+	type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<synonym>user</synonym>
+<synonym>users</synonym>
+<description>
+    <para>Multiple users may be specified in a comma-delimited 
+    list, in which case the supplied password will be tested against 
+    each username in turn (left to right).</para>
+
+    <para>The deprecated <parameter moreinfo="none">username</parameter> line is needed only when
+    the PC is unable to supply its own username. This is the case 
+    for the COREPLUS protocol or where your users have different WfWg 
+    usernames to UNIX usernames. In both these cases you may also be 
+    better using the \\server\share%user syntax instead.</para>
+
+    <para>The <parameter moreinfo="none">username</parameter> line is not a great 
+    solution in many cases as it means Samba will try to validate 
+    the supplied password against each of the usernames in the 
+    <parameter moreinfo="none">username</parameter> line in turn. This is slow and 
+    a bad idea for lots of users in case of duplicate passwords. 
+    You may get timeouts or security breaches using this parameter 
+    unwisely.</para>
+
+    <para>Samba relies on the underlying UNIX security. This 
+    parameter does not restrict who can login, it just offers hints 
+    to the Samba server as to what usernames might correspond to the 
+    supplied password. Users can login as whoever they please and 
+    they will be able to do no more damage than if they started a 
+    telnet session. The daemon runs as the user that they log in as, 
+    so they cannot do anything that user cannot do.</para>
+
+    <para>To restrict a service to a particular set of users you 
+    can use the <smbconfoption name="valid users"/> parameter.</para>
+
+    <para>If any of the usernames begin with a '@' then the name 
+    will be looked up first in the NIS netgroups list (if Samba 
+    is compiled with netgroup support), followed by a lookup in 
+    the UNIX groups database and will expand to a list of all users 
+    in the group of that name.</para>
+		
+    <para>If any of the usernames begin with a '+' then the name 
+    will be looked up only in the UNIX groups database and will 
+    expand to a list of all users in the group of that name.</para>
+
+    <para>If any of the usernames begin with a '&amp;' then the name 
+    will be looked up only in the NIS netgroups database (if Samba 
+    is compiled with netgroup support) and will expand to a list 
+    of all users in the netgroup group of that name.</para>
+
+    <para>Note that searching though a groups database can take 
+    quite some time, and some clients may time out during the 
+    search.</para>
+
+    <para>See the section <link linkend="VALIDATIONSECT">NOTE ABOUT
+	USERNAME/PASSWORD VALIDATION</link> for more information on how 
+	this parameter determines access to the services.</para>
+</description>
+
+<value type="default"><comment>The guest account if a guest service, 
+		else &lt;empty string&gt;.</comment></value>
+
+<value type="example">fred, mary, jack, jane, @users, @pcgroup</value>
+</samba:parameter>

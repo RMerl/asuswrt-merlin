@@ -1,0 +1,16 @@
+<samba:parameter name="fstype"
+	         context="S"
+			 type="string"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This parameter allows the administrator to configure the string that specifies the type of filesystem a share 
+	is using that is reported by <citerefentry><refentrytitle>smbd</refentrytitle> <manvolnum>8</manvolnum></citerefentry> 
+	when a client queries the filesystem type for a share. The default type is <constant>NTFS</constant> for compatibility 
+	with Windows NT but this can be changed to other strings such as <constant>Samba</constant> or <constant>FAT</constant> 
+	if required.
+	</para>
+</description>
+<value type="default">NTFS</value>
+<value type="example">Samba</value>
+</samba:parameter>

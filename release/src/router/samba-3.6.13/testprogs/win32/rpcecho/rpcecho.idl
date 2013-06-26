@@ -1,0 +1,146 @@
+/* 
+   RPC echo IDL.
+
+   Copyright (C) Tim Potter 2003
+   
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
+   
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#ifndef __PIDL__
+#define unistr [string] wchar_t *
+#endif
+
+[
+uuid(60a15ec5-4de8-11d7-a637-005056a20182),
+version(1.0)
+]
+interface rpcecho
+{
+	// Add one to an integer
+	void AddOne(
+		[in] int in_data,
+		[out] int *out_data
+	);
+	// Echo an array of bytes back at the caller
+	void EchoData(
+		[in] int len,
+		[in] [size_is(len)] char in_data[],
+		[out] [size_is(len)] char out_data[]
+	);
+	// Sink data to the server
+	void SinkData(
+		[in] int len,
+		[in] [size_is(len)] char in_data[]
+	);
+	// Source data from server
+	void SourceData(
+		[in] int len,
+		[out] [size_is(len)] char out_data[]
+	);
+	const long myconstant = 42;
+
+	/* test strings */
+ 	void TestCall (
+		[in]   unistr *s1,
+		[out]  unistr *s2
+ 		);
+
+	/* test some alignment issues */
+	typedef struct {
+		char v;
+	} echo_info1;
+
+	typedef struct {
+		short v;
+	} echo_info2;
+
+	typedef struct {
+		long v;
+	} echo_info3;
+
+	typedef struct {
+		hyper v;
+	} echo_info4;
+
+	typedef struct {
+		char v1;
+		hyper v2;
+	} echo_info5;
+
+	typedef struct {
+		char v1;
+		echo_info1 info1;
+	} echo_info6;
+
+	typedef struct {
+		char v1;
+		echo_info4 info4;
+	} echo_info7;
+
+	typedef union {
+		[case(1)]  echo_info1 info1;
+		[case(2)]  echo_info2 info2;
+		[case(3)]  echo_info3 info3;
+		[case(4)]  echo_info4 info4;
+		[case(5)]  echo_info5 info5;
+		[case(6)]  echo_info6 info6;
+		[case(7)]  echo_info7 info7;
+	} echo_Info;
+
+	long TestCall2 (
+		[in]                     short level,
+		[out,switch_is(level)]   echo_Info **info
+		);
+
+	long TestSleep(
+		[in] long seconds
+		);
+
+	typedef enum {
+		ECHO_ENUM1 = 1,
+		ECHO_ENUM2 = 2
+	} echo_Enum1;
+
+	typedef [v1_enum] enum {
+		ECHO_ENUM1_32 = 1,
+		ECHO_ENUM2_32 = 2
+	} echo_Enum1_32;
+
+	typedef struct {
+		echo_Enum1 e1;
+		echo_Enum1_32 e2;
+	} echo_Enum2;
+
+	typedef union {
+		[case(ECHO_ENUM1)] echo_Enum1 e1;
+		[case(ECHO_ENUM2)] echo_Enum2 e2;
+	} echo_Enum3;
+
+	void echo_TestEnum(
+		[in,out,ref] echo_Enum1 *foo1,
+		[in,out,ref] echo_Enum2 *foo2,
+		[in,out,ref,switch_is(*foo1)] echo_Enum3 *foo3
+		);
+
+	typedef struct {
+		long x;
+		[size_is(x)] short surrounding[*];
+	} echo_Surrounding;
+
+	void echo_TestSurrounding(
+		[in,out,ref] echo_Surrounding *data
+	);
+
+	short echo_TestDoublePointer([in] short ***data);
+}

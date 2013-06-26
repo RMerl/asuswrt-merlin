@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC
+"-//O'Reilly//DTD DBLite Safari 1.0 XML//EN"
+"/usr/local/prod/sgml/dblite/safari_future.dtd"
+[
+<!ENTITY metadata SYSTEM "metadata.xml">
+<!-- Declare external file entities -->
+<!ENTITY appa SYSTEM "appa.xml">
+<!ENTITY appb SYSTEM "appb.xml">
+<!ENTITY appc SYSTEM "appc.xml">
+<!ENTITY appd SYSTEM "appd.xml">
+<!ENTITY appe SYSTEM "appe.xml">
+<!ENTITY appf SYSTEM "appf.xml">
+<!ENTITY ch00 SYSTEM "ch00.xml">
+<!ENTITY ch01 SYSTEM "ch01.xml">
+<!ENTITY ch02 SYSTEM "ch02.xml">
+<!ENTITY ch03 SYSTEM "ch03.xml">
+<!ENTITY ch04 SYSTEM "ch04.xml">
+<!ENTITY ch05 SYSTEM "ch05.xml">
+<!ENTITY ch06 SYSTEM "ch06.xml">
+<!ENTITY ch07 SYSTEM "ch07.xml">
+<!ENTITY ch08 SYSTEM "ch08.xml">
+<!ENTITY ch09 SYSTEM "ch09.xml">
+<!ENTITY colo1 SYSTEM "colo1.xml">
+<!ENTITY cpyrt SYSTEM "copy.xml">
+]>
+<!-- Document type description -->
+<book fpi="1565924495">
+  <title>Using Samba</title>
+  <!-- Book metadata -->
+&metadata;
+<!-- Reference the file entities -->
+&cpyrt;
+&ch00;
+&ch01;
+&ch02;
+&ch03;
+&ch04;
+&ch05;
+&ch06;
+&ch07;
+&ch08;
+&ch09;
+&appa;
+&appb;
+&appc;
+&appd;
+&appe;
+&appf;
+&colo1;
+</book>

@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="23.674999cm"
+   height="19.329cm"
+   viewBox="-0.492 0 23.184 19.329"
+   id="svg2">
+  <defs
+     id="defs97" />
+  <path
+     d="M 6.333,17.471 L 8.667,17.471 C 8.989,17.471 9.25,17.876 9.25,18.375 C 9.25,18.874 8.989,19.279 8.667,19.279 L 6.333,19.279 C 6.011,19.279 5.75,18.874 5.75,18.375 C 5.75,17.876 6.011,17.471 6.333,17.471"
+     id="path4"
+     style="fill:#dcdcdc;stroke:none;stroke-width:0.1" />
+  <path
+     d="M 6.333,17.471 L 8.667,17.471 C 8.989,17.471 9.25,17.876 9.25,18.375 C 9.25,18.874 8.989,19.279 8.667,19.279 L 6.333,19.279 C 6.011,19.279 5.75,18.874 5.75,18.375 C 5.75,17.876 6.011,17.471 6.333,17.471"
+     id="path6"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="6.7610002"
+     y="18.552"
+     id="text8"
+     style="font-size:1px;font-style:normal;font-weight:700;text-anchor:start;fill:#000000;font-family:luxi sans">GID</text>
+  <line
+     x1="4.5019999"
+     y1="6"
+     x2="4.5009999"
+     y2="6.6500001"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line10"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="4.101,6.649 4.5,7.45 4.901,6.651 4.101,6.649 "
+     id="polygon12"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <path
+     d="M 2.883,0.05 L 6.117,0.05 C 6.564,0.05 6.926,0.678 6.926,1.454 C 6.926,2.229 6.564,2.857 6.117,2.857 L 2.883,2.857 C 2.436,2.857 2.074,2.229 2.074,1.454 C 2.074,0.678 2.436,0.05 2.883,0.05"
+     id="path14"
+     style="fill:#cfcfcf;stroke:none;stroke-width:0.1" />
+  <path
+     d="M 2.883,0.05 L 6.117,0.05 C 6.564,0.05 6.926,0.678 6.926,1.454 C 6.926,2.229 6.564,2.857 6.117,2.857 L 2.883,2.857 C 2.436,2.857 2.074,2.229 2.074,1.454 C 2.074,0.678 2.436,0.05 2.883,0.05"
+     id="path16"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="3.286"
+     y="1.131"
+     id="text18"
+     style="font-size:1px;font-style:normal;font-weight:700;text-anchor:start;fill:#000000;font-family:luxi sans">group</text>
+  <text
+     x="3.799"
+     y="2.131"
+     id="text20"
+     style="font-size:1px;font-style:normal;font-weight:700;text-anchor:start;fill:#000000;font-family:luxi sans">SID</text>
+  <path
+     d="M 15.181,12.15 L 17.435,12.15 C 17.746,12.15 17.999,12.555 17.999,13.054 C 17.999,13.553 17.746,13.957 17.435,13.957 L 15.181,13.957 C 14.869,13.957 14.617,13.553 14.617,13.054 C 14.617,12.555 14.869,12.15 15.181,12.15"
+     id="path22"
+     style="fill:#dcdcdc;stroke:none;stroke-width:0.1" />
+  <path
+     d="M 15.181,12.15 L 17.435,12.15 C 17.746,12.15 17.999,12.555 17.999,13.054 C 17.999,13.553 17.746,13.957 17.435,13.957 L 15.181,13.957 C 14.869,13.957 14.617,13.553 14.617,13.054 C 14.617,12.555 14.869,12.15 15.181,12.15"
+     id="path24"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="15.584"
+     y="13.231"
+     id="text26"
+     style="font-size:1px;font-style:normal;font-weight:700;text-anchor:start;fill:#000000;font-family:luxi sans">Fail</text>
+  <line
+     x1="12.5"
+     y1="13"
+     x2="13.9"
+     y2="13"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line28"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="13.9,13.4 14.7,13 13.9,12.6 13.9,13.4 "
+     id="polygon30"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="10.5,11.5 12.5,13 10.5,14.5 8.5,13 10.5,11.5 "
+     id="polygon32"
+     style="fill:#bef2ff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="10.5,11.5 12.5,13 10.5,14.5 8.5,13 10.5,11.5 "
+     id="polygon34"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="9.0229998"
+     y="13.25"
+     id="text36"
+     style="font-size:1px;font-style:normal;font-weight:700;text-anchor:start;fill:#000000;font-family:luxi sans">Found?</text>
+  <text
+     x="11.031"
+     y="15.5"
+     id="text38"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:luxi sans">Yes</text>
+  <line
+     x1="10.489"
+     y1="10"
+     x2="10.494"
+     y2="10.65"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line40"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="10.094,10.653 10.5,11.45 10.894,10.647 10.094,10.653 "
+     id="polygon42"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <text
+     x="12.604"
+     y="12.75"
+     id="text44"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:luxi sans">No</text>
+  <line
+     x1="7.5"
+     y1="15.75"
+     x2="7.5"
+     y2="16.65"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line46"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="7.1,16.65 7.5,17.45 7.9,16.65 7.1,16.65 "
+     id="polygon48"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="4.5,7.5 6.5,9 4.5,10.5 2.5,9 4.5,7.5 "
+     id="polygon50"
+     style="fill:#acedff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="4.5,7.5 6.5,9 4.5,10.5 2.5,9 4.5,7.5 "
+     id="polygon52"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="3.0220001"
+     y="9.25"
+     id="text54"
+     style="font-size:1px;font-style:normal;font-weight:700;text-anchor:start;fill:#000000;font-family:luxi sans">Found?</text>
+  <text
+     x="5.0310001"
+     y="11.25"
+     id="text56"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:luxi sans">Yes</text>
+  <line
+     x1="4.5"
+     y1="2.8570001"
+     x2="4.5"
+     y2="3.05"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line58"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="4.1,3.051 4.502,3.85 4.9,3.049 4.1,3.051 "
+     id="polygon60"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <text
+     x="6.6040001"
+     y="8.75"
+     id="text62"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:luxi sans">No</text>
+  <line
+     x1="6.5"
+     y1="9"
+     x2="7.6500001"
+     y2="9"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line64"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="7.65,9.4 8.45,9 7.65,8.6 7.65,9.4 "
+     id="polygon66"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <rect
+     width="4.4899998"
+     height="2.0999999"
+     x="8.2440004"
+     y="7.9000001"
+     id="rect68"
+     style="fill:#dcdcdc;stroke:none;stroke-width:0" />
+  <rect
+     width="4.4899998"
+     height="2.0999999"
+     x="8.2440004"
+     y="7.9000001"
+     id="rect70"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="8.7939997"
+     y="9.1280003"
+     id="text72"
+     style="font-size:1px;font-style:normal;font-weight:700;text-anchor:start;fill:#000000;font-family:luxi sans">Winbind</text>
+  <line
+     x1="12.75"
+     y1="9.25"
+     x2="14.75"
+     y2="10"
+     stroke="#000000"
+     stroke-width="0.050"
+     id="line74"
+     style="stroke:#000000;stroke-width:0.05" />
+  <line
+     x1="12.75"
+     y1="8.75"
+     x2="14.75"
+     y2="8"
+     stroke="#000000"
+     stroke-width="0.050"
+     id="line76"
+     style="stroke:#000000;stroke-width:0.05" />
+  <rect
+     width="8"
+     height="2"
+     x="15"
+     y="8"
+     id="rect78"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="8"
+     height="2"
+     x="15"
+     y="8"
+     id="rect80"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="14.816"
+     y="8.75"
+     id="text82"
+     style="font-size:1px;font-style:normal;font-weight:700;text-anchor:start;fill:#000000;font-family:luxi sans">winbindd_idmap.tdb</text>
+  <text
+     x="17.261999"
+     y="9.75"
+     id="text84"
+     style="font-size:1px;font-style:normal;font-weight:700;text-anchor:start;fill:#000000;font-family:luxi sans">ldapsam</text>
+  <line
+     x1="23"
+     y1="9"
+     x2="15"
+     y2="9"
+     stroke="#000000"
+     stroke-width="0.050"
+     id="line86"
+     style="stroke:#000000;stroke-width:0.05" />
+  <rect
+     width="9.8870001"
+     height="2.0999999"
+     x="-0.442"
+     y="3.9000001"
+     id="rect88"
+     style="fill:#d3d3d3;stroke:none;stroke-width:0" />
+  <rect
+     width="9.8870001"
+     height="2.0999999"
+     x="-0.442"
+     y="3.9000001"
+     id="rect90"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="0.108"
+     y="5.1269999"
+     id="text92"
+     style="font-size:1px;font-style:normal;font-weight:700;text-anchor:start;fill:#000000;font-family:luxi sans">groupmap_idmap.tdb</text>
+  <polyline
+     fill="none"
+     stroke="#000000"
+     stroke-width="0.100"
+     points="4.500,10.500 4.500,15.500 10.500,15.500 10.500,14.500 "
+     id="polyline94"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+</svg>

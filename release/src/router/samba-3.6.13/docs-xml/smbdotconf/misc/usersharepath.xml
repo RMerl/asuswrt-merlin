@@ -1,0 +1,33 @@
+<samba:parameter name="usershare path"
+	         context="G"
+		 basic="1" advanced="1"
+		 type="string"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter specifies the absolute path of the directory on the
+	filesystem used to store the user defined share definition files.
+	This directory must be owned by root, and have no access for
+	other, and be writable only by the group owner. In addition the
+	"sticky" bit must also be set, restricting rename and delete to
+	owners of a file (in the same way the /tmp directory is usually configured).
+	Members of the group owner of this directory are the users allowed to create
+	usershares. If this parameter is undefined then no user defined
+	shares are allowed.
+	</para>
+	<para>
+	For example, a valid usershare directory might be /usr/local/samba/lib/usershares,
+	set up as follows.
+	</para>
+	<para>
+	<programlisting>
+	ls -ld /usr/local/samba/lib/usershares/
+	drwxrwx--T  2 root power_users 4096 2006-05-05 12:27 /usr/local/samba/lib/usershares/
+	</programlisting>
+	</para>
+	<para>
+	In this case, only members of the group "power_users" can create user defined shares.
+	</para>
+
+</description>
+<value type="default">NULL</value>
+</samba:parameter>

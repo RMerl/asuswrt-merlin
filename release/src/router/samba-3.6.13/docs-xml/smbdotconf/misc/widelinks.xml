@@ -1,0 +1,27 @@
+<samba:parameter name="wide links"
+		 context="S"
+		 type="boolean"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter controls whether or not links 
+	in the UNIX file system may be followed by the server. Links 
+	that point to areas within the directory tree exported by the 
+	server are always allowed; this parameter controls access only 
+	to areas that are outside the directory tree being exported.</para>
+
+	<para>Note: Turning this parameter on when UNIX extensions are enabled
+	will allow UNIX clients to create symbolic links on the share that
+	can point to files or directories outside restricted path exported
+	by the share definition. This can cause access to areas outside of
+	the share. Due to this problem, this parameter will be automatically
+	disabled (with a message in the log file) if the
+	<smbconfoption name="unix extensions"/> option is on.
+	</para>
+	<para>
+	See the parameter <smbconfoption name="allow insecure wide links"/>
+	if you wish to change this coupling between the two parameters.
+	</para>
+</description>
+
+<value type="default">no</value>
+</samba:parameter>

@@ -1,0 +1,51 @@
+#!/usr/bin/env python
+
+bld.SAMBA3_SUBSYSTEM('NDR_LIBNETAPI',
+	source='gen_ndr/ndr_libnetapi.c',
+	public_deps='ndr'
+	)
+
+bld.SAMBA3_SUBSYSTEM('NDR_LIBNET_JOIN',
+	source='gen_ndr/ndr_libnet_join.c',
+	public_deps='ndr'
+	)
+
+bld.SAMBA3_SUBSYSTEM('NDR_SERVER_ID',
+	source='gen_ndr/ndr_server_id.c',
+	public_deps='ndr'
+	)
+
+bld.SAMBA3_SUBSYSTEM('NDR_MESSAGING',
+	source='gen_ndr/ndr_messaging.c',
+	public_deps='ndr NDR_SERVER_ID'
+	)
+
+bld.SAMBA3_SUBSYSTEM('NDR_NOTIFY3',
+	source='gen_ndr/ndr_notify.c',
+	public_deps='ndr NDR_FILE_ID NDR_SERVER_ID'
+	)
+
+bld.SAMBA3_SUBSYSTEM('NDR_SECRETS',
+	source='gen_ndr/ndr_secrets.c',
+	public_deps='ndr'
+	)
+
+bld.SAMBA3_SUBSYSTEM('NDR_PERFCOUNT',
+	source='gen_ndr/ndr_perfcount.c',
+	public_deps='ndr'
+	)
+
+bld.SAMBA3_SUBSYSTEM('NDR_WBINT',
+	source='gen_ndr/ndr_wbint.c',
+	public_deps='ndr'
+	)
+
+bld.SAMBA3_SUBSYSTEM('RPC_NDR_WBINT',
+	source='../librpc/gen_ndr/ndr_wbint_c.c',
+	public_deps='dcerpc NDR_WBINT'
+	)
+
+bld.SAMBA3_SUBSYSTEM('SRV_NDR_WBINT',
+	source='../librpc/gen_ndr/srv_wbint.c',
+	public_deps='NDR_WBINT'
+	)

@@ -1,0 +1,16 @@
+<samba:parameter name="copy" context="S" hide="1" xmlns:samba="http://www.samba.org/samba/DTD/samba-doc" type="string">
+<description>
+	<para>This parameter allows you to &quot;clone&quot; service 
+	entries. The specified service is simply duplicated under the 
+	current service's name. Any parameters specified in the current 
+	section will override those in the section being copied.</para>
+
+	<para>This feature lets you set up a 'template' service and 
+	create similar services easily. Note that the service being 
+	copied must occur earlier in the configuration file than the 
+	service doing the copying.</para>
+</description>
+
+<value type="default"></value>
+<value type="example">otherservice</value>
+</samba:parameter>

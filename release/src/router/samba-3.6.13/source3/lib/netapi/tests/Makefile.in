@@ -1,0 +1,57 @@
+KRB5LIBS=@KRB5_LIBS@
+LDAP_LIBS=@LDAP_LIBS@
+LIBS=@LIBS@ -lnetapi -ltdb -ltalloc
+DEVELOPER_CFLAGS=@DEVELOPER_CFLAGS@
+CCFLAGS=-I../ -L../../../bin @CFLAGS@ $(GTK_FLAGS)
+CC=@CC@
+PICFLAG=@PICFLAG@
+LDFLAGS=@PIE_LDFLAGS@ @LDFLAGS@
+DYNEXP=@DYNEXP@
+NETAPI_LIBS=$(LIBS) $(KRB5LIBS) $(LDAP_LIBS)
+CMDLINE_LIBS=$(NETAPI_LIBS) @POPTLIBS@
+
+# Compile a source file.
+COMPILE_CC = $(CC) -I. $(CCFLAGS) $(PICFLAG) -c $< -o $@
+COMPILE = $(COMPILE_CC)
+
+PROGS = bin/netapitest@EXEEXT@
+
+all: $(PROGS)
+
+MAKEDIR = || exec false; \
+	  if test -d "$$dir"; then :; else \
+	  echo mkdir "$$dir"; \
+	  mkdir -p "$$dir" >/dev/null 2>&1 || \
+	  test -d "$$dir" || \
+	  mkdir "$$dir" || \
+	  exec false; fi || exec false
+
+BINARY_PREREQS = bin/.dummy
+
+bin/.dummy:
+	@if (: >> $@ || : > $@) >/dev/null 2>&1; then :; else \
+	  dir=bin $(MAKEDIR); fi
+	@: >> $@ || : > $@ # what a fancy emoticon!
+
+.c.o:
+	@if (: >> $@ || : > $@) >/dev/null 2>&1; then rm -f $@; else \
+	 dir=`echo $@ | sed 's,/[^/]*$$,,;s,^$$,.,'` $(MAKEDIR); fi
+	@echo Compiling $*.c
+	@$(COMPILE) && exit 0;\
+		echo "The following command failed:" 1>&2;\
+		echo "$(COMPILE_CC)" 1>&2;\
+		$(COMPILE_CC) >/dev/null 2>&1
+
+CMDLINE_OBJ = common.o
+NETAPIBUFFER_OBJ = netapibuffer.o
+NETAPITEST_OBJ = netapitest.o netlocalgroup.o netuser.o netgroup.o netdisplay.o netshare.o netfile.o netserver.o $(CMDLINE_OBJ)
+
+bin/netapitest@EXEEXT@: $(BINARY_PREREQS) $(NETAPITEST_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(NETAPITEST_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+clean:
+	-rm -f $(PROGS)
+	-rm -f core */*~ *~ \
+		*/*.o */*/*.o */*/*/*.o
+

@@ -1,0 +1,413 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 15. User Rights and Privileges</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><link rel="home" href="index.html" title="The Official Samba 3.5.x HOWTO and Reference Guide"><link rel="up" href="optional.html" title="Part III. Advanced Configuration"><link rel="prev" href="idmapper.html" title="Chapter 14. Identity Mapping (IDMAP)"><link rel="next" href="AccessControls.html" title="Chapter 16. File, Directory, and Share Access Controls"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 15. User Rights and Privileges</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="idmapper.html">Prev</a> </td><th width="60%" align="center">Part III. Advanced Configuration</th><td width="20%" align="right"> <a accesskey="n" href="AccessControls.html">Next</a></td></tr></table><hr></div><div class="chapter" title="Chapter 15. User Rights and Privileges"><div class="titlepage"><div><div><h2 class="title"><a name="rights"></a>Chapter 15. User Rights and Privileges</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Gerald</span> <span class="othername">(Jerry)</span> <span class="surname">Carter</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jerry@samba.org">jerry@samba.org</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">John</span> <span class="othername">H.</span> <span class="surname">Terpstra</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jht@samba.org">jht@samba.org</a>&gt;</code></p></div></div></div></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="rights.html#id376570">Rights Management Capabilities</a></span></dt><dd><dl><dt><span class="sect2"><a href="rights.html#id376833">Using the <span class="quote">&#8220;<span class="quote">net rpc rights</span>&#8221;</span> Utility</a></span></dt><dt><span class="sect2"><a href="rights.html#id377149">Description of Privileges</a></span></dt><dt><span class="sect2"><a href="rights.html#id377439">Privileges Supported by Windows 2000 Domain Controllers</a></span></dt></dl></dd><dt><span class="sect1"><a href="rights.html#id377883">The Administrator Domain SID</a></span></dt><dt><span class="sect1"><a href="rights.html#id378048">Common Errors</a></span></dt><dd><dl><dt><span class="sect2"><a href="rights.html#id378053">What Rights and Privileges Will Permit Windows Client Administration?</a></span></dt></dl></dd></dl></div><p>
+<a class="indexterm" name="id376313"></a>
+<a class="indexterm" name="id376320"></a>
+<a class="indexterm" name="id376326"></a>
+<a class="indexterm" name="id376333"></a>
+The administration of Windows user, group, and machine accounts in the Samba
+domain-controlled network necessitates interfacing between the MS Windows
+networking environment and the UNIX operating system environment. The right
+(permission) to add machines to the Windows security domain can be assigned
+(set) to non-administrative users both in Windows NT4 domains and
+Active Directory domains.
+</p><p>
+<a class="indexterm" name="id376346"></a>
+<a class="indexterm" name="id376353"></a>
+<a class="indexterm" name="id376360"></a>
+<a class="indexterm" name="id376367"></a>
+The addition of Windows NT4/2kX/XPPro machines to the domain necessitates the
+creation of a machine account for each machine added. The machine account is
+a necessity that is used to validate that the machine can be trusted to permit
+user logons.
+</p><p>
+<a class="indexterm" name="id376379"></a>
+<a class="indexterm" name="id376386"></a>
+<a class="indexterm" name="id376393"></a>
+<a class="indexterm" name="id376400"></a>
+<a class="indexterm" name="id376406"></a>
+<a class="indexterm" name="id376413"></a>
+Machine accounts are analogous to user accounts, and thus in implementing them on a UNIX machine that is
+hosting Samba (i.e., on which Samba is running), it is necessary to create a special type of user account.
+Machine accounts differ from  normal user accounts in that the account name (login ID) is terminated with a
+<code class="literal">$</code> sign. An additional difference is that this type of account should not ever be able to
+log into the UNIX environment as a system user and therefore is set to have a shell of
+<code class="literal">/bin/false</code> and a home directory of <code class="literal">/dev/null.</code> The machine
+account is used only to authenticate domain member machines during start-up. This security measure
+is designed to block man-in-the-middle attempts to violate network integrity.
+</p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+<a class="indexterm" name="id376448"></a>
+<a class="indexterm" name="id376454"></a>
+<a class="indexterm" name="id376461"></a>
+<a class="indexterm" name="id376468"></a>
+<a class="indexterm" name="id376475"></a>
+Machine (computer) accounts are used in the Windows NT OS family to store security
+credentials for domain member servers and workstations. When the domain member
+starts up, it goes through a validation process that includes an exchange of
+credentials with a domain controller. If the domain member fails to authenticate
+using the credentials known for it by domain controllers, the machine will be refused
+all access by domain users. The computer account is essential to the way that MS 
+Windows secures authentication.
+</p></div><p>
+<a class="indexterm" name="id376489"></a>
+<a class="indexterm" name="id376496"></a>
+<a class="indexterm" name="id376503"></a>
+<a class="indexterm" name="id376510"></a>
+The creation of UNIX system accounts has traditionally been the sole right of
+the system administrator, better known as the <code class="constant">root</code> account.
+It is possible in the UNIX environment to create multiple users who have the
+same UID. Any UNIX user who has a UID=0 is inherently the same as the
+<code class="constant">root</code> account user.
+</p><p>
+<a class="indexterm" name="id376529"></a>
+<a class="indexterm" name="id376536"></a>
+<a class="indexterm" name="id376543"></a>
+<a class="indexterm" name="id376550"></a>
+All versions of Samba call system interface scripts that permit CIFS function
+calls that are used to manage users, groups, and machine accounts
+in the UNIX environment. All versions of Samba up to and including version 3.0.10
+required the use of a Windows administrator account that unambiguously maps to
+the UNIX <code class="constant">root</code> account to permit the execution of these
+interface scripts. The requirement to do this has understandably met with some
+disdain and consternation among Samba administrators, particularly where it became
+necessary to permit people who should not possess <code class="constant">root</code>-level
+access to the UNIX host system.
+</p><div class="sect1" title="Rights Management Capabilities"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id376570"></a>Rights Management Capabilities</h2></div></div></div><p>
+<a class="indexterm" name="id376578"></a>
+<a class="indexterm" name="id376585"></a>
+<a class="indexterm" name="id376592"></a>
+<a class="indexterm" name="id376598"></a>
+Samba 3.0.11 introduced support for the Windows privilege model.  This model
+allows certain rights to be assigned to a user or group SID.  In order to enable
+this feature, <a class="link" href="smb.conf.5.html#ENABLEPRIVILEGES" target="_top">enable privileges = yes</a>
+must be defined in the <em class="parameter"><code>global</code></em> section of the <code class="filename">smb.conf</code> file.
+</p><p>
+<a class="indexterm" name="id376634"></a>
+<a class="indexterm" name="id376641"></a>
+<a class="indexterm" name="id376648"></a>
+Currently, the rights supported in Samba-3 are listed in <a class="link" href="rights.html#rp-privs" title="Table 15.1. Current Privilege Capabilities">&#8220;Current Privilege Capabilities&#8221;</a>.
+The remainder of this chapter explains how to manage and use these privileges on Samba servers.
+</p><a class="indexterm" name="id376664"></a><a class="indexterm" name="id376671"></a><a class="indexterm" name="id376678"></a><a class="indexterm" name="id376684"></a><a class="indexterm" name="id376691"></a><a class="indexterm" name="id376698"></a><div class="table"><a name="rp-privs"></a><p class="title"><b>Table 15.1. Current Privilege Capabilities</b></p><div class="table-contents"><table summary="Current Privilege Capabilities" border="1"><colgroup><col align="right"><col align="left"></colgroup><thead><tr><th align="left">Privilege</th><th align="left">Description</th></tr></thead><tbody><tr><td align="right"><p>SeMachineAccountPrivilege</p></td><td align="left"><p>Add machines to domain</p></td></tr><tr><td align="right"><p>SePrintOperatorPrivilege</p></td><td align="left"><p>Manage printers</p></td></tr><tr><td align="right"><p>SeAddUsersPrivilege</p></td><td align="left"><p>Add users and groups to the domain</p></td></tr><tr><td align="right"><p>SeRemoteShutdownPrivilege</p></td><td align="left"><p>Force shutdown from a remote system</p></td></tr><tr><td align="right"><p>SeDiskOperatorPrivilege</p></td><td align="left"><p>Manage disk share</p></td></tr><tr><td align="right"><p>SeTakeOwnershipPrivilege</p></td><td align="left"><p>Take ownership of files or other objects</p></td></tr></tbody></table></div></div><br class="table-break"><div class="sect2" title="Using the &#8220;net rpc rights&#8221; Utility"><div class="titlepage"><div><div><h3 class="title"><a name="id376833"></a>Using the <span class="quote">&#8220;<span class="quote">net rpc rights</span>&#8221;</span> Utility</h3></div></div></div><p>
+<a class="indexterm" name="id376844"></a>
+<a class="indexterm" name="id376851"></a>
+<a class="indexterm" name="id376858"></a>
+<a class="indexterm" name="id376865"></a>
+<a class="indexterm" name="id376871"></a>
+There are two primary means of managing the rights assigned to users and groups
+on a Samba server.  The <code class="literal">NT4 User Manager for Domains</code> may be
+used from any Windows NT4, 2000, or XP Professional domain member client to
+connect to a Samba domain controller and view/modify the rights assignments.
+This application, however, appears to have bugs when run on a client running
+Windows 2000 or later; therefore, Samba provides a command-line utility for
+performing the necessary administrative actions.
+</p><p>
+The <code class="literal">net rpc rights</code> utility in Samba 3.0.11 has three new subcommands:
+</p><div class="variablelist"><dl><dt><span class="term">list [name|accounts]</span></dt><dd><p>
+<a class="indexterm" name="id376909"></a>
+<a class="indexterm" name="id376920"></a>
+<a class="indexterm" name="id376927"></a>
+<a class="indexterm" name="id376934"></a>
+		When called with no arguments, <code class="literal">net rpc list</code>
+		simply lists the available rights on the server.  When passed
+		a specific user or group name, the tool lists the privileges
+		currently assigned to the specified account.  When invoked using
+		the special string <code class="constant">accounts</code>,
+		<code class="literal">net rpc rights list</code> returns a list of all
+		privileged accounts on the server and the assigned rights.
+		</p></dd><dt><span class="term">grant &lt;user&gt; &lt;right [right ...]&gt;</span></dt><dd><p>
+<a class="indexterm" name="id376968"></a>
+<a class="indexterm" name="id376975"></a>
+<a class="indexterm" name="id376982"></a>
+<a class="indexterm" name="id376989"></a>
+		When called with no arguments, this function is used to assign
+		a list of rights to a specified user or group.  For example,
+		to grant the members of the Domain Admins group on a Samba domain controller,
+		the capability to add client machines to the domain, one would run:
+</p><pre class="screen">
+<code class="prompt">root# </code> net -S server -U domadmin rpc rights grant \
+	 'DOMAIN\Domain Admins' SeMachineAccountPrivilege
+</pre><p>
+		The following syntax has the same result:
+<a class="indexterm" name="id377011"></a>
+</p><pre class="screen">
+<code class="prompt">root# </code> net rpc rights grant 'DOMAIN\Domain Admins' \
+     SeMachineAccountPrivilege -S server -U domadmin
+</pre><p>
+		More than one privilege can be assigned by specifying a
+		list of rights separated by spaces. The parameter 'Domain\Domain Admins'
+		must be quoted with single ticks or using double-quotes to prevent
+		the backslash and the space from being interpreted by the system shell.
+		</p></dd><dt><span class="term">revoke &lt;user&gt; &lt;right [right ...]&gt;</span></dt><dd><p>
+		This command is similar in format to <code class="literal">net rpc rights grant</code>.  Its
+		effect is to remove an assigned right (or list of rights) from a user or group.
+		</p></dd></dl></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+<a class="indexterm" name="id377060"></a>
+<a class="indexterm" name="id377067"></a>
+<a class="indexterm" name="id377074"></a>
+You must be connected as a member of the Domain Admins group to be able to grant or revoke privileges assigned
+to an account.  This capability is inherent to the Domain Admins group and is not configurable. There are no
+default rights and privileges, except the ability for a member of the Domain Admins group to assign them.
+This means that all administrative rights and privileges (other than the ability to assign them) must be 
+explicitly assigned, even for the Domain Admins group.
+</p></div><p>
+<a class="indexterm" name="id377088"></a>
+<a class="indexterm" name="id377095"></a>
+<a class="indexterm" name="id377102"></a>
+<a class="indexterm" name="id377108"></a>
+By default, no privileges are initially assigned to any account because certain actions will be performed as
+root once smbd determines that a user has the necessary rights.  For example, when joining a client to a
+Windows domain, <em class="parameter"><code>add machine script</code></em> must be executed with superuser rights in most 
+cases.  For this reason, you should be very careful about handing out privileges to accounts.
+</p><p>
+<a class="indexterm" name="id377126"></a>
+<a class="indexterm" name="id377133"></a>
+<a class="indexterm" name="id377140"></a>
+Access as the root user (UID=0) bypasses all privilege checks.
+</p></div><div class="sect2" title="Description of Privileges"><div class="titlepage"><div><div><h3 class="title"><a name="id377149"></a>Description of Privileges</h3></div></div></div><p>
+<a class="indexterm" name="id377157"></a>
+<a class="indexterm" name="id377164"></a>
+<a class="indexterm" name="id377171"></a>
+The privileges that have been implemented in Samba-3.0.11 are shown below.  It is possible, and likely, that
+additional privileges may be implemented in later releases of Samba. It is also likely that any privileges
+currently implemented but not used may be removed from future releases as a housekeeping matter, so it is
+important that the successful as well as unsuccessful use of these facilities should be reported on the Samba
+mailing lists.
+</p><div class="variablelist"><dl><dt><span class="term">SeAddUsersPrivilege</span></dt><dd><p>
+<a class="indexterm" name="id377192"></a>
+<a class="indexterm" name="id377199"></a>
+<a class="indexterm" name="id377206"></a>
+		This right determines whether or not smbd will allow the
+		user to create new user or group accounts via such tools
+		as <code class="literal">net rpc user add</code> or 
+		<code class="literal">NT4 User Manager for Domains.</code>
+		</p></dd><dt><span class="term">SeDiskOperatorPrivilege</span></dt><dd><p>
+<a class="indexterm" name="id377236"></a>
+<a class="indexterm" name="id377242"></a>
+<a class="indexterm" name="id377249"></a>
+		Accounts that possess this right will be able to execute
+		scripts defined by the <code class="literal">add/delete/change</code>
+		share command in <code class="filename">smb.conf</code> file as root.  Such users will
+		also be able to modify the ACL associated with file shares
+		on the Samba server.
+		</p></dd><dt><span class="term">SeMachineAccountPrivilege</span></dt><dd><p>
+<a class="indexterm" name="id377279"></a>
+<a class="indexterm" name="id377286"></a>
+<a class="indexterm" name="id377293"></a>
+		This right controls whether or not the user can join client
+		machines to a Samba-controlled domain.
+		</p></dd><dt><span class="term">SePrintOperatorPrivilege</span></dt><dd><p>
+<a class="indexterm" name="id377311"></a>
+<a class="indexterm" name="id377318"></a>
+<a class="indexterm" name="id377325"></a>
+<a class="indexterm" name="id377332"></a>
+<a class="indexterm" name="id377338"></a>
+		This privilege operates identically to the <a class="link" href="smb.conf.5.html#PRINTERADMIN" target="_top">printer admin</a>
+		option in the <code class="filename">smb.conf</code> file (see section 5 man page for <code class="filename">smb.conf</code>)
+		except that it is a global right (not on a per-printer basis). 
+		Eventually the smb.conf option will be deprecated and administrative
+		rights to printers will be controlled exclusively by this right and
+		the security descriptor associated with the printer object in the
+		<code class="filename">ntprinters.tdb</code> file.
+		</p></dd><dt><span class="term">SeRemoteShutdownPrivilege</span></dt><dd><p>
+<a class="indexterm" name="id377388"></a>
+<a class="indexterm" name="id377395"></a>
+<a class="indexterm" name="id377402"></a>
+		Samba provides two hooks for shutting down or rebooting
+		the server and for aborting a previously issued shutdown
+		command.  Since this is an operation normally limited by
+		the operating system to the root user, an account must possess this
+		right to be able to execute either of these hooks.
+		</p></dd><dt><span class="term">SeTakeOwnershipPrivilege</span></dt><dd><p>
+<a class="indexterm" name="id377421"></a>
+<a class="indexterm" name="id377428"></a>
+		This right permits users to take ownership of files and directories.
+		</p></dd></dl></div></div><div class="sect2" title="Privileges Supported by Windows 2000 Domain Controllers"><div class="titlepage"><div><div><h3 class="title"><a name="id377439"></a>Privileges Supported by Windows 2000 Domain Controllers</h3></div></div></div><p>
+    For reference purposes, a Windows NT4 Primary Domain Controller reports support for the following
+	privileges:
+<a class="indexterm" name="id377448"></a>
+<a class="indexterm" name="id377455"></a>
+<a class="indexterm" name="id377462"></a>
+<a class="indexterm" name="id377469"></a>
+<a class="indexterm" name="id377476"></a>
+<a class="indexterm" name="id377482"></a>
+<a class="indexterm" name="id377489"></a>
+<a class="indexterm" name="id377496"></a>
+<a class="indexterm" name="id377503"></a>
+<a class="indexterm" name="id377510"></a>
+<a class="indexterm" name="id377517"></a>
+<a class="indexterm" name="id377524"></a>
+<a class="indexterm" name="id377530"></a>
+<a class="indexterm" name="id377537"></a>
+<a class="indexterm" name="id377544"></a>
+<a class="indexterm" name="id377551"></a>
+<a class="indexterm" name="id377558"></a>
+<a class="indexterm" name="id377565"></a>
+<a class="indexterm" name="id377572"></a>
+<a class="indexterm" name="id377578"></a>
+<a class="indexterm" name="id377585"></a>
+<a class="indexterm" name="id377592"></a>
+<a class="indexterm" name="id377599"></a>
+</p><pre class="screen">
+         SeCreateTokenPrivilege  Create a token object
+  SeAssignPrimaryTokenPrivilege  Replace a process level token
+          SeLockMemoryPrivilege  Lock pages in memory
+       SeIncreaseQuotaPrivilege  Increase quotas
+      SeMachineAccountPrivilege  Add workstations to domain
+                 SeTcbPrivilege  Act as part of the operating system
+            SeSecurityPrivilege  Manage auditing and security log
+       SeTakeOwnershipPrivilege  Take ownership of files or other objects
+          SeLoadDriverPrivilege  Load and unload device drivers
+       SeSystemProfilePrivilege  Profile system performance
+          SeSystemtimePrivilege  Change the system time
+SeProfileSingleProcessPrivilege  Profile single process
+SeIncreaseBasePriorityPrivilege  Increase scheduling priority
+      SeCreatePagefilePrivilege  Create a pagefile
+     SeCreatePermanentPrivilege  Create permanent shared objects
+              SeBackupPrivilege  Back up files and directories
+             SeRestorePrivilege  Restore files and directories
+            SeShutdownPrivilege  Shut down the system
+               SeDebugPrivilege  Debug programs
+               SeAuditPrivilege  Generate security audits
+   SeSystemEnvironmentPrivilege  Modify firmware environment values
+        SeChangeNotifyPrivilege  Bypass traverse checking
+      SeRemoteShutdownPrivilege  Force shutdown from a remote system
+</pre><p>
+	And Windows 200x/XP Domain Controllers and workstations reports to support the following privileges:
+<a class="indexterm" name="id377636"></a>
+<a class="indexterm" name="id377642"></a>
+<a class="indexterm" name="id377649"></a>
+<a class="indexterm" name="id377656"></a>
+<a class="indexterm" name="id377663"></a>
+<a class="indexterm" name="id377670"></a>
+<a class="indexterm" name="id377677"></a>
+<a class="indexterm" name="id377684"></a>
+<a class="indexterm" name="id377690"></a>
+<a class="indexterm" name="id377697"></a>
+<a class="indexterm" name="id377704"></a>
+<a class="indexterm" name="id377711"></a>
+<a class="indexterm" name="id377718"></a>
+<a class="indexterm" name="id377725"></a>
+<a class="indexterm" name="id377732"></a>
+<a class="indexterm" name="id377739"></a>
+<a class="indexterm" name="id377746"></a>
+<a class="indexterm" name="id377752"></a>
+<a class="indexterm" name="id377759"></a>
+<a class="indexterm" name="id377766"></a>
+<a class="indexterm" name="id377773"></a>
+<a class="indexterm" name="id377780"></a>
+<a class="indexterm" name="id377786"></a>
+<a class="indexterm" name="id377793"></a>
+<a class="indexterm" name="id377800"></a>
+<a class="indexterm" name="id377807"></a>
+<a class="indexterm" name="id377814"></a>
+<a class="indexterm" name="id377821"></a>
+<a class="indexterm" name="id377828"></a>
+</p><pre class="screen">
+         SeCreateTokenPrivilege  Create a token object
+  SeAssignPrimaryTokenPrivilege  Replace a process level token
+          SeLockMemoryPrivilege  Lock pages in memory
+       SeIncreaseQuotaPrivilege  Increase quotas
+      SeMachineAccountPrivilege  Add workstations to domain
+                 SeTcbPrivilege  Act as part of the operating system
+            SeSecurityPrivilege  Manage auditing and security log
+       SeTakeOwnershipPrivilege  Take ownership of files or other objects
+          SeLoadDriverPrivilege  Load and unload device drivers
+       SeSystemProfilePrivilege  Profile system performance
+          SeSystemtimePrivilege  Change the system time
+SeProfileSingleProcessPrivilege  Profile single process
+SeIncreaseBasePriorityPrivilege  Increase scheduling priority
+      SeCreatePagefilePrivilege  Create a pagefile
+     SeCreatePermanentPrivilege  Create permanent shared objects
+              SeBackupPrivilege  Back up files and directories
+             SeRestorePrivilege  Restore files and directories
+            SeShutdownPrivilege  Shut down the system
+               SeDebugPrivilege  Debug programs
+               SeAuditPrivilege  Generate security audits
+   SeSystemEnvironmentPrivilege  Modify firmware environment values
+        SeChangeNotifyPrivilege  Bypass traverse checking
+      SeRemoteShutdownPrivilege  Force shutdown from a remote system
+              SeUndockPrivilege  Remove computer from docking station
+           SeSyncAgentPrivilege  Synchronize directory service data
+    SeEnableDelegationPrivilege  Enable computer and user accounts to
+                                 be trusted for delegation
+        SeManageVolumePrivilege  Perform volume maintenance tasks
+         SeImpersonatePrivilege  Impersonate a client after authentication
+        SeCreateGlobalPrivilege  Create global objects
+</pre><p>
+<a class="indexterm" name="id377871"></a>
+    The Samba Team is implementing only those privileges that are logical and useful in the UNIX/Linux
+    environment. Many of the Windows 200X/XP privileges have no direct equivalence in UNIX.
+    </p></div></div><div class="sect1" title="The Administrator Domain SID"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id377883"></a>The Administrator Domain SID</h2></div></div></div><p>
+<a class="indexterm" name="id377890"></a>
+<a class="indexterm" name="id377897"></a>
+<a class="indexterm" name="id377904"></a>
+<a class="indexterm" name="id377911"></a>
+<a class="indexterm" name="id377918"></a>
+Please note that every Windows NT4 and later server requires a domain Administrator account. Samba versions
+commencing with 3.0.11 permit Administrative duties to be performed via assigned rights and privileges
+(see <a class="link" href="rights.html" title="Chapter 15. User Rights and Privileges">User Rights and Privileges</a>).  An account in the server's passdb backend can
+be set to the well-known RID of the default administrator account.  To obtain the domain SID on a Samba domain
+controller, run the following command:
+</p><pre class="screen">
+<code class="prompt">root# </code> net getlocalsid
+SID for domain FOO is: S-1-5-21-4294955119-3368514841-2087710299
+</pre><p>
+<a class="indexterm" name="id377947"></a>
+You may assign the domain administrator RID to an account using the <code class="literal">pdbedit</code>
+command as shown here:
+<a class="indexterm" name="id377960"></a>
+</p><pre class="screen">
+<code class="prompt">root# </code> pdbedit -U S-1-5-21-4294955119-3368514841-2087710299-500 -u root -r
+</pre><p>
+</p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+<a class="indexterm" name="id377983"></a>
+<a class="indexterm" name="id377990"></a>
+<a class="indexterm" name="id377997"></a>
+<a class="indexterm" name="id378004"></a>
+The RID 500 is the well known standard value of the default Administrator account. It is the RID
+that confers the rights and privileges that the Administrator account has on a Windows machine
+or domain. Under UNIX/Linux the equivalent is UID=0 (the root account).
+</p></div><p>
+<a class="indexterm" name="id378016"></a>
+<a class="indexterm" name="id378023"></a>
+<a class="indexterm" name="id378030"></a>
+<a class="indexterm" name="id378037"></a>
+Releases of Samba version 3.0.11 and later make it possible to operate without an Administrator account
+provided equivalent rights and privileges have been established for a Windows user or a Windows
+group account. 
+</p></div><div class="sect1" title="Common Errors"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id378048"></a>Common Errors</h2></div></div></div><div class="sect2" title="What Rights and Privileges Will Permit Windows Client Administration?"><div class="titlepage"><div><div><h3 class="title"><a name="id378053"></a>What Rights and Privileges Will Permit Windows Client Administration?</h3></div></div></div><p>
+<a class="indexterm" name="id378061"></a>
+<a class="indexterm" name="id378068"></a>
+<a class="indexterm" name="id378075"></a>
+<a class="indexterm" name="id378082"></a>
+	When a Windows NT4 (or later) client joins a domain, the domain global <code class="literal">Domain Admins</code> group
+	is added to the membership of the local <code class="literal">Administrators</code> group on the client. Any user who is
+	a member of the domain global <code class="literal">Domain Admins</code> group will have administrative rights on the
+	Windows client.
+	</p><p>
+<a class="indexterm" name="id378112"></a>
+<a class="indexterm" name="id378118"></a>
+<a class="indexterm" name="id378125"></a>
+<a class="indexterm" name="id378132"></a>
+<a class="indexterm" name="id378139"></a>
+	This is often not the most desirable solution because it means that the user will have administrative
+	rights and privileges on domain servers also. The <code class="literal">Power Users</code> group on Windows client
+	workstations permits local administration of the workstation alone. Any domain global user or domain global
+	group can be added to the membership of the local workstation group <code class="literal">Power Users</code>.
+	</p><p>
+<a class="indexterm" name="id378164"></a>
+<a class="indexterm" name="id378171"></a>
+<a class="indexterm" name="id378178"></a>
+<a class="indexterm" name="id378184"></a>
+	See <a class="link" href="NetCommand.html#nestedgrpmgmgt" title="Nested Group Support">Nested Group Support</a> for an example of how to add domain users
+	and groups to a local group that is on a Windows workstation. The use of the <code class="literal">net</code>
+	command permits this to be done from the Samba server.
+	</p><p>
+<a class="indexterm" name="id378210"></a>
+<a class="indexterm" name="id378216"></a>
+<a class="indexterm" name="id378223"></a>
+	Another way this can be done is to log onto the Windows workstation as the user
+	<code class="literal">Administrator</code>, then open a <code class="literal">cmd</code> shell, then execute:
+</p><pre class="screen">
+<code class="prompt">C:\&gt; </code> net localgroup administrators /add <strong class="userinput"><code>domain_name\entity</code></strong>
+</pre><p>
+	where <code class="literal">entity</code> is either a domain user or a domain group account name.
+	</p></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="idmapper.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="optional.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="AccessControls.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 14. Identity Mapping (IDMAP) </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 16. File, Directory, and Share Access Controls</td></tr></table></div></body></html>

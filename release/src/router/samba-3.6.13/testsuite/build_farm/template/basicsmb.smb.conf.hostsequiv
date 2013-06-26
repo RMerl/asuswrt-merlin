@@ -1,0 +1,3 @@
+       hostname lookups = no 
+       hosts equiv=PREFIX/lib/hosts.equiv
+       auth methods = hostsequiv

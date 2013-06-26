@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="architecture">
+<chapterinfo>
+	<author>
+		<firstname>Dan</firstname><surname>Shearer</surname>
+	</author>
+	<pubdate> November 1997</pubdate>
+</chapterinfo>
+
+<title>Samba Architecture</title>
+
+<sect1>
+<title>Introduction</title>
+
+<para>
+This document gives a general overview of how Samba works
+internally. The Samba Team has tried to come up with a model which is
+the best possible compromise between elegance, portability, security
+and the constraints imposed by the very messy SMB and CIFS
+protocol. 
+</para>
+
+<para>
+It also tries to answer some of the frequently asked questions such as:
+</para>
+
+<orderedlist>
+<listitem><para>
+	Is Samba secure when running on Unix? The xyz platform?
+	What about the root priveliges issue?
+</para></listitem>
+
+<listitem><para>Pros and cons of multithreading in various parts of Samba</para></listitem>
+
+<listitem><para>Why not have a separate process for name resolution, WINS, and browsing?</para></listitem>
+
+</orderedlist>
+
+</sect1>
+
+<sect1>
+<title>Multithreading and Samba</title>
+
+<para>
+People sometimes tout threads as a uniformly good thing. They are very
+nice in their place but are quite inappropriate for smbd. nmbd is
+another matter, and multi-threading it would be very nice. 
+</para>
+
+<para>
+The short version is that smbd is not multithreaded, and alternative
+servers that take this approach under Unix (such as Syntax, at the
+time of writing) suffer tremendous performance penalties and are less
+robust. nmbd is not threaded either, but this is because it is not
+possible to do it while keeping code consistent and portable across 35
+or more platforms. (This drawback also applies to threading smbd.)
+</para>
+
+<para>
+The longer versions is that there are very good reasons for not making
+smbd multi-threaded.  Multi-threading would actually make Samba much
+slower, less scalable, less portable and much less robust. The fact
+that we use a separate process for each connection is one of Samba's
+biggest advantages.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Threading smbd</title>
+
+<para>
+A few problems that would arise from a threaded smbd are:
+</para>
+
+<orderedlist>
+<listitem><para>
+	It's not only to create threads instead of processes, but you
+	must care about all variables if they have to be thread specific
+	(currently they would be global).
+</para></listitem>
+
+<listitem><para>
+	if one thread dies (eg. a seg fault) then all threads die. We can
+	immediately throw robustness out the window.
+</para></listitem>
+
+<listitem><para>
+	many of the system calls we make are blocking. Non-blocking
+	equivalents of many calls are either not available or are awkward (and
+	slow) to use. So while we block in one thread all clients are
+	waiting. Imagine if one share is a slow NFS filesystem and the others 
+	are fast, we will end up slowing all clients to the speed of NFS.
+</para></listitem>
+
+<listitem><para>
+	you can't run as a different uid in different threads. This means
+	we would have to switch uid/gid on _every_ SMB packet. It would be
+	horrendously slow.
+</para></listitem>
+
+<listitem><para>
+	the per process file descriptor limit would mean that we could only
+	support a limited number of clients.
+</para></listitem>
+
+<listitem><para>
+	we couldn't use the system locking calls as the locking context of
+	fcntl() is a process, not a thread.
+</para></listitem>
+
+</orderedlist>
+
+</sect1>
+
+<sect1>
+<title>Threading nmbd</title>
+
+<para>
+This would be ideal, but gets sunk by portability requirements.
+</para>
+
+<para>
+Andrew tried to write a test threads library for nmbd that used only
+ansi-C constructs (using setjmp and longjmp). Unfortunately some OSes
+defeat this by restricting longjmp to calling addresses that are
+shallower than the current address on the stack (apparently AIX does
+this). This makes a truly portable threads library impossible. So to
+support all our current platforms we would have to code nmbd both with
+and without threads, and as the real aim of threads is to make the
+code clearer we would not have gained anything. (it is a myth that
+threads make things faster. threading is like recursion, it can make
+things clear but the same thing can always be done faster by some
+other method)
+</para>
+
+<para>
+Chris tried to spec out a general design that would abstract threading
+vs separate processes (vs other methods?) and make them accessible
+through some general API. This doesn't work because of the data
+sharing requirements of the protocol (packets in the future depending
+on packets now, etc.) At least, the code would work but would be very
+clumsy, and besides the fork() type model would never work on Unix. (Is there an OS that it would work on, for nmbd?)
+</para>
+
+<para>
+A fork() is cheap, but not nearly cheap enough to do on every UDP
+packet that arrives. Having a pool of processes is possible but is
+nasty to program cleanly due to the enormous amount of shared data (in
+complex structures) between the processes. We can't rely on each
+platform having a shared memory system.
+</para>
+
+</sect1>
+
+<sect1>
+<title>nbmd Design</title>
+
+<para>
+Originally Andrew used recursion to simulate a multi-threaded
+environment, which use the stack enormously and made for really
+confusing debugging sessions. Luke Leighton rewrote it to use a
+queuing system that keeps state information on each packet.  The
+first version used a single structure which was used by all the
+pending states.  As the initialisation of this structure was
+done by adding arguments, as the functionality developed, it got
+pretty messy.  So, it was replaced with a higher-order function
+and a pointer to a user-defined memory block.  This suddenly
+made things much simpler: large numbers of functions could be
+made static, and modularised.  This is the same principle as used
+in NT's kernel, and achieves the same effect as threads, but in
+a single process.
+</para>
+
+<para>
+Then Jeremy rewrote nmbd. The packet data in nmbd isn't what's on the
+wire. It's a nice format that is very amenable to processing but still
+keeps the idea of a distinct packet. See "struct packet_struct" in
+nameserv.h.  It has all the detail but none of the on-the-wire
+mess. This makes it ideal for using in disk or memory-based databases
+for browsing and WINS support. 
+</para>
+
+</sect1>
+</chapter>

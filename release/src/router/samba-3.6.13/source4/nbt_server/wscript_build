@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+
+bld.SAMBA_SUBSYSTEM('WINSDB',
+	source='wins/winsdb.c wins/wins_hook.c',
+	autoproto='wins/winsdb_proto.h',
+	public_deps='ldb ldbsamba'
+	)
+
+
+bld.SAMBA_MODULE('ldb_wins_ldb',
+	source='wins/wins_ldb.c',
+	subsystem='ldb',
+	init_function='ldb_wins_ldb_module_init',
+        module_init_name='ldb_init_module',
+	deps='ldb netif samba-hostconfig samba-util',
+	internal_module=False,
+	)
+
+
+bld.SAMBA_SUBSYSTEM('NBTD_WINS',
+	source='wins/winsserver.c wins/winsclient.c wins/winswack.c wins/wins_dns_proxy.c',
+	autoproto='wins/winsserver_proto.h',
+	deps='cli-nbt WINSDB'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('NBTD_DGRAM',
+	source='dgram/request.c dgram/netlogon.c dgram/browse.c',
+	autoproto='dgram/proto.h',
+	deps='LIBCLI_DGRAM CLDAPD'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('NBT_SERVER',
+	source='interfaces.c register.c query.c nodestatus.c defense.c packet.c irpc.c',
+	autoproto='nbt_server_proto.h',
+	deps='cli-nbt NBTD_WINS NBTD_DGRAM'
+	)
+
+
+bld.SAMBA_MODULE('service_nbtd',
+	source='nbt_server.c',
+	subsystem='service',
+	init_function='server_service_nbtd_init',
+	deps='NBT_SERVER process_model',
+	internal_module=False,
+	)
+

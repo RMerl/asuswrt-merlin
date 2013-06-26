@@ -1,0 +1,2 @@
+preexec close = yes
+preexec = PREFIX/lib/preexec_does_not_exist

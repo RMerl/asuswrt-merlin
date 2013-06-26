@@ -1,0 +1,14 @@
+<samba:parameter name="winbind max clients"
+                 context="G"
+				 type="integer"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter specifies the maximum number of clients
+	the <citerefentry><refentrytitle>winbindd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> daemon can connect with.
+	</para>
+</description>
+
+<value type="default">200</value>
+</samba:parameter>

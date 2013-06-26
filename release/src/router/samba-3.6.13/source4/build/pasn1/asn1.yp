@@ -1,0 +1,306 @@
+########################
+# ASN.1 Parse::Yapp parser
+# Copyright (C) Stefan (metze) Metzmacher <metze@samba.org>
+# released under the GNU GPL version 3 or later
+
+
+
+# the precedence actually doesn't matter at all for this grammer, but
+# by providing a precedence we reduce the number of conflicts
+# enormously
+%left   '-' '+' '&' '|' '*' '>' '.' '/' '(' ')' '[' ']' ':' ',' ';'
+
+
+################
+# grammer
+%%
+
+asn1: 
+	identifier asn1_definitions asn1_delimitter asn1_begin asn1_decls asn1_end
+		{{
+			"OBJECT"	=>	"ASN1_DEFINITION",
+			"IDENTIFIER"	=>	$_[1],
+			"DATA"		=>	$_[5]
+		}}
+;
+
+asn1_delimitter: 
+	delimitter
+;
+
+asn1_definitions:
+	'DEFINITIONS'
+;
+
+asn1_begin:
+	'BEGIN'
+;
+
+asn1_end:
+	'END'
+;
+
+asn1_decls:
+	asn1_def
+		{ [ $_[1] ] }
+	| asn1_decls asn1_def 
+		{ push(@{$_[1]}, $_[2]); $_[1] }
+;
+
+
+
+asn1_def: 
+	asn1_target asn1_delimitter asn1_application asn1_type
+		{{ 
+		    "OBJECT"		=> "ASN1_DEF",
+		    "IDENTIFIER"	=> $_[1],
+		    "APPLICATION"	=> $_[3],
+		    "STRUCTURE"		=> $_[4]
+		}}
+;
+
+asn1_target:
+	identifier
+;
+
+asn1_application:
+	#empty
+	| '[' 'APPLICATION' constant ']'
+		{ $_[3] }
+;
+
+asn1_type: 
+	asn1_boolean
+	| asn1_integer
+	| asn1_bit_string
+	| asn1_octet_string
+	| asn1_null
+	| asn1_object_identifier
+	| asn1_real
+	| asn1_enumerated
+	| asn1_sequence
+	| identifier
+;
+
+asn1_boolean:
+	'BOOLEAN'
+		{{
+			"TYPE"		=> "BOOLEAN",
+			"TAG"		=> 1
+		}}
+;
+
+asn1_integer:
+	'INTEGER'
+		{{
+			"TYPE"		=> "INTEGER",
+			"TAG"		=> 2
+		}}
+	| 'INTEGER' '(' constant '.' '.' constant ')'
+		{{
+			"TYPE"		=> "INTEGER",
+			"TAG"		=> 2,
+			"RANGE_LOW"	=> $_[3],
+			"RENAGE_HIGH"	=> $_[6]
+		}}
+;
+
+asn1_bit_string:
+	'BIT' 'STRING'
+		{{
+			"TYPE"		=> "BIT STRING",
+			"TAG"		=> 3
+		}}
+;
+
+asn1_octet_string:
+	'OCTET' 'STRING'
+		{{
+			"TYPE"		=> "OCTET STRING",
+			"TAG"		=> 4
+		}}
+;
+
+asn1_null:
+	'NULL'
+		{{
+			"TYPE"		=> "NULL",
+			"TAG"		=> 5
+		}}
+;
+
+asn1_object_identifier:
+	'OBJECT' 'IDENTIFIER'
+		{{
+			"TYPE"		=> "OBJECT IDENTIFIER",
+			"TAG"		=> 6
+		}}
+;
+
+asn1_real:
+	'REAL'
+		{{
+			"TYPE"		=> "REAL",
+			"TAG"		=> 9
+		}}
+;
+
+asn1_enumerated:
+	'ENUMERATED'
+		{{
+			"TYPE"		=> "ENUMERATED",
+			"TAG"		=> 10
+		}}
+;
+
+asn1_sequence:
+	'SEQUENCE' '{' asn1_var_dec_list '}'
+		{{
+			"TYPE"		=> "SEQUENCE",
+			"TAG"		=> 16,
+			"STRUCTURE"	=> $_[3]
+		}}
+;
+
+asn1_var_dec_list:
+	asn1_var_dec
+		{ [ $_[1] ] }
+	| asn1_var_dec_list ',' asn1_var_dec 
+		{ push(@{$_[1]}, $_[3]); $_[1]  }
+;
+
+asn1_var_dec: 
+	identifier asn1_type
+	{{
+		"NAME" => $_[1],
+		"TYPE" => $_[2]
+	}}
+;
+
+anytext:  #empty { "" }
+    | identifier | constant | text
+    | anytext '-' anytext  { "$_[1]$_[2]$_[3]" }
+    | anytext '.' anytext  { "$_[1]$_[2]$_[3]" }
+    | anytext '*' anytext  { "$_[1]$_[2]$_[3]" }
+    | anytext '>' anytext  { "$_[1]$_[2]$_[3]" }
+    | anytext '|' anytext  { "$_[1]$_[2]$_[3]" }
+    | anytext '&' anytext  { "$_[1]$_[2]$_[3]" }
+    | anytext '/' anytext  { "$_[1]$_[2]$_[3]" }
+    | anytext '+' anytext  { "$_[1]$_[2]$_[3]" }
+    | anytext '(' anytext ')' anytext  { "$_[1]$_[2]$_[3]$_[4]$_[5]" }
+;
+
+delimitter: DELIMITTER
+;
+
+identifier: IDENTIFIER
+;
+
+constant: CONSTANT
+;
+
+text: TEXT { "\"$_[1]\"" }
+;
+
+#####################################
+# start code
+%%
+
+use util;
+
+sub _ASN1_Error {
+        if (exists $_[0]->YYData->{ERRMSG}) {
+		print $_[0]->YYData->{ERRMSG};
+		delete $_[0]->YYData->{ERRMSG};
+		return;
+	};
+	my $line = $_[0]->YYData->{LINE};
+	my $last_token = $_[0]->YYData->{LAST_TOKEN};
+	my $file = $_[0]->YYData->{INPUT_FILENAME};
+	
+	print "$file:$line: Syntax error near '$last_token'\n";
+}
+
+sub _ASN1_Lexer($)
+{
+	my($parser)=shift;
+
+        $parser->YYData->{INPUT}
+        or  return('',undef);
+
+again:
+	$parser->YYData->{INPUT} =~ s/^[ \t]*//;
+
+	for ($parser->YYData->{INPUT}) {
+		if (/^\#/) {
+			if (s/^\# (\d+) \"(.*?)\"( \d+|)//) {
+				$parser->YYData->{LINE} = $1-1;
+				$parser->YYData->{INPUT_FILENAME} = $2;
+				goto again;
+			}
+			if (s/^\#line (\d+) \"(.*?)\"( \d+|)//) {
+				$parser->YYData->{LINE} = $1-1;
+				$parser->YYData->{INPUT_FILENAME} = $2;
+				goto again;
+			}
+			if (s/^(\#.*)$//m) {
+				goto again;
+			}
+		}
+		if (s/^(\n)//) {
+			$parser->YYData->{LINE}++;
+			goto again;
+		}
+		if (s/^(--.*\n)//) {
+			$parser->YYData->{LINE}++;
+			goto again;
+		}
+		if (s/^(::=)//) {
+			$parser->YYData->{LAST_TOKEN} = $1;
+			return('DELIMITTER',$1); 
+		}
+		if (s/^\"(.*?)\"//) {
+			$parser->YYData->{LAST_TOKEN} = $1;
+			return('TEXT',$1); 
+		}
+		if (s/^(\d+)(\W|$)/$2/) {
+			$parser->YYData->{LAST_TOKEN} = $1;
+			return('CONSTANT',$1); 
+		}
+		if (s/^([\w_-]+)//) {
+			$parser->YYData->{LAST_TOKEN} = $1;
+			if ($1 =~ 
+			    /^(SEQUENCE|INTEGER|OCTET|STRING|
+			       APPLICATION|OPTIONAL|NULL|COMPONENTS|OF|
+			       BOOLEAN|ENUMERATED|CHOISE|REAL|BIT|OBJECT|IDENTIFIER|
+			       DEFAULT|FALSE|TRUE|SET|DEFINITIONS|BEGIN|END)$/x) {
+				return $1;
+			}
+			return('IDENTIFIER',$1);
+		}
+		if (s/^(.)//s) {
+			$parser->YYData->{LAST_TOKEN} = $1;
+			return($1,$1);
+		}
+	}
+}
+
+sub parse_asn1($$)
+{
+	my $self = shift;
+	my $filename = shift;
+
+	my $saved_delim = $/;
+	undef $/;
+	my $cpp = $ENV{CPP};
+	if (! defined $cpp) {
+		$cpp = "cpp"
+	}
+	my $data = `$cpp -xc $filename`;
+	$/ = $saved_delim;
+
+        $self->YYData->{INPUT} = $data;
+        $self->YYData->{LINE} = 0;
+        $self->YYData->{LAST_TOKEN} = "NONE";
+	return $self->YYParse( yylex => \&_ASN1_Lexer, yyerror => \&_ASN1_Error );
+}

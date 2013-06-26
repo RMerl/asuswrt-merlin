@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="eventlogadm.8">
+
+<refmeta>
+	<refentrytitle>eventlogadm</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>eventlogadm</refname>
+	<refpurpose>push records into the Samba event log store</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+
+		<command>eventlogadm</command>
+		<arg><option>-s</option></arg>
+		<arg><option>-d</option></arg>
+		<arg><option>-h</option></arg>
+		<arg choice="plain"><option>-o</option>
+		<literal>addsource</literal>
+		<replaceable>EVENTLOG</replaceable>
+		<replaceable>SOURCENAME</replaceable>
+		<replaceable>MSGFILE</replaceable>
+		</arg>
+
+	</cmdsynopsis>
+	<cmdsynopsis>
+		<command>eventlogadm</command>
+		<arg><option>-s</option></arg>
+		<arg><option>-d</option></arg>
+		<arg><option>-h</option></arg>
+		<arg choice="plain"><option>-o</option>
+		<literal>write</literal>
+		<replaceable>EVENTLOG</replaceable>
+		</arg>
+
+	</cmdsynopsis>
+	<cmdsynopsis>
+		<command>eventlogadm</command>
+		<arg><option>-s</option></arg>
+		<arg><option>-d</option></arg>
+		<arg><option>-h</option></arg>
+		<arg choice="plain"><option>-o</option>
+		<literal>dump</literal>
+		<replaceable>EVENTLOG</replaceable>
+		<replaceable>RECORD_NUMBER</replaceable>
+		</arg>
+
+	</cmdsynopsis>
+
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry> suite.</para>
+
+	<para><command>eventlogadm</command> is a filter that accepts
+	formatted event log records on standard input and writes them
+	to the Samba event log store. Windows client can then manipulate
+	these record using the usual administration tools.</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>
+		<option>-s</option>
+		<replaceable>FILENAME</replaceable>
+		</term>
+		<listitem><para>
+		The <command>-s</command> option causes <command>eventlogadm</command> to load the
+		configuration file given as FILENAME instead of the default one used by Samba.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>-d</option></term>
+		<listitem><para>
+		The <command>-d</command> option causes <command>eventlogadm</command> to emit debugging
+		information.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>
+		<option>-o</option>
+		<literal>addsource</literal>
+		<replaceable>EVENTLOG</replaceable>
+		<replaceable>SOURCENAME</replaceable>
+		<replaceable>MSGFILE</replaceable>
+		</term>
+		<listitem><para>
+		The <command>-o addsource</command> option creates a
+		new event log source.
+		</para> </listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>
+		<option>-o</option>
+		<literal>write</literal>
+		<replaceable>EVENTLOG</replaceable>
+		</term>
+		<listitem><para>
+		The <command>-o write</command> reads event log
+		records from standard input and writes them to the Samba
+		event log store named by EVENTLOG.
+		</para> </listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>
+		<option>-o</option>
+		<literal>dump</literal>
+		<replaceable>EVENTLOG</replaceable>
+		<replaceable>RECORD_NUMBER</replaceable>
+		</term>
+		<listitem><para>
+		The <command>-o dump</command> reads event log
+		records from a EVENTLOG tdb and dumps them to standard
+		output on screen.
+		</para> </listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>-h</option></term>
+		<listitem><para>
+		Print usage information.
+		</para></listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+
+<refsect1>
+	<title>EVENTLOG RECORD FORMAT</title>
+
+	<para>For the write operation, <command>eventlogadm</command>
+	expects to be able to read structured records from standard
+	input. These records are a sequence of lines, with the record key
+	and data separated by a colon character. Records are separated
+	by at least one or more blank line.</para>
+
+	<para>The event log record field are:</para>
+	<itemizedlist>
+
+		<listitem><para>
+		<command>LEN</command> - This field should be 0, since <command>eventlogadm</command> will calculate this value.
+		</para></listitem>
+
+		<listitem><para>
+		<command>RS1</command> - This must be the value 1699505740.
+		</para></listitem>
+
+		<listitem><para>
+		<command>RCN</command> -  This field should be 0.
+		</para></listitem>
+
+		<listitem><para>
+		<command>TMG</command> - The time the eventlog record
+		was generated; format is the number of seconds since
+		00:00:00 January 1, 1970, UTC.
+		</para></listitem>
+
+		<listitem><para>
+		<command>TMW</command> - The time the eventlog record was
+		written; format is the number of seconds since 00:00:00
+		January 1, 1970, UTC.
+		</para></listitem>
+
+		<listitem><para>
+		<command>EID</command> - The eventlog ID.
+		</para></listitem>
+
+		<listitem><para>
+		<command>ETP</command> - The event type -- one of
+		&quot;INFO&quot;,
+		&quot;ERROR&quot;, &quot;WARNING&quot;, &quot;AUDIT
+		SUCCESS&quot; or &quot;AUDIT FAILURE&quot;.
+		</para></listitem>
+
+		<listitem><para>
+		<command>ECT</command> - The event category; this depends
+		on the message file. It is primarily used as a means of
+		filtering in the eventlog viewer.
+		</para></listitem>
+
+		<listitem><para>
+		<command>RS2</command> - This field should be 0.
+		</para></listitem>
+
+		<listitem><para>
+		<command>CRN</command> - This field should be 0.
+		</para></listitem>
+
+		<listitem><para>
+		<command>USL</command> - This field should be 0.
+		</para></listitem>
+
+		<listitem><para>
+		<command>SRC</command> - This field contains the source
+		name associated with the event log. If a message file is
+		used with an event log, there will be a registry entry
+		for associating this source name with a message file DLL.
+		</para></listitem>
+
+		<listitem><para>
+		<command>SRN</command> - The name of the machine on
+		which the eventlog was generated. This is typically the
+		host name.
+		</para></listitem>
+
+		<listitem><para>
+		<command>STR</command> - The text associated with the
+		eventlog. There may be more than one string in a record.
+		</para></listitem>
+
+		<listitem><para>
+		<command>DAT</command> - This field should be left unset.
+		</para></listitem>
+
+	</itemizedlist>
+
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+	<para>An example of the record format accepted by <command>eventlogadm</command>:</para>
+
+	<programlisting>
+	LEN: 0
+	RS1: 1699505740
+	RCN: 0
+	TMG: 1128631322
+	TMW: 1128631322
+	EID: 1000
+	ETP: INFO
+	ECT: 0
+	RS2: 0
+	CRN: 0
+	USL: 0
+	SRC: cron
+	SRN: dmlinux
+	STR: (root) CMD ( rm -f /var/spool/cron/lastrun/cron.hourly)
+	DAT:
+	</programlisting>
+
+	<para>Set up an eventlog source, specifying a message file DLL:</para>
+	<programlisting>
+	eventlogadm -o addsource Application MyApplication | \\
+	    	%SystemRoot%/system32/MyApplication.dll
+	</programlisting>
+
+	<para>Filter messages from the system log into an event log:</para>
+	<programlisting>
+	tail -f /var/log/messages | \\
+		my_program_to_parse_into_eventlog_records | \\
+	      	eventlogadm SystemLogEvents
+	</programlisting>
+
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+	<para>This man page is correct for version 3.0.25 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para> The original Samba software and related utilities were
+	created by Andrew Tridgell.  Samba is now developed by the
+	Samba Team as an Open Source project similar to the way the
+	Linux kernel is developed.</para>
+</refsect1>
+
+</refentry>

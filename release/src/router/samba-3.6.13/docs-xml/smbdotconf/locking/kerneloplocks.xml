@@ -1,0 +1,25 @@
+<samba:parameter name="kernel oplocks"
+				 type="boolean"
+                 context="G"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>For UNIXes that support kernel based <smbconfoption name="oplocks"/>
+	(currently only IRIX and the Linux 2.4 kernel), this parameter 
+	allows the use of them to be turned on or off.</para>
+
+	<para>Kernel oplocks support allows Samba <parameter moreinfo="none">oplocks
+	</parameter> to be broken whenever a local UNIX process or NFS operation 
+	accesses a file that <citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> has oplocked. This allows complete 
+	data consistency between SMB/CIFS, NFS and local file access (and is 
+	a <emphasis>very</emphasis> cool feature :-).</para>
+
+	<para>This parameter defaults to <constant>on</constant>, but is translated
+	to a no-op on systems that no not have the necessary kernel support.
+	You should never need to touch this parameter.</para>
+</description>
+
+<related>oplocks</related>
+<related>level2 oplocks</related>
+<value type="default">yes</value>
+</samba:parameter>

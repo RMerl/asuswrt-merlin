@@ -1,0 +1,465 @@
+#!/usr/bin/env python
+
+APPNAME = 'libreplace'
+VERSION = '1.2.1'
+
+blddir = 'bin'
+
+import sys, os, Utils
+
+# find the buildtools directory
+srcdir = '.'
+while not os.path.exists(srcdir+'/buildtools') and len(srcdir.split('/')) < 5:
+    srcdir = '../' + srcdir
+sys.path.insert(0, srcdir + '/buildtools/wafsamba')
+
+import wafsamba, samba_dist
+import Options, os, preproc
+
+samba_dist.DIST_DIRS('lib/replace buildtools:buildtools')
+
+def set_options(opt):
+    opt.BUILTIN_DEFAULT('NONE')
+    opt.PRIVATE_EXTENSION_DEFAULT('')
+    opt.RECURSE('buildtools/wafsamba')
+
+@wafsamba.runonce
+def configure(conf):
+    conf.RECURSE('buildtools/wafsamba')
+
+    conf.env.standalone_replace = conf.IN_LAUNCH_DIR()
+
+    conf.DEFINE('LIBREPLACE_NETWORK_CHECKS', 1)
+
+    # on Tru64 certain features are only available with _OSF_SOURCE set to 1
+    # and _XOPEN_SOURCE set to 600
+    if conf.env['SYSTEM_UNAME_SYSNAME'] == 'OSF1':
+        conf.DEFINE('_OSF_SOURCE', 1, add_to_cflags=True)
+        conf.DEFINE('_XOPEN_SOURCE', 600, add_to_cflags=True)
+
+    conf.CHECK_HEADERS('linux/types.h crypt.h locale.h acl/libacl.h compat.h')
+    conf.CHECK_HEADERS('acl/libacl.h attr/xattr.h compat.h ctype.h dustat.h')
+    conf.CHECK_HEADERS('fcntl.h fnmatch.h glob.h history.h krb5.h langinfo.h')
+    conf.CHECK_HEADERS('libaio.h locale.h ndir.h pwd.h')
+    conf.CHECK_HEADERS('shadow.h sys/acl.h')
+    conf.CHECK_HEADERS('sys/attributes.h sys/capability.h sys/dir.h sys/epoll.h')
+    conf.CHECK_HEADERS('sys/fcntl.h sys/filio.h sys/filsys.h sys/fs/s5param.h sys/fs/vx/quota.h')
+    conf.CHECK_HEADERS('sys/id.h sys/ioctl.h sys/ipc.h sys/mman.h sys/mode.h sys/ndir.h sys/priv.h')
+    conf.CHECK_HEADERS('sys/resource.h sys/security.h sys/shm.h sys/statfs.h sys/statvfs.h sys/termio.h')
+    conf.CHECK_HEADERS('sys/vfs.h sys/xattr.h termio.h termios.h sys/file.h')
+    conf.CHECK_HEADERS('sys/wait.h sys/stat.h malloc.h grp.h')
+    conf.CHECK_HEADERS('sys/select.h setjmp.h utime.h sys/syslog.h syslog.h')
+    conf.CHECK_HEADERS('stdarg.h vararg.h sys/mount.h mntent.h')
+    conf.CHECK_HEADERS('stropts.h unix.h string.h strings.h sys/param.h limits.h')
+    conf.CHECK_HEADERS('''sys/socket.h netinet/in.h netdb.h arpa/inet.h netinet/in_systm.h
+                          netinet/ip.h netinet/tcp.h netinet/in_ip.h
+                          sys/sockio.h sys/un.h''', together=True)
+    conf.CHECK_HEADERS('sys/uio.h ifaddrs.h direct.h dirent.h')
+    conf.CHECK_HEADERS('windows.h winsock2.h ws2tcpip.h')
+    conf.CHECK_HEADERS('libintl.h errno.h')
+    conf.CHECK_HEADERS('gcrypt.h getopt.h iconv.h')
+    conf.CHECK_HEADERS('sys/inotify.h memory.h nss.h sasl/sasl.h')
+    conf.CHECK_HEADERS('security/pam_appl.h sys/inotify.h zlib.h asm/unistd.h')
+    conf.CHECK_HEADERS('aio.h sys/unistd.h rpc/rpc.h rpc/nettype.h alloca.h float.h')
+
+    conf.CHECK_HEADERS('rpcsvc/nis.h rpcsvc/ypclnt.h sys/prctl.h sys/sysctl.h')
+    conf.CHECK_HEADERS('sys/fileio.h sys/filesys.h sys/dustat.h sys/sysmacros.h')
+    conf.CHECK_HEADERS('xfs/libxfs.h netgroup.h rpcsvc/yp_prot.h')
+    conf.CHECK_HEADERS('valgrind.h valgrind/valgrind.h valgrind/memcheck.h')
+    conf.CHECK_HEADERS('nss_common.h nsswitch.h ns_api.h')
+    conf.CHECK_HEADERS('sys/extattr.h sys/ea.h sys/proplist.h sys/cdefs.h')
+    conf.CHECK_HEADERS('utmp.h utmpx.h lastlog.h')
+    conf.CHECK_HEADERS('syscall.h sys/syscall.h inttypes.h')
+
+    conf.CHECK_TYPES('"long long" intptr_t uintptr_t ptrdiff_t comparison_fn_t')
+    conf.CHECK_TYPE('_Bool', define='HAVE__Bool')
+    conf.CHECK_TYPE('bool', define='HAVE_BOOL')
+
+    conf.CHECK_TYPE('int8_t', 'char')
+    conf.CHECK_TYPE('uint8_t', 'unsigned char')
+    conf.CHECK_TYPE('int16_t', 'short')
+    conf.CHECK_TYPE('uint16_t', 'unsigned short')
+    conf.CHECK_TYPE('int32_t', 'int')
+    conf.CHECK_TYPE('uint32_t', 'unsigned')
+    conf.CHECK_TYPE('int64_t', 'long long')
+    conf.CHECK_TYPE('uint64_t', 'unsigned long long')
+    conf.CHECK_TYPE('size_t', 'unsigned int')
+    conf.CHECK_TYPE('ssize_t', 'int')
+    conf.CHECK_TYPE('ino_t', 'unsigned')
+    conf.CHECK_TYPE('loff_t', 'off_t')
+    conf.CHECK_TYPE('offset_t', 'loff_t')
+    conf.CHECK_TYPE('volatile int', define='HAVE_VOLATILE')
+    conf.CHECK_TYPE('uint_t', 'unsigned int')
+
+    conf.CHECK_SIZEOF('bool char int "long long" long short size_t ssize_t')
+    conf.CHECK_SIZEOF('int8_t uint8_t int16_t uint16_t int32_t uint32_t int64_t uint64_t')
+    conf.CHECK_SIZEOF('void*', define='SIZEOF_VOID_P')
+    conf.CHECK_SIZEOF('off_t dev_t ino_t time_t')
+
+    conf.CHECK_TYPES('socklen_t', headers='sys/socket.h')
+    conf.CHECK_TYPE_IN('struct ifaddrs', 'ifaddrs.h')
+    conf.CHECK_TYPE_IN('struct addrinfo', 'netdb.h')
+    conf.CHECK_TYPE_IN('struct sockaddr', 'sys/socket.h')
+    conf.CHECK_CODE('struct sockaddr_in6 x', define='HAVE_STRUCT_SOCKADDR_IN6',
+                    headers='sys/socket.h netdb.h netinet/in.h')
+    conf.CHECK_TYPE_IN('struct sockaddr_storage', 'sys/socket.h')
+    conf.CHECK_TYPE_IN('sa_family_t', 'sys/socket.h')
+
+    conf.CHECK_TYPE_IN('sig_atomic_t', 'signal.h', define='HAVE_SIG_ATOMIC_T_TYPE')
+
+    conf.CHECK_FUNCS_IN('''inet_ntoa inet_aton inet_ntop inet_pton connect gethostbyname
+                           getaddrinfo getnameinfo freeaddrinfo gai_strerror socketpair''',
+                        'socket nsl', checklibc=True,
+                        headers='sys/socket.h netinet/in.h arpa/inet.h netdb.h')
+
+    # Some old Linux systems have broken header files and
+    # miss the IPV6_V6ONLY define in netinet/in.h,
+    # but have it in linux/in6.h.
+    # We can't include both files so we just check if the value
+    # if defined and do the replacement in system/network.h
+    if not conf.CHECK_VARIABLE('IPV6_V6ONLY',
+                               headers='sys/socket.h netdb.h netinet/in.h'):
+        conf.CHECK_CODE('''
+                        #include <linux/in6.h>
+                        #if (IPV6_V6ONLY != 26)
+                        #error no IPV6_V6ONLY support on linux
+                        #endif
+                        int main(void) { return IPV6_V6ONLY; }
+                        ''',
+                        define='HAVE_LINUX_IPV6_V6ONLY_26',
+                        addmain=False,
+                        msg='Checking for IPV6_V6ONLY in linux/in6.h',
+                        local_include=False)
+
+    conf.CHECK_CODE('''
+                       struct sockaddr_storage sa_store;
+                       struct addrinfo *ai = NULL;
+                       struct in6_addr in6addr;
+                       int idx = if_nametoindex("iface1");
+                       int s = socket(AF_INET6, SOCK_STREAM, 0);
+                       int ret = getaddrinfo(NULL, NULL, NULL, &ai);
+                       if (ret != 0) {
+                           const char *es = gai_strerror(ret);
+                       }
+                       freeaddrinfo(ai);
+                       {
+                          int val = 1;
+                          #ifdef HAVE_LINUX_IPV6_V6ONLY_26
+                          #define IPV6_V6ONLY 26
+                          #endif
+                          ret = setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY,
+                                           (const void *)&val, sizeof(val));
+                       }
+                       ''',
+                    define='HAVE_IPV6',
+                    lib='nsl socket',
+                    headers='sys/socket.h netdb.h netinet/in.h')
+
+    # these may be builtins, so we need the link=False strategy
+    conf.CHECK_FUNCS('strdup memmem printf memset memcpy memmove strcpy strncpy bzero', link=False)
+
+    conf.CHECK_FUNCS('shl_load shl_unload shl_findsym')
+    conf.CHECK_FUNCS('pipe strftime srandom random srand rand usleep setbuffer')
+    conf.CHECK_FUNCS('lstat getpgrp utime utimes seteuid setresuid setegid')
+    conf.CHECK_FUNCS('setresgid chroot strerror vsyslog setlinebuf mktime')
+    conf.CHECK_FUNCS('ftruncate chsize rename waitpid wait4 strlcpy strlcat')
+    conf.CHECK_FUNCS('initgroups pread pwrite strndup strcasestr')
+    conf.CHECK_FUNCS('strtok_r mkdtemp dup2 dprintf vdprintf isatty chown lchown')
+    conf.CHECK_FUNCS('link readlink symlink realpath snprintf vsnprintf')
+    conf.CHECK_FUNCS('asprintf vasprintf setenv unsetenv strnlen strtoull __strtoull')
+    conf.CHECK_FUNCS('strtouq strtoll __strtoll strtoq')
+    #Some OS (ie. freebsd) return EINVAL if the convertion could not be done, it's not what we expect
+    #Let's detect those cases
+    if conf.CONFIG_SET('HAVE_STRTOLL'):
+        conf.CHECK_CODE('''
+                        long long nb = strtoll("Text", NULL, 0);
+                        if (errno == EINVAL) {
+                            return 0;
+                        } else {
+                            return 1;
+                        }
+                        ''',
+                        msg="Checking correct behavior of strtoll",
+                        headers = 'errno.h',
+                        execute = True,
+                        define_ret = True,
+                        define = 'HAVE_BSD_STRTOLL',
+                        )
+    conf.CHECK_FUNCS('if_nametoindex strerror_r')
+    conf.CHECK_FUNCS('getdirentries getdents syslog')
+    conf.CHECK_FUNCS('gai_strerror get_current_dir_name')
+    conf.CHECK_FUNCS('timegm getifaddrs freeifaddrs mmap setgroups setsid')
+    conf.CHECK_FUNCS('getgrent_r getgrgid_r getgrnam_r getgrouplist getpagesize')
+    conf.CHECK_FUNCS('getpwent_r getpwnam_r getpwuid_r epoll_create')
+
+    conf.CHECK_FUNCS_IN('dlopen dlsym dlerror dlclose', 'dl',
+                        checklibc=True, headers='dlfcn.h dl.h')
+
+    conf.CHECK_C_PROTOTYPE('dlopen', 'void *dlopen(const char* filename, unsigned int flags)',
+                           define='DLOPEN_TAKES_UNSIGNED_FLAGS', headers='dlfcn.h dl.h')
+
+    if conf.CHECK_FUNCS_IN('fdatasync', 'rt', checklibc=True):
+        # some systems are missing the declaration
+        conf.CHECK_DECLS('fdatasync')
+
+    if conf.CHECK_FUNCS_IN('clock_gettime', 'rt', checklibc=True):
+        for c in ['CLOCK_MONOTONIC', 'CLOCK_PROCESS_CPUTIME_ID', 'CLOCK_REALTIME']:
+            conf.CHECK_CODE('''
+			    #if TIME_WITH_SYS_TIME
+			    # include <sys/time.h>
+			    # include <time.h>
+			    #else
+			    # if HAVE_SYS_TIME_H
+			    #  include <sys/time.h>
+			    # else
+			    #  include <time.h>
+			    # endif
+			    #endif
+			    clockid_t clk = %s''' % c,
+			    'HAVE_%s' % c,
+			    msg='Checking whether the clock_gettime clock ID %s is available' % c)
+
+    conf.CHECK_TYPE('struct timespec', headers='sys/time.h time.h')
+
+    # these headers need to be tested as a group on freebsd
+    conf.CHECK_HEADERS(headers='sys/socket.h net/if.h', together=True)
+    conf.CHECK_HEADERS(headers='netinet/in.h arpa/nameser.h resolv.h', together=True)
+    conf.CHECK_FUNCS_IN('res_search', 'resolv', checklibc=True,
+                        headers='netinet/in.h arpa/nameser.h resolv.h')
+
+
+    if not conf.CHECK_FUNCS_IN('gettext', 'intl', checklibc=True, headers='libintl.h'):
+    # Some hosts need lib iconv for linking with lib intl
+    # So we try with flags just in case it helps.
+        oldflags = conf.env['LDFLAGS_INTL']
+        conf.env['LDFLAGS_INTL'] = "-liconv"
+        if not conf.CHECK_LIB('intl'):
+            conf.env['LDFLAGS_INTL'] = oldflags
+        else:
+            conf.CHECK_FUNCS_IN('gettext', 'intl', checklibc=True, headers='libintl.h')
+
+    conf.CHECK_FUNCS_IN('dgettext gettext', 'intl', headers='libintl.h')
+    conf.CHECK_FUNCS_IN('pthread_create', 'pthread', checklibc=True, headers='pthread.h')
+
+    conf.CHECK_FUNCS_IN('crypt', 'crypt', checklibc=True)
+
+    conf.CHECK_VARIABLE('rl_event_hook', define='HAVE_DECL_RL_EVENT_HOOK', always=True,
+                        headers='readline.h readline/readline.h readline/history.h')
+
+    conf.CHECK_DECLS('snprintf vsnprintf asprintf vasprintf')
+
+    conf.CHECK_DECLS('errno', headers='errno.h', reverse=True)
+    conf.CHECK_DECLS('environ getgrent_r getpwent_r', reverse=True, headers='pwd.h grp.h')
+    conf.CHECK_DECLS('pread pwrite setenv setresgid setresuid', reverse=True)
+
+    if conf.CONFIG_SET('HAVE_EPOLL_CREATE') and conf.CONFIG_SET('HAVE_SYS_EPOLL_H'):
+        conf.DEFINE('HAVE_EPOLL', 1)
+
+    conf.CHECK_HEADERS('poll.h')
+    conf.CHECK_FUNCS('poll')
+
+    if not conf.CHECK_CODE('''#define LIBREPLACE_CONFIGURE_TEST_STRPTIME
+                           #include "test/strptime.c"''',
+                           define='HAVE_STRPTIME',
+                           addmain=False,
+                           msg='Checking for working strptime'):
+        conf.DEFINE('REPLACE_STRPTIME', 1)
+    else:
+       conf.CHECK_CODE('''
+                        const char *s = "20070414101546Z";
+                        char *ret;
+                        struct tm t;
+                        memset(&t, 0, sizeof(t));
+                        ret = strptime(s, "%Y%m%d%H%M%S", &t);
+                        if (ret == NULL || t.tm_wday != 6) {
+                            return 0;
+                        } else {
+                            return 1;
+                        }
+                        ''',
+                        msg="Checking correct behavior of strptime",
+                        headers = 'time.h',
+                        execute = True,
+                        define_ret = True,
+                        define = 'REPLACE_STRPTIME',
+                        )
+
+    conf.CHECK_CODE('gettimeofday(NULL, NULL)', 'HAVE_GETTIMEOFDAY_TZ', execute=False)
+
+    conf.CHECK_CODE('#include "test/snprintf.c"',
+                    define="HAVE_C99_VSNPRINTF",
+                    execute=1,
+                    addmain=False,
+                    msg="Checking for C99 vsnprintf")
+
+    conf.SAMBA_BUILD_ENV()
+
+    conf.CHECK_CODE('''
+                    typedef struct {unsigned x;} FOOBAR;
+                    #define X_FOOBAR(x) ((FOOBAR) { x })
+                    #define FOO_ONE X_FOOBAR(1)
+                    FOOBAR f = FOO_ONE;
+                    static const struct {
+                        FOOBAR y;
+                    } f2[] = {
+                        {FOO_ONE}
+                    };
+                    static const FOOBAR f3[] = {FOO_ONE};
+                    ''',
+                    define='HAVE_IMMEDIATE_STRUCTURES')
+
+    conf.CHECK_CODE('mkdir("foo",0777)', define='HAVE_MKDIR_MODE', headers='sys/stat.h')
+
+    conf.CHECK_STRUCTURE_MEMBER('struct stat', 'st_mtim.tv_nsec', define='HAVE_STAT_TV_NSEC',
+                                headers='sys/stat.h')
+    # we need the st_rdev test under two names
+    conf.CHECK_STRUCTURE_MEMBER('struct stat', 'st_rdev',
+                                define='HAVE_STRUCT_STAT_ST_RDEV',
+                                headers='sys/stat.h')
+    conf.CHECK_STRUCTURE_MEMBER('struct stat', 'st_rdev', define='HAVE_ST_RDEV',
+                                headers='sys/stat.h')
+    conf.CHECK_STRUCTURE_MEMBER('struct sockaddr_storage', 'ss_family',
+                                headers='sys/socket.h netinet/in.h')
+    conf.CHECK_STRUCTURE_MEMBER('struct sockaddr_storage', '__ss_family',
+                                headers='sys/socket.h netinet/in.h')
+
+
+    if conf.CHECK_STRUCTURE_MEMBER('struct sockaddr', 'sa_len',
+                                   headers='sys/socket.h netinet/in.h',
+                                   define='HAVE_SOCKADDR_SA_LEN'):
+        # the old build system produced both defines
+        conf.DEFINE('HAVE_STRUCT_SOCKADDR_SA_LEN', 1)
+
+    conf.CHECK_STRUCTURE_MEMBER('struct sockaddr_in', 'sin_len',
+                                headers='sys/socket.h netinet/in.h',
+                                define='HAVE_SOCK_SIN_LEN')
+
+    conf.CHECK_CODE('struct sockaddr_un sunaddr; sunaddr.sun_family = AF_UNIX;',
+                    define='HAVE_UNIXSOCKET', headers='sys/socket.h sys/un.h')
+
+
+    conf.CHECK_CODE('''
+                    struct stat st;
+                    char tpl[20]="/tmp/test.XXXXXX";
+                    int fd = mkstemp(tpl);
+                    if (fd == -1) exit(1);
+                    unlink(tpl);
+                    if (fstat(fd, &st) != 0) exit(1);
+                    if ((st.st_mode & 0777) != 0600) exit(1);
+                    exit(0);
+                    ''',
+                    define='HAVE_SECURE_MKSTEMP',
+                    execute=True,
+                    mandatory=True) # lets see if we get a mandatory failure for this one
+
+    if conf.CHECK_CFLAGS('-fvisibility=hidden'):
+        conf.env.VISIBILITY_CFLAGS = '-fvisibility=hidden'
+        conf.CHECK_CODE('''void vis_foo1(void) {}
+                           __attribute__((visibility("default"))) void vis_foo2(void) {}''',
+                        cflags=conf.env.VISIBILITY_CFLAGS,
+                        define='HAVE_VISIBILITY_ATTR')
+
+    # look for a method of finding the list of network interfaces
+    for method in ['HAVE_IFACE_GETIFADDRS', 'HAVE_IFACE_AIX', 'HAVE_IFACE_IFCONF', 'HAVE_IFACE_IFREQ']:
+        if conf.CHECK_CODE('''
+                           #define %s 1
+                           #define NO_CONFIG_H 1
+                           #define AUTOCONF_TEST 1
+                           #define SOCKET_WRAPPER_NOT_REPLACE
+                           #include "replace.c"
+                           #include "inet_ntop.c"
+                           #include "snprintf.c"
+                           #include "getifaddrs.c"
+                           #define getifaddrs_test main
+                           #include "test/getifaddrs.c"
+                           ''' % method,
+                           method,
+                           lib='nsl socket',
+                           addmain=False,
+                           execute=True):
+            break
+
+    if conf.CHECK_FUNCS('getpass getpassphrase'):
+        # if we have both, then we prefer getpassphrase
+        conf.DEFINE('REPLACE_GETPASS_BY_GETPASSPHRASE', 1)
+        conf.DEFINE('REPLACE_GETPASS', 1)
+    else:
+        conf.CHECK_CODE('''#include "getpass.c"
+                       int main(void) { return 0; }''',
+                    addmain=False,
+                    define='REPLACE_GETPASS',
+                    cflags='-DNO_CONFIG_H')
+
+    conf.RECURSE('system')
+    conf.SAMBA_CONFIG_H()
+
+
+def build(bld):
+    bld.RECURSE('buildtools/wafsamba')
+
+    REPLACE_HOSTCC_SOURCE = 'replace.c snprintf.c'
+
+    if bld.CONFIG_SET('REPLACE_STRPTIME'):       REPLACE_HOSTCC_SOURCE += ' strptime.c'
+    if not bld.CONFIG_SET('HAVE_TIMEGM'):        REPLACE_HOSTCC_SOURCE += ' timegm.c'
+
+    bld.SAMBA_SUBSYSTEM('LIBREPLACE_HOSTCC',
+        REPLACE_HOSTCC_SOURCE,
+        use_hostcc=True,
+        use_global_deps=False,
+        cflags='-DSOCKET_WRAPPER_DISABLE=1 -DNSS_WRAPPER_DISABLE=1 -D_SAMBA_HOSTCC_',
+        group='compiler_libraries'
+    )
+
+    REPLACE_SOURCE = REPLACE_HOSTCC_SOURCE
+
+    if bld.CONFIG_SET('REPLACE_GETPASS'):        REPLACE_SOURCE += ' getpass.c'
+    if not bld.CONFIG_SET('HAVE_CRYPT'):         REPLACE_SOURCE += ' crypt.c'
+    if not bld.CONFIG_SET('HAVE_DLOPEN'):        REPLACE_SOURCE += ' dlfcn.c'
+    if not bld.CONFIG_SET('HAVE_POLL'):          REPLACE_SOURCE += ' poll.c'
+
+    if not bld.CONFIG_SET('HAVE_SOCKETPAIR'):    REPLACE_SOURCE += ' socketpair.c'
+    if not bld.CONFIG_SET('HAVE_CONNECT'):       REPLACE_SOURCE += ' socket.c'
+    if not bld.CONFIG_SET('HAVE_GETIFADDRS'):    REPLACE_SOURCE += ' getifaddrs.c'
+    if not bld.CONFIG_SET('HAVE_GETADDRINFO'):   REPLACE_SOURCE += ' getaddrinfo.c'
+    if not bld.CONFIG_SET('HAVE_INET_NTOA'):     REPLACE_SOURCE += ' inet_ntoa.c'
+    if not bld.CONFIG_SET('HAVE_INET_ATON'):     REPLACE_SOURCE += ' inet_aton.c'
+    if not bld.CONFIG_SET('HAVE_INET_NTOP'):     REPLACE_SOURCE += ' inet_ntop.c'
+    if not bld.CONFIG_SET('HAVE_INET_PTON'):     REPLACE_SOURCE += ' inet_pton.c'
+
+    bld.SAMBA_LIBRARY('replace',
+                      source=REPLACE_SOURCE,
+                      group='base_libraries',
+                      # FIXME: Ideally symbols should be hidden here so they 
+                      # don't appear in the global namespace when Samba 
+                      # libraries are loaded, but this doesn't appear to work 
+                      # at the moment:
+                      # hide_symbols=bld.BUILTIN_LIBRARY('replace'),
+                      private_library=True,
+                      deps='crypt dl nsl socket rt')
+
+    bld.SAMBA_SUBSYSTEM('replace-test',
+                      source='''test/testsuite.c test/strptime.c
+                      test/os2_delete.c test/getifaddrs.c''',
+                      deps='replace')
+
+    if bld.env.standalone_replace:
+        bld.SAMBA_BINARY('replace_testsuite',
+                         source='test/main.c',
+                         deps='replace replace-test',
+                         install=False)
+
+    # build replacements for stdint.h and stdbool.h if needed
+    bld.SAMBA_GENERATOR('replace_stdint_h',
+                        rule='cp ${SRC} ${TGT}',
+                        source='hdr_replace.h',
+                        target='stdint.h',
+                        enabled = not bld.CONFIG_SET('HAVE_STDINT_H'))
+    bld.SAMBA_GENERATOR('replace_stdbool_h',
+                        rule='cp ${SRC} ${TGT}',
+                        source='hdr_replace.h',
+                        target='stdbool.h',
+                        enabled = not bld.CONFIG_SET('HAVE_STDBOOL_H'))
+
+def dist():
+    '''makes a tarball for distribution'''
+    samba_dist.dist()

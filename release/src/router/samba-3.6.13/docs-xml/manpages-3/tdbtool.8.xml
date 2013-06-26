@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<refentry id="tdbtool.8">
+
+<refmeta>
+	<refentrytitle>tdbtool</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>tdbtool</refname>
+	<refpurpose>manipulate the contents TDB files</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+
+	<cmdsynopsis>
+		<command>tdbtool</command>
+	</cmdsynopsis>
+
+	<cmdsynopsis>
+		<command>tdbtool</command>
+		<arg choice="plain">
+		<replaceable>TDBFILE</replaceable>
+		</arg>
+		<arg rep="repeat" choice="opt">
+		<replaceable>COMMANDS</replaceable>
+		</arg>
+	</cmdsynopsis>
+
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry> suite.</para>
+
+	<para><command>tdbtool</command> a tool for displaying and
+	altering the contents of Samba TDB (Trivial DataBase) files. Each
+	of the commands listed below can be entered interactively or
+	provided on the command line.</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>COMMANDS</title>
+
+	<variablelist>
+
+		<varlistentry>
+		<term><option>create</option>
+		<replaceable>TDBFILE</replaceable></term>
+		<listitem><para>Create a new database named
+		<replaceable>TDBFILE</replaceable>.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>open</option>
+		<replaceable>TDBFILE</replaceable></term>
+		<listitem><para>Open an existing database named
+		<replaceable>TDBFILE</replaceable>.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>erase</option></term>
+		<listitem><para>Erase the current database.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>dump</option></term>
+		<listitem><para>Dump the current database as strings.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>cdump</option></term>
+		<listitem><para>Dump the current database as connection records.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>keys</option></term>
+		<listitem><para>Dump the current database keys as strings.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>hexkeys</option></term>
+		<listitem><para>Dump the current database keys as hex values.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>info</option></term>
+		<listitem><para>Print summary information about the
+		current database.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>insert</option>
+		<replaceable>KEY</replaceable>
+		<replaceable>DATA</replaceable>
+		</term>
+		<listitem><para>Insert a record into the
+		current database.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>move</option>
+		<replaceable>KEY</replaceable>
+		<replaceable>TDBFILE</replaceable>
+		</term>
+		<listitem><para>Move a record from the 
+		current database into <replaceable>TDBFILE</replaceable>.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>store</option>
+		<replaceable>KEY</replaceable>
+		<replaceable>DATA</replaceable>
+		</term>
+		<listitem><para>Store (replace) a record in the
+		current database.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>show</option>
+		<replaceable>KEY</replaceable>
+		</term>
+		<listitem><para>Show a record by key.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>delete</option>
+		<replaceable>KEY</replaceable>
+		</term>
+		<listitem><para>Delete a record by key.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>list</option>
+		</term>
+		<listitem><para>Print the current database hash table and free list.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>free</option>
+		</term>
+		<listitem><para>Print the current database and free list.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term><option>!</option>
+		<replaceable>COMMAND</replaceable>
+		</term>
+		<listitem><para>Execute the given system command.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>
+		<option>first</option>
+		</term>
+		<listitem><para>Print the first record in the current database.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>
+		<option>next</option>
+		</term>
+		<listitem><para>Print the next record in the current database.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>
+		<option>check</option>
+		</term>
+		<listitem><para>Check the integrity of the current database.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>
+		<option>quit</option>
+		</term>
+		<listitem><para>Exit <command>tdbtool</command>.
+		</para></listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>CAVEATS</title>
+	<para>The contents of the Samba TDB files are private
+	to the implementation and should not be altered with
+	<command>tdbtool</command>.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+	<para>This man page is correct for version 3.0.25 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para> The original Samba software and related utilities were
+	created by Andrew Tridgell.  Samba is now developed by the
+	Samba Team as an Open Source project similar to the way the
+	Linux kernel is developed.</para>
+</refsect1>
+
+</refentry>

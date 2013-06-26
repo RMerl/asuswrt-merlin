@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+if [ ! -d /usr/bin ]; then
+	echo "The /usr file system is not mounted."
+        exit 1
+fi
+
+killproc() {         
+        pid=`/bin/ps ax | grep -w $1 | sed -e 's/^  *//' -e 's/ .*//'`
+	echo "Stopping $1 now."
+        [ "$pid" != "" ] && kill -15 $pid
+	echo $pid
+}
+
+
+# Start/stop processes required for samba server
+
+case "$1" in
+
+	'start')
+	   echo "Starting Samba"
+	   /usr/local/samba/sbin/smbd
+	   /usr/local/samba/sbin/nmbd
+	   echo "Done."
+	   ;;
+	'stop')
+	   killproc smbd
+	   killproc nmbd
+	   ;;
+	*)
+	   echo "Usage: /sbin/init.d/samba.init [ start | stop ]"
+	   ;;
+esac
+exit 0

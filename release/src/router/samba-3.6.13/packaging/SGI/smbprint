@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# @(#) smbprint.sysv version 1.0 Ross Wakelin <r.wakelin@march.co.uk>
+#
+#      Version 1.0 13 January 1995
+#		modified from the original smbprint (bsd) script
+#
+# this script is a System 5 printer interface script. It uses the smbclient 
+# program to print the file to the specified smb-based server and service. 
+# 
+# To add this to your lp system, modify the server and service variables 
+# and then execute the following command (as root):
+#
+#      lpadmin -punixprintername -v/dev/null -i/usr/samba/bin/smbprint 
+# 
+# where	unixprintername is the name that the printer will be known as 
+# on your unix box. 
+# 
+# the script smbprint will be copied into your printer administration 
+# directory (/usr/spool/lp) as a new interface (interface/unixprintername)
+# Then you have to execute the following commands:
+#
+#      enable unixprintername
+#      accept unixprintername
+#
+# This script will then be called by the lp service to print the files.
+# This script will have 6 or more parameters passed to it by the lp service.
+# The first five will contain details of the print job, who queued it etc,
+# while parameters 6 onwards are a list of files to print.  We just
+# cat these to the samba client.
+#
+# clear out the unwanted parameters
+
+shift;shift;shift;shift;shift
+
+# now the argument list is just the files to print
+
+# Set these to the server and service you wish to print to 
+# In this example I have a PC called "admin" that has a printer 
+# exported called "hplj2" with no password.
+#
+server=admin
+service=hplj2
+password=""
+
+# NOTE: The line `echo translate' provides automatic CR/LF translation 
+# when printing.
+(
+	echo translate
+	echo "print -"
+	cat $*
+) | /usr/samba/bin/smbclient "//$server/$service" $password -N  > /dev/null
+exit $?
+

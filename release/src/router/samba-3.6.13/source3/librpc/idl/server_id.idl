@@ -1,0 +1,25 @@
+[
+	pointer_default(unique)
+]
+interface server_id
+{
+
+	/* used to look like the following, note that unique_id was not
+	 * marshalled at all...
+
+	struct server_id {
+		pid_t pid;
+	#ifdef CLUSTER_SUPPORT
+		uint32 vnn;
+	#endif
+		uint64_t unique_id;
+	};
+
+	*/
+
+	typedef [public] struct {
+		uint32 pid;
+		uint32 vnn;
+		udlong unique_id;
+	} server_id;
+}

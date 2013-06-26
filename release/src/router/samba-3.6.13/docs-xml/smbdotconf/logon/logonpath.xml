@@ -1,0 +1,70 @@
+<samba:parameter name="logon path"
+                 context="G"
+				 type="string"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This parameter specifies the directory where roaming profiles (Desktop, NTuser.dat, etc) are 
+	stored.  Contrary to previous versions of these manual pages, it has nothing to do with Win 9X roaming
+	profiles.  To find out how to handle roaming profiles for Win 9X system, see the
+	<smbconfoption name="logon home"/> parameter.
+	</para>
+
+	<para>
+	This option takes the standard substitutions, allowing you to have separate logon scripts for each user or
+	machine.  It also specifies the directory from which the &quot;Application Data&quot;, <filename
+	moreinfo="none">desktop</filename>, <filename moreinfo="none">start menu</filename>, <filename
+	moreinfo="none">network neighborhood</filename>, <filename moreinfo="none">programs</filename> and other
+	folders, and their contents, are loaded and displayed on your Windows NT client.
+	</para>
+
+	<para>
+	The share and the path must be readable by the user for the preferences and directories to be loaded onto the
+	Windows NT client. The share must be writeable when the user logs in for the first time, in order that the
+	Windows NT client can create the NTuser.dat and other directories.  
+	Thereafter, the directories and any of the contents can, if required, be made read-only.  It is not advisable
+	that the NTuser.dat file be made read-only - rename it to NTuser.man to achieve the desired effect (a
+	<emphasis>MAN</emphasis>datory profile).
+	</para>
+
+	<para>
+	Windows clients can sometimes maintain a connection to the [homes] share, even though there is no user logged
+	in.  Therefore, it is vital that the logon path does not include a reference to the homes share (i.e. setting
+	this parameter to \\%N\homes\profile_path will cause problems).
+	</para>
+
+	<para>
+	This option takes the standard substitutions, allowing you to have separate logon scripts for each user or machine.
+	</para>
+
+	<warning><para>
+	Do not quote the value. Setting this as <quote>\\%N\profile\%U</quote>
+	will break profile handling. Where the tdbsam or ldapsam passdb backend
+	is used, at the time the user account is created the value configured
+	for this parameter is written to the passdb backend and that value will
+	over-ride the parameter value present in the smb.conf file. Any error
+	present in the passdb backend account record must be editted using the
+	appropriate tool (pdbedit on the command-line, or any other locally
+	provided system tool).
+	</para></warning>
+
+	<para>Note that this option is only useful if Samba is set up as a domain controller.</para>
+
+	<para>
+	Disable the use of roaming profiles by setting the value of this parameter to the empty string. For
+	example, <smbconfoption name="logon path">""</smbconfoption>. Take note that even if the default setting
+	in the smb.conf file is the empty string, any value specified in the user account settings in the passdb
+	backend will over-ride the effect of setting this parameter to null. Disabling of all roaming profile use
+	requires that the user account settings must also be blank.
+	</para>
+
+	<para>
+	An example of use is:
+<programlisting>
+logon path = \\PROFILESERVER\PROFILE\%U
+</programlisting>
+	</para>
+</description>
+<value type="default">\\%N\%U\profile</value>
+</samba:parameter>

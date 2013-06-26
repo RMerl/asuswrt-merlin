@@ -1,0 +1,5 @@
+This is a [slightly rearranged] import of http://pypi.python.org/pypi/iso8601/
+version 0.1.4. The OS X hidden files have been stripped, and the package
+turned into a single module, to simplify installation. The remainder of the
+source distribution is included in the subunit source tree at python/iso8601
+for reference.

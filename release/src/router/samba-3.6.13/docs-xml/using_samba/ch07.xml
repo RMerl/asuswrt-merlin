@@ -1,0 +1,1932 @@
+<chapter label="7" id="SAMBA-CH-7">
+<title>Printing and Name Resolution</title>
+
+
+
+
+<para>
+<indexterm id="ch07-idx-956351-0" class="startofrange"><primary>printing</primary></indexterm>This chapter tackles two Samba topics: setting up printers for use with a Samba server and configuring Samba to use or become a Windows Internet Name Service (WINS) server. Samba allows client machines to send documents to printers connected to the Samba server. In addition, Samba can also assist you with printing Unix documents to a printer on a Windows machine. In the first part of this chapter, we will discuss how to get printers configured to work on either side.</para>
+
+
+<para>In the second half of the chapter, we will introduce the Windows Internet Name Service, Microsoft's implementation of a NetBIOS Name Server (NBNS). As mentioned in <link linkend="ch01-48078">Chapter 1</link>, an NBNS allows machines to perform name resolution on a NetBIOS network without having to rely on broadcasts. Instead, each machine knows exactly where the WINS server is and can query it for the IP addresses of other machines on the network.</para>
+
+
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="7.1" id="ch07-61388">
+<title>Sending Print Jobs to Samba</title>
+
+
+<para>
+<indexterm id="ch07-idx-956360-0" class="startofrange"><primary>printing</primary><secondary sortas="Samba">through Samba</secondary></indexterm>A printer attached to the Samba server shows up in the list of shares offered in the Network Neighborhood. If the printer is registered on the client machine and the client has the correct printer driver installed, the client can effortlessly send print jobs to a printer attached to a Samba server. <link linkend="ch07-35075">Figure 7.1</link> shows a Samba printer as it appears in the Network Neighborhood of a Windows client.</para>
+
+
+<para>
+<indexterm id="ch07-idx-956377-0"><primary>printing</primary><secondary>on a network, steps in</secondary></indexterm>
+<indexterm id="ch07-idx-956377-1"><primary>networking</primary><secondary>printing on a network, steps in</secondary></indexterm>To administer printers with Samba, you should understand the basic process by which printing takes place on a network. Sending a print job to a printer on a Samba server involves four steps:</para>
+
+
+<orderedlist>
+<listitem><para>Opening and authenticating a connection to the printer share</para></listitem>
+<listitem><para>Copying the file over the network</para></listitem>
+<listitem><para>Closing the connection</para></listitem>
+<listitem><para>Printing and deleting the copy of the file</para>
+
+
+<figure label="7.1" id="ch07-35075">
+<title>A Samba printer in the Network Neighborhood</title>
+
+<graphic width="502" depth="171" fileref="figs/sam.0701.gif"></graphic>
+</figure></listitem>
+</orderedlist>
+
+<para>When a print job arrives at a Samba server, the print data is temporarily written to disk in the directory specified by the <literal>path</literal> option of the printer share. Samba then executes a Unix print command to send that data file to the printer. The job is printed as the authenticated user of the share. Note that this may be the guest user, depending on how the share is configured.</para>
+
+
+<sect2 role="" label="7.1.1" id="ch07-SECT-1.1">
+<title>Print Commands</title>
+
+
+<para>
+<indexterm id="ch07-idx-956378-0"><primary>printing</primary><secondary>commands</secondary></indexterm>In order to print the document, you'll need to tell Samba what the command is to print and delete a file. On Linux, such a command is:</para>
+
+
+<programlisting>lpr -r -P<replaceable>printer</replaceable> <replaceable>file</replaceable></programlisting>
+
+
+<para>This tells <literal>lpr</literal> to copy the document to a spool area, usually <filename>/var/spool</filename>, retrieve the name of the printer in the system configuration file (<filename>/etc/printcap</filename>), and interpret the rules it finds there to decide how to process the data and which physical device to send it to. Note that because the <literal>-r</literal> option has been listed, the file specified on the command line will be deleted after it has been printed. Of course, the file removed is just a copy stored on the Samba server; the original file on the client is unaffected.</para>
+
+
+<para>Linux uses a Berkeley (BSD) style of printing. However, the process is similar on System V Unix. Here, printing and deleting becomes a compound command:</para>
+
+
+<programlisting>lp -d<replaceable>printer</replaceable> -s <replaceable>file</replaceable>; rm <replaceable>file</replaceable></programlisting>
+
+
+<para>With System V, the <filename>/etc/printcap</filename> file is replaced with different set of configuration files hiding in <filename>/usr/spool/lp</filename>, and there is no option to delete the file. You have to do it yourself, which is why we have added the <literal>rm</literal> command afterward.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="7.1.2" id="ch07-SECT-1.2">
+<title>Printing Variables</title>
+
+
+<para>
+<indexterm id="ch07-idx-956380-0"><primary>printing</primary><secondary>variables for</secondary></indexterm>Samba provides four variables specifically for use with <indexterm id="ch07-idx-956450-0" class="startofrange"><primary>printing</primary><secondary>configuration options</secondary></indexterm>printing configuration options. They are shown in <link linkend="ch07-29758">Table 7.1</link>.</para>
+
+
+<table label="7.1" id="ch07-29758">
+<title>Printing Variables </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Variable</para></entry>
+
+<entry colname="col2"><para>Definition</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>%s</literal></para></entry>
+
+<entry colname="col2"><para>The full pathname of the file on the Samba server to be printed</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%f</literal></para></entry>
+
+<entry colname="col2"><para>The name of the file itself (without the preceding path) on the Samba server to be printed</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%p</literal></para></entry>
+
+<entry colname="col2"><para>The name of the Unix printer to use</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%j</literal></para></entry>
+
+<entry colname="col2"><para>The number of the print job (for use with <literal>lprm</literal>, <literal>lppause</literal>, and <literal>lpresume</literal>)</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="7.1.3" id="ch07-SECT-1.3">
+<title>A Minimal Printing Setup</title>
+
+
+<para>
+<indexterm id="ch07-idx-956382-0" class="startofrange"><primary>printing</primary><secondary>configuration, minimal</secondary></indexterm>Let's start with a simple but illustrative printing share. Assuming that you're on a Linux system and you have a printer called <literal>lp</literal> listed in the printer capabilities file, the following addition to your <filename>smb.conf</filename>
+<indexterm id="ch07-idx-956439-0"><primary>smb.conf (Samba configuration) file</primary><secondary>configuring printers</secondary></indexterm> file will make the printer accessible through the network:</para>
+
+
+<programlisting>[printer1]
+	printable = yes
+	print command = /usr/bin/lpr -r  %s
+	printer = lp
+	printing = BSD
+	read only = yes
+	guest ok = yes</programlisting>
+
+
+<para>This configuration allows anyone to send data to the printer, something we may want to change later. For the moment, what's important to understand is that the variable <literal>%s</literal> in the <literal>print</literal> <literal>command</literal> option will be replaced with the name of the file to be printed when Samba executes the command. Changing the <literal>print command</literal> to reflect a different style of Unix machine typically involves only replacing the right side of the <literal>print</literal> <literal>command</literal> option with whatever command you need for your system and changing the target of the <literal>printing</literal> option.</para>
+
+
+<para>Let's look at the commands for a <indexterm id="ch07-idx-956440-0"><primary>System V Unix</primary><secondary>printer configuration for</secondary></indexterm>
+<indexterm id="ch07-idx-956440-1"><primary>Unix</primary><secondary>System V</secondary><tertiary>printer configuration for</tertiary></indexterm>System V Unix. With variable substitution, the System V Unix command becomes:</para>
+
+
+<programlisting>print command = lp -d%p -s %s; rm %s</programlisting>
+
+
+<para>As mentioned earlier, the <literal>%p</literal> variable resolves to the name of the printer, while the <literal>%s</literal> variable resolves to the name of the file. After that, you can change the <literal>printing</literal> option to reflect that you're using a System V architecture:</para>
+
+
+<programlisting>printing = SYSV</programlisting>
+
+
+<para>If you are using <indexterm id="ch07-idx-956441-0"><primary>share-level security</primary><secondary>printing and guest accounts</secondary></indexterm>share-level security, pay special attention to the guest account used by Samba. The typical setting, <literal>nobody</literal>, may not be allowed to print by the operating system. If that's true for your operating system, you should place a <literal>guest</literal> <literal>account</literal> option under the <indexterm id="ch07-idx-956445-0"><primary>print shares</primary></indexterm>printing share (or even perhaps the global share) specifying an account that can. A popular candidate with the Samba authors is the <literal>ftp</literal> account, which is often preconfigured to be safe for untrusted guest users. You can set it with the following command:</para>
+
+
+<programlisting>guest account = ftp</programlisting>
+
+
+<para>Another common printing issue is that clients may need to request the status of a <indexterm id="ch07-idx-956443-0"><primary>printing</primary><secondary>print jobs</secondary></indexterm>print job sent to the Samba server. Samba will not reject a document from being sent to an already busy printer share. Consequently, Samba needs the ability to communicate not only the status of the current printing job to the client, but also which documents are currently waiting to be printed on that printer. Samba also has to provide the client the ability to pause print jobs, resume print jobs, and remove print jobs from the printing queue. Samba provides options for each of these tasks. As you might expect, they borrow functionality from existing Unix commands. The options are:</para>
+
+
+<itemizedlist>
+<listitem><para><literal>lpq command</literal></para></listitem>
+<listitem><para><literal>lprm command</literal></para></listitem>
+<listitem><para><literal>lppause command</literal></para></listitem>
+<listitem><para><literal>lpresume command</literal></para></listitem>
+</itemizedlist>
+
+<para>We will cover these options in more detail below. For the most part, however, the value of the <literal>printing</literal> configuration option will determine their values, and you should not need to alter the default values of these options.</para>
+
+
+<para>Here are a few important items to remember about printing shares:</para>
+
+
+<itemizedlist>
+<listitem><para>You must put <literal>printable</literal> <literal>=</literal> <literal>yes</literal> in all printer shares (even <literal>[printers]</literal>), so that Samba will know that they are printer shares. If you forget, the shares will not be usable for printing and will instead be treated as disk shares.</para></listitem>
+<listitem><para>If you set the <literal>path</literal> configuration option in the printer section, any files sent to the printer(s) will be copied to the directory you specify instead of to the default location of <filename>/tmp</filename>. As the amount of disk space allocated to <filename>/tmp</filename> can be relatively small in some Unix operating systems, many administrators opt to use <filename>/var/spool</filename> or some other directory instead.</para></listitem>
+<listitem><para>The <literal>read only</literal> option is ignored for printer shares.</para></listitem>
+<listitem><para>If you set <literal>guest</literal> <literal>ok</literal> <literal>=</literal> <literal>yes</literal> in a printer share and Samba is configured for share-level security, it will allow anyone to send data to the printer as the <literal>guest</literal> <literal>account</literal> user.</para></listitem>
+</itemizedlist>
+
+<para>Using one or more Samba machines as a print server gives you a great deal of flexibility on your LAN. You can easily partition your available printers, restricting some to members of one department, or you can maintain a bank of printers available to all. In addition, you can restrict a printer to a selected few by adding the trusty <literal>valid</literal> <literal>users</literal> option to its share definition:</para>
+
+
+<programlisting>[deskjet]
+	printable = yes
+	path = /var/spool/samba/print
+	valid users = gail sam</programlisting>
+
+
+<para>All of the other share accessibility options defined in the previous chapter should work for printing shares as well. Since the printers themselves are accessed through Samba by name, it's also simple to delegate print services among several servers using familiar Unix commands for tasks such as load balancing or maintenance.<indexterm id="ch07-idx-956385-0" class="endofrange" startref="ch07-idx-956382-0"/></para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="7.1.4" id="ch07-SECT-1.4">
+<title>The [printers] Share</title>
+
+
+<para>
+<indexterm id="ch07-idx-956390-0"><primary>print shares</primary></indexterm><link linkend="ch04-21486">Chapter 4</link>, briefly introduced <literal>[printers]</literal>, a special share for automatically creating printing services. Let's review how it works: if you create a share named <literal>[printers]</literal> in the configuration file, Samba will automatically read in your printer capabilities file and create a printing share for each printer that appears in the file. For example, if the Samba server had <literal>lp</literal>, <literal>pcl</literal> and <literal>ps</literal> printers in its printer capabilities file, Samba would provide three printer shares with those names, each configured with the options in the <literal>[printers]</literal> share.</para>
+
+
+<para>
+<indexterm id="ch07-idx-956509-0"><primary>print shares</primary><secondary>created by Samba</secondary></indexterm>Recall that Samba obeys following rules when a client requests a share that has not been created through the <filename>smb.conf</filename> file:</para>
+
+
+<itemizedlist>
+<listitem><para>If the share name matches a username in the system password file and a <literal>[homes]</literal> share exists, a new share is created with the name of the user and is initialized using the values given in the <literal>[homes]</literal> and <literal>[global]</literal> sections.</para></listitem>
+<listitem><para>Otherwise, if the name matches a printer in the system printer capabilities file, and a <literal>[printers]</literal> share exists, a new share is created with the name of the printer and initialized using the values given in the <literal>[printers]</literal> section. (Variables in the <literal>[global]</literal> section do not apply here.)</para></listitem>
+<listitem><para>If neither of those succeed, Samba looks for a <literal>default</literal> <literal>service</literal> share. If none is found, it returns an error.</para></listitem>
+</itemizedlist>
+
+<para>This brings to light an important point: be careful that you do not give a <indexterm id="ch07-idx-956508-0"><primary>printers</primary><secondary>names</secondary><tertiary>caution with</tertiary></indexterm>printer the same name as a user. Otherwise, you will end up connecting to a disk share when you may have wanted a printer share instead.</para>
+
+
+<para>Here is an example <literal>[printers]</literal> share for a Linux (BSD) system. Some of these options are already defaults; however, we have listed them anyway for illustrative purposes:</para>
+
+
+<programlisting>[global]
+	printing = BSD
+	print command = /usr/bin/lpr -P%p -r %s
+	printcap file = /etc/printcap
+	min print space = 2000
+
+[printers]
+	path = /usr/spool/public
+	printable = true
+	guest ok = true
+	guest account = pcguest</programlisting>
+
+
+<para>Here, we've given Samba global options that specify the printing type (BSD), a print command to send data to the printer and remove a temporary file, our default printer capabilities file, and a minimum printing space of 2 megabytes.</para>
+
+
+<para>In addition, we've created a <literal>[printers]</literal> share for each of the system printers. Our temporary spooling directory is specified by the <literal>path</literal> option: <filename>/usr/spool/public</filename>. Each of the shares is marked as printable&mdash;this is necessary, even in the <literal>[printers]</literal> section. The two <literal>guest</literal> options are useful in the event that Samba is using share-level security: we allow guest access to the printer and we specify the guest user that Samba should use to execute print commands.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="7.1.5" id="ch07-SECT-1.5">
+<title>Test Printing</title>
+
+
+<para>
+<indexterm id="ch07-idx-956391-0"><primary>printing</primary><secondary>test for</secondary></indexterm>Here is how you can test printing from the Samba server. Let's assume the most complex case and use a guest account. First, run the Samba <emphasis>testparm</emphasis> command on your configuration file that contains the print shares, as we did in <link linkend="SAMBA-CH-2">Chapter 2</link>. This will tell you if there are any syntactical problems with the configuration file. For example, here is what you would see if you left out the <literal>path</literal> configuration option in the previous example:</para>
+
+
+<programlisting># testparm
+Load smb config files from /usr/local/samba/lib/smb.conf
+Processing configuration file "/usr/local/samba/lib/smb.conf"
+Processing section "[global]"
+Processing section "[homes]"
+Processing section "[data]"
+Processing section "[printers]"
+No path in service printers - using /tmp
+Loaded services file OK.
+Press enter to see a dump of your service definitions
+Global parameters:
+	load printers: Yes
+	printcap name: /etc/printcap
+Default service parameters:
+	guest account: ftp
+	min print space: 0
+	print command: lpr -r -P%p %s
+	lpq command: lpq -P%p
+	lprm command: lprm -P%p %j
+lppause command:
+	lpresume command:
+ Service parameters [printers]:
+	path: /tmp
+	print ok: Yes
+	read only: true
+	public: true</programlisting>
+
+
+<para>Second, try the command <literal>testprns</literal> <replaceable>printername</replaceable>. This is a simple program that verifies that the specified printer is available in your <emphasis>printcap</emphasis> file. If your <emphasis>printcap</emphasis> file is not in the usual place, you can specify its full pathname as the second argument to the <emphasis>testprns</emphasis> command:</para>
+
+
+<programlisting># testprns lp /etc/printcap
+Looking for printer lp in printcap file /etc/printcap
+Printer name lp is valid.</programlisting>
+
+
+<para>Next, log on as the guest user, go to the spooling directory, and ensure that you can print using the same command that <emphasis>testparm</emphasis> says Samba will use. As mentioned before, this will tell you if you need to change the guest account, as the default account may not be allowed to print.</para>
+
+
+<para>Finally, print something to the Samba server via <literal>smbclient</literal>, and see if the following actions occur:</para>
+
+
+<itemizedlist>
+<listitem><para>The job appears (briefly) in the Samba spool directory specified by the path.</para></listitem>
+<listitem><para>The job shows up in your print systems spool directory.</para></listitem>
+<listitem><para>The job disappears from the spool directory that Samba used.</para></listitem>
+</itemizedlist>
+
+<para>If <emphasis>smbclient</emphasis> cannot print, you can reset the <literal>print</literal> <literal>command</literal> option to collect debugging information:</para>
+
+
+<programlisting>print command = /bin/cat %s &gt;&gt;/tmp/printlog; rm %s</programlisting>
+
+
+<para>or:</para>
+
+
+<programlisting>print command = echo "printed %s on %p" &gt;&gt;/tmp/printlog</programlisting>
+
+
+<para>A common problem with Samba printer configuration is forgetting to use the full <indexterm id="ch07-idx-956511-0"><primary>pathnames</primary><secondary>printer configuration and</secondary></indexterm>
+<indexterm id="ch07-idx-956511-1"><primary>printing</primary><secondary>pathnames used in commands for</secondary></indexterm>pathnames for commands; simple commands often don't work because the guest account's PATH doesn't include them. Another frequent problem is not having the correct <indexterm id="ch07-idx-956512-0"><primary>permissions</primary><secondary sortas="printing">for printing</secondary></indexterm>
+<indexterm id="ch07-idx-956512-1"><primary>printing</primary><secondary>permissions for</secondary></indexterm>permissions on the spooling directory.<indexterm id="ch07-idx-956494-0" class="endofrange" startref="ch07-idx-956450-0"/></para>
+
+
+<tip role="ora">
+<para>
+<indexterm id="ch07-idx-956514-0"><primary>resources for further information</primary><secondary>printers, debuggiing</secondary></indexterm>
+<indexterm id="ch07-idx-956514-1"><primary>printing</primary><secondary>resources for information on debugging</secondary></indexterm>There is more information on debugging printers in the Samba documentation (<filename>Printing.txt</filename>). In addition, the Unix print systems are covered in detail in AEleen Frisch's <emphasis>Essential Systems Administration</emphasis> (published by O'Reilly).</para>
+
+</tip>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="7.1.6" id="ch07-SECT-1.6">
+<title>Setting Up and Testing a Windows Client</title>
+
+
+<para>
+<indexterm id="ch07-idx-956392-0"><primary>printing</primary><secondary>Windows client printers</secondary><tertiary>setting up and testing</tertiary></indexterm>
+<indexterm id="ch07-idx-956392-1"><primary>Windows clients</primary><secondary>printers for, setting up and testing</secondary></indexterm>Now that Samba is offering a workable printer, you need to set it up on a Windows client. Look at the Samba server in the Network Neighborhood. It should now show each of the printers that are available. For example, in <link linkend="ch07-35075">Figure 7.1</link>, we saw a printer called <literal>lp</literal>.</para>
+
+
+<para>Next, you need to have the Windows client recognize the printer. Double-click on the printer icon to get started. If you try to select an uninstalled printer (as you just did), Windows will ask you if it should help configure it for the Windows system. Respond "Yes," which will open the Printer Wizard.</para>
+
+
+<para>The first thing the wizard will ask is whether you need to print from DOS.  Let's assume you don't, so choose No and press the Next button to get to the manufacturer/model window as shown in <link linkend="ch07-60084">Figure 7.2</link>.</para>
+
+
+<figure label="7.2" id="ch07-60084">
+<title>A printer in the Network Neighborhood</title>
+
+<graphic width="502" depth="128" fileref="figs/sam.0702.gif"></graphic>
+</figure>
+
+<para>In this dialog box, you should see a large list of manufacturers and models for almost every printer imaginable. If you don't see your printer on the list, but you know it's a PostScript printer, select Apple as the manufacturer and Apple LaserWriter as the model. This will give you the most basic Postscript printer setup, and arguably one of the most reliable. If you already have any Postscript printers attached, you will be asked about replacing or reusing the existing driver. Be aware that if you replace it with a new one, you may make your other printers fail. Therefore, we recommend you keep using your existing printer drivers as long as they're working properly.</para>
+
+
+<para>Following that, the Printer Wizard will ask you to name the printer. <link linkend="ch07-69466">Figure 7.3</link> shows this example, where the name has defaulted to our second laserwriter. Here, you rename it from Apple Laserwriter (Copy 2) to "ps on Samba server," so you know where to look for the printouts. In reality, you can name the printer anything you want.</para>
+
+
+<figure label="7.3" id="ch07-69466">
+<title>Printer manufacturers and models</title>
+
+<graphic width="502" depth="296" fileref="figs/sam.0703.gif"></graphic>
+</figure>
+
+<para>Finally, the Printing Wizard asks if it should print a test page. Click on Yes, and you should be presented with the dialog in <link linkend="ch07-43374">Figure 7.4</link>.</para>
+
+
+<figure label="7.4" id="ch07-43374">
+<title>Printing successfully completed</title>
+
+<graphic width="502" depth="232" fileref="figs/sam.0704.gif"></graphic>
+</figure>
+
+<para>If the test printing was unsuccessful, press the No button in <link linkend="ch07-43374">Figure 7.4</link> and the Printing Wizard will walk you through some debugging steps for the client side of the process. If the test printing does work, congratulations! The remote printer will now be available to all your PC applications through the File and Print menu items.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="7.1.7" id="ch07-30008">
+<title>Automatically Setting Up Printer Drivers</title>
+
+
+<para>
+<indexterm id="ch07-idx-956393-0" class="startofrange"><primary>printing</primary><secondary>drivers for, setting up</secondary></indexterm>The previous section described how to manually configure a printer driver for your Windows system. As a system administrator, however, you can't always guarantee that users can perform such a process without making mistakes. Luckily, however, you can ask Samba to automatically set up the printer drivers for a specific printer.</para>
+
+
+<para>Samba has three options that can be used to automatically set up printer drivers for clients who are connecting for the first time. These options are <literal>printer</literal> <literal>driver</literal>, <literal>printer</literal> <literal>driver</literal> <literal>file</literal>, and <literal>printer</literal> <literal>driver</literal> <literal>location</literal>. This section explains how to use these options to allow users to skip over the Manufacturer dialog in the Add Printer Wizard above.</para>
+
+
+<tip role="ora">
+<para>For more information on how to do this, see the <filename>PRINTER_DRIVER.TXT</filename> file in the Samba distribution documentation.</para>
+
+</tip>
+
+<para>There are four major steps:</para>
+
+
+<orderedlist>
+<listitem><para>Install the drivers for the printer on a Windows client (the printer need not be attached).</para></listitem>
+<listitem><para>Create a printer definition file from the information on a Windows machine.</para></listitem>
+<listitem><para>Create a <literal>PRINTER$</literal> share where the resulting driver files can be placed.</para></listitem>
+<listitem><para>Modify the Samba configuration file accordingly.</para></listitem>
+</orderedlist>
+
+<para>Let's go over each of the four steps in greater detail.</para>
+
+
+<sect3 role="" label="7.1.7.1" id="ch07-SECT-1.7.1">
+<title>Install the drivers on a windows client</title>
+
+
+<para>Use <indexterm id="ch07-idx-956517-0"><primary>Windows 95/98</primary><secondary>printer drivers, installing</secondary></indexterm>Windows 95/98 for this step. It doesn't matter which client you choose, as long as it has the ability to load the appropriate drivers for the printer. In fact, you don't even need to have the printer attached to the machine. All you're interested in here is getting the appropriate driver files into the Windows directory. First, go to the Printers window of My Computer and double-click on the Add Printer icon, as shown in <link linkend="ch07-52397">Figure 7.5</link>.</para>
+
+
+<figure label="7.5" id="ch07-52397">
+<title>The Printers window</title>
+
+<graphic width="502" depth="223" fileref="figs/sam.0705.gif"></graphic>
+</figure>
+
+<para>At this point, you can follow the Add Printer Wizard dialogs through to select the manufacturer and model of the printer in question. If it asks you if you want to print from MS-DOS, answer No. Windows should load the appropriate driver resources from its CD-ROM and ask you if you want to print a test page. Again, respond No and close the Add Printer Wizard dialog.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.1.7.2" id="ch07-SECT-1.7.2">
+<title>Create a printer definition file</title>
+
+
+<para>You can create a <indexterm id="ch07-idx-956518-0"><primary>printing</primary><secondary>printer definition file</secondary></indexterm>printer definition file by using the <filename>make_ printerdef</filename> script in the <filename>/usr/local/samba/bin</filename> directory. In order to use this script, you need to copy over the following four files from a Windows client:<footnote label="1" id="ch07-pgfId-951615">
+
+
+<para>Older Windows 95 clients may have only the first two files.</para>
+
+
+</footnote></para>
+
+
+<simplelist>
+
+<member><emphasis>C:\WINDOWS\INF\MSPRINT.INF</emphasis></member>
+
+<member><emphasis>C:\WINDOWS\INF\MSPRINT2.INF</emphasis></member>
+
+<member><emphasis>C:\WINDOWS\INF\MSPRINT3.INF</emphasis></member>
+
+<member><emphasis>C:\WINDOWS\INF\MSPRINT4.INF</emphasis></member>
+
+</simplelist>
+
+
+<para>Once you have the four files, you can create a printer definition file using the appropriate printer driver and its .INF file. If the printer driver starts with the letters A-K, use either the <emphasis>MSPRINT.INF</emphasis> file or the <emphasis>MSPRINT3.INF</emphasis> file. If it begins with the letters L-Z, use the <emphasis>MSPRINT2.INF</emphasis> file or the <emphasis>MSPRINT4.INF</emphasis> file. You may need to <emphasis>grep</emphasis> through each of the files to see where your specific driver is. For the following example, we have located our driver in <emphasis>MSPRINT3.INF</emphasis> and created a printer definition file for a HP DeskJet 560C printer:</para>
+
+
+<programlisting>$grep "HP DeskJet 560C Printer" MSPRINT.INF MSPRINT3.INF
+MSPRINT3.INF: "HP DeskJet 560C Printer"=DESKJETC.DRV,HP_DeskJet_ ...
+
+$make_printerdef MSPRINT3.INF "HP DeskJet 560C Printer" &gt;printers.def
+FOUND:DESKJETC.DRV
+End of section found
+CopyFiles: DESKJETC,COLOR_DESKJETC
+Datasection: (null)
+Datafile: DESKJETC.DRV
+Driverfile: DESKJETC.DRV
+Helpfile: HPVDJC.HLP
+LanguageMonitor: (null)
+
+Copy the following files to your printer$ share location:
+DESKJETC.DRV
+HPVCM.HPM
+HPVIOL.DLL
+HPVMON.DLL
+HPVRES.DLL
+HPCOLOR.DLL
+HPVUI.DLL
+HPVDJCC.HLP
+color\HPDESK.ICM</programlisting>
+
+
+<para>Note the files that the script asks you to copy. You'll need those for the next step.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.1.7.3" id="ch07-SECT-1.7.3">
+<title>Create a PRINTER$ share</title>
+
+
+<para>
+<indexterm id="ch07-idx-956525-0"><primary>PRINTER$ share, creating</primary></indexterm>This part is relatively easy. Create a share called <literal>[PRINTER$]</literal> in your <filename>smb.conf</filename> that points to an empty directory on the Samba server. Once that is done, copy over the files that the <filename>make_ printerdef</filename> script requested of you into the location of the <literal>path</literal> configuration option for the <literal>[PRINTER$]</literal> share. For example, you can put the following in your configuration file:</para>
+
+
+<programlisting>[PRINTER$]
+	path = /usr/local/samba/print
+	read only = yes
+	browsable = no
+	guest ok = yes</programlisting>
+
+
+<para>The files requested by the <filename>make_ printerdef</filename> script are typically located in the <emphasis>C:\WINDOWS\SYSTEM</emphasis> directory, although you can use the following commands to find out exactly where they are:</para>
+
+
+<programlisting>cd C:\WINDOWS
+dir <replaceable>filename</replaceable> /s</programlisting>
+
+
+<para>In this case, each of the files needs to be copied to the <filename>/usr/local/samba/print</filename> directory on the Samba server. In addition, copy the <filename>printers.def</filename> file that you created over to that share as well. Once you've done that, you're almost ready to go.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.1.7.4" id="ch07-SECT-1.7.4">
+<title>Modify the Samba configuration file</title>
+
+
+<para><filename></filename>
+<indexterm id="ch07-idx-956532-0"><primary>smb.conf (Samba configuration) file</primary><secondary>modifying for printer drivers</secondary></indexterm>The last step is to modify the Samba configuration file by adding the following three options:</para>
+
+
+<itemizedlist>
+<listitem><para><literal>printer</literal> <literal>driver</literal></para></listitem>
+<listitem><para><literal>printer</literal> <literal>driver</literal> <literal>file</literal></para></listitem>
+<listitem><para><literal>printer</literal> <literal>driver</literal> <literal>location</literal></para></listitem>
+</itemizedlist>
+
+<para>The <literal>printer</literal> <literal>driver</literal> <literal>file</literal> is a global option that points to the <filename>printers.def</filename> file; place that option in your <literal>[global]</literal> section. The other options should be set in the printer share for which you wish to automatically configure the drivers. The value for <literal>printer</literal> <literal>driver</literal> should match the string that shows up in the Printer Wizard on the Windows system. The value of the <literal>printer</literal> <literal>driver</literal> <literal>location</literal> is the pathname of the PRINTER$ share you set up, not the Unix pathname on the server. Thus, you could use the following:</para>
+
+
+<programlisting>[global]
+	printer driver file = /usr/local/samba/print/printers.def
+[hpdeskjet]
+	path = /var/spool/samba/printers
+	printable = yes
+
+	printer driver = HP DeskJet 560C Printer
+	printer driver location = \\%L\PRINTER$</programlisting>
+
+
+<para>Now you're ready to test it out. At this point, remove the Windows printer that you "set up" in the first step from the list of printers in the Printers window of My Computer. If Samba asks you to delete unneeded files, do so. These files will be replaced shortly on the client, as they now exist on the Samba server.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.1.7.5" id="ch07-SECT-1.7.5">
+<title>Testing the configuration</title>
+
+
+<para>Restart the Samba daemons and look for the <literal>[hpdeskjet]</literal> share under the machine name in the Network Neighborhood. At this point, if you click on the printer icon, you should begin the printer setup process and come to the dialog shown in <link linkend="ch07-60108">Figure 7.6</link>.</para>
+
+
+<para>This is different from the dialog you saw earlier when setting up a printer. Essentially, the dialog is asking if you wish to accept the driver that is "already installed"&mdash;in other words, offered by Samba. Go ahead and keep the existing driver, and press the Next button. At this point, you can give the printer a name and print out a test page. If it works, the setup should be complete. You should be able to repeat the process now from any Windows<indexterm id="ch07-idx-956413-0" class="endofrange" startref="ch07-idx-956393-0"/> client. <indexterm id="ch07-idx-956407-0" class="endofrange" startref="ch07-idx-956360-0"/></para>
+
+
+<figure label="7.6" id="ch07-60108">
+<title>Automatically configuring the printer driver</title>
+
+<graphic width="502" depth="296" fileref="figs/sam.0706.gif"></graphic>
+</figure>
+</sect3>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="7.2" id="ch07-31526">
+<title>Printing to Windows Client Printers</title>
+
+
+<para>
+<indexterm id="ch07-idx-956368-0" class="startofrange"><primary>printing</primary><secondary>Windows client printers</secondary><tertiary>printing to</tertiary></indexterm>If you have printers connected to clients running Windows 95/98 or NT 4.0, those printers can also be accessed from Samba. Samba comes equipped with a tool called <emphasis>smbprint</emphasis>
+<indexterm id="ch07-idx-956539-0"><primary>smbprint tool, spooling print jobs</primary></indexterm>
+<indexterm id="ch07-idx-956539-1"><primary>printing</primary><secondary>print jobs</secondary><tertiary>spooling with smbprint tool</tertiary></indexterm> that can be used to spool print jobs to Windows-based printers. In order to use this, however, you need to set up the printer as a shared resource on the client machine. If you haven't already done this, you can reset this from the Printers window, reached from the Start button, as shown in <link linkend="ch07-32814">Figure 7.7</link>.</para>
+
+
+<figure label="7.7" id="ch07-32814">
+<title>The Printers window</title>
+
+<graphic width="502" depth="273" fileref="figs/sam.0707.gif"></graphic>
+</figure>
+
+<para>Select a printer that's locally connected (for example, ours is the Canon printer), press the right mouse button to bring up a menu, and select Sharing. This will give you the Sharing tab of the Printer Properties frame, as shown in <link linkend="ch07-92021">Figure 7.8</link>. If you want it available to everybody on your LAN as the Windows guest user, enter a blank password.</para>
+
+
+<figure label="7.8" id="ch07-92021">
+<title>The Sharing tab of the printer</title>
+
+<graphic width="502" depth="273" fileref="figs/sam.0708.gif"></graphic>
+</figure>
+
+<para>Once you've got this working, you can add your printer to the list of standard printers and Samba can make it available to all the other PCs in the workgroup. To make installation on Unix easier, the Samba distribution provides two sample scripts: <filename>smbprint</filename> and <filename>smbprint.sysv</filename>. The first works with BSD-style printers; the second is designed for System V printers.</para>
+
+
+<sect2 role="" label="7.2.1" id="ch07-SECT-2.0.1">
+<title>BSD printers</title>
+
+
+<para>
+<indexterm id="ch07-idx-956540-0"><primary>printers</primary><secondary>BSD</secondary></indexterm>There are two steps you need to have a BSD Unix recognize a remote printer:</para>
+
+
+<orderedlist>
+<listitem><para>Place an entry for the printer in the <filename>/etc/printcap</filename> file (or equivalent).</para></listitem>
+<listitem><para>Place a configuration file in the <filename>/var/spool</filename> directory for the printer.</para></listitem>
+</orderedlist>
+
+<para>First, edit your <filename>/etc/printcap</filename> file and add an entry for the remote printer. Note that the input filter (<literal>if</literal>) entry needs to point to the <emphasis>smbprint</emphasis> program if the machine is on Windows 95/98. The following set of lines will accomplish on a Linux machine, for example:</para>
+
+
+<programlisting>laserjet:\
+  :sd=/var/spool/lpd/laser:\         <replaceable># spool directory</replaceable>
+  :mx#0:\                            <replaceable># maximum file size (none)</replaceable>
+  :sh:\                              <replaceable># surpress burst header (no)</replaceable>
+  :if=/usr/local/samba/bin/smbprint: <replaceable># text filter</replaceable></programlisting>
+
+
+<para>After that, you need to create a configuration file in the spool directory that you specified with the <literal>sd</literal> parameter above. (You may need to create that directory.) The file must have the name <emphasis>.config</emphasis> and should contain the following information:</para>
+
+
+<itemizedlist>
+<listitem><para>The NetBIOS name of the Windows machine with the printer</para></listitem>
+<listitem><para>The service name that represents the printer</para></listitem>
+<listitem><para>The password used to access that service</para></listitem>
+</itemizedlist>
+
+<para>The last two parameters were set up in the Sharing dialog for the requested resource on the Windows machine. In this case, the <emphasis>.config</emphasis> file would have three lines:</para>
+
+
+<programlisting>server = phoenix
+service = CANON
+password = ""</programlisting>
+
+
+<para>After you've done that, reset the Samba server machine and try printing to it using any standard Unix program.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="7.2.2" id="ch07-SECT-2.0.2">
+<title>System V printers</title>
+
+
+<para>
+<indexterm id="ch07-idx-956541-0"><primary>printers</primary><secondary>System V</secondary></indexterm>Sending print jobs from a System V Unix system is a little easier. Here, you need to get obtain the <filename>smbprint.sysv</filename> script in the <filename>/usr/local/samba/examples/printing</filename> directory and do the following:</para>
+
+
+<orderedlist>
+<listitem><para>Change the <literal>server</literal>, <literal>service</literal>, and <literal>password</literal> parameters in the script to match the NetBIOS machine, its shared printer service, and its password, respectively. For example, the following entries would be correct for the service in the previous example:</para>
+
+
+<programlisting>server = phoenix
+service = CANON
+password = ""</programlisting></listitem>
+
+<listitem><para>Run the following commands, which create a reference for the printer in the printer capabilities file. Note that the new Unix printer entry <literal>canon_  printer</literal> is named:</para>
+
+
+<programlisting># lpadmin -p canon_printer -v /dev/null -i./smbprint.sysv
+# enable canon_printer
+# accept canon_printer</programlisting></listitem>
+</orderedlist>
+
+<para>After you've done that, restart the Samba daemons and try printing to it using any standard Unix program. You should now be able to send data to a printer on a Windows client across the network.</para>
+</sect2>
+
+
+
+
+<sect2 role="" label="7.2.3" id="ch07-SECT-2.1">
+<title>Samba Printing Options</title>
+
+
+<para>
+<indexterm id="ch07-idx-956419-0" class="startofrange"><primary>printing</primary><secondary>options for</secondary></indexterm><link linkend="ch07-19361">Table 7.2</link> summarizes the Samba printing options.</para>
+
+
+<table label="7.2" id="ch07-19361">
+<title>Printing Configuration Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>printing</literal></para></entry>
+
+<entry colname="col2"><para><literal>bsd</literal>, <literal>sysv</literal>, <literal>hpux</literal>, <literal>aix</literal>, <literal>qnx</literal>, <literal>plp</literal>, <literal>softq</literal>, or <literal>lprng</literal></para></entry>
+
+<entry colname="col3"><para>Sets the print system type for your Unix system.</para></entry>
+
+<entry colname="col4"><para>System dependent</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>printable (print ok)</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Marks a share as a printing share.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>printer (printer name)</literal></para></entry>
+
+<entry colname="col2"><para>string (Unix printer name)</para></entry>
+
+<entry colname="col3"><para>Sets the name of the printer to be shown to clients.</para></entry>
+
+<entry colname="col4"><para>System dependent</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>printer driver</literal></para></entry>
+
+<entry colname="col2"><para>string (printer driver name)</para></entry>
+
+<entry colname="col3"><para>Sets the driver name that should be used by the client to send data to the printer.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>printer driver file</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Sets the name of the printer driver file.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>printer driver location</literal></para></entry>
+
+<entry colname="col2"><para>string (network pathname)</para></entry>
+
+<entry colname="col3"><para>Specifies the pathname of the share for the printer driver file.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>lpq cache time</literal></para></entry>
+
+<entry colname="col2"><para>numeric (time in seconds)</para></entry>
+
+<entry colname="col3"><para>Sets the amount of time in seconds that Samba will cache the lpq status.</para></entry>
+
+<entry colname="col4"><para><literal>10</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>postscript</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Treats all print jobs sent as postscript by prepending <literal>%!</literal> at the beginning of each file.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>load printers</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Automatically loads each of the printers in the <emphasis>printcap</emphasis> file as printing shares.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>print command</literal></para></entry>
+
+<entry colname="col2"><para>string (shell command)</para></entry>
+
+<entry colname="col3"><para>Sets the Unix command to perform printing.</para></entry>
+
+<entry colname="col4"><para>See below</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>lpq command</literal></para></entry>
+
+<entry colname="col2"><para>string (shell command)</para></entry>
+
+<entry colname="col3"><para>Sets the Unix command to return the status of the printing queue.</para></entry>
+
+<entry colname="col4"><para>See below</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>lprm command</literal></para></entry>
+
+<entry colname="col2"><para>string (shell command)</para></entry>
+
+<entry colname="col3"><para>Sets the Unix command to remove a job from the printing queue.</para></entry>
+
+<entry colname="col4"><para>See below</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>lppause command</literal></para></entry>
+
+<entry colname="col2"><para>string (shell command)</para></entry>
+
+<entry colname="col3"><para>Sets the Unix command to pause a job on the printing queue.</para></entry>
+
+<entry colname="col4"><para>See below</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>lpresume command</literal></para></entry>
+
+<entry colname="col2"><para>string (shell command)</para></entry>
+
+<entry colname="col3"><para>Sets the Unix command to resume a paused job on the printing queue.</para></entry>
+
+<entry colname="col4"><para>See below</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>printcap name</literal></para>
+
+<para><literal>(printcap)</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Specifies the location of the printer capabilities file.</para></entry>
+
+<entry colname="col4"><para>System dependent</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>min print space</literal></para></entry>
+
+<entry colname="col2"><para>numeric (size in kilobytes)</para></entry>
+
+<entry colname="col3"><para>Sets the minimum amount of disk free space that must be present to print.</para></entry>
+
+<entry colname="col4"><para><literal>0</literal></para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>queuepause command</literal></para></entry>
+
+<entry colname="col2"><para>string (shell command)</para></entry>
+
+<entry colname="col3"><para>Sets the Unix command to pause a queue.</para></entry>
+
+<entry colname="col4"><para>See below</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>queueresume command</literal></para></entry>
+
+<entry colname="col2"><para>string (shell command)</para></entry>
+
+<entry colname="col3"><para>Sets the Unix command to resume a queue.</para></entry>
+
+<entry colname="col4"><para>See below</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect3 role="" label="7.2.3.1" id="ch07-SECT-2.1.1">
+<title>printing</title>
+
+
+<para>The <literal>printing</literal>
+<indexterm id="ch07-idx-958423-0"><primary>printing configuration option</primary></indexterm> configuration option tells Samba a little about your Unix printing system, in this case which printing parser to use. With Unix, there are several different families of commands to control printing and print statusing. Samba supports seven different types, as shown in <link linkend="ch07-28758">Table 7.3</link>.</para>
+
+
+<table label="7.3" id="ch07-28758">
+<title>Printing Types </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Variable</para></entry>
+
+<entry colname="col2"><para>Definition</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>BSD</para></entry>
+
+<entry colname="col2"><para>
+<indexterm id="ch07-idx-956545-0"><primary>printing</primary><secondary>types</secondary></indexterm>Berkeley Unix system</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>SYSV</para></entry>
+
+<entry colname="col2"><para>System V</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>AIX</para></entry>
+
+<entry colname="col2"><para>AIX Operating System (IBM)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>HPUX</para></entry>
+
+<entry colname="col2"><para>Hewlett-Packard Unix</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>QNX</para></entry>
+
+<entry colname="col2"><para>QNX Realtime Operating System (QNX)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>LPRNG</para></entry>
+
+<entry colname="col2"><para>LPR Next Generation (Powell)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>SOFTQ</para></entry>
+
+<entry colname="col2"><para>SOFTQ system</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>PLP</para></entry>
+
+<entry colname="col2"><para>Portable Line Printer (Powell)</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>The value for this optio.n will be one of these seven options. For example:</para>
+
+
+<programlisting>printing = SYSV</programlisting>
+
+
+<para>The default value of this option is system dependent and is configured when Samba is first compiled. For most systems, the <filename>configure</filename> script will automatically detect the printing system to be used and configure it properly in the Samba makefile. However, if your system is a PLP, LPRNG, or QNX printing system, you will need to explicitly specify this in the makefile or the printing share.</para>
+
+
+<para>The most common system types are BSD and SYSV. Each of the printers on a BSD Unix server are described in the printer capabilities file&mdash;normally <filename>/etc/printcap</filename>.</para>
+
+
+<para>Setting the <literal>printing</literal> configuration option automatically sets at least three other printing options for the service in question: <literal>print</literal> <literal>command</literal>, <literal>lpq</literal> <literal>command</literal>, and <literal>lprm</literal> <literal>command</literal>. If you are running Samba on a system that doesn't support any of these printing styles, simply set the commands for each of these manually.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.2.3.2" id="ch07-SECT-2.1.2">
+<title>printable</title>
+
+
+<para>The <indexterm id="ch07-idx-958426-0"><primary>printable option</primary></indexterm>printable option must be set to <literal>yes</literal> in order to flag a share as a printing service. If this option is not set, the share will be treated as a disk share instead. You can set the option as follows:</para>
+
+
+<programlisting>[printer1]
+	printable = yes</programlisting>
+</sect3>
+
+
+
+<sect3 role="" label="7.2.3.3" id="ch07-SECT-2.1.3">
+<title>printer</title>
+
+
+<para>
+<indexterm id="ch07-idx-957248-0" class="startofrange"><primary>printers</primary><secondary>option for</secondary></indexterm>The <indexterm id="ch07-idx-958427-0"><primary>printer option</primary></indexterm>option, sometimes called <literal>printer</literal> <literal>name</literal>, specifies the name of the printer on the server to which the share points. This option has no default and should be set explicitly in the configuration file, even though Unix systems themselves often recognize a default name such as <literal>lp</literal> for a printer. For example:</para>
+
+
+<programlisting>[deskjet]
+	printer = hpdkjet1</programlisting>
+</sect3>
+
+
+
+<sect3 role="" label="7.2.3.4" id="ch07-SECT-2.1.4">
+<title>printer driver</title>
+
+
+<para>The <literal>printer</literal>
+<indexterm id="ch07-idx-958428-0"><primary>printer driver option</primary></indexterm> <literal>driver</literal> option sets the string that Samba uses to tell Windows what the printer is. If this option is set correctly, the Windows Printer Wizard will already know what the printer is, making installation easier for end users by giving them one less dialog to worry about. The string given should match the string that shows up in the Printer Wizard, as shown in <link linkend="ch07-46183">Figure 7.9</link>. For example, an Apple LaserWriter typically uses <literal>Apple</literal> <literal>LaserWriter</literal>; a Hewlett Packard Deskjet 560C uses <literal>HP</literal> <literal>DeskJet</literal> <literal>560C</literal> <literal>Printer</literal>.</para>
+
+
+<figure label="7.9" id="ch07-46183">
+<title>The Add Printer Wizard dialog box in Windows 98</title>
+
+<graphic width="502" depth="296" fileref="figs/sam.0709.gif"></graphic>
+</figure>
+
+<para>Automatically configuring printer drivers with Samba is explained in greater detail in <link linkend="ch07-30008">Section 7.1.7</link> earlier in this chapter.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.2.3.5" id="ch07-SECT-2.1.5">
+<indexterm id="ch07-idx-958429-0"><primary>printer driver file option</primary></indexterm>
+<title>
+printer driver file</title>
+
+
+<para>This global option gives the location of the Windows 95/98 printer driver definition file, which is needed to give printer drivers to clients using a Samba printer. The default value of this option is <filename>/usr/local/samba/lib/printers.def</filename>. You can override this default as shown below:</para>
+
+
+<programlisting>[deskjet]
+	printer driver file = /var/printers/printers.def</programlisting>
+
+
+<para>This option is explained in greater detail in <link linkend="ch07-30008">Section 7.1.7</link> earlier in this chapter.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.2.3.6" id="ch07-SECT-2.1.6">
+<indexterm id="ch07-idx-958432-0"><primary>printer driver location option</primary></indexterm>
+<title>
+printer driver location</title>
+
+
+<para>This option specifies a specific share that contains Windows 95 and 98 printer driver and definition files. There is no default parameter for this value. You can specify the location as a network pathname. A frequent approach is to use a share on your own machine, as shown here:</para>
+
+
+<programlisting>[deskjet]
+	printer driver location = \\%L\PRINTER$</programlisting>
+
+
+<para>This option is also explained in greater detail in <link linkend="ch07-30008">Section 7.1.7</link> earlier in this chapter.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.2.3.7" id="ch07-SECT-2.1.7">
+<indexterm id="ch07-idx-958433-0"><primary>lpq cache time option</primary></indexterm>
+<title>
+lpq cache time</title>
+
+
+<para>
+<indexterm id="ch07-idx-956564-0"><primary>cache time (printers), option for</primary></indexterm>The global <literal>lpq</literal> <literal>cache</literal> <literal>time</literal> option allows you to set the number of seconds that Samba will remember the current printer status. After this time elapses, Samba will issue an <emphasis>lpq</emphasis> command (or whatever command you specify with the <literal>lpq</literal> <literal>command</literal> option) to get a more up-to-date status. This defaults to 10 seconds, but can be increased if your <literal>lpq</literal> <literal>command</literal> takes an unusually long time to run or you have lots of clients. The following example resets the time to 30 seconds:</para>
+
+
+<programlisting>[deskjet]
+	lpq cache time = 30</programlisting>
+</sect3>
+
+
+
+<sect3 role="" label="7.2.3.8" id="ch07-SECT-2.1.8">
+<title>postscript</title>
+
+
+<para>The<indexterm id="ch07-idx-958438-0"><primary>postscript option</primary></indexterm> <literal>postscript</literal> option forces the printer to treat all data sent to it as Postscript. It does this by prepending the characters <literal>%!</literal> at the beginning of the first line of each job. It is normally used with PCs that insert a <literal>^D</literal> (control-D or "end-of-file mark) in front of the first line of a PostScript file. It will not, obviously, turn a non-PostScript printer into a PostScript one. The default value of this options is <literal>no</literal>. You can override it as follows:<indexterm id="ch07-idx-957258-0" class="endofrange" startref="ch07-idx-957248-0"/></para>
+
+
+<programlisting>[deskjet]
+	postscript = yes</programlisting>
+</sect3>
+
+
+
+<sect3 role="" label="7.2.3.9" id="ch07-SECT-2.1.9">
+<indexterm id="ch07-idx-958439-0"><primary>print command option</primary></indexterm>
+<indexterm id="ch07-idx-958439-1"><primary>lpq command option</primary></indexterm>
+<indexterm id="ch07-idx-958439-2"><primary>lprm command option</primary></indexterm>
+<indexterm id="ch07-idx-958439-3"><primary>lppause command option</primary></indexterm>
+<indexterm id="ch07-idx-958439-4"><primary>lpresume command option</primary></indexterm>
+<title>
+
+
+
+
+print command, lpq command, lprm command, lppause command, lpresume command</title>
+
+
+<para>
+<indexterm id="ch07-idx-956566-0"><primary>Unix</primary><secondary>options</secondary><tertiary sortas="print commands">for print commands</tertiary></indexterm>These options tell Samba which Unix commands used to control and send data to the printer. The Unix commands involved are: <emphasis>lpr</emphasis> (send to Line PRinter), <emphasis>lpq</emphasis> (List Printer Queue), <emphasis>lprm</emphasis> (Line printer ReMove), and optionally <emphasis>lppause</emphasis> and <emphasis>lpresume</emphasis>. Samba provides an option named after each of these commands, in case you need to override any of the system defaults. For example, consider:</para>
+
+
+<programlisting>lpq command = /usr/ucb/lpq %p</programlisting>
+
+
+<para>This would set the <literal>lpq command</literal> to use <filename>/usr/ucb/lpq</filename>. Similarly:</para>
+
+
+<programlisting>lprm command = /usr/local/lprm -P%p %j</programlisting>
+
+
+<para>would set the Samba printer remove command to <filename>/usr/local/lprm</filename>, and provide it the print job number using the <literal>%j</literal> variable.</para>
+
+
+<para>The default values for each of these options are dependent on the value of the <literal>printing</literal> option. <link linkend="ch07-82964">Table 7.4</link> shows the default commands for each of the printing options. The most popular printing system is BSD.</para>
+
+
+<table label="7.4" id="ch07-82964">
+<title>Default Commands for Various Printing Commands </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>BSD, AIX, PLP, LPRNG</para></entry>
+
+<entry colname="col3"><para>SYSV, HPUX</para></entry>
+
+<entry colname="col4"><para>QNX</para></entry>
+
+<entry colname="col5"><para>SOFTQ</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>print command</literal></para></entry>
+
+<entry colname="col2"><para><literal>lpr -r -P%p %s</literal>
+<indexterm id="ch07-idx-958518-0"><primary>printing</primary><secondary>commands</secondary><tertiary>default commands for</tertiary></indexterm></para></entry>
+
+<entry colname="col3"><para><literal>lp -c -d%p %s; rm %s</literal></para></entry>
+
+<entry colname="col4"><para><literal>lp -r -P%p %s</literal></para></entry>
+
+<entry colname="col5"><para><literal>lp -d%p -s %s; rm %s</literal></para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>lpq command</literal></para></entry>
+
+<entry colname="col2"><para><literal>lpq -P%p</literal></para></entry>
+
+<entry colname="col3"><para><literal>lpstat -o%p</literal></para></entry>
+
+<entry colname="col4"><para><literal>lpq -P%p</literal></para></entry>
+
+<entry colname="col5"><para><literal>lpstat -o%p</literal></para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>lprm command</literal></para></entry>
+
+<entry colname="col2"><para><literal>lprm -P%p %j</literal></para></entry>
+
+<entry colname="col3"><para><literal>cancel %p-%j</literal></para></entry>
+
+<entry colname="col4"><para><literal>cancel %p-%j</literal></para></entry>
+
+<entry colname="col5"><para><literal>cancel %p-%j</literal></para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>lppause command</literal></para></entry>
+
+<entry colname="col2"><para><literal>lp -i %p-%j -H hold </literal></para>
+
+<para>(SYSV only)</para></entry>
+
+<entry colname="col3"><para>None</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>None</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>lpresume command</literal></para></entry>
+
+<entry colname="col2"><para><literal>lp -i %p-%j -H resume</literal></para>
+
+<para>(SYSV only)</para></entry>
+
+<entry colname="col3"><para>None</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para><literal>qstat -s -j%j -r</literal></para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>It is typically not necessary to reset these options in Samba, with the possible exception of <literal>print</literal> <literal>command</literal>. This option may need to be explicitly set if your printing system doesn't have a <literal>-r</literal> (remove after printing) option on the printing command. For example:</para>
+
+
+<programlisting>/usr/local/lpr -P%p %s; /bin/rm %s</programlisting>
+
+
+<para>With a bit of judicious programming, these <filename>smb.conf</filename> options can also used for debugging:</para>
+
+
+<programlisting>print command = cat %s &gt;&gt;/tmp/printlog; lpr -r -P%p %s</programlisting>
+
+
+<para>For example, this configuration can verify that files are actually being delivered to the Samba server. If they are, their contents will show up in the <filename>/tmp/printlog</filename> file.</para>
+
+
+<para>After BSD, the next most popular kind of printing system is SYSV (or System V) printing, plus some SYSV variants for IBM's AIX and Hewlett-Packard's HP-UX. These system do not have an <filename>/etc/printcap</filename> file. Instead, the <literal>printcap</literal> <literal>file</literal> option can be set to an appropriate <emphasis>lpstat</emphasis> command for the system. This tells Samba to get a list of printers from the <emphasis>lpstat</emphasis> command. Alternatively, you can set the global configuration option <literal>printcap</literal> <literal>name</literal> to the name of a dummy <filename>printcap</filename> file you provide. In the latter case, the file must contain a series of lines such as:</para>
+
+
+<programlisting>lp|print1|My Printer 1
+print2|My Printer 2
+print3|My Printer 3</programlisting>
+
+
+<para>Each line names a printer, and provides aliases for it. In this example, the first printer is called <literal>lp</literal>, <literal>print1</literal>, or <literal>My</literal> <literal>Printer</literal> <literal>1</literal>, whichever the user prefers to use. The first name will be used in place of <literal>%p</literal> in any command Samba executes for that printer.</para>
+
+
+<para>Two additional printer types are also supported by Samba: LPRNG (LPR New Generation) and PLP (Public Line Printer). These are public domain and Open Source printing systems, and are used by many sites to overcome problems with vendor-supplied software. In addition, the SOFTQ and QNX realtime operating systems are supported by Samba.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.2.3.10" id="ch07-SECT-2.1.10">
+<title>load printers</title>
+
+
+<para>
+<indexterm id="ch07-idx-956568-0"><primary>print shares</primary><secondary>options for</secondary></indexterm>The <literal>load</literal>
+<indexterm id="ch07-idx-958440-0"><primary>load printers option</primary></indexterm> <literal>printers</literal> option tells Samba to create shares for all known printer names and load those shares into the browse list. Samba will create and list a printer share for each printer name in <filename>/etc/printcap</filename> (or system equivalent). For example, if your <filename>printcap</filename> file looks like this:<footnote label="2" id="ch07-pgfId-950654">
+
+
+<para>We have placed annotated comments off to the side in case you've never dealt with this file before.</para>
+
+
+</footnote></para>
+
+
+<programlisting>lp:\
+  :sd=/var/spool/lpd/lp:\            <replaceable># spool directory</replaceable>
+  :mx#0:\                            <replaceable># maximum file size (none)</replaceable>
+  :sh:\                              <replaceable># surpress burst header (no)</replaceable>
+  :lp=/dev/lp1:\                     <replaceable># device name for output</replaceable>
+  :if=/var/spool/lpd/lp/filter:      <replaceable># text filter</replaceable>
+
+laser:\
+  :sd=/var/spool/lpd/laser:\         <replaceable># spool directory</replaceable>
+  :mx#0:\                            <replaceable># maximum file size (none)</replaceable>
+  :sh:\                              <replaceable># surpress burst header (no)</replaceable>
+  :lp=/dev/laser:\                   <replaceable># device name for output</replaceable>
+  :if=/var/spool/lpd/lp/filter:      <replaceable># text filter</replaceable></programlisting>
+
+
+<para>and you specify:</para>
+
+
+<programlisting>load printers = yes</programlisting>
+
+
+<para>the shares <literal>[lp]</literal> and <literal>[laser]</literal> will automatically be created as valid print shares when Samba is started. Both shares will borrow the configuration options specified in the <literal>[printers]</literal> section to configure themselves, and will be available in the browse list for the Samba server.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.2.3.11" id="ch07-SECT-2.1.11">
+<title>printcap name</title>
+
+
+<para>If the <literal>printcap</literal>
+<indexterm id="ch07-idx-958442-0"><primary>printcap name option</primary></indexterm> <literal>name</literal> option (also called <literal>printcap</literal>) appears in a printing share, Samba will use the file specified as the system printer capabilities file. This is normally <filename>/etc/printcap</filename>. However, you can reset it to a file consisting of only the printers you want to share over the network. The value must be a fully-qualified filename of a printer capabilities file on the server:</para>
+
+
+<programlisting>[deskjet]
+	printcap name = /usr/local/printcap</programlisting>
+</sect3>
+
+
+
+<sect3 role="" label="7.2.3.12" id="ch07-SECT-2.1.12">
+<title>min print space</title>
+
+
+<para>The <literal>min</literal>
+<indexterm id="ch07-idx-958443-0"><primary>min print space option</primary></indexterm> <literal>print</literal> <literal>space</literal> option sets the amount of <indexterm id="ch07-idx-956570-0"><primary>spool space, options for</primary></indexterm>spool space that must be available on the disk before printing is allowed. Setting it to zero (the default) turns the check off; setting it to any other number sets the amount of free space in kilobytes required. This option helps avoid having print jobs fill up the remaining disk space on the server, which may cause other processes to fail:</para>
+
+
+<programlisting>[deskjet]
+	min print space = 4000</programlisting>
+</sect3>
+
+
+
+<sect3 role="" label="7.2.3.13" id="ch07-SECT-2.1.13">
+<indexterm id="ch07-idx-958444-0"><primary>queuepause command option</primary></indexterm>
+<title>
+queuepause command</title>
+
+
+<para>This configuration option specifies a command that tells Samba how to pause a <indexterm id="ch07-idx-956571-0"><primary>print queue, options for</primary></indexterm>print queue entirely, as opposed to a single job on the queue. The default value depends on the printing type chosen. You should not need to alter this option.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.2.3.14" id="ch07-SECT-2.1.14">
+<indexterm id="ch07-idx-958445-0"><primary>queueresume command option</primary></indexterm>
+<title>
+queueresume command</title>
+
+
+<para>This configuration option specifies a command that tells Samba how to resume a paused print queue, as opposed to resuming a single job on the print queue. The default value depends on the printing type chosen. You should not need to alter<indexterm id="ch07-idx-956423-0" class="endofrange" startref="ch07-idx-956419-0"/> this<indexterm id="ch07-idx-956372-0" class="endofrange" startref="ch07-idx-956368-0"/> option.<indexterm id="ch07-idx-956352-0" class="endofrange" startref="ch07-idx-956351-0"/></para>
+</sect3>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="7.3" id="ch07-12219">
+<title>Name Resolution with Samba</title>
+
+
+<para>
+<indexterm id="ch07-idx-956353-0" class="startofrange"><primary>name resolution</primary></indexterm>Before NetBIOS Name Servers (NBNS) came about, name resolution worked entirely by broadcast. If you needed a machine's address, you simply <indexterm id="ch07-idx-956574-0"><primary>broadcasting</primary><seealso>browsing; name resolution</seealso></indexterm>broadcast its name across the network and, in theory, the machine itself would reply. This approach is still possible: anyone looking for a machine named <literal>fred</literal> can still broadcast a query and find out if it exists and what its IP address is. (We use this capability to troubleshoot Samba name services with the <literal>nmblookup</literal> command in <link linkend="SAMBA-CH-9">Chapter 9</link>.)</para>
+
+
+<para>As you saw in the first chapter, however, broadcasting&mdash;whether it be browsing or name registration and resolution&mdash;does not pass easily across multiple subnets. In addition, many broadcasts tend to bog down networks. To solve this problem, Microsoft now provides the <indexterm id="ch07-idx-956577-0"><primary>WINS (Windows Internet Name Service)</primary><secondary>name resolution and</secondary></indexterm>Windows Internet Naming Service (WINS), a cross-subnet NBNS, which Samba supports. With it, an administrator can designate a single machine to act as a WINS server, and can then provide each client that requires name resolution the address of the WINS server. Consequently, name registration and resolution requests can be directed to a single machine from any point on the network, instead of broadcast.</para>
+
+
+<para>WINS and broadcasting are not the only means of name resolution, however. There are actually four mechanisms that can be used with Samba:</para>
+
+
+<itemizedlist>
+<listitem><para>WINS</para></listitem>
+<listitem><para>Broadcasting</para></listitem>
+<listitem><para>Unix <filename>/etc/hosts</filename> or NIS/NIS+ matches</para></listitem>
+<listitem><para><emphasis>LMHOSTS</emphasis> file</para></listitem>
+</itemizedlist>
+
+<para>Samba can use any or all of these name resolution methods in the order that you specify in the Samba configuration file using the <literal>name</literal> <literal>resolve</literal> <literal>order</literal> parameter. However, before delving into configuration options, let's discuss the one that you've probably not encountered before: the <filename>LMHOSTS</filename> file.</para>
+
+
+<sect2 role="" label="7.3.1" id="ch07-SECT-3.1">
+<title>The LMHOSTS File</title>
+
+
+<para><filename>LMHOSTS</filename>
+<indexterm id="ch07-idx-956428-0"><primary>LMHOSTS file</primary></indexterm> is the standard LAN Manager <emphasis>hosts</emphasis> file used to resolve names into IP addresses on the system. It is the NBT equivalent of the <filename>/etc/hosts</filename> file that is standard on all Unix systems. By default, the file is usually stored as <filename>/usr/local/samba/lib/LMHOSTS</filename> and shares a format similar to <filename>/etc/hosts</filename>. For example:</para>
+
+
+<programlisting>192.168.220.100    hydra
+192.168.220.101    phoenix</programlisting>
+
+
+<para>The only difference is that the names on the right side of the entries are NetBIOS names instead of DNS names. Because they are NetBIOS names, you can assign resource types to them as well:</para>
+
+
+<programlisting>192.168.220.100    hydra#20
+192.168.220.100    simple#1b
+192.168.220.101    phoenix#20</programlisting>
+
+
+<para>Here, we've assigned the <literal>hydra</literal> machine to be the primary domain controller of the <literal>SIMPLE</literal> domain, as indicated by the resource type &lt;1B&gt; assigned to the name after <literal>hydra</literal>'s IP address in the second line. The other two are standard workstations.</para>
+
+
+<para>If you wish to place an <emphasis>LMHOSTS</emphasis> file somewhere other than the default location, you will need to notify the <emphasis>nmbd</emphasis> process upon start up, as follows:</para>
+
+
+<programlisting>nmbd -H /etc/samba/lmhosts -D</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="7.3.2" id="ch07-SECT-3.2">
+<title>Setting Up Samba to Use Another WINS Server</title>
+
+
+<para>
+<indexterm id="ch07-idx-956595-0"><primary>Samba</primary><secondary>WINS server and</secondary></indexterm>
+<indexterm id="ch07-idx-956595-1"><primary>WINS (Windows Internet Name Service) server</primary><secondary>setting up Sambato use</secondary></indexterm>You can set up Samba to use a WINS server somewhere else on the network by simply pointing it to the IP address of the WINS server. This is done with the global <literal>wins</literal> <literal>server</literal> configuration option, as shown here:</para>
+
+
+<programlisting>[global]
+	wins server = 192.168.200.122</programlisting>
+
+
+<para>With this option enabled, Samba will direct all WINS requests to the server at 192.168.200.122. Note that because the request is directed at a single machine, we don't have to worry about any of the problems inherent to broadcasting. However, though you have specified an IP address for a WINS server in the configuration file, Samba will not necessarily use the WINS server before other forms of name resolution. The order in which Samba attempts various name-resolution techniques is given with the <literal>name</literal> <literal>resolve</literal> <literal>order</literal> configuration option, which we will discuss shortly.</para>
+
+
+<para>If you have a Samba server on a subnet that still uses broadcasting and the Samba server knows the correct location of a WINS server on another subnet, you can configure the Samba server to forward any name resolution requests with the <literal>wins</literal> <literal>proxy</literal> option:</para>
+
+
+<programlisting>[global]
+	wins server = 192.168.200.12
+	wins proxy = yes</programlisting>
+
+
+<para>Use this only in situations where the WINS server resides on another subnet. Otherwise, the broadcast will reach the WINS server regardless of any proxying.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="7.3.3" id="ch07-83429">
+<title>Setting Up Samba as a WINS Server</title>
+
+
+<para>
+<indexterm id="ch07-idx-956600-0"><primary>WINS (Windows Internet Name Service) server</primary><secondary>setting up Samba as</secondary></indexterm>You can set up Samba as a WINS server by setting two global options in the configuration file, as shown below:</para>
+
+
+<programlisting>[global]
+	wins support = yes
+	name resolve order = wins lmhosts hosts bcast</programlisting>
+
+
+<para>The <literal>wins</literal> <literal>support</literal> option turns Samba into a WINS server. Believe it or not, that's all you need to do! Samba handles the rest of the details behind the scenes, leaving you a relaxed administrator. The <literal>wins</literal> <literal>support=yes</literal> and the <literal>wins</literal> <literal>server</literal> option are mutually exclusive; you cannot simultaneously offer Samba as the WINS server and point to another system as the server.</para>
+
+
+<para>If Samba is acting as a WINS server, you should probably get familiar with the <literal>name</literal> <literal>resolve</literal> <literal>order</literal> option mentioned earlier. This option tells Samba the order of methods in which it tries to resolve a NetBIOS name. It can take up to four values:</para>
+
+
+<variablelist>
+<varlistentry><term>lmhosts</term>
+<listitem><para>Uses a LAN Manager <emphasis>LMHOSTS</emphasis> file</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>hosts</term>
+<listitem><para>Uses the standard name resolution methods of the Unix system, <emphasis>/etc/hosts</emphasis>, DNS, NIS, or a combination (as configured for the system)</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>wins</term>
+<listitem><para>Uses the WINS server</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>bcast</term>
+<listitem><para>Uses a broadcast method</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<para>The order in which you specify them in the value is the order in which Samba will attempt name resolution when acting as a WINS server. For example, let's look at the value specified previously:</para>
+
+
+<programlisting>name resolve order = wins lmhosts hosts bcast</programlisting>
+
+
+<para>This means that Samba will attempt to use its WINS entries first for name resolution, followed by the LAN Manager <emphasis>LMHOSTS</emphasis> file on its system. Next, the hosts value causes it to use Unix name resolution methods. The word <literal>hosts</literal> may be misleading; it covers not only the <filename>/etc/hosts</filename> file, but also the use of DNS or NIS (as configured on the Unix host). Finally, if those three do not work, it will use a broadcast to try to locate the correct machine.</para>
+
+
+<para>Finally, you can instruct a Samba server that is acting as a WINS server to check with the system's DNS server if a requested host cannot be found in its WINS database. With a typical Linux system, for example, you can find the IP address of the DNS server by searching the <filename>/etc/resolv.conf</filename> file. In it, you might see an entry such as the following:</para>
+
+
+<programlisting>nameserver 127.0.0.1
+nameserver 192.168.200.192</programlisting>
+
+
+<para>This tells us that a DNS server is located at 192.168.220.192. (The 127.0.0.1 is the localhost address and is never a valid DNS server address.)</para>
+
+
+<para>Use the global <literal>dns</literal> <literal>proxy</literal> option to alert Samba to use the configured DNS server:</para>
+
+
+<programlisting>[global]
+	wins support = yes
+	name resolve order = wins lmhosts hosts bcast
+	dns proxy = yes</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="7.3.4" id="ch07-SECT-3.4">
+<title>Name Resolution Configuration Options</title>
+
+
+<para>
+<indexterm id="ch07-idx-956430-0" class="startofrange"><primary>name resolution</primary><secondary>options for</secondary></indexterm>Samba's WINS options are shown in <link linkend="ch07-82331">Table 7.5</link>.</para>
+
+
+<table label="7.5" id="ch07-82331">
+<title>WINS Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>wins support</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>If set to <literal>yes</literal>, Samba will act as a WINS server.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>wins server</literal></para></entry>
+
+<entry colname="col2"><para>string (IP address or DNS name)</para></entry>
+
+<entry colname="col3"><para>Identifies a WINS server for Samba to use for name registration and resolution.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>wins proxy</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Allows Samba to act as a proxy to a WINS server on another subnet.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>dns proxy</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>If set to <literal>yes</literal>, a Samba WINS server will search DNS if it cannot find a name in WINS.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>name resolve order</literal></para></entry>
+
+<entry colname="col2"><para><literal>lmhosts</literal>, <literal>hosts</literal>, <literal>wins</literal>, or <literal>bcast</literal></para></entry>
+
+<entry colname="col3"><para>Specifies an order of the methods used to resolve NetBIOS names.</para></entry>
+
+<entry colname="col4"><para><literal>lmhosts hosts wins bcast</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>max ttl</literal></para></entry>
+
+<entry colname="col2"><para>numerical</para></entry>
+
+<entry colname="col3"><para>Specifies the maximum time-to-live in seconds for a requested NetBIOS names.</para></entry>
+
+<entry colname="col4"><para><literal>259200</literal>( 3 days)</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>max wins ttl</literal></para></entry>
+
+<entry colname="col2"><para>numerical</para></entry>
+
+<entry colname="col3"><para>Specifies the maximum time-to-live in seconds for NetBIOS names given out by Samba as a WINS server.</para></entry>
+
+<entry colname="col4"><para><literal>518400</literal>(6 days)</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>min wins ttl</literal></para></entry>
+
+<entry colname="col2"><para>numerical</para></entry>
+
+<entry colname="col3"><para>Specifies the minimum time-to-live in seconds for NetBIOS names given out by Samba as a WINS server.</para></entry>
+
+<entry colname="col4"><para><literal>21600</literal>(6 hours)</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect3 role="" label="7.3.4.1" id="ch07-SECT-3.4.1">
+<indexterm id="ch07-idx-958447-0"><primary>wins support option</primary></indexterm>
+<title>
+wins support</title>
+
+
+<para>Samba will provide <indexterm id="ch07-idx-956607-0"><primary>WINS (Windows Internet Name Service)</primary><secondary>options for</secondary></indexterm>WINS name service to all machines in the network if you set the following in the <literal>[global]</literal> section of the <filename>smb.conf</filename> file:</para>
+
+
+<programlisting>[global]
+    wins support = yes</programlisting>
+
+
+<para>The default value is <literal>no</literal>, which is typically used to allow another Windows NT server to become a WINS server. If you do enable this option, remember that a Samba WINS server currently cannot exchange data with any backup WINS servers. If activated, this option is mutually exclusive with the <literal>wins</literal> <literal>server</literal> parameter; you cannot set both to <literal>yes</literal> at the same time or Samba will flag an error.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.3.4.2" id="ch07-SECT-3.4.2">
+<indexterm id="ch07-idx-958448-0"><primary>wins server option</primary></indexterm>
+<title>
+wins server</title>
+
+
+<para>Samba will use an existing WINS server on the network if you specify the <literal>wins</literal> <literal>server</literal> global option in your configuration file. The value of this option is either the IP address or DNS name (not NetBIOS name) of the WINS server. For example:</para>
+
+
+<programlisting>[global]
+    wins server = 192.168.220.110</programlisting>
+
+
+<para>or:</para>
+
+
+<programlisting>[global]
+    wins server = wins.example.com</programlisting>
+
+
+<para>In order for this option to work, the <literal>wins</literal> <literal>support</literal> option must be set to <literal>no</literal> (the default). Otherwise, Samba will report an error. You can specify only one WINS server using this option.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.3.4.3" id="ch07-SECT-3.4.3">
+<indexterm id="ch07-idx-958449-0"><primary>wins proxy option</primary></indexterm>
+<title>
+wins proxy</title>
+
+
+<para>This option allows Samba to act as a proxy to another WINS server, and thus relay name registration and resolution requests from itself to the real WINS server, often outside the current subnet. The WINS server can be indicated through the <literal>wins</literal> <literal>server</literal> option. The proxy will then return the WINS response back to the client. You can enable this option by specifying the following in the <literal>[global]</literal> section:</para>
+
+
+<programlisting>[global]
+    wins proxy = yes</programlisting>
+</sect3>
+
+
+
+<sect3 role="" label="7.3.4.4" id="ch07-SECT-3.4.4">
+<indexterm id="ch07-idx-958450-0"><primary>dns proxy option</primary></indexterm>
+<title>
+dns proxy</title>
+
+
+<para>If you want the <indexterm id="ch07-idx-956608-0"><primary>DNS (Domain Name System)</primary><secondary>option for</secondary></indexterm>domain name service (DNS) to be used if a name isn't found in WINS, you can set the following option:</para>
+
+
+<programlisting>[global]
+    dns proxy = yes</programlisting>
+
+
+<para>This will cause <filename>nmbd</filename> to query for machine names using the server's standard domain name service. You may wish to deactivate this option if you do not have a permanent connection to your DNS server. Despite this option, we recommend using a WINS server. If you don't already have any WINS servers on your network, make one Samba machine a WINS server. Do not, however, make two Samba machines WINS servers (one primary and one backup) as they currently cannot exchange WINS databases.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.3.4.5" id="ch07-SECT-3.4.5">
+<indexterm id="ch07-idx-958451-0"><primary>name resolve order option</primary></indexterm>
+<title>
+name resolve order</title>
+
+
+<para>The global <literal>name</literal> <literal>resolve</literal> <literal>order</literal> option specifies the order of services that Samba will use in attempting name resolution. The default order is to use the <emphasis>LMHOSTS</emphasis> file, followed by standard Unix name resolution methods (some combination of    <filename>/etc/hosts</filename>, DNS, and NIS), then query a WINS server, and finally use broadcasting to determine the address of a NetBIOS name. You can override this option by specifying something like the following:</para>
+
+
+<programlisting>[global]
+    name resolve order = lmhosts wins hosts bcast</programlisting>
+
+
+<para>This causes resolution to use the <emphasis>LMHOSTS</emphasis> file first, followed by a query to a WINS server, the system password file, and finally broadcasting. You need not use all four options if you don't want to. This option is covered in more detail in <link linkend="ch07-83429">Section 7.3.3</link> earlier in this chapter.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.3.4.6" id="ch07-SECT-3.4.6">
+<indexterm id="ch07-idx-958452-0"><primary>max ttl option</primary></indexterm>
+<title>
+max ttl</title>
+
+
+<para>This option gives the maximum t<indexterm id="ch07-idx-956610-0"><primary>TTL (time to live), options for</primary></indexterm>
+<indexterm id="ch07-idx-956610-1"><primary>time to live (TTL), options for</primary></indexterm>ime to live (T T L) during which a NetBIOS name registered with the Samba server will remain active. You should never need to alter this value.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.3.4.7" id="ch07-SECT-3.4.7">
+<indexterm id="ch07-idx-958453-0"><primary>max wins ttl option</primary></indexterm>
+<title>
+max wins ttl</title>
+
+
+<para>This option give the maximum time to live (T T L) during which a NetBIOS name resolved from a WINS server will remain active. You should never need to change this value from its default.</para>
+</sect3>
+
+
+
+<sect3 role="" label="7.3.4.8" id="ch07-SECT-3.4.8">
+<indexterm id="ch07-idx-958454-0"><primary>min wins ttl option</primary></indexterm>
+<title>
+min wins ttl</title>
+
+
+<para>This option give the minimum time to live (T T L) during which a NetBIOS name resolved from a WINS server will remain active. You should never need to alter this value from its<indexterm id="ch07-idx-956431-0" class="endofrange" startref="ch07-idx-956430-0"/> default.<indexterm id="ch07-idx-956354-0" class="endofrange" startref="ch07-idx-956353-0"/></para>
+</sect3>
+</sect2>
+</sect1>
+</chapter>

@@ -1,0 +1,71 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>pam_winbind.conf</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" title="pam_winbind.conf"><a name="pam_winbind.conf.5"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>pam_winbind.conf &#8212; Configuration file of PAM module for Winbind</p></div><div class="refsect1" title="DESCRIPTION"><a name="id298152"></a><h2>DESCRIPTION</h2><p>This configuration file is part of the <a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p>
+	pam_winbind.conf is the configuration file for the pam_winbind PAM
+	module. See
+	<a class="citerefentry" href="pam_winbind.8.html"><span class="citerefentry"><span class="refentrytitle">pam_winbind</span>(8)</span></a>
+	for further details.
+	</p></div><div class="refsect1" title="SYNOPSIS"><a name="id266354"></a><h2>SYNOPSIS</h2><p>
+		The pam_winbind.conf configuration file is a classic ini-style
+		configuration file. There is only one section (global) where
+		various options are defined.
+	</p></div><div class="refsect1" title="OPTIONS"><a name="id266821"></a><h2>OPTIONS</h2><p>
+
+		pam_winbind supports several options which can either be set in
+		the PAM configuration files or in the pam_winbind configuration
+		file situated at
+		<code class="filename">/etc/security/pam_winbind.conf</code>. Options
+		from the PAM configuration file take precedence to those from
+		the pam_winbind.conf configuration file.
+
+		</p><div class="variablelist"><dl><dt><span class="term">debug = yes|no</span></dt><dd><p>Gives debugging output to syslog. Defaults to "no".</p></dd><dt><span class="term">debug_state = yes|no</span></dt><dd><p>Gives detailed PAM state debugging output to syslog. Defaults to "no".</p></dd><dt><span class="term">require_membership_of = [SID or NAME]</span></dt><dd><p>
+		If this option is set, pam_winbind will only succeed if the user is a member of the given SID or NAME. A SID
+		can be either a group-SID, an alias-SID or even an user-SID. It is also possible to give a NAME instead of the
+		SID. That name must have the form: <em class="parameter"><code>MYDOMAIN\\mygroup</code></em> or
+		<em class="parameter"><code>MYDOMAIN\\myuser</code></em>.  pam_winbind will, in that case, lookup the SID internally. Note that
+		NAME may not contain any spaces. It is thus recommended to only use SIDs. You can verify the list of SIDs a
+		user is a member of with <code class="literal">wbinfo --user-sids=SID</code>. This setting is empty by default.
+		</p></dd><dt><span class="term">try_first_pass = yes|no</span></dt><dd><p>
+		By default, pam_winbind tries to get the authentication token from a previous module. If no token is available
+		it asks the user for the old password. With this option, pam_winbind aborts with an error if no authentication
+		token from a previous module is available. If a primary password is not valid, PAM will prompt for a password.
+		Default to "no".
+		</p></dd><dt><span class="term">krb5_auth = yes|no</span></dt><dd><p>
+
+		pam_winbind can authenticate using Kerberos when winbindd is
+		talking to an Active Directory domain controller. Kerberos
+		authentication must be enabled with this parameter. When
+		Kerberos authentication can not succeed (e.g. due to clock
+		skew), winbindd will fallback to samlogon authentication over
+		MSRPC. When this parameter is used in conjunction with
+		<em class="parameter"><code>winbind refresh tickets</code></em>, winbind will
+		keep your Ticket Granting Ticket (TGT) uptodate by refreshing
+		it whenever necessary. Defaults to "no".
+
+		</p></dd><dt><span class="term">krb5_ccache_type = [type]</span></dt><dd><p>
+
+		When pam_winbind is configured to try kerberos authentication
+		by enabling the <em class="parameter"><code>krb5_auth</code></em> option, it can
+		store the retrieved Ticket Granting Ticket (TGT) in a
+		credential cache. The type of credential cache can be set with
+		this option. Currently the only supported value is:
+		<em class="parameter"><code>FILE</code></em>. In that case a credential cache in
+		the form of /tmp/krb5cc_UID will be created, where UID is
+		replaced with the numeric user id.  Leave empty to just do
+		kerberos authentication without having a ticket cache after the
+		logon has succeeded. This setting is empty by default.
+
+		</p></dd><dt><span class="term">cached_login = yes|no</span></dt><dd><p>
+		Winbind allows to logon using cached credentials when <em class="parameter"><code>winbind offline logon</code></em> is enabled. To use this feature from the PAM module this option must be set. Defaults to "no".
+		</p></dd><dt><span class="term">silent = yes|no</span></dt><dd><p>
+		Do not emit any messages. Defaults to "no".
+		</p></dd><dt><span class="term">mkhomedir = yes|no</span></dt><dd><p>
+		Create homedirectory for a user on-the-fly, option is valid in
+		PAM session block. Defaults to "no".
+		</p></dd><dt><span class="term">warn_pwd_expire = days</span></dt><dd><p>
+		Defines number of days before pam_winbind starts to warn about passwords that are
+		going to expire. Defaults to 14 days.
+		</p></dd></dl></div><p>
+
+	</p></div><div class="refsect1" title="SEE ALSO"><a name="id265808"></a><h2>SEE ALSO</h2><p><a class="citerefentry" href="pam_winbind.8.html"><span class="citerefentry"><span class="refentrytitle">pam_winbind</span>(8)</span></a>, <a class="citerefentry" href="wbinfo.1.html"><span class="citerefentry"><span class="refentrytitle">wbinfo</span>(1)</span></a>, <a class="citerefentry" href="winbindd.8.html"><span class="citerefentry"><span class="refentrytitle">winbindd</span>(8)</span></a>, <a class="citerefentry" href="smb.conf.5.html"><span class="citerefentry"><span class="refentrytitle">smb.conf</span>(5)</span></a></p></div><div class="refsect1" title="VERSION"><a name="id265852"></a><h2>VERSION</h2><p>This man page is correct for version 3 of Samba.</p></div><div class="refsect1" title="AUTHOR"><a name="id265862"></a><h2>AUTHOR</h2><p>
+	The original Samba software and related utilities were created by Andrew Tridgell. Samba is now developed by
+	the Samba Team as an Open Source project similar to the way the Linux kernel is developed.
+	</p><p>This manpage was written by Jelmer Vernooij and Guenther Deschner.</p></div></div></body></html>

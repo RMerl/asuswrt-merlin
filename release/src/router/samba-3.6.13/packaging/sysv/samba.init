@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+# Copyright (c) Timo Knuutila <knuutila@cs.utu.fi>     1996.
+#
+# This file should have uid root, gid sys and chmod 744
+#
+if [ ! -d /usr/bin ]
+then                    # /usr not mounted
+        exit
+fi
+
+killproc() {            # kill the named process(es)
+        pid=`/usr/bin/ps -e |
+             /usr/bin/grep -w $1 |
+             /usr/bin/sed -e 's/^  *//' -e 's/ .*//'`
+        [ "$pid" != "" ] && kill $pid
+}
+
+# Start/stop processes required for samba server
+
+case "$1" in
+
+'start')
+#
+# Edit these lines to suit your installation (paths, workgroup, host)
+#
+   /opt/samba/bin/smbd -D -s/opt/samba/smb.conf
+   /opt/samba/bin/nmbd -D -l/opt/samba/log -s/opt/samba/smb.conf
+   ;;
+'stop')
+   killproc nmbd
+   killproc smbd
+   ;;
+*)
+   echo "Usage: /etc/init.d/samba.server { start | stop }"
+   ;;
+esac

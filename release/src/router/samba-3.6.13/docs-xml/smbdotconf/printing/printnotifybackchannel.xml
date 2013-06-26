@@ -1,0 +1,19 @@
+<samba:parameter name="print notify backchannel"
+		 context="S"
+		 print="1"
+		 type="boolean"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+<para>Windows print clients can update print queue status by expecting
+	the server to open a backchannel SMB connection to them. Due to
+	client firewall settings this can cause considerable timeouts
+	and will often fail, as there is no guarantee the client is even
+	running an SMB server. By setting this parameter to <constant>no</constant>
+	the Samba print server will not try to connect back to clients
+	and treat corresponding requests as if the connection back to
+	the client failed. The default setting of <constant>yes</constant>
+	causes smbd to attempt this connection.
+</para>
+</description>
+<value type="default">yes</value>
+</samba:parameter>

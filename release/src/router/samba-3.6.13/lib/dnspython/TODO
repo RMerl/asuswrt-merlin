@@ -1,0 +1,17 @@
+Tutorial documentation
+
+More examples
+
+It would be nice to have a tokenizer that used regular expressions
+because it would be faster.
+
+Teach the resolver about DNAME (right now it relies on the server adding
+synthesized CNAMEs)
+
+Add TKEY support.
+
+TSIG works, but needs cleaning up -- probably better encapsulation of
+TSIG state to make things much simpler and easier to use.
+
+Pickling support.
+

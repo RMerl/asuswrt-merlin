@@ -1,0 +1,1147 @@
+<appendix label="A" id="SAMBA-AP-A">
+<title>Configuring Samba with SSL</title>
+
+
+
+
+<para>
+<indexterm id="appa-idx-990325-0" class="startofrange"><primary>configuring Samba</primary><secondary sortas="SSL">with SSL</secondary></indexterm>
+<indexterm id="appa-idx-990325-1" class="startofrange"><primary>SSL (Secure Sockets Layer) protocol</primary><secondary>configuring Samba with</secondary></indexterm>This appendix describes how to set up Samba to use secure connections between the Samba server and its clients. The protocol used here is Netscape's Secure Sockets Layer (SSL). For this example, we will establish a secure connection between a Samba server and a Windows NT workstation.</para>
+
+
+<para>Before we begin, we will assume that you are familiar with the fundamentals of public-key cryptography and X.509 certificates. If not, we highly recommend Bruce Schneier's <filename>Applied Cryptography, 2nd Edition</filename> (Wiley) as the premiere source for learning the many secret faces of cryptography.</para>
+
+
+<tip role="ora">
+<para>If you would like more information on Samba and SSL, be sure to look at the document <filename>SSLeay.txt</filename> in the <filename>docs/textdocs</filename> directory of the Samba distribution, which is the basis for this appendix.</para>
+
+</tip>
+
+
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="A.1" id="appa-SECT-1">
+<title>About Certificates</title>
+
+
+<para>Here are a few quick questions and answers from the <filename>SSLeay.txt</filename> file in the Samba documentation, regarding the benefits of SSL and certificates. This text was written by Christian Starkjohann for the Samba projects.</para>
+
+
+<sect2 role="" label="A.1.1" id="appa-SECT-1.1">
+<title>What is a Certificate?</title>
+
+
+<para>A certificate is issued by an issuer, usually a <emphasis>Certification Authority</emphasis> (CA), who confirms something by issuing the certificate. The subject of this confirmation depends on the CA's policy. CAs for secure web servers (used for shopping malls, etc.) usually attest only that the given public key belongs the given domain name. Company-wide CAs might attest that you are an employee of the company, that you have permissions to use a server, and so on.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.1.2" id="appa-SECT-1.2">
+<title>What is an X.509 certificate, technically?</title>
+
+
+<para>Technically, the certificate is a block of data signed by the certificate issuer (the CA). The relevant fields are:</para>
+
+
+<itemizedlist>
+
+<listitem><para>
+Unique identifier (name) of the certificate issuer</para></listitem>
+
+<listitem><para>Time range during which the certificate is valid</para></listitem>
+
+<listitem><para>Unique identifier (name) of the certified object</para></listitem>
+
+<listitem><para>Public key of the certified object</para></listitem>
+
+<listitem><para>The issuer's signature over all the above</para></listitem>
+
+</itemizedlist>
+
+<para>If this certificate is to be verified, the verifier must have a table of the names and public keys of trusted CAs. For simplicity, these tables should list certificates issued by the respective CAs for themselves (self-signed certificates).</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.1.3" id="appa-SECT-1.3">
+<title>What are the implications of this certificate structure?</title>
+
+
+<para>Four implications follow:</para>
+
+
+<itemizedlist>
+
+<listitem><para>Because the certificate contains the subjects's public key, the certificate and the private key together are all that is needed to encrypt and decrypt.</para></listitem>
+
+<listitem><para>To verify certificates, you need the certificates of all CAs you trust.</para></listitem>
+
+<listitem><para>The simplest form of a dummy-certificate is one that is signed by the subject.</para></listitem>
+
+<listitem><para>A CA is needed. The client can't simply issue local certificates for servers it trusts because the server determines which certificate it presents.</para></listitem>
+
+</itemizedlist>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="A.2" id="appa-SECT-2">
+<title>Requirements</title>
+
+
+<para>
+<indexterm id="appa-idx-990348-0"><primary>configuring Samba</primary><secondary sortas="SSL">with SSL</secondary><tertiary>requirements for</tertiary></indexterm>
+<indexterm id="appa-idx-990348-1"><primary>SSL (Secure Sockets Layer) protocol</primary><secondary>configuring Samba with</secondary><tertiary>requirements for</tertiary></indexterm>To set up SSL connections, you will need to download two programs in addition to Samba:</para>
+
+
+<variablelist>
+<varlistentry><term>
+<indexterm id="appa-idx-990613-0" class="startofrange"><primary>SSL (Secure Sockets Layer) protocol</primary><secondary>SSLeay</secondary></indexterm>SSLeay</term>
+<listitem><para>Eric <indexterm id="appa-idx-990362-0"><primary>Young, Eric</primary></indexterm>Young's implementation of the Secure Socket's Layer (SSL) protocol as a series of Unix programming libraries</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>
+<indexterm id="appa-idx-990357-0"><primary>SSL (Secure Sockets Layer) protocol</primary><secondary>SS Proxy</secondary></indexterm>SSL Proxy</term>
+<listitem><para>A freeware SSL application from Objective Development, which can be used to proxy a secure link on Unix or Windows NT platforms</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<para>These two products assist with the server and client side of the encrypted SSL connection. The SSLeay libraries are compiled and installed directly on the Unix system. SSL Proxy, on the other hand, can be downloaded and compiled (or downloaded in binary format) and located on the client side. If you intend to have a Windows NT client or a Samba client on the other end of the SSL connection, you will not require a special setup.</para>
+
+
+<para>SSL Proxy, however, does not work on Windows 95/98 machines. Therefore, if you want to have a secure connection between a Samba server and Windows 95/98 client, you will need to place either a Unix server or a Windows NT machine on the same subnet with the Windows 9<emphasis>x</emphasis> clients and route all network connections through the SSL-Proxy-enabled machine. See <link linkend="appa-89929">Figure 1.1</link>.</para>
+
+
+<figure label="A.1" id="appa-89929">
+<title>Two possible ways of proxying Windows 95/98 clients</title>
+
+<graphic width="502" depth="317" fileref="figs/sam.aa01.gif"></graphic>
+</figure>
+
+<para>For the purposes of this chapter, we will create a simple SSL connection between the Samba server and a Windows NT client. This configuration can be used to set up more complex networks at the administrator's discretion.</para>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="A.3" id="appa-SECT-3">
+<title>Installing SSLeay</title>
+
+
+<para>Samba uses the SSLeay package, written by Eric Young, to provide Secure Sockets Layer support on the server side. Because of U.S. export law, however, the SSLeay package cannot be shipped with Samba distributions that are based in the United States. For that reason, the Samba creators decided to leave it as a separate package entirely. You can download the SSLeay distribution from any of the following sites:</para>
+
+
+<itemizedlist>
+
+<listitem><para><systemitem role="ftpurl">ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL/</systemitem></para></listitem>
+
+<listitem><para><systemitem role="ftpurl">ftp://ftp.uni-mainz.de/pub/internet/security/ssl</systemitem></para></listitem>
+
+<listitem><para><systemitem role="ftpurl">ftp://ftp.cert.dfn.de/pub/tools/crypt/sslapps</systemitem></para></listitem>
+
+<listitem><para><systemitem role="ftpurl">ftp://ftp.funet.fi/pub/crypt/mirrors/ftp.psy.uq.oz.au</systemitem></para></listitem>
+
+<listitem><para><systemitem role="ftpurl">ftp://ftp.sunet.se/ftp/pub/security/tools/crypt/ssleay</systemitem></para></listitem>
+
+</itemizedlist>
+
+<para>The latest version as of this printing is 0.9.0b. Download it to the same server as the Samba distribution, then uncompress and untar it. You should be left with a directory entitled <filename>SSLeay-0.9.0b</filename>. After changing to that directory, you will need to configure and build the SSL encryption package in the same way that you did with Samba.</para>
+
+
+<para>SSLeay uses a Perl-based <filename>configure</filename> script. This script modifies the Makefile that constructs the utilities and libraries of the SSLeay package. However, the default script is hardcoded to find Perl at <filename>/usr/local/bin/perl</filename>. You may need to change the <filename>configure</filename> script to point to the location of the Perl executable file on your Unix system. For example, you can type the following to locate the Perl executable:</para>
+
+
+<programlisting># <userinput>which perl</userinput>
+/usr/bin/perl</programlisting>
+
+
+<para>Then modify the first line of the <filename>configure</filename> script to force it to use the correct Perl executable. For example, on our Red Hat Linux system:</para>
+
+
+<programlisting>#!/usr/bin/perl
+#
+# see PROBLEMS for instructions on what sort of things to do
+# when tracking a bug -tjh
+...</programlisting>
+
+
+<para>After that, you need to run the <filename>configure</filename> script by specifying a target platform for the distribution. This target platform can be any of the following:</para>
+
+
+<programlisting>BC-16              BC-32              FreeBSD            NetBSD-m86
+NetBSD-sparc       NetBSD-x86         SINIX-N            VC-MSDOS
+VC-NT              VC-W31-16          VC-W31-32          VC-WIN16
+VC-WIN32           aix-cc             aix-gcc            alpha-cc
+alpha-gcc          alpha400-cc        cc                 cray-t90-cc
+debug              debug-irix-cc      debug-linux-elf    dgux-R3-gcc
+dgux-R4-gcc        dgux-R4-x86-gcc    dist               gcc
+hpux-cc            hpux-gcc           hpux-kr-cc         irix-cc
+irix-gcc           linux-aout         linux-elf          ncr-scde
+nextstep           purify             sco5-cc            solaris-sparc-cc
+solaris-sparc-gcc  solaris-sparc-sc4  solaris-usparc-sc4 solaris-x86-gcc
+sunos-cc           sunos-gcc          unixware-2.0       unixware</programlisting>
+
+
+<para>For our system, we would enter the following:</para>
+
+
+<programlisting># <userinput>./Configure linux-elf</userinput>
+CC            =gcc
+CFLAG         =-DL_ENDIAN -DTERMIO -DBN_ASM -O3 -fomit-frame-pointer
+EX_LIBS       =
+BN_MULW       =asm/bn86-elf.o
+DES_ENC       =asm/dx86-elf.o asm/yx86-elf.o
+BF_ENC        =asm/bx86-elf.o
+CAST_ENC      =asm/cx86-elf.o
+RC4_ENC       =asm/rx86-elf.o
+RC5_ENC       =asm/r586-elf.o
+MD5_OBJ_ASM   =asm/mx86-elf.o
+SHA1_OBJ_ASM  =asm/sx86-elf.o
+RMD160_OBJ_ASM=asm/rm86-elf.o
+THIRTY_TWO_BIT mode
+DES_PTR used
+DES_RISC1 used
+DES_UNROLL used
+BN_LLONG mode
+RC4_INDEX mode</programlisting>
+
+
+<para>After the package has been configured, you can build it by typing <literal>make</literal>. If the build did not successfully complete, consult the documentation that comes with the distribution or the FAQ at <systemitem role="url">http://www.cryptsoft.com/ssleay/</systemitem> for more information on what may have happened. If the build did complete, type <literal>make</literal> <literal>install</literal> to install the libraries on the system. Note that the makefile installs the package in <filename>/usr/local/ssl</filename> by default. If you decide to install it in another directory, remember the directory when configuring Samba to use SSL.</para>
+
+
+<sect2 role="" label="A.3.1" id="appa-SECT-3.1">
+<title>Configuring SSLeay for Your System</title>
+
+
+<para>The first thing you need to do is to set the <literal>PATH</literal> environment variable on your system to include the <filename>/bin</filename> directory of the SSL distribution. This can be done with the following statement:</para>
+
+
+<programlisting>PATH=$PATH:/usr/local/ssl/bin</programlisting>
+
+
+<para>That's the easy part. Following that, you will need to create a random series of characters that will be used to prime SSLeay's random number generator. The random number generator will be used to create key pairs for both the clients and the server. You can create this random series by filling a text file of a long series of random characters. For example, you can use your favorite editor to create a text file with random characters, or use this command and enter arbitrary characters at the standard input:</para>
+
+
+<programlisting>cat &gt;/tmp/private.txt</programlisting>
+
+
+<para>The Samba documentation recommends that you type characters for longer than a minute before interrupting the input stream by hitting Control-D. Try not to type only the characters that are under your fingers on the keyboard; throw in some symbols and numbers as well. Once you've completed the random file, you can prime the random number generator with the following command:</para>
+
+
+<programlisting># ssleay genrsa -rand /tmp/private.txt &gt;/dev/null
+2451 semi-random bytes loaded
+Generating RSA private key, 512 bit long modulus
+..+++++
+.................................+++++
+e is 65537 (0x10001)</programlisting>
+
+
+<para>You can safely ignore the output of this command. After it has completed, remove the series of characters used to create the key because this could be used to recreate any private keys that were generated from this random number generator:</para>
+
+
+<programlisting>rm -f /tmp/private.txt</programlisting>
+
+
+<para>The result of this command is the hidden file .<emphasis>rnd</emphasis>, which is stored in your home directory. SSLeay will use this file when creating key pairs in the future.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.3.2" id="appa-SECT-3.2">
+<title>Configuring Samba to use SSL</title>
+
+
+<para>
+<indexterm id="appa-idx-990398-0"><primary>SSL (Secure Sockets Layer) protocol</primary><secondary>configuring Samba to use</secondary></indexterm>At this point, you can compile Samba to use SSL. Recall that in <link linkend="SAMBA-CH-2">Chapter 2</link>, we said you have to first run the configure script, which initializes the makefile, before you compile Samba. In order to use SSL with Samba, you will need to reconfigure the makefile:</para>
+
+
+<programlisting>./configure --with-ssl</programlisting>
+
+
+<para>After that, you can compile Samba with the following commands:</para>
+
+
+<programlisting># <userinput>make clean</userinput>
+# <userinput>make all</userinput></programlisting>
+
+
+<para>If you encounter an error that says the <filename>smbd</filename> executable is missing the file <filename>ssl.h</filename>, you probably didn't install SSLeay in the default directory. Use the configure option <literal>--with-sslinc</literal> to point to the base directory of the SSL distribution&mdash;in this case, the directory that contains <emphasis>include/ssl.h</emphasis>.</para>
+
+
+<para>On the other hand, if you have a clean compile, you're ready to move on to the next step: creating certificates.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.3.3" id="appa-62097">
+<title>Becoming a Certificate Authority</title>
+
+
+<para><firstterm></firstterm>
+<indexterm id="appa-idx-990405-0" class="startofrange"><primary>certificate authority</primary></indexterm>The SSL protocol requires the use of X.509 certificates in the protocol handshake to ensure that either one or both parties involved in the communication are indeed who they say they are. Certificates in real life, such as those use for SSL connections on public web sites, can cost in the arena of $300 a year. This is because the certificate must have a digital signature placed on it by a <firstterm>certificate authority</firstterm>. A certificate authority is an entity that vouches for the authenticity of a digital certificate by signing it with its own private key. This way, anyone who wishes to check the authenticity of the certificate can simply use the certificate authority's public key to check the signature.</para>
+
+
+<para>You are allowed to use a public certificate authority with SSLeay. However, you don't have to. Instead, SSLeay will allow you to declare yourself a trusted certificate authority&mdash;specifying which clients you choose to trust and which clients you do not. In order to do this, you will need to perform several tasks with the SSLeay distribution.</para>
+
+
+<para>The first thing you need to do is specify a secure location where the certificates of the clients and potentially the server will be stored. We have chosen <filename>/etc/certificates</filename> as our default. Execute the following commands as <literal>root</literal>:</para>
+
+
+<programlisting># <userinput>cd /etc</userinput>
+# <userinput>mkdir certificates</userinput>
+# <userinput>chmod 700 certificates</userinput></programlisting>
+
+
+<para>Note that we shut out all access to users other than <literal>root</literal> for this directory. This is very important.</para>
+
+
+<para>Next, you need to set up the SSLeay scripts and configuration files to use the certificates stored in this directory. In order to do this, first modify the <filename>CA.sh</filename> script located at <emphasis>/usr/local/ssl/bin/CA.sh</emphasis> to specify the location of the directory you just created. Find the line that contains the following entry:</para>
+
+
+<programlisting>CATOP=./demoCA</programlisting>
+
+
+<para>Then change it to:</para>
+
+
+<programlisting>CATOP=/etc/certificates</programlisting>
+
+
+<para>Next, you need to modify the <emphasis>/usr/local/ssl/lib/ssleay.cnf</emphasis> file to specify the same directory. Find the entry:</para>
+
+
+<programlisting>[ CA_default ]
+dir     = ./demoCA             # Where everything is kept</programlisting>
+
+
+<para>Then change it to:</para>
+
+
+<programlisting>[ CA_default ]
+dir     =  /etc/certificates   # Where everything is kept</programlisting>
+
+
+<para>Next, run the certificate authority setup script, <filename>CA.sh</filename>, in order to create the certificates. Be sure to do this as the same user that you used to prime the random number generator above:</para>
+
+
+<programlisting>/usr/local/ssl/bin/CA.sh -newca
+mkdir: cannot make directory '/etc/certificates': File exists
+CA certificate filename (or enter to create)</programlisting>
+
+
+<para>Press the Enter key to create a certificate for the CA. You should then see:</para>
+
+
+<programlisting>Making CA certificate ...
+Using configuration from /usr/local/ssl/lib/ssleay.cnf
+Generating a 1024 bit RSA private key
+.............................+++++
+.....................+++++
+writing new private key to /etc/certificates/private/cakey.pem
+Enter PEM pass phrase:</programlisting>
+
+
+<para>Enter a new pass phrase for your certificate. You will need to enter it twice correctly before SSLeay will accept it:</para>
+
+
+<programlisting>Enter PEM pass phrase:
+Verifying password - Enter PEM pass phrase:</programlisting>
+
+
+<para>Be sure to remember this pass phrase. You will need it to sign the client certificates in the future. Once SSLeay has accepted the pass phrase, it will continue on with a series of questions for each of the fields in the X509 certificate:</para>
+
+
+<programlisting>You are about to be asked to enter information that will be
+incorporated into your certificate request.
+What you are about to enter is what is called a Distinguished
+Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.</programlisting>
+
+
+<para>Fill out the remainder of the fields with information about your organization. For example, our certificate looks like this:</para>
+
+
+<programlisting>Country Name (2 letter code) [AU]:<userinput>US</userinput>
+State or Province Name (full name) [Some-State]:<userinput>California</userinput>
+Locality Name (eg, city) []:<userinput>Sebastopol</userinput>
+Organization Name (eg, company) []:<userinput>O'Reilly</userinput>
+Organizational Unit Name (eg, section) []:<userinput>Books</userinput>
+Common Name (eg, YOUR name) []:<userinput>John Doe</userinput>
+Email Address []:<userinput>doe@ora.com</userinput></programlisting>
+
+
+<para>After that, SSLeay will be configured as a certificate authority and can be used to sign certificates for client machines that will be connecting to the Samba server.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.3.4" id="appa-SECT-3.4">
+<title>Creating Certificates for Clients</title>
+
+
+<para>It's simple to create a certificate for a client machine. First, you need to generate a public/private key pair for each entity, create a certificate request file, and then use <emphasis>SSLeay</emphasis> to sign the file as a trusted authority.</para>
+
+
+<para>For our example client <literal>phoenix</literal>, this boils down to three SSLeay commands. The first generates a key pair for the client and places it in the file <filename>phoenix.key</filename>. The private key will be encrypted, in this case using triple DES. Enter a pass phrase when requested below&mdash;you'll need it for the next step:</para>
+
+
+<programlisting># ssleay genrsa -des3 1024 &gt;phoenix.key
+1112 semi-random bytes loaded
+Generating RSA private key, 1024 bit long modulus
+........................................+++++
+.............+++++
+e is 65537 (0x10001)
+Enter PEM pass phrase:
+Verifying password - Enter PEM pass phrase:</programlisting>
+
+
+<para>After that command has completed, type in the following command:</para>
+
+
+<programlisting># <userinput>ssleay req -new -key phoenix.key -out phoenix-csr</userinput>
+Enter PEM pass phrase:</programlisting>
+
+
+<para>Enter the pass phrase for the client certificate you just created (not the certificate authority). At this point, you will need to answer the questionnaire again, this time for the client machine. In addition, you must type in a challenge password and an optional company name&mdash;those do not matter here. When the command completes, you will have a certificate request in the file <emphasis>phoenix-csr.</emphasis></para>
+
+
+<para>Then, you must sign the certificate request as the trusted certificate authority. Type in the following command:</para>
+
+
+<programlisting># <userinput>ssleay ca -days 1000 -inflies phoenix-csr &gt;phoenix.pem</userinput></programlisting>
+
+
+<para>This command will prompt you to enter the PEM pass phrase of the <emphasis>certificate authority</emphasis>. Be sure that you do not enter the PEM pass phrase of the client certificate that you just created. After entering the correct pass phrase, you should see the following:</para>
+
+
+<programlisting>Check that the request matches the signature
+Signature ok
+The Subjects Distinguished Name is as follows:
+...</programlisting>
+
+
+<para>This will be followed by the information that you just entered for the client certificate. If there is an error in the fields, the program will notify you. On the other hand, if everything is fine, SSLeay will confirm that it should sign the certificate and commit it to the database. This adds a record of the certificate to the <filename>/etc/certificates/newcerts</filename> directory.</para>
+
+
+<para>The operative files at the end of this exercise are the <emphasis>phoenix.key</emphasis> and <emphasis>phoenix.pem</emphasis> files, which reside in the current directory. These files will be passed off to the client with whom the SSL-enabled Samba server will interact, and will be used by SSL Proxy.<firstterm></firstterm>
+<indexterm id="appa-idx-990421-0" class="endofrange" startref="appa-idx-990405-0"/></para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.3.5" id="appa-SECT-3.5">
+<title>Configuring the Samba Server</title>
+
+
+<para>The next step is to modify the Samba configuration file to include the following setup options. These options assume that you created the certificates directory for the certificate authority at <filename>/etc/certificates </filename>:</para>
+
+
+<programlisting>[global]
+	ssl = yes
+	ssl server cert = /etc/certificates/cacert.pem
+	ssl server key = /etc/certificates/private/cakey.pem
+	ssl CA certDir = /etc/certificates</programlisting>
+
+
+<para>At this point, you will need to kill the Samba daemons and restart them manually:</para>
+
+
+<programlisting># <userinput>nmbd -D</userinput>
+# <userinput>smbd -D</userinput>
+Enter PEM pass phrase:</programlisting>
+
+
+<para>You will need to enter the PEM pass phrase of the certificate authority to start up the Samba daemons. Note that this may present a problem in terms of starting the program using ordinary means. However, you can get around this using advanced scripting languages, such as Expect or Python.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.3.6" id="appa-SECT-3.6">
+<title>Testing with smbclient</title>
+
+
+<para>A good way to test whether Samba is working properly is to use the <emphasis>smbclient</emphasis> program. On the Samba server, enter the following command, substituting the appropriate share and user for a connection:</para>
+
+
+<programlisting># <userinput>smbclient //hydra/data -U tom</userinput></programlisting>
+
+
+<para>You should see several debugging statements followed by a line indicating the negotiated cipher, such as:</para>
+
+
+<programlisting>SSL: negotiated cipher: DES-CBC3-SHA</programlisting>
+
+
+<para>After that, you can enter your password and connect to the share normally. If this works, you can be sure that Samba is correctly supporting SSL connections. Now, on to the client setup. <indexterm id="appa-idx-990386-0" class="endofrange" startref="appa-idx-990613-0"/></para>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="A.4" id="appa-SECT-4">
+<title>Setting Up SSL Proxy</title>
+
+
+<para>The <indexterm id="appa-idx-990393-0"><primary>SSL (Secure Sockets Layer) protocol</primary><secondary>SS Proxy</secondary><tertiary>setting up</tertiary></indexterm>SSL Proxy program is available as a standalone binary or as source code. You can download it from <systemitem role="url">http://obdev.at/Products/sslproxy.html</systemitem>.</para>
+
+
+<para>Once it is downloaded, you can configure and compile it like Samba. We will configure it on a Windows NT system. However, setting it up for a Unix system involves a nearly identical series of steps. Be sure that you are the superuser (administrator) for the next series of steps.</para>
+
+
+<para>If you downloaded the binary for Windows NT, you should have the following files in a directory:</para>
+
+
+<itemizedlist>
+
+<listitem><para><filename>cygwinb19.dll</filename></para></listitem>
+
+<listitem><para><filename>README.TXT</filename></para></listitem>
+
+<listitem><para><filename>sslproxy.exe</filename></para></listitem>
+
+<listitem><para><filename>dummyCert.pem</filename></para></listitem>
+
+</itemizedlist>
+
+<para>The only one that you will be interested in is the SSL Proxy executable. Copy over the <emphasis>phoenix.pem</emphasis> and <emphasis>phoenix.key</emphasis> files that you generated earlier for the client to the same directory as the SSL proxy executable. Make sure that the directory is secure from the prying eyes of other users.</para>
+
+
+<para>The next step is to ensure that the Windows NT machine can resolve the NetBIOS name of the Samba server. This means that you should either have a WINS server up and running (the Samba server can perform this task with the <literal>wins</literal> <literal>support</literal> <literal>=</literal> <literal>yes</literal> option) or have it listed in the appropriate <emphasis>hosts</emphasis> file of the system. See <link linkend="SAMBA-CH-7">Chapter 7</link>, for more information on WINS server.<footnote label="1" id="appa-pgfId-986801">
+
+
+<para>If you are running SSL Proxy on a Unix server, you should ensure that the DNS name of the Samba server can be resolved.</para>
+
+
+</footnote></para>
+
+
+<para>Finally, start up SSL Proxy with the following command. Here, we assume that <literal>hydra</literal> is the name of the Samba server:</para>
+
+
+<programlisting>#<userinput> C:\SSLProxy&gt;sslproxy -l 139 -R hydra -r 139 -n -c phoenix.pem -k phoenix.key</userinput></programlisting>
+
+
+<para>This tells SSL Proxy to listen for connections to port 139 and relay those requests to port 139 on the NetBIOS machine <literal>hydra</literal>. It also instructs SSL Proxy to use the <filename>phoenix.pem</filename> and <filename>phoenix.key</filename> files to generate the certificate and keys necessary to initiate the SSL connection. SSL Proxy responds with:</para>
+
+
+<programlisting>Enter PEM pass phrase:</programlisting>
+
+
+<para>Enter the PEM pass phrase of the client keypair that you generated, <emphasis>not</emphasis> the certificate authority. You should then see the following output:</para>
+
+
+<programlisting>SSL: No verify locations, trying default
+proxy ready, listening for connections</programlisting>
+
+
+<para>That should take care of the client. You can place this command in a startup sequence on either Unix or Windows NT if you want this functionality available at all times. Be sure to set any clients you have connecting to the NT server (including the NT server itself) to point to this server instead of the Samba server.</para>
+
+
+<para>After you've completed setting this up, try to connect using clients that proxy through the NT server. You should find that it works almost transparently.</para>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="A.5" id="appa-SECT-5">
+<title>SSL Configuration Options</title>
+
+
+<para>
+<indexterm id="appa-idx-990427-0" class="startofrange"><primary>SSL (Secure Sockets Layer) protocol</primary><secondary>configuration options for</secondary></indexterm><link linkend="appa-61150">Table 1.1</link> summarizes the configuration options introduced in the previous section for using SSL. Note that all of these options are global in scope; in other words, they must appear in the <literal>[global]</literal> section of the configuration file.</para>
+
+
+<table label="A.1" id="appa-61150">
+<title>SSL Configuration Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>ssl</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Indicates whether SSL mode is enabled with Samba.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ssl hosts</literal></para></entry>
+
+<entry colname="col2"><para>string (list of addresses)</para></entry>
+
+<entry colname="col3"><para>Specifies a list of hosts that must always connect using SSL.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ssl hosts resign</literal></para></entry>
+
+<entry colname="col2"><para>string (list of addresses)</para></entry>
+
+<entry colname="col3"><para>Specifies a list of hosts that never connect using SS.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ssl CA certDir</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Specifies the directory where the certificates are stored.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ssl CA certFile</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Specifies a file that contains all of the certificates for Samba.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ssl server cert</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Specifies the location of the server's certificate.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ssl server key</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Specifies the location of the server's private key.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ssl client cert</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Specifies the location of the client's certificate.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ssl client key</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Specifies the location of the client's private key.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ssl require clientcert</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Indicates whether Samba should require each client to have a certificate.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ssl require servercert</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Indicates whether the server itself should have a certificate.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ssl ciphers</literal></para></entry>
+
+<entry colname="col2"><para>String</para></entry>
+
+<entry colname="col3"><para>Specifies the cipher suite to use during protocol negotiation.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ssl version</literal></para></entry>
+
+<entry colname="col2"><para><literal>ssl2or3</literal>, <literal>ssl3</literal>, or <literal>tls1</literal></para></entry>
+
+<entry colname="col3"><para>Specifies the version of SSL to use.</para></entry>
+
+<entry colname="col4"><para><literal>ssl2or3</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ssl compatibility</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Indicates whether compatibility with other implementations of SSL should be activated.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect2 role="" label="A.5.1" id="appa-SECT-5.0.1">
+<indexterm id="appa-idx-990620-0"><primary>ssl option</primary></indexterm>
+<title>
+ssl</title>
+
+
+<para>This global option configures Samba to use SSL for communication between itself and clients. The default value of this option is <literal>no</literal>. You can reset it as follows:</para>
+
+
+<programlisting>[global]
+	ssl = yes</programlisting>
+
+
+<para>Note that in order to use this option, you must have a proxy for Windows 95/98 clients, such as in the model presented earlier in this chapter.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.5.2" id="appa-SECT-5.0.2">
+<indexterm id="appa-idx-990625-0"><primary>ssl hosts option</primary></indexterm>
+<title>
+ssl hosts</title>
+
+
+<para>This option specifies the hosts that will be forced into using SSL. The syntax for specifying hosts and addresses is the same as the <literal>hosts</literal> <literal>allow</literal> and the <literal>hosts</literal> <literal>deny</literal> configuration options. For example:</para>
+
+
+<programlisting>[global]
+	ssl = yes
+	ssl hosts = 192.168.220.</programlisting>
+
+
+<para>This example specifies that all hosts that fall into the 192.168.220 subnet must use SSL connections with the client. This type of structure is useful if you know that various connections will be made by a subnet that lies across an untrusted network, such as the Internet. If neither this option nor the <literal>ssl</literal> <literal>hosts</literal> <literal>resign</literal> option has been specified, and <literal>ssl</literal> is set to <literal>yes</literal>, Samba will allow only SSL connections from all clients.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.5.3" id="appa-SECT-5.0.3">
+<indexterm id="appa-idx-990628-0"><primary>ssl hosts resign option</primary></indexterm>
+<title>
+ssl hosts resign</title>
+
+
+<para>This option specifies the hosts that will <emphasis>not</emphasis> be forced into SSL mode. The syntax for specifying hosts and addresses is the same as the <literal>hosts</literal> <literal>allow</literal> and the <literal>hosts</literal> <literal>deny</literal> configuration options. For example:</para>
+
+
+<programlisting>[global]
+	ssl = yes
+	ssl hosts resign = 160.2.310. 160.2.320.</programlisting>
+
+
+<para>This example specifies that all hosts that fall into the 160.2.310 or 160.2.320 subnets will not use SSL connections with the client. If neither this option nor the <literal>ssl</literal> <literal>hosts</literal> option has been specified, and <literal>ssl</literal> is set to <literal>yes</literal>, Samba will allow only SSL connections from all clients.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.5.4" id="appa-SECT-5.0.4">
+<indexterm id="appa-idx-990631-0"><primary>ssl CA certDir option</primary></indexterm>
+<title>
+ssl CA certDir</title>
+
+
+<para>This option specifies the directory containing the certificate authority's certificates that Samba will use to authenticate clients. There must be one file in this directory for each certificate authority, named as specified earlier in this chapter. Any other files in this directory are ignored. For example:</para>
+
+
+<programlisting>[global]
+	ssl = yes
+	ssl hosts = 192.168.220.
+	ssl CA certDir = /usr/local/samba/cert</programlisting>
+
+
+<para>There is no default for this option. You can alternatively use the option <literal>ssl</literal> <literal>CA</literal> <literal>certFile</literal> if you wish to place all the certificate authority information in the same file.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.5.5" id="appa-SECT-5.0.5">
+<indexterm id="appa-idx-990634-0"><primary>ssl CA certFile option</primary></indexterm>
+<title>
+ssl CA certFile</title>
+
+
+<para>This option specifies a file that contains the certificate authority's certificates that Samba will use to authenticate clients. This option differs from <literal>ssl</literal> <literal>CA</literal> <literal>certDir</literal> in that there is only one file used for all the certificate authorities. An example of its usage follows:</para>
+
+
+<programlisting>[global]
+	ssl = yes
+	ssl hosts = 192.168.220.
+	ssl CA certFile = /usr/local/samba/cert/certFile</programlisting>
+
+
+<para>There is no default for this option. You can also use the option <literal>ssl</literal> <literal>CA</literal> <literal>certDir</literal> if you wish to have a separate file for each certificate authority that Samba trusts.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.5.6" id="appa-SECT-5.0.6">
+<indexterm id="appa-idx-990637-0"><primary>ssl server cert option</primary></indexterm>
+<title>
+ssl server cert</title>
+
+
+<para>This option specifies the location of the server's certificate. This option is mandatory; the server must have a certificate in order to use SSL. For example:</para>
+
+
+<programlisting>[global]
+	ssl = yes
+	ssl hosts = 192.168.220.
+	ssl CA certFile = /usr/local/samba/cert/certFile
+	ssl server cert = /usr/local/samba/private/server.pem</programlisting>
+
+
+<para>There is no default for this option. Note that the certificate may contain the private key for the server.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.5.7" id="appa-SECT-5.0.7">
+<indexterm id="appa-idx-990640-0"><primary>ssl server key option</primary></indexterm>
+<title>
+ssl server key</title>
+
+
+<para>This option specifies the location of the server's private key. You should ensure that the location of the file cannot be accessed by anyone other than <literal>root</literal>. For example:</para>
+
+
+<programlisting>[global]
+	ssl = yes
+	ssl hosts = 192.168.220.
+	ssl CA certFile = /usr/local/samba/cert/certFile
+	ssl server key = /usr/local/samba/private/samba.pem</programlisting>
+
+
+<para>There is no default for this option. Note that the private key may be contained in the certificate for the server.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.5.8" id="appa-SECT-5.0.8">
+<indexterm id="appa-idx-990643-0"><primary>ssl client cert option</primary></indexterm>
+<title>
+ssl client cert</title>
+
+
+<para>This option specifies the location of the client's certificate. The certificate may be requested by the Samba server with the <literal>ssl</literal> <literal>require</literal> <literal>clientcert</literal> option; the certificate is also used by <filename>smbclient</filename>. For example:</para>
+
+
+<programlisting>[global]
+    ssl = yes
+    ssl hosts = 192.168.220.
+    ssl CA certFile = /usr/local/samba/cert/certFile
+    ssl server cert = /usr/local/ssl/private/server.pem
+    ssl client cert= /usr/local/ssl/private/clientcert.pem</programlisting>
+
+
+<para>There is no default for this option.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.5.9" id="appa-SECT-5.0.9">
+<indexterm id="appa-idx-990646-0"><primary>ssl client key option</primary></indexterm>
+<title>
+ssl client key</title>
+
+
+<para>This option specifies the location of the client's private key. You should ensure that the location of the file cannot be accessed by anyone other than <literal>root</literal>. For example:</para>
+
+
+<programlisting>[global]
+	ssl = yes
+	ssl hosts = 192.168.220.
+	ssl CA certDir = /usr/local/samba/cert/
+	ssl server key = /usr/local/ssl/private/samba.pem
+	ssl client key = /usr/local/ssl/private/clients.pem</programlisting>
+
+
+<para>There is no default for this option. This option is only needed if the client has a certificate.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.5.10" id="appa-SECT-5.0.10">
+<indexterm id="appa-idx-990649-0"><primary>ssl require clientcert option</primary></indexterm>
+<title>
+ssl require clientcert</title>
+
+
+<para>This option specifies whether the client is required to have a certificate. The certificates listed with either the <literal>ssl</literal> <literal>CA</literal> <literal>certDir</literal> or the <literal>ssl</literal> <literal>CA</literal> <literal>certFile</literal> will be searched to confirm that the client has a valid certificate and is authorized to connect to the Samba server. The value of this option is a simple boolean. For example:</para>
+
+
+<programlisting>[global]
+	ssl = yes
+	ssl hosts = 192.168.220.
+	ssl CA certFile = /usr/local/samba/cert/certFile
+	ssl require clientcert = yes</programlisting>
+
+
+<para>We recommend that you require certificates from all clients that could be connecting to the Samba server. The default value for this option is <literal>no</literal>.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.5.11" id="appa-SECT-5.0.11">
+<indexterm id="appa-idx-990652-0"><primary>ssl require servercert option</primary></indexterm>
+<title>
+ssl require servercert</title>
+
+
+<para>This option specifies whether the server is required to have a certificate. Again, this will be used by the <filename>smbclient</filename> program. The value of this option is a simple boolean. For example:</para>
+
+
+<programlisting>[global]
+	ssl = yes
+	ssl hosts = 192.168.220.
+	ssl CA certFile = /usr/local/samba/cert/certFile
+	ssl require clientcert = yes
+	ssl require servercert = yes</programlisting>
+
+
+<para>Although we recommend that you require certificates from all clients that could be connecting to the Samba server, a server certificate is not required. It is, however,  recommended. The default value for this option is <literal>no</literal>.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.5.12" id="appa-SECT-5.0.12">
+<indexterm id="appa-idx-990655-0"><primary>ssl ciphers option</primary></indexterm>
+<title>
+ssl ciphers</title>
+
+
+<para>This option sets the ciphers on which SSL will decide during the negotiation phase of the SSL connection. Samba can use any of the following ciphers:</para>
+
+
+<programlisting>DEFAULT
+DES-CFB-M1
+NULL-MD5
+RC4-MD5
+EXP-RC4-MD5
+RC2-CBC-MD5
+EXP-RC2-CBC-MD5
+IDEA-CBC-MD5
+DES-CBC-MD5
+DES-CBC-SHA
+DES-CBC3-MD5
+DES-CBC3-SHA
+RC4-64-MD5
+NULL</programlisting>
+
+
+<para>It is best not to set this option unless you are familiar with the SSL protocol and want to mandate a specific cipher suite.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.5.13" id="appa-SECT-5.0.13">
+<indexterm id="appa-idx-990658-0"><primary>ssl version option</primary></indexterm>
+<title>
+ssl version</title>
+
+
+<para>This global option specifies the version of SSL that Samba will use when handling encrypted connections. The default value is <literal>ssl2or3</literal>, which specifies that either version 2 or 3 of the SSL protocol can be used, depending on which version is negotiated in the handshake between the server and the client. However, if you want Samba to use only a specific version of the protocol, you can specify the following:</para>
+
+
+<programlisting>[global]
+	ssl version = ssl3</programlisting>
+
+
+<para>Again, it is best not to set this option unless you are familiar with the SSL protocol and want to mandate a specific version.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="A.5.14" id="appa-SECT-5.0.14">
+<indexterm id="appa-idx-990661-0"><primary>ssl compatibility option</primary></indexterm>
+<title>
+ssl compatibility</title>
+
+
+<para>This global option specifies whether Samba should be configured to use other versions of SSL. However, because no other versions exist at this writing, the issue is  moot and the variable should always be left at the<indexterm id="appa-idx-990431-0" class="endofrange" startref="appa-idx-990427-0"/> default.<indexterm id="appa-idx-990339-0" class="endofrange" startref="appa-idx-990325-0"/>
+<indexterm id="appa-idx-990339-1" class="endofrange" startref="appa-idx-990325-1"/></para>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+</appendix>

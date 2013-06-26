@@ -1,0 +1,28 @@
+<samba:parameter name="ctdb locktime warn threshold"
+                 context="G"
+		 type="integer"
+                 advanced="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+
+	<para>
+	In a cluster environment using Samba and ctdb it is critical
+	that locks on central ctdb-hosted databases like locking.tdb
+	are not held for long. With the current Samba architecture
+	it happens that Samba takes a lock and while holding that
+	lock makes file system calls into the shared cluster file
+	system. This option makes Samba warn if it detects that it
+	has held locks for the specified number of milliseconds. If
+	this happens, <emphasis>smbd</emphasis> will emit a debug level 0
+	message into its logs and potentially into syslog. The most likely
+	reason for such a log message is that an operation of the cluster
+	file system Samba exports is taking longer than expected.
+	The messages are meant as a debugging aid for potential
+	cluster problems.
+	</para>
+
+	<para>The default value of 0 disables this logging.</para>
+
+</description>
+<value type="default">0</value>
+</samba:parameter>

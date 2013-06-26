@@ -1,0 +1,1076 @@
+#include "idl_types.h"
+
+/*
+	rap interface definition
+*/
+
+[
+	pointer_default(unique),
+	helper("../librpc/ndr/ndr_rap.h")
+]
+interface rap
+{
+	typedef [public,noprint] enum {
+		NERR_Success = 0
+	} rap_status;
+
+	const int RAP_WshareEnum			= 0;
+	const int RAP_WshareGetInfo			= 1;
+	const int RAP_WshareSetInfo			= 2;
+	const int RAP_WshareAdd				= 3;
+	const int RAP_WshareDel				= 4;
+	const int RAP_NetShareCheck			= 5;
+	const int RAP_WsessionEnum			= 6;
+	const int RAP_WsessionGetInfo			= 7;
+	const int RAP_WsessionDel			= 8;
+	const int RAP_WconnectionEnum			= 9;
+	const int RAP_WfileEnum				= 10;
+	const int RAP_WfileGetInfo			= 11;
+	const int RAP_WfileClose			= 12;
+	const int RAP_WserverGetInfo			= 13;
+	const int RAP_WserverSetInfo			= 14;
+	const int RAP_WserverDiskEnum			= 15;
+	const int RAP_WserverAdminCommand		= 16;
+	const int RAP_NetAuditOpen			= 17;
+	const int RAP_WauditClear			= 18;
+	const int RAP_NetErrorLogOpen			= 19;
+	const int RAP_WerrorLogClear			= 20;
+	const int RAP_NetCharDevEnum			= 21;
+	const int RAP_NetCharDevGetInfo			= 22;
+	const int RAP_WCharDevControl			= 23;
+	const int RAP_NetCharDevQEnum			= 24;
+	const int RAP_NetCharDevQGetInfo		= 25;
+	const int RAP_WCharDevQSetInfo			= 26;
+	const int RAP_WCharDevQPurge			= 27;
+	const int RAP_WCharDevQPurgeSelf		= 28;
+	const int RAP_WMessageNameEnum			= 29;
+	const int RAP_WMessageNameGetInfo		= 30;
+	const int RAP_WMessageNameAdd			= 31;
+	const int RAP_WMessageNameDel			= 32;
+	const int RAP_WMessageNameFwd			= 33;
+	const int RAP_WMessageNameUnFwd			= 34;
+	const int RAP_WMessageBufferSend		= 35;
+	const int RAP_WMessageFileSend			= 36;
+	const int RAP_WMessageLogFileSet		= 37;
+	const int RAP_WMessageLogFileGet		= 38;
+	const int RAP_WServiceEnum			= 39;
+	const int RAP_WServiceInstall			= 40;
+	const int RAP_WServiceControl			= 41;
+	const int RAP_WAccessEnum			= 42;
+	const int RAP_WAccessGetInfo			= 43;
+	const int RAP_WAccessSetInfo			= 44;
+	const int RAP_WAccessAdd			= 45;
+	const int RAP_WAccessDel			= 46;
+	const int RAP_WGroupEnum			= 47;
+	const int RAP_WGroupAdd				= 48;
+	const int RAP_WGroupDel				= 49;
+	const int RAP_WGroupAddUser			= 50;
+	const int RAP_WGroupDelUser			= 51;
+	const int RAP_WGroupGetUsers			= 52;
+	const int RAP_WUserEnum				= 53;
+	const int RAP_WUserAdd				= 54;
+	const int RAP_WUserDel				= 55;
+	const int RAP_WUserGetInfo			= 56;
+	const int RAP_WUserSetInfo			= 57;
+	const int RAP_WUserPasswordSet			= 58;
+	const int RAP_WUserGetGroups			= 59;
+	const int RAP_WWkstaSetUID			= 62;
+	const int RAP_WWkstaGetInfo			= 63;
+	const int RAP_WWkstaSetInfo			= 64;
+	const int RAP_WUseEnum				= 65;
+	const int RAP_WUseAdd				= 66;
+	const int RAP_WUseDel				= 67;
+	const int RAP_WUseGetInfo			= 68;
+	const int RAP_WPrintQEnum			= 69;
+	const int RAP_WPrintQGetInfo			= 70;
+	const int RAP_WPrintQSetInfo			= 71;
+	const int RAP_WPrintQAdd			= 72;
+	const int RAP_WPrintQDel			= 73;
+	const int RAP_WPrintQPause			= 74;
+	const int RAP_WPrintQContinue			= 75;
+	const int RAP_WPrintJobEnum			= 76;
+	const int RAP_WPrintJobGetInfo			= 77;
+	const int RAP_WPrintJobSetInfo_OLD		= 78;
+	const int RAP_WPrintJobDel			= 81;
+	const int RAP_WPrintJobPause			= 82;
+	const int RAP_WPrintJobContinue			= 83;
+	const int RAP_WPrintDestEnum			= 84;
+	const int RAP_WPrintDestGetInfo			= 85;
+	const int RAP_WPrintDestControl			= 86;
+	const int RAP_WProfileSave			= 87;
+	const int RAP_WProfileLoad			= 88;
+	const int RAP_WStatisticsGet			= 89;
+	const int RAP_WStatisticsClear			= 90;
+	const int RAP_NetRemoteTOD			= 91;
+	const int RAP_WNetBiosEnum			= 92;
+	const int RAP_WNetBiosGetInfo			= 93;
+	const int RAP_NetServerEnum			= 94;
+	const int RAP_I_NetServerEnum			= 95;
+	const int RAP_WServiceGetInfo			= 96;
+	const int RAP_WPrintQPurge			= 103;
+	const int RAP_NetServerEnum2			= 104;
+	const int RAP_WAccessGetUserPerms		= 105;
+	const int RAP_WGroupGetInfo			= 106;
+	const int RAP_WGroupSetInfo			= 107;
+	const int RAP_WGroupSetUsers			= 108;
+	const int RAP_WUserSetGroups			= 109;
+	const int RAP_WUserModalsGet			= 110;
+	const int RAP_WUserModalsSet			= 111;
+	const int RAP_WFileEnum2			= 112;
+	const int RAP_WUserAdd2				= 113;
+	const int RAP_WUserSetInfo2			= 114;
+	const int RAP_WUserPasswordSet2			= 115;
+	const int RAP_I_NetServerEnum2			= 116;
+	const int RAP_WConfigGet2			= 117;
+	const int RAP_WConfigGetAll2			= 118;
+	const int RAP_WGetDCName			= 119;
+	const int RAP_NetHandleGetInfo			= 120;
+	const int RAP_NetHandleSetInfo			= 121;
+	const int RAP_WStatisticsGet2			= 122;
+	const int RAP_WBuildGetInfo			= 123;
+	const int RAP_WFileGetInfo2			= 124;
+	const int RAP_WFileClose2			= 125;
+	const int RAP_WNetServerReqChallenge		= 126;
+	const int RAP_WNetServerAuthenticate		= 127;
+	const int RAP_WNetServerPasswordSet		= 128;
+	const int RAP_WNetAccountDeltas			= 129;
+	const int RAP_WNetAccountSync			= 130;
+	const int RAP_WUserEnum2			= 131;
+	const int RAP_WWkstaUserLogon			= 132;
+	const int RAP_WWkstaUserLogoff			= 133;
+	const int RAP_WLogonEnum			= 134;
+	const int RAP_WErrorLogRead			= 135;
+	const int RAP_NetPathType			= 136;
+	const int RAP_NetPathCanonicalize		= 137;
+	const int RAP_NetPathCompare			= 138;
+	const int RAP_NetNameValidate			= 139;
+	const int RAP_NetNameCanonicalize		= 140;
+	const int RAP_NetNameCompare			= 141;
+	const int RAP_WAuditRead			= 142;
+	const int RAP_WPrintDestAdd			= 143;
+	const int RAP_WPrintDestSetInfo			= 144;
+	const int RAP_WPrintDestDel			= 145;
+	const int RAP_WUserValidate2			= 146;
+	const int RAP_WPrintJobSetInfo			= 147;
+	const int RAP_TI_NetServerDiskEnum		= 148;
+	const int RAP_TI_NetServerDiskGetInfo		= 149;
+	const int RAP_TI_FTVerifyMirror			= 150;
+	const int RAP_TI_FTAbortVerify			= 151;
+	const int RAP_TI_FTGetInfo			= 152;
+	const int RAP_TI_FTSetInfo			= 153;
+	const int RAP_TI_FTLockDisk			= 154;
+	const int RAP_TI_FTFixError			= 155;
+	const int RAP_TI_FTAbortFix			= 156;
+	const int RAP_TI_FTDiagnoseError		= 157;
+	const int RAP_TI_FTGetDriveStats		= 158;
+	const int RAP_TI_FTErrorGetInfo			= 160;
+	const int RAP_NetAccessCheck			= 163;
+	const int RAP_NetAlertRaise			= 164;
+	const int RAP_NetAlertStart			= 165;
+	const int RAP_NetAlertStop			= 166;
+	const int RAP_NetAuditWrite			= 167;
+	const int RAP_NetIRemoteAPI			= 168;
+	const int RAP_NetServiceStatus			= 169;
+	const int RAP_NetServerRegister			= 170;
+	const int RAP_NetServerDeregister		= 171;
+	const int RAP_NetSessionEntryMake		= 172;
+	const int RAP_NetSessionEntryClear		= 173;
+	const int RAP_NetSessionEntryGetInfo		= 174;
+	const int RAP_NetSessionEntrySetInfo		= 175;
+	const int RAP_NetConnectionEntryMake		= 176;
+	const int RAP_NetConnectionEntryClear		= 177;
+	const int RAP_NetConnectionEntrySetInfo		= 178;
+	const int RAP_NetConnectionEntryGetInfo		= 179;
+	const int RAP_NetFileEntryMake			= 180;
+	const int RAP_NetFileEntryClear			= 181;
+	const int RAP_NetFileEntrySetInfo		= 182;
+	const int RAP_NetFileEntryGetInfo		= 183;
+	const int RAP_AltSrvMessageBufferSend		= 184;
+	const int RAP_AltSrvMessageFileSend		= 185;
+	const int RAP_wI_NetRplWkstaEnum		= 186;
+	const int RAP_wI_NetRplWkstaGetInfo		= 187;
+	const int RAP_wI_NetRplWkstaSetInfo		= 188;
+	const int RAP_wI_NetRplWkstaAdd			= 189;
+	const int RAP_wI_NetRplWkstaDel			= 190;
+	const int RAP_wI_NetRplProfileEnum		= 191;
+	const int RAP_wI_NetRplProfileGetInfo		= 192;
+	const int RAP_wI_NetRplProfileSetInfo		= 193;
+	const int RAP_wI_NetRplProfileAdd		= 194;
+	const int RAP_wI_NetRplProfileDel		= 195;
+	const int RAP_wI_NetRplProfileClone		= 196;
+	const int RAP_wI_NetRplBaseProfileEnum		= 197;
+	const int RAP_WIServerSetInfo			= 201;
+	const int RAP_WPrintDriverEnum			= 205;
+	const int RAP_WPrintQProcessorEnum		= 206;
+	const int RAP_WPrintPortEnum			= 207;
+	const int RAP_WNetWriteUpdateLog		= 208;
+	const int RAP_WNetAccountUpdate			= 209;
+	const int RAP_WNetAccountConfirmUpdate		= 210;
+	const int RAP_WConfigSet			= 211;
+	const int RAP_WAccountsReplicate		= 212;
+	const int RAP_SamOEMChgPasswordUser2_P		= 214;
+	const int RAP_NetServerEnum3			= 215;
+	const int RAP_WprintDriverGetInfo		= 250;
+	const int RAP_WprintDriverSetInfo		= 251;
+	const int RAP_WaliasAdd				= 252;
+	const int RAP_WaliasDel				= 253;
+	const int RAP_WaliasGetInfo			= 254;
+	const int RAP_WaliasSetInfo			= 255;
+	const int RAP_WaliasEnum			= 256;
+	const int RAP_WuserGetLogonAsn			= 257;
+	const int RAP_WuserSetLogonAsn			= 258;
+	const int RAP_WuserGetAppSel			= 259;
+	const int RAP_WuserSetAppSel			= 260;
+	const int RAP_WappAdd				= 261;
+	const int RAP_WappDel				= 262;
+	const int RAP_WappGetInfo			= 263;
+	const int RAP_WappSetInfo			= 264;
+	const int RAP_WappEnum				= 265;
+	const int RAP_WUserDCDBInit			= 266;
+	const int RAP_WDASDAdd				= 267;
+	const int RAP_WDASDDel				= 268;
+	const int RAP_WDASDGetInfo			= 269;
+	const int RAP_WDASDSetInfo			= 270;
+	const int RAP_WDASDEnum				= 271;
+	const int RAP_WDASDCheck			= 272;
+	const int RAP_WDASDCtl				= 273;
+	const int RAP_WuserRemoteLogonCheck		= 274;
+	const int RAP_WUserPasswordSet3			= 275;
+	const int RAP_WCreateRIPLMachine		= 276;
+	const int RAP_WDeleteRIPLMachine		= 277;
+	const int RAP_WGetRIPLMachineInfo		= 278;
+	const int RAP_WSetRIPLMachineInfo		= 279;
+	const int RAP_WEnumRIPLMachine			= 280;
+	const int RAP_I_ShareAdd			= 281;
+	const int RAP_AliasEnum				= 282;
+	const int RAP_WaccessApply			= 283;
+	const int RAP_WPrt16Query			= 284;
+	const int RAP_WPrt16Set				= 285;
+	const int RAP_WUserDel100			= 286;
+	const int RAP_WUserRemoteLogonCheck2		= 287;
+	const int RAP_WRemoteTODSet			= 294;
+	const int RAP_WprintJobMoveAll			= 295;
+	const int RAP_W16AppParmAdd			= 296;
+	const int RAP_W16AppParmDel			= 297;
+	const int RAP_W16AppParmGet			= 298;
+	const int RAP_W16AppParmSet			= 299;
+	const int RAP_W16RIPLMachineCreate		= 300;
+	const int RAP_W16RIPLMachineGetInfo		= 301;
+	const int RAP_W16RIPLMachineSetInfo		= 302;
+	const int RAP_W16RIPLMachineEnum		= 303;
+	const int RAP_W16RIPLMachineListParmEnum	= 304;
+	const int RAP_W16RIPLMachClassGetInfo		= 305;
+	const int RAP_W16RIPLMachClassEnum		= 306;
+	const int RAP_W16RIPLMachClassCreate		= 307;
+	const int RAP_W16RIPLMachClassSetInfo		= 308;
+	const int RAP_W16RIPLMachClassDelete		= 309;
+	const int RAP_W16RIPLMachClassLPEnum		= 310;
+	const int RAP_W16RIPLMachineDelete		= 311;
+	const int RAP_W16WSLevelGetInfo			= 312;
+	const int RAP_WserverNameAdd			= 313;
+	const int RAP_WserverNameDel			= 314;
+	const int RAP_WserverNameEnum			= 315;
+	const int RAP_I_WDASDEnum			= 316;
+	const int RAP_WDASDEnumTerminate		= 317;
+	const int RAP_WDASDSetInfo2			= 318;
+	const int MAX_API				= 318;
+
+	/* sizes of fixed-length fields, including null terminator */
+	const int RAP_GROUPNAME_LEN	= 21;
+	const int RAP_USERNAME_LEN	= 21;
+	const int RAP_SHARENAME_LEN	= 13;
+	const int RAP_UPASSWD_LEN	= 16; /* user password */
+	const int RAP_SPASSWD_LEN	= 9; /* share password */
+	const int RAP_MACHNAME_LEN	= 16;
+	const int RAP_SRVCNAME_LEN	= 16;
+	const int RAP_SRVCCMNT_LEN	= 64;
+	const int RAP_DATATYPE_LEN	= 10;
+
+	typedef struct {
+		uint8 group_name[21];
+		char reserved1;
+		astring *comment;
+	} rap_group_info_1;
+
+	typedef struct {
+		uint8 user_name[21];
+		char reserved1;
+		uint8 passwrd[16];
+		uint32 pwage;
+		uint16 priv;
+		astring *home_dir;
+		astring *comment;
+		uint16 userflags;
+		astring *logon_script;
+	} rap_user_info_1;
+
+	typedef struct {
+		uint8 service_name[16];
+		uint16 status;
+		uint32 installcode;
+		uint16 process_num;
+		astring *comment;
+	} rap_service_info_2;
+
+	typedef struct {
+		uint8 share_name[13];
+	} rap_share_info_0;
+
+	typedef struct {
+		uint8 share_name[13];
+		char reserved1;
+		uint16 share_type;
+		astring *comment;
+	} rap_share_info_1;
+
+	typedef struct {
+		uint8 share_name[13];
+		char reserved1;
+		uint16 share_type;
+		astring *comment;
+		uint16 perms;
+		uint16 maximum_users;
+		uint16 active_users;
+		astring *path;
+		uint8 password[9];
+		char reserved2;
+	} rap_share_info_2;
+
+	typedef [nodiscriminant] union {
+		[case(0)] rap_share_info_0 info0;
+		[case(1)] rap_share_info_1 info1;
+		[case(2)] rap_share_info_2 info2;
+	} rap_share_info;
+
+	[public] void rap_NetShareEnum(
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[out] rap_status status,
+		[out] uint16 convert,
+		[out] uint16 count,
+		[out] uint16 available,
+		[out,switch_is(level)] rap_share_info *info
+	);
+
+	/* not documented in MS-RAP */
+	[public] void rap_NetShareAdd(
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[in,switch_is(level)] rap_share_info info,
+		[out] rap_status status,
+		[out] uint16 convert
+	);
+
+	typedef struct {
+		uint8 name[16];
+	} rap_server_info_0;
+
+	typedef struct {
+		uint8 name[16];
+		uint8 version_major;
+		uint8 version_minor;
+		uint32 servertype;
+		astring *comment;
+	} rap_server_info_1;
+
+	typedef [nodiscriminant] union {
+		[case(0)] rap_server_info_0 info0;
+		[case(1)] rap_server_info_1 info1;
+	} rap_server_info;
+
+	[public] void rap_NetServerEnum2(
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[in] uint32 servertype,
+		[in] astring *domain,
+		[out] rap_status status,
+		[out] uint16 convert,
+		[out] uint16 count,
+		[out] uint16 available,
+		[out,switch_is(level)] rap_server_info info[count]
+	);
+
+	[public] void rap_WserverGetInfo(
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[out] rap_status status,
+		[out] uint16 convert,
+		[out] uint16 available,
+		[out,switch_is(level)] rap_server_info info
+	);
+
+	typedef [public] enum {
+		PRJ_QS_QUEUED	= 0x0000,
+		PRJ_QS_PAUSED	= 0x0001,
+		PRJ_QS_SPOOLING	= 0x0002,
+		PRJ_QS_PRINTING	= 0x0003,
+		PRJ_QS_ERROR	= 0x0010
+	} rap_PrintJStatusCode;
+
+	typedef struct {
+		uint16 JobID;
+	} rap_PrintJobInfo0;
+
+	typedef struct {
+		uint16 JobID;
+		[charset(DOS)] uint8 UserName[21];
+		uint8 Pad;
+		[charset(DOS)] uint8 NotifyName[16];
+		[charset(DOS)] uint8 DataType[10];
+		[relative_short] astring *PrintParameterString;
+		uint16 PrintParameterStringHigh;
+		uint16 JobPosition;
+		rap_PrintJStatusCode JobStatus;
+		[relative_short] astring *JobStatusString;
+		uint16 JobStatusStringHigh;
+		time_t TimeSubmitted;
+		uint32 JobSize;
+		[relative_short] astring *JobCommentString;
+		uint16 JobCommentStringHigh;
+	} rap_PrintJobInfo1;
+
+	typedef struct {
+		uint16 JobID;
+		uint16 Priority;
+		[relative_short] astring *UserName;
+		uint16 UserNameHigh;
+		uint16 JobPosition;
+		rap_PrintJStatusCode JobStatus;
+		time_t TimeSubmitted;
+		uint32 JobSize;
+		[relative_short] astring *JobCommentString;
+		uint16 JobCommentStringHigh;
+		[relative_short] astring *DocumentName;
+		uint16 DocumentNameHigh;
+	} rap_PrintJobInfo2;
+
+	typedef struct {
+		uint16 JobID;
+		uint16 Priority;
+		[relative_short] astring *UserName;
+		uint16 UserNameHigh;
+		uint16 JobPosition;
+		rap_PrintJStatusCode JobStatus;
+		time_t TimeSubmitted;
+		uint32 JobSize;
+		[relative_short] astring *JobCommentString;
+		uint16 JobCommentStringHigh;
+		[relative_short] astring *DocumentName;
+		uint16 DocumentNameHigh;
+		[relative_short] astring *NotifyName;
+		uint16 NotifyNameHigh;
+		[relative_short] astring *DataType;
+		uint16 DataTypeHigh;
+		[relative_short] astring *PrintParameterString;
+		uint16 PrintParameterStringHigh;
+		[relative_short] astring *StatusString;
+		uint16 StatusStringHigh;
+		[relative_short] astring *QueueName;
+		uint16 QueueNameHigh;
+		[relative_short] astring *PrintProcessorName;
+		uint16 PrintProcessorNameHigh;
+		[relative_short] astring *PrintProcessorParams;
+		uint16 PrintProcessorParamsHigh;
+		[relative_short] astring *DriverName;
+		uint16 DriverNameHigh;
+		[relative_short] astring *DriverDataOffset;
+		uint16 DriverDataOffsetHigh;
+		[relative_short] astring *PrinterNameOffset;
+		uint16 PrinterNameOffsetHigh;
+	} rap_PrintJobInfo3;
+
+	typedef [public,nodiscriminant] union {
+		[case(0)] rap_PrintJobInfo0 info0;
+		[case(1)] rap_PrintJobInfo1 info1;
+		[case(2)] rap_PrintJobInfo2 info2;
+		[case(3)] rap_PrintJobInfo3 info3;
+	} rap_printj_info;
+
+	typedef [public] enum {
+		PRQ_ACTIVE	= 0x0000,
+		PRQ_PAUSE	= 0x0001,
+		PRQ_ERROR	= 0x0002,
+		PRQ_PENDING	= 0x0003
+	} rap_PrintQStatusCode;
+
+	typedef struct {
+		[charset(DOS)] uint8 PrintQName[13];
+	} rap_PrintQueue0;
+
+	typedef struct {
+		[charset(DOS)] uint8 PrintQName[13];
+		uint8 Pad1;
+		uint16 Priority;
+		uint16 StartTime;
+		uint16 UntilTime;
+		[relative_short] astring *SeparatorPageFilename;
+		uint16 SeparatorPageFilenameHigh;
+		[relative_short] astring *PrintProcessorDllName;
+		uint16 PrintProcessorDllNameHigh;
+		[relative_short] astring *PrintDestinationsName;
+		uint16 PrintDestinationsNameHigh;
+		[relative_short] astring *PrintParameterString;
+		uint16 PrintParameterStringHigh;
+		[relative_short] astring *CommentString;
+		uint16 CommentStringHigh;
+		rap_PrintQStatusCode PrintQStatus;
+		uint16 PrintJobCount;
+	} rap_PrintQueue1;
+
+	typedef struct {
+		rap_PrintQueue1 queue;
+		rap_PrintJobInfo1 job[queue.PrintJobCount];
+	} rap_PrintQueue2;
+
+	typedef [public] struct {
+		[relative_short] astring *PrintQueueName;
+		uint16 PrintQueueNameHigh;
+		uint16 Priority;
+		uint16 StartTime;
+		uint16 UntilTime;
+		uint16 Pad;
+		[relative_short] astring *SeparatorPageFilename;
+		uint16 SeparatorPageFilenameHigh;
+		[relative_short] astring *PrintProcessorDllName;
+		uint16 PrintProcessorDllNameHigh;
+		[relative_short] astring *PrintParameterString;
+		uint16 PrintParameterStringHigh;
+		[relative_short] astring *CommentString;
+		uint16 CommentStringHigh;
+		rap_PrintQStatusCode PrintQStatus;
+		uint16 PrintJobCount;
+		[relative_short] astring *Printers;
+		uint16 PrintersHigh;
+		[relative_short] astring *DriverName;
+		uint16 DriverNameHigh;
+		[relative_short] astring *PrintDriverData;
+		uint16 PrintDriverDataHigh;
+	} rap_PrintQueue3;
+
+	typedef struct {
+		rap_PrintQueue3 queue;
+		rap_PrintJobInfo2 job[queue.PrintJobCount];
+	} rap_PrintQueue4;
+
+	typedef struct {
+		[relative_short] astring *PrintQueueName;
+		uint16 PrintQueueNameHigh;
+	} rap_PrintQueue5;
+
+	typedef [public,nodiscriminant] union {
+		[case(0)] rap_PrintQueue0 info0;
+		[case(1)] rap_PrintQueue1 info1;
+		[case(2)] rap_PrintQueue2 info2;
+		[case(3)] rap_PrintQueue3 info3;
+		[case(4)] rap_PrintQueue4 info4;
+		[case(5)] rap_PrintQueue5 info5;
+	} rap_printq_info;
+
+	[public] void rap_NetPrintQEnum(
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[out] rap_status status,
+		[out] uint16 convert,
+		[out] uint16 count,
+		[out] uint16 available,
+		[out,switch_is(level)] rap_printq_info info[count]
+	);
+
+	[public] void rap_NetPrintQGetInfo(
+		[in] astring PrintQueueName,
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[out] rap_status status,
+		[out] uint16 convert,
+		[out] uint16 available,
+		[out,switch_is(level)] rap_printq_info info
+	);
+
+	[public] void rap_NetPrintJobPause(
+		[in] uint16 JobID,
+		[out] rap_status status,
+		[out] uint16 convert
+	);
+
+	[public] void rap_NetPrintJobContinue(
+		[in] uint16 JobID,
+		[out] rap_status status,
+		[out] uint16 convert
+	);
+
+	[public] void rap_NetPrintJobDelete(
+		[in] uint16 JobID,
+		[out] rap_status status,
+		[out] uint16 convert
+	);
+
+	/* not documented in MS-RAP */
+	[public] void rap_NetPrintQueuePause(
+		[in] astring PrintQueueName,
+		[out] rap_status status,
+		[out] uint16 convert
+	);
+
+	/* not documented in MS-RAP */
+	[public] void rap_NetPrintQueueResume(
+		[in] astring PrintQueueName,
+		[out] rap_status status,
+		[out] uint16 convert
+	);
+
+	/* not documented in MS-RAP */
+	[public] void rap_NetPrintQueuePurge(
+		[in] astring PrintQueueName,
+		[out] rap_status status,
+		[out] uint16 convert
+	);
+
+	/* not documented in MS-RAP */
+	[public] void rap_NetPrintJobEnum(
+		[in] astring PrintQueueName,
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[out] rap_status status,
+		[out] uint16 convert,
+		[out] uint16 count,
+		[out] uint16 available,
+		[out,switch_is(level)] rap_printj_info info[count]
+	);
+
+	[public] void rap_NetPrintJobGetInfo(
+		[in] uint16 JobID,
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[out] rap_status status,
+		[out] uint16 convert,
+		[out] uint16 available,
+		[out,switch_is(level)] rap_printj_info info
+	);
+
+	typedef enum {
+		RAP_PARAM_JOBNUM		= 0x0001,
+		RAP_PARAM_USERNAME		= 0x0002,
+		RAP_PARAM_NOTIFYNAME		= 0x0003,
+		RAP_PARAM_DATATYPE		= 0x0004,
+		RAP_PARAM_PARAMETERS_STRING	= 0x0005,
+		RAP_PARAM_JOBPOSITION		= 0x0006,
+		RAP_PARAM_JOBSTATUS		= 0x0007,
+		RAP_PARAM_JOBSTATUSSTR		= 0x0008,
+		RAP_PARAM_TIMESUBMITTED		= 0x0009,
+		RAP_PARAM_JOBSIZE		= 0x000a,
+		RAP_PARAM_JOBCOMMENT		= 0x000b
+	} rap_JobInfoParamNum;
+
+	typedef [nodiscriminant] union {
+		[case (RAP_PARAM_JOBNUM)] uint16 value;
+		[case (RAP_PARAM_USERNAME)] astring string;
+		[case (RAP_PARAM_NOTIFYNAME)] astring string;
+		[case (RAP_PARAM_DATATYPE)] astring string;
+		[case (RAP_PARAM_PARAMETERS_STRING)] astring string;
+		[case (RAP_PARAM_JOBPOSITION)] uint16 value;
+		[case (RAP_PARAM_JOBSTATUS)] uint16 value;
+		[case (RAP_PARAM_JOBSTATUSSTR)] astring string;
+		[case (RAP_PARAM_TIMESUBMITTED)] uint32 value4;
+		[case (RAP_PARAM_JOBSIZE)] uint32 value4;
+		[case (RAP_PARAM_JOBCOMMENT)] astring string;
+	} rap_JobInfoParam;
+
+	[public] void rap_NetPrintJobSetInfo(
+		[in] uint16 JobID,
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[in] rap_JobInfoParamNum ParamNum,
+		[in,switch_is(ParamNum)] rap_JobInfoParam Param,
+		[out] rap_status status,
+		[out] uint16 convert
+	);
+
+	/* all not documented in MS-RAP */
+
+	typedef struct {
+		[charset(DOS)] uint8 PrintDestName[9];
+	} rap_PrintDest0;
+
+	typedef struct {
+		[charset(DOS)] uint8 PrintDestName[9];
+		[charset(DOS)] uint8 UserName[21];
+		uint16 JobId;
+		uint16 Status;
+		[relative_short] astring *StatusStringName;
+		uint16 PrintQueueNameHigh;
+		uint16 Time;
+	} rap_PrintDest1;
+
+	typedef struct {
+		[relative_short] astring *PrinterName;
+		uint16 PrinterNameHigh;
+	} rap_PrintDest2;
+
+	typedef struct {
+		[relative_short] astring *PrinterName;
+		uint16 PrinterNameHigh;
+		[relative_short] astring *UserName;
+		uint16 UserNameHigh;
+		[relative_short] astring *LogAddr;
+		uint16 LogAddrHigh;
+		uint16 JobId;
+		uint16 Status;
+		[relative_short] astring *StatusStringName;
+		uint16 PrintQueueNameHigh;
+		[relative_short] astring *Comment;
+		uint16 CommentHigh;
+		[relative_short] astring *Drivers;
+		uint16 DriversHigh;
+		uint16 Time;
+		uint16 Pad1;
+	} rap_PrintDest3;
+
+	typedef [public,nodiscriminant] union {
+		[case(0)] rap_PrintDest0 info0;
+		[case(1)] rap_PrintDest1 info1;
+		[case(2)] rap_PrintDest2 info2;
+		[case(3)] rap_PrintDest3 info3;
+	} rap_printdest_info;
+
+	/* not documented in MS-RAP */
+	[public] void rap_NetPrintDestEnum(
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[out] rap_status status,
+		[out] uint16 convert,
+		[out] uint16 count,
+		[out] uint16 available,
+		[out,switch_is(level)] rap_printdest_info info[count]
+	);
+
+	/* not documented in MS-RAP */
+	[public] void rap_NetPrintDestGetInfo(
+		[in] astring PrintDestName,
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[out] rap_status status,
+		[out] uint16 convert,
+		[out] uint16 available,
+		[out,switch_is(level)] rap_printdest_info info
+	);
+
+	[public] void rap_NetUserPasswordSet2(
+		[in] astring UserName,
+		[in] uint8 OldPassword[16],
+		[in] uint8 NewPassword[16],
+		[in] uint16 EncryptedPassword,
+		[in] uint16 RealPasswordLength,
+		[out] rap_status status,
+		[out] uint16 convert
+	);
+
+	/* not documented in MS-RAP */
+	[public] void rap_NetOEMChangePassword(
+		[in] astring UserName,
+		[in] uint8 crypt_password[516],
+		[in] uint8 password_hash[16],
+		[out] rap_status status,
+		[out] uint16 convert
+	);
+
+	typedef struct {
+		[charset(DOS)] uint8 Name[21];
+	} rap_NetUserInfo0;
+
+	typedef [public] enum {
+		USER_PRIV_GUEST = 0,
+		USER_PRIV_USER	= 1,
+		USER_PRIV_ADMIN	= 2
+	} rap_UserPriv;
+
+	typedef struct {
+		[charset(DOS)] uint8 Name[21];
+		uint8 Pad;
+		uint8 Password[16];
+		time_t PasswordAge;
+		rap_UserPriv Priv;
+		[relative_short] astring *HomeDir;
+		uint16 HomeDirHigh;
+		[relative_short] astring *Comment;
+		uint16 CommentHigh;
+		uint16 Flags; /* FIXME */
+		[relative_short] astring *ScriptPath;
+		uint16 ScriptPathHigh;
+	} rap_NetUserInfo1;
+
+	typedef [public,v1_enum] enum {
+		AF_OP_PRINT	= 0,
+		AF_OP_COMM	= 1,
+		AF_OP_SERVER	= 2,
+		AF_OP_ACCOUNTS	= 3
+	} rap_AuthFlags;
+
+	typedef [public] struct {
+		uint8 LogonHours[21];
+	} rap_LogonHours;
+
+	typedef struct {
+		[charset(DOS)] uint8 Name[21];
+		uint8 Pad;
+		uint8 Password[16];
+		time_t PasswordAge;
+		rap_UserPriv Priv;
+		[relative_short] astring *HomeDir;
+		uint16 HomeDirHigh;
+		[relative_short] astring *Comment;
+		uint16 CommentHigh;
+		uint16 Flags; /* FIXME */
+		[relative_short] astring *ScriptPath;
+		uint16 ScriptPathHigh;
+		rap_AuthFlags AuthFlags;
+		[relative_short] astring *FullName;
+		uint16 FullNameHigh;
+		[relative_short] astring *UsrComment;
+		uint16 UsrCommentHigh;
+		[relative_short] astring *pParms;
+		uint16 pParmsHigh;
+		[relative_short] astring *WorkStations;
+		uint16 WorkStationsHigh;
+		time_t LastLogon;
+		time_t LastLogOff;
+		time_t AcctExpires;
+		uint32 MaxStorage;
+		uint16 UnitsPerWeek;
+		[relative_short] rap_LogonHours *LogonHours;
+		uint16 LogonHoursHigh;
+		uint16 BadPwCount;
+		uint16 NumLogons;
+		[relative_short] astring *LogonServer;
+		uint16 LogonServerHigh;
+		uint16 CountryCode;
+		uint16 CodePage;
+	} rap_NetUserInfo2;
+
+	typedef struct {
+		[charset(DOS)] uint8 Name[21];
+		uint8 Pad;
+		[relative_short] astring *Comment;
+		uint16 CommentHigh;
+		[relative_short] astring *UsrComment;
+		uint16 UsrCommentHigh;
+		[relative_short] astring *FullName;
+		uint16 FullNameHigh;
+	} rap_NetUserInfo10;
+
+	typedef struct {
+		[charset(DOS)] uint8 Name[21];
+		uint8 Pad;
+		[relative_short] astring *Comment;
+		uint16 CommentHigh;
+		[relative_short] astring *UsrComment;
+		uint16 UsrCommentHigh;
+		[relative_short] astring *FullName;
+		uint16 FullNameHigh;
+		rap_UserPriv Priv;
+		rap_AuthFlags AuthFlags;
+		time_t PasswordAge;
+		[relative_short] astring *HomeDir;
+		uint16 HomeDirHigh;
+		[relative_short] astring *Parms;
+		uint16 ParmsHigh;
+		time_t LastLogon;
+		time_t LastLogOff;
+		uint16 BadPWCount;
+		uint16 NumLogons;
+		[relative_short] astring *LogonServer;
+		uint16 LogonServerHigh;
+		uint16 CountryCode;
+		[relative_short] astring *WorkStations;
+		uint16 WorkStationsHigh;
+		uint32 MaxStorage;
+		uint16 UnitsPerWeek;
+		[relative_short] rap_LogonHours *LogonHours;
+		uint16 LogonHoursHigh;
+		uint16 CodePage;
+	} rap_NetUserInfo11;
+
+	typedef [public,nodiscriminant] union {
+		[case(0)] rap_NetUserInfo0 info0;
+		[case(1)] rap_NetUserInfo1 info1;
+		[case(2)] rap_NetUserInfo2 info2;
+		[case(10)] rap_NetUserInfo10 info10;
+		[case(11)] rap_NetUserInfo11 info11;
+	} rap_netuser_info;
+
+	[public] void rap_NetUserGetInfo(
+		[in] astring UserName,
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[out] rap_status status,
+		[out] uint16 convert,
+		[out] uint16 available,
+		[out,switch_is(level)] rap_netuser_info info
+	);
+
+	typedef struct {
+		[relative_short] astring *ComputerName;
+		uint16 ComputerNameHigh;
+		[relative_short] astring *UserName;
+		uint16 UserNameHigh;
+		uint16 num_conns;
+		uint16 num_opens;
+		uint16 num_users;
+		uint32 sess_time;
+		uint32 idle_time;
+		uint32 user_flags;
+		[relative_short] astring *CliTypeName;
+		uint16 CliTypeNameHigh;
+	} rap_session_info_2;
+
+	typedef [public,nodiscriminant] union {
+		[case(2)] rap_session_info_2 info2;
+	} rap_session_info;
+
+	/* not documented in MS-RAP */
+	[public] void rap_NetSessionEnum(
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[out] rap_status status,
+		[out] uint16 convert,
+		[out] uint16 count,
+		[out] uint16 available,
+		[out,switch_is(level)] rap_session_info info[count]
+	);
+
+	/* not documented in MS-RAP */
+	[public] void rap_NetSessionGetInfo(
+		[in] astring SessionName,
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[out] rap_status status,
+		[out] uint16 convert,
+		[out] uint16 available,
+		[out,switch_is(level)] rap_session_info info
+	);
+
+	/* not documented in MS-RAP */
+	[public] void rap_NetUserAdd(
+		[in] uint16 level,
+		[in] uint16 bufsize,
+		[in] uint16 pwdlength,
+		[in] uint16 unknown,
+		[in,switch_is(level)] rap_netuser_info info,
+		[out] rap_status status,
+		[out] uint16 convert
+	);
+
+	/* not documented in MS-RAP */
+	[public] void rap_NetUserDelete(
+		[in] astring UserName,
+		[out] rap_status status,
+		[out] uint16 convert
+	);
+
+	typedef [public] struct {
+		uint32 TimeSinceJan11970;
+		uint32 TimeSinceBoot;
+		uint8 Hours;
+		uint8 Minutes;
+		uint8 Seconds;
+		uint8 Hundreds;
+		uint16 TimeZone;
+		uint16 ClockFrequency;
+		uint8 Day;
+		uint8 Month;
+		uint16 Year;
+		uint8 Weekday;
+	} rap_TimeOfDayInfo;
+
+	[public] void rap_NetRemoteTOD(
+		[in] uint16 bufsize,
+		[out] rap_status status,
+		[out] uint16 convert,
+		[out] rap_TimeOfDayInfo tod
+	);
+
+	/* Parameter description strings for RAP calls   */
+	/* Names are defined name for RAP call with _REQ */
+	/* appended to end.                              */
+
+	const string RAP_WFileEnum2_REQ			= "zzWrLehb8g8";
+	const string RAP_WFileGetInfo2_REQ		= "DWrLh";
+	const string RAP_WFileClose2_REQ     		= "D";
+
+	const string RAP_NetGroupEnum_REQ		= "WrLeh";
+	const string RAP_NetGroupAdd_REQ		= "WsT";
+	const string RAP_NetGroupDel_REQ		= "z";
+	const string RAP_NetGroupAddUser_REQ		= "zz";
+	const string RAP_NetGroupDelUser_REQ		= "zz";
+	const string RAP_NetGroupGetUsers_REQ		= "zWrLeh";
+	const string RAP_NetGroupSetUsers_REQ		= "zWsTW";
+
+	const string RAP_NetUserAdd2_REQ		= "WsTWW";
+	const string RAP_NetUserEnum_REQ		= "WrLeh";
+	const string RAP_NetUserEnum2_REQ		= "WrLDieh";
+	const string RAP_NetUserGetGroups_REQ		= "zWrLeh";
+	const string RAP_NetUserSetGroups_REQ		= "zWsTW";
+	const string RAP_NetUserPasswordSet_REQ		= "zb16b16w";
+	const string RAP_NetUserPasswordSet2_REQ	= "zb16b16WW";
+	const string RAP_SAMOEMChgPasswordUser2_REQ	= "B516B16";
+	const string RAP_NetUserValidate2_REQ		= "Wb62WWrLhWW";
+
+	const string RAP_NetServerEnum2_REQ		= "WrLehDz";
+	const string RAP_WserverGetInfo_REQ		= "WrLh";
+	const string RAP_NetWkstatGetInfo		= "WrLh";
+
+	const string RAP_WShareAdd_REQ			= "WsT";
+	const string RAP_WShareEnum_REQ			= "WrLeh";
+	const string RAP_WShareDel_REQ			= "zW";
+	const string RAP_WWkstaGetInfo_REQ		= "WrLh";
+
+	const string RAP_NetPrintQEnum_REQ		= "WrLeh";
+	const string RAP_NetPrintQGetInfo_REQ		= "zWrLh";
+
+	const string RAP_NetServerAdminCommand_REQ	= "zhrLeh";
+	const string RAP_NetServiceEnum_REQ		= "WrLeh";
+	const string RAP_NetServiceControl_REQ		= "zWWrL";
+	const string RAP_NetServiceInstall_REQ		= "zF88sg88T";
+	const string RAP_NetServiceGetInfo_REQ		= "zWrLh";
+	const string RAP_NetSessionEnum_REQ		= "WrLeh";
+	const string RAP_NetSessionGetInfo_REQ		= "zWrLh";
+	const string RAP_NetSessionDel_REQ		= "zW";
+
+	const string RAP_NetConnectionEnum_REQ		= "zWrLeh";
+
+	const string RAP_NetWkstaUserLogoff_REQ		= "zzWb38WrLh";
+
+	/* Description strings for returned data in RAP calls */
+	/* I use all caps here in part to avoid accidental    */
+	/* name collisions */
+
+	const string RAP_FILE_INFO_L2			= "D";
+	const string RAP_FILE_INFO_L3			= "DWWzz";
+	const string  RAP_GROUP_INFO_L0			= "B21";
+	const string RAP_GROUP_INFO_L1			= "B21Bz";
+	const string RAP_GROUP_USERS_INFO_0		= "B21";
+	const string RAP_GROUP_USERS_INFO_1		= "B21BN";
+
+	const string RAP_USER_INFO_L0			= "B21";
+	const string RAP_USER_INFO_L1			= "B21BB16DWzzWz";
+
+	const string RAP_SERVER_INFO_L0			= "B16";
+	const string RAP_SERVER_INFO_L1			= "B16BBDz";
+	const string RAP_SERVER_INFO_L2			= "B16BBDzDDDWWzWWWWWWWB21BzWWWWWWWWWWWWWWWWWWWWWWz";
+	const string RAP_SERVER_INFO_L3			= "B16BBDzDDDWWzWWWWWWWB21BzWWWWWWWWWWWWWWWWWWWWWWzDWz";
+	const string RAP_SERVICE_INFO_L0		= "B16";
+	const string RAP_SERVICE_INFO_L2		= "B16WDWB64";
+	const string RAP_SHARE_INFO_L0			= "B13";
+	const string RAP_SHARE_INFO_L1			= "B13BWz";
+	const string RAP_SHARE_INFO_L2			= "B13BWzWWWzB9B";
+
+	const string RAP_PRINTQ_INFO_L2			= "B13BWWWzzzzzWN";
+	const string RAP_SMB_PRINT_JOB_L1		= "WB21BB16B10zWWzDDz";
+
+	const string RAP_SESSION_INFO_L2		= "zzWWWDDDz";
+	const string RAP_CONNECTION_INFO_L1		= "WWWWDzz";
+
+	const string RAP_USER_LOGOFF_INFO_L1		= "WDW";
+
+	const string RAP_WKSTA_INFO_L1			= "WDzzzzBBDWDWWWWWWWWWWWWWWWWWWWzzWzzW";
+	const string RAP_WKSTA_INFO_L10			= "zzzBBzz";
+};

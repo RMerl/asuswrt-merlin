@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+
+# script to call a netlogon RODC DNS update
+
+import sys
+from optparse import OptionParser
+
+sys.path.insert(0, "bin/python")
+
+import samba
+import samba.getopt as options
+from samba.dcerpc import netlogon, winbind
+
+########### main code ###########
+if __name__ == "__main__":
+    parser = OptionParser("rodcdns [options]")
+    sambaopts = options.SambaOptions(parser)
+
+    parser.add_option("", "--weight", dest="weight", help="record weight", default=0, type='int')
+    parser.add_option("", "--priority", dest="priority", help="record priority", default=100, type='int')
+    parser.add_option("", "--port", dest="port", help="port number", default=389, type='int')
+    parser.add_option("", "--type", dest="type", help="record type", default=netlogon.NlDnsLdapAtSite, type='int')
+    parser.add_option("", "--site", dest="site", help="site name", default="Default-First-Site-Name")
+
+    (opts, args) = parser.parse_args()
+
+    lp = sambaopts.get_loadparm()
+
+    w = winbind.winbind("irpc:winbind_server", lp)
+
+    dns_names = netlogon.NL_DNS_NAME_INFO_ARRAY()
+    dns_names.count = 1
+    name = netlogon.NL_DNS_NAME_INFO()
+    name.type = opts.type
+    name.priority = opts.priority
+    name.weight   = opts.weight
+    name.port = opts.port
+    name.dns_register = True
+    dns_names.names = [ name ]
+    site_name = opts.site.decode('utf-8')
+
+    ret_names = w.DsrUpdateReadOnlyServerDnsRecords(site_name, 600, dns_names)
+    print("Status: %u" % ret_names.names[0].status)
