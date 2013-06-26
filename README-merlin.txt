@@ -221,12 +221,13 @@ set "Create or reset data files" to "Yes".
 
 Also, Asuswrt-Merlin can track your traffic on a 
 per device (IP) basis, allowing you to monitor traffic 
-history of individual computers.  To enable this, you 
+history of individual computers.  This option is 
+called IPTraffic.  To enable this, you 
 must first set a custom location to store your 
 traffic database (see above).  Once again, you 
 must also tell it to create the new data file, 
-by enabling "Create or reset advanced data files".
-Once done, enable the Advanced Traffic Monitoring option.  
+by enabling "Create or reset IPTraffic data files".
+Once done, enable the IPTraffic Monitoring option.  
 This will add three new entries to the Traffic Monitor 
 page selector (on the Traffic Monitoring page).
 
@@ -448,6 +449,9 @@ History
    - CHANGED: Updated e2fsprogs to 1.42.7.  Amongst other things
               this new version is more memory-efficient on large
               filesystems.
+   - CHANGED: Renamed Advanced (Per IP) Traffic monitoring for
+              IPTraffic (to match the Tomato name for that same
+              functionality)
    - FIXED: Reapply layout fixes to Guest network and DHCP page (were lost
             in a recent webui update)
    - FIXED: JFFS2 could get reformated again at each subsequent reboots.

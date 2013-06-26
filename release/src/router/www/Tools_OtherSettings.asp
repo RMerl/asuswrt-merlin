@@ -677,7 +677,7 @@ function done_validating(action){
 								<option value="1">Custom location</option>
 								<option value="2">NVRAM</option>
 							</select>
-							<span id="invalid_location" style="display:none;" class="formfontdesc">Cannot use NVRAM if per IP monitoring is enabled!</span>
+							<span id="invalid_location" style="display:none;" class="formfontdesc">Cannot use NVRAM if IPTraffic is enabled!</span>
 			   			</td>
 					</tr>
 
@@ -711,14 +711,14 @@ function done_validating(action){
 			        		<td><input type="text" maxlength="2" class="input_3_table" name="rstats_offset" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 31)" value="<% nvram_get("rstats_offset"); %>"></td>
 			        	</tr>
 					<tr id="cstats_enable_tr">
-			        		<th>Enable advanced (per IP) monitoring</i></th>
+			        		<th>Enable IPTraffic (per IP monitoring)</i></th>
 				        	<td>
 	       		       				<input type="radio" name="cstats_enable" class="input" value="1" <% nvram_match_x("", "cstats_enable", "1", "checked"); %> onclick="hide_cstats(this.value);"><#checkbox_Yes#>
 							<input type="radio" name="cstats_enable" class="input" value="0" <% nvram_match_x("", "cstats_enable", "0", "checked"); %> onclick="hide_cstats(this.value);"><#checkbox_No#>
 						</td>
 					</tr>
 					<tr id="cstats_1_tr">
-						<th>Create or reset advanced data files</th>
+						<th>Create or reset IPTraffic data files</th>
 						<td>
 							<input type="radio" name="cstats_new" class="input" value="1" <% nvram_match_x("", "cstats_new", "1", "checked"); %>><#checkbox_Yes#>
 							<input type="radio" name="cstats_new" class="input" value="0" <% nvram_match_x("", "cstats_new", "0", "checked"); %>><#checkbox_No#>
