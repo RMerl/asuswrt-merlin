@@ -30,7 +30,7 @@
 #define LIST_POISON2  ((void *) 0x00200200 )
 
 #if 1
-#include <linux/netfilter/nf_nat.h>
+#include "../../iptables-1.4.x/include/net/netfilter/nf_nat.h"
 #else
 #include "tiny_nf_nat.h"
 #endif
