@@ -1,0 +1,9 @@
+*.o
+piggy
+piggy.lds
+piggz
+vmlinux
+vmlinux.lds
+vmlinuz
+vmlinuz-gzip
+zImage
