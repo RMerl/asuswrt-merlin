@@ -4339,10 +4339,6 @@ int start_firewall(int wanunit, int lanunit)
 	run_vpn_firewall_scripts();
 #endif
 
-#ifdef RTCONFIG_BCMARM
-	if (pids("smbd")) notify_rc("start_sambafw");
-#endif
-
 	run_custom_script("firewall-start", NULL);
 
 	return 0;

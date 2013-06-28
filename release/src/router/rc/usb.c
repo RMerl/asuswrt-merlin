@@ -1788,6 +1788,11 @@ int suit_double_quote(const char *output, const char *input, int outsize){
 	return dst-output;
 }
 
+#ifdef RTCONFIG_BCMARM
+extern void del_samba_rules(void);
+extern void add_samba_rules(void);
+#endif
+
 void
 start_samba(void)
 {
@@ -1822,7 +1827,7 @@ start_samba(void)
 #endif
 
 #ifdef RTCONFIG_BCMARM
-	notify_rc("restart_sambafw");
+	add_samba_rules();
 #endif
 /*
 	if (!nvram_match("txworkq", "1")) {
@@ -1907,7 +1912,7 @@ void stop_samba(void)
 	logmessage("Samba Server", "smb daemon is stoped");
 
 #ifdef RTCONFIG_BCMARM
-	notify_rc("sambafw");
+	del_samba_rules();
 #endif
 
 #ifdef RTCONFIG_GROCTRL

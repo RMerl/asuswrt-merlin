@@ -4193,12 +4193,6 @@ check_ddr_done:
 	else if (strcmp(script, "leds") == 0) {
 		setup_leds();
 	}
-#ifdef RTCONFIG_BCMARM
-	else if (strcmp(script, "sambafw") == 0) {
-		if(action&RC_SERVICE_STOP) del_samba_rules();
-		if(action&RC_SERVICE_START) add_samba_rules();
-	}
-#endif
 	else if (strcmp(script, "updateresolv") == 0) {
 		update_resolvconf();
 	}
