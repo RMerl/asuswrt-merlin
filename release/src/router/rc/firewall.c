@@ -2779,7 +2779,18 @@ TRACE_PT("filterstr %s %s\n", timef, filterstr);
 	fclose(fp);
 
 	//system("iptables -F");
-	eval("iptables-restore", "/tmp/filter_rules");
+
+	// Quite a few functions will blindly attempt to manipulate iptables, colliding with us.
+	// Retry a few times with increasing wait time to resolve collision.
+	for ( i = 1; i < 4; i++ ) {
+		if (eval("iptables-restore", "/tmp/filter_rules")) {
+			_dprintf("iptables-restore failed - retrying in %d secs...\n", i*i);
+			sleep(i*i);
+		} else {
+			i = 4;
+		}
+	}
+
 
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled())
@@ -4337,6 +4348,9 @@ int start_firewall(int wanunit, int lanunit)
 
 #ifdef RTCONFIG_OPENVPN
 	run_vpn_firewall_scripts();
+#endif
+#ifdef RTCONFIG_BCMARM
+	if (pids("smbd")) add_samba_rules();
 #endif
 
 	run_custom_script("firewall-start", NULL);
