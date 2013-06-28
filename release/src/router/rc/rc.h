@@ -330,6 +330,10 @@ extern void filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_i
 #ifdef WEB_REDIRECT
 extern void redirect_setting(void);
 #endif
+#ifdef RTCONFIG_BCMARM
+extern void del_samba_rules(void);
+extern void add_samba_rules(void);
+#endif
 
 /* pc.c */
 #ifdef RTCONFIG_PARENTALCTRL
