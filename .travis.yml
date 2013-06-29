@@ -1,4 +1,6 @@
 language: cpp
+compiler:
+  - mipsel-linux-g++
 install:
   - sudo apt-get install aptitude
   - sudo aptitude -y install $(< apt-requirements.txt)
