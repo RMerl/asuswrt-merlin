@@ -1,0 +1,114 @@
+if [ "$DESCRIPTION"x != x ]; then
+	test_description="$DESCRIPTION"
+fi
+if [ "$IMAGE"x = x ]; then
+	IMAGE=$test_dir/image.gz
+fi
+
+if [ "$FSCK_OPT"x = x ]; then
+	FSCK_OPT=-yf
+fi
+
+if [ "$SECOND_FSCK_OPT"x = x ]; then
+	SECOND_FSCK_OPT=-yf
+fi
+
+if [ "$OUT1"x = x ]; then
+	OUT1=$test_name.1.log
+fi
+
+if [ "$OUT2"x = x ]; then
+	OUT2=$test_name.2.log
+fi
+
+if [ "$EXP1"x = x ]; then
+	if [ -f $test_dir/expect.1.gz ]; then
+		EXP1=$test_name.1.tmp
+		gunzip < $test_dir/expect.1.gz > $EXP1
+	else
+		EXP1=$test_dir/expect.1
+	fi
+fi
+
+if [ "$EXP2"x = x ]; then
+	if [ -f $test_dir/expect.2.gz ]; then
+		EXP2=$test_name.2.tmp
+		gunzip < $test_dir/expect.2.gz > $EXP2
+	else
+		EXP2=$test_dir/expect.2
+	fi
+fi
+
+if [ "$SKIP_GUNZIP" != "true" ] ; then
+	gunzip < $IMAGE > $TMPFILE
+fi
+
+cp /dev/null $OUT1
+
+eval $PREP_CMD
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT1.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT1.new
+sed -e '1d' $OUT1.new | sed -e '/^JFS DEBUG:/d' | \
+	    sed -e "s;$TMPFILE;test.img;" | tr -d \\015 >> $OUT1
+rm -f $OUT1.new
+
+if [ "$ONE_PASS_ONLY" != "true" ]; then
+	$FSCK $SECOND_FSCK_OPT -N test_filesys $TMPFILE > $OUT2.new 2>&1 
+	status=$?
+	echo Exit status is $status >> $OUT2.new
+	sed -e '1d' $OUT2.new | sed -e '/^JFS DEBUG:/d' | \
+	    sed -e "s;$TMPFILE;test.img;" > $OUT2
+	rm -f $OUT2.new
+fi
+
+eval $AFTER_CMD
+
+if [ "$SKIP_VERIFY" != "true" ] ; then
+	rm -f $test_name.ok $test_name.failed
+	cmp -s $OUT1 $EXP1
+	status1=$?
+	if [ "$ONE_PASS_ONLY" != "true" ]; then
+		cmp -s $OUT2 $EXP2
+		status2=$?
+	else
+		status2=0
+	fi
+	if [ "$PASS_ZERO" = "true" ]; then
+		cmp -s $test_name.0.log	$test_dir/expect.0
+		status3=$?
+	else
+		status3=0
+	fi
+
+	if [ -z "$test_description" ] ; then
+		description="$test_name"
+	else
+		description="$test_name: $test_description"
+	fi
+
+	if [ "$status1" -eq 0 -a "$status2" -eq 0 -a "$status3" -eq 0 ] ; then
+		echo "$description: ok"
+		touch $test_name.ok
+	else
+		echo "$description: failed"
+		rm -f $test_name.failed
+		if [ "$PASS_ZERO" = "true" ]; then
+			diff $DIFF_OPTS $test_dir/expect.0 \
+				$test_name.0.log >> $test_name.failed
+		fi
+		diff $DIFF_OPTS $EXP1 $OUT1 >> $test_name.failed
+		if [ "$ONE_PASS_ONLY" != "true" ]; then
+			diff $DIFF_OPTS $EXP2 $OUT2 >> $test_name.failed
+		fi
+	fi
+	rm -f tmp_expect
+fi
+
+if [ "$SKIP_CLEANUP" != "true" ] ; then
+	unset IMAGE FSCK_OPT SECOND_FSCK_OPT OUT1 OUT2 EXP1 EXP2 
+	unset SKIP_VERIFY SKIP_CLEANUP SKIP_GUNZIP ONE_PASS_ONLY PREP_CMD
+	unset DESCRIPTION SKIP_UNLINK AFTER_CMD PASS_ZERO
+fi
+

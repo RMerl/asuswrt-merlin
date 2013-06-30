@@ -172,7 +172,7 @@ ifeq ($(CONFIG_RALINK),y)
 	echo "PAD2: $${PAD2}" ; \
 	asustools/mkimage -A mips -O linux -T kernel -C lzma -a 80000000 -e $${ENTRY} -r $${RFSOFFSET} \
 		-n $(BUILD_NAME) -V "$(KERNEL_VER)" "$(FS_VER)" "0" "0" "0" "0" "0" "0" "0" "0" \
-		-d $(PLATFORMDIR)/zImage.img image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx
+		-d $(PLATFORMDIR)/zImage.img image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(EXTENDNO).trx
 else
 	$(MAKE) -C ctools
 	# Create generic TRX image
@@ -184,13 +184,13 @@ ifeq ($(BOOTLZMA),y)
 else
 	ctools/trx -o image/linux-lzma.trx lzma-loader/loader.gz ctools/vmlinuz-lzma ctools/target.squashfs
 endif
-	ctools/trx_asus -i image/linux-lzma.trx -r $(BUILD_NAME),$(KERNEL_VER).$(FS_VER),image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx
+	ctools/trx_asus -i image/linux-lzma.trx -r $(BUILD_NAME),$(KERNEL_VER).$(FS_VER),image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(EXTENDNO).trx
 	@rm -f image/linux-lzma.trx
 endif
 	@echo ""
 
 bin_file:
-	[ ! -e .bin/$(BUILD_NAME)/Makefile ] || $(MAKE) -C .bin/$(BUILD_NAME) O=$(SRCBASE)/image FW_FN=$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx
+	[ ! -e .bin/$(BUILD_NAME)/Makefile ] || $(MAKE) -C .bin/$(BUILD_NAME) O=$(SRCBASE)/image FW_FN=$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(EXTENDNO).trx
 
 clean:
 	@touch router/.config

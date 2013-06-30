@@ -1,0 +1,7 @@
+DESCRIPTION="largefile fs type"
+FS_SIZE=65536
+MKE2FS_DEVICE_SECTSIZE=2048
+export MKE2FS_DEVICE_SECTSIZE
+MKE2FS_OPTS="-T largefile"
+. $cmd_dir/run_mke2fs
+unset MKE2FS_DEVICE_SECTSIZE

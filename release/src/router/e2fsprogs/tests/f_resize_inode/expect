@@ -1,0 +1,170 @@
+mke2fs -F -O resize_inode -o Linux -b 1024 -g 1024 test.img 16384
+Filesystem label=
+OS type: Linux
+Block size=1024 (log=0)
+Fragment size=1024 (log=0)
+Stride=0 blocks, Stripe width=0 blocks
+4096 inodes, 16384 blocks
+819 blocks (5.00%) reserved for the super user
+First data block=1
+Maximum filesystem blocks=8421376
+16 block groups
+1024 blocks per group, 1024 fragments per group
+256 inodes per group
+Superblock backups stored on blocks: 
+	1025, 3073, 5121, 7169, 9217
+
+Allocating group tables:      done                            
+Writing inode tables:      done                            
+Writing superblocks and filesystem accounting information:      done
+
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+test_filesys: 11/4096 files (0.0% non-contiguous), 2107/16384 blocks
+Exit status is 0
+-----------------------------------------------
+ 
+debugfs -R ''set_inode_field <7> block[2] 42'' -w test.img
+Exit status is 0
+Resize inode not valid.  Recreate? yes
+
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Free blocks count wrong for group #0 (717, counted=718).
+Fix? yes
+
+Free blocks count wrong (14276, counted=14277).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 11/4096 files (0.0% non-contiguous), 2107/16384 blocks
+Exit status is 1
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+test_filesys: 11/4096 files (0.0% non-contiguous), 2107/16384 blocks
+Exit status is 0
+-----------------------------------------------
+ 
+debugfs -R ''clri <7>'' -w test.img
+Exit status is 0
+Resize inode not valid.  Recreate? yes
+
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Free blocks count wrong for group #0 (717, counted=718).
+Fix? yes
+
+Free blocks count wrong (14276, counted=14277).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 11/4096 files (0.0% non-contiguous), 2107/16384 blocks
+Exit status is 1
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+test_filesys: 11/4096 files (0.0% non-contiguous), 2107/16384 blocks
+Exit status is 0
+-----------------------------------------------
+ 
+debugfs -R ''set_inode_field <7> bmap[524] 57'' -w test.img
+Exit status is 0
+Resize inode not valid.  Recreate? yes
+
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Free blocks count wrong for group #0 (717, counted=718).
+Fix? yes
+
+Free blocks count wrong (14276, counted=14277).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 11/4096 files (0.0% non-contiguous), 2107/16384 blocks
+Exit status is 1
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+test_filesys: 11/4096 files (0.0% non-contiguous), 2107/16384 blocks
+Exit status is 0
+-----------------------------------------------
+ 
+debugfs -R ''set_super_value reserved_gdt_blocks 15679'' -w test.img
+Exit status is 0
+ext2fs_check_desc: Corrupt group descriptor: bad block for block bitmap
+../e2fsck/e2fsck: Group descriptors look bad... trying backup blocks...
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 11/4096 files (0.0% non-contiguous), 2107/16384 blocks
+Exit status is 1
+-----------------------------------------------
+ 
+debugfs -R ''set_super_value reserved_gdt_blocks 32'' -w test.img
+Exit status is 0
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Block bitmap differences:  -(35--258) -(1059--1282) -(3107--3330) -(5155--5378) -(7203--7426) -(9251--9474)
+Fix? yes
+
+Free blocks count wrong for group #0 (718, counted=942).
+Fix? yes
+
+Free blocks count wrong for group #1 (732, counted=956).
+Fix? yes
+
+Free blocks count wrong for group #3 (732, counted=956).
+Fix? yes
+
+Free blocks count wrong for group #5 (732, counted=956).
+Fix? yes
+
+Free blocks count wrong for group #7 (732, counted=956).
+Fix? yes
+
+Free blocks count wrong for group #9 (732, counted=956).
+Fix? yes
+
+Free blocks count wrong (14277, counted=15621).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 11/4096 files (0.0% non-contiguous), 763/16384 blocks
+Exit status is 1
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+test_filesys: 11/4096 files (0.0% non-contiguous), 763/16384 blocks
+Exit status is 0

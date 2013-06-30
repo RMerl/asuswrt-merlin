@@ -1,0 +1,69 @@
+Pass 1: Checking inodes, blocks, and sizes
+Inode 16, i_size is 8192, should be 409600.  Fix? yes
+
+Inode 16, i_blocks is 128, should be 896.  Fix? yes
+
+
+Running additional passes to resolve blocks claimed by more than one inode...
+Pass 1B: Rescanning for multiply-claimed blocks
+Multiply-claimed block(s) in inode 16: 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239
+Multiply-claimed block(s) in inode 17: 160 161
+Multiply-claimed block(s) in inode 18: 176 177
+Multiply-claimed block(s) in inode 19: 192 193
+Multiply-claimed block(s) in inode 20: 208 209
+Multiply-claimed block(s) in inode 21: 224 225
+Pass 1C: Scanning directories for inodes with multiply-claimed blocks
+Pass 1D: Reconciling multiply-claimed blocks
+(There are 6 inodes containing multiply-claimed blocks.)
+
+File /5 (inode #16, mod time Sun Nov 27 04:39:31 2011) 
+  has 5 multiply-claimed block(s), shared with 5 file(s):
+	/10 (inode #21, mod time Sun Nov 27 04:39:36 2011)
+	/9 (inode #20, mod time Sun Nov 27 04:39:35 2011)
+	/8 (inode #19, mod time Sun Nov 27 04:39:34 2011)
+	/7 (inode #18, mod time Sun Nov 27 04:39:33 2011)
+	/6 (inode #17, mod time Sun Nov 27 04:39:32 2011)
+Clone multiply-claimed blocks? yes
+
+File /6 (inode #17, mod time Sun Nov 27 04:39:32 2011) 
+  has 1 multiply-claimed block(s), shared with 1 file(s):
+	/5 (inode #16, mod time Sun Nov 27 04:39:31 2011)
+Multiply-claimed blocks already reassigned or cloned.
+
+File /7 (inode #18, mod time Sun Nov 27 04:39:33 2011) 
+  has 1 multiply-claimed block(s), shared with 1 file(s):
+	/5 (inode #16, mod time Sun Nov 27 04:39:31 2011)
+Multiply-claimed blocks already reassigned or cloned.
+
+File /8 (inode #19, mod time Sun Nov 27 04:39:34 2011) 
+  has 1 multiply-claimed block(s), shared with 1 file(s):
+	/5 (inode #16, mod time Sun Nov 27 04:39:31 2011)
+Multiply-claimed blocks already reassigned or cloned.
+
+File /9 (inode #20, mod time Sun Nov 27 04:39:35 2011) 
+  has 1 multiply-claimed block(s), shared with 1 file(s):
+	/5 (inode #16, mod time Sun Nov 27 04:39:31 2011)
+Multiply-claimed blocks already reassigned or cloned.
+
+File /10 (inode #21, mod time Sun Nov 27 04:39:36 2011) 
+  has 1 multiply-claimed block(s), shared with 1 file(s):
+	/5 (inode #16, mod time Sun Nov 27 04:39:31 2011)
+Multiply-claimed blocks already reassigned or cloned.
+
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Block bitmap differences:  +240
+Fix? yes
+
+Free blocks count wrong for group #0 (49, counted=43).
+Fix? yes
+
+Free blocks count wrong (784, counted=688).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 21/64 files (0.0% non-contiguous), 336/1024 blocks
+Exit status is 1

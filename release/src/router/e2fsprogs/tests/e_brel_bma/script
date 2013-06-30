@@ -1,0 +1,1 @@
+echo "$test_name: $test_description: skipped"

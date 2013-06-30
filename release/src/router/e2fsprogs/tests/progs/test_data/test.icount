@@ -1,0 +1,136 @@
+#
+# This is the test script for the icount abstraction
+#
+# Copyright 1997 by Theodore Ts'o.  This file may be redistributed 
+# under the terms of the GNU Public License.
+#
+#
+# First let's test the boundary cases for illegal arguments
+#
+validate
+store 0 0
+fetch 0
+increment 0
+decrement 0
+store 20001 0
+fetch 20001
+increment 20001
+decrement 20001
+validate
+#
+# OK, now let's test fetch and store.  We also test the boundary cases
+# for legal inodes here.
+#
+fetch 1
+store 1 1
+fetch 1
+store 1 2
+fetch 1
+store 1 3
+fetch 1
+store 1 1
+fetch 1
+store 1 0
+fetch 1
+fetch 20000
+store 20000 0
+fetch 20000
+store 20000 3
+fetch 20000
+store 20000 0
+fetch 20000
+store 20000 42
+fetch 20000
+store 20000 1
+fetch 20000
+store 20000 0
+fetch 20000
+get_size
+#
+# Time to test increment.  First increment from 0 (previously unreferenced)
+#
+decrement 2
+increment 2
+fetch 2
+increment 2
+fetch 2
+increment 2
+fetch 2
+increment 2
+fetch 2
+decrement 2
+fetch 2
+decrement 2
+fetch 2
+decrement 2
+fetch 2
+decrement 2
+decrement 2
+#
+# Store 1 then test...
+#
+store 3 1
+increment 3
+fetch 3
+decrement 3
+fetch 3
+decrement 3
+#
+# Store 0 then test
+# 
+store 4 0
+fetch 4
+increment 4
+increment 4
+fetch 4
+decrement 4
+decrement 4
+#
+# Store something, then store 0, then test...
+#
+store 4  42
+store 4 0
+increment 4
+increment 4
+increment 4
+decrement 4
+decrement 4
+decrement 4
+decrement 4
+decrement 4
+#
+# store something, then decrement to zero
+#
+store 5 4
+decrement 5
+decrement 5
+decrement 5
+decrement 5
+decrement 5
+#
+# Test insert
+#
+get_size
+validate
+store 10 10
+store 20 20
+store 30 30
+store 40 40
+store 50 50
+store 60 60
+store 70 70
+store 80 80
+store 90 90
+store 100 100
+store 15 15
+store 25 25
+store 35 35
+store 45 45
+store 55 55
+store 65 65
+store 75 75
+store 85 85
+store 95 95
+dump
+get_size
+validate

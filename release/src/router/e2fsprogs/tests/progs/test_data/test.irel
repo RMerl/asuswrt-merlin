@@ -1,0 +1,69 @@
+#
+# This is the test script for the inode relocation table.
+#
+# Copyright 1997 by Theodore Ts'o.  This file may be redistributed 
+# under the terms of the GNU Public License.
+#
+#
+irel_dump
+irel_put 2 11 3
+irel_put 1 10 2
+irel_put 3 9 1
+irel_add_ref 1 4 128
+irel_add_ref 1 5 64
+#
+# Check to see what happens if we add too many references
+#
+irel_add_ref 1 6 512
+#
+# Try resizing the number of references and retry the add
+#
+irel_put 1 8 3
+irel_add_ref 1 6 512
+#
+irel_add_ref 2 4 64
+#
+# Test boundary cases of irel_put
+#
+irel_put 23 12 1
+irel_put 24 13 1
+#
+# Test other boundary cases....
+#
+irel_get 24
+irel_delete 24
+#
+# Test retrivals
+#
+irel_get 3
+irel_get 1
+#
+# Test the iterator functions
+#
+irel_start_iter
+irel_next
+irel_next
+irel_next
+irel_next
+#
+# Now try the delete function, on existing and non-existent entries
+#
+irel_delete 2
+irel_delete 2
+irel_delete 4
+#
+# Move tests...
+#
+irel_move 1 2
+irel_dump
+irel_delete 4
+irel_move 1 4
+irel_move 2 4
+#
+# Get by orig tests
+#
+irel_dump
+irel_get_by_orig 3
+irel_get_by_orig 1
+irel_get_by_orig 5
+irel_get_by_orig 2

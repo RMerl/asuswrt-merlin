@@ -1,0 +1,26 @@
+test_description="remove missing external journal device"
+OUT=$test_name.log
+
+dd if=/dev/zero of=$TMPFILE bs=1k count=512 > /dev/null 2>&1
+
+echo mke2fs -q -F -o Linux -b 1024 $TMPFILE >> $OUT
+$MKE2FS -q -F -o Linux -I 128 -b 1024 $TMPFILE >> $OUT 2>&1
+
+echo "debugfs add journal device/UUID" >> $OUT
+$DEBUGFS -w -f - $TMPFILE <<- EOF >> $OUT 2>&1
+	feature has_journal
+	ssv journal_dev 0x9999
+	ssv journal_uuid 1db3f677-6832-4adb-bafc-8e4059c30a33
+EOF
+
+echo "tune2fs -f -O ^has_journal $TMPFILE" >> $OUT
+$TUNE2FS -f -O ^has_journal $TMPFILE >> $OUT 2>&1
+$DUMPE2FS -h $TMPFILE >> $OUT 2>&1
+if [ "$(grep 'Journal UUID:' $OUT)" ]; then
+	mv $test_name.log $test_name.failed
+	echo "$test_name: $test_description: failed"
+else
+	echo "$test_name: $test_description: ok"
+	mv $test_name.log $test_name.ok
+fi
+rm -f $TMPFILE

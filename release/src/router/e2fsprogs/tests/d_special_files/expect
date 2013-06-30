@@ -1,0 +1,85 @@
+debugfs create special files
+mke2fs -Fq -b 1024 test.img 512
+Exit status is 0
+debugfs -R ''stat foo'' -w test.img
+Inode: 12   Type: symlink    Mode:  0777   Flags: 0x0
+Generation: 0    Version: 0x00000000
+User:     0   Group:     0   Size: 3
+File ACL: 0    Directory ACL: 0
+Links: 1   Blockcount: 0
+Fragment:  Address: 0    Number: 0    Size: 0
+ctime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+atime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+mtime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+Fast_link_dest: bar
+Exit status is 0
+debugfs -R ''stat foo2'' -w test.img
+Inode: 13   Type: symlink    Mode:  0777   Flags: 0x0
+Generation: 0    Version: 0x00000000
+User:     0   Group:     0   Size: 80
+File ACL: 0    Directory ACL: 0
+Links: 1   Blockcount: 2
+Fragment:  Address: 0    Number: 0    Size: 0
+ctime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+atime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+mtime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+BLOCKS:
+(0):28
+TOTAL: 1
+
+Exit status is 0
+debugfs -R ''block_dump 28'' -w test.img
+0000  3132 3334 3536 3738 3930 3132 3334 3536  1234567890123456
+0020  3738 3930 3132 3334 3536 3738 3930 3132  7890123456789012
+0040  3334 3536 3738 3930 3132 3334 3536 3738  3456789012345678
+0060  3930 3132 3334 3536 3738 3930 3132 3334  9012345678901234
+0100  3536 3738 3930 3132 3334 3536 3738 3930  5678901234567890
+0120  0000 0000 0000 0000 0000 0000 0000 0000  ................
+*
+
+Exit status is 0
+debugfs -R ''stat pipe'' -w test.img
+Inode: 14   Type: FIFO    Mode:  0000   Flags: 0x0
+Generation: 0    Version: 0x00000000
+User:     0   Group:     0   Size: 0
+File ACL: 0    Directory ACL: 0
+Links: 1   Blockcount: 0
+Fragment:  Address: 0    Number: 0    Size: 0
+ctime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+atime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+mtime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+BLOCKS:
+
+Exit status is 0
+debugfs -R ''stat sda'' -w test.img
+Inode: 15   Type: block special    Mode:  0000   Flags: 0x0
+Generation: 0    Version: 0x00000000
+User:     0   Group:     0   Size: 0
+File ACL: 0    Directory ACL: 0
+Links: 1   Blockcount: 0
+Fragment:  Address: 0    Number: 0    Size: 0
+ctime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+atime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+mtime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+Device major/minor number: 08:00 (hex 08:00)
+Exit status is 0
+debugfs -R ''stat null'' -w test.img
+Inode: 16   Type: character special    Mode:  0000   Flags: 0x0
+Generation: 0    Version: 0x00000000
+User:     0   Group:     0   Size: 0
+File ACL: 0    Directory ACL: 0
+Links: 1   Blockcount: 0
+Fragment:  Address: 0    Number: 0    Size: 0
+ctime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+atime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+mtime: 0x50f560e0 -- Tue Jan 15 14:00:00 2013
+Device major/minor number: 01:03 (hex 01:03)
+Exit status is 0
+e2fsck -yf -N test_filesys
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+test_filesys: 16/64 files (0.0% non-contiguous), 29/512 blocks
+Exit status is 0

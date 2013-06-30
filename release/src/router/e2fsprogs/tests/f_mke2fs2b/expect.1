@@ -1,0 +1,25 @@
+Filesystem did not have a UUID; generating one.
+
+Pass 1: Checking inodes, blocks, and sizes
+Root inode has dtime set (probably due to old mke2fs).  Fix? yes
+
+Inode 11 is in use, but has dtime set.  Fix? yes
+
+Inode 15 is in use, but has dtime set.  Fix? yes
+
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Unattached zero-length inode 15.  Clear? yes
+
+Pass 5: Checking group summary information
+Free inodes count wrong for group #0 (18, counted=17).
+Fix? yes
+
+Free inodes count wrong (18, counted=17).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 15/32 files (0.0% non-contiguous), 25/100 blocks
+Exit status is 1

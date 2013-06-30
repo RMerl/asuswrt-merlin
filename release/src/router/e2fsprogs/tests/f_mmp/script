@@ -1,0 +1,74 @@
+FSCK_OPT=-yf
+
+TMPFILE=$test_name.tmp
+> $TMPFILE
+
+stat -f $TMPFILE | grep -q "Type: tmpfs"
+if [ $? = 0 ]; then
+	rm -f $TMPFILE
+	echo "$test_name: $test_description: skipped for tmpfs (no O_DIRECT)"
+	return 0
+fi
+
+echo "make the test image ..." > $test_name.log
+$MKE2FS -q -F -o Linux -b 4096 -O mmp -E mmp_update_interval=1 $TMPFILE 100 >> $test_name.log 2>&1
+status=$?
+if [ "$status" != 0 ] ; then
+	echo "mke2fs -O mmp failed" > $test_name.failed
+	echo "$test_name: $test_description: failed"
+	return $status
+fi
+
+kill_debugfs() {
+	trap 0
+	PID=$(ps -o pid,command | grep -v awk |
+		awk "/debugfs -w $TMPFILE/ { print \$1 }")
+	[ "x$PID" != "x" ] && kill -9 $PID
+}
+
+# this will cause debugfs to create the $test_name.mark file once it has
+# passed the MMP startup, then continue reading input until it is killed
+MARKFILE=$test_name.new
+rm -f $MARKFILE
+trap kill_debugfs EXIT
+echo "set mmp sequence to EXT2_MMP_SEQ_FSCK..." >> $test_name.log
+( { echo dump_mmp; echo "dump_inode <2> $MARKFILE"; cat /dev/zero; } |
+	$DEBUGFS -w $TMPFILE >> $test_name.log 2>&1 & ) > /dev/null 2>&1 &
+echo "wait until debugfs has started ..." >> $test_name.log
+while [ ! -e $MARKFILE ]; do
+	sleep 1
+done
+rm -f $MARKFILE
+echo "kill debugfs abruptly (simulates e2fsck failure) ..." >> $test_name.log
+kill_debugfs
+
+
+echo "e2fsck (should fail mmp_seq = EXT2_MMP_SEQ_FSCK) ..." >> $test_name.log
+$FSCK $FSCK_OPT $TMPFILE >> $test_name.log 2>&1
+status=$?
+if [ "$status" = 0 ] ; then
+	echo "e2fsck with MMP as EXT2_MMP_SEQ_FSCK ran!" > $test_name.failed
+	echo "$test_name: $test_description: failed"
+	return 1
+fi
+
+echo "clear mmp_seq with tune2fs ..." >> $test_name.log
+$TUNE2FS -f -E clear_mmp $TMPFILE >> $test_name.log 2>&1
+status=$?
+if [ "$status" != 0 ] ; then
+	echo "tune2fs clearing EXT2_MMP_SEQ_FSCK failed" > $test_name.failed
+	echo "$test_name: $test_description: failed"
+	return 1
+fi
+
+echo "run e2fsck again (should pass with clean mmp_seq) ..." >> $test_name.log
+$FSCK $FSCK_OPT $TMPFILE >> $test_name.log 2>&1
+status=$?
+if [ "$status" != 0 ] ; then
+	echo "e2fsck after clearing EXT2_MMP_SEQ_FSCK failed"> $test_name.failed
+	echo "$test_name: $test_description: failed"
+	return $status
+fi
+
+echo "$test_name: $test_description: ok"
+rm -f $TMPFILE

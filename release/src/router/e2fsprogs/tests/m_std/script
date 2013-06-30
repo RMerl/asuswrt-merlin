@@ -1,0 +1,3 @@
+DESCRIPTION="standard filesystem options"
+FS_SIZE=65536
+. $cmd_dir/run_mke2fs

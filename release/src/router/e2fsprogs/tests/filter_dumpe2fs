@@ -1,0 +1,14 @@
+1s/^.*$//
+/^Filesystem UUID:/d
+/^Filesystem created:/d
+/^Filesystem flags:/d
+/^Last write time:/d
+/^Last mount time:/d
+/^Last checked:/d
+/^Directory Hash Seed:/d
+/^Next check after:/d
+/^Maximum mount count:/d
+/^Lifetime writes:/d
+/Reserved blocks uid:/s/ (user .*)//
+/Reserved blocks gid:/s/ (group .*)//
+/^  Checksum /d

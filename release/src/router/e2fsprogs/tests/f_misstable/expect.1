@@ -1,0 +1,49 @@
+ext2fs_check_desc: Corrupt group descriptor: bad block for inode table
+../e2fsck/e2fsck: Group descriptors look bad... trying backup blocks...
+Inode table for group 1 is not in group.  (block 0)
+WARNING: SEVERE DATA LOSS POSSIBLE.
+Relocate? yes
+
+Pass 1: Checking inodes, blocks, and sizes
+Relocating group 1's inode table to 8197...
+Restarting e2fsck from the beginning...
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Entry 'etc' in / (2) has deleted/unused inode 1505.  Clear? yes
+
+Entry 'cache' in / (2) has deleted/unused inode 1514.  Clear? yes
+
+Entry 'a' in / (2) has deleted/unused inode 1515.  Clear? yes
+
+Entry 'b' in / (2) has deleted/unused inode 1516.  Clear? yes
+
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Inode 2 ref count is 8, should be 4.  Fix? yes
+
+Pass 5: Checking group summary information
+Block bitmap differences:  -(8385--8405)
+Fix? yes
+
+Free blocks count wrong for group #0 (7987, counted=7984).
+Fix? yes
+
+Free blocks count wrong (11602, counted=11599).
+Fix? yes
+
+Inode bitmap differences:  -(1505--1516)
+Fix? yes
+
+Free inodes count wrong for group #0 (1493, counted=1489).
+Fix? yes
+
+Directories count wrong for group #0 (2, counted=3).
+Fix? yes
+
+Free inodes count wrong (2997, counted=2993).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 15/3008 files (0.0% non-contiguous), 401/12000 blocks
+Exit status is 1

@@ -1,0 +1,53 @@
+if test -x $RESIZE2FS_EXE -a -x $DEBUGFS_EXE; then
+
+IMAGE=$test_dir/image.gz
+FSCK_OPT=-yf
+OUT=$test_name.log
+EXP=$test_dir/expect
+
+gunzip < $IMAGE > $TMPFILE
+
+echo "resize2fs test" > $OUT
+
+# Look at existing inline extended attribute
+echo "debugfs -R ''stat file'' test.img 2>&1 | grep ''^Inode\|in inode body\|name = ''" >> $OUT
+$DEBUGFS -R "stat file" $TMPFILE 2>&1 | grep "^Inode\|in inode body\|name = " >> $OUT
+status=$?
+echo Exit status is $status >> $OUT
+
+# resize it
+echo "resize2fs test.img 5M" >> $OUT
+$RESIZE2FS $TMPFILE 5M 2>&1 >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '1d' $OUT.new | sed -e "s;$TMPFILE;test.img;" >> $OUT
+
+# Look at inline extended attribute in resized fs
+echo "debugfs -R ''stat file'' test.img 2>&1 | grep ''^Inode\|in inode body\|name = ''" >> $OUT
+$DEBUGFS -R "stat file" $TMPFILE 2>&1 | grep "^Inode\|in inode body\|name = " >> $OUT
+status=$?
+echo Exit status is $status >> $OUT
+
+rm $TMPFILE $OUT.new
+
+#
+# Do the verification
+#
+
+cmp -s $OUT $EXP
+status=$?
+
+if [ "$status" = 0 ] ; then
+	echo "$test_name: $test_description: ok"
+	touch $test_name.ok
+else
+	echo "$test_name: $test_description: failed"
+	diff $DIFF_OPTS $EXP $OUT > $test_name.failed
+fi
+
+unset IMAGE FSCK_OPT OUT EXP
+
+else #if test -x $RESIZE2FS_EXE -a -x $DEBUGFS_EXE; then
+	echo "$test_name: $test_description: skipped"
+fi
+
