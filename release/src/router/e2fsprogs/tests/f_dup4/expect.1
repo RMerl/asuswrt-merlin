@@ -1,0 +1,112 @@
+Pass 1: Checking inodes, blocks, and sizes
+
+Running additional passes to resolve blocks claimed by more than one inode...
+Pass 1B: Rescanning for multiply-claimed blocks
+Multiply-claimed block(s) in inode 16: 30
+Multiply-claimed block(s) in inode 17: 30
+Multiply-claimed block(s) in inode 18: 30
+Multiply-claimed block(s) in inode 19: 30
+Multiply-claimed block(s) in inode 20: 34
+Multiply-claimed block(s) in inode 21: 34
+Multiply-claimed block(s) in inode 22: 34
+Multiply-claimed block(s) in inode 23: 34
+Pass 1C: Scanning directories for inodes with multiply-claimed blocks
+Pass 1D: Reconciling multiply-claimed blocks
+(There are 8 inodes containing multiply-claimed blocks.)
+
+File /dir/foo (inode #16, mod time Tue Apr 10 21:00:00 2007) 
+  has 1 multiply-claimed block(s), shared with 3 file(s):
+	/dir/quux1 (inode #19, mod time Tue Apr 10 21:00:00 2007)
+	/dir3/baz (inode #18, mod time Tue Apr 10 21:00:00 2007)
+	/dir2/bar (inode #17, mod time Tue Apr 10 21:00:00 2007)
+Clone multiply-claimed blocks? yes
+
+File /dir2/bar (inode #17, mod time Tue Apr 10 21:00:00 2007) 
+  has 1 multiply-claimed block(s), shared with 3 file(s):
+	/dir/quux1 (inode #19, mod time Tue Apr 10 21:00:00 2007)
+	/dir3/baz (inode #18, mod time Tue Apr 10 21:00:00 2007)
+	/dir/foo (inode #16, mod time Tue Apr 10 21:00:00 2007)
+Clone multiply-claimed blocks? yes
+
+File /dir3/baz (inode #18, mod time Tue Apr 10 21:00:00 2007) 
+  has 1 multiply-claimed block(s), shared with 3 file(s):
+	/dir/quux1 (inode #19, mod time Tue Apr 10 21:00:00 2007)
+	/dir2/bar (inode #17, mod time Tue Apr 10 21:00:00 2007)
+	/dir/foo (inode #16, mod time Tue Apr 10 21:00:00 2007)
+Clone multiply-claimed blocks? yes
+
+File /dir/quux1 (inode #19, mod time Tue Apr 10 21:00:00 2007) 
+  has 1 multiply-claimed block(s), shared with 3 file(s):
+	/dir3/baz (inode #18, mod time Tue Apr 10 21:00:00 2007)
+	/dir2/bar (inode #17, mod time Tue Apr 10 21:00:00 2007)
+	/dir/foo (inode #16, mod time Tue Apr 10 21:00:00 2007)
+Multiply-claimed blocks already reassigned or cloned.
+
+File /dir/fee (inode #20, mod time Tue Apr 10 21:00:00 2007) 
+  has 1 multiply-claimed block(s), shared with 3 file(s):
+	/dir4/fum (inode #23, mod time Tue Apr 10 21:00:00 2007)
+	/dir3/foe (inode #22, mod time Tue Apr 10 21:00:00 2007)
+	/dir2/fie (inode #21, mod time Tue Apr 10 21:00:00 2007)
+Clone multiply-claimed blocks? yes
+
+File /dir2/fie (inode #21, mod time Tue Apr 10 21:00:00 2007) 
+  has 1 multiply-claimed block(s), shared with 3 file(s):
+	/dir4/fum (inode #23, mod time Tue Apr 10 21:00:00 2007)
+	/dir3/foe (inode #22, mod time Tue Apr 10 21:00:00 2007)
+	/dir/fee (inode #20, mod time Tue Apr 10 21:00:00 2007)
+Clone multiply-claimed blocks? yes
+
+File /dir3/foe (inode #22, mod time Tue Apr 10 21:00:00 2007) 
+  has 1 multiply-claimed block(s), shared with 3 file(s):
+	/dir4/fum (inode #23, mod time Tue Apr 10 21:00:00 2007)
+	/dir2/fie (inode #21, mod time Tue Apr 10 21:00:00 2007)
+	/dir/fee (inode #20, mod time Tue Apr 10 21:00:00 2007)
+Clone multiply-claimed blocks? yes
+
+File /dir4/fum (inode #23, mod time Tue Apr 10 21:00:00 2007) 
+  has 1 multiply-claimed block(s), shared with 3 file(s):
+	/dir3/foe (inode #22, mod time Tue Apr 10 21:00:00 2007)
+	/dir2/fie (inode #21, mod time Tue Apr 10 21:00:00 2007)
+	/dir/fee (inode #20, mod time Tue Apr 10 21:00:00 2007)
+Multiply-claimed blocks already reassigned or cloned.
+
+Pass 2: Checking directory structure
+Invalid inode number for '.' in directory inode 20.
+Fix? yes
+
+Invalid inode number for '.' in directory inode 21.
+Fix? yes
+
+Invalid inode number for '.' in directory inode 22.
+Fix? yes
+
+Pass 3: Checking directory connectivity
+'..' in /dir/fee (20) is /dir4 (15), should be /dir (12).
+Fix? yes
+
+'..' in /dir2/fie (21) is /dir4 (15), should be /dir2 (13).
+Fix? yes
+
+'..' in /dir3/foe (22) is /dir4 (15), should be /dir3 (14).
+Fix? yes
+
+Pass 4: Checking reference counts
+Inode 12 ref count is 4, should be 3.  Fix? yes
+
+Inode 13 ref count is 4, should be 3.  Fix? yes
+
+Inode 14 ref count is 4, should be 3.  Fix? yes
+
+Inode 15 ref count is 0, should be 3.  Fix? yes
+
+Inode 16 ref count is 1, should be 3.  Fix? yes
+
+Inode 17 ref count is 1, should be 2.  Fix? yes
+
+Inode 19 ref count is 1, should be 3.  Fix? yes
+
+Pass 5: Checking group summary information
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 23/32 files (0.0% non-contiguous), 35/100 blocks
+Exit status is 1

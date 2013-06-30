@@ -1,0 +1,35 @@
+#
+# Test configuration
+#
+
+unset LANG LANGUAGE LC_ADDRESS LC_ALL LC_COLLATE LC_CTYPE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE LC_TIME PAGER
+FSCK="$USE_VALGRIND ../e2fsck/e2fsck"
+MKE2FS="$USE_VALGRIND ../misc/mke2fs"
+DUMPE2FS="$USE_VALGRIND ../misc/dumpe2fs"
+TUNE2FS="$USE_VALGRIND ../misc/tune2fs"
+CHATTR="$USE_VALGRIND../misc/chattr"
+LSATTR="$USE_VALGRIND ../misc/lsattr"
+E2IMAGE="$USE_VALGRIND ../misc/e2image"
+E2IMAGE_EXE="../misc/e2image"
+DEBUGFS="$USE_VALGRIND ../debugfs/debugfs"
+DEBUGFS_EXE="../debugfs/debugfs"
+TEST_BITS="../debugfs/debugfs"
+RESIZE2FS_EXE="../resize/resize2fs"
+RESIZE2FS="$USE_VALGRIND $RESIZE2FS_EXE"
+E2UNDO_EXE="../misc/e2undo"
+TEST_REL=../tests/progs/test_rel
+TEST_ICOUNT=../tests/progs/test_icount
+LD_LIBRARY_PATH=../lib:../lib/ext2fs:../lib/e2p:../lib/et:../lib/ss
+DYLD_LIBRARY_PATH=../lib:../lib/ext2fs:../lib/e2p:../lib/et:../lib/ss
+export LD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH
+TZ=GMT0
+export TZ
+LC_ALL=C
+export LC_ALL
+E2FSCK_CONFIG=/dev/null
+export E2FSCK_CONFIG
+MKE2FS_CONFIG=./mke2fs.conf
+export MKE2FS_CONFIG
+E2FSPROGS_SKIP_PROGRESS=yes
+export E2FSPROGS_SKIP_PROGRESS

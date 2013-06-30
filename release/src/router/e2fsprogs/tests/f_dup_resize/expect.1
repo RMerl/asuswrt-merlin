@@ -1,0 +1,34 @@
+Resize inode not valid.  Recreate? yes
+
+Pass 1: Checking inodes, blocks, and sizes
+
+Running additional passes to resolve blocks claimed by more than one inode...
+Pass 1B: Rescanning for multiply-claimed blocks
+Multiply-claimed block(s) in inode 7: 4 5 6 7
+Multiply-claimed block(s) in inode 12: 4 5 6 7
+Pass 1C: Scanning directories for inodes with multiply-claimed blocks
+Pass 1D: Reconciling multiply-claimed blocks
+(There are 1 inodes containing multiply-claimed blocks.)
+
+File /debugfs (inode #12, mod time Mon Apr 11 00:00:00 2005) 
+  has 4 multiply-claimed block(s), shared with 1 file(s):
+	<The group descriptor inode> (inode #7, mod time Mon Apr 11 06:13:20 2005)
+Clone multiply-claimed blocks? yes
+
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Block bitmap differences:  +(8195--8198)
+Fix? yes
+
+Free blocks count wrong for group #0 (7910, counted=7911).
+Fix? yes
+
+Free blocks count wrong (9754, counted=9755).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 12/2560 files (8.3% non-contiguous), 485/10240 blocks
+Exit status is 1

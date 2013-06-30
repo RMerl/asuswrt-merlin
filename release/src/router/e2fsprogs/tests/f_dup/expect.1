@@ -1,0 +1,38 @@
+Filesystem did not have a UUID; generating one.
+
+Pass 1: Checking inodes, blocks, and sizes
+
+Running additional passes to resolve blocks claimed by more than one inode...
+Pass 1B: Rescanning for multiply-claimed blocks
+Multiply-claimed block(s) in inode 12: 25 26
+Multiply-claimed block(s) in inode 13: 25 26
+Pass 1C: Scanning directories for inodes with multiply-claimed blocks
+Pass 1D: Reconciling multiply-claimed blocks
+(There are 2 inodes containing multiply-claimed blocks.)
+
+File /termcap (inode #12, mod time Tue Sep 21 03:19:14 1993) 
+  has 2 multiply-claimed block(s), shared with 1 file(s):
+	/motd (inode #13, mod time Tue Sep 21 03:19:20 1993)
+Clone multiply-claimed blocks? yes
+
+File /motd (inode #13, mod time Tue Sep 21 03:19:20 1993) 
+  has 2 multiply-claimed block(s), shared with 1 file(s):
+	/termcap (inode #12, mod time Tue Sep 21 03:19:14 1993)
+Multiply-claimed blocks already reassigned or cloned.
+
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Free blocks count wrong for group #0 (44, counted=60).
+Fix? yes
+
+Free blocks count wrong (62, counted=60).
+Fix? yes
+
+Padding at end of block bitmap is not set. Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 13/16 files (7.7% non-contiguous), 40/100 blocks
+Exit status is 1

@@ -1,0 +1,49 @@
+Pass 1: Checking inodes, blocks, and sizes
+Special (device/socket/fifo/symlink) file (inode 14) has immutable
+or append-only flag set.  Clear? yes
+
+Special (device/socket/fifo/symlink) file (inode 15) has immutable
+or append-only flag set.  Clear? yes
+
+Special (device/socket/fifo/symlink) file (inode 16) has immutable
+or append-only flag set.  Clear? yes
+
+Special (device/socket/fifo/symlink) file (inode 17) has immutable
+or append-only flag set.  Clear? yes
+
+Pass 2: Checking directory structure
+Setting filetype for entry '.' in / (2) to 2.
+Setting filetype for entry '..' in / (2) to 2.
+Setting filetype for entry 'lost+found' in / (2) to 2.
+Setting filetype for entry 'file' in / (2) to 1.
+Setting filetype for entry 'dir' in / (2) to 2.
+Setting filetype for entry 'fifo' in / (2) to 5.
+Setting filetype for entry 'block' in / (2) to 4.
+Setting filetype for entry 'char' in / (2) to 3.
+Setting filetype for entry 'symlink' in / (2) to 7.
+Inode 18 (/badchar) is an illegal character device.
+Clear? yes
+
+Inode 19 (/badblock) is an illegal block device.
+Clear? yes
+
+Inode 20 (/badfifo) is an illegal FIFO.
+Clear? yes
+
+Setting filetype for entry '.' in /lost+found (11) to 2.
+Setting filetype for entry '..' in /lost+found (11) to 2.
+Setting filetype for entry '.' in /dir (13) to 2.
+Setting filetype for entry '..' in /dir (13) to 2.
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Free inodes count wrong for group #0 (50, counted=47).
+Fix? yes
+
+Free inodes count wrong (50, counted=47).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 17/64 files (0.0% non-contiguous), 27/100 blocks
+Exit status is 1

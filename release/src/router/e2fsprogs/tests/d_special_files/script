@@ -1,0 +1,94 @@
+if test -x $DEBUGFS_EXE; then
+
+OUT=$test_name.log
+EXP=$test_dir/expect
+VERIFY_FSCK_OPT=-yf
+
+TEST_DATA=$test_name.tmp
+VERIFY_DATA=$test_name.ver.tmp
+
+echo "debugfs create special files" > $OUT
+
+dd if=/dev/zero of=$TMPFILE bs=1k count=512 > /dev/null 2>&1
+
+echo "mke2fs -Fq -b 1024 test.img 512" >> $OUT
+
+$MKE2FS -Fq $TMPFILE 512 > /dev/null 2>&1
+status=$?
+echo Exit status is $status >> $OUT
+
+$DEBUGFS -w $TMPFILE << EOF > /dev/null 2>&1
+set_current_time 201301151400
+set_super_value lastcheck 0
+set_super_value hash_seed null
+set_super_value mkfs_time 0
+symlink foo bar
+symlink foo2 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+mknod pipe p
+mknod sda b 8 0
+mknod null c 1 3
+EOF
+
+echo "debugfs -R ''stat foo'' -w test.img" > $OUT.new
+$DEBUGFS -R "stat foo" -w $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+echo "debugfs -R ''stat foo2'' -w test.img" > $OUT.new
+$DEBUGFS -R "stat foo2" -w $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+echo "debugfs -R ''block_dump 28'' -w test.img" > $OUT.new
+$DEBUGFS -R "block_dump 28" -w $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+echo "debugfs -R ''stat pipe'' -w test.img" > $OUT.new
+$DEBUGFS -R "stat pipe" -w $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+echo "debugfs -R ''stat sda'' -w test.img" > $OUT.new
+$DEBUGFS -R "stat sda" -w $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+echo "debugfs -R ''stat null'' -w test.img" > $OUT.new
+$DEBUGFS -R "stat null" -w $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+echo e2fsck $VERIFY_FSCK_OPT -N test_filesys > $OUT.new
+$FSCK $VERIFY_FSCK_OPT -N test_filesys $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+#
+# Do the verification
+#
+
+rm -f $TMPFILE $OUT.new
+cmp -s $OUT $EXP
+status=$?
+
+if [ "$status" = 0 ] ; then
+	echo "$test_name: $test_description: ok"
+	touch $test_name.ok
+else
+	echo "$test_name: $test_description: failed"
+	diff $DIFF_OPTS $EXP $OUT > $test_name.failed
+fi
+
+unset VERIFY_FSCK_OPT NATIVE_FSCK_OPT OUT EXP TEST_DATA VERIFY_DATA
+
+else #if test -x $DEBUGFS_EXE; then
+	echo "$test_name: $test_description: skipped"
+fi 

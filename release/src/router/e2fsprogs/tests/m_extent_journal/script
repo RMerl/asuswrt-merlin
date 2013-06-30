@@ -1,0 +1,4 @@
+DESCRIPTION="extent-mapped journal"
+FS_SIZE=65536
+MKE2FS_OPTS="-O extents -j"
+. $cmd_dir/run_mke2fs

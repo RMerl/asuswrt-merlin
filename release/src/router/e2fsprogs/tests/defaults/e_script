@@ -1,0 +1,47 @@
+#
+# Default script for testing the relocation library routines 
+# (irel -- inode relocation and brel -- block relocation)
+#
+
+if [ -f $test_dir/setup ]; then
+	. $test_dir/setup
+fi
+
+if [ "$class"x = x ]; then
+	class=`echo $test_name | sed -e 's/e_\([^_]*\)_\(.*\)/\1/'`
+	instance=`echo $test_name | sed -e 's/e_\([^_]*\)_\(.*\)/\2/'`
+fi
+if [ "$OUT"x = x ]; then
+	OUT=$test_name.log
+fi
+if [ "$EXPECT"x = x ]; then
+	EXPECT=$SRCDIR/progs/test_data/expect.$class
+fi
+
+if [ "$class" = irel ]; then
+	TEST_PROG=$TEST_REL
+elif [ "$class" = brel ]; then
+	TEST_PROG=$TEST_REL
+elif [ "$class" = icount ]; then
+	TEST_PROG=$TEST_ICOUNT
+else
+	TEST_PROG=/bin/cat
+fi
+
+cat $SRCDIR/progs/test_data/$instance.setup $SRCDIR/progs/test_data/test.$class \
+    | $TEST_PROG -f - 2>&1 | tr -d \\015 > $OUT 
+
+cmp -s $EXPECT $OUT
+status=$?
+
+rm -f $test_name.failed $test_name.ok
+
+if [ "$status" = 0 ] ; then
+    echo "$test_name: $test_description: ok"
+    touch $test_name.ok
+else
+    echo "$test_name: $test_description: failed"
+    diff $DIFF_OPTS $EXPECT $OUT > $test_name.failed
+fi
+
+unset EXPECT OUT class instance

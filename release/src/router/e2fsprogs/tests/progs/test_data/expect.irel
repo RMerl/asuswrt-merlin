@@ -1,0 +1,62 @@
+test_rel: irel_dump
+test_rel: irel_put 2 11 3
+test_rel: irel_put 1 10 2
+test_rel: irel_put 3 9 1
+test_rel: irel_add_ref 1 4 128
+test_rel: irel_add_ref 1 5 64
+test_rel: irel_add_ref 1 6 512
+irel_add_ref: No space left on device while calling ext2fs_irel_add_ref
+test_rel: irel_put 1 8 3
+test_rel: irel_add_ref 1 6 512
+test_rel: irel_add_ref 2 4 64
+test_rel: irel_put 23 12 1
+test_rel: irel_put 24 13 1
+irel_put: Invalid argument while calling ext2fs_irel_put
+test_rel: irel_get 24
+irel_get: Invalid argument while calling ext2fs_irel_get
+test_rel: irel_delete 24
+irel_delete: Invalid argument while calling ext2fs_irel_delete
+test_rel: irel_get 3
+Old= 3, New= 9, Original=3, Max_refs=1
+test_rel: irel_get 1
+Old= 1, New= 8, Original=1, Max_refs=3
+	4:128, 5:64, 6:512
+test_rel: irel_start_iter
+test_rel: irel_next
+Old= 1, New= 8, Original=1, Max_refs=3
+	4:128, 5:64, 6:512
+test_rel: irel_next
+Old= 2, New= 11, Original=2, Max_refs=3
+	4:64
+test_rel: irel_next
+Old= 3, New= 9, Original=3, Max_refs=1
+test_rel: irel_next
+No more entries!
+test_rel: irel_delete 2
+test_rel: irel_delete 2
+irel_delete: No such file or directory while calling ext2fs_irel_delete
+test_rel: irel_delete 4
+irel_delete: No such file or directory while calling ext2fs_irel_delete
+test_rel: irel_move 1 2
+test_rel: irel_dump
+Old= 2, New= 8, Original=1, Max_refs=3
+	4:128, 5:64, 6:512
+Old= 3, New= 9, Original=3, Max_refs=1
+test_rel: irel_delete 4
+irel_delete: No such file or directory while calling ext2fs_irel_delete
+test_rel: irel_move 1 4
+irel_move: No such file or directory while calling ext2fs_irel_move
+test_rel: irel_move 2 4
+test_rel: irel_dump
+Old= 3, New= 9, Original=3, Max_refs=1
+Old= 4, New= 8, Original=1, Max_refs=3
+	4:128, 5:64, 6:512
+test_rel: irel_get_by_orig 3
+Old= 3, New= 9, Original=3, Max_refs=1
+test_rel: irel_get_by_orig 1
+Old= 4, New= 8, Original=1, Max_refs=3
+	4:128, 5:64, 6:512
+test_rel: irel_get_by_orig 5
+irel_get_by_orig: No such file or directory while calling ext2fs_irel_get_by_orig
+test_rel: irel_get_by_orig 2
+irel_get_by_orig: No such file or directory while calling ext2fs_irel_get_by_orig

@@ -1,0 +1,68 @@
+These images contain various forms of corrupted filesystem which
+e2fsck will correct.  They are used as a regression test for e2fsck.
+
+The test_script program will automatically run e2fsck against the
+filesystem images.  It will run them two times, and display the exit
+status for each run.  The meaning of the exit status codes are as
+follows:
+
+	0		No filesystem errors were detected
+	1		Filesystem errors detected, but corrected
+	2		System should be rebooted
+	4		Filesystem errors left uncorrected
+	8		Operational error (generally means internal error,
+				or filesystem error that the e2fsck was not
+				prepared to deal with)
+	16		Usage or syntax error
+
+During the regression test, the first exit code should be 1, and the
+second exit code should be 0.  In other words, all (with one
+exception) of the test filesystems in this directory have some sort of
+filesystem corruption, which e2fsck should fix on the first pass.
+After the first pass, e2fsck should leave a fully consistent
+filesystem with no detectable errors found in the second pass.  The
+exception is the okgroup.img filesystem, which contains no errors, and
+so both exit codes should be 0.
+
+NOTE: It appears that at least some versions of the original e2fsck do
+not exit with an exit status code of 1 after correcting filesystem
+errors.  So if you modify the test_script to try running these
+filesystems against the original e2fsck, you will have to inspect the
+test_script.log file manually.
+
+--------------------------------------------------------------
+Here's a one-line descriptons of the various test images in this
+directory:
+
+baddir.img		Filesystem with a corrupted directory
+badbblocks.img		Filesystem with illegal blocks in the bad block inode.
+badinode.img		Filesystem with various different corrupted inode
+				entries.
+badlkcnt.img		Filesystem with deleted files with non-zero link count
+badroot.img		Filesystem with a file for a root directory
+badtable.img		Filesystem with blocks shared between the bitmaps and
+				inode table blocks and the bad block inode
+bbfile.img		Filesystem with files containing bad blocks
+bitmaps.img		Filesystem with corrupted inode and block bitmaps
+dirlink.img		Filesystem with a hard link to a directory
+dup.img			Filesystem with blocks claimed by two different files
+dup2.img		Filesystem with blocks claimed by three different files
+dupfsblks.img		Filesystem with blocks claimed by a file and
+				inode/block bitmaps and inode tables
+dupsuper.img		Filesystem with blocks claimed by a file and
+				the superblock / group descriptors
+end-bitmap.img		Filesystem with corruption at the end of the block 
+				bitmap
+expand.img		Tests e2fsck's ability to expand lost+found if 
+				necessary
+lpf.img			Filesystem with disconnected files and no /lost+found 
+				directory
+mke2fs2b.img		Filesystem with corruption similar to that
+				created by mke2fs version 0.2b
+noroot.img		Filesystem with a deleted root directory
+okgroup.img		Filesystem that's exactly 8193 blocks long 
+				(otherwise OK)
+overfsblks.img		Filesystem with overlapping inode and block bitmaps
+symlinks.img		Filesystem with bad symlink sizes
+
+

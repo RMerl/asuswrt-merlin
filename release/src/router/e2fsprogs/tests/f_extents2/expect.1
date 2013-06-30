@@ -1,0 +1,70 @@
+Pass 1: Checking inodes, blocks, and sizes
+Inode 12 has out of order extents
+	(invalid logical block 0, physical block 23, len 12)
+Clear? yes
+
+Inode 12, i_blocks is 86, should be 62.  Fix? yes
+
+Inode 13, i_size is 13295, should be 14336.  Fix? yes
+
+Inode 13, i_blocks is 26, should be 28.  Fix? yes
+
+Inode 15, i_size is 42197, should be 44032.  Fix? yes
+
+Inode 15, i_blocks is 84, should be 86.  Fix? yes
+
+Inode 16 has an invalid extent
+	(logical block 0, invalid physical block 500, len 10)
+Clear? yes
+
+Inode 17 has an invalid extent
+	(logical block 0, physical block 120, invalid len 6000)
+Clear? yes
+
+Inode 18 has out of order extents
+	(invalid logical block 10, physical block 155, len 45)
+Clear? yes
+
+Inode 18, i_blocks is 116, should be 24.  Fix? yes
+
+
+Running additional passes to resolve blocks claimed by more than one inode...
+Pass 1B: Rescanning for multiply-claimed blocks
+Multiply-claimed block(s) in inode 13: 80 80
+Multiply-claimed block(s) in inode 14: 85
+Multiply-claimed block(s) in inode 15: 85
+Pass 1C: Scanning directories for inodes with multiply-claimed blocks
+Pass 1D: Reconciling multiply-claimed blocks
+(There are 3 inodes containing multiply-claimed blocks.)
+
+File /block.c (inode #13, mod time Mon Jun  2 05:20:22 2008) 
+  has 2 multiply-claimed block(s), shared with 0 file(s):
+Clone multiply-claimed blocks? yes
+
+File /inode.c (inode #14, mod time Mon Jun  2 05:28:16 2008) 
+  has 1 multiply-claimed block(s), shared with 1 file(s):
+	/ext2fs.h (inode #15, mod time Mon Jun  2 07:22:57 2008)
+Clone multiply-claimed blocks? yes
+
+File /ext2fs.h (inode #15, mod time Mon Jun  2 07:22:57 2008) 
+  has 1 multiply-claimed block(s), shared with 1 file(s):
+	/inode.c (inode #14, mod time Mon Jun  2 05:28:16 2008)
+Multiply-claimed blocks already reassigned or cloned.
+
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Block bitmap differences:  -(26--34) -(154--199)
+Fix? yes
+
+Free blocks count wrong for group #0 (65535, counted=55).
+Fix? yes
+
+Free blocks count wrong (4294967295, counted=55).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 18/32 files (22.2% non-contiguous), 145/200 blocks
+Exit status is 1

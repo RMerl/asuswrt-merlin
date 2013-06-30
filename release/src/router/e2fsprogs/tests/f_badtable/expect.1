@@ -1,0 +1,45 @@
+Filesystem did not have a UUID; generating one.
+
+Pass 1: Checking inodes, blocks, and sizes
+Group 0's block bitmap (3) is bad.  Relocate? yes
+
+Group 0's inode bitmap (4) is bad.  Relocate? yes
+
+Relocating group 0's block bitmap from 3 to 9...
+Relocating group 0's inode bitmap from 4 to 10...
+Pass 2: Checking directory structure
+Entry 'lost+found' in / (2) points to inode (11) located in a bad block.
+Clear? yes
+
+Pass 3: Checking directory connectivity
+/lost+found not found.  Create? yes
+
+Pass 4: Checking reference counts
+Inode 2 ref count is 4, should be 3.  Fix? yes
+
+Pass 5: Checking group summary information
+Block bitmap differences:  -(12--20)
+Fix? yes
+
+Free blocks count wrong for group #0 (77, counted=87).
+Fix? yes
+
+Free blocks count wrong (77, counted=87).
+Fix? yes
+
+Inode bitmap differences:  +(12--16) +(25--32)
+Fix? yes
+
+Free inodes count wrong for group #0 (20, counted=7).
+Fix? yes
+
+Directories count wrong for group #0 (3, counted=2).
+Fix? yes
+
+Free inodes count wrong (20, counted=7).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 25/32 files (0.0% non-contiguous), 13/100 blocks
+Exit status is 1

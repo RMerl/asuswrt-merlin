@@ -1,0 +1,41 @@
+test_rel: brel_dump
+test_rel: brel_put 2 11
+test_rel: brel_put 1 10
+test_rel: brel_put 3 9
+test_rel: brel_put 1 10 4 128
+test_rel: brel_put 23 12
+test_rel: brel_put 24 13
+brel_put: Invalid argument while calling ext2fs_brel_put
+test_rel: brel_get 24
+brel_get: Invalid argument while calling ext2fs_brel_get
+test_rel: brel_delete 24
+brel_delete: Invalid argument while calling ext2fs_brel_delete
+test_rel: brel_get 5
+brel_get: No such file or directory while calling ext2fs_brel_get
+test_rel: brel_get 3
+Old= 3, New= 9, Owner= 0:0
+test_rel: brel_get 1
+Old= 1, New= 10, Owner= 4:128
+test_rel: brel_start_iter
+test_rel: brel_next
+Old= 1, New= 10, Owner= 4:128
+test_rel: brel_next
+Old= 2, New= 11, Owner= 0:0
+test_rel: brel_next
+Old= 3, New= 9, Owner= 0:0
+test_rel: brel_next
+No more entries!
+test_rel: brel_delete 2
+test_rel: brel_delete 2
+brel_delete: No such file or directory while calling ext2fs_brel_delete
+test_rel: brel_delete 5
+brel_delete: No such file or directory while calling ext2fs_brel_delete
+test_rel: brel_move 1 2
+test_rel: brel_delete 1
+brel_delete: No such file or directory while calling ext2fs_brel_delete
+test_rel: brel_move 1 4
+brel_move: No such file or directory while calling ext2fs_brel_move
+test_rel: brel_move 2 5
+test_rel: brel_dump
+Old= 3, New= 9, Owner= 0:0
+Old= 5, New= 10, Owner= 4:128

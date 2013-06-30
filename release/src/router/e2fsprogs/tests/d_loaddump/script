@@ -1,0 +1,66 @@
+if test -x $DEBUGFS_EXE; then
+
+OUT=$test_name.log
+EXP=$test_dir/expect
+VERIFY_FSCK_OPT=-yf
+
+TEST_DATA=$test_name.tmp
+VERIFY_DATA=$test_name.ver.tmp
+
+echo "debugfs load/dump test" > $OUT
+
+dd if=/dev/zero of=$TMPFILE bs=1k count=512 > /dev/null 2>&1
+
+echo "mke2fs -Fq -b 1024 test.img 512" >> $OUT
+
+$MKE2FS -Fq $TMPFILE 512 > /dev/null 2>&1
+status=$?
+echo Exit status is $status >> $OUT
+
+dd if=$TEST_BITS of=$TEST_DATA bs=128k count=1 conv=sync > /dev/null 2>&1 
+echo "file fragment odd size" >> $TEST_DATA
+
+echo "debugfs -R ''write $TEST_DATA test_data'' -w test.img" > $OUT.new
+$DEBUGFS -R "write $TEST_DATA test_data" -w $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+echo e2fsck $VERIFY_FSCK_OPT -N test_filesys > $OUT.new
+$FSCK $VERIFY_FSCK_OPT -N test_filesys $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+echo "debugfs -R ''dump test_data $VERIFY_DATA'' test.img" > $OUT.new
+$DEBUGFS -R "dump test_data $VERIFY_DATA" $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+echo "cmp $TEST_DATA $VERIFY_DATA" >> $OUT
+cmp $TEST_DATA $VERIFY_DATA >>$OUT
+status=$?
+echo Exit status is $status >> $OUT
+
+#
+# Do the verification
+#
+
+rm -f $VERIFY_DATA $TEST_DATA $TMPFILE $OUT.new
+cmp -s $OUT $EXP
+status=$?
+
+if [ "$status" = 0 ] ; then
+	echo "$test_name: $test_description: ok"
+	touch $test_name.ok
+else
+	echo "$test_name: $test_description: failed"
+	diff $DIFF_OPTS $EXP $OUT > $test_name.failed
+fi
+
+unset VERIFY_FSCK_OPT NATIVE_FSCK_OPT OUT EXP TEST_DATA VERIFY_DATA
+
+else #if test -x $DEBUGFS_EXE; then
+	echo "$test_name: $test_description: skipped"
+fi 

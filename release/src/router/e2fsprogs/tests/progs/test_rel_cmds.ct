@@ -1,0 +1,82 @@
+#
+# Copyright (C) 1997 Theodore Ts'o.  This file may be redistributed
+# under the terms of the GNU Public License.
+#
+command_table test_cmds;
+
+#
+# Block relocation table commands
+#
+
+request do_brel_ma_create, "Open a memory array block relocation table",
+	brel_ma_create, bma_create;
+
+request do_brel_free, "Free a block relocation table",
+	brel_free, bfree;
+
+request do_brel_put, "Add or modify a block relocation entry",
+	brel_put, bput;
+
+request do_brel_get, "Get a block relocation entry",
+	brel_get, bget;
+
+request do_brel_start_iter, "Start iterating over the block table",
+	brel_start_iter, bstart;
+
+request do_brel_next, "Get the next block relocation entry",
+	brel_next, bnext;
+
+request do_brel_dump, "Dump the block relocation table",
+	brel_dump, bdump;
+
+request do_brel_move, "Move an entry in the block relocation table",
+	brel_move, bmove;
+
+request do_brel_delete, "Delete an entry in the block relocation table",
+	brel_delete, bdelete, bdel;
+
+#
+# Inode relocation table commands
+#
+
+request do_irel_ma_create, "Open a memory array inode relocation table",
+	irel_ma_create, ima_create;
+
+request do_irel_free, "Free an inode relocation table",
+	irel_free, ifree;
+
+request do_irel_put, "Add or modify an inode relocation entry",
+	irel_put, iput;
+
+request do_irel_get, "Get an inode relocation entry",
+	irel_get, iget;
+
+request do_irel_get_by_orig, 
+	"Get an inode relocation entry by its original number",
+	irel_get_by_orig, igetorig, igeto;
+
+request do_irel_start_iter, "Start iterating over the inode table",
+	irel_start_iter, istart;
+
+request do_irel_next, "Get the next block relocation entry",
+	irel_next, inext;
+
+request do_irel_dump, "Dump the inode relocation table",
+	irel_dump, idump;
+
+request do_irel_add_ref, "Add a reference to an inode entry",
+	irel_add_ref, iaddref, iaddr;
+
+request do_irel_start_iter_ref, "Start iterating over references to an inode",
+	irel_start_iter_ref, istartref, istartr;
+
+request do_irel_next_ref, "Get the next reference for an inode entry",
+	irel_next_ref, inextref, inextr;
+
+request do_irel_move, "Move an entry in the inode relocation table", 
+	irel_move, imove;
+
+request do_irel_delete, "Delete an entry in the inode relocation table",
+	irel_delete, idelete, idel;
+
+end;

@@ -1,0 +1,2 @@
+ONE_PASS_ONLY="true"
+. $cmd_dir/run_e2fsck
