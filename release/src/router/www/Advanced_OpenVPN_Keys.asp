@@ -29,6 +29,27 @@ client2pid = '<% sysinfo("pid.vpnclient2"); %>';
 function initial()
 {
 	show_menu();
+	document.form.vpn_crt_server1_static.value = document.form.vpn_crt_server1_static.value.replace(/>/gm,"\r\n");
+	document.form.vpn_crt_server1_ca.value = document.form.vpn_crt_server1_ca.value.replace(/>/gm,"\r\n");
+	document.form.vpn_crt_server1_key.value = document.form.vpn_crt_server1_key.value.replace(/>/gm,"\r\n");
+	document.form.vpn_crt_server1_crt.value = document.form.vpn_crt_server1_crt.value.replace(/>/gm,"\r\n");
+	document.form.vpn_crt_server1_dh.value = document.form.vpn_crt_server1_dh.value.replace(/>/gm,"\r\n");
+
+	document.form.vpn_crt_server2_static.value = document.form.vpn_crt_server2_static.value.replace(/>/gm,"\r\n");
+	document.form.vpn_crt_server2_ca.value = document.form.vpn_crt_server2_ca.value.replace(/>/gm,"\r\n");
+	document.form.vpn_crt_server2_key.value = document.form.vpn_crt_server2_key.value.replace(/>/gm,"\r\n");
+	document.form.vpn_crt_server2_crt.value = document.form.vpn_crt_server2_crt.value.replace(/>/gm,"\r\n");
+	document.form.vpn_crt_server2_dh.value = document.form.vpn_crt_server2_dh.value.replace(/>/gm,"\r\n");
+
+	document.form.vpn_crt_client1_static.value = document.form.vpn_crt_client1_static.value.replace(/>/gm,"\r\n");
+	document.form.vpn_crt_client1_ca.value = document.form.vpn_crt_client1_ca.value.replace(/>/gm,"\r\n");
+	document.form.vpn_crt_client1_crt.value = document.form.vpn_crt_client1_crt.value.replace(/>/gm,"\r\n");
+	document.form.vpn_crt_client1_key.value = document.form.vpn_crt_client1_key.value.replace(/>/gm,"\r\n");
+
+	document.form.vpn_crt_client2_static.value = document.form.vpn_crt_client2_static.value.replace(/>/gm,"\r\n");
+	document.form.vpn_crt_client2_ca.value = document.form.vpn_crt_client2_ca.value.replace(/>/gm,"\r\n");
+	document.form.vpn_crt_client2_crt.value = document.form.vpn_crt_client2_crt.value.replace(/>/gm,"\r\n");
+	document.form.vpn_crt_client2_key.value = document.form.vpn_crt_client2_key.value.replace(/>/gm,"\r\n");
 	change_page(1);
 }
 
@@ -42,28 +63,6 @@ function applyRule(){
 	if (server2pid > 0) document.form.action_script.value += "restart_vpnserver2;";
 
 	if (document.form.action_script.value != "") document.form.action_wait.value = "10";
-
-	document.form.vpn_crt_server1_static.value.replace(/\r/g,"");
-	document.form.vpn_crt_server1_ca.value.replace(/\r/g,"");
-	document.form.vpn_crt_server1_key.value.replace(/\r/g,"");
-	document.form.vpn_crt_server1_crt.value.replace(/\r/g,"");
-	document.form.vpn_crt_server1_dh.value.replace(/\r/g,"");
-
-	document.form.vpn_crt_server2_static.value.replace(/\r/g,"");
-	document.form.vpn_crt_server2_ca.value.replace(/\r/g,"");
-	document.form.vpn_crt_server2_key.value.replace(/\r/g,"");
-	document.form.vpn_crt_server2_crt.value.replace(/\r/g,"");
-	document.form.vpn_crt_server2_dh.value.replace(/\r/g,"");
-
-	document.form.vpn_crt_client1_static.value.replace(/\r/g,"");
-	document.form.vpn_crt_client1_ca.value.replace(/\r/g,"");
-	document.form.vpn_crt_client1_crt.value.replace(/\r/g,"");
-	document.form.vpn_crt_client1_key.value.replace(/\r/g,"");
-
-	document.form.vpn_crt_client2_static.value.replace(/\r/g,"");
-	document.form.vpn_crt_client2_ca.value.replace(/\r/g,"");
-	document.form.vpn_crt_client2_crt.value.replace(/\r/g,"");
-	document.form.vpn_crt_client2_key.value.replace(/\r/g,"");
 
 	document.form.submit();
 }

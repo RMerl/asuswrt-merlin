@@ -129,6 +129,8 @@ function initial(){
 		$("https_port").style.display = "none";
 	else if('<% nvram_get("http_enable"); %>' == 1)
 		$("http_port").style.display = "none";
+
+	document.form.sshd_authkeys.value = document.form.sshd_authkeys.value.replace(/>/gm,"\r\n");
 }
 
 var time_zone_tmp="";
@@ -205,8 +207,6 @@ function applyRule(){
 					document.form.flag.value = "https://" + location.hostname + ":" + document.form.https_lanport.value;
 			}
 		}
-
-		document.form.sshd_authkeys.value.replace(/\r/g,"");
 
 		showLoading();
 		document.form.submit();

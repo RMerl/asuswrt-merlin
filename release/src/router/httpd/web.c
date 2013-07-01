@@ -1367,7 +1367,8 @@ static int validate_apply(webs_t wp) {
 	struct nvram_tuple *t;
 	char *value;
 	char name[64];
-	char buff[100], tmp[100], prefix[32];
+	char buff[100], tmp[3000], prefix[32];
+	int i, j, len;
 	int unit=-1, subunit=-1;
 	int nvram_modified = 0;
 	int nvram_modified_wl = 0;
@@ -1499,6 +1500,22 @@ static int validate_apply(webs_t wp) {
                                 }
                         }
 #endif
+			// Replace CRLF with ">", as the nvram backup encoder can't handle
+                        // ASCII values below 32.
+			else if((!strncmp(name, "vpn_crt", 7)) || (!strncmp(name, "sshd_", 5))) {
+
+				len = strlen(value);
+				i = 0;
+				for (j=0; (j < len); j++) {
+					if (value[j] == '\n') tmp[i++] = '>';
+					else if (value[j] != '\r') tmp[i++] = value[j];
+				}
+				tmp[i] = '\0';
+
+				nvram_set(name, tmp);
+				nvram_modified = 1;
+				_dprintf("set %s=%s\n", name, tmp);
+			}
 			// TODO: add other multiple instance handle here
 			else if(strcmp(buff, value)) {
 				nvram_set(name, value);
