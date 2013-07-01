@@ -440,10 +440,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.372.30 Beta 1:
+3.0.0.4.372.30 Beta 4:
    - NEW: Merged with 372 (code from the arm environment), with
           some fixes to make it build properly on a mipsel router.
-   - NEW: RT-AC56U support (still beta).
+   - NEW: RT-AC56U support (still beta).  Various bugs have been
+          fixed over the original FW that shipped with these routers.
    - CHANGED: Updated iptables-1.4.x to 1.4.14 (RT-AC56U)
    - CHANGED: Brought back the Connection page under System Logs
    - CHANGED: Updated e2fsprogs to 1.42.7.  Amongst other things
@@ -452,6 +453,11 @@ History
    - CHANGED: Renamed Advanced (Per IP) Traffic monitoring for
               IPTraffic (to match the Tomato name for that same
               functionality)
+   - FIXED: GRO kills upload speed if CTF is disabled (Asus bug, RT-AC56U)
+   - FIXED: Buffer overrun in NVRAM handling, leading to random crashes
+            (Asus bug, RT-AC56U)
+   - FIXED: NVRAM values getting corrupted or disappearing if using more
+            than 32 KB (Asus bug, RT-AC56U)
    - FIXED: Reapply layout fixes to Guest network and DHCP page (were lost
             in a recent webui update)
    - FIXED: JFFS2 could get reformated again at each subsequent reboots.
@@ -459,7 +465,10 @@ History
             name merged with the next device's.
    - FIXED: Empty Site Survey list if there was only one AP found
    - FIXED: Saved settings might fail to restore if they contained 
-            OpenVPN or SSHD keys with CRLF line endings.
+            OpenVPN or SSHD keys with CRLF line endings.  You should
+            access the OpenVPN Keys page, click on Apply to re-save them,
+            then re-create any backup you had of your router settings.
+            (Still broken as of Beta 3)
    - FIXED: Numerous bugs in ipt_account for Kernel 2.6.36 (RT-AC56U)
 
 
