@@ -50,6 +50,7 @@ void start_vpnclient(int clientNum)
 	FILE *fp;
 	char iface[IF_SIZE];
 	char buffer[BUF_SIZE];
+	char buffer2[3000];
 	char *argv[6];
 	int argc = 0;
 	enum { TLS, SECRET, CUSTOM } cryptMode = CUSTOM;
@@ -320,7 +321,7 @@ void start_vpnclient(int clientNum)
 			fp = fopen(&buffer[0], "w");
 			chmod(&buffer[0], S_IRUSR|S_IWUSR);
 			sprintf(&buffer[0], "vpn_crt_client%d_ca", clientNum);
-			fprintf(fp, "%s", nvram_safe_get(&buffer[0]));
+			fprintf(fp, "%s", get_parsed_crt(&buffer[0], buffer2));
 			fclose(fp);
 		}
 
@@ -333,7 +334,7 @@ void start_vpnclient(int clientNum)
 				fp = fopen(&buffer[0], "w");
 				chmod(&buffer[0], S_IRUSR|S_IWUSR);
 				sprintf(&buffer[0], "vpn_crt_client%d_key", clientNum);
-				fprintf(fp, "%s", nvram_safe_get(&buffer[0]));
+				fprintf(fp, "%s", get_parsed_crt(&buffer[0], buffer2));
 				fclose(fp);
 			}
 
@@ -344,7 +345,7 @@ void start_vpnclient(int clientNum)
 				fp = fopen(&buffer[0], "w");
 				chmod(&buffer[0], S_IRUSR|S_IWUSR);
 				sprintf(&buffer[0], "vpn_crt_client%d_crt", clientNum);
-				fprintf(fp, "%s", nvram_safe_get(&buffer[0]));
+				fprintf(fp, "%s", get_parsed_crt(&buffer[0], buffer2));
 				fclose(fp);
 			}
 		}
@@ -370,7 +371,7 @@ void start_vpnclient(int clientNum)
 			fp = fopen(&buffer[0], "w");
 			chmod(&buffer[0], S_IRUSR|S_IWUSR);
 			sprintf(&buffer[0], "vpn_crt_client%d_static", clientNum);
-			fprintf(fp, "%s", nvram_safe_get(&buffer[0]));
+			fprintf(fp, "%s", get_parsed_crt(&buffer[0], buffer2));
 			fclose(fp);
 		}
 	}
@@ -536,6 +537,7 @@ void start_vpnserver(int serverNum)
 	FILE *fp, *ccd;
 	char iface[IF_SIZE];
 	char buffer[BUF_SIZE];
+	char buffer2[3000];
 	char *argv[6], *chp, *route;
 	int argc = 0;
 	int c2c = 0;
@@ -873,7 +875,7 @@ void start_vpnserver(int serverNum)
 			fp = fopen(&buffer[0], "w");
 			chmod(&buffer[0], S_IRUSR|S_IWUSR);
 			sprintf(&buffer[0], "vpn_crt_server%d_ca", serverNum);
-			fprintf(fp, "%s", nvram_safe_get(&buffer[0]));
+			fprintf(fp, "%s", get_parsed_crt(&buffer[0], buffer2));
 			fclose(fp);
 		}
 
@@ -884,7 +886,7 @@ void start_vpnserver(int serverNum)
 			fp = fopen(&buffer[0], "w");
 			chmod(&buffer[0], S_IRUSR|S_IWUSR);
 			sprintf(&buffer[0], "vpn_crt_server%d_key", serverNum);
-			fprintf(fp, "%s", nvram_safe_get(&buffer[0]));
+			fprintf(fp, "%s", get_parsed_crt(&buffer[0], buffer2));
 			fclose(fp);
 		}
 
@@ -895,7 +897,7 @@ void start_vpnserver(int serverNum)
 			fp = fopen(&buffer[0], "w");
 			chmod(&buffer[0], S_IRUSR|S_IWUSR);
 			sprintf(&buffer[0], "vpn_crt_server%d_crt", serverNum);
-			fprintf(fp, "%s", nvram_safe_get(&buffer[0]));
+			fprintf(fp, "%s", get_parsed_crt(&buffer[0], buffer2));
 			fclose(fp);
 		}
 
@@ -906,7 +908,7 @@ void start_vpnserver(int serverNum)
 			fp = fopen(&buffer[0], "w");
 			chmod(&buffer[0], S_IRUSR|S_IWUSR);
 			sprintf(&buffer[0], "vpn_crt_server%d_dh", serverNum);
-			fprintf(fp, "%s", nvram_safe_get(&buffer[0]));
+			fprintf(fp, "%s", get_parsed_crt(&buffer[0], buffer2));
 			fclose(fp);
 		}
 	}

@@ -25,11 +25,12 @@ static inline int check_host_key(const char *ktype, const char *nvname, const ch
 void start_sshd(void)
 {
 	int dirty = 0;
+	char buf[2048];
 
 	mkdir("/etc/dropbear", 0700);
 	mkdir("/root/.ssh", 0700);
 
-	f_write_string("/root/.ssh/authorized_keys", nvram_safe_get("sshd_authkeys"), 0, 0700);
+	f_write_string("/root/.ssh/authorized_keys", get_parsed_crt("sshd_authkeys", buf), 0, 0700);
 
 	dirty |= check_host_key("rsa", "sshd_hostkey", "/etc/dropbear/dropbear_rsa_host_key");
 	dirty |= check_host_key("dss", "sshd_dsskey",  "/etc/dropbear/dropbear_dss_host_key");

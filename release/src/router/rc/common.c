@@ -1533,3 +1533,24 @@ is_valid_volname(const char *name)
 	return len;
 }
 
+char *get_parsed_crt(const char *name, char *buf)
+{
+	char *value;
+	int len, i;
+
+	value = nvram_safe_get(name);
+
+	len = strlen(value);
+
+	for (i=0; (i < len); i++) {
+		if (value[i] == '>') 
+			buf[i] = '\n';
+		else
+			buf[i] = value[i];
+	}
+
+	buf[i] = '\0';
+
+	return buf;
+}
+

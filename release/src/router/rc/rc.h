@@ -491,6 +491,7 @@ extern int pppstatus(void);
 extern void time_zone_x_mapping(void);
 extern void use_custom_config(char *config, char *target);
 extern void append_custom_config(char *config, FILE *fp);
+extern char *get_parsed_crt(const char *name, char *buf);
 
 // ssh.c
 extern void start_sshd(void);
