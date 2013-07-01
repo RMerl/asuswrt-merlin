@@ -1746,7 +1746,7 @@ void enable_gro(int interval)
 	char path[64] = {0};
 	char parm[32] = {0};
 
-	if((nvram_get_int("gro_disable")) || (nvram_get_int("ctf_disable") == 0))
+	if((nvram_get_int("gro_disable")) || (nvram_get_int("ctf_disable")))
 		return;
 
 	/* enabled gso on vlan interface */
