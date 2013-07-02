@@ -1,0 +1,542 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+## Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## DIST_COMMON comes first so that README can be the very first file.
+DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+
+if %?TOPDIR_P%
+distdir = $(PACKAGE)-$(VERSION)
+top_distdir = $(distdir)
+
+am__remove_distdir = \
+  { test ! -d "$(distdir)" \
+    || { find "$(distdir)" -type d ! -perm -200 -exec chmod u+w {} ';' \
+         && rm -fr "$(distdir)"; }; }
+
+endif %?TOPDIR_P%
+
+if %?SUBDIRS%
+## computes a relative pathname RELDIR such that DIR1/RELDIR = DIR2.
+## Input:
+## - DIR1            relative pathname, relative to the current directory
+## - DIR2            relative pathname, relative to the current directory
+## Output:
+## - reldir          relative pathname of DIR2, relative to DIR1
+am__relativize = \
+  dir0=`pwd`; \
+  sed_first='s,^\([^/]*\)/.*$$,\1,'; \
+  sed_rest='s,^[^/]*/*,,'; \
+  sed_last='s,^.*/\([^/]*\)$$,\1,'; \
+  sed_butlast='s,/*[^/]*$$,,'; \
+  while test -n "$$dir1"; do \
+    first=`echo "$$dir1" | sed -e "$$sed_first"`; \
+    if test "$$first" != "."; then \
+      if test "$$first" = ".."; then \
+        dir2=`echo "$$dir0" | sed -e "$$sed_last"`/"$$dir2"; \
+        dir0=`echo "$$dir0" | sed -e "$$sed_butlast"`; \
+      else \
+        first2=`echo "$$dir2" | sed -e "$$sed_first"`; \
+        if test "$$first2" = "$$first"; then \
+          dir2=`echo "$$dir2" | sed -e "$$sed_rest"`; \
+        else \
+          dir2="../$$dir2"; \
+        fi; \
+        dir0="$$dir0"/"$$first"; \
+      fi; \
+    fi; \
+    dir1=`echo "$$dir1" | sed -e "$$sed_rest"`; \
+  done; \
+  reldir="$$dir2"
+endif %?SUBDIRS%
+
+.PHONY: distdir
+if %?SUBDIRS%
+AM_RECURSIVE_TARGETS += distdir
+endif %?SUBDIRS%
+
+distdir: $(DISTFILES)
+##
+## For Gnits users, this is pretty handy.  Look at 15 lines
+## in case some explanatory text is desirable.
+##
+if %?TOPDIR_P%
+if  %?CK-NEWS%
+	@case `sed 15q $(srcdir)/NEWS` in \
+	*"$(VERSION)"*) : ;; \
+	*) \
+	  echo "NEWS not updated; not releasing" 1>&2; \
+	  exit 1;; \
+	esac
+endif  %?CK-NEWS%
+endif %?TOPDIR_P%
+##
+## `missing help2man' may have created some bogus man pages.  Ensure they
+## are not distributed.
+##
+if %?INSTALL-MAN%
+if %?HAVE-MANS%
+	@list='$(MANS)'; if test -n "$$list"; then \
+	  list=`for p in $$list; do \
+	    if test -f $$p; then d=; else d="$(srcdir)/"; fi; \
+## Note that we check existing man pages here only.  If there are man pages
+## which are not distributed, and may be generated only conditionally, then
+## we should not error out because of them.  This could be refined to take
+## into account only dist_*_MANS, but then we'd be missing out on those
+## the user distributes with EXTRA_DIST.
+	    if test -f "$$d$$p"; then echo "$$d$$p"; else :; fi; done`; \
+	  if test -n "$$list" && \
+	    grep 'ab help2man is required to generate this page' $$list >/dev/null; then \
+	    echo "error: found man pages containing the \`missing help2man' replacement text:" >&2; \
+	    grep -l 'ab help2man is required to generate this page' $$list | sed 's/^/         /' >&2; \
+	    echo "       to fix them, install help2man, remove and regenerate the man pages;" >&2; \
+	    echo "       typically \`make maintainer-clean' will remove them" >&2; \
+	    exit 1; \
+	  else :; fi; \
+	else :; fi
+endif %?HAVE-MANS%
+endif %?INSTALL-MAN%
+##
+## Only for the top dir.
+##
+if %?TOPDIR_P%
+	$(am__remove_distdir)
+	test -d "$(distdir)" || mkdir "$(distdir)"
+endif %?TOPDIR_P%
+##
+##
+	@srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
+	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
+##
+## Yet another hack to support SUN make.
+##
+## Let's assume `foo' appears in DISTFILES and is not a built file.
+## When building with VPATH=$(srcdir), SUN make and OSF1/Tru64 will
+## rewrite `foo' as `$(srcdir)/foo'.  An attempt to install the file
+## with
+##    cp $file $(distdir)/$file
+## will thus install $(srcdir)/foo as $(distdir)/$(srcdir)/foo
+## instead of $(distdir)/foo.
+##
+## So let's strip this leading $(srcdir)/ when it exists.  (As far we
+## know, only SUN make and OSF1/Tru64 make add it.)  Searching whether
+## the file is to be found in the source or build directory will be
+## done later.
+##
+## In case we are _not_ using SUN or OSF1/Tru64 make, how can we be sure
+## we are not stripping a legitimate filename that starts with the
+## same pattern as $(srcdir)?
+## Well, it can't happen without the Makefile author distributing
+## something out of the distribution (which is bad).   As an example,
+## consider `EXTRA_DIST = ../bar'.  This is an issue if $srcdir is `..',
+## however getting this value for srcdir is impossible: `EXTRA_DIST = ../bar'
+## implies we are in a subdirectory (so `../bar' is within the package),
+## hence `$srcdir' is something like `../../subdir'.
+##
+## There is more to say about files which are above the current directory,
+## like `../bar' in the previous example.  The OSF1/Tru64 make
+## implementation can simplify filenames resulting from a VPATH lookup.
+## For instance if `VPATH = ../../subdir' and `../bar' is found in that
+## VPATH directory, then occurrences of `../bar' will be replaced by
+## `../../bar' (instead of `../../subdir/../bar').  This obviously defeats
+## any attempt to strip a leading $srcdir.  Presently we have no workaround
+## for this.  We avoid this issue by writing `EXTRA_DIST = $(srcdir)/../bar'
+## instead of `EXTRA_DIST = ../bar'.  This prefixing is needed only for files
+## above the current directory.  Fortunately, apart from auxdir files which
+## can be located in .. or ../.., this situation hardly occurs in practice.
+##
+## Also rewrite $(top_srcdir) (which sometimes appears in DISTFILES, and can
+## be absolute) by $(top_builddir) (which is always relative).  $(srcdir) will
+## be prepended later.
+	list='$(DISTFILES)'; \
+	  dist_files=`for file in $$list; do echo $$file; done | \
+	  sed -e "s|^$$srcdirstrip/||;t" \
+	      -e "s|^$$topsrcdirstrip/|$(top_builddir)/|;t"`; \
+## (The second `t' command clears the flag for the next round.)
+##
+## Make the subdirectories for the files.
+##
+	case $$dist_files in \
+	  */*) $(MKDIR_P) `echo "$$dist_files" | \
+			   sed '/\//!d;s|^|$(distdir)/|;s,/[^/]*$$,,' | \
+			   sort -u` ;; \
+	esac; \
+##
+##
+	for file in $$dist_files; do \
+##
+## Always look for the file in the build directory first.  That way
+## for something like yacc output we will correctly pick up the latest
+## version.  Also check for directories in the build directory first,
+## so one can ship generated directories.
+##
+	  if test -f $$file || test -d $$file; then d=.; else d=$(srcdir); fi; \
+##
+## Use cp, not ln.  There are situations in which "ln" can fail.  For
+## instance a file to distribute could actually be a cross-filesystem
+## symlink -- this can easily happen if "gettextize" was run on the
+## distribution.
+##
+	  if test -d $$d/$$file; then \
+## Don't mention $$file in the destination argument, since this fails if
+## the destination directory already exists.  Also, use `-R' and not `-r'.
+## `-r' is almost always incorrect.
+##
+## If a directory exists both in `.' and $(srcdir), then
+## We copy the files from $(srcdir) first and then install those from
+## `.'.  This can help people who distribute directories made of
+## source files _and_ generated files.  It is also important when the
+## directory exists only in $(srcdir), because some vendor Make (such
+## as Tru64) will magically create an empty directory in `.'
+	    dir=`echo "/$$file" | sed -e 's,/[^/]*$$,,'`; \
+## If the destination directory already exists, it may contain read-only
+## files, e.g., during `make distcheck'.
+	    if test -d "$(distdir)/$$file"; then \
+	      find "$(distdir)/$$file" -type d ! -perm -700 -exec chmod u+rwx {} \;; \
+	    fi; \
+	    if test -d $(srcdir)/$$file && test $$d != $(srcdir); then \
+	      cp -fpR $(srcdir)/$$file "$(distdir)$$dir" || exit 1; \
+	      find "$(distdir)/$$file" -type d ! -perm -700 -exec chmod u+rwx {} \;; \
+	    fi; \
+	    cp -fpR $$d/$$file "$(distdir)$$dir" || exit 1; \
+	  else \
+## Test for file existence because sometimes a file gets included in
+## DISTFILES twice.  For example this happens when a single source
+## file is used in building more than one program.
+	    test -f "$(distdir)/$$file" \
+	    || cp -p $$d/$$file "$(distdir)/$$file" \
+	    || exit 1; \
+	  fi; \
+	done
+##
+## Test for directory existence here because previous automake
+## invocation might have created some directories.  Note that we
+## explicitly set distdir for the subdir make; that lets us mix-n-match
+## many automake-using packages into one large package, and have "dist"
+## at the top level do the right thing.  If we're in the topmost
+## directory, then we use `distdir' instead of `top_distdir'; this lets
+## us work correctly with an enclosing package.
+##
+## Split the loop for the directory creation and the one for recursion,
+## so that with GNU make -n, only the latter is executed.
+if %?SUBDIRS%
+	@list='$(DIST_SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    test -d "$(distdir)/$$subdir" \
+	    || $(MKDIR_P) "$(distdir)/$$subdir" \
+	    || exit 1; \
+	  fi; \
+	done
+	@list='$(DIST_SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    dir1=$$subdir; dir2="$(distdir)/$$subdir"; \
+	    $(am__relativize); \
+	    new_distdir=$$reldir; \
+	    dir1=$$subdir; dir2="$(top_distdir)"; \
+	    $(am__relativize); \
+	    new_top_distdir=$$reldir; \
+	    echo " (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) top_distdir="$$new_top_distdir" distdir="$$new_distdir" \\"; \
+	    echo "     am__remove_distdir=: am__skip_length_check=: am__skip_mode_fix=: distdir)"; \
+	    ($(am__cd) $$subdir && \
+	      $(MAKE) $(AM_MAKEFLAGS) \
+	        top_distdir="$$new_top_distdir" \
+	        distdir="$$new_distdir" \
+## Disable am__remove_distdir so that sub-packages do not clear a
+## directory we have already cleared and might even have populated
+## (e.g. shared AUX dir in the sub-package).
+		am__remove_distdir=: \
+## Disable filename length check:
+		am__skip_length_check=: \
+## No need to fix modes more than once:
+		am__skip_mode_fix=: \
+	        distdir) \
+	      || exit 1; \
+	  fi; \
+	done
+endif %?SUBDIRS%
+##
+## We might have to perform some last second updates, such as updating
+## info files.
+## We must explicitly set distdir and top_distdir for these sub-makes.
+##
+if %?DIST-TARGETS%
+	$(MAKE) $(AM_MAKEFLAGS) \
+	  top_distdir="$(top_distdir)" distdir="$(distdir)" \
+	  %DIST-TARGETS%
+endif %?DIST-TARGETS%
+##
+## This complex find command will try to avoid changing the modes of
+## links into the source tree, in case they're hard-linked.
+##
+## Ignore return result from chmod, because it might give an error
+## if we chmod a symlink.
+##
+## Another nastiness: if the file is unreadable by us, we make it
+## readable regardless of the number of links to it.  This only
+## happens in perverse cases.
+##
+## We use $(install_sh) because that is a known-portable way to modify
+## the file in place in the source tree.
+##
+## If we are being invoked recursively, then there is no need to walk
+## the whole subtree again.  This is a complexity reduction for a deep
+## hierarchy of subpackages.
+##
+if %?TOPDIR_P%
+	-test -n "$(am__skip_mode_fix)" \
+	|| find "$(distdir)" -type d ! -perm -755 \
+		-exec chmod u+rwx,go+rx {} \; -o \
+	  ! -type d ! -perm -444 -links 1 -exec chmod a+r {} \; -o \
+	  ! -type d ! -perm -400 -exec chmod a+r {} \; -o \
+	  ! -type d ! -perm -444 -exec $(install_sh) -c -m a+r {} {} \; \
+	|| chmod -R a+r "$(distdir)"
+if %?FILENAME_FILTER%
+	@if test -z "$(am__skip_length_check)" && find "$(distdir)" -type f -print | \
+	  grep '^%FILENAME_FILTER%' 1>&2; then \
+	  echo 'error: the above filenames are too long' 1>&2; \
+	  exit 1; \
+	else :; fi
+endif %?FILENAME_FILTER%
+endif %?TOPDIR_P%
+
+
+
+## --------------------------------------- ##
+## Building various distribution flavors.  ##
+## --------------------------------------- ##
+
+## Note that we don't use GNU tar's `-z' option.  One reason (but not
+## the only reason) is that some versions of tar (e.g., OSF1)
+## interpret `-z' differently.
+##
+## The -o option of GNU tar used to exclude empty directories.  This
+## behavior was fixed in tar 1.12 (released on 1997-04-25).  But older
+## versions of tar are still used (for instance NetBSD 1.6.1 ships
+## with tar 1.11.2).  We do not do anything specific w.r.t. this
+## incompatibility since packages where empty directories need to be
+## present in the archive are really unusual.
+
+if %?TOPDIR_P%
+
+?GZIP?DIST_ARCHIVES += $(distdir).tar.gz
+GZIP_ENV = --best
+.PHONY: dist-gzip
+dist-gzip: distdir
+	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(distdir).tar.gz
+	$(am__remove_distdir)
+
+?BZIP2?DIST_ARCHIVES += $(distdir).tar.bz2
+.PHONY: dist-bzip2
+dist-bzip2: distdir
+	tardir=$(distdir) && $(am__tar) | bzip2 -9 -c >$(distdir).tar.bz2
+	$(am__remove_distdir)
+
+?LZMA?DIST_ARCHIVES += $(distdir).tar.lzma
+.PHONY: dist-lzma
+dist-lzma: distdir
+	tardir=$(distdir) && $(am__tar) | lzma -9 -c >$(distdir).tar.lzma
+	$(am__remove_distdir)
+
+?XZ?DIST_ARCHIVES += $(distdir).tar.xz
+.PHONY: dist-xz
+dist-xz: distdir
+	tardir=$(distdir) && $(am__tar) | xz -c >$(distdir).tar.xz
+	$(am__remove_distdir)
+
+?COMPRESS?DIST_ARCHIVES += $(distdir).tar.Z
+.PHONY: dist-tarZ
+dist-tarZ: distdir
+	tardir=$(distdir) && $(am__tar) | compress -c >$(distdir).tar.Z
+	$(am__remove_distdir)
+
+?SHAR?DIST_ARCHIVES += $(distdir).shar.gz
+.PHONY: dist-shar
+dist-shar: distdir
+	shar $(distdir) | GZIP=$(GZIP_ENV) gzip -c >$(distdir).shar.gz
+	$(am__remove_distdir)
+
+?ZIP?DIST_ARCHIVES += $(distdir).zip
+.PHONY: dist-zip
+dist-zip: distdir
+	-rm -f $(distdir).zip
+	zip -rq $(distdir).zip $(distdir)
+	$(am__remove_distdir)
+
+endif %?TOPDIR_P%
+
+
+
+## ------------------------------------------------- ##
+## Building all the requested distribution flavors.  ##
+## ------------------------------------------------- ##
+
+## Currently we cannot use if/endif inside a rule.  The file_contents
+## parser needs work.
+
+if %?TOPDIR_P%
+
+.PHONY: dist dist-all
+if %?SUBDIRS%
+AM_RECURSIVE_TARGETS += dist dist-all
+endif %?SUBDIRS%
+
+dist dist-all: distdir
+?GZIP?	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(distdir).tar.gz
+?BZIP2?	tardir=$(distdir) && $(am__tar) | bzip2 -9 -c >$(distdir).tar.bz2
+?LZMA?	tardir=$(distdir) && $(am__tar) | lzma -9 -c >$(distdir).tar.lzma
+?XZ?	tardir=$(distdir) && $(am__tar) | xz -c >$(distdir).tar.xz
+?COMPRESS?	tardir=$(distdir) && $(am__tar) | compress -c >$(distdir).tar.Z
+?SHAR?	shar $(distdir) | GZIP=$(GZIP_ENV) gzip -c >$(distdir).shar.gz
+?ZIP?	-rm -f $(distdir).zip
+?ZIP?	zip -rq $(distdir).zip $(distdir)
+	$(am__remove_distdir)
+
+endif %?TOPDIR_P%
+
+
+## ------------------------- ##
+## Checking a distribution.  ##
+## ------------------------- ##
+
+
+if %?TOPDIR_P%
+if %?SUBDIRS%
+AM_RECURSIVE_TARGETS += distcheck
+endif %?SUBDIRS%
+
+# This target untars the dist file and tries a VPATH configuration.  Then
+# it guarantees that the distribution is self-contained by making another
+# tarfile.
+.PHONY: distcheck
+distcheck: dist
+	case '$(DIST_ARCHIVES)' in \
+	*.tar.gz*) \
+	  GZIP=$(GZIP_ENV) gzip -dc $(distdir).tar.gz | $(am__untar) ;;\
+	*.tar.bz2*) \
+	  bzip2 -dc $(distdir).tar.bz2 | $(am__untar) ;;\
+	*.tar.lzma*) \
+	  lzma -dc $(distdir).tar.lzma | $(am__untar) ;;\
+	*.tar.xz*) \
+	  xz -dc $(distdir).tar.xz | $(am__untar) ;;\
+	*.tar.Z*) \
+	  uncompress -c $(distdir).tar.Z | $(am__untar) ;;\
+	*.shar.gz*) \
+	  GZIP=$(GZIP_ENV) gzip -dc $(distdir).shar.gz | unshar ;;\
+	*.zip*) \
+	  unzip $(distdir).zip ;;\
+	esac
+## Make the new source tree read-only.  Distributions ought to work in
+## this case.  However, make the top-level directory writable so we
+## can make our new subdirs.
+	chmod -R a-w $(distdir); chmod a+w $(distdir)
+	mkdir $(distdir)/_build
+	mkdir $(distdir)/_inst
+## Undo the write access.
+	chmod a-w $(distdir)
+## With GNU make, the following command will be executed even with `make -n',
+## due to the presence of `$(MAKE)'.  That is normally all well (and `$(MAKE)'
+## is necessary for things like parallel distcheck), but here we don't want
+## execution.  To avoid MAKEFLAGS parsing hassles, use a witness file that a
+## non-`-n' run would have just created.
+	test -d $(distdir)/_build || exit 0; \
+## Compute the absolute path of `_inst'.  Strip any leading DOS drive
+## to allow DESTDIR installations.  Otherwise "$(DESTDIR)$(prefix)" would
+## expand to "c:/temp/am-dc-5668/c:/src/package/package-1.0/_inst".
+	dc_install_base=`$(am__cd) $(distdir)/_inst && pwd | sed -e 's,^[^:\\/]:[\\/],/,'` \
+## We will attempt a DESTDIR install in $dc_destdir.  We don't
+## create this directory under $dc_install_base, because it would
+## create very long directory names.
+	  && dc_destdir="$${TMPDIR-/tmp}/am-dc-$$$$/" \
+?DISTCHECK-HOOK?	  && $(MAKE) $(AM_MAKEFLAGS) distcheck-hook \
+## Parallel BSD make may not start a new shell for each command in a recipe,
+## so be sure to `cd' back to the original directory after this.
+	  && am__cwd=`pwd` \
+	  && $(am__cd) $(distdir)/_build \
+	  && ../configure --srcdir=.. --prefix="$$dc_install_base" \
+?GETTEXT?	    --with-included-gettext \
+## Additional flags for configure.  Keep this last in the configure
+## invocation so the user can override previous options.
+	    $(DISTCHECK_CONFIGURE_FLAGS) \
+	  && $(MAKE) $(AM_MAKEFLAGS) \
+	  && $(MAKE) $(AM_MAKEFLAGS) dvi \
+	  && $(MAKE) $(AM_MAKEFLAGS) check \
+	  && $(MAKE) $(AM_MAKEFLAGS) install \
+	  && $(MAKE) $(AM_MAKEFLAGS) installcheck \
+	  && $(MAKE) $(AM_MAKEFLAGS) uninstall \
+	  && $(MAKE) $(AM_MAKEFLAGS) distuninstallcheck_dir="$$dc_install_base" \
+	        distuninstallcheck \
+## Make sure the package has proper DESTDIR support (we could not test this
+## in the previous install/installcheck/uninstall test, because it's reasonable
+## for installcheck to fail in a DESTDIR install).
+## We make the `$dc_install_base' read-only because this is where files
+## with missing DESTDIR support are likely to be installed.
+	  && chmod -R a-w "$$dc_install_base" \
+## The logic here is quite convoluted because we must clean $dc_destdir
+## whatever happens (it won't be erased by the next run of distcheck like
+## $(distdir) is).
+	  && ({ \
+## Build the directory, so we can cd into it even if `make install'
+## didn't create it.  Use mkdir, not $(MKDIR_P) because we want to
+## fail if the directory already exists (PR/413).
+	       (cd ../.. && umask 077 && mkdir "$$dc_destdir") \
+	       && $(MAKE) $(AM_MAKEFLAGS) DESTDIR="$$dc_destdir" install \
+	       && $(MAKE) $(AM_MAKEFLAGS) DESTDIR="$$dc_destdir" uninstall \
+	       && $(MAKE) $(AM_MAKEFLAGS) DESTDIR="$$dc_destdir" \
+	            distuninstallcheck_dir="$$dc_destdir" distuninstallcheck; \
+	      } || { rm -rf "$$dc_destdir"; exit 1; }) \
+	  && rm -rf "$$dc_destdir" \
+	  && $(MAKE) $(AM_MAKEFLAGS) dist \
+## Make sure to remove the dists we created in the test build directory.
+	  && rm -rf $(DIST_ARCHIVES) \
+	  && $(MAKE) $(AM_MAKEFLAGS) distcleancheck \
+## Cater to parallel BSD make (see above).
+	  && cd "$$am__cwd" \
+	  || exit 1
+	$(am__remove_distdir)
+	@(echo "$(distdir) archives ready for distribution: "; \
+	  list='$(DIST_ARCHIVES)'; for i in $$list; do echo $$i; done) | \
+	  sed -e 1h -e 1s/./=/g -e 1p -e 1x -e '$$p' -e '$$x'
+
+## Define distuninstallcheck_listfiles and distuninstallcheck separately
+## from distcheck, so that they can be overridden by the user.
+.PHONY: distuninstallcheck
+distuninstallcheck_listfiles = find . -type f -print
+distuninstallcheck:
+## We use -le 1 because the `dir' file (created by install-info)
+## might still exist after uninstall.
+	@$(am__cd) '$(distuninstallcheck_dir)' \
+	&& test `$(distuninstallcheck_listfiles) | wc -l` -le 1 \
+	   || { echo "ERROR: files left after uninstall:" ; \
+	        if test -n "$(DESTDIR)"; then \
+	          echo "  (check DESTDIR support)"; \
+	        fi ; \
+	        $(distuninstallcheck_listfiles) ; \
+	        exit 1; } >&2
+
+## Define distcleancheck_listfiles and distcleancheck separately
+## from distcheck, so that they can be overridden by the user.
+.PHONY: distcleancheck
+distcleancheck_listfiles = find . -type f -print
+distcleancheck: distclean
+	@if test '$(srcdir)' = . ; then \
+	  echo "ERROR: distcleancheck can only run from a VPATH build" ; \
+	  exit 1 ; \
+	fi
+	@test `$(distcleancheck_listfiles) | wc -l` -eq 0 \
+	  || { echo "ERROR: files left in build directory after distclean:" ; \
+	       $(distcleancheck_listfiles) ; \
+	       exit 1; } >&2
+endif %?TOPDIR_P%

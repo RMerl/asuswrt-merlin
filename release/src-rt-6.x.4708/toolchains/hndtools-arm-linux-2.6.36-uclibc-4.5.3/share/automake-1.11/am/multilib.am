@@ -1,0 +1,60 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1998, 2001, 2003, 2004 Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+## Multilib support variables.
+MULTISRCTOP =
+MULTIBUILDTOP =
+MULTIDIRS =
+MULTISUBDIR =
+MULTIDO = true
+MULTICLEAN = true
+
+# GNU Make needs to see an explicit $(MAKE) variable in the command it
+# runs to enable its job server during parallel builds.  Hence the
+# comments below.
+
+all-multi:
+	$(MULTIDO) $(AM_MAKEFLAGS) DO=all multi-do # $(MAKE)
+install-multi:
+	$(MULTIDO) $(AM_MAKEFLAGS) DO=install multi-do # $(MAKE)
+
+.MAKE .PHONY: all-multi install-multi
+
+
+mostlyclean-multi:
+	$(MULTICLEAN) $(AM_MAKEFLAGS) DO=mostlyclean multi-clean # $(MAKE)
+clean-multi:
+	$(MULTICLEAN) $(AM_MAKEFLAGS) DO=clean multi-clean # $(MAKE)
+distclean-multi:
+	$(MULTICLEAN) $(AM_MAKEFLAGS) DO=distclean multi-clean # $(MAKE)
+maintainer-clean-multi:
+	$(MULTICLEAN) $(AM_MAKEFLAGS) DO=maintainer-clean multi-clean # $(MAKE)
+
+.MAKE .PHONY: mostlyclean-multi clean-multi distclean-multi maintainer-clean-multi
+
+install-exec-am: install-multi
+## No uninstall rule?
+
+
+## These cleaning rules are recursive.  They should not be
+## registered as dependencies of *-am rules.  For instance
+## otherwise running `make clean' would cause both
+## clean-multi and mostlyclean-multi to be run, while only
+## clean-multi is really expected (since clean-multi recursively
+## call clean, it already do the job of mostlyclean).
+mostlyclean: mostlyclean-multi
+clean: clean-multi
+distclean: distclean-multi
+maintainer-clean: maintainer-clean-multi

@@ -1,0 +1,414 @@
+## automake - create Makefile.in from Makefile.am
+
+## Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+## 2003, 2004, 2005, 2006, 2007, 2008, 2009  Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## ----------- ##
+## Variables.  ##
+## ----------- ##
+
+if %?LOCAL-TEXIS%
+if ! %?CYGNUS%
+TEXI2DVI = texi2dvi
+
+else %?CYGNUS%
+
+## Find these programs wherever they may lie.  Yes, this has
+## intimate knowledge of the structure of the texinfo distribution.
+MAKEINFO = `if test -f $(top_builddir)/../texinfo/makeinfo/makeinfo; then \
+            echo $(top_builddir)/../texinfo/makeinfo/makeinfo; \
+          else \
+            echo makeinfo; \
+          fi`
+
+TEXI2DVI = `if test -f $(top_srcdir)/../texinfo/util/texi2dvi; then \
+             echo $(top_srcdir)/../texinfo/util/texi2dvi; \
+           else \
+             echo texi2dvi; \
+           fi`
+endif %?CYGNUS%
+
+TEXI2PDF = $(TEXI2DVI) --pdf --batch
+MAKEINFOHTML = $(MAKEINFO) --html
+AM_MAKEINFOHTMLFLAGS = $(AM_MAKEINFOFLAGS)
+endif %?LOCAL-TEXIS%
+
+
+## ---------- ##
+## Building.  ##
+## ---------- ##
+
+## The way to make PostScript, for those who want it.
+if %?LOCAL-TEXIS%
+DVIPS = dvips
+.dvi.ps:
+	TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
+	$(DVIPS) -o $@ $<
+endif %?LOCAL-TEXIS%
+
+.PHONY: dvi dvi-am html html-am info info-am pdf pdf-am ps ps-am
+if %?SUBDIRS%
+RECURSIVE_TARGETS += dvi-recursive html-recursive info-recursive
+RECURSIVE_TARGETS += pdf-recursive ps-recursive
+dvi: dvi-recursive
+html: html-recursive
+info: info-recursive
+pdf: pdf-recursive
+ps: ps-recursive
+else !%?SUBDIRS%
+dvi: dvi-am
+html: html-am
+info: info-am
+pdf: pdf-am
+ps: ps-am
+endif !%?SUBDIRS%
+
+if %?LOCAL-TEXIS%
+dvi-am: $(DVIS)
+html-am: $(HTMLS)
+info-am: $(INFO_DEPS)
+pdf-am: $(PDFS)
+ps-am: $(PSS)
+else ! %?LOCAL-TEXIS%
+dvi-am:
+html-am:
+info-am:
+pdf-am:
+ps-am:
+endif ! %?LOCAL-TEXIS%
+
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+## Look in both . and srcdir because the info pages might have been
+## rebuilt in the build directory.  Can't cd to srcdir; that might
+## break a possible install-sh reference.
+##
+## Funny name due to --cygnus influence; we want to reserve
+## `install-info' for the user.
+##
+## TEXINFOS primary are always installed in infodir, hence install-data
+## is hard coded.
+if %?INSTALL-INFO%
+if %?LOCAL-TEXIS%
+am__installdirs += "$(DESTDIR)$(infodir)"
+install-data-am: install-info-am
+endif %?LOCAL-TEXIS%
+endif %?INSTALL-INFO%
+.PHONY: \
+  install-dvi  install-dvi-am \
+  install-html install-html-am \
+  install-info install-info-am \
+  install-pdf  install-pdf-am \
+  install-ps   install-ps-am
+
+if %?SUBDIRS%
+RECURSIVE_TARGETS += \
+  install-dvi-recursive \
+  install-html-recursive \
+  install-info-recursive \
+  install-pdf-recursive \
+  install-ps-recursive
+install-dvi: install-dvi-recursive
+install-html: install-html-recursive
+install-info: install-info-recursive
+install-pdf: install-pdf-recursive
+install-ps: install-ps-recursive
+else !%?SUBDIRS%
+install-dvi: install-dvi-am
+install-html: install-html-am
+install-info: install-info-am
+install-pdf: install-pdf-am
+install-ps: install-ps-am
+endif !%?SUBDIRS%
+
+if %?LOCAL-TEXIS%
+
+include inst-vars.am
+
+install-dvi-am: $(DVIS)
+	@$(NORMAL_INSTALL)
+	test -z "$(dvidir)" || $(MKDIR_P) "$(DESTDIR)$(dvidir)"
+	@list='$(DVIS)'; test -n "$(dvidir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(dvidir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(dvidir)" || exit $$?; \
+	done
+
+install-html-am: $(HTMLS)
+	@$(NORMAL_INSTALL)
+	test -z "$(htmldir)" || $(MKDIR_P) "$(DESTDIR)$(htmldir)"
+	@list='$(HTMLS)'; list2=; test -n "$(htmldir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p" || test -d "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  $(am__strip_dir) \
+	  if test -d "$$d$$p"; then \
+	    echo " $(MKDIR_P) '$(DESTDIR)$(htmldir)/$$f'"; \
+	    $(MKDIR_P) "$(DESTDIR)$(htmldir)/$$f" || exit 1; \
+	    echo " $(INSTALL_DATA) '$$d$$p'/* '$(DESTDIR)$(htmldir)/$$f'"; \
+	    $(INSTALL_DATA) "$$d$$p"/* "$(DESTDIR)$(htmldir)/$$f" || exit $$?; \
+	  else \
+	    list2="$$list2 $$d$$p"; \
+	  fi; \
+	done; \
+	test -z "$$list2" || { echo "$$list2" | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(htmldir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(htmldir)" || exit $$?; \
+	done; }
+
+install-info-am: $(INFO_DEPS)
+	@$(NORMAL_INSTALL)
+	test -z "$(infodir)" || $(MKDIR_P) "$(DESTDIR)$(infodir)"
+	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
+	list='$(INFO_DEPS)'; test -n "$(infodir)" || list=; \
+	for file in $$list; do \
+## Strip possible $(srcdir) prefix.
+	  case $$file in \
+	    $(srcdir)/*) file=`echo "$$file" | sed "s|^$$srcdirstrip/||"`;; \
+	  esac; \
+	  if test -f $$file; then d=.; else d=$(srcdir); fi; \
+## 8+3 filesystems cannot deal with foo.info-N filenames: they all
+## conflict.  DJGPP comes with a tool, DJTAR, that will rename these
+## files to foo.iNN while extracting the archive.  DJGPP's makeinfo
+## is patched to grok these filenames.  However we have to account
+## for the renaming when installing the info files.
+##
+## If $file == foo.info, then $file_i == foo.i.  The reason we use two
+## shell commands instead of one ('s|\.info$$|.i|') is so that a suffix-less
+## `foo' becomes `foo.i' too.
+	  file_i=`echo "$$file" | sed 's|\.info$$||;s|$$|.i|'`; \
+	  for ifile in $$d/$$file $$d/$$file-[0-9] $$d/$$file-[0-9][0-9] \
+	               $$d/$$file_i[0-9] $$d/$$file_i[0-9][0-9] ; do \
+	    if test -f $$ifile; then \
+	      echo "$$ifile"; \
+	    else : ; fi; \
+	  done; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(infodir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(infodir)" || exit $$?; done
+	@$(POST_INSTALL)
+## Only run this code if install-info actually exists, and it is not
+## the Debian install-info.  FIXME: once Debian install-info goes
+## away, we can remove this hack.  Some versions of Debian install-info
+## print their version on stderr (e.g. 1.8.3), other do it in
+## on stdout (e.g. 1.10.15).
+##
+## Do not use
+##    install-info --version 2>&1 | sed 1q | grep -v -i debian
+## as if install-info does not exist, grep -v will be happy, and
+## therefore the code will be triggered although install-info is missing.
+	@if (install-info --version && \
+	     install-info --version 2>&1 | sed 1q | grep -i -v debian) >/dev/null 2>&1; then \
+	  list='$(INFO_DEPS)'; test -n "$(infodir)" || list=; \
+	  for file in $$list; do \
+## Strip directory
+	    relfile=`echo "$$file" | sed 's|^.*/||'`; \
+## Run `:' after install-info in case install-info fails.  We really
+## don't care about failures here, because they can be spurious.  For
+## instance if you don't have a dir file, install-info will fail.  I
+## think instead it should create a new dir file for you.  This bug
+## causes the `make distcheck' target to fail reliably.
+	    echo " install-info --info-dir='$(DESTDIR)$(infodir)' '$(DESTDIR)$(infodir)/$$relfile'";\
+## Use `|| :' here because Sun make passes -e to sh; if install-info
+## fails then we'd fail if we used `;'.
+	    install-info --info-dir="$(DESTDIR)$(infodir)" "$(DESTDIR)$(infodir)/$$relfile" || :;\
+	  done; \
+	else : ; fi
+
+install-pdf-am: $(PDFS)
+	@$(NORMAL_INSTALL)
+	test -z "$(pdfdir)" || $(MKDIR_P) "$(DESTDIR)$(pdfdir)"
+	@list='$(PDFS)'; test -n "$(pdfdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(pdfdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(pdfdir)" || exit $$?; done
+
+install-ps-am: $(PSS)
+	@$(NORMAL_INSTALL)
+	test -z "$(psdir)" || $(MKDIR_P) "$(DESTDIR)$(psdir)"
+	@list='$(PSS)'; test -n "$(psdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(psdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(psdir)" || exit $$?; done
+
+else ! %?LOCAL-TEXIS%
+install-dvi-am:
+install-html-am:
+install-info-am:
+install-pdf-am:
+install-ps-am:
+endif ! %?LOCAL-TEXIS%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+if %?LOCAL-TEXIS%
+.PHONY uninstall-am: \
+  uninstall-dvi-am \
+  uninstall-html-am \
+  uninstall-info-am \
+  uninstall-ps-am \
+  uninstall-pdf-am
+
+uninstall-dvi-am:
+	@$(NORMAL_UNINSTALL)
+	@list='$(DVIS)'; test -n "$(dvidir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(dvidir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(dvidir)/$$f"; \
+	done
+
+uninstall-html-am:
+	@$(NORMAL_UNINSTALL)
+	@list='$(HTMLS)'; test -n "$(htmldir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+## $f can be a directory, hence the -r.
+	  echo " rm -rf '$(DESTDIR)$(htmldir)/$$f'"; \
+	  rm -rf "$(DESTDIR)$(htmldir)/$$f"; \
+	done
+
+uninstall-info-am:
+	@$(PRE_UNINSTALL)
+## Run two loops here so that we can handle PRE_UNINSTALL and
+## NORMAL_UNINSTALL correctly.
+	@if test -d '$(DESTDIR)$(infodir)' && \
+	    (install-info --version && \
+	     install-info --version 2>&1 | sed 1q | grep -i -v debian) >/dev/null 2>&1; then \
+	  list='$(INFO_DEPS)'; \
+	  for file in $$list; do \
+	    relfile=`echo "$$file" | sed 's|^.*/||'`; \
+## install-info needs the actual info file.  We use the installed one,
+## rather than relying on one still being in srcdir or builddir.
+## However, `make uninstall && make uninstall' should not fail,
+## so we ignore failure if the file did not exist.
+	    echo " install-info --info-dir='$(DESTDIR)$(infodir)' --remove '$(DESTDIR)$(infodir)/$$relfile'"; \
+	    if install-info --info-dir="$(DESTDIR)$(infodir)" --remove "$(DESTDIR)$(infodir)/$$relfile"; \
+	    then :; else test ! -f "$(DESTDIR)$(infodir)/$$relfile" || exit 1; fi; \
+	  done; \
+	else :; fi
+	@$(NORMAL_UNINSTALL)
+	@list='$(INFO_DEPS)'; \
+	for file in $$list; do \
+	  relfile=`echo "$$file" | sed 's|^.*/||'`; \
+## DJGPP-style info files.  See comment in install-info-am.
+	  relfile_i=`echo "$$relfile" | sed 's|\.info$$||;s|$$|.i|'`; \
+	  (if test -d "$(DESTDIR)$(infodir)" && cd "$(DESTDIR)$(infodir)"; then \
+	     echo " cd '$(DESTDIR)$(infodir)' && rm -f $$relfile $$relfile-[0-9] $$relfile-[0-9][0-9] $$relfile_i[0-9] $$relfile_i[0-9][0-9]"; \
+	     rm -f $$relfile $$relfile-[0-9] $$relfile-[0-9][0-9] $$relfile_i[0-9] $$relfile_i[0-9][0-9]; \
+	   else :; fi); \
+	done
+
+uninstall-pdf-am:
+	@$(NORMAL_UNINSTALL)
+	@list='$(PDFS)'; test -n "$(pdfdir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(pdfdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(pdfdir)/$$f"; \
+	done
+
+uninstall-ps-am:
+	@$(NORMAL_UNINSTALL)
+	@list='$(PSS)'; test -n "$(psdir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(psdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(psdir)/$$f"; \
+	done
+endif %?LOCAL-TEXIS%
+
+if %?LOCAL-TEXIS%
+.PHONY: dist-info
+dist-info: $(INFO_DEPS)
+	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
+	list='$(INFO_DEPS)'; \
+	for base in $$list; do \
+## Strip possible $(srcdir) prefix.
+	  case $$base in \
+	    $(srcdir)/*) base=`echo "$$base" | sed "s|^$$srcdirstrip/||"`;; \
+	  esac; \
+	  if test -f $$base; then d=.; else d=$(srcdir); fi; \
+	  base_i=`echo "$$base" | sed 's|\.info$$||;s|$$|.i|'`; \
+	  for file in $$d/$$base $$d/$$base-[0-9] $$d/$$base-[0-9][0-9] $$d/$$base_i[0-9] $$d/$$base_i[0-9][0-9]; do \
+	    if test -f $$file; then \
+## Strip leading '$$d/'.
+	      relfile=`expr "$$file" : "$$d/\(.*\)"`; \
+	      test -f "$(distdir)/$$relfile" || \
+		cp -p $$file "$(distdir)/$$relfile"; \
+	    else :; fi; \
+	  done; \
+	done
+endif %?LOCAL-TEXIS%
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+## The funny name is due to --cygnus influence; in Cygnus mode,
+## `clean-info' is a target that users can use.
+
+if %?LOCAL-TEXIS%
+.PHONY mostlyclean-am: mostlyclean-aminfo
+.PHONY: mostlyclean-aminfo
+mostlyclean-aminfo:
+## Use `-rf', not just `-f', because the %*CLEAN% substitutions can also
+## contain any directory created by `makeinfo --html'.
+	-rm -rf %MOSTLYCLEAN%
+
+.PHONY clean-am: clean-aminfo
+clean-aminfo:
+## Use `-rf', not just `-f', because the %*CLEAN% substitutions can also
+## contain any directory created by `makeinfo --html'.
+?TEXICLEAN?	-test -z "%TEXICLEAN%" \
+?TEXICLEAN?	|| rm -rf %TEXICLEAN%
+
+.PHONY maintainer-clean-am: maintainer-clean-aminfo
+maintainer-clean-aminfo:
+	@list='$(INFO_DEPS)'; for i in $$list; do \
+## .iNN files are DJGPP-style info files.
+	  i_i=`echo "$$i" | sed 's|\.info$$||;s|$$|.i|'`; \
+	  echo " rm -f $$i $$i-[0-9] $$i-[0-9][0-9] $$i_i[0-9] $$i_i[0-9][0-9]"; \
+	  rm -f $$i $$i-[0-9] $$i-[0-9][0-9] $$i_i[0-9] $$i_i[0-9][0-9]; \
+	done
+## Use `-rf', not just `-f', because the %*CLEAN% substitutions can also
+## contain any directory created by `makeinfo --html'.
+?MAINTCLEAN?	-test -z "%MAINTCLEAN%" \
+?MAINTCLEAN?	|| rm -rf %MAINTCLEAN%
+
+?CYGNUS?.PHONY: clean-info
+?CYGNUS?clean-info: mostlyclean-aminfo clean-aminfo
+endif %?LOCAL-TEXIS%

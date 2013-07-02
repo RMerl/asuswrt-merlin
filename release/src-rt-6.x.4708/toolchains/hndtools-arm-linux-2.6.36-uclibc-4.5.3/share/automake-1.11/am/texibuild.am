@@ -1,0 +1,117 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+##   2003, 2004, 2005, 2008  Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+?GENERIC_INFO?%SOURCE_SUFFIX%%DEST_SUFFIX%:
+?!GENERIC_INFO?%DEST_INFO_PREFIX%%DEST_SUFFIX%: %SOURCE_INFO% %DEPS%
+## It is wrong to have `info' files dependent on %DIRSTAMP%, because
+## `info' files are distributed and %DIRSTAMP% isn't: a distributed file
+## should never be dependent upon a non-distributed built file.
+## Therefore we ensure that %DIRSTAMP% exists in the rule.
+?!INSRC??DIRSTAMP?	@test -f %DIRSTAMP% || $(MAKE) $(AM_MAKEFLAGS) %DIRSTAMP%
+## Back up the info files before running makeinfo. This is the cheapest
+## way to ensure that
+## 1) If the texinfo file shrinks (or if you start using --no-split),
+##    you'll not be left with some dead info files lying around -- dead
+##    files which would end up in the distribution.
+## 2) If the texinfo file has some minor mistakes which cause makeinfo
+##    to fail, the info files are not removed.  (They are needed by the
+##    developer while he writes documentation.)
+## *.iNN files are used on DJGPP.  See the comments in install-info-am
+	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
+?INSRC?	am__cwd=`pwd` && $(am__cd) $(srcdir) && \
+	rm -rf $$backupdir && mkdir $$backupdir && \
+## If makeinfo is not installed we must not backup the files so
+##`missing' can do its job and touch $@ if it exists.
+	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
+	  for f in $@ $@-[0-9] $@-[0-9][0-9] $(@:.info=).i[0-9] $(@:.info=).i[0-9][0-9]; do \
+	    if test -f $$f; then mv $$f $$backupdir; restore=mv; else :; fi; \
+	  done; \
+	else :; fi && \
+?INSRC?	cd "$$am__cwd"; \
+	if $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) %MAKEINFOFLAGS% \
+?!INSRC?	 -o $@ `test -f '%SOURCE_INFO%' || echo '$(srcdir)/'`%SOURCE_INFO%; \
+?INSRC??!GENERIC_INFO?	 -o $@ $(srcdir)/%SOURCE_INFO%; \
+?INSRC??GENERIC_INFO?	 -o $@ $<; \
+	then \
+	  rc=0; \
+?INSRC?	  $(am__cd) $(srcdir); \
+	else \
+	  rc=$$?; \
+## Beware that backup info files might come from a subdirectory.
+?INSRC?	  $(am__cd) $(srcdir) && \
+	  $$restore $$backupdir/* `echo "./$@" | sed 's|[^/]*$$||'`; \
+	fi; \
+	rm -rf $$backupdir; exit $$rc
+
+INFO_DEPS += %DEST_INFO_PREFIX%%DEST_SUFFIX%
+
+?GENERIC?%SOURCE_SUFFIX%.dvi:
+?!GENERIC?%DEST_PREFIX%.dvi: %SOURCE% %DEPS% %DIRSTAMP%
+	TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
+## Must set MAKEINFO like this so that version.texi will be found even
+## if it is in srcdir (-I $(srcdir) is set in %MAKEINFOFLAGS%).
+	MAKEINFO='$(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) %MAKEINFOFLAGS%' \
+## Do not use `-o' unless necessary: it is only supported since Texinfo 4.1.
+?GENERIC?	$(TEXI2DVI) %SOURCE%
+?!GENERIC?	$(TEXI2DVI) -o $@ `test -f '%SOURCE%' || echo '$(srcdir)/'`%SOURCE%
+
+?GENERIC?%SOURCE_SUFFIX%.pdf:
+?!GENERIC?%DEST_PREFIX%.pdf: %SOURCE% %DEPS% %DIRSTAMP%
+	TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
+## Must set MAKEINFO like this so that version.texi will be found even
+## if it is in srcdir (-I $(srcdir) is set in %MAKEINFOFLAGS%).
+	MAKEINFO='$(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) %MAKEINFOFLAGS%' \
+## Do not use `-o' unless necessary: it is only supported since Texinfo 4.1.
+?GENERIC?	$(TEXI2PDF) %SOURCE%
+?!GENERIC?	$(TEXI2PDF) -o $@ `test -f '%SOURCE%' || echo '$(srcdir)/'`%SOURCE%
+
+?GENERIC?%SOURCE_SUFFIX%.html:
+?!GENERIC?%DEST_PREFIX%.html: %SOURCE% %DEPS% %DIRSTAMP%
+## When --split (the default) is used, makeinfo will output a
+## directory.  However it will not update the time stamp of a
+## previously existing directory, and when the names of the nodes
+## in the manual change, it may leave unused pages.  Our fix
+## is to build under a temporary name, and replace the target on
+## success.
+	rm -rf $(@:.html=.htp)
+	if $(MAKEINFOHTML) $(AM_MAKEINFOHTMLFLAGS) $(MAKEINFOFLAGS) %MAKEINFOFLAGS% \
+?GENERIC?	 -o $(@:.html=.htp) %SOURCE%; \
+?!GENERIC?	 -o $(@:.html=.htp) `test -f '%SOURCE%' || echo '$(srcdir)/'`%SOURCE%; \
+	then \
+	  rm -rf $@; \
+## Work around a bug in Texinfo 4.1 (-o foo.html outputs files in foo/
+## instead of foo.html/).
+	  if test ! -d $(@:.html=.htp) && test -d $(@:.html=); then \
+	    mv $(@:.html=) $@; else mv $(@:.html=.htp) $@; fi; \
+	else \
+	  if test ! -d $(@:.html=.htp) && test -d $(@:.html=); then \
+	    rm -rf $(@:.html=); else rm -Rf $(@:.html=.htp) $@; fi; \
+	  exit 1; \
+	fi
+
+## If we are using the generic rules, we need separate dependencies.
+## (Don't wonder about %DIRSTAMP% here, this is used only by non-generic
+## rules.)
+if %?GENERIC_INFO%
+%DEST_INFO_PREFIX%%DEST_SUFFIX%: %SOURCE_REAL% %DEPS%
+endif %?GENERIC_INFO%
+if %?GENERIC%
+%DEST_PREFIX%.dvi: %SOURCE_REAL% %DEPS%
+%DEST_PREFIX%.pdf: %SOURCE_REAL% %DEPS%
+%DEST_PREFIX%.html: %SOURCE_REAL% %DEPS%
+endif %?GENERIC%

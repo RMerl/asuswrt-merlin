@@ -1,0 +1,6 @@
+/* GNU ld script
+ * Use the shared library, but some functions are only in
+ * the static library, so try that secondarily. */
+OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
+	      "elf32-littlearm")
+GROUP ( /lib/libc.so.0 /usr/lib/uclibc_nonshared.a AS_NEEDED ( /lib/ld-uClibc.so.0 ) )

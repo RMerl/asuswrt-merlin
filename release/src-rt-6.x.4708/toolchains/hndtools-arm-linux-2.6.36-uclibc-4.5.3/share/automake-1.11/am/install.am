@@ -1,0 +1,98 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 2001, 2002, 2003, 2004, 2006, 2008, 2009  Free Software
+## Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## ----------------------------------------- ##
+## installdirs -- Creating the installdirs.  ##
+## ----------------------------------------- ##
+
+## The reason we loop over %am__installdirs% (instead of simply running
+## `$(MKDIR_P) %am__installdirs%') is that directories variable such as
+## `"$(DESTDIR)$(mydir)"' can potentially expand to `""' if `$(mydir)'
+## is conditionally defined.  BTW, those directories are quoted in
+## order to support installation paths with spaces.
+
+if %?SUBDIRS%
+.PHONY: installdirs installdirs-am
+RECURSIVE_TARGETS += installdirs-recursive
+installdirs: installdirs-recursive
+installdirs-am:%installdirs-local%
+?am__installdirs?	for dir in %am__installdirs%; do \
+?am__installdirs?	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
+?am__installdirs?	done
+else !%?SUBDIRS%
+.PHONY: installdirs
+installdirs:%installdirs-local%
+?am__installdirs?	for dir in %am__installdirs%; do \
+?am__installdirs?	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
+?am__installdirs?	done
+endif !%?SUBDIRS%
+
+
+## ----------------- ##
+## Install targets.  ##
+## ----------------- ##
+
+.PHONY: install install-exec install-data uninstall
+.PHONY: install-exec-am install-data-am uninstall-am
+
+if %?SUBDIRS%
+RECURSIVE_TARGETS += install-data-recursive install-exec-recursive \
+		     install-recursive uninstall-recursive
+install:%maybe_BUILT_SOURCES% install-recursive
+install-exec: install-exec-recursive
+install-data: install-data-recursive
+uninstall: uninstall-recursive
+else !%?SUBDIRS%
+install:%maybe_BUILT_SOURCES% install-am
+install-exec: install-exec-am
+install-data: install-data-am
+uninstall: uninstall-am
+endif !%?SUBDIRS%
+
+if %?maybe_BUILT_SOURCES%
+.MAKE: install
+endif %?maybe_BUILT_SOURCES%
+
+.MAKE .PHONY: install-am
+install-am: all-am
+	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+
+
+.PHONY: installcheck
+?SUBDIRS?installcheck: installcheck-recursive
+?!SUBDIRS?installcheck: installcheck-am
+?!SUBDIRS?.PHONY: installcheck-am
+?!SUBDIRS?installcheck-am:
+
+## If you ever modify this, keep in mind that INSTALL_PROGRAM is used
+## in subdirectories, so never set it to a value relative to the top
+## directory.
+.MAKE .PHONY: install-strip
+install-strip:
+## Beware that there are two variables used to install programs:
+##   INSTALL_PROGRAM is used for ordinary *_PROGRAMS
+##   install_sh_PROGRAM is used for nobase_*_PROGRAMS (because install-sh
+##                                                     creates directories)
+## It's OK to override both with INSTALL_STRIP_PROGRAM, because
+## INSTALL_STRIP_PROGRAM uses install-sh (see m4/strip.m4 for a rationale).
+##
+## Use double quotes here because we might need to interpolate some
+## backquotes at runtime.
+	$(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
+	  install_sh_PROGRAM="$(INSTALL_STRIP_PROGRAM)" INSTALL_STRIP_FLAG=-s \
+	  `test -z '$(STRIP)' || \
+	    echo "INSTALL_PROGRAM_ENV=STRIPPROG='$(STRIP)'"` install

@@ -1,0 +1,48 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1998, 1999, 2001, 2002, 2003, 2004, 2006, 2009
+##   Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## We want to disable the Yacc rebuild rule when
+##   1. AM_MAINTAINER_MODE is used, and
+##   2. --enable-maintainer-mode is not specified, and
+##   3. parser.c already exist, and
+##   4. parser.y and parser.c are distributed.
+## Point #3 is because `make maintainer-clean' erases parser.c, yet
+## the GNU Coding Standards require that ./configure; make works even
+## after that.
+## Point #4 is because parsers listed in nodist_*_SOURCES are always
+## built on the user's side, so it makes no sense to disable them.
+##
+## Points #1, #2, #3 are solved by unconditionally prefixing the rule
+## with $(am__skipyacc) defined below only when needed.
+##
+## Point #4 requires a condition on whether parser.y/parser.c are
+## distributed or not.  We cannot have a generic rule that works in
+## both cases, so we ensure in automake that nodist_ parsers always
+## use non-generic rules.
+if %?MAINTAINER-MODE%
+if %?FIRST%
+@MAINTAINER_MODE_FALSE@am__skipyacc = test -f $@ ||
+endif %?FIRST%
+endif %?MAINTAINER-MODE%
+
+?GENERIC?%EXT%%DERIVED-EXT%:
+?!GENERIC?%OBJ%: %SOURCE%
+?GENERIC?	%VERBOSE%$(am__skipyacc) $(SHELL) $(YLWRAP) %SOURCE% y.tab.c %OBJ% y.tab.h %BASE%.h y.output %BASE%.output -- %COMPILE%
+?!GENERIC?	%VERBOSE% \
+?!GENERIC??DIST_SOURCE?	$(am__skipyacc) \
+## For non-suffix rules, we must emulate a VPATH search on %SOURCE%.
+?!GENERIC?	$(SHELL) $(YLWRAP) `test -f '%SOURCE%' || echo '$(srcdir)/'`%SOURCE% y.tab.c %OBJ% y.tab.h %BASE%.h y.output %BASE%.output -- %COMPILE%

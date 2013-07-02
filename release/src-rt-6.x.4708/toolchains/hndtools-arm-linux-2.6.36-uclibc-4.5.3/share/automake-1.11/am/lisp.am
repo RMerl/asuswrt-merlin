@@ -1,0 +1,146 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
+## 2007, 2008, 2009 Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if %?INSTALL%
+include inst-vars.am
+endif %?INSTALL%
+
+## ---------- ##
+## Building.  ##
+## ---------- ##
+
+elc-stamp: $(LISP)
+	@echo 'WARNING: Warnings can be ignored. :-)'
+	@rm -f elc-temp && touch elc-temp
+	if test "$(EMACS)" != no; then \
+## Make sure "$@" isn't empty initially.
+	  set x; \
+## Populate "$@" with elisp files (found in the current directory
+## or in $srcdir).
+	  list='$(LISP)'; for p in $$list; do \
+	    if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	    set x "$$@" "$$d$$p"; shift; \
+	  done; \
+## Finally call elisp-comp for all files.
+	  shift; \
+	  EMACS="$(EMACS)" $(SHELL) $(elisp_comp) "$$@" || exit 1; \
+	else : ; fi
+	@mv -f elc-temp $@
+
+## Do not use $(ELCFILES) as target, because it may have been emptied
+## by the user (to disable byte-compilation), and POSIX does not allow
+## an empty target.
+$(am__ELCFILES): elc-stamp
+## Recover from the removal of $@.
+##
+## Do not call `make elc-stamp' if emacs is not available, because it would
+## be useless.
+	@if test "$(EMACS)" != no && test ! -f $@; then \
+## If `make -j' is used and more than one file has been erased, several
+## processes can execute this block.  We have to make sure that only
+## the first one will run `$(MAKE) $(AM_MAKEFLAGS) elc-stamp', and the
+## other ones will wait.
+##
+## There is a race here if only one child of make receive a signal.
+## In that case the build may fail.  We remove elc-stamp when we receive
+## a signal so we are sure the build will succeed the next time.
+	  trap 'rm -rf elc-lock elc-stamp' 1 2 13 15; \
+	  if mkdir elc-lock 2>/dev/null; then \
+## This code is being executed by the first process.
+	    rm -f elc-stamp; \
+	    $(MAKE) $(AM_MAKEFLAGS) elc-stamp; \
+	    rmdir elc-lock; \
+	  else \
+## This code is being executed by the follower processes.
+## Wait until the first process is done.
+	    while test -d elc-lock; do sleep 1; done; \
+## Succeed if and only if the first process succeeded.
+	    test -f elc-stamp; exit $$?; \
+	  fi; \
+	else : ; fi
+
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+if %?INSTALL%
+am__installdirs += "$(DESTDIR)$(%NDIR%dir)"
+%DIR%LISP_INSTALL = %BASE?$(INSTALL_DATA):$(install_sh_DATA)%
+.PHONY install-%EXEC?exec:data%-am: install-%DIR%LISP
+install-%DIR%LISP: $(%DIR%_LISP) $(ELCFILES)
+	@$(NORMAL_INSTALL)
+## Do not install anything if EMACS was not found.
+	@if test "$(EMACS)" != no && test -n "$(%NDIR%dir)"; then \
+	  $(MKDIR_P) "$(DESTDIR)$(%NDIR%dir)"; \
+?!BASE?	  $(am__vpath_adj_setup) \
+## Funny invocation because Makefile variable can be empty, leading to
+## a syntax error in sh.
+	  list='$(%DIR%_LISP)'; for p in $$list; do \
+## A lisp file can be in the source directory or the build directory.
+	    if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	    %BASE?$(am__strip_dir):$(am__vpath_adj)% \
+	    echo " $(%DIR%LISP_INSTALL) '$$d$$p' '$(DESTDIR)$(%NDIR%dir)/$$f'"; \
+	    $(%DIR%LISP_INSTALL) "$$d$$p" "$(DESTDIR)$(%NDIR%dir)/$$f" || exit $$?; \
+## Only install .elc file if it exists.
+	    if test -f $${p}c; then \
+	      echo " $(%DIR%LISP_INSTALL) '$${p}c' '$(DESTDIR)$(%NDIR%dir)/$${f}c'"; \
+	      $(%DIR%LISP_INSTALL) "$${p}c" "$(DESTDIR)$(%NDIR%dir)/$${f}c" || exit $$?; \
+	    else : ; fi; \
+	  done; \
+	else : ; fi
+endif %?INSTALL%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+if %?INSTALL%
+.PHONY uninstall-am: uninstall-%DIR%LISP
+uninstall-%DIR%LISP:
+	@$(NORMAL_UNINSTALL)
+## Do not uninstall anything if EMACS was not found.
+	@test "$(EMACS)" != no && test -n "$(%NDIR%dir)" || exit 0; \
+	list='$(%DIR%_LISP)'; \
+?BASE?	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+?!BASE?	$(am__nobase_strip_setup); files=`$(am__nobase_strip)`; \
+	test -n "$$files" || exit 0; \
+	filesc=`echo "$$files" | sed 's|$$|c|'`; \
+	echo " ( cd '$(DESTDIR)$(%NDIR%dir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(%NDIR%dir)" && rm -f $$files || exit $$?; \
+	echo " ( cd '$(DESTDIR)$(%NDIR%dir)' && rm -f" $$filesc ")"; \
+	cd "$(DESTDIR)$(%NDIR%dir)" && rm -f $$filesc
+endif %?INSTALL%
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+.PHONY clean-am: clean-lisp
+clean-lisp:
+	-rm -f elc-stamp $(ELCFILES)
+
+
+## -------------- ##
+## Distributing.  ##
+## -------------- ##
+
+if %?DIST%
+DIST_COMMON += %DISTVAR%
+endif %?DIST%

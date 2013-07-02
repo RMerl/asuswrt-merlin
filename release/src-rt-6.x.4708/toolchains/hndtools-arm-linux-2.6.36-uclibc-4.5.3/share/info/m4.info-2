@@ -1,0 +1,909 @@
+This is m4.info, produced by makeinfo version 4.13 from m4.texinfo.
+
+This manual (28 February 2011) is for GNU M4 (version 1.4.16), a
+package containing an implementation of the m4 macro language.
+
+   Copyright (C) 1989-1994, 2004-2011 Free Software Foundation, Inc.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections, no Front-Cover Texts, and
+     no Back-Cover Texts.  A copy of the license is included in the
+     section entitled "GNU Free Documentation License."
+
+INFO-DIR-SECTION Text creation and manipulation
+START-INFO-DIR-ENTRY
+* M4: (m4).                     A powerful macro processor.
+END-INFO-DIR-ENTRY
+
+
+File: m4.info,  Node: GNU Free Documentation License,  Up: Copying This Manual
+
+B.1 License for copying this manual
+===================================
+
+                     Version 1.3, 3 November 2008
+
+     Copyright (C) 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
+     `http://fsf.org/'
+
+     Everyone is permitted to copy and distribute verbatim copies
+     of this license document, but changing it is not allowed.
+
+  0. PREAMBLE
+
+     The purpose of this License is to make a manual, textbook, or other
+     functional and useful document "free" in the sense of freedom: to
+     assure everyone the effective freedom to copy and redistribute it,
+     with or without modifying it, either commercially or
+     noncommercially.  Secondarily, this License preserves for the
+     author and publisher a way to get credit for their work, while not
+     being considered responsible for modifications made by others.
+
+     This License is a kind of "copyleft", which means that derivative
+     works of the document must themselves be free in the same sense.
+     It complements the GNU General Public License, which is a copyleft
+     license designed for free software.
+
+     We have designed this License in order to use it for manuals for
+     free software, because free software needs free documentation: a
+     free program should come with manuals providing the same freedoms
+     that the software does.  But this License is not limited to
+     software manuals; it can be used for any textual work, regardless
+     of subject matter or whether it is published as a printed book.
+     We recommend this License principally for works whose purpose is
+     instruction or reference.
+
+  1. APPLICABILITY AND DEFINITIONS
+
+     This License applies to any manual or other work, in any medium,
+     that contains a notice placed by the copyright holder saying it
+     can be distributed under the terms of this License.  Such a notice
+     grants a world-wide, royalty-free license, unlimited in duration,
+     to use that work under the conditions stated herein.  The
+     "Document", below, refers to any such manual or work.  Any member
+     of the public is a licensee, and is addressed as "you".  You
+     accept the license if you copy, modify or distribute the work in a
+     way requiring permission under copyright law.
+
+     A "Modified Version" of the Document means any work containing the
+     Document or a portion of it, either copied verbatim, or with
+     modifications and/or translated into another language.
+
+     A "Secondary Section" is a named appendix or a front-matter section
+     of the Document that deals exclusively with the relationship of the
+     publishers or authors of the Document to the Document's overall
+     subject (or to related matters) and contains nothing that could
+     fall directly within that overall subject.  (Thus, if the Document
+     is in part a textbook of mathematics, a Secondary Section may not
+     explain any mathematics.)  The relationship could be a matter of
+     historical connection with the subject or with related matters, or
+     of legal, commercial, philosophical, ethical or political position
+     regarding them.
+
+     The "Invariant Sections" are certain Secondary Sections whose
+     titles are designated, as being those of Invariant Sections, in
+     the notice that says that the Document is released under this
+     License.  If a section does not fit the above definition of
+     Secondary then it is not allowed to be designated as Invariant.
+     The Document may contain zero Invariant Sections.  If the Document
+     does not identify any Invariant Sections then there are none.
+
+     The "Cover Texts" are certain short passages of text that are
+     listed, as Front-Cover Texts or Back-Cover Texts, in the notice
+     that says that the Document is released under this License.  A
+     Front-Cover Text may be at most 5 words, and a Back-Cover Text may
+     be at most 25 words.
+
+     A "Transparent" copy of the Document means a machine-readable copy,
+     represented in a format whose specification is available to the
+     general public, that is suitable for revising the document
+     straightforwardly with generic text editors or (for images
+     composed of pixels) generic paint programs or (for drawings) some
+     widely available drawing editor, and that is suitable for input to
+     text formatters or for automatic translation to a variety of
+     formats suitable for input to text formatters.  A copy made in an
+     otherwise Transparent file format whose markup, or absence of
+     markup, has been arranged to thwart or discourage subsequent
+     modification by readers is not Transparent.  An image format is
+     not Transparent if used for any substantial amount of text.  A
+     copy that is not "Transparent" is called "Opaque".
+
+     Examples of suitable formats for Transparent copies include plain
+     ASCII without markup, Texinfo input format, LaTeX input format,
+     SGML or XML using a publicly available DTD, and
+     standard-conforming simple HTML, PostScript or PDF designed for
+     human modification.  Examples of transparent image formats include
+     PNG, XCF and JPG.  Opaque formats include proprietary formats that
+     can be read and edited only by proprietary word processors, SGML or
+     XML for which the DTD and/or processing tools are not generally
+     available, and the machine-generated HTML, PostScript or PDF
+     produced by some word processors for output purposes only.
+
+     The "Title Page" means, for a printed book, the title page itself,
+     plus such following pages as are needed to hold, legibly, the
+     material this License requires to appear in the title page.  For
+     works in formats which do not have any title page as such, "Title
+     Page" means the text near the most prominent appearance of the
+     work's title, preceding the beginning of the body of the text.
+
+     The "publisher" means any person or entity that distributes copies
+     of the Document to the public.
+
+     A section "Entitled XYZ" means a named subunit of the Document
+     whose title either is precisely XYZ or contains XYZ in parentheses
+     following text that translates XYZ in another language.  (Here XYZ
+     stands for a specific section name mentioned below, such as
+     "Acknowledgements", "Dedications", "Endorsements", or "History".)
+     To "Preserve the Title" of such a section when you modify the
+     Document means that it remains a section "Entitled XYZ" according
+     to this definition.
+
+     The Document may include Warranty Disclaimers next to the notice
+     which states that this License applies to the Document.  These
+     Warranty Disclaimers are considered to be included by reference in
+     this License, but only as regards disclaiming warranties: any other
+     implication that these Warranty Disclaimers may have is void and
+     has no effect on the meaning of this License.
+
+  2. VERBATIM COPYING
+
+     You may copy and distribute the Document in any medium, either
+     commercially or noncommercially, provided that this License, the
+     copyright notices, and the license notice saying this License
+     applies to the Document are reproduced in all copies, and that you
+     add no other conditions whatsoever to those of this License.  You
+     may not use technical measures to obstruct or control the reading
+     or further copying of the copies you make or distribute.  However,
+     you may accept compensation in exchange for copies.  If you
+     distribute a large enough number of copies you must also follow
+     the conditions in section 3.
+
+     You may also lend copies, under the same conditions stated above,
+     and you may publicly display copies.
+
+  3. COPYING IN QUANTITY
+
+     If you publish printed copies (or copies in media that commonly
+     have printed covers) of the Document, numbering more than 100, and
+     the Document's license notice requires Cover Texts, you must
+     enclose the copies in covers that carry, clearly and legibly, all
+     these Cover Texts: Front-Cover Texts on the front cover, and
+     Back-Cover Texts on the back cover.  Both covers must also clearly
+     and legibly identify you as the publisher of these copies.  The
+     front cover must present the full title with all words of the
+     title equally prominent and visible.  You may add other material
+     on the covers in addition.  Copying with changes limited to the
+     covers, as long as they preserve the title of the Document and
+     satisfy these conditions, can be treated as verbatim copying in
+     other respects.
+
+     If the required texts for either cover are too voluminous to fit
+     legibly, you should put the first ones listed (as many as fit
+     reasonably) on the actual cover, and continue the rest onto
+     adjacent pages.
+
+     If you publish or distribute Opaque copies of the Document
+     numbering more than 100, you must either include a
+     machine-readable Transparent copy along with each Opaque copy, or
+     state in or with each Opaque copy a computer-network location from
+     which the general network-using public has access to download
+     using public-standard network protocols a complete Transparent
+     copy of the Document, free of added material.  If you use the
+     latter option, you must take reasonably prudent steps, when you
+     begin distribution of Opaque copies in quantity, to ensure that
+     this Transparent copy will remain thus accessible at the stated
+     location until at least one year after the last time you
+     distribute an Opaque copy (directly or through your agents or
+     retailers) of that edition to the public.
+
+     It is requested, but not required, that you contact the authors of
+     the Document well before redistributing any large number of
+     copies, to give them a chance to provide you with an updated
+     version of the Document.
+
+  4. MODIFICATIONS
+
+     You may copy and distribute a Modified Version of the Document
+     under the conditions of sections 2 and 3 above, provided that you
+     release the Modified Version under precisely this License, with
+     the Modified Version filling the role of the Document, thus
+     licensing distribution and modification of the Modified Version to
+     whoever possesses a copy of it.  In addition, you must do these
+     things in the Modified Version:
+
+       A. Use in the Title Page (and on the covers, if any) a title
+          distinct from that of the Document, and from those of
+          previous versions (which should, if there were any, be listed
+          in the History section of the Document).  You may use the
+          same title as a previous version if the original publisher of
+          that version gives permission.
+
+       B. List on the Title Page, as authors, one or more persons or
+          entities responsible for authorship of the modifications in
+          the Modified Version, together with at least five of the
+          principal authors of the Document (all of its principal
+          authors, if it has fewer than five), unless they release you
+          from this requirement.
+
+       C. State on the Title page the name of the publisher of the
+          Modified Version, as the publisher.
+
+       D. Preserve all the copyright notices of the Document.
+
+       E. Add an appropriate copyright notice for your modifications
+          adjacent to the other copyright notices.
+
+       F. Include, immediately after the copyright notices, a license
+          notice giving the public permission to use the Modified
+          Version under the terms of this License, in the form shown in
+          the Addendum below.
+
+       G. Preserve in that license notice the full lists of Invariant
+          Sections and required Cover Texts given in the Document's
+          license notice.
+
+       H. Include an unaltered copy of this License.
+
+       I. Preserve the section Entitled "History", Preserve its Title,
+          and add to it an item stating at least the title, year, new
+          authors, and publisher of the Modified Version as given on
+          the Title Page.  If there is no section Entitled "History" in
+          the Document, create one stating the title, year, authors,
+          and publisher of the Document as given on its Title Page,
+          then add an item describing the Modified Version as stated in
+          the previous sentence.
+
+       J. Preserve the network location, if any, given in the Document
+          for public access to a Transparent copy of the Document, and
+          likewise the network locations given in the Document for
+          previous versions it was based on.  These may be placed in
+          the "History" section.  You may omit a network location for a
+          work that was published at least four years before the
+          Document itself, or if the original publisher of the version
+          it refers to gives permission.
+
+       K. For any section Entitled "Acknowledgements" or "Dedications",
+          Preserve the Title of the section, and preserve in the
+          section all the substance and tone of each of the contributor
+          acknowledgements and/or dedications given therein.
+
+       L. Preserve all the Invariant Sections of the Document,
+          unaltered in their text and in their titles.  Section numbers
+          or the equivalent are not considered part of the section
+          titles.
+
+       M. Delete any section Entitled "Endorsements".  Such a section
+          may not be included in the Modified Version.
+
+       N. Do not retitle any existing section to be Entitled
+          "Endorsements" or to conflict in title with any Invariant
+          Section.
+
+       O. Preserve any Warranty Disclaimers.
+
+     If the Modified Version includes new front-matter sections or
+     appendices that qualify as Secondary Sections and contain no
+     material copied from the Document, you may at your option
+     designate some or all of these sections as invariant.  To do this,
+     add their titles to the list of Invariant Sections in the Modified
+     Version's license notice.  These titles must be distinct from any
+     other section titles.
+
+     You may add a section Entitled "Endorsements", provided it contains
+     nothing but endorsements of your Modified Version by various
+     parties--for example, statements of peer review or that the text
+     has been approved by an organization as the authoritative
+     definition of a standard.
+
+     You may add a passage of up to five words as a Front-Cover Text,
+     and a passage of up to 25 words as a Back-Cover Text, to the end
+     of the list of Cover Texts in the Modified Version.  Only one
+     passage of Front-Cover Text and one of Back-Cover Text may be
+     added by (or through arrangements made by) any one entity.  If the
+     Document already includes a cover text for the same cover,
+     previously added by you or by arrangement made by the same entity
+     you are acting on behalf of, you may not add another; but you may
+     replace the old one, on explicit permission from the previous
+     publisher that added the old one.
+
+     The author(s) and publisher(s) of the Document do not by this
+     License give permission to use their names for publicity for or to
+     assert or imply endorsement of any Modified Version.
+
+  5. COMBINING DOCUMENTS
+
+     You may combine the Document with other documents released under
+     this License, under the terms defined in section 4 above for
+     modified versions, provided that you include in the combination
+     all of the Invariant Sections of all of the original documents,
+     unmodified, and list them all as Invariant Sections of your
+     combined work in its license notice, and that you preserve all
+     their Warranty Disclaimers.
+
+     The combined work need only contain one copy of this License, and
+     multiple identical Invariant Sections may be replaced with a single
+     copy.  If there are multiple Invariant Sections with the same name
+     but different contents, make the title of each such section unique
+     by adding at the end of it, in parentheses, the name of the
+     original author or publisher of that section if known, or else a
+     unique number.  Make the same adjustment to the section titles in
+     the list of Invariant Sections in the license notice of the
+     combined work.
+
+     In the combination, you must combine any sections Entitled
+     "History" in the various original documents, forming one section
+     Entitled "History"; likewise combine any sections Entitled
+     "Acknowledgements", and any sections Entitled "Dedications".  You
+     must delete all sections Entitled "Endorsements."
+
+  6. COLLECTIONS OF DOCUMENTS
+
+     You may make a collection consisting of the Document and other
+     documents released under this License, and replace the individual
+     copies of this License in the various documents with a single copy
+     that is included in the collection, provided that you follow the
+     rules of this License for verbatim copying of each of the
+     documents in all other respects.
+
+     You may extract a single document from such a collection, and
+     distribute it individually under this License, provided you insert
+     a copy of this License into the extracted document, and follow
+     this License in all other respects regarding verbatim copying of
+     that document.
+
+  7. AGGREGATION WITH INDEPENDENT WORKS
+
+     A compilation of the Document or its derivatives with other
+     separate and independent documents or works, in or on a volume of
+     a storage or distribution medium, is called an "aggregate" if the
+     copyright resulting from the compilation is not used to limit the
+     legal rights of the compilation's users beyond what the individual
+     works permit.  When the Document is included in an aggregate, this
+     License does not apply to the other works in the aggregate which
+     are not themselves derivative works of the Document.
+
+     If the Cover Text requirement of section 3 is applicable to these
+     copies of the Document, then if the Document is less than one half
+     of the entire aggregate, the Document's Cover Texts may be placed
+     on covers that bracket the Document within the aggregate, or the
+     electronic equivalent of covers if the Document is in electronic
+     form.  Otherwise they must appear on printed covers that bracket
+     the whole aggregate.
+
+  8. TRANSLATION
+
+     Translation is considered a kind of modification, so you may
+     distribute translations of the Document under the terms of section
+     4.  Replacing Invariant Sections with translations requires special
+     permission from their copyright holders, but you may include
+     translations of some or all Invariant Sections in addition to the
+     original versions of these Invariant Sections.  You may include a
+     translation of this License, and all the license notices in the
+     Document, and any Warranty Disclaimers, provided that you also
+     include the original English version of this License and the
+     original versions of those notices and disclaimers.  In case of a
+     disagreement between the translation and the original version of
+     this License or a notice or disclaimer, the original version will
+     prevail.
+
+     If a section in the Document is Entitled "Acknowledgements",
+     "Dedications", or "History", the requirement (section 4) to
+     Preserve its Title (section 1) will typically require changing the
+     actual title.
+
+  9. TERMINATION
+
+     You may not copy, modify, sublicense, or distribute the Document
+     except as expressly provided under this License.  Any attempt
+     otherwise to copy, modify, sublicense, or distribute it is void,
+     and will automatically terminate your rights under this License.
+
+     However, if you cease all violation of this License, then your
+     license from a particular copyright holder is reinstated (a)
+     provisionally, unless and until the copyright holder explicitly
+     and finally terminates your license, and (b) permanently, if the
+     copyright holder fails to notify you of the violation by some
+     reasonable means prior to 60 days after the cessation.
+
+     Moreover, your license from a particular copyright holder is
+     reinstated permanently if the copyright holder notifies you of the
+     violation by some reasonable means, this is the first time you have
+     received notice of violation of this License (for any work) from
+     that copyright holder, and you cure the violation prior to 30 days
+     after your receipt of the notice.
+
+     Termination of your rights under this section does not terminate
+     the licenses of parties who have received copies or rights from
+     you under this License.  If your rights have been terminated and
+     not permanently reinstated, receipt of a copy of some or all of
+     the same material does not give you any rights to use it.
+
+ 10. FUTURE REVISIONS OF THIS LICENSE
+
+     The Free Software Foundation may publish new, revised versions of
+     the GNU Free Documentation License from time to time.  Such new
+     versions will be similar in spirit to the present version, but may
+     differ in detail to address new problems or concerns.  See
+     `http://www.gnu.org/copyleft/'.
+
+     Each version of the License is given a distinguishing version
+     number.  If the Document specifies that a particular numbered
+     version of this License "or any later version" applies to it, you
+     have the option of following the terms and conditions either of
+     that specified version or of any later version that has been
+     published (not as a draft) by the Free Software Foundation.  If
+     the Document does not specify a version number of this License,
+     you may choose any version ever published (not as a draft) by the
+     Free Software Foundation.  If the Document specifies that a proxy
+     can decide which future versions of this License can be used, that
+     proxy's public statement of acceptance of a version permanently
+     authorizes you to choose that version for the Document.
+
+ 11. RELICENSING
+
+     "Massive Multiauthor Collaboration Site" (or "MMC Site") means any
+     World Wide Web server that publishes copyrightable works and also
+     provides prominent facilities for anybody to edit those works.  A
+     public wiki that anybody can edit is an example of such a server.
+     A "Massive Multiauthor Collaboration" (or "MMC") contained in the
+     site means any set of copyrightable works thus published on the MMC
+     site.
+
+     "CC-BY-SA" means the Creative Commons Attribution-Share Alike 3.0
+     license published by Creative Commons Corporation, a not-for-profit
+     corporation with a principal place of business in San Francisco,
+     California, as well as future copyleft versions of that license
+     published by that same organization.
+
+     "Incorporate" means to publish or republish a Document, in whole or
+     in part, as part of another Document.
+
+     An MMC is "eligible for relicensing" if it is licensed under this
+     License, and if all works that were first published under this
+     License somewhere other than this MMC, and subsequently
+     incorporated in whole or in part into the MMC, (1) had no cover
+     texts or invariant sections, and (2) were thus incorporated prior
+     to November 1, 2008.
+
+     The operator of an MMC Site may republish an MMC contained in the
+     site under CC-BY-SA on the same site at any time before August 1,
+     2009, provided the MMC is eligible for relicensing.
+
+
+ADDENDUM: How to use this License for your documents
+====================================================
+
+To use this License in a document you have written, include a copy of
+the License in the document and put the following copyright and license
+notices just after the title page:
+
+       Copyright (C)  YEAR  YOUR NAME.
+       Permission is granted to copy, distribute and/or modify this document
+       under the terms of the GNU Free Documentation License, Version 1.3
+       or any later version published by the Free Software Foundation;
+       with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+       Texts.  A copy of the license is included in the section entitled ``GNU
+       Free Documentation License''.
+
+   If you have Invariant Sections, Front-Cover Texts and Back-Cover
+Texts, replace the "with...Texts." line with this:
+
+         with the Invariant Sections being LIST THEIR TITLES, with
+         the Front-Cover Texts being LIST, and with the Back-Cover Texts
+         being LIST.
+
+   If you have Invariant Sections without Cover Texts, or some other
+combination of the three, merge those two alternatives to suit the
+situation.
+
+   If your document contains nontrivial examples of program code, we
+recommend releasing these examples in parallel under your choice of
+free software license, such as the GNU General Public License, to
+permit their use in free software.
+
+
+File: m4.info,  Node: Indices,  Prev: Copying This Manual,  Up: Top
+
+Appendix C Indices of concepts and macros
+*****************************************
+
+* Menu:
+
+* Macro index::                 Index for all `m4' macros
+* Concept index::               Index for many concepts
+
+
+File: m4.info,  Node: Macro index,  Next: Concept index,  Up: Indices
+
+C.1 Index for all `m4' macros
+=============================
+
+This index covers all `m4' builtins, as well as several useful
+composite macros.  References are exclusively to the places where a
+macro is introduced the first time.
+
+ [index ]
+* Menu:
+
+* __file__:                              Location.            (line  10)
+* __gnu__:                               Platform macros.     (line  12)
+* __line__:                              Location.            (line  11)
+* __os2__:                               Platform macros.     (line  13)
+* __program__:                           Location.            (line  12)
+* __unix__:                              Platform macros.     (line  15)
+* __windows__:                           Platform macros.     (line  17)
+* argn:                                  Shift.               (line 258)
+* array:                                 Define.              (line  56)
+* array_set:                             Define.              (line  57)
+* builtin:                               Builtin.             (line   9)
+* capitalize:                            Patsubst.            (line  55)
+* changecom:                             Changecom.           (line  10)
+* changequote:                           Changequote.         (line  10)
+* changeword:                            Changeword.          (line  23)
+* cleardivert:                           Cleardivert.         (line  26)
+* cond:                                  Shift.               (line  53)
+* copy:                                  Composition.         (line 120)
+* curry:                                 Composition.         (line  68)
+* debugfile:                             Debug Output.        (line  11)
+* debugmode:                             Debug Levels.        (line  78)
+* decr:                                  Incr.                (line  11)
+* define:                                Define.              (line  10)
+* define_blind:                          Composition.         (line  11)
+* defn:                                  Defn.                (line  10)
+* divert:                                Divert.              (line   9)
+* divnum:                                Divnum.              (line   9)
+* dnl:                                   Dnl.                 (line   9)
+* downcase:                              Patsubst.            (line  54)
+* dquote:                                Shift.               (line 196)
+* dquote_elt:                            Shift.               (line 197)
+* dumpdef:                               Dumpdef.             (line  10)
+* errprint:                              Errprint.            (line   9)
+* esyscmd:                               Esyscmd.             (line   9)
+* eval:                                  Eval.                (line   9)
+* example:                               Manual.              (line  40)
+* exch:                                  Arguments.           (line  13)
+* fatal_error:                           M4exit.              (line  25)
+* foreach:                               Foreach.             (line   9)
+* foreachq:                              Foreach.             (line  10)
+* forloop:                               Forloop.             (line   9)
+* format:                                Format.              (line   9)
+* ifdef:                                 Ifdef.               (line  10)
+* ifelse:                                Ifelse.              (line  11)
+* include:                               Include.             (line   9)
+* incr:                                  Incr.                (line  10)
+* index:                                 Index macro.         (line   9)
+* indir:                                 Indir.               (line   9)
+* join:                                  Shift.               (line 104)
+* joinall:                               Shift.               (line 105)
+* len:                                   Len.                 (line   9)
+* m4exit:                                M4exit.              (line  10)
+* m4wrap:                                M4wrap.              (line  14)
+* maketemp:                              Mkstemp.             (line  12)
+* mkstemp:                               Mkstemp.             (line  11)
+* nargs:                                 Pseudo Arguments.    (line  13)
+* os2:                                   Platform macros.     (line  14)
+* patsubst:                              Patsubst.            (line   9)
+* popdef:                                Pushdef.             (line  12)
+* pushdef:                               Pushdef.             (line  11)
+* quote:                                 Shift.               (line 195)
+* regexp:                                Regexp.              (line   9)
+* rename:                                Composition.         (line 121)
+* reverse:                               Shift.               (line  32)
+* shift:                                 Shift.               (line  17)
+* sinclude:                              Include.             (line  10)
+* stack_foreach:                         Stacks.              (line  12)
+* stack_foreach_lifo:                    Stacks.              (line  13)
+* stack_foreach_sep:                     Improved copy.       (line  16)
+* stack_foreach_sep_lifo:                Improved copy.       (line  17)
+* substr:                                Substr.              (line   9)
+* syscmd:                                Syscmd.              (line   9)
+* sysval:                                Sysval.              (line   9)
+* traceoff:                              Trace.               (line  11)
+* traceon:                               Trace.               (line  10)
+* translit:                              Translit.            (line   9)
+* undefine:                              Undefine.            (line   9)
+* undivert:                              Undivert.            (line   9)
+* unix:                                  Platform macros.     (line  16)
+* upcase:                                Patsubst.            (line  53)
+* windows:                               Platform macros.     (line  18)
+
+
+File: m4.info,  Node: Concept index,  Prev: Macro index,  Up: Indices
+
+C.2 Index for many concepts
+===========================
+
+ [index ]
+* Menu:
+
+* argument currying:                     Composition.         (line  63)
+* arguments to macros <1>:               Arguments.           (line   6)
+* arguments to macros:                   Macro Arguments.     (line   6)
+* arguments to macros, special:          Pseudo Arguments.    (line   6)
+* arguments, joining:                    Shift.               (line 100)
+* arguments, more than nine <1>:         Improved foreach.    (line 155)
+* arguments, more than nine <2>:         Shift.               (line 252)
+* arguments, more than nine:             Arguments.           (line  54)
+* arguments, quoted macro:               Quoting Arguments.   (line   6)
+* arguments, reversing:                  Shift.               (line  31)
+* arithmetic:                            Arithmetic.          (line   6)
+* arrays:                                Define.              (line  52)
+* avoiding quadratic behavior:           Improved foreach.    (line  38)
+* basic regular expressions <1>:         Patsubst.            (line   6)
+* basic regular expressions:             Regexp.              (line   6)
+* blind macro <1>:                       Composition.         (line  10)
+* blind macro <2>:                       Ifelse.              (line  52)
+* blind macro:                           Inhibiting Invocation.
+                                                              (line  14)
+* bug reports:                           Bugs.                (line   6)
+* builtins, indirect call of:            Builtin.             (line   6)
+* builtins, special tokens:              Defn.                (line 101)
+* call of builtins, indirect:            Builtin.             (line   6)
+* call of macros, indirect:              Indir.               (line   6)
+* case statement:                        Ifelse.              (line  69)
+* changing comment delimiters:           Changecom.           (line   6)
+* changing quote delimiters:             Changequote.         (line   6)
+* changing syntax:                       Changeword.          (line   6)
+* characters, translating:               Translit.            (line   6)
+* command line:                          Invoking m4.         (line   6)
+* command line, file names on the:       Command line files.  (line   6)
+* command line, macro definitions on the: Preprocessor features.
+                                                              (line   6)
+* command line, options:                 Invoking m4.         (line  10)
+* commands, exit status from shell:      Sysval.              (line   6)
+* commands, running shell:               Shell commands.      (line   6)
+* comment delimiters, changing:          Changecom.           (line   6)
+* comments:                              Comments.            (line   6)
+* comments, copied to output:            Changecom.           (line  29)
+* comparing strings:                     Ifelse.              (line   6)
+* compatibility:                         Compatibility.       (line   6)
+* composing macros:                      Composition.         (line   6)
+* concatenating arguments:               Shift.               (line 100)
+* conditional, short-circuiting:         Shift.               (line  51)
+* conditionals:                          Ifdef.               (line   6)
+* controlling debugging output:          Debug Levels.        (line   6)
+* copying macros:                        Composition.         (line 116)
+* counting loops:                        Forloop.             (line   6)
+* currying arguments:                    Composition.         (line  63)
+* debugging macros:                      Debugging.           (line   6)
+* debugging output, controlling:         Debug Levels.        (line   6)
+* debugging output, saving:              Debug Output.        (line   6)
+* decrement operator:                    Incr.                (line   6)
+* deferring expansion:                   M4wrap.              (line   6)
+* deferring output:                      Diversions.          (line   6)
+* defining new macros:                   Definitions.         (line   6)
+* definition stack <1>:                  Stacks.              (line   6)
+* definition stack:                      Pushdef.             (line   6)
+* definitions, displaying macro <1>:     Dumpdef.             (line   6)
+* definitions, displaying macro:         Defn.                (line   6)
+* deleting macros:                       Undefine.            (line   6)
+* deleting whitespace in input:          Dnl.                 (line   6)
+* delimiters, changing <1>:              Changecom.           (line   6)
+* delimiters, changing:                  Changequote.         (line   6)
+* discarding diverted text:              Cleardivert.         (line   6)
+* discarding input <1>:                  Divert.              (line  42)
+* discarding input <2>:                  Dnl.                 (line   6)
+* discarding input:                      Ifelse.              (line   6)
+* displaying macro definitions:          Dumpdef.             (line   6)
+* diversion numbers:                     Divnum.              (line   6)
+* diverted text, discarding:             Cleardivert.         (line   6)
+* diverting output to files:             Divert.              (line   6)
+* dumping into frozen file:              Using frozen files.  (line   6)
+* error messages, printing:              Errprint.            (line   6)
+* errors, fatal:                         Operation modes.     (line  20)
+* evaluation, of integer expressions:    Eval.                (line   6)
+* examples, understanding:               Manual.              (line   6)
+* executing shell commands:              Shell commands.      (line   6)
+* exit status from shell commands:       Sysval.              (line   6)
+* exiting from m4:                       M4exit.              (line   6)
+* expansion of macros:                   Macro expansion.     (line   6)
+* expansion, deferring:                  M4wrap.              (line   6)
+* expansion, tracing macro:              Trace.               (line   6)
+* expressions, evaluation of integer:    Eval.                (line   6)
+* expressions, regular <1>:              Patsubst.            (line   6)
+* expressions, regular:                  Regexp.              (line   6)
+* extracting substrings:                 Substr.              (line   6)
+* fast loading of frozen files:          Using frozen files.  (line   6)
+* fatal errors:                          Operation modes.     (line  20)
+* FDL, GNU Free Documentation License:   GNU Free Documentation License.
+                                                              (line   6)
+* file format, frozen file:              Frozen file format.  (line   6)
+* file inclusion <1>:                    Undivert.            (line  13)
+* file inclusion:                        File Inclusion.      (line   6)
+* file names, on the command line:       Command line files.  (line   6)
+* files, diverting output to:            Divert.              (line   6)
+* files, names of temporary:             Mkstemp.             (line   6)
+* for each loops:                        Foreach.             (line   6)
+* for loops:                             Forloop.             (line   6)
+* formatted output:                      Format.              (line   6)
+* Free Documentation License (FDL), GNU: GNU Free Documentation License.
+                                                              (line   6)
+* frozen file format:                    Frozen file format.  (line   6)
+* frozen files for fast loading:         Using frozen files.  (line   6)
+* General Public License (GPL), GNU:     GNU General Public License.
+                                                              (line   6)
+* GNU extensions <1>:                    Extensions.          (line   6)
+* GNU extensions <2>:                    Using frozen files.  (line   6)
+* GNU extensions <3>:                    Mkstemp.             (line  59)
+* GNU extensions <4>:                    Esyscmd.             (line   6)
+* GNU extensions <5>:                    Eval.                (line 125)
+* GNU extensions <6>:                    Format.              (line   6)
+* GNU extensions <7>:                    Patsubst.            (line   6)
+* GNU extensions <8>:                    Regexp.              (line   6)
+* GNU extensions <9>:                    Undivert.            (line  13)
+* GNU extensions <10>:                   Divert.              (line  54)
+* GNU extensions <11>:                   Search Path.         (line   6)
+* GNU extensions <12>:                   Debug Output.        (line   6)
+* GNU extensions <13>:                   Debug Levels.        (line  74)
+* GNU extensions <14>:                   Builtin.             (line   6)
+* GNU extensions <15>:                   Indir.               (line   6)
+* GNU extensions <16>:                   Arguments.           (line  54)
+* GNU extensions <17>:                   Define.              (line  41)
+* GNU extensions:                        Inhibiting Invocation.
+                                                              (line  14)
+* GNU Free Documentation License:        GNU Free Documentation License.
+                                                              (line   6)
+* GNU General Public License:            GNU General Public License.
+                                                              (line   6)
+* GNU M4, history of:                    History.             (line   6)
+* GPL, GNU General Public License:       GNU General Public License.
+                                                              (line   6)
+* history of m4:                         History.             (line   6)
+* included files, search path for:       Search Path.         (line   6)
+* inclusion, of files <1>:               Undivert.            (line  13)
+* inclusion, of files:                   File Inclusion.      (line   6)
+* increment operator:                    Incr.                (line   6)
+* indirect call of builtins:             Builtin.             (line   6)
+* indirect call of macros:               Indir.               (line   6)
+* initialization, frozen state:          Using frozen files.  (line   6)
+* input location <1>:                    Location.            (line   6)
+* input location:                        Preprocessor features.
+                                                              (line  28)
+* input tokens:                          Syntax.              (line   6)
+* input, discarding <1>:                 Divert.              (line  42)
+* input, discarding <2>:                 Dnl.                 (line   6)
+* input, discarding:                     Ifelse.              (line   6)
+* input, saving:                         M4wrap.              (line   6)
+* integer arithmetic:                    Arithmetic.          (line   6)
+* integer expression evaluation:         Eval.                (line   6)
+* invoking m4:                           Invoking m4.         (line   6)
+* invoking macros:                       Invocation.          (line   6)
+* iterating over lists:                  Foreach.             (line   6)
+* joining arguments:                     Shift.               (line 100)
+* length of strings:                     Len.                 (line   6)
+* lexical structure of words:            Changeword.          (line   6)
+* License, code:                         Copying This Package.
+                                                              (line   6)
+* License, manual:                       Copying This Manual. (line   6)
+* limit, nesting:                        Limits control.      (line  43)
+* literal output:                        Pseudo Arguments.    (line 106)
+* local variables:                       Pushdef.             (line  79)
+* location, input <1>:                   Location.            (line   6)
+* location, input:                       Preprocessor features.
+                                                              (line  28)
+* loops:                                 Shift.               (line  10)
+* loops, counting:                       Forloop.             (line   6)
+* loops, list iteration:                 Foreach.             (line   6)
+* M4PATH:                                Search Path.         (line   9)
+* macro composition:                     Composition.         (line   6)
+* macro definitions, on the command line: Preprocessor features.
+                                                              (line   6)
+* macro expansion, tracing:              Trace.               (line   6)
+* macro invocation:                      Invocation.          (line   6)
+* macro, blind <1>:                      Composition.         (line  10)
+* macro, blind <2>:                      Ifelse.              (line  52)
+* macro, blind:                          Inhibiting Invocation.
+                                                              (line  14)
+* macros, arguments to <1>:              Arguments.           (line   6)
+* macros, arguments to:                  Macro Arguments.     (line   6)
+* macros, copying:                       Composition.         (line 116)
+* macros, debugging:                     Debugging.           (line   6)
+* macros, displaying definitions <1>:    Dumpdef.             (line   6)
+* macros, displaying definitions:        Defn.                (line   6)
+* macros, expansion of:                  Macro expansion.     (line   6)
+* macros, how to define new:             Definitions.         (line   6)
+* macros, how to delete:                 Undefine.            (line   6)
+* macros, how to rename:                 Defn.                (line   6)
+* macros, indirect call of:              Indir.               (line   6)
+* macros, quoted arguments to:           Quoting Arguments.   (line   6)
+* macros, recursive:                     Shift.               (line   6)
+* macros, special arguments to:          Pseudo Arguments.    (line   6)
+* macros, temporary redefinition of:     Pushdef.             (line   6)
+* manipulating quotes:                   Shift.               (line 191)
+* messages, printing error:              Errprint.            (line   6)
+* more than nine arguments <1>:          Improved foreach.    (line 155)
+* more than nine arguments <2>:          Shift.               (line 252)
+* more than nine arguments:              Arguments.           (line  54)
+* multibranches:                         Ifelse.              (line  69)
+* names:                                 Names.               (line   6)
+* nesting limit:                         Limits control.      (line  43)
+* nine arguments, more than <1>:         Improved foreach.    (line 155)
+* nine arguments, more than <2>:         Shift.               (line 252)
+* nine arguments, more than:             Arguments.           (line  54)
+* numbers:                               Manual.              (line  57)
+* options, command line:                 Invoking m4.         (line  10)
+* output, diverting to files:            Divert.              (line   6)
+* output, formatted:                     Format.              (line   6)
+* output, literal:                       Pseudo Arguments.    (line 106)
+* output, saving debugging:              Debug Output.        (line   6)
+* overview of m4:                        Intro.               (line   6)
+* pattern substitution:                  Patsubst.            (line   6)
+* platform macros:                       Platform macros.     (line   6)
+* positional parameters, more than nine: Arguments.           (line  54)
+* POSIX:                                 Extensions.          (line   6)
+* POSIXLY_CORRECT <1>:                   Incompatibilities.   (line 146)
+* POSIXLY_CORRECT:                       Invoking m4.         (line  10)
+* preprocessor features:                 Preprocessor features.
+                                                              (line   6)
+* printing error messages:               Errprint.            (line   6)
+* pushdef stack <1>:                     Stacks.              (line   6)
+* pushdef stack:                         Pushdef.             (line   6)
+* quadratic behavior, avoiding:          Improved foreach.    (line  38)
+* quote delimiters, changing:            Changequote.         (line   6)
+* quote manipulation:                    Shift.               (line 191)
+* quoted macro arguments:                Quoting Arguments.   (line   6)
+* quoted string:                         Quoted strings.      (line   6)
+* quoting rule of thumb:                 Quoting Arguments.   (line  22)
+* recursive macros:                      Shift.               (line   6)
+* redefinition of macros, temporary:     Pushdef.             (line   6)
+* regular expressions <1>:               Patsubst.            (line   6)
+* regular expressions <2>:               Regexp.              (line   6)
+* regular expressions:                   Changeword.          (line   6)
+* reloading a frozen file:               Using frozen files.  (line   6)
+* renaming macros <1>:                   Composition.         (line 116)
+* renaming macros:                       Defn.                (line   6)
+* reporting bugs:                        Bugs.                (line   6)
+* rescanning <1>:                        Other Incompatibilities.
+                                                              (line  52)
+* rescanning <2>:                        Defn.                (line  61)
+* rescanning <3>:                        Pseudo Arguments.    (line 106)
+* rescanning <4>:                        Inhibiting Invocation.
+                                                              (line  87)
+* rescanning:                            Limits control.      (line  56)
+* reversing arguments:                   Shift.               (line  31)
+* rule of thumb, quoting:                Quoting Arguments.   (line  22)
+* running shell commands:                Shell commands.      (line   6)
+* saving debugging output:               Debug Output.        (line   6)
+* saving input:                          M4wrap.              (line   6)
+* search path for included files:        Search Path.         (line   6)
+* shell commands, exit status from:      Sysval.              (line   6)
+* shell commands, running:               Shell commands.      (line   6)
+* short-circuiting conditional:          Shift.               (line  51)
+* special arguments to macros:           Pseudo Arguments.    (line   6)
+* stack, macro definition <1>:           Stacks.              (line   6)
+* stack, macro definition:               Pushdef.             (line   6)
+* standard error, output to <1>:         Errprint.            (line   6)
+* standard error, output to <2>:         Trace.               (line   6)
+* standard error, output to:             Dumpdef.             (line   6)
+* status of shell commands:              Sysval.              (line   6)
+* status, setting m4 exit:               M4exit.              (line   6)
+* string, quoted:                        Quoted strings.      (line   6)
+* strings, length of:                    Len.                 (line   6)
+* substitution by regular expression:    Patsubst.            (line   6)
+* substrings, extracting:                Substr.              (line   6)
+* substrings, locating:                  Index macro.         (line   6)
+* suggestions, reporting:                Bugs.                (line   6)
+* suppressing warnings:                  Macro Arguments.     (line  38)
+* switch statement:                      Ifelse.              (line  69)
+* synchronization lines:                 Preprocessor features.
+                                                              (line  28)
+* syntax, changing:                      Changeword.          (line   6)
+* temporary file names:                  Mkstemp.             (line   6)
+* temporary redefinition of macros:      Pushdef.             (line   6)
+* TMPDIR:                                Diversions.          (line  10)
+* tokens:                                Syntax.              (line   6)
+* tokens, builtin macro:                 Defn.                (line 101)
+* tokens, special:                       Other tokens.        (line   6)
+* tracing macro expansion:               Trace.               (line   6)
+* translating characters:                Translit.            (line   6)
+* undefining macros:                     Undefine.            (line   6)
+* UNIX commands, exit status from:       Sysval.              (line   6)
+* UNIX commands, running:                Shell commands.      (line   6)
+* variables, local:                      Pushdef.             (line  79)
+* warnings, suppressing:                 Macro Arguments.     (line  38)
+* words:                                 Names.               (line   6)
+* words, lexical structure of:           Changeword.          (line   6)
+
+

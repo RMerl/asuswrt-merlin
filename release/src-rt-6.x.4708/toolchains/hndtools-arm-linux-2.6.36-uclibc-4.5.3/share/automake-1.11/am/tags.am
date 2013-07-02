@@ -1,0 +1,144 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2003,
+## 2004, 2007, 2008, 2009  Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## ---- ##
+## ID.  ##
+## ---- ##
+
+ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
+## Make sure the list of sources is unique.
+	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+## Handle VPATH correctly.
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '{ files[$$0] = 1; nonempty = 1; } \
+	      END { if (nonempty) { for (i in files) print i; }; }'`; \
+	mkid -fID $$unique
+
+
+## ------ ##
+## TAGS.  ##
+## ------ ##
+
+ETAGS = etags
+.PHONY: tags
+if %?SUBDIRS%
+AM_RECURSIVE_TARGETS += tags TAGS
+endif %?SUBDIRS%
+tags: TAGS
+
+TAGS: %TAGSDIRS% $(HEADERS) $(SOURCES) %CONFIG% $(TAGS_DEPENDENCIES) \
+		$(TAGS_FILES) $(LISP)
+## We use the positional parameters to build the subdir list with
+## absolute names, without the need to worry about white space in `pwd`.
+	set x; \
+	here=`pwd`; \
+## It is tempting to use if/endif here, but don't: the previous
+## backslash will cause bad results (automake doesn't `see' the `if').
+## Exuberant Ctags wants --etags-include,
+## GNU Etags             --include
+## Furthermore Exuberant Ctags 5.5.4 fails to create TAGS files
+## when no files are supplied, despite any --etags-include option.
+## A workaround is to pass `.' as a file.  This is what $empty_fix is for.
+?SUBDIRS?	if ($(ETAGS) --etags-include --version) >/dev/null 2>&1; then \
+?SUBDIRS?	  include_option=--etags-include; \
+?SUBDIRS?	  empty_fix=.; \
+?SUBDIRS?	else \
+?SUBDIRS?	  include_option=--include; \
+?SUBDIRS?	  empty_fix=; \
+?SUBDIRS?	fi; \
+?SUBDIRS?	list='$(SUBDIRS)'; for subdir in $$list; do \
+## Do nothing if we're trying to look in `.'.
+?SUBDIRS?	  if test "$$subdir" = .; then :; else \
+?SUBDIRS?	    test ! -f $$subdir/TAGS || \
+## Note that the = is mandatory for --etags-include.
+?SUBDIRS?	      set "$$@" "$$include_option=$$here/$$subdir/TAGS"; \
+?SUBDIRS?	  fi; \
+?SUBDIRS?	done; \
+## Make sure the list of sources is unique.
+	list='$(SOURCES) $(HEADERS) %CONFIG% $(LISP) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+## Handle VPATH correctly.
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '{ files[$$0] = 1; nonempty = 1; } \
+	      END { if (nonempty) { for (i in files) print i; }; }'`; \
+## Remove the `x' we added first:
+	shift; \
+## Make sure we have something to run etags on.
+	if test -z "$(ETAGS_ARGS)$$*$$unique"; then :; else \
+	  test -n "$$unique" || unique=$$empty_fix; \
+	  if test $$# -gt 0; then \
+	    $(ETAGS) $(ETAGSFLAGS) $(AM_ETAGSFLAGS) $(ETAGS_ARGS) \
+	      "$$@" $$unique; \
+	  else \
+	    $(ETAGS) $(ETAGSFLAGS) $(AM_ETAGSFLAGS) $(ETAGS_ARGS) \
+	      $$unique; \
+	  fi; \
+	fi
+
+
+## ------------- ##
+## vi-style tags ##
+## ------------- ##
+
+CTAGS = ctags
+.PHONY: CTAGS ctags
+if %?SUBDIRS%
+AM_RECURSIVE_TARGETS += ctags CTAGS
+endif %?SUBDIRS%
+ctags: CTAGS
+
+## We have a dummy name here because `tags' has already been in use
+## for a long time to mean Emacs-style tags.  Oops.  This means the
+## dependencies here are useless.
+CTAGS: %CTAGSDIRS% $(HEADERS) $(SOURCES) %CONFIG% $(TAGS_DEPENDENCIES) \
+		$(TAGS_FILES) $(LISP)
+## Make sure the list of sources is unique.
+	list='$(SOURCES) $(HEADERS) %CONFIG% $(LISP) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+## Handle VPATH correctly.
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '{ files[$$0] = 1; nonempty = 1; } \
+	      END { if (nonempty) { for (i in files) print i; }; }'`; \
+## Make sure we have something to run ctags on.
+	test -z "$(CTAGS_ARGS)$$unique" \
+	  || $(CTAGS) $(CTAGSFLAGS) $(AM_CTAGSFLAGS) $(CTAGS_ARGS) \
+	     $$unique
+
+
+## --------------- ##
+## `Global' tags.  ##
+## --------------- ##
+
+.PHONY: GTAGS
+GTAGS:
+	here=`$(am__cd) $(top_builddir) && pwd` \
+	  && $(am__cd) $(top_srcdir) \
+	  && gtags -i $(GTAGS_ARGS) "$$here"
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+.PHONY distclean-am: distclean-tags
+
+distclean-tags:
+	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags

@@ -1,0 +1,63 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1994, 1995, 1996, 1998, 1999, 2001, 2003, 2004, 2008
+## Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## We must test each macro because it might be empty, and an empty "rm
+## -rf" command looks disturbing.  Also, the Solaris 2.4 "rm" will
+## return an error if there are no arguments other than "-f".
+mostlyclean-am: mostlyclean-generic
+mostlyclean-generic:
+%MOSTLYCLEAN_RMS%
+
+clean-am: clean-generic mostlyclean-am
+clean-generic:
+%CLEAN_RMS%
+
+distclean-am: distclean-generic clean-am
+distclean-generic:
+	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
+	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+%DISTCLEAN_RMS%
+
+## Makefiles and their dependencies cannot be cleaned by
+## an -am dependency, because that would prevent other distclean
+## dependencies from calling make recursively.  (The multilib
+## cleaning rules do this.)
+##
+## If you change distclean here, you probably also want to change
+## maintainer-clean below.
+distclean:
+	-rm -f %MAKEFILE%
+
+maintainer-clean-am: maintainer-clean-generic distclean-am
+maintainer-clean-generic:
+## FIXME: shouldn't we really print these messages before running
+## the dependencies?
+	@echo "This command is intended for maintainers to use"
+	@echo "it deletes files that may require special tools to rebuild."
+%MAINTAINER_CLEAN_RMS%
+
+## See comment for distclean.
+maintainer-clean:
+	-rm -f %MAKEFILE%
+
+.PHONY: clean mostlyclean distclean maintainer-clean \
+clean-generic mostlyclean-generic distclean-generic maintainer-clean-generic
+
+?!SUBDIRS?clean: clean-am
+?!SUBDIRS?distclean: distclean-am
+?!SUBDIRS?mostlyclean: mostlyclean-am
+?!SUBDIRS?maintainer-clean: maintainer-clean-am

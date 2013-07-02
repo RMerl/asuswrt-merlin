@@ -1,0 +1,95 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1994, 1995, 1996, 1998, 1999, 2001, 2003, 2004, 2006,
+## 2007, 2008, 2009  Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if %?INSTALL%
+include inst-vars.am
+endif %?INSTALL%
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+if %?INSTALL%
+am__installdirs += "$(DESTDIR)$(%NDIR%dir)"
+.PHONY install-%EXEC?exec:data%-am: install-%DIR%%PRIMARY%
+install-%DIR%%PRIMARY%: $(%DIR%_%PRIMARY%)
+	@$(NORMAL_INSTALL)
+	test -z "$(%NDIR%dir)" || $(MKDIR_P) "$(DESTDIR)$(%NDIR%dir)"
+if %?BASE%
+## Funny invocation because Makefile variable can be empty, leading to
+## a syntax error in sh.
+	@list='$(%DIR%_%PRIMARY%)'; test -n "$(%NDIR%dir)" || list=; \
+	for p in $$list; do \
+## A file can be in the source directory or the build directory.
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+## If the _%PRIMARY% variable has an entry like foo/bar, install it as
+## $(destdir)/bar, not $(destdir)/foo/bar.  The user can make a
+## new dir variable or use a nobase_ target for the latter case.
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_%ONE_PRIMARY%) $$files '$(DESTDIR)$(%NDIR%dir)'"; \
+	  $(INSTALL_%ONE_PRIMARY%) $$files "$(DESTDIR)$(%NDIR%dir)" || exit $$?; \
+	done
+else !%?BASE%
+	@list='$(%DIR%_%PRIMARY%)'; test -n "$(%NDIR%dir)" || list=; \
+	$(am__nobase_list) | while read dir files; do \
+	  xfiles=; for file in $$files; do \
+	    if test -f "$$file"; then xfiles="$$xfiles $$file"; \
+	    else xfiles="$$xfiles $(srcdir)/$$file"; fi; done; \
+	  test -z "$$xfiles" || { \
+	    test "x$$dir" = x. || { \
+	      echo "$(MKDIR_P) '$(DESTDIR)$(%NDIR%dir)/$$dir'"; \
+	      $(MKDIR_P) "$(DESTDIR)$(%NDIR%dir)/$$dir"; }; \
+	    echo " $(INSTALL_%ONE_PRIMARY%) $$xfiles '$(DESTDIR)$(%NDIR%dir)/$$dir'"; \
+	    $(INSTALL_%ONE_PRIMARY%) $$xfiles "$(DESTDIR)$(%NDIR%dir)/$$dir" || exit $$?; }; \
+	done
+endif !%?BASE%
+endif %?INSTALL%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+if %?INSTALL%
+.PHONY uninstall-am: uninstall-%DIR%%PRIMARY%
+uninstall-%DIR%%PRIMARY%:
+	@$(NORMAL_UNINSTALL)
+	@list='$(%DIR%_%PRIMARY%)'; test -n "$(%NDIR%dir)" || list=; \
+?BASE?	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+?!BASE?	$(am__nobase_strip_setup); files=`$(am__nobase_strip)`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(%NDIR%dir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(%NDIR%dir)" && rm -f $$files
+endif %?INSTALL%
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+## Nothing.
+
+
+## -------------- ##
+## Distributing.  ##
+## -------------- ##
+
+if %?DIST%
+DIST_COMMON += %DISTVAR%
+endif %?DIST%

@@ -1,0 +1,93 @@
+This is the file .../info/dir, which contains the
+topmost node of the Info hierarchy, called (dir)Top.
+The first time you invoke Info you start off looking at this node.
+
+File: dir,	Node: Top	This is the top of the INFO tree
+
+  This (the Directory node) gives a menu of major topics.
+  Typing "q" exits, "?" lists all Info commands, "d" returns here,
+  "h" gives a primer for first-timers,
+  "mEmacs<Return>" visits the Emacs manual, etc.
+
+  In Emacs, you can click mouse button 2 on a menu item or cross reference
+  to select it.
+
+* Menu:
+
+Archiving
+* Tar: (tar).                   Making tape (or disk) archives.
+
+Individual utilities
+* aclocal: (automake)Invoking aclocal.          Generating aclocal.m4.
+* addr2line: (binutils)addr2line. Convert addresses to file and line.
+* ar: (binutils)ar.               Create, modify, and extract from archives.
+* autoconf-invocation: (autoconf)autoconf Invocation.
+                                How to create configuration scripts
+* autoheader: (autoconf)autoheader Invocation.
+                                How to create configuration templates
+* autom4te: (autoconf)autom4te Invocation.
+                                The Autoconf executables backbone
+* automake: (automake)Invoking Automake.        Generating Makefile.in.
+* autoreconf: (autoconf)autoreconf Invocation.
+                                Remaking multiple `configure' scripts
+* autoscan: (autoconf)autoscan Invocation.
+                                Semi-automatic `configure.ac' writing
+* autoupdate: (autoconf)autoupdate Invocation.
+                                Automatic update of `configure.ac'
+* c++filt: (binutils)c++filt.	  Filter to demangle encoded C++ symbols.
+* config.status: (autoconf)config.status Invocation. Recreating configurations.
+* configure: (autoconf)configure Invocation.    Configuring a package.
+* cxxfilt: (binutils)c++filt.     MS-DOS name for c++filt.
+* dlltool: (binutils)dlltool.	  Create files needed to build and use DLLs.
+* elfedit: (binutils)elfedit.     Update the ELF header of ELF files.
+* ifnames: (autoconf)ifnames Invocation.        Listing conditionals in source.
+* libtool-invocation: (libtool)Invoking libtool.
+                                                Running the `libtool' script.
+* libtoolize: (libtool)Invoking libtoolize.     Adding libtool support.
+* nlmconv: (binutils)nlmconv.     Converts object code into an NLM.
+* nm: (binutils)nm.               List symbols from object files.
+* objcopy: (binutils)objcopy.	  Copy and translate object files.
+* objdump: (binutils)objdump.     Display information from object files.
+* ranlib: (binutils)ranlib.       Generate index to archive contents.
+* readelf: (binutils)readelf.	  Display the contents of ELF format files.
+* size: (binutils)size.           List section sizes and total size.
+* strings: (binutils)strings.     List printable strings from files.
+* strip: (binutils)strip.         Discard symbols.
+* tar: (tar)tar invocation.                     Invoking GNU `tar'.
+* testsuite: (autoconf)testsuite Invocation.    Running an Autotest test suite.
+* windmc: (binutils)windmc.	  Generator for Windows message resources.
+* windres: (binutils)windres.	  Manipulate Windows resources.
+
+GNU libraries
+* gmp: (gmp).                   GNU Multiple Precision Arithmetic Library.
+
+Software libraries
+* mpfr: (mpfr).                 Multiple Precision Floating-Point Reliable Library.
+
+Text creation and manipulation
+* M4: (m4).                     A powerful macro processor.
+
+GNU programming tools
+* Libtool: (libtool).           Generic shared library support script.
+
+Software development
+* As: (as).                     The GNU assembler.
+* Autoconf: (autoconf).         Create source code configuration scripts.
+* Automake: (automake).         Making GNU standards-compliant Makefiles.
+* Bfd: (bfd).                   The Binary File Descriptor library.
+* Binutils: (binutils).         The GNU binary utilities.
+* Cpp: (cpp).                  The GNU C preprocessor.
+* Cpplib: (cppinternals).      Cpplib internals.
+* Gas: (as).                    The GNU assembler.
+* Ld: (ld).                       The GNU linker.
+* g++: (gcc).                  The GNU C++ compiler.
+* gcc: (gcc).                  The GNU Compiler Collection.
+* gccinstall: (gccinstall).    Installing the GNU Compiler Collection.
+* gccint: (gccint).            Internals of the GNU Compiler Collection.
+* gprof: (gprof).                Profiling your program's execution
+
+GNU organization
+* Standards: (standards).       GNU coding standards.
+
+Miscellaneous
+* mpc: (mpc.info).               Multiple Precision Complex Library.

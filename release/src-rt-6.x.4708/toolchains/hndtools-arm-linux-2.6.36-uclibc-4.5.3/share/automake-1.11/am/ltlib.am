@@ -1,0 +1,112 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2003, 2004,
+## 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if %?INSTALL%
+include inst-vars.am
+endif %?INSTALL%
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+if %?INSTALL%
+am__installdirs += "$(DESTDIR)$(%NDIR%dir)"
+.PHONY install-%EXEC?exec:data%-am: install-%DIR%LTLIBRARIES
+install-%DIR%LTLIBRARIES: $(%DIR%_LTLIBRARIES)
+	@$(NORMAL_INSTALL)
+	test -z "$(%NDIR%dir)" || $(MKDIR_P) "$(DESTDIR)$(%NDIR%dir)"
+if %?BASE%
+## Funny invocation because Makefile variable can be empty, leading to
+## a syntax error in sh.
+	@list='$(%DIR%_LTLIBRARIES)'; test -n "$(%NDIR%dir)" || list=; \
+	list2=; for p in $$list; do \
+	  if test -f $$p; then \
+	    list2="$$list2 $$p"; \
+	  else :; fi; \
+	done; \
+	test -z "$$list2" || { \
+## Note that we explicitly set the libtool mode.  This avoids any lossage
+## if the program doesn't have a name that libtool expects.
+## Use INSTALL and not INSTALL_DATA because libtool knows the right
+## permissions to use.
+?LIBTOOL?	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(%NDIR%dir)'"; \
+?LIBTOOL?	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(%NDIR%dir)"; \
+?!LIBTOOL?	  echo " $(INSTALL) $(INSTALL_STRIP_FLAG) $$list '$(DESTDIR)$(%NDIR%dir)'"; \
+?!LIBTOOL?	  $(INSTALL) $(INSTALL_STRIP_FLAG) $$list "$(DESTDIR)$(%NDIR%dir)"; \
+	}
+else !%?BASE%
+	@list='$(%DIR%_LTLIBRARIES)'; test -n "$(%NDIR%dir)"  || list=; \
+	for p in $$list; do if test -f "$$p"; then echo "$$p $$p"; else :; fi; done | \
+	sed '/ .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
+	$(AWK) 'BEGIN { cur = "." } \
+	  { if ($$2 == cur) { files = files " " $$1 } \
+	    else { print cur, files; files = $$1; cur = $$2 } } \
+	  END { print cur, files }' | \
+	while read dir files; do \
+	  test -z "$$files" || { \
+	    test "x$$dir" = x. || { \
+	      echo "$(MKDIR_P) '$(DESTDIR)$(%NDIR%dir)/$$dir'"; \
+	      $(MKDIR_P) "$(DESTDIR)$(%NDIR%dir)/$$dir"; }; \
+## Note that we explicitly set the libtool mode.  This avoids any lossage
+## if the program doesn't have a name that libtool expects.
+## Use INSTALL and not INSTALL_DATA because libtool knows the right
+## permissions to use.
+?LIBTOOL?	    echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$files '$(DESTDIR)$(%NDIR%dir)/$$dir'"; \
+?LIBTOOL?	    $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$files "$(DESTDIR)$(%NDIR%dir)/$$dir" || exit $$?; \
+?!LIBTOOL?	    echo " $(INSTALL) $(INSTALL_STRIP_FLAG) $$files '$(DESTDIR)$(%NDIR%dir)/$$dir'"; \
+?!LIBTOOL?	    $(INSTALL) $(INSTALL_STRIP_FLAG) $$files "$(DESTDIR)$(%NDIR%dir)/$$dir" || exit $$?; \
+	  }; \
+	done
+endif !%?BASE%
+endif %?INSTALL%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+if %?INSTALL%
+.PHONY uninstall-am: uninstall-%DIR%LTLIBRARIES
+uninstall-%DIR%LTLIBRARIES:
+	@$(NORMAL_UNINSTALL)
+	@list='$(%DIR%_LTLIBRARIES)'; test -n "$(%NDIR%dir)" || list=; \
+	for p in $$list; do \
+	  %BASE?$(am__strip_dir):f=$$p;% \
+?LIBTOOL?	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(%NDIR%dir)/$$f'"; \
+?LIBTOOL?	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(%NDIR%dir)/$$f"; \
+?!LIBTOOL?	  echo " rm -f '$(DESTDIR)$(%NDIR%dir)/$$f'"; \
+?!LIBTOOL?	  rm -f "$(DESTDIR)$(%NDIR%dir)/$$f"; \
+	done
+endif %?INSTALL%
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+.PHONY clean-am: clean-%DIR%LTLIBRARIES
+clean-%DIR%LTLIBRARIES:
+	-test -z "$(%DIR%_LTLIBRARIES)" || rm -f $(%DIR%_LTLIBRARIES)
+## `so_locations' files are created by some linkers (IRIX, OSF) when
+## building a shared object.  Libtool places these files in the
+## directory where the shared object is created.
+	@list='$(%DIR%_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test "$$dir" != "$$p" || dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
+	done

@@ -1,0 +1,142 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+## 2003, 2004, 2006, 2008, 2009  Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## This file is read several times:
+## - once per *extension* (not per language) for generic compilation rules
+## - once for each file which requires specific flags.
+
+## Note it is on purpose we wrote `if %AMDEP%', since:
+##
+## - if deps are turned off, %AMDEP% is mapped onto FALSE, and therefore
+##   the `if FALSE' chunk is removed (automake-time conditionals).
+##
+## - if deps are on, %AMDEP% is mapped onto AMDEP,  and therefore
+##   the `if AMDEP' chunk is prefix with @AMDEP_TRUE@ just like for any
+##   other configure-time conditional.
+##
+## We do likewise for %FASTDEP%; this expands to an ordinary
+## configure-time conditional.  %FASTDEP% is used to speed up the
+## common case of building a package with gcc 3.x.  In this case we
+## can skip the use of depcomp and easily inline the dependency
+## tracking.
+
+## Verbosity of FASTDEP rules
+## --------------------------
+## (1) Some people want to see what happens during make.  They think
+##     @-commands are evil because hiding things hinders debugging.
+## (2) Other people want to see only the important commands--those that
+##     may produce diagnostics, such as compiler invocations.  They
+##     do not care about build details such as dependency generation
+##     (the if/then/else machinery in FASTDEP rules).  Their point is
+##     that it is hard to spot diagnostics in a verbose output.
+## (3) Other people want `make -s' to work as expected: silently.
+##     This way they can spot any diagnostic really easily.
+##
+## The second point suggests we hide rules with @ and that we `echo'
+## only the relevant parts.  However this goes against the two others.
+## There are regular complaints about this on the mailing list, but
+## it's hard to please everybody.  On April 2003, William Fulton (from
+## clan (3)) and Karl Berry (from clan (2)) agreed that folding the
+## compile rules so that they are output on a single line (instead of 5)
+## would be a good compromise.  Actually we use two lines rather than one,
+## because this way %SOURCE% is always located at the end of the first
+## line and is therefore easier to spot.  (We need an extra line when
+## depbase is used.)
+
+if %?NONLIBTOOL%
+?GENERIC?%EXT%.o:
+?!GENERIC?%OBJ%: %SOURCE%
+if %FASTDEP%
+## In fast-dep mode, we can always use -o.
+## For non-suffix rules, we must emulate a VPATH search on %SOURCE%.
+?!GENERIC?	%VERBOSE%%COMPILE% -MT %OBJ% -MD -MP -MF %DEPBASE%.Tpo %-c% -o %OBJ% %SOURCEFLAG%`test -f '%SOURCE%' || echo '$(srcdir)/'`%SOURCE%
+?!GENERIC?	%SILENT%$(am__mv) %DEPBASE%.Tpo %DEPBASE%.Po
+?GENERIC??!SUBDIROBJ?	%VERBOSE%%COMPILE% -MT %OBJ% -MD -MP -MF %DEPBASE%.Tpo %-c% -o %OBJ% %SOURCEFLAG%%SOURCE%
+?GENERIC??!SUBDIROBJ?	%SILENT%$(am__mv) %DEPBASE%.Tpo %DEPBASE%.Po
+?GENERIC??SUBDIROBJ?	%VERBOSE%depbase=`echo %OBJ% | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+?GENERIC??SUBDIROBJ?	%COMPILE% -MT %OBJ% -MD -MP -MF %DEPBASE%.Tpo %-c% -o %OBJ% %SOURCEFLAG%%SOURCE% &&\
+?GENERIC??SUBDIROBJ?	$(am__mv) %DEPBASE%.Tpo %DEPBASE%.Po
+else !%FASTDEP%
+?VERBOSE?	%VERBOSE% @AM_BACKSLASH@
+if %AMDEP%
+	source='%SOURCE%' object='%OBJ%' libtool=no @AMDEPBACKSLASH@
+	DEPDIR=$(DEPDIR) $(%FPFX%DEPMODE) $(depcomp) @AMDEPBACKSLASH@
+endif %AMDEP%
+if %?GENERIC%
+?-o?	%COMPILE% %-c% %-o% %OBJ% %SOURCEFLAG%%SOURCE%
+?!-o?	%COMPILE% %-c% %SOURCEFLAG%%SOURCE%
+else !%?GENERIC%
+## For non-suffix rules, we must emulate a VPATH search on %SOURCE%.
+?-o?	%COMPILE% %-c% %-o% %OBJ% %SOURCEFLAG%`test -f '%SOURCE%' || echo '$(srcdir)/'`%SOURCE%
+?!-o?	%COMPILE% %-c% %SOURCEFLAG%`test -f '%SOURCE%' || echo '$(srcdir)/'`%SOURCE%
+endif !%?GENERIC%
+endif !%FASTDEP%
+
+?GENERIC?%EXT%.obj:
+?!GENERIC?%OBJOBJ%: %SOURCE%
+if %FASTDEP%
+## In fast-dep mode, we can always use -o.
+## For non-suffix rules, we must emulate a VPATH search on %SOURCE%.
+?!GENERIC?	%VERBOSE%%COMPILE% -MT %OBJOBJ% -MD -MP -MF %DEPBASE%.Tpo %-c% -o %OBJOBJ% %SOURCEFLAG%`if test -f '%SOURCE%'; then $(CYGPATH_W) '%SOURCE%'; else $(CYGPATH_W) '$(srcdir)/%SOURCE%'; fi`
+?!GENERIC?	%SILENT%$(am__mv) %DEPBASE%.Tpo %DEPBASE%.Po
+?GENERIC??!SUBDIROBJ?	%VERBOSE%%COMPILE% -MT %OBJOBJ% -MD -MP -MF %DEPBASE%.Tpo %-c% -o %OBJOBJ% %SOURCEFLAG%`$(CYGPATH_W) '%SOURCE%'`
+?GENERIC??!SUBDIROBJ?	%SILENT%$(am__mv) %DEPBASE%.Tpo %DEPBASE%.Po
+?GENERIC??SUBDIROBJ?	%VERBOSE%depbase=`echo %OBJ% | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+?GENERIC??SUBDIROBJ?	%COMPILE% -MT %OBJOBJ% -MD -MP -MF %DEPBASE%.Tpo %-c% -o %OBJOBJ% %SOURCEFLAG%`$(CYGPATH_W) '%SOURCE%'` &&\
+?GENERIC??SUBDIROBJ?	$(am__mv) %DEPBASE%.Tpo %DEPBASE%.Po
+else !%FASTDEP%
+?VERBOSE?	%VERBOSE% @AM_BACKSLASH@
+if %AMDEP%
+	source='%SOURCE%' object='%OBJOBJ%' libtool=no @AMDEPBACKSLASH@
+	DEPDIR=$(DEPDIR) $(%FPFX%DEPMODE) $(depcomp) @AMDEPBACKSLASH@
+endif %AMDEP%
+if %?GENERIC%
+?-o?	%COMPILE% %-c% %-o% %OBJOBJ% %SOURCEFLAG%`$(CYGPATH_W) '%SOURCE%'`
+?!-o?	%COMPILE% %-c% `$(CYGPATH_W) %SOURCEFLAG%'%SOURCE%'`
+else !%?GENERIC%
+## For non-suffix rules, we must emulate a VPATH search on %SOURCE%.
+?-o?	%COMPILE% %-c% %-o% %OBJOBJ% %SOURCEFLAG%`if test -f '%SOURCE%'; then $(CYGPATH_W) '%SOURCE%'; else $(CYGPATH_W) '$(srcdir)/%SOURCE%'; fi`
+?!-o?	%COMPILE% %-c% %SOURCEFLAG%`if test -f '%SOURCE%'; then $(CYGPATH_W) '%SOURCE%'; else $(CYGPATH_W) '$(srcdir)/%SOURCE%'; fi`
+endif !%?GENERIC%
+endif !%FASTDEP%
+endif %?NONLIBTOOL%
+
+if %?LIBTOOL%
+?GENERIC?%EXT%.lo:
+?!GENERIC?%LTOBJ%: %SOURCE%
+if %FASTDEP%
+## In fast-dep mode, we can always use -o.
+## For non-suffix rules, we must emulate a VPATH search on %SOURCE%.
+?!GENERIC?	%VERBOSE%%LTCOMPILE% -MT %LTOBJ% -MD -MP -MF %DEPBASE%.Tpo %-c% -o %LTOBJ% %SOURCEFLAG%`test -f '%SOURCE%' || echo '$(srcdir)/'`%SOURCE%
+?!GENERIC?	%SILENT%$(am__mv) %DEPBASE%.Tpo %DEPBASE%.Plo
+?GENERIC??!SUBDIROBJ?	%VERBOSE%%LTCOMPILE% -MT %LTOBJ% -MD -MP -MF %DEPBASE%.Tpo %-c% -o %LTOBJ% %SOURCEFLAG%%SOURCE%
+?GENERIC??!SUBDIROBJ?	%SILENT%$(am__mv) %DEPBASE%.Tpo %DEPBASE%.Plo
+?GENERIC??SUBDIROBJ?	%VERBOSE%depbase=`echo %OBJ% | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+?GENERIC??SUBDIROBJ?	%LTCOMPILE% -MT %LTOBJ% -MD -MP -MF %DEPBASE%.Tpo %-c% -o %LTOBJ% %SOURCEFLAG%%SOURCE% &&\
+?GENERIC??SUBDIROBJ?	$(am__mv) %DEPBASE%.Tpo %DEPBASE%.Plo
+else !%FASTDEP%
+?VERBOSE?	%VERBOSE% @AM_BACKSLASH@
+if %AMDEP%
+	source='%SOURCE%' object='%LTOBJ%' libtool=yes @AMDEPBACKSLASH@
+	DEPDIR=$(DEPDIR) $(%FPFX%DEPMODE) $(depcomp) @AMDEPBACKSLASH@
+endif %AMDEP%
+## We can always use `-o' with Libtool.
+?GENERIC?	%LTCOMPILE% %-c% -o %LTOBJ% %SOURCEFLAG%%SOURCE%
+## For non-suffix rules, we must emulate a VPATH search on %SOURCE%.
+?!GENERIC?	%LTCOMPILE% %-c% -o %LTOBJ% %SOURCEFLAG%`test -f '%SOURCE%' || echo '$(srcdir)/'`%SOURCE%
+endif !%FASTDEP%
+endif %?LIBTOOL%

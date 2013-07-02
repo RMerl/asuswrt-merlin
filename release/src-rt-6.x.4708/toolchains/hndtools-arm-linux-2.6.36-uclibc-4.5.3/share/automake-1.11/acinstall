@@ -1,0 +1,50 @@
+#! /bin/sh
+
+# Install an aclocal-style M4 file.  A script is needed to do this
+# because we want to do serial-number checking; newer versions of
+# macro files should always be preferred.
+
+# Usage:
+#  acinstall file directory installprogram [install-args]...
+
+# Copyright 1996 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+file="$1"
+dir="$2"
+shift
+shift
+
+localserial=`grep '^# serial ' $file | sed -e 's/^# serial \([0-9][0-9]*\).*$/\1/; q'`
+if test -z "$localserial"; then
+   echo "acinstall: no serial number in $file" 1>&2
+   exit 1
+fi
+
+# Maybe if the installed file has no serial number we should just
+# assume it is ancient.
+instserial=`grep '^# serial ' $dir/$file | sed -e 's/^# serial \([0-9][0-9]*\).*$/\1/; q'`
+if test -z "$instserial"; then
+   echo "acinstall: no serial number in $dir/$file" 1>&2
+   exit 1
+fi
+
+if test $localserial -lt $instserial; then
+   # Installed file is newer.
+   exit 0
+fi
+
+# Install the file.
+$* $file $dir/$file

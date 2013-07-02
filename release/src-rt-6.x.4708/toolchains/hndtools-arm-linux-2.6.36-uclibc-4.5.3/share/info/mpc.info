@@ -1,0 +1,1322 @@
+This is mpc.info, produced by makeinfo version 4.13 from mpc.texi.
+
+START-INFO-DIR-ENTRY
+* mpc: (mpc.info).               Multiple Precision Complex Library.
+END-INFO-DIR-ENTRY
+
+   This is the manual for MPC, a library for multiple precision complex
+arithmetic, version 0.9, of February 2011.
+
+
+   Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
+2011 INRIA
+
+
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+File: mpc.info,  Node: Top,  Next: Copying,  Prev: (dir),  Up: (dir)
+
+MPC
+***
+
+This manual documents how to install and use the Multiple Precision
+Complex Library, version 0.9
+
+* Menu:
+
+* Copying::                     MPC Copying Conditions (LGPL).
+* Introduction to MPC::         Brief introduction to MPC.
+* Installing MPC::              How to configure and compile the MPC library.
+* Reporting Bugs::              How to usefully report bugs.
+* MPC Basics::                  What every MPC user should know.
+* Complex Functions::           Functions for arithmetic on complex numbers.
+* Contributors::
+* References::
+* Concept Index::
+* Function Index::
+
+
+File: mpc.info,  Node: Copying,  Next: Introduction to MPC,  Prev: Top,  Up: Top
+
+MPC Copying Conditions
+**********************
+
+The MPC Library is free software; you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as
+published by the Free Software Foundation; either version 2.1 of the
+License, or (at your option) any later version, see the file
+COPYING.LIB.
+
+   The MPC Library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+
+File: mpc.info,  Node: Introduction to MPC,  Next: Installing MPC,  Prev: Copying,  Up: Top
+
+1 Introduction to MPC
+*********************
+
+MPC is a portable library written in C for arbitrary precision
+arithmetic on complex numbers providing correct rounding. Ultimately, it
+should implement a multiprecision equivalent of the C99 standard.  It
+builds upon the GNU MP and the GNU MPFR libraries.
+
+1.1 How to use this Manual
+==========================
+
+Everyone should read *note MPC Basics::.  If you need to install the
+library yourself, you need to read *note Installing MPC::, too.
+
+   The remainder of the manual can be used for later reference,
+although it is probably a good idea to skim through it.
+
+
+File: mpc.info,  Node: Installing MPC,  Next: Reporting Bugs,  Prev: Introduction to MPC,  Up: Top
+
+2 Installing MPC
+****************
+
+To build MPC, you first have to install GNU MP (version 4.3.2 or
+higher) and GNU MPFR (version 2.4.2 or higher) on your computer.  You
+need a C compiler, preferably GCC, but any reasonable compiler should
+work. And you need a standard Unix `make' program, plus some other
+standard Unix utility programs.
+
+   Here are the steps needed to install the library on Unix systems:
+
+  1. `tar xzf mpc-0.9.tar.gz'
+
+  2. `cd mpc-0.9'
+
+  3. `./configure'
+
+     if GMP and MPFR are installed into standard directories, that is,
+     directories that are searched by default by the compiler and the
+     linking tools.
+
+     `./configure --with-gmp=<gmp_install_dir>'
+
+     is used to indicate a different location where GMP is installed.
+     Alternatively, you can specify directly GMP include and GMP lib
+     directories with `./configure --with-gmp-lib=<gmp_lib_dir>
+     --with-gmp-include=<gmp_include_dir>'.
+
+     `./configure --with-mpfr=<mpfr_install_dir>'
+
+     is used to indicate a different location where MPFR is installed.
+     Alternatively, you can specify directly MPFR include and MPFR lib
+     directories with `./configure --with-mpf-lib=<mpfr_lib_dir>
+     --with-mpfr-include=<mpfr_include_dir>'.
+
+     Another useful parameter is `--prefix', which can be used to
+     specify an alternative installation location instead of
+     `/usr/local'; see `make install' below.
+
+     If for debugging purposes you wish to log calls to MPC functions
+     from within your code, add the parameter `--enable-logging'.  In
+     your code, replace the inclusion of `mpc.h' by `mpc-log.h' and
+     link the executable dynamically.  Then all calls to functions with
+     only complex arguments are printed to `stderr' in the following
+     form: First, the function name is given, followed by its type such
+     as `c_cc', meaning that the function has one complex result (one
+     `c' in front of the `_'), computed from two complex arguments (two
+     `c' after the `_'). Then, the precisions of the real and the
+     imaginary part of the first result is given, followed by the
+     second one and so on. Finally, for each argument, the precisions
+     of its real and imaginary part are specified and the argument
+     itself is printed in hexadecimal via the function `mpc_out_str'
+     (*note String and Stream Input and Output: string-io.).
+
+     Use `./configure --help' for an exhaustive list of parameters.
+
+  4. `make'
+
+     This compiles MPC in the working directory.
+
+  5. `make check'
+
+     This will make sure MPC was built correctly.
+
+     If you get error messages, please report them to
+     `mpc-discuss@lists.gforge.inria.fr' (*Note Reporting Bugs::, for
+     information on what to include in useful bug reports).
+
+  6. `make install'
+
+     This will copy the file `mpc.h' to the directory
+     `/usr/local/include', the file `libmpc.a' to the directory
+     `/usr/local/lib', and the file `mpc.info' to the directory
+     `/usr/local/share/info' (or if you passed the `--prefix' option to
+     `configure', using the prefix directory given as argument to
+     `--prefix' instead of `/usr/local'). Note: you need write
+     permissions on these directories.
+
+
+2.1 Other `make' Targets
+========================
+
+There are some other useful make targets:
+
+   * `info'
+
+     Create an info version of the manual, in `mpc.info'.
+
+   * `pdf'
+
+     Create a PDF version of the manual, in `doc/mpc.pdf'.
+
+   * `dvi'
+
+     Create a DVI version of the manual, in `doc/mpc.dvi'.
+
+   * `ps'
+
+     Create a Postscript version of the manual, in `doc/mpc.ps'.
+
+   * `html'
+
+     Create an HTML version of the manual, in several pages in the
+     directory `doc/mpc.html'; if you want only one output HTML file,
+     then type `makeinfo --html --no-split mpc.texi' instead.
+
+   * `clean'
+
+     Delete all object files and archive files, but not the
+     configuration files.
+
+   * `distclean'
+
+     Delete all files not included in the distribution.
+
+   * `uninstall'
+
+     Delete all files copied by `make install'.
+
+2.2 Known Build Problems
+========================
+
+On AIX, if GMP was built with the 64-bit ABI, before building and
+testing MPC, it might be necessary to set the `OBJECT_MODE' environment
+variable to 64 by, e.g.,
+
+   `export OBJECT_MODE=64'
+
+   This has been tested with the C compiler IBM XL C/C++ Enterprise
+Edition V8.0 for AIX, version: 08.00.0000.0021, GMP 4.2.4 and MPFR
+2.4.1.
+
+   Please report any other problems you encounter to
+`mpc-discuss@lists.gforge.inria.fr'.  *Note Reporting Bugs::.
+
+
+File: mpc.info,  Node: Reporting Bugs,  Next: MPC Basics,  Prev: Installing MPC,  Up: Top
+
+3 Reporting Bugs
+****************
+
+If you think you have found a bug in the MPC library, please investigate
+and report it. We have made this library available to you, and it is
+not to ask too much from you, to ask you to report the bugs that you
+find.
+
+   There are a few things you should think about when you put your bug
+report together.
+
+   You have to send us a test case that makes it possible for us to
+reproduce the bug.  Include instructions on how to run the test case.
+
+   You also have to explain what is wrong; if you get a crash, or if
+the results printed are incorrect and in that case, in what way.
+
+   Please include compiler version information in your bug report.
+This can be extracted using `gcc -v', or `cc -V' on some machines.
+Also, include the output from `uname -a'.
+
+   If your bug report is good, we will do our best to help you to get a
+corrected version of the library; if the bug report is poor, we will
+not do anything about it (aside of chiding you to send better bug
+reports).
+
+   Send your bug report to: `mpc-discuss@lists.gforge.inria.fr'.
+
+   If you think something in this manual is unclear, or downright
+incorrect, or if the language needs to be improved, please send a note
+to the same address.
+
+
+File: mpc.info,  Node: MPC Basics,  Next: Complex Functions,  Prev: Reporting Bugs,  Up: Top
+
+4 MPC Basics
+************
+
+All declarations needed to use MPC are collected in the include file
+`mpc.h'.  It is designed to work with both C and C++ compilers.  You
+should include that file in any program using the MPC library by adding
+the line
+        #include "mpc.h"
+
+4.1 Nomenclature and Types
+==========================
+
+"Complex number" or "Complex" for short, is a pair of two arbitrary
+precision floating-point numbers (for the real and imaginary parts).
+The C data type for such objects is `mpc_t'.
+
+The "Precision" is the number of bits used to represent the mantissa of
+the real and imaginary parts; the corresponding C data type is
+`mpfr_prec_t'.  For more details on the allowed precision range, *note
+Nomenclature and Types: (mpfr.info)Nomenclature and Types.
+
+The "rounding mode" specifies the way to round the result of a complex
+operation, in case the exact result can not be represented exactly in
+the destination mantissa; the corresponding C data type is `mpc_rnd_t'.
+A complex rounding mode is a pair of two rounding modes: one for the
+real part, one for the imaginary part.
+
+4.2 Function Classes
+====================
+
+There is only one class of functions in the MPC library, namely
+functions for complex arithmetic. The function names begin with `mpc_'.
+The associated type is `mpc_t'.
+
+4.3 MPC Variable Conventions
+============================
+
+As a general rule, all MPC functions expect output arguments before
+input arguments.  This notation is based on an analogy with the
+assignment operator.
+
+   MPC allows you to use the same variable for both input and output in
+the same expression.  For example, the main function for floating-point
+multiplication, `mpc_mul', can be used like this: `mpc_mul (x, x, x,
+rnd_mode)'.  This computes the square of X with rounding mode `rnd_mode'
+and puts the result back in X.
+
+   Before you can assign to an MPC variable, you need to initialize it
+by calling one of the special initialization functions.  When you are
+done with a variable, you need to clear it out, using one of the
+functions for that purpose.
+
+   A variable should only be initialized once, or at least cleared out
+between each initialization.  After a variable has been initialized, it
+may be assigned to any number of times.
+
+   For efficiency reasons, avoid to initialize and clear out a variable
+in loops.  Instead, initialize it before entering the loop, and clear
+it out after the loop has exited.
+
+   You do not need to be concerned about allocating additional space
+for MPC variables, since each of its real and imaginary part has a
+mantissa of fixed size.  Hence unless you change its precision, or
+clear and reinitialize it, a complex variable will have the same
+allocated space during all its life.
+
+4.4 Rounding Modes
+==================
+
+A complex rounding mode is of the form `MPC_RNDxy' where `x' and `y'
+are one of `N' (to nearest), `Z' (towards zero), `U' (towards plus
+infinity), `D' (towards minus infinity).  The first letter refers to
+the rounding mode for the real part, and the second one for the
+imaginary part.  For example `MPC_RNDZU' indicates to round the real
+part towards zero, and the imaginary part towards plus infinity.
+
+   The `round to nearest' mode works as in the IEEE P754 standard: in
+case the number to be rounded lies exactly in the middle of two
+representable numbers, it is rounded to the one with the least
+significant bit set to zero.  For example, the number 5, which is
+represented by (101) in binary, is rounded to (100)=4 with a precision
+of two bits, and not to (110)=6.
+
+4.5 Return Value
+================
+
+Most MPC functions have a return value of type `int', which is used to
+indicate the position of the rounded real and imaginary parts with
+respect to the exact (infinite precision) values.  If this integer is
+`i', the macros `MPC_INEX_RE(i)' and `MPC_INEX_IM(i)' give 0 if the
+corresponding rounded value is exact, a negative value if the rounded
+value is less than the exact one, and a positive value if it is greater
+than the exact one.  Similarly, functions computing a result of type
+`mpfr_t' return an integer that is 0, positive or negative depending on
+whether the rounded value is the same, larger or smaller then the exact
+result.
+
+   Some functions, such as `mpc_sin_cos', compute two complex results;
+the macros `MPC_INEX1(i)' and `MPC_INEX2(i)', applied to the return
+value `i' of such a function, yield the exactness value corresponding
+to the first or the second computed value, respectively.
+
+4.6 Branch Cuts And Special Values
+==================================
+
+Some complex functions have branch cuts, across which the function is
+discontinous. In MPC, the branch cuts chosen are the same as those
+specified for the corresponding functions in the ISO C99 standard.
+
+   Likewise, when evaluated at a point whose real or imaginary part is
+either infinite or a NaN or a signed zero, a function returns the same
+value as those specified for the corresponding function in the ISO C99
+standard.
+
+
+File: mpc.info,  Node: Complex Functions,  Next: Contributors,  Prev: MPC Basics,  Up: Top
+
+5 Complex Functions
+*******************
+
+The complex functions expect arguments of type `mpc_t'.
+
+   The MPC floating-point functions have an interface that is similar
+to the GNU MP integer functions.  The function prefix for operations on
+complex numbers is `mpc_'.
+
+   The precision of a computation is defined as follows: Compute the
+requested operation exactly (with "infinite precision"), and round the
+result to the destination variable precision with the given rounding
+mode.
+
+   The MPC complex functions are intended to be a smooth extension of
+the IEEE P754 arithmetic. The results obtained on one computer should
+not differ from the results obtained on a computer with a different
+word size.
+
+* Menu:
+
+* Initializing Complex Numbers::
+* Assigning Complex Numbers::
+* Converting Complex Numbers::
+* String and Stream Input and Output::
+* Complex Comparison::
+* Projection & Decomposing::
+* Basic Arithmetic::
+* Power Functions and Logarithm::
+* Trigonometric Functions::
+* Miscellaneous Complex Functions::
+* Advanced Functions::
+* Internals::
+
+
+File: mpc.info,  Node: Initializing Complex Numbers,  Next: Assigning Complex Numbers,  Prev: Complex Functions,  Up: Complex Functions
+
+5.1 Initialization Functions
+============================
+
+An `mpc_t' object must be initialized before storing the first value in
+it.  The functions `mpc_init2' and `mpc_init3' are used for that
+purpose.
+
+ -- Function: void mpc_init2 (mpc_t Z, mpfr_prec_t PREC)
+     Initialize Z to precision PREC bits and set its real and imaginary
+     parts to NaN.  Normally, a variable should be initialized once only
+     or at least be cleared, using `mpc_clear', between initializations.
+
+ -- Function: void mpc_init3 (mpc_t Z, mpfr_prec_t PREC_R, mpfr_prec_t
+          PREC_I)
+     Initialize Z with the precision of its real part being PREC_R bits
+     and the precision of its imaginary part being PREC_I bits, and set
+     the real and imaginary parts to NaN.
+
+ -- Function: void mpc_clear (mpc_t Z)
+     Free the space occupied by Z.  Make sure to call this function for
+     all `mpc_t' variables when you are done with them.
+
+   Here is an example on how to initialize complex variables:
+     {
+       mpc_t x, y;
+       mpc_init2 (x, 256);		/* precision _exactly_ 256 bits */
+       mpc_init3 (y, 100, 50);	/* 100/50 bits for the real/imaginary part */
+       ...
+       mpc_clear (x);
+       mpc_clear (y);
+     }
+
+   The following function is useful for changing the precision during a
+calculation.  A typical use would be for adjusting the precision
+gradually in iterative algorithms like Newton-Raphson, making the
+computation precision closely match the actual accurate part of the
+numbers.
+
+ -- Function: void mpc_set_prec (mpc_t X, mpfr_prec_t PREC)
+     Reset the precision of X to be *exactly* PREC bits, and set its
+     real/imaginary parts to NaN.  The previous value stored in X is
+     lost. It is equivalent to a call to `mpc_clear(x)' followed by a
+     call to `mpc_init2(x, prec)', but more efficient as no allocation
+     is done in case the current allocated space for the mantissa of X
+     is sufficient.
+
+ -- Function: mpfr_prec_t mpc_get_prec (mpc_t X)
+     If the real and imaginary part of X have the same precision, it is
+     returned, otherwise, 0 is returned.
+
+ -- Function: void mpc_get_prec2 (mpfr_prec_t* PR, mpfr_prec_t* PI,
+          mpc_t X)
+     Returns the precision of the real part of X via PR and of its
+     imaginary part via PI.
+
+
+File: mpc.info,  Node: Assigning Complex Numbers,  Next: Converting Complex Numbers,  Prev: Initializing Complex Numbers,  Up: Complex Functions
+
+5.2 Assignment Functions
+========================
+
+These functions assign new values to already initialized complex numbers
+(*note Initializing Complex Numbers::).  When using any functions with
+`intmax_t' or `uintmax_t' parameters, you must include `<stdint.h>' or
+`<inttypes.h>' _before_ `mpc.h', to allow `mpc.h' to define prototypes
+for these functions.  Similarly, functions with parameters of type
+`complex' or `long complex' are defined only if `<complex.h>' is
+included _before_ `mpc.h'.  If you need assignment functions that are
+not in the current API, you can define them using the `MPC_SET_X_Y'
+macro (*note Advanced Functions::).
+
+ -- Function: int mpc_set (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set the value of ROP from OP, rounded to the precision of ROP with
+     the given rounding mode RND.
+
+ -- Function: int mpc_set_ui (mpc_t ROP, unsigned long int OP,
+          mpc_rnd_t RND)
+ -- Function: int mpc_set_si (mpc_t ROP, long int OP, mpc_rnd_t RND)
+ -- Function: int mpc_set_uj (mpc_t ROP, uintmax_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_set_sj (mpc_t ROP, intmax_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_set_d (mpc_t ROP, double OP, mpc_rnd_t RND)
+ -- Function: int mpc_set_ld (mpc_t ROP, long double OP, mpc_rnd_t RND)
+ -- Function: int mpc_set_dc (mpc_t ROP, double _Complex OP, mpc_rnd_t
+          RND)
+ -- Function: int mpc_set_ldc (mpc_t ROP, long double _Complex OP,
+          mpc_rnd_t RND)
+ -- Function: int mpc_set_z (mpc_t ROP, mpz_t OP mpc_rnd_t RND)
+ -- Function: int mpc_set_q (mpc_t ROP, mpq_t OP mpc_rnd_t RND)
+ -- Function: int mpc_set_f (mpc_t ROP, mpf_t OP mpc_rnd_t RND)
+ -- Function: int mpc_set_fr (mpc_t ROP, mpfr_t OP, mpc_rnd_t RND)
+     Set the value of ROP from OP, rounded to the precision of ROP with
+     the given rounding mode RND.  The argument OP is interpreted as
+     real, so the imaginary part of ROP is set to zero with a positive
+     sign.  Please note that even a `long int' may have to be rounded,
+     if the destination precision is less than the machine word width.
+     For `mpc_set_d', be careful that the input number OP may not be
+     exactly representable as a double-precision number (this happens
+     for 0.1 for instance), in which case it is first rounded by the C
+     compiler to a double-precision number, and then only to a complex
+     number.
+
+ -- Function: int mpc_set_ui_ui (mpc_t ROP, unsigned long int OP1,
+          unsigned long int OP2, mpc_rnd_t RND)
+ -- Function: int mpc_set_si_si (mpc_t ROP, long int OP1, long int OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_set_uj_uj (mpc_t ROP, uintmax_t OP1, uintmax_t
+          OP2, mpc_rnd_t RND)
+ -- Function: int mpc_set_sj_sj (mpc_t ROP, intmax_t OP1, intmax_t OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_set_d_d (mpc_t ROP, double OP1, double OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_set_ld_ld (mpc_t ROP, long double OP1, long
+          double OP2, mpc_rnd_t RND)
+ -- Function: int mpc_set_z_z (mpc_t ROP, mpz_t OP1, mpz_t OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_set_q_q (mpc_t ROP, mpq_t OP1, mpq_t OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_set_f_f (mpc_t ROP, mpf_t OP1, mpf_t OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_set_fr_fr (mpc_t ROP, mpfr_t OP1, mpfr_t OP2,
+          mpc_rnd_t RND)
+     Set the real part of ROP from OP1, and its imaginary part from
+     OP2, according to the rounding mode RND.
+
+     Beware that the behaviour of `mpc_set_fr_fr' is undefined if OP1
+     or OP2 is a pointer to the real or imaginary part of ROP.  To
+     exchange the real and the imaginary part of a complex number,
+     either use `mpfr_swap (mpc_realref (rop), mpc_imagref (rop))',
+     which also exchanges the precisions of the two parts; or use a
+     temporary variable.
+
+   For functions assigning complex variables from strings or input
+streams, *note String and Stream Input and Output: string-io.
+
+ -- Function: void mpc_set_nan (mpc_t ROP)
+     Set ROP to Nan+i*NaN.
+
+ -- Function: void mpc_swap (mpc_t OP1, mpc_t OP2)
+     Swap the values of OP1 and OP2 efficiently. Warning: The
+     precisions are exchanged, too; in case these are different,
+     `mpc_swap' is thus not equivalent to three `mpc_set' calls using a
+     third auxiliary variable.
+
+
+File: mpc.info,  Node: Converting Complex Numbers,  Next: String and Stream Input and Output,  Prev: Assigning Complex Numbers,  Up: Complex Functions
+
+5.3 Conversion Functions
+========================
+
+The following functions are available only if `<complex.h>' is included
+_before_ `mpc.h'.
+
+ -- Function: double _Complex mpc_get_dc (mpc_t OP, mpc_rnd_t RND)
+ -- Function: long double _Complex mpc_get_ldc (mpc_t OP, mpc_rnd_t RND)
+     Convert OP to a C complex number, using the rounding mode RND.
+
+   For functions converting complex variables to strings or stream
+output, *note String and Stream Input and Output: string-io.
+
+
+File: mpc.info,  Node: String and Stream Input and Output,  Next: Complex Comparison,  Prev: Converting Complex Numbers,  Up: Complex Functions
+
+5.4 String and Stream Input and Output
+======================================
+
+ -- Function: int mpc_strtoc (mpc_t ROP, const char *NPTR, char
+          **ENDPTR, int BASE, mpc_rnd_t RND)
+     Read a complex number from a string NPTR in base BASE, rounded to
+     the precision of ROP with the given rounding mode RND.  The BASE
+     must be either 0 or a number from 2 to 36 (otherwise the behaviour
+     is undefined).  If NPTR starts with valid data, the result is
+     stored in ROP, the usual inexact value is returned (*note Return
+     Value: return-value.) and, if ENDPTR is not the null pointer,
+     *ENDPTR points to the character just after the valid data.
+     Otherwise, ROP is set to `NaN + i * NaN', -1 is returned and, if
+     ENDPTR is not the null pointer, the value of NPTR is stored in the
+     location referenced by ENDPTR.
+
+     The expected form of a complex number string is either a real
+     number (an optional leading whitespace, an optional sign followed
+     by a floating-point number), or a pair of real numbers in
+     parentheses separated by whitespace. If a real number is read, the
+     missing imaginary part is set to +0.  The form of a floating-point
+     number depends on the base and is described in the documentation
+     of `mpfr_strtofr' (*note Assignment Functions:
+     (mpfr.info)Assignment Functions.).  For instance, `"3.1415926"',
+     `"(1.25e+7 +.17)"', `"(@nan@ 2)"' and `"(-0 -7)"' are valid
+     strings for BASE = 10.  If BASE = 0, then a prefix may be used to
+     indicate the base in which the floating-point number is written.
+     Use prefix '0b' for binary numbers, prefix '0x' for hexadecimal
+     numbers, and no prefix for decimal numbers.  The real and
+     imaginary part may then be written in different bases.  For
+     instance, `"(1.024e+3 +2.05e+3)"' and `"(0b1p+10 +0x802)"' are
+     valid strings for `base'=0 and represent the same value.
+
+ -- Function: int mpc_set_str (mpc_t ROP, const char *S, int BASE,
+          mpc_rnd_t rnd)
+     Set ROP to the value of the string S in base BASE, rounded to the
+     precision of ROP with the given rounding mode RND.  See the
+     documentation of `mpc_strtoc' for a detailed description of the
+     valid string formats.  Contrarily to `mpc_strtoc', `mpc_set_str'
+     requires the _whole_ string to represent a valid complex number
+     (potentially followed by additional white space).  This function
+     returns the usual inexact value (*note Return Value:
+     return-value.) if the entire string up to the final null character
+     is a valid number in base BASE; otherwise it returns -1, and ROP
+     is set to NaN+i*NaN.
+
+ -- Function: char * mpc_get_str (int B, size_t N, mpc_t OP, mpc_rnd_t
+          RND)
+     Convert OP to a string containing its real and imaginary parts,
+     separated by a space and enclosed in a pair of parentheses.  The
+     numbers are written in base B (which may vary from 2 to 36) and
+     rounded according to RND. The number of significant digits, at
+     least 2, is given by N. It is also possible to let N be zero, in
+     which case the number of digits is chosen large enough so that
+     re-reading the printed value with the same precision, assuming
+     both output and input use rounding to nearest, will recover the
+     original value of OP.  Note that `mpc_get_str' uses the decimal
+     point of the current locale if available, and `.' otherwise.
+
+     The string is generated using the current memory allocation
+     function (`malloc' by default, unless it has been modified using
+     the custom memory allocation interface of `gmp'); once it is not
+     needed any more, it should be freed by calling `mpc_free_str'.
+
+ -- Function: void mpc_free_str (char *STR)
+     Free the string STR, which needs to have been allocated by a call
+     to `mpc_get_str'.
+
+   The following two functions read numbers from input streams and write
+them to output streams.  When using any of these functions, you need to
+include `stdio.h' _before_ `mpc.h'.
+
+ -- Function: int mpc_inp_str (mpc_t ROP, FILE *STREAM, size_t *READ,
+          int BASE, mpc_rnd_t RND)
+     Input a string in base BASE in the same format as for `mpc_strtoc'
+     from stdio stream STREAM, rounded according to RND, and put the
+     read complex number into ROP.  If STREAM is the null pointer, ROP
+     is read from `stdin'.  Return the usual inexact value; if an error
+     occurs, set ROP to `NaN + i * NaN' and return -1.  If READ is not
+     the null pointer, it is set to the number of read characters.
+
+     Unlike `mpc_strtoc', the function `mpc_inp_str' does not possess
+     perfect knowledge of the string to transform and has to read it
+     character by character, so it behaves slightly differently: It
+     tries to read a string describing a complex number and processes
+     this string through a call to `mpc_set_str'. Precisely, after
+     skipping optional whitespace, a minimal string is read according
+     to the regular expression `mpfr | '(' \s* mpfr \s+ mpfr \s* ')'',
+     where `\s' denotes a whitespace, and `mpfr' is either a string
+     containing neither whitespaces nor parentheses, or
+     `nan(n-char-sequence)' or `@nan@(n-char-sequence)' (regardless of
+     capitalisation) with `n-char-sequence' a string of ascii letters,
+     digits or `'_''.
+
+     For instance, upon input of `"nan(13 1)"', the function
+     `mpc_inp_str' starts to recognise a value of NaN followed by an
+     n-char-sequence indicated by the opening parenthesis; as soon as
+     the space is reached, it becocmes clear that the expression in
+     parentheses is not an n-char-sequence, and the error flag -1 is
+     returned after 6 characters have been consumed from the stream
+     (the whitespace itself remaining in the stream).  The function
+     `mpc_strtoc', on the other hand, may track back when reaching the
+     whitespace; it treats the string as the two successive complex
+     numbers `NaN + i * 0' and `13 + i'.  It is thus recommended to
+     have a whitespace follow each floating point number to avoid this
+     problem.
+
+ -- Function: size_t mpc_out_str (FILE *STREAM, int BASE, size_t
+          N_DIGITS, mpc_t OP, mpc_rnd_t RND)
+     Output OP on stdio stream STREAM in base BASE, rounded according
+     to RND, in the same format as for `mpc_strtoc' If STREAM is the
+     null pointer, ROP is written to `stdout'.
+
+     Return the number of characters written.
+
+
+File: mpc.info,  Node: Complex Comparison,  Next: Projection & Decomposing,  Prev: String and Stream Input and Output,  Up: Complex Functions
+
+5.5 Comparison Functions
+========================
+
+ -- Function: int mpc_cmp (mpc_t OP1, mpc_t OP2)
+ -- Function: int mpc_cmp_si_si (mpc_t OP1, long int OP2R, long int
+          OP2I)
+ -- Macro: int mpc_cmp_si (mpc_t OP1, long int OP2)
+     Compare OP1 and OP2, where in the case of `mpc_cmp_si_si', OP2 is
+     taken to be OP2R + i OP2I.  The return value C can be decomposed
+     into `x = MPC_INEX_RE(c)' and `y = MPC_INEX_IM(c)', such that X is
+     positive if the real part of OP1 is greater than that of OP2, zero
+     if both real parts are equal, and negative if the real part of OP1
+     is less than that of OP2, and likewise for Y.  Both OP1 and OP2
+     are considered to their full own precision, which may differ.  It
+     is not allowed that one of the operands has a NaN (Not-a-Number)
+     part.
+
+     The storage of the return value is such that equality can be
+     simply checked with `mpc_cmp (op1, op2) == 0'.
+
+
+File: mpc.info,  Node: Projection & Decomposing,  Next: Basic Arithmetic,  Prev: Complex Comparison,  Up: Complex Functions
+
+5.6 Projection and Decomposing Functions
+========================================
+
+ -- Function: int mpc_real (mpfr_t ROP, mpc_t OP, mpfr_rnd_t RND)
+     Set ROP to the value of the real part of OP rounded in the
+     direction RND.
+
+ -- Function: int mpc_imag (mpfr_t ROP, mpc_t OP, mpfr_rnd_t RND)
+     Set ROP to the value of the imaginary part of OP rounded in the
+     direction RND.
+
+ -- Macro: mpfr_t mpc_realref (mpc_t OP)
+ -- Macro: mpfr_t mpc_imagref (mpc_t OP)
+     Return a reference to the real part and imaginary part of OP,
+     respectively. The `mpfr' functions can be used on the result of
+     these macros (note that the `mpfr_t' type is itself a pointer).
+
+ -- Function: int mpc_arg (mpfr_t ROP, mpc_t OP, mpfr_rnd_t RND)
+     Set ROP to the argument of OP, with a branch cut along the
+     negative real axis.
+
+ -- Function: int mpc_proj (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Compute a projection of OP onto the Riemann sphere. Set ROP to OP
+     rounded in the direction RND, except when at least one part of OP
+     is infinite (even if the other part is a NaN) in which case the
+     real part of ROP is set to plus infinity and its imaginary part to
+     a signed zero with the same sign as the imaginary part of OP.
+
+
+File: mpc.info,  Node: Basic Arithmetic,  Next: Power Functions and Logarithm,  Prev: Projection & Decomposing,  Up: Complex Functions
+
+5.7 Basic Arithmetic Functions
+==============================
+
+All the following functions are designed in such a way that, when
+working with real numbers instead of complex numbers, their complexity
+should essentially be the same as with the MPFR library, with only a
+marginal overhead due to the MPC layer.
+
+ -- Function: int mpc_add (mpc_t ROP, mpc_t OP1, mpc_t OP2, mpc_rnd_t
+          RND)
+ -- Function: int mpc_add_ui (mpc_t ROP, mpc_t OP1, unsigned long int
+          OP2, mpc_rnd_t RND)
+ -- Function: int mpc_add_fr (mpc_t ROP, mpc_t OP1, mpfr_t OP2,
+          mpc_rnd_t RND)
+     Set ROP to OP1 + OP2 rounded according to RND.
+
+ -- Function: int mpc_sub (mpc_t ROP, mpc_t OP1, mpc_t OP2, mpc_rnd_t
+          RND)
+ -- Function: int mpc_sub_fr (mpc_t ROP, mpc_t OP1, mpfr_t OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_fr_sub (mpc_t ROP, mpfr_t OP1, mpc_t OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_sub_ui (mpc_t ROP, mpc_t OP1, unsigned long int
+          OP2, mpc_rnd_t RND)
+ -- Macro: int mpc_ui_sub (mpc_t ROP, unsigned long int OP1, mpc_t OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_ui_ui_sub (mpc_t ROP, unsigned long int RE1,
+          unsigned long int IM1, mpc_t OP2, mpc_rnd_t RND)
+     Set ROP to OP1 - OP2 rounded according to RND.  For
+     `mpc_ui_ui_sub', OP1 is RE1 + IM1.
+
+ -- Function: int mpc_mul (mpc_t ROP, mpc_t OP1, mpc_t OP2, mpc_rnd_t
+          RND)
+ -- Function: int mpc_mul_ui (mpc_t ROP, mpc_t OP1, unsigned long int
+          OP2, mpc_rnd_t RND)
+ -- Function: int mpc_mul_si (mpc_t ROP, mpc_t OP1, long int OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_mul_fr (mpc_t ROP, mpc_t OP1, mpfr_t OP2,
+          mpc_rnd_t RND)
+     Set ROP to OP1 times OP2 rounded according to RND.
+
+ -- Function: int mpc_mul_i (mpc_t ROP, mpc_t OP, int SGN, mpc_rnd_t
+          RND)
+     Set ROP to OP times the imaginary unit i if SGN is non-negative,
+     set ROP to OP times -i otherwise, in both cases rounded according
+     to RND.
+
+ -- Function: int mpc_sqr (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the square of OP rounded according to RND.
+
+ -- Function: int mpc_div (mpc_t ROP, mpc_t OP1, mpc_t OP2, mpc_rnd_t
+          RND)
+ -- Function: int mpc_div_ui (mpc_t ROP, mpc_t OP1, unsigned long int
+          OP2, mpc_rnd_t RND)
+ -- Function: int mpc_ui_div (mpc_t ROP, unsigned long int OP1, mpc_t
+          OP2, mpc_rnd_t RND)
+ -- Function: int mpc_div_fr (mpc_t ROP, mpc_t OP1, mpfr_t OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_fr_div (mpc_t ROP, mpfr_t OP1, mpc_t OP2,
+          mpc_rnd_t RND)
+     Set ROP to OP1/OP2 rounded according to RND.  For `mpc_div' and
+     `mpc_ui_div', the return value may fail to recognize some exact
+     results. The sign of returned value is significant only for
+     `mpc_div_ui'.
+
+ -- Function: int mpc_neg (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set ROP to -OP rounded according to RND.  Just changes the sign if
+     ROP and OP are the same variable.
+
+ -- Function: int mpc_conj (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the conjugate of OP rounded according to RND.  Just
+     changes the sign of the imaginary part if ROP and OP are the same
+     variable.
+
+ -- Function: int mpc_abs (mpfr_t ROP, mpc_t OP, mpfr_rnd_t RND)
+     Set the floating-point number ROP to the absolute value of OP,
+     rounded in the direction RND.  The returned value is zero iff the
+     result is exact.
+
+ -- Function: int mpc_norm (mpfr_t ROP, mpc_t OP, mpfr_rnd_t RND)
+     Set the floating-point number ROP to the norm of OP (i.e., the
+     square of its absolute value), rounded in the direction RND.  The
+     returned value is zero iff the result is exact.  Note that the
+     destination is of type `mpfr_t', not `mpc_t'.
+
+ -- Function: int mpc_mul_2exp (mpc_t ROP, mpc_t OP1, unsigned long int
+          OP2, mpc_rnd_t RND)
+     Set ROP to OP1 times 2 raised to OP2 rounded according to RND.
+     Just increases the exponents of the real and imaginary parts by OP2
+     when ROP and OP1 are identical.
+
+ -- Function: int mpc_div_2exp (mpc_t ROP, mpc_t OP1, unsigned long int
+          OP2, mpc_rnd_t RND)
+     Set ROP to OP1 divided by 2 raised to OP2 rounded according to
+     RND. Just decreases the exponents of the real and imaginary parts
+     by OP2 when ROP and OP1 are identical.
+
+ -- Function: int mpc_fma (mpc_t ROP, mpc_t OP1, mpc_t OP2, mpc_t OP3,
+          mpc_rnd_t RND)
+     Set ROP to OP1 times OP2 plus OP3, rounded according to RND, with
+     only one final rounding.
+
+
+File: mpc.info,  Node: Power Functions and Logarithm,  Next: Trigonometric Functions,  Prev: Basic Arithmetic,  Up: Complex Functions
+
+5.8 Power Functions and Logarithm
+=================================
+
+ -- Function: int mpc_sqrt (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the square root of OP rounded according to RND.
+
+ -- Function: int mpc_pow (mpc_t ROP, mpc_t OP1, mpc_t OP2, mpc_rnd_t
+          RND)
+ -- Function: int mpc_pow_d (mpc_t ROP, mpc_t OP1, double OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_pow_ld (mpc_t ROP, mpc_t OP1, long double OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_pow_si (mpc_t ROP, mpc_t OP1, long OP2, mpc_rnd_t
+          RND)
+ -- Function: int mpc_pow_ui (mpc_t ROP, mpc_t OP1, unsigned long OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_pow_z (mpc_t ROP, mpc_t OP1, mpz_t OP2, mpc_rnd_t
+          RND)
+ -- Function: int mpc_pow_fr (mpc_t ROP, mpc_t OP1, mpfr_t OP2,
+          mpc_rnd_t RND)
+     Set ROP to OP1 raised to the power OP2, rounded according to RND.
+     For `mpc_pow_d', `mpc_pow_ld', `mpc_pow_si', `mpc_pow_ui',
+     `mpc_pow_z' and `mpc_pow_fr', the imaginary part of OP2 is
+     considered as +0.
+
+ -- Function: int mpc_exp (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the exponential of OP, rounded according to RND with
+     the precision of ROP.
+
+ -- Function: int mpc_log (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the logarithm of OP, rounded according to RND with the
+     precision of ROP.  The principal branch is chosen, with the branch
+     cut on the negative real axis, so that the imaginary part of the
+     result lies in ]-\pi , \pi].
+
+
+File: mpc.info,  Node: Trigonometric Functions,  Next: Miscellaneous Complex Functions,  Prev: Power Functions and Logarithm,  Up: Complex Functions
+
+5.9 Trigonometric Functions
+===========================
+
+ -- Function: int mpc_sin (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the sine of OP, rounded according to RND with the
+     precision of ROP.
+
+ -- Function: int mpc_cos (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the cosine of OP, rounded according to RND with the
+     precision of ROP.
+
+ -- Function: int mpc_sin_cos (mpc_t ROP_SIN, mpc_t ROP_COS, mpc_t OP,
+          mpc_rnd_t RND_SIN, mpc_rnd_t RND_COS)
+     Set ROP_SIN to the sine of OP, rounded according to RND_SIN with
+     the precision of ROP_SIN, and ROP_COS to the cosine of OP, rounded
+     according to RND_COS with the precision of ROP_COS.
+
+ -- Function: int mpc_tan (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the tangent of OP, rounded according to RND with the
+     precision of ROP.
+
+ -- Function: int mpc_sinh (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the hyperbolic sine of OP, rounded according to RND
+     with the precision of ROP.
+
+ -- Function: int mpc_cosh (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the hyperbolic cosine of OP, rounded according to RND
+     with the precision of ROP.
+
+ -- Function: int mpc_tanh (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the hyperbolic tangent of OP, rounded according to RND
+     with the precision of ROP.
+
+ -- Function: int mpc_asin (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_acos (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_atan (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the inverse sine, inverse cosine, inverse tangent of OP,
+     rounded according to RND with the precision of ROP.
+
+ -- Function: int mpc_asinh (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_acosh (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_atanh (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the inverse hyperbolic sine, inverse hyperbolic cosine,
+     inverse hyperbolic tangent of OP, rounded according to RND with
+     the precision of ROP.  The branch cut of MPC_ACOSH is (-\infty, 1).
+
+
+File: mpc.info,  Node: Miscellaneous Complex Functions,  Next: Advanced Functions,  Prev: Trigonometric Functions,  Up: Complex Functions
+
+5.10 Miscellaneous Functions
+============================
+
+ -- Function: int mpc_urandom (mpc_t ROP, gmp_randstate_t STATE)
+     Generate a uniformly distributed random complex in the unit square
+     [0, 1] * [0, 1]. Return 0, unless an exponent in the real or
+     imaginary part is not in the current exponent range, in which case
+     that part is set to NaN and a zero value is returned. The second
+     argument is a `gmp_randstate_t' structure which should be created
+     using the GMP `rand_init' function, see the GMP manual.
+
+ -- Function: const char * mpc_get_version (void)
+     Return the MPC version, as a null-terminated string.
+
+ -- Macro: MPC_VERSION
+ -- Macro: MPC_VERSION_MAJOR
+ -- Macro: MPC_VERSION_MINOR
+ -- Macro: MPC_VERSION_PATCHLEVEL
+ -- Macro: MPC_VERSION_STRING
+     `MPC_VERSION' is the version of MPC as a preprocessing constant.
+     `MPC_VERSION_MAJOR', `MPC_VERSION_MINOR' and
+     `MPC_VERSION_PATCHLEVEL' are respectively the major, minor and
+     patch level of MPC version, as preprocessing constants.
+     `MPC_VERSION_STRING' is the version as a string constant, which
+     can be compared to the result of `mpc_get_version' to check at run
+     time the header file and library used match:
+          if (strcmp (mpc_get_version (), MPC_VERSION_STRING))
+            fprintf (stderr, "Warning: header and library do not match\n");
+     Note: Obtaining different strings is not necessarily an error, as
+     in general, a program compiled with some old MPC version can be
+     dynamically linked with a newer MPC library version (if allowed by
+     the library versioning system).
+
+ -- Macro: long MPC_VERSION_NUM (MAJOR, MINOR, PATCHLEVEL)
+     Create an integer in the same format as used by `MPC_VERSION' from
+     the given MAJOR, MINOR and PATCHLEVEL.  Here is an example of how
+     to check the MPC version at compile time:
+          #if (!defined(MPC_VERSION) || (MPC_VERSION<MPC_VERSION_NUM(2,1,0)))
+          # error "Wrong MPC version."
+          #endif
+
+
+File: mpc.info,  Node: Advanced Functions,  Next: Internals,  Prev: Miscellaneous Complex Functions,  Up: Complex Functions
+
+5.11 Advanced Functions
+=======================
+
+ -- Macro: MPC_SET_X_Y (REAL_SUFFIX, IMAG_SUFFIX, ROP, REAL, IMAG, RND)
+     The macro MPC_SET_X_Y is designed to serve as the body of an
+     assignment function and cannot be used by itself.  The REAL_SUFFIX
+     and IMAG_SUFFIX parameters are the types of the real and imaginary
+     part, that is, the `x' in the `mpfr_set_x' function one would use
+     to set the part; for the mpfr type, use `fr'.  REAL (respectively
+     IMAG) is the value you want to assign to the real (resp.
+     imaginary) part, its type must conform to REAL_SUFFIX (resp.
+     IMAG_SUFFIX).  RND is the `mpc_rnd_t' rounding mode.  The return
+     value is the usual inexact value (*note Return Value:
+     return-value.).
+
+     For instance, you can define mpc_set_ui_fr as follows:
+          int mpc_set_ui_fr (mpc_t rop, long int re, double im, mpc_rnd_t rnd)
+              MPC_SET_X_Y (ui, fr, rop, re, im, rnd);
+
+
+File: mpc.info,  Node: Internals,  Prev: Advanced Functions,  Up: Complex Functions
+
+5.12 Internals
+==============
+
+These macros and functions are mainly designed for the implementation
+of MPC, but may be useful for users too.  However, no upward
+compatibility is guaranteed.  You need to include `mpc-impl.h' to use
+them.
+
+   The macro `MPC_MAX_PREC(z)' gives the maximum of the precisions of
+the real and imaginary parts of a complex number.
+
+
+File: mpc.info,  Node: Contributors,  Next: References,  Prev: Complex Functions,  Up: Top
+
+Contributors
+************
+
+The main developers of the MPC library are Andreas Enge, Philippe
+The'veny and Paul Zimmermann.  Patrick Pe'lissier has helped cleaning
+up the code.  Marc Helbling contributed the `mpc_ui_sub' and
+`mpc_ui_ui_sub' functions.
+
+
+File: mpc.info,  Node: References,  Next: Concept Index,  Prev: Contributors,  Up: Top
+
+References
+**********
+
+   * Torbjo"rn Granlund et al.  `gmp' - GNU multiprecision library.
+     Version 4.2.4, `http://gmplib.org/'.
+
+   * Guillaume Hanrot, Vincent Lefe`vre, Patrick Pe'lissier, Paul
+     Zimmermann et al.  `mpfr' - A library for multiple-precision
+     floating-point               computations with exact rounding.
+     Version 2.4.1, `http://www.mpfr.org'.
+
+   * IEEE standard for binary floating-point arithmetic, Technical
+     Report ANSI-IEEE Standard 754-1985, New York, 1985.  Approved
+     March 21, 1985: IEEE Standards Board; approved July 26,   1985:
+     American National Standards Institute, 18 pages.
+
+   * Donald E. Knuth, "The Art of Computer Programming", vol 2,
+     "Seminumerical Algorithms", 2nd edition, Addison-Wesley, 1981.
+
+   * ISO/IEC 9899:1999, Programming languages — C.
+
+
+
+File: mpc.info,  Node: Concept Index,  Next: Function Index,  Prev: References,  Up: Top
+
+Concept Index
+*************
+
+ [index ]
+* Menu:
+
+* Arithmetic functions:                  Basic Arithmetic.     (line  6)
+* Comparison functions:                  Complex Comparison.   (line  3)
+* Complex arithmetic functions:          Basic Arithmetic.     (line  6)
+* Complex assignment functions:          Assigning Complex Numbers.
+                                                               (line  6)
+* Complex comparisons functions:         Complex Comparison.   (line  3)
+* Complex functions:                     Complex Functions.    (line  6)
+* Complex number:                        MPC Basics.           (line 15)
+* Conditions for copying MPC:            Copying.              (line  6)
+* Conversion functions:                  Converting Complex Numbers.
+                                                               (line  6)
+* Copying conditions:                    Copying.              (line  6)
+* Installation:                          Installing MPC.       (line  6)
+* Logarithm:                             Power Functions and Logarithm.
+                                                               (line  6)
+* Miscellaneous complex functions:       Miscellaneous Complex Functions.
+                                                               (line  6)
+* mpc.h:                                 MPC Basics.           (line  6)
+* Power functions:                       Power Functions and Logarithm.
+                                                               (line  6)
+* Precision:                             MPC Basics.           (line 19)
+* Projection and Decomposing Functions:  Projection & Decomposing.
+                                                               (line  6)
+* Reporting bugs:                        Reporting Bugs.       (line  6)
+* Rounding Mode:                         MPC Basics.           (line 24)
+* String and stream input and output:    String and Stream Input and Output.
+                                                               (line  3)
+* Trigonometric functions:               Trigonometric Functions.
+                                                               (line  6)
+* User-defined precision:                Complex Functions.    (line 12)
+
+
+File: mpc.info,  Node: Function Index,  Prev: Concept Index,  Up: Top
+
+Function and Type Index
+***********************
+
+ [index ]
+* Menu:
+
+* _Complex:                              Converting Complex Numbers.
+                                                              (line  10)
+* mpc_abs:                               Basic Arithmetic.    (line  78)
+* mpc_acos:                              Trigonometric Functions.
+                                                              (line  38)
+* mpc_acosh:                             Trigonometric Functions.
+                                                              (line  44)
+* mpc_add:                               Basic Arithmetic.    (line  13)
+* mpc_add_fr:                            Basic Arithmetic.    (line  17)
+* mpc_add_ui:                            Basic Arithmetic.    (line  15)
+* mpc_arg:                               Projection & Decomposing.
+                                                              (line  21)
+* mpc_asin:                              Trigonometric Functions.
+                                                              (line  37)
+* mpc_asinh:                             Trigonometric Functions.
+                                                              (line  43)
+* mpc_atan:                              Trigonometric Functions.
+                                                              (line  39)
+* mpc_atanh:                             Trigonometric Functions.
+                                                              (line  45)
+* mpc_clear:                             Initializing Complex Numbers.
+                                                              (line  22)
+* mpc_cmp:                               Complex Comparison.  (line   7)
+* mpc_cmp_si:                            Complex Comparison.  (line  10)
+* mpc_cmp_si_si:                         Complex Comparison.  (line   9)
+* mpc_conj:                              Basic Arithmetic.    (line  73)
+* mpc_cos:                               Trigonometric Functions.
+                                                              (line  11)
+* mpc_cosh:                              Trigonometric Functions.
+                                                              (line  29)
+* mpc_div:                               Basic Arithmetic.    (line  55)
+* mpc_div_2exp:                          Basic Arithmetic.    (line  96)
+* mpc_div_fr:                            Basic Arithmetic.    (line  61)
+* mpc_div_ui:                            Basic Arithmetic.    (line  57)
+* mpc_exp:                               Power Functions and Logarithm.
+                                                              (line  29)
+* mpc_fma:                               Basic Arithmetic.    (line 102)
+* mpc_fr_div:                            Basic Arithmetic.    (line  63)
+* mpc_fr_sub:                            Basic Arithmetic.    (line  25)
+* mpc_free_str:                          String and Stream Input and Output.
+                                                              (line  68)
+* mpc_get_ldc:                           Converting Complex Numbers.
+                                                              (line  11)
+* mpc_get_prec:                          Initializing Complex Numbers.
+                                                              (line  50)
+* mpc_get_prec2:                         Initializing Complex Numbers.
+                                                              (line  55)
+* mpc_get_str:                           String and Stream Input and Output.
+                                                              (line  51)
+* mpc_get_version:                       Miscellaneous Complex Functions.
+                                                              (line  15)
+* mpc_imag:                              Projection & Decomposing.
+                                                              (line  11)
+* mpc_imagref:                           Projection & Decomposing.
+                                                              (line  16)
+* mpc_init2:                             Initializing Complex Numbers.
+                                                              (line  11)
+* mpc_init3:                             Initializing Complex Numbers.
+                                                              (line  17)
+* mpc_inp_str:                           String and Stream Input and Output.
+                                                              (line  77)
+* mpc_log:                               Power Functions and Logarithm.
+                                                              (line  33)
+* mpc_mul:                               Basic Arithmetic.    (line  36)
+* mpc_mul_2exp:                          Basic Arithmetic.    (line  90)
+* mpc_mul_fr:                            Basic Arithmetic.    (line  42)
+* mpc_mul_i:                             Basic Arithmetic.    (line  46)
+* mpc_mul_si:                            Basic Arithmetic.    (line  40)
+* mpc_mul_ui:                            Basic Arithmetic.    (line  38)
+* mpc_neg:                               Basic Arithmetic.    (line  69)
+* mpc_norm:                              Basic Arithmetic.    (line  83)
+* mpc_out_str:                           String and Stream Input and Output.
+                                                              (line 112)
+* mpc_pow:                               Power Functions and Logarithm.
+                                                              (line  11)
+* mpc_pow_d:                             Power Functions and Logarithm.
+                                                              (line  13)
+* mpc_pow_fr:                            Power Functions and Logarithm.
+                                                              (line  23)
+* mpc_pow_ld:                            Power Functions and Logarithm.
+                                                              (line  15)
+* mpc_pow_si:                            Power Functions and Logarithm.
+                                                              (line  17)
+* mpc_pow_ui:                            Power Functions and Logarithm.
+                                                              (line  19)
+* mpc_pow_z:                             Power Functions and Logarithm.
+                                                              (line  21)
+* mpc_proj:                              Projection & Decomposing.
+                                                              (line  25)
+* mpc_real:                              Projection & Decomposing.
+                                                              (line   7)
+* mpc_realref:                           Projection & Decomposing.
+                                                              (line  15)
+* mpc_rnd_t:                             MPC Basics.          (line  24)
+* mpc_set:                               Assigning Complex Numbers.
+                                                              (line  17)
+* mpc_set_d:                             Assigning Complex Numbers.
+                                                              (line  26)
+* mpc_set_d_d:                           Assigning Complex Numbers.
+                                                              (line  56)
+* mpc_set_dc:                            Assigning Complex Numbers.
+                                                              (line  29)
+* mpc_set_f:                             Assigning Complex Numbers.
+                                                              (line  34)
+* mpc_set_f_f:                           Assigning Complex Numbers.
+                                                              (line  64)
+* mpc_set_fr:                            Assigning Complex Numbers.
+                                                              (line  35)
+* mpc_set_fr_fr:                         Assigning Complex Numbers.
+                                                              (line  66)
+* mpc_set_ld:                            Assigning Complex Numbers.
+                                                              (line  27)
+* mpc_set_ld_ld:                         Assigning Complex Numbers.
+                                                              (line  58)
+* mpc_set_ldc:                           Assigning Complex Numbers.
+                                                              (line  31)
+* mpc_set_nan:                           Assigning Complex Numbers.
+                                                              (line  80)
+* mpc_set_prec:                          Initializing Complex Numbers.
+                                                              (line  42)
+* mpc_set_q:                             Assigning Complex Numbers.
+                                                              (line  33)
+* mpc_set_q_q:                           Assigning Complex Numbers.
+                                                              (line  62)
+* mpc_set_si:                            Assigning Complex Numbers.
+                                                              (line  23)
+* mpc_set_si_si:                         Assigning Complex Numbers.
+                                                              (line  50)
+* mpc_set_sj:                            Assigning Complex Numbers.
+                                                              (line  25)
+* mpc_set_sj_sj:                         Assigning Complex Numbers.
+                                                              (line  54)
+* mpc_set_str:                           String and Stream Input and Output.
+                                                              (line  38)
+* mpc_set_ui:                            Assigning Complex Numbers.
+                                                              (line  22)
+* mpc_set_ui_ui:                         Assigning Complex Numbers.
+                                                              (line  48)
+* mpc_set_uj:                            Assigning Complex Numbers.
+                                                              (line  24)
+* mpc_set_uj_uj:                         Assigning Complex Numbers.
+                                                              (line  52)
+* MPC_SET_X_Y:                           Advanced Functions.  (line   7)
+* mpc_set_z:                             Assigning Complex Numbers.
+                                                              (line  32)
+* mpc_set_z_z:                           Assigning Complex Numbers.
+                                                              (line  60)
+* mpc_sin:                               Trigonometric Functions.
+                                                              (line   7)
+* mpc_sin_cos:                           Trigonometric Functions.
+                                                              (line  16)
+* mpc_sinh:                              Trigonometric Functions.
+                                                              (line  25)
+* mpc_sqr:                               Basic Arithmetic.    (line  51)
+* mpc_sqrt:                              Power Functions and Logarithm.
+                                                              (line   7)
+* mpc_strtoc:                            String and Stream Input and Output.
+                                                              (line   8)
+* mpc_sub:                               Basic Arithmetic.    (line  21)
+* mpc_sub_fr:                            Basic Arithmetic.    (line  23)
+* mpc_sub_ui:                            Basic Arithmetic.    (line  27)
+* mpc_swap:                              Assigning Complex Numbers.
+                                                              (line  83)
+* mpc_t:                                 MPC Basics.          (line  15)
+* mpc_tan:                               Trigonometric Functions.
+                                                              (line  21)
+* mpc_tanh:                              Trigonometric Functions.
+                                                              (line  33)
+* mpc_ui_div:                            Basic Arithmetic.    (line  59)
+* mpc_ui_sub:                            Basic Arithmetic.    (line  29)
+* mpc_ui_ui_sub:                         Basic Arithmetic.    (line  31)
+* mpc_urandom:                           Miscellaneous Complex Functions.
+                                                              (line   7)
+* MPC_VERSION:                           Miscellaneous Complex Functions.
+                                                              (line  18)
+* MPC_VERSION_MAJOR:                     Miscellaneous Complex Functions.
+                                                              (line  19)
+* MPC_VERSION_MINOR:                     Miscellaneous Complex Functions.
+                                                              (line  20)
+* MPC_VERSION_NUM:                       Miscellaneous Complex Functions.
+                                                              (line  37)
+* MPC_VERSION_PATCHLEVEL:                Miscellaneous Complex Functions.
+                                                              (line  21)
+* MPC_VERSION_STRING:                    Miscellaneous Complex Functions.
+                                                              (line  22)
+* mpfr_prec_t:                           MPC Basics.          (line  19)
+
+
+
+Tag Table:
+Node: Top946
+Node: Copying1607
+Node: Introduction to MPC2265
+Node: Installing MPC2973
+Node: Reporting Bugs7632
+Node: MPC Basics8961
+Ref: return-value12611
+Node: Complex Functions14053
+Node: Initializing Complex Numbers15202
+Node: Assigning Complex Numbers17616
+Node: Converting Complex Numbers22024
+Node: String and Stream Input and Output22658
+Ref: string-io22805
+Node: Complex Comparison29237
+Node: Projection & Decomposing30316
+Node: Basic Arithmetic31691
+Node: Power Functions and Logarithm36331
+Node: Trigonometric Functions37986
+Node: Miscellaneous Complex Functions40211
+Node: Advanced Functions42356
+Node: Internals43429
+Node: Contributors43876
+Node: References44222
+Node: Concept Index45136
+Node: Function Index47450
+
+End Tag Table

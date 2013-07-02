@@ -1,0 +1,102 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1994, 1995, 1996, 1998, 1999, 2001, 2002, 2003, 2004, 2006,
+## 2007, 2008, 2009  Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if %?INSTALL%
+include inst-vars.am
+endif %?INSTALL%
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+if %?INSTALL%
+am__installdirs += "$(DESTDIR)$(%NDIR%dir)"
+.PHONY install-%EXEC?exec:data%-am: install-%DIR%LIBRARIES
+install-%DIR%LIBRARIES: $(%DIR%_LIBRARIES)
+	@$(NORMAL_INSTALL)
+	test -z "$(%NDIR%dir)" || $(MKDIR_P) "$(DESTDIR)$(%NDIR%dir)"
+if %?BASE%
+## Funny invocation because Makefile variable can be empty, leading to
+## a syntax error in sh.
+	@list='$(%DIR%_LIBRARIES)'; test -n "$(%NDIR%dir)" || list=; \
+	list2=; for p in $$list; do \
+	  if test -f $$p; then \
+	    list2="$$list2 $$p"; \
+	  else :; fi; \
+	done; \
+	test -z "$$list2" || { \
+	  echo " $(INSTALL_DATA) $$list2 '$(DESTDIR)$(%NDIR%dir)'"; \
+	  $(INSTALL_DATA) $$list2 "$(DESTDIR)$(%NDIR%dir)" || exit $$?; }
+else !%?BASE%
+## Funny invocation because Makefile variable can be empty, leading to
+## a syntax error in sh.
+	@list='$(%DIR%_LIBRARIES)'; test -n "$(%NDIR%dir)" || list=; \
+	$(am__nobase_list) | while read dir files; do \
+	  xfiles=; for p in $$files; do \
+	    if test -f "$$p"; then xfiles="$$xfiles $$p"; else :; fi; done; \
+	  test -z "$$xfiles" || { \
+	    test "x$$dir" = x. || { \
+	      echo "$(MKDIR_P) '$(DESTDIR)$(%NDIR%dir)/$$dir'"; \
+	      $(MKDIR_P) "$(DESTDIR)$(%NDIR%dir)/$$dir"; }; \
+	    echo " $(INSTALL_DATA) $$xfiles '$(DESTDIR)$(%NDIR%dir)/$$dir'"; \
+	    $(INSTALL_DATA) $$xfiles "$(DESTDIR)$(%NDIR%dir)/$$dir" || exit $$?; }; \
+	done
+endif !%?BASE%
+## We do two loops here so that $(POST_INSTALL) can be empty.  If we
+## merge the two loops, we get a syntax error from sh.  Anyway, having
+## $(POST_INSTALL) in the middle of the loop essentially renders it
+## useless; sh never actually executes this command.  Read the GNU
+## Standards for a little enlightenment on this.
+	@$(POST_INSTALL)
+	@list='$(%DIR%_LIBRARIES)'; test -n "$(%NDIR%dir)" || list=; \
+	for p in $$list; do \
+	  if test -f $$p; then \
+	    %BASE?$(am__strip_dir):f=$$p;% \
+## Must ranlib after installing because mod time changes.
+## cd to target directory because AIX ranlib messes up with whitespace
+## in the argument.
+	    echo " ( cd '$(DESTDIR)$(%NDIR%dir)' && $(RANLIB) $$f )"; \
+	    ( cd "$(DESTDIR)$(%NDIR%dir)" && $(RANLIB) $$f ) || exit $$?; \
+	  else :; fi; \
+	done
+endif %?INSTALL%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+if %?INSTALL%
+.PHONY uninstall-am: uninstall-%DIR%LIBRARIES
+uninstall-%DIR%LIBRARIES:
+	@$(NORMAL_UNINSTALL)
+	@list='$(%DIR%_LIBRARIES)'; test -n "$(%NDIR%dir)" || list=; \
+?BASE?	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+?!BASE?	$(am__nobase_strip_setup); files=`$(am__nobase_strip)`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(%NDIR%dir)' && rm -f "$$files" )"; \
+	cd "$(DESTDIR)$(%NDIR%dir)" && rm -f $$files
+endif %?INSTALL%
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+.PHONY clean-am: clean-%DIR%LIBRARIES
+clean-%DIR%LIBRARIES:
+	-test -z "$(%DIR%_LIBRARIES)" || rm -f $(%DIR%_LIBRARIES)

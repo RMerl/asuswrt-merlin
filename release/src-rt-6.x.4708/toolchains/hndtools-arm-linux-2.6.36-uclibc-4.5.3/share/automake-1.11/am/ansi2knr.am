@@ -1,0 +1,77 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1994, 1995, 1996, 1997, 2001, 2003, 2008, 2009
+## Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## %ANSI2KNR-DIR% is the directory where ansi2knr is, `' if
+## is the current directory.
+
+
+## ---------- ##
+## ansi2knr.  ##
+## ---------- ##
+
+if %?ANSI2KNR-DIR%
+
+ANSI2KNR = %ANSI2KNR-DIR%/ansi2knr
+%ANSI2KNR-DIR%/ansi2knr:
+	$(am__cd) %ANSI2KNR-DIR% && $(MAKE) $(AM_MAKEFLAGS) ./ansi2knr
+.MAKE: %ANSI2KNR-DIR%/ansi2knr
+
+else !%?ANSI2KNR-DIR%
+
+## Substitution from AM_C_PROTOTYPES.  This makes it be built only when
+## necessary.
+ANSI2KNR = @ANSI2KNR@
+./ansi2knr: ansi2knr.$(OBJEXT)
+	$(LINK) ansi2knr.$(OBJEXT) $(LIBS)
+ansi2knr.$(OBJEXT): $(CONFIG_HEADER)
+
+endif !%?ANSI2KNR-DIR%
+
+
+## ------------------- ##
+## Cleaning ansi2knr.  ##
+## ------------------- ##
+
+
+if !%?ANSI2KNR-DIR%
+.PHONY: clean-krextra
+
+clean-am: clean-krextra
+clean-krextra:
+## Why `clean' and not somewhere else?  Not `mostlyclean' because
+## people usually don't want to recompile this file.  And not
+## `distclean' because of our informal rule: if `make' built it, then
+## `clean' should delete it; if `configure' built it, then `distclean'
+## should remove it (and if the maintainer built it, then
+## maintainer-clean should remove it).
+	-rm -f ansi2knr
+endif !%?ANSI2KNR-DIR%
+
+
+
+## --------------------------------- ##
+## Cleaning the output of ansi2knr.  ##
+## --------------------------------- ##
+
+.PHONY: mostlyclean-kr
+
+mostlyclean-am: mostlyclean-kr
+mostlyclean-kr:
+## Only delete *_.c when ansi2knr is actually in use, so as to avoid
+## deleting sources that happen to end in "_" after being truncated on a DOS
+## 8.3 filesystem with srcdir==builddir.
+	-test "$U" = "" || rm -f *_.c

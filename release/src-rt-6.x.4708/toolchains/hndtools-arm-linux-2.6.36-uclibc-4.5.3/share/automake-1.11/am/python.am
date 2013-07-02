@@ -1,0 +1,128 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1999, 2001, 2003, 2004, 2006, 2007, 2008, 2009  Free
+## Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if %?INSTALL%
+include inst-vars.am
+endif %?INSTALL%
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+if %?INSTALL%
+am__installdirs += "$(DESTDIR)$(%NDIR%dir)"
+.PHONY install-%EXEC?exec:data%-am: install-%DIR%PYTHON
+install-%DIR%PYTHON: $(%DIR%_PYTHON)
+	@$(NORMAL_INSTALL)
+	test -z "$(%NDIR%dir)" || $(MKDIR_P) "$(DESTDIR)$(%NDIR%dir)"
+if %?BASE%
+	@list='$(%DIR%_PYTHON)'; dlist=; list2=; test -n "$(%NDIR%dir)" || list=; \
+	for p in $$list; do \
+## A file can be in the source directory or the build directory.
+	  if test -f "$$p"; then b=; else b="$(srcdir)/"; fi; \
+	  if test -f $$b$$p; then \
+## Compute basename of source file.  Unless this is a nobase_ target, we
+## want to install 'python/foo.py' as '$(DESTDIR)$(%NDIR%dir)/foo.py',
+## not '$(DESTDIR)$(%NDIR%dir)/python/foo.py'.
+	    $(am__strip_dir) \
+	    dlist="$$dlist $$f"; \
+	    list2="$$list2 $$b$$p"; \
+	  else :; fi; \
+	done; \
+	for file in $$list2; do echo $$file; done | $(am__base_list) | \
+	while read files; do \
+## Don't perform translation, since script name is important.
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(%NDIR%dir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(%NDIR%dir)" || exit $$?; \
+	done || exit $$?; \
+## Byte-compile must be done at install time, since file times are
+## encoded in the actual files.
+	if test -n "$$dlist"; then \
+	  if test -z "$(DESTDIR)"; then \
+	    PYTHON=$(PYTHON) $(py_compile) --basedir "$(%NDIR%dir)" $$dlist; \
+	  else \
+	    PYTHON=$(PYTHON) $(py_compile) --destdir "$(DESTDIR)" --basedir "$(%NDIR%dir)" $$dlist; \
+	  fi; \
+	else :; fi
+else !%?BASE%
+	@list='$(%DIR%_PYTHON)'; test -n "$(%NDIR%dir)" || list=; \
+	$(am__nobase_list) | while read dir files; do \
+	  xfiles=; for p in $$files; do \
+## A file can be in the source directory or the build directory.
+	    if test -f "$$p"; then b=; else b="$(srcdir)/"; fi; \
+	    if test -f "$$b$$p"; then xfiles="$$xfiles $$b$$p"; dlist="$$dlist $$p"; \
+	    else :; fi; done; \
+	  test -z "$$xfiles" || { \
+	    test "x$$dir" = x. || { \
+	      echo "$(MKDIR_P) '$(DESTDIR)$(%NDIR%dir)/$$dir'"; \
+	      $(MKDIR_P) "$(DESTDIR)$(%NDIR%dir)/$$dir"; }; \
+## Don't perform translation, since script name is important.
+	    echo " $(INSTALL_DATA) $$xfiles '$(DESTDIR)$(%NDIR%dir)/$$dir'"; \
+	    $(INSTALL_DATA) $$xfiles "$(DESTDIR)$(%NDIR%dir)/$$dir" || exit $$?; }; \
+## Byte-compile must be done at install time, since file times are
+## encoded in the actual files.
+	  if test -n "$$dlist"; then \
+	    if test -z "$(DESTDIR)"; then \
+	      PYTHON=$(PYTHON) $(py_compile) --basedir "$(%NDIR%dir)" $$dlist; \
+	    else \
+	      PYTHON=$(PYTHON) $(py_compile) --destdir "$(DESTDIR)" --basedir "$(%NDIR%dir)" $$dlist; \
+	    fi; \
+	  else :; fi \
+	done
+endif !%?BASE%
+endif %?INSTALL%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+if %?INSTALL%
+.PHONY uninstall-am: uninstall-%DIR%PYTHON
+uninstall-%DIR%PYTHON:
+	@$(NORMAL_UNINSTALL)
+	@list='$(%DIR%_PYTHON)'; test -n "$(%NDIR%dir)" || list=; \
+?BASE?	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+?!BASE?	$(am__nobase_strip_setup); files=`$(am__nobase_strip)`; \
+	test -n "$$files" || exit 0; \
+	filesc=`echo "$$files" | sed 's|$$|c|'`; \
+	fileso=`echo "$$files" | sed 's|$$|o|'`; \
+	echo " ( cd '$(DESTDIR)$(%NDIR%dir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(%NDIR%dir)" && rm -f $$files || exit $$?; \
+## This is to remove the .pyc and .pyo byte compiled versions (a bit
+## of a hack).
+	echo " ( cd '$(DESTDIR)$(%NDIR%dir)' && rm -f" $$filesc ")"; \
+	cd "$(DESTDIR)$(%NDIR%dir)" && rm -f $$filesc || exit $$?; \
+	echo " ( cd '$(DESTDIR)$(%NDIR%dir)' && rm -f" $$fileso ")"; \
+	cd "$(DESTDIR)$(%NDIR%dir)" && rm -f $$fileso
+endif %?INSTALL%
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+## There is nothing to clean here since files are
+## byte-compiled when (and where) they are installed.
+
+## -------------- ##
+## Distributing.  ##
+## -------------- ##
+
+if %?DIST%
+DIST_COMMON += %DISTVAR%
+endif %?DIST%

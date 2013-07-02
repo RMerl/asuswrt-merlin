@@ -1,0 +1,159 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 2001, 2002, 2003, 2004, 2006, 2007, 2008, 2009  Free
+## Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+## This dummy rule is called from subdirectories whenever one of the
+## top-level Makefile's dependencies must be updated.  It does not
+## need to depend on %MAKEFILE% because GNU make will always make sure
+## %MAKEFILE% is updated before considering the am--refresh target.
+if %?TOPDIR_P%
+.PHONY: am--refresh
+am--refresh:
+	@:
+endif %?TOPDIR_P%
+
+## --------------------- ##
+## Building Makefile.*.  ##
+## --------------------- ##
+
+## This rule remakes the Makefile.in.
+%MAKEFILE-IN%: %MAINTAINER-MODE% %MAKEFILE-AM% %MAKEFILE-IN-DEPS% $(am__configure_deps)
+## If configure.ac or one of configure's dependencies has changed, all
+## Makefile.in are to be updated; it is then more efficient to run
+## automake on all the Makefiles at once.  It also allow Automake to be
+## run for newly added directories.
+	@for dep in $?; do \
+	  case '$(am__configure_deps)' in \
+	    *$$dep*) \
+?TOPDIR_P?	      echo ' cd $(srcdir) && $(AUTOMAKE) %AUTOMAKE-OPTIONS%'; \
+?TOPDIR_P?	      $(am__cd) $(srcdir) && $(AUTOMAKE) %AUTOMAKE-OPTIONS% \
+?TOPDIR_P?		&& exit 0; \
+?!TOPDIR_P?	      ( cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh ) \
+## If on the other hand, subdir/Makefile.in has been removed, then toplevel
+## am--refresh will not be aware of any need to run.  We still invoke it
+## due to $? listing all prerequisites.  Fix up for it by running the rebuild
+## rule for this file only, below.
+?!TOPDIR_P?	        && { if test -f $@; then exit 0; else break; fi; }; \
+	      exit 1;; \
+	  esac; \
+	done; \
+## Otherwise, rebuild only this file.
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) %AUTOMAKE-OPTIONS% %MAKEFILE-AM-SOURCES%'; \
+	$(am__cd) $(top_srcdir) && \
+	  $(AUTOMAKE) %AUTOMAKE-OPTIONS% %MAKEFILE-AM-SOURCES%
+
+## Ensure that GNU make doesn't remove Makefile if ./config.status (below)
+## is interrupted.  Otherwise, the user would need to know to rerun
+## ./config.status to recreate the lost Makefile.
+.PRECIOUS: %MAKEFILE%
+## This rule remakes the Makefile.
+%MAKEFILE%: %MAKEFILE-DEPS% $(top_builddir)/config.status
+## If Makefile is to be updated because of config.status, then run
+## config.status without argument in order to (i) rerun all the
+## AC_CONFIG_COMMANDS including those that are not visible to
+## Automake, and (ii) to save time by running config.status all with
+## all the files, instead of once per file (iii) generate Makefiles
+## in newly added directories.
+	@case '$?' in \
+## Don't prefix $(top_builddir), because GNU make will strip it out
+## when it's `.'.
+	  *config.status*) \
+?TOPDIR_P?	    echo ' $(SHELL) ./config.status'; \
+?TOPDIR_P?	    $(SHELL) ./config.status;; \
+?!TOPDIR_P?	    cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh;; \
+	  *) \
+## FIXME: $(am__depfiles_maybe) lets us re-run the rule to create the
+## .P files.  Ideally we wouldn't have to do this by hand.
+	    echo ' cd $(top_builddir) && $(SHELL) ./config.status %CONFIG-MAKEFILE% $(am__depfiles_maybe)'; \
+	    cd $(top_builddir) && $(SHELL) ./config.status %CONFIG-MAKEFILE% $(am__depfiles_maybe);; \
+	esac;
+
+DIST_COMMON += %MAKEFILE-AM%
+
+
+## --------------------------- ##
+## config.status & configure.  ##
+## --------------------------- ##
+
+if %?TOPDIR_P%
+## Always require configure.ac and configure at top level, even if they
+## don't exist.  This is especially important for configure, since it
+## won't be created until autoconf is run -- which might be after
+## automake is run.
+DIST_COMMON += $(top_srcdir)/configure $(am__configure_deps)
+endif %?TOPDIR_P%
+
+$(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
+?TOPDIR_P?	$(SHELL) ./config.status --recheck
+?!TOPDIR_P?	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
+
+$(top_srcdir)/configure: %MAINTAINER-MODE% $(am__configure_deps)
+?TOPDIR_P?	$(am__cd) $(srcdir) && $(AUTOCONF)
+?!TOPDIR_P?	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
+
+
+## ------------ ##
+## aclocal.m4.  ##
+## ------------ ##
+
+## aclocal.m4 must be built by the top-level Makefile, because this is
+## where the user is expected to define $(ACLOCAL_AMFLAGS).
+##
+## Whenever a configure dependency changes we need to rebuild
+## aclocal.m4 too.  Changing configure.ac, or any file included by
+## aclocal.m4 might require adding more files to aclocal.m4.  Hence
+## the $(am__configure_deps) dependency.
+if %?REGEN-ACLOCAL-M4%
+$(ACLOCAL_M4): %MAINTAINER-MODE% $(am__aclocal_m4_deps)
+?TOPDIR_P?	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
+?!TOPDIR_P?	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
+
+## Avoid the "deleted header file" problem for the dependencies.
+$(am__aclocal_m4_deps):
+endif %?REGEN-ACLOCAL-M4%
+
+
+## --------- ##
+## cleanup.  ##
+## --------- ##
+
+## We special-case config.status here.  If we do it as part of the
+## normal clean processing for this directory, then it might be
+## removed before some subdir is cleaned.  However, that subdir's
+## Makefile depends on config.status.
+
+if %?TOPDIR_P%
+am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
+ configure.lineno config.status.lineno
+distclean:
+	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
+
+## Note: you might think we should remove Makefile.in, configure, or
+## aclocal.m4 here in a maintainer-clean rule.  However, the GNU
+## Coding Standards explicitly prohibit this.
+
+maintainer-clean:
+	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
+## autom4te.cache is created by Autoconf; the only valid target to
+## remove it is maintainer-clean, not distclean.
+## If you have an autom4te.cache that cause distcheck to fail, then
+## it is good news: you finally discovered that autoconf and/or
+## autoheader is needed to use your tarball, which is wrong.
+	-rm -rf $(top_srcdir)/autom4te.cache
+
+
+endif %?TOPDIR_P%

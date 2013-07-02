@@ -1,0 +1,144 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2003, 2004,
+## 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+if %?INSTALL%
+am__installdirs += "$(DESTDIR)$(%NDIR%dir)"
+.PHONY install-%EXEC?exec:data%-am: install-%DIR%PROGRAMS
+install-%DIR%PROGRAMS: $(%DIR%_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	test -z "$(%NDIR%dir)" || $(MKDIR_P) "$(DESTDIR)$(%NDIR%dir)"
+## Funny invocation because Makefile variable can be empty, leading to
+## a syntax error in sh.
+	@list='$(%DIR%_PROGRAMS)'; test -n "$(%NDIR%dir)" || list=; \
+	for p in $$list; do echo "$$p $$p"; done | \
+## On Cygwin with libtool test won't see `foo.exe' but instead `foo'.
+## So we check for both.
+	sed 's/$(EXEEXT)$$//' | \
+	while read p p1; do if test -f $$p%LIBTOOL? || test -f $$p1%; \
+	  then echo "$$p"; echo "$$p"; else :; fi; \
+	done | \
+## We now have a list of sourcefile pairs, separated by newline.
+## Turn that into "sourcefile source_base target_dir xformed_target_base",
+## with newlines being turned into spaces in a second step.
+	sed -e 'p;s,.*/,,;n;h' -e '%BASE?s|.*|.|:s|[^/]*$$||; s|^$$|.|%' \
+	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
+	sed 'N;N;N;s,\n, ,g' | \
+## The following awk script turns that into one line containing directories
+## and then lines of 'type target_name_or_directory sources...', with type
+## 'd' designating directories, and 'f' files.
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
+	    else { print "f", $$3 "/" $$4, $$1; } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+?!BASE?	  case $$type in \
+?!BASE?	  d) echo " $(MKDIR_P) '$(DESTDIR)$(%NDIR%dir)/$$dir'"; \
+?!BASE?	     $(MKDIR_P) "$(DESTDIR)$(%NDIR%dir)/$$dir" || exit $$?;; \
+?!BASE?	  f) \
+	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	    test -z "$$files" || { \
+?!LIBTOOL?	      echo " $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(%NDIR%dir)$$dir'"; \
+?!LIBTOOL?	      $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(%NDIR%dir)$$dir" || exit $$?; \
+## Note that we explicitly set the libtool mode.  This avoids any
+## lossage if the install program doesn't have a name that libtool
+## expects.
+?LIBTOOL?	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(%NDIR%dir)$$dir'"; \
+?LIBTOOL?	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(%NDIR%dir)$$dir" || exit $$?; \
+	    } \
+?!BASE?	  ;; esac \
+	; done
+
+endif %?INSTALL%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+if %?INSTALL%
+.PHONY uninstall-am: uninstall-%DIR%PROGRAMS
+uninstall-%DIR%PROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(%DIR%_PROGRAMS)'; test -n "$(%NDIR%dir)" || list=; \
+	files=`for p in $$list; do echo "$$p"; done | \
+## Remove any leading directory before applying $(transform),
+## but keep the directory part in the hold buffer, in order to
+## reapply it again afterwards in the nobase case.  Append $(EXEEXT).
+	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
+	      -e 's/$$/$(EXEEXT)/'%BASE? : -e 'x;s,[^/]*$$,,;G;s,\n,,'%`; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(%NDIR%dir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(%NDIR%dir)" && rm -f $$files
+endif %?INSTALL%
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+.PHONY clean-am: clean-%DIR%PROGRAMS
+clean-%DIR%PROGRAMS:
+?!LIBTOOL?	-test -z "$(%DIR%_PROGRAMS)" || rm -f $(%DIR%_PROGRAMS)
+## Under Cygwin, we build `program$(EXEEXT)'.  However, if this
+## program uses a Libtool library, Libtool will move it in
+## `_libs/program$(EXEEXT)' and create a `program' wrapper (without
+## `$(EXEEXT)').  Therefore, if Libtool is used, we must try to erase
+## both `program$(EXEEXT)' and `program'.
+## Cleaning the `_libs/' or `.libs/' directory is done from clean-libtool.
+## FIXME: In the future (i.e., when it works) it would be nice to delegate
+## this task to `libtool --mode=clean'.
+?LIBTOOL?	@list='$(%DIR%_PROGRAMS)'; test -n "$$list" || exit 0; \
+?LIBTOOL?	echo " rm -f" $$list; \
+?LIBTOOL?	rm -f $$list || exit $$?; \
+?LIBTOOL?	test -n "$(EXEEXT)" || exit 0; \
+?LIBTOOL?	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
+?LIBTOOL?	echo " rm -f" $$list; \
+?LIBTOOL?	rm -f $$list
+
+
+## ---------- ##
+## Checking.  ##
+## ---------- ##
+
+if %?CK-OPTS%
+.PHONY installcheck-am: installcheck-%DIR%PROGRAMS
+installcheck-%DIR%PROGRAMS: $(%DIR%_PROGRAMS)
+	bad=0; pid=$$$$; list="$(%DIR%_PROGRAMS)"; for p in $$list; do \
+	  case ' $(AM_INSTALLCHECK_STD_OPTIONS_EXEMPT) ' in \
+## Match $(srcdir)/$$p in addition to $$p because Sun make might rewrite
+## filenames in AM_INSTALLCHECK_STD_OPTIONS_EXEMPT during VPATH builds.
+	   *" $$p "* | *" $(srcdir)/$$p "*) continue;; \
+	  esac; \
+## Strip the directory and $(EXEEXT) before applying $(transform).
+	  f=`echo "$$p" | \
+	     sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
+## Insert the directory back if nobase_ is used.
+?!BASE?	  f=`echo "$$p" | sed 's|[^/]*$$||'`"$$f"; \
+	  for opt in --help --version; do \
+	    if "$(DESTDIR)$(%NDIR%dir)/$$f" $$opt >c$${pid}_.out \
+	         2>c$${pid}_.err </dev/null \
+		 && test -n "`cat c$${pid}_.out`" \
+		 && test -z "`cat c$${pid}_.err`"; then :; \
+	    else echo "$$f does not support $$opt" 1>&2; bad=1; fi; \
+	  done; \
+	done; rm -f c$${pid}_.???; exit $$bad
+endif %?CK-OPTS%

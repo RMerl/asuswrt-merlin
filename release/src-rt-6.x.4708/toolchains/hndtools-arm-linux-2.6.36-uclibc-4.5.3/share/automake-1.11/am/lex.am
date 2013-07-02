@@ -1,0 +1,31 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 2001, 2002, 2003, 2004, 2006, 2009  Free Software
+## Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## See the comment about am__skipyacc in yacc.am.
+if %?MAINTAINER-MODE%
+if %?FIRST%
+@MAINTAINER_MODE_FALSE@am__skiplex = test -f $@ ||
+endif %?FIRST%
+endif %?MAINTAINER-MODE%
+
+?GENERIC?%EXT%%DERIVED-EXT%:
+?!GENERIC?%OBJ%: %SOURCE%
+?GENERIC?	%VERBOSE%$(am__skiplex) $(SHELL) $(YLWRAP) %SOURCE% $(LEX_OUTPUT_ROOT).c %OBJ% -- %COMPILE%
+?!GENERIC?	%VERBOSE% \
+?!GENERIC??DIST_SOURCE?	$(am__skiplex) \
+## For non-suffix rules, we must emulate a VPATH search on %SOURCE%.
+?!GENERIC?	$(SHELL) $(YLWRAP) `test -f '%SOURCE%' || echo '$(srcdir)/'`%SOURCE% $(LEX_OUTPUT_ROOT).c %OBJ% -- %COMPILE%

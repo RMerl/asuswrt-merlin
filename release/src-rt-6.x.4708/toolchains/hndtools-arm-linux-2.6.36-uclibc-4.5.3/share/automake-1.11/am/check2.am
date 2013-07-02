@@ -1,0 +1,29 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 2008, 2009 Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## From a test file to a log file.
+?GENERIC?%EXT%.log:
+?!GENERIC?%OBJ%: %SOURCE%
+	@p='%SOURCE%'; $(am__check_pre) %COMPILE% "$$tst" $(am__check_post)
+
+## If no programs are built in this package, then this rule is removed
+## at automake time.  Otherwise, %am__EXEEXT% expands to a configure time
+## conditional, true if $(EXEEXT) is nonempty, thus this rule does not
+## conflict with the previous one.
+if %am__EXEEXT%
+?GENERIC?%EXT%$(EXEEXT).log:
+	@p='%SOURCE%'; $(am__check_pre) %COMPILE% "$$tst" $(am__check_post)
+endif %am__EXEEXT%

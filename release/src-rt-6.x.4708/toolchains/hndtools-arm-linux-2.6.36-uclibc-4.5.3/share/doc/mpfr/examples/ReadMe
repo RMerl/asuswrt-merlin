@@ -1,0 +1,4 @@
+This directory contains simple examples.
+
+These examples currently use the old rounding mode macros (GMP_RNDN, etc.)
+instead of the new ones, which are not compatible with MPFR 2.x.

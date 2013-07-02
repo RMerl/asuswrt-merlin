@@ -1,0 +1,77 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2003, 2004, 2005,
+## 2008, 2009 Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## Explicitly look in srcdir for benefit of non-GNU makes.
+
+
+%CONFIG_H%: %STAMP%
+## Recover from removal of CONFIG_HEADER
+	@if test ! -f $@; then \
+	  rm -f %STAMP%; \
+	  $(MAKE) $(AM_MAKEFLAGS) %STAMP%; \
+	else :; fi
+
+
+%STAMP%: %CONFIG_H_DEPS% $(top_builddir)/config.status
+	@rm -f %STAMP%
+	cd $(top_builddir) && $(SHELL) ./config.status %CONFIG_H_PATH%
+
+
+## Only the first file of AC_CONFIG_HEADERS is assumed to be generated
+## by autoheader.
+if %?FIRST%
+%CONFIG_HIN%: %MAINTAINER-MODE% $(am__configure_deps) %FILES%
+## Cater to parallel BSD make.
+	($(am__cd) $(top_srcdir) && $(AUTOHEADER))
+## Whenever $(AUTOHEADER) has run, we must make sure that
+## ./config.status will rebuild config.h.  The dependency from %STAMP%
+## on %CONFIG_H_DEPS% (which contains config.hin) is not enough to
+## express this.
+##
+## There are some tricky cases where this rule will build a
+## config.hin which has the same timestamp as %STAMP%, in which case
+## ./config.status will not be rerun (meaning that users will use an
+## out-of-date config.h without knowing it).  One situation where this
+## can occur is the following:
+## 1. the user updates some configure dependency (let's say foo.m4)
+##    and runs `make'
+## 2. the rebuild rules detect that a foo.m4 has changed,
+##    run aclocal, autoconf, automake, and then run ./config.status.
+##    (Note that autoheader hasn't been called yet, so ./config.status
+##    outputs a config.h from an obsolete config.hin.)
+## 3. Once Makefile has been regenerated, make continues, and
+##    discovers that config.h is a dependency of the `all' rule.
+##    Because config.h depends on stamp-h1, stamp-h1 depends on
+##    config.hin, and config.hin depends on aclocal.m4, make runs
+##    autoheader to rebuild config.hin.
+## Now make ought to call ./config.status once again to rebuild
+## config.h from the new config.hin, but if you have a sufficiently
+## fast box, steps 2 and 3 will occur within the same second: the
+## config.h/stamp-h1 generated from the outdated config.hin will have
+## the same mtime as the new config.hin.  Hence make will think that
+## config.h is up to date.
+##
+## A solution is to erase %STAMP% here so that the %STAMP% rule
+## is always triggered after the this one.
+	rm -f %STAMP%
+## Autoheader has the bad habit of not changing the timestamp if
+## config.hin is unchanged, which breaks Make targets.  Since what
+## must not changed gratuitously is config.h, which is already handled
+## by config.status, there is no reason to make things complex for
+## config.hin.
+	touch $@
+endif %?FIRST%

@@ -1,0 +1,403 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 2001, 2003, 2006, 2007, 2008, 2009 Free Software
+## Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if %?COLOR%
+# If stdout is a non-dumb tty, use colors.  If test -t is not supported,
+# then this fails; a conservative approach.  Of course do not redirect
+# stdout here, just stderr.
+am__tty_colors = \
+red=; grn=; lgn=; blu=; std=; \
+test "X$(AM_COLOR_TESTS)" != Xno \
+&& test "X$$TERM" != Xdumb \
+&& { test "X$(AM_COLOR_TESTS)" = Xalways || test -t 1 2>/dev/null; } \
+&& { \
+  red='[0;31m'; \
+  grn='[0;32m'; \
+  lgn='[1;32m'; \
+  blu='[1;34m'; \
+  std='[m'; \
+}
+else !%?COLOR%
+am__tty_colors = \
+red=; grn=; lgn=; blu=; std=
+endif !%?COLOR%
+
+.PHONY: check-TESTS
+
+if %?PARALLEL_TESTS%
+
+include inst-vars.am
+
+## New parallel test driver.
+##
+## This code is adapted from check.mk which was originally
+## written at EPITA/LRDE, further developed at Gostai, then made
+## its way from GNU coreutils to end up, largely rewritten, in
+## Automake.
+##
+## It provides special support for "unit tests", that is to say,
+## tests that (once run) no longer need to be re-compiled and
+## re-run at each "make check", unless their sources changed.  To
+## enable unit-test supports, set RECHECK_LOGS to empty.  In such a
+## setting, that heavily relies on correct dependencies, its users may
+## prefer to define EXTRA_PROGRAMS instead of check_PROGRAMS, because
+## it allows intertwined compilation and execution of the tests.
+## Sometimes this helps catching errors earlier (you don't have to
+## wait for all the tests to be compiled).
+##
+## Define TEST_SUITE_LOG to be the name of the global log to create.
+## Define TEST_LOGS to the set of logs to include in it.  It defaults
+## to $(TESTS), with `.test' and `@EXEEXT@' removed, and `'.log'
+## appended.
+##
+## In addition to the magic "exit 77 means SKIP" feature (which was
+## imported from automake), there is a magic "exit 99 means FAIL" feature
+## which is useful if you need to issue a hard error no matter whether the
+## test is XFAIL or not.  You can disable this feature by setting the
+## variable DISABLE_HARD_ERRORS to a nonempty value.
+
+# Restructured Text title and section.
+am__rst_title   = sed 's/.*/   &   /;h;s/./=/g;p;x;p;g;p;s/.*//'
+am__rst_section = sed 'p;s/./=/g;p;g'
+
+# Put stdin (possibly several lines separated by ".  ") in a box.
+am__text_box = $(AWK) '{				\
+  n = split($$0, lines, "\\.  "); max = 0;		\
+  for (i = 1; i <= n; ++i)				\
+    if (max < length(lines[i]))				\
+      max = length(lines[i]);				\
+  for (i = 0; i < max; ++i) line = line "=";		\
+  print line;						\
+  for (i = 1; i <= n; ++i) if (lines[i]) print lines[i];\
+  print line;						\
+}'
+
+# Solaris 10 'make', and several other traditional 'make' implementations,
+# pass "-e" to $(SHELL).  This contradicts POSIX.  Work around the problem
+# by disabling -e (using the XSI extension "set +e") if it's set.
+am__sh_e_setup = case $$- in *e*) set +e;; esac
+
+# To be inserted before the command running the test.  Creates the
+# directory for the log if needed.  Stores in $dir the directory
+# containing $f, in $tst the test, in $log the log, and passes
+# TESTS_ENVIRONMENT.  Save and restore TERM around use of
+# TESTS_ENVIRONMENT, in case that unsets it.
+am__check_pre =						\
+$(am__sh_e_setup);					\
+$(am__vpath_adj_setup) $(am__vpath_adj)			\
+srcdir=$(srcdir); export srcdir;			\
+rm -f $@-t;						\
+trap 'st=$$?; rm -f '\''$(abs_builddir)/$@-t'\''; (exit $$st); exit $$st' \
+  1 2 13 15;						\
+am__odir=`echo "./$@" | sed 's|/[^/]*$$||'`;		\
+test "x$$am__odir" = x. || $(MKDIR_P) "$$am__odir" || exit $$?;	\
+if test -f "./$$f"; then dir=./;			\
+elif test -f "$$f"; then dir=;				\
+else dir="$(srcdir)/"; fi;				\
+tst=$$dir$$f; log='$@'; __SAVED_TERM=$$TERM;		\
+$(TESTS_ENVIRONMENT)
+
+# To be appended to the command running the test.  Handle the stdout
+# and stderr redirection, and catch the exit status.
+am__check_post =					\
+>$@-t 2>&1;						\
+estatus=$$?;						\
+if test -n '$(DISABLE_HARD_ERRORS)'			\
+   && test $$estatus -eq 99; then			\
+  estatus=1;						\
+fi;							\
+TERM=$$__SAVED_TERM; export TERM;			\
+$(am__tty_colors);					\
+xfailed=PASS;						\
+case " $(XFAIL_TESTS) " in				\
+  *[\ \	]$$f[\ \	]* | *[\ \	]$$dir$$f[\ \	]*) \
+    xfailed=XFAIL;;					\
+esac;							\
+case $$estatus:$$xfailed in				\
+    0:XFAIL) col=$$red; res=XPASS;;			\
+    0:*)     col=$$grn; res=PASS ;;			\
+    77:*)    col=$$blu; res=SKIP ;;			\
+    99:*)    col=$$red; res=FAIL ;;			\
+    *:XFAIL) col=$$lgn; res=XFAIL;;			\
+    *:*)     col=$$red; res=FAIL ;;			\
+esac;							\
+echo "$${col}$$res$${std}: $$f";			\
+echo "$$res: $$f (exit: $$estatus)" |			\
+  $(am__rst_section) >$@;				\
+cat $@-t >>$@;						\
+rm -f $@-t
+
+$(TEST_SUITE_LOG): $(TEST_LOGS)
+	@$(am__sh_e_setup);						\
+	list='$(TEST_LOGS)';						\
+	results=`for f in $$list; do					\
+		   read line < $$f && echo "$$line" || echo FAIL;	\
+		 done`;							\
+	all=`echo "$$results" | sed '/^$$/d' | wc -l | sed -e 's/^[	 ]*//'`; \
+	fail=`echo "$$results" | grep -c '^FAIL'`;			\
+	pass=`echo "$$results" | grep -c '^PASS'`;			\
+	skip=`echo "$$results" | grep -c '^SKIP'`;			\
+	xfail=`echo "$$results" | grep -c '^XFAIL'`;			\
+	xpass=`echo "$$results" | grep -c '^XPASS'`;			\
+	failures=`expr $$fail + $$xpass`;				\
+	all=`expr $$all - $$skip`;					\
+	if test "$$all" -eq 1; then tests=test; All=;			\
+	else tests=tests; All="All "; fi;				\
+	case fail=$$fail:xpass=$$xpass:xfail=$$xfail in			\
+	  fail=0:xpass=0:xfail=0)					\
+	    msg="$$All$$all $$tests passed.  ";				\
+	    exit=true;;							\
+	  fail=0:xpass=0:xfail=*)					\
+	    msg="$$All$$all $$tests behaved as expected";		\
+	    if test "$$xfail" -eq 1; then xfailures=failure;		\
+	    else xfailures=failures; fi;				\
+	    msg="$$msg ($$xfail expected $$xfailures).  ";		\
+	    exit=true;;							\
+	  fail=*:xpass=0:xfail=*)					\
+	    msg="$$fail of $$all $$tests failed.  ";			\
+	    exit=false;;						\
+	  fail=*:xpass=*:xfail=*)					\
+	    msg="$$failures of $$all $$tests did not behave as expected"; \
+	    if test "$$xpass" -eq 1; then xpasses=pass;			\
+	    else xpasses=passes; fi;					\
+	    msg="$$msg ($$xpass unexpected $$xpasses).  ";		\
+	    exit=false;;						\
+	  *)								\
+	    echo >&2 "incorrect case"; exit 4;;				\
+	esac;								\
+	if test "$$skip" -ne 0; then					\
+	  if test "$$skip" -eq 1; then					\
+	    msg="$$msg($$skip test was not run).  ";			\
+	  else								\
+	    msg="$$msg($$skip tests were not run).  ";			\
+	  fi;								\
+	fi;								\
+	{								\
+	  echo "$(PACKAGE_STRING): $(subdir)/$(TEST_SUITE_LOG)" |	\
+	    $(am__rst_title);						\
+	  echo "$$msg";							\
+	  echo;								\
+	  echo ".. contents:: :depth: 2";				\
+	  echo;								\
+	  for f in $$list; do						\
+	    read line < $$f;						\
+	    case $$line in						\
+	      PASS:*|XFAIL:*);;						\
+	      *) echo; cat $$f;;					\
+	    esac;							\
+	  done;								\
+	} >$(TEST_SUITE_LOG).tmp;					\
+	mv $(TEST_SUITE_LOG).tmp $(TEST_SUITE_LOG);			\
+	if test "$$failures" -ne 0; then				\
+	  msg="$${msg}See $(subdir)/$(TEST_SUITE_LOG).  ";		\
+	  if test -n "$(PACKAGE_BUGREPORT)"; then			\
+	    msg="$${msg}Please report to $(PACKAGE_BUGREPORT).  ";	\
+	  fi;								\
+	fi;								\
+	test x"$$VERBOSE" = x || $$exit || cat $(TEST_SUITE_LOG);	\
+	$(am__tty_colors);						\
+	if $$exit; then							\
+	  echo $(ECHO_N) "$$grn$(ECHO_C)";				\
+	 else								\
+	  echo $(ECHO_N) "$$red$(ECHO_C)";				\
+	fi;								\
+	echo "$$msg" | $(am__text_box);					\
+	echo $(ECHO_N) "$$std$(ECHO_C)";				\
+	$$exit
+
+RECHECK_LOGS = $(TEST_LOGS)
+
+# Run all the tests.
+check-TESTS:
+## Expand $(RECHECK_LOGS) only once, to avoid exceeding line length limits.
+	@list='$(RECHECK_LOGS)'; test -z "$$list" || rm -f $$list
+## We always have to remove TEST_SUITE_LOG, to ensure its rule is run
+## in any case even in lazy mode: otherwise, if no test needs rerunning,
+## or a prior run plus reruns all happen within the same timestamp
+## (can happen with a prior `make TESTS=<subset>'),
+## then we get no log output.
+## OTOH, this means that, in the rule for `$(TEST_SUITE_LOG)', we
+## cannot use `$?' to compute the set of lazily rerun tests, lest
+## we rely on .PHONY to work portably.
+	@test -z "$(TEST_SUITE_LOG)" || rm -f $(TEST_SUITE_LOG)
+	@list='$(TEST_LOGS)';						\
+	list=`for f in $$list; do					\
+	  test .log = $$f || echo $$f;					\
+	done | tr '\012\015' '  '`;					\
+	$(MAKE) $(AM_MAKEFLAGS) $(TEST_SUITE_LOG) TEST_LOGS="$$list"
+
+AM_RECURSIVE_TARGETS += check
+
+## -------------- ##
+## Produce HTML.  ##
+## -------------- ##
+
+.log.html:
+	@list='$(RST2HTML) $$RST2HTML rst2html rst2html.py';		\
+	for r2h in $$list; do						\
+	  if ($$r2h --version) >/dev/null 2>&1; then			\
+	    R2H=$$r2h;							\
+	  fi;								\
+	done;								\
+	if test -z "$$R2H"; then					\
+	  echo >&2 "cannot find rst2html, cannot create $@";		\
+	  exit 2;							\
+	fi;								\
+	$$R2H $< >$@.tmp
+	@mv $@.tmp $@
+
+# Be sure to run check first, and then to convert the result.
+# Beware of concurrent executions.  Run "check" not "check-TESTS", as
+# check-SCRIPTS and other dependencies are rebuilt by the former only.
+# And expect check to fail.
+check-html:
+	@if $(MAKE) $(AM_MAKEFLAGS) check; then			\
+	  rv=0; else rv=$$?;					\
+	fi;							\
+	$(MAKE) $(AM_MAKEFLAGS) $(TEST_SUITE_HTML) || exit 4;	\
+	exit $$rv
+
+.PHONY: check-html
+.MAKE: check-html
+
+AM_RECURSIVE_TARGETS += check-html
+
+## -------------------- ##
+## Rechecking failures. ##
+## -------------------- ##
+
+## Rerun all FAILed or XPASSed tests.
+recheck recheck-html:
+	@target=`echo $@ | sed 's,^re,,'`;				\
+	list='$(TEST_LOGS)';						\
+	list=`for f in $$list; do					\
+	        test -f $$f || continue;				\
+	        if read line < $$f; then				\
+	          case $$line in FAIL*|XPASS*) echo $$f;; esac;		\
+	        else echo $$f; fi;					\
+	      done | tr '\012\015' '  '`;				\
+	$(MAKE) $(AM_MAKEFLAGS) $$target AM_MAKEFLAGS='$(AM_MAKEFLAGS) TEST_LOGS="'"$$list"'"'
+
+.PHONY: recheck recheck-html
+.MAKE: recheck recheck-html
+
+AM_RECURSIVE_TARGETS += recheck recheck-html
+
+else !%?PARALLEL_TESTS%
+
+check-TESTS: $(TESTS)
+	@failed=0; all=0; xfail=0; xpass=0; skip=0; \
+	srcdir=$(srcdir); export srcdir; \
+## Make sure Solaris VPATH-expands all members of this list, even
+## the first and the last one; thus the spaces around $(TESTS)
+	list=' $(TESTS) '; \
+	$(am__tty_colors); \
+	if test -n "$$list"; then \
+	  for tst in $$list; do \
+	    if test -f ./$$tst; then dir=./; \
+## Note: Solaris 2.7 seems to expand TESTS using VPATH.  That's
+## why we also try `dir='
+	    elif test -f $$tst; then dir=; \
+	    else dir="$(srcdir)/"; fi; \
+	    if $(TESTS_ENVIRONMENT) $${dir}$$tst; then \
+## Success
+	      all=`expr $$all + 1`; \
+	      case " $(XFAIL_TESTS) " in \
+	      *[\ \	]$$tst[\ \	]*) \
+		xpass=`expr $$xpass + 1`; \
+		failed=`expr $$failed + 1`; \
+		col=$$red; res=XPASS; \
+	      ;; \
+	      *) \
+		col=$$grn; res=PASS; \
+	      ;; \
+	      esac; \
+	    elif test $$? -ne 77; then \
+## Failure
+	      all=`expr $$all + 1`; \
+	      case " $(XFAIL_TESTS) " in \
+	      *[\ \	]$$tst[\ \	]*) \
+		xfail=`expr $$xfail + 1`; \
+		col=$$lgn; res=XFAIL; \
+	      ;; \
+	      *) \
+		failed=`expr $$failed + 1`; \
+		col=$$red; res=FAIL; \
+	      ;; \
+	      esac; \
+	    else \
+## Skipped
+	      skip=`expr $$skip + 1`; \
+	      col=$$blu; res=SKIP; \
+	    fi; \
+	    echo "$${col}$$res$${std}: $$tst"; \
+	  done; \
+## Prepare the banner
+	  if test "$$all" -eq 1; then \
+	    tests="test"; \
+	    All=""; \
+	  else \
+	    tests="tests"; \
+	    All="All "; \
+	  fi; \
+	  if test "$$failed" -eq 0; then \
+	    if test "$$xfail" -eq 0; then \
+	      banner="$$All$$all $$tests passed"; \
+	    else \
+	      if test "$$xfail" -eq 1; then failures=failure; else failures=failures; fi; \
+	      banner="$$All$$all $$tests behaved as expected ($$xfail expected $$failures)"; \
+	    fi; \
+	  else \
+	    if test "$$xpass" -eq 0; then \
+	      banner="$$failed of $$all $$tests failed"; \
+	    else \
+	      if test "$$xpass" -eq 1; then passes=pass; else passes=passes; fi; \
+	      banner="$$failed of $$all $$tests did not behave as expected ($$xpass unexpected $$passes)"; \
+	    fi; \
+	  fi; \
+## DASHES should contain the largest line of the banner.
+	  dashes="$$banner"; \
+	  skipped=""; \
+	  if test "$$skip" -ne 0; then \
+	    if test "$$skip" -eq 1; then \
+	      skipped="($$skip test was not run)"; \
+	    else \
+	      skipped="($$skip tests were not run)"; \
+	    fi; \
+	    test `echo "$$skipped" | wc -c` -le `echo "$$banner" | wc -c` || \
+	      dashes="$$skipped"; \
+	  fi; \
+	  report=""; \
+	  if test "$$failed" -ne 0 && test -n "$(PACKAGE_BUGREPORT)"; then \
+	    report="Please report to $(PACKAGE_BUGREPORT)"; \
+	    test `echo "$$report" | wc -c` -le `echo "$$banner" | wc -c` || \
+	      dashes="$$report"; \
+	  fi; \
+	  dashes=`echo "$$dashes" | sed s/./=/g`; \
+	  if test "$$failed" -eq 0; then \
+	    echo "$$grn$$dashes"; \
+	  else \
+	    echo "$$red$$dashes"; \
+	  fi; \
+	  echo "$$banner"; \
+	  test -z "$$skipped" || echo "$$skipped"; \
+	  test -z "$$report" || echo "$$report"; \
+	  echo "$$dashes$$std"; \
+	  test "$$failed" -eq 0; \
+	else :; fi
+
+endif !%?PARALLEL_TESTS%

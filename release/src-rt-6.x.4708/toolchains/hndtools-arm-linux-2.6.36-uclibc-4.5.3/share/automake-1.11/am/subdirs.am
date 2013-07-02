@@ -1,0 +1,111 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2003,
+## 2004, 2008, 2009 Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+RECURSIVE_TARGETS += all-recursive check-recursive installcheck-recursive
+RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
+  distclean-recursive maintainer-clean-recursive
+## All documented targets which invoke `make' recursively, or depend
+## on targets that do so.
+AM_RECURSIVE_TARGETS += $(RECURSIVE_TARGETS:-recursive=) \
+  $(RECURSIVE_CLEAN_TARGETS:-recursive=)
+
+.PHONY: $(RECURSIVE_TARGETS) $(RECURSIVE_CLEAN_TARGETS)
+.MAKE: $(RECURSIVE_TARGETS) $(RECURSIVE_CLEAN_TARGETS)
+
+# This directory's subdirectories are mostly independent; you can cd
+# into them and run `make' without going through this Makefile.
+# To change the values of `make' variables: instead of editing Makefiles,
+# (1) if the variable is set in `config.status', edit `config.status'
+#     (which will cause the Makefiles to be regenerated when you run `make');
+# (2) otherwise, pass the desired values on the `make' command line.
+
+$(RECURSIVE_TARGETS):
+## Using $failcom allows "-k" to keep its natural meaning when running a
+## recursive rule.
+	@fail= failcom='exit 1'; \
+	for f in x $$MAKEFLAGS; do \
+	  case $$f in \
+	    *=* | --[!k]*);; \
+	    *k*) failcom='fail=yes';; \
+	  esac; \
+	done; \
+	dot_seen=no; \
+	target=`echo $@ | sed s/-recursive//`; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    dot_seen=yes; \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  ($(am__cd) $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	  || eval $$failcom; \
+	done; \
+	if test "$$dot_seen" = "no"; then \
+	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
+	fi; test -z "$$fail"
+
+
+mostlyclean: mostlyclean-recursive
+clean: clean-recursive
+distclean: distclean-recursive
+maintainer-clean: maintainer-clean-recursive
+
+## We run all `clean' targets in reverse order.  Why?  It's an attempt
+## to alleviate a problem that can happen when dependencies are
+## enabled.  In this case, the .P file in one directory can depend on
+## some automatically generated header in an earlier directory.  Since
+## the dependencies are required before any target is examined, make
+## bombs.
+$(RECURSIVE_CLEAN_TARGETS):
+## Using $failcom allows "-k" to keep its natural meaning when running a
+## recursive rule.
+	@fail= failcom='exit 1'; \
+	for f in x $$MAKEFLAGS; do \
+	  case $$f in \
+	    *=* | --[!k]*);; \
+	    *k*) failcom='fail=yes';; \
+	  esac; \
+	done; \
+	dot_seen=no; \
+## For distclean and maintainer-clean we make sure to use the full
+## list of subdirectories.  We do this so that `configure; make
+## distclean' really is a no-op, even if SUBDIRS is conditional.  For
+## other clean targets this doesn't matter.
+	case "$@" in \
+	  distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \
+	  *) list='$(SUBDIRS)' ;; \
+	esac; \
+	rev=''; for subdir in $$list; do \
+	  if test "$$subdir" = "."; then :; else \
+	    rev="$$subdir $$rev"; \
+	  fi; \
+	done; \
+## Always do `.' last.
+	rev="$$rev ."; \
+	target=`echo $@ | sed s/-recursive//`; \
+	for subdir in $$rev; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  ($(am__cd) $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	  || eval $$failcom; \
+	done && test -z "$$fail"

@@ -1,0 +1,24 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright (C) 1994, 1995, 1996, 1997, 2001, 2003, 2005, 2009
+## Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%PROGRAM%%EXEEXT%: $(%XPROGRAM%_OBJECTS) $(%XPROGRAM%_DEPENDENCIES) %DIRSTAMP%
+## Remove program before linking.  Otherwise the link will fail if the
+## program is running somewhere.  FIXME: this could be a loss if
+## you're using an incremental linker.  Maybe we should think twice?
+## Or maybe not... sadly, incremental linkers are rarer than losing
+## systems.
+	@rm -f %PROGRAM%%EXEEXT%
+	%VERBOSE%$(%XLINK%) $(%XPROGRAM%_OBJECTS) $(%XPROGRAM%_LDADD) $(LIBS)
