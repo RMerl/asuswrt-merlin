@@ -206,7 +206,6 @@ endif
 ifneq ($(RTCONFIG_PROXYSTA),y)
 	rm -rf $(INSTALLDIR)/www/qis/QIS_sitesurvey_mb.htm
 ifneq ($(RTCONFIG_WIRELESSREPEATER),y)
-	rm -rf $(INSTALLDIR)/www/images/survey/radio_status.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
 endif
 endif
