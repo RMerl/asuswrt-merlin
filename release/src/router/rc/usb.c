@@ -1747,7 +1747,7 @@ void enable_gro(int interval)
 	char parm[32] = {0};
 
 	if((nvram_get_int("gro_disable")) 
-#ifndef RTCONFIG_BCMARM
+#ifdef RTCONFIG_BCMARM
 || (nvram_get_int("ctf_disable"))
 #endif
 		)
