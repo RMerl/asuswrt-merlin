@@ -31,7 +31,7 @@
 //#endif
 
 // Asuswrt does not use this feature
-//#define SPEED_REPORT
+//#define SPEED_SUPPORT
 
 #define K 1024
 #define M (1024 * 1024)
