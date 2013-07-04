@@ -94,7 +94,7 @@ typedef struct _Node {
 	uint64_t speed[MAX_NSPEED][MAX_COUNTER];
 #endif
 	uint64_t last[MAX_COUNTER];
-	char sync;
+	int sync;
 
 	TREE_ENTRY(_Node)	linkage;
 } Node;
