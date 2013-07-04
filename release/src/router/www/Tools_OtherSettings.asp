@@ -98,6 +98,9 @@ function initial() {
 	if (document.form.usb_idle_exclude.value.indexOf("c") != -1)
 		document.form.usb_idle_exclude_c.checked = true;
 
+	if ((productid == "RT-AC56U") || (productid == "RT-AC68U"))
+		$("ct_established_default").innerHTML = "Default: 432000 (5 days)";
+
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
 }
@@ -800,8 +803,8 @@ function done_validating(action){
 						<tr>
 							<th>TCP Timeout: Established</th>
 							<td>
-								<input type="text" maxlength="5" class="input_6_table" name="tcp_established" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
-								<span>Default: 1200</span>
+								<input type="text" maxlength="5" class="input_6_table" name="tcp_established" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 432000)" value="">
+								<span id="ct_established_default">Default: 1200</span>
 							</td>
 
 						</tr>
