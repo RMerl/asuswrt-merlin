@@ -83,21 +83,14 @@ function get_connections(){
 		  		<div class="formfonttitle"><#System_Log#> - Active Connections</div>
 		  		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		  		<div class="formfontdesc">This is a list of tracked connections.</div>
-				<iframe width=100% style="height:600px;"  frameborder=0 scrolling=NO src="" name="conn_frame" id="conn_frame"></iframe>
-				</td>
-			</tr>
-              
-			  <tr class="apply_gen" valign="top" height="95px">
-			  <td>
-			  	<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
-			  	</td>
-			  </tr>
-			  
-			</table>
-			</form>
+				<iframe width=100% style="height:450px;"  frameborder=0 scrolling=NO src="" name="conn_frame" id="conn_frame"></iframe>
+				<div class="apply_gen">
+			  		<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
+				</div>
 			</td>
-
-
+		  </tr>
+	    </table>
+	  </td>
         </tr>
       </table>
       <!--===================================Ending of Main Content===========================================-->
@@ -106,5 +99,6 @@ function get_connections(){
   </tr>
 </table>
 <div id="footer"></div>
+</form>
 </body>
 </html>
