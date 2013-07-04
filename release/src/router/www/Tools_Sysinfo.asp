@@ -52,8 +52,7 @@ function initial(){
 	if (odmpid != "")
 		$("model_id").innerHTML = odmpid;
 	else
-		$("model_id").innerHTML = "<% nvram_get("productid"); %>";
-
+		$("model_id").innerHTML = productid;
 	update_temperatures();
 	hwaccel_state();
 	show_etherstate();
