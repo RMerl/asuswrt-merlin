@@ -2706,7 +2706,7 @@ struct sk_buff BCMFASTPATH_HOST *tcp_tso_segment(struct sk_buff *skb, int featur
 	 * the old method since the packets are passed up to the application
 	 * layer.
 	 */
-	if (!skb->tcpf_nf) {
+	if (!skb->tcpf_nf && !(skb_shinfo(skb)->frag_list)) {
 		return skb_tcp_segment(skb, features, oldlen, thlen);
 	}
 
