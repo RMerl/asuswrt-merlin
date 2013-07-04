@@ -5,7 +5,7 @@
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 
-<title><#Web_Title#> - <#traffic_monitor#> : Realtime per IP</title>
+<title><#Web_Title#> - <#traffic_monitor#> : Realtime IPTraffic</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="tmmenu.css">
@@ -136,6 +136,7 @@ function redraw() {
 
 	sortfield = "color: #FFCC00;";
 	grid = '<table width="730px" class="FormTable_NWM">';
+	grid += '<thead class="FormTable"><tr><th colspan="8" style="color:#fff; text-align:left; font-weight:bold;">Realtime Traffic</th></tr></thead>'
 	grid += '<tr class="traffictable"><th onclick="setSort(this, 0);" style="min-width: 100px; ' + (sortColumn == 0 ? sortfield : "") + '">Host</th>';
 	grid += '<th onclick="setSort(this, 1);" style="' + (sortColumn == 1 ? sortfield : "") + '">Reception<br>(bytes/s)</th>';
 	grid += '<th onclick="setSort(this, 2);" style="' + (sortColumn == 2 ? sortfield : "") + '">Transmission<br>(bytes/s)</th>';
