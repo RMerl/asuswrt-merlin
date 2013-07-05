@@ -355,7 +355,7 @@ function submitForm(){
 		  <div class="formfontdesc"><strong>
 		  	<#FW_note#></strong>
 				<ol>
-				<li id="jffs_warning" style="display:none;"><span>WARNING: you have JFFS enabled.  Make sure you have a backup of its content, as upgrading your firmware MIGHT overwrite it!</span></li>
+				<li id="jffs_warning" style="display:none; color:#FFCC00;">WARNING: you have JFFS enabled.  Make sure you have a backup of its content, as upgrading your firmware MIGHT overwrite it!</li>
 					<li><#FW_n0#></li>
 					<li><#FW_n1#></li>
 					<li><#FW_n2#></li>
