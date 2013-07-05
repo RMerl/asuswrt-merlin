@@ -1037,11 +1037,12 @@ function show_top_status(){
 	var buildno = '<% nvram_get("buildno"); %>';
 	var firmver = '<% nvram_get("firmver"); %>'
 	var extendno = '<% nvram_get("extendno"); %>';
-	if(extendno == "") extendno="0";
-
 
 	if(swpjverno == ''){
-		showtext($("firmver"), firmver + "." + buildno + '_' + extendno.split("-g")[0]);
+		if ((extendno == "") || (extendno == "0"))
+			showtext($("firmver"), firmver + "." + buildno);
+		else
+			showtext($("firmver"), firmver + "." + buildno + '_' + extendno.split("-g")[0]);
 	}
 	else{
 		showtext($("firmver"), swpjverno + '_' + extendno);
