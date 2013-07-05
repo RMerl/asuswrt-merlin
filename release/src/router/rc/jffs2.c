@@ -56,8 +56,9 @@ _dprintf("*** jffs2: %d, %d\n", part, size);
 		nvram_set("jffs2_format", "0");
 
 		if( (model==MODEL_RTAC56U || model==MODEL_RTAC68U) ^ (!mtd_erase(JFFS_NAME)) ){
-                        error("formatting");
-                        return;
+			error("formatting");
+			nvram_commit_x();
+			return;
 		}
 
 		format = 1;
