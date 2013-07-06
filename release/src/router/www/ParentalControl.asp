@@ -780,6 +780,7 @@ function deleteRow_lantowan(r, client){
 		
     <td valign="top">
 	<div id="tabMenu" class="submenuBlock" style="*margin-top:-155px;">
+<!--
 		<table border="0" cellspacing="0" cellpadding="0">
 				<tbody>
 					<tr>
@@ -792,7 +793,7 @@ function deleteRow_lantowan(r, client){
 					</tr>
 			</tbody>
 		</table>
-	
+-->	
 	
 	</div>
 	
