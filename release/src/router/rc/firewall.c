@@ -3856,8 +3856,6 @@ write_porttrigger(FILE *fp, char *wan_if, int is_nat)
 void
 mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 {
-	char tmp[16];
-
 	if(nvram_match("qos_enable", "1")) {
 		add_iQosRules(wan_if);
 	}
@@ -3869,9 +3867,7 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	}
 
 /* For NAT loopback */
-	sprintf(tmp, "!%s", wan_if);
-
-	eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-i", tmp,
+	eval("iptables", "-t", "mangle", "-A", "PREROUTING", "!", "-i", wan_if,
 	     "-d", wan_ip, "-j", "MARK", "--set-mark", "0xd001");
 
 #ifdef CONFIG_BCMWL5
@@ -3903,7 +3899,7 @@ void
 mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 {
 	int unit;
-	char tmp[100], tmp2[16], prefix[] = "wanXXXXXXXXXX_";
+	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char *wan_if;
 
 	if(nvram_match("qos_enable", "1")) {
@@ -3934,8 +3930,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 
 		wan_if = get_wan_ifname(unit);
 
-		sprintf(tmp2, "!%s", wan_if);
-		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-i", tmp2,
+		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "!", "-i", wan_if,
 		     "-d", wan_ip, "-j", "MARK", "--set-mark", "0xd001");
 	}
 */
