@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.372.30 BETA 1 (xx-xxx-2013)
-==========================================================
+Asuswrt-Merlin - build 3.0.0.4.372.30 (7-July-2013)
+===================================================
 
 About
 -----
@@ -26,8 +26,6 @@ Supported devices are:
  * RT-N16
  * RT-N66U and RT-N66R
  * RT-AC66U and RT-AC66R
-
-Experimental support for:
  * RT-AC56U
 
 
@@ -36,7 +34,7 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on the 3.0.0.4.372 sources from Asus
+   - Based on pre-release 3.0.0.4.372 sources from Asus
    - Various bugfixes all over the place
    - Some components were updated to their latest versions, for improved stability
      and security
@@ -46,6 +44,7 @@ System:
    - Customized config files for router services
    - LED control - put your Dark Knight in Stealth Mode by turning off all LEDs
    - Entware easy setup script (alternative to Optware - the two are mutually exclusive)
+     (not available on RT-AC56U)
 
 Disk sharing:
    - Enable/disable the use of shorter share names
@@ -427,6 +426,8 @@ Note that Entware requires the JFFS partition to be enabled,
 and an ext2/ext3 formatted USB disk (NTFS and FAT32 are 
 not supported).
 
+Also note that Entware is not available for the 
+RT-AC56U.
 
 
 Source code
@@ -440,11 +441,17 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.372.30 Beta 4:
-   - NEW: Merged with 372 (code from the arm environment), with
-          some fixes to make it build properly on a mipsel router.
-   - NEW: RT-AC56U support (still beta).  Various bugs have been
-          fixed over the original FW that shipped with these routers.
+3.0.0.4.372.30:
+   - NEW: Merged with preliminary 372 code provided by Asus
+          (initialy meant for the ARM environment)
+   - NEW: RT-AC56U support.  Various bugs have been fixed 
+          over the original FW that initially shipped with these routers.
+          Thanks to Asus for providing a development sample.
+   - NEW: Added JFFS support to RT-AC56U.
+   - CHANGED: Downgraded wireless driver + CTF to build 270 version
+              (RT-N66U, fixes 5 GHz stability issues).  Note that this
+              means that HW acceleration for PPPoE is no longer available
+              for the RT-N66U, as it was new in the 5.110 SDK.
    - CHANGED: Updated iptables-1.4.x to 1.4.14 (RT-AC56U)
    - CHANGED: Brought back the Connection page under System Logs
    - CHANGED: Updated e2fsprogs to 1.42.7.  Amongst other things
@@ -453,7 +460,8 @@ History
    - CHANGED: Renamed Advanced (Per IP) Traffic monitoring for
               IPTraffic (to match the Tomato name for that same
               functionality)
-   - FIXED: GRO kills upload speed if CTF is disabled (Asus bug, RT-AC56U)
+   - FIXED: GRO kills upload speed if CTF is disabled (patched provided 
+            by Asus, RT-AC56U)
    - FIXED: Buffer overrun in NVRAM handling, leading to random crashes
             (Asus bug, RT-AC56U)
    - FIXED: NVRAM values getting corrupted or disappearing if using more
@@ -468,7 +476,6 @@ History
             OpenVPN or SSHD keys with CRLF line endings.  You should
             access the OpenVPN Keys page, click on Apply to re-save them,
             then re-create any backup you had of your router settings.
-            (Still broken as of Beta 3)
    - FIXED: Numerous bugs in ipt_account for Kernel 2.6.36 (RT-AC56U)
 
 
