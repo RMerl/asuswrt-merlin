@@ -339,7 +339,7 @@ obj-$(RTCONFIG_OPENVPN) += openvpn
 obj-$(CONFIG_LINUX26) += hotplug2
 obj-$(CONFIG_LINUX26) += udev
 
-# obj-$(RTCONFIG_ACCEL_PPTPD) += accel-pptpd 	# disable for tmp
+obj-$(RTCONFIG_ACCEL_PPTPD) += accel-pptpd
 obj-$(RTCONFIG_PPTPD) += pptpd
 
 obj-$(RTCONFIG_WEBDAV) += sqlite
