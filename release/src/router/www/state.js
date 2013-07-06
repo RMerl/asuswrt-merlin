@@ -431,7 +431,6 @@ function remove_url(){
 		remove_menu_item(5,"Advanced_OpenVPNServer_Content.asp");
 		remove_menu_item(5,"Advanced_OpenVPNClient_Content.asp");
 		remove_menu_item(5,"Advanced_OpenVPN_Keys.asp");
-		remove_menu_item(5,"Advanced_VPNStatus.asp");
 	}
 
 	if(nfsd_support == -1){
