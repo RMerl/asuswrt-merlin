@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.372.30 (7-July-2013)
-===================================================
+Asuswrt-Merlin - build 3.0.0.4.372.30.2 (xx-July-2013)
+======================================================
 
 About
 -----
@@ -441,6 +441,17 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.372.30_2:
+(note: since people always thought adding a "b" meant "beta' 
+rather than revision "b", I am switching to Asus's new 
+numbering scheme, hence "30_2" for this revised 372.30.)
+   - FIXED: NAT loopback (invalid iptable rules was silently accepted
+            by iptables)
+   - FIXED: Removed empty Yandex tab
+   - FIXED: Entware setup script missing from all builds
+   - FIXED: pptpd failing to start (was missing from build)
+
+
 3.0.0.4.372.30:
    - NEW: Merged with preliminary 372 code provided by Asus
           (initialy meant for the ARM environment)
