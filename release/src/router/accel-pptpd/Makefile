@@ -20,10 +20,13 @@ pptpd: pptpd-1.3.3/Makefile
 	(cd pptpd-1.3.3; make)
 
 pppd_plugin/Makefile: pptpd-1.3.3/Makefile
-	(cd pppd_plugin; $(CONFIGURE) --prefix=/usr PPPDIR=$(TOP)/pppd CC=mipsel-uclibc-gcc STRIP=mipsel-uclibc-strip AR=mipsel-uclibc-ar LD=mipsel-uclibc-ld NM=mipsel-uclibc-nm RANLIB=mipsel-uclibc-ranlib)
+	(cd pppd_plugin; $(CONFIGURE) --prefix=/usr PPPDIR=$(TOP)/pppd)
 
 pptpd-1.3.3/Makefile:
-	(cd pptpd-1.3.3; $(CONFIGURE) --prefix=$(INSTALLDIR)/pptpd --enable-bcrelay CC=mipsel-uclibc-gcc STRIP=mipsel-uclibc-strip AR=mipsel-uclibc-ar LD=mipsel-uclibc-ld NM=mipsel-uclibc-nm RANLIB=mipsel-uclibc-ranlib)
+	(cd pppd_plugin; $(CONFIGURE) --prefix=/usr PPPDIR=$(TOP)/pppd)
+
+pptpd-1.3.3/Makefile:
+	(cd pptpd-1.3.3; $(CONFIGURE) --prefix=$(INSTALLDIR)/pptpd --enable-bcrelay)
 
 module_install: module
 	(cd kernel/driver; make install TDIR=$(TARGETDIR))
