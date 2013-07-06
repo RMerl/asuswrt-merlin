@@ -922,7 +922,7 @@ void start_vpnserver(int serverNum)
 			fp = fopen(&buffer[0], "w");
 			chmod(&buffer[0], S_IRUSR|S_IWUSR);
 			sprintf(&buffer[0], "vpn_crt_server%d_static", serverNum);
-			fprintf(fp, "%s", nvram_safe_get(&buffer[0]));
+			fprintf(fp, "%s", get_parsed_crt(&buffer[0], buffer2));
 			fclose(fp);
 		}
 	}
