@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.372.30.2 (xx-July-2013)
-======================================================
+Asuswrt-Merlin - build 3.0.0.4.372.30.2 (7-July-2013)
+=====================================================
 
 About
 -----
@@ -442,12 +442,16 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.372.30_2:
-(note: since people always thought adding a "b" meant "beta' 
-rather than revision "b", I am switching to Asus's new 
-numbering scheme, hence "30_2" for this revised 372.30.)
+      (note: since people always thought adding a "b" meant "beta' 
+       rather than revision "b", I am switching to Asus's new 
+       numbering scheme, hence "30_2" for this revised 372.30.)
+   - NEW: Yandex DNS filtering (Experimental builds only).  This is a 
+          new feature being implemented by Asus that allows interfacing
+          with the Yandex DNS filtering system.  You can find it under
+          Parental Control.  This is untested, and a work-in-progress.
    - FIXED: NAT loopback (invalid iptable rules was silently accepted
             by iptables)
-   - FIXED: Removed empty Yandex tab
+   - FIXED: Removed empty Yandex tab from regular builds
    - FIXED: Entware setup script missing from all builds
    - FIXED: pptpd failing to start (was missing from build)
    - FIXED: OpenVPN server not starting if using a static key
