@@ -450,6 +450,8 @@ numbering scheme, hence "30_2" for this revised 372.30.)
    - FIXED: Removed empty Yandex tab
    - FIXED: Entware setup script missing from all builds
    - FIXED: pptpd failing to start (was missing from build)
+   - FIXED: OpenVPN server not starting if using a static key
+   - FIXED: Disks plugged to USB 2.0 port weren't getting mounted
 
 
 3.0.0.4.372.30:
