@@ -90,9 +90,6 @@ static int sg_err_category_new(int scsi_status, int msg_status, int
 {
 	scsi_status &= 0x7e;
 
-	/*
-	 * XXX change to return only two values - failed or OK.
-	 */
 
 	/*
 	 * checks msg_status
@@ -163,17 +160,6 @@ static int scsi_dump_sense(struct sysfs_device *dev_scsi, struct sg_io_hdr *io)
 	int i, j;
 #endif
 
-	/*
-	 * Figure out and print the sense key, asc and ascq.
-	 *
-	 * If you want to suppress these for a particular drive model, add
-	 * a black list entry in the scsi_id config file.
-	 *
-	 * XXX We probably need to: lookup the sense/asc/ascq in a retry
-	 * table, and if found return 1 (after dumping the sense, asc, and
-	 * ascq). So, if/when we get something like a power on/reset,
-	 * we'll retry the command.
-	 */
 
 	dbg("got check condition\n");
 
@@ -561,11 +547,6 @@ static int do_scsi_page83_inquiry(struct sysfs_device *dev_scsi, int fd,
 		return 1;
 	}
 	
-	/*
-	 * XXX Some devices (IBM 3542) return all spaces for an identifier if
-	 * the LUN is not actually configured. This leads to identifers of
-	 * the form: "1            ".
-	 */
 
 	/*
 	 * Model 4, 5, and (some) model 6 EMC Symmetrix devices return

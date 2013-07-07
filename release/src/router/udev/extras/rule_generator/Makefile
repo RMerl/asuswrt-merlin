@@ -65,4 +65,3 @@ uninstall-man:
 install-config:
 	@echo "no config file to install"
 .PHONY: install-config
-

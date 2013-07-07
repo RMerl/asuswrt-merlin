@@ -125,4 +125,3 @@ clean:
 	$(Q) rm -rf .shlib
 	$(Q) rm -f libvolume_id.pc
 .PHONY: clean
-

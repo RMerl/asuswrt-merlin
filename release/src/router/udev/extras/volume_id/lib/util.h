@@ -90,4 +90,3 @@ extern uint8_t *volume_id_get_buffer(struct volume_id *id, uint64_t off, size_t 
 extern void volume_id_free_buffer(struct volume_id *id);
 
 #endif /* _VOLUME_ID_UTIL_ */
-
