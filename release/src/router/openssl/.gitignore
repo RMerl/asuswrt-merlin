@@ -65,4 +65,6 @@ stamp-h1
 apps/progs.h
 crypto/*/*.S
 crypto/*/*.s
+Makefile
+crypto/opensslconf.h
 
