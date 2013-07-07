@@ -94,7 +94,7 @@ function initial(){
 	inputCtrl(document.form.wl_itxbf, 0);
 	inputCtrl(document.form.usb_usb3, 0);
 
-	if((based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC66U")){
+	if((based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" /* || based_modelid == "RT-AC66U"*/)){
 		inputCtrl(document.form.wl_ampdu_mpdu, 1);
 		inputCtrl(document.form.wl_ack_ratio, 1);
 
