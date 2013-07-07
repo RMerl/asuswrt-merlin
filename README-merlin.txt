@@ -456,6 +456,7 @@ History
    - FIXED: pptpd failing to start (was missing from build)
    - FIXED: OpenVPN server not starting if using a static key
    - FIXED: Disks plugged to USB 2.0 port weren't getting mounted
+            (RT-AC56U)
 
 
 3.0.0.4.372.30:
