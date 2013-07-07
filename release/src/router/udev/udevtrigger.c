@@ -438,7 +438,6 @@ int main(int argc, char *argv[], char *envp[])
 	};
 
 	logging_init("udevtrigger");
-	udev_config_init();
 	dbg("version %s", UDEV_VERSION);
 	sysfs_init();
 

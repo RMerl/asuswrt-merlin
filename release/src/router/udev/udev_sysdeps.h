@@ -40,39 +40,39 @@
 # define __NR_inotify_init	275
 # define __NR_inotify_add_watch	276
 # define __NR_inotify_rm_watch	277
-#elif defined(__ia64__)
+#elif defined (__ia64__)
 # define __NR_inotify_init	1277
 # define __NR_inotify_add_watch	1278
 # define __NR_inotify_rm_watch	1279
-#elif defined(__s390__)
+#elif defined (__s390__)
 # define __NR_inotify_init	284
 # define __NR_inotify_add_watch	285
 # define __NR_inotify_rm_watch	286
-#elif defined(__alpha__)
+#elif defined (__alpha__)
 # define __NR_inotify_init	444
 # define __NR_inotify_add_watch	445
 # define __NR_inotify_rm_watch	446
-#elif defined(__sparc__) || defined(__sparc64__)
+#elif defined (__sparc__) || defined (__sparc64__)
 # define __NR_inotify_init	151
 # define __NR_inotify_add_watch	152
 # define __NR_inotify_rm_watch	156
-#elif defined(__arm__)
+#elif defined (__arm__)
 # define __NR_inotify_init	__NR_SYSCALL_BASE+316
 # define __NR_inotify_add_watch	__NR_SYSCALL_BASE+317
 # define __NR_inotify_rm_watch	__NR_SYSCALL_BASE+318
-#elif defined(__sh__)
+#elif defined (__sh__)
 # define __NR_inotify_init	290
 # define __NR_inotify_add_watch	291
 # define __NR_inotify_rm_watch	292
-#elif defined(__m32r__)
+#elif defined (__m32r__)
 # define __NR_inotify_init	290
 # define __NR_inotify_add_watch	291
 # define __NR_inotify_rm_watch	292
-#elif defined(__hppa__)
+#elif defined (__hppa__)
 # define __NR_inotify_init      269
 # define __NR_inotify_add_watch 270
 # define __NR_inotify_rm_watch  271
-#elif defined(__mips__)
+#elif defined (__mips__)
 # include <sgidefs.h>
 # if _MIPS_SIM == _MIPS_SIM_ABI32
 #  define __NR_Linux             4000
@@ -159,8 +159,7 @@ static inline int inotify_add_watch(int fd, const char *name, uint32_t mask)
 #endif
 
 #ifndef SO_RCVBUFFORCE
-#if defined(__alpha__) || defined(__hppa__) || defined(__sparc__) || \
-	defined(__sparc_v9__)
+#if defined(__alpha__) || defined(__hppa__) || defined(__sparc__) || defined(__sparc_v9__)
 #define SO_RCVBUFFORCE 0x100b
 #else
 #define SO_RCVBUFFORCE 33

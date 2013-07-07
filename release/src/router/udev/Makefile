@@ -53,9 +53,6 @@ PROGRAMS = \
 	test-udev			\
 	udevstart
 
-# We only need udevtrigger for now
-PROGRAMS = udevtrigger
-
 HEADERS = \
 	udev.h				\
 	udevd.h				\
@@ -120,7 +117,7 @@ CFLAGS		+= -g -Wall -pipe -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64
 WARNINGS	= -Wstrict-prototypes -Wsign-compare -Wshadow \
 		  -Wchar-subscripts -Wmissing-declarations -Wnested-externs \
 		  -Wpointer-arith -Wsign-compare -Wmissing-prototypes
-CFLAGS		+= $(WARNINGS)
+CFLAGS		+= $(WARNINGS) $(EXTRACFLAGS)
 
 LDFLAGS += -Wl,-warn-common
 
@@ -161,18 +158,20 @@ else
 endif
 export E Q
 
-.DEFAULT: all
+all: $(PROGRAMS)
+	$(Q) extras="$(EXTRAS)"; for target in $$extras; do \
+		$(MAKE) CC="$(CC)" \
+			CFLAGS="$(CFLAGS)" \
+			LD="$(LD)" \
+			LDFLAGS="$(LDFLAGS)" \
+			AR="$(AR)" \
+			RANLIB="$(RANLIB)" \
+			LIB_OBJS="$(LIB_OBJS)" \
+			LIBUDEV="$(PWD)/$(LIBUDEV)" \
+			-C $$target $@ || exit 1; \
+	done;
 .PHONY: all
-all: $(PROGRAMS) $(EXTRAS)
-
-.PHONY: $(EXTRAS)
-$(EXTRAS):
-	$Q+$(MAKE) -C $@ all \
-		CC="$(CC)" CFLAGS="$(CFLAGS)" \
-		LD="$(LD)" LDFLAGS="$(LDFLAGS)" \
-		AR="$(AR)" RANLIB="$(RANLIB)" \
-		LIB_OBJS="$(LIB_OBJS)" \
-		LIBUDEV="$(PWD)/$(LIBUDEV)"
+.DEFAULT: all
 
 # clear implicit rules
 .SUFFIXES:
@@ -203,13 +202,12 @@ udev_version.h:
 	$(Q) echo \#define UDEV_RULES_DIR	\"$(configdir)/rules.d\" >> $@
 
 # man pages
-.PRECIOUS: %.8
 %.8 %.7: %.xml
 	$(E) "  XMLTO   " $@
 	$(Q) xmlto man $?
+.PRECIOUS: %.8
 
-.PHONY: clean
-clean: $(addprefix clean-,$(EXTRAS))
+clean:
 	$(E) "  CLEAN   "
 	$(Q) - find . -type f -name '*.orig' -print0 | xargs -0r rm -f
 	$(Q) - find . -type f -name '*.rej' -print0 | xargs -0r rm -f
@@ -222,14 +220,11 @@ clean: $(addprefix clean-,$(EXTRAS))
 	$(Q) - rm -f core $(PROGRAMS) $(GEN_HEADERS)
 	$(Q) - rm -f udev-$(VERSION).tar.gz
 	$(Q) - rm -f udev-$(VERSION).tar.bz2
+	@ extras="$(EXTRAS)"; for target in $$extras; do \
+		$(MAKE) -C $$target $@ || exit 1; \
+	done;
+.PHONY: clean
 
-clean-%:
-	+$(MAKE) -C $(patsubst clean-%,%,$@) clean
-
-.PHONY: install
-install: all install-bin
-
-.PHONY: install-config
 install-config:
 	$(INSTALL) -d $(DESTDIR)$(configdir)/rules.d
 	@ if [ ! -r $(DESTDIR)$(configdir)/udev.conf ]; then \
@@ -243,9 +238,9 @@ install-config:
 	@ extras="$(EXTRAS)"; for target in $$extras; do \
 		$(MAKE) -C $$target $@ || exit 1; \
 	done;
+.PHONY: install-config
 
-.PHONY: install-man
-install-man: $(addprefix install-,$(EXTRAS))
+install-man:
 	$(INSTALL_DATA) -D udev.7 $(DESTDIR)$(mandir)/man7/udev.7
 	$(INSTALL_DATA) -D udevinfo.8 $(DESTDIR)$(mandir)/man8/udevinfo.8
 	$(INSTALL_DATA) -D udevtest.8 $(DESTDIR)$(mandir)/man8/udevtest.8
@@ -254,16 +249,30 @@ install-man: $(addprefix install-,$(EXTRAS))
 	$(INSTALL_DATA) -D udevsettle.8 $(DESTDIR)$(mandir)/man8/udevsettle.8
 	$(INSTALL_DATA) -D udevmonitor.8 $(DESTDIR)$(mandir)/man8/udevmonitor.8
 	- ln -f -s udevd.8 $(DESTDIR)$(mandir)/man8/udevcontrol.8
+	@extras="$(EXTRAS)"; for target in $$extras; do \
+		$(MAKE) -C $$target $@ || exit 1; \
+	done;
+.PHONY: install-man
 
-.PHONY: install-udevtrigger
+uninstall-man:
+	- rm -f $(DESTDIR)$(mandir)/man7/udev.7
+	- rm -f $(DESTDIR)$(mandir)/man8/udevinfo.8
+	- rm -f $(DESTDIR)$(mandir)/man8/udevtest.8
+	- rm -f $(DESTDIR)$(mandir)/man8/udevd.8
+	- rm -f $(DESTDIR)$(mandir)/man8/udevtrigger.8
+	- rm -f $(DESTDIR)$(mandir)/man8/udevsettle.8
+	- rm -f $(DESTDIR)$(mandir)/man8/udevmonitor.8
+	- rm -f $(DESTDIR)$(mandir)/man8/udevcontrol.8
+	@ extras="$(EXTRAS)"; for target in $$extras; do \
+		$(MAKE) -C $$target $@ || exit 1; \
+	done;
+.PHONY: uninstall-man
+
 install-udevtrigger:
 	$(INSTALL) -d $(DESTDIR)$(udevdir)
-	$(INSTALL) -d $(DESTDIR)$(configdir)
-	$(INSTALL_DATA) etc/udev/udev.conf $(DESTDIR)$(configdir)
 	$(INSTALL_PROGRAM) -D udevtrigger $(DESTDIR)$(sbindir)/udevtrigger
 	$(STRIP) $(DESTDIR)$(sbindir)/udevtrigger
 
-.PHONY: install-bin
 install-bin:
 	$(INSTALL) -d $(DESTDIR)$(udevdir)
 	$(INSTALL_PROGRAM) -D udevd $(DESTDIR)$(sbindir)/udevd
@@ -273,30 +282,16 @@ install-bin:
 	$(INSTALL_PROGRAM) -D udevmonitor $(DESTDIR)$(usrsbindir)/udevmonitor
 	$(INSTALL_PROGRAM) -D udevinfo $(DESTDIR)$(usrbindir)/udevinfo
 	$(INSTALL_PROGRAM) -D udevtest $(DESTDIR)$(usrbindir)/udevtest
+	@extras="$(EXTRAS)"; for target in $$extras; do \
+		$(MAKE) -C $$target $@ || exit 1; \
+	done;
 ifndef DESTDIR
 	- killall udevd
 	- rm -rf /dev/.udev
 	- $(sbindir)/udevd --daemon
 endif
+.PHONY: install-bin
 
-install-%:
-	+$(MAKE) -C $(patsubst install-%,%,$@) install
-
-.PHONY: uninstall
-uninstall: uninstall-bin uninstall-man
-
-.PHONY: uninstall-man
-uninstall-man: $(addprefix uninstall-,$(EXTRAS))
-	- rm -f $(DESTDIR)$(mandir)/man7/udev.7
-	- rm -f $(DESTDIR)$(mandir)/man8/udevinfo.8
-	- rm -f $(DESTDIR)$(mandir)/man8/udevtest.8
-	- rm -f $(DESTDIR)$(mandir)/man8/udevd.8
-	- rm -f $(DESTDIR)$(mandir)/man8/udevtrigger.8
-	- rm -f $(DESTDIR)$(mandir)/man8/udevsettle.8
-	- rm -f $(DESTDIR)$(mandir)/man8/udevmonitor.8
-	- rm -f $(DESTDIR)$(mandir)/man8/udevcontrol.8
-
-.PHONY: uninstall-bin
 uninstall-bin:
 	- rm -f $(DESTDIR)$(sbindir)/udevd
 	- rm -f $(DESTDIR)$(sbindir)/udevtrigger
@@ -312,23 +307,23 @@ endif
 	@extras="$(EXTRAS)"; for target in $$extras; do \
 		$(MAKE) -C $$target $@ || exit 1; \
 	done;
+.PHONY: uninstall-bin
 
-uninstall-%:
-	+$(MAKE) -C $(patsubst uninstall-%,%,$@) uninstall
+install: all install-bin
+.PHONY: install
 
-.PHONY: test tests
+uninstall: uninstall-bin uninstall-man
+.PHONY: uninstall
 
 test tests: all
 	@ cd test && ./udev-test.pl
 	@ cd test && ./udevstart-test.pl
+.PHONY: test tests
 
-.PHONY: buildtest
 buildtest:
 	test/simple-build-check.sh
+.PHONY: buildtest
 
-
-.PHONY: ChangeLog
-.PRECIOUS: ChangeLog
 ChangeLog:
 	head -1 $@ | grep -q "to v$(shell echo $$(($(VERSION) - 1)))"
 	@ mv $@ $@.tmp
@@ -341,9 +336,9 @@ ChangeLog:
 	@ cat $@.tmp >> $@
 	@ rm $@.tmp
 	head -1 $@ | grep -q "to v$(VERSION)"
+.PHONY: ChangeLog
+.PRECIOUS: ChangeLog
 
-
-.PHONY: release
 release:
 	$(Q) - rm -f udev-$(VERSION).tar.gz
 	$(Q) - rm -f udev-$(VERSION).tar.bz2
@@ -354,14 +349,14 @@ release:
 	@ echo
 	git-archive --format=tar --prefix=udev-$(VERSION)/ HEAD | gzip -9v > udev-$(VERSION).tar.gz
 	git-archive --format=tar --prefix=udev-$(VERSION)/ HEAD | bzip2 -9v > udev-$(VERSION).tar.bz2
+.PHONY: release
 
-
-.PHONY: gcov-all
 gcov-all:
 	$(MAKE) clean all USE_GCOV=true
 	@ echo
 	@ echo "binaries built with gcov support."
 	@ echo "run the tests and analyze with 'make udev_gcov.txt'"
+.PHONY: gcov-all
 
 # see docs/README-gcov_for_udev
 udev_gcov.txt: $(wildcard *.gcda) $(wildcard *.gcno)

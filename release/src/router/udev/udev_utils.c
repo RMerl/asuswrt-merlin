@@ -219,3 +219,4 @@ extern gid_t lookup_group(const char *group)
 
 	return gid;
 }
+
