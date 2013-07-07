@@ -7,6 +7,7 @@ config.log
 config.status
 libtool
 doc/doxygen.conf
+doc/README.html
 examples/testd
 libdaemon/libdaemon.la
 .libs
