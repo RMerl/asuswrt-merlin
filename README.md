@@ -10,12 +10,11 @@ for people who prefer the original firmware featureset.
 
 At this time, the supported devices are:
 
+- RT-N16
+- RT-AC56U
 - RT-N66U
 - RT-AC66U
 
-
-Also available in experimental (untested) state:
-- RT-N16
 
 Firmware builds can be downloaded from the official download site:
 
