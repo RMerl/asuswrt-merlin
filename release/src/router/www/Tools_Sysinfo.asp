@@ -89,7 +89,7 @@ function hwaccel_state(){
 			if ('<% nvram_get("sw_mode"); %>' == '2') code += 'Repeater mode, ';
 			if ('<% nvram_get("url_enable_x"); %>' == '1') code += 'URL filtering, ';
 			if ('<% nvram_get("keyword_enable_x"); %>' == '1') code += 'Keyword filtering, ';
-			if ('<% nvram_get("ipv6_service"); %>' != 'disabled') code += 'IPv6, ';
+			if (('<% nvram_get("ipv6_service"); %>' != 'disabled') && ((productid == "RT-AC56U") || (productid == "RT-AC68U"))) code += 'IPv6, ';
 
 			// We're disabled but we don't know why
 			if (code.slice(-2) == "  ") code += "&lt;unknown&gt;, ";
