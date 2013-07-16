@@ -676,6 +676,11 @@ void start_vpnserver(int serverNum)
 				sprintf(&buffer[0], "vpn_server%d_r2", serverNum);
 				fprintf(fp, "%s", nvram_safe_get(&buffer[0]));
 			}
+			else
+			{
+				fprintf(fp, "\npush \"route 0.0.0.0 255.255.255.255 net_gateway\"");
+			}
+
 			fprintf(fp, "\n");
 		}
 	}
