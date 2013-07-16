@@ -442,12 +442,17 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.372.31:
-   - NEW: Added support for newest RT-N66U hardware revision.
-          This router has a new model of flash, you can NOT
-          use any older FW on these. (RT-N66U)
    - FIXED: Sysinfo page was reporting IPv6 as reason for
             CTF to be disabled - since 372 that is only true
             for ARM devices.
+   - FIXED: OpenVPN Server in TAP mode + DHCP wasn't routing
+            properly (DHCP was overruling the default GW)
+
+
+3.0.0.4.372_30_3:
+   - NEW: Added support for newest RT-N66U hardware revision.
+          This router has a new model of flash, you can NOT
+          use any older FW on these. (RT-N66U)
 
 
 3.0.0.4.372.30_2:
