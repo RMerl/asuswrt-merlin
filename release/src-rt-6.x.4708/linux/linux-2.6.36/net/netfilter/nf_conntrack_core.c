@@ -306,13 +306,13 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 		ipc_entry.pppoe_sid = 0xffff;
 	}
 
-
 	if (ipc_entry.ppp_ifp){
 		struct net_device  *pppox_tx_dev=NULL;
 		ctf_ppp_t ctfppp;
-		if (ppp_get_conn_pkt_info(ipc_entry.ppp_ifp,&ctfppp)){
+
+
+		if (ppp_get_conn_pkt_info(ipc_entry.ppp_ifp,&ctfppp))
 			return;
-		}
 		else {
 			if(ctfppp.psk.pppox_protocol == PX_PROTO_OE){
 				if (skb_dst(skb)->dev->flags & IFF_POINTOPOINT) {
@@ -328,10 +328,9 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 			}
 			else
 				return;
-			
+
 			/* For vlan interfaces fill the vlan id and the tag/untag actions */
 			if(pppox_tx_dev){
-		
 				if(!CTFQOS_ULDL_DIFFIF(kcih)){	
 					if (pppox_tx_dev ->priv_flags & IFF_802_1Q_VLAN) {
 						ipc_entry.txif = (void *)vlan_dev_real_dev(pppox_tx_dev);
@@ -347,18 +346,11 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 					ipc_entry.txif = pppox_tx_dev;
 					ipc_entry.action |= CTF_ACTION_UNTAG;
 				}					
-				
-				
-				
-				
-				
 			}
-			
-			}
-		}	
+		}
+	}
 
 #endif /* CTF_PPPOE */
-
 
 	if (kcih->ipc_suspend) {
 		/* The default action is suspend */

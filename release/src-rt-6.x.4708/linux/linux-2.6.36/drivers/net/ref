@@ -1,0 +1,213 @@
+1d0
+< /* Modified by Broadcom Corp. Portions Copyright (c) Broadcom Corp, 2012. */
+44a44
+> #include <linux/smp_lock.h>
+97c97
+< #define PF_TO_X(pf, X)		container_of(pf, X, file)
+---
+> #define PF_TO_X(pf, X)		((X *)((char *)(pf) - offsetof(X, file)))
+100a101
+> #define ROUNDUP(n, x)          (((n) + (x) - 1) / (x))
+104c105
+< #endif 
+---
+> #endif
+119a121
+> 	int             mru_alloc;      /* MAX(1500,MRU) for dev_alloc_skb() */
+150c152
+< 	channel_t		*ctfpch;
+---
+> 	channel_t               *ctfpch;
+156,157c158
+<  * SC_MULTILINK, SC_MP_SHORTSEQ, SC_MP_XSHORTSEQ, SC_COMP_TCP, SC_REJ_COMP_TCP,
+<  * SC_MUST_COMP
+---
+>  * SC_MULTILINK, SC_MP_SHORTSEQ, SC_MP_XSHORTSEQ, SC_COMP_TCP, SC_REJ_COMP_TCP.
+163c164
+< 			 |SC_COMP_TCP|SC_REJ_COMP_TCP|SC_MUST_COMP)
+---
+> 			 |SC_COMP_TCP|SC_REJ_COMP_TCP)
+656c657,659
+< 		ppp->mru = val;
+---
+> 		ppp->mru_alloc = ppp->mru = val;
+> 	        if (ppp->mru_alloc < PPP_MRU)
+>  	            ppp->mru_alloc = PPP_MRU;   /* increase for broken peers */
+1082,1131d1084
+< static inline struct sk_buff *
+< pad_compress_skb(struct ppp *ppp, struct sk_buff *skb)
+< {
+< 	struct sk_buff *new_skb;
+< 	int len;
+< 	int new_skb_size = ppp->dev->mtu +
+< 		ppp->xcomp->comp_extra + ppp->dev->hard_header_len;
+< 	int compressor_skb_size = ppp->dev->mtu +
+< 		ppp->xcomp->comp_extra + PPP_HDRLEN;
+< 	new_skb = alloc_skb(new_skb_size, GFP_ATOMIC);
+< 	if (!new_skb) {
+< 		if (net_ratelimit())
+< 			printk(KERN_ERR "PPP: no memory (comp pkt)\n");
+< 		return NULL;
+< 	}
+< 	if (ppp->dev->hard_header_len > PPP_HDRLEN)
+< 		skb_reserve(new_skb,
+< 			    ppp->dev->hard_header_len - PPP_HDRLEN);
+< 
+< 	/* compressor still expects A/C bytes in hdr */
+< 	len = ppp->xcomp->compress(ppp->xc_state, skb->data - 2,
+< 				   new_skb->data, skb->len + 2,
+< 				   compressor_skb_size);
+< 	if (len > 0 && (ppp->flags & SC_CCP_UP)) {
+< 		kfree_skb(skb);
+< 		skb = new_skb;
+< 		skb_put(skb, len);
+< 		skb_pull(skb, 2);	/* pull off A/C bytes */
+< 	} else if (len == 0) {
+< 		/* didn't compress, or CCP not up yet */
+< 		kfree_skb(new_skb);
+< 		new_skb = skb;
+< 	} else {
+< 		/*
+< 		 * (len < 0)
+< 		 * MPPE requires that we do not send unencrypted
+< 		 * frames.  The compressor will return -1 if we
+< 		 * should drop the frame.  We cannot simply test
+< 		 * the compress_proto because MPPE and MPPC share
+< 		 * the same number.
+< 		 */
+< 		if (net_ratelimit())
+< 			printk(KERN_ERR "ppp: compressor dropped pkt\n");
+< 		kfree_skb(skb);
+< 		kfree_skb(new_skb);
+< 		new_skb = NULL;
+< 	}
+< 	return new_skb;
+< }
+< 
+1211a1165,1173
+>                 if (CCP_CODE(skb->data+2) == CCP_RESETACK
+>                     && (ppp->xcomp->compress_proto == CI_MPPE
+>                         || ppp->xcomp->compress_proto == CI_LZS)) {
+>                     --ppp->dev->stats.tx_packets;
+>                     ppp->dev->stats.tx_bytes -= skb->len - 2;
+>                     kfree_skb(skb);
+>                     return;
+>                }
+> 
+1218,1220c1180,1193
+< 		if (!(ppp->flags & SC_CCP_UP) && (ppp->flags & SC_MUST_COMP)) {
+< 			if (net_ratelimit())
+< 				printk(KERN_ERR "ppp: compression required but down - pkt dropped.\n");
+---
+>                 int comp_ovhd = 0;
+>                 /* 
+>                  * because of possible data expansion when MPPC or LZS
+>                  * is used, allocate compressor's buffer 12.5% bigger
+>                  * than MTU
+>                  */
+>                 if (ppp->xcomp->compress_proto == CI_MPPE)
+>                     comp_ovhd = ((ppp->dev->mtu * 9) / 8) + 1 + MPPE_OVHD;
+>                 else if (ppp->xcomp->compress_proto == CI_LZS)
+>                     comp_ovhd = ((ppp->dev->mtu * 9) / 8) + 1 + LZS_OVHD;
+>                 new_skb = alloc_skb(ppp->dev->mtu + ppp->dev->hard_header_len
+>                                     + comp_ovhd, GFP_ATOMIC);
+>                 if (new_skb == 0) {
+>                         printk(KERN_ERR "PPP: no memory (comp pkt)\n");
+1222,1224c1195,1222
+< 		}
+< 		skb = pad_compress_skb(ppp, skb);
+< 		if (!skb)
+---
+> 	 	}
+>                 if (ppp->dev->hard_header_len > PPP_HDRLEN)
+>                         skb_reserve(new_skb,
+>                                     ppp->dev->hard_header_len - PPP_HDRLEN);
+>  
+>                 /* compressor still expects A/C bytes in hdr */
+>                 len = ppp->xcomp->compress(ppp->xc_state, skb->data - 2,
+>                                            new_skb->data, skb->len + 2,
+>                                            ppp->dev->mtu + PPP_HDRLEN);
+>                 if (len > 0 && (ppp->flags & SC_CCP_UP)) {
+>                         kfree_skb(skb);
+>                         skb = new_skb;
+>                         skb_put(skb, len);
+>                         skb_pull(skb, 2);       /* pull off A/C bytes */
+>                 } else if (len == 0) {
+>                         /* didn't compress, or CCP not up yet */
+>                         kfree_skb(new_skb);
+>                 } else {
+>                         /*
+>                          * (len < 0)
+>                          * MPPE requires that we do not send unencrypted
+>                          * frames.  The compressor will return -1 if we
+>                          * should drop the frame.  We cannot simply test
+>                          * the compress_proto because MPPE and MPPC share
+>                          * the same number.
+>                          */
+>                         printk(KERN_ERR "ppp: compressor dropped pkt\n");
+>                         kfree_skb(new_skb);
+1225a1224
+> 		}
+1682,1684d1680
+< 	if (ppp->flags & SC_MUST_COMP && ppp->rstate & SC_DC_FERROR)
+< 		goto err;
+< 
+1864c1860,1867
+< 	ppp->rstate |= SC_DC_ERROR;
+---
+>         if (ppp->rcomp->compress_proto != CI_MPPE
+>             && ppp->rcomp->compress_proto != CI_LZS) {
+>             /*
+>              * If decompression protocol isn't MPPE/MPPC or LZS, we set
+>              * SC_DC_ERROR flag and wait for CCP_RESETACK
+>              */
+>             ppp->rstate |= SC_DC_ERROR;
+>         }
+2575a2579
+> 	ppp->mru_alloc = PPP_MRU;
+2635,2637c2639,2641
+< 	if ((ctf_dev_register(kcih, dev, FALSE) != BCME_OK) ||
+< 	    (ctf_enable(kcih, dev, TRUE, NULL) != BCME_OK))
+< 		ctf_dev_unregister(kcih, dev);
+---
+>         if ((ctf_dev_register(kcih, dev, FALSE) != BCME_OK) ||
+>             (ctf_enable(kcih, dev, TRUE, NULL) != BCME_OK))
+>                 ctf_dev_unregister(kcih, dev);
+2684c2688
+< 		ctf_dev_unregister(kcih, ppp->dev);
+---
+>                 ctf_dev_unregister(kcih, ppp->dev);
+2807,2808c2811,2812
+< 	ppp->ctfpch = pch;
+< #endif		
+---
+>         ppp->ctfpch = pch;
+> #endif
+2957d2960
+< 
+2965c2968
+< 	const char *vars;
+---
+> 	const char *vars = NULL;
+2972c2975
+< 		printk("pch ==NULL/n");
+---
+> 		printk("pch ==NULL.\n");
+2975c2978
+< 	
+---
+> 
+2979c2982
+< 	
+---
+> 
+2986c2989
+< 	
+---
+> 
+2996c2999
+< 		printk("%s: Adding ppp connection:  session ID =%04x, Address=%02x:%02x:%02x:%02x:%02x:%02x\n",
+---
+> 		printk("%s: Adding ppp connection:  session ID =%04x, Address=%02x:%02x:%02x:%02x:%02x:%02x.\n",
+3020d3022
+< 

@@ -47,6 +47,7 @@
 #include <linux/device.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>
+#include <linux/ppp_async.h>
 #include <net/slhc_vj.h>
 #include <asm/atomic.h>
 
@@ -2961,12 +2962,11 @@ ppp_txstats_upd(void *pppif, struct sk_buff *skb)
 int
 ppp_get_conn_pkt_info(void *pppif, struct ctf_ppp *ctfppp){
 	struct pppox_sock *po = NULL;
+	struct asyncppp *ap = NULL;
 	struct sock *sk = NULL;
 	struct ppp *ppp = NULL;
 	struct channel *pch = NULL;
 	struct ppp_net *pn;
-	const char *vars = NULL;
-
 
 	ppp = (struct ppp *)netdev_priv((const struct net_device *)pppif);
 	if(ppp) pch = ppp->ctfpch;
@@ -2976,11 +2976,11 @@ ppp_get_conn_pkt_info(void *pppif, struct ctf_ppp *ctfppp){
 		return (BCME_ERROR);
 	}
 
-	if(strstr(getvar(vars, "wan_proto"),"l2tp")){
-		return (BCME_ERROR);
-	}
-
 	po = pppox_sk((struct sock *)pch->chan->private);
+	ap = (struct asyncppp *)pch->chan->private;
+
+	if(ap && ap->tty)
+		return (BCME_ERROR);
 
 	if (po == NULL){
 		return (BCME_ERROR);
@@ -2988,7 +2988,7 @@ ppp_get_conn_pkt_info(void *pppif, struct ctf_ppp *ctfppp){
 	ctfppp->psk.po = po;
 
 	sk = po->chan.private;
-	if(sk && sizeof(sk) > sizeof(struct sock_common)){
+	if(sk /*&& sizeof(sk) > sizeof(struct sock_common)*/){
 		ctfppp->psk.pppox_protocol = sk->sk_protocol;
 		switch (sk->sk_protocol){
 		case PX_PROTO_OE:
