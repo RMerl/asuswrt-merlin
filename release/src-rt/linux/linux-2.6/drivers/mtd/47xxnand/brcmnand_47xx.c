@@ -1779,7 +1779,6 @@ static void brcmnand_resume(struct mtd_info *mtd)
 
 struct mtd_partition brcmnand_parts[5] = {{0}};
 
-
 // Minimum number of blocks for jffs2 fs
 #define PART_JFFS2_MIN 5
 // Max size = 32 MB
@@ -1835,20 +1834,19 @@ struct mtd_partition *init_brcmnand_mtd_partitions(struct mtd_info *mtd, size_t 
 #endif
 	}
 
-	jffssize = size - (NFL_BBT_SIZE * 2);
-	if (jffssize > (mtd->erasesize * PART_JFFS2_MIN)) {
+        jffssize = size - (NFL_BBT_SIZE * 2);
+        if (jffssize > (mtd->erasesize * PART_JFFS2_MIN)) {
 
-		if (jffssize > PART_JFFS2_MAXSIZE)
-			jffssize = PART_JFFS2_MAXSIZE;
+                if (jffssize > PART_JFFS2_MAXSIZE)
+                        jffssize = PART_JFFS2_MAXSIZE;
 
                 brcmnand_parts[j].name = "jffs2";
                 brcmnand_parts[j].offset = offset;
-		brcmnand_parts[j].size = jffssize;
+                brcmnand_parts[j].size = jffssize;
                 offset += brcmnand_parts[j].size;
                 size -= brcmnand_parts[j].size;
                 j++;
-	}
-
+        }
 
 	size -= NFL_BBT_SIZE;
 	if (size <= 0) {

@@ -89,6 +89,7 @@ struct parport_splink_device_info {
 	char model[MAX_MODEL];
 	char description[MAX_DESCRIPT];
 };
+#if 0
 static char *usblp_status_type[MAX_STATUS_TYPE]={ "Lexmark", "Canon", "Hp", "Epson", "EPSON", NULL};
 static int usblp_status_maping[MAX_STATUS_TYPE][4]={ {0,0,0,0},
 				       		     {0, LP_POUTPA, LP_PERRORP, LP_PBUSY},
@@ -96,7 +97,7 @@ static int usblp_status_maping[MAX_STATUS_TYPE][4]={ {0,0,0,0},
 				       		     {0,0,0,0},
 				       		     {0,0,0,0},
 				       		     {0,0,0,0}};
-			       	       	       
+#endif
 static struct parport_splink_device_info usblpid_info;
 struct parport_splink_device_info prn_info_tmp, *prn_info; // Added by JYWeng 20031212:
 char *strunknown="unknown"; // Added by JYWeng 20031212:
@@ -639,7 +640,6 @@ out:
 
 static void usblp_cleanup (struct usblp *usblp)
 {
-	struct usb_device *dev = usblp->dev;
 #ifdef N13U_HOTPLUG
 	char usb_path_nvram[10];
 	char nvram_name[64];
@@ -716,7 +716,7 @@ static long usblp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	struct usblp *usblp = file->private_data;
 //JYWeng 20031212: set this as global	struct parport_splink_device_info prn_info_tmp, *prn_info; // Added by PaN
-	struct print_buffer user_buf_tmp, *user_buf; // Added by PaN
+	struct print_buffer *user_buf; // Added by PaN
 //JYWeng 20031212: set this as global	char *strtmp, *str_dev_id, *strunknown="unknown"; // Added by PaN
 	char *strtmp, *str_dev_id; // Added by PaN: JYWeng 20031212: modified from the above
 	//int i, unk=0; // Added by PaN

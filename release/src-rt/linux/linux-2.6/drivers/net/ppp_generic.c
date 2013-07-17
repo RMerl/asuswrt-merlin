@@ -45,6 +45,7 @@
 #include <linux/stddef.h>
 #include <linux/device.h>
 #include <linux/mutex.h>
+#include <linux/ppp_async.h>
 #include <net/slhc_vj.h>
 #include <asm/atomic.h>
 
@@ -2895,6 +2896,8 @@ ppp_rxstats_upd(void *pppif, struct sk_buff *skb)
 	if(pppif == NULL || skb == NULL)
 		return;
 	struct ppp *ppp = ((struct net_device *)pppif)->priv;
+	if(ppp == NULL)
+		return;
 	++ppp->stats.rx_packets;
 	ppp->stats.rx_bytes += skb->len;
 	ppp->last_recv = jiffies;
@@ -2906,6 +2909,8 @@ ppp_txstats_upd(void *pppif, struct sk_buff *skb)
 	if(pppif == NULL || skb == NULL)
 		return;
 	struct ppp *ppp = ((struct net_device *)pppif)->priv;
+	if(ppp == NULL)
+		return;
 	++ppp->stats.tx_packets;
 	ppp->stats.tx_bytes += skb->len;
 	ppp->last_xmit = jiffies;
@@ -2915,6 +2920,7 @@ ppp_txstats_upd(void *pppif, struct sk_buff *skb)
 int
 ppp_get_conn_pkt_info(int unit, struct ctf_ppp *ctfppp){
 	struct pppox_sock *po = NULL;
+	struct asyncppp *ap = NULL;
 	struct sock *sk = NULL;
 	struct ppp *ppp = NULL;
 	struct channel *pch = NULL;
@@ -2922,23 +2928,16 @@ ppp_get_conn_pkt_info(int unit, struct ctf_ppp *ctfppp){
 
 	ppp = ppp_find_unit(unit);
 	if(ppp) pch = ppp->ctfpch;
-	/*
-	spin_lock_bh(&all_channels_lock);
-	pch = ppp_find_channel(unit);
-	spin_unlock_bh(&all_channels_lock);
-	*/
-
 
 	if (pch == NULL){
 		return (BCME_ERROR);
 	}
-#if 0
-	if(strstr(getvar(vars, "wan_proto"),"l2tp")){
-		ctfppp->psk.pppox_protocol = PX_PROTO_OL2TP;
-		return (BCME_ERROR);
-	}
-#endif
+
 	po = pppox_sk((struct sock *)pch->chan->private);
+	ap = (struct asyncppp *)pch->chan->private;
+
+	if(ap && ap->tty)
+		return (BCME_ERROR);
 
 	if (po == NULL){
 		return (BCME_ERROR);
@@ -2946,7 +2945,7 @@ ppp_get_conn_pkt_info(int unit, struct ctf_ppp *ctfppp){
 	ctfppp->psk.po = po;
 	
 	sk = po->chan.private;
-	if(sk){
+	if(sk /*&& sizeof(sk) > sizeof(struct sock_common)*/){
 		ctfppp->psk.pppox_protocol = sk->sk_protocol;
 		switch (sk->sk_protocol){
 		case PX_PROTO_OE:
