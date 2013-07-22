@@ -8398,6 +8398,10 @@ struct ej_handler ej_handlers[] = {
 	{ "modify_sharedfolder", ej_modify_sharedfolder},	/* no ccc*/
 	{ "set_share_mode", ej_set_share_mode},
 	{ "initial_folder_var_file", ej_initial_folder_var_file},
+#ifdef RTCONFIG_DISK_MONITOR
+        { "apps_fsck_ret", ej_apps_fsck_ret},
+        { "apps_fsck_log", ej_apps_fsck_log},
+#endif
 	{ "apps_info", ej_apps_info},
 	{ "apps_state_info", ej_apps_state_info},
 	{ "apps_action", ej_apps_action},
