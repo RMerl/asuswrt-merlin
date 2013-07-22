@@ -54,4 +54,7 @@ nvram show|grep dns
 echo ">"
 echo "syslog>"
 cat /tmp/syslog.log
+echo ">"
+echo "usblog>"
+cat /tmp/usb.log
 

@@ -34,27 +34,18 @@
 
 #ifdef RTCONFIG_RALINK
 #include <ralink.h>
+#include <flash_mtd.h>
 #endif
 
 #ifdef RTCONFIG_RALINK_RT3052
 #include <ra3052.h>
 #endif
 
-#if defined(RTN14U)
-#ifdef HWNAT_FIX
-#include <sys/shm.h>
-#include <sys/ipc.h>
-int shm_client_info_id;
-void *shared_client_info=(void *) 0;
-int *hwnat_rst_unlock=0;
-#endif
-#endif 
-
 void init_devs(void)
 {
 #define MKNOD(name,mode,dev)	if(mknod(name,mode,dev)) perror("## mknod " name)
 
-#if defined(LINUX30) && !defined(RTN14U)
+#if defined(LINUX30) && !defined(RTN14U) && !defined(RTAC52U)
 	/* Below device node are used by proprietary driver.
 	 * Thus, we cannot use GPL-only symbol to create/remove device node dynamically.
 	 */
@@ -67,13 +58,12 @@ void init_devs(void)
 	MKNOD("/dev/nvram", S_IFCHR | 0x666, makedev(228, 0));
 #else
 	MKNOD("/dev/video0", S_IFCHR | 0x666, makedev(81, 0));
-#if !defined(RTN14U)
+#if !defined(RTN14U) && !defined(RTAC52U)
 	MKNOD("/dev/rtkswitch", S_IFCHR | 0x666, makedev(206, 0));
 #endif
 	MKNOD("/dev/spiS0", S_IFCHR | 0x666, makedev(217, 0));
 	MKNOD("/dev/i2cM0", S_IFCHR | 0x666, makedev(218, 0));
-#if defined(RTN14U)
-	MKNOD("/dev/rdm0", S_IFCHR | 0x666, makedev(253, 0));
+#if defined(RTN14U) || defined(RTAC52U)
 #else
 	MKNOD("/dev/rdm0", S_IFCHR | 0x666, makedev(254, 0));
 #endif
@@ -145,24 +135,6 @@ void generate_switch_para(void)
 
 static void init_switch_ralink(void)
 {
-#if defined(RTN14U)
-#ifdef HWNAT_FIX
-	shm_client_info_id = shmget((key_t)1001, sizeof(int), 0666|IPC_CREAT);
-	if (shm_client_info_id == -1){
- 		 _dprintf("hwnat rst:shmget failed1\n");
-	         goto err;
-	}
-
-        shared_client_info = shmat(shm_client_info_id,(void *) 0,0);
-	if (shared_client_info == (void *)-1){
-	   	 _dprintf("hwnat rst:shmat failed2\n");
-	         goto err;
-	}	    
-	hwnat_rst_unlock= (int *)shared_client_info;
-	*hwnat_rst_unlock=0;
-err:
-#endif	
-#endif	
 	generate_switch_para();
 
 	// TODO: replace to nvram controlled procedure later
@@ -176,9 +148,6 @@ err:
 		else
 			eval("ifconfig", nvram_safe_get("wan0_ifname"), "hw", "ether", nvram_safe_get("et0macaddr"));
 	}
-#if defined(RTN14U)
-	system("rtkswitch 8 0"); //Barton add
-#endif
 	config_switch();
 #endif
 
@@ -229,6 +198,9 @@ void config_switch()
 		dbG("software reset\n");
 		eval("rtkswitch", "27");	// software reset
 	}
+#if defined(RTN14U) || defined(RTAC52U)
+	system("rtkswitch 8 0"); //Barton add
+#endif
 
 	if (is_routing_enabled())
 	{
@@ -445,9 +417,9 @@ void config_switch()
 							system("rtkswitch 37 0");
 					}
 	
-                                        if(!strcmp(nvram_safe_get("switch_wan1tagid"), nvram_safe_get("switch_wan2tagid")))
-                                                system("rtkswitch 39 0x00030013"); //IPTV=VOIP
-                                        else
+					if(!strcmp(nvram_safe_get("switch_wan1tagid"), nvram_safe_get("switch_wan2tagid")))
+						system("rtkswitch 39 0x00030013"); //IPTV=VOIP
+					else
 						system("rtkswitch 39 0x00020012");//VoIP Port: P1 untag
 				}
 
@@ -556,6 +528,10 @@ void init_wl(void)
 	if (!is_module_loaded("iNIC_mii"))
 		modprobe("iNIC_mii", "mode=ap", "bridge=1", "miimaster=eth2", "syncmiimac=0");	// set iNIC mac address from eeprom need insmod with "syncmiimac=0"
 #endif
+#if defined (RTCONFIG_WLMODULE_MT7610_AP)
+	if (!is_module_loaded("MT7610_ap"))
+		modprobe("MT7610_ap");
+#endif
 
 	sleep(1);
 }
@@ -565,6 +541,10 @@ void fini_wl(void)
 	if (is_module_loaded("hw_nat"))
 		modprobe_r("hw_nat");
 
+#if defined (RTCONFIG_WLMODULE_MT7610_AP)
+	if (is_module_loaded("MT7610_ap"))
+		modprobe_r("MT7610_ap");
+#endif
 #if defined (RTCONFIG_WLMODULE_RT3352_INIC_MII)
 	if (is_module_loaded("iNIC_mii"))
 		modprobe_r("iNIC_mii");
@@ -581,11 +561,36 @@ void fini_wl(void)
 		modprobe_r("rt2860v2_ap");
 }
 
+
+#if ! defined(RTCONFIG_NEW_REGULATION_DOMAIN)
+static void chk_valid_country_code(char *country_code)
+{
+	if ((unsigned char)country_code[0]!=0xff)
+	{
+		//for specific power
+		if     (memcmp(country_code, "Z1", 2) == 0)
+			strcpy(country_code, "US");
+		else if(memcmp(country_code, "Z2", 2) == 0)
+			strcpy(country_code, "GB");
+		else if(memcmp(country_code, "Z3", 2) == 0)
+			strcpy(country_code, "TW");
+		else if(memcmp(country_code, "Z4", 2) == 0)
+			strcpy(country_code, "CN");
+		//for normal
+		if(memcmp(country_code, "BR", 2) == 0)
+			strcpy(country_code, "UZ");
+	}
+	else
+	{
+		strcpy(country_code, "DB");
+	}
+}
+#endif
+
 void init_syspara(void)
 {
 	unsigned char buffer[16];
-	unsigned int *src;
-	char *dst;
+	unsigned char *dst;
 	unsigned int bytes;
 	int i;
 	char macaddr[]="00:11:22:33:44:55";
@@ -636,9 +641,9 @@ void init_syspara(void)
 #endif
 
 #if defined(RTN14U) // single band
-	if (!ralink_mssid_mac_validate(macaddr))
+	if (!mssid_mac_validate(macaddr))
 #else
-	if (!ralink_mssid_mac_validate(macaddr) || !ralink_mssid_mac_validate(macaddr2))
+	if (!mssid_mac_validate(macaddr) || !mssid_mac_validate(macaddr2))
 #endif
 		nvram_set("wl_mssid", "0");
 	else
@@ -676,7 +681,8 @@ void init_syspara(void)
 	}
 
 	/* reserved for Ralink. used as ASUS country code. */
-	dst = country_code;
+#if ! defined(RTCONFIG_NEW_REGULATION_DOMAIN)
+	dst = (unsigned char*) country_code;
 	bytes = 2;
 	if (FRead(dst, OFFSET_COUNTRY_CODE, bytes)<0)
 	{
@@ -685,51 +691,94 @@ void init_syspara(void)
 	}
 	else
 	{
-		if ((unsigned char)country_code[0]!=0xff)
-		{ 
-		   //for specific power
-		        if (country_code[0] ==0x5a  && country_code[1] == 0x31)
-			{
-			   country_code[0]='U';
-			   country_code[1]='S';
-			}   
-			else if (country_code[0] ==0x5a  && country_code[1] == 0x32)
-			{
-			   country_code[0]='G';
-			   country_code[1]='B';
-			}   
-			else if (country_code[0] ==0x5a  && country_code[1] == 0x33)
-			{
-			   country_code[0]='T';
-			   country_code[1]='W';
-			}   
-			else if (country_code[0] ==0x5a  && country_code[1] == 0x34)
-			{
-			   country_code[0]='C';
-			   country_code[1]='N';
-			}   
-			   
-			nvram_set("wl_country_code", country_code);
-			nvram_set("wl0_country_code", country_code);
-			nvram_set("wl1_country_code", country_code);
-		}
-		else
-		{
-			nvram_set("wl_country_code", "DB");
-			nvram_set("wl0_country_code", "DB");
-			nvram_set("wl1_country_code", "DB");
-		}
+		chk_valid_country_code(country_code);
+		nvram_set("wl_country_code", country_code);
+		nvram_set("wl0_country_code", country_code);
+		nvram_set("wl1_country_code", country_code);
+	}
+#else	/* ! RTCONFIG_NEW_REGULATION_DOMAIN */
+	dst = buffer;
 
-		if (!strcasecmp(nvram_safe_get("wl_country_code"), "BR"))
+	bytes = MAX_REGSPEC_LEN;
+	memset(dst, 0, MAX_REGSPEC_LEN+1);
+	if(FRead(dst, REGSPEC_ADDR, bytes) < 0)
+		nvram_set("reg_spec", "FCC"); // DEFAULT
+	else
+	{
+		for (i=(MAX_REGSPEC_LEN-1);i>=0;i--) {
+			if ((dst[i]==0xff) || (dst[i]=='\0'))
+				dst[i]='\0';
+		}
+		if (dst[0]!=0x00)
+			nvram_set("reg_spec", dst);
+		else
+			nvram_set("reg_spec", "FCC"); // DEFAULT
+	}
+
+	if (FRead(dst, REG2G_EEPROM_ADDR, MAX_REGDOMAIN_LEN)<0 || memcmp(dst,"2G_CH", 5) != 0)
+	{
+		_dprintf("READ ASUS country code: Out of scope\n");
+		nvram_set("wl_country_code", "");
+		nvram_set("wl0_country_code", "DB");
+		nvram_set("wl_reg_2g", "2G_CH14");
+	}
+	else
+	{
+		for(i = 0; i < MAX_REGDOMAIN_LEN; i++)
+			if(dst[i] == 0xff || dst[i] == 0)
+				break;
+
+		dst[i] = 0;
+		nvram_set("wl_reg_2g", dst);
+		if      (strcmp(dst, "2G_CH11") == 0)
+			nvram_set("wl0_country_code", "US");
+		else if (strcmp(dst, "2G_CH13") == 0)
+			nvram_set("wl0_country_code", "GB");
+		else if (strcmp(dst, "2G_CH14") == 0)
+			nvram_set("wl0_country_code", "DB");
+		else
+			nvram_set("wl0_country_code", "DB");
+	}
+
+	if (FRead(dst, REG5G_EEPROM_ADDR, MAX_REGDOMAIN_LEN)<0 || memcmp(dst,"5G_", 3) != 0)
+	{
+		_dprintf("READ ASUS country code: Out of scope\n");
+		nvram_set("wl_country_code", "");
+		nvram_set("wl1_country_code", "DB");
+		nvram_set("wl_reg_5g", "5G_ALL");
+	}
+	else
+	{
+		for(i = 0; i < MAX_REGDOMAIN_LEN; i++)
+			if(dst[i] == 0xff || dst[i] == 0)
+				break;
+
+		dst[i] = 0;
+		nvram_set("wl_reg_5g", dst);
+		if      (strcmp(dst, "5G_BAND1") == 0)
+			nvram_set("wl1_country_code", "GB");
+		else if (strcmp(dst, "5G_BAND123") == 0)
+			nvram_set("wl1_country_code", "GB");
+		else if (strcmp(dst, "5G_BAND14") == 0)
+			nvram_set("wl1_country_code", "US");
+		else if (strcmp(dst, "5G_BAND24") == 0)
+			nvram_set("wl1_country_code", "TW");
+		else if (strcmp(dst, "5G_BAND4") == 0)
+			nvram_set("wl1_country_code", "CN");
+		else
+			nvram_set("wl1_country_code", "DB");
+	}
+#endif	/* ! RTCONFIG_NEW_REGULATION_DOMAIN */
+#if defined(RTN56U) || defined(RTCONFIG_DSL)
+		if (nvram_match("wl_country_code", "BR"))
 		{
 			nvram_set("wl_country_code", "UZ");
 			nvram_set("wl0_country_code", "UZ");
 			nvram_set("wl1_country_code", "UZ");
 		}
-
+#endif
 		if (nvram_match("wl_country_code", "HK") && nvram_match("preferred_lang", ""))
 			nvram_set("preferred_lang", "TW");
-	}
 
 	/* reserved for Ralink. used as ASUS pin code. */
 	dst = (char*)pin;
@@ -747,10 +796,9 @@ void init_syspara(void)
 			nvram_set("secret_code", "12345670");
 	}
 
-	src = (unsigned int*) 0x50020;	/* /dev/mtd/3, firmware, starts from 0x50000 */
 	dst = buffer;
 	bytes = 16;
-	if (FRead(dst, (int)src, bytes)<0)
+	if (linuxRead(dst, 0x20, bytes)<0)	/* The "linux" MTD partition, offset 0x20. */
 	{
 		fprintf(stderr, "READ firmware header: Out of scope\n");
 		nvram_set("productid", "unknown");
@@ -873,30 +921,6 @@ int is_module_loaded(const char *module)
 	return 0;
 }
 
-
-
-#if defined(RTN14U)
-#ifdef HWNAT_FIX
-void hwnat_workaround(void)
-{   
-	int t;
-
-	//_dprintf("--fix--\n");
-	if(t=is_module_loaded("hw_nat")) modprobe_r("hw_nat");
-	 
-	usleep(100000);
-	system("reg s 0xb0000000");
-	system("reg w 0x34 0x80000000");
-	usleep(200000);
-	system("reg w 0x34 0x0");
-	usleep(200000);
-	
-	if(t)  modprobe("hw_nat");
-}
-#endif
-#endif	
-
-
 // only ralink solution can reload it dynamically
 void reinit_hwnat()
 {
@@ -907,18 +931,25 @@ void reinit_hwnat()
 	// in restart_wireless for wlx_mrate_x
 	
 	if (nvram_get_int("hwnat")) {
-#if defined(RTN14U)	
-#ifdef HWNAT_FIX
-		   if(*hwnat_rst_unlock)
-			hwnat_workaround();
-#endif 
-#endif		   
 		if (is_nat_enabled() && !nvram_get_int("qos_enable") /*&&*/
 			/* TODO: consider RTCONFIG_DUALWAN case */
 //			!nvram_match("wan0_proto", "l2tp") &&
 //			!nvram_match("wan0_proto", "pptp") &&
 			/*(nvram_match("wl0_radio", "0") || !nvram_get_int("wl0_mrate_x")) &&
 			(nvram_match("wl1_radio", "0") || !nvram_get_int("wl1_mrate_x"))*/) {
+
+#if !defined(RTCONFIG_DUALWAN)
+#if defined(RTN65U) || defined(RTN56U)
+			char primary[] = "wan1_primaryXXXXXX";
+
+			sprintf(primary, "wan%d_primary", WAN_UNIT_SECOND);
+			if (nvram_match(primary, "1")) {
+				_dprintf("%s: don't install hardware NAT driver if 3G is enabled!\n", __func__);
+				return;
+			}
+#endif
+#endif
+
 			if (!is_module_loaded("hw_nat")) {
 #if 0
 				system("echo 2 > /proc/sys/net/ipv4/conf/default/force_igmp_version");

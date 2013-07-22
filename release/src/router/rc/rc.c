@@ -164,7 +164,11 @@ static int rctest_main(int argc, char *argv[])
 		}
 		else if (strcmp(argv[1], "set_action") == 0) {
 			set_action(on);
-		}	
+		}
+		else if (strcmp(argv[1], "pwr_usb") == 0) {
+			set_pwr_usb(atoi(argv[2]));
+			_dprintf("done.\n");
+		}
 		else {
 			printf("what?\n");
 		}
@@ -188,9 +192,6 @@ static int hotplug_main(int argc, char *argv[])
 #ifdef LINUX26
 		else if (strcmp(argv[1], "block") == 0) {
 			hotplug_usb();
-#ifdef RTCONFIG_BCMARM
-			//hotplug_block();
-#endif
 		}
 #endif
 #endif
@@ -204,7 +205,7 @@ typedef struct {
 } applets_t;
 
 static const applets_t applets[] = {
-	{ "preinit",                    init_main                               },
+        { "preinit",                    init_main                               },
 	{ "init",			init_main				},
 	{ "console",			console_main			},
 #ifdef DEBUG_RCTEST
@@ -222,9 +223,15 @@ static const applets_t applets[] = {
 	{ "wpa_cli",			wpacli_main			},
 #endif
 	{ "hotplug",			hotplug_main			},
-	{ "mtd-write",			mtd_write_main_old			},
-	{ "mtd-erase",			mtd_unlock_erase_main_old		},
-	{ "mtd-unlock",			mtd_unlock_erase_main_old		},
+#ifdef RTCONFIG_BCMARM
+        { "mtd-write",                  mtd_write_main_old                      },
+        { "mtd-erase",                  mtd_unlock_erase_main_old               },
+        { "mtd-unlock",                 mtd_unlock_erase_main_old               },
+#else
+	{ "mtd-write",			mtd_write_main			},
+	{ "mtd-erase",			mtd_unlock_erase_main		},
+	{ "mtd-unlock",			mtd_unlock_erase_main		},
+#endif
 	{ "watchdog",			watchdog_main			},
 #ifdef RTCONFIG_RALINK
 	{ "wpsfix",			wpsfix_main			},
@@ -272,7 +279,7 @@ static const applets_t applets[] = {
 #endif
 	{ "disk_remove",		diskremove_main			},
 #endif
-	{ "firmware_check",             firmware_check_main             },
+	{ "firmware_check",		firmware_check_main             },
 	{ "service",			service_main			},
 	{NULL, NULL}
 };
@@ -366,10 +373,10 @@ int main(int argc, char **argv)
 		restart_wireless();
 		return 0;
 	}
-	else if(!strcmp(base, "nvram_erase")){
-		erase_nvram();
-		return 0;
-	}
+        else if(!strcmp(base, "nvram_erase")){
+                erase_nvram();
+                return 0;
+        }
 #ifdef RTCONFIG_USB
 	else if(!strcmp(base, "get_apps_name")){
 		if(argc != 2){
@@ -435,22 +442,14 @@ int main(int argc, char **argv)
 
 		return asus_usb_interface(argv[1], argv[2]);
 	}
-        else if (!strcmp(base, "usb_notify")) {
+	else if (!strcmp(base, "usb_notify")) {
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 		usb_notify();
 #endif
 
 		return 0;
 	}
-#if 0
-#ifdef RTCONFIG_USBEJECT
-	else if (!strcmp(base, "restart_usb")) {
-		restart_usb();
-		return 0;
-	}
-#endif
-#endif
-#endif
+#if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 	else if(!strcmp(base, "run_app_script")){
 		if(argc != 3){
 			printf("Usage: run_app_script [Package name | allpkg] [APP action]\n");
@@ -462,6 +461,78 @@ int main(int argc, char **argv)
 		else
 			return run_app_script(argv[1], argv[2]);
 	}
+	else if (!strcmp(base, "chk_app_state")) {
+#define PID_FILE "/var/run/chk_app_state.pid"
+		FILE *fp;
+		char chk_value[4];
+
+		if(f_read_string(PID_FILE, chk_value, 4) > 0
+				&& atoi(chk_value) != getpid()){
+			_dprintf("Already running!\n");
+			return 0;
+		}
+
+		if((fp = fopen(PID_FILE, "w")) == NULL){
+			_dprintf("Can't open the pid file!\n");
+			return 0;
+		}
+
+		fprintf(fp, "%d", getpid());
+		fclose(fp);
+
+		memset(chk_value, 0, 4);
+		strncpy(chk_value, nvram_safe_get("apps_state_switch"), 4);
+		if(strcmp(chk_value, "")){
+			if(atoi(chk_value) != APPS_SWITCH_FINISHED && !pids("app_switch.sh")){
+				_dprintf("Don't have the switch script.\n");
+				nvram_set("apps_state_switch", "");
+			}
+
+			unlink(PID_FILE);
+			return 0;
+		}
+
+		memset(chk_value, 0, 4);
+		strncpy(chk_value, nvram_safe_get("apps_state_install"), 4);
+		if(strcmp(chk_value, "")){
+			if(atoi(chk_value) != APPS_INSTALL_FINISHED && !pids("app_install.sh")){
+				_dprintf("Don't have the install script.\n");
+				nvram_set("apps_state_install", "");
+			}
+
+			unlink(PID_FILE);
+			return 0;
+		}
+
+		memset(chk_value, 0, 4);
+		strncpy(chk_value, nvram_safe_get("apps_state_upgrade"), 4);
+		if(strcmp(chk_value, "")){
+			if(atoi(chk_value) != APPS_UPGRADE_FINISHED && !pids("app_upgrade.sh")){
+				_dprintf("Don't have the upgrade script.\n");
+				nvram_set("apps_state_upgrade", "");
+			}
+
+			unlink(PID_FILE);
+			return 0;
+		}
+
+		memset(chk_value, 0, 4);
+		strncpy(chk_value, nvram_safe_get("apps_state_enable"), 4);
+		if(strcmp(chk_value, "")){
+			if(atoi(chk_value) != APPS_ENABLE_FINISHED && !pids("app_set_enabled.sh")){
+				_dprintf("Don't have the enable script.\n");
+				nvram_set("apps_state_enable", "");
+			}
+
+			unlink(PID_FILE);
+			return 0;
+		}
+
+		unlink(PID_FILE);
+		return 0;
+	}
+#endif
+#endif
 	else if(!strcmp(base, "ATE")) {
 		if( argc == 2 || argc == 3 || argc == 4) {
 			asus_ate_command(argv[1], argv[2], argv[3]);
@@ -563,6 +634,7 @@ int main(int argc, char **argv)
 
 		return(led_control(atoi(argv[1]), atoi(argv[2])));
 	}
+#ifdef RTCONFIG_BCMARM
         /* mtd-erase2 [device] */
         else if (!strcmp(base, "mtd-erase2")) {
                 if (argv[1] && ((!strcmp(argv[1], "boot")) ||
@@ -587,6 +659,7 @@ int main(int argc, char **argv)
                         return EINVAL;
                 }
         }
+#endif
 	else if (!strcmp(base, "free_caches")) {
 		int c;
 		unsigned int test_num;

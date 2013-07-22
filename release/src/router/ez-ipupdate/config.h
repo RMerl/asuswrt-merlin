@@ -6,7 +6,7 @@
 
 #define PACKAGE "ez-ipupdate"
 #define VERSION "3.0.11b5"
-#define DEBUG 0
+#define DEBUG 1
 #define HAVE_GETPASS 1
 #define HAVE_SYS_ERRLIST 1
 #define OS "unknown"

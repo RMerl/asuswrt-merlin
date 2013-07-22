@@ -1,0 +1,23 @@
+#! /bin/sh
+
+APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
+APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
+APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
+#CLOUD_PATH=`cat /opt/etc/Cloud.conf | awk -F , '{print $7}'`
+
+#rm progress
+rm -rf $APPS_INSTALL_PATH/bin/webdav_client
+#rm libs
+rm -rf $APPS_INSTALL_PATH/lib/libneon.so.27.2.6
+#rm ui
+#rm -rf $APPS_INSTALL_PATH/etc/downloadmaster/cloudui
+#rm -rf $APPS_INSTALL_PATH/etc/www/cloudui
+#rm setting
+#rm -rf $APPS_MOUNTED_PATH/Cloud/inotify_file
+#rm -rf $CLOUD_PATH/asuswebstorage/.logs
+#rm -rf $CLOUD_PATH/asuswebstorage/xml
+#rm conf
+#rm -rf $APPS_INSTALL_PATH/etc/init.d/webdav.conf
+#rm -rf $APPS_INSTALL_PATH/etc/webdav_client_script
+#rm -rf $APPS_INSTALL_PATH/etc/webdav_usbinfo.conf
+#rm -rf $APPS_INSTALL_PATH/etc/webdav.conf

@@ -1,0 +1,88 @@
+.\" Copyright (c) 1989, 1990 The Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)wall.1	6.5 (Berkeley) 4/23/91
+.\"
+.\" Modified for Linux, Mon Mar  8 18:07:38 1993, faith@cs.unc.edu
+.\"
+.Dd April 2011 "  "
+.Dt WALL(1) "" "User Commands"
+.Os util-linux
+.Sh NAME
+.Nm wall
+.Nd write a message to users
+.Sh SYNOPSIS
+.Nm wall
+.Op Ar -n
+.Op Ar -t TIMEOUT
+.Op Ar file
+.Sh DESCRIPTION
+.Nm Wall
+displays the contents of
+.Ar file
+or, by default, its standard input, on the terminals of all
+currently logged in users. The command will cut over 79 character
+long lines to new lines. Short lines are white space padded to
+have 79 characters. The command will always put carriage return
+and new line at the end of each line.
+.Pp
+Only the super-user can write on the
+terminals of users who have chosen
+to deny messages or are using a program which
+automatically denies messages.
+.Pp
+Reading from a file is refused when the invoker is not superuser
+and the program is suid or sgid.
+.Sh OPTIONS
+.Bl -tag -width Fl
+.It Fl n, Fl Fl nobanner
+Supress banner
+.It Fl t, Fl Fl timeout Ar TIMEOUT
+Write timeout to terminals in seconds. Argument must be positive
+integer. Default value is 300 seconds, which is a legacy from
+time when people ran terminals over modem lines.
+.It Fl V, Fl Fl version
+Output version and exit.
+.It Fl h, Fl Fl help
+Output help and exit.
+.Sh SEE ALSO
+.Xr mesg 1 ,
+.Xr talk 1 ,
+.Xr write 1 ,
+.Xr shutdown 8
+.Sh HISTORY
+A
+.Nm
+command appeared in
+.At v7 .
+.Sh AVAILABILITY
+The wall command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

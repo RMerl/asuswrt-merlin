@@ -78,6 +78,7 @@ var wds_aplist = "";
 var $j = jQuery.noConflict();
 
 function initial(){
+	$('pull_arrow').title = Untranslated.select_AP;
 	show_menu();
 	load_body();	
 	insertExtChannelOption();
@@ -95,9 +96,9 @@ function initial(){
 	else
 		show_wl_wdslist();
 
-	if(band5g_support == -1){
-		$("wl_unit_field").style.display = "none";
-		$("mac_5g").style.display = "none";
+	if(!band5g_support){
+		$("wl_5g_mac").style.display = "none";
+		$("wl_unit_field").style.display = "none";		
 	}	
 
 	setTimeout("wds_scan();", 500);
@@ -369,9 +370,10 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		  	<div>&nbsp;</div>
 		  	<div class="formfonttitle"><#menu5_1#> - <#menu5_1_3#></div>
 		  	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		  	<div class="formfontdesc"><#WLANConfig11b_display3_sectiondesc#></div>
-		  	<div style="margin-left:40px;">(2.4GHz MAC) <% nvram_get("wl0_hwaddr"); %></div>
-		  	<div id="mac_5g" style="margin-left:40px;">(5GHz MAC) <% nvram_get("wl1_hwaddr"); %></div>
+		  	<div class="formfontdesc"><#WLANConfig11b_display31_sectiondesc#></div>
+		  	<div class="formfontdesc" style="color:#FFCC00;"><#ADSL_FW_note#><#WLANConfig11b_display32_sectiondesc#></div>
+		  	<div class="formfontdesc"><#WLANConfig11b_display33_sectiondesc#></div>	
+		  		
 			
 			<table id="MainTable1" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 			  <thead>
@@ -379,6 +381,21 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 				<td colspan="2"><#t2BC#></td>
 			  </tr>
 			  </thead>		
+
+				<tr>
+					<th>2.4GHz MAC</th>
+					<td>
+							<input type="text" maxlength="17" class="input_20_table" id="wl0_hwaddr" name="wl0_hwaddr" value="<% nvram_get("wl0_hwaddr"); %>" readonly>
+					</td>		
+			  </tr>
+
+				
+				<tr id="wl_5g_mac">
+					<th>5GHz MAC</th>
+					<td>
+							<input type="text" maxlength="17" class="input_20_table" id="wl1_hwaddr" name="wl1_hwaddr" value="<% nvram_get("wl1_hwaddr"); %>" readonly>
+					</td>		
+			  </tr>			  
 
 				<tr id="wl_unit_field">
 					<th><#Interface#></th>
@@ -460,7 +477,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
           		<tr>
             		<td width="80%">
               		<input type="text" style="margin-left:220px;float:left;" maxlength="17" class="input_macaddr_table" name="wl_wdslist_0" onKeyPress="return is_hwaddr(this,event)">
-									<img style="float:left;" id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="Select the Access Point" onmouseover="over_var=1;" onmouseout="over_var=0;">
+									<img style="float:left;" id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
 									<div id="WDSAPList" class="WDSAPList">
 										<div style="width:98px">
 											<img height="15px" style="margin-left:5px;margin-top:2px;" src="/images/InternetScan.gif">

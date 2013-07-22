@@ -238,7 +238,7 @@ function switchPage(page){
         			<tr>
           				<td align="left" valign="middle">
 							<table width="95%" border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="DescTable">
-								<tr><th width="16%"></th><th width="26%"><#tm_internet#></th><th width="29%"><#tm_wired#></th><th width="29%"><#tm_wireless#></th></tr>
+								<tr><th width="16%"></th><th width="26%"><#Internet#></th><th width="29%"><#tm_wired#></th><th width="29%"><#tm_wireless#></th></tr>
 								<tr><th><#tm_reception#></th><td style="color:#FF9000;"><#tm_recp_int#></td><td style="color:#3CF;"><#tm_recp_wired#></td><td style="color:#3CF;"><#tm_recp_wireless#></td></tr>
 								<tr><th><#tm_transmission#></th><td style="color:#3CF;"><#tm_trans_int#></td><td style="color:#FF9000;"><#tm_trans_wired#></td><td style="color:#FF9000;"><#tm_trans_wireless#></td></tr>
 							</table>
@@ -270,31 +270,24 @@ function switchPage(page){
 
   		     		<tr>
 						<td >
-				    	 	<table width="735px" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_NWM" style="margin-top:10px">
+				    	 	<table width="730px" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_NWM" style="margin-top:10px;margin-left:-1px;*margin-left:-10px;">
 						  		<tr>
-						  			<th style="text-align:center; width:160px;height:25px;"><#Network#></th>
 						  			<th style="text-align:center; width:160px;"><#Current#></th>
 						  			<th style="text-align:center; width:160px;"><#Average#></th>
 						  			<th style="text-align:center; width:160px;"><#Maximum#></th>
 						  			<th style="text-align:center; width:160px;"><#Total#></th>
 						  		</tr>
 						  		<tr>
-						  			<td style="text-align:center; background-color:#111;">
-										<div id='rx-sel'><#tm_reception#></div>
-						  			</td>
 						  			<td style="text-align:center;font-weight: bold; background-color:#111;"><span id="rx-current" style="color:#FF9000;"></span></td>
 						  			<td style="text-align:center; background-color:#111;" id='rx-avg'></td>
 						  			<td style="text-align:center; background-color:#111;" id='rx-max'></td>
 						  			<td style="text-align:center; background-color:#111;" id='rx-total'></td>
 						    	</tr>
 						    	<tr>
-						    		<td style="text-align:center; background-color:#111;">
-										<div id='tx-sel'><#tm_transmission#></div>
-              						</td>
-									<td style="text-align:center;font-weight: bold; background-color:#111;"><span id="tx-current" style="color:#3CF;"></span></td>
-									<td style="text-align:center; background-color:#111;" id='tx-avg'></td>
-									<td style="text-align:center; background-color:#111;" id='tx-max'></td>
-									<td style="text-align:center; background-color:#111;" id='tx-total'></td>
+						    		<td style="text-align:center;font-weight: bold; background-color:#111;"><span id="tx-current" style="color:#3CF;"></span></td>
+										<td style="text-align:center; background-color:#111;" id='tx-avg'></td>
+										<td style="text-align:center; background-color:#111;" id='tx-max'></td>
+										<td style="text-align:center; background-color:#111;" id='tx-total'></td>
 								</tr>
 							</table>
 						</td>

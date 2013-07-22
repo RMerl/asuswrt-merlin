@@ -29,6 +29,7 @@
 #ifndef __UPNPREPLYPARSE_H__
 #define __UPNPREPLYPARSE_H__
 
+#include <stdint.h>
 #include <sys/queue.h>
 
 #ifdef __cplusplus
@@ -46,10 +47,12 @@ struct NameValueParserData {
     char curelt[64];
 };
 
+#define XML_STORE_EMPTY_FL  0x01
+
 /* ParseNameValue() */
 void
 ParseNameValue(const char * buffer, int bufsize,
-               struct NameValueParserData * data);
+               struct NameValueParserData * data, uint32_t flags);
 
 /* ClearNameValueList() */
 void

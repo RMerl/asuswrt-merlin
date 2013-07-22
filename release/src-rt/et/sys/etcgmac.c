@@ -1086,12 +1086,16 @@ gmac_mf_add(ch_t *ch, struct ether_addr *mcaddr)
 static void
 gmac_mf_cleanup(ch_t *ch)
 {
-	mflist_t *ptr;
+	mflist_t *ptr, *tmp;
 	int32 i;
 
 	for (i = 0; i < GMAC_HASHT_SIZE; i++) {
-		for (ptr = ch->mf.bucket[i]; ptr != NULL; ptr = ptr->next)
-			MFREE(ch->osh, ptr, sizeof(mflist_t));
+		ptr = ch->mf.bucket[i];
+		while (ptr) {
+			tmp = ptr;
+			ptr = ptr->next;
+			MFREE(ch->osh, tmp, sizeof(mflist_t));
+		}
 		ch->mf.bucket[i] = NULL;
 	}
 }

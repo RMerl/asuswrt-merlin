@@ -20,7 +20,7 @@ static const struct model_s model_list[] = {
 	{ "RT-AC68U",	MODEL_RTAC68U	},
 	{ "RT-N53",	MODEL_RTN53	},
 	{ "RT-N16",	MODEL_RTN16	},
-	{ "RT-N16UHP",	MODEL_RTN16UHP	},
+	{ "RT-N18UHP",	MODEL_RTN18UHP	},
 	{ "RT-N15U",	MODEL_RTN15U	},
 	{ "RT-N12",	MODEL_RTN12	},
 	{ "RT-N12B1",	MODEL_RTN12B1	},
@@ -42,6 +42,7 @@ static const struct model_s model_list[] = {
 	{ "EA-N66",	MODEL_EAN66	},
 	{ "RT-N13U",	MODEL_RTN13U	},
 	{ "RT-N14U",	MODEL_RTN14U	},
+	{ "RT-AC52U",	MODEL_RTAC52U	},
 	{ "RT-N36U3",	MODEL_RTN36U3	},
 	{ "RT-N56U",	MODEL_RTN56U	},
 	{ "RT-N65U",	MODEL_RTN65U	},
@@ -67,21 +68,27 @@ static int get_model_by_hw(void)
 		if (strncmp(hw_version, "APN12HP", 7) == 0)
 			return MODEL_APN12HP;
 		return MODEL_RTN12;
-	}else if (strncmp(hw_version, "APN12", 5) == 0) {
+	} else if (strncmp(hw_version, "APN12", 5) == 0) {
 		if (strncmp(hw_version, "APN12HP", 7) == 0)
-		return MODEL_APN12HP;
+			return MODEL_APN12HP;
 		return MODEL_APN12;
 	}
 	return MODEL_UNKNOWN;
 }
 #endif
 
+/* returns MODEL ID
+ * result is cached for safe multiple use */
 int get_model(void)
 {
-	int model = MODEL_UNKNOWN;
-	char *pid = nvram_safe_get("productid");
+	static int model = MODEL_UNKNOWN;
+	char *pid;
 	const struct model_s *p;
 
+	if (model != MODEL_UNKNOWN)
+		return model;
+
+	pid = nvram_safe_get("productid");
 	for (p = &model_list[0]; p->pid; ++p) {
 		if (!strcmp(pid, p->pid)) {
 			model = p->model;
@@ -113,3 +120,20 @@ char *get_modelid(int model)
 	return pid;
 }
 #endif
+
+/* returns SWITCH ID
+ * result is cached for safe multiple use */
+int get_switch(void)
+{
+	static int sw_model = SWITCH_UNKNOWN;
+
+	if (sw_model != SWITCH_UNKNOWN)
+		return sw_model;
+
+#ifdef BCM5301X
+	sw_model = SWITCH_BCM5301x;
+#else
+	sw_model = get_switch_model();
+#endif
+	return sw_model;
+}

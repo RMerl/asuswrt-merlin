@@ -86,16 +86,29 @@ char *port_get(char *name);
 char *get_productid(void)
 {
         char *productid = port_get("productid");
-#ifdef RTCONFIG_ODMPID
+
         char *odmpid = port_get("odmpid");
+    if(odmpid != NULL)
+    {
         if (*odmpid)
-                productid = odmpid;
-#endif
+            productid = odmpid;
+    }
         return productid;
 }
 
 char *port_get(char *name)
 {
+	char tmp_name[256]="/opt/etc/asus_script/aicloud_nvram_check.sh";
+        //char tmp_name[256]="/tmp/aicloud_nvram_check.sh";
+        char *cmd_name;
+        cmd_name=(char *)malloc(sizeof(char)*(strlen(tmp_name)+strlen(name)+2));
+        memset(cmd_name,0,sizeof(cmd_name));
+        sprintf(cmd_name,"%s %s",tmp_name,name);
+        system(cmd_name);
+        free(cmd_name);
+
+        while(-1!=access("/tmp/aicloud_check.control",F_OK))
+            usleep(50);
     printf("name = %s\n",name);
     FILE *fp;
     if((fp=fopen("/tmp/webDAV.conf","r+"))==NULL)
@@ -126,6 +139,18 @@ char *port_get(char *name)
 
 int webdav_match(char *name,int id)
 {
+	char tmp_name[256]="/opt/etc/asus_script/aicloud_nvram_check.sh";
+        //char tmp_name[256]="/tmp/aicloud_nvram_check.sh";
+        char *cmd_name;
+        cmd_name=(char *)malloc(sizeof(char)*(strlen(tmp_name)+strlen(name)+2));
+        memset(cmd_name,0,sizeof(cmd_name));
+        sprintf(cmd_name,"%s %s",tmp_name,name);
+        system(cmd_name);
+        free(cmd_name);
+
+        while(-1!=access("/tmp/aicloud_check.control",F_OK))
+            usleep(50);
+
     FILE *fp;
     if((fp=fopen("/tmp/webDAV.conf","r+"))==NULL)
     {
@@ -160,31 +185,33 @@ int webdav_match(char *name,int id)
     fclose(fp);
     return 0;
 }
-
+#else	/* ! APP_IPKG */
+#include <shared.h>
 #endif
-char* get_webdav_http_port()
+
+char *get_webdav_http_port(void)
 {
 #ifndef APP_IPKG
-   nvram_get(WEBDAV_HTTP_PORT);
+	return nvram_get(WEBDAV_HTTP_PORT);
 #else
-	port_get(WEBDAV_HTTP_PORT);
+	return port_get(WEBDAV_HTTP_PORT);
 #endif
 }
 
-char* get_webdav_https_port()
+char *get_webdav_https_port(void)
 {
 #ifndef APP_IPKG
-   nvram_get(WEBDAV_HTTPS_PORT);
+	return nvram_get(WEBDAV_HTTPS_PORT);
 #else
-	port_get(WEBDAV_HTTPS_PORT);
+	return port_get(WEBDAV_HTTPS_PORT);
 #endif
 }
 
 int main(int argc, char *argv[]) {
 	FILE *fp;
-	int n=0, sh_num=0;
-	disk_info_t *follow_disk, *disks_info = NULL;
-	partition_info_t *follow_partition;
+//	int n=0, sh_num=0;
+	disk_info_t /**follow_disk,*/ *disks_info = NULL;
+//	partition_info_t *follow_partition;
 	
 	/* 
 		st_webdav_mpde = 1 => share mode (default)
@@ -198,7 +225,7 @@ int main(int argc, char *argv[]) {
 	}
 	
 	fp = fopen(WEBDAV_CONF, "w");
-	if (fp==NULL) return;
+	if (fp==NULL) return -1;
 	
 	/* Load modules */
 	fprintf(fp, "server.modules+=(\"mod_aicloud_auth\")\n");
@@ -250,11 +277,11 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "server.pid-file=\"/tmp/lighttpd/lighttpd.pid\"\n");
 	fprintf(fp, "server.arpping-interface=\"br0\"\n");
 #ifndef APP_IPKG
-	fprintf(fp, "server.errorfile-prefix=\"/usr/css/status-\"\n");
+	fprintf(fp, "server.errorfile-prefix=\"/usr/lighttpd/css/status-\"\n");
 #else
 	fprintf(fp, "server.errorfile-prefix=\"/opt/etc/aicloud_UI/css/status-\"\n");
 #endif
-	fprintf(fp, "dir-listing.activate=\"enable\"\n");
+	fprintf(fp, "dir-listing.activate=\"disable\"\n");
     fprintf(fp, "server.syslog=\"/tmp/lighttpd/syslog.log\"\n");
 
 	//	**** Minetype setting **** //	
@@ -310,7 +337,7 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "	else $HTTP[\"url\"]=~\"^/smb($|/)\"{\n");
 	fprintf(fp, "		server.document-root = \"/\"\n");
 #ifndef APP_IPKG
-	fprintf(fp, "		alias.url=(\"/smb\"=>\"/usr\")\n");
+	fprintf(fp, "		alias.url=(\"/smb\"=>\"/usr/lighttpd\")\n");
 #else
 	fprintf(fp, "		alias.url=(\"/smb\"=>\"/opt/etc/aicloud_UI\")\n");
 #endif
@@ -322,7 +349,7 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "	else $HTTP[\"url\"] =~ \"^/favicon.ico$\"{\n");
     fprintf(fp, "		server.document-root = \"/\"\n");
 #ifndef APP_IPKG
-    fprintf(fp, "		alias.url = ( \"/favicon.ico\" => \"/usr/css/favicon.ico\" ) \n");
+    fprintf(fp, "		alias.url = ( \"/favicon.ico\" => \"/usr/lighttpd/css/favicon.ico\" ) \n");
 #else
 	fprintf(fp, "		alias.url = ( \"/favicon.ico\" => \"/opt/etc/aicloud_UI/css/favicon.ico\" ) \n");
 #endif
@@ -469,7 +496,7 @@ WEBDAV_SETTING:
 	fprintf(fp, "	else $HTTP[\"url\"]=~\"^/smb($|/)\"{\n");
 	fprintf(fp, "		server.document-root = \"/\"\n");
 #ifndef APP_IPKG
-	fprintf(fp, "		alias.url=(\"/smb\"=>\"/usr\")\n");
+	fprintf(fp, "		alias.url=(\"/smb\"=>\"/usr/lighttpd\")\n");
 #else
 	fprintf(fp, "		alias.url=(\"/smb\"=>\"/opt/etc/aicloud_UI\")\n");
 #endif
@@ -481,7 +508,7 @@ WEBDAV_SETTING:
 	fprintf(fp, "	else $HTTP[\"url\"] =~ \"^/favicon.ico$\"{\n");
     fprintf(fp, "		server.document-root = \"/\"\n");
 #ifndef APP_IPKG
-    fprintf(fp, "		alias.url = ( \"/favicon.ico\" => \"/usr/css/favicon.ico\" ) \n");
+    fprintf(fp, "		alias.url = ( \"/favicon.ico\" => \"/usr/lighttpd/css/favicon.ico\" ) \n");
 #else
 	 fprintf(fp, "		alias.url = ( \"/favicon.ico\" => \"/opt/etc/aicloud_UI/css/favicon.ico\" ) \n");
 #endif

@@ -14,8 +14,8 @@ PCRE_VER=8.31
 
 ####	Set compiler variable ####
 #export CFLAGS="-I$cur_dir/../pcre-$PCRE_VER -I$uclib_inc -I$cur_dir/../sqlite -I$router_dir/../include -I$router_dir/nvram -DHAVE_OPENSSL_SSL_H=1 -DHAVE_LIBSSL=1"
-export CFLAGS="-I$cur_dir/../pcre-$PCRE_VER -I$uclib_inc -I$cur_dir/../sqlite -I$router_dir/../include -I$router_dir/nvram -I$router_dir/shared -I$router_dir/libdisk -DHAVE_OPENSSL_SSL_H=1 -DHAVE_LIBSSL=1 -DEMBEDDED_EANBLE=1"
-export LIBS="-L$uclib -L$router_dir/shared -lshared -L$router_dir/nvram -lnvram -L$router_dir/libdisk -ldisk -lpthread"
+export CFLAGS="-I$cur_dir/../pcre-$PCRE_VER -I$uclib_inc -I$cur_dir/../sqlite -I$router_dir/../include -I$router_dir/nvram${BCMEX} -I$router_dir/shared -I$router_dir/libdisk -DHAVE_OPENSSL_SSL_H=1 -DHAVE_LIBSSL=1 -DEMBEDDED_EANBLE=1"
+export LIBS="-L$uclib -L$router_dir/shared -lshared -L$router_dir/nvram${BCMEX} -lnvram -L$router_dir/libdisk -ldisk -lpthread"
 #export LIBS="-lshared"
 export LDFLAGS="-L$uclib -ldl -L$cur_dir/../pcre-$PCRE_VER/.libs -lpcre -L$cur_dir/../libxml2/.libs -lxml2 -L$router_dir/openssl"
 export XML_CFLAGS="-I$cur_dir/../libxml2/include"

@@ -23,7 +23,11 @@
 
 #define __PACKED__  __attribute__((packed))
 
+#ifdef HAVE_MACHINE_ENDIAN_H
+#include <machine/endian.h>
+#else
 #include <endian.h>
+#endif
 
 typedef struct _GUID {
 	__u32 l;

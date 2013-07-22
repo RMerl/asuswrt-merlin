@@ -1,0 +1,96 @@
+#!/bin/bash
+
+# Copyright (C) 2010 Karel Zak <kzak@redhat.com>
+
+TS_TOPDIR="$(dirname $0)/../.."
+TS_DESC="tab update"
+
+. $TS_TOPDIR/functions.sh
+ts_init "$*"
+ts_skip_nonroot
+
+TESTPROG="$TS_HELPER_LIBMOUNT_UPDATE"
+
+[ -x $TESTPROG ] || ts_skip "test not compiled"
+
+# IMPORTANT notes:
+#
+#  - the $TS_OUTPUT variable is between ts_init_subtest and ts_finalize_subtest
+#    redefined to subtest specific namespace -- it means that $TS_OUTPUT is a
+#    different file within a subtest.
+#
+#  - all this test uses global $TS_OUTPUT.{mtab,mountinfo}
+
+
+#
+# Traditional /etc/mtab
+#
+export LIBMOUNT_MTAB=$TS_OUTPUT.mtab
+rm -f $LIBMOUNT_MTAB
+> $LIBMOUNT_MTAB
+
+ts_init_subtest "mtab-mount"
+$TESTPROG --add /dev/sda1 /mnt/foo ext3 "rw,bbb,ccc,fff=FFF,ddd,noexec"
+$TESTPROG --add /dev/sdb1 /mnt/bar ext3 "gg=G,ffff=f,ro,noatime"
+$TESTPROG --add /dev/sda2 /mnt/bar ext3 "rw,noatime"
+$TESTPROG --add /dev/sda1 /mnt/gogo ext3 "rw,noatime,nosuid"
+$TESTPROG --add none /proc proc defaults
+cp $LIBMOUNT_MTAB $TS_OUTPUT	# save the mtab aside
+ts_finalize_subtest		# checks the mtab
+
+ts_init_subtest "mtab-move"
+$TESTPROG --move /mnt/foo /mnt/newfoo
+$TESTPROG --move /mnt/bar /mnt/newbar
+cp $LIBMOUNT_MTAB $TS_OUTPUT	# save the mtab aside
+ts_finalize_subtest		# checks the mtab
+
+ts_init_subtest "mtab-remount"
+$TESTPROG --remount /mnt/newfoo "ro,noatime"
+$TESTPROG --remount /mnt/bar "rw,atime,nosuid"
+cp $LIBMOUNT_MTAB $TS_OUTPUT	# save the mtab aside
+ts_finalize_subtest		# checks the mtab
+
+ts_init_subtest "mtab-umount"
+$TESTPROG --remove /mnt/bar
+$TESTPROG --remove /mnt/gogo
+$TESTPROG --remove /proc
+cp $LIBMOUNT_MTAB $TS_OUTPUT	# save the mtab aside
+ts_finalize_subtest		# checks the mtab
+
+#
+# utab
+#
+rm -f $LIBMOUNT_MTAB
+ln -s /proc/mounts $LIBMOUNT_MTAB
+
+export LIBMOUNT_UTAB=$TS_OUTPUT.utab
+rm -f $LIBMOUNT_UTAB
+> $LIBMOUNT_UTAB
+
+ts_init_subtest "utab-mount"
+$TESTPROG --add /dev/sda1 /mnt/foo ext3 "rw,bbb,ccc,fff=FFF,ddd,noexec"
+$TESTPROG --add /dev/sdb1 /mnt/bar ext3 "ro,user"
+$TESTPROG --add /dev/sda2 /mnt/xyz ext3 "rw,loop=/dev/loop0,uhelper=hal"
+$TESTPROG --add none /proc proc "rw,user"
+cp $LIBMOUNT_UTAB $TS_OUTPUT	# save the mtab aside
+ts_finalize_subtest		# checks the mtab
+
+ts_init_subtest "utab-move"
+$TESTPROG --move /mnt/bar /mnt/newbar
+$TESTPROG --move /mnt/xyz /mnt/newxyz
+cp $LIBMOUNT_UTAB $TS_OUTPUT	# save the mtab aside
+ts_finalize_subtest		# checks the mtab
+
+ts_init_subtest "utab-remount"
+$TESTPROG --remount /mnt/newbar "ro,noatime"
+$TESTPROG --remount /mnt/newxyz "rw,user"
+cp $LIBMOUNT_UTAB $TS_OUTPUT	# save the mtab aside
+ts_finalize_subtest		# checks the mtab
+
+ts_init_subtest "utab-umount"
+$TESTPROG --remove /mnt/newbar
+$TESTPROG --remove /proc
+cp $LIBMOUNT_UTAB $TS_OUTPUT	# save the mtab aside
+ts_finalize_subtest		# checks the mtab
+
+ts_finalize

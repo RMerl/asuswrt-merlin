@@ -8,9 +8,9 @@ ifeq ($(RTCONFIG_WEBDAV),y)
 PROGS += write_webdav_conf
 endif
 
-CFLAGS += -fPIC
+CFLAGS += -fPIC $(EXTRACFLAGS)
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -I$(LINUXDIR)/include -Wall
-LDFLAGS_SO = -L$(TOP)/nvram -lnvram -L$(TOP)/shared -lshared
+LDFLAGS_SO = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
 LDFLAGS += $(LDFLAGS_SO) -L. -ldisk
 ifeq ($(RTCONFIG_BCMARM),y)
 LDFLAGS += -lgcc_s
@@ -49,7 +49,7 @@ test_disk1: test_disk1.o libdisk.so
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 test_disk2: test_disk2.o $(ID_OBJS)
-	$(CC) $(CFLAGS) -L$(TOP)/nvram -lnvram -L$(TOP)/shared -lshared -lgcc_s -o $@ $^
+	$(CC) $(CFLAGS) -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared -lgcc_s -o $@ $^
 
 ifeq ($(SHARE_STATIC),y)
 test_share: test_share.o disk_share.o

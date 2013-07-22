@@ -60,22 +60,22 @@
 extern int valid_cache;
 
 int
-is_video(const char * file);
+is_video(const char *file);
 
 int
-is_audio(const char * file);
+is_audio(const char *file);
 
 int
-is_image(const char * file);
+is_image(const char *file);
 
-sqlite_int64
-get_next_available_id(const char * table, const char * parentID);
-
-int
-insert_directory(const char * name, const char * path, const char * base, const char * parentID, int objectID);
+int64_t
+get_next_available_id(const char *table, const char *parentID);
 
 int
-insert_file(char * name, const char * path, const char * parentID, int object);
+insert_directory(const char *name, const char *path, const char *base, const char *parentID, int objectID);
+
+int
+insert_file(char *name, const char *path, const char *parentID, int object);
 
 int
 CreateDatabase(void);

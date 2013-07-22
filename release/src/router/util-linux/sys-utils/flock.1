@@ -1,0 +1,113 @@
+.\" -----------------------------------------------------------------------
+.\"   
+.\"   Copyright 2003-2006 H. Peter Anvin - All Rights Reserved
+.\"
+.\"   Permission is hereby granted, free of charge, to any person
+.\"   obtaining a copy of this software and associated documentation
+.\"   files (the "Software"), to deal in the Software without
+.\"   restriction, including without limitation the rights to use,
+.\"   copy, modify, merge, publish, distribute, sublicense, and/or
+.\"   sell copies of the Software, and to permit persons to whom
+.\"   the Software is furnished to do so, subject to the following
+.\"   conditions:
+.\"   
+.\"   The above copyright notice and this permission notice shall
+.\"   be included in all copies or substantial portions of the Software.
+.\"   
+.\"   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+.\"   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+.\"   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+.\"   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+.\"   HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+.\"   WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+.\"   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+.\"   OTHER DEALINGS IN THE SOFTWARE.
+.\"
+.\" -----------------------------------------------------------------------
+.TH FLOCK 1 "February 2006" "util-linux" "User Commands"
+.SH NAME
+flock \- manage locks from shell scripts
+.SH SYNOPSIS
+\fBflock\fP [\fB\-sxon\fP] [\fB\-w\fP \fItimeout\fP] \fIlockfile\fP [\fB\-c\fP] \fIcommand...\fP
+.PP
+\fBflock\fP [\fB\-sxon\fP] [\fB\-w\fP \fItimeout\fP] \fIlockdir\fP [\fB\-c\fP] \fIcommand...\fP
+.PP
+\fBflock\fP [\fB\-sxun\fP] [\fB\-w\fP \fItimeout\fP] \fIfd\fP
+.SH DESCRIPTION
+.PP
+This utility manages
+.BR flock (2)
+locks from within shell scripts or the command line.
+.PP
+The first and second forms wraps the lock around the executing a command, in a manner similar to
+.BR su (1)
+or
+.BR newgrp (1).
+It locks a specified file or directory, which is created (assuming appropriate
+permissions), if it does not already exist.
+.PP
+The third form is convenient inside shell scripts, and is usually
+used the following manner:
+.PP
+\fC(
+.br
+  flock -n 9 || exit 1
+.br
+  # ... commands executed under lock ...
+.br
+) 9>/var/lock/mylockfile\fP
+.PP
+The mode used to open the file doesn't matter to \fBflock\fP; using
+\fC>\fP or \fP>>\fP allows the lockfile to be created if it does not
+already exist, however, write permission is required; using \fC<\fP
+requires that the file already exists but only read permission is
+required.
+.PP
+By default, if the lock cannot be immediately acquired, \fBflock\fP
+waits until the lock is available.
+.SH OPTIONS
+.TP
+\fB\-s\fP, \fB\-\-shared\fP
+Obtain a shared lock, sometimes called a read lock.
+.TP
+\fB\-x\fP, \fB\-e\fP, \fB\-\-exclusive\fP
+Obtain an exclusive lock, sometimes called a write lock.  This is the
+default.
+.TP
+\fB\-u\fP, \fB\-\-unlock\fP
+Drop a lock.  This is usually not required, since a lock is
+automatically dropped when the file is closed.  However, it may be
+required in special cases, for example if the enclosed command group
+may have forked a background process which should not be holding the
+lock.
+.TP
+\fB\-n\fP, \fB\-\-nb\fP, \fB\-\-nonblock\fP
+Fail (with an exit code of 1) rather than wait if the lock cannot be
+immediately acquired.
+.TP
+\fB\-w\fP, \fB\-\-wait\fP, \fB\-\-timeout\fP \fIseconds\fP
+Fail (with an exit code of 1) if the lock cannot be acquired within
+\fIseconds\fP seconds.  Decimal fractional values are allowed.
+.TP
+\fB\-o\fP, \fB\-\-close\fP
+Close the file descriptor on which the lock is held before executing
+\fIcommand\fP.  This is useful if \fIcommand\fP spawns a child process
+which should not be holding the lock.
+.TP
+\fB\-c\fP, \fB\-\-command\fP \fIcommand\fP
+Pass a single \fIcommand\fP to the shell with \fB\-c\fP.
+.TP
+\fB\-h\fP, \fB\-\-help\fP
+Print a help message.
+.SH AUTHOR
+Written by H. Peter Anvin <hpa@zytor.com>.
+.SH COPYRIGHT
+Copyright \(co 2003\-2006 H. Peter Anvin.
+.br
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.SH "SEE ALSO"
+.BR flock (2)
+.SH AVAILABILITY
+The flock command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

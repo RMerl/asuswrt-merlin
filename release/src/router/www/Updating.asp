@@ -15,6 +15,9 @@
 			|| parent.based_modelid == "RT-AC68U"){		//MODELDEP: RT-AC56U, RT-AC66U, RT-AC68U 2013.03
 			parent.showLoadingBar(90);
 			setTimeout("parent.detect_httpd();", 92000);
+	}else if(parent.based_modelid == "RT-AC52U"){			//MODELDEP: RT-AC52U
+			parent.showLoadingBar(120);
+			setTimeout("parent.detect_httpd();", 122000);
 	}else{
 			parent.showLoadingBar(270);
 			setTimeout("parent.detect_httpd();", 272000);		

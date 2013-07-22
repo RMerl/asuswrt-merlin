@@ -71,7 +71,7 @@ void tune_bdflush(void)
 	f_write_string("/proc/sys/vm/dirty_expire_centisecs", "200", 0, 0);
 	f_write_string("/proc/sys/vm/dirty_writeback_centisecs", "200", 0, 0);
 #else
-	printf("no tune_bdflush\n");
+        printf("no tune_bdflush\n");
 #endif
 }
 #else
@@ -86,7 +86,7 @@ void tune_bdflush(void)
 #endif // LINUX26
 
 #define USBCORE_MOD	"usbcore"
-#ifdef RTCONFIG_USB_XHCI
+#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
 #define USB30_MOD	"xhci-hcd"
 #endif
 #define USB20_MOD	"ehci-hcd"
@@ -113,9 +113,6 @@ void tune_bdflush(void)
 void
 start_lpd()
 {
-#if 0 /* defined (SMP) */
-	int ret;
-#endif
 	if(getpid()!=1) {
 		notify_rc("start_lpd");
 		return;
@@ -125,11 +122,7 @@ start_lpd()
 	{
 		unlink("/var/run/lpdparent.pid");
 		//return xstart("lpd");
-#if 0 /* defined (SMP) */
-		ret = eval("taskset", "-c", DEFAULT_TASKSET_CPU, "lpd");
-#else
 		system("lpd &");
-#endif
 	}
 }
 
@@ -151,9 +144,6 @@ stop_lpd()
 void
 start_u2ec()
 {
-#if 0 /* defined (SMP) */
-	int ret;
-#endif
 	if(getpid()!=1) {
 		notify_rc("start_u2ec");
 		return;
@@ -162,11 +152,7 @@ start_u2ec()
 	if (!pids("u2ec"))
 	{
 		unlink("/var/run/u2ec.pid");
-#if 0 /* defined (SMP) */
-	int ret = eval("taskset", "-c", DEFAULT_TASKSET_CPU, "u2ec");
-#else
 		system("u2ec &");
-#endif
 
 		nvram_set("apps_u2ec_ex", "1");
 	}
@@ -259,14 +245,10 @@ void start_usb(void)
 	_dprintf("%s\n", __FUNCTION__);
 
 	tune_bdflush();
-#if 0
-#ifdef RTCONFIG_USBEJECT
-	nvram_set_int("ejusb_count", 0);
-#endif
-#endif
+
 	if (nvram_get_int("usb_enable")) {
 #ifdef RTCONFIG_BCMARM
-		hotplug_usb_init();
+                hotplug_usb_init();
 #endif
 		modprobe(USBCORE_MOD);
 
@@ -301,10 +283,10 @@ void start_usb(void)
 #ifdef LINUX26
 				modprobe("mbcache");	// used by ext2/ext3
 #endif
-				/* insert ext3 first so that lazy mount tries ext3 before ext2 */
+				/* insert ext3 first so that lazy mount tries ext4 before ext2 */
 				modprobe("jbd");
 				modprobe("ext3");
-#if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
+#if defined(RTCONFIG_BCMARM) || defined(RTAC52U)
 				modprobe("ext4");
 #endif
 				modprobe("ext2");
@@ -323,10 +305,18 @@ void start_usb(void)
 		}
 #endif
 
-#ifdef RTCONFIG_USB_XHCI
+#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
 		if (nvram_get_int("usb_usb3") == 1) {
+			_dprintf("ready to modprobe usb3/xhci\n");	// tmp test
 			modprobe(USB30_MOD);
 		}
+#if defined(RTN65U)
+		else{
+			/* FIXME: Append a new module parameter that is used to disable USB3 support. */
+			_dprintf("ready to modprobe xhci\n");	// tmp test
+			modprobe(USB30_MOD);
+		}
+#endif
 #endif
 
 		/* if enabled, force USB2 before USB1.1 */
@@ -362,31 +352,16 @@ void start_usb(void)
 	}
 }
 
-void stop_usb(void)
+// mode 0: stop all USB programs, mode 1: stop the programs from USB hotplug.
+void stop_usb_program(int mode)
 {
-	int disabled = !nvram_get_int("usb_enable");
-
 #ifdef RTCONFIG_USB_MODEM
 #ifdef RTCONFIG_USB_BECEEM
 	system("killall wimaxd");
 	system("killall -SIGUSR1 wimaxd");
-	sleep(1);
-
-	modprobe_r("drxvi314");
+	if(!g_reboot)
+		sleep(1);
 #endif
-
-	modprobe_r("asix");
-	modprobe_r("cdc_ether");
-	modprobe_r("net1080");
-	modprobe_r("rndis_host");
-	modprobe_r("zaurus");
-	modprobe_r("usbnet");
-#endif
-
-#ifdef RTCONFIG_USB_PRINTER
-	stop_lpd();
-	stop_u2ec();
-	modprobe_r(USBPRINTER_MOD);
 #endif
 
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
@@ -399,9 +374,11 @@ void stop_usb(void)
 
 	stop_app();
 #endif
-#ifdef RTCONFIG_MEDIA_SERVER
-	force_stop_dms();
-#endif
+
+	stop_nas_services(0);
+
+	if(mode)
+		return;
 
 #ifdef RTCONFIG_WEBDAV
 	stop_webdav();
@@ -409,7 +386,34 @@ void stop_usb(void)
 	system("sh /opt/etc/init.d/S50aicloud scan");
 #endif
 
-	stop_nas_services(0);
+#ifdef RTCONFIG_USB_PRINTER
+	stop_lpd();
+	stop_u2ec();
+#endif
+}
+
+void stop_usb(void)
+{
+	int disabled = !nvram_get_int("usb_enable");
+
+	stop_usb_program(0);
+
+#ifdef RTCONFIG_USB_MODEM
+#ifdef RTCONFIG_USB_BECEEM
+	modprobe_r("drxvi314");
+#endif
+
+	modprobe_r("zaurus");
+	modprobe_r("rndis_host");
+	modprobe_r("net1080");
+	modprobe_r("cdc_ether");
+	modprobe_r("asix");
+	modprobe_r("usbnet");
+#endif
+
+#ifdef RTCONFIG_USB_PRINTER
+	modprobe_r(USBPRINTER_MOD);
+#endif
 
 #if defined(RTCONFIG_SAMBASRV) || defined(RTCONFIG_FTP)
 	// only stop storage services if disabled
@@ -421,10 +425,10 @@ void stop_usb(void)
 		modprobe_r("ext2");
 		modprobe_r("ext3");
 		modprobe_r("jbd");
-#if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
+#if defined(RTCONFIG_BCMARM) || defined(RTAC52U)
 		modprobe_r("ext4");
-#endif
 		modprobe_r("jbd2");
+#endif
 #ifdef LINUX26
 		modprobe_r("mbcache");
 #endif
@@ -455,7 +459,9 @@ void stop_usb(void)
 #ifdef LINUX26
 		modprobe_r(SCSI_WAIT_MOD);
 #endif
+#if defined(RTCONFIG_BCMARM) || defined(RTAC52U)
 		modprobe_r("sr_mod");
+#endif
 		modprobe_r(SCSI_MOD);
 	}
 #endif
@@ -463,8 +469,12 @@ void stop_usb(void)
 	if (disabled || nvram_get_int("usb_ohci") != 1) modprobe_r(USBOHCI_MOD);
 	if (disabled || nvram_get_int("usb_uhci") != 1) modprobe_r(USBUHCI_MOD);
 	if (disabled || nvram_get_int("usb_usb2") != 1) modprobe_r(USB20_MOD);
-#ifdef RTCONFIG_USB_XHCI
+#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
+#if defined(RTN65U)
+	if (disabled) modprobe_r(USB30_MOD);
+#else
 	if (disabled || nvram_get_int("usb_usb3") != 1) modprobe_r(USB30_MOD);
+#endif
 #endif
 
 #ifdef LINUX26
@@ -478,53 +488,12 @@ void stop_usb(void)
 		modprobe_r(USBOHCI_MOD);
 		modprobe_r(USBUHCI_MOD);
 		modprobe_r(USB20_MOD);
-#ifdef RTCONFIG_USB_XHCI
+#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
 		modprobe_r(USB30_MOD);
 #endif
 		modprobe_r(USBCORE_MOD);
 	}
 }
-
-#if 0
-#ifdef RTCONFIG_USBEJECT
-void stop_usb2(void)
-{
-	modprobe_r("ext2");
-	modprobe_r("ext3");
-	modprobe_r("jbd");
-#if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
-	modprobe_r("ext4");
-#endif
-	modprobe_r("jbd2");
-#ifdef LINUX26
-	modprobe_r("mbcache");
-#endif
-#ifdef RTCONFIG_NTFS
-#ifndef RTCONFIG_NTFS3G
-	modprobe_r("ufsd");
-#endif
-#endif
-	modprobe_r(SD_MOD);
-	modprobe_r(SG_MOD);
-	modprobe_r(USBSTORAGE_MOD);
-#ifdef LINUX26
-	modprobe_r(SCSI_WAIT_MOD);
-#endif
-	modprobe_r("sr_mod");
-	modprobe_r(SCSI_MOD);
-
-	// only unload core modules if usb is disabled
-	umount("/proc/bus/usb"); // unmount usb device filesystem
-#ifdef RTCONFIG_USB_XHCI
-	modprobe_r(USB30_MOD);
-#endif
-	modprobe_r(USB20_MOD);
-	modprobe_r(USBOHCI_MOD);
-	modprobe_r(USBUHCI_MOD);
-	modprobe_r(USBCORE_MOD);
-}
-#endif
-#endif
 
 #ifdef RTCONFIG_USB_PRINTER
 void start_usblpsrv(void)
@@ -536,23 +505,6 @@ void start_usblpsrv(void)
 	start_u2ec();
 	start_lpd();
 }
-#endif
-
-#if 0
-#ifdef RTCONFIG_USBEJECT
-void restart_usb(void)
-{
-	int lock = file_lock("usb");
-
-	stop_usb();
-	stop_usb2();
-	start_usb();
-#ifdef RTCONFIG_USB_PRINTER
-	start_usblpsrv();
-#endif
-	file_unlock(lock);
-}
-#endif
 #endif
 
 #define MOUNT_VAL_FAIL 	0
@@ -577,22 +529,26 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 	options[0] = 0;
 
 	if (type) {
+#ifndef RTCONFIG_BCMARM
+		unsigned long flags = MS_NOATIME | MS_NODEV;
+#else
 		unsigned long flags = MS_NODEV;
+#endif
 
 		if (strcmp(type, "swap") == 0 || strcmp(type, "mbr") == 0) {
 			/* not a mountable partition */
 			flags = 0;
 		}
 		else if (strcmp(type, "ext2") == 0 || strcmp(type, "ext3") == 0 || strcmp(type, "ext4") == 0) {
-			sprintf(options, "umask=0000");
-			sprintf(options + strlen(options), ",user_xattr");
+			sprintf(options, "user_xattr");
 
 			if (nvram_invmatch("usb_ext_opt", ""))
 				sprintf(options + strlen(options), "%s%s", options[0] ? "," : "", nvram_safe_get("usb_ext_opt"));
 		}
 		else if (strcmp(type, "vfat") == 0) {
+#ifdef RTCONFIG_BCMARM
 			flags |= MS_NOATIME;
-
+#endif
 			sprintf(options, "umask=0000,allow_utime=0000");
 
 			if (nvram_invmatch("smbd_cset", ""))
@@ -616,17 +572,16 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 
 			sprintf(options + strlen(options), ",shortname=winnt" + (options[0] ? 0 : 1));
 #ifdef LINUX26
-#ifndef RTCONFIG_BCMARM
 			sprintf(options + strlen(options), ",flush" + (options[0] ? 0 : 1));
-#endif
 #endif
 			if (nvram_invmatch("usb_fat_opt", ""))
 				sprintf(options + strlen(options), "%s%s", options[0] ? "," : "", nvram_safe_get("usb_fat_opt"));
 
 		}
 		else if (strncmp(type, "ntfs", 4) == 0) {
+#ifdef RTCONFIG_BCMARM
 			flags |= MS_NOATIME;
-
+#endif
 			sprintf(options, "umask=0000");
 
 			if (nvram_invmatch("smbd_cset", ""))
@@ -685,8 +640,11 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 #endif
 
 			if (ret != 0) /* give it another try - guess fs */
+#ifndef RTCONFIG_BCMARM
+				ret = eval("mount", "-o", "noatime,nodev", mnt_dev, mnt_dir);
+#else
 				ret = eval("mount", "-o", "nodev", mnt_dev, mnt_dir);
-
+#endif
 			if (ret == 0) {
 				syslog(LOG_INFO, "USB %s%s fs at %s mounted on %s",
 					type, (flags & MS_RDONLY) ? " (ro)" : "", mnt_dev, mnt_dir);
@@ -911,7 +869,7 @@ _dprintf("%s: stop_cloudsync.\n", __FUNCTION__);
 	}
 #endif
 
-	if(nvram_match("apps_mounted_path", mnt->mnt_dir))
+	if(!g_reboot && nvram_match("apps_mounted_path", mnt->mnt_dir))
 		stop_app();
 #endif
 
@@ -920,23 +878,40 @@ _dprintf("%s: stop_cloudsync.\n", __FUNCTION__);
 	sync();
 	sleep(1);	// Give some time for buffers to be physically written to disk
 
-	count = 0;
-	while ((ret = umount(mnt->mnt_dir)) && (count < 2)) {
-		count++;
+	for (count = 0; count < 35; count++) {
+		sync();
+		ret = umount(mnt->mnt_dir);
+		if (!ret)
+			break;
+
+		_dprintf("%s: umount %s count %d, return %d (errno %d %s)\n",
+			__func__, mnt->mnt_dir, count, ret, errno, strerror(errno));
+		syslog(LOG_NOTICE, "USB partition unmounted from %s fail. (return %d, %s)",
+			mnt->mnt_dir, ret, strerror(errno));
 		/* If we could not unmount the drive on the 1st try,
 		 * kill all NAS applications so they are not keeping the device busy -
 		 * unless it's an unmount request from the Web GUI.
 		 */
-		if ((count == 1) && ((flags & EFH_USER) == 0)){
+		if ((count == 0) && ((flags & EFH_USER) == 0)){
 //_dprintf("restart_nas_services(%d): test 1.\n", getpid());
 			restart_nas_services(1, 0);
 		}
+		/* If we could not unmount the driver ten times,
+		 * it is likely caused by downloadmaster/mediaserver/asus_lighttpd.
+		 * Remove them again per ten retry.
+		 */
+#if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
+		if ((count && !(count % 9)) && ((flags & EFH_USER) == 0)){
+			if (nvram_match("apps_mounted_path", mnt->mnt_dir))
+				stop_app();
+		}
+#endif
 		sleep(1);
 	}
 
 	if (ret == 0) {
 		_dprintf("USB partition unmounted from %s\n", mnt->mnt_dir);
-		syslog(LOG_INFO, "USB partition unmounted from %s", mnt->mnt_dir);
+		syslog(LOG_NOTICE, "USB partition unmounted from %s", mnt->mnt_dir);
 	}
 
 	if (ret && ((flags & EFH_SHUTDN) != 0)) {
@@ -958,7 +933,7 @@ _dprintf("%s: stop_cloudsync.\n", __FUNCTION__);
 		 */
 		ret = umount2(mnt->mnt_dir, MNT_DETACH);
 		_dprintf("USB partition busy - will unmount ASAP from %s\n", mnt->mnt_dir);
-		syslog(LOG_INFO, "USB partition busy - will unmount ASAP from %s", mnt->mnt_dir);
+		syslog(LOG_NOTICE, "USB partition busy - will unmount ASAP from %s", mnt->mnt_dir);
 	}
 
 	if (ret == 0) {
@@ -1303,6 +1278,21 @@ _dprintf("%s: start_cloudsync.\n", __FUNCTION__);
 		}
 #endif
 	}
+#ifdef RTCONFIG_USBRESET
+	else if(strcmp(type, "unknown")){ // Can't mount the the known partition.
+		char *usbreset_active = nvram_safe_get("usbreset_active");
+
+_dprintf("test a. %s: usbreset_active=%s.\n", dev_name, usbreset_active);
+		if(strlen(usbreset_active) <= 0 || !strcmp(usbreset_active, "0")){
+			nvram_set("usbreset_active", "1");
+
+			notify_rc("start_usbreset");
+
+_dprintf("test b. USB RESET finish.\n");
+		}
+	}
+#endif
+
 	return (ret == MOUNT_VAL_RONLY || ret == MOUNT_VAL_RW);
 }
 
@@ -1470,11 +1460,6 @@ void hotplug_usb(void)
 	if (!wait_action_idle(10)) return;
 
 	add = (strcmp(action, "add") == 0);
-#if 0
-#ifdef RTCONFIG_USBEJECT
-	if (!add) nvram_set_int("ejusb_count", 0);
-#endif
-#endif
 	if (add && (strncmp(interface ? : "", "TOMATO/", 7) != 0)) {
 #ifdef LINUX26
 		if (!is_block && device)
@@ -1510,7 +1495,7 @@ void hotplug_usb(void)
 	}
 #ifdef LINUX26
 	else if (is_block && strcmp(getenv("MAJOR") ? : "", "8") == 0
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
+#if (!defined(LINUX30) && LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36))
 		&& strcmp(getenv("PHYSDEVBUS") ? : "", "scsi") == 0
 #endif
 		)
@@ -1603,10 +1588,9 @@ void write_ftpd_conf()
 	fprintf(fp, "xferlog_enable=NO\n");
 	fprintf(fp, "syslog_enable=NO\n");
 	fprintf(fp, "connect_from_port_20=YES\n");
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
+	fprintf(fp, "use_localtime=YES\n");
+#if (!defined(LINUX30) && LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36))
 	fprintf(fp, "use_sendfile=NO\n");
-#else
-	fprintf(fp, "use_sendfile=YES\n");
 #endif
 #ifdef RTCONFIG_IPV6
 	fprintf(fp, "listen%s=YES\n", ipv6_enabled() ? "_ipv6" : "");
@@ -1752,11 +1736,11 @@ void enable_gro(int interval)
 	/* enabled gso on vlan interface */
 	lan_ifnames = nvram_safe_get("lan_ifnames");
 	foreach(lan_ifname, lan_ifnames, next) {
-		if (!strncmp(lan_ifname, "vlan", 4)) {
+	if (!strncmp(lan_ifname, "vlan", 4)) {
 			sprintf(path, ">>/proc/net/vlan/%s", lan_ifname);
 			sprintf(parm, "-gro %d", interval);
 			argv[1] = parm;
-			_eval(argv, path, 0, NULL);
+			 _eval(argv, path, 0, NULL);
 		}
 	}
 }
@@ -1809,18 +1793,11 @@ start_samba(void)
 		return;
 	}
 
-/*
 	if ((nvram_match("enable_samba", "0")) &&
 	    (nvram_match("smbd_master", "0")) &&
-	    (nvram_match("smbd_wins", "0")))
-	{
-		if (nvram_match("txworkq", "1")) {
-			nvram_unset("txworkq");
-			nvram_commit();
-		}
+	    (nvram_match("smbd_wins", "0"))) {
 		return;
 	}
-*/
 
 #ifdef RTCONFIG_GROCTRL
 	enable_gro(2);
@@ -1829,12 +1806,6 @@ start_samba(void)
 #ifdef RTCONFIG_BCMARM
 	add_samba_rules();
 #endif
-/*
-	if (!nvram_match("txworkq", "1")) {
-		nvram_set("txworkq", "1");
-		nvram_commit();
-	}
-*/	
 	mkdir_if_none("/var/run/samba");
 	mkdir_if_none("/etc/samba");
 	
@@ -1881,14 +1852,17 @@ _dprintf("%s: cmd=%s.\n", __FUNCTION__, cmd);
 		free(nv);
 
 	xstart("nmbd", "-D", "-s", "/etc/smb.conf");
-
 #ifdef RTCONFIG_BCMARM
-	if (cpu_num > 1)
-		taskset_ret = eval("taskset", "-c", "1", "smbd", "-D", "-s", "/etc/smb.conf");
+#ifdef SMP 
+        if (cpu_num > 1)
+                taskset_ret = cpu_eval(NULL, "1", "smbd", "-D", "-s", "/etc/smb.conf");
+        else
+                taskset_ret = eval("smbd", "-D", "-s", "/etc/smb.conf");
 
-	if (taskset_ret != 0)
+        if (taskset_ret != 0)
 #endif
-		xstart("smbd", "-D", "-s", "/etc/smb.conf");
+#endif
+                xstart("smbd", "-D", "-s", "/etc/smb.conf");
 
 	logmessage("Samba Server", "daemon is started");
 
@@ -1912,11 +1886,11 @@ void stop_samba(void)
 	logmessage("Samba Server", "smb daemon is stoped");
 
 #ifdef RTCONFIG_BCMARM
-	del_samba_rules();
+        del_samba_rules();
 #endif
 
 #ifdef RTCONFIG_GROCTRL
-	enable_gro(0);
+        enable_gro(0);
 #endif
 }
 #endif	// RTCONFIG_SAMBASRV
@@ -1929,11 +1903,7 @@ void start_dms(void)
 	FILE *f;
 	int port, pid;
 	char dbdir[100], *dmsdir;
-#if 0 /* defined (SMP) */
-	char *argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, MEDIA_SERVER_APP, "-f", "/etc/"MEDIA_SERVER_APP".conf", "-R", NULL };
-#else
 	char *argv[] = { MEDIA_SERVER_APP, "-f", "/etc/"MEDIA_SERVER_APP".conf", "-R", NULL };
-#endif
 	static int once = 1;
 	int i;
 	char serial[18];
@@ -2232,10 +2202,11 @@ void start_webdav(void)	// added by Vanic
 		notify_rc("start_webdav");
 		return;
 	}
-
+/*
 #ifndef RTCONFIG_WEBDAV
         system("sh /opt/etc/init.d/S50aicloud scan");
 #else
+*/
 	//static char *lighttpd_monitor_argv[] = { "lighttpd-monitor", NULL, NULL };
 	if(nvram_get_int("sw_mode") != SW_MODE_ROUTER) return;
 
@@ -2247,9 +2218,12 @@ void start_webdav(void)	// added by Vanic
 		nvram_set("webdav_aidisk", "1");
 		nvram_set("webdav_proxy", "1");
 	}
-	
+
 	if (nvram_match("enable_webdav", "0")) return;
 
+#ifndef RTCONFIG_WEBDAV
+        system("sh /opt/etc/init.d/S50aicloud scan");
+#else
 	/* WebDav directory */
 	mkdir_if_none("/tmp/lighttpd");
 	mkdir_if_none("/tmp/lighttpd/uploads");
@@ -2315,7 +2289,7 @@ void stop_webdav(void)
 }
 //#endif	// RTCONFIG_WEBDAV
 
-#ifdef RTCONFIG_CLOUDSYNC
+//#ifdef RTCONFIG_CLOUDSYNC
 void start_cloudsync(int fromUI)
 {
 	char word[PATH_MAX], *next_word;
@@ -2497,10 +2471,10 @@ void stop_cloudsync(int type)
 		logmessage("Cloudsync client", "daemon is stoped");
 	}
 	else{
-	if(pids("inotify"))
+  	if(pids("inotify"))
 			killall_tk("inotify");
 
-	if(pids("webdav_client"))
+  	if(pids("webdav_client"))
 			killall_tk("webdav_client");
 
 		if(pids("asuswebstorage"))
@@ -2509,7 +2483,7 @@ void stop_cloudsync(int type)
 		logmessage("Cloudsync client and Webdav_client", "daemon is stoped");
 	}
 }
-#endif
+//#endif
 
 #ifdef RTCONFIG_USB
 void start_nas_services(int force)
@@ -2647,9 +2621,9 @@ void restart_sambaftp(int stop, int start)
 	file_unlock(fd);
 }
 
-#define USB_PORT_0	0x01
-#define USB_PORT_1	0x02
-#define USB_PORT_2	0x04
+#define USB_PORT_0      0x01
+#define USB_PORT_1      0x02
+#define USB_PORT_2      0x04
 
 int ejusb_main(int argc, char *argv[])
 {
@@ -2673,11 +2647,7 @@ int ejusb_main(int argc, char *argv[])
 
 	got_usb_port = atoi(argv[1]);
 	if(got_usb_port < 1 || got_usb_port > 3){
-#ifndef RTCONFIG_BCMARM
 		printf("Usage: ejusb [disk_port] [0|1]\n");
-#else
-		printf("Usage: ejusb [disk_port] [1|2]\n");
-#endif
 		return 0;
 	}
 
@@ -2722,14 +2692,7 @@ int ejusb_main(int argc, char *argv[])
 	} else {
 		_dprintf("restart_nas_services(%d) is skipped: test 7.\n", getpid());
 	}
-#if 0
-#ifdef RTCONFIG_USBEJECT
-	sprintf(nvram_name, "usb_path%d", got_usb_port);
-	nvram_set(nvram_name, "");
-	int usb_port_hex = (got_usb_port == 0) ? USB_PORT_0 : ((got_usb_port == 1) ? USB_PORT_1 : ((got_usb_port == 2) ? USB_PORT_2 : 0));
-	nvram_set_int("ejusb_count", nvram_get_int("ejusb_count") | usb_port_hex);
-#endif
-#endif
+
 	return 0;
 }
 
@@ -2885,11 +2848,7 @@ static void diskmon_sighandler(int sig)
 
 void start_diskmon(void)
 {
-#if 0 /* defined (SMP) */
-	char *diskmon_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "disk_monitor", NULL };
-#else
 	char *diskmon_argv[] = { "disk_monitor", NULL };
-#endif
 	pid_t pid;
 
 	if (getpid() != 1) {

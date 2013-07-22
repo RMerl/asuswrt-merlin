@@ -110,7 +110,7 @@ function initial(){
 		parent.errCount = 0;
 		parent.parent.$("LoadingBar").style.visibility = "visible";
 		parent.parent.showLoadingBar(parent.waitingTime);
-		parent.setTimeout("update_site_info();", parseInt(parent.waitingTime)*1000);		
+		parent.setTimeout("update_site_info();", parseInt(parent.waitingTime+2)*1000);		
 	}
 	else if(getflag == "wlcconnect_mb"){
 		parent.errCount = 0;
@@ -137,7 +137,7 @@ function initial(){
 
 		if(getflag == "finish"){
 			if(parent.$("hidden_frame")){
-				if(parent.parent.live_update_support == -1){
+				if(!parent.parent.live_update_support){
 					//setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000); // Post
 					setTimeout("parent.location.href='/qis/QIS_finish.htm';", restart_time*1000);  // Get
 				}
@@ -176,7 +176,7 @@ function initial(){
 	}
 	else{
 		if(next_page == "/qis/QIS_finish.htm"){
-			if(parent.parent.live_update_support == -1){
+			if(!parent.parent.live_update_support){
 				if(navigator.userAgent.indexOf("Opera")  >= 0)
 					setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000);
 				else	

@@ -1,3 +1,0 @@
-# Generated config based on /media/ASUSWRT/asuswrt/release/src-ra/router/iptables-1.4.x/include
-TC_CONFIG_XT:=y
-IPT_LIB_DIR:=/usr/lib/xtables

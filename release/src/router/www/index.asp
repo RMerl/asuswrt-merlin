@@ -53,7 +53,7 @@ var usb_path2_index = '<% nvram_get("usb_path2"); %>';
 
 var all_disks = "";
 var all_disk_interface;
-if(usb_support != -1){
+if(usb_support){
 	all_disks = foreign_disks().concat(blank_disks());
 	all_disk_interface = foreign_disk_interface_names().concat(blank_disk_interface_names());
 }
@@ -68,7 +68,7 @@ var client_list_array = '<% get_client_detail_info(); %>';
 var $j = jQuery.noConflict();	
 
 var _apps_pool_error = '<% apps_fsck_ret(); %>';
-if('<% apps_fsck_ret(); %>' != '')
+if(_apps_pool_error != '')
 	var apps_pool_error = eval(_apps_pool_error);
 else
 	var apps_pool_error = [[""]];
@@ -103,7 +103,7 @@ function initial(){
 	set_default_choice();
 	show_client_status();		
 
-	if(parent.usb_support == -1){
+	if(!parent.usb_support){
 		$("line3_td").height = '21px';
 		$("line3_img").src = '/images/New_ui/networkmap/line_one.png';
 		$("clients_tr").colSpan = "3";
@@ -190,10 +190,11 @@ function detectUSBStatusIndex(){
     		detectUSBStatusIndex();
     	},
     	success: function(){
+    		if((tmp_mount_0 == 0 && tmp_mount_0 != foreign_disk_total_mounted_number()[0]) 
+						|| (tmp_mount_1 == 0 && tmp_mount_1 != foreign_disk_total_mounted_number()[1])){
+						location.href = "/index.asp";
 				return 0;
-				clickEvent($("iconRouter"));
-				$("statusframe").src = "/device-map/router.asp";
-				show_device();
+				}		
   		}
 	});
 }
@@ -318,7 +319,7 @@ function show_client_status(){
 }
 
 function show_device(){
-	if(usb_support == -1){
+	if(!usb_support){
 		usb_path1_index = "";
 		usb_path2_index = "";
 		return true;
@@ -663,29 +664,54 @@ function check_status(flag, diskOrder){
 		document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "0px";
 	else
 		document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "33px";
-	
+
 	document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";	
 	document.getElementById('ring_USBdisk_'+diskOrder).style.display = "";
-	
+
 	if(!diskUtility_support)
 		return true;
-	
-	var i, j, ret;
-	for(i = 0, ret = 0; i < pool_name.length; ++i){
+
+	var i, j;
+	var got_code_0, got_code_1, got_code_2, got_code_3;
+
+	got_code_0 = got_code_1 = got_code_2 = got_code_3 = 0;
+
+	for(i = 0; i < pool_name.length; ++i){
 		for(j = 0; j < flag.length; ++j){
-			if(pool_name[i] == flag[j][0]){
-				ret += parseInt(flag[j][1]);
+			if(pool_name[i] == flag[j][0] && per_pane_pool_usage_kilobytes(i, diskOrder)[0] > 0){
+				if(flag[j][1] == ""){
+					got_code_3 = 1;
+					continue;
+				}
+
+				switch(parseInt(flag[j][1])){
+					case 3: // don't or can't support.
+						got_code_3 = 1;
+						break;
+					case 2: // proceeding...
+						got_code_2 = 1;
+						break;
+					case 1: // find errors.
+						got_code_1 = 1;
+						break;
+					default: // no error.
+						got_code_0 = 1;
+						break;
+				}
 			}
 		}
 	}
 
-	if(ret == 0){
-		document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -3px';
-		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 50%';	
-	}
-	else if(ret == 1){
+	if(got_code_1){
 		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 101%';
 		document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -3px';
+	}
+	else if(got_code_2 || got_code_3){
+		// do nothing.
+	}
+	else{ // got_code_0
+		document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -3px';
+		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 50%';
 	}
 }
 
@@ -803,53 +829,67 @@ function change_wan_state(primary_status, secondary_status){
 	if(wans_mode == "fo"){
 		if(wan_unit == 0){
 			$('primary_status').innerHTML = primary_status;
-			if(primary_status == "Disconnected")				
-				$('primary_line').src = "/images/New_ui/networkmap/line_dualwan_disconnected.png";
-			else
-				$('primary_line').src = "/images/New_ui/networkmap/line_dualwan.png";
+			if(primary_status == "Disconnected"){				
+				$('primary_line').className = "primary_wan_disconnected";
+			}	
+			else{
+				$('primary_line').className = "primary_wan_connected";
+			}
 			
 			if(secondary_wanlink_ipaddr != '0.0.0.0' && secondary_status != 'Disconnected')
 				secondary_status = "Standby";	
 				
 			$('seconday_status').innerHTML = secondary_status;	
-			if(secondary_status == 'Disconnected')
-				$('secondary_line').src = "/images/New_ui/networkmap/line_dualwan_disconnected.png";
-			else if(secondary_status == 'Standby')
-				$('secondary_line').src = "/images/New_ui/networkmap/line_dualwan_dot.png";
-			else
-				$('secondary_line').src = "/images/New_ui/networkmap/line_dualwan.png";
+			if(secondary_status == 'Disconnected'){
+				$('secondary_line').className = "secondary_wan_disconnected";
+			}	
+			else if(secondary_status == 'Standby'){
+				$('secondary_line').className = "secondary_wan_disconnected";
+			}	
+			else{
+				$('secondary_line').className = "secondary_wan_connected";
+			}
 		}
 		else{
 			if(wanlink_ipaddr != '0.0.0.0' && primary_status != 'Disconnected')
 				primary_status = "Standby";
 				
 			$('primary_status').innerHTML = primary_status;
-			if(primary_status == 'Disconnected')
-				$('primary_line').src = "/images/New_ui/networkmap/line_dualwan_disconnected.png";
-			else if(primary_status == 'Standby')
-				$('primary_line').src = "/images/New_ui/networkmap/line_dualwan_dot.png";
-			else
-				$('primary_line').src = "/images/New_ui/networkmap/line_dualwan_.png";
+			if(primary_status == 'Disconnected'){
+				$('primary_line').className = "primary_wan_disconnected";
+			}	
+			else if(primary_status == 'Standby'){
+				$('primary_line').className = "primary_wan_standby";
+			}	
+			else{
+				$('primary_line').className = "primary_wan_connected";
+			}
 			
 			$('seconday_status').innerHTML = secondary_status;
-			if(secondary_status == "Disconnected")
-				$('secondary_line').src = "/images/New_ui/networkmap/line_dualwan_disconnected.png";
-			else
-				$('secondary_line').src = "/images/New_ui/networkmap/line_dualwan.png";	
+			if(secondary_status == "Disconnected"){
+				$('secondary_line').className = "secondary_wan_disconnected";
+			}	
+			else{
+				$('secondary_line').className = "secondary_wan_connected";
+			}
 		}	
 	}
 	else{
 		$('primary_status').innerHTML = primary_status;
 		$('seconday_status').innerHTML = secondary_status;
-		if(primary_status == "Disconnected")				
-				$('primary_line').src = "/images/New_ui/networkmap/line_dualwan_disconnected.png";
-			else
-				$('primary_line').src = "/images/New_ui/networkmap/line_dualwan.png";
+		if(primary_status == "Disconnected"){				
+			$('primary_line').className = "primary_wan_disconnected";
+		}	
+		else{
+			$('primary_line').className = "primary_wan_connected";
+		}
 		
-		if(secondary_status == "Disconnected")
-			$('secondary_line').src = "/images/New_ui/networkmap/line_dualwan_disconnected.png";
-		else
-			$('secondary_line').src = "/images/New_ui/networkmap/line_dualwan.png";
+		if(secondary_status == "Disconnected"){
+			$('secondary_line').className = "secondary_wan_disconnected";
+		}	
+		else{
+			$('secondary_line').className = "secondary_wan_connected";
+		}	
 	}
 }
 </script>
@@ -964,14 +1004,14 @@ function change_wan_state(primary_status, secondary_status){
 				<tr>
 					<!--==line of dual wan==-->
 					<td id="primary_wan_line"  align="center" height="40px" style="display:none;">
-						<img id="primary_line" style="margin-left:3px;" src="/images/New_ui/networkmap/line_dualwan.png">
+						<div id="primary_line" class="primary_wan_connected"></div>
 					</td>
 					<td id="secondary_wan_line" colspan="2" align="center" height="40px"  style="display:none;">
-						<img id="secondary_line" style="margin-left:39px;" src="/images/New_ui/networkmap/line_dualwan_dot.png">
+						<div id="secondary_line" class="secondary_wan_connected"></div>
 					</td>
 					<!--==line of single wan==-->
 					<td id="single_wan_line" colspan="5" align="center" height="19px">
-						<img id="single_wan" style="margin-left:-365px;*margin-left:-185px;" src="/images/New_ui/networkmap/line_dualwan.png">
+						<div id="single_wan" class="single_wan_connected"></div>
 					</td>
 				</tr>			
 				<tr>

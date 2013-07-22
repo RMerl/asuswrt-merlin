@@ -38,7 +38,6 @@ var wep_x = '<% nvram_get("wl1_wep_x"); %>';
 var key_x = '<% nvram_get("wl1_key"); %>';
 var wpa_mode = '<% nvram_get("wl1_wpa_mode"); %>';
 var reIP = '<% nvram_get("lan_ipaddr"); %>';
-var band5g_support = "<% nvram_get("rc_support"); %>".search("5G");
 var JS_timeObj = new Date();
 var uptimeStr = "<% uptime(); %>";
 var newformat_systime = uptimeStr.substring(8,11) + " " + uptimeStr.substring(5,7) + " " + uptimeStr.substring(17,25) + " " + uptimeStr.substring(12,16);  //Ex format: Jun 23 10:33:31 2008
@@ -210,7 +209,7 @@ function QKfinish_load_body(){
 			$("#security2_block")[0].style.display = "none";
 		}
 
-		if(band5g_support == -1){
+		if(!parent.band5g_support){
 			$("#desc2g")[0].style.display = "none";
 			$("#freqtitle5")[0].style.display = "none";
 			$("#ssid5_block")[0].style.display = "none";
@@ -332,7 +331,7 @@ function QKfinish_load_body(){
 			
 		}
 		
-		if(band5g_support == -1){
+		if(!parent.band5g_support){
 				$("#desc2g")[0].style.display = "none";
 				$("#freqtitle5")[0].style.display = "none";
 				$("#ssid5_block")[0].style.display = "none";

@@ -53,7 +53,7 @@ function initial(){
 	
 	document.aidiskForm.protocol.value = PROTOCOL;
 
-	if(WebDav_support == -1)
+	if(!WebDav_support)
 		$("clouddiskstr").style.display = "none";
 	
 	// show page's control

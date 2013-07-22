@@ -1,0 +1,5 @@
+Initialize empty image
+Create MBR with ID=0x1
+Disk identifier: 0x00000001
+Create MBR with ID=0x2
+Disk identifier: 0x00000002

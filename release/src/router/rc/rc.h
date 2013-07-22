@@ -40,9 +40,6 @@
 #define DUT_DOMAIN_NAME "router.asus.com"
 #define OLD_DUT_DOMAIN_NAME1 "www.asusnetwork.net"
 #define OLD_DUT_DOMAIN_NAME2 "www.asusrouter.com"
-#if defined (SMP)
-#define DEFAULT_TASKSET_CPU "0"
-#endif
 
 #ifdef RTCONFIG_IPV6
 extern char wan6face[];
@@ -51,12 +48,14 @@ extern char wan6face[];
 /* services.c */
 extern int g_reboot;
 
+#ifdef RTCONFIG_BCMARM
 #define LINUX_KERNEL_VERSION LINUX_VERSION_CODE
+#endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)
-#define DAYS_PARAM      " --days "
+#if defined(LINUX30) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,34)
+#define DAYS_PARAM	" --kerneltz --weekdays "
 #else
-#define DAYS_PARAM      " --kerneltz --weekdays "
+#define DAYS_PARAM	" --days "
 #endif
 
 #define LOGNAME get_productid()
@@ -177,7 +176,17 @@ extern int stop_wps_method(void);
 extern int is_wps_stopped(void);
 extern int setMAC_2G(const char *mac);
 extern int setMAC_5G(const char *mac);
+#if defined(RTCONFIG_NEW_REGULATION_DOMAIN)
+extern int getRegSpec(void);
+extern int getRegDomain_2G(void);
+extern int getRegDomain_5G(void);
+extern int setRegSpec(const char *regSpec);
+extern int setRegDomain_2G(const char *cc);
+extern int setRegDomain_5G(const char *cc);
+#else
+extern int getCountryCode_2G(void);
 extern int setCountryCode_2G(const char *cc);
+#endif
 extern int setCountryCode_5G(const char *cc);
 extern int setSN(const char *SN);
 extern int getSN(void);
@@ -189,7 +198,6 @@ extern int ResetDefault(void);
 extern int getBootVer(void);
 extern int getMAC_2G(void);
 extern int getMAC_5G(void);
-extern int getCountryCode_2G(void);
 extern int GetPhyStatus(void);
 extern int Get_ChannelList_2G(void);
 extern int Get_ChannelList_5G(void);
@@ -200,6 +208,7 @@ extern void Get_fail_dev_log(void);
 extern int setMN(const char *MN);
 extern int getMN(void);
 #endif
+extern int check_imagefile(char *fname);
 
 /* board API under sysdeps/ralink/ralink.c */
 #ifdef RTCONFIG_RALINK
@@ -226,6 +235,12 @@ extern int wl_WscConfigured(int unit);
 extern int Get_Device_Flags(void);
 extern int Set_Device_Flags(const char *flags_str);
 #endif
+
+/* sysdeps/dsl-*.c */
+extern int check_tc_firmware_crc(void);
+extern int truncate_trx(void);
+extern void do_upgrade_adsldrv(void);
+extern int compare_linux_image(void);
 
 // init.c
 extern int init_main(int argc, char *argv[]);
@@ -407,23 +422,37 @@ extern int wpacli_main(int argc, char *argv[]);
 #endif
 
 // mtd.c
-extern int mtd_erase_old(const char *mtdname);
+extern int mtd_erase(const char *mtdname);
 extern int mtd_unlock(const char *mtdname);
+#ifdef RTCONFIG_BCMARM
+extern int mtd_erase_old(const char *mtdname);
 extern int mtd_write_main_old(int argc, char *argv[]);
 extern int mtd_unlock_erase_main_old(int argc, char *argv[]);
-
-extern int mtd_erase(const char *mtd);
 extern int mtd_write(const char *path, const char *mtd);
+#else
+extern int mtd_write_main(int argc, char *argv[]);
+extern int mtd_unlock_erase_main(int argc, char *argv[]);
+#endif
 
 // jffs2.c
-#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_JFFSV1)
+#if defined(RTCONFIG_UBIFS)
+extern void start_ubifs(void);
+extern void stop_ubifs(void);
+static inline void start_jffs2(void) { start_ubifs(); }
+static inline void stop_jffs2(void) { stop_ubifs(); }
+#elif defined(RTCONFIG_JFFS2) || defined(RTCONFIG_JFFSV1)
 extern void start_jffs2(void);
-//extern void erase_jffs_partition(void);
+extern void stop_jffs2(void);
 #else
-//static inline void erase_jffs_partition(void) { }
+static inline void start_jffs2(void) { }
+static inline void stop_jffs2(void) { }
 #endif
 
 // watchdog.c
+extern void led_control_normal(void);
+extern void erase_nvram(void);
+extern int init_toggle(void);
+extern void btn_check(void);
 extern int watchdog_main(int argc, char *argv[]);
 
 // wpsfix.c
@@ -492,6 +521,8 @@ extern void time_zone_x_mapping(void);
 extern void use_custom_config(char *config, char *target);
 extern void append_custom_config(char *config, FILE *fp);
 extern char *get_parsed_crt(const char *name, char *buf);
+extern void stop_if_misc(void);
+extern int mssid_mac_validate(const char *macaddr);
 
 // ssh.c
 extern void start_sshd(void);
@@ -606,10 +637,17 @@ extern int asus_usbbcm(const char *device_name, const char *action);
 #endif
 #ifdef RTCONFIG_USB_BECEEM
 extern int write_beceem_conf(const char *eth_node);
+extern int is_beceem_dongle(const int mode, const char *vid, const char *pid);
+extern int is_samsung_dongle(const int mode, const char *vid, const char *pid);
+extern int is_gct_dongle(const int mode, const char *vid, const char *pid);
+extern int write_gct_conf(void);
 #endif
 #ifdef RTCONFIG_USB_MODEM
 extern int is_create_file_dongle(const char *vid, const char *pid);
 #endif
+extern int is_android_phone(const int mode, const char *vid, const char *pid);
+extern int write_3g_conf(FILE *fp, int dno, int aut, char *vid, char *pid);
+extern int init_3g_param(char *vid, char *pid, int port_num);
 
 //services.c
 extern void setup_leds();
@@ -713,8 +751,9 @@ extern int stop_wpsfix(void);
 extern void stop_dnsmasq(int force);
 #endif
 extern int firmware_check_main(int argc, char *argv[]);
-
-
-
+#ifdef RTCONFIG_DSL
+extern int check_tc_upgrade(void);
+extern int start_tc_upgrade(void);
+#endif
 
 #endif	/* __RC_H__ */

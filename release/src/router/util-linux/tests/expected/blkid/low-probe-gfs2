@@ -1,0 +1,5 @@
+ID_FS_LABEL=mycluster:mygfs2
+ID_FS_LABEL_ENC=mycluster:mygfs2
+ID_FS_TYPE=gfs2
+ID_FS_USAGE=filesystem
+ID_FS_VERSION=1

@@ -1,0 +1,117 @@
+CURRENT=..
+SEP=echo "\033[41;1m   $@   \033[0m"
+export SRCBASE := $(shell pwd)/$(CURRENT)
+export BUILD := $(shell (gcc -dumpmachine))
+export HOSTCC := gcc
+export PLATFORM := mipsel-uclibc
+CROSS_COMPILE := mipsel-linux-
+export CROSS_COMPILER := $(CROSS_COMPILE)
+export CONFIGURE := ./configure --host=mipsel-linux --build=$(BUILD)
+export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/.. && pwd)
+export IPKG_TOOLS := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))../../../ipkg-utils-1.7 && pwd)
+export LD_DIR := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))../../../../staging && pwd)
+
+
+export CC := $(CROSS_COMPILE)gcc
+export AR := $(CROSS_COMPILE)ar
+export AS := $(CROSS_COMPILE)as
+export LD := $(CROSS_COMPILE)ld
+export NM := $(CROSS_COMPILE)nm
+export RANLIB := $(CROSS_COMPILE)ranlib
+export STRIP := $(CROSS_COMPILE)strip
+export SIZE := $(CROSS_COMPILE)size
+
+obj-y += zlib
+obj-y += libxml2
+obj-y += openssl
+obj-y += neon
+obj-y += webdav
+obj-y += WebDAV-ipk
+
+all: $(obj-y)
+	echo $(LD_DIR)
+	echo $(TOOLCHAIN)
+	echo $(IPKG_TOOLS)
+
+clean:
+	@$(MAKE) -C $(CURRENT)/neon clean
+	@$(MAKE) -C $(CURRENT)/webdav_client clean
+	@$(MAKE) -C $(CURRENT)/libxml2 clean
+	@$(MAKE) -C $(CURRENT)/openssl clean
+	@$(MAKE) -C $(CURRENT)/zlib clean
+	@rm -rf WebdavClient-ipk/opt/tmp/lib/*
+	@rm -rf WebdavClient-ipk/opt/tmp/bin/*
+	rm -rf webdavclient_*.ipk
+
+neon/stamp-h2:
+	@$(SEP)
+#	cd neon
+#	touch $@
+neon: neon/stamp-h2
+	cd $(CURRENT)/neon && \
+	AR=$(TOOLCHAIN)/bin/mipsel-linux-ar AS=$(TOOLCHAIN)/bin/mipsel-linux-as LD=$(TOOLCHAIN)/bin/mipsel-linux-ld NM=$(TOOLCHAIN)/bin/mipsel-linux-nm CC=$(TOOLCHAIN)/bin/mipsel-linux-gcc CPP="$(TOOLCHAIN)/bin/mipsel-linux-gcc -E" GCC=$(TOOLCHAIN)/bin/mipsel-linux-gcc CXX=$(TOOLCHAIN)/bin/mipsel-linux-g++ RANLIB=$(TOOLCHAIN)/bin/mipsel-linux-ranlib STRIP=$(TOOLCHAIN)/bin/mipsel-linux-strip \
+	./configure --build=i386-pc-linux-gnu --host=mipsel-linux --target=mipsel-linux --prefix=/opt --disable-static --enable-shared --disable-nls --with-zlib --with-libxml2 --with-ssl=openssl --with-libs=$(SRCBASE)/openssl:$(SRCBASE)/libxml2 CFLAGS='-I$(SRCBASE)/zlib -I$(SRCBASE)/libxml2/include -I$(SRCBASE)/openssl/include' LDFLAGS='-L$(SRCBASE)/libxml2/.libs -L$(SRCBASE)/openssl -L$(SRCBASE)/zlib' LIBS='-lxml2 -lcrypto -lssl -lz' XML2_CONFIG='$(SRCBASE)/libxml2/xml2-config'
+	cp -f $(CURRENT)/neon/config.h $(CURRENT)/neon/src/config.h
+	@$(MAKE) -C $(CURRENT)/neon
+	cp -rf $(CURRENT)/neon/src/.libs/libneon.so.27.2.6 WebdavClient-ipk/opt/tmp/lib/
+
+webdav/stamp-h2:
+	@$(SEP)
+#	cd webdav
+#	touch $@
+webdav: webdav/stamp-h2
+	@$(MAKE) -C $(CURRENT)/webdav_client -f Makefile.ipk
+	cp -rf $(CURRENT)/webdav_client/webdav_client WebdavClient-ipk/opt/tmp/bin/
+
+libxml2/stamp-h2:
+	@$(SEP)
+#	cd libxml2
+#	touch $@
+libxml2: libxml2/stamp-h2
+	cd $(CURRENT)/libxml2 && \
+	AR=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ar AS=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-as LD=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ld NM=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-nm CC=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc CPP="$(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc -E" GCC=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc CXX=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-g++ RANLIB=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ranlib STRIP=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-strip CPPFLAGS="-O2   -pipe  -I$(LD_DIR)/opt/include " LDFLAGS=" -L$(LD_DIR)/opt/lib -Wl,-rpath,/opt/lib -Wl,-rpath-link,$(LD_DIR)/opt/lib " \
+	./configure --build=i386-pc-linux-gnu --host=mipsel-linux --target=mipsel-linux --prefix=/opt --disable-nls --disable-static --enable-shared --without-python
+	@$(MAKE) -C $(CURRENT)/libxml2 all
+
+openssl/stamp-h2:
+	@$(SEP)
+#	cd openssl
+#	touch $@
+openssl: openssl/stamp-h2
+	cd $(CURRENT)/openssl && \
+	AR=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ar AS=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-as LD=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ld NM=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-nm CC=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc CPP="$(LD_DIR)/bin/mipsel-linux-uclibc-gcc -E" GCC=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc CXX=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-g++ RANLIB=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ranlib STRIP=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-strip \
+		./Configure \
+			shared no-zlib \
+			-O2   -pipe  -I$(LD_DIR)/opt/include \
+			--openssldir=/opt/share/openssl \
+			--prefix=$(LD_DIR)/opt \
+			linux-mipsel 
+	@$(MAKE) -C $(CURRENT)/openssl \
+		AR=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ar AS=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-as LD=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ld NM=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-nm CC=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc CPP="$(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc -E" GCC=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc CXX=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-g++ RANLIB=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ranlib STRIP=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-strip \
+		AR="$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ar r" \
+		\
+		\
+		MANDIR=/opt/man \
+		EX_LIBS=" -L$(LD_DIR)/opt/lib -Wl,-rpath,/opt/lib -Wl,-rpath-link,$(LD_DIR)/opt/lib -ldl" \
+		DIRS="crypto ssl apps test"
+#	 cd openssl && \
+#	$(MAKE) install
+	cp -rf $(CURRENT)/openssl/libcrypto.so.1.0.0 $(LD_DIR)/opt/lib/libcrypto.so.1.0.0
+	cp -rf $(CURRENT)/openssl/libcrypto.so $(LD_DIR)/opt/lib/libcrypto.so
+	cp -rf $(CURRENT)/openssl/libssl.so.1.0.0 $(LD_DIR)/opt/lib/libssl.so.1.0.0
+	cp -rf $(CURRENT)/openssl/libssl.so $(LD_DIR)/opt/lib/libssl.so
+
+zlib/stamp-h2:
+	@$(SEP)
+#	cd zlib
+#	touch $@
+zlib: zlib/stamp-h2
+	cd $(CURRENT)/zlib && \
+	AR=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ar AS=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-as LD=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ld NM=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-nm CC=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc CPP="$(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc -E" GCC=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc CXX=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-g++ RANLIB=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ranlib STRIP=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-strip \
+	./configure --shared
+	@$(MAKE) -C $(CURRENT)/zlib all
+
+WebDAV-ipk:
+	$(STRIP) WebdavClient-ipk/opt/tmp/bin/*
+	$(STRIP) WebdavClient-ipk/opt/tmp/lib/*
+	@$(IPKG_TOOLS)/ipkg-build WebdavClient-ipk ./

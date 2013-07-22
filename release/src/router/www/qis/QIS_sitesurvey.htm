@@ -33,7 +33,9 @@
 }	
 	
 </style>	
+<script type="text/JavaScript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <script type="text/JavaScript">
 var aplist = new Array();
 var wlc_state = '<% nvram_get("wlc_state"); %>';
@@ -67,7 +69,7 @@ function addBorder(obj){
 	else
 		document.getElementById("sigTh").style.borderBottom = '1px solid #334044';
 
-	if(sorter.sortingMethod == "increase"){
+	if(sorter.sortingMethod == "decrease"){
 		obj.style.borderTop='1px solid #FC0';
 		obj.style.borderBottom='1px solid #334044';
 	}
@@ -82,13 +84,13 @@ function addBorder(obj){
 function doSorter(_flag, _Method){
 	if(aplist.length == 1)
 		return 0;
-	
-	// doSorter
-	eval("aplist.sort(sorter."+_Method+"_"+sorter.sortingMethod+");");
 
 	// update variables
 	sorter.indexFlag = _flag;
 	sorter.sortingMethod = (sorter.sortingMethod == "increase") ? "decrease" : "increase";
+	
+	// doSorter
+	eval("aplist.sort(sorter."+_Method+"_"+sorter.sortingMethod+");");
 	
 	// show Table
 	showSiteTable();
@@ -97,7 +99,7 @@ function doSorter(_flag, _Method){
 // suit for 2 dimention array
 var sorter = {
 	"lastClick" : "", // a HTML object
-	"sortingMethod" : "increase", 
+	"sortingMethod" : "decrease", 
 	"indexFlag" : 5, // default sort is by signal
 	"num_increase" : function(a, b){
 		return parseInt(a[sorter.indexFlag]) - parseInt(b[sorter.indexFlag]);
@@ -263,14 +265,13 @@ function bind_event(){ //bind <tr> click and hover event
 		$(this).find("td").css("color", "#FFFFFF");
 		idx = $(this)[0].rowIndex;
 
-		var initRow = '<tr class="inputRow" style="display:none;background-color:#708789;"><td style="height:50px;" colspan="5"><table><tr>';
+		var initRow = '<tr class="inputRow" style="display:none;background-color:#708789;"><td style="height:50px;" colspan="5"><table width="100%"><tr>';
 		var connectedHint = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_connected#></span></td>';
 		var unEncrypt = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_connect_open_wlan#></span></td>';
-		var networkKey = '<td style="border:0px;"><span style="color:#FFFFFF;"><#Network_key#>:</span><input type="password" autocapitalization="off" id="thekey" name="thekey" class="input_25_table" style="padding-left:3px;margin-left:5px;width:200px;"></td>';
-		var wepkeyIndex = '<td style="border:0px;"><span style="margin-left:5px;color:#FFFFFF;"><#WLANConfig11b_WEPDefaultKey_itemname#></span><select name="sta_key_index" class="input_option" style="margin-left:5px;"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td>';
-		var wep_auth = '<td style="border:0px;"><span style="margin-left:5px;color:#FFFFFF;">Auth:</span><select name="wl_wep_auth" class="input_option" style="margin-left:5px;"><option value="open" selected>open</option><option value="shared">shared</option></select></td>';
-		var connectBtn = '<td style="border:0px;"><input style="margin-left:10px;" id="connect_btn" type="button" value="<#CTL_Add_enrollee#>" onclick="submitForm('+ idx +')" class="button_gen"> <img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></td></tr>';
-		var showPassword = '<tr><td style="border:0px;color:#FFFFFF;"><div style="*margin-left:50px;margin-left:55px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.thekey);"><#QIS_show_pass#></div></td></tr>';
+		var networkKey = '<td style="border:0px;"><span style="color:#FFFFFF;"><#Network_key#>:</span><input type="password" autocapitalization="off" id="thekey" name="thekey" class="input_25_table" style="padding-left:3px;margin-left:5px;width:200px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.thekey);"><span style="color:#FFF"><#QIS_show_pass#></span></td>';
+		var connectBtn = '<td style="border:0px;text-align:right"><input style="margin-left:10px;" id="connect_btn" type="button" value="<#CTL_Add_enrollee#>" onclick="submitForm('+ idx +')" class="button_gen"></td></tr>';
+		var wep_auth = '<tr><td style="border:0px;"><span style="margin-left:5px;color:#FFFFFF;"><#WLANConfig11b_AuthenticationMethod_itemname#></span><select name="wl_wep_auth" class="input_option" style="margin-left:5px;"><option value="open" selected>open</option><option value="shared">shared</option></select>';
+		var wepkeyIndex = '<span style="margin-left:5px;color:#FFFFFF;"><#WLANConfig11b_WEPDefaultKey_itemname#></span><select name="sta_key_index" class="input_option" style="margin-left:5px;"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td></tr>';
 		var endOfRow = '</table></td></tr>';
 
 		if(wlc_scan_state != 3)
@@ -300,18 +301,18 @@ function bind_event(){ //bind <tr> click and hover event
 				initRow += '<span style="color:#FFCC00;"><#WLANConfig11b_x_BRApply_itemname2#>...</span><img id="loadingIcon" src="/images/InternetScan.gif"></td></tr>';
 		}
 		else{	
-			if(aplist[idx][4] == "NONE")
+			if(aplist[idx][4] == "NONE"){
 				initRow += unEncrypt;
+				initRow += connectBtn;
+			}
 			else{
 				initRow += networkKey;
+				initRow += connectBtn;
 				if(aplist[idx][4] == "WEP"){
 					initRow += wep_auth;
 					initRow += wepkeyIndex;
 				}	
 			}
-			initRow += connectBtn;
-			if(aplist[idx][4] != "NONE")
-				initRow += showPassword;
 		}
 		initRow += endOfRow;
 		$(this).after(initRow);
@@ -334,27 +335,7 @@ function bind_event(){ //bind <tr> click and hover event
 
 /* password item show or not */
 function pass_checked(obj){
-	if(document.form.show_pass_1.checked)
-		replace_pass_type(obj, "text");
-	else
-		replace_pass_type(obj, "password");
-}
-
-/* change password type depend on browser for fix IE issue*/
-function replace_pass_type(obj, _Type){
-	if(navigator.userAgent.indexOf("MSIE") != -1){ // fix IE issue
-		var input2 = document.createElement('<input class="input_25_table" autocapitalization="off" style="padding-left:3px;margin-left:5px;width:200px;">');  // create input element
-		with (input2){ 
-			id = obj.id; 
-			value = obj.value; 
-			type = _Type; // change input type
-			name = obj.name;
-		} 
-		obj.parentNode.replaceChild(input2,obj);
-	}
-	else{	
-		obj.type= _Type;
-	}
+	switchType(obj, document.form.show_pass_1.checked, true);
 }
 
 function validate_psk(psk_obj){
@@ -504,7 +485,7 @@ function submitForm(_idx){	//["band","ssid","channel","auth","encrypt","signal",
 	parent.document.QKform.wlc_crypto.value = document.form.wlc_crypto.value;
 	parent.document.QKform.wlc_wpa_psk.value = document.form.wlc_wpa_psk.value;
 	parent.document.QKform.wlc_nbw_cap.value = document.form.wlc_nbw_cap.value;
-	gotoPage('/qis/QIS_wireless.htm', 0)
+	gotoPage('/qis/QIS_wireless.htm', 0);
 }
 
 function rescan(){
@@ -545,6 +526,195 @@ function gotoPage(dst_url, flag){
 		document.redirectForm.flag.value = flag;
 		document.redirectForm.submit();
 	}
+}
+
+function setParentAP(){
+		document.getElementById("PAPSurvey").style.display = "none";
+		document.getElementById("setPAP").style.display = "";
+		tune_setPAP();	//If !5g_support
+		changeAuthMode(document.form._wlc_auth_mode_x.value);
+		
+		document.getElementById("btnManual").style.display = "none";		
+		document.getElementById("btnrescan").style.display = "none";
+		document.getElementById("btnPre").style.display = "";
+		document.getElementById("btnNext").style.display = "";
+}
+
+function return_sitesurvey(){
+		document.getElementById("PAPSurvey").style.display = "";
+		document.getElementById("setPAP").style.display = "none";
+		
+		document.getElementById("btnManual").style.display = "";		
+		document.getElementById("btnrescan").style.display = "";
+		document.getElementById("btnPre").style.display = "none";
+		document.getElementById("btnNext").style.display = "none";	
+		QKInternet_load_body();	
+}
+
+function submitManual(){
+	if(validManualForm()){
+			if(document.form._wlc_band.value == "2G")
+				document.form.wlc_band.value = 0;
+			else
+				document.form.wlc_band.value = 1;
+				
+			document.form.wlc_ssid.value = document.form._wlc_ssid.value;
+			document.form.wlc_auth_mode.value = document.form._wlc_auth_mode_x.value;
+			
+			if(document.form.wlc_auth_mode.value == "psk" || document.form.wlc_auth_mode.value == "psk2")
+				document.form.wlc_crypto.value = document.form.__wlc_crypto_wpa.value;
+			
+			if(document.form._wlc_auth_mode_x.value == "shared" || (document.form._wlc_auth_mode_x.value == "open" && document.form.__wlc_crypto_wep.value != "0")){
+				document.form.wlc_wep_key.value = document.form.thekey_manual.value;
+				document.form.wlc_key.value = document.form.sta_key_index_manual.value;
+				if(document.form.thekey_manual.value.length == 5 || document.form.thekey_manual.value.length == 10)
+					document.form.wlc_wep.value = 1;
+				else if(document.form.thekey_manual.value.length == 13 || document.form.thekey_manual.value.length == 26)
+					document.form.wlc_wep.value = 2;
+			}
+			else if(document.form._wlc_auth_mode_x.value == "open"){
+				document.form.wlc_wep.value = 0;
+				document.form.wlc_wpa_psk.value = "";
+			}
+			else{
+				document.form.wlc_wep.value = 0;
+				document.form.wlc_wpa_psk.value = document.form.thekey_manual.value;
+			}		
+	}
+	else
+		return;
+		
+	//save to QKform
+	document.form.wlc_nbw_cap.value = "2";	
+
+	if(document.form.wlc_ure_ssid.value == ""){
+		if(document.form.wlc_band.value == 0)
+			document.form.wlc_ure_ssid.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>');
+		else
+			document.form.wlc_ure_ssid.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>');
+	}
+	
+	//save to QKform
+	parent.document.QKform.sw_mode.value = 2;
+	parent.document.QKform.wlc_band.value = document.form.wlc_band.value;
+	parent.document.QKform.wlc_ssid.value = document.form.wlc_ssid.value; // Here is ascii code!!
+	parent.document.QKform.wlc_wep.value = document.form.wlc_wep.value;
+	parent.document.QKform.wlc_key.value = document.form.wlc_key.value;
+	parent.document.QKform.wlc_wep_key.value = document.form.wlc_wep_key.value;
+	parent.document.QKform.wlc_auth_mode.value = document.form.wlc_auth_mode.value;
+	parent.document.QKform.wlc_crypto.value = document.form.wlc_crypto.value;
+	parent.document.QKform.wlc_wpa_psk.value = document.form.wlc_wpa_psk.value;
+	parent.document.QKform.wlc_nbw_cap.value = document.form.wlc_nbw_cap.value;
+	gotoPage('/qis/QIS_wireless.htm', 0);	
+		
+		
+		
+		
+}
+
+function validManualForm(){
+	if(document.form._wlc_ssid.value == ""){
+		alert("<#JS_fieldblank#>");
+		document.form._wlc_ssid.focus();
+		return false;
+	}
+	if(document.getElementById("thekey_tr").style.display != "none"){
+			if(document.form._wlc_auth_mode_x.value == "psk" || document.form._wlc_auth_mode_x.value == "psk2"){
+					if(!validate_psk(document.form.thekey_manual))
+						return false;
+			}
+			else if(document.form._wlc_auth_mode_x.value == "shared" || (document.form._wlc_auth_mode_x.value == "open" && document.form.__wlc_crypto_wep.value != "0")){
+					if(!validate_wlkey(document.form.thekey_manual))
+						return false;
+			}	
+	}		
+
+	return true;	
+}
+
+function tune_setPAP(){
+	if(!parent.band5g_support){
+			document.getElementById("wl_unit_field").style.display = "none";
+			document.form._wlc_band.value = "2G";			
+	}
+}
+
+function changeAuthMode(_val){
+	if(_val == "psk2" || (_val == "open" && document.form.__wlc_crypto_wep.value == "0"))
+		document.getElementById("wl_nmode_x_hint").style.display = "none";
+	else
+		document.getElementById("wl_nmode_x_hint").style.display = "";
+
+	if(_val == "psk2"){
+		document.getElementById("__wlc_crypto_wpa_tr").style.display = "";
+		document.getElementById("__wlc_crypto_wep_tr").style.display = "none";
+		document.getElementById("sta_key_index_tr").style.display = "none";
+		//document.form._wlc_crypto.value = "PSK2";
+		document.getElementById("thekey_tr").style.display = "";
+	}
+	else if(_val == "psk"){
+		document.getElementById("__wlc_crypto_wpa_tr").style.display = "";
+		document.getElementById("__wlc_crypto_wep_tr").style.display = "none";
+		document.getElementById("sta_key_index_tr").style.display = "none";
+		//document.form._wlc_crypto.value = "PSK";
+		document.getElementById("thekey_tr").style.display = "";
+	}
+	else if(_val == "shared"){
+		document.getElementById("__wlc_crypto_wpa_tr").style.display = "none";
+		document.getElementById("__wlc_crypto_wep_tr").style.display = "";
+		document.getElementById("sta_key_index_tr").style.display = "";
+		//document.form._wlc_crypto.value = "WEP";
+		document.getElementById("thekey_tr").style.display = "";
+		regenOption(document.form.__wlc_crypto_wep, ["WEP-64bits", "WEP-128bits"], ["1", "2"], "");
+	}
+	else{
+		document.getElementById("__wlc_crypto_wpa_tr").style.display = "none";
+		document.getElementById("__wlc_crypto_wep_tr").style.display = "";
+		document.getElementById("sta_key_index_tr").style.display = "none";
+		changeCrypto(document.getElementById("__wlc_crypto_wep").value);
+		regenOption(document.form.__wlc_crypto_wep, ["None", "WEP-64bits", "WEP-128bits"], ["0", "1", "2"], "0");
+	}
+	
+	control_showpass_field();
+}
+
+function regenOption(obj, optArray, valArray, sel){
+	obj.options.length = 0;
+	for(var i=0; i<optArray.length; i++){
+		newItem = new Option(optArray[i], valArray[i]); 	
+		obj.options.add(newItem); 
+	}
+	
+	obj.selectedIndex = parseInt(sel);
+	changeCrypto(sel);
+}
+
+function changeCrypto(_val){
+	if(_val == "0"){
+		document.getElementById("wl_nmode_x_hint").style.display = "none";
+		document.getElementById("thekey_tr").style.display = "none";
+		document.getElementById("sta_key_index_tr").style.display = "none";
+	}
+	else{
+		document.getElementById("wl_nmode_x_hint").style.display = "";
+		document.getElementById("thekey_tr").style.display = "";
+		document.getElementById("sta_key_index_tr").style.display = "";
+	}
+
+	//document.form._wlc_crypto.value = _val;
+	control_showpass_field();
+}
+
+function control_showpass_field(){
+	if( document.form._wlc_auth_mode_x.value == "open" && document.form.__wlc_crypto_wep.value == "0")
+		document.getElementById('show_password_tr').style.display ="none";		
+	else
+		document.getElementById('show_password_tr').style.display ="";	
+}
+
+
+function check_manual_pass(obj){
+	switchType(document.form.thekey_manual, obj.checked, true);
 }
 </script>
 </head>
@@ -593,22 +763,124 @@ function gotoPage(dst_url, flag){
 		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 </div>
 
-<div style="margin-left:18px;">
-	<table width="670px" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey">
-		<th onclick="addBorder(this);doSorter(1, 'str');" style="cursor:pointer;"><#Wireless_name#></th>
-		<th onclick="addBorder(this);doSorter(2, 'num');" width="15%" style="text-align:center;cursor:pointer;"><#WLANConfig11b_Channel_itemname#></th>
-		<th onclick="addBorder(this);doSorter(3, 'str');" width="20%" style="cursor:pointer;"><#QIS_finish_wireless_item2#></th>
-		<th onclick="addBorder(this);doSorter(0, 'str');" width="10%" style="text-align:center;cursor:pointer;">Band</th>
-		<th onclick="addBorder(this);doSorter(5, 'num');" width="10%" id="sigTh" style="border-bottom: 1px solid #FC0;text-align:center;cursor:pointer;"><#Radio#></th>
-	</table>
+<!-- AP list -->
+<div id="PAPSurvey">
+	<div style="margin-left:18px;">
+		<table width="670px" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey">
+			<th onclick="addBorder(this);doSorter(1, 'str');" style="cursor:pointer;"><#Wireless_name#></th>
+			<th onclick="addBorder(this);doSorter(2, 'num');" width="15%" style="text-align:center;cursor:pointer;"><#WLANConfig11b_Channel_itemname#></th>
+			<th onclick="addBorder(this);doSorter(3, 'str');" width="20%" style="cursor:pointer;"><#QIS_finish_wireless_item2#></th>
+			<th onclick="addBorder(this);doSorter(0, 'str');" width="10%" style="text-align:center;cursor:pointer;">Band</th>
+			<th onclick="addBorder(this);doSorter(5, 'num');" width="10%" id="sigTh" style="border-bottom: 1px solid #FC0;text-align:center;cursor:pointer;"><#Radio#></th>
+		</table>
+	</div>
+	
+	<div style="height:360px;overflow-y:auto;margin-top:0px;" id="wlscan_table_container">
+		<div id="wlscan_table" style="height:360px;margin-left:35px;cursor:pointer;margin-top:0px;vertical-align:top;"></div>
+	</div>
 </div>
 
-<div style="height:360px;overflow-y:auto;margin-top:0px;" id="wlscan_table_container">
-	<div id="wlscan_table" style="height:360px;margin-left:35px;cursor:pointer;margin-top:0px;vertical-align:top;"></div>
+<!-- manual -->
+<div id="setPAP" style="display:none;">
+		<div style="margin-left:25px;" class="QISGeneralFont">
+			<#APSurvey_action_search_again_hint2#>
+			<br/>
+			<span style="color:#FC0" id="deviceDiscorvy">
+				Install and use the <a href="http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/Discovery.zip" style="font-family:Lucida Console;text-decoration:underline;color:#FC0;">Device Discovery Utility</a> in order to detect the <#Web_Title2#>'s IP address.
+			</span>
+		</div>
+		<br><br>
+		<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="padding-left:30px;">
+			<tr id="wl_unit_field">
+				<th width="25%"><#Interface#></th>
+				<td>
+					<select name="_wlc_band" class="input_option">
+						<option class="content_input_fd" value="2G">2.4GHz</option>
+						<option class="content_input_fd" value="5G" selected>5GHz</option>
+					</select>			
+				</td>
+	  	</tr>
+            
+		  <tr>
+			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 1);"><#WLANConfig11b_SSID_itemname#></a></th>
+			<td>
+				<input type="text" maxlength="32" class="input_32_table" name="_wlc_ssid" value="" onkeypress="return parent.is_string(this, event);">
+			</td>
+		  </tr>
+
+	  	<tr>
+			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 5);"><#WLANConfig11b_AuthenticationMethod_itemname#></a></th>
+			<td>
+	  		<select name="_wlc_auth_mode_x" class="input_option" onChange="changeAuthMode(this.value);">
+					<option value="open">Open System</option>
+					<option value="shared">Shared Key</option>
+					<option value="psk">WPA-Personal</option>
+					<option value="psk2">WPA2-Personal</option>
+					<!--
+					<option value="wpa">WPA-Enterprise</option>
+					<option value="wpa2">WPA2-Enterprise</option>
+					-->
+	  		</select>
+				<div id="wl_nmode_x_hint" style="margin-top:5px;color:#FC0;">
+					Under WEP or WPA-Personal encryption, the maximum transmission rate of <#Web_Title2#> is 54Mbps. Please change to WPA2-Personal.
+				</div>
+			</td>
+	  	</tr>
+
+			<tr id="__wlc_crypto_wpa_tr">
+			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);"><#WLANConfig11b_WPAType_itemname#></a></th>
+			<td>
+		  		<select name="__wlc_crypto_wpa" id="__wlc_crypto_wpa" class="input_option">
+						<option value="tkip">TKIP</option>
+						<option value="aes">AES</option>
+						<!--option value="tkip+aes">TKIP+AES</option-->
+				  </select>					
+			</td>
+	  	</tr>	  	
+	  	
+	  	<tr id="__wlc_crypto_wep_tr">
+			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);"><#WLANConfig11b_WEPType_itemname#></a></th>
+			<td>
+		  		<select name="__wlc_crypto_wep" id="__wlc_crypto_wep" class="input_option" onChange="changeCrypto(this.value);">
+						<option value="0"><#wl_securitylevel_0#></option>
+						<option value="1">WEP-64bits</option>
+						<option value="2">WEP-128bits</option>
+		  		</select>
+			</td>
+	  	</tr>
+
+	  	<tr id="sta_key_index_tr">
+			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 10);"><#WLANConfig11b_WEPDefaultKey_itemname#></a></th>
+			<td>		
+		  		<select name="sta_key_index_manual" class="input_option"  onChange="">
+					<option value="1" <% nvram_match("wl_key", "1","selected"); %>>1</option>
+					<option value="2" <% nvram_match("wl_key", "2","selected"); %>>2</option>
+					<option value="3" <% nvram_match("wl_key", "3","selected"); %>>3</option>
+					<option value="4" <% nvram_match("wl_key", "4","selected"); %>>4</option>
+		  		</select>
+			</td>
+	  	</tr>
+	  
+	  	<tr id="thekey_tr">
+			<th><#Network_key#></th>
+			<td>
+				<input type="password" id="thekey_manual" name="thekey_manual" class="input_32_table" style="height:25px;">
+			</td>
+	  	</tr>
+			<tr id ="show_password_tr">
+				<th></th>
+				<td>
+					<input type="checkbox" name="show_pass_1_manual" onclick="check_manual_pass(this)"><#QIS_show_pass#>
+				</td>
+			</tr> 
+		</table>
 </div>
 
 <div class="apply_gen" style="margin-top:10px">
-	<input type="button" id="nextButton" value="<#QIS_rescan#>" onclick="rescan();" class="button_gen" >
+	<input id="btnManual" type="button" value="<#Manual_Setting_btn#>" onclick="setParentAP();" class="button_gen">
+	<input id="btnPre" type="button" style="display:none;" value="<#btn_pre#>" onclick="return_sitesurvey();" class="button_gen" >
+	<input id="btnNext" type="button" style="display:none;" value="<#btn_next#>" onclick="submitManual();" class="button_gen">	
+	<input type="button" id="btnrescan" value="<#QIS_rescan#>" onclick="rescan();" class="button_gen" >
 	<img id="SearchingIcon" style="display:none;" src="/images/InternetScan.gif">
 </div> 
 

@@ -29,6 +29,8 @@
 # $KAME: Makefile.in,v 1.45 2005/10/16 16:25:38 suz Exp $
 #
 
+include ../common.mak
+
 prefix=	@prefix@
 srcdir=	@srcdir@
 sysconfdir= @sysconfdir@
@@ -101,7 +103,7 @@ strlcpy.o:	$(srcdir)/missing/strlcpy.c
 arc4random.o:	$(srcdir)/missing/arc4random.c
 	$(CC) $(CFLAGS) -c $(srcdir)/missing/$*.c
 getifaddrs.o:	$(srcdir)/missing/getifaddrs.c
-	$(CC) -c $(srcdir)/missing/$*.c
+	$(CC) $(CFLAGS) -c $(srcdir)/missing/$*.c
 daemon.o:	$(srcdir)/missing/daemon.c
 	$(CC) -c $(srcdir)/missing/$*.c
 warnx.o:	$(srcdir)/missing/warnx.c

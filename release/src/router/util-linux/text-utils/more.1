@@ -1,0 +1,208 @@
+.\" Copyright (c) 1988, 1990 The Regents of the University of California.
+.\" Copyright (c) 1988 Mark Nudleman
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)more.1	5.15 (Berkeley) 7/29/91
+.\"
+.\" Revised: Fri Dec 25 15:27:27 1992 by root
+.\" 25Dec92: Extensive changes made by Rik Faith (faith@cs.unc.edu) to
+.\" conform with the more 5.19 currently in use by the Linux community.
+.\"
+.\" .Dd July 29, 1991 (Modified December 25, 1992)
+.Dd February 2011 "  "
+.Dt MORE(1) "" "User Commands"
+.Os util-linux
+.Sh NAME
+.Nm more
+.Nd file perusal filter for crt viewing
+.Sh SYNOPSIS
+.Nm more
+.Op Fl dlfpcsu
+.Op Fl num
+.Op +/\fIpattern\fP
+.Op +\fIlinenum\fP
+.Op Ar
+.Sh DESCRIPTION
+.Nm
+is a filter for paging through text one screenful at a time.  This version
+is especially primitive.  Users should realize that
+.Xr less 1
+provides
+.Xr more 1
+emulation plus extensive enhancements.
+.Sh OPTIONS
+Command-line options are described below.
+Options are also taken from the environment variable
+.Ev MORE
+(make sure to precede them with a dash (``-'')) but command
+line options will override them.
+.Bl -tag -width flag
+.It Fl num
+This option specifies an integer which is the screen size (in lines).
+.It Fl d
+.Nm more
+will prompt the user with the message "[Press space to continue, 'q' to
+quit.]" and will display "[Press 'h' for instructions.]" instead of ringing
+the bell when an illegal key is pressed.
+.It Fl l
+.Nm more
+usually treats
+.Ic \&^L
+(form feed) as a special character, and will pause after any line that
+contains a form feed.  The
+.Fl l
+option will prevent this behavior.
+.It Fl f
+Causes
+.Nm more
+to count logical, rather than screen lines (i.e., long lines are not
+folded).
+.It Fl p
+Do not scroll.  Instead, clear the whole screen and then display the text.
+.Pp
+Notice that this option is switched on automatically if the executable is named
+.Nm page .
+.It Fl c
+Do not scroll.  Instead, paint each screen from the top, clearing the
+remainder of each line as it is displayed.
+.It Fl s
+Squeeze multiple blank lines into one.
+.It Fl u
+Suppress underlining.
+.It Ic +/
+The
+.Ic +/
+option specifies a string that will be searched for before
+each file is displayed.
+.It Ic +num
+Start at line number
+.Ic num .
+.El
+.Sh COMMANDS
+Interactive commands for
+.Nm more
+are based on
+.Xr vi  1  .
+Some commands may be preceded by a decimal number, called k in the
+descriptions below.
+In the following descriptions, ^X means control-X.
+.Pp
+.Bl -tag -width Ic
+.It Ic h No or Ic ?
+Help: display a summary of these commands.
+If you forget all the other commands, remember this one.
+.It Ic SPACE
+Display next k lines of text.  Defaults to current screen size.
+.It Ic z
+Display next k lines of text.  Defaults to current screen size.  Argument
+becomes new default.
+.It Ic RETURN
+Display next k lines of text.  Defaults to 1.  Argument becomes new
+default.
+.It Ic d No or Ic \&^D
+Scroll k lines.  Default is current scroll size, initially 11.  Argument
+becomes new default.
+.It Xo
+.Ic q
+.No or
+.Ic Q
+.No or
+.Ic INTERRUPT
+.Xc
+Exit.
+.It Ic s
+Skip forward k lines of text.  Defaults to 1.
+.It Ic f
+Skip forward k screenfuls of text.  Defaults to 1.
+.It Ic b No or Ic \&^B
+Skip backwards k screenfuls of text.  Defaults to 1.
+Only works with files, not pipes.
+.It Ic '
+Go to place where previous search started.
+.It Ic =
+Display current line number.
+.It Ic \&/ Ns Ar pattern
+Search for kth occurrence of regular expression.  Defaults to 1.
+.It Ic n
+Search for kth occurrence of last r.e.  Defaults to 1.
+.It Ic !<cmd> No or Ic :!<cmd>
+Execute <cmd> in a subshell
+.It Ic v
+Start up an editor at current line.
+The editor is taken from the environment variable VISUAL if defined,
+or EDITOR if VISUAL is not defined,
+or defaults to "vi" if neither VISUAL nor EDITOR is defined.
+.It Ic \&^L
+Redraw screen
+.It Ic :n
+Go to kth next file.  Defaults to 1.
+.It Ic :p
+Go to kth previous file.  Defaults to 1.
+.It Ic :f
+Display current file name and line number
+.It Ic \&.
+Repeat previous command
+.El
+.Sh ENVIRONMENT
+.Nm More
+utilizes the following environment variables, if they exist:
+.Bl -tag -width Fl
+.It Ev MORE
+This variable may be set with favored options to
+.Nm more .
+.It Ev SHELL
+Current shell in use (normally set by the shell at login time).
+.It Ev TERM
+Specifies terminal type, used by more to get the terminal
+characteristics necessary to manipulate the screen.
+.El
+.Sh SEE ALSO
+.Xr vi 1 ,
+.Xr less 1
+.Sh AUTHORS
+Eric Shienbrood, UC Berkeley
+.br
+Modified by Geoff Peck, UCB to add underlining, single spacing
+.br
+Modified by John Foderaro, UCB to add -c and MORE environment variable
+.Sh HISTORY
+The
+.Nm more
+command appeared in
+.Bx 3.0 .
+This man page documents
+.Nm more
+version 5.19 (Berkeley 6/29/88), which is currently in use in the Linux
+community.  Documentation was produced using several other versions of the
+man page, and extensive inspection of the source code.
+.Sh AVAILABILITY
+The more command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

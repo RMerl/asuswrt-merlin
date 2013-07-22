@@ -1,0 +1,237 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" version="1.1" xmlns="http://www.w3.org/2000/svg" id="svgraph" onload="initial();">
+<style type='text/css'>
+line { 
+	stroke: #AAAAAA	stroke-width: 1;
+}
+line.a {
+	stroke: #AAAAAA;
+}
+#crossX, #crossY {
+	stroke: #FFFFFF;
+	stroke-width: 1;
+}
+text {
+	font: 11px Lucida Sans Unicode;
+}
+.tickH {
+	text-anchor: middle;
+	fill: #569AC7;
+}
+#pointText {
+	font: 11px Lucida Sans Unicode;
+	fill: #ffffff;
+	text-anchor: end;
+}
+.back {
+	fill: #CCCCCC;
+	opacity: 0.3;
+	isShadow: true;
+}
+#crossText {
+	font: 11px Lucida Sans Unicode;
+	fill: #ffffff;
+}
+#crossTime {
+	font: 11px Lucida Sans Unicode;
+	fill: #ffffff;
+}
+#pointTextBack {
+	fill: #ffffff;
+}
+#pointText {
+	fill: #FFFFFF;
+}
+</style>
+
+<script type='text/ecmascript'><![CDATA[
+var pointLoc = 0;
+var vWidth = 700;
+var vHeight = 200;
+var crossH = 0;
+var crossV = 0;
+var maxV = 0;
+var maxL = 0;
+var advX = 1;
+var interval = 0;
+var xpstVis = 1;
+var ignoreNext = 0;
+var eraseL = 0;
+var samp = 1;
+var X_array = 0;
+
+rxData = [top.curr_rxData];
+
+function initial(){
+	xunit = [];
+	xunitfq = [];
+	bpc_unit = [];
+	
+	gen_svg();
+		
+	TextTX = E('TextTX');
+	setText(TextTX, "─ Transmission");
+	TextRX = E('TextRX');
+	setText(TextRX, "─ Reception");
+	var i = 0;	
+	for(var y=7; y>=0; y--){
+		bpc_unit[y] = E('bpc_unit' + y);
+		setText(bpc_unit[y], 2*i);
+		i++;
+	}
+}
+
+function gen_svg(){
+	polyBPC_TX = E('polyBPC_TX');
+	polyBPC_RX = E('polyBPC_RX');
+	updateSVG();
+}
+
+function setText(e, text){
+	if(e.firstChild)
+		e.removeChild(e.firstChild);
+	e.appendChild(document.createTextNode(text));
+}
+
+function E(id){
+	return document.getElementById(id);
+
+}
+
+function drawData_BPC(poly, data, mode, color){		
+	var i;
+	var pt;
+	var x, y;
+	var d;
+
+	if (data.length == 0) return;
+	
+	maxV = 14;
+	maxL = data.length;
+	advX = vWidth/maxL;	//X Spacing
+		
+	if (mode == 0) {
+		poly.setAttribute('fill-opacity', '0.5');
+		pt = '0,' + vHeight;
+	}
+	else {
+		poly.setAttribute('fill-opacity', '0');
+		pt = '';
+	}	
+	
+	poly.setAttribute('stroke', color);
+	poly.setAttribute('fill', color);
+
+	x = 0;	
+	for (i = 0; i < data.length; ++i) {
+		if (i < 0) {
+			d = 0;
+		}
+		else {
+			d = Math.round(data[i]*175/14);						
+		}
+
+		y = vHeight - d;
+		pt += ' ' + Math.round(x) + ',' + y;
+		x += advX;
+	}
+	
+	pt += ' ' + vWidth + ',' + vHeight;	
+	poly.setAttribute('points', pt);
+}
+
+function updateSVG(){
+	if(top.bpc_us){
+		if(top.bpc_us.length == 256){
+			X_array = 32;
+			E('xunit2').setAttribute('x', "22%");	//Tune position: 64
+			E('xunit3').setAttribute('x', "34.5%");	////Tune position: 96
+			E('xunitfq2').setAttribute('x', "46%");	////Tune position: 552
+		}else if(top.bpc_us.length == 512)
+			X_array = 64;
+		else
+			X_array = 0;
+		
+		if(X_array != 0){	
+			for(var x=1; x<9; x++){
+				xunit[x] = E('xunit' + x);
+				setText(xunit[x], X_array*x);
+			}		
+			for(var y=1; y<5; y++){
+				xunitfq[y] = E('xunitfq' + y);
+				setText(xunitfq[y], X_array*2*y*4.3125);
+			}	
+		}
+			
+		drawData_BPC(polyBPC_TX, top.bpc_us, 0, "#B232B2");
+		drawData_BPC(polyBPC_RX, top.bpc_ds, 0, "#33CCFF");
+	}	
+	setTimeout('gen_svg();', 5000);
+}
+
+function setText(e, text){
+	if(e.firstChild)
+		e.removeChild(e.firstChild);
+	e.appendChild(document.createTextNode(text));
+}
+
+
+
+]]></script>
+
+<rect x="0" y="0" width="100%" height="100%" fill="#111" id="background"/>
+
+<g id="across">
+	<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="12.5%" x2="100%" y2="12.5%" />
+	<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="25%" x2="100%" y2="25%" />
+	<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="37.5%" x2="100%" y2="37.5%" />
+	<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="50%" x2="100%" y2="50%" />
+	<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="62.5%" x2="100%" y2="62.5%" />
+	<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="75%" x2="100%" y2="75%" />
+	<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="87.5%" x2="100%" y2="87.5%" />
+
+	<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="12.5%" y1="0%" x2="12.5%" y2="100%" />
+	<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="25%" y1="0%" x2="25%" y2="100%" />
+	<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="37.5%" y1="0%" x2="37.5%" y2="100%" />
+	<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="50%" y1="0%" x2="50%" y2="100%" />
+	<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="62.5%" y1="0%" x2="62.5%" y2="100%" />
+	<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="75%" y1="0%" x2="75%" y2="100%" />
+	<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="87.5%" y1="0%" x2="87.5%" y2="100%" />
+</g>
+
+<g id="xunit">	
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="9.5%" y="98%" id="xunit1" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="21%" y="98%" id="xunit2" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="33.5%" y="98%" id="xunit3" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="46%" y="98%" id="xunit4" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="58.5%" y="98%" id="xunit5" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="71%" y="98%" id="xunit6" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="83.5%" y="98%" id="xunit7" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="96%" y="98%" id="xunit8" />
+</g>
+
+<g id="xunitfq">		
+	<text font-family="Verdana" fill="#ADD8E6" font-size="11" x="21%" y="92%" id="xunitfq1" />
+	<text font-family="Verdana" fill="#ADD8E6" font-size="11" x="45%" y="92%" id="xunitfq2" />
+	<text font-family="Verdana" fill="#ADD8E6" font-size="11" x="70%" y="92%" id="xunitfq3" />
+	<text font-family="Verdana" fill="#ADD8E6" font-size="11" x="95%" y="92%" id="xunitfq4" />
+</g>
+
+<g id="bpc_unit">	
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="12.5%" id="bpc_unit0" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="25%" id="bpc_unit1" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="37.5%" id="bpc_unit2" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="50%" id="bpc_unit3" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="62.5%" id="bpc_unit4" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="75%" id="bpc_unit5" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="87.5%" id="bpc_unit6" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="100%" id="bpc_unit7" />
+</g>
+
+<text font-family="Verdana" fill="#B232B2" font-size="11" x="85.5%" y="12.5%" id="TextTX" />
+<text font-family="Verdana" fill="#33CCFF" font-size="11" x="85.5%" y="25%" id="TextRX" />
+<polyline id="polyBPC_TX" style="stroke-width:1" stroke-opacity="0.9" points="" />
+<polyline id="polyBPC_RX" style="stroke-width:1" stroke-opacity="0.9" points="" />
+
+</svg>

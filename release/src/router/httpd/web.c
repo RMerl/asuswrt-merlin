@@ -51,6 +51,7 @@
 #include <dirent.h>
 #include <proto/ethernet.h>   //add by Viz 2010.08
 #include <net/route.h>
+#include <sys/ioctl.h>
 
 #include <typedefs.h>
 #include <bcmutils.h>
@@ -118,6 +119,10 @@ extern int ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv);
 #ifdef RTCONFIG_PROXYSTA
 int ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv);
 #endif
+#endif
+
+#ifdef RTCONFIG_IPV6
+extern int ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv);
 #endif
 
 extern int ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **argv);
@@ -1520,6 +1525,7 @@ static int validate_apply(webs_t wp) {
 			else if(strcmp(buff, value)) {
 				nvram_set(name, value);
 				nvram_modified = 1;
+				_dprintf("set %s=%s\n", name, value);
 
 				// the flag is set only when username or password is changed
 				if(!strcmp(t->name, "http_username")
@@ -1627,11 +1633,16 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 
 			notify_rc(notify_cmd);
 		}
-#if defined (RTCONFIG_WLMODULE_RT3352_INIC_MII)
-		if(strcmp(action_script, "restart_wireless") == 0)
-			websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait) + 15);
-		else if(strcmp(action_script, "restart_net_and_phy") == 0)
-			websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait) + 15);
+#if defined(RTCONFIG_RALINK)
+		if (strcmp(action_script, "restart_wireless") == 0
+		  ||strcmp(action_script, "restart_net") == 0)
+		{
+			char *rc_support = nvram_safe_get("rc_support");
+			if (find_word(rc_support, "2.4G") && find_word(rc_support, "5G"))
+				websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait) + 20);
+			else
+				websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait) + 5);
+		}
 		else
 #endif
 		websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait));
@@ -2443,6 +2454,22 @@ static int get_fanctrl_info(int eid, webs_t wp, int argc, char_t **argv)
 }
 #endif
 
+#ifdef RTCONFIG_BCMARM
+static int get_cpu_temperature(int eid, webs_t wp, int argc, char_t **argv)
+{
+	FILE *fp;
+	int temperature = -1;
+
+	if ((fp = fopen("/proc/dmu/temperature", "r")) != NULL) {
+		if (fscanf(fp, "%*s %*s %*s %d", &temperature) != 1);
+			temperature = -1;
+		fclose(fp);
+	}
+	
+	return websWrite(wp, "%d", temperature);
+}
+#endif
+
 static int get_machine_name(int eid, webs_t wp, int argc, char_t **argv)
 {
 	int ret = 0;
@@ -3110,7 +3137,7 @@ ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv)
 	char ipv6_dns_str[1024];
 	char *p;
 
-	if (get_ipv6_service() == IPV6_DISABLED)
+	if (!(ipv6_enabled() && is_routing_enabled()))
 	{
 		ret += websWrite(wp, "IPv6 disabled\n");
 		return ret;
@@ -4326,8 +4353,17 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		if (get_model() == MODEL_RTN65U)
 			offset = 15;
 #endif
+
+		/* Stop USB application prior to counting reboot_time.
+		 * Don't stop 3G/4G here.  If yes and end-user connect to
+		 * administrative page through 3G/4G, he/she can't see Restarting.asp
+		 */
+		if (!notify_rc_and_wait_2min("stop_app"))
+			_dprintf("%s: send stop_app rc_service fail!\n", __func__);
+
 		/* Enlarge reboot_time temporarily. */
 		nvram_set_int("reboot_time", nvram_get_int("reboot_time") + offset);
+		nvram_set("lan_ipaddr", "192.168.1.1");
 		websApply(wp, "Restarting.asp");
 		shutdown(fileno(wp), SHUT_RDWR);
 		sys_default();
@@ -4825,7 +4861,6 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 	if(!check_imagefile(upload_fifo)) /* 0: illegal image; 1: legal image */
 		goto err;
 #endif 
-
 	upgrade_err = 0;
 
 err:
@@ -7009,7 +7044,6 @@ int ej_apps_fsck_ret(int eid, webs_t wp, int argc, char **argv){
 	disk_info_t *disk_list, *disk_info;
 	partition_info_t *partition_info;
 	FILE *fp;
-	char file_name0[32], file_name1[32];
 
 	disk_list = read_disk_data();
 	if(disk_list == NULL){
@@ -7022,23 +7056,23 @@ int ej_apps_fsck_ret(int eid, webs_t wp, int argc, char **argv){
 		for(partition_info = disk_info->partitions; partition_info != NULL; partition_info = partition_info->next){
 			websWrite(wp, "[\"%s\", ", partition_info->device);
 
-			memset(file_name0, 0, 32);
-			sprintf(file_name0, "/tmp/fsck_ret/%s.0", partition_info->device);
+#define MAX_ERROR_CODE 3
+			int error_code, got_code;
+			char file_name[32];
 
-			memset(file_name1, 0, 32);
-			sprintf(file_name1, "/tmp/fsck_ret/%s.1", partition_info->device);
+			for(error_code = 0, got_code = 0; error_code <= MAX_ERROR_CODE; ++error_code){
+				memset(file_name, 0, 32);
+				sprintf(file_name, "/tmp/fsck_ret/%s.%d", partition_info->device, error_code);
 
-			if((fp = fopen(file_name0, "r")) != NULL){
-				fclose(fp);
-
-				websWrite(wp, "\"0\"");
+				if((fp = fopen(file_name, "r")) != NULL){
+					fclose(fp);
+					websWrite(wp, "\"%d\"", error_code);
+					got_code = 1;
+					break;
+				}
 			}
-			else if((fp = fopen(file_name1, "r")) != NULL){
-				fclose(fp);
 
-				websWrite(wp, "\"1\"");
-			}
-			else
+			if(!got_code)
 				websWrite(wp, "\"\"");
 
 			websWrite(wp, "]%s", (partition_info->next)?", ":"");
@@ -7127,6 +7161,34 @@ int ej_apps_info(int eid, webs_t wp, int argc, char **argv)
 	}
 	websWrite(wp, "]");
 	free_apps_list(&apps_info_list);
+
+	return 0;
+}
+
+int ej_apps_state_info(int eid, webs_t wp, int argc, char **argv){
+	char *cmd[] = {"chk_app_state", NULL};
+	int pid;
+
+	_eval(cmd, NULL, 0, &pid);
+
+	websWrite(wp, "apps_dev = \"%s\";", nvram_safe_get("apps_dev"));
+	websWrite(wp, "apps_mounted_path = \"%s\";", nvram_safe_get("apps_mounted_path"));
+
+	websWrite(wp, "apps_state_upgrade = \"%s\";", nvram_safe_get("apps_state_upgrade"));
+	websWrite(wp, "apps_state_update = \"%s\";", nvram_safe_get("apps_state_update"));
+	websWrite(wp, "apps_state_remove = \"%s\";", nvram_safe_get("apps_state_remove"));
+	websWrite(wp, "apps_state_enable = \"%s\";", nvram_safe_get("apps_state_enable"));
+	websWrite(wp, "apps_state_switch = \"%s\";", nvram_safe_get("apps_state_switch"));
+	websWrite(wp, "apps_state_autorun = \"%s\";", nvram_safe_get("apps_state_autorun"));
+	websWrite(wp, "apps_state_install = \"%s\";", nvram_safe_get("apps_state_install"));
+	websWrite(wp, "apps_state_error = \"%s\";", nvram_safe_get("apps_state_error"));
+
+	websWrite(wp, "apps_download_file = \"%s\";", nvram_safe_get("apps_download_file"));
+	websWrite(wp, "apps_download_percent = \"%s\";", nvram_safe_get("apps_download_percent"));
+
+	websWrite(wp, "apps_depend_do = \"%s\";", nvram_safe_get("apps_depend_do"));
+	websWrite(wp, "apps_depend_action = \"%s\";", nvram_safe_get("apps_depend_action"));
+	websWrite(wp, "apps_depend_action_target = \"%s\";", nvram_safe_get("apps_depend_action_target"));
 
 	return 0;
 }
@@ -7869,10 +7931,13 @@ static int ej_netdev(int eid, webs_t wp, int argc, char_t **argv)
   char buf[256];
   unsigned long rx, tx;
   unsigned long rx2, tx2;
+  unsigned long wl0_all_rx = 0, wl0_all_tx = 0;
+  unsigned long wl1_all_rx = 0, wl1_all_tx = 0;
   char *p;
   char *ifname;
   char ifname_desc[12], ifname_desc2[12];
   char comma;
+  int wl0_valid = 0, wl1_valid = 0;
   int ret=0;
 
   ret += websWrite(wp, "\nnetdev = {\n");
@@ -7887,7 +7952,8 @@ static int ej_netdev(int eid, webs_t wp, int argc, char_t **argv)
 			   		else ++ifname;
 	  	   		if (sscanf(p + 1, "%lu%*u%*u%*u%*u%*u%*u%*u%lu", &rx, &tx) != 2) continue;
 
-#if defined(RTN14U)
+#if defined(RTN14U) || defined(RTAC52U)
+/* TODO: it's not the right place, should be moved to shared */
 				if (strcmp(ifname, "vlan2") == 0) 
 				{
 					get_wan_bytecount(0,&tx);
@@ -7898,9 +7964,18 @@ static int ej_netdev(int eid, webs_t wp, int argc, char_t **argv)
 
 
 loopagain: 
-				ret += websWrite(wp, "%c'%s':{rx:0x%lx,tx:0x%lx}", comma, ifname_desc, rx, tx);
-				comma = ',';
-				ret += websWrite(wp, "\n");
+				if (!strncmp(ifname_desc, "WIRELESS0", 9)) {
+					wl0_valid = 1;
+					wl0_all_rx += rx;
+					wl0_all_tx += tx;
+				} else if (!strncmp(ifname_desc, "WIRELESS1", 9)) {
+					wl1_valid = 1;
+					wl1_all_rx += rx;
+					wl1_all_tx += tx;
+				} else {
+					ret += websWrite(wp, "%c'%s':{rx:0x%lx,tx:0x%lx}\n", comma, ifname_desc, rx, tx);
+					comma = ',';
+				}
 
 				if(strlen(ifname_desc2)) {
 					strcpy(ifname_desc, ifname_desc2);
@@ -7909,6 +7984,15 @@ loopagain:
 					strcpy(ifname_desc2, "");
 					goto loopagain;
 				}
+			}
+
+			if (wl0_valid) {
+				ret += websWrite(wp, "%c'%s':{rx:0x%lx,tx:0x%lx}\n", comma, "WIRELESS0", wl0_all_rx, wl0_all_tx);
+				comma = ',';
+			}
+			if (wl1_valid) {
+				ret += websWrite(wp, "%c'%s':{rx:0x%lx,tx:0x%lx}\n", comma, "WIRELESS1", wl1_all_rx, wl1_all_tx);
+				comma = ',';
 			}
 
 		fclose(fp);
@@ -7943,67 +8027,22 @@ int ej_bandwidth(int eid, webs_t wp, int argc, char_t **argv)
 #ifdef RTCONFIG_DSL
 int ej_spectrum(int eid, webs_t wp, int argc, char_t **argv)
 {
-	char bpc[] = "/var/tmp/spectrum-bpc";
-	char snr[] = "/var/tmp/spectrum-snr";
 	int sig;
-	static int runFlag = 0;
-	int index = 0;
-	int maxTone = 512;
 
-	if( runFlag == 1 )
+	if(nvram_match("spectrum_hook_is_running", "1"))
 	{
-		//command is still running, skip this time.
-		return 1;
+		//on running status, skip.
+		return 0;
 	}
+
 	sig = SIGUSR1;
 	system("/usr/sbin/check_spectrum.sh"); //check if spectrum is running.
 	sleep(1);
-	runFlag = 1;
-	unlink(bpc);
-	unlink(snr);
+
 	killall("spectrum", sig);
-	if(f_wait_exists(bpc, 100))
-	{
-		do_f(bpc, wp);
-	}
-	else
-	{
-		index = 0;
-		websWrite(wp, "spectrum-bpc = {" );
-		while(index < maxTone)
-		{
-			websWrite(wp, "0" );
-			if( index != maxTone-1)
-			{
-				websWrite(wp, ", " );
-			}
-			index++;
-		}
-		websWrite(wp, "};\n" );
-	}
 
-	if(f_wait_exists(snr, 150))
-	{
-		do_f(snr, wp);
-	}
-	else
-	{
-		index = 0;
-		websWrite(wp, "spectrum-snr = {" );
-		while(index < maxTone)
-		{
-			websWrite(wp, "0.00" );
-			if( index != maxTone-1)
-			{
-				websWrite(wp, ", " );
-			}
-			index++;
-		}
-		websWrite(wp, "};\n" );
-	}
-
-	runFlag = 0;
 	return 0;
+
 }
 
 int ej_getAnnexMode(int eid, webs_t wp, int argc, char_t **argv)
@@ -8041,6 +8080,77 @@ int ej_getAnnexMode(int eid, webs_t wp, int argc, char_t **argv)
 
 	fclose(logFile);
 	return 0;
+}
+
+int ej_getADSLToneAmount(int eid, webs_t wp, int argc, char_t **argv)
+{
+	FILE *logFile = fopen( "/tmp/adsl/adsllog.log", "r" );
+	char buf[256] = {0};
+	char *ptr = NULL;
+	int mode = 5;
+	int tones = 512;
+
+	if( !logFile )
+	{
+		printf("Error: adsllog.log does not exist.\n");
+		websWrite(wp, "%d", tones);
+		return -1;
+	}
+	while( fgets(buf, sizeof(buf), logFile) )
+	{
+		if( (ptr=strstr(buf, "Modulation :")) != NULL )
+		{
+			ptr += strlen("Annex Mode :")+1;
+			mode = atoi(ptr);
+			break;
+		}
+	}
+
+	switch(mode)
+	{
+		case 0:
+		case 1:
+		case 2:
+			tones = 256;
+			break;
+		case 3:
+		case 4:
+			tones = 512;
+			break;
+		default:
+			tones = 512;
+	}
+
+	fclose(logFile);
+	websWrite(wp, "%d", tones);
+	return 0;
+}
+
+int show_file_content(int eid, webs_t wp, int argc, char_t **argv)
+{
+	char *name;
+	char buffer[256];
+	FILE *fp = NULL;
+	int ret = 0;
+
+	if (ejArgs(argc, argv, "%s", &name) < 1) {
+		websError(wp, 400, "Insufficient args\n");
+		return -1;
+	}
+
+	fp = fopen(name, "r");
+	if(!fp)
+	{
+		ret += websWrite(wp, "");
+		return -2;
+	}
+	while (fgets(buffer, sizeof(buffer), fp))
+	{
+		ret += websWrite(wp, "%s", buffer);
+	}
+
+	fclose(fp);
+	return ret;
 }
 #endif
 //Ren.E
@@ -8208,6 +8318,8 @@ struct ej_handler ej_handlers[] = {
 #ifdef RTCONFIG_DSL
 	{ "spectrum", ej_spectrum}, //Ren
 	{ "get_annexmode", ej_getAnnexMode}, //Ren
+	{ "get_adsltoneamount", ej_getADSLToneAmount}, //Ren
+	{ "show_file_content", show_file_content}, //Ren
 #endif
 	{ "backup_nvram", ej_backup_nvram},
 //tomato qos^^^^^^^^^^^^ end Viz
@@ -8244,6 +8356,9 @@ struct ej_handler ej_handlers[] = {
 	{ "login_state_hook", login_state_hook},
 #ifdef RTCONFIG_FANCTRL
 	{ "get_fanctrl_info", get_fanctrl_info},
+#endif
+#ifdef RTCONFIG_BCMARM
+	{ "get_cpu_temperature", get_cpu_temperature},
 #endif
 	{ "get_machine_name" , get_machine_name},
 	{ "dhcp_leases", ej_dhcp_leases},
@@ -8284,6 +8399,7 @@ struct ej_handler ej_handlers[] = {
 	{ "set_share_mode", ej_set_share_mode},
 	{ "initial_folder_var_file", ej_initial_folder_var_file},
 	{ "apps_info", ej_apps_info},
+	{ "apps_state_info", ej_apps_state_info},
 	{ "apps_action", ej_apps_action},
 #ifdef RTCONFIG_MEDIA_SERVER
 	{ "dms_info", ej_dms_info},
@@ -8489,3 +8605,34 @@ ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **argv)
 	retval += websWrite(wp, nvram_safe_get("reboot_time"));
 	return retval;
 }
+
+int is_wlif_up(const char *ifname)
+{
+	struct ifreq ifr;
+	int skfd;
+
+	if (!ifname)
+		return -1;
+
+	skfd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (skfd == -1)
+	{
+		perror("socket");
+		return -1;
+	}
+
+	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	if (ioctl(skfd, SIOCGIFFLAGS, &ifr) < 0)
+	{
+		perror("ioctl");
+		close(skfd);
+		return -1;
+	}
+	close(skfd);
+
+	if (ifr.ifr_flags & IFF_UP)
+		return 1;
+	else
+		return 0;
+}
+

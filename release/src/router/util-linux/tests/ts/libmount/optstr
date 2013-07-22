@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# Copyright (C) 2010 Karel Zak <kzak@redhat.com>
+
+TS_TOPDIR="$(dirname $0)/../.."
+TS_DESC="options string"
+
+. $TS_TOPDIR/functions.sh
+ts_init "$*"
+
+TESTPROG="$TS_HELPER_LIBMOUNT_OPTSTR"
+
+[ -x $TESTPROG ] || ts_skip "test not compiled"
+
+ts_init_subtest "append"
+$TESTPROG --append "aaa,bbb=BBB,context=\"foo,bar,gogo\",ccc" "ddd" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "append-value"
+$TESTPROG --append "aaa,bbb=BBB,ccc" "ddd" "DDD" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "prepend"
+$TESTPROG --prepend "aaa,bbb=BBB,ccc" "ddd" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "prepend-value"
+$TESTPROG --prepend "aaa,bbb=BBB,ccc" "ddd" "DDD" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "set-remove"
+$TESTPROG --set "aaa,bbb=BBB,ccc" "bbb" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "set-small"
+$TESTPROG --set "aaa,bbb=BBB,ccc" "bbb" "X" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "set-large"
+$TESTPROG --set "aaa,bbb=BBB,ccc" "bbb" "XXX-YYY-ZZZ" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "set-new"
+$TESTPROG --set "aaa,bbb=BBB,ccc" "aaa" "XXX" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "set-new-end"
+$TESTPROG --set "aaa,bbb=BBB,ccc" "ccc" "XXX" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "get"
+$TESTPROG --get "aaa,bbb=BBB,ccc" "aaa" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "get-value"
+$TESTPROG --get "aaa,bbb=BBB,ccc" "bbb" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "remove"
+$TESTPROG --remove "aaa,bbb=BBB,ccc" "aaa" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "remove-quoted"
+$TESTPROG --remove "aaa,context=\"foo,bar,gogo\",bbb=BBB,ccc" "context" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "remove-value"
+$TESTPROG --remove "aaa,bbb=BBB,ccc" "bbb" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "split"
+$TESTPROG --split "aaa,bbb=BBB,ccc,x-bar,x-foo=foodata,user=kzak,noexec,nosuid,loop=/dev/loop0" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "flags"
+$TESTPROG --flags "aaa,bbb=BBB,x-foo,ccc,user=kzak,nodev,noexec,nosuid,loop=/dev/loop0" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "apply-linux"	# add noatime and remove noexec and nosuid
+$TESTPROG --apply --linux "user=kzak,noexec,nosuid" 0x400 &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "apply-user"	# add user,nofail and remove loop
+$TESTPROG --apply --user "noexec,nosuid,loop=/dev/looop0" 0x408 &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "fix"
+$TESTPROG --fix "uid=root,gid=root" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_finalize

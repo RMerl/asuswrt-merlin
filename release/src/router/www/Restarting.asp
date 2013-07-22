@@ -21,10 +21,10 @@ function redirect1(){
 		parent.$('drword').innerHTML = "<#Setting_factorydefault_iphint#><br/>";
 		setTimeout("parent.hideLoading()",1000);
 		setTimeout("parent.dr_advise();",1000);
-		if(parent.location.href.indexOf("Advanced_SettingBackup_Content") >= 0)
-				parent.location.href = "/QIS_wizard.htm?flag=welcome";
+		if(parent.location.hostname.search('router.asus') != -1)
+			parent.location.href = 'http://router.asus.com/QIS_wizard.htm?flag=welcome';
 		else		
-		parent.location.href = 'http://<% nvram_default_get("lan_ipaddr"); %>/QIS_wizard.htm?flag=welcome';
+			parent.location.href = 'http://<% nvram_default_get("lan_ipaddr"); %>/QIS_wizard.htm?flag=welcome';
 	}
 	else{
 		parent.location.href = "/";

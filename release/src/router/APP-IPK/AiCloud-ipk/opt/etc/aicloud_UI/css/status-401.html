@@ -128,6 +128,8 @@ $("document").ready(function() {
 	$(window).resize(adjustUI);
 	
 	$("table#table_login").css("display", "block");
+	
+	$("input#username").focus();
 });
 
 function parseXml(xml) {
@@ -302,41 +304,40 @@ function onKeyHandler(e){
 					<td align="left" background="" height="106" alt="">		
 						<div id="main" style="width:300px;height:385px;background-color:#008F6D">
 							<table id="table_login" border="0" cellpadding="0" cellspacing="3" style="position: relative;left:40px;padding-top:20px;display:none">
-									<tbody>
-										<tr>
-											<td><font color="white" size="4"><label id="username">Username :</label></font></td>
-										</tr>
-										<tr height="5px"></tr>
-										<tr>
-					          	<td><input id="username" name="username" type="text" size="20" autocapitalize="off" style="font-size:20px;width:220px;height:36px"></td>
-					          </tr>
-					          <tr style="height:10px"></tr>
-					          <tr> 
-					            <td><font color="white" size="4"><label id="password">Password :</label></font></td>
-					          </tr>
-					          <tr height="5px"></tr>
-					          <tr> 
-					            <td><input id="password" name="password" type="password" size="20" style="font-size:20px;width:220px;height:36px" onkeydown="return onKeyHandler(event)"></td>
-					          </tr>
-					           <tr style="height:10px"></tr>
-					          <tr class="captcha" style="display:none">
-											<td><font color="white" size="4"><label id="captcha">Random no. :</label></font></td>
-										</tr>
-										<tr class="captcha" height="5px" style="display:none"></tr>
-										<tr class="captcha" style="display:none">
-					          	<td>
-					          		<input id="captcha" name="captcha" type="text" size="20" autocapitalize="off" maxlength="4" style="font-size:20px;width:220px;height:36px" onkeydown="return onKeyHandler(event)">
-					          	</td>
-					          </tr>
-					          <tr class="captcha" height="5px" style="display:none"></tr>
-					          <tr class="captcha" style="display:none">
-					          	<td><div id="captcha_pattern" class="unselectable" name="captcha_pattern" style="width:220px;height:40px;float:left" onclick="generateCaptcha()"></div></td>
-					          </tr>
-					          <tr style="height:10px"></tr>
-					          <tr> 
-					          	<td colspan="2" align="center"><div id="ok" onClick="doOK();"></div></td>
-					        	</tr>
-					        </tbody>
+								<tbody>
+									<tr>
+										<td><font color="white" size="4"><label id="username">Username :</label></font></td>
+									</tr>
+									<tr height="5px"></tr>
+									<tr>
+					          			<td><input id="username" name="username" type="text" size="20" autocapitalize="off" style="font-size:20px;width:220px;height:36px"></td>
+					          		</tr>
+					          		<tr style="height:10px"></tr>
+                                  	<tr> 
+                                    	<td><font color="white" size="4"><label id="password">Password :</label></font></td>
+                                  	</tr>
+					          		<tr height="5px"></tr>
+					          		<tr> 
+					            		<td><input id="password" name="password" type="password" size="20" style="font-size:20px;width:220px;height:36px" onkeydown="return onKeyHandler(event)"></td>
+					          		</tr>
+					           		<tr style="height:10px"></tr>
+					          		<tr class="captcha" style="display:none">
+										<td><font color="white" size="4"><label id="captcha">Random no. :</label></font></td>
+									</tr>
+									<tr class="captcha" height="5px" style="display:none"></tr>
+									<tr class="captcha" style="display:none">
+					          			<td><input id="captcha" name="captcha" type="text" size="20" autocapitalize="off" maxlength="4" style="font-size:20px;width:220px;height:36px" onkeydown="return onKeyHandler(event)">
+					          			</td>
+					          		</tr>
+					          		<tr class="captcha" height="5px" style="display:none"></tr>
+					          		<tr class="captcha" style="display:none">
+					          			<td><div id="captcha_pattern" class="unselectable" name="captcha_pattern" style="width:220px;height:40px;float:left" onclick="generateCaptcha()"></div></td>
+					          		</tr>
+					          		<tr style="height:10px"></tr>
+					          		<tr> 
+					          			<td colspan="2" align="center"><div id="ok" onClick="doOK();"></div></td>
+					        		</tr>
+					        	</tbody>
 					    </table>
 				    </div>
 					</td>

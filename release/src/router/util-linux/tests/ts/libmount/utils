@@ -1,0 +1,79 @@
+#!/bin/bash
+
+# Copyright (C) 2010 Karel Zak <kzak@redhat.com>
+
+TS_TOPDIR="$(dirname $0)/../.."
+TS_DESC="utils"
+
+. $TS_TOPDIR/functions.sh
+ts_init "$*"
+
+TESTPROG="$TS_HELPER_LIBMOUNT_UTILS"
+
+[ -x $TESTPROG ] || ts_skip "test not compiled"
+
+ts_init_subtest "match-fstype"
+$TESTPROG --match-fstype ext3 "ext2,ext3,cifs" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "match-fstype-neg"
+$TESTPROG --match-fstype cifs "ext2,ext3,nocifs" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "match-fstype-neg2"
+$TESTPROG --match-fstype cifs "noext2,ext3,cifs" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "match-options"
+$TESTPROG --match-options "aaa,bbb=BBB,ccc,ddd" "ccc" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "match-options-list"
+$TESTPROG --match-options "aaa,bbb=BBB,ccc,ddd" "ccc,aaa,ddd" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "match-options-neg"
+$TESTPROG --match-options "aaa,bbb=BBB,ccc,ddd" "noxxx" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "match-options-neg-list"
+$TESTPROG --match-options "aaa,bbb=BBB,ccc,ddd" "ddd,noaaa" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "match-options-neg-list2"
+$TESTPROG --match-options "aaa,bbb=BBB,ccc,ddd" "noxxx,ccc,aaa" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "starts-with"
+$TESTPROG --starts-with "AAAbbbCCC" "AAA" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "ends-with"
+$TESTPROG --ends-with "AAAbbbCCC" "CCC" &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "mountpoint"
+$TESTPROG --mountpoint /proc &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "mountpoint-subdir"
+$TESTPROG --mountpoint /proc/sys/kernel &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "mountpoint-root"
+$TESTPROG --mountpoint / &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "fs-root"
+$TESTPROG --fs-root /proc &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "fs-root-subdir"
+$TESTPROG --fs-root /proc/sys/kernel &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_init_subtest "fs-root-subdir2"
+$TESTPROG --fs-root /etc &> $TS_OUTPUT
+ts_finalize_subtest
+
+ts_finalize

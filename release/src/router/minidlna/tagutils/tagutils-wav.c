@@ -204,7 +204,7 @@ _get_wavtags(char *filename, struct song_metadata *psong)
 				p += taglen + 8;
 				off += taglen + 8;
 				/* Handle some common WAV file malformations */
-				while (*p == '\0') {
+				while (*p == '\0' && off < len) {
 					p++;
 					off++;
 				}

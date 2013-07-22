@@ -221,18 +221,18 @@ int
 etc_iovar(etc_info_t *etc, uint cmd, uint set, void *arg)
 {
 	int error;
+	uint *vecarg;
 #if defined(ETROBO) && !defined(_CFE_)
 	int i;
-	uint *vecarg;
 	robo_info_t *robo = etc->robo;
 #endif /* ETROBO && _CFE_ */
 
 	error = 0;
+	vecarg = (uint *)arg;
 	ET_TRACE(("et%d: etc_iovar: cmd 0x%x\n", etc->unit, cmd));
 	switch (cmd) {
 #if defined(ETROBO) && !defined(_CFE_)
 		case IOV_ET_POWER_SAVE_MODE:
-			vecarg = (uint *)arg;
 			if (set)
 				error = robo_power_save_mode_set(robo, vecarg[1], vecarg[0]);
 			else {
@@ -249,6 +249,15 @@ etc_iovar(etc_info_t *etc, uint cmd, uint set, void *arg)
 					vecarg[1] = error;
 					error = 0;
 				}
+			}
+			break;
+
+		case IOV_ET_ROBO_DEVID:
+			error = -1;
+
+			if (robo != NULL) {
+				*vecarg = robo->devid;
+				error = 0;
 			}
 			break;
 #endif /* ETROBO && !_CFE_ */
@@ -391,8 +400,10 @@ etc_ioctl(etc_info_t *etc, int cmd, void *arg)
 			(*etc->chops->phywr)(etc->ch, etc->phyaddr, vec[0], (uint16)vec[1]);
 #ifdef ETROBO
 			/* Invalidate current robo page */
-			if (etc->robo && etc->phyaddr == EPHY_NOREG && vec[0] == 0x10)
-				((robo_info_t *)etc->robo)->page = ((uint16)vec[1] >> 8);
+			if (etc->robo && etc->phyaddr == EPHY_NOREG && vec[0] == 0x10) {
+				uint16 page = (*etc->chops->phyrd)(etc->ch, EPHY_NOREG, 0x10);
+				((robo_info_t *)etc->robo)->page = (page == 0xffff) ? -1 : (page >> 8);
+			}
 #endif
 		}
 		break;
@@ -406,8 +417,10 @@ etc_ioctl(etc_info_t *etc, int cmd, void *arg)
 				(*etc->chops->phywr)(etc->ch, phyaddr, reg, (uint16)vec[1]);
 #ifdef ETROBO
 				/* Invalidate current robo page */
-				if (etc->robo && phyaddr == EPHY_NOREG && reg == 0x10)
-					((robo_info_t *)etc->robo)->page = ((uint16)vec[1] >> 8);
+				if (etc->robo && phyaddr == EPHY_NOREG && reg == 0x10) {
+					uint16 page = (*etc->chops->phyrd)(etc->ch, EPHY_NOREG, 0x10);
+					((robo_info_t *)etc->robo)->page = (page == 0xffff) ? -1 : (page >> 8);
+				}
 #endif
 				ET_TRACE(("etc_ioctl: ETCPHYWR2 to phy 0x%x, reg 0x%x <= 0x%x\n",
 				          phyaddr, reg, vec[1]));

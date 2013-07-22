@@ -107,6 +107,10 @@ endif
 
 ifneq ($(BUILD_NAME),DSL-N55U)
 ifneq ($(BUILD_NAME),DSL-N55U-B)
+	rm -rf $(INSTALLDIR)/www/Main_Spectrum_Content.asp
+	rm -rf $(INSTALLDIR)/www/SNR.svg
+	rm -rf $(INSTALLDIR)/www/BPC.svg
+	rm -rf $(INSTALLDIR)/www/ajax_signals.asp
 ifneq ($(BUILD_NAME),RT-N56U)
 ifneq ($(RTCONFIG_CLOUDSYNC),y)
 	rm -rf $(INSTALLDIR)/www/images/cloudsync
@@ -216,5 +220,5 @@ endif
 
 ifneq ($(RTCONFIG_YANDEXDNS),y)
 	rm -rf $(INSTALLDIR)/www/YandexDNS.asp
-	rm -rf $(INSTALLDIR)/www/images/New_ui/yandex.jpg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/yandex*.png
 endif

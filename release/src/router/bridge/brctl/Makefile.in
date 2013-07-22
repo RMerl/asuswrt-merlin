@@ -2,7 +2,7 @@
 KERNEL_HEADERS=-I@KERNEL_HEADERS@
 
 CC=@CC@
-CFLAGS= $(OPTCFLAGS) -Wall @CFLAGS@
+CFLAGS= -Wall @CFLAGS@
 LDFLAGS=@LDFLAGS@
 INCLUDE=-I../libbridge $(KERNEL_HEADERS) 
 LIBS= -L ../libbridge -lbridge @LIBS@
@@ -41,3 +41,4 @@ brctl:	$(brctl_OBJECTS) ../libbridge/libbridge.a
 
 clean:
 	rm -f *.o brctl core
+

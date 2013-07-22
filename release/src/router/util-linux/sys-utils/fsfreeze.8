@@ -1,0 +1,73 @@
+.\" -*- nroff -*-
+.TH FSFREEZE 8 "May 2010" "util-linux" "System Administration"
+.SH NAME
+fsfreeze \- suspend access to a filesystem (Linux Ext3/4, ReiserFS, JFS, XFS)
+.SH SYNOPSIS
+.B fsfreeze \-f
+.I mountpoint
+
+.B fsfreeze \-u
+.I mountpoint
+
+.SH DESCRIPTION
+.B fsfreeze
+suspends and resumes access to an filesystem
+.PP
+.B fsfreeze
+halts new access to the filesystem and creates a stable image on disk.
+.B fsfreeze
+is intended to be used with hardware RAID devices that support the creation 
+of snapshots.
+.PP
+.B fsfreeze
+is unnecessary for
+.B device-mapper
+devices. The device-mapper (and LVM)
+automatically freezes filesystem on the device when a snapshot creation is requested.
+For more details see the
+.BR dmsetup (8)
+man page.
+.PP
+The
+.I mount-point
+argument is the pathname of the directory where the filesystem
+is mounted.
+The filesystem must be mounted to be frozen (see
+.BR mount (8)).
+.SH OPTIONS
+.IP "\fB\-h, \-\-help\fP"
+Print help and exit.
+.IP "\fB\-f, \-\-freeze\fP"
+This option requests the specified a filesystem to be frozen from new
+modifications.  When this is selected, all ongoing transactions in the
+filesystem are allowed to complete, new write system calls are halted, other
+calls which modify the filesystem are halted, and all dirty data, metadata, and
+log information are written to disk.  Any process attempting to write to the
+frozen filesystem will block waiting for the filesystem to be unfrozen.
+
+Note that even after freezing, the on-disk filesystem can contain
+information on files that are still in the process of unlinking.
+These files will not be unlinked until the filesystem is unfrozen
+or a clean mount of the snapshot is complete.
+.IP "\fB\-u, \-\-unfreeze\fP
+This option is used to un-freeze the filesystem and allow operations to
+continue.  Any filesystem modifications that were blocked by the freeze are
+unblocked and allowed to complete.
+.SH AUTHOR
+.PP
+Written by Hajime Taira.
+.SH NOTES
+.PP
+This man page based on xfs_freeze.
+One of
+.B \-f
+or
+.B \-u
+must be supplied to
+.BR fsfreeze .
+.SH SEE ALSO
+.BR mount (8)
+.SH AVAILABILITY
+The fsfreeze command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+

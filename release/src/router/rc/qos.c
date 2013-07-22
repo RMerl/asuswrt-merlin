@@ -175,9 +175,9 @@ int add_iQosRules(char *pcWANIF)
 #endif
 
 	inuse = sticky_enable = 0;
-	
-	if(get_model()==MODEL_RTAC56U || get_model()==MODEL_RTAC68U)
-		manual_return = 1;
+
+        if(get_model()==MODEL_RTAC56U || get_model()==MODEL_RTAC68U)
+                manual_return = 1;
 
 	if (nvram_match("qos_sticky", "0"))
 		sticky_enable = 1;
@@ -264,8 +264,7 @@ int add_iQosRules(char *pcWANIF)
 
 		chain = "QOSO";                     // chain name
                 sprintf(end , " -j CONNMARK --set-return 0x%x/0xFF\n", class_num);	// CONNMARK string
-                sprintf(end2, " -j RETURN\n");
-
+		sprintf(end2, " -j RETURN\n");
 
 		/*************************************************/
 		/*                        addr                   */
@@ -455,26 +454,26 @@ int add_iQosRules(char *pcWANIF)
 				// step2. if proto = any, no proto / dport
 				if(strcmp(proto_1, "")){
 					// step3. check saddr for ip-range;saddr_1 could be empty, dport only
-						fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_1, conn, end);
-						if(manual_return)
-						fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_1, conn, end2);
+                                                fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_1, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_1, conn, end2);
 
-					if(strcmp(saddr_2, "")){
-						fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_2, conn, end);
-						if(manual_return)
-						fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_2, conn, end2);
-					}
+                                        if(strcmp(saddr_2, "")){
+                                                fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_2, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_2, conn, end2);
+                                        }
 				}
 				else{
-						fprintf(fn, "-A %s %s %s %s", chain, saddr_1, conn, end);
-						if(manual_return)
-						fprintf(fn, "-A %s %s %s %s", chain, saddr_1, conn, end2);
+                                                fprintf(fn, "-A %s %s %s %s", chain, saddr_1, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn, "-A %s %s %s %s", chain, saddr_1, conn, end2);
 
-					if(strcmp(saddr_2, "")){
-						fprintf(fn, "-A %s %s %s %s", chain, saddr_2, conn, end);
-						if(manual_return)
-						fprintf(fn, "-A %s %s %s %s", chain, saddr_2, conn, end2);
-					}
+                                        if(strcmp(saddr_2, "")){
+                                                fprintf(fn, "-A %s %s %s %s", chain, saddr_2, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn, "-A %s %s %s %s", chain, saddr_2, conn, end2);
+                                        }
 				}
 			}
 
@@ -483,26 +482,26 @@ int add_iQosRules(char *pcWANIF)
 				// step2. if proto = any, no proto / dport
 				if(strcmp(proto_2, "")){
 					// step3. check saddr for ip-range;saddr_1 could be empty, dport only
-						fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_1, conn, end);
-						if(manual_return)
-						fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_1, conn, end2);
+                                                fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_1, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_1, conn, end2);
 
-					if(strcmp(saddr_2, "")){
-						fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_2, conn, end);
-						if(manual_return)
-						fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_2, conn, end2);
-					}
+                                        if(strcmp(saddr_2, "")){
+                                                fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_2, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_2, conn, end2);
+                                        }
 				}
 				else{
-						fprintf(fn, "-A %s %s %s %s", chain, saddr_1, conn, end);
-						if(manual_return)
-						fprintf(fn, "-A %s %s %s %s", chain, saddr_1, conn, end2);
+                                                fprintf(fn, "-A %s %s %s %s", chain, saddr_1, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn, "-A %s %s %s %s", chain, saddr_1, conn, end2);
 
-					if(strcmp(saddr_2, "")){
-						fprintf(fn, "-A %s %s %s %s", chain, saddr_2, conn, end);
-						if(manual_return)
-						fprintf(fn, "-A %s %s %s %s", chain, saddr_2, conn, end2);
-					}
+                                        if(strcmp(saddr_2, "")){
+                                                fprintf(fn, "-A %s %s %s %s", chain, saddr_2, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn, "-A %s %s %s %s", chain, saddr_2, conn, end2);
+                                        }
 				}
 			}
 		}
@@ -514,26 +513,26 @@ int add_iQosRules(char *pcWANIF)
 				// step2. if proto = any, no proto / dport
 				if(strcmp(proto_1, "")){
 					// step3. check saddr for ip-range;saddr_1 could be empty, dport only
-						fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_1, conn, end);
-						if(manual_return)
-						fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_1, conn, end2);
+                                                fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_1, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_1, conn, end2);
 
-					if(strcmp(saddr_2, "")){
-						fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_2, conn, end);
-						if(manual_return)
-						fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_2, conn, end2);
-					}
+                                        if(strcmp(saddr_2, "")){
+                                                fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_2, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_1, dport, saddr_2, conn, end2);
+                                        }
 				}
 				else{
-						fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_1, conn, end);
-						if(manual_return)
-						fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_1, conn, end2);
+                                                fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_1, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_1, conn, end2);
 
-					if(strcmp(saddr_2, "")){
-						fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_2, conn, end);
-						if(manual_return)
-						fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_2, conn, end2);
-					}
+                                        if(strcmp(saddr_2, "")){
+                                                fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_2, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_2, conn, end2);
+                                        }
 				}
 			}
 
@@ -542,25 +541,25 @@ int add_iQosRules(char *pcWANIF)
 				// step2. if proto = any, no proto / dport
 				if(strcmp(proto_2, "")){
 					// step3. check saddr for ip-range;saddr_1 could be empty, dport only
-						fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_1, conn, end);
-						if(manual_return)
-						fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_1, conn, end2);
+                                                fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_1, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_1, conn, end2);
 
-					if(strcmp(saddr_2, "")){
-						fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_2, conn, end);
-						if(manual_return)
-						fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_2, conn, end2);
-					}
+                                        if(strcmp(saddr_2, "")){
+                                                fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_2, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn_ipv6, "-A %s %s %s %s %s %s", chain, proto_2, dport, saddr_2, conn, end2);
+                                        }
 				}
 				else{
-						fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_1, conn, end);
-						if(manual_return)
-						fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_1, conn, end2);
-					if(strcmp(saddr_2, "")){
-						fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_2, conn, end);
-						if(manual_return)
-						fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_2, conn, end2);
-					}
+                                                fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_1, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_1, conn, end2);
+                                        if(strcmp(saddr_2, "")){
+                                                fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_2, conn, end);
+                                                if(manual_return)
+                                                fprintf(fn_ipv6, "-A %s %s %s %s", chain, saddr_2, conn, end2);
+                                        }
 				}
 			}
 		}
@@ -600,12 +599,12 @@ int add_iQosRules(char *pcWANIF)
 
 		// for multicast
 		fprintf(fn, "-A QOSO -d 224.0.0.0/4 -j CONNMARK --set-return 0x%x/0xFF\n",  down_class_num);
-		if(manual_return)
-                	fprintf(fn , "-A QOSO -d 224.0.0.0/4 -j RETURN\n");
+                if(manual_return)
+                        fprintf(fn , "-A QOSO -d 224.0.0.0/4 -j RETURN\n");
 		// for download (LAN or wireless)
 		fprintf(fn, "-A QOSO -d %s -j CONNMARK --set-return 0x%x/0xFF\n", lan_addr, down_class_num);
-		if(manual_return)
-                	fprintf(fn , "-A QOSO -d %s -j RETURN\n", lan_addr);
+                if(manual_return)
+                        fprintf(fn , "-A QOSO -d %s -j RETURN\n", lan_addr);
 /* Requires bridge netfilter, but slows down and breaks EMF/IGS IGMP IPTV Snooping
 		// for WLAN to LAN bridge issue
 		fprintf(fn, "-A POSTROUTING -d %s -m physdev --physdev-is-in -j CONNMARK --set-return 0x6/0xFF\n", lan_addr);
@@ -619,8 +618,8 @@ int add_iQosRules(char *pcWANIF)
 	                "-A FORWARD -o %s -j QOSO\n"
         	        "-A OUTPUT -o %s -j QOSO\n",
                 	        class_num, pcWANIF, pcWANIF);
-		if(manual_return)
-                	fprintf(fn , "-A QOSO -j RETURN\n");
+                if(manual_return)
+                        fprintf(fn , "-A QOSO -j RETURN\n");
 
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled() && *wan6face) {
@@ -636,12 +635,12 @@ int add_iQosRules(char *pcWANIF)
 
 			// for multicast
 			fprintf(fn_ipv6, "-A QOSO -d 224.0.0.0/4 -j CONNMARK --set-return 0x%x/0xFF\n",  down_class_num);
-			if(manual_return)
-				fprintf(fn_ipv6, "-A QOSO -d 224.0.0.0/4 -j RETURN\n");
+                        if(manual_return)
+                                fprintf(fn_ipv6, "-A QOSO -d 224.0.0.0/4 -j RETURN\n");
 			// for download (LAN or wireless)
         		fprintf(fn_ipv6, "-A QOSO -d %s -j CONNMARK --set-return 0x%x/0xFF\n", lan_addr, down_class_num);
-			if(manual_return)
-        			fprintf(fn_ipv6, "-A QOSO -d %s -j RETURN\n", lan_addr);
+                        if(manual_return)
+                                fprintf(fn_ipv6, "-A QOSO -d %s -j RETURN\n", lan_addr);
 /* Requires bridge netfilter, but slows down and breaks EMF/IGS IGMP IPTV Snooping
 			// for WLAN to LAN bridge issue
 			fprintf(fn_ipv6, "-A POSTROUTING -d %s -m physdev --physdev-is-in -j CONNMARK --set-return 0x6/0xFF\n", lan_addr);
@@ -656,7 +655,7 @@ int add_iQosRules(char *pcWANIF)
                 	"-A OUTPUT -o %s -j QOSO\n",
                         	class_num, wan6face, wan6face);
 		if(manual_return)
-        		fprintf(fn_ipv6, "-A QOSO -j RETURN\n");
+			fprintf(fn_ipv6, "-A QOSO -j RETURN\n");
 	}
 #endif
 
@@ -963,12 +962,12 @@ int start_iQos(void)
 #endif
 		"\t;;\n"
 		"*)\n"
-		"\t---------- Upload ----------\n"
+		"\t#---------- Upload ----------\n"
 		"\ttc -s -d class ls dev $I\n"
 		"\ttc -s -d qdisc ls dev $I\n"
 		"\techo\n"
 #ifdef CLS_ACT
-		"\t--------- Download ---------\n"
+		"\t#--------- Download ---------\n"
 		"\ttc -s -d class ls dev $DLIF\n"
 		"\ttc -s -d qdisc ls dev $DLIF\n"
 		"\techo\n"

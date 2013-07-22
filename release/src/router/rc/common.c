@@ -1554,3 +1554,58 @@ char *get_parsed_crt(const char *name, char *buf)
 	return buf;
 }
 
+void stop_if_misc(void)
+{
+	DIR *dir;
+	struct dirent *dirent;
+	struct ifreq ifr;
+	int sfd;
+
+	if ((dir = opendir("/proc/sys/net/ipv4/conf")) != NULL) {
+		while ((dirent = readdir(dir)) != NULL) {
+			if (!strcmp(dirent->d_name, ".") || !strcmp(dirent->d_name, ".."))
+				continue;
+
+			if (strcmp(dirent->d_name, "all") &&
+				strcmp(dirent->d_name, "default") &&
+				strcmp(dirent->d_name, "lo") &&
+				strncmp(dirent->d_name, "br", 2) &&
+				strncmp(dirent->d_name, "eth", 3) &&
+				strncmp(dirent->d_name, "ra", 2) &&
+				!((sfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0))
+			{
+				strcpy(ifr.ifr_name, dirent->d_name);
+				if (!ioctl(sfd, SIOCGIFFLAGS, &ifr) && (ifr.ifr_flags & IFF_UP))
+					ifconfig(ifr.ifr_name, 0, NULL, NULL);
+
+				close(sfd);
+			}
+
+		}
+		closedir(dir);
+	}
+}
+
+int mssid_mac_validate(const char *macaddr)
+{
+	unsigned char mac_binary[6];
+	unsigned long long macvalue;
+	char macbuf[13];
+
+	if (!macaddr || !strlen(macaddr))
+		return 0;
+
+	ether_atoe(macaddr, mac_binary);
+	sprintf(macbuf, "%02X%02X%02X%02X%02X%02X",
+		mac_binary[0],
+		mac_binary[1],
+		mac_binary[2],
+		mac_binary[3],
+		mac_binary[4],
+		mac_binary[5]);
+	macvalue = strtoll(macbuf, (char **) NULL, 16);
+	if (macvalue % 4)
+		return 0;
+	else
+		return 1;
+}

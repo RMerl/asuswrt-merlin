@@ -1,0 +1,143 @@
+.\" Copyright (c) 1983, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)logger.1	8.1 (Berkeley) 6/6/93
+.\"
+.\" Section on valid facility and level strings added by
+.\" and1000@debian.org, 26 Oct 1997.
+.Dd August 2011 "  "
+.Dt LOGGER(1) "" "User Commands"
+.Os util-linux
+.Sh NAME
+.Nm logger
+.Nd a shell command interface to the syslog(3) system log module
+.Sh SYNOPSIS
+.Nm logger
+.Op Fl dhisV
+.Op Fl f Ar file
+.Op Fl n Ar server
+.Op Fl P Ar port
+.Op Fl p Ar pri
+.Op Fl t Ar tag
+.Op Fl u Ar socket
+.Op Ar message
+.Sh DESCRIPTION
+.Nm logger
+makes entries in the system log.
+It provides a shell command interface to the
+.Xr syslog  3
+system log module.
+.Pp
+Options:
+.Pp
+.Bl -tag -width "message"
+.It Fl d, Fl Fl udp
+Use datagram (UDP) instead of the default stream connection (TCP).
+.It Fl i, Fl Fl id
+Log the process ID of the logger process with each line.
+.It Fl f, Fl Fl file Ar file
+Log the contents of the specified \fIfile\fR.  This option cannot be
+combined with a command-line message.
+.It Fl h, Fl Fl help
+Display a help text and exit.
+.It Fl n, Fl Fl server Ar server
+Write to the specified remote syslog
+.Ar server
+using UDP instead of to the builtin syslog routines.
+.It Fl P, Fl Fl port Ar port
+Use the specified UDP
+.Ar port  .
+The default port number is 514.
+.It Fl p, Fl Fl priority Ar priority
+Enter the message into the log with the specified
+.Ar priority  .
+The priority may be specified numerically or as a \fIfacility.level\fR
+pair.
+For example, \fB-p local3.info\fR logs the message as
+informational in the local3 facility.
+The default is \fIuser.notice\fR.
+.It Fl s, Fl Fl stderr
+Output the message to standard error as well as to the system log.
+.It Fl t, Fl Fl tag Ar tag
+Mark every line to be logged with the specified
+.Ar tag  .
+.It Fl u, Fl Fl socket Ar socket
+Write to the specified
+.Ar socket
+instead of to the builtin syslog routines.
+.It Fl V, Fl Fl version
+Display version information and exit.
+.It --
+End the argument list. This is to allow the
+.Ar message
+to start with a hyphen (\-).
+.It Ar message
+Write the message to log; if not specified, and the
+.Fl f
+flag is not
+provided, standard input is logged.
+.El
+.Pp
+The
+.Nm logger
+utility exits 0 on success, and >0 if an error occurs.
+.Pp
+Valid facility names are: auth, authpriv (for security information of a
+sensitive nature), cron, daemon, ftp, kern (can't be generated from user
+process), lpr, mail, news, security (deprecated synonym for auth), syslog,
+user, uucp, and local0 to local7, inclusive.
+.Pp
+Valid level names are:
+alert, crit, debug, emerg, err, error (deprecated synonym for err),
+info, notice, panic (deprecated synonym for emerg), warning,
+warn (deprecated synonym for warning).
+For the priority order and intended purposes of these levels, see
+.Xr syslog 3 .
+.Sh EXAMPLES
+.Bd -literal -offset indent -compact
+logger System rebooted
+
+logger \-p local0.notice \-t HOSTIDM \-f /dev/idmc
+
+logger \-n loghost.example.com System rebooted
+.Ed
+.Sh SEE ALSO
+.Xr syslog 3 ,
+.Xr syslogd 8
+.Sh STANDARDS
+The
+.Nm logger
+command is expected to be
+.St -p1003.2
+compatible.
+.Sh AVAILABILITY
+The logger command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

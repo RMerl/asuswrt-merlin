@@ -82,6 +82,8 @@ function key_event(evt){
 }
 
 function initial(){
+	$('pull_arrow').title = Untranslated.select_service;
+	$('pull_arrow_mac').title = Untranslated.select_client;
 	show_menu();
 	showqos_rulelist();
 
@@ -890,12 +892,12 @@ function linkport(obj){
 							<tr>
 								<td width="20%">							
 									<input type="text" class="input_12_table" style="float:left;width:105px;" placeholder="<#Select_menu_default#>" name="qos_service_name_x_0" onKeyPress="return is_string(this, event)">
-									<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullQoSList(this);" title="Select the device name of DHCP clients." >
+									<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullQoSList(this);" title="" >
 									<div id="QoSList_Block" class="QoSList_Block" onclick="hideClients_Block()"></div>
 								</td>
 								<td width="19%">
 									<input type="text" maxlength="17" class="input_15_table" name="qos_ip_x_0" style="width:100px;float:left">
-									<img id="pull_arrow_mac" class="pull_arrow"height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." >
+									<img id="pull_arrow_mac" class="pull_arrow"height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="" >
 									<div id="ClientList_Block_PC" class="ClientList_Block_PC" ></div>
 								</td>
 								

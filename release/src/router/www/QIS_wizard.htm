@@ -70,10 +70,7 @@ if(isMobile() && sw_mode != 2 && qisFlag != "sitesurvey" && qisFlag != "sitesurv
 
 var parent_macaddr = '<% nvram_get("et0macaddr"); %>';
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-var arg_wan_nat_x = '<% get_parameter("wan_nat_x"); %>';
-var arg_wan_proto = '<% get_parameter("wan_proto"); %>';
-var arg_wan_route_x = '<% get_parameter("wan_route_x"); %>';
-var arg_prev_page = '<% get_parameter("prev_page"); %>';
+
 var reduced_internet_type = "disable";
 var targeturl = "/index.htm";
 var firmver = '<% nvram_get("firmver"); %>';
@@ -83,6 +80,7 @@ var flag_manual = 0;
 var issubmit = 0;
 var isrescan = 0;
 var getBand = '<% get_parameter("band"); %>';
+var isFirst = ('<% nvram_get("x_Setting"); %>' == '1') ? false : true;;
 var ISMOBILE = false;
 
 // live update
@@ -150,7 +148,11 @@ function detect_firmware(){
 }
 
 function detect_update(){
-	document.start_update.submit();
+	if(isFirst)
+		var _action_wait = 10000;
+	else
+		var _action_wait = 5000;
+	setTimeout("document.start_update.submit();", _action_wait);	//delay after restart_time
 }
 
 function set_step(focus_id){
@@ -173,11 +175,10 @@ function set_step(focus_id){
 
 function QIS_load_body(){
 	var showCase;
-	showCase = $("flag").value;
-	get_args();
+	showCase = $("flag").value;	
 	winW_H();
 
-	if(psta_support != -1){
+	if(psta_support){
 		if(document.QKform.sw_mode.value == 3 && '<% nvram_get("wlc_psta"); %>' == 1)
 			document.QKform.sw_mode.value = 4;
 	}
@@ -249,29 +250,6 @@ function QIS_load_body(){
 				break;					
 		}
 	}
-}
-
-function get_args(){
-	if(arg_wan_proto.length > 0)
-		document.QKform.wan_proto.value = arg_wan_proto;
-	
-	if(arg_wan_nat_x.length > 0)
-		document.QKform.wan_nat_x.value = arg_wan_nat_x;
-	
-	if(arg_wan_route_x.length > 0)
-		document.QKform.wan_route_x.value = arg_wan_route_x;
-	
-	if(arg_prev_page.length > 0)
-		document.QKform.prev_page.value = arg_prev_page;
-}
-
-function getOperationMode(){
-	if(document.QKform.wan_nat_x.value == "1")
-		return "gateway";
-	else if(document.QKform.wan_route_x.value == "IP_Routed")
-		return "router";
-	else
-		return "ap";
 }
 
 function set_internet_type_reducedmode(mode){

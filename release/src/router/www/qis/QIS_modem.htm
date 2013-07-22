@@ -85,7 +85,7 @@ function QKInternet_load_body(){
 	gen_country_list();
 	reloadProfile();
 
-  if(wimax_support < 0){
+  if(!wimax_support){
   	for (var i = 0; i < document.form.modem_enable_option.options.length; i++) {
 			if (document.form.modem_enable_option.options[i].value == "4") {
 				document.form.modem_enable_option.options.remove(i);
@@ -130,6 +130,7 @@ function submitForm(){
 	document.getElementById("skipButton").style.display = "none";
 	document.getElementById("loadingIcon").style.display = "";
 	changeiuiBackground(1);
+	document.form.action_wait.value	= eval("<% get_default_reboot_time(); %> + 30");
 	document.form.submit();
 }
 
@@ -397,7 +398,7 @@ function show_ISP_list(){
 	$("modem_isp").options.length = isplist.length;
 
 	for(var i = 0; i < isplist.length; i++){
-	  if(protolist[i] == 4 && wimax_support < 0){
+	  if(protolist[i] == 4 && !wimax_support){
 			$("modem_isp").options.length = $("modem_isp").options.length - 1;
 
 			if($("modem_isp").options.length > 0)
@@ -624,7 +625,7 @@ function submitenter(myfield,e)
 		<tr>
     	<th style="width:40%"><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,9);"><#HSDPAConfig_Country_itemname#></a></th>
       <td>
-      	<select name="modem_country" id="isp_countrys" class="input_option" onfocus="parent.showHelpofDrSurf(21,9);" onchange="switch_modem_mode(document.form.modem_enable_option.value);reloadProfile();"></select>
+      	<select name="modem_country" id="isp_countrys" class="input_option" onchange="switch_modem_mode(document.form.modem_enable_option.value);reloadProfile();"></select>
 			</td>
 		</tr>
 

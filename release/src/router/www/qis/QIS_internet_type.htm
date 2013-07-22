@@ -42,8 +42,7 @@ function QKinternettype_load_body(){
 		document.getElementById("field_mobile").style.display = "";		
 		hideObjs();
 
-		//if(parent.rc_support.search("manual_stb") == -1)
-			// disable Unifi settings here
+		//if(!parent.manualstb_support)
 			document.getElementById("unifyBtn").style.display = "none";
 	}
 	else{
@@ -67,12 +66,12 @@ function QKinternettype_load_body(){
 		ISP_Profile_Selection(original_switch_wantag);
 		hide_specialISP();
 	
-		if(parent.ruisp_support >= 0)
+		if(parent.ruisp_support)
 			document.getElementById("ruisp_btn").style.display = "";
 			
 		document.getElementById("ff123").focus();
 	
-		if(parent.rc_support.search("manual_stb") == -1) 
+		if(!parent.manualstb_support) 
 			document.applyForm.switch_wantag.remove(8);
 
 		detect_if_wan_plug();

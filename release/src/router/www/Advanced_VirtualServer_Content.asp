@@ -65,6 +65,7 @@ var vts_rulelist_array = "<% nvram_char_to_ascii("","vts_rulelist"); %>";
 var ctf_disable = '<% nvram_get("ctf_disable"); %>';
 
 function initial(){
+	$('pull_arrow').title = Untranslated.select_IP;
 	show_menu();
 	loadAppOptions();
 	loadGameOptions();
@@ -72,7 +73,7 @@ function initial(){
 	showvts_rulelist();
 	addOnlineHelp($("faq"), ["ASUSWRT", "port", "forwarding"]);
 
-	if(parent.usb_support == -1){
+	if(!parent.usb_support){
 		$('FTP_desc').style.display = "none";
 		document.form.vts_ftpport.parentNode.parentNode.style.display = "none";
 	}
@@ -95,7 +96,7 @@ function isChange(){
 
 function applyRule(){
 
-	if(parent.usb_support != -1){
+	if(parent.usb_support){
 		if(!validate_number_range(document.form.vts_ftpport, 1, 65535)){
 			return false;	
 		}	
@@ -171,7 +172,7 @@ function change_wizard(o, id){
 		}
 
 		if(document.form.KnownApps.options[1].selected == 1){
-				if(parent.usb_support == -1){
+				if(!parent.usb_support){
 						document.form.vts_port_x_0.value = "21";
 				}
 				
@@ -639,7 +640,7 @@ function changeBgColor(obj, num){
 				</td>
 				<td width="21%">
 					<input type="text" maxlength="15" class="input_15_table" name="vts_ipaddr_x_0" align="left" onkeypress="return is_ipaddr(this, event)" style="float:left;"/ autocomplete="off" onblur="if(!over_var){hideClients_Block();}" onClick="hideClients_Block();">
-					<img id="pull_arrow" height="14px;" src="images/arrow-down.gif" align="right" onclick="pullLANIPList(this);" title="Select the IP of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
+					<img id="pull_arrow" height="14px;" src="images/arrow-down.gif" align="right" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
 					<div id="ClientList_Block" class="ClientList_Block"></div>
 				</td>
 				<td width="10%">

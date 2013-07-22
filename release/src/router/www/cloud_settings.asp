@@ -50,39 +50,44 @@ function initial(){
 }
 
 function applyRule(){
-	validate_number_range(document.form.webdav_lock_times, 1, 10);
-	validate_number_range(document.form.webdav_lock_interval, 1, 60);
-	/*
-	validate_number_range(document.form.webdav_http_port, 1024, 65536); 
-	validate_number_range(document.form.webdav_https_port, 1024, 65536); 
-	*/
 
-	if(isPortConflict_webdav(document.form.webdav_http_port.value)){
-		alert(isPortConflict_webdav(document.form.webdav_http_port.value));
-		document.form.webdav_http_port.focus();
-		return false;
+	if(	validate_number_range(document.form.webdav_lock_times, 1, 10)
+		&&validate_number_range(document.form.webdav_lock_interval, 1, 60)
+		&&validate_number_range(document.form.webdav_http_port, 1, 65535)
+		&&validate_number_range(document.form.webdav_https_port, 1, 65535)
+		&&isPortConflict_webdav(document.form.webdav_http_port)
+		&&isPortConflict_webdav(document.form.webdav_https_port)
+	){
+		document.form.webdav_http_port.value = parseInt(document.form.webdav_http_port.value);	
+		document.form.webdav_https_port.value = parseInt(document.form.webdav_https_port.value);	
+		showLoading();	
+		document.form.submit();	
 	}
-	else if(isPortConflict_webdav(document.form.webdav_https_port.value)){
-		alert(isPortConflict_webdav(document.form.webdav_https_port.value));
-		document.form.webdav_https_port.focus();
-		return false;
-	}
-
-	showLoading();	
-	document.form.submit();	
 }
 
-function isPortConflict_webdav(_val){
-	if(_val == '<% nvram_get("login_port"); %>')
-		return "<#portConflictHint#> HTTP LAN port.";
-	else if(_val == '<% nvram_get("dm_http_port"); %>')
-		return "<#portConflictHint#> Download Master.";
-	else if(_val == '<% nvram_get("misc_httpsport_x"); %>')
-		return "<#portConflictHint#> [<#FirewallConfig_x_WanWebPort_itemname#>(HTTPS)].";
-	else if(_val == '<% nvram_get("misc_httpport_x"); %>')
-		return "<#portConflictHint#> [<#FirewallConfig_x_WanWebPort_itemname#>(HTTP)].";
-	else
+function isPortConflict_webdav(obj){
+	if(obj.value == '<% nvram_get("login_port"); %>'){
+		alert("<#portConflictHint#> HTTP LAN port.");
+		obj.focus();
 		return false;
+	}	
+	else if(obj.value == '<% nvram_get("dm_http_port"); %>'){
+		alert("<#portConflictHint#> Download Master.");
+		obj.focus();
+		return false;
+	}	
+	else if(obj.value == '<% nvram_get("misc_httpsport_x"); %>'){
+		alert("<#portConflictHint#> [<#FirewallConfig_x_WanWebPort_itemname#>(HTTPS)].");
+		obj.focus();
+		return false;
+	}	
+	else if(obj.value == '<% nvram_get("misc_httpport_x"); %>'){
+		alert("<#portConflictHint#> [<#FirewallConfig_x_WanWebPort_itemname#>(HTTP)].");
+		obj.focus();
+		return false;
+	}
+	
+	return true;	
 }
 
 function unlockAcc(){

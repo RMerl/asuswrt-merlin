@@ -56,8 +56,8 @@
 
 /* bitmask of supported algorithms */
 #define MDTYPE_MICROSOFT_V2	0x1
-#define MDTYPE_MICROSOFT	0x2
-#define MDTYPE_MD5              0x4
+#define MDTYPE_MD5		0x2
+#define MDTYPE_MICROSOFT	0x4
 #define MDTYPE_NONE		0
 
 /* hashes supported by this instance of pppd */

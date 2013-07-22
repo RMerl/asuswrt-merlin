@@ -4,13 +4,21 @@ CFLAGS	= -Os -Wall $(EXTRACFLAGS) #-mips32
 CFLAGS	+= -I$(SRCBASE)/include -I$(TOP)/shared -DRTCONFIG_ISP_METER -DDEBUG
 LDFLAGS	=
 
+ifeq ($(RTN14U),y)
+CFLAGS += -DRTN14U
+endif
+
+ifeq ($(RTAC52U),y)
+CFLAGS += -DRTAC52U
+endif
+
 OBJS = rstats.o
 
 all: rstats
 
 rstats: $(OBJS)
 	@echo " [rstats] CC -o $@"
-	@$(CC) $(LDFLAGS) -o $@ $(OBJS) -L../nvram -lnvram -L../shared -lshared
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
 
 	$(SIZECHECK)
 	$(CPTMP)

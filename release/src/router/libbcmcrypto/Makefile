@@ -21,7 +21,11 @@ LDFLAGS += -L.
 
 
 vpath %.c $(SRCBASE)/bcmcrypto
-vpath %.o $(SRCBASE)/router/libbcmcrypto/prebuilt
+ifeq ($(RTCONFIG_BCMARM),y)
+vpath %.o $(SRCBASE)/router/libbcmcrypto/prebuilt.arm
+else
+vpath %.o $(SRCBASE)/router/libbcmcrypto/prebuilt.mipsel
+endif
 
 OBJS := aes.o aeskeywrap.o rijndael-alg-fst.o dh.o bn.o sha1.o passhash.o prf.o md5.o hmac.o rc4.o random.o
 # For customer backwords compatibility, for now we keep CONFIG_WSCCMD here and can be removed when

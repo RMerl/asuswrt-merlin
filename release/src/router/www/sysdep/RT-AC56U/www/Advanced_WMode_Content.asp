@@ -75,6 +75,7 @@ var wds_aplist = "";
 var $j = jQuery.noConflict();
 
 function initial(){
+	$('pull_arrow').title = Untranslated.select_AP;
 	show_menu();
 	load_body();	
 
@@ -90,9 +91,9 @@ function initial(){
 	else
 		show_wl_wdslist();
 
-	if(band5g_support == -1){
+	if(!band5g_support){
+		$("wl_5g_mac").style.display = "none";
 		$("wl_unit_field").style.display = "none";
-		$("mac_5g").style.display = "none";
 	}	
 	wl_bw_hint();
 	setTimeout("wds_scan();", 500);
@@ -370,9 +371,9 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
 		  	<div>&nbsp;</div>
 		  	<div class="formfonttitle"><#menu5_1#> - <#menu5_1_3#></div>
 		  	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		  	<div class="formfontdesc"><#WLANConfig11b_display3_sectiondesc#></div>				
-		  	<div style="margin-left:40px;">(2.4GHz MAC) <% nvram_get("wl0_hwaddr"); %></div>
-		  	<div id="mac_5g" style="margin-left:40px;">(5GHz MAC) <% nvram_get("wl1_hwaddr"); %></div>
+		  	<div class="formfontdesc"><#WLANConfig11b_display31_sectiondesc#></div>
+		  	<div class="formfontdesc" style="color:#FFCC00;"><#ADSL_FW_note#><#WLANConfig11b_display32_sectiondesc#></div>
+		  	<div class="formfontdesc"><#WLANConfig11b_display33_sectiondesc#></div>
 		  	<div id="wl_bw_hint" style="font-size:13px;font-family: Arial, Helvetica, sans-serif;color:#FC0;margin-left:28px;">5. You are currently using the Auto channel. Click <a style="font-size:13px;font-family: Lucida Console;color:#FC0;text-decoration:underline;" href="/Advanced_Wireless_Content.asp?af=wl_bw">Here</a> to modify.</div>
 			
 			<table id="MainTable1" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -380,7 +381,22 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
 			  <tr>
 				<td colspan="2"><#t2BC#></td>
 			  </tr>
-			  </thead>		
+			  </thead>
+			  
+				<tr>
+					<th>2.4GHz MAC</th>
+					<td>
+							<input type="text" maxlength="17" class="input_20_table" id="wl0_hwaddr" name="wl0_hwaddr" value="<% nvram_get("wl0_hwaddr"); %>" readonly>
+					</td>		
+			  </tr>
+
+				
+				<tr id="wl_5g_mac">
+					<th>5GHz MAC</th>
+					<td>
+							<input type="text" maxlength="17" class="input_20_table" id="wl1_hwaddr" name="wl1_hwaddr" value="<% nvram_get("wl1_hwaddr"); %>" readonly>
+					</td>		
+			  </tr>			  
 
 				<tr id="wl_unit_field">
 					<th><#Interface#></th>
@@ -440,7 +456,7 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
           		<tr>
             		<td width="80%">
               		<input type="text" style="margin-left:220px;float:left;" maxlength="17" class="input_macaddr_table" name="wl_wdslist_0" onKeyPress="return is_hwaddr(this,event)">
-									<img style="float:left;" id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="Select the Access Point" onmouseover="over_var=1;" onmouseout="over_var=0;">
+									<img style="float:left;" id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
 									<div id="WDSAPList" class="WDSAPList">
 										<div style="width:98px">
 											<img height="15px" style="margin-left:5px;margin-top:2px;" src="/images/InternetScan.gif">

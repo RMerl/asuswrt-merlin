@@ -62,7 +62,8 @@ int is_beceem_dongle(const int mode, const char *vid, const char *pid){
 	return 0;
 }
 
-int is_samsung_dongle(const int mode, const char *vid, const char *pid){
+int is_samsung_dongle(const int mode, const char *vid, const char *pid)
+{
 	if(mode){ // modem mode.
 		if(!strcmp(vid, "04e8") && !strcmp(pid, "6761")
 				)
@@ -77,7 +78,8 @@ int is_samsung_dongle(const int mode, const char *vid, const char *pid){
 	return 0;
 }
 
-int is_gct_dongle(const int mode, const char *vid, const char *pid){
+int is_gct_dongle(const int mode, const char *vid, const char *pid)
+{
 	if(mode){ // modem mode.
 		if(!strcmp(vid, "1076") && !strcmp(pid, "7f00")
 				)
@@ -94,7 +96,8 @@ int is_gct_dongle(const int mode, const char *vid, const char *pid){
 #endif
 
 // if the MTP mode of the phone will hang the DUT, need add the VID/PID in this function.
-int is_android_phone(const int mode, const char *vid, const char *pid){
+int is_android_phone(const int mode, const char *vid, const char *pid)
+{
 	if(nvram_match("modem_android", "1"))
 		return 1;
 	else if(mode){ // modem mode.
@@ -109,7 +112,16 @@ int is_android_phone(const int mode, const char *vid, const char *pid){
 	return 0;
 }
 
-int write_3g_conf(FILE *fp, int dno, int aut, char *vid, char *pid){
+int is_storage_cd(const int mode, const char *vid, const char *pid)
+{
+	if(!strcmp(vid, "0781") && !strcmp(pid, "540e")) // SanDisk cruzer
+			return 1;
+
+	return 0;
+}
+
+int write_3g_conf(FILE *fp, int dno, int aut, char *vid, char *pid)
+{
 	switch(dno){
 		case SN_MU_Q101:
 			fprintf(fp, "DefaultVendor=  0x0408\n");
@@ -2063,10 +2075,10 @@ usb_dbg("3G: manaul setting.\n");
 			write_3g_conf(fp, SN_Vodafone_MD950, 0, vid, pid);
 		} else if (strcmp(nvram_safe_get("Dev3G"), "Siptune-LM-75") == 0){
 			write_3g_conf(fp, SN_Siptune_LM75, 0, vid, pid);
-                } else if (strcmp(nvram_safe_get("Dev3G"), "Celot_CT-680") == 0){               // 0703 add 
-                        write_3g_conf(fp, SN_Celot_CT680, 0, vid, pid);
-                } else if (strcmp(nvram_safe_get("Dev3G"), "Celot_CT-K300") == 0){              // 0703 add 
-                        write_3g_conf(fp, SN_Celot_K300, 0, vid, pid);
+		} else if (strcmp(nvram_safe_get("Dev3G"), "Celot_CT-680") == 0){               // 0703 add 
+			write_3g_conf(fp, SN_Celot_CT680, 0, vid, pid);
+		} else if (strcmp(nvram_safe_get("Dev3G"), "Celot_CT-K300") == 0){              // 0703 add 
+			write_3g_conf(fp, SN_Celot_K300, 0, vid, pid);
 		} else if (strncmp(nvram_safe_get("Dev3G"), "Huawei-", 7) == 0 && !strcmp(vid, "12d1")){
 			write_3g_conf(fp, UNKNOWNDEV, 0, vid, pid);
 		} else{
@@ -2313,7 +2325,8 @@ int write_beceem_conf(const char *eth_node){
 	return 1;
 }
 
-int write_gct_conf(){
+int write_gct_conf(void)
+{
 	FILE *fp;
 	int retry, lock;
 
@@ -2408,77 +2421,77 @@ FILE *fp = NULL;
 
 #define LOCK_FILE      "/tmp/hotplug_block_lock"
 
-#define MAX_USB_PORTS			2
+#define MAX_USB_PORTS                   2
 
 int hotplug_usb_power(int port, int boolOn)
 {
-	char name[] = "usbport%d"; /* 1 ~ 99 ports */
-	unsigned long gpiomap;
-	int usb_gpio;
+        char name[] = "usbport%d"; /* 1 ~ 99 ports */
+        unsigned long gpiomap;
+        int usb_gpio;
 
-	if (port > MAX_USB_PORTS)
-		return -1;
+        if (port > MAX_USB_PORTS)
+                return -1;
 
-	sprintf(name, "usbport%d", port);
-	usb_gpio = bcmgpio_getpin(name, BCMGPIO_UNDEFINED);
-	if (usb_gpio ==	BCMGPIO_UNDEFINED)
-		return 0;
-	if (bcmgpio_connect(usb_gpio, BCMGPIO_DIRN_OUT))
-		return 0;
+        sprintf(name, "usbport%d", port);
+        usb_gpio = bcmgpio_getpin(name, BCMGPIO_UNDEFINED);
+        if (usb_gpio == BCMGPIO_UNDEFINED)
+                return 0;
+        if (bcmgpio_connect(usb_gpio, BCMGPIO_DIRN_OUT))
+                return 0;
 
-	gpiomap = (1 << usb_gpio);
-	bcmgpio_out(gpiomap, boolOn? gpiomap: 0);
-	bcmgpio_disconnect(usb_gpio);
-	return 1;
+        gpiomap = (1 << usb_gpio);
+        bcmgpio_out(gpiomap, boolOn? gpiomap: 0);
+        bcmgpio_disconnect(usb_gpio);
+        return 1;
 }
 
 /* Return number of usbports enabled */
 int hotplug_usb_init(void)
 {
-	/* Enable VBUS via GPIOs for port1 and port2 */
-	int i, count;
+        /* Enable VBUS via GPIOs for port1 and port2 */
+        int i, count;
 
-	for (count = 0, i = 1; i <= MAX_USB_PORTS; i++) {
-		if (hotplug_usb_power(i, TRUE) > 0)
-			count++;
-	}
-	return count;
+        for (count = 0, i = 1; i <= MAX_USB_PORTS; i++) {
+                if (hotplug_usb_power(i, TRUE) > 0)
+                        count++;
+        }
+        return count;
 }
 
-#define PHYSDEVPATH_DEPTH_USB_LPORT	4	/* Depth is from 0 */
+#define PHYSDEVPATH_DEPTH_USB_LPORT     4       /* Depth is from 0 */
 
 static void
 hotplug_usb_power_recover(void)
 {
-	char *physdevpath;
-	char *tok = NULL;
-	int depth = 0, root_hub_num = -1, usb_lport = -1, nv_port = -1;
+        char *physdevpath;
+        char *tok = NULL;
+        int depth = 0, root_hub_num = -1, usb_lport = -1, nv_port = -1;
 
-	if ((physdevpath = getenv("PHYSDEVPATH")) == NULL)
-		return;
+        if ((physdevpath = getenv("PHYSDEVPATH")) == NULL)
+                return;
 
 	/* Get root_hub and logical port number.
 	 * PHYSDEVPATH in sysfs is /devices/pci/hcd/root_hub/root_hub_num-lport/.....
 	 */
-	tok = strtok(physdevpath, "/");
+        tok = strtok(physdevpath, "/");
 
-	while (tok != NULL) {
-		if (PHYSDEVPATH_DEPTH_USB_LPORT == depth) {
-			sscanf(tok, "%d-%d", &root_hub_num, &usb_lport);
-			break;
-		}
-		depth++;
-		tok = strtok(NULL, "/");
-	}
+        while (tok != NULL) {
+                if (PHYSDEVPATH_DEPTH_USB_LPORT == depth) {
+                        sscanf(tok, "%d-%d", &root_hub_num, &usb_lport);
+                        break;
+                }
+                depth++;
+                tok = strtok(NULL, "/");
+        }
 
-	if (tok && (root_hub_num != -1) && (usb_lport != -1)) {
-		/* Translate logical port to nvram setting port */
-		nv_port = (usb_lport == 1) ? 2 : 1;
+        if (tok && (root_hub_num != -1) && (usb_lport != -1)) {
+                /* Translate logical port to nvram setting port */
+                nv_port = (usb_lport == 1) ? 2 : 1;
 
-		hotplug_usb_power(nv_port, FALSE);
-		sleep(1);
-		hotplug_usb_power(nv_port, TRUE);
-	}
+                hotplug_usb_power(nv_port, FALSE);
+                sleep(1);
+                hotplug_usb_power(nv_port, TRUE);
+        }
 }
 
 /* Optimize performance */
@@ -2488,78 +2501,78 @@ hotplug_usb_power_recover(void)
 static void
 optimize_block_device(char *devname)
 {
-	char blkdev[8] = {0};
-	char read_ahead_conf[64] = {0};
-	char cmdbuf[64] = {0};
-	int err;
+        char blkdev[8] = {0};
+        char read_ahead_conf[64] = {0};
+        char cmdbuf[64] = {0};
+        int err;
 
-	memset(blkdev, 0, sizeof(blkdev));
-	strncpy(blkdev, devname, 3);
-	sprintf(read_ahead_conf, READ_AHEAD_CONF, blkdev);
-	sprintf(cmdbuf, "echo %d > %s", READ_AHEAD_KB_BUF, read_ahead_conf);
-	err = system(cmdbuf);
-	hotplug_dbg("err = %d\n", err);
+        memset(blkdev, 0, sizeof(blkdev));
+        strncpy(blkdev, devname, 3);
+        sprintf(read_ahead_conf, READ_AHEAD_CONF, blkdev);
+        sprintf(cmdbuf, "echo %d > %s", READ_AHEAD_KB_BUF, read_ahead_conf);
+        err = system(cmdbuf);
+        hotplug_dbg("err = %d\n", err);
 
-	if (err) {
-		hotplug_dbg("read ahead: unsuccess %d!\n", err);
-	}
+        if (err) {
+                hotplug_dbg("read ahead: unsuccess %d!\n", err);
+        }
 }
 
 int
 hotplug_block(void)
 {
-	char *action = NULL, *minor = NULL;
-	char *major = NULL, *driver = NULL;
-	int retry = 3, lock_fd = -1;
-	struct flock lk_info = {0};
+        char *action = NULL, *minor = NULL;
+        char *major = NULL, *driver = NULL;
+        int retry = 3, lock_fd = -1;
+        struct flock lk_info = {0};
 
-	if (!(action = getenv("ACTION")) ||
-	    !(minor = getenv("MINOR")) ||
-	    !(driver = getenv("PHYSDEVDRIVER")) ||
-	    !(major = getenv("MAJOR")))
-	{
-		return EINVAL;
-	}
+        if (!(action = getenv("ACTION")) ||
+            !(minor = getenv("MINOR")) ||
+            !(driver = getenv("PHYSDEVDRIVER")) ||
+            !(major = getenv("MAJOR")))
+        {
+                return EINVAL;
+        }
 
-	hotplug_dbg("env %s %s!\n", action, driver);
-	if (strncmp(driver, "sd", 2))
-	{
-		return EINVAL;
-	}
+        hotplug_dbg("env %s %s!\n", action, driver);
+        if (strncmp(driver, "sd", 2))
+        {
+                return EINVAL;
+        }
 
-	if ((lock_fd = open(LOCK_FILE, O_RDWR|O_CREAT, 0666)) < 0) {
-		hotplug_dbg("Failed opening lock file LOCK_FILE: %s\n", strerror(errno));
-		return -1;
-	}
+        if ((lock_fd = open(LOCK_FILE, O_RDWR|O_CREAT, 0666)) < 0) {
+                hotplug_dbg("Failed opening lock file LOCK_FILE: %s\n", strerror(errno));
+                return -1;
+        }
 
-	while (--retry) {
-		lk_info.l_type = F_WRLCK;
-		lk_info.l_whence = SEEK_SET;
-		lk_info.l_start = 0;
-		lk_info.l_len = 0;
-		if (!fcntl(lock_fd, F_SETLKW, &lk_info)) break;
-	}
+        while (--retry) {
+                lk_info.l_type = F_WRLCK;
+                lk_info.l_whence = SEEK_SET;
+                lk_info.l_start = 0;
+                lk_info.l_len = 0;
+                if (!fcntl(lock_fd, F_SETLKW, &lk_info)) break;
+        }
 
-	if (!retry) {
-		hotplug_dbg("Failed locking LOCK_FILE: %s\n", strerror(errno));
-		return -1;
-	}
+        if (!retry) {
+                hotplug_dbg("Failed locking LOCK_FILE: %s\n", strerror(errno));
+                return -1;
+        }
 
-	if (!strcmp(action, "add")) {
-		hotplug_dbg("add block!\n");
+        if (!strcmp(action, "add")) {
+                hotplug_dbg("add block!\n");
 
-	} else if (!strcmp(action, "remove")) {
-		hotplug_dbg("usb power recover!\n");
+        } else if (!strcmp(action, "remove")) {
+                hotplug_dbg("usb power recover!\n");
 		//hotplug_usb_power_recover(); // Mark off this. It will let the modem can't be switched.
-	} else {
-		hotplug_dbg("unsupported action!\n");
-	}
+        } else {
+                hotplug_dbg("unsupported action!\n");
+        }
 
-	close(lock_fd);
-	unlink(LOCK_FILE);
-	return 0;
+        close(lock_fd);
+        unlink(LOCK_FILE);
+        return 0;
 }
-#endif	/* RTCONFIG_BCMARM */
+#endif  /* RTCONFIG_BCMARM */
 
 // 201102. James. Move the Jiahao's code from rc/service_ex.c. {
 int
@@ -2600,12 +2613,12 @@ int check_hotplug_action(const char *action){
 }
 
 int set_usb_common_nvram(const char *action, const char *usb_node, const char *known_type){
-	char nvram_name[32], usb_port[8];
+	char nvram_name[32], usb_port[8], nvram_name2[32];
 	char type[16], vid[8], pid[8], manufacturer[256], product[256], serial[256];
 	char been_type[16];
 	int partition_order;
 	int port_num;
-#if defined(RTCONFIG_USB_XHCI)
+#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
 	char speed[256];
 #endif
 	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
@@ -2640,7 +2653,7 @@ int set_usb_common_nvram(const char *action, const char *usb_node, const char *k
 		nvram_set(strcat_r(prefix, "_product", tmp), "");
 		nvram_set(strcat_r(prefix, "_serial", tmp), "");
 		nvram_set(strcat_r(prefix, "_host", tmp), "");
-#if defined(RTCONFIG_USB_XHCI)
+#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
 		nvram_set(strcat_r(prefix, "_speed", tmp), "");
 #endif
 
@@ -2650,13 +2663,24 @@ int set_usb_common_nvram(const char *action, const char *usb_node, const char *k
 		if(strlen(nvram_safe_get(nvram_name)) > 0){
 			nvram_unset(nvram_name);
 
-#if 0
+			memset(nvram_name2, 0, 32);
+			sprintf(nvram_name2, "%s_label%d", prefix, partition_order);
+			if(strlen(nvram_safe_get(nvram_name2)) > 0)
+				nvram_unset(nvram_name2);
+
 			for(partition_order = 1; partition_order < 16 ; ++partition_order){
+#if 0
 				memset(nvram_name, 0, 32);
 				sprintf(nvram_name, "%s_fs_path%d", prefix, partition_order);
-				nvram_unset(nvram_name);
-			}
+				if(strlen(nvram_safe_get(nvram_name)) > 0)
+					nvram_unset(nvram_name);
 #endif
+
+				memset(nvram_name2, 0, 32);
+				sprintf(nvram_name2, "%s_label%d", prefix, partition_order);
+				if(strlen(nvram_safe_get(nvram_name2)) > 0)
+					nvram_unset(nvram_name2);
+			}
 		}
 	}
 	else{
@@ -2756,7 +2780,7 @@ int set_usb_common_nvram(const char *action, const char *usb_node, const char *k
 				break;
 		}
 
-#if defined(RTCONFIG_USB_XHCI)
+#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
 		strcat_r(prefix, "_speed", tmp);
 		if(get_usb_speed(usb_port, speed, 256) == NULL)
 			nvram_set(tmp, "");
@@ -2943,10 +2967,12 @@ int asus_sd(const char *device_name, const char *action){
 	unsetenv("DEVICENAME");
 	unsetenv("SUBSYSTEM");
 	unsetenv("USBPORT");
-#if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
-	/* Optimize performance */
-	optimize_block_device(device_name);
+
+#ifdef RTCONFIG_BCMARM
+        /* Optimize performance */
+        optimize_block_device(device_name);
 #endif
+
 	usb_dbg("(%s): Success!\n", device_name);
 	file_unlock(isLock);
 	return 1;
@@ -3282,7 +3308,10 @@ int asus_sr(const char *device_name, const char *action){
 	}
 	else
 #endif
-	if(strcmp(nvram_safe_get("stop_cd_remove"), "1")){
+	if(is_storage_cd(0, vid, pid)){
+		usb_dbg("(%s): skip to eject CD...\n", device_name);
+	}
+	else if(strcmp(nvram_safe_get("stop_cd_remove"), "1")){
 		usb_dbg("(%s): Running sdparm...\n", device_name);
 
 		memset(eject_cmd, 0, 32);
@@ -3496,10 +3525,10 @@ int asus_tty(const char *device_name, const char *action){
 	sprintf(nvram_def, "usb_path%d_act_def", port_num);
 	memset(current_def, 0, 16);
 	strcpy(current_def, nvram_safe_get(nvram_def));
+	usb_dbg("(%s): interface_name=%s, current_value=%s.\n", device_name, interface_name, current_value);
 
 	if(isSerialNode(device_name)){
 		// Find the endpoint: 03(Int).
-		usb_dbg("(%s): interface_name=%s.\n", device_name, interface_name);
 		got_Int_endpoint = get_interface_Int_endpoint(interface_name);
 		if(!got_Int_endpoint){
 			// Set the default node be ttyUSB0, because there is no Int endpoint in some dongles.
@@ -3871,7 +3900,7 @@ int asus_usb_interface(const char *device_name, const char *action){
 
 	if(!isSerialInterface(device_name)
 			&& !isACMInterface(device_name)
-			&& !isRNDISInterface(device_name)
+			&& !isRNDISInterface(device_name, vid, pid)
 			&& !isCDCETHInterface(device_name)
 #ifdef RTCONFIG_USB_BECEEM
 			&& !isGCTInterface(device_name)
@@ -4006,7 +4035,7 @@ int asus_usb_interface(const char *device_name, const char *action){
 	if(is_android_phone(0, vid, pid)){
 		usb_dbg("(%s): do nothing with the MTP mode.\n", device_name);
 	}
-	else if(isRNDISInterface(device_name)){
+	else if(isRNDISInterface(device_name, vid, pid)){
 		usb_dbg("(%s): Runing RNDIS...\n", device_name);
 	}
 	else if(isCDCETHInterface(device_name)){

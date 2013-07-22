@@ -1,0 +1,1 @@
+SRC=/dev/sda2 TARGET=/mnt/newxyz ROOT=/ OPTS=user

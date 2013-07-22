@@ -1,0 +1,92 @@
+.\" -*- nroff -*-
+.TH RAW 8 "August 1999" "util-linux" "System Administration"
+.SH NAME
+raw \- bind a Linux raw character device
+.SH SYNOPSIS
+.B raw
+.I /dev/raw/raw<N> <major> <minor>
+.PP
+.B raw
+.I /dev/raw/raw<N> /dev/<blockdev>
+.PP
+.B raw \-q
+.I /dev/raw/raw<N>
+.PP
+.B raw \-qa
+.SH DESCRIPTION
+.B raw
+is used to bind a Linux raw character device to a block device.  Any
+block device may be used: at the time of binding, the device driver does
+not even have to be accessible (it may be loaded on demand as a kernel
+module later).
+.PP
+.B raw
+is used in two modes: it either sets raw device bindings, or it queries
+existing bindings.  When setting a raw device,
+.I /dev/raw/raw<N>
+is the device name of an existing raw device node in the filesystem.
+The block device to which it is to be bound can be specified either in
+terms of its
+.I major
+and
+.I minor
+device numbers, or as a path name
+.I /dev/<blockdev>
+to an existing block device file.
+.PP
+The bindings already in existence can be queried with the 
+.I \-q
+option, which is used either with a raw device filename to query that one
+device, or with the 
+.I \-a
+option to query all bound raw devices.
+.PP
+Unbinding can be done by specifying major and minor 0.
+.PP
+Once bound to a block device, a raw device can be opened, read and
+written, just like the block device it is bound to.  However, the raw
+device does not behave exactly like the block device.  In particular,
+access to the raw device bypasses the kernel's block buffer cache
+entirely: all I/O is done directly to and from the address space of the
+process performing the I/O.  If the underlying block device driver can
+support DMA, then no data copying at all is required to complete the
+I/O.
+.PP
+Because raw I/O involves direct hardware access to a process's memory, a
+few extra restrictions must be observed.  All I/Os must be correctly
+aligned in memory and on disk: they must start at a sector offset on
+disk, they must be an exact number of sectors long, and the data buffer
+in virtual memory must also be aligned to a multiple of the sector
+size.  The sector size is 512 bytes for most devices.
+.SH OPTIONS
+.TP
+.B -q
+Set query mode.
+.B raw
+will query an existing binding instead of setting a new one.
+.TP
+.B -a
+With
+.B -q
+, specify that all bound raw devices should be queried.
+.TP
+.B -h
+Provide a usage summary.
+.SH BUGS
+The Linux
+.BR dd (1)
+command should be used without the \fBbs=\fR option, or the blocksize
+needs to be a multiple of the sector size of the device (512 bytes usually),
+otherwise it will fail with "Invalid Argument" messages (EINVAL).
+
+.PP
+Raw I/O devices do not maintain cache coherency with the Linux block
+device buffer cache.  If you use raw I/O to overwrite data already in
+the buffer cache, the buffer cache will no longer correspond to the
+contents of the actual storage device underneath.  This is deliberate,
+but is regarded either a bug or a feature depending on who you ask!
+.SH AUTHOR
+Stephen Tweedie (sct@redhat.com)
+.SH AVAILABILITY
+The raw command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

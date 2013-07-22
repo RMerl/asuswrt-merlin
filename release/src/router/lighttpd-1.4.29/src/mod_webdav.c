@@ -3432,9 +3432,11 @@ propmatch_cleanup:
 		#ifdef APP_IPKG
 		char* aicloud_version_file = "/opt/lib/ipkg/info/aicloud.control";
 		#else
-		char* aicloud_version_file = "/usr/css/control";
+		char* aicloud_version_file = "/usr/lighttpd/control";
 		#endif
-		char aicloud_version[10]="\0";
+		char aicloud_version[20]="\0";
+		char *swpjverno = nvram_get_swpjverno();
+		char *extendno = nvram_get_extendno();
 #else
 		char router_mac[20]="\0";
 		get_mac_address("eth0", &router_mac); 
@@ -3459,11 +3461,12 @@ propmatch_cleanup:
 
 		//- Get aicloud version
 		char* aicloud_version_file = "/usr/css/control";
-		char aicloud_version[10]="\0";
+		char aicloud_version[20]="\0";
+		char *swpjverno = "";
+		char *extendno = "";
 #endif
 
 		//- Parser version file
-
 		FILE* fp2;
 		char line[128];
 		if((fp2 = fopen(aicloud_version_file, "r")) != NULL){
@@ -3475,7 +3478,17 @@ propmatch_cleanup:
 			}
 			fclose(fp2);
 		}
-
+		
+#ifndef APP_IPKG
+		if( swpjverno!=NULL && strncmp(swpjverno,"", 1)!=0){
+			strcpy(aicloud_version, swpjverno);
+			if(extendno!=NULL && strncmp(extendno,"", 1)!=0)
+			{
+				strcat(aicloud_version, "_");
+				strcat(aicloud_version, extendno);
+			}
+		}
+#endif
 		con->http_status = 200;
 		
 		response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/xml; charset=\"utf-8\""));
@@ -3558,7 +3571,7 @@ propmatch_cleanup:
 					
 				char querycmd[100] = "\0";		
 
-				sprintf(querycmd, "df|grep -i %s%s", disk_path, de->d_name);
+				sprintf(querycmd, "df|grep -i '%s%s'", disk_path, de->d_name);
 								
 				buffer_append_string_len(b,CONST_STR_LEN("<DiskName>"));
 				buffer_append_string(b,de->d_name);
@@ -3624,6 +3637,10 @@ propmatch_cleanup:
 		free(wan_ip);
 		free(http_enable);
 		free(misc_https_port);
+		if(swpjverno!=NULL)
+			{free(swpjverno);}
+			if(extendno!=NULL)
+			{free(extendno);}
 #endif
 #endif
 		return HANDLER_FINISHED;

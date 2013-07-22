@@ -42,6 +42,7 @@ extern const char *rt_swpjverno;
 #define csprintf(args...)	do { } while(0)
 #endif
 
+#define ASUS_STOP_COMMIT	"asus_stop_commit"
 
 #ifdef RTCONFIG_IPV6
 enum {
@@ -124,9 +125,6 @@ extern void set_action(int a);
 extern int check_action(void);
 extern int wait_action_idle(int n);
 extern int wl_client(int unit, int subunit);
-#ifdef RTCONFIG_IPV6
-extern const char *get_wan6face(void);
-#endif
 extern const char *getifaddr(char *ifname, int family, int linklocal);
 extern long uptime(void);
 extern char *wl_nvname(const char *nv, int unit, int subunit);
@@ -144,8 +142,16 @@ extern int nvram_is_empty(const char *key);
 extern void nvram_commit_x(void);
 extern int connect_timeout(int fd, const struct sockaddr *addr, socklen_t len, int timeout);
 extern int mtd_getinfo(const char *mtdname, int *part, int *size);
+#if defined(RTCONFIG_UBIFS)
+extern int ubi_getinfo(const char *ubiname, int *dev, int *part, int *size);
+#endif
 extern int foreach_wif(int include_vifs, void *param,
 	int (*func)(int idx, int unit, int subunit, void *param));
+
+//shutils.c
+extern void dbgprintf (const char * format, ...); //Ren
+extern void cprintf(const char *format, ...);
+extern int _eval(char *const argv[], const char *path, int timeout, int *ppid);
 
 // usb.c
 #ifdef RTCONFIG_USB
@@ -179,6 +185,8 @@ enum {
 	MODEL_DSLN55U,
 	MODEL_EAN66,
 	MODEL_RTN13U,
+	MODEL_RTN14U,
+	MODEL_RTAC52U,
 	MODEL_RTN36U3,
 	MODEL_RTN56U,
 	MODEL_RTN65U,
@@ -191,7 +199,7 @@ enum {
 	MODEL_APN12,
 	MODEL_APN12HP,
 	MODEL_RTN16,
-	MODEL_RTN16UHP,
+	MODEL_RTN18UHP,
 	MODEL_RTN15U,
 	MODEL_RTN53,
 	MODEL_RTN66U,
@@ -203,6 +211,15 @@ enum {
 	MODEL_RTN10P,
 	MODEL_RTN10D1,
 	MODEL_GENERIC
+};
+
+enum {
+	SWITCH_UNKNOWN,
+	SWITCH_BCM5325,
+	SWITCH_BCM53115,
+	SWITCH_BCM53125,
+	SWITCH_BCM5301x,
+	SWITCH_GENERIC
 };
 
 #define RTCONFIG_NVRAM_VER "1"
@@ -246,6 +263,7 @@ extern int check_hw_type(void);
 extern int get_model(void);
 extern char *get_modelid(int model);
 extern char *get_productid(void);
+extern int get_switch(void);
 extern int supports(unsigned long attr);
 
 // pids.c
@@ -312,7 +330,7 @@ extern int f_wait_notexists(const char *name, int max);
 #define LED_LAN3        12
 #define LED_LAN4        13
 #endif
-#define LED_TURBO			0x0A
+#define LED_TURBO			14
 #define LED_SWITCH			20
 
 #define	LED_OFF				0
@@ -323,6 +341,7 @@ extern int f_wait_notexists(const char *name, int max);
 #define	HAVE_FAN_ON			5
 
 extern int init_gpio(void);
+extern int set_pwr_usb(int boolOn);
 extern int button_pressed(int which);
 extern int led_control(int which, int mode);
 
@@ -330,12 +349,15 @@ extern int led_control(int which, int mode);
 extern uint32_t gpio_dir(uint32_t gpio, int dir);
 extern uint32_t set_gpio(uint32_t gpio, uint32_t value);
 extern uint32_t get_gpio(uint32_t gpio);
+extern int get_switch_model(void);
 extern uint32_t get_phy_speed(uint32_t portmask);
+#if defined(RTN14U) || defined(RTAC52U)
+extern int get_wan_bytecount(int dir, unsigned long *count);
+extern int mt7620_wan_bytecount(int dir, unsigned long *count);
+#endif
 
 /* sysdeps/ralink/ *.c */
 #ifdef RTCONFIG_RALINK
-extern int FRead(char *dst, int src, int count);
-extern int FWrite(const char *src, int offset, int count);
 extern int rtkswitch_ioctl(int val, int val2);
 extern unsigned int rtkswitch_wanPort_phyStatus(void);
 extern unsigned int rtkswitch_lanPorts_phyStatus(void);
@@ -352,6 +374,8 @@ extern int ralink_gpio_write_bit(int idx, int value);
 extern char *wif_to_vif(char *wif);
 extern int ralink_gpio_init(unsigned int idx, int dir);
 extern int config_rtkswitch(int argc, char *argv[]);
+extern int get_channel_list_via_driver(int unit, char *buffer, int len);
+extern int get_channel_list_via_country(int unit, const char *country_code, char *buffer, int len);
 #endif
 
 // base64.c
@@ -380,6 +404,7 @@ extern int check_if_dir_exist(const char *file);
 extern int check_if_dir_writable(const char *dir);
 
 /* misc.c */
+extern char *get_productid(void);
 extern char *get_logfile_path(void);
 extern char *get_syslog_fname(unsigned int idx);
 #if defined(RTCONFIG_SSH) || defined(RTCONFIG_HTTPS)
@@ -397,13 +422,26 @@ extern int is_intf_up(const char* ifname);
 extern uint32_t crc_calc(uint32_t crc, const char *buf, int len);
 #ifdef RTCONFIG_IPV6
 extern const char *get_wan6face(void);
+extern int get_ipv6_service(void);
+extern const char *ipv6_router_address(struct in6_addr *in6addr);
+extern const char *ipv6_address(const char *ipaddr6);
+extern const char *ipv6_prefix(struct in6_addr *in6addr);
+extern void reset_ipv6_linklocal_addr(const char *ifname, int flush);
+extern int with_ipv6_linklocal_addr(const char *ifname);
+extern void ipv6_set_flags(char *flagstr, int flags);
+extern char* INET6_rresolve(struct sockaddr_in6 *sin6, int numeric);
+extern const char *ipv6_gateway_address();
 #endif
 
+/* mt7620.c */
+extern void ATE_mt7620_esw_port_status(void);
+
 /* notify_rc.c */
-extern void notify_rc(const char *event_name);
-extern void notify_rc_after_wait(const char *event_name);
-extern void notify_rc_after_period_wait(const char *event_name, int wait);
-extern void notify_rc_and_wait(const char *event_name);
+extern int notify_rc(const char *event_name);
+extern int notify_rc_after_wait(const char *event_name);
+extern int notify_rc_after_period_wait(const char *event_name, int wait);
+extern int notify_rc_and_wait(const char *event_name);
+extern int notify_rc_and_wait_2min(const char *event_name);
 
 /* rtstate.c */
 extern char *get_wanx_ifname(int unit);
@@ -411,6 +449,13 @@ extern int get_lanports_status(void);
 extern int set_wan_primary_ifunit(const int unit);
 #ifdef RTCONFIG_IPV6
 extern char *get_wan6_ifname(int unit);
+#endif
+#ifdef RTCONFIG_USB
+extern char *get_usb_xhci_port(int port);
+extern char *get_usb_ehci_port(int port);
+extern char *get_usb_ohci_port(int port);
+extern int get_usb_port_number(const char *usb_port);
+extern int get_usb_port_host(const char *usb_port);
 #endif
 
 /* semaphore.c */

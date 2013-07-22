@@ -341,11 +341,7 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 	char pid[sizeof("/var/run/udhcpcXXXXXXXXXX.pid")];
 	char clientid[sizeof("61:") + (32+32+1)*2];
 	char *value;
-#if defined (SMP)
-	char *dhcp_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "udhcpc",
-#else
 	char *dhcp_argv[] = { "udhcpc",
-#endif
 		"-i", wan_ifname,
 		"-p", (snprintf(pid, sizeof(pid), "/var/run/udhcpc%d.pid", unit), pid),
 		"-s", "/tmp/udhcpc",
@@ -366,11 +362,7 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 #endif
 		NULL, NULL,	/* -x 61:wan_clientid (non-DSL) */
 		NULL };
-#if defined (SMP)
-	int index = 10;		/* first NULL */
-#else
 	int index = 7;		/* first NULL */
-#endif
 	int dr_enable;
 
 	/* Use unit */

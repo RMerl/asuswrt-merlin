@@ -13,7 +13,7 @@ _set_fsck_code(){
 		mkdir $ret_dir
 	fi
 
-	rm -f $ret_dir/$pool_name.[0-2]
+	rm -f $ret_dir/$pool_name.[0-3]
 	touch "$ret_dir/$pool_name.$2"
 }
 
@@ -31,6 +31,9 @@ _get_fsck_logfile(){
 
 if [ -z "$1" ] || [ -z "$2" ]; then
 	echo "Usage: app_fsck.sh [filesystem type] [device's path]"
+	exit 0
+elif [ "$1" == "vfat" ] || [ "$1" == "msdos" ]; then
+	_set_fsck_code $2 3
 	exit 0
 fi
 

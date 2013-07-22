@@ -1,3 +1,5 @@
+include ../.config
+
 VERSION = 1
 PATCHLEVEL = 20
 SUBLEVEL = 2
@@ -65,6 +67,10 @@ ifdef M
   endif
 endif
 
+
+ifeq ($(RTCONFIG_BCMARM), y)
+CFLAGS += -DBCMARM
+endif
 
 # kbuild supports saving output files in a separate directory.
 # To locate output files in a separate directory two syntaxes are supported.

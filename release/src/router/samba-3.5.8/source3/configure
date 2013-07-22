@@ -58071,6 +58071,11 @@ $as_echo "$ac_try_echo") >&5
   jm_cv_include="iconv.h"
          jm_cv_func_iconv=yes
          jm_cv_lib_iconv=""
+	echo "============= VANIC ============="
+         jm_cv_include=""
+         jm_cv_func_iconv=no
+         jm_cv_lib_iconv=""
+	echo "============= VANIC ============="
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
@@ -83592,7 +83597,11 @@ $as_echo "$ac_cv_lib_pthread_pthread_attr_init" >&6; }
 if test "x$ac_cv_lib_pthread_pthread_attr_init" = x""yes; then
 
 	     PTHREAD_CFLAGS="-D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS"
-	     PTHREAD_LDFLAGS="-lpthread"
+	     if test "${HOST}" = "arm"; then
+		PTHREAD_LDFLAGS="$LD_LIBRARY_PATH/../arm-brcm-linux-uclibcgnueabi/sysroot/usr/lib/libpthread.a"
+	     else
+		PTHREAD_LDFLAGS="-lpthread"
+	     fi
 fi
 
 fi

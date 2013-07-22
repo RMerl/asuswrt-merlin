@@ -41,7 +41,8 @@ else
 function initial(){
 	show_menu();
 	load_body();
-	remove_5G_NOnly(document.form.wl_nmode_x);
+
+	regen_5G_mode(document.form.wl_nmode_x,'<% nvram_get("wl_unit"); %>')
 	genBWTable('<% nvram_get("wl_unit"); %>');	
 
 	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
@@ -88,7 +89,7 @@ function initial(){
 	else
 		document.form.wl_gmode_check.checked = false;
 
-	if(band5g_support == -1)	
+	if(!band5g_support)	
 		$("wl_unit_field").style.display = "none";
 
 	if(sw_mode == 2 || sw_mode == 4)
@@ -336,18 +337,16 @@ function check_NOnly_to_GN(){
 //  Viz add 2012.11.05 restriction for 'N Only' mode  ) end		
 }
 
-// Viz add to remove 5GHz:N-Only option for RT-AC56U 2013.01 & RT-AC68U 2013.03
-function remove_5G_NOnly(obj){	//MODELDEP
-		if((based_modelid.search("RT-AC56U") >= 0 || based_modelid.search("RT-AC68U") >= 0)
-				&& '<% nvram_get("wl_unit"); %>' == '1'){
-				free_options(obj);
-				obj.options[0] = new Option("<#Auto#>", 0);
-				obj.options[1] = new Option("Legacy", 2);
-		}	
-
-		obj.value = '<% nvram_get("wl_nmode_x"); %>';
+function regen_5G_mode(obj,flag){
+	if(flag == 1){
+		free_options(obj);
+		obj.options[0] = new Option("<#Auto#>", 0);
+		obj.options[1] = new Option("N + AC", 1);
+		obj.options[2] = new Option("Legacy", 2);
+	}
+	
+	obj.value = '<% nvram_get("wl_nmode_x"); %>';
 }
-
 </script>
 </head>
 

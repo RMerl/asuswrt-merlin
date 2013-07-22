@@ -369,9 +369,6 @@ ralink_get_range_info(iwrange *	range, char* buffer, int length)
   return (0);
 }
 
-#define RTPRIV_IOCTL_SHOW		SIOCIWFIRSTPRIV + 0x11
-#define RTPRIV_IOCTL_GET_MAC_TABLE	SIOCIWFIRSTPRIV + 0x0F
-
 
 char* GetBW(int BW)
 {
@@ -385,6 +382,11 @@ char* GetBW(int BW)
 
 		case BW_40:
 			return "40M";
+
+#if defined(RTAC52U)
+		case BW_80:
+			return "80M";
+#endif
 
 		default:
 			return "N/A";
@@ -405,6 +407,12 @@ char* GetPhyMode(int Mode)
 
 		case MODE_HTGREENFIELD:
 			return "GREEN";
+
+#if defined(RTAC52U)
+		case MODE_VHT:
+			return "VHT";
+#endif
+
 		default:
 			return "N/A";
 	}
@@ -420,57 +428,67 @@ int MCSMappingRateTable[] =
 	14, 29,   43,  57,  87, 115, 130, 144, 29, 59,   87, 115, 173, 230, 260, 288, // 20MHz, 400ns GI, MCS: 0 ~ 15
 	43, 87,  130, 173, 260, 317, 390, 433,										  // 20MHz, 400ns GI, MCS: 16 ~ 23
 	30, 60,   90, 120, 180, 240, 270, 300, 60, 120, 180, 240, 360, 480, 540, 600, // 40MHz, 400ns GI, MCS: 0 ~ 15
-	90, 180, 270, 360, 540, 720, 810, 900};
+	90, 180, 270, 360, 540, 720, 810, 900,
+	13, 26,   39,  52,  78, 104, 117, 130, 156, /* 11ac: 20Mhz, 800ns GI, MCS: 0~8 */
+	27, 54,   81, 108, 162, 216, 243, 270, 324, 360, /*11ac: 40Mhz, 800ns GI, MCS: 0~9 */
+	59, 117, 176, 234, 351, 468, 527, 585, 702, 780, /*11ac: 80Mhz, 800ns GI, MCS: 0~9 */
+	14, 29,   43,  57,  87, 115, 130, 144, 173, /* 11ac: 20Mhz, 400ns GI, MCS: 0~8 */
+	30, 60,   90, 120, 180, 240, 270, 300, 360, 400, /*11ac: 40Mhz, 400ns GI, MCS: 0~9 */
+	65, 130, 195, 260, 390, 520, 585, 650, 780, 867 /*11ac: 80Mhz, 400ns GI, MCS: 0~9 */
+	};
 
-int
-getRate(MACHTTRANSMIT_SETTING HTSetting)
-{
-	int rate_count = sizeof(MCSMappingRateTable)/sizeof(int);
-	int rate_index = 0;  
 
-    if (HTSetting.field.MODE >= MODE_HTMIX)
-    {
-    	rate_index = 12 + ((unsigned char)HTSetting.field.BW *24) + ((unsigned char)HTSetting.field.ShortGI *48) + ((unsigned char)HTSetting.field.MCS);
-    }
-    else 
-    if (HTSetting.field.MODE == MODE_OFDM)
-    	rate_index = (unsigned char)(HTSetting.field.MCS) + 4;
-    else if (HTSetting.field.MODE == MODE_CCK)   
-    	rate_index = (unsigned char)(HTSetting.field.MCS);
-
-    if (rate_index < 0)
-	rate_index = 0;
-    
-    if (rate_index > rate_count)
-	rate_index = rate_count;
-
-	return (MCSMappingRateTable[rate_index] * 5)/10;
+#define FN_GETRATE(_fn_, _st_)						\
+_fn_(_st_ HTSetting)							\
+{									\
+	int rate_count = sizeof(MCSMappingRateTable)/sizeof(int);	\
+	int rate_index = 0;						\
+									\
+	if (HTSetting.field.MODE >= MODE_VHT)				\
+	{								\
+		if (HTSetting.field.BW == BW_20) {			\
+			rate_index = 108 +				\
+			((unsigned char)HTSetting.field.ShortGI * 29) +	\
+			((unsigned char)HTSetting.field.MCS);		\
+		}							\
+		else if (HTSetting.field.BW == BW_40) {			\
+			rate_index = 117 +				\
+			((unsigned char)HTSetting.field.ShortGI * 29) +	\
+			((unsigned char)HTSetting.field.MCS);		\
+		}							\
+		else if (HTSetting.field.BW == BW_80) {			\
+			rate_index = 127 +				\
+			((unsigned char)HTSetting.field.ShortGI * 29) +	\
+			((unsigned char)HTSetting.field.MCS);		\
+		}							\
+	}								\
+	else								\
+	if (HTSetting.field.MODE >= MODE_HTMIX)				\
+	{								\
+		rate_index = 12 + ((unsigned char)HTSetting.field.BW *24) + ((unsigned char)HTSetting.field.ShortGI *48) + ((unsigned char)HTSetting.field.MCS);	\
+	}								\
+	else								\
+	if (HTSetting.field.MODE == MODE_OFDM)				\
+		rate_index = (unsigned char)(HTSetting.field.MCS) + 4;	\
+	else if (HTSetting.field.MODE == MODE_CCK)			\
+		rate_index = (unsigned char)(HTSetting.field.MCS);	\
+									\
+	if (rate_index < 0)						\
+		rate_index = 0;						\
+									\
+	if (rate_index >= rate_count)					\
+		rate_index = rate_count-1;				\
+									\
+	return (MCSMappingRateTable[rate_index] * 5)/10;		\
 }
 
-int
-getRate_2g(MACHTTRANSMIT_SETTING_2G HTSetting)
-{
-	int rate_count = sizeof(MCSMappingRateTable)/sizeof(int);
-	int rate_index = 0;
+int FN_GETRATE(getRate,      MACHTTRANSMIT_SETTING)		//getRate(MACHTTRANSMIT_SETTING)
+int FN_GETRATE(getRate_2g,   MACHTTRANSMIT_SETTING_2G)		//getRate_2g(MACHTTRANSMIT_SETTING_2G)
+#if defined(RTAC52U)
+int FN_GETRATE(getRate_11ac, MACHTTRANSMIT_SETTING_11AC)	//getRate_11ac(MACHTTRANSMIT_SETTING_11AC)
+#endif
 
-    if (HTSetting.field.MODE >= MODE_HTMIX)
-    {
-    	rate_index = 12 + ((unsigned char)HTSetting.field.BW *24) + ((unsigned char)HTSetting.field.ShortGI *48) + ((unsigned char)HTSetting.field.MCS);
-    }
-    else 
-    if (HTSetting.field.MODE == MODE_OFDM)
-    	rate_index = (unsigned char)(HTSetting.field.MCS) + 4;
-    else if (HTSetting.field.MODE == MODE_CCK)   
-    	rate_index = (unsigned char)(HTSetting.field.MCS);
 
-    if (rate_index < 0)
-	rate_index = 0;
-    
-    if (rate_index >= rate_count)
-	rate_index = rate_count-1;
-
-	return (MCSMappingRateTable[rate_index] * 5)/10;
-}
 
 int
 ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
@@ -509,6 +527,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	unsigned long phy_mode;
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_", *ifname;
 	int wl_mode_x;
+	int r;
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 	ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
@@ -626,6 +645,27 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	else
 		ret+=websWrite(wp, "OP Mode		: AP\n");
 
+#ifdef RTAC52U
+	if (get_model() == MODEL_RTAC52U && unit == 1)
+	{
+		char *p = tmp;
+		if(phy_mode & WMODE_A)
+			p += sprintf(p, "/a");
+		if(phy_mode & WMODE_B)
+			p += sprintf(p, "/b");
+		if(phy_mode & WMODE_G)
+			p += sprintf(p, "/g");
+		if(phy_mode & WMODE_GN)
+			p += sprintf(p, "/n");	//N in 2G
+		if(phy_mode & WMODE_AN)
+			p += sprintf(p, "/n");	//N in 5G
+		if(phy_mode & WMODE_AC)
+			p += sprintf(p, "/ac");
+		if(p != tmp)
+			ret+=websWrite(wp, "Phy Mode	: 11%s\n", tmp+1); // skip first '/'
+	}
+	else
+#endif
 	if (phy_mode==PHY_11BG_MIXED)
 		ret+=websWrite(wp, "Phy Mode	: 11b/g\n");
 	else if (phy_mode==PHY_11B)
@@ -657,8 +697,11 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	wrq3.u.data.length = sizeof(data);
 	wrq3.u.data.flags = 0;
 
-	if (wl_ioctl(ifname, RTPRIV_IOCTL_GET_MAC_TABLE, &wrq3) < 0)
+	if ((r = wl_ioctl(ifname, RTPRIV_IOCTL_GET_MAC_TABLE, &wrq3)) < 0) {
+		_dprintf("%s: Take MAC table from i/f %s fail! ret %d, errno %d (%s)\n",
+			__func__, r, errno, strerror(errno));
 		return ret;
+	}
 
 	RT_802_11_MAC_TABLE* mp=(RT_802_11_MAC_TABLE*)wrq3.u.data.pointer;
 	RT_802_11_MAC_TABLE_2G* mp2=(RT_802_11_MAC_TABLE_2G*)wrq3.u.data.pointer;
@@ -701,30 +744,26 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		);													\
 	}
 
-	if (get_model() == MODEL_RTN65U)
-	{
-		for (i=0;i<mp->Num;i++)
-		{
-			if(strcmp(ifname, WIF_2G) == 0)
-			{
-				SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3352_iNIC, getRate_2g);
-			}
-			else
-			{
-				SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3883, getRate_2g);
-			}
+	if (!strcmp(ifname, WIF_2G)) {
+		for (i=0;i<mp->Num;i++) {
+#if defined(RTN65U)
+			SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3352_iNIC, getRate_2g);
+#elif defined(RTAC52U)
+			SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_2G, getRate_2g);
+#else
+			SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_2G, getRate_2g);
+#endif
 		}
 	}
-	else
-	{
-		if(strcmp(ifname, WIF_2G) == 0)
-		{
-			for (i=0;i<mp2->Num;i++)
-				SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_2G, getRate_2g);
-		}
-		else
-		{	for (i=0;i<mp->Num;i++)
-				SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY, getRate);
+	else {
+		for (i=0;i<mp->Num;i++) {
+#if defined(RTN65U)
+			SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3883, getRate_2g);
+#elif defined(RTAC52U)
+			SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_11AC, getRate_11ac);
+#else
+			SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3883, getRate_2g);
+#endif
 		}
 	}
 
@@ -1041,7 +1080,6 @@ ej_wps_info_2g(int eid, webs_t wp, int argc, char_t **argv)
 }
 
 // Wireless Client List		 /* Start --Alicia, 08.09.23 */
-#define RTPRIV_IOCTL_GET_MAC_TABLE	SIOCIWFIRSTPRIV + 0x0F
 
 int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -1281,10 +1319,11 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			retval += websWrite(wp, "[");
 			for (i = 0; i < apCount; i++)
 			{
+				dbg(
 #if defined(RTN14U)
-				dbg("%-4s%-33s%-18s%-9s%-16s%-9s%-8s%-4s%-5s\n",
+				"%-4s%-33s%-18s%-9s%-16s%-9s%-8s%-4s%-5s\n",
 #else
-				dbg("%-4s%-33s%-18s%-9s%-16s%-9s%-8s\n",
+				"%-4s%-33s%-18s%-9s%-16s%-9s%-8s\n",
 #endif
 					ssap->SiteSurvey[i].channel,
 					(char*)ssap->SiteSurvey[i].ssid,

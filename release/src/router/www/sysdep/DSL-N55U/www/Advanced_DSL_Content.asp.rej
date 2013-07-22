@@ -1,0 +1,44 @@
+--- release/src/router/www/sysdep/DSL-N55U-B/www/Advanced_DSL_Content.asp	2013-06-26 03:57:21.000000000 -0400
++++ release/src/router/www/sysdep/DSL-N55U-B/www/Advanced_DSL_Content.asp	2013-07-12 05:24:38.000000000 -0400
+@@ -1072,10 +1072,10 @@
+ 												<th style="width: 7%;"><center>Index</center></th>
+ 												<th style="width: 9%;"><center>VPI</center></th>
+ 												<th style="width: 9%;"><center>VCI</center></th>
+-												<th style="width: 12%;"><center>Protocol</center></th>
+-												<th style="width: 13%;"><center>Encapsulation</center></th>
+-												<th style="width: 10%;"><center>Internet</center></th>
+-												<th style="width: 10%;"><center>IPTV</center></th>
++												<th style="width: 12%;"><center><#IPConnection_VServerProto_itemname#></center></th>
++												<th style="width: 13%;"><center><#prtcl_JS_encap#></center></th>
++												<th style="width: 10%;"><center><#Internet#></center></th>
++												<th style="width: 10%;"><center><#menu_dsl_iptv#></center></th>
+ 												<th style="width: 15%;"><center>Edit PVC</center></th>
+ 												<th style="width: 15%;"><center>Add / Delete</center></th>
+ 											</tr>
+@@ -1084,7 +1084,7 @@
+ 									<table id="dslSettings" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+ 										<thead>
+ 										<tr>
+-											<td colspan="2">PVC Settings</td>
++											<td colspan="2"><#pvccfg_PVC_Setting#></td>
+ 										</tr>
+ 										</thead>
+ 										<tr>
+@@ -1116,7 +1116,7 @@
+ 											</td>
+ 										</tr>
+ 										<tr>
+-											<th>Encapsulation Mode</th>
++											<th><#prtcl_JS_encmode#></th>
+ 											<td align="left">
+ 												<select id="" class="input_option" name="dsl_encap" onchange="">
+ 													<option value="0" <% nvram_match("dsl_encap", "0", "selected"); %>>LLC</option>
+@@ -1125,7 +1125,7 @@
+ 											</td>
+ 										</tr>
+ 										<tr>
+-											<th>Service Category</th>
++											<th><#pvccfg_service#></th>
+ 											<td align="left">
+ 												<select id="" class="input_option" name="dsl_svc_cat" onchange="change_svc_cat(this.value);">
+ 													<option value="0" <% nvram_match("dsl_svc_cat", "0", "selected"); %>>UBR without PCR</option>

@@ -26,6 +26,7 @@
 #include <sys/vfs.h>
 #include <limits.h>
 #include <dirent.h>
+#include <bcmnvram.h>
 
 // From BusyBox and get volume's label.
 #include <autoconf.h>
@@ -33,15 +34,6 @@
 #include <shared.h>
 
 #include "disk_initial.h"
-
-#define disk_dbg(fmt, args...) do{ \
-		FILE *fp = fopen("/dev/console", "a+"); \
-		if(fp){ \
-			fprintf(fp, "[test_disk_dbg: %s] ", __FUNCTION__); \
-			fprintf(fp, fmt, ## args); \
-			fclose(fp); \
-		} \
-	}while(0)
 
 #define SYS_BLOCK "/sys/block"
 
@@ -771,6 +763,27 @@ extern int is_partition_name(const char *device_name, u32 *partition_order){
 int find_partition_label(const char *dev_name, char *label){
 	struct volume_id id;
 	char dev_path[128];
+	char usb_port[8];
+	int port_num;
+	char nvram_label[32], nvram_value[512];
+
+	if(label) *label = 0;
+
+	memset(usb_port, 0, 8);
+	if(get_usb_port_by_device(dev_name, usb_port, 8) == NULL)
+		return 0;
+	port_num = get_usb_port_number(usb_port);
+
+	memset(nvram_label, 0, 32);
+	sprintf(nvram_label, "usb_path%d_label", port_num);
+
+	memset(nvram_value, 0, 512);
+	strncpy(nvram_value, nvram_safe_get(nvram_label), 512);
+	if(strlen(nvram_value) > 0){
+		strcpy(label, nvram_value);
+
+		return (label && *label != 0);
+	}
 
 	memset(dev_path, 0, 128);
 	sprintf(dev_path, "/dev/%s", dev_name);
@@ -778,8 +791,6 @@ int find_partition_label(const char *dev_name, char *label){
 	memset(&id, 0x00, sizeof(id));
 	if((id.fd = open(dev_path, O_RDONLY)) < 0)
 		return 0;
-
-	if(label) *label = 0;
 
 	volume_id_get_buffer(&id, 0, SB_BUFFER_SIZE);
 
@@ -795,6 +806,9 @@ ret:
 	volume_id_free_buffer(&id);
 	if(label && (*id.label != 0))
 		strcpy(label, id.label);
+	else
+		strcpy(label, " ");
+	nvram_set(nvram_label, label);
 	close(id.fd);
 	return (label && *label != 0);
 }
@@ -1058,66 +1072,6 @@ extern int get_mount_path(const char *const pool, char *mount_path, int mount_le
 	return read_mount_data(pool, mount_path, mount_len, type, 64, right, PATH_MAX);
 }
 
-//#ifdef RTCONFIG_BCMARM
-#if 0
-extern int get_mount_size(const char *mount_point, u64 *total_kilobytes, u64 *used_kilobytes){
-	char *mount_info, *partition_info;
-	char *follow_info, line[PATH_MAX];
-	char target[PATH_MAX], *ptr;
-	char device[8];
-	u64 total_size;
-disk_dbg("ARM: get_mount_size!\n");
-
-	if(mount_point == NULL || total_kilobytes == NULL || used_kilobytes == NULL)
-		return 0;
-
-	*total_kilobytes = 0;
-	*used_kilobytes = 0;
-
-	mount_info = read_whole_file(MOUNT_FILE);
-	if(mount_info == NULL)
-		return 0;
-	follow_info = mount_info;
-
-	memset(target, 0, PATH_MAX);
-	sprintf(target, " %s ", mount_point);
-	memset(device, 0, 8);
-	while(get_line_from_buffer(follow_info, line, PATH_MAX) != NULL){
-		follow_info += strlen(line);
-
-		if((ptr = strstr(line, target)) != NULL){
-			*ptr = '\0';
-			strncpy(device, line+5, 8);
-			break;
-		}
-	}
-	free(mount_info);
-
-	if(strlen(device) <= 0)
-		return 0;
-
-	partition_info = read_whole_file(PARTITION_FILE);
-	if(partition_info == NULL)
-		return 0;
-	follow_info = partition_info;
-
-	memset(target, 0, PATH_MAX);
-	while(get_line_from_buffer(follow_info, line, PATH_MAX) != NULL){
-		follow_info += strlen(line);
-
-		if(sscanf(line, "%*u %*u %llu %[^\n ]", &total_size, target) == 2){
-			if(strcmp(device, target))
-				continue;
-
-			*total_kilobytes = total_size;
-			break;
-		}
-	}
-	free(partition_info);
-
-	return 1;
-}
-#else
 extern int get_mount_size(const char *mount_point, u64 *total_kilobytes, u64 *used_kilobytes){
 	u64 total_size, free_size, used_size;
 	struct statfs fsbuf;
@@ -1140,7 +1094,6 @@ extern int get_mount_size(const char *mount_point, u64 *total_kilobytes, u64 *us
 
 	return 1;
 }
-#endif
 
 extern char *get_disk_name(const char *string, char *buf, const int buf_size){
 	int len;

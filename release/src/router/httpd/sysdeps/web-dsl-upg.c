@@ -582,7 +582,7 @@ int truncate_trx(void)
 #define ADSL_FW_IP_PREFIX "194.255.255."
 
 
-void do_upgrade_adsldrv()
+void do_upgrade_adsldrv(void)
 {
 	int ret;
 	char UpdateFwBuf[256];

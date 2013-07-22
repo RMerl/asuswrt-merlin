@@ -45,7 +45,7 @@ endif
 #	LDFLAGS += -L$(TOP)/libusb/libusb/.libs -lusb
 #	LDFLAGS += -L$(TOP)/libusb-0.1.12/.libs -lusb
 	LDFLAGS += -L$(TOP)/shared -lshared
-	LDFLAGS += -L$(TOP)/nvram -lnvram
+	LDFLAGS += -L$(TOP)/nvram${BCMEX} -lnvram
 #endif
 
 ifeq ($(RTCONFIG_BCMARM),y)

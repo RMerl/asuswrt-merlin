@@ -1385,6 +1385,7 @@ et_set_multicast_list(struct net_device *dev)
 
 	et = ET_INFO(dev);
 	etc = et->etc;
+	mclist = NULL ;		/* fend off warnings */
 
 	ET_TRACE(("et%d: et_set_multicast_list\n", etc->unit));
 

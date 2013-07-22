@@ -204,7 +204,6 @@ int
 db_upgrade(sqlite3 *db)
 {
 	int db_vers;
-	int ret;
 
 	db_vers = sql_get_int_field(db, "PRAGMA user_version");
 
@@ -214,31 +213,8 @@ db_upgrade(sqlite3 *db)
 		return -2;
 	if (db_vers < 1)
 		return -1;
-	if (db_vers < 5)
-		return 5;
-	if (db_vers < 6)
-	{
-		DPRINTF(E_WARN, L_DB_SQL, "Updating DB version to v%d.\n", 6);
-		ret = sql_exec(db, "CREATE TABLE BOOKMARKS ("
-		                        "ID INTEGER PRIMARY KEY, "
-					"SEC INTEGER)");
-		if( ret != SQLITE_OK )
-			return 6;
-	}
-	if (db_vers < 7)
-	{
-		DPRINTF(E_WARN, L_DB_SQL, "Updating DB version to v%d.\n", 7);
-		ret = sql_exec(db, "ALTER TABLE DETAILS ADD rotation INTEGER");
-		if( ret != SQLITE_OK )
-			return 7;
-	}
-	if (db_vers < 8)
-	{
-		DPRINTF(E_WARN, L_DB_SQL, "Updating DB version to v%d.\n", 8);
-		ret = sql_exec(db, "UPDATE DETAILS set DLNA_PN = replace(DLNA_PN, ';DLNA.ORG_OP=01;DLNA.ORG_CI=0', '')");
-		if( ret != SQLITE_OK )
-			return 8;
-	}
+	if (db_vers < 9)
+		return 9;
 	sql_exec(db, "PRAGMA user_version = %d", DB_VERSION);
 
 	return 0;

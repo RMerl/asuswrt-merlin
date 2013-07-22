@@ -1,0 +1,52 @@
+.\" -*- nroff -*-
+.TH FALLOCATE 1 "July 2009" "util-linux" "User Commands"
+.SH NAME
+fallocate \- preallocate space to a file
+.SH SYNOPSIS
+.B fallocate
+.RB [ \-n ]
+.RB [ \-o
+.IR offset ]
+.B \-l
+.IR length
+.I filename
+.SH DESCRIPTION
+.B fallocate
+is used to preallocate blocks to a file.  For filesystems which support the
+fallocate system call, this is done quickly by allocating blocks and marking
+them as uninitialized, requiring no IO to the data blocks.  This is much faster
+than creating a file by filling it with zeros.
+.PP
+As of the Linux Kernel v2.6.31, the fallocate system call is supported by the
+btrfs, ext4, ocfs2, and xfs filesystems.
+.PP
+The exit code returned by
+.B fallocate
+is 0 on success and 1 on failure.
+.PP
+.SH OPTIONS
+The \fIlength\fR and \fIoffset\fR arguments may be followed by binary (2^N)
+suffixes KiB, MiB, GiB, TiB, PiB and EiB (the "iB" is optional, e.g. "K" has the
+same meaning as "KiB") or decimal (10^N) suffixes KB, MB, GB, PB and EB.
+.IP "\fB\-h, \-\-help\fP"
+Print help and exit.
+.IP "\fB\-n, \-\-keep-size\fP"
+Do not modify the apparent length of the file. This may effectively allocate
+blocks past EOF, which can be removed with a truncate.
+.IP "\fB\-o, \-\-offset\fP \fIoffset\fP
+Specifies the beginning offset of the allocation, in bytes.
+.IP "\fB\-l, \-\-length\fP \fIlength\fP
+Specifies the length of the allocation, in bytes.
+.SH AUTHORS
+.nf
+Eric Sandeen <sandeen@redhat.com>
+Karel Zak <kzak@redhat.com>
+.fi
+.SH SEE ALSO
+.BR fallocate (2),
+.BR posix_fallocate (3),
+.BR truncate (1)
+.SH AVAILABILITY
+The fallocate command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+

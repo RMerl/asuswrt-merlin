@@ -1,0 +1,7 @@
+RedHat and SuSE take the program clear from ncurses.
+ A 20KB program equivalent to "tput clear".
+
+Slackware uses the script.
+
+So, both versions will behave identically, and
+Slackware saves 20 KB.

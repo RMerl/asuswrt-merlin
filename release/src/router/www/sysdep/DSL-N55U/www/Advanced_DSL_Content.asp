@@ -993,28 +993,9 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 
 /* password item show or not */
 function pass_checked(obj){
-	if(document.form.show_pass_1.checked)
-		replace_pass_type(obj, "text");
-	else
-		replace_pass_type(obj, "password");
+	switchType(obj, document.form.show_pass_1.checked, true);
 }
 
-/* change password type depend on browser for fix IE issue*/
-function replace_pass_type(obj, _Type){
-	if(navigator.userAgent.indexOf("MSIE") != -1){ // fix IE issue
-		var input2 = document.createElement('<input class="input_32_table" autocapitalization="off">');  // create input element
-		with (input2){ 
-			id = obj.id; 
-			value = obj.value; 
-			type = _Type; // change input type
-			name = obj.name;
-		} 
-		obj.parentNode.replaceChild(input2,obj);
-	}
-	else{	
-		obj.type= _Type;
-	}
-}
 </script>
 </head>
 
@@ -1091,10 +1072,10 @@ function replace_pass_type(obj, _Type){
 												<th style="width: 7%;"><center>Index</center></th>
 												<th style="width: 9%;"><center>VPI</center></th>
 												<th style="width: 9%;"><center>VCI</center></th>
-												<th style="width: 12%;"><center>Protocol</center></th>
-												<th style="width: 13%;"><center>Encapsulation</center></th>
-												<th style="width: 10%;"><center>Internet</center></th>
-												<th style="width: 10%;"><center>IPTV</center></th>
+												<th style="width: 12%;"><center><#IPConnection_VServerProto_itemname#></center></th>
+												<th style="width: 13%;"><center><#prtcl_JS_encap#></center></th>
+												<th style="width: 10%;"><center><#Internet#></center></th>
+												<th style="width: 10%;"><center><#menu_dsl_iptv#></center></th>
 												<th style="width: 15%;"><center>Edit PVC</center></th>
 												<th style="width: 15%;"><center>Add / Delete</center></th>
 											</tr>
@@ -1103,7 +1084,7 @@ function replace_pass_type(obj, _Type){
 									<table id="dslSettings" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 										<thead>
 										<tr>
-											<td colspan="2">PVC Settings</td>
+											<td colspan="2"><#pvccfg_PVC_Setting#></td>
 										</tr>
 										</thead>
 										<tr>
@@ -1135,7 +1116,7 @@ function replace_pass_type(obj, _Type){
 											</td>
 										</tr>
 										<tr>
-											<th>Encapsulation Mode</th>
+											<th><#prtcl_JS_encmode#></th>
 											<td align="left">
 												<select id="" class="input_option" name="dsl_encap" onchange="">
 													<option value="0" <% nvram_match("dsl_encap", "0", "selected"); %>>LLC</option>
@@ -1144,7 +1125,7 @@ function replace_pass_type(obj, _Type){
 											</td>
 										</tr>
 										<tr>
-											<th>Service Category</th>
+											<th><#pvccfg_service#></th>
 											<td align="left">
 												<select id="" class="input_option" name="dsl_svc_cat" onchange="change_svc_cat(this.value);">
 													<option value="0" <% nvram_match("dsl_svc_cat", "0", "selected"); %>>UBR without PCR</option>

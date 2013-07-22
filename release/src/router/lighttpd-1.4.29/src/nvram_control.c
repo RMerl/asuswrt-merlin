@@ -49,6 +49,8 @@
 #define SHARE_LINK_PARAM "share_link_param"
 #define SHARE_LINK_RESULT "share_link_result"
 #define TIME_ZONE_X "time_zone_x"
+#define SWPJVERNO "swpjverno"
+#define EXTENDNO "extendno"
 
 #define DBE 0
 
@@ -65,23 +67,28 @@ char *nvram_get(char *name);
 char *get_productid(void)
 {
         char *productid = nvram_get("productid");
-#ifdef RTCONFIG_ODMPID
         char *odmpid = nvram_get("odmpid");
-        if (*odmpid)
+        if(odmpid != NULL)
+        {
+            if (*odmpid)
                 productid = odmpid;
-#endif
+        }
         return productid;
 }
 
 char *nvram_get(char *name)
 {
-#if 1
+#if 0
+
     if(strcmp(name,"webdav_aidisk")==0 ||strcmp(name,"webdav_proxy")==0||strcmp(name,"webdav_smb_pc")==0
        ||strcmp(name,"share_link")==0||strcmp(name,"webdav_acc_lock")==0
        ||strcmp(name,"webdav_last_login_info")==0||strcmp(name,"enable_webdav_lock")==0
        ||strcmp(name,"http_passwd")==0||strcmp(name,"webdav_lock_times")==0||strcmp(name,"webdav_lock_interval")==0
-       ||strcmp(name,"ddns_hostname_x")==0||strcmp(name,"ddns_enable_x")==0||strcmp(name,"ddns_server_x")==0)
+       ||strcmp(name,"ddns_hostname_x")==0||strcmp(name,"ddns_enable_x")==0||strcmp(name,"ddns_server_x")==0
+       ||strcmp(name,"share_link_param")==0||strcmp(name,"share_link_result")==0
+       ||strcmp(name,"swpjverno")==0||strcmp(name,"extendno")==0)
     {
+#endif
         char tmp_name[256]="/opt/etc/asus_script/aicloud_nvram_check.sh";
         //char tmp_name[256]="/tmp/aicloud_nvram_check.sh";
         char *cmd_name;
@@ -93,8 +100,9 @@ char *nvram_get(char *name)
 
         while(-1!=access("/tmp/aicloud_check.control",F_OK))
             usleep(50);
-    }
-#endif
+ //   }
+//#endif
+
     FILE *fp;
     if((fp=fopen("/tmp/webDAV.conf","r+"))==NULL)
     {
@@ -112,38 +120,39 @@ char *nvram_get(char *name)
             char *p=NULL;
             p=strchr(tmp,'=');
             p++;
-            value=(char *)malloc(strlen(p)+1);
-            memset(value,'\0',sizeof(value));
-            strcpy(value,p);
-            if(value[strlen(value)-1]=='\n')
-                value[strlen(value)-1]='\0';
+            if(p==NULL)
+            {
+                fclose(fp);
+                return NULL;
+            }
+            else
+            {
+                value=(char *)malloc(strlen(p)+1);
+                memset(value,'\0',sizeof(value));
+                strcpy(value,p);
+                if(value[strlen(value)-1]=='\n')
+                    value[strlen(value)-1]='\0';
+            }
+
         }
+        fclose(fp);
+        return value;
     }
-    fclose(fp);
-    return value;
 }
 char *nvram_safe_get(char *name)
 {
-#if 1
-    if(strcmp(name,"webdav_aidisk")==0 ||strcmp(name,"webdav_proxy")==0||strcmp(name,"webdav_smb_pc")==0
-       ||strcmp(name,"share_link")==0||strcmp(name,"webdav_acc_lock")==0
-       ||strcmp(name,"webdav_last_login_info")==0||strcmp(name,"enable_webdav_lock")==0
-       ||strcmp(name,"http_passwd")==0||strcmp(name,"webdav_lock_times")==0||strcmp(name,"webdav_lock_interval")==0
-       ||strcmp(name,"ddns_hostname_x")==0||strcmp(name,"ddns_enable_x")==0||strcmp(name,"ddns_server_x")==0)
-    {
-        char tmp_name[256]="/opt/etc/asus_script/aicloud_nvram_check.sh";
-        //char tmp_name[256]="/tmp/aicloud_nvram_check.sh";
-        char *cmd_name;
-        cmd_name=(char *)malloc(sizeof(char)*(strlen(tmp_name)+strlen(name)+2));
-        memset(cmd_name,0,sizeof(cmd_name));
-        sprintf(cmd_name,"%s %s",tmp_name,name);
-        system(cmd_name);
-        free(cmd_name);
+    char tmp_name[256]="/opt/etc/asus_script/aicloud_nvram_check.sh";
+    //char tmp_name[256]="/tmp/aicloud_nvram_check.sh";
+    char *cmd_name;
+    cmd_name=(char *)malloc(sizeof(char)*(strlen(tmp_name)+strlen(name)+2));
+    memset(cmd_name,0,sizeof(cmd_name));
+    sprintf(cmd_name,"%s %s",tmp_name,name);
+    system(cmd_name);
+    free(cmd_name);
 
-        while(-1!=access("/tmp/aicloud_check.control",F_OK))
-            usleep(50);
-    }
-#endif
+    while(-1!=access("/tmp/aicloud_check.control",F_OK))
+        usleep(50);
+
 
     FILE *fp;
     if((fp=fopen("/tmp/webDAV.conf","r+"))==NULL)
@@ -151,8 +160,7 @@ char *nvram_safe_get(char *name)
         return NULL;
     }
     char *value;
-    //value=(char *)malloc(256);
-    //memset(value,'\0',sizeof(value));
+
     char tmp[256]={0};
     while(!feof(fp)){
         memset(tmp,0,sizeof(tmp));
@@ -162,25 +170,43 @@ char *nvram_safe_get(char *name)
             char *p=NULL;
             p=strchr(tmp,'=');
             p++;
-            value=(char *)malloc(strlen(p)+1);
-            memset(value,'\0',sizeof(value));
-            strcpy(value,p);
-            if(value[strlen(value)-1]=='\n')
-                value[strlen(value)-1]='\0';
+            if(p==NULL)
+            {
+                fclose(fp);
+                return NULL;
+            }
+            else
+            {
+                value=(char *)malloc(strlen(p)+1);
+                memset(value,'\0',sizeof(value));
+                strcpy(value,p);
+                if(value[strlen(value)-1]=='\n')
+                    value[strlen(value)-1]='\0';
+            }
+
         }
+        fclose(fp);
+        return value;
     }
-    fclose(fp);
-    return value;
 }
 int nvram_set(const char *name, const char *value)
 {
     char *cmd;
-    cmd=(char *)malloc(sizeof(char)*(32+strlen(name)+strlen(value)));
-    memset(cmd,0,sizeof(cmd));
-    sprintf(cmd,"nvram set \"%s=%s\"",name,value);
-    system(cmd);
-    free(cmd);
 
+    if(value == NULL)
+        cmd=(char *)malloc(sizeof(char)*(64+strlen(name)));
+    else
+        cmd=(char *)malloc(sizeof(char)*(64+strlen(name)+strlen(value)));
+
+    memset(cmd,0,sizeof(cmd));
+
+    sprintf(cmd,"nvram set \"%s=%s\"",name,value);
+
+    system(cmd);
+
+    free(cmd);
+    return 0;
+# if 0
     size_t count = strlen(name) + 1;
     char tmp[100];
     char *buf = tmp;
@@ -208,16 +234,22 @@ int nvram_set(const char *name, const char *value)
         fgets(tmp_name,sizeof(tmp_name),fp);
         if(strncmp(tmp_name,name,strlen(name))==0)
         {
+#if 0
             char *cmd_name;
-            cmd_name=(char *)malloc(sizeof(char)*(64+2*strlen(name)+strlen(value)));
+            if(value == NULL)
+                cmd_name=(char *)malloc(sizeof(char)*(64+2*strlen(name)));
+            else
+                cmd_name=(char *)malloc(sizeof(char)*(64+2*strlen(name)+strlen(value)));
             memset(cmd_name,0,sizeof(cmd_name));
+#endif
+            /*
             if(strcmp(name,"webdav_last_login_info")==0)
             {
-
+            */
                 char tmp_name[256]="/opt/etc/asus_script/aicloud_nvram_check.sh";
                 char *cmd_name_1;
                 cmd_name_1=(char *)malloc(sizeof(char)*(strlen(tmp_name)+strlen(name)+2));
-                memset(cmd_name_1,0,sizeof(cmd_name));
+                memset(cmd_name_1,0,sizeof(cmd_name_1));
                 sprintf(cmd_name_1,"%s %s",tmp_name,name);
                 system(cmd_name_1);
                 //fprintf(stderr,"cmd_name_1=%s\n",cmd_name_1);
@@ -231,17 +263,17 @@ int nvram_set(const char *name, const char *value)
                 fclose(fp_1);
                 sprintf(cmd_name,"sed -i 's/^%s.*/%s=%s/g' /tmp/webDAV.conf",name,name,value_tmp);
                 system(cmd_name);
-#endif
+
             }
             else
             {
-                sprintf(cmd_name,"sed -i 's/^%s.*/%s=%s/g' /tmp/webDAV.conf",name,name,value);
+
+                sprintf(cmd_name,"sed -i 's/^%s=.*/%s=%s/g' /tmp/webDAV.conf",name,name,value);
+
                 system(cmd_name);
             }
-            //printf("tmp_name = %s\n",tmp_name);
-            //ret = fwrite(buf,sizeof(buf),1,fp);
-            //ret = fprintf(fp,"%s\n",buf);
-            free(cmd_name);
+#endif
+            //free(cmd_name);
             if (buf != tmp) free(buf);
             fclose(fp);
             return 0;
@@ -254,6 +286,7 @@ int nvram_set(const char *name, const char *value)
     if (buf != tmp) free(buf);
     fclose(fp);
     return (ret == count) ? 0 : ret;
+#endif
 }
 
 int nvram_commit(void)
@@ -261,7 +294,6 @@ int nvram_commit(void)
 #if 0
         FILE *fp;
         fp = fopen("/var/log/commit_ret", "w");
-         fprintf(fp,"commit: OK\n");
         fclose(fp);
 #endif
         char cmd[]="nvram commit";
@@ -573,4 +605,13 @@ char* nvram_get_wan_ip(){
 	wan_ip = nvram_get(strcat_r(prefix, "ipaddr", tmp));
 	return wan_ip;
 }
+
+char* nvram_get_swpjverno(){
+	return nvram_get(SWPJVERNO);
+}
+
+char* nvram_get_extendno(){
+	return nvram_get(EXTENDNO);
+}
+
 #endif

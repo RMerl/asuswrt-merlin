@@ -56,7 +56,7 @@ var varload = 0;
 
 function initial(){
 	show_menu();
-	if(live_update_support == -1)
+	if(!live_update_support)
 		$("update").style.display = "none";
 	else if('<% nvram_get("webs_state_update"); %>' != '')
 		detect_firmware();
@@ -135,13 +135,19 @@ function detect_firmware(){
 }
 
 function detect_update(){
-	//setCookie("after_check", 1, 365);
-  document.start_update.action_mode.value="apply";
-  document.start_update.action_script.value="start_webs_update";
-  //document.start_update.action_wait.value="60";
-  $('update_states').innerHTML="<#check_proceeding#>";
-  $('update_scan').style.display="";
-	document.start_update.submit();
+	
+	if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
+		//setCookie("after_check", 1, 365);
+  	document.start_update.action_mode.value="apply";
+  	document.start_update.action_script.value="start_webs_update";  	
+  	$('update_states').innerHTML="<#check_proceeding#>";
+  	$('update_scan').style.display="";
+		document.start_update.submit();				
+	}else{
+		$('update_scan').style.display="none";
+    $('update_states').innerHTML="<#connect_failed#>";
+    return false;	
+	}	
 }
 
 function getCookie(c_name)

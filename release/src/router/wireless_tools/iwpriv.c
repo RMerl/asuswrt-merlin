@@ -457,6 +457,10 @@ set_private_cmd(int		skfd,		/* Socket */
 	}
     }
 
+#if defined(RTN14U) || defined(RTAC52U)
+	if(priv[k].cmd == 0x8BED)
+	    wrq.u.data.length=8192;
+#endif  
   /* Perform the private ioctl */
   if(ioctl(skfd, priv[k].cmd, &wrq) < 0)
     {

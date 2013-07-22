@@ -1,0 +1,19 @@
+2003-10-27  
+
+	* install.sh: new parameter (--iocharset) was added. This parameter use
+		    in the mount command and writes in the fstab
+	* install.sh: User can select the type of linux if he(she) install module
+		    with the --interactive parameter
+	* ufsd module: ufsd driver can use option iocharset (user can use this
+		     option in the mount command)
+	* ufsd module: ufsd driver can work correctly with Japan cadepage
+	* ufsd module: fixed problem with sparses files
+	* ufsd module: ufsd driver can work correctly with files more then 2gb
+	* ufsd module: ufsd driver can work correctly with very small files
+
+2004-06-02  
+	* ufsd module: added support for 2.5.x kernels
+
+2004-09-14  
+	* ufsd module: fixed error with sync
+		     

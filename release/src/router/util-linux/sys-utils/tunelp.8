@@ -1,0 +1,188 @@
+.\" This file Copyright (C) 1992-1997 Michael K. Johnson <johnsonm@redhat.com>
+.\" This file Copyright (C) 1998      Andrea Arcangeli   <andrea@e-mind.com>
+.\" It may be distributed under the terms of the GNU General Public License,
+.\" version 2, or any higher version.  See section COPYING of the GNU General
+.\" Public license for conditions under which this file may be redistributed.
+.\"
+.\" Polished a bit - aeb
+.TH TUNELP 8 "May 1999" "util-linux" "System Administration"
+.SH NAME
+tunelp \- set various parameters for the lp device
+.SH SYNOPSIS
+.B tunelp
+.I device
+.RB [ \-i
+.IR IRQ ]
+.RB [ \-t
+.IR TIME ]
+.RB [ \-c
+.IR CHARS ]
+.RB [ \-w
+.IR WAIT ]
+.RB [ \-a
+.RB { on | off }]
+.RB [ \-o
+.RB { on | off }]
+.RB [ \-C
+.RB { on | off }]
+.RB [ \-r ]
+.RB [ \-s ]
+.RB [ \-q
+.RB { on | off }]
+.RB [ \-T
+.RB { on | off }]
+.SH DESCRIPTION
+\fBtunelp\fP sets several parameters for the /dev/lp\fI?\fP devices, for better
+performance (or for any performance at all, if your printer won't work
+without it...)  Without parameters, it tells whether the device is using
+interrupts, and if so, which one.  With parameters, it sets the device
+characteristics accordingly.  The parameters are as follows:
+
+.TP
+.BI \-i " IRQ"
+specifies the IRQ to use for the parallel port in question.  If this
+is set to something non-zero, \-t and \-c have no effect.  If your port
+does not use interrupts, this option will make printing stop.
+The command
+.B tunelp -i 0
+restores non-interrupt driven (polling) action, and your printer should
+work again.  If your parallel port does support interrupts,
+interrupt-driven printing should be somewhat faster and efficient, and
+will probably be desirable.
+
+NOTE: This option will have no effect with kernel 2.1.131 or later since
+the irq is handled by the parport driver. You can change
+the parport irq for example via
+.IR /proc/parport/*/irq .
+Read
+.I /usr/src/linux/Documentation/parport.txt
+for more details on parport.
+
+.TP
+.BI \-t " TIME"
+is the amount of time in jiffies that the driver waits if the
+printer doesn't take a character for the number of tries dictated by
+the \-c parameter.  10 is the default value.  If you want fastest
+possible printing, and don't care about system load, you may set this
+to 0.  If you don't care how fast your printer goes, or are printing
+text on a slow printer with a buffer, then 500 (5 seconds) should be
+fine, and will give you very low system load.  This value generally
+should be lower for printing graphics than text, by a factor of
+approximately 10, for best performance.
+
+.TP
+.BI \-c " CHARS"
+is the number of times to try to output a character to the
+printer before sleeping for \-t \fITIME\fP.  It is the number of times around
+a loop that tries to send a character to the printer.  120 appears to
+be a good value for most printers in polling mode.  1000 is the default,
+because there are some printers that become jerky otherwise, but you \fImust\fP
+set this to `1' to handle the maximal CPU efficiency if you are using
+interrupts. If you have a very fast printer, a value of 10 might make more
+sense even if in polling mode.
+If you have a \fIreally\fP old printer, you can increase this further.
+
+Setting \-t \fITIME\fP to 0 is equivalent to setting \-c \fICHARS\fP
+to infinity.
+
+.TP
+.BI \-w " WAIT"
+is the number of usec we wait while playing with the strobe signal.
+While most printers appear to be able to deal with an extremely
+short strobe, some printers demand a longer one.  Increasing this from
+the default 1 may make it possible to print with those printers.  This may also
+make it possible to use longer cables. It's also possible to decrease this
+value to 0 if your printer is fast enough or your machine is slow enough.
+
+.TP
+.BR \-a " {" on | off }
+This is whether to abort on printer error - the default
+is not to.  If you are sitting at your computer, you probably want to
+be able to see an error and fix it, and have the printer go on
+printing.  On the other hand, if you aren't, you might rather that
+your printer spooler find out that the printer isn't ready, quit
+trying, and send you mail about it.  The choice is yours.
+
+.TP
+.BR \-o " {" on | off }
+This option is much like \-a.  It makes any
+.I open()
+of this device check to see that the device is on-line and not reporting any
+out of paper or other errors.  This is the correct setting for most
+versions of lpd.
+
+.TP
+.BR \-C " {" on | off }
+This option adds extra ("careful") error checking.  When
+this option is on, the printer driver will ensure that the printer is
+on-line and not reporting any out of paper or other errors before
+sending data.  This is particularly useful for printers that normally
+appear to accept data when turned off.
+
+NOTE: This option is obsolete because it's the default in 2.1.131 kernel
+or later.
+
+.TP
+.B \-s
+This option returns the current printer status, both as a
+decimal number from 0..255, and as a list of active flags.  When
+this option is specified, \-q off, turning off the display of the
+current IRQ, is implied.
+
+.TP
+.BR \-T " {" on | off }
+This option is obsolete. It was added in Linux 2.1.131,
+and removed again in Linux 2.3.10. The below is for these
+old kernels only.
+
+This option tells the lp driver to trust or not the IRQ.
+This option makes sense only if you are using interrupts.
+If you tell the lp driver to trust the irq, then, when the lp driver will
+get an irq, it will send the next pending character to the printer
+unconditionally, even if the printer still claims to be BUSY.
+This is the only way to sleep on interrupt (and so the handle the irq
+printing efficiently) at least on Epson Stylus Color Printers.
+The lp driver automagically detects if you could get improved
+performance by setting this flag, and in such case it will warn you
+with a kernel message.
+
+NOTE: Trusting the irq is reported to corrupt the printing on some hardware,
+you must try to know if your printer will work or not...
+
+.TP
+.B \-r
+This option resets the port.  It requires a Linux kernel version of
+1.1.80 or later.
+
+.TP
+.BR \-q " {" on | off }
+This option sets printing the display of the current IRQ setting.
+
+
+.SH NOTES
+.BR \-o ,
+.BR \-C ,
+and
+.B \-s
+all require a Linux kernel version of 1.1.76 or later.
+
+.B \-C
+requires a Linux version prior to 2.1.131.
+
+.B \-T
+requires a Linux version of 2.1.131 or later.
+
+.SH BUGS
+By some unfortunate coincidence the ioctl LPSTRICT of 2.0.36 has the same
+number as the ioctl LPTRUSTIRQ introduced in 2.1.131. So, use of the \-T option
+on a 2.0.36 kernel with an tunelp compiled under 2.1.131 or later may have
+unexpected effects.
+
+.SH FILES
+.I /dev/lp?
+.br
+.I /proc/parport/*/*
+
+.SH AVAILABILITY
+The tunelp  command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

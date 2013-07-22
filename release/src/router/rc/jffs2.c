@@ -56,10 +56,7 @@ _dprintf("*** jffs2: %d, %d\n", part, size);
 	if (nvram_match("jffs2_format", "1")) {
 		nvram_set("jffs2_format", "0");
 
-		if(model==MODEL_RTAC56U || model==MODEL_RTAC68U)
-			result = mtd_erase(JFFS_NAME);
-		else
-			result = mtd_erase_old(JFFS_NAME);
+		result = mtd_erase(JFFS_NAME);
 
 		if (!result) {
 			error("formatting");
@@ -87,7 +84,7 @@ _dprintf("*** jffs2: %d, %d\n", part, size);
 		switch(model) {
 			case MODEL_RTAC56U: 
 			case MODEL_RTAC68U: 
-			case MODEL_RTN65U: 
+			case MODEL_RTN65U:
 			{
 				if (sf.f_type != 0x73717368 /* squashfs */) {
 					// already mounted
@@ -202,12 +199,3 @@ void stop_jffs2(void)
 		start_syslogd();
 #endif
 }
-
-/*
-void erase_jffs_partition(void)
-{
-	_dprintf("Erase MTD partition: %s\n", JFFS_NAME);
-	eval("mtd-erase","-d", JFFS_NAME);
-	_dprintf("Erase MTD partition: %s done.\n", JFFS_NAME);
-}
-*/

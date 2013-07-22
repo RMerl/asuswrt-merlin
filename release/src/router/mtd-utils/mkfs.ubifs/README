@@ -1,0 +1,10 @@
+UBIFS File System - Make File System program
+
+* crc16.h and crc16.c were copied from the linux kernel.
+* crc32.h and crc32.c were copied from mtd-utils and amended.
+* ubifs-media.h is fs/ubifs/ubifs-media.h from the linux kernel
+* ubifs.h is a selection of definitions from fs/ubifs/ubifs.h from the linux kernel.
+* key.h is copied from fs/ubifs/key.h from the linux kernel.
+* defs.h is a bunch of definitions to smooth things over.
+* lpt.c is a selection of functions copied from fs/ubifs/lpt.c from the linux kernel, and amended.
+* hashtable/* was downloaded from http://www.cl.cam.ac.uk/~cwc22/hashtable/

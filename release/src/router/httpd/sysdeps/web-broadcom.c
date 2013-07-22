@@ -1256,6 +1256,12 @@ static int ej_wl_channel_list(int eid, webs_t wp, int argc, char_t **argv, int u
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 	memset(tmp, 0x0, sizeof(tmp));
 
+	if (is_wlif_up(name) != 1)
+	{
+		sprintf(tmp, "[\"%d\"]", 0);
+		goto ERROR;
+	}
+
 	memset(channels, 0, sizeof(channels));
 	list->count = htod32(MAXCHANNEL);
 	if (wl_ioctl(name, WLC_GET_VALID_CHANNELS , channels, sizeof(channels)) < 0)

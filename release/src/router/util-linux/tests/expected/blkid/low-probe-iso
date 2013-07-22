@@ -1,0 +1,4 @@
+ID_FS_LABEL=IsoVolumeName
+ID_FS_LABEL_ENC=IsoVolumeName
+ID_FS_TYPE=iso9660
+ID_FS_USAGE=filesystem

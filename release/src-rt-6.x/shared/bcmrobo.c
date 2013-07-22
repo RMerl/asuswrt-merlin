@@ -1558,8 +1558,7 @@ vlan_setup:
 
 	/* Drop reserved bit, if any */
 	robo->ops->read_reg(robo, PAGE_CTRL, 0x2f, &val8, sizeof(val8));
-	if (/*((robo->devid == DEVID53115) || (robo->devid == DEVID53125)) &&*/
-	    val8 & (1 << 1)) {
+	if (robo->devid != DEVID5325 && val8 & (1 << 1)) {
 		val8 &= ~(1 << 1);
 		robo->ops->write_reg(robo, PAGE_CTRL, 0x2f, &val8, sizeof(val8));
 	}

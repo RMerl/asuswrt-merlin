@@ -16,10 +16,10 @@
 #endif
 #endif
 
-#define DBE 1
+#define DBE 0
 
 typedef struct {
-	array *access_deny;
+	array *alias_url;
 } plugin_config;
 
 typedef struct {
@@ -50,7 +50,7 @@ FREE_FUNC(mod_sharelink_free) {
 		for (i = 0; i < srv->config_context->used; i++) {
 			plugin_config *s = p->config_storage[i];
 
-			array_free(s->access_deny);
+			array_free(s->alias_url);
 
 			free(s);
 		}
@@ -67,7 +67,7 @@ SETDEFAULTS_FUNC(mod_sharelink_set_defaults) {
 	size_t i = 0;
 
 	config_values_t cv[] = {
-		{ "url.access-deny",             NULL, T_CONFIG_ARRAY, T_CONFIG_SCOPE_CONNECTION },
+		{ "alias.url",             NULL, T_CONFIG_ARRAY, T_CONFIG_SCOPE_CONNECTION },
 		{ NULL,                          NULL, T_CONFIG_UNSET, T_CONFIG_SCOPE_UNSET }
 	};
 
@@ -77,9 +77,9 @@ SETDEFAULTS_FUNC(mod_sharelink_set_defaults) {
 		plugin_config *s;
 
 		s = calloc(1, sizeof(plugin_config));
-		s->access_deny    = array_init();
+		s->alias_url    = array_init();
 
-		cv[0].destination = s->access_deny;
+		cv[0].destination = s->alias_url;
 
 		p->config_storage[i] = s;
 
@@ -97,25 +97,40 @@ static int mod_sharelink_patch_connection(server *srv, connection *con, plugin_d
 	size_t i, j;
 	plugin_config *s = p->config_storage[0];
 
-	PATCH(access_deny);
+	PATCH(alias_url);
+
+#if EMBEDDED_EANBLE
+	char *usbdiskname = nvram_get_productid();
+#else
+	char *usbdiskname = "usbdisk";
+#endif
 
 	/* skip the first, the global context */
 	for (i = 1; i < srv->config_context->used; i++) {
 		data_config *dc = (data_config *)srv->config_context->data[i];
 		s = p->config_storage[i];
 
-		/* condition didn't match */
-		if (!config_check_cond(srv, con, dc)) continue;
+		if( dc->comp != COMP_HTTP_URL )
+			continue;
+
+		if(strstr(dc->string->ptr, usbdiskname)==NULL)
+			continue;
 
 		/* merge config */
 		for (j = 0; j < dc->value->used; j++) {
 			data_unset *du = dc->value->data[j];
 
-			if (buffer_is_equal_string(du->key, CONST_STR_LEN("url.access-deny"))) {
-				PATCH(access_deny);
+			if (buffer_is_equal_string(du->key, CONST_STR_LEN("alias.url"))) {
+				PATCH(alias_url);
 			}
 		}
 	}
+
+#if EMBEDDED_EANBLE
+#ifdef APP_IPKG
+	free(usbdiskname);
+#endif
+#endif
 
 	return 0;
 }
@@ -173,7 +188,6 @@ output_folder_list(server *srv, connection *con, char* fullpath, char* filename,
 	buffer_append_string_len(out, CONST_STR_LEN("/"));
 	buffer_append_string(out, filename);
 
-	Cdbg(1, "111111111111111111111111111111 fullpath = %s", fullpath);
 	buffer_append_string_len(out, CONST_STR_LEN("' uhref='"));
 
 	buffer_append_string_buffer(out, con->uri.scheme);
@@ -350,8 +364,8 @@ URIHANDLER_FUNC(mod_sharelink_physical_handler){
 	
 	if(!con->share_link_shortpath->used)  return HANDLER_GO_ON;
 	
-	char mnt_path[5] = "/mnt/";
-	int mlen = 5;
+	//char mnt_path[5] = "/mnt/";
+	//int mlen = 5;
 	struct stat st;
 	int r;
 	
@@ -360,13 +374,42 @@ URIHANDLER_FUNC(mod_sharelink_physical_handler){
 
 	Cdbg(DBE, "mod_sharelink_physical_handler");
 	
-	if( con->mode == DIRECT && strncmp( con->physical.path->ptr, mnt_path, mlen ) == 0 ){
+	mod_sharelink_patch_connection(srv, con, p);
+	
+	buffer* buffer_mnt_path = buffer_init();
+
+#if EMBEDDED_EANBLE
+	char *usbdiskname = nvram_get_productid();
+#else
+	char *usbdiskname = "usbdisk";
+#endif
+
+	for (k = 0; k < p->conf.alias_url->used; k++) {
+		data_string *ds = (data_string *)p->conf.alias_url->data[k];
+
+		if(strstr(ds->key->ptr, usbdiskname)){
+			buffer_copy_string_buffer(buffer_mnt_path, ds->value);
+			buffer_append_string(buffer_mnt_path, "/");
+			break;
+		}
+	}
+	
+#if EMBEDDED_EANBLE
+#ifdef APP_IPKG
+	free(usbdiskname);
+#endif
+#endif
+
+	if( con->mode == DIRECT && 
+		strncmp( con->physical.path->ptr, buffer_mnt_path->ptr, buffer_mnt_path->used-1) == 0 ){
 		r =  stat(con->physical.path->ptr, &st);
 	}
 	else if( con->mode == SMB_BASIC ){
 		r =  smbc_wrapper_stat(con, con->url.path->ptr, &st);
 	}
 
+	buffer_free(buffer_mnt_path);
+		
 	if (-1 == r) {		
 		con->http_status = 404;
 		return HANDLER_FINISHED;
@@ -386,6 +429,7 @@ URIHANDLER_FUNC(mod_sharelink_physical_handler){
 				"<html>\n"
 				"<head>\n"
 				"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n"
+				"<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n"
 			));
 
 		buffer_append_string_len(out, CONST_STR_LEN("<title>"));

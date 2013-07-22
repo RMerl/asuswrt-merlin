@@ -98,8 +98,8 @@ if [ -d "$APPS_INSTALL_PATH" ]; then
 fi
 
 if [ -f "$APPS_INSTALL_PATH/$nonautorun_file" ]; then
-	rm -f $APPS_PATH/$nonautorun_file
-	rm -f $APPS_INSTALL_PATH/$nonautorun_file
+	rm -rf $APPS_PATH/$nonautorun_file
+	rm -rf $APPS_INSTALL_PATH/$nonautorun_file
 fi
 
 

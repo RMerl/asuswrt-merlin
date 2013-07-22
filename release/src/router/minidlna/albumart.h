@@ -25,9 +25,9 @@
 #define __ALBUMART_H__
 
 void
-update_if_album_art(const char * path);
+update_if_album_art(const char *path);
 
-sqlite_int64
-find_album_art(const char * path, const char * image_data, int image_size);
+int64_t
+find_album_art(const char *path, const char *image_data, int image_size);
 
 #endif

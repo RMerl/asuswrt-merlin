@@ -38,6 +38,7 @@
 
 #include <stdarg.h>
 #include <netdb.h>	// for struct addrinfo
+#include <proto/ethernet.h>
 
 #define WEBSTRFILTER 1
 #define CONTENTFILTER 1
@@ -1072,6 +1073,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		":POSTROUTING ACCEPT [0:0]\n"
 		":OUTPUT ACCEPT [0:0]\n"
 		":VSERVER - [0:0]\n"
+		":LOCALSRV - [0:0]\n"
 		":VUPNP - [0:0]\n");
 #ifdef RTCONFIG_YANDEXDNS
 	fprintf(fp,
@@ -1094,7 +1096,8 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 
 #ifdef RTCONFIG_YANDEXDNS
 	if (nvram_get_int("yadns_enable_x")) {
-		char *mac, *mode;
+		char *name, *mac, *mode;
+		unsigned char ea[ETHER_ADDR_LEN];
 
 		/* Reroute all DNS requests from LAN to Yandex.DNS */
 		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
@@ -1106,9 +1109,9 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		/* Protection level per client */
 		nv = nvp = strdup(nvram_safe_get("yadns_rulelist"));
 		while (nv && (b = strsep(&nvp, "<")) != NULL) {
-			if (vstrsep(b, ">", &mac, &mode) != 2)
+			if (vstrsep(b, ">", &name, &mac, &mode) != 3)
 				continue;
-			if (!*mac || !*mode)
+			if (!*mac || !*mode || !ether_atoe(mac, ea))
 				continue;
 			fprintf(fp,
 				"-A YADNS -m mac --mac-source %s -j DNAT --to-destination %s\n",
@@ -1212,6 +1215,20 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	/* Exposed station */
 	if (is_nat_enabled() && !nvram_match("dmz_ip", ""))
 	{
+		fprintf(fp, "-A VSERVER -j LOCALSRV\n");
+		if (nvram_match("webdav_aidisk", "1")) {
+			int port;
+
+			port = atoi(nvram_safe_get("webdav_https_port"));
+			if (!port || port >= 65536)
+				port = 443;
+			fprintf(fp, "-A LOCALSRV -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n", port, lan_ip, port);
+			port = atoi(nvram_safe_get("webdav_http_port"));
+			if (!port || port >= 65536)
+				port = 8082;
+			fprintf(fp, "-A LOCALSRV -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n", port, lan_ip, port);
+		}
+
 		fprintf(fp, "-A VSERVER -j DNAT --to %s\n", nvram_safe_get("dmz_ip"));
 	}
 
@@ -1316,7 +1333,8 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 
 #ifdef RTCONFIG_YANDEXDNS
 	if (nvram_get_int("yadns_enable_x")) {
-		char *mac, *mode;
+		char *name, *mac, *mode;
+		unsigned char ea[ETHER_ADDR_LEN];
 
 		/* Reroute all DNS requests from LAN to Yandex.DNS */
 		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
@@ -1328,9 +1346,9 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 		/* Protection level per client */
 		nv = nvp = strdup(nvram_safe_get("yadns_rulelist"));
 		while (nv && (b = strsep(&nvp, "<")) != NULL) {
-			if (vstrsep(b, ">", &mac, &mode) != 2)
+			if (vstrsep(b, ">", &name, &mac, &mode) != 3)
 				continue;
-			if (!*mac || !*mode)
+			if (!*mac || !*mode || !ether_atoe(mac, ea))
 				continue;
 			fprintf(fp,
 				"-A YADNS -m mac --mac-source %s -j DNAT --to-destination %s\n",
@@ -1517,7 +1535,6 @@ void redirect_setting(void)
 {
 	FILE *nat_fp, *redirect_fp;
 	char tmp_buf[1024];
-//	char http_rule[256], dns_rule[256];
 	char *lan_ipaddr_t, *lan_netmask_t;
 
 #ifdef RTCONFIG_WIRELESSREPEATER
@@ -1538,13 +1555,11 @@ void redirect_setting(void)
 	}
 
 	if(nvram_get_int("sw_mode") == SW_MODE_ROUTER && (nat_fp = fopen(NAT_RULES, "r")) != NULL) {
-		memset(tmp_buf, 0, sizeof(tmp_buf));
 		while ((fgets(tmp_buf, sizeof(tmp_buf), nat_fp)) != NULL
 				&& strncmp(tmp_buf, "COMMIT", 6) != 0) {
+			
 			fprintf(redirect_fp, "%s", tmp_buf);
-			memset(tmp_buf, 0, sizeof(tmp_buf));
 		}
-
 		fclose(nat_fp);
 	}
 	else{
@@ -1559,14 +1574,6 @@ void redirect_setting(void)
 				":YADNS - [0:0]\n");
 #endif
 	}
-/*
-	memset(http_rule, 0, sizeof(http_rule));
-	memset(dns_rule, 0, sizeof(dns_rule));
-	sprintf(http_rule, "-A PREROUTING ! -d %s/%s -p tcp --dport 80 -j DNAT --to-destination %s:18017\n", lan_ipaddr_t, lan_netmask_t, lan_ipaddr_t);
-	sprintf(dns_rule, "-A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s:18018\n", lan_ipaddr_t);
-
-	fprintf(redirect_fp, "%s%s", http_rule, dns_rule);
-*/
 	fprintf(redirect_fp, "-A PREROUTING ! -d %s/%s -p tcp --dport 80 -j DNAT --to-destination %s:18017\n", lan_ipaddr_t, lan_netmask_t, lan_ipaddr_t);
 	fprintf(redirect_fp, "COMMIT\n");
 
@@ -4097,13 +4104,9 @@ int start_firewall(int wanunit, int lanunit)
 		if (strncmp(file->d_name, ".", NAME_MAX) != 0 &&
 		    strncmp(file->d_name, "..", NAME_MAX) != 0) {
 			sprintf(name, "/proc/sys/net/ipv4/conf/%s/rp_filter", file->d_name);
-			if (!(fp = fopen(name, "r+"))) {
-				perror(name);
-				break;
-			}
-			fputc(mcast_ifname && strncmp(file->d_name, 	// oleg patch
-				mcast_ifname, NAME_MAX) == 0 ? '0' : '1', fp);
-			fclose(fp);	// oleg patch
+			f_write_string(name, mcast_ifname &&
+				strncmp(file->d_name, mcast_ifname, NAME_MAX) == 0 ? "0" :
+				strncmp(file->d_name, "all", NAME_MAX) == 0 ? "-1" : "1", 0, 0);
 		}
 	}
 	closedir(dir);

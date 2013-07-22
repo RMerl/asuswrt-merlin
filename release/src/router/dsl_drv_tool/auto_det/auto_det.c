@@ -168,7 +168,7 @@ int link_state(void)
 		//if(fp)
 		//{
 			//fputs(recv_msg, fp);
-			//close(fp);
+			//fclose(fp);
 		//}
 		//printf("Link: %s\n", recv_msg);
 		nvram_set("dsltmp_autodet_state", recv_msg);
@@ -764,7 +764,7 @@ void auto_det_main(char* auto_det_list)
 			nvram_set("dsltmp_autodet_state", "Fail");
 		}
 
-		close(fp2);
+		fclose(fp2);
 	}//endof open file if
 
 delete_msgq_and_quit:

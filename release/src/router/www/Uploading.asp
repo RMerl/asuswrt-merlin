@@ -9,13 +9,9 @@
 </head>
 <body>
 <script>	
-	if(parent.based_modelid == "RT-N65U"){
-			parent.showLoadingBar(92);
-			setTimeout("parent.detect_httpd();", 92000);
-	}else{
-			parent.showLoadingBar(62);
-			setTimeout("parent.detect_httpd();", 62000);		
-	}	
+var reboot_needed_time = eval("<% get_default_reboot_time(); %> + 5");
+	parent.showLoadingBar(reboot_needed_time);
+	setTimeout("parent.detect_httpd();", reboot_needed_time*1000);
 </script>
 </body>
 </html>

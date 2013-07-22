@@ -1,0 +1,110 @@
+.\" -*- nroff -*-
+.TH MKFS 8 "June 2011" "util-linux" "System Administration"
+.SH NAME
+mkfs \- build a Linux filesystem
+.SH SYNOPSIS
+.SH SYNOPSIS
+.B mkfs
+.RI [ options ]
+.RB [ \-t
+.IR "type fs-options" ] " device " [ size ]
+.SH DESCRIPTION
+.B mkfs
+is used to build a Linux filesystem on a device, usually
+a hard disk partition.  The
+.I device
+argument is either the device name (e.g.
+.IR /dev/hda1 ,
+.IR /dev/sdb2 ),
+or a regular file that shall contain the filesystem.  The
+.I size
+argument is the number of blocks to be used for the filesystem.
+.PP
+The exit code returned by
+.B mkfs
+is 0 on success and 1 on failure.
+.PP
+In actuality,
+.B mkfs
+is simply a front-end for the various filesystem builders
+(\fBmkfs.\fIfstype\fR)
+available under Linux.
+The filesystem-specific builder is searched for in a number
+of directories, like perhaps
+.IR /sbin ,
+.IR /sbin/fs ,
+.IR /sbin/fs.d ,
+.IR /etc/fs ,
+.I /etc
+(the precise list is defined at compile time but at least
+contains
+.I /sbin
+and
+.IR /sbin/fs ),
+and finally in the directories
+listed in the PATH environment variable.
+Please see the filesystem-specific builder manual pages for
+further details.
+.SH OPTIONS
+.TP
+.BR \-t , " \-\-type " \fItype\fR
+Specify the \fItype\fR of filesystem to be built.
+If not specified, the default filesystem type
+(currently ext2) is used.
+.TP
+.I fs-options
+Filesystem-specific options to be passed to the real filesystem builder.
+Although not guaranteed, the following options are supported
+by most filesystem builders.
+.TP
+.BR \-V , " \-\-verbose"
+Produce verbose output, including all filesystem-specific commands
+that are executed.
+Specifying this option more than once inhibits execution of any
+filesystem-specific commands.
+This is really only useful for testing.
+.TP
+.BR \-V , " \-\-version"
+Display version information and exit.  (Option \fB\-V\fR will display
+version information only when it is the only parameter, otherwise it
+will work as \fB\-\-verbose\fR.)
+.TP
+.BR \-h , " \-\-help"
+Display help and exit.
+.SH BUGS
+All generic options must precede and not be combined with
+filesystem-specific options.
+Some filesystem-specific programs do not support the
+.B -V
+(verbose) option, nor return meaningful exit codes.
+Also, some filesystem-specific programs do not automatically
+detect the device size and require the
+.I size
+parameter to be specified.
+.SH AUTHORS
+David Engel (david@ods.com)
+.br
+Fred N. van Kempen (waltje@uwalt.nl.mugnet.org)
+.br
+Ron Sommeling (sommel@sci.kun.nl)
+.br
+The manual page was shamelessly adapted from Remy Card's version
+for the ext2 filesystem.
+.SH SEE ALSO
+.BR fs (5),
+.BR badblocks (8),
+.BR fsck (8),
+.BR mkdosfs (8),
+.BR mke2fs (8),
+.BR mkfs.bfs (8),
+.BR mkfs.ext2 (8),
+.BR mkfs.ext3 (8),
+.BR mkfs.ext4 (8),
+.BR mkfs.minix (8),
+.BR mkfs.msdos (8),
+.BR mkfs.vfat (8),
+.BR mkfs.xfs (8),
+.BR mkfs.xiafs (8)
+.SH AVAILABILITY
+The mkfs command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

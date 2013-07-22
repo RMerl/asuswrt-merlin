@@ -54,9 +54,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_vifnames", 	""	},	/* Virtual Interface Names */
 	/* Wireless parameters */
 	{ "wl_version", EPI_VERSION_STR },	/* OS revision */
-
+#ifdef RTCONFIG_DSL
 	{ "wl_HW_switch", "0" },			/* siwtch WiFi slash*/
-
+#endif
 	{ "wl_ifname", "" },			/* Interface name */
 	{ "wl_hwaddr", "" },			/* MAC address */
 	{ "wl_phytype", "b" },			/* Current wireless band ("a" (5 GHz),
@@ -74,6 +74,10 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_radio", "1"},			/* Enable (1) or disable (0) radio */
 	{ "wl_closed", "0"},			/* Closed (hidden) network */
 	{ "wl_ap_isolate", "0"},		/* AP isolate mode */
+
+	{ "wl_igs", "0" },			/* BCM: wl_wmf_bss_enable
+						 * Ralink: IGMPSnEnable */
+
 #ifndef RTCONFIG_RALINK
 	{ "wl_wmf_bss_enable", "0"},		/* WMF Enable/Disable */
 	{ "wl_mcast_regen_bss_enable", "1"},	/* MCAST REGEN Enable/Disable */
@@ -220,7 +224,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_radius_key", "" },		/* RADIUS shared secret */
 	{ "wl_radius_port", "1812"},		/* RADIUS server UDP port */
 	{ "wl_crypto", "tkip+aes"},		/* WPA data encryption */
-	{ "wl_net_reauth", "36000"},		/* Network Re-auth/PMK caching duration */
+#if 0
+	{ "wl_net_reauth", "3600"},		/* Network Re-auth/PMK caching duration */
+#else
+	{ "wl_pmk_cache", "60"},		/* Network Re-auth/PMK caching duration in minutes */
+#endif
 	{ "wl_akm", ""},			/* WPA akm list */
 #ifdef RTCONFIG_BCMWL6
 	{ "wl_psr_mrpt", "0" },			/* Default to one level repeating mode */
@@ -354,11 +362,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_PktAggregate", "1" },	// UI configurable
  	{ "wl_HT_OpMode", "0" }, 	// UI configurable
 	{ "wl_DLSCapable", "0" },	// UI configurable
-#if defined(RTN14U) 
-	{ "wl_GreenAP",	"1" },		// UI configurable
-#else
 	{ "wl_GreenAP",	"0" },		// UI configurable
-#endif
 	{ "wl_key_type", "0" },
 	{ "wl_HT_AutoBA", "1" },
 	{ "wl_HT_HTC", "1"},
@@ -377,7 +381,6 @@ struct nvram_tuple router_defaults[] = {
 //	{ "wl1_HT_TxStream", "2" }, // move to init_nvram for model dep.
 //	{ "wl1_HT_RxStream", "3" }, // move to init_nvram for model dep.
 	{ "wl_HT_STBC", "1" },
-	{ "wl_igs", "0" },					/* ralink IgmpSnEnable */
 	{ "wl_McastPhyMode", "0" },
 	{ "wl_McastMcs", "0" },
 	// the following for ralink 5g only
@@ -401,6 +404,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_wmf_mdata_sendup", 	"0"		},	/* Disable Sending Multicast Data to host (default) */
 #endif
 #endif
+
+
+
 // WPS 
 //	#if defined (W7_LOGO) || defined (WIFI_LOGO)
 	{ "wps_enable", "1"},
@@ -869,6 +875,11 @@ struct nvram_tuple router_defaults[] = {
 	{"MULTIFILTER_URL_ENABLE", "" },
 	{"MULTIFILTER_URL", "" },
 #endif	/* RTCONFIG_PARENTALCTRL */
+#ifdef RTCONFIG_YANDEXDNS
+	{ "yadns_enable_x", "0"},	/* 0: disable, 1: enable Yandex.DNS */
+	{ "yadns_mode", "1"},		/* 0: Undefended, 1: Safe, 2: Family */
+	{ "yadns_rulelist", ""},	/* List client modes <devname>hh:ww:aa:dd:dd:rr>mode... */
+#endif  /* RTCONFIG_YANDEXDNS */
 	{ "fw_enable_x", "1" },
 	{ "fw_dos_x", "0" },
 	{ "fw_log_x", "none" },
@@ -917,8 +928,8 @@ struct nvram_tuple router_defaults[] = {
 
 	// NVRAM for start_usb
 	{ "usb_enable", "1"},
-#ifdef RTCONFIG_USB_XHCI
-	{ "usb_usb3", "1"},
+#if defined (RTCONFIG_USB_XHCI)
+	{ "usb_usb3", "0"},
 #endif
 	{ "usb_usb2", "1"},
 	{ "usb_ftpenable_x", "1"},
@@ -996,6 +1007,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "jffs2_on", "0" },
 	{ "jffs2_exec", "" },
 	{ "jffs2_format", "0" },
+#endif
+
+#ifdef RTCONFIG_UBIFS
+	{ "ubifs_on", "1" },
+	{ "ubifs_exec", "" },
 #endif
 
 #ifdef RTCONFIG_USB
@@ -1565,6 +1581,12 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "dms_state", ""},
  	{ "dms_dbcwd", ""},
 #endif
+
+#ifdef RTCONFIG_USBRESET
+	{ "usbreset_active", "0"},
+	{ "usbreset_num", "0"},
+#endif
+
 	// USB state
 	{ "usb_path1", "" },
 	{ "usb_path1_act", "" },
@@ -1595,8 +1617,24 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "usb_path1_fs_path14", "" },
 	{ "usb_path1_fs_path15", "" },
 #endif
+	{ "usb_path1_label0", "" },
+	{ "usb_path1_label1", "" },
+	{ "usb_path1_label2", "" },
+	{ "usb_path1_label3", "" },
+	{ "usb_path1_label4", "" },
+	{ "usb_path1_label5", "" },
+	{ "usb_path1_label6", "" },
+	{ "usb_path1_label7", "" },
+	{ "usb_path1_label8", "" },
+	{ "usb_path1_label9", "" },
+	{ "usb_path1_label10", "" },
+	{ "usb_path1_label11", "" },
+	{ "usb_path1_label12", "" },
+	{ "usb_path1_label13", "" },
+	{ "usb_path1_label14", "" },
+	{ "usb_path1_label15", "" },
 	{ "usb_path1_host", "" },
-#ifdef RTCONFIG_USB_XHCI
+#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
 	{ "usb_path1_speed", "" },
 #endif
 
@@ -1629,8 +1667,24 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "usb_path2_fs_path14", "" },
 	{ "usb_path2_fs_path15", "" },
 #endif
+	{ "usb_path2_label0", "" },
+	{ "usb_path2_label1", "" },
+	{ "usb_path2_label2", "" },
+	{ "usb_path2_label3", "" },
+	{ "usb_path2_label4", "" },
+	{ "usb_path2_label5", "" },
+	{ "usb_path2_label6", "" },
+	{ "usb_path2_label7", "" },
+	{ "usb_path2_label8", "" },
+	{ "usb_path2_label9", "" },
+	{ "usb_path2_label10", "" },
+	{ "usb_path2_label11", "" },
+	{ "usb_path2_label12", "" },
+	{ "usb_path2_label13", "" },
+	{ "usb_path2_label14", "" },
+	{ "usb_path2_label15", "" },
 	{ "usb_path2_host", "" },
-#ifdef RTCONFIG_USB_XHCI
+#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
 	{ "usb_path2_speed", "" },
 #endif
 
@@ -1663,8 +1717,24 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "usb_path3_fs_path14", "" },
 	{ "usb_path3_fs_path15", "" },
 #endif
+	{ "usb_path3_label0", "" },
+	{ "usb_path3_label1", "" },
+	{ "usb_path3_label2", "" },
+	{ "usb_path3_label3", "" },
+	{ "usb_path3_label4", "" },
+	{ "usb_path3_label5", "" },
+	{ "usb_path3_label6", "" },
+	{ "usb_path3_label7", "" },
+	{ "usb_path3_label8", "" },
+	{ "usb_path3_label9", "" },
+	{ "usb_path3_label10", "" },
+	{ "usb_path3_label11", "" },
+	{ "usb_path3_label12", "" },
+	{ "usb_path3_label13", "" },
+	{ "usb_path3_label14", "" },
+	{ "usb_path3_label15", "" },
 	{ "usb_path3_host", "" },
-#ifdef RTCONFIG_USB_XHCI
+#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
 	{ "usb_path3_speed", "" },
 #endif
 
@@ -1883,6 +1953,7 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 struct nvram_tuple router_defaults_override_type1[] = {
 	{ "router_disable", "1", 0 },		/* lan_proto=static lan_stp=0 wan_proto=disabled */
 	{ "lan_stp", "0", 0 },			/* LAN spanning tree protocol */
+	{ "wl_igs", "1", 0 },			/* WMF depends on it */
 	{ "wl_wmf_bss_enable", "1", 0 },	/* WMF Enable for IPTV Media or WiFi+PLC */
 	{ "wl_reg_mode", "h", 0 },		/* Regulatory: 802.11H(h) */
 	{ "wl_wet_tunnel", "1", 0 },		/* Enable wet tunnel */

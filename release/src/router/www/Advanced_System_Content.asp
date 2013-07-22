@@ -74,6 +74,7 @@ if(sw_mode == 3 || (sw_mode == 4))
 	theUrl = location.hostName;
 
 function initial(){
+	$('pull_arrow').title = Untranslated.select_client;
 	show_menu();
 	show_http_clientlist();
 	corrected_timezone();
@@ -98,7 +99,7 @@ function initial(){
 		hide_https_wanport(document.form.http_enable.value);
 	}	
 
-	if(WebDav_support != -1){
+	if(WebDav_support){
 		document.getElementById('http_username_span').style.display = "none";
 		document.form.http_username.disabled = false;
 	}else{
@@ -107,7 +108,7 @@ function initial(){
 		document.getElementById('http_username').style.display = "none";
 	}
 	
-	if(wifi_tog_btn_support != -1 || wifi_hw_sw_support || sw_mode == 2 || sw_mode == 4){		// wifi_tog_btn && wifi_hw_sw && hide WPS button behavior under repeater mode
+	if(wifi_tog_btn_support || wifi_hw_sw_support || sw_mode == 2 || sw_mode == 4){		// wifi_tog_btn && wifi_hw_sw && hide WPS button behavior under repeater mode
 			document.form.btn_ez_radiotoggle[0].disabled = true;
 			document.form.btn_ez_radiotoggle[1].disabled = true;
 			document.getElementById('btn_ez_radiotoggle_tr').style.display = "none";
@@ -294,13 +295,6 @@ function validForm(){
 	}
 
 	if(!validate_string(document.form.http_passwd2)){
-		document.form.http_passwd2.focus();
-		document.form.http_passwd2.select();
-		return false;
-	}
-
-	if(document.form.http_passwd2.value.length > 16){
-		showtext($("alert_msg2"),"*<#LANHostConfig_x_Password_itemdesc#>");
 		document.form.http_passwd2.focus();
 		document.form.http_passwd2.select();
 		return false;
@@ -824,6 +818,12 @@ function change_url(num, flag){
 }
 //Viz add 2012.12 show url for https [end]
 
+
+/* password item show or not */
+function pass_checked(obj){
+	switchType(obj, document.form.show_pass_1.checked, true);
+}
+
 </script>
 </head>
 
@@ -895,19 +895,20 @@ function change_url(num, flag){
         <tr>
           <th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
           <td>
-            <input type="password" autocapitalization="off" name="http_passwd2" onKeyPress="return is_string(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" class="input_15_table" maxlength="17" />
+            <input type="password" autocapitalization="off" name="http_passwd2" onKeyPress="return is_string(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;" class="input_15_table" maxlength="16" />
             &nbsp;&nbsp;
             <div id="scorebarBorder" style="margin-left:140px; margin-top:-25px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
             		<div id="score"></div>
             		<div id="scorebar">&nbsp;</div>
             </div>
+            <div style="margin-top:1px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd2);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
           </td>
         </tr>
 
         <tr>
           <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></th>
           <td>
-            <input type="password" autocapitalization="off" name="v_password2" onKeyPress="return is_string(this, event);" class="input_15_table" maxlength="17" /><br/><span id="alert_msg2"></span>
+            <input type="password" autocapitalization="off" name="v_password2" onKeyPress="return is_string(this, event);" onpaste="return false;" class="input_15_table" maxlength="16" /><br/><span id="alert_msg2"></span>
           </td>
         </tr>
       </table>
@@ -1112,7 +1113,7 @@ function change_url(num, flag){
 					<!-- client info -->
 					<td width="80%">
 				 		<input type="text" class="input_32_table" maxlength="15" name="http_client_ip_x_0"  onKeyPress="" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">
-						<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="Select the device name of LAN clients." onmouseover="over_var=1;" onmouseout="over_var=0;">				 		
+						<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">				 		
 						<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>	
 				 	</td>
 				 	<td width="20%">	

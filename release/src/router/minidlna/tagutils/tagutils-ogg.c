@@ -106,17 +106,17 @@ _ogg_vorbis_process(ogg_stream_processor *stream, ogg_page *page,
 			{
 				if(ogg_page_granulepos(page) != 0 || ogg_stream_packetpeek(&stream->os, NULL) == 1)
 					DPRINTF(E_WARN, L_SCANNER, "No header in vorbis stream %d\n", stream->num);
-				DPRINTF(E_DEBUG, L_SCANNER, "Vorbis headers parsed for stream %d, "
+				DPRINTF(E_MAXDEBUG, L_SCANNER, "Vorbis headers parsed for stream %d, "
 					"information follows...\n", stream->num);
-				DPRINTF(E_DEBUG, L_SCANNER, "Channels: %d\n", inf->vi.channels);
-				DPRINTF(E_DEBUG, L_SCANNER, "Rate: %ld\n\n", inf->vi.rate);
+				DPRINTF(E_MAXDEBUG, L_SCANNER, "Channels: %d\n", inf->vi.channels);
+				DPRINTF(E_MAXDEBUG, L_SCANNER, "Rate: %ld\n\n", inf->vi.rate);
 
 				psong->samplerate = inf->vi.rate;
 				psong->channels = inf->vi.channels;
 
 				if(inf->vi.bitrate_nominal > 0)
 				{
-					DPRINTF(E_DEBUG, L_SCANNER, "Nominal bitrate: %f kb/s\n",
+					DPRINTF(E_MAXDEBUG, L_SCANNER, "Nominal bitrate: %f kb/s\n",
 						(double)inf->vi.bitrate_nominal / 1000.0);
 					psong->bitrate = inf->vi.bitrate_nominal / 1000;
 				}
@@ -124,7 +124,7 @@ _ogg_vorbis_process(ogg_stream_processor *stream, ogg_page *page,
 				{
 					int upper_rate, lower_rate;
 
-					DPRINTF(E_DEBUG, L_SCANNER, "Nominal bitrate not set\n");
+					DPRINTF(E_MAXDEBUG, L_SCANNER, "Nominal bitrate not set\n");
 
 					//
 					upper_rate = 0;
@@ -132,24 +132,24 @@ _ogg_vorbis_process(ogg_stream_processor *stream, ogg_page *page,
 
 					if(inf->vi.bitrate_upper > 0)
 					{
-						DPRINTF(E_DEBUG, L_SCANNER, "Upper bitrate: %f kb/s\n",
+						DPRINTF(E_MAXDEBUG, L_SCANNER, "Upper bitrate: %f kb/s\n",
 							(double)inf->vi.bitrate_upper / 1000.0);
 						upper_rate = inf->vi.bitrate_upper;
 					}
 					else
 					{
-						DPRINTF(E_DEBUG, L_SCANNER, "Upper bitrate not set\n");
+						DPRINTF(E_MAXDEBUG, L_SCANNER, "Upper bitrate not set\n");
 					}
 
 					if(inf->vi.bitrate_lower > 0)
 					{
-						DPRINTF(E_DEBUG, L_SCANNER, "Lower bitrate: %f kb/s\n",
+						DPRINTF(E_MAXDEBUG, L_SCANNER, "Lower bitrate: %f kb/s\n",
 							(double)inf->vi.bitrate_lower / 1000.0);
 						lower_rate = inf->vi.bitrate_lower;;
 					}
 					else
 					{
-						DPRINTF(E_DEBUG, L_SCANNER, "Lower bitrate not set\n");
+						DPRINTF(E_MAXDEBUG, L_SCANNER, "Lower bitrate not set\n");
 					}
 
 					if(upper_rate && lower_rate)
@@ -163,7 +163,7 @@ _ogg_vorbis_process(ogg_stream_processor *stream, ogg_page *page,
 				}
 
 				if(inf->vc.comments > 0)
-					DPRINTF(E_DEBUG, L_SCANNER,
+					DPRINTF(E_MAXDEBUG, L_SCANNER,
 						"User comments section follows...\n");
 
 				for(i = 0; i < inf->vc.comments; i++)
@@ -437,7 +437,7 @@ _get_oggfileinfo(char *filename, struct song_metadata *psong)
 		return -1;
 	}
 
-	DPRINTF(E_INFO, L_SCANNER, "Processing file \"%s\"...\n\n", filename);
+	DPRINTF(E_MAXDEBUG, L_SCANNER, "Processing file \"%s\"...\n\n", filename);
 
 	ogg_sync_init(&sync);
 
@@ -482,7 +482,7 @@ _get_oggfileinfo(char *filename, struct song_metadata *psong)
 
 		if(p->isnew)
 		{
-			DPRINTF(E_DEBUG, L_SCANNER, "New logical stream (#%d, serial: %08x): type %s\n",
+			DPRINTF(E_MAXDEBUG, L_SCANNER, "New logical stream (#%d, serial: %08x): type %s\n",
 				p->num, p->serial, p->type);
 			if(!p->start)
 				DPRINTF(E_WARN, L_SCANNER,
@@ -514,7 +514,7 @@ _get_oggfileinfo(char *filename, struct song_metadata *psong)
 			{
 				if(p->process_end)
 					p->process_end(p, psong);
-				DPRINTF(E_DEBUG, L_SCANNER, "Logical stream %d ended\n", p->num);
+				DPRINTF(E_MAXDEBUG, L_SCANNER, "Logical stream %d ended\n", p->num);
 				p->isillegal = 1;
 				p->constraint_violated = CONSTRAINT_PAGE_AFTER_EOS;
 			}

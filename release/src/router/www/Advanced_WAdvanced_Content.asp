@@ -62,15 +62,13 @@ function initial(){
 
 	$("wl_rate").style.display = "none";
 
-	if(band5g_support == -1){	
+	if(!band5g_support){	
 		$("wl_unit_field").style.display = "none";
 	}	
 
 	if(!Rawifi_support){ // BRCM == without rawifi
-		$("wl_igs_select").style.display = "none";
 		$("DLSCapable").style.display = "none";	
 		$("PktAggregate").style.display = "none";
-		$("enable_wl_multicast_forward").style.display = "";
 		
 		if('<% nvram_get("wl_unit"); %>' == '1' || based_modelid == "RT-AC66U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC56U" || based_modelid == "RT-N66U"){	// MODELDEP: RT-AC*U and RT-N66U
 			inputCtrl(document.form.wl_noisemitigation, 0);
@@ -94,7 +92,7 @@ function initial(){
 	inputCtrl(document.form.wl_itxbf, 0);
 	inputCtrl(document.form.usb_usb3, 0);
 
-	if((based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" /* || based_modelid == "RT-AC66U"*/)){
+	if((based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC66U" || based_modelid == "RT-N65U")){
 		inputCtrl(document.form.wl_ampdu_mpdu, 1);
 		inputCtrl(document.form.wl_ack_ratio, 1);
 
@@ -106,12 +104,16 @@ function initial(){
 				inputCtrl(document.form.wl_turbo_qam, 1);
 				inputCtrl(document.form.usb_usb3, 1);
 			}
+			else if(based_modelid == "RT-AC56U" /*|| based_modelid == "RT-N65U"*/){
+				inputCtrl(document.form.usb_usb3, 1);
+			}
 		}
 	}
 
 	var mcast_rate = '<% nvram_get("wl_mrate_x"); %>';
 	var mcast_unit = '<% nvram_get("wl_unit"); %>';
-	//free_options(document.form.wl_mrate_x);
+	if(Rawifi_support)
+		$("mcast_rate0").innerHTML = "<#WLANConfig11b_WirelessCtrl_buttonname#>";
 	for (var i = 0; i < mcast_rates.length; i++) {
 		if (mcast_unit == '1' && mcast_rates[i][2]) // 5Ghz && CCK
 			continue;
@@ -122,7 +124,7 @@ function initial(){
 			(mcast_rate == mcast_rates[i][1]) ? 1 : 0);
 	}
 
-	if(repeater_support != -1 || psta_support != -1){		//with RE mode
+	if(repeater_support || psta_support){		//with RE mode
 		$("DLSCapable").style.display = "none";	
 	}	
 
@@ -157,6 +159,10 @@ function initial(){
 	setFlag_TimeFiled();	
 	check_Timefield_checkbox();
 	control_TimeField();		
+	
+	if(svc_ready == "0")
+		$('svc_hint_div').style.display = "";	
+	corrected_timezone();	
 }
 
 function applyRule(){
@@ -171,7 +177,7 @@ function applyRule(){
 			document.form.wl_TxPower.value = document.form.wl_TxPower_ra.value;
 		}		
 
-		if(document.form.usb_usb3.value != '<% nvram_get("usb_usb3"); %>'){
+		if(document.form.usb_usb3.disabled == false && document.form.usb_usb3.value != '<% nvram_get("usb_usb3"); %>'){
 			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
 		}
 
@@ -412,7 +418,7 @@ function setFlag_TimeFiled(){
 <input type="hidden" name="wl_gmode_protection_x" value="<% nvram_get("wl_gmode_protection_x"); %>">
 
 <input type="hidden" name="current_page" value="Advanced_WAdvanced_Content.asp">
-<input type="hidden" name="next_page" value="SaveRestart.asp">
+<input type="hidden" name="next_page" value="Advanced_WAdvanced_Content.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
@@ -455,6 +461,8 @@ function setFlag_TimeFiled(){
 		  			<div class="formfonttitle"><#menu5_1#> - <#menu5_1_6#></div>
 		  			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		 				<div class="formfontdesc"><#WLANConfig11b_display5_sectiondesc#></div>
+		 				<div id="svc_hint_div" style="display:none;"><span onClick="location.href='Advanced_System_Content.asp?af=ntp_server0'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;">* Remind: Did not synchronize your system time with NTP server yet.</span></div>
+		  			<div id="timezone_hint_div" style="display:none;"><span id="timezone_hint" onclick="location.href='Advanced_System_Content.asp?af=time_zone_select'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"></span></div>	
 
 					<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable" id="WAdvTable">	
 
@@ -550,7 +558,7 @@ function setFlag_TimeFiled(){
 							</div>
 			  			</td>
 					</tr>
-					<tr id="wl_igs_select">
+					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 22);"><#WLANConfig11b_x_IgmpSnEnable_itemname#></a></th>
 						<td>
 							<select name="wl_igs" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_igs')">
@@ -563,7 +571,7 @@ function setFlag_TimeFiled(){
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 7);"><#WLANConfig11b_MultiRateAll_itemname#></a></th>
 						<td>
 							<select name="wl_mrate_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_mrate_x')">
-								<option value="0" <% nvram_match("wl_mrate_x", "0", "selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+								<option id="mcast_rate0" value="0" <% nvram_match("wl_mrate_x", "0", "selected"); %>><#Auto#></option>
 							</select>
 						</td>
 					</tr>
@@ -662,17 +670,6 @@ function setFlag_TimeFiled(){
 							</select>
 			  			</td>
 					</tr>
-
-					<tr id="enable_wl_multicast_forward" style="display:none;">
-						<th>Wireless Multicast Forwarding</th>
-						<td>
-                  				<select name="wl_wmf_bss_enable" class="input_option">
-                    					<option value="0" <% nvram_match("wl_wmf_bss_enable", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
-                    					<option value="1" <% nvram_match("wl_wmf_bss_enable", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
-                  				</select>
-						</td>
-					</tr>
-
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,17);"><#WLANConfig11b_x_APSD_itemname#></a></th>
 						<td>
@@ -705,7 +702,7 @@ function setFlag_TimeFiled(){
 					</tr>
 
 					<tr> <!-- MODELDEP: RT-AC68U Only  -->
-						<th>Reduce USB 3.0 interference</th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,29);">Reduce USB 3.0 interference</a></th>
 						<td>
 							<select name="usb_usb3" class="input_option">
 								<option value="1" <% nvram_match("usb_usb3", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>

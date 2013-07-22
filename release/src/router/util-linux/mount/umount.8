@@ -1,0 +1,180 @@
+.\" Copyright (c) 1996 Andries Brouwer
+.\" This page is somewhat derived from a page that was
+.\" (c) 1980, 1989, 1991 The Regents of the University of California
+.\" and had been heavily modified by Rik Faith and myself.
+.\"
+.\" This is free documentation; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License as
+.\" published by the Free Software Foundation; either version 2 of
+.\" the License, or (at your option) any later version.
+.\"
+.\" The GNU General Public License's references to "object code"
+.\" and "executables" are to be interpreted as the output of any
+.\" document formatting or typesetting system, including
+.\" intermediate and printed output.
+.\"
+.\" This manual is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public
+.\" License along with this manual; if not, write to the Free
+.\" Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139,
+.\" USA.
+.\"
+.TH UMOUNT 8 "March 2010" "util-linux" "System Administration"
+.SH NAME
+umount \- unmount file systems
+.SH SYNOPSIS
+.B umount
+.RB [ \-hV ]
+.LP
+.B umount \-a
+.RB [ \-dflnrv ]
+.RB [ \-t
+.IR vfstype ]
+.RB [ \-O
+.IR options ]
+.br
+.B umount
+.RB [ \-dflnrv ]
+.RI { dir | device }...
+.SH DESCRIPTION
+The
+.B umount
+command detaches the file system(s) mentioned from the file hierarchy.
+A file system is specified by giving the directory where it
+has been mounted. Giving the special device on which the file system lives
+may also work, but is obsolete, mainly because it will fail
+in case this device was mounted on more than one directory.
+
+Note that a file system cannot be unmounted when it is `busy' -
+for example, when there are open files on it, or when some process
+has its working directory there, or when a swap file on it is in use.
+The offending process could even be
+.B umount
+itself - it opens libc, and libc in its turn may open for example
+locale files.
+A lazy unmount avoids this problem.
+
+Options for the
+.B umount
+command:
+.TP
+.B \-V
+Print version and exit.
+.TP
+.B \-h
+Print help message and exit.
+.TP
+.B \-v
+Verbose mode.
+.TP
+.B \-n
+Unmount without writing in
+.IR /etc/mtab .
+.TP
+.B \-r
+In case unmounting fails, try to remount read-only.
+.TP
+.B \-d
+In case the unmounted device was a loop device, also
+free this loop device.
+.TP
+.B \-i
+Don't call the /sbin/umount.<filesystem> helper even if it exists. By default /sbin/umount.<filesystem> helper is called if one exists.
+.TP
+.B \-a
+All of the file systems described in
+.I /etc/mtab
+are unmounted. (With
+.B umount
+version 2.7 and later: the
+.I proc
+filesystem is not unmounted.)
+.TP
+.BI \-t " vfstype"
+Indicate that the actions should only be taken on file systems of the
+specified type.  More than one type may be specified in a comma separated
+list.  The list of file system types can be prefixed with
+.B no
+to specify the file system types on which no action should be taken.
+.TP
+.BI \-O " options"
+Indicate that the actions should only be taken on file systems with
+the specified options in
+.IR /etc/fstab .
+More than one option type may be specified in a comma separated
+list.  Each option can be prefixed with
+.B no
+to specify options for which no action should be taken.
+.TP
+.B \-f
+Force unmount (in case of an unreachable NFS system).
+(Requires kernel 2.1.116 or later.)
+.TP
+.B \-l
+Lazy unmount. Detach the filesystem from the filesystem hierarchy now,
+and cleanup all references to the filesystem as soon as it is not busy
+anymore.
+(Requires kernel 2.4.11 or later.)
+.IP "\fB\-\-no\-canonicalize\fP"
+Don't canonicalize paths. For more details about this option see the
+.B mount(8)
+man page.
+.IP "\fB\-\-fake\fP"
+Causes everything to be done except for the actual system call; this
+``fakes'' unmounting the filesystem.  It can  be used to remove
+entries from
+.I /etc/mtab
+that were unmounted earlier with the -n option.
+
+.SH "THE LOOP DEVICE"
+The
+.B umount
+command will free the loop device (if any) associated
+with the mount, in case it finds the option `loop=...' in
+.IR /etc/mtab ,
+or when the \-d option was given.
+Any pending loop devices can be freed using `losetup -d', see
+.BR losetup (8).
+
+.SH NOTES
+The syntax of external umount helpers is:
+
+.br
+.BI /sbin/umount. <suffix>
+.RI { dir | device }
+.RB [ \-nlfvr ]
+.RB [ \-t
+.IR type.subtype ]
+.br
+
+where the <suffix> is filesystem type or a value from "uhelper=" or "helper="
+mtab option.  The \-t option is used  for filesystems with subtypes support
+(for example /sbin/mount.fuse -t fuse.sshfs).
+
+The uhelper= (unprivileged umount helper) is possible to use when non-root user
+wants to umount a mountpoint which is not defined in the /etc/fstab file (e.g
+devices mounted by udisk).
+
+The helper= mount option redirects all umount requests to the
+/sbin/umount.<helper> independently on UID.
+
+.SH FILES
+.I /etc/mtab
+table of mounted file systems
+
+.SH "SEE ALSO"
+.BR umount (2),
+.BR mount (8),
+.BR losetup (8).
+
+.SH HISTORY
+A
+.B umount
+command appeared in Version 6 AT&T UNIX.
+.SH AVAILABILITY
+The umount command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

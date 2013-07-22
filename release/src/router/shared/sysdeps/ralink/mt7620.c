@@ -61,8 +61,27 @@ static int lan_wan_partition[9][5] = {	{0,1,1,1,1}, //WLLLL
 					{0,0,0,1,1}, //WWWLL
 					{0,1,1,0,0}, //WLLWW
 					{1,1,1,1,1}}; // ALL
-#elif defined(xxxxRTAC52U) // re-defined here
-
+#elif defined(RTAC52U)
+/// RT-AC52U mapping
+enum {
+WAN_PORT=0,
+LAN1_PORT=3,
+LAN2_PORT=4,
+LAN3_PORT=2,
+LAN4_PORT=1,
+P5_PORT=5,
+CPU_PORT=6,
+P7_PORT=7,
+};
+//0:WAN, 1:LAN, lan_wan_partition[][0] is port0
+static int lan_wan_partition[9][5] = {	{0,1,1,1,1}, //WLLLL
+					{0,1,1,0,1}, //WLLWL  port3	--> port1
+					{0,1,1,1,0}, //WLLLW  port4	--> port2
+					{0,1,0,1,1}, //WLWLL  port2	--> port3
+					{0,0,1,1,1}, //WWLLL  port1	--> port4
+					{0,1,1,0,0}, //WLLWW  port3+4	--> port1+2
+					{0,0,0,1,1}, //WWWLL  port1+2	--> port3+4
+					{1,1,1,1,1}}; // ALL
 #endif
 
 static int switch_port_mapping[] = {
@@ -95,7 +114,7 @@ void switch_fini(void)
 	close(esw_fd);
 }
 
-int mt7620_reg_read(int offset, int *value)
+int mt7620_reg_read(int offset, unsigned int *value)
 {
 	struct ifreq ifr;
 	esw_reg reg;
@@ -104,7 +123,7 @@ int mt7620_reg_read(int offset, int *value)
 		return -1;
 	reg.off = offset;
 	strncpy(ifr.ifr_name, "eth2", 5);
-	ifr.ifr_data = &reg;
+	ifr.ifr_data = (void*) &reg;
 	if (-1 == ioctl(esw_fd, RAETH_ESW_REG_READ, &ifr)) {
 		perror("ioctl");
 		close(esw_fd);
@@ -128,7 +147,7 @@ int mt7620_reg_write(int offset, int value)
 	reg.off = offset;
 	reg.val = value;
 	strncpy(ifr.ifr_name, "eth2", 5);
-	ifr.ifr_data = &reg;
+	ifr.ifr_data = (void*) &reg;
 	if (-1 == ioctl(esw_fd, RAETH_ESW_REG_WRITE, &ifr)) {
 		perror("ioctl");
 		close(esw_fd);
@@ -227,8 +246,8 @@ int mt7620_vlan_set(int idx, int vid, char *portmap, int stag)
 }
 
 
-#if defined(RTN14U)  
-int mt7620_wan_bytecount(int dir, int *count)
+#if defined(RTN14U) || defined(RTAC52U)
+int mt7620_wan_bytecount(int dir, unsigned long *count)
 {
    	int offset;
  
@@ -245,7 +264,7 @@ int mt7620_wan_bytecount(int dir, int *count)
 		return -1;
 	}
 
-	mt7620_reg_read(offset, count);
+	mt7620_reg_read(offset, (unsigned int*) count);
 	switch_fini();
 	return 0;
 }   
@@ -737,7 +756,7 @@ ralink_gpio_write_bit(int idx, int value)
 	}	
 	else if (idx==72) 
 	{              
-#if defined(RTN14U)  //wlan led	   
+#if defined(RTN14U) || defined(RTAC52U)  //wlan led
 		req=RALINK_ATE_GPIO72;
 		idx=value;
 #else
@@ -804,7 +823,7 @@ ralink_gpio_init(unsigned int idx, int dir)
 	int fd, req;
 	unsigned long arg;
 	
-#if defined(RTN14U)  
+#if defined(RTN14U) || defined(RTAC52U)
 	if(idx==72) //discard gpio72
 		return 0;
 #endif
@@ -999,12 +1018,21 @@ void ATE_mt7620_esw_port_status(void)
 		pS.speed[i] = (value >> 2) & 0x3;
 	}
 
+#if defined(RTAC52U)
+	sprintf(buf, "W0=%C;L4=%C;L3=%C;L2=%C;L1=%C;",
+		(pS.link[0] == 1) ? (pS.speed[0] == 2) ? 'G' : 'M': 'X',
+		(pS.link[1] == 1) ? (pS.speed[1] == 2) ? 'G' : 'M': 'X',
+		(pS.link[2] == 1) ? (pS.speed[2] == 2) ? 'G' : 'M': 'X',
+		(pS.link[4] == 1) ? (pS.speed[4] == 2) ? 'G' : 'M': 'X',
+		(pS.link[3] == 1) ? (pS.speed[3] == 2) ? 'G' : 'M': 'X');
+#else
 	sprintf(buf, "W0=%C;L1=%C;L2=%C;L3=%C;L4=%C;",
 		(pS.link[0] == 1) ? (pS.speed[0] == 2) ? 'G' : 'M': 'X',
 		(pS.link[1] == 1) ? (pS.speed[1] == 2) ? 'G' : 'M': 'X',
 		(pS.link[2] == 1) ? (pS.speed[2] == 2) ? 'G' : 'M': 'X',
 		(pS.link[3] == 1) ? (pS.speed[3] == 2) ? 'G' : 'M': 'X',
 		(pS.link[4] == 1) ? (pS.speed[4] == 2) ? 'G' : 'M': 'X');
+#endif
 	puts(buf);
 
 	switch_fini();

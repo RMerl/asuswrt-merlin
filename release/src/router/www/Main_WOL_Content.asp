@@ -56,6 +56,14 @@
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
+function initial(){
+	$('pull_arrow').title = Untranslated.select_device_name;
+	show_menu();
+	load_body();
+	showwollist();
+	showLANIPList();
+}
+
 function onSubmitCtrl(o, s) {
 	if(document.form.destIP.value == ""){
 		alert("<#JS_fieldblank#>");
@@ -195,11 +203,11 @@ function del_Row(r){
 	for(k=0; k<$('wollist_table').rows.length; k++){
 		for(j=0; j<$('wollist_table').rows[k].cells.length-1; j++){
 			if(j == 0)	
-				wollist_value += "<";
+				wollist_value += "&#60";
 			else{
-			wollist_value += $('wollist_table').rows[k].cells[0].firstChild.innerHTML;
-			wollist_value += ">";
-			wollist_value += $('wollist_table').rows[k].cells[1].firstChild.innerHTML;
+			wollist_value += $('wollist_table').rows[k].cells[0].innerHTML;
+			wollist_value += "&#62";
+			wollist_value += $('wollist_table').rows[k].cells[1].innerHTML;
 			}
 		}
 	}
@@ -281,7 +289,7 @@ function applyRule(){
 }
 </script>
 </head>
-<body onload="show_menu();load_body();showwollist();showLANIPList();">
+<body onload="initial();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
@@ -325,7 +333,7 @@ function applyRule(){
 											<th width="20%"><#NetworkTools_target#></th>
 											<td>
 												<input type="text" class="input_20_table" maxlength="17" name="destIP" value="" placeholder="ex: <% nvram_get("et0macaddr"); %>" onKeyPress="return is_hwaddr(this,event);">
-												<input class="button_gen" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="Wake" name="action">
+												<input class="button_gen" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="Wake">
 												<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 											</td>										
 										</tr>
@@ -348,7 +356,7 @@ function applyRule(){
 																					  		
 				            			<td width="40%">
 				            				<input type="text" class="input_20_table" maxlength="15" name="wollist_deviceName" onClick="hideClients_Block();">
-											<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
+											<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
 											<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>	
 				            			</td>
 				            			<td width="40%">

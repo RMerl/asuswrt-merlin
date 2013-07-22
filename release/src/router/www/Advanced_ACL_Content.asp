@@ -85,6 +85,7 @@ var simply_client_mac = smac[0] + smac[1] + smac[2] + smac[3] + smac[4] + smac[5
 var wl_maclist_x_array = '<% nvram_get("wl_maclist_x"); %>';
 
 function initial(){
+	$('pull_arrow').title = Untranslated.select_wireless_MAC;
 	$('enable_macfilter').innerHTML = Untranslated.enable_macmode;
 	show_menu();
 	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
@@ -100,7 +101,7 @@ function initial(){
 		show_wl_maclist_x();
 		
 	showWLMACList();		
-	if(band5g_support == -1)	
+	if(!band5g_support)	
 		$("wl_unit_field").style.display = "none";
 		
 	check_macMode();
@@ -318,35 +319,29 @@ function check_macMode(){
 	}	
 }
 
-function enable_macMode(obj){
-	if(obj.value == 0)
+function enable_macMode(){
+	if(document.form.enable_mac[0].checked)
 		$('mac_filter_mode').style.display = "";	
 	else
 		$('mac_filter_mode').style.display = "none";
 }
-
 </script>
 </head>
 
 <body onload="initial();">
 <div id="TopBanner"></div>
-
 <div id="Loading" class="popup_bg"></div>
-
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
-
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>		
 		<td valign="top" width="202">	
-		<div  id="mainMenu"></div>	
-		<div  id="subMenu"></div>		
-		</td>				
-		
+			<div  id="mainMenu"></div>	
+			<div  id="subMenu"></div>		
+		</td>						
     <td valign="top">
 	<div id="tabMenu" class="submenuBlock"></div>
-
 		<!--===================================Beginning of Main Content===========================================-->
 <input type="hidden" name="current_page" value="Advanced_ACL_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_ACL_Content.asp">
@@ -367,102 +362,92 @@ function enable_macMode(obj){
 	<tr>
 		<td valign="top" >
 		
-<table width="760px" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
-<tbody>
-		<tr>
-		  <td bgcolor="#4D595D" valign="top">
-		  <div>&nbsp;</div>
-		  <div class="formfonttitle"><#menu5_1#> - <#menu5_1_4#></div>
-		  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		  <div class="formfontdesc"><#DeviceSecurity11a_display1_sectiondesc#></div>
-		<table id="MainTable1" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-			<thead>
-			  <tr>
-				<td colspan="2"><#t2BC#></td>
-			  </tr>
-			</thead>		
-
-			<tr id="wl_unit_field">
-				<th><#Interface#></th>
-				<td>
-					<select name="wl_unit" class="input_option" onChange="change_wl_unit();">
-						<option class="content_input_fd" value="0" <% nvram_match("wl_unit", "0","selected"); %>>2.4GHz</option>
-						<option class="content_input_fd" value="1" <% nvram_match("wl_unit", "1","selected"); %>>5GHz</option>
-					</select>			
-				</td>
-		  </tr>
-
-			<tr id="repeaterModeHint" style="display:none;">
-				<td colspan="2" style="color:#FFCC00;height:30px;" align="center"><#page_not_support_mode_hint#></td>
-		  </tr>
+		<table width="760px" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
+		<tbody>
 			<tr>
-				<th width="30%" id="enable_macfilter"></th>
-				<td>
-					<input type="radio" name="enable_mac" value="0" onchange="enable_macMode(this);"><#checkbox_Yes#>
-					<input type="radio" name="enable_mac" value="1" onchange="enable_macMode(this);"><#checkbox_No#>
+				<td bgcolor="#4D595D" valign="top">
+					<div>&nbsp;</div>
+					<div class="formfonttitle"><#menu5_1#> - <#menu5_1_4#></div>
+					<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+					<div class="formfontdesc"><#DeviceSecurity11a_display1_sectiondesc#></div>
+					<table id="MainTable1" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+						<thead>
+						  <tr>
+							<td colspan="2"><#t2BC#></td>
+						  </tr>
+						</thead>		
+
+						<tr id="wl_unit_field">
+							<th><#Interface#></th>
+							<td>
+								<select name="wl_unit" class="input_option" onChange="change_wl_unit();">
+									<option class="content_input_fd" value="0" <% nvram_match("wl_unit", "0","selected"); %>>2.4GHz</option>
+									<option class="content_input_fd" value="1" <% nvram_match("wl_unit", "1","selected"); %>>5GHz</option>
+								</select>			
+							</td>
+					  </tr>
+
+						<tr id="repeaterModeHint" style="display:none;">
+							<td colspan="2" style="color:#FFCC00;height:30px;" align="center"><#page_not_support_mode_hint#></td>
+					  </tr>
+						<tr>
+							<th width="30%" id="enable_macfilter"></th>
+							<td>
+								<input type="radio" name="enable_mac" value="0" onclick="enable_macMode();"><#checkbox_Yes#>
+								<input type="radio" name="enable_mac" value="1" onclick="enable_macMode();"><#checkbox_No#>
+							</td>
+						</tr>
+						<tr id="mac_filter_mode">
+							<th width="30%" >
+								<a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,1);"><#FirewallConfig_MFMethod_itemname#></a>
+							</th>
+							<td>
+								<select name="wl_macmode_show" class="input_option">
+									<option class="content_input_fd" value="allow" <% nvram_match("wl_macmode", "allow","selected"); %>><#FirewallConfig_MFMethod_item1#></option>
+									<option class="content_input_fd" value="deny" <% nvram_match("wl_macmode", "deny","selected"); %>><#FirewallConfig_MFMethod_item2#></option>
+								</select>
+							</td>
+						</tr>
+					</table>
+					<table id="MainTable2" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
+						<thead>
+							<tr>
+								<td colspan="2"><#FirewallConfig_MFList_groupitemname#>&nbsp;(<#List_limit#>&nbsp;128)</td>
+							</tr>
+						</thead>
+							<tr>
+								<th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#FirewallConfig_MFList_groupitemname#></th> 
+								<th width="40%">Name</th>
+								<th width="20%">Add / Delete</th>
+							</tr>
+							<tr>
+								<td width="40%">
+									<input type="text" maxlength="17" class="input_macaddr_table" name="wl_maclist_x_0" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
+									<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;display:none;" onclick="pullWLMACList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
+									<div id="WL_MAC_List_Block" class="WL_MAC_Block"></div>
+					              		</td>
+								<td width="40%">
+									<input type="text" class="input_15_table" maxlenght="15" onKeypress="return is_alphanum(this,event);" name="wl_macname_x_0">
+								</td>
+								<td width="20%">	
+									<input type="button" class="add_btn" onClick="addRow(document.form.wl_maclist_x_0, document.form.wl_macname_x_0, 128);" value="">
+								</td>
+							</tr>      		
+					</table>
+						<div id="wl_maclist_x_Block"></div>			
+						<div id="submitBtn" class="apply_gen">
+							<input class="button_gen" onclick="applyRule()" type="button" value="<#CTL_apply#>"/>
+						</div>				
 				</td>
 			</tr>
-			<tr id="mac_filter_mode">
-				<th width="30%" >
-					<a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,1);"><#FirewallConfig_MFMethod_itemname#></a>
-				</th>
-				<td>
-					<select name="wl_macmode_show" class="input_option">
-						<option class="content_input_fd" value="allow" <% nvram_match("wl_macmode", "allow","selected"); %>><#FirewallConfig_MFMethod_item1#></option>
-						<option class="content_input_fd" value="deny" <% nvram_match("wl_macmode", "deny","selected"); %>><#FirewallConfig_MFMethod_item2#></option>
-					</select>
-				</td>
-			</tr>
+		</tbody>
 		</table>
-		
-			<table id="MainTable2" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
-			  <thead>
-			  <tr>
-				<td colspan="2"><#FirewallConfig_MFList_groupitemname#>&nbsp;(<#List_limit#>&nbsp;128)</td>
-			  </tr>
-			  </thead>
-
-          		<tr>
-	          		<th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);">
-						<#FirewallConfig_MFList_groupitemname#>
-					</th> 
-					<th width="40%">Name</th>
-					<th width="20%">Add / Delete</th>
-          		</tr>
-          		<tr>
-            		<td width="40%">
-              			<input type="text" maxlength="17" class="input_macaddr_table" name="wl_maclist_x_0" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
-              			<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;display:none;" onclick="pullWLMACList(this);" title="Select the mac address of Wireless Clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
-				<div id="WL_MAC_List_Block" class="WL_MAC_Block"></div>
-              		</td>
-			<td width="40%">
-				<input type="text" class="input_15_table" maxlenght="15" onKeypress="return is_alphanum(this,event);" name="wl_macname_x_0">
-			</td>
-              		<td width="20%">	
-              			<input type="button" class="add_btn" onClick="addRow(document.form.wl_maclist_x_0, document.form.wl_macname_x_0, 128);" value="">
-              		</td>
-          		</tr>      		
-        		</table>
-	
-			<div id="wl_maclist_x_Block"></div>
-		
-			<div id="submitBtn" class="apply_gen">
-				<input class="button_gen" onclick="applyRule()" type="button" value="<#CTL_apply#>"/>
-			</div>		
-		
-	</td>
-</tr>
-</tbody>
-</table>
-</td>
+		</td>
 </form>
-
-
         </tr>
       </table>				
 		<!--===================================Ending of Main Content===========================================-->		
-	</td>
-		
+	</td>	
     <td width="10" align="center" valign="top">&nbsp;</td>
 	</tr>
 </table>

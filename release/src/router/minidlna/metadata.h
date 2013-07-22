@@ -80,24 +80,21 @@ typedef enum {
 } ts_timestamp_t;
 
 int
-ends_with(const char * haystack, const char * needle);
-
-char *
-modifyString(char * string, const char * before, const char * after, short like);
+ends_with(const char *haystack, const char *needle);
 
 void
-check_for_captions(const char * path, sqlite_int64 detailID);
+check_for_captions(const char *path, int64_t detailID);
 
-sqlite_int64
-GetFolderMetadata(const char * name, const char * path, const char * artist, const char * genre, sqlite3_int64 album_art);
+int64_t
+GetFolderMetadata(const char *name, const char *path, const char *artist, const char *genre, int64_t album_art);
 
-sqlite_int64
-GetAudioMetadata(const char * path, char * name);
+int64_t
+GetAudioMetadata(const char *path, char *name);
 
-sqlite_int64
-GetImageMetadata(const char * path, char * name);
+int64_t
+GetImageMetadata(const char *path, char *name);
 
-sqlite_int64
-GetVideoMetadata(const char * path, char * name);
+int64_t
+GetVideoMetadata(const char *path, char *name);
 
 #endif

@@ -1115,7 +1115,7 @@ function automode_hint(){ //Lock add 2009.11.05 for 54Mbps limitation in auto mo
 				$("wl_nmode_x_hint").style.display = "";
 		}
 				
-		if(psta_support != -1 
+		if(psta_support
 				&& document.form.current_page.value.indexOf("device-map/router.asp") == -1
 				&& document.form.current_page.value.indexOf("Guest_network.asp") == -1 ){
 			if(!document.form.wl_bw) return false;
@@ -1125,7 +1125,7 @@ function automode_hint(){ //Lock add 2009.11.05 for 54Mbps limitation in auto mo
 		}
 	}
 	else{
-		if(psta_support != -1 && document.form.wl_bw){
+		if(psta_support && document.form.wl_bw){
 			genBWTable('<% nvram_get("wl_unit"); %>');
 		}
 		if(document.form.current_page.value == "Advanced_Wireless_Content.asp" 
@@ -1177,6 +1177,17 @@ function nmode_limitation(){ //Lock add 2009.11.05 for TKIP limitation in n mode
 			document.form.wl_crypto.selectedIndex = 1;
 		}*/
 		wl_auth_mode_change(0);
+	}
+}
+
+function handle_11ac_80MHz(){
+	if(band5g_support == false || band5g_11ac_support == false || document.form.wl_unit[0].selected == true || document.form.wl_nmode_x.value=='2') {
+		document.form.wl_bw[0].text = "20/40 MHz";
+		document.form.wl_bw.remove(3); //remove 80 Mhz when not when not required required
+	} else {
+		document.form.wl_bw[0].text = "20/40/80 MHz";
+		if(document.form.wl_bw.length == 3)
+			document.form.wl_bw[3] = new Option("80 MHz", "3");
 	}
 }
 
@@ -1257,6 +1268,8 @@ function change_common(o, s, v){
 		else
 			inputCtrl(document.form.wl_bw, 1);
 
+		handle_11ac_80MHz();
+
 		insertExtChannelOption();
 		if(o.value == "3"){
 			document.form.wl_wme.value = "on";
@@ -1274,8 +1287,8 @@ function change_common(o, s, v){
 	else if (v == "wl_wme"){
 		if(o.value == "off"){
 			inputCtrl(document.form.wl_wme_no_ack, 0);
-			if($("enable_wl_multicast_forward").style.display != "none")
-					inputCtrl(document.form.wl_wmf_bss_enable, 0);
+			if(!Rawifi_support)
+				inputCtrl(document.form.wl_igs, 0);
 			inputCtrl(document.form.wl_wme_apsd, 0);
 		}
 		else{
@@ -1284,9 +1297,8 @@ function change_common(o, s, v){
 				inputCtrl(document.form.wl_wme_no_ack, 0);
 			}else		
 				inputCtrl(document.form.wl_wme_no_ack, 1);
-					
 			if(!Rawifi_support)
-				inputCtrl(document.form.wl_wmf_bss_enable, 1);
+				inputCtrl(document.form.wl_igs, 1);
 			inputCtrl(document.form.wl_wme_apsd, 1);
 		}
 	}else if (v == "time_zone_select"){
@@ -1799,7 +1811,14 @@ function insertExtChannelOption_5g(){
 					var i;
 					for(i=0; i < wl_channel_list_5g.length; i++)
 						if(wl_channel_list_5g[i] == "165")
-							wl_channel_list_5g.splice(i);
+						{
+							wl_channel_list_5g.splice(i,(wl_channel_list_5g.length - i));
+							break;
+						}
+					//remove ch56 when bw != 20MHz and no ch52 is provided.
+					for(i=0; i < wl_channel_list_5g.length; i++)
+						if(wl_channel_list_5g[i] == "56" && (i == 0 || wl_channel_list_5g[i-1] != "52"))
+							wl_channel_list_5g.splice(i,1);
 				}
 				if(wl_channel_list_5g[0] != "<#Auto#>")
 						wl_channel_list_5g.splice(0,0,"0");
@@ -2681,3 +2700,4 @@ function isPrivateIP(_val){
   else 
 		return false;
 }
+

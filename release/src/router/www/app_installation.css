@@ -24,7 +24,7 @@ body {font-family: Verdana, Tohoma, Arial, Helvetica, sans-serif;padding:0;margi
 .app_name{
 	margin-left:10px;
 	font-weight:bold;
-	font-size: 18px;
+	font-size:18px;
 	margin-top:10px;
 }
 .app_desc{
@@ -52,6 +52,7 @@ body {font-family: Verdana, Tohoma, Arial, Helvetica, sans-serif;padding:0;margi
 	font-size: 12px;
 }
 .app_state{
+	text-shadow: 1px 1px 0px #000;
 	font-family:Segoe UI, Georgia, sans-serif;
 	word-break: break-all;
 	margin-top:100px;
@@ -90,6 +91,11 @@ body {font-family: Verdana, Tohoma, Arial, Helvetica, sans-serif;padding:0;margi
 #partition_div table tr:hover{
 	background-color: #444f53;
 	*background-color: #4D595D;
+}
+
+.nohover:hover{
+	background-color: #4d595d;
+	*background-color: #4d595d;
 }
 
 .app_table_radius_left{

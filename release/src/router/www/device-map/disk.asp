@@ -60,7 +60,7 @@ function initial(){
 	if(!parent.media_support)
 		$("mediaserver_hyperlink").style.display = "none";
 	
-	if(WebDav_support == -1)
+	if(!WebDav_support)
 		$("clouddiskstr").style.display = "none";
 
 	// Hide disk utility temporarily.

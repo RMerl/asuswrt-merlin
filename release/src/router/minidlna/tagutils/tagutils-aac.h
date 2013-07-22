@@ -23,4 +23,3 @@
 static int _get_aactags(char *file, struct song_metadata *psong);
 static int _get_aacfileinfo(char *file, struct song_metadata *psong);
 static off_t _aac_lookforatom(FILE *aac_fp, char *atom_path, unsigned int *atom_length);
-static time_t _mac_to_unix_time(int t) __attribute__((unused));

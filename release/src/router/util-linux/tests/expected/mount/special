@@ -1,0 +1,17 @@
+mount: fstab path: "/etc/fstab"
+mount: mtab path:  "/etc/mtab"
+mount: lock path:  "/etc/mtab~"
+mount: temp path:  "/etc/mtab.tmp"
+mount: UID:        0
+mount: eUID:       0
+mount: spec:  "/foo"
+mount: node:  "/bar"
+mount: types: "mytest"
+mount: opts:  "(null)"
+mount: external mount: argv[0] = "/sbin/mount.mytest"
+mount: external mount: argv[1] = "/foo"
+mount: external mount: argv[2] = "/bar"
+mount: external mount: argv[3] = "-v"
+mount: external mount: argv[4] = "-o"
+mount: external mount: argv[5] = "rw"
+/sbin/mount.mytest called with "/foo /bar -v -o rw"

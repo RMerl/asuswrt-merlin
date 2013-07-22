@@ -13,6 +13,7 @@
 .config.old
 config_
 config_current
+arm-uclibc
 mipsel-uclibc
 config.log
 config.status

@@ -98,17 +98,17 @@ function update_clients(e) {
     success: function(response) {
 			client_list_row = client_list_array.split('<');
 			showclient_list(0);
+			_showNextItem(listFlag);
 			if(networkmap_scanning == 1 || client_list_array == "")
 				setTimeout("update_clients();", 2000);
 			$("loadingIcon").style.display = (mapscanning == 1 ? "" : "none");
-			_showNextItem(listFlag);
 		}    
   });
 
 }
 
 function gotoMACFilter(){
-	if(parent.ParentalCtrl2_support != -1)
+	if(parent.ParentalCtrl2_support)
 		parent.location.href = "/ParentalControl.asp";
 	else
 		parent.location.href = "/Advanced_MACFilter_Content.asp";
@@ -118,6 +118,7 @@ function initial(){
 	if(client_list_array != ""){
 		client_list_row = client_list_array.split('<');
 		showclient_list(0);
+		setTimeout("_showNextItem(listFlag);", 1);
 	}
 	else{
 		var HTMLCode = '<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table" id="client_list_table">';
@@ -126,13 +127,14 @@ function initial(){
 		$("client_list_Block").innerHTML = HTMLCode;
 	}
 	setTimeout("update_clients();", 1000);
-	if((macfilter_enable != 0 || ParentalCtrl_support != -1) && sw_mode == 1)
+	if((macfilter_enable != 0 || ParentalCtrl_support) && sw_mode == 1)
 			$("macFilterHint").style.display = "";
 }
 
 var listFlag = 0;
 var itemperpage = 14;
 function _showNextItem(num){
+	$("client_list_Block").style.display = "";
 	var _client_list_row_length = client_list_row.length-1;
 
 	if(_client_list_row_length < parseInt(itemperpage)+1){
@@ -256,7 +258,7 @@ function showclient_list(list){
 					code += '<td width="36%" class="ClientName" onclick="oui_query(\'' + client_list_col[3] + '\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();">'+ client_list_col[j] +'</td>';
 			}
 			
-			if(parent.sw_mode == 1 && ParentalCtrl_support != -1)
+			if(parent.sw_mode == 1 && ParentalCtrl_support)
 				code += '<td width="12%"><input class="remove_btn_NM" type="submit" title="<#Block#>" onclick="block_this_client(this);" value=""/></td></tr>';
 			else
 				code += '</tr>';
@@ -264,7 +266,8 @@ function showclient_list(list){
 	}
 	code +='</table>';
 	$("client_list_Block").innerHTML = code;
-	
+	$("client_list_Block").style.display = "none";
+
 	for(var i=client_list_row.length-1; i>0; i--){
 		var client_list_col = client_list_row[i].split('>');
 		if(list == is_blocked_client(client_list_col[3])){

@@ -187,7 +187,7 @@ function QKWireless_load_body(){
 	document.form.wl1_ssid.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>');
 	document.form.wl1_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>');
 
-	if(band5g_support == -1){
+	if(!band5g_support){
 		$("wl_unit_field_1").style.display = "none";
 		$("wl_unit_field_2").style.display = "none";
 		$("wl_unit_field_3").style.display = "none";
@@ -260,7 +260,6 @@ function submitForm(){
 		document.form.sw_mode.value = 1;
 	//}
 
-	parent.showLoading(15);
 	//parent.w_Setting_tmp = document.form.w_Setting.value
 	//document.getElementById("loadingIcon").style.display = "";
 	//document.form.wan_nat_x.value = parent.document.QKform.wan_nat_x.value;
@@ -268,6 +267,7 @@ function submitForm(){
 	//document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
 	//document.form.target = "hidden_frame";
 	document.form.next_page.value = "/qis/QIS_finish.htm";
+	parent.showLoading(20);
 	document.form.submit();
 }
 
@@ -468,7 +468,6 @@ function gotoHome(){
 	<th width="180"><span onmouseout="return nd();" onclick="openHint(0, 23);" style="cursor:help;"><#Network_key#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 	<td class="QISformtd">
 			<input id="wl0_wpa_psk" name="wl0_wpa_psk" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>" onkeyup="Sync_2ghz(2);" style="height:25px;" class="input_32_table" maxlength="64">
-			<input id="wl0_wpa_psk_text" name="wl0_wpa_psk_text" type="text" autocapitalization="off" onBlur="switchType(this, flase);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>" onkeyup="Sync_2ghz(2);" style="height:25px;display:none;" class="input_32_table" maxlength="64">
 	</td>
 	</tr>
 
@@ -490,7 +489,6 @@ function gotoHome(){
 	<th width="180"><span onmouseout="return nd();" onclick="openHint(0, 23);" style="cursor:help;"><#Network_key#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 	<td class="QISformtd">
 			<input id="wl1_wpa_psk" name="wl1_wpa_psk" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_wpa_psk"); %>" onkeyup="Sync_2ghz(5);" style="height:25px;" class="input_32_table" maxlength="64">
-			<input id="wl1_wpa_psk_text" name="wl1_wpa_psk_text" type="text" autocapitalization="off" onBlur="switchType(this, false);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_wpa_psk"); %>" onkeyup="Sync_2ghz(5);" style="height:25px;display:none;" class="input_32_table" maxlength="64">
 	</td>
 	</tr>
 </table>

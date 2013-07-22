@@ -1,0 +1,5 @@
+/dev/sda1 /mnt/foo ext3 rw,noexec,bbb,ccc,fff=FFF,ddd 0 0
+/dev/sdb1 /mnt/bar ext3 ro,noatime,gg=G,ffff=f 0 0
+/dev/sda2 /mnt/bar ext3 rw,noatime 0 0
+/dev/sda1 /mnt/gogo ext3 rw,noatime,nosuid 0 0
+none /proc proc rw 0 0

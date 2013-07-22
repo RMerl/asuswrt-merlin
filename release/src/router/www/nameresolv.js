@@ -58,7 +58,7 @@ function parsedhcpLease(xmldoc){
 }
 
 var retHostName = function(_mac){
-	if(parent.sw_mode != 1) return false;
+	if(parent.sw_mode != 1 || !leasemac) return false;
 	if(leasemac == "") return "";
 
 	for(var idx=0; idx<leasemac.length; idx++){
@@ -113,7 +113,7 @@ function oui_query(mac) {
     success: function(response) {
 			if(overlib.isOut)
 				return nd();
-			var retData = response.responseText.split("pre")[1].split("(base 16)")[1].split("&lt;/");
+			var retData = response.responseText.split("pre")[1].split("(base 16)")[1].replace("PROVINCE OF CHINA", "R.O.C").split("&lt;/");
 			overlib_str_tmp += "<p><span>.....................................</span></p>";
 			return overlib(overlib_str_tmp + "<p style='margin-top:5px'>Manufacturer:</p>" + retData[0]);
 		}    

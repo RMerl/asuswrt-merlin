@@ -31,6 +31,7 @@
  */
 #ifndef __MINIXML_H__
 #define __MINIXML_H__
+#include <stdint.h>
 #define IS_WHITE_SPACE(c) ((c==' ') || (c=='\t') || (c=='\r') || (c=='\n'))
 
 /* if a callback function pointer is set to NULL,
@@ -40,6 +41,7 @@ struct xmlparser {
 	const char *xmlend;
 	const char *xml;	/* pointer to current character */
 	int xmlsize;
+	uint32_t flags;
 	void * data;
 	void (*starteltfunc) (void *, const char *, int);
 	void (*endeltfunc) (void *, const char *, int);

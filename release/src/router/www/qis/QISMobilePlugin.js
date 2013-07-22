@@ -14,11 +14,11 @@ function genErrorHint(){
 		htmlCode += '<span class="description_down"><#qis_finish_title1#></span></td><td align="right"></td></tr></table></div>';
 		htmlCode += '<div style="margin:5px;" id="splitLine">';
 		htmlCode += '<img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>';
-		htmlCode += "<br><br><br><p style='font-size:20px;line-height: 25px;color:#FC0;' class='QISGeneralFont'>The LAN IP of " + parent.productid + " may have been changed.<br>Duo to IE caching issue, please close this browser and access router.asus.com again.</p>";
+		htmlCode += "<br><br><br><p style='font-size:20px;line-height: 25px;color:#FC0;' class='QISGeneralFont'>* The LAN IP of " + parent.productid + " may have been changed.<br>Please close this browser and access router.asus.com again.<br><br>* <#DrSurf_sweet_advise1#></p>";
 		document.getElementsByTagName("body")[0].innerHTML = htmlCode;
 	}
 	else{
-		alert("The LAN IP of " + parent.productid + " may have been changed. Duo to IE caching issue, please close this browser and access router.asus.com again.");
+		alert("The LAN IP of " + parent.productid + " may have been changed. Please close this browser and access router.asus.com again. <#DrSurf_sweet_advise1#>");
 	}
 } 
 

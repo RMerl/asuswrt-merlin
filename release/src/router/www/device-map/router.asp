@@ -60,7 +60,7 @@ function initial(){
 	else
 		document.form.wl_subunit.value = -1;
 	
-	if(band5g_support != -1){
+	if(band5g_support){
 		$("t0").style.display = "";
 		$("t1").style.display = "";
 		/* allow to use the other band as a wireless AP
@@ -354,8 +354,7 @@ function change_key_des(){
 }
 
 function show_key(){
-	if(document.form.wl_asuskey1_text)
-			switchType(document.form.wl_asuskey1_text,true);
+	switchType(document.form.wl_asuskey1,true);
 
 	var wep_type = document.form.wl_wep_x.value;
 	var keyindex = document.form.wl_key.value;
@@ -393,18 +392,11 @@ function show_LAN_info(){
 
 	if(document.form.wl_unit.value == 0){
 		$("macaddr_wl5").style.display = "none";
-		if(band5g_support == -1)
+		if(!band5g_support)
 			$("macaddr_wl2_title").style.display = "none";
 	}
 	else
 		$("macaddr_wl2").style.display = "none";
-}
-
-function show_wepkey_help(){
-	if(document.form.wl_wep_x.value == 1)
-		parent.showHelpofDrSurf(0, 12);
-	else if(document.form.wl_wep_x.value == 2)
-		parent.showHelpofDrSurf(0, 13);
 }
 
 var secs;
@@ -423,6 +415,10 @@ function submitForm(){
 	if(!validate_string_ssid(document.form.wl_ssid))
 		return false;
 	
+	stopFlag = 1;
+	document.form.current_page.value = "/index.asp";
+	document.form.next_page.value = "/index.asp";
+	
 	if(auth_mode == "psk" || auth_mode == "psk2" || auth_mode == "pskpsk2"){
 		if(!validate_psk(document.form.wl_wpa_psk))
 			return false;
@@ -435,10 +431,6 @@ function submitForm(){
 		if(!validate_wlkey(document.form.wl_asuskey1))
 			return false;
 	}
-	
-	stopFlag = 1;
-	document.form.current_page.value = "/index.asp";
-	document.form.next_page.value = "/index.asp";
 	
 	var wep11 = eval('document.form.wl_key'+document.form.wl_key.value);
 	wep11.value = document.form.wl_asuskey1.value;
@@ -493,8 +485,7 @@ function clean_input(obj){
 function change_authmode(o, s, v){
 	change = 1;
 	pageChanged = 1;	
-	if(document.form.wl_wpa_psk_text)
-			switchType(document.form.wl_wpa_psk_text,true);
+	switchType(document.form.wl_wpa_psk,true);
 	
 	if(v == "wl_auth_mode_x"){ /* Handle AuthenticationMethod Change */
 		wl_auth_mode_change(0);
@@ -608,7 +599,7 @@ function manualSetup(){
   		<tr>
     			<td style="padding:5px 10px 0px 10px; ">
   	  			<p class="formfonttitle_nwm" ><#Wireless_name#>(SSID)</p>
-      			<input style="*margin-top:-7px; width:260px;" id="wl_ssid" type="text" name="wl_ssid" onfocus="parent.showHelpofDrSurf(0, 1);" value="<% nvram_get("wl_ssid"); %>" maxlength="32" size="22" class="input_25_table" >
+      			<input style="*margin-top:-7px; width:260px;" id="wl_ssid" type="text" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>" maxlength="32" size="22" class="input_25_table" >
       			<img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
     			</td>
   		</tr>  
@@ -633,7 +624,7 @@ function manualSetup(){
   		<tr id='all_related_wep' style='display:none;'>
 			<td style="padding:5px 10px 0px 10px; *padding:1px 10px 0px 10px;">
 				<p class="formfonttitle_nwm" ><#WLANConfig11b_WEPType_itemname#></p>
-	  			<select style="*margin-top:-7px;" name="wl_wep_x" id="wl_wep_x" class="input_option" onfocus="parent.showHelpofDrSurf(0, 9);" onchange="change_wlweptype(this);">
+	  			<select style="*margin-top:-7px;" name="wl_wep_x" id="wl_wep_x" class="input_option" onchange="change_wlweptype(this);">
 						<option value="0" <% nvram_match("wl_wep_x", "0", "selected"); %>><#wl_securitylevel_0#></option>
 						<option value="1" <% nvram_match("wl_wep_x", "1", "selected"); %>>WEP-64bits</option>
 						<option value="2" <% nvram_match("wl_wep_x", "2", "selected"); %>>WEP-128bits</option>
@@ -644,7 +635,7 @@ function manualSetup(){
   		<tr id='all_wep_key' style='display:none;'>
     			<td style="padding:5px 10px 0px 10px; *padding:1px 10px 0px 10px;">
     				<p class="formfonttitle_nwm" ><#WLANConfig11b_WEPDefaultKey_itemname#></p>
-      				<select style="*margin-top:-7px;" name="wl_key" class="input_option" onfocus="parent.showHelpofDrSurf(0, 10);" onchange="show_key();">
+      				<select style="*margin-top:-7px;" name="wl_key" class="input_option" onchange="show_key();">
         				<option value="1" <% nvram_match("wl_key", "1", "selected"); %>>Key1</option>
         				<option value="2" <% nvram_match("wl_key", "2", "selected"); %>>Key2</option>
         				<option value="3" <% nvram_match("wl_key", "3", "selected"); %>>Key3</option>
@@ -658,8 +649,7 @@ function manualSetup(){
 	    			<p class="formfonttitle_nwm" ><#WLANConfig11b_WEPKey_itemname#>
 						</p>
 						<span id="sta_asuskey1_span">
-							<input id="wl_asuskey1" name="wl_asuskey1" style="width:260px;*margin-top:-7px;" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);show_wepkey_help();" onKeyUp="return change_wlkey(this, 'WLANConfig11b');" value="" maxlength="27" class="input_25_table">
-							<input id="wl_asuskey1_text" name="wl_asuskey1_text" style="width:260px;*margin-top:-7px;display:none;" type="text" autocapitalization="off"  onClick="clean_input(this);" onBlur="switchType(this,true);parent.showHelpofDrSurf(0, 7);" value="" maxlength="27" class="input_25_table"/>
+							<input id="wl_asuskey1" name="wl_asuskey1" style="width:260px;*margin-top:-7px;" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" onKeyUp="return change_wlkey(this, 'WLANConfig11b');" value="" maxlength="27" class="input_25_table">
 						</span>
       			<img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
     			</td>
@@ -667,7 +657,7 @@ function manualSetup(){
   		<tr id='wl_crypto' style='display:none;'>
 			<td style="padding:5px 10px 0px 10px; *padding:1px 10px 0px 10px;">
 	  			<p class="formfonttitle_nwm" ><#WLANConfig11b_WPAType_itemname#></p>
-	  			<select style="*margin-top:-7px;" name="wl_crypto" class="input_option" onfocus="parent.showHelpofDrSurf(0, 6);" onchange="wl_auth_mode_change(0);">
+	  			<select style="*margin-top:-7px;" name="wl_crypto" class="input_option" onchange="wl_auth_mode_change(0);">
 					<!--option value="tkip" <% nvram_match("wl_crypto", "tkip", "selected"); %>>TKIP</option-->
 					<option value="aes" <% nvram_match("wl_crypto", "aes", "selected"); %>>AES</option>
 					<option value="tkip+aes" <% nvram_match("wl_crypto", "tkip+aes", "selected"); %>>TKIP+AES</option>
@@ -680,8 +670,7 @@ function manualSetup(){
       			<p class="formfonttitle_nwm" ><#WPA-PSKKey#>
 						</p>	
       			<span id="sta_wpa_psk_span">
-							<input id="wl_wpa_psk" name="wl_wpa_psk" style="width:260px;*margin-top:-7px;" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);parent.showHelpofDrSurf(0, 7);" value="" maxlength="64" class="input_25_table"/>
-							<input id="wl_wpa_psk_text" name="wl_wpa_psk_text" style="width:260px;*margin-top:-7px;display:none;" type="text" autocapitalization="off" onClick="clean_input(this);" onBlur="switchType(this, true);parent.showHelpofDrSurf(0, 7);" value="" maxlength="64" class="input_25_table"/>
+							<input id="wl_wpa_psk" name="wl_wpa_psk" style="width:260px;*margin-top:-7px;" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" value="" maxlength="64" class="input_25_table"/>
 						</span>
       			<img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
     			</td>

@@ -38,6 +38,9 @@ function initial(){
 	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
 		_change_wl_unit('<% nvram_get("wl_unit"); %>');
 	}
+	if(band5g_support && band5g_11ac_support && document.form.wl_unit[1].selected == true){
+		document.form.wl_nmode_x[1].text = "N + AC";
+	}
 	// special case after modifing GuestNetwork
 	if("<% nvram_get("wl_unit"); %>" == "-1" && "<% nvram_get("wl_subunit"); %>" == "-1"){
 		change_wl_unit();
@@ -82,8 +85,10 @@ function initial(){
 	else
 		document.form.wl_gmode_check.checked = false;
 
-	if(band5g_support == -1)	
+	if(!band5g_support)	
 		$("wl_unit_field").style.display = "none";
+
+	handle_11ac_80MHz();
 
 	if(sw_mode == 2 || sw_mode == 4)
 		document.form.wl_subunit.value = ('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>') ? 1 : -1;	
@@ -155,7 +160,7 @@ function applyRule(){
 		inputCtrl(document.form.wl_wpa_gtk_rekey, 1);*/
 
 		if(sw_mode == 2 || sw_mode == 4)
-			document.form.action_wait.value = "5";
+			document.form.action_wait.value = "7";
 
 		document.form.submit();
 	}
@@ -296,7 +301,7 @@ function check_NOnly_to_GN(){
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_wireless">
-<input type="hidden" name="action_wait" value="3">
+<input type="hidden" name="action_wait" value="7">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="wl_country_code" value="<% nvram_get("wl0_country_code"); %>" disabled>
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
@@ -407,9 +412,10 @@ function check_NOnly_to_GN(){
 			   	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 14);"><#WLANConfig11b_ChannelBW_itemname#></a></th>
 			   	<td>				    			
 						<select name="wl_bw" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_bw')">
+							<option class="content_input_fd" value="1" <% nvram_match("wl_bw", "1","selected"); %>>20/40/80 MHz</option>
 							<option class="content_input_fd" value="0" <% nvram_match("wl_bw", "0","selected"); %>>20 MHz</option>
-							<option class="content_input_fd" value="1" <% nvram_match("wl_bw", "1","selected"); %>>20/40 MHz</option>
 							<option class="content_input_fd" value="2" <% nvram_match("wl_bw", "2","selected"); %>>40 MHz</option>
+							<option class="content_input_fd" value="3" <% nvram_match("wl_bw", "3","selected"); %>>80 MHz</option>
 						</select>				
 			   	</td>
 			 	</tr>			  

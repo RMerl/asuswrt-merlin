@@ -23,10 +23,14 @@
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
-
 var radio_2 = '<% nvram_get("wl0_radio"); %>';
 var radio_5 = '<% nvram_get("wl1_radio"); %>';
 <% radio_status(); %>
+
+if('<% nvram_get("wl_unit"); %>' == 1)
+	var macmode = '<% nvram_get("wl1_macmode"); %>';
+else
+	var macmode = '<% nvram_get("wl0_macmode"); %>';
 
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var modify_mode = '<% get_parameter("flag"); %>';
@@ -67,7 +71,7 @@ function initial(){
 	else
 		document.form.wl_gmode_check.checked = false;
 
-	if(band5g_support == -1 || no5gmssid_support != -1){
+	if(!band5g_support || no5gmssid_support){
 		$("guest_table5").style.display = "none";
 	}
 
@@ -92,7 +96,11 @@ function initial(){
 		childsel.style.color="#FFCC00";
 		$('gn_desc').parentNode.appendChild(childsel);
 		$("wl_NOnly_note").innerHTML="* Please change the guest network authentication to WPA2 Personal AES.";	
-	}		
+	}
+
+	if(macmode != "disabled"){
+		$("mac_filter_guest").style.display = "";
+	}
 }
 
 function change_wl_expire_radio(){
@@ -213,6 +221,21 @@ function _change_wl_unit_status(__unit){
 	change_wl_unit_status(__unit);
 }
 
+function goToACLFilter(){
+	if(sw_mode == 2 || sw_mode == 4) return false;
+	
+	document.titleForm.wl_unit.disabled = false;
+	document.titleForm.wl_unit.value = document.form.wl_unit.value;
+	if(document.titleForm.current_page.value == "")
+		document.titleForm.current_page.value = "Advanced_ACL_Content.asp?af=wl_maclist_x_0";
+	if(document.titleForm.next_page.value == "")
+		document.titleForm.next_page.value = "Advanced_ACL_Content.asp?af=wl_maclist_x_0";
+	document.titleForm.action_mode.value = "change_wl_unit";
+	document.titleForm.action = "apply.cgi";
+	document.titleForm.target = "";
+	document.titleForm.submit();
+}
+
 function gen_gntable(){
 	var htmlcode = ""; 
 	var htmlcode5 = ""; 
@@ -287,9 +310,13 @@ function applyRule(){
 		else
 			document.form.wl_expire.value = 0;
 
-		if(Rawifi_support)
-			document.form.action_wait.value = parseInt(document.form.action_wait.value)+5;			// extend waiting time for RaLink
-		
+		if(document.form.wl_macmode_option.value == "disabled"){
+			document.form.wl_macmode.value = "disabled";
+		}
+		else{
+			document.form.wl_macmode.value = macmode;
+		}
+
 		document.form.submit();
 	}
 }
@@ -350,7 +377,7 @@ function disableAdvFn(){
 function guest_divctrl(flag){	
 	if(flag == 1){
 		$("guest_table2").style.display = "none";
-		if(band5g_support != -1)
+		if(band5g_support)
 			$("guest_table5").style.display = "none";
 		$("gnset_table").style.display = "";
 		if(sw_mode == "3")
@@ -360,7 +387,7 @@ function guest_divctrl(flag){
 	}
 	else{
 		$("guest_table2").style.display = "";
-		if(band5g_support == -1 || no5gmssid_support != -1)
+		if(!band5g_support || no5gmssid_support)
 				$("guest_table5").style.display = "none";
 		else
 				$("guest_table5").style.display = "";
@@ -380,7 +407,7 @@ function mbss_display_ctrl(){
 	else{
 		$("gnset_table").style.display = "none";
 		$("guest_table2").style.display = "none";
-		if(band5g_support != -1)
+		if(band5g_support)
 			$("guest_table5").style.display = "none";
 		$("applyButton").style.display = "none";
 		$("applyButton").innerHTML = "Not support!";
@@ -395,8 +422,6 @@ function close_guest_unit(_unit, _subunit){
 	NewInput.name = "wl"+ _unit + "." + _subunit +"_bss_enabled";
 	NewInput.value = "0";
 	document.unitform.appendChild(NewInput);
-	if(Rawifi_support)
-			document.unitform.action_wait.value = parseInt(document.unitform.action_wait.value)+5;			// extend waiting time for RaLink
 	document.unitform.submit();
 }
 
@@ -407,8 +432,6 @@ function change_guest_unit(_unit, _subunit){
 	document.form.next_page.value = "Guest_network.asp?flag=1";
 	FormActions("apply.cgi", "change_wl_unit", "", "");
 	document.form.target = "";
-	if(Rawifi_support)
-			document.form.action_wait.value = parseInt(document.form.action_wait.value)+5;			// extend waiting time for RaLink	
 	document.form.submit();
 }
 
@@ -420,8 +443,6 @@ function create_guest_unit(_unit, _subunit){
 	document.unitform.appendChild(NewInput);
 	document.unitform.wl_unit.value = _unit;
 	document.unitform.wl_subunit.value = _subunit;
-	if(Rawifi_support)
-			document.unitform.action_wait.value = parseInt(document.unitform.action_wait.value)+5;			// extend waiting time for RaLink	
 	document.unitform.submit();
 }
 
@@ -480,7 +501,7 @@ function genBWTable(_unit){
 <input type="hidden" name="wl_subunit" value="<% nvram_get("wl_subunit"); %>">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_wireless">
-<input type="hidden" name="action_wait" value="10">
+<input type="hidden" name="action_wait" value="15">
 </form>
 <form method="post" name="form" action="/start_apply2.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
@@ -492,7 +513,7 @@ function genBWTable(_unit){
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_wireless">
-<input type="hidden" name="action_wait" value="10">
+<input type="hidden" name="action_wait" value="15">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="wl_country_code" value="<% nvram_get("wl0_country_code"); %>" disabled>
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
@@ -509,6 +530,7 @@ function genBWTable(_unit){
 <input type="hidden" name="wl_key_type" value='<% nvram_get("wl_key_type"); %>'> <!--Lock Add 2009.03.10 for ralink platform-->
 <input type="hidden" name="wl_channel_orig" value='<% nvram_get("wl_channel"); %>'>
 <input type="hidden" name="wl_expire" value='<% nvram_get("wl_expire"); %>'>
+<input type="hidden" name="wl_macmode" value='<% nvram_get("wl_macmode"); %>'>
 
 <input type="hidden" name="wl_gmode_protection" value="<% nvram_get("wl_gmode_protection"); %>" disabled>
 <input type="hidden" name="wl_wpa_mode" value="<% nvram_get("wl_wpa_mode"); %>" disabled>
@@ -749,6 +771,18 @@ function genBWTable(_unit){
 			  		</select>
 					</td>
 			 	</tr>
+
+				<tr id="mac_filter_guest" style="display:none">
+					<th>Enable MAC Filter</th>
+					<td>
+						<select name="wl_macmode_option" class="input_option">
+							<option class="content_input_fd" value="" <% nvram_match("wl_macmode", "","selected"); %>><#checkbox_Yes#></option>
+							<option class="content_input_fd" value="disabled" <% nvram_match("wl_macmode", "disabled","selected"); %>><#checkbox_No#></option>
+						</select>
+						&nbsp;
+						<span style="cursor:pointer" onclick="goToACLFilter();"><#FirewallConfig_MFList_groupitemname#></span>
+					</td>
+				</tr>
 			</table>
 
 			<div class="apply_gen" id="applyButton">

@@ -1,0 +1,6 @@
+------ fs:
+source: /dev/mapper/kzak-home
+target: /home/kzak
+fstype: ext4
+optstr: rw,noatime
+VFS-optstr: rw,noatime

@@ -8,7 +8,7 @@
 #define RAETH_MII_WRITE			0x89F4
 #define RAETH_ESW_INGRESS_RATE		0x89F5
 #define RAETH_ESW_EGRESS_RATE		0x89F6
-#if defined(RTN14U)
+#if defined(RTN14U) || defined(RTAC52U)
 #define RAETH_ESW_PHY_DUMP		0x89F7
 #endif
 /* ASUS Ext */
@@ -18,7 +18,7 @@
 #define RAETH_ASUS_RESET		0x0
 #define RAETH_ASUS_STATS		0x1
 
-#if defined(RTN14U)
+#if defined(RTN14U) || defined(RTAC52U)
 
 #define REG_ESW_WT_MAC_MFC              0x10
 #define REG_ESW_WT_MAC_ATA1             0x74
@@ -66,7 +66,7 @@
 #define REG_ESW_MAX			0x14C
 #elif defined (CONFIG_RALINK_RT5350)
 #define REG_ESW_MAX                     0x16C
-#elif defined(RTN14U)
+#elif defined(RTN14U) || defined(RTAC52U)
 #define REG_ESW_MAX			0x7FFFF
 #else //RT305x, RT3350
 #define REG_ESW_MAX			0xFC
@@ -79,17 +79,10 @@ typedef struct rt3052_esw_reg {
 } esw_reg;
 
 typedef struct ralink_mii_ioctl_data {
-#if defined(RTN14U)   
-	unsigned long phy_id;
-	unsigned long reg_num;
-	unsigned long val_in;
-	unsigned long val_out;
-#else
         __u32   phy_id;
         __u32   reg_num;
         __u32   val_in;
         __u32   val_out;
-#endif	
 } ra_mii_ioctl_data;
 
 typedef struct rt335x_esw_reg {

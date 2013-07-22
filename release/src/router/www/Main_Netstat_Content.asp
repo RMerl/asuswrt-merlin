@@ -351,7 +351,7 @@ function validForm(){
 									</table>
 
 									<div class="apply_gen">
-										<input class="button_gen" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="Netstat" name="action">
+										<input class="button_gen" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="Netstat">
 										<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 									</div>
 

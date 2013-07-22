@@ -24,7 +24,9 @@ install:
 
 ifeq ($(RTCONFIG_APP_PREINSTALLED),y)
 	install -m 0644 optware.asus.$(pkg_type) $(INSTALLDIR)/rom/optware.asus
-ifneq ($(RTCONFIG_BCMARM),y)
+ifeq ($(RTCONFIG_BCMARM),y)
+	install -m 0644 optware.mbwe-bluering $(INSTALLDIR)/rom
+else
 	install -m 0644 optware.oleg $(INSTALLDIR)/rom
 
 	-install -m 0644 packages/libuclibc++_*_$(pkg_type).ipk $(INSTALLDIR)/rom
@@ -53,10 +55,12 @@ endif
 	mkdir -p $(INSTALLDIR)/usr/sbin
 	install -m 0755 apps_scripts/*.sh $(INSTALLDIR)/usr/sbin
 	install -m 0755 webs_scripts/*.sh $(INSTALLDIR)/usr/sbin
-ifeq ($(RTCONFIG_AUTOLIVEUPDATE_NOZIP),y)
-	cp -f webs_scripts/nozip_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
-else
+ifeq ($(RTCONFIG_AUTOLIVEUPDATE_ZIP),y)
 	cp -f webs_scripts/zip_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
+	cp -f webs_scripts/zip_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
+else
+	cp -f webs_scripts/nozip_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
+	cp -f webs_scripts/nozip_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
 endif
 
 	# remove comments, compress whitespace

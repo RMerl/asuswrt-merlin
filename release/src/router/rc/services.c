@@ -44,10 +44,16 @@
 #include <ralink.h>
 #endif
 #include <shared.h>
+#ifdef RTCONFIG_DSL
+#include <dsl-upg.h>
+#endif
 
 extern char *crypt __P((const char *, const char *)); //should be defined in unistd.h with _XOPEN_SOURCE defined
 #define sin_addr(s) (((struct sockaddr_in *)(s))->sin_addr)
 
+/* The g_reboot global variable is used to skip several unnecessary delay
+ * and redundant steps during reboot / restore to default procedure.
+ */
 int g_reboot = 0;
 
 // Pop an alarm to recheck pids in 500 msec.
@@ -339,18 +345,11 @@ void start_dnsmasq(int force)
 		"interface=%s\n"		// dns & dhcp only on LAN interface
 		"min-port=%u\n",		// min port used for random src port
 #ifdef RTCONFIG_YANDEXDNS
-		nvram_get_int("yadns_enable_x") ? "" :	// no resolv.conf
+		nvram_get_int("yadns_enable_x") ? "" : // no resolv.conf
 #endif
 		dmresolv,
 		lan_ifname,
 		nvram_get_int("dns_minport") ? : 4096);
-
-	/* legacy: DNS servers */
-	const dns_list_t *dns = get_dns();	// this always points to a static buffer
-	for (n = 0 ; n < dns->count; ++n) {
-		if (dns->dns[n].port != 53)
-			fprintf(fp, "server=%s#%u\n", inet_ntoa(dns->dns[n].addr), dns->dns[n].port);
-	}
 
 #ifdef RTCONFIG_YANDEXDNS
 	/* default Yandex.DNS server for clients */
@@ -360,13 +359,20 @@ void start_dnsmasq(int force)
 	} else
 #endif
 {
+	/* legacy: DNS servers */
+	const dns_list_t *dns = get_dns();	// this always points to a static buffer
+	for (n = 0 ; n < dns->count; ++n) {
+		if (dns->dns[n].port != 53)
+			fprintf(fp, "server=%s#%u\n", inet_ntoa(dns->dns[n].addr), dns->dns[n].port);
+	}
+}
+
 	/* lan domain */
 	nv = nvram_safe_get("lan_domain");
 	if (*nv) {
 		fprintf(fp, "domain=%s\n"
 			    "expand-hosts\n", nv);	// expand hostnames in hosts file
 	}
-}
 
 	/* caching */
 	fprintf(fp, "no-negcache\n"
@@ -494,11 +500,7 @@ void start_dnsmasq(int force)
 	/* Create resolv.conf with empty nameserver list */
 	f_write(dmresolv, NULL, 0, FW_APPEND, 0666);
 
-#if defined (SMP)
-	eval("taskset", "-c", DEFAULT_TASKSET_CPU, "dnsmasq", "--log-async");
-#else
 	eval("dnsmasq", "--log-async");
-#endif
 
 /* TODO: remove it for here !!!*/
 	int unit;
@@ -756,6 +758,7 @@ void start_dhcp6s(void)
 		for (i = 0; i < 3; i++) {
 			snprintf(nvname, sizeof(nvname), "ipv6_dns%d", i + 1);
 			p = nvram_safe_get(nvname);
+			if (!strlen(p)) continue;
 			/* TODO: make validation ipv6 address */
 			next += sprintf(next, strlen(ipv6_dns_str) ? " %s" : "%s", p);
 		}
@@ -914,6 +917,7 @@ void start_radvd(void)
 			for (i = 0; i < 3; i++) {
 				snprintf(nvname, sizeof(nvname), "ipv6_dns%d", i + 1);
 				p = nvram_safe_get(nvname);
+				if (!strlen(p)) continue;
 				/* TODO: make validation ipv6 address */
 				next += sprintf(next, strlen(ipv6_dns_str) ? " %s" : "%s", p);
 			}
@@ -1052,13 +1056,35 @@ int no_need_to_start_wps(void)
 				/*(strstr(nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp)), "psk") &&
 					nvram_match(strcat_r(prefix, "crypto", tmp), "tkip")) ||*/
 				strstr(nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp)), "wpa") ||
-				nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "radius") ||
+				nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "radius") /*||
 #if 0
 				!get_radio(i, -1)
 #else
 				nvram_match(strcat_r(prefix, "radio", tmp), "0")
-#endif
+#endif*/
 			)
+				return 1;
+		}
+
+		i++;
+	}
+
+	return 0;
+}
+
+int wps_band_radio_off(int wps_band)
+{
+	int i;
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
+	char word[256], *next;
+
+	i = 0;
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next) {
+		if (i == wps_band) {
+			snprintf(prefix, sizeof(prefix), "wl%d_", i);
+
+			if (nvram_match(strcat_r(prefix, "radio", tmp), "0"))
 				return 1;
 		}
 
@@ -1100,6 +1126,8 @@ wl_wpsPincheck(char *pin_string)
 int 
 start_wps_pbc(int unit)
 {
+	if (wps_band_radio_off(unit)) return 1;
+
 	if (!no_need_to_start_wps() && nvram_match("wps_enable", "0"))
 	{
 		nvram_set("wps_enable", "1");
@@ -1149,11 +1177,7 @@ stop_wpsaide()
 int
 start_wpsaide()
 {
-#if defined (SMP)
-	char *wpsaide_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "wpsaide", NULL};
-#else
 	char *wpsaide_argv[] = {"wpsaide", NULL};
-#endif
 	pid_t pid;
 
 	stop_wpsaide();
@@ -1166,14 +1190,13 @@ start_wps(void)
 {
 #ifdef RTCONFIG_WPS
 #ifdef CONFIG_BCMWL5
-#if defined (SMP)
-	char *wps_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "/bin/wps_monitor", NULL};
-#else
 	char *wps_argv[] = {"/bin/wps_monitor", NULL};
-#endif
 	pid_t pid;
 	int wait_time = 3;
 #endif
+	if (wps_band_radio_off(nvram_get_int("wps_band")))
+		return 1;
+
 	if (no_need_to_start_wps())
 		nvram_set("wps_enable", "0");
 
@@ -1279,11 +1302,7 @@ reset_wps(void)
 int
 start_eapd(void)
 {
-#if defined (SMP)
-	int ret = eval("taskset", "-c", DEFAULT_TASKSET_CPU, "/bin/eapd");
-#else
 	int ret = eval("/bin/eapd");
-#endif
 
 	return ret;
 }
@@ -1319,11 +1338,7 @@ stop_dcsd(void)
 //2008.10 magic{
 int start_networkmap(void)
 {
-#if defined (SMP)
-	char *networkmap_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "networkmap", NULL};
-#else
 	char *networkmap_argv[] = {"networkmap", NULL};
-#endif
 	pid_t pid;
 
 	//if (!is_routing_enabled())
@@ -1382,11 +1397,7 @@ stop_infosvr()
 int 
 start_infosvr()
 {
-#if defined (SMP)
-	char *infosvr_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "/usr/sbin/infosvr", "br0", NULL};
-#else
 	char *infosvr_argv[] = {"/usr/sbin/infosvr", "br0", NULL};
-#endif
 	pid_t pid;
 
 	return _eval(infosvr_argv, NULL, 0, &pid);
@@ -1558,7 +1569,6 @@ const char *yandex_dns(int mode)
 		return server[0];
 	}
 }
-
 #endif
 
 #ifndef RTCONFIG_DNSMASQ
@@ -2097,11 +2107,7 @@ start_syslogd(void)
 {
 	int argc;
 	char syslog_path[PATH_MAX];
-#if defined (SMP)
-	char *syslogd_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "syslogd",
-#else
 	char *syslogd_argv[] = {"syslogd",
-#endif
 		"-m", "0",				/* disable marks */
 		"-S",					/* small log */
 //		"-D",					/* suppress dups */
@@ -2149,11 +2155,7 @@ int
 start_klogd(void)
 {
 	pid_t pid;
-#if 0 /* defined (SMP) */
-	char *klogd_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "/sbin/klogd", NULL};
-#else
 	char *klogd_argv[] = {"/sbin/klogd", NULL};
-#endif
 
 	return _eval(klogd_argv, NULL, 0, &pid);
 }
@@ -2171,39 +2173,32 @@ _dprintf("%s:\n", __FUNCTION__);
 int 
 start_misc(void)
 {
-#if defined (SMP)
-	char *infosvr_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "infosvr", "br0", NULL};
-	char *watchdog_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "watchdog", NULL};
-#else
 	char *infosvr_argv[] = {"infosvr", "br0", NULL};
 	char *watchdog_argv[] = {"watchdog", NULL};
-#endif
 #ifdef RTCONFIG_FANCTRL
-#if 0 /* defined (SMP) */
-	char *phy_tempsense_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "phy_tempsense", NULL};
-#else
 	char *phy_tempsense_argv[] = {"phy_tempsense", NULL};
-#endif	/* SMP */
 #endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
-#if 0 /* defined (SMP) */
-	char *psta_monitor_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "psta_monitor", NULL};
-#else
 	char *psta_monitor_argv[] = {"psta_monitor", NULL};
-#endif	/* SMP */
 #endif
 #endif
-	pid_t pid;
-
-	_eval(infosvr_argv, NULL, 0, &pid);
-	_eval(watchdog_argv, NULL, 0, &pid);
+	pid_t pid1, pid2;
 #ifdef RTCONFIG_FANCTRL
-	_eval(phy_tempsense_argv, NULL, 0, &pid);
+	pid_t pid3;
+#endif
+#ifdef RTCONFIG_PROXYSTA
+	pid_t pid4;
+#endif
+
+	_eval(infosvr_argv, NULL, 0, &pid1);
+	_eval(watchdog_argv, NULL, 0, &pid2);
+#ifdef RTCONFIG_FANCTRL
+	_eval(phy_tempsense_argv, NULL, 0, &pid3);
 #endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
-	_eval(psta_monitor_argv, NULL, 0, &pid);
+	_eval(psta_monitor_argv, NULL, 0, &pid4);
 #endif
 #endif
 	return 0;
@@ -2326,18 +2321,10 @@ run_telnetd(void)
 void
 start_httpd(void)
 {
-#if defined (SMP)
-	char *httpd_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "httpd", NULL};
-#else
 	char *httpd_argv[] = {"httpd", NULL};
-#endif
 	pid_t pid;
 #ifdef RTCONFIG_HTTPS
-#if defined (SMP)
-	char *https_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "httpd", "-s", "-p", nvram_safe_get("https_lanport"), NULL};
-#else
 	char *https_argv[] = {"httpd", "-s", "-p", nvram_safe_get("https_lanport"), NULL};
-#endif
 	pid_t pid_https;
 #endif
 	int enable;
@@ -2655,21 +2642,13 @@ int start_lltd(void)
 			eval("lld2d.rtac66r", "br0");
 			break;
 		default:
-#if 0 /* defined (SMP) */
-			eval("taskset", "-c", DEFAULT_TASKSET_CPU, "lld2d", "br0");
-#else
 			eval("lld2d", "br0");
-#endif
 			break;
 		}
 	}
 	else
 #endif
-#if 0 /* defined (SMP) */
-		eval("taskset", "-c", DEFAULT_TASKSET_CPU, "lld2d", "br0");
-#else
 		eval("lld2d", "br0");
-#endif
 
 	chdir("/");
 
@@ -2875,11 +2854,7 @@ stop_services(void)
 // 2008.10 magic 
 int start_wanduck(void)
 {	
-#if defined (SMP)
-	char *argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "/sbin/wanduck", NULL};
-#else
 	char *argv[] = {"/sbin/wanduck", NULL};
-#endif
 	pid_t pid;
 #if 0
 	int sw_mode = nvram_get_int("sw_mode");
@@ -2910,15 +2885,68 @@ stop_watchdog(void)
 int 
 start_watchdog(void)
 {
-#if defined (SMP)
-	char *watchdog_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "watchdog", NULL};
-#else
 	char *watchdog_argv[] = {"watchdog", NULL};
-#endif
 	pid_t whpid;
 
 	return _eval(watchdog_argv, NULL, 0, &whpid);
 }
+
+#ifdef RTCONFIG_DSL
+//Ren.B
+int check_tc_upgrade(void)
+{
+	int ret_val_sep = 0;
+
+	TRACE_PT("check_tc_upgrade\n");
+
+	ret_val_sep = separate_tc_fw_from_trx();
+	TRACE_PT("check_tc_upgrade, ret_val_sep=%d\n", ret_val_sep);
+	if(ret_val_sep)
+	{
+		if(check_tc_firmware_crc() == 0)
+		{
+			TRACE_PT("check_tc_upgrade ret=1\n");
+			return 1; //success
+		}
+	}
+	TRACE_PT("check_tc_upgrade ret=0\n");
+	return 0; //fail
+}
+
+//New version will rename downloaded firmware to /tmp/linux.trx as default.
+int start_tc_upgrade(void)
+{
+	int ret_val_trunc = 0;
+	int ret_val_comp = 0;
+	
+	TRACE_PT("start_tc_upgrade\n");
+
+	if(check_tc_upgrade())
+	{
+		ret_val_trunc = truncate_trx();
+		TRACE_PT("start_tc_upgrade ret_val_trunc=%d\n", ret_val_trunc);
+		if(ret_val_trunc)
+		{
+			do_upgrade_adsldrv();
+			ret_val_comp = compare_linux_image();
+			TRACE_PT("start_tc_upgrade ret_val_comp=%d\n", ret_val_comp);
+			if (ret_val_comp == 0)
+			{
+				// same trx
+				TRACE_PT("same firmware\n");
+				unlink("/tmp/linux.trx");
+			}
+			else
+			{
+				// different trx
+				TRACE_PT("different firmware\n");
+			}
+		}
+	}
+	return 0;
+}
+//Ren.E
+#endif
 
 #ifdef RTCONFIG_FANCTRL
 int
@@ -2933,11 +2961,7 @@ stop_phy_tempsense()
 int
 start_phy_tempsense()
 {
-#if 0 /* defined (SMP) */
-	char *phy_tempsense_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "phy_tempsense", NULL};
-#else
 	char *phy_tempsense_argv[] = {"phy_tempsense", NULL};
-#endif
 	pid_t pid;
 
 	return _eval(phy_tempsense_argv, NULL, 0, &pid);
@@ -2958,11 +2982,7 @@ stop_psta_monitor()
 int
 start_psta_monitor()
 {
-#if 0 /* defined (SMP) */
-	char *psta_monitor_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "psta_monitor", NULL};
-#else
 	char *psta_monitor_argv[] = {"psta_monitor", NULL};
-#endif
 	pid_t pid;
 
 	return _eval(psta_monitor_argv, NULL, 0, &pid);
@@ -2974,11 +2994,7 @@ start_psta_monitor()
 int
 start_usbled(void)
 {
-#if defined (SMP)
-	char *usbled_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "usbled", NULL};
-#else
 	char *usbled_argv[] = {"usbled", NULL};
-#endif
 	pid_t whpid;
 
 	stop_usbled();
@@ -3057,8 +3073,7 @@ void check_services(void)
 
 void handle_notifications(void)
 {
-#define MAX_CMD_FIELD 8
-	char nv[256], nvtmp[32], *cmd[MAX_CMD_FIELD], *script;
+	char nv[256], nvtmp[32], *cmd[8], *script;
 	char *nvp, *b, *nvptr;
 	int action = 0;
 	int count;
@@ -3078,10 +3093,9 @@ again:
 		_dprintf("cmd[%d]=%s\n", count, b);
 		cmd[count] = b;
 		count ++;
-		if(count==MAX_CMD_FIELD) break; 
+		if(count == 7) break;
 	}
-
-	while(count<MAX_CMD_FIELD) cmd[count++] = 0;
+	cmd[count] = 0;
 	
 	if(cmd[0]==0 || strlen(cmd[0])==0) {
 		nvram_set("rc_service", "");
@@ -3124,15 +3138,15 @@ again:
 		/* Fall through to signal handler of init process. */
 	}
 	else if (strcmp(script, "resetdefault") == 0) {
+		g_reboot = 1;
 		stop_wan();
 #ifdef RTCONFIG_USB
 		stop_usb();
 		stop_usbled();
 #endif
 		sleep(3);
-		if(get_model() == MODEL_RTAC56U || get_model() == MODEL_RTAC68U)
-			eval("mtd-erase2", "nvram");
-		else if (nvram_contains_word("rc_support", "nandflash"))	/* RT-N16UHP */
+		nvram_set(ASUS_STOP_COMMIT, "1");
+		if (nvram_contains_word("rc_support", "nandflash"))     /* RT-AC56U/RT-AC68U/RT-N18UHP */
 			eval("mtd-erase2", "nvram");
 		else
 			eval("mtd-erase", "-d", "nvram");
@@ -3146,12 +3160,16 @@ again:
 	}
 	else if(strcmp(script, "upgrade") == 0) {
 		if(action&RC_SERVICE_STOP) {
+			stop_wan();
 			// what process need to stop to free memory or 
 			// to avoid affecting upgrade
 			stop_misc();
 			stop_logger();
 			stop_wanduck();
 			stop_upnp();
+#if defined(RTN56U)
+			stop_if_misc();
+#endif
 #ifdef RTCONFIG_USB
 			stop_usb();
 			stop_usbled();
@@ -3165,6 +3183,11 @@ again:
 		if(action&RC_SERVICE_START) {
 			char upgrade_file[64] = "/tmp/linux.trx";
 			char *webs_state_info = nvram_safe_get("webs_state_info");
+
+		#ifdef RTCONFIG_DSL
+			_dprintf("to do start_tc_upgrade\n");
+			start_tc_upgrade();
+		#endif
 
 #ifndef RTCONFIG_BCMARM
 			limit_page_cache_ratio(90);
@@ -3187,10 +3210,6 @@ again:
 			/* flash it if exists */
 			if (f_exists(upgrade_file)) {
 				stop_wan();
-				if(get_model() == MODEL_RTAC56U || get_model() == MODEL_RTAC68U)
-					eval("mtd-write2", upgrade_file, "linux");
-				else
-					eval("mtd-write", "-i", upgrade_file, "-d", "linux");
 #ifdef RTCONFIG_DUAL_TRX
 				if (!nvram_match("nflash_swecc", "1"))
 				{
@@ -3198,6 +3217,10 @@ again:
 					eval("mtd-write", "-i", upgrade_file, "-d", "linux2");
 				}
 #endif
+				if (nvram_contains_word("rc_support", "nandflash"))	/* RT-AC56U/RT-AC68U/RT-N16UHP */
+					eval("mtd-write2", upgrade_file, "linux");
+				else
+					eval("mtd-write", "-i", upgrade_file, "-d", "linux");
 				/* erase trx and free memory on purpose */
 				unlink(upgrade_file);
 				kill(1, SIGTERM);
@@ -3477,46 +3500,46 @@ again:
 	}
 #ifdef CONFIG_BCMWL5
 #ifdef RTCONFIG_BCMWL6A
-	else if (strcmp(script, "clkfreq") == 0) {
-		dbG("clkfreq: %s\n", nvram_safe_get("clkfreq"));
+        else if (strcmp(script, "clkfreq") == 0) {
+                dbG("clkfreq: %s\n", nvram_safe_get("clkfreq"));
 
-		char *string = nvram_safe_get("clkfreq");
-		char *cpu, *ddr, buf[100];
-		unsigned int cpu_clock = 0, ddr_clock = 0;
-		static unsigned int cpu_clock_table[] = {600, 800, 1000, 1200, 1400, 1600};
-		static unsigned int ddr_clock_table[] = {333, 389, 400, 533, 666, 775, 800};
+                char *string = nvram_safe_get("clkfreq");
+                char *cpu, *ddr, buf[100];
+                unsigned int cpu_clock = 0, ddr_clock = 0;
+                static unsigned int cpu_clock_table[] = {600, 800, 1000, 1200, 1400, 1600};
+                static unsigned int ddr_clock_table[] = {333, 389, 400, 533, 666, 775, 800};
 
-		if (strchr(string, ','))
-		{
-			strncpy(ddr = buf, string, sizeof(buf));
-			cpu = strsep(&ddr, ",");
-			cpu_clock=atoi(cpu);
-			ddr_clock=atoi(ddr);
-		}
-		else
-			cpu_clock=atoi(string);
+                if (strchr(string, ','))
+                {
+                        strncpy(ddr = buf, string, sizeof(buf));
+                        cpu = strsep(&ddr, ",");
+                        cpu_clock=atoi(cpu);
+                        ddr_clock=atoi(ddr);
+                }
+                else
+                        cpu_clock=atoi(string);
 
 
-		for (i = 0; i < (sizeof(cpu_clock_table)/sizeof(cpu_clock_table[0])); i++)
-		{
-			if (cpu_clock == cpu_clock_table[i])
-				goto check_ddr_clock;
-		}
-		cpu_clock = 800;
+                for (i = 0; i < (sizeof(cpu_clock_table)/sizeof(cpu_clock_table[0])); i++)
+                {
+                        if (cpu_clock == cpu_clock_table[i])
+                                goto check_ddr_clock;
+                }
+                cpu_clock = 800;
 check_ddr_clock:
-		for (i = 0; i < (sizeof(ddr_clock_table)/sizeof(ddr_clock_table[0])); i++)
-		{
-			if (ddr_clock == ddr_clock_table[i])
-				goto check_ddr_done;
-		}
-		ddr_clock = 533;
+                for (i = 0; i < (sizeof(ddr_clock_table)/sizeof(ddr_clock_table[0])); i++)
+                {
+                        if (ddr_clock == ddr_clock_table[i])
+                                goto check_ddr_done;
+                }
+                ddr_clock = 533;
 check_ddr_done:
-		if (cpu_clock) dbG("target CPU clock: %d\n", cpu_clock);
-		if (ddr_clock) dbG("target DDR clock: %d\n", ddr_clock);
+                if (cpu_clock) dbG("target CPU clock: %d\n", cpu_clock);
+                if (ddr_clock) dbG("target DDR clock: %d\n", ddr_clock);
 
-		nvram_unset("sdram_ncdl");
-		nvram_commit();
-	}
+                nvram_unset("sdram_ncdl");
+                nvram_commit();
+        }
 #endif
 	else if (strcmp(script, "set_wltxpower") == 0) {
 	if ((get_model() == MODEL_RTAC66U) ||
@@ -3801,9 +3824,6 @@ check_ddr_done:
 				free_caches(FREE_MEM_PAGE, 1, 0);
 
 				cmd[0] = nvtmp;
-				count = 0;
-				while(cmd[count] != NULL && (count+1) < MAX_CMD_FIELD)
-					++count;
 				start_script(count, cmd);
 			}
 		}
@@ -3821,9 +3841,6 @@ check_ddr_done:
 #endif
 			sprintf(nvtmp, "%s.sh", script);
 			cmd[0] = nvtmp;
-			count = 0;
-			while(cmd[count] != NULL && (count+1) < MAX_CMD_FIELD)
-				++count;
 			start_script(count, cmd);
 		}
 	}
@@ -4038,15 +4055,6 @@ check_ddr_done:
 		if(action&RC_SERVICE_STOP) stop_autodet();
 		if(action&RC_SERVICE_START) start_autodet();
 	}
-#if defined(RTN14U)
-#if defined(HWNAT_FIX)
-	else if (strcmp(script, "hwnat")==0)
-	{
-	//	if(action&RC_SERVICE_STOP) 
-		if(action&RC_SERVICE_START) hwnat_workaround();
-	}
-#endif
-#endif
 #ifdef CONFIG_BCMWL5
 	else if (strcmp(script, "wlcscan")==0)
 	{
@@ -4139,7 +4147,24 @@ check_ddr_done:
 		if(action&RC_SERVICE_STOP) stop_pptpd();
 		if(action&RC_SERVICE_START) {
 			start_pptpd();
+#ifdef RTCONFIG_DNSMASQ
 			restart_dnsmasq(0);
+#else
+			restart_dns();
+#endif
+			start_firewall(wan_primary_ifunit(), 0);
+		}
+	}
+#endif
+#ifdef RTCONFIG_YANDEXDNS
+	else if (strcmp(script, "yadns") == 0)
+	{
+		if(action&RC_SERVICE_START) {
+#ifdef RTCONFIG_DNSMASQ
+			restart_dnsmasq(0);
+#else
+			restart_dns();
+#endif
 			start_firewall(wan_primary_ifunit(), 0);
 		}
 	}
@@ -4196,6 +4221,42 @@ check_ddr_done:
 	else if (strcmp(script, "updateresolv") == 0) {
 		update_resolvconf();
 	}
+	else if (strcmp(script, "app") == 0) {
+#if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
+		if(action & RC_SERVICE_STOP)
+			stop_app();
+#endif
+	}
+#ifdef RTCONFIG_USBRESET
+	else if (strcmp(script, "usbreset") == 0) {
+#define MAX_USBRESET_NUM 5
+		char reset_seconds[] = {2, 4, 6, 8, 10};
+		char *usbreset_active = nvram_safe_get("usbreset_active");
+		char *usbreset_num = nvram_safe_get("usbreset_num");
+		char buf[4];
+		int reset_num = 0;
+_dprintf("test 1. usbreset_active=%s, usbreset_num=%s.\n", usbreset_active, usbreset_num);
+
+		if(strlen(usbreset_num) > 0 && strlen(usbreset_active) > 0 && strcmp(usbreset_active, "0")){
+			reset_num = atoi(usbreset_num);
+			if(reset_num < MAX_USBRESET_NUM){
+				stop_usb_program(1);
+
+_dprintf("test 2. turn off the USB power during %d seconds.\n", reset_seconds[reset_num]);
+				set_pwr_usb(0);
+				sleep(reset_seconds[reset_num]);
+
+				++reset_num;
+				memset(buf, 0, 4);
+				sprintf(buf, "%d", reset_num);
+				nvram_set("usbreset_num", buf);
+				nvram_set("usbreset_active", "0");
+
+				set_pwr_usb(1);
+			}
+		}
+	}
+#endif
 	else
 	{
 		fprintf(stderr,
@@ -4210,11 +4271,6 @@ _dprintf("goto again(%d)...\n", getpid());
 
 	nvram_set("rc_service", "");
 	nvram_set("rc_service_pid", "");	
-#if defined(RTN14U)
-#ifdef HWNAT_FIX
-	reinit_hwnat();
-#endif
-#endif
 _dprintf("handle_notifications() end\n");
 }
 #ifdef CONFIG_BCMWL5
@@ -4357,11 +4413,6 @@ void start_nat_rules(void)
 	struct stat s;
 
 	// all rules applied directly according to currently status, wanduck help to triger those not cover by normal flow
-#if defined(RTN14U)
-#ifdef HWNAT_FIX
-	reinit_hwnat();
-#endif
-#endif
  	if(nvram_match("x_Setting", "0")){
 		stop_nat_rules();
 		return;
@@ -4466,11 +4517,7 @@ start_acsd(void)
 	stop_acsd();
 
 	if (!restore_defaults_g && strlen(nvram_safe_get("acs_ifnames")))
-#if defined (SMP)
-		ret = eval("taskset", "-c", DEFAULT_TASKSET_CPU, "/usr/sbin/acsd");
-#else
 		ret = eval("/usr/sbin/acsd");
-#endif
 
 	return ret;
 }
@@ -4493,10 +4540,9 @@ stop_acsd(void)
 int
 firmware_check_main(int argc, char *argv[])
 {
-	int ret = 0;
 	if(argc!=2) 
-		return 0;
-	
+		return -1;
+
 	_dprintf("FW: %s\n", argv[1]);
 
 	if(check_imagefile(argv[1])) {

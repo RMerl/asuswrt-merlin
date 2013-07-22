@@ -19,7 +19,7 @@ ifeq ($(RTCONFIG_BCMWL6),y)
 CFLAGS  += -I$(SRCBASE)/shared/bcmwifi/include
 endif
 CFLAGS  += -Dlinux -DNO_PARALLEL -DPRNINFO
-LDFLAGS = -L$(TOP)/shared -lshared -L$(TOP)/nvram -lnvram 
+LDFLAGS = -L$(TOP)/shared -lshared -L$(TOP)/nvram${BCMEX} -lnvram 
 ifeq ($(RTCONFIG_BCMARM),y)
 LDFLAGS += -lgcc_s
 endif

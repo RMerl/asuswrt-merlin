@@ -173,23 +173,23 @@ sendBeaconMessage(int fd, struct sockaddr_in * client, int len, int broadcast)
  * Returns true if this was a broadcast beacon msg
  */
 int
-rcvBeaconMessage(char * beacon)
+rcvBeaconMessage(char *beacon)
 {
-	char * tivoConnect = NULL;
-	char * method = NULL;
-	char * identity = NULL;
-	char * machine = NULL;
-	char * platform = NULL;
-	char * services = NULL;
-	char * cp;
-	char * scp;
-	char * tokptr;
+	char *tivoConnect = NULL;
+	char *method = NULL;
+	char *identity = NULL;
+	char *machine = NULL;
+	char *platform = NULL;
+	char *services = NULL;
+	char *cp;
+	char *scp;
+	char *tokptr;
 
 	cp = strtok_r(beacon, "=\r\n", &tokptr);
 	while( cp != NULL )
 	{
 		scp = cp;
-		cp = strtok_r( NULL, "=\r\n", &tokptr );
+		cp = strtok_r(NULL, "=\r\n", &tokptr);
 		if( strcasecmp(scp, "tivoconnect") == 0 )
 			tivoConnect = cp;
 		else if( strcasecmp(scp, "method") == 0 )
@@ -205,12 +205,12 @@ rcvBeaconMessage(char * beacon)
 		cp = strtok_r(NULL, "=\r\n", &tokptr);
 	}
 
-	if( tivoConnect == NULL )
+	if( !tivoConnect || !platform || !method )
 		return 0;
 
 #ifdef DEBUG
-	static struct aBeacon* topBeacon = NULL;
-	struct aBeacon * b;
+	static struct aBeacon *topBeacon = NULL;
+	struct aBeacon *b;
 	time_t current;
 	int len;
 	char buf[32];
@@ -274,8 +274,9 @@ rcvBeaconMessage(char * beacon)
 
 	if( strcasecmp(method, "broadcast") == 0 )
 	{
-		DPRINTF(E_DEBUG, L_TIVO, "Received new beacon: machine(%s) platform(%s) services(%s)\n", 
+		DPRINTF(E_DEBUG, L_TIVO, "Received new beacon: machine(%s/%s) platform(%s) services(%s)\n", 
 		         machine ? machine : "-",
+		         identity ? identity : "-",
 		         platform ? platform : "-", 
 		         services ? services : "-" );
 		return 1;

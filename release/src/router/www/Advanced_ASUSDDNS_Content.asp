@@ -28,8 +28,6 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var $j = jQuery.noConflict();
 
 function init(){
-		show_banner(1);
-		show_footer();
 		ddns_load_body();	
 		$('linkToHome').innerHTML = Untranslated.ddns_home_link;  // remove this line when translated string is done
 }

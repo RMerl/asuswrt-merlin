@@ -24,15 +24,14 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var original_switch_stb_x = '<% nvram_get("switch_stb_x"); %>';
 var original_switch_wantag = '<% nvram_get("switch_wantag"); %>';
 var original_switch_wan0tagid = '<%nvram_get("switch_wan0tagid"); %>';
-var original_switch_wan0tagid = '<%nvram_get("switch_wan0prio"); %>';
+var original_switch_wan0prio  = '<%nvram_get("switch_wan0prio"); %>';
 var original_switch_wan1tagid = '<%nvram_get("switch_wan1tagid"); %>';
-var original_switch_wan1tagid = '<%nvram_get("switch_wan1prio"); %>';
+var original_switch_wan1prio  = '<%nvram_get("switch_wan1prio"); %>';
 var original_switch_wan2tagid = '<%nvram_get("switch_wan2tagid"); %>';
-var original_switch_wan2tagid = '<%nvram_get("switch_wan2prio"); %>';
+var original_switch_wan2prio  = '<%nvram_get("switch_wan2prio"); %>';
 
 var wans_lanport = '<% nvram_get("wans_lanport"); %>';
 var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
-var manual_stb = rc_support.search("manual_stb");
 
 function initial(){
 	if (dsl_support) {
@@ -51,7 +50,7 @@ function initial(){
 		$('enable_eff_multicast_forward').style.display="";		
 
 	if(!dsl_support){
-		if(parent.rc_support.search("manual_stb") == -1) 
+		if(!manualstb_support) 
 			document.form.switch_wantag.remove(8);
 	}
 }

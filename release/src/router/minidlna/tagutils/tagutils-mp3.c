@@ -233,8 +233,7 @@ _get_mp3tags(char *file, struct song_metadata *psong)
 				if((utf8_text) && (strncasecmp((char*)utf8_text, "iTun", 4) != 0))
 				{
 					// read comment
-					if(utf8_text)
-						free(utf8_text);
+					free(utf8_text);
 
 					native_text = id3_field_getfullstring(&pid3frame->fields[3]);
 					if(native_text)
@@ -242,16 +241,14 @@ _get_mp3tags(char *file, struct song_metadata *psong)
 						utf8_text = (unsigned char*)id3_ucs4_utf8duplicate(native_text);
 						if(utf8_text)
 						{
-							if (psong->comment)
-								free(psong->comment);
+							free(psong->comment);
 							psong->comment = (char*)utf8_text;
 						}
 					}
 				}
 				else
 				{
-					if(utf8_text)
-						free(utf8_text);
+					free(utf8_text);
 				}
 			}
 		}
@@ -773,7 +770,7 @@ _get_mp3fileinfo(char *file, struct song_metadata *psong)
 	//DEBUG DPRINTF(E_INFO, L_SCANNER, "Got fileinfo successfully for file=%s song_length=%d\n", file, psong->song_length);
 
 	psong->blockalignment = 1;
-	asprintf(&(psong->dlna_pn), "MP3");
+	xasprintf(&(psong->dlna_pn), "MP3");
 
 	return 0;
 }

@@ -1,0 +1,9 @@
+Init device
+Create partitions
+Create filesystem
+Do tests...
+Create filesystem [btrfs]
+All mount options (btrfs subvolume + utab) ---
+rw,relatime,ssd,uhelper=foo
+---
+...done.

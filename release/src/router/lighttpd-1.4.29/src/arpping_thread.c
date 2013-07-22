@@ -555,7 +555,7 @@ static int thread_arpping(char* iface)
 void query_one_hostname(){
 	smb_srv_info_t *p;
 	int bchange = 0;
-	Cdbg(DBE, "query_one_hostname......");
+	
 	for (p = smb_srv_info_list; p; p = p->next) {
 		if(is_shutdown)
 			break;
@@ -1062,10 +1062,11 @@ int main(int argc, char *argv[])
 	sigaction(SIGCHLD, &act, NULL);	
 	sigaction(SIGUSR1, &act, NULL);	
 #endif
-
-	int          dbglv = 0;//9;
+	
+	//int          dbglv = -1;//9;
+	int          dbglv = 0;
 	smbc_init(get_auth_data_fn, dbglv);
-
+	
 	start_scan_sambaserver(0);
 	
 	time_t prv_ts = 0;

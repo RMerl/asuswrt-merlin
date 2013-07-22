@@ -1,0 +1,373 @@
+﻿PARAGON NTFS & HFS FOR LINUX
+		
+1.1 About this README file
+
+There are 3 products in Paragon file system drivers for Linux family:
+  - Paragon NTFS for Linux 8.0 Express
+  - Paragon HFS for Linux 8.0 Express
+  - Paragon NTFS&HFS for Linux 8.0 Professional
+
+Information provided in this README file applies to all of the products
+unless otherwise noted.
+
+
+1.2 Key features
+
+All of the products share the following features:
+
+  - Transparent read-write access to NTFS and/or HFS+ volumes;
+  - High performance (in some cases even better than Ext3 FS);
+  - Easy installation and unistallation (assistant scripts);
+  - Support for the latest Linux Kernels and distributions;
+  - Support for SMP kernels;
+  - File sharing over network via SAMBA;
+  - No system degradation during data transfers;
+
+
+1.2.1 Paragon NTFS for Linux 8.0 Express
+      (features also included in Professional Edition):
+  - Full support for compressed files (random access
+    for reading and writing with no limitations);
+  - Sparse files;
+  - Alternate data streams;
+
+What's new in Paragon NTFS for Linux 8.0 Express:
+
+  - Several codepages for filename translation are supported
+    simultaneously;
+  - Full interoperability with Mac OS X SAMBA clients;
+  - Full interoperability with P2P (BitTorrent) software;
+  - All known bugs are fixed.
+
+
+1.2.2 Paragon HFS for Linux 8.0 Express
+      (features also included in Professional Edition):
+
+Paragon HFS for Linux 8.0 Express is our new product providingcomplete
+support for all types of (case sensitive and journaling) HFS+ (Mac OS X
+native file system) under Linux. Like NTFS for Linux, HFS+ for Linux
+provides high performance full read and write access to HFS+ partitions
+under Linux.
+
+Limitations:
+
+  - extended attributes are not yet supported;
+  - NFS on HFS+ is not yet supported;
+  - additional forks are not yet supported;
+
+
+1.2.2 Paragon NTFS&HFS for Linux 8.0 Professional:
+
+Paragon NTFS&HFS for Linux 8.0 Professional supports NTFS and 
+HFS+ file systems simultaneously (one module supports both file systems).
+
+Additional features of the Professional edition:
+  - Support for all kinds of Microsoft Dynamic Disks (simple, mirror, 
+    spanned, stripe and RAID5) - support for LDM (Logical Disk Manager);
+  - Supporting encrypted files copying (cpntfs utility);
+  
+  - Additional NTFS utilities:
+	- mkntfs  - creates an NTFS volume on a user specified (block) device;
+	- chkntfs - checks NTFS Volumes integrifty and fixes errors;
+	- dfntfs  - defragments NTFS Volumes;
+	- cpntfs  - copies files/directories to/from/between NTFS Volume(s);
+	- mkfat   - creates an FAT volume on a user specified (block) device;
+	- dffat   - defragments FAT32 Volumes;
+	- extents - traces extents for files/folders;
+	- fsutil  - performs NTFS file system related tasks;
+	- hdlnk   - enumerates hard links;
+	- infntfs - Shows and modifies NTFS volume label, used space, dirty flag,
+                version, serial number.
+	- junction - displays reparse point informations
+	- mftpack  - packs MFT records and/or Truncate MFT on NTFS volume
+	- svntfs   - makes volume like sieve (fragments free space and files);
+	- wipe     - zeroes free space (unused clusters and tails of
+	             files/directories) on NTFS/FAT volumes.
+  
+  - Additional HFS+ utilities:
+	- chkhfs   - checks HFS+ volumes integrity and fix errors;
+	- mkhfs    - creates HFS+ volume on a user specified (block) device.
+
+
+2. System Requirements
+
+2.1 Hardware requirements:
+
+  - CPU: Intel Pentium 300 MHz and higher, or compatible;
+  - both 32 and 64-bit CPUs are supported.
+  - 16MB of RAM;
+  
+Due to unique technology Paragon file system drivers for Linux
+only need around 500 Kb of RAM to work with partition of 250 Gb and larger.
+Kernel module itself occupies around 430 Kb of RAM.
+
+Supported Linux versions:
+  - Linux with kernel versions 2.4.x;
+  - Linux with kernel versions 2.6.x
+    (NTFS/HFS+ drivers were tested with Kernels up to 2.6.32.6,
+     LDM driver was tested with Kernels up to 2.6.31).
+
+Linux distributions this product was tested with:
+  - Ubuntu 9.10
+  - OpenSUSE 11.2
+  - LinuxMint 8
+  - Slackware 13
+  - Mandriva Linux Free 2010
+  - Debian 5.04
+
+
+2.2 Development Environment
+
+A development environment is required to compile Linux drivers and 
+utilities. Please verify these tools are all functional. The easiest 
+way is to choose the developer toolkit when installing Linux.
+What has to be installed:
+
+  - Kernel source code (recommended) or Kernel header files;
+	  #rpm -qa|grep kernel-source (for RPM based kernel-sources)
+  - GNU C compiler
+	  #gcc --version
+  - GNU C++ compiler (for Professional version only)
+	  #g++ --version
+  - GNU Make;
+	  #make --version
+  - GNU ld (binutils);
+	  #ld --version
+  - Modutils (module-init tools);
+	  #insmod -V
+
+2.3 Limitations
+
+- GNU C compiler (gcc) must have the version 2.95 or higher.
+- The user should login as root to install the drivers and utilities.
+- Correct operation is not guaranteed when using Linux with kernel 
+  versions 2.3.x and 2.5.x (which are known for their instability).
+- Correct operation is not guaranteed for customized Linux kernels.
+
+
+3. Installation
+
+3.1 Shipment
+
+The setup files of NTFS & HFS for Linux are provided compressed in an
+archive, which can be downloaded from company's web site.
+
+3.2 Components
+
+The package includes the following components:
+- The source files for the NTFS and/or HFS for Linux driver;
+- The source files for the LDM driver (Professional edition only);
+- The source files for additional utilities (Professional edition only);
+- Assistant script files for easy installation and uninstallation.
+
+3.3 Installing the NTFS & HFS for Linux and LDM driver
+
+First, NTFS and/or HFS for Linux driver must be installed, followed by LDM.
+To do that:
+  1. Log in as root. This step is obligatory;
+  2. Build and install the NTFS & HFS and LDM for Linux drivers using install.sh
+     script. Alternatively, driver binary module may be built manually using
+	 'make' command.
+  4. Activating (loading) the driver. After building and installing, the NTFS & HFS 
+     for Linux driver can be referenced as a "used file system driver" when 
+     mounting a NTFS partitions.
+
+The steps 1-3 should be made only once while step 4 is the standard way
+of using file system drivers in Linux environment.
+
+NTFS & HFS for Linux as well as LDM driver include a set of assistant script files 
+for the simplification of building, installing and uninstalling procedures. 
+Note that these assistant scripts may fail to work in customized Linux 
+configurations or unsupported Linux distributions. 
+
+The most friendly and convenient assistant scripts are the "install.sh" 
+and "uninstall.sh" script files. The alternative is to use the special makefile 
+together with the "make" utility.
+
+The sections below describe the installation procedure.
+
+3.3.1 Unpacking Setup Files
+
+The setup files of the Linux-based version of the NTFS & HFS for Linux and LDM 
+driver are provided in the form of a bz2 archive. The archive should be 
+copied to the hard disk and decompressed. Unpack the archive file to a directory. 
+The command would be the following:
+
+For example:
+For the NTFS & HFS for Linux driver and utilities:	
+tar xfj /usr/tmp -f /your/download/folder/ntfsforlinux_pro_*.bz2
+or
+tar xfj /usr/tmp/ntfsforlinux_pro_*.bz2 - in case you have already copied 
+the bz2 archive to the /usr/tmp/ directory.
+
+For the LDM driver:	
+	tar xfj /usr/tmp -f /mnt/cdrom/ldm_drv_*.bz2
+or
+	tar xfj /usr/tmp/ldm_drv_*.bz2 - in case you have already copied the 
+TGZ archive to the /usr/tmp/ directory.
+
+Next, change the current directory to the /usr/tmp:
+	cd /usr/tmp
+
+Next step is to build and install the NTFS & HFS for Linux or LDM driver. 
+These actions depend on which set of assistant scripts will be used 
+and which bz2 archive (NTFS & HFS for Linux or LDM) is opened.
+
+3.3.2 Using the INSTALL.SH Assistant Script
+
+The assistant script "install.sh" provides the extremely easy and flexible 
+way to make the NTFS & HFS for Linux and LDM driver, install them in the system 
+and mount all NTFS and/or HFS partitions, dynamic partitions currently existing
+on local hard disks. Additionally, the script reconfigures OS so that
+all NTFS partitions are mounted automatically at the system startup.
+
+Please note that development tools and kernel sources are required to present
+on the system and stay in the default locations to build and install the drivers.
+
+To start, simply run the install.sh script:
+	./install.sh  or sudo ./install.sh
+The assistant script will automatically perform following actions:
+1. Detect the Linux Kernel version;
+2. Find kernel header files and libraries needed for building the drivers;
+3. Build the drivers and binary modules;
+4. Install the drivers;
+5. Detect all NTFS partitions on all local hard disks, mount 
+   all NTFS partitions;
+6. Reconfigure the file /etc/fstab to automatically mount NTFS partitions 
+   at Linux startup;
+7. Install a service for supported OSs.
+
+If the user confirms automatic mounting of NTFS and dynamic partitions, all 
+of them will be mounted to the end of this session and will be mounted 
+automatically at system startup in future.
+
+Script steps:
+1. The script tries to locate the source files and development tools automatically. 
+   In case of successful locating files, the script builds and installs the 
+   NTFS & HFS for Linux or LDM driver. This step cannot be customized in the "install.sh" 
+   script file.
+2. The final stage is to find and mount NTFS or dynamic partitions.  
+   In case the user confirms it, the script searches NTFS and dynamic 
+   partitions on all local hard disks and mounts each NTFS and dynamic 
+   partition.
+3. Additional utilities can be build. In case the user confirms it, the utilities 
+   will be build and automatically copied to /usr/local/bin.
+
+Advanced use of the INSTALL.SH script file
+The assistant script install.sh supports following parameters:
+	install.sh --help - displays the inline help;
+	install.sh --interactive [--iocharset=] - runs the script install.sh in 
+the interactive mode.
+
+Parameters:
+--help		    Display the "how to use" inline help;
+--interactive	Run the script in the interactive mode. If omitted, the script 
+                runs in the unattended mode.
+--iocharset	    Select the codepage or character set, which should be applied to 
+                the mounted partition(s).
+
+INSTALL.SH default mode for the NTFS & HFS for Linux driver
+- The assistant script install.sh always names the NTFS & HFS for Linux driver as 
+  'ufsd.ko' or 'ufsd.o', depending on Kernel version (it is the abbreviation
+  of the project name Universal File System Driver);
+- The assistant script install.sh always mounts NTFS partitions to directories 
+  named like "/mnt/ntfs_0", "/mnt/ntfs_1" etc.
+
+INSTALL.SH default mode for the LDM driver
+The assistant script install.sh always names the LDM driver as 'ufsdldm';
+The assistant script install.sh always mounts dynamic partitions to 
+directories named like "/mnt/dyn_0, /mnt/dyn_1" etc.
+
+
+4. Uninstalling the Drivers
+
+To completely remove the drivers from the system, one should dismount all NTFS
+and/or HFS+ as well as dynamic partitions, uninstall the drivers and optionally
+remove the binary files. NTFS & HFS for Linux provide tools for the drivers
+uninstall automation.
+
+The assistant script "uninstall.sh" allows to completely remove the drivers
+from the system with correct uninstalling and unmounting all NTFS and dynamic
+partitions. The script supports the unattended and interactive operation modes.
+
+In addition, makefiles allow to perform the drivers unloading, uninstallation
+and removal separately.
+
+4.1 Using the UNINSTALL.SH Assistant Script
+
+The assistant script "uninstall.sh" provides the extremely easy and flexible way 
+to deactivate and remove the drivers and utilities from the system. The script 
+performs the correct deactivation, uninstallation and the complete removing of 
+the driver's and utilities' files.
+
+4.1.1 Uninstalling in Unattended Mode
+
+Just run the "uninstall.sh" script:
+	./uninstall.sh
+
+The assistant script will automatically perform the following actions:
+1. Unmount all currently mounted NTFS and dynamic partitions. Additionally, 
+   the script removes the appropriate mount-points and deletes reference to 
+   these partitions from the "fstab". If some NTFS and dynamic partitions are 
+   in use, the script (for the NTFS or LDM driver) will not unmount these 
+   partitions. The further script execution is aborted in this case;
+2. Deactivate the driver modules. If the drivers is still in use, the further 
+   script execution is aborted;
+3. Uninstall the drivers;
+4. Remove all binary and source files of the driver.
+
+4.1.2 Advanced Use of UNINSTALL.SH
+
+The assistant script "uninstall.sh" supports the following parameters:
+uninstall.sh --help			Display the online help;
+uninstall.sh				Run the script uninstall.sh in the unattended mode;
+uninstall.sh --interactive	Run the script uninstall.sh in the interactive mode.
+
+Parameters:
+--help				Display the "how to use" online help;
+--interactive		Run the script in the interactive mode. If omitted, 
+					the script runs in unattended mode.
+
+
+5. Using the NTFS & HFS for Linux and LDM Driver
+
+After building and installing the NTFS & HFS for Linux driver, it can be
+automatically loaded at system startup. The driver allows mounting NTFS and HFS
+partitions and provides access to their contents.
+
+At loading the LDM driver scans and initialises mountable block devices in 
+/dev/dm directory with names v0...vN. If "devfs" has not been compiled in,
+directory and device nodes should be created manually by calling (in /dev/dm) 
+"mkdev vN b 212 N" with "N" in 0..max, where max is a reasonable limit but
+no more  then 128.
+- "/dev/dm/vN" can be mounted in the usual way by using the mount command.
+- Devices containing dynamic disks and detected volumes are listed in system log 
+  during driver loading process.
+- After loading the driver you can mount and umount dynamic volumes by mount and 
+  umount commands.
+
+5.1 Mounting NTFS/HFS+ Partitions
+
+To get access to a NTFS and/or HFS partition, use the standard "mount" command
+with file system type set to "ufsd". For example: 
+
+	mount -t ufsd /dev/hdb1 /mnt/ntfs
+
+5.2 Unmounting NTFS/HFS+ Partitions
+
+To unmount an NTFS or HFS+ partition, use the standard "umount" command.
+For example:
+
+	umount /dev/hdb1
+
+5.3 Unmounting Dynamic Partitions
+
+To unmount a dynamic partition, use the standard command "umount".
+
+	umount /mnt/dyn_1
+or 
+	umount /dev/dm/v1
+	
+	
+More informations on mount options, additional utilities and troubleshooting
+can be found in complete user manual found inside of the distribution package.

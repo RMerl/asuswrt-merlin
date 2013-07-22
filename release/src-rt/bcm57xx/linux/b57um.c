@@ -4265,8 +4265,10 @@ STATIC int bcm5700_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 
 		/* Invalidate current robo page */
 		if ((pDevice->Flags & ROBO_SWITCH_FLAG) && pUmDevice->robo &&
-		    (pDevice->PhyAddr == 0x1e) && ((data[1] & 0x1f) == 0x10))
-			((robo_info_t *)pUmDevice->robo)->page = (data[2] >> 8);
+		    (pDevice->PhyAddr == 0x1e) && ((data[1] & 0x1f) == 0x10)) {
+			LM_ReadPhy(pDevice, 0x10, (LM_UINT32 *)&value), value &= 0xffff;
+			((robo_info_t *)pUmDevice->robo)->page = (value == 0xffff) ? -1 : (value >> 8);
+		}
 
 		if (data[0] != 0xffff)
 			pDevice->PhyAddr = savephyaddr;
@@ -4300,8 +4302,10 @@ STATIC int bcm5700_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 
 		/* Invalidate current robo page */
 		if ((pDevice->Flags & ROBO_SWITCH_FLAG) && pUmDevice->robo &&
-		    (pDevice->PhyAddr == 0x1e) && ((args[0] & 0xffff) == 0x10))
-			((robo_info_t *)pUmDevice->robo)->page = ((uint16)args[1] >> 8);
+		    (pDevice->PhyAddr == 0x1e) && ((args[0] & 0xffff) == 0x10)) {
+			LM_ReadPhy(pDevice, 0x10, (LM_UINT32 *)&value), value &= 0xffff;
+			((robo_info_t *)pUmDevice->robo)->page = (value == 0xffff) ? -1 : (value >> 8);
+		}
 
 		if (cmd == SIOCSETCPHYWR2)
 			pDevice->PhyAddr = savephyaddr;

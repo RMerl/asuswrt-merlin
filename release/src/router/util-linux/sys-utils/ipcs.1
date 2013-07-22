@@ -1,0 +1,84 @@
+.\" Copyright 1993 Rickard E. Faith (faith@cs.unc.edu)
+.\" May be distributed under the GNU General Public License
+.TH IPCS 1 "February 2008" "util-linux" "User Commands"
+.SH NAME
+ipcs \- provide information on ipc facilities
+.SH SYNOPSIS
+.B ipcs
+.RB [ \-asmq ]
+.RB [ \-tclup ]
+.br
+.B ipcs
+.RB [ \-smq ]
+.BI \-i " id"
+.br
+.B ipcs \-h
+.SH DESCRIPTION
+.B ipcs
+provides information on the ipc facilities for which the calling process
+has read access.
+
+The
+.B \-i
+option allows a specific resource
+.I id
+to be specified.  Only information on this
+.I id
+will be printed.
+
+Resources may be specified as follows:
+.TP
+.B \-m
+shared memory segments
+.TP
+.B \-q
+message queues
+.TP
+.B \-s
+semaphore arrays
+.TP
+.B \-a
+all (this is the default)
+.PP
+The output format may be specified as follows:
+.TP
+.B \-t
+time
+.TP
+.B \-p
+pid
+.TP
+.B \-c
+creator
+.TP
+.B \-l
+limits
+.TP
+.B \-u
+summary
+.SH SEE ALSO
+.BR ipcrm (1),
+.BR ipcmk (1)
+.SH CONFORMING TO
+The Linux ipcs utility is not fully compatible to the POSIX ipcs utility.
+The Linux version does not support the
+.B \-b
+and
+.B \-o
+options, but does support the
+.B \-l
+and
+.B \-u
+options not defined by POSIX. The portable application shall not use the
+.BR \-a ,
+.BR \-b ,
+.BR \-o ,
+.BR \-l ,
+and
+.B \-u
+options.
+.SH AUTHOR
+krishna balasubramanian (balasub@cis.ohio-state.edu)
+.SH AVAILABILITY
+The ipcs command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

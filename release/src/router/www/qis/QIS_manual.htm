@@ -25,10 +25,10 @@ function QKInternet_load_body(){
 		parent.set_step("t2");
 		setScenerion(parent.sw_mode);
 
-		if(repeater_support < 0)
+		if(!repeater_support)
 			$("repeaterMode").style.display = "none";
 
-		if(psta_support < 0)
+		if(!psta_support)
 			$("MBMode").style.display = "none";
 		
 		if(parent.hwmodeSwitch_support){

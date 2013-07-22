@@ -1,0 +1,203 @@
+.\" cytune.8 --
+.\" Created: Sat Mar  4 17:44:53 1995 by faith@cs.unc.edu
+.\" Update: Sat Mar  4 18:22:24 1995 by faith@cs.unc.edu
+.\" Update: Sun Mar  5 06:40:12 1995 by njs@scifi.emi.net
+.\" Copyright 1995 Rickard E. Faith (faith@cs.unc.edu)
+.\"
+.\" Permission is granted to make and distribute verbatim copies of this
+.\" manual provided the copyright notice and this permission notice are
+.\" preserved on all copies.
+.\"
+.\" Permission is granted to copy and distribute modified versions of this
+.\" manual under the conditions for verbatim copying, provided that the
+.\" entire resulting derived work is distributed under the terms of a
+.\" permission notice identical to this one
+.\"
+.\" Since the Linux kernel and libraries are constantly changing, this
+.\" manual page may be incorrect or out-of-date.  The author(s) assume no
+.\" responsibility for errors or omissions, or for damages resulting from
+.\" the use of the information contained herein.  The author(s) may not
+.\" have taken the same level of care in the production of this manual,
+.\" which is licensed free of charge, as they might when working
+.\" professionally.
+.\"
+.\" Formatted or processed versions of this manual, if unaccompanied by
+.\" the source, must acknowledge the copyright and authors of this work.
+.\" "
+.TH CYTUNE 8 "March 1995" "util-linux" "System Administration"
+.SH NAME
+cytune \- tune driver parameters for Cyclades-Z multiport serial card
+.SH SYNOPSIS
+.B cytune
+.RB [ \-q
+.RB [ \-i
+.IR interval ]]
+.RB [{ \-s | \-S }
+.IR value ]
+.RB [ \-g | \-G ]
+.RB [{ \-t | \-T }
+.IR timeout ]
+.IR tty ...
+.SH DESCRIPTION
+.B cytune
+queries and modifies the interruption threshold for the Cyclades driver.
+Each serial line on a Cyclades card has a 12-byte FIFO for input (and
+another 12-byte FIFO for output).  The "threshold" specifies how many input
+characters must be present in the FIFO before an interruption is raised.
+When a Cyclades tty is opened, this threshold is set to a default value
+based on baud rate:
+.sp
+.RS
+    Baud        Threshold
+.sp
+50-4800            10
+.br
+9600                8
+.br
+19200               4
+.br
+38400               2
+.br
+57600-150000        1
+.RE
+.PP
+If the threshold is set too low, the large number of interruptions can load
+the machine and decrease overall system throughput.  If the threshold is set too high, the
+FIFO buffer can overflow, and characters will be lost.  Slower machines,
+however, may not be able to deal with the interrupt load, and will require
+that the threshold be adjusted upwards.
+.PP
+If the cyclades driver was compiled with
+.B ENABLE_MONITORING
+defined, the cytune command can be used with the
+.B \-q
+option to report interrupts over the monitoring interval and
+characters transferred over the monitoring interval.  It will also report
+the state of the FIFO.  The maximum number of characters in the FIFO when
+an interrupt occurred, the instantaneous count of characters in the FIFO,
+and how many characters are now in the FIFO are reported.  This output might
+look like this:
+.sp
+.RS
+/dev/cubC0: 830 ints, 9130 chars; fifo: 11 threshold, 11 max, 11 now
+.br
+   166.259866 interrupts/second, 1828.858521 characters/second
+.RE
+.PP
+This output indicates that for this monitoring period, the interrupts were
+always being handled within one character time, because
+.B max
+never rose above
+.BR threshold .
+This is good, and you can probably run this way, provided that a large
+number of samples come out this way.  You will lose characters if you
+overrun the FIFO, as the Cyclades hardware does not seem to support
+the RTS RS-232 signal line for hardware flow control from the
+DCE to the DTE.
+.PP
+In query mode
+.B cytune
+will produce a summary report when ended with
+a SIGINT or when the threshold or timeout is changed.
+.PP
+There may be a responsiveness vs. throughput tradeoff.  The Cyclades card,
+at the higher speeds, is capable of putting a very high interrupt load on the
+system.  This will reduce the amount of CPU time available for other tasks
+on your system.  However, the time it takes to respond to a single character
+may be increased if you increase the threshold.  This might be noticed by
+monitoring
+.BR ping (8)
+times on a SLIP link controlled by a Cyclades card.  If your SLIP link is
+generally used for interactive work such as
+.BR telnet (1),
+you may want to leave the threshold low, so that characters are responded
+to as quickly as possible.  If your SLIP link is generally used for file
+transfer, WWW, and the like, setting the FIFO to a high value is likely to
+reduce the load on your system while not significantly affecting
+throughput.  Alternatively, see the
+.B \-t
+or
+.B \-T
+options to adjust the time that the cyclades waits before flushing its
+buffer.  Units are 5ms.
+.PP
+If you are running a mouse on a Cyclades port, it is likely that you would
+want to maintain the threshold and timeout at a low value.
+.PP
+.SH OPTIONS
+.TP
+.BI \-s " value"
+Set the current threshold to
+.I value
+characters.  Note that if the
+.I tty
+is not being held open by another process, the threshold will be reset on
+the next open.  Only values between 1 and 12, inclusive, are permitted.
+.TP
+.BI \-t " value"
+Set the current flush timeout to
+.I value
+units.  Note that if the
+.I tty
+is not being held open by another process, the threshold will be reset on
+the next open.  Only values between 0 and 255, inclusive, are permitted.
+Setting
+.I value
+to zero forces the default, currently 0x20 (160ms), but soon to be 0x02
+(10ms).  Units are 5 ms.
+.TP
+.B \-g
+Get the current threshold and timeout.
+.TP
+.BI \-S " value"
+Set the default threshold to
+.I value
+characters.  When the
+.I tty
+is next opened, this value will be used instead of the default.
+Only values between 1 and 12, inclusive, are permitted.
+.TP
+.BI \-T " value"
+Set the default flush timeout to
+.I value
+units.  When the
+.I tty
+is next opened, this value will be used instead of the default.  If
+.I value
+is zero, then the the value will default to 0x20 (160ms), soon to be 0x02
+(10ms).
+.TP
+.B \-G
+Get the default threshold and flush timeout values.
+.TP
+.B \-q
+Gather statistics about the
+.IR tty .
+The results are only valid if the Cyclades driver has been compiled with
+.B ENABLE_MONITORING
+defined.  This is probably not the default.
+.TP
+.BI \-i " interval"
+Statistics will be gathered every
+.I interval
+seconds.
+.SH BUGS
+If you run two copies of
+.B cytune
+at the same time to report statistics about the same port,
+the 'ints', 'chars', and 'max' value will be reset
+and not reported correctly.
+.B cytune
+should prevent this, but does not.
+.\" .SH AUTHOR
+.\" Nick Simicich (njs@scifi.emi.net), with modifications by
+.\" Rik Faith (faith@cs.unc.edu)
+.SH FILES
+.I /dev/ttyC[0-8]
+.br
+.I /dev/cubC[0-8]
+.SH "SEE ALSO"
+.BR setserial (8)
+.SH AVAILABILITY
+The cytune command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

@@ -52,11 +52,12 @@
 #include <time.h>
 
 #include "minidlnatypes.h"
+#include "clients.h"
 #include "config.h"
 
 #include <sqlite3.h>
 
-#define MINIDLNA_VERSION "1.0.26"
+#define MINIDLNA_VERSION "1.1.0"
 
 #ifdef NETGEAR
 # define SERVER_NAME "ReadyDLNA"
@@ -64,9 +65,8 @@
 # define SERVER_NAME "MiniDLNA"
 #endif
 
-#define CLIENT_CACHE_SLOTS 20
 #define USE_FORK 1
-#define DB_VERSION 8
+#define DB_VERSION 9
 
 #ifdef ENABLE_NLS
 #define _(string) gettext(string)
@@ -188,12 +188,13 @@ extern uint32_t runtime_flags;
 #define TIVO_MASK             0x0002
 #define DLNA_STRICT_MASK      0x0004
 #define NO_PLAYLIST_MASK      0x0008
+#define SYSTEMD_MASK          0x0010
 
 #define SETFLAG(mask)	runtime_flags |= mask
-#define GETFLAG(mask)	runtime_flags & mask
+#define GETFLAG(mask)	(runtime_flags & mask)
 #define CLEARFLAG(mask)	runtime_flags &= ~mask
 
-extern const char * pidfilename;
+extern const char *pidfilename;
 
 extern char uuidvalue[];
 
@@ -228,9 +229,8 @@ extern sqlite3 *db;
 extern char friendly_name[];
 extern char db_path[];
 extern char log_path[];
-extern struct media_dir_s * media_dirs;
-extern struct album_art_name_s * album_art_names;
-extern struct client_cache_s clients[CLIENT_CACHE_SLOTS];
+extern struct media_dir_s *media_dirs;
+extern struct album_art_name_s *album_art_names;
 extern short int scanning;
 extern volatile short int quitting;
 extern volatile uint32_t updateID;

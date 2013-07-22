@@ -1,0 +1,35 @@
+CURRENT=..
+SEP=echo "\033[41;1m   $@   \033[0m"
+export SRCBASE := $(shell pwd)/$(CURRENT)
+export BUILD := $(shell (gcc -dumpmachine))
+export HOSTCC := gcc
+export PLATFORM := mipsel-uclibc
+CROSS_COMPILE := mipsel-openwrt-linux-
+export CROSS_COMPILER := $(CROSS_COMPILE)
+export CONFIGURE := ./configure --host=mipsel-linux --build=$(BUILD)
+export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/.. && pwd)
+export IPKG_TOOLS := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))../../../../../toolchain/ipkg-utils-1.7 && pwd)
+export LD_DIR := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))../../../../staging && pwd)
+
+
+export CC := $(CROSS_COMPILE)gcc
+export AR := $(CROSS_COMPILE)ar
+export AS := $(CROSS_COMPILE)as
+export LD := $(CROSS_COMPILE)ld
+export NM := $(CROSS_COMPILE)nm
+export RANLIB := $(CROSS_COMPILE)ranlib
+export STRIP := $(CROSS_COMPILE)strip
+export SIZE := $(CROSS_COMPILE)size
+
+obj-y += smartsync-ipk
+
+all: $(obj-y)
+	echo $(LD_DIR)
+	echo $(TOOLCHAIN)
+	echo $(IPKG_TOOLS)
+
+clean:
+	@rm -rf smartsync_*.ipk
+
+smartsync-ipk:
+	@$(IPKG_TOOLS)/ipkg-build SmartSync-ipk ./

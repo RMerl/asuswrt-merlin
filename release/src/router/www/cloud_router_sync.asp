@@ -204,7 +204,7 @@ function initial_dir(){
 }
 
 function initial_dir_status(data){
-	if(data == ""){	
+	if(data == "" || data.length == 2){	
 		$("noUSB").style.display = "";
 		disk_flag=1;
 	}
@@ -844,7 +844,7 @@ function apply_sharelink(){
 	document.sharelink_form.share_link_host.disabled = true; // Do not submit share_link_host while generating the share link.
 	document.sharelink_form.share_link_param.value = sharelink_path + ">" + sharelink_folder;
 	document.sharelink_form.submit();
-	setTimeout('get_sharelink();',1000);
+	setTimeout('get_sharelink();',5000);
 }
 
 function get_sharelink(){

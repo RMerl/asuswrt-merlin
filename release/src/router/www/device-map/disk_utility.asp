@@ -367,7 +367,7 @@ function check_status(flag){
 		parent.document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "0px";
 	else	
 		parent.document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "33px";
-	
+
 	if(flag.length == 0){
 		document.getElementById('disk_init_status').style.display = "";
 		document.getElementById('problem_found').style.display = "none";
@@ -375,26 +375,38 @@ function check_status(flag){
 		document.getElementById('scan_status_image').src = "/images/New_ui/networkmap/normal.png";
 	}
 	else{
-		var i, j, ret;
-		for(i = 0, ret = 0; i < pools.length; ++i){
+		var i, j;
+		var got_code_0, got_code_1, got_code_2, got_code_3;
+
+		got_code_0 = got_code_1 = got_code_2 = got_code_3 = 0;
+
+		for(i = 0; i < pools.length; ++i){
 			for(j = 0; j < flag.length; ++j){
 				if(pools[i] == flag[j][0]){
-					ret += parseInt(flag[j][1]);
+					if(flag[j][1] == ""){
+						got_code_3 = 1;
+						continue;
+					}
+
+					switch(parseInt(flag[j][1])){
+						case 3: // don't or can't support.
+							got_code_3 = 1;
+							break;
+						case 2: // proceeding...
+							got_code_2 = 1;
+							break;
+						case 1: // find errors.
+							got_code_1 = 1;
+							break;
+						default: // no error.
+							got_code_0 = 1;
+							break;
+					}
 				}
 			}
 		}
-		if(ret == 0){	
-			document.getElementById('disk_init_status').style.display = "none";
-			document.getElementById('problem_found').style.display = "";
-			document.getElementById('crash_found').style.display = "none";
-			document.getElementById('scan_status_image').src = "/images/New_ui/networkmap/blue.png";
-			if(stop_flag == 1 || scan_done == 1){
-				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
-				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 50%';
-			}
-			parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -103px';
-		}
-		else if(ret == 1){	
+
+		if(got_code_1){
 			document.getElementById('disk_init_status').style.display = "none";
 			document.getElementById('problem_found').style.display = "none";
 			document.getElementById('crash_found').style.display = "";
@@ -405,12 +417,28 @@ function check_status(flag){
 			}
 			parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0% -202px';
 		}
-		else{
+		else if(got_code_2){
 			if(stop_flag == 1){
 				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
 				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 0%';
 			}
 		}
+		else if(got_code_3){
+			parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
+			parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 0%';
+		}
+		else{ // got_code_0
+			document.getElementById('disk_init_status').style.display = "none";
+			document.getElementById('problem_found').style.display = "";
+			document.getElementById('crash_found').style.display = "none";
+			document.getElementById('scan_status_image').src = "/images/New_ui/networkmap/blue.png";
+			if(stop_flag == 1 || scan_done == 1){
+				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
+				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 50%';
+			}
+			parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -103px';
+		}
+
 		get_disk_log();
 	}
 }

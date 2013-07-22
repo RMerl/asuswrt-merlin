@@ -1,0 +1,3 @@
+ID_FS_TYPE=nvidia_raid_member
+ID_FS_USAGE=raid
+ID_FS_VERSION=100

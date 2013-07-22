@@ -71,7 +71,7 @@ NameValueParserGetData(void * d, const char * datas, int l)
 
 void
 ParseNameValue(const char * buffer, int bufsize,
-                    struct NameValueParserData * data)
+                    struct NameValueParserData * data, uint32_t flags)
 {
     struct xmlparser parser;
     LIST_INIT(&(data->head));
@@ -83,6 +83,7 @@ ParseNameValue(const char * buffer, int bufsize,
     parser.endeltfunc = 0;
     parser.datafunc = NameValueParserGetData;
     parser.attfunc = 0;
+    parser.flags = flags;
     parsexml(&parser);
 }
 

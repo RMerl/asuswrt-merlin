@@ -37,11 +37,6 @@
 int
 daemonize(void);
 
-/* writepidfile()
- * write the pid to a file */
-int
-writepidfile(const char * fname, int pid);
-
 /* checkforrunning()
  * check for another instance running
  * returns: 0 only instance

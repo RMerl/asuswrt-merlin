@@ -8,11 +8,20 @@ SRCS = ated.c
 
 #EXTRA_CFLAGS += -DDBG
 
+ifeq ($(RTN14U),y)
+ifneq ($(wildcard ./.prebuilt),)
+all:
+	-cp .prebuilt/$(EXEC) $(EXEC)
+else
+all: $(EXEC)
+endif
+else
 ifneq ($(wildcard ./prebuilt),)
 all:
 	-cp prebuilt/$(EXEC) $(EXEC)
 else
 all: $(EXEC)
+endif
 endif
 
 $(EXEC): $(SRCS) $(LINUXDIR)/include/linux/autoconf.h

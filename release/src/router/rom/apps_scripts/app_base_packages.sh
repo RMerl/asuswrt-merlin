@@ -22,13 +22,13 @@ link_internet=`nvram get link_internet`
 
 if [ -n "$is_arm_machine" ]; then
 	pkg_type="arm"
-elif [ -n "$productid" ] && [ "$productid" == "VSL-N66U" ]; then
+	third_lib="mbwe-bluering"
+elif [ -n "$productid" ] && [ "$productid" == "DSL-N66U" ]; then
 	pkg_type="mipsbig"
+	third_lib=
 else
 	pkg_type="mipsel"
-	if [ -z "$apps_from_internet" ]; then
-		third_lib="oleg"
-	fi
+	third_lib="oleg"
 fi
 
 if [ -z "$APPS_DEV" ]; then
@@ -57,6 +57,7 @@ if [ -L "$APPS_INSTALL_PATH" ] || [ ! -d "$APPS_INSTALL_PATH" ]; then
 fi
 
 if [ ! -f "$APPS_INSTALL_PATH/$nonautorun_file" ]; then
+	rm -rf $APPS_INSTALL_PATH/$autorun_file
 	cp -f $apps_local_space/$autorun_file $APPS_INSTALL_PATH
 	if [ "$?" != "0" ]; then
 		nvram set apps_state_error=10
@@ -96,7 +97,7 @@ if [ ! -f "$APPS_INSTALL_PATH/bin/ipkg" ] || [ -z "$had_uclibc" ]; then
 			exit 1
 		fi
 		cp -f $apps_local_space/optware.asus $APPS_INSTALL_PATH/lib/ipkg/lists/
-		if [ -z "$is_arm_machine" ]; then
+		if [ -n "$third_lib" ]; then
 			cp -f $apps_local_space/optware.$third_lib $APPS_INSTALL_PATH/lib/ipkg/lists/
 		fi
 		cd $CURRENT_PWD

@@ -113,6 +113,24 @@ extern int test_if_System_folder(const char *const dirname){
 	return 0;
 }
 
+extern int test_mounted_disk_size_status(char *diskpath){
+	struct statfs fsbuf;
+	unsigned long long block_size;
+
+	if(statfs(diskpath, &fsbuf)){
+		perror("*** statfs fail! - in test_mounted_disk_size_status()");
+		return 0;
+	}
+
+	block_size = fsbuf.f_bsize;
+	if(block_size*fsbuf.f_bfree/(1<<20) < (unsigned long long)33)
+		return 1;
+	else if(block_size*fsbuf.f_blocks/(1<<20) > (unsigned long long)256)
+		return 2;
+	else
+		return 3;
+}
+
 extern void strntrim(char *str){
 	register char *start, *end;
 	int len;

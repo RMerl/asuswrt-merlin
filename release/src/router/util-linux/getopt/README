@@ -1,0 +1,81 @@
+This package contains a reimplementation of getopt(1).
+
+PREFACE
+
+Getopt(1) is a program to help shell scripts parse command-line parameters.
+It is for example included in the util-linux distribution (upto version
+2.7.1). But, there are some problems with that getopt(1) implementation, 
+as listed in the 'BUGS' section of its man-page:
+
+>BUGS
+>     Whatever getopt(3) has.
+>
+>     Arguments containing white space or imbedded shell metacharacters gener-
+>     ally will not survive intact;  this looks easy to fix but isn't.
+>
+>     The error message for an invalid option is identified as coming from
+>     getopt rather than from the shell procedure containing the invocation of
+>     getopt; this again is hard to fix.
+>
+>     The precise best way to use the set command to set the arguments without
+>     disrupting the value(s) of shell options varies from one shell version to
+>     another.
+
+This implementation of getopt(1) is written to solve some of these problems,
+while still staying (for all practical purposes) completely compatible with
+other getopt(1) implementations.
+
+
+INSTALLATION
+
+Installation should be very easy. Just type 'make' to compile the sources.
+It should compile cleanly, without any warnings, but even if it does not
+you probably don't have to worry. You must use GNU Make and gcc, or you
+will have to edit the Makefile. 
+
+Type 'make install' to install the binary and the manual page. It installs 
+by default in /usr/local/bin and /usr/local/man/man1, to install in /usr/bin 
+and /usr/man/man1 try 'make install prefix=/usr'.
+
+The example files can be installed in /usr/local/lib/getopt by calling
+'make install_doc'.
+
+If you do not trust the getopt(3) in your libc, or if you do not use a libc
+with the GNU getopt(3) routines, you can use the gnu sources as provided 
+in the gnu directory. Try 'make LIBCGETOPT=0'. Ignore any compile warnings.
+
+You can check whether the new implementation of getopt is found first
+in your path by calling 'bash test.bash'.
+
+
+HIGHLIGHTS
+
+It can do anything that the GNU getopt(3) routines can do.
+
+It can cope with spaces and shell metacharacters within arguments.
+
+It can parse long parameters.
+
+It can shuffle parameters, so you can mix options and other parameters on
+the command-line.
+
+It can be easily identified as an enhanced getopt(1) from within shell scripts.
+
+It can report parse errors as coming from the shell script.
+
+It is fully compatible with other getopt(1) implementations.
+
+COPYING
+
+This program comes under the GNU general public licence version 2. See the 
+file COPYING included in this package. Note that though you may freely
+copy it, it is copyright (c) 1997-2005 by Frodo Looijaard 
+<frodo@frodo.looijaard.name>.
+Files in the gnu directory are from glibc-2.0.4: copyright (C) 1987, 88, 
+89, 90, 91, 92, 93, 94, 95, 96, 97 Free Software Foundation, Inc.
+
+
+DOWNLOADING
+
+You can find the latest version of this program at:
+  http://software.frodo.looijaard.name/getopt/

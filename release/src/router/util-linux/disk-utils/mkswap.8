@@ -1,0 +1,148 @@
+.\" Copyright 1998 Andries E. Brouwer (aeb@cwi.nl)
+.\"
+.\" May be distributed under the GNU General Public License
+.\" Rewritten for 2.1.117, aeb, 981010.
+.\"
+.TH MKSWAP 8 "March 2009" "util-linux" "System Administration"
+.SH NAME
+mkswap \- set up a Linux swap area
+.SH SYNOPSIS
+.B mkswap
+.RI [ options ]
+.I device
+.RI [ size ]
+.SH DESCRIPTION
+.B mkswap
+sets up a Linux swap area on a device or in a file.
+
+The
+.I device
+argument will usually be a disk partition (something like
+.IR /dev/sdb7 )
+but can also be a file.
+The Linux kernel does not look at partition IDs, but
+many installation scripts will assume that partitions
+of hex type 82 (LINUX_SWAP) are meant to be swap partitions.
+(\fBWarning: Solaris also uses this type.  Be careful not to kill
+your Solaris partitions.\fP)
+
+The
+.I size
+parameter is superfluous but retained for backwards compatibility.
+(It specifies the desired size of the swap area in 1024-byte blocks.
+.B mkswap
+will use the entire partition or file if it is omitted.
+Specifying it is unwise -- a typo may destroy your disk.)
+
+After creating the swap area, you need the
+.B swapon
+command to start using it.  Usually swap areas are listed in
+.I /etc/fstab
+so that they can be taken into use at boot time by a
+.B swapon -a
+command in some boot script.
+
+.SH WARNING
+The swap header does not touch the first block.  A boot loader or disk label
+can be there, but it is not a recommended setup.  The recommended setup is to
+use a separate partition for a Linux swap area.
+
+.BR mkswap ,
+like many others mkfs-like utils,
+.B erases the first partition block to make any previous filesystem invisible.
+
+However,
+.B mkswap
+refuses to erase the first block on a device with a disk
+label (SUN, BSD, ...) and on a whole disk (e.g. /dev/sda).
+
+.SH OPTIONS
+.TP
+.BR \-c , " \-\-check"
+Check the device (if it is a block device) for bad blocks
+before creating the swap area.
+If any bad blocks are found, the count is printed.
+.TP
+.BR \-f , " \-\-force"
+Go ahead even if the command is stupid.
+This allows the creation of a swap area larger than the file
+or partition it resides on.
+
+Also, without this option,
+.B mkswap
+will refuse to erase the first block on a device with a partition table and on
+a whole disk (e.g. /dev/sda).
+.TP
+.BR \-L , " \-\-label " \fIlabel\fR
+Specify a \fIlabel\fR for the device, to allow
+.B swapon
+by label.
+.TP
+.BR \-p , " \-\-pagesize " \fIsize\fR
+Specify the page \fIsize\fR (in bytes) to use.  This option is usually unnecessary;
+.B mkswap
+reads the size from the kernel.
+.TP
+.BR \-U , " \-\-uuid " \fIUUID\fR
+Specify the \fIUUID\fR to use.  The default is to generate a UUID.
+.TP
+.BR \-v , " \-\-swapversion 1"
+Specify the swap-space version.  (This option is currently pointless, as the old
+.B \-v 0
+option has become obsolete and now only
+.B \-v 1
+is supported.
+The kernel has not supported v0 swap-space format since 2.5.22 (June 2002).
+The new version v1 is supported since 2.1.117 (August 1998).)
+.TP
+.BR \-h , " \-\-help"
+Display help text and exit.
+.TP
+.BR \-V , " \-\-version"
+Display version information and exit.
+
+.SH NOTES
+The maximum useful size of a swap area depends on the architecture and
+the kernel version.
+It is roughly 2GiB on i386, PPC, m68k and ARM, 1GiB on sparc, 512MiB on mips,
+128GiB on alpha, and 3TiB on sparc64.  For kernels after 2.3.3 (May 1999) there is no
+such limitation.
+
+Note that before version 2.1.117 the kernel allocated one byte for each page,
+while it now allocates two bytes, so that taking into use a swap area of 2 GiB
+might require 2 MiB of kernel memory.
+
+Presently, Linux allows 32 swap areas (this was 8 before Linux 2.4.10 (Sep 2001)).
+The areas in use can be seen in the file
+.I /proc/swaps
+(since 2.1.25 (Sep 1997)).
+
+.B mkswap
+refuses areas smaller than 10 pages.
+
+If you don't know the page size that your machine uses, you may be
+able to look it up with "cat /proc/cpuinfo" (or you may not --
+the contents of this file depend on architecture and kernel version).
+
+To set up a swap file, it is necessary to create that file before
+initializing it with
+.BR mkswap ,
+e.g. using a command like
+
+.nf
+.RS
+# dd if=/dev/zero of=swapfile bs=1024 count=65536
+.RE
+.fi
+
+Note that a swap file must not contain any holes (so, using
+.BR cp (1)
+to create the file is not acceptable).
+
+
+.SH "SEE ALSO"
+.BR fdisk (8),
+.BR swapon (8)
+.SH AVAILABILITY
+The mkswap command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

@@ -1,0 +1,76 @@
+25/10/95 Peter Orbaek <poe@daimi.aau.dk>
+
+Some notes for using agetty with modems
+
+Using a comms program to initialize the modem
+---------------------------------------------
+
+* Use kermit or minicom to initialize the modem to
+
+	- be entirely quiet.
+	- don't do local echo in command mode.
+	- turn on DCD (carrier detect) only when there is a connection going.
+	- enable auto-answer.
+	- keep a constant computer/modem bitrate at all times.
+	- optionally save this setup as the modem startup configuration.
+
+* Run agetty on the appropriate ttySn port with the arguments:
+	* -w to wait for a CR or LF before writing the /etc/issue message
+	* computer/modem bitrate
+	* the tty name.
+
+Example from my modem setup, an old 2400 bps SupraModem using Hayes standard
+AT commands.
+
+Initialize modem using kermit with the commands
+
+	AT E0 Q1 &D2 &C1 S0=1 &W0
+
+to
+	- turn off local echo from modem when in command mode (E0).
+	- disable all result codes from modem (Q1).
+	- make an on/off transition on the DTR line make the modem
+	  disconnect and go into command mode (&D2).
+	- make the computer/modem DCD line track the modem/modem
+	  carrier detect signal, i.e. no connection means no
+	  carrier detect signal to the computer (&C1).
+	- enable auto-answer after the first ring (S0=1).
+	- store the configuration as the start configuration (&W0).
+
+The commands on your modem to achieve the same setup may vary, especially
+the &D2 and &C1 commands may not be entirely standard.
+
+Exit kermit/minicom.
+
+Put the command 
+
+	/sbin/agetty -w 2400 ttyS1
+
+in the command field of the appropriate line in /etc/inittab to start
+agetty on /dev/ttyS1 with a 2400 bps speed between modem and computer.
+
+Initializing the modem with agetty
+----------------------------------
+
+Use the agetty -I command line option to specify a modem init string, like
+for the same setup as above, use the following agetty command in your
+/etc/inittab.
+
+	/sbin/agetty -w -I 'ATE0Q1&D2&C1S0=1\015' 2400 ttyS1
+
+The final \015 is an octal coding of the carriage return character
+ending the command string.
+
+If you're using simpleinit (part of this package) instead of the SYSV 
+compatible init (you're most likely using the SYSV one!) then you must
+remove the single quotes from the command line above.
+
+Note that the &W0 command was not used here since the modem will be 
+initialized each time agetty starts.
+
+With a V.34 (28.8 kbps) modem try starting with a command like:
+
+	/sbin/agetty -w -I 'ATE0Q1&D2&C1S0=1\015' 115200 ttyS1
+
+Note that agetty supports the higher (>9600 bps) serial speeds
+directly, there's no need to use setserial to use the higher speeds.

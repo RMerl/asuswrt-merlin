@@ -1911,6 +1911,14 @@ copy-prebuild:
 		cp ../prebuild/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
 	fi
 
+copy-prebuild-arm:
+	if test -d '../prebuild_arm' ; then \
+		cp ../prebuild_arm/mod_smbdav.so.l .libs/mod_smbdav.so; \
+		cp ../prebuild_arm/mod_aidisk_access.so.l .libs/mod_aidisk_access.so; \
+		cp ../prebuild_arm/mod_sharelink.so.l .libs/mod_sharelink.so; \
+		cp ../prebuild_arm/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
+	fi
+
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

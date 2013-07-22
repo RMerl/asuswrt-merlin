@@ -245,12 +245,6 @@ void http_login_timeout(unsigned int ip);
 void http_logout(unsigned int ip);
 int http_login_check(void);
 
-#if defined(RTN14U)
-#if defined(HWNAT_FIX)
-int hit=0;
-#endif
-#endif
-
 #if 0
 static int check_if_inviteCode(const char *dirpath){
 	return 1;
@@ -853,16 +847,6 @@ handle_request(void)
 	for (handler = &mime_handlers[0]; handler->pattern; handler++) {
 		if (match(handler->pattern, url))
 		{
-#if defined(RTN14U)	   
-#if defined(HWNAT_FIX)
-		   	if(!strcmp(handler->pattern, "**.asp*")
-			   && (strcmp(url,"ajax_status.asp")!=0))
-			     hit=1;
-			else
-			     hit=0;
-			//_dprintf("handler->pattern=%s, url=%s\n",handler->pattern,url);
-#endif		   
-#endif			
 			if (handler->auth) {
 				if(skip_auth) {
 
@@ -1712,13 +1696,6 @@ int main(int argc, char **argv)
 
 			free(item);
 		}
-
-#if defined(RTN14U)
-#if defined(HWNAT_FIX)		
-	if(hit==1)	   
-       		 notify_rc("start_hwnat");
-#endif
-#endif	
 	}
 
 	shutdown(listen_fd, 2);

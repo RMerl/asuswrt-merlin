@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+               "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd"
+[
+  <!ENTITY version SYSTEM "version.xml">
+]>
+<refentry id="libblkid-config">
+<refmeta>
+<refentrytitle role="top_of_page" id="libblkid-config.top_of_page">Config file</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>LIBBLKID Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>Config file</refname>
+<refpurpose>config file to control paths and basic library behavior</refpurpose>
+</refnamediv>
+
+<refsect1 id="libblkid-config.description" role="desc">
+<title role="desc.title">Description</title>
+<para>
+The standard location of the
+/etc/blkid.conf config file can be overridden by the environment variable
+BLKID_CONF.  The following options control the libblkid library:
+</para>
+
+<variablelist role="params">
+ <varlistentry>
+  <term>SEND_UEVENT=<parameter>yes|not</parameter></term>
+  <listitem><simpara>
+   Sends uevent when /dev/disk/by-{label,uuid}/
+   symlink does not match with LABEL or UUID on the device. Default is "yes".
+  </simpara></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term>CACHE_FILE=<parameter>path</parameter></term>
+  <listitem><simpara>
+   Overrides the standard location of the cache file. This
+   setting can be overridden by the environment variable BLKID_FILE. Default is
+   /etc/blkid.tab.
+  </simpara></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term>EVALUATE=<parameter>method</parameter></term>
+  <listitem><simpara>
+   Defines LABEL and UUID evaluation method(s). Currently,
+   the libblkid library supports "udev" and "scan" methods. More than one methods
+   may be specified in a comma separated list. Default is "udev,scan". The "udev"
+   method uses udev /dev/disk/by-* symlinks and the "scan" method scans all
+   block devices from the /proc/partitions file.
+  </simpara></listitem>
+ </varlistentry>
+</variablelist>
+
+</refsect1>
+
+</refentry>

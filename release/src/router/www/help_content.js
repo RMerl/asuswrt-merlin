@@ -37,7 +37,7 @@ helpcontent[3] = new Array("",
 						   "<#WLANConfig11b_x_RadioEnable_itemdesc#>",
 						   "<#WLANConfig11b_x_RadioEnableDate_itemdesc#><p><a href='/Main_LogStatus_Content.asp' target='_blank'><#General_x_SystemTime_itemname#><#btn_go#></a></p>",
 						   "<#WLANConfig11b_x_RadioEnableTime_itemdesc#><p><a href='/Main_LogStatus_Content.asp' target='_blank'><#General_x_SystemTime_itemname#><#btn_go#></a></p>",						   
-						   "<#WLANConfig11b_x_AfterBurner_itemdesc#>",
+						   "",
 						   "<#WLANConfig11b_x_IsolateAP_itemdesc#>",
 						   "<#WLANConfig11b_DataRateAll_itemdesc#>",
 							 "<#WLANConfig11b_MultiRateAll_itemdesc#>",
@@ -61,7 +61,8 @@ helpcontent[3] = new Array("",
 							 "For legacy wireless network adapters not supporting beamforming, the router will estimate the channel and determine steering in order to improve downlink speed.",
 							 "Optimize max number of mpdus in an ampdu.",
 							 "Optimize max number of ack to suppress in a row.",
-							 "256-QAM (MCS 8/9) support.");
+							 "256-QAM (MCS 8/9) support.",
+							 "Reduced USB 3.0 interference is enabled to ensure the best wireless performance on the 2.4 GHz band. Disabling this feature can increase transmission speed of USB3.0 port but may affect 2.4GHz wireless range.");
 
 helpcontent[4] = new Array("",
 						   "<#LANHostConfig_IPRouters_itemdesc#>",

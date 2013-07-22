@@ -1,0 +1,98 @@
+
+                                  util-linux
+
+              util-linux is a random collection of Linux utilities
+
+     Note that in years 2006-2010 this project used the name "util-linux-ng".
+
+WEB PAGE:
+
+     http://kernel.org/~kzak/util-linux/
+
+
+MAILING LIST:
+
+      E-MAIL: util-linux@vger.kernel.org
+      URL:    http://vger.kernel.org/vger-lists.html#util-linux
+
+
+DOWNLOAD:
+
+      ftp://ftp.kernel.org/pub/linux/utils/util-linux/
+
+
+SOURCE CODE:
+
+      Web interface:
+          http://git.kernel.org/?p=utils/util-linux/util-linux.git
+      Checkout:
+          git clone git://git.kernel.org/pub/scm/utils/util-linux/util-linux.git util-linux
+
+NLS (PO TRANSLATIONS):
+
+      PO files are maintained by:
+          http://translationproject.org/domain/util-linux-ng.html
+
+NEUTRALITY:
+
+      The stuff in util-linux should be rather distribution-neutral.
+      No RPMs/DEBs/... are provided - get yours from your distributor.
+
+
+VERSION SCHEMA:
+
+      Standard releases:
+
+          <major>.<minor>[.<maint>[.<bugfix>]]
+
+             major = fatal and deep changes
+             minor = typical release with new features
+             maint = maintenance releases; bug fixes only
+             bugfix = unplanned releases for critical/security bugs
+
+      Development releases:
+
+         <major>.<minor>-rc<N>
+
+
+COMPILATION:
+
+      See the INSTALL file for more details.
+
+      Notes:
+            * use SUID_CFLAGS and SUID_LDFLAGS when you want to define special
+              compiler options for typical suid programs, for example:
+
+                  ./configure SUID_CFLAGS="-fpie" SUID_LDFLAGS="-pie"
+
+              This feature is currently supported for chfn, chsh, newgrp,
+              write, mount, and umount.
+
+
+STATIC LINKING:
+
+      Use --enable-static-programs[=LIST] configure option when you want to use
+      statically linked programs.
+
+      Note, mount(8) uses get{pw,gr}nam() and getpwuid() functions for
+      translation from username and groupname to UID and GID. These functions
+      could be implemented by dynamically loaded independent modules (NSS) in
+      your libc (e.g. glibc). These modules are not statically linked to
+      mount(8) and mount.static is still using dlopen() like dynamically
+      linked version.
+
+      The translation won't work in environment where NSS modules are
+      not installed.
+
+      For example normal system (NSS modules are available):
+
+              # ./mount.static -v -f -n -ouid=kzak /mnt/foo
+              LABEL=/mnt/foo on /mnt/foo type vfat (rw,uid=500)
+                                                       ^^^^^^^
+      and without NSS modules:
+
+              # chroot . ./mount.static -v -f -n -ouid=kzak /mnt/win
+              LABEL=/mnt/win on /mnt/win type vfat (rw,uid=kzak)
+                                                       ^^^^^^^^
+
+

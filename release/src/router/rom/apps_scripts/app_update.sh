@@ -32,6 +32,10 @@ if [ "$link_internet" != "1" ]; then
 	exit 1
 fi
 
+if [ -n "$is_arm_machine" ]; then
+	sed -i '/^#src\/gz.*ASUSWRT$/c src/gz optware.mbwe-bluering http://ipkg.nslu2-linux.org/feeds/optware/mbwe-bluering/cross/stable' $CONF_FILE
+fi
+
 grep -n '^src.*' $CONF_FILE |sort -r |awk '{print $2 " " $3}' > $TEMP_FILE
 row_num=`wc -l < $TEMP_FILE`
 if [ -z "$row_num" ]; then

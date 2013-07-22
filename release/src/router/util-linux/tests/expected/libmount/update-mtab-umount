@@ -1,0 +1,2 @@
+/dev/sda1 /mnt/newfoo ext3 ro,noatime 0 0
+/dev/sda2 /mnt/newbar ext3 rw,noatime 0 0

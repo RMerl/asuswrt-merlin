@@ -28,7 +28,7 @@ CFLAGS = -Wall -g -Os -D_GNU_SOURCE $(EXTRACFLAGS) -D_FILE_OFFSET_BITS=64 \
 	-I$(TOP)/libvorbis/include \
 
 ifneq ($(STATIC),1)
-CFLAGS += -L$(TOP)/zlib -L$(TOP)/sqlite/.libs -L$(TOP)/jpeg -L$(TOP)/libvorbis/lib/.libs \
+LDFLAGS += -L$(TOP)/zlib -L$(TOP)/sqlite/.libs -L$(TOP)/jpeg -L$(TOP)/libvorbis/lib/.libs \
 	-L$(TOP)/libogg/src/.libs -L$(TOP)/libexif/libexif/.libs -L$(TOP)/flac/src/libFLAC/.libs \
 	-L$(TOP)/ffmpeg/libavutil -L$(TOP)/ffmpeg/libavcodec -L$(TOP)/ffmpeg/libavformat \
 	-L$(TOP)/libid3tag/.libs
@@ -44,15 +44,15 @@ INSTALL = install
 CFLAGS += -I$(TOP)/shared
 
 ifeq ($(RTAC66U), y)
-        CFLAGS += -DRTN66U
+	CFLAGS += -DRTN66U
 endif
 
 ifeq ($(RTN66U), y)
-        CFLAGS += -DRTN66U
+	CFLAGS += -DRTN66U
 endif
 
 ifeq ($(RTN56U)$(RTN65U), y)
-        CFLAGS += -DRTN56U
+	CFLAGS += -DRTN56U
 endif
 
 INSTALLPREFIX ?= $(DESTDIR)/usr
@@ -60,17 +60,17 @@ SBININSTALLDIR = $(INSTALLPREFIX)/sbin
 ETCINSTALLDIR = $(DESTDIR)/etc
 
 BASEOBJS = minidlna.o upnphttp.o upnpdescgen.o upnpsoap.o \
-           upnpreplyparse.o minixml.o \
-           getifaddr.o daemonize.o upnpglobalvars.o \
-           options.o minissdp.o uuid.o upnpevents.o \
-           sql.o utils.o metadata.o scanner.o inotify.o \
-           tivo_utils.o tivo_beacon.o tivo_commands.o \
-           tagutils/textutils.o tagutils/misc.o tagutils/tagutils.o \
-           playlist.o image_utils.o albumart.o log.o
+	   upnpreplyparse.o minixml.o \
+	   getifaddr.o daemonize.o upnpglobalvars.o \
+	   options.o minissdp.o uuid.o upnpevents.o \
+	   sql.o utils.o metadata.o scanner.o inotify.o \
+	   tivo_utils.o tivo_beacon.o tivo_commands.o \
+	   tagutils/textutils.o tagutils/misc.o tagutils/tagutils.o \
+	   playlist.o image_utils.o albumart.o log.o clients.o
 
 ALLOBJS = $(BASEOBJS) $(LNXOBJS)
 
-LIBS = -lpthread -lexif -ljpeg -lsqlite3 -lavformat -lavutil -lavcodec -lid3tag -lFLAC -logg -lvorbis
+#LIBS = -lpthread -lexif -ljpeg -lsqlite3 -lavformat -lavutil -lavcodec -lid3tag -lFLAC -logg -lvorbis
 #STATIC_LINKING: LIBS = -lvorbis -logg -lm -lsqlite3 -lpthread -lexif -ljpeg -lFLAC -lm -lid3tag -lz -lavformat -lavutil -lavcodec -lm
 
 ifeq ($(STATIC),1)
@@ -87,7 +87,7 @@ LIBS = -lpthread -lm \
 	$(TOP)/ffmpeg/libavcodec/libavcodec.a \
 	$(TOP)/ffmpeg/libavutil/libavutil.a
 else
-LIBS += -lm -lz
+LIBS += -lpthread -lm -lvorbis -logg -lsqlite3 -lexif -ljpeg -lFLAC -lid3tag -lz -lavformat -lavcodec -lavutil
 endif
 
 TESTUPNPDESCGENOBJS = testupnpdescgen.o upnpdescgen.o
@@ -136,8 +136,8 @@ minidlna.o: config.h upnpglobalvars.h minidlnatypes.h
 minidlna.o: upnphttp.h upnpdescgen.h minidlnapath.h getifaddr.h upnpsoap.h
 minidlna.o: options.h minissdp.h daemonize.h upnpevents.h log.h
 upnphttp.o: config.h upnphttp.h upnpdescgen.h minidlnapath.h upnpsoap.h
-upnphttp.o: upnpevents.h image_utils.h sql.h log.h icons.c
-upnpdescgen.o: config.h upnpdescgen.h minidlnapath.h upnpglobalvars.h
+upnphttp.o: upnpevents.h image_utils.h sql.h log.h sendfile.h icons.c
+upnpdescgen.o: config.h upnpdescgen.h minidlnapath.h upnpglobalvars.h upnpdescstrings.h
 upnpdescgen.o: minidlnatypes.h upnpdescstrings.h log.h
 upnpsoap.o: config.h upnpglobalvars.h minidlnatypes.h log.h utils.h sql.h
 upnpsoap.o: upnphttp.h upnpsoap.h upnpreplyparse.h getifaddr.h log.h
@@ -145,7 +145,7 @@ upnpreplyparse.o: upnpreplyparse.h minixml.h log.h
 minixml.o: minixml.h
 getifaddr.o: getifaddr.h log.h
 daemonize.o: daemonize.h config.h log.h
-upnpglobalvars.o: config.h upnpglobalvars.h
+upnpglobalvars.o: config.h upnpglobalvars.h upnpdescstrings.h
 upnpglobalvars.o: minidlnatypes.h
 options.o: options.h config.h upnpglobalvars.h
 options.o: minidlnatypes.h
@@ -155,9 +155,7 @@ upnpevents.o: config.h upnpevents.h minidlnapath.h upnpglobalvars.h
 upnpevents.o: minidlnatypes.h upnpdescgen.h log.h uuid.h
 uuid.o: uuid.h
 testupnpdescgen.o: config.h upnpdescgen.h
-upnpdescgen.o: config.h upnpdescgen.h minidlnapath.h upnpglobalvars.h
-upnpdescgen.o: minidlnatypes.h upnpdescstrings.h
-scanner.o: upnpglobalvars.h metadata.h utils.h sql.h scanner.h log.h playlist.h
+scanner.o: upnpglobalvars.h metadata.h utils.h sql.h scanner.h log.h playlist.h scanner_sqlite.h
 metadata.o: upnpglobalvars.h metadata.h albumart.h utils.h sql.h log.h
 albumart.o: upnpglobalvars.h albumart.h utils.h image_utils.h sql.h log.h
 tagutils/misc.o: tagutils/misc.h
@@ -174,6 +172,7 @@ tivo_commands.o: config.h tivo_commands.h tivo_utils.h utils.h
 utils.o: utils.h
 sql.o: sql.h
 log.o: log.h
+clients.o: clients.h
 
 .SUFFIXES: .c .o
 

@@ -53,7 +53,8 @@ SMBC_module_init(void * punused)
     lp_set_in_client(True);
                 
     home = getenv("HOME");
-    if (home) {
+    /*
+	if (home) {
         char *conf = NULL;
         if (asprintf(&conf, "%s/.smb/smb.conf", home) > 0) {
             if (lp_load(conf, True, False, False, True)) {
@@ -65,7 +66,8 @@ SMBC_module_init(void * punused)
             SAFE_FREE(conf);
         }
     }
-                
+    */
+
     if (!conf_loaded) {
         /*
          * Well, if that failed, try the get_dyn_CONFIGFILE

@@ -47,16 +47,9 @@ int wds_enable(void)
 void
 start_nas(void)
 {
-#if 0 /* defined (SMP) */
-	int ret;
-#endif
 	stop_nas();
 
-#if 0 /* defined (SMP) */
-	ret = eval("taskset", "-c", DEFAULT_TASKSET_CPU, "nas");
-#else
 	system("nas&");
-#endif
 }
 
 void
@@ -144,7 +137,7 @@ int wlcscan_main(void)
 		fclose(fp);
 	}
 	file_unlock(lock);
-
+	
 	nvram_set_int("wlc_scan_state", WLCSCAN_STATE_INITIALIZING);
 	/* Starting scanning */
 	i = 0;

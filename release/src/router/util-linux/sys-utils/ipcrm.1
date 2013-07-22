@@ -1,0 +1,122 @@
+.\" Copyright 2002 Andre C. Mazzone (linuxdev@karagee.com)
+.\" May be distributed under the GNU General Public License
+.TH IPCRM 1 "March 2002" "util-linux" "User Commands"
+.SH NAME
+ipcrm \- remove a message queue, semaphore set or shared memory id
+.SH SYNOPSIS
+.B ipcrm
+[
+.B \-M
+.I key
+|
+.B \-m
+.I id
+|
+.B \-Q
+.I key
+|
+.B \-q
+.I id
+|
+.B \-S
+.I key
+|
+.B \-s
+.I id
+] ...
+
+deprecated usage
+
+.BI ipcrm
+.RB { shm | msg | sem }
+.IR id ...
+.SH DESCRIPTION
+.I ipcrm
+removes System V interprocess communication (IPC) objects
+and associated data structures from the system.
+In order to delete such objects, you must be superuser, or
+the creator or owner of the object.
+
+System V IPC objects are of three types: shared memory,
+message queues, and semaphores.
+Deletion of a message queue or semaphore object is immediate
+(regardless of whether any process still holds an IPC
+identifier for the object).
+A shared memory object is only removed
+after all currently attached processes have detached
+.RB ( shmdt (2))
+the object from their virtual address space.
+
+Two syntax styles are supported.  The old Linux historical syntax specifies
+a three letter keyword indicating which class of object is to be deleted,
+followed by one or more IPC identifiers for objects of this type.
+
+The SUS-compliant syntax allows the specification of
+zero or more objects of all three types in a single command line,
+with objects specified either by key or by identifier. (See below.)
+Both keys and identifiers may be specified in decimal, hexadecimal
+(specified with an initial '0x' or '0X'), or octal (specified with
+an initial '0').
+
+.SH OPTIONS
+.TP
+.BI \-M " shmkey"
+removes the shared memory segment created with
+.I shmkey
+after the last detach is performed.
+.TP
+.BI \-m " shmid"
+removes the shared memory segment identified by
+.I shmid
+after the last detach is performed.
+.TP
+.BI \-Q " msgkey"
+removes the message queue created with
+.IR msgkey .
+.TP
+.BI \-q " msgid"
+removes the message queue identified by
+.IR msgid .
+.TP
+.BI \-S " semkey"
+removes the semaphore created with
+.IR semkey .
+.TP
+.BI \-s " semid"
+removes the semaphore identified by
+.IR semid .
+.LP
+The details of the removes are described in
+.IR msgctl (2),
+.IR shmctl (2),
+and
+.IR semctl (2).
+The identifiers and keys may be found by using
+.IR ipcs (1).
+.SH NOTES
+In its first Linux implementation, ipcrm used the deprecated syntax
+shown in the
+.BR SYNOPSIS .
+Functionality present in other *nix implementations of ipcrm has since
+been added, namely the ability to delete resources by key (not just
+identifier), and to respect the same command-line syntax. For backward
+compatibility the previous syntax is still supported.
+.\" .SH AUTHORS
+.\" Andre C. Mazzone (linuxdev@karagee.com)
+.\" .br
+.\" Krishna Balasubramanian (balasub@cis.ohio-state.edu)
+.SH SEE ALSO
+.nh
+.BR ipcs (1),
+.BR ipcmk (1),
+.BR msgctl (2),
+.BR msgget (2),
+.BR semctl (2),
+.BR semget (2),
+.BR shmctl (2),
+.BR shmdt (2),
+.BR shmget (2),
+.BR ftok (3)
+.SH AVAILABILITY
+The ipcrm command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

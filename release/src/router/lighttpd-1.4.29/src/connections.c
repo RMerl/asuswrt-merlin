@@ -992,10 +992,10 @@ static int redirect_mobile_share_link(server *srv, connection *con){
 		buffer* html_file = buffer_init();
 #ifndef APP_IPKG
 		if( strncmp(file_ext, "mp3", 3) == 0 )
-			buffer_copy_string(html_file, "/usr/css/iaudio.html");
+			buffer_copy_string(html_file, "/usr/lighttpd/css/iaudio.html");
 		else if( strncmp(file_ext, "mp4", 3) == 0 ||
 				 strncmp(file_ext, "m4v", 3) == 0 )
-			buffer_copy_string(html_file, "/usr/css/ivideo.html");
+			buffer_copy_string(html_file, "/usr/lighttpd/css/ivideo.html");
 #else
 		if( strncmp(file_ext, "mp3", 3) == 0 )
 			buffer_copy_string(html_file, "/opt/etc/aicloud_UI/css/iaudio.html");
@@ -1055,7 +1055,7 @@ static void check_available_temp_space(server *srv, connection *con){
 			char disk_full_path[100] = "\0";
 			
 			sprintf(disk_full_path, "%s%s", disk_path, de->d_name);
-			sprintf(querycmd, "df|grep -i %s", disk_full_path);
+			sprintf(querycmd, "df|grep -i '%s'", disk_full_path);
 						
 			char mybuffer[BUFSIZ]="\0";
 			FILE* fp = popen( querycmd, "r");

@@ -1,0 +1,18 @@
+--- release/src/router/www/sysdep/DSL-N55U-B/www/qis/QIS_wireless.htm	2013-06-26 03:57:21.000000000 -0400
++++ release/src/router/www/sysdep/DSL-N55U-B/www/qis/QIS_wireless.htm	2013-07-12 00:46:52.000000000 -0400
+@@ -260,7 +260,6 @@
+ 		document.form.sw_mode.value = 1;
+ 	//}
+ 
+-	parent.showLoading(15);
+ 	//parent.w_Setting_tmp = document.form.w_Setting.value
+ 	//document.getElementById("loadingIcon").style.display = "";
+ 	//document.form.wan_nat_x.value = parent.document.QKform.wan_nat_x.value;
+@@ -268,6 +267,7 @@
+ 	//document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
+ 	//document.form.target = "hidden_frame";
+ 	document.form.next_page.value = "/qis/QIS_finish.htm";
++	parent.showLoading(20);
+ 	document.form.submit();
+ }
+ 

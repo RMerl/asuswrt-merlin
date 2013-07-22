@@ -19,6 +19,7 @@
 //#include "api.h"
 
 //#define DEBUG 1
+#define CMD_SPLIT "\n"
 
 
 //extern int keep_running;
@@ -526,6 +527,8 @@ void handle_event (queue_entry_t event,int fd)
 
     //category = get_category(path);  //del by alan
 
+    List *list_temp;
+
     if(category == -1)
     {
         printf("inotify can't find path type\n");
@@ -651,7 +654,7 @@ void handle_event (queue_entry_t event,int fd)
             }
 #endif
             //if( is_create_file == 1 )
-            List *list_temp;
+            //List *list_temp;
             sprintf(fullname,"%s/%s",path,cur_event_filename);
             list_temp = get_list(fullname,create_file_list);
             if(list_temp != NULL)
@@ -659,25 +662,28 @@ void handle_event (queue_entry_t event,int fd)
 #ifdef MYDEBUG
                 printf("###### %s create file has copy ending #######\n",cur_event_filename);
 #endif
-
-                if(!test_if_download_temp_file(cur_event_filename))
+                list_temp->open_num--;
+                //printf("list_temp->open_num = %d\n",list_temp->open_num);
+                if(!test_if_download_temp_file(cur_event_filename) && list_temp->open_num == 0)
                 {
                     //if(strrstr())
                     //sprintf(fullname,"%s/%s",allfolderlist.folderlist[cur_event_wd-1].name,cur_event_filename);
 
-                    sprintf(info,"createfile@%s@%s",path,cur_event_filename);
+                    //sprintf(info,"createfile@%s@%s",path,cur_event_filename);
+                    sprintf(info,"createfile%s%s%s%s",CMD_SPLIT,path,CMD_SPLIT,cur_event_filename);
                     send_action(type,info);
                     if(is_windows_modify)
                     {
                         is_windows_modify = 0;
                     }
+                    del_list(fullname,create_file_list);
                 }
                 //else
                 // printf("ignore download temp file create socket\n");
 
                 //is_create_file = 0;
                 //create_file_num--;
-                del_list(fullname,create_file_list);
+                //del_list(fullname,create_file_list);
             }
             else
             {
@@ -692,7 +698,8 @@ void handle_event (queue_entry_t event,int fd)
                            strstr(cur_event_filename,"~gvf")))
                     {
 
-                        sprintf(info,"modify@%s@%s",path,cur_event_filename);
+                        //sprintf(info,"modify@%s@%s",path,cur_event_filename);
+                        sprintf(info,"modify%s%s%s%s",CMD_SPLIT,path,CMD_SPLIT,cur_event_filename);
                         send_action(type,info);
                     }
 
@@ -710,6 +717,13 @@ void handle_event (queue_entry_t event,int fd)
         printf ("CLOSE_NOWRITE: %s \"%s\" on WD #%i\n",
                 cur_event_file_or_dir, cur_event_filename, cur_event_wd);
 #endif
+        //List *list_temp;
+        sprintf(fullname,"%s/%s",path,cur_event_filename);
+        list_temp = get_list(fullname,create_file_list);
+        if(list_temp != NULL)
+        {
+            list_temp->open_num--;
+        }
         break;
 
         /* File was opened */
@@ -723,6 +737,15 @@ void handle_event (queue_entry_t event,int fd)
         //printf("read len is %d \n",len);
 
         //isfolder = ( temp_event.mask & IN_ISDIR ) ? 1 : 0;
+
+        //List *list_temp;
+        sprintf(fullname,"%s/%s",path,cur_event_filename);
+        list_temp = get_list(fullname,create_file_list);
+        if(list_temp != NULL)
+        {
+            list_temp->open_num++;
+            memset(fullname,0,sizeof(fullname));
+        }
 
         if(have_from_file == 1)
         {
@@ -750,7 +773,8 @@ void handle_event (queue_entry_t event,int fd)
 
                 if(!test_if_download_temp_file(fullname))
                 {
-                    sprintf(info,"remove@%s@%s",fullname,temp_event.name);
+                    //sprintf(info,"remove@%s@%s",fullname,temp_event.name);
+                    sprintf(info,"remove%s%s%s%s",CMD_SPLIT,fullname,CMD_SPLIT,temp_event.name);
                     send_action(type,info);
                 }
 
@@ -807,7 +831,8 @@ void handle_event (queue_entry_t event,int fd)
 
             if(!test_if_download_temp_file(cur_event_filename))
             {
-                sprintf(info,"modify@%s@%s",path,cur_event_filename);
+                //sprintf(info,"modify@%s@%s",path,cur_event_filename);
+                sprintf(info,"modify%s%s%s%s",CMD_SPLIT,path,CMD_SPLIT,cur_event_filename);
                 send_action(type,info);
             }
 
@@ -834,7 +859,8 @@ void handle_event (queue_entry_t event,int fd)
 #endif
                             if(!test_if_download_temp_file(temp_event.name))
                             {
-                                sprintf(info,"rename@%s@%s@%s",path,temp_event.name,cur_event_filename);
+                                //sprintf(info,"rename@%s@%s@%s",path,temp_event.name,cur_event_filename);
+                                sprintf(info,"rename%s%s%s%s%s%s",CMD_SPLIT,path,CMD_SPLIT,temp_event.name,CMD_SPLIT,cur_event_filename);
                                 //remove("../inotify");   delete by alan
 
                                 sprintf(fullname,"%s/%s",path,cur_event_filename);
@@ -873,7 +899,8 @@ void handle_event (queue_entry_t event,int fd)
                                 //sprintf(old_path,"%s",allfolderlist.folderlist[temp_event.wd-1].name);
                                 sprintf(old_path,"%s",folder_temp_move->name);
 
-                                sprintf(info,"move@%s@%s@%s",path,old_path,temp_event.name);
+                                //sprintf(info,"move@%s@%s@%s",path,old_path,temp_event.name);
+                                sprintf(info,"move%s%s%s%s%s%s",CMD_SPLIT,path,CMD_SPLIT,old_path,CMD_SPLIT,temp_event.name);
 
                                 sprintf(fullname,"%s/%s",path,temp_event.name);
                                 sprintf(old_fullname,"%s/%s",old_path,temp_event.name);
@@ -907,7 +934,8 @@ void handle_event (queue_entry_t event,int fd)
 
                 if(isfolder)
                 {
-                    sprintf(info,"dragfolder@%s@%s",path,cur_event_filename);
+                    //sprintf(info,"dragfolder@%s@%s",path,cur_event_filename);
+                    sprintf(info,"dragfolder%s%s%s%s",CMD_SPLIT,path,CMD_SPLIT,cur_event_filename);
 
                     pthread_mutex_lock(&mutex_allfolderlist);
                     dragfolder_wd = watch_dragfolder_dir(fullname,type,fd);
@@ -930,7 +958,8 @@ void handle_event (queue_entry_t event,int fd)
                 }
                 else
                 {
-                    sprintf(info,"dragfile@%s@%s",path,cur_event_filename);
+                    //sprintf(info,"dragfile@%s@%s",path,cur_event_filename);
+                    sprintf(info,"dragfile%s%s%s%s",CMD_SPLIT,path,CMD_SPLIT,cur_event_filename);
                     send_action(type,info);
                 }
             }
@@ -966,7 +995,8 @@ void handle_event (queue_entry_t event,int fd)
 
             if(!test_if_download_temp_file(cur_event_filename))
             {
-                sprintf(info,"delete@%s@%s",path,cur_event_filename);
+                //sprintf(info,"delete@%s@%s",path,cur_event_filename);
+                sprintf(info,"delete%s%s%s%s",CMD_SPLIT,path,CMD_SPLIT,cur_event_filename);
                 send_action(type,info);
             }
 
@@ -999,7 +1029,8 @@ void handle_event (queue_entry_t event,int fd)
                 printf("***********it is folder*************\n");
 #endif
                 sprintf(fullname,"%s/%s",path,cur_event_filename);
-                sprintf(info,"createfolder@%s@%s",path,cur_event_filename);
+                //sprintf(info,"createfolder@%s@%s",path,cur_event_filename);
+                sprintf(info,"createfolder%s%s%s%s",CMD_SPLIT,path,CMD_SPLIT,cur_event_filename);
 
                 //add by alan
                 wd = watch_dir (fd, fullname, MY_IN_ALL_EVENTS);
@@ -1034,7 +1065,8 @@ void handle_event (queue_entry_t event,int fd)
                 if(!test_if_download_temp_file(cur_event_filename))
                 {
                     sprintf(fullname,"%s/%s",path,cur_event_filename);
-                    sprintf(info,"copyfile@%s@%s",path,cur_event_filename);
+                    //sprintf(info,"copyfile@%s@%s",path,cur_event_filename);
+                    sprintf(info,"copyfile%s%s%s%s",CMD_SPLIT,path,CMD_SPLIT,cur_event_filename);
                     send_action(type,info);
                     //is_create_file = 1;
                     //create_file_num++;
@@ -1066,7 +1098,8 @@ void handle_event (queue_entry_t event,int fd)
 
             if(pathlist_temp != NULL)
             {
-                sprintf(info,"rmroot@%s",pathlist_temp->name);
+                //sprintf(info,"rmroot@%s",pathlist_temp->name);
+                sprintf(info,"rmroot%s%s",CMD_SPLIT,pathlist_temp->name);
                 send_action(type,info);
                 pthread_mutex_lock(&mutex_pathlist);
                 pathlist_tail = del_Folder(cur_event_wd,pathlist);
@@ -1100,7 +1133,8 @@ void handle_event (queue_entry_t event,int fd)
                     ignore_all_wd(pathlist_temp1->name,fd);
                     //ignore_wd (fd,cur_event_wd);
                 }
-                sprintf(info,"rmroot@%s",pathlist_temp1->name);
+                //sprintf(info,"rmroot@%s",pathlist_temp1->name);
+                sprintf(info,"rmroot%s%s",CMD_SPLIT,pathlist_temp1->name);
                 send_action(type,info);
                 pthread_mutex_lock(&mutex_pathlist);
                 pathlist_tail = del_Folder(pathlist_temp1->wd,pathlist);
@@ -1143,7 +1177,8 @@ void handle_event (queue_entry_t event,int fd)
                     }
 
                     ignore_all_wd(folder_temp_remove->name,fd);
-                    sprintf(info,"remove@%s@%s",fullname,temp_event.name);
+                    //sprintf(info,"remove@%s@%s",fullname,temp_event.name);
+                    sprintf(info,"remove%s%s%s%s",CMD_SPLIT,fullname,CMD_SPLIT,temp_event.name);
                     send_action(type,info);
                     //}
 

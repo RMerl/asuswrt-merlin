@@ -24,7 +24,11 @@ OBJS := bcmgpio.o
 
 ifeq ($(wildcard ./*.c),)
 all:
+ifeq ($(RTCONFIG_BCMARM),y)
+	cp -f ./prebuild_arm/libbcm.so .
+else
 	cp -f ./prebuild/libbcm.so .
+endif
 else
 all: libbcm.so
 endif

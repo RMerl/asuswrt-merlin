@@ -22,15 +22,20 @@ APP_LINK_DIR=/tmp/opt
 APP_LINK_BIN=$APP_LINK_DIR/bin
 APP_LINK_LIB=$APP_LINK_DIR/lib
 
+APP_FS_TYPE=`mount | grep $APPS_MOUNTED_PATH | sed -e "s,.*on.* type \([^ ]*\) (.*$,\1,"`
 
 APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
 if [ "$APPS_MOUNTED_TYPE" != "vfat" ]; then
-	chmod -R 777 $APPS_INSTALL_PATH
+	if [ "$APP_FS_TYPE" != "fuseblk" ] ; then
+		chmod -R 777 $APPS_INSTALL_PATH
+	fi
 	user_account=`nvram get http_username`
 	if [ -z "$user_account" ]; then
 		user_account="admin"
 	fi
-	chown -R "$user_account":root $APPS_INSTALL_PATH
+	if [ "$APP_FS_TYPE" != "fuseblk" ] ; then
+		chown -R "$user_account":root $APPS_INSTALL_PATH
+	fi
 	rm -rf $APP_LINK_DIR
 	ln -sf $APPS_INSTALL_PATH $APP_LINK_DIR
 	exit 0

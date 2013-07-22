@@ -48,7 +48,7 @@
  */
 #include <sys/types.h>
 #include <netinet/in.h>
-#include <linux/limits.h>
+#include <sys/param.h>
 
 #include "config.h"
 #include "upnpglobalvars.h"
@@ -63,7 +63,7 @@ time_t startup_time = 0;
 struct runtime_vars_s runtime_vars;
 uint32_t runtime_flags = INOTIFY_MASK;
 
-const char * pidfilename = "/var/run/minidlna.pid";
+const char * pidfilename = "/var/run/minidlna/minidlna.pid";
 
 char uuidvalue[] = "uuid:00000000-0000-0000-0000-000000000000";
 char modelname[MODELNAME_MAX_LEN] = ROOTDEV_MODELNAME;
@@ -90,7 +90,6 @@ char db_path[PATH_MAX] = {'\0'};
 char log_path[PATH_MAX] = {'\0'};
 struct media_dir_s * media_dirs = NULL;
 struct album_art_name_s * album_art_names = NULL;
-struct client_cache_s clients[CLIENT_CACHE_SLOTS];
 short int scanning = 0;
 volatile short int quitting = 0;
 volatile uint32_t updateID = 0;

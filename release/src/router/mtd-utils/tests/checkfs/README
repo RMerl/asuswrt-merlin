@@ -1,0 +1,173 @@
+$Id: README,v 1.2 2001/06/21 23:07:06 dwmw2 Exp $
+$Log: README,v $
+Revision 1.2  2001/06/21 23:07:06  dwmw2
+Initial import to MTD CVS
+
+Revision 1.1  2001/06/11 19:34:40  vipin
+Added README file to dir.
+
+
+This is the README file for the "checkfs" power fail test program.
+By: Vipin Malik
+
+NOTE: This program requires an external "power cycling box"
+connected to one of the com ports of the system under test.
+This power cycling box should wait for a random amount of time
+after it receives a "ok to power me down" message over the
+serial port, and then yank power to the system under test.
+(The box that I rigged up tested with waits anywhere from
+0 to ~40 seconds).
+
+
+It should then restore power after a few seconds and wait for the
+message again.
+
+
+ABOUT:
+
+This program's primary purpose it to test the reliiability
+of various file systems under Linux.
+
+SETUP:
+
+You need to setup the file system you want to test and run the
+"makefiles" program ONCE. This creates a set of files that are
+required by the "checkfs" program.
+
+Also copy the "checkfs" executable program to the same dir.
+
+Then you need to make sure that the program "checkfs" is called
+automatically on startup. You can customise the operation of
+the "checkfs" program by passing it various cmd line arguments.
+run "checkfs -?" for more details.
+
+****NOTE*******
+Make sure that you call the checkfs program only after you have
+mounted the file system you want to test (this is obvious), but
+also after you have run any "scan" utilities to check for and
+fix any file systems errors. The e2fsck is one utility for the
+ext2 file system. For an automated setup you of course need to
+provide these scan programs to run in standalone mode (-f -y
+flags for e2fsck for example).
+
+File systems like JFFS and JFFS2 do not have any such external
+utilities and you may call "checkfs" right after you have mounted
+the respective file system under test.
+
+There are two ways you can mount the file system under test:
+
+1. Mount your root fs on a "standard" fs like ext2 and then
+mount the file system under test (which may be ext2 on another
+partition or device) and then run "checkfs" on this mounted
+partition OR
+
+2. Make your fs AND device that you have put this fs as your
+root fs and run "checkfs" on the root device (i.e. "/").
+You can of course still run checkfs under a separate dir
+under your "/" root dir.
+
+I have found the second method to be a particularly stringent
+arrangement (and thus preferred when you are trying to break
+something).
+
+Using this arrangement I was able to find that JFFS clobbered
+some "sister" files on the root fs even though "checkfs" would
+run fine through all its own check files.
+
+(I found this out when one of the clobbered sister file happened
+to be /bin/bash. The system refused to run rc.local thus
+preventing my "checkfs" program from being launched :)
+
+"checkfs":
+
+The "formatting" reliability of the fs as well as the file data integrity
+of files on the fs can be checked using this program.
+
+"formatiing" reliability can only be checked via an indirect method.
+If there is severe formatting reliability issues with the file system,
+it will most likely cause other system failures that will prevent this
+program from running successfully on a power up. This will prevent
+a "ok to power me down" message from going out to the power cycling
+black box and prevent power being turned off again.
+
+File data reliability is checked more directly. A fixed number of
+files are created in the current dir (using the program "makefiles").
+
+Each file has a random number of bytes in it (set by using the
+-s cmd line flag). The number of "ints" in the file is stored as the
+first "int" in it (note: 0 length files are not allowed). Each file
+is then filled with random data and a 16 bit CRC appended at the end.
+
+When "checkfs" is run, it runs through all files (with predetermined
+file names)- one at a time- and checks for the number of "int's"
+in it as well as the ending CRC.
+
+The program exits if the numbers of files that are corrupt are greater
+that a user specified parameter (set by using the -e cmd line flag).
+
+If the number of corrupt files is less than this parameter, the corrupt
+files are repaired and operation resumes as explained below.
+
+The idea behind allowing a user specified amount of corrupt files is as
+follows:
+
+If you are testing for "formatting" reliability of a fs, and for
+the data reliability of "other" files present of the fs, use -e 1.
+"other" files are defined as sister files on the fs, not being written to
+by the "checkfs" test program.
+
+As mentioned, in this case you would set -e 1, or allow at most 1 file
+to be corrupt each time after a power fail. This would be the file
+that was probably being written to when power failed (and CRC was not
+updated to reflect the  new data being written). You would check file
+systems like ext2 etc. with such a configuration.
+(As you have no hope that these file systems provide for either your
+new data or old data to be present in the file if power failed during
+the write. This is called "roll back and recover".)
+
+With JFFS2 I tested for such "roll back and recover" file data reliability
+by setting -e 0 and making sure that all writes to the file being
+updated are done in a *single* write().
+
+This is how I found that JFFS2 (yet) does NOT support this functionality.
+(There was a great debate if this was a bug or a feature that was lacking
+or even an issue at all. See the mtd archives for more details).
+
+In other words, JFFS2 will partially update a file on FLASH even before
+the write() command has completed, thus leaving part old data part new
+data in your file if power failed in the middle of a write().
+
+This is bad functionality if you are updating a binary structure or a
+CRC protected file (as in our case).
+
+
+If All Files Check Out OK:
+
+On the startup scan, if there are less errors than specified by the "-e flag"
+a "ok to power me down message" is sent via the specified com port.
+
+The actual format of this message will depend on the format expected
+by the power cycling box that will receive this message. One may customise
+the actual message that goes out in the "do_pwr_dn)" routine in "comm.c".
+
+This file is called with an open file descriptor to the comm port that
+this message needs to go out over and the count of the current power
+cycle (in case your power cycling box can display/log this count).
+
+After this message has been sent out, the checkfs program goes into
+a while(1) loop of writing new data (with CRC), one at a time, into
+all the "check files" in the dir.
+
+Its life comes to a sudden end when power is asynchronously pulled from
+under its feet (by your external power cycling box).
+
+It comes back to life when power is restored and the system boots and
+checkfs is called from the rc.local script file.
+
+The cycle then repeats till a problem is detected, at which point
+the "ok to power me down" message is not sent and the cycle stops
+waiting for the user to examine the system.
+
+
+
+

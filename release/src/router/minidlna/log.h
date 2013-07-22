@@ -21,12 +21,13 @@
 #ifndef __ERR_H__
 #define __ERR_H__
 
-#define E_OFF		0
-#define E_FATAL         1
-#define E_ERROR		2
-#define E_WARN          3
-#define E_INFO          4
-#define E_DEBUG		5
+#define E_OFF       0
+#define E_FATAL     1
+#define E_ERROR     2
+#define E_WARN      3
+#define E_INFO      4
+#define E_DEBUG     5
+#define E_MAXDEBUG  6
 
 enum _log_facility
 {
@@ -44,6 +45,7 @@ enum _log_facility
 
 extern int log_level[L_MAX];
 extern int log_init(const char *fname, const char *debug);
+extern void log_close(void);
 extern void log_err(int level, enum _log_facility facility, char *fname, int lineno, char *fmt, ...);
 
 #define DPRINTF(level, facility, fmt, arg...) do { log_err(level, facility, __FILE__, __LINE__, fmt, ##arg); } while (0)

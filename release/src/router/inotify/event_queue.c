@@ -162,6 +162,7 @@ int add_list(const char *path,List *head){
     memset(p2->path,'\0',sizeof(p2->path));
 
     sprintf(p2->path,"%s",path);
+    p2->open_num = 0;
 
     while(p1->next != NULL)
         p1 = p1->next;

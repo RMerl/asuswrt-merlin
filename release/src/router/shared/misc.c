@@ -843,6 +843,62 @@ int mtd_getinfo(const char *mtdname, int *part, int *size)
 	return r;
 }
 
+#if defined(RTCONFIG_UBIFS)
+#define UBI_SYSFS_DIR	"/sys/class/ubi"
+/* return device number, volume id, and volume size in bytes
+ * @return:
+ *      1:	ubi volume not found
+ * 	0:	success
+ *     -1:	invalid parameter
+ *     -2:	UBI not exist (open /sys/class/ubi failed)
+ *     <0:	error
+ */
+int ubi_getinfo(const char *ubiname, int *dev, int *part, int *size)
+{
+	DIR *dir;
+	int d, p, l, cmp, ret = 1;
+	char *s1, *s2, path[PATH_MAX];
+	struct dirent *ent;
+
+	if (!ubiname || *ubiname == '\0' || !dev || !part || !size)
+		return -1;
+
+	if ((dir = opendir(UBI_SYSFS_DIR)) == NULL)
+		return -2;
+
+	while (ret && (ent = readdir(dir)) != NULL) {
+		if (!strcmp(ent->d_name, ".") || !strcmp(ent->d_name, "..") || strncmp(ent->d_name, "ubi", 3))
+			continue;
+		if (sscanf(ent->d_name, "ubi%d_%d", &d, &p) != 2)
+			continue;
+
+		snprintf(path, sizeof(path), "%s/ubi%d_%d/name", UBI_SYSFS_DIR, d, p);
+		if (!(s1 = file2str(path)))
+			continue;
+		/* remove tailed line-feed character */
+		l = strlen(s1);
+		if (*(s1+l-1) == '\xa')
+			*(s1+l-1) = '\0';
+		cmp = strcmp(ubiname, s1);
+		free(s1);
+		if (cmp)
+			continue;
+
+		snprintf(path, sizeof(path), "%s/ubi%d_%d/data_bytes", UBI_SYSFS_DIR, d, p);
+		if (!(s2 = file2str(path)))
+			continue;
+		*dev = d;
+		*part = p;
+		*size = atoi(s2);
+		free(s2);
+		ret = 0;
+	}
+	closedir(dir);
+
+	return ret;
+}
+#endif
+
 // -----------------------------------------------------------------------------
 
 int nvram_get_int(const char *key)
@@ -1010,7 +1066,7 @@ void bcmvlan_models(int model, char *vlan)
 	case MODEL_RTAC66U:
 	case MODEL_RTN66U:
 	case MODEL_RTN16:
-	case MODEL_RTN16UHP:
+	case MODEL_RTN18UHP:
 	case MODEL_RTN15U:
 		strcpy(vlan, "vlan1");
 		break;
@@ -1142,7 +1198,7 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 		return 1;
 	}
 	// find in WAN interface
-	else if(nvram_contains_word("wan_ifnames", ifname))
+	else if(nvram_match("wan0_primary", "1") && nvram_contains_word("wan_ifnames", ifname))
 	{
 		if(strlen(modelvlan) && strcmp(ifname, "eth0")==0) { 
 			backup_rx = *rx;
@@ -1153,6 +1209,13 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 			return 1;	
 		}
 	}
+#if !defined(RTCONFIG_DUALWAN)
+	else if(nvram_match("wan1_primary", "1") && !strcmp(nvram_safe_get("wan1_pppoe_ifname"), ifname))
+	{
+		strcpy(ifname_desc, "INTERNET");
+		return 1;
+	}
+#endif
 	return 0;
 }
 
@@ -1222,11 +1285,7 @@ _dprintf("%s: memfree=%u.\n", __FUNCTION__, memfree);
 				}
 			}
 			fclose(fp);
-#ifdef RTN14U
-			if((memfree*1024) > threshold){	//Byte
-#else			
 			if(memfree > threshold){
-#endif
 _dprintf("%s: memfree > threshold.\n", __FUNCTION__);
 				return 0;
 			}

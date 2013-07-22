@@ -336,7 +336,25 @@ typedef enum _RT_802_11_PHY_MODE {
 	PHY_11AN_MIXED,     // 5G  band       8
 	PHY_11BGN_MIXED,    // if check 802.11b.      9
 	PHY_11AGN_MIXED,    // if check 802.11b.      10
+	PHY_11N_5G,         // 11
+	PHY_11VHT_N_ABG_MIXED,
+	PHY_11VHT_N_AG_MIXED,
+	PHY_11VHT_N_A_MIXED,// 14
+	PHY_11VHT_N_MIXED,
+	PHY_MODE_MAX
 } RT_802_11_PHY_MODE;
+
+enum WIFI_MODE{
+	WMODE_INVALID = 0,
+	WMODE_A  = 1 << 0,
+	WMODE_B  = 1 << 1,
+	WMODE_G  = 1 << 2,
+	WMODE_GN = 1 << 3,
+	WMODE_AN = 1 << 4,
+	WMODE_AC = 1 << 5,
+	WMODE_COMP = 6, /* total types of supported wireless mode, add this value once yow add new type */
+};
+
 
 typedef struct {
 	RT_802_11_PHY_MODE  PhyMode;

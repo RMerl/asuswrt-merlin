@@ -1,0 +1,154 @@
+##
+##  This file is part of shtool and free software; you can redistribute
+##  it and/or modify it under the terms of the GNU General Public
+##  License as published by the Free Software Foundation; either version
+##  2 of the License, or (at your option) any later version.
+##
+##  This file is distributed in the hope that it will be useful,
+##  but WITHOUT ANY WARRANTY; without even the implied warranty of
+##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+##  General Public License for more details.
+##
+##  You should have received a copy of the GNU General Public License
+##  along with this program; if not, write to the Free Software
+##  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+##  USA, or contact Ralf S. Engelschall <rse@engelschall.com>.
+##
+
+##
+##  COMMON UTILITY CODE
+##
+
+#   determine name of tool
+if [ ".$tool" != . ]; then
+    #   used inside shtool script
+    toolcmd="$0 $tool"
+    toolcmdhelp="shtool $tool"
+    msgprefix="shtool:$tool"
+else
+    #   used as standalone script
+    toolcmd="$0"
+    toolcmdhelp="sh $0"
+    msgprefix="$str_tool"
+fi
+
+#   parse argument specification string
+eval `echo $arg_spec |\
+      sed -e 's/^\([0-9]*\)\([+=]\)/arg_NUMS=\1; arg_MODE=\2/'`
+
+#   parse option specification string
+eval `echo h.$opt_spec |\
+      sed -e 's/\([a-zA-Z0-9]\)\([.:+]\)/opt_MODE_\1=\2;/g'`
+
+#   interate over argument line
+opt_PREV=''
+while [ $# -gt 0 ]; do
+    #   special option stops processing
+    if [ ".$1" = ".--" ]; then
+        shift
+        break
+    fi
+
+    #   determine option and argument
+    opt_ARG_OK=no
+    if [ ".$opt_PREV" != . ]; then
+        #   merge previous seen option with argument
+        opt_OPT="$opt_PREV"
+        opt_ARG="$1"
+        opt_ARG_OK=yes
+        opt_PREV=''
+    else
+        #   split argument into option and argument
+        case "$1" in
+            -[a-zA-Z0-9]*)
+                eval `echo "x$1" |\
+                      sed -e 's/^x-\([a-zA-Z0-9]\)/opt_OPT="\1";/' \
+                          -e 's/";\(.*\)$/"; opt_ARG="\1"/'`
+                ;;
+            -[a-zA-Z0-9])
+                opt_OPT=`echo "x$1" | cut -c3-`
+                opt_ARG=''
+                ;;
+            *)
+                break
+                ;;
+        esac
+    fi
+
+    #   eat up option
+    shift
+
+    #   determine whether option needs an argument
+    eval "opt_MODE=\$opt_MODE_${opt_OPT}"
+    if [ ".$opt_ARG" = . -a ".$opt_ARG_OK" != .yes ]; then
+        if [ ".$opt_MODE" = ".:" -o ".$opt_MODE" = ".+" ]; then
+            opt_PREV="$opt_OPT"
+            continue
+        fi
+    fi
+
+    #   process option
+    case $opt_MODE in
+        '.' )
+            #   boolean option
+            eval "opt_${opt_OPT}=yes"
+            ;;
+        ':' )
+            #   option with argument (multiple occurances override)
+            eval "opt_${opt_OPT}=\"\$opt_ARG\""
+            ;;
+        '+' )
+            #   option with argument (multiple occurances append)
+            eval "opt_${opt_OPT}=\"\$opt_${opt_OPT} \$opt_ARG\""
+            ;;
+        * )
+            echo "$msgprefix:Error: unknown option: \`-$opt_OPT'" 1>&2
+            echo "$msgprefix:Hint:  run \`$toolcmdhelp -h' or \`man shtool' for details" 1>&2
+            exit 1
+            ;;
+    esac
+done
+if [ ".$opt_PREV" != . ]; then
+    echo "$msgprefix:Error: missing argument to option \`-$opt_PREV'" 1>&2
+    echo "$msgprefix:Hint:  run \`$toolcmdhelp -h' or \`man shtool' for details" 1>&2
+    exit 1
+fi
+
+#   process help option
+if [ ".$opt_h" = .yes ]; then
+    echo "Usage: $toolcmdhelp $str_usage"
+    exit 0
+fi
+
+#   complain about incorrect number of arguments
+case $arg_MODE in
+    '=' )
+        if [ $# -ne $arg_NUMS ]; then
+            echo "$msgprefix:Error: invalid number of arguments (exactly $arg_NUMS expected)" 1>&2
+            echo "$msgprefix:Hint:  run \`$toolcmd -h' or \`man shtool' for details" 1>&2
+            exit 1
+        fi
+        ;;
+    '+' )
+        if [ $# -lt $arg_NUMS ]; then
+            echo "$msgprefix:Error: invalid number of arguments (at least $arg_NUMS expected)" 1>&2
+            echo "$msgprefix:Hint:  run \`$toolcmd -h' or \`man shtool' for details" 1>&2
+            exit 1
+        fi
+        ;;
+esac
+
+#   establish a temporary file on request
+if [ ".$gen_tmpfile" = .yes ]; then
+    if [ ".$TMPDIR" != . ]; then
+        tmpdir="$TMPDIR"
+    elif [ ".$TEMPDIR" != . ]; then
+        tmpdir="$TEMPDIR"
+    else
+        tmpdir="/tmp"
+    fi
+    tmpfile="$tmpdir/.shtool.$$"
+    rm -f $tmpfile >/dev/null 2>&1
+    touch $tmpfile
+fi
+

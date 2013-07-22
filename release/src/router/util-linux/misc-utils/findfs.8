@@ -1,0 +1,34 @@
+.\" -*- nroff -*-
+.\" Copyright 1993, 1994, 1995 by Theodore Ts'o.  All Rights Reserved.
+.\" This file may be copied under the terms of the GNU Public License.
+.\"
+.TH FINDFS 8 "February 2009" "util-linux" "System Administration"
+.SH NAME
+findfs \- find a filesystem by label or UUID
+.SH SYNOPSIS
+.B findfs
+.BI LABEL= label
+.sp
+.B findfs
+.BI UUID= uuid
+.SH DESCRIPTION
+.B findfs
+will search the disks in the system looking for a filesystem which has
+a label matching
+.I label
+or a UUID equal to
+.IR uuid .
+If the filesystem is found, the device name for the filesystem will
+be printed on stdout.
+.PP
+.SH AUTHOR
+.B findfs
+was originally written by Theodore Ts'o (tytso@mit.edu) and re-written for
+the util-linux package by Karel Zak (kzak@redhat.com).
+.SH AVAILABILITY
+The findfs command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+.SH SEE ALSO
+.BR blkid (8)
+.BR fsck (8)
+

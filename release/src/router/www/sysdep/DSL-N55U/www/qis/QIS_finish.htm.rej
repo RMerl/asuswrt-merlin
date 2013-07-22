@@ -1,0 +1,32 @@
+--- release/src/router/www/sysdep/DSL-N55U-B/www/qis/QIS_finish.htm	2013-06-24 04:24:31.000000000 -0400
++++ release/src/router/www/sysdep/DSL-N55U-B/www/qis/QIS_finish.htm	2013-07-12 00:46:52.000000000 -0400
+@@ -282,18 +282,6 @@
+ 	document.redirectForm.action = "/qis/QIS_"+redirect_flag+".htm";
+ 	document.redirectForm.submit();
+ }
+-
+-function gotoHome(){
+-	if (w_Setting == "0") {
+-		alert("<#QIS_recommand_encryption#>");
+-		location.href = '/qis/QIS_wireless.htm';
+-	}
+-	else {
+-		parent.location.href = '/index.asp';
+-	}
+-}
+-
+-
+ </script>
+ </head>
+ 
+@@ -315,9 +303,7 @@
+ 					</td>
+ 				</tr>
+ 				<tr id="home_button">
+-					<td align="right">
+-						<img onclick="gotoHome();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
+-					</td>
++					<td align="right">&nbsp;</td>
+ 				</tr>
+ 			</table>
+ 		</div>

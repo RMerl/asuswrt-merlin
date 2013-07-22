@@ -45,6 +45,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include "config.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -60,7 +62,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "config.h"
 #include "upnpevents.h"
 #include "minidlnapath.h"
 #include "upnpglobalvars.h"
@@ -345,10 +346,7 @@ static void upnp_event_prepare(struct upnp_event_notify * obj)
 	                       obj->sub->uuid, obj->sub->seq,
 	                       l, xml);
 	obj->buffersize = obj->tosend;
-	if(xml) {
-		free(xml);
-		xml = NULL;
-	}
+	free(xml);
 	DPRINTF(E_DEBUG, L_HTTP, "Sending UPnP Event response:\n%s\n", obj->buffer);
 	obj->state = ESending;
 }
@@ -476,9 +474,7 @@ void upnpevents_processfds(fd_set *readset, fd_set *writeset)
 				free(obj->sub);
 			}
 #endif
-			if(obj->buffer) {
-				free(obj->buffer);
-			}
+			free(obj->buffer);
 			LIST_REMOVE(obj, entries);
 			free(obj);
 		}

@@ -95,7 +95,7 @@ function gen_part_option(){
 		else
 			Beselected = 0;
 
-		if(per_pane_pool_usage_kilobytes(i, disk_num) > 0)
+		if(per_pane_pool_usage_kilobytes(i, disk_num)[0] > 0)
 			add_option(document.form.diskmon_part, pool_names()[i], pool_devices()[i], Beselected);
 	}
 }

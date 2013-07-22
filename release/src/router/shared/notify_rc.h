@@ -33,9 +33,10 @@
 #include <typedefs.h>
 
 
-extern void notify_rc(const char *event_name);
-extern void notify_rc_after_wait(const char *event_name);
-extern void notify_rc_and_wait(const char *event_name);
+extern int notify_rc(const char *event_name);
+extern int notify_rc_after_wait(const char *event_name);
+extern int notify_rc_and_wait(const char *event_name);
+extern int notify_rc_and_wait_2min(const char *event_name);
 
 
 #endif /* NOTIFY_RC_H */

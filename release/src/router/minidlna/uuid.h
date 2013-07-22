@@ -24,6 +24,14 @@
 #ifndef __UUID_H__
 #define __UUID_H__
 
+#define ETH_ALEN 6
+#ifndef NSEC_PER_SEC
+#define NSEC_PER_SEC 1000000000L
+#endif
+#ifndef NSEC_PER_MSEC
+#define NSEC_PER_MSEC 1000000L
+#endif
+
 int
 get_uuid_string(char *buf);
 

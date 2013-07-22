@@ -25,7 +25,7 @@ CFLAGS	+=	-I$(OPENSSLINC)
 endif
 
 CFLAGS  += 	-I$(SRCBASE)/include -I$(TOP)/shared -I$(TOP)/libdisk
-LDFLAGS  +=	-L$(TOP)/nvram -lnvram -L$(TOP)/shared -lshared -L$(TOP)/libdisk -ldisk
+LDFLAGS  +=	-L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared -L$(TOP)/libdisk -ldisk
 ifeq ($(RTCONFIG_BCMARM),y)
 LDFLAGS += -lgcc_s
 endif

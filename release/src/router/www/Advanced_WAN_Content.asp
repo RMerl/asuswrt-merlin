@@ -622,28 +622,9 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 
 /* password item show or not */
 function pass_checked(obj){
-	if(document.form.show_pass_1.checked)
-		replace_pass_type(obj, "text");
-	else
-		replace_pass_type(obj, "password");
+	switchType(obj, document.form.show_pass_1.checked, true);
 }
 
-/* change password type depend on browser for fix IE issue*/
-function replace_pass_type(obj, _Type){
-	if(navigator.userAgent.indexOf("MSIE") != -1){ // fix IE issue
-		var input2 = document.createElement('<input class="input_32_table" autocapitalization="off">');  // create input element
-		with (input2){ 
-			id = obj.id; 
-			value = obj.value; 
-			type = _Type; // change input type
-			name = obj.name;
-		} 
-		obj.parentNode.replaceChild(input2,obj);
-	}
-	else{	
-		obj.type= _Type;
-	}
-}
 </script>
 </head>
 

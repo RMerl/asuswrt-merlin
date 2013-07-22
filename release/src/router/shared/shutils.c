@@ -107,6 +107,22 @@ enum flag {
 };
 
 /*
+ * Print out message on console.
+ */
+void dbgprintf (const char * format, ...)
+{
+	FILE *dbg = fopen("/dev/console", "w");
+	if(dbg)
+	{
+		va_list args;
+		va_start (args, format);
+		vfprintf (dbg, format, args);
+		va_end (args);
+		fclose(dbg);
+	}
+}
+
+/*
  * Reads file and returns contents
  * @param	fd	file descriptor
  * @return	contents of file or NULL if an error occurred
@@ -191,6 +207,8 @@ int _eval(char *const argv[], const char *path, int timeout, int *ppid)
 	int n;
 	const char *p;
 	char s[256];
+	//char *cpu0_argv[32] = { "taskset", "-c", "0"};
+	//char *cpu1_argv[32] = { "taskset", "-c", "1"};
 
 	if (!ppid) {
 		// block SIGCHLD
@@ -307,10 +325,65 @@ EXIT:
 	setenv("PATH", s, 1);
 
 	alarm(timeout);
+#if 1
 	execvp(argv[0], argv);
-	
+
 	perror(argv[0]);
+#elif 0
+	for(n = 0; argv[n]; ++n)
+		cpu0_argv[n+3] = argv[n];
+	execvp(cpu0_argv[0], cpu0_argv);
+
+	perror(cpu0_argv[0]);
+#else
+	for(n = 0; argv[n]; ++n)
+		cpu1_argv[n+3] = argv[n];
+	execvp(cpu1_argv[0], cpu1_argv);
+
+	perror(cpu1_argv[0]);
+
+#endif
+
 	_exit(errno);
+}
+
+static int get_cmds_size(char **cmds)
+{
+        int i=0;
+        for(; cmds[i]; ++i);
+        return i;
+}
+
+int _cpu_eval(int *ppid, char *cmds[])
+{
+        int ncmds=0, n=0, i;
+        int maxn = get_cmds_size(cmds)
+#if defined (SMP)
+                + 4;
+#else
+                +1;
+#endif
+        char *cpucmd[maxn];
+
+        for(i=0; i<maxn; ++i)
+                cpucmd[i]=NULL;
+
+#if defined (SMP)
+        cpucmd[ncmds++]="taskset";
+        cpucmd[ncmds++]="-c";
+        if(!strcmp(cmds[n], CPU0) || !strcmp(cmds[n], CPU1)) {
+                cpucmd[ncmds++]=cmds[n++];
+        } else
+                cpucmd[ncmds++]=CPU0;
+#else
+        if(strcmp(cmds[n], CPU0) && strcmp(cmds[n], CPU1))
+                cpucmd[ncmds++]=cmds[n++];
+        else
+                n++;
+#endif
+        for(; cmds[n]; cpucmd[ncmds++]=cmds[n++]);
+
+        return _eval(cpucmd, NULL, 0, ppid);;
 }
 
 /*

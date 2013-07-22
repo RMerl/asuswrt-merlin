@@ -127,7 +127,7 @@ function detect_firmware(){
 }
 
 function detect_update(){
-	document.start_update.submit();
+	setTimeout("document.start_update.submit();", 10000);	//delay after restart_time
 }
 
 function set_step(focus_id){

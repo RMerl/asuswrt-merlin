@@ -1,0 +1,35 @@
+.TH ISOSIZE 8 "June 2011" "util-linux" "System Administration"
+.SH NAME
+isosize \- output the length of an iso9660 filesystem
+.SH SYNOPSIS
+.B isosize
+.RI [ options ] " iso9660_image_file"
+.SH DESCRIPTION
+.\" Add any additional description here
+.PP
+This command outputs the length of an iso9660 file system that
+is contained in the given file.  That file may be a normal file or
+a block device (e.g. /dev/hdd or /dev/sr0).  In the absence of
+any switches (and errors) it will output the size of the iso9660
+filesystem in bytes.  This can now be a large number (>> 4 GB).
+.SH OPTIONS
+.TP
+.BR \-x , " \-\-sectors"
+Show the block count and block size in human-readable form.
+The output uses the term "sectors" for "blocks".
+.TP
+.BR \-d , " \-\-divisor " \fInumber\fR
+Only has an effect when
+.B \-x
+is not given.  The value shown (if no errors)
+is the iso9660 file size in bytes divided by
+.IR number .
+So if
+.I number
+is the block size then the shown value will be the block count.
+.PP
+The size of the file (or block device) holding an iso9660
+filesystem can be marginally larger than the actual size of the
+iso9660 filesystem.  One reason for this is that cd writers
+are allowed to add "run out" sectors at the end of an iso9660
+image.

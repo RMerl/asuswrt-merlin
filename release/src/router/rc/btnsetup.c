@@ -940,10 +940,10 @@ int OTSStart(int flag)
 			sprintf(ssid, "%s_OTS1", get_productid()); 
 		else sprintf(ssid, "%s_OTS0", get_productid()); 
 
-		doSystem("iwpriv %s set AuthMode=OPEN", WIF);
-		doSystem("iwpriv %s set EncrypType=NONE", WIF);
-		doSystem("iwpriv %s set IEEE8021X=0", WIF);
-		doSystem("iwpriv %s set SSID=ASUS_OTS", WIF);
+		doSystem("iwpriv %s set AuthMode=OPEN", WIF_5G);
+		doSystem("iwpriv %s set EncrypType=NONE", WIF_5G);
+		doSystem("iwpriv %s set IEEE8021X=0", WIF_5G);
+		doSystem("iwpriv %s set SSID=ASUS_OTS", WIF_5G);
 
 		doSystem("iwpriv %s set AuthMode=OPEN", WIF2G);
 		doSystem("iwpriv %s set EncrypType=NONE", WIF2G);
@@ -1441,13 +1441,9 @@ int OTSPacketHandler(int sockfd)
 int 
 start_ots(void)
 { 
-#if defined (SMP)
-	char *ots_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "ots", NULL};
-#else
 	char *ots_argv[] = {"ots", NULL};
-#endif
 	pid_t pid;
-	
+
 	_eval(ots_argv, NULL, 0, &pid);
 	return 0;
 }

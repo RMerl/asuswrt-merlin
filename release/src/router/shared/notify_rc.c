@@ -42,26 +42,31 @@
 #include "shared.h"
 #include "notify_rc.h"
 
-static void notify_rc_internal(const char *event_name, bool do_wait, int wait);
+static int notify_rc_internal(const char *event_name, bool do_wait, int wait);
 
-void notify_rc(const char *event_name)
+int notify_rc(const char *event_name)
 {
-	notify_rc_internal(event_name, FALSE, 15);
+	return notify_rc_internal(event_name, FALSE, 15);
 }
 
-void notify_rc_after_wait(const char *event_name)
+int notify_rc_after_wait(const char *event_name)
 {
-	notify_rc_internal(event_name, FALSE, 30);
+	return notify_rc_internal(event_name, FALSE, 30);
 }
 
-void notify_rc_after_period_wait(const char *event_name, int wait)
+int notify_rc_after_period_wait(const char *event_name, int wait)
 {
-	notify_rc_internal(event_name, FALSE, wait);
+	return notify_rc_internal(event_name, FALSE, wait);
 }
 
-void notify_rc_and_wait(const char *event_name)
+int notify_rc_and_wait(const char *event_name)
 {
-	notify_rc_internal(event_name, TRUE, 10);
+	return notify_rc_internal(event_name, TRUE, 10);
+}
+
+int notify_rc_and_wait_2min(const char *event_name)
+{
+	return notify_rc_internal(event_name, TRUE, 120);
 }
 
 static void logmessage(char *logheader, char *fmt, ...)
@@ -78,10 +83,18 @@ static void logmessage(char *logheader, char *fmt, ...)
   va_end(args);
 }
 
-static void notify_rc_internal(const char *event_name, bool do_wait, int wait)
+/* @return:
+ * 	0:	success
+ *     -1:	invalid parameter
+ *      1:	wait pending rc_service timeout
+ */
+static int notify_rc_internal(const char *event_name, bool do_wait, int wait)
 {
 	int i;
 	char p1[16], p2[16];
+
+	if (!event_name || wait < 0)
+		return -1;
 
 	psname(nvram_get_int("rc_service_pid"), p1, sizeof(p1));
 	psname(getpid(), p2, sizeof(p2));
@@ -106,7 +119,7 @@ static void notify_rc_internal(const char *event_name, bool do_wait, int wait)
 	if(!got_right){
 		logmessage("rc_service", "skip the event: %s.", event_name);
 		_dprintf("rc_service: skip the event: %s.\n", event_name);
-		return;
+		return 1;
 	}
 
 	nvram_set("rc_service", event_name);
@@ -121,6 +134,8 @@ static void notify_rc_internal(const char *event_name, bool do_wait, int wait)
 			sleep(1);
 		}
 	}
+
+	return 0;
 }
 
 

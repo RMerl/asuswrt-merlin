@@ -1,0 +1,260 @@
+.\" Copyright (c) 1980, 1989, 1991 The Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)fstab.5	6.5 (Berkeley) 5/10/91
+.\"
+.\" Modified Sat Mar  6 20:45:03 1993, faith@cs.unc.edu, for Linux
+.\" Sat Oct  9 10:07:10 1993: converted to man format by faith@cs.unc.edu
+.\" Sat Nov 20 20:47:38 1993: hpfs documentation added
+.\" Sat Nov 27 20:23:32 1993: Updated authorship information
+.\" Wed Jul 26 00:00:00 1995: Updated some nfs stuff, joey@infodrom.north.de
+.\" Tue Apr  2 00:38:28 1996: added info about "noauto", "user", etc.
+.\" Tue Jun 15 20:02:18 1999: added LABEL and UUID
+.\" Sat Jul 14 2001: Michael K. Johnson <johnsonm@redhat.com> added -O
+.\"
+.TH FSTAB 5 "August 2010" "util-linux" "File Formats"
+.SH NAME
+fstab \- static information about the filesystems
+.SH SYNOPSIS
+.B /etc/fstab
+.SH DESCRIPTION
+The file
+.B fstab
+contains descriptive information about the various file systems.
+.B fstab
+is only read by programs, and not written; it is the duty of the system
+administrator to properly create and maintain this file.  Each filesystem
+is described on a separate line; fields on each line are separated by tabs or
+spaces.  Lines starting with '#' are comments, blank lines are ignored. The
+order of records in
+.B fstab
+is important because
+.BR fsck (8),
+.BR mount (8),
+and
+.BR umount (8)
+sequentially iterate through
+.B fstab
+doing their thing.
+
+.B The first field
+.RI ( fs_spec ).
+.RS
+This field describes the block special device or
+remote filesystem to be mounted.
+.LP
+For ordinary mounts it will hold (a link to) a block special
+device node (as created by
+.BR mknod (8))
+for the device to be mounted, like `/dev/cdrom' or `/dev/sdb7'.
+For NFS mounts one will have <host>:<dir>, e.g., `knuth.aeb.nl:/'.
+For procfs, use `proc'.
+.LP
+Instead of giving the device explicitly, one may indicate
+the (ext2 or xfs) filesystem that is to be mounted by its UUID or
+volume label (cf.
+.BR e2label (8)
+or
+.BR xfs_admin (8)),
+writing LABEL=<label> or UUID=<uuid>,
+e.g., `LABEL=Boot' or `UUID=3e6be9de\%-8139\%-11d1\%-9106\%-a43f08d823a6'.
+This will make the system more robust: adding or removing a SCSI disk
+changes the disk device name but not the filesystem volume label.
+.LP
+Note that
+.BR mount (8)
+uses UUIDs as strings. The string representation of the UUID should be based on
+lower case characters.
+.RE
+
+.B The second field
+.RI ( fs_file ).
+.RS
+This field describes the mount point for the filesystem.  For swap partitions, this
+field should be specified as `none'. If the name of the mount point
+contains spaces these can be escaped as `\\040'.
+.RE
+
+.B The third field
+.RI ( fs_vfstype ).
+.RS
+This field describes the type of the filesystem.  Linux supports lots
+of filesystem types, such as
+.IR adfs ,
+.IR affs ,
+.IR autofs ,
+.IR coda ,
+.IR coherent ,
+.IR cramfs ,
+.IR devpts ,
+.IR efs ,
+.IR ext2 ,
+.IR ext3 ,
+.IR hfs ,
+.IR hpfs ,
+.IR iso9660 ,
+.IR jfs ,
+.IR minix ,
+.IR msdos ,
+.IR ncpfs ,
+.IR nfs ,
+.IR ntfs ,
+.IR proc ,
+.IR qnx4 ,
+.IR reiserfs ,
+.IR romfs ,
+.IR smbfs ,
+.IR sysv ,
+.IR tmpfs ,
+.IR udf ,
+.IR ufs ,
+.IR umsdos ,
+.IR vfat ,
+.IR xenix ,
+.IR xfs ,
+and possibly others. For more details, see
+.BR mount (8).
+
+For the filesystems currently supported by the running kernel, see
+.IR /proc/filesystems .
+
+An entry
+.I swap
+denotes a file or partition to be used
+for swapping, cf.\&
+.BR swapon (8).
+An entry
+.I ignore
+causes the line to be ignored.  This is useful
+to show disk partitions which are currently unused.
+An entry
+.I none
+is useful for bind or move mounts.
+
+.BR mount (8)
+and
+.BR umount (8)
+support filesystem
+.IR subtypes .
+The subtype is defined by '.subtype' suffix.  For
+example 'fuse.sshfs'. It's recommended to use subtype notation rather than add
+any prefix to the first fstab field (for example 'sshfs#example.com' is
+depreacated). 
+.RE
+
+.B The fourth field
+.RI ( fs_mntops ).
+.RS
+This field describes the mount options associated with the filesystem.
+
+It is formatted as a comma separated list of options.  It contains at least
+the type of mount plus any additional options appropriate to the filesystem
+type. For documentation on the available mount options, see
+.BR mount (8).
+For documentation on the available swap options, see
+.BR swapon (8).
+
+Basic file system independent options are:
+.TP
+.B defaults
+use default options: rw, suid, dev, exec, auto, nouser, and async.
+.TP
+.B noauto
+do not mount when "mount -a" is given (e.g., at boot time)
+.TP
+.B user
+allow a user to mount
+.TP
+.B owner
+allow device owner to mount
+.TP
+.B comment
+for use by fstab-maintaining programs
+.TP
+.B nofail
+do not report errors for this device if it does not exist.
+.RE
+
+.B The fifth field
+.RI ( fs_freq ).
+.RS
+This field is used for these filesystems by the
+.BR dump (8)
+command to determine which filesystems need to be dumped.  If the fifth
+field is not present, a value of zero is returned and
+.B dump
+will assume that the filesystem does not need to be dumped.
+.RE
+
+.B The sixth field
+.RI ( fs_passno ).
+.RS
+This field is used by the
+.BR fsck (8)
+program to determine the order in which filesystem checks are done at
+reboot time.  The root filesystem should be specified with a
+.I fs_passno
+of 1, and other filesystems should have a
+.I fs_passno
+of 2.  Filesystems within a drive will be checked sequentially, but
+filesystems on different drives will be checked at the same time to utilize
+parallelism available in the hardware.  If the sixth field is not present
+or zero, a value of zero is returned and
+.B fsck
+will assume that the filesystem does not need to be checked.
+.RE
+
+The proper way to read records from
+.B fstab
+is to use the routines
+.BR getmntent (3)
+or
+.BR libmount .
+.SH FILES
+.IR /etc/fstab ,
+.I <fstab.h>
+.SH "SEE ALSO"
+.BR mount (8),
+.BR swapon (8),
+.BR fs (5),
+.BR nfs (5),
+.BR xfs (5),
+.BR proc (5),
+.BR getmntent (3)
+.SH HISTORY
+The ancestor of this
+.B fstab
+file format appeared in 4.0BSD.
+.\" But without comment convention, and options and vfs_type.
+.\" Instead there was a type rw/ro/rq/sw/xx, where xx is the present 'ignore'.
+.SH AVAILABILITY
+This man page is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

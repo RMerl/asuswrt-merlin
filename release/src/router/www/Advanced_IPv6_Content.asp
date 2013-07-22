@@ -567,12 +567,12 @@ function applyRule(){
 		if(document.form.ipv6_service.value!="static6" && document.form.ipv6_service.value!="other")	//clean up ipv6_rtr_addr if not static6 or not other
 				document.form.ipv6_rtr_addr.value = "";
 
-		if(machine_arm)
+		/*if(machine_arm)	//Viz 2013.06 Don't need to reboot anymore
 		{ // MODELDEP: Machine ARM structure
 			if((document.form.ipv6_service.value == "disabled" && document.form.ipv6_service_orig.value != "disabled") ||
 				 (document.form.ipv6_service.value != "disabled" && document.form.ipv6_service_orig.value == "disabled"))
     		FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
-		}
+		}*/
 	
 		document.form.ipv6_accept_ra.value=1;			// 0/1/2 default:1	
 		showLoading();		

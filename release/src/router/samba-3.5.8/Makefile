@@ -6,8 +6,19 @@ srcdir=source3
 SMBCFLAGS = $(EXTRACFLAGS) -Os -ffunction-sections -fdata-sections
 SMBLDFLAGS = -ffunction-sections -fdata-sections -Wl,--gc-sections
 
+ifeq ($(RTCONFIG_BCMARM), y)
+SMBCFLAGS += -DBCMARM
+SMBLDFLAGS += -lgcc_s
+endif
+
 ifneq ($(CONFIG_LINUX26),y)
 SMBCFLAGS += -DMAX_DEBUG_LEVEL="-1"
+endif
+
+ifeq ($(RTCONFIG_BCMARM), y)
+HOST = arm
+else
+HOST = mips
 endif
 
 all: .conf apps
@@ -55,7 +66,7 @@ apps: .conf
 	samba_cv_HAVE_DEVICE_MAJOR_FN=yes \
 	samba_cv_HAVE_DEVICE_MINOR_FN=yes \
 	samba_cv_HAVE_IFACE_AIX=no \
-	samba_cv_HAVE_KERNEL_CHANGE_NOTIFY=no \
+	samba_cv_HAVE_KERNEL_CHANGE_NOTIFY=yes \
 	samba_cv_HAVE_KERNEL_SHARE_MODES=yes \
 	samba_cv_HAVE_MAKEDEV=yes \
 	samba_cv_HAVE_TRUNCATED_SALT=no \
@@ -75,7 +86,7 @@ apps: .conf
 		--sbindir=/usr/sbin \
 		--libdir=/etc \
 		--localstatedir=/var \
-		--host=mips-linux \
+		--host=$(HOST)-linux \
 		--with-configdir=/etc \
 		--with-rootsbindir=/usr/sbin \
 		--with-piddir=/var/run/samba \
@@ -86,6 +97,8 @@ apps: .conf
 		--with-krb5=no \
 		--with-libsmbclient=yes \
 		--with-shared-modules=MODULES \
+		--disable-external-libtalloc \
+		--disable-external-libtdb \
 		--disable-static \
 		--disable-cups \
 		--disable-iprint \

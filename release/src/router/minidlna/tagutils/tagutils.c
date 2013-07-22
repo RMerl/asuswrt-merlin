@@ -37,7 +37,7 @@
 #include <FLAC/metadata.h>
 
 #include "../config.h"
-#ifdef HAVE_ICONV_H
+#ifdef HAVE_ICONV
 #include <iconv.h>
 #endif
 
@@ -46,6 +46,7 @@
 #include "misc.h"
 #include "textutils.h"
 #include "../metadata.h"
+#include "../utils.h"
 #include "../log.h"
 
 struct id3header {

@@ -49,17 +49,8 @@ if(apps_array == ""){
 		apps_array =["aicloud", "", "", "no", "no", "", "", "","", "", "", "", ""];
 }
 
-var apps_state_upgrade = "<% nvram_get("apps_state_upgrade"); %>";
-var apps_state_update = "<% nvram_get("apps_state_update"); %>";
-var apps_state_remove = "<% nvram_get("apps_state_remove"); %>";
-var apps_state_enable = "<% nvram_get("apps_state_enable"); %>";
-var apps_state_switch = "<% nvram_get("apps_state_switch"); %>";
-var apps_state_autorun = "<% nvram_get("apps_state_autorun"); %>";
-var apps_state_install = "<% nvram_get("apps_state_install"); %>";
-var apps_state_error = "<% nvram_get("apps_state_error"); %>";
-var apps_download_file = "<% nvram_get("apps_download_file"); %>";
-var apps_download_percent = "<% nvram_get("apps_download_percent"); %>";
-var apps_dev = "<% nvram_get("apps_dev"); %>";
+<% apps_state_info(); %>
+
 var apps_download_percent_done = 0;
 
 var curr_pool_name = "";

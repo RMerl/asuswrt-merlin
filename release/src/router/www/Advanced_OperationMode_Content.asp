@@ -32,6 +32,7 @@
 	z-index:2000;
 	background-color:#2B373B;
 	display:none;
+	behavior: url(/PIE.htc);
 }
 .QISmain{
 	width:730px;
@@ -46,6 +47,7 @@
 	font-size:12px;
 	color:#FFFFFF;
 	margin-top:10px;
+	*margin-left:10px;
 }
 
 .QISform_wireless thead{
@@ -56,6 +58,7 @@
 
 .QISform_wireless th{
 	padding-left:10px;
+	*padding-left:30px;
 	font-size:12px;
 	font-weight:bolder;
 	color: #FFFFFF;
@@ -99,10 +102,10 @@ function initial(){
 	setScenerion(sw_mode_orig);
 	Senario_shift();
 
-	if(repeater_support < 0)
+	if(!repeater_support)
 		$("repeaterMode").style.display = "none";
 
-	if(psta_support == -1)
+	if(!psta_support)
 		$("mbMode").style.display = "none";
 }
 
@@ -198,7 +201,7 @@ function saveMode(){
 				restore_wl_config("wl0.1_");
 				restore_wl_config_wep("wl0_");
 				
-				if(band5g_support != -1){
+				if(band5g_support){
 					restore_wl_config_wep("wl1_");
 					restore_wl_config("wl1.1_");
 				}
@@ -206,7 +209,7 @@ function saveMode(){
 			}
 			
 			close_guest_unit(0,1);
-			if(band5g_support != -1){
+			if(band5g_support){
 				inputCtrl(document.form.wl1_ssid,1);
 				inputCtrl(document.form.wl1_crypto,1);
 				inputCtrl(document.form.wl1_wpa_psk,1);
@@ -214,7 +217,7 @@ function saveMode(){
 				close_guest_unit(1,1);
 			}
 			
-			if(band5g_support == -1){			
+			if(!band5g_support){			
 				$('wl_unit_field_1').style.display="none";
 				$('wl_unit_field_2').style.display="none";
 				$('wl_unit_field_3').style.display="none";	
@@ -249,7 +252,7 @@ function applyRule(){
 		else
 			document.form.wl0_auth_mode_x.value = "open";
 
-		if(band5g_support >= 0){  // for Dualband 5G
+		if(band5g_support){
 			inputCtrl(document.form.wl1_ssid,1);
 			inputCtrl(document.form.wl1_crypto,1);
 			inputCtrl(document.form.wl1_wpa_psk,1);
@@ -276,7 +279,6 @@ function applyRule(){
 	$("forSSID_bg").style.visibility = "hidden";
 	document.form.submit();	
 }
-
 
 function done_validating(action){
 	refreshpage();
@@ -353,22 +355,6 @@ function setScenerion(mode){
 	}
 }
 
-/* change password type depend on browser for fix IE issue*/
-function replace_pass_type(obj, _Type){
-	if(navigator.userAgent.indexOf("MSIE") != -1){ // fix IE issue
-		var input2 = document.createElement('<input class="input_25_table" autocapitalization="off">');  // create input element
-		with (input2){ 
-			id = obj.id; 
-			value = obj.value; 
-			type = _Type; // change input type
-			name = obj.name;
-		} 
-		obj.parentNode.replaceChild(input2,obj);
-	}
-	else{	
-		obj.type= _Type;
-	}
-}
 function Sync_2ghz(band){
 	if(band == 2){
 		if(document.form.sync_with_2ghz.checked == true){
@@ -396,7 +382,17 @@ function cal_panel_block(){
 		blockmarginLeft= (winWidth*0.25)+winPadding;
 	}
 	else if(winWidth <=1050){
-		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
+		if(isMobile()){
+			if(document.body.scrollLeft < 50)
+				blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;
+			else if(document.body.scrollLeft >320)
+				blockmarginLeft= 320;			
+			else
+				blockmarginLeft= document.body.scrollLeft;		
+		}
+		else{
+			blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
+		}
 	}
 
 	$("routerSSID").style.marginLeft = blockmarginLeft+"px";
@@ -468,7 +464,7 @@ function cancel_SSID_Block(){
 			<div class="QISGeneralFont" align="left"><#qis_wireless_setting#></div>
 		</tr>
 		<tr>
-			<div style="margin:5px;"><img style="width: 640px; *width: 640px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+			<div style="margin:5px;*margin-left:-5px;"><img style="width: 640px; *width: 640px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 		</tr>
 		<tr>
 			<th width="180">2.4GHz - <#Security#></th>
@@ -487,7 +483,7 @@ function cancel_SSID_Block(){
 				<span onmouseout="return nd();" onclick="openHint(0, 23);" style="cursor:help;"><#Network_key#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>		
 			</th>
 			<td class="QISformtd">
-				<input id="wl0_wpa_psk" name="wl0_wpa_psk" type="password" autocapitalization="off" onBlur="replace_pass_type(this, 'password');" onFocus="replace_pass_type(this,'text');" value="" onkeyup="Sync_2ghz(2);" style="height:25px;" class="input_32_table" maxlength="65" disabled="disabled">
+				<input id="wl0_wpa_psk" name="wl0_wpa_psk" type="password" autocapitalization="off" onBlur="switchType(this,false);" onFocus="switchType(this,true);" value="" onkeyup="Sync_2ghz(2);" style="height:25px;" class="input_32_table" maxlength="65" disabled="disabled">
 			</td>
 		</tr>
 		<tr id="wl_unit_field_1">
@@ -509,7 +505,7 @@ function cancel_SSID_Block(){
 				<span onmouseout="return nd();" onclick="openHint(0, 23);" style="cursor:help;"><#Network_key#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">
-				<input id="wl1_wpa_psk" name="wl1_wpa_psk" type="password" autocapitalization="off" onBlur="replace_pass_type(this, 'password');" onFocus="replace_pass_type(this,'text');" value="" onkeyup="Sync_2ghz(5);" style="height:25px;" class="input_32_table" maxlength="65" disabled="disabled">
+				<input id="wl1_wpa_psk" name="wl1_wpa_psk" type="password" autocapitalization="off" onBlur="switchType(this,false);" onFocus="switchType(this,true);" value="" onkeyup="Sync_2ghz(5);" style="height:25px;" class="input_32_table" maxlength="65" disabled="disabled">
 			</td>
 		</tr>
 		<tr>

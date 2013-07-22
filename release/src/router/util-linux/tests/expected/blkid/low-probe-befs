@@ -1,0 +1,7 @@
+ID_FS_LABEL=befs_test
+ID_FS_LABEL_ENC=befs_test
+ID_FS_TYPE=befs
+ID_FS_USAGE=filesystem
+ID_FS_UUID=95d89dec82f6b73b
+ID_FS_UUID_ENC=95d89dec82f6b73b
+ID_FS_VERSION=little-endian

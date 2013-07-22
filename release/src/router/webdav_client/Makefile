@@ -9,7 +9,7 @@
 CFLAGS = -I$(TOP)/neon/src -I$(TOP)/libxml2/include -I$(TOP)/openssl/include
 CFLAGS += -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared -D_FILE_OFFSET_BITS=64 -DNVRAM_
 
-LDFLAGS = -L$(TOP)/neon/src/.libs -L$(TOP)/libxml2/.libs -L$(TOP)/nvram -L$(TOP)/shared -L$(TOP)/zlib -L$(TOP)/openssl
+LDFLAGS = -L$(TOP)/neon/src/.libs -L$(TOP)/libxml2/.libs -L$(TOP)/nvram${BCMEX} -L$(TOP)/shared -L$(TOP)/zlib -L$(TOP)/openssl
 
 LIBS = -lpthread -lnvram -lneon -lxml2 -lshared -lz -lcrypto -lssl
 

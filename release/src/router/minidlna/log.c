@@ -17,6 +17,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+#include "config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -24,6 +25,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "upnpglobalvars.h"
 #include "log.h"
 
 static FILE *log_fp = NULL;
@@ -50,8 +52,16 @@ char *level_name[] = {
 	"warn",					// E_WARN
 	"info",					// E_INFO
 	"debug",				// E_DEBUG
+	"maxdebug",				// E_MAXDEBUG
 	0
 };
+
+void
+log_close(void)
+{
+	if (log_fp)
+		fclose(log_fp);
+}
 
 int
 log_init(const char *fname, const char *debug)
@@ -121,11 +131,7 @@ log_init(const char *fname, const char *debug)
 void
 log_err(int level, enum _log_facility facility, char *fname, int lineno, char *fmt, ...)
 {
-	//char errbuf[1024];
-	char * errbuf;
 	va_list ap;
-	time_t t;
-	struct tm *tm;
 
 	if (level && level>log_level[facility] && level>E_FATAL)
 		return;
@@ -133,29 +139,33 @@ log_err(int level, enum _log_facility facility, char *fname, int lineno, char *f
 	if (!log_fp)
 		log_fp = stdout;
 
+	// timestamp
+	if (!GETFLAG(SYSTEMD_MASK))
+	{
+		time_t t;
+		struct tm *tm;
+		t = time(NULL);
+		tm = localtime(&t);
+		fprintf(log_fp, "[%04d/%02d/%02d %02d:%02d:%02d] ",
+		        tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+		        tm->tm_hour, tm->tm_min, tm->tm_sec);
+	}
+
+	if (level)
+		fprintf(log_fp, "%s:%d: %s: ", fname, lineno, level_name[level]);
+	else
+		fprintf(log_fp, "%s:%d: ", fname, lineno);
+
 	// user log
 	va_start(ap, fmt);
-	//vsnprintf(errbuf, sizeof(errbuf), fmt, ap);
-	if (vasprintf(&errbuf, fmt, ap) == -1)
+	if (vfprintf(log_fp, fmt, ap) == -1)
 	{
 		va_end(ap);
 		return;
 	}
 	va_end(ap);
 
-	// timestamp
-	t = time(NULL);
-	tm = localtime(&t);
-	fprintf(log_fp, "[%04d/%02d/%02d %02d:%02d:%02d] ",
-	        tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-	        tm->tm_hour, tm->tm_min, tm->tm_sec);
-
-	if (level)
-		fprintf(log_fp, "%s:%d: %s: %s", fname, lineno, level_name[level], errbuf);
-	else
-		fprintf(log_fp, "%s:%d: %s", fname, lineno, errbuf);
 	fflush(log_fp);
-	free(errbuf);
 
 	if (level==E_FATAL)
 		exit(-1);

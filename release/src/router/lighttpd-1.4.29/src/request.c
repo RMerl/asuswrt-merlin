@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#define DBE 1
+#define DBE 0
 
 static int request_check_hostname(server *srv, connection *con, buffer *host) {
 	enum { DOMAINLABEL, TOPLABEL } stage = TOPLABEL;

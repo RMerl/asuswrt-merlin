@@ -27,6 +27,7 @@
 #include <error.h>
 #include <sys/ioctl.h>
 #include <sys/sysinfo.h>
+#include <sys/mman.h>
 #ifdef LINUX26
 #include <linux/compiler.h>
 #include <mtd/mtd-user.h>
@@ -38,11 +39,11 @@
 #include <trxhdr.h>
 #include <bcmutils.h>
 
+#ifdef RTCONFIG_BCMARM
 #include <bcmendian.h>
 #include <bcmnvram.h>
 #include <shutils.h>
-
-
+#endif
 //	#define DEBUG_SIMULATE
 
 
@@ -70,7 +71,11 @@ static void crc_done(void)
 
 // -----------------------------------------------------------------------------
 
+#ifdef RTCONFIG_BCMARM
 static int mtd_open_old(const char *mtdname, mtd_info_t *mi)
+#else
+static int mtd_open(const char *mtdname, mtd_info_t *mi)
+#endif
 {
 	char path[256];
 	int part;
@@ -102,7 +107,12 @@ static int _unlock_erase(const char *mtdname, int erase)
 
 	r = 0;
 	skipbb = 0;
-	if ((mf = mtd_open_old(mtdname, &mi)) >= 0) {
+
+#ifdef RTCONFIG_BCMARM
+ 	if ((mf = mtd_open_old(mtdname, &mi)) >= 0) {
+#else
+	if ((mf = mtd_open(mtdname, &mi)) >= 0) {
+#endif
 			r = 1;
 #if 1
 			ei.length = mi.erasesize;
@@ -178,12 +188,20 @@ int mtd_unlock(const char *mtdname)
 	return _unlock_erase(mtdname, 0);
 }
 
+#ifdef RTCONFIG_BCMARM
 int mtd_erase_old(const char *mtdname)
+#else
+int mtd_erase(const char *mtdname)
+#endif
 {
 	return _unlock_erase(mtdname, 1);
 }
 
+#ifdef RTCONFIG_BCMARM
 int mtd_unlock_erase_main_old(int argc, char *argv[])
+#else
+int mtd_unlock_erase_main(int argc, char *argv[])
+#endif
 {
 	char c;
 	char *dev = NULL;
@@ -203,26 +221,35 @@ int mtd_unlock_erase_main_old(int argc, char *argv[])
 	return _unlock_erase(dev, strstr(argv[0], "erase") ? 1 : 0);
 }
 
+#ifdef RTCONFIG_BCMARM
 int mtd_write_main_old(int argc, char *argv[])
+#else
+int mtd_write_main(int argc, char *argv[])
+#endif
 {
 	int mf = -1;
 	mtd_info_t mi;
 	erase_info_t ei;
+#ifdef RTCONFIG_BCMARM	
 	uint32 sig;
 	struct code_header cth;
 	uint32 crc;
+#endif
 	FILE *f;
-	char *buf = NULL;
+	unsigned char *buf = NULL, *p, *bounce_buf = NULL;
 	const char *error;
-	uint32 total;
-	long filelen;
-	uint32 n;
+	long filelen = 0, n, wlen, unit_len;
 	struct sysinfo si;
 	uint32 ofs;
 	char c;
 	int web = 0;
 	char *iname = NULL;
 	char *dev = NULL;
+	char msg_buf[2048];
+	int alloc = 0, bounce = 0, fd;
+#ifdef DEBUG_SIMULATE
+	FILE *of;
+#endif
 
 	while ((c = getopt(argc, argv, "i:d:w")) != -1) {
 		switch (c) {
@@ -254,13 +281,19 @@ int mtd_write_main_old(int argc, char *argv[])
 		goto ERROR;
 	}
 
+	fd = fileno(f);
 	fseek( f, 0, SEEK_END);
 	filelen = ftell(f);
 	fseek( f, 0, SEEK_SET);
 	_dprintf("file len=0x%x\n", filelen);
 
+#ifdef RTCONFIG_BCMARM
 	if ((mf = mtd_open_old(dev, &mi)) < 0) {
-		error = "Error opening MTD device";
+#else
+	if ((mf = mtd_open(dev, &mi)) < 0) {
+#endif
+		snprintf(msg_buf, sizeof(msg_buf), "Error opening MTD device. (errno %d (%s))", errno, strerror(errno));
+		error = msg_buf;
 		goto ERROR;
 	}
 
@@ -269,76 +302,95 @@ int mtd_write_main_old(int argc, char *argv[])
 		goto ERROR;
 	}
 
-	_dprintf("mtd size=%6x, erasesize=%6x\n", mi.size, mi.erasesize);
+	_dprintf("mtd size=%x, erasesize=%x, writesize=%x, type=%x\n", mi.size, mi.erasesize, mi.writesize, mi.type);
 
-	total = ROUNDUP(filelen, mi.erasesize);
-	
-	if (total > mi.size) {
+	unit_len = ROUNDUP(filelen, mi.erasesize);
+	if (unit_len > mi.size) {
 		error = "File is too big to fit in MTD";
 		goto ERROR;
 	}
 
-	sysinfo(&si);
-	//if ((si.freeram * si.mem_unit) > (total + (256 * 1024))) {
-	if ((si.freeram * si.mem_unit) > (total + (4096 * 1024))) {
-		ei.length = total;
+	if ((buf = mmap(0, filelen, PROT_READ, MAP_SHARED, fd, 0)) == (unsigned char*)MAP_FAILED) {
+		_dprintf("mmap %x bytes fail!. errno %d (%s).\n", filelen, errno, strerror(errno));
+		alloc = 1;
 	}
-	else {
-//		ei.length = ROUNDUP((si.freeram - (256 * 1024)), mi.erasesize);
-		ei.length = mi.erasesize;
-	}
-	_dprintf("freeram=%ld ei.length=%d total=%u\n", si.freeram, ei.length, total);
 
-	if ((buf = malloc(ei.length)) == NULL) {
+	sysinfo(&si);
+	if (alloc) {
+		if ((si.freeram * si.mem_unit) <= (unit_len + (4096 * 1024)))
+			unit_len = mi.erasesize;
+	}
+
+	if (mi.type == MTD_UBIVOLUME) {
+		if (!(bounce_buf = malloc(mi.writesize))) {
+			error = "Not enough memory";
+			goto ERROR;
+		}
+	}
+	_dprintf("freeram=%lx unit_len=%lx filelen=%lx mi.erasesize=%x mi.writesize=%x\n",
+		si.freeram, unit_len, filelen, mi.erasesize, mi.writesize);
+
+	if (alloc && !(buf = malloc(unit_len))) {
 		error = "Not enough memory";
 		goto ERROR;
 	}
 
 #ifdef DEBUG_SIMULATE
-	FILE *of;
 	if ((of = fopen("/mnt/out.bin", "w")) == NULL) {
 		error = "Error creating test file";
 		goto ERROR;
 	}
 #endif
 
-	ofs = 0;
-	error = NULL;
+	for (ei.start = ofs = 0, ei.length = unit_len, n = 0, error = NULL, p = buf;
+	     ofs < filelen;
+	     ofs += n, ei.start += unit_len)
+	{
+		wlen = n = MIN(unit_len, filelen - ofs);
+		if (mi.type == MTD_UBIVOLUME) {
+			if (n >= mi.writesize) {
+				n &= ~(mi.writesize - 1);
+				wlen = n;
+			} else {
+				if (!alloc)
+					memcpy(bounce_buf, p, n);
+				bounce = 1;
+				p = bounce_buf;
+				wlen = ROUNDUP(n, mi.writesize);
+			}
+		}
 
-	for (ei.start = 0; ei.start < total; ei.start += ei.length) {
-		n = MIN(ei.length, filelen) - ofs;
-		if (safe_fread(buf + ofs, 1, n, f) != n) {
+		if (alloc && safe_fread(p, 1, n, f) != n) {
 			error = "Error reading file";
 			break;
 		}
-		filelen -= (n + ofs);
 
-		_dprintf("ofs=%ub  n=%ub 0x%x  trx.len=%ub  ei.start=0x%x  ei.length=0x%x  mi.erasesize=0x%x\n",
-			   ofs, n, n, filelen, ei.start, ei.length, mi.erasesize);
-
-		n += ofs;
-
-		_dprintf(" erase start=%x len=%x\n", ei.start, ei.length);
-		_dprintf(" write %x\n", n);
+		_dprintf("ofs=%x n=%lx/%lx ei.start=%x ei.length=%x\n", ofs, n, wlen, ei.start, ei.length);
 
 #ifdef DEBUG_SIMULATE
-		if (fwrite(buf, 1, n, of) != n) {
+		if (fwrite(p, 1, wlen, of) != wlen) {
 			fclose(of);
 			error = "Error writing to test file";
 			break;
 		}
 #else
-		ioctl(mf, MEMUNLOCK, &ei);
-		if (ioctl(mf, MEMERASE, &ei) != 0) {
-			error = "Error erasing MTD block";
-			break;
+		if (ei.start == ofs) {
+			ioctl(mf, MEMUNLOCK, &ei);
+			if (ioctl(mf, MEMERASE, &ei) != 0) {
+				snprintf(msg_buf, sizeof(msg_buf), "Error erasing MTD block. (errno %d (%s))", errno, strerror(errno));
+				error = msg_buf;
+				break;
+			}
 		}
-		if (write(mf, buf, n) != n) {
-			error = "Error writing to MTD device";
+		if (write(mf, p, wlen) != wlen) {
+			snprintf(msg_buf, sizeof(msg_buf), "Error writing to MTD device. (errno %d (%s))", errno, strerror(errno));
+			error = msg_buf;
 			break;
 		}
 #endif
-		ofs = 0;
+
+		if (!(alloc || bounce))
+			p += n;
 	}
 
 #ifdef DEBUG_SIMULATE
@@ -346,7 +398,14 @@ int mtd_write_main_old(int argc, char *argv[])
 #endif
 
 ERROR:
-	if (buf) free(buf);
+	if (!alloc)
+		munmap((void*) buf, filelen);
+	else
+		free(buf);
+
+	if (bounce_buf)
+		free(bounce_buf);
+
 	if (mf >= 0) {
 		// dummy read to ensure chip(s) are out of lock/suspend state
 		read(mf, &n, sizeof(n));
@@ -362,7 +421,7 @@ ERROR:
 	return (error ? 1 : 0);
 }
 
-// -----------------------------------------------------------------------------
+#ifdef RTCONFIG_BCMARM
 
 /*
  * Open an MTD device
@@ -715,3 +774,4 @@ fail:
         return ret;
 }
 
+#endif

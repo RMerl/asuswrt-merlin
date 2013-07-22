@@ -54,8 +54,9 @@
 #ifdef RTCONFIG_DSL
 	#define MAX_WAIT_TIME 120
 #else
-#define MAX_WAIT_TIME 60
+	#define MAX_WAIT_TIME 60
 #endif
+
 #define MAX_DISCONN_COUNT MAX_WAIT_TIME/SCAN_INTERVAL
 
 int max_wait_time = MAX_WAIT_TIME;

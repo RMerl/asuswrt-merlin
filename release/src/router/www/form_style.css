@@ -1997,3 +1997,59 @@ padding-top:1px;
 	font-size:12px;
 	line-height:25px;
 }
+.single_wan_connected{
+	background-image:url(/images/New_ui/networkmap/line_dualwan.png);
+	background-repeat:no-repeat;
+	margin-left:-364px;
+	height:40px;
+	width:20px;
+}
+.single_wan_disconnected{
+	background-image:url(/images/New_ui/networkmap/line_dualwan_disconnected.png);
+	background-repeat:no-repeat;
+	margin-left:-364px;
+	height:40px;
+	width:20px;
+}
+.primary_wan_connected{
+	background-image:url(/images/New_ui/networkmap/line_dualwan.png);
+	background-repeat:no-repeat;
+	margin-left:3px;
+	height:40px;
+	width:20px;
+}
+.primary_wan_disconnected{
+	background-image:url(/images/New_ui/networkmap/line_dualwan_disconnected.png);
+	background-repeat:no-repeat;
+	margin-left:3px;
+	height:40px;
+	width:20px;
+}
+.primary_wan_standby{
+	background-image:url(/images/New_ui/networkmap/line_dualwan_dot.png);
+	background-repeat:no-repeat;
+	margin-left:3px;
+	height:40px;
+	width:20px;
+}
+.secondary_wan_connected{
+	background-image:url(/images/New_ui/networkmap/line_dualwan.png);
+	background-repeat:no-repeat;
+	margin-left:37px;
+	height:40px;
+	width:20px;
+}
+.secondary_wan_disconnected{
+	background-image:url(/images/New_ui/networkmap/line_dualwan_disconnected.png);
+	background-repeat:no-repeat;
+	margin-left:37px;
+	height:40px;
+	width:20px;
+}
+.secondary_wan_standby{
+	background-image:url(/images/New_ui/networkmap/line_dualwan_dot.png);
+	background-repeat:no-repeat;
+	margin-left:37px;
+	height:40px;
+	width:20px;
+}

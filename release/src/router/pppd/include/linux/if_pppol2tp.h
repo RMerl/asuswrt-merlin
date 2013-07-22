@@ -2,7 +2,7 @@
  * Linux PPP over L2TP (PPPoL2TP) Socket Implementation (RFC 2661)
  *
  * This file supplies definitions required by the PPP over L2TP driver
- * (l2tp_ppp.c).  All version information wrt this file is located in l2tp_ppp.c
+ * (pppol2tp.c).  All version information wrt this file is located in pppol2tp.c
  *
  * License:
  *		This program is free software; you can redistribute it and/or
@@ -15,17 +15,14 @@
 #ifndef __LINUX_IF_PPPOL2TP_H
 #define __LINUX_IF_PPPOL2TP_H
 
-#include <linux/types.h>
-
-#ifdef __KERNEL__
-#include <linux/in.h>
-#endif
+#include <asm/types.h>
 
 /* Structure used to connect() the socket to a particular tunnel UDP
  * socket.
  */
-struct pppol2tp_addr {
-	__kernel_pid_t	pid;		/* pid that owns the fd.
+struct pppol2tp_addr
+{
+	pid_t	pid;			/* pid that owns the fd.
 					 * 0 => current */
 	int	fd;			/* FD of UDP socket to use */
 
@@ -39,9 +36,9 @@ struct pppol2tp_addr {
  * bits. So we need a different sockaddr structure.
  */
 struct pppol2tpv3_addr {
-	pid_t	pid;			/* pid that owns the fd.
+	pid_t   pid;			/* pid that owns the fd.
 					 * 0 => current */
-	int	fd;			/* FD of UDP or IP socket to use */
+	int     fd;			/* FD of UDP or IP socket to use */
 
 	struct sockaddr_in addr;	/* IP address and port to send to */
 

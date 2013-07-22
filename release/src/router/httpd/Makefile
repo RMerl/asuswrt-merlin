@@ -11,7 +11,15 @@ CFLAGS += -I$(TOP)/shared/sysdeps/ralink -I$(TOP)/wireless_tools
 endif
 
 ifeq ($(RTN14U),y)
-export CFLAGS += -DRTN14U 
+CFLAGS += -DRTN14U
+endif
+
+ifeq ($(RTAC52U),y)
+CFLAGS += -DRTAC52U
+endif
+
+ifeq ($(RTN65U),y)
+CFLAGS += -DRTN65U
 endif
 
 ifeq ($(RTCONFIG_HTTPS),y)
@@ -46,7 +54,7 @@ OBJS += web-dsl.o
 OBJS += web-dsl-upg.o
 endif
 
-LIBS = -L$(TOP)/nvram -lnvram -L$(TOP)/shared -lshared
+LIBS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
 
 ifeq ($(RTCONFIG_BCMARM),y)
 CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include
@@ -66,6 +74,7 @@ ifeq ($(RTCONFIG_OPENVPN),y)
 LIBS += -L$(TOP)/openssl -lssl -lcrypto
 endif
 
+export CFLAGS
 vpath %.c sysdeps
 
 all: httpd #test_apps

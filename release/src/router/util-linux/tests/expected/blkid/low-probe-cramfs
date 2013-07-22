@@ -1,0 +1,4 @@
+ID_FS_LABEL=test-cram
+ID_FS_LABEL_ENC=test-cram
+ID_FS_TYPE=cramfs
+ID_FS_USAGE=filesystem

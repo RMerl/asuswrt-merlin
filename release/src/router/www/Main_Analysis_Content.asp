@@ -55,6 +55,13 @@
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
+function initial(){
+	$('pull_arrow').title = Untranslated.select_network_host;
+	show_menu();
+	load_body();
+	showLANIPList();
+}
+
 function onSubmitCtrl(o, s) {
 	document.form.action_mode.value = s;
 	updateOptions();
@@ -185,7 +192,7 @@ function pullLANIPList(obj){
 }
 </script>
 </head>
-<body onload="show_menu();load_body();showLANIPList();">
+<body onload="initial();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
@@ -237,7 +244,7 @@ function pullLANIPList(obj){
 											<th width="20%"><#NetworkTools_target#></th>
 											<td>
 												<input type="text" class="input_32_table" name="destIP" value="" placeholder="ex: www.google.com">
-												<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">						
+												<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">						
 												<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 											</td>										
 										</tr>
@@ -250,7 +257,7 @@ function pullLANIPList(obj){
 									</table>
 
 									<div class="apply_gen">
-										<span><input class="button_gen_long" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="Diagnose" name="action"></span>
+										<span><input class="button_gen_long" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="Diagnose"></span>
 										<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 									</div>
 

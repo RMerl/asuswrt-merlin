@@ -20,8 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-#include <sys/select.h>
-#include <unistd.h>
 #include <errno.h>
 #include <asm/param.h>
 #include "libbridge.h"
@@ -81,58 +79,13 @@ static int br_cmd_delbr(int argc, char*const* argv)
 	}
 }
 
-static int wait_to_forward_state(const char *br_ifname, const char *ifname)
-{
-	int err;
-	struct port_info info;
-	struct timeval now, later, tout;
-
-	if ((err = br_refresh())) {
-		fprintf(stderr, "Unable to refresh bridge info:%d\n", err);
-		return 1;
-	}
-
-	if ((err = br_get_port_info(br_ifname, ifname, &info))) {
-		fprintf(stderr, "Unable to get port info:%d\n", err);
-		return 1;
-	}
-
-	/* Wait for this port transition to FORWARDING state. */
-	gettimeofday(&now, NULL);
-	later = now;
-	while (info.state != BR_STATE_FORWARDING) {
-		if ((later.tv_sec - now.tv_sec) > 5) {
-			printf("device %s timedout changing to"
-				"BR_STATE_FORWARDING\n", ifname);
-			return 1;
-		}
-		tout.tv_sec = 0;
-		tout.tv_usec = 200000; /* 200 milli secs */
-		select(0, NULL, NULL, NULL, &tout);
-		if ((err = br_get_port_info(br_ifname, ifname, &info))) {
-			fprintf(stderr, "Unable to get port info:%d\n", err);
-			return 1;
-		}
-		gettimeofday(&later, NULL);
-	}
-
-	return 0;
-}
-
 static int br_cmd_addif(int argc, char *const* argv)
 {
 	const char *brname;
 	int err;
-	int waitarg = 0;
 
 	argc -= 2;
 	brname = *++argv;
-
-	/* is last argv "wait" */
-	if (!strcmp(*(argv+argc), "wait")) {
-		waitarg = 1;
-		argc -= 1; /* skip last wait argv */
-	}
 
 	while (argc-- > 0) {
 		const char *ifname = *++argv;
@@ -140,12 +93,13 @@ static int br_cmd_addif(int argc, char *const* argv)
 
 		switch(err) {
 		case 0:
-			if (waitarg && wait_to_forward_state(brname, ifname))
-				break;
 			continue;
 
 		case ENODEV:
-			fprintf(stderr, "interface %s does not exist!\n", ifname);
+			if (if_nametoindex(ifname) == 0)
+				fprintf(stderr, "interface %s does not exist!\n", ifname);
+			else
+				fprintf(stderr, "bridge %s does not exist!\n", brname);
 			break;
 
 		case EBUSY:
@@ -185,8 +139,10 @@ static int br_cmd_delif(int argc, char *const* argv)
 			continue;
 
 		case ENODEV:
-			fprintf(stderr, "interface %s does not exist!\n", 
-				ifname);
+			if (if_nametoindex(ifname) == 0)
+				fprintf(stderr, "interface %s does not exist!\n", ifname);
+			else
+				fprintf(stderr, "bridge %s does not exist!\n", brname);
 			break;
 
 		case EINVAL:
@@ -316,7 +272,7 @@ static int br_cmd_setportprio(int argc, char *const* argv)
 		return 1;
 	}
 
-	err = br_set_path_cost(argv[1], argv[2], cost);
+	err = br_set_port_priority(argv[1], argv[2], cost);
 	if (err)
 		fprintf(stderr, "set port priority failed: %s\n",
 			strerror(errno));

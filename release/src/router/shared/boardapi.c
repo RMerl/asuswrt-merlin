@@ -42,7 +42,9 @@ int led_lan3_gpio = 0xff;
 int led_lan4_gpio = 0xff;
 #endif  /* LAN4WAN_LED */
 int led_wan_gpio = 0xff;
+#ifdef RTCONFIG_LED_ALL
 int led_all_gpio = 0xff;
+#endif
 int wan_port = 0xff;
 int fan_gpio = 0xff;
 int have_fan_gpio = 0xff;
@@ -66,11 +68,24 @@ int btn_swmode_sw_ap = 0xff;
 
 int init_gpio(void)
 {
-	char *btn_list[] = { "btn_rst_gpio", "btn_wps_gpio", "fan_gpio", "have_fan_gpio", "btn_wifi_gpio", "btn_wltog_gpio", "btn_turbo_gpio", "btn_led_gpio" };
-	char *led_list[] = { "led_turbo_gpio", "led_all_gpio", "led_pwr_gpio", "led_usb_gpio", "led_wps_gpio", "fan_gpio", "have_fan_gpio", "led_lan_gpio", "led_wan_gpio", "led_usb3_gpio", "led_2g_gpio", "led_5g_gpio" 
+	char *btn_list[] = { "btn_rst_gpio", "btn_wps_gpio", "fan_gpio", "have_fan_gpio"
+#ifdef RTCONFIG_WIRELESS_SWITCH
+		, "btn_wifi_gpio"
+#endif
+#ifdef RTCONFIG_WIFI_TOG_BTN
+		, "btn_wltog_gpio"
+#endif
+#ifdef RTCONFIG_SWMODE_SWITCH
+		, "btn_swmode1_gpio", "btn_swmode2_gpio", "btn_swmode3_gpio"
+#endif
+		, "btn_turbo_gpio", "btn_led_gpio" };
+	char *led_list[] = { "led_turbo_gpio", "led_pwr_gpio", "led_usb_gpio", "led_wps_gpio", "fan_gpio", "have_fan_gpio", "led_lan_gpio", "led_wan_gpio", "led_usb3_gpio", "led_2g_gpio", "led_5g_gpio" 
 #ifdef RTCONFIG_LAN4WAN_LED
-                                , "led_lan1_gpio", "led_lan2_gpio", "led_lan3_gpio", "led_lan4_gpio"
+		, "led_lan1_gpio", "led_lan2_gpio", "led_lan3_gpio", "led_lan4_gpio"
 #endif  /* LAN4WAN_LED */
+#ifdef RTCONFIG_LED_ALL
+		, "led_all_gpio"
+#endif
 			   };
 	int use_gpio, gpio_pin;
 	int enable, disable;
@@ -88,6 +103,10 @@ int init_gpio(void)
 	/* led output */
 	for(i = 0; i < ASIZE(led_list); i++)
 	{
+#ifdef RTN14U
+		if (!strcmp(led_list[i],"led_2g_gpio"))
+			continue;
+#endif
 		use_gpio = nvram_get_int(led_list[i]);
 		if((gpio_pin = use_gpio & 0xff) == 0xff)
 			continue;
@@ -101,9 +120,13 @@ int init_gpio(void)
 		enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
 		set_gpio(gpio_pin, enable);
 	}
-	
-	if((gpio_pin = (use_gpio = nvram_get_int("led_all_gpio")) & 0xff) != 0xff)
-	{
+
+	// Power of USB.
+	if((gpio_pin = (use_gpio = nvram_get_int("pwr_usb_gpio")) & 0xff) != 0xff){
+		enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
+		set_gpio(gpio_pin, enable);
+	}
+	if((gpio_pin = (use_gpio = nvram_get_int("pwr_usb_gpio2")) & 0xff) != 0xff){
 		enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
 		set_gpio(gpio_pin, enable);
 	}
@@ -112,24 +135,44 @@ int init_gpio(void)
 	return 0;
 }
 
+int set_pwr_usb(int boolOn){
+	int use_gpio, gpio_pin;
+
+	if((gpio_pin = (use_gpio = nvram_get_int("pwr_usb_gpio"))&0xff) != 0xff){
+		if(boolOn)
+			set_gpio(gpio_pin, 1);
+		else
+			set_gpio(gpio_pin, 0);
+	}
+
+	if((gpio_pin = (use_gpio = nvram_get_int("pwr_usb_gpio2"))&0xff) != 0xff){
+		if(boolOn)
+			set_gpio(gpio_pin, 1);
+		else
+			set_gpio(gpio_pin, 0);
+	}
+
+	return 0;
+}
+
 // this is shared by every process, so, need to get nvram for first time it called per process
 void get_gpio_values_once(void)
 {
 	//int model;
 	if (gpio_values_loaded) return;
-	
+
 	gpio_values_loaded = 1;
 	//model = get_model();
 
 	// TODO : add other models
-	
+
 	btn_rst_gpio = nvram_get_int("btn_rst_gpio");
 	btn_wps_gpio = nvram_get_int("btn_wps_gpio");
 	led_pwr_gpio = nvram_get_int("led_pwr_gpio");
-	led_wps_gpio = nvram_get_int("led_wps_gpio");		
+	led_wps_gpio = nvram_get_int("led_wps_gpio");
 	led_2g_gpio = nvram_get_int("led_2g_gpio");
 	led_5g_gpio = nvram_get_int("led_5g_gpio");
-#ifdef RTCONFIG_LAN4WAN_LED	
+#ifdef RTCONFIG_LAN4WAN_LED
 	led_lan1_gpio = nvram_get_int("led_lan1_gpio");
 	led_lan2_gpio = nvram_get_int("led_lan2_gpio");
 	led_lan3_gpio = nvram_get_int("led_lan3_gpio");
@@ -138,9 +181,11 @@ void get_gpio_values_once(void)
 	led_lan_gpio = nvram_get_int("led_lan_gpio");
 #endif	/* LAN4WAN_LED */
 	led_wan_gpio = nvram_get_int("led_wan_gpio");
-	led_usb_gpio = nvram_get_int("led_usb_gpio");	
-	led_usb3_gpio = nvram_get_int("led_usb3_gpio");	
+	led_usb_gpio = nvram_get_int("led_usb_gpio");
+	led_usb3_gpio = nvram_get_int("led_usb3_gpio");
+#ifdef RTCONFIG_LED_ALL
 	led_all_gpio = nvram_get_int("led_all_gpio");
+#endif
 	led_turbo_gpio = nvram_get_int("led_turbo_gpio");
 
 #ifdef RTCONFIG_SWMODE_SWITCH
@@ -150,10 +195,10 @@ void get_gpio_values_once(void)
 #endif
 
 #ifdef RTCONFIG_WIRELESS_SWITCH
-	btn_wifi_sw = nvram_get_int("btn_wifi_gpio"); 
+	btn_wifi_sw = nvram_get_int("btn_wifi_gpio");
 #endif
 #ifdef RTCONFIG_WIFI_TOG_BTN
-	btn_wltog_gpio = nvram_get_int("btn_wltog_gpio"); 
+	btn_wltog_gpio = nvram_get_int("btn_wltog_gpio");
 #endif
 #ifdef RTCONFIG_TURBO
 	btn_turbo_gpio = nvram_get_int("btn_turbo_gpio");

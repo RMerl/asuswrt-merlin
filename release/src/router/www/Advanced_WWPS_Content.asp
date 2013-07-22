@@ -42,7 +42,7 @@ var delay = 1000;
 function initial(){
 	show_menu();
 
-	if(band5g_support == -1){	//single band
+	if(!band5g_support){
 		$("wps_band_tr").style.display = "none";
 		
 	}else{										//Dual band
@@ -234,22 +234,6 @@ function refresh_wpsinfo(xmldoc){
 }
 
 function show_wsc_status(wps_infos){
-	if( (wps_infos[11].firstChild.nodeValue == "open" && document.form.wl_wep_x.value != "0")
-		  || wps_infos[11].firstChild.nodeValue == "shared"
-		  || wps_infos[11].firstChild.nodeValue == "psk"
-			|| wps_infos[11].firstChild.nodeValue == "wpa"
-			|| wps_infos[11].firstChild.nodeValue == "wpa2"
-			|| wps_infos[11].firstChild.nodeValue == "wpawpa2"
-			|| wps_infos[11].firstChild.nodeValue == "radius"){
-		$("wps_enable_hint").innerHTML = "<#WPS_weptkip_hint#><br><#wsc_mode_hint1#> <a style='color:#FC0; text-decoration: underline; font-family:Lucida Console;' href=\"Advanced_Wireless_Content.asp?af=wl_auth_mode_x\"><#menu5_1_1#></a> <#wsc_mode_hint2#>"
-		$("wps_state_tr").style.display = "none";
-		$("devicePIN_tr").style.display = "none";
-		$("wpsmethod_tr").style.display = "none";
-		$("wps_band_tr").style.display = "none";
-
-		return;
-	}
-	
 	// enable button
 	if(wps_enable_old == "1"){
 		$("wps_enable_word").innerHTML = "<#btn_Enabled#>";
@@ -268,6 +252,22 @@ function show_wsc_status(wps_infos){
 		}	
 		$("switchWPSbtn").style.display = "";
 	}
+
+	if( (wps_infos[11].firstChild.nodeValue == "open" && document.form.wl_wep_x.value != "0")
+		  || wps_infos[11].firstChild.nodeValue == "shared"
+		  || wps_infos[11].firstChild.nodeValue == "psk"
+			|| wps_infos[11].firstChild.nodeValue == "wpa"
+			|| wps_infos[11].firstChild.nodeValue == "wpa2"
+			|| wps_infos[11].firstChild.nodeValue == "wpawpa2"
+			|| wps_infos[11].firstChild.nodeValue == "radius"){
+		$("wps_enable_hint").innerHTML = "<#WPS_weptkip_hint#><br><#wsc_mode_hint1#> <a style='color:#FC0; text-decoration: underline; font-family:Lucida Console;' href=\"Advanced_Wireless_Content.asp?af=wl_auth_mode_x\"><#menu5_1_1#></a> <#wsc_mode_hint2#>"
+		$("wps_state_tr").style.display = "none";
+		$("devicePIN_tr").style.display = "none";
+		$("wpsmethod_tr").style.display = "none";
+
+		return;
+	}
+
 	//$("wps_enable_block").style.display = "";
 	
 	// WPS status

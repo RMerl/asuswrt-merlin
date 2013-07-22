@@ -37,7 +37,7 @@ var wep_x = '<% nvram_get("wl1_wep_x"); %>';
 var key_x = '<% nvram_get("wl1_key"); %>';
 var wpa_mode = '<% nvram_get("wl1_wpa_mode"); %>';
 var reIP = '<% nvram_get("lan_ipaddr"); %>';
-var band5g_support = "<% nvram_get("rc_support"); %>".search("5G");
+var band5g_support = ("<% nvram_get("rc_support"); %>".search("5G") == -1) ? false : true;
 
 function QKfinish_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_all_title#>";
@@ -115,7 +115,7 @@ function QKfinish_load_body(){
 		$("#security2_block")[0].style.display = "none";
 	}
 
-	if(band5g_support == -1){
+	if(!band5g_support){
 		$("#desc2g")[0].style.display = "none";
 		$("#freqtitle5")[0].style.display = "none";
 		$("#ssid5_block")[0].style.display = "none";
@@ -282,18 +282,6 @@ function redirect_page(redirect_flag){
 	document.redirectForm.action = "/qis/QIS_"+redirect_flag+".htm";
 	document.redirectForm.submit();
 }
-
-function gotoHome(){
-	if (w_Setting == "0") {
-		alert("<#QIS_recommand_encryption#>");
-		location.href = '/qis/QIS_wireless.htm';
-	}
-	else {
-		parent.location.href = '/index.asp';
-	}
-}
-
-
 </script>
 </head>
 
@@ -315,9 +303,7 @@ function gotoHome(){
 					</td>
 				</tr>
 				<tr id="home_button">
-					<td align="right">
-						<img onclick="gotoHome();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
-					</td>
+					<td align="right">&nbsp;</td>
 				</tr>
 			</table>
 		</div>

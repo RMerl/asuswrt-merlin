@@ -15,6 +15,9 @@
 #include "config.h"
 #include "includes.h"
 #include "radvd.h"
+#ifdef BCMARM
+#include "ifaddrs.c"
+#endif
 
 void
 mdelay(double msecs)

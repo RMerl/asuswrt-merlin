@@ -205,7 +205,7 @@ static int wlconf(char *ifname, int unit, int subunit)
 		if (nvram_match(strcat_r(prefix, "optimizexbox", tmp), "1"))
 			eval("wl", "-i", ifname, "ldpc_cap", "0");
 		else
-			eval("wl", "-i", ifname, "ldpc_cap", "1");		// driver default setting
+			eval("wl", "-i", ifname, "ldpc_cap", "1");	// driver default setting
 #endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_BCMARM
@@ -873,7 +873,6 @@ void config_ipv6(int enable, int incl_wan)
 {
 	DIR *dir;
 	struct dirent *dirent;
-	char s[256];
 	int service;
 	int match;
 	char word[256], *next;
@@ -935,8 +934,6 @@ ALL:
 
 void start_lan(void)
 {
-	_dprintf("%s %d\n", __FUNCTION__, __LINE__);
-
 	char *lan_ifname;
 	struct ifreq ifr;
 	char *lan_ifnames, *ifname, *p;
@@ -950,7 +947,11 @@ void start_lan(void)
 	int match;
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 	int i;
+#ifdef RTCONFIG_WIRELESSREPEATER
 	char domain_mapping[64];
+#endif
+
+	_dprintf("%s %d\n", __func__, __LINE__);
 
 	update_lan_state(LAN_STATE_INITIALIZING, 0);
 
@@ -964,13 +965,20 @@ void start_lan(void)
 	convert_routes();
 
 #ifdef CONFIG_BCMWL5
-	if ((get_model() == MODEL_RTAC66U) ||
+#ifndef RTCONFIG_BRCM_USBAP
+	if ((get_model() == MODEL_RTAC68U) ||
+		(get_model() == MODEL_RTAC66U) ||
 		(get_model() == MODEL_RTN66U))
 	modprobe("wl");
+#endif
 #endif
 
 #ifdef RTCONFIG_RALINK
 	init_wl();
+#endif
+
+#ifdef RTCONFIG_LED_ALL
+	led_control(LED_ALL  , LED_ON);
 #endif
 
 #ifdef CONFIG_BCMWL5
@@ -1268,11 +1276,7 @@ void start_lan(void)
 
 		hostname = nvram_safe_get("computer_name");
 
-#if 0 /* defined (SMP) */
-		char *dhcp_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "udhcpc",
-#else
 		char *dhcp_argv[] = { "udhcpc",
-#endif
 					"-i", "br0",
 					"-p", "/var/run/udhcpc_lan.pid",
 					"-s", "/tmp/udhcpc_lan",
@@ -1480,9 +1484,12 @@ void stop_lan(void)
 	kill_pidfile_s("/var/run/watchdog.pid", SIGUSR2);
 
 #ifdef CONFIG_BCMWL5
-	if ((get_model() == MODEL_RTAC66U) ||
+#ifndef RTCONFIG_BRCM_USBAP
+	if ((get_model() == MODEL_RTAC68U) ||
+		(get_model() == MODEL_RTAC66U) ||
 		(get_model() == MODEL_RTN66U))
 	modprobe_r("wl");
+#endif
 #endif
 
 #ifdef RTCONFIG_RALINK
@@ -1626,7 +1633,7 @@ void hotplug_net(void)
 		if (nvram_match("sw_mode", "2"))
 			return;
 
-		if (strncmp(interface, "wdsi", 4))
+		if (strncmp(interface, WDSIF_5G, sizeof(WDSIF_5G)-1) == 0 && isdigit(interface[sizeof(WDSIF_5G)-1]))
 		{
 			if (nvram_match("wl1_mode_x", "0")) return;
 		}
@@ -2161,6 +2168,51 @@ static void led_bh(int sw)
 			break;
 	}
 }
+
+static void led_bh_prep(int post)
+{
+	switch (get_model()) {
+		case MODEL_RTAC56U:
+			if(post)
+			{
+				eval("wl", "ledbh", "3", "7");
+				eval("wl", "-i", "eth2", "ledbh", "10", "7");
+			}
+			else
+			{
+				eval("wl", "ledbh", "3", "1");
+				eval("wl", "-i", "eth2", "ledbh", "10", "1");
+				led_control(LED_5G, LED_ON);
+				eval("wlconf", "eth1", "up");
+				eval("wl", "maxassoc", "0");
+				eval("wlconf", "eth2", "up");
+				eval("wl", "-i", "eth2", "maxassoc", "0");
+			}
+			break;
+		case MODEL_RTAC68U:
+			if(post)
+			{
+				eval("wl", "ledbh", "10", "7");
+				eval("wl", "-i", "eth2", "ledbh", "10", "7");
+			}
+			else
+			{
+				eval("wl", "ledbh", "10", "1");
+				eval("wl", "-i", "eth2", "ledbh", "10", "1");
+				led_control(LED_5G, LED_ON);
+#ifdef RTCONFIG_TURBO
+				led_control(LED_TURBO, LED_ON);
+#endif
+				eval("wlconf", "eth1", "up");
+				eval("wl", "maxassoc", "0");
+				eval("wlconf", "eth2", "up");
+				eval("wl", "-i", "eth2", "maxassoc", "0");
+			}
+			break;
+		default:
+			break;
+	}
+}
 #endif
 
 static int radio_switch(int subunit)
@@ -2187,9 +2239,7 @@ static int radio_switch(int subunit)
 	}
 
 	sw = !sw;
-#ifdef RTCONFIG_BCMWL6
-	//led_bh(sw);
-#endif
+
 	for(i = 0; i < MAX; i++){
 		// set wlx_radio
 		snprintf(prefix, sizeof(prefix), "wl%d_", i);
@@ -2205,10 +2255,14 @@ static int radio_switch(int subunit)
 
 	// commit to flash once */
 	nvram_commit();
-
+#ifdef RTCONFIG_BCMWL6
+	if (sw) led_bh_prep(0);	// early turn wl led on
+#endif
 	// make sure all interfaces work well
 	notify_rc("restart_wireless");
-
+#ifdef RTCONFIG_BCMWL6
+	if (sw) led_bh_prep(1); // restore ledbh if needed
+#endif
 	return 0;
 }
 
@@ -2373,7 +2427,10 @@ update_lan_resolvconf(void)
 void
 lan_up(char *lan_ifname)
 {
+#ifdef RTCONFIG_WIRELESSREPEATER
 	char domain_mapping[64];
+#endif
+
 	_dprintf("%s(%s)\n", __FUNCTION__, lan_ifname);
 
 	restart_dnsmasq(0);
@@ -2531,9 +2588,12 @@ void stop_lan_wl(void)
 	kill_pidfile_s("/var/run/watchdog.pid", SIGUSR2);
 
 #ifdef CONFIG_BCMWL5
-	if ((get_model() == MODEL_RTAC66U) ||
-		(get_model() == MODEL_RTN66U))
+#ifndef RTCONFIG_BRCM_USBAP
+	if ((get_model() == MODEL_RTAC68U) ||
+		(get_model() == MODEL_RTAC66U) ||
+ 		(get_model() == MODEL_RTN66U))
 	modprobe_r("wl");
+#endif
 #endif
 
 #ifdef RTCONFIG_RALINK
@@ -2574,9 +2634,12 @@ void start_lan_wl(void)
 #endif
 
 #ifdef CONFIG_BCMWL5
-	if ((get_model() == MODEL_RTAC66U) ||
-		(get_model() == MODEL_RTN66U))
+#ifndef RTCONFIG_BRCM_USBAP
+	if ((get_model() == MODEL_RTAC68U) ||
+		(get_model() == MODEL_RTAC66U) ||
+ 		(get_model() == MODEL_RTN66U))
 	modprobe("wl");
+#endif
 #endif
 
 #ifdef RTCONFIG_RALINK
@@ -2945,7 +3008,9 @@ void lanaccess_wl(void)
 
 void restart_wireless(void)
 {
+#ifdef RTCONFIG_WIRELESSREPEATER
 	char domain_mapping[64];
+#endif
 	int lock = file_lock("wireless");
 
 	nvram_set_int("wlready", 0);
@@ -3203,11 +3268,7 @@ void start_lan_wlc(void)
 			unlink("/tmp/udhcpc_lan");
 		}
 
-#if 0 /* defined (SMP) */
-		char *dhcp_argv[] = {"taskset", "-c", DEFAULT_TASKSET_CPU, "udhcpc",
-#else
 		char *dhcp_argv[] = { "udhcpc",
-#endif
 					"-i", "br0",
 					"-p", "/var/run/udhcpc_lan.pid",
 					"-s", "/tmp/udhcpc_lan",

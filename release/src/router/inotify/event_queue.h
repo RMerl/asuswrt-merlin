@@ -53,6 +53,7 @@ typedef struct action_struct *action_t;
 typedef struct LIST
 {
     char *path;
+    int open_num;
     struct LIST *next;
 }List;
 List *create_file_list;

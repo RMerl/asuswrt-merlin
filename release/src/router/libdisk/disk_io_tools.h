@@ -27,9 +27,9 @@ typedef unsigned long long u64;
 #if defined(WL500)
 #define POOL_MOUNT_ROOT "/tmp/harddisk"
 #define BASE_LAYER 2
-#elif defined(RTN56U)
-#define POOL_MOUNT_ROOT "/media"	// for n13u
-#define BASE_LAYER 1
+//#elif defined(RTN56U)
+//#define POOL_MOUNT_ROOT "/media"	// for n13u
+//#define BASE_LAYER 1
 #else
 #define POOL_MOUNT_ROOT "/tmp/mnt"
 #define BASE_LAYER 2
@@ -44,6 +44,7 @@ extern int delete_file_or_dir(char *target);
 
 extern int test_if_mount_point_of_pool(const char *dirname);
 extern int test_if_System_folder(const char *const dirname);
+extern int test_mounted_disk_size_status(char *diskpath);
 
 extern void strntrim(char *str);
 /*extern void write_escaped_value(FILE *fp, const char *value);//*/

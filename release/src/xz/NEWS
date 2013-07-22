@@ -1,0 +1,126 @@
+
+XZ Utils Release Notes
+======================
+
+5.0.3 (2011-05-21)
+
+    * liblzma fixes:
+
+        - A memory leak was fixed.
+
+        - lzma_stream_buffer_encode() no longer creates an empty .xz
+          Block if encoding an empty buffer. Such an empty Block with
+          LZMA2 data would trigger a bug in 5.0.1 and older (see the
+          first bullet point in 5.0.2 notes). When releasing 5.0.2,
+          I thought that no encoder creates this kind of files but
+          I was wrong.
+
+        - Validate function arguments better in a few functions. Most
+          importantly, specifying an unsupported integrity check to
+          lzma_stream_buffer_encode() no longer creates a corrupt .xz
+          file. Probably no application tries to do that, so this
+          shouldn't be a big problem in practice.
+
+        - Document that lzma_block_buffer_encode(),
+          lzma_easy_buffer_encode(), lzma_stream_encoder(), and
+          lzma_stream_buffer_encode() may return LZMA_UNSUPPORTED_CHECK.
+
+        - The return values of the _memusage() functions are now
+          documented better.
+
+    * Fix command name detection in xzgrep. xzegrep and xzfgrep now
+      correctly use egrep and fgrep instead of grep.
+
+    * French translation was added.
+
+
+5.0.2 (2011-04-01)
+
+    * LZMA2 decompressor now correctly accepts LZMA2 streams with no
+      uncompressed data. Previously it considered them corrupt. The
+      bug can affect applications that use raw LZMA2 streams. It is
+      very unlikely to affect .xz files because no compressor creates
+      .xz files with empty LZMA2 streams. (Empty .xz files are a
+      different thing than empty LZMA2 streams.)
+
+    * "xz --suffix=.foo filename.foo" now refuses to compress the
+      file due to it already having the suffix .foo. It was already
+      documented on the man page, but the code lacked the test.
+
+    * "xzgrep -l foo bar.xz" works now.
+
+    * Polish translation was added.
+
+
+5.0.1 (2011-01-29)
+
+    * xz --force now (de)compresses files that have setuid, setgid,
+      or sticky bit set and files that have multiple hard links.
+      The man page had it documented this way already, but the code
+      had a bug.
+
+    * gzip and bzip2 support in xzdiff was fixed.
+
+    * Portability fixes
+
+    * Minor fix to Czech translation
+
+
+5.0.0 (2010-10-23)
+
+    Only the most important changes compared to 4.999.9beta are listed
+    here. One change is especially important:
+
+      * The memory usage limit is now disabled by default. Some scripts
+        written before this change may have used --memory=max on xz command
+        line or in XZ_OPT. THESE USES OF --memory=max SHOULD BE REMOVED
+        NOW, because they interfere with user's ability to set the memory
+        usage limit himself. If user-specified limit causes problems to
+        your script, blame the user.
+
+    Other significant changes:
+
+      * Added support for XZ_DEFAULTS environment variable. This variable
+        allows users to set default options for xz, e.g. default memory
+        usage limit or default compression level. Scripts that use xz
+        must never set or unset XZ_DEFAULTS. Scripts should use XZ_OPT
+        instead if they need a way to pass options to xz via an
+        environment variable.
+
+      * The compression settings associated with the preset levels
+        -0 ... -9 have been changed. --extreme was changed a little too.
+        It is now less likely to make compression worse, but with some
+        files the new --extreme may compress slightly worse than the old
+        --extreme.
+
+      * If a preset level (-0 ... -9) is specified after a custom filter
+        chain options have been used (e.g. --lzma2), the custom filter
+        chain will be forgotten. Earlier the preset options were
+        completely ignored after custom filter chain options had been
+        seen.
+
+      * xz will create sparse files when decompressing if the uncompressed
+        data contains long sequences of binary zeros. This is done even
+        when writing to standard output that is connected to a regular
+        file and certain additional conditions are met to make it safe.
+
+      * Support for "xz --list" was added. Combine with --verbose or
+        --verbose --verbose (-vv) for detailed output.
+
+      * I had hoped that liblzma API would have been stable after
+        4.999.9beta, but there have been a couple of changes in the
+        advanced features, which don't affect most applications:
+
+          - Index handling code was revised. If you were using the old
+            API, you will get a compiler error (so it's easy to notice).
+
+          - A subtle but important change was made to the Block handling
+            API. lzma_block.version has to be initialized even for
+            lzma_block_header_decode(). Code that doesn't do it will work
+            for now, but might break in the future, which makes this API
+            change easy to miss.
+
+      * The major soname has been bumped to 5.0.0. liblzma API and ABI
+        are now stable, so the need to recompile programs linking against
+        liblzma shouldn't arise soon.
+

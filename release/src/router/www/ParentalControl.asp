@@ -28,7 +28,7 @@
 
 var client_list_array = '<% get_client_detail_info(); %>';
 
-if(parental2_support != -1){
+if(ParentalCtrl2_support){
 	addNewScript("/calendar/fullcalendar.js");
 	addNewScript("/calendar/jquery-ui-1.8.11.custom.min.js");
 }
@@ -49,7 +49,6 @@ var arls = [<% get_arl_table(); %>];		// [[MAC, port, x, x], ...]
 var ipmonitor = [<% get_static_client(); %>];	// [[IP, MAC, DeviceName, Type, http, printer, iTune], ...]
 var networkmap_fullscan = '<% nvram_match("networkmap_fullscan", "0", "done"); %>'; //2008.07.24 Add.  1 stands for complete, 0 stands for scanning.;
 var clients_info = getclients();
-var parental2_support = rc_support.search("PARENTAL2"); 
 
 var MULTIFILTER_ENABLE = '<% nvram_get("MULTIFILTER_ENABLE"); %>'.replace(/&#62/g, ">");
 var MULTIFILTER_MAC = '<% nvram_get("MULTIFILTER_MAC"); %>'.replace(/&#62/g, ">");
@@ -69,21 +68,30 @@ var MULTIFILTER_LANTOWAN_PORT_row = MULTIFILTER_LANTOWAN_PORT.split('>');
 var MULTIFILTER_LANTOWAN_PROTO_row = MULTIFILTER_LANTOWAN_PROTO.split('>');
 var MULTIFILTER_MACFILTER_DAYTIME_row = MULTIFILTER_MACFILTER_DAYTIME.split('>');
 var _client;
-var StopTimeCount;
 
 function initial(){
+	
 	show_menu();
 	show_footer();
 
 	if(downsize_4m_support)
 		$("guest_image").parentNode.style.display = "none";
 
+	if(!yadns_support){
+		$('FormTitle').style.webkitBorderRadius = "3px";
+		$('FormTitle').style.MozBorderRadius = "3px";
+		$('FormTitle').style.BorderRadius = "3px";	
+	}
+
 	gen_mainTable();
+	$('pull_arrow').title = Untranslated.select_client;  //temp, untranslated string
 	showLANIPList();
 	if(<% nvram_get("MULTIFILTER_ALL"); %>)
 		showhide("list_table",1);
 	else
 		showhide("list_table",0);
+		
+	count_time();	
 }
 
 /*------------ Mouse event of fake LAN IP select menu {-----------------*/
@@ -143,6 +151,7 @@ function hideClients_Block(){
 function gen_mainTable(){
 	var code = "";
 	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable_table" id="mainTable_table">';
+	code +='<thead><tr><td colspan="5"><#ConnectedClient#>&nbsp;(<#List_limit#>&nbsp;16)</td></tr></thead>';
   code +='<tr><th width="5%" height="30px" title="Select all"><input id="selAll" type=\"checkbox\" onclick=\"selectAll(this, 0);\" value=\"\"/></th>';
 	code +='<th width="40%"><#ParentalCtrl_username#></th>';
 	code +='<th width="25%"><#ParentalCtrl_hwaddr#></th>';
@@ -151,7 +160,7 @@ function gen_mainTable(){
 
 	code +='<tr><td style="border-bottom:2px solid #000;" title="<#WLANConfig11b_WirelessCtrl_button1name#>/<#btn_disable#>"><input type=\"checkbox\" id="newrule_Enable" checked></td>';
 	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="32" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onKeyPress="" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">';
-	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">';
+	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">';
 	code +='<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div></td>';
 	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" class="input_macaddr_table" name="PC_mac" onKeyPress="return is_hwaddr(this,event)"></td>';
 	code +='<td style="border-bottom:2px solid #000;">--</td>';
@@ -184,6 +193,8 @@ function gen_mainTable(){
 		$("mainTable").style.display = "none";
 		$("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="applyRule(1);" value="<#WLANConfig11b_WirelessCtrl_button1name#>">'
 	}*/
+	showLANIPList();
+	showclock();
 }
 
 function selectAll(obj, tab){
@@ -270,20 +281,14 @@ function genChecked(_flag){
 	else
 		return "";
 }
-var t = "";
-function showclock(){
-	if(StopTimeCount == 1){			//Jieming added to continue counting millisecond of system time
-		systime_millsec += 1000;
-		t = setTimeout("showclock()", 1000);
-		return false;
-	}
-	else if(StopTimeCount == 0 && t){  
-		clearTimeout(t);
-		t = "";
-	}
 
-	JS_timeObj.setTime(systime_millsec);
+function count_time(){		// To count system time
 	systime_millsec += 1000;
+	setTimeout("count_time()", 1000);
+}
+
+function showclock(){
+	JS_timeObj.setTime(systime_millsec);
 	JS_timeObj2 = JS_timeObj.toString();	
 	JS_timeObj2 = JS_timeObj2.substring(0,3) + ", " +
 	              JS_timeObj2.substring(4,10) + "  " +
@@ -293,6 +298,9 @@ function showclock(){
 				  JS_timeObj.getFullYear();
 	$("system_time").value = JS_timeObj2;
 	setTimeout("showclock()", 1000);
+	
+	if(svc_ready == "0")
+		$('svc_hint_div').style.display = "";
 	corrected_timezone();
 }
 
@@ -320,41 +328,17 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 	}	
 }
 
-function corrected_timezone(){
-	var today = new Date();
-	var StrIndex;	
-	if(today.toString().lastIndexOf("-") > 0)
-		StrIndex = today.toString().lastIndexOf("-");
-	else if(today.toString().lastIndexOf("+") > 0)
-		StrIndex = today.toString().lastIndexOf("+");
-
-	if(StrIndex > 0){
-		if(timezone != today.toString().substring(StrIndex, StrIndex+5)){
-			$("timezone_hint").style.display = "";
-			$("timezone_hint").innerHTML = "* <#LANHostConfig_x_TimeZone_itemhint#>";
-		}
-		else
-			return;
-	}
-	else
-		return;	
-}
-
 function gen_lantowanTable(client){
 	_client = client;
 	var code = "";
 	code +='<div style="margin-bottom:10px;color: #003399;font-family: Verdana;" align="left">';
 
-	if(parental2_support != -1){
+	if(ParentalCtrl2_support){
 		code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable">';
 		code +='<thead><tr><td colspan="6" id="LWFilterList">Active schedule</td></tr></thead>';
 
-		code +='<tr><th width="20%"><#General_x_SystemTime_itemname#></th><td>';
-		code +='<input type="text" id="system_time" name="system_time" class="devicepin" value="" readonly="1" style="font-size:12px;width:200px;"><br>';
-		code +='<span id="timezone_hint" onclick="location.href=\'Advanced_System_Content.asp\'" style="display:none;text-decoration:underline;cursor:pointer;"></span></td></tr>';
-
 		code +='<tr>';
-		code +='<th style="width:40%;height:20px;" align="right">Client</th>';	
+		code +='<th style="width:40%;height:20px;" align="right"><#ParentalCtrl_username#></th>';	
 		if(MULTIFILTER_DEVICENAME_row[client] != "")
 			code +='<td align="left" style="color:#FFF">'+ MULTIFILTER_DEVICENAME_row[client] + '</td></tr>';
 		else
@@ -368,7 +352,7 @@ function gen_lantowanTable(client){
 
 	code +='<thead><tr><td colspan="6" id="LWFilterList">Active schedule</td></tr></thead>';
 	code +='<tr>';
-	code +='<th width="40%" height="30px;" align="right">Client</th>';
+	code +='<th width="40%" height="30px;" align="right"><#ParentalCtrl_username#></th>';
 	if(MULTIFILTER_DEVICENAME_row[client] != "")
 		code +='<td align="left" style="color:#FFF">'+ MULTIFILTER_DEVICENAME_row[client] + '</td></tr>';
 	else
@@ -426,9 +410,11 @@ function gen_lantowanTable(client){
 
 	$("mainTable").innerHTML = code;
 	var code_temp = "";
-	code_temp = '<table style="width:650px;margin-left:-98px;"><tr>';
+	code_temp = '<table style="width:350px;margin-left:-395px;"><tr>';
 	code_temp += '<td style="width:90px;"><div style="width:90px;height:20px;background:#9CB2BA;"></div></td>';
 	code_temp += '<td><div align="left" style="font-family:Arial,sans-serif,Helvetica;font-size:18px;margin-left:5px;">Allow</div></td>';
+	code_temp += '<td style="width:90px;"><div style="width:90px;height:20px;border:solid 1px #000"></div></td>';
+	code_temp += '<td><div align="left" style="font-family:Arial,sans-serif,Helvetica;font-size:18px;margin-left:5px;">Deny</div></td>';
 	code_temp += '</tr></table>';
 	$('hintBlock').innerHTML = code_temp;
 	$('hintBlock').style.marginTop = "10px";
@@ -442,11 +428,8 @@ function gen_lantowanTable(client){
 	$("mainTable").style.display = "";
 	$j("#mainTable").fadeIn();
 
-	if(parental2_support != -1)
-		generateCalendar(client);
-	
-	StopTimeCount = 0;
-	showclock();
+	if(ParentalCtrl2_support)
+		generateCalendar(client);		
 }
 
 function regen_lantowan(){
@@ -455,14 +438,13 @@ function regen_lantowan(){
 	MULTIFILTER_LANTOWAN_PORT = "";
 	MULTIFILTER_LANTOWAN_PROTO = "";
 	MULTIFILTER_MACFILTER_DAYTIME = "";
-
-	for(i=0;i<MULTIFILTER_LANTOWAN_DESC_row.length;i++){
+	for(i=0;i<MULTIFILTER_MACFILTER_DAYTIME_row.length;i++){
 		MULTIFILTER_LANTOWAN_ENABLE += MULTIFILTER_LANTOWAN_ENABLE_row[i];
 		MULTIFILTER_LANTOWAN_DESC += MULTIFILTER_LANTOWAN_DESC_row[i];
 		MULTIFILTER_LANTOWAN_PORT += MULTIFILTER_LANTOWAN_PORT_row[i];
 		MULTIFILTER_LANTOWAN_PROTO += MULTIFILTER_LANTOWAN_PROTO_row[i];
 		MULTIFILTER_MACFILTER_DAYTIME += MULTIFILTER_MACFILTER_DAYTIME_row[i];
-		if(i<MULTIFILTER_LANTOWAN_DESC_row.length-1){
+		if(i<MULTIFILTER_MACFILTER_DAYTIME_row.length-1){
 			MULTIFILTER_LANTOWAN_ENABLE += ">";
 			MULTIFILTER_LANTOWAN_DESC += ">";
 			MULTIFILTER_LANTOWAN_PORT += ">";
@@ -473,9 +455,7 @@ function regen_lantowan(){
 }
 
 function saveto_lantowan(client){
-	StopTimeCount = 1;
-
-	if(parental2_support == -1){
+	if(!ParentalCtrl2_support){
 		var starttime = eval(document.form.url_time_x_starthour.value + document.form.url_time_x_startmin.value);
 		var endtime = eval(document.form.url_time_x_endhour.value + document.form.url_time_x_endmin.value);
 		if(!validate_timerange(document.form.url_time_x_starthour, 0)
@@ -533,8 +513,6 @@ function saveto_lantowan(client){
 }
 
 function cancel_lantowan(client){
-	StopTimeCount = 1;
-
 	MULTIFILTER_LANTOWAN_ENABLE_row_tmp = MULTIFILTER_LANTOWAN_ENABLE.split('>');
 	MULTIFILTER_LANTOWAN_DESC_row_tmp = MULTIFILTER_LANTOWAN_DESC.split('>');
 	MULTIFILTER_LANTOWAN_PORT_row_tmp = MULTIFILTER_LANTOWAN_PORT.split('>');
@@ -553,12 +531,11 @@ function cancel_lantowan(client){
 }
 
 function addRow_main(upper){
+	var invalid_char = "";
 	if(<% nvram_get("MULTIFILTER_ALL"); %> != "1")
 		document.form.MULTIFILTER_ALL.value = 1;
 	
-	var rule_num = $('mainTable_table').rows.length;
-	var item_num = $('mainTable_table').rows[0].cells.length;	
-	
+	var rule_num = $('mainTable_table').rows.length - 3; // remove tbody
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 		return false;	
@@ -571,6 +548,16 @@ function addRow_main(upper){
 		document.form.PC_devicename.focus();
 		return false;
 	}
+		
+	for(var i = 0; i < document.form.PC_devicename.value.length; ++i){
+		if(document.form.PC_devicename.value.charAt(i) == '<' || document.form.PC_devicename.value.charAt(i) == '>'){
+			invalid_char += document.form.PC_devicename.value.charAt(i);
+			document.form.PC_devicename.focus();
+			alert("<#JS_validstr2#> ' "+invalid_char + " '");
+			return false;			
+		}
+	}
+	
 	if(document.form.PC_mac.value == ""){
 		alert("<#JS_fieldblank#>");
 		document.form.PC_mac.focus();
@@ -604,7 +591,7 @@ function addRow_main(upper){
 	if(MULTIFILTER_MACFILTER_DAYTIME != "")
 		MULTIFILTER_MACFILTER_DAYTIME += ">";
 
-	if(parental2_support != -1)
+	if(ParentalCtrl2_support)
 		MULTIFILTER_MACFILTER_DAYTIME += "<";
 	else
 		MULTIFILTER_MACFILTER_DAYTIME += "111111100002359";
@@ -645,16 +632,18 @@ function deleteRow_main(r){
   var MULTIFILTER_ENABLE_tmp = "";
   var MULTIFILTER_MAC_tmp = "";
   var MULTIFILTER_DEVICENAME_tmp = "";
-	for(i=2; i<$('mainTable_table').rows.length; i++){
+	for(i=3; i<$('mainTable_table').rows.length; i++){
 		MULTIFILTER_ENABLE_tmp += $('mainTable_table').rows[i].cells[0].title;
 		MULTIFILTER_DEVICENAME_tmp += $('mainTable_table').rows[i].cells[1].title;
 		MULTIFILTER_MAC_tmp += $('mainTable_table').rows[i].cells[2].title;
-		if(i != $('mainTable_table').rows.length-1){
+
+	if(i != $('mainTable_table').rows.length-1){
 			MULTIFILTER_ENABLE_tmp += ">";
 			MULTIFILTER_DEVICENAME_tmp += ">";
 			MULTIFILTER_MAC_tmp += ">";
 		}
 	}
+
 	MULTIFILTER_ENABLE = MULTIFILTER_ENABLE_tmp;
 	MULTIFILTER_MAC = MULTIFILTER_MAC_tmp;
 	MULTIFILTER_DEVICENAME = MULTIFILTER_DEVICENAME_tmp;
@@ -662,11 +651,12 @@ function deleteRow_main(r){
 	MULTIFILTER_MAC_row = MULTIFILTER_MAC.split('>');
 	MULTIFILTER_DEVICENAME_row = MULTIFILTER_DEVICENAME.split('>');
 
-	MULTIFILTER_LANTOWAN_ENABLE_row.splice(j-2,1);
-	MULTIFILTER_LANTOWAN_DESC_row.splice(j-2,1);
-	MULTIFILTER_LANTOWAN_PORT_row.splice(j-2,1);
-	MULTIFILTER_LANTOWAN_PROTO_row.splice(j-2,1);
-	MULTIFILTER_MACFILTER_DAYTIME_row.splice(j-2,1);
+	MULTIFILTER_LANTOWAN_ENABLE_row.splice(j-3,1);
+	MULTIFILTER_LANTOWAN_DESC_row.splice(j-3,1);
+	MULTIFILTER_LANTOWAN_PORT_row.splice(j-3,1);
+	MULTIFILTER_LANTOWAN_PROTO_row.splice(j-3,1);
+
+	MULTIFILTER_MACFILTER_DAYTIME_row.splice(j-3,1);
 	regen_lantowan();	
 	gen_mainTable();
 }
@@ -759,7 +749,7 @@ function deleteRow_lantowan(r, client){
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_firewall">
-<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>" disabled>
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="MULTIFILTER_ALL" value="<% nvram_get("MULTIFILTER_ALL"); %>">
 <input type="hidden" name="MULTIFILTER_ENABLE" value="<% nvram_get("MULTIFILTER_ENABLE"); %>">
@@ -779,58 +769,25 @@ function deleteRow_lantowan(r, client){
 		</td>				
 		
     <td valign="top">
-	<div id="tabMenu" class="submenuBlock" style="*margin-top:-155px;">
-<!--
-		<table border="0" cellspacing="0" cellpadding="0">
-				<tbody>
-					<tr>
-						<td>
-							<div class="tabclick"><span>Parental Control</span></div>
-						</td>
-						<td>
-							<a href="YandexDNS.asp"><div class="tab" id="tab_YandexDNS"><span>Yandex.DNS</span></div></a>
-						</td>
-					</tr>
-			</tbody>
-		</table>
--->	
-	
-	</div>
-	
+	<div id="tabMenu" class="submenuBlock"></div>	
 		<!--===================================Beginning of Main Content===========================================-->		
 <table width="98%" border="0" align="left" cellpadding="0" cellspacing="0" >
 	<tr>
 		<td valign="top" >
 		
-<table width="730px" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle" style="-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px;">
+<table width="730px" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
 	<tbody>
 	<tr>
 		<td bgcolor="#4D595D" valign="top">
 		<div>&nbsp;</div>
 		<div class="formfonttitle"><#Parental_Control#></div>
 		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		<!--div class="formfontdesc"><#ParentalCtrl_Desc#></div-->
 
 		<div id="PC_desc">
 			<table width="700px" style="margin-left:25px;">
 				<tr>
 					<td>
 						<img id="guest_image" src="/images/New_ui/parental-control.png">
-						<!--div align="center" class="left" style="margin-top:25px;margin-left:43px;width:94px; float:left; cursor:pointer;" id="radio_ParentControl_enable"></div>
-						<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
-						<script type="text/javascript">
-								$j('#radio_ParentControl_enable').iphoneSwitch('<% nvram_get("MULTIFILTER_ALL"); %>',
-										function() {
-													document.form.MULTIFILTER_ALL.value = 1;
-										},
-										function() {
-													document.form.MULTIFILTER_ALL.value = 0;
-										},
-										{
-													switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-										});
-						</script>			
-						</div-->
 					</td>
 					<td>&nbsp;&nbsp;</td>
 					<td style="font-style: italic;font-size: 14px;">
@@ -844,7 +801,8 @@ function deleteRow_lantowan(r, client){
 								<a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://www.youtube.com/v/IbsuvSjG0xM"><#Video_Link1#></a>
 								<!--span onclick="location.href='#';document.body.style.overflow='hidden';document.getElementById('ParentalCtrlHelp').style.display='';">Click to open tutorial video.</span-->
 							</li>
-						</ol>		
+						</ol>
+						<ol style="color:#FC0;margin:-5px 0px 3px -18px;*margin-left:18px;">Note: Default is to limit access to use on all time bucket.</ol>
 					</td>
 				</tr>
 			</table>
@@ -854,7 +812,7 @@ function deleteRow_lantowan(r, client){
 			<!--=====Beginning of Main Content=====-->
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 				<tr>
-					<th>Enable Parental Control</th>
+					<th><#ParentalCtrl_Enable#></th>
 					<td>
 						<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_ParentControl_enable"></div>
 						<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
@@ -887,6 +845,17 @@ function deleteRow_lantowan(r, client){
 						<!-- client info -->
 						<div id="VSList_Block"></div>
 						<!-- Content -->
+						<div id="SystemTime">
+								<table width="100%" border="1" cellspacing="0" cellpadding="4" class="FormTable">
+								<tr>
+										<th width="20%"><#General_x_SystemTime_itemname#></th>
+										<td align="left"><input type="text" id="system_time" name="system_time" class="devicepin" value="" readonly="1" style="font-size:12px;width:200px;">
+											<div id="svc_hint_div" style="display:none;"><span onClick="location.href='Advanced_System_Content.asp?af=ntp_server0'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;">* Remind: Did not synchronize your system time with NTP server yet.</span></div>
+		  								<div id="timezone_hint_div" style="display:none;"><span id="timezone_hint" onclick="location.href='Advanced_System_Content.asp?af=time_zone_select'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"></span></div>
+										</td>
+								</tr>
+								</table>
+						</div>
 						<div id="mainTable" style="margin-top:10px;"></div>
 						<!--br/-->
 						<div id="hintBlock" style="width:650px;display:none;"></div>

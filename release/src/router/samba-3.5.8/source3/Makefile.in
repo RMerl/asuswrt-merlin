@@ -384,7 +384,7 @@ CRYPTO_OBJ = ../lib/crypto/crc32.o ../lib/crypto/md5.o \
 LIB_OBJ = $(LIBSAMBAUTIL_OBJ) $(UTIL_OBJ) $(CRYPTO_OBJ) \
 	  lib/messages.o librpc/gen_ndr/ndr_messaging.o lib/messages_local.o \
 	  lib/messages_ctdbd.o lib/packet.o lib/ctdbd_conn.o \
-	  lib/interfaces.o lib/memcache.o \
+	  lib/ifaddrs.o lib/interfaces.o lib/memcache.o \
 	  lib/talloc_dict.o \
 	  lib/util_transfer_file.o ../lib/async_req/async_sock.o \
 	  $(TDB_LIB_OBJ) \

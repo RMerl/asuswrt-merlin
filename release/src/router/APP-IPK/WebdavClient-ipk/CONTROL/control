@@ -1,0 +1,14 @@
+Package: webdavclient
+Architecture: mipsel
+Priority: optional
+Section: net
+Version: 1.0.0.2
+OptionalUtility:
+Maintainer: ASUS
+Source: http://127.0.0.1/
+URL: http://www.asusnetwork.net/cloud_sync.asp
+Description: Cloud client
+Depends: inotify,openssl,libxml2,zlib
+Suggests: 
+Conflicts: 
+Enabled: yes

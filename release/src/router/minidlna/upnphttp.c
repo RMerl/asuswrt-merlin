@@ -58,28 +58,29 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <sys/sendfile.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
 #include "config.h"
+#include "upnpglobalvars.h"
 #include "upnphttp.h"
 #include "upnpdescgen.h"
 #include "minidlnapath.h"
 #include "upnpsoap.h"
 #include "upnpevents.h"
-#include "upnpglobalvars.h"
 #include "utils.h"
 #include "getifaddr.h"
 #include "image_utils.h"
 #include "log.h"
 #include "sql.h"
 #include <libexif/exif-loader.h>
-#ifdef TIVO_SUPPORT
 #include "tivo_utils.h"
 #include "tivo_commands.h"
-#endif
+#include "clients.h"
+
+#include "sendfile.h"
+
 //#define MAX_BUFFER_SIZE 4194304 // 4MB -- Too much?
 #define MAX_BUFFER_SIZE 2147483647 // 2GB -- Too much?
 #define MIN_BUFFER_SIZE 65536
@@ -128,40 +129,6 @@ Delete_upnphttp(struct upnphttp * h)
 		free(h->res_buf);
 		free(h);
 	}
-}
-
-int
-SearchClientCache(struct in_addr addr, int quiet)
-{
-	int i;
-	for( i=0; i<CLIENT_CACHE_SLOTS; i++ )
-	{
-		if( clients[i].addr.s_addr == addr.s_addr )
-		{
-			/* Invalidate this client cache if it's older than 1 hour */
-			if( (time(NULL) - clients[i].age) > 3600 )
-			{
-				unsigned char mac[6];
-				if( get_remote_mac(addr, mac) == 0 &&
-				    memcmp(mac, clients[i].mac, 6) == 0 )
-				{
-					/* Same MAC as last time when we were able to identify the client,
- 					 * so extend the timeout by another hour. */
-					clients[i].age = time(NULL);
-				}
-				else
-				{
-					memset(&clients[i], 0, sizeof(struct client_cache_s));
-					return -1;
-				}
-			}
-			if( !quiet )
-				DPRINTF(E_DEBUG, L_HTTP, "Client found in cache. [type %d/entry %d]\n",
-					clients[i].type, i);
-			return i;
-		}
-	}
-	return -1;
 }
 
 /* parse HttpHeaders of the REQUEST */
@@ -302,121 +269,42 @@ ParseHttpHeaders(struct upnphttp * h)
 			}
 			else if(strncasecmp(line, "User-Agent", 10)==0)
 			{
-				char *s;
+				int i;
 				/* Skip client detection if we already detected it. */
 				if( h->req_client )
 					goto next_header;
 				p = colon + 1;
 				while(isspace(*p))
 					p++;
-				if(strncasecmp(p, "Xbox/", 5)==0)
+				for (i = 0; client_types[i].name; i++)
 				{
-					h->req_client = EXbox;
-					h->reqflags |= FLAG_MIME_AVI_AVI;
-					h->reqflags |= FLAG_MS_PFS;
-				}
-				else if(strncmp(p, "PLAYSTATION", 11)==0)
-				{
-					h->req_client = EPS3;
-					h->reqflags |= FLAG_DLNA;
-					h->reqflags |= FLAG_MIME_AVI_DIVX;
-				}
-				else if((s=strstrc(p, "SEC_HHP_", '\r')))
-				{
-					h->req_client = ESamsungSeriesC;
-					h->reqflags |= FLAG_SAMSUNG;
-					h->reqflags |= FLAG_DLNA;
-					h->reqflags |= FLAG_NO_RESIZE;
-					if(strstrc(s+8, "TV", '\r'))
-						h->reqflags |= FLAG_SAMSUNG_TV;
-				}
-				else if(strncmp(p, "SamsungWiselinkPro", 18)==0)
-				{
-					h->req_client = ESamsungSeriesA;
-					h->reqflags |= FLAG_SAMSUNG;
-					h->reqflags |= FLAG_DLNA;
-					h->reqflags |= FLAG_NO_RESIZE;
-				}
-				else if(strstrc(p, "bridgeCo-DMP/3", '\r'))
-				{
-					h->req_client = EDenonReceiver;
-					h->reqflags |= FLAG_DLNA;
-				}
-				else if(strstrc(p, "fbxupnpav/", '\r'))
-				{
-					h->req_client = EFreeBox;
-					h->reqflags |= FLAG_RESIZE_THUMBS;
-				}
-				else if(strncmp(p, "SMP8634", 7)==0)
-				{
-					h->req_client = EPopcornHour;
-					h->reqflags |= FLAG_MIME_FLAC_FLAC;
-				}
-				else if(strstrc(p, "Microsoft-IPTV-Client", '\r'))
-				{
-					h->req_client = EMediaRoom;
-					h->reqflags |= FLAG_MS_PFS;
-				}
-				else if(strstrc(p, "LGE_DLNA_SDK", '\r'))
-				{
-					h->req_client = ELGDevice;
-					h->reqflags |= FLAG_DLNA;
-				}
-				else if(strncmp(p, "Verismo,", 8)==0)
-				{
-					h->req_client = ENetgearEVA2000;
-					h->reqflags |= FLAG_MS_PFS;
-					h->reqflags |= FLAG_RESIZE_THUMBS;
-				}
-				else if(strstrc(p, "DIRECTV ", '\r'))
-				{
-					h->req_client = EDirecTV;
-					h->reqflags |= FLAG_RESIZE_THUMBS;
-				}
-				else if(strstrc(p, "UPnP/1.0 DLNADOC/1.50 Intel_SDK_for_UPnP_devices/1.2", '\r'))
-				{
-					h->req_client = EToshibaTV;
-					h->reqflags |= FLAG_DLNA;
-				}
-				else if(strstrc(p, "DLNADOC/1.50", '\r'))
-				{
-					h->req_client = EStandardDLNA150;
-					h->reqflags |= FLAG_DLNA;
-					h->reqflags |= FLAG_MIME_AVI_AVI;
+					if (client_types[i].match_type != EUserAgent)
+						continue;
+					if (strstrc(p, client_types[i].match, '\r') != NULL)
+					{
+						h->req_client = i;
+						break;
+					}
 				}
 			}
 			else if(strncasecmp(line, "X-AV-Client-Info", 16)==0)
 			{
+				int i;
 				/* Skip client detection if we already detected it. */
-				if( h->req_client && h->req_client < EStandardDLNA150 )
+				if( h->req_client && client_types[h->req_client].type < EStandardDLNA150 )
 					goto next_header;
 				p = colon + 1;
 				while(isspace(*p))
 					p++;
-				if(strstrc(p, "PLAYSTATION 3", '\r'))
+				for (i = 0; client_types[i].name; i++)
 				{
-					h->req_client = EPS3;
-					h->reqflags |= FLAG_DLNA;
-					h->reqflags |= FLAG_MIME_AVI_DIVX;
-				}
-				/* X-AV-Client-Info: av=5.0; cn="Sony Corporation"; mn="Blu-ray Disc Player"; mv="2.0" */
-				/* X-AV-Client-Info: av=5.0; cn="Sony Corporation"; mn="BLU-RAY HOME THEATRE SYSTEM"; mv="2.0"; */
-				/* Sony SMP-100 needs the same treatment as their BDP-S370 */
-				/* X-AV-Client-Info: av=5.0; cn="Sony Corporation"; mn="Media Player"; mv="2.0" */
-				else if(strstrc(p, "Blu-ray Disc Player", '\r') ||
-				        strstrc(p, "BLU-RAY HOME THEATRE SYSTEM", '\r') ||
-				        strstrc(p, "Media Player", '\r'))
-				{
-					h->req_client = ESonyBDP;
-					h->reqflags |= FLAG_DLNA;
-				}
-				/* X-AV-Client-Info: av=5.0; cn="Sony Corporation"; mn="BRAVIA KDL-40EX503"; mv="1.7"; */
-				/* X-AV-Client-Info: av=5.0; hn=""; cn="Sony Corporation"; mn="INTERNET TV NSX-40GT 1"; mv="0.1"; */
-				else if(strstrc(p, "BRAVIA", '\r') ||
-				        strstrc(p, "INTERNET TV", '\r'))
-				{
-					h->req_client = ESonyBravia;
-					h->reqflags |= FLAG_DLNA;
+					if (client_types[i].match_type != EXAVClientInfo)
+						continue;
+					if (strstrc(p, client_types[i].match, '\r') != NULL)
+					{
+						h->req_client = i;
+						break;
+					}
 				}
 			}
 			else if(strncasecmp(line, "Transfer-Encoding", 17)==0)
@@ -485,13 +373,19 @@ ParseHttpHeaders(struct upnphttp * h)
 			}
 			else if(strncasecmp(line, "FriendlyName", 12)==0)
 			{
+				int i;
 				p = colon + 1;
 				while(isspace(*p))
 					p++;
-				if(strstrc(p, "LIFETAB", '\r'))
+				for (i = 0; client_types[i].name; i++)
 				{
-					h->req_client = ELifeTab;
-					h->reqflags |= FLAG_MS_PFS;
+					if (client_types[i].match_type != EFriendlyName)
+						continue;
+					if (strstrc(p, client_types[i].match, '\r') != NULL)
+					{
+						h->req_client = i;
+						break;
+					}
 				}
 			}
 		}
@@ -532,35 +426,26 @@ next_header:
 		/* Add this client to the cache if it's not there already. */
 		if( n < 0 )
 		{
-			for( n=0; n<CLIENT_CACHE_SLOTS; n++ )
-			{
-				if( clients[n].addr.s_addr )
-					continue;
-				get_remote_mac(h->clientaddr, clients[n].mac);
-				clients[n].addr = h->clientaddr;
-				DPRINTF(E_DEBUG, L_HTTP, "Added client [%d/%s/%02X:%02X:%02X:%02X:%02X:%02X] to cache slot %d.\n",
-				                         h->req_client, inet_ntoa(clients[n].addr),
-				                         clients[n].mac[0], clients[n].mac[1], clients[n].mac[2],
-				                         clients[n].mac[3], clients[n].mac[4], clients[n].mac[5], n);
-				break;
-			}
+			AddClientCache(h->clientaddr, h->req_client);
 		}
-		else if( (clients[n].type < EStandardDLNA150 && h->req_client == EStandardDLNA150) ||
-		         (clients[n].type == ESamsungSeriesB && h->req_client == ESamsungSeriesA) )
+		else
 		{
+			enum client_types type = client_types[h->req_client].type;
+			enum client_types ctype = client_types[clients[n].type].type;
 			/* If we know the client and our new detection is generic, use our cached info */
 			/* If we detected a Samsung Series B earlier, don't overwrite it with Series A info */
-			h->reqflags |= clients[n].flags;
-			h->req_client = clients[n].type;
-			return;
+			if ((ctype < EStandardDLNA150 && type == EStandardDLNA150) ||
+			    (ctype == ESamsungSeriesB && type == ESamsungSeriesA))
+			{
+				h->req_client = clients[n].type;
+				return;
+			}
+			clients[n].type = h->req_client;
+			clients[n].age = time(NULL);
 		}
-		clients[n].type = h->req_client;
-		clients[n].flags = h->reqflags & 0xFFF00000;
-		clients[n].age = time(NULL);
 	}
 	else if( n >= 0 )
 	{
-		h->reqflags |= clients[n].flags;
 		h->req_client = clients[n].type;
 	}
 }
@@ -979,7 +864,7 @@ ProcessHttpQuery_upnphttp(struct upnphttp * h)
 		if(strcmp(ROOTDESC_PATH, HttpUrl) == 0)
 		{
 			/* If it's a Xbox360, we might need a special friendly_name to be recognized */
-			if( h->req_client == EXbox )
+			if( client_types[h->req_client].type == EXbox )
 			{
 				char model_sav[2];
 				i = 0;
@@ -995,7 +880,7 @@ ProcessHttpQuery_upnphttp(struct upnphttp * h)
 					friendly_name[i] = '\0';
 				memcpy(modelnumber, model_sav, 2);
 			}
-			else if( h->reqflags & FLAG_SAMSUNG_TV )
+			else if( client_types[h->req_client].flags & FLAG_SAMSUNG_TV )
 			{
 				sendXMLdesc(h, genRootDescSamsung);
 			}
@@ -1312,14 +1197,17 @@ send_file(struct upnphttp * h, int sendfd, off_t offset, off_t end_offset)
 	off_t send_size;
 	off_t ret;
 	char *buf = NULL;
+#if HAVE_SENDFILE
 	int try_sendfile = 1;
+#endif
 
 	while( offset <= end_offset )
 	{
+#if HAVE_SENDFILE
 		if( try_sendfile )
 		{
 			send_size = ( ((end_offset - offset) < MAX_BUFFER_SIZE) ? (end_offset - offset + 1) : MAX_BUFFER_SIZE);
-			ret = sendfile(h->socket, sendfd, &offset, send_size);
+			ret = sys_sendfile(h->socket, sendfd, &offset, send_size);
 			if( ret == -1 )
 			{
 				DPRINTF(E_DEBUG, L_HTTP, "sendfile error :: error no. %d [%s]\n", errno, strerror(errno));
@@ -1335,6 +1223,7 @@ send_file(struct upnphttp * h, int sendfd, off_t offset, off_t end_offset)
 				continue;
 			}
 		}
+#endif
 		/* Fall back to regular I/O */
 		if( !buf )
 			buf = malloc(MIN_BUFFER_SIZE);
@@ -1659,21 +1548,21 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	time_t curtime = time(NULL);
 	int width=640, height=480, dstw, dsth, size;
 	int srcw, srch;
-	unsigned char *data = NULL;
+	unsigned char * data = NULL;
 	char *path, *file_path = NULL;
 	char *resolution = NULL;
 	char *key, *val;
-	char *saveptr, *item=NULL;
+	char *saveptr, *item = NULL;
 	int rotate = 0;
 	/* Not implemented yet *
 	char *pixelshape=NULL; */
-	sqlite_int64 id;
+	long long id;
 	int rows=0, chunked, ret;
 	image_s *imsrc = NULL, *imdst = NULL;
 	int scale = 1;
 
 	id = strtoll(object, &saveptr, 10);
-	snprintf(buf, sizeof(buf), "SELECT PATH, RESOLUTION, ROTATION from DETAILS where ID = '%lld'", id);
+	snprintf(buf, sizeof(buf), "SELECT PATH, RESOLUTION, ROTATION from DETAILS where ID = '%lld'", (long long)id);
 	ret = sql_get_table(db, buf, &result, &rows, NULL);
 	if( ret != SQLITE_OK )
 	{
@@ -1699,9 +1588,7 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	path = saveptr ? saveptr + 1 : object;
 	for( item = strtok_r(path, "&,", &saveptr); item != NULL; item = strtok_r(NULL, "&,", &saveptr) )
 	{
-#ifdef TIVO_SUPPORT
 		decodeString(item, 1);
-#endif
 		val = item;
 		key = strsep(&val, "=");
 		if( !val )
@@ -1877,7 +1764,7 @@ resized_error:
 }
 
 void
-SendResp_dlnafile(struct upnphttp * h, char * object)
+SendResp_dlnafile(struct upnphttp *h, char *object)
 {
 	char header[1024];
 	struct string_s str;
@@ -1887,10 +1774,11 @@ SendResp_dlnafile(struct upnphttp * h, char * object)
 	char date[30];
 	time_t curtime = time(NULL);
 	off_t total, offset, size;
-	sqlite_int64 id;
+	int64_t id;
 	int sendfh;
 	uint32_t dlna_flags = DLNA_FLAG_DLNA_V1_5|DLNA_FLAG_HTTP_STALLING|DLNA_FLAG_TM_B;
-	static struct { sqlite_int64 id;
+	uint32_t cflags = client_types[h->req_client].flags;
+	static struct { int64_t id;
 	                enum client_types client;
 	                char path[PATH_MAX];
 	                char mime[32];
@@ -1901,7 +1789,7 @@ SendResp_dlnafile(struct upnphttp * h, char * object)
 #endif
 
 	id = strtoll(object, NULL, 10);
-	if( h->reqflags & FLAG_MS_PFS )
+	if( cflags & FLAG_MS_PFS )
 	{
 		if( strstr(object, "?albumArt=true") )
 		{
@@ -1914,10 +1802,11 @@ SendResp_dlnafile(struct upnphttp * h, char * object)
 	}
 	if( id != last_file.id || h->req_client != last_file.client )
 	{
-		snprintf(buf, sizeof(buf), "SELECT PATH, MIME, DLNA_PN from DETAILS where ID = '%lld'", id);
+		snprintf(buf, sizeof(buf), "SELECT PATH, MIME, DLNA_PN from DETAILS where ID = '%lld'", (long long)id);
 		ret = sql_get_table(db, buf, &result, &rows, NULL);
-		if( ret != SQLITE_OK )
+		if( (ret != SQLITE_OK) )
 		{
+			DPRINTF(E_ERROR, L_HTTP, "Didn't find valid file for %lld!\n", id);
 			Send500(h);
 			return;
 		}
@@ -1936,7 +1825,7 @@ SendResp_dlnafile(struct upnphttp * h, char * object)
 		{
 			strncpy(last_file.mime, result[4], sizeof(last_file.mime)-1);
 			/* From what I read, Samsung TV's expect a [wrong] MIME type of x-mkv. */
-			if( h->reqflags & FLAG_SAMSUNG )
+			if( cflags & FLAG_SAMSUNG )
 			{
 				if( strcmp(last_file.mime+6, "x-matroska") == 0 )
 					strcpy(last_file.mime+8, "mkv");
@@ -1994,7 +1883,7 @@ SendResp_dlnafile(struct upnphttp * h, char * object)
 			DPRINTF(E_WARN, L_HTTP, "Client tried to specify transferMode as Interactive without an image!\n");
 			/* Samsung TVs (well, at least the A950) do this for some reason,
 			 * and I don't see them fixing this bug any time soon. */
-			if( !(h->reqflags & FLAG_SAMSUNG) || GETFLAG(DLNA_STRICT_MASK) )
+			if( !(cflags & FLAG_SAMSUNG) || GETFLAG(DLNA_STRICT_MASK) )
 			{
 				Send406(h);
 				goto error;

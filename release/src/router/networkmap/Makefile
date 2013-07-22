@@ -5,7 +5,7 @@ OBJS = function.o networkmap.o
 
 CFLAGS  += -Wall -DASUS -DBCMNVRAM -I. -I$(TOP)/shared -I$(TOP)/kernel_header/include -I$(SRCBASE)/include
 CFLAGS  += -s -O2 -DNO_PARALLEL
-LDFLAGS += -L$(TOP)/shared -lshared -L$(TOP)/nvram -lnvram 
+LDFLAGS += -L$(TOP)/shared -lshared -L$(TOP)/nvram${BCMEX} -lnvram 
 ifeq ($(RTCONFIG_BCMARM),y)
 LDFLAGS += -lgcc_s
 endif

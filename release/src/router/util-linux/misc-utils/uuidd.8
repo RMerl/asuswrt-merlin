@@ -1,0 +1,82 @@
+.\" -*- nroff -*-
+.\" Copyright 2007 by Theodore Ts'o.  All Rights Reserved.
+.\" This file may be copied under the terms of the GNU Public License.
+.\"
+.TH UUIDD 8 "June 2011" "util-linux" "System Administration"
+.SH NAME
+uuidd \- UUID generation daemon
+.SH SYNOPSIS
+.B uuidd
+.RI [ options ]
+.SH DESCRIPTION
+The
+.B uuidd
+daemon is used by the UUID library to generate
+universally unique identifiers (UUIDs), especially time-based UUIDs,
+in a secure and guaranteed-unique fashion, even in the face of large
+numbers of threads running on different CPUs trying to grab UUIDs.
+.SH OPTIONS
+.TP
+.B \-d
+Run uuidd in debugging mode.  This prevents uuidd from running as a daemon.
+.TP
+.BR \-h , " \-\-help "
+Display help screen and exit.
+.TP
+.BR \-k , " \-\-kill "
+If currently a uuidd daemon is running, kill it.
+.TP
+.BR \-n , " \-\-uuids " \fInumber\fR
+When issuing a test request to a running uuidd, request a bulk response
+of
+.I number
+UUIDs.
+.TP
+.BR \-p , " \-\-pid " \fIpath\fR
+Specify the pathname where the pid file should be written.  By default,
+the pid file is written to /var/run/uuidd/uuidd.pid.
+.TP
+.B \-q
+Suppress some failure messages.
+.TP
+.BR \-r , " \-\-random "
+Test uuidd by trying to connect to a running uuidd daemon and
+request it to return a random-based UUID.
+.TP
+.BR \-s , " \-\-socket " \fIpath\fR
+Specify the pathname used for the unix-domain socket used by uuidd.  By
+default, the pathname used is /var/run/uuidd/request.  This is primarily
+for debugging purposes, since the pathname is hard-coded in the libuuid
+library.
+.TP
+.BR \-T , " \-\-timeout " \fItimeout\fR
+Specify a timeout for uuidd.  If specified, then uuidd will exit after
+.I timeout
+seconds of inactivity.
+.TP
+.BR \-t , " \-\-time "
+Test uuidd by trying to connect to a running uuidd daemon and
+request it to return a time-based UUID.
+.TP
+.BR \-V , " \-\-version "
+Output version information and exit.
+.SH EXAMPLE
+Start up a daemon, print 42 random keys, and then stop the daemon.
+.PP
+.RS
+.nf
+uuidd -p /tmp/uuidd.pid -s /tmp/uuidd.socket
+uuidd -d -r -n 42 -s /tmp/uuidd.socket
+uuidd -d -k -s /tmp/uuidd.socket
+.nf
+.RE
+.SH AUTHOR
+The
+.B uuidd
+daemon was written by Theodore Ts'o <tytso@mit.edu>.
+.SH AVAILABILITY
+The uuidd daemon is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+.SH "SEE ALSO"
+.BR uuid (3),
+.BR uuidgen (1)

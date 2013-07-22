@@ -15,7 +15,7 @@ check_dir="$1/asusware"
 check_file="$1/asusware/lib/ipkg/info/ipkg-opt.control"
 platform=`echo "$APPS_INSTALL_FOLDER" |awk '{FS="."; print $2}'`
 
-if [ -n "$is_arm_machine" ] || [ "$pid" == "VSL-N66U" ]; then
+if [ -n "$is_arm_machine" ] || [ "$pid" == "DSL-N66U" ]; then
 	if [ -d "$APPS_INSTALL_PATH" ]; then
 		echo "Already have the correct installed APP folder."
 		exit 0

@@ -11,6 +11,9 @@
 #
 # $Id: Makefile 343005 2012-07-05 08:39:28Z $
 #
+
+REBUILD = $(shell if [ -f "prebuilt/wps_monitor" ]; then echo 0; else echo 1; fi)
+
 ifneq (true,$(parallel))
   .NOTPARALLEL:
 endif
@@ -127,7 +130,6 @@ WPS_DIRLIST = $(sort $(WPS_DIRS))
 
 ifneq ($(wildcard ./prebuilt),)
 all: osl wps_monitor
-	cp -f ./prebuilt/wps_monitor .
 else
 all: mkversion sta_build_check dirs variants_build osl wps_monitor
 endif
@@ -188,12 +190,16 @@ clean:
 	find -name obj | xargs rm -rf
 	rm -rf lib
 #	find -name wps_monitor | xargs rm -f
-	rm -f wps_monitor
+#	rm -rf prebuilt
 
 # install
 install: all
 	install -d $(INSTALLDIR)/wps/bin
+ifeq ($(REBUILD),0)
+	install prebuilt/wps_monitor $(INSTALLDIR)/wps/bin
+else
 	install wps_monitor $(INSTALLDIR)/wps/bin
+endif
 	$(STRIP) $(INSTALLDIR)/wps/bin/wps_monitor
 
 .PHONY: all clean install libs dirs osl

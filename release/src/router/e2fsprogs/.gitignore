@@ -207,4 +207,5 @@ util/subst.conf
 Meta
 *.so.*
 *.so
+intl/libgnuintl.h
 

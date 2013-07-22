@@ -592,6 +592,9 @@ function updateCloudStatus(){
 }
 
 function validform(){
+	if(!validate_string(document.form.cloud_dir))
+		return false;
+
 	if(!Block_chars(document.form.cloud_username, ["<", ">"]))
 		return false;
 
@@ -1220,7 +1223,6 @@ function cal_panel_block(){
 							</th>			
 							<td>
 								<input id="cloud_password" name="cloud_password" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" maxlength="25" class="input_32_table" style="height: 23px;" value="">
-								<input id="cloud_password_text" name="cloud_password_text" type="text" autocapitalization="off" onBlur="switchType(this, false);" maxlength="25" class="input_32_table" style="height:25px; display:none;" value="">
 							</td>
 						  </tr>						  				
 					  				

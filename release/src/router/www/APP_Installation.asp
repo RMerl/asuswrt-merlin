@@ -27,21 +27,10 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
 var apps_array = <% apps_info("asus"); %>;
-var apps_state_upgrade = "<% nvram_get("apps_state_upgrade"); %>";
-var apps_state_update = "<% nvram_get("apps_state_update"); %>";
-var apps_state_remove = "<% nvram_get("apps_state_remove"); %>";
-var apps_state_enable = "<% nvram_get("apps_state_enable"); %>";
-var apps_state_switch = "<% nvram_get("apps_state_switch"); %>";
-var apps_state_autorun = "<% nvram_get("apps_state_autorun"); %>";
-var apps_state_install = "<% nvram_get("apps_state_install"); %>";
-var apps_state_error = "<% nvram_get("apps_state_error"); %>";
-var apps_download_file = "<% nvram_get("apps_download_file"); %>";
-var apps_download_percent = "<% nvram_get("apps_download_percent"); %>";
-var apps_dev = "<% nvram_get("apps_dev"); %>";
+
+<% apps_state_info(); %>
+
 var apps_download_percent_done = 0;
-var apps_depend_do = "<% nvram_get("apps_depend_do"); %>";
-var apps_depend_action = "<% nvram_get("apps_depend_action"); %>";
-var apps_depend_action_target = "<% nvram_get("apps_depend_action_target"); %>";
 
 <% apps_action(); %> //trigger apps_action.
 
@@ -82,7 +71,7 @@ function initial(){
 			default_apps_array[1].splice(2,1,"<#MediaServer_Help#>");						
 	}											
 
-	if(dualWAN_support != -1){
+	if(dualWAN_support){
 		default_apps_array[3][2] += "<br><br>Make sure Dual WAN support is enabled first.";
 	}
 
@@ -90,7 +79,7 @@ function initial(){
 		default_apps_array.splice(3, 1);
 		default_apps_array.splice(0, 1);
 	}
-	if(modem_support == -1)
+	if(!modem_support)
 		default_apps_array.splice(3, 1);
 
 	trNum = default_apps_array.length;
@@ -110,7 +99,7 @@ function initial(){
 		setTimeout("update_appstate();", 2000);
 	}
 
-	if(nodm_support == -1){
+	if(!nodm_support){
 		addOnlineHelp($("faq"), ["ASUSWRT", "download","master"]);
 		addOnlineHelp($("faq2"), ["ASUSWRT", "download","tool"]);
 	}
@@ -126,8 +115,12 @@ function calHeight(_trNum){
 	var manualOffSet = 28;
 	menu_height = Math.round(optionHeight*calculate_height - manualOffSet*calculate_height/14 - $("tabMenu").clientHeight) - 18;
 
-	if(menu_height > _trNum)
-		$("applist_table").style.height = menu_height + "px";
+	if(menu_height > _trNum){
+		if(menu_height < 522)
+			$("applist_table").style.height = "522px";
+		else	
+			$("applist_table").style.height = menu_height + "px";
+	}	
 }
 
 function update_appstate(e){
@@ -164,6 +157,11 @@ function update_applist(e){
 				for(var i = 0; i < apps_array.length; i++){
 					if(apps_array[i][0] == "DM2_Utility")
 						$("DMUtilityLink").href = apps_array[i][5]+ "/" + apps_array[i][12];
+						
+					if(apps_array[i][0] == "downloadmaster"){			//set cookie for help.js	
+						_dm_install = apps_array[i][3];
+						_dm_enable = apps_array[i][4];
+					}	
 				}
 				$("isInstallDesc").style.display = "";
 				setTimeout('divdisplayctrl("none", "none", "none", "");', 100);
@@ -375,11 +373,14 @@ function check_appstate(){
 					$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
 					installPercent = installPercent + proceed;
 				}
-				else
+				else{
+					var _apps_depend_do = apps_depend_do.replace(apps_depend_action, "<span style='color:#FC0'>"+apps_depend_action+"</span>");
+
 					$("apps_state_desc").innerHTML = "<b>[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> </b>"
-							+"<br> <span style='font-size: 16px;'> <#Excute_processing#>："+apps_depend_do+"</span>"
-							+"<br> <span style='font-size: 16px;'>"+apps_depend_action+"  "+apps_depend_action_target+"</span>"
+							+"<br> <span style='font-size: 16px;'> <#Excute_processing#>："+_apps_depend_do+"</span>"
+							+"<br><br> <span style='font-size: 18px;'>"+apps_depend_action+"  "+apps_depend_action_target+"</span>"
 					;
+				}
 			}
 			else{
 				if(installPercent > 99)
@@ -403,7 +404,8 @@ function check_appstate(){
 	else
 		$("return_btn").style.display = "none";
 
-	$("apps_state_desc").innerHTML += '<span class="app_action" onclick="apps_form(\'cancel\',\'\',\'\');">(<#CTL_Cancel#>)</span>';
+	//$("apps_state_desc").innerHTML += '<span class="app_action" onclick="apps_form(\'cancel\',\'\',\'\');">(<#CTL_Cancel#>)</span>';
+	$("cancelBtn").style.display = "";
 	return false;
 }
 
@@ -414,10 +416,10 @@ function show_apps(){
 	var counter = 0;
 	appnum = 0;
 
-	if(apps_array == "" && (appnet_support != -1 || appbase_support != -1)){
+	if(apps_array == "" && (appnet_support || appbase_support)){
 		apps_array = [["downloadmaster", "", "", "no", "no", "", "", "Download tools", "downloadmaster.png", "", "", ""],
 									["mediaserver", "", "", "no", "no", "", "", "", "mediaserver.png", "", "", ""]];
-		if(nodm_support != -1)
+		if(nodm_support)
 			apps_array[1][0] = "mediaserver2";
 
 		if(aicloudipk_support)
@@ -430,7 +432,7 @@ function show_apps(){
 			apps_array.splice(aicloud_idx[0], 1);
 	}
 
-	if(nodm_support != -1){
+	if(nodm_support){
 		var dm_idx = apps_array.getIndexByValue2D("downloadmaster");
 		if(dm_idx[1] != -1 && dm_idx != -1)
 			apps_array.splice(dm_idx[0], 1);
@@ -448,7 +450,7 @@ function show_apps(){
 			apps_array.splice(media2_idx[0], 1);
 	}
 	else{
-		if(nodm_support != -1)
+		if(nodm_support)
 			var media_idx = apps_array.getIndexByValue2D("mediaserver");
 		else
 			var media_idx = apps_array.getIndexByValue2D("mediaserver2");
@@ -457,7 +459,7 @@ function show_apps(){
 			apps_array.splice(media_idx[0], 1);
 
 		var media_idx = apps_array.getIndexByValue2D("mediaserver");
-		if(nodm_support == -1 && (media_idx == -1 || media_idx[1] == -1)){
+		if(!nodm_support && (media_idx == -1 || media_idx[1] == -1)){
 			var apps_len = apps_array.length;
 			apps_array[apps_len] = ["mediaserver", "", "", "no", "no", "", "", "", "mediaserver.png", "", "", ""];
 		}
@@ -529,18 +531,26 @@ function show_apps(){
 			htmlcode += '<div class="app_name">';
 
 			if(apps_array[i][1] == ""){
-				if(apps_array[i][3] == "no")
+				if(apps_array[i][3] == "no") // uninstall
 					htmlcode += apps_array[i][0] + '</div>\n';
 				else if(apps_array[i][4] == "no" && apps_array[i][3] == "yes") // disable
 					htmlcode += '<a href="' + apps_array[i][6] + '" style="color:gray;">' + apps_array[i][0] + '<span class="app_ver" style="color:gray">' + apps_array[i][1] + '</sapn></a></div>\n';
-				else // enable
-					htmlcode += '<a href="' + apps_array[i][6] + '" style="text-decoration: underline;">' + apps_array[i][0] + '</a><span class="app_ver">' + apps_array[i][1] + '</sapn></div>\n';		
+				else{ // enable
+					if(apps_array[i][0] == "Download Master")
+						htmlcode += '<a target="_blank" href="' + apps_array[i][6] + '" style="text-decoration: underline;">' + apps_array[i][0] + '</a><span class="app_ver">' + apps_array[i][1] + '</sapn></div>\n';		
+					else
+						htmlcode += '<a href="' + apps_array[i][6] + '" style="text-decoration: underline;">' + apps_array[i][0] + '</a><span class="app_ver">' + apps_array[i][1] + '</sapn></div>\n';		
+				}
 			}
 			else{
 				if(apps_array[i][4] == "no" && apps_array[i][3] == "yes") // disable
 					htmlcode += '<a href="' + apps_array[i][6] + '" style="color:gray">' + apps_array[i][0] + '<span class="app_ver" style="color:gray">ver. ' + apps_array[i][1] + '</sapn></a></div>\n';
-				else // enable
-					htmlcode += '<a href="' + apps_array[i][6] + '" style="text-decoration: underline;">' + apps_array[i][0] + '</a><span class="app_ver">ver. ' + apps_array[i][1] + '</sapn></div>\n';
+				else{ // enable
+					if(apps_array[i][0] == "Download Master")
+						htmlcode += '<a target="_blank" href="' + apps_array[i][6] + '" style="text-decoration: underline;">' + apps_array[i][0] + '</a><span class="app_ver">ver. ' + apps_array[i][1] + '</sapn></div>\n';
+					else
+						htmlcode += '<a href="' + apps_array[i][6] + '" style="text-decoration: underline;">' + apps_array[i][0] + '</a><span class="app_ver">ver. ' + apps_array[i][1] + '</sapn></div>\n';
+				}
 			}
 		}
 		else{ // without hyper-link
@@ -557,7 +567,7 @@ function show_apps(){
 		if(apps_array[i][0] == "Download Master")
 			apps_array[i][0] = "downloadmaster";
 		else if(apps_array[i][0] == "Media Server"){
-			if(nodm_support == -1)
+			if(!nodm_support)
 				apps_array[i][0] = "mediaserver";
 			else
 				apps_array[i][0] = "mediaserver2";
@@ -665,7 +675,7 @@ function show_partition(){
 	}
 
 	if(mounted_partition == 0)
-		htmlcode += '<tr height="360px"><td colspan="2"><span class="app_name" style="line-height:100%"><#no_usb_found#></span></td></tr>\n';
+		htmlcode += '<tr height="360px"><td colspan="2" class="nohover"><span class="app_name" style="line-height:100%"><#no_usb_found#></span></td></tr>\n';
 
 	$("partition_div").innerHTML = htmlcode;
 	$("usbHint").innerHTML = "<#DM_Install_partition#>";
@@ -726,8 +736,11 @@ function divdisplayctrl(flag1, flag2, flag3, flag4){
 		else
 			var _quick_dmlink = "http://" + location.host + ":" + dm_http_port;
 
-		if(_dm_enable == "yes")
-			$("quick_dmlink").onclick = function(){location.href=_quick_dmlink;}
+		if(_dm_enable == "yes"){
+			$("realLink").href = _quick_dmlink;
+			$("quick_dmlink").onclick = function(){$("realLink").click();}
+			//$("quick_dmlink").onclick = function(){location.href=_quick_dmlink;}
+		}
 		else
 			$("quick_dmlink").onclick = function(){alert(Untranslated.DM_DisableHint)}
 
@@ -822,11 +835,21 @@ function reloadAPP(){
   <tr>
    	<td valign="top">
 		<div id="partition_div"></div>
-		<div id="app_state" class="app_state"><img id="loadingicon" style="" src="/images/InternetScan.gif"><span style="margin-left:15px;" id="apps_state_desc"><#APP_list_loading#></span></div>
+		<div id="app_state" class="app_state">
+			<span style="margin-left:15px;" id="apps_state_desc"><#APP_list_loading#></span>
+			<img id="loadingicon" style="margin-left:10px" src="/images/InternetScan.gif">
+			<br>
+			<br>
+			<br>
+			<div id="cancelBtn" style="display:none;">
+				<input class="button_gen" onclick="apps_form('cancel','','');" type="button" value="<#CTL_Cancel#>"/>
+			</div>
+		</div>
 		<div id="DMDesc" style="display:none;">
 			<div style="margin-left:10px;" id="isInstallDesc">
 				<h2><#DM_Install_success#></h2>
 				<div class="top-heading" style="cursor:pointer;" id="quick_dmlink">
+				<a id="realLink" href="www.google.com" target="_blank"></a>
 					<table><tr><td><b style="text-decoration:underline;color:#FC0;font-size:16px;"><#DM_launch#></b></td><td><img style="margin-left:10px;" src="images/New_ui/aidisk/steparrow.png" /></td></tr></table>
 				</div>
 			</div>

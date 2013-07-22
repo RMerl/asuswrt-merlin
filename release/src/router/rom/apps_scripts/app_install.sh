@@ -5,6 +5,7 @@
 
 apps_ipkg_old=`nvram get apps_ipkg_old`
 is_arm_machine=`uname -m |grep arm`
+productid=`nvram get productid`
 
 APPS_PATH=/opt
 CONF_FILE=$APPS_PATH/etc/ipkg.conf
@@ -16,7 +17,11 @@ download_file=
 apps_from_internet=`nvram get rc_support |grep appnet`
 apps_local_space=`nvram get apps_local_space`
 
-if [ -z "$is_arm_machine" ]; then
+if [ -n "$is_arm_machine" ]; then
+	third_lib="mbwe-bluering"
+elif [ -n "$productid" ] && [ "$productid" == "DSL-N66U" ]; then
+	third_lib=
+else
 	third_lib="oleg"
 fi
 
@@ -337,12 +342,12 @@ nvram set apps_state_install=3 # DOWNLOADING
 link_internet=`nvram get link_internet`
 if [ "$link_internet" != "1" ]; then
 	cp -f $apps_local_space/optware.asus $APPS_INSTALL_PATH/lib/ipkg/lists/
-	if [ -z "$is_arm_machine" ]; then
+	if [ -n "$third_lib" ]; then
 		cp -f $apps_local_space/optware.$third_lib $APPS_INSTALL_PATH/lib/ipkg/lists/
 	fi
 elif [ "$1" == "downloadmaster" ] && [ -z "$apps_from_internet" ]; then
 	app_update.sh optware.asus
-	if [ -z "$is_arm_machine" ]; then
+	if [ -z "$third_lib" ]; then
 		cp -f $apps_local_space/optware.$third_lib $APPS_INSTALL_PATH/lib/ipkg/lists/
 	fi
 else

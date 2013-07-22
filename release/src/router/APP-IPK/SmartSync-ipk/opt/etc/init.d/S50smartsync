@@ -1,0 +1,48 @@
+#! /bin/sh
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/opt/bin
+
+APP_UCLIBC_VERSION=0.9.28
+APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
+APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
+APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
+ENABLE_CLOUDSYNC=`nvram get enable_cloudsync`
+
+chmod -R 777 $APPS_INSTALL_PATH/bin/
+
+chmod -R 777 $APPS_INSTALL_PATH/etc
+
+case "$1" in
+  start)
+	cp -rf /opt/etc/smartsync_script/smartsync_rm /tmp/smartsync_rm
+	if [ "$ENABLE_CLOUDSYNC" == "1" ]; then
+		webdavclientnum=`ps | grep "webdav_client" | grep -v "$0" | grep -v "grep" | wc -l`
+		asuswebstoragenum=`ps | grep "asuswebstorage" | grep -v "$0" | grep -v "grep" | wc -l`
+		if [ "$webdavclientnum" == "0" ]; then
+			sh /opt/etc/init.d/S50webdavclient start
+		fi
+		if [ "$asuswebstoragenum" == "0" ]; then
+    		sh /opt/etc/init.d/S50asuswebstorage start
+		fi
+	fi
+    ;;
+  restart)
+	cp -rf /opt/etc/smartsync_script/smartsync_rm /tmp/smartsync_rm
+	if [ "$ENABLE_CLOUDSYNC" == "1" ]; then
+		    sh /opt/etc/init.d/S50asuswebstorage restart
+			sh /opt/etc/init.d/S50webdavclient restart
+	else
+		    sh /opt/etc/init.d/S50asuswebstorage stop
+			sh /opt/etc/init.d/S50webdavclient stop
+	fi
+	;;
+  stop)
+    sh /opt/etc/init.d/S50asuswebstorage stop
+	sh /opt/etc/init.d/S50webdavclient stop
+
+    ;;
+  
+  *)
+    exit 1
+    ;;
+esac

@@ -38,25 +38,18 @@
 #include <ralink.h>
 #endif
 
-#if defined(RTN14U)
-#ifdef HWNAT_FIX
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#endif
-#endif
-
 #include <syslog.h>
 #include <bcmnvram.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#ifndef HAVE_TYPE_FLOAT
+#ifndef RTCONFIG_BCMARM
 #include <math.h>
 #endif
 #include <string.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <sys/reboot.h>
-#define BCM47XX_SOFTWARE_RESET  0x40		/* GPIO 6 */
+#define BCM47XX_SOFTWARE_RESET	0x40		/* GPIO 6 */
 #define RESET_WAIT		2		/* seconds */
 #define RESET_WAIT_COUNT	RESET_WAIT * 10 /* 10 times a second */
 
@@ -104,19 +97,10 @@ static int LED_status_first = 1;
 static int LED_status_on = -1;
 #endif
 
-#if defined(RTN14U)
-#ifdef HWNAT_FIX
-int shm_client_id;
-void *shared_client_inf=(void *) 0;
-int *g_hwnat_isReady=0;
-int  g_bcrelay_isReday=0;
-#endif
-#endif
-
 extern int g_wsc_configured;
 extern int g_isEnrollee;
 
-void
+void 
 sys_exit()
 {
 	printf("[watchdog] sys_exit");
@@ -127,7 +111,7 @@ sys_exit()
 static void
 alarmtimer(unsigned long sec, unsigned long usec)
 {
-	itv.it_value.tv_sec  = sec;
+	itv.it_value.tv_sec = sec;
 	itv.it_value.tv_usec = usec;
 	itv.it_interval = itv.it_value;
 	setitimer(ITIMER_REAL, &itv, NULL);
@@ -145,28 +129,28 @@ void led_control_normal(void)
 	led_control(LED_POWER, LED_ON);
 }
 
-void erase_nvram()
+void erase_nvram(void)
 {
-	switch (get_model()) {
-		case MODEL_RTAC56U:
-		case MODEL_RTAC68U:
-			eval("mtd-erase2", "nvram");
-			break;
-		default:
-			eval("mtd-erase","-d","nvram");
-	}
+        switch (get_model()) {
+                case MODEL_RTAC56U:
+                case MODEL_RTAC68U:
+                        eval("mtd-erase2", "nvram");
+                        break;
+                default:
+                        eval("mtd-erase","-d","nvram");
+        }
 }
 
-int init_toggle()
+int init_toggle(void)
 {
-	switch (get_model()) {
-		case MODEL_RTAC56U:
-		case MODEL_RTAC68U:
-			nvram_set("btn_ez_radiotoggle", "1");
-			return BTN_WIFI_TOG;
-		default:
-			return BTN_WPS;
-	}
+        switch (get_model()) {
+                case MODEL_RTAC56U:
+                case MODEL_RTAC68U:
+                        nvram_set("btn_ez_radiotoggle", "1");
+                        return BTN_WIFI_TOG;
+                default:
+                        return BTN_WPS;
+        }
 }
 
 void btn_check(void)
@@ -207,17 +191,17 @@ void btn_check(void)
 			nvram_set("btn_turbo", "1");
 		}
 #endif
-#ifdef RTCONFIG_LED_BTN	/* currently for RT-AC68U only */
-		if (button_pressed(BTN_LED))
-		{
-			TRACE_PT("button LED pressed\n");
-			nvram_set("btn_led", "1");
-		}
-		else
-		{
+#ifdef RTCONFIG_LED_BTN /* currently for RT-AC68U only */
+                if (button_pressed(BTN_LED))
+                {
+                        TRACE_PT("button LED pressed\n");
+                        nvram_set("btn_led", "1");
+                }
+                else
+                {
 			//TRACE_PT("button LED released\n");
-			nvram_set("btn_led", "0");
-		}
+                        nvram_set("btn_led", "0");
+                }
 #endif
 		return;
 	}
@@ -259,13 +243,10 @@ void btn_check(void)
 #ifdef RTCONFIG_DSL /* Paul add 2013/4/2 */
 					led_control(0, 0);
 					alarmtimer(0, 0);
-					eval("mtd-erase","-d","nvram");
-					/* FIXME: all stop-wan, umount logic will not be called
-					 * prevous sys_exit (kill(1, SIGTERM) was ok
-					 * since nvram isn't valid stop_wan should just kill possible daemons,
-					 * nothing else, maybe with flag */
-					sync();
-					reboot(RB_AUTOBOOT);
+					if (notify_rc_after_wait("resetdefault")) {
+						/* Send resetdefault rc_service failed. */
+						alarmtimer(NORMAL_PERIOD, 0);
+					}
 #else
 				/* 0123456789 */
 				/* 0011100111 */
@@ -280,7 +261,7 @@ void btn_check(void)
 #ifdef RTCONFIG_WIRELESS_SWITCH
 	else if (button_pressed(BTN_WIFI_SW))
 	{
-		//TRACE_PT("button BTN_WIFI_SW pressed\n");	
+		//TRACE_PT("button BTN_WIFI_SW pressed\n");
 			if(wlan_sw_init == 0)
 			{
 				wlan_sw_init = 1;
@@ -301,13 +282,10 @@ void btn_check(void)
 					// IT MUST BE SAME AS BELOW CODE
 					led_control(LED_POWER, LED_OFF);
 					alarmtimer(0, 0);
-					erase_nvram();
-					/* FIXME: all stop-wan, umount logic will not be called
-					 * prevous sys_exit (kill(1, SIGTERM) was ok
-					 * since nvram isn't valid stop_wan should just kill possible daemons,
-					 * nothing else, maybe with flag */
-					sync();
-					reboot(RB_AUTOBOOT);
+					if(notify_rc_after_wait("resetdefault")) {
+						/* Send resetdefault rc_service failed. */
+						alarmtimer(NORMAL_PERIOD, 0);
+					}
 				}
 
 				if(nvram_match("wl0_HW_switch", "0") || nvram_match("wl1_HW_switch", "0")){
@@ -327,7 +305,7 @@ void btn_check(void)
 						nvram_commit();
 					}
 				}
-			}	
+			}
 	}
 #endif
 	else
@@ -343,13 +321,10 @@ void btn_check(void)
 		{
 			led_control(LED_POWER, LED_OFF);
 			alarmtimer(0, 0);
-			erase_nvram();
-			/* FIXME: all stop-wan, umount logic will not be called
-			 * prevous sys_exit (kill(1, SIGTERM) was ok
-			 * since nvram isn't valid stop_wan should just kill possible daemons,
-			 * nothing else, maybe with flag */
-			sync();
-			reboot(RB_AUTOBOOT);
+			if (notify_rc_after_wait("resetdefault")) {
+				/* Send resetdefault rc_service failed. */
+				alarmtimer(NORMAL_PERIOD, 0);
+			}
 		}
 #ifdef RTCONFIG_WIRELESS_SWITCH
 		else
@@ -408,7 +383,7 @@ void btn_check(void)
 		&& (nvram_get_int("sw_mode") != SW_MODE_REPEATER)) // repeater mode not support HW radio
 #endif
 	{
-		TRACE_PT("button BTN_WIFI_TOG pressed\n");
+		TRACE_PT("button WIFI_TOG pressed\n");
 		if (btn_pressed_toggle_radio == 0){
 			eval("radio","switch");
 			btn_pressed_toggle_radio = 1;
@@ -419,71 +394,73 @@ void btn_check(void)
 		btn_pressed_toggle_radio = 0;
 	}
 #ifdef RTCONFIG_TURBO
-	if (button_pressed(BTN_TURBO))
-	{
-		TRACE_PT("button BTN_TURBO pressed\n");
-	}
+        if (button_pressed(BTN_TURBO))
+        {
+                TRACE_PT("button BTN_TURBO pressed\n");
+        }
 #endif
-#ifdef RTCONFIG_LED_BTN	// currently for RT-AC68U only
-	LED_status_old = LED_status;
-	LED_status = button_pressed(BTN_LED);
+#ifdef RTCONFIG_LED_BTN // currently for RT-AC68U only
+        LED_status_old = LED_status;
+        LED_status = button_pressed(BTN_LED);
 
-	LED_status_changed = 0;
-	if (LED_status != LED_status_old)
-	{
-		if (LED_status_first)
-		{
-			LED_status_first = 0;
-			LED_status_on = LED_status;
-		}
-		else
-			LED_status_changed = 1;
-	}
+        LED_status_changed = 0;
+        if (LED_status != LED_status_old)
+        {
+                if (LED_status_first)
+                {
+                        LED_status_first = 0;
+                        LED_status_on = LED_status;
+                }
+                else
+                        LED_status_changed = 1;
+        }
 
-	if (LED_status_changed)
-	{
-		TRACE_PT("button BTN_LED pressed\n");
+        if (LED_status_changed)
+        {
+                TRACE_PT("button BTN_LED pressed\n");
 #if 0
-			eval("ejusb", "1");
-			eval("ejusb", "2");
+                        eval("ejusb", "1");
+                        eval("ejusb", "2");
 #else
 #ifdef RTCONFIG_LED_BTN_MODE
-			if (nvram_get_int("btn_led_mode"))
-				reboot(RB_AUTOBOOT);
+                        if (nvram_get_int("btn_led_mode"))
+                                reboot(RB_AUTOBOOT);
 #endif
-			if (LED_status == LED_status_on)
-				nvram_set_int("AllLED", 1);
-			else
-				nvram_set_int("AllLED", 0);
+                        if (LED_status == LED_status_on)
+                                nvram_set_int("AllLED", 1);
+                        else
+                                nvram_set_int("AllLED", 0);
 
-			if (LED_status == LED_status_on)
-			{
-				eval("et", "robowr", "0", "0x18", "0x01ff");
-				eval("et", "robowr", "0", "0x1a", "0x01ff");
+                        if (LED_status == LED_status_on)
+                        {
+				led_control(LED_POWER, LED_ON);
 
-				eval("wl", "ledbh", "10", "7");
-				eval("wl", "-i", "eth2", "ledbh", "10", "7");
+                                eval("et", "robowr", "0", "0x18", "0x01ff");
+                                eval("et", "robowr", "0", "0x1a", "0x01ff");
 
-				if (nvram_match("wl1_radio", "1"))
-				{
-					nvram_set("led_5g", "1");
-					led_control(LED_5G, LED_ON);
-				}
+                                eval("wl", "ledbh", "10", "7");
+                                eval("wl", "-i", "eth2", "ledbh", "10", "7");
+
+                                if (nvram_match("wl1_radio", "1"))
+                                {
+                                        nvram_set("led_5g", "1");
+                                        led_control(LED_5G, LED_ON);
+                                }
 #ifdef RTCONFIG_TURBO
-				if (nvram_match("wl0_radio", "1") || nvram_match("wl1_radio", "1"))
-					led_control(LED_TURBO, LED_ON);
+                                if (nvram_match("wl0_radio", "1") || nvram_match("wl1_radio", "1"))
+                                        led_control(LED_TURBO, LED_ON);
 #endif
-				kill_pidfile_s("/var/run/usbled.pid", SIGTSTP);	// inform usbled to reset status
-			}
-			else
-				setAllLedOff();
+                                kill_pidfile_s("/var/run/usbled.pid", SIGTSTP); // inform usbled to reset status
+                        }
+                        else
+                                setAllLedOff();
 #endif
-	}
+        }
 #endif
 
 	if (btn_pressed_setup < BTNSETUP_START)
 	{
-		if (!no_need_to_start_wps() &&
+		if (!no_need_to_start_wps() && !wps_band_radio_off(0) &&
 #ifndef RTCONFIG_WIFI_TOG_BTN
 		nvram_match("btn_ez_radiotoggle", "0") &&
 #endif
@@ -513,7 +490,7 @@ void btn_check(void)
 						wsc_timeout = WPS_TIMEOUT_COUNT;
 					}
 				}
-		} 
+		}
 		else if (btn_pressed_setup == BTNSETUP_DETECT)
 		{
 			btn_pressed_setup = BTNSETUP_NONE;
@@ -522,10 +499,10 @@ void btn_check(void)
 			alarmtimer(NORMAL_PERIOD, 0);
 		}
 	}
-	else
+	else 
 	{
 		if (!nvram_match("wps_ign_btn", "1")) {
-			if (!no_need_to_start_wps() && button_pressed(BTN_WPS))
+			if (!no_need_to_start_wps() && !wps_band_radio_off(0) && button_pressed(BTN_WPS))
 			{
 				/* Whenever it is pushed steady, again... */
 				if (++btn_count_setup_second > SETUP_WAIT_COUNT)
@@ -604,7 +581,7 @@ static int in_sched(int now_mins, int now_dow, int sched_begin, int sched_end, i
 	}
 
 	// wday: 1
-	if((now_dow & 0x20) != 0){
+	if((now_dow & 0x20) != 0){ 
 		// under Monday's sched time
 		if(((now_dow & sched_dow) != 0) && (now_mins >= sched_begin) && (now_mins <= sched_end) && (sched_begin < sched_end))
 			return 1;
@@ -615,7 +592,7 @@ static int in_sched(int now_mins, int now_dow, int sched_begin, int sched_end, i
 
 		// under Sunday's sched time
 		now_dow <<= 1; // Sunday
-		if(((now_dow & sched_dow) != 0) && (now_mins <= sched_end2) && (sched_begin2 >= sched_end2))
+		if(((now_dow & sched_dow) != 0) && (now_mins <= sched_end2) && (sched_begin2 >= sched_end2)) 
 			return 1;
 	}
 
@@ -647,7 +624,7 @@ static int in_sched(int now_mins, int now_dow, int sched_begin, int sched_end, i
 
 		// under Friday's sched time
 		now_dow <<= 1; // Friday
-		if(((now_dow & sched_dow) != 0) && (now_mins <= sched_end) && (sched_begin >= sched_end))
+		if(((now_dow & sched_dow) != 0) && (now_mins <= sched_end) && (sched_begin >= sched_end)) 
 			return 1;
 	}
 
@@ -697,11 +674,6 @@ int timecheck_item(char *activeDate, char *activeTime, char *activeTime2)
 #ifdef RTCONFIG_RALINK
 extern char *wif_to_vif(char *wif);
 #endif
-#if 0
-#ifdef RTCONFIG_USBEJECT
-static int wait_count = 0;
-#endif
-#endif
 
 int svcStatus[8] = { -1, -1, -1, -1, -1, -1, -1, -1};
 
@@ -719,20 +691,7 @@ void timecheck(void)
 	char *lan_ifname;
 	char wl_vifs[256], nv[40];
 	int expire, need_commit = 0;
-#if 0
-#ifdef RTCONFIG_USBEJECT
-	if (nvram_get_int("ejusb_count"))
-		wait_count++;
-	else
-		wait_count = 0;
 
-	if (wait_count > 1)
-	{
-		wait_count = 0;
-		restart_usb();
-	}
-#endif
-#endif
 	item = 0;
 	unit = 0;
 
@@ -756,7 +715,7 @@ void timecheck(void)
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
 		//dbG("[watchdog] timecheck unit=%s radio=%s, timesched=%s\n", prefix, nvram_safe_get(strcat_r(prefix, "radio", tmp)), nvram_safe_get(strcat_r(prefix, "timesched", tmp2))); // radio toggle test
-		if (nvram_match(strcat_r(prefix, "radio", tmp), "0") ||
+		if (nvram_match(strcat_r(prefix, "radio", tmp), "0") || 
 			nvram_match(strcat_r(prefix, "timesched", tmp2), "0")){
 			item++;
 			unit++;
@@ -913,6 +872,85 @@ static void catch_sig(int sig)
 #endif
 }
 
+#ifdef RTCONFIG_WLAN_LED
+unsigned long get_2g_count()
+{
+	FILE *f;
+	char buf[256];
+	char *ifname, *p;
+	unsigned long counter1, counter2;
+
+	if((f = fopen("/proc/net/dev", "r"))==NULL) return -1;
+
+	fgets(buf, sizeof(buf), f);
+	fgets(buf, sizeof(buf), f);
+
+	counter1=counter2=0;
+
+	while (fgets(buf, sizeof(buf), f)) {
+		if((p=strchr(buf, ':'))==NULL) continue;
+		*p = 0;
+		if((ifname = strrchr(buf, ' '))==NULL) ifname = buf;
+		else ++ifname;
+
+		if(strcmp(ifname, "eth1")) continue;
+
+		if(sscanf(p+1, "%lu%*u%*u%*u%*u%*u%*u%*u%*u%lu", &counter1, &counter2)!=2) continue;
+
+	}
+	fclose(f);
+
+	return counter1;
+}
+
+void fake_wl_led_2g(void)
+{
+	static unsigned int blink_2g_check = 0;
+	static unsigned int blink_2g = 0;
+	static unsigned int data_2g = 0;
+	unsigned long count_2g;
+	int i;
+	static int j;
+	static int status = -1;
+	static int status_old;
+
+	// check data per 10 count
+	if((blink_2g_check%10)==0) {
+		count_2g = get_2g_count();
+		if(count_2g && data_2g!=count_2g) {
+			blink_2g = 1;
+			data_2g = count_2g;
+		}
+		else blink_2g = 0;
+		led_control(LED_2G, LED_ON);
+	}
+
+	if(blink_2g) {
+		j = rand_seed_by_time() % 3;
+		for(i=0;i<10;i++) {
+			usleep(33*1000);
+
+			status_old = status;
+			if (((i%2)==0) && (i > (3 + 2*j)))
+				status = 0;
+			else
+				status = 1;
+
+			if (status != status_old)
+			{
+				if (status)
+					led_control(LED_2G, LED_ON);
+				else
+					led_control(LED_2G, LED_OFF);
+			}
+		}
+		led_control(LED_2G, LED_ON);
+	}
+
+	blink_2g_check++;
+}
+#endif	/* RTCONFIG_WLAN_LED */
+
 #if defined(RTCONFIG_BRCM_USBAP) || defined(RTAC66U) || defined(BCM4352)
 unsigned long get_5g_count()
 {
@@ -1006,6 +1044,11 @@ void fake_wl_led_5g(void)
 
 void led_check(void)
 {
+#ifdef RTCONFIG_WLAN_LED
+	if (nvram_contains_word("rc_support", "led_2g"))
+		fake_wl_led_2g();
+#endif
+
 #if defined(RTCONFIG_BRCM_USBAP) || defined(RTAC66U) || defined(BCM4352)
 #if defined(RTAC66U) || defined(BCM4352)
 	if (nvram_match("led_5g", "1"))
@@ -1015,7 +1058,7 @@ void led_check(void)
 
 // it is not really necessary, but if required, add internet led check here
 // using wan_primary_ifunit() to get current working wan unit wan0 or wan1
-// using wan0_state_t or wan1_state_t to get status of working wan,
+// using wan0_state_t or wan1_state_t to get status of working wan, 
 //	WAN_STATE_CONNECTED means internet connected
 //	else means internet disconnted
 
@@ -1165,7 +1208,7 @@ void swmode_check()
 
 void ddns_check(void)
 {
-	if( nvram_match("ddns_enable_x", "1") &&
+	if(nvram_match("ddns_enable_x", "1") &&
 	   (nvram_match("wan0_state_t", "2") && nvram_match("wan0_auxstate_t", "0")) )
 	{
 		if (pids("ez-ipupdate")) //ez-ipupdate is running!
@@ -1192,79 +1235,6 @@ void ddns_check(void)
 	return;
 }
 
-#if defined(RTN14U)
-#ifdef HWNAT_FIX
-char *readfile(char *fname,int *fsize)
-// for proc file
-{
- FILE *fp;
- unsigned long size,lsize;
- char *pt;
- int len;
- char buf[100];
-
- size=0;
- pt=NULL;
- fp=fopen(fname,"r");
- if (!fp) return NULL;
- while (1)
-  {
-   len=fread(buf,1,100,fp);
-   if (len==-1)
-    goto sysfail;
-   lsize=size;
-   size+=len;
-   pt=(char *)realloc(pt,size+1);
-   if (len==0)
-    {
-     pt[size]='\0';
-     break;
-    }
-   if (!pt)
-    goto sysfail;
-   memcpy(pt+lsize,buf,len);
-  }
- fclose(fp);
- pt[size]='\0';
- *fsize=size;
- return pt;
-
-sysfail:
- fclose(fp);
- if (pt)
-  free(pt);
- return NULL;
-}
-
-int check_uptime(void)
-{
-	char *fpt;
-	int fsize;
-	int uptime;
-
-	fpt=readfile("/proc/uptime",&fsize);
-	if (fpt)
-	{
-		uptime=atoi(fpt);
-		free(fpt);
-		if ((uptime> (50-12)/*uboot overhead*/) && (*g_hwnat_isReady==0) )
-		{
-			//_dprintf("uptime=%d\n",uptime);
-			*g_hwnat_isReady=1;
-			hwnat_workaround();
-		}
-		else if(!nvram_match("pptpd_broadcast","disable")&& !nvram_match("pptpd_broadcast","br0") && (uptime> (85-12)) && (*g_hwnat_isReady==1)&&(g_bcrelay_isReday==0))
-		{
-			//_dprintf("uptime=%d\n",uptime);
-			g_bcrelay_isReday=1;
-			hwnat_workaround();
-		}
-	}
-
-}
-#endif
-#endif
-
 /* wathchdog is runned in NORMAL_PERIOD, 1 seconds
  * check in each NORMAL_PERIOD
  *	1. button
@@ -1273,20 +1243,16 @@ int check_uptime(void)
  *
  *      1. time-dependent service
  */
+
 void watchdog(int sig)
 {
 	/* handle button */
-	btn_check();
-#if defined(RTN14U)
-#ifdef HWNAT_FIX
-	check_uptime();
-#endif
-#endif
+  	 btn_check();
 	if(nvram_match("asus_mfg", "0")
 #ifdef RTCONFIG_LED_BTN
-		&& nvram_get_int("AllLED")
+                && nvram_get_int("AllLED")
 #endif
-	)
+        )
 		led_check();
 
 #ifdef RTCONFIG_RALINK
@@ -1304,7 +1270,7 @@ void watchdog(int sig)
 	}
 #endif
 #ifdef RTCONFIG_SWMODE_SWITCH
- 	swmode_check();
+	swmode_check();
 #endif
 
 	/* if timer is set to less than 1 sec, then bypass the following */
@@ -1330,7 +1296,7 @@ void watchdog(int sig)
 	return;
 }
 
-int
+int 
 watchdog_main(int argc, char *argv[])
 {
 	FILE *fp;
@@ -1341,25 +1307,6 @@ watchdog_main(int argc, char *argv[])
 		fprintf(fp, "%d", getpid());
 		fclose(fp);
 	}
-
-#if defined(RTN14U)
-#ifdef HWNAT_FIX
-	shm_client_id = shmget((key_t)1001, sizeof(int), 0666|IPC_CREAT);
-	if (shm_client_id == -1){
-		 _dprintf("shmget failed1\n");
-		goto err;
-	}
-
-	shared_client_inf = shmat(shm_client_id,(void *) 0,0);
-	if (shared_client_inf == (void *)-1){
-		 _dprintf("shmat failed2\n");
-		goto err;
-	}
-	g_hwnat_isReady= (int *)shared_client_inf;
-	*g_hwnat_isReady=0;
-err:
-#endif
-#endif
 
 #ifdef RTCONFIG_SWMODE_SWITCH
 	pre_sw_mode=nvram_get_int("sw_mode");

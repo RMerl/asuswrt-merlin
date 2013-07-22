@@ -109,7 +109,7 @@ _log_ipkg_install(){
 
 if [ -n "$is_arm_machine" ]; then
 	pkg_type="arm"
-elif [ -n "$productid" ] && [ "$productid" == "VSL-N66U" ]; then
+elif [ -n "$productid" ] && [ "$productid" == "DSL-N66U" ]; then
 	pkg_type="mipsbig"
 else
 	pkg_type="mipsel"
@@ -145,13 +145,14 @@ if [ -L "$APPS_INSTALL_PATH" ] || [ ! -d "$APPS_INSTALL_PATH" ]; then
 fi
 
 if [ ! -f "$APPS_INSTALL_PATH/$nonautorun_file" ]; then
+	rm -rf $APPS_INSTALL_PATH/$autorun_file
 	cp -f $apps_local_space/$autorun_file $APPS_INSTALL_PATH
 	if [ "$?" != "0" ]; then
 		nvram set apps_state_error=10
 		exit 1
 	fi
 else
-	rm -f $APPS_INSTALL_PATH/$autorun_file
+	rm -rf $APPS_INSTALL_PATH/$autorun_file
 fi
 
 install_log=$APPS_INSTALL_PATH/ipkg_log.txt

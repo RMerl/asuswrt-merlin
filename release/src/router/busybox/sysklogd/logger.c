@@ -85,15 +85,23 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 	char *str_p, *str_t;
 	int opt;
 	int i = 0;
+	FILE *f = NULL;
 
 	/* Fill out the name string early (may be overwritten later) */
 	str_t = uid2uname_utoa(geteuid());
 
 	/* Parse any options */
-	opt = getopt32(argv, "p:st:", &str_p, &str_t);
+	opt = getopt32(argv, "p:st:c", &str_p, &str_t);
 
 	if (opt & 0x2) /* -s */
 		i |= LOG_PERROR;
+	if (opt & 0x8) { /* -c */
+		f = fopen_for_read(DEV_CONSOLE);
+		if (!f) {
+			i |= LOG_CONS;
+			bb_error_msg("can't open console: %d %s\n", errno, strerror(errno));
+		}
+	}
 	//if (opt & 0x4) /* -t */
 	openlog(str_t, i, 0);
 	i = LOG_USER | LOG_WARNING;
@@ -108,6 +116,8 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 			) {
 				/* Neither "" nor "\n" */
 				syslog(i, "%s", strbuf);
+				if (f)
+					fprintf(f, "%s", strbuf);
 			}
 		}
 	} else {
@@ -121,9 +131,13 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 			pos = len;
 		} while (*++argv);
 		syslog(i, "%s", message + 1); /* skip leading " " */
+		if (f)
+			fprintf(f, "%s", message + 1);
 	}
 
 	closelog();
+	if (f)
+		fclose(f);
 	return EXIT_SUCCESS;
 }
 

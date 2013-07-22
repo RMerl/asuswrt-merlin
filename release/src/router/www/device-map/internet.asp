@@ -51,6 +51,9 @@ var loadBalance_Ratio = '<%nvram_get("wans_lb_ratio");%>';
 
 <% wan_get_parameter(); %>
 
+var yadns_enable = '<% nvram_get("yadns_enable_x"); %>';
+var yadns_mode = '<% nvram_get("yadns_mode"); %>';
+
 function add_lanport_number(if_name)
 {
 	if (if_name == "lan") {
@@ -178,6 +181,18 @@ function initial(){
 		else if (wanproto == "static") {
 			if (dslproto == "ipoa") wanlink_type_conv = "IPoA";
 		}		
+	}
+
+	if (yadns_support) {
+		if (yadns_enable != 0) {
+			if (yadns_mode == 1)
+				showtext($("yadns_mode"), "<#YandexDNS_mode1#>");
+			else if (yadns_mode == 2)
+				showtext($("yadns_mode"), "<#YandexDNS_mode2#>");
+			else
+				showtext($("yadns_mode"), "<#YandexDNS_mode0#>");
+			$('yadns_ctrl').style.display = "";
+		}
 	}
 
 	showtext($j("#connectionType")[0], wanlink_type_conv);
@@ -391,7 +406,6 @@ function update_wanip(e) {
 			secondary_wanxdns = secondary_wanlink_xdns();
 			secondary_wanxgateway = secondary_wanlink_xgateway();
 		}
-
 		if(old_link_internet == -1)
 			old_link_internet = update_wan_state(wanstate, wanauxstate);
 
@@ -566,6 +580,14 @@ function manualSetup(){
     </td>
 </tr>
 
+<tr style="display:none;" id="yadns_ctrl">
+    <td style="padding:5px 10px 5px 15px;">
+    		<p class="formfonttitle_nwm"><#YandexDNS#></p>
+    		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="yadns_mode"></p>
+      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+    </td>
+</tr>
+
 <tr id="primary_WANIP_ctrl">
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#WAN_IP#></p>
@@ -587,7 +609,7 @@ function manualSetup(){
 
 <tr id="primary_DNS_ctrl">
     <td style="padding:5px 10px 5px 15px;">
-    		<p class="formfonttitle_nwm" >DNS</p>
+    		<p class="formfonttitle_nwm">DNS</p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="DNS1"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="DNS2"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="xDNS1"></p>
@@ -597,7 +619,7 @@ function manualSetup(){
 </tr>
 <tr style="display:none;" id="secondary_DNS_ctrl">
     <td style="padding:5px 10px 5px 15px;">
-    		<p class="formfonttitle_nwm" >DNS</p>
+    		<p class="formfonttitle_nwm">DNS</p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_DNS1"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_DNS2"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_xDNS1"></p>
@@ -608,7 +630,7 @@ function manualSetup(){
 
 <tr id="primary_gateway_ctrl">
     <td style="padding:5px 10px 5px 15px;">
-    		<p class="formfonttitle_nwm" ><#RouterConfig_GWStaticGW_itemname#></p>
+    		<p class="formfonttitle_nwm"><#RouterConfig_GWStaticGW_itemname#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="gateway"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="xgateway"></p>
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
@@ -616,7 +638,7 @@ function manualSetup(){
 </tr>
 <tr style="display:none;" id="secondary_gateway_ctrl">
     <td style="padding:5px 10px 5px 15px;">
-    		<p class="formfonttitle_nwm" ><#RouterConfig_GWStaticGW_itemname#></p>
+    		<p class="formfonttitle_nwm"><#RouterConfig_GWStaticGW_itemname#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_gateway"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_xgateway"></p>
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">

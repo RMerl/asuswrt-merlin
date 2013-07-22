@@ -1,0 +1,61 @@
+.\" Process this file with
+.\" groff -man -Tascii lscpu.1
+.\"
+.TH LSCPU 1 "February 2011" "util-linux" "User Commands"
+.SH NAME
+lscpu \- display information on CPU architecture
+.SH SYNOPSIS
+.B lscpu
+.RB [ \-hpx ]
+.RB [ \-s
+.IR directory ]
+.SH DESCRIPTION
+.B lscpu
+gathers CPU architecture information like number of CPUs, threads,
+cores, sockets, NUMA nodes, information about CPU caches, CPU family,
+model, bogoMIPS, byte order and stepping from sysfs and /proc/cpuinfo, and prints it in
+a human-readable format.  It supports both online and offline CPUs.
+It can also print out in a parsable format,
+including how different caches are shared by different CPUs,
+which can be fed to other programs.
+.SH OPTIONS
+.TP
+.BR \-h , " \-\-help"
+Print a help message.
+.TP
+.BR \-p , " \-\-parse " \fI[=list]\fP
+Print out in parsable instead of human-readable format.
+
+If the \fIlist\fP argument is not given then the default backwardly compatible
+output is printed.  The backwardly compatible format uses two commas to
+separate CPU cache columns. If no CPU caches are identified, then the cache
+columns are not printed at all.
+
+The \fIlist\fP argument is comma delimited list of the columns. Currently
+supported are CPU, Core, Node, Socket, Book and Cache columns. If the
+\fIlist\fP argument is given then always all requested columns are printed in
+the defined order. The Cache columns are separated by ':'.
+
+Note that the optional \fIlist\fP argument cannot be separated from the
+option by a space, the correct form is for example '\fB-p=cpu,node\fP' or '\fB--parse=cpu,node\fP'.
+.TP
+.BR \-s , " \-\-sysroot " \fIdirectory\fP
+Use the specified \fIdirectory\fP as system root.  This allows you to inspect
+a snapshot from a different system.
+.TP
+.BR \-x , " \-\-hex"
+Use hexadecimal masks for CPU sets (e.g. 0x3).  The default is to print the sets
+in list format (e.g. 0,1).
+.SH BUGS
+The basic overview about CPU family, model, etc. is always based on the first
+CPU only.
+
+Sometimes in Xen Dom0 the kernel reports wrong data.
+.SH AUTHOR
+.nf
+Cai Qian <qcai@redhat.com>
+Karel Zak <kzak@redhat.com>
+.fi
+.SH AVAILABILITY
+The lscpu command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

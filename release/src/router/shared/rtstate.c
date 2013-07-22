@@ -344,7 +344,8 @@ char *get_usb_ohci_port(int port)
 	return ohci_string;
 }
 
-int get_usb_port_number(const char *usb_port){
+int get_usb_port_number(const char *usb_port)
+{
 	char word[100], *next;
 	int port_num, i;
 
@@ -383,7 +384,8 @@ int get_usb_port_number(const char *usb_port){
 	return port_num;
 }
 
-int get_usb_port_host(const char *usb_port){
+int get_usb_port_host(const char *usb_port)
+{
 	char word[100], *next;
 	int i;
 

@@ -113,6 +113,7 @@ function genWANSoption(){
 /* end of DualWAN */ 
 	
 function initial(){
+	$('pull_arrow').title = Untranslated.select_APN_service;
 	show_menu();
 	genWANSoption();
 	switch_modem_mode('<% nvram_get("modem_enable"); %>');
@@ -124,7 +125,7 @@ function initial(){
 		$("option5").className = "m5_r";
 	}
 
-  if(wimax_support < 0){
+  if(!wimax_support){
   	for (var i = 0; i < document.form.modem_enable_option.options.length; i++) {
 			if (document.form.modem_enable_option.options[i].value == "4") {
 				document.form.modem_enable_option.options.remove(i);
@@ -304,7 +305,7 @@ function show_ISP_list(){
 	$("modem_isp").options.length = isplist.length;
 
 	for(var i = 0; i < isplist.length; i++){
-	  if(protolist[i] == 4 && wimax_support < 0){
+	  if(protolist[i] == 4 && !wimax_support){
 			$("modem_isp").options.length = $("modem_isp").options.length - 1;
 
 			if($("modem_isp").options.length > 0)
@@ -623,7 +624,7 @@ function check_dongle_status(){
 					<tr>
           	<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,9);"><#HSDPAConfig_Country_itemname#></a></th>
             <td>
-            	<select name="modem_country" id="isp_countrys" class="input_option" onfocus="parent.showHelpofDrSurf(21,9);" onchange="switch_modem_mode(document.form.modem_enable_option.value);reloadProfile();"></select>
+            	<select name="modem_country" id="isp_countrys" class="input_option" onchange="switch_modem_mode(document.form.modem_enable_option.value);reloadProfile();"></select>
 						</td>
 					</tr>
                                 
@@ -654,7 +655,7 @@ function check_dongle_status(){
 						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,3);"><#HSDPAConfig_private_apn_itemname#></a></th>
             <td>
             	<input id="modem_apn" name="modem_apn" class="input_20_table" type="text" value=""/>
-           		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
+           		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
 							<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 						</td>
 					</tr>

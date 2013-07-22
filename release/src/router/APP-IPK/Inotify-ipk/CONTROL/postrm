@@ -1,0 +1,10 @@
+#! /bin/sh
+
+APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
+APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
+APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
+
+#rm progress
+rm -rf $APPS_INSTALL_PATH/bin/inotify
+rm -rf $APPS_INSTALL_PATH/etc/init.d/S50inotify
+

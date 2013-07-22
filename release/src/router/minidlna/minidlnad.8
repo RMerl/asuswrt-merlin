@@ -1,0 +1,78 @@
+.\" minidlnad man page
+.TH minidlnad 8 "October 2012"
+.SH NAME
+minidlnad \- MiniDLNA DLNA/UPnP-AV Server
+.SH SYNOPSIS
+minidlnad options
+
+.SH DESCRIPTION
+.PP
+.B minidlna
+is a lightweight but very functional DLNA/UPnP-AV server allowing easy 
+sharing of your media files including pictures to any capable device or
+client on your local wired and wireless network. Common PC software like 
+totem is a good lightweight and fast choice for Linux/BSD; more fully
+featured software for Linux, Windows and MAC is XBMC, also Mediahouse 
+on Android, and any media sharing capable DVR/TV etc.
+
+.SH OPTIONS
+.PP
+.B minidlna's 
+options are normally set from the global /etc/minidlna.conf file.
+.nf
+But there may be times when you need to temporarily alter some of these options,
+you can do this by running minidlna with the following command line switches.
+.fi
+
+.IP "\fB\-R\fR \fIRescan\fR"
+This forces minidlna to rescan all of the media_dir directories.
+
+.IP "\fB\-f\fR \fIconfig_file\fR"
+Run minidlna with a different configuration file than the global default.
+
+.IP "\fB\-a\fR \fIlistening_ip\fR"
+If your machine has multiple IP's, you can tell minidlna to bind to a specific address.
+
+.IP "\fB\-p\fR \fIport\fR"
+Allows to run minidlna on a different port.
+
+.IP "\fB\-w\fR \fIpresentation_url\fR"
+Change the default presentation url address.
+
+.IP "\fB\-d\fR \fIdebug\fR"
+minidlna will run in the foreground with debug output.
+
+.IP "\fB\-P\fR \fIpid_filename\fR"
+Specify a location for the PID file.
+
+.IP "\fB\-m\fR \fImodel\fR"
+Force minidlna to report a specific model number.
+
+.IP "\fB\-s\fR \fIserial\fR"
+Force minidlna to report a specific serial number.
+
+.IP "\fB\-t\fR \fInotify_interval\fR"
+Change the notify interval, in seconds. Defaults to 895 seconds.
+
+.IP "\fB\-h\fR \fIhelp\fR"
+Show basic switch options for running minidlna.
+
+.IP "\fB\-V\fR \fIVersion\fR"
+Shows the program version number and exits.
+
+
+.SH VERSION
+This man page corresponds to minidlna version 1.1.0 
+
+.SH AUTHOR
+.nf
+minidlna developed by Justin Maggard  https://sourceforge.net/projects/minidlna/
+man page written by Noel Butler <noelb@ausics.net>
+.fi
+
+.SH FILES
+/usr/sbin/minidlnad
+
+.SH SEE ALSO
+ minidlna.conf(5)
+

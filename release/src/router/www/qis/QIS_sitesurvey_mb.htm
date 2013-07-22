@@ -32,13 +32,18 @@
   background-position: -0px -150px; width: 30px; height: 30px;
 }	
 </style>	
+<script type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/general.js"></script>
+<script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <script type="text/JavaScript">
 var aplist = new Array();
+var aplist_tmp = new Array();
 var wlc_state = '<% nvram_get("wlc_state"); %>';
 var wlc_sbstate = '<% nvram_get("wlc_sbstate"); %>';
 var wlc_scan_state = '<% nvram_get("wlc_scan_state"); %>';
+var wlc_ssid_tmp = '<% nvram_get("wlc_ssid"); %>';
 var _wlc_ssid;
 var _sw_mode;
 
@@ -53,6 +58,7 @@ if(parent.isrescan == 120)
 var iserror = 0;
 var waitingTime = 120;
 var curState = "init";
+var isManual = false;
 
 function QKInternet_load_body(){
 	parent.set_step("t2");
@@ -83,27 +89,14 @@ function is_string(o, event){
 }
 
 function gen_aplist(idx){
-	if(document.form._wlc_ssid.value != ""){
-		idx = 0;
-		aplist[0] = ["band","ssid","channel","auth","encrypt","signal","macaddr","wlmode","status"];
-		aplist[0][0] = document.form._wlc_band.value;
-		aplist[0][1] = document.form._wlc_ssid.value;
-		aplist[0][2] = "";
-		aplist[0][3] = document.form._wlc_auth_mode_x.value;
-		aplist[0][4] = document.form._wlc_crypto.value;
-		aplist[0][5] = "";
-		aplist[0][6] = "";
-		aplist[0][7] = "";
-		aplist[0][8] = "";
-	}
-	else{
+	if(!isManual){ // sitesurvey
 		document.form._wlc_band.value = aplist[idx][0]; 
 		document.form._wlc_ssid.value = decodeURIComponent(aplist[idx][1]);
 		document.form._wlc_auth_mode_x.value = aplist[idx][3];
 		document.form._wlc_crypto.value = aplist[idx][4];
 	}
 
-	return cehckPAP(idx);
+	return checkPAP(idx);
 }
 
 function validate_psk(psk_obj){
@@ -163,7 +156,7 @@ function validForm(_idx){
 }
 
 /* ["band","ssid","channel","auth","encrypt","signal","macaddr","wlmode","status"] */
-function cehckPAP(_idx){
+function checkPAP(_idx){
 	if(_idx != null){
 		if(validForm(_idx)){
 			if(aplist[_idx][1] == ""){
@@ -179,6 +172,7 @@ function cehckPAP(_idx){
 
 			// ssid
 			document.form.wlc_ssid.value = decodeURIComponent(aplist[_idx][1]);
+			parent.document.getElementById("stassid").innerHTML = document.form.wlc_ssid.value;
 
 			// auth
 			if(aplist[_idx][4] == "TKIP"){
@@ -225,34 +219,57 @@ function cehckPAP(_idx){
 }
 
 function changeAuthMode(_val){
-	if(_val == "psk2" || (_val == "open" && document.form.__wlc_crypto.value == "None"))
+	if(_val == "psk2" || (_val == "open" && document.form.__wlc_crypto_wep.value == "0"))
 		document.getElementById("wl_nmode_x_hint").style.display = "none";
 	else
 		document.getElementById("wl_nmode_x_hint").style.display = "";
 
-	if(_val == "psk" || _val == "psk2"){
-		document.getElementById("__wlc_crypto_tr").style.display = "none";
+	if(_val == "psk2"){
+		document.getElementById("__wlc_crypto_wpa_tr").style.display = "";
+		document.getElementById("__wlc_crypto_wep_tr").style.display = "none";
 		document.getElementById("sta_key_index_tr").style.display = "none";
-		document.form._wlc_crypto.value = "PSK";
+		//document.form._wlc_crypto.value = "PSK2";
+		document.getElementById("thekey_tr").style.display = "";
+	}
+	else if(_val == "psk"){
+		document.getElementById("__wlc_crypto_wpa_tr").style.display = "";
+		document.getElementById("__wlc_crypto_wep_tr").style.display = "none";
+		document.getElementById("sta_key_index_tr").style.display = "none";
+		//document.form._wlc_crypto.value = "PSK";
 		document.getElementById("thekey_tr").style.display = "";
 	}
 	else if(_val == "shared"){
-		document.getElementById("__wlc_crypto_tr").style.display = "none";
+		document.getElementById("__wlc_crypto_wpa_tr").style.display = "none";
+		document.getElementById("__wlc_crypto_wep_tr").style.display = "";
 		document.getElementById("sta_key_index_tr").style.display = "";
-		document.form._wlc_crypto.value = "WEP";
+		//document.form._wlc_crypto.value = "WEP";
 		document.getElementById("thekey_tr").style.display = "";
+		regenOption(document.form.__wlc_crypto_wep, ["WEP-64bits", "WEP-128bits"], ["1", "2"], "");
 	}
 	else{
-		document.getElementById("__wlc_crypto_tr").style.display = "";
+		document.getElementById("__wlc_crypto_wpa_tr").style.display = "none";
+		document.getElementById("__wlc_crypto_wep_tr").style.display = "";
 		document.getElementById("sta_key_index_tr").style.display = "none";
-		changeCrypto(document.getElementById("__wlc_crypto").value);
+		changeCrypto(document.getElementById("__wlc_crypto_wep").value);
+		regenOption(document.form.__wlc_crypto_wep, ["None", "WEP-64bits", "WEP-128bits"], ["0", "1", "2"], "0");
 	}
 	
 	control_showpass_field();
 }
 
+function regenOption(obj, optArray, valArray, sel){
+	obj.options.length = 0;
+	for(var i=0; i<optArray.length; i++){
+		newItem = new Option(optArray[i], valArray[i]); 	
+		obj.options.add(newItem); 
+	}
+	
+	obj.selectedIndex = parseInt(sel);
+	changeCrypto(sel);
+}
+
 function changeCrypto(_val){
-	if(_val == "None"){
+	if(_val == "0"){
 		document.getElementById("wl_nmode_x_hint").style.display = "none";
 		document.getElementById("thekey_tr").style.display = "none";
 		document.getElementById("sta_key_index_tr").style.display = "none";
@@ -263,7 +280,7 @@ function changeCrypto(_val){
 		document.getElementById("sta_key_index_tr").style.display = "";
 	}
 
-	document.form._wlc_crypto.value = _val;
+	//document.form._wlc_crypto.value = _val;
 	control_showpass_field();
 }
 
@@ -276,11 +293,14 @@ function setAuthMethod(idx){
 	document.getElementById("PAPSurvey").style.display = "none";
 	document.getElementById("setPAP").style.display = "none";
 	document.getElementById("setAuth").style.display = "";
+	
 	document.getElementById("btnPre").style.display = "";
+	document.getElementById("btnManual").style.display = "none";
 	document.getElementById("btnRecan").style.display = "none";
+	document.getElementById("btnNext").style.display = "none";
 	document.getElementById("btnSubmit").style.display = "";
 
-	if(document.form.wlc_band.value == 1){
+	if(document.form.wlc_band.value == "1"){
 		document.getElementById("wl0_ssid").disabled = false;
 		document.getElementById("wl0_ssid").style.display = "";
 		document.getElementById("wl0_wpa_psk").disabled = false;
@@ -324,9 +344,9 @@ function submitForm(){
 		if(!validate_string_ssid(document.form.wl0_ssid))
 			return false;
 
-		if(document.form.wl0_wpa_psk.value.length > 0){
+		if(document.getElementById('wl0_wpa_psk').value.length > 0){
 			document.form.wl0_auth_mode_x.value = "psk2";
-			if(!validate_psk(document.form.wl0_wpa_psk))
+			if(!validate_psk(document.getElementById('wl0_wpa_psk')))
 					return false;
 		}else
 			document.form.wl0_auth_mode_x.value = "open";
@@ -350,9 +370,9 @@ function submitForm(){
 		if(!validate_string_ssid(document.form.wl1_ssid))
 				return false;
 
-		if(document.form.wl1_wpa_psk.value.length > 0){
+		if(document.getElementById('wl1_wpa_psk').value.length > 0){
 				document.form.wl1_auth_mode_x.value = "psk2";
-				if(!validate_psk(document.form.wl1_wpa_psk))
+				if(!validate_psk(document.getElementById('wl1_wpa_psk')))
 						return false;
 		}else
 				document.form.wl1_auth_mode_x.value = "open";
@@ -365,18 +385,16 @@ function submitForm(){
 	}
 
 	document.getElementById("loadingIcon").style.display = "";
-	parent.document.getElementById("stassid").innerHTML = document.form.wlc_ssid.value;
-	parent.document.getElementById("stassid").innerHTML += "<br/><span style='color:#FC0;font-weight:normal;'>Please unplug the network cable connected to WAN port in media bridge mode.</span>";
 	parent.w_Setting_tmp = document.form.w_Setting.value;
 	document.form.http_username.value = parent.document.QKform.http_username.value;
 	document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
-
 	document.form.flag.value = "wlcconnect_mb";
 	document.form.action_mode.value = "apply";
 	document.form.action_wait.value = "50";
 	document.form.action_script.value = "reboot";
 	document.form.target = "hidden_frame";
 
+	disableVar(false);
 	document.form.submit();
 }
 
@@ -384,64 +402,57 @@ function setParentAP(){
 	curState = "setPAP";
 	document.getElementById("PAPSurvey").style.display = "none";
 	document.getElementById("setPAP").style.display = "";
+	tune_setPAP();	//If !5g_support
 	document.getElementById("setAuth").style.display = "none";
-	document.getElementById("btnPre").style.display = "none";
-	document.getElementById("btnRecan").style.display = "";
+	
+	document.getElementById("btnPre").style.display = "";
+	document.getElementById("btnManual").style.display = "none";
+	document.getElementById("btnRecan").style.display = "none";
+	document.getElementById("btnNext").style.display = "";
 	document.getElementById("btnSubmit").style.display = "none";
 }
 
 function setSiteSurvey(){
+	if(isManual){
+		isManual = false;
+		setParentAP();
+		return false;
+	}
+
 	update_site_info();
 	curState = "setPAP";
 	document.getElementById("PAPSurvey").style.display = "";
 	document.getElementById("setPAP").style.display = "none";
 	document.getElementById("setAuth").style.display = "none";
+	
 	document.getElementById("btnPre").style.display = "none";
+	document.getElementById("btnManual").style.display = "";
 	document.getElementById("btnRecan").style.display = "";
+	document.getElementById("btnNext").style.display = "none";
 	document.getElementById("btnSubmit").style.display = "none";
 }
 
 /* password item show or not */
 function pass_checked(obj){
-	if(document.form.show_pass_1.checked || document.form.show_pass_2.checked)
-		replace_pass_type(obj, "text");
-	else
-		replace_pass_type(obj, "password");
+	switchType(obj, document.form.show_pass_1.checked || document.form.show_pass_2.checked, true);
 }
 
-/* change password type depend on browser for fix IE issue*/
-function replace_pass_type(obj, _Type){
-	if(navigator.userAgent.indexOf("MSIE") != -1){ // fix IE issue
-		if(obj.name == "thekey")
-			var input2 = document.createElement('<input class="input_32_table" autocapitalization="off" style="padding-left:3px;margin-left:5px;width:200px;">');  // create input element
-		else
-			var input2 = document.createElement('<input class="input_32_table" autocapitalization="off" style="height:25px;">');
-			
-		with (input2){ 
-			id = obj.id; 
-			value = obj.value; 
-			type = _Type; // change input type
-			name = obj.name;
-		} 
-		obj.parentNode.replaceChild(input2,obj);
-	}
-	else{	
-		obj.type= _Type;
-	}
-}
 function control_showpass_field(){
-	if( document.form._wlc_auth_mode_x.value == "open" && document.form.__wlc_crypto.value == "None")
+	if( document.form._wlc_auth_mode_x.value == "open" && document.form.__wlc_crypto_wep.value == "0")
 		document.getElementById('show_password_tr').style.display ="none";		
 	else
 		document.getElementById('show_password_tr').style.display ="";	
 }
-function check_wlc_band(){
+
+function check_wlc_band(obj){
 	if(document.form.wlc_band.value == 1)
-		 pass_checked(document.form.wl0_wpa_psk);
+		switchType(document.form.wl0_wpa_psk, obj.checked, true);
 	else
-		 pass_checked(document.form.wl1_wpa_psk);
-	
-	document.form.show_pass_1.checked = false;	
+		switchType(document.form.wl1_wpa_psk, obj.checked, true);
+}
+
+function check_manual_pass(obj){
+	switchType(document.form.thekey_manual, obj.checked, true);
 }
 
 // Do site survey
@@ -454,7 +465,7 @@ function addBorder(obj){
 	else
 		document.getElementById("sigTh").style.borderBottom = '1px solid #334044';
 
-	if(sorter.sortingMethod == "increase"){
+	if(sorter.sortingMethod == "decrease"){
 		obj.style.borderTop='1px solid #FC0';
 		obj.style.borderBottom='1px solid #334044';
 	}
@@ -470,12 +481,12 @@ function doSorter(_flag, _Method){
 	if(aplist.length == 1)
 		return 0;
 	
-	// doSorter
-	eval("aplist.sort(sorter."+_Method+"_"+sorter.sortingMethod+");");
-
 	// update variables
 	sorter.indexFlag = _flag;
 	sorter.sortingMethod = (sorter.sortingMethod == "increase") ? "decrease" : "increase";
+
+	// doSorter
+	eval("aplist.sort(sorter."+_Method+"_"+sorter.sortingMethod+");");
 	
 	// show Table
 	showSiteTable();
@@ -484,7 +495,7 @@ function doSorter(_flag, _Method){
 // suit for 2 dimention array
 var sorter = {
 	"lastClick" : "", // a HTML object
-	"sortingMethod" : "increase", 
+	"sortingMethod" : "decrease", 
 	"indexFlag" : 5, // default sort is by signal
 	"num_increase" : function(a, b){
 		return parseInt(a[sorter.indexFlag]) - parseInt(b[sorter.indexFlag]);
@@ -506,6 +517,8 @@ var sorter = {
 // end
 
 function update_site_info(){
+	child_macaddr = '';
+
 	$.ajax({
 		url: '/apscan.asp',
 		dataType: 'script',
@@ -522,6 +535,21 @@ function update_site_info(){
 			}			
 		},
 		success: function(response){
+			if(parent.parent_macaddr && child_macaddr){
+				if(child_macaddr != parent.parent_macaddr){
+					genErrorHint();
+					parent.hideLoading();
+					parent.document.getElementById("LoadingBar").style.visibility = "hidden";
+					return false;
+				}
+			}
+			else{
+				genErrorHint();
+				parent.hideLoading();
+				parent.$("LoadingBar").style.visibility = 'hidden';
+				return false;
+			}
+
 			parent.hideLoading();
 			parent.document.getElementById("LoadingBar").style.visibility = "hidden";
 			if(wlc_scan_state != 3 || (wlc_state == 0 && issubmit != 0)){
@@ -585,8 +613,8 @@ function showSiteTable(){
 
 				//ssid
 				htmlCode += '<td id="ssid">' + '<span title="' + aplist[i][6] + '">' + decodeURIComponent(aplist[i][1]) + '</span>';
-				if(aplist[i][8] != 0 && wlc_state == 2)
-					htmlCode += '<img src="/images/checked_parentctrl.png" width="18px" style="margin-left:10px;"/>';
+				/*if(decodeURIComponent(aplist[i][1]) == wlc_ssid_tmp && wlc_state == 0 && wlc_sbstate == 0)
+					htmlCode += '<img src="/images/checked_parentctrl.png" width="18px" style="margin-left:10px;"/>';*/
 				htmlCode +=	'</td>';
  				
 				// channel
@@ -650,21 +678,17 @@ function bind_event(){ //bind <tr> click and hover event
 		$(this).find("td").css("color", "#FFFFFF");
 		idx = $(this)[0].rowIndex;
 
-		var initRow = '<tr class="inputRow" style="display:none;background-color:#708789;"><td style="height:50px;" colspan="5"><table><tr>';
+		var initRow = '<tr class="inputRow" style="display:none;background-color:#708789;"><td style="height:50px;" colspan="5"><table width="100%"><tr>';
 		var connectedHint = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_connected#></span></td>';
 		var unEncrypt = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_connect_open_wlan#></span></td>';
-		var networkKey = '<td style="border:0px;"><span style="color:#FFFFFF;"><#Network_key#>:</span><input type="password" autocapitalization="off" id="thekey" name="thekey" class="input_25_table" style="padding-left:3px;margin-left:5px;width:200px;"></td>';
-		var wepkeyIndex = '<td style="border:0px;"><span style="margin-left:5px;color:#FFFFFF;"><#WLANConfig11b_WEPDefaultKey_itemname#></span><select name="sta_key_index" class="input_option" style="margin-left:5px;"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td>';
-		var wep_auth = '<td style="border:0px;"><span style="margin-left:5px;color:#FFFFFF;">Auth:</span><select name="wl_wep_auth" class="input_option" style="margin-left:5px;"><option value="open" selected>open</option><option value="shared">shared</option></select></td>';
-		var connectBtn = '<td style="border:0px;"><input style="margin-left:10px;" id="connect_btn" type="button" value="<#CTL_Add_enrollee#>" onclick="setAuthMethod('+ idx +')" class="button_gen"></td></tr>';
-		var showPassword = '<tr><td style="border:0px;color:#FFFFFF;"><div style="*margin-left:50px;margin-left:55px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.thekey);"><#QIS_show_pass#></div></td></tr>';
+		var networkKey = '<td style="border:0px;"><span style="color:#FFFFFF;"><#Network_key#>:</span><input type="password" autocapitalization="off" id="thekey" name="thekey" class="input_25_table" style="padding-left:3px;margin-left:5px;width:200px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.thekey);"><span style="color:#FFF"><#QIS_show_pass#></span></td>';
+		var connectBtn = '<td style="border:0px;text-align:right"><input style="margin-left:10px;" id="connect_btn" type="button" value="<#CTL_Add_enrollee#>" onclick="setAuthMethod('+ idx +')" class="button_gen"></td></tr>';
+		var wep_auth = '<tr><td style="border:0px;"><span style="margin-left:5px;color:#FFFFFF;"><#WLANConfig11b_AuthenticationMethod_itemname#></span><select name="wl_wep_auth" class="input_option" style="margin-left:5px;"><option value="open" selected>open</option><option value="shared">shared</option></select>';
+		var wepkeyIndex = '<span style="margin-left:5px;color:#FFFFFF;"><#WLANConfig11b_WEPDefaultKey_itemname#></span><select name="sta_key_index" class="input_option" style="margin-left:5px;"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td></tr>';
 		var endOfRow = '</table></td></tr>';
 
 		if(wlc_scan_state != 3)
 			initRow = "";
-		else if(aplist[idx][8] != 0 && wlc_state == 2){
-			initRow += connectedHint;
-		}
 		else if(issubmit > 0){
 			if(wlc_state == 3 && wlc_sbstate == 2){
 				connectBtn = '<input style="margin-left:10px;" id="connect_btn" type="button" value="<#CTL_Add_enrollee#>" onclick="submitForm()" class="button_gen"> <img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></td></tr>';
@@ -687,18 +711,18 @@ function bind_event(){ //bind <tr> click and hover event
 				initRow += '<span style="color:#FFCC00;"><#WLANConfig11b_x_BRApply_itemname2#>...</span><img id="loadingIcon" src="/images/InternetScan.gif"></td></tr>';
 		}
 		else{	
-			if(aplist[idx][4] == "NONE")
+			if(aplist[idx][4] == "NONE"){
 				initRow += unEncrypt;
+				initRow += connectBtn;
+			}
 			else{
 				initRow += networkKey;
+				initRow += connectBtn;
 				if(aplist[idx][4] == "WEP"){
 					initRow += wep_auth;
 					initRow += wepkeyIndex;
 				}	
 			}
-			initRow += connectBtn;
-			if(aplist[idx][4] != "NONE")
-				initRow += showPassword;
 		}
 		initRow += endOfRow;
 		$(this).after(initRow);
@@ -719,7 +743,31 @@ function bind_event(){ //bind <tr> click and hover event
 	}
 }
 
+function disableVar(_val){
+	document.form.wlc_band.disabled = _val;
+	document.form.wlc_ssid_orig.disabled = _val;
+	document.form.wlc_wep.disabled = _val;
+	document.form.wlc_key.disabled = _val;
+	document.form.wlc_wep_key.disabled = _val;
+	document.form.wlc_auth_mode.disabled = _val;
+	document.form.wlc_crypto.disabled = _val;
+	document.form.wlc_wpa_psk.disabled = _val;
+	document.form.wlc_nbw_cap.disabled = _val;
+	document.form.wlc_ssid.disabled = _val;
+	document.form.wlc_psta.disabled = _val;
+	document.form.lan_proto.disabled = _val;
+	document.form.sw_mode.disabled = _val;
+	document.form.wl0_ssid.disabled = _val;
+	document.form.wl1_ssid.disabled = _val;
+	document.form.lan_dnsenable_x.disabled = _val;
+	document.form.http_username.disabled = _val;
+	document.form.http_passwd.disabled = _val;
+	document.form.x_Setting.disabled = _val;
+	document.form.w_Setting.disabled = _val;
+}
+
 function rescan(){
+	disableVar(true);
 	document.getElementById("wl0_ssid").disabled = true;
 	document.getElementById("wl0_wpa_psk").disabled = true;
 	document.getElementById("wl0_auth_mode_x").disabled = true;
@@ -731,7 +779,6 @@ function rescan(){
 
 	issubmit = 0;
 	parent.isrescan = 120; // stop rescan
-	document.form.wlc_ssid.value = decodeURIComponent(document.form.wlc_ssid_orig.value); // Here is ascii code!!
 	document.getElementById("loadingIcon").style.display = "";
 	document.form.flag.value = "sitesurvey_mb";
 	document.form.target = "hidden_frame";
@@ -782,6 +829,93 @@ function getRetVal(){
 		}
 	});	
 }
+function ManualToSetAuth(){
+	if(document.form._wlc_ssid.value == ""){
+		alert("<#JS_fieldblank#>");
+		document.form._wlc_ssid.focus();
+		return false;
+	}
+	if(document.getElementById("thekey_tr").style.display != "none"){
+		if(document.form._wlc_auth_mode_x.value.search("psk") != -1){
+			if(!validate_psk(document.form.thekey_manual))
+				return false;
+		}
+		else{
+			if(!validate_wlkey(document.form.thekey_manual))		
+				return false;
+		}
+	}
+
+	isManual = true;
+	curState = "setAuth";
+
+	document.getElementById("PAPSurvey").style.display = "none";
+	document.getElementById("setPAP").style.display = "none";
+	document.getElementById("setAuth").style.display = "";
+	
+	document.getElementById("btnPre").style.display = "";
+	document.getElementById("btnManual").style.display = "none";
+	document.getElementById("btnRecan").style.display = "none";
+	document.getElementById("btnNext").style.display = "none";
+	document.getElementById("btnSubmit").style.display = "";
+
+	if(document.form._wlc_band.value == "5G"){
+		document.getElementById("wl0_ssid").disabled = false;
+		document.getElementById("wl0_ssid").style.display = "";
+		document.getElementById("wl0_wpa_psk").disabled = false;
+		document.getElementById("wl0_wpa_psk").style.display = "";
+		document.getElementById("wl0_auth_mode_x").disabled = false;
+		document.getElementById("wl0_crypto").disabled = false;
+
+		document.getElementById("wl1_ssid").disabled = true;
+		document.getElementById("wl1_ssid").style.display = "none";
+		document.getElementById("wl1_wpa_psk").disabled = true;
+		document.getElementById("wl1_wpa_psk").style.display = "none";
+		document.getElementById("wl1_auth_mode_x").disabled = true;
+		document.getElementById("wl1_crypto").disabled = true;
+
+		document.getElementById("wl0_ssid").focus();
+		document.form.wlc_band.value = 1;
+	}
+	else{
+		document.getElementById("wl0_ssid").disabled = true;
+		document.getElementById("wl0_ssid").style.display = "none";
+		document.getElementById("wl0_wpa_psk").disabled = true;
+		document.getElementById("wl0_wpa_psk").style.display = "none";
+		document.getElementById("wl0_auth_mode_x").disabled = true;
+		document.getElementById("wl0_crypto").disabled = true;
+
+		document.getElementById("wl1_ssid").disabled = false;
+		document.getElementById("wl1_ssid").style.display = "";
+		document.getElementById("wl1_wpa_psk").disabled = false;
+		document.getElementById("wl1_wpa_psk").style.display = "";
+		document.getElementById("wl1_auth_mode_x").disabled = false;
+		document.getElementById("wl1_crypto").disabled = false;
+
+		document.getElementById("wl1_ssid").focus();		
+		document.form.wlc_band.value = 0;		
+	}
+	
+	document.form.wlc_ssid.value = document.form._wlc_ssid.value;
+	parent.document.getElementById("stassid").innerHTML = document.form.wlc_ssid.value;
+	document.form.wlc_auth_mode.value = document.form._wlc_auth_mode_x.value;
+	document.form.wlc_crypto.value = document.form.__wlc_crypto_wpa.value;
+	document.form.wlc_wep.value = document.form.__wlc_crypto_wep.value;
+	document.form.wlc_key.value = document.form.sta_key_index_manual.value;
+	if(document.form._wlc_auth_mode_x.value == "shared"
+			|| (document.form._wlc_auth_mode_x.value == "open" && document.form.__wlc_crypto_wep.value != "0")){
+			document.form.wlc_wep_key.value = document.form.thekey_manual.value;
+	}else{
+			document.form.wlc_wpa_psk.value = document.form.thekey_manual.value;
+	}		
+}
+
+function tune_setPAP(){	//remove wl_unit if !5g_support
+	if(!parent.band5g_support){
+			document.getElementById("wl_unit_field").style.display = "none";
+			document.form._wlc_band.value = "2G";			
+	}
+}
 </script>
 </head>
 <body onkeydown="key_event(event);" onLoad="QKInternet_load_body();" onunload="">
@@ -805,6 +939,7 @@ function getRetVal(){
 <input type="hidden" name="wlc_wep_key" value="<% nvram_get("wlc_wep_key"); %>">
 <input type="hidden" name="wlc_auth_mode" value="<% nvram_get("wlc_auth_mode"); %>">
 <input type="hidden" name="wlc_crypto" value="<% nvram_get("wlc_crypto"); %>">
+<input type="hidden" name="_wlc_crypto" value="">
 <input type="hidden" name="wlc_wpa_psk" value="<% nvram_get("wlc_wpa_psk"); %>">
 <input type="hidden" name="wlc_nbw_cap" value="2">
 <input type="hidden" name="wl0_auth_mode_x" id="wl0_auth_mode_x" value="psk2" disabled>
@@ -827,9 +962,9 @@ function getRetVal(){
 					<td align="left">
 						<span class="description_down"><#APSurvey_main_title#></span>
 					</td>
-					<!--td align="right">
+					<td align="right">
 						<img onclick="parent.location.href = '/index.asp'" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
-					</td-->
+					</td>
 				</tr>
 			</table>
 		</div>
@@ -863,7 +998,7 @@ function getRetVal(){
 			</span>
 		</div>
 		<br><br>
-		<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="padding-left:100px;">
+		<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="padding-left:30px;">
 			<tr id="wl_unit_field">
 				<th width="25%"><#Interface#></th>
 				<td>
@@ -900,14 +1035,25 @@ function getRetVal(){
 			</td>
 	  	</tr>
 
-	  	<tr id="__wlc_crypto_tr">
+			<tr id="__wlc_crypto_wpa_tr">
+			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);"><#WLANConfig11b_WPAType_itemname#></a></th>
+			<td>
+		  		<select name="__wlc_crypto_wpa" id="__wlc_crypto_wpa" class="input_option">
+						<option value="tkip">TKIP</option>
+						<option value="aes">AES</option>
+						<!--option value="tkip+aes">TKIP+AES</option-->
+				  </select>					
+			</td>
+	  	</tr>	  	
+	  	
+	  	<tr id="__wlc_crypto_wep_tr">
 			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);"><#WLANConfig11b_WEPType_itemname#></a></th>
 			<td>
-		  		<select name="__wlc_crypto" id="__wlc_crypto" class="input_option" onChange="changeCrypto(this.value);">
-						<option value="None"><#wl_securitylevel_0#></option>
-						<option value="WEP">WEP</option>
+		  		<select name="__wlc_crypto_wep" id="__wlc_crypto_wep" class="input_option" onChange="changeCrypto(this.value);">
+						<option value="0"><#wl_securitylevel_0#></option>
+						<option value="1">WEP-64bits</option>
+						<option value="2">WEP-128bits</option>
 		  		</select>
-					<input type="hidden" name="_wlc_crypto" value="">
 			</td>
 	  	</tr>
 
@@ -924,17 +1070,17 @@ function getRetVal(){
 	  	</tr>
 	  
 	  	<tr id="thekey_tr">
-			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 7);"><#Network_key#></a></th>
+			<th><#Network_key#></th>
 			<td>
-				<input type="password" id="thekey_manual" name="thekey_manual" class="input_32_table">
+				<input type="password" id="thekey_manual" name="thekey_manual" class="input_32_table" style="height:25px;">
 			</td>
 	  	</tr>
-		<tr id ="show_password_tr">
-			<th></th>
-			<td>
-				<input type="checkbox" name="show_pass_1_manual" onclick="pass_checked(document.form.thekey);"><#QIS_show_pass#>
-			</td>
-		</tr> 
+			<tr id ="show_password_tr">
+				<th></th>
+				<td>
+					<input type="checkbox" name="show_pass_1_manual" onclick="check_manual_pass(this)"><#QIS_show_pass#>
+				</td>
+			</tr> 
 		</table>
 </div>
 
@@ -944,14 +1090,14 @@ function getRetVal(){
 		</div>
 		<br><br>
 		<table id="tblsetting_2" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="padding-left:100px;">
-			<tr id="wl_unit_field">
+			<tr>
 				<th width="25%"><#QIS_finish_wireless_item1#></th>
 				<td>
 					<input type="text" id="wl0_ssid" name="wl0_ssid" onkeypress="return is_string(this, event);" style="height:25px;display:none;" class="input_32_table" maxlength="32" value="" disabled>
 					<input type="text" id="wl1_ssid" name="wl1_ssid" onkeypress="return is_string(this, event);" style="height:25px;" class="input_32_table" maxlength="32" value="">
 				</td>
 	  	</tr>
-			<tr id="wl_unit_field">
+			<tr>
 				<th width="25%"><#Network_key#></th>
 				<td>
 					<input id="wl0_wpa_psk" name="wl0_wpa_psk" type="password" autocapitalization="off" value="" style="height:25px;display:none;" class="input_32_table" maxlength="65" disabled>
@@ -961,7 +1107,7 @@ function getRetVal(){
 		<tr >
 			<th></th>
 			<td>
-				<input type="checkbox" name="show_pass_2" onclick="check_wlc_band();"><#QIS_show_pass#>
+				<input type="checkbox" name="show_pass_2" onclick="check_wlc_band(this);"><#QIS_show_pass#>
 			</td>
 		</tr> 
 		</table>
@@ -971,7 +1117,9 @@ function getRetVal(){
 <div class="apply_gen" style="margin-top:10px">
 	<input id="btnPre" type="button" value="<#btn_pre#>" onclick="setSiteSurvey();" class="button_gen" >
 	<input id="btnSubmit" type="button" value="<#CTL_Add_enrollee#>" onclick="submitForm();" class="button_gen" >
-	<input id="btnRecan" type="button" id="nextButton" value="<#QIS_rescan#>" onclick="rescan();" class="button_gen" >
+	<input id="btnManual" type="button" value="<#Manual_Setting_btn#>" onclick="setParentAP();" class="button_gen">
+	<input id="btnRecan" type="button" value="<#QIS_rescan#>" onclick="rescan();" class="button_gen">
+	<input id="btnNext" type="button" value="<#btn_next#>" onclick="ManualToSetAuth();" class="button_gen">
 	<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 </div> 
 

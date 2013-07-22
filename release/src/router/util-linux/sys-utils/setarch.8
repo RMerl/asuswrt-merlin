@@ -1,0 +1,76 @@
+.TH SETARCH 8 "June 2007" "util-linux" "System Administration"
+.SH NAME
+setarch \- change reported architecture in new program environment and set personality flags
+.SH SYNOPSIS
+.B setarch
+.I arch
+.RI [ options ]
+.RI [ program
+.RI [ arguments ]]
+.br
+.I arch
+.RI [ options ]
+.RI [ program
+.RI [ arguments ]]
+.SH DESCRIPTION
+.B setarch
+This utility currently only affects the output of uname -m. For example, on an AMD64 system, running 'setarch i386 program' will cause 'program' to see
+.IR i686
+(or other relevant arch) instead of
+.IR x86_64
+as machine type. It also allows to set various personality options. The default
+.B program
+is /bin/sh.
+.SH OPTIONS
+.TP
+.I "\-v," "\-\-verbose"
+Be verbose.
+.TP
+.I "\-h," "\-\-help"
+Display help (it is also displayed when setarch takes no arguments).
+.TP
+.I "\-\-uname\-2.6"
+Causes the program to see a kernel version number beginning with 2.6.
+.TP
+.I "\-3," "\-\-3gb"
+Specifies that processes should use a maximum of 3GB of address space on systems where it is supported (ADDR_LIMIT_3GB).
+.TP
+.I "\-B," "\-\-32bit"
+Turns on ADDR_LIMIT_32BIT.
+.TP
+.I "\-F," "\-\-fdpic-funcptrs"
+Userspace function pointers point to descriptors (turns on FDPIC_FUNCPTRS).
+.TP
+.I "\-I," "\-\-short-inode"
+Turns on SHORT_INODE.
+.TP
+.I "\-L," "\-\-addr-compat-layout"
+Changes the way virtual memory is allocated (turns on the ADDR_COMPAT_LAYOUT).
+.TP
+.I "\-R," "\-\-addr-no-randomize"
+Disables randomization of the virtual address space (turns on ADDR_NO_RANDOMIZE).
+.TP
+.I "\-S," "\-\-whole-seconds"
+Turns on WHOLE_SECONDS.
+.TP
+.I "\-T," "\-\-sticky-timeouts"
+Turns on STICKY_TIMEOUTS.
+.TP
+.I "\-X" "\-\-read-implies-exec"
+Turns on READ_IMPLIES_EXEC.
+.TP
+.I "\-Z," "mmap-page-zero"
+Turns on MMAP_PAGE_ZERO.
+.SH EXAMPLES
+setarch ppc32 rpmbuild --target=ppc --rebuild foo.src.rpm
+.br
+setarch ppc32 -v -vL3 rpmbuild --target=ppc --rebuild bar.src.rpm
+.br
+setarch ppc32 --32bit rpmbuild --target=ppc --rebuild foo.src.rpm
+.SH AUTHOR
+Elliot Lee <sopwith@redhat.com>
+.br
+Jindrich Novy <jnovy@redhat.com>
+.SH AVAILABILITY
+The setarch command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

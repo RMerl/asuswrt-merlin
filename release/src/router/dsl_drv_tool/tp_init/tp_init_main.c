@@ -29,7 +29,7 @@ static BOOLEAN m_AdaptOpened;
 #endif
 
 #include "../dsl_define.h"
-
+#include <shared.h> //Ren
 #include <stdarg.h>
 #include "scanner.h"
 #include "tp_msg.h"
@@ -2214,6 +2214,8 @@ int getBitsPerCarrier()
 	system(UserCmd);
 	sprintf(UserCmd, "sed -i '$d' %s", TMP_FILE_NAME_GET_BPC ); //delete last row (empty row).
 	system(UserCmd);
+	sprintf(UserCmd, "wc -l %s > %s", TMP_FILE_NAME_GET_BPC, "/tmp/adsl/bpclinecount" );
+	system(UserCmd);
 	
 	enable_polling();
 	return 0;
@@ -2261,7 +2263,7 @@ int getSNR()
 	system(UserCmd);
 	sprintf(UserCmd, "sed -i 's/\\t/\\n/g' %s", TMP_FILE_NAME_GET_SNR ); //translate every row to a single column.
 	system(UserCmd);
-	sprintf(UserCmd, "wc -l %s > %s", TMP_FILE_NAME_GET_SNR, "/tmp/adsl/snrlinecount" ); //just a debug record.
+	sprintf(UserCmd, "wc -l %s > %s", TMP_FILE_NAME_GET_SNR, "/tmp/adsl/snrlinecount" );
 	system(UserCmd);
 
 	enable_polling();
@@ -2667,6 +2669,44 @@ void InitTc(void)
 	}
 }
 
+int check_DSL_spectrum_driver(char *ver)
+{
+	char buffer[32] = {0};
+	char verstr[32] = {0};
+	char *ptr = verstr;
+	int i;
+	unsigned long base = 316181; //version with spectrum support = 3.16.18.1
+	unsigned long result = 0;
+
+	snprintf(buffer, sizeof(buffer), "%s", ver);
+
+	i = 0;
+	while(buffer[i])
+	{
+		if(isdigit(buffer[i]))
+		{
+			*ptr = buffer[i];
+			ptr++;
+		}
+		i++;
+	}
+
+	sscanf(verstr, "%lu", &result);
+
+	if(result >= base)
+	{
+		//this version supports spectrum
+		add_rc_support("spectrum");
+		nvram_set("spectrum_supported", "1");
+		return 1;
+	}
+	else
+	{
+		//this version does not support spectrum
+		nvram_set("spectrum_supported", "0");
+		return 0;
+	}
+}
 
 static ADSL_SYS_INFO m_SysInfo;
 static ADSL_LAN_IP m_IpAddr;
@@ -2713,6 +2753,10 @@ void WriteAdslFwInfoToFile()
     fp = fopen("/tmp/adsl/tc_fw_ver_short.txt","wb");
 #endif
     if (fp == NULL) return;
+
+    nvram_set("spectrum_supported", "0");//Ren
+    nvram_set("adsldriververshort", m_SysInfo.AdslFwVerDisp);//Ren
+    check_DSL_spectrum_driver(m_SysInfo.AdslFwVerDisp);//Ren
 
     fputs(m_SysInfo.AdslFwVerDisp,fp);
     //fputs("\n",fp);

@@ -1,0 +1,281 @@
+.\" Copyright 2000 Andreas Dilger (adilger@turbolinux.com)
+.\"
+.\" This man page was created for blkid from e2fsprogs-1.25.
+.\"
+.\" This file may be copied under the terms of the GNU Public License.
+.\"
+.\" Based on uuidgen, Mon Sep 17 10:42:12 2000, Andreas Dilger
+.TH BLKID 8 "February 2011" "util-linux" "System Administration"
+.SH NAME
+blkid \- locate/print block device attributes
+.SH SYNOPSIS
+.B blkid
+.RB \-L
+.IR label " | "
+.RB \-U
+.IR uuid
+
+.B blkid
+.RB [ \-dghlv ]
+.RB [ \-c
+.IR file ]
+.RB [ \-w
+.IR file ]
+.RB [ \-o
+.IR format ]
+.in +6
+.RB [ \-s
+.IR tag ]
+.RB [ \-t
+.IR NAME=value ]
+[\fIdevice\fR ...]
+.in -6
+
+.B blkid
+.RB -p
+.RB [ \-O
+.IR offset ]
+.RB [ \-S
+.IR size ]
+.RB [ \-o
+.IR format ]
+.RB [ \-s
+.IR tag ]
+.in +9
+.RB [ \-n
+.IR list ]
+.RB [ \-u
+.IR list ]
+.IR device " ... "
+.in -9
+
+.B blkid
+.RB -i
+.RB [ \-o
+.IR format ]
+.RB [ \-s
+.IR tag ]
+.IR device " ... "
+
+.SH DESCRIPTION
+The
+.B blkid
+program is the command-line interface to working with the
+.BR libblkid (3)
+library.  It can determine the type of content (e.g. filesystem or swap)
+that a block device holds, and also attributes (tokens, NAME=value pairs)
+from the content metadata (e.g. LABEL or UUID fields).
+.PP
+.B blkid
+has two main forms of operation: either searching for a device with a
+specific NAME=value pair, or displaying NAME=value pairs for one or
+more specified devices.
+.SH OPTIONS
+The \fIsize\fR and \fIoffset\fR arguments may be followed by binary (2^N) 
+suffixes KiB, MiB, GiB, TiB, PiB and EiB (the "iB" is optional, e.g. "K" has the
+same meaning as "KiB") or decimal (10^N) suffixes KB, MB, GB, PB and EB.
+.TP
+.BI \-c " cachefile"
+Read from
+.I cachefile
+instead of reading from the default cache file
+.IR /etc/blkid.tab .
+If you want to start with a clean cache (i.e. don't report devices previously
+scanned but not necessarily available at this time), specify
+.IR /dev/null .
+.TP
+.B \-d
+Don't encode non-printing characters. The non-printing characters are encoded
+by ^ and M- notation by default. Note that \fB-o udev\fR output format uses
+a diffrent encoding and this encoding cannot be disabled.
+.TP
+.B \-g
+Perform a garbage collection pass on the blkid cache to remove
+devices which no longer exist.
+.TP
+.B \-h
+Display a usage message and exit.
+.TP
+.B \-i
+Display I/O Limits (aka I/O topology) information.  The 'export' output format is
+automatically enabled.  This option can be used together with the \fB-p\fR option.
+.TP
+.B \-l
+Look up only one device that matches the search parameter specified with the
+.TP
+.B \-k
+List all known filesystems and RAIDs and exit.
+.TP
+.B \-t
+option.  If there are multiple devices that match the specified search
+parameter, then the device with the highest priority is returned, and/or
+the first device found at a given priority.  Device types in order of
+decreasing priority are Device Mapper, EVMS, LVM, MD, and finally regular
+block devices.  If this option is not specified,
+.B blkid
+will print all of the devices that match the search parameter.
+.TP
+.BI \-L " label"
+Look up the device that uses this \fIlabel\fR (equal to: -l -o device -t
+LABEL=<label>).  This lookup method is able to reliably use /dev/disk/by-label
+udev symlinks (dependent on a setting in /etc/blkid.conf).  Avoid using the
+symlinks directly; it is not reliable to use the symlinks without verification.
+The \fB-L\fR option works on systems with and without udev.
+
+Unfortunately, the original
+.B blkid(8)
+from e2fsprogs use the \fB-L\fR option as a
+synonym for the \fB-o list\fR option.  For better portability, use \fB-l -o device
+-t LABEL=<label>\fR and \fB-o list\fR in your scripts rather than the \fB-L\fR option.
+.TP
+.BI \-n " list "
+Restrict the probing functions to the specified (comma-separated) \fIlist\fR of
+superblock types (names).
+The list items may be prefixed with "no" to specify the types which should be ignored.
+For example:
+.sp
+  blkid -p -n vfat,ext3,ext4 /dev/sda1
+.sp
+probes for vfat, ext3 and ext4 filesystems, and
+.sp
+  blkid -p -n nominix /dev/sda1
+.sp
+probes for all supported formats except minix filesystems.
+This option is only useful together with \fB-p\fR.
+.TP
+.BI \-o " format"
+Display
+.BR blkid 's
+output using the specified format.  The
+.I format
+parameter may be:
+.RS
+.TP
+.B full
+print all tags (the default)
+.TP
+.B value
+print the value of the tags
+.TP
+.B list
+print the devices in a user-friendly format; this output format is unsupported
+for low-level probing (\fB-p\fR or \fB-i\fR)
+.TP
+.B device
+print the device name only; this output format is always enabled for \fB-L\fR
+and \fB-U\fR options
+.TP
+.B udev
+print key="value" pairs for easy import into the udev environment; the keys are
+prefixed by ID_FS_ or ID_PART_ prefixes
+
+The udev output returns the ID_FS_AMBIVALENT tag if more superblocks are detected,
+and ID_PART_ENTRY_* tags are always returned for all partitions including empty
+partitions.
+.TP
+.B export
+print key=value pairs for easy import into the environment; this output format
+is automatically enabled when I/O Limits (\fB-i\fR option) are requested
+.RE
+.TP
+.BI \-O " offset"
+Probe at the given \fIoffset\fR (only useful with \fB-p\fR).  This option can be
+used together with the \fB-i\fR option.
+.TP
+.BI \-p
+Switch to low-level superblock probing mode (bypass cache).
+
+Note that low-level probing also returns information about partition table type
+(PTTYPE tag) and partitions (PART_ENTRY_* tags).
+.TP
+.BI \-s " tag"
+For each (specified) device, show only the tags that match
+.IR tag .
+It is possible to specify multiple
+.B \-s
+options.  If no tag is specified, then all tokens are shown for all
+(specified) devices.
+In order to just refresh the cache without showing any tokens, use
+.B "-s none"
+with no other options.
+.TP
+.BI \-S " size"
+Overwrite device/file size (only useful with \fB-p\fR).
+.TP
+.BI \-t " NAME" = "value"
+Search for block devices with tokens named
+.I NAME
+that have the value
+.IR value ,
+and display any devices which are found.
+Common values for
+.I NAME
+include
+.BR TYPE ,
+.BR LABEL ,
+and
+.BR UUID .
+If there are no devices specified on the command line, all block devices
+will be searched; otherwise only the specified devices are searched.
+.TP
+.BI \-u " list "
+Restrict the probing functions to the specified (comma-separated) \fIlist\fR of "usage" types.
+Supported usage types are: filesystem, raid, crypto and other.  The list items may be
+prefixed with "no" to specify the usage types which should be ignored.  For example:
+.sp
+  blkid -p -u filesystem,other /dev/sda1
+.sp
+probes for all filesystem and other (e.g. swap) formats, and
+.sp
+  blkid -p -u noraid /dev/sda1
+.sp
+probes for all supported formats except RAIDs.
+This option is only useful together with \fB-p\fR.
+.TP
+.BI \-U " uuid "
+Look up the device that uses this \fIuuid\fR.  For more details see the \fB-L\fR option.
+.TP
+.B \-v
+Display version number and exit.
+.TP
+.BI \-w " writecachefile"
+Write the device cache to
+.I writecachefile
+instead of writing it to the default cache file
+.IR /etc/blkid.tab .
+If you don't want to save the cache at all, specify
+.IR /dev/null.
+If not specified, it will be the same file as that given with the
+.B \-c
+option.
+.TP
+.I device
+Display tokens from only the specified device.  It is possible to
+give multiple
+.I device
+options on the command line.  If none is given, all devices which
+appear in
+.I /proc/partitions
+are shown, if they are recognized.
+.SH "RETURN CODE"
+If the specified token was found, or if any tags were shown from (specified)
+devices, 0 is returned.
+
+If the specified token was not found, or no (specified) devices could be
+identified, an exit code of 2 is returned.
+
+For usage or other errors, an exit code of 4 is returned.
+
+If the ambivalent low-level probing result was detected, an exit code of 8 is
+returned.
+.SH AUTHOR
+.B blkid
+was written by Andreas Dilger for libblkid and improved by Theodore Ts'o
+and Karel Zak.
+.SH AVAILABILITY
+The blkid command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+.SH "SEE ALSO"
+.BR libblkid (3)
+.BR findfs (8)
+.BR wipefs (8)

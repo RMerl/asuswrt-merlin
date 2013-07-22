@@ -1,0 +1,8 @@
+hnmatch() on 130.225.16.0/255.255.254.0     <-- 130.225.16.1   : match
+hnmatch() on 130.225.16.0/255.255.254.0     <-- 10.20.30.1     : mismatch
+hnmatch() on 130.225.0.0/255.254.0.0        <-- 130.225.16.1   : match
+hnmatch() on 130.225.0.0/255.254.0.0        <-- 130.225.17.1   : match
+hnmatch() on 130.225.0.0/255.254.0.0        <-- 150.160.170.180: mismatch
+hnmatch() on [3ffe:505:2:1::]/64            <-- 3ffe:505:2:1:: : match
+hnmatch() on [3ffe:505:2:1::]/64            <-- 3ffe:505:2:2:: : mismatch
+hnmatch() on [3ffe:505:2:1::]/64            <-- 3ffe:505:2:1:ffff:ffff::: match

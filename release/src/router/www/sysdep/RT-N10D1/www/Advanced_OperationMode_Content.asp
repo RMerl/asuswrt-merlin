@@ -48,7 +48,7 @@ function initial(){
 	show_menu();
 	setScenerion(sw_mode);
 	Senario_shift();
-	if(repeater_support < 0)
+	if(!repeater_support)
 			$("repeaterMode").style.display = "none";
 }
 
@@ -83,7 +83,7 @@ function saveMode(){
 		document.form.lan_gateway.value = document.form.lan_ipaddr_rt.value;
 		if('<% nvram_get("sw_mode"); %>' == '2'){
 			close_guest_unit(0,1);
-			if(band5g_support != -1)
+			if(band5g_support)
 				close_guest_unit(1,1);
 		}
 	}

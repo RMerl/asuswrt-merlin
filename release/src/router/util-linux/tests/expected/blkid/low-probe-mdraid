@@ -1,0 +1,5 @@
+ID_FS_TYPE=linux_raid_member
+ID_FS_USAGE=raid
+ID_FS_UUID=37c76b91-011a-05c5-d30c-1fd4c5c3dbbc
+ID_FS_UUID_ENC=37c76b91-011a-05c5-d30c-1fd4c5c3dbbc
+ID_FS_VERSION=0.90.0

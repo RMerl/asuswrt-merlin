@@ -1715,13 +1715,17 @@ stop_wan_if(int unit)
 #endif
 	{
 		if(is_usb_modem_ready() == 1){
-			system("wimaxc disconnect");
+			if(pids("wimaxd"))
+				system("wimaxc disconnect");
 
 			killall_tk("madwimax");
 			killall_tk("gctwimax");
 		}
-		system("killall wimaxd");
-		system("killall -SIGUSR1 wimaxd");
+
+		if(pids("wimaxd")){
+			system("killall wimaxd");
+			system("killall -SIGUSR1 wimaxd");
+		}
 	}
 #endif
 
@@ -2080,7 +2084,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	}
 #endif
 
-#if defined(RTN65U)
+#if defined(RTN65U) || defined(RTN56U)
 	switch (wan_unit) {
 	case WAN_UNIT_FIRST:
 		if (wan_unit == wan_primary_ifunit()) {
@@ -2473,8 +2477,8 @@ start_wan(void)
 #endif
 
 #if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
-	system("echo 0 > /proc/sys/net/bridge/bridge-nf-call-iptables");
-	system("echo 0 > /proc/sys/net/bridge/bridge-nf-call-ip6tables");
+        system("echo 0 > /proc/sys/net/bridge/bridge-nf-call-iptables");
+        system("echo 0 > /proc/sys/net/bridge/bridge-nf-call-ip6tables");
 #endif
 
 	/* Report stats */

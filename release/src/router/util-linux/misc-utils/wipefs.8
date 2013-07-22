@@ -1,0 +1,51 @@
+.\" -*- nroff -*-
+.\" Copyright 2009 by Karel Zak.  All Rights Reserved.
+.\" This file may be copied under the terms of the GNU Public License.
+.\"
+.TH WIPEFS 8 "October 2009" "util-linux" "System Administration"
+.SH NAME
+wipefs \- wipe a filesystem signature from a device
+.SH SYNOPSIS
+.B wipefs
+.RB [ \-ahnpV ]
+.RB [ \-o
+.IR offset ]
+.I device
+.SH DESCRIPTION
+.B wipefs
+can erase filesystem or raid signatures (magic strings) from the specified
+.I device
+to make the filesystem invisible for libblkid.
+.B wipefs
+does not erase the filesystem itself nor any other data from the device.
+When used without options \fB-a\fR or \fB-o\fR, it lists all visible filesystems
+and the offsets of their signatures.
+.SH OPTIONS
+.IP "\fB\-a, \-\-all\fP"
+Erase all available signatures.
+.IP "\fB\-h, \-\-help\fP"
+Print help and exit.
+.IP "\fB\-n, \-\-no\-act\fP"
+Causes everything to be done except for the write() call.
+.IP "\fB\-o, \-\-offset\fP \fIoffset\fP
+Specify the location (in bytes) of the signature which should be erased from the
+device.  The \fIoffset\fR number may include a "0x" prefix; then the number will be
+interpreted as a hex value.  It is possible to specify multiple \fB-o\fR options.
+
+The \fIoffset\fR argument may be followed by binary (2^N) suffixes KiB, MiB,
+GiB, TiB, PiB and EiB (the "iB" is optional, e.g. "K" has the same meaning as
+"KiB") or decimal (10^N) suffixes KB, MB, GB, PB and EB.
+.IP "\fB\-p, \-\-parsable\fP"
+Print out in parsable instead of printable format.  Encode all potentially unsafe
+characters of a string to the corresponding hex value prefixed by '\\x'.
+.IP "\fB\-V, \-\-version\fP"
+Output version information and exit.
+.SH AUTHOR
+Karel Zak <kzak@redhat.com>.
+.SH AVAILABILITY
+The wipefs command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+.SH SEE ALSO
+.BR blkid (8)
+.BR findfs (8)
+

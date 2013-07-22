@@ -1,0 +1,16 @@
+i pkginfo
+d none /usr 0775 root sys
+d none /usr/bin 0775 root bin
+f none /usr/bin/bon_csv2html 0755 root root
+f none /usr/bin/bon_csv2txt 0755 root root
+d none /usr/sbin 0775 root bin
+f none /usr/sbin/bonnie++ 0755 root root
+f none /usr/sbin/zcav 0755 root root
+d none /usr/share 0755 root sys
+d none /usr/share/man 0755 bin bin
+d none /usr/share/man/man1 0755 bin bin
+f none /usr/share/man/man1/bon_csv2html.1 0644 root root
+f none /usr/share/man/man1/bon_csv2txt.1 0644 root root
+d none /usr/share/man/man8 0755 bin bin
+f none /usr/share/man/man8/bonnie++.8 0644 root root
+f none /usr/share/man/man8/zcav.8 0644 root root

@@ -1,5 +1,10 @@
 #! /bin/sh
 
+INSTASLL_FLAG=`ls /usr/sbin | grep "lighttpd" |grep -v "lighttpd-arpping" |grep -v "lighttpd-monitor"`
+if [ "$INSTASLL_FLAG" == "lighttpd" ];then
+exit 1
+fi
+
 is_arm_machine=`uname -m |grep arm`
 
 APP_UCLIBC_VERSION=0.9.28
@@ -63,6 +68,12 @@ HTTP_ENABLE=`nvram get http_enable`
 WEBDAV_PROXY=`nvram get webdav_proxy`
 WEBDAV_AIDISK=`nvram get webdav_aidisk`
 
+SHARE_LINK_PARAM=`nvram get share_link_param`
+SHARE_LINK_RESULT=`nvram get share_link_result`
+
+SWPJVERNO=`nvram get swpjverno`
+EXTENDNO=`nvram get extendno`
+
 chmod -R 777 $APPS_INSTALL_PATH/bin/
 
 chmod -R 777 $APPS_INSTALL_PATH/etc
@@ -89,47 +100,6 @@ chmod -R 777 /tmp/lighttpd/uploads
 chmod -R 777 /tmp/lighttpd/www
 
 #sh /opt/etc/asus_script/dm2_check_general general-check&
-
-dir_control_file=/tmp/webDAV.conf
-#if [ ! -f "$dir_control_file" ]; then
-	echo "productid="$PRODUCTID>$dir_control_file
-	echo "st_webdav_mode="$ST_WEBDAV_MODE>>$dir_control_file
-	echo "webdav_http_port="$WEBDAV_HTTP_PORT>>$dir_control_file
-	echo "ddns_enable_x="$DDNS_ENANBLE_X>>$dir_control_file
-	echo "ddns_server_x="$DDNS_SERVER_X>>$dir_control_file
-	echo "ddns_hostname_x="$DDNS_HOST_NAME_X>>$dir_control_file
-	echo "webdav_smb_pc="$WEBDAV_SMB_PC>>$dir_control_file
-	echo "computer_name="$COMPUTER_NAME>>$dir_control_file
-	echo "acc_list="$ACC_LIST>>$dir_control_file
-	echo "acc_webdavproxy="$ACC_WEBDAVPROXY>>$dir_control_file
-	echo "http_username="$HTTP_USERNAME>>$dir_control_file
-	echo "http_passwd="$HTTP_PASSWD>>$dir_control_file
-	echo "share_link="$SHARELINK>>$dir_control_file
-	echo "et0macaddr="$ETHMACADDR>>$dir_control_file
-	
-	echo "firmver="$FIRMVER>>$dir_control_file
-	echo "buildno="$BUILDNO>>$dir_control_file
-	echo "st_samba_mode="$ST_SAMBA_MODE>>$dir_control_file
-	echo "webdav_https_port="$WEBDAV_HTTPS_PORT>>$dir_control_file
-	echo "misc_http_x="$MISC_HTTP_X>>$dir_control_file
-	echo "misc_httpport_x="$MISC_HTTP_PORT>>$dir_control_file
-	echo "enable_webdav_captcha="$ENABLE_WEBDAV_CAPTCHA>>$dir_control_file
-	echo "enable_webdav_lock="$ENABLE_WEBDAV_LOCK>>$dir_control_file
-	echo "webdav_acc_lock="$WEBDAV_ACC_LOCK>>$dir_control_file
-	echo "webdav_lock_interval="$WEBDAV_LOCK_INTERVAL>>$dir_control_file
-
-	echo "webdav_lock_times="$WEBDAV_LOCK_TIMES>>$dir_control_file
-	echo "webdav_last_login_info="$WEBDAV_LAST_LOGININFO>>$dir_control_file
-	echo "webs_state_info="$WEBS_STATE_INFO>>$dir_control_file
-	echo "webs_state_error="$WEBS_STATE_ERROR>>$dir_control_file
-	
-	echo "webdav_aidisk="$WEBDAVAIDISK>>$dir_control_file
-	echo "webdav_proxy="$WEBDAVPROXY>>$dir_control_file
-	
-	echo "http_enable="$HTTP_ENABLE>>$dir_control_file
-	echo "time_zone_x="$TIME_ZONE_X>>$dir_control_file
-	echo "misc_httpsport_x="$MISC_HTTPS_PORT>>$dir_control_file
-#fi
 
 
 case "$1" in

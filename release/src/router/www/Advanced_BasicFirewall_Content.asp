@@ -30,7 +30,7 @@ function initial(){
 	load_body();
 	change_firewall('<% nvram_get("fw_enable_x"); %>');
 
-	if(WebDav_support != -1){
+	if(WebDav_support){
 		hideAll(1);
 	}
 }

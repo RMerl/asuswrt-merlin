@@ -1,9 +1,17 @@
-1.0.26 - Released 04-April-2013
+1.1.0 - Released 04-April-2013
 --------------------------------
-- Fix compiling with ffmpeg 1.0.
-- Fix a couple potential scanner crash bugs.
-- Fix inotify parsing of new video symlinks.
+- Add support for other operating systems.
+- Switch to autoconf from our handcrafted genconfig.sh.
+- Add configuration option for UUID.
+- Add configuration option to specify the user to run as.
+- Add support for limiting a media dir to multiple media types.
+- Force a rescan if we detect a new or missing media_dir entry.
+- Fix crash caused by certain TiVo clients.
+- Fix crash bug on video files with some ffmpeg library versions.
+- Add support for TiVo MPEG-TS files.
+- Add some logging and forking tweaks to work better with systemd.
 - Validate or escape user input to prevent SQL injection.
+- Add forced sorting support for Panasonic devices.
 
 1.0.25 - Released 13-July-2012
 --------------------------------

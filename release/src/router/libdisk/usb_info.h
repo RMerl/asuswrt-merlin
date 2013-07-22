@@ -88,18 +88,18 @@ extern int get_interface_numendpoints(const char *interface_name);
 extern int get_interface_Int_endpoint(const char *interface_name);
 
 #ifdef RTCONFIG_USB_MODEM
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,36)
-extern int hadWWANModule();
+#if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
+extern int hadWWANModule(void);
 #endif
-extern int hadOptionModule();
-extern int hadSerialModule();
-extern int hadACMModule();
-extern int hadRNDISModule();
+extern int hadOptionModule(void);
+extern int hadSerialModule(void);
+extern int hadACMModule(void);
+extern int hadRNDISModule(void);
 extern int isSerialNode(const char *device_name);
 extern int isACMNode(const char *device_name);
 extern int isSerialInterface(const char *interface_name);
 extern int isACMInterface(const char *interface_name);
-extern int isRNDISInterface(const char *interface_name);
+extern int isRNDISInterface(const char *interface_name, const char *vid, const char *pid);
 extern int isCDCETHInterface(const char *interface_name);
 #ifdef RTCONFIG_USB_BECEEM
 extern int isGCTInterface(const char *interface_name);

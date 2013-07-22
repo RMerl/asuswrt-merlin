@@ -1,0 +1,2842 @@
+.\" Copyright (c) 1996-2004 Andries Brouwer
+.\"
+.\" This page is somewhat derived from a page that was
+.\" (c) 1980, 1989, 1991 The Regents of the University of California
+.\" and had been heavily modified by Rik Faith and myself.
+.\" (Probably no BSD text remains.)
+.\" Fragments of text were written by Werner Almesberger, Remy Card,
+.\" Stephen Tweedie and Eric Youngdale.
+.\"
+.\" This is free documentation; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License as
+.\" published by the Free Software Foundation; either version 2 of
+.\" the License, or (at your option) any later version.
+.\"
+.\" The GNU General Public License's references to "object code"
+.\" and "executables" are to be interpreted as the output of any
+.\" document formatting or typesetting system, including
+.\" intermediate and printed output.
+.\"
+.\" This manual is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public
+.\" License along with this manual; if not, write to the Free
+.\" Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139,
+.\" USA.
+.\"
+.\" 960705, aeb: version for mount-2.7g
+.\" 970114, aeb: xiafs and ext are dead; romfs is new
+.\" 970623, aeb: -F option
+.\" 970914, reg: -s option
+.\" 981111, K.Garloff: /etc/filesystems
+.\" 990111, aeb: documented /sbin/mount.smbfs
+.\" 990730, Yann Droneaud <lch@multimania.com>: updated page
+.\" 991214, Elrond <Elrond@Wunder-Nett.org>: added some docs on devpts
+.\" 010714, Michael K. Johnson <johnsonm@redhat.com> added -O
+.\" 010725, Nikita Danilov <NikitaDanilov@Yahoo.COM>: reiserfs options
+.\" 011124, Karl Eichwalder <ke@gnu.franken.de>: tmpfs options
+.\"
+.TH MOUNT 8 "December 2004" "util-linux" "System Administration"
+.SH NAME
+mount \- mount a filesystem
+.SH SYNOPSIS
+.B mount
+.RB [ \-lhV ]
+.LP
+.BI "mount \-a
+.RB [ \-fFnrsvw ]
+.RB [ \-t
+.IR vfstype ]
+.RB [ \-O
+.IR optlist ]
+.LP
+.B mount
+.RB [ \-fnrsvw ]
+.RB [ \-o
+.IR option [ \fB,\fPoption ]...]
+.IR device | dir
+.LP
+.B mount
+.RB [ \-fnrsvw ]
+.RB [ \-t
+.IB vfstype ]
+.RB [ \-o
+.IR options ]
+.I device dir
+.SH DESCRIPTION
+All files accessible in a Unix system are arranged in one big
+tree, the file hierarchy, rooted at
+.BR / .
+These files can be spread out over several devices. The
+.B mount
+command serves to attach the filesystem found on some device
+to the big file tree. Conversely, the
+.BR umount (8)
+command will detach it again.
+
+The standard form of the
+.B mount
+command, is
+.RS
+
+.br
+.BI "mount \-t" " type device dir"
+.br
+
+.RE
+This tells the kernel to attach the filesystem found on
+.I device
+(which is of type
+.IR type )
+at the directory
+.IR dir .
+The previous contents (if any) and owner and mode of
+.I dir
+become invisible, and as long as this filesystem remains mounted,
+the pathname
+.I dir
+refers to the root of the filesystem on
+.IR device .
+
+If only directory or device is given, for example:
+.RS
+
+.br
+.BI "mount /dir"
+.br
+
+.RE
+then mount looks for a mountpoint and if not found then for a device in the
+/etc/fstab file.
+
+.B The listing and help.
+.RS
+Three forms of invocation do not actually mount anything:
+.TP
+.B "mount \-h"
+prints a help message
+.TP
+.B "mount \-V"
+prints a version string
+.TP
+.BR "mount " [ -l "] [" "-t \fItype\fP" ]
+lists all mounted filesystems (of type
+.IR type ).
+The option \-l adds the labels in this listing.
+See below.
+.RE
+
+.B The device indication.
+.RS
+Most devices are indicated by a file name (of a block special device), like
+.IR /dev/sda1 ,
+but there are other possibilities. For example, in the case of an NFS mount,
+.I device
+may look like
+.IR knuth.cwi.nl:/dir .
+It is possible to indicate a block special device using its
+volume
+.B LABEL
+or
+.B UUID
+(see the \-L and \-U options below).
+
+The recommended setup is to use LABEL=<label> or UUID=<uuid> tags rather than
+.B /dev/disk/by-{label,uuid}
+udev symlinks in the /etc/fstab file. The tags are
+more readable, robust and portable. The
+.BR mount (8)
+command internally uses udev
+symlinks, so use the symlinks in /etc/fstab has no advantage over LABEL=/UUID=.
+For more details see
+.BR libblkid (3).
+
+Note that
+.BR mount (8)
+uses UUIDs as strings. The UUIDs from command line or
+.BR fstab (5)
+are not converted to internal binary representation. The string representation
+of the UUID should be based on lower case characters.
+
+The
+.I proc
+filesystem is not associated with a special device, and when
+mounting it, an arbitrary keyword, such as
+.I proc
+can be used instead of a device specification.
+(The customary choice
+.I none
+is less fortunate: the error message `none busy' from
+.B umount
+can be confusing.)
+.RE
+
+.B The /etc/fstab, /etc/mtab and /proc/mounts files.
+.RS
+The file
+.I /etc/fstab
+(see
+.BR fstab (5)),
+may contain lines describing what devices are usually
+mounted where, using which options.
+.LP
+The command
+.RS
+.sp
+.B mount \-a
+.RB [ \-t
+.IR type ]
+.RB [ \-O
+.IR optlist ]
+.sp
+.RE
+(usually given in a bootscript) causes all filesystems mentioned in
+.I fstab
+(of the proper type and/or having or not having the proper options)
+to be mounted as indicated, except for those whose line contains the
+.B noauto
+keyword. Adding the
+.B \-F
+option will make mount fork, so that the
+filesystems are mounted simultaneously.
+.LP
+When mounting a filesystem mentioned in
+.IR fstab
+or
+.IR mtab ,
+it suffices to give only the device, or only the mount point.
+
+
+The programs
+.B mount
+and
+.B umount
+maintain a list of currently mounted filesystems in the file
+.IR /etc/mtab .
+If no arguments are given to
+.BR mount ,
+this list is printed.
+
+The
+.B mount
+program does not read the
+.I /etc/fstab
+file if
+.I device
+(or LABEL/UUID) and
+.I dir
+are specified. For example:
+.RS
+.sp
+.B "mount /dev/foo /dir"
+.sp
+.RE
+If you want to override mount options from
+.I /etc/fstab
+you have to use:
+.RS
+.sp
+.B "mount device|dir -o <options>"
+.sp
+.RE
+and then the mount options from command line will be appended to
+the list of options from
+.IR /etc/fstab .
+The usual behaviour is that the last option wins if there is more duplicated
+options.
+
+When the
+.I proc
+filesystem is mounted (say at
+.IR /proc ),
+the files
+.I /etc/mtab
+and
+.I /proc/mounts
+have very similar contents. The former has somewhat
+more information, such as the mount options used,
+but is not necessarily up-to-date (cf. the
+.B \-n
+option below). It is possible to replace
+.I /etc/mtab
+by a symbolic link to
+.IR /proc/mounts ,
+and especially when you have very large numbers of mounts
+things will be much faster with that symlink,
+but some information is lost that way, and in particular
+using the "user" option will fail.
+.RE
+
+.B The non-superuser mounts.
+.RS
+Normally, only the superuser can mount filesystems.
+However, when
+.I fstab
+contains the
+.B user
+option on a line, anybody can mount the corresponding system.
+.LP
+Thus, given a line
+.RS
+.sp
+.B "/dev/cdrom  /cd  iso9660  ro,user,noauto,unhide"
+.sp
+.RE
+any user can mount the iso9660 filesystem found on his CDROM
+using the command
+.RS
+.sp
+.B "mount /dev/cdrom"
+.sp
+.RE
+or
+.RS
+.sp
+.B "mount /cd"
+.sp
+.RE
+For more details, see
+.BR fstab (5).
+Only the user that mounted a filesystem can unmount it again.
+If any user should be able to unmount, then use
+.B users
+instead of
+.B user
+in the
+.I fstab
+line.
+The
+.B owner
+option is similar to the
+.B user
+option, with the restriction that the user must be the owner
+of the special file. This may be useful e.g. for
+.I /dev/fd
+if a login script makes the console user owner of this device.
+The
+.B group
+option is similar, with the restriction that the user must be
+member of the group of the special file.
+.RE
+
+
+.B The bind mounts.
+.RS
+.\" In fact since 2.3.99. At first the syntax was mount -t bind.
+Since Linux 2.4.0 it is possible to remount part of the
+file hierarchy somewhere else. The call is
+.RS
+.br
+.B mount --bind
+.I olddir newdir
+.RE
+or shortoption
+.RS
+.br
+.B mount -B
+.I olddir newdir
+.RE
+or fstab entry is:
+.RS
+.br
+.I /olddir
+.I /newdir
+.B  none  bind
+.RE
+
+After this call the same contents is accessible in two places.
+One can also remount a single file (on a single file). It's also
+possible to use the bind mount to create a mountpoint from a regular
+directory, for example:
+
+.RS
+.br
+.B mount --bind
+.I foo foo
+.RE
+
+The bind mount call attaches only (part of) a single filesystem, not possible
+submounts. The entire file hierarchy including submounts is attached
+a second place using
+
+.RS
+.br
+.B mount --rbind
+.I olddir newdir
+.RE
+
+or shortoption
+
+.RS
+.br
+.B mount -R
+.I olddir newdir
+.RE
+.\" available since Linux 2.4.11.
+
+Note that the filesystem mount options will remain the same as those
+on the original mount point, and cannot be changed by passing the -o
+option along with --bind/--rbind. The mount options can be
+changed by a separate remount command, for example:
+
+.RS
+.br
+.B mount --bind
+.I olddir newdir
+.br
+.B mount -o remount,ro
+.I newdir
+.RE
+
+Note that behavior of the remount operation depends on the /etc/mtab file. The
+first command stores the 'bind' flag to the /etc/mtab file and the second
+command reads the flag from the file.  If you have a system without the
+/etc/mtab file or if you explicitly define source and target for the remount
+command (then mount(8) does not read /etc/mtab), then you have to use bind flag
+(or option) for the remount command too. For example:
+
+.RS
+.br
+.B mount --bind
+.I olddir newdir
+.br
+.B mount -o remount,ro,bind
+.I olddir newdir
+.RE
+.RE
+
+.B The move operation.
+.RS
+Since Linux 2.5.1 it is possible to atomically move a
+.B mounted tree
+to another place. The call is
+.RS
+.br
+.B mount --move
+.I olddir newdir
+.RE
+or shortoption
+.RS
+.br
+.B mount -M
+.I olddir newdir
+.RE
+This will cause the contents which previously appeared under olddir to be
+accessed under newdir.  The physical location of the files is not changed.
+Note that the
+.I olddir
+has to be a mountpoint.
+.RE
+
+.B The shared subtrees operations.
+.RS
+Since Linux 2.6.15 it is possible to mark a mount and its submounts as shared,
+private, slave or unbindable. A shared mount provides ability to create mirrors
+of that mount such that mounts and umounts within any of the mirrors propagate
+to the other mirror. A slave mount receives propagation from its master, but
+any not vice-versa.  A private mount carries no propagation abilities.  A
+unbindable mount is a private mount which cannot be cloned through a bind
+operation. Detailed semantics is documented in Documentation/filesystems/sharedsubtree.txt
+file in the kernel source tree.
+
+.RS
+.nf
+.BI "mount --make-shared " mountpoint
+.BI "mount --make-slave " mountpoint
+.BI "mount --make-private " mountpoint
+.BI "mount --make-unbindable " mountpoint
+.fi
+.RE
+
+The following commands allows one to recursively change the type of all the
+mounts under a given mountpoint.
+
+.RS
+.nf
+.BI "mount --make-rshared " mountpoint
+.BI "mount --make-rslave " mountpoint
+.BI "mount --make-rprivate " mountpoint
+.BI "mount --make-runbindable " mountpoint
+.fi
+.RE
+.RE
+
+.SH COMMAND LINE OPTIONS
+The full set of mount options used by an invocation of
+.B mount
+is determined by first extracting the
+mount options for the filesystem from the
+.I fstab
+table, then applying any options specified by the
+.B \-o
+argument, and finally applying a
+.BR \-r " or " \-w
+option, when present.
+
+Command line options available for the
+.B mount
+command:
+.IP "\fB\-V, \-\-version\fP"
+Output version.
+.IP "\fB\-h, \-\-help\fP"
+Print a help message.
+.IP "\fB\-v, \-\-verbose\fP"
+Verbose mode.
+.IP "\fB\-a, \-\-all\fP"
+Mount all filesystems (of the given types) mentioned in
+.IR fstab .
+.IP "\fB\-F, \-\-fork\fP"
+(Used in conjunction with
+.BR \-a .)
+Fork off a new incarnation of mount for each device.
+This will do the mounts on different devices or different NFS servers
+in parallel.
+This has the advantage that it is faster; also NFS timeouts go in
+parallel. A disadvantage is that the mounts are done in undefined order.
+Thus, you cannot use this option if you want to mount both
+.I /usr
+and
+.IR /usr/spool .
+.IP "\fB\-f, \-\-fake\fP"
+Causes everything to be done except for the actual system call; if it's not
+obvious, this ``fakes'' mounting the filesystem.  This option is useful in
+conjunction with the
+.B \-v
+flag to determine what the
+.B mount
+command is trying to do. It can also be used to add entries for devices
+that were mounted earlier with the -n option. The -f option checks for
+existing record in /etc/mtab and fails when the record already
+exists (with regular non-fake mount, this check is done by kernel).
+.IP "\fB\-i, \-\-internal\-only\fP"
+Don't call the /sbin/mount.<filesystem> helper even if it exists.
+.IP "\fB\-l\fP"
+Add the labels in the mount output. Mount must have
+permission to read the disk device (e.g. be suid root) for this to work.
+One can set such a label for ext2, ext3 or ext4 using the
+.BR e2label (8)
+utility, or for XFS using
+.BR xfs_admin (8),
+or for reiserfs using
+.BR reiserfstune (8).
+.IP "\fB\-n, \-\-no\-mtab\fP"
+Mount without writing in
+.IR /etc/mtab .
+This is necessary for example when
+.I /etc
+is on a read-only filesystem.
+.IP "\fB\-\-no\-canonicalize\fP"
+Don't canonicalize paths. The mount command canonicalizes all paths 
+(from command line or fstab) and stores canonicalized paths to the 
+.IR /etc/mtab
+file. This option can be used together with the
+.B \-f
+flag for already canonicalized absolut paths.
+.IP "\fB\-p, \-\-pass\-fd \fInum\fP"
+In case of a loop mount with encryption, read the passphrase from
+file descriptor
+.I num
+instead of from the terminal.
+.IP "\fB\-s\fP"
+Tolerate sloppy mount options rather than failing. This will ignore
+mount options not supported by a filesystem type. Not all filesystems
+support this option. This option exists for support of the Linux
+autofs\-based automounter.
+.IP "\fB\-r, \-\-read\-only\fP"
+Mount the filesystem read-only. A synonym is
+.BR "\-o ro" .
+
+Note that, depending on the filesystem type, state and kernel behavior, the
+system may still write to the device. For example, Ext3 or ext4 will replay its
+journal if the filesystem is dirty. To prevent this kind of write access, you
+may want to mount ext3 or ext4 filesystem with "ro,noload" mount options or
+set the block device to read-only mode, see command
+.BR blockdev (8).
+.IP "\fB\-w, \-\-rw\fP"
+Mount the filesystem read/write. This is the default. A synonym is
+.BR "\-o rw" .
+.IP "\fB\-L \fIlabel\fP"
+Mount the partition that has the specified
+.IR label .
+.IP "\fB\-U \fIuuid\fP"
+Mount the partition that has the specified
+.IR uuid .
+These two options require the file
+.I /proc/partitions
+(present since Linux 2.1.116) to exist.
+.IP "\fB\-t, \-\-types \fIvfstype\fP"
+The argument following the
+.B \-t
+is used to indicate the filesystem type.  The filesystem types which are
+currently supported include:
+.IR adfs ,
+.IR affs ,
+.IR autofs ,
+.IR cifs ,
+.IR coda ,
+.IR coherent ,
+.IR cramfs ,
+.IR debugfs ,
+.IR devpts ,
+.IR efs ,
+.IR ext ,
+.IR ext2 ,
+.IR ext3 ,
+.IR ext4 ,
+.IR hfs ,
+.IR hfsplus ,
+.IR hpfs ,
+.IR iso9660 ,
+.IR jfs ,
+.IR minix ,
+.IR msdos ,
+.IR ncpfs ,
+.IR nfs ,
+.IR nfs4 ,
+.IR ntfs ,
+.IR proc ,
+.IR qnx4 ,
+.IR ramfs ,
+.IR reiserfs ,
+.IR romfs ,
+.IR squashfs ,
+.IR smbfs ,
+.IR sysv ,
+.IR tmpfs ,
+.IR ubifs ,
+.IR udf ,
+.IR ufs ,
+.IR umsdos ,
+.IR usbfs ,
+.IR vfat ,
+.IR xenix ,
+.IR xfs ,
+.IR xiafs .
+Note that coherent, sysv and xenix are equivalent and that
+.I xenix
+and
+.I coherent
+will be removed at some point in the future \(em use
+.I sysv
+instead. Since kernel version 2.1.21 the types
+.I ext
+and
+.I xiafs
+do not exist anymore. Earlier,
+.I usbfs
+was known as
+.IR usbdevfs .
+Note, the real list of all supported filesystems depends on your
+kernel.
+
+The programs
+.B mount
+and
+.B umount
+support filesystem subtypes.  The subtype is defined by '.subtype' suffix.  For
+example  'fuse.sshfs'. It's recommended to use subtype notation rather than add
+any prefix to the mount source (for example 'sshfs#example.com' is
+depreacated).
+
+For most types all the
+.B mount
+program has to do is issue a simple
+.IR mount (2)
+system call, and no detailed knowledge of the filesystem type is required.
+For a few types however (like nfs, nfs4, cifs, smbfs, ncpfs) ad hoc code is
+necessary. The nfs, nfs4, cifs, smbfs, and ncpfs filesystems
+have a separate mount program. In order to make it possible to
+treat all types in a uniform way, mount will execute the program
+.BI /sbin/mount. TYPE
+(if that exists) when called with type
+.IR TYPE .
+Since various versions of the
+.B smbmount
+program have different calling conventions,
+.B /sbin/mount.smbfs
+may have to be a shell script that sets up the desired call.
+
+If no
+.B \-t
+option is given, or if the
+.B auto
+type is specified, mount will try to guess the desired type.
+Mount uses the blkid library for guessing the filesystem
+type; if that does not turn up anything that looks familiar,
+mount will try to read the file
+.IR /etc/filesystems ,
+or, if that does not exist,
+.IR /proc/filesystems .
+All of the filesystem types listed there will be tried,
+except for those that are labeled "nodev" (e.g.,
+.IR devpts ,
+.I proc
+and
+.IR nfs ).
+If
+.I /etc/filesystems
+ends in a line with a single * only, mount will read
+.I /proc/filesystems
+afterwards.
+
+The
+.B auto
+type may be useful for user-mounted floppies.
+Creating a file
+.I /etc/filesystems
+can be useful to change the probe order (e.g., to try vfat before msdos
+or ext3 before ext2) or if you use a kernel module autoloader.
+
+More than one type may be specified in a comma separated
+list.  The list of filesystem types can be prefixed with
+.B no
+to specify the filesystem types on which no action should be taken.
+(This can be meaningful with the
+.B \-a
+option.) For example, the command:
+.RS
+.RS
+.sp
+.B "mount \-a \-t nomsdos,ext"
+.sp
+.RE
+mounts all filesystems except those of type
+.I msdos
+and
+.IR ext .
+.RE
+.IP "\fB\-O, \-\-test-opts \fIopts\fP"
+Used in conjunction with
+.BR \-a ,
+to limit the set of filesystems to which the
+.B \-a
+is applied.  Like
+.B \-t
+in this regard except that it is useless except in the context of
+.BR \-a .
+For example, the command:
+.RS
+.RS
+.sp
+.B "mount \-a \-O no_netdev"
+.sp
+.RE
+mounts all filesystems except those which have the option
+.I _netdev
+specified in the options field in the
+.I /etc/fstab
+file.
+
+It is different from
+.B \-t
+in that each option is matched exactly; a leading
+.B no
+at the beginning of one option does not negate the rest.
+
+The
+.B \-t
+and
+.B \-O
+options are cumulative in effect; that is, the command
+.RS
+.sp
+.B "mount \-a \-t ext2 \-O _netdev"
+.sp
+.RE
+mounts all ext2 filesystems with the _netdev option, not all filesystems
+that are either ext2 or have the _netdev option specified.
+.RE
+.IP "\fB\-o, \-\-options \fIopts\fP"
+Options are specified with a
+.B \-o
+flag followed by a comma separated string of options. For example:
+.RS
+.RS
+.sp
+.B "mount LABEL=mydisk \-o noatime,nouser"
+.sp
+.RE
+
+For more details, see
+.B FILESYSTEM INDEPENDENT MOUNT OPTIONS
+and
+.B FILESYSTEM SPECIFIC MOUNT OPTIONS
+sections.
+.RE
+.IP "\fB\-B, \-\-bind\fP"
+Remount a subtree somewhere else (so that its contents are available
+in both places). See above.
+.IP "\fB\-R, \-\-rbind\fP"
+Remount a subtree and all possible submounts somewhere else (so that its
+contents are available in both places). See above.
+.IP "\fB\-M, \-\-move\fP"
+Move a subtree to some other place. See above.
+
+.SH FILESYSTEM INDEPENDENT MOUNT OPTIONS
+Some of these options are only useful when they appear in the
+.I /etc/fstab
+file.
+
+Some of these options could be enabled or disabled by default
+in the system kernel. To check the current setting see the options
+in /proc/mounts.
+
+The following options apply to any filesystem that is being
+mounted (but not every filesystem actually honors them - e.g., the
+.B sync
+option today has effect only for ext2, ext3, fat, vfat and ufs):
+
+.TP
+.B async
+All I/O to the filesystem should be done asynchronously. (See also the
+.B sync
+option.)
+.TP
+.B atime
+Do not use noatime feature, then the inode access time is controlled by kernel
+defaults. See also the description for
+.B strictatime
+and
+.B reatime
+mount options.
+.TP
+.B noatime
+Do not update inode access times on this filesystem (e.g., for faster
+access on the news spool to speed up news servers).
+.TP
+.B auto
+Can be mounted with the
+.B \-a
+option.
+.TP
+.B noauto
+Can only be mounted explicitly (i.e., the
+.B \-a
+option will not cause the filesystem to be mounted).
+.TP
+\fBcontext=\fP\fIcontext\fP, \fBfscontext=\fP\fIcontext\fP, \fBdefcontext=\fP\fIcontext\fP and \fBrootcontext=\fP\fIcontext\fP
+The
+.BR context=
+option is useful when mounting filesystems that do not support
+extended attributes, such as a floppy or hard disk formatted with VFAT, or
+systems that are not normally running under SELinux, such as an ext3 formatted
+disk from a non-SELinux workstation. You can also use
+.BR context=
+on filesystems you do not trust, such as a floppy. It also helps in compatibility with
+xattr-supporting filesystems on earlier 2.4.<x> kernel versions. Even where
+xattrs are supported, you can save time not having to label every file by
+assigning the entire disk one security context.
+
+A commonly used option for removable media is
+.BR context=system_u:object_r:removable_t .
+
+Two other options are
+.BR fscontext=
+and
+.BR defcontext= ,
+both of which are mutually exclusive of the context option. This means you
+can use fscontext and defcontext with each other, but neither can be used with
+context.
+
+The
+.BR fscontext=
+option works for all filesystems, regardless of their xattr
+support. The fscontext option sets the overarching filesystem label to a
+specific security context. This filesystem label is separate from the
+individual labels on the files. It represents the entire filesystem for
+certain kinds of permission checks, such as during mount or file creation.
+Individual file labels are still obtained from the xattrs on the files
+themselves. The context option actually sets the aggregate context that
+fscontext provides, in addition to supplying the same label for individual
+files.
+
+You can set the default security context for unlabeled files using
+.BR defcontext=
+option. This overrides the value set for unlabeled files in the policy and requires a
+filesystem that supports xattr labeling.
+
+The
+.BR rootcontext=
+option allows you to explicitly label the root inode of a FS being mounted
+before that FS or inode because visable to userspace. This was found to be
+useful for things like stateless linux.
+
+Note that kernel rejects any remount request that includes the context
+option even if unchanged from the current context.
+
+For more details, see
+.BR selinux (8)
+
+.TP
+.B defaults
+Use default options:
+.BR rw ", " suid ", " dev ", " exec ", " auto ", " nouser ", and " async.
+.TP
+.B dev
+Interpret character or block special devices on the filesystem.
+.TP
+.B nodev
+Do not interpret character or block special devices on the file
+system.
+.TP
+.B diratime
+Update directory inode access times on this filesystem. This is the default.
+.TP
+.B nodiratime
+Do not update directory inode access times on this filesystem.
+.TP
+.B dirsync
+All directory updates within the filesystem should be done synchronously.
+This affects the following system calls: creat, link, unlink, symlink,
+mkdir, rmdir, mknod and rename.
+.TP
+.B exec
+Permit execution of binaries.
+.TP
+.B noexec
+Do not allow direct execution of any binaries on the mounted filesystem.
+(Until recently it was possible to run binaries anyway using a command like
+/lib/ld*.so /mnt/binary. This trick fails since Linux 2.4.25 / 2.6.0.)
+.TP
+.B group
+Allow an ordinary (i.e., non-root) user to mount the filesystem if one
+of his groups matches the group of the device.
+This option implies the options
+.BR nosuid " and " nodev
+(unless overridden by subsequent options, as in the option line
+.BR group,dev,suid ).
+.TP
+.B iversion
+Every time the inode is modified, the i_version field will be incremented.
+.TP
+.B noiversion
+Do not increment the i_version inode field.
+.TP
+.B mand
+Allow mandatory locks on this filesystem. See
+.BR fcntl (2).
+.TP
+.B nomand
+Do not allow mandatory locks on this filesystem.
+.TP
+.B _netdev
+The filesystem resides on a device that requires network access
+(used to prevent the system from attempting to mount these filesystems
+until the network has been enabled on the system).
+.TP
+.B nofail
+Do not report errors for this device if it does not exist.
+.TP
+.B relatime
+Update inode access times relative to modify or change time.  Access
+time is only updated if the previous access time was earlier than the
+current modify or change time. (Similar to noatime, but doesn't break
+mutt or other applications that need to know if a file has been read
+since the last time it was modified.)
+
+Since Linux 2.6.30, the kernel defaults to the behavior provided by this
+option (unless
+.B noatime
+was  specified), and the
+.B strictatime
+option is required to obtain traditional semantics. In addition, since Linux
+2.6.30, the file's last access time is always  updated  if  it  is more than 1
+day old.
+.TP
+.B norelatime
+Do not use
+.B relatime
+feature. See also the
+.B strictatime
+mount option.
+.TP
+.B strictatime
+Allows to explicitly requesting full atime updates. This makes it
+possible for kernel to defaults to
+.B relatime
+or
+.B noatime
+but still allow userspace to override it. For more details about the default
+system mount options see /proc/mounts.
+.TP
+.B nostrictatime
+Use the kernel's default behaviour for inode access time updates.
+.TP
+.B suid
+Allow set-user-identifier or set-group-identifier bits to take
+effect.
+.TP
+.B nosuid
+Do not allow set-user-identifier or set-group-identifier bits to take
+effect. (This seems safe, but is in fact rather unsafe if you have
+suidperl(1) installed.)
+.TP
+.B silent
+Turn on the silent flag.
+.TP
+.B loud
+Turn off the silent flag.
+.TP
+.B owner
+Allow an ordinary (i.e., non-root) user to mount the filesystem if he
+is the owner of the device.
+This option implies the options
+.BR nosuid " and " nodev
+(unless overridden by subsequent options, as in the option line
+.BR owner,dev,suid ).
+.TP
+.B remount
+Attempt to remount an already-mounted filesystem.  This is commonly
+used to change the mount flags for a filesystem, especially to make a
+readonly filesystem writable. It does not change device or mount point.
+
+The remount functionality follows the standard way how the mount command works
+with options from fstab. It means the mount command doesn't read fstab (or
+mtab) only when a
+.IR device
+and
+.IR dir
+are fully specified.
+
+.BR "mount -o remount,rw /dev/foo /dir"
+
+After this call all old mount options are replaced and arbitrary stuff from
+fstab is ignored, except the loop= option which is internally generated and
+maintained by the mount command.
+
+.BR "mount -o remount,rw  /dir"
+
+After this call mount reads fstab (or mtab) and merges these options with
+options from command line (
+.B -o
+).
+.TP
+.B ro
+Mount the filesystem read-only.
+.TP
+.B rw
+Mount the filesystem read-write.
+.TP
+.B sync
+All I/O to the filesystem should be done synchronously. In case of media with limited number of write cycles
+(e.g. some flash drives) "sync" may cause life-cycle shortening.
+.TP
+.B user
+Allow an ordinary user to mount the filesystem.
+The name of the mounting user is written to mtab so that he can unmount
+the filesystem again.
+This option implies the options
+.BR noexec ", " nosuid ", and " nodev
+(unless overridden by subsequent options, as in the option line
+.BR user,exec,dev,suid ).
+.TP
+.B nouser
+Forbid an ordinary (i.e., non-root) user to mount the filesystem.
+This is the default.
+.TP
+.B users
+Allow every user to mount and unmount the filesystem.
+This option implies the options
+.BR noexec ", " nosuid ", and " nodev
+(unless overridden by subsequent options, as in the option line
+.BR users,exec,dev,suid ).
+
+.SH "FILESYSTEM SPECIFIC MOUNT OPTIONS"
+The following options apply only to certain filesystems.
+We sort them by filesystem. They all follow the
+.B \-o
+flag.
+
+What options are supported depends a bit on the running kernel.
+More info may be found in the kernel source subdirectory
+.IR Documentation/filesystems .
+
+.SH "Mount options for adfs"
+.TP
+\fBuid=\fP\fIvalue\fP and \fBgid=\fP\fIvalue\fP
+Set the owner and group of the files in the filesystem (default: uid=gid=0).
+.TP
+\fBownmask=\fP\fIvalue\fP and \fBothmask=\fP\fIvalue\fP
+Set the permission mask for ADFS 'owner' permissions and 'other' permissions,
+respectively (default: 0700 and 0077, respectively).
+See also
+.IR /usr/src/linux/Documentation/filesystems/adfs.txt .
+.SH "Mount options for affs"
+.TP
+\fBuid=\fP\fIvalue\fP and \fBgid=\fP\fIvalue\fP
+Set the owner and group of the root of the filesystem (default: uid=gid=0,
+but with option
+.B uid
+or
+.B gid
+without specified value, the uid and gid of the current process are taken).
+.TP
+\fBsetuid=\fP\fIvalue\fP and \fBsetgid=\fP\fIvalue\fP
+Set the owner and group of all files.
+.TP
+.BI mode= value
+Set the mode of all files to
+.IR value " & 0777"
+disregarding the original permissions.
+Add search permission to directories that have read permission.
+The value is given in octal.
+.TP
+.B protect
+Do not allow any changes to the protection bits on the filesystem.
+.TP
+.B usemp
+Set uid and gid of the root of the filesystem to the uid and gid
+of the mount point upon the first sync or umount, and then
+clear this option. Strange...
+.TP
+.B verbose
+Print an informational message for each successful mount.
+.TP
+.BI prefix= string
+Prefix used before volume name, when following a link.
+.TP
+.BI volume= string
+Prefix (of length at most 30) used before '/' when following a symbolic link.
+.TP
+.BI reserved= value
+(Default: 2.) Number of unused blocks at the start of the device.
+.TP
+.BI root= value
+Give explicitly the location of the root block.
+.TP
+.BI bs= value
+Give blocksize. Allowed values are 512, 1024, 2048, 4096.
+.TP
+.BR grpquota | noquota | quota | usrquota
+These options are accepted but ignored.
+(However, quota utilities may react to such strings in
+.IR /etc/fstab .)
+
+.SH "Mount options for cifs"
+See the options section of the
+.BR mount.cifs (8)
+man page (cifs-utils package must be installed).
+
+.SH "Mount options for coherent"
+None.
+
+.SH "Mount options for debugfs"
+The debugfs filesystem is a pseudo filesystem, traditionally mounted on
+.IR /sys/kernel/debug .
+.\" or just /debug
+.\" present since 2.6.11
+There are no mount options.
+
+.SH "Mount options for devpts"
+The devpts filesystem is a pseudo filesystem, traditionally mounted on
+.IR /dev/pts .
+In order to acquire a pseudo terminal, a process opens
+.IR /dev/ptmx ;
+the number of the pseudo terminal is then made available to the process
+and the pseudo terminal slave can be accessed as
+.IR /dev/pts/ <number>.
+.TP
+\fBuid=\fP\fIvalue\fP and \fBgid=\fP\fIvalue\fP
+This sets the owner or the group of newly created PTYs to
+the specified values. When nothing is specified, they will
+be set to the UID and GID of the creating process.
+For example, if there is a tty group with GID 5, then
+.B gid=5
+will cause newly created PTYs to belong to the tty group.
+.TP
+.BI mode= value
+Set the mode of newly created PTYs to the specified value.
+The default is 0600.
+A value of
+.B mode=620
+and
+.B gid=5
+makes "mesg y" the default on newly created PTYs.
+.TP
+\fBnewinstance
+Create a private instance of devpts filesystem, such that
+indices of ptys allocated in this new instance are
+independent of indices created in other instances of devpts.
+
+All mounts of devpts without this
+.B newinstance
+option share the same set of pty indices (i.e legacy mode).
+Each mount of devpts with the
+.B newinstance
+option has a private set of pty indices.
+
+This option is mainly used to support containers in the
+linux kernel. It is implemented in linux kernel versions
+starting with 2.6.29.  Further, this mount option is valid
+only if CONFIG_DEVPTS_MULTIPLE_INSTANCES is enabled in the
+kernel configuration.
+
+To use this option effectively,
+.IR /dev/ptmx
+must be a symbolic link to
+.IR pts/ptmx.
+See
+.IR Documentation/filesystems/devpts.txt
+in the linux kernel source tree for details.
+.TP
+.BI ptmxmode= value
+
+Set the mode for the new
+.IR ptmx
+device node in the devpts filesystem.
+
+With the support for multiple instances of devpts (see
+.B newinstance
+option above), each instance has a private
+.IR ptmx
+node in the root of the devpts filesystem (typically
+.IR /dev/pts/ptmx).
+
+For compatibility with older versions of the kernel, the
+default mode of the new
+.IR ptmx
+node is 0000.
+.BI ptmxmode= value
+specifies a more useful mode for the
+.IR ptmx
+node and is highly recommended when the
+.B newinstance
+option is specified.
+
+This option is only implemented in linux kernel versions
+starting with 2.6.29. Further this option is valid only if
+CONFIG_DEVPTS_MULTIPLE_INSTANCES is enabled in the kernel
+configuration.
+
+.SH "Mount options for ext"
+None.
+Note that the `ext' filesystem is obsolete. Don't use it.
+Since Linux version 2.1.21 extfs is no longer part of the kernel source.
+
+.SH "Mount options for ext2"
+The `ext2' filesystem is the standard Linux filesystem.
+.\" Due to a kernel bug, it may be mounted with random mount options
+.\" (fixed in Linux 2.0.4).
+Since Linux 2.5.46, for most mount options the default
+is determined by the filesystem superblock. Set them with
+.BR tune2fs (8).
+.TP
+.BR acl | noacl
+Support POSIX Access Control Lists (or not).
+.\" requires CONFIG_EXT2_FS_POSIX_ACL
+.TP
+.BR bsddf | minixdf
+Set the behaviour for the
+.I statfs
+system call. The
+.B minixdf
+behaviour is to return in the
+.I f_blocks
+field the total number of blocks of the filesystem, while the
+.B bsddf
+behaviour (which is the default) is to subtract the overhead blocks
+used by the ext2 filesystem and not available for file storage. Thus
+.nf
+
+% mount /k -o minixdf; df /k; umount /k
+Filesystem   1024-blocks  Used Available Capacity Mounted on
+/dev/sda6      2630655   86954  2412169      3%   /k
+% mount /k -o bsddf; df /k; umount /k
+Filesystem   1024-blocks  Used Available Capacity Mounted on
+/dev/sda6      2543714      13  2412169      0%   /k
+
+.fi
+(Note that this example shows that one can add command line options
+to the options given in
+.IR /etc/fstab .)
+
+.TP
+.BR check= { none | nocheck }
+No checking is done at mount time. This is the default. This is fast.
+It is wise to invoke
+.BR e2fsck (8)
+every now and then, e.g. at boot time.
+.TP
+.B debug
+Print debugging info upon each (re)mount.
+.TP
+.BR errors= { continue | remount-ro | panic }
+Define the behaviour when an error is encountered.
+(Either ignore errors and just mark the filesystem erroneous and continue,
+or remount the filesystem read-only, or panic and halt the system.)
+The default is set in the filesystem superblock, and can be
+changed using
+.BR tune2fs (8).
+.TP
+.BR grpid | bsdgroups " and " nogrpid | sysvgroups
+These options define what group id a newly created file gets.
+When
+.BR grpid
+is set, it takes the group id of the directory in which it is created;
+otherwise (the default) it takes the fsgid of the current process, unless
+the directory has the setgid bit set, in which case it takes the gid
+from the parent directory, and also gets the setgid bit set
+if it is a directory itself.
+.TP
+.BR grpquota | noquota | quota | usrquota
+These options are accepted but ignored.
+.TP
+.BR nouid32
+Disables 32-bit UIDs and GIDs.  This is for interoperability with older
+kernels which only store and expect 16-bit values.
+.TP
+.BR oldalloc " or " orlov
+Use old allocator or Orlov allocator for new inodes. Orlov is default.
+.TP
+\fBresgid=\fP\fIn\fP and \fBresuid=\fP\fIn\fP
+The ext2 filesystem reserves a certain percentage of the available
+space (by default 5%, see
+.BR mke2fs (8)
+and
+.BR tune2fs (8)).
+These options determine who can use the reserved blocks.
+(Roughly: whoever has the specified uid, or belongs to the specified group.)
+.TP
+.BI sb= n
+Instead of block 1, use block
+.I n
+as superblock. This could be useful when the filesystem has been damaged.
+(Earlier, copies of the superblock would be made every 8192 blocks: in
+block 1, 8193, 16385, ... (and one got thousands of copies on
+a big filesystem). Since version 1.08,
+.B mke2fs
+has a \-s (sparse superblock) option to reduce the number of backup
+superblocks, and since version 1.15 this is the default. Note
+that this may mean that ext2 filesystems created by a recent
+.B mke2fs
+cannot be mounted r/w under Linux 2.0.*.)
+The block number here uses 1k units. Thus, if you want to use logical
+block 32768 on a filesystem with 4k blocks, use "sb=131072".
+.TP
+.BR user_xattr | nouser_xattr
+Support "user." extended attributes (or not).
+.\" requires CONFIG_EXT2_FS_XATTR
+
+
+.SH "Mount options for ext3"
+The ext3 filesystem is a version of the ext2 filesystem which has been
+enhanced with journalling.  It supports the same options as ext2 as
+well as the following additions:
+.\" .TP
+.\" .BR abort
+.\" Mount the filesystem in abort mode, as if a fatal error has occurred.
+.TP
+.BR journal=update
+Update the ext3 filesystem's journal to the current format.
+.TP
+.BR journal=inum
+When a journal already exists, this option is ignored. Otherwise, it
+specifies the number of the inode which will represent the ext3 filesystem's
+journal file;  ext3 will create a new journal, overwriting the old contents
+of the file whose inode number is
+.IR inum .
+.TP
+.BR journal_dev=devnum	
+When the external journal device's major/minor numbers
+have changed, this option allows the user to specify
+the new journal location.  The journal device is
+identified through its new major/minor numbers encoded
+in devnum.
+.TP
+.BR norecovery / noload
+Don't load the journal on mounting.  Note that
+if the filesystem was not unmounted cleanly,
+skipping the journal replay will lead to the
+filesystem containing inconsistencies that can
+lead to any number of problems.
+.TP
+.BR data= { journal | ordered | writeback }
+Specifies the journalling mode for file data.  Metadata is always journaled.
+To use modes other than
+.B ordered
+on the root filesystem, pass the mode to the kernel as boot parameter, e.g.
+.IR rootflags=data=journal .
+.RS
+.TP
+.B journal
+All data is committed into the journal prior to being written into the
+main filesystem.
+.TP
+.B ordered
+This is the default mode.  All data is forced directly out to the main file
+system prior to its metadata being committed to the journal.
+.TP
+.B writeback
+Data ordering is not preserved - data may be written into the main
+filesystem after its metadata has been committed to the journal.
+This is rumoured to be the highest-throughput option.  It guarantees
+internal filesystem integrity, however it can allow old data to appear
+in files after a crash and journal recovery.
+.RE
+.TP
+.BR barrier=0 " / "  barrier=1 "
+This enables/disables barriers.  barrier=0 disables it, barrier=1 enables it.
+Write barriers enforce proper on-disk ordering of journal commits, making
+volatile disk write caches safe to use, at some performance penalty.  The ext3
+filesystem does not enable write barriers by default.  Be sure to enable
+barriers unless your disks are battery-backed one way or another.  Otherwise
+you risk filesystem corruption in case of power failure.
+.TP
+.BI commit= nrsec
+Sync all data and metadata every
+.I nrsec
+seconds. The default value is 5 seconds. Zero means default.
+.TP
+.BR user_xattr
+Enable Extended User Attributes. See the
+.BR attr (5)
+manual page.
+.TP
+.BR acl
+Enable POSIX Access Control Lists. See the
+.BR acl (5)
+manual page.
+
+.SH "Mount options for ext4"
+The ext4 filesystem is an an advanced level of the ext3 filesystem which
+incorporates scalability and reliability enhancements for supporting large
+filesystem.
+
+The options
+.B journal_dev, noload, data, commit, orlov, oldalloc, [no]user_xattr
+.B [no]acl, bsddf, minixdf, debug, errors, data_err, grpid, bsdgroups, nogrpid
+.B sysvgroups, resgid, resuid, sb, quota, noquota, grpquota and usrquota
+are backwardly compatible with ext3 or ext2.
+.TP
+.BR journal_checksum
+Enable checksumming of the journal transactions.  This will allow the recovery
+code in e2fsck and the kernel to detect corruption in the kernel.  It is a
+compatible change and will be ignored by older kernels.
+.TP
+.BR journal_async_commit
+Commit block can be written to disk without waiting for descriptor blocks. If
+enabled older kernels cannot mount the device.
+This will enable 'journal_checksum' internally.
+.TP
+.BR journal=update
+Update the ext4 filesystem's journal to the current format.
+.TP
+.BR barrier=0 " / "  barrier=1 " / " barrier " / " nobarrier
+This enables/disables the use of write barriers in the jbd code.  barrier=0
+disables, barrier=1 enables.  This also requires an IO stack which can support
+barriers, and if jbd gets an error on a barrier write, it will disable again
+with a warning.  Write barriers enforce proper on-disk ordering of journal
+commits, making volatile disk write caches safe to use, at some performance
+penalty.  If your disks are battery-backed in one way or another, disabling
+barriers may safely improve performance.  The mount options "barrier" and
+"nobarrier" can also be used to enable or disable barriers, for consistency
+with other ext4 mount options.
+
+The ext4 filesystem enables write barriers by default.
+.TP
+.BI inode_readahead= n
+This tuning parameter controls the maximum number of inode table blocks that
+ext4's inode table readahead algorithm will pre-read into the buffer cache.
+The default value is 32 blocks.
+.TP
+.BI stripe= n
+Number of filesystem blocks that mballoc will try to use for allocation size
+and alignment. For RAID5/6 systems this should be the number of data disks *
+RAID chunk size in filesystem blocks.
+.TP
+.BR delalloc
+Deferring block allocation until write-out time.
+.TP
+.BR nodelalloc
+Disable delayed allocation. Blocks are allocated when data is copied from user
+to page cache.
+.TP
+.BI max_batch_time= usec
+Maximum amount of time ext4 should wait for additional filesystem operations to
+be batch together with a synchronous write operation. Since a synchronous
+write operation is going to force a commit and then a wait for the I/O
+complete, it doesn't cost much, and can be a huge throughput win, we wait for a
+small amount of time to see if any other transactions can piggyback on the
+synchronous write. The algorithm used is designed to automatically tune for
+the speed of the disk, by measuring the amount of time (on average) that it
+takes to finish committing a transaction. Call this time the "commit time".
+If the time that the transaction has been running is less than the commit time,
+ext4 will try sleeping for the commit time to see if other operations will join
+the transaction. The commit time is capped by the max_batch_time, which
+defaults to 15000us (15ms). This optimization can be turned off entirely by
+setting max_batch_time to 0.
+.TP
+.BI min_batch_time= usec
+This parameter sets the commit time (as described above) to be at least
+min_batch_time. It defaults to zero microseconds. Increasing this parameter
+may improve the throughput of multi-threaded, synchronous workloads on very
+fast disks, at the cost of increasing latency.
+.TP
+.BI journal_ioprio= prio
+The I/O priority (from 0 to 7, where 0 is the highest priorty) which should be
+used for I/O operations submitted by kjournald2 during a commit operation.
+This defaults to 3, which is a slightly higher priority than the default I/O
+priority.
+.TP
+.BR abort
+Simulate the effects of calling ext4_abort() for
+debugging purposes.  This is normally used while
+remounting a filesystem which is already mounted.
+.TP
+.BR auto_da_alloc | noauto_da_alloc
+Many broken applications don't use fsync() when
+replacing existing files via patterns such as
+
+fd = open("foo.new")/write(fd,..)/close(fd)/ rename("foo.new", "foo")
+
+or worse yet
+
+fd = open("foo", O_TRUNC)/write(fd,..)/close(fd).
+
+If auto_da_alloc is enabled, ext4 will detect the replace-via-rename and
+replace-via-truncate patterns and force that any delayed allocation blocks are
+allocated such that at the next journal commit, in the default data=ordered
+mode, the data blocks of the new file are forced to disk before the rename()
+operation is committed.  This provides roughly the same level of guarantees as
+ext3, and avoids the "zero-length" problem that can happen when a system
+crashes before the delayed allocation blocks are forced to disk.
+.TP
+.BR discard / nodiscard
+Controls whether ext4 should issue discard/TRIM commands to the underlying
+block device when blocks are freed.  This is useful for SSD devices and
+sparse/thinly-provisioned LUNs, but it is off by default until sufficient
+testing has been done.
+.TP
+.BR nouid32
+Disables 32-bit UIDs and GIDs.  This is for
+interoperability  with  older kernels which only
+store and expect 16-bit values.
+.TP
+.BR resize
+Allows to resize filesystem to the end of the last
+existing block group, further resize has to be done
+with resize2fs either online, or offline. It can be
+used only with conjunction with remount.
+.TP
+.BR block_validity / noblock_validity
+This options allows to enables/disables the in-kernel facility for tracking
+filesystem metadata blocks within internal data structures. This allows multi-
+block allocator and other routines to quickly locate extents which might
+overlap with filesystem metadata blocks. This option is intended for debugging
+purposes and since it negatively affects the performance, it is off by default.
+.TP
+.BR dioread_lock / dioread_nolock
+Controls whether or not ext4 should use the DIO read locking. If the
+dioread_nolock option is specified ext4 will allocate uninitialized extent
+before buffer write and convert the extent to initialized after IO completes.
+This approach allows ext4 code to avoid using inode mutex, which improves
+scalability on high speed storages. However this does not work with data
+journaling and dioread_nolock option will be ignored with kernel warning.
+Note that dioread_nolock code path is only used for extent-based files.
+Because of the restrictions this options comprises it is off by default
+(e.g. dioread_lock).
+.TP
+.BR i_version
+Enable 64-bit inode version support. This option is off by default.
+
+.SH "Mount options for fat"
+(Note:
+.I fat
+is not a separate filesystem, but a common part of the
+.IR msdos ,
+.I umsdos
+and
+.I vfat
+filesystems.)
+.TP
+.BR blocksize= { 512 | 1024 | 2048 }
+Set blocksize (default 512). This option is obsolete.
+.TP
+\fBuid=\fP\fIvalue\fP and \fBgid=\fP\fIvalue\fP
+Set the owner and group of all files.
+(Default: the uid and gid of the current process.)
+.TP
+.BI umask= value
+Set the umask (the bitmask of the permissions that are
+.B not
+present). The default is the umask of the current process.
+The value is given in octal.
+.TP
+.BI dmask= value
+Set the umask applied to directories only.
+The default is the umask of the current process.
+The value is given in octal.
+.\" Present since Linux 2.5.43.
+.TP
+.BI fmask= value
+Set the umask applied to regular files only.
+The default is the umask of the current process.
+The value is given in octal.
+.\" Present since Linux 2.5.43.
+.TP
+.BI allow_utime= value
+This option controls the permission check of mtime/atime.
+.RS
+.TP
+.B 20
+If current process is in group of file's group ID, you can change timestamp.
+.TP
+.B 2
+Other users can change timestamp.
+.PP
+The default is set from `dmask' option. (If the directory is writable,
+.B utime(2)
+is also allowed. I.e. ~dmask & 022)
+
+Normally
+.B utime(2)
+checks current process is owner of the file, or it has
+CAP_FOWNER capability.  But FAT filesystem doesn't have uid/gid on disk, so
+normal check is too unflexible. With this option you can relax it.
+.RE
+.TP
+.BI check= value
+Three different levels of pickyness can be chosen:
+.RS
+.TP
+.BR r [ elaxed ]
+Upper and lower case are accepted and equivalent, long name parts are
+truncated (e.g.
+.I verylongname.foobar
+becomes
+.IR verylong.foo ),
+leading and embedded spaces are accepted in each name part (name and extension).
+.TP
+.BR n [ ormal ]
+Like "relaxed", but many special characters (*, ?, <, spaces, etc.) are
+rejected.  This is the default.
+.TP
+.BR s [ trict ]
+Like "normal", but names may not contain long parts and special characters
+that are sometimes used on Linux, but are not accepted by MS-DOS are
+rejected. (+, =, spaces, etc.)
+.RE
+.TP
+.BI codepage= value
+Sets the codepage for converting to shortname characters on FAT
+and VFAT filesystems. By default, codepage 437 is used.
+.TP
+.BR conv= {b [ inary ]| t [ ext ]| a [ uto ]}
+The
+.I fat
+filesystem can perform CRLF<-->NL (MS-DOS text format to UNIX text
+format) conversion in the kernel. The following conversion modes are
+available:
+.RS
+.TP
+.B binary
+no translation is performed.  This is the default.
+.TP
+.B text
+CRLF<-->NL translation is performed on all files.
+.TP
+.B auto
+CRLF<-->NL translation is performed on all files that don't have a
+"well-known binary" extension. The list of known extensions can be found at
+the beginning of
+.I fs/fat/misc.c
+(as of 2.0, the list is: exe, com, bin, app, sys, drv, ovl, ovr, obj,
+lib, dll, pif, arc, zip, lha, lzh, zoo, tar, z, arj, tz, taz, tzp, tpz,
+gz, tgz, deb, gif, bmp, tif, gl, jpg, pcx, tfm, vf, gf, pk, pxl, dvi).
+.PP
+Programs that do computed lseeks won't like in-kernel text conversion.
+Several people have had their data ruined by this translation. Beware!
+
+For filesystems mounted in binary mode, a conversion tool
+(fromdos/todos) is available. This option is obsolete.
+.RE
+.TP
+.BI cvf_format= module
+Forces the driver to use the CVF (Compressed Volume File) module
+.RI cvf_ module
+instead of auto-detection. If the kernel supports kmod, the
+cvf_format=xxx option also controls on-demand CVF module loading.
+This option is obsolete.
+.TP
+.BI cvf_option= option
+Option passed to the CVF module. This option is obsolete.
+.TP
+.B debug
+Turn on the
+.I debug
+flag.  A version string and a list of filesystem parameters will be
+printed (these data are also printed if the parameters appear to be
+inconsistent).
+.TP
+.BR fat= {12 | 16 | 32 }
+Specify a 12, 16 or 32 bit fat.  This overrides
+the automatic FAT type detection routine.  Use with caution!
+.TP
+.BI iocharset= value
+Character set to use for converting between 8 bit characters
+and 16 bit Unicode characters. The default is iso8859-1.
+Long filenames are stored on disk in Unicode format.
+.TP
+.BI tz=UTC
+This option disables the conversion of timestamps
+between local time (as used by Windows on FAT) and UTC
+(which Linux uses internally).  This is particularly
+useful when mounting devices (like digital cameras)
+that are set to UTC in order to avoid the pitfalls of
+local time.
+.TP
+.B quiet
+Turn on the
+.I quiet
+flag.  Attempts to chown or chmod files do not return errors,
+although they fail. Use with caution!
+.TP
+.B showexec
+If set, the execute permission bits of the file will be allowed only if
+the extension part of the name is .EXE, .COM, or .BAT. Not set by default.
+.TP
+.B sys_immutable
+If set, ATTR_SYS attribute on FAT is handled as IMMUTABLE flag on Linux.
+Not set by default.
+.TP
+.B flush
+If set, the filesystem will try to flush to disk more early than normal.
+Not set by default.
+.TP
+.B usefree
+Use the "free clusters" value stored on FSINFO. It'll
+be used to determine number of free clusters without
+scanning disk. But it's not used by default, because
+recent Windows don't update it correctly in some
+case. If you are sure the "free clusters" on FSINFO is
+correct, by this option you can avoid scanning disk.
+.TP
+.BR dots ", " nodots ", " dotsOK= [ yes | no ]
+Various misguided attempts to force Unix or DOS conventions
+onto a FAT filesystem.
+
+.SH "Mount options for hfs"
+.TP
+.BI creator= cccc ", type=" cccc
+Set the creator/type values as shown by the MacOS finder
+used for creating new files.  Default values: '????'.
+.TP
+.BI uid= n ", gid=" n
+Set the owner and group of all files.
+(Default: the uid and gid of the current process.)
+.TP
+.BI dir_umask= n ", file_umask=" n ", umask=" n
+Set the umask used for all directories, all regular files, or all
+files and directories.  Defaults to the umask of the current process.
+.TP
+.BI session= n
+Select the CDROM session to mount.
+Defaults to leaving that decision to the CDROM driver.
+This option will fail with anything but a CDROM as underlying device.
+.TP
+.BI part= n
+Select partition number n from the device.
+Only makes sense for CDROMs.
+Defaults to not parsing the partition table at all.
+.TP
+.B quiet
+Don't complain about invalid mount options.
+
+.SH "Mount options for hpfs"
+.TP
+\fBuid=\fP\fIvalue\fP and \fBgid=\fP\fIvalue\fP
+Set the owner and group of all files. (Default: the uid and gid
+of the current process.)
+.TP
+.BI umask= value
+Set the umask (the bitmask of the permissions that are
+.B not
+present). The default is the umask of the current process.
+The value is given in octal.
+.TP
+.BR case= { lower | asis }
+Convert all files names to lower case, or leave them.
+(Default:
+.BR case=lower .)
+.TP
+.BR conv= { binary | text | auto }
+For
+.BR conv=text ,
+delete some random CRs (in particular, all followed by NL)
+when reading a file.
+For
+.BR conv=auto ,
+choose more or less at random between
+.BR conv=binary " and " conv=text .
+For
+.BR conv=binary ,
+just read what is in the file. This is the default.
+.TP
+.B nocheck
+Do not abort mounting when certain consistency checks fail.
+
+.SH "Mount options for iso9660"
+ISO 9660 is a standard describing a filesystem structure to be used
+on CD-ROMs. (This filesystem type is also seen on some DVDs. See also the
+.I udf
+filesystem.)
+
+Normal
+.I iso9660
+filenames appear in a 8.3 format (i.e., DOS-like restrictions on filename
+length), and in addition all characters are in upper case.  Also there is
+no field for file ownership, protection, number of links, provision for
+block/character devices, etc.
+
+Rock Ridge is an extension to iso9660 that provides all of these UNIX-like
+features.  Basically there are extensions to each directory record that
+supply all of the additional information, and when Rock Ridge is in use,
+the filesystem is indistinguishable from a normal UNIX filesystem (except
+that it is read-only, of course).
+.TP
+.B norock
+Disable the use of Rock Ridge extensions, even if available. Cf.\&
+.BR map .
+.TP
+.B nojoliet
+Disable the use of Microsoft Joliet extensions, even if available. Cf.\&
+.BR map .
+.TP
+.BR check= { r [ elaxed ]| s [ trict ]}
+With
+.BR check=relaxed ,
+a filename is first converted to lower case before doing the lookup.
+This is probably only meaningful together with
+.B norock
+and
+.BR map=normal .
+(Default:
+.BR check=strict .)
+.TP
+\fBuid=\fP\fIvalue\fP and \fBgid=\fP\fIvalue\fP
+Give all files in the filesystem the indicated user or group id,
+possibly overriding the information found in the Rock Ridge extensions.
+(Default:
+.BR uid=0,gid=0 .)
+.TP
+.BR map= { n [ ormal ]| o [ ff ]| a [ corn ]}
+For non-Rock Ridge volumes, normal name translation maps upper
+to lower case ASCII, drops a trailing `;1', and converts `;' to `.'.
+With
+.B map=off
+no name translation is done. See
+.BR norock .
+(Default:
+.BR map=normal .)
+.B map=acorn
+is like
+.BR map=normal
+but also apply Acorn extensions if present.
+.TP
+.BI mode= value
+For non-Rock Ridge volumes, give all files the indicated mode.
+(Default: read permission for everybody.)
+Since Linux 2.1.37 one no longer needs to specify the mode in
+decimal. (Octal is indicated by a leading 0.)
+.TP
+.B unhide
+Also show hidden and associated files.
+(If the ordinary files and the associated or hidden files have
+the same filenames, this may make the ordinary files inaccessible.)
+.TP
+.BR block= { 512 | 1024 | 2048 }
+Set the block size to the indicated value.
+(Default:
+.BR block=1024 .)
+.TP
+.BR conv= { a [ uto ]| b [ inary ]| m [ text ]| t [ ext ]}
+(Default:
+.BR conv=binary .)
+Since Linux 1.3.54 this option has no effect anymore.
+(And non-binary settings used to be very dangerous,
+possibly leading to silent data corruption.)
+.TP
+.B cruft
+If the high byte of the file length contains other garbage,
+set this mount option to ignore the high order bits of the file length.
+This implies that a file cannot be larger than 16MB.
+.TP
+.BI session= x
+Select number of session on multisession CD. (Since 2.3.4.)
+.TP
+.BI sbsector= xxx
+Session begins from sector xxx. (Since 2.3.4.)
+.LP
+The following options are the same as for vfat and specifying them only makes
+sense when using discs encoded using Microsoft's Joliet extensions.
+.TP
+.BI iocharset= value
+Character set to use for converting 16 bit Unicode characters on CD
+to 8 bit characters. The default is iso8859-1.
+.TP
+.B utf8
+Convert 16 bit Unicode characters on CD to UTF-8.
+
+.SH "Mount options for jfs"
+.TP
+.BI iocharset= name
+Character set to use for converting from Unicode to ASCII.  The default is
+to do no conversion.  Use
+.B iocharset=utf8
+for UTF8 translations.  This requires CONFIG_NLS_UTF8 to be set in
+the kernel
+.I ".config"
+file.
+.TP
+.BI resize= value
+Resize the volume to
+.I value
+blocks. JFS only supports growing a volume, not shrinking it. This option
+is only valid during a remount, when the volume is mounted read-write. The
+.B resize
+keyword with no value will grow the volume to the full size of the partition.
+.TP
+.B nointegrity
+Do not write to the journal.  The primary use of this option is to allow
+for higher performance when restoring a volume from backup media. The
+integrity of the volume is not guaranteed if the system abnormally abends.
+.TP
+.B integrity
+Default.  Commit metadata changes to the journal.  Use this option to remount
+a volume where the
+.B nointegrity
+option was previously specified in order to restore normal behavior.
+.TP
+.BR errors= { continue | remount-ro | panic }
+Define the behaviour when an error is encountered.
+(Either ignore errors and just mark the filesystem erroneous and continue,
+or remount the filesystem read-only, or panic and halt the system.)
+.TP
+.BR noquota | quota | usrquota | grpquota
+These options are accepted but ignored.
+
+.SH "Mount options for minix"
+None.
+
+.SH "Mount options for msdos"
+See mount options for fat.
+If the
+.I msdos
+filesystem detects an inconsistency, it reports an error and sets the file
+system read-only. The filesystem can be made writable again by remounting
+it.
+
+.SH "Mount options for ncpfs"
+Just like
+.IR nfs ", the " ncpfs
+implementation expects a binary argument (a
+.IR "struct ncp_mount_data" )
+to the mount system call. This argument is constructed by
+.BR ncpmount (8)
+and the current version of
+.B mount
+(2.12) does not know anything about ncpfs.
+
+.SH "Mount options for nfs and nfs4"
+See the options section of the
+.BR nfs (5)
+man page (nfs-utils package must be installed).
+
+The
+.IR nfs " and " nfs4
+implementation expects a binary argument (a
+.IR "struct nfs_mount_data" )
+to the mount system call. This argument is constructed by
+.BR mount.nfs (8)
+and the current version of
+.B mount
+(2.13) does not know anything about nfs and nfs4.
+
+.SH "Mount options for ntfs"
+.TP
+.BI iocharset= name
+Character set to use when returning file names.
+Unlike VFAT, NTFS suppresses names that contain
+nonconvertible characters. Deprecated.
+.\" since 2.5.11
+.TP
+.BI nls= name
+New name for the option earlier called
+.IR iocharset .
+.\" since 2.5.11
+.TP
+.BR utf8
+Use UTF-8 for converting file names.
+.TP
+.BR uni_xlate= { 0 | 1 | 2 }
+For 0 (or `no' or `false'), do not use escape sequences
+for unknown Unicode characters.
+For 1 (or `yes' or `true') or 2, use vfat-style 4-byte escape sequences
+starting with ":". Here 2 give a little-endian encoding
+and 1 a byteswapped bigendian encoding.
+.TP
+.B posix=[0|1]
+If enabled (posix=1), the filesystem distinguishes between
+upper and lower case. The 8.3 alias names are presented as
+hard links instead of being suppressed. This option is obsolete.
+.TP
+\fBuid=\fP\fIvalue\fP, \fBgid=\fP\fIvalue\fP and \fBumask=\fP\fIvalue\fP
+Set the file permission on the filesystem.
+The umask value is given in octal.
+By default, the files are owned by root and not readable by somebody else.
+
+.SH "Mount options for proc"
+.TP
+\fBuid=\fP\fIvalue\fP and \fBgid=\fP\fIvalue\fP
+These options are recognized, but have no effect as far as I can see.
+
+.SH "Mount options for ramfs"
+Ramfs is a memory based filesystem. Mount it and you have it. Unmount it
+and it is gone. Present since Linux 2.3.99pre4.
+There are no mount options.
+
+.SH "Mount options for reiserfs"
+Reiserfs is a journaling filesystem.
+.TP
+.BR conv
+Instructs version 3.6 reiserfs software to mount a version 3.5 filesystem,
+using the 3.6 format for newly created objects. This filesystem will no
+longer be compatible with reiserfs 3.5 tools.
+.TP
+.BR hash= { rupasov | tea | r5 | detect }
+Choose which hash function reiserfs will use to find files within directories.
+.RS
+.TP
+.B rupasov
+A hash invented by Yury Yu. Rupasov.  It is fast and preserves locality,
+mapping lexicographically close file names to close hash values.
+This option should not be used, as it causes a high probability of hash
+collisions.
+.TP
+.B tea
+A Davis-Meyer function implemented by Jeremy Fitzhardinge.
+It uses hash permuting bits in the name.  It gets high randomness
+and, therefore, low probability of hash collisions at some CPU cost.
+This may be used if EHASHCOLLISION errors are experienced with the r5 hash.
+.TP
+.B r5
+A modified version of the rupasov hash. It is used by default and is
+the best choice unless the filesystem has huge directories and
+unusual file-name patterns.
+.TP
+.B detect
+Instructs
+.IR mount
+to detect which hash function is in use by examining
+the filesystem being mounted,  and to write this information into
+the reiserfs superblock. This is only useful on the first mount of
+an old format filesystem.
+.RE
+.TP
+.BR hashed_relocation
+Tunes the block allocator. This may provide performance improvements
+in some situations.
+.TP
+.BR no_unhashed_relocation
+Tunes the block allocator. This may provide performance improvements
+in some situations.
+.TP
+.BR noborder
+Disable the border allocator algorithm invented by Yury Yu. Rupasov.
+This may provide performance improvements in some situations.
+.TP
+.BR nolog
+Disable journalling. This will provide slight performance improvements in
+some situations at the cost of losing reiserfs's fast recovery from crashes.
+Even with this option turned on, reiserfs still performs all journalling
+operations, save for actual writes into its journalling area.  Implementation
+of
+.IR nolog
+is a work in progress.
+.TP
+.BR notail
+By default, reiserfs stores small files and `file tails' directly into its
+tree. This confuses some utilities such as
+.BR LILO (8).
+This option is used to disable packing of files into the tree.
+.TP
+.BR replayonly
+Replay the transactions which are in the journal, but do not actually
+mount the filesystem. Mainly used by
+.IR reiserfsck .
+.TP
+.BI resize= number
+A remount option which permits online expansion of reiserfs partitions.
+Instructs reiserfs to assume that the device has
+.I number
+blocks.
+This option is designed for use with devices which are under logical
+volume management (LVM).
+There is a special
+.I resizer
+utility which can be obtained from
+.IR ftp://ftp.namesys.com/pub/reiserfsprogs .
+.TP
+.BR user_xattr
+Enable Extended User Attributes. See the
+.BR attr (5)
+manual page.
+.TP
+.BR acl
+Enable POSIX Access Control Lists. See the
+.BR acl (5)
+manual page.
+.TP
+.BR barrier=none " / "  barrier=flush "
+This enables/disables the use of write barriers in the journaling code.
+barrier=none disables it, barrier=flush enables it. Write barriers enforce
+proper on-disk ordering of journal commits, making volatile disk write caches
+safe to use, at some performance penalty. The reiserfs filesystem does not
+enable write barriers by default. Be sure to enable barriers unless your disks
+are battery-backed one way or another. Otherwise you risk filesystem
+corruption in case of power failure.
+
+.SH "Mount options for romfs"
+None.
+
+.SH "Mount options for squashfs"
+None.
+
+.SH "Mount options for smbfs"
+Just like
+.IR nfs ", the " smbfs
+implementation expects a binary argument (a
+.IR "struct smb_mount_data" )
+to the mount system call. This argument is constructed by
+.BR smbmount (8)
+and the current version of
+.B mount
+(2.12) does not know anything about smbfs.
+
+.SH "Mount options for sysv"
+None.
+
+.SH "Mount options for tmpfs"
+.TP
+.BI size= nbytes
+Override default maximum size of the filesystem.
+The size is given in bytes, and rounded up to entire pages.
+The default is half of the memory. The size parameter also accepts a suffix %
+to limit this tmpfs instance to that percentage of your physical RAM:
+the default, when neither size nor nr_blocks is specified, is size=50%
+.TP
+.B nr_blocks=
+The same as size, but in blocks of PAGE_CACHE_SIZE
+.TP
+.B nr_inodes=
+The maximum number of inodes for this instance. The default
+is half of the number of your physical RAM pages, or (on a
+machine with highmem) the number of lowmem RAM pages,
+whichever is the lower.
+.PP
+The tmpfs mount options for sizing (
+.BR size ,
+.BR nr_blocks ,
+and
+.BR nr_inodes )
+accept a suffix
+.BR k ,
+.B m
+or
+.B g
+for Ki, Mi, Gi (binary kilo, mega and giga) and can be changed on remount.
+
+.TP
+.B mode=
+Set initial permissions of the root directory.
+.TP
+.B uid=
+The user id.
+.TP
+.B gid=
+The group id.
+.TP
+.B mpol=[default|prefer:Node|bind:NodeList|interleave|interleave:NodeList]
+Set the NUMA memory allocation policy for all files in that
+instance (if the kernel CONFIG_NUMA is enabled) - which can be adjusted on the
+fly via 'mount -o remount ...'
+.RS
+.TP
+.B default
+prefers to allocate memory from the local node
+.TP
+.B prefer:Node
+prefers to allocate memory from the given Node
+.TP
+.B bind:NodeList
+allocates memory only from nodes in NodeList
+.TP
+.B interleave
+prefers to allocate from each node in turn
+.TP
+.B interleave:NodeList
+allocates from each node of NodeList in turn.
+.PP
+The NodeList format is a comma-separated list of decimal numbers and ranges, a
+range being two hyphen-separated decimal numbers, the smallest and largest node
+numbers in the range.  For example, mpol=bind:0-3,5,7,9-15
+
+Note that trying to mount a tmpfs with an mpol option will fail if the
+running kernel does not support NUMA; and will fail if its nodelist
+specifies a node which is not online.  If your system relies on that
+tmpfs being mounted, but from time to time runs a kernel built without
+NUMA capability (perhaps a safe recovery kernel), or with fewer nodes
+online, then it is advisable to omit the mpol option from automatic
+mount options.  It can be added later, when the tmpfs is already mounted
+on MountPoint, by 'mount -o remount,mpol=Policy:NodeList MountPoint'.
+
+.SH "Mount options for ubifs"
+UBIFS is a flash file system which works on top of UBI volumes. Note that
+.B
+atime
+is not supported and is always turned off.
+.TP
+The device name may be specified as
+.RS
+.B ubiX_Y
+UBI device number
+.BR X ,
+volume number
+.B Y
+.TP
+.B ubiY
+UBI device number
+.BR 0 ,
+volume number
+.B Y
+.TP
+.B ubiX:NAME
+UBI device number
+.BR X ,
+volume with name
+.B NAME
+.TP
+.B ubi:NAME
+UBI device number
+.BR 0 ,
+volume with name
+.B NAME
+.RE
+Alternative
+.B !
+separator may be used instead of
+.BR : .
+.TP
+The following mount options are available:
+.TP
+.BR bulk_read
+Enable bulk-read. VFS read-ahead is disabled because it slows down the file
+system. Bulk-Read is an internal optimization. Some flashes may read faster if
+the data are read at one go, rather than at several read requests. For
+example, OneNAND can do "read-while-load" if it reads more than one NAND page.
+.TP
+.BR no_bulk_read
+Do not bulk-read. This is the default.
+.TP
+.BR chk_data_crc
+Check data CRC-32 checksums. This is the default.
+.TP
+.BR no_chk_data_crc.
+Do not check data CRC-32 checksums. With this option, the filesystem does not
+check CRC-32 checksum for data, but it does check it for the internal indexing
+information. This option only affects reading, not writing. CRC-32 is always
+calculated when writing the data.
+.TP
+.BR compr= { none | lzo | zlib }
+Select the default compressor which is used when new files are written. It is
+still possible to read compressed files if mounted with the
+.B none
+option.
+
+.SH "Mount options for udf"
+udf is the "Universal Disk Format" filesystem defined by the Optical
+Storage Technology Association, and is often used for DVD-ROM.
+See also
+.IR iso9660 .
+.TP
+.B gid=
+Set the default group.
+.TP
+.B umask=
+Set the default umask.
+The value is given in octal.
+.TP
+.B uid=
+Set the default user.
+.TP
+.B unhide
+Show otherwise hidden files.
+.TP
+.B undelete
+Show deleted files in lists.
+.TP
+.B nostrict
+Unset strict conformance.
+.\" .TP
+.\" .B utf8
+.\" (unused).
+.TP
+.B iocharset
+Set the NLS character set.
+.TP
+.B bs=
+Set the block size. (May not work unless 2048.)
+.TP
+.B novrs
+Skip volume sequence recognition.
+.TP
+.B session=
+Set the CDROM session counting from 0. Default: last session.
+.TP
+.B anchor=
+Override standard anchor location. Default: 256.
+.TP
+.B volume=
+Override the VolumeDesc location. (unused)
+.TP
+.B partition=
+Override the PartitionDesc location. (unused)
+.TP
+.B lastblock=
+Set the last block of the filesystem.
+.TP
+.B fileset=
+Override the fileset block location. (unused)
+.TP
+.B rootdir=
+Override the root directory location. (unused)
+
+.SH "Mount options for ufs"
+.TP
+.BI ufstype= value
+UFS is a filesystem widely used in different operating systems.
+The problem are differences among implementations. Features of some
+implementations are undocumented, so its hard to recognize the
+type of ufs automatically.
+That's why the user must specify the type of ufs by mount option.
+Possible values are:
+.RS
+.TP
+.B old
+Old format of ufs, this is the default, read only.
+(Don't forget to give the \-r option.)
+.TP
+.B 44bsd
+For filesystems created by a BSD-like system (NetBSD,FreeBSD,OpenBSD).
+.TP
+.B ufs2
+Used in FreeBSD 5.x supported as read-write.
+.TP
+.B 5xbsd
+Synonym for ufs2.
+.TP
+.B sun
+For filesystems created by SunOS or Solaris on Sparc.
+.TP
+.B sunx86
+For filesystems created by Solaris on x86.
+.TP
+.B hp
+For filesystems created by HP-UX, read-only.
+.TP
+.B nextstep
+For filesystems created by NeXTStep (on NeXT station) (currently read only).
+.TP
+.B nextstep-cd
+For NextStep CDROMs (block_size == 2048), read-only.
+.TP
+.B openstep
+For filesystems created by OpenStep (currently read only).
+The same filesystem type is also used by Mac OS X.
+.RE
+
+.TP
+.BI onerror= value
+Set behaviour on error:
+.RS
+.TP
+.B panic
+If an error is encountered, cause a kernel panic.
+.TP
+.RB [ lock | umount | repair ]
+These mount options don't do anything at present;
+when an error is encountered only a console message is printed.
+.RE
+
+.SH "Mount options for umsdos"
+See mount options for msdos.
+The
+.B dotsOK
+option is explicitly killed by
+.IR umsdos .
+
+.SH "Mount options for vfat"
+First of all, the mount options for
+.I fat
+are recognized.
+The
+.B dotsOK
+option is explicitly killed by
+.IR vfat .
+Furthermore, there are
+.TP
+.B uni_xlate
+Translate unhandled Unicode characters to special escaped sequences.
+This lets you backup and restore filenames that are created with any
+Unicode characters. Without this option, a '?' is used when no
+translation is possible. The escape character is ':' because it is
+otherwise illegal on the vfat filesystem. The escape sequence
+that gets used, where u is the unicode character,
+is: ':', (u & 0x3f), ((u>>6) & 0x3f), (u>>12).
+.TP
+.B posix
+Allow two files with names that only differ in case.
+This option is obsolete.
+.TP
+.B nonumtail
+First try to make a short name without sequence number,
+before trying
+.IR name~num.ext .
+.TP
+.B utf8
+UTF8 is the filesystem safe 8-bit encoding of Unicode that is used by the
+console. It can be enabled for the filesystem with this option or disabled
+with utf8=0, utf8=no or utf8=false. If `uni_xlate' gets set, UTF8 gets
+disabled.
+.TP
+.BR shortname= { lower | win95 | winnt | mixed }
+
+Defines the behaviour for creation and display of filenames which fit into
+8.3 characters. If a long name for a file exists, it will always be
+preferred display. There are four modes:
+:
+.RS
+.TP
+.I lower
+Force the short name to lower case upon display; store a long name when
+the short name is not all upper case.
+.TP
+.I win95
+Force the short name to upper case upon display; store a long name when
+the short name is not all upper case.
+.TP
+.I winnt
+Display the shortname as is; store a long name when the short name is
+not all lower case or all upper case.
+.TP
+.I mixed
+Display the short name as is; store a long name when the short name is not
+all upper case. This mode is the default since Linux 2.6.32.
+.RE
+
+
+.SH "Mount options for usbfs"
+.TP
+\fBdevuid=\fP\fIuid\fP and \fBdevgid=\fP\fIgid\fP and \fBdevmode=\fP\fImode\fP
+Set the owner and group and mode of the device files in the usbfs filesystem
+(default: uid=gid=0, mode=0644). The mode is given in octal.
+.TP
+\fBbusuid=\fP\fIuid\fP and \fBbusgid=\fP\fIgid\fP and \fBbusmode=\fP\fImode\fP
+Set the owner and group and mode of the bus directories in the usbfs
+filesystem (default: uid=gid=0, mode=0555). The mode is given in octal.
+.TP
+\fBlistuid=\fP\fIuid\fP and \fBlistgid=\fP\fIgid\fP and \fBlistmode=\fP\fImode\fP
+Set the owner and group and mode of the file
+.I devices
+(default: uid=gid=0, mode=0444). The mode is given in octal.
+
+.SH "Mount options for xenix"
+None.
+
+.SH "Mount options for xfs"
+.TP
+.BI allocsize= size
+Sets the buffered I/O end-of-file preallocation size when
+doing delayed allocation writeout (default size is 64KiB).
+Valid values for this option are page size (typically 4KiB)
+through to 1GiB, inclusive, in power-of-2 increments.
+.TP
+.BR attr2 | noattr2
+The options enable/disable (default is enabled) an "opportunistic"
+improvement to be made in the way inline extended attributes are
+stored on-disk.
+When the new form is used for the first time (by setting or
+removing extended attributes) the on-disk superblock feature
+bit field will be updated to reflect this format being in use.
+.TP
+.B barrier
+Enables the use of block layer write barriers for writes into
+the journal and unwritten extent conversion.  This allows for
+drive level write caching to be enabled, for devices that
+support write barriers.
+.TP
+.B dmapi
+Enable the DMAPI (Data Management API) event callouts.
+Use with the
+.B mtpt
+option.
+.TP
+.BR grpid | bsdgroups " and " nogrpid | sysvgroups
+These options define what group ID a newly created file gets.
+When grpid is set, it takes the group ID of the directory in
+which it is created; otherwise (the default) it takes the fsgid
+of the current process, unless the directory has the setgid bit
+set, in which case it takes the gid from the parent directory,
+and also gets the setgid bit set if it is a directory itself.
+.TP
+.BI ihashsize= value
+Sets the number of hash buckets available for hashing the
+in-memory inodes of the specified mount point.  If a value
+of zero is used, the value selected by the default algorithm
+will be displayed in
+.IR /proc/mounts .
+.TP
+.BR ikeep | noikeep
+When inode clusters are emptied of inodes, keep them around
+on the disk (ikeep) - this is the traditional XFS behaviour
+and is still the default for now.  Using the noikeep option,
+inode clusters are returned to the free space pool.
+.TP
+.B inode64
+Indicates that XFS is allowed to create inodes at any location
+in the filesystem, including those which will result in inode
+numbers occupying more than 32 bits of significance.  This is
+provided for backwards compatibility, but causes problems for
+backup applications that cannot handle large inode numbers.
+.TP
+.BR largeio | nolargeio
+If
+.B nolargeio
+is specified, the optimal I/O reported in
+st_blksize by
+.BR stat (2)
+will be as small as possible to allow user
+applications to avoid inefficient read/modify/write I/O.
+If
+.B largeio
+is specified, a filesystem that has a
+.B swidth
+specified
+will return the
+.B swidth
+value (in bytes) in st_blksize. If the
+filesystem does not have a
+.B swidth
+specified but does specify
+an
+.B allocsize
+then
+.B allocsize
+(in bytes) will be returned
+instead.
+If neither of these two options are specified, then filesystem
+will behave as if
+.B nolargeio
+was specified.
+.TP
+.BI logbufs= value
+Set the number of in-memory log buffers.  Valid numbers range
+from 2-8 inclusive.
+The default value is 8 buffers for any recent kernel.
+.TP
+.BI logbsize= value
+Set the size of each in-memory log buffer.
+Size may be specified in bytes, or in kilobytes with a "k" suffix.
+Valid sizes for version 1 and version 2 logs are 16384 (16k) and
+32768 (32k).  Valid sizes for version 2 logs also include
+65536 (64k), 131072 (128k) and 262144 (256k).
+The default value for any recent kernel is 32768.
+.TP
+\fBlogdev=\fP\fIdevice\fP and \fBrtdev=\fP\fIdevice\fP
+Use an external log (metadata journal) and/or real-time device.
+An XFS filesystem has up to three parts: a data section, a log section,
+and a real-time section.
+The real-time section is optional, and the log section can be separate
+from the data section or contained within it.
+Refer to
+.BR xfs (5).
+.TP
+.BI  mtpt= mountpoint
+Use with the
+.B dmapi
+option. The value specified here will be
+included in the DMAPI mount event, and should be the path of
+the actual mountpoint that is used.
+.TP
+.B noalign
+Data allocations will not be aligned at stripe unit boundaries.
+.TP
+.B noatime
+Access timestamps are not updated when a file is read.
+.TP
+.B norecovery
+The filesystem will be mounted without running log recovery.
+If the filesystem was not cleanly unmounted, it is likely to
+be inconsistent when mounted in
+.B norecovery
+mode.
+Some files or directories may not be accessible because of this.
+Filesystems mounted
+.B norecovery
+must be mounted read-only or the mount will fail.
+.TP
+.B nouuid
+Don't check for double mounted filesystems using the filesystem uuid.
+This is useful to mount LVM snapshot volumes.
+.TP
+.B osyncisosync
+Make O_SYNC writes implement true O_SYNC.  WITHOUT this option,
+Linux XFS behaves as if an
+.B osyncisdsync
+option is used,
+which will make writes to files opened with the O_SYNC flag set
+behave as if the O_DSYNC flag had been used instead.
+This can result in better performance without compromising
+data safety.
+However if this option is not in effect, timestamp updates from
+O_SYNC writes can be lost if the system crashes.
+If timestamp updates are critical, use the
+.B osyncisosync
+option.
+.TP
+.BR uquota | usrquota | uqnoenforce | quota
+User disk quota accounting enabled, and limits (optionally)
+enforced.  Refer to
+.BR xfs_quota (8)
+for further details.
+.TP
+.BR gquota | grpquota | gqnoenforce
+Group disk quota accounting enabled and limits (optionally)
+enforced. Refer to
+.BR xfs_quota (8)
+for further details.
+.TP
+.BR pquota | prjquota | pqnoenforce
+Project disk quota accounting enabled and limits (optionally)
+enforced. Refer to
+.BR xfs_quota (8)
+for further details.
+.TP
+\fBsunit=\fP\fIvalue\fP and \fBswidth=\fP\fIvalue\fP
+Used to specify the stripe unit and width for a RAID device or a stripe
+volume.
+.I value
+must be specified in 512-byte block units.
+If this option is not specified and the filesystem was made on a stripe
+volume or the stripe width or unit were specified for the RAID device at
+mkfs time, then the mount system call will restore the value from the
+superblock.
+For filesystems that are made directly on RAID devices, these options can be
+used to override the information in the superblock if the underlying disk
+layout changes after the filesystem has been created.
+The
+.B swidth
+option is required if the
+.B sunit
+option has been specified,
+and must be a multiple of the
+.B sunit
+value.
+.TP
+.B swalloc
+Data allocations will be rounded up to stripe width boundaries
+when the current end of file is being extended and the file
+size is larger than the stripe width size.
+
+.SH "Mount options for xiafs"
+None. Although nothing is wrong with xiafs, it is not used much,
+and is not maintained. Probably one shouldn't use it.
+Since Linux version 2.1.21 xiafs is no longer part of the kernel source.
+
+.SH "THE LOOP DEVICE"
+One further possible type is a mount via the loop device. For example,
+the command
+.RS
+.sp
+.B "mount /tmp/disk.img /mnt -t vfat -o loop=/dev/loop"
+.sp
+.RE
+will set up the loop device
+.I /dev/loop3
+to correspond to the file
+.IR /tmp/disk.img ,
+and then mount this device on
+.IR /mnt .
+
+If no explicit loop device is mentioned
+(but just an option `\fB\-o loop\fP' is given), then
+.B mount
+will try to find some unused loop device and use that, for example
+.RS
+.sp
+.B "mount /tmp/disk.img /mnt -o loop"
+.sp
+.RE
+The mount command
+.B automatically
+creates a loop device from a regular file if a filesystem type is
+not specified or the filesystem is known for libblkid, for example:
+.RS
+.sp
+.B "mount /tmp/disk.img /mnt"
+.sp
+.B "mount -t ext3 /tmp/disk.img /mnt"
+.sp
+.RE
+This type of mount knows about four options, namely
+.BR loop ", " offset ", " sizelimit " and " encryption ,
+that are really options to
+.BR \%losetup (8).
+(These options can be used in addition to those specific
+to the filesystem type.)
+
+Since Linux 2.6.25 is supported auto-destruction of loop devices and
+then any loop device allocated by
+.B mount
+will be freed by
+.B umount
+independently on
+.IR /etc/mtab .
+
+You can also free a loop device by hand, using `losetup -d' or `umount -d`.
+
+.SH RETURN CODES
+.B mount
+has the following return codes (the bits can be ORed):
+.TP
+.BR 0
+success
+.TP
+.BR 1
+incorrect invocation or permissions
+.TP
+.BR 2
+system error (out of memory, cannot fork, no more loop devices)
+.TP
+.BR 4
+internal
+.B mount
+bug
+.TP
+.BR 8
+user interrupt
+.TP
+.BR 16
+problems writing or locking /etc/mtab
+.TP
+.BR 32
+mount failure
+.TP
+.BR 64
+some mount succeeded
+
+.SH NOTES
+The syntax of external mount helpers is:
+
+.RS
+.BI /sbin/mount. <suffix>
+.I spec dir
+.RB [ \-sfnv ]
+.RB [ \-o
+.IR options ]
+.RB [ \-t
+.IR type.subtype ]
+.RE
+
+where the <type> is filesystem type and \-sfnvo options have same meaning like
+standard mount options. The \-t option is used  for filesystems with subtypes
+support (for example /sbin/mount.fuse -t fuse.sshfs).
+
+.SH FILES
+.TP 18n
+.I /etc/fstab
+filesystem table
+.TP
+.I /etc/mtab
+table of mounted filesystems
+.TP
+.I /etc/mtab~
+lock file
+.TP
+.I /etc/mtab.tmp
+temporary file
+.TP
+.I /etc/filesystems
+a list of filesystem types to try
+
+.SH "SEE ALSO"
+.BR mount (2),
+.BR umount (2),
+.BR fstab (5),
+.BR umount (8),
+.BR swapon (8),
+.BR nfs (5),
+.BR xfs (5),
+.BR e2label (8),
+.BR xfs_admin (8),
+.BR mountd (8),
+.BR nfsd (8),
+.BR mke2fs (8),
+.BR tune2fs (8),
+.BR losetup (8)
+.SH BUGS
+It is possible for a corrupted filesystem to cause a crash.
+.PP
+Some Linux filesystems don't support
+.B "\-o sync and \-o dirsync"
+(the ext2, ext3, fat and vfat filesystems
+.I do
+support synchronous updates (a la BSD) when mounted with the
+.B sync
+option).
+.PP
+The
+.B "\-o remount"
+may not be able to change mount parameters (all
+.IR ext2fs -specific
+parameters, except
+.BR  sb ,
+are changeable with a remount, for example, but you can't change
+.B gid
+or
+.B umask
+for the
+.IR fatfs ).
+.PP
+Mount by label or uuid will work only if your devices have the names listed in
+.IR /proc/partitions .
+In particular, it may well fail if the kernel was compiled with devfs
+but devfs is not mounted.
+.PP
+It is possible that files
+.IR /etc/mtab
+and
+.IR /proc/mounts
+don't match. The first file is based only on the mount command options, but the
+content of the second file also depends on the kernel and others settings (e.g.
+remote NFS server. In particular case the mount command may reports unreliable
+information about a NFS mount point and the /proc/mounts file usually contains
+more reliable information.)
+.PP
+Checking files on NFS filesystem referenced by file descriptors (i.e. the
+.BR fcntl
+and
+.BR ioctl
+families of functions) may lead to inconsistent result due to the lack of
+consistency check in kernel even if noac is used.
+.SH HISTORY
+A
+.B mount
+command existed in Version 5 AT&T UNIX.
+.SH AVAILABILITY
+The mount command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+

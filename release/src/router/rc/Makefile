@@ -1,13 +1,12 @@
 include ../common.mak
 
-CFLAGS += -Wall -Os
+CFLAGS = -Wall -Os $(EXTRACFLAGS)
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -idirafter$(LINUXDIR)/include
 CFLAGS += -I$(TOP)/openssl/include
 CFLAGS += -ffunction-sections -fdata-sections
 CFLAGS += -DDLM -DASUS_DDNS -DASUS_EXT -DBTN_SETUP -DWEB_REDIRECT -DRTCONFIG_CROND
 
 CFLAGS += -DDEBUG_RCTEST
-#CFLAGS += -DSMP
 
 ifeq ($(RTCONFIG_WPS),y)
 CFLAGS += -I$(SRCBASE)/wps/brcm_apps/include
@@ -17,7 +16,15 @@ ifeq ($(RTCONFIG_RALINK),y)
 CFLAGS += -I$(TOP)/shared/sysdeps/ralink -I$(TOP)/wireless_tools
 endif
 
-LDFLAGS = -L$(TOP)/nvram -lnvram -L$(TOP)/shared -lshared -lcrypt -L$(TOP)/libbcmcrypto -lbcmcrypto
+ifeq ($(RTN14U),y)
+export CFLAGS += -DRTN14U
+endif
+
+ifeq ($(RTAC52U),y)
+export CFLAGS += -DRTAC52U
+endif
+
+LDFLAGS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared -lcrypt -L$(TOP)/libbcmcrypto -lbcmcrypto
 
 ifeq ($(RTCONFIG_BCMARM),y)
 CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include -DHAVE_TYPE_FLOAT
@@ -25,8 +32,8 @@ LDFLAGS += -L$(TOP)/libbcm -lbcm
 LDFLAGS += -lgcc_s
 endif
 
-ifeq ($(RTCONFIG_5301X),y)
-CFLAGS += -DBCM5301X
+ifeq ($(RTCONFIG_BCMSMP),y)
+CFLAGS += -DSMP
 endif
 
 ifeq ($(RTCONFIG_4352_5G),y)
@@ -44,6 +51,9 @@ CFLAGS += -DRTAC66U
 endif
 ifeq ($(RTN65U), y)
 CFLAGS += -DRTN65U
+endif
+ifeq ($(RTN56U), y)
+CFLAGS += -DRTN56U
 endif
 
 ifeq ($(RTCONFIG_ODMPID),y)
@@ -75,7 +85,9 @@ OBJS += watchdog.o ntp.o btnsetup.o qos.o udhcpc.o ate.o #cpu.o
 ifeq ($(RTCONFIG_FANCTRL),y)
 OBJS += phy_tempsense.o
 endif
+ifeq ($(RTCONFIG_BCMARM),y)
 OBJS += bcmutils.o
+endif
 
 ifeq ($(RTCONFIG_RALINK),y)
 OBJS += init-ralink.o wps-ralink.o ralink.o wpsfix.o
@@ -101,6 +113,9 @@ ifeq ($(RTCONFIG_JFFS2),y)
 OBJS += jffs2.o
 endif
 
+ifeq ($(RTCONFIG_UBIFS),y)
+OBJS += ubifs.o
+endif
 
 ifeq ($(RTCONFIG_CIFS),y)
 OBJS += cifs.o
@@ -132,6 +147,7 @@ endif
 
 ifeq ($(RTCONFIG_DSL),y)
 OBJS += dsl.o
+OBJS += dsl-upg.o
 endif
 
 ifeq ($(RTCONFIG_IPV6),y)
@@ -157,7 +173,11 @@ ifeq ($(RTCONFIG_SHP),y)
 export CFLAGS += -DMEDIA_REVIEW
 endif
 
+ifeq ($(RTCONFIG_BCMARM),y)
 vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink $(SRCBASE)/shared
+else
+vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink
+endif
 
 all: rc
 
@@ -174,8 +194,11 @@ install: all
 	@$(STRIP) $(INSTALLDIR)/sbin/rc
 	@chmod 0500 $(INSTALLDIR)/sbin/rc
 
+ifeq ($(RTCONFIG_BCMARM),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc preinit
+else
 	@cd $(INSTALLDIR)/sbin && ln -sf rc init
+endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc console
 	@cd $(INSTALLDIR)/sbin && ln -sf rc hotplug
 	@cd $(INSTALLDIR)/sbin && ln -sf rc service
@@ -184,13 +207,14 @@ install: all
 	@cd $(INSTALLDIR)/sbin && ln -sf rc led_ctrl
 	@cd $(INSTALLDIR)/sbin && ln -sf rc reboot
 	@cd $(INSTALLDIR)/sbin && ln -sf rc halt
+ifeq ($(RTCONFIG_BCMARM),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc gpio
-ifneq ($(RTCONFIG_BCMARM),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-write2
+	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-erase2
+else
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-write
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-erase
 endif
-	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-write2
-	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-erase2
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-unlock
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ots
 	@cd $(INSTALLDIR)/sbin && ln -sf rc watchdog
@@ -249,17 +273,19 @@ ifeq ($(RTCONFIG_USB),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_usb_interface
 	@cd $(INSTALLDIR)/sbin && ln -sf rc usb_notify
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ejusb
-#ifeq ($(RTCONFIG_USBEJECT),y)
-#	@cd $(INSTALLDIR)/sbin && ln -sf rc restart_usb
-#endif
 ifeq ($(RTCONFIG_DISK_MONITOR),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc disk_monitor
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc disk_remove
+ifeq ($(RTCONFIG_APP_PREINSTALLED)$(RTCONFIG_APP_NETINSTALLED),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc run_app_script
+	@cd $(INSTALLDIR)/sbin && ln -sf rc chk_app_state
 endif
-	@cd $(INSTALLDIR)/sbin && ln -sf rc run_app_script 
+endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc restart_wireless
+ifeq ($(RTCONFIG_BCMARM),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc nvram_erase
+endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ATE
 ifeq ($(RTCONFIG_RALINK),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc FWRITE

@@ -54,6 +54,20 @@ extern int waitfor(int fd, int timeout);
  */
 extern int _eval(char *const argv[], const char *path, int timeout, pid_t *ppid);
 
+/*
+ * Evaluate cmds using taskset while SMP.
+ * @param	ppid	NULL to wait for child termination or pointer to pid
+ * @param	cmds	command argument list
+ * The normal command elements protype is as [cpu0/cpu1], [cmd_arg0, cmd_arg1, ..., NULL]
+ * If smp defined, it should specify cpu0/cpu1 at the fist element,
+ * if it is not specified, cpu0 will be the default choice.
+ * On UP case, no need to specify cpu0/1, otherwise will be ignored. 
+ */
+#define CPU0	"0"
+#define CPU1	"1"
+
+extern int _cpu_eval(int *ppid, char *cmds[]);
+
 /* 
  * Concatenates NULL-terminated list of arguments into a single
  * commmand and executes it
@@ -146,6 +160,12 @@ static inline char * strcat_r(const char *s1, const char *s2, char *buf)
 	_eval(argv, ">/dev/console", 0, NULL); \
 })
 #endif
+
+/* another _cpu_eval form */
+#define cpu_eval(ppid, cmd, args...) ({ \
+	char * argv[] = { cmd, ## args, NULL }; \
+	_cpu_eval(ppid, argv); \
+})
 
 /* Copy each token in wordlist delimited by space into word */
 #define foreach(word, wordlist, next) \

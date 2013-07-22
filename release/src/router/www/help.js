@@ -6,7 +6,16 @@
 	DM_DisableHint: "You cannot use Download Master because Download Master is disabled!", 
 	the_array_is_end : "end here.",
 	ddns_home_link: "Get started",
-	go_to_wan_setting : "Go to WAN setting" // need to replace string manually in device-map/internet.asp
+	go_to_wan_setting : "Go to WAN setting", // need to replace string manually in device-map/internet.asp
+	select_wireless_MAC : "Select the MAC address of Wireless Clients.",
+	select_AP : "Select the Access Point",
+	select_MAC : "Select the MAC address of DHCP clients.",
+	select_IP : "Select the IP address of DHCP clients.",
+	select_network_host : "Select the network host.",
+	select_device_name : "Select the device name of DHCP clients.",
+	select_service : "Select the service name.",
+	select_client : "Select the client of DHCP clients.",
+	select_APN_service : "Select the APN service."
 };
 var clicked_help_string = "<#Help_init_word1#> <a class=\"hintstyle\" style=\"background-color:#7aa3bd\"><#Help_init_word2#></a> <#Help_init_word3#>";
 
@@ -138,7 +147,7 @@ function overHint(itemNum){
 			wifiDesc = "<b>2.4G:</b> <#btn_Disabled#>";
 		}
 
-		if (band5g_support != -1) {
+		if(band5g_support){
 			if (wlan1_radio_flag == 1) {
 				wifiDesc += "<br><b>&nbsp;&nbsp;5G:</b> ";
 				if ((extent_chan_arr[1] == 0) || (extent_chan_arr[1] == undefined) || (extent_chan_arr[1] == control_chan_arr[1]))
@@ -201,7 +210,7 @@ function overHint(itemNum){
 				statusmenu += " left)</span><br>";
 			}
 		}
-		if(band5g_support != -1){
+		if(band5g_support){
 			for(var i=0; i<gn_array_2g.length; i++){
 				if(gn_array_5g[i][0] == 1){
 					if(title5 == 0){
@@ -271,7 +280,7 @@ function overHint(itemNum){
 	// usb storage
 	if(itemNum == 2){
 		var dmStatus = "<#download_nonInstall#>";
-		if(nodm_support != -1){
+		if(nodm_support){
 			var dmStatus = "Not support.";
 		}
 
@@ -281,7 +290,7 @@ function overHint(itemNum){
 			statusmenu = "<div class='StatusHint'><#no_usb_found#></div>";
 		}
 		else if(foreign_disk_total_mounted_number()[0] == "0" && foreign_disk_total_mounted_number()[foreign_disk_total_mounted_number().length-1] == "0"){
-			statusmenu = "<span class='StatusHint'><#usb_unmount#></span>";	
+			statusmenu = "<span class='StatusHint'><#DISK_UNMOUNTED#></span>";
 		}
 		else{
 			statusmenu = "<div class='StatusHint'>Download Master:</div>";				
@@ -307,7 +316,7 @@ function overHint(itemNum){
 			}
 			else if(getCookie_help("dm_install") == "no"){
 				dmStatus = "<#download_nonInstall#>";		
-				if(nodm_support != -1){
+				if(nodm_support){
 					dmStatus = "Not support.";
 				}
 			}
@@ -379,28 +388,33 @@ function openHint(hint_array_id, hint_show_id, flag){
 		else if(hint_show_id == 2){
 			var statusmenu = "";
 
-			for(i=0; i<foreign_disk_interface_names().length; i++){
-				if(foreign_disk_total_mounted_number()[0] == ""){
-					statusmenu = "<span class='StatusHint'><#no_usb_found#></span>";
-					break;
-				}
-
-				if(foreign_disk_interface_names()[i] == 1)
-					_foreign_disk_interface_name = 1;
-				else
-					_foreign_disk_interface_name = 2;
-
-				var usb_path_curr = eval("usb_path"+_foreign_disk_interface_name);
-				if(foreign_disk_total_mounted_number()[i] != "0" && foreign_disk_total_mounted_number()[i] != "" && usb_path_curr != "usb=")
-					statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk("+parseInt(foreign_disk_interface_names()[i])+");' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#Eject_usb_disk#> <span style='font-weight:normal'>"+ decodeURIComponent(foreign_disks()[i]) +"</span></div>";
-				else 
-					continue;
+			if(foreign_disk_total_mounted_number()[0] == "0" && foreign_disk_total_mounted_number()[foreign_disk_total_mounted_number().length-1] == "0"){
+				return false;
 			}
-			if(current_url!="index.asp" && current_url!=""){
-				if((usb_path_tmp[0] != usb_path1) && usb_path1 != "usb=" && usb_path1 != "usb=printer")
-					statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk(1);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#Eject_usb_disk#> <span style='font-weight:normal'>USB Disk 1</span></div>";
-				if((usb_path_tmp[1] != usb_path2) && usb_path2 != "usb=" && usb_path2 != "usb=printer")
-					statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk(2);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#Eject_usb_disk#> <span style='font-weight:normal'>USB Disk 2</span></div>";
+			else{
+				for(i=0; i<foreign_disk_interface_names().length; i++){
+					if(foreign_disk_total_mounted_number()[0] == ""){
+						statusmenu = "<span class='StatusHint'><#no_usb_found#></span>";
+						break;
+					}
+	
+					if(foreign_disk_interface_names()[i] == 1)
+						_foreign_disk_interface_name = 1;
+					else
+						_foreign_disk_interface_name = 2;
+	
+					var usb_path_curr = eval("usb_path"+_foreign_disk_interface_name);
+					if(foreign_disk_total_mounted_number()[i] != "0" && foreign_disk_total_mounted_number()[i] != "" && usb_path_curr != "usb=")
+						statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk("+parseInt(foreign_disk_interface_names()[i])+");' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#Eject_usb_disk#> <span style='font-weight:normal'>"+ decodeURIComponent(foreign_disks()[i]) +"</span></div>";
+					else 
+						continue;
+				}
+				if(current_url!="index.asp" && current_url!=""){
+					if((usb_path_tmp[0] != usb_path1) && usb_path1 != "usb=" && usb_path1 != "usb=printer")
+						statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk(1);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#Eject_usb_disk#> <span style='font-weight:normal'>USB Disk 1</span></div>";
+					if((usb_path_tmp[1] != usb_path2) && usb_path2 != "usb=" && usb_path2 != "usb=printer")
+						statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk(2);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#Eject_usb_disk#> <span style='font-weight:normal'>USB Disk 2</span></div>";
+				}
 			}
 
 			_caption = "USB storage";

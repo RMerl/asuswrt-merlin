@@ -1,0 +1,67 @@
+.\" -*- nroff -*-
+.TH ELVTUNE 8 "March 2000" "util-linux" "System Administration"
+.SH NAME
+elvtune \- I/O elevator tuner
+.SH SYNOPSIS
+.B elvtune
+.RB [ \-r
+.IR r_lat ]
+.RB [ \-w
+.IR w_lat ]
+.RB [ \-b
+.IR b_max ]
+.IR device ...
+.br
+.B elvtune \-h
+.br
+.B elvtune \-v
+.SH DESCRIPTION
+.B elvtune
+allows to tune the I/O elevator per blockdevice queue.  The
+tuning can be safely done at runtime.  Tuning the elevator means
+being able to change disk performance and interactiveness.
+In the output of
+.B elvtune
+the address of the queue tuned will be shown;
+it can be considered as a queue ID.
+Multiple partitions on the same harddisk will
+share the same queue and so tuning one partition will be
+like tuning the whole HD.
+.SH OPTIONS
+.TP
+.BI -r \ r_lat
+Set the maximum latency that the I/O scheduler will provide on
+each read.
+.TP
+.BI -w \ w_lat
+Set the maximum latency that the I/O scheduler will provide on
+each write.
+.TP
+.BI -b \ b_max
+Set the maximum coalescing factor allowed on writes when there are reads
+pending in the queue.
+.TP
+.BI -h
+Display help text and exit.
+.TP
+.BI -v
+Display version version information and exit.
+.SH NOTE
+Actually, the only fields tunable are those relative
+to the IO scheduler.  It's not possible to select
+a one-way or two-way elevator yet.
+.PP
+For logical blockdevices like LVM the tuning has to
+be done on the
+.I physical
+devices.  Tuning the queue of the LVM logical device
+is useless.
+.SH RETURN VALUE
+0 on success and 1 on failure.
+.SH HISTORY
+Ioctls for tuning elevator behaviour were added in Linux 2.3.99-pre1.
+.SH AUTHORS
+Andrea Arcangeli <andrea@suse.de> SuSE
+.SH AVAILABILITY
+The elvtune command is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

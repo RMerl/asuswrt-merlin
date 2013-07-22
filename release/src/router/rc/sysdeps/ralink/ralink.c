@@ -33,6 +33,7 @@
 #include <iwlib.h>
 #include <wps.h>
 #include <stapriv.h>
+#include "flash_mtd.h"
 
 #define MAX_FRW 64
 #define MACSIZE 12
@@ -274,7 +275,7 @@ isWifiPower2(const char *cc)
 	return 0;
 }
 
-#if !defined(RTN14U)
+#if !defined(RTN14U) && !defined(RTAC52U)
 //for specific power
 int
 isWifiPower3(const char *cc)
@@ -313,7 +314,7 @@ modify_ralink_power_2g(const char *old_CC, const char *CC, unsigned char *flash_
 	//for specific power
 	else if(isWifiPower3(CC))
 	{
-		printf("use power3\n");   
+		printf("use power3\n");
 		powerValue = power3Value;
 		len = sizeof(power3Value);
 	}
@@ -371,6 +372,123 @@ modify_ralink_power_5g(const char *old_CC, const char *CC, unsigned char *flash_
 }
 #endif
 
+#if defined(RTCONFIG_NEW_REGULATION_DOMAIN)
+int getRegSpec(void)
+{
+	char value_str[MAX_REGSPEC_LEN+1];
+	int i;
+
+	memset(value_str, 0, sizeof(value_str));
+	FRead(value_str, REGSPEC_ADDR, MAX_REGSPEC_LEN);
+	for(i = 0; i < MAX_REGSPEC_LEN && value_str[i] != '\0'; i++) {
+		if ((unsigned char)value_str[i] == 0xff)
+		{
+			value_str[i] = '\0';
+			break;
+		}
+	}
+	puts(value_str);
+	return 0;
+}
+
+int getRegDomain_2G(void)
+{
+	char value_str[MAX_REGDOMAIN_LEN+1];
+	int i;
+
+	memset(value_str, 0, sizeof(value_str));
+	FRead(value_str, REG2G_EEPROM_ADDR, MAX_REGDOMAIN_LEN);
+
+        for(i=0; i<MAX_REGDOMAIN_LEN; ++i) {
+		if ((value_str[i]==(char)0xFF) || (value_str[i]=='\0'))
+			break;
+                printf("%c", value_str[i]);
+	}
+        printf("\n");
+	return 0;
+}
+
+int getRegDomain_5G(void)
+{
+	char value_str[MAX_REGDOMAIN_LEN+1];
+	int i;
+
+	memset(value_str, 0, sizeof(value_str));
+	FRead(value_str, REG5G_EEPROM_ADDR, MAX_REGDOMAIN_LEN);
+
+        for(i=0; i<MAX_REGDOMAIN_LEN; ++i) {
+		if ((value_str[i]==(char)0xFF) || (value_str[i]=='\0'))
+			break;
+                printf("%c", value_str[i]);
+	}
+        printf("\n");
+	return 0;
+}
+
+
+int setRegSpec(const char *regSpec)
+{
+	char REGSPEC[MAX_REGSPEC_LEN+1];
+	int i;
+
+	if (regSpec == NULL || regSpec[0] == '\0' || strlen(regSpec) > 3)
+		return -1;
+	if (!strcasecmp(regSpec, "CE")) ;
+	else if (!strcasecmp(regSpec, "FCC")) ;
+	else
+		return -1;
+
+	memset(REGSPEC, 0, sizeof(REGSPEC));
+	for (i=0; regSpec[i]!='\0' ;i++)
+		REGSPEC[i]=(char)toupper(regSpec[i]);
+	FWrite(REGSPEC, REGSPEC_ADDR, MAX_REGSPEC_LEN);
+	return 0;
+}
+
+int setRegDomain_2G(const char *cc)
+{
+	char CC[MAX_REGDOMAIN_LEN+1];
+	int i;
+
+	if (!strcasecmp(cc, "2G_CH11")) ;
+	else if (!strcasecmp(cc, "2G_CH13")) ;
+	else if (!strcasecmp(cc, "2G_CH14")) ;
+	else
+		return -1;
+
+	memset(CC, 0x0, sizeof(CC));
+	strcpy(CC, cc);
+	for (i=0;CC[i]!='\0';i++)
+		CC[i]=(char)toupper(CC[i]);
+	FWrite(CC, REG2G_EEPROM_ADDR, MAX_REGDOMAIN_LEN);
+	return 0;
+}
+
+int setRegDomain_5G(const char *cc)
+{
+	char CC[MAX_REGDOMAIN_LEN+1];
+	int i;
+
+	if (!strcasecmp(cc, "5G_ALL")) ;
+	else if (!strcasecmp(cc, "5G_BAND14")) ;
+	else if (!strcasecmp(cc, "5G_BAND24")) ;
+	else if (!strcasecmp(cc, "5G_BAND1")) ;
+	else if (!strcasecmp(cc, "5G_BAND4")) ;
+	else if (!strcasecmp(cc, "5G_BAND123")) ;
+	else
+		return -1;
+
+	memset(CC, 0x0, sizeof(CC));
+	strcpy(CC, cc);
+	for (i=0;CC[i]!='\0';i++)
+		CC[i]=(char)toupper(CC[i]);
+	FWrite(CC, REG5G_EEPROM_ADDR, MAX_REGDOMAIN_LEN);
+	return 0;
+}
+
+
+#else	/* ! RTCONFIG_NEW_REGULATION_DOMAIN */
+
 int
 getCountryCode_2G()
 {
@@ -389,9 +507,6 @@ int
 setCountryCode_2G(const char *cc)
 {
 	char CC[3];
-#if !defined(RTN14U)
-	unsigned char *flash_buf;
-#endif
 
 	if (cc==NULL || !isValidCountryCode(cc))
 		return 0;
@@ -434,7 +549,7 @@ setCountryCode_2G(const char *cc)
 	else if (!strcasecmp(cc, "FR")) ;
 	else if (!strcasecmp(cc, "GB")) ;
 	else if (!strcasecmp(cc, "GE")) ;
-#if defined(RTN14U)
+#if defined(RTN14U) || defined(RTAC52U)
 	else if (!strcasecmp(cc, "EU")) ;
 #endif
 	else if (!strcasecmp(cc, "GR")) ;
@@ -502,7 +617,7 @@ setCountryCode_2G(const char *cc)
 	else if (!strcasecmp(cc, "YE")) ;
 	else if (!strcasecmp(cc, "ZA")) ;
 	else if (!strcasecmp(cc, "ZW")) ;
-#if !defined(RTN14U)
+#if !defined(RTN14U) && !defined(RTAC52U)
 	//for specific power
 	else if (!strcasecmp(cc, "Z1")) ; //US
 	else if (!strcasecmp(cc, "Z2")) ; //GB
@@ -514,20 +629,21 @@ setCountryCode_2G(const char *cc)
 		return 0;
 	}
 
-#if !defined(RTN14U)
+	memset(&CC[0], toupper(cc[0]), 1);
+	memset(&CC[1], toupper(cc[1]), 1);
+	memset(&CC[2], 0, 1);
+
+#if defined(RTN14U)
+	FWrite(CC, OFFSET_COUNTRY_CODE, 2);
+#else
 #define MTD_SIZE_FACTORY 0x10000
+    {
+	unsigned char *flash_buf;
 	if((flash_buf = malloc(MTD_SIZE_FACTORY)) == NULL)
 	{
 		return 0;
 	}
 	FRead(flash_buf, OFFSET_MTD_FACTORY, MTD_SIZE_FACTORY);
-#endif
-	memset(&CC[0], toupper(cc[0]), 1);
-	memset(&CC[1], toupper(cc[1]), 1);
-	memset(&CC[2], 0, 1);
-#if defined(RTN14U)
-	FWrite(CC, OFFSET_COUNTRY_CODE, 2);
-#else
 
 #if defined(RTN65U) // adjust power for different regulation domain
 	if(get_model() == MODEL_RTN65U)
@@ -542,11 +658,13 @@ setCountryCode_2G(const char *cc)
 	memcpy(flash_buf + (OFFSET_COUNTRY_CODE - OFFSET_MTD_FACTORY), CC, 2);
 	FWrite(flash_buf, OFFSET_MTD_FACTORY, MTD_SIZE_FACTORY);
 	free(flash_buf);
+    }
 #endif
 
 	puts(CC);
 	return 1;
 }
+#endif	/* ! RTCONFIG_NEW_REGULATION_DOMAIN */
 
 static unsigned char nibble_hex(char *c)
 {
@@ -727,7 +845,7 @@ getPIN()
 int
 GetPhyStatus(void)
 {
-#if defined(RTN14U)
+#if defined(RTN14U) || defined(RTAC52U)
 	ATE_mt7620_esw_port_status();
 	return 1;
 #else
@@ -834,13 +952,8 @@ set40M_Channel_2G(char *channel)
 	if (channel==NULL || !isValidChannel(1, channel))
 		return 0;
 	sprintf(chl_buf,"Channel=%s", channel);
-#if defined(RTN14U)
-	eval("iwpriv", "ra0", "set", chl_buf);
-	eval("iwpriv", "ra0", "set", "HtBw=1");
-#else
-	eval("iwpriv", "rai0", "set", chl_buf);
-	eval("iwpriv", "rai0", "set", "HtBw=1");
-#endif
+	eval("iwpriv", WIF_2G, "set", chl_buf);
+	eval("iwpriv", WIF_2G, "set", "HtBw=1");
 	puts("1");
 	return 1;
 }
@@ -852,8 +965,8 @@ set40M_Channel_5G(char *channel)
 	if (channel==NULL || !isValidChannel(0, channel))
 		return 0;
 	sprintf(chl_buf,"Channel=%s", channel);
-	eval("iwpriv", "ra0", "set", chl_buf);
-	eval("iwpriv", "ra0", "set", "HtBw=1");
+	eval("iwpriv", WIF_5G, "set", chl_buf);
+	eval("iwpriv", WIF_5G, "set", "HtBw=1");
 	puts("1");
 	return 1;
 }
@@ -865,10 +978,11 @@ int Get_channel_list(int unit)
 	char chList[256];
 
 #ifdef RTCONFIG_NEW_REGULATION_DOMAIN
-	char tmp[128], prefix[] = "wlXXXXXXXXXX_", *ifname;
+	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-	strcpy(countryCode, nvram_safe_get(strcat_r(prefix, "country_code", tmp)), 2);
+	memset(countryCode, 0, sizeof(countryCode));
+	strncpy(countryCode, nvram_safe_get(strcat_r(prefix, "country_code", tmp)), 2);
 #else
 	memset(countryCode, 0, sizeof(countryCode));
 	FRead(countryCode, OFFSET_COUNTRY_CODE, 2);
@@ -896,8 +1010,6 @@ int Get_ChannelList_5G(void)
 {
 	return Get_channel_list(1);
 }
-
-
 //End of new ATE Command
 
 int getCountryRegion2G(const char *countryCode)
@@ -999,7 +1111,7 @@ int getCountryRegion5G(const char *countryCode, int *warning)
 			(!strcasecmp(countryCode, "VN")) ||
 			(!strcasecmp(countryCode, "YE")) ||
 			(!strcasecmp(countryCode, "ZW")) ||
-#if !defined(RTN14U)
+#if !defined(RTN14U) && !defined(RTAC52U)
 			//for specific power
 			(!strcasecmp(countryCode, "Z1")) 
 #else
@@ -1081,7 +1193,7 @@ int getCountryRegion5G(const char *countryCode, int *warning)
 #endif
 			(!strcasecmp(countryCode, "UZ")) ||
 			(!strcasecmp(countryCode, "ZA")) ||
-#if !defined(RTN14U)
+#if !defined(RTN14U) && !defined(RTAC52U)
 			//for specific power
 			(!strcasecmp(countryCode, "Z2"))
 #else
@@ -1117,7 +1229,7 @@ int getCountryRegion5G(const char *countryCode, int *warning)
 			(!strcasecmp(countryCode, "AR")) ||
 #endif
 			(!strcasecmp(countryCode, "TW")) ||
-#if !defined(RTN14U)
+#if !defined(RTN14U) && !defined(RTAC52U)
 			//for specific power
 			(!strcasecmp(countryCode, "Z3")) 
 #else
@@ -1147,7 +1259,7 @@ int getCountryRegion5G(const char *countryCode, int *warning)
 			(!strcasecmp(countryCode, "VE"))
 #endif
 						 ||
-#if !defined(RTN14U)
+#if !defined(RTN14U) && !defined(RTAC52U)
 			//for specific power
 			(!strcasecmp(countryCode, "Z4")) 
 #else
@@ -1194,31 +1306,71 @@ int getCountryRegion5G(const char *countryCode, int *warning)
 	}
 }
 
-int ralink_mssid_mac_validate(const char *macaddr)
+//Ren.B
+int check_macmode(const char *str)
 {
-	unsigned char mac_binary[6];
-	unsigned long long macvalue;
-	char macbuf[13];
-
-	if (!macaddr)
+	if((!str)||(!strcmp(str, ""))||(!strcmp(str, "disabled")))
+	{
 		return 0;
-	else if (!strlen(macaddr))
-		return 1;
+	}
 
-	ether_atoe(macaddr, mac_binary);
-	sprintf(macbuf, "%02X%02X%02X%02X%02X%02X",
-		mac_binary[0],
-		mac_binary[1],
-		mac_binary[2],
-		mac_binary[3],
-		mac_binary[4],
-		mac_binary[5]);
-	macvalue = strtoll(macbuf, (char **) NULL, 16);
-	if (macvalue % 4)
-		return 0;
-	else
+	if(strcmp(str, "allow")==0)
+	{
 		return 1;
+	}
+
+	if(strcmp(str, "deny")==0)
+	{
+		return 2;
+	}
+	return 0;
 }
+//Ren.E
+
+//Ren.B
+void gen_macmode(int mac_filter[], int band)
+{
+	int i,j;
+	char temp[128], prefix_mssid[] = "wlXXXXXXXXXX_mssid_";
+
+	snprintf(temp, sizeof(temp), "wl%d_macmode", band);
+	mac_filter[0] = check_macmode(nvram_get(temp));
+	_dprintf("mac_filter[0] = %d\n", mac_filter[0]);
+	if(mac_filter[0] == 0)
+	{
+		for(i = 1, j = 1; i < MAX_NO_MSSID; i++)
+		{
+			sprintf(prefix_mssid, "wl%d.%d_", band, i);
+			if (!nvram_match(strcat_r(prefix_mssid, "bss_enabled", temp), "1"))
+				continue;
+
+			mac_filter[j] = 0;
+			_dprintf("mac_filter[%d] = %d\n", j, mac_filter[j]);
+			j++;
+		}
+	}
+	else
+	{
+		for(i = 1, j = 1; i < MAX_NO_MSSID; i++)
+		{
+			sprintf(prefix_mssid, "wl%d.%d_", band, i);
+			if (!nvram_match(strcat_r(prefix_mssid, "bss_enabled", temp), "1"))
+				continue;
+
+			if(nvram_match(strcat_r(prefix_mssid, "macmode", temp), "disabled"))
+			{
+				mac_filter[j] = 0;
+			}
+			else
+			{
+				mac_filter[j] = mac_filter[0]; //copy rule from "primary" WiFi interface.
+			}
+			_dprintf("mac_filter[%d] = %d\n", j, mac_filter[j]);
+			j++;
+		}
+	}
+}
+//Ren.E
 
 int gen_ralink_config(int band, int is_iNIC)
 {
@@ -1241,6 +1393,10 @@ int gen_ralink_config(int band, int is_iNIC)
 	char *nv, *nvp, *b;
 	int wl_key_type[MAX_NO_MSSID];
 	int mcast_phy, mcast_mcs;
+	int mac_filter[MAX_NO_MSSID];
+#if defined(RTAC52U)
+	int VHTBW_MAX = 0;
+#endif
 
 	if (!is_iNIC)
 	{
@@ -1307,7 +1463,7 @@ int gen_ralink_config(int band, int is_iNIC)
 
 
 
-	if (!ralink_mssid_mac_validate(nvram_safe_get(strcat_r(prefix, "hwaddr", tmp))))
+	if (!mssid_mac_validate(nvram_safe_get(strcat_r(prefix, "hwaddr", tmp))))
 	{
 		dbG("Main BSSID is not multiple of 4s!");
 		ssid_num = 1;
@@ -1410,19 +1566,45 @@ int gen_ralink_config(int band, int is_iNIC)
 	{
 		if (str && strlen(str))
 		{
-			if (atoi(str) == 0)       // A,N
-				fprintf(fp, "WirelessMode=%d\n", 8);
-			else if (atoi(str) == 1)  // N
-				fprintf(fp, "WirelessMode=%d\n", 11);
+			if (atoi(str) == 0)       // Auto
+			{
+#if defined(RTAC52U)
+				fprintf(fp, "WirelessMode=%d\n", 14);	// A + AN + AC mixed
+				VHTBW_MAX = 1;
+#else
+				fprintf(fp, "WirelessMode=%d\n", 8);	// A + AN mixed
+#endif
+			}
+			else if (atoi(str) == 1)  // N Only or N + AC
+			{
+#if defined(RTAC52U)
+				fprintf(fp, "WirelessMode=%d\n", 15);	// AN + AC mixed
+				VHTBW_MAX = 1;
+#else
+				fprintf(fp, "WirelessMode=%d\n", 11);	// N in 5G
+#endif
+			}
 			else if (atoi(str) == 2)  // A
 				fprintf(fp, "WirelessMode=%d\n", 2);
 			else			// A,N
+			{
+#if defined(RTAC52U)
+				fprintf(fp, "WirelessMode=%d\n", 14);
+				VHTBW_MAX = 1;
+#else
 				fprintf(fp, "WirelessMode=%d\n", 8);
+#endif
+			}
 		}
 		else
 		{
-			warning = 6;		// A,N
-			fprintf(fp, "WirelessMode=%d\n", 8);
+			warning = 6;
+#if defined(RTAC52U)
+			fprintf(fp, "WirelessMode=%d\n", 14);		// A + AN + AC mixed
+			VHTBW_MAX = 1;
+#else
+			fprintf(fp, "WirelessMode=%d\n", 8);		// A + AN mixed
+#endif
 		}
 	}
 	else
@@ -1892,13 +2074,13 @@ int gen_ralink_config(int band, int is_iNIC)
 	fprintf(fp, "BlockCh=\n");
 
 	//GreenAP
-#if defined(RTN65U) || defined(RTN14U)
-	if(get_model() == MODEL_RTN65U)
+#if defined(RTN65U)
 	{
 		fprintf(fp, "GreenAP=%d\n", 1);
 	}
-	else if (get_model() == MODEL_RTN14U)
+#elif defined(RTN14U) || defined(RTAC52U)
 	/// MT7620 GreenAP will impact TSSI, force to disable GreenAP here..
+	//  MT7620 GreenAP cause bad site survey result on RTAC52 2G.
 	{
 		fprintf(fp, "GreenAP=%d\n", 0);
 	}
@@ -1918,13 +2100,17 @@ int gen_ralink_config(int band, int is_iNIC)
 
 	//PreAuth
 	memset(tmpstr, 0x0, sizeof(tmpstr));
-
 	for (i = 0; i < ssid_num; i++)
 	{
 		if (i)
+			snprintf(prefix_mssid, sizeof(prefix_mssid), "wl%d.%d_", band, i);
+		else
+			snprintf(prefix_mssid, sizeof(prefix_mssid), "wl%d_", band);
+
+		if (i)
 			sprintf(tmpstr, "%s;", tmpstr);
 
-		sprintf(tmpstr, "%s%s", tmpstr, "0");
+		sprintf(tmpstr, "%s%s", tmpstr, strstr(nvram_safe_get(strcat_r(prefix_mssid, "auth_mode_x", temp)), "wpa") ? "1" : "0");
 	}
 	fprintf(fp, "PreAuth=%s\n", tmpstr);
 /*
@@ -2154,7 +2340,11 @@ int gen_ralink_config(int band, int is_iNIC)
 		fprintf(fp, "RekeyInterval=%d\n", 0);
 	}
 
-	//PMKCachePeriod
+	//PMKCachePeriod (in minutes)
+	str = nvram_safe_get(strcat_r(prefix, "pmk_cache", tmp));
+	if (str && strlen(str))
+                fprintf(fp, "PMKCachePeriod=%ld\n", atol(str));
+	else
 	fprintf(fp, "PMKCachePeriod=%d\n", 10);
 
 	fprintf(fp, "MeshAutoLink=%d\n", 0);
@@ -2576,10 +2766,8 @@ int gen_ralink_config(int band, int is_iNIC)
 			else
 				EXTCHA_MAX = 1;
 		}
-#if !defined(RTN14U)  
 		else
 			HTBW_MAX = 0;
-#endif
 	}
 
 	//HT_EXTCHA
@@ -2624,7 +2812,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	}
 
 	//HT_BSSCoexistence
-	if(str && (strcmp(str, "2") != 0))
+	if(str && (strcmp(str, "1") == 0))
 		fprintf(fp, "HT_BSSCoexistence=%d\n", 1);	// 20 Only and 20/40 coexistence support
 	else
 		fprintf(fp, "HT_BSSCoexistence=%d\n", 0);	// 40 Only
@@ -2736,6 +2924,29 @@ int gen_ralink_config(int band, int is_iNIC)
 	//HT_DisallowTKIP
 	fprintf(fp, "HT_DisallowTKIP=%d\n", 1);
 
+#ifdef RTAC52U
+	//VHT_BW, VHT_DisallowNonVHT
+	str = nvram_safe_get(strcat_r(prefix, "bw", tmp));
+	if(band != 1)
+	{
+	}
+	else if(str && (strcmp(str, "1") == 0) && (HTBW_MAX == 1) && (VHTBW_MAX == 1))	// Auto
+	{
+		fprintf(fp, "VHT_BW=%d\n", 1);
+		fprintf(fp, "VHT_DisallowNonVHT=%d\n", 0);
+	}
+	else if(str && (strcmp(str, "3") == 0) && (HTBW_MAX == 1) && (VHTBW_MAX == 1))	// 80 MHz Only
+	{
+		fprintf(fp, "VHT_BW=%d\n", 1);
+		fprintf(fp, "VHT_DisallowNonVHT=%d\n", 1);
+	}
+	else
+	{
+		fprintf(fp, "VHT_BW=%d\n", 0);
+		fprintf(fp, "VHT_DisallowNonVHT=%d\n", 0);
+	}
+#endif
+
 	// TxBF
 	if (band)
 	{
@@ -2787,9 +2998,17 @@ int gen_ralink_config(int band, int is_iNIC)
 //	fprintf(fp, "ApCliWscPinCode=%s\n", nvram_safe_get("secret_code"));	// removed from SDK 3.3.0.0
 
 	//AccessPolicy0
+	gen_macmode(mac_filter, band); //Ren
 	str = nvram_safe_get(strcat_r(prefix, "macmode", tmp));
+
 	if (str && strlen(str))
 	{
+		#if 1 //Ren.B
+		for (i = 0; i < ssid_num; i++)
+		{
+			fprintf(fp, "AccessPolicy%d=%d\n", i, mac_filter[i]);
+		}
+		#else
 		if (!strcmp(str, "disabled"))
 		{
 			for (i = 0; i < ssid_num; i++)
@@ -2811,6 +3030,7 @@ int gen_ralink_config(int band, int is_iNIC)
 			for (i = 0; i < ssid_num; i++)
 				fprintf(fp, "AccessPolicy%d=%d\n", i, 0);
 		}
+		#endif //Ren.E
 	}
 	else
 	{
@@ -2838,7 +3058,10 @@ int gen_ralink_config(int band, int is_iNIC)
 
 	// AccessControlLis0~3
 	for (i = 0; i < ssid_num; i++)
-		fprintf(fp, "AccessControlList%d=%s\n", i, list);
+		if(mac_filter[i] != 0)
+			fprintf(fp, "AccessControlList%d=%s\n", i, list);
+		else
+			fprintf(fp, "AccessControlList%d=%s\n", i, "");
 
 	if (!nvram_match("sw_mode", "2") && !nvram_match(strcat_r(prefix, "mode_x", tmp), "0"))
 	{
@@ -3148,14 +3371,12 @@ int gen_ralink_config(int band, int is_iNIC)
 	fprintf(fp, "Key3Str=\n");
 	fprintf(fp, "Key4Str=\n");
 
-	//IgmpSnEnable
-	if (nvram_get_int(strcat_r(prefix, "igs", tmp)))
-		fprintf(fp, "IgmpSnEnable=%d\n", 1);
-	else
-		fprintf(fp, "IgmpSnEnable=%d\n", 0);
+	/* Wireless IGMP Snooping */
+	fprintf(fp, "IgmpSnEnable=%d\n",
+		nvram_get_int(strcat_r(prefix, "igs", tmp)) ? 1 : 0);
 
 	/*	McastPhyMode, PHY mode for Multicast frames
-	 *	McastMcs, MCS for Multicast frames, ranges from 0 to 15
+	 *	McastMcs, MCS for Multicast frames
 	 *
 	 *	MODE=1, MCS=0: Legacy CCK 1Mbps
 	 *	MODE=1, MCS=1: Legacy CCK 2Mbps
@@ -3170,12 +3391,13 @@ int gen_ralink_config(int band, int is_iNIC)
 	 *	MODE=2, MCS=6: Legacy OFDM 48Mbps
 	 *	MODE=2, MCS=7: Legacy OFDM 54Mbps
 	 *	MODE=3, MCS=0: HTMIX 6.5/15Mbps
-	 *	MODE=3, MCS=1: HTMIX 15/30Mbps
+	 *	MODE=3, MCS=1: HTMIX 13/30Mbps
 	 *	MODE=3, MCS=2: HTMIX 19.5/45Mbps
-	 *	MODE=3, MCS=8: HTMIX 13/30Mbps
-	 *	MODE=3, MCS=9: HTMIX 26/60Mbps
-	 *	MODE=3, MCS=10: HTMIX 39/90Mbps
-	 *	MODE=3, MCS=15: HTMIX 130/144Mbps
+	 *	MODE=3, MCS=7: HTMIX 65/150Mbps
+	 *	MODE=3, MCS=8: HTMIX 13/30Mbps 2S
+	 *	MODE=3, MCS=9: HTMIX 26/60Mbps 2S
+	 *	MODE=3, MCS=10: HTMIX 39/90Mbps 2S
+	 *	MODE=3, MCS=15: HTMIX 130/300Mbps 2S
 	 **/
 	i = nvram_get_int(strcat_r(prefix, "mrate_x", tmp));
 next_mrate:
@@ -3216,10 +3438,10 @@ next_mrate:
 	case 12: /* Legacy OFDM 54Mbps */
 		mcast_phy = 2, mcast_mcs = 7;
 		break;
-	case 13: /* HTMIX 130/144Mbps */
+	case 13: /* HTMIX 130/300Mbps 2S */
 		mcast_phy = 3, mcast_mcs = 15;
 		break;
-	case 14: /* HTMIX HTMIX 6.5/15Mbps */
+	case 14: /* HTMIX 6.5/15Mbps */
 		mcast_phy = 3, mcast_mcs = 0;
 		break;
 	case 15: /* HTMIX 13/30Mbps */
@@ -3234,7 +3456,7 @@ next_mrate:
 	case 18: /* HTMIX 26/60Mbps 2S */
 		mcast_phy = 3, mcast_mcs = 9;
 		break;
-	case 19: /* HTMIX 36/90Mbps 2S */
+	case 19: /* HTMIX 39/90Mbps 2S */
 		mcast_phy = 3, mcast_mcs = 10;
 		break;
 	default: /* Disable */
@@ -3634,10 +3856,10 @@ getSiteSurvey(int band)
 	int lock;
 
 	memset(data, 0x00, 255);
-	strcpy(data, "SiteSurvey=1"); 
-	wrq.u.data.length = strlen(data)+1; 
-	wrq.u.data.pointer = data; 
-	wrq.u.data.flags = 0; 
+	strcpy(data, "SiteSurvey=1");
+	wrq.u.data.length = strlen(data)+1;
+	wrq.u.data.pointer = data;
+	wrq.u.data.flags = 0;
 
 	lock = file_lock("sitesurvey");
 	if (wl_ioctl(get_wifname(band), RTPRIV_IOCTL_SET, &wrq) < 0)
@@ -5131,7 +5353,7 @@ ate_run_in(void)
 }
 #endif // RTN65U
 
-#if !defined(RTN14U)	
+#if !defined(RTN14U) && !defined(RTAC52U)
 int Set_SwitchPort_LEDs(const char *group, const char *action)
 {
 	int groupNo;

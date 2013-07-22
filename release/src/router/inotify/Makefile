@@ -4,6 +4,8 @@
 #
 #***********************************************************************
 
+include ../common.mak
+
 #CFLAGS = -g -rdynamic -DMYDEBUG -DDEBUG
 LIBS = -lpthread
 

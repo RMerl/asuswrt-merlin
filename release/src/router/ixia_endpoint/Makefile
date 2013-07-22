@@ -7,3 +7,4 @@ install: all
 	install echr.msg $(INSTALLDIR)/bin
 	install endpoint.ini $(INSTALLDIR)/bin
 
+clean:
