@@ -1,0 +1,344 @@
+# NVRAM board text file for the BCM4703nr
+# $Copyright (C) 2007 Broadcom Corporation$
+# All Rights Reserved.
+# $Id: bcm94703nr.txt,v 1.13 2007-10-25 21:21:54 mtanner Exp $
+#
+# THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
+# KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
+# SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A SPECIFIC PURPOSE OR NON-INFRINGEMENT CONCERNING THIS SOFTWARE.
+
+# boardtype describes what type of Broadcom reference board that the design resembles
+# set a boardtype of BCM94703nr
+boardtype=0x04c0
+
+# boardnum is set by the nvserial program. Don't edit it here.
+boardnum=${serno}
+
+# Board revision is 1.1
+boardrev=0x1101
+
+# NOTE: This "boardflags" entry is ONLY for the 4704, not the 4321. See below for 4321 parameters.
+# boardflags: (LSB on top, MSB on bottom)
+#             0 = no Bluetooth coexistence
+#             0 = GPIO 9 does not control the PA
+#             0 = does not implement GPIO 13 radio disable indication
+#             0 = NO RSSI divider
+#             1 = YES board has RoboSwitch (the BCM5325F)
+#             0 = OK to power down PLL and chip
+#             0 = NO can't do high power CCK transmission (disables opo parameter
+#                 for power offset between CCK and OFDM)
+#             0 = NO board does not have ADMtek switch
+#             0 = NO board does not have VLAN capability
+#             0 = NO board does not support Afterburner
+#             0 = NO board uses the PCI bus
+#             0 = NO board does not have a FEM
+#             0 = NO board does not have an external LNA
+#             0 = NO board does not have high gain PA
+#             0 = NO alternate Bluetooth coexistence
+#             0 = NO do not use alternate IQ imbalance settings
+#
+boardflags=0x0010
+
+# sromrev tells the software what "version" of NVRAM is used.
+sromrev=2
+
+# MIPS clock frequency in MHz
+clkfreq=264
+
+# 16MByte DDR SDRAM (4M x 16 x 1)
+# The sdram_init value is the lower 16-bits of the memory controller's CONFIG register (offset 0x004)
+# 64 MB DDR SDRAM (4 Meg x 16 x 2)
+sdram_init=0x0149
+# The sdram_config value is the lower 16-bits of the memory controller's MEMBuf register (offset 0x010)
+# which is directly written to the SDRAM's mode register.
+# Set burst length to 4, burst type to sequential, CAS latency to 2.5, normal mode, burst writes.
+sdram_config=0x0062
+# Always set sdram_refresh to 0x0000
+sdram_refresh=0x0000
+# Always set sdram_ncdl to 0x0000
+sdram_ncdl=0x0000
+
+# MII0 (et0) connects to the external Ethernet switch (5325F RoboSwitch) for the LAN
+et0phyaddr=30
+et0mdcport=0
+# Set the MAC address of the LAN Ethernet ports
+# The "maclo" part is filled in by the nvserial program.
+et0macaddr=00:90:4c:f0:${maclo}
+
+# MII1 (et1) connects directly to PHY 4 (not the switch) in the 5325F for the WAN
+et1phyaddr=4
+et1mdcport=0
+# Set the MAC address of the WAN Ethernet port
+# The "maclo" part is filled in by the nvserial program.
+et1macaddr=00:90:4c:f1:${maclo}
+
+# Set default IP address and net mask for the router.
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+
+# Set a short delay on boot so the CFE delays a bit before loading Linux. Allows easier S/W updates.
+boot_wait=on
+# If boot_wait is on, then "wait_time" sets the wait time from 3 to 20 seconds.
+wait_time=3
+
+# The reset button is on GPIO 7.
+reset_gpio=7
+
+# Bootloader variables for downloading new flash code - don't change!
+dl_ram_addr=a0001000
+os_ram_addr=80001000
+os_flash_addr=bfc40000
+scratch=a0180000
+
+# Board has an external BCM5325 Ethernet switch (RoboSwitch) with the reset line
+# controlled with GPIO_0 from the CPU chip.
+gpio0=robo_reset
+
+# SES Button on GPIO 6
+gpio6=ses_button
+
+# Watchdog timer in ms (0 will disable), 3000ms is minimum.
+watchdog=3000
+
+# The following section is to configure the on-board (WOMBO) 4322 when it does not have an SROM.
+# These parameters take the place of the SROM contents.
+# These parameters must have a special prefix. The format is:
+#   'pci/<bus_#>/<slot_#>/<param>'
+#
+#   where: <bus_#> is the PCI bus number – always "1" for current chips
+#          <slot_#> slot number of the WOMBo chip (i.e. the 4322)
+#             slot 0 is (usually) the CPU chip (i.e. the 4703)
+#             slot = 1 if PCI_AD17 connected to IDSEL pin of the WOMBo chip
+#             slot = 2 if PCI_AD18 connected to IDSEL pin of the WOMBo chip
+#             slot = 3 if PCI_AD19 connected to IDSEL pin of the WOMBo chip
+#          <param> is the parameter assignment. i.e. "boardflags=0x0200"
+
+# This is the 4322 WOMBO section
+
+# venid is the "vendor ID" of the 4321. 0x14E4 is Broadcom (Epigram)
+pci/1/1/venid=0x14e4
+
+# devid is the "device ID" to identify what type of wireless interface this is
+# 0x432C sets 11n, single band 2.4GHz
+pci/1/1/devid=0x432C
+
+# sromrev tells the software what "version" of NVRAM/SROM is used.
+pci/1/1/sromrev=8
+
+# boardtype is the "type" of Broadcom reference board that the design resembles
+# sets a board type of BCM94322mp
+pci/1/1/boardtype=0x04a6
+
+# boardvendor is the same as venid
+pci/1/1/boardvendor=0x14e4
+
+# set the rev of the 4322 part of the board
+# set Rev 1.0
+pci/1/1/boardrev=0x1101
+
+# This is the 'boardflags' parameter for the 4322 only
+# boardflags: (LSB on top, MSB on bottom)
+#             0 = no Bluetooth coexistence
+#             0 = GPIO 9 does not control the PA
+#             0 = does not implement GPIO 13 radio disable indication
+#             0 = NO RSSI divider
+#             0 = NO board does not have a RoboSwitch (not applicable for a MAC/PHY only chip)
+#             0 = OK to power down PLL and chip
+#             0 = disables opo parameter for power offset between CCK and OFDM (not applicable for 4321)
+#             0 = NO board does not have an ADMtek switch (not applicable for a MAC/PHY only chip)
+#             0 = NO board does not have VLAN capability (not applicable for a MAC/PHY only chip)
+#             1 = YES board supports Afterburner
+#             0 = NO board does not disable the PCI bus, i.e. board uses the PCI bus
+#             0 = NO board does no have a FEM
+#             0 = NO board does not have an external LNA
+#             0 = NO board does not have high gain PA
+#             0 = NO alternate Bluetooth coexistence
+#             0 = NO do not use alternate IQ imbalance settings
+#			  0 = No board has a PA
+#             0 = NO board's RSSI does not use positive slope 
+#			  0 = NO board does not use the PARef LDO
+#			  0 = NO board does not support phase shifter
+#			  0 = NO board does not  have buck/booster
+#             0 = NO board does not have FEM and switch to share antenna w/ BT
+pci/1/1/boardflags=0x200
+
+# This is the 'boardflags2' parameter for the 4321 only
+# Awalys set zero for 4322
+# boardflags2: (LSB on top, MSB on bottom)
+#             0 = Board uses internal RX baseband regulators in 2055
+#             0 = NO board does not have the RF superswitch for 2-of-3 antenna diversity
+#             0 = NO board disables TX power control
+#             0 = NO board does not support 2-of-4 antenna diversity
+#             0 = NO board does not support the 5G band power boost
+#             0 = NO board does not override ASPM and Clkreq settings 
+#             0 = NO board is not Caesers brd
+#             0 = NO board does not use 3-wire BTC 
+#             0 = NO board does not use Skyworks FEM 
+#             0 = not defined yet
+#             0 = not defined yet
+#             0 = not defined yet
+#             0 = not defined yet
+#             0 = not defined yet
+#             0 = not defined yet
+#             0 = not defined yet
+pci/1/1/boardflags2=0x0000
+
+# macaddr sets the MAC address of the 4321 11n wireless interface
+# The value of 00:90:4C:d6 is for a BCM94322mp reference design.
+# The "maclo" part is filled in by the nvserial program.
+pci/1/1/macaddr=00:90:4C:F2:${maclo}
+
+# ccode is the "Country Code". 0 sets "all"
+# This parameter should be changed depending upon where the board is shipped.
+pci/1/1/ccode=0x0
+
+# regrev is the regulatory revision number
+pci/1/1/regrev=0x0
+
+# ledbhX sets the LED behaviour of LEDs connected to the GPIO[3:0] pins of the 4322
+# See app note "80211-AN500-RDS LED guide.pdf" for more details.
+
+# GPIO 7 is wireless activity - 2 = WL_LED_ACTIVITY
+pci/1/1/ledbh0=02
+# don't control GPIOs 1-5
+pci/1/1/ledbh1=11
+pci/1/1/ledbh2=11
+pci/1/1/ledbh3=11
+# Driver can actually control more LEDs.
+pci/1/1/ledbh4=11
+pci/1/1/ledbh5=11
+
+# leddc is the duty cycle for PWM control of the LEDs.
+# 0xFFFF sets 100% duty cycle
+pci/1/1/leddc=0xFFFF
+
+# pci/1/1/aa2g sets which antennas are available for 2.4GHz. Value is a bit field:
+# Bit 0 = 1 for antenna 0 is available, 0 for not.
+# Bit 1 = 1 for antenna 1 is available, 0 for not.
+# Bit 2 = 1 for antenna 2 is available, 0 for not.
+# Bit 3 = 1 for antenna 3 is available, 0 for not.
+
+pci/1/1/aa2g=0x3
+
+
+# agX sets the antenna gain for antenna X. Lower 6 bits are interpreted as a signed number representing
+# whole dB. Hi 2 bits represent number of quarter dBs. qdB's are ALWAYS POSITIVE and are
+# added to whole dBs, so -1 whole dB and 1 qdB = 0x7F = -1dB + 0.25dB = -0.75dB. Range is
+# -32dB to +31.75 dB.
+# set 2dB gain for all available antennas
+pci/1/1/ag0=0x2
+pci/1/1/ag1=0x2
+
+
+# txchain is a bit field that sets how many TX chains are implemented.
+# Bit 0 = 1 for TX chain 0 is implemented, 0 for not.
+# Bit 1 = 1 for TX chain 1 is implemented, 0 for not.
+# Bit 2 = 1 for TX chain 2 is implemented, 0 for not.
+# Bit 3 = 1 for TX chain 3 is implemented, 0 for not.
+
+pci/1/1/txchain=0x3
+
+# rxchain is a bit field that sets how many RX chains are implemented.
+# Bit 0 = 1 for RX chain 0 is implemented, 0 for not.
+# Bit 1 = 1 for RX chain 1 is implemented, 0 for not.
+# Bit 2 = 1 for RX chain 2 is implemented, 0 for not.
+# Bit 3 = 1 for RX chain 3 is implemented, 0 for not.
+
+pci/1/1/rxchain=0x3
+
+# antswitch sets the type of antenna diveristy switch used on the board
+# 0 = no antenna switch
+# 1 = antenna switch as on BCM94321cb2 2of3
+# 2 = antenna switch as on BCM94321mp 2of3
+# WNDR3300 uses the 4321cb2 switch design
+pci/1/1/antswitch=0x0
+
+
+
+# itt2ga0 is the TX chain 0 idle target TSSI value for 2.4GHz
+pci/1/1/itt2ga0=0x20
+
+# maxp2ga0 is the TX chain 0 maximum TX output power for 2.4GHz
+# units of 0.25dB
+# max TX power is 0x48=72qdBm=18dBm
+pci/1/1/maxp2ga0=0x48
+
+# The following four parameters are the PA parameters for the TX chain 0, 2.4GHz, PA
+
+pci/1/1/pa2gw0a0=0xfe9e
+pci/1/1/pa2gw1a0=0x15D5
+pci/1/1/pa2gw2a0=0xfae9
+
+# itt2ga1 is the TX chain 1 idle target TSSI value for 2.4GHz
+pci/1/1/itt2ga1=0x20
+
+# maxp2ga1 is the TX chain 1 maximum TX output power for 2.4GHz
+# units of 0.25dB
+# max TX power is 0x48=72qdBm=18dBm
+pci/1/1/maxp2ga1=0x48
+
+# The following four parameters are the PA parameters for the TX chain 1, 2.4GHz, PA
+
+pci/1/1/pa2gw0a1=0xfeb3
+pci/1/1/pa2gw1a1=0x15C9
+pci/1/1/pa2gw2a1=0xfaf7
+
+
+
+######FEM  parameters ###########
+# TSSI positive slope (1 bit) 
+pci/1/1/tssipos2g=0x1
+#External-PA gain-type: full-gain (0x0), pa-lite(0x1), no_pa(0x2)
+pci/1/1/extpagain2g=0x0
+#support 32 combinations of different Pdet dynamic ranges (5 bits)
+pci/1/1/pdetrange2g=0x0
+#TR switch isolation loss between RX0 <-> Ant0 (12:4:40 dB)
+pci/1/1/triso2g=0x3
+#AntswitchctrlLUT? configuration: 32 possible choices 
+pci/1/1/antswctl2g=0x0
+
+
+####used for lpphy only ? #########
+pci/1/1/bxa2g=0x3
+pci/1/1/rssisav2g=0x7
+pci/1/1/rssismc2g=0xf
+pci/1/1/rssismf2g=0xf
+pci/1/1/rxpo2g=0xff
+pci/1/1/tri2g=0xff
+
+##########PO parameters ########################
+# cck2gpo is the 2.4GHz band CCK power offsets
+pci/1/1/cck2gpo=0x0
+
+# ofdm2gpo is the 2.4GHz band, legacy SISO, OFDM power offsets
+pci/1/1/ofdm2gpo=0x0
+
+
+# mcs2gpo0 is the 2.4GHz band, 11n MCS 0-3, SISO, power offsets
+pci/1/1/mcs2gpo0=0x0
+# mcs2gpo1 is the 2.4GHz band, 11n MCS 4-7, SISO, power offsets
+pci/1/1/mcs2gpo1=0x0
+# mcs2gpo2 is the 2.4GHz band, 11n MCS 8-11, SDM, power offsets
+pci/1/1/mcs2gpo2=0x0
+# mcs2gpo3 is the 2.4GHz band, 11n MCS 12-15, SDM, power offsets
+pci/1/1/mcs2gpo3=0x0
+# mcs2gpo4 is the 2.4GHz band, 11n MCS 16-19, SDM, power offsets
+pci/1/1/mcs2gpo4=0x0
+# mcs2gpo5 is the 2.4GHz band, 11n MCS 20-23, SDM, power offsets
+pci/1/1/mcs2gpo5=0x0
+# mcs2gpo6 is the 2.4GHz band, 11n MCS 24-27, SDM, power offsets
+pci/1/1/mcs2gpo6=0x0
+# mcs2gpo7 is the 2.4GHz band, 11n MCS 28-31, SDM, power offsets
+pci/1/1/mcs2gpo7=0x0
+# cddpo is the CDD power offsets, with regard to SISO
+pci/1/1/cddpo=0x0
+
+# stbcpo is the STBC power offsets, with regard to SISO
+pci/1/1/stbcpo=0x0
+
+# bw40po is the 40MHz power offsets, with regard to 20MHz BW
+pci/1/1/bw40po=0x4
+
+# bwduppo is the Dup in 40MHz power offsets, with regard to 20MHz BW
+pci/1/1/bwduppo=0x0

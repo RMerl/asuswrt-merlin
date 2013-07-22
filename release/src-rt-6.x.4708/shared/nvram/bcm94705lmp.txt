@@ -1,0 +1,53 @@
+# Broadcom 4705L reference design
+# $Copyright Open Broadcom Corporation$
+# $Id: bcm94705lmp.txt,v 1.3 2006-11-28 23:08:06 rnuti Exp $
+
+boardtype=0x489
+boardnum=${serno}
+# Board revision 1.0
+boardrev=0x10
+# BFL_ENETROBO, BFL_ENETVLAN
+boardflags=0x110
+
+# MIPS clock frequency in MHz
+clkfreq=300,150,37
+
+# 64 MB DDR SDRAM (16 Meg x 16 x 2)
+sdram_init=0x0009
+sdram_config=0x0062
+sdram_refresh=0x0000
+sdram_ncdl=0
+
+# Ethernet 
+et0macaddr=00:90:4c:b9:${maclo}
+et0phyaddr=30
+et0mdcport=0
+
+# Watchdog timer in ms
+watchdog=3000
+
+# Reset 
+reset_gpio=7
+
+# SES Button on GPIO 8
+gpio8=ses_button
+
+# Variables used by CFE and run-time OS image
+# which may be modified by the run-time OS image
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+
+# Ethernet switch config (vlan1:LAN, vlan2:WAN)
+vlan1ports=0 1 2 3 8*
+vlan1hwname=et0
+vlan2ports=4 8u
+
+# bootloader/OS glue
+landevs=vlan1 wl0 wl1
+wandevs=et0
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+
+# CFE variables
+boot_wait=on
+wait_time=5

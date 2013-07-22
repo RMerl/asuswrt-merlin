@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+#  The optional parameter to this function specifies the name
+#  of a binary file to be in the 'flash2' device. You can
+#  boot this binary by typing:
+#
+#  cfe> boot -elf -rawfs flash2:
+#
+#
+if [ "$1" ]; then
+    swarm-run \
+        --sim-check-undefined \
+        --add-hw flash2.m4 \
+        --with-boot-flash-file cfe.srec \
+        --with-boot-flash-type ram \
+        --no-file \
+        --with-swarm-devs \
+        --with-sample-pci-devs \
+        --with-swarm-ide \
+        --with-swarm-ide-disk0-file disk0.dsk \
+        --with-swarm-ide-disk0-size 60 \
+        --with-memory-config 2x32 \
+        --with-swarm-rtc-eeprom-file x1240rom.bin \
+        --with-swarm-pcmcia-flash-file $1
+else
+    swarm-run \
+	-v \
+        --sim-check-undefined \
+        --with-boot-flash-file cfe.srec \
+        --with-boot-flash-type ram \
+        --no-file \
+        --with-swarm-devs \
+        --with-sample-pci-devs \
+        --with-swarm-ide \
+        --with-swarm-ide-disk0-file disk0.dsk \
+        --with-swarm-ide-disk0-size 60 \
+        --with-memory-config 2x32 \
+        --with-swarm-rtc-eeprom-file x1240rom.bin 
+fi

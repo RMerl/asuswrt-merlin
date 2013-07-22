@@ -1,0 +1,23 @@
+#
+# Sample script file for romboot CFE
+# o To download nvram 
+# o To download and run linux.trx
+#
+# $Id: cfe_script.cfesh,v 1.1 2010-06-08 21:49:36 vjakula Exp $
+
+############# 32MB comfiguration for 5358unr p100 #####################
+# Change sdram settings to support 32MB RAM (only if board has it).
+sdram_param set refresh=0x2060 config=0x202 ncdl=0x60000020
+#Load the default nvram at top 32KB in RAM.
+load -raw -tftp -addr=0x81FF8000 -max=0x5000000 192.168.1.10:nvram5358unr_p100
+#Load linux.trx 5MB below TOP 32K nvram.
+load -raw -tftp -addr=0x81af0000 -max=0x5000000 192.168.1.10:linux.trx
+#Uncompress the linux image @0x81af001c and load and run from 0x80001000
+boot -raw -z -tftp -addr=0x80001000 -max=0x5000000 -fs=memory :0x81af001c
+############# 16MB comfiguration for 5358bu p103 ######################
+#Load the default nvram at top 32KB in RAM.
+#load -raw -tftp -addr=0x80FF8000 -max=0x5000000 192.168.1.10:nvram5358unr_p100
+#Load linux.trx 5MB below TOP 32K nvram.
+#load -raw -tftp -addr=0x80af0000 -max=0x5000000 192.168.1.10:linux.trx
+#Uncompress the linux image @0x80af001c and load and run from 0x80001000
+#boot -raw -z -tftp -addr=0x80001000 -max=0x5000000 -fs=memory :0x80af001c

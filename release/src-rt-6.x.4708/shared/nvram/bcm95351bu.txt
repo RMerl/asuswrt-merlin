@@ -1,0 +1,113 @@
+# BCM95351BU sdram board
+# $Copyright Open Broadcom Corporation$
+# $Id: bcm95351bu.txt,v 1.2 2005-11-17 01:04:46 jhuston Exp $
+boardtype=0x047a
+boardnum=${serno}
+# VLAN + ROBO
+boardflags=0x0110
+# Board revision 1.0
+boardrev=0x10
+
+# MIPS clock frequency in MHz
+clkfreq=200
+
+# 16 MB SDR SDRAM (4 Meg x 16 x 2)
+sdram_init=0x2000
+sdram_config=0x22
+sdram_refresh=0x0
+sdram_ncdl=0
+
+# Bootloader variables
+dl_ram_addr=a0001000
+os_ram_addr=80001000
+os_flash_addr=bfc40000
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+scratch=a0180000
+boot_wait=on
+reset_gpio=3
+
+# Watchdog timer in ms
+watchdog=3000
+
+# Ethernet w/Robo switch
+et0macaddr=00:90:4c:9c:${maclo}
+et0phyaddr=30
+et0mdcport=0
+
+# Robo switch config (vlan0:LAN, vlan1:WAN)
+vlan0ports=1 2 3 4 5*
+vlan0hwname=et0
+vlan1ports=0 5u
+
+# Bootloader and OS glue
+landevs=vlan0 wl0 wl1
+wandevs=et0
+
+# SES parameters
+gpio2=ses_button
+
+#
+# --- on-chip d11 device ---
+#
+sb/7/sromrev=2
+# HGPA + AB + CCK + AD
+sb/7/boardflags=0x2248
+
+# single band 802.11b/g device
+sb/7/devid=0x4320
+
+# 802.11g parameters
+sb/7/il0macaddr=00:90:4c:9d:${maclo}
+sb/7/aa0=1
+sb/7/ag0=255
+sb/7/pa0maxpwr=76
+sb/7/pa0itssit=62
+sb/7/pa0b0=0x15c8
+sb/7/pa0b1=0xfa80
+sb/7/pa0b2=0xfe65
+sb/7/opo=12
+
+# LED GPIO assignments
+sb/7/wl0gpio2=0
+
+# misc. parameters
+sb/7/ccode=0
+
+#
+# --- off-chip d11 device ---
+#
+pci/1/1/sromrev=2
+# ALTIQ + HGPA + AB + CCK + AD
+pci/1/1/boardflags=0xa248
+
+# single band 802.11a device
+# pci/1/1/devid=0x431a
+
+# 802.11a parameters
+# pci/1/1/et1macaddr=00:90:4c:9e:${maclo}
+# pci/1/1/aa1=1
+# pci/1/1/ag1=2
+# pci/1/1/pa1lomaxpwr=60
+# pci/1/1/pa1himaxpwr=60
+# pci/1/1/pa1lob0=0x1880
+# pci/1/1/pa1lob1=0xfcbd
+# pci/1/1/pa1lob2=0xff4b
+# pci/1/1/pa1hib0=0x18a8
+# pci/1/1/pa1hib1=0xfcc1
+# pci/1/1/pa1hib2=0xff41
+# pci/1/1/pa1maxpwr=60
+# pci/1/1/pa1b0=0x184c
+# pci/1/1/pa1b1=0xfcc3
+# pci/1/1/pa1b2=0xff40
+# pci/1/1/pa1itssit=120
+# pci/1/1/opo=0
+
+# LED GPIO assignments
+pci/1/1/wl0gpio0=2
+pci/1/1/wl0gpio1=0
+pci/1/1/wl0gpio2=4
+
+# misc. parameters
+pci/1/1/ccode=0
+

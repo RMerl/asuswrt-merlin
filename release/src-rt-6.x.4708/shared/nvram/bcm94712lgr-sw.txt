@@ -1,0 +1,60 @@
+# BCM94712LGR DDR board as L2 switch
+# $Copyright Open Broadcom Corporation$
+# $Id: bcm94712lgr-sw.txt,v 1.1 2004-06-30 22:47:34 jqliu Exp $
+boardtype=0x0460
+boardnum=${serno}
+# Board revision 1.0
+boardrev=0x10
+boardflags=0x0618
+sromrev=2
+
+# MIPS clock frequency in MHz
+clkfreq=200
+
+# 32 MB DDR SDRAM (16 Meg x 16)
+sdram_init=0x000b
+sdram_config=0x0062
+sdram_refresh=0x0000
+sdram_ncdl=0
+
+# Ethernet w/BCM5325E switch
+et0macaddr=00:90:4c:88:${maclo}
+et0phyaddr=30
+et0mdcport=0
+
+# BCM5325E switch reset
+gpio6=robo_reset
+
+# Make the d11 i/f single band
+wl0id=0x4320
+
+# 4712 802.11g parameters
+il0macaddr=00:90:4c:89:${maclo}
+aa0=3
+ag0=2
+pa0maxpwr=60
+pa0itssit=62
+pa0b0=0x1599
+pa0b1=0xfad3
+pa0b2=0xfed4
+
+# Commons wireless parameters
+cctl=0
+ccode=0
+
+# Bootlaoder variables
+dl_ram_addr=a0001000
+os_ram_addr=80001000
+os_flash_addr=bfc40000
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+scratch=a0180000
+boot_wait=on
+
+# Watchdog timer in ms
+watchdog=3000
+
+# Bootloader and OS glue
+landevs=et0 wl0
+wandevs=
+
