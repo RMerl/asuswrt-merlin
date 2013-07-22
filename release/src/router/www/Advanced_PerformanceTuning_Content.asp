@@ -214,11 +214,11 @@ function getCookie(c_name)
 
 			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 				<tr>
-					<td valign="top" >
+					<td valign="top">
 						<table width="760px" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
 							<tbody>
-								<tr>
-								  <td bgcolor="#4D595D" valign="top">
+								<tr bgcolor="#4D595D" style="height:10px">
+								  <td valign="top">
 									  <div>&nbsp;</div>
 									  <div class="formfonttitle"><#menu5_6_adv#> - Performance tuning</div>
 									  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
@@ -228,7 +228,7 @@ function getCookie(c_name)
 								</tr>
 
 								<tr>
-									<td bgcolor="#4D595D">
+									<td bgcolor="#4D595D" valign="top">
 										<table width="99%" border="0" align="center" cellpadding="0" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 											<thead>
 											<tr>
@@ -237,7 +237,7 @@ function getCookie(c_name)
 											</thead>
 											
 											<tr>
-												<td>
+												<td valign="top">
 													<div style="margin-left:-10px;">
 														<!--========= svg =========-->
 														<!--[if IE]>
@@ -255,12 +255,12 @@ function getCookie(c_name)
 											</tr>
 										</table>
 										<br>Legend: <span style="color: #FF9900;">2.4 GHz</span> - <span style="color: #33CCFF;">5 GHz</span>
-										<br>Current Temperatures:<span id="coreTemp_2" style="text-align:center; font-weight:bold;color:#FF9900"></span> - <span id="coreTemp_5" style="text-align:center; font-weight:bold;color:#33CCFF"></span>
+										<br>Current Temperatures: <span id="coreTemp_2" style="text-align:center; font-weight:bold;color:#FF9900"></span> - <span id="coreTemp_5" style="text-align:center; font-weight:bold;color:#33CCFF"></span>
 
 									</td>
 								</tr>
 								<tr>
-									<td bgcolor="#4D595D">
+									<td bgcolor="#4D595D" valign="top">
 										<table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 											<thead>
 											<tr>
@@ -301,6 +301,12 @@ function getCookie(c_name)
 										</div -->
 									</td>
 					  		</tr>
+							<tr valign="top">
+								<td bgcolor="#4D595D" valign="top">
+								<div>
+								</div>
+								</td>
+                                                        </tr>
 							</tbody>
 						</table>
 					</td>
