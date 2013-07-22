@@ -18,9 +18,9 @@
 # $Id: Makefile,v 1.3 2008-08-13 20:20:16 $
 #
 
-EMFSRCDIR := ../../../../../../src-rt-6.x.4708/router/emf/emf
+EMFSRCDIR := ../../../../../../src-rt-6.x.4708/router/emf_arm/emf
 EMFCSRCDIR := ../../../../../../src-rt-6.x.4708/emf/emf
-EMFDIR := ../../../../../../src-rt-6.x.4708/router/emf
+EMFDIR := ../../../../../../src-rt-6.x.4708/router/emf_arm
 
 EMF_OBJS := $(EMFCSRCDIR)/emfc.o $(EMFSRCDIR)/emf_linux.o
 

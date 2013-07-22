@@ -118,7 +118,6 @@ $(obj)/$(WLCONF_H): $(WLCFGDIR)/$(WLTUNEFILE) FORCE
 	@echo "WLTUNEFILE     = $(WLTUNEFILE)"
 	cp $< wltemp
 	$(UPDATESH) wltemp $@
-	-cp $(src)/$(SRCBASE_OFFSET)/wl/sysdeps/$(BUILD_NAME)/clm/src/wlc_clm_data.c $(src)/$(SRCBASE_OFFSET)/wl/clm/src
 
 FORCE:
 

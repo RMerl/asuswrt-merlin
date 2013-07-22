@@ -18,9 +18,9 @@
 # $Id: Makefile,v 1.3 2008-08-13 20:20:16 $
 #
 
-IGSSRCDIR := ../../../../../../src-rt-6.x.4708/router/emf/igs
+IGSSRCDIR := ../../../../../../src-rt-6.x.4708/router/emf_arm/igs
 IGSCSRCDIR := ../../../../../../src-rt-6.x.4708/emf/igs
-EMFDIR := ../../../../../../src-rt-6.x.4708/router/emf
+EMFDIR := ../../../../../../src-rt-6.x.4708/router/emf_arm
 
 IGS_OBJS := $(IGSCSRCDIR)/igsc.o $(IGSCSRCDIR)/igsc_sdb.o $(IGSSRCDIR)/igs_linux.o \
 	    $(IGSCSRCDIR)/osl_linux.o
