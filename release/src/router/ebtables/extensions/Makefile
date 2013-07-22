@@ -7,7 +7,7 @@
 EXT_FUNC+=nat arp arpreply ip standard log redirect vlan mark \
           pkttype stp limit
 ifeq ($(DO_IPV6), 1)
-EXT_FUNC+=ip6
+#EXT_FUNC+=ip6
 endif
 EXT_TABLES+=filter nat broute
 
