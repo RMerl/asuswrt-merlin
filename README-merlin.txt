@@ -442,6 +442,7 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.372.31:
+   - NEW: Merged with 372_1363 code from Asus.
    - FIXED: Sysinfo page was reporting IPv6 as reason for
             CTF to be disabled - since 372 that is only true
             for ARM devices.
@@ -489,7 +490,7 @@ History
    - CHANGED: Renamed Advanced (Per IP) Traffic monitoring for
               IPTraffic (to match the Tomato name for that same
               functionality)
-   - FIXED: GRO kills upload speed if CTF is disabled (patched provided 
+   - FIXED: GRO kills upload speed if CTF is disabled (patch provided 
             by Asus, RT-AC56U)
    - FIXED: Buffer overrun in NVRAM handling, leading to random crashes
             (Asus bug, RT-AC56U)
