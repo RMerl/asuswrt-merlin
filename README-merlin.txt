@@ -481,6 +481,9 @@ History
           found under Parental Control.  See http://dns.yandex.ru/
           for more info (go go Google translate).  
           (Experimental builds only)
+   - CHANGED: Connections list under System Log will now progressively
+              display the result while the router is still
+              resolving IPs (if that option was enabled).
    - FIXED: Sysinfo page was reporting IPv6 as reason for
             CTF to be disabled - since 372 that is only true
             for ARM devices.
