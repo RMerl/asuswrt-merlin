@@ -89,6 +89,7 @@ integrated/enabled in the official firmware:
 - WakeOnLan web interface (with user-entered preset targets)
 - clickable MACs on the client list for lookup in the OUI database
 - Display active/tracked network connections
+- VPN Status page
 
 
 Installation
@@ -103,6 +104,11 @@ usually mean an original firmware older than 3.0.0.4.220), the first time
 you flash a 64KB-enabled firmware (such as Asuswrt-merlin) it will 
 wipe ALL your current settings and revert back to factory default!
 This is required to upgrade the nvram storage to 64 KB.
+
+It's also strongly recommended to reset to factory defaults if 
+upgrading from 3.0.0.4.2xx to 3.0.0.4.3xx, to ensure that the 
+new wireless driver used in these builds inherit the new 
+low-level default values.
 
 
 Usage
@@ -218,10 +224,9 @@ Note that the first time you use that option, you must
 tell the router to create the data file.  Make sure you 
 set "Create or reset data files" to "Yes".
 
-Also, Asuswrt-Merlin can track your traffic on a 
-per device (IP) basis, allowing you to monitor traffic 
-history of individual computers.  This option is 
-called IPTraffic.  To enable this, you 
+Also, Asuswrt-Merlin can track the traffic generated 
+by each individual IP on your network.  This option 
+is called IPTraffic.  To enable this, you 
 must first set a custom location to store your 
 traffic database (see above).  Once again, you 
 must also tell it to create the new data file, 
@@ -243,12 +248,12 @@ The monitoring is done per IP, NOT per MAC.
 
 
 * Display active NAT connections *
-On the Network Tools -> Netstat page there is an additional 
-option called "NAT Connections".  This will list the currently 
-tracked network connections.  You can enable name resolution for 
-IPs on the Tools menu,  under "Other Settings".  Note that name 
-resolution can slow down the loading of this page, especially if 
-you have a lot of tracked connections (for instance while torrenting).
+On the System Log -> Connections tab you can view the list 
+of the currently tracked connections.  You can enable name 
+resolution for IPs on the Tools menu,  under "Other Settings".  
+Note that name resolution can slow down the loading of this 
+page, especially if you have a lot of tracked connections 
+(for instance while torrenting).
 
 
 
@@ -430,6 +435,25 @@ Also note that Entware is not available for the
 RT-AC56U.
 
 
+
+* YandexDNS filtering (Experimental builds only) *
+Asus is implementing support for the YandexDNS DNS-based 
+filtering.  This service allows you to filter out 
+dangerous websites at the DNS level.  You can configure 
+which computer will make use of this service if you 
+want, for example, to only filter your children's 
+computer.  The settings can be found under 
+Parental Control.
+
+This feature is a work-in-progress by Asus, so it is 
+only available in the Experimental builds of this 
+firmware at this time, and might not be 100% working 
+yet.
+
+For more information visit http://dns.yandex.ru/ .
+
+
+
 Source code
 -----------
 The source code with all my modifications can be found 
@@ -442,7 +466,21 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.372.31:
-   - NEW: Merged with 372_1363 code from Asus.
+   - NEW: Merged with 372_1363 code from Asus.  Notes:
+      * Beamforming support for RT-AC66U/RT-AC56U
+      * RT-N66U driver downgraded to build 270 (which
+        means no HW acceleration for PPP, but more reliable
+        connectivity on the 5 GHz band)
+      * Minidlna was updated to 1.1.0
+      * AiCloud security hole fixed
+      * Parental Control ui still broken under IE (use Fx or Chrome
+        for now)
+
+   - NEW: YandexDNS.  This is a new DNS-based filtering system
+          Asus is implementing in the firmware.  This can be
+          found under Parental Control.  See http://dns.yandex.ru/
+          for more info (go go Google translate).  
+          (Experimental builds only)
    - FIXED: Sysinfo page was reporting IPv6 as reason for
             CTF to be disabled - since 372 that is only true
             for ARM devices.
