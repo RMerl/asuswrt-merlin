@@ -19,7 +19,6 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include <string.h>
-
 #include "libnetlink.h"
 #include "ll_map.h"
 

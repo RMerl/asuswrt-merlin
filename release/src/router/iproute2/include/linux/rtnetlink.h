@@ -737,7 +737,6 @@ enum
 	__IFLA_MAX
 };
 
-
 #define IFLA_MAX (__IFLA_MAX - 1)
 
 #define IFLA_RTA(r)  ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct ifinfomsg))))
@@ -783,7 +782,6 @@ enum
 	IFLA_INET6_CACHEINFO,	/* time values and max reasm size */
 	__IFLA_INET6_MAX
 };
-
 #define IFLA_INET6_MAX	(__IFLA_INET6_MAX - 1)
 
 struct ifla_cacheinfo
