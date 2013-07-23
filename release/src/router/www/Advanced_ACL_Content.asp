@@ -412,7 +412,7 @@ function enable_macMode(){
 					<table id="MainTable2" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
 						<thead>
 							<tr>
-								<td colspan="2"><#FirewallConfig_MFList_groupitemname#>&nbsp;(<#List_limit#>&nbsp;128)</td>
+								<td colspan="3"><#FirewallConfig_MFList_groupitemname#>&nbsp;(<#List_limit#>&nbsp;128)</td>
 							</tr>
 						</thead>
 							<tr>
