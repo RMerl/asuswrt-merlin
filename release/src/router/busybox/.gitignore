@@ -45,4 +45,5 @@ include/usage.h
 include/usage_compressed.h.*
 include/applets.h
 config_current
+config_rt*
 
