@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -14,22 +14,22 @@
 #ifndef _version_h_
 #define _epivers_h_
 
-#define	MOD_MAJOR_VERSION	2012
+#define	MOD_MAJOR_VERSION	2013
 
 #define	MOD_MINOR_VERSION	7
 
-#define	MOD_RC_NUMBER		19
+#define	MOD_RC_NUMBER		21
 
 #define	MOD_INCREMENTAL_NUMBER	0
 
 #define	MOD_BUILD_NUMBER	0
 
-#define	MOD_VERSION		2012, 7, 19, 0
+#define	MOD_VERSION		2013, 7, 21, 0
 
-#define	MOD_VERSION_NUM		0x00071300
+#define	MOD_VERSION_NUM		0x00071500
 
 /* Driver Version String, ASCII, 32 chars max */
-#define	MOD_VERSION_STR		"2012.7.19.0"
-#define	MOD_ROUTER_VERSION_STR	"2012.7.19.0"
+#define	MOD_VERSION_STR		"2013.7.21.0"
+#define	MOD_ROUTER_VERSION_STR	"2013.7.21.0"
 
 #endif /* _version_h_ */
