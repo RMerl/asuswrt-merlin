@@ -13,9 +13,9 @@ LDFLAGS = -L$(TOP)/neon/src/.libs -L$(TOP)/libxml2/.libs -L$(TOP)/nvram${BCMEX} 
 
 LIBS = -lpthread -lnvram -lneon -lxml2 -lshared -lz -lcrypto -lssl
 
-ifeq ($(wildcard $(TOP)/webdav_client/*.c),)
+ifeq ($(wildcard $(TOP)/webdav_client_arm/*.c),)
 all:
-	-cp -f $(TOP)/webdav_client$(BCMEX)/prebuilt/webdav_client webdav_client
+	-cp -f prebuilt/webdav_client webdav_client
 else
 all: webdav_client
 endif
