@@ -1,6 +1,5 @@
 *.o
 .conf
-Makefile
 source/bin
 source/client/client_proto.h
 source/config.log
