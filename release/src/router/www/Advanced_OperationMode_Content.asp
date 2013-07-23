@@ -328,7 +328,7 @@ function setScenerion(mode){
 				pstaDesc += "<br/><span style=\"color:#FC0\"><#use_DevDiscoveryUtil#></span>";
 
 		$j("#Senario").css("height", "300px");
-		$j("#Senario").css("background", "url(/images/New_ui/re.jpg) center no-repeat");
+		$j("#Senario").css("background", "url(/images/New_ui/mb.jpg) center no-repeat");
 		$j("#Senario").css("margin-bottom", "-20px");
 		$j("#radio2").css("display", "none");
 		$j("#Internet_span").css("display", "block");

@@ -5740,7 +5740,13 @@ static int ej_safely_remove_disk(int eid, webs_t wp, int argc, char_t **argv){
 
 	csprintf("disk_port = %s\n", disk_port);
 
-	result = eval("/sbin/ejusb", disk_port, "0");
+	if(!strcmp(disk_port, "all")){
+		result = eval("/sbin/ejusb", "1", "0");
+		result = result + eval("/sbin/ejusb", "2", "0");
+	}
+	else{
+		result = eval("/sbin/ejusb", disk_port, "0");
+	}
 
 	if (result != 0){
 		websWrite(wp, "<script>\n");

@@ -1585,11 +1585,13 @@ padding-top:1px;
 	font-weight: bold;
 	background-color: #3366FF;
 	color: #FFFFFF;	
+	margin-bottom: 10px;
 }
 .StatusClickHint{
 	text-decoration: underline;
 	cursor:pointer;
 	font-weight:bold;
+	margin-bottom: 10px;
 }
 .StatusHint{
 	font-weight:bold;

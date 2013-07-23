@@ -160,7 +160,7 @@ function applyRule(){
 		inputCtrl(document.form.wl_wpa_gtk_rekey, 1);*/
 
 		if(sw_mode == 2 || sw_mode == 4)
-			document.form.action_wait.value = "7";
+			document.form.action_wait.value = "5";
 
 		document.form.submit();
 	}
@@ -301,7 +301,7 @@ function check_NOnly_to_GN(){
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_wireless">
-<input type="hidden" name="action_wait" value="7">
+<input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="wl_country_code" value="<% nvram_get("wl0_country_code"); %>" disabled>
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">

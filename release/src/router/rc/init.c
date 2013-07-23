@@ -3044,9 +3044,7 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 int reboothalt_main(int argc, char *argv[])
 {
 	int reboot = (strstr(argv[0], "reboot") != NULL);
-	puts(reboot ? "Rebooting..." : "Shutting down...");
-	fflush(stdout);
-	sleep(1);
+	cprintf(reboot ? "Rebooting..." : "Shutting down...");
 	kill(1, reboot ? SIGTERM : SIGQUIT);
 	
 	/* In the case we're hung, we'll get stuck and never actually reboot.
@@ -3059,8 +3057,8 @@ int reboothalt_main(int argc, char *argv[])
 
 		f_write("/proc/sysrq-trigger", "s", 1, 0 , 0); /* sync disks */
 		sleep(wait);
-		puts("Still running... Doing machine reset.");
-		fflush(stdout);
+		cprintf("Still running... Doing machine reset.\n");
+		remove_usb_module();
 		f_write("/proc/sysrq-trigger", "s", 1, 0 , 0); /* sync disks */
 		sleep(1);
 		f_write("/proc/sysrq-trigger", "b", 1, 0 , 0); /* machine reset */

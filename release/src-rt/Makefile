@@ -1129,7 +1129,6 @@ ifeq ($(BUILD_NAME),)
 	@echo $@" is not a valid target!"
 	@false
 endif
-
 	@cp router/config_base router/config_$(lowercase_B)
 	@cp router/busybox/config_base router/busybox/config_$(lowercase_B)
 	@cp $(LINUXDIR)/config_base $(LINUXDIR)/config_$(lowercase_B)
@@ -1139,7 +1138,6 @@ endif
 	$(call RouterOptions, router/config_$(lowercase_B))
 	$(call KernelConfig, $(LINUXDIR)/config_$(lowercase_B))
 	$(call BusyboxOptions, router/busybox/config_$(lowercase_B))
-
 	@$(MAKE) setprofile
 	@$(MAKE) all
 

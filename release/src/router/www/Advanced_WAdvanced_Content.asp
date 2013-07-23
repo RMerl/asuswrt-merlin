@@ -104,7 +104,7 @@ function initial(){
 				inputCtrl(document.form.wl_turbo_qam, 1);
 				inputCtrl(document.form.usb_usb3, 1);
 			}
-			else if(based_modelid == "RT-AC56U" /*|| based_modelid == "RT-N65U"*/){
+			else if(based_modelid == "RT-AC56U" || based_modelid == "RT-N65U"){
 				inputCtrl(document.form.usb_usb3, 1);
 			}
 		}
@@ -112,8 +112,6 @@ function initial(){
 
 	var mcast_rate = '<% nvram_get("wl_mrate_x"); %>';
 	var mcast_unit = '<% nvram_get("wl_unit"); %>';
-	if(Rawifi_support)
-		$("mcast_rate0").innerHTML = "<#WLANConfig11b_WirelessCtrl_buttonname#>";
 	for (var i = 0; i < mcast_rates.length; i++) {
 		if (mcast_unit == '1' && mcast_rates[i][2]) // 5Ghz && CCK
 			continue;
@@ -571,7 +569,7 @@ function setFlag_TimeFiled(){
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 7);"><#WLANConfig11b_MultiRateAll_itemname#></a></th>
 						<td>
 							<select name="wl_mrate_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_mrate_x')">
-								<option id="mcast_rate0" value="0" <% nvram_match("wl_mrate_x", "0", "selected"); %>><#Auto#></option>
+								<option value="0" <% nvram_match("wl_mrate_x", "0", "selected"); %>><#Auto#></option>
 							</select>
 						</td>
 					</tr>

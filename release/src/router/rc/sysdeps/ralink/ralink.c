@@ -399,12 +399,12 @@ int getRegDomain_2G(void)
 	memset(value_str, 0, sizeof(value_str));
 	FRead(value_str, REG2G_EEPROM_ADDR, MAX_REGDOMAIN_LEN);
 
-        for(i=0; i<MAX_REGDOMAIN_LEN; ++i) {
+	for(i=0; i<MAX_REGDOMAIN_LEN; ++i) {
 		if ((value_str[i]==(char)0xFF) || (value_str[i]=='\0'))
 			break;
-                printf("%c", value_str[i]);
+		printf("%c", value_str[i]);
 	}
-        printf("\n");
+	printf("\n");
 	return 0;
 }
 
@@ -416,12 +416,12 @@ int getRegDomain_5G(void)
 	memset(value_str, 0, sizeof(value_str));
 	FRead(value_str, REG5G_EEPROM_ADDR, MAX_REGDOMAIN_LEN);
 
-        for(i=0; i<MAX_REGDOMAIN_LEN; ++i) {
+	for(i=0; i<MAX_REGDOMAIN_LEN; ++i) {
 		if ((value_str[i]==(char)0xFF) || (value_str[i]=='\0'))
 			break;
-                printf("%c", value_str[i]);
+		printf("%c", value_str[i]);
 	}
-        printf("\n");
+	printf("\n");
 	return 0;
 }
 
@@ -2343,7 +2343,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	//PMKCachePeriod (in minutes)
 	str = nvram_safe_get(strcat_r(prefix, "pmk_cache", tmp));
 	if (str && strlen(str))
-                fprintf(fp, "PMKCachePeriod=%ld\n", atol(str));
+		fprintf(fp, "PMKCachePeriod=%ld\n", atol(str));
 	else
 	fprintf(fp, "PMKCachePeriod=%d\n", 10);
 
@@ -3402,6 +3402,9 @@ int gen_ralink_config(int band, int is_iNIC)
 	i = nvram_get_int(strcat_r(prefix, "mrate_x", tmp));
 next_mrate:
 	switch (i++) {
+	case 0: /* HTMIX 65/150Mbps */
+		mcast_phy = 3, mcast_mcs = 7;
+		break;
 	case 1: /* Legacy CCK 1Mbps */
 		mcast_phy = 1, mcast_mcs = 0;
 		break;
@@ -4266,6 +4269,29 @@ wps_pbc_both()
 }
 #endif
 
+extern struct nvram_tuple router_defaults[];
+
+static void
+wl_default_wps(int unit)
+{
+	struct nvram_tuple *t;
+	char prefix[]="wlXXXXXX_", tmp[100];
+
+	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+	for (t = router_defaults; t->name; t++) {
+		if(strncmp(t->name, "wl_", 3) &&
+			strncmp(t->name, "wl0_", 4) &&
+			strncmp(t->name, "wl1_", 4))
+			continue;
+
+		if(!strncmp(t->name, "wl_", 3))
+			nvram_set(strcat_r(prefix, &t->name[3], tmp), t->value);
+		else if (!strncmp(t->name, prefix, 4))
+			nvram_set(t->name, t->value);
+	}
+}
+
 void
 wps_oob()
 {
@@ -4273,9 +4299,6 @@ wps_oob()
 
 	if (nvram_match("lan_ipaddr", ""))
 		return;
-
-	char tmp[100], prefix[]="wlXXXXXXX_";
-	snprintf(prefix, sizeof(prefix), "wl%d_", wps_band);
 
 	if (wps_band)
 	{
@@ -4291,39 +4314,9 @@ wps_oob()
 		nvram_set("wl0_wsc_config_state", "0");
 	else
 		nvram_set("wl1_wsc_config_state", "0");
-#if defined (W7_LOGO) || defined (wifi_LOGO)
-	nvram_set(strcat_r(prefix, "ssid", tmp), DEFAULT_SSID_5G);
-	nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "open");
-	nvram_set(strcat_r(prefix, "wep_x", tmp), "0");
-	nvram_set(strcat_r(prefix, "crypto", tmp), "tkip");
-	nvram_set(strcat_r(prefix, "key", tmp), "1");
-	nvram_set(strcat_r(prefix, "phrase_x", tmp), "");
-	nvram_set(strcat_r(prefix, "key1", tmp), "");
-	nvram_set(strcat_r(prefix, "key2", tmp), "");
-	nvram_set(strcat_r(prefix, "key3", tmp), "");
-	nvram_set(strcat_r(prefix, "key4", tmp), "");
-	nvram_set(strcat_r(prefix, "wpa_psk", tmp), "");
-#else
-/*
-	nvram_set(strcat_r(prefix, "ssid", tmp), "ASUSInitialAP");
-	nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "psk");
-	nvram_set(strcat_r(prefix, "wep_x", tmp), "0");
-	nvram_set(strcat_r(prefix, "crypto", tmp), "tkip+aes");
-	nvram_set(strcat_r(prefix, "key", tmp), "2");
-	nvram_set(strcat_r(prefix, "wpa_psk", tmp), "12345678");
-*/
-	nvram_set(strcat_r(prefix, "ssid", tmp), DEFAULT_SSID_5G);
-	nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "open");
-	nvram_set(strcat_r(prefix, "wep_x", tmp), "0");
-	nvram_set(strcat_r(prefix, "crypto", tmp), "tkip");
-	nvram_set(strcat_r(prefix, "key", tmp), "1");
-	nvram_set(strcat_r(prefix, "phrase_x", tmp), "");
-	nvram_set(strcat_r(prefix, "key1", tmp), "");
-	nvram_set(strcat_r(prefix, "key2", tmp), "");
-	nvram_set(strcat_r(prefix, "key3", tmp), "");
-	nvram_set(strcat_r(prefix, "key4", tmp), "");
-	nvram_set(strcat_r(prefix, "wpa_psk", tmp), "");
-#endif
+
+	wl_default_wps(wps_band);
+
 	nvram_commit();
 
 #if defined (W7_LOGO) || defined (wifi_LOGO)
@@ -4364,13 +4357,6 @@ wps_oob()
 	doSystem("iwpriv %s set WscMode=1", get_wpsifname());			// PIN method
 //	doSystem("iwpriv %s set WscGetConf=%d", get_wpsifname(), 1);		// Trigger WPS AP to do simple config with WPS Client
 #else
-/*
-	doSystem("iwpriv %s set SSID=ASUSInitialAP", get_wpsifname());
-	doSystem("iwpriv %s set AuthMode=WPAPSK", get_wpsifname());
-	doSystem("iwpriv %s set EncrypType=TKIPAES", get_wpsifname());
-	doSystem("iwpriv %s set WPAPSK=12345678", get_wpsifname());
-	doSystem("iwpriv %s set DefaultKeyID=2", get_wpsifname());
-*/
 	doSystem("iwpriv %s set AuthMode=%s", get_wpsifname(), "OPEN");
 	doSystem("iwpriv %s set EncrypType=%s", get_wpsifname(), "NONE");
 	doSystem("iwpriv %s set IEEE8021X=%d", get_wpsifname(), 0);
@@ -4402,66 +4388,10 @@ wps_oob_both(void)
 //	if (!need_to_start_wps_5g() || !need_to_start_wps_2g()) return;
 
 	nvram_set("w_Setting", "0");
-	nvram_set("wl0_wsc_config_state", "0");
-	nvram_set("wl1_wsc_config_state", "0");
-#if defined (W7_LOGO) || defined (wifi_LOGO)
+//	nvram_set("wl0_wsc_config_state", "0");
+//	nvram_set("wl1_wsc_config_state", "0");
+	wl_defaults_wps();
 
-	nvram_set("wl1_ssid", DEFAULT_SSID_5G);
-	nvram_set("wl1_auth_mode_x", "open");
-	nvram_set("wl1_wep_x", "0");
-	nvram_set("wl1_crypto", "tkip");
-	nvram_set("wl1_key", "1");
-	nvram_set("wl1_phrase_x", "");
-	nvram_set("wl1_key1", "");
-	nvram_set("wl1_key2", "");
-	nvram_set("wl1_key3", "");
-	nvram_set("wl1_key4", "");
-	nvram_set("wl1_wpa_psk", "");
-
-	nvram_set("wl0_ssid", DEFAULT_SSID_2G);
-	nvram_set("wl0_auth_mode_x", "open");
-	nvram_set("wl0_wep_x", "0");
-	nvram_set("wl0_crypto", "tkip");
-	nvram_set("wl0_key", "1");
-	nvram_set("wl0_phrase_x", "");
-	nvram_set("wl0_key1", "");
-	nvram_set("wl0_key2", "");
-	nvram_set("wl0_key3", "");
-	nvram_set("wl0_key4", "");
-	nvram_set("wl0_wpa_psk", "");
-#else
-/*
-	nvram_set("wl1_ssid", "ASUSInitialAP");
-	nvram_set("wl1_auth_mode_x", "psk");
-	nvram_set("wl1_wep_x", "0");
-	nvram_set("wl1_crypto", "tkip+aes");
-	nvram_set("wl1_key", "2");
-	nvram_set("wl1_wpa_psk", "12345678");
-*/
-	nvram_set("wl1_ssid", DEFAULT_SSID_5G);
-	nvram_set("wl1_auth_mode_x", "open");
-	nvram_set("wl1_wep_x", "0");
-	nvram_set("wl1_crypto", "tkip");
-	nvram_set("wl1_key", "1");
-	nvram_set("wl1_phrase_x", "");
-	nvram_set("wl1_key1", "");
-	nvram_set("wl1_key2", "");
-	nvram_set("wl1_key3", "");
-	nvram_set("wl1_key4", "");
-	nvram_set("wl1_wpa_psk", "");
-
-	nvram_set("wl0_ssid", DEFAULT_SSID_2G);
-	nvram_set("wl0_auth_mode_x", "open");
-	nvram_set("wl0_wep_x", "0");
-	nvram_set("wl0_crypto", "tkip");
-	nvram_set("wl0_key", "1");
-	nvram_set("wl0_phrase_x", "");
-	nvram_set("wl0_key1", "");
-	nvram_set("wl0_key2", "");
-	nvram_set("wl0_key3", "");
-	nvram_set("wl0_key4", "");
-	nvram_set("wl0_wpa_psk", "");
-#endif
 	nvram_commit();
 
 #if defined (W7_LOGO) || defined (wifi_LOGO)
@@ -4536,13 +4466,6 @@ wps_oob_both(void)
 
 //	doSystem("iwpriv %s set WscGetConf=%d", get_wifname(1), 1);		// Trigger WPS AP to do simple config with WPS Client
 #else
-/*
-	doSystem("iwpriv %s set SSID=ASUSInitialAP", get_wifname(1));
-	doSystem("iwpriv %s set AuthMode=WPAPSK", get_wifname(1));
-	doSystem("iwpriv %s set EncrypType=TKIPAES", get_wifname(1));
-	doSystem("iwpriv %s set WPAPSK=12345678", get_wifname(1));
-	doSystem("iwpriv %s set DefaultKeyID=2", get_wifname(1));
-*/
 	doSystem("iwpriv %s set AuthMode=%s", get_wifname(1), "OPEN");
 	doSystem("iwpriv %s set EncrypType=%s", get_wifname(1), "NONE");
 	doSystem("iwpriv %s set IEEE8021X=%d", get_wifname(1), 0);

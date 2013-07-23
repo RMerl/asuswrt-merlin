@@ -415,6 +415,9 @@ function openHint(hint_array_id, hint_show_id, flag){
 					if((usb_path_tmp[1] != usb_path2) && usb_path2 != "usb=" && usb_path2 != "usb=printer")
 						statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk(2);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#Eject_usb_disk#> <span style='font-weight:normal'>USB Disk 2</span></div>";
 				}
+
+				if(statusmenu.howMany("remove_disk") == 2)
+					statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk(\"all\");' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Eject all USB disks</div>";
 			}
 
 			_caption = "USB storage";

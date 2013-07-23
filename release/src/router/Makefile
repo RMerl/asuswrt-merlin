@@ -171,6 +171,7 @@ obj-y += sd-idle
 obj-y += libusb10
 obj-y += libusb
 obj-y += libusb-0.1.12
+obj-y += hub-ctrl
 obj-$(RTCONFIG_USB_PRINTER) += u2ec
 obj-$(RTCONFIG_USB_PRINTER) += LPRng
 

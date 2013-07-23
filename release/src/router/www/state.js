@@ -2448,3 +2448,10 @@ function corrected_timezone(){
 	else
 		return;	
 }
+
+String.prototype.howMany = function(val){
+	var result = this.toString().match(new RegExp(val ,"g"));
+	var count = (result)?result.length:0;
+
+	return count;
+}

@@ -306,14 +306,18 @@ void start_usb(void)
 #endif
 
 #if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
+#if defined(RTN65U)
+		{
+			char *param = "u3intf=0";
+
+			if (nvram_get_int("usb_usb3") == 1)
+				param = "u3intf=1";
+			_dprintf("ready to modprobe xhci\n");	// tmp test
+			modprobe(USB30_MOD, param);
+		}
+#else
 		if (nvram_get_int("usb_usb3") == 1) {
 			_dprintf("ready to modprobe usb3/xhci\n");	// tmp test
-			modprobe(USB30_MOD);
-		}
-#if defined(RTN65U)
-		else{
-			/* FIXME: Append a new module parameter that is used to disable USB3 support. */
-			_dprintf("ready to modprobe xhci\n");	// tmp test
 			modprobe(USB30_MOD);
 		}
 #endif
@@ -350,6 +354,113 @@ void start_usb(void)
 		modprobe("zaurus");
 #endif
 	}
+}
+
+void remove_usb_modem_modules(void)
+{
+#ifdef RTCONFIG_USB_MODEM
+#ifdef RTCONFIG_USB_BECEEM
+	modprobe_r("drxvi314");
+#endif
+	modprobe_r("zaurus");
+	modprobe_r("rndis_host");
+	modprobe_r("net1080");
+	modprobe_r("cdc_ether");
+	modprobe_r("asix");
+	modprobe_r("usbnet");
+#endif
+}
+
+void remove_usb_prn_module(void)
+{
+#ifdef RTCONFIG_USB_PRINTER
+	modprobe_r(USBPRINTER_MOD);
+#endif
+}
+
+void remove_usb_storage_module(void)
+{
+#if defined(RTCONFIG_SAMBASRV) || defined(RTCONFIG_FTP)
+	modprobe_r("ext2");
+	modprobe_r("ext3");
+	modprobe_r("jbd");
+#if defined(RTCONFIG_BCMARM) || defined(RTAC52U)
+	modprobe_r("ext4");
+	modprobe_r("jbd2");
+#endif
+#ifdef LINUX26
+	modprobe_r("mbcache");
+#endif
+	modprobe_r("vfat");
+	modprobe_r("fat");
+#ifdef RTCONFIG_NTFS
+#ifndef RTCONFIG_NTFS3G
+	modprobe_r("ufsd");
+#endif
+#endif
+	modprobe_r("fuse");
+	sleep(1);
+#ifdef RTCONFIG_SAMBASRV
+	modprobe_r("nls_cp437");
+	modprobe_r("nls_cp850");
+	modprobe_r("nls_cp852");
+	modprobe_r("nls_cp866");
+#ifdef LINUX26
+	modprobe_r("nls_cp932");
+	modprobe_r("nls_cp936");
+	modprobe_r("nls_cp949");
+	modprobe_r("nls_cp950");
+#endif
+#endif
+	modprobe_r(SD_MOD);
+	modprobe_r(SG_MOD);
+	modprobe_r(USBSTORAGE_MOD);
+#ifdef LINUX26
+	modprobe_r(SCSI_WAIT_MOD);
+#endif
+#if defined(RTCONFIG_BCMARM) || defined(RTAC52U)
+	modprobe_r("sr_mod");
+#endif
+	modprobe_r(SCSI_MOD);
+#endif
+}
+
+void remove_usb_led_module(void)
+{
+#ifdef LINUX26
+	modprobe_r("leds-usb");
+	modprobe_r("ledtrig-usbdev");
+#endif
+}
+
+void remove_usb_host_module(void)
+{
+	modprobe_r(USBOHCI_MOD);
+	modprobe_r(USBUHCI_MOD);
+	modprobe_r(USB20_MOD);
+#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
+	modprobe_r(USB30_MOD);
+#endif
+
+	modprobe_r(USBCORE_MOD);
+}
+
+void remove_usb_module(void)
+{
+	int disabled = !nvram_get_int("usb_enable");
+
+	remove_usb_modem_modules();
+	remove_usb_prn_module();
+
+#if defined(RTCONFIG_SAMBASRV) || defined(RTCONFIG_FTP)
+	// only stop storage services if disabled
+	if (disabled || !nvram_get_int("usb_storage")) {
+		// Stop storage services
+		remove_usb_storage_module();
+	}
+#endif
+	remove_usb_led_module();
+	remove_usb_host_module();
 }
 
 // mode 0: stop all USB programs, mode 1: stop the programs from USB hotplug.
@@ -398,22 +509,8 @@ void stop_usb(void)
 
 	stop_usb_program(0);
 
-#ifdef RTCONFIG_USB_MODEM
-#ifdef RTCONFIG_USB_BECEEM
-	modprobe_r("drxvi314");
-#endif
-
-	modprobe_r("zaurus");
-	modprobe_r("rndis_host");
-	modprobe_r("net1080");
-	modprobe_r("cdc_ether");
-	modprobe_r("asix");
-	modprobe_r("usbnet");
-#endif
-
-#ifdef RTCONFIG_USB_PRINTER
-	modprobe_r(USBPRINTER_MOD);
-#endif
+	remove_usb_modem_modules();
+	remove_usb_prn_module();
 
 #if defined(RTCONFIG_SAMBASRV) || defined(RTCONFIG_FTP)
 	// only stop storage services if disabled
@@ -422,49 +519,11 @@ void stop_usb(void)
 		remove_storage_main(0);
 
 		// Stop storage services
-		modprobe_r("ext2");
-		modprobe_r("ext3");
-		modprobe_r("jbd");
-#if defined(RTCONFIG_BCMARM) || defined(RTAC52U)
-		modprobe_r("ext4");
-		modprobe_r("jbd2");
-#endif
-#ifdef LINUX26
-		modprobe_r("mbcache");
-#endif
-		modprobe_r("vfat");
-		modprobe_r("fat");
-#ifdef RTCONFIG_NTFS
-#ifndef RTCONFIG_NTFS3G
-		modprobe_r("ufsd");
-#endif
-#endif
-		modprobe_r("fuse");
-		sleep(1);
-#ifdef RTCONFIG_SAMBASRV
-		modprobe_r("nls_cp437");
-		modprobe_r("nls_cp850");
-		modprobe_r("nls_cp852");
-		modprobe_r("nls_cp866");
-#ifdef LINUX26
-		modprobe_r("nls_cp932");
-		modprobe_r("nls_cp936");
-		modprobe_r("nls_cp949");
-		modprobe_r("nls_cp950");
-#endif
-#endif
-		modprobe_r(SD_MOD);
-		modprobe_r(SG_MOD);
-		modprobe_r(USBSTORAGE_MOD);
-#ifdef LINUX26
-		modprobe_r(SCSI_WAIT_MOD);
-#endif
-#if defined(RTCONFIG_BCMARM) || defined(RTAC52U)
-		modprobe_r("sr_mod");
-#endif
-		modprobe_r(SCSI_MOD);
+		remove_usb_storage_module();
 	}
 #endif
+
+	remove_usb_led_module();
 
 	if (disabled || nvram_get_int("usb_ohci") != 1) modprobe_r(USBOHCI_MOD);
 	if (disabled || nvram_get_int("usb_uhci") != 1) modprobe_r(USBUHCI_MOD);
@@ -475,11 +534,6 @@ void stop_usb(void)
 #else
 	if (disabled || nvram_get_int("usb_usb3") != 1) modprobe_r(USB30_MOD);
 #endif
-#endif
-
-#ifdef LINUX26
-	modprobe_r("leds-usb");
-	modprobe_r("ledtrig-usbdev");
 #endif
 
 	// only unload core modules if usb is disabled

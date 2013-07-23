@@ -159,7 +159,7 @@ static int wlconf(char *ifname, int unit, int subunit)
 	int r;
 	char wl[24];
 	int txpower;
-	int model;
+	int model = get_model();
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 
 	if (unit < 0) return -1;
@@ -211,7 +211,7 @@ static int wlconf(char *ifname, int unit, int subunit)
 #ifdef RTCONFIG_BCMARM
 		if (unit == 0)
 		{
-			if (get_model() == MODEL_RTAC68U) {
+			if (model == MODEL_RTAC68U) {
 				if (nvram_match(strcat_r(prefix, "turbo_qam", tmp), "1"))
 					eval("wl", "-i", ifname, "vht_features", "3");
 				else
@@ -228,6 +228,9 @@ static int wlconf(char *ifname, int unit, int subunit)
 			eval("wl", "-i", ifname, "ampdu_mpdu", "64");
 		else
 			eval("wl", "-i", ifname, "ampdu_mpdu", "-1");	// driver default setting
+#else
+// Disabled since we are still using 5.100
+///		eval("wl", "-i", ifname, "ampdu_density", "6");		// resolve IOT with Intel STA for BRCM SDK 5.110.27.20012
 #endif
 	}
 
@@ -243,7 +246,6 @@ static int wlconf(char *ifname, int unit, int subunit)
 			eval("wl", "-i", ifname, "interference", nvram_safe_get(wl_nvname("interfmode", unit, 0)));
 #endif
 #ifndef RTCONFIG_BCMWL6
-			model = get_model();
 			switch (model) {
 				default:
 					if ((unit == 0) &&

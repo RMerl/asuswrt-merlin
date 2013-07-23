@@ -533,6 +533,7 @@ extern void stop_sshd(void);
 FILE* fopen_or_warn(const char *path, const char *mode);
 extern void hotplug_usb(void);
 extern void start_usb(void);
+extern void remove_usb_module(void);
 extern void stop_usb(void);
 extern void start_lpd();
 extern void stop_lpd();
