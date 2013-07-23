@@ -28,9 +28,6 @@ endif
 # chpasswd script
 	install -m 0700 chpasswd.sh $(INSTALLDIR)/usr/sbin
 
-# Display active connections
-	install -m 0700 netstat-nat.sh $(INSTALLDIR)/usr/sbin/
-
 # Easy-rsa scripts (for OpenVPN)
 
 ifeq ($(RTCONFIG_OPENVPN),y)
