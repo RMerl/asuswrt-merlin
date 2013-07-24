@@ -1372,7 +1372,7 @@ static int validate_apply(webs_t wp) {
 	struct nvram_tuple *t;
 	char *value;
 	char name[64];
-	char buff[100], tmp[3000], prefix[32];
+	char buff[3000], tmp[3000], prefix[32];
 	int i, j, len;
 	int unit=-1, subunit=-1;
 	int nvram_modified = 0;
@@ -1405,8 +1405,8 @@ static int validate_apply(webs_t wp) {
 			_dprintf("value %s=%s\n", name, value);
 
 #ifdef RTCONFIG_USB
-			memset(buff, 0, 100);
-			strncpy(buff, nvram_safe_get(name), 100);
+			memset(buff, 0, 3000);
+			strncpy(buff, nvram_safe_get(name), 3000);
 #endif
 
 			// unit nvram should be in fron of each apply,
