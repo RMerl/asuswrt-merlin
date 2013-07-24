@@ -156,7 +156,7 @@ function update_visibility(){
 
 	showhide("server_pdns", ((auth == "tls") && (dns == 1)));
 	showhide("server_dhcp",((auth == "tls") && (iface == "tap")));
-	showhide("server_range", (dhcp == 0));
+	showhide("server_range", ((dhcp == 0) && (auth == "tls") && (iface == "tap")));
 	showhide("server_custom_crypto_text", (auth == "custom"));
 }
 
