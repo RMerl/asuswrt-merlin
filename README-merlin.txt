@@ -34,7 +34,7 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on pre-release 3.0.0.4.372_1363 sources from Asus
+   - Based on pre-release 3.0.0.4.372_1393 sources from Asus
    - Various bugfixes all over the place
    - Some components were updated to their latest versions, for improved stability
      and security
@@ -484,6 +484,9 @@ History
    - CHANGED: Connections list under System Log will now progressively
               display the result while the router is still
               resolving IPs (if that option was enabled).
+   - CHANGED: OpenVPN client password hidden by default (and added
+              checkbox to display it similar to what Asus added
+              to the System page)
    - FIXED: Sysinfo page was reporting IPv6 as reason for
             CTF to be disabled - since 372 that is only true
             for ARM devices.
