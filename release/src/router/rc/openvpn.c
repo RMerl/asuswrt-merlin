@@ -800,6 +800,16 @@ void start_vpnserver(int serverNum)
 				// Advance to next entry
 				chp = strtok(NULL, "<");
 			}
+			// Copy any user-configured client config files
+			sprintf(&buffer[0], "/jffs/configs/openvpn/ccd%d", serverNum);
+
+			if(check_if_dir_exist(&buffer[0]))
+			{
+				vpnlog(VPN_LOG_EXTRA,"CCD - copying user files");
+				sprintf(buffer2, "cp %s/* .", &buffer[0]); /* */
+				system(buffer2);
+			}
+
 			vpnlog(VPN_LOG_EXTRA,"CCD processing complete");
 		}
 
