@@ -173,6 +173,12 @@ function change_vpn_unit(val){
         document.form.submit();
 }
 
+/* password item show or not */
+function pass_checked(obj){
+	switchType(obj, document.form.show_pass_1.checked, true);
+}
+
+
 </script>
 </head>
 
@@ -345,7 +351,8 @@ function change_vpn_unit(val){
 					<tr id="client_password">
 						<th>Password</th>
 						<td>
-							<input type="text" maxlength="50" class="input_25_table" name="vpn_client_password" value="<% nvram_get("vpn_client_password"); %>">
+							<input type="password" maxlength="50" class="input_25_table" name="vpn_client_password" value="<% nvram_get("vpn_client_password"); %>">
+							<input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.vpn_client_password)"><#QIS_show_pass#>
 						</td>
 					</tr>
 					<tr id="client_useronly">
