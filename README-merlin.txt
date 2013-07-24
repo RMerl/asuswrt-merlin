@@ -327,6 +327,13 @@ for Tomato can easily be used to guide you on
 Asuswrt-Merlin.  For pointers, check the Wiki on the Asuswrt-Merlin 
 Github repository.
 
+You can provide your own custom client config files for the 
+two server instances.  Store them in the 
+/jffs/configs/openvpn/ccd1/ (and ccd2/) directory based 
+on which server instance they belong to, with the 
+filenames matching the client common names.
+See the OpenVPN documentation for more details on the ccd directory.
+
 
 
 * Customized config files *
@@ -365,6 +372,14 @@ The list of available config overrides:
         through init-start first if it doesn't exist!)
 - group, gshadow, passwd, shadow (only .add versions supported)
 - exports (only exports.add supported)
+
+Also, you can put OpenVPN ccd files in the following directories:
+
+  /jffs/configs/openvpn/ccd1/
+  /jffs/configs/openvpn/ccd2/
+
+The content of these will be copied to their respective 
+server instance's ccd directory when the server is started.
 
 
 * NFS Exports *
@@ -468,19 +483,22 @@ History
 3.0.0.4.372.31:
    - NEW: Merged with 372_1363 code from Asus.  Notes:
       * Beamforming support for RT-AC66U/RT-AC56U
-      * RT-N66U driver downgraded to build 270 (which
+      * RT-N66U driver still downgraded to build 270 (which
         means no HW acceleration for PPP, but more reliable
         connectivity on the 5 GHz band)
       * Minidlna was updated to 1.1.0
       * AiCloud security hole fixed
-      * Parental Control ui still broken under IE (use Fx or Chrome
+      * Parental Control ui still broken under IE10 (use Fx or Chrome
         for now)
 
-   - NEW: YandexDNS.  This is a new DNS-based filtering system
-          Asus is implementing in the firmware.  This can be
+   - NEW: YandexDNS.  Asus is currently implementing support in the
+          firmware for this DNS-based filter.  This can be
           found under Parental Control.  See http://dns.yandex.ru/
-          for more info (go go Google translate).  
+          for more info (go go Google translate!).
           (Experimental builds only)
+   - NEW: User-provided client config files (ccd) for OpenVPN server.
+          See the OpenVPN and Custom Config sections of the firmware's
+          documentation for more info.
    - CHANGED: Connections list under System Log will now progressively
               display the result while the router is still
               resolving IPs (if that option was enabled).
