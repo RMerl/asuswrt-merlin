@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.372.31 (xx-xxx-2013)
-===================================================
+Asuswrt-Merlin - build 3.0.0.4.372.31 (24-Juil-2013)
+====================================================
 
 About
 -----
@@ -481,7 +481,7 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.372.31:
-   - NEW: Merged with 372_1363 code from Asus.  Notes:
+   - NEW: Merged with 372_1393 code from Asus.  Notes:
       * Beamforming support for RT-AC66U/RT-AC56U
       * RT-N66U driver still downgraded to build 270 (which
         means no HW acceleration for PPP, but more reliable
