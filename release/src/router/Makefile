@@ -615,6 +615,9 @@ endif
 ifeq ($(RTCONFIG_OPTIMIZE_SHARED_LIBS),y)
 ifneq ($(RTCONFIG_BCMARM),y)
 	@$(SRCBASE)/btools/libfoo.pl
+else
+	# Was usually done by libfoo
+	ln -snf libbigballofmud.so $(TARGETDIR)/usr/lib/libbigballofmud.so.0
 endif
 else
 	@$(SRCBASE)/btools/libfoo.pl --noopt
