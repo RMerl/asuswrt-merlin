@@ -3913,6 +3913,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	int unit;
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char *wan_if;
+	char *wan_ip;
 
 	if(nvram_match("qos_enable", "1")) {
 		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
@@ -3933,19 +3934,20 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	}
 
 /* For NAT loopback */
-// TODO: Need wan_ip
-/*
+/* Untested yet */
+#if 0
 	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 		if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 			continue;
 
+		wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
 		wan_if = get_wan_ifname(unit);
 
 		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "!", "-i", wan_if,
 		     "-d", wan_ip, "-j", "MARK", "--set-mark", "0xd001");
 	}
-*/
+#endif
 
 #ifdef CONFIG_BCMWL5
 	/* mark connect to bypass CTF */		
