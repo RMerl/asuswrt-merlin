@@ -39,7 +39,7 @@ Set Up Environment (Tested in Fedora 8/9 and Ubuntu 10.04/12.04 LTS amd64)
 
 	b. Fedora
 		sudo yum groupinstall "Development Tools"
- 		sudo yum install gettext-devel libxml2-devel mtd-utils-ubi ncurses-devel zlib-devel
+ 		sudo yum install gettext-devel libxml2-devel mtd-utils-ubi ncurses-devel zlib-devel gperf
 
 		If you are using Fedora 19, you need to install below packages.
 		sudo yum groupinstall "C Development Tools and Libraries"
