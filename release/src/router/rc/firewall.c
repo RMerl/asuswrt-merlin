@@ -2877,6 +2877,11 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 
 	strcpy(macaccept, "");
 
+// Setup traffic accounting
+        if (nvram_match("cstats_enable", "1")) {
+                ipt_account(fp);
+        }
+
 #ifdef RTCONFIG_OLD_PARENTALCTRL
 	parental_ctrl();
 #endif	/* RTCONFIG_OLD_PARENTALCTRL */
