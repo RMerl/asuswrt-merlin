@@ -285,6 +285,7 @@ struct options
   const char *writepid;
   const char *up_script;
   const char *down_script;
+  bool user_script_used;
   bool down_pre;
   bool up_delay;
   bool up_restart;
@@ -506,8 +507,9 @@ struct options
   const char *pkcs12_file;
   const char *cipher_list;
   const char *tls_verify;
+  int verify_x509_type;
+  const char *verify_x509_name;
   const char *tls_export_cert;
-  const char *tls_remote;
   const char *crl_file;
 
   const char *ca_file_inline;

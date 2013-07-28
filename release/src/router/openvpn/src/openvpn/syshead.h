@@ -307,6 +307,10 @@
 #include <netinet/ip.h>
 #endif
 
+#ifdef HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
+#endif
+
 #ifdef HAVE_NET_IF_TUN_H
 #include <net/if_tun.h>
 #endif
@@ -392,6 +396,13 @@
  */
 #if defined(HAVE_GETTIMEOFDAY) || defined(WIN32)
 #define HAVE_GETTIMEOFDAY_NANOSECONDS 1
+#endif
+
+/*
+ * do we have the MIN() macro?
+ */
+#ifndef MIN
+#define MIN(a,b) (((a)<(b))?(a):(b))
 #endif
 
 /*

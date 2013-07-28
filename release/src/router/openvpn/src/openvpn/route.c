@@ -503,6 +503,7 @@ route_list_add_vpn_gateway (struct route_list *rl,
 			    struct env_set *es,
 			    const in_addr_t addr)
 {
+  ASSERT(rl);
   rl->spec.remote_endpoint = addr;
   rl->spec.flags |= RTSA_REMOTE_ENDPOINT;
   setenv_route_addr (es, "vpn_gateway", rl->spec.remote_endpoint, -1);
@@ -1089,7 +1090,7 @@ delete_routes (struct route_list *rl, struct route_ipv6_list *rl6,
     }
 }
 
-#ifdef ENABLE_DEBUG
+#ifndef ENABLE_SMALL
 
 static const char *
 show_opt (const char *option)
@@ -1397,17 +1398,20 @@ add_route (struct route *r,
   argv_printf (&argv, "%s add",
 		ROUTE_PATH);
 
-#if 0
-  if (r->flags & RT_METRIC_DEFINED)
-    argv_printf_cat (&argv, "-rtt %d", r->metric);
-#endif
-
   argv_printf_cat (&argv, "%s -netmask %s %s",
 	      network,
 	      netmask,
 	      gateway);
 
-  /* FIXME -- add on-link support for Solaris */
+  /* Solaris can only distinguish between "metric 0" == "on-link on the
+   * interface where the IP address given is configured" and "metric > 0"
+   * == "use gateway specified" (no finer-grained route metrics available)
+   *
+   * More recent versions of Solaris can also do "-interface", but that
+   * would break backwards compatibility with older versions for no gain.
+   */
+  if (r->flags & RT_METRIC_DEFINED )
+    argv_printf_cat (&argv, "%d", r->metric);
 
   argv_msg (D_ROUTE, &argv);
   status = openvpn_execve_check (&argv, es, 0, "ERROR: Solaris route add command failed");

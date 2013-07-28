@@ -73,6 +73,8 @@ static void solaris_error_close (struct tuntap *tt, const struct env_set *es, co
 #include <stropts.h>
 #endif
 
+static void clear_tuntap (struct tuntap *tuntap);
+
 bool
 is_dev_type (const char *dev, const char *dev_type, const char *match_type)
 {
@@ -295,16 +297,6 @@ warn_on_use_of_common_subnets (void)
 	msg (M_WARN, "NOTE: your local LAN uses the extremely common subnet address 192.168.0.x or 192.168.1.x.  Be aware that this might create routing conflicts if you connect to the VPN server from public locations such as internet cafes that use the same subnet.");
     }
   gc_free (&gc);
-}
-
-/*
- * Complain if --dev tap and --ifconfig is used on an OS for which
- * we don't have a custom tap ifconfig template below.
- */
-static void
-no_tap_ifconfig ()
-{
-  msg (M_FATAL, "Sorry but you cannot use --dev tap and --ifconfig together on this OS because I have not yet been programmed to understand the appropriate ifconfig syntax to use for TAP-style devices on this OS.  Your best alternative is to use an --up script and do the ifconfig command manually.");
 }
 
 /*

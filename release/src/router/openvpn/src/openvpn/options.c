@@ -614,8 +614,8 @@ static const char usage_message[] =
   "--tls-export-cert [directory] : Get peer cert in PEM format and store it \n"
   "                  in an openvpn temporary file in [directory]. Peer cert is \n"
   "                  stored before tls-verify script execution and deleted after.\n"
-  "--tls-remote x509name: Accept connections only from a host with X509 name\n"
-  "                  x509name. The remote host must also pass all other tests\n"
+  "--verify-x509-name name: Accept connections only from a host with X509 subject\n"
+  "                  DN name. The remote host must also pass all other tests\n"
   "                  of verification.\n"
   "--ns-cert-type t: Require that peer certificate was signed with an explicit\n"
   "                  nsCertType designation t = 'client' | 'server'.\n"
@@ -881,7 +881,7 @@ uninit_options (struct options *o)
     }
 }
 
-#ifdef ENABLE_DEBUG
+#ifndef ENABLE_SMALL
 
 #define SHOW_PARM(name, value, format) msg(D_SHOW_PARMS, "  " #name " = " format, (value))
 #define SHOW_STR(var)       SHOW_PARM(var, (o->var ? o->var : "[UNDEF]"), "'%s'")
@@ -1081,7 +1081,7 @@ parse_hash_fingerprint(const char *str, int nbytes, int msglevel, struct gc_aren
 
 #ifdef WIN32
 
-#ifdef ENABLE_DEBUG
+#ifndef ENABLE_SMALL
 
 static void
 show_dhcp_option_addrs (const char *name, const in_addr_t *array, int len)
@@ -1153,7 +1153,7 @@ dhcp_option_address_parse (const char *name, const char *parm, in_addr_t *array,
 
 #if P2MP
 
-#ifdef ENABLE_DEBUG
+#ifndef ENABLE_SMALL
 
 static void
 show_p2mp_parms (const struct options *o)
@@ -1225,7 +1225,7 @@ show_p2mp_parms (const struct options *o)
   gc_free (&gc);
 }
 
-#endif /* ENABLE_DEBUG */
+#endif /* ! ENABLE_SMALL */
 
 #if P2MP_SERVER
 
@@ -1279,7 +1279,7 @@ option_iroute_ipv6 (struct options *o,
 #endif /* P2MP_SERVER */
 #endif /* P2MP */
 
-#if defined(ENABLE_HTTP_PROXY) && defined(ENABLE_DEBUG)
+#if defined(ENABLE_HTTP_PROXY) && !defined(ENABLE_SMALL)
 static void
 show_http_proxy_options (const struct http_proxy_options *o)
 {
@@ -1332,7 +1332,7 @@ cnol_check_alloc (struct options *options)
 }
 #endif
 
-#ifdef ENABLE_DEBUG
+#ifndef ENABLE_SMALL
 static void
 show_connection_entry (const struct connection_entry *o)
 {
@@ -1400,7 +1400,7 @@ show_connection_entries (const struct options *o)
 void
 show_settings (const struct options *o)
 {
-#ifdef ENABLE_DEBUG
+#ifndef ENABLE_SMALL
   msg (D_SHOW_PARMS, "Current Parameter Settings:");
 
   SHOW_STR (config);
@@ -1596,7 +1596,8 @@ show_settings (const struct options *o)
   SHOW_STR (cipher_list);
   SHOW_STR (tls_verify);
   SHOW_STR (tls_export_cert);
-  SHOW_STR (tls_remote);
+  SHOW_INT (verify_x509_type);
+  SHOW_STR (verify_x509_name);
   SHOW_STR (crl_file);
   SHOW_INT (ns_cert_type);
   {
@@ -1829,6 +1830,8 @@ options_postprocess_verify_ce (const struct options *options, const struct conne
    */
   if (ce->proto == PROTO_TCPv4)
     msg (M_USAGE, "--proto tcp is ambiguous in this context.  Please specify --proto tcp-server or --proto tcp-client");
+  if (ce->proto == PROTO_TCPv6)
+    msg (M_USAGE, "--proto tcp6 is ambiguous in this context.  Please specify --proto tcp6-server or --proto tcp6-client");
 
   /*
    * Sanity check on daemon/inetd modes
@@ -2130,7 +2133,6 @@ options_postprocess_verify_ce (const struct options *options, const struct conne
 
       if (options->stale_routes_check_interval)
         msg (M_USAGE, "--stale-routes-check requires --mode server");
-
       if (compat_flag (COMPAT_FLAG_QUERY | COMPAT_NO_NAME_REMAPPING))
         msg (M_USAGE, "--compat-x509-names no-remapping requires --mode server");
     }
@@ -2302,7 +2304,7 @@ options_postprocess_verify_ce (const struct options *options, const struct conne
       MUST_BE_UNDEF (cipher_list);
       MUST_BE_UNDEF (tls_verify);
       MUST_BE_UNDEF (tls_export_cert);
-      MUST_BE_UNDEF (tls_remote);
+      MUST_BE_UNDEF (verify_x509_name);
       MUST_BE_UNDEF (tls_timeout);
       MUST_BE_UNDEF (renegotiate_bytes);
       MUST_BE_UNDEF (renegotiate_packets);
@@ -2352,6 +2354,8 @@ options_postprocess_mutate_ce (struct options *o, struct connection_entry *ce)
     {
       if (ce->proto == PROTO_TCPv4)
 	ce->proto = PROTO_TCPv4_SERVER;
+      else if (ce->proto == PROTO_TCPv6)
+	ce->proto = PROTO_TCPv6_SERVER;
     }
 #endif
 #if P2MP
@@ -2728,28 +2732,6 @@ options_postprocess_filechecks (struct options *options)
   errs |= check_file_access (CHKACC_FILE, options->tmp_dir,
                              R_OK|W_OK|X_OK, "Temporary directory (--tmp-dir)");
 
-  /* ** Script hooks that accept an optionally quoted and/or escaped executable path, ** */
-  /* ** optionally followed by arguments ** */
-  errs |= check_cmd_access (options->auth_user_pass_verify_script,
-                            "--auth-user-pass-verify script");
-  errs |= check_cmd_access (options->client_connect_script,
-                            "--client-connect script");
-  errs |= check_cmd_access (options->client_disconnect_script,
-                            "--client-disconnect script");
-  errs |= check_cmd_access (options->tls_verify,
-                            "--tls-verify script");
-  errs |= check_cmd_access (options->up_script,
-                            "--up script");
-  errs |= check_cmd_access (options->down_script,
-                            "--down script");
-  errs |= check_cmd_access (options->ipchange,
-                            "--ipchange script");
-  errs |= check_cmd_access (options->route_script,
-                            "--route-up script");
-  errs |= check_cmd_access (options->route_predown_script,
-                            "--route-pre-down script");
-  errs |= check_cmd_access (options->learn_address_script,
-                            "--learn-address script");
 #endif /* P2MP_SERVER */
 
   if (errs)
@@ -3771,9 +3753,13 @@ read_config_file (struct options *options,
 	  line_num = 0;
 	  while (fgets(line, sizeof (line), fp))
 	    {
+              int offset = 0;
 	      CLEAR (p);
 	      ++line_num;
-	      if (parse_line (line, p, SIZE (p), file, line_num, msglevel, &options->gc))
+              /* Ignore UTF-8 BOM at start of stream */
+              if (line_num == 1 && strncmp (line, "\xEF\xBB\xBF", 3) == 0)
+                offset = 3;
+              if (parse_line (line + offset, p, SIZE (p), file, line_num, msglevel, &options->gc))
 		{
 		  bypass_doubledash (&p[0]);
 		  check_inline_file_via_fp (fp, p, &options->gc);
@@ -4007,11 +3993,28 @@ msglevel_forward_compatible (struct options *options, const int msglevel)
 }
 
 static void
-warn_multiple_script (const char *script, const char *type) {
-      if (script) {
-	msg (M_WARN, "Multiple --%s scripts defined.  "
-	     "The previously configured script is overridden.", type);
-      }
+set_user_script (struct options *options,
+		 const char **script,
+		 const char *new_script,
+		 const char *type)
+{
+  if (*script) {
+    msg (M_WARN, "Multiple --%s scripts defined.  "
+	 "The previously configured script is overridden.", type);
+  }
+  *script = new_script;
+  options->user_script_used = true;
+
+#ifndef ENABLE_SMALL
+  {
+    char script_name[100];
+    openvpn_snprintf (script_name, sizeof(script_name),
+                      "--%s script", type);
+
+    if (check_cmd_access (*script, script_name))
+      msg (M_USAGE, "Please correct this error.");
+  }
+#endif
 }
 
 
@@ -4476,8 +4479,10 @@ add_option (struct options *options,
       VERIFY_PERMISSION (OPT_P_SCRIPT);
       if (!no_more_than_n_args (msglevel, p, 2, NM_QUOTE_HINT))
 	goto err;
-      warn_multiple_script (options->ipchange, "ipchange");
-      options->ipchange = string_substitute (p[1], ',', ' ', &options->gc);
+      set_user_script (options,
+		       &options->ipchange,
+		       string_substitute (p[1], ',', ' ', &options->gc),
+		       "ipchange");
     }
   else if (streq (p[0], "float"))
     {
@@ -4523,16 +4528,14 @@ add_option (struct options *options,
       VERIFY_PERMISSION (OPT_P_SCRIPT);
       if (!no_more_than_n_args (msglevel, p, 2, NM_QUOTE_HINT))
 	goto err;
-      warn_multiple_script (options->up_script, "up");
-      options->up_script = p[1];
+      set_user_script (options, &options->up_script, p[1], "up");
     }
   else if (streq (p[0], "down") && p[1])
     {
       VERIFY_PERMISSION (OPT_P_SCRIPT);
       if (!no_more_than_n_args (msglevel, p, 2, NM_QUOTE_HINT))
 	goto err;
-      warn_multiple_script (options->down_script, "down");
-      options->down_script = p[1];
+      set_user_script (options, &options->down_script, p[1], "down");
     }
   else if (streq (p[0], "down-pre"))
     {
@@ -4668,6 +4671,12 @@ add_option (struct options *options,
     {
       VERIFY_PERMISSION (OPT_P_MESSAGES);
       options->verbosity = positive_atoi (p[1]);
+#if !defined(ENABLE_DEBUG) && !defined(ENABLE_SMALL)
+      /* Warn when a debug verbosity is supplied when built without debug support */
+      if (options->verbosity >= 7)
+        msg (M_WARN, "NOTE: debug verbosity (--verb %d) is enabled but this build lacks debug support.",
+	    options->verbosity);
+#endif
     }
   else if (streq (p[0], "mute") && p[1])
     {
@@ -5059,8 +5068,7 @@ add_option (struct options *options,
 #ifdef ENABLE_OCC
   else if (streq (p[0], "explicit-exit-notify"))
     {
-      VERIFY_PERMISSION (OPT_P_GENERAL|OPT_P_CONNECTION);
-/*      VERIFY_PERMISSION (OPT_P_EXPLICIT_NOTIFY); */
+      VERIFY_PERMISSION (OPT_P_GENERAL|OPT_P_CONNECTION|OPT_P_EXPLICIT_NOTIFY);
       if (p[1])
 	{
 	  options->ce.explicit_exit_notification = positive_atoi (p[1]);
@@ -5208,16 +5216,17 @@ add_option (struct options *options,
       VERIFY_PERMISSION (OPT_P_SCRIPT);
       if (!no_more_than_n_args (msglevel, p, 2, NM_QUOTE_HINT))
 	goto err;
-      warn_multiple_script (options->route_script, "route-up");
-      options->route_script = p[1];
+      set_user_script (options, &options->route_script, p[1], "route-up");
     }
   else if (streq (p[0], "route-pre-down") && p[1])
     {
       VERIFY_PERMISSION (OPT_P_SCRIPT);
       if (!no_more_than_n_args (msglevel, p, 2, NM_QUOTE_HINT))
 	goto err;
-      warn_multiple_script (options->route_predown_script, "route-pre-down");
-      options->route_predown_script = p[1];
+      set_user_script (options,
+		       &options->route_predown_script,
+		       p[1],
+		       "route-pre-down");
     }
   else if (streq (p[0], "route-noexec"))
     {
@@ -5484,9 +5493,9 @@ add_option (struct options *options,
 	  msg (msglevel, "error parsing --ifconfig-ipv6-pool parameters");
 	  goto err;
 	}
-      if ( netbits != 64 )
+      if ( netbits < 64 || netbits > 112 )
 	{
-	  msg( msglevel, "--ifconfig-ipv6-pool settings: only /64 supported right now (not /%d)", netbits );
+	  msg( msglevel, "--ifconfig-ipv6-pool settings: only /64../112 supported right now (not /%d)", netbits );
 	  goto err;
 	}
 
@@ -5557,13 +5566,6 @@ add_option (struct options *options,
       VERIFY_PERMISSION (OPT_P_GENERAL);
       options->ssl_flags |= SSLF_AUTH_USER_PASS_OPTIONAL;
     }
-  else if (streq (p[0], "compat-names"))
-    {
-      VERIFY_PERMISSION (OPT_P_GENERAL);
-      compat_flag (COMPAT_FLAG_SET | COMPAT_NAMES);
-      if (p[1] && streq (p[1], "no-remapping"))
-        compat_flag (COMPAT_FLAG_SET | COMPAT_NO_NAME_REMAPPING);
-    }
   else if (streq (p[0], "opt-verify"))
     {
       VERIFY_PERMISSION (OPT_P_GENERAL);
@@ -5591,32 +5593,33 @@ add_option (struct options *options,
 	  msg (msglevel, "--auth-user-pass-verify requires a second parameter ('via-env' or 'via-file')");
 	  goto err;
 	}
-      warn_multiple_script (options->auth_user_pass_verify_script, "auth-user-pass-verify");
-      options->auth_user_pass_verify_script = p[1];
+      set_user_script (options,
+		       &options->auth_user_pass_verify_script,
+		       p[1], "auth-user-pass-verify");
     }
   else if (streq (p[0], "client-connect") && p[1])
     {
       VERIFY_PERMISSION (OPT_P_SCRIPT);
       if (!no_more_than_n_args (msglevel, p, 2, NM_QUOTE_HINT))
 	goto err;
-      warn_multiple_script (options->client_connect_script, "client-connect");
-      options->client_connect_script = p[1];
+      set_user_script (options, &options->client_connect_script,
+		       p[1], "client-connect");
     }
   else if (streq (p[0], "client-disconnect") && p[1])
     {
       VERIFY_PERMISSION (OPT_P_SCRIPT);
       if (!no_more_than_n_args (msglevel, p, 2, NM_QUOTE_HINT))
 	goto err;
-      warn_multiple_script (options->client_disconnect_script, "client-disconnect");
-      options->client_disconnect_script = p[1];
+      set_user_script (options, &options->client_disconnect_script,
+		       p[1], "client-disconnect");
     }
   else if (streq (p[0], "learn-address") && p[1])
     {
       VERIFY_PERMISSION (OPT_P_SCRIPT);
       if (!no_more_than_n_args (msglevel, p, 2, NM_QUOTE_HINT))
 	goto err;
-      warn_multiple_script (options->learn_address_script, "learn-address");
-      options->learn_address_script = p[1];
+      set_user_script (options, &options->learn_address_script,
+		       p[1], "learn-address");
     }
   else if (streq (p[0], "tmp-dir") && p[1])
     {
@@ -6504,8 +6507,9 @@ add_option (struct options *options,
       VERIFY_PERMISSION (OPT_P_SCRIPT);
       if (!no_more_than_n_args (msglevel, p, 2, NM_QUOTE_HINT))
 	goto err;
-      warn_multiple_script (options->tls_verify, "tls-verify");
-      options->tls_verify = string_substitute (p[1], ',', ' ', &options->gc);
+      set_user_script (options, &options->tls_verify,
+		       string_substitute (p[1], ',', ' ', &options->gc),
+		       "tls-verify");
     }
 #ifndef ENABLE_CRYPTO_POLARSSL
   else if (streq (p[0], "tls-export-cert") && p[1])
@@ -6514,10 +6518,100 @@ add_option (struct options *options,
       options->tls_export_cert = p[1];
     }
 #endif
+  else if (streq (p[0], "compat-names"))
+    {
+      VERIFY_PERMISSION (OPT_P_GENERAL);
+      if (options->verify_x509_type != VERIFY_X509_NONE &&
+          options->verify_x509_type != TLS_REMOTE_SUBJECT_DN &&
+          options->verify_x509_type != TLS_REMOTE_SUBJECT_RDN_PREFIX)
+        {
+          msg (msglevel, "you cannot use --compat-names with --verify-x509-name");
+          goto err;
+        }
+      msg (M_WARN, "DEPRECATED OPTION: --compat-names, please update your configuration");
+      compat_flag (COMPAT_FLAG_SET | COMPAT_NAMES);
+#if P2MP_SERVER
+      if (p[1] && streq (p[1], "no-remapping"))
+        compat_flag (COMPAT_FLAG_SET | COMPAT_NO_NAME_REMAPPING);
+    }
+  else if (streq (p[0], "no-name-remapping"))
+    {
+      VERIFY_PERMISSION (OPT_P_GENERAL);
+      if (options->verify_x509_type != VERIFY_X509_NONE &&
+          options->verify_x509_type != TLS_REMOTE_SUBJECT_DN &&
+          options->verify_x509_type != TLS_REMOTE_SUBJECT_RDN_PREFIX)
+        {
+          msg (msglevel, "you cannot use --no-name-remapping with --verify-x509-name");
+          goto err;
+        }
+      msg (M_WARN, "DEPRECATED OPTION: --no-name-remapping, please update your configuration");
+      compat_flag (COMPAT_FLAG_SET | COMPAT_NAMES);
+      compat_flag (COMPAT_FLAG_SET | COMPAT_NO_NAME_REMAPPING);
+#endif
+    }
   else if (streq (p[0], "tls-remote") && p[1])
     {
       VERIFY_PERMISSION (OPT_P_GENERAL);
-      options->tls_remote = p[1];
+
+      if (options->verify_x509_type != VERIFY_X509_NONE &&
+          options->verify_x509_type != TLS_REMOTE_SUBJECT_DN &&
+          options->verify_x509_type != TLS_REMOTE_SUBJECT_RDN_PREFIX)
+        {
+          msg (msglevel, "you cannot use --tls-remote with --verify-x509-name");
+          goto err;
+        }
+      msg (M_WARN, "DEPRECATED OPTION: --tls-remote, please update your configuration");
+
+      if (strlen (p[1]))
+        {
+          int is_username = (!strchr (p[1], '=') || !strstr (p[1], ", "));
+          int type = TLS_REMOTE_SUBJECT_DN;
+          if (p[1][0] != '/' && is_username)
+            type = TLS_REMOTE_SUBJECT_RDN_PREFIX;
+
+          /*
+           * Enable legacy openvpn format for DNs that have not been converted
+           * yet and --x509-username-field (not containing an '=' or ', ')
+           */
+          if (p[1][0] == '/' || is_username)
+            compat_flag (COMPAT_FLAG_SET | COMPAT_NAMES);
+
+          options->verify_x509_type = type;
+          options->verify_x509_name = p[1];
+        }
+    }
+  else if (streq (p[0], "verify-x509-name") && p[1] && strlen (p[1]))
+    {
+      int type = VERIFY_X509_SUBJECT_DN;
+      VERIFY_PERMISSION (OPT_P_GENERAL);
+      if (options->verify_x509_type == TLS_REMOTE_SUBJECT_DN ||
+          options->verify_x509_type == TLS_REMOTE_SUBJECT_RDN_PREFIX)
+        {
+          msg (msglevel, "you cannot use --verify-x509-name with --tls-remote");
+          goto err;
+        }
+      if (compat_flag (COMPAT_FLAG_QUERY | COMPAT_NAMES))
+        {
+          msg (msglevel, "you cannot use --verify-x509-name with "
+                         "--compat-names or --no-name-remapping");
+          goto err;
+        }
+      if (p[2])
+        {
+          if (streq (p[2], "subject"))
+            type = VERIFY_X509_SUBJECT_DN;
+          else if (streq (p[2], "name"))
+            type = VERIFY_X509_SUBJECT_RDN;
+          else if (streq (p[2], "name-prefix"))
+            type = VERIFY_X509_SUBJECT_RDN_PREFIX;
+          else
+            {
+              msg (msglevel, "unknown X.509 name type: %s", p[2]);
+              goto err;
+            }
+        }
+      options->verify_x509_type = type;
+      options->verify_x509_name = p[1];
     }
   else if (streq (p[0], "ns-cert-type") && p[1])
     {

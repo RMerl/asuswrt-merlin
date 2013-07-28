@@ -65,23 +65,6 @@ tls_clear_error()
 {
 }
 
-static int default_ciphersuites[] =
-{
-    SSL_EDH_RSA_AES_256_SHA,
-    SSL_EDH_RSA_CAMELLIA_256_SHA,
-    SSL_EDH_RSA_AES_128_SHA,
-    SSL_EDH_RSA_CAMELLIA_128_SHA,
-    SSL_EDH_RSA_DES_168_SHA,
-    SSL_RSA_AES_256_SHA,
-    SSL_RSA_CAMELLIA_256_SHA,
-    SSL_RSA_AES_128_SHA,
-    SSL_RSA_CAMELLIA_128_SHA,
-    SSL_RSA_DES_168_SHA,
-    SSL_RSA_RC4_128_SHA,
-    SSL_RSA_RC4_128_MD5,
-    0
-};
-
 void
 tls_ctx_server_new(struct tls_root_ctx *ctx)
 {
@@ -161,6 +144,25 @@ tls_ctx_set_options (struct tls_root_ctx *ctx, unsigned int ssl_flags)
 {
 }
 
+static const char *
+tls_translate_cipher_name (const char * cipher_name) {
+  const tls_cipher_name_pair * pair = tls_get_cipher_name_pair(cipher_name, strlen(cipher_name));
+
+  if (NULL == pair)
+    {
+      // No translation found, return original
+      return cipher_name;
+    }
+
+  if (0 != strcmp(cipher_name, pair->iana_name))
+    {
+      // Deprecated name found, notify user
+      msg(M_WARN, "Deprecated cipher suite name '%s', please use IANA name '%s'", pair->openssl_name, pair->iana_name);
+    }
+
+  return pair->iana_name;
+}
+
 void
 tls_ctx_restrict_ciphers(struct tls_root_ctx *ctx, const char *ciphers)
 {
@@ -186,7 +188,8 @@ tls_ctx_restrict_ciphers(struct tls_root_ctx *ctx, const char *ciphers)
   token = strtok (tmp_ciphers, ":");
   while(token)
     {
-      ctx->allowed_ciphers[i] = ssl_get_ciphersuite_id (token);
+      ctx->allowed_ciphers[i] = ssl_get_ciphersuite_id (
+	  tls_translate_cipher_name (token));
       if (0 != ctx->allowed_ciphers[i])
 	i++;
       token = strtok (NULL, ":");
@@ -514,20 +517,17 @@ void key_state_ssl_init(struct key_state_ssl *ks_ssl,
 
       ssl_set_rng (ks_ssl->ctx, ctr_drbg_random, rand_ctx_get());
 
-      ALLOC_OBJ_CLEAR (ks_ssl->ssn, ssl_session);
-      ssl_set_session (ks_ssl->ctx, 0, 0, ks_ssl->ssn );
       if (ssl_ctx->allowed_ciphers)
 	ssl_set_ciphersuites (ks_ssl->ctx, ssl_ctx->allowed_ciphers);
-      else
-	ssl_set_ciphersuites (ks_ssl->ctx, default_ciphersuites);
 
       /* Initialise authentication information */
       if (is_server)
 	ssl_set_dh_param_ctx (ks_ssl->ctx, ssl_ctx->dhm_ctx );
 #if defined(ENABLE_PKCS11)
       if (ssl_ctx->priv_key_pkcs11 != NULL)
-	ssl_set_own_cert_pkcs11( ks_ssl->ctx, ssl_ctx->crt_chain,
-	    ssl_ctx->priv_key_pkcs11 );
+	ssl_set_own_cert_alt( ks_ssl->ctx, ssl_ctx->crt_chain,
+	    ssl_ctx->priv_key_pkcs11, ssl_pkcs11_decrypt, ssl_pkcs11_sign,
+	    ssl_pkcs11_key_len );
       else
 #endif
 	ssl_set_own_cert( ks_ssl->ctx, ssl_ctx->crt_chain, ssl_ctx->priv_key );
@@ -543,7 +543,6 @@ void key_state_ssl_init(struct key_state_ssl *ks_ssl,
       ALLOC_OBJ_CLEAR (ks_ssl->ct_out, endless_buffer);
       ssl_set_bio (ks_ssl->ctx, endless_buf_read, ks_ssl->ct_in,
 	  endless_buf_write, ks_ssl->ct_out);
-
     }
 }
 
@@ -556,8 +555,6 @@ key_state_ssl_free(struct key_state_ssl *ks_ssl)
 	  ssl_free(ks_ssl->ctx);
 	  free(ks_ssl->ctx);
 	}
-      if (ks_ssl->ssn)
-	free(ks_ssl->ssn);
       if (ks_ssl->ct_in) {
 	buf_free_entries(ks_ssl->ct_in);
 	free(ks_ssl->ct_in);
@@ -666,6 +663,7 @@ key_state_read_ciphertext (struct key_state_ssl *ks, struct buffer *buf,
 {
   int retval = 0;
   int len = 0;
+  char error_message[1024];
 
   perf_push (PERF_BIO_READ_CIPHERTEXT);
 
@@ -691,7 +689,8 @@ key_state_read_ciphertext (struct key_state_ssl *ks, struct buffer *buf,
       perf_pop ();
       if (POLARSSL_ERR_NET_WANT_WRITE == retval || POLARSSL_ERR_NET_WANT_READ == retval)
 	return 0;
-      msg (D_TLS_ERRORS, "TLS_ERROR: read tls_read_plaintext error");
+      error_strerror(retval, error_message, sizeof(error_message));
+      msg (D_TLS_ERRORS, "TLS_ERROR: read tls_read_ciphertext error: %d %s", retval, error_message);
       buf->len = 0;
       return -1;
     }
@@ -763,6 +762,7 @@ key_state_read_plaintext (struct key_state_ssl *ks, struct buffer *buf,
 {
   int retval = 0;
   int len = 0;
+  char error_message[1024];
 
   perf_push (PERF_BIO_READ_PLAINTEXT);
 
@@ -787,7 +787,8 @@ key_state_read_plaintext (struct key_state_ssl *ks, struct buffer *buf,
     {
       if (POLARSSL_ERR_NET_WANT_WRITE == retval || POLARSSL_ERR_NET_WANT_READ == retval)
 	return 0;
-      msg (D_TLS_ERRORS, "TLS_ERROR: read tls_read_plaintext error");
+      error_strerror(retval, error_message, sizeof(error_message));
+      msg (D_TLS_ERRORS, "TLS_ERROR: read tls_read_plaintext error: %d %s", retval, error_message);
       buf->len = 0;
       perf_pop ();
       return -1;
@@ -818,7 +819,7 @@ key_state_read_plaintext (struct key_state_ssl *ks, struct buffer *buf,
 void
 print_details (struct key_state_ssl * ks_ssl, const char *prefix)
 {
-  x509_cert *cert;
+  const x509_cert *cert;
   char s1[256];
   char s2[256];
 
@@ -828,7 +829,7 @@ print_details (struct key_state_ssl * ks_ssl, const char *prefix)
 		    ssl_get_version (ks_ssl->ctx),
 		    ssl_get_ciphersuite(ks_ssl->ctx));
 
-  cert = ks_ssl->ctx->peer_cert;
+  cert = ssl_get_peer_cert(ks_ssl->ctx);
   if (cert != NULL)
     {
       openvpn_snprintf (s2, sizeof (s2), ", " counter_format " bit RSA", (counter_type) cert->rsa.len * 8);

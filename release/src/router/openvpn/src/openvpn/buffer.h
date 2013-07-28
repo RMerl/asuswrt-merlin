@@ -668,6 +668,10 @@ buf_read_u32 (struct buffer *buf, bool *good)
     }
 }
 
+/**
+ * Compare src buffer contents with match.
+ * *NOT* constant time. Do not use when comparing HMACs.
+ */
 static inline bool
 buf_string_match (const struct buffer *src, const void *match, int size)
 {
@@ -676,6 +680,10 @@ buf_string_match (const struct buffer *src, const void *match, int size)
   return memcmp (BPTR (src), match, size) == 0;
 }
 
+/**
+ * Compare first size bytes of src buffer contents with match.
+ * *NOT* constant time. Do not use when comparing HMACs.
+ */
 static inline bool
 buf_string_match_head (const struct buffer *src, const void *match, int size)
 {
@@ -687,16 +695,6 @@ buf_string_match_head (const struct buffer *src, const void *match, int size)
 bool buf_string_match_head_str (const struct buffer *src, const char *match);
 bool buf_string_compare_advance (struct buffer *src, const char *match);
 int buf_substring_len (const struct buffer *buf, int delim);
-
-/*
- * Bitwise operations
- */
-static inline void
-xor (uint8_t *dest, const uint8_t *src, int len)
-{
-  while (len-- > 0)
-    *dest++ ^= *src++;
-}
 
 /*
  * Print a string which might be NULL
