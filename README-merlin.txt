@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.372.31_2 (26-Juil-2013)
+Asuswrt-Merlin - build 3.0.0.4.372.32 (xx-xxx-2013)
 ======================================================
 
 About
@@ -480,6 +480,12 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.372.32:
+   - CHANGED: Upgraded OpenVPN to 2.3.2
+   - CHANGED: Implemented IPTraffic support in DualWAN - Load balanced
+              mode (Experimental builds)
+
+
 3.0.0.4.372.31_2:
    - FIXED: Samba wouldn't start due to missing symlink (RT-AC56U)
 
