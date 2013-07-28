@@ -19,3 +19,4 @@ libtool
 .libs
 src/openvpn/openvpn
 version.sh
+Makefile.in
