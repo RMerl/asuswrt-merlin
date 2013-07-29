@@ -144,6 +144,7 @@ certain events occur.  Those scripts must be saved in /jffs/scripts/
 - services-start:  Services are started (boot)
 - services-stop:  Services are stopped (reboot)
 - wan-start:  WAN interface just come up (includes if it went down and back up)
+              The WAN unit number will be passed as argument (0 = primary WAN)
 - firewall-start:  Firewall is started (filter rules have been applied)
 - nat-start: nat rules (i.e. port forwards and such) have been applied (nat table)
 - init-start:  Right after jffs is mounted, before any of the services get started
@@ -481,9 +482,12 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.372.32:
+   - NEW: wan-start script will get passed the WAN unit number as argument
    - CHANGED: Upgraded OpenVPN to 2.3.2
    - CHANGED: Implemented IPTraffic support in DualWAN - Load balanced
               mode (Experimental builds)
+   - FIXED: web server would crash if you entered too much data in
+            OpenVPN key/cert fields.
 
 
 3.0.0.4.372.31_2:
