@@ -802,7 +802,8 @@ void update_wan_state(char *prefix, int state, int reason)
 		unlink("/tmp/wanstatus.log");
 	}
         else if (state == WAN_STATE_CONNECTED) {
-                run_custom_script("wan-start", NULL);
+		sprintf(tmp,"%c",prefix[3]);
+                run_custom_script("wan-start", tmp);
         }
 }
 
