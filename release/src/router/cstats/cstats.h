@@ -23,13 +23,6 @@
 //#define DEBUG_NOISY
 //#define DEBUG_STIME
 
-//#ifdef DEBUG_NOISY
-//#define _dprintf(args...)	cprintf(args)
-//#define _dprintf(args...)	printf(args)
-//#else
-//#define _dprintf(args...)	do { } while (0)
-//#endif
-
 // Asuswrt does not use this feature
 //#define SPEED_SUPPORT
 
