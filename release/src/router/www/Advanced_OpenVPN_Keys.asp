@@ -118,7 +118,11 @@ function change_page(page){
                 <div>&nbsp;</div>
                 <div class="formfonttitle">OpenVPN- Keys</div>
                 <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-
+		<div class="formfontdesc">
+			<p>Only paste the content of the <span style="color:#FFCC00;">----- BEGIN xxx ----- </span>/<span style="color:#FFCC00;"> ----- END xxx -----</span> block (including those two lines).
+			<p>Limit: 2999 characters per field
+		</div>
+		<br>
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 
 					<tr id="server_unit">
