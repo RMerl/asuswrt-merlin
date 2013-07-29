@@ -13,6 +13,7 @@ images/Makefile
 aclocal.m4
 Makefile
 configure.h
+configure
 autom4te.cache
 config.h
 libtool
