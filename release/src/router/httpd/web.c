@@ -1510,6 +1510,9 @@ static int validate_apply(webs_t wp) {
 			else if((!strncmp(name, "vpn_crt", 7)) || (!strncmp(name, "sshd_", 5))) {
 
 				len = strlen(value);
+				// Saveguarda gainst buffer overrun
+				if (len > (sizeof(tmp) - 1)) len = sizeof(tmp) - 1;
+
 				i = 0;
 				for (j=0; (j < len); j++) {
 					if (value[j] == '\n') tmp[i++] = '>';
