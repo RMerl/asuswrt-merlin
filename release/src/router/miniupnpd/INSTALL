@@ -1,5 +1,5 @@
 MiniUPnP project.
-(c) 2006-2012 Thomas Bernard
+(c) 2006-2013 Thomas Bernard
 Homepage : http://miniupnp.free.fr/
 Mirror: http://miniupnp.tuxfamily.org/
 github: https://github.com/miniupnp/miniupnp
@@ -74,8 +74,6 @@ To Build and install :
   > make -f Makefile.linux
   If not using iptables from your system,
   > IPTABLESPATH=/path/to/iptables-1.4.1 make -f Makefile.linux
-  note : make sure you have iptables with static libraries compiled.
-  use "./configure --enable-static" before compiling iptables
 - install as root using :
   > make -f Makefile.linux install
 - A miniupnpd script should be installed to /etc/init.d
@@ -101,7 +99,7 @@ How to get libiptc with its headers on debian :
   > ./configure --enable-static
   > make
 - it is now possible to compile miniupnpd using the following command :
-  > IPTABLESPATH=§path/to/iptables-x.x.x make -f Makefile.linux
+  > IPTABLESPATH=/path/to/iptables-x.x.x make -f Makefile.linux
 
 =========================== Configuration =============================
 Edit the /etc/miniupnpd.conf file to set options. Almost all options are

@@ -1,4 +1,4 @@
-/* $Id: upnpsoap.c,v 1.115 2013/03/23 10:46:56 nanard Exp $ */
+/* $Id: upnpsoap.c,v 1.118 2013/06/13 13:21:30 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2013 Thomas Bernard
@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/socket.h>
@@ -794,9 +795,10 @@ GetGenericPortMappingEntry(struct upnphttp * h, const char * action)
 		"<NewLeaseDuration>%u</NewLeaseDuration>"
 		"</u:%sResponse>";
 
-	int index = 0;
+	long int index = 0;
 	unsigned short eport, iport;
 	const char * m_index;
+	char * endptr;
 	char protocol[4], iaddr[32];
 	char desc[64];
 	char rhost[40];
@@ -812,13 +814,27 @@ GetGenericPortMappingEntry(struct upnphttp * h, const char * action)
 		SoapError(h, 402, "Invalid Args");
 		return;
 	}
+	errno = 0;	/* To distinguish success/failure after call */
+	index = strtol(m_index, &endptr, 10);
+	if((errno == ERANGE && (index == LONG_MAX || index == LONG_MIN))
+	   || (errno != 0 && index == 0) || (m_index == endptr))
+	{
+		/* should condition (*endptr != '\0') be also an error ? */
+		if(m_index == endptr)
+			syslog(LOG_WARNING, "%s: no digits were found in <%s>",
+			       "GetGenericPortMappingEntry", "NewPortMappingIndex");
+		else
+			syslog(LOG_WARNING, "%s: strtol('%s'): %m",
+			       "GetGenericPortMappingEntry", m_index);
+		ClearNameValueList(&data);
+		SoapError(h, 402, "Invalid Args");
+		return;
+	}
 
-	index = (int)atoi(m_index);
-
-	syslog(LOG_INFO, "%s: index=%d", action, index);
+	syslog(LOG_INFO, "%s: index=%d", action, (int)index);
 
 	rhost[0] = '\0';
-	r = upnp_get_redirection_infos_by_index(index, &eport, protocol, &iport,
+	r = upnp_get_redirection_infos_by_index((int)index, &eport, protocol, &iport,
                                             iaddr, sizeof(iaddr),
 	                                        desc, sizeof(desc),
 	                                        rhost, sizeof(rhost),
@@ -966,19 +982,17 @@ http://www.upnp.org/schemas/gw/WANIPConnection-v2.xsd">
 		/* have a margin of 1024 bytes to store the new entry */
 		if((unsigned int)bodylen + 1024 > bodyalloc)
 		{
-			char *new_body;
-
+			char * body_sav = body;
 			bodyalloc += 4096;
-			new_body = realloc(body, bodyalloc);
-			if(!new_body)
+			body = realloc(body, bodyalloc);
+			if(!body)
 			{
 				ClearNameValueList(&data);
 				SoapError(h, 501, "ActionFailed");
+				free(body_sav);
 				free(port_list);
-				free(body);
 				return;
 			}
-			body = new_body;
 		}
 		rhost[0] = '\0';
 		r = upnp_get_redirection_infos(port_list[i], protocol, &iport,
@@ -1020,10 +1034,27 @@ SetDefaultConnectionService(struct upnphttp * h, const char * action)
 	ParseNameValue(h->req_buf + h->req_contentoff, h->req_contentlen, &data);
 	p = GetValueFromNameValueList(&data, "NewDefaultConnectionService");
 	if(p) {
-		syslog(LOG_INFO, "%s(%s) : Ignored", action, p);
+		/* 720 InvalidDeviceUUID
+		 * 721 InvalidServiceID
+		 * 723 InvalidConnServiceSelection */
+#ifdef UPNP_STRICT
+		char * service;
+		service = strchr(p, ',');
+		if(0 != memcmp(uuidvalue_wcd, p, sizeof("uuid:00000000-0000-0000-0000-000000000000") - 1)) {
+			SoapError(h, 720, "InvalidDeviceUUID");
+		} else if(service == NULL || 0 != strcmp(service+1, SERVICE_ID_WANIPC)) {
+			SoapError(h, 721, "InvalidServiceID");
+		} else
+#endif
+		{
+			syslog(LOG_INFO, "%s(%s) : Ignored", action, p);
+			BuildSendAndCloseSoapResp(h, resp, sizeof(resp)-1);
+		}
+	} else {
+		/* missing argument */
+		SoapError(h, 402, "Invalid Args");
 	}
 	ClearNameValueList(&data);
-	BuildSendAndCloseSoapResp(h, resp, sizeof(resp)-1);
 }
 
 static void
@@ -1042,7 +1073,7 @@ GetDefaultConnectionService(struct upnphttp * h, const char * action)
 	int bodylen;
 
 	bodylen = snprintf(body, sizeof(body), resp,
-	                   action, uuidvalue, action);
+	                   action, uuidvalue_wcd, action);
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 #endif
@@ -1057,6 +1088,13 @@ SetConnectionType(struct upnphttp * h, const char * action)
 
 	ParseNameValue(h->req_buf + h->req_contentoff, h->req_contentlen, &data);
 	connection_type = GetValueFromNameValueList(&data, "NewConnectionType");
+#ifdef UPNP_STRICT
+	if(!connection_type) {
+		ClearNameValueList(&data);
+		SoapError(h, 402, "Invalid Args");
+		return;
+	}
+#endif
 	/* Unconfigured, IP_Routed, IP_Bridged */
 	ClearNameValueList(&data);
 	/* always return a ReadOnly error */
@@ -1525,7 +1563,6 @@ UpdatePinhole(struct upnphttp * h, const char * action)
 	else
 	{
 		SoapError(h, 501, "ActionFailed");
-		free(body);
 		return;
 	}
 

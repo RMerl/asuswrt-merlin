@@ -1,4 +1,4 @@
-/* $Id: upnpglobalvars.h,v 1.34 2012/09/27 15:47:15 nanard Exp $ */
+/* $Id: upnpglobalvars.h,v 1.35 2013/06/13 13:21:30 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2012 Thomas Bernard
@@ -54,7 +54,9 @@ extern int runtime_flags;
 
 extern const char * pidfilename;
 
-extern char uuidvalue[];
+extern char uuidvalue_igd[];	/* uuid of root device (IGD) */
+extern char uuidvalue_wan[];	/* uuid of WAN Device */
+extern char uuidvalue_wcd[];	/* uuid of WAN Connection Device */
 
 #define SERIALNUMBER_MAX_LEN (48)
 extern char serialnumber[];

@@ -1,7 +1,7 @@
-/* $Id: testupnpdescgen.c,v 1.29 2012/04/30 21:08:00 nanard Exp $ */
+/* $Id: testupnpdescgen.c,v 1.30 2013/06/13 13:21:30 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2013 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -17,7 +17,9 @@
 #include "config.h"
 #include "upnpdescgen.h"
 
-char uuidvalue[] = "uuid:12345678-0000-0000-0000-00000000abcd";
+char uuidvalue_igd[] = "uuid:12345678-0000-0000-0000-000000abcd01";
+char uuidvalue_wan[] = "uuid:12345678-0000-0000-0000-000000abcd02";
+char uuidvalue_wcd[] = "uuid:12345678-0000-0000-0000-000000abcd03";
 char serialnumber[] = "12345678";
 char modelnumber[] = "1";
 char presentationurl[] = "http://192.168.0.1:8080/";

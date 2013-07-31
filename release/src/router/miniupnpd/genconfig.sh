@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Id: genconfig.sh,v 1.62 2013/04/24 17:03:16 nanard Exp $
+# $Id: genconfig.sh,v 1.63 2013/05/03 09:30:10 nanard Exp $
 # miniupnp daemon
 # http://miniupnp.free.fr or http://miniupnp.tuxfamily.org/
 # (c) 2006-2011 Thomas Bernard
@@ -204,6 +204,10 @@ case $OS_NAME in
 					;;
 				Gentoo)
 					OS_URL=http://www.gentoo.org/
+					;;
+				arch)
+					OS_URL=http://www.archlinux.org/
+					OS_VERSION=`uname -r`
 					;;
 			esac
 		fi

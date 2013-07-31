@@ -1,4 +1,4 @@
-# $Id: Makefile.linux,v 1.77 2013/02/11 10:37:07 nanard Exp $
+# $Id: Makefile.linux,v 1.78 2013/05/03 09:30:33 nanard Exp $
 # MiniUPnP project
 # (c) 2006-2013 Thomas Bernard
 # http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
@@ -114,6 +114,7 @@ install:	miniupnpd miniupnpd.8 miniupnpd.conf genuuid \
 
 # genuuid is using the uuidgen CLI tool which is part of libuuid
 # from the e2fsprogs
+# 'cat /proc/sys/kernel/random/uuid' could be also used
 genuuid:
 ifeq ($(TARGET_OPENWRT),)
 	sed -i -e "s/^uuid=[-0-9a-f]*/uuid=`(genuuid||uuidgen||uuid) 2>/dev/null`/" miniupnpd.conf

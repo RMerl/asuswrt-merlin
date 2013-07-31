@@ -1,4 +1,4 @@
-/* $Id: ipfrdr.c,v 1.13 2012/03/19 21:14:13 nanard Exp $ */
+/* $Id: ipfrdr.c,v 1.16 2013/05/20 00:07:47 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2007 Darren Reed
@@ -243,33 +243,64 @@ add_redirect_rule2(const char * ifname, const char * rhost,
 	memset(&ipnat, 0, sizeof(ipnat));
 
 	ipnat.in_redir = NAT_REDIRECT;
+#if IPFILTER_VERSION >= 5000000
+	ipnat.in_pr[0] = proto;
+	ipnat.in_pr[1] = proto;
+#else
 	ipnat.in_p = proto;
+#endif
 	if (proto == IPPROTO_TCP)
 		ipnat.in_flags = IPN_TCP;
 	if (proto == IPPROTO_UDP)
 		ipnat.in_flags = IPN_UDP;
 	ipnat.in_dcmp = FR_EQUAL;
+#if IPFILTER_VERSION >= 5000000
+	ipnat.in_dpmin = htons(eport);
+	ipnat.in_dpmax = htons(eport);
+	ipnat.in_dpnext = htons(iport);
+	ipnat.in_v[0] = 4;
+	ipnat.in_v[1] = 4;
+#else
 	ipnat.in_pmin = htons(eport);
 	ipnat.in_pmax = htons(eport);
 	ipnat.in_pnext = htons(iport);
 	ipnat.in_v = 4;
+#endif
 	strlcpy(ipnat.in_tag.ipt_tag, group_name, IPFTAG_LEN);
 
 #ifdef USE_IFNAME_IN_RULES
 	if (ifname) {
+#if IPFILTER_VERSION >= 5000000
+		/* XXX check for stack overflow ! */
+		ipnat.in_ifnames[0] = 0;
+		ipnat.in_ifnames[1] = 0;
+		strlcpy(ipnat.in_names, ifname, IFNAMSIZ);
+		ipnat.in_namelen = strlen(ipnat.in_names) + 1;
+#else
 		strlcpy(ipnat.in_ifnames[0], ifname, IFNAMSIZ);
 		strlcpy(ipnat.in_ifnames[1], ifname, IFNAMSIZ);
+#endif
 	}
 #endif
 
 	if(rhost && rhost[0] != '\0' && rhost[0] != '*')
 	{
+#if IPFILTER_VERSION >= 5000000
+		inet_pton(AF_INET, rhost, &ipnat.in_nsrc.na_addr[0].in4); /* in_nsrcip */
+		ipnat.in_nsrc.na_addr[1].in4.s_addr = 0xffffffff;	/* in_nsrcmsk */
+#else
 		inet_pton(AF_INET, rhost, &ipnat.in_src[0].in4);
 		ipnat.in_src[1].in4.s_addr = 0xffffffff;
+#endif
 	}
 
+#if IPFILTER_VERSION >= 5000000
+	inet_pton(AF_INET, iaddr, &ipnat.in_ndst.na_addr[0].in4); /* in_ndstip */
+	ipnat.in_ndst.na_addr[1].in4.s_addr = 0xffffffff; /* in_ndstmsk */
+#else
 	inet_pton(AF_INET, iaddr, &ipnat.in_in[0].in4);
 	ipnat.in_in[1].in4.s_addr = 0xffffffff;
+#endif
 
 	obj.ipfo_rev = IPFILTER_VERSION;
 	obj.ipfo_size = sizeof(ipnat);
@@ -323,10 +354,17 @@ get_redirect_rule(const char * ifname, unsigned short eport, int proto,
 			syslog(LOG_ERR, "ioctl(dev, SIOCGENITER): %m");
 			break;
 		}
+#if IPFILTER_VERSION >= 5000000
+		if (eport == ntohs(ipn.in_dpmin) &&
+		    eport == ntohs(ipn.in_dpmax) &&
+		    strcmp(ipn.in_tag.ipt_tag, group_name) == 0 &&
+		    ipn.in_pr[0] == proto)
+#else
 		if (eport == ntohs(ipn.in_pmin) &&
 		    eport == ntohs(ipn.in_pmax) &&
 		    strcmp(ipn.in_tag.ipt_tag, group_name) == 0 &&
 		    ipn.in_p == proto)
+#endif
 		{
 			strlcpy(desc, "", desclen);
 			if (packets != NULL)
@@ -334,12 +372,24 @@ get_redirect_rule(const char * ifname, unsigned short eport, int proto,
 			if (bytes != NULL)
 				*bytes = 0;
 			if (iport != NULL)
+#if IPFILTER_VERSION >= 5000000
+				*iport = ntohs(ipn.in_dpnext);
+#else
 				*iport = ntohs(ipn.in_pnext);
+#endif
 			if ((desc != NULL) && (timestamp != NULL))
 				get_redirect_desc(eport, proto, desc, desclen, timestamp);
 			if ((rhost != NULL) && (rhostlen > 0))
+#if IPFILTER_VERSION >= 5000000
+				inet_ntop(AF_INET, &ipn.in_nsrc.na_addr[0].in4, rhost, rhostlen);	/* in_nsrcip */
+#else
 				inet_ntop(AF_INET, &ipn.in_src[0].in4, rhost, rhostlen);
+#endif
+#if IPFILTER_VERSION >= 5000000
+			inet_ntop(AF_INET, &ipn.in_ndst.na_addr[0].in4, iaddr, iaddrlen);	/* in_ndstip */
+#else
 			inet_ntop(AF_INET, &ipn.in_in[0].in4, iaddr, iaddrlen);
+#endif
 			r = 0;
 		}
 	} while (ipn.in_next != NULL);
@@ -394,12 +444,22 @@ get_redirect_rule_by_index(int index,
 			continue;
 
 		if (index == n++) {
+#if IPFILTER_VERSION >= 5000000
+			*proto = ipn.in_pr[0];
+			*eport = ntohs(ipn.in_dpmax);
+			*iport = ntohs(ipn.in_dpnext);
+#else
 			*proto = ipn.in_p;
 			*eport = ntohs(ipn.in_pmax);
 			*iport = ntohs(ipn.in_pnext);
+#endif
 
 			if (ifname)
+#if IPFILTER_VERSION >= 5000000
+				strlcpy(ifname, ipn.in_names + ipn.in_ifnames[0], IFNAMSIZ);
+#else
 				strlcpy(ifname, ipn.in_ifnames[0], IFNAMSIZ);
+#endif
 			if (packets != NULL)
 				*packets = 0;
 			if (bytes != NULL)
@@ -407,8 +467,16 @@ get_redirect_rule_by_index(int index,
 			if ((desc != NULL) && (timestamp != NULL))
 				get_redirect_desc(*eport, *proto, desc, desclen, timestamp);
 			if ((rhost != NULL) && (rhostlen > 0))
+#if IPFILTER_VERSION >= 5000000
+				inet_ntop(AF_INET, &ipn.in_nsrc.na_addr[0].in4, rhost, rhostlen);	/* in_nsrcip */
+#else
 				inet_ntop(AF_INET, &ipn.in_src[0].in4, rhost, rhostlen);
+#endif
+#if IPFILTER_VERSION >= 5000000
+			inet_ntop(AF_INET, &ipn.in_ndst.na_addr[0].in4, iaddr, iaddrlen);	/* in_ndstip */
+#else
 			inet_ntop(AF_INET, &ipn.in_in[0].in4, iaddr, iaddrlen);
+#endif
 			r = 0;
 		}
 	} while (ipn.in_next != NULL);
@@ -447,10 +515,17 @@ real_delete_redirect_rule(const char * ifname, unsigned short eport, int proto)
 			    "delete_redirect_rule");
 			break;
 		}
+#if IPFILTER_VERSION >= 5000000
+		if (eport == ntohs(ipn.in_dpmin) &&
+		    eport == ntohs(ipn.in_dpmax) &&
+		    strcmp(ipn.in_tag.ipt_tag, group_name) == 0 &&
+		    ipn.in_pr[0] == proto)
+#else
 		if (eport == ntohs(ipn.in_pmin) &&
 		    eport == ntohs(ipn.in_pmax) &&
 		    strcmp(ipn.in_tag.ipt_tag, group_name) == 0 &&
 		    ipn.in_p == proto)
+#endif
 		{
 			obj.ipfo_rev = IPFILTER_VERSION;
 			obj.ipfo_size = sizeof(ipn);
@@ -504,7 +579,11 @@ add_filter_rule2(const char * ifname, const char * rhost,
 	fr.fr_flags = FR_PASS|FR_KEEPSTATE|FR_QUICK|FR_INQUE;
 	if (GETFLAG(LOGPACKETSMASK))
 		fr.fr_flags |= FR_LOG|FR_LOGFIRST;
+#if IPFILTER_VERSION >= 5000000
+	fr.fr_family = PF_INET;
+#else
 	fr.fr_v = 4;
+#endif
 
 	fr.fr_type = FR_T_IPF;
 	fr.fr_dun.fru_ipf = &ipffr;
@@ -516,10 +595,25 @@ add_filter_rule2(const char * ifname, const char * rhost,
 	fr.fr_dcmp = FR_EQUAL;
 	fr.fr_dport = eport;
 #ifdef USE_IFNAME_IN_RULES
-	if (ifname)
+	if (ifname) {
+#if IPFILTER_VERSION >= 5000000
+		/* XXX check for stack overflow ! */
+		fr.fr_ifnames[0] = fr.fr_namelen;
+		strlcpy(fr.fr_names + fr.fr_ifnames[0], ifname, IFNAMSIZ);
+		fr.fr_namelen += strlen(ifname) + 1;
+#else
 		strlcpy(fr.fr_ifnames[0], ifname, IFNAMSIZ);
 #endif
+	}
+#endif
+#if IPFILTER_VERSION >= 5000000
+	/* XXX check for stack overflow ! */
+	fr.fr_group = fr.fr_namelen;
+	strlcpy(fr.fr_names + fr.fr_group, group_name, FR_GROUPLEN);
+	fr.fr_namelen += strlen(group_name) + 1;
+#else
 	strlcpy(fr.fr_group, group_name, sizeof(fr.fr_group));
+#endif
 
 	if (proto == IPPROTO_TCP) {
 		fr.fr_tcpf = TH_SYN;
@@ -671,10 +765,17 @@ get_portmappings_in_range(unsigned short startport, unsigned short endport,
 		if (strcmp(ipn.in_tag.ipt_tag, group_name) != 0)
 			continue;
 		
+#if IPFILTER_VERSION >= 5000000
+		eport = ntohs(ipn.in_dpmin);
+		if( (eport == ntohs(ipn.in_dpmax))
+		  && (ipn.in_pr[0] == proto)
+		  && (startport <= eport) && (eport <= endport) )
+#else
 		eport = ntohs(ipn.in_pmin);
 		if( (eport == ntohs(ipn.in_pmax))
 		  && (ipn.in_p == proto)
 		  && (startport <= eport) && (eport <= endport) )
+#endif
 		{
 			if(*number >= capacity)
 			{

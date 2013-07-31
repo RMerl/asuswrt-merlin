@@ -1,4 +1,4 @@
-/* $Id: miniupnpd.c,v 1.174 2013/03/23 10:46:54 nanard Exp $ */
+/* $Id: miniupnpd.c,v 1.176 2013/06/13 13:21:29 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2013 Thomas Bernard
@@ -631,12 +631,45 @@ parselanaddr(struct lan_addr_s * lan_addr, const char * str)
 			fprintf(stderr, "Cannot get index for network interface %s",
 			        lan_addr->ifname);
 	}
+	else
+	{
+		fprintf(stderr, "Warning: please specify LAN network interface by name instead of IPv4 address\n");
+	}
 #endif
 	return 0;
 parselan_error:
 	fprintf(stderr, "Error parsing address/mask (or interface name) : %s\n",
 	        str);
 	return -1;
+}
+
+/* fill uuidvalue_wan and uuidvalue_wcd based on uuidvalue_igd */
+void complete_uuidvalues(void)
+{
+	size_t len;
+	len = strlen(uuidvalue_igd);
+	memcpy(uuidvalue_wan, uuidvalue_igd, len+1);
+	switch(uuidvalue_wan[len-1]) {
+	case '9':
+		uuidvalue_wan[len-1] = 'a';
+		break;
+	case 'f':
+		uuidvalue_wan[len-1] = '0';
+		break;
+	default:
+		uuidvalue_wan[len-1]++;
+	}
+	memcpy(uuidvalue_wcd, uuidvalue_wan, len+1);
+	switch(uuidvalue_wcd[len-1]) {
+	case '9':
+		uuidvalue_wcd[len-1] = 'a';
+		break;
+	case 'f':
+		uuidvalue_wcd[len-1] = '0';
+		break;
+	default:
+		uuidvalue_wcd[len-1]++;
+	}
 }
 
 /* init phase :
@@ -766,8 +799,9 @@ init(int argc, char * * argv, struct runtime_vars * v)
 				break;
 #endif
 			case UPNPUUID:
-				strncpy(uuidvalue+5, ary_options[i].value,
-				        strlen(uuidvalue+5) + 1);
+				strncpy(uuidvalue_igd+5, ary_options[i].value,
+				        strlen(uuidvalue_igd+5) + 1);
+				complete_uuidvalues();
 				break;
 			case UPNPSERIAL:
 				strncpy(serialnumber, ary_options[i].value, SERIALNUMBER_MAX_LEN);
@@ -862,9 +896,10 @@ init(int argc, char * * argv, struct runtime_vars * v)
 				fprintf(stderr, "Option -%c takes one argument.\n", argv[i][1]);
 			break;
 		case 'u':
-			if(i+1 < argc)
-				strncpy(uuidvalue+5, argv[++i], strlen(uuidvalue+5) + 1);
-			else
+			if(i+1 < argc) {
+				strncpy(uuidvalue_igd+5, argv[++i], strlen(uuidvalue_igd+5) + 1);
+				complete_uuidvalues();
+			} else
 				fprintf(stderr, "Option -%c takes one argument.\n", argv[i][1]);
 			break;
 		case 'z':

@@ -1,7 +1,7 @@
-/* $Id: getifstats.c,v 1.11 2012/04/06 15:26:45 nanard Exp $ */
+/* $Id: getifstats.c,v 1.12 2013/04/29 10:18:20 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2013 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -13,6 +13,16 @@
 
 #include "../config.h"
 #include "../getifstats.h"
+
+#ifdef GET_WIRELESS_STATS
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <arpa/inet.h>
+#include <linux/wireless.h>
+#endif /* GET_WIRELESS_STATS */
+
+/* that is the answer */
+#define BAUDRATE_DEFAULT 4200000
 
 int
 getifstats(const char * ifname, struct ifdata * data)
@@ -27,10 +37,10 @@ getifstats(const char * ifname, struct ifdata * data)
 	static time_t cache_timestamp = 0;
 	static struct ifdata cache_data;
 	time_t current_time;
-#endif
+#endif /* ENABLE_GETIFSTATS_CACHING */
 	if(!data)
 		return -1;
-	data->baudrate = 4200000;	/* that is the answer */
+	data->baudrate = BAUDRATE_DEFAULT;
 	data->opackets = 0;
 	data->ipackets = 0;
 	data->obytes = 0;
@@ -48,7 +58,7 @@ getifstats(const char * ifname, struct ifdata * data)
 			return 0;
 		}
 	}
-#endif
+#endif /* ENABLE_GETIFSTATS_CACHING */
 	f = fopen("/proc/net/dev", "r");
 	if(!f) {
 		syslog(LOG_ERR, "getifstats() : cannot open /proc/net/dev : %m");
@@ -98,13 +108,27 @@ getifstats(const char * ifname, struct ifdata * data)
 		}
 		fclose(f);
 	}
+#ifdef GET_WIRELESS_STATS
+	if(data->baudrate == BAUDRATE_DEFAULT) {
+		struct iwreq iwr;
+		int s;
+		s = socket(AF_INET, SOCK_DGRAM, 0);
+		if(s >= 0) {
+			strncpy(iwr.ifr_name, ifname, IFNAMSIZ);
+			if(ioctl(s, SIOCGIWRATE, &iwr) >= 0) {
+				data->baudrate = iwr.u.bitrate.value;
+			}
+			close(s);
+		}
+	}
+#endif /* GET_WIRELESS_STATS */
 #ifdef ENABLE_GETIFSTATS_CACHING
 	if(r==0 && current_time!=((time_t)-1)) {
 		/* cache the new data */
 		cache_timestamp = current_time;
 		memcpy(&cache_data, data, sizeof(struct ifdata));
 	}
-#endif
+#endif /* ENABLE_GETIFSTATS_CACHING */
 	return r;
 }
 

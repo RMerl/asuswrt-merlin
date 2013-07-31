@@ -1,7 +1,7 @@
-/* $Id: upnpevents.c,v 1.26 2012/10/04 22:11:56 nanard Exp $ */
+/* $Id: upnpevents.c,v 1.27 2013/06/13 13:21:30 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2008-2012 Thomas Bernard
+ * (c) 2008-2013 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -110,7 +110,7 @@ newSubscriber(const char * eventurl, const char * callback, int callbacklen)
 	tmp->callback[callbacklen] = '\0';
 	/* make a dummy uuid */
 	/* TODO: improve that */
-	strncpy(tmp->uuid, uuidvalue, sizeof(tmp->uuid));
+	strncpy(tmp->uuid, uuidvalue_igd, sizeof(tmp->uuid));
 	tmp->uuid[sizeof(tmp->uuid)-1] = '\0';
 	snprintf(tmp->uuid+37, 5, "%04lx", random() & 0xffff);
 	return tmp;

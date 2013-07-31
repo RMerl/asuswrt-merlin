@@ -1,4 +1,4 @@
-/* $Id: upnpglobalvars.c,v 1.29 2012/04/26 14:01:16 nanard Exp $ */
+/* $Id: upnpglobalvars.c,v 1.30 2013/06/13 13:21:30 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2012 Thomas Bernard
@@ -36,7 +36,9 @@ int runtime_flags = 0;
 
 const char * pidfilename = "/var/run/miniupnpd.pid";
 
-char uuidvalue[] = "uuid:00000000-0000-0000-0000-000000000000";
+char uuidvalue_igd[] = "uuid:00000000-0000-0000-0000-000000000000";
+char uuidvalue_wan[] = "uuid:00000000-0000-0000-0000-000000000000";
+char uuidvalue_wcd[] = "uuid:00000000-0000-0000-0000-000000000000";
 char serialnumber[SERIALNUMBER_MAX_LEN] = "00000000";
 
 char modelnumber[MODELNUMBER_MAX_LEN] = "1";

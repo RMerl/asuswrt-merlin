@@ -1,4 +1,36 @@
-$Id: Changelog.txt,v 1.335 2013/04/26 15:17:09 nanard Exp $
+$Id: Changelog.txt,v 1.345 2013/06/13 13:21:28 nanard Exp $
+
+2013/06/13:
+  Have 3 UUID for the 3 devices (IGD, WAN Device, WAN Connection Device)
+
+2013/06/06:
+  update upnpreplyparse to allow larger values (128 chars instead of 64)
+
+2013/06/05:
+  check Service ID in SetDefaultConnectionService method
+  Don't advertise WANPPPConnection in UPNP_STRICT mode
+
+2013/05/29:
+  Remove namespace from variable name elements in Events "propertyset"
+    to comply with UPNP DeviceArchitecture v1.1.
+
+2013/05/20:
+  Adding support for IP Filter version 5.x
+
+2013/05/16:
+  refuses non integer <NewPortMappingIndex> values
+
+2013/05/14:
+  Update upnpreplyparse to take into account "empty" elements
+
+2013/05/03:
+  Use pkg-config under linux to find libiptc. Thanks to Olivier Langlois
+
+2013/04/29:
+  Add warning message when using IPv4 address for listening_ip with IPv6 enabled
+
+2013/04/27:
+  Uses ifr_addr if ifr_netmask is not defined in struct ifreq
 
 2013/04/26:
   Correctly handle truncated snprintf() in SSDP code
