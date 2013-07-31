@@ -194,6 +194,7 @@ var folderlist = new Array();
 
 function applyRule(){
 	document.form.dms_dir.value = $("PATH").value;
+	document.form.dms_dbdir.value = $("DBPATH").value;
 	showLoading();
 	FormActions("start_apply.htm", "apply", "restart_media", "3");
 	document.form.submit();
@@ -576,6 +577,7 @@ function check_dir_path(){
 <input type="hidden" name="next_page" value="mediaserver.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="dms_dir" value="">
+<input type="hidden" name="dms_dbdir" value="">
 <input type="hidden" name="action_mode" value="">
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="">
@@ -684,12 +686,17 @@ function check_dir_path(){
 <tr>
         	<th>Media server directory</th>
         	<td>
-				<input id="PATH" type="text"  class="input_25_table" style="margin-left:15px;height:25px;" value="<% nvram_show_chinese_char("dms_dir"); %>" onclick="get_disk_tree();" readonly="readonly"/">
-				<input type="button" class="button_gen" onclick="applyRule()" value="<#CTL_apply#>"/>
+				<input id="PATH" type="text"  class="input_25_table" style="margin-left:15px;height:25px;" value="<% nvram_show_chinese_char("dms_dir"); %>" onclick="get_disk_tree();" readonly="readonly" />
 				<div id="noUSB" style="color:#FC0;display:none;margin-left:17px;padding-top:2px;padding-bottom:2px;"><#no_usb_found#></div>
         	</td>
        	</tr>
 
+		<tr>
+			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,1);">Default media server database directory</a></th>
+			<td>
+				<input id="DBPATH" type="text" class="input_25_table" style="margin-left:15px;height:25px;" value="<% nvram_get("dms_dbdir"); %>" />
+			</td>
+		</tr>
    			<tr>
         	<th>Media Server Status</th>
         	<td><span id="dmsStatus" style="margin-left:15px">Idle</span>
@@ -697,6 +704,9 @@ function check_dir_path(){
        	</tr>
       	</table> 
       	</div>
+	<div class="apply_gen">
+		<input type="button" class="button_gen" value="<#CTL_apply#>" onclick="applyRule();">
+	</div>
     	</td> 
   </tr>  
   

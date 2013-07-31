@@ -1991,7 +1991,7 @@ void start_dms(void)
 				dmsdir = nvram_default_get("dms_dir");
 
 			if(strcmp(dmsdir, nvram_default_get("dms_dir"))==0)
-				strcpy(dbdir, "/var/cache/minidlna");
+				strcpy(dbdir, nvram_safe_get("dms_dbdir"));
 			else {
 				if(dmsdir[strlen(dmsdir)-1]=='/') sprintf(dbdir, "%sminidlna", dmsdir);
 				else sprintf(dbdir, "%s/minidlna", dmsdir);

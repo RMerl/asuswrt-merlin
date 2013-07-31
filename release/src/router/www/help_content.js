@@ -245,3 +245,7 @@ helpcontent[24] = new Array("",
 helpcontent[25] = new Array("",
 							"<#DSL_Stab_Adjustment#>",			//Stability Adjustment
 							"<#DSL_SRA_itemdesc#>");		//SRA(Seamless Rate Adaptation)
+
+// DLNA
+helpcontent[26] = new Array("",
+							"Specify the default directory where the media server will keep it's database.  This value is only used if you use the default <b>Media server directory</b> of <b>/tmp/mnt</b>.<br /><br />Otherwise, the database will be stored in a subdirectory of your Media server directory named <b>minidlna</b>.");
