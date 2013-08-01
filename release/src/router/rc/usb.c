@@ -1990,9 +1990,10 @@ void start_dms(void)
 			if(!check_if_dir_exist(dmsdir)) 
 				dmsdir = nvram_default_get("dms_dir");
 
-			if(strcmp(dmsdir, nvram_default_get("dms_dir"))==0)
-				strcpy(dbdir, nvram_safe_get("dms_dbdir"));
-			else {
+			if(strcmp(dmsdir, nvram_default_get("dms_dir"))==0) {
+				strlcpy(dbdir, nvram_safe_get("dms_dbdir"), sizeof(dbdir));
+				if (dbdir[0] == 0) strlcpy(dbdir, nvram_default_get("dms_dbdir"), sizeof(dbdir));
+			} else {
 				if(dmsdir[strlen(dmsdir)-1]=='/') sprintf(dbdir, "%sminidlna", dmsdir);
 				else sprintf(dbdir, "%s/minidlna", dmsdir);
 			}

@@ -199,7 +199,8 @@ function applyRule(){
 	FormActions("start_apply.htm", "apply", "restart_media", "3");
 	document.form.submit();
 }
-function get_disk_tree(){
+function get_disk_tree(modifyDbDir){
+	window.modifyDbDir = modifyDbDir
 	if(disk_flag == 1){
 		alert('<#no_usb_found#>');
 		return false;	
@@ -494,7 +495,8 @@ function cancel_folderTree(){
 	$j("#folderTree_panel").fadeOut(300);
 }
 function confirm_folderTree(){
-	$('PATH').value = path_directory ;
+	if (modifyDbDir) $('DBPATH').value = path_directory ;
+	else $('PATH').value = path_directory ;
 	this.FromObject ="0";
 	$j("#folderTree_panel").fadeOut(300);
 	//check_dir_path();
@@ -686,15 +688,17 @@ function check_dir_path(){
 <tr>
         	<th>Media server directory</th>
         	<td>
-				<input id="PATH" type="text"  class="input_25_table" style="margin-left:15px;height:25px;" value="<% nvram_show_chinese_char("dms_dir"); %>" onclick="get_disk_tree();" readonly="readonly" />
+				<input id="PATH" type="text"  class="input_25_table" style="margin-left:15px;height:25px;" value="<% nvram_show_chinese_char("dms_dir"); %>" onclick="get_disk_tree(false);" readonly="readonly" />
+				<input type="button" class="button_gen" value="Use Default" onclick="$('PATH').value='<% nvram_default_get("dms_dir"); %>';" />
 				<div id="noUSB" style="color:#FC0;display:none;margin-left:17px;padding-top:2px;padding-bottom:2px;"><#no_usb_found#></div>
         	</td>
        	</tr>
 
 		<tr>
-			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,1);">Default media server database directory</a></th>
+			<th><a class="hintstyle" href="javascript:void(0);" onclick="return overlib('Specify the default directory where the media server will keep it\'s database.  This value is only used if you use the default <b>Media server directory</b> of <b>/tmp/mnt</b>.<br /><br />Otherwise, the database will be stored in a subdirectory of your Media server directory named <b>minidlna</b>.', HAUTO, VAUTO);" onmouseout="return nd();">Default media server database directory</a></th>
 			<td>
-				<input id="DBPATH" type="text" class="input_25_table" style="margin-left:15px;height:25px;" value="<% nvram_get("dms_dbdir"); %>" />
+				<input id="DBPATH" type="text" class="input_25_table" style="margin-left:15px;height:25px;" value="<% nvram_show_chinese_char("dms_dbdir"); %>" onclick="get_disk_tree(true);" readonly="readonly" />
+				<input type="button" class="button_gen" value="Use Default" onclick="$('DBPATH').value='<% nvram_default_get("dms_dbdir");  %>';" />
 			</td>
 		</tr>
    			<tr>
