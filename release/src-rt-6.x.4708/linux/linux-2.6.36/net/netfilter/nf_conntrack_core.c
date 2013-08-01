@@ -295,12 +295,16 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 		ipc_entry.action = CTF_ACTION_UNTAG;
 	}	
 #ifdef CTF_PPPOE
+	const char *vars = NULL, *dev_name = NULL;
+
 	/* For pppoe interfaces fill the session id and header add/del actions */
 	if (skb_dst(skb)->dev->flags & IFF_POINTOPOINT) {
 		/* Transmit interface and sid will be populated by pppoe module */
 		ipc_entry.ppp_ifp = skb_dst(skb)->dev;
+		dev_name = skb_dst(skb)->dev->name;
 	} else if (skb->dev->flags & IFF_POINTOPOINT) {
 		ipc_entry.ppp_ifp = skb->dev;
+		dev_name = skb->dev->name;
 	} else{
 		ipc_entry.ppp_ifp = NULL;
 		ipc_entry.pppoe_sid = 0xffff;

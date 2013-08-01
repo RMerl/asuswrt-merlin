@@ -24,6 +24,8 @@
 
 #include "xhci.h"
 
+extern int usb2mode;
+
 static void xhci_hub_descriptor(struct xhci_hcd *xhci,
 		struct usb_hub_descriptor *desc)
 {
@@ -236,13 +238,26 @@ int xhci_hub_control(struct usb_hcd *hcd, u16 typeReq, u16 wValue,
 		temp = xhci_port_state_to_neutral(temp);
 		switch (wValue) {
 		case USB_PORT_FEAT_POWER:
+			printk(KERN_INFO "[xhci-hub] usb2mode:[%d]\n", usb2mode);
 			/*
 			 * Turn on ports, even if there isn't per-port switching.
 			 * HC will report connect events even before this is set.
 			 * However, khubd will ignore the roothub events until
 			 * the roothub is registered.
 			 */
-			xhci_writel(xhci, temp | PORT_POWER, addr);
+			if(usb2mode==1){
+				printk(KERN_INFO "[xhci] USB3 port power off\n");
+				xhci_writel(xhci, (temp | PORT_PE), addr);
+				xhci_writel(xhci, (temp & ~(PORT_POWER)), addr);
+				xhci_writel(xhci, ((temp & ~PORT_PLS_MASK) | PORT_WR | PORT_PLC | XDEV_U0 | PORT_RESET | PORT_LINK_STROBE), addr);
+			}else if(usb2mode==2){
+				printk(KERN_INFO "[xhci] USB3 port power off\n");
+				xhci_writel(xhci, (temp | PORT_PE), addr);
+				xhci_writel(xhci, (temp | PORT_POWER), addr);
+				xhci_writel(xhci, ((temp & ~PORT_PLS_MASK) | PORT_WR | PORT_PLC | XDEV_U0 | PORT_RESET | PORT_LINK_STROBE), addr);
+			}else{
+				xhci_writel(xhci, temp | PORT_POWER, addr);
+			}
 
 			temp = xhci_readl(xhci, addr);
 			xhci_dbg(xhci, "set port power, actual port %d status  = 0x%x\n", wIndex, temp);

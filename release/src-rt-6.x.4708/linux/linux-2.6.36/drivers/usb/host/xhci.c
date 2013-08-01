@@ -38,6 +38,11 @@ static int link_quirk;
 module_param(link_quirk, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(link_quirk, "Don't clear the chain bit on a link TRB");
 
+/* a workaround for Seagate or WD USB 3.0 HDD */
+int usb2mode;
+module_param(usb2mode, int, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(usb2mode, "set this to enable USB2");
+
 /* TODO: copied from ehci-hcd.c - can this be refactored? */
 /*
  * handshake - spin reading hc until handshake completes or fails

@@ -2943,6 +2943,8 @@ ppp_rxstats_upd(void *pppif, struct sk_buff *skb)
 	if(pppif == NULL || skb == NULL)
 		return;
 	struct ppp *ppp = (struct ppp *)netdev_priv((const struct net_device *)pppif);
+	if (ppp == NULL)
+		return;
 	++ppp->dev->stats.rx_packets;
 	ppp->dev->stats.rx_bytes += skb->len;
 	ppp->last_recv = jiffies;
@@ -2954,6 +2956,8 @@ ppp_txstats_upd(void *pppif, struct sk_buff *skb)
 	if(pppif == NULL || skb == NULL)
 		return;
 	struct ppp *ppp = (struct ppp *)netdev_priv((const struct net_device *)pppif);
+	if (ppp == NULL)
+		return;
 	++ppp->dev->stats.tx_packets;
 	ppp->dev->stats.tx_bytes += skb->len;
 	ppp->last_xmit = jiffies;

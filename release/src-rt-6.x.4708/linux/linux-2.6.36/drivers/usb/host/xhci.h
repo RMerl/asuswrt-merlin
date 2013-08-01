@@ -266,6 +266,15 @@ struct xhci_op_regs {
  * A read gives the current link PM state of the port,
  * a write with Link State Write Strobe set sets the link state.
  */
+/* Port Link State - bits 5:8
+ * A read gives the current link PM state of the port,
+ * a write with Link State Write Strobe set sets the link state.
+ */
+#define PORT_PLS_MASK	(0xf << 5)
+#define XDEV_U0		(0x0 << 5)
+#define XDEV_U3		(0x3 << 5)
+#define XDEV_RESUME	(0xf << 5)
+
 /* true: port has power (see HCC_PPC) */
 #define PORT_POWER	(1 << 9)
 /* bits 10:13 indicate device speed:
