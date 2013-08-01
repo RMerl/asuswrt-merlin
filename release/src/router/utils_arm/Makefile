@@ -54,6 +54,10 @@ CFLAGS += -DD11AC_IOTYPES -DPPR_API
 CFLAGS += -DWLCNT
 #endif
 
+ifeq ($(RTCONFIG_5301X),y)
+CFLAGS += -DBCM5301X
+endif
+
 ifeq ($(CONFIG_TRAFFIC_MGMT),y)
 CFLAGS += -DTRAFFIC_MGMT
 endif
@@ -94,7 +98,7 @@ endif
 endif
 
 ifneq ($(wildcard ./prebuilt),)
-all:
+all: robocfg
 	-cp prebuilt/et ./
 	-cp prebuilt/wl ./
 	-cp prebuilt/epi_ttcp ./
