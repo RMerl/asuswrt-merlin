@@ -486,6 +486,11 @@ History
    - CHANGED: Upgraded OpenVPN to 2.3.2
    - CHANGED: Implemented IPTraffic support in DualWAN - Load balanced
               mode (Experimental builds)
+   - CHANGED: Updated miniupnpd to 20130730
+   - CHANGED: Updated some prebuilt binaries (RT-AC56U)
+   - CHANGED: Updated 2.6.36 kernel to the latest code used
+              in 372_184 (RT-AC56U), includes some changes
+              related to USB3, and PPP/CTF.
    - FIXED: web server would crash if you entered too much data in
             OpenVPN key/cert fields.
 
