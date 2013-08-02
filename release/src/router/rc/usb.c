@@ -1990,12 +1990,19 @@ void start_dms(void)
 			if(!check_if_dir_exist(dmsdir)) 
 				dmsdir = nvram_default_get("dms_dir");
 
-			if(strcmp(dmsdir, nvram_default_get("dms_dir"))==0)
-				strcpy(dbdir, "/var/cache/minidlna");
-			else {
+			strlcpy(dbdir, nvram_safe_get("dms_dbdir"), sizeof(dbdir));
+
+			// If dms_dbdir is the default and dms_dir is NOT the default,
+			// then use "<dms_dir>/minidlna" as dms_dbdir.
+			if (0 == strcmp(dbdir, nvram_default_get("dms_dbdir")) &&
+			    0 != strcmp(dmsdir, nvram_default_get("dms_dir"))) {
 				if(dmsdir[strlen(dmsdir)-1]=='/') sprintf(dbdir, "%sminidlna", dmsdir);
 				else sprintf(dbdir, "%s/minidlna", dmsdir);
 			}
+
+			// If dbdir is an empty string, use the default value
+			if (dbdir[0] == 0) strlcpy(dbdir, nvram_default_get("dms_dbdir"), sizeof(dbdir));
+
 			mkdir_if_none(dbdir);
 
 			nvram_set("dms_dbcwd", dbdir);
