@@ -695,7 +695,7 @@ function check_dir_path(){
        	</tr>
 
 		<tr>
-			<th><a class="hintstyle" href="javascript:void(0);" onclick="return overlib('Specify the default directory where the media server will keep it\'s database.  This value is only used if you use the default <b>Media server directory</b> of <b>/tmp/mnt</b>.<br /><br />Otherwise, the database will be stored in a subdirectory of your Media server directory named <b>minidlna</b>.', HAUTO, VAUTO);" onmouseout="return nd();">Default media server database directory</a></th>
+			<th>Media server database directory</a></th>
 			<td>
 				<input id="DBPATH" type="text" class="input_25_table" style="margin-left:15px;height:25px;" value="<% nvram_show_chinese_char("dms_dbdir"); %>" onclick="get_disk_tree(true);" readonly="readonly" />
 				<input type="button" class="button_gen" value="Use Default" onclick="$('DBPATH').value='<% nvram_default_get("dms_dbdir");  %>';" />
