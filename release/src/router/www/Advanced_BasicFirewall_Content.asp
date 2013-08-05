@@ -30,6 +30,9 @@ function initial(){
 	load_body();
 	change_firewall('<% nvram_get("fw_enable_x"); %>');
 
+	if(!IPv6_support){
+		$("ipv6_fw_enable").style.dysplay = "none";
+	}
 	if(WebDav_support){
 		hideAll(1);
 	}
@@ -143,6 +146,13 @@ function done_validating(action){
             		<input type="radio" value="0" name="fw_enable_x"  onClick="return change_common_radio(this, 'FirewallConfig', 'fw_enable_x', '0')" <% nvram_match("fw_enable_x", "0", "checked"); %>><#checkbox_No#>
             	</td>
           	</tr>
+          	<tr>
+            	<th>Enable IPv6 Firewall</th>
+            	<td>
+            		<input type="radio" value="1" name="ipv6_fw_enable" <% nvram_match("ipv6_fw_enable", "1", "checked"); %>><#checkbox_Yes#>
+            		<input type="radio" value="0" name="ipv6_fw_enable" <% nvram_match("ipv6_fw_enable", "0", "checked"); %>><#checkbox_No#>
+		</td>
+		</tr>
           	<!-- 2008.03 James. patch for Oleg's patch. { -->
           	<tr>
 							<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,7);"><#FirewallConfig_DoSEnable_itemname#></a></th>
