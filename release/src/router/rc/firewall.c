@@ -1963,7 +1963,11 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled()){
-		fprintf(fp_ipv6, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n");
+		if (nvram_match("ipv6_fw_enable", "1")){
+			fprintf(fp_ipv6, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT ACCEPT [0:0]\n");
+		} else {
+			fprintf(fp_ipv6, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n");
+		}
 #ifdef RTCONFIG_PARENTALCTRL
 		fprintf(fp_ipv6, ":PControls - [0:0]\n");
 #else
@@ -2865,7 +2869,11 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	fprintf(fp, ":logaccept - [0:0]\n:logdrop - [0:0]\n");
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled()){
-		fprintf(fp_ipv6, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n");
+		if (nvram_match("ipv6_fw_enable", "1")){
+			fprintf(fp_ipv6, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT ACCEPT [0:0]\n");
+		} else {
+			fprintf(fp_ipv6, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n");
+		}
 #ifdef RTCONFIG_PARENTALCTRL
 		fprintf(fp_ipv6, ":PControls - [0:0]\n");
 #else

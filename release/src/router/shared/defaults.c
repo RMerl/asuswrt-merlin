@@ -1491,6 +1491,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_dhcp_lifetime", "86400"		},	// valid lifetimes of IPv6 prefix in seconds
 	{ "ipv6_dhcp_start",	""		},	// start of address pool
 	{ "ipv6_dhcp_end",	""		},	// end of address pool
+	{ "ipv6_fw_enable",	"1"		},	// Default FORWARD table to DROP packets
 
 	{ "web_redirect", 	"1"		},	// Only NOLINK is redirected in default, it is overwrited in init_nvram
 	{ "disiosdet",		"1"		},
