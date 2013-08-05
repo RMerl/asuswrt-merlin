@@ -2806,6 +2806,11 @@ TRACE_PT("filterstr %s %s\n", timef, filterstr);
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled())
 	{
+		// Default rule
+		if (nvram_match("ipv6_fw_enable", "1"))
+		{
+			fprintf(fp_ipv6, "-A FORWARD -j %s\n", logdrop);
+		}
 		fprintf(fp_ipv6, "COMMIT\n\n");
 		fclose(fp_ipv6);
 		eval("ip6tables-restore", "/tmp/filter_rules_ipv6");
