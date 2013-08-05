@@ -2390,6 +2390,9 @@ TRACE_PT("writing Parental Control\n");
 
 		// IPv6 firewall - allowed traffic
 		if (nvram_match("ipv6_fw_enable", "1")) {
+
+			// TODO: replace the existing rule that drops packets not from br0?
+			fprintf(fp_ipv6, "-A FORWARD -o %s -i %s -j %s\n", wan6face, lan_if, logaccept);
 			nvp = nv = strdup(nvram_safe_get("ipv6_fw_rulelist"));
 				while (nv && (b = strsep(&nvp, "<")) != NULL) {
 				char *portv, *portp, *c, *port, *desc;
@@ -2411,7 +2414,7 @@ TRACE_PT("writing Parental Control\n");
                                 // Handle raw protocol in port field, no val1:val2 allowed
                                 if (strcmp(proto, "OTHER") == 0) {
                                         protono = strsep(&c, ":");
-                                        fprintf(ipv6_fp, "-A FORWARD -p %s -d %s -j %s\n", protono, dstip, logaccept);
+                                        fprintf(fp_ipv6, "-A FORWARD -p %s -d %s -j %s\n", protono, dstip, logaccept);
                                 }
 */
 				}
