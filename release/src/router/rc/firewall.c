@@ -2387,6 +2387,38 @@ TRACE_PT("writing Parental Control\n");
 
 
 		fprintf(fp_ipv6, "-A OUTPUT -m rt --rt-type 0 -j %s\n", logdrop);
+
+		// IPv6 firewall - allowed traffic
+		if (nvram_match("ipv6_fw_enable", "1")) {
+			nvp = nv = strdup(nvram_safe_get("ipv6_fw_rulelist"));
+				while (nv && (b = strsep(&nvp, "<")) != NULL) {
+				char *portv, *portp, *c, *port, *desc;
+				char dstports[256];
+
+				if ((vstrsep(b, ">", &desc, &srcip, &port, &dstip, &proto) != 5))
+					continue;
+
+				portp = portv = strdup(port);
+				while (portv && (c = strsep(&portp, ",")) != NULL) {
+// TODO: can't we just directly use c?
+					snprintf(dstports, sizeof(dstports), "%s", c);
+// TODO: implement srcip filtering (if it's not empty)
+					if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
+						fprintf(fp_ipv6, "-A FORWARD -p tcp -m tcp -d %s --dport %s -j %s\n", dstip, dstports, logaccept);
+					if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
+						fprintf(fp_ipv6, "-A FORWARD -p udp -m udp -d %s --dport %s -j %s\n", dstip, dstports, logaccept);
+/*
+                                // Handle raw protocol in port field, no val1:val2 allowed
+                                if (strcmp(proto, "OTHER") == 0) {
+                                        protono = strsep(&c, ":");
+                                        fprintf(ipv6_fp, "-A FORWARD -p %s -d %s -j %s\n", protono, dstip, logaccept);
+                                }
+*/
+				}
+				free(portv);
+			}
+		}
+
 	}
 #endif
 
