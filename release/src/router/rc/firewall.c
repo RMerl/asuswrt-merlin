@@ -2407,7 +2407,7 @@ TRACE_PT("writing Parental Control\n");
 				char *portv, *portp, *port, *desc, *dstports;
 				char srciprule[64];
 
-				if ((vstrsep(b, ">", &desc, &srcip, &port, &dstip, &proto) != 5))
+				if ((vstrsep(b, ">", &desc, &srcip, &dstip, &port, &proto) != 5))
 					continue;
 
 				if (srcip[0] != '\0')
