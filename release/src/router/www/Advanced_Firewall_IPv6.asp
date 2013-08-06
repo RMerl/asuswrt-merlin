@@ -158,13 +158,11 @@ function validForm(){
 		return false;
 	}
 
-// TODO: implement IPv6 validation
-/*
 	if(!validate_multi_range(document.form.ipv6_fw_port_x_0, 1, 65535)
-		|| !valid_IP_form(document.form.ipv6_fw_ipaddr_x_0, 0)){			
-		return false;	
-	}			
-*/
+		|| !ipv6_valid(document.form.ipv6_fw_lipaddr_x_0, 0)
+		|| !ipv6_valid(document.form.ipv6_fw_ripaddr_x_0, 1)) {
+		return false;
+	}
 	
 	return true;
 }
@@ -381,6 +379,26 @@ function showipv6_fw_rulelist(){
 	$("ipv6_fw_rulelist_Block").innerHTML = code;	     
 }
 
+
+function ipv6_valid(obj, cidr){
+
+	if (cidr == 1)
+		var rangere=new RegExp("^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*(\/(\d|\d\d|1[0-1]\d|12[0-8]))$", "gi");
+	else
+		var rangere=new RegExp("^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*", "gi");
+
+	if(rangere.test(obj.value)) {
+		//alert(obj.value+"good");
+		return true;
+	}else{
+		alert(obj.value+" <#JS_validip#>");
+		obj.focus();
+		obj.select();
+		return false;
+	}
+}
+
+
 function changeBgColor(obj, num){
 	if(obj.checked)
  		$("row" + num).style.background='#FF9';
@@ -440,10 +458,6 @@ function changeBgColor(obj, num){
                         A subnet can also be specified (2001::111:222:333/64 for example).
 		</div>
 			
-		<div class="formfontdesc" style="margin-top:-10px;">
-			<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;"><#menu5_3_4#>&nbspFAQ</a>
-		</div>
-
 		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
 					  <thead>
 					  <tr>
@@ -460,7 +474,7 @@ function changeBgColor(obj, num){
 		</tr>
 		<tr>
 			<th><#IPConnection_VSList_groupitemdesc#></th>
-			<td id="ipv6_fw_rulelist">					
+			<td id="ipv6_fw_rulelist">
 			  		<select name="KnownApps" id="KnownApps" class="input_option" onchange="change_wizard(this, 'KnownApps');">
 			  		</select>
 			</td>
@@ -471,13 +485,13 @@ function changeBgColor(obj, num){
 		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
 			<thead>
 			<tr>
-              		<td colspan="7"><#IPConnection_VSList_title#>&nbsp;(<#List_limit#>&nbsp;128)</td>
+              		<td colspan="7">Inbound Firewall Rules&nbsp;(<#List_limit#>&nbsp;128)</td>
             	</tr>
  		  	</thead>
  		  	
           		<tr>
 				<th><#BM_UserList1#></th>
-				<th>Remote IP</th>
+				<th>Remote IP/CIDR</th>
 	            		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,25);"><#IPConnection_VServerIP_itemname#></a></th>
 				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,24);"><#FirewallConfig_LanWanSrcPort_itemname#></a></th>
 	            		<th><#IPConnection_VServerProto_itemname#></th>
