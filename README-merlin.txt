@@ -505,6 +505,8 @@ History
               (patch by VinceV)
    - FIXED: web server would crash if you entered too much data in
             OpenVPN key/cert fields.
+   - FIXED: Prevent TCP connections to ACSD to protect against
+            exploiting security flaws in it.
 
 
 3.0.0.4.372.31_2:
