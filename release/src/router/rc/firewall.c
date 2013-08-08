@@ -3192,8 +3192,13 @@ TRACE_PT("writing Parental Control\n");
 
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled())
-	fprintf(fp_ipv6,
-		"-A FORWARD -m rt --rt-type 0 -j DROP\n");
+	{
+		if (nvram_match("ipv6_fw_enable", "1"))
+		{
+			fprintf(fp_ipv6, "-A FORWARD -m state --state ESTABLISHED,RELATED -j %s\n", logaccept);
+		}
+		fprintf(fp_ipv6,"-A FORWARD -m rt --rt-type 0 -j DROP\n");
+	}
 #endif
 
 // oleg patch ~
@@ -3256,8 +3261,13 @@ TRACE_PT("writing Parental Control\n");
 		/* Filter out invalid WAN->WAN connections */
 		fprintf(fp, "-A FORWARD -o %s ! -i %s -j %s\n", wan_if, lan_if, logdrop);
 #ifdef RTCONFIG_IPV6
-		if (ipv6_enabled() && *wan6face)
-		fprintf(fp_ipv6, "-A FORWARD -o %s ! -i %s -j %s\n", wan6face, lan_if, logdrop);
+	 if (ipv6_enabled() && *wan6face) {
+		if (nvram_match("ipv6_fw_enable", "1")) {
+			fprintf(fp_ipv6, "-A FORWARD -o %s -i %s -j %s\n", wan6face, lan_if, logaccept);
+		} else {        // The default DROP rule from the IPv6 firewall would take care of it
+			fprintf(fp_ipv6, "-A FORWARD -o %s ! -i %s -j %s\n", wan6face, lan_if, logdrop);
+		}
+	}
 #endif
 		if(strcmp(wanx_if, wan_if) && inet_addr_(wanx_ip)
 				&& (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN
@@ -3360,6 +3370,43 @@ TRACE_PT("writing Parental Control\n");
 
 
 		fprintf(fp_ipv6, "-A OUTPUT -m rt --rt-type 0 -j %s\n", logdrop);
+
+		// IPv6 firewall allowed traffic
+		if (nvram_match("ipv6_fw_enable", "1")) {
+
+			nvp = nv = strdup(nvram_safe_get("ipv6_fw_rulelist"));
+			while (nv && (b = strsep(&nvp, "<")) != NULL) {
+				char *portv, *portp, *port, *desc, *dstports;
+				char srciprule[64];
+
+				if ((vstrsep(b, ">", &desc, &srcip, &dstip, &port, &proto) != 5))
+					continue;
+
+				if (srcip[0] != '\0')
+					snprintf(srciprule, sizeof(srciprule), "-s %s", srcip);
+				else
+					srciprule[0] = '\0';
+
+				portp = portv = strdup(port);
+				while (portv && (dstports = strsep(&portp, ",")) != NULL) {
+					if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
+						fprintf(fp_ipv6, "-A FORWARD -m state --state NEW -p tcp -m tcp %s -d %s --dport %s -j %s\n", 
+						        srciprule, dstip, dstports, logaccept);
+					if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
+						fprintf(fp_ipv6, "-A FORWARD -m state --state NEW -p udp -m udp %s -d %s --dport %s -j %s\n", 
+						        srciprule, dstip, dstports, logaccept);
+/*
+					// Handle raw protocol in port field, no val1:val2 allowed
+					if (strcmp(proto, "OTHER") == 0) {
+						protono = strsep(&c, ":");
+						fprintf(fp_ipv6, "-A FORWARD -p %s -d %s -j %s\n", protono, dstip, logaccept);
+					}
+*/
+				}
+				free(portv);
+			}
+		}
+
 	}
 #endif
 
