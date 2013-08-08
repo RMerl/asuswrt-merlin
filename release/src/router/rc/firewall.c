@@ -1979,6 +1979,9 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 
 	strcpy(macaccept, "");
 
+// Prevent access to ACSD from outside the router
+	fprintf(fp, "-A INPUT -m tcp -p tcp --dport 5916 -j DROP");
+
 // Setup traffic accounting
 	if (nvram_match("cstats_enable", "1")) {
 		ipt_account(fp);
@@ -2935,6 +2938,9 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 #endif
 
 	strcpy(macaccept, "");
+
+// Prevent access to ACSD from outside the router
+	fprintf(fp, "-A INPUT -m tcp -p tcp --dport 5916 -j DROP");
 
 // Setup traffic accounting
         if (nvram_match("cstats_enable", "1")) {
