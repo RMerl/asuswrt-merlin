@@ -2242,6 +2242,7 @@ TRACE_PT("writing Parental Control\n");
 	{
 		if (nvram_match("ipv6_fw_enable", "1"))
 		{
+			fprintf(fp_ipv6, "-A FORWARD -m state --state INVALID -j %s\n", logdrop);
 			fprintf(fp_ipv6, "-A FORWARD -m state --state ESTABLISHED,RELATED -j %s\n", logaccept);
 		}
 		fprintf(fp_ipv6,"-A FORWARD -m rt --rt-type 0 -j DROP\n");
@@ -3207,6 +3208,7 @@ TRACE_PT("writing Parental Control\n");
 	{
 		if (nvram_match("ipv6_fw_enable", "1"))
 		{
+			fprintf(fp_ipv6, "-A FORWARD -m state --state INVALID -j %s\n", logdrop);
 			fprintf(fp_ipv6, "-A FORWARD -m state --state ESTABLISHED,RELATED -j %s\n", logaccept);
 		}
 		fprintf(fp_ipv6,"-A FORWARD -m rt --rt-type 0 -j DROP\n");
