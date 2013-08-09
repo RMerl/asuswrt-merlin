@@ -489,8 +489,9 @@ History
    - NEW: IPv6 firewalling.  Originally, Asuswrt would allow any IPv6 traffic 
           to be forwarded to your LAN devices.  This new option (enabled by
           default) will prevent traffic forwarding to LAN devices.  You can
-          enable the firewall, and define inbound rules as well on the new
-          Firewall -> IPv6 Firewall page.
+          also create firewall rules to allow inbound traffic to specific 
+          hosts.  The firewall configuration can be accessed through the 
+          "Firewall -> IPv6 Firewall" page.
    - CHANGED: Upgraded OpenVPN to 2.3.2
    - CHANGED: Implemented IPTraffic support in DualWAN - Load balanced
               mode (Experimental builds)
@@ -503,10 +504,13 @@ History
               location to reduce the chances of having it in
               RAM if left to default location, filling it up 
               (patch by VinceV)
-   - FIXED: web server would crash if you entered too much data in
+   - FIXED: Web server would crash if you entered too much data in
             OpenVPN key/cert fields.
-   - FIXED: Prevent TCP connections to ACSD to protect against
-            exploiting security flaws in it.
+   - FIXED: The ACSD service could be exploited by a LAN user to
+            gain shell access to the router.  TCP connections to
+            ACSD are now blocked by the firewall.
+   - FIXED: You could not define time periods on the Parental
+            Control calendar under IE (backported from 374)
 
 
 3.0.0.4.372.31_2:
