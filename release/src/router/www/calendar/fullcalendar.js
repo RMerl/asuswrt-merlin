@@ -5643,18 +5643,19 @@ var array_occupied = new Array();
 						"end: '"+ new Date(y, m, d+end_day_temp, end_time_temp, 0) +"',"+
 						"allDay: false" +
 					"}";
-					//if(i != MULTIFILTER_MACFILTER_DAYTIME_col.length-2)
-						_jData += ",";		
 
+					_jData += ",";
 					start_time_temp++;
 					end_time_temp++;
 
 				}
 			}
 		}
+
 		_jData += "];";
+		_jData = _jData.replace(",]", "]");
 		eval(_jData);
-		
+
 		var calendar = $j('#calendar').fullCalendar({
 			header: {
 				left: 'prev,next today',
