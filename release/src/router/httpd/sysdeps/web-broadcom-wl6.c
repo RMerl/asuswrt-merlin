@@ -1323,8 +1323,8 @@ if (leaselist) {
 		if (arplist) {
 			arplistptr = arplist;
 
-			while ((found == 0) && (arplistptr < arplist+strlen(arplist)-2) && (sscanf(arplistptr,"%s %*s %*s %s",ipentry,macentry))) {
-				if (strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0)
+			while ((found == 0) && (arplistptr < arplist+strlen(arplist)-2) && (sscanf(arplistptr,"%15s %*s %*s %17s",ipentry,macentry) == 2)) {
+				if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0)
 					found = 1;
 				else
 					arplistptr = strstr(arplistptr,"\n")+1;
@@ -1341,9 +1341,17 @@ if (leaselist) {
 #ifdef RTCONFIG_DNSMASQ
 		// Retrieve hostname from dnsmasq leases
 		if (leaselist) {
-			leaselistptr = strstr(leaselist,ipentry); // ip entry more efficient than MAC
-			if (leaselistptr) {
-				sscanf(leaselistptr, "%*s %15s", hostnameentry);
+			leaselistptr = leaselist;
+
+			while ((found == 0) && (leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %*s %15s %*s", macentry, hostnameentry) == 2)) {
+				if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0)
+					found = 1;
+				else
+					leaselistptr = strstr(leaselistptr,"\n")+1;
+			}
+
+			if (found == 1) {
+				found = 0;
 				sprintf(hostname,"%-15s ",hostnameentry);
 			} else {
 				sprintf(hostname,"%-15s ","");
