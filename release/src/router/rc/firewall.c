@@ -1980,9 +1980,9 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	strcpy(macaccept, "");
 
 // Prevent access to ACSD from outside the router
-	fprintf(fp, "-A INPUT -m tcp -p tcp --dport 5916 -j DROP");
+	fprintf(fp, "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n");
 #ifdef RTCONFIG_IPV6
-	fprintf(fp_ipv6, "-A INPUT -m tcp -p tcp --dport 5916 -j DROP");
+	fprintf(fp_ipv6, "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n");
 #endif
 
 // Setup traffic accounting
