@@ -1306,10 +1306,10 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 	ret += websWrite(wp, "\n");
 if (leaselist) {
-	ret += websWrite(wp, "Stations List                                        Rx/Tx  speed  rssi     state\n");
+	ret += websWrite(wp, "Stations List                                        Rx/Tx Speed   RSSI     State\n");
 	ret += websWrite(wp, "--------------------------------------------------------------------------------------\n");
 } else {
-	ret += websWrite(wp, "Stations List                        Rx/Tx  speed   rssi    state\n");
+	ret += websWrite(wp, "Stations List                        Rx/Tx Speed    RSSI    State\n");
 	ret += websWrite(wp, "----------------------------------------------------------------------\n");
 }
 //                            00:00:00:00:00:00 111.222.333.444 hostnamexxxxxxx  xxxx/xxxx Mbps  -xx dBm  assoc auth
