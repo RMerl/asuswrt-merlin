@@ -22,7 +22,7 @@
 	border:1px outset #999;
 	background-color:#576D73;
 	position:absolute;
-	*margin-top:27px;	
+	*margin-top:27px;
 	margin-left:10px;
 	*margin-left:-263px;
 	width:255px;
@@ -672,17 +672,17 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
         		<th>Add / Delete</th>
 			  	</tr>			  
 			  	<tr>
-			  			<!-- client info -->	  		
+				<!-- client info -->
             			<td width="27%">
-                		<input type="text" class="input_20_table" maxlength="17" name="dhcp_staticmac_x_0" style="margin-left:-12px;width:170px;" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
-                		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
-                			</td>
+					<input type="text" class="input_20_table" maxlength="17" name="dhcp_staticmac_x_0" style="margin-left:-12px;width:170px;" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
+					<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
+					<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
+				</td>
             			<td width="27%">
             				<input type="text" class="input_15_table" maxlength="15" name="dhcp_staticip_x_0" onkeypress="return is_ipaddr(this,event)">
             			</td>
             			<td width="27%">
 					<input type="text" class="input_15_table" maxlenght="15" onkeypress="return is_alphanum(this,event);" name="dhcp_staticname_x_0">
-					<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>	
 				</td>
 				<td width="19%">
 										<div> 
