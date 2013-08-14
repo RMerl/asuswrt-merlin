@@ -298,6 +298,7 @@ int main(int argc, char *argv[])
 	fprintf(fp, "oplocks = yes\n");
 	fprintf(fp, "level2 oplocks = yes\n");
 	fprintf(fp, "kernel oplocks = no\n");
+	fprintf(fp, "wide links = no\n");
 
 	disks_info = read_disk_data();
 	if (disks_info == NULL) {
