@@ -513,6 +513,7 @@ History
             Control calendar under IE (backported from 374)
    - FIXED: Wireless client list would sometime return incorrect
             hostname or be missing IP.
+   - FIXED: Security issue with Samba and symlinks
 
 
 3.0.0.4.372.31_2:
