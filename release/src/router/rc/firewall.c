@@ -2919,8 +2919,14 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	int v4v6_ok;
 
 	if ((fp=fopen("/tmp/filter_rules", "w"))==NULL) return;
+
 #ifdef RTCONFIG_IPV6
-	if (ipv6_enabled() && (fp_ipv6=fopen("/tmp/filter_rules_ipv6", "w"))==NULL) return;
+	if (ipv6_enabled()) {
+		if ((fp_ipv6 = fopen("/tmp/filter_rules_ipv6", "w"))==NULL) {
+			fclose(fp);
+			return;
+		}
+	}
 #endif
 
 	fprintf(fp, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:FUPNP - [0:0]\n");
