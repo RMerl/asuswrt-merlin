@@ -1987,7 +1987,8 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 // Prevent access to ACSD from outside the router
 	fprintf(fp, "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n");
 #ifdef RTCONFIG_IPV6
-	fprintf(fp_ipv6, "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n");
+	if (ipv6_enabled())
+		fprintf(fp_ipv6, "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n");
 #endif
 
 // Setup traffic accounting
@@ -2077,8 +2078,8 @@ TRACE_PT("writing Parental Control\n");
 			,lan_if, logdrop);
 #ifdef RTCONFIG_IPV6
 			if (ipv6_enabled())
-			fprintf(fp_ipv6, "-A INPUT -i %s -m state --state NEW -j %s\n"
-			,lan_if, logdrop);
+				fprintf(fp_ipv6, "-A INPUT -i %s -m state --state NEW -j %s\n"
+					,lan_if, logdrop);
 #endif
 		}
 #endif
@@ -2957,7 +2958,8 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 // Prevent access to ACSD from outside the router
 	fprintf(fp, "-A INPUT -m tcp -p tcp --dport 5916 -j DROP");
 #ifdef RTCONFIG_IPV6
-	fprintf(fp_ipv6, "-A INPUT -m tcp -p tcp --dport 5916 -j DROP");
+	if (ipv6_enabled()) 
+		fprintf(fp_ipv6, "-A INPUT -m tcp -p tcp --dport 5916 -j DROP");
 #endif
 
 // Setup traffic accounting
