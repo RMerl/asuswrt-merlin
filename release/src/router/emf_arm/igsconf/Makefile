@@ -1,5 +1,3 @@
-include ../../common.mak
-
 #
 # $Id: Makefile 241182 2011-02-17 21:50:03Z $
 #
@@ -11,11 +9,12 @@ STRIP = $(CROSS)strip
 
 ALL_OBJS = igsu.o igsu_linux.o
 
-CCFLAGS = -Os -Wall -I$(SRCBASE)/include -I../../shared -I$(SRCBASE)/include/emf/igs
+#CCFLAGS = -Os -Wall -I../../../include -I../../shared -I../../../include/emf/igs
+CCFLAGS = -Os -Wall -I../../../include -I../../shared -I../../../../src-rt-6.x.4708/include/emf/igs
 
-ifeq ($(wildcard ./*.c),)
+ifneq ($(wildcard ./prebuilt),)
 all:
-	-cp prebuild/igs igs
+	-cp prebuilt/igs igs
 else
 all: igs
 endif
@@ -30,8 +29,8 @@ $(ALL_OBJS): %.o: %.c
 	$(CC) $(CCFLAGS) -c $<
 
 install: all
-	install -d $(INSTALLDIR)/igs$(BCMEX)/usr/sbin
-	install -m 755 igs $(INSTALLDIR)/igs$(BCMEX)/usr/sbin
+	install -d $(INSTALLDIR)/igs/usr/sbin
+	install -m 755 igs $(INSTALLDIR)/igs/usr/sbin
 
 .PHONY:	clean
 clean:
