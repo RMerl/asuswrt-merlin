@@ -504,6 +504,7 @@ History
               location to reduce the chances of having it in
               RAM if left to default location, filling it up 
               (patch by VinceV)
+   - CHANGED: Updated e2fsprogs to 1.42.8 to be in sync with Asus
    - FIXED: Web server would crash if you entered too much data in
             OpenVPN key/cert fields.
    - FIXED: The ACSD service could be exploited by a LAN user to
