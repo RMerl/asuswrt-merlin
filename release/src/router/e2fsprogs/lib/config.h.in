@@ -26,6 +26,9 @@
 /* Define to 1 if using `alloca.c'. */
 #undef C_ALLOCA
 
+/* Define to 1 to disable use of backtrace */
+#undef DISABLE_BACKTRACE
+
 /* Define to 1 if ext2 compression enabled */
 #undef ENABLE_COMPRESSION
 
@@ -296,6 +299,9 @@
 /* Define to 1 if if struct sockaddr contains sa_len */
 #undef HAVE_SA_LEN
 
+/* Define to 1 if you have the `secure_getenv' function. */
+#undef HAVE_SECURE_GETENV
+
 /* Define to 1 if you have the <semaphore.h> header file. */
 #undef HAVE_SEMAPHORE_H
 
@@ -542,6 +548,9 @@
 
 /* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
+
+/* The size of `off_t', as computed by sizeof. */
+#undef SIZEOF_OFF_T
 
 /* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT

@@ -47,7 +47,7 @@ int ext2fs_reserve_super_and_bgd(ext2_filsys fs,
 {
 	blk64_t	super_blk, old_desc_blk, new_desc_blk;
 	blk_t	used_blks;
-	int	j, old_desc_blocks, num_blocks;
+	int	old_desc_blocks, num_blocks;
 
 	ext2fs_super_and_bgd_loc2(fs, group, &super_blk,
 				  &old_desc_blk, &new_desc_blk, &used_blks);

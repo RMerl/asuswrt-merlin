@@ -158,8 +158,8 @@ extern void ext2fs_rb_augment_erase_end(struct rb_node *node,
 				 rb_augment_f func, void *data);
 
 /* Find logical next and previous nodes in a tree */
-extern struct rb_node *ext2fs_rb_next(const struct rb_node *);
-extern struct rb_node *ext2fs_rb_prev(const struct rb_node *);
+extern struct rb_node *ext2fs_rb_next(struct rb_node *);
+extern struct rb_node *ext2fs_rb_prev(struct rb_node *);
 extern struct rb_node *ext2fs_rb_first(const struct rb_root *);
 extern struct rb_node *ext2fs_rb_last(const struct rb_root *);
 

@@ -62,7 +62,8 @@ errcode_t ext2fs_mmp_read(ext2_filsys fs, blk64_t mmp_blk, void *buf)
 			return retval;
 	}
 
-	if (ext2fs_llseek(fs->mmp_fd, mmp_blk * fs->blocksize, SEEK_SET) !=
+	if ((blk64_t) ext2fs_llseek(fs->mmp_fd, mmp_blk * fs->blocksize,
+				    SEEK_SET) !=
 	    mmp_blk * fs->blocksize) {
 		retval = EXT2_ET_LLSEEK_FAILED;
 		goto out;

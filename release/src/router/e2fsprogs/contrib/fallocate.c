@@ -39,7 +39,7 @@
 
 void usage(void)
 {
-	printf("Usage: fallocate [-nt] [-o offset] -l length filename\n");
+	printf("Usage: fallocate [-npt] [-o offset] -l length filename\n");
 	exit(EXIT_FAILURE);
 }
 

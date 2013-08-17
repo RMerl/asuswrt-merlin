@@ -43,10 +43,8 @@ static int figure_label_len(const unsigned char *label, int len)
 
 	while ((*end == ' ' || *end == 0) && end >= label)
 		--end;
-	if (end >= label) {
-		label = label;
+	if (end >= label)
 		return end - label + 1;
-	}
 	return 0;
 }
 

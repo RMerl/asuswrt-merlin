@@ -59,7 +59,7 @@ struct fill_dir_struct {
 	e2fsck_t ctx;
 	struct hash_entry *harray;
 	int max_array, num_array;
-	int dir_size;
+	unsigned int dir_size;
 	int compress;
 	ino_t parent;
 };
@@ -122,7 +122,7 @@ static int fill_dir_block(ext2_filsys fs,
 		if (((dir_offset + rec_len) > fs->blocksize) ||
 		    (rec_len < 8) ||
 		    ((rec_len % 4) != 0) ||
-		    (((dirent->name_len & 0xFF)+8) > rec_len)) {
+		    (((dirent->name_len & 0xFF)+8U) > rec_len)) {
 			fd->err = EXT2_ET_DIR_CORRUPTED;
 			return BLOCK_ABORT;
 		}
@@ -404,10 +404,9 @@ static errcode_t copy_dir_entries(e2fsck_t ctx,
 	char			*block_start;
 	struct hash_entry 	*ent;
 	struct ext2_dir_entry	*dirent;
-	unsigned int		rec_len, prev_rec_len;
-	int			i, left;
+	unsigned int		rec_len, prev_rec_len, left, slack, offset;
+	int			i;
 	ext2_dirhash_t		prev_hash;
-	int			offset, slack;
 
 	if (ctx->htree_slack_percentage == 255) {
 		profile_get_uint(ctx->profile, "options",

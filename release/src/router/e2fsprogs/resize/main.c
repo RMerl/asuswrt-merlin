@@ -147,7 +147,7 @@ static void determine_fs_stride(ext2_filsys fs)
 #endif
 }
 
-static bigalloc_check(ext2_filsys fs, int force)
+static void bigalloc_check(ext2_filsys fs, int force)
 {
 	if (!force && EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
 				EXT4_FEATURE_RO_COMPAT_BIGALLOC)) {

@@ -171,7 +171,9 @@ else
 USRLIB ?= /usr/lib
 endif
 
-STD_CONF_FLAGS ?= --enable-symlink-install $(MULTIARCH_CONF)
+BACKTRACE_CONF_FLAGS ?= $(shell if ${debdir}/scripts/test-backtrace ; then echo --disable-backtrace ; fi)
+
+STD_CONF_FLAGS ?= --enable-symlink-install $(MULTIARCH_CONF) $(BACKTRACE_CONF_FLAGS)
 
 BF_CONF_FLAGS ?= --disable-nls --disable-imager --disable-testio-debug \
 	--disable-uuidd --disable-tls --disable-debugfs

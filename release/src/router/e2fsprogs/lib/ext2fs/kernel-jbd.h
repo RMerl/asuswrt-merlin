@@ -214,13 +214,13 @@ typedef struct journal_superblock_s
 
 #define JFS_HAS_COMPAT_FEATURE(j,mask)					\
 	((j)->j_format_version >= 2 &&					\
-	 ((j)->j_superblock->s_feature_compat & cpu_to_be32((mask))))
+	 ((j)->j_superblock->s_feature_compat & ext2fs_cpu_to_be32((mask))))
 #define JFS_HAS_RO_COMPAT_FEATURE(j,mask)				\
 	((j)->j_format_version >= 2 &&					\
-	 ((j)->j_superblock->s_feature_ro_compat & cpu_to_be32((mask))))
+	 ((j)->j_superblock->s_feature_ro_compat & ext2fs_cpu_to_be32((mask))))
 #define JFS_HAS_INCOMPAT_FEATURE(j,mask)				\
 	((j)->j_format_version >= 2 &&					\
-	 ((j)->j_superblock->s_feature_incompat & cpu_to_be32((mask))))
+	 ((j)->j_superblock->s_feature_incompat & ext2fs_cpu_to_be32((mask))))
 
 #define JFS_FEATURE_COMPAT_CHECKSUM	0x00000001
 

@@ -557,7 +557,7 @@ static unsigned int test_ro (int dev, blk_t last_block,
 		currently_testing += got;
 		if (got != try) {
 			try = 1;
-			if (recover_block == ~0)
+			if (recover_block == ~0U)
 				recover_block = currently_testing - got +
 					blocks_at_once;
 			continue;
@@ -647,7 +647,7 @@ static unsigned int test_rw (int dev, blk_t last_block,
 			currently_testing += got;
 			if (got != try) {
 				try = 1;
-				if (recover_block == ~0)
+				if (recover_block == ~0U)
 					recover_block = currently_testing -
 						got + blocks_at_once;
 				continue;
@@ -686,13 +686,13 @@ static unsigned int test_rw (int dev, blk_t last_block,
 			currently_testing += got;
 			if (got != try) {
 				try = 1;
-				if (recover_block == ~0)
+				if (recover_block == ~0U)
 					recover_block = currently_testing -
 						got + blocks_at_once;
 				continue;
 			} else if (currently_testing == recover_block) {
 				try = blocks_at_once;
-				recover_block = ~0;
+				recover_block = ~0U;
 			}
 			for (i=0; i < got; i++) {
 				if (memcmp(read_buffer + i * block_size,
@@ -739,8 +739,8 @@ static unsigned int test_nd (int dev, blk_t last_block,
 	errcode_t errcode;
 	unsigned long buf_used;
 	static unsigned int bb_count;
-	int granularity = blocks_at_once;
-	blk_t recover_block = ~0;
+	unsigned int granularity = blocks_at_once;
+	blk_t recover_block = ~0U;
 
 	bb_count = 0;
 	errcode = ext2fs_badblocks_list_iterate_begin(bb_list,&bb_iter);
@@ -839,7 +839,7 @@ static unsigned int test_nd (int dev, blk_t last_block,
 			got = do_read (dev, save_ptr, try, block_size,
 				       currently_testing);
 			if (got == 0) {
-				if (recover_block == ~0)
+				if (recover_block == ~0U)
 					recover_block = currently_testing +
 						blocks_at_once;
 				if (granularity != 1) {
@@ -874,7 +874,7 @@ static unsigned int test_nd (int dev, blk_t last_block,
 			currently_testing += got;
 			if (got != try) {
 				try = 1;
-				if (recover_block == ~0)
+				if (recover_block == ~0U)
 					recover_block = currently_testing -
 						got + blocks_at_once;
 				continue;

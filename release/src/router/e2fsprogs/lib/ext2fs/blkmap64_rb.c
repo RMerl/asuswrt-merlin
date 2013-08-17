@@ -47,6 +47,17 @@ struct ext2fs_rb_private {
 #endif
 };
 
+inline static struct bmap_rb_extent *node_to_extent(struct rb_node *node)
+{
+	/*
+	 * This depends on the fact the struct rb_node is at the
+	 * beginning of the bmap_rb_extent structure.  We use this
+	 * instead of the ext2fs_rb_entry macro because it causes gcc
+	 * -Wall to generate a huge amount of noise.
+	 */
+	return (struct bmap_rb_extent *) node;
+}
+
 static int rb_insert_extent(__u64 start, __u64 count,
 			    struct ext2fs_rb_private *);
 static void rb_get_new_extent(struct bmap_rb_extent **, __u64, __u64);
@@ -63,7 +74,7 @@ static void print_tree(struct rb_root *root)
 	node = ext2fs_rb_first(root);
 	for (node = ext2fs_rb_first(root); node != NULL; 
 	     node = ext2fs_rb_next(node)) {
-		ext = ext2fs_rb_entry(node, struct bmap_rb_extent, node);
+		ext = node_to_extent(node);
 		printf("\t\t\t--> (%llu -> %llu)\n",
 			ext->start, ext->start + ext->count);
 	}
@@ -77,7 +88,7 @@ static void check_tree(struct rb_root *root, const char *msg)
 
 	for (node = ext2fs_rb_first(root); node;
 	     node = ext2fs_rb_next(node)) {
-		ext = ext2fs_rb_entry(node, struct bmap_rb_extent, node);
+		ext = node_to_extent(node);
 		if (ext->count <= 0) {
 			printf("Tree Error: count is crazy\n");
 			printf("extent: %llu -> %llu (%u)\n", ext->start,
@@ -200,7 +211,7 @@ static void rb_free_tree(struct rb_root *root)
 
 	for (node = ext2fs_rb_first(root); node; node = next) {
 		next = ext2fs_rb_next(node);
-		ext = ext2fs_rb_entry(node, struct bmap_rb_extent, node);
+		ext = node_to_extent(node);
 		ext2fs_rb_erase(node, root);
 		ext2fs_free_mem(&ext);
 	}
@@ -236,7 +247,7 @@ static errcode_t rb_copy_bmap(ext2fs_generic_bitmap src,
 
 	src_node = ext2fs_rb_first(&src_bp->root);
 	while (src_node) {
-		src_ext = ext2fs_rb_entry(src_node, struct bmap_rb_extent, node);
+		src_ext = node_to_extent(src_node);
 		retval = ext2fs_get_mem(sizeof (struct bmap_rb_extent),
 					&dest_ext);
 		if (retval)
@@ -269,7 +280,7 @@ static void rb_truncate(__u64 new_max, struct rb_root *root)
 
 	node = ext2fs_rb_last(root);
 	while (node) {
-		ext = ext2fs_rb_entry(node, struct bmap_rb_extent, node);
+		ext = node_to_extent(node);
 
 		if ((ext->start + ext->count - 1) <= new_max)
 			break;
@@ -330,8 +341,7 @@ rb_test_bit(struct ext2fs_rb_private *bp, __u64 bit)
 	if (!next_ext) {
 		next = ext2fs_rb_next(&rcursor->node);
 		if (next)
-			next_ext = ext2fs_rb_entry(next, struct bmap_rb_extent,
-						   node);
+			next_ext = node_to_extent(next);
 		bp->rcursor_next = next_ext;
 	}
 	if (next_ext) {
@@ -357,7 +367,7 @@ search_tree:
 
 	while (*n) {
 		parent = *n;
-		ext = ext2fs_rb_entry(parent, struct bmap_rb_extent, node);
+		ext = node_to_extent(parent);
 		if (bit < ext->start)
 			n = &(*n)->rb_left;
 		else if (bit >= (ext->start + ext->count))
@@ -395,7 +405,7 @@ static int rb_insert_extent(__u64 start, __u64 count,
 
 	while (*n) {
 		parent = *n;
-		ext = ext2fs_rb_entry(parent, struct bmap_rb_extent, node);
+		ext = node_to_extent(parent);
 
 		if (start < ext->start) {
 			n = &(*n)->rb_left;
@@ -429,7 +439,7 @@ got_extent:
 
 	node = ext2fs_rb_prev(new_node);
 	if (node) {
-		ext = ext2fs_rb_entry(node, struct bmap_rb_extent, node);
+		ext = node_to_extent(node);
 		if ((ext->start + ext->count) == start) {
 			start = ext->start;
 			count += ext->count;
@@ -442,7 +452,7 @@ skip_insert:
 	/* See if we can merge extent to the right */
 	for (node = ext2fs_rb_next(new_node); node != NULL; node = next) {
 		next = ext2fs_rb_next(node);
-		ext = ext2fs_rb_entry(node, struct bmap_rb_extent, node);
+		ext = node_to_extent(node);
 
 		if ((ext->start + ext->count) <= start)
 			continue;
@@ -487,7 +497,7 @@ static int rb_remove_extent(__u64 start, __u64 count,
 
 	while (*n) {
 		parent = *n;
-		ext = ext2fs_rb_entry(parent, struct bmap_rb_extent, node);
+		ext = node_to_extent(parent);
 		if (start < ext->start) {
 			n = &(*n)->rb_left;
 			continue;
@@ -530,7 +540,7 @@ static int rb_remove_extent(__u64 start, __u64 count,
 	/* See if we should delete or truncate extent on the right */
 	for (; parent != NULL; parent = node) {
 		node = ext2fs_rb_next(parent);
-		ext = ext2fs_rb_entry(parent, struct bmap_rb_extent, node);
+		ext = node_to_extent(parent);
 		if ((ext->start + ext->count) <= start)
 			continue;
 
@@ -637,7 +647,7 @@ static int rb_test_clear_bmap_extent(ext2fs_generic_bitmap bitmap,
 	 */
 	while (*n) {
 		parent = *n;
-		ext = ext2fs_rb_entry(parent, struct bmap_rb_extent, node);
+		ext = node_to_extent(parent);
 		if (start < ext->start) {
 			n = &(*n)->rb_left;
 		} else if (start >= (ext->start + ext->count)) {
@@ -654,7 +664,7 @@ static int rb_test_clear_bmap_extent(ext2fs_generic_bitmap bitmap,
 	node = parent;
 	while (node) {
 		next = ext2fs_rb_next(node);
-		ext = ext2fs_rb_entry(node, struct bmap_rb_extent, node);
+		ext = node_to_extent(node);
 		node = next;
 
 		if ((ext->start + ext->count) <= start)
@@ -732,7 +742,7 @@ static errcode_t rb_get_bmap_range(ext2fs_generic_bitmap bitmap,
 
 	while (*n) {
 		parent = *n;
-		ext = ext2fs_rb_entry(parent, struct bmap_rb_extent, node);
+		ext = node_to_extent(parent);
 		if (start < ext->start) {
 			n = &(*n)->rb_left;
 		} else if (start >= (ext->start + ext->count)) {
@@ -745,7 +755,7 @@ static errcode_t rb_get_bmap_range(ext2fs_generic_bitmap bitmap,
 
 	for (; parent != NULL; parent = next) {
 		next = ext2fs_rb_next(parent);
-		ext = ext2fs_rb_entry(parent, struct bmap_rb_extent, node);
+		ext = node_to_extent(parent);
 
 		pos = ext->start;
 		count = ext->count;
@@ -766,7 +776,7 @@ static errcode_t rb_get_bmap_range(ext2fs_generic_bitmap bitmap,
 				int nbytes = count >> 3;
 				int offset = (pos - start) >> 3;
 
-				memset(out + offset, 0xFF, nbytes);
+				memset(((char *) out) + offset, 0xFF, nbytes);
 				pos += nbytes << 3;
 				count -= nbytes << 3;
 				continue;
@@ -812,7 +822,7 @@ static void rb_print_stats(ext2fs_generic_bitmap bitmap)
 	node = ext2fs_rb_first(&bp->root);
 	for (node = ext2fs_rb_first(&bp->root); node != NULL;
 	     node = ext2fs_rb_next(node)) {
-		ext = ext2fs_rb_entry(node, struct bmap_rb_extent, node);
+		ext = node_to_extent(node);
 		count++;
 		if (ext->count > max_size)
 			max_size = ext->count;

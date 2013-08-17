@@ -668,7 +668,7 @@ static void salvage_directory(ext2_filsys fs,
 	 */
 	if ((left < 0) &&
 	    ((int) rec_len + left > 8) &&
-	    (name_len + 8 <= (int) rec_len + left) &&
+	    ((int) name_len + 8 <= (int) rec_len + left) &&
 	    dirent->inode <= fs->super->s_inodes_count &&
 	    strnlen(dirent->name, name_len) == name_len) {
 		(void) ext2fs_set_rec_len(fs, (int) rec_len + left, dirent);

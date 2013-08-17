@@ -375,7 +375,8 @@ static int update_feature_set(ext2_filsys fs, char *features)
 	struct ext2_super_block *sb = fs->super;
 	struct ext2_group_desc *gd;
 	__u32		old_features[3];
-	int		i, type_err;
+	dgrp_t		i;
+	int		type_err;
 	unsigned int	mask_err;
 
 #define FEATURE_ON(type, mask) (!(old_features[(type)] & (mask)) && \
@@ -701,7 +702,7 @@ err:
 	return 1;
 }
 
-void handle_quota_options(ext2_filsys fs)
+static void handle_quota_options(ext2_filsys fs)
 {
 	quota_ctx_t qctx;
 	ext2_ino_t qf_ino;
@@ -751,7 +752,7 @@ void handle_quota_options(ext2_filsys fs)
 	return;
 }
 
-void parse_quota_opts(const char *opts)
+static void parse_quota_opts(const char *opts)
 {
 	char	*buf, *token, *next, *p;
 	int	len;
@@ -1153,12 +1154,12 @@ static int parse_extended_opts(ext2_filsys fs, const char *opts)
 		    strcmp(token, "clear_mmp") == 0) {
 			clear_mmp = 1;
 		} else if (strcmp(token, "mmp_update_interval") == 0) {
-			unsigned long interval;
+			unsigned long intv;
 			if (!arg) {
 				r_usage++;
 				continue;
 			}
-			interval = strtoul(arg, &p, 0);
+			intv = strtoul(arg, &p, 0);
 			if (*p) {
 				fprintf(stderr,
 					_("Invalid mmp_update_interval: %s\n"),
@@ -1166,21 +1167,21 @@ static int parse_extended_opts(ext2_filsys fs, const char *opts)
 				r_usage++;
 				continue;
 			}
-			if (interval == 0) {
-				interval = EXT4_MMP_UPDATE_INTERVAL;
-			} else if (interval > EXT4_MMP_MAX_UPDATE_INTERVAL) {
+			if (intv == 0) {
+				intv = EXT4_MMP_UPDATE_INTERVAL;
+			} else if (intv > EXT4_MMP_MAX_UPDATE_INTERVAL) {
 				fprintf(stderr,
 					_("mmp_update_interval too big: %lu\n"),
-					interval);
+					intv);
 				r_usage++;
 				continue;
 			}
 			printf(P_("Setting multiple mount protection update "
 				  "interval to %lu second\n",
 				  "Setting multiple mount protection update "
-				  "interval to %lu seconds\n", interval),
-			       interval);
-			fs->super->s_mmp_update_interval = interval;
+				  "interval to %lu seconds\n", intv),
+			       intv);
+			fs->super->s_mmp_update_interval = intv;
 			ext2fs_mark_super_dirty(fs);
 		} else if (!strcmp(token, "test_fs")) {
 			fs->super->s_flags |= EXT2_FLAGS_TEST_FILESYS;
@@ -1941,6 +1942,12 @@ retry_open:
 		if (new_inode_size < EXT2_INODE_SIZE(fs->super)) {
 			fprintf(stderr, _("Shrinking the inode size is "
 					  "not supported\n"));
+			rc = 1;
+			goto closefs;
+		}
+		if (new_inode_size > fs->blocksize) {
+			fprintf(stderr, _("Invalid inode size %lu (max %d)\n"),
+				new_inode_size, fs->blocksize);
 			rc = 1;
 			goto closefs;
 		}

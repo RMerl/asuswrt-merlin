@@ -465,11 +465,11 @@ void check_super_block(e2fsck_t ctx)
 	ext2_filsys fs = ctx->fs;
 	blk64_t	first_block, last_block;
 	struct ext2_super_block *sb = fs->super;
+	unsigned int	ipg_max;
 	problem_t	problem;
 	blk64_t	blocks_per_group = fs->super->s_blocks_per_group;
 	__u32	bpg_max, cpg_max;
 	int	inodes_per_block;
-	int	ipg_max;
 	int	inode_size;
 	int	accept_time_fudge;
 	int	broken_system_clock;

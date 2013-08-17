@@ -533,7 +533,9 @@ errcode_t ext2fs_read_inode_full(ext2_filsys fs, ext2_ino_t ino,
 	EXT2_CHECK_MAGIC(fs, EXT2_ET_MAGIC_EXT2FS_FILSYS);
 
 	/* Check to see if user has an override function */
-	if (fs->read_inode) {
+	if (fs->read_inode &&
+	    ((bufsize == sizeof(struct ext2_inode)) ||
+	     (EXT2_INODE_SIZE(fs->super) == sizeof(struct ext2_inode)))) {
 		retval = (fs->read_inode)(fs, ino, inode);
 		if (retval != EXT2_ET_CALLBACK_NOTHANDLED)
 			return retval;

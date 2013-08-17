@@ -42,7 +42,7 @@ unsigned long long parse_num_blocks2(const char *arg, int log_block_size)
 		break;
 	case 's':
 		if (log_block_size < 0)
-			num << 1;
+			num <<= 9;
 		else
 			num >>= (1+log_block_size);
 		break;

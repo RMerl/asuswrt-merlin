@@ -331,7 +331,8 @@ static const char *lookup_table_fallback(int num, struct str_table *table)
 	return buf;
 }
 
-static void die_signal_handler(int signum, siginfo_t *siginfo, void *context)
+static void die_signal_handler(int signum, siginfo_t *siginfo,
+			       void *context EXT2FS_ATTR((unused)))
 {
        void *stack_syms[32];
        int frames;
@@ -372,7 +373,7 @@ static void die_signal_handler(int signum, siginfo_t *siginfo, void *context)
 	       fprintf(stderr, "fault addr=%p", siginfo->si_addr);
        fprintf(stderr, "\n");
 
-#ifdef HAVE_BACKTRACE
+#if defined(HAVE_BACKTRACE) && !defined(DISABLE_BACKTRACE)
        frames = backtrace(stack_syms, 32);
        backtrace_symbols_fd(stack_syms, frames, 2);
 #endif

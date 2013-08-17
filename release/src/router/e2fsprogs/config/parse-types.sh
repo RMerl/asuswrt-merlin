@@ -26,7 +26,7 @@ cp asm_types.h asm_types.c
 cat >> asm_types.c <<EOF
 #include <stdio.h>
 #include <stdlib.h>
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 #ifdef __U8_TYPEDEF
 	if (sizeof(__U8_TYPEDEF) != 1) {
@@ -102,7 +102,7 @@ main(int argc, char **argv)
 #else
 #warning __S64_TYPEDEF not defined
 #endif
-	exit(0);
+	return 0;
 }
 EOF
 

@@ -352,7 +352,6 @@ libext2fs.so.2 e2fslibs #MINVER#
  ext2fs_open_file@Base 1.42
  ext2fs_open_inode_scan@Base 1.37
  ext2fs_parse_version_string@Base 1.37
- ext2fs_print_bmap_statistics@Base 1.42.1
  ext2fs_process_dir_block@Base 1.37
  ext2fs_punch@Base 1.42
  ext2fs_r_blocks_count@Base 1.42

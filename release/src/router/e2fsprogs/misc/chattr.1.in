@@ -168,8 +168,8 @@ was written by Remy Card <Remy.Card@linux.org>.  It is currently being
 maintained by Theodore Ts'o <tytso@alum.mit.edu>.
 .SH BUGS AND LIMITATIONS
 The `c', 's',  and `u' attributes are not honored
-by the ext2 and ext3 filesystems as implemented in the current mainline
-Linux kernels.
+by the ext2, ext3, and ext4 filesystems as implemented in the current
+mainline Linux kernels.
 .PP
 The `j' option is only useful if the filesystem is mounted as ext3.
 .PP

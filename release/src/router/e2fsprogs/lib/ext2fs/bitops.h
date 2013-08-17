@@ -54,6 +54,14 @@ extern void ext2fs_warn_bitmap2(ext2fs_generic_bitmap bitmap,
 				int code, unsigned long arg);
 
 #ifdef NO_INLINE_FUNCS
+extern void ext2fs_fast_set_bit(unsigned int nr,void * addr);
+extern void ext2fs_fast_clear_bit(unsigned int nr, void * addr);
+extern void ext2fs_fast_set_bit64(__u64 nr,void * addr);
+extern void ext2fs_fast_clear_bit64(__u64 nr, void * addr);
+extern __u16 ext2fs_swab16(__u16 val);
+extern __u32 ext2fs_swab32(__u32 val);
+extern __u64 ext2fs_swab64(__u64 val);
+
 extern int ext2fs_mark_block_bitmap(ext2fs_block_bitmap bitmap, blk_t block);
 extern int ext2fs_unmark_block_bitmap(ext2fs_block_bitmap bitmap,
 				       blk_t block);
@@ -650,14 +658,3 @@ extern int ext2fs_set_bit64(__u64 nr,void * addr);
 extern int ext2fs_clear_bit64(__u64 nr, void * addr);
 extern int ext2fs_test_bit64(__u64 nr, const void * addr);
 extern unsigned int ext2fs_bitcount(const void *addr, unsigned int nbytes);
-
-#ifdef NO_INLINE_FUNCS
-extern void ext2fs_fast_set_bit(unsigned int nr,void * addr);
-extern void ext2fs_fast_clear_bit(unsigned int nr, void * addr);
-extern void ext2fs_fast_set_bit64(__u64 nr,void * addr);
-extern void ext2fs_fast_clear_bit64(__u64 nr, void * addr);
-extern __u16 ext2fs_swab16(__u16 val);
-extern __u32 ext2fs_swab32(__u32 val);
-extern __u64 ext2fs_swab64(__u64 val);
-#endif
-

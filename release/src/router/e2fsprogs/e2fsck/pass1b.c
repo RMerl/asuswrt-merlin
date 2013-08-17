@@ -624,7 +624,6 @@ static void delete_file(e2fsck_t ctx, ext2_ino_t ino,
 {
 	ext2_filsys fs = ctx->fs;
 	struct process_block_struct pb;
-	struct ext2_inode	inode;
 	struct problem_context	pctx;
 	unsigned int		count;
 
@@ -635,33 +634,35 @@ static void delete_file(e2fsck_t ctx, ext2_ino_t ino,
 	pctx.str = "delete_file";
 	pb.cur_cluster = ~0;
 
-	e2fsck_read_inode(ctx, ino, &inode, "delete_file");
-	if (ext2fs_inode_has_valid_blocks2(fs, &inode))
-		pctx.errcode = ext2fs_block_iterate3(fs, ino, BLOCK_FLAG_READ_ONLY,
-						     block_buf, delete_file_block, &pb);
+	if (ext2fs_inode_has_valid_blocks2(fs, &dp->inode))
+		pctx.errcode = ext2fs_block_iterate3(fs, ino,
+						     BLOCK_FLAG_READ_ONLY,
+						     block_buf,
+						     delete_file_block, &pb);
 	if (pctx.errcode)
 		fix_problem(ctx, PR_1B_BLOCK_ITERATE, &pctx);
 	if (ctx->inode_bad_map)
 		ext2fs_unmark_inode_bitmap2(ctx->inode_bad_map, ino);
-	ext2fs_inode_alloc_stats2(fs, ino, -1, LINUX_S_ISDIR(inode.i_mode));
-	quota_data_sub(ctx->qctx, &inode, ino, pb.dup_blocks * fs->blocksize);
-	quota_data_inodes(ctx->qctx, &inode, ino, -1);
+	ext2fs_inode_alloc_stats2(fs, ino, -1, LINUX_S_ISDIR(dp->inode.i_mode));
+	quota_data_sub(ctx->qctx, &dp->inode, ino,
+		       pb.dup_blocks * fs->blocksize);
+	quota_data_inodes(ctx->qctx, &dp->inode, ino, -1);
 
 	/* Inode may have changed by block_iterate, so reread it */
-	e2fsck_read_inode(ctx, ino, &inode, "delete_file");
-	e2fsck_clear_inode(ctx, ino, &inode, 0, "delete_file");
-	if (ext2fs_file_acl_block(fs, &inode) &&
+	e2fsck_read_inode(ctx, ino, &dp->inode, "delete_file");
+	e2fsck_clear_inode(ctx, ino, &dp->inode, 0, "delete_file");
+	if (ext2fs_file_acl_block(fs, &dp->inode) &&
 	    (fs->super->s_feature_compat & EXT2_FEATURE_COMPAT_EXT_ATTR)) {
 		count = 1;
 		pctx.errcode = ext2fs_adjust_ea_refcount2(fs,
-					ext2fs_file_acl_block(fs, &inode),
+					ext2fs_file_acl_block(fs, &dp->inode),
 						   block_buf, -1, &count);
 		if (pctx.errcode == EXT2_ET_BAD_EA_BLOCK_NUM) {
 			pctx.errcode = 0;
 			count = 1;
 		}
 		if (pctx.errcode) {
-			pctx.blk = ext2fs_file_acl_block(fs, &inode);
+			pctx.blk = ext2fs_file_acl_block(fs, &dp->inode);
 			fix_problem(ctx, PR_1B_ADJ_EA_REFCOUNT, &pctx);
 		}
 		/*
@@ -672,12 +673,12 @@ static void delete_file(e2fsck_t ctx, ext2_ino_t ino,
 		 */
 		if ((count == 0) ||
 		    ext2fs_test_block_bitmap2(ctx->block_dup_map,
-					ext2fs_file_acl_block(fs, &inode))) {
-			blk64_t blk = ext2fs_file_acl_block(fs, &inode);
+					ext2fs_file_acl_block(fs, &dp->inode))) {
+			blk64_t blk = ext2fs_file_acl_block(fs, &dp->inode);
 			delete_file_block(fs, &blk,
 					  BLOCK_COUNT_EXTATTR, 0, 0, &pb);
-			ext2fs_file_acl_block_set(fs, &inode, blk);
-			quota_data_sub(ctx->qctx, &inode, ino, fs->blocksize);
+			ext2fs_file_acl_block_set(fs, &dp->inode, blk);
+			quota_data_sub(ctx->qctx, &dp->inode, ino, fs->blocksize);
 		}
 	}
 }

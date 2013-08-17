@@ -187,7 +187,7 @@ Normally
 only includes fs metadata, not regular file data.  The
 .B \-a
 option can be specified to include all data.  This will
-give an image that is suitible to use to clone the entire FS or
+give an image that is suitable to use to clone the entire FS or
 for backup purposes.  Note that this option only works with the
 raw or QCOW2 formats.
 .PP

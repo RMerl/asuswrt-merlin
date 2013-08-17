@@ -640,6 +640,7 @@ LINUX_CMT
 UNI_DIFF_OPTS
 SEM_INIT_LIB
 SOCKET_LIB
+SIZEOF_OFF_T
 SIZEOF_LONG_LONG
 SIZEOF_LONG
 SIZEOF_INT
@@ -841,6 +842,7 @@ enable_testio_debug
 enable_libuuid
 enable_libblkid
 enable_quota
+enable_backtrace
 enable_debugfs
 enable_imager
 enable_resizer
@@ -1496,6 +1498,7 @@ Optional Features:
   --disable-libuuid	  do not build private uuid library
   --disable-libblkid	  do not build private blkid library
   --enable-quota	  enable quota support
+  --disable-backtrace	  disable use backtrace
   --disable-debugfs   	  disable support of debugfs program
   --disable-imager   	  disable support of e2image program
   --disable-resizer   	  disable support of e2resize program
@@ -5330,6 +5333,26 @@ DEPPROFILED_LIBQUOTA=$PROFILED_LIBQUOTA
 
 
 
+
+
+# Check whether --enable-backtrace was given.
+if test "${enable_backtrace+set}" = set; then :
+  enableval=$enable_backtrace; if test "$enableval" = "no"
+then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: Disabling use of backtrace" >&5
+$as_echo "Disabling use of backtrace" >&6; }
+	$as_echo "#define DISABLE_BACKTRACE 1" >>confdefs.h
+
+else
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: Enabling use of backtrace" >&5
+$as_echo "Enabling use of backtrace" >&6; }
+fi
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: Enabling use of backtrace by default" >&5
+$as_echo "Enabling use of backtrace by default" >&6; }
+
+fi
 
 # Check whether --enable-debugfs was given.
 if test "${enable_debugfs+set}" = set; then :
@@ -10574,10 +10597,45 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of off_t" >&5
+$as_echo_n "checking size of off_t... " >&6; }
+if ${ac_cv_sizeof_off_t+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (off_t))" "ac_cv_sizeof_off_t"        "$ac_includes_default"; then :
+
+else
+  if test "$ac_cv_type_off_t" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (off_t)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_off_t=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_off_t" >&5
+$as_echo "$ac_cv_sizeof_off_t" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_OFF_T $ac_cv_sizeof_off_t
+_ACEOF
+
+
 SIZEOF_SHORT=$ac_cv_sizeof_short
 SIZEOF_INT=$ac_cv_sizeof_int
 SIZEOF_LONG=$ac_cv_sizeof_long
 SIZEOF_LONG_LONG=$ac_cv_sizeof_long_long
+SIZEOF_OFF_T=$ac_cv_sizeof_off_t
+
 
 
 
@@ -10974,7 +11032,7 @@ if test "$ac_res" != no; then :
 fi
 
 fi
-for ac_func in  	__secure_getenv 	backtrace 	blkid_probe_get_topology 	chflags 	fallocate 	fallocate64 	fchown 	fdatasync 	fstat64 	ftruncate64 	getdtablesize 	getmntinfo 	getpwuid_r 	getrlimit 	getrusage 	jrand48 	llseek 	lseek64 	mallinfo 	mbstowcs 	memalign 	mmap 	msync 	nanosleep 	open64 	pathconf 	posix_fadvise 	posix_memalign 	prctl 	setmntent 	setresgid 	setresuid 	srandom 	strcasecmp 	strdup 	strnlen 	strptime 	strtoull 	sync_file_range 	sysconf 	usleep 	utime 	valloc
+for ac_func in  	__secure_getenv 	backtrace 	blkid_probe_get_topology 	chflags 	fallocate 	fallocate64 	fchown 	fdatasync 	fstat64 	ftruncate64 	getdtablesize 	getmntinfo 	getpwuid_r 	getrlimit 	getrusage 	jrand48 	llseek 	lseek64 	mallinfo 	mbstowcs 	memalign 	mmap 	msync 	nanosleep 	open64 	pathconf 	posix_fadvise 	posix_memalign 	prctl 	secure_getenv 	setmntent 	setresgid 	setresuid 	srandom 	strcasecmp 	strdup 	strnlen 	strptime 	strtoull 	sync_file_range 	sysconf 	usleep 	utime 	valloc
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"

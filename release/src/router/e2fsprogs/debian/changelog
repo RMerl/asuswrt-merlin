@@ -1,3 +1,42 @@
+e2fsprogs (1.42.8-1) unstable; urgency=low
+
+  * New upstream version
+  * Work around Debian Bug #712530 (Closes: #708307)
+  * Fix e2fsck so it can check a read-only root file system with an
+    external journal.  (Closes: #707030)
+  * Fix off-line resizing of file systems with flex_bg && !resize_inode
+    (Closes: #696746)
+  * Change mke2fs so that it does not set the root directory to the real
+    uid/gid of the mke2fs process.  Add the extended option root_owner to
+    override this behavior.
+  * If an invalid journal size is given to mke2fs, it will now complain
+    and exit sooner.
+  * Fix resize2fs when shrinking file systems to make sure that bitmap
+    blocks aren't left outside the bounds of the shrunken file system.
+    This could happen with flex_bg file systems that were grown using
+    the old online resizing algorithm.
+  * E2fsck will now detect and repair corrupted extent trees which contain
+    invalid extents at the end of the extent tree leaf block.
+  * E2fsck will now longer complain about zero length extended attribute values.
+  * Fix a regression introduced in e2fsprogs v1.42 which caused e2image -s
+    to crash.
+  * Add safety check so tune2fs will not attempt to set the inode size to
+    be larger than the block size.
+  * Enhance chattr to allow clearing the extent flag if the kernel allows it
+  * Fix e2image with large (> 32-bit) file systems (Closes: #703067)
+  * Mke2fs will not give warnings about the bigalloc and quota options in
+    quiet mode.
+  * Debugfs was erroneously giving spurious error messages for certain
+    extent_inode subcommands which take arguments (split_node,
+    replace_node, and insert_node).  This has been fixed.
+  * Fix the parsing of the 's' (sectors) in parse_num_blocks2, which among
+    other programs is used by mke2fs.
+  * Fix texinfo incompatibilities (Closes: #712365)
+  * Updated/fixed various man pages  (Closes: #712429, #712430, #707609)
+  * Update German translation
+
+ -- Theodore Y. Ts'o <tytso@mit.edu>  Thu, 20 Jun 2013 23:09:25 -0500
+
 e2fsprogs (1.42.7-1) unstable; urgency=low
 
   * New upstream version

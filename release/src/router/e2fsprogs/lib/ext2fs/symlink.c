@@ -37,7 +37,7 @@ errcode_t ext2fs_symlink(ext2_filsys fs, ext2_ino_t parent, ext2_ino_t ino,
 	ext2_ino_t		scratch_ino;
 	blk64_t			blk;
 	int			fastlink;
-	int			target_len;
+	unsigned int		target_len;
 	char			*block_buf = 0;
 
 	EXT2_CHECK_MAGIC(fs, EXT2_ET_MAGIC_EXT2FS_FILSYS);

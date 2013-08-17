@@ -132,11 +132,6 @@ struct quotafile_ops {
 /* This might go into a special header file but that sounds a bit silly... */
 extern struct quotafile_ops quotafile_ops_meta;
 
-static inline void mark_quotafile_info_dirty(struct quota_handle *h)
-{
-	h->qh_io_flags |= IOFL_INFODIRTY;
-}
-
 /* Open existing quotafile of given type (and verify its format) on given
  * filesystem. */
 errcode_t quota_file_open(struct quota_handle *h, ext2_filsys fs,

@@ -52,8 +52,8 @@ int force_bmap;	/* force use of FIBMAP instead of FIEMAP */
 int force_extent;	/* print output in extent format always */
 int logical_width = 8;
 int physical_width = 10;
-char *ext_fmt = "%4d: %*llu..%*llu: %*llu..%*llu: %6llu: %s\n";
-char *hex_fmt = "%4d: %*llx..%*llx: %*llx..%*llx: %6llx: %s\n";
+const char *ext_fmt = "%4d: %*llu..%*llu: %*llu..%*llu: %6llu: %s\n";
+const char *hex_fmt = "%4d: %*llx..%*llx: %*llx..%*llx: %6llx: %s\n";
 
 #define FILEFRAG_FIEMAP_FLAGS_COMPAT (FIEMAP_FLAG_SYNC | FIEMAP_FLAG_XATTR)
 
@@ -166,7 +166,7 @@ static void print_extent_info(struct fiemap_extent *fm_extent, int cur_ex,
 	if (fm_extent->fe_flags & FIEMAP_EXTENT_MERGED)
 		strcat(flags, "merged,");
 
-	if (fm_extent->fe_logical + fm_extent->fe_length >= st->st_size)
+	if (fm_extent->fe_logical + fm_extent->fe_length >= (__u64) st->st_size)
 		strcat(flags, "eof,");
 
 	/* Remove trailing comma, if any */

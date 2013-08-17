@@ -143,7 +143,8 @@ crc32table.h: gen_crc32table
 	$(E) "	GEN32TABLE $@"
 	$(Q) ./gen_crc32table > crc32table.h
 
-tst_sigcatcher: $(srcdir)/sigcatcher.c
+tst_sigcatcher: $(srcdir)/sigcatcher.c sigcatcher.o
+	$(E) "	CC $@"
 	$(Q) $(CC) $(BUILD_LDFLAGS) $(ALL_CFLAGS) $(RDYNAMIC) \
 		$(srcdir)/sigcatcher.c -DDEBUG -o tst_sigcatcher
 

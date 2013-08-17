@@ -954,6 +954,12 @@ static struct e2fsck_problem problem_table[] = {
 	     "Logical start %b does not match logical start %c at next level.  "),
 	  PROMPT_FIX, 0 },
 
+	/* Extent end is out of bounds for the tree */
+	{ PR_1_EXTENT_END_OUT_OF_BOUNDS,
+	  N_("@i %i, end of extent exceeds allowed value\n\t(logical @b %c, physical @b %b, len %N)\n"),
+	  PROMPT_CLEAR, 0 },
+
+
 	/* Pass 1b errors */
 
 	/* Pass 1B: Rescan for duplicate/bad blocks */

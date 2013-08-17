@@ -10,7 +10,7 @@ Section: admin
 Priority: required
 Maintainer: Theodore Y. Ts'o <tytso@mit.edu>
 Build-Depends: texi2html (>= 1.76), gettext, texinfo, pkg-config, DIETLIBC_DEFINES gcc-multilib [mips mipsel], debhelper (>= 7.0), UTIL_LINUX_NG_DEFINES m4
-Standards-Version: 3.9.3
+Standards-Version: 3.9.4
 Homepage: http://e2fsprogs.sourceforge.net
 
 ifdef(`E2FSCK_STATIC',``

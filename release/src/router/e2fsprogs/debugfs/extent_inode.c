@@ -281,7 +281,7 @@ void do_replace_node(int argc, char *argv[])
 		com_err(argv[0], retval, 0);
 		return;
 	}
-	do_current_node(argc, argv);
+	generic_goto_node(NULL, argc, argv, EXT2_EXTENT_CURRENT);
 }
 
 void do_split_node(int argc, char *argv[])
@@ -297,7 +297,7 @@ void do_split_node(int argc, char *argv[])
 		com_err(argv[0], retval, 0);
 		return;
 	}
-	do_current_node(argc, argv);
+	generic_goto_node(NULL, argc, argv, EXT2_EXTENT_CURRENT);
 }
 
 void do_insert_node(int argc, char *argv[])
@@ -358,7 +358,7 @@ void do_insert_node(int argc, char *argv[])
 		com_err(cmd, retval, 0);
 		return;
 	}
-	do_current_node(argc, argv);
+	generic_goto_node(NULL, argc, argv, EXT2_EXTENT_CURRENT);
 }
 
 void do_set_bmap(int argc, char **argv)

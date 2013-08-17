@@ -375,7 +375,7 @@ struct rb_node *ext2fs_rb_last(const struct rb_root *root)
 	return n;
 }
 
-struct rb_node *ext2fs_rb_next(const struct rb_node *node)
+struct rb_node *ext2fs_rb_next(struct rb_node *node)
 {
 	struct rb_node *parent;
 
@@ -403,7 +403,7 @@ struct rb_node *ext2fs_rb_next(const struct rb_node *node)
 	return parent;
 }
 
-struct rb_node *ext2fs_rb_prev(const struct rb_node *node)
+struct rb_node *ext2fs_rb_prev(struct rb_node *node)
 {
 	struct rb_node *parent;
 

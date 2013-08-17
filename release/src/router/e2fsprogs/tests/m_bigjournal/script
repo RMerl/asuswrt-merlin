@@ -1,4 +1,0 @@
-DESCRIPTION="journal over 4GB in size"
-FS_SIZE=11000000
-MKE2FS_OPTS="-t ext4 -G 512 -N 1280 -J size=5000 -q -E lazy_journal_init,lazy_itable_init,nodiscard"
-. $cmd_dir/run_mke2fs

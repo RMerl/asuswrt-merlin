@@ -472,9 +472,9 @@ errcode_t ext2fs_block_iterate3(ext2_filsys fs,
 			       extent.e_lblk, extent.e_pblk,
 			       extent.e_len, blockcnt);
 #endif
-			if (extent.e_lblk + extent.e_len <= blockcnt)
+			if (extent.e_lblk + extent.e_len <= (blk64_t) blockcnt)
 				continue;
-			if (extent.e_lblk > blockcnt)
+			if (extent.e_lblk > (blk64_t) blockcnt)
 				blockcnt = extent.e_lblk;
 			j = blockcnt - extent.e_lblk;
 			blk += j;

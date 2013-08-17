@@ -194,7 +194,6 @@ static int change_attributes(const char * name)
 {
 	unsigned long flags;
 	STRUCT_STAT	st;
-	int extent_file = 0;
 
 	if (LSTAT (name, &st) == -1) {
 		if (!silent)
@@ -209,16 +208,7 @@ static int change_attributes(const char * name)
 					_("while reading flags on %s"), name);
 		return -1;
 	}
-	if (flags & EXT4_EXTENTS_FL)
-		extent_file = 1;
 	if (set) {
-		if (extent_file && !(sf & EXT4_EXTENTS_FL)) {
-			if (!silent)
-				com_err(program_name, 0,
-				_("Clearing extent flag not supported on %s"),
-					name);
-			return -1;
-		}
 		if (verbose) {
 			printf (_("Flags of %s set as "), name);
 			print_flags (stdout, sf, 0);
@@ -231,13 +221,6 @@ static int change_attributes(const char * name)
 			flags &= ~rf;
 		if (add)
 			flags |= af;
-		if (extent_file && !(flags & EXT4_EXTENTS_FL)) {
-			if (!silent)
-				com_err(program_name, 0,
-				_("Clearing extent flag not supported on %s"),
-					name);
-			return -1;
-		}
 		if (verbose) {
 			printf(_("Flags of %s set as "), name);
 			print_flags(stdout, flags, 0);

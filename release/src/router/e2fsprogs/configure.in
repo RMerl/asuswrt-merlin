@@ -596,6 +596,22 @@ AC_SUBST(PROFILED_LIBQUOTA)
 AC_SUBST(DEPPROFILED_LIBQUOTA)
 AC_SUBST(QUOTA_CMT)
 dnl
+dnl handle --disable-backtrace
+dnl
+AH_TEMPLATE([DISABLE_BACKTRACE], [Define to 1 to disable use of backtrace])
+AC_ARG_ENABLE([backtrace],
+[  --disable-backtrace	  disable use backtrace],
+if test "$enableval" = "no"
+then
+	AC_MSG_RESULT([Disabling use of backtrace])
+	AC_DEFINE(DISABLE_BACKTRACE, 1)
+else
+	AC_MSG_RESULT([Enabling use of backtrace])
+fi
+,
+AC_MSG_RESULT([Enabling use of backtrace by default])
+)
+dnl
 dnl handle --enable-debugfs
 dnl
 AC_ARG_ENABLE([debugfs],
@@ -916,14 +932,17 @@ AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(off_t)
 SIZEOF_SHORT=$ac_cv_sizeof_short
 SIZEOF_INT=$ac_cv_sizeof_int
 SIZEOF_LONG=$ac_cv_sizeof_long
 SIZEOF_LONG_LONG=$ac_cv_sizeof_long_long
+SIZEOF_OFF_T=$ac_cv_sizeof_off_t
 AC_SUBST(SIZEOF_SHORT)
 AC_SUBST(SIZEOF_INT)
 AC_SUBST(SIZEOF_LONG)
 AC_SUBST(SIZEOF_LONG_LONG)
+AC_SUBST(SIZEOF_OFF_T)
 AC_C_BIGENDIAN
 BUILD_CC="$BUILD_CC" CPP="$CPP" /bin/sh $ac_aux_dir/parse-types.sh
 ASM_TYPES_HEADER=./asm_types.h
@@ -1022,6 +1041,7 @@ AC_CHECK_FUNCS(m4_flatten([
 	posix_fadvise
 	posix_memalign
 	prctl
+	secure_getenv
 	setmntent
 	setresgid
 	setresuid

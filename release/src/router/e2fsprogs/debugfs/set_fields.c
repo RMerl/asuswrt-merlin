@@ -389,7 +389,10 @@ static errcode_t parse_uint(struct field_set_info *info, char *field,
 	n = num & mask;
 	switch (size) {
 	case 8:
-		*u.ptr64 = n;
+		/* Should never get here */
+		fprintf(stderr, "64-bit field %s has a second 64-bit field\n"
+			"defined; BUG?!?\n", info->name);
+		*u.ptr64 = 0;
 		break;
 	case 4:
 		*u.ptr32 = n;

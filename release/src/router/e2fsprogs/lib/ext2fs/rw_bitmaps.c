@@ -163,7 +163,8 @@ static errcode_t read_bitmaps(ext2_filsys fs, int do_inode, int do_block)
 
 	EXT2_CHECK_MAGIC(fs, EXT2_ET_MAGIC_EXT2FS_FILSYS);
 
-	if ((block_nbytes > fs->blocksize) || (inode_nbytes > fs->blocksize))
+	if ((block_nbytes > (int) fs->blocksize) ||
+	    (inode_nbytes > (int) fs->blocksize))
 		return EXT2_ET_CORRUPT_SUPERBLOCK;
 
 	fs->write_bitmaps = ext2fs_write_bitmaps;

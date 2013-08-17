@@ -53,6 +53,11 @@ static int get_index(qid_t id, int depth)
 	return (id >> ((QT_TREEDEPTH - depth - 1) * 8)) & 0xff;
 }
 
+static inline void mark_quotafile_info_dirty(struct quota_handle *h)
+{
+	h->qh_io_flags |= IOFL_INFODIRTY;
+}
+
 /* Read given block */
 static void read_blk(struct quota_handle *h, uint blk, dqbuf_t buf)
 {

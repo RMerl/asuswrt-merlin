@@ -11,6 +11,9 @@
  */
 
 #include "config.h"
+#if HAVE_SECURE_GETENV
+#define _GNU_SOURCE
+#endif
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -49,7 +52,9 @@ static char *safe_getenv(const char *arg)
 #endif
 #endif
 
-#ifdef HAVE___SECURE_GETENV
+#if defined(HAVE_SECURE_GETENV)
+	return secure_getenv(arg);
+#elif defined(HAVE___SECURE_GETENV)
 	return __secure_getenv(arg);
 #else
 	return getenv(arg);

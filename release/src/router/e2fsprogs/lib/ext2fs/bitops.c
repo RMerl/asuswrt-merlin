@@ -142,7 +142,7 @@ unsigned int ext2fs_bitcount(const void *addr, unsigned int nbytes)
 		res += popcount8(*cp++);
 		nbytes--;
 	}
-	p = (__u32 *) cp;
+	p = (const __u32 *) cp;
 
 	while (nbytes > 4) {
 		res += popcount32(*p++);

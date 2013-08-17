@@ -314,7 +314,7 @@ static errcode_t e2fsck_get_journal(e2fsck_t ctx, journal_t **ret_journal)
 					       BLOCK_FLAG_HOLE, 0,
 					       process_journal_block, &pb);
 		if ((pb.last_block + 1) * ctx->fs->blocksize <
-		    EXT2_I_SIZE(&j_inode->i_ext2)) {
+		    (int) EXT2_I_SIZE(&j_inode->i_ext2)) {
 			retval = EXT2_ET_JOURNAL_TOO_SMALL;
 			goto try_backup_journal;
 		}
@@ -372,9 +372,19 @@ static errcode_t e2fsck_get_journal(e2fsck_t ctx, journal_t **ret_journal)
 #ifndef USE_INODE_IO
 	if (ext_journal)
 #endif
-		retval = io_ptr->open(journal_name,
-				      IO_FLAG_RW | IO_FLAG_EXCLUSIVE,
+	{
+		int flags = IO_FLAG_RW;
+		if (!(ctx->mount_flags & EXT2_MF_ISROOT &&
+		      ctx->mount_flags & EXT2_MF_READONLY))
+			flags |= IO_FLAG_EXCLUSIVE;
+		if ((ctx->mount_flags & EXT2_MF_READONLY) &&
+		    (ctx->options & E2F_OPT_FORCE))
+			flags &= ~IO_FLAG_EXCLUSIVE;
+
+
+		retval = io_ptr->open(journal_name, flags,
 				      &ctx->journal_io);
+	}
 	if (retval)
 		goto errout;
 

@@ -20,12 +20,12 @@
 #include "ext2_fs.h"
 #include "ext2fsP.h"
 
-static int test_root(int a, int b)
+static int test_root(unsigned int a, unsigned int b)
 {
-	if (a == 0)
-		return 1;
 	while (1) {
-		if (a == 1)
+		if (a < b)
+			return 0;
+		if (a == b)
 			return 1;
 		if (a % b)
 			return 0;
@@ -33,14 +33,15 @@ static int test_root(int a, int b)
 	}
 }
 
-int ext2fs_bg_has_super(ext2_filsys fs, int group_block)
+int ext2fs_bg_has_super(ext2_filsys fs, dgrp_t group)
 {
 	if (!(fs->super->s_feature_ro_compat &
-	      EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER))
+	      EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER) || group <= 1)
 		return 1;
-
-	if (test_root(group_block, 3) || (test_root(group_block, 5)) ||
-	    test_root(group_block, 7))
+	if (!(group & 1))
+		return 0;
+	if (test_root(group, 3) || (test_root(group, 5)) ||
+	    test_root(group, 7))
 		return 1;
 
 	return 0;

@@ -561,6 +561,7 @@ struct problem_context {
 /* Index start doesn't match start of next extent down */
 #define PR_1_EXTENT_INDEX_START_INVALID	0x01006D
 
+#define PR_1_EXTENT_END_OUT_OF_BOUNDS	0x01006E
 /*
  * Pass 1b errors
  */

@@ -51,6 +51,8 @@ static errcode_t move_itables(ext2_resize_t rfs);
 static errcode_t fix_resize_inode(ext2_filsys fs);
 static errcode_t ext2fs_calculate_summary_stats(ext2_filsys fs);
 static errcode_t fix_sb_journal_backup(ext2_filsys fs);
+static errcode_t mark_table_blocks(ext2_filsys fs,
+				   ext2fs_block_bitmap bmap);
 
 /*
  * Some helper CPP macros
@@ -306,9 +308,6 @@ static void free_gdp_blocks(ext2_filsys fs,
 /*
  * This routine is shared by the online and offline resize routines.
  * All of the information which is adjusted in memory is done here.
- *
- * The reserve_blocks parameter is only needed when shrinking the
- * filesystem.
  */
 errcode_t adjust_fs_info(ext2_filsys fs, ext2_filsys old_fs,
 			 ext2fs_block_bitmap reserve_blocks, blk64_t new_size)
@@ -407,10 +406,19 @@ retry:
 	real_end = (((blk64_t) EXT2_BLOCKS_PER_GROUP(fs->super) *
 		     fs->group_desc_count)) - 1 +
 		fs->super->s_first_data_block;
-	retval = ext2fs_resize_block_bitmap2(ext2fs_blocks_count(fs->super)-1,
-					    real_end, fs->block_map);
-
+	retval = ext2fs_resize_block_bitmap2(new_size - 1,
+					     real_end, fs->block_map);
 	if (retval) goto errout;
+
+	/*
+	 * If we are growing the file system, also grow the size of
+	 * the reserve_blocks bitmap
+	 */
+	if (reserve_blocks && new_size > ext2fs_blocks_count(old_fs->super)) {
+		retval = ext2fs_resize_block_bitmap2(new_size - 1,
+						     real_end, reserve_blocks);
+		if (retval) goto errout;
+	}
 
 	/*
 	 * Reallocate the group descriptors as necessary.
@@ -512,6 +520,15 @@ retry:
 	else
 		old_desc_blocks = fs->desc_blocks +
 			fs->super->s_reserved_gdt_blocks;
+
+	/*
+	 * If we changed the number of block_group descriptor blocks,
+	 * we need to make sure they are all marked as reserved in the
+	 * file systems's block allocation map.
+	 */
+	for (i = 0; i < old_fs->group_desc_count; i++)
+		ext2fs_reserve_super_and_bgd(fs, i, fs->block_map);
+
 	for (i = old_fs->group_desc_count;
 	     i < fs->group_desc_count; i++) {
 		memset(ext2fs_group_desc(fs, fs->group_desc, i), 0,
@@ -577,6 +594,17 @@ retry:
 		group_block += fs->super->s_blocks_per_group;
 	}
 	retval = 0;
+
+	/*
+	 * Mark all of the metadata blocks as reserved so they won't
+	 * get allocated by the call to ext2fs_allocate_group_table()
+	 * in blocks_to_move(), where we allocate new blocks to
+	 * replace those allocation bitmap and inode table blocks
+	 * which have to get relocated to make space for an increased
+	 * number of the block group descriptors.
+	 */
+	if (reserve_blocks)
+		mark_table_blocks(fs, reserve_blocks);
 
 errout:
 	return (retval);
@@ -716,6 +744,7 @@ static errcode_t mark_table_blocks(ext2_filsys fs,
 				   ext2fs_block_bitmap bmap)
 {
 	dgrp_t			i;
+	blk64_t			blk;
 
 	for (i = 0; i < fs->group_desc_count; i++) {
 		ext2fs_reserve_super_and_bgd(fs, i, bmap);
@@ -723,21 +752,24 @@ static errcode_t mark_table_blocks(ext2_filsys fs,
 		/*
 		 * Mark the blocks used for the inode table
 		 */
-		ext2fs_mark_block_bitmap_range2(bmap,
-					  ext2fs_inode_table_loc(fs, i),
-					  fs->inode_blocks_per_group);
+		blk = ext2fs_inode_table_loc(fs, i);
+		if (blk)
+			ext2fs_mark_block_bitmap_range2(bmap, blk,
+						fs->inode_blocks_per_group);
 
 		/*
 		 * Mark block used for the block bitmap
 		 */
-		ext2fs_mark_block_bitmap2(bmap,
-					 ext2fs_block_bitmap_loc(fs, i));
+		blk = ext2fs_block_bitmap_loc(fs, i);
+		if (blk)
+			ext2fs_mark_block_bitmap2(bmap, blk);
 
 		/*
 		 * Mark block used for the inode bitmap
 		 */
-		ext2fs_mark_block_bitmap2(bmap,
-					 ext2fs_inode_bitmap_loc(fs, i));
+		blk = ext2fs_inode_bitmap_loc(fs, i);
+		if (blk)
+			ext2fs_mark_block_bitmap2(bmap, blk);
 	}
 	return 0;
 }
@@ -824,6 +856,7 @@ static errcode_t blocks_to_move(ext2_resize_t rfs)
 	dgrp_t		i, max_groups, g;
 	blk64_t		blk, group_blk;
 	blk64_t		old_blocks, new_blocks;
+	blk64_t		new_size;
 	unsigned int	meta_bg, meta_bg_size;
 	errcode_t	retval;
 	ext2_filsys 	fs, old_fs;
@@ -850,6 +883,32 @@ static errcode_t blocks_to_move(ext2_resize_t rfs)
 		return retval;
 
 	fs = rfs->new_fs;
+
+	/*
+	 * If we're shrinking the filesystem, we need to move any group's
+	 * bitmaps which are beyond the end of the new filesystem.
+	 */
+	new_size = ext2fs_blocks_count(fs->super);
+	if (new_size < ext2fs_blocks_count(old_fs->super)) {
+		for (g = 0; g < fs->group_desc_count; g++) {
+			/*
+			 * ext2fs_allocate_group_table re-allocates bitmaps
+			 * which are set to block 0.
+			 */
+			if (ext2fs_block_bitmap_loc(fs, g) >= new_size) {
+				ext2fs_block_bitmap_loc_set(fs, g, 0);
+				retval = ext2fs_allocate_group_table(fs, g, 0);
+				if (retval)
+					return retval;
+			}
+			if (ext2fs_inode_bitmap_loc(fs, g) >= new_size) {
+				ext2fs_inode_bitmap_loc_set(fs, g, 0);
+				retval = ext2fs_allocate_group_table(fs, g, 0);
+				if (retval)
+					return retval;
+			}
+		}
+	}
 
 	/*
 	 * If we're shrinking the filesystem, we need to move all of

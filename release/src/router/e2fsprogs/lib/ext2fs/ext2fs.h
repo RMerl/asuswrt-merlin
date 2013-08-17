@@ -911,7 +911,7 @@ extern errcode_t ext2fs_close(ext2_filsys fs);
 extern errcode_t ext2fs_close2(ext2_filsys fs, int flags);
 extern errcode_t ext2fs_flush(ext2_filsys fs);
 extern errcode_t ext2fs_flush2(ext2_filsys fs, int flags);
-extern int ext2fs_bg_has_super(ext2_filsys fs, int group_block);
+extern int ext2fs_bg_has_super(ext2_filsys fs, dgrp_t group_block);
 extern errcode_t ext2fs_super_and_bgd_loc2(ext2_filsys fs,
 				    dgrp_t group,
 				    blk64_t *ret_super_blk,
@@ -1373,6 +1373,10 @@ errcode_t ext2fs_link(ext2_filsys fs, ext2_ino_t dir, const char *name,
 		      ext2_ino_t ino, int flags);
 errcode_t ext2fs_unlink(ext2_filsys fs, ext2_ino_t dir, const char *name,
 			ext2_ino_t ino, int flags);
+
+/* symlink.c */
+errcode_t ext2fs_symlink(ext2_filsys fs, ext2_ino_t parent, ext2_ino_t ino,
+			 const char *name, char *target);
 
 /* mmp.c */
 errcode_t ext2fs_mmp_read(ext2_filsys fs, blk64_t mmp_blk, void *buf);

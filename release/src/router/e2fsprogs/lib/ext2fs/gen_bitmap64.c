@@ -174,7 +174,7 @@ errcode_t ext2fs_alloc_generic_bmap(ext2_filsys fs, errcode_t magic,
 }
 
 #ifdef BMAP_STATS
-void ext2fs_print_bmap_statistics(ext2fs_generic_bitmap bitmap)
+static void ext2fs_print_bmap_statistics(ext2fs_generic_bitmap bitmap)
 {
 	struct ext2_bmap_statistics *stats = &bitmap->stats;
 #ifdef BMAP_STATS_OPS
@@ -657,7 +657,7 @@ int ext2fs_test_block_bitmap_range2(ext2fs_block_bitmap bmap,
 	if ((block < bmap->start) || (block+num-1 > bmap->end)) {
 		ext2fs_warn_bitmap(EXT2_ET_BAD_BLOCK_TEST, block,
 				   bmap->description);
-		return;
+		return EINVAL;
 	}
 
 	return bmap->bitmap_ops->test_clear_bmap_extent(bmap, block, num);

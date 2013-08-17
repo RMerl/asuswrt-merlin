@@ -361,8 +361,7 @@ static _INLINE_ void expand_dirent_expression(FILE *f, ext2_filsys fs, char ch,
 					      struct problem_context *ctx)
 {
 	struct ext2_dir_entry	*dirent;
-	unsigned int rec_len;
-	int	len;
+	unsigned int rec_len, len;
 
 	if (!ctx || !ctx->dirent)
 		goto no_dirent;
