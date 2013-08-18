@@ -1,0 +1,24 @@
+Pass 1: Checking inodes, blocks, and sizes
+Inode 12, end of extent exceeds allowed value
+	(logical block 15, physical block 200, len 30)
+Clear? yes
+
+Inode 12, i_blocks is 154, should be 94.  Fix? yes
+
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Block bitmap differences:  -(200--229)
+Fix? yes
+
+Free blocks count wrong for group #0 (156, counted=186).
+Fix? yes
+
+Free blocks count wrong (156, counted=186).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 12/32 files (8.3% non-contiguous), 70/256 blocks
+Exit status is 1

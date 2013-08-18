@@ -1,0 +1,567 @@
+Journal starts at block 1, transaction 2
+Found expected sequence 2, type 1 (descriptor block) at block 1
+Dumping descriptor block, sequence 2, at block 1:
+  FS block 2 logged at journal block 2 (flags 0x8)
+Found expected sequence 2, type 2 (commit block) at block 3
+Found expected sequence 3, type 1 (descriptor block) at block 4
+Dumping descriptor block, sequence 3, at block 4:
+  FS block 82 logged at journal block 5 (flags 0x0)
+  FS block 2 logged at journal block 6 (flags 0x2)
+  FS block 99 logged at journal block 7 (flags 0x2)
+  FS block 66 logged at journal block 8 (flags 0x2)
+  FS block 81 logged at journal block 9 (flags 0x2)
+  FS block 98 logged at journal block 10 (flags 0x2)
+  FS block 68 logged at journal block 11 (flags 0x2)
+  FS block 83 logged at journal block 12 (flags 0x2)
+  FS block 354 logged at journal block 13 (flags 0x2)
+  FS block 84 logged at journal block 14 (flags 0x2)
+  FS block 100 logged at journal block 15 (flags 0x2)
+  FS block 97 logged at journal block 16 (flags 0x2)
+  FS block 101 logged at journal block 17 (flags 0x2)
+  FS block 611 logged at journal block 18 (flags 0x2)
+  FS block 102 logged at journal block 19 (flags 0x2)
+  FS block 103 logged at journal block 20 (flags 0x2)
+  FS block 612 logged at journal block 21 (flags 0x2)
+  FS block 104 logged at journal block 22 (flags 0x2)
+  FS block 85 logged at journal block 23 (flags 0x2)
+  FS block 105 logged at journal block 24 (flags 0x2)
+  FS block 86 logged at journal block 25 (flags 0x2)
+  FS block 106 logged at journal block 26 (flags 0x2)
+  FS block 87 logged at journal block 27 (flags 0x2)
+  FS block 107 logged at journal block 28 (flags 0x2)
+  FS block 108 logged at journal block 29 (flags 0x2)
+  FS block 88 logged at journal block 30 (flags 0x2)
+  FS block 109 logged at journal block 31 (flags 0x2)
+  FS block 355 logged at journal block 32 (flags 0x2)
+  FS block 613 logged at journal block 33 (flags 0x2)
+  FS block 110 logged at journal block 34 (flags 0x2)
+  FS block 614 logged at journal block 35 (flags 0x2)
+  FS block 111 logged at journal block 36 (flags 0x2)
+  FS block 615 logged at journal block 37 (flags 0x2)
+  FS block 112 logged at journal block 38 (flags 0x2)
+  FS block 113 logged at journal block 39 (flags 0x2)
+  FS block 616 logged at journal block 40 (flags 0x2)
+  FS block 89 logged at journal block 41 (flags 0x2)
+  FS block 114 logged at journal block 42 (flags 0x2)
+  FS block 90 logged at journal block 43 (flags 0x2)
+  FS block 115 logged at journal block 44 (flags 0x2)
+  FS block 91 logged at journal block 45 (flags 0x2)
+  FS block 116 logged at journal block 46 (flags 0x2)
+  FS block 92 logged at journal block 47 (flags 0x2)
+  FS block 117 logged at journal block 48 (flags 0x2)
+  FS block 118 logged at journal block 49 (flags 0x2)
+  FS block 356 logged at journal block 50 (flags 0x2)
+  FS block 93 logged at journal block 51 (flags 0x2)
+  FS block 119 logged at journal block 52 (flags 0x2)
+  FS block 94 logged at journal block 53 (flags 0x2)
+  FS block 120 logged at journal block 54 (flags 0x2)
+  FS block 95 logged at journal block 55 (flags 0x2)
+  FS block 121 logged at journal block 56 (flags 0x2)
+  FS block 96 logged at journal block 57 (flags 0x2)
+  FS block 122 logged at journal block 58 (flags 0x2)
+  FS block 123 logged at journal block 59 (flags 0x2)
+  FS block 617 logged at journal block 60 (flags 0x2)
+  FS block 124 logged at journal block 61 (flags 0x2)
+  FS block 618 logged at journal block 62 (flags 0x2)
+  FS block 125 logged at journal block 63 (flags 0x2)
+  FS block 619 logged at journal block 64 (flags 0x2)
+  FS block 126 logged at journal block 65 (flags 0x2)
+  FS block 620 logged at journal block 66 (flags 0x2)
+  FS block 357 logged at journal block 67 (flags 0x2)
+  FS block 621 logged at journal block 68 (flags 0x2)
+  FS block 127 logged at journal block 69 (flags 0x2)
+  FS block 128 logged at journal block 70 (flags 0x2)
+  FS block 622 logged at journal block 71 (flags 0x2)
+  FS block 129 logged at journal block 72 (flags 0x2)
+  FS block 623 logged at journal block 73 (flags 0x2)
+  FS block 130 logged at journal block 74 (flags 0x2)
+  FS block 624 logged at journal block 75 (flags 0x2)
+  FS block 131 logged at journal block 76 (flags 0x2)
+  FS block 625 logged at journal block 77 (flags 0x2)
+  FS block 132 logged at journal block 78 (flags 0x2)
+  FS block 133 logged at journal block 79 (flags 0x2)
+  FS block 626 logged at journal block 80 (flags 0x2)
+  FS block 134 logged at journal block 81 (flags 0x2)
+  FS block 627 logged at journal block 82 (flags 0x2)
+  FS block 135 logged at journal block 83 (flags 0x2)
+  FS block 628 logged at journal block 84 (flags 0x2)
+  FS block 136 logged at journal block 85 (flags 0x2)
+  FS block 358 logged at journal block 86 (flags 0x2)
+  FS block 629 logged at journal block 87 (flags 0x2)
+  FS block 137 logged at journal block 88 (flags 0xa)
+Found expected sequence 3, type 1 (descriptor block) at block 89
+Dumping descriptor block, sequence 3, at block 89:
+  FS block 138 logged at journal block 90 (flags 0x0)
+  FS block 630 logged at journal block 91 (flags 0x2)
+  FS block 139 logged at journal block 92 (flags 0x2)
+  FS block 631 logged at journal block 93 (flags 0x2)
+  FS block 140 logged at journal block 94 (flags 0x2)
+  FS block 632 logged at journal block 95 (flags 0x2)
+  FS block 633 logged at journal block 96 (flags 0x2)
+  FS block 141 logged at journal block 97 (flags 0x2)
+  FS block 634 logged at journal block 98 (flags 0x2)
+  FS block 142 logged at journal block 99 (flags 0x2)
+  FS block 143 logged at journal block 100 (flags 0x2)
+  FS block 635 logged at journal block 101 (flags 0x2)
+  FS block 144 logged at journal block 102 (flags 0x2)
+  FS block 636 logged at journal block 103 (flags 0x2)
+  FS block 145 logged at journal block 104 (flags 0x2)
+  FS block 359 logged at journal block 105 (flags 0x2)
+  FS block 637 logged at journal block 106 (flags 0x2)
+  FS block 146 logged at journal block 107 (flags 0x2)
+  FS block 638 logged at journal block 108 (flags 0x2)
+  FS block 147 logged at journal block 109 (flags 0x2)
+  FS block 148 logged at journal block 110 (flags 0x2)
+  FS block 639 logged at journal block 111 (flags 0x2)
+  FS block 149 logged at journal block 112 (flags 0x2)
+  FS block 640 logged at journal block 113 (flags 0x2)
+  FS block 150 logged at journal block 114 (flags 0x2)
+  FS block 641 logged at journal block 115 (flags 0x2)
+  FS block 151 logged at journal block 116 (flags 0x2)
+  FS block 642 logged at journal block 117 (flags 0x2)
+  FS block 152 logged at journal block 118 (flags 0x2)
+  FS block 153 logged at journal block 119 (flags 0x2)
+  FS block 643 logged at journal block 120 (flags 0x2)
+  FS block 154 logged at journal block 121 (flags 0x2)
+  FS block 644 logged at journal block 122 (flags 0x2)
+  FS block 360 logged at journal block 123 (flags 0x2)
+  FS block 645 logged at journal block 124 (flags 0x2)
+  FS block 155 logged at journal block 125 (flags 0x2)
+  FS block 646 logged at journal block 126 (flags 0x2)
+  FS block 156 logged at journal block 127 (flags 0x2)
+  FS block 647 logged at journal block 128 (flags 0x2)
+  FS block 157 logged at journal block 129 (flags 0x2)
+  FS block 158 logged at journal block 130 (flags 0x2)
+  FS block 648 logged at journal block 131 (flags 0x2)
+  FS block 159 logged at journal block 132 (flags 0x2)
+  FS block 649 logged at journal block 133 (flags 0x2)
+  FS block 160 logged at journal block 134 (flags 0x2)
+  FS block 650 logged at journal block 135 (flags 0x2)
+  FS block 161 logged at journal block 136 (flags 0x2)
+  FS block 651 logged at journal block 137 (flags 0x2)
+  FS block 162 logged at journal block 138 (flags 0x2)
+  FS block 163 logged at journal block 139 (flags 0x2)
+  FS block 652 logged at journal block 140 (flags 0x2)
+  FS block 164 logged at journal block 141 (flags 0x2)
+  FS block 361 logged at journal block 142 (flags 0x2)
+  FS block 653 logged at journal block 143 (flags 0x2)
+  FS block 165 logged at journal block 144 (flags 0x2)
+  FS block 654 logged at journal block 145 (flags 0x2)
+  FS block 166 logged at journal block 146 (flags 0x2)
+  FS block 655 logged at journal block 147 (flags 0x2)
+  FS block 167 logged at journal block 148 (flags 0x2)
+  FS block 168 logged at journal block 149 (flags 0x2)
+  FS block 656 logged at journal block 150 (flags 0x2)
+  FS block 657 logged at journal block 151 (flags 0x2)
+  FS block 169 logged at journal block 152 (flags 0x2)
+  FS block 658 logged at journal block 153 (flags 0x2)
+  FS block 170 logged at journal block 154 (flags 0x2)
+  FS block 659 logged at journal block 155 (flags 0x2)
+  FS block 171 logged at journal block 156 (flags 0x2)
+  FS block 660 logged at journal block 157 (flags 0x2)
+  FS block 172 logged at journal block 158 (flags 0x2)
+  FS block 173 logged at journal block 159 (flags 0x2)
+  FS block 362 logged at journal block 160 (flags 0x2)
+  FS block 661 logged at journal block 161 (flags 0x2)
+  FS block 174 logged at journal block 162 (flags 0x2)
+  FS block 662 logged at journal block 163 (flags 0x2)
+  FS block 175 logged at journal block 164 (flags 0x2)
+  FS block 663 logged at journal block 165 (flags 0x2)
+  FS block 176 logged at journal block 166 (flags 0x2)
+  FS block 664 logged at journal block 167 (flags 0x2)
+  FS block 177 logged at journal block 168 (flags 0x2)
+  FS block 178 logged at journal block 169 (flags 0x2)
+  FS block 665 logged at journal block 170 (flags 0x2)
+  FS block 179 logged at journal block 171 (flags 0x2)
+  FS block 666 logged at journal block 172 (flags 0x2)
+  FS block 180 logged at journal block 173 (flags 0xa)
+Found expected sequence 3, type 1 (descriptor block) at block 174
+Dumping descriptor block, sequence 3, at block 174:
+  FS block 667 logged at journal block 175 (flags 0x0)
+  FS block 181 logged at journal block 176 (flags 0x2)
+  FS block 668 logged at journal block 177 (flags 0x2)
+  FS block 363 logged at journal block 178 (flags 0x2)
+  FS block 669 logged at journal block 179 (flags 0x2)
+  FS block 182 logged at journal block 180 (flags 0x2)
+  FS block 183 logged at journal block 181 (flags 0x2)
+  FS block 670 logged at journal block 182 (flags 0x2)
+  FS block 184 logged at journal block 183 (flags 0x2)
+  FS block 671 logged at journal block 184 (flags 0x2)
+  FS block 185 logged at journal block 185 (flags 0x2)
+  FS block 672 logged at journal block 186 (flags 0x2)
+  FS block 186 logged at journal block 187 (flags 0x2)
+  FS block 673 logged at journal block 188 (flags 0x2)
+  FS block 187 logged at journal block 189 (flags 0x2)
+  FS block 188 logged at journal block 190 (flags 0x2)
+  FS block 674 logged at journal block 191 (flags 0x2)
+  FS block 189 logged at journal block 192 (flags 0x2)
+  FS block 675 logged at journal block 193 (flags 0x2)
+  FS block 190 logged at journal block 194 (flags 0x2)
+  FS block 676 logged at journal block 195 (flags 0x2)
+  FS block 191 logged at journal block 196 (flags 0x2)
+  FS block 364 logged at journal block 197 (flags 0x2)
+  FS block 677 logged at journal block 198 (flags 0x2)
+  FS block 192 logged at journal block 199 (flags 0x2)
+  FS block 193 logged at journal block 200 (flags 0x2)
+  FS block 678 logged at journal block 201 (flags 0x2)
+  FS block 194 logged at journal block 202 (flags 0x2)
+  FS block 679 logged at journal block 203 (flags 0x2)
+  FS block 195 logged at journal block 204 (flags 0x2)
+  FS block 680 logged at journal block 205 (flags 0x2)
+  FS block 681 logged at journal block 206 (flags 0x2)
+  FS block 196 logged at journal block 207 (flags 0x2)
+  FS block 682 logged at journal block 208 (flags 0x2)
+  FS block 197 logged at journal block 209 (flags 0x2)
+  FS block 198 logged at journal block 210 (flags 0x2)
+  FS block 683 logged at journal block 211 (flags 0x2)
+  FS block 199 logged at journal block 212 (flags 0x2)
+  FS block 684 logged at journal block 213 (flags 0x2)
+  FS block 200 logged at journal block 214 (flags 0x2)
+  FS block 365 logged at journal block 215 (flags 0x2)
+  FS block 685 logged at journal block 216 (flags 0x2)
+  FS block 201 logged at journal block 217 (flags 0x2)
+  FS block 686 logged at journal block 218 (flags 0x2)
+  FS block 202 logged at journal block 219 (flags 0x2)
+  FS block 203 logged at journal block 220 (flags 0x2)
+  FS block 687 logged at journal block 221 (flags 0xa)
+Found expected sequence 3, type 2 (commit block) at block 222
+Found expected sequence 4, type 1 (descriptor block) at block 223
+Dumping descriptor block, sequence 4, at block 223:
+  FS block 204 logged at journal block 224 (flags 0x0)
+  FS block 687 logged at journal block 225 (flags 0x2)
+  FS block 203 logged at journal block 226 (flags 0x2)
+  FS block 365 logged at journal block 227 (flags 0x2)
+  FS block 2 logged at journal block 228 (flags 0x2)
+  FS block 82 logged at journal block 229 (flags 0x2)
+  FS block 83 logged at journal block 230 (flags 0x2)
+  FS block 66 logged at journal block 231 (flags 0x2)
+  FS block 688 logged at journal block 232 (flags 0x2)
+  FS block 364 logged at journal block 233 (flags 0x2)
+  FS block 680 logged at journal block 234 (flags 0x2)
+  FS block 205 logged at journal block 235 (flags 0x2)
+  FS block 689 logged at journal block 236 (flags 0x2)
+  FS block 206 logged at journal block 237 (flags 0x2)
+  FS block 690 logged at journal block 238 (flags 0x2)
+  FS block 207 logged at journal block 239 (flags 0x2)
+  FS block 208 logged at journal block 240 (flags 0x2)
+  FS block 691 logged at journal block 241 (flags 0x2)
+  FS block 209 logged at journal block 242 (flags 0x2)
+  FS block 692 logged at journal block 243 (flags 0x2)
+  FS block 98 logged at journal block 244 (flags 0x2)
+  FS block 68 logged at journal block 245 (flags 0x2)
+  FS block 366 logged at journal block 246 (flags 0x2)
+  FS block 693 logged at journal block 247 (flags 0x2)
+  FS block 210 logged at journal block 248 (flags 0x2)
+  FS block 694 logged at journal block 249 (flags 0x2)
+  FS block 211 logged at journal block 250 (flags 0x2)
+  FS block 695 logged at journal block 251 (flags 0x2)
+  FS block 212 logged at journal block 252 (flags 0x2)
+  FS block 213 logged at journal block 253 (flags 0x2)
+  FS block 696 logged at journal block 254 (flags 0x2)
+  FS block 214 logged at journal block 255 (flags 0x2)
+  FS block 697 logged at journal block 256 (flags 0x2)
+  FS block 215 logged at journal block 257 (flags 0x2)
+  FS block 698 logged at journal block 258 (flags 0x2)
+  FS block 216 logged at journal block 259 (flags 0x2)
+  FS block 699 logged at journal block 260 (flags 0x2)
+  FS block 217 logged at journal block 261 (flags 0x2)
+  FS block 218 logged at journal block 262 (flags 0x2)
+  FS block 700 logged at journal block 263 (flags 0x2)
+  FS block 219 logged at journal block 264 (flags 0x2)
+  FS block 367 logged at journal block 265 (flags 0x2)
+  FS block 701 logged at journal block 266 (flags 0x2)
+  FS block 220 logged at journal block 267 (flags 0x2)
+  FS block 702 logged at journal block 268 (flags 0x2)
+  FS block 221 logged at journal block 269 (flags 0x2)
+  FS block 703 logged at journal block 270 (flags 0x2)
+  FS block 222 logged at journal block 271 (flags 0x2)
+  FS block 223 logged at journal block 272 (flags 0x2)
+  FS block 704 logged at journal block 273 (flags 0x2)
+  FS block 705 logged at journal block 274 (flags 0x2)
+  FS block 224 logged at journal block 275 (flags 0x2)
+  FS block 706 logged at journal block 276 (flags 0x2)
+  FS block 225 logged at journal block 277 (flags 0x2)
+  FS block 707 logged at journal block 278 (flags 0x2)
+  FS block 226 logged at journal block 279 (flags 0x2)
+  FS block 708 logged at journal block 280 (flags 0x2)
+  FS block 227 logged at journal block 281 (flags 0x2)
+  FS block 228 logged at journal block 282 (flags 0x2)
+  FS block 368 logged at journal block 283 (flags 0x2)
+  FS block 709 logged at journal block 284 (flags 0x2)
+  FS block 229 logged at journal block 285 (flags 0x2)
+  FS block 710 logged at journal block 286 (flags 0x2)
+  FS block 230 logged at journal block 287 (flags 0x2)
+  FS block 711 logged at journal block 288 (flags 0x2)
+  FS block 231 logged at journal block 289 (flags 0x2)
+  FS block 712 logged at journal block 290 (flags 0x2)
+  FS block 232 logged at journal block 291 (flags 0x2)
+  FS block 233 logged at journal block 292 (flags 0x2)
+  FS block 713 logged at journal block 293 (flags 0x2)
+  FS block 234 logged at journal block 294 (flags 0x2)
+  FS block 714 logged at journal block 295 (flags 0x2)
+  FS block 235 logged at journal block 296 (flags 0x2)
+  FS block 715 logged at journal block 297 (flags 0x2)
+  FS block 236 logged at journal block 298 (flags 0x2)
+  FS block 716 logged at journal block 299 (flags 0x2)
+  FS block 369 logged at journal block 300 (flags 0x2)
+  FS block 717 logged at journal block 301 (flags 0x2)
+  FS block 237 logged at journal block 302 (flags 0x2)
+  FS block 238 logged at journal block 303 (flags 0x2)
+  FS block 718 logged at journal block 304 (flags 0x2)
+  FS block 239 logged at journal block 305 (flags 0x2)
+  FS block 719 logged at journal block 306 (flags 0x2)
+  FS block 240 logged at journal block 307 (flags 0xa)
+Found expected sequence 4, type 1 (descriptor block) at block 308
+Dumping descriptor block, sequence 4, at block 308:
+  FS block 720 logged at journal block 309 (flags 0x0)
+  FS block 241 logged at journal block 310 (flags 0x2)
+  FS block 721 logged at journal block 311 (flags 0x2)
+  FS block 242 logged at journal block 312 (flags 0x2)
+  FS block 243 logged at journal block 313 (flags 0x2)
+  FS block 722 logged at journal block 314 (flags 0x2)
+  FS block 244 logged at journal block 315 (flags 0x2)
+  FS block 723 logged at journal block 316 (flags 0x2)
+  FS block 245 logged at journal block 317 (flags 0x2)
+  FS block 724 logged at journal block 318 (flags 0x2)
+  FS block 246 logged at journal block 319 (flags 0x2)
+  FS block 370 logged at journal block 320 (flags 0x2)
+  FS block 725 logged at journal block 321 (flags 0x2)
+  FS block 247 logged at journal block 322 (flags 0x2)
+  FS block 248 logged at journal block 323 (flags 0x2)
+  FS block 726 logged at journal block 324 (flags 0x2)
+  FS block 249 logged at journal block 325 (flags 0x2)
+  FS block 727 logged at journal block 326 (flags 0x2)
+  FS block 250 logged at journal block 327 (flags 0xa)
+Found expected sequence 4, type 2 (commit block) at block 328
+Found expected sequence 5, type 5 (revoke table) at block 329
+Dumping revoke block, sequence 5, at block 329:
+  Revoke FS block 640
+  Revoke FS block 641
+  Revoke FS block 642
+  Revoke FS block 643
+  Revoke FS block 644
+  Revoke FS block 645
+  Revoke FS block 646
+  Revoke FS block 647
+  Revoke FS block 648
+  Revoke FS block 649
+  Revoke FS block 650
+  Revoke FS block 651
+  Revoke FS block 652
+  Revoke FS block 653
+  Revoke FS block 654
+  Revoke FS block 655
+  Revoke FS block 656
+  Revoke FS block 657
+  Revoke FS block 81
+  Revoke FS block 658
+  Revoke FS block 659
+  Revoke FS block 660
+  Revoke FS block 84
+  Revoke FS block 661
+  Revoke FS block 85
+  Revoke FS block 662
+  Revoke FS block 86
+  Revoke FS block 663
+  Revoke FS block 87
+  Revoke FS block 664
+  Revoke FS block 88
+  Revoke FS block 665
+  Revoke FS block 89
+  Revoke FS block 666
+  Revoke FS block 90
+  Revoke FS block 667
+  Revoke FS block 91
+  Revoke FS block 668
+  Revoke FS block 92
+  Revoke FS block 669
+  Revoke FS block 93
+  Revoke FS block 670
+  Revoke FS block 94
+  Revoke FS block 671
+  Revoke FS block 95
+  Revoke FS block 672
+  Revoke FS block 96
+  Revoke FS block 673
+  Revoke FS block 97
+  Revoke FS block 674
+  Revoke FS block 675
+  Revoke FS block 611
+  Revoke FS block 676
+  Revoke FS block 612
+  Revoke FS block 677
+  Revoke FS block 613
+  Revoke FS block 678
+  Revoke FS block 614
+  Revoke FS block 679
+  Revoke FS block 615
+  Revoke FS block 616
+  Revoke FS block 617
+  Revoke FS block 682
+  Revoke FS block 618
+  Revoke FS block 683
+  Revoke FS block 619
+  Revoke FS block 684
+  Revoke FS block 620
+  Revoke FS block 685
+  Revoke FS block 621
+  Revoke FS block 622
+  Revoke FS block 687
+  Revoke FS block 623
+  Revoke FS block 688
+  Revoke FS block 624
+  Revoke FS block 689
+  Revoke FS block 625
+  Revoke FS block 690
+  Revoke FS block 626
+  Revoke FS block 691
+  Revoke FS block 627
+  Revoke FS block 628
+  Revoke FS block 629
+  Revoke FS block 630
+  Revoke FS block 631
+  Revoke FS block 632
+  Revoke FS block 633
+  Revoke FS block 634
+  Revoke FS block 635
+  Revoke FS block 636
+  Revoke FS block 637
+  Revoke FS block 638
+  Revoke FS block 639
+Found expected sequence 5, type 1 (descriptor block) at block 330
+Dumping descriptor block, sequence 5, at block 330:
+  FS block 98 logged at journal block 331 (flags 0x0)
+  FS block 99 logged at journal block 332 (flags 0x2)
+  FS block 354 logged at journal block 333 (flags 0x2)
+  FS block 1 logged at journal block 334 (flags 0x2)
+  FS block 105 logged at journal block 335 (flags 0x2)
+  FS block 2 logged at journal block 336 (flags 0x2)
+  FS block 82 logged at journal block 337 (flags 0x2)
+  FS block 104 logged at journal block 338 (flags 0x2)
+  FS block 66 logged at journal block 339 (flags 0x2)
+  FS block 83 logged at journal block 340 (flags 0x2)
+  FS block 355 logged at journal block 341 (flags 0x2)
+  FS block 112 logged at journal block 342 (flags 0x2)
+  FS block 113 logged at journal block 343 (flags 0x2)
+  FS block 102 logged at journal block 344 (flags 0x2)
+  FS block 103 logged at journal block 345 (flags 0x2)
+  FS block 107 logged at journal block 346 (flags 0x2)
+  FS block 108 logged at journal block 347 (flags 0x2)
+  FS block 101 logged at journal block 348 (flags 0x2)
+  FS block 100 logged at journal block 349 (flags 0x2)
+  FS block 110 logged at journal block 350 (flags 0x2)
+  FS block 109 logged at journal block 351 (flags 0x2)
+  FS block 111 logged at journal block 352 (flags 0x2)
+  FS block 106 logged at journal block 353 (flags 0x2)
+  FS block 68 logged at journal block 354 (flags 0x2)
+  FS block 356 logged at journal block 355 (flags 0x2)
+  FS block 119 logged at journal block 356 (flags 0x2)
+  FS block 118 logged at journal block 357 (flags 0x2)
+  FS block 126 logged at journal block 358 (flags 0x2)
+  FS block 125 logged at journal block 359 (flags 0x2)
+  FS block 116 logged at journal block 360 (flags 0x2)
+  FS block 115 logged at journal block 361 (flags 0x2)
+  FS block 117 logged at journal block 362 (flags 0x2)
+  FS block 121 logged at journal block 363 (flags 0x2)
+  FS block 120 logged at journal block 364 (flags 0x2)
+  FS block 114 logged at journal block 365 (flags 0x2)
+  FS block 124 logged at journal block 366 (flags 0x2)
+  FS block 123 logged at journal block 367 (flags 0x2)
+  FS block 122 logged at journal block 368 (flags 0x2)
+  FS block 357 logged at journal block 369 (flags 0x2)
+  FS block 132 logged at journal block 370 (flags 0x2)
+  FS block 133 logged at journal block 371 (flags 0x2)
+  FS block 358 logged at journal block 372 (flags 0x2)
+  FS block 140 logged at journal block 373 (flags 0x2)
+  FS block 139 logged at journal block 374 (flags 0x2)
+  FS block 130 logged at journal block 375 (flags 0x2)
+  FS block 129 logged at journal block 376 (flags 0x2)
+  FS block 131 logged at journal block 377 (flags 0x2)
+  FS block 135 logged at journal block 378 (flags 0x2)
+  FS block 134 logged at journal block 379 (flags 0x2)
+  FS block 128 logged at journal block 380 (flags 0x2)
+  FS block 137 logged at journal block 381 (flags 0x2)
+  FS block 138 logged at journal block 382 (flags 0x2)
+  FS block 136 logged at journal block 383 (flags 0x2)
+  FS block 127 logged at journal block 384 (flags 0x2)
+  FS block 359 logged at journal block 385 (flags 0x2)
+  FS block 146 logged at journal block 386 (flags 0x2)
+  FS block 145 logged at journal block 387 (flags 0x2)
+  FS block 154 logged at journal block 388 (flags 0x2)
+  FS block 153 logged at journal block 389 (flags 0x2)
+  FS block 144 logged at journal block 390 (flags 0x2)
+  FS block 143 logged at journal block 391 (flags 0x2)
+  FS block 149 logged at journal block 392 (flags 0x2)
+  FS block 148 logged at journal block 393 (flags 0x2)
+  FS block 142 logged at journal block 394 (flags 0x2)
+  FS block 151 logged at journal block 395 (flags 0x2)
+  FS block 150 logged at journal block 396 (flags 0x2)
+  FS block 152 logged at journal block 397 (flags 0x2)
+  FS block 141 logged at journal block 398 (flags 0x2)
+  FS block 147 logged at journal block 399 (flags 0x2)
+  FS block 360 logged at journal block 400 (flags 0x2)
+  FS block 160 logged at journal block 401 (flags 0x2)
+  FS block 159 logged at journal block 402 (flags 0x2)
+  FS block 361 logged at journal block 403 (flags 0x2)
+  FS block 167 logged at journal block 404 (flags 0x2)
+  FS block 168 logged at journal block 405 (flags 0x2)
+  FS block 157 logged at journal block 406 (flags 0x2)
+  FS block 158 logged at journal block 407 (flags 0x2)
+  FS block 162 logged at journal block 408 (flags 0x2)
+  FS block 163 logged at journal block 409 (flags 0x2)
+  FS block 156 logged at journal block 410 (flags 0x2)
+  FS block 155 logged at journal block 411 (flags 0x2)
+  FS block 165 logged at journal block 412 (flags 0x2)
+  FS block 164 logged at journal block 413 (flags 0x2)
+  FS block 166 logged at journal block 414 (flags 0xa)
+Found expected sequence 5, type 1 (descriptor block) at block 415
+Dumping descriptor block, sequence 5, at block 415:
+  FS block 161 logged at journal block 416 (flags 0x0)
+  FS block 362 logged at journal block 417 (flags 0x2)
+  FS block 174 logged at journal block 418 (flags 0x2)
+  FS block 173 logged at journal block 419 (flags 0x2)
+  FS block 181 logged at journal block 420 (flags 0x2)
+  FS block 180 logged at journal block 421 (flags 0x2)
+  FS block 171 logged at journal block 422 (flags 0x2)
+  FS block 170 logged at journal block 423 (flags 0x2)
+  FS block 172 logged at journal block 424 (flags 0x2)
+  FS block 176 logged at journal block 425 (flags 0x2)
+  FS block 175 logged at journal block 426 (flags 0x2)
+  FS block 169 logged at journal block 427 (flags 0x2)
+  FS block 179 logged at journal block 428 (flags 0x2)
+  FS block 178 logged at journal block 429 (flags 0x2)
+  FS block 177 logged at journal block 430 (flags 0x2)
+  FS block 363 logged at journal block 431 (flags 0x2)
+  FS block 187 logged at journal block 432 (flags 0x2)
+  FS block 188 logged at journal block 433 (flags 0x2)
+  FS block 364 logged at journal block 434 (flags 0x2)
+  FS block 195 logged at journal block 435 (flags 0x2)
+  FS block 194 logged at journal block 436 (flags 0x2)
+  FS block 185 logged at journal block 437 (flags 0x2)
+  FS block 184 logged at journal block 438 (flags 0x2)
+  FS block 186 logged at journal block 439 (flags 0x2)
+  FS block 190 logged at journal block 440 (flags 0x2)
+  FS block 189 logged at journal block 441 (flags 0x2)
+  FS block 183 logged at journal block 442 (flags 0x2)
+  FS block 192 logged at journal block 443 (flags 0x2)
+  FS block 193 logged at journal block 444 (flags 0x2)
+  FS block 191 logged at journal block 445 (flags 0x2)
+  FS block 182 logged at journal block 446 (flags 0x2)
+  FS block 365 logged at journal block 447 (flags 0x2)
+  FS block 201 logged at journal block 448 (flags 0x2)
+  FS block 200 logged at journal block 449 (flags 0x2)
+  FS block 680 logged at journal block 450 (flags 0x2)
+  FS block 209 logged at journal block 451 (flags 0x2)
+  FS block 208 logged at journal block 452 (flags 0x2)
+  FS block 199 logged at journal block 453 (flags 0x2)
+  FS block 198 logged at journal block 454 (flags 0x2)
+  FS block 204 logged at journal block 455 (flags 0x2)
+  FS block 203 logged at journal block 456 (flags 0x2)
+  FS block 197 logged at journal block 457 (flags 0x2)
+  FS block 206 logged at journal block 458 (flags 0x2)
+  FS block 205 logged at journal block 459 (flags 0x2)
+  FS block 207 logged at journal block 460 (flags 0x2)
+  FS block 681 logged at journal block 461 (flags 0x2)
+  FS block 196 logged at journal block 462 (flags 0xa)
+Found expected sequence 5, type 2 (commit block) at block 463
+No magic number at block 464: end of journal.

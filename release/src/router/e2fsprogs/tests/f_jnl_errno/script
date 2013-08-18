@@ -1,0 +1,4 @@
+AFTER_CMD='$DUMPE2FS $TMPFILE 2>&1 | sed -f $cmd_dir/filter.sed > $test_name.0.log'
+PASS_ZERO=true
+
+. $cmd_dir/run_e2fsck

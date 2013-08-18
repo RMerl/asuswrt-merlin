@@ -1,0 +1,27 @@
+if test -x $DEBUGFS_EXE; then
+
+if [ "$FS_SIZE"x = x ]; then
+	FS_SIZE=1024
+fi
+OUT1=$test_name.1.log
+OUT2=$test_name.2.log
+SKIP_GUNZIP=true
+ONE_PASS_ONLY=true
+MKE2FS_SKIP_PROGRESS=true
+MKE2FS_SKIP_CHECK_MSG=true
+export MKE2FS_SKIP_PROGRESS MKE2FS_SKIP_CHECK_MSG
+> $TMPFILE
+PREP_CMD='$MKE2FS -F -o Linux $MKE2FS_OPTS $TMPFILE $FS_SIZE 2>&1 |
+	sed -f $cmd_dir/filter.sed -e "s;$TMPFILE;test.img;" > $OUT1;
+	$DEBUGFS -R features $TMPFILE 2>&1 |
+	sed -f $cmd_dir/filter.sed -e "s;$TMPFILE;test.img;" >> $OUT1'
+AFTER_CMD='$DUMPE2FS $TMPFILE 2>&1 | sed -f $cmd_dir/filter.sed >> $OUT1'
+. $cmd_dir/run_e2fsck
+
+else #if test -x $DEBUGFS_EXE; then
+	rm -f $test_name.ok $test_name.failed
+	echo "skipped"
+fi 
+
+unset DESCRIPTION FS_SIZE MKE2FS_OPTS MKE2FS_SKIP_PROGRESS \
+	MKE2FS_DEVICE_SECTSIZE

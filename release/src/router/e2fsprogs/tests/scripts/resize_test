@@ -1,0 +1,139 @@
+#!/bin/sh
+
+resize_test () {
+
+rm -f $TMPFILE
+touch $TMPFILE
+echo $MKE2FS $FEATURES -qF $TMPFILE $SIZE_1 > $LOG
+$MKE2FS $FEATURES -qF $TMPFILE $SIZE_1 >> $LOG
+
+OUT_TMP=$(mktemp -t csum-tmp.XXXXXX)
+
+date > $OUT_TMP
+cat $E2FSCK >> $OUT_TMP
+echo $CRCSUM $OUT_TMP >> $LOG 2>&1
+CSUM_1=$($CRCSUM $OUT_TMP)
+echo Checksum is $CSUM_1 >> $LOG
+
+echo Setting up file system >> $LOG
+$DEBUGFS -w $TMPFILE  >> $LOG 2>&1 << EOF
+mkdir test
+cd test
+write $OUT_TMP e2fsck
+ls /test
+stat /test/e2fsck
+quit
+EOF
+echo " " >> $LOG
+
+rm -f $OUT_TMP
+
+echo $FSCK -fy $TMPFILE >> $LOG 2>&1 
+$FSCK -fy $TMPFILE >> $LOG 2>&1 
+
+echo $RESIZE2FS $RESIZE2FS_OPTS -d 31 $TMPFILE $SIZE_2 >> $LOG 2>&1
+if ! $RESIZE2FS $RESIZE2FS_OPTS -d 31 $TMPFILE $SIZE_2 >> $LOG 2>&1
+then
+	return 1
+fi
+
+echo $FSCK -fp $TMPFILE >> $LOG 2>&1 
+if ! $FSCK -fp $TMPFILE >> $LOG 2>&1
+then
+	dumpe2fs $TMPFILE >> $LOG
+	return 1
+fi
+
+echo $DEBUGFS -R "dump /test/e2fsck $OUT_TMP" $TMPFILE >> $LOG 2>&1
+$DEBUGFS -R "dump /test/e2fsck $OUT_TMP" $TMPFILE >> $LOG 2>&1
+
+echo $CRCSUM $OUT_TMP >> $LOG 2>&1
+CSUM_2=$($CRCSUM $OUT_TMP)
+echo Checksum is $CSUM_2 >> $LOG
+
+if test "$CSUM_1" != "$CSUM_2"
+then
+	return 1
+fi
+
+echo $RESIZE2FS $RESIZE2FS_OPTS -d 31 -M $TMPFILE $SIZE_2 >> $LOG 2>&1
+if ! $RESIZE2FS $RESIZE2FS_OPTS -d 31 -M $TMPFILE $SIZE_2 >> $LOG 2>&1
+then
+	return 1
+fi
+
+echo $FSCK -fp $TMPFILE >> $LOG 2>&1 
+if ! $FSCK -fp $TMPFILE >> $LOG 2>&1
+then
+	dumpe2fs $TMPFILE >> $LOG
+	return 1
+fi
+
+echo $DEBUGFS -R "dump /test/e2fsck $OUT_TMP" $TMPFILE >> $LOG 2>&1
+$DEBUGFS -R "dump /test/e2fsck $OUT_TMP" $TMPFILE >> $LOG 2>&1
+
+echo $CRCSUM $OUT_TMP >> $LOG 2>&1
+CSUM_2=$($CRCSUM $OUT_TMP)
+echo Checksum is $CSUM_2 >> $LOG
+
+if test "$CSUM_1" != "$CSUM_2"
+then
+	return 1
+fi
+
+echo $RESIZE2FS $RESIZE2FS_OPTS -d 31 -M $TMPFILE $SIZE_2 >> $LOG 2>&1
+if ! $RESIZE2FS $RESIZE2FS_OPTS -d 31 -M $TMPFILE $SIZE_2 >> $LOG 2>&1
+then
+	return 1
+fi
+
+echo $FSCK -fp $TMPFILE >> $LOG 2>&1 
+if ! $FSCK -fp $TMPFILE >> $LOG 2>&1
+then
+	dumpe2fs $TMPFILE >> $LOG
+	return 1
+fi
+
+echo $DEBUGFS -R "dump /test/e2fsck $OUT_TMP" $TMPFILE >> $LOG 2>&1
+$DEBUGFS -R "dump /test/e2fsck $OUT_TMP" $TMPFILE >> $LOG 2>&1
+
+echo $CRCSUM $OUT_TMP >> $LOG 2>&1
+CSUM_2=$($CRCSUM $OUT_TMP)
+echo Checksum is $CSUM_2 >> $LOG
+
+if test "$CSUM_1" != "$CSUM_2"
+then
+	return 1
+fi
+
+echo $RESIZE2FS $RESIZE2FS_OPTS -d 31 -M $TMPFILE $SIZE_2 >> $LOG 2>&1
+if ! $RESIZE2FS $RESIZE2FS_OPTS -d 31 -M $TMPFILE $SIZE_2 >> $LOG 2>&1
+then
+	return 1
+fi
+
+echo $FSCK -fp $TMPFILE >> $LOG 2>&1 
+if ! $FSCK -fp $TMPFILE >> $LOG 2>&1
+then
+	dumpe2fs $TMPFILE >> $LOG
+	return 1
+fi
+
+echo $DEBUGFS -R "dump /test/e2fsck $OUT_TMP" $TMPFILE >> $LOG 2>&1
+$DEBUGFS -R "dump /test/e2fsck $OUT_TMP" $TMPFILE >> $LOG 2>&1
+
+echo $CRCSUM $OUT_TMP >> $LOG 2>&1
+CSUM_2=$($CRCSUM $OUT_TMP)
+echo Checksum is $CSUM_2 >> $LOG
+
+rm $OUT_TMP
+unset OUT_TMP
+
+if test "$CSUM_1" != "$CSUM_2"
+then
+	return 1
+fi
+
+return 0
+
+}

@@ -1,0 +1,37 @@
+#
+# Copyright (C) 1997 Theodore Ts'o.  This file may be redistributed
+# under the terms of the GNU Public License.
+#
+command_table test_cmds;
+
+#
+# Icount table commands
+#
+request do_create_icount, "Create an icount structure",
+	create_icount, create;
+
+request do_free_icount, "Free an icount structure",
+	free_icount, free;
+
+request do_fetch, "Fetch an icount entry",
+	fetch;
+
+request do_increment, "Increment an icount entry",
+	increment, inc;
+
+request do_decrement, "Decrement an icount entry",
+	decrement, dec;
+
+request do_store, "Store an icount entry",
+	store;
+
+request do_get_size, "Get the size of the icount structure",
+	get_size;
+
+request do_dump, "Dump the icount structure",
+	dump;
+
+request do_validate, "Validate the icount structure",
+	validate, check;
+
+end;

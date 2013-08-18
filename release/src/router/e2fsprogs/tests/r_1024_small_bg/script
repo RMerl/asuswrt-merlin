@@ -1,0 +1,27 @@
+if test -x $RESIZE2FS_EXE -a -x $DEBUGFS_EXE; then
+
+test_description="ext2 1024 blocksize with small block groups"
+FEATURES="-t ext2 -O ^resize_inode -b 1024 -g 1024"
+SIZE_1=64M
+SIZE_2=2G
+LOG=$test_name.log
+E2FSCK=../e2fsck/e2fsck
+
+
+. $cmd_dir/scripts/resize_test
+
+if resize_test
+then
+	echo "$test_name: $test_description: ok"
+	touch $test_name.ok
+else
+	echo "$test_name: $test_description: failed"
+	touch $test_name.failed
+fi
+
+unset FEATURES SIZE_1 SIZE_2 LOG E2FSCK
+
+else #if test -x $RESIZE2FS_EXE -a -x $DEBUGFS_EXE; then
+	echo "$test_name: $test_description: skipped"
+fi 
+

@@ -1,0 +1,33 @@
+Filesystem did not have a UUID; generating one.
+
+Pass 1: Checking inodes, blocks, and sizes
+Inode 11 has illegal block(s).  Clear? yes
+
+Illegal block #6 (200) in inode 11.  CLEARED.
+Inode 11, i_size is 12288, should be 11264.  Fix? yes
+
+Inode 11, i_blocks is 24, should be 16.  Fix? yes
+
+Pass 2: Checking directory structure
+Directory inode 11 has an unallocated block #0.  Allocate? yes
+
+Directory inode 11 has an unallocated block #3.  Allocate? yes
+
+Directory inode 11 has an unallocated block #6.  Allocate? yes
+
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Block bitmap differences:  -21
+Fix? yes
+
+Free blocks count wrong for group #0 (78, counted=79).
+Fix? yes
+
+Free blocks count wrong (78, counted=79).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 11/32 files (9.1% non-contiguous), 21/100 blocks
+Exit status is 1

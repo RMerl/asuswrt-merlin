@@ -1,0 +1,116 @@
+if test -x $RESIZE2FS_EXE -a -x $DEBUGFS_EXE; then
+
+FSCK_OPT=-yf
+OUT=$test_name.log
+if [ -f $test_dir/expect.gz ]; then
+	EXP=$test_name.tmp
+	gunzip < $test_dir/expect.gz > $EXP1
+else
+	EXP=$test_dir/expect
+fi
+
+cp /dev/null $OUT
+
+dd if=/dev/zero of=$TMPFILE bs=1k count=512 > /dev/null 2>&1
+
+echo mke2fs -q -F -o Linux -b 1024 -g 256 test.img 1024 > $OUT
+$MKE2FS -q -F -o Linux -b 1024 -g 256 $TMPFILE 1024 2>&1 |
+	sed -f $cmd_dir/filter.sed -e "s;$TMPFILE;test.img;" >> $OUT
+
+echo resize2fs -p test.img 10000 >> $OUT
+$RESIZE2FS -p $TMPFILE 10000 2>&1 |
+	sed -f $cmd_dir/filter.sed -e "s;$TMPFILE;test.img;" >> $OUT
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -f $cmd_dir/filter.sed -e "s;$TMPFILE;test.img;" $OUT.new >> $OUT
+rm -f $OUT.new
+
+$DEBUGFS -R "set_super_value lastcheck 0" -w $TMPFILE >/dev/null 2>&1
+$DEBUGFS -R "set_super_value hash_seed null" -w $TMPFILE >/dev/null 2>&1
+$DEBUGFS -R "set_super_value mkfs_time 0" -w $TMPFILE >/dev/null 2>&1
+$TUNE2FS -c 20 -U clear $TMPFILE  >/dev/null 2>&1
+
+echo dumpe2fs test.img >> $OUT
+$DUMPE2FS $TMPFILE 2>&1 | sed -f $cmd_dir/filter.sed >> $OUT
+
+echo "--------------------------------" >> $OUT
+
+echo resize2fs -p test.img 20000 >> $OUT
+$RESIZE2FS -p $TMPFILE 20000 2>&1 |
+	sed -f $cmd_dir/filter.sed -e "s;$TMPFILE;test.img;" >> $OUT
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -f $cmd_dir/filter.sed -e "s;$TMPFILE;test.img;" $OUT.new >> $OUT
+rm -f $OUT.new
+
+$DEBUGFS -R "set_super_value lastcheck 0" -w $TMPFILE >/dev/null 2>&1
+$DEBUGFS -R "set_super_value hash_seed null" -w $TMPFILE >/dev/null 2>&1
+$DEBUGFS -R "set_super_value mkfs_time 0" -w $TMPFILE >/dev/null 2>&1
+$TUNE2FS -c 20 -U clear $TMPFILE  >/dev/null 2>&1
+
+echo dumpe2fs test.img >> $OUT
+$DUMPE2FS $TMPFILE 2>&1 | sed -f $cmd_dir/filter.sed >> $OUT
+
+echo "--------------------------------" >> $OUT
+
+echo resize2fs -p test.img 30000 >> $OUT
+$RESIZE2FS -p $TMPFILE 30000 2>&1 |
+	sed -f $cmd_dir/filter.sed -e "s;$TMPFILE;test.img;" >> $OUT
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -f $cmd_dir/filter.sed -e "s;$TMPFILE;test.img;" $OUT.new >> $OUT
+rm -f $OUT.new
+
+$DEBUGFS -R "set_super_value lastcheck 0" -w $TMPFILE >/dev/null 2>&1
+$DEBUGFS -R "set_super_value hash_seed null" -w $TMPFILE >/dev/null 2>&1
+$DEBUGFS -R "set_super_value mkfs_time 0" -w $TMPFILE >/dev/null 2>&1
+$TUNE2FS -c 20 -U clear $TMPFILE  >/dev/null 2>&1
+
+echo dumpe2fs test.img >> $OUT
+$DUMPE2FS $TMPFILE 2>&1 | sed -f $cmd_dir/filter.sed >> $OUT
+
+echo "--------------------------------" >> $OUT
+
+echo resize2fs -p test.img 40000 >> $OUT
+$RESIZE2FS -p $TMPFILE 40000 2>&1 |
+	sed -f $cmd_dir/filter.sed -e "s;$TMPFILE;test.img;" >> $OUT
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -f $cmd_dir/filter.sed -e "s;$TMPFILE;test.img;" $OUT.new >> $OUT
+rm -f $OUT.new
+
+$DEBUGFS -R "set_super_value lastcheck 0" -w $TMPFILE >/dev/null 2>&1
+$DEBUGFS -R "set_super_value hash_seed null" -w $TMPFILE >/dev/null 2>&1
+$DEBUGFS -R "set_super_value mkfs_time 0" -w $TMPFILE >/dev/null 2>&1
+$TUNE2FS -c 20 -U clear $TMPFILE  >/dev/null 2>&1
+
+echo dumpe2fs test.img >> $OUT
+$DUMPE2FS $TMPFILE 2>&1 | sed -f $cmd_dir/filter.sed >> $OUT
+
+rm -f $TMPFILE
+
+cmp -s $OUT $EXP
+status=$?
+
+if [ "$status" = 0 ] ; then
+	echo "$test_name: $test_description: ok"
+	touch $test_name.ok
+else
+	echo "$test_name: $test_description: failed"
+	diff $DIFF_OPTS $EXP $OUT > $test_name.failed
+	rm -f $test_name.tmp
+fi
+
+unset IMAGE FSCK_OPT OUT EXP
+
+else #if test -x $RESIZE2FS_EXE -a -x $DEBUGFS_EXE; then
+	echo "$test_name: $test_description: skipped"
+fi 

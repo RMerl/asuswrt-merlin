@@ -1,0 +1,5 @@
+if test "$HTREE"x = yx ; then
+. $cmd_dir/run_e2fsck
+else
+	echo "$test_name: $test_description: skipped"
+fi

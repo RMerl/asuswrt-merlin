@@ -1,0 +1,47 @@
+#
+# This is the test script for the block relocation table.
+#
+# Copyright 1997 by Theodore Ts'o.  This file may be redistributed 
+# under the terms of the GNU Public License.
+#
+#
+brel_dump
+brel_put 2 11
+brel_put 1 10
+brel_put 3 9
+brel_put 1 10 4 128
+#
+# Test boundary cases for brel_put
+#
+brel_put 23 12
+brel_put 24 13
+#
+# Test other boundary cases
+#
+brel_get 24
+brel_delete 24
+#
+# Test getting existing and non-existent entries
+#
+brel_get 5
+brel_get 3
+brel_get 1
+#
+# Test the iterator functions
+#
+brel_start_iter
+brel_next
+brel_next
+brel_next
+brel_next
+#
+# Test delete and move
+#
+brel_delete 2
+brel_delete 2
+brel_delete 5
+brel_move 1 2
+brel_delete 1
+brel_move 1 4
+brel_move 2 5
+brel_dump

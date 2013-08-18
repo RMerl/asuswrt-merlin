@@ -1,0 +1,47 @@
+Filesystem volume name:   <none>
+Last mounted on:          <not available>
+Filesystem magic number:  0xEF53
+Filesystem revision #:    1 (dynamic)
+Filesystem features:      has_journal ext_attr resize_inode dir_index filetype extent flex_bg sparse_super huge_file uninit_bg dir_nlink extra_isize
+Default mount options:    user_xattr acl
+Filesystem state:         clean
+Errors behavior:          Remount read-only
+Filesystem OS type:       Linux
+Inode count:              2048
+Block count:              8192
+Reserved block count:     409
+Free blocks:              6862
+Free inodes:              2037
+First block:              1
+Block size:               1024
+Fragment size:            1024
+Reserved GDT blocks:      31
+Blocks per group:         8192
+Fragments per group:      8192
+Inodes per group:         2048
+Inode blocks per group:   256
+Flex block group size:    16
+Mount count:              0
+Check interval:           0 (<none>)
+Reserved blocks uid:      0
+Reserved blocks gid:      0
+First inode:              11
+Inode size:	          128
+Journal inode:            8
+Default directory hash:   half_md4
+Journal backup:           inode blocks
+Journal features:         (none)
+Journal size:             1024k
+Journal length:           1024
+Journal sequence:         0x00000005
+Journal start:            0
+
+
+Group 0: (Blocks 1-8191) [ITABLE_ZEROED]
+  Primary superblock at 1, Group descriptors at 2-2
+  Reserved GDT blocks at 3-33
+  Block bitmap at 34 (+33), Inode bitmap at 50 (+49)
+  Inode table at 66-321 (+65)
+  6862 free blocks, 2037 free inodes, 2 directories, 2037 unused inodes
+  Free blocks: 1330-8191
+  Free inodes: 12-2048

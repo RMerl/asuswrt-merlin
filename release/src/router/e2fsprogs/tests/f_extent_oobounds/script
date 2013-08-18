@@ -1,0 +1,42 @@
+if test -x $DEBUGFS_EXE; then
+
+SKIP_GUNZIP="true"
+TEST_DATA="$test_name.tmp"
+
+dd if=/dev/zero of=$TMPFILE bs=1k count=256 > /dev/null 2>&1
+mke2fs -Ft ext4 $TMPFILE > /dev/null 2>&1
+debugfs -w $TMPFILE << EOF  > /dev/null 2>&1
+write /dev/null testfile
+extent_open testfile
+  insert_node 0 15 100
+  insert_node --after 15 15 115
+  insert_node --after 30 15 130
+  insert_node --after 45 15 145
+  split
+  down
+  split
+  root
+  down
+  next
+  replace_node 15 30 200
+  extent_close
+set_inode_field testfile i_size 61400
+set_inode_field testfile i_blocks 154
+setb 100 15
+setb 130 30
+setb 200 30
+set_bg 0 free_blocks_count 156
+set_bg 0 bg_checksum calc
+set_super_value free_blocks_count 156
+q
+EOF
+
+. $cmd_dir/run_e2fsck
+
+rm -f $TEST_DATA
+
+unset E2FSCK_TIME TEST_DATA
+
+else #if test -x $DEBUGFS_EXE; then
+	echo "$test_name: $test_description: skipped"
+fi

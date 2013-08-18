@@ -1,0 +1,57 @@
+test_description="create/convert raw/qcow2 images"
+if test -x $E2IMAGE_EXE; then
+
+ORIG_IMAGES="image1024.orig image2048.orig image4096.orig"
+
+RAW_IMG=_image.raw
+QCOW2_IMG=_image.qcow2
+QCOW2_TO_RAW=_image.qcow2.raw
+OUT=$test_name.log
+MD5=$SRCDIR/$test_name/$test_name.md5
+MD5_TMP=$test_name.md5.tmp
+
+rm -f $test_name/_image.* $MD5_TMP $OUT >/dev/null 2>&1
+
+(
+for i in $ORIG_IMAGES; do
+	ORIG_IMG=$test_name/$i
+	echo $ORIG_IMG >> $MD5_TMP
+
+	bunzip2 < $SRCDIR/$ORIG_IMG.bz2 > $i
+	md5sum $i >> $MD5_TMP
+
+	echo "e2image -r $ORIG_IMG $RAW_IMG"
+	$E2IMAGE      -r $i $RAW_IMG
+	md5sum $RAW_IMG >> $MD5_TMP
+
+	echo "e2image -Q $ORIG_IMG $QCOW2_IMG"
+	$E2IMAGE      -Q $i $QCOW2_IMG
+	md5sum $QCOW2_IMG >> $MD5_TMP
+
+	echo "e2image -r $QCOW2_IMG $QCOW2_TO_RAW"
+	$E2IMAGE      -r $i $QCOW2_TO_RAW
+	md5sum $QCOW2_TO_RAW >> $MD5_TMP
+
+	rm -f $i
+done
+) >> $OUT 2>&1
+
+echo "md5sums:" >> $OUT
+cat $MD5_TMP >> $OUT
+echo "" >> $OUT
+
+diff $MD5 $MD5_TMP >> $OUT 2>&1
+
+if [ $? -eq 0 ]; then
+	echo "$test_name: $test_description: ok"
+	touch $test_name.ok
+else
+	ln -f $test_name.log $test_name.failed
+	echo "$test_name: $test_description: failed"
+fi
+
+rm -f _image.* $MD5_TMP >/dev/null 2>&1
+
+else #if test -x $E2IMAGE_EXE; then
+	echo "$test_name: $test_description: skipped"
+fi

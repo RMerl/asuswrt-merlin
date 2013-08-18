@@ -1,0 +1,4 @@
+DESCRIPTION="root directory owner"
+FS_SIZE=1024
+MKE2FS_OPTS="-E root_owner=1234:1234"
+. $cmd_dir/run_mke2fs
