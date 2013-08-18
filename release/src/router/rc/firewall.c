@@ -1926,7 +1926,7 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 #ifdef RTCONFIG_IPV6
 	FILE *fp_ipv6 = NULL;
 	int n;
-	char *ip;
+	char *ip, *protono;
 #endif
 	int v4v6_ok = IPT_V4;
 
@@ -2434,13 +2434,13 @@ TRACE_PT("writing Parental Control\n");
 						fprintf(fp_ipv6, "-A FORWARD -m state --state NEW -p tcp -m tcp %s -d %s --dport %s -j %s\n", srciprule, dstip, dstports, logaccept);
 					if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
 						fprintf(fp_ipv6, "-A FORWARD -m state --state NEW -p udp -m udp %s -d %s --dport %s -j %s\n", srciprule, dstip, dstports, logaccept);
-/*
-                                // Handle raw protocol in port field, no val1:val2 allowed
-                                if (strcmp(proto, "OTHER") == 0) {
-                                        protono = strsep(&c, ":");
-                                        fprintf(fp_ipv6, "-A FORWARD -p %s -d %s -j %s\n", protono, dstip, logaccept);
-                                }
-*/
+
+					// Handle raw protocol in port field, no val1:val2 allowed
+					if (strcmp(proto, "OTHER") == 0) {
+						protono = strsep(&dstports, ":");
+						fprintf(fp_ipv6, "-A FORWARD -p %s %s -d %s -j %s\n", protono, srciprule, dstip, logaccept);
+					}
+
 				}
 				free(portv);
 			}
@@ -2884,6 +2884,7 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	FILE *fp;	// oleg patch
 #ifdef RTCONFIG_IPV6
 	FILE *fp_ipv6;
+	char *protono;
 #endif
 	char *proto, *flag, *srcip, *srcport, *dstip, *dstport;
 	char *nv, *nvp, *b;
@@ -3422,13 +3423,11 @@ TRACE_PT("writing Parental Control\n");
 					if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
 						fprintf(fp_ipv6, "-A FORWARD -m state --state NEW -p udp -m udp %s -d %s --dport %s -j %s\n", 
 						        srciprule, dstip, dstports, logaccept);
-/*
-					// Handle raw protocol in port field, no val1:val2 allowed
+                                        // Handle raw protocol in port field, no val1:val2 allowed
 					if (strcmp(proto, "OTHER") == 0) {
-						protono = strsep(&c, ":");
-						fprintf(fp_ipv6, "-A FORWARD -p %s -d %s -j %s\n", protono, dstip, logaccept);
+						protono = strsep(&dstports, ":");
+						fprintf(fp_ipv6, "-A FORWARD -p %s %s -d %s -j %s\n", protono, srciprule, dstip, logaccept);
 					}
-*/
 				}
 				free(portv);
 			}

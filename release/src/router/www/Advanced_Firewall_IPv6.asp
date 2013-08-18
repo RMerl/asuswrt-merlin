@@ -135,7 +135,6 @@ function validForm(){
 	}	
 
 	if(document.form.ipv6_fw_proto_x_0.value=="OTHER"){
-		document.form.ipv6_fw_lport_x_0.value = "";
 		if (!check_multi_range(document.form.ipv6_fw_port_x_0, 1, 255, false))
 			return false;
 	}
@@ -484,7 +483,7 @@ function changeBgColor(obj, num){
 						<option value="TCP">TCP</option>
 						<option value="UDP">UDP</option>
 						<option value="BOTH">BOTH</option>
-						<!--option value="OTHER">OTHER</option -->
+						<option value="OTHER">OTHER</option>
 					</select>
 				</td>
 				<td width="12%">
