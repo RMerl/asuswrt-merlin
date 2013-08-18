@@ -1984,13 +1984,6 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 
 	strcpy(macaccept, "");
 
-// Prevent access to ACSD from outside the router
-	fprintf(fp, "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n");
-#ifdef RTCONFIG_IPV6
-	if (ipv6_enabled())
-		fprintf(fp_ipv6, "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n");
-#endif
-
 // Setup traffic accounting
 	if (nvram_match("cstats_enable", "1")) {
 		ipt_account(fp);
@@ -2093,6 +2086,7 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp, "-A INPUT -m state --state INVALID -j %s\n"
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
+			  "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
 			,logdrop, logaccept, "ACCEPT", lan_if, logdrop);
 #ifdef RTCONFIG_IPV6
@@ -2100,6 +2094,7 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n"
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
+			  "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
 			,logdrop, logaccept, "ACCEPT", lan_if, logdrop);
 #endif
@@ -2111,6 +2106,7 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp, "-A INPUT -m state --state INVALID -j %s\n"
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
+			  "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
 			,logdrop, logaccept, "ACCEPT", lan_if, "ACCEPT");
 #ifdef RTCONFIG_IPV6
@@ -2118,6 +2114,7 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n"
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
+			  "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
 			,logdrop, logaccept, "ACCEPT", lan_if, "ACCEPT");
 #endif
@@ -3065,6 +3062,7 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp, "-A INPUT -m state --state INVALID -j %s\n"
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
+			  "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
 			,logdrop, logaccept, "ACCEPT", lan_if, logdrop);
 #ifdef RTCONFIG_IPV6
@@ -3072,6 +3070,7 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n"
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
+			  "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
 			,logdrop, logaccept, "ACCEPT", lan_if, logdrop);
 #endif
@@ -3083,6 +3082,7 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp, "-A INPUT -m state --state INVALID -j %s\n"
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
+			  "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
 			,logdrop, logaccept, "ACCEPT", lan_if, "ACCEPT");
 #ifdef RTCONFIG_IPV6
@@ -3090,6 +3090,7 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n"
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
+			  "-A INPUT -m tcp -p tcp --dport 5916 -j DROP\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
 			,logdrop, logaccept, "ACCEPT", lan_if, "ACCEPT");
 #endif
