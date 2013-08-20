@@ -84,7 +84,7 @@ function hwaccel_state(){
 			code += " <i>(by user)</i>";
 		else {
 			code += " <i> - incompatible with:<span>  ";	// Two trailing spaces
-			if ('<% nvram_get("cstats_enable"); %>' == '1') code += 'Per IP monitoring, ';
+			if ('<% nvram_get("cstats_enable"); %>' == '1') code += 'IPTraffic, ';
 			if ('<% nvram_get("qos_enable"); %>' == '1') code += 'QoS, ';
 			if ('<% nvram_get("sw_mode"); %>' == '2') code += 'Repeater mode, ';
 			if ('<% nvram_get("url_enable_x"); %>' == '1') code += 'URL filtering, ';
