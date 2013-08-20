@@ -12,6 +12,7 @@
 #define TRUE    1
 #define INTERFACE 	"br0"
 #define MODEL_NAME 	RT_BUILD_NAME
+#define ARP_BUFFER_SIZE	512
 
 // Hardware type field in ARP message
 #define DIX_ETHERNET            1

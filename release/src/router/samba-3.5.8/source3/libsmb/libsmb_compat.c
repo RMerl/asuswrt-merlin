@@ -779,8 +779,11 @@ fprintf(stderr, "JerryLin: libsmb_compat.c-->SMBC_server_internal: cli_session_s
 //- JerryLin add
 const char* smbc_nmblookup(const char* ip)
 {
+	TALLOC_CTX *frame = talloc_stackframe();
 	char* hostname = NULL;
 	query_hostname_byip(ip, &hostname);
+	TALLOC_FREE(frame);
+
 	return hostname;
 }
 

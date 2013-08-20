@@ -1623,6 +1623,13 @@ function validate_wlkey(key_obj){
 	return iscurrect;
 }
 
+function validate_ssidchar(ch){
+	if(ch >= 32 && ch <= 126)
+		return false;
+	
+	return true;
+}
+
 function validate_account(string_obj, flag){
 	var invalid_char = "";
 
@@ -1652,6 +1659,10 @@ function validate_account(string_obj, flag){
 	}
 
 	for(var i = 0; i < string_obj.value.length; ++i){
+		if(validate_ssidchar(string_obj.value.charCodeAt(i))){
+			invalid_char = invalid_char+string_obj.value.charAt(i);
+		}	
+		
 		if(string_obj.value.charAt(i) == '"'
 				||  string_obj.value.charAt(i) == '/'
 				||  string_obj.value.charAt(i) == '\\'
@@ -1964,8 +1975,10 @@ var usb_path1_removed_tmp = "init";
 var usb_path2_removed_tmp = "init";
 var ddns_return_code = '<% nvram_get("ddns_return_code_chk");%>';
 var ddns_updated = '<% nvram_get("ddns_updated");%>';
-var tmp_mount_0 = foreign_disk_total_mounted_number()[0];		//Viz 2013.06
-var tmp_mount_1 = foreign_disk_total_mounted_number()[1];		//Viz 2013.06
+if(usb_support){
+	var tmp_mount_0 = foreign_disk_total_mounted_number()[0];		//Viz 2013.06
+	var tmp_mount_1 = foreign_disk_total_mounted_number()[1];		//Viz 2013.06
+}	
 
 function refresh_info_status(xmldoc)
 {

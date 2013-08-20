@@ -212,14 +212,14 @@ function setText(e, text){
 </g>
 
 <g id="snr_unit">	
-	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="12.5%" id="snr_unit0" />
-	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="25%" id="snr_unit1" />
-	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="37.5%" id="snr_unit2" />
-	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="50%" id="snr_unit3" />
-	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="62.5%" id="snr_unit4" />
-	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="75%" id="snr_unit5" />
-	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="87.5%" id="snr_unit6" />
-	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="100%" id="snr_unit7" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="11.5%" id="snr_unit0" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="24%" id="snr_unit1" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="36.5%" id="snr_unit2" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="49%" id="snr_unit3" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="61.5%" id="snr_unit4" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="74%" id="snr_unit5" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="86.5%" id="snr_unit6" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0%" y="99%" id="snr_unit7" />
 </g>
 
 <polyline id="polySNR" style="stroke-width:1" stroke-opacity="0.9" points="" />

@@ -587,6 +587,20 @@ static void chk_valid_country_code(char *country_code)
 }
 #endif
 
+#ifdef RA_SINGLE_SKU
+static void create_SingleSKU(const char *path, const char *pAppend, const char *reg_spec)
+{
+	char src[128];
+	char dest[128];
+
+	sprintf(src , "/ra_SKU/SingleSKU%s_%s.dat", pAppend, reg_spec);
+	sprintf(dest, "%s/SingleSKU%s.dat", path, pAppend);
+
+	eval("mkdir", "-p", path);
+	eval("ln", "-s", src, dest);
+}
+#endif	/* RA_SINGLE_SKU */
+
 void init_syspara(void)
 {
 	unsigned char buffer[16];
@@ -882,6 +896,18 @@ void init_syspara(void)
 		}
 	}
 #endif
+
+#ifdef RA_SINGLE_SKU
+#if defined(RTAC52U)
+	{
+		char *reg_spec;
+
+		reg_spec = nvram_safe_get("reg_spec");
+		create_SingleSKU("/etc/Wireless/RT2860", "", reg_spec);
+		create_SingleSKU("/etc/Wireless/iNIC", "_5G", reg_spec);
+	}
+#endif	/* RTAC52U */
+#endif	/* RA_SINGLE_SKU */
 
 	{
 #ifdef RTCONFIG_ODMPID

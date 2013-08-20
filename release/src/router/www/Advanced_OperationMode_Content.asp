@@ -531,56 +531,51 @@ function cancel_SSID_Block(){
     <td valign="top">
 	<div id="tabMenu" class="submenuBlock"></div>
 		<!--===================================Beginning of Main Content===========================================-->
-<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
-	<tr>
-		<td valign="top" >
-		
-	<table width="760px" border="0" cellpadding="5" cellspacing="0" class="FormTitle" id="FormTitle">
-	<tr bgcolor="#4D595D" valign="top" height="100px">
-	  	<td>
-	  		<div>&nbsp;</div>
-	  		<div class="formfonttitle"><#menu5_6_adv#> - <#menu5_6_1_title#></div>
-	  		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		  	<div class="formfontdesc"><#OP_desc1#></div>
-
+		<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
+			<tr>
+				<td valign="top" >			
+					<table width="760px" border="0" cellpadding="5" cellspacing="0" class="FormTitle" id="FormTitle">
+						<tr bgcolor="#4D595D" valign="top" style="height:15%;*height:5%">
+							<td>
+								<div>&nbsp;</div>
+								<div class="formfonttitle"><#menu5_6_adv#> - <#menu5_6_1_title#></div>
+								<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+								<div class="formfontdesc" style="*margin-bottom:-25px;"><#OP_desc1#></div>
+							</td>
+						</tr>
+						<tr bgcolor="#4D595D" valign="top">
+							<td>
+								<div style="width:95%; margin:0 auto; padding-bottom:3px;">
+									<span style="font-size:16px; font-weight:bold;color:white;text-shadow:1px 1px 0px black">
+										<input type="radio" name="sw_mode_radio" class="input" value="1" onclick="setScenerion(1);" <% nvram_match("sw_mode", "1", "checked"); %>><#OP_GW_item#>
+										&nbsp;&nbsp;
+										<span id="repeaterMode"><input type="radio" name="sw_mode_radio" class="input" value="2" onclick="setScenerion(2);" <% nvram_match("sw_mode", "2", "checked"); %>><#OP_RE_item#></span>
+										&nbsp;&nbsp;
+										<input type="radio" name="sw_mode_radio" class="input" value="3" onclick="setScenerion(3);" <% nvram_match("sw_mode", "3", "checked"); %>><#OP_AP_item#>
+										&nbsp;&nbsp;
+										<span id="mbMode"><input type="radio" name="sw_mode_radio" class="input" value="4" onclick="setScenerion(4);" <% nvram_match("sw_mode", "4", "checked"); %>>Media bridge</span>
+									</span>
+									<div id="mode_desc" style="position:relative;display:block;margin-top:10px;margin-left:5px;height:60px;z-index:75;">
+										<#OP_GW_desc#>
+									</div>
+										<br/><br/>
+									<div id="Senario" style="margin-top:40px; margin-bottom:60px;">
+										<!--div id="ap-line" style="border:0px solid #333; width:133px; height:41px; position:absolute; background:url(/images/wanlink.gif) no-repeat;"></div-->
+										<div id="Unplug-hint" style="border:2px solid red; background-color:#FFF; padding:3px;margin:0px 0px 0px 150px;width:250px; position:absolute; display:block; display:none;"><#web_redirect_suggestion1#></div>
+									</div>	
+								</div>
+								<div class="apply_gen">
+									<input name="button" type="button" class="button_gen" onClick="saveMode();" value="<#CTL_onlysave#>">
+								</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+			<!--===================================Ending of Main Content===========================================-->
 		</td>
-	</tr>
-
-	<tr>
-	  <td bgcolor="#4D595D" valign="top" height="500px">
-	<div style="width:95%; margin:0 auto; padding-bottom:3px;">
-		<span style="font-size:16px; font-weight:bold;color:white;text-shadow:1px 1px 0px black">
-			<input type="radio" name="sw_mode_radio" class="input" value="1" onclick="setScenerion(1);" <% nvram_match("sw_mode", "1", "checked"); %>><#OP_GW_item#>
-			&nbsp;&nbsp;
-			<span id="repeaterMode"><input type="radio" name="sw_mode_radio" class="input" value="2" onclick="setScenerion(2);" <% nvram_match("sw_mode", "2", "checked"); %>><#OP_RE_item#></span>
-			&nbsp;&nbsp;
-			<input type="radio" name="sw_mode_radio" class="input" value="3" onclick="setScenerion(3);" <% nvram_match("sw_mode", "3", "checked"); %>><#OP_AP_item#>
-			&nbsp;&nbsp;
-			<span id="mbMode"><input type="radio" name="sw_mode_radio" class="input" value="4" onclick="setScenerion(4);" <% nvram_match("sw_mode", "4", "checked"); %>>Media bridge</span>
-		</span>
-	<div id="mode_desc" style="position:relative;display:block;margin-top:10px;margin-left:5px;height:60px;z-index:75;">
-		<#OP_GW_desc#>
-	</div>
-		<br/><br/>
-	<div id="Senario" style="margin-top:40px; margin-bottom:60px;">
-		<!--div id="ap-line" style="border:0px solid #333; width:133px; height:41px; position:absolute; background:url(/images/wanlink.gif) no-repeat;"></div-->
-		<div id="Unplug-hint" style="border:2px solid red; background-color:#FFF; padding:3px;margin:0px 0px 0px 150px;width:250px; position:absolute; display:block; display:none;"><#web_redirect_suggestion1#></div>
-	</div>	
-	</div>
-	<div class="apply_gen">
-		<input name="button" type="button" class="button_gen" onClick="saveMode();" value="<#CTL_onlysave#>">
-	</div>
-	</td>
-	</tr>
-</table>
-</td>
-
-
-		</tr>
-      </table>
-		<!--===================================Ending of Main Content===========================================-->
-	</td>
-    <td width="10" align="center" valign="top">&nbsp;</td>
+		<td width="10" align="center" valign="top">&nbsp;</td>
 	</tr>
 </table>
 

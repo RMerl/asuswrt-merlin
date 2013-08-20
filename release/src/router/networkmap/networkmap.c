@@ -160,7 +160,7 @@ int main()
 	int arp_sockfd, arp_getlen, i;
 	int send_count=0, file_num=0;
 	struct sockaddr_in router_addr, device_addr;
-	char router_ipaddr[17], router_mac[17], buffer[512];
+	char router_ipaddr[17], router_mac[17], buffer[ARP_BUFFER_SIZE];
 	unsigned char scan_ipaddr[4]; // scan ip
 	FILE *fp_ip;
 	fd_set rfds;
@@ -246,7 +246,7 @@ int main()
 		    if( scan_count<255 && memcmp(scan_ipaddr, my_ipaddr, 4) ) {
                         sent_arppacket(arp_sockfd, scan_ipaddr);
 		    }         
-		    else if(scan_count>255) { //Scan completed
+		    else if(scan_count>=255) { //Scan completed
                 	arp_timeout.tv_sec = 1;
                 	arp_timeout.tv_usec = 500000; //Reset timeout at monitor state for decase cpu loading
                 	setsockopt(arp_sockfd, SOL_SOCKET, SO_RCVTIMEO, &arp_timeout, sizeof(arp_timeout));//set receive timeout
@@ -257,7 +257,8 @@ int main()
 		    }
                 }// End of full scan
 
-		arp_getlen=recvfrom(arp_sockfd, buffer, 512, 0, NULL, NULL);
+		memset(buffer, 0, ARP_BUFFER_SIZE);
+		arp_getlen=recvfrom(arp_sockfd, buffer, ARP_BUFFER_SIZE, 0, NULL, NULL);
 
 	   	if(arp_getlen == -1) {
 			if( scan_count<255)
@@ -283,6 +284,13 @@ int main()
                        	    memcmp(arp_ptr->dest_hwaddr, my_hwaddr, 6) == 0) 	// dest MAC
 			{
 			    //NMP_DEBUG("   It's an ARP Response to Router!\n");
+                            NMP_DEBUG("*RCV %d.%d.%d.%d-%02X:%02X:%02X:%02X:%02X:%02X\n",
+                            (int *)arp_ptr->source_ipaddr[0],(int *)arp_ptr->source_ipaddr[1],
+                            (int *)arp_ptr->source_ipaddr[2],(int *)arp_ptr->source_ipaddr[3],
+                            arp_ptr->source_hwaddr[0],arp_ptr->source_hwaddr[1],
+                            arp_ptr->source_hwaddr[2],arp_ptr->source_hwaddr[3],
+                            arp_ptr->source_hwaddr[4],arp_ptr->source_hwaddr[5]);
+
                             for(i=0; i<p_client_detail_info_tab->ip_mac_num; i++) {
 				ip_dup = memcmp(p_client_detail_info_tab->ip_addr[i], arp_ptr->source_ipaddr, 4);
                                 mac_dup = memcmp(p_client_detail_info_tab->mac_addr[i], arp_ptr->source_hwaddr, 6);
@@ -292,23 +300,15 @@ int main()
 				else if((ip_dup != 0) && (mac_dup != 0))
 					continue;
 
-				else if(scan_count>255) { //IP/MAC mapping changed, update immediately after finish scan.
-					NMP_DEBUG("IP/MAC mapping changed, update immediately\n");
-					/*
-                   			NMP_DEBUG("*RCV %d.%d.%d.%d-%02X:%02X:%02X:%02X:%02X:%02X\n",
-                                	(int *)arp_ptr->source_ipaddr[0],(int *)arp_ptr->source_ipaddr[1],
-                                	(int *)arp_ptr->source_ipaddr[2],(int *)arp_ptr->source_ipaddr[3],
-                                        arp_ptr->source_hwaddr[0],arp_ptr->source_hwaddr[1],
-                                        arp_ptr->source_hwaddr[2],arp_ptr->source_hwaddr[3],
-                                        arp_ptr->source_hwaddr[4],arp_ptr->source_hwaddr[5]);
-
+				else if( (scan_count>=255) && ((ip_dup != 0) && (mac_dup == 0)) ) { 
+					NMP_DEBUG("IP changed, update immediately\n");
 					NMP_DEBUG("*CMP %d.%d.%d.%d-%02X:%02X:%02X:%02X:%02X:%02X\n",
                                     	p_client_detail_info_tab->ip_addr[i][0],p_client_detail_info_tab->ip_addr[i][1],
                                     	p_client_detail_info_tab->ip_addr[i][2],p_client_detail_info_tab->ip_addr[i][3],
                                     	p_client_detail_info_tab->mac_addr[i][0],p_client_detail_info_tab->mac_addr[i][1],
                                     	p_client_detail_info_tab->mac_addr[i][2],p_client_detail_info_tab->mac_addr[i][3],
                                     	p_client_detail_info_tab->mac_addr[i][4],p_client_detail_info_tab->mac_addr[i][5]);
-					*/
+					
 					lock = file_lock("networkmap");
 	                                memcpy(p_client_detail_info_tab->ip_addr[i],
         	                                arp_ptr->source_ipaddr, 4);
@@ -377,6 +377,7 @@ int main()
 	    } // End of while for flush buffer
 
 	    //Find All Application of clients
+	    //NMP_DEBUG("\ndetail ? ip : %d ? %d\n\n", p_client_detail_info_tab->detail_info_num, p_client_detail_info_tab->ip_mac_num);
 	    if(p_client_detail_info_tab->detail_info_num < p_client_detail_info_tab->ip_mac_num) {
 		nvram_set("networkmap_status", "1");
 		FindAllApp(my_ipaddr, p_client_detail_info_tab);

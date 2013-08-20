@@ -1003,14 +1003,14 @@ function change_wan_state(primary_status, secondary_status){
 				</tr>			
 				<tr>
 					<!--==line of dual wan==-->
-					<td id="primary_wan_line"  align="center" height="40px" style="display:none;">
+					<td id="primary_wan_line"  height="40px" style="display:none;">
 						<div id="primary_line" class="primary_wan_connected"></div>
 					</td>
-					<td id="secondary_wan_line" colspan="2" align="center" height="40px"  style="display:none;">
+					<td id="secondary_wan_line" colspan="2" height="40px"  style="display:none;">
 						<div id="secondary_line" class="secondary_wan_connected"></div>
 					</td>
 					<!--==line of single wan==-->
-					<td id="single_wan_line" colspan="5" align="center" height="19px">
+					<td id="single_wan_line" colspan="5" height="19px">
 						<div id="single_wan" class="single_wan_connected"></div>
 					</td>
 				</tr>			

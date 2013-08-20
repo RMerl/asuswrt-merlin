@@ -29,8 +29,8 @@ var encap_val = "<% nvram_get("dsltmp_cfg_encap"); %>";
 var ispname_str = "<% nvram_get("dsltmp_cfg_ispname"); %>";
 var country_str = "<% nvram_get("dsltmp_cfg_country"); %>";
 
-var encap_str = " , LLC";
-if (encap_val == "1") encap_str = " , VC";
+var encap_str = ", LLC";
+if (encap_val == "1") encap_str = ", VC-Mux";
 
 function QKfinish_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_all_title#>";
@@ -103,7 +103,7 @@ function gotoHome(){
 
 <table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
   <tr>
-		&nbsp;&nbsp;&nbsp;<#pvccfg_PVC_type#> Bridge. <b>VPI/VCI = <% nvram_get("dsltmp_cfg_vpi"); %>/<% nvram_get("dsltmp_cfg_vci"); %><script>document.write(encap_str);</script></b><br>
+		&nbsp;&nbsp;&nbsp;<#Layer3Forwarding_x_ConnectionType_itemname#>: Bridge, VPI/VCI: <% nvram_get("dsltmp_cfg_vpi"); %>/<% nvram_get("dsltmp_cfg_vci"); %><script>document.write(encap_str);</script><br>
      <br><br>
   </tr>
 </table>

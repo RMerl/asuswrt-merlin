@@ -68,13 +68,21 @@ for f in $APPS_RUN_DIR/S*; do
 	s="/opt/"`basename $f`.1
 	[ ! -e "$s" ] && s=$f
 
-	echo "$s $2" | logger -c
-	sh $s $2
+	nice_cmd=
+	if [ "$tmp_apps_name" == "downloadmaster" ]; then
+		nice_cmd="nice -n 19"
+	fi
+
+	echo "$nice_cmd sh $s $2" | logger -c
+	$nice_cmd sh $s $2
 
 	if [ "$1" != "allpkg" ] && [ "$1" == "$tmp_apps_name" ]; then
 		break
 	fi
 done
 
-# reduce dm2_transmission-daemon's priority.
-renice 20 `ps|grep dm2_trans|grep -v grep|awk '{print $1}'`
+dm2_trans_array=`ps|grep dm2_trans|grep -v grep|awk '{print $1}'`
+for tran in $dm2_trans_array; do
+	ionice -c3 -p $tran
+done
+

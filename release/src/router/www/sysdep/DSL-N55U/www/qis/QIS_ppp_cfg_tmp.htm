@@ -37,8 +37,8 @@ if (prctl_val == "0")
 else if (prctl_val == "1")
 	prctl_str = "PPPoA";
 
-var encap_str = " , LLC";
-if (encap_val == "1") encap_str = " , VC";
+var encap_str = ", LLC";
+if (encap_val == "1") encap_str = ", VC-Mux";
 
 var iptv_num_pvc_val = "<% nvram_get("dsltmp_cfg_iptv_num_pvc"); %>";
 if (iptv_num_pvc_val != "0" && iptv_num_pvc_val != "") iptv_num_pvc_str = iptv_num_pvc_val + " IPTV PVC(s).";
@@ -172,7 +172,7 @@ function gotoHome() {
 
 <table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
   <tr>
-     &nbsp;&nbsp;&nbsp;<#pvccfg_PVC_type#> <script>document.write(prctl_str);</script>. <b>VPI/VCI = <% nvram_get("dsltmp_cfg_vpi"); %>/<% nvram_get("dsltmp_cfg_vci"); %><script>document.write(encap_str);</script></b><br>
+     &nbsp;&nbsp;&nbsp;<#Layer3Forwarding_x_ConnectionType_itemname#>: <script>document.write(prctl_str);</script>, VPI/VCI: <% nvram_get("dsltmp_cfg_vpi"); %>/<% nvram_get("dsltmp_cfg_vci"); %><script>document.write(encap_str);</script><br>
      &nbsp;&nbsp;&nbsp;<b><script>document.write(iptv_num_pvc_str);</script></b><br>
      &nbsp;&nbsp;&nbsp;<#PPP_cfg_usersel_desc#>
      <br><br>

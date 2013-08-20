@@ -533,7 +533,7 @@ function manualSetup(){
 <form method="post" name="form" id="form" action="/start_apply2.htm">
 <input type="hidden" name="current_page" value="device-map/router.asp">
 <input type="hidden" name="next_page" value="">
-<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_mode" value="apply_new">
 <input type="hidden" name="action_script" value="restart_wireless">
 <input type="hidden" name="action_wait" value="8">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">

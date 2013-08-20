@@ -17,7 +17,11 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/detect.js"></script>
 <script>
+wan_route_x = '<% nvram_get("wan_route_x"); %>';
+wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
+
 <% login_state_hook(); %>
+var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var pptpd_clientlist_array_ori = '<% nvram_char_to_ascii("","pptpd_clientlist"); %>';
 var pptpd_clientlist_array = decodeURIComponent(pptpd_clientlist_array_ori);
 var dualwan_mode = '<% nvram_get("wans_mode"); %>';
@@ -130,9 +134,9 @@ function del_Row(r){
 			if(j == 0)	
 				pptpd_clientlist_value += "<";
 			else{
-				pptpd_clientlist_value += $('pptpd_clientlist_table').rows[k].cells[0].firstChild.innerHTML;
+				pptpd_clientlist_value += $('pptpd_clientlist_table').rows[k].cells[0].innerHTML;
 				pptpd_clientlist_value += ">";
-				pptpd_clientlist_value += $('pptpd_clientlist_table').rows[k].cells[1].firstChild.innerHTML;
+				pptpd_clientlist_value += $('pptpd_clientlist_table').rows[k].cells[1].innerHTML;
 			}
 		}
 	}
@@ -233,9 +237,9 @@ function valid_IP(obj_name, obj_flag){
 
 function check_pptpd_broadcast(){
 	if(document.form.pptpd_broadcast.value =="ppp" || document.form.pptpd_broadcast.value =="br0ppp")
-		$('pptpd_broadcast_ppp_yes').checked="true";
+		document.form.pptpd_broadcast_ppp[0].checked = true;
 	else
-		$('pptpd_broadcast_ppp_no').checked="true";	
+		document.form.pptpd_broadcast_ppp[1].checked = true;
 }
 
 function set_pptpd_broadcast(obj){
@@ -328,8 +332,8 @@ function check_pptp_server(){
 										<tr id="pptp_samba">
 											<th><#vpn_network_place#></th>
 											<td>
-													<input type="radio" value="1" id="pptpd_broadcast_ppp_yes" name="pptpd_broadcast_ppp" onchange="set_pptpd_broadcast(this);"/><#checkbox_Yes#>
-													<input type="radio" value="0" id="pptpd_broadcast_ppp_no" name="pptpd_broadcast_ppp" onchange="set_pptpd_broadcast(this);"/><#checkbox_No#>										
+													<input type="radio" value="1" name="pptpd_broadcast_ppp" onchange="set_pptpd_broadcast(this);"/><#checkbox_Yes#>
+													<input type="radio" value="0" name="pptpd_broadcast_ppp" onchange="set_pptpd_broadcast(this);"/><#checkbox_No#>										
 											</td>
 										</tr>
 									</table>

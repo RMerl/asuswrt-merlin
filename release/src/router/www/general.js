@@ -229,13 +229,6 @@ function is_hwaddr(o,event){
 	}
 }
 
-function validate_ssidchar(ch){
-	if(ch >= 32 && ch <= 126)
-		return false;
-	
-	return true;
-}
-
 function validate_string_ssid(o){
 	var c;	// character code
 	var flag=0; // notify valid characters of SSID except space

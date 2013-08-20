@@ -41,6 +41,28 @@
 #define OLD_DUT_DOMAIN_NAME1 "www.asusnetwork.net"
 #define OLD_DUT_DOMAIN_NAME2 "www.asusrouter.com"
 
+#define USBCORE_MOD	"usbcore"
+#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
+#define USB30_MOD	"xhci-hcd"
+#endif
+#define USB20_MOD	"ehci-hcd"
+#define USBSTORAGE_MOD	"usb-storage"
+#define SCSI_MOD	"scsi_mod"
+#define SD_MOD		"sd_mod"
+#define SG_MOD		"sg"
+#ifdef LINUX26
+#define USBOHCI_MOD	"ohci-hcd"
+#define USBUHCI_MOD	"uhci-hcd"
+#define USBPRINTER_MOD	"usblp"
+#define SCSI_WAIT_MOD	"scsi_wait_scan"
+#define USBFS		"usbfs"
+#else
+#define USBOHCI_MOD	"usb-ohci"
+#define USBUHCI_MOD	"usb-uhci"
+#define USBPRINTER_MOD	"printer"
+#define USBFS		"usbdevfs"
+#endif
+
 #ifdef RTCONFIG_IPV6
 extern char wan6face[];
 #endif

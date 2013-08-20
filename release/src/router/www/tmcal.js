@@ -166,10 +166,11 @@ function showTab(name)
 		max = scaleMode ? MAX(h.rx_max, h.tx_max) : xx_max
 		if (max > 12500) max = Math.round((max + 12499) / 12500) * 12500;
 			else max += 100;
-
-		updateSVG(h.rx, h.tx, max, drawMode,
-			colorRX[drawColorRX], colorTX[drawColorTX],
-			updateInt, updateMaxL, updateDiv, avgMode, clock);	
+		if(ifname == "WIRED" || ifname == "WIRELESS0" || ifname == "WIRELESS1"){
+			updateSVG(h.rx, h.tx, max, drawMode, colorTX[drawColorTX], colorRX[drawColorRX],updateInt, updateMaxL, updateDiv, avgMode, clock);
+		}else{
+			updateSVG(h.rx, h.tx, max, drawMode,colorRX[drawColorRX], colorTX[drawColorTX], updateInt, updateMaxL, updateDiv, avgMode, clock);
+		}	
 	}
 }
 

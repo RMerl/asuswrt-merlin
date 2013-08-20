@@ -179,12 +179,23 @@ function addRow_Group(upper){
 		return false;	
 	}			
 
+	if(document.form.wollist_macAddr.value==""){
+		alert("<#JS_fieldblank#>");
+		document.form.wollist_macAddr.focus();
+		document.form.wollist_macAddr.select();			
+		return false;
+	}else if(!check_macaddr(document.form.wollist_macAddr, check_hwaddr_flag(document.form.wollist_macAddr))){
+		document.form.wollist_macAddr.focus();
+		document.form.wollist_macAddr.select();	
+		return false;	
+	}
+	
 	if(item_num >=2){
 		for(i=0; i<rule_num; i++){	
-				if(document.form.wollist_deviceName.value.toLowerCase() == $('wollist_table').rows[i].cells[0].innerHTML.toLowerCase()){
+				if(document.form.wollist_macAddr.value.toLowerCase() == $('wollist_table').rows[i].cells[1].innerHTML.toLowerCase()){
 					alert("<#JS_duplicate#>");
-					document.form.wollist_deviceName.focus();
-					document.form.wollist_deviceName.select();
+					document.form.wollist_macAddr.focus();
+					document.form.wollist_macAddr.select();
 					return false;
 				}	
 		}
@@ -193,6 +204,29 @@ function addRow_Group(upper){
 	addRow(document.form.wollist_deviceName ,1);
 	addRow(document.form.wollist_macAddr, 0);
 	showwollist();				
+}
+
+function check_macaddr(obj,flag){ //control hint of input mac address
+	if(flag == 1){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","check_mac");
+		childsel.style.color="#FFCC00";
+		obj.parentNode.appendChild(childsel);
+		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		$("check_mac").style.display = "";
+		return false;
+	}else if(flag ==2){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","check_mac");
+		childsel.style.color="#FFCC00";
+		obj.parentNode.appendChild(childsel);
+		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
+		$("check_mac").style.display = "";
+		return false;		
+	}else{	
+		$("check_mac") ? $("check_mac").style.display="none" : true;
+		return true;
+	}	
 }
 
 function del_Row(r){

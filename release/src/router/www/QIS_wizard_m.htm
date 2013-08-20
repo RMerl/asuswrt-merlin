@@ -102,19 +102,23 @@ function detect_firmware(){
 			}
 			else{
 				if(webs_state_error != 1){
-					Latest_firmver = webs_state_info.split("_");
-					Latest_firm = Latest_firmver[0];
-					Latest_buildno = Latest_firmver[1];
-					Latest_extendno = Latest_firmver[2];
+					var Latest_firmver = webs_state_info.split("_");
+					var Latest_firm = Latest_firmver[0];
+					var Latest_buildno = Latest_firmver[1];
+					var Latest_extendno = Latest_firmver[2];
+					var Latest_extendno_split = Latest_extendno.split("-g");
+	      	var Latest_extendno_comp = Latest_extendno_split[0];
 
 					if(Latest_firm && Latest_buildno && Latest_extendno){	//match model FW
 						current_firm = parseInt(exist_firmver.replace(/[.]/gi,""));
       			current_buildno = parseInt("<% nvram_get("buildno"); %>");
       			current_extendno = "<% nvram_get("extendno"); %>";
+      			current_extendno_split = current_extendno.split("-g");
+      			current_extendno_comp = current_extendno_split[0];
 
 						if((current_buildno < Latest_buildno) || 
       					(current_firm < Latest_firm && current_buildno == Latest_buildno) ||
-      					(current_extendno != Latest_extendno && current_buildno == Latest_buildno && current_firm == Latest_firm))
+      					(current_extendno_comp < Latest_extendno_comp && current_buildno == Latest_buildno && current_firm == Latest_firm))
       			{
 							new_FW = true;
 						}

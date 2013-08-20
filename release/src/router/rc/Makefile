@@ -73,6 +73,10 @@ ifneq ($(findstring DEVTMPFS=, $(shell cat $(LINUXDIR)/.config)),)
 export CFLAGS += -DDEVTMPFS
 endif
 
+ifeq ($(RA_SKU),y)
+export CFLAGS += -DRA_SINGLE_SKU
+endif
+
 LDFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
 ifeq ($(STATIC),1)
 LDFLAGS += -static

@@ -1470,7 +1470,7 @@ int init_nvram(void)
 #ifdef CONFIG_BCMWL5
 	case MODEL_APN12HP:
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3 wl0.4 wl0.5 wl0.6 wl0.7");
-		add_rc_support("mssid");
+		add_rc_support("2.4G mssid");
 		nvram_set_int("btn_rst_gpio", 22|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_wps_gpio", 23|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_pwr_gpio", 4|GPIO_ACTIVE_LOW);
@@ -1490,7 +1490,7 @@ int init_nvram(void)
 
 	case MODEL_RTN12HP:
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
-		add_rc_support("mssid");
+		add_rc_support("2.4G mssid");
 		nvram_set_int("btn_rst_gpio", 22|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_wps_gpio", 23|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_pwr_gpio", 18|GPIO_ACTIVE_LOW);
@@ -1503,14 +1503,14 @@ int init_nvram(void)
 
 	case MODEL_RTN12D1:
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
-		add_rc_support("mssid");
+		add_rc_support("2.4G mssid");
 		nvram_set_int("btn_rst_gpio", 22|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_wps_gpio", 23|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_pwr_gpio", 18|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wps_gpio", 18|GPIO_ACTIVE_LOW);
 		nvram_set_int("sb/1/ledbh5", 7);
-		nvram_set("sb/1/maxp2ga0", "0x5A");
-		nvram_set("sb/1/maxp2ga1", "0x5A");
+		nvram_set("sb/1/maxp2ga0", "0x52");
+		nvram_set("sb/1/maxp2ga1", "0x52");
 		nvram_set("sb/1/cck2gpo", "0x0");
 		nvram_set("sb/1/ofdm2gpo0", "0x2000");
 		nvram_set("sb/1/ofdm2gpo1", "0x6442");
@@ -1528,7 +1528,7 @@ int init_nvram(void)
 
 	case MODEL_RTN12C1:
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
-		add_rc_support("mssid");
+		add_rc_support("2.4G mssid");
 		nvram_set_int("btn_rst_gpio", 22|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_wps_gpio", 23|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_pwr_gpio", 18|GPIO_ACTIVE_LOW);
@@ -1550,7 +1550,7 @@ int init_nvram(void)
 
 	case MODEL_RTN12B1:
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
-		add_rc_support("mssid");
+		add_rc_support("2.4G mssid");
 		nvram_set_int("btn_rst_gpio", 22|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_wps_gpio", 23|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_pwr_gpio", 18|GPIO_ACTIVE_LOW);
@@ -1633,7 +1633,7 @@ int init_nvram(void)
 		nvram_set("ohci_ports", "2-1");
 		if(!nvram_get("ct_max")) 
 			nvram_set("ct_max", "15000");
-		add_rc_support("2.4G mssid usbX1 nomedia");
+		add_rc_support("2.4G update mssid usbX1 nomedia");
 		add_rc_support("switchctrl"); // broadcom: for jumbo frame only
 		add_rc_support("manual_stb");
 		break;
@@ -1793,6 +1793,11 @@ int init_nvram(void)
 		nvram_set_int("led_lan_gpio", 9|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_2g_gpio", 10|GPIO_ACTIVE_LOW);
 
+#ifdef RTCONFIG_XHCIMODE
+		nvram_set("xhci_ports", "1-1");
+		nvram_set("ehci_ports", "2-1 2-2");
+		nvram_set("ohci_ports", "3-1 3-2");
+#else
 		if(nvram_get_int("usb_usb3") == 1){
 			nvram_set("xhci_ports", "1-1");
 			nvram_set("ehci_ports", "2-1 2-2");
@@ -1803,6 +1808,7 @@ int init_nvram(void)
 			nvram_set("ehci_ports", "1-1 1-2");
 			nvram_set("ohci_ports", "2-1 2-2");
 		}
+#endif
 
 		if(!nvram_get("ct_max"))
 			nvram_set("ct_max", "300000");
@@ -1893,6 +1899,11 @@ int init_nvram(void)
 		nvram_set_int("btn_led_gpio", 5);	// active high
 #endif
 
+#ifdef RTCONFIG_XHCIMODE
+		nvram_set("xhci_ports", "1-1");
+		nvram_set("ehci_ports", "2-1 2-2");
+		nvram_set("ohci_ports", "3-1 3-2");
+#else
 		if(nvram_get_int("usb_usb3") == 1){
 			nvram_set("xhci_ports", "1-1");
 			nvram_set("ehci_ports", "2-1 2-2");
@@ -1903,6 +1914,7 @@ int init_nvram(void)
 			nvram_set("ehci_ports", "1-1 1-2");
 			nvram_set("ohci_ports", "2-1 2-2");
 		}
+#endif
 
 		if(!nvram_get("ct_max"))
 			nvram_set("ct_max", "300000");
@@ -1993,6 +2005,11 @@ int init_nvram(void)
 		nvram_set_int("btn_turbo_gpio", 5);
 #endif
 
+#ifdef RTCONFIG_XHCIMODE
+		nvram_set("xhci_ports", "1-1");
+		nvram_set("ehci_ports", "2-1 2-2");
+		nvram_set("ohci_ports", "3-1 3-2");
+#else
 		if(nvram_get_int("usb_usb3") == 1){
 			nvram_set("xhci_ports", "1-1");
 			nvram_set("ehci_ports", "2-1 2-2");
@@ -2003,6 +2020,7 @@ int init_nvram(void)
 			nvram_set("ehci_ports", "1-1 1-2");
 			nvram_set("ohci_ports", "2-1 2-2");
 		}
+#endif
 
 		if(!nvram_get("ct_max"))
 			nvram_set("ct_max", "300000");
@@ -2158,7 +2176,7 @@ int init_nvram(void)
 		nvram_set("ohci_ports", "2-1");
 		if(!nvram_get("ct_max")) 
 			nvram_set("ct_max", "2048");
-		add_rc_support("2.4G mssid usbX1 update nomedia");
+		add_rc_support("2.4G mssid media usbX1 update");
 		break;
 
 	case MODEL_RTN10U:
@@ -2223,8 +2241,8 @@ int init_nvram(void)
 		nvram_set_int("btn_wps_gpio", 20|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_pwr_gpio", 6|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wps_gpio", 7);
-		nvram_set("sb/1/maxp2ga0", "0x5A");
-		nvram_set("sb/1/maxp2ga1", "0x5A");
+		nvram_set("sb/1/maxp2ga0", "0x52");
+		nvram_set("sb/1/maxp2ga1", "0x52");
 		if(!nvram_get("ct_max")) {
 			if (model == MODEL_RTN10D1)
 				nvram_set_int("ct_max", 1024);
@@ -3058,7 +3076,9 @@ int reboothalt_main(int argc, char *argv[])
 		f_write("/proc/sysrq-trigger", "s", 1, 0 , 0); /* sync disks */
 		sleep(wait);
 		cprintf("Still running... Doing machine reset.\n");
+#ifdef RTCONFIG_USB
 		remove_usb_module();
+#endif
 		f_write("/proc/sysrq-trigger", "s", 1, 0 , 0); /* sync disks */
 		sleep(1);
 		f_write("/proc/sysrq-trigger", "b", 1, 0 , 0); /* machine reset */

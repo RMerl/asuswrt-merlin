@@ -299,7 +299,7 @@ function check_NOnly_to_GN(){
 <input type="hidden" name="next_page" value="Advanced_Wireless_Content.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
-<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_mode" value="apply_new">
 <input type="hidden" name="action_script" value="restart_wireless">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">

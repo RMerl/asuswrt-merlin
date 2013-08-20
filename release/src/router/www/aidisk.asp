@@ -103,11 +103,7 @@ function resultOfInitialAccount(){
 	if($("dummyShareway").value == "1")
 		createAccount();
 	else{
-		pools = pool_devices();
-		if(pools && pools.length > 0)
-			folderlist = get_sharedfolder_in_pool(pools[0]);
-		
-		submitChangePermission('<% nvram_char_to_ascii("", "http_username"); %>', "3", "ftp");
+		submitChangeAllFolderPermission('<% nvram_char_to_ascii("", "http_username"); %>', "3", "ftp");
 	}
 }
 
@@ -129,11 +125,7 @@ function createAccount(){
 }
 
 function resultOfCreateAccount(){
-	pools = pool_devices();
-	if(pools && pools.length > 0)
-		folderlist = get_sharedfolder_in_pool(pools[0]);
-	
-	submitChangePermission($("account1").value, $("permission1").value, "ftp");
+	submitChangeAllFolderPermission($("account1").value, $("permission1").value, "ftp");
 }
 
 function submitChangePermission(account, permission, protocol){
@@ -185,6 +177,24 @@ function submitChangePermission(account, permission, protocol){
 	}
 	else
 		switchShareMode("ftp", "account");
+}
+
+function submitChangeAllFolderPermission(account, permission, protocol){
+	
+	if($("dummyShareway").value == "1"){
+		$("dummyShareway").value = "";
+		document.applyForm.password.value = "";
+		document.applyForm.action = "/aidisk/set_account_all_folder_permission.asp";
+		document.applyForm.account.value = account;
+		document.applyForm.folder.disabled = 0;
+		document.applyForm.protocol.value = protocol;
+		document.applyForm.permission.value = permission;
+		document.applyForm.flag.value = "aidisk_wizard";
+		document.applyForm.submit();
+	}
+	else {
+		switchShareMode("ftp", "account");
+	}
 }
 
 function switchShareMode(protocol, mode){

@@ -22,6 +22,8 @@ else
 
 function initial(){
 		showtext($("disk_model_name"), model_name);
+		if(sw_mode != "1")
+			inputHideCtrl(document.diskForm.btn_Hspda, 0);
 }
 
 function goHspdaWizard(){
@@ -42,6 +44,7 @@ function remove_d3g(){
 </head>
 
 <body class="statusbody" onload="initial();">
+<form method="post" name="diskForm" action="">
 <table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="table1px">
 	<tr>
     <td style="padding:5px 10px 0px 15px;">
@@ -54,7 +57,7 @@ function remove_d3g(){
   <tr>
     <td height="50" style="padding:10px 15px 0px 15px;">
     	<p class="formfonttitle_nwm" style="float:left;width:138px;"><#GO_HSDPA_SETTING#></p>
-    	<input type="button" class="button_gen" onclick="goHspdaWizard();" value="<#btn_go#>" >
+    	<input type="button" name="btn_Hspda" class="button_gen" onclick="goHspdaWizard();" value="<#btn_go#>" >
       <img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
   </tr>
@@ -68,7 +71,7 @@ function remove_d3g(){
   </tr-->
 </table>
 
-<form method="post" name="diskForm" action="">
+
 <input type="hidden" name="disk" value="">
 </form>
 </body>

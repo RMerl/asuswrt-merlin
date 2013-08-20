@@ -250,6 +250,9 @@ function showLANIPList(){
 			else
 				show_name = wds_aplist[i][0];
 			
+			show_name = show_name.replace(/\&/g,"&amp;");
+			show_name = show_name.replace(/\</g,"&lt;");
+			show_name = show_name.replace(/\>/g,"&gt;");
 			if(wds_aplist[i][1]){
 				code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP('+i+');"><strong>'+show_name+'</strong>';
 				if(show_name && show_name.length > 0)
@@ -330,7 +333,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="wl_wdslist">
 <input type="hidden" name="modified" value="0">
-<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_mode" value="apply_new">
 <input type="hidden" name="action_wait" value="3">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="action_script" value="restart_wireless">

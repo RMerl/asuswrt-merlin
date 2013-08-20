@@ -598,11 +598,13 @@ static void add_client_options(struct dhcp_packet *packet)
 
 	uint8_t optionsToRequest[sizeof(client_config.opt_mask)];
 	uint16_t currOption;
-
+/*
 	len = sizeof(struct ip_udp_dhcp_packet);
 	if (client_config.client_mtu == 0 ||
 	    client_config.client_mtu > len)
 		udhcp_add_simple_option(packet, DHCP_MAX_SIZE, htons(len));
+*/
+	udhcp_add_simple_option(packet, DHCP_MAX_SIZE, htons(576));
 
 	/* Add a "param req" option with the list of options we'd like to have
 	 * from stubborn DHCP servers. Pull the data from the struct in common.c.

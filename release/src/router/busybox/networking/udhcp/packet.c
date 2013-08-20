@@ -144,7 +144,8 @@ int FAST_FUNC udhcp_send_raw_packet(struct dhcp_packet *dhcp_pkt,
 	 * In order to work with those buggy servers,
 	 * we truncate packets after end option byte.
 	 */
-	padding = DHCP_OPTIONS_BUFSIZE - 1 - udhcp_end_option(packet.data.options);
+	//padding = DHCP_OPTIONS_BUFSIZE - 1 - udhcp_end_option(packet.data.options);
+	padding = 0;
 
 	packet.ip.protocol = IPPROTO_UDP;
 	packet.ip.saddr = source_nip;

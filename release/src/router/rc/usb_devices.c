@@ -2794,7 +2794,7 @@ int set_usb_common_nvram(const char *action, const char *usb_node, const char *k
 
 int asus_sd(const char *device_name, const char *action){
 #ifdef RTCONFIG_USB
-	char usb_port[8], usb_node[8], vid[8];
+	char usb_port[8], usb_node[8], vid[8], pid[8];
 	int retry, isLock;
 	char nvram_name[32], nvram_value[32]; // 201102. James. Move the Jiahao's code from ~/drivers/usb/storage.
 	int partition_order;
@@ -2883,12 +2883,58 @@ int asus_sd(const char *device_name, const char *action){
 		return 0;
 	}
 
-	// Get VID.
-	if(get_usb_vid(usb_node, vid, 8) == NULL){
-		usb_dbg("(%s): Fail to get VID of USB(%s).\n", device_name, usb_node);
+#if RTCONFIG_XHCIMODE
+	int usb2mode = 0;
+	char buf[2], *ptr;
+
+	// Get the xhci mode.
+	if(f_read_string("/sys/module/xhci_hcd/parameters/usb2mode", buf, sizeof(buf)) <= 0){
+		usb_dbg("(%s): Fail to get xhci mode.\n", device_name);
 		file_unlock(isLock);
 		return 0;
 	}
+	usb2mode = atoi(buf);
+
+	ptr = device_name+strlen(device_name)-1;
+_dprintf("test 1. ptr=%s.\n", ptr);
+
+	if(nvram_get_int("usb_usb3") != 1){
+		// Get VID.
+		if(get_usb_vid(usb_node, vid, 8) == NULL){
+			usb_dbg("(%s): Fail to get VID of USB(%s).\n", device_name, usb_node);
+			file_unlock(isLock);
+			return 0;
+		}
+
+		// Get PID.
+		if(get_usb_pid(usb_node, pid, 8) == NULL){
+			usb_dbg("(%s): Fail to get PID of USB(%s).\n", device_name, usb_node);
+			file_unlock(isLock);
+			return 0;
+		}
+
+		if(!strcmp(vid, "0bc2") && !strcmp(pid, "a0a1")){
+			if(usb2mode != 1){
+				if(!isdigit(*ptr))
+					notify_rc("restart_xhcimode 1");
+				file_unlock(isLock);
+				return 0;
+			}
+		}
+		else if(usb2mode == 0 || usb2mode == 1){
+			if(!isdigit(*ptr))
+				notify_rc("restart_xhcimode 2");
+			file_unlock(isLock);
+			return 0;
+		}
+	}
+	else if(usb2mode != 0){
+		if(!isdigit(*ptr))
+			notify_rc("restart_xhcimode 0");
+		file_unlock(isLock);
+		return 0;
+	}
+#endif
 
 #ifdef RTCONFIG_USB_PRINTER
 	// Wait if there is the printer interface.

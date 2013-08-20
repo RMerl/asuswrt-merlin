@@ -49,25 +49,14 @@ function showdisklink(){
 }
 
 function show_share_link(){
-
-	/*if(NN_status == 1 && nav == false)
-		$("ie_link").style.display = "block";
-	if(FTP_status == 1 && FTP_mode == 1)
-		$("notie_link").style.display = "block";
-	else{
-		$("noLAN_link").style.display = "block";
-		
-		if(NN_status != 1)
-			showtext($("noLAN_link"), "<#linktodisk_no_1#>");
-		else
-			showtext($("noLAN_link"), "<#linktodisk_no_2#>");
-	}*/
-	
 	//alert("FTP"+FTP_status);
 	// access the disk from WAN
 	if(FTP_status == 1 && ddns_enable == 1 && ddns_server.length > 0 && ddns_hostname.length > 0){
 		if(FTP_mode == 1 || dummyShareway == 0){
 			$("ddnslink1").style.display = ""; 
+			showtext($("ddnslink1"), '<#Internet#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink1_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("ddns_hostname_x"); %></a>');
+			$("ddnslink1_link").href = 'ftp://<% nvram_get("ddns_hostname_x"); %>';
+			
 			$("desc_2").style.display = ""; 
 			$("ddnslink1_LAN").style.display = ""; 			
 			showtext($("ddnslink1_LAN"), '<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink1_LAN_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>');
@@ -75,10 +64,13 @@ function show_share_link(){
 		}
 		else if(FTP_mode == 2){
 			$("ddnslink2").style.display = "";
+			showtext($("ddnslink2"), '<#Internet#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink2_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("ddns_hostname_x"); %></a>');
+			$("ddnslink2_link").href = 'ftp://'+accounts[0]+':<% nvram_get("http_passwd"); %>@<% nvram_get("ddns_hostname_x"); %>';
+			
 			$("desc_2").style.display = ""; 
 			$("ddnslink2_LAN").style.display = ""; 			
 			showtext($("ddnslink2_LAN"), '<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink2_LAN_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>');
-			$("ddnslink2_LAN_link").href = 'ftp://'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
+			$("ddnslink2_LAN_link").href = 'ftp://'+accounts[0]+':<% nvram_get("http_passwd"); %>@<% nvram_get("lan_ipaddr"); %>';
 			$("ddnslink2_LAN_link").innerHTML = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 		}
 	}
@@ -95,8 +87,7 @@ function show_share_link(){
 					$("ddnslink1_LAN_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 			}else{
 					showtext($("ddnslink1_LAN"), '<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink1_LAN_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>');
-					$("ddnslink1_LAN_link").href = 'ftp://'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
-					$("ddnslink1_LAN_link").innerHTML = 'ftp://<% nvram_get("lan_ipaddr"); %>';
+					$("ddnslink1_LAN_link").href = 'ftp://'+accounts[0]+':<% nvram_get("http_passwd"); %>@<% nvram_get("lan_ipaddr"); %>';
 			}		
 		}else if(ddns_hostname.length <= 0){
 			showtext($("noWAN_link"), "<#linktoFTP_no_3#>");
@@ -163,10 +154,10 @@ function go_next_page(){
 		  				<li> 
 		  					<span id="noWAN_link" style="display:none;"></span>
 		  					<span id="ddnslink1" style="display:none;">
-		  					<#Internet#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a target="_blank" href="ftp://<% nvram_get("ddns_hostname_x"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("ddns_hostname_x"); %></a>
+		  					<!-- #Internet#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a target="_blank" href="ftp://<% nvram_get("ddns_hostname_x"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("ddns_hostname_x"); %></a-->
 		  					</span>
 		  					<span id="ddnslink2" style="display:none;">
-		  					<#Internet#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a target="_blank" href="ftp://<% nvram_get("ddns_hostname_x"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("ddns_hostname_x"); %></a>
+		  					<!--#Internet#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a target="_blank" href="ftp://<% nvram_get("ddns_hostname_x"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("ddns_hostname_x"); %></a-->
 		  					</span>
 		  				</li>
 		  				<li id="desc_2" style="display:none;margin-top:8px;">

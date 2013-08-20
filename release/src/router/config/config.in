@@ -165,6 +165,10 @@ config RTCONFIG_USBRESET
 	bool "USB Power Reset Support"
 	default n
 
+config RTCONFIG_XHCIMODE
+	bool "XHCI mode Support"
+	default n
+
 config RTCONFIG_MEDIA_SERVER
 	bool "Media Server (MiniDLNA)"
 	depends on RTCONFIG_USB
@@ -451,3 +455,6 @@ config RTCONFIG_LAN4WAN_LED
 	bool "SW Control 4LAN/WAN LED"
 	default n
 
+config RTCONFIG_EXT4FS
+	bool "ext4 filesystem"
+	default n

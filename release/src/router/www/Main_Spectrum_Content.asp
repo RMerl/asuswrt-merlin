@@ -32,16 +32,22 @@ bpc_ds = [<% show_file_content("/var/tmp/spectrum-bpc-ds"); %>];
 snr = [<% show_file_content("/var/tmp/spectrum-snr"); %>];
 var spec_running = '<% nvram_get("spectrum_hook_is_running"); %>';
 
+var delay_time = 45;
 
 function initial(){
 	show_menu();
-	if(bpc_us.length == 0 && bpc_ds.length == 0 && snr.length == 0 && spec_running == 0){
+	if(wan_line_state != "up"){
+			$('btn_refresh').style.display="none";
+			$('signals_update').style.display="none";		
+	}else if(bpc_us.length == 0 && bpc_ds.length == 0 && snr.length == 0 && spec_running == 0){
 			$('btn_refresh').style.display="";
 	}else if(bpc_us.length == 0 && bpc_ds.length == 0 && snr.length == 0 && spec_running == 1){
 			refresh_signals();
 	}
 	else{
 			$('btn_refresh').style.display="none";
+			$('signals_update').innerHTML = "These graphs will be updated in(seconds): ";
+			$('signals_update').innerHTML += delay_time;
 			$('signals_update').style.display="";
 			update_spectrum();
 	}
@@ -53,13 +59,13 @@ function update_spectrum(){
     dataType: 'script', 
 	
     error: function(xhr){
-      setTimeout("update_spectrum();", 5000);
+      setTimeout("update_spectrum();", 3000);
     },
     success: function(response){
-    	setTimeout("$('signals_collect_scan').style.display=\"none\";", 45000);
-    	setTimeout("$('signals_collect').style.display=\"none\";", 45000);
-    	setTimeout("$('signals_update').style.display=\"\";", 45000);
-			setTimeout("update_spectrum();", 5000);			
+    	setTimeout("$('signals_collect_scan').style.display=\"none\";", delay_time*1000);
+    	setTimeout("$('signals_collect').style.display=\"none\";", delay_time*1000);
+    	setTimeout("$('signals_update').style.display=\"\";", delay_time*1000);
+			setTimeout("update_spectrum();", 3000);			
 		}		
   });
 }
@@ -67,8 +73,9 @@ function update_spectrum(){
 function refresh_signals(){
 		$('btn_refresh').style.display="none";
 		$('signals_collect_scan').style.display="";
-		$('signals_collect').style.display="";
-		$('signals_collect').innerHTML="Signals proceeding to display about 30 seconds.";
+		$('signals_collect').innerHTML = "Gathering data, Spectrum graph will be displayed in(seconds): ";
+		$('signals_collect').innerHTML += delay_time;
+		$('signals_collect').style.display="";		
 		update_spectrum();
 }
 
@@ -111,12 +118,12 @@ function refresh_signals(){
 									  <div class="formfonttitle"><#System_Log#> - Spectrum</div>
 									  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 									  <div class="formfontdesc">The graph of signal-to-noise ratio shows the classic SNR (Signal-to-Noise Ratio), it can be useful in identifying the stability of DSL connection. Transmission / Reception shows how many bits per-carrier transmitted / received.</div>
-										<span id="signals_update" style="margin-left:5px;margin-top:10px;color:#FFCC00;display:none;">These graphs will be updated every 30 seconds.</span>
+										<span id="signals_update" style="margin-left:5px;margin-top:10px;color:#FFCC00;display:none;"></span>
 									</td>
 								</tr>
 								
 								<tr>
-									<td height="30" bgcolor="#4D595D" valign="bottom"><div style="font-weight: bold;margin-left:24px;margin-bottom:-10px;">Signal-to-noise ratio in dB</div></td>
+									<td height="15" bgcolor="#4D595D" valign="bottom"><div style="font-weight: bold;margin-left:24px;margin-bottom:-10px;">Signal-to-noise ratio in dB</div></td>
 								</tr>
 								<tr>
 									<td bgcolor="#4D595D" valign="top">
@@ -142,11 +149,11 @@ function refresh_signals(){
 									</td>
 					  		</tr>
 					  		<tr>
-									<td height="30" bgcolor="#4D595D" align="center" valign="top"><div style="font-weight: bold;margin-top:-10px;margin-left:-100px;">Carrier</div><div style="font-weight:bold;margin-top:-21px;margin-left:60px;color:#ADD8E6;">( Frequency in kHz )</div></td>
+									<td height="15" bgcolor="#4D595D" align="center" valign="top"><div style="font-weight: bold;margin-top:-10px;margin-left:-100px;">Carrier</div><div style="font-weight:bold;margin-top:-21px;margin-left:60px;color:#ADD8E6;">( Frequency in kHz )</div></td>
 								</tr>
 					  		
 								<tr>
-									<td height="30" bgcolor="#4D595D" valign="bottom"><div style="font-weight: bold;margin-left:24px;margin-bottom:-10px;">Bits</div></td>
+									<td height="15" bgcolor="#4D595D" valign="bottom"><div style="font-weight: bold;margin-left:24px;margin-bottom:-10px;">Bits</div></td>
 								</tr>					  		
 					  		<tr>
 									<td bgcolor="#4D595D" valign="top">
@@ -172,7 +179,7 @@ function refresh_signals(){
 									</td>
 					  		</tr>
 					  		<tr>
-									<td height="30px" bgcolor="#4D595D" align="center" valign="top"><div style="font-weight: bold;margin-top:-10px;margin-left:-100px;">Carrier</div><div style="font-weight:bold;margin-top:-21px;margin-left:60px;color:#ADD8E6;">( Frequency in kHz )</div></td>
+									<td height="15px" bgcolor="#4D595D" align="center" valign="top"><div style="font-weight: bold;margin-top:-10px;margin-left:-100px;">Carrier</div><div style="font-weight:bold;margin-top:-21px;margin-left:60px;color:#ADD8E6;">( Frequency in kHz )</div></td>
 								</tr>
 
 								<tr>

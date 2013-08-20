@@ -76,7 +76,7 @@ function redraw()
 	if (daily_history.length-1 > 0) {
 		ymd = getYMD(daily_history[0][0]);
 		d = new Date((new Date(ymd[0], ymd[1], ymd[2], 12, 0, 0, 0)).getTime() - ((30 - 1) * 86400000));
-		E('last-dates').innerHTML = '(' + ymdText(ymd[0], ymd[1], ymd[2]) + ' ~ ' + ymdText(d.getFullYear(), d.getMonth(), d.getDate()) + ')';
+		E('last-dates').innerHTML = '(' + ymdText(d.getFullYear(), d.getMonth(), d.getDate()) + ' ~ ' + ymdText(ymd[0], ymd[1], ymd[2]) + ')';
 
 		lastt = ((d.getFullYear() - 1900) << 16) | (d.getMonth() << 8) | d.getDate();
 	}

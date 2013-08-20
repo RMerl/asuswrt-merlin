@@ -900,7 +900,7 @@ extern void build_options(BOOL screen);
 #endif
 
 #if 1 /* AVM */
-	setpriority(PRIO_PROCESS, 0, 19); /* be nice */
+	setpriority(PRIO_PROCESS, 0, -20); /* be nice */
 #endif
 
 	sec_init();

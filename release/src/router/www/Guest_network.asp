@@ -42,6 +42,8 @@ wl_channel_list_2g = '<% channel_list_2g(); %>';
 wl_channel_list_5g = '<% channel_list_5g(); %>';
 
 function initial(){
+	$('ACL_disabled_hint').innerHTML = Untranslated.Guest_Network_enable_ACL;
+	$('enable_macfilter').innerHTML = Untranslated.enable_macmode;
 	show_menu();	
 	insertExtChannelOption();		
 	wl_auth_mode_change(1);
@@ -98,8 +100,13 @@ function initial(){
 		$("wl_NOnly_note").innerHTML="* Please change the guest network authentication to WPA2 Personal AES.";	
 	}
 
-	if(macmode != "disabled"){
-		$("mac_filter_guest").style.display = "";
+	if(macmode == "disabled"){
+		document.form.wl_macmode_option.disabled = "disabled";
+		$('ACL_disabled_hint').style.display = "";
+	}
+	else{
+		document.form.wl_macmode_option.disabled = "";
+		$('ACL_enabled_hint').style.display = "";
 	}
 }
 
@@ -134,8 +141,10 @@ function translate_auth(flag){
 function gen_gntable_tr(unit, gn_array, slicesb){	
 	var GN_band = "";
 	var htmlcode = "";
-	if(unit == 0) GN_band = 2;
-	if(unit == 1) GN_band = 5;
+	if(unit == 0) 
+		GN_band = 2;
+	else
+		GN_band = 5;
 	
 	htmlcode += '<table align="left" style="margin-left:-10px;border-collapse:collapse;width:720px;';
 	if(slicesb > 0)
@@ -154,26 +163,35 @@ function gen_gntable_tr(unit, gn_array, slicesb){
 	
 	for(var i=0; i<gn_array.length; i++){			
 			var subunit = i+1+slicesb*4;
+			var show_str;
 			htmlcode += '<td><table id="GNW_'+GN_band+'G'+i+'" class="gninfo_table" align="center" style="margin:auto;border-collapse:collapse;">';			
 			if(gn_array[i][0] == "1"){
 					htmlcode += '<tr><td align="center" class="gninfo_table_top"></td></tr>';
-					if(gn_array[i][1].length < 21)
-							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ gn_array[i][1] +'</td></tr>';
-					else
-							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ gn_array[i][1].substring(0,17) +'...</td></tr>';
-					
+					show_str = decodeURIComponent(gn_array[i][1]);
+					if(show_str.length >= 21)
+						show_str = show_str.substring(0,17) + "...";
+					show_str = show_str.replace(/\&/g, "&amp;");
+					show_str = show_str.replace(/\</g, "&lt;");
+					show_str = show_str.replace(/\>/g, "&gt;");
+					htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ show_str +'</td></tr>';
 					htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ translate_auth(gn_array[i][2]) +'</td></tr>';
 					
-					if(gn_array[i][2].indexOf("psk") >= 0 && gn_array[i][4].length < 21)
-							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ gn_array[i][4] +'</td></tr>';
-					else if(gn_array[i][2].indexOf("psk") >= 0)
-							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ gn_array[i][4].substring(0,17) +'...</td></tr>';
+					if(gn_array[i][2].indexOf("psk") >= 0)
+							show_str = gn_array[i][4];
 					else if(gn_array[i][2] == "open" && gn_array[i][5] == "0")
-							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">None</td></tr>';
+							show_str = "None";
 					else{
 							var key_index = parseInt(gn_array[i][6])+6;
-							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ gn_array[i][key_index] +'</td></tr>';
+							show_str = gn_array[i][key_index];
 					}
+
+					show_str = decodeURIComponent(show_str);
+					if(show_str.length >= 21)
+						show_str = show_str.substring(0,17) + "...";
+					show_str = show_str.replace(/\&/g, "&amp;");
+					show_str = show_str.replace(/\</g, "&lt;");
+					show_str = show_str.replace(/\>/g, "&gt;");
+					htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ show_str +'</td></tr>';
 					
 					if(gn_array[i][11] == 0)
 							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');"><#Limitless#></td></tr>';
@@ -224,12 +242,19 @@ function _change_wl_unit_status(__unit){
 function goToACLFilter(){
 	if(sw_mode == 2 || sw_mode == 4) return false;
 	
+	var page_temp = "";
 	document.titleForm.wl_unit.disabled = false;
 	document.titleForm.wl_unit.value = document.form.wl_unit.value;
+	if(macmode == "disabled")
+		page_temp = "Advanced_ACL_Content.asp?af=enable_mac";
+	else 
+		page_temp = "Advanced_ACL_Content.asp?af=wl_maclist_x_0";
+		
 	if(document.titleForm.current_page.value == "")
-		document.titleForm.current_page.value = "Advanced_ACL_Content.asp?af=wl_maclist_x_0";
+		document.titleForm.current_page.value = page_temp;
 	if(document.titleForm.next_page.value == "")
-		document.titleForm.next_page.value = "Advanced_ACL_Content.asp?af=wl_maclist_x_0";
+		document.titleForm.next_page.value = page_temp;
+			
 	document.titleForm.action_mode.value = "change_wl_unit";
 	document.titleForm.action = "apply.cgi";
 	document.titleForm.target = "";
@@ -499,7 +524,7 @@ function genBWTable(_unit){
 <input type="hidden" name="next_page" value="Guest_network.asp">
 <input type="hidden" name="wl_unit" value="<% nvram_get("wl_unit"); %>">
 <input type="hidden" name="wl_subunit" value="<% nvram_get("wl_subunit"); %>">
-<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_mode" value="apply_new">
 <input type="hidden" name="action_script" value="restart_wireless">
 <input type="hidden" name="action_wait" value="15">
 </form>
@@ -511,7 +536,7 @@ function genBWTable(_unit){
 <input type="hidden" name="next_page" value="Guest_network.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
-<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_mode" value="apply_new">
 <input type="hidden" name="action_script" value="restart_wireless">
 <input type="hidden" name="action_wait" value="15">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
@@ -772,15 +797,16 @@ function genBWTable(_unit){
 					</td>
 			 	</tr>
 
-				<tr id="mac_filter_guest" style="display:none">
-					<th>Enable MAC Filter</th>
+				<tr id="mac_filter_guest">
+					<th id="enable_macfilter"></th>
 					<td>
 						<select name="wl_macmode_option" class="input_option">
 							<option class="content_input_fd" value="" <% nvram_match("wl_macmode", "","selected"); %>><#checkbox_Yes#></option>
 							<option class="content_input_fd" value="disabled" <% nvram_match("wl_macmode", "disabled","selected"); %>><#checkbox_No#></option>
 						</select>
 						&nbsp;
-						<span style="cursor:pointer" onclick="goToACLFilter();"><#FirewallConfig_MFList_groupitemname#></span>
+						<span id="ACL_enabled_hint" style="cursor:pointer;display:none;text-decoration:underline;" onclick="goToACLFilter();"><#FirewallConfig_MFList_groupitemname#></span>
+						<span id="ACL_disabled_hint" style="cursor:pointer;display:none;text-decoration:underline;" onclick="goToACLFilter();"></span>				
 					</td>
 				</tr>
 			</table>

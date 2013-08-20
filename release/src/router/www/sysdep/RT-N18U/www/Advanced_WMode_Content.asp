@@ -330,7 +330,7 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="wl_wdslist">
 <input type="hidden" name="modified" value="0">
-<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_mode" value="apply_new">
 <input type="hidden" name="action_wait" value="8">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="action_script" value="restart_wireless">

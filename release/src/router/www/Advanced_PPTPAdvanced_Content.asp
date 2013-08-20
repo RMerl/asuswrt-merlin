@@ -11,11 +11,6 @@
 <title><#Web_Title#> - <#BOP_isp_heart_item#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
-<style>
-.vpnbasic{
-	display: none;
-}
-</style>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
@@ -56,8 +51,6 @@ var staticclist_row = dhcp_staticlists.split('&#60');
 
 function initial(){
 	show_menu();
-	//Viz marked 2012.04 pptpd_clientlist_array = decodeURIComponent(pptpd_clientlist_array);
-	//Viz marked 2012.04  showpptpd_clientlist();
 	check_dns_wins();	
 
 	if (pptpd_clients != "") {
@@ -76,8 +69,6 @@ function initial(){
 	document.form.pptpd_mppe_no.checked = (document.form.pptpd_mppe.value & 8);
 
 	check_vpn_conflict();
-	
-	addOnlineHelp($("faq"), ["ASUSWRT", "VPN"]);
 }
 
 function changeMppe(){
@@ -88,12 +79,6 @@ function changeMppe(){
 }
 
 function applyRule(){
-	/* Viz marked 2012.04
-	var rule_num = $('pptpd_clientlist_table').rows.length;
-	var item_num = $('pptpd_clientlist_table').rows[0].cells.length;
-	var tmp_value = "";
-	*/
-	
 	if(!valid_IP(document.form._pptpd_clients_start, "")){
 			document.form._pptpd_clients_start.focus();
 			document.form._pptpd_clients_start.select();
@@ -105,21 +90,6 @@ function applyRule(){
 			document.form._pptpd_clients_end.select();
 			return false;
 	}	
-		
-	/* Viz marked 2012.04 cuz these codes move to PPTP page
-	for(i=0; i<rule_num; i++){
-		tmp_value += "<"		
-		for(j=0; j<item_num-1; j++){																		//<td>			//<pre>
-			tmp_value += $('pptpd_clientlist_table').rows[i].cells[j].childNodes[0].childNodes[0].nodeValue;
-			if(j != item_num-2)	
-				tmp_value += ">";
-		}
-	}
-	if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<")
-		tmp_value = "";	
-	document.form.pptpd_clientlist.value = tmp_value;
-	*/ //Viz marked 2012.04 
-	
 
 	document.form.pptpd_clients.value = document.form._pptpd_clients_start.value + "-" + document.form._pptpd_clients_end.value;
 
@@ -171,114 +141,7 @@ function applyRule(){
 	document.form.submit();	
 }
 
-function addRow(obj, head){
-	if(head == 1)
-		pptpd_clientlist_array += "<" /*&#60*/
-	else
-		pptpd_clientlist_array += ">" /*&#62*/
-			
-	pptpd_clientlist_array += obj.value;
 
-	obj.value = "";
-}
-
-function addRow_Group(upper){
-	var rule_num = $('pptpd_clientlist_table').rows.length;
-	var item_num = $('pptpd_clientlist_table').rows[0].cells.length;
-		
-	if(rule_num >= upper){
-		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
-		return false;	
-	}			
-		
-	if(document.form.pptpd_clientlist_username.value==""){
-		alert("<#JS_fieldblank#>");
-		document.form.pptpd_clientlist_username.focus();
-		document.form.pptpd_clientlist_username.select();
-		return false;
-	}else if(document.form.pptpd_clientlist_password.value==""){
-		alert("<#JS_fieldblank#>");
-		document.form.pptpd_clientlist_password.focus();
-		document.form.pptpd_clientlist_password.select();
-		return false;
-	}else{
-		
-		//Viz check same rule  //match(username) is not accepted
-		if(item_num >=2){	
-			for(i=0; i<rule_num; i++){	
-					if(document.form.pptpd_clientlist_username.value.toLowerCase() == $('pptpd_clientlist_table').rows[i].cells[0].firstChild.innerHTML.toLowerCase()){
-						alert("<#JS_duplicate#>");
-						document.form.pptpd_clientlist_username.focus();
-						document.form.pptpd_clientlist_username.select();
-						return false;
-					}	
-			}
-		}		
-		
-		if(!validate_string_ssid(document.form.pptpd_clientlist_username))
-			return false;
-		if(!validate_string_group(document.form.pptpd_clientlist_username))
-			return false;
-
-		if(!validate_string_ssid(document.form.pptpd_clientlist_password))
-			return false;				
-		if(!validate_string_group(document.form.pptpd_clientlist_password))
-			return false;		
-		
-		addRow(document.form.pptpd_clientlist_username ,1);
-		addRow(document.form.pptpd_clientlist_password, 0);
-		showpptpd_clientlist();		
-	}
-}
-
-function del_Row(r){
-  var i=r.parentNode.parentNode.rowIndex;
-  $('pptpd_clientlist_table').deleteRow(i);
-  
-  var pptpd_clientlist_value = "";
-	for(k=0; k<$('pptpd_clientlist_table').rows.length; k++){
-		for(j=0; j<$('pptpd_clientlist_table').rows[k].cells.length-1; j++){
-			if(j == 0)	
-				pptpd_clientlist_value += "&#60";
-			else
-				pptpd_clientlist_value += "&#62";
-			pptpd_clientlist_value += $('pptpd_clientlist_table').rows[k].cells[j].innerHTML;		
-		}
-	}
-	
-	pptpd_clientlist_array = pptpd_clientlist_value;
-	if(pptpd_clientlist_array == "")
-		showpptpd_clientlist();
-}
-
-function edit_Row(r){ 	
-	var i=r.parentNode.parentNode.rowIndex;
-	document.form.pptpd_clientlist_username.value = $('pptpd_clientlist_table').rows[i].cells[0].innerHTML;
-	document.form.pptpd_clientlist_password.value = $('pptpd_clientlist_table').rows[i].cells[1].innerHTML; 	
-  del_Row(r);	
-}
-
-function showpptpd_clientlist(){
-	var pptpd_clientlist_row = pptpd_clientlist_array.split('<');
-	var code = "";
-
-	code +='<table width="100%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="pptpd_clientlist_table">';
-	if(pptpd_clientlist_row.length == 1)
-		code +='<tr><td style="color:#FFCC00;" colspan="6"><#IPConnection_VSList_Norule#></td></tr>';
-	else{
-		for(var i = 1; i < pptpd_clientlist_row.length; i++){
-			code +='<tr id="row'+i+'">';
-			var pptpd_clientlist_col = pptpd_clientlist_row[i].split('>');
-				for(var j = 0; j < pptpd_clientlist_col.length; j++){
-					code +='<td width="40%"><pre>'+ pptpd_clientlist_col[j] +'</pre></td>';		//IP  width="98"
-				}
-				code +='<td width="20%"><!--input class="edit_btn" onclick="edit_Row(this);" value=""/-->';
-				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
-		}
-	}
-  code +='</table>';
-	$("pptpd_clientlist_Block").innerHTML = code;
-}
 
 // test if Private ip
 function valid_IP(obj_name, obj_flag){
@@ -429,23 +292,23 @@ function change_pptpd_radio(obj){
 }
 
 function check_dns_wins(){
-		if(pptpd_dns1_orig == "" && pptpd_dns2_orig == ""){
-				document.form.pptpd_dnsenable_x[0].checked = true;
-				change_pptpd_radio(document.form.pptpd_dnsenable_x[0]);
-		}else{
-				document.form.pptpd_dnsenable_x[1].checked = true;
-				change_pptpd_radio(document.form.pptpd_dnsenable_x[1]);
-		}		
+	if(pptpd_dns1_orig == "" && pptpd_dns2_orig == ""){
+		document.form.pptpd_dnsenable_x[0].checked = true;
+		change_pptpd_radio(document.form.pptpd_dnsenable_x[0]);
+	}else{
+		document.form.pptpd_dnsenable_x[1].checked = true;
+		change_pptpd_radio(document.form.pptpd_dnsenable_x[1]);
+	}		
+			
+	if(pptpd_wins1_orig == "" && pptpd_wins2_orig == ""){
+		document.form.pptpd_winsenable_x[0].checked = true;
+		change_pptpd_radio(document.form.pptpd_winsenable_x[0]);
+	}else{
+		document.form.pptpd_winsenable_x[1].checked = true;
+		change_pptpd_radio(document.form.pptpd_winsenable_x[1]);
+	}	
 		
-		
-		if(pptpd_wins1_orig == "" && pptpd_wins2_orig == ""){
-				document.form.pptpd_winsenable_x[0].checked = true;
-				change_pptpd_radio(document.form.pptpd_winsenable_x[0]);
-		}else{
-				document.form.pptpd_winsenable_x[1].checked = true;
-				change_pptpd_radio(document.form.pptpd_winsenable_x[1]);
-		}		
-		change_pptpd_radio(document.form.pptpd_winsenable_x);	
+	change_pptpd_radio(document.form.pptpd_winsenable_x);	
 }
 </script>
 </head>
@@ -462,9 +325,8 @@ function check_dns_wins(){
 			<div id="mainMenu"></div>	
 			<div id="subMenu"></div>		
 		</td>						
-    <td valign="top">
-			<div id="tabMenu" class="submenuBlock"></div>
-			
+		<td valign="top">
+			<div id="tabMenu" class="submenuBlock"></div>			
 			<!--===================================Beginning of Main Content===========================================-->
 			<input type="hidden" name="current_page" value="Advanced_PPTPAdvanced_Content.asp">
 			<input type="hidden" name="next_page" value="Advanced_PPTPAdvanced_Content.asp">
@@ -476,55 +338,37 @@ function check_dns_wins(){
 			<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 			<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 			<input type="hidden" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>">
-			<input type="hidden" name="pptpd_clientlist" value="<% nvram_char_to_ascii("","pptpd_clientlist"); %>" disabled>
 			<input type="hidden" name="pptpd_clients" value="<% nvram_get("pptpd_clients"); %>">
 			<input type="hidden" name="pptpd_mppe" value="<% nvram_get("pptpd_mppe"); %>">	
-
 			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 				<tr>
 					<td valign="top" >
 						<table width="760px" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
 							<tbody>
 								<tr>
-								  <td bgcolor="#4D595D" valign="top">
-								  <div>&nbsp;</div>
-								  <div class="formfonttitle"><#BOP_isp_heart_item#> - <#vpn_Adv#></div>
-								  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-								  <div class="formfontdesc"><#PPTP_desc#></div>
-								  <!--div class="formfontdesc"><#PPTP_desc2#> <% nvram_get("wan0_ipaddr"); %></div>
-								  <div class="formfontdesc" style="margin-top:-10px;font-weight: bolder;"><#PPTP_desc3#></div>
-									<div class="formfontdesc" style="margin-top:-10px;">
-										(7) <a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">VPN server FAQ</a>
-									</div-->
-
-									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+								<td bgcolor="#4D595D" valign="top">
+								<div>&nbsp;</div>
+								<div class="formfonttitle"><#BOP_isp_heart_item#> - <#vpn_Adv#></div>
+								<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+								<div class="formfontdesc"><#PPTP_desc#></div>
+								<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 									  	<thead>
 									  		<tr>
 												<td colspan="3" id="GWStatic"><#t2BC#></td>
 									  		</tr>
 									  	</thead>
-										
-										<tr class="vpnbasic">
-											<th><#vpn_enable#></th>
-											<td>
-												<select name="pptpd_enable" class="input_option" disabled>
-													<option class="content_input_fd" value="0" <% nvram_match("pptpd_enable", "0","selected"); %>><#btn_disable#></option>
-													<option class="content_input_fd" value="1"<% nvram_match("pptpd_enable", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
-												</select>			
-											</td>
-									  </tr>
-							
+																
 										<tr>
 											<th><#vpn_broadcast#></th>
 											<td>
 												<select name="pptpd_broadcast" class="input_option">
 													<option class="content_input_fd" value="disable" <% nvram_match("pptpd_broadcast", "disable","selected"); %>><#btn_disable#></option>
 													<option class="content_input_fd" value="br0"<% nvram_match("pptpd_broadcast", "br0","selected"); %>>LAN to VPN Client</option>
-                          <option class="content_input_fd" value="ppp" <% nvram_match("pptpd_broadcast", "ppp","selected"); %>>VPN Client to LAN</option>
+													<option class="content_input_fd" value="ppp" <% nvram_match("pptpd_broadcast", "ppp","selected"); %>>VPN Client to LAN</option>
 													<option class="content_input_fd" value="br0ppp"<% nvram_match("pptpd_broadcast", "br0ppp","selected"); %>>Both</option>
 												</select>			
 											</td>
-									  </tr>
+										</tr>
 							
 										<tr>
 											<th><#PPPConnection_Authentication_itemname#></th>
@@ -535,115 +379,81 @@ function check_dns_wins(){
 													<option value="2" <% nvram_match("pptpd_chap", "2","selected"); %>>MS-CHAPv2</option>
 												</select>			
 											</td>
-									  </tr>
+										</tr>
 										<tr>
-                                                                                        <th><#MPPE_Encryp#></th>
-                                                                                        <td>
+                                            <th><#MPPE_Encryp#></th>
+                                            <td>
 												<input type="checkbox" class="input" name="pptpd_mppe_128" onClick="return changeMppe();">MPPE-128<br>
 												<!--input type="checkbox" class="input" name="pptpd_mppe_56" onClick="return changeMppe();">MPPE-56<br-->
 												<input type="checkbox" class="input" name="pptpd_mppe_40" onClick="return changeMppe();">MPPE-40<br>
 												<input type="checkbox" class="input" name="pptpd_mppe_no" onClick="return changeMppe();"><#No_Encryp#>
 											</td>
-									 </tr>
+										</tr>
 									 
 										<tr>
-                      <th><#IPConnection_x_DNSServerEnable_itemname#></th>
-                      <td>
+											<th><#IPConnection_x_DNSServerEnable_itemname#></th>
+											<td>
 			  									<input type="radio" name="pptpd_dnsenable_x" class="input" value="1" onclick="return change_pptpd_radio(this)" /><#checkbox_Yes#>
 			  									<input type="radio" name="pptpd_dnsenable_x" class="input" value="0" onclick="return change_pptpd_radio(this)" /><#checkbox_No#>
 											</td>
-									 </tr>									 
-									 
-			          		<tr>
-			            		<th><a class="hintstyle" href="javascript:void(0);"><#IPConnection_x_DNSServer1_itemname#></a></th>
-			            		<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_dns1" value="<% nvram_get("pptpd_dns1"); %>" onkeypress="return is_ipaddr(this, event)" ></td>
-			          		</tr>
+										</tr>									 								 
+									<tr>
+										<th><a class="hintstyle" href="javascript:void(0);"><#IPConnection_x_DNSServer1_itemname#></a></th>
+										<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_dns1" value="<% nvram_get("pptpd_dns1"); %>" onkeypress="return is_ipaddr(this, event)" ></td>
+									</tr>
 
-			          		<tr>
-			            		<th><a class="hintstyle" href="javascript:void(0);"><#IPConnection_x_DNSServer2_itemname#></a></th>
-			            		<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_dns2" value="<% nvram_get("pptpd_dns2"); %>" onkeypress="return is_ipaddr(this, event)" ></td>
-			          		</tr>
-
-										<tr>
-                      <th><#IPConnection_x_WINSServerEnable_itemname#></th>
-                      <td>
-			  									<input type="radio" name="pptpd_winsenable_x" class="input" value="1" onclick="return change_pptpd_radio(this)" /><#checkbox_Yes#>
-			  									<input type="radio" name="pptpd_winsenable_x" class="input" value="0" onclick="return change_pptpd_radio(this)" /><#checkbox_No#>
-											</td>
-									 </tr>
-
-			          		<tr>
-			            		<th><#IPConnection_x_WINSServer1_itemname#></th>
-			            		<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_wins1" value="<% nvram_get("pptpd_wins1"); %>" onkeypress="return is_ipaddr(this, event)" ></td>
-			          		</tr>
-
-			          		<tr>
-			            		<th><#IPConnection_x_WINSServer2_itemname#></th>
-			            		<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_wins2" value="<% nvram_get("pptpd_wins2"); %>" onkeypress="return is_ipaddr(this, event)" ></td>
-			          		</tr>
+									<tr>
+										<th><a class="hintstyle" href="javascript:void(0);"><#IPConnection_x_DNSServer2_itemname#></a></th>
+										<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_dns2" value="<% nvram_get("pptpd_dns2"); %>" onkeypress="return is_ipaddr(this, event)" ></td>
+									</tr>
+									<tr>
+										<th><#IPConnection_x_WINSServerEnable_itemname#></th>
+										<td>
+			  								<input type="radio" name="pptpd_winsenable_x" class="input" value="1" onclick="return change_pptpd_radio(this)" /><#checkbox_Yes#>
+			  								<input type="radio" name="pptpd_winsenable_x" class="input" value="0" onclick="return change_pptpd_radio(this)" /><#checkbox_No#>
+										</td>
+									</tr>
+									<tr>
+										<th><#IPConnection_x_WINSServer1_itemname#></th>
+										<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_wins1" value="<% nvram_get("pptpd_wins1"); %>" onkeypress="return is_ipaddr(this, event)" ></td>
+									</tr>
+									<tr>
+										<th><#IPConnection_x_WINSServer2_itemname#></th>
+										<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_wins2" value="<% nvram_get("pptpd_wins2"); %>" onkeypress="return is_ipaddr(this, event)" ></td>
+									</tr>
 <!-- Yau add mru/mtu-->
-                                                <tr>
-                                                <th><a class="hintstyle" href="javascript:void(0);">MRU</a></th>
-                                                <td><input type="text" maxlength="15" class="input_15_table" name="pptpd_mru" value="<% nvram_get("pptpd_mru"); %>" ></td>
-                                                </tr>
-                                                <tr>
-                                                <th><a class="hintstyle" href="javascript:void(0);">MTU</a></th>
-                                                <td><input type="text" maxlength="15" class="input_15_table" name="pptpd_mtu" value="<% nvram_get("pptpd_mtu"); %>" ></td>
-                                                </tr>
+                                    <tr>
+										<th><a class="hintstyle" href="javascript:void(0);">MRU</a></th>
+										<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_mru" value="<% nvram_get("pptpd_mru"); %>" ></td>
+                                    </tr>
+                                    <tr>
+										<th><a class="hintstyle" href="javascript:void(0);">MTU</a></th>
+										<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_mtu" value="<% nvram_get("pptpd_mtu"); %>" ></td>
+                                    </tr>
 <!-- Yau -->
-			          		<tr>
-			            		<th><#vpn_client_ip#></th>
-			            		<td>
-                          <input type="text" maxlength="15" class="input_15_table" name="_pptpd_clients_start" onBlur="setEnd();check_pptpd_clients_range();check_vpn_conflict();"  onKeyPress="return is_ipaddr(this, event);" value=""/> ~
-                          <span id="pptpd_subnet" style="font-family: Lucida Console;color: #FFF;"></span><input type="text" maxlength="3" class="input_3_table" name="_pptpd_clients_end" onBlur="check_pptpd_clients_range();check_vpn_conflict();" value=""/><span style="color:#FFCC00;"> <#vpn_maximum_clients#></span>
-                          <br><span id="pptpd_conflict"></span>	
-											</td>
-			          		</tr>
-
-									</table>
-<div class="vpnbasic">
-									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
-									  	<thead>
-									  		<tr>
-												<td colspan="3" id="GWStatic"><#Username_Pwd#></td>
-									  		</tr>
-									  	</thead>
-									  
-									  	<tr>
-								  			<th><#PPPConnection_UserName_itemname#></th>
-						        		<th><#PPPConnection_Password_itemname#></th>
-						        		<th>Add / Delete</th>
-									  	</tr>			  
-									  	<tr>
-						          	<td width="40%">
-						              <input type="text" class="input_25_table" maxlength="32" name="pptpd_clientlist_username" onKeyDown="return is_string_down(this, event)">
-						            </td>
-						            			<td width="40%">
-						            				<input type="text" class="input_25_table" maxlength="32" name="pptpd_clientlist_password">
-						            			</td>
-						            			<td width="20%">
-																<div> 
-																	<input type="button" class="add_btn" onClick="addRow_Group(32);" value="">
-																</div>
-						            			</td>
-									  	</tr>	 			  
-								  </table>        			
-						        			
-				  <div id="pptpd_clientlist_Block"></div>
-</div>        			
-        	<!-- manually assigned the DHCP List end-->		
-					<div class="apply_gen">
-						<input class="button_gen" onclick="applyRule()" type="button" value="<#CTL_apply#>"/>
-					</div>		
-      	  </td>
-		</tr>
+								<tr>
+									<th><#vpn_client_ip#></th>
+									<td>
+										<input type="text" maxlength="15" class="input_15_table" name="_pptpd_clients_start" onBlur="setEnd();check_pptpd_clients_range();check_vpn_conflict();"  onKeyPress="return is_ipaddr(this, event);" value=""/> ~
+										<span id="pptpd_subnet" style="font-family: Lucida Console;color: #FFF;"></span><input type="text" maxlength="3" class="input_3_table" name="_pptpd_clients_end" onBlur="check_pptpd_clients_range();check_vpn_conflict();" value=""/><span style="color:#FFCC00;"> <#vpn_maximum_clients#></span>
+										<br><span id="pptpd_conflict"></span>	
+									</td>
+								</tr>
+								</table>      			
+						<!-- manually assigned the DHCP List end-->		
+								<div class="apply_gen">
+									<input class="button_gen" onclick="applyRule()" type="button" value="<#CTL_apply#>"/>
+								</div>		
+								</td>
+							</tr>
 
 							</tbody>
 						</table>
 					</td>
 				</tr>
 			</table>
-    <td width="10" align="center" valign="top">&nbsp;</td>
+		</td>
+		<td width="10" align="center" valign="top">&nbsp;</td>
 	</tr>
 </table>
 </form>

@@ -96,14 +96,19 @@ function detect_firmware(){
 	      					var Latest_firm = Latest_firmver[0];
 	      					var Latest_buildno = Latest_firmver[1];
 	      					var Latest_extendno = Latest_firmver[2];
+	      					var Latest_extendno_split = Latest_extendno.split("-g");
+	      					var Latest_extendno_comp = Latest_extendno_split[0];
 	      					
 	      					if(Latest_firm && Latest_buildno && Latest_extendno ){	//match model FW
       								current_firm = parseInt(exist_firmver.replace(/[.]/gi,""));
       								current_buildno = parseInt("<% nvram_get("buildno"); %>");
       								current_extendno = "<% nvram_get("extendno"); %>";
+      								current_extendno_split = current_extendno.split("-g");
+      								current_extendno_comp = current_extendno_split[0];
+      								
       								if((current_buildno < Latest_buildno) || 
       									 (current_firm < Latest_firm && current_buildno == Latest_buildno) ||
-      									 (current_extendno != Latest_extendno && current_buildno == Latest_buildno && current_firm == Latest_firm))
+      									 (current_extendno_comp < Latest_extendno_comp && current_buildno == Latest_buildno && current_firm == Latest_firm))
       								{
       										$('update_scan').style.display="none";
       										$('update_states').style.display="none";
@@ -136,7 +141,7 @@ function detect_firmware(){
 
 function detect_update(){
 	
-	if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
+	if(sw_mode != "1" | (link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
 		//setCookie("after_check", 1, 365);
   	document.start_update.action_mode.value="apply";
   	document.start_update.action_script.value="start_webs_update";  	

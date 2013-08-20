@@ -271,7 +271,7 @@ function showDSLWANList(){
 					cell[4].innerHTML = "LLC";
 				}
 				else {
-					cell[4].innerHTML = "VC";
+					cell[4].innerHTML = "VC-Mux";
 				}
 				cell[4].style.color = "white";
 				cell[5] = addRow.insertCell(5);
@@ -1120,7 +1120,7 @@ function pass_checked(obj){
 											<td align="left">
 												<select id="" class="input_option" name="dsl_encap" onchange="">
 													<option value="0" <% nvram_match("dsl_encap", "0", "selected"); %>>LLC</option>
-													<option value="1" <% nvram_match("dsl_encap", "1", "selected"); %>>VC</option>
+													<option value="1" <% nvram_match("dsl_encap", "1", "selected"); %>>VC-Mux</option>
 												</select>
 											</td>
 										</tr>
@@ -1133,7 +1133,7 @@ function pass_checked(obj){
 													<option value="2" <% nvram_match("dsl_svc_cat", "2", "selected"); %>>CBR</option>
 													<option value="3" <% nvram_match("dsl_svc_cat", "3", "selected"); %>>VBR</option>
 													<option value="4" <% nvram_match("dsl_svc_cat", "4", "selected"); %>>GFR</option>
-													<option value="5" <% nvram_match("dsl_svc_cat", "5", "selected"); %>>NRT_VBR</option>
+													<option value="5" <% nvram_match("dsl_svc_cat", "5", "selected"); %>>NRT-VBR</option>
 												</select>
 											</td>
 										</tr>

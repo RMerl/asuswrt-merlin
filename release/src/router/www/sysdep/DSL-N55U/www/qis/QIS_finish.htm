@@ -194,7 +194,7 @@ function QKfinish_load_body(){
 			var wanlink_type_conv = wanlink_type();
 	}
 	else {
-		$("#wantype_item")[0].innerHTML = "<#pvccfg_PVC_type#>";
+		$("#wantype_item")[0].innerHTML = "<#Layer3Forwarding_x_ConnectionType_itemname#>";
 		var pvc_type = "<% nvram_get("dsl0_proto"); %>";
 		var wanlink_type_conv = "";
 
@@ -209,14 +209,14 @@ function QKfinish_load_body(){
 		else if (pvc_type == "ipoa")
 			wanlink_type_conv = "IPoA";
 
-		$("#wanvpivci_item")[0].innerHTML = "VPI/VCI/<#prtcl_JS_encmode#>";
-		var tmp_str = "<% nvram_get("dsl0_vpi"); %>/<% nvram_get("dsl0_vci"); %>";
+		$("#wanvpivci_item")[0].innerHTML = "VPI / VCI / <#prtcl_JS_encmode#>";
+		var tmp_str = "<% nvram_get("dsl0_vpi"); %> / <% nvram_get("dsl0_vci"); %>";
 
 		var encap_val = "<% nvram_get("dsl0_encap"); %>";
 		if (encap_val == "1")
-			tmp_str += "/VC";
+			tmp_str += " / VC-Mux";
 		else
-			tmp_str += "/LLC";
+			tmp_str += " / LLC";
 
 		$("#wanvpivci")[0].innerHTML = tmp_str;
 	}

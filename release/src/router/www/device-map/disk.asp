@@ -82,7 +82,7 @@ function initial(){
 		//$("show_removed_string").style.display = "";
 		$("unmounted_refresh").style.display = "";
 	}
-	if(sw_mode == "2" || sw_mode == "3")
+	if(sw_mode == "2" || sw_mode == "3" || sw_mode == "4")
 		$("aidisk_hyperlink").style.display = "none";
 
 	for(var i = 0; i < apps_array.length; i++){
@@ -113,9 +113,9 @@ function showdisklink(){
 			$("ddnslink2").style.display = "";
 			$("desc_2").style.display = "";			
 			$("ddnslink2_LAN").style.display = "";
-			$("selected_account_link").href = 'ftp://'+accounts[0]+'@<% nvram_get("ddns_hostname_x"); %>';
+			$("selected_account_link").href = 'ftp://'+accounts[0]+':<% nvram_get("http_passwd"); %>@<% nvram_get("ddns_hostname_x"); %>';
 			showtext($("selected_account_str"), 'ftp://<% nvram_get("ddns_hostname_x"); %>');
-			$("selected_account_link_LAN").href = 'ftp://'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
+			$("selected_account_link_LAN").href = 'ftp://'+accounts[0]+':<% nvram_get("http_passwd"); %>@<% nvram_get("lan_ipaddr"); %>';
 			showtext($("selected_account_str_LAN"), 'ftp://<% nvram_get("lan_ipaddr"); %>');
 		}
 		
@@ -142,7 +142,7 @@ function showdisklink(){
 		if(FTP_mode == 1){
 				$("ftp_account_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 		}else{
-				$("ftp_account_link").href = 'ftp://'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
+				$("ftp_account_link").href = 'ftp://'+accounts[0]+':<% nvram_get("http_passwd"); %>@<% nvram_get("lan_ipaddr"); %>';
 				$("ftp_account_link").innerHTML = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 		}		
 						

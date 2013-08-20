@@ -337,6 +337,7 @@ obj-$(RTCONFIG_IPERF) += iperf
 obj-$(UBI) += mtd-utils
 obj-$(UBIFS) += mtd-utils
 obj-$(UBIFS) += util-linux lzo zlib
+obj-$(RA_SKU) += ra_SingleSKU
 
 #obj-y += bonnie
 

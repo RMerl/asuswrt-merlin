@@ -101,7 +101,7 @@ function applyRule(){
 
 function enableWPS(){
 	document.form.action_script.value = "restart_wireless";
-	document.form.action_mode.value = "apply";
+	document.form.action_mode.value = "apply_new";
 	document.form.action_wait.value = "3";
 	applyRule();
 }

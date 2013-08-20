@@ -85,28 +85,6 @@ void tune_bdflush(void)
 }
 #endif // LINUX26
 
-#define USBCORE_MOD	"usbcore"
-#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
-#define USB30_MOD	"xhci-hcd"
-#endif
-#define USB20_MOD	"ehci-hcd"
-#define USBSTORAGE_MOD	"usb-storage"
-#define SCSI_MOD	"scsi_mod"
-#define SD_MOD		"sd_mod"
-#define SG_MOD		"sg"
-#ifdef LINUX26
-#define USBOHCI_MOD	"ohci-hcd"
-#define USBUHCI_MOD	"uhci-hcd"
-#define USBPRINTER_MOD	"usblp"
-#define SCSI_WAIT_MOD	"scsi_wait_scan"
-#define USBFS		"usbfs"
-#else
-#define USBOHCI_MOD	"usb-ohci"
-#define USBUHCI_MOD	"usb-uhci"
-#define USBPRINTER_MOD	"printer"
-#define USBFS		"usbdevfs"
-#endif
-
 #define NFS_EXPORT	"/etc/exports"
 
 #ifdef RTCONFIG_USB_PRINTER
@@ -286,7 +264,7 @@ void start_usb(void)
 				/* insert ext3 first so that lazy mount tries ext4 before ext2 */
 				modprobe("jbd");
 				modprobe("ext3");
-#if defined(RTCONFIG_BCMARM) || defined(RTAC52U)
+#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_EXT4FS)
 				modprobe("ext4");
 #endif
 				modprobe("ext2");
@@ -315,6 +293,9 @@ void start_usb(void)
 			_dprintf("ready to modprobe xhci\n");	// tmp test
 			modprobe(USB30_MOD, param);
 		}
+#elif defined(RTCONFIG_XHCIMODE)
+		_dprintf("ready to modprobe usb3/xhci\n");	// tmp test
+		modprobe(USB30_MOD);
 #else
 		if (nvram_get_int("usb_usb3") == 1) {
 			_dprintf("ready to modprobe usb3/xhci\n");	// tmp test
@@ -384,7 +365,7 @@ void remove_usb_storage_module(void)
 	modprobe_r("ext2");
 	modprobe_r("ext3");
 	modprobe_r("jbd");
-#if defined(RTCONFIG_BCMARM) || defined(RTAC52U)
+#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_EXT4FS)
 	modprobe_r("ext4");
 	modprobe_r("jbd2");
 #endif
@@ -531,6 +512,8 @@ void stop_usb(void)
 #if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
 #if defined(RTN65U)
 	if (disabled) modprobe_r(USB30_MOD);
+#elif defined(RTCONFIG_XHCIMODE)
+	modprobe_r(USB30_MOD);
 #else
 	if (disabled || nvram_get_int("usb_usb3") != 1) modprobe_r(USB30_MOD);
 #endif
@@ -593,7 +576,12 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 			/* not a mountable partition */
 			flags = 0;
 		}
-		else if (strcmp(type, "ext2") == 0 || strcmp(type, "ext3") == 0 || strcmp(type, "ext4") == 0) {
+		else if (strcmp(type, "ext2") == 0 || strcmp(type, "ext3") == 0
+#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_EXT4FS)
+			|| strcmp(type, "ext4") == 0
+#endif
+			)
+		{
 			sprintf(options, "user_xattr");
 
 			if (nvram_invmatch("usb_ext_opt", ""))
@@ -1152,8 +1140,12 @@ done:
 
 			if(check_if_file_exist(buff1) && !check_if_file_exist(buff2)){
 				// fsck the partition.
-				if(host_num != -3 &&
-						(!strcmp(type, "ext2") || !strcmp(type, "ext3") || !strcmp(type, "ext4")
+				if(strcmp(nvram_safe_get("stop_fsck"), "1") &&
+						host_num != -3 &&
+						(!strcmp(type, "ext2") || !strcmp(type, "ext3")
+#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_EXT4FS)
+						|| !strcmp(type, "ext4")
+#endif
 						|| !strcmp(type, "vfat") || !strcmp(type, "msdos")
 						|| !strcmp(type, "ntfs") || !strcmp(type, "ufsd"))
 						){
@@ -1170,20 +1162,22 @@ done:
 				sprintf(command, "ln -sf %s/%s /tmp/opt", mountpoint, apps_folder);
 				system(command);
 
-				memset(buff1, 0, 64);
-				sprintf(buff1, "APPS_DEV=%s", dev_name+5);
-				putenv(buff1);
-				memset(buff2, 0, 64);
-				sprintf(buff2, "APPS_MOUNTED_PATH=%s", mountpoint);
-				putenv(buff2);
-				/* Run user *.asusrouter and post-mount scripts if any. */
-				memset(command, 0, PATH_MAX);
-				//sprintf(command, "%s/%s", mountpoint, apps_folder);
-				//run_userfile(command, ".asusrouter", NULL, 3);
-				sprintf(command, "%s/%s/.asusrouter", mountpoint, apps_folder);
-				system(command);
-				unsetenv("APPS_DEV");
-				unsetenv("APPS_MOUNTED_PATH");
+				if(strcmp(nvram_safe_get("stop_runapp"), "1")){
+					memset(buff1, 0, 64);
+					sprintf(buff1, "APPS_DEV=%s", dev_name+5);
+					putenv(buff1);
+					memset(buff2, 0, 64);
+					sprintf(buff2, "APPS_MOUNTED_PATH=%s", mountpoint);
+					putenv(buff2);
+					/* Run user *.asusrouter and post-mount scripts if any. */
+					memset(command, 0, PATH_MAX);
+					//sprintf(command, "%s/%s", mountpoint, apps_folder);
+					//run_userfile(command, ".asusrouter", NULL, 3);
+					sprintf(command, "%s/%s/.asusrouter", mountpoint, apps_folder);
+					system(command);
+					unsetenv("APPS_DEV");
+					unsetenv("APPS_MOUNTED_PATH");
+				}
 			}
 		}
 
@@ -1909,9 +1903,9 @@ _dprintf("%s: cmd=%s.\n", __FUNCTION__, cmd);
 #ifdef RTCONFIG_BCMARM
 #ifdef SMP 
         if (cpu_num > 1)
-                taskset_ret = cpu_eval(NULL, "1", "smbd", "-D", "-s", "/etc/smb.conf");
+		taskset_ret = cpu_eval(NULL, "1", "ionice", "-c1", "-n0", "smbd", "-D", "-s", "/etc/smb.conf");
         else
-                taskset_ret = eval("smbd", "-D", "-s", "/etc/smb.conf");
+		taskset_ret = eval("ionice", "-c1", "-n0", "smbd", "-D", "-s", "/etc/smb.conf");
 
         if (taskset_ret != 0)
 #endif

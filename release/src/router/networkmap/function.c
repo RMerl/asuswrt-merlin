@@ -1658,13 +1658,20 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
         UCHAR primarydomain[32];
         UCHAR nativeOS[32];
         UCHAR nativeLanMan[32];
-#ifdef DEBUG
-	char ipaddr[16];
-    	sprintf(ipaddr, "%d.%d.%d.%d",(int)*(dest_ip),(int)*(dest_ip+1),(int)*(dest_ip+2),(int)*(dest_ip+3));
-	NMP_DEBUG("Find device: %s\n", ipaddr);
-#endif
 	int lock;
 
+        NMP_DEBUG("*FindAllApp: %d -> %d.%d.%d.%d-%02X:%02X:%02X:%02X:%02X:%02X\n",p_client_detail_info_tab->detail_info_num,
+                (int *)p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][0],
+		(int *)p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][1],
+		(int *)p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][2],
+		(int *)p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][3],
+ 	        p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->detail_info_num][0],
+                p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->detail_info_num][1],
+                p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->detail_info_num][2],
+                p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->detail_info_num][3],
+                p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->detail_info_num][4],
+                p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->detail_info_num][5]
+	);
 	//NBSS Called and Calling Name
         UCHAR des_hostname[16] = {
                                 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,

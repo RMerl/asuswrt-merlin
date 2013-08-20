@@ -96,11 +96,9 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 	if (opt & 0x2) /* -s */
 		i |= LOG_PERROR;
 	if (opt & 0x8) { /* -c */
-		f = fopen_for_read(DEV_CONSOLE);
-		if (!f) {
-			i |= LOG_CONS;
+		f = fopen_for_write(DEV_CONSOLE);
+		if (!f)
 			bb_error_msg("can't open console: %d %s\n", errno, strerror(errno));
-		}
 	}
 	//if (opt & 0x4) /* -t */
 	openlog(str_t, i, 0);

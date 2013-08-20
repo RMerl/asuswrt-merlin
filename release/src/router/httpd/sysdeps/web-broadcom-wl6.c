@@ -1688,22 +1688,27 @@ static int ej_wl_channel_list(int eid, webs_t wp, int argc, char_t **argv, int u
 	char tmp[256], tmp1[256], tmp2[256], prefix[] = "wlXXXXXXXXXX_";
 	char *name;
 	uint ch;
+	char word[256], *next;
+	int unit_max = 0, count = 0;
+
+	sprintf(tmp1, "[\"%d\"]", 0);
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next)
+		unit_max++;
+
+	if (unit > (unit_max - 1))
+		goto ERROR;
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
-	memset(tmp1, 0x0, sizeof(tmp1));
-	memset(tmp2, 0x0, sizeof(tmp2));
 
 	if (is_wlif_up(name) != 1)
 	{
-#if 0
-		sprintf(tmp1, "[\"%d\"]", 0);
-#else
-		char word[256], *next;
-		int count = 0;
-
 		foreach (word, nvram_safe_get(strcat_r(prefix, "chlist", tmp)), next)
 			count++;
+
+		if (count < 2)
+			goto ERROR;
 
 		i = 0;
 		foreach (word, nvram_safe_get(strcat_r(prefix, "chlist", tmp)), next) {
@@ -1722,7 +1727,6 @@ static int ej_wl_channel_list(int eid, webs_t wp, int argc, char_t **argv, int u
 
 			i++;
 		}
-#endif
 		goto ERROR;
 	}
 
@@ -2053,16 +2057,15 @@ ej_nat_table(int eid, webs_t wp, int argc, char_t **argv)
 
 	// find another way to show iptable
 #ifdef REMOVE
-    	netconf_get_nat(NULL, &needlen);
+	netconf_get_nat(NULL, &needlen);
 
-    	if (needlen > 0) 
+	if (needlen > 0)
 	{
-
 		nat_list = (netconf_nat_t *) malloc(needlen);
 		if (nat_list) {
-	    		memset(nat_list, 0, needlen);
-	    		listlen = needlen;
-	    		if (netconf_get_nat(nat_list, &listlen) == 0 && needlen == listlen) {
+			memset(nat_list, 0, needlen);
+			listlen = needlen;
+			if (netconf_get_nat(nat_list, &listlen) == 0 && needlen == listlen) {
 				listlen = needlen/sizeof(netconf_nat_t);
 
 				for(i=0;i<listlen;i++)
@@ -2105,10 +2108,10 @@ ej_nat_table(int eid, webs_t wp, int argc, char_t **argv)
 					ret += websWrite(wp, line);
 				}
 				}
-	    		}
-	    		free(nat_list);
+			}
+			free(nat_list);
 		}
-    	}
+	}
 #endif
 	return ret;
 }

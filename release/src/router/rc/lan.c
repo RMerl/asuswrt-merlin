@@ -154,6 +154,63 @@ void txpwr_rtn12hp(char *ifname, int unit, int subunit)
 
 }
 
+#ifdef RTCONFIG_BCMWL6
+/* workaround for BCMWL6 only */
+static void set_mrate(const char* ifname, const char* prefix)
+{
+	float mrate = 0;
+	char tmp[100];
+
+	switch (nvram_get_int(strcat_r(prefix, "mrate_x", tmp))) {
+	case 0: /* Auto */
+		mrate = 0;
+		break;
+	case 1: /* Legacy CCK 1Mbps */
+		mrate = 1;
+		break;
+	case 2: /* Legacy CCK 2Mbps */
+		mrate = 2;
+		break;
+	case 3: /* Legacy CCK 5.5Mbps */
+		mrate = 5.5;
+		break;
+	case 4: /* Legacy OFDM 6Mbps */
+		mrate = 6;
+		break;
+	case 5: /* Legacy OFDM 9Mbps */
+		mrate = 9;
+		break;
+	case 6: /* Legacy CCK 11Mbps */
+		mrate = 11;
+		break;
+	case 7: /* Legacy OFDM 12Mbps */
+		mrate = 12;
+		break;
+	case 8: /* Legacy OFDM 18Mbps */
+		mrate = 18;
+		break;
+	case 9: /* Legacy OFDM 24Mbps */
+		mrate = 24;
+		break;
+	case 10: /* Legacy OFDM 36Mbps */
+		mrate = 36;
+		break;
+	case 11: /* Legacy OFDM 48Mbps */
+		mrate = 48;
+		break;
+	case 12: /* Legacy OFDM 54Mbps */
+		mrate = 54;
+		break;
+	default: /* Auto */
+		mrate = 0;
+		break;
+	}
+
+	sprintf(tmp, "wl -i %s mrate %.1f", ifname, mrate);
+	system(tmp);
+}
+#endif
+
 static int wlconf(char *ifname, int unit, int subunit)
 {
 	int r;
@@ -208,17 +265,6 @@ static int wlconf(char *ifname, int unit, int subunit)
 			eval("wl", "-i", ifname, "ldpc_cap", "1");	// driver default setting
 #endif
 #ifdef RTCONFIG_BCMWL6
-#ifdef RTCONFIG_BCMARM
-		if (unit == 0)
-		{
-			if (model == MODEL_RTAC68U) {
-				if (nvram_match(strcat_r(prefix, "turbo_qam", tmp), "1"))
-					eval("wl", "-i", ifname, "vht_features", "3");
-				else
-					eval("wl", "-i", ifname, "vht_features", "0");
-			}
-		}
-#endif
 		if (nvram_match(strcat_r(prefix, "ack_ratio", tmp), "1"))
 			eval("wl", "-i", ifname, "ack_ratio", "4");
 		else
@@ -257,6 +303,8 @@ static int wlconf(char *ifname, int unit, int subunit)
 					}
 					break;
 			}
+#else
+			set_mrate(ifname, prefix);
 #endif
 			txpower = nvram_get_int(wl_nvname("TxPower", unit, 0));
 
@@ -272,7 +320,7 @@ static int wlconf(char *ifname, int unit, int subunit)
 
 				default:
 
-					eval("wl", "-i", ifname, "txpwr1", "-o", "-q", "-1");
+					eval("wl", "-i", ifname, "txpwr1", "-1");
 
 					break;
 			}
@@ -509,6 +557,32 @@ static void check_afterburner(void)
 		nvram_set("boardflags", s);
 	}
 */
+}
+
+void wlconf_pre()
+{
+	int unit = 0;
+	int model = get_model();
+	char word[256], *next;
+	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next) {
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_BCMARM
+		if (unit == 0)
+		{
+			if (model == MODEL_RTAC68U) {
+				if (nvram_match(strcat_r(prefix, "turbo_qam", tmp), "1"))
+					eval("wl", "-i", word, "vht_features", "3");
+				else
+					eval("wl", "-i", word, "vht_features", "0");
+			}
+		}
+#endif
+#endif
+		unit++;
+	}
 }
 #endif
 
@@ -973,6 +1047,7 @@ void start_lan(void)
 		(get_model() == MODEL_RTN66U))
 	modprobe("wl");
 #endif
+	wlconf_pre();
 #endif
 
 #ifdef RTCONFIG_RALINK
@@ -1492,6 +1567,7 @@ void stop_lan(void)
 		(get_model() == MODEL_RTN66U))
 	modprobe_r("wl");
 #endif
+	wlconf_pre();
 #endif
 
 #ifdef RTCONFIG_RALINK
@@ -2642,6 +2718,7 @@ void start_lan_wl(void)
  		(get_model() == MODEL_RTN66U))
 	modprobe("wl");
 #endif
+	wlconf_pre();
 #endif
 
 #ifdef RTCONFIG_RALINK
@@ -3147,20 +3224,26 @@ void stop_wan_port(void)
 	wanport_ctrl(0);
 }
 
+void restart_lan_port(int dt)
+{
+	stop_lan_port();
+	start_lan_port(dt);
+}
+
 void start_lan_port(int dt)
 {
-	int now;
+	int now = 0;
 
 	if (dt <= 0)
 		now = 1;
 
 	_dprintf("%s(%d) %d\n", __func__, dt, now);
 	if (!s_last_lan_port_stopped_ts) {
-		time(&s_last_lan_port_stopped_ts);
+		s_last_lan_port_stopped_ts = uptime();
 		now = 1;
 	}
 
-	while (!now && time(NULL) - s_last_lan_port_stopped_ts < 6) {
+	while (!now && (uptime() - s_last_lan_port_stopped_ts < dt)) {
 		_dprintf("sleep 1\n");
 		sleep(1);
 	}
@@ -3171,7 +3254,7 @@ void start_lan_port(int dt)
 void stop_lan_port(void)
 {
 	lanport_ctrl(0);
-	time(&s_last_lan_port_stopped_ts);
+	s_last_lan_port_stopped_ts = uptime();
 	_dprintf("%s() stop lan port. ts %ld\n", __func__, s_last_lan_port_stopped_ts);
 }
 

@@ -15,7 +15,8 @@
 	select_device_name : "Select the device name of DHCP clients.",
 	select_service : "Select the service name.",
 	select_client : "Select the client of DHCP clients.",
-	select_APN_service : "Select the APN service."
+	select_APN_service : "Select the APN service.",
+	Guest_Network_enable_ACL : "You must go to enable MAC filter"
 };
 var clicked_help_string = "<#Help_init_word1#> <a class=\"hintstyle\" style=\"background-color:#7aa3bd\"><#Help_init_word2#></a> <#Help_init_word3#>";
 
@@ -194,7 +195,12 @@ function overHint(itemNum){
 					title2 = 1;
 				}
 
-				statusmenu += "<span>" + gn_array_2g[i][1] + " (";
+				var show_str = gn_array_2g[i][1];
+				show_str = decodeURIComponent(show_str);
+				show_str = show_str.replace(/\&/g,"&amp;");
+				show_str = show_str.replace(/\</g,"&lt;");
+				show_str = show_str.replace(/\>/g,"&gt;");
+				statusmenu += "<span>" + show_str + " (";
 
 				if(gn_array_2g[i][11] == 0)
 					statusmenu += '<#Limitless#>';
@@ -211,14 +217,19 @@ function overHint(itemNum){
 			}
 		}
 		if(band5g_support){
-			for(var i=0; i<gn_array_2g.length; i++){
+			for(var i=0; i<gn_array_5g.length; i++){
 				if(gn_array_5g[i][0] == 1){
 					if(title5 == 0){
 						statusmenu += "<div class='StatusHint' style='margin-top:15px;'>5GHz Network:</div>";				
 						title5 = 1;
 					}
 	
-					statusmenu += "<span>" + gn_array_5g[i][1] + " (";
+					var show_str = gn_array_5g[i][1];
+					show_str = decodeURIComponent(show_str);
+					show_str = show_str.replace(/\&/g,"&amp;");
+					show_str = show_str.replace(/\</g,"&lt;");
+					show_str = show_str.replace(/\>/g,"&gt;");
+					statusmenu += "<span>" + show_str + " (";
 
 					if(gn_array_5g[i][11] == 0)
 						statusmenu += '<#Limitless#>';

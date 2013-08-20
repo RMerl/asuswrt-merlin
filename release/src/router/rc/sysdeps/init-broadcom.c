@@ -704,6 +704,7 @@ reset_mssid_hwaddr(int unit)
 				macvalue++;
 				macp = (unsigned char*) &macvalue;
 				memset(macaddr_str, 0, sizeof(macaddr_str));
+				sprintf(macaddr_str, "%02X:%02X:%02X:%02X:%02X:%02X\n", *(macp+5), *(macp+4), *(macp+3), *(macp+2), *(macp+1), *(macp+0));
 				snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
 				nvram_set(strcat_r(prefix, "hwaddr", tmp), macaddr_str);
 			}
@@ -1152,7 +1153,6 @@ int set_wltxpower()
 	int txpower = 80;
 	int commit_needed = 0;
 	int model;
-	int wlopmode = (nvram_get("wlopmode") == NULL) ? 0 : nvram_get_int("wlopmode");
 
 	// generate nvram nvram according to system setting
 	model = get_model();
@@ -1248,103 +1248,6 @@ int set_wltxpower()
 
 		switch(model) {
 			case MODEL_RTAC66U:
-				if (wlopmode == 7)
-				{
-					if (nvram_match(strcat_r(prefix, "country_code", tmp), "US"))
-					{
-						nvram_set("regulation_domain_5G", "Q2");
-						nvram_set(strcat_r(prefix, "country_code", tmp), "Q2");
-						nvram_set(strcat_r(prefix2, "ccode", tmp2), "Q2");
-						nvram_set(strcat_r(prefix, "country_rev", tmp), "12");
-						nvram_set(strcat_r(prefix2, "regrev", tmp2), "12");
-						commit_needed++;
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "Q2"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "12"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "12");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "12");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "EU"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "15"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "15");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "15");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "TW"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "4"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "4");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "4");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "CN"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "5"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "5");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "5");
-							commit_needed++;
-						}
-					}
-				}
-				else
-				{
-					if (nvram_match(strcat_r(prefix, "country_code", tmp), "US"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "12"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "12");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "12");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "Q2"))
-					{
-						nvram_set("regulation_domain_5G", "US");
-						nvram_set(strcat_r(prefix, "country_code", tmp), "US");
-						nvram_set(strcat_r(prefix2, "ccode", tmp2), "US");
-						nvram_set(strcat_r(prefix, "country_rev", tmp), "12");
-						nvram_set(strcat_r(prefix2, "regrev", tmp2), "12");
-						commit_needed++;
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "EU"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "31"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "31");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "31");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "TW"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "9"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "9");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "9");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "CN"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "11"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "11");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "11");
-							commit_needed++;
-						}
-					}
-				}
-
 				if (set_wltxpower_once) {
 					if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))		// 2.4G
 					{
@@ -1606,63 +1509,6 @@ int set_wltxpower()
 				break;
 
 			case MODEL_RTN18UHP:
-				if (wlopmode == 7)
-				{
-					if (nvram_match(strcat_r(prefix, "country_code", tmp), "US"))
-					{
-						nvram_set(strcat_r(prefix, "country_code", tmp), "Q2");
-						nvram_set(strcat_r(prefix2, "ccode", tmp2), "Q2");
-						nvram_set(strcat_r(prefix, "country_rev", tmp), "12");
-						nvram_set(strcat_r(prefix2, "regrev", tmp2), "12");
-						commit_needed++;
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "Q2"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "12"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "12");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "12");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "EU"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "15"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "15");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "15");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "TW"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "4"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "4");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "4");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "CN"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "5"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "5");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "5");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "JP"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "15"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "15");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "15");
-							commit_needed++;
-						}
-					}
-				}
-				else
 				{
 					if (nvram_match(strcat_r(prefix, "country_code", tmp), "US"))
 					{
@@ -1722,63 +1568,6 @@ int set_wltxpower()
 				break;
 
 			case MODEL_RTAC68U:
-				if (wlopmode == 7)
-				{
-					if (nvram_match(strcat_r(prefix, "country_code", tmp), "US"))
-					{
-						nvram_set(strcat_r(prefix, "country_code", tmp), "Q2");
-						nvram_set(strcat_r(prefix2, "ccode", tmp2), "Q2");
-						nvram_set(strcat_r(prefix, "country_rev", tmp), "12");
-						nvram_set(strcat_r(prefix2, "regrev", tmp2), "12");
-						commit_needed++;
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "Q2"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "12"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "12");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "12");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "EU"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "15"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "15");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "15");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "TW"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "4"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "4");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "4");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "CN"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "5"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "5");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "5");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "JP"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "15"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "15");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "15");
-							commit_needed++;
-						}
-					}
-				}
-				else
 				{
 					if (nvram_match(strcat_r(prefix, "country_code", tmp), "US"))
 					{
@@ -1799,7 +1588,8 @@ int set_wltxpower()
 					}
 					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "EU"))
 					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "31"))
+						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "31") &&
+							!nvram_match(strcat_r(prefix2, "regrev", tmp2), "42"))
 						{
 							nvram_set(strcat_r(prefix, "country_rev", tmp), "31");
 							nvram_set(strcat_r(prefix2, "regrev", tmp2), "31");
@@ -2098,54 +1888,6 @@ int set_wltxpower()
 				break;
 
 			case MODEL_RTAC56U:
-				if (wlopmode == 7)
-				{
-					if (nvram_match(strcat_r(prefix, "country_code", tmp), "US"))
-					{
-						nvram_set(strcat_r(prefix, "country_code", tmp), "Q2");
-						nvram_set(strcat_r(prefix2, "ccode", tmp2), "Q2");
-						nvram_set(strcat_r(prefix, "country_rev", tmp), "12");
-						nvram_set(strcat_r(prefix2, "regrev", tmp2), "12");
-						commit_needed++;
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "Q2"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "12"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "12");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "12");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "EU"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "15"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "15");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "15");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "TW"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "4"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "4");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "4");
-							commit_needed++;
-						}
-					}
-					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "CN"))
-					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "5"))
-						{
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "5");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "5");
-							commit_needed++;
-						}
-					}
-				}
-				else
 				{
 					if (nvram_match(strcat_r(prefix, "country_code", tmp), "US"))
 					{
@@ -2166,7 +1908,8 @@ int set_wltxpower()
 					}
 					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "EU"))
 					{
-						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "31"))
+						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "31")
+							&& !nvram_match(strcat_r(prefix2, "regrev", tmp2), "42"))
 						{
 							nvram_set(strcat_r(prefix, "country_rev", tmp), "31");
 							nvram_set(strcat_r(prefix2, "regrev", tmp2), "31");
@@ -2426,187 +2169,6 @@ int set_wltxpower()
 				break;
 
 			case MODEL_RTN66U:
-				if (wlopmode == 7)
-				{
-					if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))		// 2.4G
-					{
-						if (nvram_match(strcat_r(prefix, "country_code", tmp), "US"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "2"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "2");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "2");
-								commit_needed++;
-							}
-						}
-						else if (nvram_match(strcat_r(prefix, "country_code", tmp), "EU"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "5"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "5");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "5");
-								commit_needed++;
-							}
-						}
-						else if (nvram_match(strcat_r(prefix, "country_code", tmp), "JP"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "13"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "13");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "13");
-								commit_needed++;
-							}
-						}
-					}
-					else								// 5G
-					{
-						if (nvram_match(strcat_r(prefix, "country_code", tmp), "US"))
-						{
-							nvram_set("regulation_domain_5G", "Q2");
-							nvram_set(strcat_r(prefix, "country_code", tmp), "Q2");
-							nvram_set(strcat_r(prefix2, "ccode", tmp2), "Q2");
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "0");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "0");
-							commit_needed++;
-						}
-						else if (nvram_match(strcat_r(prefix, "country_code", tmp), "Q2"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "0"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "0");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "0");
-								commit_needed++;
-							}
-						}
-						else if (nvram_match(strcat_r(prefix, "country_code", tmp), "EU"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "3"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "3");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "3");
-								commit_needed++;
-							}
-						}
-						else if (nvram_match(strcat_r(prefix, "country_code", tmp), "TW"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "0"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "0");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "0");
-								commit_needed++;
-							}
-						}
-						else if (nvram_match(strcat_r(prefix, "country_code", tmp), "CN"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "0"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "0");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "0");
-								commit_needed++;
-							}
-						}
-						else if (nvram_match(strcat_r(prefix, "country_code", tmp), "JP"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "13"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "13");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "13");
-								commit_needed++;
-							}
-						}
-					}
-				}
-				else
-				{
-					if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))		// 2.4G
-					{
-						if (nvram_match(strcat_r(prefix, "country_code", tmp), "US"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "63"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "63");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "63");
-								commit_needed++;
-							}
-						}
-						else if (nvram_match(strcat_r(prefix, "country_code", tmp), "EU"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "10"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "10");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "10");
-								commit_needed++;
-							}
-						}
-						else if (nvram_match(strcat_r(prefix, "country_code", tmp), "JP"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "14"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "14");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "14");
-								commit_needed++;
-							}
-						}
-					}
-					else								// 5G
-					{
-						if (nvram_match(strcat_r(prefix, "country_code", tmp), "US"))
-						{
-							nvram_set("regulation_domain_5G", "Q2");
-							nvram_set(strcat_r(prefix, "country_code", tmp), "Q2");
-							nvram_set(strcat_r(prefix2, "ccode", tmp2), "Q2");
-							nvram_set(strcat_r(prefix, "country_rev", tmp), "3");
-							nvram_set(strcat_r(prefix2, "regrev", tmp2), "3");
-							commit_needed++;
-						}
-						else if (nvram_match(strcat_r(prefix, "country_code", tmp), "Q2"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "3"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "3");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "3");
-								commit_needed++;
-							}
-						}
-						else if (nvram_match(strcat_r(prefix, "country_code", tmp), "EU"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "10"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "10");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "10");
-								commit_needed++;
-							}
-						}
-						else if (nvram_match(strcat_r(prefix, "country_code", tmp), "TW"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "5"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "5");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "5");
-								commit_needed++;
-							}
-						}
-						else if (nvram_match(strcat_r(prefix, "country_code", tmp), "CN"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "5"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "5");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "5");
-								commit_needed++;
-							}
-						}
-						else if (nvram_match(strcat_r(prefix, "country_code", tmp), "JP"))
-						{
-							if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "14"))
-							{
-								nvram_set(strcat_r(prefix, "country_rev", tmp), "14");
-								nvram_set(strcat_r(prefix2, "regrev", tmp2), "14");
-								commit_needed++;
-							}
-						}
-					}
-				}
-
 				if (set_wltxpower_once || nvram_match("bl_version", "1.0.0.9")) {
 					if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))		// 2.4G
 					{

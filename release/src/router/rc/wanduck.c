@@ -1359,6 +1359,10 @@ int wanduck_main(int argc, char *argv[]){
 	signal(SIGUSR2, notify_nvram_changed);
 #endif
 
+#ifdef RTCONFIG_DSL
+	int usb_switched_back_dsl = 0;
+#endif
+
 	if(argc < 3){
 		http_servport = DFL_HTTP_SERV_PORT;
 		dns_servport = DFL_DNS_SERV_PORT;
@@ -1772,7 +1776,24 @@ csprintf("# wanduck: set S_COUNT: PHY_RECONN.\n");
 
 				conn_state_old[current_wan_unit] = conn_state[current_wan_unit];
 
+#ifdef RTCONFIG_DSL /* Paul add 2013/7/29, for Non-DualWAN 3G/4G WAN -> DSL WAN, auto Fail-Back feature */
+#ifndef RTCONFIG_DUALWAN
+			if (nvram_match("dsltmp_adslsyncsts","up") && current_wan_unit == WAN_UNIT_SECOND){
+				csprintf("\n# wanduck: adslsync up.\n");
 				set_disconn_count(current_wan_unit, S_IDLE);
+				link_wan[current_wan_unit] = DISCONN;
+				conn_state[current_wan_unit] = DISCONN;
+				usb_switched_back_dsl = 1;
+				max_disconn_count = 1;
+			}
+			else
+				set_disconn_count(current_wan_unit, S_IDLE);
+#else
+			set_disconn_count(current_wan_unit, S_IDLE);
+#endif
+#else
+			set_disconn_count(current_wan_unit, S_IDLE);
+#endif
 			}
 			else if(conn_state[current_wan_unit] == DISCONN){
 				if(conn_state_old[current_wan_unit] == CONNED)
@@ -1927,6 +1948,17 @@ else
 							){
 csprintf("\n# wanduck(C2D): Modem was plugged off and try to Switch the other line.\n");
 						switch_wan_line(other_wan_unit);
+
+#ifdef RTCONFIG_DSL /* Paul add 2013/7/29, for Non-DualWAN 3G/4G WAN -> DSL WAN, auto Fail-Back feature */
+#ifndef RTCONFIG_DUALWAN
+						if (nvram_match("dsltmp_adslsyncsts","up") && usb_switched_back_dsl == 1){
+							csprintf("\n# wanduck: usb_switched_back_dsl: 1.\n");
+							link_wan[WAN_UNIT_SECOND] = CONNED; 
+							max_disconn_count = max_wait_time/SCAN_INTERVAL;
+							usb_switched_back_dsl = 0;
+						}
+#endif
+#endif
 					}
 					else
 #endif
@@ -1944,9 +1976,11 @@ csprintf("\n# wanduck(C2D): Try to prepare the backup line.\n");
 		}
 		else if(conn_changed_state[current_wan_unit] == D2C || conn_changed_state[current_wan_unit] == CONNED){
 			if(rule_setup == 1 && !isFirstUse){
+#ifdef RTCONFIG_DSL /* Paul add 2013/7/30 */
+				led_control(LED_WAN, LED_ON);
+#endif
 csprintf("\n# Disable direct rule if not tunnelled (D2C)\n");
 				rule_setup = 0;
-
 				handle_wan_line(current_wan_unit, rule_setup);
 			}
 		}

@@ -245,8 +245,8 @@ function done_validating(action){
                                         </th>
                                         <td>
                                                 <select name="ftp_lang" class="input_option" onChange="return change_common(this, 'Storage', 'ftp_lang');">
-                                                        <option value="CN" <% nvram_match("ftp_lang", "CN", "selected"); %>><#ShareNode_FTPLANG_optionname3#></option>
-                                                        <option value="TW" <% nvram_match("ftp_lang", "TW", "selected"); %>><#ShareNode_FTPLANG_optionname2#></option>
+                                                        <option value="CN" <% nvram_match("ftp_lang", "CN", "selected"); %>>GBK</option><!-- <#ShareNode_FTPLANG_optionname3#> -->
+                                                        <option value="TW" <% nvram_match("ftp_lang", "TW", "selected"); %>>Big5</option><!-- <#ShareNode_FTPLANG_optionname2#> -->
                                                         <option value="EN" <% nvram_match("ftp_lang", "EN", "selected"); %>>UTF-8</option><!--<#ShareNode_FTPLANG_optionname1#>-->
                                                         <!-- Viz for Common N16 : RU CZ  -->	
 														<option value="RU" <% nvram_match("ftp_lang", "RU", "selected"); %>><#ShareNode_FTPLANG_optionname4#></option>

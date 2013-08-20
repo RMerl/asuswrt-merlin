@@ -4257,6 +4257,63 @@ _dprintf("test 2. turn off the USB power during %d seconds.\n", reset_seconds[re
 		}
 	}
 #endif
+#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
+#ifdef RTCONFIG_XHCIMODE
+	else if(!strcmp(script, "xhcimode")){
+		char param[32];
+		int usb2enable = nvram_get_int("usb_usb2");
+		int uhcienable = nvram_get_int("usb_uhci");
+		int ohcienable = nvram_get_int("usb_ohci");
+		int i;
+
+		_dprintf("xhcimode: stop_usb_program...\n");
+		stop_usb_program(1);
+
+		_dprintf("xhcimode: remove xhci...\n");
+		modprobe_r(USB30_MOD);
+
+		if(usb2enable){
+			_dprintf("xhcimode: remove ehci...\n");
+			modprobe_r(USB20_MOD);
+		}
+
+		if(ohcienable){
+			_dprintf("xhcimode: remove ohci...\n");
+			modprobe_r(USBOHCI_MOD);
+		}
+
+		if(uhcienable){
+			_dprintf("xhcimode: remove uhci...\n");
+			modprobe_r(USBUHCI_MOD);
+		}
+
+		memset(param, 0, 32);
+		sprintf(param, "usb2mode=%s", cmd[1]);
+		_dprintf("xhcimode: insert xhci %s...\n", param);
+		modprobe(USB30_MOD, param);
+
+		if(usb2enable){
+			i = nvram_get_int("usb_irq_thresh");
+			if(i < 0 || i > 6)
+				i = 0;
+			memset(param, 0, 32);
+			sprintf(param, "log2_irq_thresh=%d", i);
+			_dprintf("xhcimode: insert ehci %s...\n", param);
+			modprobe(USB20_MOD, param);
+		}
+
+		if(ohcienable){
+			_dprintf("xhcimode: insert ohci...\n");
+			modprobe(USBOHCI_MOD);
+		}
+
+		if(uhcienable){
+			_dprintf("xhcimode: insert uhci...\n");
+			modprobe(USBUHCI_MOD);
+		}
+	}
+#endif
+#endif
 	else
 	{
 		fprintf(stderr,

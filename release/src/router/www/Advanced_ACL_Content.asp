@@ -347,7 +347,7 @@ function enable_macMode(){
 <input type="hidden" name="next_page" value="Advanced_ACL_Content.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
-<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_mode" value="apply_new">
 <input type="hidden" name="action_wait" value="3">
 <input type="hidden" name="action_script" value="restart_wireless">
 <input type="hidden" name="first_time" value="">

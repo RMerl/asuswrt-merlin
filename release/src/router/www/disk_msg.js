@@ -39,6 +39,6 @@ var alert_msg = {
 "Input9":"<#ALERT_OF_ERROR_Input9#>",
 "System1":"<#ALERT_OF_ERROR_System1#>",
 "System2":"<#ALERT_OF_ERROR_System2#>",
-"System3":"<#ALERT_OF_ERROR_System3#>",
+"System3":"<#ALERT_OF_ERROR_System3#>"
 };
 

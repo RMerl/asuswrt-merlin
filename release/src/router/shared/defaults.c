@@ -400,8 +400,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "emf_uffp_entry",		""		},	// Unreg frames forwarding ports
 	{ "emf_rtport_entry",		""		},	// IGMP frames forwarding ports
 #ifdef RTCONFIG_BCMWL6
-	{ "wl_wmf_ucigmp_query",	"0"		},	/* Disable Converting IGMP Query to ucast (default) */
-	{ "wl_wmf_mdata_sendup", 	"0"		},	/* Disable Sending Multicast Data to host (default) */
+	{ "wl_wmf_ucigmp_query",	"1"		},	/* Disable Converting IGMP Query to ucast (default) */
+	{ "wl_wmf_mdata_sendup", 	"1"		},	/* Disable Sending Multicast Data to host (default) */
 #endif
 #endif
 

@@ -16,7 +16,17 @@ sub append_gpl_excludes
 	if (opendir(DIR, "./wl/sysdeps")) {
 		while (my $file = readdir(DIR)) {
 			if ( $file ne "$uc_model" && $file ne "." && $file ne ".." && $file ne "default" ) {
-				print $fexclude "${uc_modeldir}/wl/sysdeps/$file\n";
+				if ( -l "./wl/sysdeps/$uc_model" ) {
+					$linkto=readlink("./wl/sysdeps/$uc_model");
+					if ( "${file}" ne "$linkto" ) {
+						print "not link to $file $linkto\n";
+						print $fexclude "${uc_modeldir}/wl/sysdeps/$file\n";
+					}
+				} 
+				else 
+				{
+					print $fexclude "${uc_modeldir}/wl/sysdeps/$file\n";
+				}
 			}
 		}
 		close(DIR);

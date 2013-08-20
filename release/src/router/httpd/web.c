@@ -196,6 +196,21 @@ extern int change_passwd;	// 2008.08 magic
 extern int reget_passwd;	// 2008.08 magic
 extern char *host_name;
 
+static void insert_hook_func(webs_t wp, char *fname, char *param)
+{
+	if (!wp || !fname) {
+		_dprintf("%s: invalid parameter (%p, %p, %p)\n", __func__, wp, fname, param);
+		return;
+	}
+
+	if (!param)
+		param = "";
+
+	websWrite(wp, "<script>\n");
+	websWrite(wp, "%s(%s);\n", fname, param);
+	websWrite(wp, "</script>\n");
+}
+
 char *
 rfctime(const time_t *timep)
 {
@@ -1062,10 +1077,10 @@ int webWriteNvram(webs_t wp, char *name)
 
 	for (c = nvram_safe_get(name); *c; c++) {
 		if (isprint(*c) &&
-		    *c != '"' && *c != '&' && *c != '<' && *c != '>' && *c != '\\')
+		    *c != '"' && *c != '&' && *c != '<' && *c != '>' && *c != '\\' && *c != '%')
 			ret += websWrite(wp, "%c", *c);
 		else
-			ret += websWrite(wp, "&#%d", *c);
+			ret += websWrite(wp, "%%%02X", *c);
 	}
 
 	return ret;
@@ -1372,14 +1387,14 @@ static int validate_apply(webs_t wp) {
 	struct nvram_tuple *t;
 	char *value;
 	char name[64];
-	char buff[3000], tmp[3000], prefix[32];
+	char tmp[3000], prefix[32];
 	int i, j, len;
 	int unit=-1, subunit=-1;
 	int nvram_modified = 0;
 	int nvram_modified_wl = 0;
+	int acc_modified = 0;
 	int ret;
 #ifdef RTCONFIG_USB
-	int acc_modified = 0;
 	char orig_acc[128], modified_acc[128], modified_pass[128];
 
 	memset(orig_acc, 0, 128);
@@ -1390,8 +1405,7 @@ static int validate_apply(webs_t wp) {
 	/* go through each nvram value */
 	for (t = router_defaults; t->name; t++)
 	{
-		memset(name, 0, 64);
-		sprintf(name, "%s", t->name);
+		snprintf(name, sizeof(name), t->name);
 
 		value = websGetVar(wp, name, NULL);
 
@@ -1403,11 +1417,6 @@ static int validate_apply(webs_t wp) {
 		}
 		else {
 			_dprintf("value %s=%s\n", name, value);
-
-#ifdef RTCONFIG_USB
-			memset(buff, 0, 3000);
-			strncpy(buff, nvram_safe_get(name), 3000);
-#endif
 
 			// unit nvram should be in fron of each apply,
 			// seems not a good design
@@ -1525,35 +1534,37 @@ static int validate_apply(webs_t wp) {
 				_dprintf("set %s=%s\n", name, tmp);
 			}
 			// TODO: add other multiple instance handle here
-			else if(strcmp(buff, value)) {
-				nvram_set(name, value);
-				nvram_modified = 1;
-				_dprintf("set %s=%s\n", name, value);
+			else if(strcmp(nvram_safe_get(name), value)) {
 
 				// the flag is set only when username or password is changed
 				if(!strcmp(t->name, "http_username")
 						|| !strcmp(t->name, "http_passwd")){
 #ifdef RTCONFIG_USB
 					if(!strcmp(t->name, "http_username")){
-						strncpy(orig_acc, buff, 128);
+						strncpy(orig_acc, nvram_safe_get(name), 128);
 						strncpy(modified_acc, value, 128);
 					}
 					else if(!strcmp(t->name, "http_passwd"))
 						strncpy(modified_pass, value, 128);
 
-					acc_modified = 1;
 #endif
 
+					acc_modified = 1;
 					change_passwd = 1;
-					// ugly solution?
-					notify_rc("chpass");
 				}
+
+				nvram_set(name, value);
+				nvram_modified = 1;
+				_dprintf("set %s=%s\n", name, value);
 			}
 		}
 	}
 
-#ifdef RTCONFIG_USB
 	if(acc_modified){
+		// ugly solution?
+		notify_rc("chpass");
+
+#ifdef RTCONFIG_USB
 		if(strlen(orig_acc) <= 0)
 			strncpy(orig_acc, nvram_safe_get("http_username"), 128);
 		if(strlen(modified_pass) <= 0)
@@ -1565,8 +1576,8 @@ static int validate_apply(webs_t wp) {
 			mod_account(orig_acc, modified_acc, modified_pass);
 
 		notify_rc_and_wait("restart_ftpsamba");
-	}
 #endif
+	}
 
 	/* go through each temp nvram value */
 	/* but not support instance now */
@@ -1609,24 +1620,27 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 	char *action_wait;
 	char *wan_unit = websGetVar(wp, "wan_unit", "0");
 	char notify_cmd[128];
+	int do_apply;
 
 	// assign control variables
 	action_mode = websGetVar(wp, "action_mode", "");
 	action_script = websGetVar(wp, "action_script", "restart_net");
 	action_wait = websGetVar(wp, "action_wait", "5");
 
-	_dprintf("update_variables: [%s] [%s]\n", action_mode, action_script);
+	_dprintf("update_variables: [%s] [%s] [%s]\n", action_mode, action_script, action_wait);
 
-	if (!strcmp(action_mode, "apply") || 
-	    !strcmp(action_mode, " Apply ")) // for backwork compatibility 
+	if ((do_apply = !strcmp(action_mode, "apply")) || 
+	    !strcmp(action_mode, "apply_new"))
 	{
-		if (!validate_apply(wp)) {
+		int has_modify;
+		if (!(has_modify = validate_apply(wp))) {
 			websWrite(wp, "<script>no_changes_and_no_committing();</script>\n");
 		}
 		else {
 			websWrite(wp, "<script>done_committing();</script>\n");
 		}
 
+		if(do_apply || has_modify) {
 		if (strlen(action_script) > 0) {
 			memset(notify_cmd, 0, 32);
 			if(strstr(action_script, "_wan_if"))
@@ -1649,6 +1663,7 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 		else
 #endif
 		websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait));
+		}
 	}
 	return 0;
 }
@@ -1881,12 +1896,13 @@ static int wanlink_hook(int eid, webs_t wp, int argc, char_t **argv){
 	unsigned int xlease = 0, xexpires = 0;
 
 	/* current unit */
-/*#ifdef RTCONFIG_DUALWAN
+#ifdef RTCONFIG_DUALWAN
 	if(nvram_match("wans_mode", "lb"))
 		unit = WAN_UNIT_FIRST;
 	else
-#endif*/
-		unit = WAN_UNIT_FIRST;
+#endif
+		unit = wan_primary_ifunit(); //Paul add 2013/7/24, get current working wan unit
+		//unit = WAN_UNIT_FIRST;
 
 printf("httpd: unit: %d\n", unit);
 
@@ -5740,6 +5756,7 @@ static int ej_safely_remove_disk(int eid, webs_t wp, int argc, char_t **argv){
 //	disk_info_t *disks_info = NULL, *follow_disk = NULL;
 //	int disk_num = 0;
 	int part_num = 0;
+	char *fn = "safely_remove_disk_error";
 
 	csprintf("disk_port = %s\n", disk_port);
 
@@ -5752,9 +5769,7 @@ static int ej_safely_remove_disk(int eid, webs_t wp, int argc, char_t **argv){
 	}
 
 	if (result != 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "safely_remove_disk_error(alert_msg.Action9);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action9");
 		return -1;
 	}
 
@@ -5780,9 +5795,7 @@ static int ej_safely_remove_disk(int eid, webs_t wp, int argc, char_t **argv){
 		result = notify_rc_for_nas("stop_nasapps");
 	}
 
-	websWrite(wp, "<script>\n");
-	websWrite(wp, "safely_remove_disk_success();\n");
-	websWrite(wp, "</script>\n");
+	insert_hook_func(wp, "safely_remove_disk_success", "");
 
 	return 0;
 }
@@ -6217,6 +6230,7 @@ int ej_set_share_mode(int eid, webs_t wp, int argc, char **argv){
 	char *protocol = websGetVar(wp, "protocol", "");
 	char *mode = websGetVar(wp, "mode", "");
 	int result;
+	char *fn = "set_share_mode_error";
 
 	if (strlen(dummyShareway) > 0)
 		nvram_set("dummyShareway", dummyShareway);
@@ -6224,15 +6238,11 @@ int ej_set_share_mode(int eid, webs_t wp, int argc, char **argv){
 		nvram_set("dummyShareway", "0");
 
 	if (strlen(protocol) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_share_mode_error(alert_msg.Input1);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input1");
 		return -1;
 	}
 	if (strlen(mode) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_share_mode_error(alert_msg.Input3);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input3");
 		return -1;
 	}
 	if (!strcmp(mode, "share")){
@@ -6257,9 +6267,7 @@ int ej_set_share_mode(int eid, webs_t wp, int argc, char **argv){
 		}
 #endif
 		else{
-			websWrite(wp, "<script>\n");
-			websWrite(wp, "set_share_mode_error(alert_msg.Input2);\n");
-			websWrite(wp, "</script>\n");
+			insert_hook_func(wp, fn, "alert_msg.Input2");
 			return -1;
 		}
 	}
@@ -6285,16 +6293,12 @@ int ej_set_share_mode(int eid, webs_t wp, int argc, char **argv){
 		}
 #endif
 		else {
-			websWrite(wp, "<script>\n");
-			websWrite(wp, "set_share_mode_error(alert_msg.Input2);\n");
-			websWrite(wp, "</script>\n");
+			insert_hook_func(wp, fn, "alert_msg.Input2");
 			return -1;
 		}
 	}
 	else{
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_share_mode_error(alert_msg.Input4);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input4");
 		return -1;
 	}
 
@@ -6314,23 +6318,17 @@ int ej_set_share_mode(int eid, webs_t wp, int argc, char **argv){
 	}
 #endif
 	else {
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_share_mode_error(alert_msg.Input2);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input2");
 		return -1;
 	}
 
 	if (result != 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_share_mode_error(alert_msg.Action8);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action8");
 		return -1;
 	}
 
 SET_SHARE_MODE_SUCCESS:
-	websWrite(wp, "<script>\n");
-	websWrite(wp, "set_share_mode_success();\n");
-	websWrite(wp, "</script>\n");
+	insert_hook_func(wp, "set_share_mode_success", "");
 
 	return 0;
 }
@@ -6341,49 +6339,36 @@ int ej_modify_sharedfolder(int eid, webs_t wp, int argc, char **argv){
 	char *folder = websGetVar(wp, "folder", "");
 	char *new_folder = websGetVar(wp, "new_folder", "");
 	char mount_path[PATH_MAX];
+	char *fn = "modify_sharedfolder_error";
 
 	if (strlen(pool) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "modify_sharedfolder_error(alert_msg.Input7);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input7");
 		return -1;
 	}
 	if (strlen(folder) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "modify_sharedfolder_error(alert_msg.Input9);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input9");
 		return -1;
 	}
 	if (strlen(new_folder) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "modify_sharedfolder_error(alert_msg.Input17);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input17");
 		return -1;
 	}
 	if (get_mount_path(pool, mount_path, PATH_MAX) < 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "modify_sharedfolder_error(alert_msg.System1);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.System1");
 		return -1;
 	}
 
 	if (mod_folder(mount_path, folder, new_folder) < 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "modify_sharedfolder_error(alert_msg.Action7);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action7");
 		return -1;
 	}
 
 	if (notify_rc_for_nas("restart_ftpsamba") != 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "modify_sharedfolder_error(alert_msg.Action7);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action7");
 		return -1;
 	}
 
-	websWrite(wp, "<script>\n");
-	websWrite(wp, "modify_sharedfolder_success();\n");
-	websWrite(wp, "</script>\n");
+	insert_hook_func(wp, "modify_sharedfolder_success", "");
 
 	return 0;
 }
@@ -6392,43 +6377,32 @@ int ej_delete_sharedfolder(int eid, webs_t wp, int argc, char **argv){
 	char *pool = websGetVar(wp, "pool", "");
 	char *folder = websGetVar(wp, "folder", "");
 	char mount_path[PATH_MAX];
+	char *fn = "delete_sharedfolder_error";
 
 	if (strlen(pool) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "delete_sharedfolder_error(alert_msg.Input7);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input7");
 		return -1;
 	}
 	if (strlen(folder) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "delete_sharedfolder_error(alert_msg.Input9);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input9");
 		return -1;
 	}
 
 	if (get_mount_path(pool, mount_path, PATH_MAX) < 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "delete_sharedfolder_error(alert_msg.System1);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.System1");
 		return -1;
 	}
 	if (del_folder(mount_path, folder) < 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "delete_sharedfolder_error(alert_msg.Action6);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action6");
 		return -1;
 	}
 
 	if (notify_rc_for_nas("restart_ftpsamba") != 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "delete_sharedfolder_error(alert_msg.Action6);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action6");
 		return -1;
 	}
 
-	websWrite(wp, "<script>\n");
-	websWrite(wp, "delete_sharedfolder_success();\n");
-	websWrite(wp, "</script>\n");
+	insert_hook_func(wp, "delete_sharedfolder_success", "");
 
 	return 0;
 }
@@ -6438,44 +6412,33 @@ int ej_create_sharedfolder(int eid, webs_t wp, int argc, char **argv){
 	char *pool = websGetVar(wp, "pool", "");
 	char *folder = websGetVar(wp, "folder", "");
 	char mount_path[PATH_MAX];
+	char *fn = "create_sharedfolder_error";
 
 	if (strlen(pool) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "create_sharedfolder_error(alert_msg.Input7);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input7");
 		return -1;
 	}
 	if (strlen(folder) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "create_sharedfolder_error(alert_msg.Input9);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input9");
 		return -1;
 	}
 
 	if (get_mount_path(pool, mount_path, PATH_MAX) < 0){
 		fprintf(stderr, "Can't get the mount_path of %s.\n", pool);
 
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "create_sharedfolder_error(alert_msg.System1);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.System1");
 		return -1;
 	}
 	if (add_folder(account, mount_path, folder) < 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "create_sharedfolder_error(alert_msg.Action5);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action5");
 		return -1;
 	}
 
 	if (notify_rc_for_nas("restart_ftpsamba") != 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "create_sharedfolder_error(alert_msg.Action5);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action5");
 		return -1;
 	}
-	websWrite(wp, "<script>\n");
-	websWrite(wp, "create_sharedfolder_success();\n");
-	websWrite(wp, "</script>\n");
+	insert_hook_func(wp, "create_sharedfolder_success", "");
 
 	return 0;
 }
@@ -6484,17 +6447,14 @@ int ej_set_AiDisk_status(int eid, webs_t wp, int argc, char **argv){
 	char *protocol = websGetVar(wp, "protocol", "");
 	char *flag = websGetVar(wp, "flag", "");
 	int result = 0;
+	char *fn = "set_AiDisk_status_error";
 
 	if (strlen(protocol) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_AiDisk_status_error(alert_msg.Input1);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input1");
 		return -1;
 	}
 	if (strlen(flag) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_AiDisk_status_error(alert_msg.Input18);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input18");
 		return -1;
 	}
 	if (!strcmp(protocol, "cifs")){
@@ -6512,9 +6472,7 @@ int ej_set_AiDisk_status(int eid, webs_t wp, int argc, char **argv){
 			result = notify_rc_for_nas("stop_samba");
 		}
 		else{
-			websWrite(wp, "<script>\n");
-			websWrite(wp, "set_AiDisk_status_error(alert_msg.Input19);\n");
-			websWrite(wp, "</script>\n");
+			insert_hook_func(wp, fn, "alert_msg.Input19");
 			return -1;
 		}
 	}
@@ -6533,9 +6491,7 @@ int ej_set_AiDisk_status(int eid, webs_t wp, int argc, char **argv){
 			result = notify_rc_for_nas("stop_ftpd");
 		}
 		else{
-			websWrite(wp, "<script>\n");
-			websWrite(wp, "set_AiDisk_status_error(alert_msg.Input19);\n");
-			websWrite(wp, "</script>\n");
+			insert_hook_func(wp, fn, "alert_msg.Input19");
 			return -1;
 		}
 	}
@@ -6555,32 +6511,24 @@ int ej_set_AiDisk_status(int eid, webs_t wp, int argc, char **argv){
 			result = notify_rc_for_nas("stop_webdav");
 		}
 		else{
-			websWrite(wp, "<script>\n");
-			websWrite(wp, "set_AiDisk_status_error(alert_msg.Input19);\n");
-			websWrite(wp, "</script>\n");
+			insert_hook_func(wp, fn, "alert_msg.Input19");
 			return -1;
 		}
 	}
 #endif
 	else{
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_AiDisk_status_error(alert_msg.Input2);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input2");
 		return -1;
 	}
 
 	if (result != 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_AiDisk_status_error(alert_msg.Action8);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action8");
 		return -1;
 	}
 
 SET_AIDISK_STATUS_SUCCESS:
-	websWrite(wp, "<script>\n");
-	//websWrite(wp, "set_AiDisk_status_success();\n");
-	websWrite(wp, "parent.resultOfSwitchAppStatus();\n");
-	websWrite(wp, "</script>\n");
+	//insert_hook_func(wp, "set_AiDisk_status_success", "");
+	insert_hook_func(wp, "parent.resultOfSwitchAppStatus", "");
 
 	return 0;
 }
@@ -6690,104 +6638,80 @@ int ej_modify_account(int eid, webs_t wp, int argc, char **argv){
 	char *account = websGetVar(wp, "account", "");
 	char *new_account = websGetVar(wp, "new_account", "");
 	char *new_password = websGetVar(wp, "new_password", "");
+	char *fn = "modify_account_error";
 
 	if (strlen(account) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "modify_account_error(alert_msg.Input5);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input5");
 		return -1;
 	}
 	if (strlen(new_account) <= 0 && strlen(new_password) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "modify_account_error(alert_msg.Input16);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input16");
 		return -1;
 	}
 
 	if (mod_account(account, new_account, new_password) < 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "modify_account_error(alert_msg.Action4);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action4");
 		return -1;
 	}
 #ifdef RTCONFIG_WEBDAV_PENDING
 	else if(mod_webdav_account(account, new_account)<0) {
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "modify_account_error(alert_msg.Action4);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action4");
 		return -1;	
 	}
 #endif
 
 	if (notify_rc_for_nas("restart_ftpsamba") != 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "modify_account_error(alert_msg.Action4);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action4");
 		return -1;
 	}
 
 #ifdef RTCONFIG_WEBDAV_PENDING
 	if(notify_rc_for_nas("restart_webdav") != 0) {
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "mod_account_error(alert_msg.Action4);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action4");
 		return -1;
 	}
 #endif
 
-	websWrite(wp, "<script>\n");
-	websWrite(wp, "modify_account_success();\n");
-	websWrite(wp, "</script>\n");
+	insert_hook_func(wp, "modify_account_success", "");
 
 	return 0;
 }
 
 int ej_delete_account(int eid, webs_t wp, int argc, char **argv){
 	char *account = websGetVar(wp, "account", "");
+	char *fn = "delete_account_error";
 
 	if (strlen(account) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "delete_account_error(alert_msg.Input5);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input5");
 		return -1;
 	}
 
 	not_ej_initial_folder_var_file();
 
 	if (del_account(account) < 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "delete_account_error(alert_msg.Action3);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action3");
 		return -1;
 	}
 #ifdef RTCONFIG_WEBDAV_PENDING
 	else if(del_webdav_account(account)<0) {
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "delete_account_error(alert_msg.Action3);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action3");
 		return -1;	
 	}
 #endif
 
 	if (notify_rc_for_nas("restart_ftpsamba") != 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "delete_account_error(alert_msg.Action3);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action3");
 		return -1;
 	}
 
 #ifdef RTCONFIG_WEBDAV_PENDING
 	if(notify_rc_for_nas("restart_webdav") != 0) {
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "delete_account_error(alert_msg.Action3);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action3");
 		return -1;
 	}
 #endif
 
-	websWrite(wp, "<script>\n");
-	websWrite(wp, "delete_account_success();\n");
-	websWrite(wp, "</script>\n");
+	insert_hook_func(wp, "delete_account_success", "");
 
 	return 0;
 }
@@ -6797,6 +6721,7 @@ int ej_initial_account(int eid, webs_t wp, int argc, char **argv){
 	partition_info_t *follow_partition;
 	char *command;
 	int len, result;
+	char *fn = "initial_account_error";
 
 	nvram_set("acc_num", "0");
 	nvram_set("acc_list", "");
@@ -6804,9 +6729,7 @@ int ej_initial_account(int eid, webs_t wp, int argc, char **argv){
 
 	disks_info = read_disk_data();
 	if (disks_info == NULL){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "initial_account_error(alert_msg.System2);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.System2");
 		return -1;
 	}
 
@@ -6816,9 +6739,7 @@ int ej_initial_account(int eid, webs_t wp, int argc, char **argv){
 				len = strlen("rm -f ")+strlen(follow_partition->mount_point)+strlen("/.__*");
 				command = (char *)malloc(sizeof(char)*(len+1));
 				if (command == NULL){
-					websWrite(wp, "<script>\n");
-					websWrite(wp, "initial_account_error(alert_msg.System1);\n");
-					websWrite(wp, "</script>\n");
+					insert_hook_func(wp, fn, "alert_msg.System1");
 					return -1;
 				}
 				sprintf(command, "rm -f %s/.__*", follow_partition->mount_point);
@@ -6847,38 +6768,28 @@ int ej_initial_account(int eid, webs_t wp, int argc, char **argv){
 	if(add_account(buf1, buf2) < 0)
 #endif
 	{
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "initial_account_error(alert_msg.Action2);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action2");
 		return -1;
 	}
 #ifdef RTCONFIG_WEBDAV_PENDING
 	else if(add_webdav_account(nvram_safe_get("http_username"))<0) {
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "init_account_error(alert_msg.Action2);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, "init_account_error", "alert_msg.Action2");
 		return -1;	
 	}
 #endif
 
 	if (notify_rc_for_nas("restart_ftpsamba") != 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "initial_account_error(alert_msg.Action2);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action2");
 		return -1;
 	}
 
 #ifdef RTCONFIG_WEBDAV_PENDING
 	if(notify_rc_for_nas("restart_webdav") != 0) {
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "initial_account_error(alert_msg.Action2);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action2");
 		return -1;
 	}
 #endif
-	websWrite(wp, "<script>\n");
-	websWrite(wp, "initial_account_success();\n");
-	websWrite(wp, "</script>\n");
+	insert_hook_func(wp, "initial_account_success", "");
 
 	return 0;
 }
@@ -6886,56 +6797,43 @@ int ej_initial_account(int eid, webs_t wp, int argc, char **argv){
 int ej_create_account(int eid, webs_t wp, int argc, char **argv){
 	char *account = websGetVar(wp, "account", "");
 	char *password = websGetVar(wp, "password", "");
+	char *fn = "create_account_error";
 
 	if (strlen(account) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "create_account_error(alert_msg.Input5);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input5");
 		return -1;
 	}
 	if (strlen(password) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "create_account_error(alert_msg.Input14);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input14");
 		return -1;
 	}
 
 	not_ej_initial_folder_var_file();
 
 	if (add_account(account, password) < 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "create_account_error(alert_msg.Action2);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action2");
 		return -1;
 	}
 #ifdef RTCONFIG_WEBDAV_PENDING
 	else if(add_webdav_account(account) < 0) {
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "create_account_error(alert_msg.Action2);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action2");
 		return -1;	
 	}
 #endif
 
 	if (notify_rc_for_nas("restart_ftpsamba") != 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "create_account_error(alert_msg.Action2);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action2");
 		return -1;
 	}
 
 #ifdef RTCONFIG_WEBDAV_PENDING
 	if(notify_rc_for_nas("restart_webdav") != 0) {
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "create_account_error(alert_msg.Action2);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action2");
 		return -1;
 	}
 #endif
 
-	websWrite(wp, "<script>\n");
-	websWrite(wp, "create_account_success();\n");
-	websWrite(wp, "</script>\n");
+	insert_hook_func(wp, "create_account_success", "");
 	return 0;
 }
 
@@ -6951,37 +6849,30 @@ int ej_set_account_permission(int eid, webs_t wp, int argc, char **argv){
 #endif
 	int right;
 	char char_user[64];
+	char *fn = "set_account_permission_error";
 
 	memset(char_user, 0, 64);
 	ascii_to_char_safe(char_user, ascii_user, 64);
 
 	if (test_if_exist_account(char_user) != 1){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_account_permission_error(alert_msg.Input6);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input6");
 		return -1;
 	}
 
 	if (strlen(pool) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_account_permission_error(alert_msg.Input7);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input7");
 		return -1;
 	}
 
 	if (get_mount_path(pool, mount_path, PATH_MAX) < 0){
 		fprintf(stderr, "Can't get the mount_path of %s.\n", pool);
 
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_account_permission_error(alert_msg.System1);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.System1");
 		return -1;
 	}
 
 	if (strlen(protocol) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_account_permission_error(alert_msg.Input1);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input1");
 		return -1;
 	}
 	if (strcmp(protocol, "cifs") && strcmp(protocol, "ftp") && strcmp(protocol, "dms") 
@@ -6989,30 +6880,22 @@ int ej_set_account_permission(int eid, webs_t wp, int argc, char **argv){
 && strcmp(protocol, "webdav")
 #endif
 ){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_account_permission_error(alert_msg.Input2);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input2");
 		return -1;
 	}
 
 	if (strlen(permission) <= 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_account_permission_error(alert_msg.Input12);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input12");
 		return -1;
 	}
 	right = atoi(permission);
 	if (right < 0 || right > 3){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_account_permission_error(alert_msg.Input13);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Input13");
 		return -1;
 	}
 
 	if (set_permission(char_user, mount_path, folder, protocol, right) < 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_account_permission_error(alert_msg.Action1);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action1");
 		return -1;
 	}
 #ifdef RTCONFIG_WEBDAV_PENDING
@@ -7026,24 +6909,123 @@ int ej_set_account_permission(int eid, webs_t wp, int argc, char **argv){
 #ifdef RTCONFIG_WEBDAV_PENDING
 	if(strcmp(protocol, "webdav")==0) {
 		if(notify_rc_for_nas("restart_webdav") != 0) {
-			websWrite(wp, "<script>\n");
-			websWrite(wp, "set_account_permission_error(alert_msg.Action1);\n");
-			websWrite(wp, "</script>\n");
+			insert_hook_func(wp, fn, "alert_msg.Action1");
 			return -1;
 		}
 	}
 	else 
 #endif
 	if (notify_rc_for_nas("restart_ftpsamba") != 0){
-		websWrite(wp, "<script>\n");
-		websWrite(wp, "set_account_permission_error(alert_msg.Action1);\n");
-		websWrite(wp, "</script>\n");
+		insert_hook_func(wp, fn, "alert_msg.Action1");
 		return -1;
 	}
 
-	websWrite(wp, "<script>\n");
-	websWrite(wp, "set_account_permission_success();\n");
-	websWrite(wp, "</script>\n");
+	insert_hook_func(wp, "set_account_permission_success", "");
+
+	return 0;
+}
+
+int ej_set_account_all_folder_permission(int eid, webs_t wp, int argc, char **argv)
+{
+	disk_info_t *disks_info, *follow_disk;
+	partition_info_t *follow_partition;
+	int i, result, sh_num;
+	char **folder_list;
+	char *ascii_user = websGetVar(wp, "account", NULL);
+	char *protocol = websGetVar(wp, "protocol", "");
+	char *permission = websGetVar(wp, "permission", "");
+#ifdef RTCONFIG_WEBDAV_PENDING
+	char *webdavproxy = websGetVar(wp, "acc_webdavproxy", "");
+#endif
+	int right;
+	char char_user[64];
+	char *fn = "set_account_all_folder_permission_error";
+
+	memset(char_user, 0, 64);
+	ascii_to_char_safe(char_user, ascii_user, 64);
+
+	if (test_if_exist_account(char_user) != 1){
+		insert_hook_func(wp, fn, "alert_msg.Input6");
+		return -1;
+	}
+
+	if (strlen(protocol) <= 0){
+		insert_hook_func(wp, fn, "alert_msg.Input1");
+		return -1;
+	}
+	if (strcmp(protocol, "cifs") && strcmp(protocol, "ftp") && strcmp(protocol, "dms") 
+#ifdef RTCONFIG_WEBDAV_PENDING
+&& strcmp(protocol, "webdav")
+#endif
+){
+		insert_hook_func(wp, fn, "alert_msg.Input2");
+		return -1;
+	}
+
+	if (strlen(permission) <= 0){
+		insert_hook_func(wp, fn, "alert_msg.Input12");
+		return -1;
+	}
+	right = atoi(permission);
+	if (right < 0 || right > 3){
+		insert_hook_func(wp, fn, "alert_msg.Input13");
+		return -1;
+	}
+
+
+	disks_info = read_disk_data();
+	if (disks_info == NULL){
+		insert_hook_func(wp, fn, "alert_msg.System2");
+		return -1;
+	}
+
+	for (follow_disk = disks_info; follow_disk != NULL; follow_disk = follow_disk->next) {
+		for (follow_partition = follow_disk->partitions; follow_partition != NULL; follow_partition = follow_partition->next) {
+			if (follow_partition->mount_point == NULL || strlen(follow_partition->mount_point) <= 0)
+				continue;
+
+			result = get_all_folder(follow_partition->mount_point, &sh_num, &folder_list);
+			if (result != 0) {
+				insert_hook_func(wp, fn, "alert_msg.Action7");
+				free_2_dimension_list(&sh_num, &folder_list);
+				return -1;
+			}
+			for (i = 0; i < sh_num; ++i) {
+				if (set_permission(char_user, follow_partition->mount_point, folder_list[i], protocol, right) < 0){
+					insert_hook_func(wp, fn, "alert_msg.Action1");
+					free_2_dimension_list(&sh_num, &folder_list);
+					return -1;
+				}
+#ifdef RTCONFIG_WEBDAV_PENDING
+#error FIXME
+				else {
+					logmessage("wedavproxy right", "%s %s %s %s %d %s", char_user, mount_path, folder, protocol, right, webdavproxy);
+					// modify permission for webdav proxy
+					nvram_set("acc_webdavproxy", webdavproxy);
+				}
+#endif
+			}
+			free_2_dimension_list(&sh_num, &folder_list);
+		}
+	}
+
+	free_disk_data(&disks_info);
+
+#ifdef RTCONFIG_WEBDAV_PENDING
+	if(strcmp(protocol, "webdav")==0) {
+		if(notify_rc_for_nas("restart_webdav") != 0) {
+			insert_hook_func(wp, fn, "alert_msg.Action1");
+			return -1;
+		}
+	}
+	else 
+#endif
+	if (notify_rc_for_nas("restart_ftpsamba") != 0){
+		insert_hook_func(wp, fn, "alert_msg.Action1");
+		return -1;
+	}
+
+	insert_hook_func(wp, "set_account_all_folder_permission_success", "");
 
 	return 0;
 }
@@ -8396,6 +8378,7 @@ struct ej_handler ej_handlers[] = {
 	{ "safely_remove_disk", ej_safely_remove_disk},
 	{ "get_permissions_of_account", ej_get_permissions_of_account},
 	{ "set_account_permission", ej_set_account_permission},
+	{ "set_account_all_folder_permission", ej_set_account_all_folder_permission},
 	{ "get_folder_tree", ej_get_folder_tree},
 	{ "get_share_tree", ej_get_share_tree},
 	{ "initial_account", ej_initial_account},

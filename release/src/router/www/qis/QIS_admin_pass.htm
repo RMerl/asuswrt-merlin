@@ -23,6 +23,12 @@
 <script type="text/javascript">
 
 var accounts = [<% get_all_accounts(); %>];
+if(accounts.length == 0)
+	accounts = ['<% nvram_get("http_username"); %>'];
+
+for(var i=0; i<accounts.length; i++){
+		accounts[i] = decodeURIComponent(accounts[i]);	
+}
 
 function QKinternettype_load_body(){
 	
@@ -73,22 +79,11 @@ function QKinternettype_load_body(){
 		}else{
 			document.getElementById('http_username_span').style.display = "";
 			document.form.http_username.disabled = true;
-			document.getElementById('http_username').style.display = "none";
+			document.getElementById('http_username').parentNode.style.display = "none";
 		}
 	}
-}
-
-function checkDuplicateName(newname, teststr){
-	var existing_string = decodeURIComponent(teststr.join(','));
-	existing_string = "," + existing_string + ",";
-	var newstr = "," + trim(newname) + ","; 
-
-	var re = new RegExp(newstr,"gi")
-	var matchArray =  existing_string.match(re);
-	if (matchArray != null)
-		return true;
-	else
-		return false;
+	
+	document.form.http_username.value= accounts[0];	
 }
 
 function submitForm(){
@@ -147,15 +142,15 @@ function submitForm(){
 		return false;
 	}
 
-	if(checkDuplicateName(document.form.http_username.value, accounts)
-			&& document.form.http_username.value != accounts[0]){
+	if(accounts.getIndexByValue(document.form.http_username.value) > 0
+			&& document.form.http_username.value != accounts[0]){		
 		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
 		document.form.http_username.focus();
 		document.form.http_username.select();
 		changeiuiBackground(0);
 		return false;
 	}
-
+	
 	if(document.form.http_passwd.value.length <= 0 || document.form.v_password2.value.length <= 0){
 		if(parent.ISMOBILE)
 			showtext($("_alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
@@ -269,8 +264,10 @@ function pass_checked(obj){
 		  <th width="200"><#Router_Login_Name#></th>
 		  <td class="QISformtd">
 				  	<div id="http_username_span" name="http_username_span" style="color:#FFFFFF;margin-left:8px;"><% nvram_get("http_username"); %></div>
-						<input type="text" id="http_username" name="http_username" style="height:25px;" class="input_15_table" maxlength="20" value='<% nvram_get("http_username"); %>'>
-						<br/><span id="alert_msg1"></span>
+						<div>
+							<input type="text" id="http_username" name="http_username" style="height:25px;" class="input_15_table" maxlength="20" value="<% nvram_get("http_username"); %>">
+							<br/><span id="alert_msg1"></span>
+						</div>
 		  </td>
 		</tr>	
 		<tr>

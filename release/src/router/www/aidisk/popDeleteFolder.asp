@@ -44,7 +44,7 @@ function submit(){
 	&& parent.document.form.current_page.value != "cloud_router_sync.asp" ){
 		parent.showLoading();
 	}
-			
+	
 	document.deleteFolderForm.submit();
 	parent.hidePop("apply");
 	setTimeout(" ",5000);

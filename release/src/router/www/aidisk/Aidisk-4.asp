@@ -16,8 +16,8 @@ var ddns_enable_x = parent.getASUSDDNS_enable();
 var ddns_server_x = '<% nvram_get("ddns_server_x"); %>';
 var ddns_hostname_x = '<% nvram_get("ddns_hostname_x"); %>';
 var ddns_hostname_title;
-var SAFE_TIME = 30;
-var FOLDER_WORK_TIME = 2;
+var SAFE_TIME = 8;
+var FOLDER_WORK_TIME = 1;
 <% wanlink(); %>
 
 function initial(){
