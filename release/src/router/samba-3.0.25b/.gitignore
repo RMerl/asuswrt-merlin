@@ -18,3 +18,5 @@ source/smbd/build_options.c
 source/utils/net_proto.h
 source/utils/ntlm_auth_proto.h
 source/web/swat_proto.h
+source/Makefile
+
