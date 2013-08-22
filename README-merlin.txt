@@ -521,11 +521,11 @@ History
    - FIXED: Security issue with Samba and symlinks
 
 
-3.0.0.4.372.31_2:
+3.0.0.4.372.31_2 (28-July-2013):
    - FIXED: Samba wouldn't start due to missing symlink (RT-AC56U)
 
 
-3.0.0.4.372.31:
+3.0.0.4.372.31 (24-July-2013:
    - NEW: Merged with 372_1393 code from Asus.  Notes:
       * Beamforming support for RT-AC66U/RT-AC56U
       * RT-N66U driver still downgraded to build 270 (which
@@ -557,13 +557,13 @@ History
             properly (DHCP was overruling the default GW)
 
 
-3.0.0.4.372_30_3:
+3.0.0.4.372_30_3 (11-July-2013):
    - NEW: Added support for newest RT-N66U hardware revision.
           This router has a new model of flash, you can NOT
           use any older FW on these. (RT-N66U)
 
 
-3.0.0.4.372.30_2:
+3.0.0.4.372.30_2 (7-July-2013):
       (note: since people always thought adding a "b" meant "beta' 
        rather than revision "b", I am switching to Asus's new 
        numbering scheme, hence "30_2" for this revised 372.30.)
@@ -578,7 +578,7 @@ History
             (RT-AC56U)
 
 
-3.0.0.4.372.30:
+3.0.0.4.372.30 (5-July-2013):
    - NEW: Merged with preliminary 372 code provided by Asus
           (initialy meant for the ARM environment)
    - NEW: RT-AC56U support.  Various bugs have been fixed 
@@ -616,7 +616,7 @@ History
    - FIXED: Numerous bugs in ipt_account for Kernel 2.6.36 (RT-AC56U)
 
 
-3.0.0.4.354.29 Beta 1:
+3.0.0.4.354.29 Beta 1 (17-May-2013):
    - KNOWN ISSUE: 5 GHz 40 MHz is unreliable with some wireless
                   cards (RT-N66U)
    - NEW: RT-N16 is no longer an experimentally supported device.
@@ -657,7 +657,7 @@ History
             cleared on the mtd partition.
 
 
-3.0.0.4.354.28 Beta 1:
+3.0.0.4.354.28 Beta 1 (19-Apr-2013):
    - KNOWN ISSUE: 5 GHz 40 MHz is unreliable with some wireless 
                   cards (RT-N66U)
    - KNOWN ISSUE: Sort order is sometimes wrong on the Site Survey page
@@ -697,7 +697,7 @@ History
            (fix submitted by hshang)
 
 
-3.0.0.4.354.27 Beta 1
+3.0.0.4.354.27 Beta 1 (31-Mar-2013):
    - NEW: Merged with 3.0.0.4.354.  Notable changes:
             * New wireless driver
             * New Network Tools
@@ -729,12 +729,12 @@ History
    - FIXED: dnsmasq warning in syslog if DHCP static leases are disabled
 
 
-3.0.0.4.270.26b
+3.0.0.4.270.26b (17-Mar-2013):
    - FIXED: Volume labels with spaces were rejected (Asus used the same code
             to validate hostnames and volume labels)
 
 
-3.0.0.4.270.26
+3.0.0.4.270.26 (15-Mar-2013):
    - NEW: ipset Netfilter support + userspace tool to create ipset lists.
    - CHANGED: Router's hostname is now set all the time, regardless of
               telnet/ssh states (and including in AP mode)
@@ -758,7 +758,7 @@ History
    - FIXED: Proxy auto-configuration support (Asus bug)
 
 
-3.0.0.4.270.25b
+3.0.0.4.270.25b (3-Mar-2013):
    - FIXED: Disabling DHCP logging would cause a syntax error in dnsmasq's configuration
             (regression from dnsmasq update)
    - FIXED: Outbound VPN client traffic was dropped (regression from firewall_2 fix)
@@ -795,7 +795,7 @@ History
 
 
 
-3.0.0.4.270.24
+3.0.0.4.270.24 (13-Feb-2013):
    - NEW: Rebased on 3.0.0.4.270.  Notable changes:
       o New driver builds (these are NOT the new major versions that
         Asus are still working on)
@@ -839,12 +839,12 @@ History
             DHCP configuration page.
 
 
-3.0.0.4.266.23b:
+3.0.0.4.266.23b (31-Dec-2012):
    - FIXED: The IE fix ended up breaking Firefox (and meanwhile, Chrome worked
             fine no matter which method was used to build that dropdown).
 
 
-3.0.0.4.266.23:
+3.0.0.4.266.23 (31-Dec-2012):
    - NEW: Rebased on 3.0.0.4.266 (from the RT-AC66U GPL)
    - NEW: Tools icon contributed by Maximilian Czarnecki.
    - FIXED: Skip bad blocks while erasing MTD partition (fixes RT-AC66U
@@ -858,7 +858,7 @@ History
    - FIXED: Per Device traffic monitor pages missing under IE
 
 
-3.0.0.4.264.22:
+3.0.0.4.264.22 (15-Dec-2012):
    - NEW: Rebased on 3.0.0.4.264 (from the RT-N53 GPL).
    - NEW: Traffic monitoring per IP added to the Traffic Monitor section.
           Based on the Tomato IPTraffic implementation by Teaman.
@@ -879,7 +879,7 @@ History
               with it at this point.  Regular USB failover still works.
 
 
-3.0.0.4.260.21:
+3.0.0.4.260.21 (5-Dec-2012):
    - NEW: Rebased on 3.0.0.4.260.  This version should
           resolve issues with some Russian ISPs.  Note that
           the RT-N66U build still uses the wireless driver
@@ -901,7 +901,7 @@ History
             NetBIOS name (such as the Sonos Dock).
 
 
-3.0.0.4.246.20:
+3.0.0.4.246.20 (14-Nov-2012):
    - NEW: Wifi status icon will be half colored if only one radio is enabled.
    - NEW: Wifi status icon popup will report the state of each radios.
    - NEW: upnp custom config file for miniupnpd
@@ -925,12 +925,12 @@ History
    - CHANGED: Improved SMB and vsftpd read performance by up to 30%
 
 
-3.0.0.4.246.19b:
+3.0.0.4.246.19b (26-Oct-2012):
    - FIXED: Reverted wireless driver to build 220 version as the new 
             one caused various connection issues for some (RT-N66U).
 
 
-3.0.0.4.246.19:
+3.0.0.4.246.19 (23-Oct-2012):
    - NEW: Rebased on 3.0.0.4.246.  Some notable changes:
             o New "Enhanced interference management" option under Wireless -> Professional.
             o Improved AiCloud webui
@@ -964,7 +964,7 @@ History
 
 
 
-3.0.0.4.220.18b:
+3.0.0.4.220.18b (25-Sept-2012):
    - NEW: Report both rx and tx rates on wifi connections
    - FIXED: Handle cases where the wireless driver returns a speed of -1
    - FIXED: Removed rssi retrieval retries, as it would make the first access to
@@ -973,7 +973,7 @@ History
             if the RSSI is reported as "??".
 
 
-3.0.0.4.220.18:
+3.0.0.4.220.18 (23-Sept-2012):
    - NEW: Added OpenVPN logging verbosity setting (vpn_loglevel, must be
           manually set to a value between 0 and 15, with 3 being the default).
    - FIXED: Buffer overrun in init code that would crash the router when 
@@ -988,7 +988,7 @@ History
    - CHANGED: Improved load time of the VPN Status page.
 
 
-3.0.0.4.220.17:
+3.0.0.4.220.17 (18-Sept-2012):
    - NEW: Rebased on 3.0.0.4.220, which includes:
             * Fixes to IPv6 6rd
             * Fixes to AC66U Wifi + QoS
@@ -1025,7 +1025,7 @@ History
               am unable to work on them without an actual router.
 
 
-3.0.0.3.178.15:
+3.0.0.3.178.15 (17-Aug-2012):
    - NEW: Rebased on 3.0.0.3.178.  Notable fixes by Asus:
            * Radio turns back on based on schedule
            * Reorganized QoS pages
@@ -1093,7 +1093,7 @@ graciously provided me with.
    - CHANGED: Improved WOL page functionality.
 
 
-3.0.0.3.144.11 Beta:
+3.0.0.3.144.11 Beta (6-July-2012):
    - NEW: Name field added to DHCP reservation list
    - NEW: Webui option to enable resolving IPs on the Connections tab
    - NEW: Store a list of computer MACs to use as WOL targets
@@ -1103,7 +1103,7 @@ graciously provided me with.
    - FIXED: Retrieve dhcpc options for the correct wan interface
 
 
-3.0.0.3.144.10:
+3.0.0.3.144.10 (30-June-2012):
    - NEW: Rebased on 3.0.0.3.144.
    - NEW: Support for 64K NVRAM enabled.  ***First flash will
           wipe out ALL your settings!  And you cannot restore 
@@ -1122,12 +1122,12 @@ graciously provided me with.
             manual DST.
 
 
-3.0.0.3.130.9:
+3.0.0.3.130.9 (10-June-2012):
    - NEW: Enabled new Dual WAN support from Asus
    - FIXED: no-ip DDNS entry would revert to Asus DDNS on webui
 
 
-3.0.0.3.130.8:
+3.0.0.3.130.8 (8-June-2012):
 *** Reverting to factory defaults BEFORE and AFTER flashing
 this version is strongly recommended!  The newer Asus code base 
 seems to have changed quite a few settings, so you'll want to 
@@ -1168,7 +1168,7 @@ good amount of the limited available nvram. ***
                executable using "chmod a+rx script_filename")
 
 
-3.0.0.3.108.7:
+3.0.0.3.108.7 (27-May-2012):
    - NEW: Added no-ip.com support to DDNS (patch submitted by Igor Pavlov)
    - NEW: Added webui page under System Log to display active/tracked
           network connections.
@@ -1183,7 +1183,7 @@ good amount of the limited available nvram. ***
             40 or 500 mW.
 
 
-3.0.0.3.108.6:
+3.0.0.3.108.6 (14-May-2012):
    - NEW: HTTP access list (backported from build 112)
    - NEW: PPTP VPN encryption options (backported from build 112)
    - FIXED: Traffic history location was't properly saved
@@ -1195,7 +1195,7 @@ good amount of the limited available nvram. ***
    - FIXED: typo in VPN iptables entries (bug in Asus's code)
 
 
-3.0.0.3.108.5:
+3.0.0.3.108.5 (5-May-2012):
    - NEW: Crond starts at boot time.
    - NEW: init-start is a new user script that will be run early on
           at boot time (right after jffs is mounted, and before any 
@@ -1212,7 +1212,7 @@ good amount of the limited available nvram. ***
            from a saved config file.
 
 
-3.0.0.3.108.4:
+3.0.0.3.108.4 (28-Apr-2012):
    - NEW: Clicking on the MAC address of an unidentified client will do a lookup in
           the OUI database (ported from DD-WRT).
    - NEW: Added HTTPS access to web interface (configurable under Administration)
@@ -1222,7 +1222,7 @@ good amount of the limited available nvram. ***
              ether-wake remains available over Telnet.
 
 
-3.0.0.3.108.3:
+3.0.0.3.108.3 (18-Apr-2012):
    - NEW: JFFS support (mounted under /jffs)
    - NEW: services-start, services-stop, wan-start and firewall-start user scripts,
           must be located in /jffs/scripts/ .
@@ -1232,11 +1232,11 @@ good amount of the limited available nvram. ***
    - CHANGE: Added "Merlin build" next to the firmware version on web interface.
    
           
-3.0.0.3.108.2:
+3.0.0.3.108.2 (14-Apr-2012):
    - NEW: Added WakeOnLan web page
 
    
-3.0.0.3.108.1:
+3.0.0.3.108.1 (5-Apr-2012):
    - Initial release.
    
    
