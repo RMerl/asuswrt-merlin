@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.374.32-Beta4 (xx-xxx-2013)
-=========================================================
+Asuswrt-Merlin - build 3.0.0.4.374.32 (24-Aug-2013)
+===================================================
 
 About
 -----
@@ -64,7 +64,7 @@ Networking:
      Keith Moyer for Tomato and reused with his permission. (RT-N66U, RT-AC66U)
    - Option to control Spanning-Tree Protocol support.
    - Netfilter ipset module, for efficient blacklist implemetnation
-   - IPv6 firewall rules
+   - Configurable IPv6 firewall
 
 Web interface:
    - Improved client list, with DHCP hostnames
@@ -482,11 +482,8 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.32 Beta 4 (xx-xxx-2013):
+3.0.0.4.374.32 (24-Aug-2013):
    - NEW: Merged with Asus 374_168 GPL code.
-
-
-3.0.0.4.372.32 Beta 3 (18-Aug-2013):
    - NEW: wan-start script will get passed the WAN unit number as argument
    - NEW: Webui option to select the location of the DLNA database (patch by
           VinceV)
