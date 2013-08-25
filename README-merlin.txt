@@ -34,7 +34,7 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on pre-release 3.0.0.4.372_1393 sources from Asus
+   - Based on 3.0.0.4.374_168 sources from Asus
    - Various bugfixes all over the place
    - Some components were updated to their latest versions, for improved stability
      and security
