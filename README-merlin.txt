@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.32 (24-Aug-2013)
+Asuswrt-Merlin - build 3.0.0.4.374.33 (xx-xxx-2013)
 ===================================================
 
 About
@@ -482,6 +482,22 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.9.0.4.374.33 (xx-xxx-2013):
+   - CHANGED: Enabled Syn Cookies for ARM devices (RT-AC56U)
+   - CHANGED: Allow selecting the Download2 folder for media server
+              location.
+   - FIXED: Samba binding to WAN interface would cause warnings
+            about WINS/master browser (regression in 374)
+   - FIXED: The ARM kernel was missing the Advanced IP Routing option,
+            preventing some of the "ip" command functions from
+            working (was breaking Astrill's plugin) (RT-AC56U)
+   - FIXED: Build 374 fixed the Samba priority which was set too
+            high by setting it to the lowest possible, resulting in
+            low average Samba performance (and even lower under higher
+            CPU load).  Now Samba will run with a default priority of
+            0, providing more balanced performance. (N16/N66/AC66)
+
+
 3.0.0.4.374.32 (24-Aug-2013):
    - NEW: Merged with Asus 374_168 GPL code.
    - NEW: wan-start script will get passed the WAN unit number as argument
