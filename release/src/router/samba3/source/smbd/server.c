@@ -899,7 +899,7 @@ extern void build_options(BOOL screen);
 	setluid(0);
 #endif
 
-#if 1 /* AVM */
+#if 0 /* AVM */
 	setpriority(PRIO_PROCESS, 0, -20); /* be nice */
 #endif
 
