@@ -492,10 +492,14 @@ History
             preventing some of the "ip" command functions from
             working (was breaking Astrill's plugin) (RT-AC56U)
    - FIXED: Build 374 fixed the Samba priority which was set too
-            high by setting it to the lowest possible, resulting in
+            high, by setting it to the lowest possible, resulting in
             low average Samba performance (and even lower under higher
             CPU load).  Now Samba will run with a default priority of
             0, providing more balanced performance. (N16/N66/AC66)
+  - FIXED: Some fields would allow invalid characters (such as
+           single quotes) which might break the webui JS.  There might 
+           still be a few unprotected fields.
+  - FIXED: Memory leak in httpd service (Asus bug)
 
 
 3.0.0.4.374.32 (24-Aug-2013):
