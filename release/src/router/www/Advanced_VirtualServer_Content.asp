@@ -633,7 +633,7 @@ function changeBgColor(obj, num){
           		        
           		<tr>
   				<td width="27%">
-  					<input type="text" maxlength="30" class="input_20_table" name="vts_desc_x_0" onKeyPress="return is_string(this, event)"/>
+  					<input type="text" maxlength="30" class="input_20_table" name="vts_desc_x_0" onKeyPress="return is_alphanum(this, event)"/>
   				</td>
         			<td width="15%">
 					<input type="text" maxlength="" class="input_12_table" name="vts_port_x_0" onkeypress="return is_portrange(this, event)"/>
