@@ -3577,6 +3577,7 @@ static int ej_get_client_detail_info(int eid, webs_t wp, int argc, char_t **argv
 		if(i < p_client_info_tab->ip_mac_num-1)
 			websWrite(wp, ",");
 	}
+	shmdt(shared_client_info);
 	file_unlock(lock);
 
 	return 0;
