@@ -70,8 +70,8 @@ OBJECTS := $(OBJS-$(ARCH))
 OBJECTS += load.o hndchipc.o hndpmu.o min_osl.o bcmutils.o \
 	   bcmstdlib.o sromstubs.o nvramstubs.o
 
-CFLAGS-mips	= -DLOADADDR=$(LOADADDR) -march=mips32 -Wa,-mips32 -Wa,--trap -G 0 -mno-abicalls -fno-pic -pipe -msoft-float
-ASFLAGS-mips	= -D__ASSEMBLY__ -DLOADADDR=$(LOADADDR) -march=mips32 -Wa,-mips32 -Wa,--trap -G 0 -mno-abicalls -fno-pic -pipe
+CFLAGS-mips	= -DLOADADDR=$(LOADADDR) -march=mips32r2 -Wa,-mips32r2 -Wa,--trap -G 0 -mno-abicalls -fno-pic -pipe -msoft-float
+ASFLAGS-mips	= -D__ASSEMBLY__ -DLOADADDR=$(LOADADDR) -march=mips32r2 -Wa,-mips32r2 -Wa,--trap -G 0 -mno-abicalls -fno-pic -pipe
 CFLAGS-arm	= -DLOADADDR=$(LOADADDR) -Ulinux -pipe -g -DSTANDALONE -O0 -D__KERNEL__ -msoft-float -marm -mabi=aapcs-linux \
 		  -mno-thumb-interwork -fno-common -ffixed-r8 -msoft-float -march=armv6k -D__ARM_ARCH_7A__ -DBCMCHIPTYPE=3 \
 		  -DBCMPMUCTL=0 -DCFG_CRU=1

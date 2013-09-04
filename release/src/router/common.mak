@@ -83,7 +83,7 @@ ifeq ($(EXTRACFLAGS),)
 ifeq ($(RTCONFIG_BCMARM),y)
 export EXTRACFLAGS := -DBCMWPA2 -DBCMARM -fno-delete-null-pointer-checks -marm
 else
-export EXTRACFLAGS := -DBCMWPA2 -fno-delete-null-pointer-checks -mips32 -mtune=mips32
+export EXTRACFLAGS := -DBCMWPA2 -fno-delete-null-pointer-checks -mips32r2 -mtune=mips32r2
 endif
 endif
 export EXTRACFLAGS += -DLINUX_KERNEL_VERSION=$(LINUX_KERNEL_VERSION)

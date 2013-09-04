@@ -26,8 +26,8 @@ vpath %.c $(SRCBASE)/shared
 vpath %.S $(SRCBASE)/shared
 vpath %.lds.in $(SRCBASE)/shared
 
-ASFLAGS		+= -D__ASSEMBLY__ -DLOADADDR=$(LOADADDR) -march=mips32 -Wa,-mips32 -Wa,--trap
-CFLAGS		+= -DLOADADDR=$(LOADADDR) -march=mips32 -Wa,-mips32 -Wa,--trap
+ASFLAGS		+= -D__ASSEMBLY__ -DLOADADDR=$(LOADADDR) -march=mips32r2 -Wa,-mips32r2 -Wa,--trap
+CFLAGS		+= -DLOADADDR=$(LOADADDR) -march=mips32r2 -Wa,-mips32r2 -Wa,--trap
 # The self-decompresor is standalone, get rid of the linux flags
 CFLAGS		:= $(subst -Dlinux,,$(CFLAGS))
 CFLAGS		+= -Ulinux -D_MINOSL_ -ffreestanding
